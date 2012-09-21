@@ -397,7 +397,7 @@ let rec contains_conj (f:CF.h_formula) : bool = match f with
 | _ -> false
               
 let rec split_heap (h:CF.h_formula) : (CF.h_formula * CF.h_formula) = 
-	let _ = print_string ("Splitting Heap H = "^ (string_of_h_formula h) ^ "\n") in 
+	(*let _ = print_string ("Splitting Heap H = "^ (string_of_h_formula h) ^ "\n") in *)
 	match h with
 	| CF.Conj({CF.h_formula_conj_h1 = h1;
 		   CF.h_formula_conj_h2 = h2;
@@ -405,8 +405,8 @@ let rec split_heap (h:CF.h_formula) : (CF.h_formula * CF.h_formula) =
   	| CF.Phase({CF.h_formula_phase_rd = h1;
 		    CF.h_formula_phase_rw = h2;
 		    CF.h_formula_phase_pos = pos}) -> 
-		    let _ = print_string ("H1 = "^ (string_of_h_formula h1)^ "\nH2 = "^ (string_of_h_formula h2) ^ "\n")
-		    in (h1,h2)
+		    (*let _ = print_string ("H1 = "^ (string_of_h_formula h1)^ "\nH2 = "^ (string_of_h_formula h2) ^ "\n")
+		    in*) (h1,h2)
 	| CF.Star({CF.h_formula_star_h1 = h1;
 		   CF.h_formula_star_h2 = h2;
 		   CF.h_formula_star_pos = pos}) ->

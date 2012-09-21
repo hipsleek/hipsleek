@@ -805,7 +805,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_bind_imm = imm;
           exp_bind_param_imm = pimm;
           exp_bind_read_only = read_only;
-		  exp_bind_path_id = pid;
+	  exp_bind_path_id = pid;
           exp_bind_pos = pos}) -> 
             (* let _ = print_string ("\n(andreeac) bind 15 to delete")in *)
             begin
@@ -837,7 +837,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let _ = CF.must_consistent_list_failesc_context "bind 1" ctx  in
 	        (* let _ = print_endline ("bind: unfolded context: before unfold: ### vprim = "^ (Cprinter.string_of_spec_var v_prim)^ " \n" ^ (Cprinter.string_of_list_failesc_context tmp_ctx)) in *)
 	        let unfolded = unfold_failesc_context (prog,None) tmp_ctx v_prim true pos in
-	        (* let _ = print_endline ("bind: unfolded context: after unfold \n" ^ (Cprinter.string_of_list_failesc_context unfolded)) in *)
+	       (*let _ = print_endline ("bind: unfolded context: after unfold \n" ^ (Cprinter.string_of_list_failesc_context unfolded)) in*) 
             let _ = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
 	        let _ = Debug.devel_zprint (lazy ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
             ^ "\n")) pos in
@@ -846,8 +846,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let fresh_frac_name = Cpure.fresh_old_name "f" in
             let perm_t = cperm_typ () in
             let fresh_frac =  Cpure.SpecVar (perm_t,fresh_frac_name, Unprimed) in (*LDK TO CHECK*)
-	        (* let _ = print_string("\n(andreeac)bind args: " ^ (List.fold_left (fun x (y,z) -> x ^ (Cprinter.string_of_spec_var y) ^ (string_of_heap_ann z) ^", ") "[" (List.combine vs_prim pimm)) ^ "]\n") in *)
-	        (* let _ = print_string("\n(andreeac)bind imm: " ^ (Cprinter.string_of_imm (CF.ConstAnn(imm))) ) in *)
+	        (*let _ = print_string("\n(andreeac)bind args: " ^ (List.fold_left (fun x (y,z) -> x ^ (Cprinter.string_of_spec_var y) ^ (string_of_heap_ann z) ^", ") "[" (List.combine vs_prim pimm)) ^ "]\n") in *)
+	        (*let _ = print_string("\n(andreeac)bind imm: " ^ (Cprinter.string_of_imm (CF.ConstAnn(imm))) ) in*) 
 	        let vdatanode = CF.DataNode ({
                 CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
                 CF.h_formula_data_name = c;

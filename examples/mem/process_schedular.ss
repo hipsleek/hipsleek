@@ -44,7 +44,7 @@ stat != 1 -> requires (plist::ll<R> & rlist::rll<R1> * slist::sll<R2>) & R = uni
 
 node insert_pll(node x, ref node n)
 requires x::ll<R> * n::node<_@L,_@L,_@M,_@M,_@M>
-ensures n::node<_@L,_@L,x@A,_@M,_@M> * x::ll<R> & Rr = union(R,{n});
+ensures n::node<_@L,_@L,x@A,_@M,_@M> * x::ll<R>;
 {
 	n.next = x;
 	return n;
@@ -52,7 +52,7 @@ ensures n::node<_@L,_@L,x@A,_@M,_@M> * x::ll<R> & Rr = union(R,{n});
 
 node insert_rll(node x, ref node n)
 requires x::rll<R> * n::node<_@L,_@L,_@A,_@M,_@A>
-ensures n::node<_@L,_@L,_@A,x@A,_@A> * x::rll<R> & Rr = union(R,{n});
+ensures n::node<_@L,_@L,_@A,x@A,_@A> * x::rll<R>;
 {
 	n.rnext = x;
 	return n;
@@ -60,7 +60,7 @@ ensures n::node<_@L,_@L,_@A,x@A,_@A> * x::rll<R> & Rr = union(R,{n});
 
 node insert_sll(node x, ref node n)
 requires x::sll<R> * n::node<_@L,_@L,_@A,_@A,_@M>
-ensures n::node<_@L,_@L,_@A,_@A,x@A> * x::sll<R> & Rr = union(R,{n});
+ensures n::node<_@L,_@L,_@A,_@A,x@A> * x::sll<R>;
 {
 	n.snext = x;
 	return n;
