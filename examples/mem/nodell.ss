@@ -22,9 +22,9 @@ lemma self::ll<R> <-> self::lseg<R,p>;
 global node cached;
 global node q;
 
-void add_L(node x, node y)
+void add_L(node x, ref node y)
 requires x::node<v,_> * y::ll<Ry>
-ensures y::ll<R1> & R1 = union(Ry,{x});
+ensures y'::ll<R1> & R1 = union(Ry,{x});
 {
   x.next = y.next;
   y.next = x;

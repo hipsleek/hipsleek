@@ -3204,12 +3204,20 @@ and heap_entail_with_mem (prog : prog_decl) (is_folding : bool)  (ctx0 : context
 			(mkFailCtx_simple msg estate conseq pos , Failure))
 
 and heap_entail_split_rhs (prog : prog_decl) (is_folding : bool) (ctx_0 : context) (conseq : formula) pos : (list_context * proof) =
-  let ctx_with_rhs =  
-	let h, p, fl, t, a  = CF.split_components conseq in
+  let ctx_with_rhs = let h, p, fl, t, a  = CF.split_components conseq in
 	let eqns = (MCP.ptr_equations_without_null p) in
     	CF.set_context (fun es -> {es with es_rhs_eqset=(es.es_rhs_eqset@eqns);}) ctx_0 in
   let helper ctx_00 h p (func : CF.h_formula -> MCP.mix_formula -> CF.formula) = 
+    if not(Mem.check_mem_sat h prog.prog_view_decls) 
+    then (match ctx_00 with
+	    | Ctx estate ->let msg = "Memory Spec Error Conseq Heap not Satisfiable" in 
+	    		let fail_ctx = (mkFailContext msg estate conseq None pos) in
+	    		let fail_ex = {fe_kind = Failure_Must msg; fe_name = Globals.logical_error;fe_locs=[]}
+	    		in mkFailCtx_in (Basic_Reason (fail_ctx,fail_ex)), UnsatConseq
+   	    | _ -> report_error no_pos ("[solver.ml]: No disjunction on the RHS should reach this level\n"))
+    else 
     let h1, h2 = Mem.split_heap h in
+    if (is_empty_heap h1) && (is_empty_heap h2) then heap_entail_conjunct prog is_folding ctx_00 conseq [] pos else
     if(is_empty_heap h2) then (* D |- h1 = D1 /\ h2 = HEmp*)
       let new_conseq = func h1 p in
       heap_entail_split_lhs prog is_folding ctx_00 new_conseq pos
@@ -3309,6 +3317,10 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
          h1 = D1 /\ h2 = D2 |- D 
       *)
       let h1, h2 = Mem.split_heap h in
+      if (is_empty_heap h1) && not (Mem.contains_conj h2) 
+      then heap_entail_conjunct prog is_folding (CF.set_context_formula ctx0 (func h2)) conseq [] pos else
+      if(is_empty_heap h1) && (Mem.contains_conj h2) 
+      then heap_entail_split_lhs prog is_folding (CF.set_context_formula ctx0 (func h2)) conseq pos else
       if (is_empty_heap h2) 
       then
         (* lhs contains only one heap (no need to split)*)
@@ -3344,7 +3356,7 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
 		            let cl = List.map subs_crt_holes_ctx cl in
 			    let cl =  List.map restore_tmp_ann_ctx cl in
 		            (* put back the frame consisting of h2 *)
-			    let cl = List.map (fun c -> insert_ho_frame c (fun f -> CF.mkStarH f h2 pos 23)) cl  
+			    let cl = List.map (fun c -> insert_ho_frame c (fun f -> CF.mkConjH f h2 pos)) cl  
 		            in 
  		            (SuccCtx(cl), with_h1_prf)
 		      | FailCtx(ft) -> 
@@ -3384,7 +3396,16 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
     match lhs with 
       | Base(bf) -> 
 	        let h, p, fl, t, a = CF.split_components lhs in
-	        helper_lhs h (fun xh -> CF.mkBase xh p t fl a pos)
+	        if not(Mem.check_mem_sat h prog.prog_view_decls) 
+		then (match ctx0 with
+	        | Ctx estate ->(*let msg = "Memory Spec Error Heap not Satisfiable" in 
+	    		let fail_ctx = (mkFailContext msg estate conseq None pos) in
+	    		let fail_ex = {fe_kind = Failure_Must msg; fe_name = Globals.logical_error;fe_locs=[]}
+	    		in mkFailCtx_in (Basic_Reason (fail_ctx,fail_ex)), Failure*)
+	    		(SuccCtx[false_ctx_with_flow_and_orig_ante estate fl lhs pos],UnsatAnte)
+   	    	| _ -> report_error no_pos ("[solver.ml]: No disjunction on the LHS should reach this level\n"))
+     		else 
+	        	helper_lhs h (fun xh -> CF.mkBase xh p t fl a pos)
 
       | Exists({formula_exists_qvars = qvars;
 	    formula_exists_heap = h;
@@ -3393,8 +3414,16 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
         formula_exists_flow = fl;
         formula_exists_and = a;
         formula_exists_label = l;
-        formula_exists_pos = pos }) -> 
-	        helper_lhs h (fun xh -> CF.mkExists qvars xh p t fl a pos)
+        formula_exists_pos = pos }) ->  if not(Mem.check_mem_sat h prog.prog_view_decls) 
+			then (match ctx0 with
+	       		| Ctx estate ->(*let msg = "Memory Spec Error Heap not Satisfiable" in 
+	    			let fail_ctx = (mkFailContext msg estate conseq None pos) in
+	    			let fail_ex = {fe_kind = Failure_Must msg; fe_name = Globals.logical_error;fe_locs=[]}
+	    			in mkFailCtx_in (Basic_Reason (fail_ctx,fail_ex)), Failure*)
+	    			(SuccCtx[false_ctx_with_flow_and_orig_ante estate fl lhs pos],UnsatAnte)
+	   	    	| _ -> report_error no_pos ("[solver.ml]: No disjunction on the LHS should reach this level\n"))
+     			else 
+	       		 helper_lhs h (fun xh -> CF.mkExists qvars xh p t fl a pos)
       | _ -> report_error no_pos ("[solver.ml]: No disjunction on the LHS should reach this level\n")	
       
 and heap_entail_init (prog : prog_decl) (is_folding : bool)  (cl : list_context) (conseq : formula) pos : (list_context * proof) =
@@ -6376,7 +6405,8 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 		          let lst1,lst2 = List.split new_lst in
 		          let new_l_args, new_l_param_ann = List.split lst1 in
 		          let new_r_args, new_r_param_ann = List.split lst2 in 
-			  (rem_l_node,rem_r_node,new_l_args, new_r_args,new_l_param_ann,new_r_param_ann )
+			  (rem_l_node,rem_r_node,new_l_args, new_r_args,new_l_param_ann,new_r_param_ann)
+			  (*(rem_l_node,,l_args, r_args, l_param_ann, r_param_ann)*)
 	    | _ -> (HEmp,HEmp,l_args, r_args, l_param_ann, r_param_ann)
 	  in
 	  match rem_r_node with (* Fail whenever the l_node cannot entail r_node *)

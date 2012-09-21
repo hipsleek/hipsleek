@@ -381,6 +381,20 @@ match f with
               CF.formula_exists_flow = fl;
               CF.formula_exists_label = lbl;
               CF.formula_exists_pos = pos}) -> CF.mkExists_w_lbl qvars (conv_h_formula_conj_to_star h) p t fl ol pos lbl
+
+let rec contains_conj (f:CF.h_formula) : bool = match f with
+| CF.DataNode (h1) -> false
+| CF.ViewNode (h1) -> false
+| CF.Star ({CF.h_formula_star_h1 = h1;
+		   CF.h_formula_star_h2 = h2;
+		   CF.h_formula_star_pos = pos}) 
+| CF.Phase ({CF.h_formula_phase_rd = h1;
+		    CF.h_formula_phase_rw = h2;
+		    CF.h_formula_phase_pos = pos})-> (contains_conj h1) || (contains_conj h2)
+| CF.Conj({CF.h_formula_conj_h1 = h1;
+		   CF.h_formula_conj_h2 = h2;
+		   CF.h_formula_conj_pos = pos}) -> true
+| _ -> false
               
 let rec split_heap (h:CF.h_formula) : (CF.h_formula * CF.h_formula) = 
 	let _ = print_string ("Splitting Heap H = "^ (string_of_h_formula h) ^ "\n") in 
@@ -396,9 +410,14 @@ let rec split_heap (h:CF.h_formula) : (CF.h_formula * CF.h_formula) =
 	| CF.Star({CF.h_formula_star_h1 = h1;
 		   CF.h_formula_star_h2 = h2;
 		   CF.h_formula_star_pos = pos}) ->
+		   if contains_conj h1 then
 		   (*let _ = print_string ("H1 = "^ (string_of_h_formula h1)^ "\nH2 = "^ (string_of_h_formula h2) ^ "\n") in*)
 		   let left_h_split = split_heap h1
 		   in (fst left_h_split),(CF.mkStarH (snd left_h_split) h2 pos 27)
+		   else if contains_conj h2 then
+		   let right_h_split = split_heap h2
+		   in (CF.mkStarH (fst right_h_split) h1 pos 28), (snd right_h_split)
+		   else (h,CF.HEmp)
 	| _ -> (h, CF.HEmp)
 
 let rec remove_phases (h: IF.h_formula): IF.h_formula = 
@@ -420,7 +439,7 @@ let rec remove_phases (h: IF.h_formula): IF.h_formula =
 	| _ -> h
 		   
 let normalize_h_formula (h : IF.h_formula): IF.h_formula =
-	(*let _ = print_string ("Before Phase Removal H = "^ (Iprinter.string_of_h_formula h) ^ "\n") in*) 
+	(*let _ = print_string ("Before Phase Removal H = "^ (Iprinter.string_of_h_formula h) ^ "\n") in*)
 	let res = remove_phases h in	
 	(*let _ = print_string ("After Phase Removal H = "^ (Iprinter.string_of_h_formula res) ^ "\n") in*) res 
 	(* Push star inside A * (B /\ C) == (A * B) /\ (A * C) *) 
@@ -432,4 +451,78 @@ let normalize_h_formula (h : IF.h_formula): IF.h_formula =
 		   IF.h_formula_star_h2 = h2;
 		   IF.h_formula_star_pos = pos}) ->
 	| _ -> h*)
-  
+	
+let rec is_compatible_field_layout (ann_lst_l: CF.ann list) (ann_lst_r: CF.ann list): bool =	
+match (ann_lst_l, ann_lst_r) with
+    | ([], []) -> true
+    | (ann_l :: tl, ann_r :: tr ) ->
+      begin
+	match ann_l, ann_r with 
+	  | CF.ConstAnn(Mutable), CF.ConstAnn(Accs)
+  	  | CF.ConstAnn(Imm), CF.ConstAnn(Accs) 
+  	  | CF.ConstAnn(Lend), CF.ConstAnn(Accs)
+	  | CF.ConstAnn(Lend), CF.ConstAnn(Lend) -> true && (is_compatible_field_layout tl tr)	
+  	  | CF.ConstAnn(Accs), CF.ConstAnn(Mutable)
+  	  | CF.ConstAnn(Accs), CF.ConstAnn(Imm)
+	  | CF.ConstAnn(Accs), CF.ConstAnn(Lend) 
+  	  | CF.ConstAnn(Accs), CF.ConstAnn(Accs)-> true && (is_compatible_field_layout tl tr)
+  	  | _ , _ -> false
+
+      end
+    | (_, _) ->	false
+
+let rec check_mem_non_inter (h1: CF.h_formula) (h2:CF.h_formula) (vl:C.view_decl list) : bool = 
+	let mpf1 = fst (xmem_heap h1 vl) in
+	let mpf2 = fst (xmem_heap h2 vl) in
+	let mpe1,exact1,fl1 = mpf1.CF.mem_formula_exp , mpf1.CF.mem_formula_exact, mpf1.CF.mem_formula_field_layout in
+	let mpe2,exact2,fl2 = mpf2.CF.mem_formula_exp , mpf2.CF.mem_formula_exact, mpf2.CF.mem_formula_field_layout in
+	let t = List.map (fun f1 -> 
+		let matched_fields = (List.filter (fun f2-> if (String.compare (fst f1) (fst f2)) == 0 then true else false) fl2)
+		in List.exists (fun c -> (is_compatible_field_layout (snd f1) (snd c))) matched_fields) fl1
+	in List.for_all (fun c -> c) t
+
+let rec check_mem_sat (h: CF.h_formula) (vl:C.view_decl list) : bool = 
+match h with 
+| CF.Conj({CF.h_formula_conj_h1 = h1;
+	   CF.h_formula_conj_h2 = h2;
+	   CF.h_formula_conj_pos = pos}) -> (check_mem_non_inter h1 h2 vl)
+| CF.Phase({CF.h_formula_phase_rd = h1;
+	    CF.h_formula_phase_rw = h2;
+	    CF.h_formula_phase_pos = pos})
+| CF.Star({CF.h_formula_star_h1 = h1;
+	   CF.h_formula_star_h2 = h2;
+	   CF.h_formula_star_pos = pos}) -> (check_mem_sat h1 vl) && (check_mem_sat h2 vl)
+| _ -> true
+
+
+let rec make_list_of_h_formula (h: CF.h_formula) : CF.h_formula list =
+match h with 
+| CF.Conj({CF.h_formula_conj_h1 = h1;
+	   CF.h_formula_conj_h2 = h2;
+	   CF.h_formula_conj_pos = pos}) 
+| CF.Phase({CF.h_formula_phase_rd = h1;
+	    CF.h_formula_phase_rw = h2;
+	    CF.h_formula_phase_pos = pos})
+| CF.Star({CF.h_formula_star_h1 = h1;
+	   CF.h_formula_star_h2 = h2;
+	   CF.h_formula_star_pos = pos}) -> (make_list_of_h_formula h1)@(make_list_of_h_formula h2)
+| _ -> [h]
+
+(*let rec matched_mem_heap (h1:CF.h_formula) (h2:CF.h_formula) (vl:C.view_decl list): (CF.h_formula * CF.h_formula) = 
+	(*let list_of_data_nodes = List.filter (CF.is_data) make_list_of_h_formula h2 in*)
+	let mpf1 = fst (xmem_heap h1 vl) in
+	let mpe1,exact1,fl1 = mpf1.CF.mem_formula_exp, mpf1.CF.mem_formula_exact, mpf1.CF.mem_formula_field_layout in
+	match h2 with
+	| CF.Conj({CF.h_formula_conj_h1 = h1;
+		   CF.h_formula_conj_h2 = h2;
+		   CF.h_formula_conj_pos = pos}) 
+	| CF.Phase({CF.h_formula_phase_rd = h1;
+		    CF.h_formula_phase_rw = h2;
+		    CF.h_formula_phase_pos = pos})
+	| CF.Star({CF.h_formula_star_h1 = h1;
+		   CF.h_formula_star_h2 = h2;
+		   CF.h_formula_star_pos = pos}) -> (make_list_of_h_formula h1)@(make_list_of_h_formula h2)
+	| _ -> [h]
+
+	let matched_data_nodes = match_mem_formula_data fl1 list_of_data_nodes in
+ *) 
