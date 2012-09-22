@@ -44,3 +44,6 @@ print residue.
 
 checkentail p::node<_@L,_@L,_@A,_@A> |-  p::node<_@L,_@L,_@A,_@A> * r::node<_@A,_@A,_@A,_@A> & p = r.
 print residue.
+
+checkentail c::node<_@L,_@A,_@M,_@M> & c = h  |- h::node<_@L,_@A,_@M,_@M> .
+print residue.

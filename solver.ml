@@ -3356,7 +3356,7 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
 		            let cl = List.map subs_crt_holes_ctx cl in
 			    let cl =  List.map restore_tmp_ann_ctx cl in
 		            (* put back the frame consisting of h2 *)
-			    let cl = List.map (fun c -> insert_ho_frame c (fun f -> CF.mkConjH f h2 pos)) cl  
+			    let cl = List.map (fun c -> insert_ho_frame c (fun f -> CF.mkConjH h2 f pos)) cl  
 		            in 
  		            (SuccCtx(cl), with_h1_prf)
 		      | FailCtx(ft) -> 
