@@ -403,6 +403,7 @@ and checkeq_mix_formulas (hvars: ident list)(mp1: MCP.mix_formula) (mp2: MCP.mix
     | _,_ ->  (false, mtl)
 
 and checkeq_p_formula (hvars: ident list)(pf1: CP.formula) (pf2: CP.formula)(mtl: map_table list): (bool * (map_table list))=
+  let _ = Debug.ninfo_pprint ("Case 2 formula") no_pos in 
   match pf1 with
     | BForm (b1,_) -> match_equiv_bform hvars b1 pf2 mtl
     | And(f1,f2,_) ->  (
@@ -441,7 +442,10 @@ and match_equiv_bform (hvars: ident list)(b1: CP.b_formula) (pf2: CP.formula)(mt
 
 and check_equiv_bform (hvars: ident list)(b1: CP.b_formula) (b2: CP.b_formula)(mt: map_table): (bool * (map_table list)) =
   match b1,b2 with
-    | (Eq (e11,e12,_), _) , (Eq (e21,e22,_) , _) ->
+    | (BConst (true,_),_),  (BConst (true,_),_) -> (true,[mt])
+    | (BConst (false,_),_),  (BConst (false,_),_) -> (true,[mt])
+    | (Eq (e11,e12,_), _) , (Eq (e21,e22,_) , _) 
+    | (Neq (e11,e12,_), _) , (Neq (e21,e22,_) , _)  ->
       (match e11,e12,e21,e22 with
         | Var (v11,_),Var (v12,_),Var (v21,_),Var (v22,_)-> 
 	  let res11, mt11 = check_spec_var_equiv hvars v11 v21 mt in 
@@ -455,195 +459,91 @@ and check_equiv_bform (hvars: ident list)(b1: CP.b_formula) (b2: CP.b_formula)(m
 	  else if(res2) then (true, [mt2])
 	  else (false, [])
         | Var (v11,_),IConst (v12,_),Var (v21,_),IConst (v22,_)-> 
-          let b1 = eq_spec_var v11 v21 in
-          let b2 = (v12= v22) in
-          (false, [mt])
+	  let res1, mt1 = check_spec_var_equiv hvars v11 v21 mt in 
+          let res2 = (v12= v22) in
+	  if(res1 && res2) then (true, [mt1])   (*merge tables*)
+	  else (false, [])
         | IConst (v11,_),Var (v12,_),IConst (v21,_),Var (v22,_)-> 
-          let b1 = (v11=v21) in
-          let b2 = eq_spec_var v12 v22 in
-          (false, [mt])
+	  let res1, mt1 = check_spec_var_equiv hvars v12 v22 mt in 
+          let res2 = (v11= v21) in
+	  if(res1 && res2) then (true, [mt1])   (*merge tables*)
+	  else (false, [])
         | Var (v11,_),FConst (v12,_),Var (v21,_),FConst (v22,_)-> 
-          let b1 = eq_spec_var v11 v21 in
-          let b2 = (v12= v22) in
-          (false, [mt])
+	  let res1, mt1 = check_spec_var_equiv hvars v11 v21 mt in 
+          let res2 = (v12= v22) in
+	  if(res1 && res2) then (true, [mt1])   (*merge tables*)
+	  else (false, [])
         | FConst (v11,_),Var (v12,_),FConst (v21,_),Var (v22,_)-> 
-          let b1 = (v11=v21) in
-          let b2 = eq_spec_var v12 v22 in
-          (false, [mt])
-        | _ -> (false, [mt]
+	  let res1, mt1 = check_spec_var_equiv hvars v12 v22 mt in 
+          let res2 = (v11= v21) in
+	  if(res1 && res2) then (true, [mt1])   (*merge tables*)
+	  else (false, [])
+	| Var (v11,_),Null _,Var (v21,_),Null _-> 
+	  let res1, mt1 = check_spec_var_equiv hvars v11 v21 mt in 
+	  if(res1) then (true, [mt1])   (*merge tables*)
+	  else (false, [])
+        | Null _,Var (v12,_),Null _,Var (v22,_)-> 
+	  let res1, mt1 = check_spec_var_equiv hvars v12 v22 mt in 
+	  if(res1) then (true, [mt1])   (*merge tables*)
+	  else (false, [])
+        | _ -> (false, []
 	)
       )
-    | _ -> (false, [mt])
+    | (Lt (e11,e12,_), _) , (Lt (e21,e22,_) , _) 
+    | (Lte (e11,e12,_), _) , (Lte (e21,e22,_) , _) 
+    | (Gt (e11,e12,_), _) , (Gt (e21,e22,_) , _) 
+    | (Gte (e11,e12,_), _) , (Gte (e21,e22,_) , _) -> 
+      (match e11,e12,e21,e22 with
+        | Var (v11,_),Var (v12,_),Var (v21,_),Var (v22,_)-> 
+	  let res11, mt11 = check_spec_var_equiv hvars v11 v21 mt in 
+	  let res12, mt12 = check_spec_var_equiv hvars v12 v22 mt11 in
+	  let res1,mt1 = if(res11&&res12) then (res11,mt12) else (false,mt) in 
+	  if(res1) then (true, [mt1])   (*merge tables*)
+	  else (false, [])
+        | Var (v11,_),IConst (v12,_),Var (v21,_),IConst (v22,_)-> 
+	  let res1, mt1 = check_spec_var_equiv hvars v11 v21 mt in 
+          let res2 = (v12= v22) in
+	  if(res1 && res2) then (true, [mt1])   (*merge tables*)
+	  else (false, [])
+        | IConst (v11,_),Var (v12,_),IConst (v21,_),Var (v22,_)-> 
+	  let res1, mt1 = check_spec_var_equiv hvars v12 v22 mt in 
+          let res2 = (v11= v21) in
+	  if(res1 && res2) then (true, [mt1])   (*merge tables*)
+	  else (false, [])
+        | Var (v11,_),FConst (v12,_),Var (v21,_),FConst (v22,_)-> 
+	  let res1, mt1 = check_spec_var_equiv hvars v11 v21 mt in 
+          let res2 = (v12= v22) in
+	  if(res1 && res2) then (true, [mt1])   (*merge tables*)
+	  else (false, [])
+        | FConst (v11,_),Var (v12,_),FConst (v21,_),Var (v22,_)-> 
+	  let res1, mt1 = check_spec_var_equiv hvars v12 v22 mt in 
+          let res2 = (v11= v21) in
+	  if(res1 && res2) then (true, [mt1])   (*merge tables*)
+	  else (false, [])
+        | _ -> (false, []
+	)
+      )
+    | _ -> (false, [])
 
 and match_equiv_orform (hvars: ident list) (f1: (formula * formula * (formula_label option) * loc)) (pf2: CP.formula)(mtl: map_table list): (bool * (map_table list)) =
   (true,[])
 
 and match_equiv_notform  (hvars: ident list)(f1: CP.formula) (pf2: CP.formula)(mtl: map_table list): (bool * (map_table list)) =
   (true,[])
-  
-
 
 let subst_with_mt (mt: map_table) (f: CF.formula): CF.formula = 
   let frs,ts = List.split mt in
   CF.subst_avoid_capture frs ts f
 
-(*let is_dupl_conj_eq (f1:formula) (f2:formula) : bool =
-  match f1,f2 with
-    | BForm (b1,_),BForm (b2,_) ->
-        (match b1,b2 with
-          | (Eq (e11,e12,_), _) , (Eq (e21,e22,_) , _) ->
-              (match e11,e12,e21,e22 with
-                | Var (v11,_),Var (v12,_),Var (v21,_),Var (v22,_)-> 
-                    let b1 = eq_spec_var v11 v21 in
-                    let b2 = eq_spec_var v12 v22 in
-                    let b3 = eq_spec_var v11 v22 in
-                    let b4 = eq_spec_var v12 v21 in
-                    (b1&&b2)||(b3&&b4)
-                | Var (v11,_),IConst (v12,_),Var (v21,_),IConst (v22,_)-> 
-                    let b1 = eq_spec_var v11 v21 in
-                    let b2 = (v12= v22) in
-                    b1&&b2
-                | IConst (v11,_),Var (v12,_),IConst (v21,_),Var (v22,_)-> 
-                    let b1 = (v11=v21) in
-                    let b2 = eq_spec_var v12 v22 in
-                    b1&b2
-                | Var (v11,_),FConst (v12,_),Var (v21,_),FConst (v22,_)-> 
-                    let b1 = eq_spec_var v11 v21 in
-                    let b2 = (v12= v22) in
-                    b1&&b2
-                | FConst (v11,_),Var (v12,_),FConst (v21,_),Var (v22,_)-> 
-                    let b1 = (v11=v21) in
-                    let b2 = eq_spec_var v12 v22 in
-                    b1&b2
-                | _ -> false)
-          | _ -> false
-        )
-    | _ -> false*)
-
-(* (\*LDK: check duplicated conjuncts of equalities*\) *)
-(* let is_dupl_conj_lt (f1:formula) (f2:formula) : bool = *)
-(*   match f1,f2 with *)
-(*     | BForm (b1,_),BForm (b2,_) -> *)
-(*         (match b1,b2 with *)
-(*           | (Lt (e11,e12,_), _) , (Lt (e21,e22,_) , _) -> *)
-(*               (match e11,e12,e21,e22 with *)
-(*                 | Var (v11,_),Var (v12,_),Var (v21,_),Var (v22,_)->  *)
-(*                     let b1 = eq_spec_var v11 v21 in *)
-(*                     let b2 = eq_spec_var v12 v22 in *)
-(*                     (b1&&b2) *)
-(*                 | Var (v11,_),IConst (v12,_),Var (v21,_),IConst (v22,_)->  *)
-(*                     let b1 = eq_spec_var v11 v21 in *)
-(*                     let b2 = (v12= v22) in *)
-(*                     b1&&b2 *)
-(*                 | IConst (v11,_),Var (v12,_),IConst (v21,_),Var (v22,_)->  *)
-(*                     let b1 = (v11=v21) in *)
-(*                     let b2 = eq_spec_var v12 v22 in *)
-(*                     b1&b2 *)
-(*                 | Var (v11,_),FConst (v12,_),Var (v21,_),FConst (v22,_)->  *)
-(*                     let b1 = eq_spec_var v11 v21 in *)
-(*                     let b2 = (v12= v22) in *)
-(*                     b1&&b2 *)
-(*                 | FConst (v11,_),Var (v12,_),FConst (v21,_),Var (v22,_)->  *)
-(*                     let b1 = (v11=v21) in *)
-(*                     let b2 = eq_spec_var v12 v22 in *)
-(*                     b1&b2 *)
-(*                 | _ -> false) *)
-(*           | _ -> false *)
-(*         ) *)
-(*     | _ -> false *)
-
-(* (\*LDK: check duplicated conjuncts*\) *)
-(* let is_dupl_conj_lte (f1:formula) (f2:formula) : bool = *)
-(*   match f1,f2 with *)
-(*     | BForm (b1,_),BForm (b2,_) -> *)
-(*         (match b1,b2 with *)
-(*           | (Lte (e11,e12,_), _) , (Lte (e21,e22,_) , _) -> *)
-(*               (match e11,e12,e21,e22 with *)
-(*                 | Var (v11,_),Var (v12,_),Var (v21,_),Var (v22,_)->  *)
-(*                     let b1 = eq_spec_var v11 v21 in *)
-(*                     let b2 = eq_spec_var v12 v22 in *)
-(*                     (b1&&b2) *)
-(*                 | Var (v11,_),IConst (v12,_),Var (v21,_),IConst (v22,_)->  *)
-(*                     let b1 = eq_spec_var v11 v21 in *)
-(*                     let b2 = (v12= v22) in *)
-(*                     b1&&b2 *)
-(*                 | IConst (v11,_),Var (v12,_),IConst (v21,_),Var (v22,_)->  *)
-(*                     let b1 = (v11=v21) in *)
-(*                     let b2 = eq_spec_var v12 v22 in *)
-(*                     b1&b2 *)
-(*                 | Var (v11,_),FConst (v12,_),Var (v21,_),FConst (v22,_)->  *)
-(*                     let b1 = eq_spec_var v11 v21 in *)
-(*                     let b2 = (v12= v22) in *)
-(*                     b1&&b2 *)
-(*                 | FConst (v11,_),Var (v12,_),FConst (v21,_),Var (v22,_)->  *)
-(*                     let b1 = (v11=v21) in *)
-(*                     let b2 = eq_spec_var v12 v22 in *)
-(*                     b1&b2 *)
-(*                 | _ -> false) *)
-(*           | _ -> false *)
-(*         ) *)
-(*     | _ -> false *)
-
-(* (\*LDK: check duplicated conjuncts*\) *)
-(* let is_dupl_conj_gt (f1:formula) (f2:formula) : bool = *)
-(*   match f1,f2 with *)
-(*     | BForm (b1,_),BForm (b2,_) -> *)
-(*         (match b1,b2 with *)
-(*           | (Gt (e11,e12,_), _) , (Gt (e21,e22,_) , _) -> *)
-(*               (match e11,e12,e21,e22 with *)
-(*                 | Var (v11,_),Var (v12,_),Var (v21,_),Var (v22,_)->  *)
-(*                     let b1 = eq_spec_var v11 v21 in *)
-(*                     let b2 = eq_spec_var v12 v22 in *)
-(*                     (b1&&b2) *)
-(*                 | Var (v11,_),IConst (v12,_),Var (v21,_),IConst (v22,_)->  *)
-(*                     let b1 = eq_spec_var v11 v21 in *)
-(*                     let b2 = (v12= v22) in *)
-(*                     b1&&b2 *)
-(*                 | IConst (v11,_),Var (v12,_),IConst (v21,_),Var (v22,_)->  *)
-(*                     let b1 = (v11=v21) in *)
-(*                     let b2 = eq_spec_var v12 v22 in *)
-(*                     b1&b2 *)
-(*                 | Var (v11,_),FConst (v12,_),Var (v21,_),FConst (v22,_)->  *)
-(*                     let b1 = eq_spec_var v11 v21 in *)
-(*                     let b2 = (v12= v22) in *)
-(*                     b1&&b2 *)
-(*                 | FConst (v11,_),Var (v12,_),FConst (v21,_),Var (v22,_)->  *)
-(*                     let b1 = (v11=v21) in *)
-(*                     let b2 = eq_spec_var v12 v22 in *)
-(*                     b1&b2 *)
-(*                 | _ -> false) *)
-(*           | _ -> false *)
-(*         ) *)
-(*     | _ -> false *)
-
-(*LDK: check duplicated conjuncts*)
-(* let is_dupl_conj_gte (f1:formula) (f2:formula) : bool = *)
-(*   match f1,f2 with *)
-(*     | BForm (b1,_),BForm (b2,_) -> *)
-(*         (match b1,b2 with *)
-(*           | (Gte (e11,e12,_), _) , (Gte (e21,e22,_) , _) -> *)
-(*               (match e11,e12,e21,e22 with *)
-(*                 | Var (v11,_),Var (v12,_),Var (v21,_),Var (v22,_)->  *)
-(*                     let b1 = eq_spec_var v11 v21 in *)
-(*                     let b2 = eq_spec_var v12 v22 in *)
-(*                     (b1&&b2) *)
-(*                 | Var (v11,_),IConst (v12,_),Var (v21,_),IConst (v22,_)->  *)
-(*                     let b1 = eq_spec_var v11 v21 in *)
-(*                     let b2 = (v12= v22) in *)
-(*                     b1&&b2 *)
-(*                 | IConst (v11,_),Var (v12,_),IConst (v21,_),Var (v22,_)->  *)
-(*                     let b1 = (v11=v21) in *)
-(*                     let b2 = eq_spec_var v12 v22 in *)
-(*                     b1&b2 *)
-(*                 | Var (v11,_),FConst (v12,_),Var (v21,_),FConst (v22,_)->  *)
-(*                     let b1 = eq_spec_var v11 v21 in *)
-(*                     let b2 = (v12= v22) in *)
-(*                     b1&&b2 *)
-(*                 | FConst (v11,_),Var (v12,_),FConst (v21,_),Var (v22,_)->  *)
-(*                     let b1 = (v11=v21) in *)
-(*                     let b2 = eq_spec_var v12 v22 in *)
-(*                     b1&b2 *)
-(*                 | _ -> false) *)
-(*           | _ -> false *)
-(*         ) *)
-(*     | _ -> false *)
+let check_equiv_constr (constr1: CF.formula * CF.formula) (constr2: CF.formula * CF.formula): (bool * map_table) = 
+  let f11,f12 = constr1 in
+  let f21, f22 =  constr2 in
+  let ivars = [] in (*no hard node*)
+  let mtl = [[]] in
+  let (res11, mtl11) = (checkeq_formulas_x ivars f11 f21 mtl) in
+  let (res21, mtl21) = (checkeq_formulas_x ivars f21 f11 mtl) in
+  if(res11&&res21)then(
+    let (res12, mtl12) = (checkeq_formulas_x ivars f12 f22 mtl11) in
+    let (res22, mtl22) = (checkeq_formulas_x ivars f22 f12 mtl21) in
+    (res12&&res22, (List.hd mtl12))
+  ) else (false,[])

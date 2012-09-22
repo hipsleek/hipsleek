@@ -54,6 +54,7 @@ let rec simplify_lst_constrs(constrs: (CF.formula * CF.formula) list): (hp_def l
   input: constrs: (formula * formula) list
   output: definitions: (formula * formula) list
 *)
+Debug.ninfo_hprint (add_str "INPUT: " (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) constrs no_pos;
   let constrs = elim_redundant_paras_lst_constr constrs in 
   Debug.ninfo_hprint (add_str "AFTER DROP: " (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) constrs no_pos;
   let constrs, par_defs = collect_partial_definitions constrs in
