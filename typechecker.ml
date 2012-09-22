@@ -836,12 +836,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (* let _ = print_endline ("WN1 tmp_ctx: "^Cprinter.string_of_list_failesc_context tmp_ctx) in *)
             let _ = CF.must_consistent_list_failesc_context "bind 1" ctx  in
 	        (* let _ = print_endline ("bind: unfolded context: before unfold: ### vprim = "^ (Cprinter.string_of_spec_var v_prim)^ " \n" ^ (Cprinter.string_of_list_failesc_context tmp_ctx)) in *)
-	        let unfolded = unfold_failesc_context (prog,None) tmp_ctx v_prim true pos in
-	       (*let _ = print_endline ("bind: unfolded context: after unfold \n" ^ (Cprinter.string_of_list_failesc_context unfolded)) in*) 
+	       let unfolded = unfold_failesc_context (prog,None) tmp_ctx v_prim true pos in
+	     (*let _ = print_endline ("bind: unfolded context: after unfold \n" ^ (Cprinter.string_of_list_failesc_context unfolded)) in*)
             let _ = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
 	        let _ = Debug.devel_zprint (lazy ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
             ^ "\n")) pos in
-	        (* let _ = print_string ("\n(andreeac)bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)     ^ "\n") in *)
+	     (*    let _ = print_string ("\n(andreeac)bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)     ^ "\n") in *)
 	        let c = string_of_typ v_t in
             let fresh_frac_name = Cpure.fresh_old_name "f" in
             let perm_t = cperm_typ () in
@@ -894,7 +894,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	                CF.formula_struc_base = vheap;
 	                CF.formula_struc_continuation = None;
 	                CF.formula_struc_pos = pos} in
-	        (* let _ = print_string ("\n(andreeac)struc_vheap: " ^ (Cprinter.string_of_struc_formula struc_vheap) ) in *)
+	        (*let _ = print_string ("\n(andreeac)struc_vheap: " ^ (Cprinter.string_of_struc_formula struc_vheap) ) in *)
 	        let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
 	        Debug.devel_pprint to_print pos;
 
@@ -907,14 +907,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let _ = PTracer.log_proof prf in
 	          let rs = CF.clear_entailment_history_failesc_list (fun x -> None) rs_prim in
               let _ = CF.must_consistent_list_failesc_context "bind 4" rs  in
-	          if (CF.isSuccessListFailescCtx_new unfolded) && not(CF.isSuccessListFailescCtx_new rs) then
-                begin
+	      if (CF.isSuccessListFailescCtx_new unfolded) && not(CF.isSuccessListFailescCtx_new rs) then
+                	begin
 		          Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ") 
-                      ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos; (* add branch info *)
+                      ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos; 
+                      (* add branch info *)
 		          Debug.print_info ("(Cause of Bind Failure)")
                       (Cprinter.string_of_failure_list_failesc_context rs) pos;
 		          rs
-                end
+                	end
               else 
                 begin
                   stk_vars # push_list lsv;

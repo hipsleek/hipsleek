@@ -2745,10 +2745,10 @@ and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool)
   ^ "\nctx:\n" ^ (Cprinter.string_of_failesc_context cl)^ "\nconseq:\n" ^ (to_string conseq))) pos; 
     let fail_branches, esc_branches, succ_branches  = cl in
     let res = List.map (fun (lbl,c2)-> 
-		(* print_string ("\nInput ==> :"^(Cprinter.string_of_context c2)); *)
-		(* print_string ("\nConseq ==> :"^(to_string conseq)); *)
+		 (*print_string ("\nInput ==> :"^(Cprinter.string_of_context c2)); *)
+		 (*print_string ("\nConseq ==> :"^(to_string conseq)); *)
 		let list_context_res,prf = f (*heap_entail_one_context_struc*) prog is_folding  has_post c2 conseq tid pos pid in
-		(* print_string ("\nOutcome ==> "^(Cprinter.string_of_list_context list_context_res)) ; *)
+		 (*print_string ("\nOutcome ==> "^(Cprinter.string_of_list_context list_context_res)) ; *)
         (*WN :fixing incorrect handling of esc_stack by adding a skeletal structure*)
         let esc_skeletal = List.map (fun (l,_) -> (l,[])) esc_branches in
 		let res = match list_context_res with
