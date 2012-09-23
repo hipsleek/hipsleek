@@ -49,7 +49,7 @@ let get_hp_rel_name_formula (f:CF.formula) =
 
 (*input: constrs
   output: definitions*)
-let rec simplify_lst_constrs(constrs: (CF.formula * CF.formula) list): (hp_def list) = 
+let rec simplify_lst_constrs (constrs: (CF.formula * CF.formula) list): (hp_def list) = 
 (*
   input: constrs: (formula * formula) list
   output: definitions: (formula * formula) list

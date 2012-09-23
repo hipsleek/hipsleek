@@ -85,4 +85,5 @@ assume x' can not reach to x
  H1(x',x) * x::node<_,x'> & x'!=null --> H(x')
  x::node<_,x0> * G(x') * HP_554(x0,x',x) & x0!=null --> G(x')
  H1(x',x) * x::node<_,x'> & x'=null --> G(x')
+
 */

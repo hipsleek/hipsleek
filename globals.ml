@@ -103,6 +103,9 @@ let is_pointer t=
    | _ -> false
 
 let barrierT = Named "barrier"
+
+(*for heap predicate*)
+let hp_default_prefix_name = "HP_"
 (*
   Data types for code gen
 *)

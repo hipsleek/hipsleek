@@ -1370,7 +1370,7 @@ let find_pointers prog fb mix_f rhs_h_matched_set eqs pos=
 let add_raw_hp_rel_x prog def_args undef_args pos=
   if (List.length undef_args > 0) then
     let hp_decl =
-      { Cast.hp_name = "HP_" ^ (string_of_int (Globals.fresh_int()));
+      { Cast.hp_name = Globals.hp_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
         Cast.hp_vars =  CP.remove_dups_svl ((List.map (fun (_,v) -> v) undef_args)@def_args);
         Cast.hp_formula = CF.mkBase CF.HEmp (MCP.mkMTrue pos) TypeTrue (CF.mkTrueFlow()) [] pos;}
     in

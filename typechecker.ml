@@ -1910,7 +1910,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     let rels = List.map (fun (_,a2,a3)-> (a2,a3)) rels in
                     let hprels = List.map (fun (_,a2,a3)-> (a2,a3)) hprels in
                     let hp_lst_assume = List.map (fun (_,a2,a3)-> (a2,a3)) hp_lst_assume in
-		    let hp_lst_simplified_assume = Sa2.simplify_lst_constrs hp_lst_assume in
+		            (* let hp_lst_simplified_assume = Sa2.simplify_lst_constrs hp_lst_assume in *)
+                     let hp_lst_simplified_assume = Sa.infer_hp hp_lst_assume in
                     let lst_rank = List.map (fun (_,a2,a3)-> (a2,a3)) lst_rank in
                     (*let _ = Ranking.do_nothing in*)
                     Debug.trace_hprint (add_str "SPECS (after simplify_ann)" pr_spec) new_spec no_pos;
