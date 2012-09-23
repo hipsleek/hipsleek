@@ -1385,7 +1385,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let imm_vrs = CP.remove_dups_svl imm_vrs in
   (* add invariant constraint @M<:v<:@A for each annotation var *)
   let ante = CP.add_ann_constraints imm_vrs ante in
-
+  (*let _ = print_string ("\n"^Cprinter.string_of_pure_formula ante) in *)
 	let _ = if should_output () then
 		begin
 			reset_generated_prover_input ();

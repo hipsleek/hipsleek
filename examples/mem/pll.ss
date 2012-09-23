@@ -3,13 +3,13 @@ data node {
 	node next;	
 }
 
-ll<v,M> == self = null & M = {} or self::node<value@v,p> * p::ll<v,Mp> & M = union(Mp,{self})
-		inv true
+ll<v,M,n,S> == self = null & M = {} & n = 0 & S = 0 or self::node<value@v,p> * p::ll<v,Mp,n-1,Sp> & M = union(Mp,{self}) & S = value + Sp
+		inv n >= 0 & S >= 0
 		mem M->(node<@L,@M> | node<@A,@M>);
 
 int length(node x)
-requires x::ll<@A,M>
-ensures x::ll<@A,M>; 
+requires x::ll<@A,M,n,S>
+ensures res = n; 
 {
 if(x==null) return 0;
 else 
@@ -18,8 +18,8 @@ return m;}
 }
 
 int sum(node x)
-requires x::ll<@L,M>
-ensures x::ll<@L,M>;  
+requires x::ll<@L,M,n,S>
+ensures res = S; 
 {
 if(x==null) return 0;
 else 

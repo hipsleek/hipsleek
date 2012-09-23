@@ -14,10 +14,13 @@ requires x::dag<0,@M,M>
 ensures x::dag<1,@A,M>;
 {
 node l,r;
-if(x == null || x.val == 1) return;
+if(x == null) return;
+else {
+if (x.val == 1) return;
 l = x.left;
 r = x.right;
 x.val = 1;
 mark(l);
 mark(r);
+}
 }

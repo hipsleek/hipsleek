@@ -2756,9 +2756,9 @@ and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool)
 		  | SuccCtx ls -> List.map ( fun c-> ([],esc_skeletal,[(lbl,c)])) ls in
 		(res, prf)) succ_branches in
     let res_l,prf_l =List.split res in
-    (* print_string ("\nCombining ==> :"^(Cprinter.string_of_list_list_partial_context res_l)); *)
+     (*print_string ("\nCombining ==> :"^(Cprinter.string_of_list_list_partial_context res_l)); *)
     let res = List.fold_left (list_failesc_context_or Cprinter.string_of_esc_stack) [(fail_branches,esc_branches,[])] res_l in
-    (* print_string ("\nResult of Combining ==> :"^(Cprinter.string_of_list_partial_context res)); *)
+    (*print_string ("\nResult of Combining ==> :"^(Cprinter.string_of_list_failesc_context res));*)
     let proof = ContextList { 
         context_list_ante = [];
         context_list_conseq = struc_formula_of_formula (mkTrue (mkTrueFlow ()) pos) pos;
@@ -3360,29 +3360,36 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
 		            in 
  		            (SuccCtx(cl), with_h1_prf)
 		      | FailCtx(ft) -> 
-		            (* failed when using lhs = h1; need to try the continuation *)
+		            (* failed when using lhs = h1; need to try h2 *)
+		            (*let _ = print_string(Cprinter.string_of_list_context with_h1_ctx) in*)
 		            match h2 with
 		              | HTrue -> (* h2 = true and hence it wont help *)
 			                (with_h1_ctx, with_h1_prf)
-		              | _ -> 
-		              	 let lhs_h2 = func h2 in
-	         		 let h2_ctx = CF.set_context_formula ctx0 lhs_h2 in
-	         		 let (with_h2_ctx, with_h2_prf) = heap_entail_split_lhs prog is_folding h2_ctx conseq pos in
-	         		 let (with_h2_ctx, with_h2_prf) = 
-	            		 match with_h2_ctx with
-	              			| FailCtx _ -> (with_h2_ctx, with_h2_prf)
-	             			| SuccCtx (cl) -> 
-		          		      (* substitute the holes due to the temporary removal of matched immutable nodes *) 
-		               		 (* let _ = print_string("Substitute the holes \n") in *)
-		               		 let cl = List.map subs_crt_holes_ctx cl in   
-					 let cl =  List.map restore_tmp_ann_ctx cl in
-		               		 (* in case of success, put back the frame consisting of h1/\h2*[] *)
-		               		 (* first add the frame h2*[] *) 
-		               		 let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkConjH h1 f pos)) cl in 
-	                        		(* next add the frame h1/\[]*)
-		                	 (*let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkConjH h1 f pos)) cl
-		               		 in*) (SuccCtx(cl), with_h2_prf)
-	          		 in (with_h2_ctx, with_h2_prf)
+		              | _ -> let lhs_h2 = func h2 in
+	         		     let h2_ctx = CF.set_context_formula ctx0 lhs_h2 in
+	         		     (*let _ = print_string(Cprinter.string_of_list_context with_h1_ctx) in*)
+	         		     (*match ft with
+		              		| Or_Continuation(ft1,ft2) ->
+		              			let ctx1, prf1 = heap_entail_split_lhs prog is_folding h2_ctx conseq pos in
+		              			let ctx2, prf2 = heap_entail_split_lhs prog is_folding h2_ctx conseq pos in
+		           			((fold_context_left [ctx1;ctx2]),(mkOrRight ctx0 conseq [prf1;prf2]))
+		              		| _ ->*)
+	         			 let (with_h2_ctx, with_h2_prf) = heap_entail_split_lhs prog is_folding h2_ctx conseq pos in
+	         			 let (with_h2_ctx, with_h2_prf) = 
+	            			 match with_h2_ctx with
+	              				| FailCtx _ -> (with_h2_ctx, with_h2_prf)
+	             				| SuccCtx (cl) -> 
+	          			      (* substitute the holes due to the temporary removal of matched immutable nodes *)
+		               			 (* let _ = print_string("Substitute the holes \n") in *)
+			               		 let cl = List.map subs_crt_holes_ctx cl in   
+						 let cl =  List.map restore_tmp_ann_ctx cl in
+			               		 (* in case of success, put back the frame consisting of h1/\h2*[] *)
+			               		 (* first add the frame h2*[] *) 
+			               		 let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkConjH h1 f pos)) cl in 
+		                        		(* next add the frame h1/\[]*)
+			                	 (*let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkConjH h1 f pos)) cl
+			               		 in*) (SuccCtx(cl), with_h2_prf)
+		          		 in (with_h2_ctx, with_h2_prf)
 		              (*heap_entail_with_cont_lhs prog is_folding new_ctx conseq ft h1 h2 with_h1_ctx with_h1_prf func pos*)
 	      in
 	      (* union of states *)
