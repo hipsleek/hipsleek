@@ -3011,6 +3011,16 @@ and disj_count (f0 : formula) = match f0 with
   | _ -> 1
 
 (*=========for sa==========*)
+let is_HRel hf=
+  match hf with
+    | HRel _ -> true
+    | _ -> false
+
+let get_HRel hf=
+  match hf with
+    | HRel (hp, eargs, _ ) -> Some (hp, List.concat (List.map CP.afv eargs))
+    | _ -> None
+
 let rec check_eq_hrel_node  (rl1, args1 ,_)  (rl2, args2,_)=
     let rec helper l1 l2=
       match l1,l2 with
@@ -3221,52 +3231,59 @@ and filter_var_holes_hf hf rvs=
     | HFalse
     | HEmp -> hf
 
-and drop_lhs_hp_f f hp_names=
+(*drop HRel in the set hp_names and return corresponding subst of their args*)
+and drop_hrel_f f hp_names=
   match f with
-    | Base fb -> Base {fb with formula_base_heap =  drop_lhs_hp_hf fb.formula_base_heap hp_names;}
-    | Or orf -> Or {orf with formula_or_f1 = drop_lhs_hp_f orf.formula_or_f1 hp_names;
-                formula_or_f2 = drop_lhs_hp_f orf.formula_or_f2 hp_names;}
-    | Exists fe -> Exists {fe with formula_exists_heap =  drop_lhs_hp_hf fe.formula_exists_heap hp_names;}
+    | Base fb -> let nfb,argsl = drop_hrel_hf fb.formula_base_heap hp_names in
+        (Base {fb with formula_base_heap =  nfb;}, argsl)
+    | Or orf -> let nf1,argsl1 =  drop_hrel_f orf.formula_or_f1 hp_names in
+                let nf2,argsl2 =  drop_hrel_f orf.formula_or_f2 hp_names in
+       ( Or {orf with formula_or_f1 = nf1;
+                formula_or_f2 = nf2;}, argsl1@argsl2)
+    | Exists fe -> let nfe,argsl = drop_hrel_hf fe.formula_exists_heap hp_names in
+        (Exists {fe with formula_exists_heap = nfe ;}, argsl)
 
-and drop_lhs_hp_hf hf hp_names=
+and drop_hrel_hf hf hp_names=
   match hf with
     | Star {h_formula_star_h1 = hf1;
             h_formula_star_h2 = hf2;
             h_formula_star_pos = pos} ->
-        let n_hf1 = drop_lhs_hp_hf hf1 hp_names in
-        let n_hf2 = drop_lhs_hp_hf hf2 hp_names in
+        let n_hf1, argsl1 = drop_hrel_hf hf1 hp_names in
+        let n_hf2, argsl2 = drop_hrel_hf hf2 hp_names in
+        let newf =
         (match n_hf1,n_hf2 with
-          | (HTrue,HTrue) -> HTrue
-          | (HTrue,_) -> n_hf2
-          | (_,HTrue) -> n_hf1
-          | _ -> Star {h_formula_star_h1 = n_hf1;
+          | (HEmp,HEmp) -> HEmp
+          | (HEmp,_) -> n_hf2
+          | (_,HEmp) -> n_hf1
+          | _ -> (Star {h_formula_star_h1 = n_hf1;
                        h_formula_star_h2 = n_hf2;
-                       h_formula_star_pos = pos}
-        )
+                       h_formula_star_pos = pos})
+        ) in
+        (newf, argsl1@argsl2)
     | Conj { h_formula_conj_h1 = hf1;
              h_formula_conj_h2 = hf2;
              h_formula_conj_pos = pos} ->
-        let n_hf1 = drop_lhs_hp_hf hf1 hp_names in
-        let n_hf2 = drop_lhs_hp_hf hf2 hp_names in
-        Conj { h_formula_conj_h1 = n_hf1;
+        let n_hf1,argsl1 = drop_hrel_hf hf1 hp_names in
+        let n_hf2,argsl2 = drop_hrel_hf hf2 hp_names in
+        (Conj { h_formula_conj_h1 = n_hf1;
                h_formula_conj_h2 = n_hf2;
-               h_formula_conj_pos = pos}
+               h_formula_conj_pos = pos}, argsl1@argsl2)
     | Phase { h_formula_phase_rd = hf1;
               h_formula_phase_rw = hf2;
               h_formula_phase_pos = pos} ->
-        let n_hf1 = drop_lhs_hp_hf hf1 hp_names in
-        let n_hf2 = drop_lhs_hp_hf hf2 hp_names in
-        Phase { h_formula_phase_rd = n_hf1;
+        let n_hf1,argsl1 = drop_hrel_hf hf1 hp_names in
+        let n_hf2,argsl2 = drop_hrel_hf hf2 hp_names in
+        (Phase { h_formula_phase_rd = n_hf1;
               h_formula_phase_rw = n_hf2;
-              h_formula_phase_pos = pos} 
-    | DataNode hd -> hf
-    | ViewNode hv -> hf
-    | HRel (id,_,_) -> if CP.mem_svl id hp_names then HTrue
-        else hf
+              h_formula_phase_pos = pos},argsl1@argsl2) 
+    | DataNode hd -> (hf,[])
+    | ViewNode hv -> (hf,[])
+    | HRel (id,args,_) -> if CP.mem_svl id hp_names then (HEmp, [args])
+        else (hf,[])
     | Hole _
     | HTrue
     | HFalse
-    | HEmp -> hf
+    | HEmp -> (hf,[])
 
 and drop_data_view_hrel_nodes f fn_data_select fn_view_select fn_hrel_select dnodes vnodes relnodes=
   match f with

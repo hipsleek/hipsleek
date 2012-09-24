@@ -1499,7 +1499,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
       let new_es_formula =  update_es_f es.CF.es_formula l_new_hp in
       let new_es_formula =  update_es_f new_es_formula r_new_hp in
       (*drop hp rel in es_formula*)
-      let new_es_formula = CF.drop_lhs_hp_f new_es_formula lhrs in
+      let new_es_formula, _ = CF.drop_hrel_f new_es_formula lhrs in
       (*add mismatched heap into the entail states if @L*)
       let check_consumed_node h f= 
         match h with
