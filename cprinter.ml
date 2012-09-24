@@ -586,8 +586,10 @@ let h_formula_assoc_op (e:h_formula) : (string * h_formula list) option =
      e.g. trivial expr and prefix forms *)
 let h_formula_wo_paren (e:h_formula) = 
   match e with
+    | DataNode _ 
+    | ViewNode _ 
     | Star _ -> true
-    | _ -> true
+    | _ -> false
 
 
 let formula_assoc_op (e:formula) : (string * formula list) option = 
