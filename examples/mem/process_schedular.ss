@@ -39,9 +39,7 @@ stat != 1 -> requires (plist::ll<R> & rlist::rll<R1> * slist::sll<R2>) & R = uni
 	else{
 		slist = insert_sll(slist,tmp);
 		}
-	dprint;
 	plist = tmp;
-	dprint;
 }
 
 node insert_pll(node x, ref node n)
