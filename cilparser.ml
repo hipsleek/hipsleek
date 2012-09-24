@@ -43,9 +43,15 @@ let translate_typ_var (t: Cil.typ) : Globals.typ =
     | Cil.TBuiltin_va_list _ -> report_error_msg "TRUNG: handle TBuiltin_va_list later!" in
   (* return *)
   newtype
-  
 
-let translate_var (vinfo: Cil.varinfo) (loc: Cil.location) :
+let translate_var (vinfo: Cil.varinfo) (loc: Cil.location) : Iast.exp_var_decl =
+  let vpos = translate_location vinfo.Cil.vdecl in
+  let vtype = translate_typ_var vinfo.Cil.vtype in
+  let vdata = [(vinfo.Cil.vname, None, vpos)] in
+  let expv  = {Iast.exp_var_decl_type = vtype;
+               Iast.exp_var_decl_decls = vdata;
+               Iast.exp_var_decl_pos = vpos } in
+  expv
 
 let translate_fundec (fdec: Cil.fundec) (loc: Cil.location): unit (*Iast.proc_decl*) =
   let translate_typ_fun (ty: Cil.typ) : Globals.typ = (
@@ -87,11 +93,10 @@ let translate_fundec (fdec: Cil.fundec) (loc: Cil.location): unit (*Iast.proc_de
   let proc_return = translate_typ_fun (fheader.Cil.vtype) in
   let proc_args = collect_fun_params fheader in
   let proc_loc = translate_location loc in
-  let 
   let sfun = "proc_name = " ^ proc_name ^ "\n"
              ^ "type = " ^ (Globals.string_of_typ proc_return) ^ "\n" in
   let _ = print_endline sfun in
-  (* ()                                 *)
+  ()
   (* let proc_iast : Iast.prog_decl = { *)
   (*   Iast.proc_name = proc_name;      *)
   (*   Iast.proc_return = proc_return;  *)
