@@ -52,10 +52,32 @@ checkentail x::node<a@A,b>  |- x::node<c@A,d>.
 print residue.
 // <1>x::node<a@A,b@A>@M[Orig]&0<=0 & 0<=3 & c=a & d=b&{FLOW,(19,20)=__norm}[]
 
-checkentail x::node<a@A,b>  |- x::node<c@A,d@L>.
+checkentail x::node<a@A,b@L>  |- x::node<c@A,d@L>.
 print residue.
-// <1>x::node<a@A,b@M>@M[Orig]&0<=0 & 0<=3 & c=a & d=b&{FLOW,(19,20)=__norm}[]
+//  <1>x::node<a@A,b@M>@M[Orig]&0<=0 & 0<=3 & d=b&{FLOW,(19,20)=__norm}[]
 
+checkentail x::node<a,b>@M  |- x::node<c,d>@L.
+print residue.
+// <1>x::node<a@M,b@M>@M[Orig]&0<=0 & c=a & d=b&{FLOW,(19,20)=__norm}[]
+
+checkentail x::node<a,b>@M  |- x::node<c,d>@A.
+print residue.
+// <1>x::node<a@M,b@M>@M[Orig]&0<=0 & c=a & d=b&{FLOW,(19,20)=__norm}[]
+
+checkentail x::node<a,b>@L  |- x::node<c,d>@L.
+print residue.
+// <1>x::node<a@L,b@L>@L[Orig]&2<=2 & c=a & d=b&{FLOW,(19,20)=__norm}[]
+
+checkentail x::node<a,b>@I  |- x::node<c,d>@L.
+print residue.
+// <1>x::node<a@L,b@L>@L[Orig]&1<=1 & c=a & d=b&{FLOW,(19,20)=__norm}[]
+
+checkentail x::node<a,b@M>@I  |- x::node<c,d>@L.
+print residue.
+// <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+
+checkentail x::node<a,b>@M  |- x::node<c,d@M>@I.
+print residue.
 
 
 /*
