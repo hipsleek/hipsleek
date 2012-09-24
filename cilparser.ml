@@ -28,7 +28,7 @@ let translate_location (loc: Cil.location) : Globals.loc =
   (* return *)
   newloc
 
-let translate_var_typ (t: Cil.typ) : Globals.typ =
+let translate_typ_var (t: Cil.typ) : Globals.typ =
   let newtype = 
     match t with
     | Cil.TVoid _            -> Globals.Void
@@ -36,57 +36,55 @@ let translate_var_typ (t: Cil.typ) : Globals.typ =
     | Cil.TFloat _           -> Globals.Float 
     | Cil.TPtr _             -> report_error_msg "TRUNG: handle TPtr later!"  
     | Cil.TArray _           -> report_error_msg "TRUNG: handle TArray later!"
-    | Cil.TFun _             -> report_error_msg "Should not appear here. Handle only in translate_fun_typ"
+    | Cil.TFun _             -> report_error_msg "Should not appear here. Handle only in translate_typ_fun"
     | Cil.TNamed _           -> report_error_msg "TRUNG: handle TNamed later!"
     | Cil.TComp _            -> report_error_msg "TRUNG: handle TComp later!"
     | Cil.TEnum _            -> report_error_msg "TRUNG: handle TEnum later!"
     | Cil.TBuiltin_va_list _ -> report_error_msg "TRUNG: handle TBuiltin_va_list later!" in
   (* return *)
   newtype
+  
 
-let translate_fun_typ (ty: Cil.typ) : Globals.typ =
-  match ty with
-  | Cil.TFun (t, params, _, _) -> translate_var_typ t
-  | _ -> report_error_msg ("Only handle TFun here."
-                           ^ "Other types should be passed to translate_var_typ!")
-
-let collect_fun_params (fheader: Cil.varinfo) : Iast.param list =
-  let ftyp = fheader.Cil.vtype in
-  let pos = translate_location fheader.Cil.vdecl in
-  match ftyp with
-  | Cil.TFun (_, p, _, _) ->
-      let params = Cil.argsToList p in
-      let translate_one_param (p : string * Cil.typ * Cil.attributes) : Iast.param = (
-        let (name, t, attrs) = p in
-        let ptyp = translate_var_typ t in
-        let is_mod = (
-          List.exists (
-            fun attr -> (
-              let attrparas = match attr with Cil.Attr (_, aps) -> aps in
-              List.exists (
-                fun attrpara ->
-                  match attrpara with
-                  | Cil.AStar _ -> true
-                  | _           -> false
-              ) attrparas
-            )
-          ) attrs
-        ) in
-        let newparam = { Iast.param_type = ptyp;
-                         Iast.param_name = name;
-                         Iast.param_mod = if is_mod then Iast.RefMod else Iast.NoMod;
-                         Iast.param_loc = pos; } in
-        newparam
-      ) in
-      (* return *)
-      List.map translate_one_param params
-  | _ -> report_error_msg "Invalid function header!"
+let translate_var (vinfo: Cil.varinfo) (loc: Cil.location) :
 
 let translate_fundec (fdec: Cil.fundec) (loc: Cil.location): unit (*Iast.proc_decl*) =
+  let translate_typ_fun (ty: Cil.typ) : Globals.typ = (
+    match ty with
+    | Cil.TFun (t, params, _, _) -> translate_typ_var t
+    | _ -> report_error_msg ("Only handle TFun here."
+                             ^ "Other types should be passed to translate_typ_var!")
+  ) in
+  let collect_fun_params (fheader: Cil.varinfo) : Iast.param list = (
+    let ftyp = fheader.Cil.vtype in
+    let pos = translate_location fheader.Cil.vdecl in
+    match ftyp with
+    | Cil.TFun (_, p, _, _) ->
+        let params = Cil.argsToList p in
+        let translate_one_param (p : string * Cil.typ * Cil.attributes) : Iast.param = (
+          let (name, t, attrs) = p in
+          let ptyp = translate_typ_var t in
+          let is_mod = (
+            List.exists (fun attr -> (
+              let attrparas = match attr with Cil.Attr (_, aps) -> aps in
+              List.exists (fun attrpara -> match attrpara with
+                                           | Cil.AStar _ -> true
+                                           | _           -> false) attrparas
+              )) attrs
+          ) in
+          let newparam = { Iast.param_type = ptyp;
+                           Iast.param_name = name;
+                           Iast.param_mod = if is_mod then Iast.RefMod else Iast.NoMod;
+                           Iast.param_loc = pos; } in
+          newparam
+        ) in
+        (* return *)
+        List.map translate_one_param params
+    | _ -> report_error_msg "Invalid function header!"
+  ) in
   let fheader = fdec.Cil.svar in
   let proc_name = fheader.Cil.vname in
   let proc_mingled_name = "" in (* TRUNG CODE: check it later *)
-  let proc_return = translate_fun_typ (fheader.Cil.vtype) in
+  let proc_return = translate_typ_fun (fheader.Cil.vtype) in
   let proc_args = collect_fun_params fheader in
   let proc_loc = translate_location loc in
   let 
