@@ -921,7 +921,7 @@ let rec pr_h_formula h =
 	      let arg1 = bin_op_to_list op_conj_short h_formula_assoc_op h1 in
           let arg2 = bin_op_to_list op_conj_short h_formula_assoc_op h2 in
           let args = arg1@arg2 in
-          pr_list_op op_conj f_b args
+          pr_list_op op_conj (pr_bracket (fun _ -> false) pr_h_formula) args
     | DataNode ({h_formula_data_node = sv;
       h_formula_data_name = c;
 	  h_formula_data_derv = dr;
