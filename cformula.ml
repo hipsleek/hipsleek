@@ -3009,8 +3009,22 @@ and disj_count (f0 : formula) = match f0 with
 		1 + c1 + c2
 
   | _ -> 1
-        
-        
+
+(*=========for sa==========*)
+let rec check_eq_hrel_node  (rl1, args1 ,_)  (rl2, args2,_)=
+    let rec helper l1 l2=
+      match l1,l2 with
+        | [],[] -> true
+        | v1::vs1,v2::vs2 ->
+            if CP.eq_spec_var v1 v2 then helper vs1 vs2
+            else false
+        | _ -> false
+    in
+    (*hp1 = hp2 and args1 = arg2*)
+    let svs1 = List.concat (List.map CP.afv args1) in
+    let svs2 = List.concat (List.map CP.afv args2) in
+    (CP.eq_spec_var rl1 rl2) && (helper svs1 svs2)
+
 and h_node_list (f: h_formula): CP.spec_var list = match f with
   | DataNode {h_formula_data_node = c}
   | ViewNode {h_formula_view_node = c} -> [c]
