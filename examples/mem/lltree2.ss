@@ -19,10 +19,10 @@ tree<p,S> == self=null & S = {}
 		
 treeseg<p,ph,h,S> == self = h & S = {} & h != null & p=ph
   or self::node<_@L,_@A,p,l,r> * l::treeseg<self,ph,h,Sl> * r::tree<self,Sr> & h != self & h notin Sr & h notin Sl 
-			& S = union(Sl,Sr,{self}) & p!=ph & p notin Sr & p notin Sl & self!=p
+  & S = union(Sl,Sr,{self}) & p!=ph & p notin Sr & p notin Sl & self!=p & (ph=self | ph in Sl)
   or self::node<_@L,_@A,p,l,r> * l::tree<self,Sl> * r::treeseg<self,ph,h,Sr> & h != self & h notin Sl & h notin Sr
-    		& S = union(Sl,Sr,{self}) & p!=ph & p notin Sr & p notin Sl & self!=p
-  inv h != null & h notin S & self!=null & (self=h | self in S) & p notin S //& (p=ph | ph in S)
+  & S = union(Sl,Sr,{self}) & p!=ph & p notin Sr & p notin Sl & self!=p & (ph=self | ph in Sr)
+  inv h != null & h notin S & self!=null & (self=h | self in S) & p notin S & (p=ph | ph in S)
 		memE S->(node<@L,@A,@M,@M,@M>);	
 
 /* tseg<hd,S> == hd = self & S = {} & hd != null */
