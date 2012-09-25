@@ -36,11 +36,14 @@ treeseg<p,ph,h,S> == self = h & S = {}  & p=ph // can h be null?
 /* 	inv hd != null */
 /* 	memE S->(node<@L,@A,@M,@M,@M>); */
 		
-// not proven successfully
-lemma self::tree<p,S> <- self::treeseg<p,ph,h,S1> * h::tree<ph,S2> & S = union(S1,S2);
+// proven successfully
+/* lemma self::tree<p,S> <- self::treeseg<p,ph,h,S1> * h::tree<ph,S2> & S = union(S1,S2); */
 
-/* lemma self::tree<p,S> & h in S */
-/*   -> self::treeseg<p,ph,h,S1> * h::node<_@L,_@A,ph,l,r> * l::tree<h,S2> * l::tree<h,S3> & S = union(S1,S2,S3,{h}); */
+
+lemma self::tree<p,S> & h in S 
+   -> self::treeseg<p,ph,h,S1> * h::node<_@L,_@A,ph,l,r> 
+        * l::tree<h,S2> * r::tree<h,S3> & S = union(S1,S2,S3,{h})
+        & h notin S1 & h notin S2 & h notin S3; 
 
 /* lemma self::tseg<hd,S> -> self::treeseg<_,hd,Ss> * hd::node<_@L,_@A,_@M,_@M,_@M> & S = union(Ss,{hd}); */
 
