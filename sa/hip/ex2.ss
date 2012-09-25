@@ -44,14 +44,14 @@ cond: x.next == null
 
 constrs:
 H1(x) -> HP_1(x,b)*x::node<_,b>
-HP_1(x,b)*H2(y)*x::node<_,b> & b = y -> G(x,y)
+HP_1(x,b)*H2(y)*x::node<_,y> & b = null-> G(x,y)
 HP_1(x,b)*H2(y)*x::node<_,b> & b != null -> H1(b) * H2(y)
 G(b',y') * HP_1(x,b)*H2(y)*x::node<_,b> & b != null -> G(x,y')
 
 
 auto:
 
-1. H1(x)  * H2(y)--->  x::node<val_22_526',next_22_527'> * HP_545(next_22_527',y,x)
+1. H1(x)  * H2(y) --->  x::node<val_22_526',next_22_527'> * HP_545(next_22_527',y,x)
 2. HP_545(v_node_22_562,y,x) * x::node<val_22_551,y>&v_node_22_562=null ---> G1(x,y)
 3. HP_545(v_node_22_568,y,x) * x::node<val_22_553,v_node_22_568>&v_node_22_568!=null --->  H1(v_node_22_568)* H2(y)
 4. x::node<val_22_553,v_node_22_568> * G1(v_node_25_579,y') * HP_580(v_node_22_568,v_node_25_579,y',x,x)& v_node_22_568!=null ---> G1(x,y')
