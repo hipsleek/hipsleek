@@ -11,7 +11,7 @@ HeapPred G2(node a, node b).
 void reverse(ref node x, ref node y)
   infer[H1,H2,G1,G2]
   requires H1(x)*H2(y)
-  ensures G1(x,x')*G2(y,y');
+  ensures G1(x',y');
 {
 	if(x!= null){
 		node tmp = x.next;

@@ -49,12 +49,12 @@ HeapPred G1(node a, node b).
 
 HeapPred H1(node a).
 HeapPred H2(node a).
-HeapPred G1(node a, node b, node c).
+HeapPred G1(node a, node b).
 
 void append(ref node x, node y)
   infer[H1,H2,G1]
   requires H1(x)*H2(y)
-  ensures G1(x,x',y);//'
+  ensures G1(x',y');//'
 {
   if (x.next == null)
     x.next = y;
