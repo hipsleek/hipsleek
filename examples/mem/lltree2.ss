@@ -28,7 +28,7 @@ treeseg<p,ph,h,S> == self = h & S = {}  & p=ph // can h be null?
   inv h notin S & p notin S  
   & (self=h & S={} | self!=h & self in S)  // inv must not contain existential variables!
   & (p=ph & S={} | ph!=p & ph in S)
-		memE S->(node<@L,@A,@M,@M,@M>);	
+       memE S->(node<@L,@A,@M,@M,@M>);	
 
 /* tseg<hd,S> == hd = self & S = {} & hd != null */
 /* 	or self::node<_@L,_@A,p,l,r> * l::tree<self,Sl> * r::tseg<hd,Sr> & hd in Sr & S = union({self},Sl,Sr) */
