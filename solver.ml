@@ -3217,7 +3217,9 @@ and heap_entail_split_rhs (prog : prog_decl) (is_folding : bool) (ctx_0 : contex
    	    | _ -> report_error no_pos ("[solver.ml]: No disjunction on the RHS should reach this level\n"))
     else 
     let h1, h2 = Mem.split_heap h in
-    if (is_empty_heap h1) && (is_empty_heap h2) then heap_entail_conjunct prog is_folding ctx_00 conseq [] pos else
+    if (is_empty_heap h1) && (is_empty_heap h2) 
+    then heap_entail_conjunct prog is_folding ctx_00 conseq [] pos 
+    else
     if(is_empty_heap h2) then (* D |- h1 = D1 /\ h2 = HEmp*)
       let new_conseq = func h1 (MCP.mkMTrue pos) in
       let after_h1_ctx, after_h1_prfs = heap_entail_split_lhs prog is_folding ctx_00 new_conseq pos in
@@ -3326,9 +3328,25 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
       *)
       let h1, h2 = Mem.split_heap h in
       if (is_empty_heap h1) && not (Mem.contains_conj h2) 
-      then heap_entail_conjunct prog is_folding (CF.set_context_formula ctx0 (func h2)) conseq [] pos else
+      then let final_ctx, final_prf = heap_entail_conjunct prog is_folding (CF.set_context_formula ctx0 (func h2)) conseq [] pos in
+      		match final_ctx with
+	      | SuccCtx(cl) ->
+	            (* substitute the holes due to the temporary removal of matched immutable nodes *) 
+	          let cl1 = List.map subs_crt_holes_ctx cl in
+		      let cl1 = List.map restore_tmp_ann_ctx cl1 in
+		      (SuccCtx(cl1), final_prf)
+	      | FailCtx _ -> (final_ctx, final_prf)
+      else
       if(is_empty_heap h1) && (Mem.contains_conj h2) 
-      then heap_entail_split_lhs prog is_folding (CF.set_context_formula ctx0 (func h2)) conseq pos else
+      then let final_ctx, final_prf = heap_entail_split_lhs prog is_folding (CF.set_context_formula ctx0 (func h2)) conseq pos in
+	      match final_ctx with
+	      | SuccCtx(cl) ->
+	            (* substitute the holes due to the temporary removal of matched immutable nodes *) 
+	          let cl1 = List.map subs_crt_holes_ctx cl in
+		      let cl1 = List.map restore_tmp_ann_ctx cl1 in
+		      (SuccCtx(cl1), final_prf)
+	      | FailCtx _ -> (final_ctx, final_prf)
+      else
       if (is_empty_heap h2) 
       then
         (* lhs contains only one heap (no need to split)*)
@@ -6551,7 +6569,16 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               Debug.devel_zprint (lazy ("do_match (after): RHS:" ^ (Cprinter.string_of_formula new_conseq))) pos;
 	      (* let _ = print_string("cris: new_conseq = " ^ (Cprinter.string_of_formula new_conseq) ^ "\n") in *)
               let res_es1, prf1 = heap_entail_conjunct prog is_folding  new_ctx new_conseq (rhs_matched_set @ [r_var]) pos in
-              (Cformula.add_to_subst res_es1 r_subs l_sub, prf1)
+              	(Cformula.add_to_subst res_es1 r_subs l_sub, prf1) 
+      		(*match final_ctx with
+	      | SuccCtx(cl) ->
+	            (* substitute the holes due to the temporary removal of matched immutable nodes *) 
+            	  let _ = print_string("asankhs: new_context = " ^ (Cprinter.string_of_list_context final_ctx) ^ "\n") in
+	          let cl1 = List.map subs_crt_holes_ctx cl in
+		  let cl1 = List.map restore_tmp_ann_ctx cl1 in
+		  let _ = print_string("asankhs: after_context = " ^ (Cprinter.string_of_list_context (SuccCtx(cl1))) ^ "\n") in
+		      (SuccCtx(cl1), final_prf)
+	      | FailCtx _ -> (final_ctx, final_prf)*)
 
 and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   Debug.devel_zprint (lazy ("heap_entail_conjunct_non_empty_rhs_heap:\ncontext:\n" ^ (Cprinter.string_of_context ctx0)

@@ -848,6 +848,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let fresh_frac =  Cpure.SpecVar (perm_t,fresh_frac_name, Unprimed) in (*LDK TO CHECK*)
 	        (*let _ = print_string("\n(andreeac)bind args: " ^ (List.fold_left (fun x (y,z) -> x ^ (Cprinter.string_of_spec_var y) ^ (string_of_heap_ann z) ^", ") "[" (List.combine vs_prim pimm)) ^ "]\n") in *)
 	        (*let _ = print_string("\n(andreeac)bind imm: " ^ (Cprinter.string_of_imm (CF.ConstAnn(imm))) ) in*) 
+	        (*let pimm = if(!Globals.allow_mem && !Globals.allow_field_ann) then Mem.transform_to_tmp_ann pimm 
+	        else pimm in*)
 	        let vdatanode = CF.DataNode ({
                 CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
                 CF.h_formula_data_name = c;
