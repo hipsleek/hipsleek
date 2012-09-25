@@ -3385,11 +3385,18 @@ and subst_hrel_hf hf hprel_subst=
       (*should specvar subst*)
       let svl1 = (List.fold_left List.append [] (List.map CP.afv el)) in
       let svl2 = (List.fold_left List.append [] (List.map CP.afv el1)) in
-      h_subst (List.combine svl2 svl1) hf
-    else HRel (id,el,p)
+      let f = h_subst (List.combine svl2 svl1) hf in
+      (true, f)
+    else (false, HRel (id,el,p))
   in
-  let find_and_subst (HRel (id,el,p)) subst =
-    List.fold_left helper (HRel (id,el,p)) subst
+  let rec find_and_subst (HRel (id,el,p)) subst =
+    (* List.fold_left helper (HRel (id,el,p)) subst *)
+    match subst with
+      | [] -> (HRel (id,el,p))
+      | (HRel (id1,el1,p1), hf)::ss ->
+          let stop,f = helper (HRel (id,el,p)) (HRel (id1,el1,p1), hf) in
+          if stop then f
+          else find_and_subst (HRel (id,el,p)) ss
   in
   match hf with
     | Star {h_formula_star_h1 = hf1;

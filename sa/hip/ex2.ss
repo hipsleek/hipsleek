@@ -10,7 +10,7 @@ HeapPred G1(node a, node b).
 HeapPred H1(node a).
 HeapPred H2(node a).
 
-void append(ref node x,ref node y)
+void append(ref node x, ref node y)
   infer[H1,H2,G1]
   requires H1(x) * H2(y)
   ensures G1(x',y');//'
@@ -61,27 +61,6 @@ auto:
 */
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
           /*
 H1(x) --> x::node<val_25_530',next_25_531'> * HP_549(next_25_531',x)
 HP_549(v_node_25_566,x) * x::node<val_25_555,y> & v_node_25_566=null --> G1(x,x,y)
@@ -110,3 +89,15 @@ x::node<_,b> *  G1(b,b',y)&b!=null --> G1(x,x,y)
 
 //Matched
 */
+
+
+/*
+out
+([( HP_545(v_node_18_562,y) * x::node<val_18_551,y>&v_node_18_562=null, HP_582(x) * HP_583(y)&true),
+( H1(x) * H2(y)&true, x::node<val_18_526',next_18_527'> * HP_545(next_18_527',y)&true),
+( HP_545(v_node_18_568,y) * x::node<val_18_553,v_node_18_568>&
+v_node_18_568!=null, H1(v_node_18_568) * H2(y)&true),
+( x::node<val_18_553,v_node_18_568> * HP_582(v_node_21_580) * HP_581(y')&
+v_node_18_568!=null, HP_582(x)&true)],[HP_RELDEFN G1:  G1(x,y)&true <--->  HP_582(x) * HP_583(y)&true,
+HP_RELDEFN G1:  G1(x,y')&true <--->  HP_584(x) * HP_585(y')&true])
+ */
