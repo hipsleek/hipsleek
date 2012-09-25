@@ -3,6 +3,10 @@ data node {
   node next;
 }
 
+ll<> == self = null  
+	or self::node<_, q>* q::ll<> 
+  inv true;
+
 HeapPred H1(node a).
 HeapPred H2(node a).
 HeapPred G1(node a, node b).
@@ -12,6 +16,13 @@ void reverse(ref node x, ref node y)
   infer[H1,H2,G1]
   requires H1(x)*H2(y)
   ensures G1(x',y');
+
+ //requires x::ll<> * y::ll<>
+ //ensures y'::ll<> & x'=null;
+ /*  FAIL
+    requires x::ll<> & x=y
+    ensures y'::ll<> & x'=null;
+ */
 {
 	if(x!= null){
 		node tmp = x.next;
