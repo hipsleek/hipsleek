@@ -21,8 +21,10 @@ int get_size(node x)
 {
 	if(x==null) 
 		return 0;
-	else 
-		return get_size(x.next) + 1;
+	else {
+      int a = get_size(x.next);
+      return  a+ 1;
+    }
 }
 
 /*
@@ -58,6 +60,10 @@ auto:
 //4. loss infomation of v_node_25_574
 
 
+[( H(x)&x=null, G(x)&true),
+( H(x)&x!=null, x::node<val_25_535',next_25_536'> * HP_557(next_25_536',x)&true),
+( HP_557(v_node_25_537',x) * x::node<val_25_564,v_node_25_537'>&x!=null, H(v_node_25_537')&true),
+( x::node<val_25_564,v_node_25_574>&x!=null, G(x)&true)]
 
 */
 

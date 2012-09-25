@@ -1432,7 +1432,7 @@ let simplify_lhs_rhs lhs_b rhs_b leqs reqs=
   let rhs_b3 = {rhs_b2 with CF.formula_base_pure = MCP.mix_of_pure 
       (CP.remove_redundant (MCP.pure_of_mix rhs_b2.CF.formula_base_pure))} in
   (*elim irr hp rel in lhs*)
-  let lhs_b4 = filter_irr_lhs_bf_hp lhs_b3 rhs_b3 in
+  let lhs_b4 = lhs_b3 (*filter_irr_lhs_bf_hp lhs_b3 rhs_b3*) in
   (lhs_b4,rhs_b3)
 
 let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rhs_h_matched_set:CP.spec_var list) conseq lhs_b rhs_b pos =
