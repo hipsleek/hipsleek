@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/software/sv-benchmarks/!svn/ver/77/tags/svcomp12/ntdrivers-simplified
+END
+cdaudio_simpl1_BUG.cil.c
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/software/sv-benchmarks/!svn/ver/77/tags/svcomp12/ntdrivers-simplified/cdaudio_simpl1_BUG.cil.c
+END
+diskperf_simpl1.cil.c
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/software/sv-benchmarks/!svn/ver/77/tags/svcomp12/ntdrivers-simplified/diskperf_simpl1.cil.c
+END
+cdaudio_simpl1.cil.c
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/software/sv-benchmarks/!svn/ver/77/tags/svcomp12/ntdrivers-simplified/cdaudio_simpl1.cil.c
+END
+floppy_simpl3_BUG.cil.c
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/software/sv-benchmarks/!svn/ver/77/tags/svcomp12/ntdrivers-simplified/floppy_simpl3_BUG.cil.c
+END
+floppy_simpl4_BUG.cil.c
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/software/sv-benchmarks/!svn/ver/77/tags/svcomp12/ntdrivers-simplified/floppy_simpl4_BUG.cil.c
+END
+floppy_simpl3.cil.c
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/software/sv-benchmarks/!svn/ver/77/tags/svcomp12/ntdrivers-simplified/floppy_simpl3.cil.c
+END
+kbfiltr_simpl2_BUG.cil.c
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/software/sv-benchmarks/!svn/ver/77/tags/svcomp12/ntdrivers-simplified/kbfiltr_simpl2_BUG.cil.c
+END
+floppy_simpl4.cil.c
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/software/sv-benchmarks/!svn/ver/77/tags/svcomp12/ntdrivers-simplified/floppy_simpl4.cil.c
+END
+kbfiltr_simpl1.cil.c
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/software/sv-benchmarks/!svn/ver/77/tags/svcomp12/ntdrivers-simplified/kbfiltr_simpl1.cil.c
+END
+kbfiltr_simpl2.cil.c
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/software/sv-benchmarks/!svn/ver/77/tags/svcomp12/ntdrivers-simplified/kbfiltr_simpl2.cil.c
+END

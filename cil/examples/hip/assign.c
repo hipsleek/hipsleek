@@ -6,6 +6,8 @@ int foo()
   return 1;
 }
 
+int yyy;
+
 int main() {
   int x;
   x++;

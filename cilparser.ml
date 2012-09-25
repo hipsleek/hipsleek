@@ -44,47 +44,52 @@ let translate_typ_var (t: Cil.typ) : Globals.typ =
   (* return *)
   newtype
 
-let translate_var (vinfo: Cil.varinfo) (loc: Cil.location) : Iast.exp_var_decl =
+let translate_var (vinfo: Cil.varinfo) (loc: Cil.location) : (*Iast.exp_var_decl*) unit =
   let vpos = translate_location vinfo.Cil.vdecl in
   let vtype = translate_typ_var vinfo.Cil.vtype in
   let vdata = [(vinfo.Cil.vname, None, vpos)] in
-  let expv  = {Iast.exp_var_decl_type = vtype;
-               Iast.exp_var_decl_decls = vdata;
-               Iast.exp_var_decl_pos = vpos } in
-  expv
+  (* FOR DEBUG *)
+  let _ = print_endline ("  -- var: " ^ (Globals.string_of_typ vtype) ^ " " ^ vinfo.Cil.vname) in ()
+  (* RETURN VALUE *)
+  (* let newvar  = {Iast.exp_var_decl_type = vtype;  *)
+  (*                Iast.exp_var_decl_decls = vdata; *)
+  (*                Iast.exp_var_decl_pos = vpos} in *)
+  (* newvar                                          *)
 
 let translate_fundec (fdec: Cil.fundec) (loc: Cil.location): unit (*Iast.proc_decl*) =
   let translate_typ_fun (ty: Cil.typ) : Globals.typ = (
     match ty with
     | Cil.TFun (t, params, _, _) -> translate_typ_var t
-    | _ -> report_error_msg ("Only handle TFun here."
+    | _ -> report_error_msg ("Handle TFun only."
                              ^ "Other types should be passed to translate_typ_var!")
   ) in
   let collect_fun_params (fheader: Cil.varinfo) : Iast.param list = (
     let ftyp = fheader.Cil.vtype in
     let pos = translate_location fheader.Cil.vdecl in
     match ftyp with
-    | Cil.TFun (_, p, _, _) ->
+    | Cil.TFun (_, p, _, _) -> (
         let params = Cil.argsToList p in
         let translate_one_param (p : string * Cil.typ * Cil.attributes) : Iast.param = (
           let (name, t, attrs) = p in
           let ptyp = translate_typ_var t in
           let is_mod = (
-            List.exists (fun attr -> (
+            List.exists (fun attr ->
               let attrparas = match attr with Cil.Attr (_, aps) -> aps in
-              List.exists (fun attrpara -> match attrpara with
-                                           | Cil.AStar _ -> true
-                                           | _           -> false) attrparas
-              )) attrs
+              List.exists (fun attrpara ->
+                match attrpara with
+                | Cil.AStar _ -> true
+                | _           -> false
+              ) attrparas
+            ) attrs
           ) in
-          let newparam = { Iast.param_type = ptyp;
-                           Iast.param_name = name;
-                           Iast.param_mod = if is_mod then Iast.RefMod else Iast.NoMod;
-                           Iast.param_loc = pos; } in
+          let newparam = {Iast.param_type = ptyp;
+                          Iast.param_name = name;
+                          Iast.param_mod = if is_mod then Iast.RefMod else Iast.NoMod;
+                          Iast.param_loc = pos; } in
           newparam
         ) in
-        (* return *)
         List.map translate_one_param params
+      )
     | _ -> report_error_msg "Invalid function header!"
   ) in
   let fheader = fdec.Cil.svar in
@@ -93,10 +98,9 @@ let translate_fundec (fdec: Cil.fundec) (loc: Cil.location): unit (*Iast.proc_de
   let proc_return = translate_typ_fun (fheader.Cil.vtype) in
   let proc_args = collect_fun_params fheader in
   let proc_loc = translate_location loc in
-  let sfun = "proc_name = " ^ proc_name ^ "\n"
-             ^ "type = " ^ (Globals.string_of_typ proc_return) ^ "\n" in
-  let _ = print_endline sfun in
-  ()
+  (* FOR DEBUG *)
+  let _ = print_endline ("  -- proc: " ^ (Globals.string_of_typ proc_return) ^ " " ^ proc_name ^ "(..)") in ()
+  (* RETURN VALUE *)
   (* let proc_iast : Iast.prog_decl = { *)
   (*   Iast.proc_name = proc_name;      *)
   (*   Iast.proc_return = proc_return;  *)
@@ -118,20 +122,24 @@ let process_one_file (cil: Cil.file) : unit =
   
   let filename = cil.Cil.fileName in
   let _ = print_endline ("file name = " ^ filename) in
-  let defaultCilPrinter = new Cil.defaultCilPrinterClass in
   let globals = cil.Cil.globals in
-  let _ = print_endline ("globals length = " ^ (string_of_int (List.length globals))) in 
-  List.iter (
-    fun gl ->
-      match gl with
-        | Cil.GFun (fd, loc) -> translate_fundec fd loc
-        | _          -> print_endline ("== Unknown globals"); 
-      (* print *)
-      (* let doc = Cil.printGlobal defaultCilPrinter () gl in *)
-      (* let s = Pretty.sprint 0 doc in                       *)
-      (* print_endline ("++ global " ^ gltype ^ "\n" ^ s)     *)
+  List.iter (fun gl ->
+    match gl with
+    | Cil.GType _ -> print_endline ("== Cil.GType");
+    | Cil.GCompTag _ -> print_endline ("== Cil.GCompTag");
+    | Cil.GCompTagDecl _ -> print_endline ("== Cil.GCompTagDecl");
+    | Cil.GEnumTag _ -> print_endline ("== Cil.GEnumTag");
+    | Cil.GEnumTagDecl _ -> print_endline ("== Cil.GEnumTagDecl");
+    | Cil.GVarDecl (vinfo, loc) ->
+        let _ = print_endline ("== Cil.GVarDecl") in 
+        translate_var vinfo loc
+    | Cil.GVar (vinfo, _, loc) ->
+        let _ = print_endline ("== Cil.GVar") in 
+        translate_var vinfo loc
+    | Cil.GFun (fd, loc) -> 
+        let _ = print_endline ("== Cil.GFun") in 
+        translate_fundec fd loc
+    | Cil.GAsm _ -> print_endline ("== Cil.GAsm");
+    | Cil.GPragma _ -> print_endline ("== Cil.GPragma");
+    | Cil.GText _ -> print_endline ("== Cil.GText");
   ) globals
-
-let print_helper s = 
-  print_endline ("helper: " ^ s)
-
