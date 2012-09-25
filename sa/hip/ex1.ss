@@ -6,7 +6,7 @@ data node {
 HeapPred H(node a).
 HeapPred H1(node a).
 HeapPred G(node a, node b).
-/*
+
 void foo(ref node x)
  infer [H,G]
  requires H(x)
@@ -16,18 +16,6 @@ void foo(ref node x)
    x = x.next;
    b = x!=null;
    if (b) {
-     foo(x);
-   }
- }
-*/
-
-void foo( node x)
- infer [H,G]
- requires H(x)
- ensures G(x); //'
- {
-   if (x!=null) {
-     x = x.next;
      foo(x);
    }
  }

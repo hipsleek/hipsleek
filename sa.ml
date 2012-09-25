@@ -508,22 +508,25 @@ let check_partial_def_eq (hp1, args1, cond1, olhs1, orhs1) (hp2, args2, cond2, o
   else false
 
 (*collect partial def ---> hp*)
-let collect_par_defs_one_side_one_hp prog f (hrel, args) def_ptrs hrel_vars eq hd_nodes hv_nodes=
+let rec collect_par_defs_one_side_one_hp prog lhs rhs (hrel, args) def_ptrs
+      rhrels eq hd_nodes hv_nodes=
 begin
   let undef_args = lookup_undef_args args [] def_ptrs in
   if (List.length undef_args) = 0 then
+    (*case 1*)
     (*this hp is well defined, synthesize partial def*)
     let keep_ptrs = loop_up_ptr_args prog hd_nodes hv_nodes args in
-    let r = CF.drop_data_view_hrel_nodes f check_neq_dnode check_neq_vnode
+    let r = CF.drop_data_view_hrel_nodes lhs check_neq_dnode check_neq_vnode
       check_neq_hrelnode keep_ptrs keep_ptrs []
     in
     [(hrel, args, r, Some r, None)]
   else
-    []
+     (*CASE2: hp1(x1,x2,x3) --> h2(x1,x2,x3)* formula: hp such that have the same set of args in both sides*)
+    collect_par_defs_two_side_one_hp prog lhs rhs (hrel, args) rhrels hd_nodes hv_nodes
 end
 
 (*collect hp1(x1,x2,x3) ---> hp2(x1,x2,x3) * F  partial def *)
-let collect_par_defs_two_side_one_hp_x prog rhs (hrel, args) rhs_hrels hd_nodes hv_nodes=
+and collect_par_defs_two_side_one_hp_x prog lhs rhs (hrel, args) rhs_hrels hd_nodes hv_nodes=
   let args0 = CP.remove_dups_svl args in
   let rec find_hrel_w_same_args ls r=
     match ls with
@@ -531,7 +534,17 @@ let collect_par_defs_two_side_one_hp_x prog rhs (hrel, args) rhs_hrels hd_nodes 
       | (hp, args1)::ss ->
           let args11 = CP.remove_dups_svl args1 in
           let diff = Gen.BList.difference_eq CP.eq_spec_var args11 args0 in
-          if diff = [] then find_hrel_w_same_args ss (r@[hp]) (*collect it*)
+          if diff = [] then
+            (*todo: find condition. for implication*)
+            (*currently just check there exists conditions contain args1*)
+           (
+               let _, mf, _, _, _ = CF.split_components lhs in
+               let svl = CP.fv (MCP.pure_of_mix mf) in
+               if(List.exists (fun v ->  CP.mem_svl v svl) args1) then
+            (*exist*) find_hrel_w_same_args ss r
+               else
+                 find_hrel_w_same_args ss (r@[hp]) (*collect it*)
+           )
           else find_hrel_w_same_args ss r
   in
     (*find all hrel in rhs such that cover the same set of args*)
@@ -544,12 +557,12 @@ let collect_par_defs_two_side_one_hp_x prog rhs (hrel, args) rhs_hrels hd_nodes 
   in
   List.map build_par_def r_selected_hrels
 
-let collect_par_defs_two_side_one_hp prog rhs (hrel, args) rhs_hrels hd_nodes hv_nodes=
+and collect_par_defs_two_side_one_hp prog lhs rhs (hrel, args) rhs_hrels hd_nodes hv_nodes=
   let pr1 = pr_pair !CP.print_sv !CP.print_svl in
   let pr2 =  pr_list_ln pr1 in
   let pr3 = pr_list_ln string_of_par_def_w_name in
   Debug.no_2 "collect_par_defs_two_side_one_hp" pr1 pr2 pr3
-      (fun _ _ -> collect_par_defs_two_side_one_hp_x prog rhs (hrel, args) rhs_hrels hd_nodes hv_nodes)
+      (fun _ _ -> collect_par_defs_two_side_one_hp_x prog lhs rhs (hrel, args) rhs_hrels hd_nodes hv_nodes)
       (hrel, args) rhs_hrels
 
 let collect_par_defs_recursive_hp_x prog lhs rhs (hrel, args) def_ptrs hrel_vars eq hd_nodes hv_nodes=
@@ -622,13 +635,18 @@ let rec collect_par_defs_one_constr_new_x prog (lhs, rhs) =
     in
     ((CP.eq_spec_var hp1 hp2) && (eq_spec_var_list args1 args2))
   in
-  let total_hps = (Gen.BList.remove_dups_eq check_hp_arg_eq (l_hp_args_name@r_hp_args_name)) in
+  let lhps = (Gen.BList.remove_dups_eq check_hp_arg_eq (l_hp_args_name)) in
+  let rhps = (Gen.BList.remove_dups_eq check_hp_arg_eq (r_hp_args_name)) in
+  let total_hps = (Gen.BList.remove_dups_eq check_hp_arg_eq (lhps@rhps)) in
   let lpdefs = List.concat (List.map (fun hrel ->
-      collect_par_defs_one_side_one_hp prog lhs hrel
-          l_def_ptrs (l_hp_args_name@r_hp_args_name) leqs l_dnodes l_vnodes) total_hps) in
-  (*CASE32: hp1(x1,x2,x3) --> h2(x1,x2,x3)* formula: hp such that have the same set of args in both sides*)
-  let both_side_pdefs = List.concat (List.map (fun l_hp_args_name ->
-      collect_par_defs_two_side_one_hp prog rhs l_hp_args_name r_hp_args_name  r_dnodes r_vnodes) l_hp_args_name)  in
+      collect_par_defs_one_side_one_hp prog lhs rhs hrel
+          l_def_ptrs r_hp_args_name leqs l_dnodes l_vnodes)
+                                lhps) in
+  let rpdefs = List.concat (List.map (fun hrel ->
+      collect_par_defs_one_side_one_hp prog lhs rhs hrel
+          l_def_ptrs [] (*pass [] to not exam case 2*) leqs l_dnodes l_vnodes)
+                                rhps) in
+  (*CASE2: hp1(x1,x2,x3) --> h2(x1,x2,x3)* formula: hp such that have the same set of args in both sides - call in side lhs*)
   (*CASE 3: recursive contraints*)
   let rec_pair_hps = List.concat (List.map (get_rec_pair_hps l_hp_args_name) r_hp_args_name) in
    (*for debugging*)
@@ -671,14 +689,14 @@ let rec collect_par_defs_one_constr_new_x prog (lhs, rhs) =
         else [(lhs,rhs)]
       in (new_constrs, rec_pdefs)
   in
-  (new_constrs,(lpdefs @ both_side_pdefs @ rec_pdefs))
+  (new_constrs,(lpdefs @ rpdefs @ rec_pdefs))
 
 and collect_par_defs_one_constr_new prog constr =
   let pr1 = (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
   let pr2 = pr_list_ln string_of_par_def_w_name in
   let pr4 = pr_list_ln pr1 in
   let pr3 = (pr_pair pr4 pr2) in
-  Debug.no_1 "collect_par_defs_one_constr_new" pr1 pr3
+  Debug.ho_1 "collect_par_defs_one_constr_new" pr1 pr3
       (fun _ -> collect_par_defs_one_constr_new_x prog constr) constr
 
 (* - collect partial def
@@ -953,7 +971,7 @@ let get_hp_split_cands_x constrs =
 let get_hp_split_cands constrs =
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
   let pr2 = pr_list_ln (Cprinter.string_of_hrel_formula) in
-  Debug.ho_1 "get_hp_split_cands" pr1 pr2
+  Debug.no_1 "get_hp_split_cands" pr1 pr2
   (fun _ -> get_hp_split_cands_x constrs) constrs
 
 (*split one hp -> mutiple hp and produce corresponding heap formulas for substitution*)
@@ -1310,8 +1328,8 @@ let infer_hps_x prog (hp_constrs: (CF.formula * CF.formula) list):
   let hp_def_from_split = generate_hp_def_from_split hp_defs_split in
   (constr2, hp_defs@hp_def_from_split)
 
-  (*loop 1*)
-  (* (\*simplify constrs*\) *)
+  (* loop 1 *)
+  (*simplify constrs*)
   (* let constrs12 = simplify_constrs constrs1 in *)
   (* (\*step 3: pick partial definition*\) *)
   (* let constrs13, par_defs1 = collect_partial_definitions prog constrs12 in *)
