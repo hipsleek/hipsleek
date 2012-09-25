@@ -3219,23 +3219,31 @@ and heap_entail_split_rhs (prog : prog_decl) (is_folding : bool) (ctx_0 : contex
     let h1, h2 = Mem.split_heap h in
     if (is_empty_heap h1) && (is_empty_heap h2) then heap_entail_conjunct prog is_folding ctx_00 conseq [] pos else
     if(is_empty_heap h2) then (* D |- h1 = D1 /\ h2 = HEmp*)
-      let new_conseq = func h1 p in
-      heap_entail_split_lhs prog is_folding ctx_00 new_conseq pos
+      let new_conseq = func h1 (MCP.mkMTrue pos) in
+      let after_h1_ctx, after_h1_prfs = heap_entail_split_lhs prog is_folding ctx_00 new_conseq pos in
+      match after_h1_ctx with
+      | FailCtx _ -> (after_h1_ctx,after_h1_prfs) 
+      | SuccCtx (cl) -> let entail_p = List.map (fun c -> one_ctx_entail prog is_folding c conseq func p pos) cl
+      			in 
+      			let entail_p_ctx,entail_p_prf = List.split entail_p in
+      			let entail_p_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) entail_p_prf in
+      			let entail_p_ctx = fold_context_left entail_p_ctx in 
+      			(entail_p_ctx,entail_p_prf)
     else (* D |- h1 = D1 /\ h2 = D2 *)
       let after_h1_ctx, after_h1_prfs = heap_entail_split_lhs prog is_folding ctx_00 (func h1 (MCP.mkMTrue pos)) pos in  
       match after_h1_ctx with
       | FailCtx _ -> (after_h1_ctx,after_h1_prfs) 
       | SuccCtx (cl) -> let (ctx,prf) = 
-			(match h2 with
-			 | HTrue -> (after_h1_ctx,after_h1_prfs)
-			 | _ -> let res = (* h2 may contain nested conj/phases *)
-			 	List.map (fun c -> heap_entail_split_rhs prog is_folding c (func h2 (MCP.mkMTrue pos)) pos) cl
-			 	in
-			 	let res_ctx,res_prf = List.split res in
-			 	let res_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) res_prf in
-			 	let res_ctx = fold_context_left res_ctx in
-			 	(res_ctx,res_prf))
-			in ctx,prf
+				(match h2 with
+				 | HTrue -> (after_h1_ctx,after_h1_prfs)
+				 | _ -> let res = (* h2 may contain nested conj/phases *)
+				 	List.map (fun c -> heap_entail_split_rhs prog is_folding c (func h2 p) pos) cl
+				 	in
+				 	let res_ctx,res_prf = List.split res in
+				 	let res_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) res_prf in
+				 	let res_ctx = fold_context_left res_ctx in
+				 	(res_ctx,res_prf))
+				in ctx,prf
   in
   
   Debug.devel_zprint (lazy ("heap_entail_split_rhs: 

@@ -382,7 +382,9 @@ match f with
               CF.formula_exists_label = lbl;
               CF.formula_exists_pos = pos}) -> CF.mkExists_w_lbl qvars (conv_h_formula_conj_to_star h) p t fl ol pos lbl
 
-let rec contains_conj (f:CF.h_formula) : bool = match f with
+let rec contains_conj (f:CF.h_formula) : bool = 
+(*let _ = print_string ("Checking Conj = "^ (string_of_h_formula f) ^ "\n") in *)
+match f with
 | CF.DataNode (h1) -> false
 | CF.ViewNode (h1) -> false
 | CF.Star ({CF.h_formula_star_h1 = h1;

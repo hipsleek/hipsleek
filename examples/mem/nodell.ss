@@ -54,7 +54,7 @@ ensures  (cached'::node<key,_> & q::ll<R1>) & R1 = union(Rq,{cached'});
 
 node find(int key, ref node cached, ref node q, int flag) 
 requires (cached::node<_,_> & q::ll<Rq>)
-ensures  (cached'::node<key,_> & q::lseg<R1,res> * res::node<key,q2> * q2::ll<R2>) & Rq = union(R1,R2,{res});
+ensures  (res::node<key,q2> * q2::ll<R2> * cached'::node<key,_> & q::lseg<R1,res>) & Rq = union(R1,R2,{res});
 {
   node tmp, cache;
   if(cached != null) {
