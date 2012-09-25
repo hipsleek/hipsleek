@@ -9,7 +9,7 @@ HeapPred G1(node a, node b).
 HeapPred G2(node a, node b).
 
 void reverse(ref node x, ref node y)
-  infer[H1,H2,G1,G2]
+  infer[H1,H2,G1]
   requires H1(x)*H2(y)
   ensures G1(x',y');
 {

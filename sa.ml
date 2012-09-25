@@ -86,7 +86,7 @@ let rec elim_redundant_paras_lst_constr_x constrs =
 
 and elim_redundant_paras_lst_constr hp_constrs =
 let pr = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
-Debug.no_1 "elim_redundant_paras_lst_constr" pr pr (fun _ ->  elim_redundant_paras_lst_constr_x hp_constrs) hp_constrs
+Debug.ho_1 "elim_redundant_paras_lst_constr" pr pr (fun _ ->  elim_redundant_paras_lst_constr_x hp_constrs) hp_constrs
 
 and check_dropable_paras_constr(constr: CF.formula * CF.formula):(hp_para list) =
   Debug.ninfo_hprint (add_str "CONSTRAINT: " (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) [constr] no_pos;
@@ -672,7 +672,7 @@ let rec collect_partial_definitions_x prog constrs: ((CF.formula*CF.formula) lis
 and collect_partial_definitions prog constrs: ((CF.formula*CF.formula) list * par_def_w_name list) =
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
   let pr2 =  pr_list_ln string_of_par_def_w_name in
-   Debug.ho_1 "collect_partial_definitions" pr1 (pr_pair pr1 pr2)
+   Debug.no_1 "collect_partial_definitions" pr1 (pr_pair pr1 pr2)
  (fun _ -> collect_partial_definitions_x prog constrs) constrs
 
 
@@ -733,7 +733,7 @@ and find_hp_def hr f (hold_rel: bool): CF.formula =
   in
   let svs = List.fold_left (fun a b -> (add_args a b)@a) [] vars in
   let str = List.fold_left (fun a b ->  (CP.name_of_spec_var b ^ "," ^ a )) "" svs in
-  let _ = Debug.ninfo_pprint ("Relevent vars, good luck to me " ^ str) no_pos in
+  let _ = Debug.ninfo_pprint ("Relevent vars: " ^ str) no_pos in
   let f2 = filter_spec_var f svs in
   if(hold_rel)then f2
   else (filter_hp hr f2)
@@ -902,7 +902,7 @@ let simplify_constrs_x constrs=
 
 let simplify_constrs constrs=
    let pr = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
-  Debug.ho_1 "simplify_constrs" pr pr
+  Debug.no_1 "simplify_constrs" pr pr
       (fun _ -> simplify_constrs_x constrs) constrs
 
 
@@ -983,7 +983,7 @@ let split_hp_x (hp_constrs: (CF.formula * CF.formula) list): ((CF.formula * CF.f
   (*split  and get map*)
   let split_map,hprel_subst =  hp_split split_cands in
   (*subs old hrel by new hrels*)
-  let new_constrs = subst_constr_with_new_hps hp_constrs hprel_subst in
+  let new_constrs = hp_constrs in (*subst_constr_with_new_hps hp_constrs hprel_subst in *)
   (new_constrs, split_map, hprel_subst)
 
 let split_hp (hp_constrs: (CF.formula * CF.formula) list):((CF.formula * CF.formula) list *
@@ -995,7 +995,6 @@ let split_hp (hp_constrs: (CF.formula * CF.formula) list):((CF.formula * CF.form
       let pr = pr_pair pr1 (pr_list (pr_pair pr2 pr3)) in
       pr (a1, a2)
   in
-  Debug.ho_1 "split_hp" pr1 pr4
       (fun _ -> split_hp_x hp_constrs) hp_constrs
 
 (*========subst==============*)
@@ -1233,7 +1232,7 @@ let generalize_hps prog cs par_defs=
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
   let pr2 = pr_list_ln string_of_par_def_w_name in
   let pr3 = pr_list Cprinter.string_of_hp_rel_def in
-  Debug.ho_2 "generalize_hp" pr1 pr2 (pr_pair pr1 pr3)
+  Debug.no_2 "generalize_hp" pr1 pr2 (pr_pair pr1 pr3)
       (fun _ _ -> generalize_hps_x prog cs par_defs) cs par_defs
 
 (*========END generalization==========*)

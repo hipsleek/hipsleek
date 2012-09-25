@@ -2,58 +2,17 @@ data node {
   int val;
   node next;
 }
-
-/* HeapPred H(node a). */
-/* HeapPred H1(node a). */
-/* HeapPred G(node a, node b). */
-/* HeapPred G1(node a, node b). */
-
-/* ll<> == self=null  */
-/* 	or self::node<_, q> * q::ll<> */
-/* 	inv true; */
-
-/* void append(node x, node y) */
-/* /\* */
-/*   requires x::ll<> * y::ll<> & x!=null */
-/*   ensures x::ll<>; */
-/* *\/ */
-/*   infer [H,G,H1] */
-/*  requires H(x) * H1(y) */
-/*  ensures  G(x,y);  */
-/*  /\* */
-/*  requires G1(x,y) */
-/*  ensures  G(x,y);  */
-/*  requires G1(y,x) */
-/*  ensures  G(x,y);  */
-/*   *\/ */
-/*  { */
-/*    if (x.next == null) { */
-/*      x.next = y; */
-/*    } else { */
-/*      append(x.next,y); */
-/*    } */
-/*  } */
-/*
-HP_550(v_node_30_567,y,x) * x::node<val_30_556,y> & v_node_30_567=null --> G(x,y)
-H(x) * H1(y) --> x::node<val_30_531',next_30_532'> * HP_550(next_30_532',y,x)
-HP_550(v_node_30_573,y,x) * x::node<val_30_558,v_node_30_573> & v_node_30_573!=null --> H(v_node_30_573) * H1(y)
-x::node<val_30_558,v_node_30_573> * G(v_node_30_573,y)& v_node_30_573!=null --> G(x,y)
-*/
-
-
 HeapPred H(node a).
-HeapPred H1(node a).
 HeapPred G(node a, node b).
 HeapPred G1(node a, node b).
 
 
 HeapPred H1(node a).
 HeapPred H2(node a).
-HeapPred G1(node a, node b).
 
-void append(ref node x, node y)
+void append(ref node x,ref node y)
   infer[H1,H2,G1]
-  requires H1(x)*H2(y)
+  requires H1(x) * H2(y)
   ensures G1(x',y');//'
 {
   if (x.next == null)
@@ -61,6 +20,67 @@ void append(ref node x, node y)
   else
     append(x.next, y);
 }
+
+
+/*
+by hand:
+
+H1(x)*H2(y)
+for x.next :
+	H1(x)*H2(y) -> x::node<_,b>
+		state: HP_1(x,b)*H2(y)*x::node<_,b>
+		constr: H1(x) -> HP_1(x,b)*x::node<_,b>
+cond: x.next == null
+	then-branch:
+		HP_1(x,b)*H2(y)*x::node<_,b> & b = null
+		HP_1(x,b)*H2(y)*x::node<_,b> & b = y
+		end: HP_1(x,b)*H2(y)*x::node<_,b> & b = y -> G(x,y)
+	else-branch:
+		HP_1(x,b)*H2(y)*x::node<_,b> & b != null
+		HP_1(x,b)*H2(y)*x::node<_,b> & b != null -> H1(b) * H2(y) --* G(b',y')
+			state: G(b',y') * HP_1(x,b)*H2(y)*x::node<_,b> & b != null
+			constr: HP_1(x,b)*H2(y)*x::node<_,b> & b != null -> H1(b) * H2(y)
+		end: G(b',y') * HP_1(x,b)*H2(y)*x::node<_,b> & b != null -> G(x,y')
+
+constrs:
+H1(x) -> HP_1(x,b)*x::node<_,b>
+HP_1(x,b)*H2(y)*x::node<_,b> & b = y -> G(x,y)
+HP_1(x,b)*H2(y)*x::node<_,b> & b != null -> H1(b) * H2(y)
+G(b',y') * HP_1(x,b)*H2(y)*x::node<_,b> & b != null -> G(x,y')
+
+
+auto:
+
+1. H1(x)  * H2(y)--->  x::node<val_22_526',next_22_527'> * HP_545(next_22_527',y,x)
+2. HP_545(v_node_22_562,y,x) * x::node<val_22_551,y>&v_node_22_562=null ---> G1(x,y)
+3. HP_545(v_node_22_568,y,x) * x::node<val_22_553,v_node_22_568>&v_node_22_568!=null --->  H1(v_node_22_568)* H2(y)
+4. x::node<val_22_553,v_node_22_568> * G1(v_node_25_579,y') * HP_580(v_node_22_568,v_node_25_579,y',x,x)& v_node_22_568!=null ---> G1(x,y')
+//4. HP_580(v_node_22_568,v_node_25_579,y',x,x) is generated.
+
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
           /*
 H1(x) --> x::node<val_25_530',next_25_531'> * HP_549(next_25_531',x)

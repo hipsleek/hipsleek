@@ -547,3 +547,47 @@ let check_equiv_constr (constr1: CF.formula * CF.formula) (constr2: CF.formula *
     let (res22, mtl22) = (checkeq_formulas_x ivars f22 f12 mtl21) in
     (res12&&res22, (List.hd mtl12))
   ) else (false,[])
+(*
+let rec check_imply_formulas ivars f1 f2 = 
+  let mtl = [[]] in
+  let ivars = [] in
+  let (res1, mtl1) = (checkeq_formulas_x2 ivars f1 f2 mtl) in
+  (res1&&res2, mtl1)
+
+and and checkeq_formulas_x2 (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(mtl: (map_table list)): (bool*(map_table list))=
+  let _ = Debug.ninfo_pprint ("Compare formulas ") no_pos in 
+  match f1 with
+    |CF.Base({CF.formula_base_heap = h1;
+	      CF.formula_base_pure = p1}) ->(match f2 with 
+		|CF.Base ({CF.formula_base_heap = h2;
+			   CF.formula_base_pure = p2}) -> (
+		  let (res,mtl1) = checkeq_h_formulas hvars h1 h2 mtl in
+		  let (res,mtl2) = if(res) then 
+		      (
+			let _ = Debug.ninfo_pprint ("EQ. HMT: " ^ (string_of_map_table_list mtl1)) no_pos in
+			checkeq_mix_formulas2 hvars p1 p2 mtl1
+		      )
+		    else  (res,mtl1)
+		  in
+		  let _ = Debug.ninfo_pprint ("EQ. FMT: " ^ (string_of_map_table_list mtl2)) no_pos in
+		  (res,mtl2)
+		)
+		|_ -> report_error no_pos "not handle Or f1 yet") (*(false,mtl))*)
+    |CF.Exists({CF.formula_exists_heap = h1;
+		CF.formula_exists_pure = p1})->(match f2 with 
+		  |CF.Exists ({CF.formula_exists_heap = h2;
+			       CF.formula_exists_pure = p2}) -> (
+		    let (res,mtl1) = checkeq_h_formulas hvars h1 h2 mtl in 
+		    let (res,mtl2) = if(res) then 
+			(
+			  let _ = Debug.ninfo_pprint ("EQ. HMT: " ^ (string_of_map_table_list mtl1)) no_pos in
+			  checkeq_mix_formulas2 hvars p1 p2 mtl1
+			)
+		      else  (res,mtl1)
+		    in
+		    let _ = Debug.ninfo_pprint ("EQ. FMT: " ^ (string_of_map_table_list mtl2)) no_pos in
+		    (res,mtl2)
+		  )
+		  |_ -> report_error no_pos "not handle Or f1 yet" )(*(false,mtl))*)
+    |CF.Or b1 ->  report_error no_pos "not handle Or f1 yet"
+*)
