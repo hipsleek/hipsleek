@@ -40,21 +40,31 @@ HP_550(v_node_30_573,y,x) * x::node<val_30_558,v_node_30_573> & v_node_30_573!=n
 x::node<val_30_558,v_node_30_573> * G(v_node_30_573,y)& v_node_30_573!=null --> G(x,y)
 */
 
-
 HeapPred H(node a).
 HeapPred H1(node a).
 HeapPred G(node a, node b).
 HeapPred G1(node a, node b).
 
-
 HeapPred H1(node a).
 HeapPred H2(node a).
 HeapPred G1(node a, node b, node c).
 
-void append(ref node x, node y)
-  infer[H1,H2,G1]
-  requires H1(x)*H2(y)
-  ensures G1(x,x',y);//'
+ll<> == self=null
+  or self::node<_,q>*q::ll<>
+  inv true;
+
+lseg<p> == self=p
+  or self::node<_,q>*q::lseg<p>
+  inv true;
+
+void append(node x, node y)
+  /* infer[H1,H2,G1] */
+  /* requires H1(x)*H2(y) */
+  /* ensures G1(x,y);//' */
+  requires x::ll<> * y::ll<> & x!=null
+  ensures  x::ll<> ; 
+  requires x::lseg<null> & x!=null  // H(x,y)
+  ensures  x::lseg<y> ;             // G(x,y)
 {
   if (x.next == null)
     x.next = y;
