@@ -528,3 +528,13 @@ match h with
 
 	let matched_data_nodes = match_mem_formula_data fl1 list_of_data_nodes in
  *) 
+ 
+let rec transform_to_tmp_ann (ann_lst: CF.ann list) : CF.ann list =
+  match ann_lst with
+    | [] -> []
+    | ann_l::tl ->
+      begin
+	match ann_l with 
+	  | CF.ConstAnn(ann)  -> CF.TempAnn(CF.ConstAnn(ann)) :: (transform_to_tmp_ann tl)
+	  | _ -> ann_l :: (transform_to_tmp_ann tl)
+      end
