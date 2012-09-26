@@ -22,26 +22,40 @@ node get_next(node x)
   node tmp = x.next;
   x.next = null;
   return tmp;
-  dprint;
+	//dprint;
 }
 
 /*
 
-dprint: sa/hip/ll-get-next.ss:25: ctx:  List of Failesc Context: [FEC(0, 1, 0 )]
+-----constrs------
+H(x) --> x::node<val_22_535',next_22_536'> * HP_551(next_22_536',x)
+HP_551(v_node_24_540',x) * x::node<val_22_560,next_23_539'> --> G(x,v_node_24_540')
 
-  State:HP_551(tmp_19',x) * x'::node<val_22_560,next_23_539'>&x'=x & next_23_539'=null & v_node_24_540'=tmp_19' & res=v_node_24_540'
+//dprint: HP_551(v_node_24_540',x) * x::node<val_22_560,next_23_539'> & next_23_539'=null
+//Lost infomation: next_23_539'=null
 
-      Try HP_551(tmp_19',x) * x::node<val_22_560,next_23_539'>& next_23_539'=null & v_node_24_540'=tmp_19' & res=v_node_24_540' |- G(x,res)
+------defs---------
+H(x)::  x::node<val_22_535',next_22_536'> * HP_566(x) or x::node<val_22_535',next_22_536'> * HP_563(x)
+HP_565(v_node_24_540')::  HP_564(v_node_24_540')
+HP_566(x)::  HP_563(x)
+G(x,v_node_24_540')::  HP_563(x) * HP_564(v_node_24_540')
+HP_551(v_node_24_540',x)::  HP_565(v_node_24_540') * HP_566(x)
+
+
+*/
 
 
 
-H(x) --> x::node<_,b> * HP_1285(b,x)
-HP_1285(b,x) * x::node<val_214_1294,next_215_914'> --> G(x,b)
 
-normalize
-H(x) --> x::node<_,b> * HP_1285(b)
-HP_1285(b) * x::node<val_214_1294,next_215_914'> --> G(x,b)
-//lost infomation
+
+
+
+
+
+
+
+/*
+
 
 expect:
 H(x) -> x::node<_,b> * H1(x,b)
