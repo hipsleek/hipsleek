@@ -7,6 +7,7 @@ open Gen.Basic
 open Mcpure
 open Cpure
 open Mcpure_D
+open Log
 
 module CP = Cpure
 module MCP = Mcpure
@@ -79,66 +80,7 @@ let string_of_prover prover = match prover with
 	| AUTO -> "AUTO - omega, z3, mona, coq"
 	| DP -> "Disequality Solver"
   | SPASS -> "SPASS"
-
-(* TODO: Add SIMPLIFY, HULL, ... *)
-type proof_type = 
-	| IMPLY of (CP.formula * CP.formula)
-	| SAT of CP.formula
-	| SIMPLIFY of CP.formula
-
-type proof_res =
-	| BOOL of bool
-	| FORMULA of CP.formula
-
-type proof_log = {
-	log_id : string; (* TODO: Should change to integer for performance *)
-	log_prover : tp_type;
-	log_type : proof_type option;
-	log_time : float;
-	log_res : proof_res;
-}
-
-let proof_log_tbl : (string, proof_log) Hashtbl.t = Hashtbl.create 200
-
-let add_proof_log pno tp ptype time res =
-	if !Globals.proof_logging then
-		let plog = {
-			log_id = pno;
-			log_prover = tp;
-			log_type = Some ptype;
-			log_time = time;
-			log_res = res; } in
-		Hashtbl.add proof_log_tbl pno plog
-	else ()
-	
-let find_bool_proof_res pno =
-	try 
-		let log = Hashtbl.find proof_log_tbl pno in
-		match log.log_res with
-		| BOOL r -> r
-		| _ -> report_error no_pos "Fatal error with Proof Logging: Unexpected result."
-	with _ -> report_error no_pos "Fatal error with Proof Logging. Do remember to enable proof logging before using LOG."
-
-let find_formula_proof_res pno =
-	try 
-		let log = Hashtbl.find proof_log_tbl pno in
-		match log.log_res with
-		| FORMULA r -> r
-		| _ -> report_error no_pos "Fatal error with Proof Logging: Unexpected result."
-	with _ -> report_error no_pos "Fatal error with Proof Logging. Do remember to enable proof logging before using LOG."	
-			
-let proof_log_to_file () = 
-	let out_chn = 
-		(try Unix.mkdir "logs" 0o750 with _ -> ());
-		open_out ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))) in
-	output_value out_chn proof_log_tbl
-	
-let file_to_proof_log () =
-	try 
-		let in_chn = open_in ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))) in
-		let tbl = input_value in_chn in
-		Hashtbl.iter (fun k log -> Hashtbl.add proof_log_tbl k log) tbl
-	with _ -> report_error no_pos "File of proof logging cannot be opened."
+	| LOG -> "LOG"
 
 let sat_cache = ref (Hashtbl.create 200)
 let imply_cache = ref (Hashtbl.create 200)
@@ -505,6 +447,7 @@ let string_of_tp tp = match tp with
    | AUTO -> "auto"
   | DP -> "dp"
   | SPASS -> "spass"
+	| LOG -> "log"
 
 let name_of_tp tp = match tp with
   | OmegaCalc -> "Omega Calculator"
@@ -527,6 +470,7 @@ let name_of_tp tp = match tp with
   | AUTO -> "Omega, Z3, Mona, Coq"
   | DP -> "DP"
   | SPASS -> "SPASS"
+	| LOG -> "LOG"
 
 let log_file_of_tp tp = match tp with
   | OmegaCalc -> "allinput.oc"
@@ -1108,7 +1052,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
 	in 
 	let tstop = Gen.Profiling.get_time () in
   let _ = Gen.Profiling.pop_time "tp_is_sat" 
-  in add_proof_log sat_no !tp (SAT f) (tstop -. tstart) (BOOL res); res
+  in add_proof_log sat_no (string_of_prover !tp) (SAT f) (tstop -. tstart) (BOOL res); res
 	
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) = 
 	Debug.no_2 "tp_is_sat_no_cache" 
@@ -1269,7 +1213,7 @@ let simplify (f : CP.formula) : CP.formula =
 		  in
 		  CP.set_il_formula_with_dept_list r rel_vars_lst
 	    else r
-			in add_proof_log simpl_no !tp (SIMPLIFY f) (tstop -. tstart) (FORMULA res); res
+			in add_proof_log simpl_no (string_of_prover !tp) (SIMPLIFY f) (tstop -. tstart) (FORMULA res); res
       with | _ -> f)
 
 let simplify (f:CP.formula):CP.formula =
@@ -1592,7 +1536,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 				Prooftracer.add_pure_imply ante conseq r (string_of_prover !tp) (get_generated_prover_input ()) (get_prover_original_output ());
 				Prooftracer.pop_div ();
 			end
-	in add_proof_log imp_no !tp (IMPLY (ante, conseq)) (tstop -. tstart) (BOOL r); r
+	in add_proof_log imp_no (string_of_prover !tp) (IMPLY (ante, conseq)) (tstop -. tstart) (BOOL r); r
 ;;
 
 let tp_imply_no_cache ante conseq imp_no timeout process =

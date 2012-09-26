@@ -190,7 +190,7 @@ let process_source_full source =
     let _ = Tpdispatcher.stop_prover () in
 		
 		(* Proof Logging *)
-		let _ = Tpdispatcher.proof_log_to_file () in
+		let _ = if !Globals.proof_logging then Log.proof_log_to_file () else () in
     
     (* An Hoa : export the proof to html *)
     let _ = if !Globals.print_proof then
