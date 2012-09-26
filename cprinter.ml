@@ -1465,10 +1465,10 @@ let pr_hprel_lhs_rhs (lhs,rhs) =
   (* fmt_string (CP.print_only_lhs_rhs rel) *)
   fmt_open_box 1;
   fmt_string "(";
-  pr_formula lhs;
+  prtt_pr_formula lhs;
   fmt_string ")";
   fmt_string " --> ";
-  pr_formula rhs;
+  prtt_pr_formula rhs;
   fmt_close()
 
 let pr_par_def (f1,f2,f3) = 
