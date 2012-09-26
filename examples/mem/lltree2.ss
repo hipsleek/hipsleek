@@ -46,7 +46,7 @@ treeseg<p,ph,h,S> == case {
 /* 	memE S->(node<@L,@A,@M,@M,@M>); */
 		
 // proven successfully
-/* lemma self::tree<p,S> <- self::treeseg<p,ph,h,S1> * h::tree<ph,S2> & S = union(S1,S2); */
+lemma self::tree<p,S> <- self::treeseg<p,ph,h,S1> * h::tree<ph,S2> & S = union(S1,S2); 
 
 
 lemma self::tree<p,S> & h in S & h=self
