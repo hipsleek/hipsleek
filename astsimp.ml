@@ -4241,23 +4241,23 @@ and trans_pure_formula (f0 : IP.formula) stab : CP.formula =
 
 and trans_pure_formula_x (f0 : IP.formula) stab : CP.formula =
   match f0 with
-    | IP.BForm (bf,lbl) -> CP.BForm (trans_pure_b_formula bf stab , lbl) 
+    | IP.BForm (bf,lbl,fo) -> CP.BForm (trans_pure_b_formula bf stab , lbl, fo) 
     | IP.And (f1, f2, pos) ->
           let pf1 = trans_pure_formula f1 stab in
           let pf2 = trans_pure_formula f2 stab in CP.mkAnd pf1 pf2 pos
     | IP.AndList b -> CP.mkAndList (map_l_snd (fun c-> trans_pure_formula c stab) b)
-    | IP.Or (f1, f2,lbl, pos) ->
+    | IP.Or (f1, f2, lbl, fo, pos) ->
           let pf1 = trans_pure_formula f1 stab in
-          let pf2 = trans_pure_formula f2 stab in CP.mkOr pf1 pf2 lbl pos
-    | IP.Not (f, lbl, pos) -> let pf = trans_pure_formula f stab in CP.mkNot pf lbl pos
-    | IP.Forall ((v, p), f, lbl, pos) ->
+          let pf2 = trans_pure_formula f2 stab in CP.mkOr pf1 pf2 lbl fo pos
+    | IP.Not (f, lbl, fo, pos) -> let pf = trans_pure_formula f stab in CP.mkNot pf lbl fo pos
+    | IP.Forall ((v, p), f, lbl, fo, pos) ->
           let pf = trans_pure_formula f stab in
           let v_type = Cpure.type_of_spec_var (trans_var (v,Unprimed) stab pos) in
-          let sv = CP.SpecVar (v_type, v, p) in CP.mkForall [ sv ] pf lbl pos
-    | IP.Exists ((v, p), f, lbl, pos) ->
+          let sv = CP.SpecVar (v_type, v, p) in CP.mkForall [ sv ] pf lbl fo pos
+    | IP.Exists ((v, p), f, lbl, fo, pos) ->
           let pf = trans_pure_formula f stab in
           let sv = trans_var (v,p) stab pos in
-	      CP.mkExists [ sv ] pf lbl pos
+	      CP.mkExists [ sv ] pf lbl fo pos
 			  
 and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
   Debug.no_1 "trans_pure_b_formula" (Iprinter.string_of_b_formula) (Cprinter.string_of_b_formula) (fun b -> trans_pure_b_formula_x b stab) b0 			
@@ -4823,12 +4823,12 @@ and gather_type_info_exp_x a0 stab et =
 
 and gather_type_info_pure_x prog (p0 : IP.formula) (stab : spec_var_table) : unit =
   match p0 with
-    | IP.BForm (b,_) -> gather_type_info_b_formula prog b stab
+    | IP.BForm (b,_,_) -> gather_type_info_b_formula prog b stab
     | IP.And (p1, p2, pos) | IP.Or (p1, p2, _, pos) ->
           (gather_type_info_pure prog p1 stab; gather_type_info_pure prog p2 stab)
-	| IP.AndList b -> List.iter (fun (_,c)-> gather_type_info_pure prog c stab) b
-    | IP.Not (p1, _, pos) -> gather_type_info_pure_x prog p1 stab 
-    | IP.Forall ((qv, qp), qf, _,pos) | IP.Exists ((qv, qp), qf, _,pos) ->
+    | IP.AndList b -> List.iter (fun (_,c)-> gather_type_info_pure prog c stab) b
+    | IP.Not (p1, _, _, pos) -> gather_type_info_pure_x prog p1 stab 
+    | IP.Forall ((qv, qp), qf, _, _, pos) | IP.Exists ((qv, qp), qf, _, _, pos) ->
 	      if (H.mem stab qv) then
             if !check_shallow_var
 	        then
@@ -6576,7 +6576,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     | CF.Or o -> (get_or_list o.CF.formula_or_f1)@(get_or_list o.CF.formula_or_f2) in
   
   let rec get_pure_conj_list (f:CP.formula):(CP.formula * (bool*CP.b_formula) list) = match f with
-    | CP.BForm (l,_) -> (CP.mkTrue no_pos , [(true,l)])
+    | CP.BForm (l,_,fo) -> (CP.mkTrue fo no_pos , [(true,l)])
     | CP.And (f1,f2,_ )-> 
           let l1,l2 = (get_pure_conj_list f1) in
           let r1,r2 = (get_pure_conj_list f2) in
@@ -6586,10 +6586,10 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
 		  (CP.mkAndList l1, List.concat l2) 
     | CP.Or _ -> (f,[])
     | CP.Not (nf,_,_) -> (match nf with
-        |CP.BForm (l,_) ->(CP.mkTrue no_pos, [(false,l)]) 
+        |CP.BForm (l,_,fo) ->(CP.mkTrue fo no_pos, [(false,l)]) 
         |_ ->(f,[]))
-    | CP.Forall (_,ff,_,_) 
-    | CP.Exists (_,ff,_,_) -> (f,[]) in
+    | CP.Forall (_,ff,_,_,_) 
+    | CP.Exists (_,ff,_,_,_) -> (f,[]) in
   
 
   let filter_pure_conj_list pc  =
@@ -6668,8 +6668,8 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
               (*     (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l2r) None no_pos in *)
               (* Cristian's fixes which seem very slow *)
         | _,_ ->
-              let f1r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l1r in
-              let f2r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l2r in
+              let f1r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None,None)) no_pos) (CP.mkTrue None no_pos) l1r in
+              let f2r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None,None)) no_pos) (CP.mkTrue None no_pos) l2r in
               let tpi = fun f1 f2 -> TP.imply f1 f2 "" false None in
               if ((fun (c,_,_)-> c) (tpi f1r f2r)) then f2r
               else if ((fun (c,_,_)-> c) (tpi f2r f1r)) then f1r
@@ -6678,7 +6678,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       let lr = hull_invs v_l lr in
       (*let _ = print_string ("after hull: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula lr))^"\n") in*)
       let lr = let rec r f = match f with
-        | CP.BForm (l, _) -> [l]
+        | CP.BForm (l, _, _) -> [l]
         | CP.And (f1,f2,_) -> (r f1)@(r f2)
         | _ -> [] in 
       List.concat (List.map r lr) in  
@@ -6793,7 +6793,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
         : (formula_label * (CP.spec_var list * CP.b_formula list)) =  
     let n_c = List.fold_left (fun a (l,c)  ->  
         if (eq_formula_label l lbl) then a else 
-          let (b,_,_) = TP.imply f (CP.BForm (c,None)) "" false None in
+          let (b,_,_) = TP.imply f (CP.BForm (c,None,None)) "" false None in
           if b then c::a  else
             a) [] neg_br in
     let r = Gen.BList.remove_dups_eq CP.eq_b_formula_no_aset (pl@n_c) in 
@@ -6808,9 +6808,9 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   in
 
   let add_needed_inv uinvl (lbl,(_,rl)) =
-	let all_r = CP.join_conjunctions (List.map (fun c-> CP.BForm (c,None)) rl) in
+	let all_r = CP.join_conjunctions (List.map (fun c-> CP.BForm (c,None,None)) rl) in
 	let uinv2 = List.filter (fun c->
-	    let r,_,_ = TP.imply all_r (CP.BForm (c,None)) "" false None in
+	    let r,_,_ = TP.imply all_r (CP.BForm (c,None,None)) "" false None in
 	    not r) uinvl in
     (lbl, uinv2)
   in
@@ -6868,7 +6868,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
         | None -> false
         | Some bf ->
               begin
-                let bf = CP.BForm (bf,None) in
+                let bf = CP.BForm (bf,None,None) in
                 let remain_ls = Gen.BList.difference_eq (fun (f,_) -> eq_formula_label f) orig_pf ls in
                 if remain_ls==[] then false
                 else List.for_all
@@ -7327,7 +7327,7 @@ and check_barrier_wf prog bd =
 	let f_gen_tot st = 
 		let v = CP.fresh_perm_var () in
 		let pf = CP.mkEq (CP.Var (v,no_pos)) (CP.Tsconst (Tree_shares.Ts.top,no_pos)) no_pos  in
-		f_gen_base st v (CP.BForm ((pf,None),None)) in
+		f_gen_base st v (CP.BForm ((pf,None),None,None)) in
 				
 	let one_entail f1 f2 = 
 		let ctx = CF.build_context (CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) f1 no_pos in

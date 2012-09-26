@@ -167,7 +167,7 @@ let elim_ex v f = match f with
 						
     
 let rec trans_f b f = match f with 
-  | BForm ((bf,_),_) -> trans_bf bf
+  | BForm ((bf,_),_,_) -> trans_bf bf
   | AndList _ -> Gen.report_error no_pos "dp.ml: encountered AndList, should have been already handled"
   | And (f1,f2,_) -> mkSAnd (trans_f b f1) (trans_f b f2)
   | Or (f1,f2,_,_) -> mkSOr (trans_f b f1) (trans_f b f2)

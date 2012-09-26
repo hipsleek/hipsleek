@@ -335,11 +335,11 @@ let matching_exp pf1 pf2 = match (pf1,pf2) with
   | _ -> (false,[])
 
 let matching f1 f2 = match (f1,f2) with
-  | (BForm ((pf1,o),p), BForm ((pf2,_),_)) -> 
+  | (BForm ((pf1,o),p,fo), BForm ((pf2,_),_,_)) -> 
 (*    DD.devel_hprint (add_str "matching: " (pr_list !CP.print_formula)) [f1;f2] no_pos;*)
     let (res1,res2) = matching_exp pf1 pf2 in
     if res2 = [] then (res1,[])
-    else (res1,List.map (fun r2 -> BForm((r2,o),p)) res2)
+    else (res1,List.map (fun r2 -> BForm((r2,o),p,fo)) res2)
   | _ -> (false,[])
 
 let can_merge f1 f2 =
