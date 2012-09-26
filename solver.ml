@@ -6540,7 +6540,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   subst_one_by_one_h rho_0 r_node)
             in
 	    let imm_n = get_imm r_node in
-        let new_consumed = if not(isLend imm_n || isAccs imm_n) && not(!allow_field_ann) then  mkStarH consumed_h estate.es_heap pos 28  else  estate.es_heap in
+        let new_consumed = if not(isLend imm_n || isAccs imm_n) (*&& not(!allow_field_ann)*) then  mkStarH consumed_h estate.es_heap pos 28  else  estate.es_heap in
 	     (*let _ = print_string("\ncris: new_consumed = " ^ (Cprinter.string_of_h_formula new_consumed) ) in *)
 	     (*let _ = print_string("\ncris: new_ante = " ^ (Cprinter.string_of_formula new_ante) ) in *)
             let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with

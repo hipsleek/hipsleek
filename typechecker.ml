@@ -925,12 +925,20 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   stk_vars # pop_list lsv;
                   let _ = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
                   let tmp_res2 = 
-		            if not(CF.isLend imm) && not(CF.isAccs imm) && not(!Globals.allow_field_ann) then 
+		            if not(CF.isLend imm) && not(CF.isAccs imm) (*&& not(!Globals.allow_field_ann)*)then 
 		              CF.normalize_max_renaming_list_failesc_context vheap pos true tmp_res1 
     			          (* for Lend, Accs and field level annotations it should not be added back *)
-		            else tmp_res1
-		          in
+		            else tmp_res1 
+		          in 
                   let _ = CF.must_consistent_list_failesc_context "bind 6" tmp_res2  in
+                  let tmp_res2 = 
+                  if(!Globals.allow_field_ann) then
+                  let idf = (fun c -> c) in
+		  CF.transform_list_failesc_context (idf,idf,
+		  (fun es -> CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;})) 
+		  tmp_res2 
+		  else tmp_res2
+		  in
                   let tmp_res3 = CF.push_exists_list_failesc_context vs_prim tmp_res2 in
                   let _ = CF.must_consistent_list_failesc_context "bind 7" tmp_res3  in
 		          let res = if !Globals.elim_exists then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
@@ -1038,7 +1046,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_name = c;
 		        CF.h_formula_data_derv = false;
 		        CF.h_formula_data_imm = CF.ConstAnn(Mutable);
-                CF.h_formula_data_param_imm = List.map (fun _ -> CF.ConstAnn(Mutable)) heap_args; (* (andreeac) to check: too weak *)
+                CF.h_formula_data_param_imm = List.map (fun _ -> CF.ConstAnn(Mutable)) heap_args; 
+                (* (andreeac) to check: too weak *)	     
 		        CF.h_formula_data_perm = None; (*LDK: deal later*)
 			    CF.h_formula_data_origins = []; (*deal later ???*)
 			    CF.h_formula_data_original = true; (*deal later ???*)

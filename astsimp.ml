@@ -3458,7 +3458,7 @@ and compute_ann_list_x all_fields (diff_fields : ident list) (default_ann : CF.a
   match all_fields with
     | ((_,h),_,_) :: r ->
       if (List.mem h diff_fields) then default_ann :: (compute_ann_list_x r diff_fields default_ann)
-      else (CF.ConstAnn(Accs)) :: (compute_ann_list_x r diff_fields default_ann)
+      else let ann = if(!Globals.allow_field_ann) then (CF.ConstAnn(Accs)) else default_ann in ann:: (compute_ann_list_x r diff_fields default_ann)
     | [] -> []
 
 and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
