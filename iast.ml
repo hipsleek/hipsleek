@@ -220,41 +220,49 @@ and exp_arrayat = { exp_arrayat_array_base : exp; (* An Hoa : modified from a si
 (* An Hoa : array memory allocation expression *)
 and exp_aalloc = { exp_aalloc_etype_name : ident; (* Name of the base element *)
 	     exp_aalloc_dimensions : exp list; (* List of size for each dimensions *)
+       exp_aalloc_origin : formula_origin option;
 			 exp_aalloc_pos : loc; }
 
 and exp_assert = { exp_assert_asserted_formula : (F.struc_formula*bool) option;
 		   exp_assert_assumed_formula : F.formula option;
 		   exp_assert_path_id : formula_label;
+       exp_assert_origin : formula_origin option;
 		   exp_assert_pos : loc }
 
 and exp_assign = { exp_assign_op : assign_op;
 		   exp_assign_lhs : exp;
 		   exp_assign_rhs : exp;
 		   exp_assign_path_id : control_path_id;
+       exp_assign_origin : formula_origin option;
 		   exp_assign_pos : loc }
 
 and exp_binary = { exp_binary_op : bin_op;
 		   exp_binary_oper1 : exp;
 		   exp_binary_oper2 : exp;
 		   exp_binary_path_id : control_path_id;
+       exp_binary_origin : formula_origin option;
 		   exp_binary_pos : loc }
 
 and exp_bind = { exp_bind_bound_var : ident;
 		 exp_bind_fields : ident list;
 		 exp_bind_body : exp;
 		 exp_bind_path_id : control_path_id;
+     exp_bind_origin : formula_origin option;
 		 exp_bind_pos : loc }
     
 and exp_break = { exp_break_jump_label : jump_label_type;
 		  exp_break_path_id : control_path_id;
+      exp_break_origin : formula_origin option;
 		  exp_break_pos : loc }	
 
 and exp_block = { exp_block_body : exp;
 		  exp_block_jump_label : jump_label_type;
 		  exp_block_local_vars: (ident*typ*loc) list;
+      exp_block_origin : formula_origin option;
 		  exp_block_pos : loc }
 
 and exp_bool_lit = { exp_bool_lit_val : bool;
+         exp_bool_origin : formula_origin option;
 		     exp_bool_lit_pos : loc }
 			 
 and exp_barrier = {exp_barrier_recv : ident; exp_barrier_pos : loc}
@@ -263,12 +271,14 @@ and exp_call_nrecv = { exp_call_nrecv_method : ident;
                exp_call_nrecv_lock : ident option;
 		       exp_call_nrecv_arguments : exp list;
 		       exp_call_nrecv_path_id : control_path_id;
+           exp_call_nrecv_origin : formula_origin option;
 		       exp_call_nrecv_pos : loc }
 
 and exp_call_recv = { exp_call_recv_receiver : exp;
 		      exp_call_recv_method : ident;
 		      exp_call_recv_arguments : exp list;
 		      exp_call_recv_path_id : control_path_id;
+          exp_call_recv_origin : formula_origin option;
 		      exp_call_recv_pos : loc }
 
 and exp_catch = { exp_catch_var : ident option ;
@@ -276,48 +286,60 @@ and exp_catch = { exp_catch_var : ident option ;
 		  exp_catch_alt_var_type : typ option; 
 		  exp_catch_flow_var : ident option;
 		  exp_catch_body : exp;											   
+      exp_catch_origin : formula_origin option;
 		  exp_catch_pos : loc }
     
 and exp_cast = { exp_cast_target_type : typ;
 		 exp_cast_body : exp;
+     exp_cast_origin : formula_origin option;
 		 exp_cast_pos : loc }
 
 and exp_cond = { exp_cond_condition : exp;
 		 exp_cond_then_arm : exp;
 		 exp_cond_else_arm : exp;
 		 exp_cond_path_id : control_path_id;
+     exp_cond_origin : formula_origin option;
 		 exp_cond_pos : loc }
 
 and exp_const_decl = { exp_const_decl_type : typ;
 		       exp_const_decl_decls : (ident * exp * loc) list;
+           exp_const_origin : formula_origin option;
 		       exp_const_decl_pos : loc }
 
 and exp_continue = { exp_continue_jump_label : jump_label_type;
 		     exp_continue_path_id : control_path_id;
+         exp_continue_origin : formula_origin option;
 		     exp_continue_pos : loc }
     
 and exp_debug = { exp_debug_flag : bool;
+      exp_debug_origin : formula_origin option;
 		  exp_debug_pos : loc }
 
 and exp_finally = { exp_finally_body : exp;
+        exp_finally_origin : formula_origin option;
 		    exp_finally_pos : loc }
 
 and exp_float_lit = { exp_float_lit_val : float;
+          exp_float_lit_origin : formula_origin option;
 		      exp_float_lit_pos : loc }
 
 and exp_int_lit = { exp_int_lit_val : int;
+        exp_int_lit_origin : formula_origin option;
 		    exp_int_lit_pos : loc }
 
 and exp_java = { exp_java_code : string;
+     exp_java_origin : formula_origin option;
 		 exp_java_pos : loc }
 
 and exp_member = { exp_member_base : exp;
 		   exp_member_fields : ident list;
 		   exp_member_path_id : control_path_id;
+       exp_member_origin : formula_origin option;
 		   exp_member_pos : loc }
 
 and exp_new = { exp_new_class_name : ident;
 		exp_new_arguments : exp list;
+    exp_new_origin : formula_origin option;
 		exp_new_pos : loc }
 
 and exp_raise = { exp_raise_type : rise_type;
@@ -325,22 +347,27 @@ and exp_raise = { exp_raise_type : rise_type;
 		  exp_raise_from_final :bool; (*if so the result can have any type...*)
 		  exp_raise_use_type : bool; 
 		  exp_raise_path_id : control_path_id;
+      exp_raise_origin : formula_origin option;
 		  exp_raise_pos : loc }
     
 and exp_return = { exp_return_val : exp option;
 		   exp_return_path_id : control_path_id;
+       exp_return_origin : formula_origin option;
 		   exp_return_pos : loc }
 
 and exp_seq = { exp_seq_exp1 : exp;
 		exp_seq_exp2 : exp;
+    exp_seq_origin : formula_origin option;
 		exp_seq_pos : loc }
 
-and exp_this = { exp_this_pos : loc }
+and exp_this = {exp_this_origin : formula_origin option;
+                exp_this_pos : loc }
 
 and exp_try = { exp_try_block : exp;
 		exp_catch_clauses : exp list;
 		exp_finally_clause : exp list;
 		exp_try_path_id : control_path_id;
+    exp_try_origin : formula_origin option;
 		exp_try_pos : loc}
 
 (*and exp_throw = { exp_throw_type : ident;
@@ -349,13 +376,16 @@ and exp_try = { exp_try_block : exp;
 and exp_unary = { exp_unary_op : uni_op;
 		  exp_unary_exp : exp;
 		  exp_unary_path_id : control_path_id;
+      exp_unary_origin : formula_origin option;
 		  exp_unary_pos : loc }
 
 and exp_var = { exp_var_name : ident;
+    exp_var_origin : formula_origin option;
 		exp_var_pos : loc }
 
 and exp_var_decl = { exp_var_decl_type : typ;
                      exp_var_decl_decls : (ident * exp option * loc) list;
+                     exp_var_origin : formula_origin option;
                      exp_var_decl_pos : loc }
 
 and exp_while = { exp_while_condition : exp;
@@ -367,6 +397,7 @@ and exp_while = { exp_while_condition : exp;
 		  exp_while_wrappings: (exp*ident) option;
 		  (*used temporary to store the break wrappers, these wrappers are catch clauses which will
 		    wrap the method so that it catches and converts the break flows with target jump_label_type*)
+      exp_while_origin : formula_origin option;
 		  exp_while_pos : loc }
 
 and exp_dprint = { exp_dprint_string : string;
