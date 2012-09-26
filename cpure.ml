@@ -8074,22 +8074,32 @@ and count_term_b_formula bf =
         | _ -> 0)
   | _ -> 0
 
-let rec remove_cnts exist_vars f = match f with
-  | BForm _ -> if intersect (fv f) exist_vars != [] then mkTrue no_pos else f
-  | And (f1,f2,p) -> mkAnd (remove_cnts exist_vars f1) (remove_cnts exist_vars f2) p
-  | Or (f1,f2,o,p) -> mkOr (remove_cnts exist_vars f1) (remove_cnts exist_vars f2) o p
-  | Not (f,o,p) -> Not (remove_cnts exist_vars f,o,p)
-  | Forall (v,f,o,p) -> Forall (v,remove_cnts exist_vars f,o,p)
-  | Exists (v,f,o,p) -> Exists (v,remove_cnts exist_vars f,o,p)
+let rec remove_cnts remove_vars f = match f with
+  | BForm _ -> if intersect (fv f) remove_vars != [] then mkTrue no_pos else f
+  | And (f1,f2,p) -> mkAnd (remove_cnts remove_vars f1) (remove_cnts remove_vars f2) p
+  | Or (f1,f2,o,p) -> 
+    let res1 = remove_cnts remove_vars f1 in
+    let res2 = remove_cnts remove_vars f2 in
+    if isConstTrue res1 then res2
+    else if isConstTrue res2 then res1
+    else mkOr res1 res2 o p
+  | Not (f,o,p) -> mkNot (remove_cnts remove_vars f) o p
+  | Forall (v,f,o,p) -> mkForall [v] (remove_cnts remove_vars f) o p
+  | Exists (v,f,o,p) -> mkExists [v] (remove_cnts remove_vars f) o p
   | AndList _ -> report_error no_pos "unexpected AndList"
 
 let rec remove_cnts2 keep_vars f = match f with
   | BForm _ -> if intersect (fv f) keep_vars = [] then mkTrue no_pos else f
   | And (f1,f2,p) -> mkAnd (remove_cnts2 keep_vars f1) (remove_cnts2 keep_vars f2) p
-  | Or (f1,f2,o,p) -> mkOr (remove_cnts2 keep_vars f1) (remove_cnts2 keep_vars f2) o p
-  | Not (f,o,p) -> Not (remove_cnts2 keep_vars f,o,p)
-  | Forall (v,f,o,p) -> Forall (v,remove_cnts2 keep_vars f,o,p)
-  | Exists (v,f,o,p) -> Exists (v,remove_cnts2 keep_vars f,o,p)
+  | Or (f1,f2,o,p) -> 
+    let res1 = remove_cnts2 keep_vars f1 in
+    let res2 = remove_cnts2 keep_vars f2 in
+    if isConstTrue res1 then res2
+    else if isConstTrue res2 then res1
+    else mkOr res1 res2 o p
+  | Not (f,o,p) -> mkNot (remove_cnts2 keep_vars f) o p
+  | Forall (v,f,o,p) -> mkForall [v] (remove_cnts2 keep_vars f) o p
+  | Exists (v,f,o,p) -> mkExists [v] (remove_cnts2 keep_vars f) o p
   | AndList _ -> report_error no_pos "unexpected AndList"
 
 let rec is_num_dom_exp_0 e = match e with
