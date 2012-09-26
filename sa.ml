@@ -696,7 +696,7 @@ and collect_par_defs_one_constr_new prog constr =
   let pr2 = pr_list_ln string_of_par_def_w_name in
   let pr4 = pr_list_ln pr1 in
   let pr3 = (pr_pair pr4 pr2) in
-  Debug.ho_1 "collect_par_defs_one_constr_new" pr1 pr3
+  Debug.no_1 "collect_par_defs_one_constr_new" pr1 pr3
       (fun _ -> collect_par_defs_one_constr_new_x prog constr) constr
 
 (* - collect partial def
@@ -966,7 +966,8 @@ let get_hp_split_cands_x constrs =
   in
   (*remove duplicate*)
   let cands = (List.concat (List.map helper constrs)) in
-  Gen.BList.remove_dups_eq (fun (CF.HRel x1) (CF.HRel x2) -> CF.check_eq_hrel_node x1 x2) cands
+  Gen.BList.remove_dups_eq (fun (CF.HRel (hp1,_,_)) (CF.HRel (hp2,_,_)) ->
+      CP.eq_spec_var hp1 hp2) cands
 
 let get_hp_split_cands constrs =
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
