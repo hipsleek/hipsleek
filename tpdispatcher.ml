@@ -32,6 +32,7 @@ type tp_type =
   | AUTO (* Omega, Z3, Mona, Coq *)
   | DP (*ineq prover for proof slicing experim*)
   | SPASS
+	| LOG (* Using previous results instead of invoking the actual provers *)
 
 let test_db = false
 
@@ -79,6 +80,45 @@ let string_of_prover prover = match prover with
 	| DP -> "Disequality Solver"
   | SPASS -> "SPASS"
 
+(* TODO: Add SIMPLIFY, HULL, ... *)
+type proof_type = 
+	| IMPLY of (CP.formula * CP.formula)
+	| SAT of CP.formula
+
+type proof_log = {
+	log_id : string; (* TODO: Should change to integer for performance *)
+	log_prover : tp_type;
+	log_type : proof_type;
+	log_res : bool;
+}
+
+let proof_log_tbl : (string, proof_log) Hashtbl.t = Hashtbl.create 200
+
+let add_proof_log pno tp ptype res =
+	if !Globals.proof_logging then
+		let plog = {
+			log_id = pno;
+			log_prover = tp;
+			log_type = ptype;
+			log_res = res; } in
+		Hashtbl.add proof_log_tbl pno plog
+	else ()
+	
+let find_proof_res pno =
+	try 
+		let log = Hashtbl.find proof_log_tbl pno in
+		log.log_res
+	with _ -> report_error no_pos "Fatal error with Proof Logging. Do remember to enable proof logging before using LOG."
+	
+let proof_log_to_file () = 
+	let out = Hashtbl.fold (fun k log a -> a ^
+		(log.log_id ^ "\n" ^ 
+		(string_of_prover log.log_prover) ^ "\n" ^ 
+		(string_of_bool log.log_res) ^ "\n")) proof_log_tbl "" in
+	let out_chn = 
+		(try Unix.mkdir "logs" 0o750 with _ -> ());
+		open_out ("logs/proof_log") in
+	Procutils.PrvComms.log_to_file true out_chn out
 
 let sat_cache = ref (Hashtbl.create 200)
 let imply_cache = ref (Hashtbl.create 200)
@@ -417,6 +457,8 @@ let set_tp tp_str =
     (Redlog.is_presburger := true; tp := RM)
   else if tp_str = "spass" then
     (tp := SPASS; prover_str := "z3"::!prover_str;)
+	else if tp_str = "log" then
+		(tp := LOG; prover_str := "log"::!prover_str)
   else
 	();
   check_prover_existence !prover_str
@@ -1040,9 +1082,14 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     else
 		  z3_is_sat wf
     | SPASS -> Spass.is_sat f sat_no
+		| LOG -> find_proof_res sat_no
   in let _ = Gen.Profiling.pop_time "tp_is_sat" 
-  in res
-
+  in add_proof_log sat_no !tp (SAT f) res; res
+	
+let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) = 
+	Debug.no_2 "tp_is_sat_no_cache" 
+	Cprinter.string_of_pure_formula (fun s -> s) string_of_bool
+	tp_is_sat_no_cache f sat_no
   
 let tp_is_sat_perm f sat_no = 
   if !perm=Dperm then match CP.has_tscons f with
@@ -1516,8 +1563,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_2_loop "tp_imply_no_cache" pr pr string_of_bool
-  (fun _ _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq
+  Debug.no_3_loop "tp_imply_no_cache" pr pr (fun s -> s) string_of_bool
+  (fun _ _ _ -> tp_imply_no_cache ante conseq imp_no timeout process) ante conseq imp_no
 
 let tp_imply_perm ante conseq imp_no timeout process = 
  if !perm=Dperm then

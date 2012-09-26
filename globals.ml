@@ -607,6 +607,9 @@ let infer_slicing = ref false
 let multi_provers = ref false
 let is_sat_slicing = ref false
 
+(* Option for proof logging *)
+let proof_logging = ref false
+
 (* Options for invariants *)
 let do_infer_inv = ref false
 

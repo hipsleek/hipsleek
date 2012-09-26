@@ -188,6 +188,9 @@ let process_source_full source =
     end);
     (* Stopping the prover *)
     let _ = Tpdispatcher.stop_prover () in
+		
+		(* Proof Logging *)
+		let _ = Tpdispatcher.proof_log_to_file () in
     
     (* An Hoa : export the proof to html *)
     let _ = if !Globals.print_proof then
