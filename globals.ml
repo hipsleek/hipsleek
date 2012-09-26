@@ -897,3 +897,9 @@ let open_log_out s =
 	Unix.mkdir "logs" 0o750
  with _ -> ());
  open_out ("logs/"^s)
+
+let norm_file_name str =
+	for i = 0 to (String.length str) - 1 do
+		if str.[i] = '.' || str.[i] = '/' then str.[i] <- '_'
+	done;
+	str

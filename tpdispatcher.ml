@@ -128,23 +128,14 @@ let find_formula_proof_res pno =
 	with _ -> report_error no_pos "Fatal error with Proof Logging. Do remember to enable proof logging before using LOG."	
 			
 let proof_log_to_file () = 
-	(* let out = Hashtbl.fold (fun k log a -> a ^                 *)
-	(* 	(log.log_id ^ "\n" ^                                      *)
-	(* 	(string_of_prover log.log_prover) ^ "\n" ^                *)
-	(* 	(string_of_float log.log_time) ^ "\n" ^                   *)
-	(* 	(string_of_bool log.log_res) ^ "\n")) proof_log_tbl "" in *)
-	(* let out_chn =                                              *)
-	(* 	(try Unix.mkdir "logs" 0o750 with _ -> ());               *)
-	(* 	open_out ("logs/proof_log") in                            *)
-	(* Procutils.PrvComms.log_to_file true out_chn out            *)
 	let out_chn = 
 		(try Unix.mkdir "logs" 0o750 with _ -> ());
-		open_out ("logs/proof_log") in
+		open_out ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))) in
 	output_value out_chn proof_log_tbl
 	
 let file_to_proof_log () =
 	try 
-		let in_chn = open_in ("logs/proof_log") in
+		let in_chn = open_in ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))) in
 		let tbl = input_value in_chn in
 		Hashtbl.iter (fun k log -> Hashtbl.add proof_log_tbl k log) tbl
 	with _ -> report_error no_pos "File of proof logging cannot be opened."
