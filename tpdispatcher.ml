@@ -33,7 +33,7 @@ type tp_type =
   | AUTO (* Omega, Z3, Mona, Coq *)
   | DP (*ineq prover for proof slicing experim*)
   | SPASS
-	| LOG (* Using previous results instead of invoking the actual provers *)
+  | LOG (* Using previous results instead of invoking the actual provers *)
 
 let test_db = false
 
@@ -79,9 +79,10 @@ let string_of_prover prover = match prover with
 	| OZ -> "Omega, z3"
 	| AUTO -> "AUTO - omega, z3, mona, coq"
 	| DP -> "Disequality Solver"
-  | SPASS -> "SPASS"
+	| SPASS -> "SPASS"
 	| LOG -> "LOG"
-
+  
+ 
 let sat_cache = ref (Hashtbl.create 200)
 let imply_cache = ref (Hashtbl.create 200)
 

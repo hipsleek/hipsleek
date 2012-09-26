@@ -10,6 +10,7 @@ open Cformula
 open Mcpure_D
 open Gen.Basic 
 open Label_only
+open Log
 
 module P = Cpure
 module MP = Mcpure
@@ -2037,6 +2038,25 @@ let string_of_barrier_decl (v: Cast.barrier_decl): string = poly_string_of_pr pr
 
 let printer_of_view_decl (fmt: Format.formatter) (v: Cast.view_decl) : unit =
   poly_printer_of_pr fmt pr_view_decl v 
+
+(*function to print proof logging*)
+let printer_of_proof_logging () =
+  let helper x= match x with 
+    |IMPLY y -> "Imply"
+    |SAT _-> "Sat" 
+    |SIMPLIFY _ -> "Simplify"
+  in
+ 	try 
+	  let _= print_endline ((Globals.norm_file_name (List.hd !Globals.source_files))) in
+		let in_chn = open_in ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))) in
+		let tbl = input_value in_chn in
+		let logstr= ref "" in
+		let _= Hashtbl.iter (fun k log -> logstr := !logstr ^ "id: "^ log.Log.log_id ^"\nProver: "^log.Log.log_prover^"\nLog_type: "^(match (log.Log.log_type) with |None -> ""|Some x-> helper x)^"\nTime: "^(string_of_float(log.Log.log_time))^"\nLog result: "^(match log.Log.log_res with
+		  |BOOL b -> string_of_bool b
+		  |FORMULA f -> string_of_pure_formula f)^ "\n") tbl in
+		let output="Proof Logging: \n"^(!logstr)^ "\nEnd of Proof logging" in
+		print_endline (output)
+	with _ -> report_error no_pos "File of proof logging cannot be opened." 
 
 (* function to print a list of strings *) 
 let rec string_of_ident_list l c = match l with 

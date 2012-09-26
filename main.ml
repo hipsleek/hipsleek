@@ -191,7 +191,7 @@ let process_source_full source =
 		
 		(* Proof Logging *)
 		let _ = if !Globals.proof_logging then Log.proof_log_to_file () else () in
-    
+		(*let _= Cprinter.printer_of_proof_logging () in*)
     (* An Hoa : export the proof to html *)
     let _ = if !Globals.print_proof then
     		begin 
