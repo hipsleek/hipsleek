@@ -84,41 +84,70 @@ let string_of_prover prover = match prover with
 type proof_type = 
 	| IMPLY of (CP.formula * CP.formula)
 	| SAT of CP.formula
+	| SIMPLIFY of CP.formula
+
+type proof_res =
+	| BOOL of bool
+	| FORMULA of CP.formula
 
 type proof_log = {
 	log_id : string; (* TODO: Should change to integer for performance *)
 	log_prover : tp_type;
-	log_type : proof_type;
-	log_res : bool;
+	log_type : proof_type option;
+	log_time : float;
+	log_res : proof_res;
 }
 
 let proof_log_tbl : (string, proof_log) Hashtbl.t = Hashtbl.create 200
 
-let add_proof_log pno tp ptype res =
+let add_proof_log pno tp ptype time res =
 	if !Globals.proof_logging then
 		let plog = {
 			log_id = pno;
 			log_prover = tp;
-			log_type = ptype;
+			log_type = Some ptype;
+			log_time = time;
 			log_res = res; } in
 		Hashtbl.add proof_log_tbl pno plog
 	else ()
 	
-let find_proof_res pno =
+let find_bool_proof_res pno =
 	try 
 		let log = Hashtbl.find proof_log_tbl pno in
-		log.log_res
+		match log.log_res with
+		| BOOL r -> r
+		| _ -> report_error no_pos "Fatal error with Proof Logging: Unexpected result."
 	with _ -> report_error no_pos "Fatal error with Proof Logging. Do remember to enable proof logging before using LOG."
-	
+
+let find_formula_proof_res pno =
+	try 
+		let log = Hashtbl.find proof_log_tbl pno in
+		match log.log_res with
+		| FORMULA r -> r
+		| _ -> report_error no_pos "Fatal error with Proof Logging: Unexpected result."
+	with _ -> report_error no_pos "Fatal error with Proof Logging. Do remember to enable proof logging before using LOG."	
+			
 let proof_log_to_file () = 
-	let out = Hashtbl.fold (fun k log a -> a ^
-		(log.log_id ^ "\n" ^ 
-		(string_of_prover log.log_prover) ^ "\n" ^ 
-		(string_of_bool log.log_res) ^ "\n")) proof_log_tbl "" in
+	(* let out = Hashtbl.fold (fun k log a -> a ^                 *)
+	(* 	(log.log_id ^ "\n" ^                                      *)
+	(* 	(string_of_prover log.log_prover) ^ "\n" ^                *)
+	(* 	(string_of_float log.log_time) ^ "\n" ^                   *)
+	(* 	(string_of_bool log.log_res) ^ "\n")) proof_log_tbl "" in *)
+	(* let out_chn =                                              *)
+	(* 	(try Unix.mkdir "logs" 0o750 with _ -> ());               *)
+	(* 	open_out ("logs/proof_log") in                            *)
+	(* Procutils.PrvComms.log_to_file true out_chn out            *)
 	let out_chn = 
 		(try Unix.mkdir "logs" 0o750 with _ -> ());
 		open_out ("logs/proof_log") in
-	Procutils.PrvComms.log_to_file true out_chn out
+	output_value out_chn proof_log_tbl
+	
+let file_to_proof_log () =
+	try 
+		let in_chn = open_in ("logs/proof_log") in
+		let tbl = input_value in_chn in
+		Hashtbl.iter (fun k log -> Hashtbl.add proof_log_tbl k log) tbl
+	with _ -> report_error no_pos "File of proof logging cannot be opened."
 
 let sat_cache = ref (Hashtbl.create 200)
 let imply_cache = ref (Hashtbl.create 200)
@@ -388,6 +417,7 @@ let incremMethodsO = ref (new incremMethods)
 let rec check_prover_existence prover_cmd_str =
   match prover_cmd_str with
     |[] -> ()
+		| "log"::rest -> check_prover_existence rest
     | prover::rest -> 
         (* let exit_code = Sys.command ("which "^prover) in *)
         (*Do not display system info in the website*)
@@ -957,6 +987,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let z3_is_sat f = Smtsolver.is_sat_ops pr_weak_z3 pr_strong_z3 f sat_no in
 
   let _ = Gen.Profiling.push_time "tp_is_sat" in
+	let tstart = Gen.Profiling.get_time () in
   let res = 
   match !tp with
 	| DP -> 
@@ -1082,9 +1113,11 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     else
 		  z3_is_sat wf
     | SPASS -> Spass.is_sat f sat_no
-		| LOG -> find_proof_res sat_no
-  in let _ = Gen.Profiling.pop_time "tp_is_sat" 
-  in add_proof_log sat_no !tp (SAT f) res; res
+		| LOG -> find_bool_proof_res sat_no
+	in 
+	let tstop = Gen.Profiling.get_time () in
+  let _ = Gen.Profiling.pop_time "tp_is_sat" 
+  in add_proof_log sat_no !tp (SAT f) (tstop -. tstart) (BOOL res); res
 	
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) = 
 	Debug.no_2 "tp_is_sat_no_cache" 
@@ -1143,6 +1176,8 @@ let simplify_omega f =
 	simplify_omega f
 
 let simplify (f : CP.formula) : CP.formula =
+	proof_no := !proof_no + 1;
+	let simpl_no = (string_of_int !proof_no) in
   if !Globals.no_simpl then f else
   if !perm=Dperm && CP.has_tscons f<>CP.No_cons then f 
   else 
@@ -1154,6 +1189,7 @@ let simplify (f : CP.formula) : CP.formula =
           Some res -> res
           | None -> f
     else
+			let tstart = Gen.Profiling.get_time () in
       (Gen.Profiling.push_time "simplify";
       try
         let r = match !tp with
@@ -1222,13 +1258,15 @@ let simplify (f : CP.formula) : CP.formula =
                   begin
                     (omega_simplify f);
                   end
+					| LOG -> find_formula_proof_res simpl_no
          | _ -> omega_simplify f in
         Gen.Profiling.pop_time "simplify";
+				let tstop = Gen.Profiling.get_time () in
 
             (*let _ = print_string ("\nsimplify: f after"^(Cprinter.string_of_pure_formula r)) in*)
 	    (* To recreate <IL> relation after simplifying *)
            (*let _ = print_string ("TP.simplify: ee formula:\n" ^ (Cprinter.string_of_pure_formula (Redlog.elim_exist_quantifier f))) in*)
-          if !Globals.do_slicing then
+        let res = if !Globals.do_slicing then
 	      let rel_vars_lst =
 		    let bfl = CP.break_formula f in
 		    (*let bfl_no_il = List.filter
@@ -1240,6 +1278,7 @@ let simplify (f : CP.formula) : CP.formula =
 		  in
 		  CP.set_il_formula_with_dept_list r rel_vars_lst
 	    else r
+			in add_proof_log simpl_no !tp (SIMPLIFY f) (tstop -. tstart) (FORMULA res); res
       with | _ -> f)
 
 let simplify (f:CP.formula):CP.formula =
@@ -1447,6 +1486,9 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let mona_imply a c = Mona.imply_ops pr_weak pr_strong ante_w conseq_s imp_no in
   let coq_imply a c = Coq.imply_ops pr_weak pr_strong ante_w conseq_s in
   let z3_imply a c = Smtsolver.imply_ops pr_weak_z3 pr_strong_z3 ante conseq timeout in
+	
+	let tstart = Gen.Profiling.get_time () in
+	
   let r = match !tp with
     | DP ->
         let r = Dp.imply ante_w conseq_s (imp_no^"XX") timeout in
@@ -1548,7 +1590,9 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
       else
         z3_imply (* Smtsolver.imply *) ante conseq (* timeout *)
   | SPASS -> z3_imply (* Smtsolver.imply  *)ante conseq (* timeout *)
+	| LOG -> find_bool_proof_res imp_no
   in
+	let tstop = Gen.Profiling.get_time () in
 	let _ = if should_output () then
 			begin
 				Prooftracer.push_pure_imply ante conseq r;
@@ -1557,8 +1601,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 				Prooftracer.add_pure_imply ante conseq r (string_of_prover !tp) (get_generated_prover_input ()) (get_prover_original_output ());
 				Prooftracer.pop_div ();
 			end
-	in
-		r
+	in add_proof_log imp_no !tp (IMPLY (ante, conseq)) (tstop -. tstart) (BOOL r); r
 ;;
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
@@ -2488,6 +2531,7 @@ let start_prover () =
   (*     Mona.start(); *)
   (*     Smtsolver.start(); *)
   (*     Coq.start (); *)
+	| LOG -> file_to_proof_log ()
   | _ -> Omega.start()
   
 let stop_prover () =
