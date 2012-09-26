@@ -4385,7 +4385,7 @@ let push_esc_elem  (e:esc_stack) (b:branch_ctx list): esc_stack =
   | [] -> e
   | _ ->
     match e with
-    | [] -> [((0,"",F_o_unknown),b)]
+    | [] -> [((0,""),b)]
     | (lbl,h)::t-> (lbl,b@h)::t 
   
 let push_esc_level (e:esc_stack) lbl : esc_stack = (lbl,[])::e
@@ -4800,7 +4800,7 @@ let rec merge_esc f e1 e2 =
   match e1,e2 with
     | [],[] -> []
     | (l1,b1)::z1,(l2,b2)::z2 ->
-        let (i1,_,_), (i2,_,_) = l1, l2 in 
+        let (i1,_), (i2,_) = l1, l2 in 
           let flag = not (i1==i2) in
           (if flag then 
             print_endline ("WARNING MISMATCH at merge_esc:\n"^(!print_esc_stack e1)^"\n"^(!print_esc_stack e2)))
@@ -5616,14 +5616,14 @@ let get_start_label ctx = match ctx with
   | SuccCtx sl -> 
     let rec helper c= match c with
       | Ctx e -> if (List.length e.es_path_label)==0 then ""
-                 else let (_,s,_) = fst (Gen.BList.list_last e.es_path_label) in s
+                 else let (_,s) = fst (Gen.BList.list_last e.es_path_label) in s
       | OCtx (c1,c2) -> helper c1 in
 	helper (List.hd sl)
 
 let get_start_partial_label (ctx:list_partial_context) =
   let rec helper c= match c with
     | Ctx e -> if (List.length e.es_path_label)==0 then ""
-               else let (_,s,_) = fst (Gen.BList.list_last e.es_path_label) in s
+               else let (_,s) = fst (Gen.BList.list_last e.es_path_label) in s
     | OCtx (c1,c2) -> helper c1 in
   let pc = List.hd ctx in
     if (rank pc) < 1. then ""
@@ -6061,8 +6061,8 @@ let rec fold_fail_context f (c:fail_type) =
     
 let rename_labels transformer e =
 	let n_l_f n_l = match n_l with
-				| None -> (fresh_branch_point_id "" F_o_tmp1)
-				| Some (_,s, fo) -> (fresh_branch_point_id s fo) in	
+				| None -> (fresh_branch_point_id "")
+				| Some (_,s) -> (fresh_branch_point_id s) in	
     let f_e_f e = None in
 	let f_f e = None in
 	let rec f_h_f e = match e with 
@@ -6095,8 +6095,8 @@ let rename_labels_formula (e:formula):formula = rename_labels transform_formula 
 		 		
 let rename_labels_formula_ante  e=
 	let n_l_f n_l = match n_l with
-				| None -> (fresh_branch_point_id "" F_o_unknown)
-				| Some (_,s,fo) -> (fresh_branch_point_id s fo) in	
+				| None -> (fresh_branch_point_id "")
+				| Some (_,s) -> (fresh_branch_point_id s) in	
     let f_e_f e = None in
 	let f_f e = None in
 	let rec f_h_f e = match e with 
@@ -6455,7 +6455,7 @@ let rec add_post post f = match f with
       let fec = match b.formula_struc_continuation with 
 				| Some b-> add_post post b
 				| _ -> let (svs,pf,(i_lbl,s_lbl)) = post in
-               EAssume (svs,pf,(fresh_formula_label s_lbl F_o_unknown)) in 
+               EAssume (svs,pf,(fresh_formula_label s_lbl)) in 
     EBase{b with formula_struc_continuation = Some fec}
   | ECase b -> ECase {b with formula_case_branches  = List.map (fun (c1,c2)-> (c1,(add_post post c2))) b.formula_case_branches;}
   | EAssume _ -> Err.report_error {Err.error_loc = no_pos; Err.error_text = "add post found an existing post\n"}
@@ -6563,14 +6563,14 @@ let filter_branches (br:formula_label list option) (f0:struc_formula) :struc_for
   
 let rec label_view (f0:struc_formula):struc_formula = 
   let rec label_formula (f:formula):formula = match f with
-    | Base b -> let (_,s,fo) = match b.formula_base_label with
+    | Base b -> let (_,s) = match b.formula_base_label with
                                | Some lbl -> lbl
-                               | None -> 0,"",F_o_unknown in
-                Base{b with formula_base_label = Some (fresh_formula_label s fo)} 
-    | Exists b -> let (_,s,fo) = match b.formula_exists_label with
+                               | None -> 0,"" in
+                Base{b with formula_base_label = Some (fresh_formula_label s)} 
+    | Exists b -> let (_,s) = match b.formula_exists_label with
                                | Some lbl -> lbl
-                               | None -> 0,"",F_o_unknown in
-                  Exists{b with formula_exists_label = Some (fresh_formula_label s fo)} 
+                               | None -> 0,"" in
+                  Exists{b with formula_exists_label = Some (fresh_formula_label s)} 
     | Or b -> Or{b with formula_or_f1 = label_formula b.formula_or_f1;formula_or_f2 = label_formula b.formula_or_f2;}  in
   let rec label_struc (f:struc_formula):struc_formula = match f with
     | EBase b -> EBase{b with formula_struc_continuation = map_opt label_struc b.formula_struc_continuation; formula_struc_base= label_formula b.formula_struc_base}

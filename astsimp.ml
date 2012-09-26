@@ -630,7 +630,7 @@ let rec seq_elim (e:C.exp):C.exp = match e with
   | C.Sharp _ -> e
   | C.Seq b -> if (!seq_to_try) then 
 					  C.Try ({	C.exp_try_type = b.C.exp_seq_type;
-								C.exp_try_path_id = fresh_strict_branch_point_id "" F_o_code;
+								C.exp_try_path_id = fresh_strict_branch_point_id "";
 								C.exp_try_body =  (seq_elim b.C.exp_seq_exp1);
 								C.exp_catch_clause = (C.Catch{
 														  C.exp_catch_flow_type = !norm_flow_int;
@@ -729,8 +729,8 @@ let rec while_labelling (e:I.exp):I.exp =
 						 let ne  = while_labelling (label_breaks nl b.I.exp_while_body) in
 						 let _  = exlist # add_edge nb brk_top in
 						 let _  = exlist # add_edge nc cont_top in 
-						 let nl1 = fresh_branch_point_id "" F_o_code in
-						 let nl2 = fresh_branch_point_id ""  F_o_code in
+						 let nl1 = fresh_branch_point_id "" in
+						 let nl2 = fresh_branch_point_id "" in
 						 let continue_try = I.mkTry ne [I.mkCatch None None nc None (I.Label ((nl1,1),I.Empty pos)) pos] [] nl1 pos in	
 						 let break_try = I.mkTry (I.This {I.exp_this_pos = pos}) [ I.mkCatch None None nb None (I.Label ((nl2,1),I.Empty pos)) pos] [] nl2 pos in
 						 Some (I.While {b with I.exp_while_body = continue_try;I.exp_while_wrappings= Some (break_try,nb)})
@@ -763,7 +763,7 @@ and while_return e ret_type = I.map_exp e (fun c-> match c with
 					Some (I.mkRaise (I.Const_flow loop_ret_flow) true b.I.exp_return_val false b.I.exp_return_path_id b.I.exp_return_pos) | _ -> None) in
 				let b = {b with I.exp_while_body = new_body} in
 				let pos = b.I.exp_while_pos in
-				let nl2 = fresh_branch_point_id "" F_o_code in
+				let nl2 = fresh_branch_point_id "" in
 				let vn = fresh_name () in
 				let return  = I.Return { I.exp_return_val = Some (I.Var { I.exp_var_name= vn; I.exp_var_pos = pos}); I.exp_return_path_id = nl2; I.exp_return_pos = pos} in
 				let catch = I.mkCatch (Some vn) (Some ret_type) loop_ret_flow None return pos in
@@ -2600,7 +2600,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_cond_else_arm = e3;
             I.exp_cond_path_id = pi;
             I.exp_cond_pos = pos } ->
-		    (* let _ = print_string ("trans_exp :: cond = " ^ Iprinter.string_of_exp e1 ^ " then branch = " ^ Iprinter.string_of_exp e2 ^ " else branch = " ^ Iprinter.string_of_exp e3 ^ "\n") in *) 
+            let _ = print_endline ("== ie = " ^ (Iprinter.string_of_exp ie)) in 
+            let _ = print_string ("trans_exp :: cond = " ^ Iprinter.string_of_exp e1 ^ " then branch = " ^ Iprinter.string_of_exp e2 ^ " else branch = " ^ Iprinter.string_of_exp e3 ^ "\n") in
             let (ce1, te1) = helper e1 in
             if not (CP.are_same_types te1 C.bool_type) then
               Err.report_error { Error.error_loc = pos; Error.error_text = "conditional expression is not bool";}
@@ -2645,7 +2646,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                           C.exp_seq_type = te2;
                           C.exp_seq_exp1 = vd;
                           C.exp_seq_exp2 = tmp_e1;
-                          C.exp_seq_pos = pos; } in (tmp_e2, te2))
+                          C.exp_seq_pos = pos; } in
+                      let _ = print_endline ("== tmp_e2 = " ^ (Cprinter.string_of_exp tmp_e2)) in 
+                      (tmp_e2, te2))
       | I.Debug { I.exp_debug_flag = flag; I.exp_debug_pos = pos } -> ((C.Debug { C.exp_debug_flag = flag; C.exp_debug_pos = pos; }), C. void_type)
       | I.Time (b,s,p) -> (C.Time (b,s,p), C. void_type)
       | I.Dprint { I.exp_dprint_string = str; I.exp_dprint_pos = pos } ->
@@ -3146,7 +3149,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_catch_clauses = cl_list;
             I.exp_finally_clause = fl_list;
             I.exp_try_pos = pos}-> 
-            let pid = match pid with | None -> fresh_strict_branch_point_id "" F_o_code | Some s -> s in
+            let pid = match pid with | None -> fresh_strict_branch_point_id "" | Some s -> s in
             if ((List.length fl_list)>0) then
               Err.report_error { Err.error_loc = pos; Err.error_text = "translation failed, i still found a finally clause" }
             else
@@ -3164,12 +3167,12 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       let fl_var = fresh_var_name "fl" pos.start_pos.Lexing.pos_lnum in
                       C.Try({ C.exp_try_type = ct1;
                       C.exp_try_body = a;
-                      C.exp_try_path_id = fresh_strict_branch_point_id "" F_o_code;
+                      C.exp_try_path_id = fresh_strict_branch_point_id "";
                       C.exp_try_pos = pos;
                       C.exp_catch_clause =
                               C.Catch ({ c with C.exp_catch_body =
                                       C.Try({C.exp_try_type = Void;
-                                      C.exp_try_path_id = fresh_strict_branch_point_id "" F_o_code;
+                                      C.exp_try_path_id = fresh_strict_branch_point_id "";
                                       C.exp_try_body = c.C.exp_catch_body;
                                       C.exp_try_pos = c.C.exp_catch_pos;		   
                                       C.exp_catch_clause = C.Catch{
@@ -6698,13 +6701,12 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       else
         if i>=l then all :: crt_lst
         else
-          let first (i1,i2,i3) = i1 in
           let n_list1 = List.map (
               fun  (c1,(b1,c2)) -> 
                   let h = (List.hd c1) in
                   let rem = List.filter (fun (d1,_)-> 
-                      (not (List.exists (fun x-> (first x)=(first d1)) c1))&
-                          ((first h)>(first d1))) pure_list in
+                      (not (List.exists (fun x-> (fst x)=(fst d1)) c1))&
+                          ((fst h)>(fst d1))) pure_list in
                   List.map (fun (d1,(b2,d2))->(d1::c1, (CP.BagaSV.or_baga b1 b2,combine_pures c2 d2))) rem 
           ) last_lst 
           in          

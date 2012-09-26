@@ -318,29 +318,8 @@ let collect_update_function (transition_constraint: CP.formula) : CP.formula =
   let pr = !CP.print_formula in
   Debug.no_1 "collect_update_function" pr pr collect_update_function_x transition_constraint
 
-let rec label_of_formula (f: CP.formula) =
-  let string_of_lb (lb: formula_label option) = (
-    match lb with
-    | None -> ""
-    | Some (i, s,fo) -> (string_of_int i) ^ ":" ^ s ^ ":" ^ (string_of_formula_origin fo)
-  ) in
-  let sf = Cprinter.string_of_pure_formula in
-  let lbl = (
-    match f with
-    | CP.BForm (_, flb) -> "BForm(" ^ (sf f) ^ "," ^ (string_of_lb flb) ^ ")"
-    | CP.And (f1, f2,_) -> "And(" ^ (label_of_formula f1) ^ "," ^ (label_of_formula f2) ^ ")"
-    | CP.AndList _ -> "AndList(_)"
-    | CP.Or (f1, f2, flb, _) -> "Or(" ^ (label_of_formula f1) ^ "," ^ (label_of_formula f2) ^ "," ^ (string_of_lb flb) ^ ")"
-    | CP.Not (f1, flb, _) -> "Not(" ^ (label_of_formula f1) ^ "," ^ (string_of_lb flb) ^ ")"
-    | CP.Forall (_, f1, flb, _) -> "Forall(" ^ (label_of_formula f1) ^ "," ^ (string_of_lb flb) ^ ")"
-    | CP.Exists (_, f1, flb, _) -> "Exists(" ^ (label_of_formula f1) ^ "," ^ (string_of_lb flb) ^ ")"
-  ) in
-  lbl
-
 (* drop the constraint from source_constrait that restrict the target_constraint *)
 let drop_restricted_constraint_x (source_contraint: CP.formula) (target_constraint: CP.formula) : CP.formula =
-  let _ = print_endline ("== source_contraint = " ^ (Cprinter.string_of_pure_formula source_contraint)) in
-  let _ = print_endline ("== lbl = " ^ (label_of_formula source_contraint)) in
   let is_restricted_constraint (constr: CP.formula) (target_constraint: CP.formula) : bool = (
     (* constr don't restrict domain if (domain -> (constr) && domain) is valid *)
     (* let _ = print_endline ("== constr = " ^ (Cprinter.string_of_pure_formula constr)) in  *)
@@ -476,6 +455,7 @@ let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
   Debug.no_1 "strip_lexvar_mix_formula" pr pr_out strip_lexvar_mix_formula_x mf
 
 let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (dst: CP.exp) pos : CP.formula =
+  let _ = print_endline ("== in create_measure_constraint_x : \n  -- lhs = " ^ (Cprinter.string_of_pure_formula lhs)) in 
   if flag then (
     match src, dst with
     | CP.Seq seqsrc, CP.Seq seqdst -> (

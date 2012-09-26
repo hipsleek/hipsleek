@@ -175,25 +175,24 @@ let apply_cexp_form1 fct form = match form with
   
   
 let apply_pure_form2 fct form1 form2 =
-  let fo = if !is_prelude_file then F_o_code else F_o_specs in
   match (form1,form2) with
   | Pure_f f1 ,Pure_f f2 -> Pure_f (fct f1 f2)
   | Pure_f f1 , Pure_c f2 -> (match f2 with 
-                             | P.Var (v,_) -> Pure_f(fct f1 (P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,"",fo))))
+                             | P.Var (v,_) -> Pure_f(fct f1 (P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,""))))
                              | _ -> report_error (get_pos 1) "with 2 expected pure_form, found cexp in var" )
   | Pure_c f1, Pure_f f2 -> (match f1 with 
-                             | P.Var (v,_) -> Pure_f(fct (P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,"",fo))) f2)
+                             | P.Var (v,_) -> Pure_f(fct (P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,""))) f2)
                              | _ -> report_error (get_pos 1) "with 2 expected pure_form in f1, found cexp")
   | Pure_c f1, Pure_c f2 -> (
       let bool_var1 = (
         match f1 with
-        | P.Var (v,_) -> P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,"",fo))
-        | P.Ann_Exp (P.Var (v, _), Bool) -> P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,"",fo))
+        | P.Var (v,_) -> P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,""))
+        | P.Ann_Exp (P.Var (v, _), Bool) -> P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,""))
         | _ -> report_error (get_pos 1) "with 2 expected pure_form in f1, found cexp") in
       let bool_var2 = (
         match f2 with
-        | P.Var (v,_) -> P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,"",fo))
-        | P.Ann_Exp (P.Var (v, _), Bool) -> P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,"",fo))
+        | P.Var (v,_) -> P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,""))
+        | P.Ann_Exp (P.Var (v, _), Bool) -> P.BForm (((P.mkBVar v (get_pos 1)), None), Some (-1,""))
         | _ -> report_error (get_pos 1) "with 2 expected pure_form in f2, found cexp") in
       Pure_f(fct bool_var1 bool_var2)
     )
@@ -207,41 +206,37 @@ let apply_cexp_form2 fct form1 form2 =
           (fun _ -> "") (apply_cexp_form2 fct) form1 form2
 
 let cexp_list_to_pure fct ls1 =
-  let fo = if !is_prelude_file then F_o_code else F_o_specs in
-  Pure_f (P.BForm (((fct ls1), None), Some (-1,"",fo)))
+  Pure_f (P.BForm (((fct ls1), None), Some (-1,"")))
 
 let cexp_to_pure1 fct f =
-  let fo = if !is_prelude_file then F_o_code else F_o_specs in
   match f with
-  | Pure_c f -> Pure_f (P.BForm (((fct f), None), Some (-1,"",fo)))
+  | Pure_c f -> Pure_f (P.BForm (((fct f), None), Some (-1,"")))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"
 
 let cexp_to_pure_slicing fct f sl =
-  let fo = if !is_prelude_file then F_o_code else F_o_specs in
   match f with
-  | Pure_c f -> Pure_f (P.BForm (((fct f), sl), Some (-1,"",fo)))
+  | Pure_c f -> Pure_f (P.BForm (((fct f), sl), Some (-1,"")))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"	
 
 let cexp_to_pure2 fct f01 f02 =
-  let fo = if !is_prelude_file then F_o_code else F_o_specs in
   match (f01,f02) with
   | Pure_c f1 , Pure_c f2 -> (
       match f1 with
       | P.List(explist,pos) -> 
-          let tmp = List.map (fun c -> P.BForm (((fct c f2), None), Some (-1,"",fo))) explist in
+          let tmp = List.map (fun c -> P.BForm (((fct c f2), None), Some (-1,""))) explist in
           let len =  List.length tmp in
           let res = 
             if (len > 1) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
-            else  P.BForm (((fct f1 f2), None), Some (-1,"",fo)) in
+            else  P.BForm (((fct f1 f2), None), Some (-1,"")) in
           Pure_f(res) 
       | _ -> (
           match f2 with
           | P.List(explist,pos) ->
-              let tmp = List.map (fun c -> P.BForm (((fct f1 c), None), Some (-1,"",fo))) explist in
+              let tmp = List.map (fun c -> P.BForm (((fct f1 c), None), Some (-1,""))) explist in
               let len = List.length tmp in
               let res =
                 if ( len > 1 ) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
-                else P.BForm (((fct f1 f2), None), Some (-1,"",fo)) in
+                else P.BForm (((fct f1 f2), None), Some (-1,"")) in
               Pure_f(res) 
           | _ -> (
               let typ1 = P.typ_of_exp f1 in 
@@ -260,7 +255,7 @@ let cexp_to_pure2 fct f01 f02 =
                         | _ -> false)
               ) in
               if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_typ_check typ1 typ2) then
-                Pure_f (P.BForm(((fct f1 f2), None), Some (-1,"",fo))) (* TRUNG: maybe because of this *)
+                Pure_f (P.BForm(((fct f1 f2), None), Some (-1,""))) (* TRUNG: maybe because of this *)
               else
                 report_error (get_pos 1) "with 2 convert expected the same cexp types, found different types"
             )
@@ -887,9 +882,9 @@ label : [[  `STRING (_,id); `COLON -> id]];
 
 (* opt_pure_label :[[t=Opure_label -> un_option t (fresh_branch_point_id "")]]; *)
 
-pure_label : [[ `DOUBLEQUOTE; `IDENTIFIER id; `DOUBLEQUOTE; `COLON -> fresh_branch_point_id id F_o_specs]];
+pure_label : [[ `DOUBLEQUOTE; `IDENTIFIER id; `DOUBLEQUOTE; `COLON -> fresh_branch_point_id id]];
 
-formula_label: [[ `AT; `STRING (_,id) ->(fresh_branch_point_id id F_o_specs)]];
+formula_label: [[ `AT; `STRING (_,id) ->(fresh_branch_point_id id)]];
 
 opt_heap_constr: [[ t = heap_constr -> t]];
 
@@ -1030,7 +1025,7 @@ cexp_w :
   | "slicing_label"
     [ sl=slicing_label; f=SELF -> set_slicing_utils_pure_double f sl ]
   | "pure_or" RIGHTA
-    [ pc1=SELF; `OR; pc2=SELF -> apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 (Some (-1,"",F_o_unknown)) (get_pos_camlp4 _loc 2)) pc1 pc2]
+    [ pc1=SELF; `OR; pc2=SELF -> apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 (Some (-1,"")) (get_pos_camlp4 _loc 2)) pc1 pc2]
   | "pure_and" RIGHTA
     [ pc1=SELF; peek_and; `AND; pc2=SELF -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos_camlp4 _loc 2)) pc1 pc2]
   |"bconstrp" RIGHTA
@@ -1211,7 +1206,7 @@ cexp_w :
         let (element, domain, limit, loopcond) = param in
         let tc = match loopcond with
                  | Pure_f f -> f
-                 | Pure_c c -> let lbl = Some (fresh_unindex_formula_label F_o_specs) in
+                 | Pure_c c -> let lbl = Some (fresh_unindex_formula_label) in
                                P.mkPure (P.mkGte element c no_pos) lbl in
         let seq = P.Seq { P.seq_element = element;
                                P.seq_domain = domain;
@@ -1291,7 +1286,7 @@ measures_seqdec:
   [[
     element = cexp;`COMMA; `OPAREN; bound1 = cexp; `COMMA; bound2 = cexp; `CPAREN; 
                    `COMMA; loopcond = cexp_w ->
-      let lbl = Some (fresh_unindex_formula_label F_o_specs) in
+      let lbl = Some (fresh_unindex_formula_label) in
       let bcons1 = P.mkPure (P.mkGt element bound1 no_pos) lbl in
       let bcons2 = P.mkPure (P.mkLt element bound2 no_pos) lbl in
       let domain = P.mkAnd bcons1 bcons2 no_pos in
@@ -1299,7 +1294,7 @@ measures_seqdec:
       (element, domain, limit, loopcond)
   | element = cexp;`COMMA; `OPAREN; bound1 = cexp; `COMMA; bound2 = cexp; `CSQUARE;
                    `COMMA; loopcond = cexp_w ->
-      let lbl = Some (fresh_unindex_formula_label F_o_specs) in
+      let lbl = Some (fresh_unindex_formula_label) in
       let bcons1 = P.mkPure (P.mkGt element bound1 no_pos) lbl in
       let bcons2 = P.mkPure (P.mkLte element bound2 no_pos) lbl in
       let domain = P.mkAnd bcons1 bcons2 no_pos in
@@ -1307,7 +1302,7 @@ measures_seqdec:
       (element, domain, limit, loopcond)
   | element = cexp;`COMMA; `OSQUARE; bound1 = cexp; `COMMA; bound2 = cexp; `CPAREN;
                    `COMMA; loopcond = cexp_w ->
-      let lbl = Some (fresh_unindex_formula_label F_o_specs) in
+      let lbl = Some (fresh_unindex_formula_label) in
       let bcons1 = P.mkPure (P.mkGte element bound1 no_pos) lbl in
       let bcons2 = P.mkPure (P.mkLt element bound2 no_pos) lbl in
       let domain = P.mkAnd bcons1 bcons2 no_pos in
@@ -1315,7 +1310,7 @@ measures_seqdec:
       (element, domain, limit, loopcond)
   | element = cexp;`COMMA; `OSQUARE; bound1 = cexp; `COMMA; bound2 = cexp; `CSQUARE;
                    `COMMA; loopcond = cexp_w ->
-      let lbl = Some (fresh_unindex_formula_label F_o_specs) in
+      let lbl = Some (fresh_unindex_formula_label) in
       let bcons1 = P.mkPure (P.mkGte element bound1 no_pos) lbl in
       let bcons2 = P.mkPure (P.mkLte element bound2 no_pos) lbl in
       let domain = P.mkAnd bcons1 bcons2 no_pos in
@@ -1742,7 +1737,7 @@ spec:
 	    	 F.formula_ext_pos = (get_pos_camlp4 _loc 1)}
   *)
   | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
-      F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol F_o_specs))
+      F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol))
   | `CASE; `OBRACE; bl= branch_list; `CBRACE ->
       F.ECase {F.formula_case_branches = bl; F.formula_case_pos = get_pos_camlp4 _loc 1; }
   ]];
@@ -1888,11 +1883,11 @@ barr_statement : [[`BARRIER; `IDENTIFIER t -> I.Barrier {exp_barrier_recv = t ; 
  
 assert_statement:
   [[ `ASSERT; ol= opt_label; f=formulas -> 
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol F_o_specs) (get_pos_camlp4 _loc 1)
+       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (get_pos_camlp4 _loc 1)
    | `ASSUME; ol=opt_label; dc=disjunctive_constr ->
-       mkAssert None (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol F_o_specs) (get_pos_camlp4 _loc 1)
+       mkAssert None (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (get_pos_camlp4 _loc 1)
    | `ASSERT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol F_o_specs) (get_pos_camlp4 _loc 1)]];
+       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (get_pos_camlp4 _loc 1)]];
 
 debug_statement:
   [[ `DDEBUG; `ON -> Debug { exp_debug_flag = true;	exp_debug_pos = get_pos_camlp4 _loc 2 }

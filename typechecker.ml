@@ -494,7 +494,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	    	          { CF.formula_flow_interval = !norm_flow_int; CF.formula_flow_link = None} ctx1 in
 	                let ctx1 = CF.add_path_id ctx1 (Some post_label,-1) in
                     (* need to add initial esc_stack *)
-                    let init_esc = [((0,"",F_o_unknown),[])] in
+                    let init_esc = [((0,""),[])] in
 	                let lfe = [CF.mk_failesc_context ctx1 [] init_esc] in
                     (* Termination: Check boundedness of the measures 
                      * before going into the function body *)
@@ -692,7 +692,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	              (* for code *)
         | Assert ({ exp_assert_asserted_formula = c1_o;
           exp_assert_assumed_formula = c2;
-          exp_assert_path_id = (pidi,s,F_o_specs);
+          exp_assert_path_id = (pidi,s);
           exp_assert_pos = pos}) -> let _ = if !print_proof && (match c1_o with | None -> false | Some _ -> true) then 
           	begin
           	  Prooftracer.push_assert_assume e0;
@@ -704,7 +704,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           begin
             if !Globals.dis_ass_chk then ctx else
 	          let _ = proving_loc#set pos in
-	          let (_,s1,_) = post_start_label in
+	          let (_,s1) = post_start_label in
               (* let _ = print_string ("labels:"^s^"#"^s1^"#"^"\n") in *)
 	          if (String.length s)>0 (* && (String.length s1)>0 *) && (String.compare s s1 <> 0) then ctx
 	          else

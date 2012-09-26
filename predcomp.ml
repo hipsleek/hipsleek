@@ -946,18 +946,18 @@ End of first attempt *)
 *)
 
 let disj_count = ref 1
-let stub_branch_point_id s fo = Some (-1,s,fo)
+let stub_branch_point_id s = Some (-1,s)
 
 let return_true pos = Return ({exp_return_val = Some
 							  (BoolLit ({exp_bool_lit_val = true;
 										 exp_bool_lit_pos = pos}));
-								exp_return_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+								exp_return_path_id = stub_branch_point_id "pred_comp_generated";
 						   exp_return_pos = pos})
 
 let return_false pos = Return ({exp_return_val = Some
 							   (BoolLit ({exp_bool_lit_val = false;
 										  exp_bool_lit_pos = pos}));
-								exp_return_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+								exp_return_path_id = stub_branch_point_id "pred_comp_generated";
 							exp_return_pos = pos})
 
 let cur_color pos = { param_type = Named "long";
@@ -1134,7 +1134,7 @@ and gen_pure_exp (pe : CP.exp) (vmap : var_map) (unbound_vars : CP.spec_var list
 	  let ce = CallNRecv ({exp_call_nrecv_method = "IntAug.max";
 						   exp_call_nrecv_arguments = [ce1; ce2];
                            exp_call_nrecv_lock = None;
-						   exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+						   exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
 						   exp_call_nrecv_pos = pos}) in
 		(ce, p1 || p2)
 	end
@@ -1144,7 +1144,7 @@ and gen_pure_exp (pe : CP.exp) (vmap : var_map) (unbound_vars : CP.spec_var list
 	  let ce = CallNRecv ({exp_call_nrecv_method = "IntAug.min";
                            exp_call_nrecv_lock = None;
 						   exp_call_nrecv_arguments = [ce1; ce2];
-						   exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+						   exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
 						   exp_call_nrecv_pos = pos}) in
 		(ce, p1 || p2)
 	end
@@ -1162,7 +1162,7 @@ and gen_pure_exp (pe : CP.exp) (vmap : var_map) (unbound_vars : CP.spec_var list
 								  exp_var_pos = pos}) in
 				  let ce = Member ({exp_member_base = v_e;
 									exp_member_fields = [f];
-									exp_member_path_id = (fresh_branch_point_id "" F_o_generated);
+									exp_member_path_id = (fresh_branch_point_id "");
 									exp_member_pos = pos}) in
 					(ce, p)
 			  | PExp me -> 
@@ -1243,21 +1243,21 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 		  let ce = CallRecv ({exp_call_recv_receiver = ce1;
 							  exp_call_recv_method = "EQ";
 							  exp_call_recv_arguments = [ce2];
-							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
 							  exp_call_recv_pos = pos}) in
 			ce
 		else if pb1 then
 		  let ce = CallRecv ({exp_call_recv_receiver = ce1;
 							  exp_call_recv_method = "EQ";
 							  exp_call_recv_arguments = [ce2];
-							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
 							  exp_call_recv_pos = pos}) in
 			ce
 		else if pb2 then
 		  let ce = CallRecv ({exp_call_recv_receiver = ce2;
 							  exp_call_recv_method = "EQ";
 							  exp_call_recv_arguments = [ce1];
-							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
 							  exp_call_recv_pos = pos}) in
 			ce
 		else 
@@ -1275,21 +1275,21 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 		  let ce = CallRecv ({exp_call_recv_receiver = ce1;
 							  exp_call_recv_method = "NEQ";
 							  exp_call_recv_arguments = [ce2];
-							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
 							  exp_call_recv_pos = pos}) in
 			ce
 		else if pb1 then
 		  let ce = CallRecv ({exp_call_recv_receiver = ce1;
 							  exp_call_recv_method = "NEQ";
 							  exp_call_recv_arguments = [ce2];
-							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
 							  exp_call_recv_pos = pos}) in
 			ce
 		else if pb2 then
 		  let ce = CallRecv ({exp_call_recv_receiver = ce2;
 							  exp_call_recv_method = "NEQ";
 							  exp_call_recv_arguments = [ce1];
-							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
 							  exp_call_recv_pos = pos}) in
 			ce
 		else 
@@ -1307,21 +1307,21 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 		  let ce = CallRecv ({exp_call_recv_receiver = ce1;
 							  exp_call_recv_method = "LTE";
 							  exp_call_recv_arguments = [ce2];
-							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
 							  exp_call_recv_pos = pos}) in
 			ce
 		else if pb1 then
 		  let ce = CallRecv ({exp_call_recv_receiver = ce1;
 							  exp_call_recv_method = "LTE";
 							  exp_call_recv_arguments = [ce2];
-							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
 							  exp_call_recv_pos = pos}) in
 			ce
 		else if pb2 then
 		  let ce = CallRecv ({exp_call_recv_receiver = ce2;
 							  exp_call_recv_method = "GTE";
 							  exp_call_recv_arguments = [ce1];
-							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
 							  exp_call_recv_pos = pos}) in
 			ce
 		else
@@ -1342,14 +1342,14 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 		  let ce = CallRecv ({exp_call_recv_receiver = ce1;
 							  exp_call_recv_method = "LT";
 							  exp_call_recv_arguments = [ce2];
-							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
 							  exp_call_recv_pos = pos}) in
 			ce
 		else if pb2 then
 		  let ce = CallRecv ({exp_call_recv_receiver = ce2;
 							  exp_call_recv_method = "GT";
 							  exp_call_recv_arguments = [ce1];
-							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
 							  exp_call_recv_pos = pos}) in
 			ce
 		else
@@ -1370,14 +1370,14 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 		  let ce = CallRecv ({exp_call_recv_receiver = ce1;
 							  exp_call_recv_method = "GTE";
 							  exp_call_recv_arguments = [ce2];
-							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
 							  exp_call_recv_pos = pos}) in
 			ce
 		else if pb2 then
 		  let ce = CallRecv ({exp_call_recv_receiver = ce2;
 							  exp_call_recv_method = "LTE";
 							  exp_call_recv_arguments = [ce1];
-							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
 							  exp_call_recv_pos = pos}) in
 			ce
 		else
@@ -1398,14 +1398,14 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 		  let ce = CallRecv ({exp_call_recv_receiver = ce1;
 							  exp_call_recv_method = "GT";
 							  exp_call_recv_arguments = [ce2];
-							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
 							  exp_call_recv_pos = pos}) in
 			ce
 		else if pb2 then
 		  let ce = CallRecv ({exp_call_recv_receiver = ce2;
 							  exp_call_recv_method = "LT";
 							  exp_call_recv_arguments = [ce1];
-							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+							  exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
 							  exp_call_recv_pos = pos}) in
 			ce
 		else
@@ -1423,7 +1423,7 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 	  let maxe = CallNRecv ({exp_call_nrecv_method = "Math.max";
                              exp_call_nrecv_lock = None;
 							 exp_call_nrecv_arguments = [ce1; ce2];
-							 exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+							 exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
 							 exp_call_nrecv_pos = pos}) in
 	  let ce = Binary ({exp_binary_op = OpEq;
 						exp_binary_oper1 = cem;
@@ -1439,7 +1439,7 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 	  let mine = CallNRecv ({exp_call_nrecv_method = "Math.min";
                              exp_call_nrecv_lock = None;
 							 exp_call_nrecv_arguments = [ce1; ce2];
-							 exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+							 exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
 							 exp_call_nrecv_pos = pos}) in
 	  let ce = Binary ({exp_binary_op = OpEq;
 						exp_binary_oper1 = cem;
@@ -1490,7 +1490,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
 		       exp_var_pos = pos}) in
       let pcolor = Member ({exp_member_base = pvar;
 			    exp_member_fields = ["color"];
-			    exp_member_path_id = (fresh_branch_point_id "" F_o_generated);
+			    exp_member_path_id = (fresh_branch_point_id "");
 			    exp_member_pos = pos}) in
       let pnewcolor = Assign ({exp_assign_op = OpAssign;
 			       exp_assign_lhs = pcolor;
@@ -1506,7 +1506,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
       let cond = Cond ({exp_cond_condition = test;
 			exp_cond_then_arm = pnewcolor;
 			exp_cond_else_arm = return_false pos;
-			exp_cond_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+			exp_cond_path_id = stub_branch_point_id "pred_comp_generated";
 			exp_cond_pos = pos}) 
       in
 	cond
@@ -1541,7 +1541,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
 				    exp_call_recv_method = "traverse";
 				    exp_call_recv_arguments = 
 				       [cur_color_exp pos; new_color_exp pos];
-				    exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+				    exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
 				    exp_call_recv_pos = pos}) in
       let neg_call = Unary ({exp_unary_op = OpNot;
 			     exp_unary_exp = call_checker;
@@ -1550,7 +1550,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
       let call_cond = Cond ({exp_cond_condition = neg_call;
 			     exp_cond_then_arm = return_false pos;
 			     exp_cond_else_arm = Empty pos;
-			     exp_cond_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+			     exp_cond_path_id = stub_branch_point_id "pred_comp_generated";
 			     exp_cond_pos = pos}) in
 	(* Set up inputs *)
 	(* helper: Constructs a list of assignments to set up inputs *)
@@ -1562,7 +1562,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
 		let e, _ = gen_pure_exp param_e vmap unbound_vars in
 		let lhs = Member ({exp_member_base = new_checker_var;
 				   exp_member_fields = [CP.name_of_spec_var farg];
-				   exp_member_path_id = (fresh_branch_point_id "" F_o_generated);
+				   exp_member_path_id = (fresh_branch_point_id "");
 				   exp_member_pos = pos}) in
 		let assignment = Assign ({exp_assign_op = OpAssign;
 					  exp_assign_lhs = lhs;
@@ -1682,7 +1682,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
   let cond = Cond ({exp_cond_condition = pure_exp;
 					exp_cond_then_arm = seq1;
 					exp_cond_else_arm = return_false pos;
-					exp_cond_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+					exp_cond_path_id = stub_branch_point_id "pred_comp_generated";
 					exp_cond_pos = pos}) in
 	(* code for the entire disjunct procedure body *)
   let seq2 = Seq ({exp_seq_exp1 = h_exp;
@@ -1719,12 +1719,12 @@ and combine_disj_results disj_results pos : exp = match disj_results with
 	  let call = CallNRecv ({exp_call_nrecv_method = disj_proc.proc_name;
                              exp_call_nrecv_lock = None;
 							 exp_call_nrecv_arguments = [cur_color_exp pos; new_color_exp pos];
-							 exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+							 exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
 							 exp_call_nrecv_pos = pos}) in
 	  let undo_call' = CallNRecv ({exp_call_nrecv_method = disj_proc.proc_name;
                                    exp_call_nrecv_lock = None;
 								  exp_call_nrecv_arguments = [new_color_exp pos; cur_color_exp pos];
-								  exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+								  exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
 								  exp_call_nrecv_pos = pos}) in
 	  let undo_call = VarDecl {exp_var_decl_type = Bool;
 							   exp_var_decl_decls = [(fresh_var_name "bool" pos.start_pos.Lexing.pos_lnum, Some undo_call', pos)];
@@ -1738,7 +1738,7 @@ and combine_disj_results disj_results pos : exp = match disj_results with
 	  let cond = Cond ({exp_cond_condition = disj_res;
 						exp_cond_then_arm = return_true pos;
 						exp_cond_else_arm = undo_call;
-						exp_cond_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+						exp_cond_path_id = stub_branch_point_id "pred_comp_generated";
 						exp_cond_pos = pos}) in
 	  let seq1 = Seq ({exp_seq_exp1 = call_disj;
 					   exp_seq_exp2 = cond;
@@ -1778,7 +1778,7 @@ and gen_formula (prog : C.prog_decl) (f0 : formula) (vmap : var_map) (output_var
   let ret_false = Return ({exp_return_val = Some 
 							  (BoolLit ({exp_bool_lit_val = false;
 										 exp_bool_lit_pos = pos}));
-							exp_return_path_id = stub_branch_point_id "pred_comp_generated" F_o_generated;
+							exp_return_path_id = stub_branch_point_id "pred_comp_generated";
 						   exp_return_pos = pos}) in
   let seq = Seq ({exp_seq_exp1 = combined_exp;
 				  exp_seq_exp2 = ret_false;

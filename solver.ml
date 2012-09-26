@@ -262,10 +262,10 @@ object (self)
   method upd_opt (pid : control_path_id) (rs: list_context) (errmsg: string) =
     match pid with 
     | None -> failwith errmsg;
-    | Some (pid_i,_,_) -> Hashtbl.add en_hist pid_i rs
+    | Some (pid_i,_) -> Hashtbl.add en_hist pid_i rs
 
   method upd (pid : formula_label) (rs: list_context) =
-    let pid_i,_,_ = pid in
+    let pid_i,_ = pid in
       Hashtbl.add en_hist pid_i rs
 
   method get (id : int) : list_context list =
@@ -1003,7 +1003,7 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
 					| None -> 
 						  let not_null_form = CP.BForm ((CP.Neq (CP.Var (d.h_formula_data_node,no_pos),CP.Null no_pos,no_pos), None), None) in
 						  let null_form = (CP.Eq (CP.Var (d.h_formula_data_node,no_pos), CP.Null no_pos,no_pos), None) in
-						  let br_lbl = [(1,"",F_o_unknown)] in
+						  let br_lbl = [(1,"")] in
 						  let new_hp = DataNode{d with 
 							  h_formula_data_remaining_branches = Some br_lbl;
 							  h_formula_data_pruning_conditions = [ (null_form,br_lbl)];} in
@@ -2541,7 +2541,7 @@ and heap_entail_failesc_prefix_init_x (prog : prog_decl) (is_folding : bool)  (h
       let rec prepare_ctx es = {es with 
         es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
         es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)
-        es_id = (let newid,_,_ = fresh_formula_label "" F_o_unknown in newid); (* unique +ve id *)		  (* es_orig_ante   = es.es_formula; *)
+        es_id = (let newid,_ = fresh_formula_label "" in newid); (* unique +ve id *)		  (* es_orig_ante   = es.es_formula; *)
         (*es_orig_conseq = conseq ;*)}in	
       let cl_new = transform_list_failesc_context (idf,idf,(fun es-> Ctx(prepare_ctx (rename_es (reset_original_es es))))) cl in
       let entail_fct = fun c-> heap_entail_struc_list_failesc_context prog is_folding  has_post c conseq tid pos pid f to_string in 
@@ -2563,7 +2563,7 @@ and heap_entail_prefix_init (prog : prog_decl) (is_folding : bool)  (has_post: b
       let rec prepare_ctx es = {es with 
         es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
         es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)
-        es_id = (let newid,_,_ = fresh_formula_label "" F_o_unknown in newid); (* unique +ve id *)
+        es_id = (let newid,_ = fresh_formula_label "" in newid); (* unique +ve id *)
         (* es_orig_ante   = es.es_formula; *)
         (*es_orig_conseq = conseq ;*)}in
       let cl_new = transform_list_partial_context ((fun es-> Ctx(prepare_ctx (rename_es es))),(fun c->c)) cl in
@@ -2717,7 +2717,7 @@ and heap_entail_struc_init_x (prog : prog_decl) (is_folding : bool)  (has_post: 
 	        let rec prepare_ctx es = {es with 
             es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
             es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)
-            es_id = (let newid,_,_ = fresh_formula_label "" F_o_unknown in newid) ; (* unique +ve id *)
+            es_id = (let newid,_ = fresh_formula_label "" in newid) ; (* unique +ve id *)
             (* es_orig_ante   = es.es_formula; *)
             es_orig_conseq = conseq ;}in	
 	        let cl_new = transform_list_context ( (fun es-> Ctx(prepare_ctx (rename_es es))),(fun c->c)) cl in
@@ -2978,7 +2978,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 						        (res_ctx,res_prf)
                         (*  let _ = print_endline ("###: 3") in*)
                         )
-                | EAssume (ref_vars, post, (i,y,_)) ->
+                | EAssume (ref_vars, post, (i,y)) ->
 		              if not has_post then report_error pos ("malfunction: this formula "^ y ^" can not have a post condition!")
 	                  else
                 (match tid with
@@ -3103,7 +3103,7 @@ and heap_entail_init_x (prog : prog_decl) (is_folding : bool)  (cl : list_contex
 	      let rec prepare_es es = {es with 
 			  es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
 			  es_residue_pts  = residue_labels_in_formula es.es_formula   ;(* residue pts from antecedent *)
-			  es_id = (let newid,_,_ = (fresh_formula_label "" F_o_unknown) in newid); (* unique +ve id *)
+			  es_id = (let newid,_ = (fresh_formula_label "") in newid); (* unique +ve id *)
 			  (* es_orig_ante   = es.es_formula; *)
 			  es_orig_conseq = struc_formula_of_formula conseq pos;} in	
 	      let cl_new = transform_list_context ((fun es-> Ctx(prepare_es(rename_es (reset_original_es es)))),(fun c->c)) cl in
@@ -8271,9 +8271,9 @@ and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula =
                  | None -> Some f1
                  | Some l -> Some (combine_struc f1 l) in
       EBase {b with formula_struc_continuation = cont }
-  | EAssume (x1,b, (y1',y2',y3') )-> (
+  | EAssume (x1,b, (y1',y2') )-> (
       match f1 with
-      | EAssume (x2,d,(y1,y2,y3)) -> EAssume ((x1@x2),(normalize_combine b d (Cformula.pos_of_formula d)),(y1,(y2^y2'),y3))
+      | EAssume (x2,d,(y1,y2)) -> EAssume ((x1@x2),(normalize_combine b d (Cformula.pos_of_formula d)),(y1,(y2^y2')))
       | _-> combine_struc f2 f1
     )
   | EInfer e -> (

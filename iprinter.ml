@@ -75,20 +75,19 @@ let string_of_label = function
   | JumpLabel l  -> l^" : "
 ;;
 
-let string_of_formula_origin fo =
-  match fo with
-  | F_o_specs -> "f_o_specs"
-  | F_o_code -> "f_o_code"
-  | F_o_generated -> "f_o_generated"
-  | F_o_unknown -> "f_o_unknown"
-  | F_o_tmp1 -> "f_o_tmp1"
+let string_of_data_origin dto =
+  match dto with
+  | D_o_specs -> "D_O_SPECS"
+  | D_o_code _ -> "F_O_CODE"
+  | D_o_intermediate -> "D_O_INTERMEDIATE"
 
-let string_of_formula_label (i,s,fo) s2:string = ("("^(string_of_int i)^","^s^","^(string_of_formula_origin fo)^"):"^s2)
+
+let string_of_formula_label (i,s) s2:string = ("("^(string_of_int i)^","^s^"):"^s2)
 let string_of_spec_label = Lab_List.string_of
 let string_of_spec_label_def = Lab2_List.string_of
 
 let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> string_of_formula_label s s2
-let string_of_control_path_id (i,s,fo) s2:string = string_of_formula_label (i,s,fo) s2
+let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
 let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
 
 let string_of_var (c1,c2) = c1^(string_of_primed c2);;
@@ -405,7 +404,7 @@ let rec string_of_struc_formula c = match c with
 				let b = string_of_formula fb in
 				let c = match cont with | None -> "" | Some l -> ("{"^(string_of_struc_formula l)^"}") in
 				"EBase: ["^l1^"]["^l2^"]"^b^" "^c
-	| F.EAssume (b,(n1,n2,_))-> "EAssume: "^(string_of_int n1)^", "^n2^":"^(string_of_formula b)
+	| F.EAssume (b,(n1,n2))-> "EAssume: "^(string_of_int n1)^", "^n2^":"^(string_of_formula b)
 	| F.EInfer{F.formula_inf_vars = lvars;
 			   F.formula_inf_post = postf;
 			   F.formula_inf_continuation = continuation;} ->
@@ -549,7 +548,7 @@ let rec string_of_exp = function
                                    -> string_of_float f
   | Null l                         -> "null"
   | Assert l                       ->
-        let (_,lbl,_) = l.exp_assert_path_id in
+        let (_,lbl) = l.exp_assert_path_id in
         lbl^" :assert "^
           (match l.exp_assert_asserted_formula with
             | None -> (" assume: ")
