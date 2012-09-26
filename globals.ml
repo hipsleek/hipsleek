@@ -31,6 +31,8 @@ type data_origin =
   | D_o_code of statement_flow
   | D_o_intermediate
 
+type formula_origin = data_origin
+
 type formula_label = (int * string)
 
 and control_path_id_strict = formula_label
