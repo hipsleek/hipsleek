@@ -214,16 +214,16 @@ and isabelle_of_b_formula b =
 (* pretty printing for formulas *)
 and isabelle_of_formula f =
     match f with
-    | CP.BForm (b,_) ->
+    | CP.BForm (b,_,_) ->
 	  if (is_bag_formula f) then
 	    "(" ^ (isabelle_of_b_formula b) ^ ")"
 	  else ""
-    | CP.Not (p, _,_) -> " (~ (" ^ (isabelle_of_formula p) ^ ")) "
-    | CP.Forall (sv, p, _,_) ->
+    | CP.Not (p, _,_,_) -> " (~ (" ^ (isabelle_of_formula p) ^ ")) "
+    | CP.Forall (sv, p, _,_,_) ->
 	  if (is_bag_formula f) then
 	    " (ALL " ^ (isabelle_of_spec_var sv) ^ "." ^ (isabelle_of_formula p) ^ ") "
           else ""
-    | CP.Exists (sv, p,_, _) ->
+    | CP.Exists (sv, p,_, _, _) ->
 	  if (is_bag_formula f) then
 	    " (EX " ^ (isabelle_of_spec_var sv) ^ "." ^ (isabelle_of_formula p) ^ ") "
           else ""
@@ -238,7 +238,7 @@ and isabelle_of_formula f =
 		if (is_bag_formula p2) then
 		  "(" ^ (isabelle_of_formula p2) ^ ")"
                 else ""
-    | CP.Or (p1, p2,_, _) ->
+    | CP.Or (p1, p2,_, _, _) ->
 	if (is_bag_formula p1) & (is_bag_formula p2) then
 	    "(" ^ (isabelle_of_formula p1) ^ " | " ^ (isabelle_of_formula p2) ^ ")"
           else
@@ -392,7 +392,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
 	output_string log_all ("\n\nimply#" ^ imp_no ^ "\n");
   max_flag := false;
   choice := 1;
-  let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
+  let tmp_form = CP.mkOr (CP.mkNot ante None None no_pos) conseq None None no_pos in
   let res =  write tmp_form !Globals.sat_timeout_limit false in
   if !log_all_flag == true then
 	output_string log_all ("[isabelle.ml]: imply --> "^(string_of_bool res)^"\n");
@@ -403,13 +403,13 @@ let imply_sat (ante : CP.formula) (conseq : CP.formula) (timeout : float) (sat_n
 	output_string log_all ("imply#from sat#" ^ sat_no ^ "\n");
   max_flag := false;
   choice := 1;
-  let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
+  let tmp_form = CP.mkOr (CP.mkNot ante None None no_pos) conseq None None no_pos in
     (write tmp_form timeout false)
 
 let is_sat (f : CP.formula) (sat_no : string) : bool = begin
 	if !log_all_flag == true then
 				output_string log_all ("\n\n#is_sat " ^ sat_no ^ "\n");
-	let answ = (imply_sat f (CP.BForm((CP.BConst(false, no_pos), None), None)) !Globals.sat_timeout_limit sat_no) in
+	let answ = (imply_sat f (CP.BForm((CP.BConst(false, no_pos), None), None, None)) !Globals.sat_timeout_limit sat_no) in
     if !log_all_flag == true then
 	  output_string log_all ("[isabelle.ml]: is_sat --> "^(string_of_bool (not answ)) ^"\n");
     (not answ)

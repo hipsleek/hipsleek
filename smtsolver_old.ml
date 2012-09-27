@@ -668,7 +668,7 @@ and gen_induction_formulas (ante : CP.formula) (conseq : CP.formula) (indval : C
 	let ante0 = CP.apply_one_term (v, CP.mkIConst 0 no_pos) ante in
 	(* let _ = print_string ("Base case: ante = "	^ (!print_pure ante0) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in *)
 	(* ante --> conseq *)
-	let aimpc = (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos) in
+	let aimpc = (CP.mkOr (CP.mkNot ante None None no_pos) conseq None None no_pos) in
 	(* induction hypothesis = \forall {v_i} : (ante -> conseq) with v_i in p *)
 	let indhyp = CP.mkForall p aimpc None no_pos in
 	(* let _ = print_string ("Induction hypothesis: ante = "	^ (!print_pure indhyp) ^ "\n") in *)

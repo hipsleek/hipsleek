@@ -1137,6 +1137,7 @@ let rec pr_formula_base e =
 	  formula_base_flow = fl;
 	  formula_base_and = a;
       formula_base_label = lbl;
+      formula_base_origin = fo;
 	  formula_base_pos = pos}) ->
           (match lbl with 
            | None -> fmt_string "" (* "<NoLabel>" *) 
@@ -1165,6 +1166,7 @@ let rec pr_formula e =
 	  formula_exists_flow = fl;
 	  formula_exists_and = a;
       formula_exists_label = lbl;
+      formula_exists_origin = fo;
 	  formula_exists_pos = pos}) ->
           (match lbl with
            | None -> ()
@@ -2597,6 +2599,7 @@ and html_of_formula e = match e with
 			formula_base_type = t;
 			formula_base_flow = fl;
 			formula_base_label = lbl;
+      formula_base_origin = fo;
 			formula_base_pos = pos}) ->
 		(html_of_h_formula h) ^ html_op_and ^ (html_of_pure_formula (MP.pure_of_mix p))
 	| Exists ({formula_exists_qvars = svs;
@@ -2605,6 +2608,7 @@ and html_of_formula e = match e with
 			formula_exists_type = t;
 			formula_exists_flow = fl;
 			formula_exists_label = lbl;
+      formula_exists_origin = fo;
 			formula_exists_pos = pos}) ->
 		html_exist ^ (html_of_spec_var_list svs) ^ " : " ^ (html_of_h_formula h) ^ html_op_and ^ (html_of_pure_formula (MP.pure_of_mix p))
 

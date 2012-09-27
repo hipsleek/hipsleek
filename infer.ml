@@ -695,7 +695,7 @@ let infer_pure_m_x_x estate lhs_rels lhs_xpure(* _orig *) (lhs_xpure0:MCP.mix_fo
           let lhs_xpure = Cpure.add_ann_constraints imm_vrs lhs_xpure in
           let _ = DD.trace_hprint (add_str "lhs_xpure(w ann): " !CP.print_formula) lhs_xpure pos  in
           let new_p = TP.simplify_raw (CP.mkForall quan_var 
-            (CP.mkOr (CP.mkNot lhs_xpure None no_pos) rhs_xpure None pos) None pos) in
+            (CP.mkOr (CP.mkNot lhs_xpure None None no_pos) rhs_xpure None None pos) None None pos) in
           let fml2 = TP.simplify_raw (CP.mkExists quan_var fml None no_pos) in
           let new_p_for_assume = new_p in
           let _ = DD.trace_hprint (add_str "new_p_assume: " !CP.print_formula) new_p pos in
@@ -764,7 +764,7 @@ let infer_pure_m_x_x estate lhs_rels lhs_xpure(* _orig *) (lhs_xpure0:MCP.mix_fo
                   let args = CP.fv n_lhs3 in (* var on lhs *)
                   let quan_var = CP.diff_svl args vs_lhs in
                   let new_p = TP.simplify_raw (CP.mkForall quan_var 
-                      (CP.mkOr (CP.mkNot n_lhs3 None no_pos) n_rhs None pos) None pos) in
+                      (CP.mkOr (CP.mkNot n_lhs3 None None no_pos) n_rhs None None pos) None None pos) in
                   let trace = Debug.tinfo_hprint in
                   trace (add_str "f (rel)" !print_formula) f no_pos;
                   trace (add_str "vs_rel" !print_svl) vs_rel no_pos;

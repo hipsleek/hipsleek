@@ -128,27 +128,27 @@ and remove_quantif f quant_list  = match f with
 			let _ = print_string ("\n#### and: " ^ Cprinter.string_of_pure_formula tmp2 ) in*)
 			((CP.mkAnd tmp1 tmp2 pos), quant_list)
 		end
-  | CP.Or (p1, p2, lbl, pos) -> 
+  | CP.Or (p1, p2, lbl, fo, pos) -> 
 		begin
 			let (tmp1, quant_list) = remove_quantif p1 quant_list in
 			let (tmp2, quant_list) = remove_quantif p2 quant_list in
 			(*let _ = print_string ("\n#### Or: " ^ Cprinter.string_of_pure_formula tmp1 ) in*)
 			(*let _ = print_string ("\n#### Or: " ^ Cprinter.string_of_pure_formula tmp2 ) in*)
-			((CP.mkOr tmp1 tmp2 lbl pos), quant_list)
+			((CP.mkOr tmp1 tmp2 lbl fo pos), quant_list)
 		end
-  | CP.Not (p, lbl, pos) -> 
+  | CP.Not (p, lbl, fo, pos) -> 
 		begin
 			let (tmp, quant_list) = remove_quantif p quant_list in
 			(*let _ = print_string ("\n#### NOT: " ^ Cprinter.string_of_pure_formula tmp ) in*)
-			((CP.mkNot tmp lbl pos), quant_list)
+			((CP.mkNot tmp lbl fo pos), quant_list)
 		end
-  | CP.Forall (sv, p, lbl, pos) -> 
+  | CP.Forall (sv, p, lbl, fo, pos) -> 
 		begin
 			let (tmp, quant_list) = remove_quantif p quant_list in
 			(*let _ = print_string ("\n#### Forall: " ^ Cprinter.string_of_pure_formula tmp ) in*)
-			((CP.mkForall [sv] tmp lbl pos), quant_list)
+			((CP.mkForall [sv] tmp lbl fo pos), quant_list)
 		end
-  | CP.Exists (sv, p, lbl, pos) -> 
+  | CP.Exists (sv, p, lbl, fo, pos) -> 
 		begin
 			let new_name = (CP.name_of_spec_var sv)^"_flatten" in 
 			let new_sv = CP.SpecVar (CP.type_of_spec_var sv, new_name, if CP.is_primed sv then Primed else Unprimed) in

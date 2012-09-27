@@ -166,7 +166,7 @@ and preprocess_formula pr_w pr_s (f : CP.formula) : CP.formula =
       | CP.Not (p1, lbl, fo, l1) -> CP.Not((preprocess_formula pr_s pr_w p1),lbl, fo, l1)
       | CP.Forall(sv1, p1,lbl, fo, l1) -> CP.Forall(sv1, (helper p1),lbl, fo, l1)
       | CP.Exists(sv1, p1,lbl, fo, l1) -> CP.Exists(sv1, (helper p1),lbl, fo, l1)
-      | CP.BForm ((b,_,_) as bf,lbl,fo) -> 		
+      | CP.BForm ((b,_) as bf,lbl,fo) -> 		
             begin
               match (pr_w b) with
                 | None -> 
@@ -1078,7 +1078,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   let conseq = CP.drop_varperm_formula conseq in
   let (ante_fv, ante) = prepare_formula_for_mona pr_w pr_s ante !test_number in
   let (conseq_fv, conseq) = prepare_formula_for_mona pr_s pr_w conseq !test_number in
-  let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
+  let tmp_form = CP.mkOr (CP.mkNot ante None None no_pos) conseq None None no_pos in
   let vs = Hashtbl.create 10 in
   let _ = find_order tmp_form vs in
   if not !is_mona_running then

@@ -106,6 +106,7 @@ and formula_base = {  formula_base_heap : h_formula;
                       formula_base_and : one_formula list; (*to capture concurrent flows*)
                       formula_base_flow : flow_formula;
                       formula_base_label : formula_label option;
+                      formula_base_origin: formula_origin option;
                       formula_base_pos : loc }
 
 
@@ -115,6 +116,7 @@ and mem_formula = {
 
 and formula_or = {  formula_or_f1 : formula;
                     formula_or_f2 : formula;
+                    formula_or_origin: formula_origin;
                     formula_or_pos : loc }
 
 and formula_exists = {  formula_exists_qvars : CP.spec_var list;
@@ -124,6 +126,7 @@ and formula_exists = {  formula_exists_qvars : CP.spec_var list;
                         formula_exists_and : one_formula list;
                         formula_exists_flow : flow_formula;
                         formula_exists_label : formula_label option;
+                        formula_exists_origin: formula_origin option;
                         formula_exists_pos : loc }
 
 and flow_formula = {  formula_flow_interval : nflow; 
@@ -139,6 +142,7 @@ and one_formula = {
     formula_thread : CP.spec_var;
     formula_ref_vars : CP.spec_var list; (*to update ref vars when join*)
     formula_label : formula_label option;
+    formula_origin : formula_origin option;
     formula_pos : loc
 }
 	
@@ -789,16 +793,18 @@ and one_formula_of_formula (f : formula) (tid: CP.spec_var): one_formula =
     | Base {formula_base_heap = h;
         formula_base_pure = p;
         formula_base_label = lbl;
+        formula_base_origin = fo;
         formula_base_pos = pos;
        } ->
-        mkOneFormula h p tid lbl pos
+        mkOneFormula h p tid lbl fo pos
     | Exists {
         formula_exists_heap = h;
         formula_exists_pure = p;
         formula_exists_label = lbl;
+        formula_exists_origin = fo;
         formula_exists_pos = pos;
        } ->
-        mkOneFormula h p tid lbl pos
+        mkOneFormula h p tid lbl fo pos
     | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = "one_formula_of_formula: disjunctive form"} )
 
 and add_formula_and (a: one_formula list) (f:formula) : formula =
@@ -821,6 +827,7 @@ and formula_of_one_formula (f : one_formula) : formula =
         formula_base_and = [];
         formula_base_flow = mkTrueFlow ();
         formula_base_label = f.formula_label;
+        formula_base_origin = f.formula_origin;
         formula_base_pos = f.formula_pos;
        }
 
@@ -948,6 +955,7 @@ and mkTrue_b (flowt:flow_formula) pos = {
 formula_base_and = [];
 		formula_base_flow = flowt (*(mkTrueFlow ())*);
 		formula_base_label = None;
+    formula_base_origin = None
 		formula_base_pos = pos}
 	  
 and mkTrue_b_nf pos = mkTrue_b (mkTrueFlow ()) pos
@@ -966,6 +974,7 @@ and mkFalse (flowt: flow_formula) pos =
     formula_base_and = [];
     formula_base_flow = flowt (*mkFalseFlow*); (*Cpure.flow_eqs any_flow pos;*)
     formula_base_label = None;
+    formula_base_origin = None;
     formula_base_pos = pos
   })
   
@@ -1007,7 +1016,7 @@ and mkOr f1 f2 pos =
   else 	
 	Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos})
 
-and mkBase_w_lbl (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flow_formula) (a : one_formula list)(pos : loc) lbl: formula= 
+and mkBase_w_lbl (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flow_formula) (a : one_formula list)(pos : loc) lbl fo: formula= 
   if MCP.isConstMFalse p || h = HFalse || (is_false_flow fl.formula_flow_interval)  then  mkFalse fl pos
   else 
 	Base ({formula_base_heap = h; 
@@ -1016,9 +1025,10 @@ and mkBase_w_lbl (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flo
 	formula_base_flow = fl;
     formula_base_and = a;
     formula_base_label = lbl;
+    formula_base_origin = fo;
 	formula_base_pos = pos})
-and mkBase (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flow_formula) (a: one_formula list)(pos : loc) : formula= 
-  mkBase_w_lbl h p t fl a pos None
+and mkBase (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flow_formula) (a: one_formula list) fo (pos : loc) : formula= 
+  mkBase_w_lbl h p t fl a pos None fo
 
 and mkOneFormula (h : h_formula) (p : MCP.mix_formula) (tid : CP.spec_var) lbl (pos : loc) : one_formula= 
   {formula_heap = h;
@@ -1190,13 +1200,14 @@ and mkAnd_pure (f1 : formula) (p2 : MCP.mix_formula) (pos : loc):formula =
       mkBase h1 (MCP.merge_mems p1 p2 true) t1 fl1 a1 pos
 
           
-and mkExists_w_lbl (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl:flow_formula) a (pos : loc) lbl=
+and mkExists_w_lbl (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl:flow_formula) a (pos : loc) lbl fo=
   let tmp_b = {formula_base_heap = h;
   formula_base_pure = p;
   formula_base_type = t;
   formula_base_flow = fl;
   formula_base_and = a;
   formula_base_label = lbl;
+  formula_base_origin = fo;
   formula_base_pos = pos} in
   let fvars = fv (Base tmp_b) in
   let qvars = Gen.BList.intersect_eq (=) svs fvars in (* used only these for the quantified formula *)
@@ -1209,14 +1220,15 @@ and mkExists_w_lbl (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula
     formula_exists_and = a;
 	formula_exists_flow = fl;
     formula_exists_label = lbl;
+    formula_exists_origin = fo;
 	formula_exists_pos = pos})
 
 and is_empty_heap (h : h_formula) = match h with
   | HEmp -> true
   | _ -> false
 
-and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl:flow_formula) a (pos : loc) = 
-  mkExists_w_lbl svs h p t fl a pos None
+and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl:flow_formula) a fo (pos : loc) = 
+  mkExists_w_lbl svs h p t fl a fo pos None fo
 
 and is_view (h : h_formula) = match h with
   | ViewNode _ -> true
@@ -1856,6 +1868,7 @@ and fv (f : formula) : CP.spec_var list = match f with
     formula_exists_and = a;
 	formula_exists_flow = fl;
     formula_exists_label = lbl;
+    formula_exists_origin = fo;
 	formula_exists_pos = pos}) -> 
 	    let fvars = fv (Base ({formula_base_heap = h; 
 		formula_base_pure = p; 
@@ -1863,6 +1876,7 @@ and fv (f : formula) : CP.spec_var list = match f with
         formula_base_and = a;
 		formula_base_flow = fl;
         formula_base_label = lbl;
+        formula_base_origin = fo;
 		formula_base_pos = pos})) in
         let vars = List.concat (List.map one_formula_fv a) in
         let fvars = CP.remove_dups_svl (vars@fvars) in
@@ -2189,6 +2203,7 @@ and subst_x sst (f : formula) =
                         formula_exists_and = a; (*TO CHECK*)
 						formula_exists_flow = fl;
 						formula_exists_label = lbl;
+            formula_exists_origin = fo;
 						formula_exists_pos = pos}) -> 
 		(* Variable under this existential quantification should NOT be substituted! *)
 		(* Thus, we need to filter out replacements (fr |-> t) in sst where fr is in qsv *)
@@ -2202,6 +2217,7 @@ and subst_x sst (f : formula) =
                                     formula_exists_and = (List.map (fun f -> one_formula_subst sst f) a);
 									formula_exists_flow = fl;
 									formula_exists_label = lbl;
+                  formula_exists_origin = fo;
 									formula_exists_pos = pos})
   in helper f
 (** An Hoa : End of formula substitution **)
@@ -2365,6 +2381,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
     formula_base_and = a;
 	formula_base_flow = fl;
     formula_base_label = lbl;
+    formula_base_origin = fo;
 	formula_base_pos = pos}) -> 
         Base ({formula_base_heap = h_apply_one s h; 
 		formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_one s p); 
@@ -2372,6 +2389,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
         formula_base_and = List.map (apply_one_one_formula s) a;
 		formula_base_flow = fl;
         formula_base_label = lbl;
+        formula_base_origin = fo;
 		formula_base_pos = pos})
   | Exists ({formula_exists_qvars = qsv; 
 	formula_exists_heap = qh; 
@@ -2380,6 +2398,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
     formula_exists_and = a;
 	formula_exists_flow = fl;
     formula_exists_label = lbl;
+    formula_exists_origin = fo;
 	formula_exists_pos = pos}) -> 
 	    if List.mem (CP.name_of_spec_var fr) (List.map CP.name_of_spec_var qsv) then f 
 	    else Exists ({formula_exists_qvars = qsv; 
@@ -2389,6 +2408,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
         formula_exists_and = List.map (apply_one_one_formula s) a;
 		formula_exists_flow = fl;
         formula_exists_label = lbl;
+        formula_exists_origin = fo;
 		formula_exists_pos = pos})
 
 (*apply subst to VarPerm only*)
@@ -2401,6 +2421,7 @@ and apply_one_varperm ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula)
     formula_base_and = a;
 	formula_base_flow = fl;
     formula_base_label = lbl;
+    formula_base_origin = fo;
 	formula_base_pos = pos}) -> 
         Base ({formula_base_heap = h_apply_one s h;
 		formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_one_varperm s p); 
@@ -2408,6 +2429,7 @@ and apply_one_varperm ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula)
         formula_base_and = List.map (apply_one_one_formula_varperm s) a;
 		formula_base_flow = fl;
         formula_base_label = lbl;
+        formula_base_origin = fo;
 		formula_base_pos = pos})
   | Exists ({formula_exists_qvars = qsv; 
 	formula_exists_heap = qh; 
@@ -2416,6 +2438,7 @@ and apply_one_varperm ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula)
     formula_exists_and = a;
 	formula_exists_flow = fl;
     formula_exists_label = lbl;
+    formula_exists_origin = fo;
 	formula_exists_pos = pos}) -> 
 	    if List.mem (CP.name_of_spec_var fr) (List.map CP.name_of_spec_var qsv) then f 
 	    else Exists ({formula_exists_qvars = qsv; 
@@ -2425,6 +2448,7 @@ and apply_one_varperm ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula)
         formula_exists_and = List.map (apply_one_one_formula_varperm s) a;
 		formula_exists_flow = fl;
         formula_exists_label = lbl;
+        formula_exists_origin = fo;
 		formula_exists_pos = pos})
 
 
@@ -2654,18 +2678,20 @@ and split_components (f: formula) =
   split_components_x f 
 
 and split_components_x (f : formula) = 
-  if (isAnyConstFalse f) then (HFalse,(MCP.mkMFalse no_pos),(flow_formula_of_formula f),TypeFalse, [])
+  if (isAnyConstFalse f) then (HFalse,(MCP.mkMFalse no_pos),(flow_formula_of_formula f),TypeFalse, [], None)
   else match f with
     | Base ({formula_base_heap = h; 
 	  formula_base_pure = p; 
 	  formula_base_flow =fl;
 	  formula_base_and =a; (*TO CHECK: omit at the moment*)
-	  formula_base_type = t}) -> (h, p(*, imm*), fl, t, a)
+	  formula_base_type = t;
+    formula_base_origin = fo;}) -> (h, p(*, imm*), fl, t, a, fo)
     | Exists ({formula_exists_heap = h; 
 	  formula_exists_pure = p; 
 	  formula_exists_flow = fl;
 	  formula_exists_and = a; (*TO CHECK: omit at the moment*)
-	  formula_exists_type = t}) -> (h, p(*, imm*), fl, t, a)
+	  formula_exists_type = t;
+    formula_exists_origin = fo;}) -> (h, p(*, imm*), fl, t, a, fo)
     | Or ({formula_or_pos = pos}) -> 
           Err.report_error {Err.error_loc = pos;Err.error_text = "split_components: don't expect OR"}
 			 
@@ -2685,8 +2711,9 @@ and split_quantifiers (f : formula) : (CP.spec_var list * formula) = match f wit
 	formula_exists_type = t;
 	formula_exists_flow = fl;
 	formula_exists_and = a;
+  formula_exists_origin = fo;
 	formula_exists_pos = pos}) -> 
-        (qvars, mkBase h p t fl a pos)
+        (qvars, mkBase h p t fl a fo pos)
   | Base _ -> ([], f)
   | _ -> failwith ("split_quantifiers: invalid argument")
 
@@ -2696,16 +2723,18 @@ and add_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = match f
 	formula_base_type = t;
 	formula_base_flow = fl;
         formula_base_and = a;
-        formula_base_pos = pos}) -> mkExists qvars h p t fl a pos
+        formula_base_origin = fo;
+        formula_base_pos = pos}) -> mkExists qvars h p t fl a fo pos
   | Exists ({formula_exists_qvars = qvs; 
 	formula_exists_heap = h; 
 	formula_exists_pure = p; 
 	formula_exists_type = t;
 	formula_exists_flow = fl;
     formula_exists_and = a;
+    formula_exists_origin = fo;
 	formula_exists_pos = pos}) -> 
 	    let new_qvars = CP.remove_dups_svl (qvs @ qvars) in
-		mkExists new_qvars h p t fl a pos
+		mkExists new_qvars h p t fl a fo pos
   | _ -> failwith ("add_quantifiers: invalid argument")
 
 (* 19.05.2008 *)
@@ -2717,10 +2746,11 @@ and remove_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = matc
 	formula_exists_type = t;
 	formula_exists_flow = fl;
     formula_exists_and = a;
+    formula_exists_origin = fo;
 	formula_exists_pos = pos}) -> 
 	    let new_qvars = (List.filter (fun x -> not(List.exists (fun y -> CP.eq_spec_var x y) qvars)) qvs) in
-	  	if (List.length new_qvars == 0) then mkBase h p t fl a pos
-	  	else mkExists new_qvars h p t fl a pos
+	  	if (List.length new_qvars == 0) then mkBase h p t fl a fo pos
+	  	else mkExists new_qvars h p t fl a fo pos
   | _ -> failwith ("add_quantifiers: invalid argument")
         (* 19.05.2008 *)
 
@@ -5268,6 +5298,7 @@ and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match 
        formula_base_and = a;
 		   formula_base_flow = fl;
 		   formula_base_label = lbl;
+       formula_base_origin = fo;
 		   formula_base_pos = pos}) -> 
     Base ({formula_base_heap = h; 
 			formula_base_pure = MCP.memo_apply_one_exp s p;
@@ -5275,6 +5306,7 @@ and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match 
 			formula_base_flow = fl;
 		 	formula_base_type = t;
 			formula_base_label = lbl;
+      formula_base_origin = fo;
 		 	formula_base_pos = pos})
   | Exists ({formula_exists_qvars = qsv; 
 			 formula_exists_heap = qh; 
@@ -5283,6 +5315,7 @@ and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match 
        formula_exists_and = a;
 			 formula_exists_flow = fl;
 			 formula_exists_label = lbl;
+       formula_exists_origin = fo;
 			 formula_exists_pos = pos}) -> 
 	  if List.mem (CP.name_of_spec_var fr) (List.map CP.name_of_spec_var qsv) then f 
 	  else 
@@ -5293,6 +5326,7 @@ and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match 
                     formula_exists_and = List.map (apply_one_exp_one_formula s) a;
 					formula_exists_flow = fl;
 					formula_exists_label = lbl;
+          formula_exists_origin = fo;
 					formula_exists_pos = pos})
 
 let rec struc_to_formula_gen (f:struc_formula):(formula*formula_label option list) list = 
@@ -6802,25 +6836,27 @@ let is_no_heap_struc_formula (e : struc_formula) : bool =
   Debug.no_1 "is_no_heap_struc_formula" pr string_of_bool is_no_heap_struc_formula e 
 
 let extr_rhs_b (e:formula) =
-  let h1, p1, fl1, t1,a1 = split_components e in
+  let h1, p1, fl1, t1,a1,fo = split_components e in
   let b1 = { formula_base_heap = h1;
   formula_base_pure = p1;
   formula_base_type = t1;
   formula_base_and = a1;
   formula_base_flow = fl1;
   formula_base_label = None;
+  formula_base_origin = fo;
   formula_base_pos = no_pos } in
   b1
     
 and extr_lhs_b (es:entail_state) =
   let e = es.es_formula in
-  let h1, p1, fl1, t1,a1 = split_components e in
+  let h1, p1, fl1, t1,a1,fo = split_components e in
   let b1 = { formula_base_heap = h1;
   formula_base_pure = p1;
   formula_base_type = t1;
   formula_base_and = a1;
   formula_base_flow = fl1;
   formula_base_label = None;
+  formula_base_origin = fo;
   formula_base_pos = no_pos } in
   b1
 

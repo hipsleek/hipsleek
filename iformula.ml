@@ -64,6 +64,7 @@ and formula_base = { formula_base_heap : h_formula;
                      formula_base_pure : P.formula;
                      formula_base_flow : flow_formula;
                      formula_base_and: one_formula list;
+                     formula_base_origin: formula_origin option;
                      formula_base_pos : loc }
 
 and formula_exists = { formula_exists_qvars : (ident * primed) list;
@@ -71,12 +72,14 @@ and formula_exists = { formula_exists_qvars : (ident * primed) list;
                        formula_exists_pure : P.formula;
                        formula_exists_flow : flow_formula;
                        formula_exists_and : one_formula list;
+                       formula_exists_origin: formula_origin option;
                        formula_exists_pos : loc }
 
 and one_formula = {
     formula_heap : h_formula;
     formula_pure : P.formula;
     formula_thread : (ident*primed) option;
+    formula_origin: formula_origin option;
     formula_pos : loc
 }
 
@@ -195,12 +198,14 @@ and one_formula_of_formula_base b =
   {formula_heap = b.formula_base_heap;
    formula_pure = b.formula_base_pure;
    formula_thread = None;
+   formula_origin = b.formula_base_origin;
    formula_pos = b.formula_base_pos}
 
 and one_formula_of_formula_exists b =
   {formula_heap = b.formula_exists_heap;
    formula_pure = b.formula_exists_pure;
    formula_thread = None;
+   formula_origin = b.formula_exists_origin;
    formula_pos = b.formula_exists_pos}
 
 and add_formula_and (a: one_formula list) (f:formula) : formula =
@@ -244,12 +249,14 @@ and mkTrue flow pos = Base { formula_base_heap = HEmp;
 						formula_base_pure = P.mkTrue pos;
 						formula_base_flow = flow;
                         formula_base_and = [];
+                        formula_base_origin = None;
 						formula_base_pos = pos }
 
 and mkFalse flow pos = Base { formula_base_heap = HFalse;
 						 formula_base_pure = P.mkFalse pos;
 						 formula_base_flow = flow;
                          formula_base_and = [];
+                         formula_base_origin = None;
 						 formula_base_pos = pos }
 
 and mkETrue flow pos = EBase {
@@ -295,7 +302,7 @@ and mkOr f1 f2 pos =
     else raw
    else raw
       
-and mkBase (h : h_formula) (p : P.formula) flow (a: one_formula list) pos = match h with
+and mkBase (h : h_formula) (p : P.formula) flow (a: one_formula list) fo pos = match h with
   | HFalse -> mkFalse flow pos
   | _ -> 
 	  if P.isConstFalse p then 
@@ -305,9 +312,10 @@ and mkBase (h : h_formula) (p : P.formula) flow (a: one_formula list) pos = matc
 			   formula_base_pure = p;
 			   formula_base_flow = flow;
 			   formula_base_and = a;
+         formula_base_origin = fo;
 			   formula_base_pos = pos }
 
-and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) flow (a: one_formula list) pos = match h with
+and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) flow (a: one_formula list) fo pos = match h with
   | HFalse -> mkFalse flow pos
   | _ ->
 	  if P.isConstFalse p then
@@ -318,6 +326,7 @@ and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) flo
              formula_exists_pure = p;
              formula_exists_flow = flow;
              formula_exists_and = a;
+             formula_exists_origin = fo;
              formula_exists_pos = pos }
 
 and mkOneFormula (h : h_formula) (p : P.formula) id pos = 
@@ -567,9 +576,10 @@ and add_quantifiers (qvars : (ident*primed) list) (f : formula) : formula = matc
              formula_exists_pure = p; 
              formula_exists_flow = f;
              formula_exists_and = a;
+             formula_exists_origin = fo;
              formula_exists_pos = pos}) -> 
 	  let new_qvars = Gen.BList.remove_dups_eq (=) (qvs @ qvars) in
-		mkExists new_qvars h p f a pos (*TO CHECK*)
+		mkExists new_qvars h p f a fo pos (*TO CHECK*)
   | _ -> failwith ("add_quantifiers: invalid argument")
 	
 and push_exists (qvars : (ident*primed) list) (f : formula) = match f with
@@ -619,7 +629,8 @@ let split_quantifiers (f : formula) : ( (ident * primed) list * formula) = match
 			 formula_exists_pure = p; 
 			 formula_exists_flow = f;
 			 formula_exists_and = a;
-			 formula_exists_pos = pos}) -> (qvars, mkBase h p f a pos)
+       formula_exists_origin = fo;
+			 formula_exists_pos = pos}) -> (qvars, mkBase h p f a fo pos)
  
   | Base _ -> ([], f)
   | _ -> failwith ("split_quantifiers: invalid argument")
@@ -666,6 +677,7 @@ and apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : formula) =
 	formula_exists_pure = qp; 
 	formula_exists_flow = fl;
 	formula_exists_and = a;
+  formula_exists_origin = fo;
 	formula_exists_pos = pos}) -> 
 	    if List.mem (fst fr) (List.map fst qsv) then f 
 	    else Exists ({formula_exists_qvars = qsv; 
@@ -673,6 +685,7 @@ and apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : formula) =
 		formula_exists_pure = Ipure.apply_one s qp; 
 		formula_exists_flow = fl;
 	    formula_exists_and = List.map (one_formula_apply_one s) a;
+      formula_exists_origin = fo;
 		formula_exists_pos = pos})		
 
 and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formula) = match f with
@@ -759,7 +772,7 @@ and rename_bound_vars (f : formula) =
     | Base b -> mkExists qvars b.formula_base_heap b.formula_base_pure b.formula_base_flow b.formula_base_and b.formula_base_pos
     | Exists b -> 
 	      let new_qvars = Gen.BList.remove_dups_eq (=) (b.formula_exists_qvars @ qvars) in
-		  mkExists new_qvars b.formula_exists_heap b.formula_exists_pure b.formula_exists_flow b.formula_exists_and b.formula_exists_pos
+		  mkExists new_qvars b.formula_exists_heap b.formula_exists_pure b.formula_exists_flow b.formula_exists_and b.formula_exists_origin b.formula_exists_pos
 
 
     | _ -> failwith ("add_quantifiers: invalid argument") in		
@@ -905,6 +918,7 @@ and float_out_exps_from_heap_x (f:formula ):formula =
 		      formula_exists_flow = b.formula_base_flow;
 		      formula_exists_pure = Ipure.mkAnd r2 b.formula_base_pure b.formula_base_pos;
 		      formula_exists_and = afs;
+          formula_exists_origin = b.formula_base_origin;
 		      formula_exists_pos = b.formula_base_pos
 		    })
     | Exists b->
@@ -912,7 +926,7 @@ and float_out_exps_from_heap_x (f:formula ):formula =
 	  if (List.length rl)== 0 then f
 	  else 
 	    let r1,r2 = List.hd rl in
-	    let r1,r2 = List.fold_left (fun (a1,a2)(c1,c2)-> ((c1::a1),(Ipure.mkAnd a2 c2 b.formula_exists_pos)) ) ([r1],r2) (List.tl rl) in
+	    let r1,r2 = List.fold_left (fun (a1,a2)(c1,c2)-> ((c1::a1),(Ipure.mkAnd a2 c2 b.formula_exists_origin b.formula_exists_pos)) ) ([r1],r2) (List.tl rl) in
         let tmp = List.map helper_one_formula b.formula_exists_and in
         let avars,afs = List.split tmp in
         let avars = List.concat avars in
@@ -922,6 +936,7 @@ and float_out_exps_from_heap_x (f:formula ):formula =
 			formula_exists_pure = Ipure.mkAnd r2 b.formula_exists_pure b.formula_exists_pos;
 			formula_exists_flow = b.formula_exists_flow;
 		    formula_exists_and = afs;
+        formula_exists_origin = b.formula_exists_origin;
 			formula_exists_pos = b.formula_exists_pos
 		      })	
     | Or b-> Or ({
@@ -983,6 +998,7 @@ and float_out_min_max (f :  formula) :  formula =
          formula_exists_pure = p0;
 		 formula_exists_flow = fl;
          formula_exists_and = a;
+         formula_exists_origin = fo;
          formula_exists_pos = l
       } ->
       let (nh, nhpf) = float_out_heap_min_max h0 in
@@ -997,6 +1013,7 @@ and float_out_min_max (f :  formula) :  formula =
                | None -> np
                | Some e1 -> (Ipure.And (np, e1, l)));
              formula_exists_and = List.map float_out_one_formula_min_max a;
+             formula_exists_origin = fo;
              formula_exists_pos = l;
           }
   |  Or b-> Or {formula_or_f1 = float_out_min_max b.formula_or_f1;formula_or_f2 = float_out_min_max b.formula_or_f2;formula_or_pos = b.formula_or_pos;}
@@ -1380,7 +1397,7 @@ let add_post_for_flow fl_names f =
 		| Exists b ->
 			if (String.compare b.formula_exists_flow n_flow) == 0 then  
 				let l = List.map (fun c-> Exists {b with formula_exists_flow = c}) fl_names in
-				List.fold_left (fun a c-> mkOr a c b.formula_exists_pos) c l 
+				List.fold_left (fun a c-> mkOr a c b.formula_exists_origin b.formula_exists_pos) c l 
 			else c in	
 	let rec helper f =  match f with
 		| ECase c -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> c1,helper c2) c.formula_case_branches} 

@@ -332,8 +332,9 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
       {
         IF.formula_base_heap = h0;
         IF.formula_base_pure = p0;
-		IF.formula_base_flow = fl0;
-		IF.formula_base_and = a0;
+        IF.formula_base_flow = fl0;
+        IF.formula_base_and = a0;
+        IF.formula_base_origin = o0;
         IF.formula_base_pos = l0
       } -> (*as f*)
       let tmp1 = look_for_anonymous_h_formula h0 in
@@ -351,6 +352,7 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
               IF.formula_exists_pure = p0;
               IF.formula_exists_flow = fl0;
               IF.formula_exists_and = a1;
+              IF.formula_exists_origin = o0;
               IF.formula_exists_pos = l0;
             }
         else f0
@@ -1305,7 +1307,7 @@ and compute_base_case_x prog cf vars = (*flatten_base_case cf s self_c_var *)
     let cases = List.fold_left mkOr_mems (mkMFalse no_pos) cases in  
     let bcg = List.fold_left (fun a p -> a@(CP.split_conjunctions (TP.simplify_a (-1) p))) [] guards in
     let bcg = Gen.BList.remove_dups_eq (CP.equalFormula_f CP.eq_spec_var) bcg in
-    let one_bc = List.fold_left (fun a c -> CP.mkOr a c None no_pos) (CP.mkFalse no_pos) guards in
+    let one_bc = List.fold_left (fun a c -> CP.mkOr a c None None no_pos) (CP.mkFalse no_pos) guards in
     let bc_impl c = let r,_,_ = TP.imply_sub_no one_bc c "0" false None in r in
     let sat_subno  = ref 0 in
     let bcg = List.filter (fun c->(not (CP.isConstTrue c))&& (bc_impl c)&& List.for_all 
@@ -3988,6 +3990,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             IF.formula_base_pure = p;
             IF.formula_base_flow = fl;
             IF.formula_base_and = a;
+            IF.formula_base_origin = fo;
             IF.formula_base_pos = pos} ->(
             let rl = res_retrieve stab clean_res fl in
             let _ = if sep_collect then  (gather_type_info_pure prog p stab; gather_type_info_heap prog h stab) else () in 					
@@ -4010,6 +4013,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             IF.formula_exists_pure = p;
             IF.formula_exists_flow = fl;
             IF.formula_exists_and = a;
+            IF.formula_exists_origin = o;
             IF.formula_exists_pos = pos} -> (
             let rl = res_retrieve stab clean_res fl in
             let _ = if sep_collect then (gather_type_info_pure prog p stab;
@@ -4020,6 +4024,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
                 IF.formula_base_pure = p;
                 IF.formula_base_flow = fl;
                 IF.formula_base_and = a;
+                IF.formula_base_origin = o;
                 IF.formula_base_pos = pos; } in
             (* let _ = print_endline ("trans_formula: Exists: before linearize:" *)
             (*                        ^ " ### stab = " ^ (string_of_stab stab )) in *)
@@ -4288,6 +4293,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
     let p = base.IF.formula_base_pure in
     let fl = base.IF.formula_base_flow in
     let a = base.IF.formula_base_and in
+    let fo = base.IF.formula_base_origin in
     let pos = base.IF.formula_base_pos in
     let (new_h, type_f) = linearize_heap h pos in
     let new_p = trans_pure_formula p stab in
@@ -4300,6 +4306,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
     | IF.Or {
           IF.formula_or_f1 = f1;
           IF.formula_or_f2 = f2;
+          IF.formula_or_origin = fo;
           IF.formula_or_pos = pos } ->
           let lf1 = linearize_formula prog f1 stab in
           let lf2 = linearize_formula prog f2 stab in
@@ -4308,24 +4315,26 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
           let pos = base.IF.formula_base_pos in
           let nh,np,nt,nfl, na = (linearize_base base pos) in
           let np = (memoise_add_pure_N (mkMTrue pos) np)  in
-          CF.mkBase nh np nt nfl na pos
+          CF.mkBase nh np nt nfl na fo pos
     | IF.Exists {
           IF.formula_exists_heap = h; 
           IF.formula_exists_pure = p;
           IF.formula_exists_flow = fl;
           IF.formula_exists_qvars = qvars;
           IF.formula_exists_and = a;
+          IF.formula_exists_origin = o;
           IF.formula_exists_pos = pos} ->
           let base ={
               IF.formula_base_heap = h;
               IF.formula_base_pure = p;
               IF.formula_base_flow = fl;
               IF.formula_base_and = a;
+              IF.formula_base_origin = o;
               IF.formula_base_pos = pos;
           } in 
 	      let nh,np,nt,nfl,na = linearize_base base pos in
           let np = memoise_add_pure_N (mkMTrue pos) np in
-	      CF.mkExists (List.map (fun c-> trans_var_safe c UNK stab pos) qvars) nh np nt nfl na pos 
+	      CF.mkExists (List.map (fun c-> trans_var_safe c UNK stab pos) qvars) nh np nt nfl na fo pos 
 	          
 
 and trans_flow_formula (f0:IF.flow_formula) pos : CF.flow_formula = 
@@ -6789,7 +6798,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
               let tpi = fun f1 f2 -> TP.imply f1 f2 "" false None in
               if ((fun (c,_,_)-> c) (tpi f1r f2r)) then f2r
               else if ((fun (c,_,_)-> c) (tpi f2r f1r)) then f1r
-              else  CP.mkOr f1r f2r None no_pos in
+              else  CP.mkOr f1r f2r None None no_pos in
       (*let _ = print_string ("before hull: "^(Cprinter.string_of_pure_formula lr)^"\n") in*)
       let lr = hull_invs v_l lr in
       (*let _ = print_string ("after hull: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula lr))^"\n") in*)

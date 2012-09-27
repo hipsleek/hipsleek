@@ -155,15 +155,14 @@ and preprocess_b_formula b : (CP.b_formula * CP.formula * CP.spec_var list) =
 *)
 and preprocess_formula (f : CP.formula) : CP.formula =
   match f with
-  | CP.Or (p1, p2,lbl, l1) -> (CP.mkOr (preprocess_formula p1) (preprocess_formula p2) lbl l1)
+  | CP.Or (p1, p2,lbl, fo, l1) -> (CP.mkOr (preprocess_formula p1) (preprocess_formula p2) lbl fo l1)
   | CP.And (p1, p2, l1) -> (CP.mkAnd (preprocess_formula p1) (preprocess_formula p2) l1)
-  | CP.Not (p1,lbl, l1) -> CP.Not((preprocess_formula p1),lbl, l1)
-  | CP.Forall(sv1, p1,lbl, l1) -> CP.Forall(sv1, (preprocess_formula p1),lbl, l1)
-  | CP.Exists(sv1, p1,lbl, l1) -> CP.Exists(sv1, (preprocess_formula p1),lbl, l1)
-  
-  | CP.BForm (b,lbl) -> 
+  | CP.Not (p1,lbl, fo, l1) -> CP.Not((preprocess_formula p1),lbl, fo, l1)
+  | CP.Forall(sv1, p1,lbl, fo, l1) -> CP.Forall(sv1, (preprocess_formula p1),lbl, fo, l1)
+  | CP.Exists(sv1, p1,lbl, fo, l1) -> CP.Exists(sv1, (preprocess_formula p1),lbl, fo, l1)
+  | CP.BForm (b,lbl,fo) -> 
     let (bf, constr, ev) = preprocess_b_formula b in
-    (mkEx ev (CP.mkAnd (CP.BForm(bf, lbl)) constr no_pos))
+    (mkEx ev (CP.mkAnd (CP.BForm(bf, lbl, fo)) constr no_pos))
 
 
 (* 
@@ -1019,7 +1018,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   incr test_number;
   let (ante_fv, ante) = prepare_formula_for_mona ante !test_number in
   let (conseq_fv, conseq) = prepare_formula_for_mona conseq !test_number in
-  let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
+  let tmp_form = CP.mkOr (CP.mkNot ante None None no_pos) conseq None None no_pos in
   let vs = Hashtbl.create 10 in
   let _ = find_order tmp_form vs in
   if not !is_mona_running then
