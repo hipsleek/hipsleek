@@ -203,7 +203,7 @@ let rec smt_of_formula pr_w pr_s f =
   let _ = Debug.devel_hprint (add_str "f : " !CP.print_formula) f no_pos in
   let rec helper f=
 	match f with
-	| CP.BForm ((b,_) as bf,_) ->
+	| CP.BForm ((b,_) as bf,_,_) ->
          begin
           match (pr_w b) with
             | None -> let _ = Debug.devel_pprint ("NONE #") no_pos in (smt_of_b_formula bf)
@@ -211,11 +211,11 @@ let rec smt_of_formula pr_w pr_s f =
         end
         | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
 	| CP.And (p1, p2, _) -> "(and " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
-	| CP.Or (p1, p2,_, _) -> "(or " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
-	| CP.Not (p,_, _) -> "(not " ^ (smt_of_formula pr_s pr_w p) ^ ")"
-	| CP.Forall (sv, p, _,_) ->
+	| CP.Or (p1, p2,_,_,_) -> "(or " ^ (helper p1) ^ " " ^ (helper p2) ^ ")"
+	| CP.Not (p,_,_,_) -> "(not " ^ (smt_of_formula pr_s pr_w p) ^ ")"
+	| CP.Forall (sv, p, _, _, _) ->
 		"(forall (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
-	| CP.Exists (sv, p, _,_) ->
+	| CP.Exists (sv, p, _, _, _) ->
 		"(exists (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
   in
   helper f
@@ -260,12 +260,12 @@ and collect_combine_formula_info f1 f2 =
  * The information is to be corrected by the function collect_formula_info.
  *)
 and collect_formula_info_raw f = match f with
-  | CP.BForm ((b,_),_) -> collect_bformula_info b
-  | CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> 
+  | CP.BForm ((b,_),_,_) -> collect_bformula_info b
+  | CP.And (f1,f2,_) | CP.Or (f1,f2,_,_,_) -> 
 		collect_combine_formula_info_raw f1 f2
   | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
-  | CP.Not (f1,_,_) -> collect_formula_info_raw f1
-  | CP.Forall (svs,f1,_,_) | CP.Exists (svs,f1,_,_) -> 
+  | CP.Not (f1,_,_,_) -> collect_formula_info_raw f1
+  | CP.Forall (svs,f1,_,_,_) | CP.Exists (svs,f1,_,_,_) -> 
 		let if1 = collect_formula_info_raw f1 in { if1 with is_quantifier_free = false; }
 
 and collect_combine_formula_info_raw f1 f2 = 
@@ -429,9 +429,9 @@ let add_relation (rname1:string) rargs rform =
 	  global_rel_defs := !global_rel_defs @ [rdef];
 	  (* Note that this axiom must be NEW i.e. no relation with this name is added earlier so that add_axiom is correct *)
 	  match rform with
-		| CP.BForm ((CP.BConst (true, no_pos), None), None) (* no definition supplied *) -> (* do nothing *) ()
+		| CP.BForm ((CP.BConst (true, no_pos), None), None, None) (* no definition supplied *) -> (* do nothing *) ()
 		| _ -> (* add an axiom to describe the definition *)
-			  let h = CP.BForm ((CP.RelForm (rname, List.map (fun x -> CP.mkVar x no_pos) rargs, no_pos), None), None) in
+			  let h = CP.BForm ((CP.RelForm (rname, List.map (fun x -> CP.mkVar x no_pos) rargs, no_pos), None), None, None) in
 			  add_axiom h IFF rform;
 	end
 	
@@ -839,7 +839,7 @@ let max_induction_level = ref 0
 let rec collect_induction_value_candidates (ante : CP.formula) (conseq : CP.formula) : (CP.exp list) =
   (*let _ = print_string ("collect_induction_value_candidates :: ante = " ^ (!print_pure ante) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in*)
   match conseq with
-	| CP.BForm (b,_) -> (let (p, _) = b in match p with
+	| CP.BForm (b,_,_) -> (let (p, _) = b in match p with
 		| CP.RelForm (r,[value],_) -> 
               if (CP.name_of_spec_var r) ="induce" then [value]
               else []
@@ -847,8 +847,8 @@ let rec collect_induction_value_candidates (ante : CP.formula) (conseq : CP.form
 		| _ -> [])
 	| CP.And (f1,f2,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
 	| CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
-	| CP.Or (f1,f2,_,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
-	| CP.Not (f,_,_) -> (collect_induction_value_candidates ante f)
+	| CP.Or (f1,f2,_,_,_) -> (collect_induction_value_candidates ante f1) @ (collect_induction_value_candidates ante f2)
+	| CP.Not (f,_,_,_) -> (collect_induction_value_candidates ante f)
 	| CP.Forall _ | CP.Exists _ -> []
 	      
 (** 
@@ -906,9 +906,9 @@ and gen_induction_formulas (ante : CP.formula) (conseq : CP.formula) (indval : C
   let ante0 = CP.apply_one_term (v, CP.mkIConst 0 no_pos) ante in
   (* let _ = print_string ("Base case: ante = "	^ (!print_pure ante0) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in *)
   (* ante --> conseq *)
-  let aimpc = (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos) in
+  let aimpc = (CP.mkOr (CP.mkNot ante None None no_pos) conseq None None no_pos) in
   (* induction hypothesis = \forall {v_i} : (ante -> conseq) with v_i in p *)
-  let indhyp = CP.mkForall p aimpc None no_pos in
+  let indhyp = CP.mkForall p aimpc None None no_pos in
   (* let _ = print_string ("Induction hypothesis: ante = "	^ (!print_pure indhyp) ^ "\n") in *)
   let vp1 = CP.mkAdd (CP.mkVar v no_pos) (CP.mkIConst 1 no_pos) no_pos in
   (* induction case: induction hypothesis /\ ante(v+1) --> conseq(v+1) *)

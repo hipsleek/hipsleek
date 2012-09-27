@@ -304,7 +304,7 @@ and exp_cond = { exp_cond_condition : exp;
 
 and exp_const_decl = { exp_const_decl_type : typ;
 		       exp_const_decl_decls : (ident * exp * loc) list;
-           exp_const_origin : formula_origin option;
+           exp_const_decl_origin : formula_origin option;
 		       exp_const_decl_pos : loc }
 
 and exp_continue = { exp_continue_jump_label : jump_label_type;
@@ -386,7 +386,7 @@ and exp_var = { exp_var_name : ident;
 
 and exp_var_decl = { exp_var_decl_type : typ;
                      exp_var_decl_decls : (ident * exp option * loc) list;
-                     exp_var_origin : formula_origin option;
+                     exp_var_decl_origin : formula_origin option;
                      exp_var_decl_pos : loc }
 
 and exp_while = { exp_while_condition : exp;
@@ -545,7 +545,7 @@ let is_var (e : exp) : bool = match e with
   
 let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | ArrayAt e -> e.exp_arrayat_pos (* An oa *)
-  | Label (_,e) -> get_exp_pos e
+  | Label (_,_,e) -> get_exp_pos e
   | Assert e -> e.exp_assert_pos
   | Assign e -> e.exp_assign_pos
   | Binary e -> e.exp_binary_pos
@@ -707,10 +707,11 @@ let mkProc id n dd c ot ags r ss ds pos bd=
       proc_file = !input_file_name;
 		  proc_body = bd }	
 
-let mkAssert asrtf assmf pid pos =
+let mkAssert asrtf assmf pid ori pos =
       Assert { exp_assert_asserted_formula = asrtf;
                exp_assert_assumed_formula = assmf;
                exp_assert_path_id = pid;
+               exp_assert_origin = ori;
                exp_assert_pos = pos }
       
 let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b) (comb_f: exp -> 'a list -> 'a) : (exp * 'a) =
@@ -784,9 +785,9 @@ let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->e
 	      | Finally b ->
 		        let e1,r1 = helper n_arg b.exp_finally_body in
 		        (Finally {b with exp_finally_body=e1},r1)
-          | Label (l,b) -> 
+          | Label (l,ori,b) -> 
                 let e1,r1 = helper n_arg b in
-                (Label (l,e1),r1)
+                (Label (l,ori,e1),r1)
           | Member b -> 
                 let e1,r1 = helper n_arg b.exp_member_base in
                 (Member {b with exp_member_base = e1;},r1)
@@ -1264,73 +1265,90 @@ and contains_field_ho (e:exp) : bool =
  
 (* smart constructors *)
 
-let mkConstDecl t d p = ConstDecl { exp_const_decl_type = t;
+let mkConstDecl t d o p = ConstDecl { exp_const_decl_type = t;
 									exp_const_decl_decls = d;
+                  exp_const_decl_origin = o;
 									exp_const_decl_pos = p }
 
-and mkVarDecl t d p = VarDecl { exp_var_decl_type = t;
+and mkVarDecl t d o p = VarDecl { exp_var_decl_type = t;
 								exp_var_decl_decls = d;
+                exp_var_decl_origin = o;
 								exp_var_decl_pos = p }
 
-and mkGlobalVarDecl t d p = { exp_var_decl_type = t;
+and mkGlobalVarDecl t d o p = { exp_var_decl_type = t;
 							  exp_var_decl_decls = d;
+                exp_var_decl_origin = o;
 							  exp_var_decl_pos = p }
 
-and mkLogicalVarDecl t d p = {
+and mkLogicalVarDecl t d o p = {
   exp_var_decl_type = t;
 	exp_var_decl_decls = d;
+  exp_var_decl_origin = o;
 	exp_var_decl_pos = p 
 }
 
-and mkSeq e1 e2 l = match e1 with
+and mkSeq e1 e2 o l = match e1 with
   | Empty _ -> e2
   | _ -> match e2 with
 	  | Empty _ -> e1
 	  | _ -> Seq { exp_seq_exp1 = e1;
 				   exp_seq_exp2 = e2;
+           exp_seq_origin = o;
 				   exp_seq_pos = l }
 
-and mkAssign op lhs rhs pos = Assign { exp_assign_op = op;
+and mkAssign op lhs rhs ori pos = Assign { exp_assign_op = op;
                                        exp_assign_lhs = lhs;
                                        exp_assign_rhs = rhs;
                                        exp_assign_path_id = (fresh_branch_point_id "") ;
+                                       exp_assign_origin = ori;
                                        exp_assign_pos = pos }
 
-and mkBinary op oper1 oper2 pos = Binary { exp_binary_op = op;
+and mkBinary op oper1 oper2 ori pos = Binary { exp_binary_op = op;
                                            exp_binary_oper1 = oper1;
                                            exp_binary_oper2 = oper2;
                                            exp_binary_path_id = (fresh_branch_point_id "") ;
+                                           exp_binary_origin = ori;
                                            exp_binary_pos = pos }
 
-and mkUnary op oper pos = Unary { exp_unary_op = op;
+and mkUnary op oper ori pos = Unary { exp_unary_op = op;
                                   exp_unary_exp = oper;
                                   exp_unary_path_id = (fresh_branch_point_id "") ;
+                                  exp_unary_origin = ori;
                                   exp_unary_pos = pos }
 
-and mkRaise ty usety rval final pid pos= Raise { exp_raise_type = ty ;
+and mkRaise ty usety rval final pid ori pos= Raise { exp_raise_type = ty ;
 										   exp_raise_val = rval;
 										   exp_raise_from_final = final;
 										   exp_raise_use_type = usety;
 										   exp_raise_path_id = pid;
+                       exp_raise_origin = ori;
 										   exp_raise_pos = pos;}
-and mkCatch var var_type fl_type fl_var body pos = Catch{  exp_catch_var = var; 
+
+and mkCatch var var_type fl_type fl_var body ori pos = Catch{  exp_catch_var = var; 
 												  exp_catch_flow_type = fl_type;
 												  exp_catch_alt_var_type = var_type ; 
 												  exp_catch_flow_var = fl_var;
-												  exp_catch_body = body; 
+												  exp_catch_body = body;
+                          exp_catch_origin = ori;
 												  exp_catch_pos = pos}
-				
-and mkTry body catch finally pid pos = Try{ exp_try_block = body;
+
+and mkTry body catch finally pid ori pos = Try{ exp_try_block = body;
 											exp_catch_clauses = catch;
 											exp_finally_clause = finally;
 											exp_try_path_id = pid;
+                      exp_try_origin = ori;
 											exp_try_pos = pos;}
 
-and mkVar name pos= Var {exp_var_name = name; exp_var_pos = pos;}
+and mkVar name ori pos= Var {exp_var_name = name; exp_var_origin = ori; exp_var_pos = pos;}
 
 (*and mkSeq f1 f2 pos = Seq {exp_seq_exp1 = f1; exp_seq_exp2 = f2; exp_seq_pos = pos;}*)
 
-and mkBlock body lbl local_vars pos = Block {exp_block_body = body; exp_block_jump_label = lbl; exp_block_local_vars = local_vars; exp_block_pos = pos}
+and mkBlock body lbl local_vars ori pos = Block {
+  exp_block_body = body;
+  exp_block_jump_label = lbl;
+  exp_block_local_vars = local_vars;
+  exp_block_origin = ori;
+  exp_block_pos = pos}
 								  
 (*************************************************************)
 (* Building the graph representing the class hierarchy       *)
@@ -1535,8 +1553,8 @@ let rec label_e e =
         iast_label_table:= (nl,"cond",[(nl,0,then_pos);(nl,1,else_pos)],e.exp_cond_pos) ::!iast_label_table;
         Cond {e with 
           exp_cond_condition = label_e e.exp_cond_condition;
-          exp_cond_then_arm  = Label ((nl,0),(label_e e.exp_cond_then_arm));
-          exp_cond_else_arm  = Label ((nl,1),(label_e e.exp_cond_else_arm));
+          exp_cond_then_arm  = Label ((nl,0),e.exp_cond_origin,(label_e e.exp_cond_then_arm));
+          exp_cond_else_arm  = Label ((nl,1),e.exp_cond_origin,(label_e e.exp_cond_else_arm));
           exp_cond_path_id =nl;}
     | Continue e -> 
         let (_, s) = match e.exp_continue_path_id with 
@@ -1587,7 +1605,7 @@ let rec label_e e =
         iast_label_table:= (nl,"try",(lbl_list_constr 0 e.exp_catch_clauses),e.exp_try_pos)::!iast_label_table;
         let lbl_c n d = 
         let d = get_catch_of_exp d in
-        Catch {d with	exp_catch_body = Label((nl,n),label_e d.exp_catch_body);} in
+        Catch {d with	exp_catch_body = Label((nl,n),e.exp_try_origin,label_e d.exp_catch_body);} in
         Try {e with
           exp_try_block = label_e e.exp_try_block;
           exp_try_path_id = nl;
@@ -2009,12 +2027,12 @@ let gen_normalize_lemma_comb ddef =
  let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
  let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
  let args1,args2 = List.split (List.map (fun _-> fresh () ,fresh ()) ddef.data_fields) in
- let pure = List.fold_left2 (fun a c1 c2 -> P.And (a,P.BForm ((P.Eq (c1,c2,no_pos),None),None), no_pos)) (P.BForm ((P.Eq (perm3,P.Add (perm1,perm2,no_pos),no_pos),None),None)) args1 args2 in
+ let pure = List.fold_left2 (fun a c1 c2 -> P.And (a,P.BForm ((P.Eq (c1,c2,no_pos),None),None,None), no_pos)) (P.BForm ((P.Eq (perm3,P.Add (perm1,perm2,no_pos),no_pos),None),None,None)) args1 args2 in
  {coercion_type = Left;
   coercion_name = lem_name;
   coercion_head = F.formula_of_heap_1 (F.mkStar (gennode perm1 args1) (gennode perm2 args2) no_pos) no_pos;
   coercion_body = F. mkBase (gennode perm3 args1) pure  top_flow [] no_pos;
-  coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos }
+  coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_origin = None; exp_return_pos = no_pos }
  }
  
  let gen_normalize_lemma_split ddef = 
@@ -2024,13 +2042,13 @@ let gen_normalize_lemma_comb ddef =
  let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
  let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
  let args = List.map (fun _-> fresh ()) ddef.data_fields in
- let pure = P.BForm ((P.Eq (perm3,P.Add (perm1,perm2,no_pos),no_pos),None),None) in
+ let pure = P.BForm ((P.Eq (perm3,P.Add (perm1,perm2,no_pos),no_pos),None),None,None) in
  {coercion_type = Left;
   coercion_name = lem_name;
   coercion_head = F.mkBase (gennode perm3 args) pure  top_flow [] no_pos;
   coercion_body = F.formula_of_heap_1 (F.mkStar (gennode perm1 args) (gennode perm2 args) no_pos) no_pos;
   
-  coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos }
+  coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_origin = None; exp_return_pos = no_pos }
  }
 	
 let add_normalize_lemmas prog4 = 

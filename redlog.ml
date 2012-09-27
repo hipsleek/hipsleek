@@ -306,18 +306,18 @@ let rl_of_b_formula b =
 let rec rl_of_formula pr_w pr_s f0 =
   let rec helper f0 =
     match f0 with
-      | CP.BForm ((b,_) as bf,_) -> 
+      | CP.BForm ((b,_) as bf,_,_) -> 
             begin
               match (pr_w b) with
                 | None -> "(" ^ (rl_of_b_formula bf) ^ ")"
                 | Some f -> helper f
             end
-	  | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
-      | CP.Not (f, _, _) -> "(not " ^ (rl_of_formula pr_s pr_w f) ^ ")"
-      | CP.Forall (sv, f, _, _) -> "(all (" ^ (rl_of_spec_var sv) ^ ", " ^ (helper f) ^ "))"
-      | CP.Exists (sv, f, _, _) -> "(ex (" ^ (rl_of_spec_var sv) ^ ", " ^ (helper f) ^ "))"
+      | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
+      | CP.Not (f, _, _, _) -> "(not " ^ (rl_of_formula pr_s pr_w f) ^ ")"
+      | CP.Forall (sv, f, _, _, _) -> "(all (" ^ (rl_of_spec_var sv) ^ ", " ^ (helper f) ^ "))"
+      | CP.Exists (sv, f, _, _, _) -> "(ex (" ^ (rl_of_spec_var sv) ^ ", " ^ (helper f) ^ "))"
       | CP.And (f1, f2, _) -> "(" ^ (helper f1) ^ " and " ^ (helper f2) ^ ")"
-      | CP.Or (f1, f2, _, _) -> "(" ^ (helper f1) ^ " or " ^ (helper f2) ^ ")"
+      | CP.Or (f1, f2, _, _, _) -> "(" ^ (helper f1) ^ " or " ^ (helper f2) ^ ")"
   in helper f0
 
 (***********************************
@@ -354,27 +354,27 @@ let simplify_var_name (e: CP.formula) : CP.formula =
     | _ -> None
   in
   let rec simplify f0 vnames = match f0 with
-    | CP.Forall (sv, f1, lbl, l) ->
+    | CP.Forall (sv, f1, lbl, fo, l) ->
         let nsv = shorten_sv sv vnames in
         let nf1 = simplify f1 vnames in
-        CP.Forall (nsv, nf1, lbl, l)
-    | CP.Exists (sv, f1, lbl, l) ->
+        CP.Forall (nsv, nf1, lbl, fo, l)
+    | CP.Exists (sv, f1, lbl, fo, l) ->
         let nsv = shorten_sv sv vnames in
         let nf1 = simplify f1 vnames in
-        CP.Exists (nsv, nf1, lbl, l)
+        CP.Exists (nsv, nf1, lbl, fo, l)
     | CP.And (f1, f2, l) ->
         let nf1 = simplify f1 vnames in
         let nf2 = simplify f2 vnames in
         CP.And (nf1, nf2, l)
-	| CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
-    | CP.Or (f1, f2, lbl, l) ->
+    | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
+    | CP.Or (f1, f2, lbl, fo, l) ->
         let nf1 = simplify f1 vnames in
         let nf2 = simplify f2 vnames in
-        CP.Or (nf1, nf2, lbl, l)
-    | CP.Not (f1, lbl, l) ->
-        CP.Not (simplify f1 vnames, lbl, l)
-    | CP.BForm (bf, lbl) ->
-	    CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl)
+        CP.Or (nf1, nf2, lbl, fo, l)
+    | CP.Not (f1, lbl, fo, l) ->
+        CP.Not (simplify f1 vnames, lbl, fo, l)
+    | CP.BForm (bf, lbl, fo) ->
+	    CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl, fo)
   in
   simplify e (Hashtbl.create 100)
 
@@ -413,11 +413,11 @@ let is_linear_bformula b =
   
 let rec is_linear_formula f0 = 
   match f0 with
-    | CP.BForm (b,_) -> is_linear_bformula b
-	| CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
-    | CP.Not (f, _,_) | CP.Forall (_, f, _,_) | CP.Exists (_, f, _,_) ->
+    | CP.BForm (b,_,_) -> is_linear_bformula b
+    | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
+    | CP.Not (f, _,_,_) | CP.Forall (_, f, _, _, _) | CP.Exists (_, f, _, _, _) ->
         is_linear_formula f;
-    | CP.And (f1, f2, _) | CP.Or (f1, f2, _,_) ->
+    | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _, _) ->
         (is_linear_formula f1) && (is_linear_formula f2)
 
 let is_linear_formula f0 =
@@ -453,18 +453,18 @@ let is_linear2 f0 =
 
 let rec has_existential_quantifier f0 negation_bounded =
   match f0 with 
-  | CP.Exists (_, f, _, _) -> 
+  | CP.Exists (_, f, _, _, _) -> 
       if negation_bounded then 
         has_existential_quantifier f negation_bounded 
       else 
         true
-  | CP.Forall (_, f, _, _) ->
+  | CP.Forall (_, f, _, _, _) ->
       if negation_bounded then
         true
       else
         has_existential_quantifier f negation_bounded
-  | CP.Not (f, _,  _) -> has_existential_quantifier f (not negation_bounded)
-  | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) -> 
+  | CP.Not (f, _, _, _) -> has_existential_quantifier f (not negation_bounded)
+  | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _, _) -> 
       (has_existential_quantifier f1 negation_bounded) ||
       (has_existential_quantifier f2 negation_bounded)
   | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
@@ -472,18 +472,18 @@ let rec has_existential_quantifier f0 negation_bounded =
 
 let rec has_existential_quantifier_of_int f0 negation_bounded =
   match f0 with 
-  | CP.Exists (_, f, _, _) -> 
+  | CP.Exists (_, f, _, _, _) -> 
       if ( (not negation_bounded) && (not (CP.is_float_formula f))) then 
         true
       else
         has_existential_quantifier_of_int f negation_bounded 
-  | CP.Forall (_, f, _, _) ->
+  | CP.Forall (_, f, _, _, _) ->
       if (negation_bounded && (not (CP.is_float_formula f)) )then
         true
       else
         has_existential_quantifier_of_int f negation_bounded
-  | CP.Not (f, _,  _) -> has_existential_quantifier_of_int f (not negation_bounded)
-  | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) -> 
+  | CP.Not (f, _, _, _) -> has_existential_quantifier_of_int f (not negation_bounded)
+  | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _, _) -> 
       (has_existential_quantifier_of_int f1 negation_bounded) ||
       (has_existential_quantifier_of_int f2 negation_bounded)
   | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
@@ -511,22 +511,22 @@ let has_exists2 f0 =
  
  let rec strengthen_formula f0 =
   match f0 with
-  | CP.BForm ((pf,il),lbl) -> 
+  | CP.BForm ((pf,il),lbl,fo) -> 
       let r = match pf with
-        | CP.Lt (e1, e2, l) -> CP.BForm ((CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l), il), lbl)
-        | CP.Gt (e1, e2, l) -> CP.BForm ((CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l), il), lbl)
+        | CP.Lt (e1, e2, l) -> CP.BForm ((CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l), il), lbl, fo)
+        | CP.Gt (e1, e2, l) -> CP.BForm ((CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l), il), lbl, fo)
         | CP.Neq (e1, e2, l) ->
             let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
             let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
-            CP.Or (CP.BForm ((lp,il), lbl), CP.BForm ((rp,il), lbl), lbl, l)
+            CP.Or (CP.BForm ((lp,il), lbl, fo), CP.BForm ((rp,il), lbl, fo), lbl, fo, l)
         | _ -> f0
       in r
-  | CP.Not (f, lbl, l) -> CP.Not (strengthen_formula f, lbl, l)
-  | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, strengthen_formula f, lbl, l)
-  | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, strengthen_formula f, lbl, l)
+  | CP.Not (f, lbl, fo, l) -> CP.Not (strengthen_formula f, lbl, fo, l)
+  | CP.Forall (sv, f, lbl, fo, l) -> CP.Forall (sv, strengthen_formula f, lbl, fo, l)
+  | CP.Exists (sv, f, lbl, fo, l) -> CP.Exists (sv, strengthen_formula f, lbl, fo, l)
   | CP.And (f1, f2, l) -> CP.And (strengthen_formula f1, strengthen_formula f2, l)
   | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
-  | CP.Or (f1, f2, lbl, l) -> CP.Or (strengthen_formula f1, strengthen_formula f2, lbl, l)
+  | CP.Or (f1, f2, lbl, fo, l) -> CP.Or (strengthen_formula f1, strengthen_formula f2, lbl, fo, l)
 
 
  let strengthen_formula f =
@@ -538,10 +538,10 @@ let has_exists2 f0 =
 let strengthen2 f0 =
   let f_f f =
 	match f with
-	| CP.BForm ((CP.Neq (e1, e2, l), il), lbl) ->
+	| CP.BForm ((CP.Neq (e1, e2, l), il), lbl, fo) ->
         let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
         let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
-        Some (CP.Or (CP.BForm ((lp, il), lbl), CP.BForm ((rp, il), lbl), lbl, l))
+        Some (CP.Or (CP.BForm ((lp, il), lbl, fo), CP.BForm ((rp, il), lbl, fo), lbl, fo, l))
     | _ -> None
   in
   let f_bf bf =
@@ -558,29 +558,29 @@ let strengthen2 f0 =
 (* e1 = e2 ~> e2 - 1 < e1 < e2 + 1 *)
 let rec weaken_formula f0 =
   match f0 with
-  | CP.BForm ((pf,il),lbl) ->
+  | CP.BForm ((pf,il),lbl,fo) ->
       let r = match pf with
-        | CP.Lte (e1, e2, l) -> CP.BForm ((CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l),l), il),lbl)
-        | CP.Gte (e1, e2, l) -> CP.BForm ((CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l),l), il),lbl)
+        | CP.Lte (e1, e2, l) -> CP.BForm ((CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l),l), il),lbl, fo)
+        | CP.Gte (e1, e2, l) -> CP.BForm ((CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l),l), il),lbl, fo)
         | CP.Eq (e1, e2, l) ->
             let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
             let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
-            CP.And (CP.BForm ((lp,il),lbl), CP.BForm ((rp,il),lbl), l)
+            CP.And (CP.BForm ((lp,il),lbl,fo), CP.BForm ((rp,il),lbl,fo), l)
         | _ -> f0
       in r
-  | CP.Not (f,lbl,l) -> CP.Not (weaken_formula f, lbl, l)
-  | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, weaken_formula f, lbl, l)
-  | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, weaken_formula f, lbl, l)
+  | CP.Not (f,lbl,fo,l) -> CP.Not (weaken_formula f, lbl, fo, l)
+  | CP.Forall (sv, f, lbl, fo, l) -> CP.Forall (sv, weaken_formula f, lbl, fo, l)
+  | CP.Exists (sv, f, lbl, fo, l) -> CP.Exists (sv, weaken_formula f, lbl, fo, l)
   | CP.And (f1, f2, l) -> CP.And (weaken_formula f1, weaken_formula f2, l)
   | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
-  | CP.Or (f1, f2, lbl, l) -> CP.Or (weaken_formula f1, weaken_formula f2, lbl, l)
+  | CP.Or (f1, f2, lbl, fo, l) -> CP.Or (weaken_formula f1, weaken_formula f2, lbl, fo, l)
 
 let weaken2 f0 =
   let f_f f = match f with
-    | CP.BForm ((CP.Eq (e1, e2, l),il), lbl) ->
+    | CP.BForm ((CP.Eq (e1, e2, l),il), lbl, fo) ->
         let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
         let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
-        Some (CP.And (CP.BForm ((lp,il),lbl), CP.BForm ((rp,il),lbl), l))
+        Some (CP.And (CP.BForm ((lp,il),lbl,fo), CP.BForm ((rp,il),lbl,fo), l))
     | _ -> None
   in
   let f_bf bf =
@@ -662,7 +662,7 @@ let rec find_bound v f0 =
         in
         (min, max)
       end
-  | CP.BForm (bf,_) -> find_bound_b_formula v bf
+  | CP.BForm (bf,_,_) -> find_bound_b_formula v bf
   | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | _ -> None, None
   
@@ -678,7 +678,7 @@ and get_subst_min f0 v = match f0 with
   | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | _ -> ([], f0)
 
-and get_subst_min_b_formula (bf,lbl) v =
+and get_subst_min_b_formula (bf,lbl,fo) v =
   let (pf,il) = bf in
   match pf with
   | CP.EqMin (e0, e1, e2, pos) ->
@@ -686,9 +686,9 @@ and get_subst_min_b_formula (bf,lbl) v =
       let v0 = CP.to_var e0 in
       if CP.eq_spec_var v0 v then
         ([v, e1, e2], CP.mkTrue no_pos)
-      else ([], CP.BForm (bf,lbl))
-    else ([], CP.BForm (bf,lbl))
-  | _ -> ([], CP.BForm (bf,lbl))
+      else ([], CP.BForm (bf,lbl,fo))
+    else ([], CP.BForm (bf,lbl,fo))
+  | _ -> ([], CP.BForm (bf,lbl,fo))
   
 and get_subst_max f0 v = match f0 with
   | CP.And (f1, f2, pos) ->
@@ -702,7 +702,7 @@ and get_subst_max f0 v = match f0 with
   | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | _ -> ([], f0)
   
-and get_subst_max_b_formula (bf,lbl) v =
+and get_subst_max_b_formula (bf,lbl,fo) v =
   let (pf,_) = bf in
   match pf with
   | CP.EqMax (e0, e1, e2, pos) ->
@@ -710,9 +710,9 @@ and get_subst_max_b_formula (bf,lbl) v =
       let v0 = CP.to_var e0 in
       if CP.eq_spec_var v0 v then
         ([v, e1, e2], CP.mkTrue no_pos)
-      else ([], CP.BForm (bf,lbl))
-    else ([], CP.BForm (bf,lbl))
-  | _ -> ([], CP.BForm (bf,lbl))
+      else ([], CP.BForm (bf,lbl,fo))
+    else ([], CP.BForm (bf,lbl,fo))
+  | _ -> ([], CP.BForm (bf,lbl,fo))
     
 (* 
  * partition an expression based on variable v
@@ -752,7 +752,7 @@ let rec partition_by_var e v =
       (with_v, without_v)
   | _ -> (0, Some e)
 
-let get_subst_equation_b_formula bf0 v lbl =
+let get_subst_equation_b_formula bf0 v lbl fo =
   let (pf,il) = bf0 in
   match pf with
   | CP.Eq (e1, e2, pos) -> 
@@ -773,8 +773,8 @@ let get_subst_equation_b_formula bf0 v lbl =
         in
         ([(v, rhs)], CP.mkTrue no_pos)
       else
-        ([], CP.BForm (bf0, lbl))
-  | _ -> ([], CP.BForm (bf0,lbl))
+        ([], CP.BForm (bf0, lbl, fo))
+  | _ -> ([], CP.BForm (bf0,lbl, fo))
 
 let rec get_subst_equation f0 v =
   match f0 with
@@ -785,7 +785,7 @@ let rec get_subst_equation f0 v =
 		else
 		  let st2, rf2 = get_subst_equation f2 v in
 			(st2, CP.mkAnd f1 rf2 pos)
-  | CP.BForm (bf, lbl) -> get_subst_equation_b_formula bf v lbl
+  | CP.BForm (bf, lbl, fo) -> get_subst_equation_b_formula bf v lbl fo
   | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | _ -> ([], f0)
 
@@ -793,18 +793,18 @@ let rec get_subst_equation f0 v =
 let rec elim_exists_helper core f0 =
   let elim_exists = elim_exists_helper core in
   match f0 with
-  | CP.Exists (qvar, qf, lbl, pos) -> 
+  | CP.Exists (qvar, qf, lbl, fo, pos) -> 
       let res = match qf with
-        | CP.Or (qf1, qf2, lbl2, qpos) ->
-            let new_qf1 = CP.mkExists [qvar] qf1 lbl qpos in
-            let new_qf2 = CP.mkExists [qvar] qf2 lbl qpos in
+        | CP.Or (qf1, qf2, lbl2, fo2, qpos) ->
+            let new_qf1 = CP.mkExists [qvar] qf1 lbl fo qpos in
+            let new_qf2 = CP.mkExists [qvar] qf2 lbl fo qpos in
             let eqf1 = elim_exists new_qf1 in
             let eqf2 = elim_exists new_qf2 in
-            let res = CP.mkOr eqf1 eqf2 lbl2 pos in
+            let res = CP.mkOr eqf1 eqf2 lbl2 fo2 pos in
             res
         | _ ->
             let qf = elim_exists qf in
-            core qvar qf lbl pos
+            core qvar qf lbl fo pos
       in res
   | CP.And (f1, f2, pos) -> begin
 	  let ef1 = elim_exists f1 in
@@ -812,20 +812,20 @@ let rec elim_exists_helper core f0 =
 	  let res = CP.mkAnd ef1 ef2 pos in
 		res
 	end
-  | CP.Or (f1, f2, lbl, pos) -> begin
+  | CP.Or (f1, f2, lbl, fo, pos) -> begin
 	  let ef1 = elim_exists f1 in
 	  let ef2 = elim_exists f2 in
-	  let res = CP.mkOr ef1 ef2 lbl pos in
+	  let res = CP.mkOr ef1 ef2 lbl fo pos in
 		res
 	end
-  | CP.Not (f1, lbl, pos) -> begin
+  | CP.Not (f1, lbl, fo, pos) -> begin
 	  let ef1 = elim_exists f1 in
-	  let res = CP.mkNot ef1 lbl pos in
+	  let res = CP.mkNot ef1 lbl fo pos in
 		res
 	end
-  | CP.Forall (qvar, qf, lbl, pos) -> begin
+  | CP.Forall (qvar, qf, lbl, fo, pos) -> begin
 	  let eqf = elim_exists qf in
-	  let res = CP.mkForall [qvar] eqf lbl pos in
+	  let res = CP.mkForall [qvar] eqf lbl fo pos in
 		res
 	end
   | CP.BForm _ -> f0
@@ -833,14 +833,14 @@ let rec elim_exists_helper core f0 =
 
 let rec elim_exists_helper2 core (f0: CP.formula) : CP.formula =
   let f_f f = match f with
-    | CP.Exists (qvar, qf, lbl, pos) ->
+    | CP.Exists (qvar, qf, lbl, fo, pos) ->
         let res = match qf with
-          | CP.Or (qf1, qf2, lbl2, qpos) ->
-              let new_qf1 = CP.mkExists [qvar] qf1 lbl qpos in
-              let new_qf2 = CP.mkExists [qvar] qf2 lbl qpos in
+          | CP.Or (qf1, qf2, lbl2, fo2, qpos) ->
+              let new_qf1 = CP.mkExists [qvar] qf1 lbl fo qpos in
+              let new_qf2 = CP.mkExists [qvar] qf2 lbl fo qpos in
               let eqf1 = elim_exists_helper2 core new_qf1 in
               let eqf2 = elim_exists_helper2 core new_qf2 in
-              Some (CP.mkOr eqf1 eqf2 lbl2 pos)
+              Some (CP.mkOr eqf1 eqf2 lbl2 fo2 pos)
           | _ ->
               let qf = elim_exists_helper2 core qf in
               Some (core qvar qf lbl pos)
@@ -851,7 +851,7 @@ let rec elim_exists_helper2 core (f0: CP.formula) : CP.formula =
   CP.map_formula f0 (f_f, somef, somef)
 
 let rec elim_exists_with_eq_x f0 = 
-  let core qvar qf lbl pos =
+  let core qvar qf lbl fo pos =
     let qf = elim_exists_with_eq_x qf in
     let qvars0, bare_f = CP.split_ex_quantifiers qf in
     let qvars = qvar :: qvars0 in
@@ -866,13 +866,13 @@ let rec elim_exists_with_eq_x f0 =
     let st, pp1 = get_subst_equation with_qvars qvar in
     if not (Gen.is_empty st) then
       let new_qf = CP.subst_term st pp1 in
-      let new_qf = CP.mkExists qvars0 new_qf lbl pos in
+      let new_qf = CP.mkExists qvars0 new_qf lbl fo pos in
       let tmp3 = elim_exists_with_eq_x new_qf in
       let tmp4 = CP.mkAnd no_qvars tmp3 pos in
       tmp4
     else (* if qvar is not equated to any variables, try the next one *)
       let tmp1 = qf (*elim_exists qf*) in
-      let tmp2 = CP.mkExists [qvar] tmp1 lbl pos in
+      let tmp2 = CP.mkExists [qvar] tmp1 lbl fo pos in
       tmp2
   in elim_exists_helper core f0
 
@@ -881,7 +881,7 @@ and elim_exists_with_eq f0 =
   Debug.no_1 "elim_exists_with_eq" pr pr elim_exists_with_eq_x f0
 
 and elim_exists_min f0 =
-  let core qvar qf lbl pos =
+  let core qvar qf lbl fo pos =
     let qvars0, bare_f = CP.split_ex_quantifiers qf in
     let qvars = qvar :: qvars0 in
     let conjs = CP.list_of_conjs qf in
@@ -894,22 +894,23 @@ and elim_exists_min f0 =
       let v, e1, e2 = List.hd st in
       let tmp1 = 
         CP.mkOr 
-        (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm (((CP.mkLte e1 e2 pos), None),None)) pos) pp1 pos)
-        (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm (((CP.mkGt e1 e2 pos), None),None)) pos) pp1 pos)
+        (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm (((CP.mkLte e1 e2 pos), None),None,None)) pos) pp1 pos)
+        (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm (((CP.mkGt e1 e2 pos), None),None,None)) pos) pp1 pos)
+        None
         None
         pos
       in
-      let tmp2 = CP.elim_exists (CP.mkExists [qvar] tmp1 lbl pos) in
-      let tmp3 = CP.mkExists qvars0 tmp2 None pos in
+      let tmp2 = CP.elim_exists (CP.mkExists [qvar] tmp1 lbl fo pos) in
+      let tmp3 = CP.mkExists qvars0 tmp2 None fo pos in
       let tmp4 = elim_exists_min tmp3 in
       let new_qf = CP.mkAnd no_qvars_f tmp4 pos in
       new_qf
     else
-      CP.mkExists [qvar] qf lbl pos
+      CP.mkExists [qvar] qf lbl fo pos
   in elim_exists_helper core f0
 
 and elim_exists_max f0 =
-  let core qvar qf lbl pos =
+  let core qvar qf lbl fo pos =
     let qvars0, bare_f = CP.split_ex_quantifiers qf in
     let qvars = qvar :: qvars0 in
     let conjs = CP.list_of_conjs qf in
@@ -922,23 +923,24 @@ and elim_exists_max f0 =
       let v, e1, e2 = List.hd st in
       let tmp1 = 
         CP.mkOr 
-        (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm (((CP.mkGte e1 e2 pos), None),None) ) pos) pp1 pos)
-        (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm (((CP.mkLt e1 e2 pos), None),None) ) pos) pp1 pos)
+        (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm (((CP.mkGte e1 e2 pos), None),None,None) ) pos) pp1 pos)
+        (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm (((CP.mkLt e1 e2 pos), None),None,None) ) pos) pp1 pos)
+        None
         None
         pos
       in
-      let tmp2 = CP.elim_exists (CP.mkExists [qvar] tmp1 lbl pos) in
-      let tmp3 = CP.mkExists qvars0 tmp2 None pos in
+      let tmp2 = CP.elim_exists (CP.mkExists [qvar] tmp1 lbl fo pos) in
+      let tmp3 = CP.mkExists qvars0 tmp2 None fo pos in
       let tmp4 = elim_exists_max tmp3 in
       let new_qf = CP.mkAnd no_qvars_f tmp4 pos in
       new_qf
       else
-        CP.mkExists [qvar] qf lbl pos
+        CP.mkExists [qvar] qf lbl fo pos
   in elim_exists_helper core f0
   
 let rec elim_exists_with_ineq f0 =
   (* caveat : do not hanlde for float *)
-  let core qvar qf lbl pos =
+  let core qvar qf lbl fo pos =
     let min, max = find_bound qvar qf in
     begin
       match min, max with
@@ -946,7 +948,7 @@ let rec elim_exists_with_ineq f0 =
           let res = ref (CP.mkFalse pos) in
           begin
             for i = mi to ma do
-              res := CP.mkOr !res (CP.apply_one_term (qvar, CP.IConst (i, no_pos)) qf) lbl pos
+              res := CP.mkOr !res (CP.apply_one_term (qvar, CP.IConst (i, no_pos)) qf) lbl fo pos
             done;
             !res
           end
@@ -992,18 +994,18 @@ let negate_b_formula bf0 =
 	| Some pf -> Some (pf,il)
   
 let rec negate_formula f0 = match f0 with
-  | CP.BForm (bf, lbl) ->
+  | CP.BForm (bf, lbl, fo) ->
     let neg_bf = negate_b_formula bf in
     let res = match neg_bf with
-    | Some new_bf -> CP.BForm (new_bf, lbl)
-    | None -> CP.Not (CP.BForm (bf, lbl), None, no_pos)
+    | Some new_bf -> CP.BForm (new_bf, lbl, fo)
+    | None -> CP.Not (CP.BForm (bf, lbl, fo), None, fo, no_pos)
     in res
-  | CP.And (f1, f2, pos) -> CP.Or (negate_formula f1, negate_formula f2, None, pos)
+  | CP.And (f1, f2, pos) -> CP.Or (negate_formula f1, negate_formula f2, None, None, pos)
   | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
-  | CP.Or (f1, f2, lbl, pos) -> CP.And (negate_formula f1, negate_formula f2, pos)
-  | CP.Not (f, lbl, pos) -> f
-  | CP.Forall (sv, f, lbl, pos) -> CP.Exists (sv, negate_formula f, lbl, pos)
-  | CP.Exists (sv, f, lbl, pos) -> CP.Forall (sv, negate_formula f, lbl, pos)
+  | CP.Or (f1, f2, lbl, fo, pos) -> CP.And (negate_formula f1, negate_formula f2, pos)
+  | CP.Not (f, lbl, fo, pos) -> f
+  | CP.Forall (sv, f, lbl, fo, pos) -> CP.Exists (sv, negate_formula f, lbl, fo, pos)
+  | CP.Exists (sv, f, lbl, fo, pos) -> CP.Forall (sv, negate_formula f, lbl, fo, pos)
 
 let negate_formula f0 =
   let pr = !print_formula in
@@ -1013,10 +1015,10 @@ let rec normalize_formula f0 = match f0 with
   | CP.BForm _ -> f0
   | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | CP.And (f1, f2, pos) -> CP.And (normalize_formula f1, normalize_formula f2, pos)
-  | CP.Or (f1, f2, lbl, pos) -> CP.Or (normalize_formula f1, normalize_formula f2, lbl, pos)
-  | CP.Not (f1, lbl, pos) -> negate_formula f1
-  | CP.Forall (sv, f, lbl, pos) -> CP.Forall (sv, normalize_formula f, lbl, pos)
-  | CP.Exists (sv, f, lbl, pos) -> CP.Exists (sv, normalize_formula f, lbl, pos)
+  | CP.Or (f1, f2, lbl, fo, pos) -> CP.Or (normalize_formula f1, normalize_formula f2, lbl, fo, pos)
+  | CP.Not (f1, lbl, fo, pos) -> negate_formula f1
+  | CP.Forall (sv, f, lbl, fo, pos) -> CP.Forall (sv, normalize_formula f, lbl, fo, pos)
+  | CP.Exists (sv, f, lbl, fo, pos) -> CP.Exists (sv, normalize_formula f, lbl, fo, pos)
 
 (**********************
    Verification works  
@@ -1125,7 +1127,7 @@ let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * floa
 
 
 let imply_ops pr_w pr_s ante conseq imp_no =
-  let f = normalize_formula (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos) in
+  let f = normalize_formula (CP.mkOr (CP.mkNot ante None None no_pos) conseq None None no_pos) in
   (*example of normalize: a => b <=> !a v b *)
   let sf = simplify_var_name f in
   let fstring = string_of_formula sf in

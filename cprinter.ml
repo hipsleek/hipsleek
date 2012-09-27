@@ -560,7 +560,7 @@ let b_formula_wo_paren (e:P.b_formula) =
 let pure_formula_assoc_op (e:P.formula) : (string * P.formula list) option = 
   match e with
     | P.And (e1,e2,_) -> Some (op_and_short,[e1;e2])
-    | P.Or (e1,e2,_,_) -> Some (op_or_short,[e1;e2])
+    | P.Or (e1,e2,_,_,_) -> Some (op_or_short,[e1;e2])
     | _ -> None
 
 (* check if exp can be printed without a parenthesis,
@@ -569,7 +569,7 @@ let pure_formula_wo_paren (e:P.formula) =
   match e with
     | P.Forall _ 
     | P.Exists _ | P.Not _ -> true
-    | P.BForm (e1,_) -> true (* b_formula_wo_paren e1 *)
+    | P.BForm (e1,_,_) -> true (* b_formula_wo_paren e1 *)
     | P.And _ -> true 
     | _ -> false
 
@@ -810,7 +810,7 @@ and pr_pure_formula  (e:P.formula) =
   let f_b e =  pr_bracket pure_formula_wo_paren pr_pure_formula e 
   in
   match e with 
-    | P.BForm (bf,lbl) -> pr_formula_label_opt lbl; pr_b_formula bf
+    | P.BForm (bf,lbl,fo) -> pr_formula_label_opt lbl; pr_b_formula bf
     | P.And (f1, f2, l) ->  
           let arg1 = bin_op_to_list op_and_short pure_formula_assoc_op f1 in
           let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in
@@ -818,20 +818,20 @@ and pr_pure_formula  (e:P.formula) =
           pr_list_op op_and f_b args
     | P.AndList b -> fmt_string "AndList ";
 		pr_list_op_none " & " (wrap_box ("B",0) (pr_pair_aux pr_spec_label pr_pure_formula)) b
-    | P.Or (f1, f2, lbl,l) -> 
+    | P.Or (f1, f2, lbl, fo, l) -> 
           pr_formula_label_opt lbl; 
           let arg1 = bin_op_to_list op_or_short pure_formula_assoc_op f1 in
           let arg2 = bin_op_to_list op_or_short pure_formula_assoc_op f2 in
           let args = arg1@arg2 in
           pr_list_op op_or f_b args
-    | P.Not (f, lbl, l) -> 
+    | P.Not (f, lbl, fo, l) -> 
           pr_formula_label_opt lbl; 
           fmt_string "!(";f_b f;fmt_string ")"
-    | P.Forall (x, f,lbl, l) -> 
+    | P.Forall (x, f, lbl, fo, l) -> 
           pr_formula_label_opt lbl; 
 	      fmt_string "forall("; pr_spec_var x; fmt_string ":";
 	      pr_pure_formula f; fmt_string ")"
-    | P.Exists (x, f, lbl, l) -> 
+    | P.Exists (x, f, lbl, fo, l) -> 
           pr_formula_label_opt lbl; 
 	      fmt_string "exists("; pr_spec_var x; fmt_string ":";
 	      pr_pure_formula f; fmt_string ")"
@@ -2513,22 +2513,22 @@ and html_of_pure_b_formula f = match f with
 
 and html_of_pure_formula f =
 	match f with
-    | P.BForm ((bf,_),_) -> html_of_pure_b_formula bf
+    | P.BForm ((bf,_),_,_) -> html_of_pure_b_formula bf
     | P.And (f1, f2, l) -> 
 		let arg1 = bin_op_to_list op_and_short pure_formula_assoc_op f1 in
 		let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in
 		let args = arg1@arg2 in
 			"(" ^ (String.concat html_op_and (List.map html_of_pure_formula args)) ^ ")"
 	| P.AndList b -> if b==[] then "[]" else String.concat " && " (List.map (fun c-> html_of_pure_formula (snd c))b)
-    | P.Or (f1, f2, lbl,l) -> 
+    | P.Or (f1, f2, lbl, fo, l) -> 
 		let arg1 = bin_op_to_list op_or_short pure_formula_assoc_op f1 in
 		let arg2 = bin_op_to_list op_or_short pure_formula_assoc_op f2 in
 		let args = arg1@arg2 in
 			"(" ^ (String.concat html_op_or (List.map html_of_pure_formula args)) ^ ")"
-    | P.Not (f1, lbl, l) -> html_op_not ^ (html_of_pure_formula f1)
-    | P.Forall (x, f1,lbl, l) ->
+    | P.Not (f1, lbl, fo, l) -> html_op_not ^ (html_of_pure_formula f1)
+    | P.Forall (x, f1, lbl, fo, l) ->
     	html_forall ^ (html_of_spec_var x) ^ " " ^ (html_of_pure_formula f1)
-    | P.Exists (x, f1, lbl, l) ->
+    | P.Exists (x, f1, lbl, fo, l) ->
     	html_exist ^ (html_of_spec_var x) ^ " " ^ (html_of_pure_formula f1)
 
 and html_of_h_formula h = match h with

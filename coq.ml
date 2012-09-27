@@ -186,7 +186,7 @@ and coq_of_b_formula b =
 and coq_of_formula pr_w pr_s f =
   let rec helper f = 
     match f with
-      | CP.BForm ((b,_) as bf,_) -> 		
+      | CP.BForm ((b,_) as bf,_,_) -> 		
         begin
           match (pr_w b) with
             | None -> "(" ^ (coq_of_b_formula bf) ^ ")"
@@ -194,19 +194,19 @@ and coq_of_formula pr_w pr_s f =
         end
     (* | CP.BForm (b,_) ->  *)
     (*       "(" ^ (coq_of_b_formula b) ^ ")" *)
-    | CP.Not (p, _,_) ->
+    | CP.Not (p, _,_,_) ->
 	    begin match p with
-		| CP.BForm ((CP.BVar (bv, _),_),_) -> (coq_of_spec_var bv) ^ " = 0"
+		| CP.BForm ((CP.BVar (bv, _),_),_,_) -> (coq_of_spec_var bv) ^ " = 0"
 		| _ -> " (~ (" ^ (coq_of_formula pr_s pr_w p) ^ ")) "
         end
-    | CP.Forall (sv, p, _, _) ->
+    | CP.Forall (sv, p, _, _, _) ->
 	    " (forall " ^ (coq_of_spec_var sv) ^ "," ^ (helper p) ^ ") "
-    | CP.Exists (sv, p,  _,_) ->
+    | CP.Exists (sv, p, _, _, _) ->
 	    " (exists " ^ (coq_of_spec_var sv) ^ ":"^(coq_type_of_spec_var sv) ^"," ^ (helper p) ^ ") "
     | CP.And (p1, p2, _) ->
 	    "(" ^ (helper p1) ^ " /\\ " ^ (helper p2) ^ ")"
 	| CP.AndList _ -> Gen.report_error no_pos "coq.ml: encountered AndList, should have been already handled"
-    | CP.Or (p1, p2, _, _) ->
+    | CP.Or (p1, p2, _, _, _) ->
 	    "(" ^ (helper p1) ^ " \\/ " ^ (helper p2) ^ ")"
   in helper f
 
@@ -339,7 +339,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) : bool =
 let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no : string) : bool =
   if !log_all_flag == true then
 	output_string log_file ("\n[coq.ml]: #is_sat " ^ sat_no ^ "\n");
-  let tmp_form = (imply_ops pr_w pr_s f (CP.BForm((CP.BConst(false, no_pos), None), None))) in
+  let tmp_form = (imply_ops pr_w pr_s f (CP.BForm((CP.BConst(false, no_pos), None), None, None))) in
   match tmp_form with
   | true ->
 	  if !log_all_flag == true then output_string log_file "[coq.ml]: is_sat --> false\n";

@@ -69,16 +69,16 @@ let rec compute_fo_formula (f0 : formula) var_map : unit =
   How about quantified formulas? Rename all quantified variables.
 *)
 and b_formulas_list (f0 : formula) : b_formula list = match f0 with
-  | BForm (bf,_) -> [bf]
+  | BForm (bf,_,_) -> [bf]
   | AndList _ -> Gen.report_error no_pos "setmona.ml: encountered AndList, should have been already handled"
   | And (f1, f2, _)
-  | Or (f1, f2, _, _) ->
+  | Or (f1, f2, _, _, _) ->
 	  let l1 = b_formulas_list f1 in
 	  let l2 = b_formulas_list f2 in
 		l1 @ l2
-  | Not (f1, _, _)
-  | Forall (_, f1, _, _)
-  | Exists (_, f1, _, _) ->
+  | Not (f1, _, _, _)
+  | Forall (_, f1, _, _, _)
+  | Exists (_, f1, _, _, _) ->
 	  b_formulas_list f1
 
 (*

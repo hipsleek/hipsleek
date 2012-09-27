@@ -745,11 +745,11 @@ let stub_branch_point_id s = (-1,s)
 let mkEAssume pos = Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkTrueFlow ()) pos),(stub_branch_point_id ""))
 let mkEAssume_norm pos = Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkNormalFlow ()) pos),(stub_branch_point_id ""))
 	
-let mkSeq t e1 e2 pos = match e1 with
+let mkSeq t e1 e2 ori pos = match e1 with
   | Unit _ -> e2
   | _ -> match e2 with
 	  | Unit _ -> e1
-	  | _ -> Seq ({exp_seq_type = t; exp_seq_exp1= e1; exp_seq_exp2 = e2; exp_seq_pos = pos})
+	  | _ -> Seq ({exp_seq_type = t; exp_seq_exp1= e1; exp_seq_exp2 = e2; exp_seq_origin = ori; exp_seq_pos = pos})
 
 (* utility functions *)
 

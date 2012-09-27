@@ -737,6 +737,7 @@ let rec while_labelling (e:I.exp):I.exp =
 				else Some (I.While {b with I.exp_while_body = while_labelling (label_breaks nl b.I.exp_while_body);I.exp_while_wrappings= None})
 			
 		| I.Try b ->
+          let ori = b.I.exp_try_origin in
 					let pos = b.I.exp_try_pos in
 					if (List.length b.I.exp_finally_clause)==0 then None
 					else 
@@ -747,7 +748,7 @@ let rec while_labelling (e:I.exp):I.exp =
 								let new_name = fresh_var_name "fi" b.I.exp_try_pos.start_pos.Lexing.pos_lnum in
 								let new_flow_var_name = fresh_var_name "flv" b.I.exp_try_pos.start_pos.Lexing.pos_lnum in
 								let new_raise = I.mkRaise (I.Var_flow new_flow_var_name) false  (Some (I.mkVar new_name pos)) true  None pos in
-								let catch_body = I.mkBlock (I.mkSeq f_body new_raise pos) I.NoJumpLabel [] pos in
+								let catch_body = I.mkBlock (I.mkSeq f_body new_raise ori pos) I.NoJumpLabel [] pos in
 								I.mkCatch (Some new_name) None c_flow (Some new_flow_var_name) catch_body pos
 								) b.I.exp_finally_clause in
 						Some (I.mkTry ob l_catch [] None pos)
@@ -2226,8 +2227,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                       C.exp_assign_origin = ori;
                                       C.exp_assign_pos = pos; }
                                 else C.Unit pos in
-                                let seq1 = C.mkSeq tmp_t init_fn tmp_e pos in
-                                let seq2 = C.mkSeq tmp_t fn_decl seq1 pos in
+                                let seq1 = C.mkSeq tmp_t init_fn tmp_e ori pos in
+                                let seq2 = C.mkSeq tmp_t fn_decl seq1 ori pos in
                                 if new_var then
                                   ((C.Block {
                                       C.exp_block_type = tmp_t;
@@ -2382,7 +2383,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                           C.exp_assign_rhs = crecv;
                           C.exp_assign_origin = ori;
                           C.exp_assign_pos = pos; } in
-                      let seq = C.mkSeq C.void_type fdecl finit pos in (fname, seq, true)) in
+                      let seq = C.mkSeq C.void_type fdecl finit ori pos in (fname, seq, true)) in
             let tmp = List.map (helper) args in
             let (cargs, cts) = List.split tmp in
             let mingled_mn = C.mingle_name mn cts in
@@ -2414,8 +2415,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       C.exp_icall_path_id = pi;
                       C.exp_icall_origin = ori;
                       C.exp_icall_pos = pos;} in
-                  let seq1 = C.mkSeq ret_ct init_seq call_e pos in
-                  let seq2 = C.mkSeq ret_ct recv_init seq1 pos in
+                  let seq1 = C.mkSeq ret_ct init_seq call_e ori pos in
+                  let seq2 = C.mkSeq ret_ct recv_init seq1 ori pos in
                   let blk =C.Block{
                       C.exp_block_type = ret_ct;
                       C.exp_block_body = seq2;
@@ -2490,7 +2491,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                               C.exp_scall_origin = ori;
                               C.exp_scall_pos = pos;
                               C.exp_scall_path_id = pi; } in
-                          let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
+                          let seq_1 = C.mkSeq ret_ct init_seq call_e ori pos in
                           ((C.Block {
                               C.exp_block_type = ret_ct;
                               C.exp_block_body = seq_1;
@@ -2539,7 +2540,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         C.exp_sacll_origin = ori;
                         C.exp_scall_pos = pos;
                         C.exp_scall_path_id = pi; } in
-                    let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
+                    let seq_1 = C.mkSeq ret_ct init_seq call_e ori pos in
                     ((C.Block {
                         C.exp_block_type = ret_ct;
                         C.exp_block_body = seq_1;
@@ -2581,7 +2582,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       C.exp_scall_origin = ori;
                       C.exp_scall_pos = pos;
                       C.exp_scall_path_id = pi; } in
-                  let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
+                  let seq_1 = C.mkSeq ret_ct init_seq call_e ori pos in
                   ((C.Block {
                       C.exp_block_type = ret_ct;
                       C.exp_block_body = seq_1;
@@ -2785,7 +2786,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   C.exp_new_origin = ori;
                   C.exp_new_pos = pos;} in
               let new_t = Named c in
-              let seq_e = C.mkSeq new_t init_seq new_e pos in
+              let seq_e = C.mkSeq new_t init_seq new_e ori pos in
               ((C.Block {
                   C.exp_block_type = new_t;
                   C.exp_block_body = seq_e;
@@ -3445,13 +3446,13 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
     | Array (et, r) -> Array (trans_type prog et pos, r) (* An Hoa *)
     | p -> p
 
-and flatten_to_bind_debug prog proc b r rhs_o pid imm pos =
+and flatten_to_bind_debug prog proc b r rhs_o pid imm ori pos =
   Debug.no_2 "flatten_to_bind " 
       (Iprinter.string_of_exp) 
       (fun x -> match x with
         | Some x1 -> (Cprinter.string_of_exp x1) | None -> "")
       (fun _ -> "?")
-      (fun b rhs_o -> flatten_to_bind prog proc b r rhs_o pid imm pos) b rhs_o
+      (fun b rhs_o -> flatten_to_bind prog proc b r rhs_o pid imm ori pos) b rhs_o
 
 (**
    * An Hoa : compact field access by combining inline fields. For example, given
@@ -3482,10 +3483,10 @@ and compact_field_access_sequence prog root_type field_seq =
   res
 
 and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
-      (rhs_o : C.exp option) (pid:control_path_id) (imm : heap_ann) (read_only : bool) pos =
+      (rhs_o : C.exp option) (pid:control_path_id) (imm : heap_ann) (read_only : bool) ori pos =
   match rev_fs with
     | f :: rest ->
-          let (cbase, base_t) = flatten_to_bind prog proc base rest None pid imm read_only pos in
+          let (cbase, base_t) = flatten_to_bind prog proc base rest None pid imm read_only ori pos in
           let (fn, new_var) =
             (match cbase with
               | C.Var { C.exp_var_name = v } -> (v, false)
@@ -3544,8 +3545,9 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
                 C.exp_bind_bound_var = ((Named dname), fn);
                 C.exp_bind_fields = List.combine field_types fresh_names;
                 C.exp_bind_body = bind_body;
-		        C.exp_bind_imm = imm;
+                C.exp_bind_imm = imm;
                 C.exp_bind_read_only = read_only;
+                C.exp_bind_origin = ori;
                 C.exp_bind_pos = pos;
                 C.exp_bind_path_id = pid;} in
             let seq1 = C.mkSeq bind_type init_fn bind_e pos in

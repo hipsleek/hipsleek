@@ -2821,7 +2821,7 @@ and propagate_perm_formula_x (f : formula) (permvar:cperm_var) : formula = match
         let base_p = f1.formula_base_pure in
         let mk_eq v = mkEq_cperm () v permvar no_pos in
         let mk_eqs = List.map mk_eq vars in
-        let mk_BForm (b:CP.b_formula): CP.formula = CP.BForm (b,None) in
+        let mk_BForm (b:CP.b_formula): CP.formula = CP.BForm (b,None,None) in
         let mk_eqs = List.map mk_BForm mk_eqs in
         let perm_p = List.fold_left (fun res v -> CP.mkAnd v res no_pos) (CP.mkTrue no_pos) mk_eqs in
         let perm_p = MCP.OnePF perm_p in
@@ -2832,7 +2832,7 @@ and propagate_perm_formula_x (f : formula) (permvar:cperm_var) : formula = match
         let base_p = f1.formula_exists_pure in
         let mk_eq v = mkEq_cperm () v permvar no_pos in
         let mk_eqs = List.map mk_eq vars in
-        let mk_BForm (b:CP.b_formula): CP.formula = CP.BForm (b,None) in
+        let mk_BForm (b:CP.b_formula): CP.formula = CP.BForm (b,None,None) in
         let mk_eqs = List.map mk_BForm mk_eqs in
         let perm_p = List.fold_left (fun res v -> CP.mkAnd v res no_pos) (CP.mkTrue no_pos) mk_eqs in
         let perm_p = MCP.OnePF perm_p in
@@ -5127,7 +5127,7 @@ and formula_trace_of_context_x ctx0 = match ctx0 with
             let ta = lex.CP.lex_ann in
             let l1 = lex.CP.lex_exp in
             let l2 = lex.CP.lex_tmp in
-            let m = CP.mkPure (CP.mkLexVar ta l1 l2 no_pos) None in
+            let m = CP.mkPure (CP.mkLexVar ta l1 l2 no_pos) None None in
             Debug.trace_hprint (add_str "es_var_measures:" !CP.print_formula) m no_pos;
             MCP.merge_mems mix_f (MCP.mix_of_pure m) true
         | _ -> report_error no_pos "Invalid value for esvm" in
@@ -6081,13 +6081,13 @@ let rename_labels transformer e =
 	let f_e e = Some e in
 	let f_p_f e = 
 		match e with
-		| CP.BForm (b,f_l) -> Some (CP.BForm (b,(n_l_f f_l)))
+		| CP.BForm (b,f_l,fo) -> Some (CP.BForm (b,(n_l_f f_l),fo))
 		| CP.And _
 		| CP. AndList _ -> None
-		| CP.Or (e1,e2,f_l,l) -> (Some (CP.Or (e1,e2,(n_l_f f_l),l)))
-		| CP.Not (e1,f_l, l) -> (Some (CP.Not (e1,(n_l_f f_l),l)))
-		| CP.Forall (v,e1,f_l, l) -> (Some (CP.Forall (v,e1,(n_l_f f_l),l)))
-		| CP.Exists (v,e1,f_l, l) -> (Some (CP.Exists (v,e1,(n_l_f f_l),l)))in
+		| CP.Or (e1,e2,f_l,fo,l) -> (Some (CP.Or (e1,e2,(n_l_f f_l),fo,l)))
+		| CP.Not (e1,f_l,fo,l) -> (Some (CP.Not (e1,(n_l_f f_l),fo,l)))
+		| CP.Forall (v,e1,f_l,fo,l) -> (Some (CP.Forall (v,e1,(n_l_f f_l),fo,l)))
+		| CP.Exists (v,e1,f_l,fo,l) -> (Some (CP.Exists (v,e1,(n_l_f f_l),fo,l)))in
 	 transformer (f_e_f,f_f,f_h_f,(f_m,f_a,f_p_f,f_b,f_e)) e
 
 let rename_labels_struc (e:struc_formula):struc_formula = rename_labels transform_struc_formula e
@@ -7114,7 +7114,7 @@ let rec simplify_post post_fml post_vars = match post_fml with
         formula_or_pos = pos}
   | _ -> 
     let h, p, fl, t, a = split_components post_fml in
-    let p = CP.mkExists_with_simpl Omega.simplify post_vars (MCP.pure_of_mix p) None no_pos in
+    let p = CP.mkExists_with_simpl Omega.simplify post_vars (MCP.pure_of_mix p) None None no_pos in
     let post_fml = mkBase h (MCP.mix_of_pure p) t fl a no_pos in
     post_fml
 
@@ -7637,7 +7637,7 @@ let rec norm_struc_with_lexvar is_primitive struc_f  = match struc_f with
       let lexvar = 
         if is_primitive then  CP.mkLexVar Term [] [] no_pos
         else CP.mkLexVar MayLoop [] [] no_pos in 
-      mkEBase_with_cont (CP.mkPure lexvar None) (Some struc_f) no_pos
+      mkEBase_with_cont (CP.mkPure lexvar None None) (Some struc_f) no_pos
   | EInfer ef -> EInfer { ef with formula_inf_continuation = norm_struc_with_lexvar is_primitive ef.formula_inf_continuation }
   | EList b -> mkEList (map_l_snd (norm_struc_with_lexvar is_primitive) b)
   | EOr b -> mkEOr (norm_struc_with_lexvar is_primitive b.formula_struc_or_f1) (norm_struc_with_lexvar is_primitive b.formula_struc_or_f2) b.formula_struc_or_pos
@@ -7802,7 +7802,7 @@ let compose_formula_and_x (f : formula) (post : formula) (id: CP.spec_var) (ref_
         (Cpure.Var (v1,no_pos)),
         (Cpure.Var (v2,no_pos)),
         no_pos
-    )),None), None)
+    )),None), None, None)
   in
   let new_f3 = List.fold_left (fun f (v1,v2) -> 
       let eq_f = func v1 v2 in
