@@ -31,6 +31,7 @@ stat != 1 -> requires (plist::ll<R> & rlist::rll<R1> * slist::sll<R2>) & R = uni
 	    & plist' = slist' & Rp = union(R1,R2p) & R2p = union(R2,{slist'}) & Rp = union(R,{plist'}) & v != 1 ;}
 {
 	node tmp = new node(pid,stat,null,null,null);
+	dprint;
 	plist = insert_pll(plist,tmp);
 	if(stat == 1){
 		rlist = insert_rll(rlist,tmp);

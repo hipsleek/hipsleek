@@ -1,0 +1,8 @@
+data pair {
+	int fst; 
+	int snd;	
+}.
+
+checkentail x::pair<_@A,b@M> * x1::pair<a@M,d@A> & x=x1 & d = 3|- x::pair<c@M,y@M> & y=3.
+
+

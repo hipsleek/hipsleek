@@ -3410,11 +3410,15 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
 			               		 let cl = List.map subs_crt_holes_ctx cl in   
 						 let cl =  List.map restore_tmp_ann_ctx cl in
 			               		 (* in case of success, put back the frame consisting of h1/\h2*[] *)
-			               		 (* first add the frame h2*[] *) 
+			               		 (* first add the frame h2*[] *)
 			               		 let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkConjH h1 f pos)) cl in 
 		                        		(* next add the frame h1/\[]*)
+		                        	 let cl = List.map
+						  (fun c -> CF.transform_context (fun es -> 
+				  CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}) c)
+				  		  cl
 			                	 (*let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkConjH h1 f pos)) cl
-			               		 in*) (SuccCtx(cl), with_h2_prf)
+			               		 in*) in (SuccCtx(cl), with_h2_prf)
 		          		 in (with_h2_ctx, with_h2_prf)
 		              (*heap_entail_with_cont_lhs prog is_folding new_ctx conseq ft h1 h2 with_h1_ctx with_h1_prf func pos*)
 	      in
