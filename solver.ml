@@ -3006,7 +3006,7 @@ and heap_entail_struc_init_bug_inv_x (prog : prog_decl) (is_folding : bool)  (ha
     heap_entail_struc_init_bug_orig prog is_folding has_post cl conseq pos pid 
 
 and heap_entail_struc_init_bug_inv (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =
-  Debug.no_2 "heap_entail_struc_init_bug_inv" Cprinter.string_of_list_context Cprinter.string_of_struc_formula
+  Debug.ho_2 "heap_entail_struc_init_bug_inv" Cprinter.string_of_list_context Cprinter.string_of_struc_formula
       (fun (ls,_) -> Cprinter.string_of_list_context ls) (fun a c -> heap_entail_struc_init_bug_inv_x prog is_folding has_post a c pos pid) cl conseq
 
 and heap_entail_struc_init_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) = 
@@ -3034,7 +3034,7 @@ and heap_entail_struc_init (prog : prog_decl) (is_folding : bool)  (has_post: bo
     | CF.FailCtx _ -> 0
     | CF.SuccCtx ctx0 -> List.length ctx0 in
   let pr_out (ctx_lst, pf) = string_of_int (length_ctx ctx_lst) in 
-  Debug.no_1 "heap_entail_struc_init" (fun _ -> "?") pr_out (fun _ -> heap_entail_struc_init_x prog is_folding has_post cl conseq pos pid) prog
+  Debug.ho_1 "heap_entail_struc_init" (fun _ -> "?") pr_out (fun _ -> heap_entail_struc_init_x prog is_folding has_post cl conseq pos pid) prog
 
 (* check entailment:                                          *)
 (* each entailment should produce one proof, be it failure or *)
@@ -3070,7 +3070,7 @@ and heap_entail_one_context_struc_debug p i1 hp cl cs pos pid =
 and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) pos pid : (list_context * proof) =
   Debug.devel_zprint (lazy ("heap_entail_one_context_struc:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
     if isAnyFalseCtx ctx then
-      (*set context as bot*)
+      (* set context as bot*)
       (* let bot_ctx = CF.change_flow_into_ctx false_flow_int ctx in *)
       (* why change to false_flow_int? *)
       let bot_ctx = ctx in
@@ -4272,18 +4272,18 @@ and heap_n_pure_entail_x
       (drop_read_phase : bool)
       pos : (list_context * proof) =
 
-  (* let _  = print_string("*************************************************\n") in *)
-  (* let _ = print_string("entailing the heap h = " ^ (Cprinter.string_of_h_formula h) ^ "\n") in *)
-  (* let _  = print_string("*************************************************\n") in *)
+ let _  = print_string("*************************************************\n") in
+ let _ = print_string("entailing the heap h = " ^ (Cprinter.string_of_h_formula h) ^ "\n") in
+ let _  = print_string("*************************************************\n") in
   let ctx0 = disable_imm_last_phase_ctx ctx0 in
   let entail_h_ctx, entail_h_prf = heap_entail_split_lhs_phases prog is_folding  ctx0 (func h (MCP.mkMTrue pos)) (consume_heap_h_formula h) pos in
   let entail_h_ctx = enable_imm_last_phase entail_h_ctx in
   match entail_h_ctx with
     | FailCtx _ -> (entail_h_ctx, entail_h_prf)
     | SuccCtx(cl) ->
-	      (* let _  = print_string("*************************************************\n") in *)
-	      (* let _ = print_string("entailing the pure p = " ^ (Cprinter.string_of_mix_formula p) ^ "\n") in *)
-	      (* let _  = print_string("*************************************************\n") in *)
+ let _  = print_string("*************************************************\n") in
+ let _ = print_string("entailing the pure p = " ^ (Cprinter.string_of_mix_formula p) ^ "\n") in
+ let _  = print_string("*************************************************\n") in
           let entail_p = List.map 
 	        (fun c -> one_ctx_entail prog is_folding  c conseq func p pos) cl  
           in
@@ -5321,8 +5321,8 @@ and pure_match (vars : CP.spec_var list) (lhs : MCP.mix_formula) (rhs : MCP.mix_
   (*let fl = CP.fv lhs in Free variables in LHS, assume that fl intersects vars is empty *)
   let pr = List.flatten (List.map (fun x -> List.map (fun y -> (x,y)) rr) rl) in (* Cartesian product of rl and rr. *)
   let eqctr = extract_equality (CP.conj_of_list lhs no_pos) in
-  (*let _ = print_string "pure_match :: pairs of relations found : \n" in
-	let _ = List.map (fun (x,y) -> print_string ("(" ^ Cprinter.string_of_b_formula x ^ "," ^ Cprinter.string_of_b_formula y ^ "\n")) pr in*)
+  let _ = print_string "pure_match :: pairs of relations found : \n" in
+	let _ = List.map (fun (x,y) -> print_string ("(" ^ Cprinter.string_of_b_formula x ^ "," ^ Cprinter.string_of_b_formula y ^ "End pure_match***\n")) pr in
   (* Internal function rel_match to perform matching of two relations *)
   let rel_match  (vars : CP.spec_var list) (rpair : CP.b_formula * CP.b_formula) : CP.formula =
 	let (r1, _) = fst rpair in
@@ -5382,10 +5382,10 @@ and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
   (* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
-  (* let _ = print_string ("\n\nAn Hoa :: heap_entail_empty_rhs_heap :: INPUTS\n" ^ *)
-  (* "ENTAIL STATE = " ^ (Cprinter.string_of_estate estate) ^ "\n" ^ *)
-  (* "LHS = " ^ (Cprinter.string_of_formula (Base lhs)) ^ "\n" ^ *)
-  (* "RHS = " ^ (Cprinter.string_of_mix_formula rhs_p) ^ "\n\n") in *)
+ let _ = print_string ("\n\nAn Hoa :: heap_entail_empty_rhs_heap :: INPUTS\n" ^
+ "ENTAIL STATE = " ^ (Cprinter.string_of_estate estate_orig) ^ "\n" ^
+ "LHS = " ^ (Cprinter.string_of_formula (Base lhs)) ^ "\n" ^
+ "RHS = " ^ (Cprinter.string_of_mix_formula rhs_p) ^ "\n\n") in
   let imp_subno = ref 1 in
   let lhs_h = lhs.formula_base_heap in
   let lhs_p = lhs.formula_base_pure in
@@ -6291,7 +6291,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
       list_context *proof =
   (* print_endline ("[do_match] input LHS = "^ (Cprinter.string_of_entail_state estate)); *)
   (* print_endline ("[do_match] RHS = "^ (Cprinter.string_of_formula rhs)); *)
-  (* print_endline ("[do_match] matching " ^ (Cprinter.string_of_h_formula l_node) ^ " |- " ^ (Cprinter.string_of_h_formula r_node)); *)
+ print_endline ("[do_match] matching " ^ (Cprinter.string_of_h_formula l_node) ^ " |- " ^ (Cprinter.string_of_h_formula r_node));
   Debug.devel_zprint (lazy ("do_match: using " ^
 	  (Cprinter.string_of_h_formula l_node)	^ " to prove " ^
 	  (Cprinter.string_of_h_formula r_node))) pos;

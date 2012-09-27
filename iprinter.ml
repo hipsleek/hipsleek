@@ -334,7 +334,7 @@ let rec string_of_formula = function
 				  F.formula_base_flow = fl;
 				  F.formula_base_pos = l}) ->  
 	  if hf = F.HTrue then 
-		((string_of_pure_formula pf)^" FLOW "^fl^")")
+		((string_of_pure_formula pf)^" Htrue FLOW "^fl^")")
       else if hf = F.HFalse then 
 		let s = string_of_pure_formula pf in 
           (if s = "" then  (string_of_h_formula hf)
@@ -342,7 +342,7 @@ let rec string_of_formula = function
 	  else 
 		let s = string_of_pure_formula pf in 
           (if s = "" then  (string_of_h_formula hf)
-            else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
+            else "(" ^ (string_of_h_formula hf) ^ "-end hf)*(" ^ (string_of_pure_formula pf) ^ "-end pf)(oooo FLOW "^fl^")")
   | Iast.F.Or ({F.formula_or_f1 = f1;
 				F.formula_or_f2 = f2;
 				F.formula_or_pos = l}) -> (string_of_formula f1) ^ "\nor" ^ (string_of_formula f2)

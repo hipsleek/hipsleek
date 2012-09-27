@@ -4,7 +4,6 @@
 open Format
 open Graph
 
-
 module Vt =
 struct
 	type t= string
@@ -289,7 +288,12 @@ class rTC=
 														let exist_bcc=bcc#getBCCGraph cpg (G.E.dst e) (G.E.src e) in(*BCC must contain at least 3 vertex*)
 (*														let _=Gen.Profiling.pop_time("stat_get_BCC") in*)
 															let _= if(exist_bcc=true) then 
+									
 															let _= bcc#add_list_diseq_edges cpg !diseq_edges in
+(*															let rec helper g =G.iter_vertex                                                                         *)
+(*																			(fun v-> try if((G.in_degree g v)=1)                                                            *)
+(*																								then let _=G.remove_vertex g v in helper g with exn -> ((*print_endline "rm dg1"*))) g*)
+(*															in let _= helper cpg in	*)
 (*																let _= (*if((Clt.is_chordal cpg)=false) then*)  self#make_chordal cpg graph_e in*)
 (*																				let _= bcc#print_chordal_graph cpg in*)
 																  let ve={ver1=(G.E.src e);ver2=(G.E.dst e)} in

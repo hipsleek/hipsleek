@@ -821,6 +821,7 @@ and rename_bound_vars (f : formula) =
 		  resform
     | Base _ -> f
     | Exists _ ->
+				let _=print_endline ("Exists: rename bound vars") in
 	      let qvars, base_f = split_quantifiers f in
 	      let new_qvars = Ipure.fresh_vars qvars in
 	      let rho = List.combine qvars new_qvars in
