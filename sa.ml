@@ -468,7 +468,7 @@ let loop_up_ptr_args prog hd_nodes hv_nodes node_names=
   in
   helper node_names node_names
 
-(*for computing partial def*)
+(*unilities for computing partial def*)
 let rec lookup_undef_args args undef_args def_ptrs=
   match args with
     | [] -> undef_args
@@ -485,7 +485,7 @@ let check_neq_vnode vn2 vn1_name=
 
 let check_neq_hrelnode id ls=
       not (CP.mem_svl id ls)
-(*END for computing partial def*)
+(*END unilities for computing partial def*)
 
 (*check_partial_def_eq: to remove duplicate and identify terminating condition*)
 let check_partial_def_eq (hp1, args1, cond1, olhs1, orhs1) (hp2, args2, cond2, olhs2, orhs2)=
@@ -508,22 +508,42 @@ let check_partial_def_eq (hp1, args1, cond1, olhs1, orhs1) (hp2, args2, cond2, o
   else false
 
 (*collect partial def ---> hp*)
-let rec collect_par_defs_one_side_one_hp prog lhs rhs (hrel, args) def_ptrs
+let rec collect_par_defs_one_side_one_hp_x prog lhs rhs (hrel, args) def_ptrs
       rhrels eq hd_nodes hv_nodes=
-begin
-  let undef_args = lookup_undef_args args [] def_ptrs in
-  if (List.length undef_args) = 0 then
-    (*case 1*)
-    (*this hp is well defined, synthesize partial def*)
-    let keep_ptrs = loop_up_ptr_args prog hd_nodes hv_nodes args in
-    let r = CF.drop_data_view_hrel_nodes lhs check_neq_dnode check_neq_vnode
-      check_neq_hrelnode keep_ptrs keep_ptrs []
-    in
-    [(hrel, args, r, Some r, None)]
-  else
-     (*CASE2: hp1(x1,x2,x3) --> h2(x1,x2,x3)* formula: hp such that have the same set of args in both sides*)
-    collect_par_defs_two_side_one_hp prog lhs rhs (hrel, args) rhrels hd_nodes hv_nodes
+  begin
+      (*old code*)
+  (* let undef_args = lookup_undef_args args [] def_ptrs in *)
+  (* if (List.length undef_args) = 0 then *)
+  (*   (\*case 1*\) *)
+  (*   (\*this hp is well defined, synthesize partial def*\) *)
+  (*   let keep_ptrs = loop_up_ptr_args prog hd_nodes hv_nodes args in *)
+  (*   let r = CF.drop_data_view_hrel_nodes lhs check_neq_dnode check_neq_vnode *)
+  (*     check_neq_hrelnode keep_ptrs keep_ptrs [] *)
+  (*   in *)
+  (*   [(hrel, args, r, Some r, None)] *)
+      let closed_args = loop_up_ptr_args prog hd_nodes hv_nodes args in
+      (*for debugging*)
+      Debug.info_hprint (add_str "closed args: " (!CP.print_svl)) closed_args no_pos;
+      (*END*)
+      let diff = Gen.BList.difference_eq CP.eq_spec_var closed_args (def_ptrs@args) in
+        if (List.length diff) = 0 then
+          let r = CF.drop_data_view_hrel_nodes lhs check_neq_dnode check_neq_vnode
+            check_neq_hrelnode closed_args closed_args []
+          in
+          [(hrel, args, r, Some r, None)]
+        else
+    (*CASE2: hp1(x1,x2,x3) --> h2(x1,x2,x3)* formula: hp such that have the same set of args in both sides*)
+          collect_par_defs_two_side_one_hp prog lhs rhs (hrel, args) rhrels hd_nodes hv_nodes
 end
+
+and collect_par_defs_one_side_one_hp prog lhs rhs (hrel, args) def_ptrs
+      rhrels eq hd_nodes hv_nodes=
+  let pr1 = pr_pair !CP.print_sv !CP.print_svl in
+  let pr2 = Cprinter.prtt_string_of_formula in
+  let pr3 = pr_list_ln string_of_par_def_w_name in
+   Debug.ho_2 "collect_par_defs_one_side_one_hp" pr1 pr2 pr3
+       (fun _ _ -> collect_par_defs_one_side_one_hp_x prog lhs rhs (hrel, args) def_ptrs
+       rhrels eq hd_nodes hv_nodes) (hrel, args) lhs
 
 (*collect hp1(x1,x2,x3) ---> hp2(x1,x2,x3) * F  partial def *)
 and collect_par_defs_two_side_one_hp_x prog lhs rhs (hrel, args) rhs_hrels hd_nodes hv_nodes=
