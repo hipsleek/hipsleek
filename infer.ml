@@ -1438,81 +1438,87 @@ let simplify_lhs_rhs lhs_b rhs_b leqs reqs=
 let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rhs_h_matched_set:CP.spec_var list) conseq lhs_b rhs_b pos =
   (*for debugging*)
   let _ = Debug.ninfo_pprint ("es_infer_vars_hp_rel: " ^ (!CP.print_svl  es.es_infer_vars_hp_rel)) no_pos in
-    (*end for debugging*)
+  (*end for debugging*)
   if no_infer_hp_rel es then (false, es)
   else
     let ivs = es.es_infer_vars_hp_rel in
     (*check whether LHS/RHS contains hp_rel*)
     let lhrs = CF.get_hp_rel_name_bformula lhs_b in
     let rhrs = CF.get_hp_rel_name_bformula rhs_b in
-    if CP.intersect ivs (lhrs@rhrs) = [] then (
-        DD.devel_pprint ">>>>>> no hp rel <<<<<<" pos; 
-        (false,es))
+    if CP.intersect ivs (lhrs@rhrs) = [] then 
+      begin
+        (* DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos; *)
+        (* DD.info_pprint " no hp_rel found" pos;  *)
+        (false,es)
+      end
     else
-    (*which pointers are defined and which arguments of data nodes are pointer*)
-      let leqs = (MCP.ptr_equations_without_null mix_lf) (* @ (MCP.ptr_equations_with_null mix_lf) *) in
-      let reqs = es.CF.es_rhs_eqset (* @ (MCP.ptr_equations_with_null mix_rf) *) in
-    (*for debugging*)
-      (* let pr_elem = Cpure.SV.string_of in *)
-      (* let pr2 = pr_list (pr_pair pr_elem pr_elem) in *)
-      (* let _ = print_endline ("lsvl: " ^ (pr2 leqs)) in *)
-      (* let _ = print_endline ("rsvl: " ^ (pr2 reqs)) in *)
-    (*end for debugging*)
-      if CP.intersect (CF.get_hp_rel_vars_bformula lhs_b) (List.fold_left close_def (CF.h_fv rhs) leqs) = [] then
-         (
-        Debug.ninfo_pprint ">>>>>> no relevant vars with mismatch <<<<<<" pos;
-        (false,es))
-      else
+      begin
+        DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
+        DD.info_pprint "  hp_rel found" pos;
+        (*which pointers are defined and which arguments of data nodes are pointer*)
+        let leqs = (MCP.ptr_equations_without_null mix_lf) (* @ (MCP.ptr_equations_with_null mix_lf) *) in
+        let reqs = es.CF.es_rhs_eqset (* @ (MCP.ptr_equations_with_null mix_rf) *) in
+        (*for debugging*)
+        (* let pr_elem = Cpure.SV.string_of in *)
+        (* let pr2 = pr_list (pr_pair pr_elem pr_elem) in *)
+        (* let _ = print_endline ("lsvl: " ^ (pr2 leqs)) in *)
+        (* let _ = print_endline ("rsvl: " ^ (pr2 reqs)) in *)
+        (*end for debugging*)
+        if CP.intersect (CF.get_hp_rel_vars_bformula lhs_b) (List.fold_left close_def (CF.h_fv rhs) leqs) = [] then
+          (
+              Debug.ninfo_pprint ">>>>>> no relevant vars with mismatch <<<<<<" pos;
+              (false,es))
+        else
+          (*generate new heap pred with undifined pointers only*)
+          let ldef ,largs = find_defined_pointers prog lhs_b mix_lf rhs_h_matched_set leqs pos in
+          let rdef, rargs = find_defined_pointers prog rhs_b mix_rf rhs_h_matched_set reqs pos in
+          (*LHS (RHS) check all pointers have been defined, if not
+            add new hp_rel*)
+          (*which args are defined*)
+          let defs = CP.remove_dups_svl (ldef@rdef) in
+          let undef_args defs (t,v) = not(CP.mem_svl v defs) in
+          let lundef_args = List.filter (undef_args defs) largs in
+          let rundef_args = List.filter (undef_args defs) rargs in
+          (*generate new hp for undef pointers*)
+          let l_new_hp = add_raw_hp_rel prog (CP.remove_dups_svl ldef) (lundef_args) pos in
+          let rdef = if List.length lundef_args > 0 then rdef else (ldef@rdef) in
+          let rdef = CP.remove_dups_svl (CP.subst_var_list (leqs@reqs) rdef) in
+          let r_new_hp = add_raw_hp_rel prog  rdef (rundef_args) pos in
 
-      (*generate new heap pred with undifined pointers only*)
-      let ldef ,largs = find_defined_pointers prog lhs_b mix_lf rhs_h_matched_set leqs pos in
-      let rdef, rargs = find_defined_pointers prog rhs_b mix_rf rhs_h_matched_set reqs pos in
-      (*LHS (RHS) check all pointers have been defined, if not
-        add new hp_rel*)
-      (*which args are defined*)
-      let defs = CP.remove_dups_svl (ldef@rdef) in
-      let undef_args defs (t,v) = not(CP.mem_svl v defs) in
-      let lundef_args = List.filter (undef_args defs) largs in
-      let rundef_args = List.filter (undef_args defs) rargs in
-      (*generate new hp for undef pointers*)
-      let l_new_hp = add_raw_hp_rel prog (CP.remove_dups_svl ldef) (lundef_args) pos in
-      let rdef = if List.length lundef_args > 0 then rdef else (ldef@rdef) in
-      let rdef = CP.remove_dups_svl (CP.subst_var_list (leqs@reqs) rdef) in
-      let r_new_hp = add_raw_hp_rel prog  rdef (rundef_args) pos in
-
-      let update_fb fb new_hp =
-        match new_hp with
-          | None -> fb,[]
-          | Some (hf,vhp_rels) -> (CF.mkAnd_fb_hf fb hf pos), vhp_rels
-      in
-      let new_lhs_b,lvhp_rels = update_fb lhs_b l_new_hp in
-      let new_rhs_b,rvhp_rels = update_fb rhs_b r_new_hp in
-      let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs new_lhs_b new_rhs_b leqs reqs in 
-      (*simply add constraints: *)
-      let hp_rel = (CP.RelAssume (CP.remove_dups_svl (lhrs@rhrs@lvhp_rels@rvhp_rels)), (CF.Base new_lhs_b),
-                           CF.Base new_rhs_b) in
-      let update_es_f f new_hp=
-        match new_hp with
-          | None -> f
-          | Some (hf,vhp_rels) -> (CF.mkAnd_f_hf f hf pos)
-      in
-      let new_es_formula =  update_es_f es.CF.es_formula l_new_hp in
-      let new_es_formula =  update_es_f new_es_formula r_new_hp in
-      (*drop hp rel in es_formula*)
-      let new_es_formula, _ = CF.drop_hrel_f new_es_formula lhrs in
-      (*add mismatched heap into the entail states if @L*)
-      let check_consumed_node h f= 
-        match h with
-          | DataNode hd -> if not(CF.isLend (hd.CF.h_formula_data_imm)) then f
-              else let new_h = DataNode {hd with CF.h_formula_data_imm = (CF.ConstAnn(Mutable));} in
-                   CF.mkAnd_f_hf f new_h pos
-          | _ -> f
-      in
-      let new_es_formula = check_consumed_node rhs new_es_formula in
-      let new_es = {es with CF. es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel @ lvhp_rels@rvhp_rels;
-          CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ [hp_rel];
-          CF.es_formula = new_es_formula} in
-      (true, new_es)
+          let update_fb fb new_hp =
+            match new_hp with
+              | None -> fb,[]
+              | Some (hf,vhp_rels) -> (CF.mkAnd_fb_hf fb hf pos), vhp_rels
+          in
+          let new_lhs_b,lvhp_rels = update_fb lhs_b l_new_hp in
+          let new_rhs_b,rvhp_rels = update_fb rhs_b r_new_hp in
+          let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs new_lhs_b new_rhs_b leqs reqs in 
+          (*simply add constraints: *)
+          let hp_rel = (CP.RelAssume (CP.remove_dups_svl (lhrs@rhrs@lvhp_rels@rvhp_rels)), (CF.Base new_lhs_b),
+          CF.Base new_rhs_b) in
+          let update_es_f f new_hp=
+            match new_hp with
+              | None -> f
+              | Some (hf,vhp_rels) -> (CF.mkAnd_f_hf f hf pos)
+          in
+          let new_es_formula =  update_es_f es.CF.es_formula l_new_hp in
+          let new_es_formula =  update_es_f new_es_formula r_new_hp in
+          (*drop hp rel in es_formula*)
+          let new_es_formula, _ = CF.drop_hrel_f new_es_formula lhrs in
+          (*add mismatched heap into the entail states if @L*)
+          let check_consumed_node h f= 
+            match h with
+              | DataNode hd -> if not(CF.isLend (hd.CF.h_formula_data_imm)) then f
+                else let new_h = DataNode {hd with CF.h_formula_data_imm = (CF.ConstAnn(Mutable));} in
+                CF.mkAnd_f_hf f new_h pos
+              | _ -> f
+          in
+          let new_es_formula = check_consumed_node rhs new_es_formula in
+          let new_es = {es with CF. es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel @ lvhp_rels@rvhp_rels;
+              CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ [hp_rel];
+              CF.es_formula = new_es_formula} in
+          (true, new_es)
+      end                          
 
 
 let infer_collect_hp_rel prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rhs_h_matched_set:CP.spec_var list) conseq lhs_b rhs_b pos =
