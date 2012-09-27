@@ -517,7 +517,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                      * before going into the function body *)
                     let (_, rankbnds) = check_bounded_term prog ctx1 (CF.pos_of_formula post_cond) in
                     let fctx,new_proc1 = (check_exp prog proc lfe e0 post_label) in
-	    	        let res_ctx = CF.list_failesc_to_partial fctx in
+                    let res_ctx = CF.list_failesc_to_partial fctx in
 	                (* let _ = print_string ("\n WN 1 :"^(Cprinter.string_of_list_partial_context res_ctx)) in *)
 	    	        let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
 	                (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in*)
@@ -576,7 +576,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       (* TODO : collecting rel twice as a temporary fix to losing ranking rel inferred during check_post *)
 (*                      let rel1 =  Inf.collect_rel_list_partial_context res_ctx in*)
 (*                      DD.dinfo_pprint ">>>>> Performing check_post STARTS" no_pos;*)
-                      let tmp_ctx,new_proc = check_post prog proc res_ctx post_cond pos_post post_label in
+                      let tmp_ctx,new_proc = check_post prog new_proc1 (*may be assertions failed*)
+                        (*proc*) res_ctx post_cond pos_post post_label in
 (*                      DD.dinfo_pprint ">>>>> Performing check_post ENDS" no_pos;*)
                       (* Termination: collect error messages from successful states *)
                       let term_err_msg = CF.collect_term_err_list_partial_context tmp_ctx in 
@@ -691,7 +692,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
   in 
   helper ctx spec 
 
-and check_exp prog proc ctx (e0:exp) label =
+and check_exp prog proc ctx (e0:exp) label : CF.list_failesc_context *  proc_decl =
   let pr= Cprinter.string_of_list_failesc_context in
   let pr1 = fun (a, _) -> Cprinter.string_of_list_failesc_context a in
    let pr2= fun (ctx,_) -> Cprinter.string_of_list_failesc_context ctx in
@@ -730,20 +731,37 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          if (String.length s)>0 (* && (String.length s1)>0 *) && (String.compare s s1 <> 0) then (ctx,proc)
 	          else
                 let (ts,ps) = List.partition (fun (fl,el,sl)-> (List.length fl) = 0) ctx in
-	            let new_ctx = match c1_o with
-                  | None -> ts
-                  | Some c1 ->
+	            let new_ctx =
+                  match c1_o with
+                    | None -> ts
+                    | Some c1 ->
                         let c1 = prune_pred_struc prog true c1 in (* specialise asserted formula *)
-                        let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " for spec: \n" ^ !log_spec ^ "\n" in	
-                        Debug.devel_pprint(*print_info "assert"*) to_print pos;
-                      let rs,prf = heap_entail_struc_list_failesc_context_init prog false false ts c1 None pos None in
+                        let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " for spec: \n" ^ !log_spec ^ "\n" in
+                        let _ = Debug.devel_pprint(*print_info "assert"*) to_print pos in
+                        let rs,prf = heap_entail_struc_list_failesc_context_init prog false false ts c1 None pos None in
                         let _ = PTracer.log_proof prf in  
-                        Debug.pprint(*print_info "assert"*) ("assert condition:\n" ^ (Cprinter.string_of_struc_formula c1)) pos;
-                        if CF.isSuccessListFailescCtx rs then 
-				          (Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok\n" else ": unreachable\n")) pos;
-				          Debug.devel_pprint(*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos)
-				        else Debug.print_info "assert/assume" (s ^" : failed\n") pos ;
-                        rs in 
+                        let _ = Debug.pprint(*print_info "assert"*) ("assert condition:\n" ^ (Cprinter.string_of_struc_formula c1)) pos in
+                        let _ =
+                          if CF.isSuccessListFailescCtx rs then
+                            begin
+				                let _ = Debug.print_info "assert" (s ^(
+                                    (if (CF.isNonFalseListFailescCtx ts)
+                                     then " : ok\n" else ": unreachable\n")
+                                )) pos in
+                                let _ = Debug.devel_pprint(*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos
+                                in ()
+                            end
+				          else
+                            begin
+                          (*for gui*)
+                                let vs = ("assertion ar line " ^(line_number_of_pos pos) ^": failed\n") in
+                                let proc_ver = [(vs, Some (CF.get_ft_list_failesc_context rs))] in
+                                let _ = proc.Cast.proc_verified <- proc.Cast.proc_verified@proc_ver in
+                          (*end for gui*)
+                                let _ = Debug.print_info "assert/assume" (s ^" : failed\n") pos in ()
+                            end
+                        in rs
+                in
 			    let _ = if !print_proof  && (match c1_o with | None -> false | Some _ -> true) then 
                   begin
           		    Prooftracer.add_assert_assume e0;
@@ -1732,8 +1750,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
     (* if (Gen.is_empty cl) then fl
        else *)
     let failesc = CF.splitter_failesc_context !norm_flow_int None (fun x->x)(fun x -> x) cl in
-    let ctx,proc = check_exp1 failesc in
-    ((ctx) @ fl, proc)
+    let ctx,nproc = check_exp1 failesc in
+    ((ctx) @ fl, nproc)
         
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context * proc_decl  =
   let pr = Cprinter.string_of_list_partial_context in

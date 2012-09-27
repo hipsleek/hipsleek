@@ -104,7 +104,10 @@ let run_hip_from_file_x ocprog (proc_name: string) =
         (* let _ = MU.process_source_full src in *)
         (* true *)
             let r, np = TC.check_proc cprog proc in (r, Some np)
-        with _ -> (false, Some proc)
+        with
+          | (TC.Post_Fail p) -> (false, Some p)
+          | (TC.Pre_Fail (_,_,p)) -> (false, Some p)
+          | _ -> (false, Some proc)
       in res
 
 let run_hip_from_file cprog (proc_name: string) =

@@ -329,6 +329,8 @@ class mainwindow () =
        (*ee*)
       let s,ft =
         if List.length new_proc.Cast.proc_verified > 0 then
+          (* let _ = print_endline ("L2 size:" ^ *)
+          (*             (string_of_int (List.length new_proc.Cast.proc_verified))) in *)
           HH.cmb_join_branches (List.tl new_proc.Cast.proc_verified)
               (List.hd new_proc.Cast.proc_verified)
         else ("The procedure does not have body", None)

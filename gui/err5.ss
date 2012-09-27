@@ -25,8 +25,19 @@ int goo (ref int x, ref int y)
 {
    x = x + 1;
    y = y - 2;
+   assert(x<0);
    return x;
 }
+
+int goo2 (ref int x, ref int y)
+  requires x > 0 & y > 0
+  ensures  true ;
+{
+  y = y + 1;
+  assert(x<0);
+   return x;
+}
+
 //succ
 int goo1 (ref int x, ref int y)
   requires x > 0 & y > 0
