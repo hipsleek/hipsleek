@@ -1263,6 +1263,8 @@ cexp_w :
 	         | `ATAT;t=id	-> 
 							let t = try Hashtbl.find !macros t with _ -> (print_string ("warning, undefined macro "^t); Ts.top) in
 							Pure_c (P.Tsconst(t,get_pos_camlp4 _loc 1))
+                | `INT_LITER (i,_) ; ann0 = LIST1 ann_heap -> Pure_t((P.IConst (i, get_pos_camlp4 _loc 1)) ,(get_heap_ann_opt ann0 ))
+                | `FLOAT_LIT (f,_) ; ann0 = LIST1 ann_heap -> (* print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_t((P.FConst (f, get_pos_camlp4 _loc 1)), (get_heap_ann_opt ann0 ))
                 | `INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
                 | `FLOAT_LIT (f,_)                          -> (* print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos_camlp4 _loc 1))
                 | `OPAREN; t=SELF; `CPAREN                -> t  

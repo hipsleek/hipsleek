@@ -9,7 +9,7 @@ ll<v,M,n,S> == self = null & M = {} & n = 0 & S = 0 or self::node<value@v,p> * p
 
 int length(node x)
 requires x::ll<@A,M,n,S>
-ensures res = n; 
+ensures x::ll<@A,M,n,S> & res = n; 
 {
 if(x==null) return 0;
 else 
@@ -19,7 +19,7 @@ return m;}
 
 int sum(node x)
 requires x::ll<@L,M,n,S>
-ensures res = S; 
+ensures x::ll<@L,M,n,S> & res = S; 
 {
 if(x==null) return 0;
 else 

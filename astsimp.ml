@@ -3971,7 +3971,7 @@ and join_ann (ann1: CF.ann list) (ann2: CF.ann list): bool * (CF.ann list) =
           
   (*     | CF.Star -> false *)
   (*     | _ -> false *)
-
+(*
 and compact_nodes_with_same_name_in_h_formula_x (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula = 
   if not (!Globals.allow_field_ann) then f else
     match f with
@@ -4037,7 +4037,8 @@ and compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.spec_v
   let pr = Cprinter.string_of_h_formula in 
   let pr_sv = pr_list Cprinter.string_of_spec_var_list in
   Debug.no_2 "compact_nodes_with_same_name_in_h_formula" pr pr_sv pr (fun _ _ -> compact_nodes_with_same_name_in_h_formula_x f aset) f aset
-
+  *)
+(*
 and compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
   match cf with
     | CF.Base f   -> CF.Base { f with
@@ -4047,7 +4048,7 @@ and compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
         CF.formula_or_f2 = compact_nodes_with_same_name_in_formula f.CF.formula_or_f2; }
     | CF.Exists f -> CF.Exists { f with
         CF.formula_exists_heap = compact_nodes_with_same_name_in_h_formula f.CF.formula_exists_heap (Context.comp_aliases f.CF.formula_exists_pure); }
-
+*)
 and compact_nodes_with_same_name_in_struc_x (f: CF.struc_formula): CF.struc_formula = (* f *)
   if not (!Globals.allow_field_ann ) then f
   else
@@ -4058,9 +4059,9 @@ and compact_nodes_with_same_name_in_struc_x (f: CF.struc_formula): CF.struc_form
       | CF.EList sf          -> CF.EList  (map_l_snd compact_nodes_with_same_name_in_struc_x sf) 
       | CF.ECase sf          -> CF.ECase {sf with CF.formula_case_branches = map_l_snd compact_nodes_with_same_name_in_struc_x sf.CF.formula_case_branches;} 
       | CF.EBase sf          -> CF.EBase {sf with
-          CF.formula_struc_base =  compact_nodes_with_same_name_in_formula sf.CF.formula_struc_base;
+          CF.formula_struc_base =  Mem.compact_nodes_with_same_name_in_formula sf.CF.formula_struc_base;
           CF.formula_struc_continuation = map_opt compact_nodes_with_same_name_in_struc_x sf.CF.formula_struc_continuation; }
-      | CF.EAssume (x, f, y)-> CF.EAssume (x,(compact_nodes_with_same_name_in_formula f),y)
+      | CF.EAssume (x, f, y)-> CF.EAssume (x,(Mem.compact_nodes_with_same_name_in_formula f),y)
       | CF.EInfer sf         -> CF.EInfer {sf with CF.formula_inf_continuation = compact_nodes_with_same_name_in_struc_x sf.CF.formula_inf_continuation} (* (andreeac) ?? *)
 
 and compact_nodes_with_same_name_in_struc (f: CF.struc_formula): CF.struc_formula = 
@@ -4139,7 +4140,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
 	        (res_replace stab rl clean_res fl);ch) 
   in (* An Hoa : Add measure to combine partial heaps into a single heap *)
   let cf = helper f0 in
-  let cf = compact_nodes_with_same_name_in_formula cf in
+  let cf = Mem.compact_nodes_with_same_name_in_formula cf in
   (*TO CHECK: temporarily disabled*) 
   (* let cf = CF.merge_partial_heaps cf in (\*ENABLE THIS for partial fields*\) *)
 

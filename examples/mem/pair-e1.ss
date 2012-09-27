@@ -22,7 +22,7 @@ Error(s) detected at main
   x.snd = 3;
   dprint;
 }
-
+/*
 int foo2(pair x)
   requires x::pair<_@A,a@L>
   ensures x::pair<_@A,_@L> & res=a+1 ;
@@ -34,7 +34,7 @@ int foo2(pair x)
   int r = x.snd;
   return r+1;
 }
-
+*/
 
 
 

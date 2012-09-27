@@ -17,6 +17,8 @@ module TP = Tpdispatcher
 module IF = Iformula
 module IP = Iprinter
 
+
+
 let rec split_phase_debug_lhs h = Debug.no_1 "split_phase(lhs)"
   Cprinter.string_of_h_formula 
   (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n") 
@@ -114,6 +116,10 @@ and consume_heap_h_formula (f : h_formula) : bool =  match f with
 	h_formula_star_h2 = h2;
 	h_formula_star_pos = pos}) -> (consume_heap_h_formula h1) or (consume_heap_h_formula h2)
   | _ -> false
+
+and isAccsList (al : ann list) : bool = List.for_all isAccs al
+
+and isExistsLendList (al : ann list) : bool = List.exists isLend al
 
 and is_lend_debug f = 
   Debug.no_1 "is_lend"
@@ -781,7 +787,3 @@ and ann_opt_to_ann (ann_opt_lst: IF.ann option list) (default_ann: IF.ann) =
     | [] -> []
     | (Some ann0) :: t -> (iformula_ann_to_cformula_ann ann0) :: (ann_opt_to_ann t default_ann)
     | (None) :: t      -> (iformula_ann_to_cformula_ann default_ann) :: (ann_opt_to_ann t default_ann) 
-    
-and isAccsList (al : ann list) : bool = List.for_all isAccs al
-
-

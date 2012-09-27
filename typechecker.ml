@@ -428,7 +428,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             Debug.tinfo_hprint (add_str "curr vars" !CP.print_svl) curr_vars no_pos;
             (* Debug.info_hprint (add_str "fv post" !CP.print_svl) ovars no_pos; *)
             (* Debug.info_hprint (add_str "out vars" !CP.print_svl) ov no_pos; *)
-	        if(Immutable.is_lend post_cond) && not(!Globals.allow_mem) then
+	        if ((Immutable.is_lend post_cond) && not(!Globals.allow_field_ann))
+	         || (!Globals.allow_field_ann && Mem.is_lend post_cond) then
 	      	  Error.report_error {Error.error_loc = pos_spec; Error.error_text =  ("The postcondition cannot contain @L heap predicates/data nodes\n")}
 	        else
               let _ = post_pos#set (CF.pos_of_formula post_cond) in
@@ -1451,7 +1452,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                    (*                              (Cprinter.string_of_list_failesc_context sctx)) in *)
                   (*we use new rules to judge the spec*)
                   let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 None pos pid in
-                 
+                  let rs = 
+                  if(!Globals.allow_field_ann) then
+                  let idf = (fun c -> c) in
+		  CF.transform_list_failesc_context (idf,idf,
+		  (fun es -> CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;})) 
+		  rs 
+		  else rs
+		  in
 				  let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
                   (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
                   let _ = PTracer.log_proof prf in

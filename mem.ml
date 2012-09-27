@@ -642,3 +642,39 @@ let rec compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
     	CF.Exists { f with
         CF.formula_exists_heap = new_h;
         CF.formula_exists_pure = new_mcp;}
+        
+let rec is_lend_h_formula (f : CF.h_formula) : bool =  match f with
+  | CF.DataNode (h1) -> 
+        if (CF.isLend h1.CF.h_formula_data_imm) then
+          (* let _ = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n")  in *) true
+        else
+        if !Globals.allow_field_ann && (Imm.isExistsLendList h1.CF.h_formula_data_param_imm) then true
+        else
+          false
+  | CF.ViewNode (h1) ->
+        if (CF.isLend h1.CF.h_formula_view_imm) then
+          (* let _ = print_string("true for h = " ^ (!print_h_formula f) ^ "\n\n") in *) true
+        else
+          false
+
+  | CF.Conj({CF.h_formula_conj_h1 = h1;
+	CF.h_formula_conj_h2 = h2;
+	CF.h_formula_conj_pos = pos})
+  | CF.Phase({CF.h_formula_phase_rd = h1;
+	CF.h_formula_phase_rw = h2;
+	CF.h_formula_phase_pos = pos})
+  | CF.Star({CF.h_formula_star_h1 = h1;
+	CF.h_formula_star_h2 = h2;
+	CF.h_formula_star_pos = pos}) -> (is_lend_h_formula h1) or (is_lend_h_formula h2)
+  | CF.Hole _ -> false
+  | _ -> false
+  
+        
+let rec is_lend (f : CF.formula) : bool =  match f with
+  | CF.Base(bf) -> is_lend_h_formula bf.CF.formula_base_heap
+  | CF.Exists(ef) -> is_lend_h_formula ef.CF.formula_exists_heap
+  | CF.Or({CF.formula_or_f1 = f1;
+    CF.formula_or_f2 = f2;
+    CF.formula_or_pos = pos}) ->
+        (is_lend f1) or (is_lend f2)
+            
