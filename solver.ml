@@ -3202,6 +3202,17 @@ and heap_entail_with_mem (prog : prog_decl) (is_folding : bool)  (ctx0 : context
 		(mkFailCtx_simple msg estate conseq pos , Failure)
 	with _ as e -> let msg = (Printexc.to_string e) in 
 			(mkFailCtx_simple msg estate conseq pos , Failure))
+			
+(*and heap_entail_mem_match (prog: prog_decl) (is_folding : bool) (ctx_0 : context) (conseq : formula) pos : (list_context * proof) =
+	let rec collect_data_nodes (f : h_formula) = match f with
+	| Star { h_formula_star_h1 = h1; h_formula_star_h2 = h2}
+	| Conj { h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
+	| Phase { h_formula_phase_rd = h1; h_formula_phase_rw = h2;} ->
+		  List.append (collect_data_view h1) (collect_data_view h2) 
+	| DataNode _ -> [f]
+	| Hole _ | HTrue | HFalse | HEmp | ViewNode _ -> []
+	  in (* End of function collect_data_nodes *)
+in heap_entail_split_rhs prog is_folding new_ctx conseq pos*)
 
 and heap_entail_split_rhs (prog : prog_decl) (is_folding : bool) (ctx_0 : context) (conseq : formula) pos : (list_context * proof) =
   let ctx_with_rhs = let h, p, fl, t, a  = CF.split_components conseq in
