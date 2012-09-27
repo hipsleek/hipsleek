@@ -3339,9 +3339,9 @@ and drop_data_view_hrel_nodes_hf hf fn_data_select fn_view_select fn_hrel_select
         Phase { h_formula_phase_rd = n_hf1;
               h_formula_phase_rw = n_hf2;
               h_formula_phase_pos = pos}
-    | DataNode hd -> if List.exists (fn_data_select hd) data_nodes then HEmp
+    | DataNode hd -> if fn_data_select hd data_nodes then HEmp
         else hf
-    | ViewNode hv -> if List.exists (fn_view_select hv) view_nodes then HEmp
+    | ViewNode hv -> if fn_view_select hv view_nodes then HEmp
         else hf
     | HRel (id,_,_) ->
         Debug.ninfo_hprint (add_str "HRel: " !CP.print_sv) id no_pos;
@@ -7534,7 +7534,7 @@ let mark_derv_self name f =
           h_formula_phase_rd = h_h p.h_formula_phase_rd;
           h_formula_phase_rw =  h_h p.h_formula_phase_rw;}     
       | DataNode _
-      | Hole _ | HTrue | HFalse | HEmp -> f in
+      | Hole _ | HTrue | HFalse | HEmp | HRel _ -> f in
   let rec h_f f = match f with 
     | Or b -> Or {b with formula_or_f1 = h_f b.formula_or_f1; formula_or_f2 = h_f b.formula_or_f2; }
     | Base b-> Base {b with formula_base_heap = h_h b.formula_base_heap; }
@@ -8666,7 +8666,7 @@ let rec find_barr bln v f =
 		  if (List.exists f1 bln)&&(List.exists f2 eqs) then 
 			Some d (*(d.h_formula_data_name,d.h_formula_data_node::d.h_formula_data_arguments,d.h_formula_data_remaining_branches)*)
  		  else None
-	  | ViewNode _ | Hole _ | HTrue | HEmp | HFalse -> None in
+	  | ViewNode _ | Hole _ | HTrue | HEmp | HFalse | HRel _-> None in
     
     match f with
 	  | Base f ->  h_bars (p_bar_eq f.formula_base_pure) f.formula_base_heap

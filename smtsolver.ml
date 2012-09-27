@@ -84,6 +84,7 @@ let rec smt_of_typ t =
 		| Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
     (* TODO *)
     | RelT -> "Int"
+    | HpT -> "Int"
 
 let smt_of_typ t =
   Debug.no_1 "smt_of_typ" string_of_typ (fun s -> s)
@@ -424,7 +425,7 @@ let add_relation (rname1:string) rargs rform =
 
 (* Interface function to add a new hp relation *)
 let add_hp_relation (rname1:string) rargs rform =
-  let rname = CP.SpecVar(HpT,rname1,Unprimed) in
+  (* let rname = CP.SpecVar(HpT,rname1,Unprimed) in *)
     (* Cache the declaration for this relation *)
   let cache_smt_input = 
 	let signature = List.map CP.type_of_spec_var rargs in

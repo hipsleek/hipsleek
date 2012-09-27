@@ -499,6 +499,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
       | HTrue  -> MCP.mkMTrue no_pos
       | HFalse -> MCP.mkMFalse no_pos
       | HEmp   -> MCP.mkMTrue no_pos
+      | HRel _ -> report_error no_pos "[solver.ml]: xpure_heap_mem_enum_x"
       | Hole _ -> MCP.mkMTrue no_pos (*report_error no_pos "[solver.ml]: An immutability marker was encountered in the formula\n"*)
   in
   let memset = h_formula_2_mem h0 [] prog in
@@ -3220,7 +3221,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	| Phase { h_formula_phase_rd = h1; h_formula_phase_rw = h2;} ->
 		  List.append (collect_data_view h1) (collect_data_view h2) 
 	| DataNode _ | ViewNode _ -> [f]
-	| Hole _ | HTrue | HFalse | HEmp -> []
+	| Hole _ | HTrue | HFalse | HEmp | HRel _ -> []
   in (* End of function collect_data_view *)
 
   (** [Internal] Generate the action based on the list of node and its tail **)

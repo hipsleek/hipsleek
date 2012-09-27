@@ -1453,7 +1453,10 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
       end
     else
       begin
-        DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
+          DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
+          DD.info_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
+          DD.info_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
+          DD.info_pprint ("  unmatching node: " ^ (Cprinter.string_of_h_formula rhs)) pos;
         DD.info_pprint "  hp_rel found" pos;
         (*which pointers are defined and which arguments of data nodes are pointer*)
         let leqs = (MCP.ptr_equations_without_null mix_lf) (* @ (MCP.ptr_equations_with_null mix_lf) *) in
@@ -1517,14 +1520,15 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
           let new_es = {es with CF. es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel @ lvhp_rels@rvhp_rels;
               CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ [hp_rel];
               CF.es_formula = new_es_formula} in
+          DD.info_pprint (" hp_rel: " ^ (Cprinter.string_of_hp_rels hp_rel)) pos;
           (true, new_es)
-      end                          
+      end
 
 
 let infer_collect_hp_rel prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rhs_h_matched_set:CP.spec_var list) conseq lhs_b rhs_b pos =
   let pr1 = Cprinter.string_of_formula_base in
   let pr2 = Cprinter.string_of_formula in
-  let pr3 = pr_list (pr_triple CP.print_rel_cat pr2 pr2) in
+  (* let pr3 = pr_list (pr_triple CP.print_rel_cat pr2 pr2) in *)
   (* let pr4 = fun es -> (!print_svl es.CF.es_infer_vars_hp_rel) ^ "; " ^ (pr3 es.CF.es_infer_hp_rel) in *)
    let pr4 = Cprinter.string_of_estate_infer_hp in
   let pr5 =  pr_pair string_of_bool pr4 in

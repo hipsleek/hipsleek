@@ -999,12 +999,15 @@ let rec pr_h_formula h =
     | HEmp -> fmt_string "emp"
     | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
 
-let pr_hrel_formula (HRel (r, args, l)) =
-  fmt_string ((string_of_spec_var r) ^ "(");
-  (match args with
-	| [] -> ()
-	| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
-		                     let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")")
+let pr_hrel_formula hf=
+  match hf with
+    | (HRel (r, args, l)) ->
+        fmt_string ((string_of_spec_var r) ^ "(");
+        (match args with
+	      | [] -> ()
+	      | arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
+		                           let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")")
+    | _ -> report_error no_pos "Cprinter.pr_hrel_formula: can not happen"
 
 let rec prtt_pr_h_formula h = 
   let f_b e =  pr_bracket h_formula_wo_paren prtt_pr_h_formula e 
@@ -1189,8 +1192,10 @@ let rec pr_h_formula_for_spec h =
     if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
     pr_prunning_conditions ann pcond;
     fmt_close()
+  | HRel a ->  (pr_hrel_formula (HRel a))
   | HTrue -> fmt_bool true
   | HFalse -> fmt_bool false
+  | HEmp -> fmt_string "emp"
   | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
 
 (** convert formula exp to a string via pr_formula_exp *)
@@ -1449,7 +1454,7 @@ let pr_es_trace (trace:string list) : unit =
   fmt_string s
 
 let pr_hp_rel hp_rel = 
-  let pr2 = string_of_formula in
+  let pr2 = prtt_string_of_formula in
   let pr3 = (pr_triple CP.print_rel_cat pr2 pr2) in
   fmt_string (pr3 hp_rel)
 
@@ -2882,6 +2887,7 @@ let rec html_of_h_formula h = match h with
   | HTrue -> "<b>htrue</b>"
   | HFalse -> "<b>hfalse</b>"
   | HEmp -> "<b>emp</b>"
+  | HRel _ -> "<b>HRel</b>"
   | Hole m -> "<b>Hole</b>[" ^ (string_of_int m) ^ "]"
 
 let rec html_of_formula e = match e with

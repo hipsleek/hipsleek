@@ -1366,6 +1366,7 @@ and find_m_prop_heap_x eq_f h = match h with
   | CF.Hole _ 
   | CF.HTrue 
   | CF.HFalse 
+  | CF.HRel _
   | CF.HEmp -> []
 
 and param_alias_sets p params = 
@@ -1977,7 +1978,7 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
 		                  CF.h_formula_view_arguments = _;
 		                  CF.h_formula_view_pos = _
 		              } -> if (CP.name_of_spec_var p) = v then c else ""
-              | CF.HTrue | CF.HFalse | CF.HEmp | CF.Hole _ -> "")
+              | CF.HTrue | CF.HFalse | CF.HEmp | CF.HRel _ | CF.Hole _ -> "")
 	      in find_view_heap h
     | CF.Or _ ->
 	      Err.report_error

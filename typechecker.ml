@@ -1998,8 +1998,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                             Debug.ninfo_hprint (add_str "NEW RELS" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) rels no_pos;
                             Debug.tinfo_hprint (add_str "NEW ASSUME" (pr_list_ln Cprinter.string_of_lhs_rhs)) lst_assume no_pos;
                             Debug.ninfo_hprint (add_str "NEW HP RELS" (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) hprels no_pos;
-                            Debug.info_hprint (add_str "NEW HP ASSUME" (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) hp_lst_assume no_pos;
-			    Debug.info_hprint (add_str "NEW SIMPLIFIED HP ASSUME" (pr_list_ln Cprinter.string_of_hp_rel_def)) hp_lst_simplified_assume no_pos;
+                            Debug.ninfo_hprint (add_str "NEW HP ASSUME" (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) hp_lst_assume no_pos;
+			    Debug.ninfo_hprint (add_str "NEW SIMPLIFIED HP ASSUME" (pr_list_ln Cprinter.string_of_hp_rel_def)) hp_lst_simplified_assume no_pos;
                             Debug.tinfo_hprint (add_str "NEW RANK" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) lst_rank no_pos;
                             Debug.tinfo_hprint (add_str "NEW CONJS" string_of_int) ((CF.no_of_cnts new_spec)-(CF.no_of_cnts proc.proc_static_specs)) no_pos;
                             stk_evars # reset;
