@@ -1319,10 +1319,14 @@ let generate_hp_def_from_split hp_defs_split=
 let infer_hps_x prog (hp_constrs: (CF.formula * CF.formula) list):
  ((CF.formula * CF.formula) list * hp_rel_def list) =
   (*step 1: drop irr parameters*)
-  let constrs = elim_redundant_paras_lst_constr hp_constrs in
-  Debug.ninfo_hprint (add_str "AFTER DROP: " (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) constrs no_pos;
+  (* let constrs = elim_redundant_paras_lst_constr hp_constrs in *)
+  (* Debug.ninfo_hprint (add_str "AFTER DROP: " (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) constrs no_pos; *)
    (*step 1': split HP*)
-  let constrs1, split_tb,hp_defs_split = split_hp constrs in
+  (* let constrs1, split_tb,hp_defs_split = split_hp constrs in *)
+  (*for temporal*)
+  let constrs1 = hp_constrs in
+  let hp_defs_split = [] in
+  (*END for temporal*)
   let cs, par_defs = infer_hps_fix prog constrs1 in
   (*step 6: over-approximate to generate hp def*)
   let constr2, hp_defs = generalize_hps prog cs par_defs in
