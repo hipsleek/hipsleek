@@ -27,7 +27,7 @@ Exception occurred: Stream.Error("GT expected after [opt_data_h_args] (in [simpl
 
 int foo2(pair x)
   requires x::pair<_@A,a@L>
-  ensures x::pair<_@A,_@L> & res=a+1 ;
+  ensures  res=a+1 ;
 /*
   requires x::pair<a,b>
   ensures x::pair<_,_> & res=b ;

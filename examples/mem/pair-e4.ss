@@ -19,8 +19,8 @@ Exception Failure("The postcondition cannot contain @L heap predicates/data node
   ensures  x::pair<_,a>@L & res=a+1 ;
 */
 
-  requires x::pair<_@A,a@L>
-  ensures  x::pair<_@A,a@L> & res=a+1 ;
+  requires x::pair<_@A,a@I>
+  ensures  x::pair<_@A,a@I> & res=a+1 ;
 
 /*  @L field should not be allowed in postcondition!
 

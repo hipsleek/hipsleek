@@ -3,6 +3,28 @@ data pair {
 	int snd;	
 }.
 
-checkentail x::pair<_@A,b@M> * x1::pair<a@M,d@A> & x=x1 & d = 3|- x::pair<c@M,y@M> & y=3.
+checkentail x::pair<_@A,b@M> * x1::pair<a@M,d@A> & x=x1 & d=3|- x::pair<c@A,y@M> & y=3.
+print residue.
 
 
+
+checkentail x::pair<_@A,b@M> * x1::pair<a@M,d@M> & x=x1 & d=3|- false.
+print residue.
+
+checkentail x::pair<_,_> * x::pair<_,_> |- false.
+print residue.
+
+checkentail x::pair<_@M,_@M> * x::pair<_@M,_@M> |- false.
+print residue.
+
+checkentail x::pair<_@M,_@M> * x::pair<_@A,_@M> |- false.
+print residue.
+
+checkentail x::pair<_@M,_@A> * y::pair<_@A,_@M> & x=y |- false.
+print residue.
+
+checkentail x::pair<_@M,_@M> * y::pair<_@A,_@M> & x=y |- false.
+print residue.
+
+checkentail x::pair<_@M,_@M> * x::pair<_@A,_@M>  |- false.
+print residue.
