@@ -443,9 +443,9 @@ and mkNEqualVarInt (sv : spec_var) (i : int) =
   BForm (ANeq (AVar (force_to_svar sv), IConst i))
 *)
 
-and mkTrue fo pos = BForm ((BConst (true, pos), None), None, fo)
+and mkTrue pos = BForm ((BConst (true, pos), None), None, None)
 
-and mkFalse fo pos = BForm ((BConst (false, pos), None), None, fo)
+and mkFalse pos = BForm ((BConst (false, pos), None), None, None)
 
 and mkExists (vs : (ident * primed) list) (f : formula) lbl fo pos = match vs with
   | [] -> f
@@ -1086,7 +1086,7 @@ and float_out_pure_min_max (p : formula) : formula =
 	let r, ev2 = match np2 with 
 	  | None -> (r, ev)
 	  | Some (p1, ev1) -> (And(r, p1, l), (List.rev_append ev1 ev)) in 
-	List.fold_left (fun a c -> (Exists ((c, Unprimed), a, None,fo,l))) r ev2 in
+	List.fold_left (fun a c -> (Exists ((c, Unprimed), a, None,None,l))) r ev2 in
     
   let rec float_out_b_formula_min_max (b: b_formula) lbl fo: formula =
 	let (pf,il) = b in
@@ -1125,7 +1125,7 @@ and float_out_pure_min_max (p : formula) : formula =
 				  | Var _ ->
 						let ne1 , np1 = float_out_exp_min_max v1 in
 						let ne2 , np2 = float_out_exp_min_max v2 in
-						let t = BForm((EqMin(e2, ne1, ne2, l), il), lbl) in
+						let t = BForm((EqMin(e2, ne1, ne2, l), il), lbl, fo) in
 						add_exists t np1 np2 l
 				  | _ -> 
 						let ne1, np1 = float_out_exp_min_max e1 in
@@ -1203,12 +1203,12 @@ and float_out_pure_min_max (p : formula) : formula =
 			let ne1, np1 = float_out_exp_min_max e in
 			let r = match np1 with
 			  | None -> BForm ((BagIn(v, ne1, l), il), lbl, fo)
-			  | Some (r, l1) -> List.fold_left (fun a c -> Exists ((c, Unprimed), a, lbl, fo, l)) (And (BForm ((BagIn(v, ne1, l), il), lbl), r, l)) l1 in r 
+			  | Some (r, l1) -> List.fold_left (fun a c -> Exists ((c, Unprimed), a, lbl, fo, l)) (And (BForm ((BagIn(v, ne1, l), il), lbl, fo), r, l)) l1 in r 
 	  | BagNotIn (v, e, l) -> 
 			let ne1, np1 = float_out_exp_min_max e in
 			let r = match np1 with
 			  | None -> BForm ((BagNotIn(v, ne1, l), il), lbl, fo)
-			  | Some (r, l1) -> List.fold_left (fun a c -> Exists ((c, Unprimed), a, lbl, fo, l)) (And (BForm ((BagIn(v, ne1, l), il), lbl), r, l)) l1 in r
+			  | Some (r, l1) -> List.fold_left (fun a c -> Exists ((c, Unprimed), a, lbl, fo, l)) (And (BForm ((BagIn(v, ne1, l), il), lbl, fo), r, l)) l1 in r
 	  | BagSub (e1, e2, l) ->
 			let ne1, np1 = float_out_exp_min_max e1 in
 			let ne2, np2 = float_out_exp_min_max e2 in

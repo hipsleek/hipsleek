@@ -2862,7 +2862,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 C.exp_seq_exp2 = ce2;
                 C.exp_seq_origin = ori;
                 C.exp_seq_pos = pos; }), te2)
-      | I.This { I.exp_this.origin = ori; I.exp_this_pos = pos } ->
+      | I.This { I.exp_this_origin = ori; I.exp_this_pos = pos } ->
             if Gen.is_some proc.I.proc_data_decl then
               (let cdef = Gen.unsome proc.I.proc_data_decl in
               let ct = Named cdef.I.data_name in 

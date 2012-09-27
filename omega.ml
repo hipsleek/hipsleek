@@ -132,7 +132,7 @@ and omega_of_b_formula b  =
 and omega_of_formula_x pr_w pr_s f  =
   let rec helper f = 
     match f with
-  | BForm ((b,_) as bf,_) -> 
+  | BForm ((b,_) as bf,_,_) -> 
         begin
           match (pr_w b) with
             | None -> "(" ^ (omega_of_b_formula bf) ^ ")"
@@ -140,10 +140,10 @@ and omega_of_formula_x pr_w pr_s f  =
         end
   | AndList _ -> report_error no_pos "omega.ml: encountered AndList, should have been already handled"
   | And (p1, p2, _) -> 	"(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
-  | Or (p1, p2,_ , _) -> 	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
-  | Not (p,_ , _) ->       " (not (" ^ (helper p) ^ ")) "	
-  | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
-  | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
+  | Or (p1, p2,_ , _, _) -> 	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
+  | Not (p,_ , _, _) ->       " (not (" ^ (helper p) ^ ")) "	
+  | Forall (sv, p,_ , _, _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
+  | Exists (sv, p,_ , _, _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
   in 
   try
 	helper f
@@ -533,7 +533,7 @@ let imply_ops pr_weak pr_strong (ante : formula) (conseq : formula) (imp_no : st
     not (is_valid tmp2)
    *)
   
-  let tmp_form = mkOr (mkNot_dumb ante None no_pos) conseq None no_pos in
+  let tmp_form = mkOr (mkNot_dumb ante None no_pos) conseq None None no_pos in
   	
   let result = is_valid_ops pr_weak pr_strong tmp_form !in_timeout in
   if !log_all_flag = true then begin
@@ -617,7 +617,7 @@ let rec match_vars (vars_list0 : spec_var list) rel =
 | UnionRel (r1, r2) ->
     let f1 = match_vars vars_list0 r1 in
     let f2 = match_vars vars_list0 r2 in
-    let tmp = mkOr f1 f2 None no_pos in
+    let tmp = mkOr f1 f2 None None no_pos in
     tmp
 
 
