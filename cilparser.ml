@@ -14,7 +14,8 @@ let parse_one_file (fname: string) : Cil.file =
   (* return *)
   cil
 
-let translate_location (loc: Cil.location) : Globals.loc =
+
+let rec translate_location (loc: Cil.location) : Globals.loc =
   let pos : Lexing.position = {
     Lexing.pos_fname = loc.Cil.file;
     Lexing.pos_lnum = loc.Cil.line;
@@ -29,23 +30,25 @@ let translate_location (loc: Cil.location) : Globals.loc =
   (* return *)
   newloc
 
-let translate_typ_var (t: Cil.typ) : Globals.typ =
+
+and translate_typ_var (t: Cil.typ) : Globals.typ =
   let newtype = 
     match t with
     | Cil.TVoid _            -> Globals.Void
     | Cil.TInt _             -> Globals.Int 
     | Cil.TFloat _           -> Globals.Float 
-    | Cil.TPtr _             -> report_error_msg "TRUNG: handle TPtr later!"  
-    | Cil.TArray _           -> report_error_msg "TRUNG: handle TArray later!"
+    | Cil.TPtr _             -> report_error_msg "TRUNG TODO: handle TPtr later!"  
+    | Cil.TArray _           -> report_error_msg "TRUNG TODO: handle TArray later!"
     | Cil.TFun _             -> report_error_msg "Should not appear here. Handle only in translate_typ_fun"
-    | Cil.TNamed _           -> report_error_msg "TRUNG: handle TNamed later!"
-    | Cil.TComp _            -> report_error_msg "TRUNG: handle TComp later!"
-    | Cil.TEnum _            -> report_error_msg "TRUNG: handle TEnum later!"
-    | Cil.TBuiltin_va_list _ -> report_error_msg "TRUNG: handle TBuiltin_va_list later!" in
+    | Cil.TNamed _           -> report_error_msg "TRUNG TODO: handle TNamed later!"
+    | Cil.TComp _            -> report_error_msg "TRUNG TODO: handle TComp later!"
+    | Cil.TEnum _            -> report_error_msg "TRUNG TODO: handle TEnum later!"
+    | Cil.TBuiltin_va_list _ -> report_error_msg "TRUNG TODO: handle TBuiltin_va_list later!" in
   (* return *)
   newtype
 
-let translate_varinfo (vinfo: Cil.varinfo) (l: Cil.location) : (*Iast.exp_var_decl*) unit =
+
+and translate_varinfo (vinfo: Cil.varinfo) (l: Cil.location) : (*Iast.exp_var_decl*) unit =
   let vpos = translate_location vinfo.Cil.vdecl in
   let vtype = translate_typ_var vinfo.Cil.vtype in
   let vdata = [(vinfo.Cil.vname, None, vpos)] in
@@ -57,77 +60,86 @@ let translate_varinfo (vinfo: Cil.varinfo) (l: Cil.location) : (*Iast.exp_var_de
   (*                Iast.exp_var_decl_pos = vpos} in *)
   (* newvar                                          *)
 
-let translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp =
+
+and translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp =
   let pos = match lopt with
             | None -> no_pos
             | Some l -> translate_location l in
   match c with
   | Cil.CInt64 (i64, ikind, _) -> (
       match ikind with
-      | Cil.IChar -> report_error_msg "TRUNG: Handle Cil.IChar later!"
-      | Cil.ISChar -> report_error_msg "TRUNG: Handle Cil.ISChar later!"
-      | Cil.IUChar -> report_error_msg "TRUNG: Handle Cil.IUChar later!"
-      | Cil.IBool -> report_error_msg "TRUNG: Handle Cil.IBool later!"
+      | Cil.IChar -> report_error_msg "TRUNG TODO: Handle Cil.IChar later!"
+      | Cil.ISChar -> report_error_msg "TRUNG TODO: Handle Cil.ISChar later!"
+      | Cil.IUChar -> report_error_msg "TRUNG TODO: Handle Cil.IUChar later!"
+      | Cil.IBool -> report_error_msg "TRUNG TODO: Handle Cil.IBool later!"
       | Cil.IInt ->
           let i = Int64.to_int i64 in
           let newconstant = Iast.IntLit {Iast.exp_int_lit_val = i; Iast.exp_int_lit_pos = pos} in
           newconstant
-      | Cil.IUInt -> report_error_msg "TRUNG: Handle Cil.IUInt later!"
-      | Cil.IShort -> report_error_msg "TRUNG: Handle Cil.IShort later!"
-      | Cil.IUShort -> report_error_msg "TRUNG: Handle Cil.IUShort later!"
-      | Cil.ILong -> report_error_msg "TRUNG: Handle Cil.ILong later!"
-      | Cil.IULong -> report_error_msg "TRUNG: Handle Cil.IULong later!"
-      | Cil.ILongLong -> report_error_msg "TRUNG: Handle Cil.ILongLong later!"
-      | Cil.IULongLong -> report_error_msg "TRUNG: Handle Cil.IULongLong later!"
+      | Cil.IUInt -> report_error_msg "TRUNG TODO: Handle Cil.IUInt later!"
+      | Cil.IShort -> report_error_msg "TRUNG TODO: Handle Cil.IShort later!"
+      | Cil.IUShort -> report_error_msg "TRUNG TODO: Handle Cil.IUShort later!"
+      | Cil.ILong -> report_error_msg "TRUNG TODO: Handle Cil.ILong later!"
+      | Cil.IULong -> report_error_msg "TRUNG TODO: Handle Cil.IULong later!"
+      | Cil.ILongLong -> report_error_msg "TRUNG TODO: Handle Cil.ILongLong later!"
+      | Cil.IULongLong -> report_error_msg "TRUNG TODO: Handle Cil.IULongLong later!"
     )
-  | Cil.CStr s -> report_error_msg "TRUNG: Handle Cil.CStr later!"
-  | Cil.CWStr _ -> report_error_msg "TRUNG: Handle Cil.CWStr later!"
-  | Cil.CChr _ -> report_error_msg "TRUNG: Handle Cil.CChr later!"
+  | Cil.CStr s -> report_error_msg "TRUNG TODO: Handle Cil.CStr later!"
+  | Cil.CWStr _ -> report_error_msg "TRUNG TODO: Handle Cil.CWStr later!"
+  | Cil.CChr _ -> report_error_msg "TRUNG TODO: Handle Cil.CChr later!"
   | Cil.CReal (f, fkind, _) -> (
       match fkind with
       | Cil.FFloat ->
           let newconstant = Iast.FloatLit {Iast.exp_float_lit_val = f; Iast.exp_float_lit_pos = pos} in
           newconstant
-      | Cil.FDouble -> report_error_msg "TRUNG: Handle Cil.FDouble later!"
-      | Cil.FLongDouble -> report_error_msg "TRUNG: Handle Cil.FLongDouble later!"
+      | Cil.FDouble -> report_error_msg "TRUNG TODO: Handle Cil.FDouble later!"
+      | Cil.FLongDouble -> report_error_msg "TRUNG TODO: Handle Cil.FLongDouble later!"
     )
-  | Cil.CEnum _ -> report_error_msg "TRUNG: Handle Cil.CEnum later!"
+  | Cil.CEnum _ -> report_error_msg "TRUNG TODO: Handle Cil.CEnum later!"
 
-let translate_exp (e: Cil.exp) (lopt: Cil.location option): Iast.exp =
+
+and translate_exp (e: Cil.exp) (lopt: Cil.location option): Iast.exp =
   match e with
   | Cil.Const c -> translate_constant c lopt
-  | Cil.Lval _ -> report_error_msg "TRUNG: Handle Cil.Lval later!"
-  | Cil.SizeOf _ -> report_error_msg "TRUNG: Handle Cil.SizeOf later!"
-  | Cil.SizeOfE _ -> report_error_msg "TRUNG: Handle Cil.SizeOfE later!"
-  | Cil.SizeOfStr _ -> report_error_msg "TRUNG: Handle Cil.SizeOfStr later!"
-  | Cil.AlignOf _ -> report_error_msg "TRUNG: Handle Cil.AlignOf later!"
-  | Cil.AlignOfE _ -> report_error_msg "TRUNG: Handle Cil.AlignOfE later!"
-  | Cil.UnOp _ -> report_error_msg "TRUNG: Handle Cil.UnOp later!"
-  | Cil.BinOp _ -> report_error_msg "TRUNG: Handle Cil.BinOp later!"
-  | Cil.CastE _ -> report_error_msg "TRUNG: Handle Cil.CastE later!"
-  | Cil.AddrOf _ -> report_error_msg "TRUNG: Handle Cil.AddrOf later!"
-  | Cil.StartOf _ -> report_error_msg "TRUNG: Handle Cil.StartOf later!"
+  | Cil.Lval _ -> report_error_msg "TRUNG TODO: Handle Cil.Lval later!"
+  | Cil.SizeOf _ -> report_error_msg "TRUNG TODO: Handle Cil.SizeOf later!"
+  | Cil.SizeOfE _ -> report_error_msg "TRUNG TODO: Handle Cil.SizeOfE later!"
+  | Cil.SizeOfStr _ -> report_error_msg "TRUNG TODO: Handle Cil.SizeOfStr later!"
+  | Cil.AlignOf _ -> report_error_msg "TRUNG TODO: Handle Cil.AlignOf later!"
+  | Cil.AlignOfE _ -> report_error_msg "TRUNG TODO: Handle Cil.AlignOfE later!"
+  | Cil.UnOp _ -> report_error_msg "TRUNG TODO: Handle Cil.UnOp later!"
+  | Cil.BinOp _ -> report_error_msg "TRUNG TODO: Handle Cil.BinOp later!"
+  | Cil.CastE _ -> report_error_msg "TRUNG TODO: Handle Cil.CastE later!"
+  | Cil.AddrOf _ -> report_error_msg "TRUNG TODO: Handle Cil.AddrOf later!"
+  | Cil.StartOf _ -> report_error_msg "TRUNG TODO: Handle Cil.StartOf later!"
 
-let translate_offset (off: Cil.offset) =
+
+and translate_offset (off: Cil.offset) =
   match off with
-  | Cil.NoOffset _ -> report_error_msg "TRUNG: Handle Cil.NoOffset later!"
-  | Cil.Field _ -> report_error_msg "TRUNG: Handle Cil.Field later!"
-  | Cil.Index _ -> report_error_msg "TRUNG: Handle Cil.Index later!"
+  | Cil.NoOffset _ -> report_error_msg "TRUNG TODO: Handle Cil.NoOffset later!"
+  | Cil.Field _ -> report_error_msg "TRUNG TODO: Handle Cil.Field later!"
+  | Cil.Index _ -> report_error_msg "TRUNG TODO: Handle Cil.Index later!"
 
-let translate_lhost (lh: Cil.lhost) =
+
+and translate_lhost (lh: Cil.lhost) =
   match lh with
-  | Cil.Var _ -> report_error_msg "TRUNG: Handle Cil.Var later!"
-  | Cil.Mem _ -> report_error_msg "TRUNG: Handle Cil.Mem later!"
+  | Cil.Var _ -> report_error_msg "TRUNG TODO: Handle Cil.Var later!"
+  | Cil.Mem _ -> report_error_msg "TRUNG TODO: Handle Cil.Mem later!"
 
-let translate_lval (lv: Cil.lval) = ()
 
-let translate_instr (instr: Cil.instr) : Iast.exp =
+and translate_lval (lv: Cil.lval) = 
+  let (lh, off) = lv in
+  report_error_msg "TRUNG TODO: Handle Cil.lval later!"
+
+
+and translate_instr (instr: Cil.instr) : Iast.exp =
   match instr with
-  | Cil.Set _ -> report_error_msg "TRUNG: Handle Cil.Set later!"
-  | Cil.Call _ -> report_error_msg "TRUNG: Handle Cil.Call later!"
-  | Cil.Asm _ -> report_error_msg "TRUNG: Handle Cil.Asm later!"
+  | Cil.Set _ -> report_error_msg "TRUNG TODO: Handle Cil.Set later!"
+  | Cil.Call _ -> report_error_msg "TRUNG TODO: Handle Cil.Call later!"
+  | Cil.Asm _ -> report_error_msg "TRUNG TODO: Handle Cil.Asm later!"
 
-let rec translate_stmtkind (sk: Cil.stmtkind) (lopt: Cil.location option) : Iast.exp =
+
+and translate_stmtkind (sk: Cil.stmtkind) (lopt: Cil.location option) : Iast.exp =
   let pos = match lopt with
     | None -> no_pos
     | Some l -> translate_location l in 
@@ -156,7 +168,7 @@ let rec translate_stmtkind (sk: Cil.stmtkind) (lopt: Cil.location option) : Iast
                                 Iast.exp_return_path_id = None;
                                 Iast.exp_return_pos = pos} in
       newexp
-  | Cil.Goto _ -> report_error_msg "TRUNG: Iast cannot handle Cil.Goto type!"
+  | Cil.Goto _ -> report_error_msg "TRUNG TODO: Iast cannot handle Cil.Goto type!"
   | Cil.Break l ->
       let pos = translate_location l in
       let newexp = Iast.Break {Iast.exp_break_jump_label = Iast.NoJumpLabel;
@@ -171,33 +183,49 @@ let rec translate_stmtkind (sk: Cil.stmtkind) (lopt: Cil.location option) : Iast
       newexp
   | Cil.If (exp, blk1, blk2, l) ->
       let pos = translate_location l in
-      let econd = translate_exp exp in
-      let e1 = translate_block blk1 in
-      let e2 = translate_block blk2 in
+      let econd = translate_exp exp (Some l) in
+      let e1 = translate_block blk1 (Some l) in
+      let e2 = translate_block blk2 (Some l) in
       let newexp = Iast.Cond {Iast.exp_cond_condition = econd;
                               Iast.exp_cond_then_arm = e1;
                               Iast.exp_cond_else_arm = e2;
                               Iast.exp_cond_path_id = None;
                               Iast.exp_cond_pos = pos} in
       newexp
-  | Cil.Switch _ -> report_error_msg "TRUNG: Handle Cil.Switch later!"
-  | Cil.Loop _ -> report_error_msg "TRUNG: Handle Cil.Loop later!"
-  | Cil.Block _ -> report_error_msg "TRUNG: Handle Cil.Block later!"
-  | Cil.TryFinally _ -> report_error_msg "TRUNG: Handle Cil.TryFinally later!"
-  | Cil.TryExcept _ -> report_error_msg "TRUNG: Handle Cil.TryExcept later!"
+  | Cil.Switch _ -> report_error_msg "TRUNG TODO: Handle Cil.Switch later!"
+  | Cil.Loop _ -> report_error_msg "TRUNG TODO: Handle Cil.Loop later!"
+  | Cil.Block _ -> report_error_msg "TRUNG TODO: Handle Cil.Block later!"
+  | Cil.TryFinally _ -> report_error_msg "TRUNG TODO: Handle Cil.TryFinally later!"
+  | Cil.TryExcept _ -> report_error_msg "TRUNG TODO: Handle Cil.TryExcept later!"
 
-let translate_stmt (s: Cil.stmt) (lopt: Cil.location option) : Iast.exp =
+
+and translate_stmt (s: Cil.stmt) (lopt: Cil.location option) : Iast.exp =
   let labels = s.Cil.labels in
   let skind = s.Cil.skind in
   let newskind = translate_stmtkind skind lopt in
   match labels with
   | [] -> newskind
-  | [lbl] -> report_error_msg "TRUNG: stmt's label has 1 element. Handle later!"
-  | hd::tl -> report_error_msg "TRUNG: stmt's label has >= 2 elements. Handle later!"
+  | [lbl] -> report_error_msg "TRUNG TODO: stmt's label has 1 element. Handle later!"
+  | hd::tl -> report_error_msg "TRUNG TODO: stmt's label has >= 2 elements. Handle later!"
 
-let translate_block (blk: Cil.block) : Iast.exp =
-  
-let translate_fundec (fdec: Cil.fundec) (l: Cil.location): unit (*Iast.proc_decl*) =
+
+and translate_block (blk: Cil.block) (lopt: Cil.location option): Iast.exp =
+  let stmts = blk.Cil.bstmts in
+  match stmts with
+  | [] -> report_error_msg "ERROR!!! block has to have at least 1 stmt element."
+  | [hd] -> translate_stmt hd lopt
+  | hd::tl -> (
+      let e1 = translate_stmt hd lopt in
+      let exps = List.map (fun x -> translate_stmt x lopt) tl in
+      let l = match lopt with None -> no_pos | Some p -> translate_location p in 
+      let newexp = List.fold_left (fun x y -> Iast.Seq {Iast.exp_seq_exp1 = x;
+                                                        Iast.exp_seq_exp2 = y;
+                                                        Iast.exp_seq_pos = l}) e1 exps in
+      newexp
+    )
+
+
+and translate_fundec (fdec: Cil.fundec) (l: Cil.location): unit (*Iast.proc_decl*) =
   let translate_funtyp (ty: Cil.typ) : Globals.typ = (
     match ty with
     | Cil.TFun (t, params, _, _) -> translate_typ_var t
