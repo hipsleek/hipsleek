@@ -48,7 +48,7 @@ HeapPred G1(node a, node b).
 
 HeapPred H1(node a).
 HeapPred H2(node a).
-HeapPred G1(node a, node b, node c).
+//HeapPred G1(node a, node b, node c).
 
 ll<> == self=null
   or self::node<_,q>*q::ll<>
@@ -58,10 +58,10 @@ lseg<p> == self=p
   or self::node<_,q>*q::lseg<p>
   inv true;
 
-void append(ref node x, node y)
-  infer[G,G1]
-  requires G(x,y)
-  ensures G1(x,x',y);//'
+void append(node x, node y)
+  infer[H,G1]
+  requires H(x)&y=null
+  ensures G1(x,y);//'
 
   /* requires x::ll<> * y::ll<> & x!=null */
   /* ensures  x::ll<> ;  */

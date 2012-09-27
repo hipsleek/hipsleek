@@ -127,6 +127,7 @@ let rec fixcalc_of_h_formula f = match f with
   | HTrue -> "HTrue"
   | HFalse -> "HFalse"
   | HEmp -> "Emp"
+  | HRel _ -> "HTrue"
   | Hole _ -> illegal_format ("Fixcalc.fixcalc_of_h_formula: Not supported Hole-formula")
 
 let fixcalc_of_mix_formula f = match f with

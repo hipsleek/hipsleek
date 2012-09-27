@@ -1308,19 +1308,22 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
       rhs_p pos) estate xpure_lhs_h1 lhs_p rhs_p
 
 let close_def defs (v1,v2)=
-  if CP.mem_svl v1 defs then (CP.remove_dups_svl defs@[v2])
+  if (CP.is_null_const v1) || (CP.is_null_const v2) then defs
+  else if CP.mem_svl v1 defs then (CP.remove_dups_svl defs@[v2])
   else if CP.mem_svl v2 defs then (CP.remove_dups_svl defs@[v1])
   else (defs)
 
+
+
 let find_defined_pointers_x prog fb mix_f rhs_h_matched_set eqs pos=
   let hds, hvs, hrs = CF.get_hp_rel_bformula fb in
-  let eqNull1, eqNull2 =  List.split (MCP.ptr_equations_with_null mix_f) in
-  let eqNulls = CP.remove_dups_svl (eqNull1@eqNull2) in
+  let eqNulls = MCP.get_null_ptrs mix_f in
    (*defined vars= args of hp_rels + null + data + view + match nodes*)
   let def_vs = (List.concat (List.map (fun (_, exps, _) -> List.concat (List.map CP.afv exps)) hrs)) @ (eqNulls) @ (List.map (fun hd -> hd.CF.h_formula_data_node) hds)
    @ (List.map (fun hv -> hv.CF.h_formula_view_node) hvs) @ rhs_h_matched_set in
   (*find closed defined pointers set*)
   (* let def_vs0 = CP.remove_dups_svl def_vs in *)
+  (* DD.info_pprint ("defined: " ^ (!CP.print_svl def_vs)) pos; *)
   let def_vs = CP.remove_dups_svl (List.fold_left close_def def_vs eqs) in
   (*find extra variable from data node arguments*)
   let look_up_arguments_def hd=

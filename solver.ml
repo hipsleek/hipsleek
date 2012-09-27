@@ -608,6 +608,7 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (
       | HTrue  -> MCP.mkMTrue no_pos
       | HFalse -> MCP.mkMFalse no_pos
       | HEmp   -> MCP.mkMTrue no_pos
+      | HRel _ -> MCP.mkMTrue no_pos
       | Hole _ -> MCP.mkMTrue no_pos (*report_error no_pos "[solver.ml]: An immutability marker was encountered in the formula\n"*)
   in
   (xpure_heap_helper prog h0 which_xpure, memset)
@@ -697,7 +698,7 @@ and heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list =
     | Star ({ h_formula_star_h1 = h1;h_formula_star_h2 = h2})
     | Phase ({ h_formula_phase_rd = h1;h_formula_phase_rw = h2;}) 
     | Conj ({ h_formula_conj_h1 = h1;h_formula_conj_h2 = h2;}) -> (helper h1) @ (helper h2)
-    | Hole _ | HTrue | HFalse | HEmp -> [] in
+    | Hole _ | HTrue | HFalse | HEmp | HRel _ -> [] in
   helper h0
 
 and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formula * CP.spec_var list) = 
@@ -1453,7 +1454,7 @@ and find_pred_roots_heap h0 =
         tmp
       end
     | ViewNode ({h_formula_view_node = p}) -> [p]
-    | DataNode _ | HTrue | HFalse | HEmp | Hole _ -> []
+    | DataNode _ | HTrue | HFalse | HEmp | HRel _ | Hole _ -> []
 
 (* unfold then unsat *)
 and unfold_context_unsat_now_x prog0 (prog:prog_or_branches) (ctx : list_context) (v : CP.spec_var) (pos : loc) : list_context =
