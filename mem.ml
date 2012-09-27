@@ -580,7 +580,7 @@ let rec compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.sp
 				                  (List.map (fun c -> (CP.mkEqVar (fst c) (snd c) h.CF.h_formula_data_pos)) comb_list) 						          h.CF.h_formula_data_pos
 				                  in 
 				                  (CF.DataNode {h with CF.h_formula_data_param_imm = new_param_imm}, CF.HEmp, p)
-				                  else (h1, h2, (CP.mkTrue no_pos))
+				                  else (CF.HFalse, h2, (CP.mkTrue no_pos))
  			                  | _ -> (h1, h2,(CP.mkTrue no_pos)) (* will never reach this branch *)
 		                  else (h1, h2,(CP.mkTrue no_pos)) (* h2 is not an alias of h1 *) 
 		              | CF.Star {CF.h_formula_star_h1 = h21;
