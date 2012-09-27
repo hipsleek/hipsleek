@@ -361,9 +361,9 @@ class mainwindow () =
           let current_validity = m_proc_list#get_selected_procedure_validity () in
           (*if m_src_view#source_buffer#modified || current_validity = None then*)
           if current_validity = None || force then begin
-            log ("Checking procedure " ^ p.name);
+            log ("Checking procedure:" ^ p.name);
               let valid = match m_current_file with
-                | None -> let src = self#get_text () in
+                | None -> let src = self#get_text () in 
                            let iprims = m_ipreludes in
                           let res, _ = HH.check_proc_from_txt src m_ipreludes p in
                           let _ =  m_ipreludes <- iprims in
@@ -390,8 +390,8 @@ class mainwindow () =
             m_proc_list#set_selected_procedure_validity valid;
             let err_pos = HH.get_error_positions () in
             match err_pos with
-            | [] -> ()
-            | pos::_ -> m_src_view#hl_error 
+            | [] ->   ()
+            | pos::_ ->    m_src_view#hl_error 
                 (* highlight only the first failure's location *)
                 ~msg:"Not all branches are successful!"
                 pos

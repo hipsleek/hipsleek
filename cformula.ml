@@ -3842,6 +3842,11 @@ let rec get_ft_list_partial_context (ls:list_partial_context): (fail_type)=
     in
       List.fold_left cmb_ror_helper (List.hd fts) (List.tl fts)
 
+and get_ft_list_failesc_context (ls: list_failesc_context) :fail_type=
+	let fts1 =ref [] in
+	let _= List.map (fun x-> match x with (a,b,c) -> fts1 := !fts1@[a,c]) ls in
+	get_ft_list_partial_context !fts1
+
 and get_ft_partial_context ((bfl:branch_fail list), _): (fail_type)=
    get_ft_branch bfl
 

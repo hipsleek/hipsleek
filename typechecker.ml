@@ -727,7 +727,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             if !Globals.dis_ass_chk then (ctx,proc) else
 	          let _ = proving_loc#set pos in
 	          let s1 = snd post_start_label in
-              (* let _ = print_string ("labels:"^s^"#"^s1^"#"^"\n") in *)
+(*						let _ = print_string ("labels:"^s^"#"^s1^"#"^"\n") in*)
 	          if (String.length s)>0 (* && (String.length s1)>0 *) && (String.compare s s1 <> 0) then (ctx,proc)
 	          else
                 let (ts,ps) = List.partition (fun (fl,el,sl)-> (List.length fl) = 0) ctx in
@@ -777,7 +777,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         let assumed_ctx = CF.normalize_max_renaming_list_failesc_context c pos false new_ctx in
                         let r =CF.transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) assumed_ctx in
                         List.map CF.remove_dupl_false_fe r
-                in
+                in 
+(*								let _=print_endline ("\nEnd of Assertion checking!") in*)
                 (ps@res),proc
 	      end
         | Assign ({ exp_assign_lhs = v;

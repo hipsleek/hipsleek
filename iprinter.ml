@@ -770,6 +770,25 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
   (string_of_axiom_decl_list p.prog_axiom_decls) ^"\n" ^
   (string_of_coerc_decl_list p.prog_coercion_decls) ^ "\n\n" ^ 
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
+
+let string_of_program_for_test p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^  *)
+  (String.concat "\n\nprog_data_decls: " (List.map string_of_data p.prog_data_decls)) ^ 
+	"\n\nprog_glogbal_var_decls: " ^
+  (string_of_global_var_decl_list p.prog_global_var_decls) ^ 
+	"\nprog_enum_decls: " ^
+  (string_of_enum_decl_list p.prog_enum_decls) ^
+	"\nprog_view_decls: " ^
+  (string_of_view_decl_list p.prog_view_decls) ^
+	"\nprog_barrier_decls: " ^
+  (string_of_barrier_decl_list p.prog_barrier_decls) ^ 
+	"\nprog_rel_decls: " ^
+  (string_of_rel_decl_list p.prog_rel_decls) ^
+	"\nprog_axiom_decls: " ^
+  (string_of_axiom_decl_list p.prog_axiom_decls) ^
+	"\nprog_coercion_decls: " ^
+  (string_of_coerc_decl_list p.prog_coercion_decls) ^ 
+	"\n\nprog_proc_decls: " ^ 
+  (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"		
 ;;
 
 Iformula.print_one_formula := string_of_one_formula;;
