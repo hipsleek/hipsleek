@@ -210,6 +210,7 @@ and assign_op =
 (* An Hoa : v[i] where v is an identifier and i is an expression *)
 and exp_arrayat = { exp_arrayat_array_base : exp; (* An Hoa : modified from a single ident to exp to support expressions like x.A[i] for a data structure that has an array as a field *)
 					exp_arrayat_index : exp list; (* An Hoa : allow multi-dimensional arrays *)
+          exp_arrayat_origin : formula_origin option;
 					exp_arrayat_pos : loc; }
 
 (* (\* An Hoa : array memory allocation expression *\) *)
@@ -401,10 +402,12 @@ and exp_while = { exp_while_condition : exp;
 		  exp_while_pos : loc }
 
 and exp_dprint = { exp_dprint_string : string;
-		   exp_dprint_pos : loc }
+      exp_dprint_origin : formula_origin option;
+      exp_dprint_pos : loc }
 
 and exp_unfold = { exp_unfold_var : (string * primed);
-		   exp_unfold_pos : loc } 
+      exp_unfold_origin : formula_origin option;
+      exp_unfold_pos : loc } 
 
 and exp =
 	| ArrayAt of exp_arrayat (* An Hoa *)
@@ -431,7 +434,7 @@ and exp =
   | Finally of exp_finally
   | IntLit of exp_int_lit
   | Java of exp_java
-  | Label of ((control_path_id * path_label) * exp)
+  | Label of ((control_path_id * path_label) * (formula_origin option) * exp)
   | Member of exp_member
   | New of exp_new
   | Null of loc
