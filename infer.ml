@@ -1423,7 +1423,7 @@ and loop_up_ptr_args_one_node prog hd_nodes hv_nodes node_name=
 (*================================*)
 
 let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f rhs_h_matched_set leqs reqs pos=
-  DD.info_pprint ">>>>>> find_undefined_selective_pointers <<<<<<" pos;
+  (* DD.info_pprint ">>>>>> find_undefined_selective_pointers <<<<<<" pos; *)
   let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lfb in
   let leqNulls = MCP.get_null_ptrs lmix_f in
   let rhds, rhvs, rhrs = CF.get_hp_rel_bformula rfb in
@@ -1584,13 +1584,13 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
         let leqs = (MCP.ptr_equations_without_null mix_lf) (* @ (MCP.ptr_equations_with_null mix_lf) *) in
         let reqs = es.CF.es_rhs_eqset (* @ (MCP.ptr_equations_with_null mix_rf) *) in
         let _ =
-          let pr_elem = Cpure.SV.string_of in
-          let pr2 = pr_list (pr_pair pr_elem pr_elem) in
+          (* let pr_elem = Cpure.SV.string_of in *)
+          (* let pr2 = pr_list (pr_pair pr_elem pr_elem) in *)
           DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
           DD.info_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
           DD.info_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
-          DD.info_pprint ("  lhs aliases: " ^  (pr2 leqs)) pos; (* aliases from LHS *)
-          DD.info_pprint ("  rhs aliases: " ^  (pr2 reqs)) pos;  (* aliases from LHS *)
+          (* DD.info_pprint ("  lhs aliases: " ^  (pr2 leqs)) pos; (\* aliases from LHS *\) *)
+          (* DD.info_pprint ("  rhs aliases: " ^  (pr2 reqs)) pos;  (\* aliases from LHS *\) *)
         in
         if CP.intersect (CF.get_hp_rel_vars_bformula lhs_b) (List.fold_left close_def (CF.h_fv rhs) leqs) = [] then
           (
@@ -1598,7 +1598,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
               (false,es))
         else
           (*generate new heap pred with undefined pointers only*)
-          let _ = DD.info_pprint ">>>>>> generate new hp_rel with undefined selective pointers only <<<<<<" pos in
+          (* let _ = DD.info_pprint ">>>>>> generate new hp_rel with undefined selective pointers only <<<<<<" pos in *)
           let unknown_ptrs = find_undefined_selective_pointers prog lhs_b rhs_b mix_lf mix_rf rhs_h_matched_set leqs reqs pos in
           let r_new_hp = add_raw_hp_rel prog unknown_ptrs pos in
           let update_fb fb new_hp =
