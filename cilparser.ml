@@ -49,19 +49,6 @@ and translate_typ (t: Cil.typ) : Globals.typ =
   newtype
 
 
-and translate_varinfo (vinfo: Cil.varinfo) (l: Cil.location) : (*Iast.exp_var_decl*) unit =
-  let vpos = translate_location vinfo.Cil.vdecl in
-  let vtype = translate_typ vinfo.Cil.vtype in
-  let vdata = [(vinfo.Cil.vname, None, vpos)] in
-  (* FOR DEBUG *)
-  let _ = print_endline ("  -- var: " ^ (Globals.string_of_typ vtype) ^ " " ^ vinfo.Cil.vname) in ()
-  (* RETURN VALUE *)
-  (* let newvar  = {Iast.exp_var_decl_type = vtype;  *)
-  (*                Iast.exp_var_decl_decls = vdata; *)
-  (*                Iast.exp_var_decl_pos = vpos} in *)
-  (* newvar                                          *)
-
-
 and translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp =
   let pos = match lopt with
             | None -> no_pos
@@ -352,7 +339,25 @@ and translate_block (blk: Cil.block) (lopt: Cil.location option): Iast.exp =
     )
 
 
-and translate_fundec (fdec: Cil.fundec) (l: Cil.location): unit (*Iast.proc_decl*) =
+and translate_var_decl (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp_var_decl =
+  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
+  let ty = translate_typ vinfo.Cil.vtype in
+  let decl = [(vinfo.Cil.vname, None, pos)] in
+  let newvardecl = {Iast.exp_var_decl_type = ty;
+                    Iast.exp_var_decl_decls = decl;
+                    Iast.exp_var_decl_pos = pos} in
+  newvardecl
+
+
+and translate_var (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp_var =
+  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
+  let name = vinfo.Cil.vname in
+  let newvar = {Iast.exp_var_name = name;
+                Iast.exp_var_pos = pos} in
+  newvar
+
+
+and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option): Iast.proc_decl =
   let translate_funtyp (ty: Cil.typ) : Globals.typ = (
     match ty with
     | Cil.TFun (t, params, _, _) -> translate_typ t
@@ -388,26 +393,88 @@ and translate_fundec (fdec: Cil.fundec) (l: Cil.location): unit (*Iast.proc_decl
       )
     | _ -> report_error_msg "Invalid function header!"
   ) in
-  (* let rec collect_stmts (sallstmts: Cil.stmt list) : Iast.exp option = ( *)
-    
-  (* ) in                                                                   *)
-  let fheader = fdec.Cil.svar in
-  let proc_name = fheader.Cil.vname in
-  let proc_mingled_name = "" in (* TRUNG CODE: check it later *)
-  let proc_return = translate_funtyp (fheader.Cil.vtype) in
-  let proc_args = collect_params fheader in
-  let proc_loc = translate_location l in
-  (* FOR DEBUG *)
-  let _ = print_endline ("  -- proc: " ^ (Globals.string_of_typ proc_return) ^ " " ^ proc_name ^ "(..)") in ()
-  (* RETURN VALUE *)
-  (* let proc_iast : Iast.prog_decl = { *)
-  (*   Iast.proc_name = proc_name;      *)
-  (*   Iast.proc_return = proc_return;  *)
-  (*   Iast.proc_file = loc.Cil.file;   *)
-  (*   Iast.proc_loc = proc_loc;        *)
-  (*   Iast.proc_args = proc_args;      *)
-  (* } in                               *)
-  (* proc_iast                          *)
+  let fheader = fundec.Cil.svar in
+  let name = fheader.Cil.vname in
+  let mingled_name = "" in (* TRUNG TODO: check mingled_name later *)
+  let return = translate_funtyp (fheader.Cil.vtype) in
+  let args = collect_params fheader in
+  let body = translate_block fundec.Cil.sbody lopt in
+  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
+  let filename = pos.start_pos.Lexing.pos_fname in
+  let newproc : Iast.proc_decl = {
+    Iast.proc_name = name;
+    Iast.proc_mingled_name = mingled_name;
+    Iast.proc_data_decl = None;
+    Iast.proc_constructor = false;
+    Iast.proc_args = args;
+    Iast.proc_return = return;
+    Iast.proc_static_specs = Iast.mkSpecTrue n_flow pos;
+    Iast.proc_dynamic_specs = Iast.mkSpecTrue n_flow pos;
+    Iast.proc_exceptions = [];
+    Iast.proc_body = Some body;
+    Iast.proc_is_main = false;
+    Iast.proc_file = filename;
+    Iast.proc_loc = pos;
+  } in
+  newproc
+
+
+and translate_file (file: Cil.file) : Iast.prog_decl =
+  (* initial values *)
+  let data_decls : Iast.data_decl list ref = ref [] in
+  let global_var_decls : Iast.exp_var_decl list ref = ref [] in
+  let logical_var_decls : Iast.exp_var_decl list ref = ref [] in
+  let enum_decls : Iast.enum_decl list ref = ref [] in
+  let view_decls : Iast.view_decl list ref = ref [] in
+  let func_decls : Iast.func_decl list ref = ref [] in
+  let rel_decls : Iast.rel_decl list ref = ref [] in
+  let rel_ids : (typ * ident) list ref = ref [] in
+  let axiom_decls : Iast.axiom_decl list ref = ref [] in
+  let hopred_decls : Iast.hopred_decl list ref = ref [] in
+  let proc_decls : Iast.proc_decl list ref = ref [] in
+  let barrier_decls : Iast.barrier_decl list ref = ref [] in
+  let coercion_decls : Iast.coercion_decl list ref = ref [] in
+  (* begin to translate *)
+  let globals = file.Cil.globals in
+  let _ = List.iter (fun gl ->
+    match gl with
+    | Cil.GType _ -> print_endline ("== translate GType");
+    | Cil.GCompTag _ -> print_endline ("== translate GCompTag");
+    | Cil.GCompTagDecl _ -> print_endline ("== translate GCompTagDecl");
+    | Cil.GEnumTag _ -> print_endline ("== translate GEnumTag");
+    | Cil.GEnumTagDecl _ -> print_endline ("== translate GEnumTagDecl");
+    | Cil.GVarDecl (v, l) ->
+        let _ = print_endline ("== translate GVarDecl") in
+        let vardecl = translate_var_decl v (Some l) in
+        global_var_decls := !global_var_decls @ [vardecl]
+    | Cil.GVar (v, _, l) ->
+        let _ = print_endline ("== translate GVar") in 
+        let var = translate_var v (Some l) in
+        ()
+    | Cil.GFun (fd, l) -> 
+        let _ = print_endline ("== translate GFun") in 
+        let proc = translate_fundec fd (Some l) in
+        proc_decls := !proc_decls @ [proc]
+    | Cil.GAsm _ -> report_error_msg "Error!!! Cannot translate Cil.GAsm to Iast module!"
+    | Cil.GPragma _ -> report_error_msg "Error!!! Cannot translate Cil.GPragma to Iast module!"
+    | Cil.GText _ -> report_error_msg "Error!!! Cannot translate Cil.GText to Iast module!"
+  ) globals in
+  let newprog : Iast.prog_decl = ({
+    Iast.prog_data_decls = !data_decls;
+    Iast.prog_global_var_decls = !global_var_decls;
+    Iast.prog_logical_var_decls = !logical_var_decls;
+    Iast.prog_enum_decls = !enum_decls;
+    Iast.prog_view_decls = !view_decls;
+    Iast.prog_func_decls = !func_decls;
+    Iast.prog_rel_decls = !rel_decls;
+    Iast.prog_rel_ids = !rel_ids;
+    Iast.prog_axiom_decls = !axiom_decls;
+    Iast.prog_hopred_decls = !hopred_decls;
+    Iast.prog_proc_decls = !proc_decls;
+    Iast.prog_barrier_decls = !barrier_decls;
+    Iast.prog_coercion_decls = !coercion_decls;
+  }) in
+  newprog
 
 let process_one_file (cil: Cil.file) : unit =
   if !Cilutil.doCheck then (
@@ -418,27 +485,3 @@ let process_one_file (cil: Cil.file) : unit =
                     ^^"in CIL.\n")
     )
   );
-  
-  let filename = cil.Cil.fileName in
-  let _ = print_endline ("file name = " ^ filename) in
-  let globals = cil.Cil.globals in
-  List.iter (fun gl ->
-    match gl with
-    | Cil.GType _ -> print_endline ("== Cil.GType");
-    | Cil.GCompTag _ -> print_endline ("== Cil.GCompTag");
-    | Cil.GCompTagDecl _ -> print_endline ("== Cil.GCompTagDecl");
-    | Cil.GEnumTag _ -> print_endline ("== Cil.GEnumTag");
-    | Cil.GEnumTagDecl _ -> print_endline ("== Cil.GEnumTagDecl");
-    | Cil.GVarDecl (v, l) ->
-        let _ = print_endline ("== Cil.GVarDecl") in 
-        translate_varinfo v l
-    | Cil.GVar (v, _, l) ->
-        let _ = print_endline ("== Cil.GVar") in 
-        translate_varinfo v l
-    | Cil.GFun (fd, l) -> 
-        let _ = print_endline ("== Cil.GFun") in 
-        translate_fundec fd l
-    | Cil.GAsm _ -> print_endline ("== Cil.GAsm");
-    | Cil.GPragma _ -> print_endline ("== Cil.GPragma");
-    | Cil.GText _ -> print_endline ("== Cil.GText");
-  ) globals
