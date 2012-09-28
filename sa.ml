@@ -334,73 +334,12 @@ and filter_hp_rel_args (hf: CF.h_formula) (drlocs: hp_para list): CF.h_formula=
     | CF.HFalse
     | CF.HEmp -> hf
 
-
-(*==============*)
-(*defined pointers list *
-  for recursive constraint(HP name *
- parameter name list)*)
-(*todo: how about null? is it defined?*)
-let rec find_defined_pointers_raw prog f=
-  let hds, hvs, hrs = CF.get_hp_rel_formula f in
-  let ( _,mix_f,_,_,_) = CF.split_components f in
-  let eqs = (MCP.ptr_equations_without_null mix_f) in
-  let eqNull1, eqNull2 =  List.split (MCP.ptr_equations_with_null mix_f) in
-  let eqNulls = CP.remove_dups_svl (eqNull1@eqNull2) in
-  (*defined vars=  + null + data + view*)
-  let def_vs = (eqNulls) @ (List.map (fun hd -> hd.CF.h_formula_data_node) hds)
-   @ (List.map (fun hv -> hv.CF.h_formula_view_node) hvs) in
-  (*find closed defined pointers set*)
-  (* let def_vs0 = CP.remove_dups_svl def_vs in *)
-  let def_vs_wo_args = CP.remove_dups_svl ((List.fold_left Infer.close_def def_vs eqs)) in
-  (def_vs_wo_args, hds, hvs, hrs, eqs)
-
-and find_defined_pointers_after_preprocess prog def_vs_wo_args hds hvs hrs eqs predef_ptrs=
-   let tmp = def_vs_wo_args in
-  let def_vs = List.filter (check_node_args_defined prog (def_vs_wo_args@predef_ptrs) hds hvs) tmp in
-  (*(HP name * parameter name list)*)
-  let hp_paras = List.map
-                (fun (id, exps, _) -> (id, List.concat (List.map CP.afv exps)))
-                hrs in
-  (def_vs, hp_paras, hds, hvs, eqs)
-
-and find_defined_pointers_new_x prog f predef_ptrs=
-  (* let hds, hvs, hrs = CF.get_hp_rel_formula f in *)
-  (* let ( _,mix_f,_,_,_) = CF.split_components f in *)
-  (* let eqs = (MCP.ptr_equations_without_null mix_f) in *)
-  (* let eqNull1, eqNull2 =  List.split (MCP.ptr_equations_with_null mix_f) in *)
-  (* let eqNulls = CP.remove_dups_svl (eqNull1@eqNull2) in *)
-  (* (\*defined vars=  + null + data + view*\) *)
-  (* let def_vs = (eqNulls) @ (List.map (fun hd -> hd.CF.h_formula_data_node) hds) *)
-  (*  @ (List.map (fun hv -> hv.CF.h_formula_view_node) hvs) in *)
-  (* (\*find closed defined pointers set*\) *)
-  (* (\* let def_vs0 = CP.remove_dups_svl def_vs in *\) *)
-  (* let def_vs_wo_args = CP.remove_dups_svl ((List.fold_left Infer.close_def def_vs eqs)@predef_ptrs) in *)
-  (* (\*check nodes'args are defined?*\) *)
-  (* let tmp = def_vs_wo_args in  *)
-  (* let def_vs = List.filter (check_node_args_defined prog def_vs_wo_args hds hvs) tmp in *)
-  (* (\*(HP name * parameter name list)*\) *)
-  (* let hp_paras = List.map *)
-  (*               (fun (id, exps, _) -> (id, List.concat (List.map CP.afv exps))) *)
-  (*               hrs in *)
-  (* (def_vs, hp_paras, hds, hvs,eqs) *)
-  let (def_vs, hds, hvs, hrs, eqs) = find_defined_pointers_raw prog f in
-  find_defined_pointers_after_preprocess prog def_vs hds hvs hrs eqs predef_ptrs
-
-and find_defined_pointers_new prog f predef_ptrs=
-  let pr1 = !CP.print_svl in
-  let pr2 = pr_list_ln (pr_pair !CP.print_sv pr1) in
-  (* let pr3 = fun x -> Cprinter.string_of_h_formula (CF.HRel x) in *)
-  let pr4 = fun (a1, a2, _, _, _) ->
-      let pr = pr_pair pr1 pr2 in pr (a1,a2)
-  in
-  Debug.no_2 "find_defined_pointers_new" Cprinter.prtt_string_of_formula pr1 pr4
-      (fun _ _ -> find_defined_pointers_new_x prog f predef_ptrs) f predef_ptrs
-
+(*=======================*)
 (*should we mkAnd f1 f2*)
-and find_defined_pointers_two_formulas_x prog f1 f2 predef_ptrs=
-  let (def_vs1, hds1, hvs1, hrs1, eqs1) = find_defined_pointers_raw prog f1 in
-  let (def_vs2, hds2, hvs2, hrs2, eqs2) = find_defined_pointers_raw prog f2 in
-  find_defined_pointers_after_preprocess prog (def_vs1@def_vs2) (hds1@hds2) (hvs1@hvs2)
+let rec find_defined_pointers_two_formulas_x prog f1 f2 predef_ptrs=
+  let (def_vs1, hds1, hvs1, hrs1, eqs1) = Infer.find_defined_pointers_raw prog f1 in
+  let (def_vs2, hds2, hvs2, hrs2, eqs2) = Infer.find_defined_pointers_raw prog f2 in
+  Infer.find_defined_pointers_after_preprocess prog (def_vs1@def_vs2) (hds1@hds2) (hvs1@hvs2)
       (hrs2) (eqs1@eqs2) predef_ptrs
 
 and find_defined_pointers_two_formulas prog f1 f2 predef_ptrs=
@@ -413,55 +352,10 @@ and find_defined_pointers_two_formulas prog f1 f2 predef_ptrs=
   Debug.no_3 "find_defined_pointers_two_formulas" Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula pr1 pr4
       (fun _ _ _ -> find_defined_pointers_two_formulas_x prog f1 f2 predef_ptrs) f1 f2 predef_ptrs
 
-and check_node_args_defined prog def_svl hd_nodes hv_nodes dn_name=
-  let arg_svl = loop_up_ptr_args_one_node prog hd_nodes hv_nodes dn_name in
-  let diff_svl = Gen.BList.difference_eq CP.eq_spec_var arg_svl def_svl in
-  if diff_svl = [] then true
-  else false
-
-and loop_up_ptr_args_data_node prog hd=
-  (*data nodes*)
-  let data_def =  Cast.look_up_data_def no_pos prog.Cast.prog_data_decls hd.CF.h_formula_data_name in
-  (*get prototype of a node declaration*)
-  let args = List.map (fun (t,_) -> t) data_def.Cast.data_fields in
-  (*combine with actual areg*)
-  let targs = List.combine args hd.CF.h_formula_data_arguments in
-  (*get pointer*)
-  snd (List.split (List.filter (fun (t, v) -> is_pointer t) targs))
-
-(* let loop_up_ptr_args_view_node prog hv= *)
-(*   (\*view node*\) *)
-(*   let view_def =  Cast.look_up_view_def no_pos prog.Cast.prog_view_decls hv.CF.h_formula_view_name in *)
-(*   (\*get prototype of a node declaration*\) *)
-(*   let args = List.map (fun (t,_) -> t) view_def.Cast.view_fields in *)
-(*   (\*combine with actual areg*\) *)
-(*   let targs = List.combine args hd.CF.h_formula_view_arguments in *)
-(*   (\*get pointer*\) *)
-(*   snd (List.split (List.filter (fun (t, v) -> is_pointer t) targs)) *)
-
-and loop_up_ptr_args_one_node prog hd_nodes hv_nodes node_name=
-  let rec look_up_data_node ls=
-    match ls with
-      | [] -> []
-      | dn::ds -> if CP.eq_spec_var node_name dn.CF.h_formula_data_node then
-            loop_up_ptr_args_data_node prog dn
-          else look_up_data_node ds
-  in
-  (* let rec look_up_view_node ls= *)
-  (*   match ls with *)
-  (*     | [] -> [] *)
-  (*     | dn::ds -> if CP.eq_spec_var node_name dn.CF.h_formula_view_node then *)
-  (*           loop_up_ptr_args_view_node prog hd *)
-  (*         else look_up_view_node ds *)
-  (* in *)
-  let ptrs = look_up_data_node hd_nodes in
-  (* if ptrs = [] then look_up_view_node hv_nodes *)
-  (* else *) ptrs
-
 let loop_up_ptr_args prog hd_nodes hv_nodes node_names=
   let rec helper old_ptrs inc_ptrs=
     let new_ptrs = List.concat
-      (List.map (loop_up_ptr_args_one_node prog hd_nodes hv_nodes) inc_ptrs) in
+      (List.map (Infer.loop_up_ptr_args_one_node prog hd_nodes hv_nodes) inc_ptrs) in
     let diff_ptrs = Gen.BList.difference_eq CP.eq_spec_var new_ptrs old_ptrs in
     if diff_ptrs = [] then old_ptrs
     else (helper (Gen.BList.remove_dups_eq CP.eq_spec_var (old_ptrs@inc_ptrs))
@@ -644,7 +538,7 @@ let rec collect_par_defs_one_constr_new_x prog (lhs, rhs) =
           else get_rec_pair_hps ss (hrel1, arg1)
   in
   (*find all defined pointer (null, nodes) and recursive defined parameters (HP, arg)*)
-  let l_def_ptrs, l_hp_args_name,l_dnodes, l_vnodes,leqs = find_defined_pointers_new prog lhs [] in
+  let l_def_ptrs, l_hp_args_name,l_dnodes, l_vnodes,leqs = Infer.find_defined_pointers_new prog lhs [] in
   (*should mkAnd lhs*rhs?*)
   let r_def_ptrs, r_hp_args_name, r_dnodes, r_vnodes, reqs = find_defined_pointers_two_formulas prog lhs rhs [] in
   (*CASE 1: formula --> hp*)
@@ -690,7 +584,7 @@ let rec collect_par_defs_one_constr_new_x prog (lhs, rhs) =
     else
       let helper ((hp1,args1),(hp2,args2))=
         (*recompute defined ptrs*)
-         let l_def_ptrs, _,_, _,_ = find_defined_pointers_new prog lhs args2 in
+         let l_def_ptrs, _,_, _,_ = Infer.find_defined_pointers_new prog lhs args2 in
          (*should mkAnd lhs*rhs?*)
          let r_def_ptrs, _, _, _, _ = find_defined_pointers_two_formulas prog lhs rhs args2 in
         let r1 = collect_par_defs_recursive_hp prog lhs rhs (hp1,args1)
@@ -698,7 +592,7 @@ let rec collect_par_defs_one_constr_new_x prog (lhs, rhs) =
           (l_dnodes@r_dnodes) (l_vnodes@r_vnodes) in
         if r1 = [] then
           (*recompute defined ptrs*)
-          let l_def_ptrs, _,_, _,_ = find_defined_pointers_new prog lhs args1 in
+          let l_def_ptrs, _,_, _,_ = Infer.find_defined_pointers_new prog lhs args1 in
          (*should mkAnd lhs*rhs?*)
           let r_def_ptrs, _, _, _, _ = find_defined_pointers_two_formulas prog lhs rhs args1 in
           collect_par_defs_recursive_hp prog lhs rhs (hp2,args2)
@@ -1210,12 +1104,12 @@ let generalize_one_hp prog par_defs=
         | Some f, None -> f
         | None, Some f -> f
         | Some f1, Some f2 -> (*find which formula contains root args*)
-            let ptrs1, _,_, _,_ = find_defined_pointers_raw prog f1 in
+            let ptrs1, _,_, _,_ = Infer.find_defined_pointers_raw prog f1 in
             let ptrs_diff= Gen.BList.difference_eq CP.eq_spec_var args ptrs1 in
             if ptrs_diff = [] then f1
             else
               (
-                  let ptrs2, _,_, _,_ = find_defined_pointers_raw prog f2 in
+                  let ptrs2, _,_, _,_ = Infer.find_defined_pointers_raw prog f2 in
                   let ptrs_diff= Gen.BList.difference_eq CP.eq_spec_var args ptrs2 in
                   (* (\*for debugging*\) *)
                   (* let _ = Debug.info_pprint ("args: " ^ (!CP.print_svl args)) no_pos in *)
