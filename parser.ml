@@ -1799,7 +1799,7 @@ labeled_valid_declaration_statement:
       | _ -> report_error (get_pos_camlp4 _loc 1) ("only blocks try and while statements can have labels"))		
 	 (* | t= OPT valid_declaration_statement -> un_option t (Empty (get_pos_camlp4 _loc 1) ) *)
       | t = valid_declaration_statement -> t ]];
-  
+
 valid_declaration_statement:
   [[ t=block -> t
   | t=expression_statement;`SEMICOLON ->t
