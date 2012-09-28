@@ -1456,26 +1456,25 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
       end
     else
       begin
-          DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
-          DD.info_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
-          DD.info_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
-          DD.info_pprint ("  unmatching node: " ^ (Cprinter.string_of_h_formula rhs)) pos;
-        DD.info_pprint "  hp_rel found" pos;
+        (* DD.info_pprint "  hp_rel found" pos; *)
         (*which pointers are defined and which arguments of data nodes are pointer*)
         let leqs = (MCP.ptr_equations_without_null mix_lf) (* @ (MCP.ptr_equations_with_null mix_lf) *) in
         let reqs = es.CF.es_rhs_eqset (* @ (MCP.ptr_equations_with_null mix_rf) *) in
-        (*for debugging*)
-        (* let pr_elem = Cpure.SV.string_of in *)
-        (* let pr2 = pr_list (pr_pair pr_elem pr_elem) in *)
-        (* let _ = print_endline ("lsvl: " ^ (pr2 leqs)) in *)
-        (* let _ = print_endline ("rsvl: " ^ (pr2 reqs)) in *)
-        (*end for debugging*)
+        let _ =
+          let pr_elem = Cpure.SV.string_of in
+          let pr2 = pr_list (pr_pair pr_elem pr_elem) in
+          DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
+          DD.info_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
+          DD.info_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
+          DD.info_pprint ("  lhs aliases: " ^  (pr2 leqs)) pos; (* aliases from LHS *)
+          DD.info_pprint ("  rhs aliases: " ^  (pr2 reqs)) pos;  (* aliases from LHS *)
+        in
         if CP.intersect (CF.get_hp_rel_vars_bformula lhs_b) (List.fold_left close_def (CF.h_fv rhs) leqs) = [] then
           (
               Debug.ninfo_pprint ">>>>>> no relevant vars with mismatch <<<<<<" pos;
               (false,es))
         else
-          (*generate new heap pred with undifined pointers only*)
+          (*generate new heap pred with undefined pointers only*)
           let ldef ,largs = find_defined_pointers prog lhs_b mix_lf rhs_h_matched_set leqs pos in
           let rdef, rargs = find_defined_pointers prog rhs_b mix_rf rhs_h_matched_set reqs pos in
           (*LHS (RHS) check all pointers have been defined, if not
