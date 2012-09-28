@@ -579,7 +579,7 @@ let rec compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.sp
 				                  let p = CP.conj_of_list 
 				                  (List.map (fun c -> (CP.mkEqVar (fst c) (snd c) h.CF.h_formula_data_pos)) comb_list) 						          h.CF.h_formula_data_pos
 				                  in 
-				                  (CF.DataNode {h with CF.h_formula_data_param_imm = new_param_imm}, CF.HTrue, p)
+				                  (CF.DataNode {h with CF.h_formula_data_param_imm = new_param_imm}, CF.HEmp, p)
 				                  else (CF.HFalse, h2, (CP.mkTrue no_pos))
  			                  | _ -> (h1, h2,(CP.mkTrue no_pos)) (* will never reach this branch *)
 		                  else (h1, h2,(CP.mkTrue no_pos)) (* h2 is not an alias of h1 *) 
@@ -642,6 +642,21 @@ let rec compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
     	CF.Exists { f with
         CF.formula_exists_heap = new_h;
         CF.formula_exists_pure = new_mcp;}
+
+let rec compact_nodes_with_same_name_in_struc (f: CF.struc_formula): CF.struc_formula = (* f *)
+  if not (!Globals.allow_field_ann ) then f
+  else
+    match f with
+      | CF.EOr sf            -> CF.EOr { sf with 
+          CF.formula_struc_or_f1 = compact_nodes_with_same_name_in_struc sf.CF.formula_struc_or_f1;
+          CF.formula_struc_or_f2 = compact_nodes_with_same_name_in_struc  sf.CF.formula_struc_or_f2;} 
+      | CF.EList sf          -> CF.EList  (map_l_snd compact_nodes_with_same_name_in_struc sf) 
+      | CF.ECase sf          -> CF.ECase {sf with CF.formula_case_branches = map_l_snd compact_nodes_with_same_name_in_struc sf.CF.formula_case_branches;} 
+      | CF.EBase sf          -> CF.EBase {sf with
+          CF.formula_struc_base =  compact_nodes_with_same_name_in_formula sf.CF.formula_struc_base;
+          CF.formula_struc_continuation = map_opt compact_nodes_with_same_name_in_struc sf.CF.formula_struc_continuation; }
+      | CF.EAssume (x, f, y)-> CF.EAssume (x,(compact_nodes_with_same_name_in_formula f),y)
+      | CF.EInfer sf         -> CF.EInfer {sf with CF.formula_inf_continuation = compact_nodes_with_same_name_in_struc sf.CF.formula_inf_continuation}
         
 let rec is_lend_h_formula (f : CF.h_formula) : bool =  match f with
   | CF.DataNode (h1) -> 

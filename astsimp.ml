@@ -3964,6 +3964,7 @@ and join_ann (ann1: CF.ann list) (ann2: CF.ann list): bool * (CF.ann list) =
 				  (true && compatible, a::new_ann)
     | _ -> (false, [])
 
+(* Moved to mem.ml and called during entailment now *)
 (* and check_node_compatibility (n1: CF.h_formula) (n2: CF.h_formula): CP.spec_var list * CP.spec_var list =  *)
   (* let helper n1 n2 =  *)
   (*   match n1 with *)
@@ -4037,8 +4038,8 @@ and compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.spec_v
   let pr = Cprinter.string_of_h_formula in 
   let pr_sv = pr_list Cprinter.string_of_spec_var_list in
   Debug.no_2 "compact_nodes_with_same_name_in_h_formula" pr pr_sv pr (fun _ _ -> compact_nodes_with_same_name_in_h_formula_x f aset) f aset
-  *)
-(*
+
+
 and compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
   match cf with
     | CF.Base f   -> CF.Base { f with
@@ -4048,7 +4049,7 @@ and compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
         CF.formula_or_f2 = compact_nodes_with_same_name_in_formula f.CF.formula_or_f2; }
     | CF.Exists f -> CF.Exists { f with
         CF.formula_exists_heap = compact_nodes_with_same_name_in_h_formula f.CF.formula_exists_heap (Context.comp_aliases f.CF.formula_exists_pure); }
-*)
+
 and compact_nodes_with_same_name_in_struc_x (f: CF.struc_formula): CF.struc_formula = (* f *)
   if not (!Globals.allow_field_ann ) then f
   else
@@ -4067,7 +4068,7 @@ and compact_nodes_with_same_name_in_struc_x (f: CF.struc_formula): CF.struc_form
 and compact_nodes_with_same_name_in_struc (f: CF.struc_formula): CF.struc_formula = 
   let pr = Cprinter.string_of_struc_formula in
   Debug.no_1 "compact_nodes_with_same_name_in_struc" pr pr (fun _ -> compact_nodes_with_same_name_in_struc_x f ) f
-
+*)
 and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
       (f0 : IF.formula) stab (clean_res:bool) : CF.formula =
   let prb = string_of_bool in
@@ -4140,7 +4141,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
 	        (res_replace stab rl clean_res fl);ch) 
   in (* An Hoa : Add measure to combine partial heaps into a single heap *)
   let cf = helper f0 in
-  let cf = Mem.compact_nodes_with_same_name_in_formula cf in
+  (*let cf = Mem.compact_nodes_with_same_name_in_formula cf in*)
   (*TO CHECK: temporarily disabled*) 
   (* let cf = CF.merge_partial_heaps cf in (\*ENABLE THIS for partial fields*\) *)
 
