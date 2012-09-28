@@ -119,45 +119,6 @@ and translate_binary_operator op =
   | Cil.LOr -> Iast.OpLogicalOr
 
 
-and translate_exp (e: Cil.exp) (lopt: Cil.location option): Iast.exp =
-  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
-  match e with
-  | Cil.Const c -> translate_constant c lopt
-  | Cil.Lval _ -> report_error_msg "TRUNG TODO: Handle Cil.Lval later!"
-  | Cil.SizeOf _ -> report_error_msg "Error!!! Iast doesn't support Cil.SizeOf exp"
-  | Cil.SizeOfE _ -> report_error_msg "Error!!! Iast doesn't support Cil.SizeOfE exp!"
-  | Cil.SizeOfStr _ -> report_error_msg "Error!!! Iast doesn't support Cil.SizeOfStr exp!"
-  | Cil.AlignOf _ -> report_error_msg "TRUNG TODO: Handle Cil.AlignOf later!"
-  | Cil.AlignOfE _ -> report_error_msg "TRUNG TODO: Handle Cil.AlignOfE later!"
-  | Cil.UnOp (op, exp, ty) ->
-      let e = translate_exp exp lopt in
-      let o = translate_unary_operator op in
-      let newexp = Iast.Unary {Iast.exp_unary_op = o;
-                               Iast.exp_unary_exp = e;
-                               Iast.exp_unary_path_id = None;
-                               Iast.exp_unary_pos = pos} in
-      newexp
-  | Cil.BinOp (op, exp1, exp2, ty) ->
-      let e1 = translate_exp exp1 lopt in
-      let e2 = translate_exp exp2 lopt in
-      let o = translate_binary_operator op in
-      let newexp = Iast.Binary {Iast.exp_binary_op = o;
-                                Iast.exp_binary_oper1 = e1;
-                                Iast.exp_binary_oper2 = e2;
-                                Iast.exp_binary_path_id = None;
-                                Iast.exp_binary_pos = pos } in
-      newexp
-  | Cil.CastE (ty, exp) ->
-      let t = translate_typ ty in
-      let e = translate_exp exp lopt in
-      let newexp = Iast.Cast {Iast.exp_cast_target_type = t;
-                              Iast.exp_cast_body = e;
-                              Iast.exp_cast_pos = pos} in
-      newexp
-  | Cil.AddrOf _ -> report_error_msg "Error!!! Iast doesn't support Cil.AddrOf exp!"
-  | Cil.StartOf _ -> report_error_msg "Error!!! Iast doesn't support Cil.StartOf exp!"
-
-
 and translate_lval (lv: Cil.lval) (lopt: Cil.location option) : Iast.exp =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let (lh, off) = lv in
@@ -196,6 +157,45 @@ and translate_lval (lv: Cil.lval) (lopt: Cil.location option) : Iast.exp =
                                 Iast.exp_member_path_id = None;
                                 Iast.exp_member_pos = pos} in
       newexp
+
+
+and translate_exp (e: Cil.exp) (lopt: Cil.location option): Iast.exp =
+  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
+  match e with
+  | Cil.Const c -> translate_constant c lopt
+  | Cil.Lval lv -> translate_lval lv lopt 
+  | Cil.SizeOf _ -> report_error_msg "Error!!! Iast doesn't support Cil.SizeOf exp"
+  | Cil.SizeOfE _ -> report_error_msg "Error!!! Iast doesn't support Cil.SizeOfE exp!"
+  | Cil.SizeOfStr _ -> report_error_msg "Error!!! Iast doesn't support Cil.SizeOfStr exp!"
+  | Cil.AlignOf _ -> report_error_msg "TRUNG TODO: Handle Cil.AlignOf later!"
+  | Cil.AlignOfE _ -> report_error_msg "TRUNG TODO: Handle Cil.AlignOfE later!"
+  | Cil.UnOp (op, exp, ty) ->
+      let e = translate_exp exp lopt in
+      let o = translate_unary_operator op in
+      let newexp = Iast.Unary {Iast.exp_unary_op = o;
+                               Iast.exp_unary_exp = e;
+                               Iast.exp_unary_path_id = None;
+                               Iast.exp_unary_pos = pos} in
+      newexp
+  | Cil.BinOp (op, exp1, exp2, ty) ->
+      let e1 = translate_exp exp1 lopt in
+      let e2 = translate_exp exp2 lopt in
+      let o = translate_binary_operator op in
+      let newexp = Iast.Binary {Iast.exp_binary_op = o;
+                                Iast.exp_binary_oper1 = e1;
+                                Iast.exp_binary_oper2 = e2;
+                                Iast.exp_binary_path_id = None;
+                                Iast.exp_binary_pos = pos } in
+      newexp
+  | Cil.CastE (ty, exp) ->
+      let t = translate_typ ty in
+      let e = translate_exp exp lopt in
+      let newexp = Iast.Cast {Iast.exp_cast_target_type = t;
+                              Iast.exp_cast_body = e;
+                              Iast.exp_cast_pos = pos} in
+      newexp
+  | Cil.AddrOf _ -> report_error_msg "Error!!! Iast doesn't support Cil.AddrOf exp!"
+  | Cil.StartOf _ -> report_error_msg "Error!!! Iast doesn't support Cil.StartOf exp!"
 
 
 and translate_instr (instr: Cil.instr) : Iast.exp =
@@ -339,17 +339,7 @@ and translate_block (blk: Cil.block) (lopt: Cil.location option): Iast.exp =
     )
 
 
-and translate_var_decl (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp_var_decl =
-  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
-  let ty = translate_typ vinfo.Cil.vtype in
-  let decl = [(vinfo.Cil.vname, None, pos)] in
-  let newvardecl = {Iast.exp_var_decl_type = ty;
-                    Iast.exp_var_decl_decls = decl;
-                    Iast.exp_var_decl_pos = pos} in
-  newvardecl
-
-
-and translate_var (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp_var =
+and translate_var_decl (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp_var =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let name = vinfo.Cil.vname in
   let newvar = {Iast.exp_var_name = name;
@@ -357,12 +347,27 @@ and translate_var (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp_va
   newvar
 
 
+and translate_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo) (lopt: Cil.location option) : Iast.exp_var_decl =
+  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
+  let ty = translate_typ vinfo.Cil.vtype in
+  let name = vinfo.Cil.vname in
+  let decl = match iinfo.Cil.init with
+    | None -> [(name, None, pos)]
+    | Some (Cil.SingleInit exp) ->
+        let e = translate_exp exp lopt in
+        [(name, Some e, pos)]
+    | Some (Cil.CompoundInit _) -> report_error_msg "TRUNG TODO: Cil.CompoundInit. Handle later!" in
+  let newvardecl = {Iast.exp_var_decl_type = ty;
+                    Iast.exp_var_decl_decls = decl;
+                    Iast.exp_var_decl_pos = pos} in
+  newvardecl
+
+
 and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option): Iast.proc_decl =
   let translate_funtyp (ty: Cil.typ) : Globals.typ = (
     match ty with
     | Cil.TFun (t, params, _, _) -> translate_typ t
-    | _ -> report_error_msg ("Handle TFun only."
-                             ^ "Other types should be passed to translate_typ!")
+    | _ -> report_error_msg "Error!!! Invalid type! Have to be TFun only."
   ) in
   let collect_params (fheader: Cil.varinfo) : Iast.param list = (
     let ftyp = fheader.Cil.vtype in
@@ -446,12 +451,12 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
     | Cil.GVarDecl (v, l) ->
         let _ = print_endline ("== translate GVarDecl") in
         let vardecl = translate_var_decl v (Some l) in
-        global_var_decls := !global_var_decls @ [vardecl]
-    | Cil.GVar (v, _, l) ->
-        let _ = print_endline ("== translate GVar") in 
-        let var = translate_var v (Some l) in
         ()
-    | Cil.GFun (fd, l) -> 
+    | Cil.GVar (v, init, l) ->
+        let _ = print_endline ("== translate GVar") in 
+        let var = translate_var v init (Some l) in
+        global_var_decls := !global_var_decls @ [var];
+    | Cil.GFun (fd, l) ->
         let _ = print_endline ("== translate GFun") in 
         let proc = translate_fundec fd (Some l) in
         proc_decls := !proc_decls @ [proc]
@@ -485,3 +490,9 @@ let process_one_file (cil: Cil.file) : unit =
                     ^^"in CIL.\n")
     )
   );
+  let prog = translate_file cil in
+  let _ = print_endline ("------------------------") in
+  let _ = print_endline ("--> translated program: ") in
+  let _ = print_endline ("------------------------") in 
+  let _ = print_endline (Iprinter.string_of_program prog) in 
+  ()

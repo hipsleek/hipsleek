@@ -8,6 +8,8 @@ int foo()
 
 int yyy;
 
+int zzz = 1;
+
 int main() {
   int x;
   x++;
