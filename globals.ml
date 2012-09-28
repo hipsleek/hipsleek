@@ -609,6 +609,8 @@ let is_sat_slicing = ref false
 
 (* Option for proof logging *)
 let proof_logging = ref false
+let proof_logging_txt = ref false
+let proof_logging_time = ref 0.000
 
 (* Options for invariants *)
 let do_infer_inv = ref false

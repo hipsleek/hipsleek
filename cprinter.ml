@@ -11,6 +11,7 @@ open Mcpure_D
 open Gen.Basic 
 open Label_only
 open Log
+open Printf
 
 module P = Cpure
 module MP = Mcpure
@@ -2047,7 +2048,6 @@ let printer_of_proof_logging () =
     |SIMPLIFY _ -> "Simplify"
   in
  	try 
-	  let _= print_endline ((Globals.norm_file_name (List.hd !Globals.source_files))) in
 		let in_chn = open_in ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))) in
 		let tbl = input_value in_chn in
 		let logstr= ref "" in
@@ -2057,6 +2057,35 @@ let printer_of_proof_logging () =
 		let output="Proof Logging: \n"^(!logstr)^ "\nEnd of Proof logging" in
 		print_endline (output)
 	with _ -> report_error no_pos "File of proof logging cannot be opened." 
+
+let proof_log_to_text_file () =
+	if !Globals.proof_logging_txt then
+		let oc = 
+		(try Unix.mkdir "logs" 0o750 with _ -> ());
+		open_out ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
+		let string_of_log_type lt =
+			match lt with
+			| IMPLY _ -> "Imply"
+			| SAT _ -> "Sat"
+			| SIMPLIFY _ -> "Simplify"
+		in
+		let helper log=
+			"id: "^log.log_id^"\nProver: "^log.log_prover^"\nType: "^(match log.log_type with | Some x-> string_of_log_type x | None -> "")^"\nTime: "^
+			(string_of_float(log.log_time))^"\nResult: "^(match log.log_res with
+		  |BOOL b -> string_of_bool b
+		  |FORMULA f -> string_of_pure_formula f)^"\n" in
+		let i =ref 0 in
+		let break = ref true in
+		while !break=true; do
+				let ix=Log.proof_log_arr.(!i) in
+				if(ix <> "-1") then
+				let log=Hashtbl.find proof_log_tbl ix in
+				let _=fprintf oc "%s" (helper log) in
+				i := !i + 1
+				else  break := false
+			done;
+		close_out oc;
+	else ()	
 
 (* function to print a list of strings *) 
 let rec string_of_ident_list l c = match l with 

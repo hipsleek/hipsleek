@@ -1052,8 +1052,9 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
 		| LOG -> find_bool_proof_res sat_no
 	in 
 	let tstop = Gen.Profiling.get_time () in
-  let _ = Gen.Profiling.pop_time "tp_is_sat" 
-  in add_proof_log sat_no (string_of_prover !tp) (SAT f) (tstop -. tstart) (BOOL res); res
+  let _ = Gen.Profiling.pop_time "tp_is_sat" in
+	let _= add_proof_log sat_no (string_of_prover !tp) (SAT f) (tstop -. tstart) (BOOL res) in
+	res
 	
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) = 
 	Debug.no_2 "tp_is_sat_no_cache" 
@@ -1214,7 +1215,9 @@ let simplify (f : CP.formula) : CP.formula =
 		  in
 		  CP.set_il_formula_with_dept_list r rel_vars_lst
 	    else r
-			in add_proof_log simpl_no (string_of_prover !tp) (SIMPLIFY f) (tstop -. tstart) (FORMULA res); res
+			in 	
+			let _= add_proof_log simpl_no (string_of_prover !tp) (SIMPLIFY f) (tstop -. tstart) (FORMULA res) in
+			 res
       with | _ -> f)
 
 let simplify (f:CP.formula):CP.formula =
@@ -1537,7 +1540,11 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 				Prooftracer.add_pure_imply ante conseq r (string_of_prover !tp) (get_generated_prover_input ()) (get_prover_original_output ());
 				Prooftracer.pop_div ();
 			end
-	in add_proof_log imp_no (string_of_prover !tp) (IMPLY (ante, conseq)) (tstop -. tstart) (BOOL r); r
+	in
+	let tstop = Gen.Profiling.get_time () in
+  let _ = Gen.Profiling.pop_time "tp_is_sat" in 
+	let _= add_proof_log imp_no (string_of_prover !tp) (IMPLY (ante, conseq)) (tstop -. tstart) (BOOL r) in
+	 r
 ;;
 
 let tp_imply_no_cache ante conseq imp_no timeout process =

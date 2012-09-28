@@ -22,15 +22,29 @@ type proof_log = {
 
 let proof_log_tbl : (string, proof_log) Hashtbl.t = Hashtbl.create 200
 
+let proof_log_arr  = Array.create 200 "-1" (*For printing to text file with the original oder of proof execution*)
+let arr_index = ref 0 
+
+(*TO DO: check unique pno??*)
 let add_proof_log pno tp ptype time res =
-	if !Globals.proof_logging then
+	if !Globals.proof_logging || !Globals.proof_logging_txt then
+		let tstartlog = Gen.Profiling.get_time () in
 		let plog = {
 			log_id = pno;
 			log_prover = tp;
 			log_type = Some ptype;
 			log_time = time;
 			log_res = res; } in
-		Hashtbl.add proof_log_tbl pno plog
+		let _=Hashtbl.add proof_log_tbl pno plog in
+		let _= if(!Globals.proof_logging_txt) then
+			begin 
+			proof_log_arr.(!arr_index) <- pno;
+			arr_index := !arr_index +1
+			end		
+		in
+	let tstoplog = Gen.Profiling.get_time () in
+	let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
+	(* let _=print_endline ("log time: "^(string_of_float (tstoplog))^" and "^(string_of_float (tstartlog))) in ()	  *)
 	else ()
 	
 let find_bool_proof_res pno =
@@ -53,7 +67,7 @@ let proof_log_to_file () =
 	let out_chn = 
 		(try Unix.mkdir "logs" 0o750 with _ -> ());
 		open_out ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))) in
-	output_value out_chn proof_log_tbl
+	 output_value out_chn proof_log_tbl 
 	
 let file_to_proof_log () =
 	try 
@@ -61,3 +75,5 @@ let file_to_proof_log () =
 		let tbl = input_value in_chn in
 		Hashtbl.iter (fun k log -> Hashtbl.add proof_log_tbl k log) tbl
 	with _ -> report_error no_pos "File of proof logging cannot be opened."
+
+
