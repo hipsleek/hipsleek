@@ -58,10 +58,12 @@ lseg<p> == self=p
   or self::node<_,q>*q::lseg<p>
   inv true;
 
-void append(node x, node y)
+void append(ref node x, node y)
   infer[H,G1]
-  requires H(x)&y=null
-  ensures G1(x,y);//'
+// requires H(x)&y=null
+  /* ensures G1(x,y);//' */
+  requires H(x)*y::node<a,null>
+    ensures G1(x' ,y);//'
 
   /* requires x::ll<> * y::ll<> & x!=null */
   /* ensures  x::ll<> ;  */

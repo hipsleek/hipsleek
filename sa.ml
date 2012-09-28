@@ -1098,44 +1098,49 @@ let subst_cs hp_constrs par_defs=
 (*for par_defs*)
 let generalize_one_hp prog par_defs=
   (*collect definition for each partial definition*)
-  let obtain_and_norm_def args0 (a1,args,a3,a4,a5)=
+  let obtain_and_norm_def args0 (a1,args,a3,olf,orf)=
     let f=
-      match a4,a5 with
+      match olf,orf with
         | Some f, None -> f
         | None, Some f -> f
         | Some f1, Some f2 -> (*find which formula contains root args*)
+            let _ = Debug.ninfo_pprint ("lpdef: " ^ (Cprinter.prtt_string_of_formula f1)) no_pos in
+            let _ = Debug.ninfo_pprint ("rpdef: " ^ (Cprinter.prtt_string_of_formula f2)) no_pos in
             let ptrs1, _,_, _,_ = Infer.find_defined_pointers_raw prog f1 in
-            let ptrs_diff= Gen.BList.difference_eq CP.eq_spec_var args ptrs1 in
-            if ptrs_diff = [] then f1
+            (*assume root is the first args*)
+            (* let ptrs_diff= Gen.BList.difference_eq CP.eq_spec_var args ptrs1 in *)
+            (* if ptrs_diff = [] then f1 *)
+            if CP.mem_svl (List.hd args) ptrs1 then f1
             else
               (
                   let ptrs2, _,_, _,_ = Infer.find_defined_pointers_raw prog f2 in
-                  let ptrs_diff= Gen.BList.difference_eq CP.eq_spec_var args ptrs2 in
+                  (* let ptrs_diff= Gen.BList.difference_eq CP.eq_spec_var args ptrs2 in *)
                   (* (\*for debugging*\) *)
-                  (* let _ = Debug.info_pprint ("args: " ^ (!CP.print_svl args)) no_pos in *)
-                  (* let _ = Debug.info_pprint ("ldef: " ^ (!CP.print_svl ptrs1)) no_pos in *)
-                  (* let _ = Debug.info_pprint ("rdef: " ^ (!CP.print_svl ptrs2)) no_pos in *)
+                  let _ = Debug.ninfo_pprint ("args: " ^ (!CP.print_svl args)) no_pos in
+                  let _ = Debug.ninfo_pprint ("ldef: " ^ (!CP.print_svl ptrs1)) no_pos in
+                  let _ = Debug.ninfo_pprint ("rdef: " ^ (!CP.print_svl ptrs2)) no_pos in
                   (* (\*end for debugging*\) *)
-                  if ptrs_diff = [] then f2
+                  (* if ptrs_diff = [] then f2 *)
+                   if CP.mem_svl (List.hd args) ptrs2 then f2
                   else report_error no_pos "sa.obtain_def: can't happen 1")
         | None, None -> report_error no_pos "sa.obtain_def: can't happen 2"
     in
     (*normalize args*)
     let subst = List.combine args args0 in
     (CF.subst subst f)
-  in
-  let hp, args, _,_,_ = (List.hd par_defs) in
-  let defs = List.map (obtain_and_norm_def args) par_defs in
+    in
+    DD.info_pprint ">>>>>> generalize_one_hp: <<<<<<" no_pos;
+    let hp, args, _,_,_ = (List.hd par_defs) in
+    DD.info_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")") no_pos;
+    let defs = List.map (obtain_and_norm_def args) par_defs in
   (*make disjunction*)
-  let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 (CF.pos_of_formula f1))
-     (List.hd defs) (List.tl defs) in
-  DD.info_pprint ">>>>>> generalize_one_hp: <<<<<<" no_pos;
-  DD.info_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")=" ^
-                         (Cprinter.prtt_string_of_formula def) ) no_pos;
-  (hp, (CP.HPRelDefn hp, (*CF.formula_of_heap*)
-      (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, no_pos))
+    let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 (CF.pos_of_formula f1))
+      (List.hd defs) (List.tl defs) in
+    DD.info_pprint (" =: " ^ (Cprinter.prtt_string_of_formula def) ) no_pos;
+    (hp, (CP.HPRelDefn hp, (*CF.formula_of_heap*)
+          (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, no_pos))
  (*no_pos*),
-   def))
+          def))
 
 let generalize_hps_par_def prog par_defs=
   (*partition the set by hp_name*)
