@@ -2065,7 +2065,7 @@ let proof_log_to_text_file () =
 		open_out ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
 		let string_of_log_type lt =
 			match lt with
-			|IMPLY (ante, conseq) -> "Imply: " ^(string_of_pure_formula ante) ^"->" ^(string_of_pure_formula conseq)
+			|IMPLY (ante, conseq) -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
     	|SAT f-> "Sat: "^(string_of_pure_formula f) 
     	|SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
 		in
