@@ -2043,9 +2043,9 @@ let printer_of_view_decl (fmt: Format.formatter) (v: Cast.view_decl) : unit =
 (*function to print proof logging*)
 let printer_of_proof_logging () =
   let helper x= match x with 
-    |IMPLY y -> "Imply"
-    |SAT _-> "Sat" 
-    |SIMPLIFY _ -> "Simplify"
+    |IMPLY (ante, conseq) -> "Imply: " ^(string_of_pure_formula ante) ^"->" ^(string_of_pure_formula conseq)
+    |SAT f-> "Sat: "^(string_of_pure_formula f) 
+    |SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
   in
  	try 
 		let in_chn = open_in ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))) in
@@ -2065,25 +2065,18 @@ let proof_log_to_text_file () =
 		open_out ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
 		let string_of_log_type lt =
 			match lt with
-			| IMPLY _ -> "Imply"
-			| SAT _ -> "Sat"
-			| SIMPLIFY _ -> "Simplify"
+			|IMPLY (ante, conseq) -> "Imply: " ^(string_of_pure_formula ante) ^"->" ^(string_of_pure_formula conseq)
+    	|SAT f-> "Sat: "^(string_of_pure_formula f) 
+    	|SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
 		in
 		let helper log=
+			"\n--------------\n"^
 			"id: "^log.log_id^"\nProver: "^log.log_prover^"\nType: "^(match log.log_type with | Some x-> string_of_log_type x | None -> "")^"\nTime: "^
 			(string_of_float(log.log_time))^"\nResult: "^(match log.log_res with
 		  |BOOL b -> string_of_bool b
 		  |FORMULA f -> string_of_pure_formula f)^"\n" in
-		let i =ref 0 in
-		let break = ref true in
-		while !break=true; do
-				let ix=Log.proof_log_arr.(!i) in
-				if(ix <> "-1") then
-				let log=Hashtbl.find proof_log_tbl ix in
-				let _=fprintf oc "%s" (helper log) in
-				i := !i + 1
-				else  break := false
-			done;
+		let _= List.map (fun ix->let log=Hashtbl.find proof_log_tbl ix in
+		let _=fprintf oc "%s" (helper log) in ()) !proof_log_list in
 		close_out oc;
 	else ()	
 

@@ -1,5 +1,6 @@
 open Globals 
 open Gen.Basic
+open Printf
 
 module CP = Cpure
 
@@ -20,10 +21,9 @@ type proof_log = {
 	log_res : proof_res;
 }
 
-let proof_log_tbl : (string, proof_log) Hashtbl.t = Hashtbl.create 200
+let proof_log_tbl : (string, proof_log) Hashtbl.t = Hashtbl.create 700
 
-let proof_log_arr  = Array.create 200 "-1" (*For printing to text file with the original oder of proof execution*)
-let arr_index = ref 0 
+let proof_log_list  = ref [] (*For printing to text file with the original oder of proof execution*)
 
 (*TO DO: check unique pno??*)
 let add_proof_log pno tp ptype time res =
@@ -38,8 +38,7 @@ let add_proof_log pno tp ptype time res =
 		let _=Hashtbl.add proof_log_tbl pno plog in
 		let _= if(!Globals.proof_logging_txt) then
 			begin 
-			proof_log_arr.(!arr_index) <- pno;
-			arr_index := !arr_index +1
+			proof_log_list := !proof_log_list @ [pno];
 			end		
 		in
 	let tstoplog = Gen.Profiling.get_time () in
@@ -77,3 +76,9 @@ let file_to_proof_log () =
 	with _ -> report_error no_pos "File of proof logging cannot be opened."
 
 
+	(* let oc =                                                                                                                                                   *)
+	(* 	(try Unix.mkdir "logs" 0o750 with _ -> ());                                                                                                              *)
+	(* 	 open_out_gen [Open_creat; Open_text; Open_append] 0o640  ("logs/bach_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in *)
+	(* 			let _=fprintf oc "%s" (sat_no^"let is_sat\n") in                                                                                                     *)
+	(* 	close_out oc;	                                                                                                                                          *)
+		

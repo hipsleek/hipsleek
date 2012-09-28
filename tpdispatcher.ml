@@ -8,6 +8,7 @@ open Mcpure
 open Cpure
 open Mcpure_D
 open Log
+open Printf
 
 module CP = Cpure
 module MCP = Mcpure
@@ -923,7 +924,6 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let z3_is_sat f = Smtsolver.is_sat_ops pr_weak_z3 pr_strong_z3 f sat_no in
 
   let _ = Gen.Profiling.push_time "tp_is_sat" in
-	let tstart = Gen.Profiling.get_time () in
   let res = 
   match !tp with
 	| DP -> 
@@ -1051,9 +1051,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     | SPASS -> Spass.is_sat f sat_no
 		| LOG -> find_bool_proof_res sat_no
 	in 
-	let tstop = Gen.Profiling.get_time () in
-  let _ = Gen.Profiling.pop_time "tp_is_sat" in
-	let _= add_proof_log sat_no (string_of_prover !tp) (SAT f) (tstop -. tstart) (BOOL res) in
+	let _ = Gen.Profiling.pop_time "tp_is_sat" in
 	res
 	
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) = 
@@ -1727,6 +1725,7 @@ let simpl_pair rid (ante, conseq) =
 let is_sat (f : CP.formula) (sat_no : string): bool =
   proof_no := !proof_no+1 ;
   let sat_no = (string_of_int !proof_no) in
+	let tstart = Gen.Profiling.get_time () in		
   Debug.devel_zprint (lazy ("SAT #" ^ sat_no)) no_pos;
   Debug.devel_zprint (lazy (!print_pure f)) no_pos;
   let f = elim_exists f in
@@ -1735,7 +1734,10 @@ let is_sat (f : CP.formula) (sat_no : string): bool =
   else
 	let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
     (* let f = CP.drop_rel_formula f in *)
-	sat_label_filter (fun c-> tp_is_sat c sat_no) f
+	let res= sat_label_filter (fun c-> tp_is_sat c sat_no) f in
+	let tstop = Gen.Profiling.get_time () in
+	let _= add_proof_log sat_no (string_of_prover !tp) (SAT f) (tstop -. tstart) (BOOL res) in
+	res
 ;;
 
 let is_sat (f : CP.formula) (sat_no : string): bool =
@@ -1744,7 +1746,7 @@ let is_sat (f : CP.formula) (sat_no : string): bool =
    
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
-  proof_no := !proof_no + 1 ; 
+  proof_no := !proof_no + 1 ;
   let imp_no = (string_of_int !proof_no) in
   Debug.devel_zprint (lazy ("IMP #" ^ imp_no)) no_pos;  
   Debug.devel_zprint (lazy ("imply_timeout: ante: " ^ (!print_pure ante0))) no_pos;
