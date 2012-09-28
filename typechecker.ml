@@ -945,6 +945,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		  tmp_res2 
 		  else tmp_res2
 		  in
+		  let tmp_res2 = prune_ctx_failesc_list prog tmp_res2 in
                   let tmp_res3 = CF.push_exists_list_failesc_context vs_prim tmp_res2 in
                   let _ = CF.must_consistent_list_failesc_context "bind 7" tmp_res3  in
 		          let res = if !Globals.elim_exists then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in

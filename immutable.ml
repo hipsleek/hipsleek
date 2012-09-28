@@ -457,14 +457,16 @@ and propagate_imm_h_formula_x (f : h_formula) (imm : ann) : h_formula =
 		| ConstAnn _ -> imm
 		| _ -> f1.Cformula.h_formula_view_imm 
 	    end })
-    | DataNode f1 -> DataNode({f1 with h_formula_data_imm = 
-	match f1.Cformula.h_formula_data_imm with
+    | DataNode f1 -> DataNode({f1 with h_formula_data_imm =
+	(match f1.Cformula.h_formula_data_imm with
 	  | ConstAnn _ -> imm
 	  | _ -> begin
 	    match imm with 
 	      | ConstAnn _ -> imm
 	      | _ -> f1.Cformula.h_formula_data_imm 
-	  end })
+	  end);
+	   h_formula_data_param_imm = 
+	  List.map (fun c -> if (subtype_ann imm c) then c else imm) f1.Cformula.h_formula_data_param_imm})
     | Star f1 ->
 	      let h1 = propagate_imm_h_formula f1.h_formula_star_h1 imm in
 	      let h2 = propagate_imm_h_formula f1.h_formula_star_h2 imm in

@@ -480,20 +480,19 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 	  (* let subtyp = subtype_ann imm1 imm in *)
         if ((CP.mem p1 aset) (* && (subtyp) *)) then 
 	(* let field_ann = false in *)
-	      if not(!Globals.allow_field_ann) then
+	      
             if (isLend imm) || (isAccs imm) then (* not consuming the node *)
 	          let hole_no = Globals.fresh_int() in 
 	          [((Hole hole_no), f, [(f, hole_no)], Root)]
             else
-              [(HEmp, f, [], Root)]
-	      else
-	  (* with field level annotations *)
-            let new_f = update_ann f pimm1 pimm in
+            if (!Globals.allow_field_ann) then
+             let new_f = update_ann f pimm1 pimm in
             (* let _ = print_string ("\n(andreeac) spatial_ctx_extarct helper initial f: " ^ (Cprinter.string_of_h_formula f)) in *)
             (* let _ = print_string ("\n(andreeac) spatial_ctx_extarct helper new f: " ^ (Cprinter.string_of_h_formula new_f)) in *)
 	        [(new_f,f,[],Root)]
-        else 
-          []
+	        else
+              [(HEmp, f, [], Root)]
+              else []
     | ViewNode ({h_formula_view_node = p1;
 	             h_formula_view_imm = imm1;
 	             h_formula_view_perm = perm1;
@@ -502,7 +501,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
             (* if (subtype_ann imm1 imm) then *)
         (if (CP.mem p1 aset) then
               (* let _ = print_string("found match for LHS = " ^ (Cprinter.string_of_h_formula f) ^ "\n") in *)
-              if  ((isLend imm) || (isAccs imm)) && not(!Globals.allow_field_ann) then
+              if  ((isLend imm) || (isAccs imm)) (*&& not(!Globals.allow_field_ann)*) then
 		        (* let _ = print_string("imm = Lend " ^ "\n") in *)
                 let hole_no = Globals.fresh_int() in
                 (*[(Hole hole_no, matched_node, hole_no, f, Root, HTrue, [])]*)

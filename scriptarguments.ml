@@ -119,6 +119,7 @@ let common_arguments = [
 	("--dis-ann-vp", Arg.Clear Globals.ann_vp,"manual annotation of variable permissions");
 	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
 	("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
+	("--dis-field-ann", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
 	("--mem", Arg.Set Globals.allow_mem,"Enable the use of Memory Specifications");
 	("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
 	("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");

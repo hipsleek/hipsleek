@@ -1671,8 +1671,9 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
 	                let renamed_view_formula = rename_bound_vars forms in
 	                let renamed_view_formula = add_unfold_num renamed_view_formula uf in
 		            (* propagate the immutability annotation inside the definition *)
+		           (*let _ = print_string ("unfold pre subst: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in*)
 	                let renamed_view_formula = propagate_imm_formula renamed_view_formula imm  in
-
+        (*let _ = print_string ("unfold post subst: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in*)
 		            (*if any, propagate the fractional permission inside the definition *)
                     let renamed_view_formula = 
                       if (Perm.allow_perm ()) then
@@ -2019,7 +2020,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               let renamed_view_formula = rename_struc_bound_vars form in
 	          (****)  
               let renamed_view_formula = 
-	            if ((isImm imm) || (isLend imm) || (isAccs imm)) && not(!Globals.allow_field_ann) then 
+	            if ((isImm imm) || (isLend imm) || (isAccs imm)) (*&& not(!Globals.allow_field_ann)*) then 
 	              propagate_imm_struc_formula renamed_view_formula imm
 	            else
 	              renamed_view_formula
