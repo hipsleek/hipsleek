@@ -3006,7 +3006,7 @@ and heap_entail_struc_init_bug_inv_x (prog : prog_decl) (is_folding : bool)  (ha
     heap_entail_struc_init_bug_orig prog is_folding has_post cl conseq pos pid 
 
 and heap_entail_struc_init_bug_inv (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) =
-  Debug.ho_2 "heap_entail_struc_init_bug_inv" Cprinter.string_of_list_context Cprinter.string_of_struc_formula
+  Debug.no_2 "heap_entail_struc_init_bug_inv" Cprinter.string_of_list_context Cprinter.string_of_struc_formula
       (fun (ls,_) -> Cprinter.string_of_list_context ls) (fun a c -> heap_entail_struc_init_bug_inv_x prog is_folding has_post a c pos pid) cl conseq
 
 and heap_entail_struc_init_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) = 
@@ -3034,7 +3034,7 @@ and heap_entail_struc_init (prog : prog_decl) (is_folding : bool)  (has_post: bo
     | CF.FailCtx _ -> 0
     | CF.SuccCtx ctx0 -> List.length ctx0 in
   let pr_out (ctx_lst, pf) = string_of_int (length_ctx ctx_lst) in 
-  Debug.ho_1 "heap_entail_struc_init" (fun _ -> "?") pr_out (fun _ -> heap_entail_struc_init_x prog is_folding has_post cl conseq pos pid) prog
+  Debug.no_1 "heap_entail_struc_init" (fun _ -> "?") pr_out (fun _ -> heap_entail_struc_init_x prog is_folding has_post cl conseq pos pid) prog
 
 (* check entailment:                                          *)
 (* each entailment should produce one proof, be it failure or *)

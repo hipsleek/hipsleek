@@ -6,7 +6,7 @@ EXDIROFSLK=/home/bachle/slicing_minisat/sleekex
 JOBS = 0
 
 # dynlink should precede camlp4lib
-LIBS = unix,threads,str,graph,xml-light,dynlink,camlp4lib,$(MINISATDIR2)/MiniSAT
+LIBS = unix,threads,str,graph,xml-light,dynlink,camlp4lib
 LIBS2 = unix,threads,str,graph,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib,$(MINISATDIR2)/MiniSAT
 
 INCLUDES = -I,+ocamlgraph,-I,$(MINISATDIR2),-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,-cclib
