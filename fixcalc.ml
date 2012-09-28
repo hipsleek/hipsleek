@@ -141,7 +141,10 @@ let rec fixcalc_of_formula e = match e with
     " exists (" ^ (string_of_elems svs fixcalc_of_spec_var ",") ^ ": " ^ 
     fixcalc_of_h_formula h ^ op_and ^ fixcalc_of_mix_formula p ^ ")"
 
+(******************************************************************************)
+
 let fixcalc = "fixcalc"
+let fixcalc = "/home/thaitm/hg-repository/infer-rec/sleekex/bin/fixcalc"
 let fixcalc_old = "fixcalc_mod"
 
 let syscall cmd =
@@ -155,6 +158,7 @@ let syscall cmd =
   let _ = Unix.close_process (ic, oc) in
   (Buffer.contents buf)
 
+(******************************************************************************)
 
 let compute_inv name vars fml pf =
   if not !Globals.do_infer_inv then pf
@@ -188,6 +192,8 @@ let compute_inv name vars fml pf =
       new_pf)
     else pf
 
+(******************************************************************************)
+
 let rec remove_paren s n = if n=0 then "" else match s.[0] with
   | '(' -> remove_paren (String.sub s 1 (n-1)) (n-1)
   | ')' -> remove_paren (String.sub s 1 (n-1)) (n-1)
@@ -207,7 +213,7 @@ let rec is_rec pf = match pf with
   | CP.Exists (_,f,_,_) -> is_rec f
 
 let rec get_rel_vars pf = match pf with
-  | CP.BForm (bf,_) -> if CP.is_RelForm pf then CP.fv pf else []
+  | CP.BForm (bf,_) -> if CP.is_RelForm pf then fv_rel pf else []
   | CP.And (f1,f2,_) -> get_rel_vars f1 @ get_rel_vars f2
   | CP.AndList b -> fold_l_snd get_rel_vars b
   | CP.Or (f1,f2,_,_) -> get_rel_vars f1 @ get_rel_vars f2
@@ -217,29 +223,36 @@ let rec get_rel_vars pf = match pf with
 
 let substitute (e: CP.exp): (CP.exp * CP.formula list) = match e with
   | CP.Var _ -> (e, [])
-  | _ -> (
-    try 
+  | _ -> 
+    (try 
       let arb = List.hd (CP.afv e) in 
       let var = CP.fresh_spec_var_prefix "fc" arb in
       let var = CP.mkVar var no_pos in
       (var, [CP.mkEqExp var e no_pos])
     with _ -> (e,[]))
 
-let arr_para_order (rel: CP.formula) (rel_def: CP.formula) (ante_vars: CP.spec_var list) = match (rel,rel_def) with
+let arr_para_order (rel: CP.formula) (rel_def: CP.formula) 
+                   (ante_vars: CP.spec_var list) = 
+  match (rel,rel_def) with
   | (CP.BForm ((CP.RelForm (id,args,p), o1), o2), CP.BForm ((CP.RelForm (id_def,args_def,_), _), _)) -> 
     if id = id_def then 
       let new_args_def = 
-        let pre_args, post_args = List.partition (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) args_def in
+        let pre_args, post_args = 
+          List.partition 
+            (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) 
+          args_def 
+        in
         pre_args @ post_args 
       in
       let pairs = List.combine args_def args in
       let new_args = List.map (fun a -> List.assoc a pairs) new_args_def in
       let new_args, subs = List.split (List.map (fun a -> substitute a) new_args) in
-      (CP.BForm ((CP.RelForm (id,new_args,p), o1), o2), [CP.conj_of_list (List.concat subs) no_pos])
+      (CP.BForm ((CP.RelForm (id,new_args,p), o1), o2), 
+        [CP.conj_of_list (List.concat subs) no_pos])
     else 
       let args, subs = List.split (List.map (fun a -> substitute a) args) in
       (CP.BForm ((CP.RelForm (id,args,p), o1), o2), [CP.conj_of_list (List.concat subs) no_pos])
-  | _ -> report_error no_pos "Expecting relation formulae"
+  | _ -> report_error no_pos "Expected relation formulas"
 
 let arr_args rcase_orig rel ante_vars = 
   let rels = CP.get_RelForm rcase_orig in
@@ -286,35 +299,41 @@ let propagate_fml rcase bcase =
       (fun _ _ -> propagate_fml rcase bcase) rcase bcase
 
 let propagate_rec_helper rcase_orig bcase_orig rel ante_vars =
-  let rel_vars = CP.remove_dups_svl (get_rel_vars rcase_orig) in
   let rcase = TP.simplify_raw (CP.drop_rel_formula rcase_orig) in
   let rels = CP.get_RelForm rcase_orig in
-  let rels,lp = List.split (List.map (fun r -> arr_para_order r rel ante_vars) rels) in
+  let rels,lp = List.split 
+                (List.map (fun r -> arr_para_order r rel ante_vars) rels) in
+  let rel_vars = CP.remove_dups_svl (get_rel_vars rcase_orig) in
   let exists_vars = CP.diff_svl (CP.fv rcase) rel_vars in
-  let rcase2 = TP.simplify_raw (CP.mkExists exists_vars rcase None no_pos) in
+  let exists_vars = List.filter (fun x -> not(CP.is_rel_var x)) exists_vars in
   try
-    let pairs = List.combine (CP.fv rel) rel_vars in
+    let rcase2 = TP.simplify_raw (CP.mkExists exists_vars rcase None no_pos) in
+    let pairs = List.combine (fv_rel rel) rel_vars in
     let bcase = CP.subst pairs bcase_orig in
-    let pf = List.concat (List.map (fun b -> List.concat 
-        (List.map (fun r -> propagate_fml r b) (CP.list_of_conjs rcase2))) (CP.list_of_conjs bcase)) in
+    let pf = List.concat (List.map (fun b -> 
+      List.concat (List.map (fun r -> propagate_fml r b) (CP.list_of_conjs rcase2))) 
+      (CP.list_of_conjs bcase)) 
+    in
     CP.conj_of_list ([rcase]@rels@pf@(List.concat lp)) no_pos
   with _ -> rcase_orig
 
 (* TODO: Need to handle computed relation in the future *)
 let rec get_other_branches or_fml args = match or_fml with
   | Or fml -> 
-    (get_other_branches fml.formula_or_f1 args) @ (get_other_branches fml.formula_or_f2 args)
+    (get_other_branches fml.formula_or_f1 args) @ 
+    (get_other_branches fml.formula_or_f2 args)
   | _ ->
-    let _,p,_,_,a = split_components or_fml in (*TODO CHECK: a*)
+    (* TODO CHECK: a*)
+    let _,p,_,_,a = split_components or_fml in 
     let conjs = CP.list_of_conjs (MCP.pure_of_mix p) in
     List.filter (fun pure -> CP.subset args (CP.fv pure)) conjs
 
-(* TODO: Filter wrong def *)
-(* TODO: Default number of disjs is 1 *)
 let propagate_rec pfs rel ante_vars specs = match CP.get_rel_id rel with
-  | None -> (pfs,1)
+  | None -> report_error no_pos "Expected a relation"
   | Some ivs ->
     let (rcases, bcases) = List.partition is_rec pfs in
+
+    (* TODO *)
     let or_post = get_or_post specs (CP.get_rel_id_list rel) in
     let bcases = 
       begin
@@ -324,53 +343,149 @@ let propagate_rec pfs rel ante_vars specs = match CP.get_rel_id rel with
         let other_branches = get_other_branches or_fml (CP.get_rel_args rel) in
         let other_branches = List.map (fun p -> CP.mkNot_s p) other_branches in
         let pure_other_branches = CP.conj_of_list other_branches no_pos in
-        List.filter (fun b -> TP.is_sat_raw (MCP.mix_of_pure (CP.mkAnd b pure_other_branches no_pos))) bcases
+        List.filter (fun b -> TP.is_sat_raw (MCP.mix_of_pure 
+          (CP.mkAnd b pure_other_branches no_pos))) bcases
       | _ -> bcases
       end
     in
-(*    let bcases = List.map (fun b -> TP.simplify_raw b) bcases in*)
-    let no_of_disjs = List.map (fun b -> let disjs = CP.list_of_disjs b in 
-        let cond = List.exists (fun d -> let conjs = CP.list_of_conjs d in 
-            List.exists (fun c -> CP.is_eq_const c) conjs) disjs in 
-        if cond then 1 else List.length disjs) bcases in 
 
-    (*let no_of_disjs = List.map (fun b -> CP.no_of_disjs b) bcases in*)
+    let no_of_disjs = 
+      List.map (fun b -> 
+        let disjs = CP.list_of_disjs b in 
+        (* TODO *)
+        let cond = List.exists (fun d -> 
+            let conjs = CP.list_of_conjs d in 
+            List.exists (fun c -> CP.is_eq_const c) conjs
+          ) disjs 
+        in 
+        if cond then 1 else List.length disjs
+      ) bcases 
+    in
     let no_of_disjs = List.fold_left (fun a b -> max a b) 1 no_of_disjs in 
 
+    (* TODO: drop rel, simplify and add rel and propagate formula *)
     match bcases with
-    | [bcase] -> ([bcase] @ (List.map (fun rcase -> propagate_rec_helper rcase bcase rel ante_vars) rcases), no_of_disjs)
-    | _ -> (bcases @ (List.map (fun rcase -> arr_args rcase rel ante_vars) rcases), no_of_disjs)
-(*      let new_bcases = remove_weaker_bcase bcases in
-      new_bcases @ (List.map (fun rcase -> arr_args rcase rel ante_vars) rcases)*)
+    | [bcase] -> ([bcase] @ (List.map (fun rcase -> 
+      propagate_rec_helper rcase bcase rel ante_vars) rcases), no_of_disjs)
+    | _ -> (bcases @ (List.map (fun rcase -> 
+                        arr_args rcase rel ante_vars) rcases), no_of_disjs)
+
+let compute_def (rel_fml, pf, no) ante_vars =
+  let (name,vars) = match rel_fml with
+    | CP.BForm ((CP.RelForm (name,args,_),_),_) -> 
+      (CP.name_of_spec_var name, (List.concat (List.map CP.afv args)))
+    | _ -> report_error no_pos 
+              ("Wrong format: " ^ (!CP.print_formula rel_fml) ^ "\n")
+  in
+
+  let pre_vars, post_vars = 
+      List.partition (fun v -> List.mem v ante_vars) vars in
+
+  try
+    let rhs = fixcalc_of_pure_formula pf in 
+    let input_fixcalc =  
+        name ^ ":={[" 
+      ^ (string_of_elems pre_vars fixcalc_of_spec_var ",") ^ "] -> "
+      ^ "[" ^ (string_of_elems post_vars fixcalc_of_spec_var ",") ^ "] -> []: " 
+      ^ rhs ^ "\n};"
+    in input_fixcalc
+  with _ -> report_error no_pos "Error in computing fixpoint"
+
+let compute_cmd rel_defs = 
+  let nos = List.map (fun (_,_,a) -> a) rel_defs in
+  let nos = string_of_elems nos string_of_int "," in
+
+  let rels = List.map (fun (a,_,_) -> 
+                CP.name_of_spec_var (CP.name_of_rel_form a)) rel_defs in
+  let names = string_of_elems rels (fun x -> x) "," in
+
+  "\nbottomupgen([" ^ names ^ "], [" ^ nos ^ "], SimHeur);"
+
+let compute_fixpoint_aux rel_defs ante_vars subs = 
+  let input_fixcalc = 
+    let def = List.fold_left (fun x y -> x ^ (compute_def y ante_vars)) "" rel_defs in
+    let cmd = compute_cmd rel_defs in 
+    def ^ cmd
+  in
+
+  DD.ninfo_pprint ("fixpoint input = " ^ input_fixcalc) no_pos;
+  DD.devel_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
+  DD.devel_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
+
+  (* Call the fixpoint calculation *)
+  let output_of_sleek = "fixcalc.inf" in
+  let oc = open_out output_of_sleek in
+  Printf.fprintf oc "%s" input_fixcalc;
+  flush oc;
+  close_out oc;
+  let res = syscall (fixcalc ^ " " ^ output_of_sleek) in
+
+  let res = remove_paren res (String.length res) in
+  DD.ninfo_pprint ("res = " ^ res ^ "\n") no_pos;
+
+  (* Handle result *)
+  DD.devel_pprint ("Result of fixcalc: " ^ res) no_pos;
+  let fixpoints = Parse_fix.parse_fix res in
+  DD.devel_hprint (add_str "Result of fixcalc (parsed): " 
+    (pr_list !CP.print_formula)) fixpoints no_pos;
+ 
+  let rels = List.map (fun (a,_,_) -> a) rel_defs in
+  let res = 
+    try List.combine rels fixpoints
+    with _ -> report_error no_pos "Error in compute_fixpoint_aux"
+  in
+  DD.ninfo_pprint ("res(b4): " ^ 
+    (pr_list (pr_pair !CP.print_formula !CP.print_formula) res)) 
+    no_pos;
+  let res = List.map (fun (a_rel,fixpoint) -> 
+      match a_rel with
+      | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
+        let subst_arg = 
+          try List.assoc name subs
+          with _ -> []
+        in
+        let subst_arg = List.map (fun (x,y) -> (y,x)) subst_arg in
+        if subst_arg = [] then (a_rel, fixpoint)
+        else (CP.subst subst_arg a_rel, CP.subst subst_arg fixpoint)
+      | _ -> report_error no_pos "Expected a relation"
+    ) res in
+  DD.ninfo_pprint ("res(af): " ^ 
+    (pr_list (pr_pair !CP.print_formula !CP.print_formula) res)) 
+    no_pos;
+  res
 
 let helper (rel, pfs) ante_vars specs =
   (* Remove bag constraints *)
   Debug.ninfo_hprint (add_str "pfs(b4):" (pr_list !CP.print_formula)) pfs no_pos;
   let pfs = List.map (fun p -> 
-      let p = TP.simplify_raw p in
       let bag_vars = List.filter CP.is_bag_typ (CP.fv p) in
-      CP.remove_cnts bag_vars p) pfs
+      if bag_vars == [] then p else 
+        let p = TP.simplify_raw p in
+        CP.remove_cnts bag_vars p
+      ) pfs
   in
   Debug.ninfo_hprint (add_str "pfs(af):" (pr_list !CP.print_formula)) pfs no_pos;
 
+  (* Propagation *)
   let pfs,no = propagate_rec pfs rel ante_vars specs in
 
-  (* Quantify out *)
+  (* Make existence *)
   let pfs = List.map (fun p -> 
-    let exists_vars = CP.diff_svl (CP.fv p) (fv_rel rel) in 
+    let exists_vars = CP.diff_svl (CP.fv p) (CP.fv rel) in
+    let exists_vars = List.filter (fun x -> not(CP.is_rel_var x)) exists_vars in
     CP.mkExists exists_vars p None no_pos) pfs 
   in
 
-  (* Handle disjs *)
-  match pfs with
-  | [] -> []
-  | _ -> 
-    let def = List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (CP.mkFalse no_pos) pfs in
-    [(rel, def, no)]
+  (* disjunctive def *)
+  let def = List.fold_left 
+          (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (CP.mkFalse no_pos) pfs in
+  [(rel, def, no)]
   
 let rec unify_rels rel a_rel = match rel, a_rel with
-  | (CP.BForm ((CP.RelForm (name1,args1,p1),p2),p3), f1), (CP.BForm ((CP.RelForm (name2,args2,_ ),_ ),_ ), f2) ->
-    let subst_arg = List.combine (List.map CP.exp_to_spec_var args2) (List.map CP.exp_to_spec_var args1) in
+  | (CP.BForm ((CP.RelForm (name1,args1,p1),p2),p3), f1), 
+    (CP.BForm ((CP.RelForm (name2,args2,_ ),_ ),_ ), f2) ->
+    let subst_arg = List.combine (List.map CP.exp_to_spec_var args2) 
+                                 (List.map CP.exp_to_spec_var args1) in
     let f2 = CP.subst subst_arg f2 in
     f2
   | _ -> report_error no_pos ("Unexpected format\n") 
@@ -378,106 +493,72 @@ let rec unify_rels rel a_rel = match rel, a_rel with
 let rec preprocess rels = match rels with
   | [] -> []
   | r::rs -> 
-    let name = CP.name_of_rel_form (snd r) in
+    let rel = snd r in
+    let name = CP.name_of_rel_form rel in
     let same_rels, diff_rels = 
       List.partition (fun r0 -> 
         CP.eq_spec_var (CP.name_of_rel_form (snd r0)) name) rs in
     let unified_rels = 
       if same_rels == [] then [(snd r, [fst r])]
       else 
-        let res = List.map (fun r0 -> if CP.equalFormula (snd r) (snd r0) then (fst r0)
-                                      else unify_rels r r0) same_rels in
+        let res = List.map (fun r0 -> 
+                    if CP.equalFormula rel (snd r0) then (fst r0)
+                    else unify_rels r r0) same_rels in
         [(snd r, (fst r) :: res)]
     in
     unified_rels @ (preprocess diff_rels)
 
-let compute_fixpoint_one (rel_fml, pf, no, ante_vars) =
-(*  if CP.isConstFalse pf then (rel_fml, CP.mkFalse no_pos, CP.mkFalse no_pos) *)
-(*  else  *)
-  let (name,vars) = match rel_fml with
-    | CP.BForm ((CP.RelForm (name,args,_),_),_) -> (CP.name_of_spec_var name, (List.concat (List.map CP.afv args)))
-    | _ -> report_error no_pos ("Wrong format: " ^ (!CP.print_formula rel_fml) ^ "\n")
-  in
-  let pre_vars, post_vars = List.partition (fun v -> List.mem v ante_vars) vars in
-  try
-    let rhs = fixcalc_of_pure_formula pf in 
-    let input_fixcalc =  name ^ ":={[" ^ (string_of_elems pre_vars fixcalc_of_spec_var ",") ^ "] -> "
-      ^ "[" ^ (string_of_elems post_vars fixcalc_of_spec_var ",") ^ "] -> []: " 
-      ^ rhs ^ "\n};"
-    in input_fixcalc
-  with _ -> report_error no_pos "Unexpected error in computing fixpoint"
-
-let get_rel_name rel = match rel with
- | CP.BForm ((CP.RelForm (name,args,_),_),_) -> CP.name_of_spec_var name
- | _ -> report_error no_pos ("Wrong format: " ^ (!CP.print_formula rel) ^ "\n")
-
-let compute_bottomup_inp rel = 
-  if rel!=[] then 
-    let first_elm = 
-      match (List.hd rel) with 
-      | (f,_,_,_) -> (get_rel_name f) 
-    in 
-    "bottomupgen([" ^ (List.fold_left (fun x (y,_,_,_) -> 
-    (x ^ "," ^ (get_rel_name y))) first_elm (List.tl rel)) ^ "]);"
-  else report_error no_pos "No relation provided"
-
-let compute_fixpoint_aux rel = 
-  let no = List.fold_left (fun a b -> max a b) 1 (List.map (fun (_,_,a,_) -> a) rel) in
-  let input_fixcalc, fixcalc = 
-    if no=1 then
-      (List.fold_left (fun x y -> x ^ (compute_fixpoint_one y)) "" rel) ^ (compute_bottomup_inp rel), fixcalc
-    else
-      List.fold_left (fun x (a,b,c,d) -> x ^ (compute_fixpoint_one (a,b,c,d) ^ 
-      "\n\nFix1:=bottomup(" ^ (get_rel_name a) ^ "," ^ (string_of_int c) ^ ",SimHeur);\nFix1;\n")) "" rel, fixcalc_old
-  in
-  DD.ninfo_pprint ("fixpoint input = " ^ input_fixcalc) no_pos;
-  DD.devel_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
-  DD.devel_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
-  let output_of_sleek = "fixcalc.inf" in
-  let oc = open_out output_of_sleek in
-  Printf.fprintf oc "%s" input_fixcalc;
-  flush oc;
-  close_out oc;
-  let res = syscall (fixcalc ^ " " ^ output_of_sleek) in
-  let res = remove_paren res (String.length res) in
-  (*print_endline ("RES: " ^ res);*)
-  DD.ninfo_pprint ("res = " ^ res ^ "\n") no_pos;
-  DD.devel_pprint ("Result of fixcalc: " ^ res) no_pos;
-  let fixpoint = Parse_fix.parse_fix res in
-  DD.devel_hprint (add_str "Result of fixcalc (parsed): " (pr_list !CP.print_formula)) fixpoint no_pos;
-  (* match fixpoint with  *)
-  (* | [post] ->  *)
-  (* 	(match (List.hd rel) with  *)
-  (* 	  | (f,_,_) -> [(f, post, CP.mkTrue no_pos)]  *)
-  (* 	  | _ -> report_error no_pos "Error") *)
-  (* | _ -> report_error no_pos "Expecting a pair of pre-post" *)
- 
-  let fixpoint_rel = 
-    try List.combine fixpoint rel 
-    with _ -> report_error no_pos "Error in compute_fixpoint_aux" 
-  in
-  List.map (fun x ->
-	  match x with
-    | (post, (rel,_,_,_)) -> (rel, post)
-    (*| _ -> report_error no_pos "Expecting a post"*)
-	) fixpoint_rel
+let arrange_para input_pairs ante_vars =
+  let pairs, subs = List.split 
+    (List.map (fun (r,pfs) ->
+      match r with
+      | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
+        let pre_args, post_args = 
+          List.partition 
+            (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) 
+          args
+        in
+        let new_args = pre_args @ post_args in
+        if new_args = args then ((r,pfs),[])
+        else
+          let subst_arg = List.combine (List.map CP.exp_to_spec_var args) 
+                                       (List.map CP.exp_to_spec_var new_args) 
+          in
+          ((CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3), 
+            List.map (fun x -> CP.subst subst_arg x) pfs),[(name,subst_arg)])
+      | _ -> report_error no_pos "Expected a relation"
+    ) input_pairs)
+  in 
+  pairs, List.concat subs
 
 let compute_fixpoint_xx input_pairs_num ante_vars specs =
 (*  let input_pairs_rec = List.map (fun (p,r) -> is_rec p) input_pairs in*)
 (*  let is_recur = List.fold_left (||) false input_pairs_rec in*)
 (*    if is_recur then *)
   DD.ninfo_pprint ("input_pairs_num: " ^ 
-    (pr_list (pr_pair !CP.print_formula !CP.print_formula) input_pairs_num)) no_pos;
+    (pr_list (pr_pair !CP.print_formula !CP.print_formula) input_pairs_num)) 
+    no_pos;
 
   let pairs = preprocess input_pairs_num in
 
-  let triples = List.concat (List.map (fun pair -> helper pair ante_vars specs) pairs) in
+  DD.ninfo_pprint ("input_pairs(b4): " ^ 
+    (pr_list (pr_pair !CP.print_formula (pr_list !CP.print_formula)) pairs)) 
+    no_pos;
 
-  let rel_defs = List.map (fun (rel,def,no) -> (rel,def,no,ante_vars)) triples in
-  compute_fixpoint_aux rel_defs
+  let pairs, subs = arrange_para pairs ante_vars in
+
+  DD.ninfo_pprint ("input_pairs(af): " ^ 
+    (pr_list (pr_pair !CP.print_formula (pr_list !CP.print_formula)) pairs)) 
+    no_pos;
+
+  (* TODO: arrange args of rel and substitute *)
+  let rel_defs = List.concat 
+    (List.map (fun pair -> helper pair ante_vars specs) pairs) in
+
+  compute_fixpoint_aux rel_defs ante_vars subs
 
 let compute_fixpoint_x input_pairs ante_vars specs =
-  let is_bag_cnt rel = List.exists CP.is_bag_typ (fv_rel rel) in
+  let is_bag_cnt rel = List.exists CP.is_bag_typ (CP.fv rel) in
   let input_pairs_bag, input_pairs_num = 
     List.partition (fun (p,r) -> is_bag_cnt r) input_pairs 
   in
@@ -493,6 +574,7 @@ let compute_fixpoint (i:int) input_pairs ante_vars specs =
   let pr1 = pr_list (pr_pair pr0 pr0) in
   let pr2 = !CP.print_svl in
   DD.no_2_num i "compute_fixpoint" pr1 pr2 (pr_list (pr_triple pr0 pr0 pr0)) 
-      (fun _ _ -> compute_fixpoint_x input_pairs ante_vars specs) input_pairs ante_vars
+    (fun _ _ -> compute_fixpoint_x input_pairs ante_vars specs) 
+      input_pairs ante_vars
 
 
