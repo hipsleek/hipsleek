@@ -879,16 +879,17 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 
 		  let prog = if !infer_slicing then slicing_label_inference_program prog else prog in
 
-		  (* let _ = print_string ("\ntrans_prog: Iast.prog_decl: " ^ (Iprinter.string_of_program prog) ^ "\n") in *)
+		  (*let _ = print_string ("\ntrans_prog: Iast.prog_decl: " ^ (Iprinter.string_of_program prog) ^ "\n") in *)
 		  
           (* let _ =  print_endline " after case normalize" in *)
           (* let _ = I.find_empty_static_specs prog in *)
+
 		  let tmp_views = order_views prog.I.prog_view_decls in
 		  let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
 		  let cviews = List.map (trans_view prog) tmp_views in
 		  (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
 		  let crels = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
-          let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT,rd.I.rel_name)) prog.I.prog_rel_decls in
+	          let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT,rd.I.rel_name)) prog.I.prog_rel_decls in
 		  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
 		  (* let _ = print_string "trans_prog :: trans_rel PASSED\n" in *)
 		  let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
@@ -4091,11 +4092,8 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             IF.formula_base_and = a;
             IF.formula_base_pos = pos} ->(
             let rl = res_retrieve stab clean_res fl in
-            let _ = if sep_collect then  (gather_type_info_pure prog p stab; gather_type_info_heap prog h stab) else () in 					
-            let _ = List.map helper_one_formula a in
-            (*let _ = print_string ("Iform: "^(Iprinter.string_of_formula f0) ^"\n" ) in*)
-            let ch = linearize_formula prog f0 stab in
-            (*let _ = print_string ("Iform: "^(Cprinter.string_of_formula ch) ^"\n" ) in*)					
+            let _ = if sep_collect then  (gather_type_info_pure prog p stab; gather_type_info_heap prog h stab) else () in 		    let _ = List.map helper_one_formula a in          
+            let ch = linearize_formula prog f0 stab in					
             (*let ch1 = linearize_formula prog false [] f0 stab in*)
             let _ = 
               if sep_collect then (
@@ -4126,7 +4124,9 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
                 IF.formula_base_pos = pos; } in
             (* let _ = print_endline ("trans_formula: Exists: before linearize:" *)
             (*                        ^ " ### stab = " ^ (string_of_stab stab )) in *)
+            (*let _ = print_string ("Iform: "^(Iprinter.string_of_formula f1) ^"\n" ) in*)
             let ch = linearize_formula prog f1 stab in
+            (*let _ = print_string ("Cform: "^(Cprinter.string_of_formula ch) ^"\n" ) in*)
             let qsvars = List.map (fun qv -> trans_var qv stab pos) qvars in
             let ch = CF.push_exists qsvars ch in
             let _ = if sep_collect then
@@ -4144,8 +4144,9 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
   (*let cf = Mem.compact_nodes_with_same_name_in_formula cf in*)
   (*TO CHECK: temporarily disabled*) 
   (* let cf = CF.merge_partial_heaps cf in (\*ENABLE THIS for partial fields*\) *)
-
+  (*let _ = print_string ("\nbefore ann: "^ Cprinter.string_of_formula cf) in*)
   let cf = if (!Globals.allow_field_ann) then add_param_ann_constraints_formula cf else cf in
+  (*let _ = print_string ("\nafter ann: "^ Cprinter.string_of_formula cf) in*)
    cf
 
 and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_table) =
@@ -5741,7 +5742,8 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
           let ft = cperm_typ () in
           let gather_type_info_ann c stab = match c with
             | IF.ConstAnn _ -> ()
-            | IF.PolyAnn ((i,_),_) -> ignore(gather_type_info_var i stab AnnT pos) in
+            | IF.PolyAnn ((i,_),_) -> ignore(let _ = (gather_type_info_var i stab AnnT pos) in ())
+          in
           let rec gather_type_info_param_ann lst stab = match lst with
             | [] -> ()
             | (Some h)::t -> gather_type_info_ann h stab;
@@ -5753,7 +5755,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
           let _ = gather_type_info_perm perm stab in
           let _ = gather_type_info_ann ann stab in
           let _ = if (!Globals.allow_field_ann) then gather_type_info_param_ann ann_param stab else () in
-		  (* let _ = print_string ("\n[gather_type_info_heap_x] input formula = " ^ Iprinter.string_of_h_formula h0) in *)
+		  (*let _ = print_string ("\n[gather_type_info_heap_x] input formula = " ^ Iprinter.string_of_h_formula h0) in *)
 		  (* An Hoa : Deal with the generic pointer! *)
 		  if (c = Parser.generic_pointer_type_name) then 
 			(* Assumptions:

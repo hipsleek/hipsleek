@@ -3178,7 +3178,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	end	in
   helper_inner 8 ctx_00 conseq 
   
-and heap_entail_with_mem (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula) pos 
+(*and heap_entail_with_mem (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula) pos 
 : (list_context * proof) =
  match ctx0 with
   | OCtx (ctx1,ctx2) -> heap_entail_conjunct prog is_folding ctx0 conseq [] pos
@@ -3207,7 +3207,7 @@ and heap_entail_with_mem (prog : prog_decl) (is_folding : bool)  (ctx0 : context
 		(mkFailCtx_simple msg estate conseq pos , Failure)
 	with _ as e -> let msg = (Printexc.to_string e) in 
 			(mkFailCtx_simple msg estate conseq pos , Failure))
-			
+*)			
 (*and heap_entail_mem_match (prog: prog_decl) (is_folding : bool) (ctx_0 : context) (conseq : formula) pos : (list_context * proof) =
 	let rec collect_data_nodes (f : h_formula) = match f with
 	| Star { h_formula_star_h1 = h1; h_formula_star_h2 = h2}
@@ -3527,6 +3527,9 @@ and heap_entail_one_context prog is_folding  ctx conseq (tid: CP.spec_var option
 (*only struc_formula can have some thread id*)
 and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : context) (conseq : formula) pos : (list_context * proof) =
   Debug.devel_zprint (lazy ("heap_entail_one_context:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)^"\n")) pos;
+       let ctx = CF.transform_context (fun es -> 
+	      CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}) ctx 
+	      in
     if isAnyFalseCtx ctx then (* check this first so that false => false is true (with false residual) *)
       (SuccCtx [ctx], UnsatAnte)
     else if isStrictConstTrue conseq then (SuccCtx [ctx], TrueConseq)
@@ -3537,6 +3540,7 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
       if isAnyFalseCtx ctx then
         (SuccCtx [ctx], UnsatAnte)
       else
+  
         (*if !Globals.allow_field_ann then heap_entail_with_mem prog is_folding ctx conseq pos
   	else*) heap_entail_after_sat prog is_folding ctx conseq pos ([])
 
@@ -4051,6 +4055,11 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
                         (* let _ = print_endline ("**********************************") in *)
 		                heap_entail_conjunct prog is_folding  c new_conseq []  pos) cl 
 	                in
+	                				let cl = List.map
+						  (fun c -> CF.transform_context (fun es -> 
+				  CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}) c)
+				  		  cl
+				  in
 	                let res_ctx, res_prf = List.split res in
 	                let res_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) res_prf in
 	                let res_ctx = fold_context_left res_ctx in 
@@ -4498,6 +4507,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 			              (* first add the frame h2_rest*[] *) 
 		                  let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH h2_rest f pos 23)) cl in
 			              (* next add the frame h1;[]*)
+			          
 		                  let cl =
 			                if not(consume_heap conseq)  && not(drop_read_phase) then
 			                  List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH h1 f pos)) cl 
@@ -6418,6 +6428,14 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
       List.fold_left Immutable.mkAndOpt None f_lst in
     (* construct two formulae for lhs and, respectively rhs, combining the constraints collected from both node ann and field ann *)
     let (r, ann_lhs, ann_rhs) = (r && rl, join_ann_constr ann_lhs param_ann_lhs, join_ann_constr ann_rhs param_ann_rhs) in
+    (* If the matched view args are param-ann check those as well*)
+    (*let l_args_ann = List.filter (fun c -> CP.is_ann_type (CP.type_of_spec_var c)) l_args in 
+    let r_args_ann = List.filter (fun c -> CP.is_ann_type (CP.type_of_spec_var c)) r_args in
+    let (rvl, view_param_ann_lhs, view_param_ann_rhs) =  if (!allow_field_ann) 
+    then Mem.subtype_sv_ann_gen_list es_impl_vars l_args_ann r_args_ann
+    else (true, None,None) in
+    let (r, ann_lhs, ann_rhs) = (r && rvl,Immutable.mkAndOpt ann_lhs view_param_ann_lhs, Immutable.mkAndOpt ann_rhs view_param_ann_rhs)
+    in*)
      (*let _ = print_string("cris: ann_lhs = " ^ (pr_opt Cprinter.string_of_pure_formula ann_lhs) ^ "\n") in *)
      (*let _ = print_string("cris: ann_rhs = " ^ (pr_opt Cprinter.string_of_pure_formula ann_rhs) ^ "\n") in *)
     if r == false 
@@ -8861,6 +8879,14 @@ let heap_entail_list_partial_context_init_x (prog : prog_decl) (is_folding : boo
   Gen.Profiling.push_time "entail_prune";  
   if cl==[] then ([],UnsatAnte)
   else begin
+  (*let cl = 
+                  if(!Globals.allow_field_ann) then
+                  let idf = (fun c -> c) in
+		  CF.transform_list_partial_context (
+		  (fun es -> CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}),idf) 
+		  cl
+		  else cl
+		  in*)
   let cl = reset_original_list_partial_context cl in
   let cl_after_prune = prune_ctx_list prog cl in
   let conseq = prune_preds prog false conseq in

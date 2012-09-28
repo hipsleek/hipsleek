@@ -1,5 +1,5 @@
 (* asankhs:  Created on 03-Sep-2012 for Memory Specifications *)
-(* Uses Field Annotations (Immutable) and Bag Constraints (Mona), run with --field-ann -tp om *)
+(* Uses Field Annotations (Immutable) and Bag Constraints (Mona), run with --mem --field-ann -tp om *)
 
 open Globals
 open Gen.Basic
@@ -559,6 +559,7 @@ let rec compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.sp
  	          | CF.DataNode { CF.h_formula_data_name = name1;
  		                      CF.h_formula_data_node = v1;
  		                      CF.h_formula_data_param_imm = param_ann1;
+ 		                      CF.h_formula_data_arguments = h1args;
  		                    } ->
  	              let aset_sv = Context.get_aset aset v1 in
                   let res_h1, res_h2,res_p = 
@@ -568,10 +569,12 @@ let rec compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.sp
  		                              CF.h_formula_data_param_imm = param_ann2; 
  		                              CF.h_formula_data_arguments = h2args;} ->
                         (* h1, h2 nodes; check if they can be join into a single node. If so, h1 will contain the updated annotations, while 
-                           h2 will be replaced by "true". Otherwise both data nodes will remain unchanged *)
+                           h2 will be replaced by "emp". Otherwise both data nodes will remain unchanged *)
  		                  if (String.compare name1 name2 == 0) && ((CP.mem v2 aset_sv) || (CP.eq_spec_var v1 v2)) then
  			                let compatible, new_param_imm = join_ann param_ann1 param_ann2 in
- 			                match h1 with (* this match is to avoid the rewriting of all h1 parameters*)
+ 			                (* compact to keep the updated node*)
+	                                if(not(CP.is_primed v2) || (CP.is_primed v1)) then
+ 			                (match h1 with (* this match is to avoid the rewriting of all h1 parameters*)
  			                  | CF.DataNode h -> 
 				                  if (compatible == true) then 
 				                  let comb_list = 
@@ -581,7 +584,19 @@ let rec compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.sp
 				                  in 
 				                  (CF.DataNode {h with CF.h_formula_data_param_imm = new_param_imm}, CF.HEmp, p)
 				                  else (CF.HFalse, h2, (CP.mkTrue no_pos))
- 			                  | _ -> (h1, h2,(CP.mkTrue no_pos)) (* will never reach this branch *)
+ 			                  | _ -> (h1, h2,(CP.mkTrue no_pos)) (* will never reach this branch *))
+ 			                 else (*keep v2*)
+ 			                 (match h2 with (* this match is to avoid the rewriting of all h2 parameters*)
+ 			                  | CF.DataNode h -> 
+				                  if (compatible == true) then 
+				                  let comb_list = 
+				                  (List.combine h.CF.h_formula_data_arguments h1args) in
+				                  let p = CP.conj_of_list 
+				                  (List.map (fun c -> (CP.mkEqVar (fst c) (snd c) h.CF.h_formula_data_pos)) comb_list) 						          h.CF.h_formula_data_pos
+				                  in 
+				                  (CF.DataNode {h with CF.h_formula_data_param_imm = new_param_imm},CF.HEmp,p)
+				                  else (CF.HFalse,h1,(CP.mkTrue no_pos))
+ 			                  | _ -> (h1, h2,(CP.mkTrue no_pos)) (* will never reach this branch *))
 		                  else (h1, h2,(CP.mkTrue no_pos)) (* h2 is not an alias of h1 *) 
 		              | CF.Star {CF.h_formula_star_h1 = h21;
 			                     CF.h_formula_star_h2 = h22;
@@ -685,11 +700,38 @@ let rec is_lend_h_formula (f : CF.h_formula) : bool =  match f with
   | _ -> false
   
         
-let rec is_lend (f : CF.formula) : bool =  match f with
+let rec is_lend (f : CF.formula) : bool =  
+(match f with
   | CF.Base(bf) -> is_lend_h_formula bf.CF.formula_base_heap
   | CF.Exists(ef) -> is_lend_h_formula ef.CF.formula_exists_heap
   | CF.Or({CF.formula_or_f1 = f1;
     CF.formula_or_f2 = f2;
     CF.formula_or_pos = pos}) ->
-        (is_lend f1) or (is_lend f2)
-            
+        (is_lend f1) or (is_lend f2))
+        
+let subtype_sv_ann_gen (impl_vars: CP.spec_var list) (l: CP.spec_var) (r: CP.spec_var) 
+: bool * (CP.formula option) * (CP.formula option) =
+	let l = CP.Var(l,no_pos) in
+	let r = CP.Var(r,no_pos) in
+	let c = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in
+        (* implicit instantiation of @v made stronger into an equality *)
+        (* two examples in ann1.slk fail otherwise; unsound when we have *)
+        (* multiple implicit being instantiated ; use explicit if needed *)
+        let lhs = CP.BForm ((CP.Eq(l,r,no_pos),None), None) in
+        (* let lhs = c in *)
+        begin
+          match r with
+            | CP.Var(v,_) -> 
+                if CP.mem v impl_vars then (true,Some lhs,None)
+                else (true,None,Some c)
+            | _ -> (true,None,Some c)
+        end
+
+let rec subtype_sv_ann_gen_list (impl_vars: CP.spec_var list) (ls: CP.spec_var list) (rs: CP.spec_var list)
+: bool * (CP.formula option) * (CP.formula option) = 
+match ls, rs with
+| [], [] -> (true,None,None)
+| l::ls, r::rs -> let f, lhs, rhs = (subtype_sv_ann_gen impl_vars l r) in
+		  let fs, lhsls, rhsrs = (subtype_sv_ann_gen_list impl_vars ls rs) in
+		  (f && fs, (Imm.mkAndOpt lhs lhsls) , (Imm.mkAndOpt rhs rhsrs))
+| _,_ -> (false,None,None)(* shouldn't get here *)

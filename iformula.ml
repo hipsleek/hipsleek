@@ -889,7 +889,8 @@ and float_out_exps_from_heap_x (f:formula ) (rel0: rel option) :formula =
                       with Not_found ->
 						  Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None)
                     else
-                      let pf = if not(!Globals.allow_field_ann) then Ipure.Eq (nv,c,b.h_formula_heap_pos) else
+                      let pf = if (*not(!Globals.allow_field_ann)*) (true) then Ipure.Eq (nv,c,b.h_formula_heap_pos) else
+                            (*asankhs: What is rel0 supposed to be ? this function is always called with a None removing for now*)
                             match rel0 with (* andreeac TODO what about heapnode2 ? *)
                               | None -> Ipure.Eq (nv,c,b.h_formula_heap_pos)
                               | Some r ->

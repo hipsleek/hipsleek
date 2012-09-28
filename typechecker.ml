@@ -430,7 +430,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             (* Debug.info_hprint (add_str "out vars" !CP.print_svl) ov no_pos; *)
 	        if ((Immutable.is_lend post_cond) && not(!Globals.allow_field_ann))
 	         || (!Globals.allow_field_ann && Mem.is_lend post_cond) then
-	      	  Error.report_error {Error.error_loc = pos_spec; Error.error_text =  ("The postcondition cannot contain @L heap predicates/data nodes\n")}
+	      	  Error.report_error {Error.error_loc = pos_spec; Error.error_text =  ("The postcondition cannot contain @L heap predicates/data nodes/field annotations\n")}
 	        else
               let _ = post_pos#set (CF.pos_of_formula post_cond) in
               Debug.devel_zprint (lazy ("check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
@@ -843,6 +843,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let _ = Debug.devel_zprint (lazy ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
             ^ "\n")) pos in
 	     (*    let _ = print_string ("\n(andreeac)bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)     ^ "\n") in *)
+	     let unfolded = if(!Globals.allow_field_ann) then
+                  let idf = (fun c -> c) in
+		  CF.transform_list_failesc_context (idf,idf,
+		  (fun es -> CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;})) unfolded
+		  else unfolded in
 	        let c = string_of_typ v_t in
             let fresh_frac_name = Cpure.fresh_old_name "f" in
             let perm_t = cperm_typ () in
@@ -1726,6 +1731,7 @@ let final_state_prim = CF.push_exists_list_partial_context w ctx in
     if f1 then
       begin
           let post = (CF.formula_subst_flow post (CF.mkNormalFlow())) in
+          
            let (ans,prf) = heap_entail_list_partial_context_init prog false fn_state post None pos (Some pid) in
            (CF.invert_list_partial_context_outcome CF.invert_ctx_branch_must_fail CF.invert_fail_branch_must_fail ans,prf)
       end
