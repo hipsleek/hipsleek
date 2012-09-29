@@ -49,6 +49,19 @@ let string_of_cil_global (g: Cil.global) : string =
 (* ---   end of string conversion   --- *) 
 
 
+(* create an Iast.exp from a list of Iast.exp *)
+let merge_iast_exp (es: Iast.exp list) (lopt : loc option): Iast.exp =
+  let pos = match lopt with None -> no_pos | Some l -> l in
+  match es with
+  | [] -> Iast.Empty pos
+  | [e] -> e
+  | hd::tl -> 
+      List.fold_left (fun x y -> 
+        Iast.Seq {Iast.exp_seq_exp1 = x;
+                  Iast.exp_seq_exp2 = y;
+                  Iast.exp_seq_pos = pos;}
+      ) hd tl
+
 
 (* ---------------------------------------- *)
 (* translation functions from Cil -> Iast   *)
@@ -266,15 +279,10 @@ and translate_stmtkind (sk: Cil.stmtkind) (lopt: Cil.location option) : Iast.exp
   | Cil.Instr instrs ->
       let newexp = (match instrs with
         | [] -> Iast.Empty pos
-        | [hd] -> translate_instr hd
-        | hd::tl ->
-            let e1 = translate_instr hd in
-            let es = List.map translate_instr tl in
-            List.fold_left (fun x y -> 
-              Iast.Seq {Iast.exp_seq_exp1 = x;
-                        Iast.exp_seq_exp2 = y;
-                        Iast.exp_seq_pos = pos;}
-            ) e1 es
+        | [i] -> translate_instr i
+        | _ ->
+            let es = List.map translate_instr instrs in
+            merge_iast_exp es (Some pos)
       ) in
       newexp
   | Cil.Return (eopt, l) ->
@@ -359,26 +367,32 @@ and translate_block (blk: Cil.block) (lopt: Cil.location option): Iast.exp =
   let stmts = blk.Cil.bstmts in
   match stmts with
   | [] -> Iast.Empty pos
-  | [hd] -> translate_stmt hd lopt
-  | hd::tl -> (
-      let e1 = translate_stmt hd lopt in
-      let exps = List.map (fun x -> translate_stmt x lopt) tl in
-      let newexp = List.fold_left (fun x y -> Iast.Seq {Iast.exp_seq_exp1 = x;
-                                                        Iast.exp_seq_exp2 = y;
-                                                        Iast.exp_seq_pos = pos}) e1 exps in
+  | [s] -> translate_stmt s lopt
+  | _ -> (
+      let es = List.map (fun x -> translate_stmt x lopt) stmts in
+      let newexp = merge_iast_exp es (Some pos) in
       newexp
     )
 
 
-and translate_var_decl (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp_var =
+and translate_var (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let name = vinfo.Cil.vname in
-  let newvar = {Iast.exp_var_name = name;
-                Iast.exp_var_pos = pos} in
-  newvar
+  let newexp = Iast.Var {Iast.exp_var_name = name;
+                         Iast.exp_var_pos = pos} in
+  newexp
 
+and translate_var_decl (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
+  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
+  let ty = translate_typ vinfo.Cil.vtype in
+  let name = vinfo.Cil.vname in
+  let decl = [(name, None, pos)] in
+  let newexp = Iast.VarDecl {Iast.exp_var_decl_type = ty;
+                             Iast.exp_var_decl_decls = decl;
+                             Iast.exp_var_decl_pos = pos} in
+  newexp
 
-and translate_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo) (lopt: Cil.location option) : Iast.exp_var_decl =
+and translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo) (lopt: Cil.location option) : Iast.exp_var_decl =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let ty = translate_typ vinfo.Cil.vtype in
   let name = vinfo.Cil.vname in
@@ -388,10 +402,10 @@ and translate_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo) (lopt: Cil.location
         let e = translate_exp exp lopt in
         [(name, Some e, pos)]
     | Some (Cil.CompoundInit _) -> report_error_msg "TRUNG TODO: Cil.CompoundInit. Handle later!" in
-  let newvardecl = {Iast.exp_var_decl_type = ty;
-                    Iast.exp_var_decl_decls = decl;
-                    Iast.exp_var_decl_pos = pos} in
-  newvardecl
+  let vardecl = {Iast.exp_var_decl_type = ty;
+                 Iast.exp_var_decl_decls = decl;
+                 Iast.exp_var_decl_pos = pos} in
+  vardecl
 
 
 and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option): Iast.proc_decl =
@@ -429,13 +443,15 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option): Iast.proc
       )
     | _ -> report_error_msg "Invalid function header!"
   ) in
+  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let fheader = fundec.Cil.svar in
   let name = fheader.Cil.vname in
   let mingled_name = "" in (* TRUNG TODO: check mingled_name later *)
   let return = translate_funtyp (fheader.Cil.vtype) in
   let args = collect_params fheader in
-  let body = translate_block fundec.Cil.sbody lopt in
-  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
+  let slocals = List.map (fun x -> translate_var_decl x lopt) fundec.Cil.slocals in
+  let sbody = translate_block fundec.Cil.sbody lopt in
+  let funbody = merge_iast_exp (slocals @ [sbody]) (Some pos) in
   let filename = pos.start_pos.Lexing.pos_fname in
   let newproc : Iast.proc_decl = {
     Iast.proc_name = name;
@@ -447,7 +463,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option): Iast.proc
     Iast.proc_static_specs = Iast.mkSpecTrue n_flow pos;
     Iast.proc_dynamic_specs = Iast.mkSpecTrue n_flow pos;
     Iast.proc_exceptions = [];
-    Iast.proc_body = Some body;
+    Iast.proc_body = Some funbody;
     Iast.proc_is_main = false;
     Iast.proc_file = filename;
     Iast.proc_loc = pos;
@@ -474,26 +490,23 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   let globals = file.Cil.globals in
   List.iter (fun gl ->
     match gl with
-    | Cil.GType _ -> print_endline ("== translate_file: meet but not collect GType");
-    | Cil.GCompTag _ -> print_endline ("== translate_file: meet but not collect GCompTag");
-    | Cil.GCompTagDecl _ -> print_endline ("== translate_file: meet but not collect GCompTagDecl");
-    | Cil.GEnumTag _ -> print_endline ("== translate_file: meet but not collect GEnumTag");
-    | Cil.GEnumTagDecl _ -> print_endline ("== translate_file: meet but not collect GEnumTagDecl");
-    | Cil.GVarDecl (v, l) ->
-        let _ = print_endline ("== translate_file: meet but not collect GVarDecl") in
-        let _ = print_endline ("== gl vardecl = " ^ (string_of_cil_global gl)) in 
-        ()
+    | Cil.GType _ -> report_error_msg "TRUNG TODO: Handle Cil.AlignOf later!"
+    | Cil.GCompTag _ -> report_error_msg "TRUNG TODO: Handle Cil.GCompTag later!"
+    | Cil.GCompTagDecl _ -> report_error_msg "TRUNG TODO: Handle Cil.GCompTagDecl later!"
+    | Cil.GEnumTag _ -> report_error_msg "TRUNG TODO: Handle Cil.GEnumTag later!"
+    | Cil.GEnumTagDecl _ -> report_error_msg "TRUNG TODO: Handle Cil.GEnumTagDecl later!"
+    | Cil.GVarDecl (v, l) -> print_endline "TRUNG TODO: How to translate Cil.GVarDecl to Iast ???";
     | Cil.GVar (v, init, l) ->
-        let _ = print_endline ("== translate_file: collect GVar") in 
-        let var = translate_var v init (Some l) in
-        global_var_decls := !global_var_decls @ [var];
+        (* let _ = print_endline ("== translate_file: collect GVar") in  *)
+        let gvar = translate_global_var v init (Some l) in
+        global_var_decls := !global_var_decls @ [gvar];
     | Cil.GFun (fd, l) ->
-        let _ = print_endline ("== translate_file: collect GFun") in 
+        (* let _ = print_endline ("== translate_file: collect GFun") in  *)
         let proc = translate_fundec fd (Some l) in
         proc_decls := !proc_decls @ [proc]
-    | Cil.GAsm _ -> report_error_msg "Error!!! translate_file: haven't handled Cil.GAsm!"
-    | Cil.GPragma _ -> report_error_msg "Error!!! translate_file: haven't handled Cil.GPragma!"
-    | Cil.GText _ -> report_error_msg "Error!!! translate_file: haven't handled Cil.GText!"
+    | Cil.GAsm _ -> report_error_msg "TRUNG TODO: Handle Cil.GAsm later!"
+    | Cil.GPragma _ -> report_error_msg "TRUNG TODO: Handle Cil.GPragma later!"
+    | Cil.GText _ -> report_error_msg "TRUNG TODO: Handle Cil.GText later!"
   ) globals;
   let newprog : Iast.prog_decl = ({
     Iast.prog_data_decls = !data_decls;
@@ -514,10 +527,10 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
 (* ---   end of translation   --- *)
 
 
-let parse_one_file (fname: string) : Cil.file =
+let parse_one_file (filename: string) : Cil.file =
   (* PARSE and convert to CIL *)
-  if !Cilutil.printStages then ignore (Errormsg.log "Parsing %s\n" fname);
-  let cil = Frontc.parse fname () in
+  if !Cilutil.printStages then ignore (Errormsg.log "Parsing %s\n" filename);
+  let cil = Frontc.parse filename () in
   if (not !Epicenter.doEpicenter) then (
     (* sm: remove unused temps to cut down on gcc warnings  *)
     (* (Stats.time "usedVar" Rmtmps.removeUnusedTemps cil);  *)
@@ -542,3 +555,18 @@ let process_one_file (cil: Cil.file) : unit =
   let _ = print_endline ("------------------------") in 
   let _ = print_endline (Iprinter.string_of_program prog) in 
   ()
+
+
+let parse_hip (filename: string) : Iast.prog_decl =
+  let cil = parse_one_file filename in
+  if !Cilutil.doCheck then (
+    ignore (Errormsg.log "First CIL check\n");
+    if not (Check.checkFile [] cil) && !Cilutil.strictChecking then (
+      Errormsg.bug ("CIL's internal data structures are inconsistent "
+                    ^^"(see the warnings above).  This may be a bug "
+                    ^^"in CIL.\n")
+    )
+  );
+  let prog = translate_file cil in
+  (* return *)
+  prog
