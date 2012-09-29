@@ -2,20 +2,57 @@ open Globals
 open Error
 open Exc.GTable
 
-let parse_one_file (fname: string) : Cil.file =
-  (* PARSE and convert to CIL *)
-  if !Cilutil.printStages then ignore (Errormsg.log "Parsing %s\n" fname);
-  let cil = Frontc.parse fname () in
-  if (not !Epicenter.doEpicenter) then (
-    (* sm: remove unused temps to cut down on gcc warnings  *)
-    (* (Stats.time "usedVar" Rmtmps.removeUnusedTemps cil);  *)
-    (* (trace "sm" (dprintf "removing unused temporaries\n")); *)
-    (Rmtmps.removeUnusedTemps cil)
-  );
-  (* return *)
-  cil
+(* ---------------------------------------- *)
+(* string conversion functions for CIL      *)
+(* ---------------------------------------- *)
+let string_of_cil_exp (e: Cil.exp) : string =
+  Pretty.sprint 10 (Cil.d_exp () e)
+
+let string_of_cil_lval (lv: Cil.lval) : string =
+  Pretty.sprint 10 (Cil.d_lval () lv)
+
+let string_of_cil_offset base (off: Cil.offset) : string =
+  Pretty.sprint 10 (Cil.d_offset base () off)
+
+let string_of_cil_init (i: Cil.init) : string =
+  Pretty.sprint 10 (Cil.d_init () i)
+
+let string_of_cil_type (t: Cil.typ) : string =
+  Pretty.sprint 10 (Cil.d_type () t)
+
+let string_of_cil_global (g: Cil.global) : string =
+  Pretty.sprint 10 (Cil.d_global () g)
+
+let string_of_cil_attrlist (a: Cil.attributes) : string =
+  Pretty.sprint 10 (Cil.d_attrlist () a)
+
+let string_of_cil_attr (a: Cil.attribute) : string =
+  Pretty.sprint 10 (Cil.d_attr () a)
+  
+let string_of_cil_attrparam (e: Cil.attrparam) : string =
+  Pretty.sprint 10 (Cil.d_attrparam () e)
+
+let string_of_cil_label (l: Cil.label) : string =
+  Pretty.sprint 10 (Cil.d_label () l)
+
+let string_of_cil_stmt (s: Cil.stmt) : string =
+  Pretty.sprint 10 (Cil.d_stmt () s)
+
+let string_of_cil_block (b: Cil.block) : string =
+  Pretty.sprint 10 (Cil.d_block () b)
+
+let string_of_cil_instr (i: Cil.instr) : string =
+  Pretty.sprint 10 (Cil.d_instr () i)
+
+let string_of_cil_global (g: Cil.global) : string =
+  Pretty.sprint 10 (Cil.d_shortglobal () g)
+(* ---   end of string conversion   --- *) 
 
 
+
+(* ---------------------------------------- *)
+(* translation functions from Cil -> Iast   *)
+(* ---------------------------------------- *)
 let rec translate_location (loc: Cil.location) : Globals.loc =
   let pos : Lexing.position = {
     Lexing.pos_fname = loc.Cil.file;
@@ -54,24 +91,10 @@ and translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp 
             | None -> no_pos
             | Some l -> translate_location l in
   match c with
-  | Cil.CInt64 (i64, ikind, _) -> (
-      match ikind with
-      | Cil.IChar -> report_error_msg "TRUNG TODO: Handle Cil.IChar later!"
-      | Cil.ISChar -> report_error_msg "TRUNG TODO: Handle Cil.ISChar later!"
-      | Cil.IUChar -> report_error_msg "TRUNG TODO: Handle Cil.IUChar later!"
-      | Cil.IBool -> report_error_msg "TRUNG TODO: Handle Cil.IBool later!"
-      | Cil.IInt ->
-          let i = Int64.to_int i64 in
-          let newconstant = Iast.IntLit {Iast.exp_int_lit_val = i; Iast.exp_int_lit_pos = pos} in
-          newconstant
-      | Cil.IUInt -> report_error_msg "TRUNG TODO: Handle Cil.IUInt later!"
-      | Cil.IShort -> report_error_msg "TRUNG TODO: Handle Cil.IShort later!"
-      | Cil.IUShort -> report_error_msg "TRUNG TODO: Handle Cil.IUShort later!"
-      | Cil.ILong -> report_error_msg "TRUNG TODO: Handle Cil.ILong later!"
-      | Cil.IULong -> report_error_msg "TRUNG TODO: Handle Cil.IULong later!"
-      | Cil.ILongLong -> report_error_msg "TRUNG TODO: Handle Cil.ILongLong later!"
-      | Cil.IULongLong -> report_error_msg "TRUNG TODO: Handle Cil.IULongLong later!"
-    )
+  | Cil.CInt64 (i64, _, _) ->
+      let i = Int64.to_int i64 in
+      let newconstant = Iast.IntLit {Iast.exp_int_lit_val = i; Iast.exp_int_lit_pos = pos} in
+      newconstant
   | Cil.CStr s -> report_error_msg "TRUNG TODO: Handle Cil.CStr later!"
   | Cil.CWStr _ -> report_error_msg "TRUNG TODO: Handle Cil.CWStr later!"
   | Cil.CChr _ -> report_error_msg "TRUNG TODO: Handle Cil.CChr later!"
@@ -211,10 +234,22 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
                                 Iast.exp_assign_pos = p} in
       newexp
   | Cil.Call (lv_opt, exp, exps, l) ->
-      let p = translate_location l in 
+      let p = translate_location l in
       let fname = match exp with
         | Cil.Const (Cil.CStr s) -> s
-        | _ ->  report_error_msg "Error!!! Invalid function name!" in
+        | Cil.Const _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.Const _ !"
+        | Cil.Lval (Cil.Var v, _) -> v.Cil.vname
+        | Cil.Lval _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.Lval _!"
+        | Cil.SizeOf _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.SizeOf!" 
+        | Cil.SizeOfE _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.SizeOfE!"
+        | Cil.SizeOfStr _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.SizeOfStr!"
+        | Cil.AlignOf _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.AlignOf!"
+        | Cil.AlignOfE _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.AlignOfE!" 
+        | Cil.UnOp _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.UnOp!" 
+        | Cil.BinOp _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.BinOp!"
+        | Cil.CastE _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.CastE!"
+        | Cil.AddrOf _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.AddrOf!" 
+        | Cil.StartOf _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.StartOf!" in
       let args = List.map (fun x -> translate_exp x (Some l)) exps in
       let newexp = Iast.CallNRecv {Iast.exp_call_nrecv_method = fname;
                                    Iast.exp_call_nrecv_lock = None;
@@ -228,9 +263,9 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
 and translate_stmtkind (sk: Cil.stmtkind) (lopt: Cil.location option) : Iast.exp =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in 
   match sk with
-  | Cil.Instr instrs -> (
+  | Cil.Instr instrs ->
       let newexp = (match instrs with
-        | [] -> report_error_msg "ERROR!!! instr list has to have at least 1 instruction"
+        | [] -> Iast.Empty pos
         | [hd] -> translate_instr hd
         | hd::tl ->
             let e1 = translate_instr hd in
@@ -242,7 +277,6 @@ and translate_stmtkind (sk: Cil.stmtkind) (lopt: Cil.location option) : Iast.exp
             ) e1 es
       ) in
       newexp
-    )
   | Cil.Return (eopt, l) ->
       let pos = translate_location l in
       let retval = match eopt with
@@ -252,7 +286,7 @@ and translate_stmtkind (sk: Cil.stmtkind) (lopt: Cil.location option) : Iast.exp
                                 Iast.exp_return_path_id = None;
                                 Iast.exp_return_pos = pos} in
       newexp
-  | Cil.Goto _ -> report_error_msg "TRUNG TODO: Iast cannot handle Cil.Goto type!"
+  | Cil.Goto (sref, l) -> translate_stmt !sref (Some l)
   | Cil.Break l ->
       let pos = translate_location l in
       let newexp = Iast.Break {Iast.exp_break_jump_label = Iast.NoJumpLabel;
@@ -314,27 +348,24 @@ and translate_stmtkind (sk: Cil.stmtkind) (lopt: Cil.location option) : Iast.exp
       newexp
 
 and translate_stmt (s: Cil.stmt) (lopt: Cil.location option) : Iast.exp =
-  let labels = s.Cil.labels in
+  (* let labels = s.Cil.labels in *)
   let skind = s.Cil.skind in
   let newskind = translate_stmtkind skind lopt in
-  match labels with
-  | [] -> newskind
-  | [lbl] -> report_error_msg "TRUNG TODO: stmt's label has 1 element. Handle later!"
-  | hd::tl -> report_error_msg "TRUNG TODO: stmt's label has >= 2 elements. Handle later!"
+  newskind
 
 
 and translate_block (blk: Cil.block) (lopt: Cil.location option): Iast.exp =
+  let pos = match lopt with None -> no_pos | Some l -> translate_location l in 
   let stmts = blk.Cil.bstmts in
   match stmts with
-  | [] -> report_error_msg "ERROR!!! block has to have at least 1 stmt element."
+  | [] -> Iast.Empty pos
   | [hd] -> translate_stmt hd lopt
   | hd::tl -> (
       let e1 = translate_stmt hd lopt in
       let exps = List.map (fun x -> translate_stmt x lopt) tl in
-      let l = match lopt with None -> no_pos | Some p -> translate_location p in 
       let newexp = List.fold_left (fun x y -> Iast.Seq {Iast.exp_seq_exp1 = x;
                                                         Iast.exp_seq_exp2 = y;
-                                                        Iast.exp_seq_pos = l}) e1 exps in
+                                                        Iast.exp_seq_pos = pos}) e1 exps in
       newexp
     )
 
@@ -441,29 +472,29 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   let coercion_decls : Iast.coercion_decl list ref = ref [] in
   (* begin to translate *)
   let globals = file.Cil.globals in
-  let _ = List.iter (fun gl ->
+  List.iter (fun gl ->
     match gl with
-    | Cil.GType _ -> print_endline ("== translate GType");
-    | Cil.GCompTag _ -> print_endline ("== translate GCompTag");
-    | Cil.GCompTagDecl _ -> print_endline ("== translate GCompTagDecl");
-    | Cil.GEnumTag _ -> print_endline ("== translate GEnumTag");
-    | Cil.GEnumTagDecl _ -> print_endline ("== translate GEnumTagDecl");
+    | Cil.GType _ -> print_endline ("== translate_file: meet but not collect GType");
+    | Cil.GCompTag _ -> print_endline ("== translate_file: meet but not collect GCompTag");
+    | Cil.GCompTagDecl _ -> print_endline ("== translate_file: meet but not collect GCompTagDecl");
+    | Cil.GEnumTag _ -> print_endline ("== translate_file: meet but not collect GEnumTag");
+    | Cil.GEnumTagDecl _ -> print_endline ("== translate_file: meet but not collect GEnumTagDecl");
     | Cil.GVarDecl (v, l) ->
-        let _ = print_endline ("== translate GVarDecl") in
-        let vardecl = translate_var_decl v (Some l) in
+        let _ = print_endline ("== translate_file: meet but not collect GVarDecl") in
+        let _ = print_endline ("== gl vardecl = " ^ (string_of_cil_global gl)) in 
         ()
     | Cil.GVar (v, init, l) ->
-        let _ = print_endline ("== translate GVar") in 
+        let _ = print_endline ("== translate_file: collect GVar") in 
         let var = translate_var v init (Some l) in
         global_var_decls := !global_var_decls @ [var];
     | Cil.GFun (fd, l) ->
-        let _ = print_endline ("== translate GFun") in 
+        let _ = print_endline ("== translate_file: collect GFun") in 
         let proc = translate_fundec fd (Some l) in
         proc_decls := !proc_decls @ [proc]
-    | Cil.GAsm _ -> report_error_msg "Error!!! Cannot translate Cil.GAsm to Iast module!"
-    | Cil.GPragma _ -> report_error_msg "Error!!! Cannot translate Cil.GPragma to Iast module!"
-    | Cil.GText _ -> report_error_msg "Error!!! Cannot translate Cil.GText to Iast module!"
-  ) globals in
+    | Cil.GAsm _ -> report_error_msg "Error!!! translate_file: haven't handled Cil.GAsm!"
+    | Cil.GPragma _ -> report_error_msg "Error!!! translate_file: haven't handled Cil.GPragma!"
+    | Cil.GText _ -> report_error_msg "Error!!! translate_file: haven't handled Cil.GText!"
+  ) globals;
   let newprog : Iast.prog_decl = ({
     Iast.prog_data_decls = !data_decls;
     Iast.prog_global_var_decls = !global_var_decls;
@@ -480,6 +511,21 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
     Iast.prog_coercion_decls = !coercion_decls;
   }) in
   newprog
+(* ---   end of translation   --- *)
+
+
+let parse_one_file (fname: string) : Cil.file =
+  (* PARSE and convert to CIL *)
+  if !Cilutil.printStages then ignore (Errormsg.log "Parsing %s\n" fname);
+  let cil = Frontc.parse fname () in
+  if (not !Epicenter.doEpicenter) then (
+    (* sm: remove unused temps to cut down on gcc warnings  *)
+    (* (Stats.time "usedVar" Rmtmps.removeUnusedTemps cil);  *)
+    (* (trace "sm" (dprintf "removing unused temporaries\n")); *)
+    (Rmtmps.removeUnusedTemps cil)
+  );
+  (* return *)
+  cil
 
 let process_one_file (cil: Cil.file) : unit =
   if !Cilutil.doCheck then (
