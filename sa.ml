@@ -8,6 +8,7 @@ module CF = Cformula
 module MCP = Mcpure
 module CEQ = Checkeq
 module TP = Tpdispatcher
+module SAU = Sautility
 
 (*temporal: name * hrel * definition body*)
 type hp_rel_def = CP.rel_cat * CF.h_formula * CF.formula
@@ -352,17 +353,6 @@ and find_defined_pointers_two_formulas prog f1 f2 predef_ptrs=
   Debug.no_3 "find_defined_pointers_two_formulas" Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula pr1 pr4
       (fun _ _ _ -> find_defined_pointers_two_formulas_x prog f1 f2 predef_ptrs) f1 f2 predef_ptrs
 
-let loop_up_ptr_args prog hd_nodes hv_nodes node_names=
-  let rec helper old_ptrs inc_ptrs=
-    let new_ptrs = List.concat
-      (List.map (Infer.loop_up_ptr_args_one_node prog hd_nodes hv_nodes) inc_ptrs) in
-    let diff_ptrs = Gen.BList.difference_eq CP.eq_spec_var new_ptrs old_ptrs in
-    if diff_ptrs = [] then old_ptrs
-    else (helper (Gen.BList.remove_dups_eq CP.eq_spec_var (old_ptrs@inc_ptrs))
-      (Gen.BList.remove_dups_eq CP.eq_spec_var diff_ptrs))
-  in
-  helper node_names node_names
-
 (*unilities for computing partial def*)
 let rec lookup_undef_args args undef_args def_ptrs=
   match args with
@@ -372,16 +362,6 @@ let rec lookup_undef_args args undef_args def_ptrs=
         else (*undefined *)
           lookup_undef_args ax (undef_args@[a]) def_ptrs
 
-(*check a data node does not belong to a set of data node name*)
-let check_nbelongsto_dnode dn dn_names=
-      List.for_all (fun dn_name -> not(CP.eq_spec_var dn.CF.h_formula_data_node dn_name)) dn_names
-
-(*check a view node does not belong to a set of view node name*)
-let check_nbelongsto_vnode vn vn_names=
-      List.for_all (fun vn_name -> not(CP.eq_spec_var vn.CF.h_formula_view_node vn_name)) vn_names
-
-let check_neq_hrelnode id ls=
-      not (CP.mem_svl id ls)
 (*END unilities for computing partial def*)
 
 (*check_partial_def_eq: to remove duplicate and identify terminating condition*)
@@ -413,9 +393,8 @@ let rec collect_par_defs_one_side_one_hp_x prog lhs rhs (hrel, args) def_ptrs
   if (List.length undef_args) = 0 then
     (*case 1*)
     (*this hp is well defined, synthesize partial def*)
-    let keep_ptrs = loop_up_ptr_args prog hd_nodes hv_nodes args in
-    let r = CF.drop_data_view_hrel_nodes lhs check_nbelongsto_dnode check_nbelongsto_vnode
-      check_neq_hrelnode keep_ptrs keep_ptrs []
+    let keep_ptrs = SAU.loop_up_closed_ptr_args prog hd_nodes hv_nodes args in
+    let r = CF.drop_data_view_hrel_nodes lhs SAU.check_nbelongsto_dnode SAU.check_nbelongsto_vnode SAU.check_neq_hrelnode keep_ptrs keep_ptrs []
     in
     [(hrel, args, r, Some r, None)]
       (* let closed_args = loop_up_ptr_args prog hd_nodes hv_nodes args in *)
@@ -466,10 +445,9 @@ and collect_par_defs_two_side_one_hp_x prog lhs rhs (hrel, args) rhs_hrels hd_no
   in
     (*find all hrel in rhs such that cover the same set of args*)
   let r_selected_hrels = find_hrel_w_same_args rhs_hrels [] in
-  let keep_ptrs = loop_up_ptr_args prog hd_nodes hv_nodes args in
+  let keep_ptrs = SAU.loop_up_closed_ptr_args prog hd_nodes hv_nodes args in
   let build_par_def hp=
-    let r = CF.drop_data_view_hrel_nodes rhs check_nbelongsto_dnode check_nbelongsto_vnode
-    check_neq_hrelnode keep_ptrs keep_ptrs [hp] in
+    let r = CF.drop_data_view_hrel_nodes rhs SAU.check_nbelongsto_dnode SAU.check_nbelongsto_vnode SAU.check_neq_hrelnode keep_ptrs keep_ptrs [hp] in
     (hrel, args, r, None, Some r)
   in
   List.map build_par_def r_selected_hrels
@@ -508,11 +486,9 @@ let collect_par_defs_recursive_hp_x prog lhs rhs (hrel, args) def_ptrs hrel_vars
   (*         else lookup_recursive_para hs a *)
   (* in *)
   let build_partial_def ()=
-    let keep_ptrs = loop_up_ptr_args prog hd_nodes hv_nodes args in
-    let plhs = CF.drop_data_view_hrel_nodes lhs check_nbelongsto_dnode check_nbelongsto_vnode
-      check_neq_hrelnode keep_ptrs keep_ptrs [hrel] in
-     let prhs = CF.drop_data_view_hrel_nodes rhs check_nbelongsto_dnode check_nbelongsto_vnode
-      check_neq_hrelnode keep_ptrs keep_ptrs [hrel] in
+    let keep_ptrs = SAU.loop_up_closed_ptr_args prog hd_nodes hv_nodes args in
+    let plhs = CF.drop_data_view_hrel_nodes lhs SAU.check_nbelongsto_dnode SAU.check_nbelongsto_vnode SAU.check_neq_hrelnode keep_ptrs keep_ptrs [hrel] in
+     let prhs = CF.drop_data_view_hrel_nodes rhs SAU.check_nbelongsto_dnode SAU.check_nbelongsto_vnode SAU.check_neq_hrelnode keep_ptrs keep_ptrs [hrel] in
     [(hrel , args ,plhs, Some plhs, Some prhs) ]
   in
   let undef_args = lookup_undef_args args [] (def_ptrs) in
@@ -528,8 +504,8 @@ let collect_par_defs_recursive_hp prog lhs rhs (hrel, args) def_ptrs hrel_vars e
           def_ptrs hrel_vars eq hd_nodes hv_nodes) (hrel, args)
 
 let rec collect_par_defs_one_constr_new_x prog (lhs, rhs) =
-  DD.ninfo_pprint ">>>>>> collect partial def for hp assumption <<<<<<" no_pos;
-  DD.ninfo_pprint (" hp assumption: " ^ (Cprinter.prtt_string_of_formula lhs) ^ " ==> " ^
+  DD.info_pprint ">>>>>> collect partial def for hp obligation <<<<<<" no_pos;
+  DD.info_pprint (" hp obligation: " ^ (Cprinter.prtt_string_of_formula lhs) ^ " ==> " ^
   (Cprinter.prtt_string_of_formula rhs)) no_pos;
   let rec get_rec_pair_hps ls (hrel1, arg1)=
     match ls with
@@ -609,6 +585,8 @@ let rec collect_par_defs_one_constr_new_x prog (lhs, rhs) =
         else [(lhs,rhs)]
       in (new_constrs, rec_pdefs)
   in
+  DD.info_pprint (" partial defs: \n" ^
+  (let pr = pr_list_ln string_of_par_def_w_name in pr (lpdefs @ rpdefs @ rec_pdefs)) ) no_pos;
   (new_constrs,(lpdefs @ rpdefs @ rec_pdefs))
 
 and collect_par_defs_one_constr_new prog constr =
@@ -839,17 +817,20 @@ and simplify_one_constr_b_x lhs_b rhs_b=
   Debug.ninfo_hprint (add_str "Matched HRel: " !CP.print_svl) hrels no_pos;
   let dnode_names = List.map (fun hd -> hd.CF.h_formula_data_node) matched_data_nodes in
   let vnode_names = List.map (fun hv -> hv.CF.h_formula_view_node) matched_view_nodes in
-  let lhs_b2 = CF.drop_data_view_hrel_nodes_fb lhs_b1 select_dnode
-    select_vnode CP.mem_svl dnode_names vnode_names hrels in
-  let rhs_b2 = CF.drop_data_view_hrel_nodes_fb rhs_b select_dnode
-    select_vnode CP.mem_svl dnode_names vnode_names hrels in
- (*remove duplicate pure formulas*)
-  let lhs_b3 = {lhs_b2 with CF.formula_base_pure = MCP.mix_of_pure
-          (CP.remove_redundant (MCP.pure_of_mix lhs_b2.CF.formula_base_pure))} in
-  let rhs_b3 = {rhs_b2 with CF.formula_base_pure = MCP.mix_of_pure
-          (CP.remove_redundant (MCP.pure_of_mix rhs_b2.CF.formula_base_pure))} in
-(*pure subformulas matching LHS-RHS: drop RHS*)
-(lhs_b3, rhs_b3)
+  let lhs_nhf2 = CF.drop_data_view_hrel_nodes_hf lhs_b1.CF.formula_base_heap
+    select_dnode select_vnode CP.mem_svl dnode_names vnode_names hrels in
+  let rhs_nhf2 = CF.drop_data_view_hrel_nodes_hf rhs_b.CF.formula_base_heap
+    select_dnode select_vnode CP.mem_svl dnode_names vnode_names hrels in
+  (*remove duplicate pure formulas*)
+  let lhs_nmf2 = CP.remove_redundant (MCP.pure_of_mix lhs_b1.CF.formula_base_pure) in
+  let rhs_nmf2 = CP.remove_redundant (MCP.pure_of_mix rhs_b.CF.formula_base_pure) in
+  let lhs_b2 = {lhs_b1 with CF.formula_base_heap = lhs_nhf2;
+      CF.formula_base_pure = MCP.mix_of_pure lhs_nmf2
+               } in
+  let rhs_b2 = {rhs_b with CF.formula_base_heap = rhs_nhf2;
+               CF.formula_base_pure = MCP.mix_of_pure rhs_nmf2} in
+ (*pure subformulas matching LHS-RHS: drop RHS*)
+(lhs_b2, rhs_b2)
 
 and simplify_one_constr_b lhs_b rhs_b=
   let pr = Cprinter.prtt_string_of_formula_base in
@@ -1280,8 +1261,9 @@ let infer_hps_x prog (hp_constrs: (CF.formula * CF.formula) list):
   (*step 6: over-approximate to generate hp def*)
   let constr2, hp_defs = generalize_hps prog cs par_defs in
   let hp_def_from_split = generate_hp_def_from_split hp_defs_split in
+  DD.info_pprint (" remains: " ^
+     (let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in pr1 constr2) ) no_pos;
   (constr2, hp_defs@hp_def_from_split)
-
   (* loop 1 *)
   (*simplify constrs*)
   (* let constrs12 = simplify_constrs constrs1 in *)

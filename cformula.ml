@@ -3190,13 +3190,13 @@ and filter_irr_hp_lhs_hf hf relevant_vars=
     | HFalse
     | HEmp -> hf
 
-and filter_var_holes_hf hf rvs=
+and filter_vars_hf hf rvs=
   match hf with
     | Star {h_formula_star_h1 = hf1;
             h_formula_star_h2 = hf2;
             h_formula_star_pos = pos} ->
-        let n_hf1 =  filter_var_holes_hf hf1 rvs in
-        let n_hf2 = filter_var_holes_hf hf2 rvs in
+        let n_hf1 =  filter_vars_hf hf1 rvs in
+        let n_hf2 = filter_vars_hf hf2 rvs in
         (match n_hf1,n_hf2 with
           | (HTrue,HTrue) -> HTrue
           | (HTrue,_) -> n_hf2
@@ -3208,16 +3208,16 @@ and filter_var_holes_hf hf rvs=
     | Conj { h_formula_conj_h1 = hf1;
              h_formula_conj_h2 = hf2;
              h_formula_conj_pos = pos} ->
-        let n_hf1 = filter_var_holes_hf hf1 rvs in
-        let n_hf2 = filter_var_holes_hf hf2 rvs in
+        let n_hf1 = filter_vars_hf hf1 rvs in
+        let n_hf2 = filter_vars_hf hf2 rvs in
         Conj { h_formula_conj_h1 = n_hf1;
                h_formula_conj_h2 = n_hf2;
                h_formula_conj_pos = pos}
     | Phase { h_formula_phase_rd = hf1;
               h_formula_phase_rw = hf2;
               h_formula_phase_pos = pos} ->
-        let n_hf1 = filter_var_holes_hf hf1 rvs in
-        let n_hf2 = filter_var_holes_hf hf2 rvs in
+        let n_hf1 = filter_vars_hf hf1 rvs in
+        let n_hf2 = filter_vars_hf hf2 rvs in
         Phase { h_formula_phase_rd = n_hf1;
               h_formula_phase_rw = n_hf2;
               h_formula_phase_pos = pos} 
@@ -3226,7 +3226,7 @@ and filter_var_holes_hf hf rvs=
     | ViewNode hv -> if CP.mem_svl hv.h_formula_view_node rvs then hf
         else HTrue
     | HRel _ -> hf
-    | Hole _ -> HTrue
+    | Hole _
     | HTrue
     | HFalse
     | HEmp -> hf
@@ -3288,20 +3288,24 @@ and drop_hrel_hf hf hp_names=
 and drop_data_view_hrel_nodes f fn_data_select fn_view_select fn_hrel_select dnodes vnodes relnodes=
   match f with
     | Base fb ->
-        let new_fb = drop_data_view_hrel_nodes_hf
+        let new_hf = drop_data_view_hrel_nodes_hf
           fb.formula_base_heap fn_data_select fn_view_select fn_hrel_select
           dnodes vnodes relnodes in
         (*assume keep vars = dnodes*)
         let new_p = CP.filter_var (MCP.pure_of_mix fb.formula_base_pure) dnodes in
-        Base {fb with formula_base_heap = new_fb;
+        Base {fb with formula_base_heap = new_hf;
             formula_base_pure = MCP.mix_of_pure new_p;
                 }
     | _ -> report_error no_pos "cformula.drop_data_view_hrel_nodes"
 
 and drop_data_view_hrel_nodes_fb fb fn_data_select fn_view_select fn_hrel_select matched_data_nodes matched_view_nodes matched_hrel_nodes=
-  {fb with formula_base_heap = drop_data_view_hrel_nodes_hf
+  let new_hf = drop_data_view_hrel_nodes_hf
           fb.formula_base_heap fn_data_select fn_view_select fn_hrel_select
-          matched_data_nodes matched_view_nodes matched_hrel_nodes;}
+          matched_data_nodes matched_view_nodes matched_hrel_nodes in
+   (*assume keep vars = dnodes*)
+  let new_p = CP.filter_var (MCP.pure_of_mix fb.formula_base_pure) matched_data_nodes in
+  {fb with formula_base_heap = new_hf;
+      formula_base_pure = MCP.mix_of_pure new_p;}
 
 and drop_data_view_hrel_nodes_hf hf fn_data_select fn_view_select fn_hrel_select
       data_nodes view_nodes hrel_nodes=
@@ -3430,7 +3434,6 @@ and subst_hrel_hf hf hprel_subst=
     | HTrue
     | HFalse
     | HEmp -> hf
-
 
 
 (*end for sa*)

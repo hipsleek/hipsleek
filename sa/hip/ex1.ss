@@ -7,10 +7,10 @@ HeapPred H(node a).
 HeapPred H1(node a).
 HeapPred G(node a, node b).
 
-void foo(ref node x)
- infer [H,G]
+void foo(node x)
+ infer [H,H1]
  requires H(x)
- ensures  G(x,x'); //'
+ ensures  H1(x); //'
  {
    bool b;
    x = x.next;

@@ -5,6 +5,7 @@ HeapPred H1(node a).
 HeapPred G(node a, node b).
 //1. for x.next
 infer [H] H(x) |- x::node<a,b>@L.
+print residue.
 
 //2.
 infer [H] H(x) |- x::node<a,b>.

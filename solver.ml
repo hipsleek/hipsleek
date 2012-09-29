@@ -5968,6 +5968,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
         h_formula_view_imm = ann;
         h_formula_view_arguments = l_args} ->
             (l_args, l_node_name,perm,ann)
+      | HRel (_, eargs, _) -> ((List.fold_left List.append [] (List.map CP.afv eargs)), "",  None, ConstAnn Mutable)
       | _ -> report_error no_pos "[solver.ml]: do_match non view input\n" in
     let r_args, r_node_name, r_var, r_perm, r_ann = match r_node with
       | DataNode {h_formula_data_name = r_node_name;
@@ -5981,6 +5982,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
         h_formula_view_arguments = r_args;
         h_formula_view_node = r_var} ->
             (r_args, r_node_name, r_var,perm,ann)
+      | HRel (rhp, eargs, _) -> ((List.fold_left List.append [] (List.map CP.afv eargs)), "",rhp, None, ConstAnn Mutable)
       | _ -> report_error no_pos "[solver.ml]: do_match non view input\n" in     
 
 	(* An Hoa : found out that the current design of do_match 
@@ -6949,8 +6951,11 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           let ( _,mix_rf,_,_,_) = CF.split_components (CF.Base rhs_b) in
           let (res,new_estate) = Inf.infer_collect_hp_rel prog estate rhs rhs_rest mix_lf mix_rf rhs_h_matched_set conseq lhs_b rhs_b pos in
           if (not res) then r else
-            let res_ctx = Ctx new_estate  in
-            (SuccCtx[res_ctx], NoAlias)
+            let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest} in
+            let res_es0, prf0 = do_match prog new_estate rhs rhs n_rhs_b rhs_h_matched_set is_folding pos in
+            (* let res_ctx = Ctx new_estate  in *)
+            (* (SuccCtx[res_ctx], NoAlias) *)
+            (res_es0,prf0)
       | Context.M_unmatched_rhs_data_node (rhs,rhs_rest) ->
           (*  do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos *)
                 (*****************************************************************************)
@@ -7005,9 +7010,12 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                                       CF.mk_failure_must s Globals.sl_error) in
                 let (res_lc, prf) = do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
                 (CF.mkFailCtx_in (Or_Reason (res_lc, unmatched_lhs)), prf)
-                        else
-                           let res_ctx = Ctx new_estate  in
-                           (SuccCtx[res_ctx], NoAlias)
+                  else
+                     let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest} in
+                     let res_es0, prf0 = do_match prog new_estate rhs rhs n_rhs_b rhs_h_matched_set is_folding pos in
+            (* let res_ctx = Ctx new_estate  in *)
+            (* (SuccCtx[res_ctx], NoAlias) *)
+                     (res_es0,prf0)
               end
           end
       | Context.Seq_action l ->
