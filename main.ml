@@ -26,7 +26,7 @@ let print_version () =
 (* main function                          *)
 (******************************************)
 
-let parse_file_full file_name = 
+let parse_file_full file_name (primitive: bool) = 
   let org_in_chnl = open_in file_name in
     try
     (*let ptime1 = Unix.times () in
@@ -35,7 +35,7 @@ let parse_file_full file_name =
       (* print_string ("Parsing "^file_name^" ...\n"); flush stdout; *)
       let _ = Gen.Profiling.push_time "Parsing" in
       Globals.input_file_name:= file_name;
-      let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) in
+      let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) primitive in
 		  close_in org_in_chnl;
          let _ = Gen.Profiling.pop_time "Parsing" in
     (*		  let ptime2 = Unix.times () in
@@ -55,8 +55,8 @@ let parse_file_full file_name =
 (* Parse all prelude files declared by user.*)
 let process_primitives (file_list: string list) : Iast.prog_decl list =
   let new_names = List.map (fun c-> (Gen.get_path Sys.executable_name) ^ (String.sub c 1 ((String.length c) - 2))) file_list in
-  if (Sys.file_exists "./prelude.ss") then [parse_file_full "./prelude.ss"]
-  else List.map parse_file_full new_names
+  if (Sys.file_exists "./prelude.ss") then [(parse_file_full "./prelude.ss" true)]
+  else List.map (fun x -> parse_file_full x true) new_names
 
 let process_primitives (file_list: string list) : Iast.prog_decl list =
   let pr1 = pr_list (fun x -> x) in
@@ -86,7 +86,7 @@ let process_source_full source =
   (* print_string ("\nProcessing file \"" ^ source ^ "\"\n");  *)
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
-  let prog = parse_file_full source in
+  let prog = parse_file_full source false in
   (* Remove all duplicated declared prelude *)
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
@@ -217,7 +217,7 @@ let process_source_full_parse_only source =
   (* print_string ("\nProcessing file \"" ^ source ^ "\"\n");  *)
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
-  let prog = parse_file_full source in
+  let prog = parse_file_full source false in
   (* Remove all duplicated declared prelude *)
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in

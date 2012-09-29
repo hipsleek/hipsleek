@@ -558,6 +558,7 @@ let process_one_file (cil: Cil.file) : unit =
 
 
 let parse_hip (filename: string) : Iast.prog_decl =
+  let _ = print_endline ("== in Cilparser.parse_hip: filename = " ^ filename) in
   let cil = parse_one_file filename in
   if !Cilutil.doCheck then (
     ignore (Errormsg.log "First CIL check\n");

@@ -27,7 +27,7 @@ let parse_file_full file_name =
      *)
 		print_string "Parsing...\n";
         let _ = Gen.Profiling.push_time "Parsing" in
-      let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) in
+      let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) false in
 		(* let prog = Iparser.program (Ilexer.tokenizer file_name) input in *)
 		  close_in org_in_chnl;
          let _ = Gen.Profiling.pop_time "Parsing" in

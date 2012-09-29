@@ -2241,13 +2241,13 @@ let parse_sleek n s = SHGram.parse sprog (PreCast.Loc.mk n) s
 let parse_sleek n s =
   DD.no_1_loop "parse_sleek" (fun x -> x) (fun _ -> "?") (fun n -> parse_sleek n s) n
 
-let parse_hip n s =
-  if (!using_parser = "default") then SHGram.parse hprog (PreCast.Loc.mk n) s
+let parse_hip n s p =
+  if (!using_parser = "default") or p then SHGram.parse hprog (PreCast.Loc.mk n) s
   else if (!using_parser = "cil") then Cilparser.parse_hip n
   else report_error no_pos "Error!!! Invalid parser name!"
 
-let parse_hip n s =
-  DD.no_1_loop "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n
+let parse_hip n s p =
+  DD.no_1_loop "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s p) n
 
 let parse_sleek_int n s = SHGram.parse_string sprog_int (PreCast.Loc.mk n) s
 let parse_hip_string n s = SHGram.parse_string hprog (PreCast.Loc.mk n) s
