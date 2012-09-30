@@ -1555,7 +1555,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
           (* let pr_elem = Cpure.SV.string_of in *)
           (* let pr2 = pr_list (pr_pair pr_elem pr_elem) in *)
           DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
-          DD.info_pprint ("  consumed nodes: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
+          (* DD.info_pprint ("  consumed nodes: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos; *)
           DD.info_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
           DD.info_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
           DD.info_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
@@ -1608,6 +1608,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
           let new_es = {es with CF. es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@rvhp_rels;
               CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ [hp_rel];
               CF.es_formula = new_es_formula} in
+          DD.info_pprint ("  new lhs: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
           (true, new_es)
       end
 

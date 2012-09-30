@@ -3021,6 +3021,18 @@ let get_HRel hf=
     | HRel (hp, eargs, _ ) -> Some (hp, List.concat (List.map CP.afv eargs))
     | _ -> None
 
+let get_HRels hf=
+  let rec helper h=
+    match h with
+      | HRel (hp, eargs, _ ) -> [(hp, List.concat (List.map CP.afv eargs))]
+      | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2} 
+      | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} 
+      | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2} 
+          -> (helper h1)@(helper h2)
+      | _ -> []
+  in
+  helper hf
+
 let rec check_eq_hrel_node  (rl1, args1 ,_)  (rl2, args2,_)=
     let rec helper l1 l2=
       match l1,l2 with

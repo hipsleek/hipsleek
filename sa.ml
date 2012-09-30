@@ -1059,7 +1059,7 @@ let subst_cs_w_other_cs_x constrs=
 
 let subst_cs_w_other_cs constrs=
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
-   Debug.no_1 "subst_cs_w_other_cs" pr1 pr1
+   Debug.ho_1 "subst_cs_w_other_cs" pr1 pr1
        (fun _ -> subst_cs_w_other_cs_x constrs) constrs
 
 let subst_cs_x hp_constrs par_defs=

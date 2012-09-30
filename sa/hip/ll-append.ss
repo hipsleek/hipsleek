@@ -42,7 +42,7 @@ x::node<val_30_558,v_node_30_573> * G(v_node_30_573,y)& v_node_30_573!=null --> 
 
 HeapPred H(node a).
 HeapPred H1(node a).
-HeapPred G(node a, node b).
+HeapPred G2(node a, node b).
 HeapPred G1(node a, node b).
   HeapPred G3(node b,node c, node d).
 
@@ -70,9 +70,9 @@ void append(node x, node y)
   /* requires x::lseg<null> & x!=null  // H(x,y) */
   /* ensures  x::lseg<y> ;             // G(x,y) */
 
-  /* infer[G, G1] */
-  /* requires G(x,y) */
-  /* ensures G1(x,y); */
+  /* infer[G1, G2] */
+  /* requires G1(x,y) */
+  /* ensures G2(x,y); */
 {
   if (x.next == null)
     x.next = y;
