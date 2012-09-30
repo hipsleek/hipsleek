@@ -460,8 +460,8 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option): Iast.proc
     Iast.proc_constructor = false;
     Iast.proc_args = args;
     Iast.proc_return = return;
-    Iast.proc_static_specs = Iast.mkSpecTrue n_flow pos;
-    Iast.proc_dynamic_specs = Iast.mkSpecTrue n_flow pos;
+    Iast.proc_static_specs = Iformula.EList [];
+    Iast.proc_dynamic_specs = Iformula.mkEFalseF ();
     Iast.proc_exceptions = [];
     Iast.proc_body = Some funbody;
     Iast.proc_is_main = false;
@@ -508,8 +508,12 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
     | Cil.GPragma _ -> report_error_msg "TRUNG TODO: Handle Cil.GPragma later!"
     | Cil.GText _ -> report_error_msg "TRUNG TODO: Handle Cil.GText later!"
   ) globals;
+  let obj_def = {Iast.data_name = "Object"; Iast.data_fields = []; Iast.data_parent_name = "";
+                 Iast.data_invs = []; Iast.data_methods = []} in
+  let string_def = {Iast.data_name = "String"; Iast.data_fields = []; Iast.data_parent_name = "Object";
+                    Iast.data_invs = []; Iast.data_methods = []} in
   let newprog : Iast.prog_decl = ({
-    Iast.prog_data_decls = !data_decls;
+    Iast.prog_data_decls = obj_def :: string_def :: !data_decls;
     Iast.prog_global_var_decls = !global_var_decls;
     Iast.prog_logical_var_decls = !logical_var_decls;
     Iast.prog_enum_decls = !enum_decls;
@@ -558,7 +562,6 @@ let process_one_file (cil: Cil.file) : unit =
 
 
 let parse_hip (filename: string) : Iast.prog_decl =
-  let _ = print_endline ("== in Cilparser.parse_hip: filename = " ^ filename) in
   let cil = parse_one_file filename in
   if !Cilutil.doCheck then (
     ignore (Errormsg.log "First CIL check\n");
