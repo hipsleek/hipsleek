@@ -36,8 +36,11 @@ let rec string_of_elems elems string_of sep = match elems with
   | h::t -> (string_of h) ^ sep ^ (string_of_elems t string_of sep)
 
 let fixcalc_of_spec_var x = match x with
-  | CP.SpecVar (Named _, id, Unprimed) -> "NOD" ^ id
-  | CP.SpecVar (Named _, id, Primed) -> "NODPRI" ^ id
+(*  | CP.SpecVar (Named _, id, Unprimed) -> "NOD" ^ id*)
+(*  | CP.SpecVar (Named _, id, Primed) -> "NODPRI" ^ id*)
+  | CP.SpecVar (Named _, id, Unprimed)
+  | CP.SpecVar (Named _, id, Primed) -> 
+    report_error no_pos "Relation contains non-numerical variables"
   | CP.SpecVar (_, id, Unprimed) -> id
   | CP.SpecVar (_, id, Primed) -> "PRI" ^ id
 
@@ -199,9 +202,9 @@ let rec remove_paren s n = if n=0 then "" else match s.[0] with
   | ')' -> remove_paren (String.sub s 1 (n-1)) (n-1)
   | _ -> (String.sub s 0 1) ^ (remove_paren (String.sub s 1 (n-1)) (n-1))
 
-let fv_rel pure = match pure with
-  | CP.BForm((CP.RelForm(_,es,_),_),_) -> List.concat (List.map CP.afv es)
-  | _ -> []
+(*let fv_rel pure = match pure with*)
+(*  | CP.BForm((CP.RelForm(_,es,_),_),_) -> List.concat (List.map CP.afv es)*)
+(*  | _ -> []*)
 
 let rec is_rec pf = match pf with
   | CP.BForm (bf,_) -> CP.is_RelForm pf
@@ -212,110 +215,110 @@ let rec is_rec pf = match pf with
   | CP.Forall (_,f,_,_) -> is_rec f
   | CP.Exists (_,f,_,_) -> is_rec f
 
-let rec get_rel_vars pf = match pf with
-  | CP.BForm (bf,_) -> if CP.is_RelForm pf then fv_rel pf else []
-  | CP.And (f1,f2,_) -> get_rel_vars f1 @ get_rel_vars f2
-  | CP.AndList b -> fold_l_snd get_rel_vars b
-  | CP.Or (f1,f2,_,_) -> get_rel_vars f1 @ get_rel_vars f2
-  | CP.Not (f,_,_) -> get_rel_vars f
-  | CP.Forall (_,f,_,_) -> get_rel_vars f
-  | CP.Exists (_,f,_,_) -> get_rel_vars f
+(*let rec get_rel_vars pf = match pf with*)
+(*  | CP.BForm (bf,_) -> if CP.is_RelForm pf then fv_rel pf else []*)
+(*  | CP.And (f1,f2,_) -> get_rel_vars f1 @ get_rel_vars f2*)
+(*  | CP.AndList b -> fold_l_snd get_rel_vars b*)
+(*  | CP.Or (f1,f2,_,_) -> get_rel_vars f1 @ get_rel_vars f2*)
+(*  | CP.Not (f,_,_) -> get_rel_vars f*)
+(*  | CP.Forall (_,f,_,_) -> get_rel_vars f*)
+(*  | CP.Exists (_,f,_,_) -> get_rel_vars f*)
 
-let substitute (e: CP.exp): (CP.exp * CP.formula list) = match e with
-  | CP.Var _ -> (e, [])
-  | _ -> 
-    (try 
-      let arb = List.hd (CP.afv e) in 
-      let var = CP.fresh_spec_var_prefix "fc" arb in
-      let var = CP.mkVar var no_pos in
-      (var, [CP.mkEqExp var e no_pos])
-    with _ -> (e,[]))
+(*let substitute (e: CP.exp): (CP.exp * CP.formula list) = match e with*)
+(*  | CP.Var _ -> (e, [])*)
+(*  | _ -> *)
+(*    (try *)
+(*      let arb = List.hd (CP.afv e) in *)
+(*      let var = CP.fresh_spec_var_prefix "fc" arb in*)
+(*      let var = CP.mkVar var no_pos in*)
+(*      (var, [CP.mkEqExp var e no_pos])*)
+(*    with _ -> (e,[]))*)
 
-let arr_para_order (rel: CP.formula) (rel_def: CP.formula) 
-                   (ante_vars: CP.spec_var list) = 
-  match (rel,rel_def) with
-  | (CP.BForm ((CP.RelForm (id,args,p), o1), o2), CP.BForm ((CP.RelForm (id_def,args_def,_), _), _)) -> 
-    if id = id_def then 
-      let new_args_def = 
-        let pre_args, post_args = 
-          List.partition 
-            (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) 
-          args_def 
-        in
-        pre_args @ post_args 
-      in
-      let pairs = List.combine args_def args in
-      let new_args = List.map (fun a -> List.assoc a pairs) new_args_def in
-      let new_args, subs = List.split (List.map (fun a -> substitute a) new_args) in
-      (CP.BForm ((CP.RelForm (id,new_args,p), o1), o2), 
-        [CP.conj_of_list (List.concat subs) no_pos])
-    else 
-      let args, subs = List.split (List.map (fun a -> substitute a) args) in
-      (CP.BForm ((CP.RelForm (id,args,p), o1), o2), [CP.conj_of_list (List.concat subs) no_pos])
-  | _ -> report_error no_pos "Expected relation formulas"
+(*let arr_para_order (rel: CP.formula) (rel_def: CP.formula) *)
+(*                   (ante_vars: CP.spec_var list) = *)
+(*  match (rel,rel_def) with*)
+(*  | (CP.BForm ((CP.RelForm (id,args,p), o1), o2), CP.BForm ((CP.RelForm (id_def,args_def,_), _), _)) -> *)
+(*    if id = id_def then *)
+(*      let new_args_def = *)
+(*        let pre_args, post_args = *)
+(*          List.partition *)
+(*            (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) *)
+(*          args_def *)
+(*        in*)
+(*        pre_args @ post_args *)
+(*      in*)
+(*      let pairs = List.combine args_def args in*)
+(*      let new_args = List.map (fun a -> List.assoc a pairs) new_args_def in*)
+(*      let new_args, subs = List.split (List.map (fun a -> substitute a) new_args) in*)
+(*      (CP.BForm ((CP.RelForm (id,new_args,p), o1), o2), *)
+(*        [CP.conj_of_list (List.concat subs) no_pos])*)
+(*    else *)
+(*      let args, subs = List.split (List.map (fun a -> substitute a) args) in*)
+(*      (CP.BForm ((CP.RelForm (id,args,p), o1), o2), [CP.conj_of_list (List.concat subs) no_pos])*)
+(*  | _ -> report_error no_pos "Expected relation formulas"*)
 
-let arr_args rcase_orig rel ante_vars = 
-  let rels = CP.get_RelForm rcase_orig in
-  let rels,lp = List.split (List.map (fun r -> arr_para_order r rel ante_vars) rels) in
-  let rcase = TP.simplify_raw (CP.drop_rel_formula rcase_orig) in
-  CP.conj_of_list ([rcase]@rels@(List.concat lp)) no_pos
+(*let arr_args rcase_orig rel ante_vars = *)
+(*  let rels = CP.get_RelForm rcase_orig in*)
+(*  let rels,lp = List.split (List.map (fun r -> arr_para_order r rel ante_vars) rels) in*)
+(*  let rcase = TP.simplify_raw (CP.drop_rel_formula rcase_orig) in*)
+(*  CP.conj_of_list ([rcase]@rels@(List.concat lp)) no_pos*)
 
-let propagate_exp exp1 exp2 = match (exp1, exp2) with (* Need to cover all patterns *)
-  | (CP.Lte(e1, CP.IConst(i2, _), _), CP.Lte(e3, CP.IConst(i4, _), _)) ->
-    if CP.eqExp e1 e3 && i2 > i4 then Some (CP.Lte(e1, CP.IConst(i4, no_pos), no_pos)) else None
-  | (CP.Lte(e1, CP.IConst(i2, _), _), CP.Eq(e3, CP.IConst(i4, _), _))
-  | (CP.Lte(e1, CP.IConst(i2, _), _), CP.Eq(CP.IConst(i4, _), e3, _)) ->
-    if CP.eqExp e1 e3 && i2 > i4 then Some (CP.Lte(e1, CP.IConst(i4, no_pos), no_pos)) else None
-  | (CP.Lte(CP.IConst(i2, _), e1, _), CP.Eq(e3, CP.IConst(i4, _), _))
-  | (CP.Lte(CP.IConst(i2, _), e1, _), CP.Eq(CP.IConst(i4, _), e3, _)) ->
-    if CP.eqExp e1 e3 && i2 < i4 then Some (CP.Gte(e1, CP.IConst(i4, no_pos), no_pos)) else None
-  | (CP.Lte(e1, CP.IConst(i2, _), _), CP.Lt(e3, CP.IConst(i4, _), _)) ->
-    if CP.eqExp e1 e3 && i2 >= i4 then Some (CP.Lt(e1, CP.IConst(i4, no_pos), no_pos)) else None
-  | (CP.Gte(e1, CP.IConst(i2, _), _), CP.Gte(e3, CP.IConst(i4, _), _)) ->
-    if CP.eqExp e1 e3 && i2 < i4 then Some (CP.Gte(e1, CP.IConst(i4, no_pos), no_pos)) else None
-  | (CP.Gte(e1, CP.IConst(i2, _), _), CP.Eq(e3, CP.IConst(i4, _), _))
-  | (CP.Gte(e1, CP.IConst(i2, _), _), CP.Eq(CP.IConst(i4, _), e3, _)) ->
-    if CP.eqExp e1 e3 && i2 < i4 then Some (CP.Gte(e1, CP.IConst(i4, no_pos), no_pos)) else None
-  | (CP.Gte(e1, CP.IConst(i2, _), _), CP.Gt(e3, CP.IConst(i4, _), _)) ->
-    if CP.eqExp e1 e3 && i2 <= i4 then Some (CP.Gt(e1, CP.IConst(i4, no_pos), no_pos)) else None
-  | _ -> None  
+(*let propagate_exp exp1 exp2 = match (exp1, exp2) with (* Need to cover all patterns *)*)
+(*  | (CP.Lte(e1, CP.IConst(i2, _), _), CP.Lte(e3, CP.IConst(i4, _), _)) ->*)
+(*    if CP.eqExp e1 e3 && i2 > i4 then Some (CP.Lte(e1, CP.IConst(i4, no_pos), no_pos)) else None*)
+(*  | (CP.Lte(e1, CP.IConst(i2, _), _), CP.Eq(e3, CP.IConst(i4, _), _))*)
+(*  | (CP.Lte(e1, CP.IConst(i2, _), _), CP.Eq(CP.IConst(i4, _), e3, _)) ->*)
+(*    if CP.eqExp e1 e3 && i2 > i4 then Some (CP.Lte(e1, CP.IConst(i4, no_pos), no_pos)) else None*)
+(*  | (CP.Lte(CP.IConst(i2, _), e1, _), CP.Eq(e3, CP.IConst(i4, _), _))*)
+(*  | (CP.Lte(CP.IConst(i2, _), e1, _), CP.Eq(CP.IConst(i4, _), e3, _)) ->*)
+(*    if CP.eqExp e1 e3 && i2 < i4 then Some (CP.Gte(e1, CP.IConst(i4, no_pos), no_pos)) else None*)
+(*  | (CP.Lte(e1, CP.IConst(i2, _), _), CP.Lt(e3, CP.IConst(i4, _), _)) ->*)
+(*    if CP.eqExp e1 e3 && i2 >= i4 then Some (CP.Lt(e1, CP.IConst(i4, no_pos), no_pos)) else None*)
+(*  | (CP.Gte(e1, CP.IConst(i2, _), _), CP.Gte(e3, CP.IConst(i4, _), _)) ->*)
+(*    if CP.eqExp e1 e3 && i2 < i4 then Some (CP.Gte(e1, CP.IConst(i4, no_pos), no_pos)) else None*)
+(*  | (CP.Gte(e1, CP.IConst(i2, _), _), CP.Eq(e3, CP.IConst(i4, _), _))*)
+(*  | (CP.Gte(e1, CP.IConst(i2, _), _), CP.Eq(CP.IConst(i4, _), e3, _)) ->*)
+(*    if CP.eqExp e1 e3 && i2 < i4 then Some (CP.Gte(e1, CP.IConst(i4, no_pos), no_pos)) else None*)
+(*  | (CP.Gte(e1, CP.IConst(i2, _), _), CP.Gt(e3, CP.IConst(i4, _), _)) ->*)
+(*    if CP.eqExp e1 e3 && i2 <= i4 then Some (CP.Gt(e1, CP.IConst(i4, no_pos), no_pos)) else None*)
+(*  | _ -> None  *)
 
-let propagate_exp exp1 exp2 = 
-  let pr0 = !CP.print_p_formula in
-  Debug.no_2 "propagate_exp" pr0 pr0 (pr_option pr0)
-      (fun _ _ -> propagate_exp exp1 exp2) exp1 exp2
+(*let propagate_exp exp1 exp2 = *)
+(*  let pr0 = !CP.print_p_formula in*)
+(*  Debug.no_2 "propagate_exp" pr0 pr0 (pr_option pr0)*)
+(*      (fun _ _ -> propagate_exp exp1 exp2) exp1 exp2*)
 
-let propagate_fml rcase bcase = match (rcase, bcase) with
-  | (CP.BForm ((exp1,_),_), CP.BForm ((exp2,_),_)) -> 
-    let exp = propagate_exp exp1 exp2 in
-    (match exp with
-    | None -> []
-    | Some e -> [CP.BForm ((e,None),None)])
-  | _ -> []
+(*let propagate_fml rcase bcase = match (rcase, bcase) with*)
+(*  | (CP.BForm ((exp1,_),_), CP.BForm ((exp2,_),_)) -> *)
+(*    let exp = propagate_exp exp1 exp2 in*)
+(*    (match exp with*)
+(*    | None -> []*)
+(*    | Some e -> [CP.BForm ((e,None),None)])*)
+(*  | _ -> []*)
 
-let propagate_fml rcase bcase = 
-  let pr0 = !CP.print_formula in
-  Debug.no_2 "propagate_fml" pr0 pr0 (pr_list pr0)
-      (fun _ _ -> propagate_fml rcase bcase) rcase bcase
+(*let propagate_fml rcase bcase = *)
+(*  let pr0 = !CP.print_formula in*)
+(*  Debug.no_2 "propagate_fml" pr0 pr0 (pr_list pr0)*)
+(*      (fun _ _ -> propagate_fml rcase bcase) rcase bcase*)
 
-let propagate_rec_helper rcase_orig bcase_orig rel ante_vars =
-  let rcase = TP.simplify_raw (CP.drop_rel_formula rcase_orig) in
-  let rels = CP.get_RelForm rcase_orig in
-  let rels,lp = List.split 
-                (List.map (fun r -> arr_para_order r rel ante_vars) rels) in
-  let rel_vars = CP.remove_dups_svl (get_rel_vars rcase_orig) in
-  let exists_vars = CP.diff_svl (CP.fv rcase) rel_vars in
-  let exists_vars = List.filter (fun x -> not(CP.is_rel_var x)) exists_vars in
-  try
-    let rcase2 = TP.simplify_raw (CP.mkExists exists_vars rcase None no_pos) in
-    let pairs = List.combine (fv_rel rel) rel_vars in
-    let bcase = CP.subst pairs bcase_orig in
-    let pf = List.concat (List.map (fun b -> 
-      List.concat (List.map (fun r -> propagate_fml r b) (CP.list_of_conjs rcase2))) 
-      (CP.list_of_conjs bcase)) 
-    in
-    CP.conj_of_list ([rcase]@rels@pf@(List.concat lp)) no_pos
-  with _ -> rcase_orig
+(*let propagate_rec_helper rcase_orig bcase_orig rel ante_vars =*)
+(*  let rcase = TP.simplify_raw (CP.drop_rel_formula rcase_orig) in*)
+(*  let rels = CP.get_RelForm rcase_orig in*)
+(*  let rels,lp = List.split *)
+(*                (List.map (fun r -> arr_para_order r rel ante_vars) rels) in*)
+(*  let rel_vars = CP.remove_dups_svl (get_rel_vars rcase_orig) in*)
+(*  let exists_vars = CP.diff_svl (CP.fv rcase) rel_vars in*)
+(*  let exists_vars = List.filter (fun x -> not(CP.is_rel_var x)) exists_vars in*)
+(*  try*)
+(*    let rcase2 = TP.simplify_raw (CP.mkExists exists_vars rcase None no_pos) in*)
+(*    let pairs = List.combine (fv_rel rel) rel_vars in*)
+(*    let bcase = CP.subst pairs bcase_orig in*)
+(*    let pf = List.concat (List.map (fun b -> *)
+(*      List.concat (List.map (fun r -> propagate_fml r b) (CP.list_of_conjs rcase2))) *)
+(*      (CP.list_of_conjs bcase)) *)
+(*    in*)
+(*    CP.conj_of_list ([rcase]@rels@pf@(List.concat lp)) no_pos*)
+(*  with _ -> rcase_orig*)
 
 (* TODO: Need to handle computed relation in the future *)
 let rec get_other_branches or_fml args = match or_fml with
@@ -327,6 +330,31 @@ let rec get_other_branches or_fml args = match or_fml with
     let _,p,_,_,a = split_components or_fml in 
     let conjs = CP.list_of_conjs (MCP.pure_of_mix p) in
     List.filter (fun pure -> CP.subset args (CP.fv pure)) conjs
+
+let substitute_args_x a_rel = match a_rel with
+  | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
+    let new_args, subs = List.split 
+      (List.map (fun e ->
+        match e with
+        | CP.Var _ -> (e, [])
+        | _ -> 
+          (try 
+            let arb = List.hd (CP.afv e) in 
+            let var = CP.fresh_spec_var_prefix "fc" arb in
+            let var = CP.mkVar var no_pos in
+            (var, [CP.mkEqExp var e no_pos])
+          with _ -> (e,[]))
+      ) args)
+    in
+    (CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3), List.concat subs)
+  | _ -> report_error no_pos "Expected a relation"
+
+let substitute_args rcase =
+  let rels = CP.get_RelForm rcase in
+  let rcase_wo_rel = TP.simplify_raw (CP.drop_rel_formula rcase) in
+  let rels, subs = List.split (List.map (fun rel -> substitute_args_x rel) rels) in
+  let res = [rcase_wo_rel]@rels@(List.concat subs) in
+  CP.conj_of_list res no_pos
 
 let propagate_rec pfs rel ante_vars specs = match CP.get_rel_id rel with
   | None -> report_error no_pos "Expected a relation"
@@ -363,12 +391,20 @@ let propagate_rec pfs rel ante_vars specs = match CP.get_rel_id rel with
     in
     let no_of_disjs = List.fold_left (fun a b -> max a b) 1 no_of_disjs in 
 
+    let rcases = List.map (fun x -> substitute_args x) rcases in
+
+(*    let rcases = if List.length bcases = 1 then *)
+(*        List.map (fun x -> propagate_fml x) rcases in*)
+(*      else rcases*)
+    bcases @ rcases, no_of_disjs
+    
+
     (* TODO: drop rel, simplify and add rel and propagate formula *)
-    match bcases with
-    | [bcase] -> ([bcase] @ (List.map (fun rcase -> 
-      propagate_rec_helper rcase bcase rel ante_vars) rcases), no_of_disjs)
-    | _ -> (bcases @ (List.map (fun rcase -> 
-                        arr_args rcase rel ante_vars) rcases), no_of_disjs)
+(*    match bcases with*)
+(*    | [bcase] -> ([bcase] @ (List.map (fun rcase -> *)
+(*      propagate_rec_helper rcase bcase rel ante_vars) rcases), no_of_disjs)*)
+(*    | _ -> (bcases @ (List.map (fun rcase -> *)
+(*                        arr_args rcase rel ante_vars) rcases), no_of_disjs)*)
 
 let compute_def (rel_fml, pf, no) ante_vars =
   let (name,vars) = match rel_fml with

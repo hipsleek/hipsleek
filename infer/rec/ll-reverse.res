@@ -29,9 +29,9 @@ Procedure reverse$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 74 invocations 
+Stop Omega... 73 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.28 second(s)
-	Time spent in main process: 0.22 second(s)
-	Time spent in child processes: 0.06 second(s)
+Total verification time: 0.34 second(s)
+	Time spent in main process: 0.27 second(s)
+	Time spent in child processes: 0.07 second(s)

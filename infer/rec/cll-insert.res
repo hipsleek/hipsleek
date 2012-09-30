@@ -32,5 +32,5 @@ Stop Omega... 92 invocations
 0 false contexts at: ()
 
 Total verification time: 0.33 second(s)
-	Time spent in main process: 0.22 second(s)
-	Time spent in child processes: 0.11 second(s)
+	Time spent in main process: 0.25 second(s)
+	Time spent in child processes: 0.08 second(s)

@@ -32,13 +32,13 @@ A(xs',t_573,m_551,n_550) & xs!=null & -1+m_551=m & 1+n_550=n)) -->  A(xs',t,m,n)
 */
 	
 	
-relation A(node r, int x, int y, int z).
+relation A(int x, int y, int z).
 
 /* function to reverse a singly linked list */
 void reverse(ref node xs, ref node ys)
         infer [A]
 	requires xs::ll<n> * ys::ll<m> 
-	ensures ys'::ll<t> & A(xs',m,n,t);
+	ensures ys'::ll<t> & A(m,n,t) & xs'=null;
 {
 	if (xs != null) {
 		node tmp;
