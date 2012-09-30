@@ -26,7 +26,8 @@ let print_version () =
 (* main function                          *)
 (******************************************)
 
-let parse_file_full file_name (primitive: bool) = 
+let parse_file_full file_name (primitive: bool) =
+  let _ = print_endline ("== file_name = " ^ file_name) in 
   let org_in_chnl = open_in file_name in
     try
     (*let ptime1 = Unix.times () in
@@ -35,7 +36,17 @@ let parse_file_full file_name (primitive: bool) =
       (* print_string ("Parsing "^file_name^" ...\n"); flush stdout; *)
       let _ = Gen.Profiling.push_time "Parsing" in
       Globals.input_file_name:= file_name;
-      let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) primitive in
+      let _ = print_endline ("== begin parsing") in
+      let prog = (
+        if (!Globals.parser_name = "default") or primitive then
+          let _ = print_endline ("    use default parser") in
+          Parser.parse_hip file_name (Stream.of_channel org_in_chnl)
+        else if (!Globals.parser_name = "cil") then
+          let _ = print_endline ("    use cil parser") in
+          Cilparser.parse_hip file_name
+        else Error.report_error_msg "Error!!! Invalid parser!"
+      ) in
+      let _ = print_endline ("== end parsing") in
 		  close_in org_in_chnl;
          let _ = Gen.Profiling.pop_time "Parsing" in
     (*		  let ptime2 = Unix.times () in
@@ -49,14 +60,16 @@ let parse_file_full file_name (primitive: bool) =
     with
 		End_of_file -> exit 0
     | M.Loc.Exc_located (l,t)->
-      (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+      (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error 1: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
       raise t)
 
 (* Parse all prelude files declared by user.*)
 let process_primitives (file_list: string list) : Iast.prog_decl list =
   let new_names = List.map (fun c-> (Gen.get_path Sys.executable_name) ^ (String.sub c 1 ((String.length c) - 2))) file_list in
-  if (Sys.file_exists "./prelude.ss") then [(parse_file_full "./prelude.ss" true)]
-  else List.map (fun x -> parse_file_full x true) new_names
+  if (Sys.file_exists "./prelude.ss") then
+    let _ = print_endline ("-- call parse_file_full 01") in 
+    [(parse_file_full "./prelude.ss" true)]
+  else List.map (fun x -> let _ = print_endline ("-- call parse_file_full 02") in parse_file_full x true) new_names
 
 let process_primitives (file_list: string list) : Iast.prog_decl list =
   let pr1 = pr_list (fun x -> x) in
@@ -86,6 +99,7 @@ let process_source_full source =
   (* print_string ("\nProcessing file \"" ^ source ^ "\"\n");  *)
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
+  let _ = print_endline ("-- call parse_file_full 1") in
   let prog = parse_file_full source false in
   (* Remove all duplicated declared prelude *)
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
@@ -217,6 +231,7 @@ let process_source_full_parse_only source =
   (* print_string ("\nProcessing file \"" ^ source ^ "\"\n");  *)
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
+  let _ = print_endline ("-- call parse_file_full 2") in
   let prog = parse_file_full source false in
   (* Remove all duplicated declared prelude *)
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
@@ -345,6 +360,7 @@ let process_source_full_after_parser source (prog, prims_list) =
 	^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
 
 let main1 () =
+  let _ = print_endline ("== main1") in
   (* Cprinter.fmt_set_margin 40; *)
   (* Cprinter.fmt_string "TEST1.................................."; *)
   (* Cprinter.fmt_cut (); *)
@@ -380,6 +396,7 @@ let main1 () =
         print_string "Source file(s) not specified\n"
     end;
     let _ = Gen.Profiling.push_time "Overall" in
+    let _ = print_endline ("== source_files = " ^ (List.fold_left (fun x y -> x ^ "; " ^ y) "" !Globals.source_files)) in
     let _ = List.map process_source_full !Globals.source_files in
     let _ = Gen.Profiling.pop_time "Overall" in
      (*  Tpdispatcher.print_stats (); *)
@@ -398,9 +415,11 @@ let pre_main =
     let _ = Printexc.record_backtrace !Globals.trace_failure in
     if List.length (!Globals.source_files) = 0 then
       print_string "Source file(s) not specified\n";
+    let _ = print_endline ("== pre_main source_files = " ^ (List.fold_left (fun x y -> x ^ "; " ^ y) "" !Globals.source_files)) in
     List.map process_source_full_parse_only !Globals.source_files
 
 let loop_cmd parsed_content = 
+  let _ = print_endline ("== in loop_cmd") in
   let _ = List.map2 (fun s t -> process_source_full_after_parser s t) !Globals.source_files parsed_content in
   ()
 
@@ -425,13 +444,18 @@ let old_main =
   end
 
 let _ = 
+  let _ = print_endline ("== main") in
   if not(!Globals.do_infer_inc) then old_main
   else
+    let _ = print_endline ("== before pre_main= ") in
     let res = pre_main in
+    let _ = print_endline ("== afer pre_main= ") in
     while true do
       try
         let _ = print_string "# " in
+        let _ = print_endline ("== after s = ") in
         let s = Parse_cmd.parse_cmd (read_line ()) in
+        let _ = print_endline ("== after s = ") in
         match s with
           | (_,(false, None, None)) -> exit 0;
           | _ ->

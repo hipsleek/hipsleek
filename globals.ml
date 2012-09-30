@@ -631,6 +631,11 @@ let do_infer_inc = ref false
 let add_count (t: int ref) = 
 	t := !t+1
 
+(* for parser *)
+let parser_name = ref "default"
+
+let set_parser name =
+  parser_name := name
 
 (* utility functions *)
 

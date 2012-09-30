@@ -49,9 +49,6 @@ open Perm
 	| AnnMode of mode
 	| AnnType of typ
 
-(* name of parser that will be used. Capable parser names are "default", "cil" *)
-let using_parser = ref "default"
-
 let macros = ref (Hashtbl.create 19)
 
 (* An Hoa : Counting of holes "#" *)
@@ -2241,21 +2238,9 @@ let parse_sleek n s = SHGram.parse sprog (PreCast.Loc.mk n) s
 let parse_sleek n s =
   DD.no_1_loop "parse_sleek" (fun x -> x) (fun _ -> "?") (fun n -> parse_sleek n s) n
 
-let parse_hip n s p =
-  if (!using_parser = "default") or p then
-    let _ = print_endline ("--> using default parser, file: " ^ n) in 
-    let prog = SHGram.parse hprog (PreCast.Loc.mk n) s in
-    let _ = print_endline ("== default, prog = " ^ (Iprinter.string_of_program prog)) in 
-    prog
-  else if (!using_parser = "cil") then
-    let _ = print_endline ("--> using cil parser, file: " ^ n) in 
-    let prog = Cilparser.parse_hip n in
-    let _ = print_endline ("== cil, prog = " ^ (Iprinter.string_of_program prog)) in 
-    prog
-  else report_error no_pos "Error!!! Invalid parser name!"
-
-let parse_hip n s p =
-  DD.no_1_loop "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s p) n
+let parse_hip n s = SHGram.parse hprog (PreCast.Loc.mk n) s
+let parse_hip n s =
+  DD.no_1_loop "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n
 
 let parse_sleek_int n s = SHGram.parse_string sprog_int (PreCast.Loc.mk n) s
 let parse_hip_string n s =
@@ -2264,6 +2249,3 @@ let parse_hip_string n s =
   let pr x = x in
   let pr_no x = "?" in DD.no_2 "parse_hip_string" pr pr pr_no parse_hip_string n s *)
 let parse_spec s = SHGram.parse_string opt_spec_list_file (PreCast.Loc.mk "spec string") s
-
-let set_parser name =
-  using_parser := name;
