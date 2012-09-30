@@ -2831,9 +2831,10 @@ and heap_entail_struc_x (prog : prog_decl) (is_folding : bool)  (has_post: bool)
     | FailCtx _ -> (cl,Failure)
     | SuccCtx cl ->
     	      (* Do compaction for field annotations *)
-    	      let conseq = Mem.compact_nodes_with_same_name_in_struc conseq in
-    	      let cl = List.map (fun c -> CF.transform_context (fun es -> 
+    	      let conseq = if(!Globals.allow_field_ann) then Mem.compact_nodes_with_same_name_in_struc conseq else conseq in
+    	      let cl = if(!Globals.allow_field_ann) then List.map (fun c -> CF.transform_context (fun es -> 
 	      CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}) c) cl
+	      else cl
 	      in
 	      if !Globals.use_set || Gen.is_empty cl then
 	      let tmp1 = List.map (fun c -> heap_entail_one_context_struc_nth "4" prog is_folding  has_post c conseq tid pos pid) cl in
@@ -3430,10 +3431,10 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
 			               		 (* first add the frame h2*[] *)
 			               		 let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkConjH h1 f pos)) cl in 
 		                        		(* next add the frame h1/\[]*)
-		                        	 let cl = List.map
+		                        	 let cl = if (!Globals.allow_field_ann) then List.map
 						  (fun c -> CF.transform_context (fun es -> 
 				  CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}) c)
-				  		  cl
+				  		  cl else cl
 			                	 (*let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkConjH h1 f pos)) cl
 			               		 in*) in (SuccCtx(cl), with_h2_prf)
 		          		 in (with_h2_ctx, with_h2_prf)
@@ -3528,8 +3529,9 @@ and heap_entail_one_context prog is_folding  ctx conseq (tid: CP.spec_var option
 (*only struc_formula can have some thread id*)
 and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : context) (conseq : formula) pos : (list_context * proof) =
   Debug.devel_zprint (lazy ("heap_entail_one_context:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)^"\n")) pos;
-       let ctx = CF.transform_context (fun es -> 
+       let ctx = if (!Globals.allow_field_ann) then CF.transform_context (fun es -> 
 	      CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}) ctx 
+	      else ctx
 	      in
     if isAnyFalseCtx ctx then (* check this first so that false => false is true (with false residual) *)
       (SuccCtx [ctx], UnsatAnte)
@@ -4056,10 +4058,10 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
                         (* let _ = print_endline ("**********************************") in *)
 		                heap_entail_conjunct prog is_folding  c new_conseq []  pos) cl 
 	                in
-	                				let cl = List.map
+	                				let cl = if (!Globals.allow_field_ann) then List.map
 						  (fun c -> CF.transform_context (fun es -> 
 				  CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;}) c)
-				  		  cl
+				  		  cl else cl
 				  in
 	                let res_ctx, res_prf = List.split res in
 	                let res_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) res_prf in

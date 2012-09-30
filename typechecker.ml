@@ -379,7 +379,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             Debug.trace_hprint (add_str "Base" !CF.print_formula) b.CF.formula_struc_base no_pos;
             Debug.trace_hprint (add_str "New Base" !CF.print_formula) new_base no_pos;
 
-            (* let _ = print_string ("\n(andreeac)New Base" ^ (!CF.print_formula new_base)) in *)
+            (*let _ = print_string ("\n(andreeac)New Base" ^ (!CF.print_formula new_base)) in *)
 
             let _ = if rels==[] then () else pre_ctr#inc  in
 	        (CF.EBase {b with CF.formula_struc_base = new_base; CF.formula_struc_continuation = c}, [], rels, r) 
@@ -454,9 +454,9 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     (* Termination: Check boundedness of the measures 
                      * before going into the function body *)
                     let (_, rankbnds) = check_bounded_term prog ctx1 (CF.pos_of_formula post_cond) in
-	                (* let _ = print_string ("\n(andreeac) ctx:" ^ (Cprinter.string_of_context ctx1)) in *)
+	                (*let _ = print_string ("\n(andreeac) ctx:" ^ (Cprinter.string_of_context ctx1)) in*) 
 	    	        let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in
-	                (* let _ = print_string ("\n WN 1 :"^(Cprinter.string_of_list_partial_context res_ctx)) in *)
+	                (*let _ = print_string ("\n WN 1 :"^(Cprinter.string_of_list_partial_context res_ctx)) in *)
 	    	        let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
 	                (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
                     let pos = CF.pos_of_formula post_cond in
@@ -638,6 +638,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
   if (exp_to_check e0) then  CF.find_false_list_failesc_ctx ctx (Cast.pos_of_exp e0)
   else ();
 	let check_exp1 (ctx : CF.list_failesc_context) : CF.list_failesc_context = 
+	(*let _ = print_string("Exp: "^(Cprinter.string_of_exp e0)^"\n") in *)
       match e0 with
 	    | Label e ->
 	          let ctx = CF.add_path_id_ctx_failesc_list ctx e.exp_label_path_id in
@@ -1669,9 +1670,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	let ctx = if (!simplify_context) then
 	  CF.simplify_list_failesc_context ctx proc.Cast.proc_important_vars
 	else ctx in
+	
 	let (fl,cl) = List.partition (fun (_,s,c)-> Gen.is_empty c && CF.is_empty_esc_stack s) ctx in
-    (* let _ = print_endline ("WN:ESCAPE:"^(Cprinter.string_of_list_failesc_context fl)) in *)
-    (* let _ = print_endline ("WN:CURRENT:"^(Cprinter.string_of_list_failesc_context cl)) in *)
+     (*let _ = print_endline ("WN:ESCAPE:"^(Cprinter.string_of_list_failesc_context fl)) in *)
+     (*let _ = print_endline ("WN:CURRENT:"^(Cprinter.string_of_list_failesc_context cl)) in *)
     (* if (Gen.is_empty cl) then fl
        else *)
     let failesc = CF.splitter_failesc_context !norm_flow_int None (fun x->x)(fun x -> x) cl in
@@ -1869,7 +1871,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     Debug.trace_hprint (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
                     Debug.trace_hprint (add_str "fm formula " (pr_list !CF.print_formula)) fm no_pos;
                     let new_spec, _ =  CF.simplify_ann true [] new_spec in
-                    (* print_string ("\n(andreeac)!!!! SPECS (after specs_infer) " ^ (Cprinter.string_of_struc_formula new_spec) ^ "\n"); *)
+                   (*print_string ("\n(andreeac)!!!! SPECS (after specs_infer) " ^ (Cprinter.string_of_struc_formula new_spec) ^ "\n"); *)
                    let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
                     let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
                     (*let lst_assume = List.map (fun (_,a2,a3)-> (a2,a3)) lst_assume in*)

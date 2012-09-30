@@ -549,6 +549,7 @@ let rec join_ann (ann1: CF.ann list) (ann2: CF.ann list): bool * (CF.ann list) =
 
       
 let rec compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula * CP.formula = 
+  (*let _ = print_string("Compacting :"^ (string_of_h_formula f)^ "\n") in*)
   if not (!Globals.allow_field_ann) then f,(CP.mkTrue no_pos) else
     match f with
       | CF.Star {CF.h_formula_star_h1 = h1;
@@ -624,6 +625,7 @@ let rec compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.sp
           in
           let h1,h2,p = helper h1 h2 in
           let res = CF.mkStarH h1 h2 pos 12 in
+          (*let _ = print_string("Compacted :"^ (string_of_h_formula res)^ "\n") in*)
           res,p
       | CF.Conj h  -> let h1_h,h1_p = compact_nodes_with_same_name_in_h_formula h.CF.h_formula_conj_h1 aset in
       		let h2_h,h2_p = compact_nodes_with_same_name_in_h_formula h.CF.h_formula_conj_h2 aset in
@@ -649,12 +651,20 @@ let rec compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
     | CF.Or f     -> CF.Or { f with 
         CF.formula_or_f1 = compact_nodes_with_same_name_in_formula f.CF.formula_or_f1; 
         CF.formula_or_f2 = compact_nodes_with_same_name_in_formula f.CF.formula_or_f2; }
-    | CF.Exists f -> let new_h,new_p = 
-    	compact_nodes_with_same_name_in_h_formula f.CF.formula_exists_heap (Context.comp_aliases f.CF.formula_exists_pure)
+    | CF.Exists f -> 
+    	(*let qevars = f.CF.formula_exists_qvars in 
+    	let fvars = CP.fresh_spec_vars qevars in
+    	let h = CF.subst_avoid_capture_h qevars fvars f.CF.formula_exists_heap in
+    	let p = MCP.subst_avoid_capture_memo qevars fvars f.CF.formula_exists_pure in*)
+    	let h = f.CF.formula_exists_heap in
+    	let mp = f.CF.formula_exists_pure in
+    	let new_h,new_p = 
+    	compact_nodes_with_same_name_in_h_formula h (Context.comp_aliases mp)
     	in
- 	let new_mcp = MCP.merge_mems f.CF.formula_exists_pure (MCP.mix_of_pure new_p) true in
+ 	let new_mcp = MCP.merge_mems mp (MCP.mix_of_pure new_p) true in
 	(*let new_mcp = MCP.memo_pure_push_exists f.CF.formula_exists_qvars new_mcp in*)
     	CF.Exists { f with
+    	(*CF.formula_exists_qvars = fvars;*)
         CF.formula_exists_heap = new_h;
         CF.formula_exists_pure = new_mcp;}
 
