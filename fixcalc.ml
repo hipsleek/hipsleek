@@ -55,7 +55,8 @@ and fixcalc_of_exp e = match e with
   | CP.IConst (i, _) -> string_of_int i
   | CP.FConst (f, _) -> string_of_float f
   | CP.Add (e1, e2, _) -> fixcalc_of_exp e1 ^ op_add ^ fixcalc_of_exp e2 
-  | CP.Subtract (e1, e2, _) -> fixcalc_of_exp e1 ^ op_sub ^ "(" ^ fixcalc_of_exp e2 ^ ")"
+  | CP.Subtract (e1, e2, _) -> 
+    fixcalc_of_exp e1 ^ op_sub ^ "(" ^ fixcalc_of_exp e2 ^ ")"
   | CP.Mult (e1, e2, _) -> 
     begin
       match e1, e2 with
@@ -90,57 +91,75 @@ let rec fixcalc_of_b_formula b =
         let t = fixcalc_of_exp e2 in
         "((" ^ s ^ op_lt ^ t ^ ")" ^ op_or ^ "(" ^ s ^ op_gt ^ t ^ "))"
     | CP.RelForm (id,args,_) -> 
-      if List.exists (fun x -> match x with | CP.IConst _ -> true | _ -> false) args then "0=0"
+      if List.exists 
+        (fun x -> match x with | CP.IConst _ -> true | _ -> false) args 
+      then "0=0"
       else
-        (fixcalc_of_spec_var id) ^ "(" ^ (string_of_elems args fixcalc_of_exp ",") ^ ")"
-    | _ -> illegal_format ("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
+        (fixcalc_of_spec_var id) ^ "(" ^ 
+          (string_of_elems args fixcalc_of_exp ",") ^ ")"
+    | _ -> 
+      illegal_format ("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
 
 let rec fixcalc_of_pure_formula f = match f with
   | CP.BForm ((CP.BVar (x,_),_),_) -> fixcalc_of_spec_var x ^ op_gt ^ "0"
   | CP.BForm (b,_) -> fixcalc_of_b_formula b
   | CP.And (p1, p2, _) ->
     "(" ^ fixcalc_of_pure_formula p1 ^ op_and ^ fixcalc_of_pure_formula p2 ^ ")"
-  | CP.AndList b -> (match b with | [] -> fixcalc_of_pure_formula (CP.mkFalse no_pos) | (_,x)::t -> 
-	fixcalc_of_pure_formula (List.fold_left (fun a (_,c)->CP.mkAnd a c no_pos) x t))
+  | CP.AndList b -> 
+    (match b with 
+    | [] -> fixcalc_of_pure_formula (CP.mkFalse no_pos) 
+    | (_,x)::t -> fixcalc_of_pure_formula 
+      (List.fold_left (fun a (_,c)->CP.mkAnd a c no_pos) x t))
   | CP.Or (p1, p2,_ , _) ->
     "(" ^ fixcalc_of_pure_formula p1 ^ op_or ^ fixcalc_of_pure_formula p2 ^ ")"
   | CP.Not (p,_ , _) -> 
     begin
     match p with
     | CP.BForm ((CP.BVar (x,_),_),_) -> fixcalc_of_spec_var x ^ op_lte ^ "0"
-    | _ -> illegal_format ("Fixcalc.fixcalc_of_pure_formula: Not supported Not-formula")
+    | _ -> illegal_format ("Fixcalc.fixcalc_of_pure_formula: 
+                            Not supported Not-formula")
     end
   | CP.Forall (sv, p,_ , _) ->
-    " (forall (" ^ fixcalc_of_spec_var sv ^ ":" ^ fixcalc_of_pure_formula p ^ ")) "
+    " (forall (" ^ fixcalc_of_spec_var sv ^ ":" ^ 
+                   fixcalc_of_pure_formula p ^ ")) "
   | CP.Exists (sv, p,_ , _) ->
-    " (exists (" ^ fixcalc_of_spec_var sv ^ ":" ^ fixcalc_of_pure_formula p ^ ")) "
+    " (exists (" ^ fixcalc_of_spec_var sv ^ ":" ^ 
+                   fixcalc_of_pure_formula p ^ ")) "
 
 let rec fixcalc_of_h_formula f = match f with
   | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} -> 
     "(" ^ fixcalc_of_h_formula h1 ^ op_and ^ fixcalc_of_h_formula h2 ^ ")"
-  | Phase _ -> illegal_format ("Fixcalc.fixcalc_of_h_formula: Not supported Phase-formula")
+  | Phase _ -> 
+    illegal_format ("Fixcalc.fixcalc_of_h_formula: Not supported Phase-formula")
   | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2} -> 
     "(" ^ fixcalc_of_h_formula h1 ^ op_or ^ fixcalc_of_h_formula h2 ^ ")"
-  | DataNode {h_formula_data_node = sv; h_formula_data_name = c; h_formula_data_arguments = svs} -> 
+  | DataNode {h_formula_data_node = sv; h_formula_data_name = c; 
+              h_formula_data_arguments = svs} -> 
     if CP.is_self_spec_var sv then self ^ op_gt ^ "0"
-    else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^ (string_of_elems svs fixcalc_of_spec_var ",") ^ ")"
-  | ViewNode {h_formula_view_node = sv; h_formula_view_name = c; h_formula_view_arguments = svs} ->
+    else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^ 
+                   (string_of_elems svs fixcalc_of_spec_var ",") ^ ")"
+  | ViewNode {h_formula_view_node = sv; h_formula_view_name = c; 
+              h_formula_view_arguments = svs} ->
     if CP.is_self_spec_var sv then self ^ op_gt ^ "0"
-    else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^ (string_of_elems svs fixcalc_of_spec_var ",") ^ ")"
+    else c ^ "(" ^ (fixcalc_of_spec_var sv) ^ "," ^ 
+                   (string_of_elems svs fixcalc_of_spec_var ",") ^ ")"
   | HTrue -> "HTrue"
   | HFalse -> "HFalse"
   | HEmp -> "Emp"
-  | Hole _ -> illegal_format ("Fixcalc.fixcalc_of_h_formula: Not supported Hole-formula")
+  | Hole _ -> 
+    illegal_format ("Fixcalc.fixcalc_of_h_formula: Not supported Hole-formula")
 
 let fixcalc_of_mix_formula f = match f with
   | MCP.MemoF _ -> ""
   | MCP.OnePF pf -> fixcalc_of_pure_formula pf
 
 let rec fixcalc_of_formula e = match e with
-  | Or _ -> illegal_format ("Fixcalc.fixcalc_of_formula: Not supported Or-formula")
+  | Or _ -> 
+    illegal_format ("Fixcalc.fixcalc_of_formula: Not supported Or-formula")
   | Base {formula_base_heap = h; formula_base_pure = p} ->
     "(" ^ fixcalc_of_h_formula h ^ op_and ^ fixcalc_of_mix_formula p ^ ")"
-  | Exists {formula_exists_qvars = svs; formula_exists_heap = h; formula_exists_pure = p} ->     
+  | Exists {formula_exists_qvars = svs; formula_exists_heap = h; 
+            formula_exists_pure = p} ->     
     " exists (" ^ (string_of_elems svs fixcalc_of_spec_var ",") ^ ": " ^ 
     fixcalc_of_h_formula h ^ op_and ^ fixcalc_of_mix_formula p ^ ")"
 
@@ -169,7 +188,8 @@ let compute_inv name vars fml pf =
     let output_of_sleek = "fixcalc.inp" in
     let oc = open_out output_of_sleek in
     let input_fixcalc = 
-      name ^ ":=" ^ "{" ^ "[" ^ self ^ "," ^ (string_of_elems vars fixcalc_of_spec_var ",") ^ "]" ^ " -> [] -> []: " ^
+      name ^ ":=" ^ "{" ^ "[" ^ self ^ "," ^ 
+      (string_of_elems vars fixcalc_of_spec_var ",") ^ "]" ^ " -> [] -> []: " ^
       (string_of_elems fml (fun (c,_)-> fixcalc_of_formula c) op_or) ^
       "\n};\n\nFix1:=bottomupgen([" ^ name ^ "]);\n\n"
     in 
@@ -177,19 +197,12 @@ let compute_inv name vars fml pf =
     flush oc;
     close_out oc;
     let res = syscall (fixcalc ^ " " ^ output_of_sleek) in
-(*    let output_of_fixcalc = "fixcalc.out" in
-    let ic = open_out output_of_fixcalc in
-    Printf.fprintf ic "%s" res;
-    close_out ic;
-    let _ = syscall ("sed -i /^#/d " ^ output_of_fixcalc) in
-    let _ = syscall ("sed -i /^T/d " ^ output_of_fixcalc) in
-    let _ = syscall ("sed -i /^$/d " ^ output_of_fixcalc) in
-    let res = syscall ("cat " ^ output_of_fixcalc) in*)
     let new_pf = List.hd (Parse_fix.parse_fix res) in
     let check_imply = Omega.imply new_pf pf "1" 100.0 in
     if check_imply then (
       Pr.fmt_string "INV:  ";
-      Pr.pr_angle name (fun x -> Pr.fmt_string (Pr.string_of_typed_spec_var x)) vars;
+      Pr.pr_angle name 
+        (fun x -> Pr.fmt_string (Pr.string_of_typed_spec_var x)) vars;
       Pr.fmt_string ("\nOLD: " ^ (Pr.string_of_pure_formula pf) ^
                      "\nNEW: " ^ (Pr.string_of_pure_formula new_pf) ^ "\n\n");			
       new_pf)
@@ -202,10 +215,6 @@ let rec remove_paren s n = if n=0 then "" else match s.[0] with
   | ')' -> remove_paren (String.sub s 1 (n-1)) (n-1)
   | _ -> (String.sub s 0 1) ^ (remove_paren (String.sub s 1 (n-1)) (n-1))
 
-(*let fv_rel pure = match pure with*)
-(*  | CP.BForm((CP.RelForm(_,es,_),_),_) -> List.concat (List.map CP.afv es)*)
-(*  | _ -> []*)
-
 let rec is_rec pf = match pf with
   | CP.BForm (bf,_) -> CP.is_RelForm pf
   | CP.And (f1,f2,_) -> is_rec f1 || is_rec f2
@@ -214,122 +223,6 @@ let rec is_rec pf = match pf with
   | CP.Not (f,_,_) -> is_rec f
   | CP.Forall (_,f,_,_) -> is_rec f
   | CP.Exists (_,f,_,_) -> is_rec f
-
-(*let rec get_rel_vars pf = match pf with*)
-(*  | CP.BForm (bf,_) -> if CP.is_RelForm pf then fv_rel pf else []*)
-(*  | CP.And (f1,f2,_) -> get_rel_vars f1 @ get_rel_vars f2*)
-(*  | CP.AndList b -> fold_l_snd get_rel_vars b*)
-(*  | CP.Or (f1,f2,_,_) -> get_rel_vars f1 @ get_rel_vars f2*)
-(*  | CP.Not (f,_,_) -> get_rel_vars f*)
-(*  | CP.Forall (_,f,_,_) -> get_rel_vars f*)
-(*  | CP.Exists (_,f,_,_) -> get_rel_vars f*)
-
-(*let substitute (e: CP.exp): (CP.exp * CP.formula list) = match e with*)
-(*  | CP.Var _ -> (e, [])*)
-(*  | _ -> *)
-(*    (try *)
-(*      let arb = List.hd (CP.afv e) in *)
-(*      let var = CP.fresh_spec_var_prefix "fc" arb in*)
-(*      let var = CP.mkVar var no_pos in*)
-(*      (var, [CP.mkEqExp var e no_pos])*)
-(*    with _ -> (e,[]))*)
-
-(*let arr_para_order (rel: CP.formula) (rel_def: CP.formula) *)
-(*                   (ante_vars: CP.spec_var list) = *)
-(*  match (rel,rel_def) with*)
-(*  | (CP.BForm ((CP.RelForm (id,args,p), o1), o2), CP.BForm ((CP.RelForm (id_def,args_def,_), _), _)) -> *)
-(*    if id = id_def then *)
-(*      let new_args_def = *)
-(*        let pre_args, post_args = *)
-(*          List.partition *)
-(*            (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) *)
-(*          args_def *)
-(*        in*)
-(*        pre_args @ post_args *)
-(*      in*)
-(*      let pairs = List.combine args_def args in*)
-(*      let new_args = List.map (fun a -> List.assoc a pairs) new_args_def in*)
-(*      let new_args, subs = List.split (List.map (fun a -> substitute a) new_args) in*)
-(*      (CP.BForm ((CP.RelForm (id,new_args,p), o1), o2), *)
-(*        [CP.conj_of_list (List.concat subs) no_pos])*)
-(*    else *)
-(*      let args, subs = List.split (List.map (fun a -> substitute a) args) in*)
-(*      (CP.BForm ((CP.RelForm (id,args,p), o1), o2), [CP.conj_of_list (List.concat subs) no_pos])*)
-(*  | _ -> report_error no_pos "Expected relation formulas"*)
-
-(*let arr_args rcase_orig rel ante_vars = *)
-(*  let rels = CP.get_RelForm rcase_orig in*)
-(*  let rels,lp = List.split (List.map (fun r -> arr_para_order r rel ante_vars) rels) in*)
-(*  let rcase = TP.simplify_raw (CP.drop_rel_formula rcase_orig) in*)
-(*  CP.conj_of_list ([rcase]@rels@(List.concat lp)) no_pos*)
-
-(*let propagate_exp exp1 exp2 = match (exp1, exp2) with (* Need to cover all patterns *)*)
-(*  | (CP.Lte(e1, CP.IConst(i2, _), _), CP.Lte(e3, CP.IConst(i4, _), _)) ->*)
-(*    if CP.eqExp e1 e3 && i2 > i4 then Some (CP.Lte(e1, CP.IConst(i4, no_pos), no_pos)) else None*)
-(*  | (CP.Lte(e1, CP.IConst(i2, _), _), CP.Eq(e3, CP.IConst(i4, _), _))*)
-(*  | (CP.Lte(e1, CP.IConst(i2, _), _), CP.Eq(CP.IConst(i4, _), e3, _)) ->*)
-(*    if CP.eqExp e1 e3 && i2 > i4 then Some (CP.Lte(e1, CP.IConst(i4, no_pos), no_pos)) else None*)
-(*  | (CP.Lte(CP.IConst(i2, _), e1, _), CP.Eq(e3, CP.IConst(i4, _), _))*)
-(*  | (CP.Lte(CP.IConst(i2, _), e1, _), CP.Eq(CP.IConst(i4, _), e3, _)) ->*)
-(*    if CP.eqExp e1 e3 && i2 < i4 then Some (CP.Gte(e1, CP.IConst(i4, no_pos), no_pos)) else None*)
-(*  | (CP.Lte(e1, CP.IConst(i2, _), _), CP.Lt(e3, CP.IConst(i4, _), _)) ->*)
-(*    if CP.eqExp e1 e3 && i2 >= i4 then Some (CP.Lt(e1, CP.IConst(i4, no_pos), no_pos)) else None*)
-(*  | (CP.Gte(e1, CP.IConst(i2, _), _), CP.Gte(e3, CP.IConst(i4, _), _)) ->*)
-(*    if CP.eqExp e1 e3 && i2 < i4 then Some (CP.Gte(e1, CP.IConst(i4, no_pos), no_pos)) else None*)
-(*  | (CP.Gte(e1, CP.IConst(i2, _), _), CP.Eq(e3, CP.IConst(i4, _), _))*)
-(*  | (CP.Gte(e1, CP.IConst(i2, _), _), CP.Eq(CP.IConst(i4, _), e3, _)) ->*)
-(*    if CP.eqExp e1 e3 && i2 < i4 then Some (CP.Gte(e1, CP.IConst(i4, no_pos), no_pos)) else None*)
-(*  | (CP.Gte(e1, CP.IConst(i2, _), _), CP.Gt(e3, CP.IConst(i4, _), _)) ->*)
-(*    if CP.eqExp e1 e3 && i2 <= i4 then Some (CP.Gt(e1, CP.IConst(i4, no_pos), no_pos)) else None*)
-(*  | _ -> None  *)
-
-(*let propagate_exp exp1 exp2 = *)
-(*  let pr0 = !CP.print_p_formula in*)
-(*  Debug.no_2 "propagate_exp" pr0 pr0 (pr_option pr0)*)
-(*      (fun _ _ -> propagate_exp exp1 exp2) exp1 exp2*)
-
-(*let propagate_fml rcase bcase = match (rcase, bcase) with*)
-(*  | (CP.BForm ((exp1,_),_), CP.BForm ((exp2,_),_)) -> *)
-(*    let exp = propagate_exp exp1 exp2 in*)
-(*    (match exp with*)
-(*    | None -> []*)
-(*    | Some e -> [CP.BForm ((e,None),None)])*)
-(*  | _ -> []*)
-
-(*let propagate_fml rcase bcase = *)
-(*  let pr0 = !CP.print_formula in*)
-(*  Debug.no_2 "propagate_fml" pr0 pr0 (pr_list pr0)*)
-(*      (fun _ _ -> propagate_fml rcase bcase) rcase bcase*)
-
-(*let propagate_rec_helper rcase_orig bcase_orig rel ante_vars =*)
-(*  let rcase = TP.simplify_raw (CP.drop_rel_formula rcase_orig) in*)
-(*  let rels = CP.get_RelForm rcase_orig in*)
-(*  let rels,lp = List.split *)
-(*                (List.map (fun r -> arr_para_order r rel ante_vars) rels) in*)
-(*  let rel_vars = CP.remove_dups_svl (get_rel_vars rcase_orig) in*)
-(*  let exists_vars = CP.diff_svl (CP.fv rcase) rel_vars in*)
-(*  let exists_vars = List.filter (fun x -> not(CP.is_rel_var x)) exists_vars in*)
-(*  try*)
-(*    let rcase2 = TP.simplify_raw (CP.mkExists exists_vars rcase None no_pos) in*)
-(*    let pairs = List.combine (fv_rel rel) rel_vars in*)
-(*    let bcase = CP.subst pairs bcase_orig in*)
-(*    let pf = List.concat (List.map (fun b -> *)
-(*      List.concat (List.map (fun r -> propagate_fml r b) (CP.list_of_conjs rcase2))) *)
-(*      (CP.list_of_conjs bcase)) *)
-(*    in*)
-(*    CP.conj_of_list ([rcase]@rels@pf@(List.concat lp)) no_pos*)
-(*  with _ -> rcase_orig*)
-
-(* TODO: Need to handle computed relation in the future *)
-let rec get_other_branches or_fml args = match or_fml with
-  | Or fml -> 
-    (get_other_branches fml.formula_or_f1 args) @ 
-    (get_other_branches fml.formula_or_f2 args)
-  | _ ->
-    (* TODO CHECK: a*)
-    let _,p,_,_,a = split_components or_fml in 
-    let conjs = CP.list_of_conjs (MCP.pure_of_mix p) in
-    List.filter (fun pure -> CP.subset args (CP.fv pure)) conjs
 
 let substitute_args_x a_rel = match a_rel with
   | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
@@ -352,11 +245,23 @@ let substitute_args_x a_rel = match a_rel with
 let substitute_args rcase =
   let rels = CP.get_RelForm rcase in
   let rcase_wo_rel = TP.simplify_raw (CP.drop_rel_formula rcase) in
-  let rels, subs = List.split (List.map (fun rel -> substitute_args_x rel) rels) in
+  let rels, subs = 
+    List.split (List.map (fun rel -> substitute_args_x rel) rels) in
   let res = [rcase_wo_rel]@rels@(List.concat subs) in
   CP.conj_of_list res no_pos
 
-let propagate_rec pfs rel ante_vars specs = match CP.get_rel_id rel with
+(* TODO: Need to handle computed relation in the future *)
+let rec get_other_branches or_fml args = match or_fml with
+  | Or fml -> 
+    (get_other_branches fml.formula_or_f1 args) @ 
+    (get_other_branches fml.formula_or_f2 args)
+  | _ ->
+    (* TODO CHECK: a *)
+    let _,p,_,_,a = split_components or_fml in 
+    let conjs = CP.list_of_conjs (MCP.pure_of_mix p) in
+    List.filter (fun pure -> CP.subset args (CP.fv pure)) conjs
+
+let propagate_rec pfs rel specs = match CP.get_rel_id rel with
   | None -> report_error no_pos "Expected a relation"
   | Some ivs ->
     let (rcases, bcases) = List.partition is_rec pfs in
@@ -393,19 +298,8 @@ let propagate_rec pfs rel ante_vars specs = match CP.get_rel_id rel with
 
     let rcases = List.map (fun x -> substitute_args x) rcases in
 
-(*    let rcases = if List.length bcases = 1 then *)
-(*        List.map (fun x -> propagate_fml x) rcases in*)
-(*      else rcases*)
     bcases @ rcases, no_of_disjs
     
-
-    (* TODO: drop rel, simplify and add rel and propagate formula *)
-(*    match bcases with*)
-(*    | [bcase] -> ([bcase] @ (List.map (fun rcase -> *)
-(*      propagate_rec_helper rcase bcase rel ante_vars) rcases), no_of_disjs)*)
-(*    | _ -> (bcases @ (List.map (fun rcase -> *)
-(*                        arr_args rcase rel ante_vars) rcases), no_of_disjs)*)
-
 let compute_def (rel_fml, pf, no) ante_vars =
   let (name,vars) = match rel_fml with
     | CP.BForm ((CP.RelForm (name,args,_),_),_) -> 
@@ -439,7 +333,8 @@ let compute_cmd rel_defs =
 
 let compute_fixpoint_aux rel_defs ante_vars subs = 
   let input_fixcalc = 
-    let def = List.fold_left (fun x y -> x ^ (compute_def y ante_vars)) "" rel_defs in
+    let def = 
+      List.fold_left (fun x y -> x ^ (compute_def y ante_vars)) "" rel_defs in
     let cmd = compute_cmd rel_defs in 
     def ^ cmd
   in
@@ -503,7 +398,7 @@ let helper (rel, pfs) ante_vars specs =
   Debug.ninfo_hprint (add_str "pfs(af):" (pr_list !CP.print_formula)) pfs no_pos;
 
   (* Propagation *)
-  let pfs,no = propagate_rec pfs rel ante_vars specs in
+  let pfs,no = propagate_rec pfs rel specs in
 
   (* Make existence *)
   let pfs = List.map (fun p -> 
