@@ -551,12 +551,14 @@ let sprog = SHGram.Entry.mk "sprog"
 let hprog = SHGram.Entry.mk "hprog"
 let sprog_int = SHGram.Entry.mk "sprog_int"
 let opt_spec_list_file = SHGram.Entry.mk "opt_spec_list_file"
+let cp_file = SHGram.Entry.mk "cp_file" 
 
 EXTEND SHGram
-  GLOBAL: sprog hprog sprog_int opt_spec_list_file;
+  GLOBAL: sprog hprog sprog_int opt_spec_list_file cp_file;
   sprog:[[ t = command_list; `EOF -> t ]];
   sprog_int:[[ t = command; `EOF -> t ]];
   hprog:[[ t = hprogn; `EOF ->  t ]];
+  cp_file:[[ t = cp_list; `EOF ->  t ]];
   
 macro: [[`PMACRO; n=id; `EQEQ ; tc=tree_const -> if !Globals.perm=(Globals.Dperm) then Hashtbl.add !macros n tc else  report_error (get_pos 1) ("distinct share reasoning not enabled")]];
 
@@ -581,6 +583,7 @@ non_empty_command:
       | t=infer_cmd           -> Infer t  
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
+      | t=cmp_cmd           ->  CmpCmd t
       | t=time_cmd            -> t 
 	  | t=macro				  -> EmptyCmd]];
   
@@ -1292,6 +1295,10 @@ compose_cmd:
 print_cmd:
   [[ `PRINT; `IDENTIFIER id           -> PCmd id
    | `PRINT; `DOLLAR; `IDENTIFIER id  -> PVar id]];
+
+cmp_cmd:
+  [[ `CMP; `IDENTIFIER id ; `OSQUARE; il=OPT id_list; `CSQUARE ; `COLON; f = meta_constr -> 
+  let il = un_option il [] in (il,id,f)]];
 
 time_cmd:
   [[ `DTIME; `ON; `IDENTIFIER id   -> Time(true, id, get_pos_camlp4 _loc 1)
@@ -2259,6 +2266,17 @@ arrayaccess_expression:[[
 (*   | `THIS _ -> This{exp_this_pos = get_pos_camlp4 _loc 1}]]; *)
  
 (*end of hip part*)
+
+(*cp_list*)
+cp_list: [[t = LIST0 cp_ele -> t]];
+
+cp_ele: [[t = id; `COLON;`OBRACE;cs=constrs;`CBRACE  -> (t,cs) ]];
+
+constrs: [[t = LIST0 constr SEP `COMMA -> t]];
+
+constr : [[ t=disjunctive_constr; `LEFTARROW; b=disjunctive_constr -> ( (F.subst_stub_flow n_flow t), (F.subst_stub_flow n_flow b))]];
+
+(*end of cp_list*)
 END;;
 
 let parse_sleek n s = SHGram.parse sprog (PreCast.Loc.mk n) s
@@ -2273,4 +2291,4 @@ let parse_hip_string n s = SHGram.parse_string hprog (PreCast.Loc.mk n) s
   let pr x = x in
   let pr_no x = "?" in DD.no_2 "parse_hip_string" pr pr pr_no parse_hip_string n s *)
 let parse_spec s = SHGram.parse_string opt_spec_list_file (PreCast.Loc.mk "spec string") s
- 
+let parse_constrs n s = SHGram.parse cp_file (PreCast.Loc.mk n) s

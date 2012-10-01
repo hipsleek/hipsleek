@@ -11,6 +11,7 @@ HeapPred H1(node a).
 HeapPred H2(node a).
 HeapPred G1(node a, node b).
 HeapPred G2(node a, node b).
+HeapPred G(node a, node b, node c, node d).
 
 /*
 HP_RELDEFN HP_551:  HP_551(tmp_21',y)::  H1(tmp_21')&true,
@@ -24,9 +25,9 @@ HP_RELDEFN G1:  G1(x,y)::  HP_571(x) * HP_572(y)&true]
 
  */
 void reverse(ref node x, ref node y)
-  infer[H1,H2,G1]
+  infer[H1,H2,G]
   requires H1(x)*H2(y)
-  ensures G1(x',y');
+  ensures G(x,x',y,y');
 
 /*
   infer[H1,H2]
@@ -74,14 +75,19 @@ HX1(x, b) * HY(y) * x0::node<a,y> & y' = x0 & x' = b -> HX(x') * HY(y')
 GX(x1, x') * GY(y0, y') * HX1(x, b) * HY(y) * x0::node<a,y> & y0 = x0  -> GX(x, x') * GY(y, y')
 HX(x) * HY(y) & x = null & x' = null -> GX(x, x') * GY(y, y')
 
-auto:
+auto1:
  H1(x) * H2(y)& x!=null --> x::node<_,b> * HP_545(b,y,x)
  HP_545(b,y,x) * x::node<_,y>&x!=null --> H1(b) * H2(x)
  x::node<_,y> * G1(temp,x') * G2(x,y') & x!=null--> G1(x,x') * G2(y,y')
  H1(x) * H2(y)&x=null --> G1(x,x) * G2(y,y)
 
-//In the third relation: x::node<_,y> * G1(temp,x') * G2(x,y') & x!=null--> G1(x,x') * G2(y,y')
-I think LHS lost information of Y
+auto2:
+H1(x) * H2(y)&x!=null) --> x::node<val_47_536',next_47_537'> * HP_555(next_47_537',y,x)
+HP_555(tmp_21',y,x) * x::node<val_47_562,y>&x!=null) --> H1(tmp_21') * H2(x)
+x::node<val_47_562,y> * G(tmp_575,x',x,y')&x!=null --> G(x,x',y,y')
+H1(x) * H2(y)&x=null) --> G(x,x,y,y)&true
+
+//In the third relation: auto1: new HP?, auto2: lack infomations?
 
 
 uto:

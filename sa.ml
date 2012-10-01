@@ -377,7 +377,8 @@ let check_partial_def_eq (hp1, args1, cond1, olhs1, orhs1) (hp2, args2, cond2, o
         | Some f1, Some f2 ->
           (*subs*)
             let f1_subst = CF.subst subst f1 in
-            let r,_ (*map*) =  CEQ.checkeq_formulas [] f1_subst f2 in
+	    let hvars = CF.get_hp_rel_name_formula f1_subst @ CF.get_hp_rel_name_formula f2 in
+            let r,_ (*map*) =  CEQ.checkeq_formulas hvars f1_subst f2 in
             r
     in
     (checkeq_w_option olhs1 olhs2) &&
@@ -860,12 +861,21 @@ and get_only_hrel f = match f with
 (*todo: rhs is only hp with more than 1 param*)
 let get_hp_split_cands_x constrs =
   let helper (lhs,rhs)=
-    try(
+    (*try(
         let sv,el,l = get_only_hrel rhs in
         if(List.length el >= 2) then [(CF.HRel (sv,el,l))]
         else []
     )
-    with _ -> []
+    with _ -> []*)
+(*split all*)
+    let hn, hv, hr = CF.get_hp_rel_formula lhs in
+    let hn1, hv1, hr1 = CF.get_hp_rel_formula rhs in
+    let cands = hr1 @ hr in
+    let cands =  Gen.BList.remove_dups_eq (fun (hp1,_,_)  (hp2,_,_) ->
+      CP.eq_spec_var hp1 hp2) cands in
+    let cands = List.filter (fun (sv,el,l) ->  (List.length el) >= 2) cands in
+    let cands = List.map (fun (sv,el,l) -> (CF.HRel (sv,el,l))) cands in
+    cands 
   in
   (*remove duplicate*)
   let cands = (List.concat (List.map helper constrs)) in
@@ -1208,14 +1218,15 @@ let infer_hps_fix prog constrs =
   let rec helper constrs par_defs =
     DD.info_pprint ">>>>>> step 3: simplification <<<<<<" no_pos;
     let constrs1 = simplify_constrs constrs in
+     Debug.ninfo_hprint (add_str "constr each LOOP: " (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) constrs1 no_pos;
   (*step 3: pick partial definition*)
     DD.info_pprint ">>>>>> step 4: pick partial definitions <<<<<<" no_pos;
     let constrs2, new_par_defs = collect_partial_definitions prog constrs1 in
     let par_defs_diff = Gen.BList.difference_eq
       check_partial_def_eq new_par_defs par_defs in
     if par_defs_diff = [] then
-      (*teminating condition*)
-      (constrs2, par_defs)
+ (*teminating condition*) 
+      (constrs2, par_defs)  
     else
       begin
           (*step 4: pick complete def*)
@@ -1283,5 +1294,5 @@ let infer_hps prog (hp_constrs: (CF.formula * CF.formula) list):
  ((CF.formula * CF.formula) list * hp_rel_def list) =
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  Debug.no_1 "infer_hp" pr1 (pr_pair pr1 pr2)
+  Debug.ho_1 "infer_hp" pr1 (pr_pair pr1 pr2)
       (fun _ -> infer_hps_x prog hp_constrs) hp_constrs

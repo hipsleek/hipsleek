@@ -72,7 +72,60 @@ HP_549(b,x) * x::node<_,b>&x!=null --> D(b)
  emp&x'=null & x!=null--> E(x,x')
  D(x)&x=null --> E(x,x)
 
+new_auto:
+D(x)&x!=null --> x::node<val_19_525',next_19_526'> * HP_549(next_19_526',x)
+HP_549(v_node_19_527',x) * x::node<val_19_556,v_node_19_527'>&  x!=null --> D(v_node_19_527')
+E(v_node_19_562,v_node_19_563) & x'=null & x!=null --> E(x,x')					//still lack info
+D(x)&x=null --> E(x,x)
+
+
 //RELATION3:
 expect: x::node<_,b> * E(b,b') & x' = null -> E(x,x')
 result: emp&x'=null & x!=null--> E(x,x')
+
+NORMALLIZE:
+	D(x) & x != null -> x::node<_,b> * D1(x,b)
+	x::node<_,b> * D1(x,b) &x!=null-> D(b)
+	x::node<_,b> * E(b,b') & x' = null -> E(x,x')
+	D(x) & x == null -> E(x,x)
+DROP
+	D(x) & x != null -> x::node<_,b> * D1(b)
+	x::node<_,b> * D1(b) &x!=null-> D(b)
+	x::node<_,b> * E(b,b') & x' = null -> E(x,x')
+	D(x) & x == null -> E(x,x)
+SPLIT
+E(x,x') <---> E1(x) * E2(x')
+	D(x) & x != null -> x::node<_,b> * D1(b)
+	x::node<_,b> * D1(b) &x!=null-> D(b)
+	x::node<_,b> * E1(b) * E2(b') & x' = null -> E1(x) * E2(x')
+	D(x) & x == null -> E1(x) * E2(x)
+PICK PARTIAL DEFINED:
+	x = null -> D(x)
+	x = null -> E1(x)
+	x = null -> E2(x)
+	x::node<_,b> * E1(b) x!= null-> E1(x)
+	E1 <-> ll
+	D1(b)  & b != null -> b::node<_,b'> * D1(b')			//ll0+
+	D1(b) -> D(b)
+	D(x) & x != null -> x::node<_,b> * D(b)
+	D(x) <--> ll
+==> D,E1: ll, E2: x=null
+
+auto:
+D(x)&x!=null --> x::node<val_19_525',next_19_526'> * HP_549(next_19_526',x)
+HP_549(v_node_19_527',x) * x::node<val_19_556,v_node_19_527'>&  x!=null --> D(v_node_19_527')
+E(v_node_19_562,v_node_19_563) & x'=null & x!=null --> E(x,x')					//still lack info
+D(x)&x=null --> E(x,x)
+---defs----
+HP_549(v_node_19_527')::  D(v_node_19_527')
+D:  D(x)::   emp&x=null or x::node<val_19_525',next_19_526'> * D(next_19_526')
+HP_565(x)::  emp&x=null,
+HP_566(x)::  emp&x=null,
+E(x,x)::  HP_565(x) * HP_566(x)
+
+////////////////E(x,x') lack info
+
+
+
+
 */

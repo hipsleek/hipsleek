@@ -484,7 +484,9 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents stab : C
   | MetaForm mf ->
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let wf = AS.case_normalize_formula_not_rename iprog h mf in
+     
       let _ = Astsimp.gather_type_info_formula iprog wf stab false in
+      (*let _ = print_endline ("WF: " ^ Iprinter.string_of_formula wf ) in *)
       let r = AS.trans_formula iprog quant fv_idents false wf stab false in
       (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
       (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
@@ -751,13 +753,13 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
                               ^ "\n ### f1 = "^(string_of_meta_formula if1)
                               ^ "\n ### f2 = "^(string_of_meta_formula if2)
                               ^"\n\n") no_pos in
+  
   let f1 = meta_to_formula_not_rename if1 false [] stab  in
   let f2 = meta_to_formula_not_rename if2 false [] stab  in
 
   let _ = if (!Globals.print_core) then print_endline ("INPUT: \n ### formula 1= " ^ (Cprinter.string_of_formula f1) ^"\n ### formula 2= " ^ (Cprinter.string_of_formula f2)) else () in
 
   (*let f2 = Solver.prune_preds !cprog true f2 in *)
-
   let (res, mt_list) = CEQ.checkeq_formulas ivars f1 f2 in
   let _ = if(res) then(
         print_string (num_id^": Valid.")
@@ -813,6 +815,24 @@ let process_print_command pcmd0 = match pcmd0 with
 	  else
 			print_string ("unsupported print command: " ^ pcmd)
 
+let process_cmp_command (input: ident list * ident * meta_formula) =
+  let iv,var,f = input in
+  if var = "residue" then
+    match !residues with
+      | None -> print_string ": no residue \n"
+      | Some (ls_ctx, print) ->
+        if (print) then (
+	  let cfs = CF.list_formula_of_list_context ls_ctx in
+	  let cf1 = (List.hd cfs) in (*if ls-ctx has exacly 1 ele*)
+	  let stab = H.create 103 in
+	  let cf2 = meta_to_formula_not_rename f false [] stab  in
+	  let _ = Debug.info_pprint ("Compared formula: " ^ (Cprinter.string_of_formula cf2) ^ "\n") no_pos in
+	  let res,mt = CEQ.checkeq_formulas iv cf1 cf2 in
+	  if(res) then  print_string ("EQUAL\n") else  print_string ("NOT EQUAL\n")
+	)
+  else
+    print_string ("unsupported compare command: " ^ var)
+
 let get_residue () = !residues
 
 let get_residue () =
@@ -821,4 +841,9 @@ let get_residue () =
     (*| None -> ""*)
     (*| Some s -> Cprinter.string_of_list_formula (CF.list_formula_of_list_context s)*)
 
-
+let meta_constr_to_constr (meta_constr: meta_formula * meta_formula): (CF.formula * CF.formula) = 
+  let if1, if2 = meta_constr in
+  let stab = H.create 103 in
+  let f1 = meta_to_formula_not_rename if1 false [] stab  in
+  let f2 = meta_to_formula_not_rename if2 false [] stab  in
+  (f1,f2)

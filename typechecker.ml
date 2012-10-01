@@ -17,7 +17,9 @@ module I = Iast
 module LP = Lemproving
 module Inf = Infer
 module AS = Astsimp
-
+module CEQ = Checkeq
+module M = Lexer.Make(Token.Token)
+module H = Hashtbl
 let store_label = new store Lab2_List.unlabelled Lab2_List.string_of
 
 let phase_infer_ind = ref false
@@ -254,7 +256,7 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
   let pr2a = add_str "formulae" (pr_list Cprinter.string_of_formula) in
   let pr2b = add_str "inferred hp rels" (fun l -> string_of_int (List.length l)) in
   let pr3 = pr_penta pr1 pr2a pr2 pr2b string_of_bool in
-  Debug.no_1 "check_specs_infer" pr1 pr3
+  Debug.ho_1 "check_specs_infer" pr1 pr3
       (fun _ -> check_specs_infer_a prog proc ctx e0 do_infer spec_list) spec_list
 
 (* Termination *)      
@@ -1839,7 +1841,7 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
   in helper proc_lst
 
 (* checking procedure: (PROC p61) *)
-and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
+and check_proc (prog : prog_decl) (iprog: I.prog_decl)(proc : proc_decl) : bool =
   let unmin_name = unmingle_name proc.proc_name in
   (* get latest procedure from table *)
   let proc = 
@@ -1911,7 +1913,42 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     let hprels = List.map (fun (_,a2,a3)-> (a2,a3)) hprels in
                     let hp_lst_assume = List.map (fun (_,a2,a3)-> (a2,a3)) hp_lst_assume in
 		            (* let hp_lst_simplified_assume = Sa2.simplify_lst_constrs hp_lst_assume in *)
-                     let _,hp_lst_simplified_assume = Sa.infer_hps prog hp_lst_assume in
+		    let is_match_constrs = if((String.compare !Globals.file_cp "") != 0) then (
+		      let file_name = !Globals.file_cp in
+		      let _ =Debug.info_pprint ("File to compare: " ^ file_name ) no_pos in
+		      let infile_constrs = 
+			let org_in_chnl = open_in file_name in 
+			try
+					     let cps  = Parser.parse_constrs file_name (Stream.of_channel org_in_chnl) in
+					     let set_constrs = List.filter (fun (t,cs) -> (String.compare t "constrs" == 0)) cps in
+					     let t,res = if(List.length set_constrs != 1) then report_error no_pos "invalid condition"
+					       else List.hd set_constrs in (*the only constrs in file*)
+					     close_in org_in_chnl;
+					     res
+			with
+			    End_of_file -> exit 0
+			  | M.Loc.Exc_located (l,t)->
+			    (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+			     raise t)
+		      in
+		      
+		      let trans_constr constr = 
+			let stab =  H.create 103 in
+			let if1, if2 = constr in
+			let _ = Astsimp.gather_type_info_formula iprog if1 stab false in
+			(*let _ = print_endline ("typechecker1: stab: " ^ Astsimp.string_of_stab stab ) in *)
+			let f1 = Astsimp.trans_formula iprog false [] false if1 stab false in
+			let _ = Astsimp.gather_type_info_formula iprog if2 stab false in
+			(*	let _ = print_endline ("typechecker2: stab: " ^ Astsimp.string_of_stab stab ) in *)
+			let f2 = Astsimp.trans_formula iprog false [] false if2 stab false in
+			(f1,f2)
+		      in
+		      let infile_constrs = List.map (fun constr -> trans_constr constr) infile_constrs in
+		      CEQ.checkeq_constrs [] hp_lst_assume infile_constrs
+		    )
+		      else true
+		    in
+                    let _,hp_lst_simplified_assume = Sa.infer_hps prog hp_lst_assume in
                     let lst_rank = List.map (fun (_,a2,a3)-> (a2,a3)) lst_rank in
                     (*let _ = Ranking.do_nothing in*)
                     Debug.trace_hprint (add_str "SPECS (after simplify_ann)" pr_spec) new_spec no_pos;
@@ -2028,16 +2065,16 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 		      end
 	end else true
 
-let check_proc (prog : prog_decl) (proc : proc_decl) : bool =
+let check_proc (prog : prog_decl) (iprog: I.prog_decl)(proc : proc_decl) : bool =
   let pr p = pr_id (name_of_proc p)  in
   Debug.no_1_opt (fun _ -> not(is_primitive_proc proc)) 
-      "check_proc" pr string_of_bool (check_proc prog) proc
+      "check_proc" pr string_of_bool (check_proc prog iprog) proc
 
-let check_phase_only prog proc =
+let check_phase_only prog (iprog: I.prog_decl) proc =
 (* check_proc prog proc *)
   try
 	(*  let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in *)
-    let _=check_proc prog proc in () 
+    let _=check_proc prog iprog proc in () 
   with _ as e ->
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       print_string ("\nException "^(Printexc.to_string e)^" during check_phase_only!\n");
@@ -2045,11 +2082,11 @@ let check_phase_only prog proc =
       ()
 
 (* check entire program *)
-let check_proc_wrapper prog proc =
+let check_proc_wrapper prog iprog proc =
 (* check_proc prog proc *)
   try
 	(*  let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in *)
-    let res = check_proc prog proc in 
+    let res = check_proc prog iprog proc in 
     (* Termination: Infer the phase numbers of functions in a scc group *) 
     (* TODO: The list of scc group does not 
      * need to be computed many times *)
@@ -2101,10 +2138,10 @@ let check_view_wrapper def = match def with
   | View vdef -> check_view vdef
 *)
 
-let check_data (prog : prog_decl) (cdef : data_decl) =
+let check_data (prog : prog_decl)(iprog: I.prog_decl) (cdef : data_decl) =
   if not (Gen.is_empty cdef.data_methods) then
 	print_string ("\nChecking class " ^ cdef.data_name ^ "...\n\n");
-  List.map (check_proc_wrapper prog) cdef.data_methods
+  List.map (check_proc_wrapper prog iprog) cdef.data_methods
 
 let check_coercion (prog : prog_decl) =
   let find_coerc coercs name =
@@ -2140,10 +2177,10 @@ let init_files () =
     Setmona.init_files ();
   end
 
-let check_proc_wrapper_map prog (proc,num) =
+let check_proc_wrapper_map prog iprog (proc,num) =
   if !Tpdispatcher.external_prover then Tpdispatcher.Netprover.set_use_socket_map (List.nth !Tpdispatcher.external_host_ports (num mod (List.length !Tpdispatcher.external_host_ports))); (* make this dynamic according to availability of server machines*)
   try
-    check_proc prog proc
+    check_proc prog iprog proc
   with _ as e ->
     if !Globals.check_all then begin
       print_string ("\nProcedure "^proc.proc_name^" FAIL-3\n");
@@ -2152,9 +2189,9 @@ let check_proc_wrapper_map prog (proc,num) =
     end else
       raise e 
 
-let check_proc_wrapper_map_net prog (proc,num) =
+let check_proc_wrapper_map_net prog iprog (proc,num) =
   try
-    check_proc prog proc
+    check_proc prog iprog proc
   with _ as e ->
     if !Globals.check_all then begin
       print_string ("\nProcedure "^proc.proc_name^" FAIL-4\n");
@@ -2184,7 +2221,7 @@ let restore_phase_infer_checks() =
   dis_term_msg := stk_tmp_checks # pop_top;
   dis_bnd_chk := stk_tmp_checks # pop_top
 
-let check_prog (prog : prog_decl) =
+let check_prog (prog : prog_decl)(iprog: I.prog_decl) =
   let _ = if (Printexc.backtrace_status ()) then print_endline "backtrace active" in 
   if !Globals.check_coercions then 
     begin
@@ -2194,7 +2231,7 @@ let check_prog (prog : prog_decl) =
       print_string "DONE.\n"
     end;
   
-  ignore (List.map (check_data prog) prog.prog_data_decls);
+  ignore (List.map (check_data prog iprog) prog.prog_data_decls);
   (* Sort the proc_decls by proc_call_order *)
   let l_proc = Cast.list_of_procs prog in
   let proc_prim, proc_main = List.partition Cast.is_primitive_proc l_proc in
@@ -2223,21 +2260,21 @@ let check_prog (prog : prog_decl) =
             Debug.dinfo_pprint ">>>>>> Perform Phase Inference for a Mutual Recursive Group  <<<<<<" no_pos;
             Debug.dinfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
             drop_phase_infer_checks();
-            proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc prog proc));
+            proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc prog iprog proc));
             restore_phase_infer_checks();
             (* the message here should be empty *)
             (* Term.term_check_output Term.term_res_stk; *)
             Term.phase_num_infer_whole_scc prog scc 
           end
         else prog in
-      let _ = proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc_wrapper prog proc)) in
+      let _ = proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc_wrapper prog iprog proc)) in
       prog
   ) prog proc_scc 
   in 
-  ignore (List.map (check_proc_wrapper prog) ((* sorted_proc_main @ *) proc_prim));
+  ignore (List.map (check_proc_wrapper prog iprog) ((* sorted_proc_main @ *) proc_prim));
   (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)
   Term.term_check_output ()
 	    
-let check_prog (prog : prog_decl) =
-  Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog 
+let check_prog (prog : prog_decl)(iprog: I.prog_decl) =
+  Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog iprog
   (*Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog iprog*)

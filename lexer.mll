@@ -181,6 +181,7 @@ module Make (Token : SleekTokenS)
 	 ("pred", PRED);
      ("print", PRINT);
 	 ("dprint", DPRINT);
+	 ("compare", CMP);
    ("raise", RAISE);
 	 ("ref", REF);
 ("relation", REL);

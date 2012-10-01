@@ -52,19 +52,17 @@ x::node<_,b> * HP_1(x,b) & x!=null --> H(b)
 x::node<_,b> & x!=null * G(b) -> G(x)
 
 auto:
-1.H(x)&x=null --> G(x)
-2.H(x) & x!=null -->  x::node<val_25_535',next_25_536'> * HP_557(next_25_536',x)
-3.HP_557(v_node_25_537',x) * x::node<val_25_564,v_node_25_537'> &x!=null --> H(v_node_25_537')
-4.x::node<val_25_564,v_node_25_574> & x!=null --> G(x)
+H(x) & x=null--> G(x)
+H(x) & x!=null) --> x::node<val_25_536',next_25_537'> * HP_557(next_25_537',x)
+HP_557(v_node_25_538',x) * x::node<val_25_564,v_node_25_538'> & x!=null --> H(v_node_25_538')
+x::node<val_25_564,v_node_25_574> * G(v_node_25_574) & x!=null --> G(x)
 
-//4. loss infomation of v_node_25_574
+//MATCH
+H(x)::  x=null or x::node<val_25_536',next_25_537'> * H(next_25_537')				//ll
+G(x)::  emp & x=null or x::node<val_25_564,v_node_25_574> * G(v_node_25_574) & x!=null		//ll
+HP_557(v_node_25_538')::  H(v_node_25_538')							//do not need
 
-
-[( H(x)&x=null, G(x)&true),
-( H(x)&x!=null, x::node<val_25_535',next_25_536'> * HP_557(next_25_536',x)&true),
-( HP_557(v_node_25_537',x) * x::node<val_25_564,v_node_25_537'>&x!=null, H(v_node_25_537')&true),
-( x::node<val_25_564,v_node_25_574>&x!=null, G(x)&true)]
-
+//SUCCESS
 */
 
 

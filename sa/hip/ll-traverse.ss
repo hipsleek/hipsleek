@@ -6,7 +6,8 @@ data node {
 HeapPred H(node a).
 HeapPred H1(node a).
 HeapPred G(node a, node b).
-
+HeapPred HP_535(node a, node b).
+HeapPred HP_537(node a, node b).
 
 void foo(ref node x)
  infer [H,G]
@@ -25,18 +26,22 @@ void foo(ref node x)
 
 
 /*
+Result-
 
+Constrs:
+========
+HP_535(x',x) * x::node<val_17_543,x'>&x'!=null --> H(x')
+x::node<val_17_543,x_552>@M[Orig] * G(x_552,x')&x_552!=null --> G(x,x')
+H(x) --> x::node<val_17_523',next_17_524'> *  HP_535(next_17_524',x)
+HP_535(x',x) * x::node<val_17_541,x'>&x'=null --> G(x,x')
 
-[RELDEFN G: (G) -->  x::node<val_17_543,x_552>@M[Orig] * G(x_552,x')&x_552!=null&
-{FLOW,(22,23)=__norm}[],
-RELDEFN HP_535: (HP_535) -->  HP_535(x')&x'=null&{FLOW,(22,23)=__norm}[],
-RELDEFN G: (G) -->  HP_535(x') * x::node<val_17_541,x'>@M[Orig]&x'=null&{FLOW,(22,23)=__norm}[],
-RELDEFN HP_535: (HP_535) -->  x'::node<val_17_523',next_17_524'>@L[Orig] * HP_535(next_17_524')&true&
-{FLOW,(1,25)=__flow}[],
-RELDEFN HP_535: (HP_535) -->  HP_535(x')&x'=null&{FLOW,(22,23)=__norm}[],
-RELDEFN G: (G) -->  HP_535(x') * x::node<val_17_541,x'>@M[Orig]&x'=null&{FLOW,(22,23)=__norm}[]]
-
-
+DEfs:
+======
+HP_556(x):: 	x::node<val_17_543,x_552> * HP_556(x_552) or x::node<val_17_541,x'>&x'=null
+HP_535(x')::	emp&x'=null or x'::node<val_17_523',next_17_524'> * HP_535(next_17_524')
+HP_557(x')::  	emp&x'=null
+H(x)::  	x::node<val_17_523',next_17_524'> * HP_535(next_17_524')
+G(x,x')::  	HP_556(x) * HP_557(x')
 
 */
 /*

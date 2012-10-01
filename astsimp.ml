@@ -1607,10 +1607,12 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
     let cret_type = trans_type prog proc.I.proc_return proc.I.proc_loc in
     let free_vars = List.map (fun p -> p.I.param_name) all_args in
     let stab = H.create 103 in
+
     let add_param p = H.add stab p.I.param_name {
         sv_info_kind =  (trans_type prog p.I.param_type p.I.param_loc);
         id = fresh_int () } in
     (ignore (List.map add_param all_args);
+
 	let _ = H.add stab res_name { sv_info_kind = cret_type;id = fresh_int () } in
 	let _ = H.add stab eres_name { sv_info_kind = UNK ;id = fresh_int () } in
   (* Termination: Add info of logical vars *)
@@ -1622,7 +1624,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 
 	let _ = check_valid_flows proc.I.proc_static_specs in
 	let _ = check_valid_flows proc.I.proc_dynamic_specs in
-    (* let _ = print_endline ("trans_proc: "^ proc.I.proc_name ^": before set_pre_flow: specs = " ^ (Iprinter.string_of_struc_formula (proc.I.proc_static_specs@proc.I.proc_dynamic_specs))) in *)
+(*	let _ = print_endline ("stab: " ^ string_of_stab stab ) in *)
 	let static_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
 	(* let _ = print_string "trans_proc :: set_pre_flow PASSED 1\n" in *)
 	let dynamic_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true) in

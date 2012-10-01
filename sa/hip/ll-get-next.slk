@@ -28,3 +28,12 @@ simplify
 
 
 */
+
+/*
+(H(x)&true&{FLOW,(22,23)=__norm}[]) --> H(x')&true&{FLOW,(22,23)=__norm}[]
+*/
+
+HeapPred H(node x).
+
+
+checkeq[] H(x)&true -|- H(x0)&true.
