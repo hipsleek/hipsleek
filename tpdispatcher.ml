@@ -1214,7 +1214,7 @@ let simplify (f : CP.formula) : CP.formula =
 		  CP.set_il_formula_with_dept_list r rel_vars_lst
 	    else r
 			in 	
-			let _= add_proof_log simpl_no (string_of_prover !tp) (SIMPLIFY f) (tstop -. tstart) (FORMULA res) in
+			let _= add_proof_log simpl_no simpl_no (string_of_prover !tp) (SIMPLIFY f) (tstop -. tstart) (FORMULA res) in
 			 res
       with | _ -> f)
 
@@ -1718,7 +1718,7 @@ let simpl_pair rid (ante, conseq) =
   (ante3, conseq)
 ;;
 
-let is_sat (f : CP.formula) (sat_no : string): bool =
+let is_sat (f : CP.formula) (old_sat_no : string): bool =
   proof_no := !proof_no+1 ;
   let sat_no = (string_of_int !proof_no) in
 	let tstart = Gen.Profiling.get_time () in		
@@ -1732,7 +1732,7 @@ let is_sat (f : CP.formula) (sat_no : string): bool =
     (* let f = CP.drop_rel_formula f in *)
 	let res= sat_label_filter (fun c-> tp_is_sat c sat_no) f in
 	let tstop = Gen.Profiling.get_time () in
-	let _= add_proof_log sat_no (string_of_prover !tp) (SAT f) (tstop -. tstart) (BOOL res) in
+	let _= add_proof_log old_sat_no sat_no (string_of_prover !tp) (SAT f) (tstop -. tstart) (BOOL res) in
 	res
 ;;
 
@@ -1740,7 +1740,7 @@ let is_sat (f : CP.formula) (sat_no : string): bool =
   Debug.no_1 "[tp]is_sat"  Cprinter.string_of_pure_formula string_of_bool (fun _ -> is_sat f sat_no) f
 
    
-let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
+let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : string) timeout process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
   proof_no := !proof_no + 1 ;
   let imp_no = (string_of_int !proof_no) in
@@ -1809,7 +1809,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
   end;
 	in 
 	let tstop = Gen.Profiling.get_time () in
-	let _= add_proof_log imp_no (string_of_prover !tp) (IMPLY (ante0, conseq0)) (tstop -. tstart) (BOOL (match final_res with | r,_,_ -> r)) in
+	let _= add_proof_log old_imp_no imp_no (string_of_prover !tp) (IMPLY (ante0, conseq0)) (tstop -. tstart) (BOOL (match final_res with | r,_,_ -> r)) in
 	final_res
 ;;
 

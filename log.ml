@@ -15,6 +15,7 @@ type proof_res =
 
 type proof_log = {
 	log_id : string; (* TODO: Should change to integer for performance *)
+	log_old_id : string; (* TODO: Should change to integer for performance *)
 	log_prover : string;
 	log_type : proof_type option;
 	log_time : float;
@@ -26,11 +27,12 @@ let proof_log_tbl : (string, proof_log) Hashtbl.t = Hashtbl.create 700
 let proof_log_list  = ref [] (*For printing to text file with the original oder of proof execution*)
 
 (*TO DO: check unique pno??*)
-let add_proof_log pno tp ptype time res =
+let add_proof_log old_no pno tp ptype time res =
 	if !Globals.proof_logging || !Globals.proof_logging_txt then
 		let tstartlog = Gen.Profiling.get_time () in
 		let plog = {
 			log_id = pno;
+			log_old_id = old_no;
 			log_prover = tp;
 			log_type = Some ptype;
 			log_time = time;

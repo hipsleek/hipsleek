@@ -2051,7 +2051,7 @@ let printer_of_proof_logging () =
 		let in_chn = open_in ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))) in
 		let tbl = input_value in_chn in
 		let logstr= ref "" in
-		let _= Hashtbl.iter (fun k log -> logstr := !logstr ^ "id: "^ log.Log.log_id ^"\nProver: "^log.Log.log_prover^"\nLog_type: "^(match (log.Log.log_type) with |None -> ""|Some x-> helper x)^"\nTime: "^(string_of_float(log.Log.log_time))^"\nLog result: "^(match log.Log.log_res with
+		let _= Hashtbl.iter (fun k log -> logstr := !logstr ^ "old_id: "^ log.Log.log_old_id ^ "\nid: "^ log.Log.log_id ^"\nProver: "^log.Log.log_prover^"\nLog_type: "^(match (log.Log.log_type) with |None -> ""|Some x-> helper x)^"\nTime: "^(string_of_float(log.Log.log_time))^"\nLog result: "^(match log.Log.log_res with
 		  |BOOL b -> string_of_bool b
 		  |FORMULA f -> string_of_pure_formula f)^ "\n") tbl in
 		let output="Proof Logging: \n"^(!logstr)^ "\nEnd of Proof logging" in
@@ -2070,8 +2070,8 @@ let proof_log_to_text_file () =
     	|SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
 		in
 		let helper log=
-			"\n--------------\n"^
-			"id: "^log.log_id^"\nProver: "^log.log_prover^"\nType: "^(match log.log_type with | Some x-> string_of_log_type x | None -> "")^"\nTime: "^
+			"\n--------------\n"^"old_id: "^log.log_old_id^
+			"\nid: "^log.log_id^"\nProver: "^log.log_prover^"\nType: "^(match log.log_type with | Some x-> string_of_log_type x | None -> "")^"\nTime: "^
 			(string_of_float(log.log_time))^"\nResult: "^(match log.log_res with
 		  |BOOL b -> string_of_bool b
 		  |FORMULA f -> string_of_pure_formula f)^"\n" in
