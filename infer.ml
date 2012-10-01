@@ -1542,7 +1542,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
     if CP.intersect ivs (lhrs@rhrs) = [] then 
       begin
         (* DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos; *)
-        (* DD.info_pprint " no hp_rel found" pos;  *)
+        DD.ninfo_pprint " no hp_rel found" pos;
         (false,es)
       end
     else
@@ -1562,9 +1562,17 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
           (* DD.info_pprint ("  lhs aliases: " ^  (pr2 leqs)) pos; (\* aliases from LHS *\) *)
           (* DD.info_pprint ("  rhs aliases: " ^  (pr2 reqs)) pos;  (\* aliases from LHS *\) *)
         in
-        if CP.intersect (CF.get_hp_rel_vars_bformula lhs_b) (List.fold_left SAU.close_def (CF.h_fv rhs) leqs) = [] then
+        let mis_node = match rhs with
+          | DataNode n -> n.h_formula_data_node
+          | ViewNode n -> n.h_formula_view_node
+          | HRel (hrel,_,_) -> hrel
+          | _ -> report_error pos "Expect a node or a hrel"
+        in
+        let _, lhs_sel_vars = (List.split (CF.get_HRels lhs_b.CF.formula_base_heap)) in
+        let lhs_sel_vars =  List.concat lhs_sel_vars in
+        if not(CP.mem_svl mis_node (List.fold_left SAU.close_def lhs_sel_vars leqs)) then
           (
-              Debug.ninfo_pprint ">>>>>> no relevant vars with mismatch <<<<<<" pos;
+              Debug.info_pprint ">>>>>> mismatch ptr is not a selective variable <<<<<<" pos;
               (false,es))
         else
           (*generate new heap pred with undefined pointers only*)

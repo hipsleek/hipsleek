@@ -309,6 +309,16 @@ let get_ptr_from_data h =
     | ViewNode f -> f.h_formula_view_node
     | _ -> report_error no_pos "get_ptr_from_data : data expected" 
 
+(*if is hrel: return true and its name
+ if a node or a view: return false and its name
+*)
+let get_ptr_from_data_w_hrel h =
+  match h with
+    | DataNode f -> false,f.h_formula_data_node
+    | ViewNode f -> false, f.h_formula_view_node
+    | HRel (hp,_,_) -> true,hp
+    | _ -> report_error no_pos "get_ptr_from_data : data expected" 
+
 let print_path_trace = ref(fun (pt: path_trace) -> "printer not initialized")
 let print_list_int = ref(fun (ll: int list) -> "printer not initialized")
 (*--- 09.05.2000 *)
@@ -3413,6 +3423,7 @@ and subst_hrel_hf hf hprel_subst=
           let stop,f = helper (HRel (id,el,p)) (HRel (id1,el1,p1), hf) in
           if stop then f
           else find_and_subst (HRel (id,el,p)) ss
+      | _ -> report_error no_pos "cformula.find_and_subst"
   in
   match hf with
     | Star {h_formula_star_h1 = hf1;

@@ -1036,14 +1036,15 @@ let subst_cs_w_partial_defs hp_constrs par_defs=
       (fun _ _ -> subst_cs_w_partial_defs_x hp_constrs par_defs) hp_constrs par_defs
 
 (*
-sth ====> A*HP
-substituted by HP ====> b (currently we only support HP, we can enhance with
+sth ====> A*HP1*HPn
+substituted by HP1*HPn ====> b
+(currently we only support HP1*HPn, we can enhance with
 more general formula and use imply )
 result is sth ====> A*b
 *)
 let subst_cs_w_other_cs_x constrs=
-  (* find all constraints which have lhs is a HP*)
-  let check_lhs_hp_only (lhs,rhs)=
+  (* find all constraints which have lhs is a HP1*HPn ====> b *)
+  let check_lhs_hps_only (lhs,rhs)=
     match lhs with
       | CF.Base fb -> if (CP.isConstTrue (MCP.pure_of_mix fb.CF.formula_base_pure)) then
             let r = (CF.get_HRel fb.CF.formula_base_heap) in
@@ -1054,13 +1055,67 @@ let subst_cs_w_other_cs_x constrs=
           else []
       | _ -> report_error no_pos "sa.subst_cs_w_other_cs: not handle yet"
   in
-  let cs_susbsts = List.concat (List.map check_lhs_hp_only constrs) in
+  let cs_susbsts = List.concat (List.map check_lhs_hps_only constrs) in
   List.map (subst_one_cs_w_partial_defs [] cs_susbsts) constrs
 
-let subst_cs_w_other_cs constrs=
+let rec subst_cs_w_other_cs constrs=
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
    Debug.ho_1 "subst_cs_w_other_cs" pr1 pr1
        (fun _ -> subst_cs_w_other_cs_x constrs) constrs
+
+(* looking for constrs with the form
+ sth ====> A*HP1*HPn *)
+and subst_one_cs_w_hps subst_hps (lhs,rhs)=
+  let get_rhs_hps f=
+    match f with
+      | CF.Base fb -> if (CP.isConstTrue (MCP.pure_of_mix fb.CF.formula_base_pure)) then
+            let r = (CF.get_HRels fb.CF.formula_base_heap) in
+            r
+          else []
+      | _ -> report_error no_pos "sa.subst_cs_w_other_cs: not handle yet"
+  in
+  let sort_hps hps = List.sort (fun (CP.SpecVar (_, id1,_),_)
+      (CP.SpecVar (_, id2, _),_)-> String.compare id1 id2) hps
+  in
+  (*precondition: ls1 and ls2 are sorted*)
+  let rec checkeq ls1 ls2 subst=
+    match ls1,ls2 with
+      | [],[] -> (true,subst)
+      | (id1, args1)::ss1,(id2, args2)::ss2 ->
+          if CP.eq_spec_var id1 id2 then checkeq ss1 ss2
+            (subst@(List.combine args1 args2))
+          else (false,[])
+      | _ -> (false,[])
+  in
+  let rhs_hps =  get_rhs_hps rhs in
+  let sorted_rhs_hps = sort_hps rhs_hps in
+  let find_and_susbt (hps, f)=
+    let sorted_subst_hps = sort_hps hps in
+    let res,subst = checkeq sorted_subst_hps sorted_rhs_hps [] in
+    if res then
+      let hps,_ = List.split hps in
+      (*drop hrels and ignore args*)
+      let new_rhs, _ = CF.drop_hrel_f rhs hps in
+      let subst_f = CF.subst subst f in
+    (*combi subst_f into new_rhs*)
+      let rhs2 = CF.mkStar new_rhs subst_f CF.Flow_combine (CF.pos_of_formula new_rhs) in
+      (lhs,rhs2)
+    else (lhs,rhs)
+  in
+  (List.map find_and_susbt subst_hps)
+
+and subst_cs_w_other_cs_new_x constrs=
+  (* find all constraints which have lhs is a HP1*HPn ====> b *)
+  let check_lhs_hps_only (lhs,rhs)=
+    match lhs with
+      | CF.Base fb -> if (CP.isConstTrue (MCP.pure_of_mix fb.CF.formula_base_pure)) then
+            let r = (CF.get_HRels fb.CF.formula_base_heap) in
+            [(r,rhs)]
+          else []
+      | _ -> report_error no_pos "sa.subst_cs_w_other_cs: not handle yet"
+  in
+  let cs_susbsts = List.concat (List.map check_lhs_hps_only constrs) in
+  List.concat (List.map (subst_one_cs_w_hps cs_susbsts) constrs)
 
 let subst_cs_x hp_constrs par_defs=
 (*subst by partial defs*)

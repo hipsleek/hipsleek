@@ -41,7 +41,7 @@ x::node<val_30_558,v_node_30_573> * G(v_node_30_573,y)& v_node_30_573!=null --> 
 */
 
 HeapPred H(node a).
-HeapPred H1(node a).
+//HeapPred H1(node a).
 HeapPred G2(node a, node b).
 HeapPred G1(node a, node b).
   HeapPred G3(node b,node c, node d).
@@ -59,11 +59,14 @@ lseg<p> == self=p
   inv true;
 
 void append(node x, node y)
-  infer[H1,G1]
+//  infer[H1,G1]
 // requires H(x)&y=null
   /* ensures G1(x,y);//' */
-  requires H1(x)*y::node<a,null>
-  ensures G1(x ,y);//'
+//requires H1(x)*y::node<a,null>
+//  ensures G1(x ,y);//'
+  infer[H1,H2,G1]
+  requires H1(x)*H2(y)
+   ensures G1(x,y);
 
   /* requires x::ll<> * y::ll<> & x!=null */
   /* ensures  x::ll<> ;  */

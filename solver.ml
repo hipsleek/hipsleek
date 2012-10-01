@@ -6609,9 +6609,10 @@ and do_unmatched_rhs_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs
             let lhs_eqs = MCP.ptr_equations_with_null lhs_b.CF.formula_base_pure in
             let lhs_p = List.fold_left
               (fun a (b,c) -> CP.mkAnd a (CP.mkPtrEqn b c no_pos) no_pos) (CP.mkTrue no_pos) lhs_eqs in
-            let rhs_p = CP.mkNull (CF.get_ptr_from_data rhs) no_pos in
+            let is_rel,rhs_ptr = CF.get_ptr_from_data_w_hrel rhs in
+            let rhs_p = CP.mkNull rhs_ptr no_pos in
             (*all LHS = null |- RHS != null*)
-            if (simple_imply lhs_p rhs_p) then
+            if (not is_rel) && (simple_imply lhs_p rhs_p) then
               let new_lhs_p = filter_redundant lhs_p rhs_p in
               let new_rhs_p = CP.mkNeqNull (CF.get_ptr_from_data rhs) no_pos in
               let s = "15.1" ^ (Cprinter.string_of_pure_formula new_lhs_p) ^ " |- " ^
@@ -6639,12 +6640,12 @@ and do_unmatched_rhs_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs
                     | Some p1 -> p1
                     | _ -> CP.mkTrue no_pos
                 in
-                let rhs_neq_nulls = CP.mkNeqNull (CF.get_ptr_from_data rhs) no_pos in
+                let rhs_neq_nulls = CP.mkNeqNull rhs_ptr no_pos in
                 let rhs_mix_p = MCP.memoise_add_pure_N rhs_b.formula_base_pure rhs_disj_set_p in
                 let rhs_mix_p_withlsNull = MCP.memoise_add_pure_N rhs_mix_p rhs_neq_nulls in
                 let rhs_p = MCP.pure_of_mix rhs_mix_p_withlsNull in
                 (*contradiction on RHS?*)
-                if not(TP.is_sat_sub_no rhs_p r) then
+                if (not is_rel) && not(TP.is_sat_sub_no rhs_p r) then
                   (*contradiction on RHS*)
                   let msg = "contradiction in RHS:" ^ (Cprinter.string_of_pure_formula rhs_p) in
                   let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
@@ -6656,7 +6657,7 @@ and do_unmatched_rhs_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs
                   (*
                     rhs_disj_set != null has been checked above. Separately check for better error classifying.
                   *)
-                  if not(simple_imply lhs_p rhs_p) then
+                  if (not is_rel) && not(simple_imply lhs_p rhs_p) then
                     (*should check may-must here*)
                     let (fc, (contra_list, must_list, may_list)) = check_maymust_failure lhs_p rhs_p in
                     let new_estate = {
@@ -6678,7 +6679,7 @@ and do_unmatched_rhs_x rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs
                        )
                      in (lc,Failure)
                   else
-                    let s = "15.4 no match for rhs data node: " ^ (CP.string_of_spec_var (CF.get_ptr_from_data rhs))
+                    let s = "15.4 no match for rhs data node: " ^ (CP.string_of_spec_var rhs_ptr)
                       ^ " (may-bug)."in
                     let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                             !top_flow_int estate.CF.es_formula} in
@@ -6967,6 +6968,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             let rhs_node = match rhs with
               | DataNode n -> n.h_formula_data_node
               | ViewNode n -> n.h_formula_view_node
+              | HRel (hrel,_,_) -> hrel
               | _ -> report_error pos "Expect a node"
             in
             enulalias := true;
@@ -6984,8 +6986,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               | Some (new_estate,pf) ->
                 begin
                   (* explicitly force unsat checking to be done here *)
-                   let _ = print_endline ("locle1: " ^ (Cprinter.string_of_estate new_estate)) in
-                  let ctx1 = (elim_unsat_es_now prog (ref 1) new_estate) in
+                    let ctx1 = (elim_unsat_es_now prog (ref 1) new_estate) in
                   (* let ctx1 = set_unsat_flag ctx1 false in  *)
                   let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq None pos in
                   match relass with
@@ -7003,7 +7004,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   let (res,new_estate) = Inf.infer_collect_hp_rel prog estate rhs rhs_rest mix_lf mix_rf rhs_h_matched_set conseq lhs_b rhs_b pos in
                   if (not res) then
                     let s = "15.5 no match for rhs data node: " ^
-                      (CP.string_of_spec_var (CF.get_ptr_from_data rhs)) ^ " (must-bug)."in
+                      (CP.string_of_spec_var (let _ , ptr = CF.get_ptr_from_data_w_hrel rhs in ptr)) ^ " (must-bug)."in
                     let new_estate = {estate  with CF.es_formula = CF.substitute_flow_into_f
                             !error_flow_int estate.CF.es_formula} in
                     let unmatched_lhs = Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
