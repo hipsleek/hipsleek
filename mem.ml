@@ -539,13 +539,16 @@ let rec transform_to_tmp_ann (ann_lst: CF.ann list) : CF.ann list =
 	  | _ -> ann_l :: (transform_to_tmp_ann tl)
       end
 
-let rec join_ann (ann1: CF.ann list) (ann2: CF.ann list): bool * (CF.ann list) =
-  match ann1, ann2 with
-    | [], [] -> (true, [])
-    | (CF.ConstAnn(Accs))::t1, a::t2 
-    | a::t1, (CF.ConstAnn(Accs))::t2 -> let compatible, new_ann = join_ann t1 t2 in
-				  (true && compatible, a::new_ann)
-    | _ -> (false, [])
+let rec join_ann (ann1: CF.ann list) (ann2: CF.ann list) (param1: CP.spec_var list) (param2: CP.spec_var list):
+ bool * (CF.ann list) * (CP.spec_var list) (* * CP.formula*) =
+ (*let tf = CP.mkTrue no_pos in*)
+  match ann1, ann2,param1,param2 with
+    | [], [],[],[] -> (true,[],[](*,tf*))
+    | (CF.ConstAnn(Accs))::t1, a::t2, p::pt1, pa::pt2 
+    | a::t1, (CF.ConstAnn(Accs))::t2, pa::pt1, p::pt2 -> let compatible, new_ann, new_param(*, new_p*) = join_ann t1 t2 pt1 pt2  in
+    				  (*let p = CP.mkEqVar *)
+				  (true && compatible, a::new_ann, pa::new_param(*, (CP.mkAnd p new_p no_pos)*))
+    | _ -> (false,[],[](*,tf*))
 
       
 let rec compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula * CP.formula = 
@@ -572,30 +575,32 @@ let rec compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.sp
                         (* h1, h2 nodes; check if they can be join into a single node. If so, h1 will contain the updated annotations, while 
                            h2 will be replaced by "emp". Otherwise both data nodes will remain unchanged *)
  		                  if (String.compare name1 name2 == 0) && ((CP.mem v2 aset_sv) || (CP.eq_spec_var v1 v2)) then
- 			                let compatible, new_param_imm = join_ann param_ann1 param_ann2 in
+ 			                let compatible, new_param_imm, new_args = join_ann param_ann1 param_ann2 h1args h2args  in
  			                (* compact to keep the updated node*)
 	                                if(not(CP.is_primed v2) || (CP.is_primed v1)) then
  			                (match h1 with (* this match is to avoid the rewriting of all h1 parameters*)
  			                  | CF.DataNode h -> 
 				                  if (compatible == true) then 
-				                  let comb_list = 
+				                  (*let comb_list = 
 				                  (List.combine h.CF.h_formula_data_arguments h2args) in
 				                  let p = CP.conj_of_list 
 				                  (List.map (fun c -> (CP.mkEqVar (fst c) (snd c) h.CF.h_formula_data_pos)) comb_list) 						          h.CF.h_formula_data_pos
-				                  in 
-				                  (CF.DataNode {h with CF.h_formula_data_param_imm = new_param_imm}, CF.HEmp, p)
+				                  in *)
+				                  (CF.DataNode {h with CF.h_formula_data_arguments = new_args; 			
+				                  CF.h_formula_data_param_imm = new_param_imm}, CF.HEmp, (CP.mkTrue no_pos))
 				                  else (CF.HFalse, h2, (CP.mkTrue no_pos))
  			                  | _ -> (h1, h2,(CP.mkTrue no_pos)) (* will never reach this branch *))
  			                 else (*keep v2*)
  			                 (match h2 with (* this match is to avoid the rewriting of all h2 parameters*)
  			                  | CF.DataNode h -> 
 				                  if (compatible == true) then 
-				                  let comb_list = 
+				                  (*let comb_list = 
 				                  (List.combine h.CF.h_formula_data_arguments h1args) in
 				                  let p = CP.conj_of_list 
 				                  (List.map (fun c -> (CP.mkEqVar (fst c) (snd c) h.CF.h_formula_data_pos)) comb_list) 						          h.CF.h_formula_data_pos
-				                  in 
-				                  (CF.DataNode {h with CF.h_formula_data_param_imm = new_param_imm},CF.HEmp,p)
+				                  in*) 
+				                  (CF.DataNode {h with CF.h_formula_data_arguments = new_args;
+				                  CF.h_formula_data_param_imm = new_param_imm},CF.HEmp,(CP.mkTrue no_pos))
 				                  else (CF.HFalse,h1,(CP.mkTrue no_pos))
  			                  | _ -> (h1, h2,(CP.mkTrue no_pos)) (* will never reach this branch *))
 		                  else (h1, h2,(CP.mkTrue no_pos)) (* h2 is not an alias of h1 *) 
@@ -644,16 +649,16 @@ let rec compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
     | CF.Base f   -> let new_h,new_p = 
     	compact_nodes_with_same_name_in_h_formula f.CF.formula_base_heap (Context.comp_aliases f.CF.formula_base_pure)
     	in 
-    	let new_mcp = MCP.merge_mems f.CF.formula_base_pure (MCP.mix_of_pure new_p) true in
+    	(*let new_mcp = MCP.merge_mems f.CF.formula_base_pure (MCP.mix_of_pure new_p) true in*)
     	CF.Base { f with
         CF.formula_base_heap = new_h;       
-	CF.formula_base_pure = new_mcp;}
+	(*CF.formula_base_pure = new_mcp;*)}
     | CF.Or f     -> CF.Or { f with 
         CF.formula_or_f1 = compact_nodes_with_same_name_in_formula f.CF.formula_or_f1; 
         CF.formula_or_f2 = compact_nodes_with_same_name_in_formula f.CF.formula_or_f2; }
     | CF.Exists f -> 
-    	(*let qevars = f.CF.formula_exists_qvars in 
-    	let fvars = CP.fresh_spec_vars qevars in
+    	let qevars = f.CF.formula_exists_qvars in 
+    	(*let fvars = CP.fresh_spec_vars qevars in
     	let h = CF.subst_avoid_capture_h qevars fvars f.CF.formula_exists_heap in
     	let p = MCP.subst_avoid_capture_memo qevars fvars f.CF.formula_exists_pure in*)
     	let h = f.CF.formula_exists_heap in
@@ -661,12 +666,18 @@ let rec compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
     	let new_h,new_p = 
     	compact_nodes_with_same_name_in_h_formula h (Context.comp_aliases mp)
     	in
- 	let new_mcp = MCP.merge_mems mp (MCP.mix_of_pure new_p) true in
+    	(*let p_list = List.filter (fun c -> match c with
+    	| CP.BForm((CP.Eq (e1,e2,_),None),None) -> (match e1,e2 with
+    				| CP.Var(s1,_) , CP.Var(s2,_) -> not ((List.mem s1 qevars) || (List.mem s2 qevars))
+    				| _ -> false)
+    	| _ -> false) (CP.list_of_conjs new_p) in
+    	let new_p = CP.conj_of_list p_list f.CF.formula_exists_pos in*)
+ 	(*let new_mcp = MCP.merge_mems mp (MCP.mix_of_pure new_p) true in*)
 	(*let new_mcp = MCP.memo_pure_push_exists f.CF.formula_exists_qvars new_mcp in*)
     	CF.Exists { f with
-    	(*CF.formula_exists_qvars = fvars;*)
+    	CF.formula_exists_qvars = qevars;
         CF.formula_exists_heap = new_h;
-        CF.formula_exists_pure = new_mcp;}
+        (*CF.formula_exists_pure = new_mcp;*)}
 
 let rec compact_nodes_with_same_name_in_struc (f: CF.struc_formula): CF.struc_formula = (* f *)
   if not (!Globals.allow_field_ann ) then f

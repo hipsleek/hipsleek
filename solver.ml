@@ -1574,7 +1574,9 @@ and unfold_failesc_context_x (prog:prog_or_branches) (ctx : list_failesc_context
       if already_unsat then set_unsat_flag res true
       else res
     else
+    (*let _ = print_string("Before: "^(Cprinter.string_of_formula es.es_formula)^"\n") in*)
     let unfolded_f = unfold_nth 7 prog es.es_formula v already_unsat 0 pos in
+    (*let _ = print_string("After: "^(Cprinter.string_of_formula unfolded_f)^"\n") in*)
     let res = build_context (Ctx es) unfolded_f pos in
     if already_unsat then set_unsat_flag res true
     else res in 
@@ -2299,11 +2301,14 @@ and elim_exists_pure_branch_x (w : CP.spec_var list) (f0 : CP.formula) pos : CP.
 
 (* --- added 11.05.2008 *)
 and entail_state_elim_exists es = 
+  (*let _ = print_string("\nes :" ^ (Cprinter.string_of_formula es.es_formula) ^ "\n") in*)
   let f_prim = elim_exists 1 es.es_formula in
+  (*let _ = print_string("f_prim :" ^ (Cprinter.string_of_formula f_prim) ^ "\n") in*)
   (* 05.06.08 *)
   (* we also try to eliminate exist vars for which a find a substitution of the form v = exp from the pure part *)
   (*let _ = print_string("[solver.ml, elim_exists_ctx]: Formula before exp exist elim: " ^ Cprinter.string_of_formula f_prim ^ "\n") in*)
   let f = elim_exists_exp f_prim in
+  (*let _ = print_string("f :" ^ (Cprinter.string_of_formula f) ^ "\n") in*)
   let qvar, base = CF.split_quantifiers f in
   let h, p, fl, t, a = CF.split_components base in
   let simpl_p =	
@@ -2312,6 +2317,7 @@ and entail_state_elim_exists es =
     else p in
   let simpl_fl = fl (*flows have nothing to simplify to*)in
   let simpl_f = CF.mkExists qvar h simpl_p t simpl_fl (CF.formula_and_of_formula base) (CF.pos_of_formula base) in (*TO CHECK*)
+  (*let _ = print_string("new es :" ^ (Cprinter.string_of_formula simpl_f) ^ "\n") in*)
   Ctx{es with es_formula = simpl_f}   (*assuming no change in cache formula*)
 
 and elim_exists_ctx_list (ctx0 : list_context) = 
@@ -5085,6 +5091,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                        but is not working for simple ann2.slk examples *)
 				                  (* let new_ctx = move_expl_inst_ctx_list ctx p2 in *)
                             let new_ctx =
+                            (*let _ = print_string("\nCtx: "^(Cprinter.string_of_list_context ctx)^"\n") in*)
                             (* when reaching the last phase of the entailment, we can move the explicit instantiations to the lhs; otherwise keep them in the aux consequent *)
                               (match ctx with
                               | FailCtx _ -> ctx
@@ -5103,6 +5110,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                                 add_to_aux_conseq_estate es (MCP.pure_of_mix l_inst) pos)
                                       )  c)) cl in
                                   SuccCtx(new_cl)) in
+                                  (*let _ = print_string("\nNEW Ctx: "^(Cprinter.string_of_list_context new_ctx)^"\n") in*)
                             (new_ctx, proof)
                           )
                         )
@@ -5756,7 +5764,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 	    let res_ctx = Ctx (CF.add_to_estate res_es "folding performed") in
 	    Debug.devel_zprint (lazy ("heap_entail_empty_heap: folding: formula is valid")) pos;
 	    Debug.devel_zprint (lazy ("heap_entail_empty_heap: folding: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
-	    (* let _ = print_string ("\n(andreeac)heap_entail_empty_heap: folding: res_ctx 1 :\n" ^ (Cprinter.string_of_context res_ctx)) in *)
+	    (*let _ = print_string ("\n(andreeac)heap_entail_empty_heap: folding: res_ctx 1 :\n" ^ (Cprinter.string_of_context res_ctx)) in *)
 	    (SuccCtx[res_ctx], prf)
 	  end
 	  else begin
@@ -6480,7 +6488,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 		          let new_l_args, new_l_param_ann = List.split lst1 in
 		          let new_r_args, new_r_param_ann = List.split lst2 in 
 			  (rem_l_node,rem_r_node,new_l_args, new_r_args,new_l_param_ann,new_r_param_ann)
-			  (*(rem_l_node,,l_args, r_args, l_param_ann, r_param_ann)*)
+			  (*(rem_l_node,rem_r_node,l_args, r_args, l_param_ann, r_param_ann)*)
 	    | _ -> (HEmp,HEmp,l_args, r_args, l_param_ann, r_param_ann)
 	  in
 	  match rem_r_node with (* Fail whenever the l_node cannot entail r_node *)
@@ -6566,8 +6574,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* apply the new bindings to the consequent *)
               let r_subs, l_sub = List.split (ivar_subs_to_conseq@ext_subst) in
               (*IMPORTANT TODO: global existential not took into consideration*)
+       	      (*let _ = print_string("cris: tmp_conseq = " ^ (Cprinter.string_of_formula tmp_conseq) ^ "\n") in *)
               let tmp_conseq' = subst_avoid_capture r_subs l_sub tmp_conseq in
-
+	      (*let _ = print_string("cris: new_tmp_conseq = " ^ (Cprinter.string_of_formula tmp_conseq') ^ "\n") in *)
               let tmp_h2, tmp_p2, tmp_fl2, _, tmp_a2 = split_components tmp_conseq' in
               let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_a2 pos in
 	          (* An Hoa : TODO fix the consumption here - THIS CAUSES THE CONTRADICTION ON LEFT HAND SIDE! *)

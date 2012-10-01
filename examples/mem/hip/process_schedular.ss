@@ -32,20 +32,22 @@ stat != 1 -> requires (plist::ll<R> & rlist::rll<R1> * slist::sll<R2>) & R = uni
 	    & plist' = slist' & Rp = union(R1,R2p) & R2p = union(R2,{slist'}) & Rp = union(R,{plist'});}
 {
 	node tmp = new node(pid,stat,null,null,null);
-	tmp.next = plist;
-	plist = tmp;
+	//tmp.next = plist;
+	//plist = tmp;
 	if(stat == 1){
 		rlist = insert_rll(rlist,tmp);
 		}
 	else{
 		slist = insert_sll(slist,tmp);
 		}
+	dprint;
+	plist = insert_pll(plist,tmp);
 }
 
 node insert_pll(node x, ref node n)
 requires x::ll<R> * n::node<_@L,1@L,_@M,_@A,_@M>
 ensures res::ll<R1> & R1 = union(R,{n});
-requires x::ll<R> * n::node<_@L,0@L,_@M,_@M,_@A>
+requires x::ll<R> * n::node<_@L,v@L,_@M,_@M,_@A> & v != 1
 ensures res::ll<R1> & R1 = union(R,{n});
 {
 	n.next = x;
