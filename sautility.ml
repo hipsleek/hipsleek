@@ -17,6 +17,32 @@ let close_def defs (v1,v2)=
   else if CP.mem_svl v1 defs then (CP.remove_dups_svl defs@[v2])
   else if CP.mem_svl v2 defs then (CP.remove_dups_svl defs@[v1])
   else (defs)
+
+let rec get_data_view_hrel_vars_bformula bf=
+  get_data_view_hrel_vars_h_formula bf.CF.formula_base_heap
+
+and get_data_view_hrel_vars_h_formula hf=
+  let rec helper h=
+ match h with
+    | CF.Star { CF.h_formula_star_h1 = hf1;
+                CF.h_formula_star_h2 = hf2}
+    | CF.Conj { CF.h_formula_conj_h1 = hf1;
+                CF.h_formula_conj_h2 = hf2;}
+    | CF.Phase { CF.h_formula_phase_rd = hf1;
+                 CF.h_formula_phase_rw = hf2;} ->
+        let ls1 = helper hf1 in
+        let ls2 = helper hf2 in
+        (ls1@ls2)
+    | CF.DataNode hd -> [hd.CF.h_formula_data_node]
+    | CF.ViewNode hv -> [hv.CF.h_formula_view_node]
+    | CF.HRel (hp,_,_) -> [hp]
+    | CF.Hole _
+    | CF.HTrue
+    | CF.HFalse
+    | CF.HEmp -> []
+  in
+  helper hf
+
 (*==============*)
 (*for drop non-selective subformulas*)
 (*check a data node does not belong to a set of data node name*)
@@ -29,6 +55,17 @@ let check_nbelongsto_vnode vn vn_names=
 
 let check_neq_hrelnode id ls=
       not (CP.mem_svl id ls)
+
+(*check a data node belongs to a list of data node names*)
+let select_dnode dn1 dn_names=
+  List.exists (CP.eq_spec_var dn1.CF.h_formula_data_node) dn_names
+
+(*check a view node belongs to a list of view node names*)
+let select_vnode vn1 vn_names=
+    (*return subst of args and add in lhs*)
+  List.exists (CP.eq_spec_var vn1.CF.h_formula_view_node) vn_names
+
+let select_hrel =  CP.mem_svl
 
 let rec loop_up_ptr_args_data_node_x prog hd=
   (*data nodes*)
@@ -108,5 +145,25 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes eqs keep_root
   let _ = Debug.ninfo_pprint ("nf1: " ^ (Cprinter.string_of_formula_base nf1)) no_pos in
   let _ = Debug.ninfo_pprint ("nf2: " ^ (Cprinter.string_of_formula_base nf2)) no_pos in
   (nf1,nf2)
+
+let rec drop_data_view_hrel_nodes_from_root prog f hd_nodes hv_nodes eqs drop_rootvars=
+   match f with
+    | CF.Base fb ->
+       CF.Base { fb with CF.formula_base_heap = drop_data_view_hrel_nodes_hf_from_root
+               prog fb.CF.formula_base_heap
+               hd_nodes hv_nodes eqs drop_rootvars}
+    | _ -> report_error no_pos "cformula.drop_data_view_hrel_nodes"
+
+
+and drop_data_view_hrel_nodes_hf_from_root prog hf hd_nodes hv_nodes eqs drop_rootvars=
+  let _ = Debug.ninfo_pprint ("drop_vars root: " ^ (!CP.print_svl drop_rootvars)) no_pos in
+  (* let drop_closed_rootvars = CP.remove_dups_svl (List.fold_left close_def drop_rootvars eqs) in *)
+  let _ = Debug.ninfo_pprint ("close drop_rootvars: " ^ (!CP.print_svl drop_rootvars)) no_pos in
+  let drop_vars = loop_up_closed_ptr_args prog hd_nodes hv_nodes drop_rootvars in
+  (*may be alisas between lhs and rhs*)
+  let _ = Debug.ninfo_pprint ("drop_vars: " ^ (!CP.print_svl drop_vars)) no_pos in
+  let nhf = CF.drop_data_view_hrel_nodes_hf hf select_dnode select_vnode select_hrel drop_vars drop_vars drop_vars in
+  let _ = Debug.ninfo_pprint ("nhf: " ^ (Cprinter.string_of_h_formula nhf)) no_pos in
+  nhf
 
 (*END for drop non-selective subformulas*)

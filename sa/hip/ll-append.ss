@@ -59,14 +59,14 @@ lseg<p> == self=p
   inv true;
 
 void append(node x, node y)
-//  infer[H1,G1]
-// requires H(x)&y=null
+  infer[H1,G1]
+// requires H1(x)&y=null
   /* ensures G1(x,y);//' */
-//requires H1(x)*y::node<a,null>
-//  ensures G1(x ,y);//'
-  infer[H1,H2,G1]
-  requires H1(x)*H2(y)
-   ensures G1(x,y);
+requires H1(x)*y::node<a,null>
+     ensures G1(x ,y);//'
+// infer[H1,H2,G1]
+//  requires H1(x)*H2(y)
+//  ensures G1(x,y);
 
   /* requires x::ll<> * y::ll<> & x!=null */
   /* ensures  x::ll<> ;  */

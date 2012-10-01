@@ -795,15 +795,6 @@ and simplify_one_constr_b_x lhs_b rhs_b=
     (*return subst of args and add in lhs*)
     CP.eq_spec_var vn1.CF.h_formula_view_node vn2.CF.h_formula_view_node
   in
-  (*check a data node belongs to a list of data node names*)
-  let select_dnode dn1 dn_names=
-     List.exists (CP.eq_spec_var dn1.CF.h_formula_data_node) dn_names
-  in
-  (*check a view node belongs to a list of view node names*)
-  let select_vnode vn1 vn_names=
-    (*return subst of args and add in lhs*)
-    List.exists (CP.eq_spec_var vn1.CF.h_formula_view_node) vn_names
-  in
  (*todo: drop unused pointers in LHS*)
   let lhs_b1 = lhs_b (* Infer.filter_irr_lhs_bf_hp lhs_b rhs_b *) in
 (*pointers/hps matching LHS-RHS*)
@@ -818,9 +809,9 @@ and simplify_one_constr_b_x lhs_b rhs_b=
   let dnode_names = List.map (fun hd -> hd.CF.h_formula_data_node) matched_data_nodes in
   let vnode_names = List.map (fun hv -> hv.CF.h_formula_view_node) matched_view_nodes in
   let lhs_nhf2 = CF.drop_data_view_hrel_nodes_hf lhs_b1.CF.formula_base_heap
-    select_dnode select_vnode CP.mem_svl dnode_names vnode_names hrels in
+    SAU.select_dnode SAU.select_vnode SAU.select_hrel dnode_names vnode_names hrels in
   let rhs_nhf2 = CF.drop_data_view_hrel_nodes_hf rhs_b.CF.formula_base_heap
-    select_dnode select_vnode CP.mem_svl dnode_names vnode_names hrels in
+    SAU.select_dnode SAU.select_vnode SAU.select_hrel dnode_names vnode_names hrels in
   (*remove duplicate pure formulas*)
   let lhs_nmf2 = CP.remove_redundant (MCP.pure_of_mix lhs_b1.CF.formula_base_pure) in
   let rhs_nmf2 = CP.remove_redundant (MCP.pure_of_mix rhs_b.CF.formula_base_pure) in
@@ -1060,7 +1051,7 @@ let subst_cs_w_other_cs_x constrs=
 
 let rec subst_cs_w_other_cs constrs=
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
-   Debug.ho_1 "subst_cs_w_other_cs" pr1 pr1
+   Debug.no_1 "subst_cs_w_other_cs" pr1 pr1
        (fun _ -> subst_cs_w_other_cs_x constrs) constrs
 
 (* looking for constrs with the form

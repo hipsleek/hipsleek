@@ -23,8 +23,8 @@ print residue.
 */
 
 
-//infer [H1,H2] H2(v5,x) * x::node<_,v5> |- H1(v5) .
-//print residue.
+infer [H1,H2] H2(v5,x) * x::node<_,v5> |- H1(v5) .
+print residue.
 /* ERROR : wrong relass inferred!
 
 !!!   hp_rel:  (RELASS [H2,H1], H2(v5,x) * x::node<Anon_11,v5>&true, H1(v5)&true)
@@ -44,13 +44,13 @@ Message: Expect a node
 Entailment Failure (4) Failure("Expect a node")
 : no residue 
 */
-/*
+
 infer [G2] x::node<val_77_580,v_node_77_595> * G2(v_node_77_595,y)
  & flted_65_571=null & v_node_77_595!=null & 
  v_node_77_595!=null & !(v_bool_77_558') & a_599=a & y!=null 
 |- G2(x,y) .
 print residue.
-*/
+
 /* ERROR - wrong residue
 !!!   hp_rel:  (RELASS [G2], x::node<val_77_580,v_node_77_595> * G2(v_node_77_595,y)&y!=null & 
 v_node_77_595!=null, G2(x,y)&true)
