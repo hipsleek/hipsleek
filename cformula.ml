@@ -2801,8 +2801,10 @@ and rename_struc_bound_vars (f:struc_formula):struc_formula = match f with
 	| EList b -> EList (map_l_snd rename_struc_bound_vars b)
 
 
-and rename_bound_vars (f : formula) = rename_bound_vars_x f
-
+and rename_bound_vars (f : formula) =
+  let pr= !print_formula in
+  Debug.no_1 "rename_bound_vars" pr pr
+      (fun _ -> rename_bound_vars_x f) f
 
 and rename_bound_vars_x (f : formula) = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
@@ -2957,7 +2959,24 @@ and check_name_clash (v : CP.spec_var) (f : formula) : bool =
 (* the term is pure                                                     *)
 
 (* x+x' o[x'->fx] x'=x+1 --> x+fx & x'=fx+1 *)
- 
+
+(*transform history also*)
+and compose_formula_new (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr history (pos : loc) =
+  let rs = CP.fresh_spec_vars x in
+  (*--- 09.05.2000 *)
+  (*let _ = (print_string ("\n[cformula.ml, line 533]: fresh name = " ^ (string_of_spec_var_list rs) ^ "!!!!!!!!!!!\n")) in*)
+  (*09.05.2000 ---*)
+  let rho1 = List.combine (List.map CP.to_unprimed x) rs in
+  let rho2 = List.combine (List.map CP.to_primed x) rs in
+  let new_delta = subst rho2 delta in
+  let new_phi = subst rho1 phi in
+  let new_history = List.map (h_subst rho2) history in
+  let new_f = normalize_keep_flow new_delta new_phi flow_tr pos in
+  let _ = must_consistent_formula "compose_formula 1" new_f in
+  let resform = push_exists rs new_f in
+  let _ = must_consistent_formula "compose_formula 2" resform in
+  resform,new_history
+
 and compose_formula_x (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
   let rs = CP.fresh_spec_vars x in
   (*--- 09.05.2000 *)
@@ -3320,12 +3339,12 @@ and drop_data_view_hrel_nodes f fn_data_select fn_view_select fn_hrel_select dno
                 }
     | _ -> report_error no_pos "cformula.drop_data_view_hrel_nodes"
 
-and drop_data_view_hrel_nodes_fb fb fn_data_select fn_view_select fn_hrel_select matched_data_nodes matched_view_nodes matched_hrel_nodes=
+and drop_data_view_hrel_nodes_fb fb fn_data_select fn_view_select fn_hrel_select matched_data_nodes matched_view_nodes matched_hrel_nodes keep_pure_vars=
   let new_hf = drop_data_view_hrel_nodes_hf
           fb.formula_base_heap fn_data_select fn_view_select fn_hrel_select
           matched_data_nodes matched_view_nodes matched_hrel_nodes in
    (*assume keep vars = dnodes*)
-  let new_p = CP.filter_var (MCP.pure_of_mix fb.formula_base_pure) matched_data_nodes in
+  let new_p = CP.filter_var (MCP.pure_of_mix fb.formula_base_pure) keep_pure_vars in
   {fb with formula_base_heap = new_hf;
       formula_base_pure = MCP.mix_of_pure new_p;}
 
@@ -3473,6 +3492,7 @@ type entail_state = {
   es_formula : formula; (* can be any formula ; 
     !!!!!  make sure that for each change to this formula the es_cache_no_list is update apropriatedly*)
   es_heap : h_formula; (* consumed nodes *)
+  es_history : h_formula list; (* for sa *)
   es_evars : CP.spec_var list; (* existential variables on RHS *)
 
   (* WN : What is es_pure for? *)
@@ -3712,6 +3732,7 @@ let empty_es flowt grp_lbl pos =
 {
   es_formula = x;
   es_heap = HEmp;
+  es_history = [];
   es_pure = MCP.mkMTrue pos;
   es_evars = [];
   (* es_must_match = false; *)
@@ -5469,7 +5490,10 @@ and compose_context_formula_x (ctx : context) (phi : formula) (x : CP.spec_var l
 			let new_c2 = compose_context_formula_x ctx phi2 x flow_tr pos in
 			let res = (mkOCtx new_c1 new_c2 pos ) in
 			  res
-		| _ -> Ctx {es with es_formula = compose_formula es.es_formula phi x flow_tr pos; es_unsat_flag =false;}
+		| _ -> let new_es_f,new_history = compose_formula_new es.es_formula phi x flow_tr es.es_history pos in
+            Ctx {es with es_formula = new_es_f;
+                es_history = new_history;
+                es_unsat_flag =false;}
 	end
   | OCtx (c1, c2) -> 
 	  let new_c1 = compose_context_formula_x c1 phi x flow_tr pos in
@@ -6735,7 +6759,8 @@ let normalize_max_renaming_s f pos b ctx =
 *)
 
 let clear_entailment_vars (es :entail_state) : entail_state = 
-     {es with es_heap = HEmp;
+  {es with es_history = es.es_history@[es.es_heap];
+         es_heap = HEmp;
           es_evars = [];
       es_ivars = [];
       es_gen_expl_vars = [];
@@ -6744,7 +6769,9 @@ let clear_entailment_vars (es :entail_state) : entail_state =
       }
 
 let clear_entailment_history_es_es (es :entail_state) : entail_state = 
-  {es with es_heap = HEmp}
+  {es with es_history = es.es_history@[es.es_heap];
+      es_heap = HEmp;
+  }
 
 (*
   to be used in the type-checker. After every entailment, the history of consumed nodes
@@ -6754,6 +6781,7 @@ let clear_entailment_history_es_es (es :entail_state) : entail_state =
 let clear_entailment_history_es xp (es :entail_state) :context =
   (* TODO : this is clearing more than es_heap since qsort-tail.ss fails otherwise *)
   let hf = es.es_heap in
+  let old_history =  if is_data hf then es.es_history@[hf] else es.es_history in
   (* adding xpure0 of es_heap into es_formula *)
   let es_f = match xp hf with
     | None -> es.es_formula
@@ -6761,23 +6789,24 @@ let clear_entailment_history_es xp (es :entail_state) :context =
   in 
   Ctx {
       (* es with es_heap=HTrue;} *)
-    (empty_es (mkTrueFlow ()) es.es_group_lbl no_pos) with
-      es_formula = es_f;
-      es_path_label = es.es_path_label;
-      es_prior_steps = es.es_prior_steps;
-      es_var_measures = es.es_var_measures;
+      (empty_es (mkTrueFlow ()) es.es_group_lbl no_pos) with
+          es_formula = es_f;
+          es_history = old_history;
+          es_path_label = es.es_path_label;
+          es_prior_steps = es.es_prior_steps;
+          es_var_measures = es.es_var_measures;
       (* WN : what is the purpose of es_var_stack?*)
-      es_var_stack = es.es_var_stack;
-      es_infer_vars = es.es_infer_vars;
-      es_infer_vars_rel = es.es_infer_vars_rel;
-      es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
-      es_infer_heap = es.es_infer_heap;
-      es_infer_pure = es.es_infer_pure;
-      es_infer_rel = es.es_infer_rel;
-       es_infer_hp_rel = es.es_infer_hp_rel;
-        es_group_lbl = es.es_group_lbl;
-        es_term_err = es.es_term_err;
-        es_var_zero_perm = es.es_var_zero_perm;
+          es_var_stack = es.es_var_stack;
+          es_infer_vars = es.es_infer_vars;
+          es_infer_vars_rel = es.es_infer_vars_rel;
+          es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
+          es_infer_heap = es.es_infer_heap;
+          es_infer_pure = es.es_infer_pure;
+          es_infer_rel = es.es_infer_rel;
+          es_infer_hp_rel = es.es_infer_hp_rel;
+          es_group_lbl = es.es_group_lbl;
+          es_term_err = es.es_term_err;
+          es_var_zero_perm = es.es_var_zero_perm;
   }
 
 let clear_entailment_history xp (ctx : context) : context =  

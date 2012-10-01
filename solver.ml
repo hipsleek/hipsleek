@@ -2232,7 +2232,8 @@ and elim_exists_pure_branch_x (w : CP.spec_var list) (f0 : CP.formula) pos : CP.
 
 (* --- added 11.05.2008 *)
 and entail_state_elim_exists es = 
-  let f_prim = elim_exists es.es_formula in
+  (* let f_prim = elim_exists es.es_formula in *)
+  let f_prim,new_his = elim_exists_es_his es.es_formula es.es_history in
   (* 05.06.08 *)
   (* we also try to eliminate exist vars for which a find a substitution of the form v = exp from the pure part *)
   (*let _ = print_string("[solver.ml, elim_exists_ctx]: Formula before exp exist elim: " ^ Cprinter.string_of_formula f_prim ^ "\n") in*)
@@ -2245,7 +2246,8 @@ and entail_state_elim_exists es =
     else p in
   let simpl_fl = fl (*flows have nothing to simplify to*)in
   let simpl_f = CF.mkExists qvar h simpl_p t simpl_fl (CF.formula_and_of_formula base) (CF.pos_of_formula base) in (*TO CHECK*)
-  Ctx{es with es_formula = simpl_f}   (*assuming no change in cache formula*)
+  Ctx{es with es_formula = simpl_f;
+     es_history = new_his}   (*assuming no change in cache formula*)
 
 and elim_exists_ctx_list (ctx0 : list_context) = 
   transform_list_context (entail_state_elim_exists, (fun c-> c)) ctx0
@@ -2516,6 +2518,42 @@ and elim_exists (f0 : formula) : formula = match f0 with
           tmp3 in
         r
   | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
+
+and elim_exists_es_his (f0 : formula) (his:h_formula list) : formula*h_formula list =
+  let rec helper f0 hfs=
+    match f0 with
+      | Or ({ formula_or_f1 = f1;
+              formula_or_f2 = f2;
+              formula_or_pos = pos}) ->
+          let ef1,hfs1 = helper f1 hfs in
+          let ef2,hfs2 = helper f2 hfs1 in
+	      (mkOr ef1 ef2 pos, hfs2)
+      | Base _ -> (f0,hfs)
+      | Exists ({ formula_exists_qvars = qvar :: rest_qvars;
+                  formula_exists_heap = h;
+                  formula_exists_pure = p;
+                  formula_exists_type = t;
+                  formula_exists_flow = fl;
+                  formula_exists_and = a;
+                  formula_exists_pos = pos}) ->
+          let st, pp1 = MCP.get_subst_equation_memo_formula_vv p qvar in
+          let r,n_hfs = if List.length st = 1 then
+             let tmp = mkBase h pp1 t fl a pos in (*TO CHECK*)
+             let new_baref = subst st tmp in
+             let new_hfs = List.map (CF.h_subst st) hfs in
+             let tmp2 = add_quantifiers rest_qvars new_baref in
+             let tmp3,new_hfs1 = helper tmp2 new_hfs in
+                (tmp3,new_hfs1)
+              else (* if qvar is not equated to any variables, try the next one *)
+                let tmp1 = mkExists rest_qvars h p t fl a pos in (*TO CHECK*)
+                let tmp2,hfs1 = helper tmp1 hfs in
+                let tmp3 = add_quantifiers [qvar] tmp2 in
+                (tmp3,hfs1)
+          in
+          (r,n_hfs)
+      | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
+  in
+  helper f0 his
 
 (**************************************************************)
 (* heap entailment                                            *)
@@ -2982,13 +3020,17 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	            let n_ctx_list, prf = heap_entail_one_context prog (if formula_cont!=None then true else is_folding) n_ctx formula_base None pos in
 			            (*let n_ctx_list = List.filter  (fun c -> not (isFalseCtx c)) n_ctx_list in*)
 	                    let n_ctx_list = pop_expl_impl_context expl_inst impl_inst n_ctx_list in
+                        (*l2: debugging*)
+                        (* DD.info_pprint ("  after pre: " ^ (Cprinter.string_of_list_context n_ctx_list)) pos; *)
+                        (*END debugging ctx11 *)
 			            (match n_ctx_list with
 	              | FailCtx _ ->(* let _ = print_endline ("###: 1") in *) (n_ctx_list, prf)
 	              | SuccCtx _ ->
 						        let res_ctx, res_prf = match formula_cont with
-							| Some l -> heap_entail_struc prog is_folding has_post n_ctx_list l tid pos pid (*also propagate tid*)
+							      | Some l -> heap_entail_struc prog is_folding has_post n_ctx_list l tid pos pid (*also propagate tid*)
 							      | None -> (n_ctx_list, prf) in
 						        let res_ctx = if !wrap_exists_implicit_explicit then push_exists_list_context (expl_inst@impl_inst) res_ctx else res_ctx in
+                                 (* DD.info_pprint ("  after pre 1: " ^ (Cprinter.string_of_list_context res_ctx)) pos; *)
 						        (res_ctx,res_prf)
                         (*  let _ = print_endline ("###: 3") in*)
                         )
@@ -3010,6 +3052,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                       begin
                 (*check reachable or not*)
                 (*let ctx1,_= heap_entail_one_context prog is_folding ctx11 (mkTrue_nf pos) pos in*)
+                          (* DD.info_pprint ("  before consume post ctx11: " ^ (Cprinter.string_of_context ctx11)) pos; *)
 	                    let rs = clear_entailment_history (fun x -> Some (xpure_heap_symbolic prog x 0)) ctx11 in
                 (*************Compose variable permissions >>> ******************)
                 if (!Globals.ann_vp) then
@@ -3039,6 +3082,11 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                 Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: after checking VarPerm in EAssume: \n ### rs = "^(Cprinter.string_of_context rs2)^"\n")) pos;
 	                    let rs3 = add_path_id rs2 (pid,i) in
                         let rs4 = prune_ctx prog rs3 in
+                (*l2: debugging*)
+                        (* DD.info_pprint ("  before consume post rs: " ^ (Cprinter.string_of_context rs)) pos; *)
+                        (* DD.info_pprint ("  before consume post rs1: " ^ (Cprinter.string_of_context rs1)) pos; *)
+                        (* DD.info_pprint ("  before consume post rs2: " ^ (Cprinter.string_of_context rs2)) pos; *)
+                (*END debugging ctx11 *)
                  (******************************************************)
                 (*foo5,foo6 in hip/err3.ss*)
 				

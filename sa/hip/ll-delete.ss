@@ -5,7 +5,7 @@ data node {
 
 void dispose(ref node x)
   requires x::node<_,_>
-  ensures x'=null;
+  ensures x'=null;//'
 
 HeapPred D(node a).
 HeapPred E(node a, node b).
@@ -13,12 +13,13 @@ HeapPred E(node a, node b).
 void delete_list(ref node x)
   infer[D,E]
   requires D(x)
-  ensures E(x,x');
+  ensures E(x,x');//'
 {
   if (x!=null) {
     delete_list(x.next);
-    dprint;
-    dispose(x);
+    //   dprint;
+    x=null;
+    //dispose(x);
   }
 }
 

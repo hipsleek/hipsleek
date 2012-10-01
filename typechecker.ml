@@ -509,7 +509,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     (* Termination: Check boundedness of the measures 
                      * before going into the function body *)
                     let (_, rankbnds) = check_bounded_term prog ctx1 (CF.pos_of_formula post_cond) in
-	    	        let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in
+                    let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in
 	                (* let _ = print_string ("\n WN 1 :"^(Cprinter.string_of_list_partial_context res_ctx)) in *)
 	    	        let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
 	                (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in*)
@@ -1497,8 +1497,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                    (*                              (Cprinter.string_of_list_failesc_context sctx)) in *)
                   (*we use new rules to judge the spec*)
                   let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 None pos pid in
-                 
-				  let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
+                  let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
                   (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
                   let _ = PTracer.log_proof prf in
 
