@@ -59,3 +59,19 @@ v_node_77_595!=null, G2(x,y)&true)
  <1>x::node<val_77_580,v_node_77_595>@M[Orig]&flted_65_571=null & v_node_77_595!=null & v_node_77_595!=null & !(v_bool_77_558') & a_599=a & y!=null&{FLOW,(19,20)=__norm}[]
 
 */
+
+
+infer [H1,H2] x::node<_,q>*H2(q,null) |- H1(x) .
+print residue.
+/*
+pick pure condition on LHS related to selected vars..
+
+!!!   hp_rel:  (RELASS [H2,H1], x::node<Anon_13,q> * H2(q,flted_64_40)&true, H1(x)&true)
+
+*/
+
+infer [H1,H2] x::node<_,q>*H2(q,x) |- H1(x) .
+print residue.
+
+infer [H1,H2] x::node<_,q>*H2(q,x) |- H1(q) .
+print residue.
