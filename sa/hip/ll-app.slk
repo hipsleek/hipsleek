@@ -26,6 +26,7 @@ print residue.
 infer [H1,H2] H2(v5,x) * x::node<_,v5> |- H1(v5) .
 print residue.
 /* ERROR : wrong relass inferred!
+H2(v5,x) --> H1(v5)
 
 !!!   hp_rel:  (RELASS [H2,H1], H2(v5,x) * x::node<Anon_11,v5>&true, H1(v5)&true)
 Entail (1) : Valid. 
