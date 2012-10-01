@@ -1,7 +1,0 @@
-data pair {
- int fst;
- int snd;
-}.
-
-checkentail x::pair<a@M,_@A> * x::pair<b@A,_@A> |- true.
-print residue.

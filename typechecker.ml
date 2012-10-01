@@ -811,11 +811,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_bind_pos = pos}) -> 
             (* let _ = print_string ("\n(andreeac) bind 15 to delete")in *)
             begin
-            DD.info_pprint ">>>>>> bind type-checker <<<<<<" pos;
-            DD.info_hprint (add_str "node" (fun x -> x)) v pos;               
-            DD.info_hprint (add_str "fields" (pr_list (fun (_,x) -> x))) lvars pos;               
-            DD.info_hprint (add_str "node ann" Cprinter.string_of_imm) imm pos;               
-            DD.info_hprint (add_str "fields ann" (pr_list Cprinter.string_of_imm)) pimm pos;               
+            DD.devel_pprint ">>>>>> bind type-checker <<<<<<" pos;
+            DD.devel_hprint (add_str "node" (fun x -> x)) v pos;               
+            DD.devel_hprint (add_str "fields" (pr_list (fun (_,x) -> x))) lvars pos;               
+            DD.devel_hprint (add_str "node ann" Cprinter.string_of_imm) imm pos;               
+            DD.devel_hprint (add_str "fields ann" (pr_list Cprinter.string_of_imm)) pimm pos;               
             let b,res = (if !Globals.ann_vp then
                   (*check for access permissions*)
                   let var = (CP.SpecVar (v_t, v, Primed)) in
@@ -834,12 +834,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let link_pv = CF.formula_of_pure_N
 	          (CP.mkAnd (CP.mkEqVar v_prim p pos) (CP.BForm ((CP.mkNeq (CP.Var (p, pos)) (CP.Null pos) pos, None), None)) pos) pos in
 	       (* let _ = print_string ("[typechecker.ml, check__exp]: link_pv: " ^ Cprinter.string_of_formula link_pv ^ "\n") in*)
-	        (* let _ = print_endline ("bind: unfolded context: after check_full_perm \n" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
+	        (*let _ = print_endline ("bind: unfolded context: after check_full_perm \n" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
 	        let tmp_ctx =
 	          if !Globals.large_bind then
 	            CF.normalize_max_renaming_list_failesc_context link_pv pos false ctx
 	          else ctx in
-            (* let _ = print_endline ("WN1 ctx: "^Cprinter.string_of_list_failesc_context ctx) in *)
+             (*let _ = print_endline ("WN1 ctx: "^Cprinter.string_of_list_failesc_context ctx) in *)
             (* let _ = print_endline ("WN1 tmp_ctx: "^Cprinter.string_of_list_failesc_context tmp_ctx) in *)
             let _ = CF.must_consistent_list_failesc_context "bind 1" ctx  in
 	        (* let _ = print_endline ("bind: unfolded context: before unfold: ### vprim = "^ (Cprinter.string_of_spec_var v_prim)^ " \n" ^ (Cprinter.string_of_list_failesc_context tmp_ctx)) in *)
@@ -848,7 +848,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let _ = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
 	        let _ = Debug.devel_zprint (lazy ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
             ^ "\n")) pos in
-	     (*    let _ = print_string ("\n(andreeac)bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)     ^ "\n") in *)
+	        (*let _ = print_string ("\n(andreeac)bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)     ^ "\n") in *)
 	     let unfolded = if(!Globals.allow_field_ann) then
                   let idf = (fun c -> c) in
 		  CF.transform_list_failesc_context (idf,idf,
@@ -878,7 +878,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_pruning_conditions = [];
                 CF.h_formula_data_pos = pos}) in
 	        let vheap = CF.formula_of_heap vdatanode pos in
-                let _ = DD.info_hprint (add_str "vheap" (Cprinter.string_of_formula)) vheap pos in
+                let _ = DD.devel_hprint (add_str "vheap" (Cprinter.string_of_formula)) vheap pos in
             (*Test whether fresh_frac is full permission or not
               writable -> fresh_frac = full_perm => normally
               read-only -> fresh_frac != full_perm => in order to 
@@ -901,7 +901,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             in
 
 		    let vheap = prune_preds prog false vheap in
-             let _ = DD.info_hprint (add_str "vheap2" (Cprinter.string_of_formula)) vheap pos in
+             let _ = DD.devel_hprint (add_str "vheap2" (Cprinter.string_of_formula)) vheap pos in
              let struc_vheap = CF.EBase { 
 	                CF.formula_struc_explicit_inst = [];	 
                     CF.formula_struc_implicit_inst = if (Perm.allow_perm ()) then [fresh_frac] else [];  (*need to instantiate f*)
@@ -1424,6 +1424,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let pre_free_vars = List.filter (fun v -> (CP.type_of_spec_var v) != RelT) pre_free_vars in
                   (* let _ = print_endline ("WN free vars to rename : "^(Cprinter.string_of_spec_var_list pre_free_vars)) in *)
                   let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
+                  (* let _ = print_string (("\nEND SCALL ctx: ") ^ (Cprinter.string_of_list_failesc_context sctx) ^ "\n") in *)
                   let renamed_spec = 
                     if !Globals.max_renaming then (CF.rename_struc_bound_vars stripped_spec(*org_spec*))
                     else (CF.rename_struc_clash_bound_vars stripped_spec(*org_spec*) (CF.formula_of_list_failesc_context sctx))
@@ -1454,7 +1455,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       else ()
                     else ()
                   in
-
+    
                   (* TODO: call the entailment checking function in solver.ml *)
                   let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec (*!log_spec*) in
                   let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in
@@ -1465,14 +1466,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                    (*                              (Cprinter.string_of_list_failesc_context sctx)) in *)
                   (*we use new rules to judge the spec*)
                   let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 None pos pid in
-                  let rs = 
-                  if(!Globals.allow_field_ann) then
-                  let idf = (fun c -> c) in
-		  CF.transform_list_failesc_context (idf,idf,
-		  (fun es -> CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;})) 
-		  rs 
-		  else rs
-		  in
+                  
 				  let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
                   (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
                   let _ = PTracer.log_proof prf in
@@ -1519,7 +1513,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 (* let _ = print_endline (("\ncheck_exp: SCall: res : ") ^ (Cprinter.string_of_list_failesc_context res)) in *)
                 if (CF.isSuccessListFailescCtx_new res) then
                  (* let _ = print_endline ("\nlocle1:" ^ proc.proc_name) in*)
-                  res
+                  let res = 
+                  if(!Globals.allow_field_ann) then
+                  let idf = (fun c -> c) in
+		  CF.transform_list_failesc_context (idf,idf,
+		  (fun es -> CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;})) 
+		  res 
+		  else res
+		  in res
                 else begin
                  (*   let _ = print_endline ("\nlocle2:" ^ proc.proc_name) in *)
       (* get source code position of failed branches *)
