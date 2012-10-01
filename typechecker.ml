@@ -801,16 +801,21 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	      end
 
         | Bind ({ exp_bind_type = body_t;
-          exp_bind_bound_var = (v_t, v);
-          exp_bind_fields = lvars;
+          exp_bind_bound_var = (v_t, v); (* node to bind *)
+          exp_bind_fields = lvars; (* fields of bound node *)
           exp_bind_body = body;
-          exp_bind_imm = imm;
-          exp_bind_param_imm = pimm;
+          exp_bind_imm = imm; (* imm annotation for the node *)
+          exp_bind_param_imm = pimm; (* imm annotation for each field *)
           exp_bind_read_only = read_only;
 	  exp_bind_path_id = pid;
           exp_bind_pos = pos}) -> 
             (* let _ = print_string ("\n(andreeac) bind 15 to delete")in *)
             begin
+            DD.info_pprint ">>>>>> bind type-checker <<<<<<" pos;
+            DD.info_hprint (add_str "node" (fun x -> x)) v pos;               
+            DD.info_hprint (add_str "fields" (pr_list (fun (_,x) -> x))) lvars pos;               
+            DD.info_hprint (add_str "node ann" Cprinter.string_of_imm) imm pos;               
+            DD.info_hprint (add_str "fields ann" (pr_list Cprinter.string_of_imm)) pimm pos;               
             let b,res = (if !Globals.ann_vp then
                   (*check for access permissions*)
                   let var = (CP.SpecVar (v_t, v, Primed)) in
@@ -873,7 +878,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_pruning_conditions = [];
                 CF.h_formula_data_pos = pos}) in
 	        let vheap = CF.formula_of_heap vdatanode pos in
-
+                let _ = DD.info_hprint (add_str "vheap" (Cprinter.string_of_formula)) vheap pos in
             (*Test whether fresh_frac is full permission or not
               writable -> fresh_frac = full_perm => normally
               read-only -> fresh_frac != full_perm => in order to 
@@ -896,7 +901,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             in
 
 		    let vheap = prune_preds prog false vheap in
-            let struc_vheap = CF.EBase { 
+             let _ = DD.info_hprint (add_str "vheap2" (Cprinter.string_of_formula)) vheap pos in
+             let struc_vheap = CF.EBase { 
 	                CF.formula_struc_explicit_inst = [];	 
                     CF.formula_struc_implicit_inst = if (Perm.allow_perm ()) then [fresh_frac] else [];  (*need to instantiate f*)
                     CF.formula_struc_exists = [];
@@ -965,8 +971,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             stk_vars # pop_list vss;
 	        let svars = List.map (fun (t, n) -> CP.SpecVar (t, n, Primed)) local_vars in
 	        let ctx2 = CF.push_exists_list_failesc_context svars ctx1 in
-		    (* let _ = print_endline ("\ncheck_exp: Block: ctx2:\n" ^ (Cprinter.string_of_list_failesc_context ctx2)) in *)
-		    (* let _ = print_endline ("\ncheck_exp: Block: after elim_exists ctx2:\n" ^ (Cprinter.string_of_list_failesc_context (elim_exists_failesc_ctx_list ctx2))) in *)
+		    (* let _ = print_endline ("\ncheck_exp: Block: ctx2:\n" ^ (Cprinter.string_of_list_failesc_context ctx2)) in  *)
+		    (*  let _ = print_endline ("\ncheck_exp: Block: after elim_exists ctx2:\n" ^ (Cprinter.string_of_list_failesc_context (elim_exists_failesc_ctx_list ctx2))) in  *)
 	        if !Globals.elim_exists then elim_exists_failesc_ctx_list ctx2 else ctx2
 	      end
 		| Catch b -> Error.report_error {Err.error_loc = b.exp_catch_pos;
