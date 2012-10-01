@@ -1424,8 +1424,6 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let coq_imply a c = Coq.imply_ops pr_weak pr_strong ante_w conseq_s in
   let z3_imply a c = Smtsolver.imply_ops pr_weak_z3 pr_strong_z3 ante conseq timeout in
 	
-	let tstart = Gen.Profiling.get_time () in
-	
   let r = match !tp with
     | DP ->
         let r = Dp.imply ante_w conseq_s (imp_no^"XX") timeout in
@@ -1539,9 +1537,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 				Prooftracer.pop_div ();
 			end
 	in
-	let tstop = Gen.Profiling.get_time () in
   let _ = Gen.Profiling.pop_time "tp_is_sat" in 
-	let _= add_proof_log imp_no (string_of_prover !tp) (IMPLY (ante, conseq)) (tstop -. tstart) (BOOL r) in
 	 r
 ;;
 
@@ -1748,10 +1744,12 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
   proof_no := !proof_no + 1 ;
   let imp_no = (string_of_int !proof_no) in
+	let tstart = Gen.Profiling.get_time () in		
   Debug.devel_zprint (lazy ("IMP #" ^ imp_no)) no_pos;  
   Debug.devel_zprint (lazy ("imply_timeout: ante: " ^ (!print_pure ante0))) no_pos;
   Debug.devel_zprint (lazy ("imply_timeout: conseq: " ^ (!print_pure conseq0))) no_pos;
-  if !external_prover then 
+  let final_res=
+		if !external_prover then 
     match Netprover.call_prover (Imply (ante0,conseq0)) with
         Some res -> (res,[],None)       
       | None -> (false,[],None)
@@ -1809,6 +1807,10 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 		in
 		List.fold_left fold_fun (true,[],None) pairs
   end;
+	in 
+	let tstop = Gen.Profiling.get_time () in
+	let _= add_proof_log imp_no (string_of_prover !tp) (IMPLY (ante0, conseq0)) (tstop -. tstart) (BOOL (match final_res with | r,_,_ -> r)) in
+	final_res
 ;;
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
