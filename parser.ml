@@ -475,16 +475,17 @@ let peek_dc =
 let peek_star = 
    SHGram.Entry.of_parser "peek_star"
        (fun strm ->
-           match Stream.npeek 2 strm with
-             |[STAR,_;OPAREN,_] -> raise Stream.Failure
+           match Stream.npeek 3strm with
+             |[AND,_;IDENTIFIER id,_; COLONCOLON,_] -> raise Stream.Failure
+             |[STAR,_;OPAREN,_;_] -> raise Stream.Failure
              | _ -> ())
              
 let peek_heap_and = 
    SHGram.Entry.of_parser "peek_heap_and"
        (fun strm ->
-           match Stream.npeek 2 strm with
-             |[AND,_;OPAREN,_] -> raise Stream.Failure
-             | _ -> ())
+           match Stream.npeek 3 strm with
+             |[AND,_;IDENTIFIER id,_; COLONCOLON,_] -> ()
+             | _ -> raise Stream.Failure)
 
 let peek_array_type =
    SHGram.Entry.of_parser "peek_array_type"
@@ -954,12 +955,12 @@ heap_rd:
 
 heap_rw:
   [[ hrd=heap_wr; `STAR; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStar hrd hc (get_pos_camlp4 _loc 2)
+   | shc=heap_wr; peek_heap_and; `AND; wr = simple_heap_constr -> F.mkConj shc wr (get_pos_camlp4 _loc 2)
    | hwr=heap_wr                                          -> F.mkPhase F.HEmp hwr (get_pos_camlp4 _loc 2)]];
 
 heap_wr:
   [[   
-     shc=SELF; peek_star; `STAR;  hw= simple_heap_constr     -> F.mkStar shc hw (get_pos_camlp4 _loc 2)
-   | shi=SELF; peek_heap_and; `AND; hw=simple_heap_constr  -> F.mkConj shi hw (get_pos_camlp4 _loc 2)
+     shc=SELF; peek_star; `STAR;  hw= simple_heap_constr    -> F.mkStar shc hw (get_pos_camlp4 _loc 2)
    | shc=simple_heap_constr        -> shc
    (* | shi=simple_heap_constr_imm; `STAR;  hw=SELF -> F.mkStar shi hw (get_pos_camlp4 _loc 2) *)
    (* | shi=simple_heap_constr_imm; `STAR; `OPAREN; hc=heap_constr; `CPAREN  -> F.mkStar shi hc (get_pos_camlp4 _loc 2) *)

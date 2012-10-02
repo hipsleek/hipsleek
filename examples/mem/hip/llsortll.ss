@@ -41,8 +41,8 @@ lemma self::sll<n,sm,lg,R> -> self::ll<n,R>;
 lemma self::ll<n,R> <-> self::lseg<n,R,p>;
 
 void overlaid_insert(node x, node s,int v)
-requires (x::ll<n,R> & s::sll<n,sm,lg,R>) 
-ensures (x::ll<n+1,R1> & s::sll<n+1,mi,ma,R1>) & mi = min(v, sm) & ma = max(v, lg) &  R1 = union(R,{x}); 
+requires x::ll<n,R> & s::sll<n,sm,lg,R>
+ensures x::ll<n+1,R1> & s::sll<n+1,mi,ma,R1> & mi = min(v, sm) & ma = max(v, lg) &  R1 = union(R,{x}); 
 {
 node c = new node(v,x,null);
 c = insert2(s,c);
@@ -50,8 +50,8 @@ x = c;
 }
 
 void overlaid_delete(node x, node s, int v)
-requires (x::ll<n,R> & s::sll<n,sm,lg,R>)
-ensures (x::ll<nres,R1> & s::sll<nres,mi,ma,R1>) & mi = min(v, sm) & ma = max(v, lg) & (R1 subset R | R1 = R) & n-1 <= nres <= n;
+requires x::ll<n,R> & s::sll<n,sm,lg,R>
+ensures x::ll<nres,R1> & s::sll<nres,mi,ma,R1> & mi = min(v, sm) & ma = max(v, lg) & (R1 subset R | R1 = R) & n-1 <= nres <= n;
 /*
 {
 node c;

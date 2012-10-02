@@ -24,11 +24,11 @@ sll<R> == self = null & R = {}
     
 void insert_process(int pid, int stat, ref node plist, ref node rlist, ref node slist)
 case {
-stat = 1 -> requires (plist::ll<R> & rlist::rll<R1> * slist::sll<R2>) & R = union(R1,R2)
-	    ensures (plist'::ll<Rp> & rlist'::rll<R1p> * slist::sll<R2> ) 
+stat = 1 -> requires plist::ll<R> & rlist::rll<R1> * slist::sll<R2> & R = union(R1,R2)
+	    ensures plist'::ll<Rp> & rlist'::rll<R1p> * slist::sll<R2> 
 	    & plist' = rlist' & Rp = union(R1p,R2) & R1p = union(R1,{rlist'}) & Rp = union(R,{plist'});
-stat != 1 -> requires (plist::ll<R> & rlist::rll<R1> * slist::sll<R2>) & R = union(R1,R2)
-	    ensures (plist'::ll<Rp> & rlist::rll<R1> * slist'::sll<R2p>)
+stat != 1 -> requires plist::ll<R> & rlist::rll<R1> * slist::sll<R2> & R = union(R1,R2)
+	    ensures plist'::ll<Rp> & rlist::rll<R1> * slist'::sll<R2p>
 	    & plist' = slist' & Rp = union(R1,R2p) & R2p = union(R2,{slist'}) & Rp = union(R,{plist'});}
 {
 	node tmp = new node(pid,stat,null,null,null);

@@ -3733,12 +3733,12 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	          (filter_set rs1, prf1)
     | _ -> begin
         let r1,p1 =
-              if !Globals.allow_mem && !Globals.allow_field_ann then
+              (*if !Globals.allow_mem && !Globals.allow_field_ann then
             begin
               Debug.devel_zprint (lazy ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs")) pos;
 	          heap_entail_split_rhs prog is_folding ctx conseq pos     
             end
-              else
+              else*)
 	      	if !Globals.allow_imm then
             	begin
               	Debug.devel_zprint (lazy ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases")) pos;
@@ -4352,7 +4352,9 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
         (* lhs contains only one phase (no need to split) *)
         let new_ctx = CF.set_context_formula ctx0 (func (choose_not_empty_heap h1 h2 h3)) in
 	    (* in this case we directly call heap_entail_conjunct *)
-        let final_ctx, final_prf = heap_entail_conjunct prog is_folding  new_ctx conseq []  pos in
+        let final_ctx, final_prf = 
+        	if(!Globals.allow_mem) then heap_entail_split_rhs prog is_folding new_ctx conseq pos else
+        	heap_entail_conjunct prog is_folding  new_ctx conseq []  pos in
 	    match final_ctx with
 	      | SuccCtx(cl) ->
 	            (* substitute the holes due to the temporary removal of matched immutable nodes *) 
@@ -4369,6 +4371,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 	        if not(Cformula.contains_phase h3) then
 	          (* no other nested phases within h3 *)
 	          (* direct call to heap_entail_conjunct *)
+	          if(!Globals.allow_mem) then heap_entail_split_rhs prog is_folding new_ctx conseq pos else
 	          heap_entail_conjunct prog is_folding  new_ctx conseq [] pos
 	        else
 	          (* we need to recursively split the phases nested in h3 *)
@@ -4502,7 +4505,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 		              (Debug.devel_zprint (lazy ("heap_entail_split_lhs_phases: \ncall heap_entail_split_lhs_phase for the continuation\n")) pos;
 		              heap_entail_split_lhs_phases prog is_folding  cont_ctx conseq drop_read_phase pos)
 		            else
-		              (Debug.devel_zprint (lazy ("heap_entail_split_lhs_phases: \ncall heap_entail_conjunct for the continuation\n")) pos;
+		              (Debug.devel_zprint (lazy ("heap_entail_split_lhs_phases: \ncall heap_entail_conjunct for the continuation\n")) pos;     if(!Globals.allow_mem) then heap_entail_split_rhs prog is_folding cont_ctx conseq pos else
 		              heap_entail_conjunct prog is_folding  cont_ctx conseq [] pos)
 	              in
 		          (match after_wr_ctx with

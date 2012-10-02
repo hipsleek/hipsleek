@@ -248,6 +248,7 @@ and normalize_h_formula_x (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
              IF.h_formula_conj_h2 = h2;
              IF.h_formula_conj_pos = pos
             }) ->
+      if (wr_phase) && (!Globals.allow_mem) then h else     
       normalize_h_formula_rd_phase h 
   | IF.HeapNode2 hf -> 
       (let annv = get_imm h in

@@ -461,7 +461,7 @@ let allow_imm = ref true (*imm will delay checking guard conditions*)
 
 let allow_field_ann = ref true
 
-let allow_mem = ref false
+let allow_mem = ref true
 
 let ann_derv = ref false
 

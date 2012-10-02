@@ -59,8 +59,8 @@ requires q1s::ll<S>
 ensures q1t::tree<p,S>;
 
 void move_request(ref node q1s, ref node q2, ref node q1t)
-requires (q2::ll<Sq> * q1s::ll<S> & q1t::tseg<q1s,S>)
-ensures (q2'::ll<Sq1> * q1s'::ll<S1> & q1t::tseg<q1s',S1>) & S = union(S1,{q1s}) & Sq1 = union(Sq,{q1s});
+requires q2::ll<Sq> * q1s::ll<S> & q1t::tseg<q1s,S>
+ensures q2'::ll<Sq1> * q1s'::ll<S1> & q1t::tseg<q1s',S1> & S = union(S1,{q1s}) & Sq1 = union(Sq,{q1s});
 {
 node c;
 c = list_remove_first(q1s);

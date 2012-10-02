@@ -6070,9 +6070,11 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
     Debug.no_2 "linearize_heap" pr0 pr1 pr2 (fun _ _ -> linearize_heap used_names f) used_names f  in
 	
   let rec normalize_base heap cp fl a evs pos : IF.formula* ((ident*primed)list)* ((ident*primed)list) =
-    let heap = if !Globals.allow_mem then heap else Immutable.normalize_h_formula heap false in 
+    (*let _ = print_string("Before Normalization : "^(Iprinter.string_of_h_formula heap)^"\n") in*)
+    let heap = (*if !Globals.allow_mem then heap else*) Immutable.normalize_h_formula heap false in 
+    (*let _ = print_string("After Normalization : "^(Iprinter.string_of_h_formula heap)^"\n") in*)
     let nu, h_evars, new_h, link_f = linearize_heap [] heap in
-    let new_h = if !Globals.allow_mem then Mem.normalize_h_formula new_h else new_h in
+    (*let new_h = if !Globals.allow_mem then Mem.normalize_h_formula new_h else new_h in*)
     (****processsing formula_*_and***********)
     (*Note: f.formula_thread should appear in f.formula_pure*)
 	let func evars (f:IF.one_formula) = normalize_base f.IF.formula_heap  f.IF.formula_pure top_flow [] evars f.IF.formula_pos in
