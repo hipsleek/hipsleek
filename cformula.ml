@@ -3085,6 +3085,14 @@ and h_node_list (f: h_formula): CP.spec_var list = match f with
   -> (h_node_list h1)@(h_node_list h2)
   | _ -> []
 
+and get_hnodes (f: h_formula) = match f with
+  | DataNode _ -> [f]
+  | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2} 
+  | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} 
+  | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2} 
+  -> (get_hnodes h1)@(get_hnodes h2)
+  | _ -> []
+
 and get_hp_rel_formula (f:formula) =
   match f with 
     | Base  ({formula_base_heap = h1;

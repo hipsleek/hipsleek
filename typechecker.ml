@@ -256,7 +256,7 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
   let pr2a = add_str "formulae" (pr_list Cprinter.string_of_formula) in
   let pr2b = add_str "inferred hp rels" (fun l -> string_of_int (List.length l)) in
   let pr3 = pr_penta pr1 pr2a pr2 pr2b string_of_bool in
-  Debug.ho_1 "check_specs_infer" pr1 pr3
+  Debug.no_1 "check_specs_infer" pr1 pr3
       (fun _ -> check_specs_infer_a prog proc ctx e0 do_infer spec_list) spec_list
 
 (* Termination *)      

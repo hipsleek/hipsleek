@@ -1467,18 +1467,21 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs crt_holes hist
   let rkeep_hrels, keep_rootvars = List.split rhp_args in
   let keep_hrels = List.concat (lkeep_hrels@rkeep_hrels) in
   let rhs_keep_rootvars = List.concat keep_rootvars in
-  (* let lhs_keep_rootvars = List.concat (List.map (look_up_lhs_root_vars rhs_keep_rootvars) lhp_args) in *)
+
   let lhs_keep_first_rootvars = (List.map look_up_lhs_root_first_var lhp_args) in
   let svl = (CP.remove_dups_svl (lhs_keep_first_rootvars@rhs_keep_rootvars)) in
   (*remove null ptrs*)
   let svl = Gen.BList.difference_eq CP.eq_spec_var svl eqNull in
   let lhs_b = get_history_nodes svl hds history lhs_b in
-  (* let keep_vars = SAU.loop_up_closed_ptr_args prog hds hvs hp_args in *)
-  (* let keep_vars = (CF.get_hp_rel_vars_bformula lhs_b) @ (CF.get_hp_rel_vars_bformula rhs_b) in *)
-       (*closed*)
-  (* let keep_vars = CP.remove_dups_svl (List.fold_left close_def keep_vars (leqs@reqs)) in *)
  (*end*)
-  let lhs_b1,rhs_b1 = SAU.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b hds hvs (leqs@reqs)
+  let get_h_formula_data_fr_hnode hn=
+    match hn with
+      | CF.DataNode hd -> hd
+      | _ -> report_error no_pos
+          "infer.get_h_formula_data_fr_hnode: input must be a list of hnodes"
+  in
+  let lhs_b1,rhs_b1 = SAU.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b
+    (hds@(List.map get_h_formula_data_fr_hnode history)) hvs (leqs@reqs)
     (rhs_keep_rootvars@lhs_keep_first_rootvars) lhs_keep_rootvars keep_hrels in
   (*subst holes*)
   let lhs_b1 = {lhs_b1 with CF.formula_base_heap = IMM.apply_subs_h_formula crt_holes lhs_b1.CF.formula_base_heap} in
@@ -1522,8 +1525,8 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
           (* let pr_elem = Cpure.SV.string_of in *)
           (* let pr2 = pr_list (pr_pair pr_elem pr_elem) in *)
           DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
-          (* DD.info_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos; *)
-          (* DD.info_pprint ("  es_history: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos; *)
+          DD.info_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
+          DD.info_pprint ("  footprint: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos;
           DD.info_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
           DD.info_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
           DD.info_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
@@ -1563,7 +1566,8 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
           in
           let new_rhs_b,rvhp_rels,new_hrels = update_fb rhs_b r_new_hp in
           (*add roots from history*)
-          let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog lhs_b new_rhs_b leqs reqs hds hvs lhras (rhras@new_hrels) es.CF.es_crt_holes es.CF.es_history eqNull in
+          let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog lhs_b new_rhs_b leqs reqs hds hvs lhras (rhras@new_hrels) es.CF.es_crt_holes
+            (es.CF.es_history@(CF.get_hnodes es.CF.es_heap)) eqNull in
           (*simply add constraints: *)
           let hp_rel = (CP.RelAssume (CP.remove_dups_svl (lhrs@rhrs@rvhp_rels)), (CF.Base new_lhs_b),
           CF.Base new_rhs_b) in

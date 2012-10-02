@@ -77,7 +77,7 @@ void append(node x, node y)
 
   infer[H1,G1]
   requires H1(x)*y::node<a,null>
-  ensures G1(x,y)*y::node<a,null>;
+     ensures G1(x,y)*y::node<a,null>;
  /*
 HP_RELDEFN G1:  G1(x,y)::  x::node<val_114_603,v_node_114_618> * G1(v_node_114_618,y)&
 v_node_114_618!=null & y!=null,
