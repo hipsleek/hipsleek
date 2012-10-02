@@ -222,9 +222,6 @@ let cexp_to_pure_slicing fct f sl = match f with
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"	
 
 let cexp_to_pure2 fct f01 f02 =
-  try 
-  let _ = print_endline ("== f01 = " ^ (string_of_pure_double f01)) in
-  let _ = print_endline ("== f02 = " ^ (string_of_pure_double f02)) in
   match (f01,f02) with
   | Pure_c f1 , Pure_c f2 -> (match f1 with
                              | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct c f2), None), None)) explist
@@ -264,7 +261,6 @@ let cexp_to_pure2 fct f01 f02 =
                                     )
                              )
   | Pure_f f1 , Pure_c f2 ->(
-      let _ = print_endline ("== 1") in
       match f1  with 
       | P.BForm((pf,il),oe) -> (match pf with 
                                 | P.Lt (a1, a2, _) 
@@ -274,21 +270,11 @@ let cexp_to_pure2 fct f01 f02 =
                                 | P.Eq (a1, a2, _) 
                                 | P.Neq (a1, a2, _) ->
                                     let tmp = P.BForm(((fct a2 f2), None),None) in
-                                    let _ = print_endline ("   == f1  = " ^ (Iprinter.string_of_pure_formula f1)) in 
-                                    let _ = print_endline ("   == tmp = " ^ (Iprinter.string_of_pure_formula tmp)) in
-                                    let res = 
-                                    let _ = print_endline ("   == pos 1 = ") in
-                                    let pos = get_pos 2 in
-                                    let _ = print_endline ("   == pos 2 = " ^ (Globals.string_of_full_loc pos)) in
-                                    Pure_f (P.mkAnd f1 tmp pos)
-                                    in
-                                    let _ = print_endline ("   == res = " ^ (string_of_pure_double res)) in
-                                    res
+                                    Pure_f (P.mkAnd f1 tmp (get_pos 2))
                                 | _ -> report_error (get_pos 1) "error should be an equality exp" )
       | _ -> report_error (get_pos 1) "error should be a binary exp" 
     )
   | _ -> report_error (get_pos 1) "with 2 convert expected cexp, found pure_form" 
-  with _ as e -> let _ = print_endline ("expception!!!") in raise e
 
 (* Use the Stream.npeek to look ahead the TOKENS *)
 let peek_try = 

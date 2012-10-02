@@ -37,14 +37,11 @@ let parse_file_full file_name (primitive: bool) =
       Globals.input_file_name:= file_name;
       let prog = (
         if (!Globals.parser_name = "default") or primitive then
-          let _ = print_endline ("--> parsing file: " ^ file_name ^ "; parser: default") in
           Parser.parse_hip file_name (Stream.of_channel org_in_chnl)
         else if (!Globals.parser_name = "cil") then
-          let _ = print_endline ("--> begin parsing file: " ^ file_name ^ "; parser: cil") in
           Cilparser.parse_hip file_name
         else Error.report_error_msg "Error!!! Invalid parser!"
       ) in
-      let _ = print_endline ("    end parsing!") in
       close_in org_in_chnl;
          let _ = Gen.Profiling.pop_time "Parsing" in
     (*		  let ptime2 = Unix.times () in
@@ -97,6 +94,7 @@ let process_source_full source =
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source false in
+  let _ = print_endline ("== gvdecls length = " ^ (string_of_int (List.length prog.Iast.prog_global_var_decls))) in
   (* Remove all duplicated declared prelude *)
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
@@ -129,6 +127,7 @@ let process_source_full source =
     (* let _ = print_endline ("process_source_full: before Globalvars.trans_global_to_param") in *)
     let intermediate_prog = Globalvars.trans_global_to_param prog in
     (* let _ = print_endline ("process_source_full: before pre_process_of_iprog") in *)
+    let _ = print_endline ("== gvdecls 2 length = " ^ (string_of_int (List.length intermediate_prog.Iast.prog_global_var_decls))) in
     let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
     let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
     (* let _ = print_endline ("process_source_full: before --pip") in *)
@@ -225,7 +224,6 @@ let process_source_full source =
 
 let process_source_full_parse_only source =
   (* print_string ("\nProcessing file \"" ^ source ^ "\"\n");  *)
-  let _ = print_endline ("== 1") in
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source false in
