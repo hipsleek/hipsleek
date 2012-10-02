@@ -1028,7 +1028,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                            (Cformula.struc_post_fv stripped_spec(*org_spec*))) farg_spec_vars in
                     (*LOCKSET: ls is not free var*)
                   (* let _ = print_endline (" ### pre_free_vars = " ^ (Cprinter.string_of_spec_var_list pre_free_vars)) in *)
-                  (* let ls_vars = List.filter (fun v -> CP.name_of_spec_var v = Globals.ls_name) pre_free_vars in(\*LOCKSET variable ls - expecting a single var list*\) *)
+                  let ls_vars = List.filter (fun v -> CP.name_of_spec_var v = Globals.ls_name) pre_free_vars in(*LOCKSET variable ls - expecting a single var list*)
                     let pre_free_vars = List.filter (fun v -> CP.name_of_spec_var v <> Globals.ls_name) pre_free_vars in
                     (* free vars get to be substituted by fresh vars *)
                     let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
@@ -1048,7 +1048,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (* let st_ls = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) ls_vars in *)
                     (* let st3= st2@st_ls in (*TO CHECK*) *)
                     (*how to handle LOCKSET when join*)
-                    let pre2 = CF.subst_struc_pre_varperm st2 renamed_spec in
+                    (*ALSO rename ls to ls'*)
+                    let st_ls = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) ls_vars in
+                    let st3= st2@st_ls in
+                    let pre2 = CF.subst_struc_pre_varperm st3 renamed_spec in
                     let new_spec = (Cprinter.string_of_struc_formula pre2) in
                     (*Termination checking *) (*TO CHECK: neccessary ???*)
                     (* TODO: call the entailment checking function in solver.ml *)

@@ -48,56 +48,57 @@ lemma "splitLock" self::LOCK(f)<x> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::LOCK(f1
 lemma "combineLock" self::LOCK(f1)<x> * self::LOCK(f2)<x> -> self::LOCK(f1+f2)<x>;
 
 //LOCK protecting a cell
-void main()
-  requires ls={}
-  ensures true; //'
-{
-  cell x;
-  lock l;
-  l = new lock(); //dummy
-  x = new cell(l,0,0,0);
-  int i=0;
-  init[LOCK](l,x);
-  /* dprint; */
-  x.val1=1;
-  x.val2=1;
-  int id;
-  id = fork(thread,l,x); // ??? consider drop ls,ls' when fork/join
-  // TO CHECK: how about ls
-  x.val3=1;
+/* void main() */
+/*   requires ls={} */
+/*   ensures true; //' */
+/* { */
+/*   cell x; */
+/*   lock l; */
+/*   l = new lock(); //dummy */
+/*   x = new cell(l,0,0,0); */
+/*   int i=0; */
+/*   init[LOCK](l,x); */
+/*   /\* dprint; *\/ */
+/*   x.val1=1; */
+/*   x.val2=1; */
+/*   int id; */
+/*   id = fork(thread,l,x); // ??? consider drop ls,ls' when fork/join */
+/*   // TO CHECK: how about ls */
+/*   dprint; */
+/*   x.val3=1; */
 
-  try{
+/*   try{ */
 
-  while (true)
-    requires l::LOCK(0.4)<x> * x::cell<l,v1,v2,v3> & v1=v2 & v3=1 & ls={l}
-          or l::LOCK(1.0)<x> * x::cell<l,v1,v2,v3> & v1=v2 & v3=0 & ls={l} // 0.4 + 0.6 = 1.0'
-    ensures l'::LOCK(1.0)<x> * x'::cell<self,v11,v22,v33> & l'=l & v11=v22 & v33=0 & ls'={l'} & flow bexc;//'
-  {
-    if (x.val3==0){
-      raise new bexc(); // break
-    };
-    x.val1=i;
-    x.val2=i;
-    release[LOCK](l,x);
-    /* dprint; */
-    i=i+1;
-    acquire[LOCK](l,x);
-  } //end TRY
-  }catch(bexc e){
-      ; //no-op
-  };
-    finalize[LOCK](l,x);
-}
+/*   while (true) */
+/*     requires l::LOCK(0.4)<x> * x::cell<l,v1,v2,v3> & v1=v2 & v3=1 & ls={l} */
+/*           or l::LOCK(1.0)<x> * x::cell<l,v1,v2,v3> & v1=v2 & v3=0 & ls={l} // 0.4 + 0.6 = 1.0' */
+/*     ensures l'::LOCK(1.0)<x> * x'::cell<self,v11,v22,v33> & l'=l & v11=v22 & v33=0 & ls'={l'} & flow bexc;//' */
+/*   { */
+/*     if (x.val3==0){ */
+/*       raise new bexc(); // break */
+/*     }; */
+/*     x.val1=i; */
+/*     x.val2=i; */
+/*     release[LOCK](l,x); */
+/*     /\* dprint; *\/ */
+/*     i=i+1; */
+/*     acquire[LOCK](l,x); */
+/*   } //end TRY */
+/*   }catch(bexc e){ */
+/*       ; //no-op */
+/*   }; */
+/*     finalize[LOCK](l,x); */
+/* } */
 
 void thread(lock l, cell x)
   requires l::LOCK(0.6)<x> & ls={}
-  ensures ls'={}; //'
+  ensures ls'=ls; //'
 {
   try{
     //syntatic sugar
     while(true)
-      requires l::LOCK(0.6)<x> & ls={}
-      ensures ls'={} & flow rexc; //'
+      requires l::LOCK(0.6)<x> & l notin ls
+      ensures ls'=ls & flow rexc; //'
     {
       acquire[LOCK](l,x);
       x.val1=x.val1 + x.val1;

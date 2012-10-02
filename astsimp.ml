@@ -6657,6 +6657,11 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
               (* let _ = print_endline ("p = " ^ (pr_list (fun (id,pr) -> id^(string_of_primed pr)) p)) in *)
               (* let _ = print_endline ("strad = " ^ (pr_list (fun (id,pr) -> id^(string_of_primed pr)) strad)) in *)
               let h = List. map (fun (id,_) -> (id,Unprimed)) h in (*TO CHECK: we may need to modify h for all in case_normalize_exp *)
+              (*LOCKSET variable*********)
+              let ls_pvar = (ls_name,Primed) in
+              let ls_uvar = (ls_name,Unprimed) in
+              (**************************)
+              let p = ls_uvar::ls_pvar::p in
               let ns,_ = case_normalize_struc_formula prog h p b.Iast.exp_while_specs false false strad in
               (Iast.While {b with Iast.exp_while_condition=nc; Iast.exp_while_body=nb;Iast.exp_while_specs = ns},h,p)
         | Iast.Try b-> 
