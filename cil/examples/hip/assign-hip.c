@@ -4,7 +4,8 @@ int foo()
 }
 
 int main() {
-  int x;
-  x = x + 1;
+  int zzzzzz;
+  int yyy = foo();
+  zzzzzz = zzzzzz + 1;
   return 0;
 }
