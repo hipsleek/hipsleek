@@ -60,12 +60,19 @@ let func_names = new Gen.stack (* list of names of ranking functions *)
 let rel_names = new Gen.stack (* list of names of relations declared *)
 let view_names = new Gen.stack (* list of names of views declared *)
 
-let get_pos x = 
-  {
-    start_pos = Parsing.symbol_start_pos ();
-    end_pos = Parsing. symbol_end_pos ();
-    mid_pos = Parsing.rhs_start_pos x;
-  }
+let get_pos x =
+  try
+    {
+      start_pos = Parsing.symbol_start_pos ();
+      end_pos = Parsing. symbol_end_pos ();
+      mid_pos = Parsing.rhs_start_pos x;
+    }
+  with _ -> 
+    {
+      start_pos = Lexing.dummy_pos;
+      end_pos = Lexing.dummy_pos;
+      mid_pos = Lexing.dummy_pos;
+    }
 
 let get_pos_camlp4 l x = 
   {
@@ -214,7 +221,11 @@ let cexp_to_pure_slicing fct f sl = match f with
   | Pure_c f -> Pure_f (P.BForm (((fct f), sl), None))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"	
 
-let cexp_to_pure2 fct f01 f02 = match (f01,f02) with
+let cexp_to_pure2 fct f01 f02 =
+  try 
+  let _ = print_endline ("== f01 = " ^ (string_of_pure_double f01)) in
+  let _ = print_endline ("== f02 = " ^ (string_of_pure_double f02)) in
+  match (f01,f02) with
   | Pure_c f1 , Pure_c f2 -> (match f1 with
                              | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct c f2), None), None)) explist
                                in let len =  List.length tmp
@@ -252,19 +263,32 @@ let cexp_to_pure2 fct f01 f02 = match (f01,f02) with
                                       )
                                     )
                              )
-  | Pure_f f1 , Pure_c f2 ->(match f1  with 
-						    | P.BForm((pf,il),oe) -> (match pf with 
-                                               | P.Lt (a1, a2, _) 
-                                               | P.Lte (a1, a2, _) 
-                                               | P.Gt (a1, a2, _) 
-                                               | P.Gte (a1, a2, _)
-                                               | P.Eq (a1, a2, _) 
-                                               | P.Neq (a1, a2, _) -> let tmp = P.BForm(((fct a2 f2), None),None) in 
-                                                 Pure_f (P.mkAnd f1 tmp (get_pos 2))
-                                               | _ -> report_error (get_pos 1) "error should be an equality exp" )
-                            | _ -> report_error (get_pos 1) "error should be a binary exp" )
+  | Pure_f f1 , Pure_c f2 ->(
+      let _ = print_endline ("== 1") in
+      match f1  with 
+      | P.BForm((pf,il),oe) -> (match pf with 
+                                | P.Lt (a1, a2, _) 
+                                | P.Lte (a1, a2, _) 
+                                | P.Gt (a1, a2, _) 
+                                | P.Gte (a1, a2, _)
+                                | P.Eq (a1, a2, _) 
+                                | P.Neq (a1, a2, _) ->
+                                    let tmp = P.BForm(((fct a2 f2), None),None) in
+                                    let _ = print_endline ("   == f1  = " ^ (Iprinter.string_of_pure_formula f1)) in 
+                                    let _ = print_endline ("   == tmp = " ^ (Iprinter.string_of_pure_formula tmp)) in
+                                    let res = 
+                                    let _ = print_endline ("   == pos 1 = ") in
+                                    let pos = get_pos 2 in
+                                    let _ = print_endline ("   == pos 2 = " ^ (Globals.string_of_full_loc pos)) in
+                                    Pure_f (P.mkAnd f1 tmp pos)
+                                    in
+                                    let _ = print_endline ("   == res = " ^ (string_of_pure_double res)) in
+                                    res
+                                | _ -> report_error (get_pos 1) "error should be an equality exp" )
+      | _ -> report_error (get_pos 1) "error should be a binary exp" 
+    )
   | _ -> report_error (get_pos 1) "with 2 convert expected cexp, found pure_form" 
-
+  with _ as e -> let _ = print_endline ("expception!!!") in raise e
 
 (* Use the Stream.npeek to look ahead the TOKENS *)
 let peek_try = 
@@ -2234,18 +2258,28 @@ arrayaccess_expression:[[
 (*end of hip part*)
 END;;
 
-let parse_sleek n s = SHGram.parse sprog (PreCast.Loc.mk n) s
+let parse_sleek n s =
+  let _ = print_endline ("--> call parse_sleek") in
+  SHGram.parse sprog (PreCast.Loc.mk n) s
 let parse_sleek n s =
   DD.no_1_loop "parse_sleek" (fun x -> x) (fun _ -> "?") (fun n -> parse_sleek n s) n
 
-let parse_hip n s = SHGram.parse hprog (PreCast.Loc.mk n) s
+let parse_hip n s =
+  let _ = print_endline ("--> call parse_hip") in
+  SHGram.parse hprog (PreCast.Loc.mk n) s
 let parse_hip n s =
   DD.no_1_loop "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n
 
-let parse_sleek_int n s = SHGram.parse_string sprog_int (PreCast.Loc.mk n) s
+let parse_sleek_int n s =
+  let _ = print_endline ("--> call parse_sleek_int") in
+  SHGram.parse_string sprog_int (PreCast.Loc.mk n) s
+
 let parse_hip_string n s =
+  let _ = print_endline ("--> call parse_hip_string") in
   SHGram.parse_string hprog (PreCast.Loc.mk n) s
 (* let parse_hip_string n s = 
   let pr x = x in
   let pr_no x = "?" in DD.no_2 "parse_hip_string" pr pr pr_no parse_hip_string n s *)
-let parse_spec s = SHGram.parse_string opt_spec_list_file (PreCast.Loc.mk "spec string") s
+let parse_spec s =
+  let _ = print_endline ("--> call parse_spec") in
+  SHGram.parse_string opt_spec_list_file (PreCast.Loc.mk "spec string") s

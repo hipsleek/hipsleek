@@ -541,6 +541,7 @@ let parse_one_file (filename: string) : Cil.file =
     (* (trace "sm" (dprintf "removing unused temporaries\n")); *)
     (Rmtmps.removeUnusedTemps cil)
   );
+  Parsing.clear_parser ();
   (* return *)
   cil
 

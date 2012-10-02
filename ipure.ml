@@ -339,16 +339,16 @@ and mkEq a1 a2 pos =
 	Eq (a1, a2, pos)
 
 and mkAnd f1 f2 pos = match f1 with
-  | BForm ((BConst (false, _), _), _) -> f1
-  | BForm ((BConst (true, _), _), _) -> f2
+  | BForm ((BConst (false, _), _), _) -> let _ = print_endline ("--> 01") in f1
+  | BForm ((BConst (true, _), _), _) -> let _ = print_endline ("--> 02") in f2
   | _ -> match f2 with
-      | BForm ((BConst (false, _), _), _) -> f2
-      | BForm ((BConst (true, _), _), _) -> f1
+      | BForm ((BConst (false, _), _), _) -> let _ = print_endline ("--> 03") in f2
+      | BForm ((BConst (true, _), _), _) -> let _ = print_endline ("--> 04") in f1
       | _ -> match f1,f2 with 
-		| AndList b1, AndList b2 ->  mkAndList (Label_Pure.merge b1 b2)
-		| AndList b, f 
-		| f, AndList b -> mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
-		| _ -> And (f1, f2, pos)
+		| AndList b1, AndList b2 -> let _ = print_endline ("--> 1") in mkAndList (Label_Pure.merge b1 b2)
+		| AndList b, f -> let _ = print_endline ("--> 2") in mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
+		| f, AndList b -> let _ = print_endline ("--> 3") in mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
+		| _ -> let _ = print_endline ("--> 4") in And (f1, f2, pos)
 
 and mkAndList b = (*print_string "ipure_list_gen\n";*) AndList b
 		

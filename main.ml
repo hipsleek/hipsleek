@@ -94,7 +94,6 @@ let rec process_header_with_pragma hlist plist =
 
 let process_source_full source =
   (* print_string ("\nProcessing file \"" ^ source ^ "\"\n");  *)
-  let _ = print_endline ("== 1") in
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source false in
