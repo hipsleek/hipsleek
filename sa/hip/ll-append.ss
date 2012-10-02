@@ -79,10 +79,12 @@ void append(node x, node y)
   requires H1(x)*y::node<a,null>
      ensures G1(x,y)*y::node<a,null>;
  /*
-HP_RELDEFN G1:  G1(x,y)::  x::node<val_114_603,v_node_114_618> * G1(v_node_114_618,y)&
-v_node_114_618!=null & y!=null,
+ERROR : Inferred def below should not have y::node<..>
 
-HP_RELDEFN G1:  G1(x,y)::  HP_595(v_node_114_612,x) * x::node<val_114_601,y>&v_node_114_612=null])
+HP_RELDEFN G1:  G1(x,y)::  
+ x::node<val_121_601,y> * y::node<a,flted_79_594>&flted_79_594=null
+ or x::node<val_121_603,v_node_121_618> * G1(v_node_121_618,y)&
+    v_node_121_618!=null & y!=null
 
  */
 
