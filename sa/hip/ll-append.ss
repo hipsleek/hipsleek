@@ -67,11 +67,30 @@ void append(node x, node y)
 // requires H1(x)&y=null
 //	ensures G1(x,y); 
 
+/*
+  requires x::ll<> * y::node<a,null> & x!=null
+  ensures x::l2<y> ;
+
+  requires x::ll<> * y::node<a,null> & x!=null
+  ensures x::lseg<y> * y::node<a,null> ;
+*/
+
+  infer[H1,G1]
+  requires H1(x)*y::node<a,null>
+  ensures G1(x,y)*y::node<a,null>;
+ /*
+HP_RELDEFN G1:  G1(x,y)::  x::node<val_114_603,v_node_114_618> * G1(v_node_114_618,y)&
+v_node_114_618!=null & y!=null,
+
+HP_RELDEFN G1:  G1(x,y)::  HP_595(v_node_114_612,x) * x::node<val_114_601,y>&v_node_114_612=null])
+
+ */
+
+/*
   infer[H1,G1]
   requires H1(x)*y::node<a,null>
   ensures G1(x ,y);
 
-/*
 HP_RELDEFN HP_586:  
   HP_586(v_node_94_603) <->
    emp&v_node_94_603=null
@@ -86,13 +105,6 @@ HP_RELDEFN H1:  H1(x) <->
    x::node<_,next_94_565'> * HP_586(next_94_565')&true])
 */
 
-/*
-  requires x::ll<> * y::node<a,null> & x!=null
-  ensures x::l2<y> ;
-
-  requires x::ll<> * y::node<a,null> & x!=null
-  ensures x::lseg<y> * y::node<a,null> ;
-*/
 // infer[H1,H2,G1]
 //  requires H1(x)*H2(y)
 //  ensures G1(x,y);
