@@ -60,12 +60,19 @@ let func_names = new Gen.stack (* list of names of ranking functions *)
 let rel_names = new Gen.stack (* list of names of relations declared *)
 let view_names = new Gen.stack (* list of names of views declared *)
 
-let get_pos x = 
-  {
+let get_pos x =  
+  try
+  let p = {
     start_pos = Parsing.symbol_start_pos ();
-    end_pos = Parsing. symbol_end_pos ();
+    end_pos = Parsing.symbol_end_pos ();
     mid_pos = Parsing.rhs_start_pos x;
-  }
+  } in p
+  with 
+  | _ -> let p = {
+    start_pos = Lexing.dummy_pos;
+    end_pos = Lexing.dummy_pos;
+    mid_pos = Lexing.dummy_pos;
+  } in p
 
 let get_pos_camlp4 l x = 
   {
