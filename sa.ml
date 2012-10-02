@@ -504,8 +504,8 @@ let collect_par_defs_recursive_hp prog lhs rhs (hrel, args) def_ptrs hrel_vars e
           def_ptrs hrel_vars eq hd_nodes hv_nodes) (hrel, args)
 
 let rec collect_par_defs_one_constr_new_x prog (lhs, rhs) =
-  DD.info_pprint ">>>>>> collect partial def for hp obligation <<<<<<" no_pos;
-  DD.info_pprint (" hp obligation: " ^ (Cprinter.prtt_string_of_formula lhs) ^ " ==> " ^
+  DD.info_pprint ">>>>>> collect partial def for hp_rel <<<<<<" no_pos;
+  DD.info_pprint (" hp_rel: " ^ (Cprinter.prtt_string_of_formula lhs) ^ " ==> " ^
   (Cprinter.prtt_string_of_formula rhs)) no_pos;
   let rec get_rec_pair_hps ls (hrel1, arg1)=
     match ls with
@@ -796,22 +796,30 @@ and simplify_one_constr_b_x lhs_b rhs_b=
     CP.eq_spec_var vn1.CF.h_formula_view_node vn2.CF.h_formula_view_node
   in
  (*todo: drop unused pointers in LHS*)
+  DD.info_pprint (" input: " ^(Cprinter.prtt_string_of_formula_base lhs_b) ^ " ==> " ^
+  (Cprinter.prtt_string_of_formula_base rhs_b)) no_pos;
   let lhs_b1 = lhs_b (* Infer.filter_irr_lhs_bf_hp lhs_b rhs_b *) in
 (*pointers/hps matching LHS-RHS*)
   (*data nodes, view nodes, rel*)
+  DD.info_pprint "  matching LHS-RHS  " no_pos;
   let l_hds, l_hvs, l_hrs = CF.get_hp_rel_bformula lhs_b1 in
   let r_hds, r_hvs, r_hrs = CF.get_hp_rel_bformula rhs_b in
   let matched_data_nodes = Gen.BList.intersect_eq check_eq_data_node l_hds r_hds in
   let matched_view_nodes = Gen.BList.intersect_eq check_eq_view_node l_hvs r_hvs in
   let matched_hrel_nodes = Gen.BList.intersect_eq CF.check_eq_hrel_node l_hrs r_hrs in
   let hrels = List.map (fun (id,_,_) -> id) matched_hrel_nodes in
-  Debug.ninfo_hprint (add_str "Matched HRel: " !CP.print_svl) hrels no_pos;
   let dnode_names = List.map (fun hd -> hd.CF.h_formula_data_node) matched_data_nodes in
   let vnode_names = List.map (fun hv -> hv.CF.h_formula_view_node) matched_view_nodes in
-  let lhs_nhf2 = CF.drop_data_view_hrel_nodes_hf lhs_b1.CF.formula_base_heap
-    SAU.select_dnode SAU.select_vnode SAU.select_hrel dnode_names vnode_names hrels in
-  let rhs_nhf2 = CF.drop_data_view_hrel_nodes_hf rhs_b.CF.formula_base_heap
-    SAU.select_dnode SAU.select_vnode SAU.select_hrel dnode_names vnode_names hrels in
+  Debug.info_pprint (" Matching found: " ^ (!CP.print_svl (dnode_names@vnode_names@hrels))) no_pos;
+  let lhs_nhf2,rhs_nhf2=
+    if (dnode_names@vnode_names@hrels)=[] then lhs_b1.CF.formula_base_heap,rhs_b.CF.formula_base_heap
+    else
+      let lhs_nhf = CF.drop_data_view_hrel_nodes_hf lhs_b1.CF.formula_base_heap
+        SAU.select_dnode SAU.select_vnode SAU.select_hrel dnode_names vnode_names hrels in
+      let rhs_nhf = CF.drop_data_view_hrel_nodes_hf rhs_b.CF.formula_base_heap
+        SAU.select_dnode SAU.select_vnode SAU.select_hrel dnode_names vnode_names hrels in
+      (lhs_nhf,rhs_nhf)
+  in
   (*remove duplicate pure formulas*)
   let lhs_nmf2 = CP.remove_redundant (MCP.pure_of_mix lhs_b1.CF.formula_base_pure) in
   let rhs_nmf2 = CP.remove_redundant (MCP.pure_of_mix rhs_b.CF.formula_base_pure) in
@@ -821,6 +829,8 @@ and simplify_one_constr_b_x lhs_b rhs_b=
   let rhs_b2 = {rhs_b with CF.formula_base_heap = rhs_nhf2;
                CF.formula_base_pure = MCP.mix_of_pure rhs_nmf2} in
  (*pure subformulas matching LHS-RHS: drop RHS*)
+  DD.info_pprint (" output: " ^(Cprinter.prtt_string_of_formula_base lhs_b2) ^ " ==> " ^
+  (Cprinter.prtt_string_of_formula_base rhs_b2)) no_pos;
 (lhs_b2, rhs_b2)
 
 and simplify_one_constr_b lhs_b rhs_b=
@@ -970,16 +980,40 @@ let subst_one_cs_w_one_partial_def f (hp_name, args, def_f)=
   match argsl with
     | [] -> f
     | [eargs] ->
-      begin
-  (*generate a susbst*)
+        begin
+            (*to subst*)
+        (*generate a susbst*)
         let args2= (List.fold_left List.append [] (List.map CP.afv eargs)) in
+        DD.info_pprint ("   subst " ^ (Cprinter.prtt_string_of_formula def_f) ^ " ==> " ^ (!CP.print_sv hp_name)
+                        ^ (!CP.print_svl args2)) no_pos;
+        (* DD.info_pprint ("   into " ^ (Cprinter.prtt_string_of_formula f)) no_pos; *)
         let subst = (List.combine args args2) in
         let def_f_subst = CF.subst subst def_f in
-  (*combi ne def_f_subst into newf*)
-        let newf1 = CF.mkStar newf def_f_subst CF.Flow_combine (CF.pos_of_formula newf) in
-  (*check contradiction*)
-        if check_unsat newf1 then f
-        else newf1
+        (*should remove duplicate*)
+        let svl1 = CF.fv newf in
+        let svl2 = CF.fv def_f_subst in
+        let intersect = CP.intersect svl1 svl2 in
+        (* DD.info_pprint ("   intersect: " ^ (!CP.print_svl intersect)) no_pos; *)
+        let def_f1 =
+          if intersect = [] then def_f_subst else
+            let diff = Gen.BList.difference_eq CP.eq_spec_var svl2 svl1 in
+            match def_f_subst with
+              | CF.Base fb ->
+                  CF.Base (CF.drop_data_view_hrel_nodes_fb fb SAU.select_dnode SAU.select_vnode
+                      SAU.select_hrel intersect intersect intersect diff)
+              | _ -> report_error no_pos "sa.subst_one_cs_w_one_partial_def"
+        in
+        (*combi def_f_subst into newf*)
+        let newf1 = CF.mkStar newf def_f1 CF.Flow_combine (CF.pos_of_formula newf) in
+        (*check contradiction*)
+        let susbt_f=
+          if check_unsat newf1 then
+            let _ = DD.info_pprint ("     contradiction found after subst.") no_pos in
+            f
+          else newf1
+        in
+        (* DD.info_pprint ("   subst out: " ^ (Cprinter.prtt_string_of_formula susbt_f)) no_pos; *)
+        susbt_f
       end
     | _ -> report_error no_pos "sa.subst_one_cs_w_one_partial_def: should be a singleton"
 
@@ -990,14 +1024,23 @@ each constraints, apply lhs and rhs. each partial def in one side ==> generate n
  hp --> rdef: subst all hp in rhs with rdef
 *)
 let subst_one_cs_w_partial_defs ldefs rdefs (lhs,rhs)=
+  DD.info_pprint (" input: " ^(Cprinter.prtt_string_of_formula lhs) ^ " ==> " ^
+  (Cprinter.prtt_string_of_formula rhs)) no_pos;
   (*subst lhs*)
+  DD.info_pprint " subst lhs" no_pos;
   let lhs1 = List.fold_left subst_one_cs_w_one_partial_def lhs ldefs in
   (*subst rhs*)
+  DD.info_pprint " subst rhs" no_pos;
   let rhs1 = List.fold_left subst_one_cs_w_one_partial_def rhs rdefs in
   (*rhs contradict with lhs?*)
   let cmbf = CF.mkStar lhs1 rhs1 CF.Flow_combine no_pos in
-  if check_unsat cmbf then (lhs,rhs)
-  else (lhs1,rhs1)
+  let lhs2,rhs2 =
+    if check_unsat cmbf then (lhs,rhs)
+    else (lhs1,rhs1)
+  in
+  let _ = DD.info_pprint (" out: " ^(Cprinter.prtt_string_of_formula lhs2) ^ " ==> " ^
+                                 (Cprinter.prtt_string_of_formula rhs2)) no_pos in
+  (lhs2,rhs2)
 
 let subst_cs_w_partial_defs_x hp_constrs par_defs=
   (*partition non-recursive partial defs: lhs set and rhs set*)
@@ -1297,11 +1340,11 @@ let infer_hps_x prog (hp_constrs: (CF.formula * CF.formula) list):
   let constrs = elim_redundant_paras_lst_constr hp_constrs in
   Debug.ninfo_hprint (add_str "AFTER DROP: " (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) constrs no_pos;
    (* step 1': split HP *)
-  DD.info_pprint ">>>>>> step 2: split arguments <<<<<<" no_pos;
-  let constrs1, split_tb,hp_defs_split = split_hp constrs in
+  DD.info_pprint ">>>>>> step 2: split arguments: currently omitted <<<<<<" no_pos;
+  (* let constrs1, split_tb,hp_defs_split = split_hp constrs in *)
   (*for temporal*)
-  (* let constrs1 = hp_constrs in *)
-  (* let hp_defs_split = [] in *)
+  let constrs1 = hp_constrs in
+  let hp_defs_split = [] in
   (*END for temporal*)
   let cs, par_defs = infer_hps_fix prog constrs1 in
   (*step 6: over-approximate to generate hp def*)
