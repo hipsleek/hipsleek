@@ -17,7 +17,6 @@ void delete_list(ref node x)
 {
   if (x!=null) {
     delete_list(x.next);
-    dprint;
     dispose(x);
   }
 }
@@ -72,11 +71,13 @@ HP_549(b,x) * x::node<_,b>&x!=null --> D(b)
  emp&x'=null & x!=null--> E(x,x')
  D(x)&x=null --> E(x,x)
 
-new_auto:
-D(x)&x!=null --> x::node<val_19_525',next_19_526'> * HP_549(next_19_526',x)
-HP_549(v_node_19_527',x) * x::node<val_19_556,v_node_19_527'>&  x!=null --> D(v_node_19_527')
-E(v_node_19_562,v_node_19_563) & x'=null & x!=null --> E(x,x')					//still lack info
-D(x)&x=null --> E(x,x)
+new: 
+ D(x)&x!=null, x::node<val_19_529',next_19_530'> * HP_557(next_19_530',x)&true),
+( HP_557(v_node_19_531',x) * x::node<val_19_564,v_node_19_531'>&x!=null, D(v_node_19_531')&true),
+( E(v_node_19_570,v_node_19_571) * x::node<Anon_577,Anon_578>&x'=null & 
+x!=null, E(x,x') * HP_579(Anon_578,x)&true),
+( D(x)&x=null, E(x,x)&true)
+
 
 
 //RELATION3:

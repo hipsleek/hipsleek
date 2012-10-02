@@ -57,6 +57,11 @@ and checkeq_formulas  ivars f1 f2 =
   Debug.no_2 "checkeq_formulas" pr1 pr1 (pr_pair pr2 pr3)
       (fun _ _ ->  checkeq_formulas_x ivars f1 f2) f1 f2
     
+and checkeq_formulas_a ivars f1 f2 mtl = 
+  let (res1, mtl1) = (checkeq_formulas_one ivars f1 f2 mtl) in
+  let (res2, mtl2) =  (checkeq_formulas_one ivars f2 f1 mtl) in
+  (res1&&res2, mtl1)
+
 and checkeq_formulas_one (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(mtl: (map_table list)): (bool*(map_table list))=
   match f1 with
     |CF.Base({CF.formula_base_heap = h1;
@@ -74,7 +79,7 @@ and checkeq_formulas_one (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(m
 		  let _ = Debug.ninfo_pprint ("EQ. FMT: " ^ (string_of_map_table_list mtl2)) no_pos in
 		  (res,mtl2)
 		)
-		|_ -> report_error no_pos "not handle Or f1 yet") (*(false,mtl))*)
+		|_ -> report_error no_pos "f1: formula_base, f2 should be formula_base") (*(false,mtl))*)
     |CF.Exists({CF.formula_exists_heap = h1;
 		CF.formula_exists_pure = p1})->(match f2 with 
 		  |CF.Exists ({CF.formula_exists_heap = h2;
@@ -90,15 +95,28 @@ and checkeq_formulas_one (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(m
 		    let _ = Debug.ninfo_pprint ("EQ. FMT: " ^ (string_of_map_table_list mtl2)) no_pos in
 		    (res,mtl2)
 		  )
-		  |_ -> report_error no_pos "not handle Or f1 yet" )(*(false,mtl))*)
-    |CF.Or b1 ->  report_error no_pos "not handle Or f1 yet"
+		  |_ -> report_error no_pos "f1: formula_exists, f2 should be formula_exists" )(*(false,mtl))*)
+    |CF.Or ({CF.formula_or_f1 = f11;
+	     CF.formula_or_f2 = f12})  ->  match f2 with
+	|CF.Or ({CF.formula_or_f1 = f21;
+	     CF.formula_or_f2 = f22})  ->(
+	  let res11, mtl11 = checkeq_formulas_a hvars f11 f21 [[]] in
+	  let res1,mtl1 = checkeq_formulas_a hvars f12 f22 mtl11 in
+	  let res12, mtl12 = checkeq_formulas_a hvars f11 f22 [[]] in
+	  let res2,mtl2 = checkeq_formulas_a hvars f12 f21 mtl12 in
+	  if(res1 && res2) then (true, mtl1 @ mtl2)   (*merge tables*)
+	  else if(res1) then (true, mtl1) 
+	  else if(res2) then (true, mtl2)
+	  else (false, [])
+	)
+	|_ ->  report_error no_pos "f1: formula_or, f2 should be formula_or"
       
 and checkeq_h_formulas_x (hvars: ident list)(hf1: CF.h_formula) (hf2: CF.h_formula)(mtl: map_table list): (bool * (map_table list))=
   let _ = Debug.ninfo_pprint ("Compare heap formulas ") no_pos in
   (*create list*)
   let check_false_hf1 = check_false_formula hf1 in
   let check_false_hf2 = check_false_formula hf2 in
-  if(check_false_hf1 && check_false_hf2) then (true, [])
+  if(check_false_hf1 && check_false_hf2) then (true, [[]])
   else 
     if(check_false_hf1 || check_false_hf2) 
     then (false,[])
@@ -206,7 +224,7 @@ and check_node_equiv (hvars: ident list)(n1: CF.h_formula_data) (n2:  CF.h_formu
 (* if((not (CF.is_eq_node_name name1 name2)) || (is_hard && (not (CP.eq_spec_var var1 var2))) || (not (CF.is_eq_data_ann ann1 ann2)))  *)
   if((not (CF.is_eq_node_name name1 name2)) || (is_hard && (not (CP.eq_spec_var var1 var2)))) 
   then( 
-    let _ = Debug.info_pprint ("diff node diff name diff ann ") no_pos in 
+    let _ = Debug.ninfo_pprint ("diff node diff name diff ann ") no_pos in 
     (false, mt) 
   (*TODO: temp eliminate ann*)
   )
@@ -580,10 +598,43 @@ and check_equiv_bform_x (hvars: ident list)(b1: CP.b_formula) (b2: CP.b_formula)
         | _ -> (false, [])
       )
     | (BVar (v1,_),_),(BVar (v2,_),_) -> let res, mt = check_spec_var_equiv hvars v1 v2 mt in if(res) then (res,[mt]) else (false,[])
+    | (RelForm r1,_), (RelForm r2,_) ->  let res, new_mt = check_rel_equiv hvars r1 r2 mt in (res,[new_mt])
     | _ -> (false, [])
 
-and match_equiv_orform (hvars: ident list) (f1: (formula * formula * (formula_label option) * loc)) (pf2: CP.formula)(mtl: map_table list): (bool * (map_table list)) =
-  (true,[])
+and match_equiv_orform (hvars: ident list) (of1: (formula * formula * (formula_label option) * loc)) (pf2: CP.formula)(mtl: map_table list): (bool * (map_table list)) =
+  let rec match_equiv_bform_helper hvars of1 pf mt= match pf with
+    | BForm (b2,_) ->  (false, [])
+    | And(f1,f2,_) ->  (
+      let res1, mtl1 = match_equiv_bform_helper hvars of1 f1 mt in
+      let res2, mtl2 = match_equiv_bform_helper hvars of1 f2 mt in 
+      if(res1 && res2) then (true, mtl1 @ mtl2)   (*merge tables*)
+      else if(res1) then (true, mtl1) 
+      else if(res2) then (true, mtl2)
+      else (false, [])
+    )
+    | AndList _ -> (
+      report_error no_pos "and list"
+    )
+    | Or(f1,f2,_,_)->(
+      let (if1, if2,_,_) = of1 in
+      let res11, mtl11 = checkeq_p_formula hvars f1 if1 [mt] in
+      let res1,mtl1 = checkeq_p_formula hvars f2 if2 mtl11 in
+      let res12, mtl12 = checkeq_p_formula hvars f1 if2 [mt] in
+      let res2,mtl2 = checkeq_p_formula hvars f2 if1 mtl12 in
+      if(res1 && res2) then (true, mtl1 @ mtl2)   (*merge tables*)
+      else if(res1) then (true, mtl1) 
+      else if(res2) then (true, mtl2)
+      else (false, [])
+    )
+    | Not _
+    | Forall _ 
+    | Exists _ -> (false, [])
+  in
+  let bs, mtls = List.split(List.map (fun mt ->  match_equiv_bform_helper hvars of1 pf2 mt) mtl) in
+  let b = if( List.exists (fun c -> c==true) bs) then true else false in
+  let mtl2 = List.concat mtls in
+  (b,mtl2)
+    
 
 and match_equiv_notform  hvars b1 pf2 mtl = 
   let pr1 = Cprinter.string_of_pure_formula in

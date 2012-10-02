@@ -60,7 +60,7 @@ lseg<p> == self=p
 
 void append(node x, node y)
   infer[H,G1]
-	requires H(x)&y=null
+	requires H(x)*y::ll<>
 	ensures G1(x,y); 
 //  requires H(x)*y::node<a,null>
 //  ensures G1(x,y);//'
@@ -110,6 +110,19 @@ H2(y)::  HP_594(y) or HP_596(y)
 HP_595(x)::  x::node<val_74_569,v_node_74_584> * HP_595(v_node_74_584)
 HP_561(v_node_74_584,y)::  HP_593(v_node_74_584) * HP_594(y)
 G1(v_node_74_584,y)::  HP_595(v_node_74_584) * HP_596(y)
+
+
+HP_565(v_node_77_582)::  
+ emp&v_node_77_582=null
+ or v_node_77_582::node<val_77_546',next_77_547'> * HP_565(next_77_547')&true
+ ,
+HP_596(x)::  
+ x::node<val_77_571,y>&y=null
+ or x::node<val_77_573,v_node_77_588> * HP_596(v_node_77_588)&
+    v_node_77_588!=null
+HP_597(y)::  emp&y=null,
+H(x)::  x::node<val_77_546',next_77_547'> * HP_565(next_77_547')&true,
+G1(v_node_77_588,y)::  HP_596(v_node_77_588) * HP_597(y)&true
 
 */
 

@@ -377,7 +377,7 @@ let check_partial_def_eq (hp1, args1, cond1, olhs1, orhs1) (hp2, args2, cond2, o
         | Some f1, Some f2 ->
           (*subs*)
             let f1_subst = CF.subst subst f1 in
-	    let hvars = CF.get_hp_rel_name_formula f1_subst @ CF.get_hp_rel_name_formula f2 in
+	    let hvars = List.map (fun c -> CP.full_name_of_spec_var c) (CF.get_hp_rel_name_formula f1_subst @ CF.get_hp_rel_name_formula f2) in
             let r,_ (*map*) =  CEQ.checkeq_formulas hvars f1_subst f2 in
             r
     in
