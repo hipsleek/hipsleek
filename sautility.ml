@@ -340,5 +340,5 @@ let rename_hp_args_x lfb rfb=
 
 let rename_hp_args lfb rfb=
   let pr=Cprinter.prtt_string_of_formula_base in
-  Debug.ho_2 "rename_hp_args" pr pr (pr_pair pr pr)
+  Debug.no_2 "rename_hp_args" pr pr (pr_pair pr pr)
       (fun _ _ -> rename_hp_args_x lfb rfb) lfb rfb
