@@ -3,14 +3,20 @@ data node { int val ; node next }.
 HeapPred H(node a).
 HeapPred H1(node a).
 HeapPred G(node a, node b).
+HeapPred H2(node a, node b).
+
 //1. for x.next
 infer [H] H(x) |- x::node<a,b>@L.
 print residue.
+compare residue [H,b]: H2(b,x) * x::node<a,b>.
+
 
 //2.
 infer [H] H(x) |- x::node<a,b>.
 print residue.
+compare residue [H,b]: H2(b,x).
 
+/*
 //3. for x.next
 infer [H] H(x) |- (exists a: x::node<a,b>@L) .
 print residue.
@@ -56,6 +62,10 @@ print residue.
 infer [G] G(y,x)* y::node<c,d>  |- x::node<a,b>@L * y::node<c,d>@L.
 print residue.
 
+
+
+
+*/
 //infer [] x::node<u,v>  |- x::node<a,b>@L.
 //print residue.
 /*

@@ -1,0 +1,22 @@
+/*
+Test pure part: relation
+*/
+
+relation A(int a, int b).
+relation B(int a, int b).
+
+//1.
+checkeq[] A(f,g) -|- B(w,d).
+//VALID
+
+//2.
+checkeq[A] A(f,g) -|- B(w,d).
+//FAIL
+
+//3.
+checkeq[A] A(f,g) & f = 3 -|- A(w,d) & d = 3.
+//FAIL
+
+//4.
+checkeq[A] A(f,g) & f = 3 -|- A(w,d) & w = 3.
+//VALID

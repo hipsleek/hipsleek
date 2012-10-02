@@ -27,40 +27,46 @@ node pop_front(ref node x)
 
 
 /*
-
-(H(x) & x'=x--> x::node<val_164_959',b> * HP_1911(b,x,x)
-HP_1911(x',x,x) * x::node<val_164_1920,next_165_963'>&v_node_166_964'=x --> G(x,x')
-
-Normalize
-H(x) & x'=x--> x::node<_,b> * HP_1911(b)
-HP_1911(x') * x::node<val_164_1920,next_165_963'> --> G(x,x')
-
 by hand
+H(x) 
+for x.next
+constr: H(x) -> x::node<_,b> * H1(x,b)
+state: x::node<_,b> * H1(x,b) & tmp =x
+x::node<_,b'> * H1(x,b) & tmp = x & x' = b & b' = null -> G(x,x')
+ 
+constrs
+H(x) -> x::node<_,b> * H1(x,b)
+x::node<_,b'> * H1(x,x') & b' = null -> G(x,x')
+drop: 	H(x) -> x::node<_,b> * H1(b)
+	x::node<_,b'> * H1(x') & b' = null -> G(x,x')
+H1(x') -> G2(x')
+H(x) -> x::node<_,b> * H1(b)
+x::node<_,b'> & b' = null -> G1(x)
+defs:
+x::node<_,b'> & b' = null <-> G1(x)
+H1(x') -> G2(x')
+H(x) -> x::node<_,b> * H1(b)
+H(x) <-> x::node<_,b> * G2(b)  ==> ???
 
-H1(tmp, x) & tmp = x
+//cp: 
+H(x) -> x::node<_,b> * H1(x,b)
+x::node<_,b'> * H1(x,x') & b' = null -> G(x,x')
 
- H2(tmp, x, b) * x::node<_,b> & tmp = x
+H(x)&x'=x --> x::node<val_164_919',next_164_920'> * HP_996(next_164_920',x,x)  			//match
+HP_996(x',x,x) * x::node<val_164_1005,next_165_923'>& v_node_166_924'=x --> G(x,x')		//lack of info !!!
 
-H2(tmp, x, b) * x::node<_,b> & tmp = x & x'= b
+( H(x)&x'=x, x::node<val_23_535',next_23_536'> * HP_552(next_23_536',x)&true),
+( HP_552(x',x) * x::node<val_23_561,next_24_539'>&v_node_25_540'=x & 
+next_24_539'=null, G(x,x')&true)]
 
-H3(tmp, x, b, c) * x::node<_,b> * tmp::node<_,null> & tmp = x & x'= b -> G(x,x')
 
-relations:
-H(x) -> H1(tmp,x) & tmp = x
-H1(tmp,x) -> H2(tmp, x, b) * x::node<_,b>
-H2(tmp, x, b) * tmp::node<_,null> -> H3(tmp, x, b, c)
-H3(tmp, x, b, c) * x::node<_,b> * tmp::node<_,null> & tmp = x & x'= b -> G(x,x')
+!!! NEW SIMPLIFIED HP ASSUME:[HP_RELDEFN HP_996:  HP_996(x')::  HP_1009(x')&true,
+HP_RELDEFN G:  G(x,x')::  HP_1008(x) * HP_1009(x')&true]
 
-normalization
-H(x) -> H1(tmp,x) & tmp = x
-H1(tmp,x) -> H2(tmp, x, b) * x::node<_,b>
-H2(tmp, x, b) --> tmp::node<_,null> * H3(tmp, x, b, c)
-H3(tmp, x, b, c) * x::node<_,b> * tmp::node<_,null> & tmp = x & x'= b -> G(x,x')
+HP_552(x')::  HP_565(x')&true,
+HP_564(x)::  x::node<val_23_561,next_24_539'>&next_24_539'=null & v_node_25_540'=x,
+G(x,x')::  HP_564(x) * HP_565(x')&true
 
-expect:
-H(x) -> H3(b) * x::node<_,b>
-H3(b) * x::node<_,b> & x'= b -> G(x,x')
 
-**lost info***
 */
 

@@ -28,29 +28,29 @@ let print_version () =
 
 let parse_file_full file_name = 
   let org_in_chnl = open_in file_name in
-    try
-    (*let ptime1 = Unix.times () in
-	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
-     *)
+  try
+      (*let ptime1 = Unix.times () in
+	let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
+      *)
       (* print_string ("Parsing "^file_name^" ...\n"); flush stdout; *)
-      let _ = Gen.Profiling.push_time "Parsing" in
-      Globals.input_file_name:= file_name;
-      let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) in
-		  close_in org_in_chnl;
-         let _ = Gen.Profiling.pop_time "Parsing" in
-    (*		  let ptime2 = Unix.times () in
-		  let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
-			print_string ("done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n"); *)
-		(* An Hoa *)
-		(*let _ = print_endline "Primitive relations : " in
-		let _ = List.map (fun x -> print_endline x.Iast.rel_name) prog.Iast.prog_rel_decls in*)
+    let _ = Gen.Profiling.push_time "Parsing" in
+    Globals.input_file_name:= file_name;
+    let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) in
+    close_in org_in_chnl;
+    let _ = Gen.Profiling.pop_time "Parsing" in
+	 (*		  let ptime2 = Unix.times () in
+			  let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
+			  print_string ("done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n"); *)
+	 (* An Hoa *)
+	 (*let _ = print_endline "Primitive relations : " in
+	   let _ = List.map (fun x -> print_endline x.Iast.rel_name) prog.Iast.prog_rel_decls in*)
 
-			prog
-    with
-		End_of_file -> exit 0
+    prog
+  with
+      End_of_file -> exit 0
     | M.Loc.Exc_located (l,t)->
       (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
-      raise t)
+       raise t)
 
 (* Parse all prelude files declared by user.*)
 let process_primitives (file_list: string list) : Iast.prog_decl list =
@@ -180,7 +180,7 @@ let process_source_full source =
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
-       ignore (Typechecker.check_prog cprog);
+       ignore (Typechecker.check_prog cprog intermediate_prog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError(s) detected at main "^"\n");
@@ -311,7 +311,7 @@ let process_source_full_after_parser source (prog, prims_list) =
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
-       ignore (Typechecker.check_prog cprog);
+	    ignore (Typechecker.check_prog cprog  intermediate_prog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError(s) detected at main "^"\n");

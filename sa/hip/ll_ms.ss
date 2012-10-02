@@ -176,7 +176,7 @@ Normalize
 H(x) & x'=x--> x::node<_,b> * HP_1911(b)
 HP_1911(x') * x::node<val_164_1920,next_165_963'> --> G(x,x')
 
-by hand
+by handc  (cycle proof)
 
 H1(tmp, x) & tmp = x
 
@@ -201,6 +201,8 @@ H3(tmp, x, b, c) * x::node<_,b> * tmp::node<_,null> & tmp = x & x'= b -> G(x,x')
 expect:
 H(x) -> H3(b) * x::node<_,b>
 H3(b) * x::node<_,b> & x'= b -> G(x,x')
+
+
 
 */
 

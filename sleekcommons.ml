@@ -48,6 +48,7 @@ type command =
   | Infer of (ident list * meta_formula * meta_formula)
   | CaptureResidue of ident
   | PrintCmd of print_cmd
+  | CmpCmd of (ident list * ident * meta_formula list)
   | Time of (bool*string*loc)
   | EmptyCmd 
 
@@ -91,6 +92,7 @@ let string_of_command c = match c with
   | Infer _ -> "Infer"
   | CaptureResidue _ -> "CaptureResidue"  
   | PrintCmd _ -> "PrintCmd"  
+  | CmpCmd _ -> "CmpCmd"  
   | Time _ -> "Time"
   | EmptyCmd -> "EmptyCmd"
 

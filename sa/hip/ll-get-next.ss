@@ -9,9 +9,12 @@ HeapPred H2(node a).
 HeapPred G(node a, node b).
 HeapPred G1(node a, node b).
 HeapPred G2(node a, node b).
+HeapPred HP_535(node a, node b).
 HeapPred G3(node a, node b, node c).
 HeapPred G4(node a, node b, node c, node d).
-
+HeapPred HP_535(node a, node b).
+HeapPred HP_537(node a, node b).
+HeapPred HP_557(node a, node b).
 
 /* return the tail of a singly linked list */
 node get_next(node x)
@@ -22,7 +25,7 @@ node get_next(node x)
   node tmp = x.next;
   x.next = null;
   return tmp;
-	//dprint;
+	dprint;
 }
 
 /*
@@ -34,6 +37,7 @@ HP_551(v_node_24_540',x) * x::node<val_22_560,next_23_539'> --> G(x,v_node_24_54
 //dprint: HP_551(v_node_24_540',x) * x::node<val_22_560,next_23_539'> & next_23_539'=null
 //Lost infomation: next_23_539'=null
 
+
 ------defs---------
 H(x)::  x::node<val_22_535',next_22_536'> * HP_566(x) or x::node<val_22_535',next_22_536'> * HP_563(x)
 HP_565(v_node_24_540')::  HP_564(v_node_24_540')
@@ -42,6 +46,19 @@ G(x,v_node_24_540')::  HP_563(x) * HP_564(v_node_24_540')
 HP_551(v_node_24_540',x)::  HP_565(v_node_24_540') * HP_566(x)
 
 
+------new-----constr---------
+H(x) --> x::node<val_24_543',next_24_544'> * HP_559(next_24_544')
+HP_559(tmp_19') * x::node<val_24_568,next_25_547'>&v_node_26_548'=tmp_19' & next_25_547'=null ---> HP_580(x) * HP_581(v_node_26_548')
+
+
+------new ----def
+HP_559(tmp_19')::  emp&v_node_26_548'=tmp_19',
+HP_580(x)::  x::node<val_24_568,next_25_547'>&next_25_547'=null,
+HP_581(v_node_26_548')::  emp&v_node_26_548'=tmp_19',
+H(x)::  x::node<val_24_543',next_24_544'> * HP_559(next_24_544')&true,
+G(x,v_node_26_548')::  HP_580(x) * HP_581(v_node_26_548')&true])
+
+should be HP_559(tmp_19') :: HP_581(v_node_26_548') &v_node_26_548'=tmp_19'
 */
 
 

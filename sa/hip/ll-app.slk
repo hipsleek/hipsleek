@@ -24,7 +24,7 @@ print residue.
 
 
 infer [H1,H2] H2(v5,x) * x::node<_,v5> |- H1(v5) .
-print residue.
+compare residue.
 /* ERROR : wrong relass inferred!
 H2(v5,x) --> H1(v5)
 
@@ -36,7 +36,7 @@ Entail (1) : Valid.
 
 infer [H1,H2] H2(v5,x) * x::node<_,v5> |- H1(v) .
 /* FAILURE
-infer [H1,H2] H2(v5,x) * x::node<_,v5> |- H1(v) .
+infer [H1,H2] H2(v5,x) * x::node<_,v5> |- H1(v5) .
 print residue.
 
 ERROR: at _0_0 
