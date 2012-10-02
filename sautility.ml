@@ -239,3 +239,106 @@ and drop_data_view_hrel_nodes_hf_from_root prog hf hd_nodes hv_nodes eqs drop_ro
   nhf
 
 (*END for drop non-selective subformulas*)
+
+let update_hp_args hf renamed_hps=
+  let rec look_up_helper hp0 ls_hp_args=
+    match ls_hp_args with
+      | [] -> false,[]
+      | (hp1,args1)::hs ->
+          if CP.eq_spec_var hp0 hp1 then (true, args1)
+          else look_up_helper hp0 hs
+  in
+  let rec helper hf0=
+    match hf0 with
+      | CF.HRel (hp, eargs, p ) ->
+          let r,args1= look_up_helper hp renamed_hps in
+          if r then (CF.HRel (hp,List.map (fun sv -> CP.mkVar sv p) args1, p))
+          else hf0
+      | CF.Conj hfc ->
+          CF.Conj {hfc with CF.h_formula_conj_h1=helper hfc.CF.h_formula_conj_h1;
+              CF.h_formula_conj_h2=helper hfc.CF.h_formula_conj_h2;}
+      | CF.Star hfs ->
+          CF.Star {hfs with CF.h_formula_star_h1=helper hfs.CF.h_formula_star_h1;
+              CF.h_formula_star_h2=helper hfs.CF.h_formula_star_h2;}
+      | CF.Phase hfp->
+           CF.Phase{hfp with CF.h_formula_phase_rd=helper hfp.CF.h_formula_phase_rd;
+              CF.h_formula_phase_rw=helper hfp.CF.h_formula_phase_rw;}
+      | _ -> hf0
+  in
+  helper hf
+
+let test_and_update fb renamed_hps ls_new_p pos=
+  if ls_new_p = [] then fb
+    else
+    begin
+        {fb with CF.formula_base_heap =
+                update_hp_args fb.CF.formula_base_heap renamed_hps;
+            CF.formula_base_pure = MCP.mix_of_pure (List.fold_left
+               (fun p1 p2-> CP.mkAnd p1 p2 pos)(List.hd ls_new_p)
+               (List.tl ls_new_p))}
+    end
+
+let rename_hp_args_x lfb rfb=
+  let lp = MCP.pure_of_mix lfb.CF.formula_base_pure in
+  let lpos = (CP.pos_of_formula lp) in
+  let lhf = lfb.CF.formula_base_heap in
+  let lls_hp_args = CF.get_HRels lhf in
+  (*rhs*)
+  let rp = MCP.pure_of_mix rfb.CF.formula_base_pure in
+  let rpos = (CP.pos_of_formula rp) in
+  let rhf = rfb.CF.formula_base_heap in
+  let rls_hp_args = CF.get_HRels rhf in
+  let rec lhelper args1 args2 p r=
+    match args2 with
+      | [] -> r,p,args1
+      | a1::ass -> if CP.mem_svl a1 args1 then
+            let new_v = CP.SpecVar (HpT,
+                  "v_" ^ (string_of_int (Globals.fresh_int())),Unprimed)  in
+            let ss = List.combine [a1] [new_v] in
+            let p0 = CP.filter_var p [a1] in
+            let p1 = CP.subst ss p0 in
+            let p2 = CP.mkAnd p p1 lpos in
+            lhelper (args1@[new_v]) ass p2 true
+          else lhelper (args1@[a1]) ass p r
+  in
+  let rec rhelper args1 args2 lp rp r=
+    match args2 with
+      | [] -> r,lp,rp,args1
+      | a1::ass -> if CP.mem_svl a1 args1 then
+            let new_v = CP.SpecVar (HpT,
+                  "v_" ^ (string_of_int (Globals.fresh_int())),Unprimed)  in
+            let ss = List.combine [a1] [new_v] in
+            (*lhs*)
+            let lp0 = CP.filter_var lp [a1] in
+            let lp1 = CP.subst ss lp0 in
+            let lp2 = CP.mkAnd lp lp1 lpos in
+            (*rhs*)
+            let rp0 = CP.filter_var rp [a1] in
+            let rp1 = CP.subst ss rp0 in
+            let rp2 = CP.mkAnd rp rp1 rpos in
+            rhelper (args1@[new_v]) ass lp2 rp2 true
+          else rhelper (args1@[a1]) ass lp rp r
+  in
+  let rename_one_lhp (hp,args)=
+    let r,np,new_args= lhelper [] args lp false in
+    if r then [((hp,new_args),np)] else []
+  in
+  let rename_one_rhp (hp,args)=
+    let r,nlp,nrp,new_args= rhelper [] args lp rp false in
+    if r then [((hp,new_args),(nlp,nrp))] else []
+  in
+  let lpair = List.concat (List.map rename_one_lhp lls_hp_args) in
+  let rpair = List.concat (List.map rename_one_rhp rls_hp_args) in
+  let lrenamed_hps,lls_p= List.split lpair in
+  let rrenamed_hps,rls_p= List.split rpair in
+  let lrls_p,rrls_p = List.split rls_p in
+  let l_new_hps = lrenamed_hps@rrenamed_hps in
+  let l_new_p = lls_p@lrls_p in
+  let new_lb= test_and_update lfb l_new_hps l_new_p lpos in
+  let new_rb = test_and_update rfb rrenamed_hps rrls_p rpos in
+  (new_lb,new_rb)
+
+let rename_hp_args lfb rfb=
+  let pr=Cprinter.prtt_string_of_formula_base in
+  Debug.ho_2 "rename_hp_args" pr pr (pr_pair pr pr)
+      (fun _ _ -> rename_hp_args_x lfb rfb) lfb rfb
