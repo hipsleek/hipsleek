@@ -18,6 +18,7 @@ let close_def defs (v1,v2)=
   else if CP.mem_svl v2 defs then (CP.remove_dups_svl defs@[v1])
   else (defs)
 
+
 let rec get_data_view_hrel_vars_bformula bf=
   get_data_view_hrel_vars_h_formula bf.CF.formula_base_heap
 
@@ -121,6 +122,73 @@ let loop_up_closed_ptr_args prog hd_nodes hv_nodes node_names=
     else (helper (old_ptrs@diff_ptrs) diff_ptrs)
   in
   helper node_names node_names
+
+(*=======utilities for infer_collect_hp_rel=======*)
+(*defined pointers list *
+  for recursive constraint(HP name *
+ parameter name list)*)
+(*todo: how about null? is it defined?*)
+let rec find_defined_pointers_raw prog f=
+  let hds, hvs, hrs = CF.get_hp_rel_formula f in
+  let ( _,mix_f,_,_,_) = CF.split_components f in
+  let eqs = (MCP.ptr_equations_without_null mix_f) in
+  let eqNulls = CP.remove_dups_svl ( MCP.get_null_ptrs mix_f) in
+  (*defined vars=  + null + data + view*)
+  let def_vs = (eqNulls) @ (List.map (fun hd -> hd.CF.h_formula_data_node) hds)
+   @ (List.map (fun hv -> hv.CF.h_formula_view_node) hvs) in
+  (*find closed defined pointers set*)
+  (* let def_vs0 = CP.remove_dups_svl def_vs in *)
+  let def_vs_wo_args = CP.remove_dups_svl ((List.fold_left close_def def_vs eqs)) in
+  (def_vs_wo_args, hds, hvs, hrs, eqs)
+
+and find_defined_pointers_after_preprocess prog def_vs_wo_args hds hvs hrs eqs predef_ptrs=
+  let tmp = def_vs_wo_args in
+  (* DD.info_pprint ("   defined raw " ^(!CP.print_svl tmp)) no_pos; *)
+  let def_vs = List.filter (check_node_args_defined prog (def_vs_wo_args@predef_ptrs) hds hvs) tmp in
+  (*(HP name * parameter name list)*)
+  let hp_paras = List.map
+                (fun (id, exps, _) -> (id, List.concat (List.map CP.afv exps)))
+                hrs in
+  (def_vs, hp_paras, hds, hvs, eqs)
+
+and find_defined_pointers_new_x prog f predef_ptrs=
+  (* let hds, hvs, hrs = CF.get_hp_rel_formula f in *)
+  (* let ( _,mix_f,_,_,_) = CF.split_components f in *)
+  (* let eqs = (MCP.ptr_equations_without_null mix_f) in *)
+  (* let eqNull1, eqNull2 =  List.split (MCP.ptr_equations_with_null mix_f) in *)
+  (* let eqNulls = CP.remove_dups_svl (eqNull1@eqNull2) in *)
+  (* (\*defined vars=  + null + data + view*\) *)
+  (* let def_vs = (eqNulls) @ (List.map (fun hd -> hd.CF.h_formula_data_node) hds) *)
+  (*  @ (List.map (fun hv -> hv.CF.h_formula_view_node) hvs) in *)
+  (* (\*find closed defined pointers set*\) *)
+  (* (\* let def_vs0 = CP.remove_dups_svl def_vs in *\) *)
+  (* let def_vs_wo_args = CP.remove_dups_svl ((List.fold_left Infer.close_def def_vs eqs)@predef_ptrs) in *)
+  (* (\*check nodes'args are defined?*\) *)
+  (* let tmp = def_vs_wo_args in  *)
+  (* let def_vs = List.filter (check_node_args_defined prog def_vs_wo_args hds hvs) tmp in *)
+  (* (\*(HP name * parameter name list)*\) *)
+  (* let hp_paras = List.map *)
+  (*               (fun (id, exps, _) -> (id, List.concat (List.map CP.afv exps))) *)
+  (*               hrs in *)
+  (* (def_vs, hp_paras, hds, hvs,eqs) *)
+  let (def_vs, hds, hvs, hrs, eqs) = find_defined_pointers_raw prog f in
+  find_defined_pointers_after_preprocess prog def_vs hds hvs hrs eqs predef_ptrs
+
+and find_defined_pointers_new prog f predef_ptrs=
+  let pr1 = !CP.print_svl in
+  let pr2 = pr_list_ln (pr_pair !CP.print_sv pr1) in
+  (* let pr3 = fun x -> Cprinter.string_of_h_formula (CF.HRel x) in *)
+  let pr4 = fun (a1, a2, _, _, _) ->
+      let pr = pr_pair pr1 pr2 in pr (a1,a2)
+  in
+  Debug.no_2 "find_defined_pointers_new" Cprinter.prtt_string_of_formula pr1 pr4
+      (fun _ _ -> find_defined_pointers_new_x prog f predef_ptrs) f predef_ptrs
+
+and check_node_args_defined prog def_svl hd_nodes hv_nodes dn_name=
+  let arg_svl = loop_up_ptr_args_one_node prog hd_nodes hv_nodes dn_name in
+  let diff_svl = Gen.BList.difference_eq CP.eq_spec_var arg_svl def_svl in
+  if diff_svl = [] then true
+  else false
 
 let keep_data_view_hrel_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hrels=
   let keep_ptrs = loop_up_closed_ptr_args prog hd_nodes hv_nodes keep_rootvars in

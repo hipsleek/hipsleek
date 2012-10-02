@@ -82,7 +82,7 @@ let rec elim_redundant_paras_lst_constr_x constrs =
     else true
   in  
   let locs = List.concat (List.map (fun c -> if(check_loc_in_all_constr c rels_info) then [c] else []) locs) in
-  let _ = Debug.ninfo_pprint ("Final drop para list: " ^ (str_of_para_loc_lst locs)) no_pos in
+  let _ = Debug.info_pprint ("Final drop para list: " ^ (str_of_para_loc_lst locs)) no_pos in
   let new_constrs = drop_process constrs locs in
   (*find candidates in all assumes, if a case appears in all assmses => apply it*) 
   new_constrs
@@ -338,9 +338,9 @@ and filter_hp_rel_args (hf: CF.h_formula) (drlocs: hp_para list): CF.h_formula=
 (*=======================*)
 (*should we mkAnd f1 f2*)
 let rec find_defined_pointers_two_formulas_x prog f1 f2 predef_ptrs=
-  let (def_vs1, hds1, hvs1, hrs1, eqs1) = Infer.find_defined_pointers_raw prog f1 in
-  let (def_vs2, hds2, hvs2, hrs2, eqs2) = Infer.find_defined_pointers_raw prog f2 in
-  Infer.find_defined_pointers_after_preprocess prog (def_vs1@def_vs2) (hds1@hds2) (hvs1@hvs2)
+  let (def_vs1, hds1, hvs1, hrs1, eqs1) = SAU.find_defined_pointers_raw prog f1 in
+  let (def_vs2, hds2, hvs2, hrs2, eqs2) = SAU.find_defined_pointers_raw prog f2 in
+  SAU.find_defined_pointers_after_preprocess prog (def_vs1@def_vs2) (hds1@hds2) (hvs1@hvs2)
       (hrs2) (eqs1@eqs2) predef_ptrs
 
 and find_defined_pointers_two_formulas prog f1 f2 predef_ptrs=
@@ -499,9 +499,9 @@ let collect_par_defs_recursive_hp prog lhs rhs (hrel, args) def_ptrs hrel_vars e
   let pr1 = !CP.print_svl in
   let pr2 = (pr_pair !CP.print_sv pr1) in
   let pr3 = pr_list_ln string_of_par_def_w_name in
-  Debug.no_1 "collect_par_defs_recursive_hp" pr2 pr3
-      (fun  _ -> collect_par_defs_recursive_hp_x prog lhs rhs (hrel, args)
-          def_ptrs hrel_vars eq hd_nodes hv_nodes) (hrel, args)
+  Debug.no_2 "collect_par_defs_recursive_hp" pr2 pr1 pr3
+      (fun  _ _ -> collect_par_defs_recursive_hp_x prog lhs rhs (hrel, args)
+          def_ptrs hrel_vars eq hd_nodes hv_nodes) (hrel, args) def_ptrs
 
 let rec collect_par_defs_one_constr_new_x prog (lhs, rhs) =
   DD.info_pprint ">>>>>> collect partial def for hp_rel <<<<<<" no_pos;
@@ -514,7 +514,7 @@ let rec collect_par_defs_one_constr_new_x prog (lhs, rhs) =
           else get_rec_pair_hps ss (hrel1, arg1)
   in
   (*find all defined pointer (null, nodes) and recursive defined parameters (HP, arg)*)
-  let l_def_ptrs, l_hp_args_name,l_dnodes, l_vnodes,leqs = Infer.find_defined_pointers_new prog lhs [] in
+  let l_def_ptrs, l_hp_args_name,l_dnodes, l_vnodes,leqs = SAU.find_defined_pointers_new prog lhs [] in
   (*should mkAnd lhs*rhs?*)
   let r_def_ptrs, r_hp_args_name, r_dnodes, r_vnodes, reqs = find_defined_pointers_two_formulas prog lhs rhs [] in
   (*CASE 1: formula --> hp*)
@@ -548,7 +548,7 @@ let rec collect_par_defs_one_constr_new_x prog (lhs, rhs) =
    (*for debugging*)
   (* let pr1 = (pr_pair !CP.print_sv !CP.print_svl) in *)
   (* let pr2 = pr_list_ln (pr_pair pr1 pr1) in *)
-  (* Debug.info_hprint (add_str "recursive pair: " (pr2)) rec_pair_hps no_pos; *)
+  (* Debug.info_hprint (add_str "  recursive pair: " (pr2)) rec_pair_hps no_pos; *)
   (*END for debugging*)
   let new_constrs, rec_pdefs =
     if rec_pair_hps = [] then
@@ -560,19 +560,19 @@ let rec collect_par_defs_one_constr_new_x prog (lhs, rhs) =
     else
       let helper ((hp1,args1),(hp2,args2))=
         (*recompute defined ptrs*)
-         let l_def_ptrs, _,_, _,_ = Infer.find_defined_pointers_new prog lhs args2 in
+         let l_def_ptrs, _,_, _,_ = SAU.find_defined_pointers_new prog lhs args2 in
          (*should mkAnd lhs*rhs?*)
          let r_def_ptrs, _, _, _, _ = find_defined_pointers_two_formulas prog lhs rhs args2 in
         let r1 = collect_par_defs_recursive_hp prog lhs rhs (hp1,args1)
-          (l_def_ptrs@r_def_ptrs)  (l_hp_args_name@r_hp_args_name) (leqs@reqs)
+          (l_def_ptrs@r_def_ptrs@args2)  (l_hp_args_name@r_hp_args_name) (leqs@reqs)
           (l_dnodes@r_dnodes) (l_vnodes@r_vnodes) in
         if r1 = [] then
           (*recompute defined ptrs*)
-          let l_def_ptrs, _,_, _,_ = Infer.find_defined_pointers_new prog lhs args1 in
+          let l_def_ptrs, _,_, _,_ = SAU.find_defined_pointers_new prog lhs args1 in
          (*should mkAnd lhs*rhs?*)
           let r_def_ptrs, _, _, _, _ = find_defined_pointers_two_formulas prog lhs rhs args1 in
           collect_par_defs_recursive_hp prog lhs rhs (hp2,args2)
-              (l_def_ptrs@r_def_ptrs)  (l_hp_args_name@r_hp_args_name) (leqs@reqs)
+              (l_def_ptrs@r_def_ptrs@args1)  (l_hp_args_name@r_hp_args_name) (leqs@reqs)
               (l_dnodes@r_dnodes) (l_vnodes@r_vnodes)
         else r1
       in
@@ -585,8 +585,10 @@ let rec collect_par_defs_one_constr_new_x prog (lhs, rhs) =
         else [(lhs,rhs)]
       in (new_constrs, rec_pdefs)
   in
-  DD.info_pprint (" partial defs: \n" ^
-  (let pr = pr_list_ln string_of_par_def_w_name in pr (lpdefs @ rpdefs @ rec_pdefs)) ) no_pos;
+  DD.info_pprint ("  partial defs: \n" ^
+  (let pr = pr_list_ln string_of_par_def_w_name in pr (lpdefs @ rpdefs)) ) no_pos;
+  DD.info_pprint ("  rec partial defs: \n" ^
+  (let pr = pr_list_ln string_of_par_def_w_name in pr (rec_pdefs)) ) no_pos;
   (new_constrs,(lpdefs @ rpdefs @ rec_pdefs))
 
 and collect_par_defs_one_constr_new prog constr =
@@ -985,10 +987,11 @@ let subst_one_cs_w_one_partial_def f (hp_name, args, def_f)=
         (*generate a susbst*)
         let args2= (List.fold_left List.append [] (List.map CP.afv eargs)) in
         DD.info_pprint ("   subst " ^ (Cprinter.prtt_string_of_formula def_f) ^ " ==> " ^ (!CP.print_sv hp_name)
-                        ^ (!CP.print_svl args2)) no_pos;
+                        ^ (!CP.print_svl args)) no_pos;
         (* DD.info_pprint ("   into " ^ (Cprinter.prtt_string_of_formula f)) no_pos; *)
         let subst = (List.combine args args2) in
         let def_f_subst = CF.subst subst def_f in
+        (* DD.info_pprint ("   body after subst " ^ (Cprinter.prtt_string_of_formula def_f_subst)) no_pos; *)
         (*should remove duplicate*)
         let svl1 = CF.fv newf in
         let svl2 = CF.fv def_f_subst in
@@ -996,11 +999,12 @@ let subst_one_cs_w_one_partial_def f (hp_name, args, def_f)=
         (* DD.info_pprint ("   intersect: " ^ (!CP.print_svl intersect)) no_pos; *)
         let def_f1 =
           if intersect = [] then def_f_subst else
-            let diff = Gen.BList.difference_eq CP.eq_spec_var svl2 svl1 in
+            (* let diff = Gen.BList.difference_eq CP.eq_spec_var svl2 svl1 in *)
             match def_f_subst with
               | CF.Base fb ->
-                  CF.Base (CF.drop_data_view_hrel_nodes_fb fb SAU.select_dnode SAU.select_vnode
-                      SAU.select_hrel intersect intersect intersect diff)
+                  CF.Base {fb with CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf fb.CF.formula_base_heap
+                          SAU.select_dnode SAU.select_vnode
+                          SAU.select_hrel intersect intersect intersect}
               | _ -> report_error no_pos "sa.subst_one_cs_w_one_partial_def"
         in
         (*combi def_f_subst into newf*)
@@ -1176,14 +1180,14 @@ let generalize_one_hp prog par_defs=
         | Some f1, Some f2 -> (*find which formula contains root args*)
             let _ = Debug.ninfo_pprint ("lpdef: " ^ (Cprinter.prtt_string_of_formula f1)) no_pos in
             let _ = Debug.ninfo_pprint ("rpdef: " ^ (Cprinter.prtt_string_of_formula f2)) no_pos in
-            let ptrs1, _,_, _,_ = Infer.find_defined_pointers_raw prog f1 in
+            let ptrs1, _,_, _,_ = SAU.find_defined_pointers_raw prog f1 in
             (*assume root is the first args*)
             (* let ptrs_diff= Gen.BList.difference_eq CP.eq_spec_var args ptrs1 in *)
             (* if ptrs_diff = [] then f1 *)
             if CP.mem_svl (List.hd args) ptrs1 then f1
             else
               (
-                  let ptrs2, _,_, _,_ = Infer.find_defined_pointers_raw prog f2 in
+                  let ptrs2, _,_, _,_ = SAU.find_defined_pointers_raw prog f2 in
                   (* let ptrs_diff= Gen.BList.difference_eq CP.eq_spec_var args ptrs2 in *)
                   (* (\*for debugging*\) *)
                   let _ = Debug.ninfo_pprint ("args: " ^ (!CP.print_svl args)) no_pos in
@@ -1334,16 +1338,16 @@ let generate_hp_def_from_split hp_defs_split=
 *)
 let infer_hps_x prog (hp_constrs: (CF.formula * CF.formula) list):
  ((CF.formula * CF.formula) list * hp_rel_def list) =
-   DD.info_pprint ">>>>>> norm_hp_rel <<<<<<" no_pos;
-  DD.info_pprint ">>>>>> step 1: drop arguments <<<<<<" no_pos;
+   DD.info_pprint "\n\n>>>>>> norm_hp_rel <<<<<<" no_pos;
+  DD.info_pprint ">>>>>> step 1: drop arguments<<<<<<" no_pos;
   (* step 1: drop irr parameters *)
   let constrs = elim_redundant_paras_lst_constr hp_constrs in
-  Debug.ninfo_hprint (add_str "AFTER DROP: " (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) constrs no_pos;
+  Debug.info_hprint (add_str "   AFTER DROP: " (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) constrs no_pos;
    (* step 1': split HP *)
   DD.info_pprint ">>>>>> step 2: split arguments: currently omitted <<<<<<" no_pos;
   (* let constrs1, split_tb,hp_defs_split = split_hp constrs in *)
   (*for temporal*)
-  let constrs1 = hp_constrs in
+  let constrs1 = constrs in
   let hp_defs_split = [] in
   (*END for temporal*)
   let cs, par_defs = infer_hps_fix prog constrs1 in
