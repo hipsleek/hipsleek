@@ -240,6 +240,9 @@ end;;
 let proving_loc  = new prog_loc
 
 let post_pos = new prog_loc
+
+let proving_info () = ("post:"^(post_pos#string_of_pos) ^"loc:"^(proving_loc#string_of_pos))
+
 (* let post_pos = ref no_pos *)
 (* let set_post_pos p = post_pos := p *)
 
