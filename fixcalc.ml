@@ -1,18 +1,17 @@
 (*
-  Call Fixpoint Calculator, send input to it
+  Call Fixpoint Calculator for numerical domains
 *)
 
 open Globals
-module DD = Debug
 open Gen
-open Exc.GTable
-open Perm
 open Cformula
-open Context
+module DD = Debug
 module Pr = Cprinter
 module CP = Cpure
 module MCP = Mcpure
 module TP = Tpdispatcher
+
+(******************************************************************************)
 
 (* Operators *)
 let op_lt = "<" 
@@ -26,6 +25,8 @@ let op_or = " || "
 let op_add = "+"
 let op_sub = "-"
 
+(******************************************************************************)
+
 let is_self = CP.is_self_var
 
 let is_null = CP.is_null
@@ -34,6 +35,8 @@ let rec string_of_elems elems string_of sep = match elems with
   | [] -> ""
   | h::[] -> string_of h 
   | h::t -> (string_of h) ^ sep ^ (string_of_elems t string_of sep)
+
+(******************************************************************************)
 
 let fixcalc_of_spec_var x = match x with
 (*  | CP.SpecVar (Named _, id, Unprimed) -> "NOD" ^ id*)
@@ -60,6 +63,7 @@ and fixcalc_of_exp e = match e with
   | CP.Mult (e1, e2, _) -> 
     begin
       match e1, e2 with
+      | (CP.IConst (i,_), CP.IConst (j,_)) -> string_of_int (i*j)
       | (CP.IConst (i,_),_) -> fixcalc_of_exp_list e2 op_add i
       | (_,CP.IConst (i,_)) -> fixcalc_of_exp_list e1 op_add i
       | _ -> illegal_format ("Fixcalc.fixcalc_of_exp: Not supported expression")
@@ -109,7 +113,8 @@ let rec fixcalc_of_pure_formula f = match f with
     (match b with 
     | [] -> fixcalc_of_pure_formula (CP.mkFalse no_pos) 
     | (_,x)::t -> fixcalc_of_pure_formula 
-      (List.fold_left (fun a (_,c)->CP.mkAnd a c no_pos) x t))
+      (List.fold_left (fun a (_,c) -> CP.mkAnd a c no_pos) x t)
+    )
   | CP.Or (p1, p2,_ , _) ->
     "(" ^ fixcalc_of_pure_formula p1 ^ op_or ^ fixcalc_of_pure_formula p2 ^ ")"
   | CP.Not (p,_ , _) -> 
@@ -167,7 +172,6 @@ let rec fixcalc_of_formula e = match e with
 
 let fixcalc = "fixcalc"
 let fixcalc = "/home/thaitm/hg-repository/infer-rec/sleekex/bin/fixcalc"
-let fixcalc_old = "fixcalc_mod"
 
 let syscall cmd =
   let ic, oc = Unix.open_process cmd in
