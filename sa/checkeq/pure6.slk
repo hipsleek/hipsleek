@@ -17,6 +17,6 @@ checkeq[A] A(f,g) -|- B(w,d).
 checkeq[A] A(f,g) & f = 3 -|- A(w,d) & d = 3.
 //FAIL
 
-//3.
+//4.
 checkeq[A] A(f,g) & f = 3 -|- A(w,d) & w = 3.
-//FAIL
+//VALID

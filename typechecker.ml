@@ -1913,42 +1913,53 @@ and check_proc (prog : prog_decl) (iprog: I.prog_decl)(proc : proc_decl) : bool 
                     let hprels = List.map (fun (_,a2,a3)-> (a2,a3)) hprels in
                     let hp_lst_assume = List.map (fun (_,a2,a3)-> (a2,a3)) hp_lst_assume in
 		            (* let hp_lst_simplified_assume = Sa2.simplify_lst_constrs hp_lst_assume in *)
-		    let is_match_constrs = if((String.compare !Globals.file_cp "") != 0) then (
+		    let _,hp_lst_simplified_assume = Sa.infer_hps prog hp_lst_assume in
+		    
+		    let infile_constrs, infile_defs = if((String.compare !Globals.file_cp "") != 0) then (
 		      let file_name = !Globals.file_cp in
 		      let _ =Debug.info_pprint ("File to compare: " ^ file_name ) no_pos in
-		      let infile_constrs = 
-			let org_in_chnl = open_in file_name in 
-			try
-					     let cps  = Parser.parse_constrs file_name (Stream.of_channel org_in_chnl) in
-					     let set_constrs = List.filter (fun (t,cs) -> (String.compare t "constrs" == 0)) cps in
-					     let t,res = if(List.length set_constrs != 1) then report_error no_pos "invalid condition"
-					       else List.hd set_constrs in (*the only constrs in file*)
-					     close_in org_in_chnl;
-					     res
-			with
-			    End_of_file -> exit 0
-			  | M.Loc.Exc_located (l,t)->
-			    (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
-			     raise t)
-		      in
 		      
-		      let trans_constr constr = 
-			let stab =  H.create 103 in
-			let if1, if2 = constr in
-			let _ = Astsimp.gather_type_info_formula iprog if1 stab false in
-			(*let _ = print_endline ("typechecker1: stab: " ^ Astsimp.string_of_stab stab ) in *)
-			let f1 = Astsimp.trans_formula iprog false [] false if1 stab false in
-			let _ = Astsimp.gather_type_info_formula iprog if2 stab false in
-			(*	let _ = print_endline ("typechecker2: stab: " ^ Astsimp.string_of_stab stab ) in *)
-			let f2 = Astsimp.trans_formula iprog false [] false if2 stab false in
-			(f1,f2)
-		      in
-		      let infile_constrs = List.map (fun constr -> trans_constr constr) infile_constrs in
-		      CEQ.checkeq_constrs [] hp_lst_assume infile_constrs
+		      let org_in_chnl = open_in file_name in 
+		      try
+			let cps  = Parser.parse_constrs file_name (Stream.of_channel org_in_chnl) in
+			let set_constrs = List.filter (fun (t,cs) -> (String.compare t "constrs" == 0)) cps in
+			let t,res = if(List.length set_constrs != 1) then report_error no_pos "invalid condition for constrs"
+			  else List.hd set_constrs in (*the only constrs in file*)
+			let set_defs = List.filter (fun (t,cs) -> (String.compare t "hp_defs" == 0)) cps in
+			let t2,res2 = if(List.length set_defs != 1) then report_error no_pos "invalid condition for defs"
+			  else List.hd set_defs in (*the only constrs in file*)
+			close_in org_in_chnl;
+			(res,res2)
+		      with
+			  End_of_file -> exit 0
+			| M.Loc.Exc_located (l,t)->
+			  (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+			   raise t)
 		    )
-		      else true
+		      else (
+			([],[])
+		      )
 		    in
-                    let _,hp_lst_simplified_assume = Sa.infer_hps prog hp_lst_assume in
+		    let trans_constr constr = 
+		      let stab =  H.create 103 in
+		      let if1, if2 = constr in
+		      let _ = Astsimp.gather_type_info_formula iprog if1 stab false in
+			(*let _ = print_endline ("typechecker1: stab: " ^ Astsimp.string_of_stab stab ) in *)
+		      let f1 = Astsimp.trans_formula iprog false [] false if1 stab false in
+		      let _ = Astsimp.gather_type_info_formula iprog if2 stab false in
+			(*	let _ = print_endline ("typechecker2: stab: " ^ Astsimp.string_of_stab stab ) in *)
+		      let f2 = Astsimp.trans_formula iprog false [] false if2 stab false in
+		      (f1,f2)
+		    in
+		    let _ = if((String.compare !Globals.file_cp "") != 0) then(
+		      let infile_constrs = List.map (fun constr -> trans_constr constr) infile_constrs in
+		      let infile_defs = List.map (fun def -> trans_constr def) infile_defs in
+		      let is_match_constrs = CEQ.checkeq_constrs [] hp_lst_assume infile_constrs in
+		      let is_match_defs = CEQ.checkeq_defs [] hp_lst_simplified_assume infile_defs in
+		      ()
+		    )
+		    in
+                   
                     let lst_rank = List.map (fun (_,a2,a3)-> (a2,a3)) lst_rank in
                     (*let _ = Ranking.do_nothing in*)
                     Debug.trace_hprint (add_str "SPECS (after simplify_ann)" pr_spec) new_spec no_pos;

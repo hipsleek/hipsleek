@@ -653,7 +653,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   in
   (* let _ = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in *)
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
-  (* let _ = print_endline ("WN# 2:"^(Cprinter.string_of_list_context rs)) in *)
+   let _ = print_endline ("WN# 2:"^(Cprinter.string_of_list_context rs)) in 
   flush stdout;
   let res =
     if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
@@ -815,21 +815,50 @@ let process_print_command pcmd0 = match pcmd0 with
 	  else
 			print_string ("unsupported print command: " ^ pcmd)
 
-let process_cmp_command (input: ident list * ident * meta_formula) =
-  let iv,var,f = input in
+let process_cmp_command (input: ident list * ident * meta_formula list) =
+  let iv,var,fl = input in
   if var = "residue" then
     match !residues with
       | None -> print_string ": no residue \n"
-      | Some (ls_ctx, print) ->
+      | Some (ls_ctx, print) ->(
         if (print) then (
-	  let cfs = CF.list_formula_of_list_context ls_ctx in
-	  let cf1 = (List.hd cfs) in (*if ls-ctx has exacly 1 ele*)
-	  let stab = H.create 103 in
-	  let cf2 = meta_to_formula_not_rename f false [] stab  in
-	  let _ = Debug.info_pprint ("Compared formula: " ^ (Cprinter.string_of_formula cf2) ^ "\n") no_pos in
-	  let res,mt = CEQ.checkeq_formulas iv cf1 cf2 in
-	  if(res) then  print_string ("EQUAL\n") else  print_string ("NOT EQUAL\n")
+	  if(List.length fl = 1) then (
+	    let f = List.hd fl in
+	    let cfs = CF.list_formula_of_list_context ls_ctx in
+	    let cf1 = (List.hd cfs) in (*if ls-ctx has exacly 1 ele*)
+	    let stab = H.create 103 in
+	    let cf2 = meta_to_formula_not_rename f false [] stab  in
+	    let _ = Debug.info_pprint ("Compared residue: " ^ (Cprinter.string_of_formula cf2) ^ "\n") no_pos in
+	    let res,mt = CEQ.checkeq_formulas iv cf1 cf2 in
+	    if(res) then  print_string ("EQUAL\n") else  print_string ("NOT EQUAL\n")
+	  )
+	  else  print_string ("ERROR: Input is 1 formula only\n")
 	)
+      )
+  else if (var = "assumption") then(
+    match !residues with
+      | None -> print_string ": no residue \n"
+      | Some (ls_ctx, print) ->(
+        if (print) then (
+	  if(List.length fl = 2) then (
+	    let f1,f2 = (List.hd fl, List.hd (List.tl fl)) in
+	    let stab = H.create 103 in
+	    let cf11 = meta_to_formula_not_rename f1 false [] stab  in
+	    let cf12 = meta_to_formula_not_rename f2 false [] stab  in
+	    let _ = Debug.info_pprint ("Compared assumption: " ^ (Cprinter.string_of_formula cf11) ^ ", " ^ (Cprinter.string_of_formula cf12) ^ "\n") no_pos in
+	    let hprels = match ls_ctx with
+	      | CF.SuccCtx (c::_) ->  CF.collect_hp_rel c
+	      | _ -> [] (*TODO: report error ?*)
+	    in
+	    let hprel1 = List.hd hprels in
+	    let (_,cf21,cf22) = hprel1 in
+	    let res,mt = CEQ.check_equiv_constr iv (cf11,cf12) (cf21, cf22) in
+	    if(res) then  print_string ("EQUAL\n") else  print_string ("NOT EQUAL\n")
+	  )
+	  else  print_string ("ERROR: Input is 1 formula only\n")
+	)
+      )
+  )
   else
     print_string ("unsupported compare command: " ^ var)
 

@@ -368,7 +368,10 @@ and check_rel_equiv (hvars: ident list) (r1:  (CP.spec_var * (CP.exp list) * loc
   if(res) then check_exp_list_equiv hvars el1 el2 mt (*check hard var in relation*)
   else (
     if(is_hard_r1 || is_hard_r2) then (false, mt)
-    else check_exp_list_equiv hvars el1 el2 mt (*TODO, add mapptable*)
+    else (
+      let res, new_mt = add_map_rel mt n1 n2 in
+      check_exp_list_equiv hvars el1 el2 new_mt (*TODO, add mapptable*)
+    )
   )
 and check_exp_list_equiv (hvars: ident list) (el1: CP.exp list) (el2: CP.exp list) (mt: map_table): (bool * map_table)=
   if((List.length el1) != (List.length el2)) then (false, mt) 
@@ -728,3 +731,35 @@ let rec checkeq_constrs hvars (constrs: (CF.formula * CF.formula) list) ( infile
   let pr2 b = if(b) then "VALID\n" else "INVALID\n" in
   Debug.ho_2 "check_constrs" pr1 pr1 (pr2)
       (fun _ _ -> checkeq_constrs_x hvars constrs infile_constrs) constrs infile_constrs
+
+
+let match_def hvars defs def =
+  let match_def_helper hvars idef def2 = 
+    let (rc, hf,f) = idef in
+    let def1 = (CF.formula_of_heap hf no_pos, f) in
+    check_equiv_constr hvars def1 def2
+  in 
+true
+
+
+
+let checkeq_defs_x hvars (defs: (CP.rel_cat * CF.h_formula * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list): bool =
+  let _ =  List.map (fun def -> match_def hvars defs def) infile_defs in
+
+  true
+
+
+
+
+
+
+
+
+
+
+let checkeq_defs hvars (defs: (CP.rel_cat * CF.h_formula * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list): bool =
+  let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
+  let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  let pr3 b = if(b) then "VALID\n" else "INVALID\n" in
+  Debug.ho_2 "check_defs" pr2 pr1 (pr3)
+    (fun _ _ -> checkeq_defs_x hvars defs infile_defs) defs infile_defs

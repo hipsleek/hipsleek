@@ -1297,8 +1297,8 @@ print_cmd:
    | `PRINT; `DOLLAR; `IDENTIFIER id  -> PVar id]];
 
 cmp_cmd:
-  [[ `CMP; `IDENTIFIER id ; `OSQUARE; il=OPT id_list; `CSQUARE ; `COLON; f = meta_constr -> 
-  let il = un_option il [] in (il,id,f)]];
+  [[ `CMP; `IDENTIFIER id ; `OSQUARE; il=OPT id_list; `CSQUARE ; `COLON; fl = LIST1 meta_constr SEP `COMMA  -> 
+  let il = un_option il [] in (il,id,fl)]];
 
 time_cmd:
   [[ `DTIME; `ON; `IDENTIFIER id   -> Time(true, id, get_pos_camlp4 _loc 1)

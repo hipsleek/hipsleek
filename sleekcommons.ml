@@ -48,7 +48,7 @@ type command =
   | Infer of (ident list * meta_formula * meta_formula)
   | CaptureResidue of ident
   | PrintCmd of print_cmd
-  | CmpCmd of (ident list * ident * meta_formula)
+  | CmpCmd of (ident list * ident * meta_formula list)
   | Time of (bool*string*loc)
   | EmptyCmd 
 
