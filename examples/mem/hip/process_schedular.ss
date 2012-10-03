@@ -24,24 +24,22 @@ sll<R> == self = null & R = {}
     
 void insert_process(int pid, int stat, ref node plist, ref node rlist, ref node slist)
 case {
-stat = 1 -> requires plist::ll<R> & rlist::rll<R1> * slist::sll<R2> & R = union(R1,R2)
-	    ensures plist'::ll<Rp> & rlist'::rll<R1p> * slist::sll<R2> 
+stat = 1 -> requires rlist::rll<R1> * slist::sll<R2> & plist::ll<R>  & R = union(R1,R2)
+	    ensures  rlist'::rll<R1p> * slist::sll<R2> & plist'::ll<Rp>
 	    & plist' = rlist' & Rp = union(R1p,R2) & R1p = union(R1,{rlist'}) & Rp = union(R,{plist'});
-stat != 1 -> requires plist::ll<R> & rlist::rll<R1> * slist::sll<R2> & R = union(R1,R2)
-	    ensures plist'::ll<Rp> & rlist::rll<R1> * slist'::sll<R2p>
+stat != 1 -> requires rlist::rll<R1> * slist::sll<R2> & plist::ll<R> & R = union(R1,R2)
+	    ensures rlist::rll<R1> * slist'::sll<R2p> & plist'::ll<Rp> 
 	    & plist' = slist' & Rp = union(R1,R2p) & R2p = union(R2,{slist'}) & Rp = union(R,{plist'});}
 {
 	node tmp = new node(pid,stat,null,null,null);
-	//tmp.next = plist;
-	//plist = tmp;
+	tmp.next = plist;
+	plist = tmp;
 	if(stat == 1){
 		rlist = insert_rll(rlist,tmp);
 		}
 	else{
 		slist = insert_sll(slist,tmp);
 		}
-	dprint;
-	plist = insert_pll(plist,tmp);
 }
 
 node insert_pll(node x, ref node n)

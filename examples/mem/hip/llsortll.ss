@@ -45,9 +45,9 @@ requires x::ll<n,R> & s::sll<n,sm,lg,R>
 ensures x::ll<n+1,R1> & s::sll<n+1,mi,ma,R1> & mi = min(v, sm) & ma = max(v, lg) &  R1 = union(R,{x}); 
 {
 node c = new node(v,null,null);
-s = insert2(s,c);
 c.next = x;
 x = c;
+insert2(s,c);
 }
 
 void overlaid_delete(node x, node s, int v)
@@ -59,7 +59,6 @@ node c;
 if(s == null) return;
 c = delete(s,v);
 s = c;
-dprint;
 }
 */
 
@@ -101,7 +100,7 @@ ensures res::sll<n + 1, mi, ma, R1> & mi = min(v, sm) & ma = max(v, lg) & R subs
 */
 
 node insert2(node x, node vn)
-	requires x::sll<n, sm, lg,R> *  vn::node<v,_@A,_>
+	requires x::sll<n, sm, lg,R> *  vn::node<v@L,_@A,_>
 	ensures res::sll<n+1, mi, ma, R1> & mi=min(v, sm) & ma=max(v, lg) & R1 = union(R,{vn});
 {
 	if (x==null) {

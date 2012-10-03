@@ -521,7 +521,6 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 	  h_formula_star_pos = pos}) ->
           let l1 = helper f1 in
           let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkStarH lhs1 f2 pos 12 , node1, hole1, match1)) l1 in  
-
           let l2 = helper f2 in
           let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkStarH f1 lhs2 pos 13, node2, hole2, match2)) l2 in
 	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x f:"  ^ (Cprinter.string_of_h_formula f)) in *)
@@ -529,6 +528,17 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res1:"  ^ helper0 res1) in *)
 	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res2:"  ^ helper0 res2) in  *)
           res1 @ res2
+    | Conj({h_formula_conj_h1 = f1;
+	   h_formula_conj_h2 = f2;
+	   h_formula_conj_pos = pos}) ->  if (!Globals.allow_mem) then 
+           let l1 = helper f1 in
+           let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkConjH lhs1 f2 pos , node1, hole1, match1)) l1 in  
+           let l2 = helper f2 in
+           let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkConjH f1 lhs2 pos , node2, hole2, match2)) l2 in
+           res1 @ res2
+	   else 
+	   let _ = print_string("[context.ml]: Conjunction in lhs, use mem specifications. lhs = " ^ (string_of_h_formula f) ^ "\n") in
+          	failwith("[context.ml]: There should be no conj/phase in the lhs at this level\n")				
     | _ -> 
           let _ = print_string("[context.ml]: There should be no conj/phase in the lhs at this level; lhs = " ^ (string_of_h_formula f) ^ "\n") in
           failwith("[context.ml]: There should be no conj/phase in the lhs at this level\n")
