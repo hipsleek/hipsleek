@@ -47,7 +47,7 @@ ensures x'::ll<n+1,R1> & s'::sll<n+1,mi,ma,R1> & mi = min(v, sm) & ma = max(v, l
 node c = new node(v,null,null);
 c.next = x;
 x = c;
-insert2(s,c);
+s = insert2(s,c);
 }
 
 void overlaid_delete(node x, node s, int v)
