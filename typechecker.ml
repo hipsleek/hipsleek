@@ -1554,7 +1554,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (* let _ = Cprinter.string_of_list_failesc_context in *)
                     let pr2 = Cprinter.string_of_list_failesc_context in
                     let pr3 = Cprinter.string_of_struc_formula in
-                    let f = wrap_proving_kind "PRE-2" check_pre_post org_spec sctx in
+                    let f = wrap_proving_kind "PRE-2" (check_pre_post org_spec sctx) in
                     Debug.no_2_loop "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  f should_output_html) org_spec sctx in
 		  let _ = if !print_proof then Prooftracer.start_compound_object () in
                   let scall_pre_cond_pushed = if !print_proof then
