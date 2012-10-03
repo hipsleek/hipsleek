@@ -237,12 +237,27 @@ object
        | Some l -> (string_of_pos l.start_pos)
 end;;
 
+class proving_type =
+object
+  inherit [string] store "None" (fun x -> x)
+end;;
+
 let proving_loc  = new prog_loc
-
 let post_pos = new prog_loc
+let proving_kind = new proving_type
 
-let proving_info () = ("post:"^(post_pos#string_of_pos) ^"loc:"^(proving_loc#string_of_pos))
+let wrap_proving_kind s f a =
+  let _ = proving_kind # set s in
+  let _ = print_string ("wrap proving kind:"^s^"\n") in
+  let r = f a in
+  let _ = proving_kind # reset in
+  r
 
+let proving_info () = 
+  if (post_pos # is_avail) 
+  then ("spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^(proving_kind # string_of))
+  else ".."
+ 
 (* let post_pos = ref no_pos *)
 (* let set_post_pos p = post_pos := p *)
 
