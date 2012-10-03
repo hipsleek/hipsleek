@@ -31,7 +31,7 @@ print residue.
 */
 
 //(4)
-checkentail (x::pair<_@A,b@I> & x::pair<a@M,d@I>) & x=x1 & d=3|- x::pair<c@A,y@L> & y=3.
+checkentail x::pair<_@A,b@I> & x::pair<a@M,d@I> & x=x1 & d=3|- x::pair<c@A,y@L> & y=3.
 print residue.
 /*
 without --mem
@@ -44,7 +44,7 @@ with --mem
 
 
 //(5)
-checkentail (x::pair<_@A,b@M> & x::pair<a@M,d@M>) & x=x1 & d=3|- x::pair<c@A,y@L> & y=3.
+checkentail x::pair<_@A,b@M> & x::pair<a@M,d@M> & x=x1 & d=3|- x::pair<c@A,y@L> & y=3.
 print residue.
 /*
 with --mem

@@ -24,7 +24,7 @@ global node q;
 
 void add_L(node x, ref node y)
 requires x::node<v,_@M> * y::ll<Ry>
-ensures y'::node<v,y@A> * y::ll<Ry>;
+ensures y'::node<v,y@I> * y::ll<Ry>;
 {
   x.next = y;
   y = x;
@@ -33,10 +33,12 @@ ensures y'::node<v,y@A> * y::ll<Ry>;
 node find_L(ref node q, int k)
 requires q::ll<Rq>
 ensures q::lseg<R1,res> * res::node<k,q2> * q2::ll<R2> & Rq =union({res},R1,R2);
+requires q::ll<Rq>
+ensures q::ll<Rq> & res = q;
 
 void caching(node x, ref node cached)
-requires x::node<v@L,n@L> * cached::node<_,_>
-ensures cached::node<v,n> * x::node<v@L,n@L>;
+requires (x::node<v,n>@L) ; cached::node<_,_>
+ensures cached::node<v,n>;
 
 void add_in(int key, ref node cached, ref node q) 
 requires cached::node<_,_> & q::ll<Rq> 
@@ -53,8 +55,10 @@ ensures  cached'::node<key,_> & q::ll<R1> & R1 = union(Rq,{cached'});
 }
 
 node find(int key, ref node cached, ref node q, int flag) 
-requires cached::node<_,_> & q::ll<Rq>
-ensures  res::node<key,q2> * q2::ll<R2> * (cached'::node<key,_> & q::lseg<R1,res>) & Rq = union(R1,R2,{res});
+requires q::ll<Rq> & cached::node<_,_>
+ensures  q::lseg<R1,res> * res::node<key,q2> * q2::ll<R2> & cached'::node<key,_> & Rq = union(R1,R2,{res});
+requires q::ll<Rq> & cached::node<_,_>
+ensures  q::ll<Rq> & cached'::node<key,_> & res = q;
 {
   node tmp, cache;
   if(cached != null) {
@@ -66,5 +70,5 @@ ensures  res::node<key,q2> * q2::ll<R2> * (cached'::node<key,_> & q::lseg<R1,res
     if(flag==1) { caching(tmp, cached); }
     return tmp;
   }
-  return null;
+  return q;
 }

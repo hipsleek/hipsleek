@@ -3873,6 +3873,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
       (f0 : IF.struc_formula) stab (sp:bool): CF.struc_formula = 
   let rec trans_struc_formula (fvars : ident list) stab (f0 : IF.struc_formula) :CF.struc_formula = match f0 with
       | IF.EAssume (b,y)->	(*add res, self*)
+            (*let _ = print_string("Struc Formula : "^(Iprinter.string_of_struc_formula f0)^"\n") in*)
             CF.EAssume ([], trans_formula prog true (self::res_name::eres_name::fvars) false b stab true, y)
       | IF.ECase b-> 	
             CF.ECase {
@@ -4091,6 +4092,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             IF.formula_base_flow = fl;
             IF.formula_base_and = a;
             IF.formula_base_pos = pos} ->(
+ 	    (*let _ = print_string("Formula: "^(Iprinter.string_of_formula f0) ^"\n") in*)
             let rl = res_retrieve stab clean_res fl in
             let _ = if sep_collect then  (gather_type_info_pure prog p stab; gather_type_info_heap prog h stab) else () in 		    let _ = List.map helper_one_formula a in          
             let ch = linearize_formula prog f0 stab in					
@@ -4165,7 +4167,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
 	        hvars
       | [] -> [] in
   let rec linearize_heap (f : IF.h_formula) pos : ( CF.h_formula * CF.t_formula) = 
-    let res = 
+    let res = (*let _ = print_string("H_formula: "^(Iprinter.string_of_h_formula f)^"\n") in*)
       match f with
         | IF.HeapNode2 h2 -> report_error (IF.pos_of_formula f0) "malfunction with convert to heap node"
         | IF.HeapNode{
@@ -4362,6 +4364,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
     let id = f.IF.formula_thread in
     let pos = f.IF.formula_pos in
     let (new_h, type_f) = linearize_heap h pos in
+    (*let _ = print_string("Heap: "^(Cprinter.string_of_h_formula new_h)^"\n") in*)
     let new_p = trans_pure_formula p stab in
     let new_p = Cpure.arith_simplify 5 new_p in
     let mix_p = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_p) in
@@ -5973,7 +5976,8 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
 	            IF.h_formula_conj_h1 = f1;
 	            IF.h_formula_conj_h2 = f2;
 	            IF.h_formula_conj_pos = pos
-	        } 
+	        } ->
+	 IF.mkConj (imm_heap f1) (imm_heap f2) pos
     | IF.Phase
 	        {
 	            IF.h_formula_phase_rd = f1;

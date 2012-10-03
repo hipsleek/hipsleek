@@ -1,0 +1,17 @@
+data pair {
+	int fst; 
+	int snd;
+}.	
+
+//(1)
+checkentail x::pair<a,d> & d=3 |- x::pair<c@A,y@M> & y=3.
+print residue.
+
+//(2)
+checkentail x::pair<_@M,b@M> && x1::pair<a@M,d@M> & x=x1 & d=3|- x::pair<c@M,y@M> & y=3.
+print residue.
+
+//(3)
+checkentail x::pair<_@A,b@L> && x1::pair<a@A,d@L> & x=x1 & d=3|- x::pair<c@A,y@I> & y=3.
+print residue.
+//field annotations and memory have to be exact

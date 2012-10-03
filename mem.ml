@@ -483,11 +483,18 @@ let rec check_mem_non_inter (h1: CF.h_formula) (h2:CF.h_formula) (vl:C.view_decl
 		in List.exists (fun c -> (is_compatible_field_layout (snd f1) (snd c))) matched_fields) fl1
 	in List.for_all (fun c -> c) t
 
+let rec check_mem_conj (h1: CF.h_formula) (h2:CF.h_formula) (vl:C.view_decl list) : bool = 
+	(*let mpf1 = fst (xmem_heap h1 vl) in
+	let mpf2 = fst (xmem_heap h2 vl) in
+	let mpe1,exact1,fl1 = mpf1.CF.mem_formula_exp , mpf1.CF.mem_formula_exact, mpf1.CF.mem_formula_field_layout in
+	let mpe2,exact2,fl2 = mpf2.CF.mem_formula_exp , mpf2.CF.mem_formula_exact, mpf2.CF.mem_formula_field_layout in*)
+	true
+
 let rec check_mem_sat (h: CF.h_formula) (vl:C.view_decl list) : bool = 
 match h with 
 | CF.Conj({CF.h_formula_conj_h1 = h1;
 	   CF.h_formula_conj_h2 = h2;
-	   CF.h_formula_conj_pos = pos}) -> (check_mem_non_inter h1 h2 vl)
+	   CF.h_formula_conj_pos = pos}) -> (check_mem_conj h1 h2 vl)
 | CF.Phase({CF.h_formula_phase_rd = h1;
 	    CF.h_formula_phase_rw = h2;
 	    CF.h_formula_phase_pos = pos})

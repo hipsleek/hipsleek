@@ -1,0 +1,22 @@
+data pair {
+	int fst; 
+	int snd;
+}.	
+
+//(1)
+checkentail x::pair<a,d> & d=3 |- x::pair<c@A,y@M> & y=3.
+print residue.
+
+//(2)
+checkentail x::pair<_@A,b@M> &* x1::pair<a@M,d@A> & x=x1 & d=3|- x::pair<c@A,y@M> & y=3.
+print residue.
+
+//(3)
+checkentail x::pair<_@A,b@L> &* x1::pair<a@M,d@L> & x=x1 & d=3|- x::pair<c@A,y@I> & y=3.
+print residue.
+//@L &* @L is okay --> shared reading of fields
+
+//(4)
+checkentail x::pair<_@A,b@M> &* x1::pair<a@M,d@L> & x=x1 & d=3|- x::pair<c@A,y@I> & y=3.
+print residue.
+// @M &* @L is hfalse --> shared writing of fields not allowed
