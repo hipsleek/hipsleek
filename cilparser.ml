@@ -451,7 +451,10 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option): Iast.proc
   let args = collect_params fheader in
   let slocals = List.map (fun x -> translate_var_decl x lopt) fundec.Cil.slocals in
   let sbody = translate_block fundec.Cil.sbody lopt in
-  let funbody = merge_iast_exp (slocals @ [sbody]) (Some pos) in
+  let funbody = Iast.Block {Iast.exp_block_body = merge_iast_exp (slocals @ [sbody]) (Some pos);
+                            Iast.exp_block_jump_label = Iast.NoJumpLabel;
+                            Iast.exp_block_local_vars = [];
+                            Iast.exp_block_pos = pos} in
   let filename = pos.start_pos.Lexing.pos_fname in
   let newproc : Iast.proc_decl = {
     Iast.proc_name = name;
