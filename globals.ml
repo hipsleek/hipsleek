@@ -257,8 +257,8 @@ let proving_info () =
 
 let wrap_proving_kind s f a =
   let _ = proving_kind # set s in
-  let _ = print_string ("wrap proving kind:"^s^"\n") in
-  let _ = print_string ((proving_info())^"\n") in
+  (* let _ = print_string ("wrap proving kind:"^s^"\n") in *)
+  (* let _ = print_string ((proving_info())^"\n") in *)
   let r = f a in
   let _ = proving_kind # reset in
   r

@@ -1170,143 +1170,147 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_bind_imm = imm;
           exp_bind_read_only = read_only;
 	  exp_bind_path_id = pid;
-          exp_bind_pos = pos}) -> begin
-            let b,res = (if !Globals.ann_vp then
-              (*check for access permissions*)
-              let var = (CP.SpecVar (v_t, v, Primed)) in
-              check_full_varperm prog ctx [var] pos
-            else
-              true,ctx)
-            in
-            if (not b) then res (*do not have permission for variable v*)
-            else
-              (* Debug.devel_zprint (lazy ("bind: delta at beginning of bind\n" ^ (string_of_constr delta) ^ "\n")) pos; *)
-	      let _ = proving_loc#set pos in
-              let lsv = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed)) lvars in
-	      let field_types, vs = List.split lvars in
-	      let v_prim = CP.SpecVar (v_t, v, Primed) in
-	      let vs_prim = List.map2 (fun v -> fun t -> CP.SpecVar (t, v, Primed)) vs field_types in
-	      let p = CP.fresh_spec_var v_prim in
-	      let link_pv = CF.formula_of_pure_N
-	        (CP.mkAnd (CP.mkEqVar v_prim p pos) (CP.BForm ((CP.mkNeq (CP.Var (p, pos)) (CP.Null pos) pos, None), None)) pos) pos in
-	      (* let _ = print_string ("[typechecker.ml, check__exp]: link_pv: " ^ Cprinter.string_of_formula link_pv ^ "\n") in*)
-	      (*	  let link_pv = CF.formula_of_pure (CP.mkEqVar v_prim p pos) pos in *)
-	      (* let _ = print_endline ("bind: unfolded context: after check_full_perm \n" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
-	      let tmp_ctx =
-	        if !Globals.large_bind then
-	          CF.normalize_max_renaming_list_failesc_context link_pv pos false ctx
-	        else ctx in
-              (* let _ = print_endline ("WN1 ctx: "^Cprinter.string_of_list_failesc_context ctx) in *)
-              (* let _ = print_endline ("WN1 tmp_ctx: "^Cprinter.string_of_list_failesc_context tmp_ctx) in *)
-              let _ = CF.must_consistent_list_failesc_context "bind 1" ctx  in
-	      (* let _ = print_endline ("bind: unfolded context: before unfold: ### vprim = "^ (Cprinter.string_of_spec_var v_prim)^ " \n" ^ (Cprinter.string_of_list_failesc_context tmp_ctx)) in *)
-	      let unfolded = unfold_failesc_context (prog,None) tmp_ctx v_prim true pos in
-	      (* let _ = print_endline ("bind: unfolded context: after unfold \n" ^ (Cprinter.string_of_list_failesc_context unfolded)) in *)
-	      (* let unfolded_prim = if !Globals.elim_unsat then elim_unsat unfolded else unfolded in *)
-              let _ = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
-	      let _ = Debug.devel_zprint (lazy ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
-              ^ "\n")) pos in
-	      (* let _ = print_string ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded) *)
-              (*     ^ "\n") in *)
-
-	      let c = string_of_typ v_t in
-              let fresh_frac_name = Cpure.fresh_old_name "f" in
-              let perm_t = cperm_typ () in
-              let fresh_frac =  Cpure.SpecVar (perm_t,fresh_frac_name, Unprimed) in (*LDK TO CHECK*)
-              (* let perm = (if (Perm.allow_perm ()) then  *)
-              (*       (\*there exists fresh_frac statisfy ... *\) *)
-              (*       (if (read_only) then *)
-              (*             Some fresh_frac  *)
-              (*        else *)
-              (*             (\* writeable *\) *)
-              (*             None) *)
-              (*     else None) *)
-              (* in *)
-	      let vdatanode = CF.DataNode ({
-                  CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
-                  CF.h_formula_data_name = c;
-		  CF.h_formula_data_derv = false; (*TO CHECK: assume false*)
-		  CF.h_formula_data_imm = CF.ConstAnn(imm);
-		  CF.h_formula_data_perm = if (Perm.allow_perm ()) then Some fresh_frac else None; (*LDK: belong to HIP, deal later ???*)
-		  CF.h_formula_data_origins = []; (*deal later ???*)
-		  CF.h_formula_data_original = true; (*deal later ???*)
-                  CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
-		  CF.h_formula_data_holes = []; (* An Hoa : Don't know what to do *)
-                  CF.h_formula_data_label = None;
-                  CF.h_formula_data_remaining_branches = None;
-                  CF.h_formula_data_pruning_conditions = [];
-                  CF.h_formula_data_pos = pos}) in
-	      let vheap = CF.formula_of_heap vdatanode pos in
-
-              (*Test whether fresh_frac is full permission or not
-                writable -> fresh_frac = full_perm => normally
-                read-only -> fresh_frac != full_perm => in order to 
-                detect permission violation
-                We use exp_bind_read_only. If true -> read only -> 0.0<f<=1.0
-                Othewiese, false -> write -> f=1.0
-              *)
-              let vheap = 
-                if (Perm.allow_perm ()) then 
-                  (*there exists fresh_frac statisfy ... *)
-                  if (read_only)
-                  then
-                    let read_f = mkPermInv () fresh_frac in
-                    CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
+          exp_bind_pos = pos}) -> 
+              let bind_op () =
+                begin
+                  let b,res = (if !Globals.ann_vp then
+                    (*check for access permissions*)
+                    let var = (CP.SpecVar (v_t, v, Primed)) in
+                    check_full_varperm prog ctx [var] pos
                   else
-                    let write_f = mkPermWrite () fresh_frac in
-                    CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) write_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
-                else
-                  vheap
-              in
+                    true,ctx)
+                  in
+                  if (not b) then res (*do not have permission for variable v*)
+                  else
+                    (* Debug.devel_zprint (lazy ("bind: delta at beginning of bind\n" ^ (string_of_constr delta) ^ "\n")) pos; *)
+	            let _ = proving_loc#set pos in
+                    let lsv = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed)) lvars in
+	            let field_types, vs = List.split lvars in
+	            let v_prim = CP.SpecVar (v_t, v, Primed) in
+	            let vs_prim = List.map2 (fun v -> fun t -> CP.SpecVar (t, v, Primed)) vs field_types in
+	            let p = CP.fresh_spec_var v_prim in
+	            let link_pv = CF.formula_of_pure_N
+	              (CP.mkAnd (CP.mkEqVar v_prim p pos) (CP.BForm ((CP.mkNeq (CP.Var (p, pos)) (CP.Null pos) pos, None), None)) pos) pos in
+	            (* let _ = print_string ("[typechecker.ml, check__exp]: link_pv: " ^ Cprinter.string_of_formula link_pv ^ "\n") in*)
+	            (*	  let link_pv = CF.formula_of_pure (CP.mkEqVar v_prim p pos) pos in *)
+	            (* let _ = print_endline ("bind: unfolded context: after check_full_perm \n" ^ (Cprinter.string_of_list_failesc_context ctx)) in *)
+	            let tmp_ctx =
+	              if !Globals.large_bind then
+	                CF.normalize_max_renaming_list_failesc_context link_pv pos false ctx
+	              else ctx in
+                    (* let _ = print_endline ("WN1 ctx: "^Cprinter.string_of_list_failesc_context ctx) in *)
+                    (* let _ = print_endline ("WN1 tmp_ctx: "^Cprinter.string_of_list_failesc_context tmp_ctx) in *)
+                    let _ = CF.must_consistent_list_failesc_context "bind 1" ctx  in
+	            (* let _ = print_endline ("bind: unfolded context: before unfold: ### vprim = "^ (Cprinter.string_of_spec_var v_prim)^ " \n" ^ (Cprinter.string_of_list_failesc_context tmp_ctx)) in *)
+	            let unfolded = unfold_failesc_context (prog,None) tmp_ctx v_prim true pos in
+	            (* let _ = print_endline ("bind: unfolded context: after unfold \n" ^ (Cprinter.string_of_list_failesc_context unfolded)) in *)
+	            (* let unfolded_prim = if !Globals.elim_unsat then elim_unsat unfolded else unfolded in *)
+                    let _ = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
+	            let _ = Debug.devel_zprint (lazy ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
+                    ^ "\n")) pos in
+	            (* let _ = print_string ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded) *)
+                    (*     ^ "\n") in *)
 
-	      let vheap = prune_preds prog false vheap in
-              let struc_vheap = CF.EBase { 
-	          CF.formula_struc_explicit_inst = [];	 
-                  CF.formula_struc_implicit_inst = if (Perm.allow_perm ()) then [fresh_frac] else [];  (*need to instantiate f*)
-                  CF.formula_struc_exists = [];
-	          CF.formula_struc_base = vheap;
-	          CF.formula_struc_continuation = None;
-	          CF.formula_struc_pos = pos} in
-	      let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
-	      Debug.devel_pprint to_print pos;
-	      if (Gen.is_empty unfolded) then unfolded
-	      else
-		let _ = consume_all := true in
-	        let rs_prim, prf = heap_entail_struc_list_failesc_context_init prog false  true unfolded struc_vheap None pos pid in
-		let _ = consume_all := false in
-                let _ = CF.must_consistent_list_failesc_context "bind 3" rs_prim  in
-	        let _ = PTracer.log_proof prf in
-	        let rs = CF.clear_entailment_history_failesc_list (fun x -> None) rs_prim in
-                let _ = CF.must_consistent_list_failesc_context "bind 4" rs  in
-	        if (CF.isSuccessListFailescCtx_new unfolded) && not(CF.isSuccessListFailescCtx_new rs) then
-                  begin
-		    Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ") 
-                        ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos; (* add branch info *)
-		    Debug.print_info ("(Cause of Bind Failure)")
-                        (Cprinter.string_of_failure_list_failesc_context rs) pos;
-		    rs
-                  end
-                else 
-                  begin
-                    stk_vars # push_list lsv;
-                    let tmp_res1 = check_exp prog proc rs body post_start_label in 
-                    stk_vars # pop_list lsv;
-                    let _ = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
-                    let tmp_res2 = 
-		      if (imm != Lend) then 
-		        CF.normalize_max_renaming_list_failesc_context vheap pos true tmp_res1 
-    			    (* for Lend, it should not be added back *)
-		      else tmp_res1
-		    in
-                    let _ = CF.must_consistent_list_failesc_context "bind 6" tmp_res2  in
-                    let tmp_res3 = CF.push_exists_list_failesc_context vs_prim tmp_res2 in
-                    let _ = CF.must_consistent_list_failesc_context "bind 7" tmp_res3  in
-		    let res = if !Globals.elim_exists then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
-                    let _ = CF.must_consistent_list_failesc_context "bind 8" res  in
-                    normalize_list_failesc_context_w_lemma prog res
-                  end
-          end; (*end Bind*)
-	      
+	            let c = string_of_typ v_t in
+                    let fresh_frac_name = Cpure.fresh_old_name "f" in
+                    let perm_t = cperm_typ () in
+                    let fresh_frac =  Cpure.SpecVar (perm_t,fresh_frac_name, Unprimed) in (*LDK TO CHECK*)
+                    (* let perm = (if (Perm.allow_perm ()) then  *)
+                    (*       (\*there exists fresh_frac statisfy ... *\) *)
+                    (*       (if (read_only) then *)
+                    (*             Some fresh_frac  *)
+                    (*        else *)
+                    (*             (\* writeable *\) *)
+                    (*             None) *)
+                    (*     else None) *)
+                    (* in *)
+	            let vdatanode = CF.DataNode ({
+                        CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
+                        CF.h_formula_data_name = c;
+		        CF.h_formula_data_derv = false; (*TO CHECK: assume false*)
+		        CF.h_formula_data_imm = CF.ConstAnn(imm);
+		        CF.h_formula_data_perm = if (Perm.allow_perm ()) then Some fresh_frac else None; (*LDK: belong to HIP, deal later ???*)
+		        CF.h_formula_data_origins = []; (*deal later ???*)
+		        CF.h_formula_data_original = true; (*deal later ???*)
+                        CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
+		        CF.h_formula_data_holes = []; (* An Hoa : Don't know what to do *)
+                        CF.h_formula_data_label = None;
+                        CF.h_formula_data_remaining_branches = None;
+                        CF.h_formula_data_pruning_conditions = [];
+                        CF.h_formula_data_pos = pos}) in
+	            let vheap = CF.formula_of_heap vdatanode pos in
+
+                    (*Test whether fresh_frac is full permission or not
+                      writable -> fresh_frac = full_perm => normally
+                      read-only -> fresh_frac != full_perm => in order to 
+                      detect permission violation
+                      We use exp_bind_read_only. If true -> read only -> 0.0<f<=1.0
+                      Othewiese, false -> write -> f=1.0
+                    *)
+                    let vheap = 
+                      if (Perm.allow_perm ()) then 
+                        (*there exists fresh_frac statisfy ... *)
+                        if (read_only)
+                        then
+                          let read_f = mkPermInv () fresh_frac in
+                          CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
+                        else
+                          let write_f = mkPermWrite () fresh_frac in
+                          CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) write_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
+                      else
+                        vheap
+                    in
+
+	            let vheap = prune_preds prog false vheap in
+                    let struc_vheap = CF.EBase { 
+	                CF.formula_struc_explicit_inst = [];	 
+                        CF.formula_struc_implicit_inst = if (Perm.allow_perm ()) then [fresh_frac] else [];  (*need to instantiate f*)
+                        CF.formula_struc_exists = [];
+	                CF.formula_struc_base = vheap;
+	                CF.formula_struc_continuation = None;
+	                CF.formula_struc_pos = pos} in
+	            let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
+	            Debug.devel_pprint to_print pos;
+	            if (Gen.is_empty unfolded) then unfolded
+	            else
+		      let _ = consume_all := true in
+	              let rs_prim, prf = heap_entail_struc_list_failesc_context_init prog false  true unfolded struc_vheap None pos pid in
+		      let _ = consume_all := false in
+                      let _ = CF.must_consistent_list_failesc_context "bind 3" rs_prim  in
+	              let _ = PTracer.log_proof prf in
+	              let rs = CF.clear_entailment_history_failesc_list (fun x -> None) rs_prim in
+                      let _ = CF.must_consistent_list_failesc_context "bind 4" rs  in
+	              if (CF.isSuccessListFailescCtx_new unfolded) && not(CF.isSuccessListFailescCtx_new rs) then
+                        begin
+		          Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ") 
+                              ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos; (* add branch info *)
+		          Debug.print_info ("(Cause of Bind Failure)")
+                              (Cprinter.string_of_failure_list_failesc_context rs) pos;
+		          rs
+                        end
+                      else 
+                        begin
+                          stk_vars # push_list lsv;
+                          let tmp_res1 = check_exp prog proc rs body post_start_label in 
+                          stk_vars # pop_list lsv;
+                          let _ = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
+                          let tmp_res2 = 
+		            if (imm != Lend) then 
+		              CF.normalize_max_renaming_list_failesc_context vheap pos true tmp_res1 
+    			          (* for Lend, it should not be added back *)
+		            else tmp_res1
+		          in
+                          let _ = CF.must_consistent_list_failesc_context "bind 6" tmp_res2  in
+                          let tmp_res3 = CF.push_exists_list_failesc_context vs_prim tmp_res2 in
+                          let _ = CF.must_consistent_list_failesc_context "bind 7" tmp_res3  in
+		          let res = if !Globals.elim_exists then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
+                          let _ = CF.must_consistent_list_failesc_context "bind 8" res  in
+                          normalize_list_failesc_context_w_lemma prog res
+                        end
+                end  (*end Bind*)
+              in
+              wrap_proving_kind "BIND" bind_op ()
+	          
         | Block ({exp_block_type = t;
           exp_block_body = e;
           exp_block_local_vars = local_vars;
@@ -1328,21 +1332,26 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_cond_then_arm = e1;
           exp_cond_else_arm = e2;
           exp_cond_path_id =pid;
-          exp_cond_pos = pos}) -> begin
-	    let pure_cond = (CP.BForm ((CP.mkBVar v Primed pos, None), None)) in
-	    let then_cond_prim = MCP.mix_of_pure pure_cond in
-	    let else_cond_prim = MCP.mix_of_pure (CP.mkNot pure_cond None pos) in
-	    let then_ctx = combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
-	    Debug.devel_zprint (lazy ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_failesc_context then_ctx))) pos;
-	    let else_ctx =combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
-	    Debug.devel_zprint (lazy ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_failesc_context else_ctx))) pos;
-	    let then_ctx1 = CF.add_cond_label_list_failesc_context pid 0 then_ctx in
-	    let else_ctx1 = CF.add_cond_label_list_failesc_context pid 1 else_ctx in 
-	    let then_ctx2 = check_exp prog proc then_ctx1 e1 post_start_label in
-	    let else_ctx2 = check_exp prog proc else_ctx1 e2 post_start_label in
-	    let res = CF.list_failesc_context_or (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
-	    res
-	  end;
+          exp_cond_pos = pos}) ->
+              let cond_op () =
+                begin
+	          let _ = proving_loc#set pos in
+	          let pure_cond = (CP.BForm ((CP.mkBVar v Primed pos, None), None)) in
+	          let then_cond_prim = MCP.mix_of_pure pure_cond in
+	          let else_cond_prim = MCP.mix_of_pure (CP.mkNot pure_cond None pos) in
+	          let then_ctx = combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
+	          Debug.devel_zprint (lazy ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_failesc_context then_ctx))) pos;
+	          let else_ctx =combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
+	          Debug.devel_zprint (lazy ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_failesc_context else_ctx))) pos;
+	          let then_ctx1 = CF.add_cond_label_list_failesc_context pid 0 then_ctx in
+	          let else_ctx1 = CF.add_cond_label_list_failesc_context pid 1 else_ctx in 
+	          let then_ctx2 = check_exp prog proc then_ctx1 e1 post_start_label in
+	          let else_ctx2 = check_exp prog proc else_ctx1 e2 post_start_label in
+	          let res = CF.list_failesc_context_or (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
+	          res
+	        end in
+              wrap_proving_kind "IF" cond_op ()
+              ;
         | Dprint ({exp_dprint_string = str;
           exp_dprint_visible_names = visib_names;
           exp_dprint_pos = pos}) -> begin
