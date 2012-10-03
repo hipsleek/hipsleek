@@ -23,8 +23,8 @@ global node cached;
 global node q;
 
 void add_L(node x, ref node y)
-requires x::node<v,_@M> * y::ll<Ry>
-ensures y'::node<v,y@I> * y::ll<Ry>;
+requires x::node<v,_> * y::ll<Ry>
+ensures y'::node<v,y> * y::ll<Ry>;
 {
   x.next = y;
   y = x;
@@ -37,8 +37,8 @@ requires q::ll<Rq>
 ensures q::ll<Rq> & res = q;
 
 void caching(node x, ref node cached)
-requires (x::node<v,n>@L) ; cached::node<_,_>
-ensures cached::node<v,n>;
+requires x::node<v,n> & cached::node<_,_>
+ensures x::node<v,n> & cached'::node<v,n>;
 
 void add_in(int key, ref node cached, ref node q) 
 requires cached::node<_,_> & q::ll<Rq> 
@@ -50,6 +50,7 @@ ensures  cached'::node<key,_> & q::ll<R1> & R1 = union(Rq,{cached'});
     x = new node(key,null);
     x.val = key;
     add_L(x,tmp);
+    dprint;
     caching(x,cached);
   }
 }

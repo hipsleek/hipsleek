@@ -40,9 +40,9 @@ lemma self::sll<n,sm,lg,R> -> self::ll<n,R>;
 
 lemma self::ll<n,R> <-> self::lseg<n,R,p>;
 
-void overlaid_insert(node x, node s,int v)
+void overlaid_insert(ref node x, ref node s,int v)
 requires x::ll<n,R> & s::sll<n,sm,lg,R>
-ensures x::ll<n+1,R1> & s::sll<n+1,mi,ma,R1> & mi = min(v, sm) & ma = max(v, lg) &  R1 = union(R,{x}); 
+ensures x'::ll<n+1,R1> & s'::sll<n+1,mi,ma,R1> & mi = min(v, sm) & ma = max(v, lg) &  R1 = union(R,{x}); 
 {
 node c = new node(v,null,null);
 c.next = x;

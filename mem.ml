@@ -72,7 +72,7 @@ let rec fl_subtyping (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann
 		    (fun c -> let _ = print_string (String.concat "," (List.map string_of_imm (snd c))) in c) fl2*)
 		    in (*let _ = List.map
 		    (fun c -> let _ = print_string (String.concat "," (List.map string_of_imm (snd c))) in c) fl2
-		    in*) let tmp = (List.exists (fun c -> let b,_,_ = (Imm.subtype_ann_list [] (snd c) (snd x)) in 
+		    in*) let tmp = (List.exists (fun c -> let b,_,_ = (Imm.subtype_ann_list [] (snd x) (snd c)) in 
 		    (*let _ = 
 		    print_string ("Ann Lists: "^ (*(string_of_bool b) ^*)(String.concat "," (List.map string_of_imm (snd c)))^" :> "^
 		    		(String.concat "," (List.map string_of_imm (snd x)))^ "\n")

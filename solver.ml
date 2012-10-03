@@ -3245,6 +3245,10 @@ and heap_entail_split_rhs (prog : prog_decl) (is_folding : bool) (ctx_0 : contex
     if (is_empty_heap h1) && (is_empty_heap h2) 
     then heap_entail_conjunct prog is_folding ctx_00 conseq rhs_h_matched_set pos 
     else
+    if(is_empty_heap h1) && not(Mem.contains_conj h2) then 
+      let new_conseq = func h2 (MCP.mkMTrue pos) in
+      	heap_entail_conjunct prog is_folding ctx_00 new_conseq rhs_h_matched_set pos
+    else
     if(is_empty_heap h2) then (* D |- h1 = D1 /\ h2 = HEmp*)
       let new_conseq = func h1 (MCP.mkMTrue pos) in
       let after_h1_ctx, after_h1_prfs = heap_entail_split_lhs prog is_folding ctx_00 new_conseq rhs_h_matched_set pos in
