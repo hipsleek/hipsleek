@@ -2,7 +2,8 @@
 global int k;
 global int n;
 
-void increase()
+int increase()
 {
-	k = k+n;
+  k = k + n;
+  return 0;	
 }
