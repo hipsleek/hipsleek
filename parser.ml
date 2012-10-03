@@ -2270,11 +2270,12 @@ arrayaccess_expression:[[
 (*cp_list*)
 cp_list: [[t = LIST0 cp_ele -> t]];
 
-cp_ele: [[t = id; `COLON;`OBRACE;cs=constrs;`CBRACE  -> (t,cs) ]];
+cp_ele: [[t = id; `OSQUARE; il=OPT id_list; `CSQUARE; `COLON;`OBRACE;cs=constrs;`CBRACE  ->  let il = un_option il [] in (il,t,cs) ]];
 
 constrs: [[t = LIST0 constr SEP `COMMA -> t]];
 
 constr : [[ t=disjunctive_constr; `LEFTARROW; b=disjunctive_constr -> ( (F.subst_stub_flow n_flow t), (F.subst_stub_flow n_flow b))]];
+
 
 (*end of cp_list*)
 END;;

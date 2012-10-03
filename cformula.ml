@@ -3167,6 +3167,15 @@ and get_hp_rel_name_h_formula hf=
     | HFalse
     | HEmp -> []
 
+and get_hp_rel_vars_formula (f: formula) =
+  match f with
+    | Base  ({formula_base_heap = h1;
+		      formula_base_pure = p1})
+    | Exists ({ formula_exists_heap = h1;
+		        formula_exists_pure = p1}) -> get_hp_rel_vars_h_formula h1
+    | Or orf  -> (get_hp_rel_vars_formula orf.formula_or_f1)@
+        (get_hp_rel_vars_formula orf.formula_or_f2)
+
 and get_hp_rel_vars_bformula bf=
   get_hp_rel_vars_h_formula bf.formula_base_heap
 

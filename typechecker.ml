@@ -1921,11 +1921,11 @@ and check_proc (prog : prog_decl) (iprog: I.prog_decl)(proc : proc_decl) : bool 
 		      let org_in_chnl = open_in file_name in 
 		      try
 			let cps  = Parser.parse_constrs file_name (Stream.of_channel org_in_chnl) in
-			let set_constrs = List.filter (fun (t,cs) -> (String.compare t "constrs" == 0)) cps in
-			let t,res = if(List.length set_constrs != 1) then report_error no_pos "invalid condition for constrs"
+			let set_constrs = List.filter (fun (il,t,cs) -> (String.compare t "constrs" == 0)) cps in
+			let il1,t,res = if(List.length set_constrs != 1) then report_error no_pos "invalid condition for constrs"
 			  else List.hd set_constrs in (*the only constrs in file*)
-			let set_defs = List.filter (fun (t,cs) -> (String.compare t "hp_defs" == 0)) cps in
-			let t2,res2 = if(List.length set_defs != 1) then report_error no_pos "invalid condition for defs"
+			let set_defs = List.filter (fun (il,t,cs) -> (String.compare t "hp_defs" == 0)) cps in
+			let il2,t2,res2 = if(List.length set_defs != 1) then report_error no_pos "invalid condition for defs"
 			  else List.hd set_defs in (*the only constrs in file*)
 			close_in org_in_chnl;
 			(res,res2)
@@ -1954,7 +1954,7 @@ and check_proc (prog : prog_decl) (iprog: I.prog_decl)(proc : proc_decl) : bool 
 		      let infile_constrs = List.map (fun constr -> trans_constr constr) infile_constrs in
 		      let infile_defs = List.map (fun def -> trans_constr def) infile_defs in
 		      let is_match_constrs = CEQ.checkeq_constrs [] hp_lst_assume infile_constrs in
-		      let is_match_defs = CEQ.checkeq_defs [] hp_lst_simplified_assume infile_defs in
+		      let match_defs = CEQ.checkeq_defs [] hp_lst_simplified_assume infile_defs in
 		      ()
 		    )
 		    in

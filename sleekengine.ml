@@ -852,7 +852,7 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
 	    in
 	    let hprel1 = List.hd hprels in
 	    let (_,cf21,cf22) = hprel1 in
-	    let res,mt = CEQ.check_equiv_constr iv (cf11,cf12) (cf21, cf22) in
+	    let res,mtl = CEQ.check_equiv_constr iv (cf11,cf12) (cf21, cf22) in
 	    if(res) then  print_string ("EQUAL\n") else  print_string ("NOT EQUAL\n")
 	  )
 	  else  print_string ("ERROR: Input is 1 formula only\n")

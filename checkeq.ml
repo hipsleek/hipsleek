@@ -79,7 +79,7 @@ and checkeq_formulas_one (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(m
 		  let _ = Debug.ninfo_pprint ("EQ. FMT: " ^ (string_of_map_table_list mtl2)) no_pos in
 		  (res,mtl2)
 		)
-		|_ -> report_error no_pos "f1: formula_base, f2 should be formula_base") (*(false,mtl))*)
+		|_ -> (false,[])) (* error no_pos "f1: formula_base, f2 should be formula_base")   (false,mtl))*)
     |CF.Exists({CF.formula_exists_heap = h1;
 		CF.formula_exists_pure = p1})->(match f2 with 
 		  |CF.Exists ({CF.formula_exists_heap = h2;
@@ -95,7 +95,7 @@ and checkeq_formulas_one (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(m
 		    let _ = Debug.ninfo_pprint ("EQ. FMT: " ^ (string_of_map_table_list mtl2)) no_pos in
 		    (res,mtl2)
 		  )
-		  |_ -> report_error no_pos "f1: formula_exists, f2 should be formula_exists" )(*(false,mtl))*)
+		  |_ ->  (false,[])) (*report_error no_pos "f1: formula_exists, f2 should be formula_exists" )(false,mtl))*)
     |CF.Or ({CF.formula_or_f1 = f11;
 	     CF.formula_or_f2 = f12})  ->  match f2 with
 	|CF.Or ({CF.formula_or_f1 = f21;
@@ -109,7 +109,7 @@ and checkeq_formulas_one (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(m
 	  else if(res2) then (true, mtl2)
 	  else (false, [])
 	)
-	|_ ->  report_error no_pos "f1: formula_or, f2 should be formula_or"
+	|_ ->   (false,[]) (*report_error no_pos "f1: formula_or, f2 should be formula_or"*)
       
 and checkeq_h_formulas_x (hvars: ident list)(hf1: CF.h_formula) (hf2: CF.h_formula)(mtl: map_table list): (bool * (map_table list))=
   let _ = Debug.ninfo_pprint ("Compare heap formulas ") no_pos in
@@ -123,6 +123,7 @@ and checkeq_h_formulas_x (hvars: ident list)(hf1: CF.h_formula) (hf2: CF.h_formu
     else(
       let _ = Debug.ninfo_pprint ("Compare h_formula1: " ^ (Cprinter.string_of_h_formula hf1)) no_pos in
       let _ = Debug.ninfo_pprint ("Compare h_formula2: " ^ (Cprinter.string_of_h_formula hf2)) no_pos in
+      let _ = Debug.ninfo_pprint ("INPUT MTL " ^ (string_of_map_table_list mtl)) no_pos in
       match hf1 with  
 	| CF.Star ({CF.h_formula_star_h1 = h1;
 		    CF.h_formula_star_h2 = h2}) 
@@ -132,7 +133,7 @@ and checkeq_h_formulas_x (hvars: ident list)(hf1: CF.h_formula) (hf2: CF.h_formu
 		     CF.h_formula_conj_h2 = h2})  ->
 	  let (ph1, mtl1) = checkeq_h_formulas hvars h1 hf2 mtl in
 	  let _ = Debug.ninfo_pprint (string_of_map_table_list mtl1) no_pos in
-	  if(ph1) then checkeq_h_formulas hvars h2 hf2 mtl1 else (false, mtl1)
+	  if(ph1) then checkeq_h_formulas hvars h2 hf2 mtl1 else (false, [])
 	| CF.DataNode n -> match_equiv_node hvars n hf2 mtl
 	| CF.ViewNode n -> match_equiv_view_node hvars n hf2 mtl
 	| CF.Hole h1 -> (match hf2 with
@@ -341,16 +342,16 @@ and match_equiv_rel (hvars: ident list) (r: (CP.spec_var * (CP.exp list) * loc))
       else (false, mtl) 
     | CF.DataNode _ 
     | CF.ViewNode _  
-    | CF.Hole _ -> (false,mtl) 
+    | CF.Hole _ -> (false,[]) 
     | CF.HRel r2  ->  (
       let _ = Debug.ninfo_pprint ("Find 2nd relation  " ) no_pos in
       let (res, mt2) = check_rel_equiv hvars r r2 mt in (res, [mt2])
     )
-    | CF.HTrue  -> (false,mtl) 
+    | CF.HTrue  -> (false,[]) 
     | CF.HFalse ->  report_error no_pos "not a case"
-    | CF.HEmp   ->  (false,mtl) 
+    | CF.HEmp   ->  (false,[]) 
   in
-let _ = Debug.ninfo_pprint ("??? Star mapping   " ^ (Cprinter.string_of_h_formula hf2) ) no_pos in
+  let _ = Debug.ninfo_pprint ("??? Star mapping   " ^ (Cprinter.string_of_h_formula hf2) ) no_pos in
   let res_list = (List.map (fun c -> match_equiv_rel_helper hvars r hf2 c) mtl) in
   let (bs, mtls) = List.split res_list in
   let b = if( List.exists (fun c -> c==true) bs) then true else false in
@@ -361,16 +362,20 @@ and check_rel_equiv (hvars: ident list) (r1:  (CP.spec_var * (CP.exp list) * loc
   let (n1,el1,l1) = r1 in
   let (n2,el2,l2) = r2 in
   let _ = Debug.ninfo_pprint ("Check rel equiv:  " ^ CP.name_of_spec_var n1 ^ " " ^ CP.name_of_spec_var n2 ) no_pos in
+  let _ = Debug.ninfo_pprint ("INPUT MT OF CHECK REL EQUIV: " ^ (string_of_map_table mt)) no_pos in
   let is_hard_r1 = (List.mem (CP.name_of_spec_var n1) hvars) in 
   let is_hard_r2 = (List.mem (CP.name_of_spec_var n2) hvars) in 
   let res = CP.eq_spec_var n1 n2 in (*eq_spec_var means same relation*)
 (*TODO: 1. same name ok, checkargs, 2.check if hard node => false, else, check args*)
   if(res) then check_exp_list_equiv hvars el1 el2 mt (*check hard var in relation*)
   else (
-    if(is_hard_r1 || is_hard_r2) then (false, mt)
+    if(is_hard_r1 || is_hard_r2) then (false, [])
     else (
+      let _ = Debug.ninfo_pprint ("ADD REL BEFORE: " ^ (string_of_map_table mt)) no_pos in
       let res, new_mt = add_map_rel mt n1 n2 in
-      check_exp_list_equiv hvars el1 el2 new_mt (*TODO, add mapptable*)
+      let _ = Debug.ninfo_pprint ("ADD REL AFTER: " ^ (string_of_map_table new_mt)) no_pos in
+      if(res) then check_exp_list_equiv hvars el1 el2 new_mt (*TODO, add mapptable*)
+      else (false, [])
     )
   )
 and check_exp_list_equiv (hvars: ident list) (el1: CP.exp list) (el2: CP.exp list) (mt: map_table): (bool * map_table)=
@@ -395,8 +400,8 @@ and check_exp_list_equiv (hvars: ident list) (el1: CP.exp list) (el2: CP.exp lis
 	|_ -> (true, mt) (*scale down: process only spec var as relation arguments*)
       in
       if(check_head) then (
-	let res, mtt = check_exp_list_equiv hvars (List.tl el1) (List.tl el2) mt in 
-	(res, mt1@mtt)
+	let res, mtt = check_exp_list_equiv hvars (List.tl el1) (List.tl el2) mt1 in 
+	(res, mtt)
       )
       else (false, mt)
     )
@@ -441,7 +446,7 @@ and add_map_rel (mt: map_table) (v1: CP.spec_var) (v2: CP.spec_var): (bool * map
       let check_v2 = check_exist vn2 mtr in
       if(check_v1 || check_v2) then (
 	let _ = Debug.ninfo_pprint ("ADD FAIL node 1: "  ^ vn1 ^ " node2 " ^ vn2 ^ "   " ^  string_of_map_table mt) no_pos in
-	(false, mt)
+	(false, [])
       )
       else (
 	let _ = Debug.ninfo_pprint ("ADD: node 1: "  ^ vn1 ^ " node2 " ^ vn2 ^ "   " ^ string_of_map_table ((v1,v2)::mt)) no_pos in 
@@ -675,7 +680,7 @@ let subst_with_mt (mt: map_table) (f: CF.formula): CF.formula =
   let frs,ts = List.split mt in
   CF.subst_avoid_capture frs ts f
 
-let check_equiv_constr_x hvars (constr1: CF.formula * CF.formula) (constr2: CF.formula * CF.formula): (bool * map_table) = 
+let check_equiv_constr_x hvars (constr1: CF.formula * CF.formula) (constr2: CF.formula * CF.formula): (bool * map_table list) = 
   let f11,f12 = constr1 in
   let f21, f22 =  constr2 in
   let mtl = [[]] in
@@ -684,13 +689,13 @@ let check_equiv_constr_x hvars (constr1: CF.formula * CF.formula) (constr2: CF.f
   if(res11&&res21)then(
     let (res12, mtl12) = (checkeq_formulas_one hvars f12 f22 mtl11) in
     let (res22, mtl22) = (checkeq_formulas_one hvars f22 f12 mtl21) in
-    (res12&&res22, (List.hd mtl12))
-  ) else (false,[])
+    (res12&&res22, mtl12)
+  ) else (false,[[]])
 
-let check_equiv_constr  hvars (constr1: CF.formula * CF.formula) (constr2: CF.formula * CF.formula): (bool * map_table) = 
+let check_equiv_constr  hvars (constr1: CF.formula * CF.formula) (constr2: CF.formula * CF.formula): (bool * map_table list) = 
   let pr1 = (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
   let pr2 b = if(b) then "VALID\n" else "INVALID\n" in
-  let pr3 = string_of_map_table in
+  let pr3 = string_of_map_table_list in
   Debug.no_2 "check_equiv_constr" pr1 pr1 (pr_pair pr2 pr3)
       (fun _ _ ->  check_equiv_constr_x hvars constr1 constr2) constr1 constr2
 
@@ -733,33 +738,81 @@ let rec checkeq_constrs hvars (constrs: (CF.formula * CF.formula) list) ( infile
       (fun _ _ -> checkeq_constrs_x hvars constrs infile_constrs) constrs infile_constrs
 
 
-let match_def hvars defs def =
-  let match_def_helper hvars idef def2 = 
-    let (rc, hf,f) = idef in
-    let def1 = (CF.formula_of_heap hf no_pos, f) in
-    check_equiv_constr hvars def1 def2
+let check_equiv_def hvars (def1: (CF.formula * CF.formula)) (def2: (CF.formula * CF.formula)) hp_map: ((CP.spec_var * CP.spec_var) list) =
+(*def means 1st element is the only HP*)
+  let is_hold p (hp1, hp2) hp_map =
+    let a,b = p in
+    if(CP.is_hprel_typ a && CP.is_hprel_typ b) then 
+      if(CP.eq_spec_var a hp1 && CP.eq_spec_var b hp2) then false 
+      else 
+	  (*HERE: check if pair is in hp_map already. NOTE: a,b: gen, infile <-> hp_map:  [gen], infile*)
+	  try
+	    let (cands, _) = List.find (fun (hps,hp) -> CP.eq_spec_var b hp) hp_map in
+	    let b = List.exists (fun c -> CP.eq_spec_var a c) cands in
+	    if(b) then false else true
+	  with 
+	    |Not_found -> true
+    else false
+  in
+  let rec helper mt (hp1,hp2) hp_map= 
+    match mt with
+      | [] -> []
+      | x::y -> if(is_hold x (hp1, hp2) hp_map) then x::(helper y (hp1,hp2) hp_map) else (helper y  (hp1,hp2) hp_map)
   in 
-true
+  let hp1,_ = def1 in
+  let hp2,_ = def2 in
+  let (hp1, hp2) =  ((List.hd (CF.get_hp_rel_name_formula hp1)),(List.hd  (CF.get_hp_rel_name_formula hp2))) in
+  let m,mtl = check_equiv_constr hvars def1 def2 in (*bool, map_table_list*)
+  if(m)then
+    (
+      let rel_mtl = List.map (fun mt -> helper mt (hp1, hp2) hp_map) mtl in 
+      let tmp = List.exists (fun mt -> List.length mt == 0) rel_mtl in
+      if(tmp) then [(hp1, hp2)] else []
+    )
+  else []
 
+let match_def hvars defs def hp_map =
+ let hp,_ = def in
+ let hp =  List.hd (CF.get_hp_rel_name_formula hp) in
+ let add_hp_map (hps,hp) hp_map =
+   try
+     let (cands, _) = List.find (fun (hps1,hp1) -> CP.eq_spec_var hp hp1) hp_map in
+     let new_ele = (CP.remove_dups_svl (cands @ hps), hp) in
+     let tmp_hp_map = List.filter (fun (_,hp1) -> not(CP.eq_spec_var hp hp1)) hp_map in
+     tmp_hp_map@[new_ele]
+   with 
+     |Not_found -> hp_map@[(hps,hp)]
+ in
+ let match_def_helper hvars idef def2 hp_map= 
+   let (rc, hf,f) = idef in
+   let def1 = (CF.formula_of_heap hf no_pos, f) in
+   check_equiv_def hvars def1 def2 hp_map
+ in 
+ let ls_res = List.concat (List.map (fun idef -> match_def_helper hvars idef def hp_map) defs) in
+ if(List.length ls_res > 0) then(
+   let hps,_ = List.split ls_res in
+   add_hp_map (hps,hp) hp_map
+ )
+ else hp_map
 
+let checkeq_defs_x hvars (defs: (CP.rel_cat * CF.h_formula * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) =
+  let no_change hp_mt1 hp_mt2 = 
+    let size_of_mt hp_mt = List.fold_left (fun piv (hps,hp) -> piv + List.length hps) 0 hp_mt in
+    (size_of_mt hp_mt1 == size_of_mt hp_mt2)
+  in
+  let rec helper hvars defs1 defs2 hp_mt=
+    let hp_map1 = List.fold_left (fun piv def -> match_def hvars defs1 def piv) hp_mt defs2 in
+    if(no_change hp_map1 hp_mt) then  (*terminate condition*)
+      hp_map1 
+    else 
+      helper hvars defs1 defs2 hp_map1
+  in
+  helper hvars defs infile_defs [] 
+  
 
-let checkeq_defs_x hvars (defs: (CP.rel_cat * CF.h_formula * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list): bool =
-  let _ =  List.map (fun def -> match_def hvars defs def) infile_defs in
-
-  true
-
-
-
-
-
-
-
-
-
-
-let checkeq_defs hvars (defs: (CP.rel_cat * CF.h_formula * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list): bool =
+let checkeq_defs hvars (defs: (CP.rel_cat * CF.h_formula * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) =
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  let pr3 b = if(b) then "VALID\n" else "INVALID\n" in
+  let pr3 = pr_list_ln (pr_pair Cprinter.string_of_spec_var_list Cprinter.string_of_spec_var) in
   Debug.ho_2 "check_defs" pr2 pr1 (pr3)
     (fun _ _ -> checkeq_defs_x hvars defs infile_defs) defs infile_defs
