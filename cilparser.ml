@@ -20,9 +20,6 @@ let string_of_cil_init (i: Cil.init) : string =
 let string_of_cil_type (t: Cil.typ) : string =
   Pretty.sprint 10 (Cil.d_type () t)
 
-let string_of_cil_global (g: Cil.global) : string =
-  Pretty.sprint 10 (Cil.d_global () g)
-
 let string_of_cil_attrlist (a: Cil.attributes) : string =
   Pretty.sprint 10 (Cil.d_attrlist () a)
 
@@ -493,12 +490,30 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
   let globals = file.Cil.globals in
   List.iter (fun gl ->
     match gl with
-    | Cil.GType _ -> report_error_msg "TRUNG TODO: Handle Cil.AlignOf later!"
-    | Cil.GCompTag _ -> report_error_msg "TRUNG TODO: Handle Cil.GCompTag later!"
-    | Cil.GCompTagDecl _ -> report_error_msg "TRUNG TODO: Handle Cil.GCompTagDecl later!"
-    | Cil.GEnumTag _ -> report_error_msg "TRUNG TODO: Handle Cil.GEnumTag later!"
-    | Cil.GEnumTagDecl _ -> report_error_msg "TRUNG TODO: Handle Cil.GEnumTagDecl later!"
-    | Cil.GVarDecl (v, l) -> print_endline "TRUNG TODO: How to translate Cil.GVarDecl to Iast ???";
+    | Cil.GType _ ->
+        (* let _ = print_endline ("== gl GType = " ^ (string_of_cil_global gl)) in *)
+        (* ()                                                                      *)
+        report_error_msg "TRUNG TODO: Handle Cil.GType later!"
+    | Cil.GCompTag _ ->
+        (* let _ = print_endline ("== gl GCompTag = " ^ (string_of_cil_global gl)) in *)
+        (* ()                                                                         *)
+        report_error_msg "TRUNG TODO: Handle Cil.GCompTag later!"
+    | Cil.GCompTagDecl _ ->
+        (* let _ = print_endline ("== gl GCompTagDecl = " ^ (string_of_cil_global gl)) in *)
+        (* ()                                                                             *)
+        report_error_msg "TRUNG TODO: Handle Cil.GCompTagDecl later!"
+    | Cil.GEnumTag _ ->
+        (* let _ = print_endline ("== gl GEnumTag = " ^ (string_of_cil_global gl)) in *)
+        (* ()                                                                         *)
+        report_error_msg "TRUNG TODO: Handle Cil.GEnumTag later!"
+    | Cil.GEnumTagDecl _ ->
+        (* let _ = print_endline ("== gl GEnumTagDecl = " ^ (string_of_cil_global gl)) in *)
+        (* ()                                                                             *)
+        report_error_msg "TRUNG TODO: Handle Cil.GEnumTagDecl later!"
+    | Cil.GVarDecl (v, l) ->
+        (* let _ = print_endline ("== gl GVarDecl = " ^ (string_of_cil_global gl)) in *)
+        (* ()                                                                         *)
+        report_error_msg "TRUNG TODO: Handle Cil.GVarDecl later!"
     | Cil.GVar (v, init, l) ->
         (* let _ = print_endline ("== translate_file: collect GVar") in  *)
         let gvar = translate_global_var v init (Some l) in
@@ -507,9 +522,18 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
         (* let _ = print_endline ("== translate_file: collect GFun") in  *)
         let proc = translate_fundec fd (Some l) in
         proc_decls := !proc_decls @ [proc]
-    | Cil.GAsm _ -> report_error_msg "TRUNG TODO: Handle Cil.GAsm later!"
-    | Cil.GPragma _ -> report_error_msg "TRUNG TODO: Handle Cil.GPragma later!"
-    | Cil.GText _ -> report_error_msg "TRUNG TODO: Handle Cil.GText later!"
+    | Cil.GAsm _ ->
+        (* let _ = print_endline ("== gl GAsm = " ^ (string_of_cil_global gl)) in *)
+        (* ()                                                                         *)
+        report_error_msg "TRUNG TODO: Handle Cil.GAsm later!"
+    | Cil.GPragma _ ->
+        (* let _ = print_endline ("== gl GPragma = " ^ (string_of_cil_global gl)) in *)
+        (* ()                                                                         *)
+        report_error_msg "TRUNG TODO: Handle Cil.GPragma later!"
+    | Cil.GText _ ->
+        (* let _ = print_endline ("== gl GText = " ^ (string_of_cil_global gl)) in *)
+        (* ()                                                                         *)
+        report_error_msg "TRUNG TODO: Handle Cil.GText later!"
   ) globals;
   let obj_def = {Iast.data_name = "Object"; Iast.data_fields = []; Iast.data_parent_name = "";
                  Iast.data_invs = []; Iast.data_methods = []} in
