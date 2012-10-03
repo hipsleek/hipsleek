@@ -77,7 +77,7 @@ void append(node x, node y)
 
   infer[H1,G1]
   requires H1(x)*y::node<a,null>
-     ensures G1(x,y)*y::node<a,null>;
+     ensures G1(x,y);//*y::node<a,null>;
  /*
 ERROR : Inferred def below should not have y::node<..>
 

@@ -247,7 +247,7 @@ let normalize_list_failesc_context_w_lemma prog lctx =
 	
   
 let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 do_infer: 
-      CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * ((CP.rel_cat * CF.formula * CF.formula) list) * bool =
+      CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * (CF.hprel list) * bool =
   let _ = pre_ctr # reset in
   let _ = post_ctr # reset in
   let pr1 = Cprinter.string_of_struc_formula in
@@ -333,8 +333,8 @@ and check_bounded_term prog ctx post_pos =
       CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * bool = do_spec_verify_infer prog proc ctx sp e0 do_infer*)
   
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (e0:exp) (do_infer:bool) (spec: CF.struc_formula)  
-      : CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *((CP.rel_cat * CF.formula * CF.formula) list) * bool =
-  let rec helper (ctx : CF.context) (spec: CF.struc_formula) :  CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *((CP.rel_cat * CF.formula * CF.formula) list) * bool =
+      : CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * bool =
+  let rec helper (ctx : CF.context) (spec: CF.struc_formula) :  CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * bool =
     let pos_spec = CF.pos_of_struc_formula spec in
     log_spec := (Cprinter.string_of_struc_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);	 
     match spec with
@@ -1904,15 +1904,15 @@ and check_proc (prog : prog_decl) (iprog: I.prog_decl)(proc : proc_decl) : bool 
                     let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
                    
                     let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
-                    let (hprels,hp_rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) hprels) in
+                    let (hprels,hp_rest) = (List.partition (fun hp -> match hp.CF.hprel_kind with | CP.RelDefn _ -> true | _ -> false) hprels) in
                    
-                    let (hp_lst_assume,hp_rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) hp_rest) in
+                    let (hp_lst_assume,hp_rest) = (List.partition (fun hp -> match hp.CF.hprel_kind with | CP.RelAssume _ -> true | _ -> false) hp_rest) in
                     (*let lst_assume = List.map (fun (_,a2,a3)-> (a2,a3)) lst_assume in*)
                     let rels = List.map (fun (_,a2,a3)-> (a2,a3)) rels in
-                    let hprels = List.map (fun (_,a2,a3)-> (a2,a3)) hprels in
-                    let hp_lst_assume = List.map (fun (_,a2,a3)-> (a2,a3)) hp_lst_assume in
+                    (* let hprels = List.map (fun (_,a2,a3)-> (a2,a3)) hprels in *)
+                    (* let hp_lst_assume = List.map (fun (_,a2,a3)-> (a2,a3)) hp_lst_assume in *)
 		            (* let hp_lst_simplified_assume = Sa2.simplify_lst_constrs hp_lst_assume in *)
-		    let _,hp_lst_simplified_assume = Sa.infer_hps prog hp_lst_assume in
+		            let _, ls_inferred_hps = Sa.infer_hps prog hp_lst_assume in
 		    
 		    let infile_constrs, infile_defs = if((String.compare !Globals.file_cp "") != 0) then (
 		      let file_name = !Globals.file_cp in
@@ -1953,8 +1953,9 @@ and check_proc (prog : prog_decl) (iprog: I.prog_decl)(proc : proc_decl) : bool 
 		    let _ = if((String.compare !Globals.file_cp "") != 0) then(
 		      let infile_constrs = List.map (fun constr -> trans_constr constr) infile_constrs in
 		      let infile_defs = List.map (fun def -> trans_constr def) infile_defs in
-		      let is_match_constrs = CEQ.checkeq_constrs [] hp_lst_assume infile_constrs in
-		      let match_defs = CEQ.checkeq_defs [] hp_lst_simplified_assume infile_defs in
+		      let is_match_constrs = CEQ.checkeq_constrs [] (List.map (fun hp -> hp.CF.hprel_lhs,hp.CF.hprel_rhs)
+                                                                 hp_lst_assume) infile_defs in
+		      let match_defs = CEQ.checkeq_defs [] ls_inferred_hps infile_defs in
 		      ()
 		    )
 		    in
@@ -2044,9 +2045,9 @@ and check_proc (prog : prog_decl) (iprog: I.prog_decl)(proc : proc_decl) : bool 
                             Debug.ninfo_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
                             Debug.ninfo_hprint (add_str "NEW RELS" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) rels no_pos;
                             Debug.tinfo_hprint (add_str "NEW ASSUME" (pr_list_ln Cprinter.string_of_lhs_rhs)) lst_assume no_pos;
-                            Debug.ninfo_hprint (add_str "NEW HP RELS" (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) hprels no_pos;
-                            Debug.ninfo_hprint (add_str "NEW HP ASSUME" (pr_list_ln Cprinter.string_of_hprel_lhs_rhs)) hp_lst_assume no_pos;
-			    Debug.ninfo_hprint (add_str "NEW SIMPLIFIED HP ASSUME" (pr_list_ln Cprinter.string_of_hp_rel_def)) hp_lst_simplified_assume no_pos;
+                            Debug.ninfo_hprint (add_str "NEW HP RELS" (pr_list_ln Cprinter.string_of_hprel)) hprels no_pos;
+                            Debug.ninfo_hprint (add_str "NEW HP ASSUME" (pr_list_ln Cprinter.string_of_hprel)) hp_lst_assume no_pos;
+			                Debug.ninfo_hprint (add_str "NEW INFERRED HP" (pr_list_ln Cprinter.string_of_hprel)) ls_inferred_hps no_pos;
                             Debug.tinfo_hprint (add_str "NEW RANK" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) lst_rank no_pos;
                             Debug.tinfo_hprint (add_str "NEW CONJS" string_of_int) ((CF.no_of_cnts new_spec)-(CF.no_of_cnts proc.proc_static_specs)) no_pos;
                             stk_evars # reset;

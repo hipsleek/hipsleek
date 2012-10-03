@@ -151,7 +151,7 @@ and find_defined_pointers_after_preprocess prog def_vs_wo_args hds hvs hrs eqs p
                 hrs in
   (def_vs, hp_paras, hds, hvs, eqs)
 
-and find_defined_pointers_new_x prog f predef_ptrs=
+and find_defined_pointers_x prog f predef_ptrs=
   (* let hds, hvs, hrs = CF.get_hp_rel_formula f in *)
   (* let ( _,mix_f,_,_,_) = CF.split_components f in *)
   (* let eqs = (MCP.ptr_equations_without_null mix_f) in *)
@@ -174,15 +174,15 @@ and find_defined_pointers_new_x prog f predef_ptrs=
   let (def_vs, hds, hvs, hrs, eqs) = find_defined_pointers_raw prog f in
   find_defined_pointers_after_preprocess prog def_vs hds hvs hrs eqs predef_ptrs
 
-and find_defined_pointers_new prog f predef_ptrs=
+and find_defined_pointers prog f predef_ptrs=
   let pr1 = !CP.print_svl in
   let pr2 = pr_list_ln (pr_pair !CP.print_sv pr1) in
   (* let pr3 = fun x -> Cprinter.string_of_h_formula (CF.HRel x) in *)
   let pr4 = fun (a1, a2, _, _, _) ->
       let pr = pr_pair pr1 pr2 in pr (a1,a2)
   in
-  Debug.no_2 "find_defined_pointers_new" Cprinter.prtt_string_of_formula pr1 pr4
-      (fun _ _ -> find_defined_pointers_new_x prog f predef_ptrs) f predef_ptrs
+  Debug.no_2 "find_defined_pointers" Cprinter.prtt_string_of_formula pr1 pr4
+      (fun _ _ -> find_defined_pointers_x prog f predef_ptrs) f predef_ptrs
 
 and check_node_args_defined prog def_svl hd_nodes hv_nodes dn_name=
   let arg_svl = loop_up_ptr_args_one_node prog hd_nodes hv_nodes dn_name in

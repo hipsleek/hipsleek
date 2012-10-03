@@ -100,6 +100,15 @@ and formula =
   | Or of formula_or
   | Exists of formula_exists
 
+
+and hprel= {
+    hprel_kind: CP.rel_cat;
+    unk_svl: CP.spec_var list;
+    predef_svl: CP.spec_var list;
+    hprel_lhs: formula;
+    hprel_rhs: formula
+}
+
 and list_formula = formula list
 
 and formula_base = {  formula_base_heap : h_formula;
@@ -3082,7 +3091,7 @@ and h_node_list (f: h_formula): CP.spec_var list = match f with
   | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2} 
   | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} 
   | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2} 
-  -> (h_node_list h1)@(h_node_list h2)
+      -> (h_node_list h1)@(h_node_list h2)
   | _ -> []
 
 and get_hnodes (f: h_formula) = match f with
@@ -3090,7 +3099,7 @@ and get_hnodes (f: h_formula) = match f with
   | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2} 
   | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} 
   | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2} 
-  -> (get_hnodes h1)@(get_hnodes h2)
+      -> (get_hnodes h1)@(get_hnodes h2)
   | _ -> []
 
 and get_hp_rel_formula (f:formula) =
@@ -3609,7 +3618,7 @@ think it is used to instantiate when folding.
   *)
   (* es_infer_rel : (CP.formula * CP.formula) list; *)
   es_infer_rel : (CP.rel_cat * CP.formula * CP.formula) list;
-  es_infer_hp_rel : (CP.rel_cat * formula * formula) list;
+  es_infer_hp_rel : hprel list; (*(CP.rel_cat * formula * formula) list;*)
   (* output : pre pure assumed to infer relation *)
   (* es_infer_pures : CP.formula list; *)
   (* es_infer_invs : CP.formula list (\* WN : what is this? *\) *)

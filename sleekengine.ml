@@ -851,7 +851,7 @@ let process_cmp_command (input: ident list * ident * meta_formula list) =
 	      | _ -> [] (*TODO: report error ?*)
 	    in
 	    let hprel1 = List.hd hprels in
-	    let (_,cf21,cf22) = hprel1 in
+	    let cf21,cf22 = hprel1.CF.hprel_lhs,hprel1.CF.hprel_rhs in
 	    let res,mtl = CEQ.check_equiv_constr iv (cf11,cf12) (cf21, cf22) in
 	    if(res) then  print_string ("EQUAL\n") else  print_string ("NOT EQUAL\n")
 	  )

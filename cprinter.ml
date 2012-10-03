@@ -1476,6 +1476,20 @@ let pr_hprel_lhs_rhs (lhs,rhs) =
   prtt_pr_formula rhs;
   fmt_close()
 
+let pr_hprel hpa=
+  fmt_open_box 1;
+  fmt_string (CP.print_rel_cat hpa.hprel_kind);
+  pr_seq " unknown: " pr_spec_var hpa.unk_svl;
+  fmt_string "; ";
+  pr_seq " predefined: " pr_spec_var hpa.predef_svl;
+  fmt_string "; ";
+  prtt_pr_formula hpa.hprel_lhs;
+  fmt_string " --> ";
+  prtt_pr_formula hpa.hprel_rhs;
+  fmt_close()
+
+let string_of_hprel hp = poly_string_of_pr pr_hprel hp
+
 let pr_par_def (f1,f2,f3) = 
   (* fmt_string (CP.print_only_lhs_rhs rel) *)
   fmt_open_box 1;
@@ -1784,7 +1798,7 @@ let pr_estate (es : entail_state) =
 (*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap; 
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure; 
-  pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hp_rel) es.es_infer_hp_rel; 
+  pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel) es.es_infer_hp_rel; 
    pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel; 
   (* pr_wrap_test "es_infer_pures: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pures;  *)
   (* pr_wrap_test "es_infer_invs: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_invs;  *)
@@ -1801,7 +1815,7 @@ let pr_estate_infer_hp (es : entail_state) =
 (*  pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) es.es_infer_heap; 
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pure; 
-  pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hp_rel) es.es_infer_hp_rel; 
+  pr_wrap_test "es_infer_hp_rel: " Gen.is_empty  (pr_seq "" pr_hprel) es.es_infer_hp_rel; 
    pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel; 
   fmt_close ()
 
