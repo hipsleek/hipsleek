@@ -556,94 +556,146 @@ let rec join_ann (ann1: CF.ann list) (ann2: CF.ann list) (param1: CP.spec_var li
     				  (*let p = CP.mkEqVar *)
 				  (true && compatible, a::new_ann, pa::new_param(*, (CP.mkAnd p new_p no_pos)*))
     | _ -> (false,[],[](*,tf*))
+    
+let rec join_ann_conj (ann1: CF.ann list) (ann2: CF.ann list) (param1: CP.spec_var list) (param2: CP.spec_var list):
+ bool * (CF.ann list) * (CP.spec_var list) (* * CP.formula*) =
+ (*let tf = CP.mkTrue no_pos in*)
+  match ann1, ann2,param1,param2 with
+    | [], [],[],[] -> (true,[],[](*,tf*))
+    | (CF.ConstAnn(Accs))::t1, a::t2, p::pt1, pa::pt2 
+    | a::t1, (CF.ConstAnn(Accs))::t2, pa::pt1, p::pt2 -> let compatible, new_ann, new_param(*, new_p*) = join_ann_conj t1 t2 pt1 pt2  in
+    				  (*let p = CP.mkEqVar *)
+				  (true && compatible, a::new_ann, pa::new_param(*, (CP.mkAnd p new_p no_pos)*))
+    | a1::t1, a2::t2, p::pt1, pa::pt2 -> let compatible, new_ann, new_param(*, new_p*) = join_ann_conj t1 t2 pt1 pt2  in
+    				  (*let p = CP.mkEqVar *)
+				  (true && compatible, a1::new_ann, p::new_param(*, (CP.mkAnd p new_p no_pos)*))
+    | _ -> (false,[],[](*,tf*))
 
-      
-let rec compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula * CP.formula = 
-  (*let _ = print_string("Compacting :"^ (string_of_h_formula f)^ "\n") in*)
-  if not (!Globals.allow_field_ann) then f,(CP.mkTrue no_pos) else
-    match f with
-      | CF.Star {CF.h_formula_star_h1 = h1;
-                 CF.h_formula_star_h2 = h2;
-                 CF.h_formula_star_pos = pos } ->
-          let rec helper h1 h2 = 
-            match h1 with
+let compact_data_nodes (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var list list) func
+: CF.h_formula * CF.h_formula * CP.formula =
+(match h1 with
+| CF.DataNode 
+	{CF.h_formula_data_name = name1;
+         CF.h_formula_data_node = v1;
+         CF.h_formula_data_param_imm = param_ann1;
+         CF.h_formula_data_arguments = h1args;
+         } ->
+	 let aset_sv = Context.get_aset aset v1 in
+         (match h2 with
+ 	 | CF.DataNode { CF.h_formula_data_name = name2;
+ 	                 CF.h_formula_data_node = v2;
+ 	                 CF.h_formula_data_param_imm = param_ann2; 
+ 	                 CF.h_formula_data_arguments = h2args;} ->
+         (* h1, h2 nodes; check if they can be join into a single node. If so, h1 will contain the updated annotations, while 
+            h2 will be replaced by "emp". Otherwise both data nodes will remain unchanged *)
+ 		     if (String.compare name1 name2 == 0) && ((CP.mem v2 aset_sv) || (CP.eq_spec_var v1 v2)) then
+ 		         let compatible, new_param_imm, new_args = func param_ann1 param_ann2 h1args h2args  in
+	                (* compact to keep the updated node*)
+                         if(not(CP.is_primed v2) || (CP.is_primed v1)) then
+	                 (match h1 with (* this match is to avoid the rewriting of all h1 parameters*)
+	                  | CF.DataNode h -> 
+	                  	if (compatible == true) then 
+	                  let comb_list = 
+	                  (List.combine h.CF.h_formula_data_arguments h2args) in
+	                   let p = CP.conj_of_list 
+		          (List.map (fun c -> (CP.mkEqVar (fst c) (snd c) h.CF.h_formula_data_pos)) comb_list) 				   h.CF.h_formula_data_pos
+			   in 
+			   	(CF.DataNode {h with CF.h_formula_data_arguments = new_args; 			
+			     	 CF.h_formula_data_param_imm = new_param_imm}, CF.HEmp, p)
+			  	else (CF.HFalse, h2, (CP.mkTrue no_pos))
+ 			  | _ -> (h1, h2,(CP.mkTrue no_pos)) (* will never reach this branch *))
+	                  else (*keep v2*)
+ 			  (match h2 with (* this match is to avoid the rewriting of all h2 parameters*)
+ 			   | CF.DataNode h -> 
+			         if (compatible == true) then 
+			         let comb_list = 
+			         (List.combine h.CF.h_formula_data_arguments h1args) in
+			          let p = CP.conj_of_list 
+			        (List.map (fun c -> (CP.mkEqVar (fst c) (snd c) h.CF.h_formula_data_pos)) comb_list) 				          h.CF.h_formula_data_pos
+			         in
+			         (CF.DataNode {h with CF.h_formula_data_arguments = new_args;
+			          CF.h_formula_data_param_imm = new_param_imm},CF.HEmp,p)
+			          else (CF.HFalse,h1,(CP.mkTrue no_pos))
+ 			   | _ -> (h1, h2,(CP.mkTrue no_pos)) (* will never reach this branch *))
+		     else (h1, h2,(CP.mkTrue no_pos)) (* h2 is not an alias of h1 *) 
+	| _ -> (h1,h2,(CP.mkTrue no_pos))  (*shouldn't get here*))
+| _ -> (h1,h2,(CP.mkTrue no_pos)) (*shouldn't get here*))
+     
+let rec compact_nodes_op (h1: CF.h_formula) (h2: CF.h_formula) (aset:CP.spec_var list list) func 
+: CF.h_formula * CF.h_formula * CP.formula =  
+(match h1 with
  	          | CF.DataNode { CF.h_formula_data_name = name1;
  		                      CF.h_formula_data_node = v1;
  		                      CF.h_formula_data_param_imm = param_ann1;
  		                      CF.h_formula_data_arguments = h1args;
  		                    } ->
- 	              let aset_sv = Context.get_aset aset v1 in
-                  let res_h1, res_h2,res_p = 
+ 		        let res_h1,res_h2,res_p =             
  	                match h2 with
  	      	          | CF.DataNode { CF.h_formula_data_name = name2;
  		                              CF.h_formula_data_node = v2;
  		                              CF.h_formula_data_param_imm = param_ann2; 
  		                              CF.h_formula_data_arguments = h2args;} ->
-                        (* h1, h2 nodes; check if they can be join into a single node. If so, h1 will contain the updated annotations, while 
-                           h2 will be replaced by "emp". Otherwise both data nodes will remain unchanged *)
- 		                  if (String.compare name1 name2 == 0) && ((CP.mem v2 aset_sv) || (CP.eq_spec_var v1 v2)) then
- 			                let compatible, new_param_imm, new_args = join_ann param_ann1 param_ann2 h1args h2args  in
- 			                (* compact to keep the updated node*)
-	                                if(not(CP.is_primed v2) || (CP.is_primed v1)) then
- 			                (match h1 with (* this match is to avoid the rewriting of all h1 parameters*)
- 			                  | CF.DataNode h -> 
-				                  if (compatible == true) then 
-				                  (*let comb_list = 
-				                  (List.combine h.CF.h_formula_data_arguments h2args) in
-				                  let p = CP.conj_of_list 
-				                  (List.map (fun c -> (CP.mkEqVar (fst c) (snd c) h.CF.h_formula_data_pos)) comb_list) 						          h.CF.h_formula_data_pos
-				                  in *)
-				                  (CF.DataNode {h with CF.h_formula_data_arguments = new_args; 			
-				                  CF.h_formula_data_param_imm = new_param_imm}, CF.HEmp, (CP.mkTrue no_pos))
-				                  else (CF.HFalse, h2, (CP.mkTrue no_pos))
- 			                  | _ -> (h1, h2,(CP.mkTrue no_pos)) (* will never reach this branch *))
- 			                 else (*keep v2*)
- 			                 (match h2 with (* this match is to avoid the rewriting of all h2 parameters*)
- 			                  | CF.DataNode h -> 
-				                  if (compatible == true) then 
-				                  (*let comb_list = 
-				                  (List.combine h.CF.h_formula_data_arguments h1args) in
-				                  let p = CP.conj_of_list 
-				                  (List.map (fun c -> (CP.mkEqVar (fst c) (snd c) h.CF.h_formula_data_pos)) comb_list) 						          h.CF.h_formula_data_pos
-				                  in*) 
-				                  (CF.DataNode {h with CF.h_formula_data_arguments = new_args;
-				                  CF.h_formula_data_param_imm = new_param_imm},CF.HEmp,(CP.mkTrue no_pos))
-				                  else (CF.HFalse,h1,(CP.mkTrue no_pos))
- 			                  | _ -> (h1, h2,(CP.mkTrue no_pos)) (* will never reach this branch *))
-		                  else (h1, h2,(CP.mkTrue no_pos)) (* h2 is not an alias of h1 *) 
-		              | CF.Star {CF.h_formula_star_h1 = h21;
+ 		                              compact_data_nodes h1 h2 aset func
+		          | CF.Star {CF.h_formula_star_h1 = h21;
 			                     CF.h_formula_star_h2 = h22;
 			                     CF.h_formula_star_pos = pos2 } ->
-                        (* h1 node, h2 star formula. Try to unify h1 with nodes on the left hand side of h2 star-formula, resulting in a new h1
-                           which will be checked against the right side of h2 star-formula. This will result in updated part of h2 right and left hand side of '*'.
-                           Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on the updated h2 to check for other groups of aliases.
-                        *)
-		                  let h31, h32,p3 = helper h1 h21 in
-		                  let h41, h42,p4 = helper h31 h22 in
+(* h1 node, h2 star formula. Try to unify h1 with nodes on the left hand side of h2 star-formula, resulting in a new h1
+which will be checked against the right side of h2 star-formula. This will result in updated part of h2 right and left hand side of '*'.
+Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on the updated h2 to check for other groups of aliases. *)
+		          	  let h31, h32,p3 = compact_nodes_op h1 h21 aset func in
+		                  let h41, h42,p4 = compact_nodes_op h31 h22 aset func in
 		                  let new_h2 = CF.mkStarH h32 h42 pos2 10 in
 		                  let new_p2 = CP.mkAnd p3 p4 pos2 in
-                          let new_h2, new_p = compact_nodes_with_same_name_in_h_formula new_h2 aset in 
-		                  (h41,new_h2, (CP.mkAnd new_p new_p2 pos2))
-		              | _ -> (h1,h2,(CP.mkTrue no_pos)) in
-                  (res_h1, res_h2,res_p)
+                                  let new_h2, new_p = compact_nodes_with_same_name_in_h_formula new_h2 aset in 
+		                  h41, new_h2 , (CP.mkAnd new_p new_p2 pos2)
+		          | CF.Conj {CF.h_formula_conj_h1 = h21;
+					 CF.h_formula_conj_h2 = h22;
+			                 CF.h_formula_conj_pos = pos2} -> 
+			          let h31, h32,p3 = compact_nodes_op h1 h21 aset func in
+		                  let h41, h42,p4 = compact_nodes_op h31 h22 aset func in
+		                  let new_h2 = CF.mkConjH h32 h42 pos2 in
+		                  let new_p2 = CP.mkAnd p3 p4 pos2 in
+                                  let new_h2, new_p = compact_nodes_with_same_name_in_h_formula new_h2 aset in 
+		                  h41, new_h2 , (CP.mkAnd new_p new_p2 pos2)
+		          | _ -> (h1, h2,(CP.mkTrue no_pos)) in
+		      	res_h1, res_h2,res_p
 	          | CF.Star {CF.h_formula_star_h1 = h11;
 		                 CF.h_formula_star_h2 = h12;
 		                 CF.h_formula_star_pos = pos1 } ->
 	              let new_h2 = CF.mkStarH h12 h2 pos1 11 in
-	              let h31, h32, p3 = helper h11 new_h2 in
-                  let new_h2,new_p2 = compact_nodes_with_same_name_in_h_formula h32 aset in 
-	              (h31, new_h2,(CP.mkAnd p3 new_p2 pos1))
-	          | _ ->	(h1, h2,(CP.mkTrue no_pos))
-          in
-          let h1,h2,p = helper h1 h2 in
-          let res = CF.mkStarH h1 h2 pos 12 in
-          (*let _ = print_string("Compacted :"^ (string_of_h_formula res)^ "\n") in*)
-          res,p
-      | CF.Conj h  -> let h1_h,h1_p = compact_nodes_with_same_name_in_h_formula h.CF.h_formula_conj_h1 aset in
+	              let h31, h32, p3 = compact_nodes_op h11 new_h2 aset func  in
+                      let new_h2,new_p2 = compact_nodes_with_same_name_in_h_formula h32 aset in 
+	              h31, new_h2,(CP.mkAnd p3 new_p2 pos1)
+	          | CF.Conj {CF.h_formula_conj_h1 = h11;
+				CF.h_formula_conj_h2 = h12;
+			        CF.h_formula_conj_pos = pos1} ->
+	              let new_h2 = CF.mkConjH h12 h2 pos1 in
+	              let h31, h32, p3 = compact_nodes_op h11 new_h2 aset func in
+                      let new_h2,new_p2 = compact_nodes_with_same_name_in_h_formula h32 aset in 
+	              h31, new_h2,(CP.mkAnd p3 new_p2 pos1)	              
+		  | _ -> h1,h2,(CP.mkTrue no_pos))  
+                   
+and compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula * CP.formula = 
+  (*let _ = print_string("Compacting :"^ (string_of_h_formula f)^ "\n") in*)
+  if not (!Globals.allow_field_ann) then f,(CP.mkTrue no_pos) else
+    match f with
+      | CF.Star {CF.h_formula_star_h1 = h1;
+                 CF.h_formula_star_h2 = h2;
+                 CF.h_formula_star_pos = pos } ->             
+	let h1,h2,_ = compact_nodes_op h1 h2 aset join_ann in
+	let res = CF.mkStarH h1 h2 pos 12 in
+	res,(CP.mkTrue no_pos)
+      | CF.Conj{CF.h_formula_conj_h1 = h1;
+		CF.h_formula_conj_h2 = h2;
+	        CF.h_formula_conj_pos = pos} ->
+	        let h1,h2,_ = compact_nodes_op h1 h2 aset join_ann_conj in
+		let res = CF.mkConjH h1 h2 pos in
+		res,(CP.mkTrue no_pos)
+	        (*let h1_h,h1_p = compact_nodes_with_same_name_in_h_formula h.CF.h_formula_conj_h1 aset in
       		let h2_h,h2_p = compact_nodes_with_same_name_in_h_formula h.CF.h_formula_conj_h2 aset in
       		let and_p = CP.mkAnd h1_p h2_p h.CF.h_formula_conj_pos in
-      	      CF.Conj {h with CF.h_formula_conj_h1 = h1_h;
- 	      CF.h_formula_conj_h2 = h2_h;},and_p
+      	        CF.Conj {h with CF.h_formula_conj_h1 = h1_h;
+ 	        CF.h_formula_conj_h2 = h2_h;},and_p*)
       | CF.Phase h ->  let h1_h,h1_p = compact_nodes_with_same_name_in_h_formula h.CF.h_formula_phase_rd aset in
       		let h2_h,h2_p = compact_nodes_with_same_name_in_h_formula h.CF.h_formula_phase_rw aset in
       		let and_p = CP.mkAnd h1_p h2_p h.CF.h_formula_phase_pos in
