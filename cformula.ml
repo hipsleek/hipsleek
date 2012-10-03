@@ -3071,6 +3071,11 @@ let get_HRels hf=
   in
   helper hf
 
+let get_HRels_f f=
+  match f with
+    | Base fb ->  get_HRels fb.formula_base_heap
+    | _ -> report_error no_pos "cformula.get_HRels_f: not handle yet"
+
 let rec check_eq_hrel_node  (rl1, args1 ,_)  (rl2, args2,_)=
     let rec helper l1 l2=
       match l1,l2 with

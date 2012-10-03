@@ -18,6 +18,19 @@ let close_def defs (v1,v2)=
   else if CP.mem_svl v2 defs then (CP.remove_dups_svl defs@[v1])
   else (defs)
 
+let is_empty_f f=
+   match f with
+    | CF.Base fb ->
+        (CF.is_empty_heap fb.CF.formula_base_heap) &&
+            (CP.isConstTrue (MCP.pure_of_mix fb.CF.formula_base_pure))
+    | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
+
+let rec retrieve_args_from_locs args locs index res=
+  match args with
+    | [] -> res
+    | a::ss -> if List.mem index locs then
+          retrieve_args_from_locs ss locs (index+1) (res@[a])
+        else retrieve_args_from_locs ss locs (index+1) res
 
 let rec get_data_view_hrel_vars_bformula bf=
   get_data_view_hrel_vars_h_formula bf.CF.formula_base_heap
@@ -41,6 +54,62 @@ and get_data_view_hrel_vars_h_formula hf=
     | CF.HTrue
     | CF.HFalse
     | CF.HEmp -> []
+  in
+  helper hf
+
+let rec drop_get_hrel f=
+  match f with
+    | CF.Base fb ->
+        let new_hf, hrels = drop_get_hrel_h_formula fb.CF.formula_base_heap in
+        (CF.Base {fb with CF.formula_base_heap= new_hf}, hrels)
+    | _ -> report_error no_pos "SAU.drop_get_hrel: not handle yet"
+
+(* and drop_get_hrel_bformula bf= *)
+(*   drop_get_hrel_h_formula bf.CF.formula_base_heap *)
+
+and drop_get_hrel_h_formula hf=
+  let rec helper hf0=
+    match hf0 with
+      | CF.Star {CF.h_formula_star_h1 = hf1;
+                 CF.h_formula_star_h2 = hf2;
+                 CF.h_formula_star_pos = pos} ->
+          let n_hf1,hrels1 = helper hf1 in
+          let n_hf2,hrels2 = helper hf2 in
+          (match n_hf1,n_hf2 with
+            | (CF.HEmp,CF.HEmp) -> (CF.HEmp,hrels1@hrels2)
+            | (CF.HEmp,_) -> (n_hf2,hrels1@hrels2)
+            | (_,CF.HEmp) -> (n_hf1,hrels1@hrels2)
+            | _ -> (CF.Star {CF.h_formula_star_h1 = n_hf1;
+			                CF.h_formula_star_h2 = n_hf2;
+			                CF.h_formula_star_pos = pos},
+                    hrels1@hrels2)
+          )
+      | CF.Conj { CF.h_formula_conj_h1 = hf1;
+		          CF.h_formula_conj_h2 = hf2;
+		          CF.h_formula_conj_pos = pos} ->
+          let n_hf1,hrels1 = helper hf1 in
+          let n_hf2,hrels2 = helper hf2 in
+          (CF.Conj { CF.h_formula_conj_h1 = n_hf1;
+		            CF.h_formula_conj_h2 = n_hf2;
+		            CF.h_formula_conj_pos = pos},
+           hrels1@hrels2)
+      | CF.Phase { CF.h_formula_phase_rd = hf1;
+		           CF.h_formula_phase_rw = hf2;
+		           CF.h_formula_phase_pos = pos} ->
+          let n_hf1,hrels1 = helper hf1 in
+          let n_hf2,hrels2 = helper hf2 in
+          (CF.Phase { CF.h_formula_phase_rd = n_hf1;
+		             CF.h_formula_phase_rw = n_hf2;
+		             CF.h_formula_phase_pos = pos},
+          hrels1@hrels2)
+      | CF.DataNode hd -> (hf0,[])
+      | CF.ViewNode hv -> (hf0,[])
+      | CF.HRel (sv, eargs, _) -> (CF.HEmp,
+                                   [(sv,List.concat (List.map CP.afv eargs))])
+      | CF.Hole _
+      | CF.HTrue
+      | CF.HFalse
+      | CF.HEmp -> (hf0,[])
   in
   helper hf
 
@@ -224,7 +293,7 @@ let rec drop_data_view_hrel_nodes_from_root prog f hd_nodes hv_nodes eqs drop_ro
        CF.Base { fb with CF.formula_base_heap = drop_data_view_hrel_nodes_hf_from_root
                prog fb.CF.formula_base_heap
                hd_nodes hv_nodes eqs drop_rootvars}
-    | _ -> report_error no_pos "cformula.drop_data_view_hrel_nodes"
+    | _ -> report_error no_pos "sau.drop_data_view_hrel_nodes"
 
 
 and drop_data_view_hrel_nodes_hf_from_root prog hf hd_nodes hv_nodes eqs drop_rootvars=
@@ -342,3 +411,12 @@ let rename_hp_args lfb rfb=
   let pr=Cprinter.prtt_string_of_formula_base in
   Debug.no_2 "rename_hp_args" pr pr (pr_pair pr pr)
       (fun _ _ -> rename_hp_args_x lfb rfb) lfb rfb
+
+
+let get_raw_defined_w_pure prog f=
+  match f with
+    | CF.Base fb ->
+        let def_raw,_,_,_,_ = find_defined_pointers_raw prog f in
+        let p_svl = CP.fv (MCP.pure_of_mix fb.CF.formula_base_pure) in
+        (def_raw@p_svl)
+    | _ -> report_error no_pos "sau.get_raw_defined_w_pure: not handle yet"
