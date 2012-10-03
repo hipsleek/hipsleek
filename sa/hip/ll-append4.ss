@@ -3,52 +3,15 @@ data node {
   node next;
 }
 
-/* HeapPred H(node a). */
-/* HeapPred H1(node a). */
-/* HeapPred G(node a, node b). */
-/* HeapPred G1(node a, node b). */
-
-/* ll<> == self=null  */
-/* 	or self::node<_, q> * q::ll<> */
-/* 	inv true; */
-
-/* void append(node x, node y) */
-/* /\* */
-/*   requires x::ll<> * y::ll<> & x!=null */
-/*   ensures x::ll<>; */
-/* *\/ */
-/*   infer [H,G,H1] */
-/*  requires H(x) * H1(y) */
-/*  ensures  G(x,y);  */
-/*  /\* */
-/*  requires G1(x,y) */
-/*  ensures  G(x,y);  */
-/*  requires G1(y,x) */
-/*  ensures  G(x,y);  */
-/*   *\/ */
-/*  { */
-/*    if (x.next == null) { */
-/*      x.next = y; */
-/*    } else { */
-/*      append(x.next,y); */
-/*    } */
-/*  } */
-/*
-HP_550(v_node_30_567,y,x) * x::node<val_30_556,y> & v_node_30_567=null --> G(x,y)
-H(x) * H1(y) --> x::node<val_30_531',next_30_532'> * HP_550(next_30_532',y,x)
-HP_550(v_node_30_573,y,x) * x::node<val_30_558,v_node_30_573> & v_node_30_573!=null --> H(v_node_30_573) * H1(y)
-x::node<val_30_558,v_node_30_573> * G(v_node_30_573,y)& v_node_30_573!=null --> G(x,y)
-*/
 
 HeapPred H(node a).
 //HeapPred H1(node a).
 HeapPred G2(node a, node b).
-HeapPred G1(node a, node b).
-  HeapPred G3(node b,node c, node d).
+HeapPred G1(node a).
+HeapPred G3(node b,node c, node d).
 
 HeapPred H1(node a).
-HeapPred H2(node a).
-//HeapPred G1(node a, node b, node c).
+  HeapPred H2(node a,node b).
 
 ll<> == self=null
   or self::node<_,q>*q::ll<>
@@ -64,20 +27,10 @@ l2<y> == self::node<a,null> & y=self
 
 void append(node x, node y)
 
-// requires H1(x)&y=null
-//	ensures G1(x,y); 
 
-/*
-  requires x::ll<> * y::node<a,null> & x!=null
-  ensures x::l2<y> ;
-
-  requires x::ll<> * y::node<a,null> & x!=null
-  ensures x::lseg<y> * y::node<a,null> ;
-*/
-
-  infer[H1,G1]
+  infer[H1,G2]
   requires H1(x)
-  ensures G1(x,y);
+  ensures G2(x,y);
 
 /*
 PROBLEM : What happen to base case of G1([x,y]) ??
