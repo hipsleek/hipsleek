@@ -11,8 +11,8 @@ let string_of_cil_exp (e: Cil.exp) : string =
 let string_of_cil_lval (lv: Cil.lval) : string =
   Pretty.sprint 10 (Cil.d_lval () lv)
 
-let string_of_cil_offset base (off: Cil.offset) : string =
-  Pretty.sprint 10 (Cil.d_offset base () off)
+let string_of_cil_offset (off: Cil.offset) : string =
+  Pretty.sprint 10 (Cil.d_offset Pretty.nil () off)
 
 let string_of_cil_init (i: Cil.init) : string =
   Pretty.sprint 10 (Cil.d_init () i)
@@ -432,16 +432,28 @@ and translate_block (blk: Cil.block) (lopt: Cil.location option): Iast.exp =
     )
 
 
+let translate_init (vname: ident) (init: Cil.init) (lopt: Cil.location option) : (ident * Iast.exp option * loc) list =
+  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
+  match init with
+  | Cil.SingleInit exp ->
+      let e = translate_exp exp lopt in
+      [(vname, Some e, pos)]
+  | Cil.CompoundInit (_, offset_init_list) -> (
+      List.map (fun x ->
+        let off, ini = x in
+        let _ = print_endline ("== off = " ^ (string_of_cil_offset off)) in
+        let _ = print_endline ("== ini = " ^ (string_of_cil_init ini)) in
+        (vname, None, pos)
+      ) offset_init_list
+    )
+
 let translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo) (lopt: Cil.location option) : Iast.exp_var_decl =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let ty = translate_typ vinfo.Cil.vtype in
   let name = vinfo.Cil.vname in
   let decl = match iinfo.Cil.init with
     | None -> [(name, None, pos)]
-    | Some (Cil.SingleInit exp) ->
-        let e = translate_exp exp lopt in
-        [(name, Some e, pos)]
-    | Some (Cil.CompoundInit _) -> report_error_msg "TRUNG TODO: Cil.CompoundInit. Handle later!" in
+    | Some init -> translate_init name init lopt in
   let vardecl = {Iast.exp_var_decl_type = ty;
                  Iast.exp_var_decl_decls = decl;
                  Iast.exp_var_decl_pos = pos} in
