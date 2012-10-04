@@ -212,6 +212,7 @@ let string_of_loc_by_char_num (l : loc) =
 (*    end;; *)
 
 
+(*Proof logging facilities*)
 class ['a] store (x_init:'a) (epr:'a->string) =
    object 
      val emp_val = x_init
@@ -225,7 +226,7 @@ class ['a] store (x_init:'a) (epr:'a->string) =
        | Some p -> p
      method reset = lc <- None
      method string_of : string = match lc with
-       | None -> "None"
+       | None -> "Why None?"
        | Some l -> (epr l)
    end;;
 
@@ -251,17 +252,23 @@ let proving_kind = new proving_type
 
 
 let proving_info () = 
-  if (post_pos # is_avail) 
-  then ("spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^(proving_kind # string_of))
-  else ".."
-
-let wrap_proving_kind s f a =
-  let _ = proving_kind # set s in
-  (* let _ = print_string ("wrap proving kind:"^s^"\n") in *)
-  (* let _ = print_string ((proving_info())^"\n") in *)
-  let r = f a in
+	if(proving_kind # is_avail) then
+		   (
+      		if (post_pos # is_avail) 
+          then ("spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^(proving_kind # string_of))
+          else if(proving_loc # is_avail)
+      	  then ("Proving_loc spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^(proving_kind # string_of))
+					else "..."
+       )
+	else "..."(*"who called is_sat,imply,simplify to be displayed later..."*)
+	
+let wrap_proving_kind (str : string) exec_function args =
+  let _ = proving_kind # set str in
+  (* let _ = print_string ((proving_info())^"\n") in       *)
+  let res = exec_function args in
+	(* let _ = print_string ("wrap proving kind:"^s^" with: post_pos"^string_of_bool(post_pos # is_avail)^"\n") in *)
   let _ = proving_kind # reset in
-  r
+  res
 
  
 (* let post_pos = ref no_pos *)

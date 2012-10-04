@@ -65,7 +65,7 @@ requires x::lseg<null,n> & x!=null
   if (x==null) return y;
   //dprint;
   node tmp=x.next;
-  //assume tmp'=null or tmp'!=null;
+  assume tmp'=null or tmp'!=null;
   x.next=app2(tmp,y);
   return x;
 }

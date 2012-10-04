@@ -1014,7 +1014,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         | Assert ({ exp_assert_asserted_formula = c1_o;
           exp_assert_assumed_formula = c2;
           exp_assert_path_id = (pidi,s);
-          exp_assert_pos = pos}) -> let _ = if !print_proof && (match c1_o with | None -> false | Some _ -> true) then 
+          exp_assert_pos = pos}) -> 
+						let assert_op ()=
+						let _ = if !print_proof && (match c1_o with | None -> false | Some _ -> true) then 
             begin
               Prooftracer.push_assert_assume e0;
               Prooftracer.add_assert_assume e0;
@@ -1061,6 +1063,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         List.map CF.remove_dupl_false_fe r in
                 (ps@res)
 	  end
+		in 
+		wrap_proving_kind "ASSERT/ASSUME" assert_op ()
         | Assign ({ exp_assign_lhs = v;
           exp_assign_rhs = rhs;
           exp_assign_pos = pos}) -> begin

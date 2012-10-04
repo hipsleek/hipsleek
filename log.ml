@@ -29,6 +29,7 @@ let proof_log_list  = ref [] (*For printing to text file with the original oder 
 (*TO DO: check unique pno??*)
 let add_proof_log old_no pno tp ptype time res =
 	if !Globals.proof_logging || !Globals.proof_logging_txt then
+		let _= print_endline ("loging :"^pno^" "^proving_info ()) in
 		let tstartlog = Gen.Profiling.get_time () in
 		let plog = {
 			log_id = pno;
