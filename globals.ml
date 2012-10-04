@@ -263,11 +263,15 @@ let proving_info () =
 	else "..."(*"who called is_sat,imply,simplify to be displayed later..."*)
 	
 let wrap_proving_kind (str : string) exec_function args =
+  let b = proving_kind # is_avail in
+  let m = proving_kind # get in
   let _ = proving_kind # set str in
   (* let _ = print_string ((proving_info())^"\n") in       *)
   let res = exec_function args in
 	(* let _ = print_string ("wrap proving kind:"^s^" with: post_pos"^string_of_bool(post_pos # is_avail)^"\n") in *)
-  let _ = proving_kind # reset in
+  let _ = 
+    if b then proving_kind # set m 
+    else proving_kind # reset in
   res
 
  

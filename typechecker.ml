@@ -253,8 +253,9 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
   let pr2 = add_str "inferred rels" (fun l -> string_of_int (List.length l)) in
   let pr2a = add_str "formulae" (pr_list Cprinter.string_of_formula) in
   let pr3 = pr_quad pr1 pr2a pr2 string_of_bool in
+  let f = wrap_proving_kind "CHECK-SPECS" (check_specs_infer_a prog proc ctx e0 do_infer) in
   Debug.no_1 "check_specs_infer" pr1 pr3
-      (fun _ -> check_specs_infer_a prog proc ctx e0 do_infer spec_list) spec_list
+      (fun _ -> f spec_list) spec_list
 
 (* Termination *)      
 (* This procedure to check that Term[x1,x2,...,xn] are bounded by x1,x2,...,xn>=0 *)
@@ -1015,56 +1016,56 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_assert_assumed_formula = c2;
           exp_assert_path_id = (pidi,s);
           exp_assert_pos = pos}) -> 
-						let assert_op ()=
-						let _ = if !print_proof && (match c1_o with | None -> false | Some _ -> true) then 
-            begin
-              Prooftracer.push_assert_assume e0;
-              Prooftracer.add_assert_assume e0;
-              Prooftracer.start_compound_object ();
-	      Tpdispatcher.push_suppress_imply_output_state ();
-	      Tpdispatcher.unsuppress_imply_output ();
-            end in
-          begin
-            if !Globals.dis_ass_chk then ctx else
-	      let _ = proving_loc#set pos in
-	      let s1 = snd post_start_label in
-              (* let _ = print_string ("labels:"^s^"#"^s1^"#"^"\n") in *)
-	      if (String.length s)>0 (* && (String.length s1)>0 *) && (String.compare s s1 <> 0) then ctx
-	      else
-                let (ts,ps) = List.partition (fun (fl,el,sl)-> (List.length fl) = 0) ctx in
-	        let new_ctx = match c1_o with
-                  | None -> ts
-                  | Some c1 ->
-                        let c1 = prune_pred_struc prog true c1 in (* specialise asserted formula *)
-                        let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " for spec: \n" ^ !log_spec ^ "\n" in	
-                        Debug.devel_pprint(*print_info "assert"*) to_print pos;
-                        let rs,prf = heap_entail_struc_list_failesc_context_init prog false false ts c1 None pos None in
-                        let _ = PTracer.log_proof prf in  
-                        Debug.pprint(*print_info "assert"*) ("assert condition:\n" ^ (Cprinter.string_of_struc_formula c1)) pos;
-                        if CF.isSuccessListFailescCtx rs then 
-			  (Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok\n" else ": unreachable\n")) pos;
-			  Debug.devel_pprint(*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos)
-			else Debug.print_info "assert/assume" (s ^" : failed\n") pos ;
-                        rs in 
-		let _ = if !print_proof  && (match c1_o with | None -> false | Some _ -> true) then 
+	      let assert_op ()=
+		let _ = if !print_proof && (match c1_o with | None -> false | Some _ -> true) then 
                   begin
-          	    Prooftracer.add_assert_assume e0;
-                    (* Prooftracer.end_object (); *)
-                    Prooftracer.pop_div ();
-                    Prooftracer.pop_div ();
-		    Tpdispatcher.restore_suppress_imply_output_state ();
+                    Prooftracer.push_assert_assume e0;
+                    Prooftracer.add_assert_assume e0;
+                    Prooftracer.start_compound_object ();
+	            Tpdispatcher.push_suppress_imply_output_state ();
+	            Tpdispatcher.unsuppress_imply_output ();
                   end in
-                let res = match c2 with
-                  | None -> ts
-                  | Some c ->
-                        let c = prune_preds prog false c in (* specialise assumed formula *)
-                        let assumed_ctx = CF.normalize_max_renaming_list_failesc_context c pos false new_ctx in
-                        let r =CF.transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) assumed_ctx in
-                        List.map CF.remove_dupl_false_fe r in
-                (ps@res)
-	  end
-		in 
-		wrap_proving_kind "ASSERT/ASSUME" assert_op ()
+                begin
+                  if !Globals.dis_ass_chk then ctx else
+	            let _ = proving_loc#set pos in
+	            let s1 = snd post_start_label in
+                    (* let _ = print_string ("labels:"^s^"#"^s1^"#"^"\n") in *)
+	            if (String.length s)>0 (* && (String.length s1)>0 *) && (String.compare s s1 <> 0) then ctx
+	            else
+                      let (ts,ps) = List.partition (fun (fl,el,sl)-> (List.length fl) = 0) ctx in
+	              let new_ctx = match c1_o with
+                        | None -> ts
+                        | Some c1 ->
+                              let c1 = prune_pred_struc prog true c1 in (* specialise asserted formula *)
+                              let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " for spec: \n" ^ !log_spec ^ "\n" in	
+                              Debug.devel_pprint(*print_info "assert"*) to_print pos;
+                              let rs,prf = heap_entail_struc_list_failesc_context_init prog false false ts c1 None pos None in
+                              let _ = PTracer.log_proof prf in  
+                              Debug.pprint(*print_info "assert"*) ("assert condition:\n" ^ (Cprinter.string_of_struc_formula c1)) pos;
+                              if CF.isSuccessListFailescCtx rs then 
+			        (Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok\n" else ": unreachable\n")) pos;
+			        Debug.devel_pprint(*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos)
+			      else Debug.print_info "assert/assume" (s ^" : failed\n") pos ;
+                              rs in 
+		      let _ = if !print_proof  && (match c1_o with | None -> false | Some _ -> true) then 
+                        begin
+          	          Prooftracer.add_assert_assume e0;
+                          (* Prooftracer.end_object (); *)
+                          Prooftracer.pop_div ();
+                          Prooftracer.pop_div ();
+		          Tpdispatcher.restore_suppress_imply_output_state ();
+                        end in
+                      let res = match c2 with
+                        | None -> ts
+                        | Some c ->
+                              let c = prune_preds prog false c in (* specialise assumed formula *)
+                              let assumed_ctx = CF.normalize_max_renaming_list_failesc_context c pos false new_ctx in
+                              let r =CF.transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) assumed_ctx in
+                              List.map CF.remove_dupl_false_fe r in
+                      (ps@res)
+	        end
+	      in 
+	      wrap_proving_kind "ASSERT/ASSUME" assert_op ()
         | Assign ({ exp_assign_lhs = v;
           exp_assign_rhs = rhs;
           exp_assign_pos = pos}) -> begin
