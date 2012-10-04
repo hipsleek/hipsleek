@@ -1059,6 +1059,8 @@ and mkConjH (f1 : h_formula) (f2 : h_formula) (pos : loc) =
   if (f1 = HFalse) || (f2 = HFalse) then HFalse
   else if (f1 = HTrue) && (f2 = HTrue) then HTrue
   else if (f1 = HEmp) && (f2 = HEmp) then HEmp
+  else if (f1 = HEmp) then f2
+  else if (f2 = HEmp) then f1
   else Conj ({h_formula_conj_h1 = f1; 
               h_formula_conj_h2 = f2; 
               h_formula_conj_pos = pos})

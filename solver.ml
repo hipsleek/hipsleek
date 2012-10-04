@@ -3461,7 +3461,7 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
 	      (*	let _ = print_string("compute final answer\n") in*)
 	      ((fold_context_left [with_h1_ctx; final_ctx]),( mkOrRight ctx0 conseq [with_h1_prf; final_prf]))		
 		      (*  end of helper method *)
-    in
+    (*in
     (* Do Matching (data nodes are already compacted) before Spliting *)
     let matching_helper prog is_folding ctx0 conseq pos = 
     	let lhs = CF.formula_of_context ctx0 in
@@ -3497,7 +3497,7 @@ and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context
         | Context.M_match _ -> process_action 2 prog estate conseq b1 b2 actions [] is_folding pos
         | _ -> let msg = "Dummy FailContext for no Matching in heap_entail_split_lhs" in 
 	    		let fail_ex = {fe_kind = Failure_Must msg; fe_name = Globals.logical_error;fe_locs=[]}
-	    		in mkFailCtx_in (Trivial_Reason (fail_ex)), Failure
+	    		in mkFailCtx_in (Trivial_Reason (fail_ex)), Failure*)
     in
     (* main method *)
     let lhs = CF.formula_of_context ctx0 in
@@ -6535,11 +6535,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 				  h_formula_data_holes = new_r_holes;	} in
 			  (* let _ = print_string ("\n(andreeac) solver.ml rem_l_node: " ^ (Cprinter.string_of_h_formula rem_l_node)) in *)
 			  (* let _ = print_string ("\n(andreeac) solver.ml rem_r_node: " ^ (Cprinter.string_of_h_formula rem_r_node)) in *)
-			  (* Filter out variables with @A on both lhs and rhs so that they do not form unnecessary equalities*)
+			  (* Filter out variables with @A on either lhs or rhs so that they do not form unnecessary equalities*)
               		  let lst1 = List.combine l_args l_param_ann in
 		          let lst2 = List.combine r_args r_param_ann in
 		          let lst = List.combine lst1 lst2 in
-		          let new_lst = List.filter (fun (l,r) -> if isAccs(snd l) && isAccs(snd r) then false else true) lst in
+		          let new_lst = List.filter (fun (l,r) -> if isAccs(snd l) || isAccs(snd r) then false else true) lst in
 		          let lst1,lst2 = List.split new_lst in
 		          let new_l_args, new_l_param_ann = List.split lst1 in
 		          let new_r_args, new_r_param_ann = List.split lst2 in 

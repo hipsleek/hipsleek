@@ -485,6 +485,9 @@ let peek_heap_and =
        (fun strm ->
            match Stream.npeek 3 strm with
              |[AND,_;IDENTIFIER id,_; COLONCOLON,_] -> ()
+             |[AND,_;SELFT t,_; COLONCOLON,_] -> ()
+             |[AND,_;THIS t,_; COLONCOLON,_] -> ()
+             |[AND,_;RES t,_; COLONCOLON,_] -> ()
              | _ -> raise Stream.Failure)
 
 let peek_array_type =
