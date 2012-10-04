@@ -2683,6 +2683,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 			let et = snd (helper e) in
 			let fs,rem,_ = compact_field_access_sequence prog et fs in
 			if not (rem = "") then
+        let _ = print_endline ("== rem = " ^ rem) in
 			  failwith ("[trans_exp] expect non-inline field access but still got { " ^ rem ^ " }")
 			else
               (* ... = o.f => read_only = true *)

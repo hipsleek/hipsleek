@@ -754,7 +754,7 @@ let string_of_axiom_decl_list adecls =
 let string_of_data cdef = 
   let meth_str = String.concat "\n" (List.map string_of_proc_decl cdef.data_methods) in
   let field_str = String.concat ";\n" 
-	(List.map (fun f -> ((* An Hoa [22/08/2011] : convert hard coded information extraction to function calls to make code extensible *) (string_of_typ (get_field_typ f)) ^ " " ^ (get_field_name f))) cdef.data_fields) in
+	(List.map (fun f -> string_of_decl f) cdef.data_fields) in
   let inv_str = String.concat ";\n" (List.map (fun i -> "inv " ^ (string_of_formula i)) cdef.data_invs) in
 	"class " ^ cdef.data_name ^ " extends " ^ cdef.data_parent_name ^ " {\n"
 	^ field_str ^ "\n" ^ inv_str ^ "\n" ^ meth_str ^ "\n}"
