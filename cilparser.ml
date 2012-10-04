@@ -90,7 +90,9 @@ and translate_typ (t: Cil.typ) : Globals.typ =
     | Cil.TPtr (t1, _) -> report_error_msg "Error!!! Iast doesn't support Cil.TPtr type!"
     | Cil.TArray _ -> report_error_msg "TRUNG TODO: handle TArray later!"
     | Cil.TFun _ -> report_error_msg "Should not appear here. Handle only in translate_typ_fun"
-    | Cil.TNamed _ -> report_error_msg "TRUNG TODO: handle TNamed later!"
+    | Cil.TNamed (tname, _) ->
+        let actual_type = tname.Cil.ttype in
+        translate_typ actual_type
     | Cil.TComp _ -> report_error_msg "TRUNG TODO: handle TComp later!"
     | Cil.TEnum _ -> report_error_msg "TRUNG TODO: handle TEnum later!"
     | Cil.TBuiltin_va_list _ -> report_error_msg "TRUNG TODO: handle TBuiltin_va_list later!" in
@@ -490,8 +492,7 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
     match gl with
     | Cil.GType _ ->
         (* let _ = print_endline ("== gl GType = " ^ (string_of_cil_global gl)) in *)
-        (* ()                                                                      *)
-        report_error_msg "TRUNG TODO: Handle Cil.GType later!"
+        ()
     | Cil.GCompTag _ ->
         (* let _ = print_endline ("== gl GCompTag = " ^ (string_of_cil_global gl)) in *)
         (* ()                                                                         *)
