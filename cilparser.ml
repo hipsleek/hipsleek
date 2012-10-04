@@ -79,21 +79,30 @@ let rec translate_location (loc: Cil.location) : Globals.loc =
   newloc
 
 
+(* - apply only for translating type of variable or function in definition      *)
+(* - for translating function's parameters type, please use translate_typ_param *) 
 and translate_typ (t: Cil.typ) : Globals.typ =
   let newtype = 
     match t with
-    | Cil.TVoid _            -> Globals.Void
-    | Cil.TInt _             -> Globals.Int 
-    | Cil.TFloat _           -> Globals.Float 
-    | Cil.TPtr _             -> report_error_msg "TRUNG TODO: handle TPtr later!"  
-    | Cil.TArray _           -> report_error_msg "TRUNG TODO: handle TArray later!"
-    | Cil.TFun _             -> report_error_msg "Should not appear here. Handle only in translate_typ_fun"
-    | Cil.TNamed _           -> report_error_msg "TRUNG TODO: handle TNamed later!"
-    | Cil.TComp _            -> report_error_msg "TRUNG TODO: handle TComp later!"
-    | Cil.TEnum _            -> report_error_msg "TRUNG TODO: handle TEnum later!"
+    | Cil.TVoid _ -> Globals.Void
+    | Cil.TInt _ -> Globals.Int
+    | Cil.TFloat _ -> Globals.Float
+    | Cil.TPtr (t1, _) -> report_error_msg "Error!!! Iast doesn't support Cil.TPtr type!"
+    | Cil.TArray _ -> report_error_msg "TRUNG TODO: handle TArray later!"
+    | Cil.TFun _ -> report_error_msg "Should not appear here. Handle only in translate_typ_fun"
+    | Cil.TNamed _ -> report_error_msg "TRUNG TODO: handle TNamed later!"
+    | Cil.TComp _ -> report_error_msg "TRUNG TODO: handle TComp later!"
+    | Cil.TEnum _ -> report_error_msg "TRUNG TODO: handle TEnum later!"
     | Cil.TBuiltin_va_list _ -> report_error_msg "TRUNG TODO: handle TBuiltin_va_list later!" in
   (* return *)
   newtype
+
+
+(* apply for translating function's parameters type *)
+and translate_typ_param (t: Cil.typ) : (Globals.typ * Iast.param_modifier) =
+  match t with
+  | Cil.TPtr (t1, _) -> (translate_typ t1, Iast.RefMod)
+  | _ -> (translate_typ t, Iast.NoMod)
 
 
 and translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp =
@@ -158,11 +167,10 @@ and translate_lval (lv: Cil.lval) (lopt: Cil.location option) : Iast.exp =
   match (lh, off) with
   | Cil.Var v, Cil.NoOffset ->
       let name = v.Cil.vname in
-      let newexp = Iast.Var {Iast.exp_var_name = name;
-                             Iast.exp_var_pos = pos} in
+      let newexp = Iast.Var {Iast.exp_var_name = name; Iast.exp_var_pos = pos} in
       newexp
   | Cil.Var _, _ -> report_error_msg "Error!!! Cil.Var has to have NoOffset!"
-  | Cil.Mem exp, Cil.NoOffset -> report_error_msg "TRUNG TODO: Handle (Cil.Mem _, Cil.NoOffset)  later!"
+  | Cil.Mem e, Cil.NoOffset -> translate_exp e lopt
   | Cil.Mem exp, Cil.Index _ ->
       let rec collect_index (off: Cil.offset) : Iast.exp list = (
         match off with
@@ -419,20 +427,10 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option): Iast.proc
         let params = Cil.argsToList p in
         let translate_one_param (p : string * Cil.typ * Cil.attributes) : Iast.param = (
           let (name, t, attrs) = p in
-          let ptyp = translate_typ t in
-          let is_mod = (
-            List.exists (fun attr ->
-              let attrparas = match attr with Cil.Attr (_, aps) -> aps in
-              List.exists (fun attrpara ->
-                match attrpara with
-                | Cil.AStar _ -> true
-                | _           -> false
-              ) attrparas
-            ) attrs
-          ) in
+          let (ptyp, pmod) = translate_typ_param t in
           let newparam = {Iast.param_type = ptyp;
                           Iast.param_name = name;
-                          Iast.param_mod = if is_mod then Iast.RefMod else Iast.NoMod;
+                          Iast.param_mod = pmod;
                           Iast.param_loc = pos; } in
           newparam
         ) in
