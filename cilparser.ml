@@ -79,7 +79,7 @@ let rec translate_location (loc: Cil.location) : Globals.loc =
   newloc
 
 
-and translate_typ (t: Cil.typ) : Globals.typ =
+let rec translate_typ (t: Cil.typ) : Globals.typ =
   let newtype = 
     match t with
     | Cil.TVoid _ -> Globals.Void
@@ -95,7 +95,26 @@ and translate_typ (t: Cil.typ) : Globals.typ =
   (* return *)
   newtype
 
-and translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp =
+let translate_var (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
+  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
+  let name = vinfo.Cil.vname in
+  let newexp = Iast.Var {Iast.exp_var_name = name;
+                         Iast.exp_var_pos = pos} in
+  newexp
+
+
+let translate_var_decl (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
+  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
+  let ty = translate_typ vinfo.Cil.vtype in
+  let name = vinfo.Cil.vname in
+  let decl = [(name, None, pos)] in
+  let newexp = Iast.VarDecl {Iast.exp_var_decl_type = ty;
+                             Iast.exp_var_decl_decls = decl;
+                             Iast.exp_var_decl_pos = pos} in
+  newexp
+
+
+let translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp =
   let pos = match lopt with
             | None -> no_pos
             | Some l -> translate_location l in
@@ -118,7 +137,7 @@ and translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp 
   | Cil.CEnum _ -> report_error_msg "TRUNG TODO: Handle Cil.CEnum later!"
 
 
-and translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option) : (Iast.typed_ident * loc * bool) =
+let translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option) : (Iast.typed_ident * loc * bool) =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let name = field.Cil.fname in
   let (ty, inline) = match field.Cil.ftype with
@@ -127,7 +146,7 @@ and translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option) : (Ia
   ((ty, name), pos, inline)
 
 
-and translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : Iast.data_decl =
+let translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : Iast.data_decl =
   (* handle struct *)
   if (comp.Cil.cstruct) then (
     let name = comp.Cil.cname in
@@ -145,14 +164,14 @@ and translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : Iast.d
   )
 
 
-and translate_unary_operator (op : Cil.unop) : Iast.uni_op =
+let translate_unary_operator (op : Cil.unop) : Iast.uni_op =
   match op with
   | Cil.Neg -> Iast.OpUMinus
   | Cil.BNot -> report_error_msg "Error!!! Iast doesn't support BNot (bitwise complement) operator!"
   | Cil.LNot -> Iast.OpNot
 
 
-and translate_binary_operator (op : Cil.binop) : Iast.bin_op =
+let translate_binary_operator (op : Cil.binop) : Iast.bin_op =
   match op with
   | Cil.PlusA -> Iast.OpPlus
   | Cil.PlusPI -> report_error_msg "TRUNG TODO: Handle Cil.PlusPI later!"
@@ -178,7 +197,7 @@ and translate_binary_operator (op : Cil.binop) : Iast.bin_op =
   | Cil.LOr -> Iast.OpLogicalOr
 
 
-and translate_lval (lv: Cil.lval) (lopt: Cil.location option) : Iast.exp =
+let rec translate_lval (lv: Cil.lval) (lopt: Cil.location option) : Iast.exp =
   let rec collect_index (off: Cil.offset) : Iast.exp list = (
     match off with
     | Cil.NoOffset -> []
@@ -263,7 +282,7 @@ and translate_exp (e: Cil.exp) (lopt: Cil.location option): Iast.exp =
   | Cil.StartOf _ -> report_error_msg "Error!!! Iast doesn't support Cil.StartOf exp!"
 
 
-and translate_instr (instr: Cil.instr) : Iast.exp =
+let translate_instr (instr: Cil.instr) : Iast.exp =
   match instr with
   | Cil.Set (lv, exp, l) ->
       let p = translate_location l in
@@ -302,9 +321,10 @@ and translate_instr (instr: Cil.instr) : Iast.exp =
   | Cil.Asm _ -> report_error_msg "TRUNG TODO: Handle Cil.Asm later!"
 
 
-and translate_stmtkind (sk: Cil.stmtkind) (lopt: Cil.location option) : Iast.exp =
+let rec translate_stmt (s: Cil.stmt) (lopt: Cil.location option) : Iast.exp =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in 
-  match sk with
+  let skind = s.Cil.skind in
+  match skind with
   | Cil.Instr instrs ->
       let newexp = (match instrs with
         | [] -> Iast.Empty pos
@@ -323,7 +343,21 @@ and translate_stmtkind (sk: Cil.stmtkind) (lopt: Cil.location option) : Iast.exp
                                 Iast.exp_return_path_id = None;
                                 Iast.exp_return_pos = pos} in
       newexp
-  | Cil.Goto (sref, l) -> translate_stmt !sref (Some l)
+  | Cil.Goto (sref, l) ->
+      (* detect a infinite loop in Goto statement *)
+      if (!sref.Cil.sid = s.Cil.sid) then (
+        let cond = Iast.BoolLit {Iast.exp_bool_lit_val = true; Iast.exp_bool_lit_pos = pos} in
+        let infinite_loop = Iast.While {Iast.exp_while_condition = cond;
+                                        Iast.exp_while_body = Iast.Empty pos;
+                                        Iast.exp_while_specs = Iast.mkSpecTrue n_flow pos;
+                                        Iast.exp_while_jump_label = Iast.NoJumpLabel;
+                                        Iast.exp_while_path_id = None ;
+                                        Iast.exp_while_f_name = "";
+                                        Iast.exp_while_wrappings = None;
+                                        Iast.exp_while_pos = pos} in
+        infinite_loop
+      )
+      else translate_stmt !sref (Some l)
   | Cil.Break l ->
       let pos = translate_location l in
       let newexp = Iast.Break {Iast.exp_break_jump_label = Iast.NoJumpLabel;
@@ -385,12 +419,6 @@ and translate_stmtkind (sk: Cil.stmtkind) (lopt: Cil.location option) : Iast.exp
       newexp
 
 
-and translate_stmt (s: Cil.stmt) (lopt: Cil.location option) : Iast.exp =
-  let skind = s.Cil.skind in
-  let newskind = translate_stmtkind skind lopt in
-  newskind
-
-
 and translate_block (blk: Cil.block) (lopt: Cil.location option): Iast.exp =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let stmts = blk.Cil.bstmts in
@@ -404,24 +432,7 @@ and translate_block (blk: Cil.block) (lopt: Cil.location option): Iast.exp =
     )
 
 
-and translate_var (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
-  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
-  let name = vinfo.Cil.vname in
-  let newexp = Iast.Var {Iast.exp_var_name = name;
-                         Iast.exp_var_pos = pos} in
-  newexp
-
-and translate_var_decl (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
-  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
-  let ty = translate_typ vinfo.Cil.vtype in
-  let name = vinfo.Cil.vname in
-  let decl = [(name, None, pos)] in
-  let newexp = Iast.VarDecl {Iast.exp_var_decl_type = ty;
-                             Iast.exp_var_decl_decls = decl;
-                             Iast.exp_var_decl_pos = pos} in
-  newexp
-
-and translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo) (lopt: Cil.location option) : Iast.exp_var_decl =
+let translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo) (lopt: Cil.location option) : Iast.exp_var_decl =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let ty = translate_typ vinfo.Cil.vtype in
   let name = vinfo.Cil.vname in
@@ -437,7 +448,7 @@ and translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo) (lopt: Cil.l
   vardecl
 
 
-and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option): Iast.proc_decl =
+let translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option): Iast.proc_decl =
   let translate_funtyp (ty: Cil.typ) : Globals.typ = (
     match ty with
     | Cil.TFun (t, params, _, _) -> translate_typ t
@@ -495,7 +506,7 @@ and translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option): Iast.proc
   newproc
 
 
-and translate_file (file: Cil.file) : Iast.prog_decl =
+let translate_file (file: Cil.file) : Iast.prog_decl =
   (* initial values *)
   let data_decls : Iast.data_decl list ref = ref [] in
   let global_var_decls : Iast.exp_var_decl list ref = ref [] in
@@ -533,10 +544,9 @@ and translate_file (file: Cil.file) : Iast.prog_decl =
         (* let _ = print_endline ("== gl GEnumTagDecl = " ^ (string_of_cil_global gl)) in *)
         (* ()                                                                             *)
         report_error_msg "TRUNG TODO: Handle Cil.GEnumTagDecl later!"
-    | Cil.GVarDecl (v, l) ->
+    | Cil.GVarDecl (v, l) -> ()
         (* let _ = print_endline ("== gl GVarDecl = " ^ (string_of_cil_global gl)) in *)
-        (* ()                                                                         *)
-        report_error_msg "TRUNG TODO: Handle Cil.GVarDecl later!"
+        (* report_error_msg "TRUNG TODO: Handle Cil.GVarDecl later!"                  *)
     | Cil.GVar (v, init, l) ->
         (* let _ = print_endline ("== translate_file: collect GVar") in  *)
         let gvar = translate_global_var v init (Some l) in
@@ -591,7 +601,6 @@ let parse_one_file (filename: string) : Cil.file =
     (* (trace "sm" (dprintf "removing unused temporaries\n")); *)
     (Rmtmps.removeUnusedTemps cil)
   );
-  Parsing.clear_parser ();
   (* return *)
   cil
 
