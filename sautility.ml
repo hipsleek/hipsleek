@@ -294,7 +294,7 @@ and drop_data_view_hrel_nodes_hf_from_root prog hf hd_nodes hv_nodes eqs drop_ro
   nhf
 
 (*END for drop non-selective subformulas*)
-
+(*fro infer_collect_hp*)
 let update_hp_args hf renamed_hps=
   let rec look_up_helper hp0 ls_hp_args=
     match ls_hp_args with

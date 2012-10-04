@@ -3376,6 +3376,8 @@ and drop_data_view_hrel_nodes_fb fb fn_data_select fn_view_select fn_hrel_select
           matched_data_nodes matched_view_nodes matched_hrel_nodes in
    (*assume keep vars = dnodes*)
   let new_p = CP.filter_var (MCP.pure_of_mix fb.formula_base_pure) keep_pure_vars in
+  (* DD.info_pprint ("  keep" ^ (!CP.print_svl keep_pure_vars)) no_pos; *)
+  (* DD.info_pprint ("  new_p" ^ (!CP.print_formula new_p)) no_pos; *)
   {fb with formula_base_heap = new_hf;
       formula_base_pure = MCP.mix_of_pure new_p;}
 

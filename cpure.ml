@@ -17,6 +17,10 @@ open Label
 type spec_var =
   | SpecVar of (typ * ident * primed)
 
+let compare_sv (SpecVar (t1, id1, pr1)) (SpecVar (t2, id2, pr2))=
+  if (t1=t2)&&(pr1=pr2) then compare id1 id2
+  else -1
+
 let is_hole_spec_var sv = match sv with
 	| SpecVar (_,n,_) -> n.[0] = '#'
 
@@ -3526,7 +3530,8 @@ let rec eq_pure_formula (f1 : formula) (f2 : formula) : bool = equalFormula f1 f
 
 module SVar = struct
   type t = spec_var
-  let compare = fun sv1 -> fun sv2 -> compare (name_of_spec_var sv1) (name_of_spec_var sv2)
+  let compare = fun sv1 -> fun sv2 -> compare_sv sv1 sv2
+      (* compare (name_of_spec_var sv1) (name_of_spec_var sv2) *)
 end
 
 module SVarSet = Set.Make(SVar)

@@ -8,9 +8,9 @@ HeapPred H1(node a).
 HeapPred G(node a, node b).
 
 void foo( node x)
- infer [H,G]
+ infer [H,H1]
  requires H(x)
- ensures G(x); //'
+ ensures H1(x); //'
  {
    if (x!=null) {
      x = x.next;
