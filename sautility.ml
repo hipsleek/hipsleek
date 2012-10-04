@@ -32,6 +32,18 @@ let rec retrieve_args_from_locs args locs index res=
           retrieve_args_from_locs ss locs (index+1) (res@[a])
         else retrieve_args_from_locs ss locs (index+1) res
 
+let check_hp_arg_eq (hp1, args1) (hp2, args2)=
+  let rec eq_spec_var_list l1 l2=
+    match l1,l2 with
+      |[],[] -> true
+      | v1::ls1,v2::ls2 ->
+          if CP.eq_spec_var v1 v2 then
+            eq_spec_var_list ls1 ls2
+          else false
+      | _ -> false
+  in
+  ((CP.eq_spec_var hp1 hp2) && (eq_spec_var_list args1 args2))
+
 let rec get_data_view_hrel_vars_bformula bf=
   get_data_view_hrel_vars_h_formula bf.CF.formula_base_heap
 
