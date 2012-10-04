@@ -221,25 +221,6 @@ and find_defined_pointers_after_preprocess prog def_vs_wo_args hds hvs hrs eqs p
   (def_vs, hp_paras, hds, hvs, eqs)
 
 and find_defined_pointers_x prog f predef_ptrs=
-  (* let hds, hvs, hrs = CF.get_hp_rel_formula f in *)
-  (* let ( _,mix_f,_,_,_) = CF.split_components f in *)
-  (* let eqs = (MCP.ptr_equations_without_null mix_f) in *)
-  (* let eqNull1, eqNull2 =  List.split (MCP.ptr_equations_with_null mix_f) in *)
-  (* let eqNulls = CP.remove_dups_svl (eqNull1@eqNull2) in *)
-  (* (\*defined vars=  + null + data + view*\) *)
-  (* let def_vs = (eqNulls) @ (List.map (fun hd -> hd.CF.h_formula_data_node) hds) *)
-  (*  @ (List.map (fun hv -> hv.CF.h_formula_view_node) hvs) in *)
-  (* (\*find closed defined pointers set*\) *)
-  (* (\* let def_vs0 = CP.remove_dups_svl def_vs in *\) *)
-  (* let def_vs_wo_args = CP.remove_dups_svl ((List.fold_left Infer.close_def def_vs eqs)@predef_ptrs) in *)
-  (* (\*check nodes'args are defined?*\) *)
-  (* let tmp = def_vs_wo_args in  *)
-  (* let def_vs = List.filter (check_node_args_defined prog def_vs_wo_args hds hvs) tmp in *)
-  (* (\*(HP name * parameter name list)*\) *)
-  (* let hp_paras = List.map *)
-  (*               (fun (id, exps, _) -> (id, List.concat (List.map CP.afv exps))) *)
-  (*               hrs in *)
-  (* (def_vs, hp_paras, hds, hvs,eqs) *)
   let (def_vs, hds, hvs, hrs, eqs) = find_defined_pointers_raw prog f in
   find_defined_pointers_after_preprocess prog def_vs hds hvs hrs eqs predef_ptrs
 
@@ -263,6 +244,11 @@ let keep_data_view_hrel_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hrels=
   let keep_ptrs = loop_up_closed_ptr_args prog hd_nodes hv_nodes keep_rootvars in
   CF.drop_data_view_hrel_nodes f check_nbelongsto_dnode check_nbelongsto_vnode
     check_neq_hrelnode keep_ptrs keep_ptrs keep_hrels
+
+let keep_data_view_hrel_nodes_fb prog fb hd_nodes hv_nodes keep_rootvars keep_hrels=
+  let keep_ptrs = loop_up_closed_ptr_args prog hd_nodes hv_nodes keep_rootvars in
+  CF.drop_data_view_hrel_nodes_fb fb check_nbelongsto_dnode check_nbelongsto_vnode
+    check_neq_hrelnode keep_ptrs keep_ptrs keep_hrels keep_ptrs
 
 let keep_data_view_hrel_nodes_two_f prog f1 f2 hd_nodes hv_nodes keep_rootvars keep_hrels=
   let keep_ptrs = loop_up_closed_ptr_args prog hd_nodes hv_nodes keep_rootvars in
