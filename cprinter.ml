@@ -1479,7 +1479,10 @@ let pr_hprel_lhs_rhs (lhs,rhs) =
 let pr_hprel hpa=
   fmt_open_box 1;
   fmt_string (CP.print_rel_cat hpa.hprel_kind);
-  pr_seq " unknown: " pr_spec_var hpa.unk_svl;
+  pr_seq " unknown svl: " pr_spec_var hpa.unk_svl;
+  fmt_string "; ";
+  let hps = List.map (fun (hp,_) -> hp) hpa.unk_hps in
+  pr_seq " unknown hps: " pr_spec_var hps;
   fmt_string "; ";
   pr_seq " predefined: " pr_spec_var hpa.predef_svl;
   fmt_string "; ";
