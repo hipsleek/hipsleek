@@ -21,7 +21,7 @@ type ann = ConstAnn of heap_ann | PolyAnn of CP.spec_var
 
 type typed_ident = (typ * ident)
 
-and formula_type = 
+and formula_type =
   | Simple
   | Complex
 (*later, type of formula, based on #nodes ....*)
@@ -104,6 +104,7 @@ and formula =
 and hprel= {
     hprel_kind: CP.rel_cat;
     unk_svl: CP.spec_var list;
+    unk_hps:(CP.spec_var*CP.spec_var list) list;
     predef_svl: CP.spec_var list;
     hprel_lhs: formula;
     hprel_rhs: formula

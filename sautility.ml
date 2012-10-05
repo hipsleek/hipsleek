@@ -25,6 +25,7 @@ let is_empty_f f=
             (CP.isConstTrue (MCP.pure_of_mix fb.CF.formula_base_pure))
     | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
 
+(*for drop hp args*)
 let rec retrieve_args_from_locs args locs index res=
   match args with
     | [] -> res
@@ -43,6 +44,9 @@ let check_hp_arg_eq (hp1, args1) (hp2, args2)=
       | _ -> false
   in
   ((CP.eq_spec_var hp1 hp2) && (eq_spec_var_list args1 args2))
+
+let check_simp_hp_eq (hp1, _) (hp2, _)=
+   (CP.eq_spec_var hp1 hp2)
 
 let rec get_data_view_hrel_vars_bformula bf=
   get_data_view_hrel_vars_h_formula bf.CF.formula_base_heap
@@ -125,6 +129,14 @@ and drop_get_hrel_h_formula hf=
   in
   helper hf
 
+let get_ptrs hf=
+  match hf with
+    | CF.DataNode hd ->([hd.CF.h_formula_data_node]@
+               (List.filter (fun (CP.SpecVar (t,_,_)) -> is_pointer t) hd.CF.h_formula_data_arguments))
+    | CF.ViewNode hv -> ([hv.CF.h_formula_view_node]@
+               (List.filter (fun (CP.SpecVar (t,_,_)) -> is_pointer t) hv.CF.h_formula_view_arguments))
+    | CF.HRel (sv, eargs, _) -> List.concat (List.map CP.afv eargs)
+    | _ -> report_error no_pos "sau.get_ptrs"
 (*==============*)
 (*for drop non-selective subformulas*)
 (*check a data node does not belong to a set of data node name*)
@@ -418,3 +430,12 @@ let get_raw_defined_w_pure prog f=
         let p_svl = CP.fv (MCP.pure_of_mix fb.CF.formula_base_pure) in
         (def_raw@p_svl)
     | _ -> report_error no_pos "sau.get_raw_defined_w_pure: not handle yet"
+
+
+(*for unk hps*)
+(*check whether args of an unk hp is in keep_ptrs*)
+let get_intersect_unk_hps keep_ptrs (hp, args)=
+  (*may need closed*)
+  let diff = Gen.BList.difference_eq CP.eq_spec_var args keep_ptrs in
+  if diff = [] then [hp]
+  else []
