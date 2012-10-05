@@ -1044,6 +1044,12 @@ and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (v
   | Conj ({h_formula_conj_h1 = h1;
 	   h_formula_conj_h2 = h2;
 	   h_formula_conj_pos = pos})
+  | ConjStar ({h_formula_conjstar_h1 = h1;
+	   h_formula_conjstar_h2 = h2;
+	   h_formula_conjstar_pos = pos})
+  | ConjConj ({h_formula_conjconj_h1 = h1;
+	   h_formula_conjconj_h2 = h2;
+	   h_formula_conjconj_pos = pos})	   	   
   | Phase ({h_formula_phase_rd = h1;
 	   h_formula_phase_rw = h2;
 	   h_formula_phase_pos = pos}) -> begin
@@ -1463,6 +1469,12 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
   | Conj ({h_formula_conj_h1 = h1;
 	   h_formula_conj_h2 = h2;
 	   h_formula_conj_pos = pos})
+  | ConjStar ({h_formula_conjstar_h1 = h1;
+	   h_formula_conjstar_h2 = h2;
+	   h_formula_conjstar_pos = pos})
+  | ConjConj ({h_formula_conjconj_h1 = h1;
+	   h_formula_conjconj_h2 = h2;
+	   h_formula_conjconj_pos = pos})	   	   
   | Phase ({h_formula_phase_rd = h1;
 	    h_formula_phase_rw = h2;
 	    h_formula_phase_pos = pos}) -> begin

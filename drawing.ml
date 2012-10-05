@@ -87,7 +87,11 @@ and gen_nodes prog n h0 buffer = match h0 with
   | Phase ({h_formula_phase_rd = h1;
 	    h_formula_phase_rw = h2}) 
   | Conj ({h_formula_conj_h1 = h1;
-	   h_formula_conj_h2 = h2}) ->
+	   h_formula_conj_h2 = h2})
+  | ConjStar ({h_formula_conjstar_h1 = h1;
+	   h_formula_conjstar_h2 = h2})	   	    
+  | ConjConj ({h_formula_conjconj_h1 = h1;
+	   h_formula_conjconj_h2 = h2}) ->
       let nodes1 = gen_nodes prog n h1 buffer in
       let nodes2 = gen_nodes prog n h2 buffer in
 	nodes1 @ nodes2
@@ -135,6 +139,10 @@ and gen_edges prog n h0 p nodes buffer =
 	       h_formula_star_h2 = h2}) 
       | Conj ({h_formula_conj_h1 = h1;
 	       h_formula_conj_h2 = h2}) 
+      | ConjStar ({h_formula_conjstar_h1 = h1;
+	       h_formula_conjstar_h2 = h2}) 
+      | ConjConj ({h_formula_conjconj_h1 = h1;
+	       h_formula_conjconj_h2 = h2}) 	       	       
       | Phase ({h_formula_phase_rd = h1;
 	       h_formula_phase_rw = h2}) ->
 	  gen_edges prog n h1 p nodes buffer;

@@ -360,6 +360,10 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
                       {mem_formula_mset = mset2}
                   | CF.Conj {CF.h_formula_conj_h1 = h3;
 			                 CF.h_formula_conj_h2 = h4} 
+                  | CF.ConjStar {CF.h_formula_conjstar_h1 = h3;
+			                 CF.h_formula_conjstar_h2 = h4}
+                  | CF.ConjConj {CF.h_formula_conjconj_h1 = h3;
+			                 CF.h_formula_conjconj_h2 = h4}                   			                 
                   | CF.Phase {CF.h_formula_phase_rd = h3;
 			                  CF.h_formula_phase_rw = h4}->  
                       let mset_h1h3 = helper (CF.mkStarH h1 h3 no_pos 22) in
@@ -385,6 +389,10 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
                 {mem_formula_mset = mset2}
             | CF.Conj {CF.h_formula_conj_h1 = h11;
 			           CF.h_formula_conj_h2 = h12} 
+            | CF.ConjStar {CF.h_formula_conjstar_h1 = h11;
+			           CF.h_formula_conjstar_h2 = h12}
+            | CF.ConjConj {CF.h_formula_conjconj_h1 = h11;
+			           CF.h_formula_conjconj_h2 = h12}			           			           
             | CF.Phase {CF.h_formula_phase_rd = h11;
 			            CF.h_formula_phase_rw = h12}->  
                 let mset_h11h2 = helper (CF.mkStarH h11 h2 no_pos 24) in
@@ -405,10 +413,16 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
 	        res
       | Phase ({h_formula_phase_rd = h1;
 	    h_formula_phase_rw = h2;
-	    h_formula_phase_pos = pos})  
+	    h_formula_phase_pos = pos}) 
       | Conj ({h_formula_conj_h1 = h1;
 	    h_formula_conj_h2 = h2;
-	    h_formula_conj_pos = pos}) ->
+	    h_formula_conj_pos = pos})
+      | ConjStar ({h_formula_conjstar_h1 = h1;
+	    h_formula_conjstar_h2 = h2;
+	    h_formula_conjstar_pos = pos})	    	     
+      | ConjConj ({h_formula_conjconj_h1 = h1;
+	    h_formula_conjconj_h2 = h2;
+	    h_formula_conjconj_pos = pos}) ->
 	        let m1 = helper h1  in
 	        let m2 = helper h2 in
 	        let m = (CP.DisjSetSV.merge_disj_set m1.mem_formula_mset m2.mem_formula_mset) in
@@ -564,7 +578,13 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
 		h_formula_phase_pos = pos})
       | Conj ({h_formula_conj_h1 = h1;
 	    h_formula_conj_h2 = h2;
-	    h_formula_conj_pos = pos}) ->
+	    h_formula_conj_pos = pos})
+      | ConjStar ({h_formula_conjstar_h1 = h1;
+	    h_formula_conjstar_h2 = h2;
+	    h_formula_conjstar_pos = pos})	    		
+      | ConjConj ({h_formula_conjconj_h1 = h1;
+	    h_formula_conjconj_h2 = h2;
+	    h_formula_conjconj_pos = pos}) ->
             let ph1 = xpure_heap_helper prog h1 which_xpure in
             let ph2 = xpure_heap_helper prog h2 which_xpure in
             MCP.merge_mems ph1 ph2 true
@@ -673,7 +693,13 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (
 		h_formula_phase_pos = pos})
       | Conj ({h_formula_conj_h1 = h1;
 	    h_formula_conj_h2 = h2;
-	    h_formula_conj_pos = pos}) ->
+	    h_formula_conj_pos = pos})
+      | ConjStar ({h_formula_conjstar_h1 = h1;
+	    h_formula_conjstar_h2 = h2;
+	    h_formula_conjstar_pos = pos})	    		
+      | ConjConj ({h_formula_conjconj_h1 = h1;
+	    h_formula_conjconj_h2 = h2;
+	    h_formula_conjconj_pos = pos}) ->
             let ph1 = xpure_heap_helper prog h1 which_xpure in
             let ph2 = xpure_heap_helper prog h2 which_xpure in
             MCP.merge_mems ph1 ph2 true
@@ -767,8 +793,10 @@ and heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list =
                   let to_svs = p :: vs in
                   lookup_view_baga_with_subs ls vdef from_svs to_svs )
     | Star ({ h_formula_star_h1 = h1;h_formula_star_h2 = h2})
-    | Phase ({ h_formula_phase_rd = h1;h_formula_phase_rw = h2;}) 
-    | Conj ({ h_formula_conj_h1 = h1;h_formula_conj_h2 = h2;}) -> (helper h1) @ (helper h2)
+    | Phase ({ h_formula_phase_rd = h1;h_formula_phase_rw = h2;})
+    | Conj ({ h_formula_conj_h1 = h1;h_formula_conj_h2 = h2;})     
+    | ConjStar ({ h_formula_conjstar_h1 = h1;h_formula_conjstar_h2 = h2;})    
+    | ConjConj ({ h_formula_conjconj_h1 = h1;h_formula_conjconj_h2 = h2;}) -> (helper h1) @ (helper h2)
     | Hole _ | HTrue | HFalse | HEmp -> [] in
   helper h0
 
@@ -813,7 +841,13 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
 	  h_formula_phase_pos = pos}) 
     | Conj ({ h_formula_conj_h1 = h1;
 	  h_formula_conj_h2 = h2;
-	  h_formula_conj_pos = pos}) ->
+	  h_formula_conj_pos = pos})
+    | ConjStar ({ h_formula_conjstar_h1 = h1;
+	  h_formula_conjstar_h2 = h2;
+	  h_formula_conjstar_pos = pos})	  	  
+    | ConjConj ({ h_formula_conjconj_h1 = h1;
+	  h_formula_conjconj_h2 = h2;
+	  h_formula_conjconj_pos = pos}) ->
           let ph1, addrs1 = helper h1 in
           let ph2, addrs2 = helper h2 in
           let tmp1 = merge_mems ph1 ph2 true in
@@ -877,10 +911,16 @@ and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP
           (MCP.merge_mems ph1 ph2 true,  addrs1 @ addrs2)
     | Phase ({ h_formula_phase_rd = h1;
 	  h_formula_phase_rw = h2;
-	  h_formula_phase_pos = pos}) 
+	  h_formula_phase_pos = pos})
     | Conj ({ h_formula_conj_h1 = h1;
 	  h_formula_conj_h2 = h2;
-	  h_formula_conj_pos = pos}) ->
+	  h_formula_conj_pos = pos})
+    | ConjStar ({ h_formula_conjstar_h1 = h1;
+	  h_formula_conjstar_h2 = h2;
+	  h_formula_conjstar_pos = pos})	  	   
+    | ConjConj ({ h_formula_conjconj_h1 = h1;
+	  h_formula_conjconj_h2 = h2;
+	  h_formula_conjconj_pos = pos}) ->
           let ph1, addrs1 = helper h1 in
           let ph2, addrs2 = helper h2 in
           (MCP.merge_mems ph1 ph2 true,  addrs1 @ addrs2)	      
@@ -916,6 +956,12 @@ and xpure_consumed_pre_heap (prog : prog_decl) (h0 : h_formula) : CP.formula = m
   | Conj ({ h_formula_conj_h1 = h1;
 	h_formula_conj_h2 = h2;
 	h_formula_conj_pos = pos}) 
+  | ConjStar ({ h_formula_conjstar_h1 = h1;
+	  h_formula_conjstar_h2 = h2;
+	  h_formula_conjstar_pos = pos})
+  | ConjConj ({ h_formula_conjconj_h1 = h1;
+	  h_formula_conjconj_h2 = h2;
+	  h_formula_conjconj_pos = pos})	  	
   | Phase ({ h_formula_phase_rd = h1;
 	h_formula_phase_rw = h2;
 	h_formula_phase_pos = pos}) 
@@ -1058,6 +1104,24 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
               h_formula_conj_h1 = h1;
               h_formula_conj_h2 = h2;
               h_formula_conj_pos = s.h_formula_conj_pos }, mem2, (changed1 or changed2) )
+    | ConjStar s ->  
+          let ba1 =ba_crt@(heap_baga prog s.h_formula_conjstar_h1) in
+          let ba2 =ba_crt@(heap_baga prog s.h_formula_conjstar_h2) in
+          let h1, mem1, changed1  = heap_prune_preds_x prog s.h_formula_conjstar_h1 old_mem ba2 in
+          let h2, mem2, changed2  = heap_prune_preds_x prog s.h_formula_conjstar_h2 mem1 ba1 in
+          (ConjStar {  
+              h_formula_conjstar_h1 = h1;
+              h_formula_conjstar_h2 = h2;
+              h_formula_conjstar_pos = s.h_formula_conjstar_pos }, mem2, (changed1 or changed2) )
+    | ConjConj s ->
+          let ba1 =ba_crt@(heap_baga prog s.h_formula_conjconj_h1) in
+          let ba2 =ba_crt@(heap_baga prog s.h_formula_conjconj_h2) in
+          let h1, mem1, changed1  = heap_prune_preds_x prog s.h_formula_conjconj_h1 old_mem ba2 in
+          let h2, mem2, changed2  = heap_prune_preds_x prog s.h_formula_conjconj_h2 mem1 ba1 in
+          (ConjConj {  
+              h_formula_conjconj_h1 = h1;
+              h_formula_conjconj_h2 = h2;
+              h_formula_conjconj_pos = s.h_formula_conjconj_pos }, mem2, (changed1 or changed2) )                 
     |Phase  s ->
          let ba1 =ba_crt@(heap_baga prog s.h_formula_phase_rd) in
          let ba2 =ba_crt@(heap_baga prog s.h_formula_phase_rw) in
@@ -1353,6 +1417,8 @@ and split_linear_node_guided_x (vars : CP.spec_var list) (h : h_formula) : (h_fo
     | DataNode _ 
     | ViewNode _ -> [(h,HEmp)]
     | Conj  h-> splitter h.h_formula_conj_h1 h.h_formula_conj_h2 mkConjH h.h_formula_conj_pos
+    | ConjStar h -> splitter h.h_formula_conjstar_h1 h.h_formula_conjstar_h2 mkConjStarH h.h_formula_conjstar_pos
+    | ConjConj h ->splitter h.h_formula_conjconj_h1 h.h_formula_conjconj_h2 mkConjConjH h.h_formula_conjconj_pos
     | Phase h-> splitter h.h_formula_phase_rd h.h_formula_phase_rw mkPhaseH h.h_formula_phase_pos
     | Star  h-> splitter h.h_formula_star_h1 h.h_formula_star_h2 (fun a b c -> mkStarH a b c 20) h.h_formula_star_pos in
   let l = sln_helper h in
@@ -1511,6 +1577,12 @@ and find_pred_roots_heap h0 =
     | Conj ({h_formula_conj_h1 = h1;
 	  h_formula_conj_h2 = h2;
 	  h_formula_conj_pos = pos})
+    | ConjStar ({h_formula_conjstar_h1 = h1;
+	  h_formula_conjstar_h2 = h2;
+	  h_formula_conjstar_pos = pos})	  	  
+    | ConjConj ({h_formula_conjconj_h1 = h1;
+	  h_formula_conjconj_h2 = h2;
+	  h_formula_conjconj_pos = pos})
     | Phase ({h_formula_phase_rd = h1;
 	  h_formula_phase_rw = h2;
 	  h_formula_phase_pos = pos}) -> begin
@@ -3665,6 +3737,8 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
   let rec collect_data_view (f : h_formula) = match f with
 	| Star { h_formula_star_h1 = h1; h_formula_star_h2 = h2}
 	| Conj { h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
+	| ConjStar { h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2}
+	| ConjConj { h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2}	
 	| Phase { h_formula_phase_rd = h1; h_formula_phase_rw = h2;} ->
 		  List.append (collect_data_view h1) (collect_data_view h2) 
 	| DataNode _ | ViewNode _ -> [f]

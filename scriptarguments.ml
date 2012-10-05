@@ -340,4 +340,4 @@ let check_option_consistency () =
     Gen.Basic.report_error Globals.no_pos "immutability and permission options cannot be turned on at the same time"
     end
 
-Astsimp.inter := !inter;;
+(*Astsimp.inter := !inter;;*)

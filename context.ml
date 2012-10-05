@@ -538,7 +538,31 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
            res1 @ res2
 	   else 
 	   let _ = print_string("[context.ml]: Conjunction in lhs, use mem specifications. lhs = " ^ (string_of_h_formula f) ^ "\n") in
-          	failwith("[context.ml]: There should be no conj/phase in the lhs at this level\n")				
+          	failwith("[context.ml]: There should be no conj/phase in the lhs at this level\n")
+          	
+    | ConjStar({h_formula_conjstar_h1 = f1;
+	   h_formula_conjstar_h2 = f2;
+	   h_formula_conjstar_pos = pos}) ->  if (!Globals.allow_mem) then 
+           let l1 = helper f1 in
+           let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkConjStarH lhs1 f2 pos , node1, hole1, match1)) l1 in  
+           let l2 = helper f2 in
+           let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkConjStarH f1 lhs2 pos , node2, hole2, match2)) l2 in
+           res1 @ res2
+	   else 
+	   let _ = print_string("[context.ml]: Conjunction in lhs, use mem specifications. lhs = " ^ (string_of_h_formula f) ^ "\n") in
+          	failwith("[context.ml]: There should be no conj/phase in the lhs at this level\n")
+          	
+    | ConjConj({h_formula_conjconj_h1 = f1;
+	   h_formula_conjconj_h2 = f2;
+	   h_formula_conjconj_pos = pos}) ->  if (!Globals.allow_mem) then 
+           let l1 = helper f1 in
+           let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkConjConjH lhs1 f2 pos , node1, hole1, match1)) l1 in  
+           let l2 = helper f2 in
+           let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkConjConjH f1 lhs2 pos , node2, hole2, match2)) l2 in
+           res1 @ res2
+	   else 
+	   let _ = print_string("[context.ml]: Conjunction in lhs, use mem specifications. lhs = " ^ (string_of_h_formula f) ^ "\n") in
+          	failwith("[context.ml]: There should be no conj/phase in the lhs at this level\n")          	          					
     | _ -> 
           let _ = print_string("[context.ml]: There should be no conj/phase in the lhs at this level; lhs = " ^ (string_of_h_formula f) ^ "\n") in
           failwith("[context.ml]: There should be no conj/phase in the lhs at this level\n")
@@ -1138,6 +1162,22 @@ and input_h_formula_in2_frame (frame, id_hole) (to_input : h_formula) : h_formul
 	      Conj ({h_formula_conj_h1 = new_f1;
 		  h_formula_conj_h2 = new_f2;
 		  h_formula_conj_pos = pos})  
+    | ConjStar ({h_formula_conjstar_h1 = f1;
+	  h_formula_conjstar_h2 = f2;
+	  h_formula_conjstar_pos = pos}) -> 
+	      let new_f1 = input_h_formula_in2_frame (f1, id_hole) to_input in 
+	      let new_f2 = input_h_formula_in2_frame (f2, id_hole) to_input in
+	      ConjStar ({h_formula_conjstar_h1 = new_f1;
+		  h_formula_conjstar_h2 = new_f2;
+		  h_formula_conjstar_pos = pos}) 
+    | ConjConj ({h_formula_conjconj_h1 = f1;
+	  h_formula_conjconj_h2 = f2;
+	  h_formula_conjconj_pos = pos}) -> 
+	      let new_f1 = input_h_formula_in2_frame (f1, id_hole) to_input in 
+	      let new_f2 = input_h_formula_in2_frame (f2, id_hole) to_input in
+	      ConjConj ({h_formula_conjconj_h1 = new_f1;
+		  h_formula_conjconj_h2 = new_f2;
+		  h_formula_conjconj_pos = pos}) 		  		  
     | Phase ({h_formula_phase_rd = f1;
 	  h_formula_phase_rw = f2;
 	  h_formula_phase_pos = pos}) -> 

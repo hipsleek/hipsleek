@@ -180,7 +180,21 @@ let rec xmem_heap (f: CF.h_formula) (vl: C.view_decl list) : CF.mem_perm_formula
 		     let mpf1,disjf1 = xmem_heap f1 vl in
 		     let mpf2,disjf2 = xmem_heap f2 vl in
 		     let mpf = mem_union mpf1 mpf2 in
+		     mpf, disjf1@disjf2
+	| CF.ConjStar ({ CF.h_formula_conjstar_h1 = f1;
+		     CF.h_formula_conjstar_h2 = f2;
+		     CF.h_formula_conjstar_pos = pos;}) ->
+		     let mpf1,disjf1 = xmem_heap f1 vl in
+		     let mpf2,disjf2 = xmem_heap f2 vl in
+		     let mpf = mem_union mpf1 mpf2 in
 		     mpf, disjf1@disjf2  
+	| CF.ConjConj ({ CF.h_formula_conjconj_h1 = f1;
+		     CF.h_formula_conjconj_h2 = f2;
+		     CF.h_formula_conjconj_pos = pos;}) ->
+		     let mpf1,disjf1 = xmem_heap f1 vl in
+		     let mpf2,disjf2 = xmem_heap f2 vl in
+		     let mpf = mem_union mpf1 mpf2 in
+		     mpf, disjf1@disjf2  		     		       
 	| CF.Phase ({ CF.h_formula_phase_rd = f1;
 		      CF.h_formula_phase_rw = f2;
 		      CF.h_formula_phase_pos = pos;}) -> 
