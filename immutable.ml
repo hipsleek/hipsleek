@@ -69,7 +69,9 @@ and split_wr_phase (h : h_formula) : (h_formula * h_formula) =
 		  (* else  *)
 		    (h, HEmp)
 	      )
-    | Conj _ -> report_error no_pos ("[solver.ml] : Conjunction should not appear at this level \n")
+    | Conj _ 
+    | ConjStar _ 	      
+    | ConjConj _ -> report_error no_pos ("[solver.ml] : Conjunction should not appear at this level \n")
     | Phase({h_formula_phase_rd = h1;
 	  h_formula_phase_rw = h2;
 	  h_formula_phase_pos = pos}) ->
@@ -109,6 +111,12 @@ and consume_heap_h_formula (f : h_formula) : bool =  match f with
   | Conj({h_formula_conj_h1 = h1;
 	h_formula_conj_h2 = h2;
 	h_formula_conj_pos = pos})
+  | ConjStar({h_formula_conjstar_h1 = h1;
+	h_formula_conjstar_h2 = h2;
+	h_formula_conjstar_pos = pos})
+  | ConjConj({h_formula_conjconj_h1 = h1;
+	h_formula_conjconj_h2 = h2;
+	h_formula_conjconj_pos = pos})		
   | Phase({h_formula_phase_rd = h1;
 	h_formula_phase_rw = h2;
 	h_formula_phase_pos = pos})
@@ -157,6 +165,12 @@ and is_lend_h_formula (f : h_formula) : bool =  match f with
   | Conj({h_formula_conj_h1 = h1;
 	h_formula_conj_h2 = h2;
 	h_formula_conj_pos = pos})
+  | ConjStar({h_formula_conjstar_h1 = h1;
+	h_formula_conjstar_h2 = h2;
+	h_formula_conjstar_pos = pos})
+  | ConjConj({h_formula_conjconj_h1 = h1;
+	h_formula_conjconj_h2 = h2;
+	h_formula_conjconj_pos = pos})		
   | Phase({h_formula_phase_rd = h1;
 	h_formula_phase_rw = h2;
 	h_formula_phase_pos = pos}) -> true
@@ -247,7 +261,15 @@ and normalize_h_formula_x (h : IF.h_formula) (wr_phase : bool) : IF.h_formula =
   | IF.Conj({IF.h_formula_conj_h1 = h1;
              IF.h_formula_conj_h2 = h2;
              IF.h_formula_conj_pos = pos
-            }) ->
+            }) 
+  | IF.ConjStar({IF.h_formula_conjstar_h1 = h1;
+             IF.h_formula_conjstar_h2 = h2;
+             IF.h_formula_conjstar_pos = pos
+            }) 
+  | IF.ConjConj({IF.h_formula_conjconj_h1 = h1;
+             IF.h_formula_conjconj_h2 = h2;
+             IF.h_formula_conjconj_pos = pos
+            })               ->
       if (wr_phase) && (!Globals.allow_mem) then h else     
       normalize_h_formula_rd_phase h 
   | IF.HeapNode2 hf -> 
@@ -288,6 +310,14 @@ and contains_phase (h : IF.h_formula) : bool = match h with
 	   IF.h_formula_conj_h2 = h2;
 	   IF.h_formula_conj_pos = pos;
     }) 
+  | IF.ConjStar ({IF.h_formula_conjstar_h1 = h1;
+	   IF.h_formula_conjstar_h2 = h2;
+	   IF.h_formula_conjstar_pos = pos;
+    })
+  | IF.ConjConj ({IF.h_formula_conjconj_h1 = h1;
+	   IF.h_formula_conjconj_h2 = h2;
+	   IF.h_formula_conjconj_pos = pos;
+    })        
   | IF.Star ({IF.h_formula_star_h1 = h1;
 	 IF.h_formula_star_h2 = h2;
 	 IF.h_formula_star_pos = pos}) ->
@@ -298,7 +328,14 @@ and contains_phase (h : IF.h_formula) : bool = match h with
 and normalize_h_formula_rd_phase (h : IF.h_formula) : IF.h_formula = match h with
   | IF.Conj({IF.h_formula_conj_h1 = h1;
 	 IF.h_formula_conj_h2 = h2;
-	 IF.h_formula_conj_pos = pos}) ->
+	 IF.h_formula_conj_pos = pos})
+  | IF.ConjStar({IF.h_formula_conjstar_h1 = h1;
+	 IF.h_formula_conjstar_h2 = h2;
+	 IF.h_formula_conjstar_pos = pos})
+  | IF.ConjConj({IF.h_formula_conjconj_h1 = h1;
+	 IF.h_formula_conjconj_h2 = h2;
+	 IF.h_formula_conjconj_pos = pos})	 	 
+	  ->
       (* conj in read phase -> split into two separate read phases *)
       let conj1 = normalize_h_formula_rd_phase h1 in
 	insert_rd_phase conj1 h2 
@@ -315,7 +352,14 @@ and validate_rd_phase (h : IF.h_formula) : bool = match h with
 	 IF.h_formula_star_pos = pos}) 
   | IF.Conj({IF.h_formula_conj_h1 = h1;
 	 IF.h_formula_conj_h2 = h2;
-	 IF.h_formula_conj_pos = pos}) -> (validate_rd_phase h1) && (validate_rd_phase h2)
+	 IF.h_formula_conj_pos = pos}) 
+  | IF.ConjStar({IF.h_formula_conjstar_h1 = h1;
+	 IF.h_formula_conjstar_h2 = h2;
+	 IF.h_formula_conjstar_pos = pos})
+  | IF.ConjConj({IF.h_formula_conjconj_h1 = h1;
+	 IF.h_formula_conjconj_h2 = h2;
+	 IF.h_formula_conjconj_pos = pos})	 	 
+	 -> (validate_rd_phase h1) && (validate_rd_phase h2)
   | IF.Phase _ -> false (* Shouldn't have phases inside the reading phase *)
   | IF.HeapNode2 hf -> (IF.isLend hf.IF.h_formula_heap2_imm) 
   | IF.HeapNode hf -> (IF.isLend hf.IF.h_formula_heap_imm)
@@ -377,7 +421,10 @@ and insert_rd_phase_x (f : IF.h_formula) (rd_phase : IF.h_formula) : IF.h_formul
 		IF.Star({IF.h_formula_star_h1 = IF.HEmp;
 		      IF.h_formula_star_h2 = new_phase;
 		      IF.h_formula_star_pos = pos})
-	   | IF.Conj _ -> failwith ("[cformula.ml] : Should not have conj at this point\n") (* the write phase does not contain conj *)	     
+		      
+	   | IF.Conj _ 
+	   | IF.ConjStar _ 
+	   | IF.ConjConj _ -> failwith ("[cformula.ml] : Should not have conj at this point\n") (* the write phase does not contain conj *)	     
 	   | IF.Star ({IF.h_formula_star_h1 = h1_star;
 		    IF.h_formula_star_h2 = h2_star;
 		    IF.h_formula_star_pos = pos_star
@@ -401,7 +448,9 @@ and insert_rd_phase_x (f : IF.h_formula) (rd_phase : IF.h_formula) : IF.h_formul
 		  IF.h_formula_phase_rw = new_h2;
 		  IF.h_formula_phase_pos = pos;
 		})
-    | IF.Conj _ -> failwith ("[cformula.ml] : Should not have conj at this point\n")	     
+    | IF.Conj _
+    | IF.ConjStar _
+    | IF.ConjConj _ -> failwith ("[cformula.ml] : Should not have conj at this point\n")	     
     | _ -> 
 		let new_phase = IF.Phase({IF.h_formula_phase_rd = rd_phase; 
 				  IF.h_formula_phase_rw = IF.HEmp;
@@ -476,6 +525,14 @@ and propagate_imm_h_formula_x (f : h_formula) (imm : ann) : h_formula =
 	      let h1 = propagate_imm_h_formula f1.h_formula_conj_h1 imm in
 	      let h2 = propagate_imm_h_formula f1.h_formula_conj_h2 imm in
 	      mkConjH h1 h2 f1.h_formula_conj_pos
+    | ConjStar f1 ->
+	      let h1 = propagate_imm_h_formula f1.h_formula_conjstar_h1 imm in
+	      let h2 = propagate_imm_h_formula f1.h_formula_conjstar_h2 imm in
+	      mkConjStarH h1 h2 f1.h_formula_conjstar_pos
+    | ConjConj f1 ->
+	      let h1 = propagate_imm_h_formula f1.h_formula_conjconj_h1 imm in
+	      let h2 = propagate_imm_h_formula f1.h_formula_conjconj_h2 imm in
+	      mkConjConjH h1 h2 f1.h_formula_conjconj_pos	      	      
     | Phase f1 ->
 	      let h1 = propagate_imm_h_formula f1.h_formula_phase_rd imm in
 	      let h2 = propagate_imm_h_formula f1.h_formula_phase_rw imm in
@@ -691,6 +748,10 @@ and restore_tmp_ann_h_formula (f: h_formula): h_formula =
 	h_formula_star_h2 = restore_tmp_ann_h_formula h.CF.h_formula_star_h2;}
       | CF.Conj h  -> CF.Conj {h with h_formula_conj_h1 = restore_tmp_ann_h_formula h.CF.h_formula_conj_h1; 
 	h_formula_conj_h2 = restore_tmp_ann_h_formula h.CF.h_formula_conj_h2;}
+      | CF.ConjStar h  -> CF.ConjStar {h with h_formula_conjstar_h1 = restore_tmp_ann_h_formula h.CF.h_formula_conjstar_h1; 
+	h_formula_conjstar_h2 = restore_tmp_ann_h_formula h.CF.h_formula_conjstar_h2;}
+      | CF.ConjConj h  -> CF.ConjConj {h with h_formula_conjconj_h1 = restore_tmp_ann_h_formula h.CF.h_formula_conjconj_h1; 
+	h_formula_conjconj_h2 = restore_tmp_ann_h_formula h.CF.h_formula_conjconj_h2;}		
       | CF.Phase h -> CF.Phase  {h with h_formula_phase_rd = restore_tmp_ann_h_formula h.CF.h_formula_phase_rd; 
 	h_formula_phase_rw = restore_tmp_ann_h_formula h.CF.h_formula_phase_rw;}
       | CF.DataNode h -> CF.DataNode {h with h_formula_data_param_imm = restore_tmp_ann h.CF.h_formula_data_param_imm}
@@ -770,6 +831,22 @@ and apply_subs_h_formula crt_holes (h : h_formula) : h_formula =
 	      Conj({h_formula_conj_h1 = nh1;
 	      h_formula_conj_h2 = nh2;
 	      h_formula_conj_pos = pos})
+    | ConjStar({h_formula_conjstar_h1 = h1;
+	  h_formula_conjstar_h2 = h2;
+	  h_formula_conjstar_pos = pos}) ->
+	      let nh1 = apply_subs_h_formula crt_holes h1 in
+	      let nh2 = apply_subs_h_formula crt_holes h2 in
+	      ConjStar({h_formula_conjstar_h1 = nh1;
+	      h_formula_conjstar_h2 = nh2;
+	      h_formula_conjstar_pos = pos})
+    | ConjConj({h_formula_conjconj_h1 = h1;
+	  h_formula_conjconj_h2 = h2;
+	  h_formula_conjconj_pos = pos}) ->
+	      let nh1 = apply_subs_h_formula crt_holes h1 in
+	      let nh2 = apply_subs_h_formula crt_holes h2 in
+	      ConjConj({h_formula_conjconj_h1 = nh1;
+	      h_formula_conjconj_h2 = nh2;
+	      h_formula_conjconj_pos = pos})	      	      
     | Phase({h_formula_phase_rd = h1;
 	  h_formula_phase_rw = h2;
 	  h_formula_phase_pos = pos}) ->

@@ -12,6 +12,6 @@ checkentail x::pair<_@M,b@M> && x1::pair<a@M,d@M> & x=x1 & d=3|- x::pair<c@M,y@M
 print residue.
 
 //(3)
-checkentail x::pair<_@A,b@L> && x1::pair<a@A,d@L> & x=x1 & d=3|- x::pair<c@A,y@I> & y=3.
+checkentail x::pair<_@A,b@I> && x1::pair<a@A,d@I> & x=x1 & d=3|- x::pair<c@A,y@L> & y=3.
 print residue.
 //field annotations and memory have to be exact
