@@ -4,11 +4,6 @@ requires x>0
 {
  if (x>0) {return 1;}
  else {
-   assert x>0;
-   assert x<=1;
-   if (x>2) 
-     {return 2;}
-   else 
-     {return 3;}
+   return 2;
  }
 }     
