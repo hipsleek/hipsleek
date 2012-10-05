@@ -334,6 +334,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
       : CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * bool =
   let rec helper (ctx : CF.context) (spec: CF.struc_formula) :  CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * bool =
     let pos_spec = CF.pos_of_struc_formula spec in
+		let _= proving_loc # set pos_spec in
     log_spec := (Cprinter.string_of_struc_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);	 
     match spec with
       | CF.ECase b ->
@@ -1655,7 +1656,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (* Astsimp ensures that e1 is of type void *)
             (* let _ = print_endline ("WN C1:"^(Cprinter.string_of_list_failesc_context ctx1)) in*)
 	    let ctx2= check_exp prog proc ctx1 e2 post_start_label (*flow_store*) in
-            (* let _ = print_endline ("WN C2:"^(Cprinter.string_of_list_failesc_context ctx2)) in*)
+            (* let _ = print_endline ("WN C2:"^(Cprinter.string_of_list_failesc_context ctx2)) in*)	
             ctx2
 	  end
         | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s; ctx
@@ -1763,7 +1764,45 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
        else *)
     let failesc = CF.splitter_failesc_context !norm_flow_int None (fun x->x)(fun x -> x) cl in
     ((check_exp1 failesc) @ fl)
-        
+
+and compare_control_path_id_strict x y =
+	let res= ref false in
+	let _= match x,y with
+	| (a,b),(c,d)-> List.map ( fun ex ->
+		(* let _= print_endline ((string_of_int ex)^" compared " ^(string_of_int c)) in  *)
+		if(ex=c) then let _=print_endline("catch return found id:"^string_of_int ex) in res := true 
+		) a
+	in !res
+
+and loc_of_branch_comprise_return ptra =
+	let loc_list= locs_of_path_trace ptra in
+		(* List.map (fun x-> print_endline ("loc_of_"^(string_of_pos x))) loc_list  *)
+		Cprinter.string_of_list_loc loc_list
+		
+(*Xuan Bach: TODO consider the case of fail*)		
+and find_return_exp_branch (ctx : CF.list_partial_context) =
+	let plb = ref 100 in
+	let rec helper a = match a with 
+		| CF.Ctx x-> 
+			List.map ( fun (id_strict,lbl) -> if(compare_control_path_id_strict (!Globals.return_exp_pid,0) id_strict ) then plb :=lbl) x.CF.es_path_label
+		| CF.OCtx(x,y) -> let _= helper x in helper y 
+	in 
+	let _= List.map ( fun (faillst,brctx)->  
+		List.map (fun (ptra,bctx)-> let _=helper bctx in 
+				if(!plb =0 ) then
+					begin
+					 plb :=100;	
+					 print_endline ("catch return 0 -> then branch or not catch or first spec \n"^(loc_of_branch_comprise_return ptra ))
+					end
+	  		else if(!plb = 1)	then 
+					begin
+					plb :=100;	
+					print_endline ("catch return 1-> else or catch taken or snd spec...\n"^(loc_of_branch_comprise_return ptra ))
+					end	 
+			) brctx ) ctx
+	in 	()
+	(* if (!plb =100) then print_endline ("catch return still cannot catch return exp branch "^(string_of_int !plb)) *)
+	       
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   let pr = Cprinter.string_of_list_partial_context in
   let pr1 = Cprinter.string_of_formula in
@@ -1778,7 +1817,8 @@ and pr_spec2 = Cprinter.string_of_struc_formula_for_spec
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (* let _ = print_string ("got into check_post on the succCtx branch\n") in *)
   (* let _ = print_string ("context before post: "^(Cprinter.string_of_list_partial_context ctx)^"\n") in *)
-  if !Globals.dis_post_chk then ctx else 
+  (* let _=proving_loc #set (Cformula.pos_of_formula post) in  *)
+	if !Globals.dis_post_chk then ctx else 
     let _ = if !print_proof then
       begin
 	Prooftracer.push_post ();
@@ -1838,6 +1878,8 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
 	(* print_endline "DONE!" *)
       end in
     if (CF.isSuccessListPartialCtx_new rs) then
+			(* let _ = print_string ("\nxuan bach\n") in *)
+			let _= find_return_exp_branch ctx in
       rs
     else begin
       (* get source code position of failed branches *)
@@ -1881,6 +1923,8 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
             }
           end
       in
+			 (* let _ = print_string ("\nxuan bach\n") in *)
+			let _= find_return_exp_branch rs in
       rs
     end
 

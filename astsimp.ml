@@ -2626,6 +2626,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_cond_else_arm = e3;
             I.exp_cond_path_id = pi;
             I.exp_cond_pos = pos } ->
+							(* let str_pi=match pi with                                                          *)
+							(* 			| None -> print_endline "none path id of cond"                              *)
+							(* 			| Some (x,y)-> 	print_endline ("Cond id: "^(string_of_int x)^" and "^y) in *)
 		    (* let _ = print_string ("trans_exp :: cond = " ^ Iprinter.string_of_exp e1 ^ " then branch = " ^ Iprinter.string_of_exp e2 ^ " else branch = " ^ Iprinter.string_of_exp e3 ^ "\n") in *) 
             let (ce1, te1) = helper e1 in
             if not (CP.are_same_types te1 C.bool_type) then
@@ -2757,7 +2760,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
       | I.Null pos -> ((C.Null pos), (Named ""))
       | I.Return {
             I.exp_return_val = oe;
-            I.exp_return_path_id = pi;
+            I.exp_return_path_id = pi; (*control_path_id -> option (int * string)*)
             I.exp_return_pos = pos} ->  begin
           let cret_type = trans_type prog proc.I.proc_return proc.I.proc_loc in
           match oe with
@@ -2778,6 +2781,12 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   let ce, ct = helper e in
                   if sub_type ct cret_type then
                     let fn = (fresh_ty_var_name (ct) e_pos.start_pos.Lexing.pos_lnum) in
+										let str_pi=match pi with 
+										| None -> "none path id"
+										| Some (x,y)-> 	let _= Globals.return_exp_pid := !Globals.return_exp_pid @ [x] in string_of_int x
+										in
+										(* let _=print_endline ("GET RETURN EXP: "^str_pi^" : "^fn^" "^Cprinter.string_of_pos pos^" "^Cprinter.string_of_pos e_pos) in *)
+									
                     let vd = C.VarDecl { 
                         C.exp_var_decl_type = ct;
                         C.exp_var_decl_name = fn;

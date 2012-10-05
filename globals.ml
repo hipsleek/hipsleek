@@ -247,11 +247,17 @@ object
      (*   | Some l -> l *)
 end;;
 
+(*Some global vars for logging*)
 let proving_loc  = new prog_loc
 let post_pos = new prog_loc
 let proving_kind = new proving_type
+let return_exp_pid = ref ([]: int list)
 
-
+let string_of_return_exp_pid_list ()=
+	let str = ref "" in
+	let _= List.map (fun pid->str := !str^(string_of_int pid)) !return_exp_pid in
+	!str
+	
 let proving_info () = 
 	if(proving_kind # is_avail) then
 		   (
