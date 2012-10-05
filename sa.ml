@@ -326,17 +326,17 @@ and update_unk_one_constr unk_hp_locs constr=
   let unk_svl = CP.remove_dups_svl ((List.concat unk_svl)@constr.CF.unk_svl) in
   let unk_hps = (* Gen.BList.remove_dups_eq SAU.check_hp_arg_eq *)
     (List.concat unk_hps) in
-  let new_constr =
-    if unk_hps = [] then
-        {constr with CF.unk_svl =  unk_svl}
-    else
-      let hps = List.map (fun (hp,_) -> hp) unk_hps in
-      let n_lhs,_ = CF.drop_hrel_f constr.CF.hprel_lhs hps in
-      let n_rhs,_ = CF.drop_hrel_f constr.CF.hprel_rhs hps in
-      {constr with CF.unk_svl =  unk_svl;
-          CF.hprel_lhs = n_lhs;
-          CF.hprel_rhs = n_rhs;
-      }
+  let new_constr = {constr with CF.unk_svl =  unk_svl}
+    (* if unk_hps = [] then *)
+    (*     {constr with CF.unk_svl =  unk_svl} *)
+    (* else *)
+    (*   let hps = List.map (fun (hp,_) -> hp) unk_hps in *)
+    (*   let n_lhs,_ = CF.drop_hrel_f constr.CF.hprel_lhs hps in *)
+    (*   let n_rhs,_ = CF.drop_hrel_f constr.CF.hprel_rhs hps in *)
+    (*   {constr with CF.unk_svl =  unk_svl; *)
+    (*       CF.hprel_lhs = n_lhs; *)
+    (*       CF.hprel_rhs = n_rhs; *)
+    (*   } *)
   in
   let _ = Debug.info_pprint ("   new hrel: " ^
               (Cprinter.string_of_hprel new_constr)) no_pos in
@@ -654,15 +654,26 @@ and collect_partial_definitions prog constrs: (CF.hprel list * par_def_w_name li
 
 (*====================*)
 let rec simplify_one_constr prog constr=
-  let (lhs, rhs) = constr.CF.hprel_lhs,constr.CF.hprel_rhs in
-  match lhs,rhs with
-    | CF.Base lhs_b, CF.Base rhs_b ->
-        let l,r,matched = simplify_one_constr_b prog lhs_b rhs_b in
-        {constr with CF.predef_svl = constr.CF.predef_svl@matched;
-            CF.hprel_lhs = CF.Base l;
-            CF.hprel_rhs = CF.Base r;
-        }
-    | _ -> report_error no_pos "sa.simplify_one_constr"
+  begin
+      let (lhs, rhs) = constr.CF.hprel_lhs,constr.CF.hprel_rhs in
+      match lhs,rhs with
+        | CF.Base lhs_b, CF.Base rhs_b ->
+            if lhs_b.CF.formula_base_heap = CF.HEmp &&
+              (MCP.isConstMTrue lhs_b.CF.formula_base_pure) then
+              let _ = DD.info_pprint (" input: " ^(Cprinter.prtt_string_of_formula_base lhs_b) ^ " ==> " ^
+                                     (Cprinter.prtt_string_of_formula_base rhs_b)) no_pos in
+              let _ =  DD.info_pprint (" output: drop") no_pos in
+              []
+            else
+              begin
+                  let l,r,matched = simplify_one_constr_b prog lhs_b rhs_b in
+                  [{constr with CF.predef_svl = constr.CF.predef_svl@matched;
+                      CF.hprel_lhs = CF.Base l;
+                      CF.hprel_rhs = CF.Base r;
+                   }]
+              end
+        | _ -> report_error no_pos "sa.simplify_one_constr"
+  end
 
 and simplify_one_constr_b_x prog lhs_b rhs_b=
   (*return subst of args and add in lhs*)
@@ -723,7 +734,7 @@ and simplify_one_constr_b prog lhs_b rhs_b=
       (fun _ _ -> simplify_one_constr_b_x prog lhs_b rhs_b) lhs_b rhs_b
 
 let simplify_constrs_x prog constrs=
-  List.map (simplify_one_constr prog) constrs
+  List.concat (List.map (simplify_one_constr prog) constrs)
 
 let simplify_constrs prog constrs=
    let pr = pr_list_ln (Cprinter.string_of_hprel) in
@@ -1363,7 +1374,6 @@ let generalize_hps_x prog cs par_defs=
 (*general par_defs*)
   let pair_names_defs = generalize_hps_par_def prog par_defs in
   let hp_names,hp_defs = List.split pair_names_defs in
-  
 (*for each constraints, we may pick more definitions*)
   let remain_constr, hp_def1 = generalize_hps_cs hp_names cs in
 (remain_constr, hp_defs@hp_def1)
