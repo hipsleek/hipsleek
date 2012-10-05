@@ -1133,6 +1133,8 @@ and add_param_ann_constraints_to_pure (h_f: CF.h_formula) (p_f: MCP.mix_formula 
     match h_f with
       | CF.Star h  -> create_mix_formula_with_ann_constr h.CF.h_formula_star_h1 h.CF.h_formula_star_h2 p_f 
       | CF.Conj h  -> create_mix_formula_with_ann_constr h.CF.h_formula_conj_h1 h.CF.h_formula_conj_h2 p_f 
+      | CF.ConjStar h  -> create_mix_formula_with_ann_constr h.CF.h_formula_conjstar_h1 h.CF.h_formula_conjstar_h2 p_f 
+      | CF.ConjConj h  -> create_mix_formula_with_ann_constr h.CF.h_formula_conjconj_h1 h.CF.h_formula_conjconj_h2 p_f             
       | CF.Phase h -> create_mix_formula_with_ann_constr h.CF.h_formula_phase_rd h.CF.h_formula_phase_rw p_f 
       | CF.DataNode h -> let data_ann = h.CF.h_formula_data_imm in
                          let helper1 (param_imm: CF.ann) = 
@@ -1423,6 +1425,8 @@ and find_m_prop_heap_x eq_f h = match h with
         List.map (fun v -> C.mk_mater_prop v true [ h.CF.h_formula_view_name]) l 
   | CF.Star h -> (find_m_prop_heap_x eq_f h.CF.h_formula_star_h1)@(find_m_prop_heap_x eq_f h.CF.h_formula_star_h2)
   | CF.Conj h -> (find_m_prop_heap_x eq_f h.CF.h_formula_conj_h1)@(find_m_prop_heap_x eq_f h.CF.h_formula_conj_h2)
+  | CF.ConjStar h -> (find_m_prop_heap_x eq_f h.CF.h_formula_conjstar_h1)@(find_m_prop_heap_x eq_f h.CF.h_formula_conjstar_h2)
+  | CF.ConjConj h -> (find_m_prop_heap_x eq_f h.CF.h_formula_conjconj_h1)@(find_m_prop_heap_x eq_f h.CF.h_formula_conjconj_h2)    
   | CF.Phase h -> (find_m_prop_heap_x eq_f h.CF.h_formula_phase_rd)@(find_m_prop_heap_x eq_f h.CF.h_formula_phase_rw)  
   | CF.Hole _ 
   | CF.HTrue 
@@ -1991,6 +1995,18 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
 		                  CF.h_formula_conj_h2 = h2;
 		                  CF.h_formula_conj_pos = _
 		              } 
+              | CF.ConjStar
+		              {
+		                  CF.h_formula_conjstar_h1 = h1;
+		                  CF.h_formula_conjstar_h2 = h2;
+		                  CF.h_formula_conjstar_pos = _
+		              } 
+              | CF.ConjConj
+		              {
+		                  CF.h_formula_conjconj_h1 = h1;
+		                  CF.h_formula_conjconj_h2 = h2;
+		                  CF.h_formula_conjconj_pos = _
+		              } 		              		              
               | CF.Phase
 		              {
 		                  CF.h_formula_phase_rd = h1;
@@ -4376,7 +4392,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                 } ->
               let (lf1, type1) = linearize_heap f1 pos in
               let (lf2, type2) = linearize_heap f2 pos in
-              let tmp_h = CF.mkConjH lf1 lf2 pos in
+              let tmp_h = CF.mkConjStarH lf1 lf2 pos in
               let tmp_type = CF.mkAndType type1 type2 in 
 	          (tmp_h, tmp_type)
         | IF.ConjConj
@@ -4387,7 +4403,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                 } ->
               let (lf1, type1) = linearize_heap f1 pos in
               let (lf2, type2) = linearize_heap f2 pos in
-              let tmp_h = CF.mkConjH lf1 lf2 pos in
+              let tmp_h = CF.mkConjConjH lf1 lf2 pos in
               let tmp_type = CF.mkAndType type1 type2 in 
 	          (tmp_h, tmp_type)	          	          
         | IF.HTrue ->  (CF.HTrue, CF.TypeTrue)

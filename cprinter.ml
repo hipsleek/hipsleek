@@ -128,6 +128,8 @@ let op_not_short = "!"
 let op_star_short = "*"  
 let op_phase_short = ";"  
 let op_conj_short = "&"  
+let op_conjstar_short = "&*" 
+let op_conjconj_short = "&&" 
 let op_f_or_short = "or"  
 let op_lappend_short = "APP"
 let op_cons_short = ":::"
@@ -155,6 +157,8 @@ let op_not = "!"
 let op_star = " * "  
 let op_phase = " ; "  
 let op_conj = " & "  
+let op_conjstar = " &* " 
+let op_conjconj = " && " 
 let op_f_or = "or" 
 let op_lappend = "append"
 let op_cons = ":::"
@@ -922,6 +926,16 @@ let rec pr_h_formula h =
           let arg2 = bin_op_to_list op_conj_short h_formula_assoc_op h2 in
           let args = arg1@arg2 in
           pr_list_op op_conj (pr_bracket (fun _ -> false) pr_h_formula) args
+    | ConjStar ({h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2; h_formula_conjstar_pos = pos}) -> 
+	      let arg1 = bin_op_to_list op_conjstar_short h_formula_assoc_op h1 in
+          let arg2 = bin_op_to_list op_conjstar_short h_formula_assoc_op h2 in
+          let args = arg1@arg2 in
+          pr_list_op op_conjstar (pr_bracket (fun _ -> false) pr_h_formula) args
+    | ConjConj ({h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2; h_formula_conjconj_pos = pos}) -> 
+	      let arg1 = bin_op_to_list op_conjconj_short h_formula_assoc_op h1 in
+          let arg2 = bin_op_to_list op_conjconj_short h_formula_assoc_op h2 in
+          let args = arg1@arg2 in
+          pr_list_op op_conjconj (pr_bracket (fun _ -> false) pr_h_formula) args                    
     | DataNode ({h_formula_data_node = sv;
       h_formula_data_name = c;
 	  h_formula_data_derv = dr;
@@ -2367,6 +2381,8 @@ let html_op_not = " &not; "
 let html_op_star = " &lowast; "  
 let html_op_phase = " ; "  
 let html_op_conj = " &and; "  
+let html_op_conjstar = " &and;&lowast; " 
+let html_op_conjconj = " &and;&and; " 
 let html_op_f_or = " <b>or</b> " 
 let html_op_lappend = "<b>append</b>"
 let html_op_cons = " ::: "
@@ -2513,6 +2529,20 @@ let rec html_of_h_formula h = match h with
 		let arg2 = bin_op_to_list op_conj_short h_formula_assoc_op h2 in
 		let args = arg1@arg2 in
 			String.concat html_op_conj (List.map html_of_h_formula args)
+	| ConjStar ({h_formula_conjstar_h1 = h1;
+			h_formula_conjstar_h2 = h2;
+			h_formula_conjstar_pos = pos}) -> 
+		let arg1 = bin_op_to_list op_conjstar_short h_formula_assoc_op h1 in
+		let arg2 = bin_op_to_list op_conjstar_short h_formula_assoc_op h2 in
+		let args = arg1@arg2 in
+			String.concat html_op_conjstar (List.map html_of_h_formula args)
+	| ConjConj ({h_formula_conjconj_h1 = h1;
+			h_formula_conjconj_h2 = h2;
+			h_formula_conjconj_pos = pos}) -> 
+		let arg1 = bin_op_to_list op_conjconj_short h_formula_assoc_op h1 in
+		let arg2 = bin_op_to_list op_conjconj_short h_formula_assoc_op h2 in
+		let args = arg1@arg2 in
+			String.concat html_op_conjconj (List.map html_of_h_formula args)						
 	| DataNode ({h_formula_data_node = sv;
 				h_formula_data_name = c;
                 h_formula_data_derv = dr;

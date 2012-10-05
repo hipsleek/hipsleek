@@ -152,6 +152,8 @@ and flow_treatment =
 and h_formula = (* heap formula *)
   | Star of h_formula_star
   | Conj of h_formula_conj
+  | ConjStar of h_formula_conjstar
+  | ConjConj of h_formula_conjconj    
   | Phase of h_formula_phase
   | DataNode of h_formula_data
   | ViewNode of h_formula_view
@@ -168,6 +170,15 @@ and h_formula_star = {  h_formula_star_h1 : h_formula;
 and h_formula_conj = { h_formula_conj_h1 : h_formula;
 h_formula_conj_h2 : h_formula;
 h_formula_conj_pos : loc }
+
+and h_formula_conjstar = { h_formula_conjstar_h1 : h_formula;
+h_formula_conjstar_h2 : h_formula;
+h_formula_conjstar_pos : loc }
+
+and h_formula_conjconj = { h_formula_conjconj_h1 : h_formula;
+h_formula_conjconj_h2 : h_formula;
+h_formula_conjconj_pos : loc }
+
 
 and h_formula_phase = { h_formula_phase_rd : h_formula;
 h_formula_phase_rw : h_formula;
@@ -619,6 +630,18 @@ and drop_read_phase1 (f : h_formula) p : h_formula = match f with
         let new_f1 = drop_read_phase1 h1 p in
         let new_f2 = drop_read_phase1 h2 p in
 	    mkConjH new_f1 new_f2 pos
+  | ConjStar({h_formula_conjstar_h1 = h1;
+	h_formula_conjstar_h2 = h2;
+	h_formula_conjstar_pos = pos;}) -> 
+        let new_f1 = drop_read_phase1 h1 p in
+        let new_f2 = drop_read_phase1 h2 p in
+	    mkConjStarH new_f1 new_f2 pos
+  | ConjConj({h_formula_conjconj_h1 = h1;
+	h_formula_conjconj_h2 = h2;
+	h_formula_conjconj_pos = pos;}) -> 
+        let new_f1 = drop_read_phase1 h1 p in
+        let new_f2 = drop_read_phase1 h2 p in
+	    mkConjConjH new_f1 new_f2 pos	    	    	    
   | _ -> f
 
 and contains_spec_var (f : h_formula) p : bool = match f with
@@ -628,7 +651,11 @@ and contains_spec_var (f : h_formula) p : bool = match f with
 	h_formula_phase_rw = h2;}) ->
         (contains_spec_var h1 p) or (contains_spec_var h2 p)
   | Conj ({h_formula_conj_h1 = h1;
-	h_formula_conj_h2 = h2;}) ->
+	h_formula_conj_h2 = h2;}) 
+  | ConjStar ({h_formula_conjstar_h1 = h1;
+	h_formula_conjstar_h2 = h2;}) 	
+  | ConjConj ({h_formula_conjconj_h1 = h1;
+	h_formula_conjconj_h2 = h2;}) ->	
         (contains_spec_var h1 p) or (contains_spec_var h2 p)
   | Star ({h_formula_star_h1 = h1;
 	h_formula_star_h2 = h2;}) ->
@@ -1065,6 +1092,26 @@ and mkConjH (f1 : h_formula) (f2 : h_formula) (pos : loc) =
               h_formula_conj_h2 = f2; 
               h_formula_conj_pos = pos})
 
+and mkConjStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) = 
+  if (f1 = HFalse) || (f2 = HFalse) then HFalse
+  else if (f1 = HTrue) && (f2 = HTrue) then HTrue
+  else if (f1 = HEmp) && (f2 = HEmp) then HEmp
+  else if (f1 = HEmp) then f2
+  else if (f2 = HEmp) then f1
+  else ConjStar ({h_formula_conjstar_h1 = f1; 
+              h_formula_conjstar_h2 = f2; 
+              h_formula_conjstar_pos = pos})
+              
+and mkConjConjH (f1 : h_formula) (f2 : h_formula) (pos : loc) = 
+  if (f1 = HFalse) || (f2 = HFalse) then HFalse
+  else if (f1 = HTrue) && (f2 = HTrue) then HTrue
+  else if (f1 = HEmp) && (f2 = HEmp) then HEmp
+  else if (f1 = HEmp) then f2
+  else if (f2 = HEmp) then f1
+  else ConjConj ({h_formula_conjconj_h1 = f1; 
+              h_formula_conjconj_h2 = f2; 
+              h_formula_conjconj_pos = pos})                            
+
 and mkPhaseH (f1 : h_formula) (f2 : h_formula) (pos : loc) = 
   match f1 with
     | HFalse -> HFalse
@@ -1171,6 +1218,12 @@ and contains_phase (f : h_formula) : bool =  match f with
   | Conj({h_formula_conj_h1 = h1;
 	h_formula_conj_h2 = h2;
 	h_formula_conj_pos = pos})
+  | ConjStar({h_formula_conjstar_h1 = h1;
+	h_formula_conjstar_h2 = h2;
+	h_formula_conjstar_pos = pos})
+  | ConjConj({h_formula_conjconj_h1 = h1;
+	h_formula_conjconj_h2 = h2;
+	h_formula_conjconj_pos = pos})		
   | Star({h_formula_star_h1 = h1;
 	h_formula_star_h2 = h2;
 	h_formula_star_pos = pos}) -> (contains_phase h1) or (contains_phase h2)
@@ -1189,6 +1242,26 @@ and mkConj_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let fl =  mkAndFlow fl1 fl2 flow_tr in
   let a = a1@a2 in (*assume merging a1 and a2*)
   mkBase h p t fl a pos (*TO CHECK: how about a1,a2: DONE*)
+  
+and mkConjStar_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
+  let h1, p1, fl1, t1, a1 = split_components f1 in
+  let h2, p2, fl2, t2, a2 = split_components f2 in
+  let h = mkConjStarH h1 h2 pos in
+  let p,_ = combine_and_pure f1 p1 p2 in
+  let t = mkAndType t1 t2 in
+  let fl =  mkAndFlow fl1 fl2 flow_tr in
+  let a = a1@a2 in (*assume merging a1 and a2*)
+  mkBase h p t fl a pos (*TO CHECK: how about a1,a2: DONE*)
+  
+and mkConjConj_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
+  let h1, p1, fl1, t1, a1 = split_components f1 in
+  let h2, p2, fl2, t2, a2 = split_components f2 in
+  let h = mkConjConjH h1 h2 pos in
+  let p,_ = combine_and_pure f1 p1 p2 in
+  let t = mkAndType t1 t2 in
+  let fl =  mkAndFlow fl1 fl2 flow_tr in
+  let a = a1@a2 in (*assume merging a1 and a2*)
+  mkBase h p t fl a pos (*TO CHECK: how about a1,a2: DONE*)    
 	  
 and mkPhase_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
   let h1, p1, fl1, t1, a1 = split_components f1 in
@@ -1250,7 +1323,11 @@ and is_hformula_contain_htrue (h: h_formula) : bool =
   | Star { h_formula_star_h1 = h1;
            h_formula_star_h2 = h2; } -> (is_hformula_contain_htrue h1) || (is_hformula_contain_htrue h2)
   | Conj { h_formula_conj_h1 = h1;
-           h_formula_conj_h2 = h2; } -> (is_hformula_contain_htrue h1) || (is_hformula_contain_htrue h2)
+           h_formula_conj_h2 = h2; }
+  | ConjStar { h_formula_conjstar_h1 = h1;
+           h_formula_conjstar_h2 = h2; }
+  | ConjConj { h_formula_conjconj_h1 = h1;
+           h_formula_conjconj_h2 = h2; } -> (is_hformula_contain_htrue h1) || (is_hformula_contain_htrue h2)
   | Phase { h_formula_phase_rd = h1;
             h_formula_phase_rw = h2; } -> (is_hformula_contain_htrue h1) || (is_hformula_contain_htrue h2)
   | HTrue -> true
@@ -1728,7 +1805,8 @@ and list_pos_of_formula (f : formula) : (loc list)= match f with
 
 and list_pos_of_heap_formula (h: h_formula): (loc list)= match h with
   | Star {h_formula_star_pos = pos} -> [pos]
-  | Conj {h_formula_conj_pos = pos} -> [pos]
+  | ConjStar {h_formula_conjstar_pos = pos} -> [pos]
+  | ConjConj {h_formula_conjconj_pos = pos} -> [pos]  
   | _ -> []
 
 and get_lines (ll: loc list): (int list)=
@@ -1823,6 +1901,22 @@ and mk_Conj f1 f2 p =
   else Conj ({h_formula_conj_h1 = f1; 
               h_formula_conj_h2 = f2; 
               h_formula_conj_pos = p})
+              
+and mk_ConjStar f1 f2 p =
+  if (f1 = HFalse) || (f2 = HFalse) then HFalse
+  else if (f1 = HTrue) && (f2 = HTrue) then HTrue
+  else if (f1 = HEmp) && (f2 = HEmp) then HEmp
+  else ConjStar ({h_formula_conjstar_h1 = f1; 
+              h_formula_conjstar_h2 = f2; 
+              h_formula_conjstar_pos = p})
+              
+and mk_ConjConj f1 f2 p =
+  if (f1 = HFalse) || (f2 = HFalse) then HFalse
+  else if (f1 = HTrue) && (f2 = HTrue) then HTrue
+  else if (f1 = HEmp) && (f2 = HEmp) then HEmp
+  else ConjConj ({h_formula_conjconj_h1 = f1; 
+              h_formula_conjconj_h2 = f2; 
+              h_formula_conjconj_pos = p})                            
 
 and remove_h_ann (f:h_formula) (annot : ann) : h_formula = 
   match f with
@@ -1836,6 +1930,16 @@ and remove_h_ann (f:h_formula) (annot : ann) : h_formula =
         let new_f2 = remove_h_ann b.h_formula_conj_h2 annot in
         let pos = b.h_formula_conj_pos in
         mk_Conj new_f1 new_f2 pos
+    | ConjStar b -> 
+        let new_f1 = remove_h_ann b.h_formula_conjstar_h1 annot in
+        let new_f2 = remove_h_ann b.h_formula_conjstar_h2 annot in
+        let pos = b.h_formula_conjstar_pos in
+        mk_ConjStar new_f1 new_f2 pos
+    | ConjConj b -> 
+        let new_f1 = remove_h_ann b.h_formula_conjconj_h1 annot in
+        let new_f2 = remove_h_ann b.h_formula_conjconj_h2 annot in
+        let pos = b.h_formula_conjconj_pos in
+        mk_ConjConj new_f1 new_f2 pos                
     | DataNode {h_formula_data_imm = i} 
     | ViewNode {h_formula_view_imm = i} ->
           if (eq_ann i annot) then HTrue else f
@@ -1917,6 +2021,8 @@ and f_h_fv (f : formula) : CP.spec_var list =
 	let rec helper h = match h with
 	  | Star b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_star_h1 @ helper b.h_formula_star_h2)
 	  | Conj b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_conj_h1 @ helper b.h_formula_conj_h2)
+	  | ConjStar b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_conjstar_h1 @ helper b.h_formula_conjstar_h2)
+	  | ConjConj b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_conjconj_h1 @ helper b.h_formula_conjconj_h2)	  	  
 	  | Phase b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_phase_rd @ helper b.h_formula_phase_rw)
 	  | DataNode b -> [b.h_formula_data_node]
 	  | ViewNode b -> [b.h_formula_view_node]
@@ -1932,7 +2038,13 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
 	h_formula_star_pos = pos}) -> CP.remove_dups_svl (h_fv h1 @ h_fv h2)
   | Conj ({h_formula_conj_h1 = h1; 
 	h_formula_conj_h2 = h2; 
-	h_formula_conj_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv h1 @ h_fv h2)
+	h_formula_conj_pos = pos}) 
+  | ConjStar ({h_formula_conjstar_h1 = h1; 
+	h_formula_conjstar_h2 = h2; 
+	h_formula_conjstar_pos = pos}) 		
+  | ConjConj ({h_formula_conjconj_h1 = h1; 
+	h_formula_conjconj_h2 = h2; 
+	h_formula_conjconj_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv h1 @ h_fv h2)
   | Phase ({h_formula_phase_rd = h1; 
 	h_formula_phase_rw = h2; 
 	h_formula_phase_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv h1 @ h_fv h2)
@@ -1979,7 +2091,11 @@ and top_level_vars (h : h_formula) : CP.spec_var list = match h with
   | Star ({h_formula_star_h1 = h1; 
 	h_formula_star_h2 = h2}) -> (top_level_vars h1) @ (top_level_vars h2)
   | Conj ({h_formula_conj_h1 = h1; 
-	h_formula_conj_h2 = h2}) -> (top_level_vars h1) @ (top_level_vars h2)
+	h_formula_conj_h2 = h2})
+  | ConjStar ({h_formula_conjstar_h1 = h1; 
+	h_formula_conjstar_h2 = h2})		
+  | ConjConj ({h_formula_conjconj_h1 = h1; 
+	h_formula_conjconj_h2 = h2}) -> (top_level_vars h1) @ (top_level_vars h2)
   | Phase ({h_formula_phase_rd = h1; 
 	h_formula_phase_rw = h2}) -> (top_level_vars h1) @ (top_level_vars h2)
   | DataNode ({h_formula_data_node = v}) 
@@ -2288,6 +2404,18 @@ and h_subst sst (f : h_formula) =
 		Conj ({h_formula_conj_h1 = h_subst sst f1; 
 		h_formula_conj_h2 = h_subst sst f2; 
 		h_formula_conj_pos = pos})
+  | ConjStar ({h_formula_conjstar_h1 = f1; 
+					h_formula_conjstar_h2 = f2; 
+					h_formula_conjstar_pos = pos}) -> 
+		ConjStar ({h_formula_conjstar_h1 = h_subst sst f1; 
+		h_formula_conjstar_h2 = h_subst sst f2; 
+		h_formula_conjstar_pos = pos})
+  | ConjConj ({h_formula_conjconj_h1 = f1; 
+					h_formula_conjconj_h2 = f2; 
+					h_formula_conjconj_pos = pos}) -> 
+		ConjConj ({h_formula_conjconj_h1 = h_subst sst f1; 
+		h_formula_conjconj_h2 = h_subst sst f2; 
+		h_formula_conjconj_pos = pos})				
   | ViewNode ({h_formula_view_node = x; 
 							h_formula_view_name = c; 
 							h_formula_view_imm = imm; 
@@ -2484,6 +2612,18 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
         Conj ({h_formula_conj_h1 = h_apply_one s f1; 
 	    h_formula_conj_h2 = h_apply_one s f2; 
 	    h_formula_conj_pos = pos})
+  | ConjStar ({h_formula_conjstar_h1 = f1; 
+	h_formula_conjstar_h2 = f2; 
+	h_formula_conjstar_pos = pos}) -> 
+        ConjStar ({h_formula_conjstar_h1 = h_apply_one s f1; 
+	    h_formula_conjstar_h2 = h_apply_one s f2; 
+	    h_formula_conjstar_pos = pos})
+  | ConjConj ({h_formula_conjconj_h1 = f1; 
+	h_formula_conjconj_h2 = f2; 
+	h_formula_conjconj_pos = pos}) -> 
+        ConjConj ({h_formula_conjconj_h1 = h_apply_one s f1; 
+	    h_formula_conjconj_h2 = h_apply_one s f2; 
+	    h_formula_conjconj_pos = pos})	    	    
   | ViewNode ({h_formula_view_node = x; 
 	h_formula_view_name = c; 
     h_formula_view_imm = imm; 
@@ -2906,7 +3046,18 @@ and propagate_perm_h_formula (f : h_formula) (permvar:cperm_var) : h_formula * (
           let conj = mkConjH h1 h2 f1.h_formula_conj_pos in
           let xs = List.append xs1 xs2 in
           (conj,xs)
-
+    | ConjStar f1 ->
+	      let h1,xs1 = propagate_perm_h_formula f1.h_formula_conjstar_h1 permvar in
+	      let h2,xs2 = propagate_perm_h_formula f1.h_formula_conjstar_h2 permvar in
+          let conjstar = mkConjStarH h1 h2 f1.h_formula_conjstar_pos in
+          let xs = List.append xs1 xs2 in
+          (conjstar,xs)
+    | ConjConj f1 ->
+	      let h1,xs1 = propagate_perm_h_formula f1.h_formula_conjconj_h1 permvar in
+	      let h2,xs2 = propagate_perm_h_formula f1.h_formula_conjconj_h2 permvar in
+          let conjconj = mkConjConjH h1 h2 f1.h_formula_conjconj_pos in
+          let xs = List.append xs1 xs2 in
+          (conjconj,xs)
     | Phase f1 ->
 	      let h1,xs1 = propagate_perm_h_formula f1.h_formula_phase_rd permvar in
 	      let h2,xs2 = propagate_perm_h_formula f1.h_formula_phase_rw permvar in
@@ -3046,6 +3197,8 @@ and h_node_list (f: h_formula): CP.spec_var list = match f with
   | DataNode {h_formula_data_node = c}
   | ViewNode {h_formula_view_node = c} -> [c]
   | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2} 
+  | ConjStar {h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2} 
+  | ConjConj {h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2}     
   | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} 
   | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2} 
   -> (h_node_list h1)@(h_node_list h2)
@@ -5574,6 +5727,8 @@ and filter_heap (f:formula):formula option = match f with
       match b.formula_base_heap with
 	| Star _
 	| Conj _
+	| ConjStar _
+	| ConjConj _
 	| Phase _    
 	| DataNode _ 
 	| ViewNode _ 
@@ -5587,6 +5742,8 @@ and filter_heap (f:formula):formula option = match f with
 	match b.formula_exists_heap with
 	  | Star _
 	  | Conj _
+	  | ConjStar _	  
+          | ConjConj _	  
 	  | Phase _    
 	  | DataNode _ 
 	  | ViewNode _ 
@@ -5663,6 +5820,12 @@ let rec replace_heap_formula_label nl f = match f with
   | Conj b -> Conj {b with 
 		      h_formula_conj_h1 = replace_heap_formula_label nl b.h_formula_conj_h1; 
 		      h_formula_conj_h2 = replace_heap_formula_label nl b.h_formula_conj_h2; }
+  | ConjStar b -> ConjStar {b with 
+		      h_formula_conjstar_h1 = replace_heap_formula_label nl b.h_formula_conjstar_h1; 
+		      h_formula_conjstar_h2 = replace_heap_formula_label nl b.h_formula_conjstar_h2; }
+  | ConjConj b -> ConjConj {b with 
+		      h_formula_conjconj_h1 = replace_heap_formula_label nl b.h_formula_conjconj_h1; 
+		      h_formula_conjconj_h2 = replace_heap_formula_label nl b.h_formula_conjconj_h2; }		      
   | DataNode b -> DataNode {b with h_formula_data_label = (nl ())}
   | ViewNode b -> ViewNode {b with h_formula_view_label = (nl ())}
   | HTrue 
@@ -5705,6 +5868,8 @@ and residue_labels_in_formula f =
   let rec residue_labels_in_heap f = match f with
     | Star b -> (residue_labels_in_heap b.h_formula_star_h1) @ (residue_labels_in_heap b.h_formula_star_h2)
     | Conj b -> (residue_labels_in_heap b.h_formula_conj_h1) @ (residue_labels_in_heap b.h_formula_conj_h2)
+    | ConjStar b -> (residue_labels_in_heap b.h_formula_conjstar_h1) @ (residue_labels_in_heap b.h_formula_conjstar_h2)
+    | ConjConj b -> (residue_labels_in_heap b.h_formula_conjconj_h1) @ (residue_labels_in_heap b.h_formula_conjconj_h2)
     | Phase b -> (residue_labels_in_heap b.h_formula_phase_rd) @ (residue_labels_in_heap b.h_formula_phase_rw)
     | DataNode b -> (match b.h_formula_data_label with Some s-> [s] | _ -> [])
     | ViewNode b -> (match b.h_formula_view_label with Some s-> [s] | _ -> [])
@@ -5742,6 +5907,16 @@ let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) op
             let (e2,r2)=helper s.h_formula_conj_h2 new_arg in
             (Conj {s with h_formula_conj_h1 = e1;
                           h_formula_conj_h2 = e2;},f_comb [r1;r2])
+        | ConjStar s -> 
+            let (e1,r1)=helper s.h_formula_conjstar_h1 new_arg in
+            let (e2,r2)=helper s.h_formula_conjstar_h2 new_arg in
+            (ConjStar {s with h_formula_conjstar_h1 = e1;
+                          h_formula_conjstar_h2 = e2;},f_comb [r1;r2])
+        | ConjConj s -> 
+            let (e1,r1)=helper s.h_formula_conjconj_h1 new_arg in
+            let (e2,r2)=helper s.h_formula_conjconj_h2 new_arg in
+            (ConjConj {s with h_formula_conjconj_h1 = e1;
+                          h_formula_conjconj_h2 = e2;},f_comb [r1;r2])                                                    
         | Phase s -> 
             let (e1,r1)=helper s.h_formula_phase_rd new_arg in
             let (e2,r2)=helper s.h_formula_phase_rw new_arg in
@@ -5786,6 +5961,12 @@ let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_fo
 	      | Conj s -> Conj {s with 
 			  h_formula_conj_h1 = transform_h_formula f s.h_formula_conj_h1;
 			  h_formula_conj_h2 = transform_h_formula f s.h_formula_conj_h2;}
+	      | ConjStar s -> ConjStar {s with 
+			  h_formula_conjstar_h1 = transform_h_formula f s.h_formula_conjstar_h1;
+			  h_formula_conjstar_h2 = transform_h_formula f s.h_formula_conjstar_h2;}
+	      | ConjConj s -> ConjConj {s with 
+			  h_formula_conjconj_h1 = transform_h_formula f s.h_formula_conjconj_h1;
+			  h_formula_conjconj_h2 = transform_h_formula f s.h_formula_conjconj_h2;}			  			  
 	      | Phase s -> Phase {s with 
 			  h_formula_phase_rd = transform_h_formula f s.h_formula_phase_rd;
 			  h_formula_phase_rw = transform_h_formula f s.h_formula_phase_rw;}
@@ -6092,6 +6273,8 @@ let rename_labels transformer e =
 	let rec f_h_f e = match e with 
 		| Star s -> None
 		| Conj s -> None
+		| ConjStar s -> None
+		| ConjConj s -> None				
 		| Phase s -> None	
   	    | DataNode d -> Some (DataNode {d with h_formula_data_label = n_l_f d.h_formula_data_label})
 	    | ViewNode v -> Some (ViewNode {v with h_formula_view_label = n_l_f v.h_formula_view_label})
@@ -6125,6 +6308,8 @@ let rename_labels_formula_ante  e=
 	let f_f e = None in
 	let rec f_h_f e = match e with 
 	    | Conj s -> None
+            | ConjStar s -> None	    
+            | ConjConj s -> None
 	    | Phase s -> None
 	    | Star s -> None
 	    | DataNode d -> Some (DataNode {d with h_formula_data_label = n_l_f d.h_formula_data_label})
@@ -7097,6 +7282,12 @@ let mark_derv_self name f =
       | Conj c -> Conj {c with 
           h_formula_conj_h1 = h_h c.h_formula_conj_h1;
           h_formula_conj_h2 = h_h c.h_formula_conj_h2;}
+      | ConjStar c -> ConjStar {c with 
+          h_formula_conjstar_h1 = h_h c.h_formula_conjstar_h1;
+          h_formula_conjstar_h2 = h_h c.h_formula_conjstar_h2;}
+      | ConjConj c -> ConjConj {c with 
+          h_formula_conjconj_h1 = h_h c.h_formula_conjconj_h1;
+          h_formula_conjconj_h2 = h_h c.h_formula_conjconj_h2;}                    
       | Phase p -> Phase {p with 
           h_formula_phase_rd = h_h p.h_formula_phase_rd;
           h_formula_phase_rw =  h_h p.h_formula_phase_rw;}     
@@ -7195,6 +7386,18 @@ let rec simp_ann_x heap pures (pre: bool) = match heap with
     let h1,ps1 = simp_ann h1 pures pre in
     let h2,ps2 = simp_ann h2 ps1 pre in
     (mkConjH h1 h2 pos,ps2)
+  | ConjStar {h_formula_conjstar_h1 = h1;
+	  h_formula_conjstar_h2 = h2;
+	  h_formula_conjstar_pos = pos} ->
+    let h1,ps1 = simp_ann h1 pures pre in
+    let h2,ps2 = simp_ann h2 ps1 pre in
+    (mkConjStarH h1 h2 pos,ps2)
+  | ConjConj {h_formula_conjconj_h1 = h1;
+	  h_formula_conjconj_h2 = h2;
+	  h_formula_conjconj_pos = pos} ->
+    let h1,ps1 = simp_ann h1 pures pre in
+    let h2,ps2 = simp_ann h2 ps1 pre in
+    (mkConjConjH h1 h2 pos,ps2)        
   | Phase {h_formula_phase_rd = h1;
 	   h_formula_phase_rw = h2;
 	   h_formula_phase_pos = pos} ->
@@ -8104,6 +8307,8 @@ let sum_of_int_lst lst = List.fold_left (+) 0 lst
 let rec no_of_cnts_heap heap = match heap with
   | Star h -> no_of_cnts_heap h.h_formula_star_h1 + no_of_cnts_heap h.h_formula_star_h2
   | Conj h -> no_of_cnts_heap h.h_formula_conj_h1 + no_of_cnts_heap h.h_formula_conj_h2
+  | ConjStar h -> no_of_cnts_heap h.h_formula_conjstar_h1 + no_of_cnts_heap h.h_formula_conjstar_h2
+  | ConjConj h -> no_of_cnts_heap h.h_formula_conjconj_h1 + no_of_cnts_heap h.h_formula_conjconj_h2    
 (*  | StarList h -> sum_of_int_lst (List.map (fun (_,s) -> no_of_cnts_heap (Star s)) h)*)
   | Phase h -> no_of_cnts_heap h.h_formula_phase_rd + no_of_cnts_heap h.h_formula_phase_rw
   | DataNode _ -> 1
@@ -8185,7 +8390,15 @@ let rec find_barr bln v f =
 	  | Conj c -> 
 	    let rd = h_bars eqs c.h_formula_conj_h1 in
 		let rw = h_bars eqs c.h_formula_conj_h2 in
-	   (match rd with | None -> rw | _ -> tester rd rw)	  
+	   (match rd with | None -> rw | _ -> tester rd rw)	
+	  | ConjStar c -> 
+	    let rd = h_bars eqs c.h_formula_conjstar_h1 in
+		let rw = h_bars eqs c.h_formula_conjstar_h2 in
+	   (match rd with | None -> rw | _ -> tester rd rw)
+	  | ConjConj c -> 
+	    let rd = h_bars eqs c.h_formula_conjconj_h1 in
+		let rw = h_bars eqs c.h_formula_conjconj_h2 in
+	   (match rd with | None -> rw | _ -> tester rd rw)	   	     
 	  | Phase p -> 
 		let rd = h_bars eqs p.h_formula_phase_rd in
 		let rw = h_bars eqs p.h_formula_phase_rw in
