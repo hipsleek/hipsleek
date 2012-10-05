@@ -25,7 +25,7 @@ open Perm
 	| View of view_decl
     | Hopred of hopred_decl
 	| Barrier of barrier_decl
-		
+
   type decl = 
     | Type of type_decl
     | Func of func_decl
@@ -35,7 +35,7 @@ open Perm
     | Logical_var of exp_var_decl (* Globally logical vars *)
     | Proc of proc_decl
     | Coercion of coercion_decl
-				
+
   type member = 
 	| Field of (typed_ident * loc)
 	| Inv of F.formula

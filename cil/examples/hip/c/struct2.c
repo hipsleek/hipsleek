@@ -1,6 +1,7 @@
 struct pair {
 	int x;
 	int y;
+  int ***aa;
 };
 
 struct quad {

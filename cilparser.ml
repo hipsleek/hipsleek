@@ -2,6 +2,23 @@ open Globals
 open Error
 open Exc.GTable
 
+(* --------------------- *)
+(* Global variables      *)
+(* --------------------- *)
+
+(* hash table contains Globals.typ structures that are used to represent Cil.typ pointers *)
+let gl_pointers_type : (Cil.typ, Globals.typ) Hashtbl.t = (Hashtbl.create 10)
+
+(* hash table contains Iast.data_decl structures that are used to represent pointer types *)
+let gl_pointers_data : (Cil.typ, Iast.data_decl) Hashtbl.t = (Hashtbl.create 10)
+
+let gl_pointer_data_name = "pdata"
+
+(* reset all global vars for the next use *)
+let reset_global_vars () =
+  Hashtbl.clear gl_pointers_type;
+  Hashtbl.clear gl_pointers_data
+
 (* ---------------------------------------- *)
 (* string conversion functions for CIL      *)
 (* ---------------------------------------- *)
@@ -17,7 +34,7 @@ let string_of_cil_offset (off: Cil.offset) : string =
 let string_of_cil_init (i: Cil.init) : string =
   Pretty.sprint 10 (Cil.d_init () i)
 
-let string_of_cil_type (t: Cil.typ) : string =
+let string_of_cil_typ (t: Cil.typ) : string =
   Pretty.sprint 10 (Cil.d_type () t)
 
 let string_of_cil_attrlist (a: Cil.attributes) : string =
@@ -25,7 +42,7 @@ let string_of_cil_attrlist (a: Cil.attributes) : string =
 
 let string_of_cil_attr (a: Cil.attribute) : string =
   Pretty.sprint 10 (Cil.d_attr () a)
-  
+
 let string_of_cil_attrparam (e: Cil.attrparam) : string =
   Pretty.sprint 10 (Cil.d_attrparam () e)
 
@@ -46,35 +63,31 @@ let string_of_cil_global (g: Cil.global) : string =
 (* ---   end of string conversion   --- *) 
 
 
+(* ---------------------------------------- *)
+(* translation functions from Cil -> Iast   *)
+(* ---------------------------------------- *)
 (* create an Iast.exp from a list of Iast.exp *)
+
 let merge_iast_exp (es: Iast.exp list) (lopt : loc option): Iast.exp =
   let pos = match lopt with None -> no_pos | Some l -> l in
   match es with
   | [] -> Iast.Empty pos
   | [e] -> e
   | hd::tl -> 
-      List.fold_left (fun x y -> 
-        Iast.Seq {Iast.exp_seq_exp1 = x;
-                  Iast.exp_seq_exp2 = y;
-                  Iast.exp_seq_pos = pos;}
+      List.fold_left (fun x y -> Iast.Seq {Iast.exp_seq_exp1 = x;
+                                           Iast.exp_seq_exp2 = y;
+                                           Iast.exp_seq_pos = pos;}
       ) hd tl
 
 
-(* ---------------------------------------- *)
-(* translation functions from Cil -> Iast   *)
-(* ---------------------------------------- *)
-let rec translate_location (loc: Cil.location) : Globals.loc =
-  let pos : Lexing.position = {
-    Lexing.pos_fname = loc.Cil.file;
-    Lexing.pos_lnum = loc.Cil.line;
-    Lexing.pos_bol = 0; (* TRUNG CODE: this should be computed later *)
-    Lexing.pos_cnum = loc.Cil.byte;
-  } in
-  let newloc: Globals.loc = {
-    Globals.start_pos = pos;
-    Globals.mid_pos = pos; (* TRUNG CODE: this should be computed later *)
-    Globals.end_pos = pos; (* TRUNG CODE: this should be computed later *)
-  } in
+let translate_location (loc: Cil.location) : Globals.loc =
+  let pos : Lexing.position = {Lexing.pos_fname = loc.Cil.file;
+                               Lexing.pos_lnum = loc.Cil.line;
+                               Lexing.pos_bol = 0; (* TRUNG CODE: this should be computed later *)
+                               Lexing.pos_cnum = loc.Cil.byte;} in
+  let newloc: Globals.loc = {Globals.start_pos = pos;
+                             Globals.mid_pos = pos; (* TRUNG CODE: this should be computed later *)
+                             Globals.end_pos = pos;} in (* TRUNG CODE: this should be computed later *)
   (* return *)
   newloc
 
@@ -85,11 +98,35 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
     | Cil.TVoid _ -> Globals.Void
     | Cil.TInt _ -> Globals.Int
     | Cil.TFloat _ -> Globals.Float
-    | Cil.TPtr (t1, _) -> report_error_msg "Error!!! Iast doesn't support Cil.TPtr type!"
+    | Cil.TPtr (ty, _) ->
+        (* create a new Globals.typ and Iast.data_decl to represent the pointer data structure *)
+        let newt = (
+          (* find if this pointer was handled before or not *)
+          try Hashtbl.find gl_pointers_type t 
+          with Not_found -> (
+            (* create new Globals.typ and update to a hash table *)
+            let index = Hashtbl.length gl_pointers_type in
+            let pointer_name = "pointer_type_" ^ (string_of_int index) in
+            let pointer_type = Globals.Named pointer_name in
+            Hashtbl.add gl_pointers_type t pointer_type;
+            (* create new Iast.data_decl and update to a hash table *)
+            let ftype = translate_typ ty in
+            let fname = gl_pointer_data_name in
+            let pointer_data = {Iast.data_name = pointer_name;
+                                Iast.data_fields = [((ftype, fname), no_pos, true)];
+                                Iast.data_parent_name = "Object";
+                                Iast.data_invs = [];
+                                Iast.data_methods = [];} in
+            Hashtbl.add gl_pointers_data t pointer_data;
+            (* return new type*)
+            pointer_type
+          )
+        ) in
+        newt
     | Cil.TArray _ -> report_error_msg "TRUNG TODO: handle TArray later!"
     | Cil.TFun _ -> report_error_msg "Should not appear here. Handle only in translate_typ_fun"
-    | Cil.TNamed (tname, _) -> translate_typ tname.Cil.ttype           (* typedef type *)
-    | Cil.TComp (comp, _) -> Globals.Named comp.Cil.cname              (* struct or union type*)
+    | Cil.TNamed (tname, _) -> translate_typ tname.Cil.ttype                       (* typedef type *)
+    | Cil.TComp (comp, _) -> Globals.Named comp.Cil.cname                          (* struct or union type*)
     | Cil.TEnum _ -> report_error_msg "TRUNG TODO: handle TEnum later!"
     | Cil.TBuiltin_va_list _ -> report_error_msg "TRUNG TODO: handle TBuiltin_va_list later!" in
   (* return *)
@@ -115,22 +152,17 @@ let translate_var_decl (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.e
 
 
 let translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp =
-  let pos = match lopt with
-            | None -> no_pos
-            | Some l -> translate_location l in
+  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   match c with
-  | Cil.CInt64 (i64, _, _) ->
-      let i = Int64.to_int i64 in
-      let newconstant = Iast.IntLit {Iast.exp_int_lit_val = i; Iast.exp_int_lit_pos = pos} in
-      newconstant
+  | Cil.CInt64 (i, _, _) -> Iast.IntLit {Iast.exp_int_lit_val = Int64.to_int i;
+                                         Iast.exp_int_lit_pos = pos}
   | Cil.CStr s -> report_error_msg "TRUNG TODO: Handle Cil.CStr later!"
   | Cil.CWStr _ -> report_error_msg "TRUNG TODO: Handle Cil.CWStr later!"
   | Cil.CChr _ -> report_error_msg "TRUNG TODO: Handle Cil.CChr later!"
   | Cil.CReal (f, fkind, _) -> (
       match fkind with
-      | Cil.FFloat ->
-          let newconstant = Iast.FloatLit {Iast.exp_float_lit_val = f; Iast.exp_float_lit_pos = pos} in
-          newconstant
+      | Cil.FFloat -> Iast.FloatLit {Iast.exp_float_lit_val = f;
+                                     Iast.exp_float_lit_pos = pos}
       | Cil.FDouble -> report_error_msg "TRUNG TODO: Handle Cil.FDouble later!"
       | Cil.FLongDouble -> report_error_msg "TRUNG TODO: Handle Cil.FLongDouble later!"
     )
@@ -140,10 +172,10 @@ let translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp 
 let translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option) : (Iast.typed_ident * loc * bool) =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let name = field.Cil.fname in
-  let (ty, inline) = match field.Cil.ftype with
-    | Cil.TPtr (t0, _) -> (translate_typ t0, true)
-    | _ -> (translate_typ field.Cil.ftype, false) in
-  ((ty, name), pos, inline)
+  let ty = translate_typ field.Cil.ftype in
+  match field.Cil.ftype with
+  | Cil.TPtr _ -> ((ty, name), pos, true)          (* pointer --> inline type in Iast *)
+  | _ -> ((ty, name), pos, false)
 
 
 let translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : Iast.data_decl =
@@ -225,7 +257,15 @@ let rec translate_lval (lv: Cil.lval) (lopt: Cil.location option) : Iast.exp =
                                 Iast.exp_member_path_id = None;
                                 Iast.exp_member_pos = pos} in
       newexp
-  | Cil.Mem e, Cil.NoOffset -> translate_exp e lopt
+  | Cil.Mem e, Cil.NoOffset ->
+      (* access to data in pointer variable *)
+      let base = translate_exp e lopt in
+      let fields = [gl_pointer_data_name] in
+      let newexp = Iast.Member {Iast.exp_member_base = base;
+                                Iast.exp_member_fields = fields;
+                                Iast.exp_member_path_id = None;
+                                Iast.exp_member_pos = pos} in
+      newexp
   | Cil.Mem exp, Cil.Index _ ->
       let e = translate_exp exp lopt in
       let i = collect_index off in
@@ -595,6 +635,8 @@ let translate_file (file: Cil.file) : Iast.prog_decl =
                  Iast.data_invs = []; Iast.data_methods = []} in
   let string_def = {Iast.data_name = "String"; Iast.data_fields = []; Iast.data_parent_name = "Object";
                     Iast.data_invs = []; Iast.data_methods = []} in
+  (* update data_decls representing pointers to program *)
+  Hashtbl.iter (fun t d -> data_decls := !data_decls @ [d]) gl_pointers_data;
   let newprog : Iast.prog_decl = ({
     Iast.prog_data_decls = obj_def :: string_def :: !data_decls;
     Iast.prog_global_var_decls = !global_var_decls;
