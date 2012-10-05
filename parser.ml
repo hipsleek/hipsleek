@@ -163,6 +163,7 @@ let string_of_pure_double p =
   match p with
   | Pure_f f -> "Pure_f: " ^ (Iprinter.string_of_pure_formula f)
   | Pure_c c -> "Pure_c: " ^ (Iprinter.string_of_formula_exp c) 
+  | Pure_t t -> "Pure_t: " ^ (Iprinter.string_of_formula_exp (fst t)) 
   
 let apply_pure_form1 fct form = match form with
   | Pure_f f -> Pure_f (fct f)
@@ -197,6 +198,7 @@ let apply_pure_form2 fct form1 form2 = match (form1,form2) with
         | _ -> report_error (get_pos 1) "with 2 expected pure_form in f2, found cexp") in
       Pure_f(fct bool_var1 bool_var2)
     )
+  | _ -> report_error (get_pos 1) "with 2 expected cexp, found pure_form"
 
 let apply_cexp_form2 fct form1 form2 = match (form1,form2) with
   | Pure_c f1, Pure_c f2 
@@ -291,6 +293,8 @@ let peek_try =
          | [GT,_;STAR,_] -> raise Stream.Failure
          | [GT,_;INV,_] -> raise Stream.Failure
          | [GT,_;AND,_] -> raise Stream.Failure
+         | [GT,_;ANDSTAR,_] -> raise Stream.Failure
+         | [GT,_;ANDAND,_] -> raise Stream.Failure
          | [GT,_;OR,_] -> raise Stream.Failure
          | [GT,_;ORWORD,_] -> raise Stream.Failure
          | [GT,_;DOT,_] -> raise Stream.Failure
@@ -483,12 +487,35 @@ let peek_star =
 let peek_heap_and = 
    SHGram.Entry.of_parser "peek_heap_and"
        (fun strm ->
-           match Stream.npeek 3 strm with
-             |[AND,_;IDENTIFIER id,_; COLONCOLON,_] -> ()
-             |[AND,_;SELFT t,_; COLONCOLON,_] -> ()
-             |[AND,_;THIS t,_; COLONCOLON,_] -> ()
-             |[AND,_;RES t,_; COLONCOLON,_] -> ()
+           match Stream.npeek 4 strm with
+             |[AND,_;OPAREN ,_; IDENTIFIER id,_; COLONCOLON,_] -> ()
+             |[AND,_;IDENTIFIER id,_; COLONCOLON,_; _,_] -> ()
+             |[AND,_;SELFT t,_; COLONCOLON,_; _,_] -> ()
+             |[AND,_;THIS t,_; COLONCOLON,_; _,_] -> ()
+             |[AND,_;RES t,_; COLONCOLON,_; _,_] -> ()
              | _ -> raise Stream.Failure)
+             
+let peek_heap_andstar = 
+   SHGram.Entry.of_parser "peek_heap_andstar"
+       (fun strm ->
+           match Stream.npeek 4 strm with
+             |[ANDSTAR,_;OPAREN ,_; IDENTIFIER id,_; COLONCOLON,_] -> ()
+             |[ANDSTAR,_;IDENTIFIER id,_; COLONCOLON,_; _,_] -> ()
+             |[ANDSTAR,_;SELFT t,_; COLONCOLON,_; _,_] -> ()
+             |[ANDSTAR,_;THIS t,_; COLONCOLON,_; _,_] -> ()
+             |[ANDSTAR,_;RES t,_; COLONCOLON,_; _,_] -> ()
+             | _ -> raise Stream.Failure)
+             
+let peek_heap_andand = 
+   SHGram.Entry.of_parser "peek_heap_andand"
+       (fun strm ->
+           match Stream.npeek 4 strm with
+             |[ANDAND,_;OPAREN ,_; IDENTIFIER id,_; COLONCOLON,_] -> ()
+             |[ANDAND,_;IDENTIFIER id,_; COLONCOLON,_; _,_] -> ()
+             |[ANDAND,_;SELFT t,_; COLONCOLON,_; _,_] -> ()
+             |[ANDAND,_;THIS t,_; COLONCOLON,_; _,_] -> ()
+             |[ANDAND,_;RES t,_; COLONCOLON,_; _,_] -> ()
+             | _ -> raise Stream.Failure)                          
 
 let peek_array_type =
    SHGram.Entry.of_parser "peek_array_type"
@@ -958,6 +985,11 @@ heap_rd:
 
 heap_rw:
   [[ hrd=heap_wr; `STAR; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStar hrd hc (get_pos_camlp4 _loc 2)
+   | shc=heap_wr; peek_heap_andand; `ANDAND; `OPAREN; wr = heap_constr; `CPAREN -> F.mkConjConj shc wr (get_pos_camlp4 _loc 2)
+   | shc=heap_wr; peek_heap_andstar; `ANDSTAR; `OPAREN; wr = heap_constr; `CPAREN -> F.mkConjStar shc wr (get_pos_camlp4 _loc 2)
+   | shc=heap_wr; peek_heap_and; `AND; `OPAREN; wr = heap_constr; `CPAREN -> F.mkConj shc wr (get_pos_camlp4 _loc 2)
+   | shc=heap_wr; peek_heap_andand; `ANDAND; wr = simple_heap_constr -> F.mkConjConj shc wr (get_pos_camlp4 _loc 2) 
+   | shc=heap_wr; peek_heap_andstar; `ANDSTAR; wr = simple_heap_constr -> F.mkConjStar shc wr (get_pos_camlp4 _loc 2)
    | shc=heap_wr; peek_heap_and; `AND; wr = simple_heap_constr -> F.mkConj shc wr (get_pos_camlp4 _loc 2)
    | hwr=heap_wr                                          -> F.mkPhase F.HEmp hwr (get_pos_camlp4 _loc 2)]];
 

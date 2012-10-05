@@ -93,6 +93,8 @@ and formula_or = { formula_or_f1 : formula;
 and h_formula = (* heap formula *)
   | Phase of h_formula_phase
   | Conj of h_formula_conj  
+  | ConjStar of h_formula_conjstar
+  | ConjConj of h_formula_conjconj
   | Star of h_formula_star
   | HeapNode of h_formula_heap
   | HeapNode2 of h_formula_heap2
@@ -110,6 +112,14 @@ and h_formula_star = { h_formula_star_h1 : h_formula;
 and h_formula_conj = { h_formula_conj_h1 : h_formula;
 		       h_formula_conj_h2 : h_formula;
 		       h_formula_conj_pos : loc }
+		       
+and h_formula_conjstar = { h_formula_conjstar_h1 : h_formula;
+		       h_formula_conjstar_h2 : h_formula;
+		       h_formula_conjstar_pos : loc }
+		       
+and h_formula_conjconj = { h_formula_conjconj_h1 : h_formula;
+		       h_formula_conjconj_h2 : h_formula;
+		       h_formula_conjconj_pos : loc }		       		       
 
 and h_formula_phase = { h_formula_phase_rd : h_formula;
 			h_formula_phase_rw : h_formula;
@@ -360,6 +370,22 @@ and mkConj f1 f2 pos =
   else Conj { h_formula_conj_h1 = f1;
               h_formula_conj_h2 = f2;
               h_formula_conj_pos = pos }
+              
+and mkConjStar f1 f2 pos =
+  if (f1 = HFalse) || (f2 = HFalse) then HFalse
+  else if (f1 = HTrue) && (f2 = HTrue) then HTrue
+  else if (f1 = HEmp) && (f2 = HEmp) then HEmp
+  else ConjStar { h_formula_conjstar_h1 = f1;
+              h_formula_conjstar_h2 = f2;
+              h_formula_conjstar_pos = pos }
+              
+and mkConjConj f1 f2 pos =
+  if (f1 = HFalse) || (f2 = HFalse) then HFalse
+  else if (f1 = HTrue) && (f2 = HTrue) then HTrue
+  else if (f1 = HEmp) && (f2 = HEmp) then HEmp
+  else ConjConj { h_formula_conjconj_h1 = f1;
+              h_formula_conjconj_h2 = f2;
+              h_formula_conjconj_pos = pos }                            
 
 and mkPhase f1 f2 pos =
   match f1 with
@@ -458,6 +484,12 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
   | Conj ({h_formula_conj_h1 = h1; 
 	   h_formula_conj_h2 = h2; 
 	   h_formula_conj_pos = pos})
+  | ConjStar ({h_formula_conjstar_h1 = h1; 
+	   h_formula_conjstar_h2 = h2; 
+	   h_formula_conjstar_pos = pos})
+  | ConjConj ({h_formula_conjconj_h1 = h1; 
+	   h_formula_conjconj_h2 = h2; 
+	   h_formula_conjconj_pos = pos})	   	   
   | Phase ({h_formula_phase_rd = h1; 
 	   h_formula_phase_rw = h2; 
 	   h_formula_phase_pos = pos}) 
@@ -714,6 +746,18 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
         Conj ({h_formula_conj_h1 = h_apply_one s h1; 
 	    h_formula_conj_h2 = h_apply_one s h2; 
 	    h_formula_conj_pos = pos})
+  | ConjStar ({h_formula_conjstar_h1 = h1; 
+	h_formula_conjstar_h2 = h2; 
+	h_formula_conjstar_pos = pos}) ->
+        ConjStar ({h_formula_conjstar_h1 = h_apply_one s h1; 
+	    h_formula_conjstar_h2 = h_apply_one s h2; 
+	    h_formula_conjstar_pos = pos})
+  | ConjConj ({h_formula_conjconj_h1 = h1; 
+	h_formula_conjconj_h2 = h2; 
+	h_formula_conjconj_pos = pos}) ->
+        ConjConj ({h_formula_conjconj_h1 = h_apply_one s h1; 
+	    h_formula_conjconj_h2 = h_apply_one s h2; 
+	    h_formula_conjconj_pos = pos})	    	    
   | Phase ({h_formula_phase_rd = h1; 
 	h_formula_phase_rw = h2; 
 	h_formula_phase_pos = pos}) ->
@@ -865,6 +909,16 @@ and float_out_exps_from_heap_x (f:formula ) (rel0: rel option) :formula =
 	let r21,r22 = float_out_exps b.h_formula_conj_h2 in
 	  (Conj ({h_formula_conj_h1  =r11; h_formula_conj_h2=r21;h_formula_conj_pos = b.h_formula_conj_pos}), 
 	   (r12@r22))
+    | ConjStar b-> 
+	let r11,r12 = float_out_exps b.h_formula_conjstar_h1 in
+	let r21,r22 = float_out_exps b.h_formula_conjstar_h2 in
+	  (ConjStar ({h_formula_conjstar_h1  =r11; h_formula_conjstar_h2=r21;h_formula_conjstar_pos = b.h_formula_conjstar_pos}), 
+	   (r12@r22))
+    | ConjConj b-> 
+	let r11,r12 = float_out_exps b.h_formula_conjconj_h1 in
+	let r21,r22 = float_out_exps b.h_formula_conjconj_h2 in
+	  (ConjConj ({h_formula_conjconj_h1  =r11; h_formula_conjconj_h2=r21;h_formula_conjconj_pos = b.h_formula_conjconj_pos}), 
+	   (r12@r22))	   	   
     | Phase b-> 
 	let r11,r12 = float_out_exps b.h_formula_phase_rd in
 	let r21,r22 = float_out_exps b.h_formula_phase_rw in
@@ -1130,6 +1184,50 @@ match h with
 		  h_formula_conj_pos = l;
 		}),
             np)
+    |  ConjStar
+	{
+          h_formula_conjstar_h1 = f1;
+          h_formula_conjstar_h2 = f2;
+          h_formula_conjstar_pos = l
+	} ->
+	 let (nf1, np1) = float_out_heap_min_max f1 in
+	 let (nf2, np2) = float_out_heap_min_max f2 in
+	 let np =
+           (match (np1, np2) with
+              | (None, None) -> None
+              | (Some _, None) -> np1
+              | (None, Some _) -> np2
+              | (Some e1, Some e2) -> Some (Ipure.And (e1, e2, l)))
+	 in
+           (( ConjStar
+		{
+		  h_formula_conjstar_h1 = nf1;
+		  h_formula_conjstar_h2 = nf2;
+		  h_formula_conjstar_pos = l;
+		}),
+            np)
+    |  ConjConj
+	{
+          h_formula_conjconj_h1 = f1;
+          h_formula_conjconj_h2 = f2;
+          h_formula_conjconj_pos = l
+	} ->
+	 let (nf1, np1) = float_out_heap_min_max f1 in
+	 let (nf2, np2) = float_out_heap_min_max f2 in
+	 let np =
+           (match (np1, np2) with
+              | (None, None) -> None
+              | (Some _, None) -> np1
+              | (None, Some _) -> np2
+              | (Some e1, Some e2) -> Some (Ipure.And (e1, e2, l)))
+	 in
+           (( ConjConj
+		{
+		  h_formula_conjconj_h1 = nf1;
+		  h_formula_conjconj_h2 = nf2;
+		  h_formula_conjconj_pos = l;
+		}),
+            np)                        
     |  Phase
 	{
           h_formula_phase_rd = f1;
@@ -1423,6 +1521,8 @@ let find_barr_node bname (f:int) (t:int) struc :bool=
 	let rec find_h_node x h = match h with 
 		 | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2}
 		 | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
+		 | ConjStar {h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2}
+		 | ConjConj {h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2}		 		 
 		 | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} -> 
 			(match find_h_node x h1 with 
 				| Bar_not_found -> find_h_node x h2 

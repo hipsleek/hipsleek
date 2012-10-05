@@ -470,6 +470,18 @@ let rec convert_heap2_heap prog (h0 : IF.h_formula) : IF.h_formula =
         in IF.Conj { (h) with
             IF.h_formula_conj_h1 = tmp1;
             IF.h_formula_conj_h2 = tmp2; }
+    | IF.ConjStar (({ IF.h_formula_conjstar_h1 = h1; IF.h_formula_conjstar_h2 = h2 } as h))
+        -> let tmp1 = convert_heap2_heap prog h1 in
+        let tmp2 = convert_heap2_heap prog h2
+        in IF.ConjStar{ (h) with
+            IF.h_formula_conjstar_h1 = tmp1;
+            IF.h_formula_conjstar_h2 = tmp2; }
+    | IF.ConjConj (({ IF.h_formula_conjconj_h1 = h1; IF.h_formula_conjconj_h2 = h2 } as h))
+        -> let tmp1 = convert_heap2_heap prog h1 in
+        let tmp2 = convert_heap2_heap prog h2
+        in IF.ConjConj { (h) with
+            IF.h_formula_conjconj_h1 = tmp1;
+            IF.h_formula_conjconj_h2 = tmp2; }                        
     | IF.Phase (({ IF.h_formula_phase_rd = h1; IF.h_formula_phase_rw = h2 } as h))
         -> let tmp1 = convert_heap2_heap prog h1 in
         let tmp2 = convert_heap2_heap prog h2
@@ -510,7 +522,11 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
   (* vdef                                                                  *)
   let rec gen_name_pairs_heap vname h =
     match h with
-      | IF.Star { IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } ->
+      | IF.Star { IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } 
+      | IF.Conj { IF.h_formula_conj_h1 = h1; IF.h_formula_conj_h2 = h2 } 
+      | IF.ConjStar { IF.h_formula_conjstar_h1 = h1; IF.h_formula_conjstar_h2 = h2 } 
+      | IF.ConjConj { IF.h_formula_conjconj_h1 = h1; IF.h_formula_conjconj_h2 = h2 }       
+      | IF.Phase { IF.h_formula_phase_rd = h1; IF.h_formula_phase_rw = h2 } ->
             (gen_name_pairs_heap vname h1) @ (gen_name_pairs_heap vname h2)
       | IF.HeapNode { IF.h_formula_heap_name = c } ->
             (* if c = vname *)
@@ -1089,7 +1105,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 		   compute_view_x_formula_x prog vdef (n - 1))
 		  else report_error pos "view formula does not entail supplied invariant\n" in ()
     )
-  else (validate_mem_spec prog vdef);
+  else (validate_mem_spec prog vdef);(* verify the memory specs using predicate definition *)
   if !Globals.print_x_inv && (n = 0)
   then
     (print_string ("\ncomputed invariant for view: " ^ vdef.C.view_name ^"\n" ^(Cprinter.string_of_mix_formula vdef.C.view_x_formula) ^"\n");
@@ -4352,6 +4368,28 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
               let tmp_h = CF.mkConjH lf1 lf2 pos in
               let tmp_type = CF.mkAndType type1 type2 in 
 	          (tmp_h, tmp_type)
+        | IF.ConjStar
+                {
+                    IF.h_formula_conjstar_h1 = f1;
+                    IF.h_formula_conjstar_h2 = f2;
+                    IF.h_formula_conjstar_pos = pos
+                } ->
+              let (lf1, type1) = linearize_heap f1 pos in
+              let (lf2, type2) = linearize_heap f2 pos in
+              let tmp_h = CF.mkConjH lf1 lf2 pos in
+              let tmp_type = CF.mkAndType type1 type2 in 
+	          (tmp_h, tmp_type)
+        | IF.ConjConj
+                {
+                    IF.h_formula_conjconj_h1 = f1;
+                    IF.h_formula_conjconj_h2 = f2;
+                    IF.h_formula_conjconj_pos = pos
+                } ->
+              let (lf1, type1) = linearize_heap f1 pos in
+              let (lf2, type2) = linearize_heap f2 pos in
+              let tmp_h = CF.mkConjH lf1 lf2 pos in
+              let tmp_type = CF.mkAndType type1 type2 in 
+	          (tmp_h, tmp_type)	          	          
         | IF.HTrue ->  (CF.HTrue, CF.TypeTrue)
         | IF.HFalse -> (CF.HFalse, CF.TypeFalse) 
         | IF.HEmp -> (CF.HEmp, CF.TypeTrue) in 
@@ -5720,6 +5758,18 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
                 IF.h_formula_conj_h2 = h2;
                 IF.h_formula_conj_pos = pos
 	        } 
+    | IF.ConjStar
+	        {
+                IF.h_formula_conjstar_h1= h1;
+                IF.h_formula_conjstar_h2= h2;
+                IF.h_formula_conjstar_pos = pos
+	        } 
+    | IF.ConjConj
+	        {
+                IF.h_formula_conjconj_h1 = h1;
+                IF.h_formula_conjconj_h2 = h2;
+                IF.h_formula_conjconj_pos = pos
+	        } 	        	        
     | IF.Phase
 	        {
                 IF.h_formula_phase_rd = h1;
@@ -5956,6 +6006,16 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
 	        IF.h_formula_conj_h2 = f2;
 	        IF.h_formula_conj_pos = pos
 	        } 
+    | IF.ConjStar
+	        {  IF.h_formula_conjstar_h1 = f1;
+	        IF.h_formula_conjstar_h2 = f2;
+	        IF.h_formula_conjstar_pos = pos
+	        } 
+    | IF.ConjConj
+	        {  IF.h_formula_conjconj_h1 = f1;
+	        IF.h_formula_conjconj_h2 = f2;
+	        IF.h_formula_conjconj_pos = pos
+	        } 	        	        
     | IF.Phase
 	        {   IF.h_formula_phase_rd = f1;
 	        IF.h_formula_phase_rw = f2;
@@ -5978,6 +6038,20 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
 	            IF.h_formula_conj_pos = pos
 	        } ->
 	 IF.mkConj (imm_heap f1) (imm_heap f2) pos
+    | IF.ConjStar
+	        {
+	            IF.h_formula_conjstar_h1 = f1;
+	            IF.h_formula_conjstar_h2 = f2;
+	            IF.h_formula_conjstar_pos = pos
+	        } ->
+	 IF.mkConjStar (imm_heap f1) (imm_heap f2) pos
+    | IF.ConjConj
+	        {
+	            IF.h_formula_conjconj_h1 = f1;
+	            IF.h_formula_conjconj_h2 = f2;
+	            IF.h_formula_conjconj_pos = pos
+	        } ->
+	 IF.mkConjConj (imm_heap f1) (imm_heap f2) pos	 	 
     | IF.Phase
 	        {
 	            IF.h_formula_phase_rd = f1;
@@ -6044,6 +6118,28 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
 	        let tmp_h = IF.mkConj lf1 lf2 pos in
 	        let tmp_link = IP.mkAnd link1 link2 pos in
 	        (new_used_names2, (qv1 @ qv2), tmp_h, tmp_link)
+      | IF.ConjStar
+	          {
+	              IF.h_formula_conjstar_h1 = f1;
+	              IF.h_formula_conjstar_h2 = f2;
+	              IF.h_formula_conjstar_pos = pos
+	          } ->
+	        let new_used_names1, qv1, lf1, link1 = linearize_heap used_names f1 in
+	        let new_used_names2, qv2, lf2, link2 = linearize_heap new_used_names1 f2 in
+	        let tmp_h = IF.mkConjStar lf1 lf2 pos in
+	        let tmp_link = IP.mkAnd link1 link2 pos in
+	        (new_used_names2, (qv1 @ qv2), tmp_h, tmp_link)
+      | IF.ConjConj
+	          {
+	              IF.h_formula_conjconj_h1 = f1;
+	              IF.h_formula_conjconj_h2 = f2;
+	              IF.h_formula_conjconj_pos = pos
+	          } ->
+	        let new_used_names1, qv1, lf1, link1 = linearize_heap used_names f1 in
+	        let new_used_names2, qv2, lf2, link2 = linearize_heap new_used_names1 f2 in
+	        let tmp_h = IF.mkConjConj lf1 lf2 pos in
+	        let tmp_link = IP.mkAnd link1 link2 pos in
+	        (new_used_names2, (qv1 @ qv2), tmp_h, tmp_link)	        	        
       | IF.Phase
 	          {
 	              IF.h_formula_phase_rd = f1;

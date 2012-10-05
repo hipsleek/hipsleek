@@ -308,6 +308,22 @@ let rec string_of_h_formula = function
         else (string_of_h_formula f1) ^ " & (" ^ (string_of_h_formula f2) ^ ")"
       else
         "(" ^ (string_of_h_formula f1) ^ ") & (" ^ (string_of_h_formula f2) ^ ")"
+  | F.ConjStar ({F.h_formula_conjstar_h1 = f1;
+             F.h_formula_conjstar_h2 = f2;
+             F.h_formula_conjstar_pos = l} ) ->
+      if is_bool_f f1 then 
+        if is_bool_f f2 then (string_of_h_formula f1) ^ " &* " ^ (string_of_h_formula f2)
+        else (string_of_h_formula f1) ^ " &* (" ^ (string_of_h_formula f2) ^ ")"
+      else
+        "(" ^ (string_of_h_formula f1) ^ ") &* (" ^ (string_of_h_formula f2) ^ ")"
+  | F.ConjConj ({F.h_formula_conjconj_h1 = f1;
+             F.h_formula_conjconj_h2 = f2;
+             F.h_formula_conjconj_pos = l} ) ->
+      if is_bool_f f1 then 
+        if is_bool_f f2 then (string_of_h_formula f1) ^ " && " ^ (string_of_h_formula f2)
+        else (string_of_h_formula f1) ^ " && (" ^ (string_of_h_formula f2) ^ ")"
+      else
+        "(" ^ (string_of_h_formula f1) ^ ") && (" ^ (string_of_h_formula f2) ^ ")"                
   | F.Phase ({F.h_formula_phase_rd = f1;
               F.h_formula_phase_rw = f2;
               F.h_formula_phase_pos = l} ) ->

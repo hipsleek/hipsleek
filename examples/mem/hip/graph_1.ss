@@ -5,7 +5,7 @@ data node {
 }
 //type error for self
 graph<v,ann,M> == self = null & M = {}
-	or (self::node<v@ann,l@L,r@L> & l::graph<v,ann,Ml> & r::graph<v,ann,Mr>) & M = union(Ml,Mr,{self})
+	or self::node<v@ann,l@L,r@L> & (l::graph<v,ann,Ml> & r::graph<v,ann,Mr>) & M = union(Ml,Mr,{self})
 	inv true
 	mem M->(node<@M,@L,@L> | node<@A,@L,@L>);
 

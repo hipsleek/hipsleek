@@ -5,9 +5,9 @@ data node {
 }
 
 dag<v,ann,M> == self = null & M = {}
-	or (self::node<v@ann,l@L,r@L> * l::dag<v,ann,Ml> & r::dag<v,ann,Mr>) & M = union(Ml,Mr,{self})
+	or self::node<v@ann,l@L,r@L> * l::dag<v,ann,Ml> & r::dag<v,ann,Mr> & M = union(Ml,Mr,{self})
 	inv true
-	mem M->(node<0@M,@L,@L> | node<1@I,@L,@L>);
+	mem M->(node<@M,@L,@L> | node<@I,@L,@L>);
 
 /*
 dag<v,M> == self = null & M = {}
@@ -20,10 +20,14 @@ dag<v,M> == self = null & M = {}
 */
 
 void mark(ref node x)
+requires x::dag<0,@I,M>
+ensures x::dag<1,@M,M>;
+/*
   requires x::dag<0,M>
   ensures x::dag<2,M>;
   requires x::dag<1,M>
   ensures x::dag<2,M>;
+*/
 {
 node l,r;
 if(x == null) return;
