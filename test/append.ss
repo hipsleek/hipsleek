@@ -19,7 +19,7 @@ void append(node x, node y)
     ensures x::lseg<y, n>;
     requires x::ll<n> & y=x & n>0
     ensures x::clist<n>;
-    requires x::ll<n> * y::ll<m> & n>0
+    requires x::ll<n> * y::ll<m> & n>0 & m>8
     ensures x::ll<e>& e=n+m;
 /*
     requires x::lseg<r, n> * r::node<b,null>

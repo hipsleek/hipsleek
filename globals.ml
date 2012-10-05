@@ -96,6 +96,7 @@ type typ =
   | Tree_sh
   (* | FuncT (\* function type *\) *)
 
+
 let barrierT = Named "barrier"
 (*
   Data types for code gen
@@ -241,9 +242,9 @@ end;;
 class proving_type =
 object
   inherit [string] store "None" (fun x -> x)
-     method string_of_string : string = match lc with
-       | None -> "None"
-       | Some l -> l
+     (* method string_of_string : string = match lc with *)
+     (*   | None -> "None" *)
+     (*   | Some l -> l *)
 end;;
 
 let proving_loc  = new prog_loc

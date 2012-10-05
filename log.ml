@@ -1,4 +1,5 @@
 open Globals 
+open Stat_global
 open Gen.Basic
 open Printf
 
@@ -33,7 +34,7 @@ let add_proof_log old_no pno tp ptype time res =
 		let tstartlog = Gen.Profiling.get_time () in
 		let plog = {
 			log_id = pno;
-			log_old_id = proving_info ();
+			log_old_id = (proving_info ())^(trace_info ());
 			(* log_old_id = old_no; *)
 			log_prover = tp;
 			log_type = Some ptype;
