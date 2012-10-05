@@ -441,11 +441,22 @@ let translate_init (vname: ident) (init: Cil.init) (lopt: Cil.location option) :
   | Cil.CompoundInit (_, offset_init_list) -> (
       List.map (fun x ->
         let off, ini = x in
-        let _ = print_endline ("== off = " ^ (string_of_cil_offset off)) in
-        let _ = print_endline ("== ini = " ^ (string_of_cil_init ini)) in
-        (vname, None, pos)
+        let name = match off with
+          | Cil.NoOffset -> report_error_msg "TRUNG TODO: translate_init: handle Cil.NoOffset later!"
+          | Cil.Field (f, o) -> (
+              match o with
+              | Cil.NoOffset -> f.Cil.fname
+              | Cil.Field _ -> report_error_msg "TRUNG TODO: translate_init: handle Cil.Field later!"
+              | Cil.Index _ -> report_error_msg "TRUNG TODO: translate_init: handle Cil.Index later!"
+            )
+          | Cil.Index _ -> report_error_msg "TRUNG TODO:  translate_init: handle Cil.Index later!" in
+        let exp = match ini with
+          | Cil.SingleInit e -> translate_exp e lopt
+          | Cil.CompoundInit _ -> report_error_msg "TRUNG TODO:  translate_init: handle Cil.CompoundInit later!" in
+        (name, Some exp, pos)
       ) offset_init_list
     )
+
 
 let translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo) (lopt: Cil.location option) : Iast.exp_var_decl =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in

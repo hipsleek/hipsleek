@@ -14,7 +14,6 @@ int getsecondcomponent(struct quad q)
 	*(q.p1) = ptemp;
 	ptemp = *(q.p1);
 	struct pair pp = *(q.p1);
-
 	return pp.y;
 }
 
