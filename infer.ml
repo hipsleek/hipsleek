@@ -1439,8 +1439,15 @@ let get_history_nodes svl hds history lfb=
   in
   List.fold_left helper lfb history
 
+let get_h_formula_data_fr_hnode hn=
+  match hn with
+    | CF.DataNode hd -> hd
+    | _ -> report_error no_pos
+        "infer.get_h_formula_data_fr_hnode: input must be a list of hnodes"
+
+
 (*history from func calls*)
-let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps crt_holes (* history *) eqNull=
+let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps crt_holes  history  eqNull=
   (*filter non-selective sub-formulas*)
   (*selective vars = args of hrels in rhs (called selective_rhs) and
     args of hrels in lhs such that args intersect which selective_rhs*)
@@ -1469,24 +1476,23 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps c
   let rhs_keep_rootvars = List.concat keep_rootvars in
 
   let lhs_keep_first_rootvars = List.concat (List.map look_up_lhs_root_first_var lhp_args) in
- (*  let svl = (CP.remove_dups_svl (lhs_keep_first_rootvars@rhs_keep_rootvars)) in *)
- (*  (\*remove null ptrs*\) *)
- (*  let svl = Gen.BList.difference_eq CP.eq_spec_var svl eqNull in *)
- (*  let history = [] in *)
- (*  let lhs_b = get_history_nodes svl hds history lhs_b in *)
- (* (\*end*\) *)
- (*  let get_h_formula_data_fr_hnode hn= *)
- (*    match hn with *)
- (*      | CF.DataNode hd -> hd *)
- (*      | _ -> report_error no_pos *)
- (*          "infer.get_h_formula_data_fr_hnode: input must be a list of hnodes" *)
- (*  in *)
- (*  let lhs_b1,rhs_b1 = SAU.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b *)
- (*    (hds@(List.map get_h_formula_data_fr_hnode history)) hvs (leqs@reqs) *)
- (*    (rhs_keep_rootvars@lhs_keep_first_rootvars) lhs_keep_rootvars keep_hrels in *)
+  (***************************)
+  (*w history*)
+  let svl = (CP.remove_dups_svl (lhs_keep_first_rootvars@rhs_keep_rootvars)) in
+  (*remove null ptrs*)
+  let svl = Gen.BList.difference_eq CP.eq_spec_var svl eqNull in
+  (*for wo history*)
+  (* let history = [] in *)
+  let lhs_b = get_history_nodes svl hds history lhs_b in
+ (*end*)
   let lhs_b1,rhs_b1 = SAU.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b
-    hds hvs (leqs@reqs)
+    (hds@(List.map get_h_formula_data_fr_hnode history)) hvs (leqs@reqs)
     (rhs_keep_rootvars@lhs_keep_first_rootvars) lhs_keep_rootvars keep_hrels in
+  (*wo history*)
+  (* let lhs_b1,rhs_b1 = SAU.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b *)
+  (*   hds hvs (leqs@reqs) *)
+  (*   (rhs_keep_rootvars@lhs_keep_first_rootvars) lhs_keep_rootvars keep_hrels in *)
+  (***************************)
   (*subst holes*)
   let lhs_b1 = {lhs_b1 with CF.formula_base_heap = IMM.apply_subs_h_formula crt_holes lhs_b1.CF.formula_base_heap} in
   let rhs_b1 = {rhs_b1 with CF.formula_base_heap = IMM.apply_subs_h_formula crt_holes rhs_b1.CF.formula_base_heap} in
@@ -1572,16 +1578,18 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
           let new_rhs_b,rvhp_rels,new_hrels = update_fb rhs_b r_new_hp in
           (*add roots from history*)
           let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog lhs_b new_rhs_b leqs reqs hds hvs lhras (rhras@new_hrels)
-            (selected_hps@(List.map (fun (hp,_,_) -> hp) new_hrels)) es.CF.es_crt_holes
+            (selected_hps@(List.map (fun (hp,_,_) -> hp) new_hrels)) es.CF.es_crt_holes es.CF.es_history
              eqNull in
           (*simply add constraints: *)
           let hprel_def = List.concat (List.map CF.h_node_list (es.CF.es_history@(CF.get_hnodes es.CF.es_heap))) in
           let closed_hprel_def = CP.subst_var_list (leqs@reqs) hprel_def in
+          let closed_hprel_args_def,_,_,_,_ = SAU.find_defined_pointers_after_preprocess prog closed_hprel_def
+            (hds@(List.map get_h_formula_data_fr_hnode es.CF.es_history)) hvs (lhras@rhras@new_hrels) (leqs@reqs) [] in
           let hp_rel = {
               CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhrs@rhrs@rvhp_rels));
               unk_svl = [];(*inferred from norm*)
               unk_hps = [];
-              predef_svl = closed_hprel_def;
+              predef_svl = closed_hprel_args_def;
               hprel_lhs = CF.Base new_lhs_b;
               hprel_rhs = CF.Base new_rhs_b;
           } in

@@ -234,6 +234,14 @@ let rec find_defined_pointers_raw prog f=
   let def_vs_wo_args = CP.remove_dups_svl ((List.fold_left close_def def_vs eqs)) in
   (def_vs_wo_args, hds, hvs, hrs, eqs)
 
+and check_node_args_defined prog def_svl hd_nodes hv_nodes dn_name=
+  let arg_svl = loop_up_ptr_args_one_node prog hd_nodes hv_nodes dn_name in
+  (* DD.info_pprint ("  arg_svl" ^ (!CP.print_svl arg_svl)) no_pos; *)
+  let diff_svl = Gen.BList.difference_eq CP.eq_spec_var arg_svl def_svl in
+  (* DD.info_pprint ("  diff_svl" ^ (!CP.print_svl diff_svl)) no_pos; *)
+  if diff_svl = [] then true
+  else false
+
 and find_defined_pointers_after_preprocess prog def_vs_wo_args hds hvs hrs eqs predef_ptrs=
   let tmp = def_vs_wo_args in
   (* DD.info_pprint ("   defined raw " ^(!CP.print_svl tmp)) no_pos; *)
@@ -258,11 +266,6 @@ and find_defined_pointers prog f predef_ptrs=
   Debug.no_2 "find_defined_pointers" Cprinter.prtt_string_of_formula pr1 pr4
       (fun _ _ -> find_defined_pointers_x prog f predef_ptrs) f predef_ptrs
 
-and check_node_args_defined prog def_svl hd_nodes hv_nodes dn_name=
-  let arg_svl = loop_up_ptr_args_one_node prog hd_nodes hv_nodes dn_name in
-  let diff_svl = Gen.BList.difference_eq CP.eq_spec_var arg_svl def_svl in
-  if diff_svl = [] then true
-  else false
 
 let keep_data_view_hrel_nodes prog f hd_nodes hv_nodes keep_rootvars keep_hrels=
   let keep_ptrs = loop_up_closed_ptr_args prog hd_nodes hv_nodes keep_rootvars in

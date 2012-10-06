@@ -3530,8 +3530,8 @@ let rec eq_pure_formula (f1 : formula) (f2 : formula) : bool = equalFormula f1 f
 
 module SVar = struct
   type t = spec_var
-  let compare = fun sv1 -> fun sv2 -> compare_sv sv1 sv2
-      (* compare (name_of_spec_var sv1) (name_of_spec_var sv2) *)
+  let compare = fun sv1 -> fun sv2 -> (* compare_sv sv1 sv2 *)
+      compare (name_of_spec_var sv1) (name_of_spec_var sv2)
 end
 
 module SVarSet = Set.Make(SVar)
@@ -3622,6 +3622,50 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
   in
   let filtered_f = select_relevants relevants0 unknowns0 rele_var_set in
 	filtered_f
+
+(* Assumption: f0 is SAT *)
+(*implemented by L2 to replace the old one (the old one does not distinguish primed and unprimed)
+f is in CNF
+keep subformula which contains keep_slv and their relevant
+*)
+let filter_var_new_x (f : formula) (keep_slv : spec_var list) : formula =
+  let rec get_new_rele_svl unk_fs old_keep_svl res_rele_fs res_unk_fs incr_keep=
+    match unk_fs with
+      | [] -> (res_rele_fs,res_unk_fs,old_keep_svl,incr_keep)
+      | f::fs ->
+          begin
+              (* let _ = Debug.info_pprint ("svl: " ^ (!print_svl old_keep_svl)) no_pos in *)
+              (* let _ = Debug.info_pprint ("f: " ^ (!print_formula f)) no_pos in *)
+              let svl = fv f in
+              (* let _ = Debug.info_pprint ("svl f: " ^ (!print_svl svl)) no_pos in *)
+              let inters = intersect svl old_keep_svl in
+              if inters = [] then
+                get_new_rele_svl fs old_keep_svl res_rele_fs (res_unk_fs@[f]) incr_keep
+              else
+                begin
+                    let diff = Gen.BList.difference_eq eq_spec_var svl old_keep_svl in
+                    get_new_rele_svl fs (old_keep_svl@diff) (res_rele_fs@[f]) res_unk_fs (incr_keep@diff)
+                end
+          end
+  in
+  let rec filter_fix rele_fs unk_fs total_svl=
+    let res_rele_fs,res_unk_fs,new_total_svl,incr_keep_svl = get_new_rele_svl unk_fs total_svl [] [] [] in
+    if res_rele_fs = [] && incr_keep_svl = [] then
+      (*reach fix point*)
+      (rele_fs)
+    else filter_fix (rele_fs@res_rele_fs) res_unk_fs new_total_svl
+  in
+  let conjs = list_of_conjs f in
+  let keep_slv = remove_dups_svl keep_slv in
+  let fv_list = List.map fv conjs in
+  let rele_fs = filter_fix [] conjs keep_slv in
+  conj_of_list rele_fs no_pos
+
+let filter_var_new (f0 : formula) (keep_slv : spec_var list) : formula =
+  let pr1 = !print_formula in
+  let pr2 = !print_svl in
+  Debug.no_2 "filter_var_new" pr1 pr2 pr1
+      (fun _ _ -> filter_var_new_x f0 keep_slv) f0 keep_slv
 
 (**************************************************************)
 (**************************************************************)
