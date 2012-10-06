@@ -1,7 +1,7 @@
 open Globals
 open Gen.Basic
 
-let string_of_path_trace x = pr_list (pr_pair (fun x -> "c_id") (fun x -> "p_label")) x
+let string_of_path_trace x = pr_list (pr_pair (fun x->match x with (a,b)->"c_id:"^(string_of_int a)^":"^b) (fun x -> "p_label: "^string_of_int x)) x
 
 class es_trace =
 object
@@ -10,9 +10,9 @@ object
      (*   | None -> "None" *)
      (*   | Some l -> l *)
 end;;
-
+	
 let last_trace  = new es_trace
-
+		
 let wrap_trace (tr : path_trace) exec_function args =
   let b = last_trace # is_avail in
   let m = last_trace # get in
@@ -25,5 +25,5 @@ let wrap_trace (tr : path_trace) exec_function args =
 
 let trace_info () = 
   if(last_trace # is_avail) then
-        (" trace::"^(last_trace # string_of))
+        ("Trace::"^(last_trace # string_of))
   else "..."

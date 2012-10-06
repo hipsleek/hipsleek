@@ -2041,22 +2041,6 @@ let printer_of_view_decl (fmt: Format.formatter) (v: Cast.view_decl) : unit =
   poly_printer_of_pr fmt pr_view_decl v 
 
 (*function to print proof logging*)
-let printer_of_proof_logging () =
-  let helper x= match x with 
-    |IMPLY (ante, conseq) -> "Imply: " ^(string_of_pure_formula ante) ^"->" ^(string_of_pure_formula conseq)
-    |SAT f-> "Sat: "^(string_of_pure_formula f) 
-    |SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
-  in
- 	try 
-		let in_chn = open_in ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))) in
-		let tbl = input_value in_chn in
-		let logstr= ref "" in
-		let _= Hashtbl.iter (fun k log -> logstr := !logstr ^ "old_id: "^ log.Log.log_old_id ^ "\nid: "^ log.Log.log_id ^"\nProver: "^log.Log.log_prover^"\nLog_type: "^(match (log.Log.log_type) with |None -> ""|Some x-> helper x)^"\nTime: "^(string_of_float(log.Log.log_time))^"\nLog result: "^(match log.Log.log_res with
-		  |BOOL b -> string_of_bool b
-		  |FORMULA f -> string_of_pure_formula f)^ "\n") tbl in
-		let output="Proof Logging: \n"^(!logstr)^ "\nEnd of Proof logging" in
-		print_endline (output)
-	with _ -> report_error no_pos "File of proof logging cannot be opened." 
 
 let proof_log_to_text_file () =
 	if !Globals.proof_logging_txt then
@@ -2070,7 +2054,8 @@ let proof_log_to_text_file () =
     	|SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
 		in
 		let helper log=
-			"\n--------------\n"^"old_id: "^log.log_old_id^
+			"\n--------------\n"^
+			List.fold_left (fun a c->a^c^"\n") "" log.log_other_properties^
 			"\nid: "^log.log_id^"\nProver: "^log.log_prover^"\nType: "^(match log.log_type with | Some x-> string_of_log_type x | None -> "")^"\nTime: "^
 			(string_of_float(log.log_time))^"\nResult: "^(match log.log_res with
 		  |BOOL b -> string_of_bool b

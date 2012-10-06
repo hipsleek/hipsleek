@@ -1,9 +1,13 @@
-int test(int x)
-requires x>0
-  ensures x>0 & res=1 ;
+void test(int x)
+requires x< 0
+  ensures x< 0 ;
 {
- if (x>0) {return 1;}
+ if (x>0) 
+{return ;}
  else {
-   return 2;
+   if(x < -1)	
+   {return ;}
+   else
+   {return ;}		
  }
 }     
