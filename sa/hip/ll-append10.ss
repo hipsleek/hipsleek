@@ -34,10 +34,22 @@ void append(node x, node y)
 
 ERROR : why not make H1a(y) --> H1b(y)?
 
+!!! G2([x,y])
+!!!  =:  
+ H1a(y) * x::node<val_45_585,y>&true
+ or x::node<val_45_587,v_node_45_602> * G2(v_node_45_602,y)&
+    v_node_45_602!=null
  
+!!! >>>>>> generalize_one_cs_hp: <<<<<<
+!!! H1([x])= x::node<val_45_560',next_45_561'> * HP_579(next_45_561')&true
+!!! >>>>>> equivalent hps: <<<<<<
 !!! >>>>>> unknown hps: <<<<<<
 !!! H1a([y])= htrue&true
 !!! H1b([y])= htrue&true
+!!!  remains: [ RELASS [H1a,HP_579,G2,H1b] unknown svl: [y];  unknown hps: [H1a; 
+  H1b];  predefined: [x]; H1a(y) * x::node<val_45_585,y>&true --> G2(x,y) * 
+  H1b(y)&true]
+Procedure append$node~node SUCCESS
 
 
    */
