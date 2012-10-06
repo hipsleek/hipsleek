@@ -30,6 +30,13 @@ node get_next(node x)
 
 /*
 
+H(x) = x::node<_,q>
+G(x,res) = x::node<_,null> & res=x
+
+*/
+
+/*
+
 -----constrs------
 H(x) --> x::node<val_22_535',next_22_536'> * HP_551(next_22_536',x)
 HP_551(v_node_24_540',x) * x::node<val_22_560,next_23_539'> --> G(x,v_node_24_540')
