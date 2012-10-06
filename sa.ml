@@ -1261,7 +1261,7 @@ and find_imply lhs1 rhs1 lhs2 rhs2=
       (*subst in lhs1*)
           let n_lhs1 = CF.subst_b subst1 lhs1 in
       (*check pure implication*)
-          let lmf = CP.filter_var (MCP.pure_of_mix n_lhs1.CF.formula_base_pure) rm in
+          let lmf = CP.filter_var_new (MCP.pure_of_mix n_lhs1.CF.formula_base_pure) rm in
           let b,_,_ = TP.imply (MCP.pure_of_mix rhs2.CF.formula_base_pure) lmf "sa:check_hrels_imply" true None in
           let lpos = (CF.pos_of_formula lhs2) in
           (* let n_lmf = CP.mkAnd (MCP.pure_of_mix rhs2.CF.formula_base_pure) lmf lpos in *)
@@ -1278,7 +1278,7 @@ and find_imply lhs1 rhs1 lhs2 rhs2=
                     rhs2.CF.formula_base_heap SAU.select_dnode
                     SAU.select_vnode SAU.select_hrel rm rm matched_hps;
                 CF.formula_base_pure = MCP.mix_of_pure
-                    (CP.filter_var
+                    (CP.filter_var_new
                          (MCP.pure_of_mix rhs2.CF.formula_base_pure) rm)}
             in
         (*combine l_res into lhs2*)

@@ -377,7 +377,7 @@ let rename_hp_args_x lfb rfb=
             let new_v = CP.SpecVar (HpT,
                   "v_" ^ (string_of_int (Globals.fresh_int())),Unprimed)  in
             let ss = List.combine [a1] [new_v] in
-            let p0 = CP.filter_var p [a1] in
+            let p0 = CP.filter_var_new p [a1] in
             let p1 = CP.subst ss p0 in
             let p2 = CP.mkAnd p p1 lpos in
             lhelper (args1@[new_v]) ass p2 true
@@ -391,11 +391,11 @@ let rename_hp_args_x lfb rfb=
                   "v_" ^ (string_of_int (Globals.fresh_int())),Unprimed)  in
             let ss = List.combine [a1] [new_v] in
             (*lhs*)
-            let lp0 = CP.filter_var lp [a1] in
+            let lp0 = CP.filter_var_new lp [a1] in
             let lp1 = CP.subst ss lp0 in
             let lp2 = CP.mkAnd lp lp1 lpos in
             (*rhs*)
-            let rp0 = CP.filter_var rp [a1] in
+            let rp0 = CP.filter_var_new rp [a1] in
             let rp1 = CP.subst ss rp0 in
             let rp2 = CP.mkAnd rp rp1 rpos in
             rhelper (args1@[new_v]) ass lp2 rp2 true
