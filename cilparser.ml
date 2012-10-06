@@ -123,8 +123,12 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
           )
         ) in
         newt
-    | Cil.TArray _ -> report_error_msg "TRUNG TODO: handle TArray later!"
-    | Cil.TFun _ -> report_error_msg "Should not appear here. Handle only in translate_typ_fun"
+    | Cil.TArray (ty, _, _) ->
+        let arrayty = translate_typ ty in
+        Globals.Array (arrayty, 1)
+    | Cil.TFun _ ->
+        let _ = print_endline ("== t TFun = " ^ (string_of_cil_typ t)) in
+        report_error_msg "TRUNG TODO: handle TFun later! Maybe it's function pointer case?"
     | Cil.TNamed (tname, _) -> translate_typ tname.Cil.ttype                       (* typedef type *)
     | Cil.TComp (comp, _) -> Globals.Named comp.Cil.cname                          (* struct or union type*)
     | Cil.TEnum _ -> report_error_msg "TRUNG TODO: handle TEnum later!"
@@ -179,21 +183,14 @@ let translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option) : (Ia
 
 
 let translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : Iast.data_decl =
-  (* handle struct *)
-  if (comp.Cil.cstruct) then (
-    let name = comp.Cil.cname in
-    let fields = List.map (fun x -> translate_fieldinfo x lopt) comp.Cil.cfields in
-    let datadecl = {Iast.data_name = name;
-                    Iast.data_fields = fields;
-                    Iast.data_parent_name = "Object";
-                    Iast.data_invs = [];
-                    Iast.data_methods = [];} in
-    datadecl
-  )
-  (* handle union *)
-  else (
-    report_error_msg "TRUNG TODO: Handle Union later!"
-  )
+  let name = comp.Cil.cname in
+  let fields = List.map (fun x -> translate_fieldinfo x lopt) comp.Cil.cfields in
+  let datadecl = {Iast.data_name = name;
+                  Iast.data_fields = fields;
+                  Iast.data_parent_name = "Object";
+                  Iast.data_invs = [];
+                  Iast.data_methods = [];} in
+  datadecl
 
 
 let translate_unary_operator (op : Cil.unop) : Iast.uni_op =
@@ -243,17 +240,23 @@ let rec translate_lval (lv: Cil.lval) (lopt: Cil.location option) : Iast.exp =
     | Cil.Index _ -> report_error_msg "Error!!! Invalid value! Have to be Cil.NoOffset or Cil.Field!"
   ) in
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
-  let (lh, off) = lv in
-  match (lh, off) with
+  let (lhost, offset) = lv in
+  match (lhost, offset) with
   | Cil.Var v, Cil.NoOffset ->
       let newexp = translate_var v lopt in
       newexp
-  | Cil.Var _, Cil.Index _ -> report_error_msg "TRUNG TODO: Handle (Cil.Var _, Cil.Field _) later"
+  | Cil.Var v, Cil.Index _ ->
+      let base = translate_var v lopt in
+      let index = collect_index offset in
+      let newexp = Iast.ArrayAt {Iast.exp_arrayat_array_base = base;
+                                 Iast.exp_arrayat_index = index;
+                                 Iast.exp_arrayat_pos = pos} in
+      newexp
   | Cil.Var v, Cil.Field _ ->
-      let e = translate_var v lopt in
-      let f = collect_field off in
-      let newexp = Iast.Member {Iast.exp_member_base = e;
-                                Iast.exp_member_fields = f;
+      let base = translate_var v lopt in
+      let fields = collect_field offset in
+      let newexp = Iast.Member {Iast.exp_member_base = base;
+                                Iast.exp_member_fields = fields;
                                 Iast.exp_member_path_id = None;
                                 Iast.exp_member_pos = pos} in
       newexp
@@ -267,17 +270,17 @@ let rec translate_lval (lv: Cil.lval) (lopt: Cil.location option) : Iast.exp =
                                 Iast.exp_member_pos = pos} in
       newexp
   | Cil.Mem exp, Cil.Index _ ->
-      let e = translate_exp exp lopt in
-      let i = collect_index off in
-      let newexp = Iast.ArrayAt {Iast.exp_arrayat_array_base = e;
-                                 Iast.exp_arrayat_index = i;
+      let base = translate_exp exp lopt in
+      let index = collect_index offset in
+      let newexp = Iast.ArrayAt {Iast.exp_arrayat_array_base = base;
+                                 Iast.exp_arrayat_index = index;
                                  Iast.exp_arrayat_pos = pos} in
       newexp
   | Cil.Mem exp, Cil.Field _ ->
-      let e = translate_exp exp lopt in
-      let f = collect_field off in
-      let newexp = Iast.Member {Iast.exp_member_base = e;
-                                Iast.exp_member_fields = f;
+      let base = translate_exp exp lopt in
+      let fields = collect_field offset in
+      let newexp = Iast.Member {Iast.exp_member_base = base;
+                                Iast.exp_member_fields = fields;
                                 Iast.exp_member_path_id = None;
                                 Iast.exp_member_pos = pos} in
       newexp
@@ -318,7 +321,7 @@ and translate_exp (e: Cil.exp) (lopt: Cil.location option): Iast.exp =
                               Iast.exp_cast_body = e;
                               Iast.exp_cast_pos = pos} in
       newexp
-  | Cil.AddrOf _ -> report_error_msg "Error!!! Iast doesn't support Cil.AddrOf exp!"
+  | Cil.AddrOf _ -> let _ = print_endline ("== e = " ^ (string_of_cil_exp e)) in report_error_msg "Error!!! Iast doesn't support Cil.AddrOf exp!"
   | Cil.StartOf _ -> report_error_msg "Error!!! Iast doesn't support Cil.StartOf exp!"
 
 
@@ -597,8 +600,8 @@ let translate_file (file: Cil.file) : Iast.prog_decl =
         data_decls := !data_decls @ [datadecl]
     | Cil.GCompTagDecl _ ->
         (* let _ = print_endline ("== gl GCompTagDecl = " ^ (string_of_cil_global gl)) in *)
-        (* ()                                                                             *)
-        report_error_msg "TRUNG TODO: Handle Cil.GCompTagDecl later!"
+        ()
+        (* report_error_msg "TRUNG TODO: Handle Cil.GCompTagDecl later!" *)
     | Cil.GEnumTag _ ->
         (* let _ = print_endline ("== gl GEnumTag = " ^ (string_of_cil_global gl)) in *)
         (* ()                                                                         *)
