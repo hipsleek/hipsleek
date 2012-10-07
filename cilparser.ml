@@ -7,12 +7,16 @@ open Exc.GTable
 (* --------------------- *)
 
 (* hash table contains Globals.typ structures that are used to represent Cil.typ pointers *)
-let gl_pointers_type : (Cil.typ, Globals.typ) Hashtbl.t = (Hashtbl.create 10)
+let gl_pointers_type : (Cil.typ, Globals.typ) Hashtbl.t = Hashtbl.create 10
 
 (* hash table contains Iast.data_decl structures that are used to represent pointer types *)
-let gl_pointers_data : (Cil.typ, Iast.data_decl) Hashtbl.t = (Hashtbl.create 10)
+let gl_pointers_data : (Cil.typ, Iast.data_decl) Hashtbl.t = Hashtbl.create 10
 
 let gl_pointer_data_name = "pdata"
+
+(* address of *)
+let gl_addressof_data : (Cil.lval, Iast.exp) Hashtbl.t = Hashtbl.create 10
+
 
 (* reset all global vars for the next use *)
 let reset_global_vars () =
@@ -64,10 +68,11 @@ let string_of_cil_global (g: Cil.global) : string =
 
 
 (* ---------------------------------------- *)
-(* translation functions from Cil -> Iast   *)
+(* supporting function                      *)
 (* ---------------------------------------- *)
-(* create an Iast.exp from a list of Iast.exp *)
 
+
+(* create an Iast.exp from a list of Iast.exp *)
 let merge_iast_exp (es: Iast.exp list) (lopt : loc option): Iast.exp =
   let pos = match lopt with None -> no_pos | Some l -> l in
   match es with
@@ -78,6 +83,49 @@ let merge_iast_exp (es: Iast.exp list) (lopt : loc option): Iast.exp =
                                            Iast.exp_seq_exp2 = y;
                                            Iast.exp_seq_pos = pos;}
       ) hd tl
+
+
+let typ_of_cil_lval (lval: Cil.lval) : Cil.typ =
+  let lhost, offset = lval in
+  match (lhost, offset) with
+  | Cil.Var v, Cil.NoOffset -> v.Cil.vtype;
+  | Cil.Var _, Cil.Field _ -> report_error_msg "typ_of_cil_lval: handle (Cil.Var, Cil.Field) later!"
+  | Cil.Var _, Cil.Index _ -> report_error_msg "typ_of_cil_lval: handle (Cil.Var, Cil.Index) later!"
+  | Cil.Mem v, Cil.NoOffset -> report_error_msg "typ_of_cil_lval: handle (Cil.Mem, Cil.NoOffset) later!"
+  | Cil.Mem _, Cil.Field _ -> report_error_msg "typ_of_cil_lval: handle (Cil.Mem, Cil.Field) later!"
+  | Cil.Mem _, Cil.Index _ -> report_error_msg "typ_of_cil_lval: handle (Cil.Mem, Cil.Index) later!"
+
+
+let is_global_cil_exp (exp: Cil.exp) : bool =
+  match exp with
+  | Const _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.Const!"
+  | Lval lval -> is_global_cil_lval lval
+  | SizeOf _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.SizeOf!"
+  | SizeOfE _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.SizeOfE!"
+  | SizeOfStr _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.SizeOfStr!"
+  | AlignOf _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.AlignOf!"
+  | AlignOfE _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.AlignOfE!"
+  | UnOp -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.UnOp!"
+  | BinOp -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.BinOp!"
+  | CastE (_, e) -> is_global_cil_exp e
+  | AddrOf lv -> is_global_cil_lval lv
+  | StartOf lv -> is_global_cil_lval lv 
+
+
+and is_global_cil_lval (lval: Cil.lval) : bool =
+  let lhost, offset = lval in
+  match (lhost, offset) with
+  | Cil.Var v, Cil.NoOffset -> v.Cil.vglob;
+  | Cil.Var _, Cil.Field _ -> report_error_msg "is_global_cil_lval: handle (Cil.Var, Cil.Field) later!"
+  | Cil.Var _, Cil.Index _ -> report_error_msg "is_global_cil_lval: handle (Cil.Var, Cil.Index) later!"
+  | Cil.Mem v, Cil.NoOffset -> report_error_msg "is_global_cil_lval: handle (Cil.Mem, Cil.NoOffset) later!"
+  | Cil.Mem _, Cil.Field _ -> report_error_msg "is_global_cil_lval: handle (Cil.Mem, Cil.Field) later!"
+  | Cil.Mem _, Cil.Index _ -> report_error_msg "is_global_cil_lval: handle (Cil.Mem, Cil.Index) later!"
+
+
+(* ---------------------------------------- *)
+(* translation functions from Cil -> Iast   *)
+(* ---------------------------------------- *)
 
 
 let translate_location (loc: Cil.location) : Globals.loc =
@@ -99,16 +147,16 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
     | Cil.TInt _ -> Globals.Int
     | Cil.TFloat _ -> Globals.Float
     | Cil.TPtr (ty, _) ->
-        (* create a new Globals.typ and Iast.data_decl to represent the pointer data structure *)
+        (* create a new Globals.typ and a new Iast.data_decl to represent the pointer data structure *)
         let newt = (
           (* find if this pointer was handled before or not *)
-          try Hashtbl.find gl_pointers_type t 
+          try Hashtbl.find gl_pointers_type ty 
           with Not_found -> (
             (* create new Globals.typ and update to a hash table *)
             let index = Hashtbl.length gl_pointers_type in
             let pointer_name = "pointer_type_" ^ (string_of_int index) in
             let pointer_type = Globals.Named pointer_name in
-            Hashtbl.add gl_pointers_type t pointer_type;
+            Hashtbl.add gl_pointers_type ty pointer_type;
             (* create new Iast.data_decl and update to a hash table *)
             let ftype = translate_typ ty in
             let fname = gl_pointer_data_name in
@@ -321,7 +369,38 @@ and translate_exp (e: Cil.exp) (lopt: Cil.location option): Iast.exp =
                               Iast.exp_cast_body = e;
                               Iast.exp_cast_pos = pos} in
       newexp
-  | Cil.AddrOf _ -> let _ = print_endline ("== e = " ^ (string_of_cil_exp e)) in report_error_msg "Error!!! Iast doesn't support Cil.AddrOf exp!"
+  | Cil.AddrOf lval ->
+      (* create a new Iast.data_decl that has 1 inline field is lval *)
+      let _ = print_endline ("== e = " ^ (string_of_cil_exp e)) in
+      let newexp = (
+        try Hashtbl.find gl_addressof_data lval
+        with Not_found -> (
+          let ty = typ_of_cil_lval lval in
+          let newty = (
+            try Hashtbl.find gl_pointers_type ty 
+            with Not_found -> (
+              (* create new Globals.typ and update to a hash table *)
+              let index = Hashtbl.length gl_pointers_type in
+              let pointer_name = "pointer_type_" ^ (string_of_int index) in
+              let pointer_type = Globals.Named pointer_name in
+              Hashtbl.add gl_pointers_type t pointer_type;
+              (* create new Iast.data_decl and update to a hash table *)
+              let ftype = translate_typ ty in
+              let fname = gl_pointer_data_name in
+              let pointer_data = {Iast.data_name = pointer_name;
+                                  Iast.data_fields = [((ftype, fname), no_pos, true)];
+                                  Iast.data_parent_name = "Object";
+                                  Iast.data_invs = [];
+                                  Iast.data_methods = [];} in
+              Hashtbl.add gl_pointers_data t pointer_data;
+              (* return new type*)
+              pointer_type
+            )
+          ) in
+          (* define new var that represents the address *)
+        )
+      ) in
+      newexp
   | Cil.StartOf _ -> report_error_msg "Error!!! Iast doesn't support Cil.StartOf exp!"
 
 
