@@ -25,7 +25,7 @@ node get_next(node x)
   node tmp = x.next;
   x.next = null;
   return tmp;
-	dprint;
+  //	dprint;
 }
 
 /*
