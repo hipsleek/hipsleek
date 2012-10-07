@@ -2330,7 +2330,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_data_remaining_branches = ann;
 							h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond;
 							h_formula_data_pos = pos})
-  | HRel (r, args, pos) -> HRel (r, CP.e_apply_subs_list sst args, pos)
+  | HRel (r, args, pos) -> HRel (CP.subst_var_par sst r, CP.e_apply_subs_list sst args, pos)
   | HTrue -> f
   | HFalse -> f
   | HEmp -> f

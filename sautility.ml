@@ -10,6 +10,7 @@ module CF=Cformula
 module CP=Cpure
 module MCP=Mcpure
 module C = Cast
+module CEQ = Checkeq
 
 
 let close_def defs (v1,v2)=
@@ -442,3 +443,175 @@ let get_intersect_unk_hps keep_ptrs (hp, args)=
   let diff = Gen.BList.difference_eq CP.eq_spec_var args keep_ptrs in
   if diff = [] then [hp]
   else []
+
+
+let rec subst_view_hp_formula view_name hp (f: CF.formula) =
+  match f with
+    | CF.Base fb -> CF.Base {fb with CF.formula_base_heap = subst_view_hp_h_formula view_name hp fb.CF.formula_base_heap }
+    | CF.Exists fe -> CF.Exists {fe with CF.formula_exists_heap = subst_view_hp_h_formula view_name hp fe.CF.formula_exists_heap }
+    | CF.Or orf  -> CF.Or { orf with
+      CF.formula_or_f1 = subst_view_hp_formula view_name hp orf.CF.formula_or_f1;
+      CF.formula_or_f2= subst_view_hp_formula view_name hp orf.CF.formula_or_f2;
+    }
+
+and subst_view_hp_h_formula view_name (hp_name, _, p) hf =
+  let rec helper hf0=
+    match hf0 with
+      | CF.Star hfs -> CF.Star {hfs with
+          CF.h_formula_star_h1 = helper hfs.CF.h_formula_star_h1;
+          CF.h_formula_star_h2 = helper hfs.CF.h_formula_star_h2;}
+      | CF.Conj hfc -> CF.Conj {hfc with
+          CF.h_formula_conj_h1 = helper hfc.CF.h_formula_conj_h1;
+          CF.h_formula_conj_h2 = helper hfc.CF.h_formula_conj_h2;}
+      | CF.Phase hfp -> CF.Phase {hfp with
+          CF.h_formula_phase_rd = helper hfp.CF.h_formula_phase_rd;
+          CF.h_formula_phase_rw = helper hfp.CF.h_formula_phase_rw;}
+      | CF.ViewNode hv -> if hv.CF.h_formula_view_name = view_name then
+            let n_args = [hv.CF.h_formula_view_node]@hv.CF.h_formula_view_arguments in
+            (CF.HRel (hp_name,  List.map (fun x -> CP.mkVar x p) n_args,p))
+          else hf0
+      | _ -> hf0
+  in
+  helper hf
+
+(*==========check_relaxeq=============*)
+(*currently we do not submit exists*)
+let xpure_for_hnodes hf=
+let hds, _, _ (*hvs, hrs*) =  CF.get_hp_rel_h_formula hf in
+  (*currently we just work with data nodes*)
+  let neqNulls = List.map (fun dn -> CP.mkNeqNull dn.CF.h_formula_data_node dn.CF.h_formula_data_pos) hds in
+  let new_mf = MCP.mix_of_pure (CP.join_conjunctions neqNulls) in
+  new_mf
+
+let check_stricteq_hnodes hns1 hns2=
+  let check_stricteq_hnode hn1 hn2=
+    let arg_ptrs1 = List.filter (fun (CP.SpecVar (t,_,_)) -> is_pointer t) hn1.CF.h_formula_data_arguments in
+    let arg_ptrs2 = List.filter (fun (CP.SpecVar (t,_,_)) -> is_pointer t)  hn2.CF.h_formula_data_arguments in
+    (hn1.CF.h_formula_data_name = hn2.CF.h_formula_data_name) &&
+        (hn1.CF.h_formula_data_node = hn2.CF.h_formula_data_node) &&
+        ((Gen.BList.difference_eq CP.eq_spec_var arg_ptrs1 arg_ptrs2)=[])
+  in
+  let rec helper hn hns2 rest2=
+    match hns2 with
+      | [] -> (false,rest2)
+      | hn1::hss ->
+          if check_stricteq_hnode hn hn1 then
+            (true,rest2@hss)
+          else helper hn hss (rest2@[hn1])
+  in
+  let rec helper2 hns1 hns2=
+    match hns1 with
+      | [] -> true
+      | hn1::rest1 ->
+          let r,rest2 = helper hn1 hns2 [] in
+          if r then
+            helper2 rest1 rest2
+          else false
+  in
+  if (List.length hns1) = (List.length hns2) then
+    helper2 hns1 hns2
+  else false
+
+let check_stricteq_hrels hrels1 hrels2=
+   let check_stricteq_hr (hp1, eargs1, _) (hp2, eargs2, _)=
+     let r = (CP.eq_spec_var hp1 hp2) in
+     (* ((Gen.BList.difference_eq CP.eq_exp_no_aset *)
+        (*     eargs1 eargs2)=[]) *)
+     if r then
+       let ls1 = List.concat (List.map CP.afv eargs1) in
+       let ls2 = List.concat (List.map CP.afv eargs2) in
+       (true, List.combine ls1 ls2)
+     else (false,[])
+        
+  in
+  let rec helper hr hrs2 rest2=
+    match hrs2 with
+      | [] -> (false,[],rest2)
+      | hr1::hss ->
+          let r,ss1= check_stricteq_hr hr hr1 in
+          if r then
+            (true,ss1,rest2@hss)
+          else helper hr hss (rest2@[hr1])
+  in
+  let rec helper2 hrs1 hrs2 ss0=
+    match hrs1 with
+      | [] -> true,ss0
+      | hr1::rest1 ->
+          let r,ss, rest2 = helper hr1 hrs2 [] in
+          if r then
+            helper2 rest1 rest2 (ss0@ss)
+          else (false,ss0)
+  in
+  if (List.length hrels1) = (List.length hrels2) then
+    helper2 hrels1 hrels2 []
+  else (false,[])
+
+let check_stricteq_h_fomula_x hf1 hf2=
+  let hnodes1, _, hrels1 = CF.get_hp_rel_h_formula hf1 in
+  let hnodes2, _, hrels2 = CF.get_hp_rel_h_formula hf2 in
+  let r,ss = check_stricteq_hrels hrels1 hrels2 in
+  let helper hn=
+    let n_hn = CF.h_subst ss (CF.DataNode hn) in
+    match n_hn with
+      | CF.DataNode hn -> hn
+      | _ -> report_error no_pos "sau.check_stricteq_h_fomula"
+  in
+  if r then
+    let n_hnodes1 = List.map helper hnodes1 in
+    let n_hnodes2 = List.map helper hnodes2 in
+    check_stricteq_hnodes n_hnodes1 n_hnodes2
+  else false
+
+let check_stricteq_h_fomula hf1 hf2=
+  let pr1 = Cprinter.string_of_h_formula in
+  Debug.no_2 " check_stricteq_h_fomula" pr1 pr1 string_of_bool
+      (fun _ _ ->  check_stricteq_h_fomula_x hf1 hf2) hf1 hf2
+
+let check_relaxeq_formula f1 f2=
+  let hf1,mf1,_,_,_ = CF.split_components f1 in
+  let hf2,mf2,_,_,_ = CF.split_components f2 in
+  DD.ninfo_pprint ("   mf1: " ^(Cprinter.string_of_mix_formula mf1)) no_pos;
+  DD.ninfo_pprint ("   mf2: " ^ (Cprinter.string_of_mix_formula mf2)) no_pos;
+  (* let r1,mts = CEQ.checkeq_h_formulas [] hf1 hf2 [] in *)
+  let r1 = check_stricteq_h_fomula hf1 hf2 in
+  if r1 then
+    let new_mf1 = xpure_for_hnodes hf1 in
+    let cmb_mf1 = MCP.merge_mems mf2 new_mf1 true in
+    let new_mf2 = xpure_for_hnodes hf2 in
+    let cmb_mf2 = MCP.merge_mems mf2 new_mf2 true in
+    (*remove dups*)
+    let np1 = CP.remove_redundant (MCP.pure_of_mix cmb_mf1) in
+    let np2 = CP.remove_redundant (MCP.pure_of_mix cmb_mf2) in
+    DD.ninfo_pprint ("   f1: " ^(!CP.print_formula np1)) no_pos;
+    DD.ninfo_pprint ("   f2: " ^ (!CP.print_formula np2)) no_pos;
+    (* let r2,_ = CEQ.checkeq_p_formula [] np1 np2 mts in *)
+    let r2 = CP.equalFormula np1 np2 in
+    let _ = DD.ninfo_pprint ("   eq: " ^ (string_of_bool r2)) no_pos in
+    r2
+  else
+    false
+
+let rec checkeq_formula_list_x fs1 fs2=
+  let rec look_up_f f fs fs1=
+    match fs with
+      | [] -> (false, fs1)
+      | f1::fss -> if (check_relaxeq_formula f f1) then
+            (true,fs1@fss)
+          else look_up_f f fss (fs1@[f1])
+  in
+  match fs1 with
+    | [] -> true
+    | f1::fss1 ->
+        begin
+            let r,fss2 = look_up_f f1 fs2 [] in
+            if r then
+              checkeq_formula_list fss1 fss2
+            else false
+        end
+
+and checkeq_formula_list fs1 fs2=
+  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
+  Debug.no_2 "checkeq_formula_list" pr1 pr1 string_of_bool
+      (fun _ _ -> checkeq_formula_list_x fs1 fs2) fs1 fs2
+
+(*==========END check_relaxeq=============*)

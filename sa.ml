@@ -3,6 +3,7 @@ open Gen
 
 module DD = Debug
 module Err = Error
+module CA = Cast
 module CP = Cpure
 module CF = Cformula
 module MCP = Mcpure
@@ -961,10 +962,7 @@ and check_unsat f=
       (fun _ -> check_unsat_x f) f
 
 and check_inconsistency hf mixf=
-  let hds, _, _ (*hvs, hrs*) =  CF.get_hp_rel_h_formula hf in
-  (*currently we just work with data nodes*)
-  let neqNulls = List.map (fun dn -> CP.mkNeqNull dn.CF.h_formula_data_node dn.CF.h_formula_data_pos) hds in
-  let new_mf = MCP.mix_of_pure (CP.join_conjunctions neqNulls) in
+  let new_mf = SAU.xpure_for_hnodes hf in
   let cmb_mf = MCP.merge_mems mixf new_mf true in
   not (TP.is_sat_raw cmb_mf)
 
@@ -1485,6 +1483,21 @@ let generalize_hps_cs hp_names cs=
   let cs1, hp_defs = List.split r in
   (List.concat cs1, List.concat hp_defs)
 
+let get_unk_hps_relation hpdefs cs=
+  let hp_args = (CF.get_HRels_f cs.CF.hprel_lhs)@(CF.get_HRels_f cs.CF.hprel_rhs) in
+  let hprels = CP.remove_dups_svl (fst (List.split hp_args)) in
+  let helper (_, hf,_)= fst (List.split (CF.get_HRels hf)) in
+  let cs_unk_hps = (List.map (fun (hp,_) -> hp) cs.CF.unk_hps) in
+  let diff = Gen.BList.difference_eq CP.eq_spec_var hprels ((List.concat (List.map helper hpdefs))@cs_unk_hps) in
+  if diff = [] then
+    let lhs = CF.drop_data_view_hrel_nodes cs.CF.hprel_lhs SAU.check_nbelongsto_dnode SAU.check_nbelongsto_vnode
+      SAU.check_neq_hrelnode cs.CF.unk_svl cs.CF.unk_svl cs_unk_hps in
+    let rhs = CF.drop_data_view_hrel_nodes cs.CF.hprel_rhs SAU.check_nbelongsto_dnode SAU.check_nbelongsto_vnode
+      SAU.check_neq_hrelnode cs.CF.unk_svl cs.CF.unk_svl cs_unk_hps in
+    {cs with CF.hprel_lhs = lhs;
+        CF.hprel_rhs = rhs;}
+  else cs
+
 let generalize_hps_x prog unk_hps cs par_defs=
   DD.info_pprint ">>>>>> step 6: generalization <<<<<<" no_pos;
 (*general par_defs*)
@@ -1493,7 +1506,9 @@ let generalize_hps_x prog unk_hps cs par_defs=
 (*for each constraints, we may pick more definitions*)
   (* let cs1 = List.map (drop_unk_hps unk_hps) cs in *)
   let remain_constr, hp_def1 = generalize_hps_cs hp_names cs in
-(remain_constr, hp_defs@hp_def1)
+  (*drop all except unk hps*)
+  let remain_constr0 = List.map (get_unk_hps_relation (hp_defs@hp_def1)) remain_constr in
+(remain_constr0, hp_defs@hp_def1)
 
 let generalize_hps prog unk_hps cs par_defs=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
@@ -1563,6 +1578,61 @@ let generate_hp_def_from_unk_hps unk_hps=
    DD.info_pprint ">>>>>> unknown hps: <<<<<<" no_pos;
   List.map helper unk_hps
 
+(*========= matching=========*)
+let match_one_hp_one_view_x hp hp_name args def_fs (vdcl: CA.view_decl): bool=
+  let v_fl,_ = List.split vdcl.CA.view_un_struc_formula in
+  if (List.length def_fs) = (List.length v_fl) then
+  (*get root*)
+    let (CP.SpecVar (t,_,p)) = List.hd args in
+    let ss = List.combine (args) ([CP.SpecVar (t,self,p)]@vdcl.CA.view_vars) in
+    let def_fs1 = List.map (CF.subst ss) def_fs in
+    let v_fl1 =
+      if vdcl.CA.view_is_rec then
+        List.map (SAU.subst_view_hp_formula vdcl.CA.view_name hp) v_fl
+      else v_fl
+    in
+    SAU.checkeq_formula_list def_fs1 v_fl1
+  else
+    false
+
+let match_one_hp_one_view hp hp_name args def_fs (vdcl: CA.view_decl):bool=
+  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
+  let pr2 = Cprinter.string_of_view_decl in
+  Debug.no_2 "match_one_hp_one_view" pr1 pr2 string_of_bool
+      (fun _ _ -> match_one_hp_one_view_x hp hp_name args def_fs vdcl) def_fs vdcl
+
+let match_one_hp_views (vdcls: CA.view_decl list) (_, hf, orf):(CP.spec_var* ident list)=
+  match hf with
+    | CF.HRel (hp, eargs, p) ->
+        let def_fl = CF.list_of_disjs orf in
+        let args = List.concat (List.map CP.afv eargs) in
+        let helper vdcl=
+          if (List.length args) = ((List.length vdcl.CA.view_vars) + 1) then
+            if (match_one_hp_one_view (hp, eargs, p) hp args def_fl vdcl) then
+              [vdcl.CA.view_name]
+            else []
+          else []
+        in
+        let eq_views = List.concat (List.map helper vdcls) in
+        (hp,eq_views)
+    | _ -> report_error no_pos "sa. match_one_hp_views: should be a hp"
+
+let match_hps_views_x (hp_defs:hp_rel_def list) (vdcls: CA.view_decl list):
+(CP.spec_var* ident list) list=
+  List.map (match_one_hp_views vdcls) hp_defs
+
+let match_hps_views (hp_defs:hp_rel_def list) (vdcls: CA.view_decl list):
+(CP.spec_var* ident list) list=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  let pr2 = pr_list_ln Cprinter.string_of_view_decl in
+  let pr3a = fun (hp,view_names) -> (!CP.print_sv hp) ^ " === " ^
+      ( String.concat " OR " view_names) in
+  let pr3 = pr_list_ln pr3a in
+  Debug.no_1 "match_hps_views" pr1 pr3
+      (fun _ -> match_hps_views_x hp_defs vdcls) hp_defs
+
+(*END matching*)
+
 (*
   input: constrs: (formula * formula) list
   output: definitions: (formula * formula) list
@@ -1589,7 +1659,13 @@ let infer_hps_x prog (hp_constrs: CF.hprel list):(CF.hprel list * hp_rel_def lis
   let unk_hp_def = generate_hp_def_from_unk_hps unk_hps in
   DD.info_pprint (" remains: " ^
      (let pr1 = pr_list_ln Cprinter.string_of_hprel in pr1 constr3) ) no_pos;
-  (constr3, hp_defs@hp_def_from_split@unk_hp_def)
+  let hp_defs = hp_defs@hp_def_from_split@unk_hp_def in
+   DD.info_pprint ">>>>>> mathching with predefined predicates <<<<<<" no_pos;
+  let m = match_hps_views hp_defs prog.CA.prog_view_decls in
+  let _ =  DD.info_pprint (" remains: " ^
+    (let pr = pr_list_ln (fun (hp,view_names) -> (!CP.print_sv hp) ^ " === " ^
+      ( String.concat " OR " view_names)) in pr m)) no_pos in
+  (constr3, hp_defs)
   (* loop 1 *)
   (*simplify constrs*)
   (* let constrs12 = simplify_constrs constrs1 in *)

@@ -261,7 +261,7 @@ and check_spec_var_equiv_x (hvars: ident list)(v1: CP.spec_var) (v2: CP.spec_var
     try ignore (Str.search_forward re name 0); true
     with Not_found -> false
   in 
-  if((is_null_var v1) && (is_null_var v2)) then (true, mt) 
+  if((is_null_var v1) && (is_null_var v2)) then (true, mt)
   else
     if((CP.is_null_const v1) || (CP.is_int_const v1) || is_hard_v1) 
     then( 
@@ -734,7 +734,7 @@ let rec checkeq_constrs_x hvars (constrs: (CF.formula * CF.formula) list) ( infi
 let rec checkeq_constrs hvars (constrs: (CF.formula * CF.formula) list) ( infile_constrs: (CF.formula * CF.formula) list): bool =
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
   let pr2 b = if(b) then "VALID\n" else "INVALID\n" in
-  Debug.ho_2 "check_constrs" pr1 pr1 (pr2)
+  Debug.no_2 "check_constrs" pr1 pr1 (pr2)
       (fun _ _ -> checkeq_constrs_x hvars constrs infile_constrs) constrs infile_constrs
 
 
