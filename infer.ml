@@ -1393,34 +1393,6 @@ let find_pointers prog fb mix_f rhs_h_matched_set eqs pos=
   Debug.no_1 "find_pointers" pr1 pr2
 ( fun _ -> find_pointers_x prog fb mix_f rhs_h_matched_set eqs pos) fb
 
-let add_raw_hp_rel_x prog unknown_ptrs pos=
-  if (List.length unknown_ptrs > 0) then
-    let hp_decl =
-      { Cast.hp_name = Globals.hp_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
-        Cast.hp_vars =  CP.remove_dups_svl unknown_ptrs;
-        Cast.hp_formula = CF.mkBase CF.HEmp (MCP.mkMTrue pos) TypeTrue (CF.mkTrueFlow()) [] pos;}
-    in
-    prog.Cast.prog_hp_decls <- (hp_decl :: prog.Cast.prog_hp_decls);
-    Smtsolver.add_hp_relation hp_decl.Cast.hp_name hp_decl.Cast.hp_vars hp_decl.Cast.hp_formula;
-    let hf =
-      CF.HRel (CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed), 
-               List.map (fun sv -> CP.mkVar sv pos) hp_decl.Cast.hp_vars,
-      pos)
-    in
-    DD.info_pprint ("  new hp_rel: " ^ (Cprinter.string_of_h_formula hf)) pos;
-    Some (hf,[CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed)])
-  else None
-
-let add_raw_hp_rel prog unknown_args pos=
-  let pr1 = !CP.print_svl in
-  let pr2 = Cprinter.string_of_h_formula in
-  let pr4 a = match a with
-    | None -> "None"
-    | Some (hf,_) -> pr2 hf
-  in
-  Debug.no_1 "add_raw_hp_rel" pr1 pr4
-      (fun _ -> add_raw_hp_rel_x prog unknown_args pos) unknown_args
-
 let filter_irr_lhs_bf_hp lfb rfb=
   let rvars = CF.fv (CF.Base rfb) in
   CF.filter_irr_hp_lhs_bf lfb rvars
@@ -1563,19 +1535,18 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
           (* let _ = DD.info_pprint ">>>>>> generate new hp_rel with undefined selective pointers only <<<<<<" pos in *)
           let unknown_ptrs,hds,hvs,lhras,rhras,eqNull,selected_hps = find_undefined_selective_pointers prog lhs_b rhs_b
             mix_lf mix_rf rhs rhs_h_matched_set leqs reqs pos in
-          let r_new_hp = add_raw_hp_rel prog unknown_ptrs pos in
-          let update_fb fb new_hp =
-            match new_hp with
-              | None -> fb,[],[]
-              | Some (hf,vhp_rels) ->
+          let update_fb fb =
+            match unknown_ptrs with
+              | [] -> fb,[],[],None
+              | _ -> let (hf,vhp_rels) = SAU.add_raw_hp_rel prog unknown_ptrs pos in
                   begin
                       match hf with
                         | HRel hp ->
-                            (CF.mkAnd_fb_hf fb hf pos), vhp_rels,[hp]
+                            (CF.mkAnd_fb_hf fb hf pos), vhp_rels,[hp],(Some (hf,vhp_rels))
                         | _ -> report_error pos "infer.infer_collect_hp_rel_x: add_raw_hp_rel should return a hrel"
                   end
           in
-          let new_rhs_b,rvhp_rels,new_hrels = update_fb rhs_b r_new_hp in
+          let new_rhs_b,rvhp_rels,new_hrels,r_new_hp = update_fb rhs_b in
           (*add roots from history*)
           let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog lhs_b new_rhs_b leqs reqs hds hvs lhras (rhras@new_hrels)
             (selected_hps@(List.map (fun (hp,_,_) -> hp) new_hrels)) es.CF.es_crt_holes es.CF.es_history

@@ -17,10 +17,10 @@ HeapPred HP_537(node a, node b).
 HeapPred HP_557(node a, node b).
 
 /* return the tail of a singly linked list */
-node get_next(node x)
+node get_next(ref node x)
   infer[H,G]
   requires H(x)
-  ensures G(x,res);//n>=1 & n=m+1
+  ensures G(x',res);//'n>=1 & n=m+1
 {
   node tmp = x.next;
   x.next = null;
@@ -31,7 +31,7 @@ node get_next(node x)
 /*
 
 H(x) = x::node<_,q>
-G(x,res) = x::node<_,null> & res=x
+G(x,res) = x::node<_,null> & res=q
 
 */
 

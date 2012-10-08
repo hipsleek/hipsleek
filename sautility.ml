@@ -46,6 +46,10 @@ let check_hp_arg_eq (hp1, args1) (hp2, args2)=
   in
   ((CP.eq_spec_var hp1 hp2) && (eq_spec_var_list args1 args2))
 
+let mkHRel hp args pos=
+  let eargs = List.map (fun x -> CP.mkVar x pos) args in
+   ( CF.HRel (hp, eargs, pos))
+
 let check_simp_hp_eq (hp1, _) (hp2, _)=
    (CP.eq_spec_var hp1 hp2)
 
@@ -567,7 +571,7 @@ let check_stricteq_h_fomula hf1 hf2=
   Debug.no_2 " check_stricteq_h_fomula" pr1 pr1 string_of_bool
       (fun _ _ ->  check_stricteq_h_fomula_x hf1 hf2) hf1 hf2
 
-let check_relaxeq_formula f1 f2=
+let check_relaxeq_formula_x f1 f2=
   let hf1,mf1,_,_,_ = CF.split_components f1 in
   let hf2,mf2,_,_,_ = CF.split_components f2 in
   DD.ninfo_pprint ("   mf1: " ^(Cprinter.string_of_mix_formula mf1)) no_pos;
@@ -590,6 +594,14 @@ let check_relaxeq_formula f1 f2=
     r2
   else
     false
+
+let check_relaxeq_formula f1 f2=
+  let pr1 = Cprinter.string_of_formula in
+  Debug.no_2 "check_relaxeq_formula" pr1 pr1 string_of_bool
+      (fun _ _ -> check_relaxeq_formula_x f1 f2) f1 f2
+
+let checkeq_pair_formula (f11,f12) (f21,f22)=
+  (check_relaxeq_formula f11 f21)&&(check_relaxeq_formula f12 f22)
 
 let rec checkeq_formula_list_x fs1 fs2=
   let rec look_up_f f fs fs1=
@@ -615,3 +627,27 @@ and checkeq_formula_list fs1 fs2=
       (fun _ _ -> checkeq_formula_list_x fs1 fs2) fs1 fs2
 
 (*==========END check_relaxeq=============*)
+let add_raw_hp_rel_x prog unknown_ptrs pos=
+  if (List.length unknown_ptrs > 0) then
+    let hp_decl =
+      { Cast.hp_name = Globals.hp_default_prefix_name ^ (string_of_int (Globals.fresh_int()));
+        Cast.hp_vars =  CP.remove_dups_svl unknown_ptrs;
+        Cast.hp_formula = CF.mkBase CF.HEmp (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow()) [] pos;}
+    in
+    prog.Cast.prog_hp_decls <- (hp_decl :: prog.Cast.prog_hp_decls);
+    Smtsolver.add_hp_relation hp_decl.Cast.hp_name hp_decl.Cast.hp_vars hp_decl.Cast.hp_formula;
+    let hf =
+      CF.HRel (CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed), 
+               List.map (fun sv -> CP.mkVar sv pos) hp_decl.Cast.hp_vars,
+      pos)
+    in
+    DD.info_pprint ("       gen hp_rel: " ^ (Cprinter.string_of_h_formula hf)) pos;
+    (hf, [CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed)])
+  else report_error pos "sau.add_raw_hp_rel: args should be not empty"
+
+let add_raw_hp_rel prog unknown_args pos=
+  let pr1 = !CP.print_svl in
+  let pr2 = Cprinter.string_of_h_formula in
+  let pr4 (hf,_) = pr2 hf in
+  Debug.no_1 "add_raw_hp_rel" pr1 pr4
+      (fun _ -> add_raw_hp_rel_x prog unknown_args pos) unknown_args
