@@ -735,6 +735,18 @@ let locs_of_path_trace (pt: path_trace): loc list =
   in
   List.map (fun (pid, plbl) -> find_loc (Some pid) plbl) pt
 
+let locs_of_return_exp_path_trace (pt: path_trace): loc list =
+  let eq_path_id pid1 pid2 = match pid1, pid2 with
+    | Some _, None -> false
+    | None, Some _ -> false
+    | None, None -> true
+    | Some (i1, s1), Some (i2, s2) -> i1 = i2
+  in
+  let find_loc pid =
+    let _, _, _, loc = List.find (fun (id, _, _ , _) -> eq_path_id pid id) !iast_label_table in
+    loc
+  in
+  List.map (fun (pid, plbl) -> find_loc (Some pid) ) pt
 
 let locs_of_partial_context ctx =
   let failed_branches = fst ctx in

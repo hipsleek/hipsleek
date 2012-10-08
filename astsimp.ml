@@ -2763,10 +2763,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_return_path_id = pi; (*control_path_id -> option (int * string)*)
             I.exp_return_pos = pos} ->  begin
           let cret_type = trans_type prog proc.I.proc_return proc.I.proc_loc in
-					let str_pi=match pi with 
+					let _=if(!Globals.proof_logging_txt) then let str_pi=match pi with (*Proof logging return exp*) 
 										| None -> "none path id"
 										| Some (x,y)-> 	let _= Globals.return_exp_pid := !Globals.return_exp_pid @ [x] in string_of_int x
-										in
+										in () in
 										(* let _=print_endline ("GET RETURN EXP: "^str_pi^" : "^fn^" "^Cprinter.string_of_pos pos^" "^Cprinter.string_of_pos e_pos) in *)
           match oe with
             | None -> 

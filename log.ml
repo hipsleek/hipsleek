@@ -16,7 +16,7 @@ type proof_res =
 
 type proof_log = {
 	log_id : string; (* TODO: Should change to integer for performance *)
-	log_other_properties : string list; (* TODO: Should change to integer for performance *)
+	mutable log_other_properties : string list; (* TODO: Should change to integer for performance *)
 	log_prover : string;
 	log_type : proof_type option;
 	log_time : float;
