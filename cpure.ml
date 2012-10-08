@@ -1495,9 +1495,9 @@ and mkGte a1 a2 pos =
   else
     Gte (a1, a2, pos)
 
-and mkNull (v : spec_var) fo pos = mkEqExp (mkVar v pos) (Null pos) pos
+and mkNull (v : spec_var) pos = mkEqExp (mkVar v pos) (Null pos) pos
 
-and mkNeqNull (v : spec_var) fo pos = mkNeqExp (mkVar v pos) (Null pos) pos
+and mkNeqNull (v : spec_var) pos = mkNeqExp (mkVar v pos) (Null pos) pos
 
 and mkNeq a1 a2 pos =
   if is_max_min a1 || is_max_min a2 then
@@ -1680,20 +1680,20 @@ and mkEqVar (sv1 : spec_var) (sv2 : spec_var) pos=
   else
     BForm ((Eq (Var (sv1, pos), Var (sv2, pos), pos), None), None, None)
 
-and mkGteVar (sv1 : spec_var) (sv2 : spec_var) fo pos=
+and mkGteVar (sv1 : spec_var) (sv2 : spec_var) pos=
   if eq_spec_var sv1 sv2 then
     mkTrue pos
   else
-    BForm (((Gte (Var (sv1, pos), Var (sv2, pos), pos)),None), None, fo)
+    BForm (((Gte (Var (sv1, pos), Var (sv2, pos), pos)),None), None, None)
 
-and mkNeqVar (sv1 : spec_var) (sv2 : spec_var) fo pos=
+and mkNeqVar (sv1 : spec_var) (sv2 : spec_var) pos=
   if eq_spec_var sv1 sv2 then
     mkFalse pos
   else
-    BForm ((Neq (Var (sv1, pos), Var (sv2, pos), pos), None),None, fo)
+    BForm ((Neq (Var (sv1, pos), Var (sv2, pos), pos), None),None, None)
 
-and mkEqVarInt (sv : spec_var) (i : int) fo pos =
-  BForm ((Eq (Var (sv, pos), IConst (i, pos), pos), None),None,fo)
+and mkEqVarInt (sv : spec_var) (i : int) pos =
+  BForm ((Eq (Var (sv, pos), IConst (i, pos), pos), None),None,None)
 
 and mkTrue_p pos = BConst (true, pos)
 

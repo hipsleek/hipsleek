@@ -143,13 +143,13 @@ let un_option s d = match s with
 let error_on_dups f l p = if (Gen.BList.check_dups_eq f l) then report_error p ("list contains duplicates") else l
 
 let label_formula f ofl = (match f with 
-          | P.BForm (b,_) -> P.BForm (b,ofl)
+          | P.BForm (b,_,fo) -> P.BForm (b,ofl,fo)
           | P.And _ -> f
           | P.AndList b -> f
-          | P.Or  (b1,b2,_,l)  -> P.Or(b1,b2,ofl,l)
-          | P.Not (b1,_,l)     -> P.Not(b1,ofl,l)
-          | P.Forall (q,b1,_,l)-> P.Forall(q,b1,ofl,l)
-          | P.Exists (q,b1,_,l)-> P.Exists(q,b1,ofl,l))
+          | P.Or  (b1,b2,_,fo,l)  -> P.Or(b1,b2,ofl,fo,l)
+          | P.Not (b1,_,fo,l)     -> P.Not(b1,ofl,fo,l)
+          | P.Forall (q,b1,_,fo,l)-> P.Forall(q,b1,ofl,fo,l)
+          | P.Exists (q,b1,_,fo,l)-> P.Exists(q,b1,ofl,fo,l))
   
 let bf_to_var p = match p with
   | P.Var (v,_) -> v
