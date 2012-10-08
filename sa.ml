@@ -710,15 +710,15 @@ and collect_par_defs_one_side_one_hp prog lhs rhs (hrel, args) def_ptrs
 and collect_par_defs_two_side_one_hp_x prog lhs rhs (hrel, args) predef rhs_hrels hd_nodes hv_nodes unk_hps=
   let args0 = CP.remove_dups_svl args in
   let args01 = SAU.loop_up_closed_ptr_args prog hd_nodes hv_nodes args0 in
-  (* let _ =  DD.info_pprint ("    args0:" ^ (!CP.print_svl args0) ) no_pos in *)
-  (* let _ =  DD.info_pprint ("    args01:" ^ (!CP.print_svl args01) ) no_pos in *)
+  let _ =  DD.info_pprint ("    args0:" ^ (!CP.print_svl args0) ) no_pos in
+  let _ =  DD.info_pprint ("    args01:" ^ (!CP.print_svl args01) ) no_pos in
   (* let _ =  DD.info_pprint ("    predef:" ^ (!CP.print_svl predef) ) no_pos in *)
   let rec find_hrel_w_same_args ls r=
     match ls with
       | [] -> r
       | (hp, args1)::ss ->
           (*recompute def_ptrs *)
-          (* let _ =  DD.info_pprint ("    hrel:" ^ (!CP.print_sv hp) ) no_pos in *)
+          let _ =  DD.info_pprint ("    hrel:" ^ (!CP.print_sv hp) ) no_pos in
           if CP.intersect args01 args1 = [] then
             find_hrel_w_same_args ss r
           else begin
@@ -727,8 +727,8 @@ and collect_par_defs_two_side_one_hp_x prog lhs rhs (hrel, args) predef rhs_hrel
               let l_def_ptrs, _,_, _,_ = SAU.find_defined_pointers prog lhs n_predef in
               let r_def_ptrs, _, _, _, _ = find_defined_pointers_two_formulas prog lhs rhs n_predef in
               (* let _ =  DD.info_pprint ("    defs:" ^ (!CP.print_svl (l_def_ptrs@r_def_ptrs)) ) no_pos in *)
-              let undef_args = lookup_undef_args args0 [] (l_def_ptrs@r_def_ptrs) in
-              (* let _ =  DD.info_pprint ("    undef_args:" ^ (!CP.print_svl undef_args) ) no_pos in *)
+              let undef_args = lookup_undef_args args0 [] (l_def_ptrs@r_def_ptrs@args1) in
+              let _ =  DD.info_pprint ("    undef_args:" ^ (!CP.print_svl undef_args) ) no_pos in
           (* let args11 = CP.remove_dups_svl args1 in *)
           (* let diff = Gen.BList.difference_eq CP.eq_spec_var args11 args0 in *)
           (* if diff = [] then *)
@@ -1493,6 +1493,11 @@ let generalize_hps_par_def prog par_defs=
           partition_pdefs_by_hp_name remains (parts@[[(a1,a2,a3,a4,a5)]@part])
   in
   let groups = partition_pdefs_by_hp_name par_defs [] in
+  (*
+    subst such that each partial def does not contain other hps
+    dont subst recursively
+    search_largest_matching between two formulas
+  *)
   (*each group, do union partial definition*)
   (List.map (generalize_one_hp prog) groups)
 
