@@ -2031,7 +2031,7 @@ let gen_normalize_lemma_comb ddef =
  {coercion_type = Left;
   coercion_name = lem_name;
   coercion_head = F.formula_of_heap_1 (F.mkStar (gennode perm1 args1) (gennode perm2 args2) no_pos) no_pos;
-  coercion_body = F. mkBase (gennode perm3 args1) pure  top_flow [] no_pos;
+  coercion_body = F.mkBase (gennode perm3 args1) pure  top_flow [] None no_pos;
   coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_origin = None; exp_return_pos = no_pos }
  }
  
@@ -2045,7 +2045,7 @@ let gen_normalize_lemma_comb ddef =
  let pure = P.BForm ((P.Eq (perm3,P.Add (perm1,perm2,no_pos),no_pos),None),None,None) in
  {coercion_type = Left;
   coercion_name = lem_name;
-  coercion_head = F.mkBase (gennode perm3 args) pure  top_flow [] no_pos;
+  coercion_head = F.mkBase (gennode perm3 args) pure  top_flow [] None no_pos;
   coercion_body = F.formula_of_heap_1 (F.mkStar (gennode perm1 args) (gennode perm2 args) no_pos) no_pos;
   
   coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_origin = None; exp_return_pos = no_pos }

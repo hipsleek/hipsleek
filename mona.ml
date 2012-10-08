@@ -712,7 +712,7 @@ and mona_of_formula_x f initial_f vs =
             begin
               if !sat_optimize then
 	            match p with
-		          | CP.BForm ((CP.BVar (bv, _), _), _) -> (mona_of_spec_var bv) ^ " =pconst(0)" (*== pconst(1)*)
+		          | CP.BForm ((CP.BVar (bv, _), _), _, _) -> (mona_of_spec_var bv) ^ " =pconst(0)" (*== pconst(1)*)
                         (*              (equation (CP.Var (bv, no_pos)) (CP.IConst (1, no_pos)) f "less" "<" vs)*)
 		          | _ -> " (~" ^ (helper p) ^ ") "
               else " (~" ^ (helper p) ^ ") "

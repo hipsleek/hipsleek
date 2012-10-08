@@ -764,7 +764,7 @@ let is_sat (f : formula) : bool =
   if !log_all_flag == true then
 	output_string log_all "\n\n[mona.ml]: #is_sat\n";
   let f = elim_exists f in
-  let tmp_form = (imply f (BForm((BConst(false, no_pos), None), None))) in
+  let tmp_form = (imply f (BForm((BConst(false, no_pos), None), None, None))) in
 	match tmp_form with
 	  | true -> 
 		  begin 

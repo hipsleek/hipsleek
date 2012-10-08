@@ -777,12 +777,12 @@ and string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s 
 and string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
 and string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
 and string_of_formula_label_only x :string = string_of_formula_label x ""
-and string_of_data_origin dto =
-  match dto with
-  | D_o_specs -> "D_O_SPECS"
-  | D_o_code _ -> "F_O_CODE"
-  | D_o_intermediate -> "D_O_INTERMEDIATE"
-
+and string_of_formula_origin fo =
+  match fo with
+  | None -> ""
+  | Some F_o_specs -> "F_O_SPECS"
+  | Some F_o_code _ -> "F_O_CODE"
+  | Some F_o_intermediate -> "F_O_INTERMEDIATE"
 and string_of_iast_label_table table =
   let string_of_row row =
     let string_of_label_loc (_, path_label, loc) =

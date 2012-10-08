@@ -90,10 +90,10 @@ let simpl_b_formula (f : CP.b_formula): CP.b_formula =
   | CP.BagSub (e1, e2, pos) ->
       if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) then
 	    (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-	    let simpl_f = TP.simplify_a 9 (CP.BForm(f,None)) in
+	    let simpl_f = TP.simplify_a 9 (CP.BForm(f,None,None)) in
   	    begin
   	      match simpl_f with
-  	        | CP.BForm(simpl_f1, _) ->
+  	        | CP.BForm(simpl_f1, _, _) ->
   		        (*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
   		        simpl_f1
   	        | _ -> f

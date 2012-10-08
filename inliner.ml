@@ -37,31 +37,36 @@ let rec inline (prog : prog_decl) (pdef : proc_decl) (e0 : exp) : exp = match e0
 		  (*let _ = (print_string ("\n[inliner.ml, line 37]: fresh name = " ^ fname ^ "\n")) in*)
 		  (* 09.05.2008 --*)		
 			  (VarDecl { exp_var_decl_type = param.param_type;
-						 exp_var_decl_decls = [(fname, Some arg, pos)];
-						 exp_var_decl_pos = pos }, fname) in
+      						 exp_var_decl_decls = [(fname, Some arg, pos)];
+                   exp_var_decl_origin = Some F_o_intermediate;
+      						 exp_var_decl_pos = pos }, fname) in
 		  let tmp1 = List.map2 mkfvar pdef.proc_args args in
 		  let fresh_args, fresh_names = List.split tmp1 in
 
 			(* assign fresh vars to formal arguments. This is to avoid name clashing 
 			   if actual and formal arguments have the same name. Put them in nested blocks. *)
 		  let mkvar param fname = VarDecl { exp_var_decl_type = param.param_type;
-											exp_var_decl_decls = [(param.param_name, 
-																   Some (Var {exp_var_name = fname;
-																			  exp_var_pos = pos}), pos)];
-											exp_var_decl_pos = pos } in
+                                        exp_var_decl_origin = Some F_o_intermediate;
+                                        exp_var_decl_decls = [(param.param_name, 
+                                                               Some (Var {exp_var_name = fname;
+                                                                          exp_var_origin = Some F_o_intermediate;
+                                                                          exp_var_pos = pos}), pos)];
+                                        exp_var_decl_pos = pos } in
 		  let var_defs = List.map2 mkvar pdef.proc_args fresh_names in
 
 		  let new_proc_body = remove_return (Gen.unsome pdef.proc_body) in
-		  let seq1 = List.fold_left (fun s -> fun vd -> mkSeq vd s pos) new_proc_body var_defs in
+		  let seq1 = List.fold_left (fun s -> fun vd -> mkSeq vd s (Some F_o_intermediate) pos) new_proc_body var_defs in
 			(* make a block to localize formal args *)
 		  let block1 = Block { exp_block_body = seq1;
 							   exp_block_jump_label = NoJumpLabel;
                  exp_block_local_vars = [];
+                 exp_block_origin = Some F_o_intermediate;
 							   exp_block_pos = pos } in
-		  let seq2 = List.fold_left (fun s -> fun vd -> mkSeq vd s pos) block1 fresh_args in
+		  let seq2 = List.fold_left (fun s -> fun vd -> mkSeq vd s (Some F_o_intermediate) pos) block1 fresh_args in
 		  let block2 = Block { exp_block_body = seq2;
 							   exp_block_jump_label = NoJumpLabel;
                  exp_block_local_vars = [];
+                 exp_block_origin = Some F_o_intermediate;
 							   exp_block_pos = pos } in
 			(*
 			  print_string ("\nblock1:\n" ^ (Iprinter.string_of_exp block1) ^ "\n");
@@ -80,7 +85,8 @@ and remove_return (e0 : exp) : exp = match e0 with
 	end
   | Seq { exp_seq_exp1 = e1;
 		  exp_seq_exp2 = e2;
-		  exp_seq_pos = pos } -> mkSeq (remove_return e1) (remove_return e2) pos
+      exp_seq_origin = Some F_o_intermediate;
+		  exp_seq_pos = pos } -> mkSeq (remove_return e1) (remove_return e2) (Some F_o_intermediate) pos
   | While ({ exp_while_body = e } as e1) -> While {e1 with exp_while_body = remove_return e}
   | Cond ({ exp_cond_then_arm = then_arm; 
 			exp_cond_else_arm = else_arm } as e1) -> Cond {e1 with 

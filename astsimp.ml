@@ -4306,7 +4306,6 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
     | IF.Or {
           IF.formula_or_f1 = f1;
           IF.formula_or_f2 = f2;
-          IF.formula_or_origin = fo;
           IF.formula_or_pos = pos } ->
           let lf1 = linearize_formula prog f1 stab in
           let lf2 = linearize_formula prog f2 stab in

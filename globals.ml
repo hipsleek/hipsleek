@@ -26,12 +26,10 @@ type statement_flow =
   | S_f_condition
   | S_f_straight
 
-type data_origin =
-  | D_o_specs
-  | D_o_code of statement_flow
-  | D_o_intermediate
-
-type formula_origin = data_origin
+type formula_origin =
+  | F_o_specs
+  | F_o_code of statement_flow
+  | F_o_intermediate
 
 type formula_label = (int * string)
 
