@@ -14,8 +14,13 @@ let gl_pointers_data : (Cil.typ, Iast.data_decl) Hashtbl.t = Hashtbl.create 10
 
 let gl_pointer_data_name = "pdata"
 
-(* address of *)
-let gl_addressof_data : (Cil.lval, Iast.exp) Hashtbl.t = Hashtbl.create 10
+(* address of global vars *)
+let gl_addressof_data : (Cil.lval, Iast.exp_var_decl) Hashtbl.t = Hashtbl.create 10  (* global vars *)
+
+
+(* address of local vars *)
+let lc_addressof_data : (Cil.lval, Iast.exp) Hashtbl.t = Hashtbl.create 10  (* local vars  *)
+let lc_additional_exp : Iast.exp list ref = ref []
 
 
 (* reset all global vars for the next use *)
@@ -96,20 +101,20 @@ let typ_of_cil_lval (lval: Cil.lval) : Cil.typ =
   | Cil.Mem _, Cil.Index _ -> report_error_msg "typ_of_cil_lval: handle (Cil.Mem, Cil.Index) later!"
 
 
-let is_global_cil_exp (exp: Cil.exp) : bool =
+let rec is_global_cil_exp (exp: Cil.exp) : bool =
   match exp with
-  | Const _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.Const!"
-  | Lval lval -> is_global_cil_lval lval
-  | SizeOf _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.SizeOf!"
-  | SizeOfE _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.SizeOfE!"
-  | SizeOfStr _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.SizeOfStr!"
-  | AlignOf _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.AlignOf!"
-  | AlignOfE _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.AlignOfE!"
-  | UnOp -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.UnOp!"
-  | BinOp -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.BinOp!"
-  | CastE (_, e) -> is_global_cil_exp e
-  | AddrOf lv -> is_global_cil_lval lv
-  | StartOf lv -> is_global_cil_lval lv 
+  | Cil.Const _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.Const!"
+  | Cil.Lval lval -> is_global_cil_lval lval
+  | Cil.SizeOf _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.SizeOf!"
+  | Cil.SizeOfE _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.SizeOfE!"
+  | Cil.SizeOfStr _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.SizeOfStr!"
+  | Cil.AlignOf _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.AlignOf!"
+  | Cil.AlignOfE _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.AlignOfE!"
+  | Cil.UnOp _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.UnOp!"
+  | Cil.BinOp _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.BinOp!"
+  | Cil.CastE (_, e) -> is_global_cil_exp e
+  | Cil.AddrOf lv -> is_global_cil_lval lv
+  | Cil.StartOf lv -> is_global_cil_lval lv 
 
 
 and is_global_cil_lval (lval: Cil.lval) : bool =
@@ -371,9 +376,13 @@ and translate_exp (e: Cil.exp) (lopt: Cil.location option): Iast.exp =
       newexp
   | Cil.AddrOf lval ->
       (* create a new Iast.data_decl that has 1 inline field is lval *)
-      let _ = print_endline ("== e = " ^ (string_of_cil_exp e)) in
       let newexp = (
-        try Hashtbl.find gl_addressof_data lval
+        try
+          if (is_global_cil_lval lval) then
+            let vardecl = Hashtbl.find gl_addressof_data lval            (* global vars *)
+            in Iast.VarDecl vardecl
+          else
+            Hashtbl.find lc_addressof_data lval            (* local vars *)
         with Not_found -> (
           let ty = typ_of_cil_lval lval in
           let newty = (
@@ -383,7 +392,7 @@ and translate_exp (e: Cil.exp) (lopt: Cil.location option): Iast.exp =
               let index = Hashtbl.length gl_pointers_type in
               let pointer_name = "pointer_type_" ^ (string_of_int index) in
               let pointer_type = Globals.Named pointer_name in
-              Hashtbl.add gl_pointers_type t pointer_type;
+              Hashtbl.add gl_pointers_type ty pointer_type;
               (* create new Iast.data_decl and update to a hash table *)
               let ftype = translate_typ ty in
               let fname = gl_pointer_data_name in
@@ -392,12 +401,45 @@ and translate_exp (e: Cil.exp) (lopt: Cil.location option): Iast.exp =
                                   Iast.data_parent_name = "Object";
                                   Iast.data_invs = [];
                                   Iast.data_methods = [];} in
-              Hashtbl.add gl_pointers_data t pointer_data;
-              (* return new type*)
+              Hashtbl.add gl_pointers_data ty pointer_data;
               pointer_type
             )
           ) in
           (* define new var that represents the address *)
+          (* global vars *)
+          if (is_global_cil_lval lval) then (
+            let index = Hashtbl.length gl_addressof_data in
+            let name = "gvar_name_" ^ (string_of_int index) in
+            let decl = [(name, None, pos)] in
+            let vardecl = {Iast.exp_var_decl_type = newty;
+                           Iast.exp_var_decl_decls = decl;
+                           Iast.exp_var_decl_pos = pos} in
+            Hashtbl.add gl_addressof_data lval vardecl;
+            Iast.VarDecl vardecl
+          )
+          (* local vars *)
+          else (
+            let index = Hashtbl.length lc_addressof_data in
+            let name = "lvar_name_" ^ (string_of_int index) in
+            let decl = [(name, None, pos)] in
+            let var_decl = Iast.VarDecl {Iast.exp_var_decl_type = newty;
+                                         Iast.exp_var_decl_decls = decl;
+                                         Iast.exp_var_decl_pos = pos} in
+            let new_var = Iast.Var {Iast.exp_var_name = name;
+                                    Iast.exp_var_pos = pos} in
+            Hashtbl.add lc_addressof_data lval var_decl;
+            let var_data = Iast.Member {Iast.exp_member_base = new_var;
+                                        Iast.exp_member_fields = [gl_pointer_data_name];
+                                        Iast.exp_member_path_id = None;
+                                        Iast.exp_member_pos = pos} in
+            let var_assign = Iast.Assign {Iast.exp_assign_op = Iast.OpAssign;
+                                          Iast.exp_assign_lhs = var_data;
+                                          Iast.exp_assign_rhs = translate_exp (Cil.Lval lval) lopt;
+                                          Iast.exp_assign_path_id = None;
+                                          Iast.exp_assign_pos = pos;} in
+            lc_additional_exp := !lc_additional_exp @ [var_assign];
+            new_var;
+          )
         )
       ) in
       newexp
@@ -594,6 +636,11 @@ let translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo) (lopt: Cil.l
 
 
 let translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option): Iast.proc_decl =
+  (* reset some local setting *)
+  Hashtbl.clear lc_addressof_data;
+  lc_additional_exp := [];
+  
+  (* supporting functions *)
   let translate_funtyp (ty: Cil.typ) : Globals.typ = (
     match ty with
     | Cil.TFun (t, params, _, _) -> translate_typ t
@@ -620,6 +667,8 @@ let translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option): Iast.proc
       )
     | _ -> report_error_msg "Invalid function header!"
   ) in
+  
+  (* start translating function *)
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let fheader = fundec.Cil.svar in
   let name = fheader.Cil.vname in
@@ -628,7 +677,14 @@ let translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option): Iast.proc
   let args = collect_params fheader in
   let slocals = List.map (fun x -> translate_var_decl x lopt) fundec.Cil.slocals in
   let sbody = translate_block fundec.Cil.sbody lopt in
-  let funbody = Iast.Block {Iast.exp_block_body = merge_iast_exp (slocals @ [sbody]) (Some pos);
+  (* collect intermediate information after translating body *) 
+  let local_addrs = (
+    let vars = ref [] in
+    Hashtbl.iter (fun _ e -> vars := !vars @ [e]) lc_addressof_data;
+    !vars;
+  ) in
+  let additional_exp = local_addrs @ !lc_additional_exp in
+  let funbody = Iast.Block {Iast.exp_block_body = merge_iast_exp (slocals @ additional_exp @ [sbody]) (Some pos);
                             Iast.exp_block_jump_label = Iast.NoJumpLabel;
                             Iast.exp_block_local_vars = [];
                             Iast.exp_block_pos = pos} in
@@ -717,8 +773,9 @@ let translate_file (file: Cil.file) : Iast.prog_decl =
                  Iast.data_invs = []; Iast.data_methods = []} in
   let string_def = {Iast.data_name = "String"; Iast.data_fields = []; Iast.data_parent_name = "Object";
                     Iast.data_invs = []; Iast.data_methods = []} in
-  (* update data_decls representing pointers to program *)
-  Hashtbl.iter (fun t d -> data_decls := !data_decls @ [d]) gl_pointers_data;
+  (* update some global settings *)
+  Hashtbl.iter (fun _ d -> data_decls := !data_decls @ [d]) gl_pointers_data;
+  Hashtbl.iter (fun _ d -> global_var_decls := !global_var_decls @ [d]) gl_addressof_data;
   let newprog : Iast.prog_decl = ({
     Iast.prog_data_decls = obj_def :: string_def :: !data_decls;
     Iast.prog_global_var_decls = !global_var_decls;
