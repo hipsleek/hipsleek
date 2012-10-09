@@ -318,7 +318,7 @@ let propagate_rec pfs rel ante_vars specs = match CP.get_rel_id rel with
       | [] -> bcases
       | [or_fml] ->
         let other_branches = get_other_branches or_fml (CP.get_rel_args rel) in
-        let other_branches = List.map (fun p -> CP.mkNot p None no_pos) other_branches in
+        let other_branches = List.map (fun p -> CP.mkNot_s p) other_branches in
         let pure_other_branches = CP.conj_of_list other_branches no_pos in
         List.filter (fun b -> TP.is_sat_raw (MCP.mix_of_pure (CP.mkAnd b pure_other_branches no_pos))) bcases
       | _ -> bcases
@@ -429,12 +429,12 @@ and helper input_pairs rel ante_vars specs =
     Debug.ninfo_hprint (add_str "p:" !CP.print_formula) p no_pos;
     Debug.ninfo_hprint (add_str "rel:" !CP.print_formula) rel no_pos;
     Debug.ninfo_hprint (add_str "exist vars:" !CP.print_svl) exists_vars no_pos;
-    CP.mkExists exists_vars p None None no_pos) pfs 
+    CP.mkExists exists_vars p None no_pos) pfs 
   in
   match pfs with
   | [] -> []
   | [hd] -> [(rel,hd,no)]
-  | _ -> [(rel, List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None None no_pos) (List.hd pfs) (List.tl pfs), no)]
+  | _ -> [(rel, List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (List.hd pfs) (List.tl pfs), no)]
 
 and compute_fixpoint_aux rel = 
   let no = List.fold_left (fun a b -> max a b) 1 (List.map (fun (_,_,a,_) -> a) rel) in

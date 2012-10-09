@@ -176,7 +176,7 @@ let pr_term_status_short = function
 let string_of_term_status = poly_string_of_pr pr_term_status
 
 let pr_term_ctx (ctx: formula) =
-  let h_f, p_f, _, _, _, _ = split_components ctx in
+  let h_f, p_f, _, _, _ = split_components ctx in
   begin
     fmt_string "Current context";
     fmt_print_newline ();
@@ -256,19 +256,19 @@ let collect_update_function_x (transition_constraint: CP.formula) : CP.formula =
     | _ -> false in
   let rec convert_formula (f: CP.formula) : CP.formula = (
     match f with
-    | CP.BForm ((pf, _), _, _) ->
+    | CP.BForm ((pf, _), _) ->
         if is_assignment pf then f
         else CP.mkTrue no_pos
     | CP.And (f1, f2, l) ->
         let new_f1 =
           match f1 with
-          | CP.BForm ((pf, _), _, _) ->
+          | CP.BForm ((pf, _), _) ->
               if is_assignment pf then f1
               else CP.mkTrue no_pos
           | _ -> convert_formula f1 in
         let new_f2 =
           match f2 with
-          | CP.BForm ((pf, _), _, _) ->
+          | CP.BForm ((pf, _), _) ->
               if is_assignment pf then f2
               else CP.mkTrue no_pos
           | _ -> convert_formula f2 in
@@ -278,36 +278,36 @@ let collect_update_function_x (transition_constraint: CP.formula) : CP.formula =
         let new_fs =
           List.map (
             fun f -> match f with
-            | CP.BForm ((pf, _), _, _) ->
+            | CP.BForm ((pf, _), _) ->
                 if is_assignment pf then f
                 else CP.mkTrue no_pos
             | _ -> convert_formula f
           ) fs in
         let new_formula_list = List.combine ls new_fs in
         CP.AndList new_formula_list
-    | CP.Or (f1, f2, l1, fo, l2) ->
+    | CP.Or (f1, f2, l1, l2) ->
         let new_f1 =
           match f1 with
-          | CP.BForm ((pf, _), _, _) ->
+          | CP.BForm ((pf, _), _) ->
               if is_assignment pf then f1
               else CP.mkTrue no_pos
           | _ -> convert_formula f1 in
         let new_f2 =
           match f2 with
-          | CP.BForm ((pf, _), _, _) ->
+          | CP.BForm ((pf, _), _) ->
               if is_assignment pf then f2
               else CP.mkTrue no_pos
           | _ -> convert_formula f2 in
-        CP.Or (new_f1, new_f2, l1, fo, l2)
-    | CP.Not (f, l1, fo, l2) ->
+        CP.Or (new_f1, new_f2, l1, l2)
+    | CP.Not (f, l1, l2) ->
         (* let new_f = convert_formula f in *)
         (* CP.Not (new_f, l1, l2)           *)
         CP.mkTrue no_pos
-    | CP.Forall (s, f, l1, fo, l2) ->
+    | CP.Forall (s, f, l1, l2) ->
         (* let new_f = convert_formula f in *)
         (* CP.Forall (s, new_f, l1, l2)     *)
         CP.mkTrue no_pos
-    | CP.Exists (s, f, l1, fo, l2) ->
+    | CP.Exists (s, f, l1, l2) ->
         (* let new_f = convert_formula f in *)
         (* CP.Exists (s, new_f, l1, l2)     *)
         CP.mkTrue no_pos
@@ -318,8 +318,29 @@ let collect_update_function (transition_constraint: CP.formula) : CP.formula =
   let pr = !CP.print_formula in
   Debug.no_1 "collect_update_function" pr pr collect_update_function_x transition_constraint
 
+let rec label_of_formula (f: CP.formula) =
+  let string_of_lb (lb: formula_label option) = (
+    match lb with
+    | None -> ""
+    | Some (i, s) -> (string_of_int i) ^ ":" ^ s
+  ) in
+  let sf = Cprinter.string_of_pure_formula in
+  let lbl = (
+    match f with
+    | CP.BForm (_, flb) -> "BForm(" ^ (sf f) ^ "," ^ (string_of_lb flb) ^ ")"
+    | CP.And (f1, f2,_) -> "And(" ^ (label_of_formula f1) ^ "," ^ (label_of_formula f2) ^ ")"
+    | CP.AndList _ -> "AndList(_)"
+    | CP.Or (f1, f2, flb, _) -> "Or(" ^ (label_of_formula f1) ^ "," ^ (label_of_formula f2) ^ "," ^ (string_of_lb flb) ^ ")"
+    | CP.Not (f1, flb, _) -> "Not(" ^ (label_of_formula f1) ^ "," ^ (string_of_lb flb) ^ ")"
+    | CP.Forall (_, f1, flb, _) -> "Forall(" ^ (label_of_formula f1) ^ "," ^ (string_of_lb flb) ^ ")"
+    | CP.Exists (_, f1, flb, _) -> "Exists(" ^ (label_of_formula f1) ^ "," ^ (string_of_lb flb) ^ ")"
+  ) in
+  lbl
+
 (* drop the constraint from source_constrait that restrict the target_constraint *)
 let drop_restricted_constraint_x (source_contraint: CP.formula) (target_constraint: CP.formula) : CP.formula =
+  (* let _ = print_endline ("== source_contraint = " ^ (Cprinter.string_of_pure_formula source_contraint)) in  *)
+  (* let _ = print_endline ("== lbl = " ^ (label_of_formula source_contraint)) in                              *)
   let is_restricted_constraint (constr: CP.formula) (target_constraint: CP.formula) : bool = (
     (* constr don't restrict domain if (domain -> (constr) && domain) is valid *)
     (* let _ = print_endline ("== constr = " ^ (Cprinter.string_of_pure_formula constr)) in  *)
@@ -334,7 +355,7 @@ let drop_restricted_constraint_x (source_contraint: CP.formula) (target_constrai
   ) in
   let rec drop_constraint (constr: CP.formula) (target_constraint: CP.formula) : CP.formula = (
     match constr with
-    | CP.BForm ((pf, _), _, _) -> (
+    | CP.BForm ((pf, _), _) -> (
         match pf with
         | CP.BVar _ -> CP.mkTrue no_pos
         | _ -> if is_restricted_constraint constr target_constraint then CP.mkTrue no_pos
@@ -344,10 +365,10 @@ let drop_restricted_constraint_x (source_contraint: CP.formula) (target_constrai
         let new_f1 = drop_constraint f1 target_constraint in
         let new_f2 = drop_constraint f2 target_constraint in
         match new_f1 with
-        | CP.BForm ((CP.BConst (true, _), None),None, None) -> new_f2
+        | CP.BForm ((CP.BConst (true, _), None),None) -> new_f2
         | _ -> (
             match new_f2 with
-            | CP.BForm ((CP.BConst (true, _), None),None, None) -> new_f1
+            | CP.BForm ((CP.BConst (true, _), None),None) -> new_f1
             | _ -> CP.mkAnd new_f1 new_f2 no_pos
           )
       )
@@ -361,7 +382,7 @@ let drop_restricted_constraint_x (source_contraint: CP.formula) (target_constrai
 
 let drop_restricted_domain_constraint (source_constraint: CP.formula) (target_constraint: CP.formula) : CP.formula =
   let pr = !CP.print_formula in
-  Debug.no_2 "drop_restricted_domain_constraint" pr pr pr drop_restricted_constraint_x source_constraint target_constraint
+  Debug.ho_2 "drop_restricted_domain_constraint" pr pr pr drop_restricted_constraint_x source_constraint target_constraint
 
 (* let rec has_variance_struc struc_f = *)
 (*   List.exists (fun ef -> has_variance_ext ef) struc_f *)
@@ -397,7 +418,7 @@ let find_lexvar_b_formula (bf: CP.b_formula) : CP.p_formula option =
 
 let rec find_lexvar_formula (f: CP.formula) : CP.p_formula option =
   match f with
-  | CP.BForm (bf, _, _) -> find_lexvar_b_formula bf
+  | CP.BForm (bf, _) -> find_lexvar_b_formula bf
   | CP.And (f1, f2, _) -> (
       match find_lexvar_formula f1 with
       | Some r -> Some r
@@ -440,7 +461,7 @@ let strip_lexvar_mix_formula_x (mf: MCP.mix_formula) =
   let (termforms, other_p) = List.partition (CP.is_lexvar) mf_ls in
   let extract_lexvar (f : CP.formula) : CP.p_formula =
     match f with
-    | CP.BForm ((CP.LexVar lexinfo,_),_,_) -> CP.LexVar lexinfo
+    | CP.BForm ((CP.LexVar lexinfo,_),_) -> CP.LexVar lexinfo
     | _ -> let _ = report_error no_pos "[term.ml] unexpected Term in check_lexvar_rhs" in
            raise (Exn_TermVar "TermVar invalid") in
   let lexvars = List.map extract_lexvar termforms in
@@ -455,7 +476,6 @@ let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
   Debug.no_1 "strip_lexvar_mix_formula" pr pr_out strip_lexvar_mix_formula_x mf
 
 let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (dst: CP.exp) pos : CP.formula =
-  let _ = print_endline ("== in create_measure_constraint_x : \n  -- lhs = " ^ (Cprinter.string_of_pure_formula lhs)) in 
   if flag then (
     match src, dst with
     | CP.Seq seqsrc, CP.Seq seqdst -> (
@@ -474,7 +494,7 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
           let _ = Debug.dinfo_pprint  "++ In function create_measure_constraint_x:" no_pos in
           let _ = Debug.dinfo_pprint ("   domain_lsh        = " ^ (Cprinter.string_of_pure_formula domain_lhs)) no_pos in
           let _ = Debug.dinfo_pprint ("   domain_rhs        = " ^ (Cprinter.string_of_pure_formula domain_rhs)) no_pos in
-          CP.mkImply domain_lhs domain_rhs None None pos
+          CP.mkImply domain_lhs domain_rhs pos
         ) in
         let decrease_constraint = (
           (* measure decreases in the recursive call *)
@@ -485,28 +505,28 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
             | _, CP.SConst (PositiveInfty, _) -> CP.mkFalse pos
             | CP.SConst (NegativeInfty, _), CP.SConst (NegativeInfty, _) ->
                 (* es > ed *)
-                CP.mkPure (CP.mkGt element_src element_dst pos) None None
+                CP.mkPure (CP.mkGt element_src element_dst pos)
             | CP.SConst (NegativeInfty, _), _
             | _, CP.SConst (NegativeInfty, _) -> CP.mkFalse pos
             | _ ->
                 (* (es > ls) & (ed > ld) & (es > ed) *)
-                let dc1 = CP.mkPure (CP.mkGt element_src limit_src pos) None None in
-                let dc2 = CP.mkPure (CP.mkGt element_dst limit_dst pos) None None in
-                let dc3 = CP.mkPure (CP.mkGt element_src element_dst pos) None None in
+                let dc1 = CP.mkPure (CP.mkGt element_src limit_src pos) in
+                let dc2 = CP.mkPure (CP.mkGt element_dst limit_dst pos) in
+                let dc3 = CP.mkPure (CP.mkGt element_src element_dst pos) in
                 CP.mkAnd dc1 (CP.mkAnd dc2 dc3 no_pos) pos
           ) in
           let _ = Debug.dinfo_pprint  "++ In function create_measure_constraint_x:" no_pos in
           let _ = Debug.dinfo_pprint ("   decrease_lhs        = " ^ (Cprinter.string_of_pure_formula decrease_lhs)) no_pos in
           let _ = Debug.dinfo_pprint ("   decrease_rhs        = " ^ (Cprinter.string_of_pure_formula decrease_rhs)) no_pos in
-          CP.mkImply decrease_lhs decrease_rhs None None pos
+          CP.mkImply decrease_lhs decrease_rhs pos
         ) in
         CP.mkAnd domain_constraint decrease_constraint pos
       )
     | CP.Seq _, _
     | _, CP.Seq _ -> raise (Exn_LexVarSeq "Measure types isn't compatible")
     | _, _ ->
-        let rhs = CP.BForm ((CP.mkGt src dst pos, None), None, None) in (* src > dst *)
-        CP.mkImply lhs rhs None None pos
+        let rhs = CP.BForm ((CP.mkGt src dst pos, None), None) in (* src > dst *)
+        CP.mkImply lhs rhs pos
   ) else (
     match src, dst with
     | CP.Seq seqsrc, CP.Seq seqdst -> (
@@ -519,20 +539,20 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
         let domain_constraint = (
           let domain_lhs = CP.mkAnd recursive_constraint domain_src pos in
           let domain_rhs = domain_dst in
-          CP.mkImply domain_lhs domain_rhs None None pos
+          CP.mkImply domain_lhs domain_rhs pos
         ) in
         let equal_constraint = (
           let equal_lhs = CP.mkAnd recursive_constraint (CP.mkAnd domain_src domain_dst pos) pos in
-          let equal_rhs = CP.mkPure (CP.mkEq element_src element_dst pos) None None in
-          CP.mkImply equal_lhs equal_rhs None None pos
+          let equal_rhs = CP.mkPure (CP.mkEq element_src element_dst pos) in
+          CP.mkImply equal_lhs equal_rhs pos
         ) in
         CP.mkAnd domain_constraint equal_constraint pos
       )
     | CP.Seq _, _
     | _, CP.Seq _ -> raise (Exn_LexVarSeq "Measure types isn't compatible")
     | _, _ ->
-        let rhs = CP.BForm ((CP.mkEq src dst pos, None), None, None) in (* src = dst *)
-        CP.mkImply lhs rhs None None pos
+        let rhs = CP.BForm ((CP.mkEq src dst pos, None), None) in (* src = dst *)
+        CP.mkImply lhs rhs pos
   )
 
 let create_measure_constraint (lhs: CP.formula) (flag: bool) (src: CP.exp) (dst: CP.exp) pos : CP.formula =
@@ -611,7 +631,7 @@ let check_term_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv ds
               (* else CP.BForm ((CP.mkEq s d pos, None), None) in (* s=d *)      *)
             (false, CP.mkAnd f res pos)) measure (true, CP.mkTrue pos)) in
           let rank_formula = List.fold_left (fun acc m ->
-            CP.mkOr acc (lex_formula m) None None pos) (CP.mkFalse pos) lst_measures in
+            CP.mkOr acc (lex_formula m) None pos) (CP.mkFalse pos) lst_measures in
           DD.devel_zprint (lazy ("Rank formula: " ^ (Cprinter.string_of_pure_formula rank_formula))) pos;
           (* TODO: rhs_p & rhs_p_br & heap_entail_build_mix_formula_check pos & rank_formula(I,O) *)
           (*let (estate,_,rank_formula,_) = Inf.infer_collect_rel TP.is_sat_raw estate xpure_lhs_h1 
@@ -698,8 +718,8 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   try
     begin
-      (* let _ = print_endline ("== path trace = " ^ (Cprinter.string_of_path_trace estate.Cformula.es_path_label)) in   *)
-      (* let _ = print_endline ("== estate.es_formula = " ^ (Cprinter.string_of_formula estate.Cformula.es_formula)) in  *)
+      let _ = print_endline ("== path trace = " ^ (Cprinter.string_of_path_trace estate.Cformula.es_path_label)) in
+      let _ = print_endline ("== estate.es_formula = " ^ (Cprinter.string_of_formula estate.Cformula.es_formula)) in 
       (* let _ = print_endline ("== estate.es_formula lbl = " ^ (label_of_formula estate.Cformula.es_formula)) in  *)
       let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in
       let conseq = MCP.pure_of_mix rhs_p in
@@ -777,7 +797,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
 
 let strip_lexvar_lhs (ctx: context) : context =
   let es_strip_lexvar_lhs (es: entail_state) : context =
-    let _, pure_f, _, _, _, _ = split_components es.es_formula in
+    let _, pure_f, _, _, _ = split_components es.es_formula in
     let (lexvar, other_p) = strip_lexvar_mix_formula pure_f in
     (* Using transform_formula to update the pure part of es_f *)
     let f_e_f _ = None in
@@ -920,7 +940,7 @@ let rec phase_constr_of_formula_list (fl: CP.formula list) : phase_constr list =
   
 and phase_constr_of_formula (f: CP.formula) : phase_constr option =
   match f with
-  | CP.BForm (bf, _, _) -> phase_constr_of_b_formula bf
+  | CP.BForm (bf, _) -> phase_constr_of_b_formula bf
   | _ -> None 
 
 and phase_constr_of_b_formula (bf: CP.b_formula) : phase_constr option =

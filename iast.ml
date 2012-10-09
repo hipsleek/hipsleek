@@ -210,7 +210,6 @@ and assign_op =
 (* An Hoa : v[i] where v is an identifier and i is an expression *)
 and exp_arrayat = { exp_arrayat_array_base : exp; (* An Hoa : modified from a single ident to exp to support expressions like x.A[i] for a data structure that has an array as a field *)
 					exp_arrayat_index : exp list; (* An Hoa : allow multi-dimensional arrays *)
-          exp_arrayat_origin : formula_origin option;
 					exp_arrayat_pos : loc; }
 
 (* (\* An Hoa : array memory allocation expression *\) *)
@@ -221,49 +220,41 @@ and exp_arrayat = { exp_arrayat_array_base : exp; (* An Hoa : modified from a si
 (* An Hoa : array memory allocation expression *)
 and exp_aalloc = { exp_aalloc_etype_name : ident; (* Name of the base element *)
 	     exp_aalloc_dimensions : exp list; (* List of size for each dimensions *)
-       exp_aalloc_origin : formula_origin option;
 			 exp_aalloc_pos : loc; }
 
 and exp_assert = { exp_assert_asserted_formula : (F.struc_formula*bool) option;
 		   exp_assert_assumed_formula : F.formula option;
 		   exp_assert_path_id : formula_label;
-       exp_assert_origin : formula_origin option;
 		   exp_assert_pos : loc }
 
 and exp_assign = { exp_assign_op : assign_op;
 		   exp_assign_lhs : exp;
 		   exp_assign_rhs : exp;
 		   exp_assign_path_id : control_path_id;
-       exp_assign_origin : formula_origin option;
 		   exp_assign_pos : loc }
 
 and exp_binary = { exp_binary_op : bin_op;
 		   exp_binary_oper1 : exp;
 		   exp_binary_oper2 : exp;
 		   exp_binary_path_id : control_path_id;
-       exp_binary_origin : formula_origin option;
 		   exp_binary_pos : loc }
 
 and exp_bind = { exp_bind_bound_var : ident;
 		 exp_bind_fields : ident list;
 		 exp_bind_body : exp;
 		 exp_bind_path_id : control_path_id;
-     exp_bind_origin : formula_origin option;
 		 exp_bind_pos : loc }
     
 and exp_break = { exp_break_jump_label : jump_label_type;
 		  exp_break_path_id : control_path_id;
-      exp_break_origin : formula_origin option;
 		  exp_break_pos : loc }	
 
 and exp_block = { exp_block_body : exp;
 		  exp_block_jump_label : jump_label_type;
 		  exp_block_local_vars: (ident*typ*loc) list;
-      exp_block_origin : formula_origin option;
 		  exp_block_pos : loc }
 
 and exp_bool_lit = { exp_bool_lit_val : bool;
-         exp_bool_origin : formula_origin option;
 		     exp_bool_lit_pos : loc }
 			 
 and exp_barrier = {exp_barrier_recv : ident; exp_barrier_pos : loc}
@@ -272,14 +263,12 @@ and exp_call_nrecv = { exp_call_nrecv_method : ident;
                exp_call_nrecv_lock : ident option;
 		       exp_call_nrecv_arguments : exp list;
 		       exp_call_nrecv_path_id : control_path_id;
-           exp_call_nrecv_origin : formula_origin option;
 		       exp_call_nrecv_pos : loc }
 
 and exp_call_recv = { exp_call_recv_receiver : exp;
 		      exp_call_recv_method : ident;
 		      exp_call_recv_arguments : exp list;
 		      exp_call_recv_path_id : control_path_id;
-          exp_call_recv_origin : formula_origin option;
 		      exp_call_recv_pos : loc }
 
 and exp_catch = { exp_catch_var : ident option ;
@@ -287,60 +276,48 @@ and exp_catch = { exp_catch_var : ident option ;
 		  exp_catch_alt_var_type : typ option; 
 		  exp_catch_flow_var : ident option;
 		  exp_catch_body : exp;											   
-      exp_catch_origin : formula_origin option;
 		  exp_catch_pos : loc }
     
 and exp_cast = { exp_cast_target_type : typ;
 		 exp_cast_body : exp;
-     exp_cast_origin : formula_origin option;
 		 exp_cast_pos : loc }
 
 and exp_cond = { exp_cond_condition : exp;
 		 exp_cond_then_arm : exp;
 		 exp_cond_else_arm : exp;
 		 exp_cond_path_id : control_path_id;
-     exp_cond_origin : formula_origin option;
 		 exp_cond_pos : loc }
 
 and exp_const_decl = { exp_const_decl_type : typ;
 		       exp_const_decl_decls : (ident * exp * loc) list;
-           exp_const_decl_origin : formula_origin option;
 		       exp_const_decl_pos : loc }
 
 and exp_continue = { exp_continue_jump_label : jump_label_type;
 		     exp_continue_path_id : control_path_id;
-         exp_continue_origin : formula_origin option;
 		     exp_continue_pos : loc }
     
 and exp_debug = { exp_debug_flag : bool;
-      exp_debug_origin : formula_origin option;
 		  exp_debug_pos : loc }
 
 and exp_finally = { exp_finally_body : exp;
-        exp_finally_origin : formula_origin option;
 		    exp_finally_pos : loc }
 
 and exp_float_lit = { exp_float_lit_val : float;
-          exp_float_lit_origin : formula_origin option;
 		      exp_float_lit_pos : loc }
 
 and exp_int_lit = { exp_int_lit_val : int;
-        exp_int_lit_origin : formula_origin option;
 		    exp_int_lit_pos : loc }
 
 and exp_java = { exp_java_code : string;
-     exp_java_origin : formula_origin option;
 		 exp_java_pos : loc }
 
 and exp_member = { exp_member_base : exp;
 		   exp_member_fields : ident list;
 		   exp_member_path_id : control_path_id;
-       exp_member_origin : formula_origin option;
 		   exp_member_pos : loc }
 
 and exp_new = { exp_new_class_name : ident;
 		exp_new_arguments : exp list;
-    exp_new_origin : formula_origin option;
 		exp_new_pos : loc }
 
 and exp_raise = { exp_raise_type : rise_type;
@@ -348,27 +325,22 @@ and exp_raise = { exp_raise_type : rise_type;
 		  exp_raise_from_final :bool; (*if so the result can have any type...*)
 		  exp_raise_use_type : bool; 
 		  exp_raise_path_id : control_path_id;
-      exp_raise_origin : formula_origin option;
 		  exp_raise_pos : loc }
     
 and exp_return = { exp_return_val : exp option;
 		   exp_return_path_id : control_path_id;
-       exp_return_origin : formula_origin option;
 		   exp_return_pos : loc }
 
 and exp_seq = { exp_seq_exp1 : exp;
 		exp_seq_exp2 : exp;
-    exp_seq_origin : formula_origin option;
 		exp_seq_pos : loc }
 
-and exp_this = {exp_this_origin : formula_origin option;
-                exp_this_pos : loc }
+and exp_this = { exp_this_pos : loc }
 
 and exp_try = { exp_try_block : exp;
 		exp_catch_clauses : exp list;
 		exp_finally_clause : exp list;
 		exp_try_path_id : control_path_id;
-    exp_try_origin : formula_origin option;
 		exp_try_pos : loc}
 
 (*and exp_throw = { exp_throw_type : ident;
@@ -377,16 +349,13 @@ and exp_try = { exp_try_block : exp;
 and exp_unary = { exp_unary_op : uni_op;
 		  exp_unary_exp : exp;
 		  exp_unary_path_id : control_path_id;
-      exp_unary_origin : formula_origin option;
 		  exp_unary_pos : loc }
 
 and exp_var = { exp_var_name : ident;
-    exp_var_origin : formula_origin option;
 		exp_var_pos : loc }
 
 and exp_var_decl = { exp_var_decl_type : typ;
                      exp_var_decl_decls : (ident * exp option * loc) list;
-                     exp_var_decl_origin : formula_origin option;
                      exp_var_decl_pos : loc }
 
 and exp_while = { exp_while_condition : exp;
@@ -398,16 +367,13 @@ and exp_while = { exp_while_condition : exp;
 		  exp_while_wrappings: (exp*ident) option;
 		  (*used temporary to store the break wrappers, these wrappers are catch clauses which will
 		    wrap the method so that it catches and converts the break flows with target jump_label_type*)
-      exp_while_origin : formula_origin option;
 		  exp_while_pos : loc }
 
 and exp_dprint = { exp_dprint_string : string;
-      exp_dprint_origin : formula_origin option;
-      exp_dprint_pos : loc }
+		   exp_dprint_pos : loc }
 
 and exp_unfold = { exp_unfold_var : (string * primed);
-      exp_unfold_origin : formula_origin option;
-      exp_unfold_pos : loc } 
+		   exp_unfold_pos : loc } 
 
 and exp =
 	| ArrayAt of exp_arrayat (* An Hoa *)
@@ -434,7 +400,7 @@ and exp =
   | Finally of exp_finally
   | IntLit of exp_int_lit
   | Java of exp_java
-  | Label of ((control_path_id * path_label) * (formula_origin option) * exp)
+  | Label of ((control_path_id * path_label) * exp)
   | Member of exp_member
   | New of exp_new
   | Null of loc
@@ -545,7 +511,7 @@ let is_var (e : exp) : bool = match e with
   
 let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | ArrayAt e -> e.exp_arrayat_pos (* An oa *)
-  | Label (_,_,e) -> get_exp_pos e
+  | Label (_,e) -> get_exp_pos e
   | Assert e -> e.exp_assert_pos
   | Assign e -> e.exp_assign_pos
   | Binary e -> e.exp_binary_pos
@@ -707,11 +673,10 @@ let mkProc id n dd c ot ags r ss ds pos bd=
       proc_file = !input_file_name;
 		  proc_body = bd }	
 
-let mkAssert asrtf assmf pid ori pos =
+let mkAssert asrtf assmf pid pos =
       Assert { exp_assert_asserted_formula = asrtf;
                exp_assert_assumed_formula = assmf;
                exp_assert_path_id = pid;
-               exp_assert_origin = ori;
                exp_assert_pos = pos }
       
 let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b) (comb_f: exp -> 'a list -> 'a) : (exp * 'a) =
@@ -785,9 +750,9 @@ let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->e
 	      | Finally b ->
 		        let e1,r1 = helper n_arg b.exp_finally_body in
 		        (Finally {b with exp_finally_body=e1},r1)
-          | Label (l,ori,b) -> 
+          | Label (l,b) -> 
                 let e1,r1 = helper n_arg b in
-                (Label (l,ori,e1),r1)
+                (Label (l,e1),r1)
           | Member b -> 
                 let e1,r1 = helper n_arg b.exp_member_base in
                 (Member {b with exp_member_base = e1;},r1)
@@ -1265,90 +1230,73 @@ and contains_field_ho (e:exp) : bool =
  
 (* smart constructors *)
 
-let mkConstDecl t d o p = ConstDecl { exp_const_decl_type = t;
+let mkConstDecl t d p = ConstDecl { exp_const_decl_type = t;
 									exp_const_decl_decls = d;
-                  exp_const_decl_origin = o;
 									exp_const_decl_pos = p }
 
-and mkVarDecl t d o p = VarDecl { exp_var_decl_type = t;
+and mkVarDecl t d p = VarDecl { exp_var_decl_type = t;
 								exp_var_decl_decls = d;
-                exp_var_decl_origin = o;
 								exp_var_decl_pos = p }
 
-and mkGlobalVarDecl t d o p = { exp_var_decl_type = t;
+and mkGlobalVarDecl t d p = { exp_var_decl_type = t;
 							  exp_var_decl_decls = d;
-                exp_var_decl_origin = o;
 							  exp_var_decl_pos = p }
 
-and mkLogicalVarDecl t d o p = {
+and mkLogicalVarDecl t d p = {
   exp_var_decl_type = t;
 	exp_var_decl_decls = d;
-  exp_var_decl_origin = o;
 	exp_var_decl_pos = p 
 }
 
-and mkSeq e1 e2 o l = match e1 with
+and mkSeq e1 e2 l = match e1 with
   | Empty _ -> e2
   | _ -> match e2 with
 	  | Empty _ -> e1
 	  | _ -> Seq { exp_seq_exp1 = e1;
 				   exp_seq_exp2 = e2;
-           exp_seq_origin = o;
 				   exp_seq_pos = l }
 
-and mkAssign op lhs rhs ori pos = Assign { exp_assign_op = op;
+and mkAssign op lhs rhs pos = Assign { exp_assign_op = op;
                                        exp_assign_lhs = lhs;
                                        exp_assign_rhs = rhs;
                                        exp_assign_path_id = (fresh_branch_point_id "") ;
-                                       exp_assign_origin = ori;
                                        exp_assign_pos = pos }
 
-and mkBinary op oper1 oper2 ori pos = Binary { exp_binary_op = op;
+and mkBinary op oper1 oper2 pos = Binary { exp_binary_op = op;
                                            exp_binary_oper1 = oper1;
                                            exp_binary_oper2 = oper2;
                                            exp_binary_path_id = (fresh_branch_point_id "") ;
-                                           exp_binary_origin = ori;
                                            exp_binary_pos = pos }
 
-and mkUnary op oper ori pos = Unary { exp_unary_op = op;
+and mkUnary op oper pos = Unary { exp_unary_op = op;
                                   exp_unary_exp = oper;
                                   exp_unary_path_id = (fresh_branch_point_id "") ;
-                                  exp_unary_origin = ori;
                                   exp_unary_pos = pos }
 
-and mkRaise ty usety rval final pid ori pos= Raise { exp_raise_type = ty ;
+and mkRaise ty usety rval final pid pos= Raise { exp_raise_type = ty ;
 										   exp_raise_val = rval;
 										   exp_raise_from_final = final;
 										   exp_raise_use_type = usety;
 										   exp_raise_path_id = pid;
-                       exp_raise_origin = ori;
 										   exp_raise_pos = pos;}
-
-and mkCatch var var_type fl_type fl_var body ori pos = Catch{  exp_catch_var = var; 
+and mkCatch var var_type fl_type fl_var body pos = Catch{  exp_catch_var = var; 
 												  exp_catch_flow_type = fl_type;
 												  exp_catch_alt_var_type = var_type ; 
 												  exp_catch_flow_var = fl_var;
-												  exp_catch_body = body;
-                          exp_catch_origin = ori;
+												  exp_catch_body = body; 
 												  exp_catch_pos = pos}
-
-and mkTry body catch finally pid ori pos = Try{ exp_try_block = body;
+				
+and mkTry body catch finally pid pos = Try{ exp_try_block = body;
 											exp_catch_clauses = catch;
 											exp_finally_clause = finally;
 											exp_try_path_id = pid;
-                      exp_try_origin = ori;
 											exp_try_pos = pos;}
 
-and mkVar name ori pos= Var {exp_var_name = name; exp_var_origin = ori; exp_var_pos = pos;}
+and mkVar name pos= Var {exp_var_name = name; exp_var_pos = pos;}
 
 (*and mkSeq f1 f2 pos = Seq {exp_seq_exp1 = f1; exp_seq_exp2 = f2; exp_seq_pos = pos;}*)
 
-and mkBlock body lbl local_vars ori pos = Block {
-  exp_block_body = body;
-  exp_block_jump_label = lbl;
-  exp_block_local_vars = local_vars;
-  exp_block_origin = ori;
-  exp_block_pos = pos}
+and mkBlock body lbl local_vars pos = Block {exp_block_body = body; exp_block_jump_label = lbl; exp_block_local_vars = local_vars; exp_block_pos = pos}
 								  
 (*************************************************************)
 (* Building the graph representing the class hierarchy       *)
@@ -1483,156 +1431,113 @@ let rec label_e e =
     | Label _ -> None
     | _ -> Some (helper2 e)
   and helper2 e = match e with
-    | Assert e ->
-        let (_, s) = e.exp_assert_path_id in
-        let nl = fresh_formula_label s in
-        iast_label_table:= (Some nl,"assert",[],e.exp_assert_pos) ::!iast_label_table;
-        Assert {e with exp_assert_path_id = nl }
+    | Assert e -> 
+		  let nl = fresh_formula_label (snd e.exp_assert_path_id) in
+		  iast_label_table:= (Some nl,"assert",[],e.exp_assert_pos) ::!iast_label_table;
+		  Assert {e with exp_assert_path_id = nl }
     | Assign e -> 
-        let (_, s) = match e.exp_assign_path_id with 
-                         | Some lbl -> lbl 
-                         | None -> (0, "") in
-        let nl = fresh_branch_point_id s in
-        iast_label_table:= (nl,"assign",[],e.exp_assign_pos) ::!iast_label_table;
-        Assign {e with 
-          exp_assign_lhs = label_e e.exp_assign_lhs;
-          exp_assign_rhs = label_e e.exp_assign_rhs;
-          exp_assign_path_id = nl;}
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"assign",[],e.exp_assign_pos) ::!iast_label_table;
+		  Assign {e with 
+			  exp_assign_lhs = label_e e.exp_assign_lhs;
+			  exp_assign_rhs = label_e e.exp_assign_rhs;
+			  exp_assign_path_id = nl;}
     | Binary e -> 
-        let (_, s) = match e.exp_binary_path_id with 
-                         | Some lbl -> lbl 
-                         | None -> (0, "") in
-        let nl = fresh_branch_point_id s in
-        iast_label_table:= (nl,"binary",[],e.exp_binary_pos) ::!iast_label_table;
-        Binary{e with
-          exp_binary_oper1 = label_e e.exp_binary_oper1;
-          exp_binary_oper2 = label_e e.exp_binary_oper2;
-          exp_binary_path_id = nl;}
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"binary",[],e.exp_binary_pos) ::!iast_label_table;
+		  Binary{e with
+			  exp_binary_oper1 = label_e e.exp_binary_oper1;
+			  exp_binary_oper2 = label_e e.exp_binary_oper2;
+			  exp_binary_path_id = nl;}
     | Bind e -> 
-        let (_, s) = match e.exp_bind_path_id with 
-                         | Some lbl -> lbl 
-                         | None -> (0, "") in
-        let nl = fresh_branch_point_id s in
-        iast_label_table:= (nl,"bind",[],e.exp_bind_pos) ::!iast_label_table;
-        Bind {e with
-          exp_bind_body = label_e e.exp_bind_body;
-          exp_bind_path_id  = nl;}
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"bind",[],e.exp_bind_pos) ::!iast_label_table;
+		  Bind {e with
+ 			  exp_bind_body = label_e e.exp_bind_body;
+			  exp_bind_path_id  = nl;}
     | Break e -> 
-        let (_, s) = match e.exp_break_path_id with 
-                         | Some lbl -> lbl 
-                         | None -> (0, "") in
-        let nl = fresh_branch_point_id s in
-        iast_label_table:= (nl,"break",[],e.exp_break_pos) ::!iast_label_table;
-        Break{ e with exp_break_path_id = nl;}  
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"break",[],e.exp_break_pos) ::!iast_label_table;
+		  Break{ e with exp_break_path_id = nl;}  
     | CallRecv e -> 
-        let (_, s) = match e.exp_call_recv_path_id with 
-                         | Some lbl -> lbl 
-                         | None -> (0, "") in
-        let nl = fresh_branch_point_id s in
-        iast_label_table:= (nl,"callRecv",[],e.exp_call_recv_pos) ::!iast_label_table;
-        CallRecv {e with
-          exp_call_recv_receiver = label_e e.exp_call_recv_receiver;
-          exp_call_recv_arguments  = List.map label_e e.exp_call_recv_arguments;
-          exp_call_recv_path_id = nl;}
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"callRecv",[],e.exp_call_recv_pos) ::!iast_label_table;
+		  CallRecv {e with
+			  exp_call_recv_receiver = label_e e.exp_call_recv_receiver;
+			  exp_call_recv_arguments  = List.map label_e e.exp_call_recv_arguments;
+			  exp_call_recv_path_id = nl;}
     | CallNRecv e -> 
-        let (_, s) = match e.exp_call_nrecv_path_id with 
-                         | Some lbl -> lbl 
-                         | None -> (0, "") in
-        let nl = fresh_branch_point_id s in
-        iast_label_table:= (nl,"callNRecv",[],e.exp_call_nrecv_pos) ::!iast_label_table;
-        CallNRecv { e with 
-          exp_call_nrecv_arguments =  List.map label_e e.exp_call_nrecv_arguments;
-          exp_call_nrecv_path_id = nl;}
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"callNRecv",[],e.exp_call_nrecv_pos) ::!iast_label_table;
+		  CallNRecv { e with 
+			  exp_call_nrecv_arguments =  List.map label_e e.exp_call_nrecv_arguments;
+			  exp_call_nrecv_path_id = nl;}
     | Cond e -> 
-        let (_, s) = match e.exp_cond_path_id with 
-                         | Some lbl -> lbl 
-                         | None -> (0, "") in
-        let nl = fresh_branch_point_id s in
-        let then_pos = get_exp_pos e.exp_cond_then_arm in
-        let else_pos = get_exp_pos e.exp_cond_else_arm in
-        iast_label_table:= (nl,"cond",[(nl,0,then_pos);(nl,1,else_pos)],e.exp_cond_pos) ::!iast_label_table;
-        Cond {e with 
-          exp_cond_condition = label_e e.exp_cond_condition;
-          exp_cond_then_arm  = Label ((nl,0),e.exp_cond_origin,(label_e e.exp_cond_then_arm));
-          exp_cond_else_arm  = Label ((nl,1),e.exp_cond_origin,(label_e e.exp_cond_else_arm));
-          exp_cond_path_id =nl;}
+		  let nl = fresh_branch_point_id "" in
+      let then_pos = get_exp_pos e.exp_cond_then_arm in
+      let else_pos = get_exp_pos e.exp_cond_else_arm in
+		  iast_label_table:= (nl,"cond",[(nl,0,then_pos);(nl,1,else_pos)],e.exp_cond_pos) ::!iast_label_table;
+		  Cond {e with 
+			  exp_cond_condition = label_e e.exp_cond_condition;
+			  exp_cond_then_arm  = Label ((nl,0),(label_e e.exp_cond_then_arm));
+			  exp_cond_else_arm  = Label ((nl,1),(label_e e.exp_cond_else_arm));
+			  exp_cond_path_id =nl;}
     | Continue e -> 
-        let (_, s) = match e.exp_continue_path_id with 
-                         | Some lbl -> lbl 
-                         | None -> (0, "") in
-        let nl = fresh_branch_point_id s in
-        iast_label_table:= (nl,"continue",[],e.exp_continue_pos) ::!iast_label_table;
-        Continue {e with  exp_continue_path_id = nl;}
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"continue",[],e.exp_continue_pos) ::!iast_label_table;
+		  Continue {e with  exp_continue_path_id = nl;}
     | Member e -> 
-        let (_, s) = match e.exp_member_path_id with 
-                         | Some lbl -> lbl 
-                         | None -> (0, "") in
-        let nl = fresh_branch_point_id s in
-        iast_label_table:= (nl,"member",[],e.exp_member_pos) ::!iast_label_table;
-        Member {e with
-          exp_member_base = label_e e.exp_member_base;
-          exp_member_path_id = nl;}  
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"member",[],e.exp_member_pos) ::!iast_label_table;
+		  Member {e with
+			  exp_member_base = label_e e.exp_member_base;
+			  exp_member_path_id = nl;}  
     | Raise e -> 
-        let (_, s) = match e.exp_raise_path_id with 
-                         | Some lbl -> lbl 
-                         | None -> (0, "") in
-        let nl = fresh_branch_point_id s in
-        iast_label_table:= (nl,"raise",[],e.exp_raise_pos) ::!iast_label_table;
-        Raise {e with
-            exp_raise_val = 
-              (match e.exp_raise_val with 
-              | None -> None 
-              | Some s-> Some (label_e s));
-            exp_raise_path_id = nl;}  
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"raise",[],e.exp_raise_pos) ::!iast_label_table;
+		  Raise {e with
+		      exp_raise_val = 
+			      (match e.exp_raise_val with 
+				    | None -> None 
+				    | Some s-> Some (label_e s));
+		      exp_raise_path_id = nl;}  
     | Return e -> 
-        let (_, s) = match e.exp_return_path_id with 
-                         | Some lbl -> lbl 
-                         | None -> (0, "") in
-        let nl = fresh_branch_point_id s in
-        iast_label_table:= (nl,"return",[],e.exp_return_pos) ::!iast_label_table;
-        Return{ e with
-          exp_return_val = (match e.exp_return_val with | None -> None | Some s-> Some (label_e s));
-          exp_return_path_id = nl;}  
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"return",[],e.exp_return_pos) ::!iast_label_table;
+		  Return{ e with
+			  exp_return_val = (match e.exp_return_val with | None -> None | Some s-> Some (label_e s));
+			  exp_return_path_id = nl;}  
     | Try e -> 
-        let (_, s) = match e.exp_try_path_id with 
-                         | Some lbl -> lbl 
-                         | None -> (0, "") in
-        let nl = fresh_branch_point_id s in
-        let rec lbl_list_constr id cclauses = match cclauses with
-          | [] -> []
-          | exp::rest -> (nl, id, get_exp_pos exp)::(lbl_list_constr (id+1) rest)
-        in
-        iast_label_table:= (nl,"try",(lbl_list_constr 0 e.exp_catch_clauses),e.exp_try_pos)::!iast_label_table;
-        let lbl_c n d = 
-        let d = get_catch_of_exp d in
-        Catch {d with	exp_catch_body = Label((nl,n),e.exp_try_origin,label_e d.exp_catch_body);} in
-        Try {e with
-          exp_try_block = label_e e.exp_try_block;
-          exp_try_path_id = nl;
-          exp_catch_clauses  = (fst (List.fold_left (fun (a,c) d-> ((lbl_c c d)::a, c+1)) ([],0) e.exp_catch_clauses));
-          exp_finally_clause = List.map label_e e.exp_finally_clause;}
+		  let nl = fresh_branch_point_id "" in
+      let rec lbl_list_constr id cclauses = match cclauses with
+        | [] -> []
+        | exp::rest -> (nl, id, get_exp_pos exp)::(lbl_list_constr (id+1) rest)
+      in
+		  iast_label_table:= (nl,"try",(lbl_list_constr 0 e.exp_catch_clauses),e.exp_try_pos)::!iast_label_table;
+		  let lbl_c n d = 
+			let d = get_catch_of_exp d in
+			Catch {d with	exp_catch_body = Label((nl,n),label_e d.exp_catch_body);} in
+		  Try {e with
+			  exp_try_block = label_e e.exp_try_block;
+			  exp_try_path_id = nl;
+			  exp_catch_clauses  = (fst (List.fold_left (fun (a,c) d-> ((lbl_c c d)::a, c+1)) ([],0) e.exp_catch_clauses));
+			  exp_finally_clause = List.map label_e e.exp_finally_clause;}
     | Unary e -> 
-        let (_, s) = match e.exp_unary_path_id with 
-                         | Some lbl -> lbl 
-                         | None -> (0, "") in
-        let nl = fresh_branch_point_id s in
-        iast_label_table:= (nl,"unary",[],e.exp_unary_pos) ::!iast_label_table;
-        Unary{ e with
-          exp_unary_exp = label_e e.exp_unary_exp;
-          exp_unary_path_id = nl;}  		
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"unary",[],e.exp_unary_pos) ::!iast_label_table;
+		  Unary{ e with
+			  exp_unary_exp = label_e e.exp_unary_exp;
+			  exp_unary_path_id = fresh_branch_point_id "";}  		
     | While e -> 
-        let (_, s) = match e.exp_while_path_id with 
-                         | Some lbl -> lbl 
-                         | None -> (0, "") in
-        let nl = fresh_branch_point_id s in
-        iast_label_table:= (nl,"while",[],e.exp_while_pos) ::!iast_label_table;
-        While {e with
-          exp_while_condition = label_e e.exp_while_condition;
-          exp_while_body = label_e e.exp_while_body;
-          exp_while_path_id = nl;
-          exp_while_wrappings = match e.exp_while_wrappings with | None -> None | Some (s,l)-> Some (label_e s,l);}  
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"while",[],e.exp_while_pos) ::!iast_label_table;
+		  While {e with
+			  exp_while_condition = label_e e.exp_while_condition;
+			  exp_while_body = label_e e.exp_while_body;
+			  exp_while_path_id = nl;
+			  exp_while_wrappings = match e.exp_while_wrappings with | None -> None | Some (s,l)-> Some (label_e s,l);}  
     | _ -> Error.report_error   
-        {Err.error_loc = get_exp_pos e; Err.error_text = "exp not considered in label_e yet"}  
+      {Err.error_loc = get_exp_pos e; Err.error_text = "exp not considered in label_e yet"}  
   in map_exp e helper
 
 (* This method adds (label,name,branches,loc) to iast_lable_table.
@@ -2027,12 +1932,12 @@ let gen_normalize_lemma_comb ddef =
  let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
  let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
  let args1,args2 = List.split (List.map (fun _-> fresh () ,fresh ()) ddef.data_fields) in
- let pure = List.fold_left2 (fun a c1 c2 -> P.And (a,P.BForm ((P.Eq (c1,c2,no_pos),None),None,None), no_pos)) (P.BForm ((P.Eq (perm3,P.Add (perm1,perm2,no_pos),no_pos),None),None,None)) args1 args2 in
+ let pure = List.fold_left2 (fun a c1 c2 -> P.And (a,P.BForm ((P.Eq (c1,c2,no_pos),None),None), no_pos)) (P.BForm ((P.Eq (perm3,P.Add (perm1,perm2,no_pos),no_pos),None),None)) args1 args2 in
  {coercion_type = Left;
   coercion_name = lem_name;
   coercion_head = F.formula_of_heap_1 (F.mkStar (gennode perm1 args1) (gennode perm2 args2) no_pos) no_pos;
-  coercion_body = F.mkBase (gennode perm3 args1) pure  top_flow [] None no_pos;
-  coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_origin = None; exp_return_pos = no_pos }
+  coercion_body = F. mkBase (gennode perm3 args1) pure  top_flow [] no_pos;
+  coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos }
  }
  
  let gen_normalize_lemma_split ddef = 
@@ -2042,13 +1947,13 @@ let gen_normalize_lemma_comb ddef =
  let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
  let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
  let args = List.map (fun _-> fresh ()) ddef.data_fields in
- let pure = P.BForm ((P.Eq (perm3,P.Add (perm1,perm2,no_pos),no_pos),None),None,None) in
+ let pure = P.BForm ((P.Eq (perm3,P.Add (perm1,perm2,no_pos),no_pos),None),None) in
  {coercion_type = Left;
   coercion_name = lem_name;
-  coercion_head = F.mkBase (gennode perm3 args) pure  top_flow [] None no_pos;
+  coercion_head = F.mkBase (gennode perm3 args) pure  top_flow [] no_pos;
   coercion_body = F.formula_of_heap_1 (F.mkStar (gennode perm1 args) (gennode perm2 args) no_pos) no_pos;
   
-  coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_origin = None; exp_return_pos = no_pos }
+  coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos }
  }
 	
 let add_normalize_lemmas prog4 = 

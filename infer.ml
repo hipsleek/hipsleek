@@ -17,7 +17,7 @@ module TP = Tpdispatcher
 
 (************************************************)
 let keep_dist f = match f with
-  | BForm ((Eq(e1,e2,_),_),_,_) ->  not((eqExp_f eq_spec_var e1 e2) || (is_null e1 && (is_null_const_exp e2)) || ((is_null_const_exp e1) && is_null e2)) 
+  | BForm ((Eq(e1,e2,_),_),_) ->  not((eqExp_f eq_spec_var e1 e2) || (is_null e1 && (is_null_const_exp e2)) || ((is_null_const_exp e1) && is_null e2)) 
   | _ -> true
 
 let simplify_conjs f =
@@ -292,7 +292,7 @@ let get_args_h_formula aset (h:h_formula) =
   Debug.no_1 "get_args_h_formula" pr1 pr2 (fun _ -> get_args_h_formula aset h) h
 
 let get_alias_formula (f:CF.formula) =
-  let (h, p, fl, t, a, fo) = split_components f in
+  let (h, p, fl, t, a) = split_components f in
   let eqns = (MCP.ptr_equations_without_null p) in
   eqns
 
@@ -383,7 +383,7 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
                     (* replace with new root name *)
                     set_node_var new_r inf_rhs 
                 in
-                let lhs_h,_,_,_,_,_ = CF.split_components es.es_formula in
+                let lhs_h,_,_,_,_ = CF.split_components es.es_formula in
                 DD.devel_pprint ">>>>>> infer_heap_nodes <<<<<<" pos;
                 DD.devel_hprint (add_str "unmatch RHS : " !print_h_formula) rhs pos;
                 DD.devel_hprint (add_str "orig inf vars : " !print_svl) iv pos;
@@ -425,8 +425,8 @@ let infer_heap_nodes (es:entail_state) (rhs:h_formula) rhs_rest conseq pos =
 (* may involve a weakening process *)
 let rec filter_var f vars = 
   match f with
-  | CP.Or (f1,f2,l,fo,p) -> 
-        CP.Or (filter_var f1 vars, filter_var f2 vars, l, fo, p)
+  | CP.Or (f1,f2,l,p) -> 
+        CP.Or (filter_var f1 vars, filter_var f2 vars, l, p)
   | _ -> if TP.is_sat_raw (MCP.mix_of_pure f) && CP.get_Neg_RelForm f = [] then CP.filter_var (CP.drop_rel_formula f) vars else CP.mkFalse no_pos
 (*        let flag = TP.is_sat_raw f                                 *)
 (*          try                                                      *)
@@ -443,7 +443,7 @@ let filter_var f vars =
   Debug.no_2 "i.filter_var" pr !print_svl pr filter_var f vars 
 
 let simplify_helper f = match f with
-  | BForm ((Neq _,_),_,_) -> f
+  | BForm ((Neq _,_),_) -> f
   | Not _ -> f
   | _ -> TP.simplify_raw f
 
@@ -463,16 +463,16 @@ let helper fml lhs_rhs_p weaken_flag =
       let args = CP.fv new_fml in
       let iv = CP.fv fml in
       let quan_var = CP.diff_svl args iv in
-      CP.mkExists_with_simpl TP.simplify_raw quan_var new_fml None None no_pos)
+      CP.mkExists_with_simpl TP.simplify_raw quan_var new_fml None no_pos)
   else CP.mkFalse no_pos
 
 let rec simplify_disjs_x pf lhs_rhs weaken_flag =
   match pf with
   | BForm _ -> if CP.isConstFalse pf then pf else helper pf lhs_rhs weaken_flag
   | And _ -> helper pf lhs_rhs weaken_flag
-  | Or (f1,f2,l,fo,p) -> mkOr (simplify_disjs_x f1 lhs_rhs true) (simplify_disjs_x f2 lhs_rhs true) l fo p
-  | Forall (s,f,l,fo,p) -> Forall (s,simplify_disjs_x f lhs_rhs weaken_flag,l,fo,p)
-  | Exists (s,f,l,fo,p) -> Exists (s,simplify_disjs_x f lhs_rhs weaken_flag,l,fo,p)
+  | Or (f1,f2,l,p) -> mkOr (simplify_disjs_x f1 lhs_rhs true) (simplify_disjs_x f2 lhs_rhs true) l p
+  | Forall (s,f,l,p) -> Forall (s,simplify_disjs_x f lhs_rhs weaken_flag,l,p)
+  | Exists (s,f,l,p) -> Exists (s,simplify_disjs_x f lhs_rhs weaken_flag,l,p)
   | _ -> pf
 
 let simplify_disjs pf lhs_rhs =
@@ -496,7 +496,7 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
     if (over_v ==[]) then None
     else 
       let exists_var = CP.diff_svl vf ivars in
-      let f = simplify_helper (CP.mkExists exists_var f None None pos) in
+      let f = simplify_helper (CP.mkExists exists_var f None pos) in
       if CP.isConstTrue f || CP.isConstFalse f then None
       else 
         let neg_f = Redlog.negate_formula f in
@@ -684,7 +684,7 @@ let infer_pure_m_x_x estate lhs_rels lhs_xpure(* _orig *) (lhs_xpure0:MCP.mix_fo
            let _ = DD.trace_hprint (add_str "new_p4: " !CP.print_formula) new_p pos in 
            let args = CP.fv new_p in 
            let quan_var = CP.diff_svl args iv in 
-           (TP.simplify_raw (CP.mkExists quan_var new_p None None pos), mkFalse no_pos)
+           (TP.simplify_raw (CP.mkExists quan_var new_p None pos), mkFalse no_pos)
         else
           let lhs_xpure = CP.drop_rel_formula lhs_xpure in
           let _ = DD.trace_hprint (add_str "lhs_xpure: " !CP.print_formula) lhs_xpure pos  in
@@ -695,8 +695,8 @@ let infer_pure_m_x_x estate lhs_rels lhs_xpure(* _orig *) (lhs_xpure0:MCP.mix_fo
           let lhs_xpure = Cpure.add_ann_constraints imm_vrs lhs_xpure in
           let _ = DD.trace_hprint (add_str "lhs_xpure(w ann): " !CP.print_formula) lhs_xpure pos  in
           let new_p = TP.simplify_raw (CP.mkForall quan_var 
-            (CP.mkOr (CP.mkNot lhs_xpure None None no_pos) rhs_xpure None None pos) None None pos) in
-          let fml2 = TP.simplify_raw (CP.mkExists quan_var fml None None no_pos) in
+            (CP.mkOr (CP.mkNot_s lhs_xpure) rhs_xpure None pos) None pos) in
+          let fml2 = TP.simplify_raw (CP.mkExists quan_var fml None no_pos) in
           let new_p_for_assume = new_p in
           let _ = DD.trace_hprint (add_str "new_p_assume: " !CP.print_formula) new_p pos in
           let new_p2 = TP.simplify_raw (CP.mkAnd new_p fml2 no_pos) in
@@ -764,7 +764,7 @@ let infer_pure_m_x_x estate lhs_rels lhs_xpure(* _orig *) (lhs_xpure0:MCP.mix_fo
                   let args = CP.fv n_lhs3 in (* var on lhs *)
                   let quan_var = CP.diff_svl args vs_lhs in
                   let new_p = TP.simplify_raw (CP.mkForall quan_var 
-                      (CP.mkOr (CP.mkNot n_lhs3 None None no_pos) n_rhs None None pos) None None pos) in
+                      (CP.mkOr (CP.mkNot_s n_lhs3) n_rhs None pos) None pos) in
                   let trace = Debug.tinfo_hprint in
                   trace (add_str "f (rel)" !print_formula) f no_pos;
                   trace (add_str "vs_rel" !print_svl) vs_rel no_pos;
@@ -1248,7 +1248,7 @@ let rec create_alias_tbl svl keep_vars aset = match svl with
 
 (* Supposed fml to be Base _ *)
 let filter_var_heap keep_vars fml =
-  let _,pure,_,_,_,_ = CF.split_components fml in
+  let _,pure,_,_,_ = CF.split_components fml in
   let als = MCP.ptr_equations_without_null pure in
 (*  DD.info_hprint (add_str "ALS: " (pr_list (pr_pair !print_sv !print_sv))) als no_pos;*)
   let aset = CP.EMapSV.build_eset als in
@@ -1259,7 +1259,7 @@ let filter_var_heap keep_vars fml =
       List.map (fun v -> (v,hd)) (List.tl vars)) alias_tbl) in
 (*  DD.info_hprint (add_str "SUBS: " (pr_list (pr_pair !print_sv !print_sv))) subst_lst no_pos;*)
   let fml = CF.subst subst_lst fml in
-  let heap,_,_,_,_,_ = CF.split_components fml in
+  let heap,_,_,_,_ = CF.split_components fml in
   heap
 
 let infer_shape input = 

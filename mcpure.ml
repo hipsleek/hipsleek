@@ -36,7 +36,7 @@ let print_alias_set aset = EMapSV.string_of aset
 (* with const for get_equiv_eq + form_formula_eq *)
 (* converts an equiv set into a formula *)
 let fold_aset (f: var_aset) : formula = 
-  List.fold_left (fun a (c1, c2)->  mkAnd (form_formula_eq_with_const c1 c2 None) a no_pos) 
+  List.fold_left (fun a (c1, c2)->  mkAnd (form_formula_eq_with_const c1 c2) a no_pos) 
     (mkTrue no_pos) (get_equiv_eq_with_const f)
 
 let fold_aset (f: var_aset) : formula =
@@ -286,21 +286,21 @@ and is_bf_ptr_equations bf =
   | _ -> false
 
 and is_pure_ptr_equations f = match f with
-  | BForm (bf,_,_) -> is_bf_ptr_equations bf
+  | BForm (bf,_) -> is_bf_ptr_equations bf
   | _ -> false
 
 and remove_ptr_equations f is_or = match f with
-  | BForm (bf,_,_) -> 
+  | BForm (bf,_) -> 
     if is_bf_ptr_equations bf then 
       if is_or then mkFalse no_pos
       else mkTrue no_pos 
     else f
   | And (f1,f2,p) -> mkAnd (remove_ptr_equations f1 false) (remove_ptr_equations f2 false) p
   | AndList b -> mkAndList (map_l_snd (fun c-> remove_ptr_equations c false) b)
-  | Or (f1,f2,o,fo,p) -> mkOr (remove_ptr_equations f1 true) (remove_ptr_equations f2 true) o fo p
-  | Not (f,o,fo,p) -> Not (remove_ptr_equations f false,o,fo,p)
-  | Forall (v,f,o,fo,p) -> Forall (v,remove_ptr_equations f false,o,fo,p)
-  | Exists (v,f,o,fo,p) -> Exists (v,remove_ptr_equations f false,o,fo,p)
+  | Or (f1,f2,o,p) -> mkOr (remove_ptr_equations f1 true) (remove_ptr_equations f2 true) o p
+  | Not (f,o,p) -> Not (remove_ptr_equations f false,o,p)
+  | Forall (v,f,o,p) -> Forall (v,remove_ptr_equations f false,o,p)
+  | Exists (v,f,o,p) -> Exists (v,remove_ptr_equations f false,o,p)
 
 and pure_ptr_equations (f:formula) : (spec_var * spec_var) list = 
   pure_ptr_equations_aux true f
@@ -309,7 +309,7 @@ and pure_ptr_equations_aux_x with_null (f:formula) : (spec_var * spec_var) list 
   let rec prep_f f = match f with
     | And (f1, f2, pos) -> (prep_f f1) @ (prep_f f2)
 	| AndList b -> fold_l_snd prep_f b
-    | BForm (bf,_,_) -> b_f_ptr_equations_aux with_null bf
+    | BForm (bf,_) -> b_f_ptr_equations_aux with_null bf
     | _ -> [] in 
   prep_f f
 
@@ -322,7 +322,7 @@ and pure_ptr_equations_aux with_null (f:formula) : (spec_var * spec_var) list =
 and pure_bag_equations_aux_x with_emp (f:formula) : (spec_var * spec_var) list = 
   let rec prep_f f = match f with
     | And (f1, f2, pos) -> (prep_f f1) @ (prep_f f2)
-    | BForm (bf,_,_) -> b_f_bag_equations_aux with_emp bf
+    | BForm (bf,_) -> b_f_bag_equations_aux with_emp bf
     | _ -> [] 
   in prep_f f
 
@@ -389,7 +389,7 @@ and get_subst_equation_memo_formula (f0 : memo_pure) (v : spec_var) only_vars: (
 	    let acl_cons, ncl = List.fold_left (fun (a1,a2) c -> 
         if not(a1=[]) then (a1,c::a2)
 		    else 
-		      let r1,r2 = get_subst_equation_b_formula c.memo_formula v None None only_vars in
+		      let r1,r2 = get_subst_equation_b_formula c.memo_formula v None only_vars in
 		      if (r1=[]) then (a1,c::a2) else (r1,a2)) ([],[]) c.memo_group_cons 
       in
 	  
@@ -427,8 +427,8 @@ and memo_apply_one_exp (s:spec_var * exp) (mem:memoised_group list) : memo_pure 
 		else (add_equiv_eq_with_const a2 c1 c2)) empty_var_aset eqs)
     | None -> List.fold_left 
       (fun (a1,a2) (c1,c2) -> 
-        if (eq_spec_var c1 fr) then ((BForm ((Eq (conv_var_to_exp c2,t,no_pos), None),None,None))::a1,a2)
-        else if (eq_spec_var c2 fr) then ((BForm ((Eq (conv_var_to_exp c1,t,no_pos), None),None,None))::a1,a2)
+        if (eq_spec_var c1 fr) then ((BForm ((Eq (conv_var_to_exp c2,t,no_pos), None),None))::a1,a2)
+        else if (eq_spec_var c2 fr) then ((BForm ((Eq (conv_var_to_exp c1,t,no_pos), None),None))::a1,a2)
         else (a1,add_equiv_eq_with_const a2 c1 c2)) ([],empty_var_aset) eqs in
   let r = List.map (fun c -> 
 	let eqs = get_equiv_eq_with_const c.memo_group_aset in
@@ -483,10 +483,10 @@ and memo_is_member_pure p mm =
   List.exists (fun c-> 
 	  let r = (List.exists (is_member_pure p) c.memo_group_slice)||
 		(List.exists (fun d-> 
-			(match p with | BForm (r,_,_)-> equalBFormula_aset c.memo_group_aset r d.memo_formula | _ -> false)) c.memo_group_cons) in
+			(match p with | BForm (r,_)-> equalBFormula_aset c.memo_group_aset r d.memo_formula | _ -> false)) c.memo_group_cons) in
 	  if r then true
 	  else match p with
-		| BForm ((Eq(Var(v1,_),Var(v2,_),_),_),_,_) -> EMapSV.is_equiv c.memo_group_aset v1 v2
+		| BForm ((Eq(Var(v1,_),Var(v2,_),_),_), _) -> EMapSV.is_equiv c.memo_group_aset v1 v2
 		| _ -> false ) mm
 
 
@@ -528,8 +528,8 @@ and fold_slice_gen (mg : memoised_group) with_R with_P with_slice with_disj : fo
 	  | Implied_R -> with_R 
 	  | Implied_N -> true 
 	  | Implied_P-> with_P) mg.memo_group_cons in
-  let cons  = List.map (fun c -> (BForm (c.memo_formula, None, None))) cons in
-  let asetf = List.map (fun (c1,c2) -> form_formula_eq_with_const c1 c2 None) (get_equiv_eq_with_const mg.memo_group_aset) in
+  let cons  = List.map (fun c -> (BForm (c.memo_formula, None))) cons in
+  let asetf = List.map (fun (c1,c2) -> form_formula_eq_with_const c1 c2) (get_equiv_eq_with_const mg.memo_group_aset) in
   join_conjunctions (asetf @ slice @ cons)
   
 and fold_mem_lst_to_lst_gen_orig (mem:memo_pure) with_R with_P with_slice with_disj : formula list =				  
@@ -575,8 +575,8 @@ and fold_mem_lst_to_lst_gen_slicing (mem:memo_pure) with_R with_P with_slice wit
 	  | Implied_R -> with_R 
 	  | Implied_N -> true 
 	  | Implied_P-> with_P) mg.memo_group_cons in
-	let cons  = List.map (fun c -> (BForm (c.memo_formula, None, None))) cons in
-	let asetf = List.map (fun (c1,c2) -> form_formula_eq_with_const c1 c2 None) (get_equiv_eq_with_const mg.memo_group_aset) in
+	let cons  = List.map (fun c -> (BForm (c.memo_formula, None))) cons in
+	let asetf = List.map (fun (c1,c2) -> form_formula_eq_with_const c1 c2) (get_equiv_eq_with_const mg.memo_group_aset) in
 	join_conjunctions (asetf @ slice @ cons)  
 	) l_mg
   in
@@ -701,8 +701,8 @@ and fold_mem_lst_to_lst_gen_for_sat_slicing (mem:memo_pure) with_R with_P with_s
 	  | Implied_R -> with_R 
 	  | Implied_N -> true 
 	  | Implied_P-> with_P) mg.memo_group_cons in
-	let cons  = List.map (fun c -> (BForm (c.memo_formula, None, None))) cons in
-	let asetf = List.map (fun (c1,c2) -> form_formula_eq_with_const c1 c2 None) (get_equiv_eq_with_const mg.memo_group_aset) in
+	let cons  = List.map (fun c -> (BForm (c.memo_formula, None))) cons in
+	let asetf = List.map (fun (c1,c2) -> form_formula_eq_with_const c1 c2) (get_equiv_eq_with_const mg.memo_group_aset) in
 	join_conjunctions (asetf @ slice @ cons)  
 	) l_mg
   in
@@ -741,7 +741,7 @@ and fold_mem_lst (f_init:formula) with_dupl with_inv (lst:memo_pure) : formula =
 (* folds just the pruning constraints, ignores the memo_group_slice *) 
 and fold_mem_lst_cons init_cond lst with_dupl with_inv with_slice : formula = 
   (*fold_mem_lst_to_lst lst false true false*)
-  fold_mem_lst_gen (BForm (init_cond,None,None)) with_dupl with_inv with_slice true lst
+  fold_mem_lst_gen (BForm (init_cond,None)) with_dupl with_inv with_slice true lst
       
 and filter_useless_memo_pure (simp_fct:formula->formula) (simp_b:bool) 
       (fv:spec_var list) (c_lst:memo_pure) : memo_pure = 
@@ -777,7 +777,7 @@ and filter_merged_cons aset l =
 and mkOr_mems (l1: memo_pure) (l2: memo_pure) (*with_dupl with_inv*) : memo_pure = 
   let f1 = fold_mem_lst (mkTrue no_pos) false true l1 in
   let f2 = fold_mem_lst (mkTrue no_pos) false true l2 in
-  memoise_add_pure_N [] (mkOr f1 f2 None None no_pos)
+  memoise_add_pure_N [] (mkOr f1 f2 None no_pos)
       
 and combine_memo_branch b (f, l) =
   match b with 
@@ -898,21 +898,21 @@ and create_memo_group_wrapper (l1:b_formula list) status : memo_pure =
 		(fun s -> "") !print_mp_f create_memo_group_wrapper_a l1 status 
 	  
 and create_memo_group_wrapper_a (l1:b_formula list) status : memo_pure = 
-  let l = List.map (fun c -> (c, None, None)) l1 in
+  let l = List.map (fun c -> (c, None)) l1 in
   create_memo_group l [] status 
 
-and anon_partition (l1:(b_formula *(formula_label option) * (formula_origin option)) list) = 
-  List.fold_left (fun (a1,a2) (c1,c2,c3)-> 
-	  if (List.exists is_anon_var (bfv c1)) then (a1,(BForm (c1,c2,c3))::a2) else ((c1,c2,c3)::a1,a2)
+and anon_partition (l1:(b_formula *(formula_label option)) list) = 
+  List.fold_left (fun (a1,a2) (c1,c2)-> 
+	  if (List.exists is_anon_var (bfv c1)) then (a1,(BForm (c1,c2))::a2) else ((c1,c2)::a1,a2)
   ) ([],[]) l1
 
-and create_memo_group (l1:(b_formula * (formula_label option) * (formula_origin option)) list) (l2:formula list) (status:prune_status): memo_pure =
-  let pr1 = fun bl -> "[" ^ (List.fold_left (fun res (b,_,_) -> res ^ (!print_bf_f b)) "" bl) ^ "]" in
+and create_memo_group (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =
+  let pr1 = fun bl -> "[" ^ (List.fold_left (fun res (b,_) -> res ^ (!print_bf_f b)) "" bl) ^ "]" in
   let pr2 = fun fl -> "[" ^ (List.fold_left (fun res f -> res ^ (!print_p_f_f f)) "" fl) ^ "]" in
   Debug.no_3 "create_memo_group" pr1 pr2 (fun s -> "") !print_mp_f create_memo_group_x l1 l2 status
 
 and create_memo_group_x 
-  (l1: (b_formula * (formula_label option) * (formula_origin option)) list) 
+  (l1: (b_formula * (formula_label option)) list) 
   (l2: formula list) (status: prune_status) : memo_pure =	 
   let l1, to_slice2 = anon_partition l1 in
   let l1, to_slice1 = memo_norm l1 in
@@ -1006,9 +1006,9 @@ and memo_pure_push_exists_slice_x (f_simp, do_split) (qv: spec_var list) (f0: me
     let r = List.filter (fun c -> not (c.memo_status = Implied_R)) r in
     let ns, drp2 = List.partition (fun c -> (Gen.BList.overlap_eq eq_spec_var (fv c) qv)) slice in 
     let aset = List.fold_left (fun a (c1, c2) -> add_equiv_eq_with_const a c1 c2) empty_var_aset drp3 in 
-    let fand1 = List.fold_left (fun a c -> mkAnd a (BForm (c.memo_formula, None, None)) pos) (mkTrue pos) r in
+    let fand1 = List.fold_left (fun a c -> mkAnd a (BForm (c.memo_formula, None)) pos) (mkTrue pos) r in
     let fand2 = List.fold_left (fun a c -> mkAnd a c pos) fand1 ns in
-    let fand3 = List.fold_left (fun a (c1, c2) -> mkAnd a (BForm (((form_bform_eq_with_const c1 c2), None), None, None)) pos) fand2 nas in
+    let fand3 = List.fold_left (fun a (c1, c2) -> mkAnd a (BForm (((form_bform_eq_with_const c1 c2), None), None)) pos) fand2 nas in
     (fand3, drp1, drp2, aset)
   in
   
@@ -1073,7 +1073,7 @@ and memo_pure_push_exists (qv:spec_var list) (c:memo_pure) =
 and memo_pure_push_exists_x (qv:spec_var list) (c:memo_pure):memo_pure = 
   if qv==[] then c
   else
-    memo_pure_push_exists_all ((fun w f p-> mkExists w f None None p),false) qv c no_pos
+    memo_pure_push_exists_all ((fun w f p-> mkExists w f None p),false) qv c no_pos
 
 and rename_vars_memo_pure (mp : memo_pure) arg =
   let replace x arg = (* Replace x by its assoc in arg *)
@@ -1082,8 +1082,8 @@ and rename_vars_memo_pure (mp : memo_pure) arg =
   (* Do not rename a bound variable *)
   let f_arg_f arg x =
 	match x with
-	  | Forall (sv, _, _, _, _) -> List.remove_assoc sv arg
-	  | Exists (sv, _, _, _, _) -> List.remove_assoc sv arg
+	  | Forall (sv, _, _, _) -> List.remove_assoc sv arg
+	  | Exists (sv, _, _, _) -> List.remove_assoc sv arg
 	  | _ -> arg
   in
   let f_arg_orig arg x = arg in
@@ -1159,14 +1159,14 @@ and memo_pure_push_exists_lhs (qv:spec_var list) (c:memo_pure) : memo_pure =
     
   memo_pure_push_exists nlv_ex n_c
 	  
-and memo_norm (l:(b_formula * (formula_label option) * (formula_origin option)) list): b_formula list * formula list =
-  Debug.no_1 "memo_norm" (fun l -> List.fold_left (fun a (bf,_,_) -> a ^ (!print_bf_f bf)) "" l)
+and memo_norm (l:(b_formula * (formula_label option)) list): b_formula list * formula list =
+  Debug.no_1 "memo_norm" (fun l -> List.fold_left (fun a (bf,_) -> a ^ (!print_bf_f bf)) "" l)
 	(fun (bfl, fl) ->
 	  "[" ^ (List.fold_left (fun a bf -> a ^ "," ^ (!print_bf_f bf)) "" bfl) ^ "]" ^
 	  "[" ^ (List.fold_left (fun a f -> a ^ (!print_p_f_f f)) "" fl) ^ "]")
 	memo_norm_x l
 	  
-and memo_norm_x (l:(b_formula *(formula_label option) * (formula_origin option)) list): b_formula list * formula list = 
+and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * formula list = 
   let rec get_head e = match e with 
     | Null _ -> "Null"
     | Var (v,_) -> name_of_spec_var v
@@ -1274,10 +1274,10 @@ and memo_norm_x (l:(b_formula *(formula_label option) * (formula_origin option))
 	  | BagMax _ | ListAllN _ | ListPerm _ -> None in*)
   
   Gen.Profiling.push_time "memo_norm";
-  let l = List.fold_left (fun (a1,a2) (c1,c2,c3)-> 
+  let l = List.fold_left (fun (a1,a2) (c1,c2)-> 
 	  match norm_bform_option(*_debug*) c1 with
 		| Some c1 -> (c1::a1,a2)
-		| None -> (a1,(BForm(c1,c2,c3))::a2)) ([],[]) l in
+		| None -> (a1,(BForm(c1,c2))::a2)) ([],[]) l in
   Gen.Profiling.pop_time "memo_norm";l
 
 (*
@@ -1302,7 +1302,7 @@ and memo_norm_x (l:(b_formula *(formula_label option) * (formula_origin option))
 *)
   
 let memo_norm_wrapper (l:b_formula list): b_formula list = 
- let l = List.map (fun c-> (c,None,None)) l in
+ let l = List.map (fun c-> (c,None)) l in
  fst (memo_norm l)
   
 (* simpl_b_f -> semantically simplifies a b_formula
@@ -1410,7 +1410,7 @@ let transform_memo_formula f l : memo_pure =
 
 let process_cons_l (f:memoised_constraint list):formula list =
   let filtl = List.filter (fun c-> match c.memo_status with | Implied_R -> false |_-> true) f in
-  List.map (fun c-> BForm (c.memo_formula,None,None)) filtl 
+  List.map (fun c-> BForm (c.memo_formula,None)) filtl 
   (*List.fold_left (fun a c -> match c with
     | Implied_dupl -> a
     | _ -> mkAnd a c.memo_group_cons no_pos) (mkTrue no_pos) f*)
@@ -1473,14 +1473,14 @@ let elim_redundant_cons(*_slow*) impl aset asetf pn =
     | c::cs -> 
       if (isCtrInSet aset s c) then helper cs s r (c::e) f
       else 
-        let conj_cs = join_conjunctions (List.map (fun c-> (BForm (c.memo_formula,None,None))) cs) in
+        let conj_cs = join_conjunctions (List.map (fun c-> (BForm (c.memo_formula,None))) cs) in
         let nf = mkAnd f conj_cs no_pos in
         let b =  Gen.Profiling.push_time "erc_imply";
-          let r = slow_imply impl nf (BForm (c.memo_formula,None,None)) in
+          let r = slow_imply impl nf (BForm (c.memo_formula,None)) in
           (Gen.Profiling.pop_time "erc_imply"; r)   in                
         if b then
           helper cs s ({c with memo_status = Implied_R}::r) e f
-        else helper cs (c::s) r e (mkAnd f (BForm (c.memo_formula,None,None)) no_pos) in
+        else helper cs (c::s) r e (mkAnd f (BForm (c.memo_formula,None)) no_pos) in
   helper pn [] [] [] asetf
 
 (*
@@ -1983,7 +1983,7 @@ let transform_mix_formula f_p_t f =
 	
 let memo_pure_push_exists qv f = match f with
   | MemoF f -> MemoF (memo_pure_push_exists qv f)
-  | OnePF f -> OnePF (mkExists qv f None None no_pos)
+  | OnePF f -> OnePF (mkExists qv f None no_pos)
 
 let memo_pure_push_exists qv f =
   Debug.no_2 "memo_pure_push_exists"
@@ -1992,7 +1992,7 @@ let memo_pure_push_exists qv f =
 
 let memo_pure_push_exists_lhs qv f = match f with
   | MemoF f -> MemoF (memo_pure_push_exists_lhs qv f)
-  | OnePF f -> OnePF (mkExists qv f None None no_pos)
+  | OnePF f -> OnePF (mkExists qv f None no_pos)
 	
 let ptr_equations_aux with_null f = match f with
   | MemoF f -> ptr_equations_aux_mp with_null f
@@ -2077,7 +2077,7 @@ let memo_is_member_pure sp f = match f with
  
 let mkOr_mems (f1: mix_formula) (f2: mix_formula) : mix_formula = match f1,f2 with
   | MemoF f1, MemoF f2 -> MemoF (mkOr_mems f1 f2)
-  | OnePF f1, OnePF f2 -> OnePF (mkOr f1 f2 None None no_pos)
+  | OnePF f1, OnePF f2 -> OnePF (mkOr f1 f2 None no_pos)
   | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "mkOr_mems: wrong mix of memo and pure formulas"}
   
 let subst_avoid_capture_memo from t f = match f with

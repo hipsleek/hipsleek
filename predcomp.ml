@@ -946,7 +946,7 @@ End of first attempt *)
 *)
 
 let disj_count = ref 1
-let stub_branch_point_id s = Some (-1,s)
+let stub_branch_point_id s = Some (-1,s) 
 
 let return_true pos = Return ({exp_return_val = Some
 							  (BoolLit ({exp_bool_lit_val = true;

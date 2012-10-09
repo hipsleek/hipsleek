@@ -332,9 +332,8 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
       {
         IF.formula_base_heap = h0;
         IF.formula_base_pure = p0;
-        IF.formula_base_flow = fl0;
-        IF.formula_base_and = a0;
-        IF.formula_base_origin = o0;
+		IF.formula_base_flow = fl0;
+		IF.formula_base_and = a0;
         IF.formula_base_pos = l0
       } -> (*as f*)
       let tmp1 = look_for_anonymous_h_formula h0 in
@@ -352,7 +351,6 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
               IF.formula_exists_pure = p0;
               IF.formula_exists_flow = fl0;
               IF.formula_exists_and = a1;
-              IF.formula_exists_origin = o0;
               IF.formula_exists_pos = l0;
             }
         else f0
@@ -739,7 +737,6 @@ let rec while_labelling (e:I.exp):I.exp =
 				else Some (I.While {b with I.exp_while_body = while_labelling (label_breaks nl b.I.exp_while_body);I.exp_while_wrappings= None})
 			
 		| I.Try b ->
-          let ori = b.I.exp_try_origin in
 					let pos = b.I.exp_try_pos in
 					if (List.length b.I.exp_finally_clause)==0 then None
 					else 
@@ -750,7 +747,7 @@ let rec while_labelling (e:I.exp):I.exp =
 								let new_name = fresh_var_name "fi" b.I.exp_try_pos.start_pos.Lexing.pos_lnum in
 								let new_flow_var_name = fresh_var_name "flv" b.I.exp_try_pos.start_pos.Lexing.pos_lnum in
 								let new_raise = I.mkRaise (I.Var_flow new_flow_var_name) false  (Some (I.mkVar new_name pos)) true  None pos in
-								let catch_body = I.mkBlock (I.mkSeq f_body new_raise ori pos) I.NoJumpLabel [] pos in
+								let catch_body = I.mkBlock (I.mkSeq f_body new_raise pos) I.NoJumpLabel [] pos in
 								I.mkCatch (Some new_name) None c_flow (Some new_flow_var_name) catch_body pos
 								) b.I.exp_finally_clause in
 						Some (I.mkTry ob l_catch [] None pos)
@@ -806,14 +803,9 @@ and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 
 let trans_logical_vars lvars =
   List.map (fun (id,_,_)-> CP.SpecVar(lvars.I.exp_var_decl_type, id, Unprimed)) lvars.I.exp_var_decl_decls
-
+  
 (*HIP*)
-let rec trans_prog (prog : I.prog_decl) : C.prog_decl =
-  let pr  = Iprinter.string_of_program in
-  let pr2 = Cprinter.string_of_program in
-  Debug.no_1 "trans_prog" pr pr2 trans_prog_x prog
-
-and trans_prog_x (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl =
+let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl =
   (* let _ = print_string ("--> input prog4 = \n"^(Iprinter.string_of_program prog4)^"\n") in *)
   (* print_string "trans_prog\n"; *)
   let _ = (exlist # add_edge "Object" "") in
@@ -1307,7 +1299,7 @@ and compute_base_case_x prog cf vars = (*flatten_base_case cf s self_c_var *)
     let cases = List.fold_left mkOr_mems (mkMFalse no_pos) cases in  
     let bcg = List.fold_left (fun a p -> a@(CP.split_conjunctions (TP.simplify_a (-1) p))) [] guards in
     let bcg = Gen.BList.remove_dups_eq (CP.equalFormula_f CP.eq_spec_var) bcg in
-    let one_bc = List.fold_left (fun a c -> CP.mkOr a c None None no_pos) (CP.mkFalse no_pos) guards in
+    let one_bc = List.fold_left (fun a c -> CP.mkOr a c None no_pos) (CP.mkFalse no_pos) guards in
     let bc_impl c = let r,_,_ = TP.imply_sub_no one_bc c "0" false None in r in
     let sat_subno  = ref 0 in
     let bcg = List.filter (fun c->(not (CP.isConstTrue c))&& (bc_impl c)&& List.for_all 
@@ -1972,19 +1964,17 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
   (* let _ = print_endline ("[trans_exp] input = { " ^ (Iprinter.string_of_exp ie) ^ " }") in *)
   let rec helper ie =
     match ie with
-      | I.Label (pid, ori, e)-> 
+      | I.Label (pid, e)-> 
             let e1,t1 = (helper e) in
-            (C.Label {C.exp_label_type = t1; C.exp_label_path_id = pid; C.exp_label_origin = ori; C.exp_label_exp = e1;},t1)
-      | I.Unfold { I.exp_unfold_var = (v, p); I.exp_unfold_origin = ori; I.exp_unfold_pos = pos } ->
+            (C.Label {C.exp_label_type = t1; C.exp_label_path_id = pid; C.exp_label_exp = e1;},t1)
+      | I.Unfold { I.exp_unfold_var = (v, p); I.exp_unfold_pos = pos } ->
             ((C.Unfold {
                 C.exp_unfold_var = CP.SpecVar (Named "", v, p);
-                C.exp_unfold_origin = ori;
                 C.exp_unfold_pos = pos;
             }), C.void_type)
 	            (* An Hoa MARKED *)
 	  | I.ArrayAt { I.exp_arrayat_array_base = a; 
 	    I.exp_arrayat_index = index;
-      I.exp_arrayat_origin = ori;
 	    I.exp_arrayat_pos = pos } ->
 	  	    let r = List.length index in
 		    let new_e = I.CallNRecv {
@@ -1992,7 +1982,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 I.exp_call_nrecv_lock = None;
 			    I.exp_call_nrecv_arguments = a :: index;
 			    I.exp_call_nrecv_path_id = None; (* No path_id is necessary because there is only one path *)
-          I.exp_call_nrecv_origin = ori;
 			    I.exp_call_nrecv_pos = pos;} in 
 	        helper new_e
                 (*(try
@@ -2016,7 +2005,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_assert_asserted_formula = assert_f_o;
             I.exp_assert_assumed_formula = assume_f_o;
             I.exp_assert_path_id = pi;
-            I.exp_assert_origin = ori;
             I.exp_assert_pos = pos} ->
             let tmp_names = E.visible_names () in
             let all_names =
@@ -2041,7 +2029,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       C.exp_assert_asserted_formula = assert_cf_o;
                       C.exp_assert_assumed_formula = assume_cf_o;
                       C.exp_assert_path_id = pi;
-                      C.exp_assert_origin = ori;
                       C.exp_assert_pos = pos;
                   } in 
             (assert_e, C.void_type))
@@ -2050,7 +2037,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_assign_lhs = lhs;
             I.exp_assign_rhs = rhs;
             I.exp_assign_path_id = pid;
-            I.exp_assign_origin = ori;
             I.exp_assign_pos = pos_a	} ->
 			(* An Hoa : WORKING *)
 		    (* let _ = print_endline ("[trans_exp] assignment input = { " ^ Iprinter.string_of_exp lhs ^ " , " ^ Iprinter.string_of_exp rhs ^ " }") in *)
@@ -2061,17 +2047,14 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 			  | I.Member{	I.exp_member_base = base_e;
 				I.exp_member_fields = fs;
 				I.exp_member_path_id = pid;
-        I.exp_member_origin = ori;
 				I.exp_member_pos = pos } ->
 					List.map (fun x -> I.Member {	I.exp_member_base = base_e;
 					I.exp_member_fields = List.append fs [x];
 					I.exp_member_path_id = pid;
-          I.exp_member_origin = ori;
 					I.exp_member_pos = pos}) fseqs
 			  | I.Var _ -> List.map (fun x -> I.Member {I.exp_member_base = base;
 				I.exp_member_fields = [x];
 				I.exp_member_path_id = pid;
-        I.exp_member_origin = ori;
 				I.exp_member_pos = no_pos }) fseqs 
 			  | _ -> failwith "produce_member_exps: unexpected pattern"
 			in (* compute the list of field accesses that {lhs = rhs} should be expanded into *)
@@ -2082,7 +2065,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 						I.exp_member_base = bl;
 						I.exp_member_fields = fl;
 						I.exp_member_path_id = pidl;
-            I.exp_member_origin = ori1;
 						I.exp_member_pos = posl } ->
 						let _,lhst = helper bl in
 						let fs,remf,remt = compact_field_access_sequence prog lhst fl in
@@ -2097,7 +2079,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 						I.exp_member_base = br;
 						I.exp_member_fields = fr;
 						I.exp_member_path_id = pidr;
-            I.exp_member_origin = ori1;
 						I.exp_member_pos = posr } ->
 						let _,rhst = helper br in
 						let fs,remf,remt = compact_field_access_sequence prog rhst fr in
@@ -2118,12 +2099,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 				  I.exp_assign_lhs = x;
 				  I.exp_assign_rhs = y;
 				  I.exp_assign_path_id = pid;
-          I.exp_assign_origin = ori;
 				  I.exp_assign_pos = pos_a }) lhss rhss in
 			  let expanded_exp = List.fold_left (fun x y -> I.Seq {
 				  I.exp_seq_exp1 = x;
 				  I.exp_seq_exp2 = y;
-          I.exp_seq_origin = ori;
 				  I.exp_seq_pos = pos_a }) 
 				(I.Empty no_pos) assignments in
 			  helper expanded_exp
@@ -2131,7 +2110,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
               (match aop with
                 | I.OpAssign ->
                       (match lhs with
-                        | I.Var { I.exp_var_name = v0; I.exp_var_origin = ori1; I.exp_var_pos = pos } -> 
+                        | I.Var { I.exp_var_name = v0; I.exp_var_pos = pos } -> 
                               let (ce1, te1) = trans_exp prog proc lhs in
 						      (* let _ = print_string ("trans_exp :: lhs = " ^ Cprinter.string_of_exp ce1 ^ "\n") in *)
                               let (ce2, te2) = trans_exp prog proc rhs in
@@ -2144,7 +2123,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                 let assign_e = C.Assign{
                                     C.exp_assign_lhs = v;
                                     C.exp_assign_rhs = ce2;
-                                    C.exp_assign_origin = ori;
                                     C.exp_assign_pos = pos;} in
                                 if C.is_var ce1 then
 	                              (* let vsv = CP.SpecVar (te1, v, Primed) in
@@ -2155,11 +2133,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                       C.exp_seq_type = C.void_type;
                                       C.exp_seq_exp1 = ce1;
                                       C.exp_seq_exp2 = assign_e;
-                                      C.exp_assign_origin = ori;
                                       C.exp_seq_pos = pos;} in (seq_e, C.void_type)))
 								    (* AN HOA MARKED : THE CASE LHS IS AN ARRAY ACCESS IS SIMILAR TO VARIABLE & BINARY - WE NEED TO CONVERT THIS INTO A FUNCTION *)
 								    (* (Iast) a[i] = v    ===>     (Iast) a = update___(a,i,v);   ===>   (Cast) Scall {a = update___(a,i,v)} *)
-					    | I.ArrayAt { I.exp_arrayat_array_base = a; I.exp_arrayat_index = index; I.exp_arrayat_origin = ori1; I.exp_arrayat_pos = pos_lhs } ->
+					    | I.ArrayAt { I.exp_arrayat_array_base = a; I.exp_arrayat_index = index; I.exp_arrayat_pos = pos_lhs } ->
 						      (* Array variable *)
 						      (* let new_lhs = I.Var { I.exp_var_name = a; I.exp_var_pos = pos_lhs } in *)
 						      let r = List.length index in
@@ -2169,14 +2146,12 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                   I.exp_call_nrecv_lock = None;
 			                      I.exp_call_nrecv_arguments = rhs :: a :: index;
 			                      I.exp_call_nrecv_path_id = pid;
-                            I.exp_call_nrecv_origin = ori;
 			                      I.exp_call_nrecv_pos = I.get_exp_pos rhs; } in 
 						      let new_e = I.Assign {
 							      I.exp_assign_op = I.OpAssign;
 		   					      I.exp_assign_lhs = a; (* new_lhs; *)
 							      I.exp_assign_rhs = new_rhs;
 							      I.exp_assign_path_id = pid;
-                    I.exp_assign_origin = ori;
 							      I.exp_assign_pos = pos_a; } in
 			                  helper new_e
 							      (* let (ce1, te1) = helper lhs in
@@ -2191,7 +2166,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                               I.exp_member_base = base_e;
                               I.exp_member_fields = fs;
                               I.exp_member_path_id = pid;
-                              I.exp_member_origin = ori1;
                               I.exp_member_pos = pos } ->
 							  (* An Hoa : fix this case with inline field access *)
 							  let _,lhst = helper base_e in
@@ -2209,7 +2183,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                 let fn_var = C.Var {
                                     C.exp_var_type = rhs_t;
                                     C.exp_var_name = fn;
-                                    C.exp_var_origin = ori;
                                     C.exp_var_pos = pos;
                                 } in
                                 let (tmp_e, tmp_t) =
@@ -2219,24 +2192,21 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                 let fn_decl = if new_var then C.VarDecl {
                                     C.exp_var_decl_type = rhs_t;
                                     C.exp_var_decl_name = fn;
-                                    C.exp_var_decl_origin = ori;
                                     C.exp_var_decl_pos = pos;}
                                 else C.Unit pos in
                                 let init_fn = if new_var then 
                                   C.Assign{
                                       C.exp_assign_lhs = fn;
                                       C.exp_assign_rhs = rhs_c;
-                                      C.exp_assign_origin = ori;
                                       C.exp_assign_pos = pos; }
                                 else C.Unit pos in
-                                let seq1 = C.mkSeq tmp_t init_fn tmp_e ori pos in
-                                let seq2 = C.mkSeq tmp_t fn_decl seq1 ori pos in
+                                let seq1 = C.mkSeq tmp_t init_fn tmp_e pos in
+                                let seq2 = C.mkSeq tmp_t fn_decl seq1 pos in
                                 if new_var then
                                   ((C.Block {
                                       C.exp_block_type = tmp_t;
                                       C.exp_block_body = seq2;
                                       C.exp_block_local_vars = [ (rhs_t, fn) ];
-                                      C.exp_block_origin = ori;
                                       C.exp_block_pos = pos;}), tmp_t)
                                 else (seq2, tmp_t)
                         | _ -> Err.report_error { Err.error_loc = pos_a; Err.error_text = "lhs is not an lvalue"; }
@@ -2248,14 +2218,12 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                           I.exp_binary_oper1 = lhs;
                           I.exp_binary_oper2 = rhs;
                           I.exp_binary_path_id = pid;
-                          I.exp_binary_origin = ori;
                           I.exp_binary_pos = pos_a;} in
                       let new_assign = I.Assign {
                           I.exp_assign_op = I.OpAssign;
                           I.exp_assign_lhs = lhs;
                           I.exp_assign_rhs = new_rhs;
                           I.exp_assign_path_id = pid;
-                          I.exp_assign_origin = ori;
                           I.exp_assign_pos = pos_a; } in helper new_assign
               )
 	  | I.Barrier {I.exp_barrier_recv=v; I.exp_barrier_pos = pos} -> 
@@ -2275,7 +2243,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_binary_oper1 = e1;
             I.exp_binary_oper2 = e2;
             I.exp_binary_path_id = pid;
-            I.exp_binary_origin = ori;
             I.exp_binary_pos = pos} ->
             if (I.is_null e1) || (I.is_null e2) then
               (let (e1_prim, e2_prim) = if I.is_null e2 then (e1, e2) else (e2, e1) in
@@ -2289,7 +2256,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   I.exp_call_nrecv_lock = None;
                   I.exp_call_nrecv_arguments = [ e1_prim ];
                   I.exp_call_nrecv_path_id = pid (*stub_branch_point_id ("primitive "^b_call)*);
-                  I.exp_call_nrecv_origin = ori;
                   I.exp_call_nrecv_pos = pos;}in 
               helper new_e)
             else
@@ -2299,7 +2265,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   I.exp_call_nrecv_lock = None;
                   I.exp_call_nrecv_arguments = [ e1; e2 ];
                   I.exp_call_nrecv_path_id = pid (*stub_branch_point_id ("primitive "^b_call)*);
-                  I.exp_call_nrecv_origin = ori;
                   I.exp_call_nrecv_pos = pos; } in 
               helper new_e)
       | I.Bind {
@@ -2307,7 +2272,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_bind_fields = vs;
             I.exp_bind_body = e;
             I.exp_bind_pos = pos;
-            I.exp_bind_origin = ori;
             I.exp_bind_path_id = pid;} ->
             (try
               let vinfo_tmp = E.look_up v in
@@ -2340,15 +2304,14 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                     C.exp_bind_body = ce;
                                     C.exp_bind_imm = Mutable; (* can it be true? *)
                                     C.exp_bind_read_only = false; (*conservative. May use read/write analysis to figure out*)
-                                    C.exp_bind_pos = pos;
-                                    C.exp_bind_origin = ori;
+				                    C.exp_bind_pos = pos;
                                     C.exp_bind_path_id = pid; }), te)))
                         | Array _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type";}
                         | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type"; }
                       )
                 | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type"; }
             with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not defined"; })
-      | I.Block { I.exp_block_body = e; I.exp_block_origin = ori; I.exp_block_pos = pos } ->
+      | I.Block { I.exp_block_body = e; I.exp_block_pos = pos } ->
             (E.push_scope ();
             let (ce, te) = helper e in
             let tmp_local_vars = E.names_on_top () in
@@ -2357,17 +2320,15 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 C.exp_block_type = te;
                 C.exp_block_body = ce;
                 C.exp_block_local_vars = local_vars;
-                C.exp_block_origin = ori;
                 C.exp_block_pos = pos; }), te))
             )
-      | I.BoolLit { I.exp_bool_lit_val = b; I.exp_bool_lit_origin = ori; I.exp_bool_lit_pos = pos } ->
-            ((C.BConst { C.exp_bconst_val = b; C.exp_bool_lit_origin = ori; C.exp_bconst_pos = pos; }), C.bool_type)
+      | I.BoolLit { I.exp_bool_lit_val = b; I.exp_bool_lit_pos = pos } ->
+            ((C.BConst { C.exp_bconst_val = b; C.exp_bconst_pos = pos; }), C.bool_type)
       | I.CallRecv {
             I.exp_call_recv_receiver = recv;
             I.exp_call_recv_method = mn;
             I.exp_call_recv_arguments = args;
             I.exp_call_recv_path_id = pi;
-            I.exp_call_recv_origin = ori;
             I.exp_call_recv_pos = pos } ->
             let (crecv, crecv_t) = helper recv in
             let (recv_ident, recv_init, new_recv_ident) =
@@ -2378,14 +2339,12 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       let fdecl = C.VarDecl {
                           C.exp_var_decl_type = crecv_t;
                           C.exp_var_decl_name = fname;
-                          C.exp_var_decl_origin = ori;
                           C.exp_var_decl_pos = pos;} in
                       let finit = C.Assign {
                           C.exp_assign_lhs = fname;
                           C.exp_assign_rhs = crecv;
-                          C.exp_assign_origin = ori;
                           C.exp_assign_pos = pos; } in
-                      let seq = C.mkSeq C.void_type fdecl finit ori pos in (fname, seq, true)) in
+                      let seq = C.mkSeq C.void_type fdecl finit pos in (fname, seq, true)) in
             let tmp = List.map (helper) args in
             let (cargs, cts) = List.split tmp in
             let mingled_mn = C.mingle_name mn cts in
@@ -2415,15 +2374,13 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                        * by mark_rec_and_call_order *)
                       C.exp_icall_is_rec = false;                       
                       C.exp_icall_path_id = pi;
-                      C.exp_icall_origin = ori;
                       C.exp_icall_pos = pos;} in
-                  let seq1 = C.mkSeq ret_ct init_seq call_e ori pos in
-                  let seq2 = C.mkSeq ret_ct recv_init seq1 ori pos in
+                  let seq1 = C.mkSeq ret_ct init_seq call_e pos in
+                  let seq2 = C.mkSeq ret_ct recv_init seq1 pos in
                   let blk =C.Block{
                       C.exp_block_type = ret_ct;
                       C.exp_block_body = seq2;
                       C.exp_block_local_vars = (if new_recv_ident then [ (crecv_t, recv_ident) ] else []) @ local_vars;
-                      C.exp_block_origin = ori;
                       C.exp_block_pos = pos;} in 
                   (blk, ret_ct)))
             with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "procedure " ^ (mingled_mn ^ " is not found");}
@@ -2433,7 +2390,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_call_nrecv_lock = lock;
             I.exp_call_nrecv_arguments = args;
             I.exp_call_nrecv_path_id = pi;
-            I.exp_call_nrecv_origin = ori;
             I.exp_call_nrecv_pos = pos } ->
 		    (* let _ = print_string "trans_exp :: case CallNRecv\n" in*)
             let tmp = List.map (helper) args in
@@ -2450,7 +2406,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 I.exp_call_recv_method = mingled_mn;
                 I.exp_call_recv_arguments = args;
                 I.exp_call_recv_path_id = pi;
-                I.exp_call_recv_origin = ori;
                 I.exp_call_recv_pos = pos; } in helper call_recv)
             else if (mn=Globals.fork_name) then
               (*============================*)
@@ -2490,15 +2445,13 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                               C.exp_scall_lock = lock;
                               C.exp_scall_arguments = mingled_forked_mn::arg_vars;
 					          C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
-                              C.exp_scall_origin = ori;
                               C.exp_scall_pos = pos;
                               C.exp_scall_path_id = pi; } in
-                          let seq_1 = C.mkSeq ret_ct init_seq call_e ori pos in
+                          let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
                           ((C.Block {
                               C.exp_block_type = ret_ct;
                               C.exp_block_body = seq_1;
                               C.exp_block_local_vars = local_vars;
-                              C.exp_block_origin = ori;
                               C.exp_block_pos = pos; }),ret_ct))))
                     with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: forked procedure " ^ (mingled_forked_mn ^ " is not found");})
             (*======== <<<<FORK ==========*)
@@ -2539,15 +2492,13 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         C.exp_scall_lock = lock;
                         C.exp_scall_arguments = arg_vars;
 					    C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
-                        C.exp_sacll_origin = ori;
                         C.exp_scall_pos = pos;
                         C.exp_scall_path_id = pi; } in
-                    let seq_1 = C.mkSeq ret_ct init_seq call_e ori pos in
+                    let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
                     ((C.Block {
                         C.exp_block_type = ret_ct;
                         C.exp_block_body = seq_1;
                         C.exp_block_local_vars = local_vars;
-                        C.exp_block_origin = ori;
                         C.exp_block_pos = pos; }),ret_ct)
                 with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: procedure " ^ (mingled_mn ^ " is not found");}))
             (*======== <<<<INIT ==========*)
@@ -2581,15 +2532,13 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                        * it will be set later in trans_prog
                        * by mark_rec_and_call_order *)
                       C.exp_scall_is_rec = false; 
-                      C.exp_scall_origin = ori;
                       C.exp_scall_pos = pos;
                       C.exp_scall_path_id = pi; } in
-                  let seq_1 = C.mkSeq ret_ct init_seq call_e ori pos in
+                  let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
                   ((C.Block {
                       C.exp_block_type = ret_ct;
                       C.exp_block_body = seq_1;
                       C.exp_block_local_vars = local_vars;
-                      C.exp_block_origin = ori;
                       C.exp_block_pos = pos; }),ret_ct)))
             with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "trans_exp :: case CallNRecv :: procedure " ^ (mingled_mn ^ " is not found");})
       | I.Catch { I.exp_catch_var = cv;
@@ -2597,7 +2546,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 	    I.exp_catch_flow_var = cfv;
 	    I.exp_catch_body = cb;	
 		I.exp_catch_alt_var_type = alt_cvt ;
-      I.exp_catch_origin = ori;
 	    I.exp_catch_pos = pos}->	
             if not (exlist # sub_type_obj cvt c_flow) then Err.report_error { Err.error_loc = pos; 
 		    Err.error_text = "can not catch a not raisable object" }
@@ -2612,7 +2560,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 			            C.exp_catch_flow_var = cfv;
 			            C.exp_catch_var = Some (Void,x);
 			            C.exp_catch_body = new_bd;																					   
-                  C.exp_catch_origin = ori;
 			            C.exp_catch_pos = pos;},ct2) end
 			          else begin
 						let cvt_rev = match alt_cvt with | None -> Named cvt | Some t -> t in
@@ -2630,7 +2577,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 					    C.exp_catch_flow_var = cfv;
 					    C.exp_catch_var = Some (ct,alpha);
 					    C.exp_catch_body = new_bd;																					   
-              C.exp_catch_origin = ori;
 					    C.exp_catch_pos = pos;
 					    } in (r,ct2) end
 		        | None ->  
@@ -2640,8 +2586,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 			          (C.Catch{	C.exp_catch_flow_type = exlist # get_hash cvt;
 					  C.exp_catch_flow_var = cfv;
 					  C.exp_catch_var = None;
-					  C.exp_catch_body = new_bd;
-            C.exp_catch_origin = ori;
+					  C.exp_catch_body = new_bd;																					   
 					  C.exp_catch_pos = pos;},ct2)
 	        end
 	  | I.Cond {
@@ -2649,10 +2594,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_cond_then_arm = e2;
             I.exp_cond_else_arm = e3;
             I.exp_cond_path_id = pi;
-            I.exp_cond_origin = ori;
             I.exp_cond_pos = pos } ->
-            let _ = print_endline ("== ie = " ^ (Iprinter.string_of_exp ie)) in 
-            let _ = print_string ("trans_exp :: cond = " ^ Iprinter.string_of_exp e1 ^ " then branch = " ^ Iprinter.string_of_exp e2 ^ " else branch = " ^ Iprinter.string_of_exp e3 ^ "\n") in
+		    (* let _ = print_string ("trans_exp :: cond = " ^ Iprinter.string_of_exp e1 ^ " then branch = " ^ Iprinter.string_of_exp e2 ^ " else branch = " ^ Iprinter.string_of_exp e3 ^ "\n") in *) 
             let (ce1, te1) = helper e1 in
             if not (CP.are_same_types te1 C.bool_type) then
               Err.report_error { Error.error_loc = pos; Error.error_text = "conditional expression is not bool";}
@@ -2669,7 +2612,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                           C.exp_cond_then_arm = ce2;
                           C.exp_cond_else_arm = ce3;
                           C.exp_cond_pos = pos;
-                          C.exp_cond_origin = ori;
                           C.exp_cond_path_id = pi; }), te2)
                 | _ ->
                       let e_pos = Iast.get_exp_pos e1 in
@@ -2677,56 +2619,47 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       let vd = C.VarDecl {
                           C.exp_var_decl_type = C.bool_type;
                           C.exp_var_decl_name = fn;
-                          C.exp_var_decl_origin = ori;
                           C.exp_var_decl_pos = e_pos; } in
                       let init_e = C.Assign {
                           C.exp_assign_lhs = fn;
                           C.exp_assign_rhs = ce1;
-                          C.exp_assign_origin = ori;
                           C.exp_assign_pos = e_pos;} in
                       let cond_e = C.Cond {
                           C.exp_cond_type = te2;
                           C.exp_cond_condition = fn;
                           C.exp_cond_then_arm = ce2;
                           C.exp_cond_else_arm = ce3;
-                          C.exp_cond_origin = ori;
                           C.exp_cond_pos = pos;
                           C.exp_cond_path_id = pi; } in
                       let tmp_e1 = C.Seq {
                           C.exp_seq_type = te2;
                           C.exp_seq_exp1 = init_e;
                           C.exp_seq_exp2 = cond_e;
-                          C.exp_seq_origin = ori;
                           C.exp_seq_pos = e_pos; } in
                       let tmp_e2 = C.Seq {
                           C.exp_seq_type = te2;
                           C.exp_seq_exp1 = vd;
                           C.exp_seq_exp2 = tmp_e1;
-                          C.exp_seq_origin = ori;
-                          C.exp_seq_pos = pos; } in
-                      let _ = print_endline ("== tmp_e2 = " ^ (Cprinter.string_of_exp tmp_e2)) in 
-                      (tmp_e2, te2))
-      | I.Debug { I.exp_debug_flag = flag; I.exp_debug_origin = ori; I.exp_debug_pos = pos } -> ((C.Debug { C.exp_debug_flag = flag; C.exp_debug_origin = ori; C.exp_debug_pos = pos; }), C. void_type)
+                          C.exp_seq_pos = pos; } in (tmp_e2, te2))
+      | I.Debug { I.exp_debug_flag = flag; I.exp_debug_pos = pos } -> ((C.Debug { C.exp_debug_flag = flag; C.exp_debug_pos = pos; }), C. void_type)
       | I.Time (b,s,p) -> (C.Time (b,s,p), C. void_type)
-      | I.Dprint { I.exp_dprint_string = str; I.exp_dprint_origin = ori; I.exp_dprint_pos = pos } ->
+      | I.Dprint { I.exp_dprint_string = str; I.exp_dprint_pos = pos } ->
             let tmp_visib_names = E.visible_names () in
             let tmp_visib_names = List.filter (fun v -> I.is_named_type (fst v)) tmp_visib_names in
             let visib_names = List.map snd tmp_visib_names in
             let ce = C.Dprint {
                 C.exp_dprint_string = str;
                 C.exp_dprint_visible_names = visib_names;
-                C.exp_dprint_origin = ori;
                 C.exp_dprint_pos = pos; } in (ce, C.void_type)
       | I.Empty pos -> ((C.Unit pos), C.void_type)
-      | I.IntLit { I.exp_int_lit_val = i; I.exp_int_lit_origin = ori; I.exp_int_lit_pos = pos } ->
-            ((C.IConst { C.exp_iconst_val = i; C.exp_iconst_origin = ori; C.exp_iconst_pos = pos; }), C.int_type)
-      | I.Java { I.exp_java_code = jcode; I.exp_java_origin = ori; I.exp_java_pos = pos } ->
-            ((C.Java { C.exp_java_code = jcode; C.exp_java_origin = ori; C.exp_java_pos = pos; }), C.void_type)
+      | I.IntLit { I.exp_int_lit_val = i; I.exp_int_lit_pos = pos } ->
+            ((C.IConst { C.exp_iconst_val = i; C.exp_iconst_pos = pos; }), C.int_type)
+      | I.Java { I.exp_java_code = jcode; I.exp_java_pos = pos } ->
+            ((C.Java { C.exp_java_code = jcode; C.exp_java_pos = pos; }), C.void_type)
       | I.Member {
             I.exp_member_base = e;
             I.exp_member_fields = fs;
             I.exp_member_path_id = pid;
-            I.exp_member_origin = ori;
             I.exp_member_pos = pos } -> 
            	(* An Hoa : compact the field access sequence *)
 			let et = snd (helper e) in
@@ -2751,7 +2684,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 	  | I.ArrayAlloc {
             I.exp_aalloc_etype_name = et;
             I.exp_aalloc_dimensions = dims;
-            I.exp_aalloc_origin = ori;
             I.exp_aalloc_pos = pos } ->
 			(* simply translate "new int[n]" into "aalloc___(n)" *)
 			let newie = I.CallNRecv {
@@ -2759,13 +2691,11 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 I.exp_call_nrecv_lock = None;
 				I.exp_call_nrecv_arguments = [List.hd dims];
 				I.exp_call_nrecv_path_id = None;
-        I.exp_call_nrecv_origin = ori;
 				I.exp_call_nrecv_pos = pos; }
 			in helper newie
       | I.New {
             I.exp_new_class_name = c;
             I.exp_new_arguments = args;
-            I.exp_new_origin = ori;
             I.exp_new_pos = pos } ->
             let data_def = I.look_up_data_def pos prog.I.prog_data_decls c in
             let all_fields = I.look_up_all_fields prog data_def in
@@ -2785,21 +2715,18 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   C.exp_new_class_name = c;
                   C.exp_new_parent_name = data_def.I.data_parent_name;
                   C.exp_new_arguments = List.combine parg_types arg_vars;
-                  C.exp_new_origin = ori;
                   C.exp_new_pos = pos;} in
               let new_t = Named c in
-              let seq_e = C.mkSeq new_t init_seq new_e ori pos in
+              let seq_e = C.mkSeq new_t init_seq new_e pos in
               ((C.Block {
                   C.exp_block_type = new_t;
                   C.exp_block_body = seq_e;
                   C.exp_block_local_vars = local_vars;
-                  C.exp_block_origin = ori;
                   C.exp_block_pos = pos; }),new_t)))
       | I.Null pos -> ((C.Null pos), (Named ""))
       | I.Return {
             I.exp_return_val = oe;
             I.exp_return_path_id = pi;
-            I.exp_return_origin = ori;
             I.exp_return_pos = pos} ->  begin
           let cret_type = trans_type prog proc.I.proc_return proc.I.proc_loc in
           match oe with
@@ -2811,7 +2738,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                     C.exp_sharp_val = Cast.Sharp_no_val;
                     C.exp_sharp_unpack = false;
                     C.exp_sharp_path_id = pi;
-                    C.exp_sharp_origin = ori;
                     C.exp_sharp_pos = pos}), C.void_type)
                   else
                     Err.report_error { Err.error_loc = proc.I.proc_loc; 
@@ -2824,12 +2750,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                     let vd = C.VarDecl { 
                         C.exp_var_decl_type = ct;
                         C.exp_var_decl_name = fn;
-                        C.exp_var_decl_origin = ori;
                         C.exp_var_decl_pos = e_pos;} in
                     let init_e = C.Assign { 
                         C.exp_assign_lhs = fn;
                         C.exp_assign_rhs = ce;
-                        C.exp_var_origin = ori;
                         C.exp_assign_pos = e_pos;} in
                     let shar = C.Sharp ({
                         C.exp_sharp_type = C.void_type;
@@ -2837,25 +2761,22 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         C.exp_sharp_unpack = false;
                         C.exp_sharp_val = Cast.Sharp_var (ct,fn);
                         C.exp_sharp_path_id = pi;
-                        C.exp_sharp_origin = ori;
                         C.exp_sharp_pos = pos}) in
                     let tmp_e1 = C.Seq { 
                         C.exp_seq_type = C.void_type;
                         C.exp_seq_exp1 = init_e;
                         C.exp_seq_exp2 = shar;
-                        C.exp_seq_origin = ori;
                         C.exp_seq_pos = e_pos;} in
                     let tmp_e2 = C.Seq { 
                         C.exp_seq_type = C.void_type;
                         C.exp_seq_exp1 = vd;
                         C.exp_seq_exp2 = tmp_e1;
-                        C.exp_seq_origin = ori;
                         C.exp_seq_pos = e_pos;} in 
                     (tmp_e2, C.void_type)
                   else
                     Err.report_error { Err.error_loc = proc.I.proc_loc; Err.error_text = "return type doesn't match" }
         end
-      | I.Seq { I.exp_seq_exp1 = e1; I.exp_seq_exp2 = e2; I.exp_seq_origin = ori; I.exp_seq_pos = pos }->
+      | I.Seq { I.exp_seq_exp1 = e1; I.exp_seq_exp2 = e2; I.exp_seq_pos = pos }->
             let (ce1', te1) = trans_exp prog proc e1 in
             let (ce2, te2) = trans_exp prog proc e2 in
             let ce1 = insert_dummy_vars ce1' pos in
@@ -2863,16 +2784,15 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 C.exp_seq_type = te2;
                 C.exp_seq_exp1 = ce1;
                 C.exp_seq_exp2 = ce2;
-                C.exp_seq_origin = ori;
                 C.exp_seq_pos = pos; }), te2)
-      | I.This { I.exp_this_origin = ori; I.exp_this_pos = pos } ->
+      | I.This { I.exp_this_pos = pos } ->
             if Gen.is_some proc.I.proc_data_decl then
               (let cdef = Gen.unsome proc.I.proc_data_decl in
               let ct = Named cdef.I.data_name in 
-              ((C.This { C.exp_this_type = ct; C.exp_this_origin = ori; C.exp_this_pos = pos; }), ct))
+              ((C.This { C.exp_this_type = ct; C.exp_this_pos = pos; }), ct))
             else
               Err.report_error { Err.error_loc = pos; Err.error_text = "\"this\" can only be used in members of a class";}
-      | I.Unary {I.exp_unary_op = u_op; I.exp_unary_exp = e; I.exp_unary_origin = ori; I.exp_unary_path_id = pid; I.exp_unary_pos = pos;} ->
+      | I.Unary {I.exp_unary_op = u_op; I.exp_unary_exp = e; I.exp_unary_path_id = pid; I.exp_unary_pos = pos;} ->
             (*let pi = stub_branch_point_id "fresh_unary_call" in*)
             (match u_op with
               | I.OpNot ->
@@ -2882,38 +2802,32 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         I.exp_call_nrecv_lock = None;
                         I.exp_call_nrecv_arguments = [ e ];
                         I.exp_call_nrecv_path_id = pid;
-                        I.exp_call_nrecv_origin = ori;
                         I.exp_call_nrecv_pos = pos;} in helper call_e
               | I.OpPostInc ->
                     let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
                     let fn_decl = I.VarDecl{
                         I.exp_var_decl_type = I.int_type;
                         I.exp_var_decl_decls = [ (fn, (Some e), pos) ];
-                        I.exp_var_decl_origin = ori;
                         I.exp_var_decl_pos = pos; } in
                     let add1_e = I.Binary {
                         I.exp_binary_op = I.OpPlus;
                         I.exp_binary_oper1 = e;
                         I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
                         I.exp_binary_path_id = pid;
-                        I.exp_binary_origin = ori;
                         I.exp_binary_pos = pos; } in
                     let assign_e = I.Assign {
                         I.exp_assign_op = I.OpAssign;
                         I.exp_assign_lhs = e;
                         I.exp_assign_rhs = add1_e;
                         I.exp_assign_path_id = None;
-                        I.exp_assign_origin = ori;
                         I.exp_assign_pos = pos; } in
                     let seq1 = I.Seq {
                         I.exp_seq_exp1 = assign_e;
                         I.exp_seq_exp2 = I.Var { I.exp_var_name = fn; I.exp_var_pos = pos; };
-                        I.exp_seq_origin = ori;
                         I.exp_seq_pos = pos; } in
                     let seq2 = I.Seq {
                         I.exp_seq_exp1 = fn_decl;
                         I.exp_seq_exp2 = seq1;
-                        I.exp_seq_origin = ori;
                         I.exp_seq_pos = pos; } in
                     helper (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq2; I.exp_block_jump_label = I.NoJumpLabel; I.exp_block_pos = pos;})
               | I.OpPostDec -> 
@@ -2921,31 +2835,26 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                     let fn_decl = I.VarDecl {
                         I.exp_var_decl_type = I.int_type;
                         I.exp_var_decl_decls = [ (fn, (Some e), pos) ];
-                        I.exp_var_decl_origin = ori;
                         I.exp_var_decl_pos = pos; } in
                     let sub1_e = I.Binary {
                         I.exp_binary_op = I.OpMinus;
                         I.exp_binary_oper1 = e;
                         I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
                         I.exp_binary_path_id = pid;
-                        I.exp_binary_origin = ori;
                         I.exp_binary_pos = pos;} in
                     let assign_e = I.Assign {
                         I.exp_assign_op = I.OpAssign;
                         I.exp_assign_lhs = e;
                         I.exp_assign_rhs = sub1_e;
                         I.exp_assign_path_id = None;
-                        I.exp_assign_origin = ori;
                         I.exp_assign_pos = pos; } in
                     let seq1 = I.Seq {
                         I.exp_seq_exp1 = assign_e;
                         I.exp_seq_exp2 = I.Var { I.exp_var_name = fn; I.exp_var_pos = pos; };
-                        I.exp_seq_origin = ori;
                         I.exp_seq_pos = pos; } in
                     let seq2 = I.Seq {
                         I.exp_seq_exp1 = fn_decl;
                         I.exp_seq_exp2 = seq1;
-                        I.exp_seq_origin = ori;
                         I.exp_seq_pos = pos; } in
                     helper (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq2;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
               | I.OpPreInc ->
@@ -2954,19 +2863,16 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         I.exp_binary_oper1 = e;
                         I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
                         I.exp_binary_path_id = pid;
-                        I.exp_binary_origin = ori;
                         I.exp_binary_pos = pos; } in
                     let assign_e = I.Assign {
                         I.exp_assign_op = I.OpAssign;
                         I.exp_assign_lhs = e;
                         I.exp_assign_rhs = add1_e;
                         I.exp_assign_path_id = None;
-                        I.exp_assign_origin = ori;
                         I.exp_assign_pos = pos; } in
                     let seq = I.Seq {
                         I.exp_seq_exp1 = assign_e;
                         I.exp_seq_exp2 = e;
-                        I.exp_seq_origin = ori;
                         I.exp_seq_pos = pos;} in
                     helper (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
               | I.OpPreDec ->
@@ -2975,23 +2881,20 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         I.exp_binary_oper1 = e;
                         I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
                         I.exp_binary_path_id = pid;
-                        I.exp_binary_origin = ori;
                         I.exp_binary_pos = pos; } in
                     let assign_e = I.Assign {
                         I.exp_assign_op = I.OpAssign;
                         I.exp_assign_lhs = e;
                         I.exp_assign_rhs = sub1_e;
                         I.exp_assign_path_id = None;
-                        I.exp_assign_origin = ori;
                         I.exp_assign_pos = pos; } in
                     let seq = I.Seq {
                         I.exp_seq_exp1 = assign_e;
                         I.exp_seq_exp2 = e;
-                        I.exp_seq_origin = ori;
                         I.exp_seq_pos = pos; } in
                     helper (I.Block { exp_block_local_vars = [];I.exp_block_body = seq;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
               | _ -> failwith "u_op not supported yet")
-      | I.Var { I.exp_var_name = v; I.exp_var_origin = ori; I.exp_var_pos = pos } ->
+      | I.Var { I.exp_var_name = v; I.exp_var_pos = pos } ->
             (try
               let vinfo_tmp = E.look_up v in
               match vinfo_tmp with
@@ -3001,7 +2904,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       ((C.Var {
                           C.exp_var_type = ct;
                           C.exp_var_name = vi.E.var_alpha;
-                          C.exp_var_origin = ori;
                           C.exp_var_pos = pos; }), ct)
                 | E.ConstInfo ci ->
                       let ct = trans_type prog ci.E.const_type pos in ((ci.E.const_value), ct)
@@ -3009,7 +2911,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       let ct = trans_type prog ei.E.enum_type pos in
                       ((C.IConst {
                           C.exp_iconst_val = ei.E.enum_value;
-                          C.exp_iconst_origin = ori;
                           C.exp_iconst_pos = pos; }), ct)
             with | Not_found ->
                   let proc_idents = 
@@ -3024,14 +2925,12 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                     ((C.Var {
                         C.exp_var_type = ct;
                         C.exp_var_name = v;
-                        C.exp_var_origin = ori;
                         C.exp_var_pos = pos; }), ct)
                   else
                     Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not defined"; })
       | I.VarDecl {
             I.exp_var_decl_type = t;
             I.exp_var_decl_decls = decls;
-            I.exp_var_decl_origin = ori;
             I.exp_var_decl_pos = tpos } ->
             let ct = trans_type prog t tpos in
             let rec helper2 ds = (match ds with
@@ -3054,12 +2953,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                     let init_e = C.Assign {
                         C.exp_assign_lhs = alpha;
                         C.exp_assign_rhs = init_val;
-                        C.exp_assign_origin = ori;
                         C.exp_assign_pos = pos; } in
                     let var_decl = C.VarDecl {
                         C.exp_var_decl_type = ct;
                         C.exp_var_decl_name = alpha;
-                        C.exp_var_decl_origin = ori;
                         C.exp_var_decl_pos = pos; } in
                     match oe with 
                       | None -> 
@@ -3070,7 +2967,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                 C.exp_seq_type = C.void_type;
                                 C.exp_seq_exp1 = var_decl;
                                 C.exp_seq_exp2 = init_e;
-                                C.exp_seq_origin = ori;
                                 C.exp_seq_pos = pos; }
                     ))
               | (v, oe, pos) :: rest ->
@@ -3080,7 +2976,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         C.exp_seq_type = C.void_type;
                         C.exp_seq_exp1 = ce;
                         C.exp_seq_exp2 = crest;
-                        C.exp_seq_origin = ori;
                         C.exp_seq_pos = pos;}
               | [] -> failwith "trans_exp: VarDecl has an empty declaration list") in 
             ((helper2 decls), C.void_type)
@@ -3090,7 +2985,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_while_specs = prepost;
             I.exp_while_wrappings = wrap;
             I.exp_while_path_id = pi;
-            I.exp_while_origin = ori;
             I.exp_while_pos = pos } ->
             let tvars = E.visible_names () in
             let tvars = Gen.BList.remove_dups_eq (=) tvars in
@@ -3111,7 +3005,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         I.exp_call_nrecv_lock = None;
                         I.exp_call_nrecv_arguments = w_args;
                         I.exp_call_nrecv_pos = pos;
-                        I.exp_call_nrecv_origin = ori;
                         I.exp_call_nrecv_path_id = pi; };
                     I.exp_seq_pos = pos; };
                 I.exp_block_local_vars = [];
@@ -3122,7 +3015,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                     I.exp_cond_condition = cond;
                     I.exp_cond_then_arm = w_body_2;
                     I.exp_cond_else_arm = I.Empty pos;
-                    I.exp_cond_origin = ori;
                     I.exp_cond_pos = pos;
                     I.exp_cond_path_id = pi;};
                 I.exp_block_local_vars = [];
@@ -3152,7 +3044,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 I.exp_call_nrecv_lock = None;
                 I.exp_call_nrecv_arguments = w_args;
                 I.exp_call_nrecv_pos = pos;
-                I.exp_call_nrecv_origin = ori;
                 I.exp_call_nrecv_path_id = pi; } in
             let w_call = match wrap with
               | None -> temp_call
@@ -3165,8 +3056,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             let (iw_call, _) = trans_exp new_prog w_proc w_call in
             let cw_proc = trans_proc new_prog w_proc in 
             (loop_procs := cw_proc :: !loop_procs; (iw_call, C.void_type))
-      | Iast.FloatLit {I.exp_float_lit_val = fval; I.exp_float_lit_origin = ori; I.exp_float_lit_pos = pos} -> 
-            (C.FConst {C.exp_fconst_val = fval; C.exp_fconst_origin = ori; C.exp_fconst_pos = pos}, C.float_type)
+      | Iast.FloatLit {I.exp_float_lit_val = fval; I.exp_float_lit_pos = pos} -> 
+            (C.FConst {C.exp_fconst_val = fval; C.exp_fconst_pos = pos}, C.float_type)
       | Iast.Finally b ->  Err.report_error { Err.error_loc = b.I.exp_finally_pos; Err.error_text = "Translation of finally failed";} 
       | Iast.ConstDecl _ -> failwith (Iprinter.string_of_exp ie)
       | Iast.Cast _ -> failwith (Iprinter.string_of_exp ie)
@@ -3178,7 +3069,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 			I.exp_raise_use_type = use_type;
             I.exp_raise_from_final = ff;
             I.exp_raise_path_id = pi;
-            I.exp_raise_origin = ori;
             I.exp_raise_pos = pos })->
             (*let _ = print_string ("\n trt : "^(string_of_bool ff)^"\n") in*)
             let r = match oe with
@@ -3197,7 +3087,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                 | _ -> Err.report_error { Err.error_loc = pos; 
                                   Err.error_text = "translation error, raise from finally raises"^ (Iprinter.string_of_exp oe)});
                       C.exp_sharp_pos = pos;
-                      C.exp_sharp_origin = ori;
                       C.exp_sharp_path_id = pi;}), C.void_type)
                     else
                       let e_pos = Iast.get_exp_pos oe in
@@ -3209,7 +3098,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         C.exp_var_decl_pos = e_pos;} in
                         let init_e = C.Assign { C.exp_assign_lhs = fn;
                         C.exp_assign_rhs = ce;
-                        C.exp_assign_origin = ori;
                         C.exp_assign_pos = e_pos;} in
                         let shar = C.Sharp ({	
                             C.exp_sharp_type = C.void_type;
@@ -3224,17 +3112,14 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                             C.exp_sharp_unpack = false;
                             C.exp_sharp_val = Cast.Sharp_var (ct,fn);
                             C.exp_sharp_path_id = pi;
-                            C.exp_sharp_origin = ori;
                             C.exp_sharp_pos = pos }) in
                         let tmp_e1 = C.Seq { C.exp_seq_type = C.void_type;
                         C.exp_seq_exp1 = init_e;
                         C.exp_seq_exp2 = shar;
-                        C.exp_seq_origin = ori;
                         C.exp_seq_pos = pos;} in
                         let tmp_e2 = C.Seq { C.exp_seq_type = C.void_type;
                         C.exp_seq_exp1 = vd;
                         C.exp_seq_exp2 = tmp_e1;
-                        C.exp_seq_origin = ori;
                         C.exp_seq_pos = pos;} in 
                         (tmp_e2, Void)
                       else Err.report_error { Err.error_loc = pos; 
@@ -3248,7 +3133,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                 {CF.formula_flow_interval = (exlist # get_hash c); CF.formula_flow_link = None})
                           | I.Var_flow c -> (C.Sharp_id c));
                     C.exp_sharp_val = Cast.Sharp_no_val;
-                    C.exp_sharp_origin = ori;
                     C.exp_sharp_pos = pos;
                     C.exp_sharp_path_id = pi;}), C.void_type) in r				
       | Iast.Try {  
@@ -3256,7 +3140,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_try_path_id = pid;
             I.exp_catch_clauses = cl_list;
             I.exp_finally_clause = fl_list;
-            C.exp_try_origin = ori;
             I.exp_try_pos = pos}-> 
             let pid = match pid with | None -> fresh_strict_branch_point_id "" | Some s -> s in
             if ((List.length fl_list)>0) then
@@ -3270,7 +3153,6 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   C.exp_try_path_id = pid;
                   C.exp_try_body = new_body;
                   C.exp_catch_clause = (List.hd new_clauses) ;
-                  C.exp_try_origin = ori;
                   C.exp_try_pos = pos}),C.void_type)
                 | _ -> let r1 = List.fold_left (fun a c ->
                       let c = C.get_catch_of_exp c in
@@ -3278,14 +3160,12 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       C.Try({ C.exp_try_type = ct1;
                       C.exp_try_body = a;
                       C.exp_try_path_id = fresh_strict_branch_point_id "";
-                      C.exp_try_origin = ori;
                       C.exp_try_pos = pos;
                       C.exp_catch_clause =
                               C.Catch ({ c with C.exp_catch_body =
                                       C.Try({C.exp_try_type = Void;
                                       C.exp_try_path_id = fresh_strict_branch_point_id "";
                                       C.exp_try_body = c.C.exp_catch_body;
-                                      C.exp_try_origin = ori;
                                       C.exp_try_pos = c.C.exp_catch_pos;		   
                                       C.exp_catch_clause = C.Catch{
                                           C.exp_catch_flow_type = exlist # get_hash c_flow;
@@ -3297,11 +3177,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                                   {CF.formula_flow_interval = !spec_flow_int; CF.formula_flow_link = Some fl_var};
                                               C.exp_sharp_val = Cast.Sharp_no_val;
                                               C.exp_sharp_unpack = false;
-                                              C.exp_sharp_origin = ori;
                                               C.exp_sharp_pos = pos;
                                               C.exp_sharp_path_id =None (* c.C.exp_catch_path_id*);
                                           });
-                                          C.exp_catch_origin = ori;
                                           C.exp_catch_pos = pos;
                                           (*C.exp_catch_path_id = c.C.exp_catch_path_id;*)
                                       };
@@ -3322,13 +3200,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 							  {CF.formula_flow_interval = !spec_flow_int; CF.formula_flow_link = None};
 						  C.exp_sharp_val = Cast.Sharp_no_val;
 						  C.exp_sharp_unpack = true;
-              C.exp_sharp_origin = ori;
 						  C.exp_sharp_pos = pos;
 						  C.exp_sharp_path_id = None (*stub_branch_point_id "_spec_catch"*);
 					  });
-              C.exp_catch_origin = ori;
 				      C.exp_catch_pos = pos;};
-          C.exp_try_origin = ori;
 				  C.exp_try_pos = pos};) in
 		          (r, C.void_type)
 	          )
@@ -3448,13 +3323,13 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
     | Array (et, r) -> Array (trans_type prog et pos, r) (* An Hoa *)
     | p -> p
 
-and flatten_to_bind_debug prog proc b r rhs_o pid imm ori pos =
+and flatten_to_bind_debug prog proc b r rhs_o pid imm pos =
   Debug.no_2 "flatten_to_bind " 
       (Iprinter.string_of_exp) 
       (fun x -> match x with
         | Some x1 -> (Cprinter.string_of_exp x1) | None -> "")
       (fun _ -> "?")
-      (fun b rhs_o -> flatten_to_bind prog proc b r rhs_o pid imm ori pos) b rhs_o
+      (fun b rhs_o -> flatten_to_bind prog proc b r rhs_o pid imm pos) b rhs_o
 
 (**
    * An Hoa : compact field access by combining inline fields. For example, given
@@ -3485,10 +3360,10 @@ and compact_field_access_sequence prog root_type field_seq =
   res
 
 and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
-      (rhs_o : C.exp option) (pid:control_path_id) (imm : heap_ann) (read_only : bool) ori pos =
+      (rhs_o : C.exp option) (pid:control_path_id) (imm : heap_ann) (read_only : bool) pos =
   match rev_fs with
     | f :: rest ->
-          let (cbase, base_t) = flatten_to_bind prog proc base rest None pid imm read_only ori pos in
+          let (cbase, base_t) = flatten_to_bind prog proc base rest None pid imm read_only pos in
           let (fn, new_var) =
             (match cbase with
               | C.Var { C.exp_var_name = v } -> (v, false)
@@ -3547,9 +3422,8 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
                 C.exp_bind_bound_var = ((Named dname), fn);
                 C.exp_bind_fields = List.combine field_types fresh_names;
                 C.exp_bind_body = bind_body;
-                C.exp_bind_imm = imm;
+		        C.exp_bind_imm = imm;
                 C.exp_bind_read_only = read_only;
-                C.exp_bind_origin = ori;
                 C.exp_bind_pos = pos;
                 C.exp_bind_path_id = pid;} in
             let seq1 = C.mkSeq bind_type init_fn bind_e pos in
@@ -3990,7 +3864,6 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             IF.formula_base_pure = p;
             IF.formula_base_flow = fl;
             IF.formula_base_and = a;
-            IF.formula_base_origin = fo;
             IF.formula_base_pos = pos} ->(
             let rl = res_retrieve stab clean_res fl in
             let _ = if sep_collect then  (gather_type_info_pure prog p stab; gather_type_info_heap prog h stab) else () in 					
@@ -4013,7 +3886,6 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
             IF.formula_exists_pure = p;
             IF.formula_exists_flow = fl;
             IF.formula_exists_and = a;
-            IF.formula_exists_origin = o;
             IF.formula_exists_pos = pos} -> (
             let rl = res_retrieve stab clean_res fl in
             let _ = if sep_collect then (gather_type_info_pure prog p stab;
@@ -4024,7 +3896,6 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
                 IF.formula_base_pure = p;
                 IF.formula_base_flow = fl;
                 IF.formula_base_and = a;
-                IF.formula_base_origin = o;
                 IF.formula_base_pos = pos; } in
             (* let _ = print_endline ("trans_formula: Exists: before linearize:" *)
             (*                        ^ " ### stab = " ^ (string_of_stab stab )) in *)
@@ -4293,7 +4164,6 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
     let p = base.IF.formula_base_pure in
     let fl = base.IF.formula_base_flow in
     let a = base.IF.formula_base_and in
-    let fo = base.IF.formula_base_origin in
     let pos = base.IF.formula_base_pos in
     let (new_h, type_f) = linearize_heap h pos in
     let new_p = trans_pure_formula p stab in
@@ -4314,26 +4184,24 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
           let pos = base.IF.formula_base_pos in
           let nh,np,nt,nfl, na = (linearize_base base pos) in
           let np = (memoise_add_pure_N (mkMTrue pos) np)  in
-          CF.mkBase nh np nt nfl na fo pos
+          CF.mkBase nh np nt nfl na pos
     | IF.Exists {
           IF.formula_exists_heap = h; 
           IF.formula_exists_pure = p;
           IF.formula_exists_flow = fl;
           IF.formula_exists_qvars = qvars;
           IF.formula_exists_and = a;
-          IF.formula_exists_origin = o;
           IF.formula_exists_pos = pos} ->
           let base ={
               IF.formula_base_heap = h;
               IF.formula_base_pure = p;
               IF.formula_base_flow = fl;
               IF.formula_base_and = a;
-              IF.formula_base_origin = o;
               IF.formula_base_pos = pos;
           } in 
 	      let nh,np,nt,nfl,na = linearize_base base pos in
           let np = memoise_add_pure_N (mkMTrue pos) np in
-	      CF.mkExists (List.map (fun c-> trans_var_safe c UNK stab pos) qvars) nh np nt nfl na fo pos 
+	      CF.mkExists (List.map (fun c-> trans_var_safe c UNK stab pos) qvars) nh np nt nfl na pos 
 	          
 
 and trans_flow_formula (f0:IF.flow_formula) pos : CF.flow_formula = 
@@ -4356,32 +4224,26 @@ and check_dfrac_wf e1 e2 pos = if (CP.has_e_tscons e1)||(CP.has_e_tscons e2) the
 			  | _,_ -> report_error pos ("distinct shares can appear only in expressions of the form a=a or a+a=a where a=v|c "^(Cprinter.string_of_formula_exp e1)^" = "^(Cprinter.string_of_formula_exp e1)))
 	| _ -> report_error pos ("distinct shares can appear only in expressions of the form a=a or a+a=a where a=v|c "^(Cprinter.string_of_formula_exp e1)^" = "^(Cprinter.string_of_formula_exp e1))
   else ()
-
+  
 and trans_pure_formula (f0 : IP.formula) stab : CP.formula =
-  Debug.no_1 "trans_pure_formula" 
-             (Iprinter.string_of_pure_formula)
-             (Cprinter.string_of_pure_formula)
-             (fun f -> trans_pure_formula_x f stab) f0
-
-and trans_pure_formula_x (f0 : IP.formula) stab : CP.formula =
   match f0 with
-    | IP.BForm (bf,lbl,fo) -> CP.BForm (trans_pure_b_formula bf stab , lbl, fo) 
+    | IP.BForm (bf,lbl) -> CP.BForm (trans_pure_b_formula bf stab , lbl) 
     | IP.And (f1, f2, pos) ->
           let pf1 = trans_pure_formula f1 stab in
           let pf2 = trans_pure_formula f2 stab in CP.mkAnd pf1 pf2 pos
-    | IP.AndList b -> CP.mkAndList (map_l_snd (fun c-> trans_pure_formula c stab) b)
-    | IP.Or (f1, f2, lbl, fo, pos) ->
+	| IP.AndList b -> CP.mkAndList (map_l_snd (fun c-> trans_pure_formula c stab) b)
+    | IP.Or (f1, f2,lbl, pos) ->
           let pf1 = trans_pure_formula f1 stab in
-          let pf2 = trans_pure_formula f2 stab in CP.mkOr pf1 pf2 lbl fo pos
-    | IP.Not (f, lbl, fo, pos) -> let pf = trans_pure_formula f stab in CP.mkNot pf lbl fo pos
-    | IP.Forall ((v, p), f, lbl, fo, pos) ->
+          let pf2 = trans_pure_formula f2 stab in CP.mkOr pf1 pf2 lbl pos
+    | IP.Not (f, lbl, pos) -> let pf = trans_pure_formula f stab in CP.mkNot pf lbl pos
+    | IP.Forall ((v, p), f, lbl, pos) ->
           let pf = trans_pure_formula f stab in
           let v_type = Cpure.type_of_spec_var (trans_var (v,Unprimed) stab pos) in
-          let sv = CP.SpecVar (v_type, v, p) in CP.mkForall [ sv ] pf lbl fo pos
-    | IP.Exists ((v, p), f, lbl, fo, pos) ->
+          let sv = CP.SpecVar (v_type, v, p) in CP.mkForall [ sv ] pf lbl pos
+    | IP.Exists ((v, p), f, lbl, pos) ->
           let pf = trans_pure_formula f stab in
           let sv = trans_var (v,p) stab pos in
-	      CP.mkExists [ sv ] pf lbl fo pos
+	      CP.mkExists [ sv ] pf lbl pos
 			  
 and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
   Debug.no_1 "trans_pure_b_formula" (Iprinter.string_of_b_formula) (Cprinter.string_of_b_formula) (fun b -> trans_pure_b_formula_x b stab) b0 			
@@ -4947,12 +4809,12 @@ and gather_type_info_exp_x a0 stab et =
 
 and gather_type_info_pure_x prog (p0 : IP.formula) (stab : spec_var_table) : unit =
   match p0 with
-    | IP.BForm (b,_,_) -> gather_type_info_b_formula prog b stab
+    | IP.BForm (b,_) -> gather_type_info_b_formula prog b stab
     | IP.And (p1, p2, pos) | IP.Or (p1, p2, _, pos) ->
           (gather_type_info_pure prog p1 stab; gather_type_info_pure prog p2 stab)
-    | IP.AndList b -> List.iter (fun (_,c)-> gather_type_info_pure prog c stab) b
-    | IP.Not (p1, _, _, pos) -> gather_type_info_pure_x prog p1 stab 
-    | IP.Forall ((qv, qp), qf, _, _, pos) | IP.Exists ((qv, qp), qf, _, _, pos) ->
+	| IP.AndList b -> List.iter (fun (_,c)-> gather_type_info_pure prog c stab) b
+    | IP.Not (p1, _, pos) -> gather_type_info_pure_x prog p1 stab 
+    | IP.Forall ((qv, qp), qf, _,pos) | IP.Exists ((qv, qp), qf, _,pos) ->
 	      if (H.mem stab qv) then
             if !check_shallow_var
 	        then
@@ -6700,7 +6562,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     | CF.Or o -> (get_or_list o.CF.formula_or_f1)@(get_or_list o.CF.formula_or_f2) in
   
   let rec get_pure_conj_list (f:CP.formula):(CP.formula * (bool*CP.b_formula) list) = match f with
-    | CP.BForm (l,_,fo) -> (CP.mkTrue fo no_pos , [(true,l)])
+    | CP.BForm (l,_) -> (CP.mkTrue no_pos , [(true,l)])
     | CP.And (f1,f2,_ )-> 
           let l1,l2 = (get_pure_conj_list f1) in
           let r1,r2 = (get_pure_conj_list f2) in
@@ -6710,10 +6572,10 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
 		  (CP.mkAndList l1, List.concat l2) 
     | CP.Or _ -> (f,[])
     | CP.Not (nf,_,_) -> (match nf with
-        |CP.BForm (l,_,fo) ->(CP.mkTrue fo no_pos, [(false,l)]) 
+        |CP.BForm (l,_) ->(CP.mkTrue no_pos, [(false,l)]) 
         |_ ->(f,[]))
-    | CP.Forall (_,ff,_,_,_) 
-    | CP.Exists (_,ff,_,_,_) -> (f,[]) in
+    | CP.Forall (_,ff,_,_) 
+    | CP.Exists (_,ff,_,_) -> (f,[]) in
   
 
   let filter_pure_conj_list pc  =
@@ -6792,17 +6654,17 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
               (*     (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l2r) None no_pos in *)
               (* Cristian's fixes which seem very slow *)
         | _,_ ->
-              let f1r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None,None)) no_pos) (CP.mkTrue None no_pos) l1r in
-              let f2r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None,None)) no_pos) (CP.mkTrue None no_pos) l2r in
+              let f1r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l1r in
+              let f2r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l2r in
               let tpi = fun f1 f2 -> TP.imply f1 f2 "" false None in
               if ((fun (c,_,_)-> c) (tpi f1r f2r)) then f2r
               else if ((fun (c,_,_)-> c) (tpi f2r f1r)) then f1r
-              else  CP.mkOr f1r f2r None None no_pos in
+              else  CP.mkOr f1r f2r None no_pos in
       (*let _ = print_string ("before hull: "^(Cprinter.string_of_pure_formula lr)^"\n") in*)
       let lr = hull_invs v_l lr in
       (*let _ = print_string ("after hull: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula lr))^"\n") in*)
       let lr = let rec r f = match f with
-        | CP.BForm (l, _, _) -> [l]
+        | CP.BForm (l, _) -> [l]
         | CP.And (f1,f2,_) -> (r f1)@(r f2)
         | _ -> [] in 
       List.concat (List.map r lr) in  
@@ -6824,7 +6686,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       if i>l then [all] (* crt_lst   *)(* in case l=1, we just return one answer; not twice*)
       else
         if i>=l then all :: crt_lst
-        else
+        else 
           let n_list1 = List.map (
               fun  (c1,(b1,c2)) -> 
                   let h = (List.hd c1) in
@@ -6917,7 +6779,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
         : (formula_label * (CP.spec_var list * CP.b_formula list)) =  
     let n_c = List.fold_left (fun a (l,c)  ->  
         if (eq_formula_label l lbl) then a else 
-          let (b,_,_) = TP.imply f (CP.BForm (c,None,None)) "" false None in
+          let (b,_,_) = TP.imply f (CP.BForm (c,None)) "" false None in
           if b then c::a  else
             a) [] neg_br in
     let r = Gen.BList.remove_dups_eq CP.eq_b_formula_no_aset (pl@n_c) in 
@@ -6932,9 +6794,9 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   in
 
   let add_needed_inv uinvl (lbl,(_,rl)) =
-	let all_r = CP.join_conjunctions (List.map (fun c-> CP.BForm (c,None,None)) rl) in
+	let all_r = CP.join_conjunctions (List.map (fun c-> CP.BForm (c,None)) rl) in
 	let uinv2 = List.filter (fun c->
-	    let r,_,_ = TP.imply all_r (CP.BForm (c,None,None)) "" false None in
+	    let r,_,_ = TP.imply all_r (CP.BForm (c,None)) "" false None in
 	    not r) uinvl in
     (lbl, uinv2)
   in
@@ -6992,7 +6854,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
         | None -> false
         | Some bf ->
               begin
-                let bf = CP.BForm (bf,None,None) in
+                let bf = CP.BForm (bf,None) in
                 let remain_ls = Gen.BList.difference_eq (fun (f,_) -> eq_formula_label f) orig_pf ls in
                 if remain_ls==[] then false
                 else List.for_all
@@ -7451,7 +7313,7 @@ and check_barrier_wf prog bd =
 	let f_gen_tot st = 
 		let v = CP.fresh_perm_var () in
 		let pf = CP.mkEq (CP.Var (v,no_pos)) (CP.Tsconst (Tree_shares.Ts.top,no_pos)) no_pos  in
-		f_gen_base st v (CP.BForm ((pf,None),None,None)) in
+		f_gen_base st v (CP.BForm ((pf,None),None)) in
 				
 	let one_entail f1 f2 = 
 		let ctx = CF.build_context (CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) f1 no_pos in

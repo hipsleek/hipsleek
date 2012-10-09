@@ -26,7 +26,7 @@ let print_version () =
 (* main function                          *)
 (******************************************)
 
-let parse_file_full file_name (is_prelude_file: bool) = 
+let parse_file_full file_name = 
   let org_in_chnl = open_in file_name in
     try
     (*let ptime1 = Unix.times () in
@@ -35,7 +35,7 @@ let parse_file_full file_name (is_prelude_file: bool) =
       (* print_string ("Parsing "^file_name^" ...\n"); flush stdout; *)
       let _ = Gen.Profiling.push_time "Parsing" in
       Globals.input_file_name:= file_name;
-      let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) is_prelude_file in
+      let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) in
 		  close_in org_in_chnl;
          let _ = Gen.Profiling.pop_time "Parsing" in
     (*		  let ptime2 = Unix.times () in
@@ -55,8 +55,8 @@ let parse_file_full file_name (is_prelude_file: bool) =
 (* Parse all prelude files declared by user.*)
 let process_primitives (file_list: string list) : Iast.prog_decl list =
   let new_names = List.map (fun c-> (Gen.get_path Sys.executable_name) ^ (String.sub c 1 ((String.length c) - 2))) file_list in
-  if (Sys.file_exists "./prelude.ss") then [parse_file_full "./prelude.ss" true]
-  else List.map (fun s -> parse_file_full s true) new_names
+  if (Sys.file_exists "./prelude.ss") then [parse_file_full "./prelude.ss"]
+  else List.map parse_file_full new_names
 
 let process_primitives (file_list: string list) : Iast.prog_decl list =
   let pr1 = pr_list (fun x -> x) in
@@ -86,7 +86,7 @@ let process_source_full source =
   (* print_string ("\nProcessing file \"" ^ source ^ "\"\n");  *)
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
-  let prog = parse_file_full source false in
+  let prog = parse_file_full source in
   (* Remove all duplicated declared prelude *)
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
@@ -131,6 +131,7 @@ let process_source_full source =
     let _ = Gen.Profiling.push_time "Translating to Core" in
     (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
     let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
+
 	(* Forward axioms and relations declarations to SMT solver module *)
 	let _ = List.map (fun crdef -> 
         Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in

@@ -1063,7 +1063,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   incr test_number;
   let (ante_fv, ante) = prepare_formula_for_mona ante true !test_number in
   let (conseq_fv, conseq) = prepare_formula_for_mona conseq false !test_number in
-  let tmp_form = CP.mkOr (CP.mkNot ante None None no_pos) conseq None None no_pos in
+  let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
   if not !is_mona_running then
     write_to_file false (ante_fv @ conseq_fv) tmp_form imp_no
   else

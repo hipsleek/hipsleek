@@ -335,11 +335,11 @@ let matching_exp pf1 pf2 = match (pf1,pf2) with
   | _ -> (false,[])
 
 let matching f1 f2 = match (f1,f2) with
-  | (BForm ((pf1,o),p,fo), BForm ((pf2,_),_,_)) -> 
+  | (BForm ((pf1,o),p), BForm ((pf2,_),_)) -> 
 (*    DD.devel_hprint (add_str "matching: " (pr_list !CP.print_formula)) [f1;f2] no_pos;*)
     let (res1,res2) = matching_exp pf1 pf2 in
     if res2 = [] then (res1,[])
-    else (res1,List.map (fun r2 -> BForm((r2,o),p,fo)) res2)
+    else (res1,List.map (fun r2 -> BForm((r2,o),p)) res2)
   | _ -> (false,[])
 
 let can_merge f1 f2 =
@@ -497,7 +497,7 @@ let rec rewrite_by_subst2 pairs = match pairs with
 
 let rec filter_var f vars = 
   match f with
-  | CP.Or (f1,f2,l,fo,p) -> CP.mkOr (filter_var f1 vars) (filter_var f2 vars) l fo p
+  | CP.Or (f1,f2,l,p) -> CP.mkOr (filter_var f1 vars) (filter_var f2 vars) l p
   | _ -> CP.filter_var (CP.drop_rel_formula f) vars
 
 let propagate_rec_helper rcase_orig rel ante_vars =
@@ -625,12 +625,12 @@ let remove_subtract_pf pf = match pf with
   | _ -> pf
 
 let rec remove_subtract pure = match pure with
-  | BForm ((pf,o1),o2,o3) -> BForm ((remove_subtract_pf pf,o1),o2,o3)
+  | BForm ((pf,o1),o2) -> BForm ((remove_subtract_pf pf,o1),o2)
   | And (f1,f2,_) -> CP.mkAnd (remove_subtract f1) (remove_subtract f2) no_pos
-  | Or (f1,f2,_,fo,_) -> CP.mkOr (remove_subtract f1) (remove_subtract f2) None fo no_pos
-  | Not (f,_,fo,_) -> CP.mkNot (remove_subtract f) None fo no_pos
-  | Forall (v,f,o,fo,p) -> Forall (v,remove_subtract f,o,fo,p)
-  | Exists (v,f,o,fo,p) -> Exists (v,remove_subtract f,o,fo,p)
+  | Or (f1,f2,_,_) -> CP.mkOr (remove_subtract f1) (remove_subtract f2) None no_pos
+  | Not (f,_,_) -> CP.mkNot_s (remove_subtract f)
+  | Forall (v,f,o,p) -> Forall (v,remove_subtract f,o,p)
+  | Exists (v,f,o,p) -> Exists (v,remove_subtract f,o,p)
   | AndList l -> AndList (map_l_snd remove_subtract l)
 
 let isComp pure = match pure with
@@ -750,7 +750,7 @@ let helper input_pairs rel ante_vars =
   match pfs with
   | [] -> []
 (*  | [hd] -> [(rel,hd,no)]*)
-  | _ -> [(rel, List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None None no_pos) (CP.mkFalse no_pos) pfs, no)]
+  | _ -> [(rel, List.fold_left (fun p1 p2 -> CP.mkOr p1 p2 None no_pos) (CP.mkFalse no_pos) pfs, no)]
 
 let simplify_res fixpoint =
   let disjs = list_of_disjs fixpoint in

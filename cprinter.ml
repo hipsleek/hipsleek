@@ -188,8 +188,7 @@ let pr_list_open_sep (f_open:unit -> unit)
 (** @param sep = "SAB"-space-cut-after-before,"SA"-space cut-after,"SB" -space-before 
  "AB"-cut-after-before,"A"-cut-after,"B"-cut-before, "S"-space, "" no-cut, no-space*)
 let pr_op_sep_gen sep op =
-
-    if sep="A" then (fmt_string op; fmt_cut())
+  if sep="A" then (fmt_string op; fmt_cut())
   else if sep="B" then (fmt_cut();fmt_string op)
   else if sep="AB" then (fmt_cut();fmt_string op;fmt_cut())
   else if sep="SB" then (fmt_space();fmt_string op;fmt_string(" "))
@@ -560,7 +559,7 @@ let b_formula_wo_paren (e:P.b_formula) =
 let pure_formula_assoc_op (e:P.formula) : (string * P.formula list) option = 
   match e with
     | P.And (e1,e2,_) -> Some (op_and_short,[e1;e2])
-    | P.Or (e1,e2,_,_,_) -> Some (op_or_short,[e1;e2])
+    | P.Or (e1,e2,_,_) -> Some (op_or_short,[e1;e2])
     | _ -> None
 
 (* check if exp can be printed without a parenthesis,
@@ -569,7 +568,7 @@ let pure_formula_wo_paren (e:P.formula) =
   match e with
     | P.Forall _ 
     | P.Exists _ | P.Not _ -> true
-    | P.BForm (e1,_,_) -> true (* b_formula_wo_paren e1 *)
+    | P.BForm (e1,_) -> true (* b_formula_wo_paren e1 *)
     | P.And _ -> true 
     | _ -> false
 
@@ -777,12 +776,7 @@ and string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s 
 and string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
 and string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
 and string_of_formula_label_only x :string = string_of_formula_label x ""
-and string_of_formula_origin fo =
-  match fo with
-  | None -> ""
-  | Some F_o_specs -> "F_O_SPECS"
-  | Some F_o_code _ -> "F_O_CODE"
-  | Some F_o_intermediate -> "F_O_INTERMEDIATE"
+
 and string_of_iast_label_table table =
   let string_of_row row =
     let string_of_label_loc (_, path_label, loc) =
@@ -810,7 +804,7 @@ and pr_pure_formula  (e:P.formula) =
   let f_b e =  pr_bracket pure_formula_wo_paren pr_pure_formula e 
   in
   match e with 
-    | P.BForm (bf,lbl,fo) -> pr_formula_label_opt lbl; pr_b_formula bf
+    | P.BForm (bf,lbl) -> (*pr_formula_label_opt lbl;*) pr_b_formula bf
     | P.And (f1, f2, l) ->  
           let arg1 = bin_op_to_list op_and_short pure_formula_assoc_op f1 in
           let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in
@@ -818,20 +812,20 @@ and pr_pure_formula  (e:P.formula) =
           pr_list_op op_and f_b args
     | P.AndList b -> fmt_string "AndList ";
 		pr_list_op_none " & " (wrap_box ("B",0) (pr_pair_aux pr_spec_label pr_pure_formula)) b
-    | P.Or (f1, f2, lbl, fo, l) -> 
+    | P.Or (f1, f2, lbl,l) -> 
           pr_formula_label_opt lbl; 
           let arg1 = bin_op_to_list op_or_short pure_formula_assoc_op f1 in
           let arg2 = bin_op_to_list op_or_short pure_formula_assoc_op f2 in
           let args = arg1@arg2 in
           pr_list_op op_or f_b args
-    | P.Not (f, lbl, fo, l) -> 
+    | P.Not (f, lbl, l) -> 
           pr_formula_label_opt lbl; 
           fmt_string "!(";f_b f;fmt_string ")"
-    | P.Forall (x, f, lbl, fo, l) -> 
+    | P.Forall (x, f,lbl, l) -> 
           pr_formula_label_opt lbl; 
 	      fmt_string "forall("; pr_spec_var x; fmt_string ":";
 	      pr_pure_formula f; fmt_string ")"
-    | P.Exists (x, f, lbl, fo, l) -> 
+    | P.Exists (x, f, lbl, l) -> 
           pr_formula_label_opt lbl; 
 	      fmt_string "exists("; pr_spec_var x; fmt_string ":";
 	      pr_pure_formula f; fmt_string ")"
@@ -1137,11 +1131,8 @@ let rec pr_formula_base e =
 	  formula_base_flow = fl;
 	  formula_base_and = a;
       formula_base_label = lbl;
-      formula_base_origin = fo;
 	  formula_base_pos = pos}) ->
-          (match lbl with 
-           | None -> fmt_string "" (* "<NoLabel>" *) 
-           | Some l -> let (i,_) = l in fmt_string ("{"^(string_of_int i)^"}->"));
+          (match lbl with | None -> fmt_string "" (* "<NoLabel>" *) | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula p;
           pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
         (* ; fmt_string (" LOC: " ^ (string_of_loc pos))*)
@@ -1166,11 +1157,8 @@ let rec pr_formula e =
 	  formula_exists_flow = fl;
 	  formula_exists_and = a;
       formula_exists_label = lbl;
-      formula_exists_origin = fo;
 	  formula_exists_pos = pos}) ->
-          (match lbl with
-           | None -> ()
-           | Some l -> let (i,_) = l in fmt_string ("{"^(string_of_int i)^"}->"));
+          (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
           pr_h_formula h; pr_cut_after "&" ;
           pr_mix_formula p; pr_cut_after  "&" ; 
@@ -2515,22 +2503,22 @@ and html_of_pure_b_formula f = match f with
 
 and html_of_pure_formula f =
 	match f with
-    | P.BForm ((bf,_),_,_) -> html_of_pure_b_formula bf
+    | P.BForm ((bf,_),_) -> html_of_pure_b_formula bf
     | P.And (f1, f2, l) -> 
 		let arg1 = bin_op_to_list op_and_short pure_formula_assoc_op f1 in
 		let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in
 		let args = arg1@arg2 in
 			"(" ^ (String.concat html_op_and (List.map html_of_pure_formula args)) ^ ")"
 	| P.AndList b -> if b==[] then "[]" else String.concat " && " (List.map (fun c-> html_of_pure_formula (snd c))b)
-    | P.Or (f1, f2, lbl, fo, l) -> 
+    | P.Or (f1, f2, lbl,l) -> 
 		let arg1 = bin_op_to_list op_or_short pure_formula_assoc_op f1 in
 		let arg2 = bin_op_to_list op_or_short pure_formula_assoc_op f2 in
 		let args = arg1@arg2 in
 			"(" ^ (String.concat html_op_or (List.map html_of_pure_formula args)) ^ ")"
-    | P.Not (f1, lbl, fo, l) -> html_op_not ^ (html_of_pure_formula f1)
-    | P.Forall (x, f1, lbl, fo, l) ->
+    | P.Not (f1, lbl, l) -> html_op_not ^ (html_of_pure_formula f1)
+    | P.Forall (x, f1,lbl, l) ->
     	html_forall ^ (html_of_spec_var x) ^ " " ^ (html_of_pure_formula f1)
-    | P.Exists (x, f1, lbl, fo, l) ->
+    | P.Exists (x, f1, lbl, l) ->
     	html_exist ^ (html_of_spec_var x) ^ " " ^ (html_of_pure_formula f1)
 
 and html_of_h_formula h = match h with
@@ -2599,7 +2587,6 @@ and html_of_formula e = match e with
 			formula_base_type = t;
 			formula_base_flow = fl;
 			formula_base_label = lbl;
-      formula_base_origin = fo;
 			formula_base_pos = pos}) ->
 		(html_of_h_formula h) ^ html_op_and ^ (html_of_pure_formula (MP.pure_of_mix p))
 	| Exists ({formula_exists_qvars = svs;
@@ -2608,7 +2595,6 @@ and html_of_formula e = match e with
 			formula_exists_type = t;
 			formula_exists_flow = fl;
 			formula_exists_label = lbl;
-      formula_exists_origin = fo;
 			formula_exists_pos = pos}) ->
 		html_exist ^ (html_of_spec_var_list svs) ^ " : " ^ (html_of_h_formula h) ^ html_op_and ^ (html_of_pure_formula (MP.pure_of_mix p))
 

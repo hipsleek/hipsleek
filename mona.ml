@@ -47,13 +47,13 @@ let rec mona_of_typ = function
 
 (*------------------------------------------*)
 let rec mkEq l = match l with
-  | e :: [] -> CP.BForm(e,None,None)
-  | e :: rest -> CP.And(CP.BForm(e,None,None), (mkEq rest), no_pos)
+  | e :: [] -> CP.BForm(e,None)
+  | e :: rest -> CP.And(CP.BForm(e,None), (mkEq rest), no_pos)
   | _ -> assert false
 
 let rec mkEx l f = match l with
   | [] -> f
-  | sv :: rest -> mkEx rest (CP.Exists(sv, f, None, None, no_pos))
+  | sv :: rest -> mkEx rest (CP.Exists(sv, f, None, no_pos))
 
 (*
 
@@ -82,28 +82,28 @@ and preprocess_exp (e0 : CP.exp) : (CP.exp * CP.formula * CP.spec_var list) =
     | CP.Add( CP.Var(CP.SpecVar(t1, _, _), l1), CP.IConst(_, _), l3) ->
           let tmp = fresh_var_name (string_of_typ t1) l3.start_pos.Lexing.pos_lnum in
 	      let new_evar = CP.SpecVar(t1, tmp, Unprimed) in
-	      let additional_constr = CP.BForm((CP.Eq(CP.Var(new_evar, no_pos), e0, l3), None), None, None) in
+	      let additional_constr = CP.BForm((CP.Eq(CP.Var(new_evar, no_pos), e0, l3), None), None) in
 	      (CP.Var(new_evar, l3), additional_constr, [new_evar])
     | CP.Subtract(CP.Var(CP.SpecVar(t1, id1, p1), l1), CP.Var(CP.SpecVar(t2, id2, p2), l2), l3) ->
           let tmp = fresh_var_name (string_of_typ t1) l3.start_pos.Lexing.pos_lnum in
 	      let new_evar = CP.SpecVar(t1, tmp, Unprimed) in
-	      let additional_constr = CP.BForm((CP.Eq(CP.Var(new_evar, no_pos), CP.Add(CP.Var(CP.SpecVar(t1, tmp, p1), l1), CP.Var(CP.SpecVar(t2, id2, p2), l2), l3), l3), None), None, None) in
+	      let additional_constr = CP.BForm((CP.Eq(CP.Var(new_evar, no_pos), CP.Add(CP.Var(CP.SpecVar(t1, tmp, p1), l1), CP.Var(CP.SpecVar(t2, id2, p2), l2), l3), l3), None), None) in
 	      (CP.Var(new_evar, l3), additional_constr, [new_evar])
     | CP.Subtract( CP.Var(CP.SpecVar(t2, id2, p2), l2), CP.IConst(i1, l1), l3) ->
           let tmp = fresh_var_name (string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
 	      let new_evar = CP.SpecVar(t2, tmp, Unprimed) in
-	      let additional_constr = CP.BForm((CP.Eq(CP.Var(new_evar, no_pos), CP.Add(CP.IConst(i1, l1), CP.Var(CP.SpecVar(t2, tmp, p2), l2), l3), l3), None), None, None) in
+	      let additional_constr = CP.BForm((CP.Eq(CP.Var(new_evar, no_pos), CP.Add(CP.IConst(i1, l1), CP.Var(CP.SpecVar(t2, tmp, p2), l2), l3), l3), None), None) in
 	      (CP.Var(new_evar, l3), additional_constr, [new_evar])
     | CP.Subtract( CP.IConst(i1, l1), CP.Var(CP.SpecVar(t2, id2, p2), l2), l3) ->
           let tmp = fresh_var_name (string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
 	      let new_evar = CP.SpecVar(t2, tmp, Unprimed) in
-	      let additional_constr = CP.BForm((CP.Eq(CP.IConst(i1, l1), CP.Add(CP.Var(CP.SpecVar(t2, id2 , p2), l2), CP.Var(CP.SpecVar(t2, tmp, p2), l2), l3), l3), None), None, None) in
+	      let additional_constr = CP.BForm((CP.Eq(CP.IConst(i1, l1), CP.Add(CP.Var(CP.SpecVar(t2, id2 , p2), l2), CP.Var(CP.SpecVar(t2, tmp, p2), l2), l3), l3), None), None) in
 	      (CP.Var(new_evar, l3), additional_constr, [new_evar])
-    | CP.Add(CP.IConst(i1, _), CP.IConst(12, _) , l3) -> (CP.IConst(i1+12, l3), CP.BForm((CP.BConst (true, l3), None), None, None), [])
+    | CP.Add(CP.IConst(i1, _), CP.IConst(12, _) , l3) -> (CP.IConst(i1+12, l3), CP.BForm((CP.BConst (true, l3), None), None), [])
     | CP.Subtract( CP.IConst(i1, l1), CP.IConst(i2, l2), l3) ->
           let tmp = fresh_var_name "int" l3.start_pos.Lexing.pos_lnum in
 	      let new_evar = CP.SpecVar(Int, tmp, Unprimed) in
-	      let additional_constr = CP.BForm((CP.Eq(CP.IConst(i1, l1), CP.Add(CP.IConst(i2, l2), CP.Var(CP.SpecVar(Int, tmp, Globals.Unprimed), l3), l3), l3), None), None, None) in
+	      let additional_constr = CP.BForm((CP.Eq(CP.IConst(i1, l1), CP.Add(CP.IConst(i2, l2), CP.Var(CP.SpecVar(Int, tmp, Globals.Unprimed), l3), l3), l3), None), None) in
 	      (CP.Var(new_evar, l3), additional_constr, [new_evar])
     | CP.Add (a1, a2, l1) -> 
           reconstr_2arg a1 a2 (fun e1 e2 l -> CP.Add(e1, e2, l)) l1
@@ -113,7 +113,7 @@ and preprocess_exp (e0 : CP.exp) : (CP.exp * CP.formula * CP.spec_var list) =
           reconstr_2arg a1 a2 (fun e1 e2 l -> CP.Min(e1, e2, l)) l1
     | CP.Max (a1, a2, l1) ->  
           reconstr_2arg a1 a2 (fun e1 e2 l -> CP.Max(e1, e2, l)) l1
-    | _ -> (e0,CP.BForm((CP.BConst (true, no_pos), None), None, None), [])
+    | _ -> (e0,CP.BForm((CP.BConst (true, no_pos), None), None), [])
 
 
 (* 
@@ -149,7 +149,7 @@ and preprocess_b_formula b : (CP.b_formula * CP.formula * CP.spec_var list) =
           reconstr_3arg a1 a2 a3 (fun e1 e2 e3 l1 -> CP.EqMin(e1, e2, e3, l1)) l1
     | CP.EqMax (a1, a2, a3, l1) -> 
           reconstr_3arg a1 a2 a3 (fun e1 e2 e3 l1 -> CP.EqMax(e1, e2, e3, l1)) l1
-    | _ -> (pf, CP.BForm((CP.BConst (true, no_pos), None), None, None), []) 
+    | _ -> (pf, CP.BForm((CP.BConst (true, no_pos), None), None), []) 
   in 
   ((npf,il), constr, ev)
 
@@ -160,18 +160,18 @@ and preprocess_b_formula b : (CP.b_formula * CP.formula * CP.spec_var list) =
 and preprocess_formula pr_w pr_s (f : CP.formula) : CP.formula =
   let rec helper f = 
     match f with
-      | CP.Or (p1, p2,lbl, fo, l1) -> (CP.mkOr (helper p1) (helper p2) lbl fo l1)
+      | CP.Or (p1, p2,lbl, l1) -> (CP.mkOr (helper p1) (helper p2) lbl l1)
       | CP.And (p1, p2, l1) -> (CP.mkAnd (helper p1) (helper p2) l1)
 	  | CP.AndList b -> CP.AndList (Gen.map_l_snd helper b)
-      | CP.Not (p1, lbl, fo, l1) -> CP.Not((preprocess_formula pr_s pr_w p1),lbl, fo, l1)
-      | CP.Forall(sv1, p1,lbl, fo, l1) -> CP.Forall(sv1, (helper p1),lbl, fo, l1)
-      | CP.Exists(sv1, p1,lbl, fo, l1) -> CP.Exists(sv1, (helper p1),lbl, fo, l1)
-      | CP.BForm ((b,_) as bf,lbl,fo) -> 		
+      | CP.Not (p1,lbl, l1) -> CP.Not((preprocess_formula pr_s pr_w p1),lbl, l1)
+      | CP.Forall(sv1, p1,lbl, l1) -> CP.Forall(sv1, (helper p1),lbl, l1)
+      | CP.Exists(sv1, p1,lbl, l1) -> CP.Exists(sv1, (helper p1),lbl, l1)
+      | CP.BForm ((b,_) as bf,lbl) -> 		
             begin
               match (pr_w b) with
                 | None -> 
                       let (bf, constr, ev) = preprocess_b_formula bf in
-                      (mkEx ev (CP.mkAnd (CP.BForm(bf, lbl, fo)) constr no_pos))
+                      (mkEx ev (CP.mkAnd (CP.BForm(bf, lbl)) constr no_pos))
                 | Some f -> helper f
             end
   in helper f
@@ -192,13 +192,13 @@ and find_order (f : CP.formula) vs =
 
 and find_order_formula (f : CP.formula) vs : bool  = match f with
   | CP.And(f1, f2, _)
-  | CP.Or(f1, f2, _,_,_) -> ((find_order_formula f1 vs) || (find_order_formula f2 vs))
+  | CP.Or(f1, f2, _,_) -> ((find_order_formula f1 vs) || (find_order_formula f2 vs))
         (* make sure everything is renamed *)
-  | CP.Forall(_, f1, _,_,_)
-  | CP.Exists(_, f1, _,_,_)
-  | CP.Not(f1, _,_,_) -> (find_order_formula f1 vs)
+  | CP.Forall(_, f1, _,_)
+  | CP.Exists(_, f1, _,_)
+  | CP.Not(f1, _,_) -> (find_order_formula f1 vs)
   | CP.AndList b -> List.exists (fun (_,c)-> find_order_formula c vs) b
-  | CP.BForm(bf,_,_) -> (find_order_b_formula bf vs)
+  | CP.BForm(bf,_) -> (find_order_b_formula bf vs)
 
 and find_order_b_formula (bf : CP.b_formula) vs : bool =
   let rec exp_order e vs =
@@ -704,15 +704,15 @@ and mona_of_formula f initial_f vs =
 and mona_of_formula_x f initial_f vs =
   let rec helper f =
     match f with
-      | CP.BForm (b,_,_) -> "(" ^ (mona_of_b_formula b initial_f vs) ^ ")"
+      | CP.BForm (b,_) -> "(" ^ (mona_of_b_formula b initial_f vs) ^ ")"
       | CP.And (p1, p2, _) -> "(" ^ (helper p1) ^ " & " ^ (helper p2) ^ ")"
 	  | CP.AndList _ -> Gen.report_error no_pos "mona.ml: encountered AndList, should have been already handled"
-      | CP.Or (p1, p2, _,_,_) -> "(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
-      | CP.Not (p, _,_,_) ->
+      | CP.Or (p1, p2, _,_) -> "(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
+      | CP.Not (p, _,_) ->
             begin
               if !sat_optimize then
 	            match p with
-		          | CP.BForm ((CP.BVar (bv, _), _), _, _) -> (mona_of_spec_var bv) ^ " =pconst(0)" (*== pconst(1)*)
+		          | CP.BForm ((CP.BVar (bv, _), _), _) -> (mona_of_spec_var bv) ^ " =pconst(0)" (*== pconst(1)*)
                         (*              (equation (CP.Var (bv, no_pos)) (CP.IConst (1, no_pos)) f "less" "<" vs)*)
 		          | _ -> " (~" ^ (helper p) ^ ") "
               else " (~" ^ (helper p) ^ ") "
@@ -725,12 +725,12 @@ and mona_of_formula_x f initial_f vs =
 	              "(ex2 " ^ v ^ " : " ^ (helper p1) ^ ")"
                   | CP.Exists (sv, p, _) ->
   	              "(ex1 " ^ (mona_of_spec_var sv) ^ " : " ^ (helper p) ^ ")"*)
-      | CP.Forall (sv, p, _,_,l) ->
+      | CP.Forall (sv, p, _,l) ->
             if (is_firstorder_mem (CP.Var(sv, l)) vs) then
 	          " (all1 " ^ (mona_of_spec_var sv) ^ ":" ^ (helper p) ^ ") "
             else
 	          " (all2 " ^ (mona_of_spec_var sv) ^ ":" ^ (helper p) ^ ") "
-      | CP.Exists (sv, p, _,_,l) ->
+      | CP.Exists (sv, p, _,l) ->
             if (is_firstorder_mem (CP.Var(sv, l)) vs) then
 	          begin
 	            " (ex1 " ^ (mona_of_spec_var sv) ^ ":" ^ (helper p) ^ ") "
@@ -1078,7 +1078,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   let conseq = CP.drop_varperm_formula conseq in
   let (ante_fv, ante) = prepare_formula_for_mona pr_w pr_s ante !test_number in
   let (conseq_fv, conseq) = prepare_formula_for_mona pr_s pr_w conseq !test_number in
-  let tmp_form = CP.mkOr (CP.mkNot ante None None no_pos) conseq None None no_pos in
+  let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
   let vs = Hashtbl.create 10 in
   let _ = find_order tmp_form vs in
   if not !is_mona_running then

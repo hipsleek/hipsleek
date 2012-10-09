@@ -364,9 +364,9 @@ struct
 
   let formula_of_memo_constr (c: t) : formula =
     match c with
-    | Memo_B (bf, _) -> BForm (bf, None, None)
+    | Memo_B (bf, _) -> BForm (bf, None)
     | Memo_F f -> f
-    | Memo_E (v1, v2) -> BForm (((form_bform_eq_with_const v1 v2), None), None, None)
+    | Memo_E (v1, v2) -> BForm (((form_bform_eq_with_const v1 v2), None), None)
 
   let atom_of_formula (f: formula) : t = Memo_F f
 

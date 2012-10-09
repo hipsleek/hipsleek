@@ -184,18 +184,15 @@ and exp_assert = {
     exp_assert_asserted_formula : F.struc_formula option;
     exp_assert_assumed_formula : F.formula option;
     exp_assert_path_id : formula_label;
-    exp_assert_origin : formula_origin option;
     exp_assert_pos : loc }
 
 and exp_assign = 
     { exp_assign_lhs : ident;
     exp_assign_rhs : exp;
-    exp_assign_origin : formula_origin option;
     exp_assign_pos : loc }
 	    
 and exp_bconst = { 
     exp_bconst_val : bool;
-    exp_bconst_origin : formula_origin option;
     exp_bconst_pos : loc }
 
 and exp_bind = { 
@@ -206,13 +203,11 @@ and exp_bind = {
     exp_bind_imm : heap_ann;
     exp_bind_read_only : bool; (*for frac perm, indicate whether the body will read or write to bound vars in exp_bind_fields*)
     exp_bind_path_id : control_path_id;
-    exp_bind_origin : formula_origin option;
     exp_bind_pos : loc }
 
 and exp_block = { exp_block_type : typ;
     exp_block_body : exp;
     exp_block_local_vars : typed_ident list;
-    exp_block_origin : formula_origin option;
     exp_block_pos : loc }
 
 and exp_barrier = {exp_barrier_recv : typed_ident; exp_barrier_pos : loc}
@@ -220,7 +215,6 @@ and exp_barrier = {exp_barrier_recv : typed_ident; exp_barrier_pos : loc}
 and exp_cast = { 
     exp_cast_target_type : typ;
     exp_cast_body : exp;
-    exp_cast_origin : formula_origin option;
     exp_cast_pos : loc }
 
 and exp_cond = { exp_cond_type : typ;
@@ -228,17 +222,14 @@ and exp_cond = { exp_cond_type : typ;
     exp_cond_then_arm : exp;
     exp_cond_else_arm : exp;
     exp_cond_path_id : control_path_id;
-    exp_cond_origin : formula_origin option;
     exp_cond_pos : loc }
 
 and exp_debug = { 
     exp_debug_flag : bool;
-    exp_debug_origin : formula_origin option;
     exp_debug_pos : loc }
 
 and exp_fconst = { 
     exp_fconst_val : float;
-    exp_fconst_origin : formula_origin option;
     exp_fconst_pos : loc }
 	
 (* instance call *)
@@ -250,24 +241,20 @@ and exp_icall = { exp_icall_type : typ;
     exp_icall_is_rec : bool; (* set for each mutual-recursive call *)
     (*exp_icall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
     exp_icall_path_id : control_path_id;
-    exp_icall_origin : formula_origin option;
     exp_icall_pos : loc }
 
 and exp_iconst = { 
     exp_iconst_val : int;
-    exp_iconst_origin : formula_origin option;
     exp_iconst_pos : loc }
 
 and exp_new = { 
     exp_new_class_name : ident;
     exp_new_parent_name : ident;
     exp_new_arguments : typed_ident list;
-    exp_new_origin : formula_origin option;
     exp_new_pos : loc }
 
 and exp_return = { exp_return_type : typ;
     exp_return_val : ident option;
-    exp_return_origin : formula_origin option;
     exp_return_pos : loc }
 
 (* static call *)
@@ -278,13 +265,11 @@ and exp_scall = { exp_scall_type : typ;
     exp_scall_is_rec : bool; (* set for each mutual-recursive call *)
     (*exp_scall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
     exp_scall_path_id : control_path_id;
-    exp_scall_origin : formula_origin option;
     exp_scall_pos : loc }
 
 and exp_seq = { exp_seq_type : typ;
     exp_seq_exp1 : exp;
     exp_seq_exp2 : exp;
-    exp_seq_origin : formula_origin option;
     exp_seq_pos : loc }
     
 and exp_sharp = {
@@ -293,7 +278,6 @@ and exp_sharp = {
     exp_sharp_val :sharp_val;(*returned value*)
     exp_sharp_unpack : bool;(*true if it must get the new flow from the second element of the current flow pair*)
     exp_sharp_path_id : control_path_id;
-    exp_sharp_origin : formula_origin option;
     exp_sharp_pos : loc;
 }
     
@@ -302,34 +286,28 @@ and exp_catch = {
     exp_catch_flow_var : ident option;
     exp_catch_var : typed_ident option;
     exp_catch_body : exp;			
-    exp_catch_origin : formula_origin option;
     exp_catch_pos : loc }
     
 and exp_try = { exp_try_type : typ;
    exp_try_body : exp;
     exp_try_path_id : control_path_id_strict;
     exp_catch_clause : exp ;
-    exp_try_origin : formula_origin option;
     exp_try_pos : loc }
 
 and exp_this = { exp_this_type : typ;
-    exp_this_origin : formula_origin option;
     exp_this_pos : loc }
 
 and exp_var = { exp_var_type : typ;
     exp_var_name : ident;
-    exp_var_origin : formula_origin option;
     exp_var_pos : loc }
 
 (* An Hoa : Empty array - only for initialization purpose *)
 and exp_emparray = { exp_emparray_type : typ;
 	exp_emparray_dim : int;
-    exp_emparray_origin : formula_origin option;
     exp_emparray_pos : loc }
 
 and exp_var_decl = { exp_var_decl_type : typ;
     exp_var_decl_name : ident;
-    exp_var_decl_origin : formula_origin option;
     exp_var_decl_pos : loc }
 
 and exp_while = { 
@@ -337,34 +315,27 @@ and exp_while = {
     exp_while_body : exp;
     exp_while_spec : Cformula.struc_formula (*multi_spec*);
     exp_while_path_id : control_path_id;
-    exp_while_origin : formula_origin option;
     exp_while_pos : loc }
 
 and exp_dprint = { 
     exp_dprint_string : ident;
     exp_dprint_visible_names : ident list;
-    exp_dprint_origin : formula_origin option;
     exp_dprint_pos : loc }
 
 and exp_unfold = { 
     exp_unfold_var : P.spec_var;
-    exp_unfold_origin : formula_origin option;
     exp_unfold_pos : loc }
 
 and exp_check_ref = { 
     exp_check_ref_var : ident;
-    exp_check_origin : formula_origin option;
     exp_check_ref_pos : loc }
 
 and exp_java = { 
     exp_java_code : string;
-    exp_java_origin : formula_origin option;
     exp_java_pos : loc}
-
 and exp_label = {
-    exp_label_type : typ;
+  exp_label_type : typ;
     exp_label_path_id : (control_path_id * path_label);
-    exp_label_origin : formula_origin option;
     exp_label_exp: exp;}
     
 and exp = (* expressions keep their types *)
@@ -745,11 +716,11 @@ let stub_branch_point_id s = (-1,s)
 let mkEAssume pos = Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkTrueFlow ()) pos),(stub_branch_point_id ""))
 let mkEAssume_norm pos = Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkNormalFlow ()) pos),(stub_branch_point_id ""))
 	
-let mkSeq t e1 e2 ori pos = match e1 with
+let mkSeq t e1 e2 pos = match e1 with
   | Unit _ -> e2
   | _ -> match e2 with
 	  | Unit _ -> e1
-	  | _ -> Seq ({exp_seq_type = t; exp_seq_exp1= e1; exp_seq_exp2 = e2; exp_seq_origin = ori; exp_seq_pos = pos})
+	  | _ -> Seq ({exp_seq_type = t; exp_seq_exp1= e1; exp_seq_exp2 = e2; exp_seq_pos = pos})
 
 (* utility functions *)
 

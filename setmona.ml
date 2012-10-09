@@ -69,16 +69,16 @@ let rec compute_fo_formula (f0 : formula) var_map : unit =
   How about quantified formulas? Rename all quantified variables.
 *)
 and b_formulas_list (f0 : formula) : b_formula list = match f0 with
-  | BForm (bf,_,_) -> [bf]
+  | BForm (bf,_) -> [bf]
   | AndList _ -> Gen.report_error no_pos "setmona.ml: encountered AndList, should have been already handled"
   | And (f1, f2, _)
-  | Or (f1, f2, _, _, _) ->
+  | Or (f1, f2, _, _) ->
 	  let l1 = b_formulas_list f1 in
 	  let l2 = b_formulas_list f2 in
 		l1 @ l2
-  | Not (f1, _, _, _)
-  | Forall (_, f1, _, _, _)
-  | Exists (_, f1, _, _, _) ->
+  | Not (f1, _, _)
+  | Forall (_, f1, _, _)
+  | Exists (_, f1, _, _) ->
 	  b_formulas_list f1
 
 (*
@@ -298,29 +298,29 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
    a1 = a2 + a3 + a4 ==> ex f . f = a2 + a3 & a1 = f + a4
 *)
 and normalize (f0 : formula) : formula = match f0 with
-  | BForm (bf,lbl,fo) -> normalize_b_formula bf lbl fo
+  | BForm (bf,lbl) -> normalize_b_formula bf lbl
   | AndList _ -> Gen.report_error no_pos "setmona.ml: encountered AndList, should have been already handled"
   | And (f1, f2, pos) ->
 	  let nf1 = normalize f1 in
 	  let nf2 = normalize f2 in
 	  let nf = mkAnd nf1 nf2 pos in
 		nf
-  | Or (f1, f2, lbl, fo, pos) ->
+  | Or (f1, f2, lbl, pos) ->
 	  let nf1 = normalize f1 in
 	  let nf2 = normalize f2 in
-	  let nf = mkOr nf1 nf2 lbl fo pos in
+	  let nf = mkOr nf1 nf2 lbl pos in
 		nf
-  | Not (f1, lbl, fo, pos) ->
+  | Not (f1, lbl, pos) ->
 	  let nf1 = normalize f1 in
-	  let nf = mkNot nf1 lbl fo pos in
+	  let nf = mkNot nf1 lbl pos in
 		nf
-  | Forall (qvar, qf, lbl, fo, pos) ->
+  | Forall (qvar, qf, lbl, pos) ->
 	  let nqf = normalize qf in
-	  let nf = Forall (qvar, nqf, lbl, fo, pos) in
+	  let nf = Forall (qvar, nqf, lbl, pos) in
 		nf
-  | Exists (qvar, qf, lbl, fo, pos) ->
+  | Exists (qvar, qf, lbl, pos) ->
 	  let nqf = normalize qf in
-	  let nf = Exists (qvar, nqf, lbl, fo, pos) in
+	  let nf = Exists (qvar, nqf, lbl, pos) in
 		nf
 
 and is_normalized_term (e : exp) : bool = match e with
@@ -330,7 +330,7 @@ and is_normalized_term (e : exp) : bool = match e with
   | Add (e1, e2, _) -> (is_var_num e1) && (is_var_num e2)
   | _ -> false
 
-and normalize_b_formula (bf0 : b_formula) lbl fo: formula =
+and normalize_b_formula (bf0 : b_formula) lbl: formula =
   let helper2 mk e1 e2 pos =
 	let a1, s1 = split_add_subtract e1 in
 	let a2, s2 = split_add_subtract e2 in
@@ -338,10 +338,10 @@ and normalize_b_formula (bf0 : b_formula) lbl fo: formula =
 	let right = a2 @ s1 in
 	let left_e, left_f, left_v = flatten_list left in
 	let right_e, right_f, right_v = flatten_list right in
-	let tmp = BForm (((mk left_e right_e pos), None), lbl, fo) in
+	let tmp = BForm (((mk left_e right_e pos), None),lbl) in
 	let tmp1 = mkAnd left_f right_f pos in
 	let tmp2 = mkAnd tmp tmp1 pos in
-	let res_f = mkExists (left_v @ right_v) tmp2 lbl fo pos in
+	let res_f = mkExists (left_v @ right_v) tmp2 lbl pos in
 	  res_f
   in
   let (pf,il) = bf0 in
@@ -354,13 +354,13 @@ and normalize_b_formula (bf0 : b_formula) lbl fo: formula =
 	  | BagNotIn _
 	  | BagSub _
 	  | BagMin _
-	  | BagMax _ -> BForm (bf0,lbl,fo)
+	  | BagMax _ -> BForm (bf0,lbl)
 	  | Eq (e1, e2, pos) -> 
 		  if ((is_var_num e1 || is_null e1) && is_normalized_term e2) || 
 			((is_var_num e2 || is_null e2) && is_normalized_term e1)
-		  then (BForm (bf0,lbl,fo))
+		  then (BForm (bf0,lbl))
 		  else helper2 mkEq e1 e2 pos
-	  | Neq (e1, e2, pos) -> mkNot (helper2 mkEq e1 e2 pos) lbl fo pos
+	  | Neq (e1, e2, pos) -> mkNot (helper2 mkEq e1 e2 pos) lbl pos
 	  | Lt (e1, e2, pos) -> helper2 mkLt e1 e2 pos
 	  | Lte (e1, e2, pos) | SubAnn (e1, e2, pos) -> helper2 mkLte e1 e2 pos
 	  | Gt (e1, e2, pos) -> helper2 mkGt e1 e2 pos
@@ -443,7 +443,7 @@ and flatten_list (es0 : exp list) : (exp * formula * spec_var list) =
 			let fn = fresh_var_name "int" pos.start_pos.Lexing.pos_lnum in
 		  let sv = SpecVar (Int, fn, Unprimed) in
 		  let new_e = Var (sv, pos) in
-		  let additional_e = BForm ((Eq (new_e, Add (e1, e2, pos), pos), None), None, None) in
+		  let additional_e = BForm ((Eq (new_e, Add (e1, e2, pos), pos), None), None) in
 			if Gen.is_empty rest then
 			  (new_e, additional_e, [sv])
 			else
@@ -623,25 +623,25 @@ and print_var_map var_map =
 and mona_of_formula f0 = mona_of_formula_helper f0
 
 and mona_of_formula_helper f0 = match f0 with
-  | BForm (bf,_,_) -> mona_of_b_formula bf 
+  | BForm (bf,_) -> mona_of_b_formula bf 
   | AndList _ -> Gen.report_error no_pos "setmona.ml: encountered AndList, should have been already handled"
   | And (f1, f2, _) ->
 	  let tmp1 = mona_of_formula_helper f1 in
 	  let tmp2 = mona_of_formula_helper f2 in
 		"(" ^ tmp1 ^ " & " ^ tmp2 ^ ")"
-  | Or (f1, f2, _,_,_) ->
+  | Or (f1, f2, _,_) ->
 	  let tmp1 = mona_of_formula_helper f1 in
 	  let tmp2 = mona_of_formula_helper f2 in
 		"(" ^ tmp1 ^ " | " ^ tmp2 ^ ")"
-  | Not (f1, _,_,_) ->
+  | Not (f1, _,_) ->
 	  let tmp1 = mona_of_formula_helper f1 in
 		"(~(" ^ tmp1 ^ "))"
-  | Forall (sv, f, _,_,_) ->
+  | Forall (sv, f, _,_) ->
 	  let tmp1 = mona_of_spec_var sv in
 	  let tmp2 = mona_of_formula_helper f in
 	  let quant = forall_quant_of_spec_var sv in
 		"(" ^ quant ^ " " ^ tmp1 ^ " : " ^ tmp2 ^ ")"
-  | Exists (sv, f, _,_,_) ->
+  | Exists (sv, f, _,_) ->
 	  let tmp1 = mona_of_spec_var sv in
 	  let tmp2 = mona_of_formula_helper f in
 	  let quant = ex_quant_of_spec_var sv in
@@ -714,7 +714,7 @@ let imply (ante : formula) (conseq : formula) : bool =
   let ante = normalize ante in
   let conseq = normalize conseq in
   let var_map = H.create 103 in
-  let tmptmp = mkOr ante conseq None None no_pos in
+  let tmptmp = mkOr ante conseq None no_pos in
   let _ = compute_fo_formula tmptmp var_map in
   let _ = var_map_ref := var_map in
   let tmp_vars = fv tmptmp in
@@ -764,7 +764,7 @@ let is_sat (f : formula) : bool =
   if !log_all_flag == true then
 	output_string log_all "\n\n[mona.ml]: #is_sat\n";
   let f = elim_exists f in
-  let tmp_form = (imply f (BForm((BConst(false, no_pos), None), None, None))) in
+  let tmp_form = (imply f (BForm((BConst(false, no_pos), None), None))) in
 	match tmp_form with
 	  | true -> 
 		  begin 

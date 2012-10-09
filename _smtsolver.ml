@@ -86,7 +86,7 @@ let is_linear_bformula b = match b with
   | _ -> false
   
 let rec is_linear_formula f0 = match f0 with
-  | CP.BForm (b,_,_) -> is_linear_bformula b
+  | CP.BForm (b,_) -> is_linear_bformula b
   | CP.Not (f, _, _) | CP.Forall (_, f, _, _) | CP.Exists (_, f, _, _) ->
       is_linear_formula f;
   | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) -> 
@@ -114,7 +114,7 @@ let rec collect_relation_names_bformula b collected = match b with
  * Collect the relations that we use
  *)
 and collect_relation_names_formula f0 collected = match f0 with
-  | CP.BForm (b, _, _) -> collect_relation_names_bformula b collected
+  | CP.BForm (b, _) -> collect_relation_names_bformula b collected
   | CP.Not (f, _, _) | CP.Forall (_,f,_,_) | CP.Exists (_,f,_,_)-> collect_relation_names_formula f collected
   | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) ->
 		(* Collect from f1 first, then collect from f2 *)
@@ -140,7 +140,7 @@ and collect_relation_names_formula f0 = match f0 with
  * Checking whether a formula is quantifier-free or not
  *)
 let rec is_quantifier_free_formula f0 = match f0 with
-  | CP.BForm (b,_,_) -> (* true *)(* An Hoa *)
+  | CP.BForm (b,_) -> (* true *)(* An Hoa *)
 		begin 
 			match b with
   		| CP.RelForm _ -> false (* Contain relation ==> we need to use forall to axiomatize ==> not quantifier free! *)
@@ -326,7 +326,7 @@ let rec smt_of_b_formula b qvars =
 
 let rec smt_of_formula f qvars =
   match f with
-  | CP.BForm (b,_,_) -> (smt_of_b_formula b qvars)
+  | CP.BForm (b,_) -> (smt_of_b_formula b qvars)
   | CP.And (p1, p2, _) -> "(and " ^ (smt_of_formula p1 qvars) ^ " " ^ (smt_of_formula p2 qvars) ^ ")"
   | CP.Or (p1, p2,_, _) -> "(or " ^ (smt_of_formula p1 qvars) ^ " " ^ (smt_of_formula p2 qvars) ^ ")"
   | CP.Not (p,_, _) -> "(not " ^ (smt_of_formula p qvars) ^ ")"

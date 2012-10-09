@@ -726,7 +726,7 @@ let sat_label_filter fct f =
 				let lst = List.filter (fun (c,_)-> Label_only.Lab_List.is_part_compatible c l) b in
 				List.fold_left (fun a c-> And (a,snd c,no_pos)) (mkTrue no_pos) lst) lbls in
 			List.for_all test fs
-		| Or (f1,f2,_ ,_,_)-> (helper f1)||(helper f2)
+		| Or (f1,f2,_ ,_)-> (helper f1)||(helper f2)
 		| _ -> test f in 
 	helper f
   
@@ -852,27 +852,27 @@ let simplify_var_name (e: CP.formula) : CP.formula =
     | _ -> None
   in
   let rec simplify f0 vnames = match f0 with
-    | CP.Forall (sv, f1, lbl, fo, l) ->
+    | CP.Forall (sv, f1, lbl, l) ->
         let nsv = shorten_sv sv vnames in
         let nf1 = simplify f1 vnames in
-        CP.Forall (nsv, nf1, lbl, fo, l)
-    | CP.Exists (sv, f1, lbl, fo, l) ->
+        CP.Forall (nsv, nf1, lbl, l)
+    | CP.Exists (sv, f1, lbl, l) ->
         let nsv = shorten_sv sv vnames in
         let nf1 = simplify f1 vnames in
-        CP.Exists (nsv, nf1, lbl, fo, l)
+        CP.Exists (nsv, nf1, lbl, l)
     | CP.And (f1, f2, l) ->
         let nf1 = simplify f1 vnames in
         let nf2 = simplify f2 vnames in
         CP.And (nf1, nf2, l)
 	| CP.AndList b -> CP.AndList (map_l_snd (fun c -> simplify c vnames) b)
-    | CP.Or (f1, f2, lbl, fo, l) ->
+    | CP.Or (f1, f2, lbl, l) ->
         let nf1 = simplify f1 vnames in
         let nf2 = simplify f2 vnames in
-        CP.mkOr nf1 nf2 lbl fo l
-    | CP.Not (f1, lbl, fo, l) ->
-        CP.Not (simplify f1 vnames, lbl, fo, l)
-    | CP.BForm (bf, lbl, fo) ->
-        CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl, fo)
+        CP.mkOr nf1 nf2 lbl l
+    | CP.Not (f1, lbl, l) ->
+        CP.Not (simplify f1 vnames, lbl, l)
+    | CP.BForm (bf, lbl) ->
+        CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl)
   in
   simplify e (Hashtbl.create 100)
 
@@ -883,21 +883,21 @@ let disj_cnt a c s =
 	  let rec p_f_size f = match f with
 		| CP.BForm _ -> 1
 		| CP.AndList b -> List.fold_left (fun a (_,c)-> a+(p_f_size c)) 0 b
-		| CP.And (f1,f2,_) | CP.Or (f1,f2,_,_,_) -> (p_f_size f1)+(p_f_size f2)
-		| CP.Not (f,_,_,_) | CP.Forall (_,f,_,_,_) | CP.Exists (_,f,_,_,_) -> p_f_size f in
+		| CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> (p_f_size f1)+(p_f_size f2)
+		| CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> p_f_size f in
 
 	  let rec or_f_size f = match f with
 		| CP.BForm _ -> 1
 		| CP.And (f1,f2,_) -> (or_f_size f1)*(or_f_size f2)
 		| CP.AndList b -> List.fold_left (fun a (_,c)-> a*(p_f_size c)) 0 b
-		| CP.Or (f1,f2,_,_,_) -> (or_f_size f1)+(or_f_size f2)
-		| CP.Not (f,_,_,_) | CP.Forall (_,f,_,_,_) | CP.Exists (_,f,_,_,_) -> or_f_size f in
+		| CP.Or (f1,f2,_,_) -> (or_f_size f1)+(or_f_size f2)
+		| CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> or_f_size f in
       let rec add_or_f_size f = match f with
 		| CP.BForm _ -> 0
 		| CP.AndList b -> List.fold_left (fun a (_,c)-> a+(p_f_size c)) 0 b
 		| CP.And (f1,f2,_) -> (add_or_f_size f1)+(add_or_f_size f2)
-		| CP.Or (f1,f2,_,_,_) -> 1+(add_or_f_size f1)+(add_or_f_size f2)
-		| CP.Not (f,_,_,_) | CP.Forall (_,f,_,_,_) | CP.Exists (_,f,_,_,_) -> add_or_f_size f in
+		| CP.Or (f1,f2,_,_) -> 1+(add_or_f_size f1)+(add_or_f_size f2)
+		| CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> add_or_f_size f in
       match c with
 		| None -> 
           Gen.Profiling.inc_counter ("stat_count_"^s);
@@ -1169,7 +1169,7 @@ let simplify (f : CP.formula) : CP.formula =
 
 let simplify (f:CP.formula):CP.formula =
 	let rec helper f = match f with 
-	 | Or(f1,f2,lbl,fo,pos) -> mkOr (helper f1) (helper f2) lbl fo pos
+	 | Or(f1,f2,lbl,pos) -> mkOr (helper f1) (helper f2) lbl pos
 	 | AndList b -> mkAndList (map_l_snd simplify b)
 	 | _ -> simplify f in
 	helper f
@@ -1187,7 +1187,7 @@ let rec simplify_raw (f: CP.formula) =
         let others = simplify_raw (conj_of_list others no_pos) in
         conj_of_list ([others]@bag_cnts@rels) no_pos
       ) disjs in
-    List.fold_left (fun p1 p2 -> mkOr p1 p2 None None no_pos) (mkFalse no_pos) disjs
+    List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
   else
     let rels = CP.get_RelForm f in
     let ids = List.concat (List.map get_rel_id_list rels) in
@@ -1205,7 +1205,7 @@ let simplify_raw_w_rel (f: CP.formula) =
         let others = simplify (conj_of_list others no_pos) in
         conj_of_list (others::bag_cnts) no_pos
       ) disjs in
-    List.fold_left (fun p1 p2 -> mkOr p1 p2 None None no_pos) (mkFalse no_pos) disjs
+    List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
   else simplify f
 	
 let simplify_raw f =
@@ -1219,13 +1219,13 @@ let simplify_exists_raw exist_vars (f: CP.formula) =
     let disjs = list_of_disjs new_f in
     let disjs = List.map (fun disj -> 
         let (bag_cnts, others) = List.partition is_bag_constraint (list_of_conjs disj) in
-        let others = simplify (CP.mkExists exist_vars (conj_of_list others no_pos) None None no_pos) in
+        let others = simplify (CP.mkExists exist_vars (conj_of_list others no_pos) None no_pos) in
         let bag_cnts = List.filter (fun b -> CP.intersect (CP.fv b) exist_vars = []) bag_cnts in
         conj_of_list (others::bag_cnts) no_pos
       ) disjs in
-    List.fold_left (fun p1 p2 -> mkOr p1 p2 None None no_pos) (mkFalse no_pos) disjs
+    List.fold_left (fun p1 p2 -> mkOr p1 p2 None no_pos) (mkFalse no_pos) disjs
   else
-    simplify (CP.mkExists exist_vars f None None no_pos)
+    simplify (CP.mkExists exist_vars f None no_pos)
 
 (* always simplify directly with the help of prover *)
 let simplify_always (f:CP.formula): CP.formula = 
@@ -1476,7 +1476,7 @@ let tp_imply_perm ante conseq imp_no timeout process =
 			let ante_lex, antes= CP.dnf_to_list ante in
 			let conseq_lex, conseqs= CP.dnf_to_list conseq in
 			let antes = List.map (fun a-> CP.tpd_drop_perm a, (ante_lex,CP.tpd_drop_nperm a)) antes in
-			let conseqs = List.map (fun c-> CP.mkExists conseq_lex (CP.tpd_drop_perm c) None None no_pos, (conseq_lex,CP.tpd_drop_nperm c)) conseqs in
+			let conseqs = List.map (fun c-> CP.mkExists conseq_lex (CP.tpd_drop_perm c) None no_pos, (conseq_lex,CP.tpd_drop_nperm c)) conseqs in
 			let tp_wrap fa fc = if CP.isConstTrue fc then true else tp_imply_no_cache fa fc imp_no timeout process in
 			let tp_wrap fa fc = Debug.no_2_loop "tp_wrap"  Cprinter.string_of_pure_formula  Cprinter.string_of_pure_formula string_of_bool tp_wrap fa fc in
 			let ss_wrap (ea,fa) (ec,fc) = if fc=[] then true else Share_prover_w.sleek_imply_wrapper (ea,fa) (ec,fc) in
@@ -1494,7 +1494,7 @@ let tp_imply ante conseq imp_no timeout process =
     tp_imply_perm ante conseq imp_no timeout process
   else
     (*let _ = Gen.Profiling.push_time "cache overhead" in*)
-    let f = CP.mkOr conseq (CP.mkNot ante None None no_pos) None None no_pos in
+    let f = CP.mkOr conseq (CP.mkNot ante None no_pos) None no_pos in
     let sf = simplify_var_name f in
     let fstring = Cprinter.string_of_pure_formula sf in
     (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
@@ -1521,22 +1521,22 @@ let tp_imply ante conseq imp_no timeout process =
 let rec requant = function
   | CP.And (f, g, l) -> CP.And (requant f, requant g, l)
   | CP.AndList b -> CP.AndList (map_l_snd requant b)
-  | CP.Or (f, g, lbl, fo, l) -> CP.Or (requant f, requant g, lbl, fo, l)
-  | CP.Not (f, lbl, fo, l) -> CP.Not (requant f, lbl, fo, l)
-  | CP.Forall (v, f, lbl, fo, l) ->
+  | CP.Or (f, g, lbl, l) -> CP.Or (requant f, requant g, lbl, l)
+  | CP.Not (f, lbl, l) -> CP.Not (requant f, lbl, l)
+  | CP.Forall (v, f, lbl, l) ->
       let nv = CP.fresh_spec_var v in
-      CP.Forall (nv, (CP.subst [v, nv] (requant f)), lbl, fo, l)
-  | CP.Exists (v, f, lbl, fo, l) ->
+      CP.Forall (nv, (CP.subst [v, nv] (requant f)), lbl, l)
+  | CP.Exists (v, f, lbl, l) ->
       let nv = CP.fresh_spec_var v in
-      CP.Exists (nv, (CP.subst [v, nv] (requant f)), lbl, fo, l)
+      CP.Exists (nv, (CP.subst [v, nv] (requant f)), lbl, l)
   | x -> x
 ;;
 
 let rewrite_in_list list formula =
   match formula with
-  | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _, _) ->
+  | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) ->
       List.map (fun x -> if x <> formula then CP.subst [v1, v2] x else x) list
-  | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _, _) ->
+  | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _) ->
       List.map (fun x -> if x <> formula then CP.subst_term [v1, term] x else x) list
   | x -> list
 ;;
@@ -1555,17 +1555,17 @@ let rec rewrite_in_and_tree rid formula rform =
   | x ->
       let subst_fun =
         match rform with
-        | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _, _) -> CP.subst [v1, v2]
-        | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _, _) -> CP.subst_term [v1, term]
-        | CP.BForm ((CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _), _), _, _) -> CP.subst_term [v1, term]
+        | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) -> CP.subst [v1, v2]
+        | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _) -> CP.subst_term [v1, term]
+        | CP.BForm ((CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _), _), _) -> CP.subst_term [v1, term]
         | _ -> fun x -> x
       in
       if ((not rid) && x = rform) then (x, subst_fun) else (subst_fun x, subst_fun)
 ;;
 
 let is_irrelevant = function
-  | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _, _) -> v1 = v2
-  | CP.BForm ((CP.Eq (CP.IConst(i1, _), CP.IConst(i2, _), _), _), _, _) -> i1 = i2
+  | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) -> v1 = v2
+  | CP.BForm ((CP.Eq (CP.IConst(i1, _), CP.IConst(i2, _), _), _), _) -> i1 = i2
   | _ -> false
 ;;
 
@@ -1590,10 +1590,10 @@ let rec simpl_in_quant formula negated rid =
   match negated with
   | true ->
       begin match formula with
-      | CP.Not (f, lbl, fo, l) -> CP.Not (simpl_in_quant f false rid, lbl, fo, l)
-      | CP.Forall (v, f, lbl, fo, l) -> CP.Forall (v, simpl_in_quant f true rid, lbl, fo, l)
-      | CP.Exists (v, f, lbl, fo, l) -> CP.Exists (v, simpl_in_quant f true rid, lbl, fo, l)
-      | CP.Or (f, g, lbl, fo, l) -> CP.mkOr (simpl_in_quant f false false) (simpl_in_quant g false false) lbl fo l
+      | CP.Not (f, lbl, l) -> CP.Not (simpl_in_quant f false rid, lbl, l)
+      | CP.Forall (v, f, lbl, l) -> CP.Forall (v, simpl_in_quant f true rid, lbl, l)
+      | CP.Exists (v, f, lbl, l) -> CP.Exists (v, simpl_in_quant f true rid, lbl, l)
+      | CP.Or (f, g, lbl, l) -> CP.mkOr (simpl_in_quant f false false) (simpl_in_quant g false false) lbl l
       | CP.And (_, _, _) ->
           let subfs = split_conjunctions formula in
           let nformula = fold_with_subst (rewrite_in_and_tree rid) formula subfs in
@@ -1604,9 +1604,9 @@ let rec simpl_in_quant formula negated rid =
       end
   | false ->
       begin match formula with
-      | CP.Not (f, lbl, fo, l) -> CP.Not (simpl_in_quant f true true, lbl, fo, l)
-      | CP.Forall (v, f, lbl, fo, l) -> CP.Forall (v, simpl_in_quant f false rid, lbl, fo, l)
-      | CP.Exists (v, f, lbl, fo, l) -> CP.Exists (v, simpl_in_quant f false rid, lbl, fo, l)
+      | CP.Not (f, lbl, l) -> CP.Not (simpl_in_quant f true true, lbl, l)
+      | CP.Forall (v, f, lbl, l) -> CP.Forall (v, simpl_in_quant f false rid, lbl, l)
+      | CP.Exists (v, f, lbl, l) -> CP.Exists (v, simpl_in_quant f false rid, lbl, l)
       | CP.And (f, g, l) -> CP.And (simpl_in_quant f true false, simpl_in_quant g true false, l)
 	  | CP.AndList b -> AndList (map_l_snd (fun c-> simpl_in_quant c negated rid) b)
       | x -> x
@@ -1618,10 +1618,10 @@ let simpl_pair rid (ante, conseq) =
   let l1 = CP.remove_dups_svl (l1 @ (CP.bag_vars_formula conseq)) in
   let antes = split_conjunctions ante in
   let fold_fun l_f_vars (ante, conseq)  = function
-    | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _, _) ->
+    | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) ->
         ((CP.subst [v1, v2] ante, CP.subst [v1, v2] conseq), (CP.subst [v1, v2]))
-    | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _, _)
-    | CP.BForm ((CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _), _), _, _) ->
+    | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _)
+    | CP.BForm ((CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _), _), _) ->
 		if (List.mem v1 l1) then ((ante, conseq), fun x -> x)
 		 else ((CP.subst_term [v1, term] ante, CP.subst_term [v1, term] conseq), (CP.subst_term [v1, term]))
     | _ -> ((ante, conseq), fun x -> x)

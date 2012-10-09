@@ -167,13 +167,13 @@ let elim_ex v f = match f with
 						
     
 let rec trans_f b f = match f with 
-  | BForm ((bf,_),_,_) -> trans_bf bf
+  | BForm ((bf,_),_) -> trans_bf bf
   | AndList _ -> Gen.report_error no_pos "dp.ml: encountered AndList, should have been already handled"
   | And (f1,f2,_) -> mkSAnd (trans_f b f1) (trans_f b f2)
-  | Or (f1,f2,_,_,_) -> mkSOr (trans_f b f1) (trans_f b f2)
-  | Not (f,_,_,_) -> neg (trans_f b f) 
+  | Or (f1,f2,_,_) -> mkSOr (trans_f b f1) (trans_f b f2)
+  | Not (f,_,_) -> neg (trans_f b f) 
   | Forall _ -> failwith "unexpected forall!"
-  | Exists (v,f,_,_,_) -> if b then elim_ex (Cprinter.string_of_spec_var v) (trans_f b f) else trans_f b f  
+  | Exists (v,f,_,_) -> if b then elim_ex (Cprinter.string_of_spec_var v) (trans_f b f) else trans_f b f  
   
 let trans_f b f = Gen.Profiling.do_2 "dptransf" trans_f b f
 let sat_check f = 

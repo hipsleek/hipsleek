@@ -90,10 +90,10 @@ let simpl_b_formula (f : CP.b_formula): CP.b_formula =
   | CP.BagSub (e1, e2, pos) ->
       if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) then
 	    (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-	    let simpl_f = TP.simplify_a 9 (CP.BForm(f,None,None)) in
+	    let simpl_f = TP.simplify_a 9 (CP.BForm(f,None)) in
   	    begin
   	      match simpl_f with
-  	        | CP.BForm(simpl_f1, _, _) ->
+  	        | CP.BForm(simpl_f1, _) ->
   		        (*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
   		        simpl_f1
   	        | _ -> f
@@ -103,10 +103,10 @@ let simpl_b_formula (f : CP.b_formula): CP.b_formula =
   | CP.EqMin (e1, e2, e3, pos) ->
       if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) or ((count_iconst e3) > 1) then
 	    (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-	    let simpl_f = TP.simplify_a 8 (CP.BForm(f,None, None)) in
+	    let simpl_f = TP.simplify_a 8 (CP.BForm(f,None)) in
   	    begin
   	      match simpl_f with
-  	        | CP.BForm(simpl_f1,_,_) ->
+  	        | CP.BForm(simpl_f1,_) ->
   		        (*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
   		        simpl_f1
   	        | _ -> f
@@ -116,10 +116,10 @@ let simpl_b_formula (f : CP.b_formula): CP.b_formula =
   | CP.BagNotIn (sv, e1, pos) ->
       if ((count_iconst e1) > 1) then
 	    (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-	    let simpl_f = TP.simplify_a 7 (CP.BForm(f,None,None)) in
+	    let simpl_f = TP.simplify_a 7 (CP.BForm(f,None)) in
   	    begin
   	      match simpl_f with
-  	        | CP.BForm(simpl_f1,_,_) ->
+  	        | CP.BForm(simpl_f1,_) ->
   		        (*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
   		        simpl_f1
   	        | _ -> f
@@ -131,10 +131,10 @@ let simpl_b_formula (f : CP.b_formula): CP.b_formula =
   | CP.ListPerm (e1, e2, pos) ->
 		if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) then
 			(*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-			let simpl_f = TP.simplify_a 6 (CP.BForm(f,None,None)) in
+			let simpl_f = TP.simplify_a 6 (CP.BForm(f,None)) in
   		begin
   		match simpl_f with
-  		| CP.BForm(simpl_f1,_,_) ->
+  		| CP.BForm(simpl_f1,_) ->
   			(*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
   			simpl_f1
   		| _ -> f
@@ -188,8 +188,8 @@ let prune_branches_subsume_x prog lhs_node rhs_node :(bool*(CP.formula*bool) opt
           if (Gen.BList.subset_eq (=) need_prunning (List.concat (List.map snd new_cond))) then 
 			(*i have enough prunning conditions to succeed*)
             let ll = List.map (fun c -> List.filter (fun (_,c1)-> List.exists ((=) c) c1) new_cond) need_prunning in (*posib prunning cond for each branch*)
-            let wrap_f (c,_) = CP.BForm ((memo_f_neg c),None,None ) in
-            let ll = List.map (fun l -> List.fold_left (fun a c-> CP.mkOr a (wrap_f c) None None no_pos) (wrap_f (List.hd l)) (List.tl l)) ll in
+            let wrap_f (c,_) = CP.BForm ((memo_f_neg c),None) in
+            let ll = List.map (fun l -> List.fold_left (fun a c-> CP.mkOr a (wrap_f c) None no_pos) (wrap_f (List.hd l)) (List.tl l)) ll in
             let inst_forms = CP.conj_of_list ll no_pos in
             (*let inst_forms = CP.conj_of_list (List.map (fun (c,_)-> CP.BForm ((memo_f_neg c),None)) new_cond) no_pos in*)
 			let fls = ((List.length need_prunning)=(List.length l1)) in
@@ -261,8 +261,8 @@ object (self)
 
   method upd_opt (pid : control_path_id) (rs: list_context) (errmsg: string) =
     match pid with 
-    | None -> failwith errmsg;
-    | Some (pid_i,_) -> Hashtbl.add en_hist pid_i rs
+	None -> failwith errmsg;
+      | Some (pid_i,_) -> Hashtbl.add en_hist pid_i rs
 
   method upd (pid : formula_label) (rs: list_context) =
     let pid_i,_ = pid in
@@ -518,7 +518,7 @@ and xpure_symbolic_slicing (prog : prog_decl) (f0 : formula) : (formula * CP.spe
             let ph, addrs, _ = xpure_heap_symbolic prog h 1 in
             let n_p = MCP.merge_mems p ph true in
 	        (* Set a complex heap formula to a simpler one *)
-	        let n_f0 = mkBase HEmp n_p TypeTrue (mkTrueFlow ()) [] None pos in (* formula_of_mix_formula n_p *)
+	        let n_f0 = mkBase HEmp n_p TypeTrue (mkTrueFlow ()) [] pos in (* formula_of_mix_formula n_p *)
             (n_f0, addrs)
       | Exists e ->
 	        let ({ formula_exists_qvars = qvars;
@@ -529,7 +529,7 @@ and xpure_symbolic_slicing (prog : prog_decl) (f0 : formula) : (formula * CP.spe
             let addrs = Gen.BList.difference_eq CP.eq_spec_var addrs' qvars in
             let n_qp = MCP.merge_mems qp pqh true in
             (* Set a complex heap formula to a simpler one *)
-	        let n_f0 = mkExists qvars HEmp n_qp TypeTrue (mkTrueFlow ()) [] None pos in
+	        let n_f0 = mkExists qvars HEmp n_qp TypeTrue (mkTrueFlow ()) [] pos in
             (n_f0, addrs)
   in
   let pf, pa = xpure_symbolic_helper prog f0 in
@@ -704,7 +704,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
     | DataNode ({ h_formula_data_node = p;
 	  h_formula_data_label = lbl;
 	  h_formula_data_pos = pos}) ->
-          let non_zero = CP.BForm ((CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None), lbl, None) in
+          let non_zero = CP.BForm ((CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None), lbl) in
           (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [p])
     | ViewNode ({ h_formula_view_node = p;
 	  h_formula_view_name = c;
@@ -758,7 +758,7 @@ and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP
       h_formula_data_perm = frac;
 	  h_formula_data_label = lbl;
 	  h_formula_data_pos = pos}) ->
-          let non_zero = CP.BForm ( (CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None),lbl, None) in
+          let non_zero = CP.BForm ( (CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None),lbl) in
           (*LDK: add fractional invariant 0<f<=1, if applicable*)
           (match frac with
             | None -> (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [p])
@@ -819,10 +819,10 @@ and xpure_consumed_pre (prog : prog_decl) (f0 : formula) : CP.formula = match f0
 	formula_or_pos = pos}) ->
         let ipf1 = xpure_consumed_pre prog f1 in
         let ipf2 = xpure_consumed_pre prog f2 in
-        CP.mkOr ipf1 ipf2 None None pos
+        CP.mkOr ipf1 ipf2 None pos
   | Base ({formula_base_heap = h}) -> xpure_consumed_pre_heap prog h
   | Exists ({formula_exists_qvars = qvars;	formula_exists_heap = qh;}) ->
-        CP.mkExists qvars (xpure_consumed_pre_heap prog qh) None None no_pos
+        CP.mkExists qvars (xpure_consumed_pre_heap prog qh) None no_pos
 
 and xpure_consumed_pre_heap (prog : prog_decl) (h0 : h_formula) : CP.formula = match h0 with
   | DataNode b -> CP.mkTrue b.h_formula_data_pos
@@ -1001,7 +1001,7 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
 			| Not_found  -> match d.h_formula_data_remaining_branches with
 					| Some l -> (hp, old_mem, false)
 					| None -> 
-						  let not_null_form = CP.BForm ((CP.Neq (CP.Var (d.h_formula_data_node,no_pos),CP.Null no_pos,no_pos), None), None, None) in
+						  let not_null_form = CP.BForm ((CP.Neq (CP.Var (d.h_formula_data_node,no_pos),CP.Null no_pos,no_pos), None), None) in
 						  let null_form = (CP.Eq (CP.Var (d.h_formula_data_node,no_pos), CP.Null no_pos,no_pos), None) in
 						  let br_lbl = [(1,"")] in
 						  let new_hp = DataNode{d with 
@@ -1093,7 +1093,7 @@ and filter_prun_cond old_mem prun_cond rem_br = List.fold_left (fun (yes_prune, 
 							let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos), None) [corr] false true !Globals.prune_with_slice in
                             let r = if (!Globals.enable_fast_imply) then false
                               else 
-                                let r1,_,_ = TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None,None)) "prune_imply" "prune_imply" true None in
+                                let r1,_,_ = TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true None in
                                 (if r1 then Gen.Profiling.inc_counter "imply_sem_prun_true"
                                  else Gen.Profiling.inc_counter "imply_sem_prun_false";r1) in
                              r in
@@ -1285,7 +1285,7 @@ and get_equations_sets (f : CP.formula) (interest_vars:Cpure.spec_var list): (CP
         let l1 = get_equations_sets f1 interest_vars in
         let l2 = get_equations_sets f2 interest_vars in
         l1@l2
-  | CP.BForm (bf,_,_) -> begin
+  | CP.BForm (bf,_) -> begin
 	  let (pf,il) = bf in
       match pf with
         | Cpure.BVar (v,l)-> [bf]
@@ -1773,7 +1773,7 @@ and normalize_to_CNF_new (f : CP.formula) pos : CP.formula =
     | conj_list :: rest -> 
           let first_disj, res_conj, res_disj_list = (filter_common_conj conj_list rest pos) in
           let res_disj = List.map (fun c -> (CP.conj_of_list c pos)) res_disj_list in
-          (CP.mkAnd (CP.conj_of_list res_conj pos) (CP.mkOr (CP.conj_of_list first_disj pos) (CP.disj_of_list res_disj pos) None None pos) pos)
+          (CP.mkAnd (CP.conj_of_list res_conj pos) (CP.mkOr (CP.conj_of_list first_disj pos) (CP.disj_of_list res_disj pos) None pos) pos)
     | [] -> (print_string("[solver.ml, normalize_to_CNF]: should not be here!!"); (CP.mkTrue pos)) 
 
 and filter_common_conj (conj_list : CP.formula list) (dc_list : (CP.formula list) list) pos : (CP.formula list *  CP.formula list * (CP.formula list list)) = 
@@ -1806,13 +1806,13 @@ and remove_conj_new (f : CP.formula list) (conj : CP.formula) pos : (bool * CP.f
 (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
 
 and normalize_to_CNF (f : CP.formula) pos : CP.formula = match f with
-  | CP.Or (f1, f2, lbl, fo, p) ->
+  | CP.Or (f1, f2, lbl, p) ->
         let conj, disj1, disj2 = (find_common_conjs f1 f2 p) in
-        (CP.mkAnd conj (CP.mkOr disj1 disj2 lbl fo p) p)
+        (CP.mkAnd conj (CP.mkOr disj1 disj2 lbl p) p)
   | CP.And (f1, f2, p) -> CP.mkAnd (normalize_to_CNF f1 p) (normalize_to_CNF f2 p) p
-  | CP.Not (f1, lbl, fo, p) -> CP.Not(normalize_to_CNF f1 p, lbl , fo, p)
-  | CP.Forall (sp, f1, lbl, fo, p) -> CP.Forall(sp, normalize_to_CNF f1 p, lbl, fo, p)
-  | CP.Exists (sp, f1, lbl, fo, p) -> CP.mkExists [sp] (normalize_to_CNF f1 p) lbl fo p
+  | CP.Not (f1, lbl, p) -> CP.Not(normalize_to_CNF f1 p, lbl ,p)
+  | CP.Forall (sp, f1, lbl, p) -> CP.Forall(sp, normalize_to_CNF f1 p, lbl ,p)
+  | CP.Exists (sp, f1, lbl, p) -> CP.mkExists [sp] (normalize_to_CNF f1 p)  lbl p
   | CP.AndList b-> CP.AndList (map_l_snd (fun c-> normalize_to_CNF c no_pos) b)
   | _ -> f
 
@@ -1823,7 +1823,7 @@ and normalize_to_CNF (f : CP.formula) pos : CP.formula = match f with
 *)
 
 and find_common_conjs (f1 : CP.formula) (f2 : CP.formula) pos : (CP.formula * CP.formula * CP.formula) = match f1 with
-  | CP.BForm(b,_,_) ->
+  | CP.BForm(b,_) ->
         if (List.exists (fun c -> (CP.eq_pure_formula c f1)) (CP.list_of_conjs f2)) then
           begin
 	        (f1, (CP.mkTrue pos), (remove_conj f2 f1 pos))
@@ -1834,17 +1834,17 @@ and find_common_conjs (f1 : CP.formula) (f2 : CP.formula) pos : (CP.formula * CP
         let outer_conj, new_f1, new_f2 = (find_common_conjs f11 f2 p) in
         let outer_conj_prim, new_f1_prim, new_f2_prim  = (find_common_conjs f12 new_f2 p) in
         ((CP.mkAnd outer_conj outer_conj_prim p), (CP.mkAnd new_f1 new_f1_prim p), new_f2_prim)
-  | CP.Or(f11, f12, lbl, fo, p) ->
+  | CP.Or(f11, f12, lbl ,p) ->
         let new_f11 = (normalize_to_CNF f11 p) in
         let new_f12 = (normalize_to_CNF f12 p) in
-        (CP.mkTrue pos),(CP.mkOr new_f11 new_f12 lbl fo p),f2
+        (CP.mkTrue pos),(CP.mkOr new_f11 new_f12 lbl p),f2
   | _ -> ((CP.mkTrue pos), f1, f2)
 
 and remove_conj (f : CP.formula) (conj : CP.formula) pos : CP.formula = match f with
-  | CP.BForm(b1,_,_) ->
+  | CP.BForm(b1,_) ->
         begin
           match conj with
-	        |CP.BForm(b2,_,_) ->
+	        |CP.BForm(b2,_) ->
 	             if (CP.eq_b_formula_no_aset b1 b2) then
 	               (CP.mkTrue pos)
 	             else f
@@ -1877,8 +1877,8 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
         else f
   | CP.And(f1, f2, l) -> CP.mkAnd (discard_uninteresting_constraint f1 vvars) (discard_uninteresting_constraint f2 vvars) l
   | CP.AndList b -> CP.AndList (map_l_snd (fun c-> discard_uninteresting_constraint c vvars) b)
-  | CP.Or(f1, f2, lbl, fo, l) -> CP.mkOr (discard_uninteresting_constraint f1 vvars) (discard_uninteresting_constraint f2 vvars) lbl fo l
-  | CP.Not(f1, lbl, fo, l) -> CP.Not(discard_uninteresting_constraint f1 vvars, lbl, fo, l)
+  | CP.Or(f1, f2, lbl, l) -> CP.mkOr (discard_uninteresting_constraint f1 vvars) (discard_uninteresting_constraint f2 vvars) lbl  l
+  | CP.Not(f1, lbl, l) -> CP.Not(discard_uninteresting_constraint f1 vvars, lbl, l)
   | _ -> f
 
 (*LDK: add rhs_p*)
@@ -2539,10 +2539,11 @@ and heap_entail_failesc_prefix_init_x (prog : prog_decl) (is_folding : bool)  (h
       let rename_es es = {es with es_formula = rename_labels_formula_ante es.es_formula}in
       let conseq = rename_f conseq in
       let rec prepare_ctx es = {es with 
-        es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
-        es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)
-        es_id = (let newid,_ = fresh_formula_label "" in newid); (* unique +ve id *)		  (* es_orig_ante   = es.es_formula; *)
-        (*es_orig_conseq = conseq ;*)}in	
+		  es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
+		  es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)
+		  es_id      = (fst (fresh_formula_label ""))              ; (* unique +ve id *)
+		  (* es_orig_ante   = es.es_formula; *)
+		  (*es_orig_conseq = conseq ;*)}in	
       let cl_new = transform_list_failesc_context (idf,idf,(fun es-> Ctx(prepare_ctx (rename_es (reset_original_es es))))) cl in
       let entail_fct = fun c-> heap_entail_struc_list_failesc_context prog is_folding  has_post c conseq tid pos pid f to_string in 
       heap_entail_agressive_prunning entail_fct (prune_ctx_failesc_list prog) (fun (c,_) -> isSuccessListFailescCtx c) cl_new
@@ -2561,11 +2562,11 @@ and heap_entail_prefix_init (prog : prog_decl) (is_folding : bool)  (has_post: b
       let rename_es es = {es with es_formula = rename_labels_formula_ante es.es_formula}in
       let conseq = rename_f conseq in
       let rec prepare_ctx es = {es with 
-        es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
-        es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)
-        es_id = (let newid,_ = fresh_formula_label "" in newid); (* unique +ve id *)
-        (* es_orig_ante   = es.es_formula; *)
-        (*es_orig_conseq = conseq ;*)}in
+		  es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
+		  es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)
+		  es_id      = (fst (fresh_formula_label ""))              ; (* unique +ve id *)
+		  (* es_orig_ante   = es.es_formula; *)
+		  (*es_orig_conseq = conseq ;*)}in
       let cl_new = transform_list_partial_context ((fun es-> Ctx(prepare_ctx (rename_es es))),(fun c->c)) cl in
       heap_entail_struc_list_partial_context prog is_folding  has_post cl_new conseq tid pos pid f to_string
     end
@@ -2715,11 +2716,11 @@ and heap_entail_struc_init_x (prog : prog_decl) (is_folding : bool)  (has_post: 
 	        let rename_es es = {es with es_formula = rename_labels_formula_ante es.es_formula}in
 	        let conseq = rename_labels_struc conseq in
 	        let rec prepare_ctx es = {es with 
-            es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
-            es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)
-            es_id = (let newid,_ = fresh_formula_label "" in newid) ; (* unique +ve id *)
-            (* es_orig_ante   = es.es_formula; *)
-            es_orig_conseq = conseq ;}in	
+				es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
+				es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)
+				es_id      = (fst (fresh_formula_label ""))              ; (* unique +ve id *)
+				(* es_orig_ante   = es.es_formula; *)
+				es_orig_conseq = conseq ;}in	
 	        let cl_new = transform_list_context ( (fun es-> Ctx(prepare_ctx (rename_es es))),(fun c->c)) cl in
             let entail_fct = fun c-> heap_entail_struc prog is_folding  has_post c conseq None pos pid in
             let (ans,prf) = heap_entail_agressive_prunning entail_fct (prune_list_ctx prog) (fun (c,_)-> not (isFailCtx c)) cl_new in
@@ -3103,7 +3104,7 @@ and heap_entail_init_x (prog : prog_decl) (is_folding : bool)  (cl : list_contex
 	      let rec prepare_es es = {es with 
 			  es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
 			  es_residue_pts  = residue_labels_in_formula es.es_formula   ;(* residue pts from antecedent *)
-			  es_id = (let newid,_ = (fresh_formula_label "") in newid); (* unique +ve id *)
+			  es_id      = (fst (fresh_formula_label ""))              ; (* unique +ve id *)
 			  (* es_orig_ante   = es.es_formula; *)
 			  es_orig_conseq = struc_formula_of_formula conseq pos;} in	
 	      let cl_new = transform_list_context ((fun es-> Ctx(prepare_es(rename_es (reset_original_es es)))),(fun c->c)) cl in
@@ -3405,7 +3406,7 @@ and move_impl_inst_estate es (f:MCP.mix_formula) =
 (* from a list containing equaltions of the form vi = wi -> obtain two lists [vi]  and [wi] *)
 and obtain_subst l =
   match l with
-    | CP.BForm ((CP.Eq(CP.Var(e1, _), CP.Var(e2, _), _), _), _, _)::r -> ((e1::(fst (obtain_subst r))), (e2::(snd (obtain_subst r))))
+    | CP.BForm ((CP.Eq(CP.Var(e1, _), CP.Var(e2, _), _), _), _)::r -> ((e1::(fst (obtain_subst r))), (e2::(snd (obtain_subst r))))
     | _::r -> ((fst (obtain_subst r)), (snd (obtain_subst r)))
     | [] -> ([],[])
 
@@ -4927,7 +4928,7 @@ and build_and_failures_x (failure_code:string) (failure_name:string) ((contra_li
 *)
 and extract_relations (f : CP.formula) : (CP.b_formula list) =
   match f with
-	| CP.BForm (b, _, _) -> (let (p, _) = b in match p with
+	| CP.BForm (b, _) -> (let (p, _) = b in match p with
 		| CP.RelForm _ -> [b]
 		| _ -> [])
 	| CP.And (f1, f2,_) -> (extract_relations f1) @ (extract_relations f2)
@@ -4939,7 +4940,7 @@ and extract_relations (f : CP.formula) : (CP.b_formula list) =
 *)
 and extract_equality (f : CP.formula) : CP.formula =
   match f with
-	| CP.BForm (b, _, _) -> (let (p, _) = b in match p with
+	| CP.BForm (b, _) -> (let (p, _) = b in match p with
 		| CP.Eq _ -> f 
 		| _ -> CP.mkTrue no_pos)
 	| CP.And (f1, f2, _) -> CP.mkAnd (extract_equality f1) (extract_equality f2) no_pos
@@ -5433,7 +5434,7 @@ and solve_ineq_pure_formula (ante : Cpure.formula) (memset : Cformula.mem_formul
   let eqset = CP.EMapSV.build_eset (MCP.pure_ptr_equations ante) in
   let rec helper (conseq : Cpure.formula) =
     match conseq with
-      | Cpure.BForm (f, l, _) -> solve_ineq_b_formula (fun x y -> CP.EMapSV.is_equiv eqset x y) memset f
+      | Cpure.BForm (f, l) -> solve_ineq_b_formula (fun x y -> CP.EMapSV.is_equiv eqset x y) memset f
       | Cpure.And (f1, f2, pos) -> Cpure.And((helper f1), (helper f2), pos)  
 	  | Cpure.AndList b -> Cpure.AndList (map_l_snd helper b)
       | Cpure.Or (f1, f2, l, pos) -> Cpure.mkOr (helper f1) (helper f2) l pos
@@ -5465,17 +5466,17 @@ and solve_ineq_memo_formula (ante : memo_pure) (memset : Cformula.mem_formula) (
 and check_disj ante memset l (f1 : Cpure.formula) (f2 : Cpure.formula) pos : Cpure.formula = 
   let s_ineq = solve_ineq_pure_formula ante memset in
   match f1, f2 with 
-    | CP.BForm((pf1, il1), label1, fo1), CP.BForm((pf2, il2), label2, fo2) -> 
+    | CP.BForm((pf1, il1), label1), CP.BForm((pf2, il2), label2) -> 
 	      (match pf1, pf2 with
 	        | CP.Lt(e1, e2, _), CP.Lt(e3, e4, _) ->
 	              (match e1, e2, e3, e4 with
 		            | CP.Var(sv1, _), CP.Var(sv2, _), CP.Var(sv3, _), CP.Var(sv4, _) ->
 		                  if (CP.eq_spec_var sv1 sv4) && (CP.eq_spec_var sv2 sv3)
 		                  then 
-			                s_ineq  (CP.BForm ((CP.Neq(CP.Var(sv1, pos), CP.Var(sv2, pos), pos), il1), label1, fo1))
+			                s_ineq  (CP.BForm ((CP.Neq(CP.Var(sv1, pos), CP.Var(sv2, pos), pos), il1), label1))
 		                  else
 			                Cpure.mkOr (s_ineq f1) (s_ineq f2) l pos
-		            | _, _, _, _ -> Cpure.Or((s_ineq f1), (s_ineq f2), l, None, pos)
+		            | _, _, _, _ -> Cpure.Or((s_ineq f1), (s_ineq f2), l, pos)
 	              )
 	        | _, _ -> Cpure.mkOr (s_ineq f1) (s_ineq f2) l pos
 	      )
@@ -5495,9 +5496,9 @@ and solve_ineq_b_formula sem_eq memset conseq : Cpure.formula =
 		      CP.mkTrue no_pos
 	        else
 		      (* leave the diseq as it is *)
-		      CP.BForm(conseq, None, None) 
-          else CP.BForm(conseq, None, None)
-    | _ -> CP.BForm(conseq, None, None)	
+		      CP.BForm(conseq, None) 
+          else CP.BForm(conseq, None)
+    | _ -> CP.BForm(conseq, None)	
 	      (* todo: could actually solve more types of b_formulae *)
 
 (************************************* 
@@ -6237,7 +6238,7 @@ and inst_before_fold_x estate rhs_p case_vars =
       let v1 = CP.fresh_spec_var v in
       (CP.b_subst [(v,v1)] f, (v,v1))) to_a_e) in
   let to_a = (fst (List.split to_a_i))@to_a_e in
-  let to_a = MCP.mix_of_pure (CP.conj_of_list (List.map (fun f-> CP.BForm (f,None,None)) to_a) no_pos) in
+  let to_a = MCP.mix_of_pure (CP.conj_of_list (List.map (fun f-> CP.BForm (f,None)) to_a) no_pos) in
   let mv_fv = MCP.mfv to_a in
   let estate1 = {estate with es_formula = 
 		  normalize_combine estate.es_formula (formula_of_mix_formula to_a no_pos) no_pos;
@@ -6752,7 +6753,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 					let n_lhs_h = mkStarH lhs_rest (set_node_perm lhs_node (Some v_rest)) pos in
 					let n_rhs_pure =
 						let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> CP.Var (v,no_pos) in
-						let npure = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.Var (v_rest,no_pos),CP.Var (v_consumed,no_pos),no_pos), no_pos), None),None,None) in
+						let npure = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.Var (v_rest,no_pos),CP.Var (v_consumed,no_pos),no_pos), no_pos), None),None) in
 						MCP.memoise_add_pure rhs_b.formula_base_pure npure in
 					let new_estate = {estate with 
 										es_formula = Base{lhs_b with formula_base_heap = n_lhs_h}; 
@@ -7779,7 +7780,7 @@ and test_frac_subsume_x prog lhs rhs_p l_perm r_perm = (*if false, split permiss
 			let r_perm = match r_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> CP.Var (v,no_pos) in
 			let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> CP.Var (v,no_pos) in
 			let nfv = CP.fresh_perm_var()  in
-			let add1 = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.Var (nfv,no_pos),r_perm,no_pos), no_pos), None),None,None) in
+			let add1 = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.Var (nfv,no_pos),r_perm,no_pos), no_pos), None),None) in
 			(*let add2 = CP.BForm ((CP.Eq (l_perm, r_perm, no_pos), None),None) in*)
 			let add = add1 (*CP.Or (add1,add2,None,no_pos)*) in
 			let rhs_p = MCP.pure_of_mix rhs_p in
@@ -7802,7 +7803,7 @@ and test_frac_eq_x prog lhs rhs_p l_perm r_perm = (*if false, do match *)
 			let add1 = CP.BForm ((CP.Eq (r_perm, CP.Add (CP.Var (nfv,no_pos),l_perm,no_pos), no_pos), None),None) in
 			let add2 = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.Var (nfv,no_pos),r_perm,no_pos), no_pos), None),None) in
 			let add = CP.Or (add1,add2,None,no_pos) in*)
-			let add = CP.BForm ((CP.Eq (r_perm, l_perm, no_pos), None),None,None) in
+			let add = CP.BForm ((CP.Eq (r_perm, l_perm, no_pos), None),None) in
 			let rhs_p = MCP.pure_of_mix rhs_p in
 			let rhs_p =  CP.And (rhs_p, add, no_pos) in
 			let n_pure =  rhs_p (*CP.Exists (nfv, rhs_p, None, no_pos)*) in
@@ -8253,37 +8254,34 @@ and elim_exists_exp_loop (f0 : formula) : (formula * bool) = match f0 with
 and simpl_pure_formula (f : CP.formula) : CP.formula = match f with
   | CP.And (f1, f2, pos) -> CP.mkAnd (simpl_pure_formula f1) (simpl_pure_formula f2) pos
   | CP.AndList b -> CP.AndList (map_l_snd simpl_pure_formula b)
-  | CP.Or (f1, f2, lbl, fo, pos) -> CP.mkOr (simpl_pure_formula f1) (simpl_pure_formula f2) lbl fo pos
-  | CP.Not (f1, lbl, fo, pos) -> CP.mkNot (simpl_pure_formula f1) lbl fo pos
-  | CP.Forall (sv, f1, lbl, fo, pos) -> CP.mkForall [sv] (simpl_pure_formula f1) lbl fo pos
-  | CP.Exists (sv, f1, lbl, fo, pos) -> CP.mkExists [sv] (simpl_pure_formula f1) lbl fo pos
-  | CP.BForm (f1,lbl,fo) ->
-        let simpl_f = CP.BForm(simpl_b_formula f1, lbl,fo) in
+  | CP.Or (f1, f2, lbl, pos) -> CP.mkOr (simpl_pure_formula f1) (simpl_pure_formula f2) lbl pos
+  | CP.Not (f1, lbl, pos) -> CP.mkNot (simpl_pure_formula f1) lbl pos
+  | CP.Forall (sv, f1, lbl, pos) -> CP.mkForall [sv] (simpl_pure_formula f1) lbl pos
+  | CP.Exists (sv, f1, lbl, pos) -> CP.mkExists [sv] (simpl_pure_formula f1) lbl pos
+  | CP.BForm (f1,lbl) ->
+        let simpl_f = CP.BForm(simpl_b_formula f1, lbl) in
 	    (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_pure_formula f ^ "\n") in
 	      let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_pure_formula simpl_f ^ "\n") in*)
 	    simpl_f
 
 and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula = 
   match f2 with
-  | ECase b -> ECase {b with formula_case_branches = map_l_snd (combine_struc f1) b.formula_case_branches}
-  | EBase b -> 
-      let cont = match b.formula_struc_continuation with
-                 | None -> Some f1
-                 | Some l -> Some (combine_struc f1 l) in
-      EBase {b with formula_struc_continuation = cont }
-  | EAssume (x1,b, (y1',y2') )-> (
-      match f1 with
-      | EAssume (x2,d,(y1,y2)) -> EAssume ((x1@x2),(normalize_combine b d (Cformula.pos_of_formula d)),(y1,(y2^y2')))
-      | _-> combine_struc f2 f1
-    )
-  | EInfer e -> (
-      match f1 with 
-      | EInfer e2 -> EInfer {e with formula_inf_vars = e.formula_inf_vars @ e2.formula_inf_vars;
-                                    formula_inf_continuation = combine_struc e.formula_inf_continuation e2.formula_inf_continuation}
-      | _ -> EInfer {e with formula_inf_continuation = combine_struc f1 e.formula_inf_continuation}
-    )
-  | EOr b -> EOr {b with formula_struc_or_f1 = combine_struc f1 b.formula_struc_or_f1; formula_struc_or_f2 = combine_struc f1 b.formula_struc_or_f2;}
-  | EList b -> EList (map_l_snd (combine_struc f1) b)(*push labels*)
+    | ECase b -> ECase {b with formula_case_branches = map_l_snd (combine_struc f1) b.formula_case_branches}
+    | EBase b -> 
+		let cont = match b.formula_struc_continuation with
+			| None -> Some f1
+			| Some l -> Some (combine_struc f1 l) in
+		EBase {b with formula_struc_continuation = cont }																											  
+    | EAssume (x1,b, (y1',y2') )-> 
+		(match f1 with
+			| EAssume (x2,d,(y1,y2)) -> EAssume ((x1@x2),(normalize_combine b d (Cformula.pos_of_formula d)),(y1,(y2^y2')))
+			| _-> combine_struc f2 f1)
+    | EInfer e -> (match f1 with 
+		| EInfer e2 -> EInfer {e with formula_inf_vars = e.formula_inf_vars @ e2.formula_inf_vars;
+									  formula_inf_continuation = combine_struc e.formula_inf_continuation e2.formula_inf_continuation}
+		| _ -> EInfer {e with formula_inf_continuation = combine_struc f1 e.formula_inf_continuation})
+	| EOr b -> EOr {b with formula_struc_or_f1 = combine_struc f1 b.formula_struc_or_f1; formula_struc_or_f2 = combine_struc f1 b.formula_struc_or_f2;}
+	| EList b -> EList (map_l_snd (combine_struc f1) b)(*push labels*)
 
 
 and compose_struc_formula (delta : struc_formula) (phi : struc_formula) (x : CP.spec_var list) (pos : loc) =

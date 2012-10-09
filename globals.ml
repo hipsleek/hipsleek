@@ -22,16 +22,7 @@ type bformula_label = int
 and ho_branch_label = string
 (*and branch_label = spec_label	(*formula branches*)*)
 
-type statement_flow =
-  | S_f_condition
-  | S_f_straight
-
-type formula_origin =
-  | F_o_specs
-  | F_o_code of statement_flow
-  | F_o_intermediate
-
-type formula_label = (int * string)
+type formula_label = (int*string)
 
 and control_path_id_strict = formula_label
 
@@ -676,7 +667,7 @@ let locs_of_path_trace (pt: path_trace): loc list =
     | Some _, None -> false
     | None, Some _ -> false
     | None, None -> true
-    | Some (i1, _), Some (i2, _) -> i1 = i2
+    | Some (i1, s1), Some (i2, s2) -> i1 = i2
   in
   let path_label_list_of_id pid =
     let _, _, label_list, _ = List.find (fun (id, _, _ , _) -> eq_path_id pid id) !iast_label_table in
@@ -703,17 +694,11 @@ let locs_of_partial_context ctx =
 let fresh_formula_label (s:string) :formula_label = 
 	branch_point_id := !branch_point_id + 1;
 	(!branch_point_id,s)
-
+  
 let fresh_branch_point_id (s:string) : control_path_id = Some (fresh_formula_label s)
 let fresh_strict_branch_point_id (s:string) : control_path_id_strict = (fresh_formula_label s)
 
-let fresh_unindex_formula_label : formula_label =
-  (-1,"")
-
-let eq_formula_label (l1:formula_label) (l2:formula_label) : bool = 
-  let (i1, _) = l1 in
-  let (i2, _) = l2 in
-  i1 = i2
+let eq_formula_label (l1:formula_label) (l2:formula_label) : bool = fst(l1)=fst(l2)
 
 let tmp_files_path = ref ""
 

@@ -706,7 +706,7 @@ let infer_pure_m estate lhs_rels lhs_xpure(* _orig *) lhs_xpure0 lhs_wo_heap (rh
         else
           let lhs_xpure = CP.drop_rel_formula lhs_xpure in
           let new_p = TP.simplify_raw (CP.mkForall quan_var 
-            (CP.mkOr (CP.mkNot lhs_xpure None None no_pos) rhs_xpure None None pos) None None pos) in
+            (CP.mkOr (CP.mkNot_s lhs_xpure) rhs_xpure None pos) None pos) in
           let fml2 = TP.simplify_raw (CP.mkExists quan_var fml None no_pos) in
           let new_p2 = TP.simplify_raw (CP.mkAnd new_p fml2 no_pos) in
           let _ = DD.trace_hprint (add_str "lhs_xpure: " !CP.print_formula) lhs_xpure pos  in
