@@ -780,9 +780,11 @@ and string_of_formula_label_only x :string = string_of_formula_label x ""
 and string_of_formula_origin fo : string =
   match fo with
   | None -> ""
-  | Some Formula_origin_specs -> "F_O_SPECS"
-  | Some Formula_origin_code -> "F_O_CODE"
-  | Some Formula_origin_intermediate -> "F_O_INTERMEDIATE"
+  | Some F_o_specs -> "F_O_SPECS"
+  | Some (F_o_code None) -> "F_O_CODE"
+  | Some (F_o_code (Some F_o_c_sequence)) -> "F_O_CODE_SEQN"
+  | Some (F_o_code (Some F_o_c_condition)) -> "F_O_CODE_COND"
+  | Some F_o_inter -> "F_O_INTER"
 
 and string_of_iast_label_table table =
   let string_of_row row =

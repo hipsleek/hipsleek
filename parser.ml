@@ -174,8 +174,8 @@ let apply_cexp_form1 fct form = match form with
   
   
 let apply_pure_form2 fct form1 form2 =
-  let fo = if !parse_primitives then Some Formula_origin_code
-           else Some Formula_origin_specs in
+  let fo = if !parse_primitives then Some (F_o_code None)
+           else Some F_o_specs in
   match (form1,form2) with
   | Pure_f f1 ,Pure_f f2 -> Pure_f (fct f1 f2)
   | Pure_f f1 , Pure_c f2 -> (match f2 with 
@@ -207,27 +207,27 @@ let apply_cexp_form2 fct form1 form2 =
           (fun _ -> "") (apply_cexp_form2 fct) form1 form2
 
 let cexp_list_to_pure fct ls1 =
-  let fo = if !parse_primitives then Some Formula_origin_code
-           else Some Formula_origin_specs in
+  let fo = if !parse_primitives then Some (F_o_code None)
+           else Some F_o_specs in
   Pure_f (P.BForm (((fct ls1), None), None, fo))
 
 let cexp_to_pure1 fct f =
-  let fo = if !parse_primitives then Some Formula_origin_code
-           else Some Formula_origin_specs in
+  let fo = if !parse_primitives then Some (F_o_code None)
+           else Some F_o_specs in
   match f with
   | Pure_c f -> Pure_f (P.BForm (((fct f), None), None, fo))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"
 
 let cexp_to_pure_slicing fct f sl =
-  let fo = if !parse_primitives then Some Formula_origin_code
-           else Some Formula_origin_specs in
+  let fo = if !parse_primitives then Some (F_o_code None)
+           else Some F_o_specs in
   match f with
   | Pure_c f -> Pure_f (P.BForm (((fct f), sl), None, fo))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"	
 
 let cexp_to_pure2 fct f01 f02 =
-  let fo = if !parse_primitives then Some Formula_origin_code
-           else Some Formula_origin_specs in
+  let fo = if !parse_primitives then Some (F_o_code None)
+           else Some F_o_specs in
   match (f01,f02) with
   | Pure_c f1 , Pure_c f2 -> (match f1 with
                              | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct c f2), None), None, fo)) explist
@@ -996,8 +996,8 @@ and_pure_constr: [[ peek_and_pure; `AND; t= pure_constr ->t]];
     
 pure_constr: 
   [[ peek_pure_out; t= cexp_w ->
-       let fo = if !parse_primitives then Some Formula_origin_code
-                else Some Formula_origin_specs in
+       let fo = if !parse_primitives then Some (F_o_code None)
+                else Some F_o_specs in
        match t with
        | Pure_f f -> f
        | Pure_c (P.Var (v,_)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None, fo)
@@ -1078,13 +1078,13 @@ cexp_w :
         let f = cexp_to_pure2 (fun c1 c2-> P.BagSub (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
         set_slicing_utils_pure_double f false
     | `BAGMAX; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN ->
-        let fo = if !parse_primitives then Some Formula_origin_code
-                 else Some Formula_origin_specs in
+        let fo = if !parse_primitives then Some (F_o_code None)
+                 else Some F_o_specs in
         let f = Pure_f (P.BForm ((P.BagMax (c1, c2, (get_pos_camlp4 _loc 2)), None), None, fo)) in
         set_slicing_utils_pure_double f false
     | `BAGMIN; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN ->
-        let fo = if !parse_primitives then Some Formula_origin_code
-                 else Some Formula_origin_specs in
+        let fo = if !parse_primitives then Some (F_o_code None)
+                 else Some F_o_specs in
         let f = Pure_f (P.BForm ((P.BagMin (c1, c2, (get_pos_camlp4 _loc 2)), None), None, fo)) in
         set_slicing_utils_pure_double f false
     | lc=SELF; `INLIST; cl=SELF ->
@@ -1188,8 +1188,8 @@ cexp_w :
         if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
         else (
           if not(rel_names # mem id) then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation");
-          let fo = if !parse_primitives then Some Formula_origin_code
-                   else Some Formula_origin_specs in
+          let fo = if !parse_primitives then Some (F_o_code None)
+                   else Some F_o_specs in
           Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None, fo))
         )
     | peek_cexp_list; ocl = opt_comma_list ->
@@ -1248,13 +1248,13 @@ cexp_w :
     | `FORALL; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN ->
         apply_pure_form1 (fun c-> List.fold_left (fun f v-> P.mkForall [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
     | t=cid ->
-        let fo = if !parse_primitives then Some Formula_origin_code
-                 else Some Formula_origin_specs in
+        let fo = if !parse_primitives then Some (F_o_code None)
+                 else Some F_o_specs in
         (*print_string ("pure_form:"^(fst t)^"\n");*)
         Pure_f (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 1), None), None , fo))
     | `NOT; t=cid ->
-        let fo = if !parse_primitives then Some Formula_origin_code
-                 else Some Formula_origin_specs in
+        let fo = if !parse_primitives then Some (F_o_code None)
+                 else Some F_o_specs in
         Pure_f (P.mkNot (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 2), None), None, fo)) None (get_pos_camlp4 _loc 1))
     | `NOT; `OPAREN; c=pure_constr; `CPAREN ->
         Pure_f (P.mkNot c None (get_pos_camlp4 _loc 1))

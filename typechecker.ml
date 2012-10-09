@@ -999,7 +999,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           exp_cond_else_arm = e2;
           exp_cond_path_id =pid;
           exp_cond_pos = pos}) -> begin
-	        let pure_cond = (CP.BForm ((CP.mkBVar v Primed pos, None), None, None)) in
+          let fo = Some (F_o_code (Some F_o_c_condition)) in
+	        let pure_cond = (CP.BForm ((CP.mkBVar v Primed pos, None), None, fo)) in
 	        let then_cond_prim = MCP.mix_of_pure pure_cond in
 	        let else_cond_prim = MCP.mix_of_pure (CP.mkNot pure_cond None pos) in
 	        let then_ctx = combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
