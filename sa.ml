@@ -1893,6 +1893,9 @@ let generate_hp_def_from_split hp_defs_split hpdefs unk_hpargs=
     (*process hp_args*)
     (*remove unks*)
     let hp_args1 = List.filter (fun (hp1,_) -> not(CP.mem_svl hp1 unk_hps)) hp_args in
+    (*create subst for hprel names also*)
+    (*let ss1 = List.map (fun (hp, _) -> (hp,hp0)) hp_args1 in *)
+    (*let ss = ss@ss1 in *)
     match hp_args1 with
       | [] ->
           (*create unk def*)
@@ -1900,8 +1903,11 @@ let generate_hp_def_from_split hp_defs_split hpdefs unk_hpargs=
       | [(hp1, args1)] ->
           (*look up hp1 def*)
           let fs = look_up_hp_def ss hp1 hpdefs in
-          generate_hp_sef hp0 args0 (CF.disj_of_list fs no_pos) no_pos
-      | _ ->
+          let hprel0 = SAU.mkHRel hp0 args0 no_pos in
+          let hprel1 = SAU.mkHRel hp1 args1 no_pos in
+          let fs1 = List.map (fun f -> CF.subst_hrel_f f [(hprel1,hprel0)]) fs in
+          generate_hp_sef hp0 args0 (CF.disj_of_list fs1 no_pos) no_pos
+      | _ -> (*currently split is omitted, this case can't happen*)
          (*look up defs*)
           let fss = List.map (fun (hp1, _) ->look_up_hp_def ss hp1 hpdefs) hp_args1  in
           let nfs = combine_def fss no_pos [] in
