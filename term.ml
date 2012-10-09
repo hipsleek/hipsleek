@@ -718,9 +718,6 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   try
     begin
-      let _ = print_endline ("== path trace = " ^ (Cprinter.string_of_path_trace estate.Cformula.es_path_label)) in
-      let _ = print_endline ("== estate.es_formula = " ^ (Cprinter.string_of_formula estate.Cformula.es_formula)) in 
-      (* let _ = print_endline ("== estate.es_formula lbl = " ^ (label_of_formula estate.Cformula.es_formula)) in  *)
       let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in
       let conseq = MCP.pure_of_mix rhs_p in
       let lexvar_dst, lex_dst = match find_lexvar_formula conseq with
