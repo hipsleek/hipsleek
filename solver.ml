@@ -2586,6 +2586,7 @@ and heap_entail_struc_list_partial_context (prog : prog_decl) (is_folding : bool
   ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
   ^ "\nctx:\n" ^ (Cprinter.string_of_list_partial_context cl)
   ^ "\nconseq:\n" ^ (to_string conseq))) pos; 
+	let _= print_endline("bach: heap_entail_struc_list_partial_context") in
     let l = List.map 
       (fun c-> heap_entail_struc_partial_context prog is_folding  has_post c conseq tid pos pid f to_string) cl in
     let l_ctx , prf_l = List.split l in
@@ -2622,7 +2623,7 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
       (has_post: bool)(cl : partial_context) (conseq:'a) (tid: CP.spec_var option) pos (pid:control_path_id) 
       (f: prog_decl->bool->bool->context->'a -> CP.spec_var option ->  loc ->control_path_id->(list_context * proof)) to_string
       : (list_partial_context * proof) = 
-  (* print_string "\ncalling struct_partial_context .."; *)
+  print_string "\nbach:calling struct_partial_context ..";
   Debug.devel_zprint (lazy ("heap_entail_struc_partial_context:"
   ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
   ^ "\nctx:\n" ^ (Cprinter.string_of_partial_context cl)
@@ -2871,6 +2872,7 @@ and heap_entail_conjunct_lhs_struc p is_folding  has_post ctx conseq (tid:CP.spe
 and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (has_post:bool) (ctx_00 : context) 
       (conseq : struc_formula) (tid: CP.spec_var option) pos pid : (list_context * proof) =
   let rec helper_inner i (ctx11: context) (f: struc_formula) : list_context * proof =
+			(* let _= print_endline ("calling heap entail conjunct lhs") in			 *)
     Debug.no_2_num i "helper_inner" Cprinter.string_of_context Cprinter.string_of_struc_formula (fun (lc, _) -> Cprinter.string_of_list_context lc)
 	(helper_inner_x i) ctx11 f
 
@@ -2881,6 +2883,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	| Ctx es -> (* (); *)
               let exec () =
                 begin
+									(* let _= print_endline ("INNER calling heap entail conjunct lhs") in *)
                   match f with
                     | ECase b   -> 
                           let ctx = add_to_context_num 1 ctx11 "case rule" in
@@ -3092,7 +3095,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 			  let l21,l22 = helper_inner_x 11 ctx b.formula_struc_or_f2 in
 			  ((fold_context_left [l11;l21]), (mkCaseStep ctx conseq [l12;l22]))
                 end 
-              in wrap_trace es.es_path_label exec ()
+              in wrap_trace es.es_path_label exec () (*exec ()*)
     end	in
   helper_inner 8 ctx_00 conseq 
 
@@ -3144,18 +3147,23 @@ and heap_entail_one_context prog is_folding  ctx conseq (tid: CP.spec_var option
 
 (*only struc_formula can have some thread id*)
 and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : context) (conseq : formula) pos : (list_context * proof) =
-  Debug.devel_zprint (lazy ("heap_entail_one_context:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)^"\n")) pos;
+	 let _= print_endline("bach: heap_entail_one_context_a") in
+	 Debug.devel_zprint (lazy ("heap_entail_one_context:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)^"\n")) pos;
     if isAnyFalseCtx ctx then (* check this first so that false => false is true (with false residual) *)
-      (SuccCtx [ctx], UnsatAnte)
-    else if isStrictConstTrue conseq then (SuccCtx [ctx], TrueConseq)
+			let _= print_endline("bach: USC1") in
+			  (SuccCtx [ctx], UnsatAnte)
+    else if 	
+		let _= print_endline("bach: USC2") in isStrictConstTrue conseq then (SuccCtx [ctx], TrueConseq)
     else
       (* UNSAT check *)
       let ctx = elim_unsat_ctx prog (ref 1) ctx in
       let ctx = set_unsat_flag ctx true in 
       if isAnyFalseCtx ctx then
+					let _= print_endline("bach: USC3") in
         (SuccCtx [ctx], UnsatAnte)
       else
-        heap_entail_after_sat prog is_folding ctx conseq pos ([])
+				let _= print_endline("bach: USC4") in
+        heap_entail_after_sat prog is_folding ctx conseq pos ([])	
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
       (ss:CF.steps) : (list_context * proof) =
@@ -3173,7 +3181,10 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
           let rs1, prf1 = heap_entail_after_sat prog is_folding c1 conseq pos (CF.add_to_steps ss "left OR 1 on ante") in  
           let rs2, prf2 = heap_entail_after_sat prog is_folding c2 conseq pos (CF.add_to_steps ss "right OR 1 on ante") in
 	  ((or_list_context rs1 rs2),(mkOrLeft ctx conseq [prf1;prf2]))
-    | Ctx es -> begin
+    | Ctx es -> 
+			let exec ()= 
+			begin
+				let _= print_endline("bach: heap_entail_after_sat_x") in
         Debug.devel_zprint (lazy ("heap_entail_after_sat: invoking heap_entail_conjunct_lhs"^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
         let es = (CF.add_to_estate_with_steps es ss) in
         let es = if (!Globals.ann_vp) then
@@ -3192,6 +3203,7 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
         let tmp, prf = heap_entail_conjunct_lhs prog is_folding  (Ctx es) conseq pos in  
 	(filter_set tmp, prf)
       end
+			in wrap_trace es.es_path_label exec ()
 
 and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_context * proof) = 
   let pr1 = (fun _ -> "prog_decl") in
@@ -8391,7 +8403,8 @@ let heap_entail_list_partial_context_init_x (prog : prog_decl) (is_folding : boo
         ^ "\nctx:\n" ^ (Cprinter.string_of_list_partial_context cl)
   ^"\n")) pos; 
   Gen.Profiling.push_time "entail_prune";  
-  if cl==[] then ([],UnsatAnte)
+	let _= print_endline("bach : init_x") in
+  if cl==[] then let _= print_endline("bach: no call heap entail") in ([],UnsatAnte)
   else begin
   let cl = reset_original_list_partial_context cl in
   let cl_after_prune = prune_ctx_list prog cl in

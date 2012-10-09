@@ -1766,76 +1766,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
     let failesc = CF.splitter_failesc_context !norm_flow_int None (fun x->x)(fun x -> x) cl in
     ((check_exp1 failesc) @ fl)
 
-(*Xuan Bach: Logging the branch of return exp for proc *)	
-(* and compare_control_path_id_strict x y =                                                                                                                         *)
-(* 	let res=match x,y with                                                                                                                                         *)
-(* 	| (a,b),(c,d)-> List.exists ( fun ex ->                                                                                                                        *)
-(* 		(* let _= print_endline ((string_of_int ex)^" compared " ^(string_of_int c)) in *)                                                                           *)
-(* 		if(ex=c) then (*let _=print_endline("catch return found id:"^string_of_int ex) in *) true                                                                    *)
-(* 		else false                                                                                                                                                   *)
-(* 		) a                                                                                                                                                          *)
-(* 	in res	                                                                                                                                                       *)
-
-(* and loc_of_branch_comprise_return ptra =                                                                                                                         *)
-(* 	let loc_list= locs_of_path_trace ptra in                                                                                                                       *)
-(* 		(* List.map (fun x-> print_endline ("loc_of_"^(string_of_pos x))) loc_list  *)                                                                               *)
-(* 	  Cprinter.string_of_list_loc loc_list                                                                                                                         *)
+(*Xuan Bach: Logging the branch of return exp for proc *)				
 		
-(* (*Xuan Bach: TODO consider the case of fail*)		                                                                                                                *)
-(* (* and find_loc_of_ ptra str = *)                                                                                                                                *)
-(* (* 	List.                     *)                                                                                                                                *)
-(* and find_return_exp_branch (ctx : CF.list_partial_context) =                                                                                                     *)
-(* 	let plb = ref false in                                                                                                                                         *)
-(* 	let rec helper a = match a with                                                                                                                                *)
-(* 		| CF.Ctx x->                                                                                                                                                 *)
-(* 			List.map ( fun (id_strict,lbl) -> if(compare_control_path_id_strict (!Globals.return_exp_pid,0) id_strict ) then plb := true) x.CF.es_path_label           *)
-(* 		| CF.OCtx(x,y) -> let _= helper x in helper y                                                                                                                *)
-(* 	in                                                                                                                                                             *)
-(* 	let _= List.map ( fun (faillst,brctx)->                                                                                                                        *)
-(* 		List.map (fun (ptra,bctx)-> let _=helper bctx in                                                                                                             *)
-(* 				if(!plb) then                                                                                                                                            *)
-(* 					let _= plb :=false in                                                                                                                                  *)
-(* 					let (_,brc_label)= List.hd ptra in                                                                                                                     *)
-(* 					(* let _= List.map (fun x-> match x with (a,b)-> match a with (c,d) -> print_endline ("This: "^(string_of_int c)^" label"^(string_of_int b) )) ptra *) *)
-(* 					(* in                                                                                                                                               *) *)
-(* 					if (brc_label=0) then                                                                                                                                  *)
-(* 						print_endline ("catch return 0 -> then branch or not catch or first spec\n"^(loc_of_branch_comprise_return ptra ))                                   *)
-(* 					else if(brc_label=1) then                                                                                                                              *)
-(* 						print_endline ("catch return 1-> else or catch taken or snd spec...\n"^(loc_of_branch_comprise_return ptra ))		                                    *)
-(* 			) brctx ) ctx                                                                                                                                              *)
-(* 	in 	()                                                                                                                                                        *)
-	(* if (!plb =100) then print_endline ("catch return still cannot catch return exp branch "^(string_of_int !plb)) *)				
-
-and compare_control_path_id_strict x y =
-	let res=match x,y with
-	| (a,b),(c,d)-> List.exists ( fun ex ->ex=c
-		) a
-	in res	
-		
-(*Xuan Bach: TODO consider the case of fail*)		
-(* and find_loc_of_ ptra str = *)
-(* 	List.                     *)
-and loc_of_branch_comprise_return ptra =                                                                                                                         
-	let loc_list= locs_of_return_exp_path_trace ptra in
-    Cprinter.string_of_list_loc loc_list
-		
-and find_return_exp_branch (ctx : CF.list_partial_context) =
-	let rec helper a exp_ids= match a with 
-		| CF.Ctx x-> 
-			List.filter ( fun (id_strict,lbl) -> compare_control_path_id_strict (exp_ids,0) id_strict  ) x.CF.es_path_label
-		| CF.OCtx(x,y) -> let _= helper x exp_ids in helper y exp_ids 
-	in 
-	let _= List.map ( fun (faillst,brctx)->
-		List.map (fun (ptra,bctx)-> let r=helper bctx !Globals.return_exp_pid in
-					if(List.length r >0) then                                                                                                                                  
-						try
-						let tl= List.nth !Log.proof_log_list ((List.length !Log.proof_log_list) -1) in
-						let tlog=Hashtbl.find Log.proof_log_tbl tl in
-						let _= tlog.Log.log_other_properties <- tlog.Log.log_other_properties @ [("Return exp at: \n"^(loc_of_branch_comprise_return r))] in
-						print_endline ("Return exp at: \n"^(loc_of_branch_comprise_return r))
-						with _-> () 	
-			) brctx ) ctx
-	in 	()												
+(*Xuan Bach: TODO consider the case of fail*)			
 																																	       
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   let pr = Cprinter.string_of_list_partial_context in
@@ -1852,11 +1785,14 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   (* let _ = print_string ("got into check_post on the succCtx branch\n") in *)
   (* let _ = print_string ("context before post: "^(Cprinter.string_of_list_partial_context ctx)^"\n") in *)
   (* let _=proving_loc #set (Cformula.pos_of_formula post) in  *)
+	(* let _= print_endline ("Check post list ctx: "^Cprinter.string_of_list_partial_context ctx) in *)
+	let _= match pid with 
+	| (i,str)-> print_endline ("pid in post: " ^string_of_int i ^str) in
 	if !Globals.dis_post_chk then ctx else 
     let _ = if !print_proof then
       begin
 	Prooftracer.push_post ();
-   	Prooftracer.start_compound_object ();
+  Prooftracer.start_compound_object ();
 	Prooftracer.push_list_partial_context_formula_entailment ctx post;
 	Tpdispatcher.push_suppress_imply_output_state ();
 	Tpdispatcher.unsuppress_imply_output ();
@@ -1912,8 +1848,6 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
 	(* print_endline "DONE!" *)
       end in
     if (CF.isSuccessListPartialCtx_new rs) then
-			(* let _ = print_string ("\nxuan bach\n") in *)
-			let _= if(!Globals.proof_logging_txt) then find_return_exp_branch rs in
       rs
     else begin
       (* get source code position of failed branches *)
@@ -1957,11 +1891,8 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
             }
           end
       in
-			 (* let _ = print_string ("\nxuan bach\n") in *)
-			let _= find_return_exp_branch rs in
       rs
     end
-
 (* process each scc set of mutual-rec procedures *)
 (* to be used for inferring phase constraints *)
 (* replacing each spec with new spec with phase numbering *)

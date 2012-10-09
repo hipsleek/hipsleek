@@ -36,7 +36,7 @@ void append(node x, node y)
 		return;
 	}
 }
-
+/*
 node app2(node x, node y)
 /*
   requires x::lseg<null,n> 
@@ -90,4 +90,4 @@ requires true
    else 
      {return 3;}
  }
-}     
+}     */

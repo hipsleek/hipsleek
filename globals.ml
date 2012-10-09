@@ -251,13 +251,8 @@ end;;
 let proving_loc  = new prog_loc
 let post_pos = new prog_loc
 let proving_kind = new proving_type
-let return_exp_pid = ref ([]: int list)
+let return_exp_pid = ref ([]: control_path_id list)	
 
-let string_of_return_exp_pid_list ()=
-	let str = ref "" in
-	let _= List.map (fun pid->str := !str^(string_of_int pid)) !return_exp_pid in
-	!str
-	
 let proving_info () = 
 	if(proving_kind # is_avail) then
 		   (
@@ -734,19 +729,6 @@ let locs_of_path_trace (pt: path_trace): loc list =
     loc_of_label plbl label_list
   in
   List.map (fun (pid, plbl) -> find_loc (Some pid) plbl) pt
-
-let locs_of_return_exp_path_trace (pt: path_trace): loc list =
-  let eq_path_id pid1 pid2 = match pid1, pid2 with
-    | Some _, None -> false
-    | None, Some _ -> false
-    | None, None -> true
-    | Some (i1, s1), Some (i2, s2) -> i1 = i2
-  in
-  let find_loc pid =
-    let _, _, _, loc = List.find (fun (id, _, _ , _) -> eq_path_id pid id) !iast_label_table in
-    loc
-  in
-  List.map (fun (pid, plbl) -> find_loc (Some pid) ) pt
 
 let locs_of_partial_context ctx =
   let failed_branches = fst ctx in

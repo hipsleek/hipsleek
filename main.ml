@@ -193,7 +193,7 @@ let process_source_full source =
 			begin
 			let tstartlog = Gen.Profiling.get_time ()in	
 			let _= Log.proof_log_to_file () in
-			let _= if (!Globals.proof_logging_txt) then Cprinter.proof_log_to_text_file ()
+			let _= if (!Globals.proof_logging_txt) then Log.proof_log_to_text_file ()
 			else try Sys.remove ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt")
 			with _ ->()
 			 in

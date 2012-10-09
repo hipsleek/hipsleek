@@ -10,7 +10,6 @@ open Cformula
 open Mcpure_D
 open Gen.Basic 
 open Label_only
-open Log
 open Printf
 
 module P = Cpure
@@ -2040,30 +2039,6 @@ let string_of_barrier_decl (v: Cast.barrier_decl): string = poly_string_of_pr pr
 let printer_of_view_decl (fmt: Format.formatter) (v: Cast.view_decl) : unit =
   poly_printer_of_pr fmt pr_view_decl v 
 
-(*function to print proof logging*)
-
-let proof_log_to_text_file () =
-	if !Globals.proof_logging_txt then
-		let oc = 
-		(try Unix.mkdir "logs" 0o750 with _ -> ());
-		open_out ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
-		let string_of_log_type lt =
-			match lt with
-			|IMPLY (ante, conseq) -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
-    	|SAT f-> "Sat: "^(string_of_pure_formula f) 
-    	|SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
-		in
-		let helper log=
-			"\n--------------\n"^
-			List.fold_left (fun a c->a^c^"\n") "" log.log_other_properties^
-			"\nid: "^log.log_id^"\nProver: "^log.log_prover^"\nType: "^(match log.log_type with | Some x-> string_of_log_type x | None -> "")^"\nTime: "^
-			(string_of_float(log.log_time))^"\nResult: "^(match log.log_res with
-		  |BOOL b -> string_of_bool b
-		  |FORMULA f -> string_of_pure_formula f)^"\n" in
-		let _= List.map (fun ix->let log=Hashtbl.find proof_log_tbl ix in
-		let _=fprintf oc "%s" (helper log) in ()) !proof_log_list in
-		close_out oc;
-	else ()	
 
 (* function to print a list of strings *) 
 let rec string_of_ident_list l c = match l with 
