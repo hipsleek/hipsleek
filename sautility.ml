@@ -672,7 +672,7 @@ let add_raw_hp_rel_x prog unknown_ptrs pos=
                List.map (fun sv -> CP.mkVar sv pos) hp_decl.Cast.hp_vars,
       pos)
     in
-    DD.info_pprint ("       gen hp_rel: " ^ (Cprinter.string_of_h_formula hf)) pos;
+    DD.ninfo_pprint ("       gen hp_rel: " ^ (Cprinter.string_of_h_formula hf)) pos;
     (hf, [CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed)])
   else report_error pos "sau.add_raw_hp_rel: args should be not empty"
 
