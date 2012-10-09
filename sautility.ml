@@ -487,7 +487,7 @@ let hds, _, _ (*hvs, hrs*) =  CF.get_hp_rel_h_formula hf in
   let new_mf = MCP.mix_of_pure (CP.join_conjunctions neqNulls) in
   new_mf
 
-let check_stricteq_hnodes hns1 hns2=
+let check_stricteq_hnodes stricted_eq hns1 hns2=
   let check_stricteq_hnode hn1 hn2=
     let arg_ptrs1 = List.filter (fun (CP.SpecVar (t,_,_)) -> is_pointer t) hn1.CF.h_formula_data_arguments in
     let arg_ptrs2 = List.filter (fun (CP.SpecVar (t,_,_)) -> is_pointer t)  hn2.CF.h_formula_data_arguments in
@@ -505,14 +505,14 @@ let check_stricteq_hnodes hns1 hns2=
   in
   let rec helper2 hns1 hns2=
     match hns1 with
-      | [] -> true
+      | [] -> if hns2 = [] then true else (not stricted_eq)
       | hn1::rest1 ->
           let r,rest2 = helper hn1 hns2 [] in
           if r then
             helper2 rest1 rest2
           else false
   in
-  if (List.length hns1) = (List.length hns2) then
+  if (List.length hns1) <= (List.length hns2) then
     helper2 hns1 hns2
   else false
 
@@ -526,7 +526,6 @@ let check_stricteq_hrels hrels1 hrels2=
        let ls2 = List.concat (List.map CP.afv eargs2) in
        (true, List.combine ls1 ls2)
      else (false,[])
-        
   in
   let rec helper hr hrs2 rest2=
     match hrs2 with
@@ -550,7 +549,7 @@ let check_stricteq_hrels hrels1 hrels2=
     helper2 hrels1 hrels2 []
   else (false,[])
 
-let check_stricteq_h_fomula_x hf1 hf2=
+let check_stricteq_h_fomula_x stricted_eq hf1 hf2=
   let hnodes1, _, hrels1 = CF.get_hp_rel_h_formula hf1 in
   let hnodes2, _, hrels2 = CF.get_hp_rel_h_formula hf2 in
   let r,ss = check_stricteq_hrels hrels1 hrels2 in
@@ -560,16 +559,20 @@ let check_stricteq_h_fomula_x hf1 hf2=
       | CF.DataNode hn -> hn
       | _ -> report_error no_pos "sau.check_stricteq_h_fomula"
   in
-  if r then
-    let n_hnodes1 = List.map helper hnodes1 in
-    let n_hnodes2 = List.map helper hnodes2 in
-    check_stricteq_hnodes n_hnodes1 n_hnodes2
+  if r then begin
+      let n_hnodes1 = List.map helper hnodes1 in
+      let n_hnodes2 = List.map helper hnodes2 in
+      if (List.length n_hnodes1) <= (List.length n_hnodes2) then
+        check_stricteq_hnodes stricted_eq n_hnodes1 n_hnodes2
+      else
+        check_stricteq_hnodes stricted_eq n_hnodes2 n_hnodes1
+    end
   else false
 
-let check_stricteq_h_fomula hf1 hf2=
+let check_stricteq_h_fomula stricted_eq hf1 hf2=
   let pr1 = Cprinter.string_of_h_formula in
-  Debug.no_2 " check_stricteq_h_fomula" pr1 pr1 string_of_bool
-      (fun _ _ ->  check_stricteq_h_fomula_x hf1 hf2) hf1 hf2
+  Debug.no_3 " check_stricteq_h_fomula" string_of_bool pr1 pr1 string_of_bool
+      (fun _ _ _ ->  check_stricteq_h_fomula_x stricted_eq hf1 hf2) stricted_eq hf1 hf2
 
 let check_relaxeq_formula_x f1 f2=
   let hf1,mf1,_,_,_ = CF.split_components f1 in
@@ -577,7 +580,7 @@ let check_relaxeq_formula_x f1 f2=
   DD.ninfo_pprint ("   mf1: " ^(Cprinter.string_of_mix_formula mf1)) no_pos;
   DD.ninfo_pprint ("   mf2: " ^ (Cprinter.string_of_mix_formula mf2)) no_pos;
   (* let r1,mts = CEQ.checkeq_h_formulas [] hf1 hf2 [] in *)
-  let r1 = check_stricteq_h_fomula hf1 hf2 in
+  let r1 = check_stricteq_h_fomula true hf1 hf2 in
   if r1 then
     let new_mf1 = xpure_for_hnodes hf1 in
     let cmb_mf1 = MCP.merge_mems mf2 new_mf1 true in
@@ -600,6 +603,7 @@ let check_relaxeq_formula f1 f2=
   Debug.no_2 "check_relaxeq_formula" pr1 pr1 string_of_bool
       (fun _ _ -> check_relaxeq_formula_x f1 f2) f1 f2
 
+(*exactly eq*)
 let checkeq_pair_formula (f11,f12) (f21,f22)=
   (check_relaxeq_formula f11 f21)&&(check_relaxeq_formula f12 f22)
 
@@ -626,6 +630,33 @@ and checkeq_formula_list fs1 fs2=
   Debug.no_2 "checkeq_formula_list" pr1 pr1 string_of_bool
       (fun _ _ -> checkeq_formula_list_x fs1 fs2) fs1 fs2
 
+(*=============common prefix equal=========*)
+let check_com_pre_eq_formula_x f1 f2=
+  let hf1,mf1,_,_,_ = CF.split_components f1 in
+  let hf2,mf2,_,_,_ = CF.split_components f2 in
+  DD.ninfo_pprint ("   mf1: " ^(Cprinter.string_of_mix_formula mf1)) no_pos;
+  DD.ninfo_pprint ("   mf2: " ^ (Cprinter.string_of_mix_formula mf2)) no_pos;
+  (* let r1,mts = CEQ.checkeq_h_formulas [] hf1 hf2 [] in *)
+  let r1 = check_stricteq_h_fomula false hf1 hf2 in
+  if r1 then
+    (*remove dups*)
+    let np1 = CP.remove_redundant (MCP.pure_of_mix mf1) in
+    let np2 = CP.remove_redundant (MCP.pure_of_mix mf2) in
+    DD.ninfo_pprint ("   p1: " ^(!CP.print_formula np1)) no_pos;
+    DD.ninfo_pprint ("   p2: " ^ (!CP.print_formula np2)) no_pos;
+    (* let r2,_ = CEQ.checkeq_p_formula [] np1 np2 mts in *)
+    let r2 = CP.equalFormula np1 np2 in
+    let _ = DD.ninfo_pprint ("   eq: " ^ (string_of_bool r2)) no_pos in
+    r2
+  else
+    false
+
+let check_com_pre_eq_formula f1 f2=
+  let pr1 = Cprinter.string_of_formula in
+  Debug.no_2 "check_com_pre_eq_formula" pr1 pr1 string_of_bool
+      (fun _ _ -> check_com_pre_eq_formula_x f1 f2) f1 f2
+
+
 (*==========END check_relaxeq=============*)
 let add_raw_hp_rel_x prog unknown_ptrs pos=
   if (List.length unknown_ptrs > 0) then
@@ -651,3 +682,67 @@ let add_raw_hp_rel prog unknown_args pos=
   let pr4 (hf,_) = pr2 hf in
   Debug.no_1 "add_raw_hp_rel" pr1 pr4
       (fun _ -> add_raw_hp_rel_x prog unknown_args pos) unknown_args
+
+(*fix subst*)
+let rec look_up_subst_group hp args nrec_grps=
+  let rec susbt_group fs pardefs=
+    match pardefs with
+      | [] -> fs
+      | (_, args2, f)::pss->
+          let ss = List.combine args2 args in
+          let nf = CF.subst ss f in
+          susbt_group (fs@[nf]) pss
+  in
+  match nrec_grps with
+    | [] -> [](* report_error no_pos "sau.look_up_groups" *)
+    | grp::gs -> begin
+        let hp1,_,_ = (List.hd grp) in
+        if CP.eq_spec_var hp hp1 then
+           susbt_group [] grp
+        else
+          look_up_subst_group hp args gs
+    end
+
+let remove_longer_common_prefix fs=
+  let rec helper cur res=
+    match cur with
+      | [] -> res
+      | f::ss -> if List.exists (fun f1 -> check_com_pre_eq_formula f1 f) res then
+            helper ss res
+          else helper ss (res@[f])
+  in
+  helper fs []
+
+let succ_susbt nrec_grps (hp,args,f)=
+  (* DD.info_pprint ("       succ_susbt hp: " ^ (!CP.print_sv hp)) no_pos; *)
+  let pos = no_pos in
+  (*l1 x l2*)
+  let helper ls1 ls2=
+    List.concat (List.map (fun f1 ->
+        List.map (fun f2 ->
+             CF.mkStar f1 f2 CF.Flow_combine pos
+    ) ls2) ls1)
+  in
+  let succ_hp_args = CF.get_HRels_f f in
+  (*filter hp out*)
+  let succ_hp_args = List.filter (fun (hp1,_) -> not (CP.eq_spec_var hp hp1)) succ_hp_args in
+  (* DD.info_pprint ("       succ_hp_args:" ^ (let pr = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) *)
+  (*                                           in pr succ_hp_args)) no_pos; *)
+  match succ_hp_args with
+    | [] -> (false,[(hp,args,f)])
+    | _ -> begin
+        let fs_list = List.map (fun (hp0,arg0) -> look_up_subst_group hp0 arg0 nrec_grps)  succ_hp_args in
+        if List.length (List.concat fs_list) = 0 then (false,[(hp,args,f)]) else
+        (*create template from f*)
+          let nf,_ = CF.drop_hrel_f f (fst (List.split succ_hp_args)) in
+        (*combine fs_list*)
+          let lsf_cmb = List.fold_left helper [nf] fs_list in
+          (* DD.info_pprint ("       succ_susbt lsf_cmb:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula) *)
+          (*                                                 in pr lsf_cmb)) no_pos; *)
+        (*remove f which has common prefix*)
+          let lsf_cmb1 = remove_longer_common_prefix lsf_cmb in
+          (* DD.info_pprint ("       succ_susbt lsf_cmb 1:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula) *)
+          (*                                                   in pr lsf_cmb1)) no_pos; *)
+          let fss = List.map (fun f1 -> (hp,args,f1)) lsf_cmb1 in
+          (true,fss)
+    end
