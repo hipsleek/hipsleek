@@ -1762,37 +1762,69 @@ let get_unk_hps_relation_x prog hpdefs cs=
       | _ -> [],[cs]
   in
   (*should lunk_hps ---> runk_hps *)
-  let new_defs2,rem_cs2=
-    match unk_hps with
-      | [] -> ([],[])
-      | [a] -> ([],[])
-      | [(hp1,args1);(hp2,args2)] ->
+  let lunk_hps, _ = List.partition (fun (hp,_) -> CP.mem_svl hp cs_unk_hps) lhp_args in
+  let runk_hps, _ = List.partition (fun (hp,_) -> CP.mem_svl hp cs_unk_hps) rhp_args in
+  (* (\*for debugging*\) *)
+  (* let pr = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in *)
+  (* let _ = Debug.info_pprint ("     l unk_hps: " ^ (pr lunk_hps)) no_pos in *)
+  (* let _ = Debug.info_pprint ("     r unk hps: " ^ (pr runk_hps)) no_pos in *)
+  (* (\*end for debugging*\) *)
+  (*local helper*)
+  let generate_unkhps_relation (hp1,args1) (hp2,args2) =
           (* let _ = Debug.info_pprint ("     unks: " ^ (!CP.print_svl [hp1;hp2])) no_pos in *)
+    if CP.eq_spec_var hp1 hp2 then [] else
+      begin
           let args = CP.remove_dups_svl (args1@args2) in
-          let keep_unk_hps = List.concat (List.map (SAU.get_intersect_unk_hps args) unk_hps) in
-          let lhs = SAU.keep_data_view_hrel_nodes prog cs.CF.hprel_lhs (lhns@rhns) (lhvs@rhvs) args (keep_unk_hps@[hp1;hp2]) in
-          let rhs = SAU.keep_data_view_hrel_nodes prog cs.CF.hprel_rhs (lhns@rhns) (lhvs@rhvs) args (keep_unk_hps@[hp1;hp2]) in
-          (* let _ = Debug.info_pprint ("      lhs: " ^ (Cprinter.prtt_string_of_formula lhs)) no_pos in *)
+          (* let keep_unk_hps = List.concat (List.map (SAU.get_intersect_unk_hps args) unk_hps) in *)
+    (* let lhs = SAU.keep_data_view_hrel_nodes prog cs.CF.hprel_lhs (lhns@rhns) (lhvs@rhvs) args (keep_unk_hps@[hp1;hp2]) in *)
+          let rhs = SAU.keep_data_view_hrel_nodes prog cs.CF.hprel_rhs (lhns@rhns) (lhvs@rhvs) args ([hp1;hp2]) in
           (* let _ = Debug.info_pprint ("      rhs: " ^ (Cprinter.prtt_string_of_formula rhs)) no_pos in *)
-          if SAU.is_empty_f lhs && SAU.is_empty_f rhs then ([], [cs])
+          if (* SAU.is_empty_f lhs && *) SAU.is_empty_f rhs then []
           else
             begin
-                if List.exists (fun (hp0,_) -> CP.eq_spec_var hp0 hp1) lhp_args then
-                  begin
-                      DD.info_pprint ">>>>>> unk hps equivalent: <<<<<<" no_pos;
-                      DD.info_pprint ((!CP.print_sv hp1)^"(" ^(!CP.print_svl args) ^ ")=" ^
-                                             (Cprinter.prtt_string_of_formula rhs) ) no_pos;
-                      ([(CP.HPRelDefn hp1, CF.HRel (hp1, List.map (fun x -> CP.mkVar x no_pos) args1, no_pos), rhs) ],[])
-                  end
-                else
-                  begin
-                      DD.info_pprint ">>>>>> unk hps equivalent: <<<<<<" no_pos;
-                      DD.info_pprint ((!CP.print_sv hp2)^"(" ^(!CP.print_svl args) ^ ")=" ^
-                                             (Cprinter.prtt_string_of_formula lhs) ) no_pos;
-                  ([(CP.HPRelDefn hp2, CF.HRel (hp2, List.map (fun x -> CP.mkVar x no_pos) args2, no_pos), lhs) ],[])
-                  end
+                DD.info_pprint ">>>>>> unk hps equivalent: <<<<<<" no_pos;
+                DD.info_pprint ((!CP.print_sv hp1)^"(" ^(!CP.print_svl args) ^ ")=" ^
+                                       (Cprinter.prtt_string_of_formula rhs) ) no_pos;
+                [(CP.HPRelDefn hp1, CF.HRel (hp1, List.map (fun x -> CP.mkVar x no_pos) args1, no_pos), rhs) ]
             end
-    | _ -> ([],[cs])
+      end
+  in
+  let new_defs2,rem_cs2=
+    if lunk_hps = [] || runk_hps = [] then ([],[cs])
+    else
+      let rels = List.concat (List.map
+             (fun lhp -> List.concat (List.map
+                     (fun rhp -> generate_unkhps_relation lhp rhp) runk_hps)) lunk_hps) in
+      (rels,[])
+      (* | [] -> ([],[]) *)
+    (*   | [a] -> ([],[]) *)
+    (*   | [(hp1,args1);(hp2,args2)] -> *)
+    (*       (\* let _ = Debug.info_pprint ("     unks: " ^ (!CP.print_svl [hp1;hp2])) no_pos in *\) *)
+    (*       let args = CP.remove_dups_svl (args1@args2) in *)
+    (*       let keep_unk_hps = List.concat (List.map (SAU.get_intersect_unk_hps args) unk_hps) in *)
+    (*       let lhs = SAU.keep_data_view_hrel_nodes prog cs.CF.hprel_lhs (lhns@rhns) (lhvs@rhvs) args (keep_unk_hps@[hp1;hp2]) in *)
+    (*       let rhs = SAU.keep_data_view_hrel_nodes prog cs.CF.hprel_rhs (lhns@rhns) (lhvs@rhvs) args (keep_unk_hps@[hp1;hp2]) in *)
+    (*       (\* let _ = Debug.info_pprint ("      lhs: " ^ (Cprinter.prtt_string_of_formula lhs)) no_pos in *\) *)
+    (*       (\* let _ = Debug.info_pprint ("      rhs: " ^ (Cprinter.prtt_string_of_formula rhs)) no_pos in *\) *)
+    (*       if SAU.is_empty_f lhs && SAU.is_empty_f rhs then ([], [cs]) *)
+    (*       else *)
+    (*         begin *)
+    (*             if List.exists (fun (hp0,_) -> CP.eq_spec_var hp0 hp1) lhp_args then *)
+    (*               begin *)
+    (*                   DD.info_pprint ">>>>>> unk hps equivalent: <<<<<<" no_pos; *)
+    (*                   DD.info_pprint ((!CP.print_sv hp1)^"(" ^(!CP.print_svl args) ^ ")=" ^ *)
+    (*                                          (Cprinter.prtt_string_of_formula rhs) ) no_pos; *)
+    (*                   ([(CP.HPRelDefn hp1, CF.HRel (hp1, List.map (fun x -> CP.mkVar x no_pos) args1, no_pos), rhs) ],[]) *)
+    (*               end *)
+    (*             else *)
+    (*               begin *)
+    (*                   DD.info_pprint ">>>>>> unk hps equivalent: <<<<<<" no_pos; *)
+    (*                   DD.info_pprint ((!CP.print_sv hp2)^"(" ^(!CP.print_svl args) ^ ")=" ^ *)
+    (*                                          (Cprinter.prtt_string_of_formula lhs) ) no_pos; *)
+    (*               ([(CP.HPRelDefn hp2, CF.HRel (hp2, List.map (fun x -> CP.mkVar x no_pos) args2, no_pos), lhs) ],[]) *)
+    (*               end *)
+    (*         end *)
+    (* | _ -> ([],[cs]) *)
   in
   let cs3=
     if (rem_cs1@rem_cs2) = [] then []
