@@ -153,7 +153,7 @@ let rec smt_of_b_formula b =
 
 let rec smt_of_formula f =
 	match f with
-	| CP.BForm (b,_) -> (smt_of_b_formula b)
+	| CP.BForm (b,_,_) -> (smt_of_b_formula b)
 	| CP.And (p1, p2, _) -> "(and " ^ (smt_of_formula p1) ^ " " ^ (smt_of_formula p2) ^ ")"
 	| CP.Or (p1, p2,_, _) -> "(or " ^ (smt_of_formula p1) ^ " " ^ (smt_of_formula p2) ^ ")"
 	| CP.Not (p,_, _) -> "(not " ^ (smt_of_formula p) ^ ")"
@@ -195,7 +195,7 @@ and collect_combine_formula_info f1 f2 =
  * The information is to be corrected by the function collect_formula_info.
  *)
 and collect_formula_info_raw f = match f with
-	| CP.BForm ((b,_),_) -> collect_bformula_info b
+	| CP.BForm ((b,_),_,_) -> collect_bformula_info b
 	| CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> 
 		collect_combine_formula_info_raw f1 f2
 	| CP.Not (f1,_,_) -> collect_formula_info_raw f1
@@ -332,9 +332,9 @@ let add_relation rname rargs rform =
 		global_rel_defs := !global_rel_defs @ [rdef];
 		(* Note that this axiom must be NEW i.e. no relation with this name is added earlier so that add_axiom is correct *)
 		match rform with
-		| CP.BForm ((CP.BConst (true, no_pos), None), None) (* no definition supplied *) -> (* do nothing *) ()
+		| CP.BForm ((CP.BConst (true, no_pos), None), None, None) (* no definition supplied *) -> (* do nothing *) ()
 		| _ -> (* add an axiom to describe the definition *)
-			let h = CP.BForm ((CP.RelForm (rname, List.map (fun x -> CP.mkVar x no_pos) rargs, no_pos), None), None) in
+			let h = CP.BForm ((CP.RelForm (rname, List.map (fun x -> CP.mkVar x no_pos) rargs, no_pos), None), None, None) in
 				add_axiom h IFF rform;
 	end
 	
@@ -603,7 +603,7 @@ let max_induction_level = ref 0
 let rec collect_induction_value_candidates (ante : CP.formula) (conseq : CP.formula) : (CP.exp list) =
 	(*let _ = print_string ("collect_induction_value_candidates :: ante = " ^ (!print_pure ante) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in*)
 	match conseq with
-		| CP.BForm (b,_) -> (let (p, _) = b in match p with
+		| CP.BForm (b,_,_) -> (let (p, _) = b in match p with
 			| CP.RelForm ("induce",[value],_) -> [value]
 			(* | CP.RelForm ("dom",[_;low;high],_) -> (* check if we can prove ante |- low <= high? *) [CP.mkSubtract high low no_pos] *)
 			| _ -> [])

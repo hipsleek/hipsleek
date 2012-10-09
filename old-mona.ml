@@ -48,8 +48,8 @@ let rec mona_of_typ = function
 
 (*------------------------------------------*)
 let rec mkEq l = match l with
-  | e :: [] -> CP.BForm(e,None)
-  | e :: rest -> CP.And(CP.BForm(e,None), (mkEq rest), no_pos)
+  | e :: [] -> CP.BForm(e,None,None)
+  | e :: rest -> CP.And(CP.BForm(e,None,None), (mkEq rest), no_pos)
   | _ -> assert false
 
 let rec mkEx l f = match l with
@@ -180,7 +180,7 @@ and mona_of_formula_break (f : CP.formula) (w : bool) : CP.formula =
   | CP.Not (p1,lbl, l1) -> CP.Not((mona_of_formula_break p1 w),lbl, l1)
   | CP.Forall(sv1, p1,lbl, l1) -> CP.Forall(sv1, (mona_of_formula_break p1 w),lbl, l1)
   | CP.Exists(sv1, p1,lbl, l1) -> CP.Exists(sv1, (mona_of_formula_break p1 w),lbl, l1)
-  | CP.BForm (b,lbl) -> CP.BForm((mona_of_b_formula_break b w),lbl)
+  | CP.BForm (b,lbl,fo) -> CP.BForm((mona_of_b_formula_break b w),lbl,fo)
   in
       if (List.length !substitution_list) > 0 then
 	   let eq = (mkEq !substitution_list) in
@@ -232,7 +232,7 @@ let rec appears_in_formula v = function
   | CP.Exists (qv, f, _,_) -> if qv = v then true else appears_in_formula v f
   | CP.And (f, g, _) -> (appears_in_formula v f) || (appears_in_formula v g)
   | CP.Or (f, g, _,_) -> (appears_in_formula v f) || (appears_in_formula v g)
-  | CP.BForm ((pf,_),_) -> match pf with
+  | CP.BForm ((pf,_),_,_) -> match pf with
       | CP.BVar (bv, _) -> v = bv
       | CP.Gt (l, r, _)
       | CP.Gte (l, r, _)
@@ -298,7 +298,7 @@ and is_first_order_a (f : CP.formula) (elem_list : CP.exp list) (initial_f : CP.
     | CP.Forall(_, f1, _,_)
     | CP.Exists(_, f1,_, _)
     | CP.Not(f1,_, _) -> (is_first_order_a f1 elem_list initial_f)
-    | CP.BForm(bf,_) -> (is_first_order_b_formula bf elem_list initial_f);
+    | CP.BForm(bf,_,_) -> (is_first_order_b_formula bf elem_list initial_f);
           (*  | _ -> false;*)
 
 and is_first_order_b_formula (bf : CP.b_formula) (elem_list : CP.exp list) (initial_f : CP.formula) : bool =
@@ -379,7 +379,7 @@ and is_inside_bag (f : CP.formula) (elem : CP.exp) : bool = match f with
   | CP.Forall(_, f1, _,_)
   | CP.Exists(_, f1, _,_)
   | CP.Not(f1, _,_) -> (is_inside_bag f1 elem)
-  | CP.BForm(bf,_) -> (is_inside_bag_b_formula bf elem)
+  | CP.BForm(bf,_,_) -> (is_inside_bag_b_formula bf elem)
 
 and is_inside_bag_b_formula (bf : CP.b_formula) (elem : CP.exp) : bool =
   let (pf,_) = bf in
@@ -720,14 +720,14 @@ and mona_of_formula f initial_f vs =
 and mona_of_formula_x f initial_f vs =
   let rec helper f =
     match f with
-      | CP.BForm (b,_) -> "(" ^ (mona_of_b_formula b initial_f vs) ^ ")"
+      | CP.BForm (b,_,_) -> "(" ^ (mona_of_b_formula b initial_f vs) ^ ")"
       | CP.And (p1, p2, _) -> "(" ^ (helper p1) ^ " & " ^ (helper p2) ^ ")"
       | CP.Or (p1, p2, _,_) -> "(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
       | CP.Not (p, _,_) ->
             begin
               if !sat_optimize then
 	            match p with
-		          | CP.BForm ((CP.BVar (bv, _), _), _) -> (mona_of_spec_var bv) ^ " =pconst(0)" (*== pconst(1)*)
+		          | CP.BForm ((CP.BVar (bv, _), _), _, _) -> (mona_of_spec_var bv) ^ " =pconst(0)" (*== pconst(1)*)
                         (*              (equation (CP.Var (bv, no_pos)) (CP.IConst (1, no_pos)) f "less" "<" vs)*)
 		          | _ -> " (~" ^ (helper p) ^ ") "
               else " (~" ^ (helper p) ^ ") "

@@ -568,7 +568,7 @@ let pure_formula_wo_paren (e:P.formula) =
   match e with
     | P.Forall _ 
     | P.Exists _ | P.Not _ -> true
-    | P.BForm (e1,_) -> true (* b_formula_wo_paren e1 *)
+    | P.BForm (e1,_,_) -> true (* b_formula_wo_paren e1 *)
     | P.And _ -> true 
     | _ -> false
 
@@ -777,6 +777,13 @@ and string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
 and string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
 and string_of_formula_label_only x :string = string_of_formula_label x ""
 
+and string_of_formula_origin fo : string =
+  match fo with
+  | None -> ""
+  | Some Formula_origin_specs -> "F_O_SPECS"
+  | Some Formula_origin_code -> "F_O_CODE"
+  | Some Formula_origin_intermediate -> "F_O_INTERMEDIATE"
+
 and string_of_iast_label_table table =
   let string_of_row row =
     let string_of_label_loc (_, path_label, loc) =
@@ -799,12 +806,14 @@ and string_of_formula_label_list l :string =  poly_string_of_pr pr_formula_label
 and pr_spec_label_def l  = fmt_string (Lab2_List.string_of l)
 and pr_spec_label l  = fmt_string (Lab_List.string_of l)
 
+and pr_formula_origin fo = fmt_string (string_of_formula_origin fo)
+
 (** print a pure formula to formatter *)
 and pr_pure_formula  (e:P.formula) = 
   let f_b e =  pr_bracket pure_formula_wo_paren pr_pure_formula e 
   in
   match e with 
-    | P.BForm (bf,lbl) -> (*pr_formula_label_opt lbl;*) pr_b_formula bf
+    | P.BForm (bf,lbl,fo) -> (*pr_formula_label_opt lbl;*) pr_formula_origin fo; fmt_string ":"; pr_b_formula bf
     | P.And (f1, f2, l) ->  
           let arg1 = bin_op_to_list op_and_short pure_formula_assoc_op f1 in
           let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in
@@ -2503,7 +2512,7 @@ and html_of_pure_b_formula f = match f with
 
 and html_of_pure_formula f =
 	match f with
-    | P.BForm ((bf,_),_) -> html_of_pure_b_formula bf
+    | P.BForm ((bf,_),_,_) -> html_of_pure_b_formula bf
     | P.And (f1, f2, l) -> 
 		let arg1 = bin_op_to_list op_and_short pure_formula_assoc_op f1 in
 		let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in

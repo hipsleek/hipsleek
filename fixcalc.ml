@@ -93,8 +93,8 @@ let rec fixcalc_of_b_formula b =
     | _ -> illegal_format ("Fixcalc.fixcalc_of_b_formula: Do not support bag, list")
 
 let rec fixcalc_of_pure_formula f = match f with
-  | CP.BForm ((CP.BVar (x,_),_),_) -> fixcalc_of_spec_var x ^ op_gt ^ "0"
-  | CP.BForm (b,_) -> fixcalc_of_b_formula b
+  | CP.BForm ((CP.BVar (x,_),_),_,_) -> fixcalc_of_spec_var x ^ op_gt ^ "0"
+  | CP.BForm (b,_,_) -> fixcalc_of_b_formula b
   | CP.And (p1, p2, _) ->
     "(" ^ fixcalc_of_pure_formula p1 ^ op_and ^ fixcalc_of_pure_formula p2 ^ ")"
   | CP.AndList b -> (match b with | [] -> fixcalc_of_pure_formula (CP.mkFalse no_pos) | (_,x)::t -> 
@@ -104,7 +104,7 @@ let rec fixcalc_of_pure_formula f = match f with
   | CP.Not (p,_ , _) -> 
     begin
     match p with
-    | CP.BForm ((CP.BVar (x,_),_),_) -> fixcalc_of_spec_var x ^ op_lte ^ "0"
+    | CP.BForm ((CP.BVar (x,_),_),_,_) -> fixcalc_of_spec_var x ^ op_lte ^ "0"
     | _ -> illegal_format ("Fixcalc.fixcalc_of_pure_formula: Not supported Not-formula")
     end
   | CP.Forall (sv, p,_ , _) ->
@@ -195,7 +195,7 @@ let rec remove_paren s n = if n=0 then "" else match s.[0] with
 
 
 let rec is_rec pf = match pf with
-  | CP.BForm (bf,_) -> CP.is_RelForm pf
+  | CP.BForm (bf,_,_) -> CP.is_RelForm pf
   | CP.And (f1,f2,_) -> is_rec f1 || is_rec f2
   | CP.AndList b -> exists_l_snd is_rec b
   | CP.Or (f1,f2,_,_) -> is_rec f1 || is_rec f2
@@ -204,7 +204,7 @@ let rec is_rec pf = match pf with
   | CP.Exists (_,f,_,_) -> is_rec f
 
 let rec get_rel_vars pf = match pf with
-  | CP.BForm (bf,_) -> if CP.is_RelForm pf then CP.fv pf else []
+  | CP.BForm (bf,_,_) -> if CP.is_RelForm pf then CP.fv pf else []
   | CP.And (f1,f2,_) -> get_rel_vars f1 @ get_rel_vars f2
   | CP.AndList b -> fold_l_snd get_rel_vars b
   | CP.Or (f1,f2,_,_) -> get_rel_vars f1 @ get_rel_vars f2
@@ -223,7 +223,7 @@ let substitute (e: CP.exp): (CP.exp * CP.formula list) = match e with
     with _ -> (e,[]))
 
 let arr_para_order (rel: CP.formula) (rel_def: CP.formula) (ante_vars: CP.spec_var list) = match (rel,rel_def) with
-  | (CP.BForm ((CP.RelForm (id,args,p), o1), o2), CP.BForm ((CP.RelForm (id_def,args_def,_), _), _)) -> 
+  | (CP.BForm ((CP.RelForm (id,args,p), o1), o2, o3), CP.BForm ((CP.RelForm (id_def,args_def,_), _), _, _)) -> 
     if id = id_def then 
       let new_args_def = 
         let pre_args, post_args = List.partition (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) args_def in
@@ -232,10 +232,10 @@ let arr_para_order (rel: CP.formula) (rel_def: CP.formula) (ante_vars: CP.spec_v
       let pairs = List.combine args_def args in
       let new_args = List.map (fun a -> List.assoc a pairs) new_args_def in
       let new_args, subs = List.split (List.map (fun a -> substitute a) new_args) in
-      (CP.BForm ((CP.RelForm (id,new_args,p), o1), o2), [CP.conj_of_list (List.concat subs) no_pos])
+      (CP.BForm ((CP.RelForm (id,new_args,p), o1), o2, o3), [CP.conj_of_list (List.concat subs) no_pos])
     else 
       let args, subs = List.split (List.map (fun a -> substitute a) args) in
-      (CP.BForm ((CP.RelForm (id,args,p), o1), o2), [CP.conj_of_list (List.concat subs) no_pos])
+      (CP.BForm ((CP.RelForm (id,args,p), o1), o2, o3), [CP.conj_of_list (List.concat subs) no_pos])
   | _ -> report_error no_pos "Expecting relation formulae"
 
 let arr_args rcase_orig rel ante_vars = 
@@ -270,11 +270,11 @@ let propagate_exp exp1 exp2 =
       (fun _ _ -> propagate_exp exp1 exp2) exp1 exp2
 
 let propagate_fml rcase bcase = match (rcase, bcase) with
-  | (CP.BForm ((exp1,_),_), CP.BForm ((exp2,_),_)) -> 
+  | (CP.BForm ((exp1,_),_,_), CP.BForm ((exp2,_),_,_)) -> 
     let exp = propagate_exp exp1 exp2 in
     (match exp with
     | None -> []
-    | Some e -> [CP.BForm ((e,None),None)])
+    | Some e -> [CP.BForm ((e,None),None,None)])
   | _ -> []
 
 let propagate_fml rcase bcase = 
@@ -399,13 +399,13 @@ and preprocess_rels rels =
 
 and unify_rels rel same_rels =
   match rel, same_rels with
-  | (CP.BForm ((CP.RelForm (name1,args1,p1),p2),p3), f1,n1), (CP.BForm ((CP.RelForm (name2,args2,_),_),_), f2,n2)::r ->
+  | (CP.BForm ((CP.RelForm (name1,args1,p1),p2),p3,p4), f1,n1), (CP.BForm ((CP.RelForm (name2,args2,_),_),_,_), f2,n2)::r ->
     let subst_arg = List.combine (List.map CP.exp_to_spec_var args2) (List.map CP.exp_to_spec_var args1) in
     let f2 = CP.subst subst_arg f2 in
     let new_f = CP.Or(f1,f2,None,no_pos) in
     DD.ninfo_pprint ("new rel = " ^ (!CP.print_formula new_f))  no_pos;
-    (CP.BForm ((CP.RelForm (name1,args1,p1),p2),p3), new_f,n1)::(unify_rels rel r)
-  | (CP.BForm ((CP.RelForm (name1,args1,_),_),_), f1,_), [] -> []
+    (CP.BForm ((CP.RelForm (name1,args1,p1),p2),p3,p4), new_f,n1)::(unify_rels rel r)
+  | (CP.BForm ((CP.RelForm (name1,args1,_),_),_,_), f1,_), [] -> []
   | _ -> report_error no_pos ("Unexpected format\n") 
 	    
 
@@ -481,7 +481,7 @@ and compute_fixpoint_one (rel_fml, pf, no, ante_vars) =
 (*  if CP.isConstFalse pf then (rel_fml, CP.mkFalse no_pos, CP.mkFalse no_pos) *)
 (*  else  *)
   let (name,vars) = match rel_fml with
-    | CP.BForm ((CP.RelForm (name,args,_),_),_) -> (CP.name_of_spec_var name, (List.concat (List.map CP.afv args)))
+    | CP.BForm ((CP.RelForm (name,args,_),_),_,_) -> (CP.name_of_spec_var name, (List.concat (List.map CP.afv args)))
     | _ -> report_error no_pos ("Wrong format: " ^ (!CP.print_formula rel_fml) ^ "\n")
   in
   let pre_vars, post_vars = List.partition (fun v -> List.mem v ante_vars) vars in
@@ -503,7 +503,7 @@ and compute_bottomup_inp rel =
   else report_error no_pos "No relation provided"
 
 and get_rel_name rel = match rel with
- | CP.BForm ((CP.RelForm (name,args,_),_),_) -> CP.name_of_spec_var name
+ | CP.BForm ((CP.RelForm (name,args,_),_),_,_) -> CP.name_of_spec_var name
  | _ -> report_error no_pos ("Wrong format: " ^ (!CP.print_formula rel) ^ "\n")
  
 

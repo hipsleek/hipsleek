@@ -40,6 +40,11 @@ and loc = {
 			end_pos : Lexing.position;
 			}
 
+and formula_origin =
+  | Formula_origin_specs
+  | Formula_origin_code
+  | Formula_origin_intermediate
+
 and primed =
   | Primed
   | Unprimed

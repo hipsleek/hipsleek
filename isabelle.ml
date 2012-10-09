@@ -214,7 +214,7 @@ and isabelle_of_b_formula b =
 (* pretty printing for formulas *)
 and isabelle_of_formula f =
     match f with
-    | CP.BForm (b,_) ->
+    | CP.BForm (b,_,_) ->
 	  if (is_bag_formula f) then
 	    "(" ^ (isabelle_of_b_formula b) ^ ")"
 	  else ""
@@ -409,7 +409,7 @@ let imply_sat (ante : CP.formula) (conseq : CP.formula) (timeout : float) (sat_n
 let is_sat (f : CP.formula) (sat_no : string) : bool = begin
 	if !log_all_flag == true then
 				output_string log_all ("\n\n#is_sat " ^ sat_no ^ "\n");
-	let answ = (imply_sat f (CP.BForm((CP.BConst(false, no_pos), None), None)) !Globals.sat_timeout_limit sat_no) in
+	let answ = (imply_sat f (CP.BForm((CP.BConst(false, no_pos), None), None, None)) !Globals.sat_timeout_limit sat_no) in
     if !log_all_flag == true then
 	  output_string log_all ("[isabelle.ml]: is_sat --> "^(string_of_bool (not answ)) ^"\n");
     (not answ)

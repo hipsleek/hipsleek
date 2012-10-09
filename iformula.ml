@@ -847,11 +847,11 @@ and float_out_exps_from_heap_x (f:formula ):formula =
                       try
                           let lexp = P.find_lexp_exp c !Ipure.linking_exp_list in
                                 (*let _ = Hashtbl.remove !Ipure.linking_exp_list c in*)
-						  Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), (Some (false, fresh_int(), lexp))), None)
+						  Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), (Some (false, fresh_int(), lexp))), None, None)
                       with Not_found ->
-						  Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None)
+						  Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None, None)
                     else
-                      Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None) 
+                      Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None, None) 
                         (* Slicing: TODO IL for linking exp *)
                   in
 				  (nv,[(nn,npf)])) b.h_formula_heap_arguments) in
@@ -872,10 +872,10 @@ and float_out_exps_from_heap_x (f:formula ):formula =
 			          try
 				          let lexp = P.find_lexp_exp (snd c) !Ipure.linking_exp_list in
 				  (*let _ = Hashtbl.remove !Ipure.linking_exp_list (snd c) in*)
-				          Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), (Some (false, fresh_int(), lexp))), None)
+				          Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), (Some (false, fresh_int(), lexp))), None, None)
 			          with Not_found ->
-				          Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None), None)
-			        else Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None), None) in (* Slicing: TODO *)
+				          Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None), None, None)
+			        else Ipure.BForm ((Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None), None, None) in (* Slicing: TODO *)
 		          (((fst c),nv),[(nn,npf)])) b.h_formula_heap2_arguments) in
         (HeapNode2 ({b with h_formula_heap2_arguments = na;h_formula_heap2_perm = na_perm}),(List.concat (ls_perm :: ls)))
     | HTrue -> (f,[])
@@ -1090,8 +1090,8 @@ match h with
 		                      let nv = Ipure.Var((new_name, Unprimed), l) in
 		                      (nv::a, let lexp = P.find_lexp_exp d !Ipure.linking_exp_list 
 				                      in match c with
-		                                | None -> Some (Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), Some (false, fresh_int(), lexp)), None)))
-		                                | Some s -> Some (Ipure.And ((Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), Some (false, fresh_int(), lexp)), None))), s, l)))) ([], new_p_perm) args in
+		                                | None -> Some (Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), Some (false, fresh_int(), lexp)), None, None)))
+		                                | Some s -> Some (Ipure.And ((Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d, l), Some (false, fresh_int(), lexp)), None, None))), s, l)))) ([], new_p_perm) args in
               (( HeapNode { h1 with  h_formula_heap_arguments = (List.rev nl); h_formula_heap_perm = nl_perm}), new_p)
     |  HeapNode2 h1 ->
 	    let l = h1. h_formula_heap2_pos in
@@ -1112,8 +1112,8 @@ match h with
 			            ((d1,nv):: a, 
                          let lexp = P.find_lexp_exp d2 !Ipure.linking_exp_list in 
                          match c with
-			               | None -> Some (Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d2, l), Some (false, fresh_int(), lexp)), None)))
-			               | Some s -> Some (Ipure.And ((Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d2, l), Some (false, fresh_int(), lexp)), None)) ), s, l)))) ([], new_p_perm) args 
+			               | None -> Some (Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d2, l), Some (false, fresh_int(), lexp)), None, None)))
+			               | Some s -> Some (Ipure.And ((Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv, d2, l), Some (false, fresh_int(), lexp)), None, None)) ), s, l)))) ([], new_p_perm) args 
         in
         (( HeapNode2 { h1 with  h_formula_heap2_arguments = (List.rev nl);h_formula_heap2_perm = nl_perm;}), new_p)
     |  HTrue -> (h, None)
@@ -1245,7 +1245,7 @@ let float_out_thread_one_formula_x (f : one_formula) : one_formula =
   (*look for a formula with thread=id*)
   let helper (f:P.formula) =
     match f with
-      | P.BForm (bf, _) ->
+      | P.BForm (bf, _, _) ->
           let p,_ = bf in
           (match p with
             | P.Eq (e1,e2,pos) ->

@@ -399,7 +399,7 @@ let rec mathematica_of_b_formula b : string =
 let rec mathematica_of_formula pr_w pr_s f0 : string =
   let rec formula_to_string f0 = (
     match f0 with
-    | CP.BForm ((b,_) as bf,_) -> ( 
+    | CP.BForm ((b,_) as bf,_,_) -> ( 
         match (pr_w b) with
         | None -> mathematica_of_b_formula bf
         | Some f -> formula_to_string f
@@ -478,8 +478,8 @@ let simplify_var_name (e: CP.formula) : CP.formula =
         let nf2 = simplify f2 vnames in
         CP.Or (nf1, nf2, lbl, l)
     | CP.Not (f1, lbl, l) -> CP.Not (simplify f1 vnames, lbl, l)
-    | CP.BForm (bf, lbl) ->
-        CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl) in
+    | CP.BForm (bf, lbl,fo) ->
+        CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl, fo) in
   simplify e (Hashtbl.create 100)
 
 let rec is_linear_exp exp = 
@@ -511,7 +511,7 @@ let is_linear_bformula b =
 
 let rec is_linear_formula f0 = 
   match f0 with
-  | CP.BForm (b,_) -> is_linear_bformula b
+  | CP.BForm (b,_,_) -> is_linear_bformula b
   | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"
   | CP.Not (f, _,_) | CP.Forall (_, f, _,_) | CP.Exists (_, f, _,_) ->
       is_linear_formula f;
@@ -551,14 +551,14 @@ let is_linear2 f0 =
 (* e1 != e2 ~> e1 >= e2 + 1 or e1 <= e2 - 1  *)
 let rec strengthen_formula f0 =
   match f0 with
-  | CP.BForm ((pf,il),lbl) -> ( 
+  | CP.BForm ((pf,il),lbl,fo) -> ( 
       match pf with
-      | CP.Lt (e1, e2, l) -> CP.BForm ((CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l), il), lbl)
-      | CP.Gt (e1, e2, l) -> CP.BForm ((CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l), il), lbl)
+      | CP.Lt (e1, e2, l) -> CP.BForm ((CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l), il), lbl, fo)
+      | CP.Gt (e1, e2, l) -> CP.BForm ((CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l), il), lbl, fo)
       | CP.Neq (e1, e2, l) ->
           let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
           let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
-          CP.Or (CP.BForm ((lp,il), lbl), CP.BForm ((rp,il), lbl), lbl, l)
+          CP.Or (CP.BForm ((lp,il), lbl, fo), CP.BForm ((rp,il), lbl, fo), lbl, l)
       | _ -> f0
     )
   | CP.Not (f, lbl, l) -> CP.Not (strengthen_formula f, lbl, l)
@@ -575,10 +575,10 @@ let strengthen_formula f =
 let strengthen2 f0 =
   let f_f f =
     match f with
-    | CP.BForm ((CP.Neq (e1, e2, l), il), lbl) ->
+    | CP.BForm ((CP.Neq (e1, e2, l), il), lbl, fo) ->
           let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
           let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
-          Some (CP.Or (CP.BForm ((lp, il), lbl), CP.BForm ((rp, il), lbl), lbl, l))
+          Some (CP.Or (CP.BForm ((lp, il), lbl, fo), CP.BForm ((rp, il), lbl, fo), lbl, l))
     | _ -> None in
   let f_bf bf =
     let (pf,il) = bf in
@@ -593,14 +593,14 @@ let strengthen2 f0 =
 (* e1 = e2 ~> e2 - 1 < e1 < e2 + 1 *)
 let rec weaken_formula f0 =
   match f0 with
-  | CP.BForm ((pf,il),lbl) -> (
+  | CP.BForm ((pf,il),lbl,fo) -> (
       match pf with
-      | CP.Lte (e1, e2, l) -> CP.BForm ((CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l),l), il),lbl)
-      | CP.Gte (e1, e2, l) -> CP.BForm ((CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l),l), il),lbl)
+      | CP.Lte (e1, e2, l) -> CP.BForm ((CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l),l), il), lbl, fo)
+      | CP.Gte (e1, e2, l) -> CP.BForm ((CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l),l), il), lbl, fo)
       | CP.Eq (e1, e2, l) ->
           let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
           let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
-          CP.And (CP.BForm ((lp,il),lbl), CP.BForm ((rp,il),lbl), l)
+          CP.And (CP.BForm ((lp,il),lbl,fo), CP.BForm ((rp,il),lbl,fo), l)
       | _ -> f0
     )
   | CP.Not (f,lbl,l) -> CP.Not (weaken_formula f, lbl, l)
@@ -613,10 +613,10 @@ let rec weaken_formula f0 =
 let weaken2 f0 =
   let f_f f =
     match f with
-    | CP.BForm ((CP.Eq (e1, e2, l),il), lbl) ->
+    | CP.BForm ((CP.Eq (e1, e2, l),il), lbl, fo) ->
         let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
         let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
-        Some (CP.And (CP.BForm ((lp,il),lbl), CP.BForm ((rp,il),lbl), l))
+        Some (CP.And (CP.BForm ((lp,il),lbl,fo), CP.BForm ((rp,il),lbl,fo), l))
     | _ -> None in
   let f_bf bf =
     let (pf,il) = bf in
@@ -645,11 +645,11 @@ let negate_b_formula bf0 =
   | Some pf -> Some (pf,il)
 
 let rec negate_formula f0 = match f0 with
-  | CP.BForm (bf, lbl) -> (
+  | CP.BForm (bf, lbl, fo) -> (
     let neg_bf = negate_b_formula bf in
       match neg_bf with
-      | Some new_bf -> CP.BForm (new_bf, lbl)
-      | None -> CP.Not (CP.BForm (bf, lbl), None, no_pos)
+      | Some new_bf -> CP.BForm (new_bf, lbl, fo)
+      | None -> CP.Not (CP.BForm (bf, lbl, fo), None, no_pos)
     )
   | CP.And (f1, f2, pos) -> CP.Or (negate_formula f1, negate_formula f2, None, pos)
   | CP.AndList _ -> Gen.report_error no_pos "mathematica.ml: encountered AndList, should have been already handled"

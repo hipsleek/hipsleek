@@ -83,6 +83,13 @@ let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s 
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
 let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
 
+and string_of_formula_origin fo : string =
+  match fo with
+  | None -> ""
+  | Some Formula_origin_specs -> "F_O_SPECS"
+  | Some Formula_origin_code -> "F_O_CODE"
+  | Some Formula_origin_intermediate -> "F_O_INTERMEDIATE"
+
 let string_of_var (c1,c2) = c1^(string_of_primed c2);;
 
 let string_of_var_list vl = String.concat " " (List.map string_of_var vl);;
@@ -237,7 +244,7 @@ and concat_string_list_string strings =
 
 (* pretty printing for a pure formula *)
 and string_of_pure_formula = function 
-  | P.BForm (bf,lbl)                    -> string_of_b_formula bf 
+  | P.BForm (bf,lbl,fo)                    -> (string_of_formula_origin fo) ^ ":" ^ (string_of_b_formula bf) 
   | P.And (f1, f2, l)             -> "(" ^ (string_of_pure_formula f1) ^ ") & (" ^ (string_of_pure_formula f2) ^ ")"  
   | P.AndList b -> List.fold_left  (fun a (l,c)-> 
 		let l_s = (string_of_spec_label l) ^": " in

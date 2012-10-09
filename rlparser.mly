@@ -32,7 +32,7 @@ input:
 ;
 
 formula: 
-  | bformula { CP.BForm ($1, None) }
+  | bformula { CP.BForm ($1, None, None) }
   | formula OR formula { CP.mkOr $1 $3 None no_pos }
   | formula AND formula { CP.mkAnd $1 $3 no_pos }
   | NOT formula { CP.mkNot $2 None no_pos }

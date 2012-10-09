@@ -203,7 +203,7 @@ let rec smt_of_formula pr_w pr_s f =
   let _ = Debug.devel_hprint (add_str "f : " !CP.print_formula) f no_pos in
   let rec helper f=
 	match f with
-	| CP.BForm ((b,_) as bf,_) ->
+	| CP.BForm ((b,_) as bf,_,_) ->
          begin
           match (pr_w b) with
             | None -> let _ = Debug.devel_pprint ("NONE #") no_pos in (smt_of_b_formula bf)
@@ -260,7 +260,7 @@ and collect_combine_formula_info f1 f2 =
  * The information is to be corrected by the function collect_formula_info.
  *)
 and collect_formula_info_raw f = match f with
-  | CP.BForm ((b,_),_) -> collect_bformula_info b
+  | CP.BForm ((b,_),_,_) -> collect_bformula_info b
   | CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> 
 		collect_combine_formula_info_raw f1 f2
   | CP.AndList _ -> Gen.report_error no_pos "smtsolver.ml: encountered AndList, should have been already handled"
@@ -429,9 +429,9 @@ let add_relation (rname1:string) rargs rform =
 	  global_rel_defs := !global_rel_defs @ [rdef];
 	  (* Note that this axiom must be NEW i.e. no relation with this name is added earlier so that add_axiom is correct *)
 	  match rform with
-		| CP.BForm ((CP.BConst (true, no_pos), None), None) (* no definition supplied *) -> (* do nothing *) ()
+		| CP.BForm ((CP.BConst (true, no_pos), None), None, None) (* no definition supplied *) -> (* do nothing *) ()
 		| _ -> (* add an axiom to describe the definition *)
-			  let h = CP.BForm ((CP.RelForm (rname, List.map (fun x -> CP.mkVar x no_pos) rargs, no_pos), None), None) in
+			  let h = CP.BForm ((CP.RelForm (rname, List.map (fun x -> CP.mkVar x no_pos) rargs, no_pos), None), None, None) in
 			  add_axiom h IFF rform;
 	end
 	
@@ -839,7 +839,7 @@ let max_induction_level = ref 0
 let rec collect_induction_value_candidates (ante : CP.formula) (conseq : CP.formula) : (CP.exp list) =
   (*let _ = print_string ("collect_induction_value_candidates :: ante = " ^ (!print_pure ante) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in*)
   match conseq with
-	| CP.BForm (b,_) -> (let (p, _) = b in match p with
+	| CP.BForm (b,_,_) -> (let (p, _) = b in match p with
 		| CP.RelForm (r,[value],_) -> 
               if (CP.name_of_spec_var r) ="induce" then [value]
               else []

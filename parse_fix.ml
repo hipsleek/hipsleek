@@ -89,10 +89,10 @@ GLOBAL: expression or_formula formula pformula exp specvar;
     | _ = NATIVEINT; "!="; _ = NATIVEINT -> mkTrue loc
     | x = INT; "="; y = INT ->
       let tmp = if int_of_string x = int_of_string y then BConst (true,loc) else BConst(false,loc) in
-      BForm ((tmp, None), None)
+      BForm ((tmp, None), None, None)
     |	x = exp; "<"; y = exp ->
-      if is_res_var y && is_zero x then BForm ((BVar (get_var "res" !stab, loc), None), None) else
-      if is_res_var x && is_one y then Not (BForm ((BVar (get_var "res" !stab, loc), None), None), None, loc) else
+      if is_res_var y && is_zero x then BForm ((BVar (get_var "res" !stab, loc), None), None, None) else
+      if is_res_var x && is_one y then Not (BForm ((BVar (get_var "res" !stab, loc), None), None, None), None, loc) else
       let tmp = 
         if is_node y & is_zero x then Neq (Var(get_var (get_node y) !stab, loc), Null loc, loc)
         else
@@ -100,10 +100,10 @@ GLOBAL: expression or_formula formula pformula exp specvar;
         else
         if is_self_var y then Neq (Var(get_var "self" !stab, loc), Null loc, loc)
         else Lt (x, y, loc) 
-      in BForm ((tmp, None), None)
+      in BForm ((tmp, None), None, None)
     | x = exp; ">"; y = exp ->
-      if is_res_var x && is_zero y then BForm ((BVar (get_var "res" !stab, loc), None), None) else
-      if is_res_var y && is_one x then Not (BForm ((BVar (get_var "res" !stab, loc), None), None), None, loc) else
+      if is_res_var x && is_zero y then BForm ((BVar (get_var "res" !stab, loc), None), None, None) else
+      if is_res_var y && is_one x then Not (BForm ((BVar (get_var "res" !stab, loc), None), None, None), None, loc) else
       let tmp = 
         if is_node x && is_zero y then Neq (Var(get_var (get_node x) !stab, loc), Null loc, loc)
         else 
@@ -111,10 +111,10 @@ GLOBAL: expression or_formula formula pformula exp specvar;
         else 
         if is_self_var x then Neq (Var(get_var "self" !stab, loc), Null loc, loc)
         else Gt (x, y, loc) 
-      in BForm ((tmp, None), None)
+      in BForm ((tmp, None), None, None)
     | x = exp; "<="; y = exp ->
-      if is_res_var x && is_zero y then Not (BForm ((BVar (get_var "res" !stab, loc), None), None), None, loc) else
-      if is_res_var y && is_one x then BForm ((BVar (get_var "res" !stab, loc), None), None) else
+      if is_res_var x && is_zero y then Not (BForm ((BVar (get_var "res" !stab, loc), None), None, None), None, loc) else
+      if is_res_var y && is_one x then BForm ((BVar (get_var "res" !stab, loc), None), None, None) else
       let tmp = 
         if is_node x & is_zero y then Eq (Var(get_var (get_node x) !stab, loc), Null loc, loc)
         else
@@ -122,10 +122,10 @@ GLOBAL: expression or_formula formula pformula exp specvar;
         else
         if is_self_var x then Eq (Var(get_var "self" !stab, loc), Null loc, loc)
         else Lte (x, y, loc)
-      in BForm ((tmp, None), None)
+      in BForm ((tmp, None), None, None)
     | x = exp; ">="; y = exp ->
-      if is_res_var y && is_zero x then Not (BForm ((BVar (get_var "res" !stab, loc), None), None), None, loc) else
-      if is_res_var x && is_one y then BForm ((BVar (get_var "res" !stab, loc), None), None) else
+      if is_res_var y && is_zero x then Not (BForm ((BVar (get_var "res" !stab, loc), None), None, None), None, loc) else
+      if is_res_var x && is_one y then BForm ((BVar (get_var "res" !stab, loc), None), None, None) else
       let tmp = 
         if is_node y & is_zero x then Eq (Var(get_var (get_node y) !stab, loc), Null loc, loc)
         else
@@ -133,7 +133,7 @@ GLOBAL: expression or_formula formula pformula exp specvar;
         else
         if is_self_var y then Eq (Var(get_var "self" !stab, loc), Null loc, loc)
         else Gte (x, y, loc)
-      in BForm ((tmp, None), None)
+      in BForm ((tmp, None), None, None)
     | x = exp; "="; y = exp -> 
       let tmp = 
         if is_node x && is_node y then 
@@ -148,10 +148,10 @@ GLOBAL: expression or_formula formula pformula exp specvar;
         if is_rec_node x && is_rec_node y then 
           Eq (Var(change_name (get_var (get_rec_node x) !stab) "REC", loc), Var(change_name (get_var (get_rec_node y) !stab) "REC", loc), loc)
         else Eq (x, y, loc)
-      in BForm ((tmp, None), None)
+      in BForm ((tmp, None), None, None)
     | x = exp; "!="; y = exp -> 
       let tmp = Neq (x, y, loc) in
-      BForm ((tmp, None), None)
+      BForm ((tmp, None), None, None)
     ]
   ]; 
       

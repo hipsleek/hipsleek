@@ -2821,7 +2821,7 @@ and propagate_perm_formula_x (f : formula) (permvar:cperm_var) : formula = match
         let base_p = f1.formula_base_pure in
         let mk_eq v = mkEq_cperm () v permvar no_pos in
         let mk_eqs = List.map mk_eq vars in
-        let mk_BForm (b:CP.b_formula): CP.formula = CP.BForm (b,None) in
+        let mk_BForm (b:CP.b_formula): CP.formula = CP.BForm (b,None,None) in
         let mk_eqs = List.map mk_BForm mk_eqs in
         let perm_p = List.fold_left (fun res v -> CP.mkAnd v res no_pos) (CP.mkTrue no_pos) mk_eqs in
         let perm_p = MCP.OnePF perm_p in
@@ -2832,7 +2832,7 @@ and propagate_perm_formula_x (f : formula) (permvar:cperm_var) : formula = match
         let base_p = f1.formula_exists_pure in
         let mk_eq v = mkEq_cperm () v permvar no_pos in
         let mk_eqs = List.map mk_eq vars in
-        let mk_BForm (b:CP.b_formula): CP.formula = CP.BForm (b,None) in
+        let mk_BForm (b:CP.b_formula): CP.formula = CP.BForm (b,None,None) in
         let mk_eqs = List.map mk_BForm mk_eqs in
         let perm_p = List.fold_left (fun res v -> CP.mkAnd v res no_pos) (CP.mkTrue no_pos) mk_eqs in
         let perm_p = MCP.OnePF perm_p in
@@ -6080,7 +6080,7 @@ let rename_labels transformer e =
 	let f_e e = Some e in
 	let f_p_f e = 
 		match e with
-		| CP.BForm (b,f_l) -> Some (CP.BForm (b,(n_l_f f_l)))
+		| CP.BForm (b,f_l,fo) -> Some (CP.BForm (b,(n_l_f f_l),fo))
 		| CP.And _
 		| CP. AndList _ -> None
 		| CP.Or (e1,e2,f_l,l) -> (Some (CP.Or (e1,e2,(n_l_f f_l),l)))
@@ -7795,7 +7795,7 @@ let compose_formula_and_x (f : formula) (post : formula) (id: CP.spec_var) (ref_
         (Cpure.Var (v1,no_pos)),
         (Cpure.Var (v2,no_pos)),
         no_pos
-    )),None), None)
+    )),None), None, None)
   in
   let new_f3 = List.fold_left (fun f (v1,v2) -> 
       let eq_f = func v1 v2 in

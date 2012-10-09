@@ -256,19 +256,19 @@ let collect_update_function_x (transition_constraint: CP.formula) : CP.formula =
     | _ -> false in
   let rec convert_formula (f: CP.formula) : CP.formula = (
     match f with
-    | CP.BForm ((pf, _), _) ->
+    | CP.BForm ((pf, _), _, _) ->
         if is_assignment pf then f
         else CP.mkTrue no_pos
     | CP.And (f1, f2, l) ->
         let new_f1 =
           match f1 with
-          | CP.BForm ((pf, _), _) ->
+          | CP.BForm ((pf, _), _, _) ->
               if is_assignment pf then f1
               else CP.mkTrue no_pos
           | _ -> convert_formula f1 in
         let new_f2 =
           match f2 with
-          | CP.BForm ((pf, _), _) ->
+          | CP.BForm ((pf, _), _, _) ->
               if is_assignment pf then f2
               else CP.mkTrue no_pos
           | _ -> convert_formula f2 in
@@ -278,7 +278,7 @@ let collect_update_function_x (transition_constraint: CP.formula) : CP.formula =
         let new_fs =
           List.map (
             fun f -> match f with
-            | CP.BForm ((pf, _), _) ->
+            | CP.BForm ((pf, _), _, _) ->
                 if is_assignment pf then f
                 else CP.mkTrue no_pos
             | _ -> convert_formula f
@@ -288,13 +288,13 @@ let collect_update_function_x (transition_constraint: CP.formula) : CP.formula =
     | CP.Or (f1, f2, l1, l2) ->
         let new_f1 =
           match f1 with
-          | CP.BForm ((pf, _), _) ->
+          | CP.BForm ((pf, _), _, _) ->
               if is_assignment pf then f1
               else CP.mkTrue no_pos
           | _ -> convert_formula f1 in
         let new_f2 =
           match f2 with
-          | CP.BForm ((pf, _), _) ->
+          | CP.BForm ((pf, _), _, _) ->
               if is_assignment pf then f2
               else CP.mkTrue no_pos
           | _ -> convert_formula f2 in
@@ -327,7 +327,7 @@ let rec label_of_formula (f: CP.formula) =
   let sf = Cprinter.string_of_pure_formula in
   let lbl = (
     match f with
-    | CP.BForm (_, flb) -> "BForm(" ^ (sf f) ^ "," ^ (string_of_lb flb) ^ ")"
+    | CP.BForm (_, flb, _) -> "BForm(" ^ (sf f) ^ "," ^ (string_of_lb flb) ^ ")"
     | CP.And (f1, f2,_) -> "And(" ^ (label_of_formula f1) ^ "," ^ (label_of_formula f2) ^ ")"
     | CP.AndList _ -> "AndList(_)"
     | CP.Or (f1, f2, flb, _) -> "Or(" ^ (label_of_formula f1) ^ "," ^ (label_of_formula f2) ^ "," ^ (string_of_lb flb) ^ ")"
@@ -355,7 +355,7 @@ let drop_restricted_constraint_x (source_contraint: CP.formula) (target_constrai
   ) in
   let rec drop_constraint (constr: CP.formula) (target_constraint: CP.formula) : CP.formula = (
     match constr with
-    | CP.BForm ((pf, _), _) -> (
+    | CP.BForm ((pf, _), _, _) -> (
         match pf with
         | CP.BVar _ -> CP.mkTrue no_pos
         | _ -> if is_restricted_constraint constr target_constraint then CP.mkTrue no_pos
@@ -365,10 +365,10 @@ let drop_restricted_constraint_x (source_contraint: CP.formula) (target_constrai
         let new_f1 = drop_constraint f1 target_constraint in
         let new_f2 = drop_constraint f2 target_constraint in
         match new_f1 with
-        | CP.BForm ((CP.BConst (true, _), None),None) -> new_f2
+        | CP.BForm ((CP.BConst (true, _), None),None,_) -> new_f2
         | _ -> (
             match new_f2 with
-            | CP.BForm ((CP.BConst (true, _), None),None) -> new_f1
+            | CP.BForm ((CP.BConst (true, _), None),None,_) -> new_f1
             | _ -> CP.mkAnd new_f1 new_f2 no_pos
           )
       )
@@ -418,7 +418,7 @@ let find_lexvar_b_formula (bf: CP.b_formula) : CP.p_formula option =
 
 let rec find_lexvar_formula (f: CP.formula) : CP.p_formula option =
   match f with
-  | CP.BForm (bf, _) -> find_lexvar_b_formula bf
+  | CP.BForm (bf, _, _) -> find_lexvar_b_formula bf
   | CP.And (f1, f2, _) -> (
       match find_lexvar_formula f1 with
       | Some r -> Some r
@@ -461,7 +461,7 @@ let strip_lexvar_mix_formula_x (mf: MCP.mix_formula) =
   let (termforms, other_p) = List.partition (CP.is_lexvar) mf_ls in
   let extract_lexvar (f : CP.formula) : CP.p_formula =
     match f with
-    | CP.BForm ((CP.LexVar lexinfo,_),_) -> CP.LexVar lexinfo
+    | CP.BForm ((CP.LexVar lexinfo,_),_,_) -> CP.LexVar lexinfo
     | _ -> let _ = report_error no_pos "[term.ml] unexpected Term in check_lexvar_rhs" in
            raise (Exn_TermVar "TermVar invalid") in
   let lexvars = List.map extract_lexvar termforms in
@@ -525,7 +525,7 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
     | CP.Seq _, _
     | _, CP.Seq _ -> raise (Exn_LexVarSeq "Measure types isn't compatible")
     | _, _ ->
-        let rhs = CP.BForm ((CP.mkGt src dst pos, None), None) in (* src > dst *)
+        let rhs = CP.BForm ((CP.mkGt src dst pos, None), None, None) in (* src > dst *)
         CP.mkImply lhs rhs pos
   ) else (
     match src, dst with
@@ -551,7 +551,7 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
     | CP.Seq _, _
     | _, CP.Seq _ -> raise (Exn_LexVarSeq "Measure types isn't compatible")
     | _, _ ->
-        let rhs = CP.BForm ((CP.mkEq src dst pos, None), None) in (* src = dst *)
+        let rhs = CP.BForm ((CP.mkEq src dst pos, None), None, None) in (* src = dst *)
         CP.mkImply lhs rhs pos
   )
 
@@ -940,7 +940,7 @@ let rec phase_constr_of_formula_list (fl: CP.formula list) : phase_constr list =
   
 and phase_constr_of_formula (f: CP.formula) : phase_constr option =
   match f with
-  | CP.BForm (bf, _) -> phase_constr_of_b_formula bf
+  | CP.BForm (bf, _, _) -> phase_constr_of_b_formula bf
   | _ -> None 
 
 and phase_constr_of_b_formula (bf: CP.b_formula) : phase_constr option =
