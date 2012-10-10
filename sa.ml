@@ -690,7 +690,7 @@ let rec collect_par_defs_one_side_one_hp_x prog lhs rhs (hrel, args) def_ptrs
       let test2 = (not (SAU.is_empty_f r)) && test1 in
       if test2 then
         let r = (hrel, args, r, Some r, None) in
-        let _ =  DD.ninfo_pprint ("  partial defs - one side: \n" ^
+        let _ =  DD.info_pprint ("  partial defs - one side: \n" ^
           (let pr =  string_of_par_def_w_name in pr r) ) no_pos in
         [r]
         (* let closed_args = loop_up_ptr_args prog hd_nodes hv_nodes args in *)
@@ -732,17 +732,17 @@ and collect_par_defs_two_side_one_hp_x prog lhs rhs (hrel, args) predef rhs_hrel
       | (hp, args1)::ss ->
           (*recompute def_ptrs *)
           let _ =  DD.ninfo_pprint ("    hrel:" ^ (!CP.print_sv hp) ) no_pos in
-          if CP.intersect args01 args1 = [] then
+          if CP.intersect args01 args1 = [] || Gen.BList.difference_eq CP.eq_spec_var args1 predef = [] then
             find_hrel_w_same_args ss r
           else begin
           (*find all defined pointer (null, nodes) and recursive defined parameters (HP, arg)*)
               let n_predef = CP.remove_dups_svl predef@args1 in
-              let _ =  DD.info_pprint ("    n_predef:" ^ (!CP.print_svl n_predef) ) no_pos in
+              let _ =  DD.ninfo_pprint ("    n_predef:" ^ (!CP.print_svl n_predef) ) no_pos in
               let l_def_ptrs, _,_, _,_ = SAU.find_defined_pointers prog lhs n_predef in
               let r_def_ptrs, _, _, _, _ = find_defined_pointers_two_formulas prog lhs rhs n_predef in
               (* let _ =  DD.info_pprint ("    defs:" ^ (!CP.print_svl (l_def_ptrs@r_def_ptrs)) ) no_pos in *)
               let undef_args = lookup_undef_args args0 [] (l_def_ptrs@r_def_ptrs@n_predef) in
-              let _ =  DD.info_pprint ("    undef_args:" ^ (!CP.print_svl undef_args) ) no_pos in
+              let _ =  DD.ninfo_pprint ("    undef_args:" ^ (!CP.print_svl undef_args) ) no_pos in
           (* let args11 = CP.remove_dups_svl args1 in *)
           (* let diff = Gen.BList.difference_eq CP.eq_spec_var args11 args0 in *)
           (* if diff = [] then *)
@@ -1230,7 +1230,7 @@ each lhs1, check rhs2 of other cs:
 
 (*
 dn is current node, it is one node of ldns
-ss: subst from ldns -> rdns
+ss: subst from ldns -> ldns
 *)
 and get_closed_ptrs_one rdn ldns rdns lcur_match ss=
   (* let _ =  DD.info_pprint ("    rdn: " ^ (!CP.print_sv rdn) ) no_pos in *)
@@ -1264,6 +1264,7 @@ and get_closed_ptrs_one rdn ldns rdns lcur_match ss=
 
 and get_closed_matched_ptrs ldns rdns lcur_match ss=
   let rec helper old_m old_ss inc_m=
+    (*find matching ldns and rdns*)
     let r = List.map (fun m -> get_closed_ptrs_one m ldns rdns old_m old_ss) inc_m in
     let incr_match, incr_ss = List.split r in
     if incr_match = [] then
@@ -1320,16 +1321,27 @@ and find_imply lhs1 rhs1 lhs2 rhs2=
     if matched_hps = [] then None
     else
       begin
+          (*for debugging*)
+          let _ = Debug.info_pprint ("     m_args2: " ^ (!CP.print_svl  m_args2)) no_pos in
+          let pr_ss = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+          let _ =  Debug.info_pprint ("     subst: " ^ (pr_ss subst)) no_pos in
+          (*END for debugging*)
       (*matching hnodes (in matched_hps) and return subst*)
           let lhns1 = List.map transform_dn ldns in
           let rhns1 = List.map transform_dn rdns in
           (*all_matched_svl2: all matched slv of rhs2*)
           let all_matched_svl2,subst1 =  get_closed_matched_ptrs lhns1 rhns1 m_args2 subst in
+          let _ = Debug.info_pprint ("    all matched: " ^ (!CP.print_svl all_matched_svl2)) no_pos in
+          let _ =  Debug.info_pprint ("     subst: " ^ (pr_ss subst)) no_pos in
       (*subst in lhs1*)
           let n_lhs1 = CF.subst_b subst1 lhs1 in
       (*check pure implication*)
           let lmf = CP.filter_var_new (MCP.pure_of_mix n_lhs1.CF.formula_base_pure)  all_matched_svl2 in
-          let b,_,_ = TP.imply (MCP.pure_of_mix rhs2.CF.formula_base_pure) lmf "sa:check_hrels_imply" true None in
+          let rmf = (MCP.pure_of_mix rhs2.CF.formula_base_pure) in
+          let _ = Debug.info_pprint ("    n_lhs1: " ^ (Cprinter.string_of_formula_base n_lhs1)) no_pos in
+          let _ = Debug.info_pprint ("    lmf: " ^ (!CP.print_formula lmf)) no_pos in
+          let _ = Debug.info_pprint ("    rmf: " ^ (!CP.print_formula rmf)) no_pos in
+          let b,_,_ = TP.imply rmf lmf "sa:check_hrels_imply" true None in
           let lpos = (CF.pos_of_formula lhs2) in
           if b then
             let l_res = {n_lhs1 with
@@ -1337,8 +1349,7 @@ and find_imply lhs1 rhs1 lhs2 rhs2=
                   n_lhs1.CF.formula_base_heap SAU.select_dnode
                   SAU.select_vnode SAU.select_hrel  all_matched_svl2  all_matched_svl2 matched_hps}
             in
-            let _ = Debug.ninfo_pprint ("    all matched: " ^ (!CP.print_svl all_matched_svl2)) no_pos in
-        (*drop hps and matched svl in n_rhs2*)
+            (*drop hps and matched svl in n_rhs2*)
             let r_res = {rhs2 with
                 CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf
                     rhs2.CF.formula_base_heap SAU.select_dnode
@@ -1389,7 +1400,7 @@ and find_imply_subst_x constrs=
           else check_constr_duplicate (lhs,rhs) ss
   in
   let find_imply_one cs1 cs2=
-    let _ = Debug.ninfo_pprint ("    cs2: " ^ (Cprinter.string_of_hprel cs2)) no_pos in
+    let _ = Debug.info_pprint ("    cs2: " ^ (Cprinter.string_of_hprel cs2)) no_pos in
     match cs1.CF.hprel_lhs,cs2.CF.hprel_rhs with
       | CF.Base lhs1, CF.Base rhs2 ->
           let r = find_imply lhs1 cs1.CF.hprel_rhs cs2.CF.hprel_lhs rhs2 in
@@ -1411,7 +1422,7 @@ and find_imply_subst_x constrs=
                               CF.hprel_rhs = r;
                           }
                           in
-                          let _ = Debug.ninfo_pprint ("    new cs: " ^ (Cprinter.string_of_hprel new_cs)) no_pos in
+                          let _ = Debug.info_pprint ("    new cs: " ^ (Cprinter.string_of_hprel new_cs)) no_pos in
                           [new_cs]
                       end
                 | None -> []
@@ -1422,7 +1433,7 @@ and find_imply_subst_x constrs=
     match rest with
       | [] -> res
       | cs::ss ->  (* let _ = Debug.info_pprint ("    ss size1: " ^ (string_of_int (List.length ss))) no_pos in *)
-          let _ = Debug.ninfo_pprint ("    cs1: " ^ (Cprinter.string_of_hprel cs)) no_pos in
+          let _ = Debug.info_pprint ("    cs1: " ^ (Cprinter.string_of_hprel cs)) no_pos in
           let r = List.concat (List.map (find_imply_one cs) (don@ss)) in
           (helper (don@[cs]) ss (res@r))
   in
