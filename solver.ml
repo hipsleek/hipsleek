@@ -2309,7 +2309,7 @@ and elim_unsat_es_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state)
 
 and elim_unsat_ctx (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : context =
   let rec helper c = match c with
-    | Ctx es -> elim_unsat_es prog sat_subno es
+    | Ctx es -> let exec ()= elim_unsat_es prog sat_subno es in wrap_trace es.es_path_label exec ()
     | OCtx(c1,c2) -> OCtx(helper c1,helper c2)
   in helper ctx
 
@@ -2815,7 +2815,10 @@ and heap_entail_after_sat_struc_x prog is_folding has_post
             (* WN : what is init_caller for? *)
             has_post c2 conseq tid pos pid (CF.add_to_steps ss "right OR 5 on ante") in
 	  ((or_list_context rs1 rs2),(mkOrStrucLeft ctx conseq [prf1;prf2]))
-    | Ctx es -> begin
+    | Ctx es -> 
+				let exec ()=
+			begin	
+				let _= print_endline ("bach: heap_entail_after_sat_struc_x") in	
         Debug.devel_zprint (lazy ("heap_entail_after_sat_struc: invoking heap_entail_conjunct_lhs_struc"
         ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
         ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
@@ -2824,6 +2827,7 @@ and heap_entail_after_sat_struc_x prog is_folding has_post
         let tmp, prf = heap_entail_conjunct_lhs_struc prog is_folding has_post (Ctx es) conseq tid pos pid in
 	(filter_set tmp, prf)
       end
+			in wrap_trace es.es_path_label exec ()
 
 and sem_imply_add prog is_folding  ctx (p:CP.formula) only_syn:(context*bool) = 
   let pr1 = Cprinter.string_of_context_short in
@@ -2883,7 +2887,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	| Ctx es -> (* (); *)
               let exec () =
                 begin
-									(* let _= print_endline ("INNER calling heap entail conjunct lhs") in *)
+									let _= print_endline ("bach: INNER calling heap entail conjunct lhs") in
                   match f with
                     | ECase b   -> 
                           let ctx = add_to_context_num 1 ctx11 "case rule" in
@@ -3153,10 +3157,11 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
 			let _= print_endline("bach: USC1") in
 			  (SuccCtx [ctx], UnsatAnte)
     else if 	
-		let _= print_endline("bach: USC2") in isStrictConstTrue conseq then (SuccCtx [ctx], TrueConseq)
+	  isStrictConstTrue conseq then let _= print_endline("bach: USC2") in (SuccCtx [ctx], TrueConseq)
     else
       (* UNSAT check *)
       let ctx = elim_unsat_ctx prog (ref 1) ctx in
+			let _= print_endline("bach: USC2.5") in
       let ctx = set_unsat_flag ctx true in 
       if isAnyFalseCtx ctx then
 					let _= print_endline("bach: USC3") in

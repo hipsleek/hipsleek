@@ -1782,9 +1782,8 @@ and pr_spec = Cprinter.string_of_struc_formula
 and pr_spec2 = Cprinter.string_of_struc_formula_for_spec
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
-  (* let _ = print_string ("got into check_post on the succCtx branch\n") in *)
+  let _ = print_string ("got into check_post on the succCtx branch\n") in
   (* let _ = print_string ("context before post: "^(Cprinter.string_of_list_partial_context ctx)^"\n") in *)
-  (* let _=proving_loc #set (Cformula.pos_of_formula post) in  *)
 	(* let _= print_endline ("Check post list ctx: "^Cprinter.string_of_list_partial_context ctx) in *)
 	let _= match pid with 
 	| (i,str)-> print_endline ("pid in post: " ^string_of_int i ^str) in
