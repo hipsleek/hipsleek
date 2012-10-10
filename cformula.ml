@@ -1232,6 +1232,10 @@ and is_empty_heap (h : h_formula) = match h with
   | HEmp -> true
   | _ -> false
 
+and is_unkown_heap (h : h_formula) = match h with
+  | HTrue -> true
+  | _ -> false
+
 and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl:flow_formula) a (pos : loc) = 
   mkExists_w_lbl svs h p t fl a pos None
 

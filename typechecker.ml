@@ -1912,6 +1912,12 @@ and check_proc (prog : prog_decl) (iprog: I.prog_decl)(proc : proc_decl) : bool 
                     (* let hprels = List.map (fun (_,a2,a3)-> (a2,a3)) hprels in *)
                     (* let hp_lst_assume = List.map (fun (_,a2,a3)-> (a2,a3)) hp_lst_assume in *)
 		            (* let hp_lst_simplified_assume = Sa2.simplify_lst_constrs hp_lst_assume in *)
+                    let _ = print_endline "" in 
+                    let _ = print_endline "*************************************" in
+                    let _ = print_endline "*******relational assumption ********" in
+                    let _ = print_endline "*************************************" in
+                    let _ = print_endline (Infer.rel_ass_stk # string_of) in
+                    let _ = print_endline "*************************************" in
 		            let _, ls_inferred_hps = Sa.infer_hps prog hp_lst_assume in
 		    
 		    let infile_constrs, infile_defs = if((String.compare !Globals.file_cp "") != 0) then (

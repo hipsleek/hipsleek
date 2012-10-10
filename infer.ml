@@ -50,6 +50,9 @@ let simp_lhs_rhs vars (c,lhs,rhs) =
 
 (************************************************)
 
+let rel_ass_stk : hprel Gen.stack_pr = new Gen.stack_pr 
+  Cprinter.string_of_hprel (==)
+
 let no_infer estate = (estate.es_infer_vars == [])
 
 let no_infer_rel estate = (estate.es_infer_vars_rel == [])
@@ -1397,29 +1400,44 @@ let filter_irr_lhs_bf_hp lfb rfb=
   let rvars = CF.fv (CF.Base rfb) in
   CF.filter_irr_hp_lhs_bf lfb rvars
 
-let get_history_nodes svl hds history lfb=
+let get_history_nodes_x root_svl hds history lfb=
   let hd_names = List.map (fun hd -> hd.CF.h_formula_data_node) hds in
-  let undefined_ptrs = Gen.BList.difference_eq CP.eq_spec_var svl hd_names in
+  let undefined_ptrs = Gen.BList.difference_eq CP.eq_spec_var root_svl hd_names in
+  let _ = Debug.info_pprint ("      undefined_ptrs: " ^ (!CP.print_svl  undefined_ptrs)) no_pos in
   let pos = CF.pos_of_formula (CF.Base lfb) in
-  let helper fb hf=
+  let helper (fb,hps,keep_svl) hf=
     match hf with
       | CF.DataNode dn ->
           if CP.mem_svl dn.CF.h_formula_data_node undefined_ptrs then
-            mkAnd_fb_hf fb hf pos
-          else fb
+            (mkAnd_fb_hf fb hf pos,hps,keep_svl)
+          else (fb,hps,keep_svl)
+      | CF.HRel (hp,eargs,p) ->
+          let args = List.concat (List.map CP.afv eargs) in
+          if (Gen.BList.intersect_eq CP.eq_spec_var args undefined_ptrs) = [] then
+            (fb,hps,keep_svl)
+          else (mkAnd_fb_hf fb hf p,hps@[hp], keep_svl@(Gen.BList.difference_eq CP.eq_spec_var args undefined_ptrs))
+      | HEmp -> (fb,hps,keep_svl)
       | _ -> report_error pos "infer.get_history_nodes"
   in
-  List.fold_left helper lfb history
+  List.fold_left helper (lfb,[],[]) history
+
+let get_history_nodes root_svl hds history lfb=
+  let pr1 = pr_list_ln Cprinter.string_of_h_formula in
+  let pr2 = Cprinter.string_of_formula_base in
+  Debug.no_2 "get_history_nodes" pr1 pr2 (fun (a,_) ->pr2 a)
+      (fun _ _ -> get_history_nodes_x root_svl hds history lfb) history lfb
 
 let get_h_formula_data_fr_hnode hn=
   match hn with
-    | CF.DataNode hd -> hd
+    | CF.DataNode hd -> [hd]
+    | CF.HEmp -> []
+    | CF.HRel _ -> []
     | _ -> report_error no_pos
         "infer.get_h_formula_data_fr_hnode: input must be a list of hnodes"
 
 
 (*history from func calls*)
-let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps crt_holes  history  eqNull=
+let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps crt_holes history eqNull=
   (*filter non-selective sub-formulas*)
   (*selective vars = args of hrels in rhs (called selective_rhs) and
     args of hrels in lhs such that args intersect which selective_rhs*)
@@ -1455,11 +1473,12 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps c
   let svl = Gen.BList.difference_eq CP.eq_spec_var svl eqNull in
   (*for wo history*)
   (* let history = [] in *)
-  let lhs_b = get_history_nodes svl hds history lhs_b in
+  let lhs_b,history_hrel,keep_root_hrels = get_history_nodes svl hds history lhs_b in
  (*end*)
   let lhs_b1,rhs_b1 = SAU.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b
-    (hds@(List.map get_h_formula_data_fr_hnode history)) hvs (leqs@reqs)
-    (rhs_keep_rootvars@lhs_keep_first_rootvars) lhs_keep_rootvars keep_hrels in
+    (hds@(List.concat (List.map get_h_formula_data_fr_hnode history))) hvs (leqs@reqs)
+    (* (rhs_keep_rootvars@lhs_keep_first_rootvars) *)(svl@keep_root_hrels) (lhs_keep_rootvars@keep_root_hrels)
+    (keep_hrels@history_hrel) in
   (*wo history*)
   (* let lhs_b1,rhs_b1 = SAU.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b *)
   (*   hds hvs (leqs@reqs) *)
@@ -1507,11 +1526,11 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
           (* let pr_elem = Cpure.SV.string_of in *)
           (* let pr2 = pr_list (pr_pair pr_elem pr_elem) in *)
           DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
-          DD.ninfo_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
+          DD.info_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
           DD.ninfo_pprint ("  footprint: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos;
-          DD.ninfo_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
-          DD.ninfo_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
-          DD.ninfo_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
+          DD.info_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
+          DD.info_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
+          DD.info_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
           (* DD.info_pprint ("  lhs aliases: " ^  (pr2 leqs)) pos; (\* aliases from LHS *\) *)
           (* DD.info_pprint ("  rhs aliases: " ^  (pr2 reqs)) pos;  (\* aliases from LHS *\) *)
         in
@@ -1549,13 +1568,14 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
           let new_rhs_b,rvhp_rels,new_hrels,r_new_hp = update_fb rhs_b in
           (*add roots from history*)
           let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog lhs_b new_rhs_b leqs reqs hds hvs lhras (rhras@new_hrels)
-            (selected_hps@(List.map (fun (hp,_,_) -> hp) new_hrels)) es.CF.es_crt_holes es.CF.es_history
+            (selected_hps@(List.map (fun (hp,_,_) -> hp) new_hrels)) es.CF.es_crt_holes ((* es.CF.es_heap:: *)es.CF.es_history)
              eqNull in
           (*simply add constraints: *)
           let hprel_def = List.concat (List.map CF.h_node_list (es.CF.es_history@(CF.get_hnodes es.CF.es_heap))) in
           let closed_hprel_def = CP.subst_var_list (leqs@reqs) hprel_def in
           let closed_hprel_args_def,_,_,_,_ = SAU.find_defined_pointers_after_preprocess prog closed_hprel_def
-            (hds@(List.map get_h_formula_data_fr_hnode es.CF.es_history)) hvs (lhras@rhras@new_hrels) (leqs@reqs) [] in
+            (hds@(List.concat (List.map get_h_formula_data_fr_hnode es.CF.es_history)))
+            hvs (lhras@rhras@new_hrels) (leqs@reqs) [] in
           let hp_rel = {
               CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhrs@rhrs@rvhp_rels));
               unk_svl = [];(*inferred from norm*)
@@ -1564,6 +1584,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
               hprel_lhs = CF.Base new_lhs_b;
               hprel_rhs = CF.Base new_rhs_b;
           } in
+          let _ = rel_ass_stk # push hp_rel in
           DD.info_pprint ("  hp_rel: " ^ (Cprinter.string_of_hprel hp_rel)) pos;
           let update_es_f f new_hp=
             match new_hp with

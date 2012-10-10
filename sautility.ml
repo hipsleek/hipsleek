@@ -26,6 +26,13 @@ let is_empty_f f=
             (CP.isConstTrue (MCP.pure_of_mix fb.CF.formula_base_pure))
     | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
 
+let is_unk_f f=
+   match f with
+    | CF.Base fb ->
+        (CF.is_unkown_heap fb.CF.formula_base_heap) &&
+            (CP.isConstTrue (MCP.pure_of_mix fb.CF.formula_base_pure))
+    | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
+
 (*for drop hp args*)
 let rec retrieve_args_from_locs args locs index res=
   match args with
@@ -210,6 +217,7 @@ and loop_up_ptr_args_one_node prog hd_nodes hv_nodes node_name=
   (* if ptrs = [] then look_up_view_node hv_nodes *)
   (* else *) ptrs
 
+(*should improve: shoul take care hrel also*)
 let loop_up_closed_ptr_args prog hd_nodes hv_nodes node_names=
   let rec helper old_ptrs inc_ptrs=
     let new_ptrs = List.concat
@@ -656,6 +664,11 @@ let check_com_pre_eq_formula f1 f2=
   Debug.no_2 "check_com_pre_eq_formula" pr1 pr1 string_of_bool
       (fun _ _ -> check_com_pre_eq_formula_x f1 f2) f1 f2
 
+
+(* let get_longest_common_hnodes fs= *)
+ (*if length fs = 1 return*)
+  (*if longest common length < 1 return*)
+(* [] *)
 
 (*==========END check_relaxeq=============*)
 let add_raw_hp_rel_x prog unknown_ptrs pos=
