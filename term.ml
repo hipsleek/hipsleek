@@ -247,95 +247,98 @@ exception Exn_TermVar of string;;
 exception Exn_LexVar of string;;
 exception Exn_LexVarSeq of string;;
 
-(* collect the update function from a transition constraint *)
-(* by obtaining only the assignments (consider only Eq p_formula) *)
-let collect_update_function_x (transition_constraint: CP.formula) : CP.formula =
-  let is_assignment (pf: CP.p_formula) : bool =
-    match pf with
-    | CP.Eq _ -> true
-    | _ -> false in
-  let rec convert_formula (f: CP.formula) : CP.formula = (
+let collect_update_formula_x (transition: CP.formula) (old_exp: CP.exp) (new_exp: CP.exp) : CP.formula =
+  (* supporting functions *)
+  let rec build_update_table (f: CP.formula) (utable : (CP.spec_var, CP.spec_var list) Hashtbl.t)
+                             : (CP.spec_var, CP.spec_var list) Hashtbl.t = (
     match f with
-    | CP.BForm ((pf, _), _, _) ->
-        if is_assignment pf then f
-        else CP.mkTrue no_pos
-    | CP.And (f1, f2, l) ->
-        let new_f1 =
-          match f1 with
-          | CP.BForm ((pf, _), _, _) ->
-              if is_assignment pf then f1
-              else CP.mkTrue no_pos
-          | _ -> convert_formula f1 in
-        let new_f2 =
-          match f2 with
-          | CP.BForm ((pf, _), _, _) ->
-              if is_assignment pf then f2
-              else CP.mkTrue no_pos
-          | _ -> convert_formula f2 in
-        CP.And (new_f1, new_f2, l)
-    | CP.AndList formula_list ->
-        let (ls, fs) = List.split formula_list in
-        let new_fs =
-          List.map (
-            fun f -> match f with
-            | CP.BForm ((pf, _), _, _) ->
-                if is_assignment pf then f
-                else CP.mkTrue no_pos
-            | _ -> convert_formula f
-          ) fs in
-        let new_formula_list = List.combine ls new_fs in
-        CP.AndList new_formula_list
-    | CP.Or (f1, f2, l1, l2) ->
-        let new_f1 =
-          match f1 with
-          | CP.BForm ((pf, _), _, _) ->
-              if is_assignment pf then f1
-              else CP.mkTrue no_pos
-          | _ -> convert_formula f1 in
-        let new_f2 =
-          match f2 with
-          | CP.BForm ((pf, _), _, _) ->
-              if is_assignment pf then f2
-              else CP.mkTrue no_pos
-          | _ -> convert_formula f2 in
-        CP.Or (new_f1, new_f2, l1, l2)
-    | CP.Not (f, l1, l2) ->
-        (* let new_f = convert_formula f in *)
-        (* CP.Not (new_f, l1, l2)           *)
-        CP.mkTrue no_pos
-    | CP.Forall (s, f, l1, l2) ->
-        (* let new_f = convert_formula f in *)
-        (* CP.Forall (s, new_f, l1, l2)     *)
-        CP.mkTrue no_pos
-    | CP.Exists (s, f, l1, l2) ->
-        (* let new_f = convert_formula f in *)
-        (* CP.Exists (s, new_f, l1, l2)     *)
-        CP.mkTrue no_pos
+    | CP.BForm (_, _, (Some F_o_specs)) -> utable
+    | CP.BForm ((CP.Eq (CP.Var (v, _), exp, _), _), _, _) ->
+        let usedvars = try Hashtbl.find utable v with Not_found -> [] in
+        let newvars = CP.afv exp in
+        let usedvars = CP.remove_dups_svl (usedvars @ newvars) in
+        Hashtbl.replace utable v usedvars;
+        utable
+    | CP.BForm _ -> utable
+    | CP.And (f1, f2, _) -> 
+        let newt = build_update_table f1 utable in
+        build_update_table f2 newt
+    | CP.AndList flist ->
+        List.fold_left (fun t x ->
+          let _, f = x in
+          build_update_table f t
+        ) utable flist
+    | CP.Or (f1, f2, _, _) ->
+        let newt = build_update_table f1 utable in
+        build_update_table f2 newt
+    | CP.Not (f, _, _) -> utable
+    | CP.Forall _ -> utable
+    | CP.Exists _ -> utable
   ) in
-  convert_formula transition_constraint
-
-let collect_update_function (transition_constraint: CP.formula) : CP.formula =
-  let pr = !CP.print_formula in
-  Debug.no_1 "collect_update_function" pr pr collect_update_function_x transition_constraint
-
-let rec label_of_formula (f: CP.formula) =
-  let string_of_lb (lb: formula_label option) = (
-    match lb with
-    | None -> ""
-    | Some (i, s) -> (string_of_int i) ^ ":" ^ s
+  let collect_used_vars (newexp: CP.exp) (utable: (CP.spec_var, CP.spec_var list) Hashtbl.t)
+                        : (CP.spec_var list) = (
+    let used_vars = ref (CP.afv newexp) in
+    let marked_vars = ref [] in
+    let rec collect_helper (uvars: CP.spec_var list) = (
+      List.iter (fun v ->
+        if not (List.exists (fun x -> CP.eq_spec_var x v) !marked_vars) then (
+          let vlist = try Hashtbl.find utable v with _ -> [] in
+          used_vars := CP.remove_dups_svl (!used_vars @ vlist);
+          marked_vars := !marked_vars @ [v];
+          collect_helper vlist;
+        )
+      ) uvars
+    ) in
+    collect_helper !used_vars;
+    !used_vars
   ) in
-  let sf = Cprinter.string_of_pure_formula in
-  let lbl = (
+  let rec is_update_formula (uvars: CP.spec_var list) (f: CP.formula) : bool = (
     match f with
-    | CP.BForm (_, flb, _) -> "BForm(" ^ (sf f) ^ "," ^ (string_of_lb flb) ^ ")"
-    | CP.And (f1, f2,_) -> "And(" ^ (label_of_formula f1) ^ "," ^ (label_of_formula f2) ^ ")"
-    | CP.AndList _ -> "AndList(_)"
-    | CP.Or (f1, f2, flb, _) -> "Or(" ^ (label_of_formula f1) ^ "," ^ (label_of_formula f2) ^ "," ^ (string_of_lb flb) ^ ")"
-    | CP.Not (f1, flb, _) -> "Not(" ^ (label_of_formula f1) ^ "," ^ (string_of_lb flb) ^ ")"
-    | CP.Forall (_, f1, flb, _) -> "Forall(" ^ (label_of_formula f1) ^ "," ^ (string_of_lb flb) ^ ")"
-    | CP.Exists (_, f1, flb, _) -> "Exists(" ^ (label_of_formula f1) ^ "," ^ (string_of_lb flb) ^ ")"
+    | CP.BForm (_, _, (Some F_o_specs)) -> false
+    | CP.BForm ((CP.Eq (CP.Var (v, _), _, _), _), _, _) -> List.exists (fun u -> CP.eq_spec_var v u) uvars 
+    | CP.BForm _ -> false
+    | CP.And (f1, f2, _) -> (is_update_formula uvars f1) || (is_update_formula uvars f2)
+    | CP.AndList flist -> List.exists (fun x -> let _, f = x in is_update_formula uvars f) flist
+    | CP.Or (f1, f2, _, _) -> (is_update_formula uvars f1) || (is_update_formula uvars f2)
+    | CP.Not (f, _, _) -> false
+    | CP.Forall _ -> false
+    | CP.Exists _ -> false
   ) in
-  lbl
+  let rec collect_update_formula_helper (uvars: CP.spec_var list) (f: CP.formula) : CP.formula = (
+    match f with
+    | CP.BForm _ -> if (is_update_formula uvars f) then f else (CP.mkTrue no_pos)
+    | CP.And (f1, f2, p) -> (
+        let newf1 = match f1 with
+          | CP.BForm _ -> if (is_update_formula uvars f1) then Some f1 else None
+          | _ -> Some (collect_update_formula_helper uvars f1) in
+        let newf2 = match f2 with
+          | CP.BForm _ -> if (is_update_formula uvars f2) then Some f2 else None
+          | _ -> Some (collect_update_formula_helper uvars f2) in
+        match newf1, newf2 with
+        | None, None -> CP.mkTrue no_pos
+        | None, Some nf -> nf
+        | Some nf, None -> nf
+        | Some nf1, Some nf2 -> CP.And (nf1, nf2, p)
+      )
+    | CP.AndList _ -> report_error no_pos "collect_update_formula_helper: handle CP.AndList later"
+    | CP.Or _
+    | CP.Not _
+    | CP.Forall _
+    | CP.Exists _ -> if (is_update_formula uvars f) then f else (CP.mkTrue no_pos)
+  ) in
+  let update_table = build_update_table transition (Hashtbl.create 10) in
+  let update_vars = collect_used_vars new_exp update_table in
+  collect_update_formula_helper update_vars transition
+
+let collect_update_formula (transition: CP.formula) (old_exp: CP.exp) (new_exp: CP.exp) : CP.formula =
+  let pr_f = !CP.print_formula in
+  let pr_e = !CP.print_exp in
+  Debug.ho_3 "collect_update_function" pr_f pr_e pr_e pr_f collect_update_formula_x transition old_exp new_exp
+
+
+(* let collect_specs_condition (transition: CP.formula) domain_constraint = ( *)
+(* )                                                                          *)
+
 
 (* drop the constraint from source_constrait that restrict the target_constraint *)
 let drop_restricted_constraint_x (source_contraint: CP.formula) (target_constraint: CP.formula) : CP.formula =
@@ -349,8 +352,6 @@ let drop_restricted_constraint_x (source_contraint: CP.formula) (target_constrai
     | _ ->
         let f = CP.mkAnd constr target_constraint no_pos in
         let res, _, _ = TP.imply target_constraint f "" false None in
-        (* let _ = print_endline ("== f = " ^ (Cprinter.string_of_pure_formula f)) in  *)
-        (* let _ = print_endline ("== res = " ^ (string_of_bool res)) in               *)
         (not res)
   ) in
   let rec drop_constraint (constr: CP.formula) (target_constraint: CP.formula) : CP.formula = (
@@ -486,10 +487,10 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
         let domain_dst = seqdst.CP.seq_domain in
         let limit_dst = seqdst.CP.seq_limit in
         let domain = CP.mkAnd domain_src domain_dst pos in
-        let recursive_constraint = drop_restricted_domain_constraint lhs domain in
+        let update_formula = collect_update_formula lhs element_src element_dst in
         let domain_constraint = (
           (* domain is covered in the recursive call *)
-          let domain_lhs = CP.mkAnd recursive_constraint domain_src pos in
+          let domain_lhs = CP.mkAnd lhs domain_src pos in
           let domain_rhs = domain_dst in
           let _ = Debug.dinfo_pprint  "++ In function create_measure_constraint_x:" no_pos in
           let _ = Debug.dinfo_pprint ("   domain_lsh        = " ^ (Cprinter.string_of_pure_formula domain_lhs)) no_pos in
@@ -498,7 +499,7 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
         ) in
         let decrease_constraint = (
           (* measure decreases in the recursive call *)
-          let decrease_lhs = CP.mkAnd recursive_constraint (CP.mkAnd domain_src domain_dst pos) pos in
+          let decrease_lhs = CP.mkAnd lhs (CP.mkAnd domain_src domain_dst pos) pos in
           let decrease_rhs = (
             match limit_src, limit_dst with
             | CP.SConst (PositiveInfty, _), _

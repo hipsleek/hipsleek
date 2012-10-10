@@ -42,12 +42,8 @@ and loc = {
 
 and formula_origin =
   | F_o_specs
-  | F_o_code of (formula_origin_code option)
+  | F_o_code
   | F_o_inter
-
-and formula_origin_code =
-  | F_o_c_sequence
-  | F_o_c_condition
 
 and primed =
   | Primed
