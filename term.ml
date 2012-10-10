@@ -370,47 +370,47 @@ let collect_specs_formula (transition: CP.formula) : CP.formula =
   Debug.ho_1 "collect_specs_formula" pr_f pr_f collect_specs_formula_x transition
 
 
-let drop_specs_unsat_domain_x (specs: CP.formula) (domain: CP.formula) =
-  let can_drop_bformula (f: CP.formula) (domain: CP.formula) = (
-    match f with
-    | CP.BForm _ ->
-        let newdomain = CP.mkAnd domain f no_pos in
-        let imply_res, _, _ = TP.imply domain newdomain "" false None in
-        let _ = print_endline ("== domain    = " ^ (!CP.print_formula domain)) in
-        let _ = print_endline ("== f         = " ^ (!CP.print_formula f)) in
-        let _ = print_endline ("== imply_res = " ^ (string_of_bool imply_res)) in
-        let _ = print_endline ("//") in
-        imply_res
-    | _ -> report_error no_pos "Error!!! can_drop_bformula: f has to be CP.BForm"
-  ) in
-  let rec drop_helper (specs: CP.formula) (domain: CP.formula) = (
-    match specs with
-    | CP.BForm _ -> if (can_drop_bformula specs domain) then (CP.mkTrue no_pos) else specs
-    | CP.And (f1, f2, p) -> (
-        let newf1 = match f1 with
-          | CP.BForm _ -> if (can_drop_bformula f1 domain) then None else (Some f1)
-          | _ -> Some (drop_helper f1 domain) in
-        let newf2 = match f2 with
-          | CP.BForm _ -> if (can_drop_bformula f2 domain) then None else (Some f2)
-          | _ -> Some (drop_helper f2 domain) in
-        match newf1, newf2 with
-        | None, None -> CP.mkTrue no_pos
-        | None, Some nf -> nf
-        | Some nf, None -> nf
-        | Some nf1, Some nf2 -> CP.And (nf1, nf2, p)
-      )
-    | CP.AndList _ -> report_error no_pos "drop_helper: handle CP.AndList later"
-    | CP.Or _ -> report_error no_pos "drop_helper: handle CP.Or later"
-    | CP.Not _ -> report_error no_pos "drop_helper: handle CP.Not later"
-    | CP.Forall _ -> report_error no_pos "drop_helper: handle CP.Forall later"
-    | CP.Exists _ -> report_error no_pos "drop_helper: handle CP.Exists later"
-  ) in
-  drop_helper specs domain
+(* let drop_specs_unsat_domain_x (specs: CP.formula) (seq: CP.sequence) =                       *)
+(*   let can_drop_bformula (f: CP.formula) (seq: CP.sequence) = (                               *)
+(*     match f with                                                                             *)
+(*     | CP.BForm _ ->                                                                          *)
+(*         let newdomain = CP.mkAnd domain f no_pos in                                          *)
+(*         let imply_res, _, _ = TP.imply domain newdomain "" false None in                     *)
+(*         let _ = print_endline ("== domain    = " ^ (!CP.print_formula domain)) in            *)
+(*         let _ = print_endline ("== f         = " ^ (!CP.print_formula f)) in                 *)
+(*         let _ = print_endline ("== imply_res = " ^ (string_of_bool imply_res)) in            *)
+(*         let _ = print_endline ("//") in                                                      *)
+(*         imply_res                                                                            *)
+(*     | _ -> report_error no_pos "Error!!! can_drop_bformula: f has to be CP.BForm"            *)
+(*   ) in                                                                                       *)
+(*   let rec drop_helper (specs: CP.formula) (domain: CP.formula) = (                           *)
+(*     match specs with                                                                         *)
+(*     | CP.BForm _ -> if (can_drop_bformula specs domain) then (CP.mkTrue no_pos) else specs   *)
+(*     | CP.And (f1, f2, p) -> (                                                                *)
+(*         let newf1 = match f1 with                                                            *)
+(*           | CP.BForm _ -> if (can_drop_bformula f1 domain) then None else (Some f1)          *)
+(*           | _ -> Some (drop_helper f1 domain) in                                             *)
+(*         let newf2 = match f2 with                                                            *)
+(*           | CP.BForm _ -> if (can_drop_bformula f2 domain) then None else (Some f2)          *)
+(*           | _ -> Some (drop_helper f2 domain) in                                             *)
+(*         match newf1, newf2 with                                                              *)
+(*         | None, None -> CP.mkTrue no_pos                                                     *)
+(*         | None, Some nf -> nf                                                                *)
+(*         | Some nf, None -> nf                                                                *)
+(*         | Some nf1, Some nf2 -> CP.And (nf1, nf2, p)                                         *)
+(*       )                                                                                      *)
+(*     | CP.AndList _ -> report_error no_pos "drop_helper: handle CP.AndList later"             *)
+(*     | CP.Or _ -> report_error no_pos "drop_helper: handle CP.Or later"                       *)
+(*     | CP.Not _ -> report_error no_pos "drop_helper: handle CP.Not later"                     *)
+(*     | CP.Forall _ -> report_error no_pos "drop_helper: handle CP.Forall later"               *)
+(*     | CP.Exists _ -> report_error no_pos "drop_helper: handle CP.Exists later"               *)
+(*   ) in                                                                                       *)
+(*   drop_helper specs domain                                                                   *)
 
 
-let drop_specs_unsat_domain (specs: CP.formula) (domain: CP.formula) = 
-  let pr_f = !CP.print_formula in
-  Debug.ho_2 "drop_specs_unsat_domain" pr_f pr_f pr_f drop_specs_unsat_domain_x specs domain
+(* let drop_specs_unsat_domain (specs: CP.formula) (domain: CP.formula) =                       *)
+(*   let pr_f = !CP.print_formula in                                                            *)
+(*   Debug.ho_2 "drop_specs_unsat_domain" pr_f pr_f pr_f drop_specs_unsat_domain_x specs domain *)
 
 
 (* let rec has_variance_struc struc_f = *)
@@ -507,23 +507,21 @@ let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
 let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (dst: CP.exp) pos : CP.formula =
   if flag then (
     match src, dst with
-    | CP.Seq seqsrc, CP.Seq seqdst -> (
-        let element_src = seqsrc.CP.seq_element in
-        let domain_src = seqsrc.CP.seq_domain in
-        let limit_src = seqsrc.CP.seq_limit in
-        let element_dst = seqdst.CP.seq_element in
-        let domain_dst = seqdst.CP.seq_domain in
-        let limit_dst = seqdst.CP.seq_limit in
+    | CP.Sequence (seq_s, loopcond_s, _) , CP.Sequence (seq_d, loopcond_d, _) -> (
+        let element_s = seq_s.CP.seq_element in
+        let element_d = seq_d.CP.seq_element in
+        let domain_s = CP.mkSequenceDomain seq_s pos in
+        let domain_d = CP.mkSequenceDomain seq_d pos in
+        let limit_s = seq_s.CP.seq_domain_lb in
+        let limit_d = seq_d.CP.seq_domain_lb in
         let _ = print_endline ("== lhs = " ^ (!CP.print_formula lhs)) in
-        let domain = CP.mkAnd domain_src domain_dst pos in
-        let _ = print_endline ("== domain = " ^ (!CP.print_formula domain)) in
-        let update_formula = collect_update_formula lhs element_src element_dst in
+        let update_formula = collect_update_formula lhs seq_s.CP.seq_element seq_d.CP.seq_element in
         let specs_formula = collect_specs_formula lhs in
-        let droped_specs = drop_specs_unsat_domain specs_formula domain in
+        (* let droped_specs = drop_specs_unsat_domain specs_formula domain in *)
         let domain_constraint = (
           (* domain is covered in the recursive call *)
-          let domain_lhs = CP.mkAnd lhs domain_src pos in
-          let domain_rhs = domain_dst in
+          let domain_lhs = CP.mkAnd lhs domain_s pos in
+          let domain_rhs = domain_d in
           let _ = Debug.dinfo_pprint  "++ In function create_measure_constraint_x:" no_pos in
           let _ = Debug.dinfo_pprint ("   domain_lsh        = " ^ (Cprinter.string_of_pure_formula domain_lhs)) no_pos in
           let _ = Debug.dinfo_pprint ("   domain_rhs        = " ^ (Cprinter.string_of_pure_formula domain_rhs)) no_pos in
@@ -531,21 +529,21 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
         ) in
         let decrease_constraint = (
           (* measure decreases in the recursive call *)
-          let decrease_lhs = CP.mkAnd lhs (CP.mkAnd domain_src domain_dst pos) pos in
+          let decrease_lhs = CP.mkAnd lhs (CP.mkAnd domain_s domain_d pos) pos in
           let decrease_rhs = (
-            match limit_src, limit_dst with
+            match limit_s, limit_d with
             | CP.SConst (PositiveInfty, _), _
             | _, CP.SConst (PositiveInfty, _) -> CP.mkFalse pos
             | CP.SConst (NegativeInfty, _), CP.SConst (NegativeInfty, _) ->
                 (* es > ed *)
-                CP.mkPure (CP.mkGt element_src element_dst pos)
+                CP.mkPure (CP.mkGt element_s element_d pos)
             | CP.SConst (NegativeInfty, _), _
             | _, CP.SConst (NegativeInfty, _) -> CP.mkFalse pos
             | _ ->
                 (* (es > ls) & (ed > ld) & (es > ed) *)
-                let dc1 = CP.mkPure (CP.mkGt element_src limit_src pos) in
-                let dc2 = CP.mkPure (CP.mkGt element_dst limit_dst pos) in
-                let dc3 = CP.mkPure (CP.mkGt element_src element_dst pos) in
+                let dc1 = CP.mkPure (CP.mkGt element_s limit_s pos) in
+                let dc2 = CP.mkPure (CP.mkGt element_d limit_d pos) in
+                let dc3 = CP.mkPure (CP.mkGt element_s element_d pos) in
                 CP.mkAnd dc1 (CP.mkAnd dc2 dc3 no_pos) pos
           ) in
           let _ = Debug.dinfo_pprint  "++ In function create_measure_constraint_x:" no_pos in
@@ -555,33 +553,34 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
         ) in
         CP.mkAnd domain_constraint decrease_constraint pos
       )
-    | CP.Seq _, _
-    | _, CP.Seq _ -> raise (Exn_LexVarSeq "Measure types isn't compatible")
+    | CP.Sequence _, _
+    | _, CP.Sequence _ -> raise (Exn_LexVarSeq "Measure types isn't compatible")
     | _, _ ->
         let rhs = CP.BForm ((CP.mkGt src dst pos, None), None, None) in (* src > dst *)
         CP.mkImply lhs rhs pos
   ) else (
     match src, dst with
-    | CP.Seq seqsrc, CP.Seq seqdst -> (
-        let element_src = seqsrc.CP.seq_element in
-        let domain_src = seqsrc.CP.seq_domain in
-        let element_dst = seqdst.CP.seq_element in
-        let domain_dst = seqdst.CP.seq_domain in
-        let domain = CP.mkAnd domain_src domain_dst pos in
+    | CP.Sequence (seq_s, loopcond_s, _) , CP.Sequence (seq_d, loopcond_d, _) -> (
+        let element_s = seq_s.CP.seq_element in
+        let element_d = seq_d.CP.seq_element in
+        let domain_s = CP.mkSequenceDomain seq_s pos in
+        let domain_d = CP.mkSequenceDomain seq_d pos in
+        let limit_s = seq_s.CP.seq_domain_lb in
+        let limit_d = seq_d.CP.seq_domain_lb in
         let domain_constraint = (
-          let domain_lhs = CP.mkAnd lhs domain_src pos in
-          let domain_rhs = domain_dst in
+          let domain_lhs = CP.mkAnd lhs domain_s pos in
+          let domain_rhs = domain_d in
           CP.mkImply domain_lhs domain_rhs pos
         ) in
         let equal_constraint = (
-          let equal_lhs = CP.mkAnd lhs (CP.mkAnd domain_src domain_dst pos) pos in
-          let equal_rhs = CP.mkPure (CP.mkEq element_src element_dst pos) in
+          let equal_lhs = CP.mkAnd lhs (CP.mkAnd domain_s domain_d pos) pos in
+          let equal_rhs = CP.mkPure (CP.mkEq element_s element_d pos) in
           CP.mkImply equal_lhs equal_rhs pos
         ) in
         CP.mkAnd domain_constraint equal_constraint pos
       )
-    | CP.Seq _, _
-    | _, CP.Seq _ -> raise (Exn_LexVarSeq "Measure types isn't compatible")
+    | CP.Sequence _, _
+    | _, CP.Sequence _ -> raise (Exn_LexVarSeq "Measure types isn't compatible")
     | _, _ ->
         let rhs = CP.BForm ((CP.mkEq src dst pos, None), None, None) in (* src = dst *)
         CP.mkImply lhs rhs pos
@@ -693,8 +692,8 @@ let check_term_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv ds
               let has_sequence_measures = (
                 List.exists (
                   fun (s, d) -> match s, d with
-                  | CP.Seq _, _
-                  | _, CP.Seq _ -> true
+                  | CP.Sequence _, _
+                  | _, CP.Sequence _ -> true
                   | _ -> false
                 ) bnd_measures
               ) in

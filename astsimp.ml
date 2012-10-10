@@ -4356,13 +4356,13 @@ and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
     | IP.Pow (e1, e2, pos) -> CP.Pow (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Max (e1, e2, pos) -> CP.Max (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Min (e1, e2, pos) -> CP.Min (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
-    | IP.Seq seq ->
-        let newseq = { CP.seq_element = trans_pure_exp seq.IP.seq_element stab;
-                       CP.seq_domain = trans_pure_formula seq.IP.seq_domain stab;
-                       CP.seq_limit = trans_pure_exp seq.IP.seq_limit stab;
-                       CP.seq_loopcond = trans_pure_formula seq.IP.seq_loopcond stab;
-                       CP.seq_loc = seq.IP.seq_loc } in
-         CP.Seq newseq
+    | IP.Sequence (seq, f, pos) ->
+        let newseq = {CP.seq_element = trans_pure_exp seq.IP.seq_element stab;
+                      CP.seq_domain_lb = trans_pure_exp seq.IP.seq_domain_lb stab;
+                      CP.seq_domain_ub = trans_pure_exp seq.IP.seq_domain_ub stab;
+                      CP.seq_domain_ub_include = seq.IP.seq_domain_ub_include;} in
+        let newf = trans_pure_formula f stab in
+        CP.Sequence (newseq, newf, pos)
     | IP.Bag (elist, pos) -> CP.Bag (trans_pure_exp_list elist stab, pos)
     | IP.BagUnion (elist, pos) -> CP.BagUnion (trans_pure_exp_list elist stab, pos)
     | IP.BagIntersect (elist, pos) -> CP.BagIntersect (trans_pure_exp_list elist stab, pos)
@@ -4725,12 +4725,10 @@ and gather_type_info_exp_x a0 stab et =
       let t1 = gather_type_info_exp_x a1 stab new_et in (* tvar, Int, Float *)
       let t1 = must_unify_expect t1 et stab pos in
       t1
-  | IP.Seq seq ->
-      let _ = must_unify_expect_test et NUM seq.IP.seq_loc in
-      let new_et = fresh_tvar stab in
-      let t1 = gather_type_info_exp_x seq.IP.seq_element stab new_et in (* tvar, Int, Float *)
-      let t1 = must_unify_expect t1 et stab seq.IP.seq_loc in
-      t1
+  | IP.Sequence (_, _, pos) ->
+      let t = I.float_type in
+      let _ = must_unify_expect t et stab pos in
+      t
   | IP.BagDiff (a1,a2,pos) ->
       let el_t = fresh_tvar stab in
       let new_et = must_unify_expect_test (BagT el_t) et pos in 

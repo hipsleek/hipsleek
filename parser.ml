@@ -1212,17 +1212,13 @@ cexp_w :
     | `INFTY ->
         (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *)
         Pure_c (P.SConst (PositiveInfty, get_pos_camlp4 _loc 1))
-    | `SEQ; `OBRACE; param = measures_seqdec; `CBRACE ->
-        let (element, domain, limit, loopcond) = param in
-        let tc = match loopcond with
+    | `SEQ; `OBRACE; seqparam = measure_sequence; `COMMA; loopcond = cexp_w; `CBRACE ->
+        let (e, lb, ub, ub_incl) = seqparam in
+        let seq = P.mkSequence e lb ub ub_incl in
+        let lc = match loopcond with
                  | Pure_f f -> f
-                 | Pure_c c -> P.mkPure (P.mkGte element c no_pos) in
-        let seq = P.Seq { P.seq_element = element;
-                               P.seq_domain = domain;
-                               P.seq_limit = limit;
-                               P.seq_loopcond = tc;
-                               P.seq_loc = get_pos_camlp4 _loc 1 } in
-        Pure_c seq
+                 | Pure_c c -> P.mkPure (P.mkGte seq.P.seq_element c no_pos) in
+        Pure_c (P.Sequence (seq, lc, get_pos_camlp4 _loc 1))
     | `OPAREN; t=SELF; `CPAREN -> t
     (* An Hoa : extend with multi-dimensional array access *)
     | i=cid; `OSQUARE; c = LIST1 cexp SEP `COMMA; `CSQUARE ->
@@ -1293,38 +1289,14 @@ opt_measures_lex_sqr :[[ il = OPT measures_lex_sqr -> un_option il [] ]];
 
 measures_lex_sqr :[[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
 
-(* Seq(element, domain, limit, lower-bound or terminiation condition) *)
-
-measures_seqdec: 
+measure_sequence:
   [[
-    element = cexp;`COMMA; `OPAREN; bound1 = cexp; `COMMA; bound2 = cexp; `CPAREN; 
-                   `COMMA; loopcond = cexp_w ->
-      let bcons1 = P.mkPure (P.mkGt element bound1 no_pos) in
-      let bcons2 = P.mkPure (P.mkLt element bound2 no_pos) in
-      let domain = P.mkAnd bcons1 bcons2 no_pos in
-      let limit = bound1 in
-      (element, domain, limit, loopcond)
-  | element = cexp;`COMMA; `OPAREN; bound1 = cexp; `COMMA; bound2 = cexp; `CSQUARE;
-                   `COMMA; loopcond = cexp_w ->
-      let bcons1 = P.mkPure (P.mkGt element bound1 no_pos) in
-      let bcons2 = P.mkPure (P.mkLte element bound2 no_pos) in
-      let domain = P.mkAnd bcons1 bcons2 no_pos in
-      let limit = bound1 in
-      (element, domain, limit, loopcond)
-  | element = cexp;`COMMA; `OSQUARE; bound1 = cexp; `COMMA; bound2 = cexp; `CPAREN;
-                   `COMMA; loopcond = cexp_w ->
-      let bcons1 = P.mkPure (P.mkGte element bound1 no_pos) in
-      let bcons2 = P.mkPure (P.mkLt element bound2 no_pos) in
-      let domain = P.mkAnd bcons1 bcons2 no_pos in
-      let limit = bound1 in
-      (element, domain, limit, loopcond)
-  | element = cexp;`COMMA; `OSQUARE; bound1 = cexp; `COMMA; bound2 = cexp; `CSQUARE;
-                   `COMMA; loopcond = cexp_w ->
-      let bcons1 = P.mkPure (P.mkGte element bound1 no_pos) in
-      let bcons2 = P.mkPure (P.mkLte element bound2 no_pos) in
-      let domain = P.mkAnd bcons1 bcons2 no_pos in
-      let limit = bound1 in
-      (element, domain, limit, loopcond)
+    element = cexp; `AT; `OPAREN; domain_lb = cexp; `COMMA; domain_ub = cexp; `CPAREN ->
+      let domain_ub_include = false in
+      (element, domain_lb, domain_ub, domain_ub_include)
+  | element = cexp; `AT; `OPAREN; domain_lb = cexp; `COMMA; domain_ub = cexp; `CSQUARE ->
+      let domain_ub_include = true in
+      (element, domain_lb, domain_ub, domain_ub_include)
   ]];
 
 opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
