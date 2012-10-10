@@ -57,6 +57,9 @@ void reverse(ref node x, ref node y)
 
 /*
 
+ ])
+
+
 ([( H1(x) * H2(y)&x!=null, x::node<val_47_536',next_47_537'> * HP_578(x) * H1(next_47_537')&true),
 ( HP_577(tmp_21') * HP_578(x) * x::node<val_47_562,y>&x!=null, H1(tmp_21') * HP_579(y) * HP_580(x) * HP_583(x)&true),
 ( x::node<val_47_562,y> * HP_579(y) * HP_580(x)&x!=null, HP_583(x)&true)],[

@@ -66,6 +66,19 @@ H(x)::  x::node<val_24_543',next_24_544'> * HP_559(next_24_544')&true,
 G(x,v_node_26_548')::  HP_580(x) * HP_581(v_node_26_548')&true])
 
 should be HP_559(tmp_19') :: HP_581(v_node_26_548') &v_node_26_548'=tmp_19'
+
+
+new (3/10)
+===================
+ H(x) --> x::node<val_25_543',next_25_544'> * HP_559(next_25_544')
+ HP_559(tmp_19') * x::node<val_25_568,null>  -->  G(x,tmp_19' )
+//Right
+([( H(x)&true, x::node<val_25_543',next_25_544'> * HP_559(next_25_544')&true),
+( HP_559(tmp_19') * x::node<val_25_568,next_26_547'>&next_26_547'=null & 
+v_node_27_548'=tmp_19', G(x,v_node_27_548')&true)],[])
+
+//HP_559(tmp_19')&  v_node_27_548'=tmp_19' -->  G2(v_node_27_548') 
+//x::node<val_25_568,next_26_547'>&next_26_547'=null -->  G1(x)
 */
 
 

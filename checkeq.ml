@@ -733,8 +733,8 @@ let rec checkeq_constrs_x hvars (constrs: (CF.formula * CF.formula) list) ( infi
 
 let rec checkeq_constrs hvars (constrs: (CF.formula * CF.formula) list) ( infile_constrs: (CF.formula * CF.formula) list): bool =
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
-  let pr2 b = if(b) then "VALID\n" else "INVALID\n" in
-  Debug.no_2 "check_constrs" pr1 pr1 (pr2)
+  let pr2 b = if(b) then "CP-CONSTRS: VALID\n" else "CP-CONSTRS: INVALID\n" in
+  Debug.ho_2 "check_constrs" pr1 pr1 (pr2)
       (fun _ _ -> checkeq_constrs_x hvars constrs infile_constrs) constrs infile_constrs
 
 
@@ -771,7 +771,9 @@ let check_equiv_def hvars (def1: (CF.formula * CF.formula)) (def2: (CF.formula *
     )
   else []
 
-let match_def hvars defs def hp_map =
+
+
+let match_def_x hvars defs def hp_map =
  let hp,_ = def in
  let hp =  List.hd (CF.get_hp_rel_name_formula hp) in
  let add_hp_map (hps,hp) hp_map =
@@ -793,7 +795,14 @@ let match_def hvars defs def hp_map =
    let hps,_ = List.split ls_res in
    add_hp_map (hps,hp) hp_map
  )
- else hp_map
+ else add_hp_map ([],hp) hp_map
+
+let match_def hvars defs def hp_map =
+  let pr1 = pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula in
+  let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  let pr3 = pr_list_ln (pr_pair Cprinter.string_of_spec_var_list Cprinter.string_of_spec_var) in
+  Debug.ho_2 "match_def" pr2 pr1 (pr3)
+    (fun _ _ -> match_def_x hvars defs def hp_map) defs def
 
 let checkeq_defs_x hvars (defs: (CP.rel_cat * CF.h_formula * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) =
   let no_change hp_mt1 hp_mt2 = 

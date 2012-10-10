@@ -44,6 +44,13 @@ HP_557(x')::  	emp&x'=null
 H(x)::  	x::node<val_17_523',next_17_524'> * HP_535(next_17_524')
 G(x,x')::  	HP_556(x) * HP_557(x')
 
+new (3/10)
+====
+[HP_RELDEFN G:  G(x,x')::  
+ x::node<val_19_548,x_557> * G(x_557,x')&x_557!=null
+ or x::node<val_19_546,x'>&x'=null
+//cmt: was not be splt -> harder to understand
+
 */
 /*
  prepost for x!=null
