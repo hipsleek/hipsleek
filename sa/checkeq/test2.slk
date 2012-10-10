@@ -1,8 +1,8 @@
 data node { int val ; node next }.
 data node2 { int val ; node next }.
 
-hpred ll(node x, int n).
-hpred rr(node x, int n).
+HeapPred ll(node x, int n).
+HeapPred rr(node x, int n).
 
 checkeq [x] x::node<a,b> -|- x::node<c,d> .
 // VALID --> [{a,c},{b,d}]
@@ -15,8 +15,10 @@ checkeq [] x::node<a,b> -|- y::node<c,d> .
 
 
 
-checkeq [] x::ll<a> -|- y::rr<b> .
+//checkeq [] x::ll<a> -|- y::rr<b> .
 // VALID --> [{x,y},{a,b}]
+
+
 /*
 checkeq [] x::ll<a> -|- (exists b: y::rr<b>).
 // VALID --> [{x,y},{ll,rr}]
