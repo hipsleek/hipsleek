@@ -504,6 +504,8 @@ let allow_imm = ref false (*imm will delay checking guard conditions*)
 
 let ann_derv = ref false
 
+let allow_para = ref true (*allow concurrency verification*)
+
 let allow_ls = ref true (*enable lockset during verification*)
 
 let ann_vp = ref true (* Disable variable permissions in default, turn on in para5*)

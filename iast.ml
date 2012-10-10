@@ -1114,7 +1114,12 @@ and update_fixpt (vl:(view_decl * ident list *ident list) list)  =
 	  (* print_endline ("update_fixpt for " ^ v.view_name);
 		 print_endline ("Feasible self type: " ^ (String.concat "," a)); *)
       v.view_pt_by_self<-tl;
-      if (List.length a==0) then report_error no_pos ("self of "^(v.view_name)^" cannot have its type determined")
+      if (List.length a==0) then
+        if (!Globals.allow_para) then
+          (*Allow a predicate to have no self --> it is a lock invariant*)
+          ()
+        else
+        report_error no_pos ("self of "^(v.view_name)^" cannot have its type determined")
       else v.view_data_name <- List.hd a) vl 
 
 and set_check_fixpt (data_decls : data_decl list) (view_decls: view_decl list)  =

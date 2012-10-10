@@ -61,6 +61,7 @@ and view_decl = {
     view_formula : F.struc_formula; (* case-structured formula *)
     view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
     (* view_inv_lock : F.formula option; *)
+    is_lock_inv : bool; (*indicate whether this predicate is a lock invariant*)
     mutable view_x_formula : (MP.mix_formula); (*XPURE 1 -> revert to P.formula*)
     mutable view_baga : Gen.Baga(P.PtrSV).baga;
     mutable view_addr_vars : P.spec_var list;

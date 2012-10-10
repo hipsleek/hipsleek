@@ -1299,6 +1299,8 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   (*let recs = rec_grp prog in*)
   let data_name = if (String.length vdef.I.view_data_name) = 0  then  I.incr_fixpt_view  prog.I.prog_data_decls prog.I.prog_view_decls
   else vdef.I.view_data_name in
+  (*A lock invariant has no "self", therefore, its data_name is empty*)
+  let is_lock_inv = if data_name = "" then true else false in
   (vdef.I.view_data_name <- data_name;
   let vtv = vdef.I.view_typed_vars in
   List.iter (fun (t,c) -> 
@@ -1394,6 +1396,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           C.view_complex_inv = None;
           C.view_user_inv = memo_pf_N;
           (* C.view_inv_lock = inv_lock; *)
+          C.is_lock_inv = is_lock_inv;
           C.view_un_struc_formula = n_un_str;
           C.view_base_case = None;
           C.view_is_rec = ir;
