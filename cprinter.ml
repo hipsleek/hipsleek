@@ -1491,7 +1491,17 @@ let pr_hprel hpa=
   prtt_pr_formula hpa.hprel_rhs;
   fmt_close()
 
+let pr_hprel_short hpa=
+  fmt_open_box 1;
+  fmt_string (CP.print_rel_cat hpa.hprel_kind);
+  prtt_pr_formula hpa.hprel_lhs;
+  fmt_string " --> ";
+  prtt_pr_formula hpa.hprel_rhs;
+  fmt_close()
+
 let string_of_hprel hp = poly_string_of_pr pr_hprel hp
+
+let string_of_hprel_short hp = poly_string_of_pr pr_hprel_short hp
 
 let pr_par_def (f1,f2,f3) = 
   (* fmt_string (CP.print_only_lhs_rhs rel) *)
