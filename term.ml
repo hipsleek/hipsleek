@@ -333,57 +333,85 @@ let collect_update_formula_x (transition: CP.formula) (old_exp: CP.exp) (new_exp
 let collect_update_formula (transition: CP.formula) (old_exp: CP.exp) (new_exp: CP.exp) : CP.formula =
   let pr_f = !CP.print_formula in
   let pr_e = !CP.print_exp in
-  Debug.ho_3 "collect_update_function" pr_f pr_e pr_e pr_f collect_update_formula_x transition old_exp new_exp
+  Debug.ho_3 "collect_update_formula" pr_f pr_e pr_e pr_f collect_update_formula_x transition old_exp new_exp
 
 
-(* let collect_specs_condition (transition: CP.formula) domain_constraint = ( *)
-(* )                                                                          *)
-
-
-(* drop the constraint from source_constrait that restrict the target_constraint *)
-let drop_restricted_constraint_x (source_contraint: CP.formula) (target_constraint: CP.formula) : CP.formula =
-  (* let _ = print_endline ("== source_contraint = " ^ (Cprinter.string_of_pure_formula source_contraint)) in  *)
-  (* let _ = print_endline ("== lbl = " ^ (label_of_formula source_contraint)) in                              *)
-  let is_restricted_constraint (constr: CP.formula) (target_constraint: CP.formula) : bool = (
-    (* constr don't restrict domain if (domain -> (constr) && domain) is valid *)
-    (* let _ = print_endline ("== constr = " ^ (Cprinter.string_of_pure_formula constr)) in  *)
-    match constr with
-    | CP.And _ -> report_error no_pos "Invalid argument! Need a atomic constraint!"
-    | _ ->
-        let f = CP.mkAnd constr target_constraint no_pos in
-        let res, _, _ = TP.imply target_constraint f "" false None in
-        (not res)
-  ) in
-  let rec drop_constraint (constr: CP.formula) (target_constraint: CP.formula) : CP.formula = (
-    match constr with
-    | CP.BForm ((pf, _), _, _) -> (
-        match pf with
-        | CP.BVar _ -> CP.mkTrue no_pos
-        | _ -> if is_restricted_constraint constr target_constraint then CP.mkTrue no_pos
-               else constr
+let collect_specs_formula_x (transition: CP.formula) : CP.formula =
+  let rec collect_helper (f: CP.formula) : CP.formula = (
+    match f with
+    | CP.BForm (_, _, Some F_o_specs) -> f
+    | CP.BForm _ -> CP.mkTrue no_pos
+    | CP.And (f1, f2, p) -> (
+        let newf1 = match f1 with
+          | CP.BForm (_, _, Some F_o_specs) -> Some f1
+          | CP.BForm _ -> None
+          | _ -> Some (collect_helper f1) in
+        let newf2 = match f2 with
+          | CP.BForm (_, _, Some F_o_specs) -> Some f2
+          | CP.BForm _ -> None
+          | _ -> Some (collect_helper f2) in
+        match newf1, newf2 with
+        | None, None -> CP.mkTrue no_pos
+        | None, Some nf -> nf
+        | Some nf, None -> nf
+        | Some nf1, Some nf2 -> CP.And (nf1, nf2, p)
       )
-    | CP.And (f1, f2, l) -> (
-        let new_f1 = drop_constraint f1 target_constraint in
-        let new_f2 = drop_constraint f2 target_constraint in
-        match new_f1 with
-        | CP.BForm ((CP.BConst (true, _), None),None,_) -> new_f2
-        | _ -> (
-            match new_f2 with
-            | CP.BForm ((CP.BConst (true, _), None),None,_) -> new_f1
-            | _ -> CP.mkAnd new_f1 new_f2 no_pos
-          )
-      )
-    | CP.AndList _ -> report_error no_pos "Invalid argument! Need a CNF constraint!"
-    | CP.Or _ -> report_error no_pos "Invalid argument! Need a CNF constraint!"
-    | CP.Not _ -> report_error no_pos "Invalid argument! Need a CNF constraint!"
-    | CP.Forall _ -> report_error no_pos "Invalid argument! Need a CNF constraint!"
-    | CP.Exists _ -> report_error no_pos "Invalid argument! Need a CNF constraint!"
+    | CP.AndList _ -> report_error no_pos "collect_specs_formula_x: handle CP.AndList later"
+    | CP.Or _ -> report_error no_pos "collect_specs_formula_x: handle CP.Or later"
+    | CP.Not _ -> report_error no_pos "collect_specs_formula_x: handle CP.Not later"
+    | CP.Forall _ -> report_error no_pos "collect_specs_formula_x: handle CP.Forall later"
+    | CP.Exists _ -> report_error no_pos "collect_specs_formula_x: handle CP.Exists later"
   ) in
-  drop_constraint source_contraint target_constraint
+  collect_helper transition
 
-let drop_restricted_domain_constraint (source_constraint: CP.formula) (target_constraint: CP.formula) : CP.formula =
-  let pr = !CP.print_formula in
-  Debug.ho_2 "drop_restricted_domain_constraint" pr pr pr drop_restricted_constraint_x source_constraint target_constraint
+
+let collect_specs_formula (transition: CP.formula) : CP.formula =
+  let pr_f = !CP.print_formula in
+  Debug.ho_1 "collect_specs_formula" pr_f pr_f collect_specs_formula_x transition
+
+
+let drop_specs_unsat_domain_x (specs: CP.formula) (domain: CP.formula) =
+  let can_drop_bformula (f: CP.formula) (domain: CP.formula) = (
+    match f with
+    | CP.BForm _ ->
+        let newdomain = CP.mkAnd domain f no_pos in
+        let imply_res, _, _ = TP.imply domain newdomain "" false None in
+        let _ = print_endline ("== domain    = " ^ (!CP.print_formula domain)) in
+        let _ = print_endline ("== f         = " ^ (!CP.print_formula f)) in
+        let _ = print_endline ("== imply_res = " ^ (string_of_bool imply_res)) in
+        let _ = print_endline ("//") in
+        imply_res
+    | _ -> report_error no_pos "Error!!! can_drop_bformula: f has to be CP.BForm"
+  ) in
+  let rec drop_helper (specs: CP.formula) (domain: CP.formula) = (
+    match specs with
+    | CP.BForm _ -> if (can_drop_bformula specs domain) then (CP.mkTrue no_pos) else specs
+    | CP.And (f1, f2, p) -> (
+        let newf1 = match f1 with
+          | CP.BForm _ -> if (can_drop_bformula f1 domain) then None else (Some f1)
+          | _ -> Some (drop_helper f1 domain) in
+        let newf2 = match f2 with
+          | CP.BForm _ -> if (can_drop_bformula f2 domain) then None else (Some f2)
+          | _ -> Some (drop_helper f2 domain) in
+        match newf1, newf2 with
+        | None, None -> CP.mkTrue no_pos
+        | None, Some nf -> nf
+        | Some nf, None -> nf
+        | Some nf1, Some nf2 -> CP.And (nf1, nf2, p)
+      )
+    | CP.AndList _ -> report_error no_pos "drop_helper: handle CP.AndList later"
+    | CP.Or _ -> report_error no_pos "drop_helper: handle CP.Or later"
+    | CP.Not _ -> report_error no_pos "drop_helper: handle CP.Not later"
+    | CP.Forall _ -> report_error no_pos "drop_helper: handle CP.Forall later"
+    | CP.Exists _ -> report_error no_pos "drop_helper: handle CP.Exists later"
+  ) in
+  drop_helper specs domain
+
+
+let drop_specs_unsat_domain (specs: CP.formula) (domain: CP.formula) = 
+  let pr_f = !CP.print_formula in
+  Debug.ho_2 "drop_specs_unsat_domain" pr_f pr_f pr_f drop_specs_unsat_domain_x specs domain
+
 
 (* let rec has_variance_struc struc_f = *)
 (*   List.exists (fun ef -> has_variance_ext ef) struc_f *)
@@ -486,8 +514,12 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
         let element_dst = seqdst.CP.seq_element in
         let domain_dst = seqdst.CP.seq_domain in
         let limit_dst = seqdst.CP.seq_limit in
+        let _ = print_endline ("== lhs = " ^ (!CP.print_formula lhs)) in
         let domain = CP.mkAnd domain_src domain_dst pos in
+        let _ = print_endline ("== domain = " ^ (!CP.print_formula domain)) in
         let update_formula = collect_update_formula lhs element_src element_dst in
+        let specs_formula = collect_specs_formula lhs in
+        let droped_specs = drop_specs_unsat_domain specs_formula domain in
         let domain_constraint = (
           (* domain is covered in the recursive call *)
           let domain_lhs = CP.mkAnd lhs domain_src pos in
@@ -536,14 +568,13 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
         let element_dst = seqdst.CP.seq_element in
         let domain_dst = seqdst.CP.seq_domain in
         let domain = CP.mkAnd domain_src domain_dst pos in
-        let recursive_constraint = drop_restricted_domain_constraint lhs domain in
         let domain_constraint = (
-          let domain_lhs = CP.mkAnd recursive_constraint domain_src pos in
+          let domain_lhs = CP.mkAnd lhs domain_src pos in
           let domain_rhs = domain_dst in
           CP.mkImply domain_lhs domain_rhs pos
         ) in
         let equal_constraint = (
-          let equal_lhs = CP.mkAnd recursive_constraint (CP.mkAnd domain_src domain_dst pos) pos in
+          let equal_lhs = CP.mkAnd lhs (CP.mkAnd domain_src domain_dst pos) pos in
           let equal_rhs = CP.mkPure (CP.mkEq element_src element_dst pos) in
           CP.mkImply equal_lhs equal_rhs pos
         ) in

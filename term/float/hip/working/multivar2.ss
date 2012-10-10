@@ -13,7 +13,7 @@ void loop(float x, float y)
           {
             y <= 1.0     -> requires Loop ensures false;
             1 < y <= 2.0 -> requires true ensures true;
-            y >  2.0     -> requires Term[Seq{-y/x@(-infty, 0) & -x@(-infty,0) & -y@(-infty,-2), y/x<0.1}] ensures true;
+            y >  2.0     -> requires Term[Seq{-y/x, (-infty, 0), y/x<0.1}] ensures true;
           }
       }
   }
