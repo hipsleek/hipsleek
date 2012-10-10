@@ -1308,24 +1308,24 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   H.add stab self { sv_info_kind = (Named data_name);id = fresh_int () };
   (* let _ = vdef.I.view_typed_vars <- [] in (\* removing the typed arguments *\) *)
   let cf = trans_I2C_struc_formula_x prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
-  let inv_lock = vdef.I.view_inv_lock in
-  let inv_lock = 
-    (match inv_lock with
-      | None -> None
-      | Some f ->
-          let new_f = trans_formula prog true (self :: vdef.I.view_vars) true f stab false in
-          (*find existential variables*)
-          let fvars = CF.fv new_f in
-          let evars = List.filter (fun sv -> not (List.exists (fun name -> name = (CP.name_of_spec_var sv)) (self :: vdef.I.view_vars))) fvars in
-          let new_f2 = if evars!=[] then CF.push_exists evars new_f else new_f in
-          (* let _ = print_endline ("new_f = " ^ (Cprinter.string_of_formula new_f)) in *)
-          (* let _ = print_endline ("new_f2 = " ^ (Cprinter.string_of_formula new_f2)) in *)
-          (* let _ = print_endline ("fvars = " ^ (Cprinter.string_of_spec_var_list fvars)) in *)
-          (* let _ = print_endline ("evars = " ^ (Cprinter.string_of_spec_var_list evars)) in *)
+  (* let inv_lock = vdef.I.view_inv_lock in *)
+  (* let inv_lock =  *)
+  (*   (match inv_lock with *)
+  (*     | None -> None *)
+  (*     | Some f -> *)
+  (*         let new_f = trans_formula prog true (self :: vdef.I.view_vars) true f stab false in *)
+  (*         (\*find existential variables*\) *)
+  (*         let fvars = CF.fv new_f in *)
+  (*         let evars = List.filter (fun sv -> not (List.exists (fun name -> name = (CP.name_of_spec_var sv)) (self :: vdef.I.view_vars))) fvars in *)
+  (*         let new_f2 = if evars!=[] then CF.push_exists evars new_f else new_f in *)
+  (*         (\* let _ = print_endline ("new_f = " ^ (Cprinter.string_of_formula new_f)) in *\) *)
+  (*         (\* let _ = print_endline ("new_f2 = " ^ (Cprinter.string_of_formula new_f2)) in *\) *)
+  (*         (\* let _ = print_endline ("fvars = " ^ (Cprinter.string_of_spec_var_list fvars)) in *\) *)
+  (*         (\* let _ = print_endline ("evars = " ^ (Cprinter.string_of_spec_var_list evars)) in *\) *)
 
-          (****************************)
-          Some new_f2)
-  in
+  (*         (\****************************\) *)
+  (*         Some new_f2) *)
+  (* in *)
   let cf = CF.mark_derv_self vdef.I.view_name cf in 
   let inv = vdef.I.view_invariant in
   let _ = gather_type_info_pure prog inv stab in
@@ -1333,13 +1333,13 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   (* Thai : pf - user given invariant in core form *) 
   let pf = Cpure.arith_simplify 1 pf in
   let cf_fv = List.map CP.name_of_spec_var (CF.struc_fv cf) in
-  let inv_lock_fv = match inv_lock with
-    | None -> []
-    | Some f -> List.map CP.name_of_spec_var (CF.fv f)
-  in
+  (* let inv_lock_fv = match inv_lock with *)
+  (*   | None -> [] *)
+  (*   | Some f -> List.map CP.name_of_spec_var (CF.fv f) *)
+  (* in *)
   let pf_fv = List.map CP.name_of_spec_var (CP.fv pf) in
 
-  if (List.mem res_name cf_fv) || (List.mem res_name pf_fv) || (List.mem res_name inv_lock_fv)  then
+  if (List.mem res_name cf_fv) || (List.mem res_name pf_fv) (* || (List.mem res_name inv_lock_fv) *)  then
     report_error (IF.pos_of_struc_formula view_formula1) "res is not allowed in view definition or invariant"
   else(
       let pos = IF.pos_of_struc_formula view_formula1 in
@@ -1393,7 +1393,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           C.view_baga = [];
           C.view_complex_inv = None;
           C.view_user_inv = memo_pf_N;
-          C.view_inv_lock = inv_lock;
+          (* C.view_inv_lock = inv_lock; *)
           C.view_un_struc_formula = n_un_str;
           C.view_base_case = None;
           C.view_is_rec = ir;
@@ -5973,11 +5973,12 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
             (*flag to check whether the heap node representing an invariant or not*)
 	        let isInv, labels = try
 	          let vdef = I.look_up_view_def_raw prog.I.prog_view_decls b.IF.h_formula_heap_name in
-              let flag = match vdef.I.view_inv_lock with
-                | None -> false
-                | Some _ -> true
-              in
-	          (flag,vdef.I.view_labels)
+              (* let flag = match vdef.I.view_inv_lock with *)
+              (*   | None -> false *)
+              (*   | Some _ -> true *)
+              (* in *)
+	          (* (flag,vdef.I.view_labels) *)
+	          (false,vdef.I.view_labels)
 	        with
 	          | Not_found -> (false,List.map (fun _ -> Label_only.empty_spec_label) b.IF.h_formula_heap_arguments)
             in
@@ -6736,15 +6737,15 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
 	  let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
 	  let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
 	  let wf,_ = case_normalize_struc_formula prog h p c.Iast.view_formula false false [] in
-      let inv_lock = c.Iast.view_inv_lock in
-      let inv_lock =
-        (match inv_lock with
-          | None -> None
-          | Some f ->
-              let new_f = case_normalize_formula prog p f in (* it has to be p to maintain self in the invariant*)
-              Some new_f)
-      in
-      { c with Iast.view_formula = 	wf; Iast.view_inv_lock = inv_lock}) tmp_views in
+      (* let inv_lock = c.Iast.view_inv_lock in *)
+      (* let inv_lock = *)
+      (*   (match inv_lock with *)
+      (*     | None -> None *)
+      (*     | Some f -> *)
+      (*         let new_f = case_normalize_formula prog p f in (\* it has to be p to maintain self in the invariant*\) *)
+      (*         Some new_f) *)
+      (* in *)
+      { c with Iast.view_formula = 	wf; (* Iast.view_inv_lock = inv_lock *)}) tmp_views in
   (*let _ = print_string ("case_normalize_program: view_a: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in*)
   let prog = {prog with Iast.prog_view_decls = tmp_views} in
   let cdata = List.map (case_normalize_data prog) prog.I.prog_data_decls in

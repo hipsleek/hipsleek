@@ -1254,11 +1254,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     | Some v -> v
                   in
                   let vdef = look_up_view_def_raw prog.prog_view_decls lock_sort in
-                  let inv_lock = match vdef.view_inv_lock with
-                    | None -> 
-                        (CF.mkTrue (CF.mkTrueFlow ()) pos)
-                    | Some f -> f 
-                  in
+                  (* let inv_lock = match vdef.view_inv_lock with *)
+                  (*   | None ->  *)
+                  (*       (CF.mkTrue (CF.mkTrueFlow ()) pos) *)
+                  (*   | Some f -> f  *)
+                  (* in *)
+                  let inv_lock = (CF.mkTrue (CF.mkTrueFlow ()) pos) in (*TO DO: change it*)
+
                   let types = List.map (fun v -> CP.type_of_spec_var v) vdef.view_vars in
                   let new_args = List.map2 (fun arg typ ->  CP.SpecVar (typ, arg, Primed) ) lock_args types in
                   let lock_data_name = vdef.view_data_name in
@@ -1300,11 +1302,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     | Some v -> v
                   in
                   let vdef = look_up_view_def_raw prog.prog_view_decls lock_sort in
-                  let inv_lock = match vdef.view_inv_lock with
-                    | None -> 
-                        (CF.mkTrue (CF.mkTrueFlow ()) pos)
-                    | Some f -> f 
-                  in
+                  (* let inv_lock = match vdef.view_inv_lock with *)
+                  (*   | None ->  *)
+                  (*       (CF.mkTrue (CF.mkTrueFlow ()) pos) *)
+                  (*   | Some f -> f  *)
+                  (* in *)
+                  let inv_lock = (CF.mkTrue (CF.mkTrueFlow ()) pos) in (*TO DO: change it*)
+
                   let types = List.map (fun v -> CP.type_of_spec_var v) vdef.view_vars in
                   let new_args = List.map2 (fun arg typ ->  CP.SpecVar (typ, arg, Primed) ) lock_args types in
 

@@ -200,15 +200,15 @@ let process_pred_def_4_iast pdef =
 		let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
 		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
 		let wf,_ = AS.case_normalize_struc_formula iprog h p pdef.Iast.view_formula false false [] in
-        let inv_lock = pdef.I.view_inv_lock in
-        let inv_lock =
-          (match inv_lock with
-            | None -> None
-            | Some f ->
-                let new_f = AS.case_normalize_formula iprog h f in (*TO CHECK: h or p*)
-                Some new_f)
-        in
-		let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock} in
+        (* let inv_lock = pdef.I.view_inv_lock in *)
+        (* let inv_lock = *)
+        (*   (match inv_lock with *)
+        (*     | None -> None *)
+        (*     | Some f -> *)
+        (*         let new_f = AS.case_normalize_formula iprog h f in (\*TO CHECK: h or p*\) *)
+        (*         Some new_f) *)
+        (* in *)
+		let new_pdef = {pdef with Iast.view_formula = wf;(* Iast.view_inv_lock = inv_lock *)} in
 		iprog.I.prog_view_decls <- ( new_pdef :: iprog.I.prog_view_decls);
 	  with
 		| _ ->  dummy_exception() ; iprog.I.prog_view_decls <- tmp

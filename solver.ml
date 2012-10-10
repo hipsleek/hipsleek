@@ -370,10 +370,10 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
             let ba = look_up_view_baga prog c p vs in
             let vdef = look_up_view_def pos prog.prog_view_decls c in
             (*TO DO: Temporarily ignore LOCK*)
-            (match vdef.view_inv_lock with
-              | Some f -> 
-                  {mem_formula_mset =[]}
-              | None ->
+            (* (match vdef.view_inv_lock with *)
+            (*   | Some f ->  *)
+            (*       {mem_formula_mset =[]} *)
+            (*   | None -> *)
             let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
             let to_svs = p :: vs in
  	        let new_mset = 
@@ -384,7 +384,7 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
                 | Some ls -> 
                    lookup_view_baga_with_subs ls vdef from_svs to_svs) in
 	        {mem_formula_mset = CP.DisjSetSV.one_list_dset new_mset;} 
-            )
+            (* ) *)
       | Hole _
       | HTrue
       | HFalse ->
@@ -771,17 +771,18 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula)  (p0: mix_formula) (wh
             (*if the ViewNode is a LOCK node, we add more information (p=i)
             because LOCK is similar to a datanode*)
             (*Handle LOCK ViewNode differently*)
-            (match vdef.view_inv_lock with
-              | Some f ->
-                  if CF.is_mem_mem_formula p memset then 
-                    (*full LOCK node*)
-                    let i = fresh_int2 () in
-                    let eq_i = CP.mkEqVarInt p i pos in
-                    MCP.memoise_add_pure_N (MCP.mkMTrue pos) eq_i (* full permission -> p=i*)
-                  else
-                    (*partial LOCK node*)
-                    res
-              | None -> res)
+            (* (match vdef.view_inv_lock with *)
+            (*   | Some f -> *)
+            (*       if CF.is_mem_mem_formula p memset then  *)
+            (*         (\*full LOCK node*\) *)
+            (*         let i = fresh_int2 () in *)
+            (*         let eq_i = CP.mkEqVarInt p i pos in *)
+            (*         MCP.memoise_add_pure_N (MCP.mkMTrue pos) eq_i (\* full permission -> p=i*\) *)
+            (*       else *)
+            (*         (\*partial LOCK node*\) *)
+            (*         res *)
+            (*   | None -> res) *)
+            res
       | Star ({h_formula_star_h1 = h1;
 	    h_formula_star_h2 = h2;
 	    h_formula_star_pos = pos})

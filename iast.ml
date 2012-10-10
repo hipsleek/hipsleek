@@ -53,7 +53,7 @@ and view_decl = { view_name : ident;
 		  mutable view_typed_vars : (typ * ident) list;
 		  view_invariant : P.formula;
 		  view_formula : Iformula.struc_formula;
-          view_inv_lock : F.formula option;
+          (* view_inv_lock : F.formula option; *)
 		  mutable view_pt_by_self : ident list; (* list of views pointed by self *)
 		  (* view_targets : ident list;  *)(* list of views pointed within declaration *)
 		  try_case_inference: bool}
