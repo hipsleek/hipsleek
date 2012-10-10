@@ -370,47 +370,46 @@ let collect_specs_formula (transition: CP.formula) : CP.formula =
   Debug.ho_1 "collect_specs_formula" pr_f pr_f collect_specs_formula_x transition
 
 
-(* let drop_specs_unsat_domain_x (specs: CP.formula) (seq: CP.sequence) =                       *)
-(*   let can_drop_bformula (f: CP.formula) (seq: CP.sequence) = (                               *)
-(*     match f with                                                                             *)
-(*     | CP.BForm _ ->                                                                          *)
-(*         let newdomain = CP.mkAnd domain f no_pos in                                          *)
-(*         let imply_res, _, _ = TP.imply domain newdomain "" false None in                     *)
-(*         let _ = print_endline ("== domain    = " ^ (!CP.print_formula domain)) in            *)
-(*         let _ = print_endline ("== f         = " ^ (!CP.print_formula f)) in                 *)
-(*         let _ = print_endline ("== imply_res = " ^ (string_of_bool imply_res)) in            *)
-(*         let _ = print_endline ("//") in                                                      *)
-(*         imply_res                                                                            *)
-(*     | _ -> report_error no_pos "Error!!! can_drop_bformula: f has to be CP.BForm"            *)
-(*   ) in                                                                                       *)
-(*   let rec drop_helper (specs: CP.formula) (domain: CP.formula) = (                           *)
-(*     match specs with                                                                         *)
-(*     | CP.BForm _ -> if (can_drop_bformula specs domain) then (CP.mkTrue no_pos) else specs   *)
-(*     | CP.And (f1, f2, p) -> (                                                                *)
-(*         let newf1 = match f1 with                                                            *)
-(*           | CP.BForm _ -> if (can_drop_bformula f1 domain) then None else (Some f1)          *)
-(*           | _ -> Some (drop_helper f1 domain) in                                             *)
-(*         let newf2 = match f2 with                                                            *)
-(*           | CP.BForm _ -> if (can_drop_bformula f2 domain) then None else (Some f2)          *)
-(*           | _ -> Some (drop_helper f2 domain) in                                             *)
-(*         match newf1, newf2 with                                                              *)
-(*         | None, None -> CP.mkTrue no_pos                                                     *)
-(*         | None, Some nf -> nf                                                                *)
-(*         | Some nf, None -> nf                                                                *)
-(*         | Some nf1, Some nf2 -> CP.And (nf1, nf2, p)                                         *)
-(*       )                                                                                      *)
-(*     | CP.AndList _ -> report_error no_pos "drop_helper: handle CP.AndList later"             *)
-(*     | CP.Or _ -> report_error no_pos "drop_helper: handle CP.Or later"                       *)
-(*     | CP.Not _ -> report_error no_pos "drop_helper: handle CP.Not later"                     *)
-(*     | CP.Forall _ -> report_error no_pos "drop_helper: handle CP.Forall later"               *)
-(*     | CP.Exists _ -> report_error no_pos "drop_helper: handle CP.Exists later"               *)
-(*   ) in                                                                                       *)
-(*   drop_helper specs domain                                                                   *)
+let drop_specs_unsat_domain_x (specs: CP.formula) (seq: CP.sequence) =
+  let can_drop_bformula (f: CP.formula) (seq: CP.sequence) = (
+    match f with
+    | CP.BForm _ ->
+        let domain = CP.mkSequenceDomain seq no_pos in
+        let _ = print_endline ("== domain    = " ^ (!CP.print_formula domain)) in
+        let _ = print_endline ("== f         = " ^ (!CP.print_formula f)) in
+        let _ = print_endline ("== imply_res = " ^ (string_of_bool imply_res)) in
+        let _ = print_endline ("//") in
+        imply_res
+    | _ -> report_error no_pos "Error!!! can_drop_bformula: f has to be CP.BForm"
+  ) in
+  let rec drop_helper (specs: CP.formula) (domain: CP.formula) = (
+    match specs with
+    | CP.BForm _ -> if (can_drop_bformula specs domain) then (CP.mkTrue no_pos) else specs
+    | CP.And (f1, f2, p) -> (
+        let newf1 = match f1 with
+          | CP.BForm _ -> if (can_drop_bformula f1 domain) then None else (Some f1)
+          | _ -> Some (drop_helper f1 domain) in
+        let newf2 = match f2 with
+          | CP.BForm _ -> if (can_drop_bformula f2 domain) then None else (Some f2)
+          | _ -> Some (drop_helper f2 domain) in
+        match newf1, newf2 with
+        | None, None -> CP.mkTrue no_pos
+        | None, Some nf -> nf
+        | Some nf, None -> nf
+        | Some nf1, Some nf2 -> CP.And (nf1, nf2, p)
+      )
+    | CP.AndList _ -> report_error no_pos "drop_helper: handle CP.AndList later"
+    | CP.Or _ -> report_error no_pos "drop_helper: handle CP.Or later"
+    | CP.Not _ -> report_error no_pos "drop_helper: handle CP.Not later"
+    | CP.Forall _ -> report_error no_pos "drop_helper: handle CP.Forall later"
+    | CP.Exists _ -> report_error no_pos "drop_helper: handle CP.Exists later"
+  ) in
+  drop_helper specs domain
 
 
-(* let drop_specs_unsat_domain (specs: CP.formula) (domain: CP.formula) =                       *)
-(*   let pr_f = !CP.print_formula in                                                            *)
-(*   Debug.ho_2 "drop_specs_unsat_domain" pr_f pr_f pr_f drop_specs_unsat_domain_x specs domain *)
+let drop_specs_unsat_domain (specs: CP.formula) (seq: CP.sequence) =
+  let pr_f = !CP.print_formula in
+  Debug.ho_1 "drop_specs_unsat_domain" pr_f pr_f (fun x -> drop_specs_unsat_domain_x x seq) specs
 
 
 (* let rec has_variance_struc struc_f = *)
