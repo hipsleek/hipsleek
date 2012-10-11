@@ -458,6 +458,8 @@ let finalize_name = "finalize"
 let acquire_name = "acquire"
 let release_name = "release"
 let lock_name = "lock"
+let lock_init_name = "islock"
+let inv_typ = Named "INV" (*invariant typ in args*)
 
 let ls_name = "ls"
 let ls_data_typ = "lock"
