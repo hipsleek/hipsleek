@@ -1415,6 +1415,8 @@ let prtt_string_of_formula (e:formula) : string =  poly_string_of_pr  prtt_pr_fo
 
 let prtt_string_of_formula_base fb: string =  poly_string_of_pr  prtt_pr_formula_base fb
 
+let prtt_string_of_h_formula (e:h_formula) : string =  poly_string_of_pr  prtt_pr_h_formula e
+
 let rec string_of_formula_list_noparen l = match l with 
   | [] -> ""
   | h::[] -> string_of_formula h 
@@ -1499,9 +1501,25 @@ let pr_hprel_short hpa=
   prtt_pr_formula hpa.hprel_rhs;
   fmt_close()
 
+
+let pr_hprel_def hpd=
+  fmt_open_box 1;
+  fmt_string (CP.print_rel_cat hpd.hprel_def_kind);
+  fmt_string "\n";
+  (pr_h_formula hpd.hprel_def_hrel);
+  fmt_string " ::=";
+  fmt_string (prtt_string_of_formula hpd.hprel_def_body);
+  fmt_string "\n LIB FORM:\n";
+  (pr_h_formula hpd.hprel_def_hrel);
+  fmt_string " ::=";
+  prtt_pr_formula hpd.hprel_def_body_lib;
+  fmt_close()
+
 let string_of_hprel hp = poly_string_of_pr pr_hprel hp
 
 let string_of_hprel_short hp = poly_string_of_pr pr_hprel_short hp
+
+let string_of_hprel_def hp = poly_string_of_pr pr_hprel_def hp
 
 let pr_par_def (f1,f2,f3) = 
   (* fmt_string (CP.print_only_lhs_rhs rel) *)

@@ -831,7 +831,7 @@ let add_raw_hp_rel_x prog unknown_ptrs pos=
                List.map (fun sv -> CP.mkVar sv pos) hp_decl.Cast.hp_vars,
       pos)
     in
-    DD.info_pprint ("       gen hp_rel: " ^ (Cprinter.string_of_h_formula hf)) pos;
+    DD.ninfo_pprint ("       gen hp_rel: " ^ (Cprinter.string_of_h_formula hf)) pos;
     (hf, [CP.SpecVar (HpT,hp_decl.Cast.hp_name, Unprimed)])
   else report_error pos "sau.add_raw_hp_rel: args should be not empty"
 
@@ -843,11 +843,11 @@ let add_raw_hp_rel prog unknown_args pos=
       (fun _ -> add_raw_hp_rel_x prog unknown_args pos) unknown_args
 
 let mk_hprel_def hp args defs pos=
-  DD.info_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")") pos;
+  DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")") pos;
   (*make disjunction*)
   let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 (CF.pos_of_formula f1))
     (List.hd defs) (List.tl defs) in
-  DD.info_pprint (" =: " ^ (Cprinter.prtt_string_of_formula def) ) pos;
+  DD.ninfo_pprint (" =: " ^ (Cprinter.prtt_string_of_formula def) ) pos;
   let def = (hp, (CP.HPRelDefn hp, (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos)), def)) in
   def
 

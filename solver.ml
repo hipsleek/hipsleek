@@ -243,6 +243,7 @@ let clear_entailment_history_es (es :entail_state) :context =
     es_infer_vars_rel = es.es_infer_vars_rel;
     es_infer_rel = es.es_infer_rel;
     es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
+    es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
     es_infer_hp_rel = es.es_infer_hp_rel;
     es_var_zero_perm = es.es_var_zero_perm;
   }
@@ -2124,6 +2125,7 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate (fold_rs0:lis
               es_infer_vars = fold_es.es_infer_vars;
               es_infer_vars_rel = fold_es.es_infer_vars_rel;
               es_infer_vars_hp_rel = fold_es.es_infer_vars_hp_rel;
+              es_infer_vars_sel_hp_rel = fold_es.es_infer_vars_sel_hp_rel;
               es_infer_vars_dead = fold_es.es_infer_vars_dead;
               es_infer_heap = fold_es.es_infer_heap;
               es_infer_pure = fold_es.es_infer_pure;
@@ -5724,6 +5726,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_infer_vars_dead = estate.es_infer_vars_dead;
         es_infer_vars_rel = estate.es_infer_vars_rel;
         es_infer_vars_hp_rel = estate.es_infer_vars_hp_rel;
+        es_infer_vars_sel_hp_rel = estate.es_infer_vars_sel_hp_rel;
         es_infer_heap = estate.es_infer_heap;
         es_infer_pure = estate.es_infer_pure;
         es_infer_pure_thus = estate.es_infer_pure_thus;

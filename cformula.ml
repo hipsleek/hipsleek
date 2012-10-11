@@ -110,6 +110,13 @@ and hprel= {
     hprel_rhs: formula
 }
 
+and hprel_def= {
+    hprel_def_kind: CP.rel_cat;
+    hprel_def_hrel: h_formula;
+    hprel_def_body: formula;
+    hprel_def_body_lib: formula;
+}
+
 and list_formula = formula list
 
 and formula_base = {  formula_base_heap : h_formula;
@@ -3521,7 +3528,7 @@ let rec subst_hrel_f f hprel_subst=
 
 and subst_hrel_hf hf hprel_subst=
   let helper (HRel (id,el,p)) (HRel (id1,el1,_), hf)=
-    if id == id1 then
+    if CP.eq_spec_var id id1 then
       (*should specvar subst*)
       let svl1 = (List.fold_left List.append [] (List.map CP.afv el)) in
       let svl2 = (List.fold_left List.append [] (List.map CP.afv el1)) in
@@ -3572,6 +3579,73 @@ and subst_hrel_hf hf hprel_subst=
     | HFalse
     | HEmp -> hf
 
+
+let rec subst_hrel_hview_f f subst=
+  match f with
+    | Base fb -> Base {fb with formula_base_heap =  subst_hrel_hview_hf fb.formula_base_heap subst;}
+    | Or orf -> Or {orf with formula_or_f1 = subst_hrel_hview_f orf.formula_or_f1 subst;
+        formula_or_f2 = subst_hrel_hview_f orf.formula_or_f2 subst;}
+    | Exists fe -> Exists {fe with formula_exists_heap =  subst_hrel_hview_hf fe.formula_exists_heap subst;}
+
+and subst_hrel_hview_hf hf0 subst=
+  let helper (HRel (id,el,p)) (id1, hf)=
+    if CP.eq_spec_var id id1 then
+      (*should specvar subst*)
+      let svl1 = (List.fold_left List.append [] (List.map CP.afv el)) in
+      let hv = match hf with
+        | ViewNode hv -> hv
+        | _ -> report_error no_pos "CF.subst_hrel_hview_hf.helper"
+      in
+      let svl2 = hv.h_formula_view_node::hv.h_formula_view_arguments in
+      let f = h_subst (List.combine svl2 svl1) hf in
+      (true, f)
+    else (false, HRel (id,el,p))
+  in
+  let rec find_and_subst (HRel (id,el,p)) subst =
+    (* List.fold_left helper (HRel (id,el,p)) subst *)
+    match subst with
+      | [] -> (HRel (id,el,p))
+      | (id1, hf)::ss ->
+          let stop,f = helper (HRel (id,el,p)) (id1, hf) in
+          if stop then f
+          else find_and_subst (HRel (id,el,p)) ss
+      | _ -> report_error no_pos "cformula.find_and_subst"
+  in
+  let rec helper2 hf=
+    match hf with
+      | Star {h_formula_star_h1 = hf1;
+              h_formula_star_h2 = hf2;
+              h_formula_star_pos = pos} ->
+          let n_hf1 = helper2 hf1 in
+          let n_hf2 = helper2 hf2 in
+        Star {h_formula_star_h1 = n_hf1;
+              h_formula_star_h2 = n_hf2;
+              h_formula_star_pos = pos}
+    | Conj { h_formula_conj_h1 = hf1;
+             h_formula_conj_h2 = hf2;
+             h_formula_conj_pos = pos} ->
+        let n_hf1 = helper2 hf1 in
+        let n_hf2 = helper2 hf2 in
+        Conj { h_formula_conj_h1 = n_hf1;
+               h_formula_conj_h2 = n_hf2;
+               h_formula_conj_pos = pos}
+    | Phase { h_formula_phase_rd = hf1;
+              h_formula_phase_rw = hf2;
+              h_formula_phase_pos = pos} ->
+        let n_hf1 = helper2 hf1 in
+        let n_hf2 = helper2 hf2 in
+        Phase { h_formula_phase_rd = n_hf1;
+              h_formula_phase_rw = n_hf2;
+              h_formula_phase_pos = pos}
+    | DataNode hd -> hf
+    | ViewNode hv -> hf
+    | HRel _ -> find_and_subst hf subst
+    | Hole _
+    | HTrue
+    | HFalse
+    | HEmp -> hf
+  in
+  helper2 hf0
 
 (*end for sa*)
  (* context functions *)
@@ -3664,6 +3738,7 @@ think it is used to instantiate when folding.
   (*input vars where inference expected*)
   es_infer_vars : CP.spec_var list; 
   es_infer_vars_rel : CP.spec_var list;
+  es_infer_vars_sel_hp_rel: CP.spec_var list;
   es_infer_vars_hp_rel : CP.spec_var list;
   (* input vars to denote vars already instantiated *)
   es_infer_vars_dead : CP.spec_var list; 
@@ -3794,6 +3869,23 @@ let print_failesc_context = ref(fun (c:failesc_context) -> "printer not initiali
 let print_failure_kind_full = ref(fun (c:failure_kind) -> "printer not initialized")
 let print_fail_type = ref(fun (c:fail_type) -> "printer not initialized")
 
+let get_infer_vars_sel_hp_ctx ctx0=
+  let rec helper ctx=
+    match ctx with
+      | Ctx es -> es.es_infer_vars_sel_hp_rel
+      | OCtx (ctx1,_) -> helper ctx1
+  in
+  helper ctx0
+
+let get_infer_vars_sel_hp_branch_ctx (_,ctx)=
+  get_infer_vars_sel_hp_ctx ctx
+
+let get_infer_vars_sel_hp_partial_ctx (_, br_list)=
+  get_infer_vars_sel_hp_branch_ctx (List.hd  br_list)
+
+let get_infer_vars_sel_hp_partial_ctx_list ls=
+  get_infer_vars_sel_hp_partial_ctx (List.hd ls)
+
 let context_of_branch_ctx_list ls = 
   let rec helper ls = match ls with
     | [] -> report_error no_pos "Current Successful context should not be empty []"
@@ -3865,6 +3957,7 @@ let empty_es flowt grp_lbl pos =
   es_infer_vars = [];
   es_infer_vars_dead = [];
   es_infer_vars_rel = [];
+  es_infer_vars_sel_hp_rel = [];
   es_infer_vars_hp_rel = [];
   es_infer_heap = []; (* HTrue; *)
   es_infer_pure = []; (* (CP.mkTrue no_pos); *)
@@ -4864,6 +4957,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_infer_vars = es.es_infer_vars;
         es_infer_vars_rel = es.es_infer_vars_rel;
         es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
+        es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
         es_infer_vars_dead = es.es_infer_vars_dead;
         es_infer_heap = es.es_infer_heap;
         es_infer_pure = es.es_infer_pure;
@@ -6895,6 +6989,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
           es_infer_vars = es.es_infer_vars;
           es_infer_vars_rel = es.es_infer_vars_rel;
           es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
+          es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
           es_infer_heap = es.es_infer_heap;
           es_infer_pure = es.es_infer_pure;
           es_infer_rel = es.es_infer_rel;
