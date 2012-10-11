@@ -3362,6 +3362,62 @@ and drop_hrel_hf hf hp_names=
     | HFalse
     | HEmp -> (hf,[])
 
+and drop_hnodes_f f hp_names=
+  match f with
+    | Base fb -> let nfb = drop_hnodes_hf fb.formula_base_heap hp_names in
+        (Base {fb with formula_base_heap =  nfb;})
+    | Or orf -> let nf1 =  drop_hnodes_f orf.formula_or_f1 hp_names in
+                let nf2 =  drop_hnodes_f orf.formula_or_f2 hp_names in
+       ( Or {orf with formula_or_f1 = nf1;
+                formula_or_f2 = nf2;})
+    | Exists fe -> let nfe = drop_hnodes_hf fe.formula_exists_heap hp_names in
+        (Exists {fe with formula_exists_heap = nfe ;})
+
+and drop_hnodes_hf hf0 hp_names=
+  let rec helper hf=
+  match hf with
+    | Star {h_formula_star_h1 = hf1;
+            h_formula_star_h2 = hf2;
+            h_formula_star_pos = pos} ->
+        let n_hf1 = helper hf1 in
+        let n_hf2 = helper hf2 in
+        let newf =
+        (match n_hf1,n_hf2 with
+          | (HEmp,HEmp) -> HEmp
+          | (HEmp,_) -> n_hf2
+          | (_,HEmp) -> n_hf1
+          | _ -> (Star {h_formula_star_h1 = n_hf1;
+                       h_formula_star_h2 = n_hf2;
+                       h_formula_star_pos = pos})
+        ) in
+        (newf)
+    | Conj { h_formula_conj_h1 = hf1;
+             h_formula_conj_h2 = hf2;
+             h_formula_conj_pos = pos} ->
+        let n_hf1 = helper hf1 in
+        let n_hf2 = helper hf2 in
+        (Conj { h_formula_conj_h1 = n_hf1;
+               h_formula_conj_h2 = n_hf2;
+               h_formula_conj_pos = pos})
+    | Phase { h_formula_phase_rd = hf1;
+              h_formula_phase_rw = hf2;
+              h_formula_phase_pos = pos} ->
+        let n_hf1 = helper hf1 in
+        let n_hf2 = helper hf2 in
+        (Phase { h_formula_phase_rd = n_hf1;
+              h_formula_phase_rw = n_hf2;
+              h_formula_phase_pos = pos})
+    | DataNode hd ->  if CP.mem_svl hd.h_formula_data_node hp_names then HEmp
+        else hf
+    | ViewNode _
+    | HRel _
+    | Hole _
+    | HTrue
+    | HFalse
+    | HEmp -> hf
+  in helper hf0
+
+
 and drop_data_view_hrel_nodes f fn_data_select fn_view_select fn_hrel_select dnodes vnodes relnodes=
   match f with
     | Base fb ->

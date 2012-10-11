@@ -1527,21 +1527,53 @@ let generalize_one_hp prog par_defs=
     let subst = List.combine args args0 in
     (CF.subst subst f)
   in
-  DD.ninfo_pprint ">>>>>> generalize_one_hp: <<<<<<" no_pos;
+  DD.info_pprint ">>>>>> generalize_one_hp: <<<<<<" no_pos;
   let hp, args, _ = (List.hd par_defs) in
-  DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")") no_pos;
+  (* DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")") no_pos; *)
   let defs = List.map (obtain_and_norm_def args) par_defs in
     (*remove duplicate*)
   let defs1 = Gen.BList.remove_dups_eq (fun f1 f2 -> SAU.check_relaxeq_formula f1 f2) defs in
   (*find longest hnodes common for more than 2 formulas*)
-    (*make disjunction*)
-  let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 (CF.pos_of_formula f1))
-    (List.hd defs1) (List.tl defs1) in
-  DD.ninfo_pprint (" =: " ^ (Cprinter.prtt_string_of_formula def) ) no_pos;
-  (hp, (CP.HPRelDefn hp, (*CF.formula_of_heap*)
-        (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, no_pos))
- (*no_pos*),
-        def))
+  (*each hds of hdss is def of a next_root*)
+  let defs = SAU.get_longest_common_hnodes_list prog hp args defs1 in
+  defs
+  (* let hdss, defs2, next_roots = SAU.get_longest_common_hnodes_list prog hp args defs1 in *)
+  (* if hdss = [] then *)
+ (*  (\*make disjunction*\) *)
+ (*    let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 (CF.pos_of_formula f1)) *)
+ (*      (List.hd defs2) (List.tl defs2) in *)
+ (*    DD.info_pprint (" =: " ^ (Cprinter.prtt_string_of_formula def) ) no_pos; *)
+ (*    let def1 = (hp, (CP.HPRelDefn hp, (\*CF.formula_of_heap*\) *)
+ (*          (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, no_pos)) *)
+ (* (\*no_pos*\), *)
+ (*        def)) in *)
+ (*    [def1] *)
+ (*  else *)
+ (*    begin *)
+ (*        match next_roots with *)
+ (*          | [] -> report_error no_pos "sa.generalize_one_hp: sth wrong" *)
+ (*          | [a] -> *)
+ (*              (\*generate new hp*\) *)
+ (*              let n_hprel,n_hp =  SAU.add_raw_hp_rel prog ([a]@(List.tl args)) no_pos in *)
+ (*              (\*first rel def for the orig*\) *)
+ (*              let rest =  (hdss@[n_hprel]) in *)
+ (*              let orig_defs_h = List.fold_left (fun hf1 hf2 -> CF.mkStarH hf1 hf2 no_pos) (List.hd rest) (List.tl rest) in *)
+ (*              let orif_def = CF.formula_of_heap orig_defs_h no_pos in *)
+ (*              DD.info_pprint (" =: " ^ (Cprinter.prtt_string_of_formula orif_def) ) no_pos; *)
+ (*              let def1 = (hp, (CP.HPRelDefn hp, (\*CF.formula_of_heap*\) *)
+ (*               (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, no_pos)) *)
+ (* (\*no_pos*\), orif_def)) in *)
+ (*    (\*make disjunction*\) *)
+ (*              DD.info_pprint (Cprinter.string_of_h_formula n_hprel) no_pos; *)
+ (*              let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 (CF.pos_of_formula f1)) *)
+ (*      (List.hd defs2) (List.tl defs2) in *)
+ (*              DD.info_pprint (" =: " ^ (Cprinter.prtt_string_of_formula def) ) no_pos; *)
+ (*              let n_hp1 = List.hd n_hp in *)
+ (*              let def2 = (n_hp1, (CP.HPRelDefn n_hp1, n_hprel, def)) in *)
+ (*              [def1;def2] *)
+ (*          | _ -> report_error no_pos "sa.generalize_one_hp: now we does not handle more than two ptr fields" *)
+ (*        end *)
+
 let get_def_body (a1,args,a3,olf,orf)=
   match olf,orf with
     | Some f, None -> (a1,args,f)
@@ -1648,7 +1680,7 @@ let pardef_subst_fix_x unk_hps groups=
 
 let pardef_subst_fix unk_hps groups=
   let pr1 = pr_list_ln (pr_list_ln string_of_par_def_w_name_short) in
-  Debug.no_1 "pardef_subst_fix" pr1 pr1
+  Debug.ho_1 "pardef_subst_fix" pr1 pr1
       (fun _ -> pardef_subst_fix_x unk_hps groups) groups
 
 let remove_dups_pardefs_x grp=
@@ -1684,7 +1716,7 @@ let generalize_hps_par_def prog unk_hps par_defs=
   *)
   let groups2 = pardef_subst_fix (List.map (fun (hp,_) -> hp) unk_hps) groups1 in
   (*each group, do union partial definition*)
-  (List.map (generalize_one_hp prog) groups2)
+  List.concat ((List.map (generalize_one_hp prog) groups2))
 
 let drop_unk_hps unk_hp_args cs=
   let unk_hps,_ = List.split unk_hp_args in
@@ -2088,9 +2120,9 @@ let infer_hps_x prog (hp_constrs: CF.hprel list):(CF.hprel list * hp_rel_def lis
   DD.ninfo_pprint (" remains: " ^
      (let pr1 = pr_list_ln Cprinter.string_of_hprel in pr1 constr3) ) no_pos;
   let hp_defs = hp_defs@hp_def_from_split@unk_hp_def in
-   DD.ninfo_pprint ">>>>>> step 7: mathching with predefined predicates <<<<<<" no_pos;
+   DD.info_pprint ">>>>>> step 7: mathching with predefined predicates <<<<<<" no_pos;
   let m = match_hps_views hp_defs prog.CA.prog_view_decls in
-  let _ =  DD.ninfo_pprint (" matching: " ^
+  let _ =  DD.info_pprint (" matching: " ^
     (let pr = pr_list_ln (fun (hp,view_names) -> (!CP.print_sv hp) ^ " === " ^
       ( String.concat " OR " view_names)) in pr m)) no_pos in
   (constr3, hp_defs)
