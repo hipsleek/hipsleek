@@ -2342,3 +2342,20 @@ let remove_dupl_conj_mix_formula_x (f:mix_formula):mix_formula =
 let remove_dupl_conj_mix_formula (f:mix_formula):mix_formula = 
   Debug.no_1 "remove_dupl_conj_mix_formula" !print_mix_formula !print_mix_formula 
       remove_dupl_conj_mix_formula_x f
+
+
+(*extract lockset constraints from a formula*)
+let extractLS_mix_formula_x (mf : mix_formula) : mix_formula =
+  match mf with
+    | OnePF f -> 
+        let mf_delayed = Cpure.extractLS_pure f in
+        (OnePF mf_delayed)
+    | MemoF mp -> 
+        let f = fold_mem_lst (mkTrue no_pos) false true mf in
+        let delayed = Cpure.extractLS_pure f in
+        (mix_of_pure delayed)
+
+(*extract lockset constraints from a formula*)
+let extractLS_mix_formula (mf : mix_formula) : mix_formula =
+  Debug.ho_1 "extractLS_mix_formula" !print_mix_formula !print_mix_formula
+      extractLS_mix_formula_x mf

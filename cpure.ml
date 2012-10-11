@@ -1492,6 +1492,8 @@ and mkEqVarInt (sv : spec_var) (i : int) pos =
 
 and mkTrue_p pos = BConst (true, pos)
 
+and mkTrue_b pos = (BConst (true, pos),None)
+
 and mkTrue pos =  BForm ((BConst (true, pos), None),None)
 
 and mkFalse pos = BForm ((BConst (false, pos), None),None)
@@ -7874,3 +7876,48 @@ let is_bag_constraint (e: formula) : bool =
   in
   let or_list = List.fold_left (||) false in
   fold_formula e (nonef, is_bag_b_constraint, f_e) or_list
+
+and extractLS_b_formula (bf : b_formula) : b_formula =
+  let (pf,_) = bf in
+  (match pf with
+    | BagIn (sv,e,pos)
+    | BagNotIn (sv,e,pos) ->
+        let vars = afv e in
+        let b = List.exists (fun v -> (name_of_spec_var v) = ls_name) vars in
+        if b then bf else mkTrue_b no_pos
+    | _ -> mkTrue_b no_pos)
+
+let extractLS_pure_x (f : formula) : formula =
+  let rec helper f = 
+    match f with
+      | BForm (bf, lbl) ->
+          let n_bf = extractLS_b_formula bf in
+          BForm (n_bf, lbl)
+      | And (f1, f2, pos) ->
+          let n_f1 = helper f1 in
+          let n_f2 = helper f2 in
+          And (n_f1, n_f2, pos)
+      | AndList b -> 
+          let nf = List.fold_left (fun ls_f (_,f_b) -> 
+              let nf = helper f_b in
+              And (ls_f, nf, no_pos)
+          ) (mkTrue no_pos) b in
+          nf
+      | Or (f1, f2, lbl, pos) ->
+          let n_f1 = helper f1 in
+          let n_f2 = helper f2 in
+          Or (n_f1, n_f2, lbl, pos)
+      | Not (f, lbl, pos) ->
+          let n_f = helper f in
+          Not (n_f, lbl, pos)
+      | Forall (sv, f, lbl, pos) ->
+          let n_f = helper f in
+          Forall (sv, n_f, lbl, pos)
+      | Exists (sv, f, lbl, pos) ->
+          let n_f = helper f in
+          Exists (sv, n_f, lbl, pos)
+  in helper f
+
+let extractLS_pure (pf : formula) : formula = 
+  Debug.ho_1 "extractLS_pure" !print_formula !print_formula 
+      extractLS_pure_x pf

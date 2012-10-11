@@ -8156,3 +8156,23 @@ and norm_struc_vperm_x struc_f ref_vars val_vars = match struc_f with
 				formula_struc_or_f2= norm_struc_vperm_x b.formula_struc_or_f2 ref_vars val_vars;}
   | EList b-> EList (map_l_snd (fun c-> norm_struc_vperm_x c ref_vars val_vars) b)
  
+(*partion a formula into delayed formula and the rest
+  Indeed, donot partition: extract + rename instead
+*)
+and partLS (f : formula) : MCP.mix_formula * formula =
+  let pr_o = pr_pair !print_mix_formula !print_formula in
+  Debug.ho_1 "partLS" !print_formula pr_o
+      partLS_x f
+
+and partLS_x (f : formula) : MCP.mix_formula * formula =
+  (extractLS f,f)
+
+(*extract lockset constraints from a formula*)
+and extractLS (f : formula) : MCP.mix_formula =
+  Debug.ho_1 "extractLS" !print_formula !print_mix_formula
+      extractLS_x f
+
+and extractLS_x (f : formula) : MCP.mix_formula  =
+  let h, p, fl, t, a = split_components f in
+  let p_delayed = MCP.extractLS_mix_formula p in
+  p_delayed
