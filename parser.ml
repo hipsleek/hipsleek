@@ -586,15 +586,16 @@ field_list2:[[
  (********** Views **********)
 
 view_decl: 
-  [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv (*; li= opt_inv_lock *)
+  [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock
       -> { vh with view_formula = (fst vb);
           view_invariant = oi; 
+          view_inv_lock = li;
           try_case_inference = (snd vb) } ]];
 
-(* opt_inv_lock: [[t=OPT inv_lock -> t]]; *)
+opt_inv_lock: [[t=OPT inv_lock -> t]];
 
-(* inv_lock: *)
-(*   [[`INVLOCK; dc=disjunctive_constr -> (F.subst_stub_flow n_flow dc)]]; *)
+inv_lock:
+  [[`INVLOCK; dc=disjunctive_constr -> (F.subst_stub_flow n_flow dc)]];
 
 opt_inv: [[t=OPT inv -> un_option t (P.mkTrue no_pos)]];
 
@@ -653,7 +654,7 @@ view_header:
           view_typed_vars = cids_t;
           view_pt_by_self  = [];
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
-          (* view_inv_lock = None; *)
+          view_inv_lock = None;
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           try_case_inference = false;
 			}]];

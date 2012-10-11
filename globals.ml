@@ -458,8 +458,6 @@ let finalize_name = "finalize"
 let acquire_name = "acquire"
 let release_name = "release"
 let lock_name = "lock"
-let lock_init_name = "islock"
-let inv_typ = Named "INV" (*invariant typ in args*)
 
 let ls_name = "ls"
 let ls_data_typ = "lock"
@@ -505,8 +503,6 @@ let elim_exists = ref true
 let allow_imm = ref false (*imm will delay checking guard conditions*)
 
 let ann_derv = ref false
-
-let allow_para = ref true (*allow concurrency verification*)
 
 let allow_ls = ref true (*enable lockset during verification*)
 

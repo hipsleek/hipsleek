@@ -60,8 +60,7 @@ and view_decl = {
     view_data_name : ident;
     view_formula : F.struc_formula; (* case-structured formula *)
     view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
-    (* view_inv_lock : F.formula option; *)
-    is_lock_inv : bool; (*indicate whether this predicate is a lock invariant*)
+    view_inv_lock : F.formula option;
     mutable view_x_formula : (MP.mix_formula); (*XPURE 1 -> revert to P.formula*)
     mutable view_baga : Gen.Baga(P.PtrSV).baga;
     mutable view_addr_vars : P.spec_var list;
@@ -867,17 +866,17 @@ let is_rec_view_def prog (name : ident) : bool =
    vdef.view_is_rec
 
 (*check whether a view is a lock invariant*)
-(* let get_lock_inv prog (name : ident) : (bool * F.formula) = *)
-(*   let vdef = look_up_view_def_raw prog.prog_view_decls name in *)
-(*   match vdef.view_inv_lock with *)
-(*     | None -> (false, (F.mkTrue (F.mkTrueFlow ()) no_pos)) *)
-(*     | Some f -> (true, f) *)
+let get_lock_inv prog (name : ident) : (bool * F.formula) =
+  let vdef = look_up_view_def_raw prog.prog_view_decls name in
+  match vdef.view_inv_lock with
+    | None -> (false, (F.mkTrue (F.mkTrueFlow ()) no_pos))
+    | Some f -> (true, f)
 
-(* let is_lock_inv prog (name : ident) : bool = *)
-(*   let vdef = look_up_view_def_raw prog.prog_view_decls name in *)
-(*   match vdef.view_inv_lock with *)
-(*     | None -> false *)
-(*     | Some f -> true *)
+let is_lock_inv prog (name : ident) : bool =
+  let vdef = look_up_view_def_raw prog.prog_view_decls name in
+  match vdef.view_inv_lock with
+    | None -> false
+    | Some f -> true
 
 
 let self_param vdef = P.SpecVar (Named vdef.view_data_name, self, Unprimed) 

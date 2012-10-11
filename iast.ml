@@ -53,7 +53,7 @@ and view_decl = { view_name : ident;
 		  mutable view_typed_vars : (typ * ident) list;
 		  view_invariant : P.formula;
 		  view_formula : Iformula.struc_formula;
-          (* view_inv_lock : F.formula option; *)
+          view_inv_lock : F.formula option;
 		  mutable view_pt_by_self : ident list; (* list of views pointed by self *)
 		  (* view_targets : ident list;  *)(* list of views pointed within declaration *)
 		  try_case_inference: bool}
@@ -1114,12 +1114,7 @@ and update_fixpt (vl:(view_decl * ident list *ident list) list)  =
 	  (* print_endline ("update_fixpt for " ^ v.view_name);
 		 print_endline ("Feasible self type: " ^ (String.concat "," a)); *)
       v.view_pt_by_self<-tl;
-      if (List.length a==0) then
-        if (!Globals.allow_para) then
-          (*Allow a predicate to have no self --> it is a lock invariant*)
-          ()
-        else
-        report_error no_pos ("self of "^(v.view_name)^" cannot have its type determined")
+      if (List.length a==0) then report_error no_pos ("self of "^(v.view_name)^" cannot have its type determined")
       else v.view_data_name <- List.hd a) vl 
 
 and set_check_fixpt (data_decls : data_decl list) (view_decls: view_decl list)  =
