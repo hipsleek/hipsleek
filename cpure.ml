@@ -118,7 +118,7 @@ and p_formula =
   (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
 
 and sequence = {
-  seq_element: exp;
+  seq_measure: exp;
   seq_domain_lb: exp;
   seq_domain_ub: exp;
   seq_domain_ub_include: bool;
@@ -801,7 +801,7 @@ and afv (af : exp) : spec_var list =
     | Max (a1, a2, _) -> combine_avars a1 a2
     | Min (a1, a2, _) -> combine_avars a1 a2
           (*| BagEmpty (_) -> []*)
-    | Sequence (seq, _, _) -> afv seq.seq_element
+    | Sequence (seq, _, _) -> afv seq.seq_measure
     | Bag (alist, _) -> let svlist = afv_list alist in
   	  remove_dups_svl svlist
     | BagUnion (alist, _) -> let svlist = afv_list alist in
@@ -1435,19 +1435,19 @@ and mkLexVar_pure a l1 l2 =
   p
 
 and mkSequence (e: exp) (lb: exp) (ub: exp) (ub_incl: bool) : sequence =
-  { seq_element = e;
+  { seq_measure = e;
     seq_domain_lb = lb;
     seq_domain_ub = ub;
     seq_domain_ub_include = ub_incl; }
 
 (* make sequence domain constraint *)
 and mkSequenceDomain (seq : sequence) pos : formula =
-  let c1 = mkPure (mkGt seq.seq_element seq.seq_domain_lb pos) in
+  let c1 = mkPure (mkGt seq.seq_measure seq.seq_domain_lb pos) in
   let c2 = (
     if seq.seq_domain_ub_include then
-      mkPure (mkLte seq.seq_element seq.seq_domain_ub pos)
+      mkPure (mkLte seq.seq_measure seq.seq_domain_ub pos)
     else
-      mkPure (mkLt seq.seq_element seq.seq_domain_ub pos)
+      mkPure (mkLt seq.seq_measure seq.seq_domain_ub pos)
   ) in
   mkAnd c1 c2 pos
 
@@ -2658,7 +2658,7 @@ and e_apply_subs sst e = match e with
   | Max (a1, a2, pos) -> Max (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | Min (a1, a2, pos) -> Min (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | Sequence (seq, f, pos) ->
-      let newseq = {seq_element = e_apply_subs sst seq.seq_element;
+      let newseq = {seq_measure = e_apply_subs sst seq.seq_measure;
                     seq_domain_lb = e_apply_subs sst seq.seq_domain_lb;
                     seq_domain_ub = e_apply_subs sst seq.seq_domain_ub;
                     seq_domain_ub_include = seq.seq_domain_ub_include;} in
@@ -2715,7 +2715,7 @@ and e_apply_one (fr, t) e = match e with
   | Max (a1, a2, pos) -> Max (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | Min (a1, a2, pos) -> Min (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | Sequence (seq, f, pos) ->
-      let newseq = {seq_element = e_apply_one (fr, t) seq.seq_element;
+      let newseq = {seq_measure = e_apply_one (fr, t) seq.seq_measure;
                     seq_domain_lb = e_apply_one (fr, t) seq.seq_domain_lb;
                     seq_domain_ub = e_apply_one (fr, t) seq.seq_domain_ub;
                     seq_domain_ub_include = seq.seq_domain_ub_include;} in
@@ -2839,7 +2839,7 @@ and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
   | Max (a1, a2, pos) -> Max (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Min (a1, a2, pos) -> Min (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Sequence (seq, f, pos) ->
-      let newseq = {seq_element = a_apply_par_term sst seq.seq_element;
+      let newseq = {seq_measure = a_apply_par_term sst seq.seq_measure;
                     seq_domain_lb = a_apply_par_term sst seq.seq_domain_lb;
                     seq_domain_ub = a_apply_par_term sst seq.seq_domain_ub;
                     seq_domain_ub_include = seq.seq_domain_ub_include;} in
@@ -2938,7 +2938,7 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | Max (a1, a2, pos) -> Max (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Min (a1, a2, pos) -> Min (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Sequence (seq, f, pos) ->
-      let newseq = {seq_element = a_apply_one_term (fr, t) seq.seq_element;
+      let newseq = {seq_measure = a_apply_one_term (fr, t) seq.seq_measure;
                     seq_domain_lb = a_apply_one_term (fr, t) seq.seq_domain_lb;
                     seq_domain_ub = a_apply_one_term (fr, t) seq.seq_domain_ub;
                     seq_domain_ub_include = seq.seq_domain_ub_include;} in
@@ -3026,8 +3026,8 @@ and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*e
           (b1||b2, Min (r1 , r2 , pos))
               (*| BagEmpty (pos) -> BagEmpty (pos)*)
     | Sequence (seq, f, pos) ->
-        let bs, r = helper crt_var seq.seq_element in
-        let newseq = {seq_element = r;
+        let bs, r = helper crt_var seq.seq_measure in
+        let newseq = {seq_measure = r;
                       seq_domain_lb = seq.seq_domain_lb;
                       seq_domain_ub = seq.seq_domain_ub;
                       seq_domain_ub_include = seq.seq_domain_ub_include;} in 
@@ -4006,7 +4006,7 @@ and e_apply_one_exp (fr, t) e = match e with
   | Min (a1, a2, pos) ->
       Min (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
   | Sequence (seq, f, pos) ->
-      let newseq = {seq_element = e_apply_one_exp (fr, t) seq.seq_element;
+      let newseq = {seq_measure = e_apply_one_exp (fr, t) seq.seq_measure;
                     seq_domain_lb = e_apply_one_exp (fr, t) seq.seq_domain_lb;
                     seq_domain_ub = e_apply_one_exp (fr, t) seq.seq_domain_ub;
                     seq_domain_ub_include = seq.seq_domain_ub_include;} in
@@ -4937,8 +4937,8 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
             let (ne2,r2) = helper new_arg e2 in
             (Min (ne1,ne2,l),f_comb[r1;r2])
         | Sequence (seq, f, l) ->
-            let (ne, nr) = helper new_arg seq.seq_element in
-            let newseq = {seq_element = ne;
+            let (ne, nr) = helper new_arg seq.seq_measure in
+            let newseq = {seq_measure = ne;
                           seq_domain_lb = seq.seq_domain_lb;
                           seq_domain_ub = seq.seq_domain_ub;
                           seq_domain_ub_include = seq.seq_domain_ub_include;} in

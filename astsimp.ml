@@ -4357,7 +4357,7 @@ and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
     | IP.Max (e1, e2, pos) -> CP.Max (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Min (e1, e2, pos) -> CP.Min (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.Sequence (seq, f, pos) ->
-        let newseq = {CP.seq_element = trans_pure_exp seq.IP.seq_element stab;
+        let newseq = {CP.seq_measure = trans_pure_exp seq.IP.seq_measure stab;
                       CP.seq_domain_lb = trans_pure_exp seq.IP.seq_domain_lb stab;
                       CP.seq_domain_ub = trans_pure_exp seq.IP.seq_domain_ub stab;
                       CP.seq_domain_ub_include = seq.IP.seq_domain_ub_include;} in

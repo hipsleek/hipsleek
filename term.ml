@@ -333,7 +333,7 @@ let collect_update_formula_x (transition: CP.formula) (old_exp: CP.exp) (new_exp
 let collect_update_formula (transition: CP.formula) (old_exp: CP.exp) (new_exp: CP.exp) : CP.formula =
   let pr_f = !CP.print_formula in
   let pr_e = !CP.print_exp in
-  Debug.ho_3 "collect_update_formula" pr_f pr_e pr_e pr_f collect_update_formula_x transition old_exp new_exp
+  Debug.no_3 "collect_update_formula" pr_f pr_e pr_e pr_f collect_update_formula_x transition old_exp new_exp
 
 
 let collect_specs_formula_x (transition: CP.formula) : CP.formula =
@@ -367,31 +367,43 @@ let collect_specs_formula_x (transition: CP.formula) : CP.formula =
 
 let collect_specs_formula (transition: CP.formula) : CP.formula =
   let pr_f = !CP.print_formula in
-  Debug.ho_1 "collect_specs_formula" pr_f pr_f collect_specs_formula_x transition
+  Debug.no_1 "collect_specs_formula" pr_f pr_f collect_specs_formula_x transition
 
 
-let drop_specs_unsat_domain_x (specs: CP.formula) (seq: CP.sequence) =
+let refine_specs_adapt_sequence_x (specs: CP.formula) (seq_src: CP.sequence) (seq_dst: CP.sequence) =
   let can_drop_bformula (f: CP.formula) (seq: CP.sequence) = (
     match f with
     | CP.BForm _ ->
-        let domain = CP.mkSequenceDomain seq no_pos in
-        let _ = print_endline ("== domain    = " ^ (!CP.print_formula domain)) in
-        let _ = print_endline ("== f         = " ^ (!CP.print_formula f)) in
-        let _ = print_endline ("== imply_res = " ^ (string_of_bool imply_res)) in
-        let _ = print_endline ("//") in
-        imply_res
+        let delta_var = CP.fresh_new_spec_var (Globals.Float) in
+        let delta_exp = CP.mkVar delta_var no_pos in
+        let dcons = (
+          let c1 = CP.mkPure (CP.mkGt delta_exp seq.CP.seq_domain_lb no_pos) in
+          let c2 = if (seq.CP.seq_domain_ub_include) then
+                     CP.mkPure (CP.mkLte delta_exp seq.CP.seq_domain_ub no_pos)
+                   else CP.mkPure (CP.mkLt delta_exp seq.CP.seq_domain_ub no_pos) in
+          CP.mkAnd c1 c2 no_pos
+        ) in
+        let measure = seq.CP.seq_measure in
+        let mcons = CP.mkPure (CP.mkEq measure delta_exp no_pos) in
+        let msv = (CP.afv measure) @ (CP.fv f) in
+        let msv = CP.remove_dups_svl msv in
+        let tmp = CP.mkExists msv (CP.mkAnd f mcons no_pos) None no_pos in
+        let new_domain_cons = CP.mkForall [delta_var] (CP.mkImply dcons tmp no_pos) None no_pos in
+        let keep, _, _ = TP.imply (CP.mkTrue no_pos) new_domain_cons "" false None in 
+        let can_drop = not keep in
+        can_drop
     | _ -> report_error no_pos "Error!!! can_drop_bformula: f has to be CP.BForm"
   ) in
-  let rec drop_helper (specs: CP.formula) (domain: CP.formula) = (
+  let rec drop_helper (specs: CP.formula) (seq: CP.sequence) = (
     match specs with
-    | CP.BForm _ -> if (can_drop_bformula specs domain) then (CP.mkTrue no_pos) else specs
+    | CP.BForm _ -> if (can_drop_bformula specs seq) then (CP.mkTrue no_pos) else specs
     | CP.And (f1, f2, p) -> (
         let newf1 = match f1 with
-          | CP.BForm _ -> if (can_drop_bformula f1 domain) then None else (Some f1)
-          | _ -> Some (drop_helper f1 domain) in
+          | CP.BForm _ -> if (can_drop_bformula f1 seq) then None else (Some f1)
+          | _ -> Some (drop_helper f1 seq) in
         let newf2 = match f2 with
-          | CP.BForm _ -> if (can_drop_bformula f2 domain) then None else (Some f2)
-          | _ -> Some (drop_helper f2 domain) in
+          | CP.BForm _ -> if (can_drop_bformula f2 seq) then None else (Some f2)
+          | _ -> Some (drop_helper f2 seq) in
         match newf1, newf2 with
         | None, None -> CP.mkTrue no_pos
         | None, Some nf -> nf
@@ -404,12 +416,14 @@ let drop_specs_unsat_domain_x (specs: CP.formula) (seq: CP.sequence) =
     | CP.Forall _ -> report_error no_pos "drop_helper: handle CP.Forall later"
     | CP.Exists _ -> report_error no_pos "drop_helper: handle CP.Exists later"
   ) in
-  drop_helper specs domain
+  let tmpspecs = drop_helper specs seq_src in
+  let newspecs = drop_helper tmpspecs seq_dst in
+  newspecs
 
 
-let drop_specs_unsat_domain (specs: CP.formula) (seq: CP.sequence) =
+let refine_specs_adapt_sequence (specs: CP.formula) (seq_src: CP.sequence) (seq_dst: CP.sequence) =
   let pr_f = !CP.print_formula in
-  Debug.ho_1 "drop_specs_unsat_domain" pr_f pr_f (fun x -> drop_specs_unsat_domain_x x seq) specs
+  Debug.no_1 "refine_specs_adapt_sequence" pr_f pr_f (fun x -> refine_specs_adapt_sequence_x x seq_src seq_dst) specs
 
 
 (* let rec has_variance_struc struc_f = *)
@@ -507,19 +521,19 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
   if flag then (
     match src, dst with
     | CP.Sequence (seq_s, loopcond_s, _) , CP.Sequence (seq_d, loopcond_d, _) -> (
-        let element_s = seq_s.CP.seq_element in
-        let element_d = seq_d.CP.seq_element in
+        let measure_s = seq_s.CP.seq_measure in
+        let measure_d = seq_d.CP.seq_measure in
         let domain_s = CP.mkSequenceDomain seq_s pos in
         let domain_d = CP.mkSequenceDomain seq_d pos in
         let limit_s = seq_s.CP.seq_domain_lb in
         let limit_d = seq_d.CP.seq_domain_lb in
-        let _ = print_endline ("== lhs = " ^ (!CP.print_formula lhs)) in
-        let update_formula = collect_update_formula lhs seq_s.CP.seq_element seq_d.CP.seq_element in
+        let update_formula = collect_update_formula lhs measure_s measure_d in
         let specs_formula = collect_specs_formula lhs in
-        (* let droped_specs = drop_specs_unsat_domain specs_formula domain in *)
+        let refined_specs = refine_specs_adapt_sequence specs_formula seq_s seq_d in
+        let assumption = CP.mkAnd update_formula refined_specs pos in
         let domain_constraint = (
           (* domain is covered in the recursive call *)
-          let domain_lhs = CP.mkAnd lhs domain_s pos in
+          let domain_lhs = CP.mkAnd assumption domain_s pos in
           let domain_rhs = domain_d in
           let _ = Debug.dinfo_pprint  "++ In function create_measure_constraint_x:" no_pos in
           let _ = Debug.dinfo_pprint ("   domain_lsh        = " ^ (Cprinter.string_of_pure_formula domain_lhs)) no_pos in
@@ -528,21 +542,21 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
         ) in
         let decrease_constraint = (
           (* measure decreases in the recursive call *)
-          let decrease_lhs = CP.mkAnd lhs (CP.mkAnd domain_s domain_d pos) pos in
+          let decrease_lhs = CP.mkAnd assumption (CP.mkAnd domain_s domain_d pos) pos in
           let decrease_rhs = (
             match limit_s, limit_d with
             | CP.SConst (PositiveInfty, _), _
             | _, CP.SConst (PositiveInfty, _) -> CP.mkFalse pos
             | CP.SConst (NegativeInfty, _), CP.SConst (NegativeInfty, _) ->
                 (* es > ed *)
-                CP.mkPure (CP.mkGt element_s element_d pos)
+                CP.mkPure (CP.mkGt measure_s measure_d pos)
             | CP.SConst (NegativeInfty, _), _
             | _, CP.SConst (NegativeInfty, _) -> CP.mkFalse pos
             | _ ->
                 (* (es > ls) & (ed > ld) & (es > ed) *)
-                let dc1 = CP.mkPure (CP.mkGt element_s limit_s pos) in
-                let dc2 = CP.mkPure (CP.mkGt element_d limit_d pos) in
-                let dc3 = CP.mkPure (CP.mkGt element_s element_d pos) in
+                let dc1 = CP.mkPure (CP.mkGt measure_s limit_s pos) in
+                let dc2 = CP.mkPure (CP.mkGt measure_d limit_d pos) in
+                let dc3 = CP.mkPure (CP.mkGt measure_s measure_d pos) in
                 CP.mkAnd dc1 (CP.mkAnd dc2 dc3 no_pos) pos
           ) in
           let _ = Debug.dinfo_pprint  "++ In function create_measure_constraint_x:" no_pos in
@@ -560,20 +574,22 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
   ) else (
     match src, dst with
     | CP.Sequence (seq_s, loopcond_s, _) , CP.Sequence (seq_d, loopcond_d, _) -> (
-        let element_s = seq_s.CP.seq_element in
-        let element_d = seq_d.CP.seq_element in
+        let measure_s = seq_s.CP.seq_measure in
+        let measure_d = seq_d.CP.seq_measure in
         let domain_s = CP.mkSequenceDomain seq_s pos in
         let domain_d = CP.mkSequenceDomain seq_d pos in
-        let limit_s = seq_s.CP.seq_domain_lb in
-        let limit_d = seq_d.CP.seq_domain_lb in
+        let update_formula = collect_update_formula lhs measure_s measure_d in
+        let specs_formula = collect_specs_formula lhs in
+        let refined_specs = refine_specs_adapt_sequence specs_formula seq_s seq_d in
+        let assumption = CP.mkAnd update_formula refined_specs pos in
         let domain_constraint = (
-          let domain_lhs = CP.mkAnd lhs domain_s pos in
+          let domain_lhs = CP.mkAnd assumption domain_s pos in
           let domain_rhs = domain_d in
           CP.mkImply domain_lhs domain_rhs pos
         ) in
         let equal_constraint = (
-          let equal_lhs = CP.mkAnd lhs (CP.mkAnd domain_s domain_d pos) pos in
-          let equal_rhs = CP.mkPure (CP.mkEq element_s element_d pos) in
+          let equal_lhs = CP.mkAnd assumption (CP.mkAnd domain_s domain_d pos) pos in
+          let equal_rhs = CP.mkPure (CP.mkEq measure_s measure_d pos) in
           CP.mkImply equal_lhs equal_rhs pos
         ) in
         CP.mkAnd domain_constraint equal_constraint pos

@@ -151,7 +151,7 @@ let rec string_of_formula_exp = function
       "min(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
   | P.Sequence (seq, f, l) ->
       "Sequence{" 
-      ^ (string_of_formula_exp seq.P.seq_element) ^ "@("
+      ^ (string_of_formula_exp seq.P.seq_measure) ^ "@("
       ^ (string_of_formula_exp seq.P.seq_domain_lb) ^ ","
       ^ (string_of_formula_exp seq.P.seq_domain_ub)
       ^ (if seq.P.seq_domain_ub_include then "], " else "), ")

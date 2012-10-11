@@ -68,7 +68,7 @@ and cvc3_of_exp a = match a with
   | CP.Pow _ -> failwith ("[cvc3.ml]: pow is not supported.")
   | CP.Max _ 
   | CP.Min _ -> failwith ("cvc3.cvc3_of_exp: min/max should not appear here")
-  | CP.Sequence _ -> failwith ("[cvc3.ml]: Seq is not supported.")
+  | CP.Sequence _ -> failwith ("[cvc3.ml]: Sequence is not supported.")
   | CP.Bag ([], _) -> ""
   | CP.Bag _ | CP.BagUnion _ | CP.BagIntersect _ | CP.BagDiff _ ->
   	    failwith ("[cvc3.ml]: ERROR in constraints (set should not appear here)");

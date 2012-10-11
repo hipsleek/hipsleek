@@ -50,7 +50,7 @@ and p_formula =
   | RelForm of (ident * (exp list) * loc)           (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
 
 and sequence = {
-  seq_element: exp;
+  seq_measure: exp;
   seq_domain_lb: exp;
   seq_domain_ub: exp;
   seq_domain_ub_include: bool;
@@ -220,7 +220,7 @@ and afv (af : exp) : (ident * primed) list =
   | Sqrt (a, _) -> afv a
   | Max (a1, a2, _) -> combine_avars a1 a2
   | Min (a1, a2, _) -> combine_avars a1 a2
-  | Sequence (seq, _, _) -> afv seq.seq_element
+  | Sequence (seq, _, _) -> afv seq.seq_measure
   | BagDiff (a1,a2,_) ->  combine_avars a1 a2
   | Bag(d,_)
   | BagIntersect (d,_)
@@ -465,7 +465,7 @@ and mkForall (vs : (ident * primed) list) (f : formula) lbl pos = match vs with
 		  ef
 
 and mkSequence (e: exp) (lb: exp) (ub: exp) (ub_incl: bool) : sequence =
-  { seq_element = e;
+  { seq_measure = e;
     seq_domain_lb = lb;
     seq_domain_ub = ub;
     seq_domain_ub_include = ub_incl; }
@@ -658,7 +658,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | Min (a1, a2, pos) -> Min (e_apply_one p a1, e_apply_one p a2, pos)
 	(*| BagEmpty (pos) -> BagEmpty (pos)*)
   | Sequence (seq, f, pos) ->
-      let newseq = { seq_element = e_apply_one p seq.seq_element;
+      let newseq = { seq_measure = e_apply_one p seq.seq_measure;
                      seq_domain_lb = e_apply_one p seq.seq_domain_lb;
                      seq_domain_ub = e_apply_one p seq.seq_domain_ub;
                      seq_domain_ub_include = seq.seq_domain_ub_include;} in
@@ -834,7 +834,7 @@ and find_lexp_exp (e: exp) ls =
     | Sqrt (e1, _) -> find_lexp_exp e1 ls
     | Min (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
     | Max (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
-    | Sequence (seq, _, _) -> find_lexp_exp seq.seq_element ls
+    | Sequence (seq, _, _) -> find_lexp_exp seq.seq_measure ls
     | Bag (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
     | BagUnion (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
     | BagIntersect (el, _) -> List.fold_left (fun acc e -> acc @ find_lexp_exp e ls) [] el
@@ -890,7 +890,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   | Sqrt (exp1, _) -> contain_vars_exp exp1
   | Max (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
   | Min (exp1, exp2, _) -> (contain_vars_exp exp1) || (contain_vars_exp exp2)
-  | Sequence (seq, _, _) -> contain_vars_exp seq.seq_element
+  | Sequence (seq, _, _) -> contain_vars_exp seq.seq_measure
   | Bag (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
   | BagUnion (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
   | BagIntersect (expl, _) -> List.exists (fun e -> contain_vars_exp e) expl
@@ -1308,7 +1308,7 @@ let rec typ_of_exp (e: exp) : typ =
                                  merge_types ty1 ty2
   | Abs (ex1, _)              -> typ_of_exp ex1
   | Sqrt (ex1, _)             -> typ_of_exp ex1
-  | Sequence (seq, _, _)      -> typ_of_exp seq.seq_element
+  | Sequence (seq, _, _)      -> typ_of_exp seq.seq_measure
   (* bag expressions *)
   | Bag (ex_list, _)
   | BagUnion (ex_list, _)

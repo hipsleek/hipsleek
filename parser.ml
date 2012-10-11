@@ -1217,7 +1217,7 @@ cexp_w :
         let seq = P.mkSequence e lb ub ub_incl in
         let lc = match loopcond with
                  | Pure_f f -> f
-                 | Pure_c c -> P.mkPure (P.mkGte seq.P.seq_element c no_pos) in
+                 | Pure_c c -> P.mkPure (P.mkGte seq.P.seq_measure c no_pos) in
         Pure_c (P.Sequence (seq, lc, get_pos_camlp4 _loc 1))
     | `OPAREN; t=SELF; `CPAREN -> t
     (* An Hoa : extend with multi-dimensional array access *)
@@ -1291,12 +1291,12 @@ measures_lex_sqr :[[`OSQUARE; t=LIST0 cexp SEP `COMMA; `CSQUARE -> t]];
 
 measure_sequence:
   [[
-    element = cexp; `AT; `OPAREN; domain_lb = cexp; `COMMA; domain_ub = cexp; `CPAREN ->
+    measure = cexp; `AT; `OPAREN; domain_lb = cexp; `COMMA; domain_ub = cexp; `CPAREN ->
       let domain_ub_include = false in
-      (element, domain_lb, domain_ub, domain_ub_include)
-  | element = cexp; `AT; `OPAREN; domain_lb = cexp; `COMMA; domain_ub = cexp; `CSQUARE ->
+      (measure, domain_lb, domain_ub, domain_ub_include)
+  | measure = cexp; `AT; `OPAREN; domain_lb = cexp; `COMMA; domain_ub = cexp; `CSQUARE ->
       let domain_ub_include = true in
-      (element, domain_lb, domain_ub, domain_ub_include)
+      (measure, domain_lb, domain_ub, domain_ub_include)
   ]];
 
 opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];

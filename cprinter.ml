@@ -666,7 +666,7 @@ let rec pr_formula_exp (e:P.exp) =
     | P.Pow (e1, e2, _) -> fmt_string "pow("; pr_formula_exp e1; fmt_string ", "; pr_formula_exp e2; fmt_string ")";
     | P.Sequence (seq, f, _) ->
         fmt_string "Sequence{";
-        pr_formula_exp seq.CP.seq_element; fmt_string " @ (";
+        pr_formula_exp seq.CP.seq_measure; fmt_string " @ (";
         pr_formula_exp seq.CP.seq_domain_lb; fmt_string ",";
         pr_formula_exp seq.CP.seq_domain_ub;
         if seq.CP.seq_domain_ub_include then fmt_string "], " else fmt_string "), ";
@@ -2446,7 +2446,7 @@ and html_of_formula_exp e =
       let args = bin_op_to_list op_min_short exp_assoc_op e in
       html_op_min ^ "(" ^ (String.concat ", " (List.map html_of_formula_exp args)) ^ ")"
   | P.Sequence (seq, f, l) ->
-      "Sequence{" ^ (html_of_formula_exp seq.CP.seq_element) ^ "@("
+      "Sequence{" ^ (html_of_formula_exp seq.CP.seq_measure) ^ "@("
       ^ html_of_formula_exp seq.CP.seq_domain_lb ^ ","
       ^ html_of_formula_exp seq.CP.seq_domain_ub
       ^ (if seq.CP.seq_domain_ub_include then "], " else "), ")

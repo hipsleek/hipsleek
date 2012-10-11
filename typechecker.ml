@@ -264,7 +264,7 @@ and create_bound_constraint measure pos =
   match measure with
   | CP.Sequence (seq, loopcond, _) ->
       let domain = CP.mkSequenceDomain seq pos in
-      let element = seq.CP.seq_element in
+      let measure = seq.CP.seq_measure in
       let limit = seq.CP.seq_domain_lb in
       let termination_constraint = (
         match limit with
@@ -272,9 +272,9 @@ and create_bound_constraint measure pos =
             let _ = report_error pos "Limit can't be PositiveInfty" in
             CP.mkFalse pos
         | CP.SConst (NegativeInfty, _) ->
-            let vars = CP.afv element in
+            let vars = CP.afv measure in
             let bound_var = CP.fresh_new_spec_var Float in
-            let bound_exp = CP.mkPure (CP.mkLt element (CP.mkVar bound_var pos) pos) in
+            let bound_exp = CP.mkPure (CP.mkLt measure (CP.mkVar bound_var pos) pos) in
             let termcond = CP.mkNot_s loopcond in
             let f = CP.mkOr (CP.mkNot_s bound_exp) termcond None pos in
             let fdomain = CP.collect_formula_domain f in
@@ -282,10 +282,10 @@ and create_bound_constraint measure pos =
             let term_formula = CP.mkForall vars fForAll None pos in
             CP.mkExists [bound_var] term_formula None pos
         | _ ->
-            let vars = CP.afv element in
+            let vars = CP.afv measure in
             let epsilon = CP.fresh_new_spec_var Float in
-            let constraint1 = CP.mkPure (CP.mkGt element limit pos) in
-            let constraint2 = CP.mkPure (CP.mkLt element (CP.mkAdd limit (CP.mkVar epsilon pos) pos) pos) in
+            let constraint1 = CP.mkPure (CP.mkGt measure limit pos) in
+            let constraint2 = CP.mkPure (CP.mkLt measure (CP.mkAdd limit (CP.mkVar epsilon pos) pos) pos) in
             let termcond = CP.mkNot_s loopcond in
             let f = CP.mkOr (CP.mkNot_s (CP.mkAnd constraint1 constraint2 pos)) termcond None pos in
             let fdomain = CP.collect_formula_domain f in
