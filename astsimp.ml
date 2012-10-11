@@ -4407,6 +4407,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
     let new_f = { CF.formula_heap = new_h;
                   CF.formula_pure = mix_p;
                   CF.formula_thread = id_var;
+                  CF.formula_delayed = MCP.mkMTrue pos; (*LDK: TO DO*)
                   CF.formula_ref_vars = [];
                   CF.formula_label = None;
                   CF.formula_pos = pos} in

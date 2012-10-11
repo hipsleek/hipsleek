@@ -134,7 +134,8 @@ and flow_store = {
 and one_formula = {
     formula_heap : h_formula;
     formula_pure : MCP.mix_formula;
-    formula_thread : CP.spec_var;
+    formula_thread : CP.spec_var; (*thread identifier*)
+    formula_delayed : MCP.mix_formula;
     formula_ref_vars : CP.spec_var list; (*to update ref vars when join*)
     formula_label : formula_label option;
     formula_pos : loc
@@ -798,14 +799,14 @@ and one_formula_of_formula (f : formula) (tid: CP.spec_var): one_formula =
         formula_base_label = lbl;
         formula_base_pos = pos;
        } ->
-        mkOneFormula h p tid lbl pos
+        mkOneFormula h p tid (MCP.mkMTrue pos) lbl pos
     | Exists {
         formula_exists_heap = h;
         formula_exists_pure = p;
         formula_exists_label = lbl;
         formula_exists_pos = pos;
        } ->
-        mkOneFormula h p tid lbl pos
+        mkOneFormula h p tid (MCP.mkMTrue pos)lbl pos
     | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = "one_formula_of_formula: disjunctive form"} )
 
 and add_formula_and (a: one_formula list) (f:formula) : formula =
@@ -1022,10 +1023,11 @@ and mkBase_w_lbl (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flo
 and mkBase (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flow_formula) (a: one_formula list)(pos : loc) : formula= 
   mkBase_w_lbl h p t fl a pos None
 
-and mkOneFormula (h : h_formula) (p : MCP.mix_formula) (tid : CP.spec_var) lbl (pos : loc) : one_formula= 
+and mkOneFormula (h : h_formula) (p : MCP.mix_formula) (tid : CP.spec_var) (dl : MCP.mix_formula) lbl (pos : loc) : one_formula= 
   {formula_heap = h;
    formula_pure = p;
    formula_thread = tid;
+   formula_delayed = dl;
    formula_ref_vars = [];
    formula_label = lbl;
    formula_pos = pos;

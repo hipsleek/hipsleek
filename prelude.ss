@@ -254,6 +254,9 @@ int array_get_elm_at___2d(int[,] a, int i, int j)
 /* data tid{ */
 /* } */
 
+data lock{
+}
+
 int fork()
   requires true
   ensures true;
