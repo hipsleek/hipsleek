@@ -17,6 +17,6 @@ for FILE in `find $TDIR -name 'll-append*.ss'`; do
 		NRES="${TMP%END-CMP*}"
 		echo "$NRES"
 	else    	
-		echo "### not found\n"
+		echo "### not found"
 	fi
 done
