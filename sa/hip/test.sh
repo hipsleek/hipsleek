@@ -1,22 +1,22 @@
-DIR=../../
+DIR=/home/phuong/Workspace/sa/sleekex/
+TDIR=/home/phuong/Workspace/sa/sleekex/sa/hip/
 
-for FILE in `find . -name 'll-append*.ss'`; do 
+
+for FILE in `find $TDIR -name 'll-append*.ss'`; do 
 	FNAME=$(basename "$FILE")
 	FNAME=${FNAME%.*}
 	echo $FNAME
-	SFILE=$FNAME".ss"
-	CPFILE=$FNAME".cp"
-	CMD="../../hip $SFILE -cp-constrs $CPFILE"
+	echo "================="
+	SFILE=$TDIR$FNAME".ss"
+	CPFILE=$TDIR$FNAME".cp"
+	CMD=$DIR"hip $SFILE -cp-constrs $CPFILE"
 	RES="$($CMD)"
-	if [[ $RES == *INVALID* ]]
+	if [[ $RES == *BEGIN-CMP* ]]
 	then
-	    echo "### invalid"
-	else
-	    	if [[ $RES == *VALID* ]]
-		then	
-			echo "### valid"
-		else
-			echo "### not found"
-		fi	
+	  	TMP="${RES#*BEGIN-CMP}"
+		NRES="${TMP%END-CMP*}"
+		echo "$NRES"
+	else    	
+		echo "### not found"
 	fi
 done

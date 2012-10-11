@@ -1964,6 +1964,15 @@ and check_proc (prog : prog_decl) (iprog: I.prog_decl)(proc : proc_decl) : bool 
 		      let is_match_constrs = CEQ.checkeq_constrs [] (List.map (fun hp -> hp.CF.hprel_lhs,hp.CF.hprel_rhs)
                                                                  hp_lst_assume) infile_constrs in
 		      let match_defs = CEQ.checkeq_defs [] ls_inferred_hps infile_defs in
+		      let _ = print_string ("BEGIN-CMP" ) in
+		      let _ = if(is_match_constrs) then 
+			  print_string ("Check constrs: VALID\n" )
+		      else 
+			   print_string ("Check constrs: INVALID\n" )
+		      in
+		      let pr3 = pr_list_ln (pr_pair Cprinter.string_of_spec_var_list Cprinter.string_of_spec_var) in
+		      let _ = print_endline ("Check defs: \n" ^ pr3 match_defs ) in
+		      let _ = print_endline ("END-CMP" ) in
 		      ()
 		    )
 		    in
