@@ -12,6 +12,7 @@ HeapPred G1(node a).
 
 HeapPred H1(node a).
   HeapPred H2(node a, node b).
+HeapPred HP1(node a, node b).
 //HeapPred G1(node a, node b, node c).
 
 ll<> == self=null
