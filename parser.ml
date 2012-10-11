@@ -268,7 +268,7 @@ let peek_try =
        match Stream.npeek 2 strm with
           | [_; DOT,_] -> ()
           | _ -> raise Stream.Failure)
-
+		  
  let peek_invocation = 
  SHGram.Entry.of_parser "peek_invocation" 
      (fun strm ->
@@ -277,17 +277,7 @@ let peek_try =
           (* | [_; OBRACE,_] -> () *)
           | [_; OSQUARE,_; _; CSQUARE, _ ; OPAREN,_] -> ()
           | _ -> raise Stream.Failure)
-
- let peek_lock_operation =
- SHGram.Entry.of_parser "peek_lock_operation" 
-     (fun strm ->
-       match Stream.npeek 1 strm with
-          | [INIT,_] -> ()
-          | [FINALIZE,_] -> ()
-          | [ACQUIRE,_] -> ()
-          | [RELEASE,_] -> ()
-          | _ -> raise Stream.Failure)
-
+		  
  let peek_member_name = 
  SHGram.Entry.of_parser "peek_member_name" 
      (fun strm ->
@@ -689,7 +679,7 @@ cid:
 
 view_body:
   [[ t = formulas -> ((F.subst_stub_flow_struc top_flow (fst t)),(snd t))
-   | `FINALIZES; t = split_combine -> (F.mkEFalseF (),false) 
+   | `FINALIZE; t = split_combine -> (F.mkEFalseF (),false) 
   ]];
   
   
@@ -1709,7 +1699,7 @@ labeled_valid_declaration_statement:
   
 valid_declaration_statement:
   [[ t=block -> t
-  | t=expression_statement;`SEMICOLON -> t
+  | t=expression_statement;`SEMICOLON ->t
   | t=selection_statement -> t
   | t=iteration_statement -> t
   | t=try_statement; `SEMICOLON -> t
@@ -2044,16 +2034,6 @@ invocation_expression:
                exp_call_recv_path_id = None;
                exp_call_recv_pos = get_pos_camlp4 _loc 1 }
   | (* peek_invocation; *) `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN ->
-    CallNRecv { exp_call_nrecv_method = id;
-                exp_call_nrecv_lock = None;
-                exp_call_nrecv_arguments = oal;
-                exp_call_nrecv_path_id = None;
-                exp_call_nrecv_pos = get_pos_camlp4 _loc 1 }
-  (* | t = lock_expression -> t *)
-  ]];
-
-lock_expression:
- [[ peek_lock_operation; `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN ->
     CallNRecv { exp_call_nrecv_method = id;
                 exp_call_nrecv_lock = l;
                 exp_call_nrecv_arguments = oal;

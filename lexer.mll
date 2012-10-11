@@ -156,13 +156,7 @@ module Make (Token : SleekTokenS)
 	 ("int", INT);
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
-  (*==For concurrency==>*)
 	 ("inv_lock", INVLOCK);
-	 ("init", INIT);
-	 ("finalize", FINALIZE);
-	 ("acquire", ACQUIRE);
-	 ("release", RELEASE);
-  (*<==================*)
    ("joinpred", JOIN); (*Changed by 28/12/2011*)
 	 ("lemma", LEMMA);
    ("len", LENGTH);
