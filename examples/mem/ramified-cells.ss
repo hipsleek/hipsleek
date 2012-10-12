@@ -28,3 +28,21 @@ else {
 }
 return;
 }
+
+/*
+Ramified Assignment
+f::cell<v> /\ s::cell<r> & v != 1 & r != 1
+	s.val = 1;
+(s::cell<r> --* f::cell<v> /\ s::cell<r>) * s::cell<1> & v != 1 & r != 1
+	f.val = 1;
+f::cell<v> --* ((s::cell<r> --* f::cell<v> /\ s::cell<r>) * s::cell<1>) * f::cell<1> & v != 1 & r != 1 
+|- f::cell<1> /\ s::cell<1>
+
+After Matching Nodes
+
+f::cell<v> --* (s::cell<r> --* f::cell<v> /\ s::cell<r>)
+
+XPure = ({f} U {s} - {s}) - {f} = {}
+
+treating --* as set difference
+*/
