@@ -1073,8 +1073,9 @@ let rec string_of_sharp_flow sf = match sf with
   | Sharp_id id -> "#"^id
 
 let pr_one_formula (f:one_formula) = 
-  let h,p,th,lb,pos = split_one_formula f in
+  let h,p,th,df,lb,pos = split_one_formula f in
   fmt_string (" <thread="); (pr_spec_var th); fmt_string ("> ");
+  fmt_string (" <delayed:"); (pr_mix_formula df); fmt_string ("> ");
   fmt_string (" <ref:"); fmt_string (string_of_spec_var_list f.formula_ref_vars); fmt_string ("> ");
   pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula p
 

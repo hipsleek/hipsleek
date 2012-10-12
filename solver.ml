@@ -3074,14 +3074,33 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	          else 
 			    (*let _ = print_string ("An Hoa :: inner_entailer_a :: check point 1\n") in*)
 	            let n_ctx = (push_expl_impl_context expl_inst impl_inst ctx11 ) in
-	            let n_ctx_list, prf = heap_entail_one_context prog (if formula_cont!=None then true else is_folding) n_ctx formula_base None None pos in
+                (*delayed lockset constraints*)
+                let n_ctx_list, prf, new_delayed_f = match tid with
+                  | None ->
+	                  let n_ctx_list, prf = heap_entail_one_context prog (if formula_cont!=None then true else is_folding) n_ctx formula_base None None pos in
+                      (n_ctx_list, prf, None)
+                  | Some id ->
+                      (match delayed_f with
+                        | Some mf ->
+                        (* TO CHECK : if already has a delayed formula. propagate*)
+                            let n_ctx_list, prf = heap_entail_one_context prog (if formula_cont!=None then true else is_folding) n_ctx formula_base tid delayed_f pos in
+                            (n_ctx_list, prf,delayed_f)
+                        | None ->
+                      (*Identify delayed constraints and propagate*)
+                            let df,new_formula_base = partLS formula_base in
+                            let n_ctx_list, prf = heap_entail_one_context prog (if formula_cont!=None then true else is_folding) n_ctx new_formula_base tid (Some df) pos in
+                            (n_ctx_list, prf ,Some df)
+
+                      )
+                in
+
 			    (*let n_ctx_list = List.filter  (fun c -> not (isFalseCtx c)) n_ctx_list in*)
 	            let n_ctx_list = pop_expl_impl_context expl_inst impl_inst n_ctx_list in
 			    (match n_ctx_list with
 	              | FailCtx _ ->(* let _ = print_endline ("###: 1") in *) (n_ctx_list, prf)
 	              | SuccCtx _ ->
 						let res_ctx, res_prf = match formula_cont with
-							| Some l -> heap_entail_struc prog is_folding has_post n_ctx_list l tid delayed_f pos pid (*also propagate tid*)
+							| Some l -> heap_entail_struc prog is_folding has_post n_ctx_list l tid new_delayed_f pos pid (*also propagate tid*)
 							| None -> (n_ctx_list, prf) in
 						let res_ctx = if !wrap_exists_implicit_explicit then push_exists_list_context (expl_inst@impl_inst) res_ctx else res_ctx in
 						(res_ctx,res_prf)
@@ -3098,7 +3117,12 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                           let f = CF.formula_of_pure_N (CP.mkEqVar (CP.mkRes thread_typ) id pos) pos in
 	                      let rs1 = CF.transform_context (normalize_es f pos true) ctx11 in
                           (*add the post condition into formul_*_and  special compose_context_formula for concurrency*)
-                          let rs2 = compose_context_formula_and rs1 post id ref_vars pos in
+                          let df = match delayed_f with
+                            | None -> (MCP.mkMTrue pos)
+                            | Some mf -> mf
+                          in
+                          let new_post = CF.removeLS post in
+                          let rs2 = compose_context_formula_and rs1 new_post df id ref_vars pos in
 	                      let rs3 = add_path_id rs2 (pid,i) in
                           let rs4 = prune_ctx prog rs3 in
                           (* let _ = print_endline ("### rs4 = " ^ (Cprinter.string_of_context rs4)) in *)

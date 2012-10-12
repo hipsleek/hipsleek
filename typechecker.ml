@@ -1149,6 +1149,26 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         CF.Ctx new_es
                     | Some one_f ->
                         let base = CF.formula_of_one_formula one_f in
+                        (******Checking the delayed constraints at join point >>> *******)
+                        let delayed_f = one_f.CF.formula_delayed in
+                        let ls_var_uprimed = CP.mkLsVar Unprimed in
+                        let ls_var_primed = CP.mkLsVar Primed in
+                        let ndf = MCP.m_apply_one (ls_var_uprimed, ls_var_primed) delayed_f in
+                        let new_f = CF.formula_of_mix_formula ndf no_pos in
+                        let _ = Debug.devel_pprint ("Proving delayed lockset constraints \n "
+                                                    ^ "### es = " ^ (Cprinter.string_of_estate es)
+                                                    ^ "### delayed_f = " ^ (Cprinter.string_of_formula new_f)
+                                                     ^"\n") pos in
+                        let rs,prf = heap_entail_one_context prog false (CF.Ctx es) new_f None None pos in
+                        if (CF.isFailCtx rs) then
+                          (*FAIL to satisfy the delayed constraints*)
+                          (*TO CHECK: become FALSE, which may not good enough*)
+                          let new_es = {es with CF.es_formula = CF.mkFalse_nf pos} in
+                          CF.Ctx new_es
+                        else
+                        let _ = Debug.devel_pprint ("Delayed lockset constraints satisfiable\n " ^ "\n") pos in
+                        (*******<<<Checking the delayed constraints at join point*****)
+                        (*if checking succeeds --> proceed as normal*)
                         (**********Compose variable permissions >>> *******)
                         (* let ps,new_base = CF.filter_varperm_formula base in *)
                         (* let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) ps) in (\*only pickup @full*\) *)
@@ -1170,10 +1190,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           let es_f = CF.replace_formula_and res2 es_f in
                           let primed_full_vars = List.map (fun var -> match var with
                             | CP.SpecVar(t,v,p) -> CP.SpecVar (t,v,Primed))  full_vars in
-                          (*LOCKSET variable*********)
-                          let ls_var = CP.mkLsVar Primed in
                           (* let _ = print_endline ("check_exp: SCall : join : \n ### es_f = " ^ (Cprinter.string_of_formula es_f) ^ " \n new_base = " ^ (Cprinter.string_of_formula new_base)) in *)
-                          let new_f = CF.compose_formula_join es_f new_base (* one_f.F.formula_ref_vars *) (ls_var::primed_full_vars) CF.Flow_combine pos in
+                          (**** DO NOT COMPOSE lockset because they are thread-local*****)
+                          let new_f = CF.compose_formula_join es_f new_base (* one_f.F.formula_ref_vars *) (primed_full_vars) CF.Flow_combine pos in
                           (* let new_f = CF.normalize 7 es_f base pos in *) (*TO CHECK: normalize or combine???*)
                           let new_es = {es with CF.es_formula = new_f} in
                           (*merge*)
@@ -1182,6 +1201,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 let res = CF.transform_list_failesc_context (idf,idf,fct) ctx in
 		        (* let _ = print_endline ("\ncheck_exp: SCall : join : after join(" ^ (Cprinter.string_of_spec_var tid) ^") (before elim_unsat) \n ### res: " ^ (Cprinter.string_of_list_failesc_context res)) in *)
                 let res = CF.transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) res in (*join a thread may cause UNSAT*)
+                if (CF.isNonFalseListFailescCtx ctx) && (not (CF.isNonFalseListFailescCtx res)) then
+                  Debug.print_info "At join point" ("Delayed Lockset Checking Failure at join point \n") pos else () ;
                 let res = normalize_list_failesc_context_w_lemma prog res in
 		        let _ = Debug.devel_pprint ("\ncheck_exp: SCall : join : after join(" ^ (Cprinter.string_of_spec_var tid) ^") \n ### res: " ^ (Cprinter.string_of_list_failesc_context res)) pos in
                   res

@@ -790,23 +790,23 @@ and struc_formula_subst_flow (f:struc_formula) ff : struc_formula = match f with
 	| EAssume (x,b,y) -> EAssume (x,(formula_subst_flow b ff),y)
     | EInfer b -> EInfer {b with formula_inf_continuation = struc_formula_subst_flow b.formula_inf_continuation ff} 
 
-and split_one_formula (f : one_formula) = f.formula_heap, f.formula_pure,  f.formula_thread, f.formula_label, f.formula_pos
+and split_one_formula (f : one_formula) = f.formula_heap, f.formula_pure,  f.formula_thread, f.formula_delayed, f.formula_label, f.formula_pos
 
-and one_formula_of_formula (f : formula) (tid: CP.spec_var): one_formula =
+and one_formula_of_formula (f : formula) (tid: CP.spec_var) (delayed_f:MCP.mix_formula) : one_formula =
   (match f with
     | Base {formula_base_heap = h;
         formula_base_pure = p;
         formula_base_label = lbl;
         formula_base_pos = pos;
        } ->
-        mkOneFormula h p tid (MCP.mkMTrue pos) lbl pos
+        mkOneFormula h p tid delayed_f lbl pos
     | Exists {
         formula_exists_heap = h;
         formula_exists_pure = p;
         formula_exists_label = lbl;
         formula_exists_pos = pos;
        } ->
-        mkOneFormula h p tid (MCP.mkMTrue pos)lbl pos
+        mkOneFormula h p tid delayed_f lbl pos
     | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = "one_formula_of_formula: disjunctive form"} )
 
 and add_formula_and (a: one_formula list) (f:formula) : formula =
@@ -2157,19 +2157,23 @@ and one_formula_subst sst (f : one_formula) =
       if ((CP.name_of_spec_var fr)=Globals.ls_name) then false
       else true
   ) sst in (*donot rename ghost LOCKSET name*)
+  let df = f.formula_delayed in
+  let ndf = MCP.m_apply_par_varperm sst df in
   let base = formula_of_one_formula f in
   let rs = subst sst base in
   let ref_vars = (List.map (CP.subst_var_par sst) f.formula_ref_vars) in
   let tid = CP.subst_var_par sst f.formula_thread in
-  let one_f = (one_formula_of_formula rs tid) in
+  let one_f = (one_formula_of_formula rs tid ndf) in
   {one_f with formula_ref_vars = ref_vars}
 
 and one_formula_subst_varperm sst (f : one_formula) = 
+  let df = f.formula_delayed in
+  let ndf = MCP.m_apply_par_varperm sst df in
   let base = formula_of_one_formula f in
   let rs = subst_varperm sst base in
   let ref_vars = (List.map (CP.subst_var_par sst) f.formula_ref_vars) in
   let tid = CP.subst_var_par sst f.formula_thread in
-  let one_f = (one_formula_of_formula rs tid) in
+  let one_f = (one_formula_of_formula rs tid ndf) in
   {one_f with formula_ref_vars = ref_vars}
 
 	
@@ -2360,19 +2364,23 @@ and subst_var (fr, t) (o : CP.spec_var) =
   if CP.eq_spec_var fr o then t else o
 
 and apply_one_one_formula ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : one_formula) = 
+  let df = f.formula_delayed in
+  let ndf = MCP.m_apply_one (fr, t) df in
   let base = formula_of_one_formula f in
   let rs = apply_one s base in
   let tid = subst_var s f.formula_thread in
   let ref_vars = List.map (subst_var s) f.formula_ref_vars in
-  let one_f = (one_formula_of_formula rs tid) in
+  let one_f = (one_formula_of_formula rs tid ndf) in
   {one_f with formula_ref_vars = ref_vars}
 
-and apply_one_one_formula_varperm ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : one_formula) = 
+and apply_one_one_formula_varperm ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : one_formula) =
+  let df = f.formula_delayed in
+  let ndf = MCP.m_apply_one_varperm (fr, t) df in
   let base = formula_of_one_formula f in
   let rs = apply_one_varperm s base in
   let tid = subst_var s f.formula_thread in
   let ref_vars = List.map (subst_var s) f.formula_ref_vars in
-  let one_f = (one_formula_of_formula rs tid) in
+  let one_f = (one_formula_of_formula rs tid ndf) in
   {one_f with formula_ref_vars = ref_vars}
 
 and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match f with
@@ -3996,9 +4004,14 @@ let must_consistent_list_failesc_context (s:string) l : unit =
   | Ctx es -> isStrictConstFalse es.es_formula
   | _ -> false*)
 
-let isAnyFalseCtx (ctx:context) : bool = match ctx with
-  | Ctx es -> isAnyConstFalse es.es_formula
-  | _ -> false  
+let isAnyFalseCtx (ctx:context) : bool = 
+  let rec helper ctx =
+    match ctx with
+      | Ctx es -> isAnyConstFalse es.es_formula
+      | OCtx (ctx1,ctx2) ->
+          (helper ctx1) && (helper ctx2)
+  in helper ctx
+
 
 (* let isAnyFalseBranchCtx (ctx:branch_ctx) : bool = match ctx with *)
 (*   | _,Ctx es -> isAnyConstFalse es.es_formula *)
@@ -5345,9 +5358,11 @@ and subst_var_exp (fr, t) (o : CP.spec_var) =
   if CP.eq_spec_var fr o then t else o
 
 and apply_one_exp_one_formula ((fr, t) as s : (CP.spec_var * CP.exp)) (f : one_formula) = 
+  let df = f.formula_delayed in
+  let ndf = MCP.memo_apply_one_exp (fr, t) df in
   let base = formula_of_one_formula f in
   let rs = apply_one_exp s base in (*TO CHECK: how about formula_thread*)
-  let one_f = (one_formula_of_formula rs f.formula_thread) in
+  let one_f = (one_formula_of_formula rs f.formula_thread df) in
   {one_f with formula_ref_vars = f.formula_ref_vars}
 
 and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match f with
@@ -7884,7 +7899,7 @@ let prepost_of_release (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formu
 
 (*IMITATE CF.COMPOSE but do not compose 2 formulas*)
 (* Put post into formula_*_and of f instread*)
-let compose_formula_and_x (f : formula) (post : formula) (id: CP.spec_var) (ref_vars : CP.spec_var list) (val_vars : CP.spec_var list) pos =
+let compose_formula_and_x (f : formula) (post : formula) (delayed_f : MCP.mix_formula) (id: CP.spec_var) (ref_vars : CP.spec_var list) (val_vars : CP.spec_var list) pos =
   (*IMITATE CF.COMPOSE but do not compose 2 formulas*)
   (*Rename ref_vars for later join*)
   let rs = CP.fresh_spec_vars ref_vars in
@@ -7923,7 +7938,7 @@ let compose_formula_and_x (f : formula) (post : formula) (id: CP.spec_var) (ref_
       | _ ->
           (*Base or Exists*)
           let qvars,base = split_quantifiers post in
-          let one_f = one_formula_of_formula base id in
+          let one_f = one_formula_of_formula base id delayed_f in
           let one_f = {one_f with formula_ref_vars = ref_vars;} in
           (*add thread id*)
           (* let _ = print_endline ("\nLDK:" ^ (Cprinter.string_of_one_formula one_f)) in *)
@@ -7934,17 +7949,18 @@ let compose_formula_and_x (f : formula) (post : formula) (id: CP.spec_var) (ref_
   in
   helper new_f3 new_post2
 
-let compose_formula_and (f : formula) (post : formula) (id: CP.spec_var) (ref_vars : CP.spec_var list) (val_vars : CP.spec_var list) pos =
-  Debug.no_2 "compose_formula_and"
-      !print_formula 
+let compose_formula_and (f : formula) (post : formula) (delayed_f : MCP.mix_formula) (id: CP.spec_var) (ref_vars : CP.spec_var list) (val_vars : CP.spec_var list) pos =
+  Debug.no_3 "compose_formula_and"
       !print_formula 
       !print_formula
-      (fun _ _ -> compose_formula_and_x f post id ref_vars val_vars pos) f post
+      !print_mix_formula
+      !print_formula
+      (fun _ _ _ -> compose_formula_and_x f post delayed_f id ref_vars val_vars pos) f post delayed_f
 
 (*add the post condition (phi) into formul_*_and *)
 (*special compose_context_formula for concurrency*)
 (*Ctx es o (f1 or f2) -> OCtx (es o f1) (es o f2)*)
-let compose_context_formula_and (ctx : context) (phi : formula) (id: CP.spec_var) (ref_vars : CP.spec_var list) pos =
+let compose_context_formula_and (ctx : context) (phi : formula) (delayed_f: MCP.mix_formula) (id: CP.spec_var) (ref_vars : CP.spec_var list) pos =
   let rec helper ctx phi = 
     (match ctx with
       | Ctx es -> begin
@@ -7962,7 +7978,7 @@ let compose_context_formula_and (ctx : context) (phi : formula) (id: CP.spec_var
                 let es = clear_entailment_history_es_es es in
                 let f = es.es_formula in
                 (*   (\*IMITATE CF.COMPOSE but do not compose 2 formulas*\) *)
-                let f2 = compose_formula_and f phi id ref_vars val_vars pos in
+                let f2 = compose_formula_and f phi delayed_f id ref_vars val_vars pos in
                 let new_es = {es with
                     es_formula = f2;
                     es_unsat_flag =false;}
@@ -8161,18 +8177,49 @@ and norm_struc_vperm_x struc_f ref_vars val_vars = match struc_f with
 *)
 and partLS (f : formula) : MCP.mix_formula * formula =
   let pr_o = pr_pair !print_mix_formula !print_formula in
-  Debug.ho_1 "partLS" !print_formula pr_o
+  Debug.no_1 "partLS" !print_formula pr_o
       partLS_x f
 
 and partLS_x (f : formula) : MCP.mix_formula * formula =
-  (extractLS f,f)
+  let delayed = extractLS f in
+  let nf = removeLS f in
+  (delayed,nf)
 
 (*extract lockset constraints from a formula*)
 and extractLS (f : formula) : MCP.mix_formula =
-  Debug.ho_1 "extractLS" !print_formula !print_mix_formula
+  Debug.no_1 "extractLS" !print_formula !print_mix_formula
       extractLS_x f
 
 and extractLS_x (f : formula) : MCP.mix_formula  =
-  let h, p, fl, t, a = split_components f in
-  let p_delayed = MCP.extractLS_mix_formula p in
-  p_delayed
+  let rec helper f =
+    match f with
+      | Base{formula_base_pure = p}
+      | Exists{formula_exists_pure = p} ->
+          let p_delayed = MCP.extractLS_mix_formula p in
+          p_delayed
+      | Or {formula_or_f1 = f1; formula_or_f2 =f2} ->
+          let pf1 = helper f1 in
+          let pf2 = helper f2 in
+          MCP.mkOr_mems pf1 pf2
+  in helper f
+
+(*remove lockset constraints from a formula*)
+and removeLS (f : formula) : formula =
+  Debug.no_1 "removeLS" !print_formula !print_formula
+      removeLS_x f
+
+(*remove lockset constraints from a formula*)
+and removeLS_x (f : formula) : formula  =
+  let rec helper f =
+    match f with
+      | Base ({formula_base_pure = p} as b) ->
+          let np = MCP.removeLS_mix_formula p in
+          Base {b with formula_base_pure = np}
+      | Exists ({formula_exists_pure = p} as e)->
+          let np = MCP.removeLS_mix_formula p in
+          Exists {e with formula_exists_pure = np}
+      | Or ({formula_or_f1 = f1; formula_or_f2 =f2} as o)->
+          let nf1 = helper f1 in
+          let nf2 = helper f2 in
+          Or {o with formula_or_f1 = nf1; formula_or_f2 = nf2}
+  in helper f

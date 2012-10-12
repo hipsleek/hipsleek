@@ -747,7 +747,7 @@ and mkOr_mems (l1: memo_pure) (l2: memo_pure) (*with_dupl with_inv*) : memo_pure
   let f1 = fold_mem_lst (mkTrue no_pos) false true l1 in
   let f2 = fold_mem_lst (mkTrue no_pos) false true l2 in
   memoise_add_pure_N [] (mkOr f1 f2 None no_pos)
-      
+
 and combine_memo_branch b (f, l) =
   match b with 
     | "" -> f
@@ -2026,7 +2026,11 @@ let mkOr_mems (f1: mix_formula) (f2: mix_formula) : mix_formula = match f1,f2 wi
   | MemoF f1, MemoF f2 -> MemoF (mkOr_mems f1 f2)
   | OnePF f1, OnePF f2 -> OnePF (mkOr f1 f2 None no_pos)
   | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "mkOr_mems: wrong mix of memo and pure formulas"}
-  
+  (* | OnePF pf, MemoF mf -> *)
+  (*     memoise_add_pure_N f2 pf *)
+  (* | MemoF mf, OnePF pf -> *)
+  (*     memoise_add_pure_N f1 pf *)
+
 let subst_avoid_capture_memo from t f = match f with
   | MemoF f -> MemoF (subst_avoid_capture_memo(*_debug*) from t f)
   | OnePF f -> OnePF (subst_avoid_capture from t f)
@@ -2357,5 +2361,21 @@ let extractLS_mix_formula_x (mf : mix_formula) : mix_formula =
 
 (*extract lockset constraints from a formula*)
 let extractLS_mix_formula (mf : mix_formula) : mix_formula =
-  Debug.ho_1 "extractLS_mix_formula" !print_mix_formula !print_mix_formula
+  Debug.no_1 "extractLS_mix_formula" !print_mix_formula !print_mix_formula
       extractLS_mix_formula_x mf
+
+(*remove lockset constraints from a formula*)
+let removeLS_mix_formula_x (mf : mix_formula) : mix_formula =
+  match mf with
+    | OnePF f -> 
+        let mf_delayed = Cpure.removeLS_pure f in
+        (OnePF mf_delayed)
+    | MemoF mp -> 
+        let f = fold_mem_lst (mkTrue no_pos) false true mf in
+        let delayed = Cpure.removeLS_pure f in
+        (mix_of_pure delayed)
+
+(*remove lockset constraints from a formula*)
+let removeLS_mix_formula (mf : mix_formula) : mix_formula =
+  Debug.no_1 "removeLS_mix_formula" !print_mix_formula !print_mix_formula
+      removeLS_mix_formula_x mf

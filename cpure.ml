@@ -7919,5 +7919,67 @@ let extractLS_pure_x (f : formula) : formula =
   in helper f
 
 let extractLS_pure (pf : formula) : formula = 
-  Debug.ho_1 "extractLS_pure" !print_formula !print_formula 
+  Debug.no_1 "extractLS_pure" !print_formula !print_formula 
       extractLS_pure_x pf
+
+(*Currently, only remove constraints
+that directly related to lockset
+Do not consider transitivity*)
+let removeLS_b_formula (bf : b_formula) : b_formula =
+  let (pf,_) = bf in
+  (match pf with
+    | BagIn (sv,e,pos)
+    | BagNotIn (sv,e,pos) ->
+        let vars = afv e in
+        let b = List.exists (fun v -> (name_of_spec_var v) = ls_name) vars in
+        if b then mkTrue_b no_pos else  bf
+    | Eq (e1, e2, pos) (* these two could be arithmetic or pointer or bag or list *)
+    | Neq (e1, e2, pos) ->
+        let vars1 = afv e1 in
+        let vars2 = afv e2 in
+        let b = List.exists (fun v -> (name_of_spec_var v) = ls_name) (vars1@vars2) in
+        if b then mkTrue_b no_pos else  bf
+    | BagSub (e1,e2,pos) -> bf (*TO CHECK there 3 cases*)
+    | BagMin (sv1,sv2,pos) -> bf
+    | BagMax (sv1,sv2,pos) -> bf
+    | _ -> bf)
+
+(*remove lockset constraints from a formula*)
+let removeLS_pure_x (pf : formula) : formula =
+  let rec helper f = 
+    match f with
+      | BForm (bf, lbl) ->
+          let n_bf = removeLS_b_formula bf in
+          BForm (n_bf, lbl)
+      | And (f1, f2, pos) ->
+          let n_f1 = helper f1 in
+          let n_f2 = helper f2 in
+          And (n_f1, n_f2, pos)
+      | AndList b -> 
+          let nf = List.fold_left (fun ls_f (_,f_b) -> 
+              let nf = helper f_b in
+              And (ls_f, nf, no_pos)
+          ) (mkTrue no_pos) b in
+          nf
+      | Or (f1, f2, lbl, pos) ->
+          let n_f1 = helper f1 in
+          let n_f2 = helper f2 in
+          Or (n_f1, n_f2, lbl, pos)
+      | Not (f, lbl, pos) ->
+          let n_f = helper f in
+          Not (n_f, lbl, pos)
+      | Forall (sv, f, lbl, pos) ->
+          let n_f = helper f in
+          Forall (sv, n_f, lbl, pos)
+      | Exists (sv, f, lbl, pos) ->
+          let n_f = helper f in
+          Exists (sv, n_f, lbl, pos)
+  in helper pf
+
+(*remove lockset constraints from a formula*)
+(*Currently, only remove constraints
+that directly related to lockset
+Do not consider transitivity*)
+let removeLS_pure (pf : formula) : formula = 
+  Debug.no_1 "removeLS_pure" !print_formula !print_formula 
+      removeLS_pure_x pf
