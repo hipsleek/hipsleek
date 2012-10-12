@@ -2791,6 +2791,74 @@ and pop_exists (qvars : CP.spec_var list) (f : formula) = match f with
   | _ -> remove_quantifiers qvars f
         (* 19.05.2008 *)
 
+(* WN : why isn't this in cformula.ml? *)
+(* removing existentail using ex x. (x=y & P(x)) <=> P(y) *)
+and elim_exists (f0 : formula) : formula = match f0 with
+  | Or ({ formula_or_f1 = f1;
+    formula_or_f2 = f2;
+    formula_or_pos = pos}) ->
+        let ef1 = elim_exists f1 in
+        let ef2 = elim_exists f2 in
+	    mkOr ef1 ef2 pos
+  | Base _ -> f0
+  | Exists ({ formula_exists_qvars = qvar :: rest_qvars;
+    formula_exists_heap = h;
+    formula_exists_pure = p;
+    formula_exists_type = t;
+    formula_exists_flow = fl;
+    formula_exists_and = a;
+    formula_exists_pos = pos}) ->
+        let st, pp1 = MCP.get_subst_equation_memo_formula_vv p qvar in
+        let r = if List.length st = 1 then
+          let tmp = mkBase h pp1 t fl a pos in (*TO CHECK*)
+          let new_baref = subst st tmp in
+          let tmp2 = add_quantifiers rest_qvars new_baref in
+          let tmp3 = elim_exists tmp2 in
+          tmp3
+        else (* if qvar is not equated to any variables, try the next one *)
+          let tmp1 = mkExists rest_qvars h p t fl a pos in (*TO CHECK*)
+          let tmp2 = elim_exists tmp1 in
+          let tmp3 = add_quantifiers [qvar] tmp2 in
+          tmp3 in
+        r
+  | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
+
+and elim_exists_es_his (f0 : formula) (his:h_formula list) : formula*h_formula list =
+  let rec helper f0 hfs=
+    match f0 with
+      | Or ({ formula_or_f1 = f1;
+              formula_or_f2 = f2;
+              formula_or_pos = pos}) ->
+          let ef1,hfs1 = helper f1 hfs in
+          let ef2,hfs2 = helper f2 hfs1 in
+	      (mkOr ef1 ef2 pos, hfs2)
+      | Base _ -> (f0,hfs)
+      | Exists ({ formula_exists_qvars = qvar :: rest_qvars;
+                  formula_exists_heap = h;
+                  formula_exists_pure = p;
+                  formula_exists_type = t;
+                  formula_exists_flow = fl;
+                  formula_exists_and = a;
+                  formula_exists_pos = pos}) ->
+          let st, pp1 = MCP.get_subst_equation_memo_formula_vv p qvar in
+          let r,n_hfs = if List.length st = 1 then
+             let tmp = mkBase h pp1 t fl a pos in (*TO CHECK*)
+             let new_baref = subst st tmp in
+             let new_hfs = List.map (h_subst st) hfs in
+             let tmp2 = add_quantifiers rest_qvars new_baref in
+             let tmp3,new_hfs1 = helper tmp2 new_hfs in
+                (tmp3,new_hfs1)
+              else (* if qvar is not equated to any variables, try the next one *)
+                let tmp1 = mkExists rest_qvars h p t fl a pos in (*TO CHECK*)
+                let tmp2,hfs1 = helper tmp1 hfs in
+                let tmp3 = add_quantifiers [qvar] tmp2 in
+                (tmp3,hfs1)
+          in
+          (r,n_hfs)
+      | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
+  in
+  helper f0 his
+
 and formula_of_disjuncts (f:formula list) : formula=
   match f with
     | [] -> (mkTrue (mkTrueFlow()) no_pos)
@@ -7040,7 +7108,7 @@ let conv_elim_res (cvar:typed_ident option)  (c:entail_state)
       	  let vsv_f = formula_of_pure_N (CP.mkEqVar (CP.SpecVar (res_typ, cvn, Primed)) (CP.mkeRes res_typ) no_pos) no_pos in
       	  let ctx1 = normalize_max_renaming_s vsv_f no_pos true ctx in
       	  let ctx1 = push_exists_context [CP.mkeRes res_typ] ctx1 in
-      	  if !elim_exists then elim_ex_fn ctx1 else  ctx1
+      	  if !Globals.elim_exists then elim_ex_fn ctx1 else  ctx1
         end
 
 let conv_elim_res (cvar:typed_ident option)  (c:entail_state)

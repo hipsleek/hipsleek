@@ -616,7 +616,7 @@ let check_relaxeq_formula_x f1 f2=
   let r1 = check_stricteq_h_fomula true hf1 hf2 in
   if r1 then
     let new_mf1 = xpure_for_hnodes hf1 in
-    let cmb_mf1 = MCP.merge_mems mf2 new_mf1 true in
+    let cmb_mf1 = MCP.merge_mems mf1 new_mf1 true in
     let new_mf2 = xpure_for_hnodes hf2 in
     let cmb_mf2 = MCP.merge_mems mf2 new_mf2 true in
     (*remove dups*)
@@ -757,10 +757,6 @@ let process_one_f hp_subst sh_ldns (ldns, f)=
   let ss = List.combine old_svl1 fresh_svl in
   let n_hf = CF.h_subst ss hf in
   let nf4 = CF.subst_hrel_f nf3 [(hprel, n_hf)] in
-   (* let next_roots = List.concat (List.map (fun (_,CP.SpecVar (t,v,p)) -> *)
-   (*        if (is_pointer t) *)
-   (*        then [CP.SpecVar (t,v,p)] *)
-   (*        else []) last_ss) in *)
   nf4
 
 let get_shortest_lnds ll_ldns min=

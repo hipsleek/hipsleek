@@ -1509,7 +1509,7 @@ let pr_hprel_def hpd=
   (pr_h_formula hpd.hprel_def_hrel);
   fmt_string " ::=";
   fmt_string (prtt_string_of_formula hpd.hprel_def_body);
-  fmt_string "\n LIB FORM:\n";
+  fmt_string " LIB FORM:\n";
   (pr_h_formula hpd.hprel_def_hrel);
   fmt_string " ::=";
   prtt_pr_formula hpd.hprel_def_body_lib;

@@ -2017,7 +2017,14 @@ let match_one_hp_one_view_x hp hp_name args def_fs (vdcl: CA.view_decl): bool=
         List.map (SAU.subst_view_hp_formula vdcl.CA.view_name hp) v_fl
       else v_fl
     in
-    SAU.checkeq_formula_list def_fs1 v_fl1
+    let v_fl2 = List.map CF.elim_exists v_fl1 in
+     (*for debugging*)
+    (* let pr = pr_list_ln Cprinter.prtt_string_of_formula in *)
+    (* let _ = Debug.ninfo_pprint ("     def_fs: " ^ (pr def_fs)) no_pos in *)
+    (* let _ = Debug.ninfo_pprint ("     def_fs1: " ^ (pr def_fs1)) no_pos in *)
+    (* let _ = Debug.ninfo_pprint ("     v_fl1: " ^ (pr v_fl1)) no_pos in *)
+    (*END for debugging*)
+    SAU.checkeq_formula_list def_fs1 v_fl2
   else
     false
 
@@ -2062,7 +2069,7 @@ let match_hps_views (hp_defs:hp_rel_def list) (vdcls: CA.view_decl list):
 
 (*END matching*)
 
-let collect_sel_hp_def_x defs sel_hps m=
+let collect_sel_hp_def_x defs sel_hps unk_hps m=
   (*currently, use the first lib matched*)
   let m = List.map (fun (hp, l) -> (hp, List.hd l)) m in
   let rec look_up_lib hp ms=
@@ -2092,13 +2099,42 @@ let collect_sel_hp_def_x defs sel_hps m=
     in
     (mk_hprel_def a hprel f f1)
   in
+  let look_up_depend cur_hp_sel f=
+    let hps = CF.get_hp_rel_name_formula f in
+    let dep_hp = Gen.BList.difference_eq CP.eq_spec_var hps (cur_hp_sel@unk_hps) in
+    (CP.remove_dups_svl dep_hp)
+  in
+  let look_up_hp_def new_sel_hps non_sel_hp_def=
+    List.partition (fun (hp,_) -> CP.mem_svl hp new_sel_hps) non_sel_hp_def
+  in
+  let rec find_closed_sel cur_sel cur_sel_hpdef non_sel_hp_def incr=
+    let rec helper1 ls res=
+      match ls with
+        | [] -> res
+        | (hp,(a,hf,f))::lss ->
+            let incr =
+              if CP.mem_svl hp (cur_sel@unk_hps) then
+                []
+              else
+                [hp]
+            in
+            let new_hp_dep = look_up_depend cur_sel f in
+            helper1 lss ((* CP.remove_dups_svl *) (res@incr@new_hp_dep))
+    in
+    let incr_sel_hps = helper1 incr [] in
+    (*nothing new*)
+    if incr_sel_hps = [] then cur_sel_hpdef else
+      let incr_sel_hp_def,remain_hp_defs = look_up_hp_def incr_sel_hps non_sel_hp_def in
+      find_closed_sel (cur_sel@incr_sel_hps) (cur_sel_hpdef@incr_sel_hp_def) remain_hp_defs incr_sel_hp_def
+  in
   let defsw = List.map (fun (a,hf,f) ->
       (List.hd (CF.get_hp_rel_name_h_formula hf), (a,hf,f))) defs in
-  let sel_defw = List.filter (fun (hp,_) -> CP.mem_svl hp sel_hps) defsw in
+  let sel_defw,remain_hp_defs = List.partition (fun (hp,_) -> CP.mem_svl hp sel_hps) defsw in
   (* let sel_defw1 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) sel_defw in *)
-  List.map compute_def_w_lib sel_defw
+  let closed_sel_defw = find_closed_sel sel_hps sel_defw remain_hp_defs sel_defw in
+  List.map compute_def_w_lib closed_sel_defw
 
-let collect_sel_hp_def defs sel_hps m=
+let collect_sel_hp_def defs sel_hps unk_hps m=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = !CP.print_svl in
   let pr3b = pr_list_ln Cprinter.prtt_string_of_h_formula in
@@ -2107,7 +2143,7 @@ let collect_sel_hp_def defs sel_hps m=
   let pr3 = pr_list_ln pr3a in
   let pr4 = (pr_list_ln Cprinter.string_of_hprel_def) in
   Debug.no_3 "collect_sel_hp_def" pr1 pr2 pr3 pr4
-      (fun _ _ _ -> collect_sel_hp_def_x defs sel_hps m) defs sel_hps m
+      (fun _ _ _ -> collect_sel_hp_def_x defs sel_hps unk_hps m) defs sel_hps m
 (*
   input: constrs: (formula * formula) list
   output: definitions: (formula * formula) list
@@ -2142,7 +2178,7 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * hp
   (* let _ =  DD.info_pprint (" matching: " ^ *)
   (*   (let pr = pr_list_ln (fun (hp,view_names) -> (!CP.print_sv hp) ^ " === " ^ *)
   (*     ( String.concat " OR " view_names)) in pr m)) no_pos in *)
-  let sel_hp_defs = collect_sel_hp_def hp_defs sel_hp_rels m in
+  let sel_hp_defs = collect_sel_hp_def hp_defs sel_hp_rels (List.map (fun (hp,_) -> hp) unk_hps) m in
   let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) sel_hp_defs in
   (constr3, hp_defs)
   (* loop 1 *)
