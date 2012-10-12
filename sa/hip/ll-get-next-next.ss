@@ -17,27 +17,27 @@ HeapPred HP_537(node a, node b).
 HeapPred HP_557(node a, node b).
 
 /* return the tail of a singly linked list */
-node get_next(ref node x)
-  infer[H,G]
-  requires H(x)
-  ensures G(x',res);//'n>=1 & n=m+1
-{
-  node tmp = x.next;
-  x.next = null;
-  return tmp;
-  //	dprint;
-}
-
-/* node get_next_next(ref node x) */
-/*   infer[H1,G1] */
-/*   requires H1(x) */
-/*   ensures G1(x',res);//'n>=1 & n=m+1 */
+/* node get_next(ref node x) */
+/*   infer[H,G] */
+/*   requires H(x) */
+/*   ensures G(x',res);//'n>=1 & n=m+1 */
 /* { */
-/*   node tmp = x.next.next; */
+/*   node tmp = x.next; */
 /*   x.next = null; */
 /*   return tmp; */
 /*   //	dprint; */
 /* } */
+
+node get_next_next(ref node x)
+  infer[H1,G1]
+  requires H1(x)
+  ensures G1(x',res);//'n>=1 & n=m+1
+{
+  node tmp = x.next.next;
+  x.next.next = null;
+  return tmp;
+  //	dprint;
+}
 
 /*
 

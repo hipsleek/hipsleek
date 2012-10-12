@@ -2101,7 +2101,7 @@ let collect_sel_hp_def_x defs sel_hps unk_hps m=
   in
   let look_up_depend cur_hp_sel f=
     let hps = CF.get_hp_rel_name_formula f in
-    let dep_hp = Gen.BList.difference_eq CP.eq_spec_var hps (cur_hp_sel@unk_hps) in
+    let dep_hp = Gen.BList.difference_eq CP.eq_spec_var hps (cur_hp_sel(* @unk_hps *)) in
     (CP.remove_dups_svl dep_hp)
   in
   let look_up_hp_def new_sel_hps non_sel_hp_def=
@@ -2113,13 +2113,13 @@ let collect_sel_hp_def_x defs sel_hps unk_hps m=
         | [] -> res
         | (hp,(a,hf,f))::lss ->
             let incr =
-              if CP.mem_svl hp (cur_sel@unk_hps) then
+              if CP.mem_svl hp (cur_sel(* @unk_hps *)) then
                 []
               else
                 [hp]
             in
             let new_hp_dep = look_up_depend cur_sel f in
-            helper1 lss ((* CP.remove_dups_svl *) (res@incr@new_hp_dep))
+            helper1 lss (CP.remove_dups_svl (res@incr@new_hp_dep))
     in
     let incr_sel_hps = helper1 incr [] in
     (*nothing new*)
@@ -2142,7 +2142,7 @@ let collect_sel_hp_def defs sel_hps unk_hps m=
       (* ( String.concat " OR " view_names) *) (pr3b vns) in
   let pr3 = pr_list_ln pr3a in
   let pr4 = (pr_list_ln Cprinter.string_of_hprel_def) in
-  Debug.no_3 "collect_sel_hp_def" pr1 pr2 pr3 pr4
+  Debug.ho_3 "collect_sel_hp_def" pr1 pr2 pr3 pr4
       (fun _ _ _ -> collect_sel_hp_def_x defs sel_hps unk_hps m) defs sel_hps m
 (*
   input: constrs: (formula * formula) list
@@ -2171,7 +2171,8 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * hp
   let hp_def_from_split = generate_hp_def_from_split hp_defs_split hp_defs unk_hps in
   DD.ninfo_pprint (" remains: " ^
      (let pr1 = pr_list_ln Cprinter.string_of_hprel in pr1 constr3) ) no_pos;
-  let hp_defs = hp_defs@hp_def_from_split@unk_hp_def in
+  let hp_defs =  (Gen.BList.remove_dups_eq (fun (CP.HPRelDefn hp1,_,_) (CP.HPRelDefn hp2,_,_) -> CP.eq_spec_var hp1 hp2) (hp_defs@hp_def_from_split))@
+  unk_hp_def in
    DD.ninfo_pprint ">>>>>> step 7: mathching with predefined predicates <<<<<<" no_pos;
   let m = match_hps_views hp_defs prog.CA.prog_view_decls in
   let _ = DD.ninfo_pprint ("        sel_hp_rel:" ^ (!CP.print_svl sel_hp_rels)) no_pos in
