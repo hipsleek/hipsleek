@@ -903,6 +903,19 @@ let get_longest_common_hnodes_list prog hp args fs=
  end
 
 (*==========END check_relaxeq=============*)
+let remove_longer_common_prefix fs=
+  let rec helper cur res=
+    match cur with
+      | [] -> res
+      | f::ss ->
+          if List.exists
+            (fun f2 ->
+                check_com_pre_eq_formula f2 f)
+            res then
+            helper ss res
+          else helper ss (res@[f])
+  in
+  helper fs []
 
 (*fix subst*)
 let rec look_up_subst_group hp args nrec_grps=
@@ -923,16 +936,6 @@ let rec look_up_subst_group hp args nrec_grps=
         else
           look_up_subst_group hp args gs
     end
-
-let remove_longer_common_prefix fs=
-  let rec helper cur res=
-    match cur with
-      | [] -> res
-      | f::ss -> if List.exists (fun f1 -> check_com_pre_eq_formula f1 f) res then
-            helper ss res
-          else helper ss (res@[f])
-  in
-  helper fs []
 
 let succ_susbt nrec_grps (hp,args,f)=
   (* DD.info_pprint ("       succ_susbt hp: " ^ (!CP.print_sv hp)) no_pos; *)
@@ -966,4 +969,67 @@ let succ_susbt nrec_grps (hp,args,f)=
           (*                                                   in pr lsf_cmb1)) no_pos; *)
           let fss = List.map (fun f1 -> (hp,args,f1)) lsf_cmb1 in
           (true,fss)
+    end
+
+let remove_longer_common_prefix_w_unk unk_hps fs=
+  let rec helper cur res=
+    match cur with
+      | [] -> res
+      | f::ss ->
+          let f1 = CF.subst_unk_hps_f f unk_hps in
+          if List.exists
+            (fun f2 ->
+                let f21 = CF.subst_unk_hps_f f2 unk_hps in
+                check_com_pre_eq_formula f1 f21)
+            res then
+            helper ss res
+          else helper ss (res@[f])
+  in
+  helper fs []
+
+
+let rec look_up_subst_hpdef hp args nrec_hpdefs=
+  match nrec_hpdefs with
+    | [] -> [](* report_error no_pos "sau.look_up_groups" *)
+    | (CP.HPRelDefn hp1,hprel1,f1)::gs -> begin
+        if CP.eq_spec_var hp hp1 then
+           let args1 = get_ptrs hprel1 in
+           let ss = List.combine args1 args in
+           let nf1 = CF.subst ss f1 in
+           (CF.list_of_disjs nf1)
+        else
+          look_up_subst_hpdef hp args gs
+    end
+
+let succ_susbt_hpdef nrec_hpdefs (hp,args,f)=
+  (* DD.info_pprint ("       succ_susbt_def hp: " ^ (!CP.print_sv hp)) no_pos; *)
+  let pos = no_pos in
+  (*l1 x l2*)
+  let helper ls1 ls2=
+    List.concat (List.map (fun f1 ->
+        List.map (fun f2 ->
+             CF.mkStar f1 f2 CF.Flow_combine pos
+    ) ls2) ls1)
+  in
+  let succ_hp_args = CF.get_HRels_f f in
+  (*filter hp out*)
+  let succ_hp_args = List.filter (fun (hp1,_) -> not (CP.eq_spec_var hp hp1)) succ_hp_args in
+  (* DD.info_pprint ("       succ_hp_args:" ^ (let pr = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) *)
+  (*                                           in pr succ_hp_args)) no_pos; *)
+  match succ_hp_args with
+    | [] -> (false,[f])
+    | _ -> begin
+        let fs_list = (List.map (fun (hp0,arg0) -> look_up_subst_hpdef hp0 arg0 nrec_hpdefs) succ_hp_args) in
+        if List.length (List.concat fs_list) = 0 then (false,[f]) else
+        (*create template from f*)
+          let nf,_ = CF.drop_hrel_f f (fst (List.split succ_hp_args)) in
+        (*combine fs_list*)
+          let lsf_cmb = List.fold_left helper [nf] fs_list in
+          (* DD.info_pprint ("       succ_susbt lsf_cmb:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula) *)
+          (*                                                 in pr lsf_cmb)) no_pos; *)
+        (*remove f which has common prefix*)
+          let lsf_cmb1 = (remove_longer_common_prefix lsf_cmb) in
+          (* DD.info_pprint ("       succ_susbt lsf_cmb 1:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula) *)
+          (*                                                   in pr lsf_cmb1)) no_pos; *)
+          (true,lsf_cmb1)
     end

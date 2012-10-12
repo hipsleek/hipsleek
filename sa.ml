@@ -1547,6 +1547,8 @@ let get_def_body (a1,args,a3,olf,orf)=
     | Some f1, Some f2 -> (a1,args,f2)
     | None, None -> report_error no_pos "sa.obtain_def: can't happen 2"
 
+
+(*=========SUBST DEF and PARDEF FIX==========*)
 (*
   divide hp into three groups:
   - independent - ready for genalizing
@@ -1644,10 +1646,113 @@ let pardef_subst_fix_x unk_hps groups=
   in
   helper_fix groups [] []
 
+(*this subst is for a nice matching between inferred HP
+and lib based predicates*)
 let pardef_subst_fix unk_hps groups=
   let pr1 = pr_list_ln (pr_list_ln string_of_par_def_w_name_short) in
   Debug.no_1 "pardef_subst_fix" pr1 pr1
       (fun _ -> pardef_subst_fix_x unk_hps groups) groups
+
+(*=========SUBST DEF FIX==========*)
+(*
+  divide hp into three groups:
+  - independent - ready for genalizing
+  - dependent:
+      - depend on non-recursive groups: susbst
+      - depend on recusive groups: wait
+*)
+let def_subst_fix_x unk_hps hpdefs=
+  let is_rec_hpdef (CP.HPRelDefn hp,_,f)=
+    let hps = CF.get_hp_rel_name_formula f in
+    (CP.mem_svl hp hps)
+  in
+  let is_independ_hpdef (CP.HPRelDefn hp,_,f)=
+    let hps = CF.get_hp_rel_name_formula f in
+    let hps = CP.remove_dups_svl hps in
+    (* DD.ninfo_pprint ("       rec hp: " ^ (!CP.print_sv hp)) no_pos; *)
+    let _,rems = List.partition (fun hp1 -> CP.eq_spec_var hp hp1) hps in
+    (* DD.ninfo_pprint ("       rec rems: " ^ (!CP.print_svl rems)) no_pos; *)
+    (rems = [])
+  in
+  let process_dep_hpdef hpdef rec_hps nrec_hpdefs=
+    let (CP.HPRelDefn hp,hprel,f) = hpdef in
+    let fs = CF.list_of_disjs f in
+    (* DD.ninfo_pprint ("       process_dep_group hp: " ^ (!CP.print_sv hp)) no_pos; *)
+    let succ_hp_args =  List.concat (List.map CF.get_HRels_f fs) in
+    (*remove dups*)
+    let succ_hp_args = Gen.BList.remove_dups_eq SAU.check_simp_hp_eq succ_hp_args in
+    (*get succ hp names only*)
+    let succ_hps = fst (List.split succ_hp_args) in
+    (* DD.ninfo_pprint ("       process_dep_group succ_hps: " ^ (!CP.print_svl succ_hps)) no_pos; *)
+    (*remove itself hp and unk_hps*)
+    let succ_hps1 = List.filter (fun hp1 -> not (CP.eq_spec_var hp1 hp) &&
+        not (CP.mem_svl hp1 unk_hps)) succ_hps in
+    (* DD.ninfo_pprint ("       process_dep_group succ_hps1: " ^ (!CP.print_svl succ_hps1)) no_pos; *)
+    if (CP.intersect succ_hps1 rec_hps) = [] then
+      (*not depends on any recursive hps, susbt it*)
+      let args = SAU.get_ptrs hprel in
+      let ters,new_fs = List.split (List.map (fun f1 -> SAU.succ_susbt_hpdef nrec_hpdefs (hp,args,f1)) fs) in
+      (*check all is false*)
+      (* let pr = pr_list string_of_bool in *)
+      (* DD.ninfo_pprint ("       bool: " ^ (pr ters)) no_pos; *)
+      let ter = List.for_all (fun b -> not b) ters in
+      let new_f1  = SAU.remove_longer_common_prefix_w_unk unk_hps (List.concat new_fs) in
+      (not ter, (CP.HPRelDefn hp,hprel,CF.disj_of_list new_f1 no_pos ))
+    else
+      (*return*)
+      (false,hpdef)
+  in
+  let subst_first_dep_hpdef deps rec_hps nrec_hpdefs=
+    let rec local_helper deps res=
+      match deps with
+        | [] -> (false,res)
+        | hpdef::gs -> let r,hpdef1 = process_dep_hpdef hpdef rec_hps nrec_hpdefs in
+                     if r then (true,(res@[hpdef1]@gs))
+                     else local_helper gs (res@[hpdef])
+    in
+    (* if nrec_grps = [] then (false, deps) else *)
+      local_helper deps []
+  in
+  let helper_x hpdefs rec_inds nrec_inds=
+    let indeps,deps = List.partition is_independ_hpdef hpdefs in
+    (*classify indeps into rec and non_rec*)
+    let lrec_inds,lnrec_inds = List.partition is_rec_hpdef indeps in
+    (*for return*)
+    let res_rec_inds = rec_inds@lrec_inds in
+    let res_nrec_inds = nrec_inds@lnrec_inds in
+    let lrec_deps,l_nrec_deps = List.partition is_rec_hpdef deps in
+    (*find deps on non_recs*)
+    let rec_hps = List.map
+      (fun (CP.HPRelDefn hp,_,_) ->  hp)
+      (res_rec_inds@lrec_deps) in
+    (*find the first depend grp in deps to subst,
+    if can not find, return false for terminating*)
+    let r, deps1 = subst_first_dep_hpdef deps rec_hps (res_nrec_inds@l_nrec_deps) in
+    ((List.length indeps>0 || r), deps1, res_rec_inds,res_nrec_inds)
+  in
+  (*for debugging*)
+   let helper hpdefs rec_inds nrec_inds=
+     let pr1 = pr_list_ln (pr_list_ln Cprinter.string_of_hprel_def) in
+     let pr2= pr_quad string_of_bool pr1 pr1 pr1 in
+     Debug.no_3 "pardef_subst_fix:helper" pr1 pr1 pr1 pr2
+         (fun _ _ _ -> helper_x hpdefs rec_inds nrec_inds) hpdefs rec_inds nrec_inds
+   in
+  (*END for debugging*)
+  let rec helper_fix cur rec_indps nrec_indps=
+    let r,new_cur,new_rec_indps,new_nrec_indps = helper cur rec_indps nrec_indps in
+    if r then helper_fix new_cur new_rec_indps new_nrec_indps
+    else (new_cur@new_rec_indps@new_nrec_indps)
+  in
+  helper_fix hpdefs [] []
+
+(*this subst is to elim intermediate hps in final inferred hprel def
+ *)
+let def_subst_fix unk_hps hpdefs=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  Debug.no_1 "def_subst_fix" pr1 pr1
+      (fun _ -> def_subst_fix_x unk_hps hpdefs) hpdefs
+
+  (*=========END SUBST FIX==========*)
 
 let remove_dups_pardefs_x grp=
   let eq_pardefs (_,args1,f1) (_,args2,f2)=
@@ -2142,7 +2247,7 @@ let collect_sel_hp_def defs sel_hps unk_hps m=
       (* ( String.concat " OR " view_names) *) (pr3b vns) in
   let pr3 = pr_list_ln pr3a in
   let pr4 = (pr_list_ln Cprinter.string_of_hprel_def) in
-  Debug.ho_3 "collect_sel_hp_def" pr1 pr2 pr3 pr4
+  Debug.no_3 "collect_sel_hp_def" pr1 pr2 pr3 pr4
       (fun _ _ _ -> collect_sel_hp_def_x defs sel_hps unk_hps m) defs sel_hps m
 (*
   input: constrs: (formula * formula) list
@@ -2171,17 +2276,19 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * hp
   let hp_def_from_split = generate_hp_def_from_split hp_defs_split hp_defs unk_hps in
   DD.ninfo_pprint (" remains: " ^
      (let pr1 = pr_list_ln Cprinter.string_of_hprel in pr1 constr3) ) no_pos;
-  let hp_defs =  (Gen.BList.remove_dups_eq (fun (CP.HPRelDefn hp1,_,_) (CP.HPRelDefn hp2,_,_) -> CP.eq_spec_var hp1 hp2) (hp_defs@hp_def_from_split))@
-  unk_hp_def in
+  let hp_defs1 =  (Gen.BList.remove_dups_eq (fun (CP.HPRelDefn hp1,_,_) (CP.HPRelDefn hp2,_,_) -> CP.eq_spec_var hp1 hp2) (hp_defs@hp_def_from_split)) in
    DD.ninfo_pprint ">>>>>> step 7: mathching with predefined predicates <<<<<<" no_pos;
-  let m = match_hps_views hp_defs prog.CA.prog_view_decls in
+  let unk_hp_svl = (List.map (fun (hp,_) -> hp) unk_hps) in
+  let hp_defs2 = (def_subst_fix unk_hp_svl hp_defs1) in
+  let hp_defs3 = hp_defs2 @ unk_hp_def in
+  let m = match_hps_views hp_defs3 prog.CA.prog_view_decls in
   let _ = DD.ninfo_pprint ("        sel_hp_rel:" ^ (!CP.print_svl sel_hp_rels)) no_pos in
   (* let _ =  DD.info_pprint (" matching: " ^ *)
   (*   (let pr = pr_list_ln (fun (hp,view_names) -> (!CP.print_sv hp) ^ " === " ^ *)
   (*     ( String.concat " OR " view_names)) in pr m)) no_pos in *)
-  let sel_hp_defs = collect_sel_hp_def hp_defs sel_hp_rels (List.map (fun (hp,_) -> hp) unk_hps) m in
+  let sel_hp_defs = collect_sel_hp_def hp_defs3 sel_hp_rels unk_hp_svl m in
   let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) sel_hp_defs in
-  (constr3, hp_defs)
+  (constr3, hp_defs3)
   (* loop 1 *)
   (*simplify constrs*)
   (* let constrs12 = simplify_constrs constrs1 in *)

@@ -66,7 +66,7 @@ l2<y> == self::node<a,null> & y=self
 
 void append(node x, node y)
 
-
+//G1 can not be a lseg because y!=null
   infer[H1,G1]
   requires H1(x)*y::node<a,null>
      ensures G1(x,y) *y::node<a,null>;

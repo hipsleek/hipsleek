@@ -3236,8 +3236,9 @@ and get_hp_rel_name_formula (f: formula) =
 		      formula_base_pure = p1})
     | Exists ({ formula_exists_heap = h1;
 		        formula_exists_pure = p1}) -> get_hp_rel_name_h_formula h1
-    | Or orf  -> (get_hp_rel_name_formula orf.formula_or_f1)@
-        (get_hp_rel_name_formula orf.formula_or_f2)
+    | Or orf  ->
+        CP.remove_dups_svl ((get_hp_rel_name_formula orf.formula_or_f1)@
+        (get_hp_rel_name_formula orf.formula_or_f2))
 
 and get_hp_rel_name_bformula bf=
   get_hp_rel_name_h_formula bf.formula_base_heap
@@ -3714,6 +3715,60 @@ and subst_hrel_hview_hf hf0 subst=
     | HEmp -> hf
   in
   helper2 hf0
+
+let rec subst_unk_hps_f f hp_names=
+  match f with
+    | Base fb -> let nfb = subst_unk_hps_hf fb.formula_base_heap hp_names in
+        (Base {fb with formula_base_heap =  nfb;})
+    | Or orf -> let nf1 =  subst_unk_hps_f orf.formula_or_f1 hp_names in
+                let nf2 =  subst_unk_hps_f orf.formula_or_f2 hp_names in
+       ( Or {orf with formula_or_f1 = nf1;
+                formula_or_f2 = nf2;})
+    | Exists fe -> let nfe = subst_unk_hps_hf fe.formula_exists_heap hp_names in
+        (Exists {fe with formula_exists_heap = nfe ;})
+
+and subst_unk_hps_hf hf0 hp_names=
+  let rec helper hf=
+  match hf with
+    | Star {h_formula_star_h1 = hf1;
+            h_formula_star_h2 = hf2;
+            h_formula_star_pos = pos} ->
+        let n_hf1 = helper hf1 in
+        let n_hf2 = helper hf2 in
+        let newf =
+        (match n_hf1,n_hf2 with
+          | (HTrue,HTrue) -> HTrue
+          | _ -> (Star {h_formula_star_h1 = n_hf1;
+                       h_formula_star_h2 = n_hf2;
+                       h_formula_star_pos = pos})
+        ) in
+        (newf)
+    | Conj { h_formula_conj_h1 = hf1;
+             h_formula_conj_h2 = hf2;
+             h_formula_conj_pos = pos} ->
+        let n_hf1 = helper hf1 in
+        let n_hf2 = helper hf2 in
+        (Conj { h_formula_conj_h1 = n_hf1;
+               h_formula_conj_h2 = n_hf2;
+               h_formula_conj_pos = pos})
+    | Phase { h_formula_phase_rd = hf1;
+              h_formula_phase_rw = hf2;
+              h_formula_phase_pos = pos} ->
+        let n_hf1 = helper hf1 in
+        let n_hf2 = helper hf2 in
+        (Phase { h_formula_phase_rd = n_hf1;
+              h_formula_phase_rw = n_hf2;
+              h_formula_phase_pos = pos})
+    | HRel (id,_,_) -> if CP.mem_svl id hp_names then HTrue
+        else hf
+    | DataNode _
+    | ViewNode _
+    | Hole _
+    | HTrue
+    | HFalse
+    | HEmp -> hf
+  in helper hf0
+
 
 (*end for sa*)
  (* context functions *)
