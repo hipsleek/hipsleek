@@ -839,3 +839,8 @@ let checkeq_defs hvars (defs: (CP.rel_cat * CF.h_formula * CF.formula) list) ( i
   let pr3 = pr_list_ln (pr_pair Cprinter.string_of_spec_var_list Cprinter.string_of_spec_var) in
   Debug.ho_2 "check_defs" pr2 pr1 (pr3)
     (fun _ _ -> checkeq_defs_x hvars defs infile_defs) defs infile_defs
+
+let checkeq_defs_bool hvars (defs: (CP.rel_cat * CF.h_formula * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) =
+  let mtb = checkeq_defs hvars defs infile_defs in
+  let rs = List.map (fun (ls, key) -> (List.exists (fun e -> CP.eq_spec_var e key) ls)) mtb in
+  not (List.exists (fun c -> not(c)) rs)
