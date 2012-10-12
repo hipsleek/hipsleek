@@ -2884,7 +2884,8 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_
     else(* if isConstFalse conseq then
 	       (--[], UnsatConseq)
 	       else *)
-      if isConstETrue conseq then
+      if (isConstETrue conseq) && (join_id=None) then
+        (*In case join_id = Some id, we need to "delay and check" *)
         ((SuccCtx [ctx]), TrueConseq)
       else
         (*let ctx = (*if !Globals.elim_unsat then elim_unsat_ctx prog ctx else *) (*elim_unsat_ctx prog *)ctx in
@@ -2981,6 +2982,90 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	 match ctx11 with (*redundant check*)
 	  | OCtx _ -> report_error post_pos#get ("[inner entailer" ^ (string_of_int i) ^ "] unexpected dealing with OCtx \n" ^ (Cprinter.string_of_context_short ctx11))
 	  | Ctx es -> ();
+          (**************** <<< Perform check when join *******)
+          (****************************************************)
+          (match join_id with
+            | Some id ->
+                let es_f = es.CF.es_formula in
+                (*TO CHECK: asssume no disjuntive form in f*)
+                let _, p, _, _,a = CF.split_components es_f in (*pickup pure constraints and threads*)
+                let ids = MCP.find_closure_mix_formula id p in
+                (*select the thread with id.*)
+                let rec helper (ls:CF.one_formula list) vars : CF.one_formula option * (CF.one_formula list) =
+                  (match ls with
+                    | [] -> (None,[])
+                    | x::xs ->
+                        let id = x.CF.formula_thread in
+                        if (List.mem id vars) then
+                          (Some x),xs
+                        else
+                          let res1,res2 = helper xs vars in
+                          (match res1 with
+                            | None -> None,[]
+                            | Some f -> Some f, x::res2))
+                in
+                let res1,res2 = helper a ids in (*res1 is the thread, res2 is the rest*)
+                (match res1 with
+                  | None ->
+                      (*FAIL to find the thread with id*)
+                      (*TO CHECK: become FALSE, which may not good enough*)
+                      let error_msg = ("Join: thread with id = " ^ (Cprinter.string_of_spec_var id) ^ " not found") in
+                      (mkFailCtx_simple error_msg es (CF.mkTrue_nf pos) pos, Failure)
+                  | Some one_f ->
+                      let base = CF.formula_of_one_formula one_f in
+                      (******Checking the delayed constraints at join point >>> *******)
+                      let delayed_f = one_f.CF.formula_delayed in
+                      let ls_var_uprimed = CP.mkLsVar Unprimed in
+                      let ls_var_primed = CP.mkLsVar Primed in
+                      let ndf = MCP.m_apply_one (ls_var_uprimed, ls_var_primed) delayed_f in
+                      let new_f = CF.formula_of_mix_formula ndf no_pos in
+                      let _ = Debug.devel_pprint ("Proving delayed lockset constraints \n "
+                                                  ^ "### es = " ^ (Cprinter.string_of_estate es)
+                                                  ^ "### delayed_f = " ^ (Cprinter.string_of_formula new_f)
+                                                  ^"\n") pos in
+                      let rs,prf = heap_entail_one_context prog false (CF.Ctx es) new_f None None None pos in
+                      (if (CF.isFailCtx rs) then
+                            (*FAIL to satisfy the delayed constraints*)
+                            (*TO CHECK: become FALSE, which may not good enough*)
+                            let rs = CF.add_error_message_list_context "[[[DELAYED CHECKING FAILURE]]]" rs in
+                              rs,prf
+                      else
+                        let _ = Debug.devel_pprint ("Delayed lockset constraints satisfiable\n " ^ "\n") pos in
+                        (*******<<<Checking the delayed constraints at join point*****)
+                        (*if checking succeeds --> proceed as normal*)
+                        (**********Compose variable permissions >>> *******)
+                        (* let ps,new_base = CF.filter_varperm_formula base in *)
+                        (* let full_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Full)) ps) in (\*only pickup @full*\) *)
+
+                        let full_vars = CF.get_varperm_formula base VP_Full in
+                        let new_base = CF.drop_varperm_formula base in
+                        let zero_vars = es.CF.es_var_zero_perm in
+                        let tmp = Gen.BList.difference_eq CP.eq_spec_var_ident full_vars zero_vars in
+                        (if (tmp!=[]) then
+                          (*all @full in the conseq should be in @zero in the ante*)
+                          let msg = "check_exp: SCall: join: failed in adding " ^ (string_of_vp_ann VP_Full) ^ " variable permissions in conseq: " ^ (Cprinter.string_of_spec_var_list tmp)^ "is not" ^(string_of_vp_ann VP_Zero) in
+                          (mkFailCtx_simple msg es (CF.mkTrue_nf pos) pos, Failure)
+                        else
+                          let vars1 = Gen.BList.difference_eq CP.eq_spec_var_ident zero_vars full_vars in
+                          let es = {es with CF.es_var_zero_perm=vars1} in
+                          (**********<<< Compose @full variable permissions *******)
+                          let es_f = CF.replace_formula_and res2 es_f in
+                          let primed_full_vars = List.map (fun var -> match var with
+                            | CP.SpecVar(t,v,p) -> CP.SpecVar (t,v,Primed))  full_vars in
+                          (* let _ = print_endline ("check_exp: SCall : join : \n ### es_f = " ^ (Cprinter.string_of_formula es_f) ^ " \n new_base = " ^ (Cprinter.string_of_formula new_base)) in *)
+                          (**** DO NOT COMPOSE lockset because they are thread-local*****)
+                          let new_f = CF.compose_formula_join es_f new_base (* one_f.F.formula_ref_vars *) (primed_full_vars) CF.Flow_combine pos in
+                          (* let new_f = CF.normalize 7 es_f base pos in *) (*TO CHECK: normalize or combine???*)
+                          let new_es = {es with CF.es_formula = new_f} in
+                          (*merge*)
+                          let nctx = CF.Ctx new_es in
+                          (SuccCtx [nctx] ,TrueConseq)
+                        ) (*END IF*)
+                        ) (*END IF*)
+                      ) (* END match res1 with *)
+            | None ->
+      (****************************************************)
+      (**************** <<< Perform check when join *******)
       match f with
         | ECase b   ->
               let ctx = add_to_context_num 1 ctx11 "case rule" in
@@ -3244,7 +3329,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 			let l11,l12 = helper_inner_x 11 ctx b.formula_struc_or_f1 in
 			let l21,l22 = helper_inner_x 11 ctx b.formula_struc_or_f2 in
 			((fold_context_left [l11;l21]), (mkCaseStep ctx conseq [l12;l22]))
-	end	in
+                ) (* END match join_id with *)
+	end
+  in
   helper_inner 8 ctx_00 conseq 
 
 and heap_entail_init (prog : prog_decl) (is_folding : bool)  (cl : list_context) (conseq : formula) pos : (list_context * proof) =

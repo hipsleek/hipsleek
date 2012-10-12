@@ -991,7 +991,10 @@ and mkETrue flowt pos = EBase({
 	formula_struc_base = mkTrue flowt pos;
 	formula_struc_continuation = None;
 	formula_struc_pos = pos})
-  
+
+(*no flow*)
+and mkETrue_nf pos = mkETrue (mkTrueFlow ()) pos
+
 and mkOr f1 f2 pos =
   let rec liniarize_or c = match c with
 	| Or f -> 
@@ -3504,6 +3507,23 @@ let mkOr_Reason ft1 ft2=
   Or_Reason (ft1, ft2)
 
 let comb_must m1 m2 = "["^m1^","^m2^"]"
+
+let add_error_message_fail_type (msg:string) (f:fail_type) =
+  let rec helper f =
+  match f with
+    | Basic_Reason (fc,fe) ->
+        let new_fc_message = msg ^ "\n" ^ fc.fc_message in
+        let nfc = {fc with fc_message = new_fc_message} in
+        Basic_Reason (nfc,fe)
+    | _ -> f
+  in helper f
+
+let add_error_message_list_context (msg:string) (l:list_context) =
+  match l with
+    | FailCtx ft ->
+        let nft = add_error_message_fail_type msg ft in
+        FailCtx nft
+    | _ -> l
 
 let is_must_failure_fe (f:fail_explaining) =
   match f.fe_kind with
