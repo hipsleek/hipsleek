@@ -3032,6 +3032,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 						        let res_ctx, res_prf = match formula_cont with
 							      | Some l -> heap_entail_struc prog is_folding has_post n_ctx_list l tid pos pid (*also propagate tid*)
 							      | None -> (n_ctx_list, prf) in
+                                 (* DD.info_pprint ("  after pre 0: " ^ (Cprinter.string_of_list_context res_ctx)) pos; *)
 						        let res_ctx = if !wrap_exists_implicit_explicit then push_exists_list_context (expl_inst@impl_inst) res_ctx else res_ctx in
                                  (* DD.info_pprint ("  after pre 1: " ^ (Cprinter.string_of_list_context res_ctx)) pos; *)
 						        (res_ctx,res_prf)
@@ -3079,7 +3080,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                 in
                 (************* <<< Compose variable permissions******************)
                         (* TOCHECK : why compose_context fail to set unsat_flag? *)
+                 (* DD.info_pprint ("   cp 1: " ^ (Cprinter.string_of_formula new_post)) pos; *)
 	            let rs1 = CF.compose_context_formula rs new_post ref_vars Flow_replace pos in
+                (* DD.info_pprint ("   cp 2: " ^ (Cprinter.string_of_context rs1)) pos; *)
 	                    let rs2 = CF.transform_context (elim_unsat_es_now prog (ref 1)) rs1 in
                 if (!Globals.ann_vp) then
                 Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: after checking VarPerm in EAssume: \n ### rs = "^(Cprinter.string_of_context rs2)^"\n")) pos;
@@ -8743,7 +8746,7 @@ let rec simplify_post post_fml post_vars prog subst_fml pre_vars inf_post evars 
     let h,p,pre,bag_vars = helper b.formula_base_heap b.formula_base_pure post_fml post_vars prog subst_fml pre_vars inf_post ref_vars in
     (*print_endline ("VARS: " ^ Cprinter.string_of_spec_var_list pre_vars);*)
     let exists_h_vars = if pre_vars = [] then [] else 
-      List.filter (fun x -> not (CP.is_res_spec_var x)) (CP.diff_svl (CF.h_fv h) (pre_vars @ ref_vars @ (List.map CP.to_primed ref_vars))) in
+      List.filter (fun x -> not (CP.is_res_spec_var x || CP.is_hprel_typ x)) (CP.diff_svl (CF.h_fv h) (pre_vars @ ref_vars @ (List.map CP.to_primed ref_vars))) in
     let fml = mkExists (CP.remove_dups_svl (evars @ bag_vars @ exists_h_vars))
         h (MCP.mix_of_pure p) b.formula_base_type b.formula_base_flow b.formula_base_and
         b.formula_base_pos
@@ -8817,7 +8820,8 @@ let rec simplify_relation_x (sp:struc_formula) subst_fml pre_vars post_vars prog
     (EBase {b with formula_struc_base = base; formula_struc_continuation = r}, [])
   | EAssume(svl,f,fl) ->
 	  let pvars = CP.remove_dups_svl (CP.diff_svl (CF.fv f) post_vars) in
-	  let (new_f,pres) = simplify_post f pvars prog subst_fml pre_vars inf_post evars svl in
+      (* let pvars1 =  List.filter (fun v -> CP.type_of_spec_var v != HpT ) pvars in *)
+      let (new_f,pres) = simplify_post f pvars prog subst_fml pre_vars inf_post evars svl in
 	  (EAssume(svl,new_f,fl), pres)
   | EInfer b -> report_error no_pos "Do not expect EInfer at this level"
 	| EList b ->   

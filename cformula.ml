@@ -2341,7 +2341,8 @@ and h_subst sst (f : h_formula) =
 							h_formula_data_remaining_branches = ann;
 							h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond;
 							h_formula_data_pos = pos})
-  | HRel (r, args, pos) -> HRel (CP.subst_var_par sst r, CP.e_apply_subs_list sst args, pos)
+  | HRel (r, args, pos) ->
+      HRel (CP.subst_var_par sst r, CP.e_apply_subs_list sst args, pos)
   | HTrue -> f
   | HFalse -> f
   | HEmp -> f
@@ -3074,7 +3075,9 @@ and compose_formula_x (delta : formula) (phi : formula) (x : CP.spec_var list) f
   let rho1 = List.combine (List.map CP.to_unprimed x) rs in
   let rho2 = List.combine (List.map CP.to_primed x) rs in
   let new_delta = subst rho2 delta in
+  DD.info_pprint ("   should not subst hprel old: " ^ (!print_formula phi)) pos;
   let new_phi = subst rho1 phi in
+  DD.info_pprint ("   should not subst hprel new: " ^ (!print_formula new_phi)) pos;
   let new_f = normalize_keep_flow new_delta new_phi flow_tr pos in
   let _ = must_consistent_formula "compose_formula 1" new_f in
   let resform = push_exists rs new_f in
@@ -8448,7 +8451,7 @@ let lax_impl_of_post f =
 
 let fv_wo_rel (f:formula) =
   let vs = fv f in
-  List.filter (fun v -> (CP.type_of_spec_var v) != RelT) vs
+  List.filter (fun v -> let t = CP.type_of_spec_var v in t!= RelT && t!=HpT) vs
 
 (* Termination: Check whether a formula contains LexVar *) 
 (* TODO: Termination: Need to add default term info
