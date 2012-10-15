@@ -726,26 +726,36 @@ let get_longest_common_hnodes_two shortes_ldns ldns2=
   in
   look_up_min_hds shortes_ldns [] ldns2 []
 
-let process_one_f hp_subst sh_ldns (ldns, f)=
+let process_one_f args hp_subst sh_ldns (ldns, f)=
   let (matcheds2, rest2, ss, last_ss) = get_longest_common_hnodes_two sh_ldns ldns in
   (*drop all matcheds*)
   (* let _ =  DD.info_pprint ("       matched 1: " ^ (!CP.print_svl matcheds2)) no_pos in *)
   (* let _ =  DD.info_pprint ("       f: " ^ (Cprinter.prtt_string_of_formula f)) no_pos in *)
   let nf1 = CF.drop_hnodes_f f matcheds2 in
   (* let _ =  DD.info_pprint ("       nf1: " ^ (Cprinter.prtt_string_of_formula nf1)) no_pos in *)
+  (* let _ =  DD.info_pprint ("       args: " ^ (!CP.print_svl args)) no_pos in *)
+  (* let _ =  DD.info_pprint ("       last_ss: " ^ (let pr = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) in pr last_ss)) no_pos in *)
   (*apply susbt ss*)
   let nf2 = CF.subst ss nf1 in
   (*if rest = [] then add pure equality all last_ss*)
   let nf3=
-    if (* rest2 = [] *) is_empty_f nf2 then
-      let ps = List.concat (List.map (fun ((CP.SpecVar (t,v,p)) ,v2) ->
-          if (is_pointer t)
-          then [CP.mkPtrEqn v2 (CP.SpecVar (t,v,p)) no_pos]
-          else []) last_ss) in
-      let p = CP.conj_of_list ps no_pos in
-      CF.mkAnd_pure nf2 (MCP.mix_of_pure p) no_pos
-  (*else apply subst last_ss*)
-    else CF.subst last_ss nf2
+    (*partition last_ss into two groups: one for subst another not*)
+    let last_ss1,last_ss2 = List.partition
+      (fun (v1,v2) -> Gen.BList.difference_eq CP.eq_spec_var [v1;v2] args = [])
+      last_ss
+    in
+    (* if (rest2 = [] && (CF.get_hp_rel_name_formula nf2) <> [] *)
+ (* (\*and <> current hp*\)) || is_empty_f nf2 then *)
+    (*mk eq for last_ss1*)
+    let ps = List.concat (List.map (fun ((CP.SpecVar (t,v,p)) ,v2) ->
+        if (is_pointer t)
+        then [CP.mkPtrEqn v2 (CP.SpecVar (t,v,p)) no_pos]
+        else []) last_ss1) in
+    let p = CP.conj_of_list ps no_pos in
+   (*apply subst last_ss2*)
+    let nf3 = CF.subst last_ss2 nf2 in
+    (*combine them*)
+    CF.mkAnd_pure nf3 (MCP.mix_of_pure p) no_pos
   in
   (*subst hp rel by its new definition if applicable*)
   let hprel,hf = hp_subst in
@@ -896,7 +906,7 @@ let get_longest_common_hnodes_list prog hp args fs=
      let root = List.hd args in
      let sh_ldns1 = move_root_to_top root sh_ldns in
      let orig_hpdef, hp_subst, new_hp, n_args = mk_orig_hprel_def prog hp args sh_ldns1 in
-     let n_fs = List.map (process_one_f hp_subst sh_ldns1) lldns in
+     let n_fs = List.map (process_one_f n_args hp_subst sh_ldns1) lldns in
      let new_hpdef =  mk_hprel_def (List.hd new_hp) n_args n_fs no_pos in
      (* (List.map (fun hd -> (CF.DataNode hd)) sh_ldns1, n_fs, []) *)
      [orig_hpdef;new_hpdef]
