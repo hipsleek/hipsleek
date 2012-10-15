@@ -32,7 +32,7 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
                    mutable prog_hopred_decls : hopred_decl list;
                    (* An Hoa: relational declaration *)
                    prog_proc_decls : proc_decl list;
-				   prog_barrier_decls : barrier_decl list;
+		   prog_barrier_decls : barrier_decl list;
                    mutable prog_coercion_decls : coercion_decl list }
 
 and data_decl = { data_name : ident;

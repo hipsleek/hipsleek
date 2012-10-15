@@ -53,6 +53,8 @@ HeapPred H2(node a).
 HeapPred HP1(node a, node b).
 HeapPred HP_648(node a).
 HeapPred HP_641(node a, node b).
+HeapPred T1(node a).
+HeapPred T2(node a, node b).
 
 ll<> == self=null
   or self::node<_,q>*q::ll<>

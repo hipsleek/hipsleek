@@ -2268,6 +2268,49 @@ arrayaccess_expression:[[
 (*end of hip part*)
 
 (*cp_list*)
+
+(*
+cpfile: 
+  [[ t = opt_cp_list ->
+      let hp_defs = new Gen.stack in(* list of heap predicate relations *)
+      let proc_defs = ref ([] : proc_decl list) in
+      let ass = ref ([] : proc_decl list) in
+      let hp_defs = ref ([] : proc_decl list) in
+      let choose d = match d with
+        | Hp hpdef -> hp_defs # push hpdef 
+        | Proc pdef -> proc_defs := pdef :: !proc_defs 
+
+    let _ = List.map choose t in
+    let obj_def = { data_name = "Object";
+					data_fields = [];
+					data_parent_name = "";
+					data_invs = []; (* F.mkTrue no_pos; *)
+					data_methods = [] } in
+    let string_def = { data_name = "String";
+					   data_fields = [];
+					   data_parent_name = "Object";
+					   data_invs = []; (* F.mkTrue no_pos; *)
+					   data_methods = [] } in
+    let rel_lst = rel_defs # get_stk in
+    let hp_lst = hp_defs # get_stk in
+    { prog_data_decls = obj_def :: string_def :: !data_defs;
+      prog_global_var_decls = !global_var_defs;
+      prog_logical_var_decls = !logical_var_defs;
+      prog_enum_decls = !enum_defs;
+      (* prog_rel_decls = [];  TODO : new field for array parsing *)
+      prog_view_decls = !view_defs;
+      prog_func_decls = func_defs # get_stk ;
+      prog_rel_decls = rel_lst ; (* An Hoa *)
+      prog_rel_ids = List.map (fun x -> (RelT,x.rel_name)) rel_lst; (* WN *)
+      prog_hp_decls = hp_lst ;
+      prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
+      prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
+      prog_proc_decls = !proc_defs;
+      prog_coercion_decls = !coercion_defs; 
+      prog_hopred_decls = !hopred_defs;
+	  prog_barrier_decls = !barrier_defs; } ]];
+*)
+
 cp_list: [[t = LIST0 cp_ele -> t]];
 
 cp_ele: [[t = id; `OSQUARE; il=OPT id_list; `CSQUARE; `COLON;`OBRACE;cs=constrs;`CBRACE  ->  let il = un_option il [] in (il,t,cs) ]];

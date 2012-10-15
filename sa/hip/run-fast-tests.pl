@@ -1068,7 +1068,8 @@ sub hip_process_file {
         if ("$param" =~ "hip") {
             $exempl_path_full = "$exempl_path/hip";
             print "Starting hip tests:\n";
-        } else {
+        } 
+	else {
             $exempl_path_full = "$exempl_path/hip/$param";
             print "Starting hip-$param tests:\n";
         }
@@ -1084,16 +1085,17 @@ sub hip_process_file {
 	    }
 	   
 	    if ("$param" =~ "sa") {
-		#print "$hip $script_arguments $extra_options $exempl_path/hip/$test->[0] 2>&1 \n";
-		$output = `$hip $script_arguments $test->[0]  $extra_options $test->[3] 2>&1`;
+		$output = `$hip $script_arguments $test->[0]  $extra_options  $test->[3]  2>&1`;
 		print LOGFILE "\n======================================\n";
 		print LOGFILE "$output";
 		$cp_ass = "Compare ass";
 		$cp_defs = "Compare defs";
 		$limit = $test->[1]*2+3;
-
+		print "sa";
 		for($i = 4; $i<$limit;$i+=2)
 		{
+			#print "Output: $output \n";
+			#print "compare with: $cp_ass $test->[$i]\$.* SUCCESS \n";
 		    $res = "";
 		    if($output =~ /$cp_ass $test->[$i]\$.* SUCCESS/){
 			$res = $res ."SUCCESS";

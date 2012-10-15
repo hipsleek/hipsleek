@@ -3333,7 +3333,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 
 	  (** [Internal] Process duplicated pointers in an entail state **)
   (* TO CHECK: currently ignore formula_*_and*)
-	  let process_entail_state (es : entail_state) =
+  let process_entail_state (es : entail_state) =
 		(* Extract the heap formula *)
 		let f = es.es_formula in
 		let h,p = match f with
@@ -3413,7 +3413,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
    - add the existential vars from the conseq to the existential vars from the antecedent
    - f represents the consequent
 *)
-
+      
 and move_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula):list_context =
   let pr1 = Cprinter.string_of_list_context_short in
   let pr2 = Cprinter.string_of_mix_formula in

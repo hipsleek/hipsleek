@@ -257,7 +257,7 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
   let pr2b = add_str "inferred hp rels" (fun l -> string_of_int (List.length l)) in
   let pr3 = pr_penta pr1 pr2a pr2 pr2b string_of_bool in
   Debug.no_1 "check_specs_infer" pr1 pr3
-      (fun _ -> check_specs_infer_a prog proc ctx e0 do_infer spec_list) spec_list
+      (fun _ -> check_specs_infer_a  prog proc ctx e0 do_infer spec_list) spec_list
 
 (* Termination *)      
 (* This procedure to check that Term[x1,x2,...,xn] are bounded by x1,x2,...,xn>=0 *)
@@ -1915,6 +1915,7 @@ and check_proc (prog : prog_decl) (iprog: I.prog_decl)(proc : proc_decl) : bool 
                     Debug.trace_hprint (add_str "SPECS (after specs_infer)" pr_spec) new_spec no_pos;
                     Debug.trace_hprint (add_str "fm formula " (pr_list !CF.print_formula)) fm no_pos;
                     let new_spec = CF.simplify_ann new_spec in
+		   
                     let (rels,rest) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelDefn _ -> true | _ -> false) rels) in
                    
                     let (lst_assume,lst_rank) = (List.partition (fun (a1,a2,a3) -> match a1 with | CP.RelAssume _ -> true | _ -> false) rest) in
@@ -1940,29 +1941,31 @@ and check_proc (prog : prog_decl) (iprog: I.prog_decl)(proc : proc_decl) : bool 
                     let _ = print_endline "*************************************" in
                     let _ = print_endline (Sa.rel_def_stk # string_of) in
                     let _ = print_endline "*************************************" in
-		    let infile_constrs, infile_defs = if((String.compare !Globals.file_cp "") != 0) then (
-		      let file_name = !Globals.file_cp in
-		      let _ = Debug.info_pprint ("File to compare: " ^ file_name ) no_pos in
-		      
-		      let org_in_chnl = open_in file_name in 
-		      try
-			let cps  = Parser.parse_constrs file_name (Stream.of_channel org_in_chnl) in
-			let set_constrs = List.filter (fun (il,t,cs) -> (String.compare t "constrs" == 0)) cps in
-			let il1,t,res = if(List.length set_constrs == 0) then report_error no_pos "no constr"
-			   else if(List.length set_constrs > 1) then report_error no_pos "more than one constr" 
+		    let infile_constrs, infile_defs = 
+		      if((String.compare !Globals.file_cp "") != 0) 
+		      then (
+			let file_name = !Globals.file_cp in
+			let _ = Debug.info_pprint ("File to compare: " ^ file_name ) no_pos in
+			
+			let org_in_chnl = open_in file_name in 
+			try
+			  let cps  = Parser.parse_constrs file_name (Stream.of_channel org_in_chnl) in
+			  let set_constrs = List.filter (fun (il,t,cs) -> (String.compare t "ass" == 0)) cps in
+			  let il1,t,res = if(List.length set_constrs == 0) then report_error no_pos "no constr"
+			    else if(List.length set_constrs > 1) then report_error no_pos "more than one constr" 
 			    else List.hd set_constrs in (*the only constrs in file*)
-			let set_defs = List.filter (fun (il,t,cs) -> (String.compare t "hp_defs" == 0)) cps in
-			let il2,t2,res2 = if(List.length set_defs == 0) then report_error no_pos "no def"
-			  else if(List.length set_defs > 1) then report_error no_pos "more than one def"
-			  else List.hd set_defs in (*the only constrs in file*)
-			close_in org_in_chnl;
-			(res,res2)
-		      with
-			  End_of_file -> exit 0
-			| M.Loc.Exc_located (l,t)->
-			  (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
-			   raise t)
-		    )
+			  let set_defs = List.filter (fun (il,t,cs) -> (String.compare t "hp_defs" == 0)) cps in
+			  let il2,t2,res2 = if(List.length set_defs == 0) then report_error no_pos "no def"
+			    else if(List.length set_defs > 1) then report_error no_pos "more than one def"
+			    else List.hd set_defs in (*the only constrs in file*)
+			  close_in org_in_chnl;
+			  (res,res2)
+			with
+			    End_of_file -> exit 0
+			  | M.Loc.Exc_located (l,t)->
+			    (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+			     raise t)
+		      )
 		      else (
 			([],[])
 		      )
@@ -1971,10 +1974,10 @@ and check_proc (prog : prog_decl) (iprog: I.prog_decl)(proc : proc_decl) : bool 
 		      let stab =  H.create 103 in
 		      let if1, if2 = constr in
 		      let _ = Astsimp.gather_type_info_formula iprog if1 stab false in
-			(*let _ = print_endline ("typechecker1: stab: " ^ Astsimp.string_of_stab stab ) in *)
+		      (*let _ = print_endline ("typechecker1: stab: " ^ Astsimp.string_of_stab stab ) in *)
 		      let f1 = Astsimp.trans_formula iprog false [] false if1 stab false in
 		      let _ = Astsimp.gather_type_info_formula iprog if2 stab false in
-			(*	let _ = print_endline ("typechecker2: stab: " ^ Astsimp.string_of_stab stab ) in *)
+		      (*	let _ = print_endline ("typechecker2: stab: " ^ Astsimp.string_of_stab stab ) in *)
 		      let f2 = Astsimp.trans_formula iprog false [] false if2 stab false in
 		      (f1,f2)
 		    in
@@ -1982,13 +1985,20 @@ and check_proc (prog : prog_decl) (iprog: I.prog_decl)(proc : proc_decl) : bool 
 		      let infile_constrs = List.map (fun constr -> trans_constr constr) infile_constrs in
 		      let infile_defs = List.map (fun def -> trans_constr def) infile_defs in
 		      let is_match_constrs = CEQ.checkeq_constrs [] (List.map (fun hp -> hp.CF.hprel_lhs,hp.CF.hprel_rhs)
-                                                                 hp_lst_assume) infile_constrs in
+                                                                       hp_lst_assume) infile_constrs in
 		      let match_defs = CEQ.checkeq_defs [] ls_inferred_hps infile_defs in
-		      let is_match_defs = CEQ.checkeq_defs_bool [] ls_inferred_hps infile_defs in
+		      (*let _ = print_string ( pr_spec proc.proc_static_specs ^ "    vp") in
+		      let pvars = match proc.proc_static_specs with
+			| CF.EInfer b ->  b.CF.formula_inf_vars
+			| _ -> report_error no_pos "no case"
+		      in*)
+		      let _,_,inf_vars = CF.get_pre_post_vars [] proc.proc_static_specs in
+		      let _ = Debug.info_pprint ("VP: " ^ (!CP.print_svl inf_vars)) no_pos in
+		      let is_match_defs = CEQ.checkeq_defs_bool [] ls_inferred_hps infile_defs inf_vars in
 		      let _ = if(is_match_constrs) then 
 			  print_string ("Compare ass " ^ proc.proc_name ^ " SUCCESS\n" )
-		      else 
-			   print_string ("Compare ass " ^ proc.proc_name ^ " FAIL\n" )
+			else 
+			  print_string ("Compare ass " ^ proc.proc_name ^ " FAIL\n" )
 		      in
 		      let _ = if(is_match_defs) then 
 			  print_string ("Compare defs " ^ proc.proc_name ^ " SUCCESS\n" )
@@ -1996,12 +2006,12 @@ and check_proc (prog : prog_decl) (iprog: I.prog_decl)(proc : proc_decl) : bool 
 			  print_string ("Compare defs " ^ proc.proc_name ^ " FAIL\n" )
 		      in
 		      (*let pr3 = pr_list_ln (pr_pair Cprinter.string_of_spec_var_list Cprinter.string_of_spec_var) in
-		      let _ = print_endline ("/nCheck defs: \n" ^ pr3 match_defs ) in
-		      let _ = print_endline ("END-CMP" ) in*)
+			let _ = print_endline ("/nCheck defs: \n" ^ pr3 match_defs ) in
+			let _ = print_endline ("END-CMP" ) in*)
 		      ()
 		    )
 		    in
-                   
+                   (****)
                     let lst_rank = List.map (fun (_,a2,a3)-> (a2,a3)) lst_rank in
                     (*let _ = Ranking.do_nothing in*)
                     Debug.trace_hprint (add_str "SPECS (after simplify_ann)" pr_spec) new_spec no_pos;
