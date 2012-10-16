@@ -32,40 +32,25 @@ void append(node x, node y)
      ensures G2(x,y) * H1b(y);
   /*
 
-ERROR : why not make H1a(y) --> H1b(y)?
-
-!!! HP_579([v_node_57_596])
-!!!  =:  
-     emp&v_node_57_596=null
-  or H1(v_node_57_596)&true // WHY?
-  or v_node_57_596::node<val_57_560',next_57_561'> * H1(next_57_561')&true
- 
-!!! >>>>>> generalize_one_hp: <<<<<<
-!!! HP_612([x])
-!!!  =:  
- H1a(y) * x::node<val_57_585,y>&true
- or x::node<val_57_587,v_node_57_602> * HP_612(v_node_57_602)&
-    v_node_57_602!=null
- 
-!!! >>>>>> generalize_one_hp: <<<<<<
-!!! H1([x])
-!!!  =:  
- x::node<val_57_560',next_57_561'>&next_57_561'=null
- or x::node<val_57_560',next_57_561'> * H1(next_57_561')&true
- 
-!!! >>>>>> unk hps equivalent: <<<<<<
-!!! H1a([y])= H1b(y)&true
-!!! H1a([y])= HP_611(y)&true
-!!! >>>>>> unknown hps: <<<<<<
-!!! H1a([y])= htrue&true
-!!! HP_611([y])= htrue&true
-!!! H1b([y])= htrue&true
-!!! >>>>>> equivalent hps: <<<<<<
-!!! [HP_RELDEFN G2:  G2(x,y)::  
- x::node<val_57_587,v_node_57_602> * HP_612(v_node_57_602)&
- v_node_57_602!=null
- or H1a(y) * x::node<val_57_585,y>&true
- ]
+[ HP_RELDEFN HP_620
+HP_620(next_73_619) ::=next_73_619::ll[LHSCase]&true,
+ HP_RELDEFN HP_613
+HP_613(y_612,y) ::=
+                                      y_612::node<val_73_611,y_616> * 
+                                      HP_613(y_616,y)&y_612!=null
+                                      or H1b(y)&y_612=y
+                                      ,
+ HP_RELDEFN H1b
+H1b(y) ::=htrue&true,
+ HP_RELDEFN H1a
+H1a(y) ::=htrue&true,
+ HP_RELDEFN H1a
+H1a(y) ::=H1b(y)&true,
+ HP_RELDEFN H1
+H1(x) ::=x::node<val_73_618,next_73_619> * 
+  next_73_619::ll[LHSCase]&true,
+ HP_RELDEFN G2
+G2(x,y) ::=x::node<val_73_611,y_612> * HP_613(y_612,y)&true]
 
 
    */

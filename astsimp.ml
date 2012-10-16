@@ -1728,7 +1728,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_is_main = proc.I.proc_is_main;
           C.proc_is_recursive = false;
           C.proc_file = proc.I.proc_file;
-          C.proc_loc = proc.I.proc_loc;} in 
+          C.proc_loc = proc.I.proc_loc;
+	  C.proc_test_comps = trans_test_comps prog proc.I.proc_test_comps} in 
 	  (E.pop_scope (); cproc))))
 
 (** An Hoa : collect important variables in the specification
@@ -3078,7 +3079,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 I.proc_body = Some w_body;
                 I.proc_is_main = proc.I.proc_is_main;
                 I.proc_file = proc.I.proc_file;
-                I.proc_loc = pos; } in
+                I.proc_loc = pos; 
+		I.proc_test_comps = proc.I.proc_test_comps} in
             let temp_call =  I.CallNRecv {
                 I.exp_call_nrecv_method = w_name;
                 I.exp_call_nrecv_lock = None;
@@ -7522,6 +7524,35 @@ and trans_bdecl prog bd =
 	let pr_out c = Cprinter.string_of_barrier_decl c in
 	Debug.no_1 "trans_bdecl " pr_in pr_out (trans_bdecl_x prog) bd
   
+(******trans_test_components**********)
+and trans_test_comps prog tcomps =		  
+		  match tcomps with
+		    | None -> None
+		    | Some t ->
+		      Some {
+		      C.expected_ass = trans_expected_ass prog t.Iast.expected_ass;
+		      C.expected_hpdefs = trans_expected_ass prog t.Iast.expected_hpdefs;
+		    }
+
+and trans_expected_ass prog ass =
+		  let trans_constr prog constr = 
+		    let stab =  H.create 103 in
+		      let if1, if2 = constr in
+		      let _ = gather_type_info_formula prog if1 stab false in
+		      (*let _ = print_endline ("typechecker1: stab: " ^ Astsimp.string_of_stab stab ) in *)
+		      let f1 = trans_formula prog false [] false if1 stab false in
+		      let _ = gather_type_info_formula prog if2 stab false in
+		      (*	let _ = print_endline ("typechecker2: stab: " ^ Astsimp.string_of_stab stab ) in *)
+		      let f2 = trans_formula prog false [] false if2 stab false in
+		      (f1,f2)
+		  in
+   let helper assl = List.map (fun one_ass -> trans_constr prog (one_ass.Iast.ass_lhs,one_ass.Iast.ass_rhs)) assl in		    
+   match ass with
+      | None -> None 
+      | Some (il,assl) -> Some(il,helper assl)
+
+(******end trans_test_components**********)
+	  
 (*
 and normalize_barr_decl cprog p = 
 		let nfs = Solver.normalize_frac_struc cprog in
@@ -7593,3 +7624,4 @@ and normalize_fracs cprog  =
 		C.prog_barrier_decls = List.map (normalize_barr_decl cprog) cprog.C.prog_barrier_decls;
 	}
 *)	
+
