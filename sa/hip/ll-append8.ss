@@ -32,20 +32,17 @@ void append(node x, node y)
   ensures G2(x,y);
   /*
 
-G2 base case should contain H1a(y)
-
-!!! HP_578([v_node_50_595])
-!!!  =:  
- emp&v_node_50_595=null
- or v_node_50_595::node<val_50_559',next_50_560'> * HP_578(next_50_560')&true
- 
-!!! >>>>>> generalize_one_hp: <<<<<<
-!!! G2([x,y])
-!!!  =:  
- x::node<val_50_584,y>&true
- or x::node<val_50_586,v_node_50_601> * G2(v_node_50_601,y)&
-    v_node_50_601!=null
- 
+[ HP_RELDEFN HP_613
+HP_613(y_612,y) ::= 
+ H1a(y)&y_612=y
+ or y_612::node<val_53_611,y_616> * HP_613(y_616,y)&true
+ ,
+ HP_RELDEFN H1a
+H1a(y) ::= htrue&true,
+ HP_RELDEFN H1
+H1(x) ::= x::node<val_53_618,next_53_619> * next_53_619::ll[LHSCase]&true,
+ HP_RELDEFN G2
+G2(x,y) ::= x::node<val_53_611,y_612> * HP_613(y_612,y)&true]
 
 
    */

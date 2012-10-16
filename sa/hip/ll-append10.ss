@@ -32,26 +32,21 @@ void append(node x, node y)
      ensures G2(x,y) * H1b(y);
   /*
 
-[ HP_RELDEFN HP_620
-HP_620(next_73_619) ::=next_73_619::ll[LHSCase]&true,
- HP_RELDEFN HP_613
-HP_613(y_612,y) ::=
-                                      y_612::node<val_73_611,y_616> * 
-                                      HP_613(y_616,y)&y_612!=null
-                                      or H1b(y)&y_612=y
-                                      ,
+[ HP_RELDEFN HP_613
+HP_613(y_612,y) ::= 
+ H1a(y)&y_612=y
+ or y_612::node<val_58_611,y_616> * HP_613(y_616,y)&true
+ ,
  HP_RELDEFN H1b
-H1b(y) ::=htrue&true,
+H1b(y) ::= htrue&true,
  HP_RELDEFN H1a
-H1a(y) ::=htrue&true,
+H1a(y) ::= htrue&true,
  HP_RELDEFN H1a
-H1a(y) ::=H1b(y)&true,
+H1a(y) ::= H1b(y)&true,
  HP_RELDEFN H1
-H1(x) ::=x::node<val_73_618,next_73_619> * 
-  next_73_619::ll[LHSCase]&true,
+H1(x) ::= x::node<val_58_618,next_58_619> * next_58_619::ll[LHSCase]&true,
  HP_RELDEFN G2
-G2(x,y) ::=x::node<val_73_611,y_612> * HP_613(y_612,y)&true]
-
+G2(x,y) ::= x::node<val_58_611,y_612> * HP_613(y_612,y)&true]
 
    */
 {
