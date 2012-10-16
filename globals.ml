@@ -459,7 +459,7 @@ let acquire_name = "acquire"
 let release_name = "release"
 let lock_name = "lock"
 
-let ls_name = "ls"
+let ls_name = "LS"
 let ls_data_typ = "lock"
 let ls_typ = BagT (Named ls_data_typ)
 
