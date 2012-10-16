@@ -29,10 +29,26 @@ l2<y> == self::node<a,null> & y=self
 
 void append(node x, node y)
 
+  infer[H1,G3]
+  requires H1(x)*y::node<_,q>
+     ensures G3(x,y,q);//*y::node<a,null>;
+/*
+expecting:
+ H1(x)=x::node<_,r>*r::ll<>
+ G3(x,y,q) = x::node<_,r>*r::lseg<y>*y::node<_,q>
 
-  infer[H1,G2]
-  requires H1(x)*y::node<a,null>
-  ensures G2(x,y);//*y::node<a,null>;
+[ HP_RELDEFN HP_618
+HP_618(q_617,y,q) ::= 
+ emp&q_617=q
+ or y::node<val_37_590,y> * y::node<Anon_616,q_621> * HP_618(q_621,y,q)&
+    q_617=q
+ ,
+ HP_RELDEFN H1
+H1(x) ::= x::node<val_37_623,next_37_624> * next_37_624::ll[LHSCase]&true,
+ HP_RELDEFN G3
+G3(x,y,q) ::= x::node<val_37_590,y> * y::node<Anon_616,q_617> * HP_618(q_617,y,q)&true]
+*/
+
 {
   if (x.next == null)
     x.next = y;
