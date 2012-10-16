@@ -40,3 +40,18 @@ void append(node x, node y)
     append(x.next, y);
 }
 
+/*
+[ HP_RELDEFN HP_625
+HP_625(flted_34_624,y) ::=
+ emp&flted_34_624=null
+ or y::node<val_37_594,y> * y::node<a_623,flted_34_628> *
+    HP_625(flted_34_628,y)&flted_34_624=null //WRONG from generalization
+ ,
+ HP_RELDEFN H1
+H1(x) ::= x::node<val_37_630,next_37_631> * next_37_631::ll[LHSCase]&true,
+ HP_RELDEFN G2
+G2(x,y) ::= x::node<val_37_594,y> * y::node<a_623,flted_34_624> *
+HP_625(flted_34_624,y)&true]
+
+
+ */

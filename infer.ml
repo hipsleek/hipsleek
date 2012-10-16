@@ -1475,7 +1475,7 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps c
   (*for wo history*)
   (* let history = [] in *)
   (*get args which already captures by other hprel*)
-  let done_args = CP.remove_dups_svl (List.concat (List.map (fun (_,args) -> args) (lhp_args@rhp_args))) in
+  let done_args = CP.remove_dups_svl (List.concat (List.map (fun (_,args) -> args) (lhp_args))) in
   let lhs_b,history_hrel,keep_root_hrels = get_history_nodes svl hds history lhs_b done_args in
  (*end*)
   let lhs_b1,rhs_b1 = SAU.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b

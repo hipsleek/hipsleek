@@ -41,17 +41,17 @@ let rec retrieve_args_from_locs args locs index res=
           retrieve_args_from_locs ss locs (index+1) (res@[a])
         else retrieve_args_from_locs ss locs (index+1) res
 
+let rec eq_spec_var_order_list l1 l2=
+  match l1,l2 with
+    |[],[] -> true
+    | v1::ls1,v2::ls2 ->
+        if CP.eq_spec_var v1 v2 then
+          eq_spec_var_order_list ls1 ls2
+        else false
+    | _ -> false
+
 let check_hp_arg_eq (hp1, args1) (hp2, args2)=
-  let rec eq_spec_var_list l1 l2=
-    match l1,l2 with
-      |[],[] -> true
-      | v1::ls1,v2::ls2 ->
-          if CP.eq_spec_var v1 v2 then
-            eq_spec_var_list ls1 ls2
-          else false
-      | _ -> false
-  in
-  ((CP.eq_spec_var hp1 hp2) && (eq_spec_var_list args1 args2))
+  ((CP.eq_spec_var hp1 hp2) && (eq_spec_var_order_list args1 args2))
 
 let mkHRel hp args pos=
   let eargs = List.map (fun x -> CP.mkVar x pos) args in
@@ -467,6 +467,7 @@ let get_raw_defined_w_pure prog f=
   match f with
     | CF.Base fb ->
         let def_raw,_,_,_,_ = find_defined_pointers_raw prog f in
+        (*LOCLE: should get closed + eqnull in pure*)
         let p_svl = CP.fv (MCP.pure_of_mix fb.CF.formula_base_pure) in
         (def_raw@p_svl)
     | _ -> report_error no_pos "sau.get_raw_defined_w_pure: not handle yet"

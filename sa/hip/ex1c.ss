@@ -21,7 +21,7 @@ node foo3(ref node x)
  ensures  G1(x',res); //'
  {
    node tmp;
-   tmp = get_next(x);
+   tmp = get_next1(x);
    return tmp;
  }
 

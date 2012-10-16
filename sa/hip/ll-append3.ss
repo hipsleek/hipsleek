@@ -83,3 +83,17 @@ void append(node x, node y)
     append(x.next, y);
 }
 
+/*
+[ HP_RELDEFN HP_644
+HP_644(y_643,y) ::=
+ emp&y_643=y
+ or y_643::node<val_80_642,y_647> * HP_644(y_647,y) *
+    y::node<a,flted_75_602>&flted_75_602=null //WRONG
+ ,
+ HP_RELDEFN H1
+H1(x) ::= x::node<val_80_649,next_80_650> * next_80_650::ll[LHSCase]&true,
+ HP_RELDEFN G1
+G1(x,y) ::= x::node<val_80_642,y_643> * HP_644(y_643,y)&true]
+
+ */
+
