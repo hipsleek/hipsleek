@@ -1515,11 +1515,22 @@ let pr_hprel_def hpd=
   prtt_pr_formula hpd.hprel_def_body_lib;
   fmt_close()
 
+let pr_hprel_def_lib hpd=
+  fmt_open_box 1;
+  fmt_string (CP.print_rel_cat hpd.hprel_def_kind);
+  fmt_string "\n";
+  (pr_h_formula hpd.hprel_def_hrel);
+  fmt_string " ::=";
+  prtt_pr_formula hpd.hprel_def_body_lib;
+  fmt_close()
+
 let string_of_hprel hp = poly_string_of_pr pr_hprel hp
 
 let string_of_hprel_short hp = poly_string_of_pr pr_hprel_short hp
 
 let string_of_hprel_def hp = poly_string_of_pr pr_hprel_def hp
+
+let string_of_hprel_def_lib hp = poly_string_of_pr pr_hprel_def_lib hp
 
 let pr_par_def (f1,f2,f3) = 
   (* fmt_string (CP.print_only_lhs_rhs rel) *)

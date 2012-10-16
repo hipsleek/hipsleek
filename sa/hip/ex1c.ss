@@ -37,3 +37,12 @@ node get_next(ref node x)
   x.next = null;
   return t;
 }
+
+node get_next1(ref node x)
+  requires x::node<_,p>
+  ensures x'::node<_,null> & res=p;//'
+{
+  node t = x.next;
+  x.next = null;
+  return t;
+}

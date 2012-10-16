@@ -7097,6 +7097,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
   (* TODO : this is clearing more than es_heap since qsort-tail.ss fails otherwise *)
   let hf = es.es_heap in
   let old_history =  if is_data hf then es.es_history@[hf] else es.es_history in
+  (* let old_history =  if (\*is_data*\) is_empty_heap hf then es.es_history else es.es_history@[hf] in *)
   (* adding xpure0 of es_heap into es_formula *)
   let es_f = match xp hf with
     | None -> es.es_formula

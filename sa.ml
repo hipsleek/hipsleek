@@ -37,7 +37,7 @@ let string_of_par_def_w_name_short pd=
   pr pd
 
 let rel_def_stk : CF.hprel_def Gen.stack_pr = new Gen.stack_pr 
-  Cprinter.string_of_hprel_def(==)
+  Cprinter.string_of_hprel_def_lib (==)
 (**=================================**)
 
 let rec elim_redundant_paras_lst_constr_x prog constrs =
