@@ -15,3 +15,21 @@ echo "======= cell-w-ls.ss ======"
 diff test-cases/cell-w-ls.res test-cases/cell-w-ls.n
 echo "======= multicast.ss ======"
 diff test-cases/multicast.res test-cases/multicast.n
+
+########### Example of verifying deadlock freedom ####################
+echo "======= ls-deadlock1.ss ======"
+diff test-cases/ls-deadlock1.res test-cases/ls-deadlock1.n
+echo "======= ls-deadlock2.ss ======"
+diff test-cases/ls-deadlock2.res test-cases/ls-deadlock2.n
+echo "======= ls-deadlock3.ss ======"
+diff test-cases/ls-deadlock3.res test-cases/ls-deadlock3.n
+
+echo "======= ls-double-acquisition.ss ======"
+diff test-cases/ls-double-acquisition.res test-cases/ls-double-acquisition.n
+
+echo "======= ls-no-deadlock1.ss ======"
+diff test-cases/ls-no-deadlock1.res test-cases/ls-no-deadlock1.n
+echo "======= ls-no-deadlock2.ss ======"
+diff test-cases/ls-no-deadlock2.res test-cases/ls-no-deadlock2.n
+echo "======= ls-no-deadlock3.ss ======"
+diff test-cases/ls-no-deadlock3.res test-cases/ls-no-deadlock3.n

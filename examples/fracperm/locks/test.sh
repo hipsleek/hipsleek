@@ -16,3 +16,20 @@ echo "======= cell-w-ls.ss ======"
 
 echo "======= multicast.ss ======"
 ../../../hip multicast.ss | grep -E 'Proc|assert' > test-cases/multicast.res
+
+########### Example of verifying deadlock freedom ####################
+echo "======= ls-deadlock1.ss ======"
+../../../hip ls-deadlock1.ss | grep -E 'Proc|assert' > test-cases/ls-deadlock1.res
+echo "======= ls-deadlock2.ss ======"
+../../../hip ls-deadlock2.ss | grep -E 'Proc|assert' > test-cases/ls-deadlock2.res
+echo "======= ls-deadlock3.ss ======"
+../../../hip ls-deadlock3.ss | grep -E 'Proc|assert' > test-cases/ls-deadlock3.res
+echo "======= ls-double-acquisition.ss ======"
+../../../hip ls-double-acquisition.ss | grep -E 'Proc|assert' > test-cases/ls-double-acquisition.res
+
+echo "======= ls-no-deadlock1.ss ======"
+../../../hip ls-no-deadlock1.ss | grep -E 'Proc|assert' > test-cases/ls-no-deadlock1.res
+echo "======= ls-no-deadlock2.ss ======"
+../../../hip ls-no-deadlock2.ss | grep -E 'Proc|assert' > test-cases/ls-no-deadlock2.res
+echo "======= ls-no-deadlock3.ss ======"
+../../../hip ls-no-deadlock3.ss | grep -E 'Proc|assert' > test-cases/ls-no-deadlock3.res
