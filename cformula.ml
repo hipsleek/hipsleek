@@ -8129,6 +8129,7 @@ let rec norm_struc_vperm struc_f ref_vars val_vars =
       norm_struc_vperm_x struc_f ref_vars val_vars
 
 (*
+  Infer varperm
   Users provide partial (or no) vperm annotations.
   Partial -> consistency check and infer the rest
   No -> infer all

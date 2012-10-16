@@ -1881,9 +1881,15 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	let new_pt p = trans_type prog p.I.param_type p.I.param_loc in
 	let by_names = List.map (fun p -> CP.SpecVar (new_pt p, p.I.param_name, Unprimed)) by_names_tmp in
     (******LOCKSET variable>>*********)
+    (*only add lockset into ref_vars if it is mentioned in the spec
+    This is to avoid adding too many LS in sequential settings*)
     let by_names = if !Globals.allow_ls then
-          let ls_var = CP.mkLsVar Unprimed in
-          (ls_var::by_names)
+          let s_f_vars = CF.struc_fv static_specs_list in
+          let d_f_vars = CF.struc_fv dynamic_specs_list in
+          if (List.exists (fun v -> CP.name_of_spec_var v = Globals.ls_name) (s_f_vars@s_f_vars)) then
+            let ls_var = CP.mkLsVar Unprimed in
+            (ls_var::by_names)
+          else by_names
      else by_names
     in
     (******<<LOCKSET variable*********)

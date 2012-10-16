@@ -7926,7 +7926,7 @@ let extractLS_pure (pf : formula) : formula =
 that directly related to lockset
 Do not consider transitivity*)
 let removeLS_b_formula (bf : b_formula) : b_formula =
-  let (pf,_) = bf in
+  let (pf,st) = bf in
   (match pf with
     | BagIn (sv,e,pos)
     | BagNotIn (sv,e,pos) ->
@@ -7939,6 +7939,10 @@ let removeLS_b_formula (bf : b_formula) : b_formula =
         let vars2 = afv e2 in
         let b = List.exists (fun v -> (name_of_spec_var v) = ls_name) (vars1@vars2) in
         if b then mkTrue_b no_pos else  bf
+    | VarPerm (vp_ann,svl,pos) ->
+        let nsvl =  List.filter (fun v -> name_of_spec_var v <> Globals.ls_name) svl in
+        if (nsvl=[]) then mkTrue_b no_pos else
+        (VarPerm (vp_ann,nsvl,pos),st)
     | BagSub (e1,e2,pos) -> bf (*TO CHECK there 3 cases*)
     | BagMin (sv1,sv2,pos) -> bf
     | BagMax (sv1,sv2,pos) -> bf
