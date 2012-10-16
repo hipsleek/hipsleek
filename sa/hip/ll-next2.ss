@@ -18,27 +18,29 @@ HeapPred HP_557(node a, node b).
 
 /* return the tail of a singly linked list */
 node get_next(ref node x)
-
-  infer[H,G]
+  infer[H,G3]
   requires H(x)
-  ensures G(x',res);//'n>=1 & n=m+1
-
+  ensures G3(x',x,res);//'
 /*
-  requires x::node<_,q>
-  ensures x::node<_,null> & res=q & x'=x; //'
 
   requires x::node<_,q> * HP(q)
   ensures x::node<_,null> * HP(res) & res=q & x'=x; //'
 
-H(x) == x::node<_,q> * HP(q)
-G(x',res) = x'::node<_,null> * HP(res)
+G3(x,v_571,v_node_39_548') ::= HP_559(v_node_39_548') *
+   x::node<val_37_568,next_38_547'>&next_38_547'=null]
+
+However, this is missing a relation x'=x or rather
+x=v_571. I am also not sure why x' in the original G is being
+renamed as x.
 
 [ HP_RELDEFN HP_559
-HP_559(v_node_27_548') ::= htrue&true,
+HP_559(v_node_39_548') ::= htrue&true,
  HP_RELDEFN H
-H(x) ::= x::node<val_25_543',next_25_544'>&true,
- HP_RELDEFN G
-G(x,v_node_27_548') ::= HP_559(v_node_27_548') * x::node<val_25_568,next_26_547'>&next_26_547'=null]
+H(x) ::= x::node<val_37_543',next_37_544'>&true,
+ HP_RELDEFN G3
+G3(x,v_571,v_node_39_548') ::= HP_559(v_node_39_548') * 
+   x::node<val_37_568,next_38_547'>&next_38_547'=null]
+
 */
 {
   node tmp = x.next;
