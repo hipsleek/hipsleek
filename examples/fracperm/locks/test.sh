@@ -7,6 +7,8 @@ echo "======= cell-lock-vperm.ss ======"
 ../../../hip cell-lock-vperm.ss | grep -E 'Proc|assert' > test-cases/cell-lock-vperm.res
 echo "======= cell-extreme-cases.ss ======"
 ../../../hip cell-extreme-cases.ss | grep -E 'Proc|assert' > test-cases/cell-extreme-cases.res
+echo "======= ls-bind.ss ======"
+../../../hip ls-bind.ss | grep -E 'Proc|assert' > test-cases/ls-bind.res
 
 ########### MOST IMPORTANT (rules + examples) ####################
 echo "======= cell-w-ls.ss ======"
