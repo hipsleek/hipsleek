@@ -17,9 +17,6 @@ data PACKET{
   int dat;
 }
 
-data lock{
-}
-
 lemma "splitLock" self::LOCK(f)<x,y> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::LOCK(f1)<x,y> * self::LOCK(f2)<x,y> & 0.0<f<=1.0;
 
 lemma "combineLock" self::LOCK(f1)<x,y> * self::LOCK(f2)<x,y> -> self::LOCK(f1+f2)<x,y>;
@@ -39,10 +36,10 @@ LOCK<p,M> == self::lock<>
 
 
 void initialize(/* ref lock l, ref PACKET p, ref int M */)
-  requires ls={} & M=10
-  ensures ls'={} & M'=M; //'
+  requires LS={} & M=10
+  ensures LS'={} & M'=M; //'
 {
-  //{true & ls={}}
+  //{true & LS={}}
   l = new lock();
   p = new PACKET(l,0,0);
   init[LOCK](l,p,M);
@@ -50,8 +47,8 @@ void initialize(/* ref lock l, ref PACKET p, ref int M */)
 }
 
 void thread(/* ref lock l, ref PACKET p, ref int M */)
-  requires l::LOCK(1/M)<p,M> & ls={} & M=10
-  ensures ls'={} & M'=M; //'
+  requires l::LOCK(1/M)<p,M> & LS={} & M=10
+  ensures LS'={} & M'=M; //'
 {
   acquire[LOCK](l,p,M);
   // . . . processing data . . .
@@ -76,24 +73,24 @@ void thread(/* ref lock l, ref PACKET p, ref int M */)
 /*
 
 void initialize()
-  requires ls={} & M=10
-  ensures ls'={} & M'=M; //'
+  requires LS={} & M=10
+  ensures LS'={} & M'=M; //'
 {
-  //{true & ls={}}
+  //{true & LS={}}
   l = new lock();
   p = new PACKET(l,0,0);
-  //{p::PACKET<l,0,0> * l::lock<_> & ls={}}
+  //{p::PACKET<l,0,0> * l::lock<_> & LS={}}
   init[LOCK](l,p,M);
-  //{l::LOCK<p,M> * p::PACKET<l,0,0> & ls={l}}
+  //{l::LOCK<p,M> * p::PACKET<l,0,0> & LS={l}}
   release[LOCK](l,p,M);
-  //{l::LOCK<p,M> ls={}}
+  //{l::LOCK<p,M> LS={}}
 }
 
 void thread()
-  requires l::LOCK(1/M)<p,M> & ls={} & M=10
-  ensures ls'={} & M'=M; //'
+  requires l::LOCK(1/M)<p,M> & LS={} & M=10
+  ensures LS'={} & M'=M; //'
 {
-  //{l::LOCK(1/M)<p,M> & ls={}}
+  //{l::LOCK(1/M)<p,M> & LS={}}
   acquire[LOCK](l,p,M);
   //{l::LOCK(1/M)<p,M> * p::PACKET<l,count,data> & count = X & X=0 & X<M
   //   or l::LOCK(1/M)<p,M> * p::PACKET<l,count,data> * l::LOCK(X/M)<p,M> & count=X & M > X >= 1 }
@@ -125,7 +122,7 @@ void thread()
     release[LOCK](l,p,M); // {both branches entail the later case of the invariant}
 	//{ emp } because the resource invariant occupies all permissions in order to entail the or branch
   }
-  //{ls'={}}
+  //{LS'={}}
 }
 
 */

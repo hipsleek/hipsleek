@@ -26,9 +26,6 @@ data cell{
   int val;
 }
 
-data lock{
-}
-
 //cellInv<> == self::cell<v> & v>=0
 //  inv self!=null;
 
@@ -44,8 +41,8 @@ LOCKB<x,y> == self::lock<>
 //valid
 // a lock protecting 1 location
 void main()
-  requires ls={}
-  ensures ls'={}; //'
+  requires LS={}
+  ensures LS'={}; //'
 {
   cell x;
   lock l;
@@ -66,8 +63,8 @@ void main()
 //fail
 // a lock protecting 2 location
 void main1()
-  requires ls={}
-  ensures ls'={}; //'
+  requires LS={}
+  ensures LS'={}; //'
 {
   cell x;
   cell y;

@@ -30,9 +30,6 @@ data cell{
   int val3;
 }
 
-data lock{
-}
-
 class rexc extends __Exc{} //exception when return from a loop
 
 class bexc extends __Exc{} //exception when break from a loop
@@ -49,7 +46,7 @@ lemma "combineLock" self::LOCK(f1)<x> * self::LOCK(f2)<x> -> self::LOCK(f1+f2)<x
 
 //LOCK protecting a cell
 /* void main() */
-/*   requires ls={} */
+/*   requires LS={} */
 /*   ensures true; //' */
 /* { */
 /*   cell x; */
@@ -62,17 +59,17 @@ lemma "combineLock" self::LOCK(f1)<x> * self::LOCK(f2)<x> -> self::LOCK(f1+f2)<x
 /*   x.val1=1; */
 /*   x.val2=1; */
 /*   int id; */
-/*   id = fork(thread,l,x); // ??? consider drop ls,ls' when fork/join */
-/*   // TO CHECK: how about ls */
+/*   id = fork(thread,l,x); // ??? consider drop LS,LS' when fork/join */
+/*   // TO CHECK: how about LS */
 /*   dprint; */
 /*   x.val3=1; */
 
 /*   try{ */
 
 /*   while (true) */
-/*     requires l::LOCK(0.4)<x> * x::cell<l,v1,v2,v3> & v1=v2 & v3=1 & ls={l} */
-/*           or l::LOCK(1.0)<x> * x::cell<l,v1,v2,v3> & v1=v2 & v3=0 & ls={l} // 0.4 + 0.6 = 1.0' */
-/*     ensures l'::LOCK(1.0)<x> * x'::cell<self,v11,v22,v33> & l'=l & v11=v22 & v33=0 & ls'={l'} & flow bexc;//' */
+/*     requires l::LOCK(0.4)<x> * x::cell<l,v1,v2,v3> & v1=v2 & v3=1 & LS={l} */
+/*           or l::LOCK(1.0)<x> * x::cell<l,v1,v2,v3> & v1=v2 & v3=0 & LS={l} // 0.4 + 0.6 = 1.0' */
+/*     ensures l'::LOCK(1.0)<x> * x'::cell<self,v11,v22,v33> & l'=l & v11=v22 & v33=0 & LS'={l'} & flow bexc;//' */
 /*   { */
 /*     if (x.val3==0){ */
 /*       raise new bexc(); // break */
@@ -91,18 +88,21 @@ lemma "combineLock" self::LOCK(f1)<x> * self::LOCK(f2)<x> -> self::LOCK(f1+f2)<x
 /* } */
 
 void thread(lock l, cell x)
-  requires l::LOCK(0.6)<x> & ls={}
-  ensures ls'=ls; //'
+  requires l::LOCK(0.6)<x> & l notin LS
+  ensures LS'=LS; //'
 {
   try{
     //syntatic sugar
     while(true)
-      requires l::LOCK(0.6)<x> & l notin ls
-      ensures ls'=ls & flow rexc; //'
+      requires l::LOCK(0.6)<x> & l notin LS
+      ensures LS'=LS & flow rexc; //'
     {
+      dprint;
       acquire[LOCK](l,x);
+      dprint;
       x.val1=x.val1 + x.val1;
       x.val2=x.val2 + x.val2;
+      dprint;
       if (x.val1>10) {
         x.val3=0;
         release[LOCK](l,x);

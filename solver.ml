@@ -3228,7 +3228,9 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                             | Some mf -> mf
                           in
                           let new_post = CF.removeLS post in
-                          let rs2 = compose_context_formula_and rs1 new_post df id ref_vars pos in
+                          (*donot rename lockset variable when fork*)
+                          let new_ref_vars = List.filter (fun v -> CP.name_of_spec_var v <> Globals.ls_name) ref_vars in
+                          let rs2 = compose_context_formula_and rs1 new_post df id new_ref_vars pos in
 	                      let rs3 = add_path_id rs2 (pid,i) in
                           let rs4 = prune_ctx prog rs3 in
                           (* let _ = print_endline ("### rs4 = " ^ (Cprinter.string_of_context rs4)) in *)

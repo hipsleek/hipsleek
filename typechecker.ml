@@ -1327,7 +1327,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*LOCKSET: ls is not free var*)
                   let ls_var = [(CP.mkLsVar Unprimed)] in
                   let pre_free_vars = List.filter (fun v -> CP.name_of_spec_var v <> Globals.ls_name) pre_free_vars in
-                  (* let _ = print_endline ("WN free vars to rename : "^(Cprinter.string_of_spec_var_list pre_free_vars)) in *)
+                  (* let _ = print_endline (" WN free vars to rename : "^(Cprinter.string_of_spec_var_list pre_free_vars)) in *)
                   let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
                   let renamed_spec = 
                     if !Globals.max_renaming then (CF.rename_struc_bound_vars stripped_spec(*org_spec*))

@@ -1880,9 +1880,13 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	let by_names_tmp = List.filter (fun p -> p.I.param_mod = I.RefMod) proc.I.proc_args in
 	let new_pt p = trans_type prog p.I.param_type p.I.param_loc in
 	let by_names = List.map (fun p -> CP.SpecVar (new_pt p, p.I.param_name, Unprimed)) by_names_tmp in
-    (******LOCKSET variable*********)
-    (* let ls_var = CP.SpecVar (BagT UNK,ls_name, Unprimed) in *)
-    (* let by_names = ls_var::by_names in *)
+    (******LOCKSET variable>>*********)
+    let by_names = if !Globals.allow_ls then
+          let ls_var = CP.mkLsVar Unprimed in
+          (ls_var::by_names)
+     else by_names
+    in
+    (******<<LOCKSET variable*********)
 	let static_specs_list  = CF.plug_ref_vars by_names static_specs_list in
 	let dynamic_specs_list = CF.plug_ref_vars by_names dynamic_specs_list in
     (*=============================*)

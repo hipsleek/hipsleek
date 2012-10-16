@@ -56,9 +56,6 @@ data cell{
   int val;
 }
 
-data lock{
-}
-
 //cellInv<> == self::cell<v> & v>=0
 //  inv self!=null;
 
@@ -75,8 +72,8 @@ LOCKB<x> == self::lock<>
 //lock protecting a variable
 //FAIL
 void testVar()
-  requires ls={}
-  ensures ls'={}; //'
+  requires LS={}
+  ensures LS'={}; //'
 {
   int x;
   lock l;
@@ -102,8 +99,8 @@ void testVar()
 
 //LOCK protecting a cell
 void testCell()
-  requires ls={}
-  ensures ls'={}; //'
+  requires LS={}
+  ensures LS'={}; //'
 {
   cell x;
   lock l;

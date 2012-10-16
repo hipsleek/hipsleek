@@ -29,9 +29,6 @@ data cell{
   int val;
 }
 
-data lock{
-}
-
 //cellInv<> == self::cell<v> & v>=0
 //  inv self!=null;
 
@@ -47,8 +44,8 @@ LOCKB<x> == self::lock<>
 
 //lock protecting a variable
 void testVar()
-  requires ls={}
-  ensures ls'={}; //'
+  requires LS={}
+  ensures LS'={}; //'
 {
   int x;
   lock l;
@@ -63,7 +60,7 @@ void testVar()
   //l::LOCKA<x>
   //x=x+1; //FAIL due to not @full[x]
 
-  assert ls'={}; //OK'
+  assert LS'={}; //OK'
 
   acquire[LOCKA](l,x);
   //l::LOCKA<x> * x>=0
@@ -74,8 +71,8 @@ void testVar()
 
 //LOCK protecting a cell
 void testCell()
-  requires ls={}
-  ensures ls'={}; //'
+  requires LS={}
+  ensures LS'={}; //'
 {
   cell x;
   lock l;
@@ -87,7 +84,7 @@ void testCell()
   x.val = x.val + 1;
   release[LOCKB](l,x);
 
-  assert ls'={}; //OK'
+  assert LS'={}; //OK'
 
   //l::LOCKB<x>
   acquire[LOCKB](l,x);
@@ -95,7 +92,7 @@ void testCell()
   //x.val = x.val - 1; //FAIL the invariant
   release[LOCKB](l,x);
 
-  assert ls'={}; //OK'
+  assert LS'={}; //OK'
 
   //l::LOCKB<x>
   acquire[LOCKB](l,x);

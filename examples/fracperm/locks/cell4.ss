@@ -12,8 +12,6 @@ Procedure main$ SUCCESS
 
  */
 
-data lock{}
-
 data cell{
   lock l;
   int val;
@@ -25,7 +23,7 @@ data cell{
 
 lemma "splitLock" self::LOCK(f)<x> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::LOCK(f1)<x> * self::LOCK(f2)<x> & 0.0<f<=1.0;
 
-                                                                             lemma "combineLock" self::LOCK(f1)<x> * self::LOCK(f2)<x> -> self::LOCK(f1+f2)<x>;
+                                                                  lemma "combineLock" self::LOCK(f1)<x> * self::LOCK(f2)<x> -> self::LOCK(f1+f2)<x>;
 
 
 LOCK<x> == self::lock<>
@@ -33,8 +31,8 @@ LOCK<x> == self::lock<>
   inv_lock (exists v: x::cell<self,v> & v>=2);
 
 void main()
-  requires ls={}
-  ensures ls'={}; //'
+  requires LS={}
+  ensures LS'={}; //'
 {
   lock l = new lock();
   cell x = new cell(l,2);
@@ -60,8 +58,8 @@ void main()
 
 //valid
 void inc(lock l,cell x)
-  requires [f] l::LOCK(f)<x> & @value[l,x] & l notin ls
-  ensures l::LOCK(f)<x> & ls'=ls; //'
+  requires [f] l::LOCK(f)<x> & @value[l,x] & l notin LS
+  ensures l::LOCK(f)<x> & LS'=LS; //'
 {
   dprint;
   acquire[LOCK](l,x);
@@ -69,5 +67,4 @@ void inc(lock l,cell x)
   x.val++;
   //x.val--; //will make it fail because of the invariant
   release[LOCK](l,x);
-
 }

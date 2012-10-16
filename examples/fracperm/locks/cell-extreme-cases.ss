@@ -14,9 +14,6 @@ data cell{
   int val;
 }
 
-data lock{
-}
-
 //cellInv<> == self::cell<v> & v>=0
 //  inv self!=null;
 
@@ -27,8 +24,8 @@ LOCKA<x> == self::lock<>
 
 //finalize w/o init or acquire => FAIL
 void test()
-  requires ls={}
-  ensures ls'={}; //'
+  requires LS={}
+  ensures LS'={}; //'
 {
   cell x;
   lock l;
@@ -44,8 +41,8 @@ void test()
 
 //release w/o acquire or finalize -> FAIL
 void test2()
-  requires ls={}
-  ensures ls'={}; //'
+  requires LS={}
+  ensures LS'={}; //'
 {
   cell x;
   lock l;
@@ -63,8 +60,8 @@ void test2()
 // w/o LOCKSET --> SUCCESS due to false ctx 
 // w LOCKSET --> FAIL
 void test3()
-  requires ls={}
-  ensures ls'={}; //'
+  requires LS={}
+  ensures LS'={}; //'
 {
   cell x;
   lock l;
@@ -82,7 +79,7 @@ void test3()
   //acquire invariant twice => false context in the presence of heap
 
   // w LOCKSET: FAIL
-  // because ls is already in LOCKSET (non-reentrant locks)
+  // because LS is already in LOCKSET (non-reentrant locks)
 
 }
 
@@ -90,8 +87,8 @@ void test3()
 // (1) fail to entail the invariant
 // (2) not holding the lock -> cannot release 
 void test4()
-  requires ls={}
-  ensures ls'={}; //'
+  requires LS={}
+  ensures LS'={}; //'
 {
   cell x;
   lock l;
