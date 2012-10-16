@@ -32,22 +32,18 @@ void append(node x, node y)
      ensures G2(x,y) * H1a(y);
 
   /*
-SEEMS wrong below..
-
-!!! >>>>>> step 6: generalization <<<<<<
-!!! >>>>>> generalize_one_hp: <<<<<<
-!!! HP_578([v_node_51_595])
-!!!  =:  emp&v_node_51_595=null
-!!! >>>>>> generalize_one_hp: <<<<<<
-!!! G2([x,y])
-!!!  =:  
- x::node<val_51_584,y>&true
- or x::node<val_51_586,v_node_51_601> * G2(v_node_51_601,y)&
-    v_node_51_601!=null
- 
-!!! >>>>>> equivalent hp: <<<<<<
-!!!  remains: [ RELASS [HP_578,G2,H1a] unknown: [y];  predefined: [x]; x::node<val_51_584,y>&
-
+[ HP_RELDEFN HP_619
+HP_619(next_54_618) ::=next_54_618::ll[LHSCase]&true,
+ HP_RELDEFN HP_612
+HP_612(y_611,y) ::=y_611::lseg<y>[LHSCase]&true,
+ HP_RELDEFN H1a
+H1a(y) ::=htrue&true,
+ HP_RELDEFN H1
+H1(x) ::=x::node<val_54_617,next_54_618> * 
+  next_54_618::ll[LHSCase]&true,
+ HP_RELDEFN G2
+G2(x,y) ::=x::node<val_54_610,y_611> * 
+  y_611::lseg<y>[LHSCase]&true]
 
    */
 {
