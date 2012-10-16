@@ -732,7 +732,9 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula)  (p0: mix_formula) (wh
               | None -> MCP.memoise_add_pure_N (MCP.mkMTrue pos) eq_i (* full permission -> p=i*)
               | Some f ->
                   let inv = 
-                    if CF.is_mem_mem_formula p memset then eq_i else non_null
+                    if CF.is_mem_mem_formula p memset then eq_i
+                    else
+                      non_null
                   in
                   MCP.memoise_add_pure_N (MCP.mkMTrue pos) (CP.mkAnd inv (mkPermInv f) no_pos)
             )
@@ -780,7 +782,26 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula)  (p0: mix_formula) (wh
                     MCP.memoise_add_pure_N (MCP.mkMTrue pos) eq_i (* full permission -> p=i*)
                   else
                     (*partial LOCK node*)
-                    res
+                    (*Because of fractional permissions, it is harder
+                      to know whether two heap nodes are separated
+                      A xpure_heap could try to identify separated
+                      heap nodes (by using fractional permissions).
+                      CURRENTLY, we take a simpler approach.
+                      For any nodes x with frac<1, x is different from
+                      any other nodes in memset. That is:
+                      for all v in memset. v!=x
+
+                      A better xpure could be:
+                      forall x y. x_frac + y_frac>1 => x!=y
+                    *)
+                    let d = memset.mem_formula_mset in
+                    let len = List.length d in
+                    let svars = List.hd d in
+                    let ineqs = List.fold_left (fun mix_f sv ->
+                        let neq_f = CP.mkNeqVar p sv no_pos in
+                        MCP.memoise_add_pure_N mix_f neq_f) res svars
+                    in
+                    ineqs
               | None -> res)
       | Star ({h_formula_star_h1 = h1;
 	    h_formula_star_h2 = h2;
