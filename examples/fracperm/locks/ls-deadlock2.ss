@@ -7,10 +7,6 @@ LOCK<> == self::lock<>
   inv self!=null
   inv_lock true;
 
-LOCK2<> == self::lock<>
-  inv self!=null
-  inv_lock true;
-
 lemma "splitLock" self::LOCK(f)<> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::LOCK(f1)<> * self::LOCK(f2)<> & 0.0<f<=1.0;
 
 void func(lock l1)

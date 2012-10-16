@@ -1,6 +1,5 @@
 /*
-  example of deadlocks due to interractions of fork/join
-  and acquire/release
+  An example of deadlock-free programs
 */
 
 LOCK<> == self::lock<>

@@ -1,5 +1,5 @@
 /*
-  example of double acquisition in sequential settings
+  example of deadlocks due to double acquisition in sequential settings
  */
 
 LOCK<> == self::lock<>
