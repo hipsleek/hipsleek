@@ -268,16 +268,16 @@ and check_spec_var_equiv_x (hvars: ident list)(v1: CP.spec_var) (v2: CP.spec_var
   (*do not check type*) 
   let is_hard_v1 = (List.mem (CP.name_of_spec_var v1) hvars) in
   let is_null_var (v: CP.spec_var):bool= 
-    let name = CP.name_of_spec_var v in
-    let re = Str.regexp_string "flted" in
-    try ignore (Str.search_forward re name 0); true
-    with Not_found -> false
+    (* let name = CP.name_of_spec_var v in *)
+    (* let re = Str.regexp_string "flted" in *)
+    (* try ignore (Str.search_forward re name 0); true *)
+    (* with Not_found -> false *) (*???*)
+    true
   in 
   if((is_null_var v1) && (is_null_var v2)) then (true, mt)
   else
     if((CP.is_null_const v1) || (CP.is_int_const v1) || is_hard_v1) 
     then( 
-
       let _ = Debug.ninfo_pprint ("null const hard:  " ^ (CP.name_of_spec_var v1)) no_pos in 
       let res = CP.eq_spec_var v1 v2 in
       (res, mt)

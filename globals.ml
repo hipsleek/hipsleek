@@ -589,6 +589,8 @@ let disable_multiple_specs =ref false
 
 let perm_prof = ref false
 
+let cp_test = ref false 
+
 let file_cp = ref ""
 
   (*for cav experiments*)

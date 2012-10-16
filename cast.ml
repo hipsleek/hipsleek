@@ -128,7 +128,14 @@ and proc_decl = {
     proc_is_main : bool;
     proc_is_recursive : bool;
     proc_file : string;
-    proc_loc : loc; }
+    proc_loc : loc;
+    proc_test_comps : test_comps option}
+
+and test_comps = 
+    {
+      expected_ass: (ident list * (Cformula.formula * Cformula.formula) list) option;
+      expected_hpdefs: (ident list * (Cformula.formula * Cformula.formula) list) option;
+    }
 
 (*TODO: should we change lemma need struc formulas?
   would this help with lemma folding later? *)

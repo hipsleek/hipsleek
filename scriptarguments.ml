@@ -30,7 +30,8 @@ let set_proc_verified arg =
 	Globals.procs_verified := procs @ !Globals.procs_verified
 
 let set_file_cp arg =
-  Globals.file_cp := arg
+  Globals.file_cp := arg;
+   Globals.cp_test := true
 
 let set_frontend fe_str = match fe_str  with
   | "native" -> fe := NativeFE
@@ -303,7 +304,7 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
    "pass read global variables by value");
   ("--sqt", Arg.Set Globals.seq_to_try,
    "translate seq to try");
-  ("-cp-constrs", Arg.String set_file_cp,
+  ("-cp-test", Arg.String set_file_cp,
    "compare set of constraints");
   ] 
 

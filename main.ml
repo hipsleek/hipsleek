@@ -44,7 +44,6 @@ let parse_file_full file_name =
 	 (* An Hoa *)
 	 (*let _ = print_endline "Primitive relations : " in
 	   let _ = List.map (fun x -> print_endline x.Iast.rel_name) prog.Iast.prog_rel_decls in*)
-
     prog
   with
       End_of_file -> exit 0
@@ -82,11 +81,51 @@ let rec process_header_with_pragma hlist plist =
 
 (***************end process preclude*********************)
 
+(**************vp: process compare file******************)
+let parse_file_cp file_name = 
+  let _ = print_string ("File to compare: " ^ file_name ^ "\n" ) in
+  let org_in_chnl = open_in file_name in 
+  try
+    let a  = Parser.parse_cpfile file_name (Stream.of_channel org_in_chnl) in
+    close_in org_in_chnl;
+    a
+  with
+      End_of_file -> exit 0
+    | M.Loc.Exc_located (l,t)->
+      (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+       raise t)
+
+let process_cp_file prog =
+  let (hpdefs, proc_tcomps) = parse_file_cp !Globals.file_cp in 
+  let helper procs tcomps =
+    let rec update_tcomp proc tcomps =
+      let proc_name = proc.Iast.proc_name in
+      match tcomps with
+	|[] -> proc
+	|(id, tcs)::y -> if(String.compare id proc_name == 0) then (
+	  {proc with Iast.proc_test_comps = Some tcs}
+	)
+	  else update_tcomp proc y
+    in
+    List.map (fun proc -> update_tcomp proc tcomps) procs 
+    (*procs proc_decl list*)
+  in
+  {prog with Iast.prog_hp_decls = prog.Iast.prog_hp_decls @ hpdefs;
+  Iast.prog_proc_decls = helper prog.Iast.prog_proc_decls proc_tcomps}
+
+(***************end process compare file*****************)
 let process_source_full source =
   (* print_string ("\nProcessing file \"" ^ source ^ "\"\n");  *)
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source in
+  let _ = Gen.Profiling.push_time "Process compare file" in
+  let prog = if(!Globals.cp_test) then (
+    process_cp_file prog 
+  )
+    else prog
+  in
+  let _ = Gen.Profiling.pop_time "Process compare file" in
   (* Remove all duplicated declared prelude *)
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
@@ -180,7 +219,7 @@ let process_source_full source =
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
-       ignore (Typechecker.check_prog cprog intermediate_prog);
+       ignore (Typechecker.check_prog cprog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError(s) detected at main "^"\n");
@@ -311,7 +350,7 @@ let process_source_full_after_parser source (prog, prims_list) =
     if (!Scriptarguments.typecheck_only) 
     then print_string (Cprinter.string_of_program cprog)
     else (try
-	    ignore (Typechecker.check_prog cprog  intermediate_prog);
+	    ignore (Typechecker.check_prog cprog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError(s) detected at main "^"\n");

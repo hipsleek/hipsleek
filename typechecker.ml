@@ -1854,7 +1854,7 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
   in helper proc_lst
 
 (* checking procedure: (PROC p61) *)
-and check_proc (prog : prog_decl) (iprog: I.prog_decl)(proc : proc_decl) : bool =
+and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
   let unmin_name = unmingle_name proc.proc_name in
   (* get latest procedure from table *)
   let proc = 
@@ -1941,76 +1941,41 @@ and check_proc (prog : prog_decl) (iprog: I.prog_decl)(proc : proc_decl) : bool 
                     let _ = print_endline "*************************************" in
                     let _ = print_endline (Sa.rel_def_stk # string_of) in
                     let _ = print_endline "*************************************" in
-		    let infile_constrs, infile_defs = 
-		      if((String.compare !Globals.file_cp "") != 0) 
-		      then (
-			let file_name = !Globals.file_cp in
-			let _ = Debug.info_pprint ("File to compare: " ^ file_name ) no_pos in
-			
-			let org_in_chnl = open_in file_name in 
-			try
-			  let cps  = Parser.parse_constrs file_name (Stream.of_channel org_in_chnl) in
-			  let set_constrs = List.filter (fun (il,t,cs) -> (String.compare t "ass" == 0)) cps in
-			  let il1,t,res = if(List.length set_constrs == 0) then report_error no_pos "no constr"
-			    else if(List.length set_constrs > 1) then report_error no_pos "more than one constr" 
-			    else List.hd set_constrs in (*the only constrs in file*)
-			  let set_defs = List.filter (fun (il,t,cs) -> (String.compare t "hp_defs" == 0)) cps in
-			  let il2,t2,res2 = if(List.length set_defs == 0) then report_error no_pos "no def"
-			    else if(List.length set_defs > 1) then report_error no_pos "more than one def"
-			    else List.hd set_defs in (*the only constrs in file*)
-			  close_in org_in_chnl;
-			  (res,res2)
-			with
-			    End_of_file -> exit 0
-			  | M.Loc.Exc_located (l,t)->
-			    (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
-			     raise t)
-		      )
-		      else (
-			([],[])
-		      )
-		    in
-		    let trans_constr constr = 
-		      let stab =  H.create 103 in
-		      let if1, if2 = constr in
-		      let _ = Astsimp.gather_type_info_formula iprog if1 stab false in
-		      (*let _ = print_endline ("typechecker1: stab: " ^ Astsimp.string_of_stab stab ) in *)
-		      let f1 = Astsimp.trans_formula iprog false [] false if1 stab false in
-		      let _ = Astsimp.gather_type_info_formula iprog if2 stab false in
-		      (*	let _ = print_endline ("typechecker2: stab: " ^ Astsimp.string_of_stab stab ) in *)
-		      let f2 = Astsimp.trans_formula iprog false [] false if2 stab false in
-		      (f1,f2)
-		    in
-		    let _ = if((String.compare !Globals.file_cp "") != 0) then(
-		      let infile_constrs = List.map (fun constr -> trans_constr constr) infile_constrs in
-		      let infile_defs = List.map (fun def -> trans_constr def) infile_defs in
-		      let is_match_constrs = CEQ.checkeq_constrs [] (List.map (fun hp -> hp.CF.hprel_lhs,hp.CF.hprel_rhs)
-                                                                       hp_lst_assume) infile_constrs in
-		      let match_defs = CEQ.checkeq_defs [] ls_inferred_hps infile_defs in
-		      (*let _ = print_string ( pr_spec proc.proc_static_specs ^ "    vp") in
-		      let pvars = match proc.proc_static_specs with
-			| CF.EInfer b ->  b.CF.formula_inf_vars
-			| _ -> report_error no_pos "no case"
-		      in*)
+
+		    let _ = if(!Globals.cp_test) then(
+		      let _ = Gen.Profiling.push_time "Compare res with cp file" in
+		      let test_comps = proc.Cast.proc_test_comps in
+		      let is_match_constrs il constrs = CEQ.checkeq_constrs il (List.map (fun hp -> hp.CF.hprel_lhs,hp.CF.hprel_rhs)
+									       hp_lst_assume) constrs in
+		      let match_defs il defs= CEQ.checkeq_defs il ls_inferred_hps defs in
 		      let _,_,inf_vars = CF.get_pre_post_vars [] proc.proc_static_specs in
-		      let _ = Debug.info_pprint ("VP: " ^ (!CP.print_svl inf_vars)) no_pos in
-		      let is_match_defs = CEQ.checkeq_defs_bool [] ls_inferred_hps infile_defs inf_vars in
-		      let _ = if(is_match_constrs) then 
+		      let _ = Debug.info_pprint ("VP: " ^ (!CP.print_svl inf_vars) ^ "\n") no_pos in
+		      let is_match_defs il defs = CEQ.checkeq_defs_bool il ls_inferred_hps defs inf_vars in
+		      let (res1, res2) = match test_comps with
+			| None -> (false,false)
+			| Some tcs -> (
+			  let ass = tcs.Cast.expected_ass in
+			  let hpdefs = tcs.Cast.expected_hpdefs in
+			  match ass,hpdefs with
+			    | None, None -> print_string "none-none\n ";(false, false)
+			    | Some (il,a), None -> (is_match_constrs il a, false) 
+			    | None, Some (il,d) -> (false, is_match_defs il d)
+			    | Some (il1,a), Some (il2,d) -> print_string "some_some\n "; (is_match_constrs il1 a, is_match_defs il2 d)
+			)
+		      in
+		      let _ = if(res1) then 
 			  print_string ("Compare ass " ^ proc.proc_name ^ " SUCCESS\n" )
 			else 
 			  print_string ("Compare ass " ^ proc.proc_name ^ " FAIL\n" )
 		      in
-		      let _ = if(is_match_defs) then 
+		      let _ = if(res2) then 
 			  print_string ("Compare defs " ^ proc.proc_name ^ " SUCCESS\n" )
 			else 
 			  print_string ("Compare defs " ^ proc.proc_name ^ " FAIL\n" )
 		      in
-		      (*let pr3 = pr_list_ln (pr_pair Cprinter.string_of_spec_var_list Cprinter.string_of_spec_var) in
-			let _ = print_endline ("/nCheck defs: \n" ^ pr3 match_defs ) in
-			let _ = print_endline ("END-CMP" ) in*)
+		      let _ = Gen.Profiling.pop_time "Compare res with cp file" in
 		      ()
-		    )
-		    in
+		    ) in
                    (****)
                     let lst_rank = List.map (fun (_,a2,a3)-> (a2,a3)) lst_rank in
                     (*let _ = Ranking.do_nothing in*)
@@ -2131,16 +2096,16 @@ and check_proc (prog : prog_decl) (iprog: I.prog_decl)(proc : proc_decl) : bool 
 		      end
 	end else true
 
-let check_proc (prog : prog_decl) (iprog: I.prog_decl)(proc : proc_decl) : bool =
+let check_proc (prog : prog_decl) (proc : proc_decl) : bool =
   let pr p = pr_id (name_of_proc p)  in
   Debug.no_1_opt (fun _ -> not(is_primitive_proc proc)) 
-      "check_proc" pr string_of_bool (check_proc prog iprog) proc
+      "check_proc" pr string_of_bool (check_proc prog) proc
 
-let check_phase_only prog (iprog: I.prog_decl) proc =
+let check_phase_only prog  proc =
 (* check_proc prog proc *)
   try
 	(*  let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in *)
-    let _=check_proc prog iprog proc in () 
+    let _=check_proc prog proc in () 
   with _ as e ->
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       print_string ("\nException "^(Printexc.to_string e)^" during check_phase_only!\n");
@@ -2148,11 +2113,11 @@ let check_phase_only prog (iprog: I.prog_decl) proc =
       ()
 
 (* check entire program *)
-let check_proc_wrapper prog iprog proc =
+let check_proc_wrapper prog proc =
 (* check_proc prog proc *)
   try
 	(*  let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in *)
-    let res = check_proc prog iprog proc in 
+    let res = check_proc prog proc in 
     (* Termination: Infer the phase numbers of functions in a scc group *) 
     (* TODO: The list of scc group does not 
      * need to be computed many times *)
@@ -2204,10 +2169,10 @@ let check_view_wrapper def = match def with
   | View vdef -> check_view vdef
 *)
 
-let check_data (prog : prog_decl)(iprog: I.prog_decl) (cdef : data_decl) =
+let check_data (prog : prog_decl) (cdef : data_decl) =
   if not (Gen.is_empty cdef.data_methods) then
 	print_string ("\nChecking class " ^ cdef.data_name ^ "...\n\n");
-  List.map (check_proc_wrapper prog iprog) cdef.data_methods
+  List.map (check_proc_wrapper prog) cdef.data_methods
 
 let check_coercion (prog : prog_decl) =
   let find_coerc coercs name =
@@ -2243,10 +2208,10 @@ let init_files () =
     Setmona.init_files ();
   end
 
-let check_proc_wrapper_map prog iprog (proc,num) =
+let check_proc_wrapper_map prog (proc,num) =
   if !Tpdispatcher.external_prover then Tpdispatcher.Netprover.set_use_socket_map (List.nth !Tpdispatcher.external_host_ports (num mod (List.length !Tpdispatcher.external_host_ports))); (* make this dynamic according to availability of server machines*)
   try
-    check_proc prog iprog proc
+    check_proc prog proc
   with _ as e ->
     if !Globals.check_all then begin
       print_string ("\nProcedure "^proc.proc_name^" FAIL-3\n");
@@ -2255,9 +2220,9 @@ let check_proc_wrapper_map prog iprog (proc,num) =
     end else
       raise e 
 
-let check_proc_wrapper_map_net prog iprog (proc,num) =
+let check_proc_wrapper_map_net prog  (proc,num) =
   try
-    check_proc prog iprog proc
+    check_proc prog proc
   with _ as e ->
     if !Globals.check_all then begin
       print_string ("\nProcedure "^proc.proc_name^" FAIL-4\n");
@@ -2287,7 +2252,7 @@ let restore_phase_infer_checks() =
   dis_term_msg := stk_tmp_checks # pop_top;
   dis_bnd_chk := stk_tmp_checks # pop_top
 
-let check_prog (prog : prog_decl)(iprog: I.prog_decl) =
+let check_prog (prog : prog_decl) =
   let _ = if (Printexc.backtrace_status ()) then print_endline "backtrace active" in 
    (* let _ = Debug.info_pprint ("  check_prog: " ^ (Cprinter.string_of_program prog) ) no_pos in *)
   if !Globals.check_coercions then 
@@ -2298,7 +2263,7 @@ let check_prog (prog : prog_decl)(iprog: I.prog_decl) =
       print_string "DONE.\n"
     end;
   
-  ignore (List.map (check_data prog iprog) prog.prog_data_decls);
+  ignore (List.map (check_data prog) prog.prog_data_decls);
   (* Sort the proc_decls by proc_call_order *)
   let l_proc = Cast.list_of_procs prog in
   let proc_prim, proc_main = List.partition Cast.is_primitive_proc l_proc in
@@ -2327,21 +2292,21 @@ let check_prog (prog : prog_decl)(iprog: I.prog_decl) =
             Debug.dinfo_pprint ">>>>>> Perform Phase Inference for a Mutual Recursive Group  <<<<<<" no_pos;
             Debug.dinfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
             drop_phase_infer_checks();
-            proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc prog iprog proc));
+            proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc prog proc));
             restore_phase_infer_checks();
             (* the message here should be empty *)
             (* Term.term_check_output Term.term_res_stk; *)
             Term.phase_num_infer_whole_scc prog scc 
           end
         else prog in
-      let _ = proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc_wrapper prog iprog proc)) in
+      let _ = proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc_wrapper prog proc)) in
       prog
   ) prog proc_scc 
   in 
-  ignore (List.map (check_proc_wrapper prog iprog) ((* sorted_proc_main @ *) proc_prim));
+  ignore (List.map (check_proc_wrapper prog) ((* sorted_proc_main @ *) proc_prim));
   (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)
   Term.term_check_output ()
 	    
-let check_prog (prog : prog_decl)(iprog: I.prog_decl) =
-  Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog iprog
+let check_prog (prog : prog_decl) =
+  Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog 
   (*Debug.no_1 "check_prog" (fun _ -> "?") (fun _ -> "?") check_prog prog iprog*)

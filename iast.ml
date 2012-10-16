@@ -33,7 +33,8 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
                    (* An Hoa: relational declaration *)
                    prog_proc_decls : proc_decl list;
 		   prog_barrier_decls : barrier_decl list;
-                   mutable prog_coercion_decls : coercion_decl list }
+                   mutable prog_coercion_decls : coercion_decl list
+		 }
 
 and data_decl = { data_name : ident;
 		  data_fields : (typed_ident * loc * bool) list; (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
@@ -169,7 +170,8 @@ and proc_decl = { proc_name : ident;
 				  proc_body : exp option;
 				  proc_is_main : bool;
 				  proc_file : string;
-				  proc_loc : loc }
+				  proc_loc : loc ;
+				  proc_test_comps: test_comps option}
 
 and coercion_decl = { coercion_type : coercion_type;
 		      coercion_name : ident;
@@ -180,6 +182,25 @@ and coercion_type =
   | Left
   | Equiv
   | Right
+
+(********vp:for parse compare file************)
+and cp_file_comps = 
+  | Hpdecl of hp_decl
+  | ProcERes of (ident * test_comps)
+  
+and test_comps = {
+  expected_ass: (((ident list) * (ass list)) option);
+  expected_hpdefs: (((ident list) * (ass list)) option) }
+
+and expected_comp = 
+  | ExpectedAss of ((ident list) * (ass list)) 
+  | ExpectedHpDef of ((ident list) * (ass list))
+
+and ass = {
+  ass_lhs: F.formula;
+  ass_rhs: F.formula }
+
+(********end parse compare file************)
 
 and uni_op = 
   | OpUMinus
@@ -678,7 +699,8 @@ let mkProc id n dd c ot ags r ss ds pos bd=
 		  proc_loc = pos;
     proc_is_main = true;
       proc_file = !input_file_name;
-		  proc_body = bd }	
+		  proc_body = bd;
+    proc_test_comps = None}	
 
 let mkAssert asrtf assmf pid pos =
       Assert { exp_assert_asserted_formula = asrtf;
@@ -1936,7 +1958,8 @@ let add_bar_inits prog =
 			  proc_body = None;
 			  proc_is_main = false;
 			  proc_file = "";
-			  proc_loc = no_pos}) prog.prog_barrier_decls in
+			  proc_loc = no_pos;
+			proc_test_comps = None}) prog.prog_barrier_decls in
  {prog with 
 	prog_data_decls = prog.prog_data_decls@b_data_def; 
 	prog_proc_decls = prog.prog_proc_decls@b_proc_def; }

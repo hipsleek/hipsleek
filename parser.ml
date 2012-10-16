@@ -1119,7 +1119,7 @@ cexp_w :
 	      set_slicing_utils_pure_double f false
       | `ALLN; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    ->
 	  let f = cexp_to_pure2 (fun c1 c2-> P.ListAllN (c1, c2, (get_pos_camlp4 _loc 2))) lc cl  in
-	  set_slicing_utils_pure_double f false
+  set_slicing_utils_pure_double f false
       | `PERM; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    ->
 	  let f = cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
 	  set_slicing_utils_pure_double f false
@@ -2269,55 +2269,51 @@ arrayaccess_expression:[[
 
 (*cp_list*)
 
-(*
-cpfile: 
+cp_list:
   [[ t = opt_cp_list ->
-      let hp_defs = new Gen.stack in(* list of heap predicate relations *)
-      let proc_defs = ref ([] : proc_decl list) in
-      let ass = ref ([] : proc_decl list) in
-      let hp_defs = ref ([] : proc_decl list) in
-      let choose d = match d with
-        | Hp hpdef -> hp_defs # push hpdef 
-        | Proc pdef -> proc_defs := pdef :: !proc_defs 
-
+    let hp_defs2 = new Gen.stack in(* list of heap predicate relations *)
+    let proc_tcomps  = ref ([] : (ident * test_comps) list) in
+    let choose d = match d with
+      | Hpdecl hpdef  -> hp_defs2 # push hpdef 
+      | ProcERes t -> proc_tcomps := t :: !proc_tcomps
+    in
     let _ = List.map choose t in
-    let obj_def = { data_name = "Object";
-					data_fields = [];
-					data_parent_name = "";
-					data_invs = []; (* F.mkTrue no_pos; *)
-					data_methods = [] } in
-    let string_def = { data_name = "String";
-					   data_fields = [];
-					   data_parent_name = "Object";
-					   data_invs = []; (* F.mkTrue no_pos; *)
-					   data_methods = [] } in
-    let rel_lst = rel_defs # get_stk in
-    let hp_lst = hp_defs # get_stk in
-    { prog_data_decls = obj_def :: string_def :: !data_defs;
-      prog_global_var_decls = !global_var_defs;
-      prog_logical_var_decls = !logical_var_defs;
-      prog_enum_decls = !enum_defs;
-      (* prog_rel_decls = [];  TODO : new field for array parsing *)
-      prog_view_decls = !view_defs;
-      prog_func_decls = func_defs # get_stk ;
-      prog_rel_decls = rel_lst ; (* An Hoa *)
-      prog_rel_ids = List.map (fun x -> (RelT,x.rel_name)) rel_lst; (* WN *)
-      prog_hp_decls = hp_lst ;
-      prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
-      prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
-      prog_proc_decls = !proc_defs;
-      prog_coercion_decls = !coercion_defs; 
-      prog_hopred_decls = !hopred_defs;
-	  prog_barrier_decls = !barrier_defs; } ]];
-*)
+    let hp_lst = hp_defs2 # get_stk in
+    (hp_lst, !proc_tcomps)]];
 
-cp_list: [[t = LIST0 cp_ele -> t]];
+opt_cp_list: [[t=LIST0 cp_comps -> List.concat t]];
 
-cp_ele: [[t = id; `OSQUARE; il=OPT id_list; `CSQUARE; `COLON;`OBRACE;cs=constrs;`CBRACE  ->  let il = un_option il [] in (il,t,cs) ]];
+cp_comps: [[ t=macro -> []
+	  |t=cp_comp -> [t]]];
+
+cp_comp: [[ r=hp_decl; `DOT -> Hpdecl r
+	  | t=test -> ProcERes t]]; 
+
+test: 
+  [[t = id; `OSQUARE; tl=test_list; `CSQUARE ->  (t,tl) ]];
+
+test_list: [[t = LIST0 test_ele -> 
+    let ass  =  ref (None : ((ident list) * (ass list)) option) in
+    let hpdefs  = ref (None : ((ident list) * (ass list)) option) in
+    let choose d = match d with
+      | ExpectedAss t  ->  ass := Some t
+      | ExpectedHpDef t ->  hpdefs := Some t
+    in
+    let _ = List.map choose t in
+    {expected_ass = !ass;
+      expected_hpdefs = !hpdefs}]];
+
+test_ele: 
+  [[t = id; `OSQUARE; il=OPT id_list; `CSQUARE; `COLON;`OBRACE;cs=constrs;`CBRACE  ->  
+  let il = un_option il [] in 
+  if(String.compare "ass" t == 0) then ExpectedAss (il,cs)
+  else if(String.compare t "hpdefs" == 0) then ExpectedHpDef (il,cs)
+  else report_error no_pos "no_case"]];
 
 constrs: [[t = LIST0 constr SEP `COMMA -> t]];
 
-constr : [[ t=disjunctive_constr; `LEFTARROW; b=disjunctive_constr -> ( (F.subst_stub_flow n_flow t), (F.subst_stub_flow n_flow b))]];
+constr : [[ t=disjunctive_constr; `LEFTARROW; b=disjunctive_constr -> {ass_lhs = F.subst_stub_flow n_flow t;
+ass_rhs = F.subst_stub_flow n_flow b}]];
 
 
 (*end of cp_list*)
@@ -2335,4 +2331,4 @@ let parse_hip_string n s = SHGram.parse_string hprog (PreCast.Loc.mk n) s
   let pr x = x in
   let pr_no x = "?" in DD.no_2 "parse_hip_string" pr pr pr_no parse_hip_string n s *)
 let parse_spec s = SHGram.parse_string opt_spec_list_file (PreCast.Loc.mk "spec string") s
-let parse_constrs n s = SHGram.parse cp_file (PreCast.Loc.mk n) s
+let parse_cpfile n s = SHGram.parse cp_file (PreCast.Loc.mk n) s

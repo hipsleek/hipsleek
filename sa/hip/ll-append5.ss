@@ -12,10 +12,7 @@ HeapPred H1(node a).
 HeapPred H2(node a,node b).
 HeapPred HP1(node a, node b).
 //HeapPred G1(node a, node b, node c).
-HeapPred HP_615(node a, node b).
-HeapPred HP_618(node a, node b).
-HeapPred HP_619(node a, node b).
-HeapPred HP_618(node a, node b).
+
 
 ll<> == self=null
   or self::node<_,q>*q::ll<>
