@@ -233,6 +233,11 @@ and check_node_equiv (hvars: ident list)(n1: CF.h_formula_data) (n2:  CF.h_formu
   let ann2 = n2.CF.h_formula_data_imm in
   let args2 = n2.CF.h_formula_data_arguments in
   let is_hard_n2 = (List.mem (CP.name_of_spec_var n2.CF.h_formula_data_node) hvars) in
+  let rec str hvars  = match hvars with
+    | [] -> ""
+    | a::y -> a ^ str y 
+  in
+ (* print_string (str hvars) ;*)
   let is_hard = is_hard_n1 || is_hard_n2 in
 (* if((not (CF.is_eq_node_name name1 name2)) || (is_hard && (not (CP.eq_spec_var var1 var2))) || (not (CF.is_eq_data_ann ann1 ann2)))  *)
   if((not (CF.is_eq_node_name name1 name2)) || (is_hard && (not (CP.eq_spec_var var1 var2)))) 
@@ -255,7 +260,7 @@ and check_spec_var_list_equiv  (hvars: ident list)(args1: CP.spec_var list)(args
   if((List.length args1) == 0 && (List.length args2) == 0) then (true, mt)
   else (
     let (check_head,mt1) = check_spec_var_equiv hvars (List.hd args1) (List.hd args2) mt in
-    if(check_head) then check_spec_var_list_equiv hvars (List.tl args1) (List.tl args2) mt1 else (check_head,mt1)
+    if(check_head) then check_spec_var_list_equiv hvars (List.tl args1) (List.tl args2) mt1 else (check_head,[])
   )
 and check_spec_var_equiv (hvars: ident list)(v1: CP.spec_var) (v2: CP.spec_var)(mt: map_table): (bool * map_table )=
   let pr1 = CP.name_of_spec_var in
@@ -272,7 +277,7 @@ and check_spec_var_equiv_x (hvars: ident list)(v1: CP.spec_var) (v2: CP.spec_var
     (* let re = Str.regexp_string "flted" in *)
     (* try ignore (Str.search_forward re name 0); true *)
     (* with Not_found -> false *) (*???*)
-    true
+    false
   in 
   if((is_null_var v1) && (is_null_var v2)) then (true, mt)
   else

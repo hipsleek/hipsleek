@@ -4,13 +4,13 @@ data node2 { int val ; node next }.
 HeapPred ll(node x, int n).
 HeapPred rr(node x, int n).
 
-checkeq [x] x::node<a,b> -|- x::node<c,d> .
+checkeq [x] x::node<a,null> -|- x::node<c,null> .
 // VALID --> [{a,c},{b,d}]
 
 checkeq [x] x::node<a,b> -|- y::node<c,d> .
 // FAIL
 
-checkeq [] x::node<a,b> -|- y::node<c,d> .
+checkeq [b] x::node<3,b> -|- y::node<3,d> .
 // VALID --> [{a,c},{b,d},{x,y}]
 
 
