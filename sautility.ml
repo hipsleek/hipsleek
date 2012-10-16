@@ -71,7 +71,6 @@ and get_hdnodes_hf (hf: CF.h_formula) = match hf with
       -> (get_hdnodes_hf h1)@(get_hdnodes_hf h2)
   | _ -> []
 
-
 let check_simp_hp_eq (hp1, _) (hp2, _)=
    (CP.eq_spec_var hp1 hp2)
 
@@ -513,13 +512,6 @@ and subst_view_hp_h_formula view_name (hp_name, _, p) hf =
 
 (*==========check_relaxeq=============*)
 (*currently we do not submit exists*)
-let xpure_for_hnodes hf=
-let hds, _, _ (*hvs, hrs*) =  CF.get_hp_rel_h_formula hf in
-  (*currently we just work with data nodes*)
-  let neqNulls = List.map (fun dn -> CP.mkNeqNull dn.CF.h_formula_data_node dn.CF.h_formula_data_pos) hds in
-  let new_mf = MCP.mix_of_pure (CP.join_conjunctions neqNulls) in
-  new_mf
-
 let check_stricteq_hnodes stricted_eq hns1 hns2=
   let check_stricteq_hnode hn1 hn2=
     let arg_ptrs1 = List.filter (fun (CP.SpecVar (t,_,_)) -> is_pointer t) hn1.CF.h_formula_data_arguments in
@@ -615,15 +607,17 @@ let check_relaxeq_formula_x f1 f2=
   (* let r1,mts = CEQ.checkeq_h_formulas [] hf1 hf2 [] in *)
   let r1 = check_stricteq_h_fomula true hf1 hf2 in
   if r1 then
-    let new_mf1 = xpure_for_hnodes hf1 in
-    let cmb_mf1 = MCP.merge_mems mf1 new_mf1 true in
-    let new_mf2 = xpure_for_hnodes hf2 in
-    let cmb_mf2 = MCP.merge_mems mf2 new_mf2 true in
-    (*remove dups*)
-    let np1 = CP.remove_redundant (MCP.pure_of_mix cmb_mf1) in
-    let np2 = CP.remove_redundant (MCP.pure_of_mix cmb_mf2) in
-    DD.ninfo_pprint ("   f1: " ^(!CP.print_formula np1)) no_pos;
-    DD.ninfo_pprint ("   f2: " ^ (!CP.print_formula np2)) no_pos;
+    (* let new_mf1 = xpure_for_hnodes hf1 in *)
+    (* let cmb_mf1 = MCP.merge_mems mf1 new_mf1 true in *)
+    (* let new_mf2 = xpure_for_hnodes hf2 in *)
+    (* let cmb_mf2 = MCP.merge_mems mf2 new_mf2 true in *)
+    (* (\*remove dups*\) *)
+    (* let np1 = CP.remove_redundant (MCP.pure_of_mix cmb_mf1) in *)
+    (* let np2 = CP.remove_redundant (MCP.pure_of_mix cmb_mf2) in *)
+    let np1 = CF.remove_neqNull_redundant_hnodes_hf hf1 (MCP.pure_of_mix mf1) in
+    let np2 = CF.remove_neqNull_redundant_hnodes_hf hf2 (MCP.pure_of_mix mf2) in
+    (* DD.info_pprint ("   f1: " ^(!CP.print_formula np1)) no_pos; *)
+    (* DD.info_pprint ("   f2: " ^ (!CP.print_formula np2)) no_pos; *)
     (* let r2,_ = CEQ.checkeq_p_formula [] np1 np2 mts in *)
     let r2 = CP.equalFormula np1 np2 in
     let _ = DD.ninfo_pprint ("   eq: " ^ (string_of_bool r2)) no_pos in
@@ -754,6 +748,7 @@ let process_one_f args hp_subst sh_ldns (ldns, f)=
     let p = CP.conj_of_list ps no_pos in
    (*apply subst last_ss2*)
     let nf3 = CF.subst last_ss2 nf2 in
+    (*should remove x!=null if x is in matched2s*)
     (*combine them*)
     CF.mkAnd_pure nf3 (MCP.mix_of_pure p) no_pos
   in
@@ -851,8 +846,10 @@ let add_raw_hp_rel prog unknown_args pos=
 let mk_hprel_def hp args defs pos=
   DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")") pos;
   (*make disjunction*)
+  (*remove neqNUll redundant*)
+  let defs1 = List.map CF.remove_neqNull_redundant_hnodes_f defs in
   let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 (CF.pos_of_formula f1))
-    (List.hd defs) (List.tl defs) in
+    (List.hd defs1) (List.tl defs1) in
   DD.ninfo_pprint (" =: " ^ (Cprinter.prtt_string_of_formula def) ) pos;
   let def = (hp, (CP.HPRelDefn hp, (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos)), def)) in
   def
@@ -1011,7 +1008,7 @@ let rec look_up_subst_hpdef hp args nrec_hpdefs=
           look_up_subst_hpdef hp args gs
     end
 
-let succ_susbt_hpdef nrec_hpdefs (hp,args,f)=
+let succ_susbt_hpdef nrec_hpdefs all_succ_hp (hp,args,f)=
   (* DD.info_pprint ("       succ_susbt_def hp: " ^ (!CP.print_sv hp)) no_pos; *)
   let pos = no_pos in
   (*l1 x l2*)
@@ -1023,7 +1020,8 @@ let succ_susbt_hpdef nrec_hpdefs (hp,args,f)=
   in
   let succ_hp_args = CF.get_HRels_f f in
   (*filter hp out*)
-  let succ_hp_args = List.filter (fun (hp1,_) -> not (CP.eq_spec_var hp hp1)) succ_hp_args in
+  let succ_hp_args = List.filter (fun (hp1,_) -> not (CP.eq_spec_var hp hp1) &&
+      (CP.mem_svl hp1 all_succ_hp)) succ_hp_args in
   (* DD.info_pprint ("       succ_hp_args:" ^ (let pr = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) *)
   (*                                           in pr succ_hp_args)) no_pos; *)
   match succ_hp_args with

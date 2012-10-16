@@ -1521,7 +1521,7 @@ let pr_hprel_def_lib hpd=
   fmt_string "\n";
   (pr_h_formula hpd.hprel_def_hrel);
   fmt_string " ::=";
-  prtt_pr_formula hpd.hprel_def_body_lib;
+  fmt_string (prtt_string_of_formula hpd.hprel_def_body_lib);
   fmt_close()
 
 let string_of_hprel hp = poly_string_of_pr pr_hprel hp

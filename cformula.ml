@@ -3184,14 +3184,27 @@ and h_node_list (f: h_formula): CP.spec_var list = match f with
 
 and get_hnodes (f: h_formula) = match f with
   | DataNode _ -> [f]
-  | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2} 
-  | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} 
-  | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2} 
+  | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
+  | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2}
+  | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2}
       -> (get_hnodes h1)@(get_hnodes h2)
   | _ -> []
 
-and get_hp_rel_formula (f:formula) =
-  match f with 
+let get_hdnodes_hrel_hf (hf0: h_formula) =
+  let rec helper hf=
+    match hf with
+      | DataNode _ -> [hf]
+      | HRel _ -> [hf]
+      | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
+      | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2}
+      | Phase {h_formula_phase_rd = h1;h_formula_phase_rw = h2}
+          -> (helper h1)@(helper h2)
+      | _ -> []
+  in
+  helper hf0
+
+let rec get_hp_rel_formula (f:formula) =
+  match f with
     | Base  ({formula_base_heap = h1;
 		formula_base_pure = p1})
     | Exists ({formula_exists_heap = h1;
@@ -3387,8 +3400,45 @@ and filter_vars_hf hf rvs=
     | HFalse
     | HEmp -> hf
 
+let xpure_for_hnodes hf=
+let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula hf in
+  (*currently we just work with data nodes*)
+  let neqNulls = List.map (fun dn -> CP.mkNeqNull dn.h_formula_data_node dn.h_formula_data_pos) hds in
+  let new_mf = MCP.mix_of_pure (CP.join_conjunctions neqNulls) in
+  new_mf
+
+(*elim redundant x!=null in p*)
+let remove_neqNull_redundant_hnodes hds p=
+  (*currently we just work with data nodes*)
+  let neqNulls = List.map (fun dn -> CP.mkNeqNull dn.h_formula_data_node dn.h_formula_data_pos) hds in
+  let ps = (CP.split_conjunctions p) in
+  let ps1 = CP.remove_redundant_helper ps [] in
+  let new_ps = Gen.BList.difference_eq CP.equalFormula ps1 neqNulls in
+  (CP.join_conjunctions new_ps)
+
+(*elim redundant x!=null in p*)
+let remove_neqNull_redundant_hnodes_hf hf p=
+  let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula hf in
+  remove_neqNull_redundant_hnodes hds p
+
+let remove_neqNull_redundant_hnodes_f f0=
+  let rec helper f=
+    match f with
+      | Base fb -> let np = remove_neqNull_redundant_hnodes_hf fb.formula_base_heap
+                     (MCP.pure_of_mix fb.formula_base_pure) in
+                   (Base {fb with formula_base_pure = MCP.mix_of_pure np})
+      | Or orf -> let nf1 = helper orf.formula_or_f1 in
+                  let nf2 = helper orf.formula_or_f2 in
+                  ( Or {orf with formula_or_f1 = nf1;
+                      formula_or_f2 = nf2;})
+      | Exists fe -> let np = remove_neqNull_redundant_hnodes_hf fe.formula_exists_heap
+                       (MCP.pure_of_mix fe.formula_exists_pure) in
+                     (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
+  in
+  helper f0
+
 (*drop HRel in the set hp_names and return corresponding subst of their args*)
-and drop_hrel_f f hp_names=
+let rec drop_hrel_f f hp_names=
   match f with
     | Base fb -> let nfb,argsl = drop_hrel_hf fb.formula_base_heap hp_names in
         (Base {fb with formula_base_heap =  nfb;}, argsl)
@@ -3444,7 +3494,9 @@ and drop_hrel_hf hf hp_names=
 and drop_hnodes_f f hp_names=
   match f with
     | Base fb -> let nfb = drop_hnodes_hf fb.formula_base_heap hp_names in
-        (Base {fb with formula_base_heap =  nfb;})
+                 (* let np = remove_neqNull_redundant_hnodes_hf nfb (MCP.pure_of_mix fb.formula_base_pure) in *)
+        (Base {fb with formula_base_heap =  nfb;
+            (* formula_base_pure = MCP.mix_of_pure np *) })
     | Or orf -> let nf1 =  drop_hnodes_f orf.formula_or_f1 hp_names in
                 let nf2 =  drop_hnodes_f orf.formula_or_f2 hp_names in
        ( Or {orf with formula_or_f1 = nf1;
@@ -3505,8 +3557,9 @@ and drop_data_view_hrel_nodes f fn_data_select fn_view_select fn_hrel_select dno
           dnodes vnodes relnodes in
         (*assume keep vars = dnodes*)
         let new_p = CP.filter_var_new (MCP.pure_of_mix fb.formula_base_pure) dnodes in
+        let new_p1 = remove_neqNull_redundant_hnodes_hf new_hf new_p in
         Base {fb with formula_base_heap = new_hf;
-            formula_base_pure = MCP.mix_of_pure new_p;
+            formula_base_pure = MCP.mix_of_pure new_p1;
                 }
     | _ -> report_error no_pos "cformula.drop_data_view_hrel_nodes"
 
@@ -3516,10 +3569,11 @@ and drop_data_view_hrel_nodes_fb fb fn_data_select fn_view_select fn_hrel_select
           matched_data_nodes matched_view_nodes matched_hrel_nodes in
    (*assume keep vars = dnodes*)
   let new_p = CP.filter_var_new (MCP.pure_of_mix fb.formula_base_pure) keep_pure_vars in
+  let new_p1 = remove_neqNull_redundant_hnodes_hf new_hf new_p in
   (* DD.info_pprint ("  keep" ^ (!CP.print_svl keep_pure_vars)) no_pos; *)
   (* DD.info_pprint ("  new_p" ^ (!CP.print_formula new_p)) no_pos; *)
   {fb with formula_base_heap = new_hf;
-      formula_base_pure = MCP.mix_of_pure new_p;}
+      formula_base_pure = MCP.mix_of_pure new_p1;}
 
 and drop_data_view_hrel_nodes_hf hf fn_data_select fn_view_select fn_hrel_select
       data_nodes view_nodes hrel_nodes=
@@ -7084,7 +7138,7 @@ let clear_entailment_vars (es :entail_state) : entail_state =
       }
 
 let clear_entailment_history_es_es (es :entail_state) : entail_state = 
-  {es with es_history = es.es_history@[es.es_heap];
+  {es with es_history = es.es_history@(get_hdnodes_hrel_hf es.es_heap);
       es_heap = HEmp;
   }
 
@@ -7097,7 +7151,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
   (* TODO : this is clearing more than es_heap since qsort-tail.ss fails otherwise *)
   let hf = es.es_heap in
   (* let old_history =  if is_data hf then es.es_history@[hf] else es.es_history in *)
-  let old_history =  if (*is_data*) is_empty_heap hf then es.es_history else es.es_history@[hf] in
+  let old_history =  if (*is_data*) is_empty_heap hf then es.es_history else es.es_history@(get_hdnodes_hrel_hf hf) in
   (* adding xpure0 of es_heap into es_formula *)
   let es_f = match xp hf with
     | None -> es.es_formula

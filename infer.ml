@@ -1425,7 +1425,7 @@ let get_history_nodes_x root_svl hds history lfb done_args=
 let get_history_nodes root_svl hds history lfb done_args=
   let pr1 = pr_list_ln Cprinter.string_of_h_formula in
   let pr2 = Cprinter.string_of_formula_base in
-  Debug.no_2 "get_history_nodes" pr1 pr2 (fun (a,_) ->pr2 a)
+  Debug.no_2 "get_history_nodes" pr1 pr2 (fun (a,_,_) ->pr2 a)
       (fun _ _ -> get_history_nodes_x root_svl hds history lfb done_args) history lfb
 
 let get_h_formula_data_fr_hnode hn=

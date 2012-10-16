@@ -990,9 +990,10 @@ and simplify_one_constr_b_x prog lhs_b rhs_b=
         SAU.select_dnode SAU.select_vnode SAU.select_hrel dnode_names vnode_names hrels in
       (lhs_nhf,rhs_nhf)
   in
-  (*remove duplicate pure formulas*)
-  let lhs_nmf2 = CP.remove_redundant (MCP.pure_of_mix lhs_b1.CF.formula_base_pure) in
-  let rhs_nmf2 = CP.remove_redundant (MCP.pure_of_mix rhs_b.CF.formula_base_pure) in
+  (*remove duplicate pure formulas and remove x!= null if x::node*)
+  let lhs_nmf2 = CF.remove_neqNull_redundant_hnodes l_hds (MCP.pure_of_mix lhs_b1.CF.formula_base_pure) in
+  let rhs_nmf2 = CF.remove_neqNull_redundant_hnodes (l_hds@r_hds) (MCP.pure_of_mix rhs_b.CF.formula_base_pure) in
+  (* Debug.info_pprint ("    lmf: " ^ (!CP.print_formula lhs_nmf2)) no_pos; *)
   let lhs_b2 = {lhs_b1 with CF.formula_base_heap = lhs_nhf2;
       CF.formula_base_pure = MCP.mix_of_pure lhs_nmf2
                } in
@@ -1033,7 +1034,7 @@ and check_unsat f=
       (fun _ -> check_unsat_x f) f
 
 and check_inconsistency hf mixf=
-  let new_mf = SAU.xpure_for_hnodes hf in
+  let new_mf = CF.xpure_for_hnodes hf in
   let cmb_mf = MCP.merge_mems mixf new_mf true in
   not (TP.is_sat_raw cmb_mf)
 
@@ -1662,6 +1663,8 @@ let pardef_subst_fix unk_hps groups=
       - depend on recusive groups: wait
 *)
 let def_subst_fix_x unk_hps hpdefs=
+  (*remove dups*)
+  (* let unk_hps = CP.remove_dups_svl unk_hps in *)
   let is_rec_hpdef (CP.HPRelDefn hp,_,f)=
     let hps = CF.get_hp_rel_name_formula f in
     (CP.mem_svl hp hps)
@@ -1687,11 +1690,11 @@ let def_subst_fix_x unk_hps hpdefs=
     (*remove itself hp and unk_hps*)
     let succ_hps1 = List.filter (fun hp1 -> not (CP.eq_spec_var hp1 hp) &&
         not (CP.mem_svl hp1 unk_hps)) succ_hps in
-    (* DD.ninfo_pprint ("       process_dep_group succ_hps1: " ^ (!CP.print_svl succ_hps1)) no_pos; *)
+    (* DD.info_pprint ("       process_dep_group succ_hps1: " ^ (!CP.print_svl succ_hps1)) no_pos; *)
     if (CP.intersect succ_hps1 rec_hps) = [] then
       (*not depends on any recursive hps, susbt it*)
       let args = SAU.get_ptrs hprel in
-      let ters,new_fs = List.split (List.map (fun f1 -> SAU.succ_susbt_hpdef nrec_hpdefs (hp,args,f1)) fs) in
+      let ters,new_fs = List.split (List.map (fun f1 -> SAU.succ_susbt_hpdef nrec_hpdefs succ_hps1 (hp,args,f1)) fs) in
       (*check all is false*)
       (* let pr = pr_list string_of_bool in *)
       (* DD.ninfo_pprint ("       bool: " ^ (pr ters)) no_pos; *)
@@ -1734,7 +1737,7 @@ let def_subst_fix_x unk_hps hpdefs=
    let helper hpdefs rec_inds nrec_inds=
      let pr1 = pr_list_ln (pr_list_ln Cprinter.string_of_hprel_def) in
      let pr2= pr_quad string_of_bool pr1 pr1 pr1 in
-     Debug.no_3 "pardef_subst_fix:helper" pr1 pr1 pr1 pr2
+     Debug.no_3 "def_subst_fix:helper" pr1 pr1 pr1 pr2
          (fun _ _ _ -> helper_x hpdefs rec_inds nrec_inds) hpdefs rec_inds nrec_inds
    in
   (*END for debugging*)
@@ -2177,6 +2180,7 @@ let match_hps_views (hp_defs:hp_rel_def list) (vdcls: CA.view_decl list):
 let collect_sel_hp_def_x defs sel_hps unk_hps m=
   (*currently, use the first lib matched*)
   let m = List.map (fun (hp, l) -> (hp, List.hd l)) m in
+  let mlib = List.map (fun (hp, _) -> hp) m in
   let rec look_up_lib hp ms=
     match ms with
       | [] -> None
@@ -2237,7 +2241,12 @@ let collect_sel_hp_def_x defs sel_hps unk_hps m=
   let sel_defw,remain_hp_defs = List.partition (fun (hp,_) -> CP.mem_svl hp sel_hps) defsw in
   (* let sel_defw1 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) sel_defw in *)
   let closed_sel_defw = find_closed_sel sel_hps sel_defw remain_hp_defs sel_defw in
-  List.map compute_def_w_lib closed_sel_defw
+  let all_sel_defw = List.map compute_def_w_lib closed_sel_defw in
+  (*remove hp not in orig but == lib*)
+  let inter_lib = Gen.BList.difference_eq CP.eq_spec_var mlib sel_hps in
+  List.filter (fun hdef ->
+      let (CP.HPRelDefn hp) = hdef.CF.hprel_def_kind in not (CP.mem_svl hp inter_lib))
+      all_sel_defw
 
 let collect_sel_hp_def defs sel_hps unk_hps m=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in

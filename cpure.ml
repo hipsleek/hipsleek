@@ -6851,21 +6851,21 @@ let find_may_failures imply pairs =
   let pairs = List.concat pairs in
   List.filter (fun (a,c) ->  not(imply a c)) pairs
 
+let rec remove_redundant_helper ls rs=
+  match ls with
+    | [] -> rs
+    | f::fs -> if List.exists (equalFormula f) fs then
+          remove_redundant_helper fs rs
+        else (match f with
+          | BForm ((Eq(e1, e2, _), _) ,_) -> if (eq_exp_no_aset e1 e2) then
+                remove_redundant_helper fs rs
+              else remove_redundant_helper fs rs@[f]
+          | _ -> remove_redundant_helper fs rs@[f]
+        )
+
 let remove_redundant (f:formula):formula =
   let l_conj = split_conjunctions f in
-  let rec helper ls rs=
-    match ls with
-      | [] -> rs
-      | f::fs -> if List.exists (equalFormula f) fs then
-            helper fs rs
-          else (match f with
-            | BForm ((Eq(e1, e2, _), _) ,_) -> if (eq_exp_no_aset e1 e2) then
-                  helper fs rs
-                else helper fs rs@[f]
-            | _ -> helper fs rs@[f]
-          )
-  in
-  let prun_l = helper l_conj [] in
+  let prun_l = remove_redundant_helper l_conj [] in
   join_conjunctions prun_l
 
 let find_all_failures is_sat ante cons =
