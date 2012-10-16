@@ -2246,25 +2246,29 @@ let collect_sel_hp_def_x defs sel_hps unk_hps m=
             Some (CF.formula_of_heap hf1 no_pos)
           else look_up_lib hp ss
   in
-  let mk_hprel_def kind hprel f flib=
+  let mk_hprel_def kind hprel opf opflib=
     {
         CF.hprel_def_kind = kind;
         CF.hprel_def_hrel = hprel;
-        CF.hprel_def_body = f;
-        CF.hprel_def_body_lib = flib;
+        CF.hprel_def_body = opf;
+        CF.hprel_def_body_lib = opflib;
     }
   in
   let compute_def_w_lib (hp,(a,hprel,f))=
     let olib = look_up_lib hp m in
-    let f1 =
-      match olib with
-        | None ->
+    if CP.mem_svl hp unk_hps then
+      (mk_hprel_def a hprel None None)
+    else begin
+        let f1 =
+          match olib with
+            | None ->
             (*subs lib form inside f if applicable*)
-            let f_subst = CF.subst_hrel_hview_f f m in
-            f_subst
-        | Some lib_f -> lib_f
-    in
-    (mk_hprel_def a hprel f f1)
+                let f_subst = CF.subst_hrel_hview_f f m in
+                f_subst
+            | Some lib_f -> lib_f
+        in
+        (mk_hprel_def a hprel (Some f) (Some f1))
+    end
   in
   let look_up_depend cur_hp_sel f=
     let hps = CF.get_hp_rel_name_formula f in
@@ -2338,14 +2342,16 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * hp
   let cs, par_defs = infer_hps_fix prog constrs2 in
   (*step 6: over-approximate to generate hp def*)
   let constr3, hp_defs = generalize_hps prog unk_hps cs par_defs in
-  let unk_hp_def = generate_hp_def_from_unk_hps unk_hps in
+  let hp_def_names =  List.map (fun (CP.HPRelDefn hp1,_,_) -> hp1) hp_defs in
+  let unk_hps1 = List.filter (fun (hp,_) -> not (CP.mem_svl hp hp_def_names)) unk_hps in
+  let unk_hp_def = generate_hp_def_from_unk_hps unk_hps1 in
    (*now just print it*)
-  let hp_def_from_split = generate_hp_def_from_split hp_defs_split hp_defs unk_hps in
+  (* let hp_def_from_split = generate_hp_def_from_split hp_defs_split hp_defs unk_hps in *)
   DD.ninfo_pprint (" remains: " ^
      (let pr1 = pr_list_ln Cprinter.string_of_hprel in pr1 constr3) ) no_pos;
-  let hp_defs1 =  (Gen.BList.remove_dups_eq (fun (CP.HPRelDefn hp1,_,_) (CP.HPRelDefn hp2,_,_) -> CP.eq_spec_var hp1 hp2) (hp_defs@hp_def_from_split)) in
+  let hp_defs1 =  (Gen.BList.remove_dups_eq (fun (CP.HPRelDefn hp1,_,_) (CP.HPRelDefn hp2,_,_) -> CP.eq_spec_var hp1 hp2) (hp_defs)) in
    DD.ninfo_pprint ">>>>>> step 7: mathching with predefined predicates <<<<<<" no_pos;
-  let unk_hp_svl = (List.map (fun (hp,_) -> hp) unk_hps) in
+  let unk_hp_svl = (List.map (fun (hp,_) -> hp) unk_hps1) in
   let hp_defs2 = (def_subst_fix unk_hp_svl hp_defs1) in
   let hp_defs3 = hp_defs2 @ unk_hp_def in
   let m = match_hps_views hp_defs3 prog.CA.prog_view_decls in
@@ -2355,7 +2361,7 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * hp
   (*     ( String.concat " OR " view_names)) in pr m)) no_pos in *)
   let sel_hp_defs = collect_sel_hp_def hp_defs3 sel_hp_rels unk_hp_svl m in
   let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) sel_hp_defs in
-  (constr3, hp_defs3)
+  (constr3, hp_defs2 @ unk_hp_def) (*return for cp*)
   (* loop 1 *)
   (*simplify constrs*)
   (* let constrs12 = simplify_constrs constrs1 in *)

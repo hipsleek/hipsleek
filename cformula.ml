@@ -113,8 +113,8 @@ and hprel= {
 and hprel_def= {
     hprel_def_kind: CP.rel_cat;
     hprel_def_hrel: h_formula;
-    hprel_def_body: formula;
-    hprel_def_body_lib: formula;
+    hprel_def_body: formula option;
+    hprel_def_body_lib: formula option;
 }
 
 and list_formula = formula list
