@@ -616,7 +616,7 @@ and update_unk_one_constr prog unk_hp_locs equivs0 constr=
       CF.hprel_rhs = rhs;
   }
   in
-  let _ = Debug.info_pprint ("   new hrel: " ^
+  let _ = Debug.ninfo_pprint ("   new hrel: " ^
               (Cprinter.string_of_hprel new_constr)) no_pos in
   (new_constr,lunk_hps@runk_hps, requv)
 (*=============END UNKOWN================*)
@@ -680,7 +680,7 @@ let check_partial_def_eq par_def1 par_def2=
 let rec collect_par_defs_one_side_one_hp_x prog lhs rhs (hrel, args) def_ptrs
       rhrels eq hd_nodes hv_nodes unk_hps predef=
   begin
-      Debug.info_pprint (" lhs hp: "^ (!CP.print_sv hrel)) no_pos;
+      Debug.ninfo_pprint (" lhs hp: "^ (!CP.print_sv hrel)) no_pos;
       (*matching lhs-rhs- first*)
       let r_r,nlhs = collect_par_defs_two_side_one_hp prog lhs rhs (hrel, args) predef rhrels hd_nodes hv_nodes unk_hps in
       (*find definition in lhs*)
@@ -695,7 +695,7 @@ let rec collect_par_defs_one_side_one_hp_x prog lhs rhs (hrel, args) def_ptrs
       let test2 = (not (SAU.is_empty_f r)) && test1 in
       if test2 then
         let l_r = (hrel, args, r, Some r, None) in
-        let _ =  DD.info_pprint ("  partial defs - one side: \n" ^
+        let _ =  DD.ninfo_pprint ("  partial defs - one side: \n" ^
           (let pr =  string_of_par_def_w_name in pr l_r) ) no_pos in
         [l_r]
         (* let closed_args = loop_up_ptr_args prog hd_nodes hv_nodes args in *)
@@ -784,7 +784,7 @@ and collect_par_defs_two_side_one_hp_x prog lhs rhs (hrel, args) predef rhs_hrel
                         loop_helper nlhs ss (res@[r])
   in
   let rs,lhs_n = loop_helper lhs r_selected_hrels [] in
-  let _ =  DD.info_pprint ("  partial defs - two side: \n" ^
+  let _ =  DD.ninfo_pprint ("  partial defs - two side: \n" ^
           (let pr = pr_list_ln string_of_par_def_w_name in pr rs) ) no_pos in
   rs,lhs_n
 
@@ -865,13 +865,13 @@ let collect_par_defs_unk_hps lhs rhs lunk_hp_arg runk_hp_arg=
   let pr2 = pr_list (pr_pair !CP.print_sv pr1) in
   let pr3 = pr_list_ln string_of_par_def_w_name in
   let pr4 = Cprinter.prtt_string_of_formula in
-  Debug.ho_2 "collect_par_defs_unk_hps" pr2 pr2 (pr_triple pr3 pr4 pr4)
+  Debug.no_2 "collect_par_defs_unk_hps" pr2 pr2 (pr_triple pr3 pr4 pr4)
       (fun  _ _ -> collect_par_defs_unk_hps_x lhs rhs lunk_hp_arg runk_hp_arg) lunk_hp_arg runk_hp_arg
 
 let rec collect_par_defs_one_constr_new_x prog constr =
   let lhs, rhs = constr.CF.hprel_lhs, constr.CF.hprel_rhs in
-  DD.info_pprint ">>>>>> collect partial def for hp_rel <<<<<<" no_pos;
-  DD.info_pprint (" hp_rel: " ^ (Cprinter.prtt_string_of_formula lhs) ^ " ==> " ^
+  DD.ninfo_pprint ">>>>>> collect partial def for hp_rel <<<<<<" no_pos;
+  DD.ninfo_pprint (" hp_rel: " ^ (Cprinter.prtt_string_of_formula lhs) ^ " ==> " ^
   (Cprinter.prtt_string_of_formula rhs)) no_pos;
   let rec get_rec_pair_hps ls (hrel1, arg1)=
     match ls with
@@ -1845,7 +1845,7 @@ let generalize_hps_par_def prog unk_hps par_defs=
   let pr1 = pr_list_ln string_of_par_def_w_name in
   let pr2 = Cprinter.string_of_hp_rel_def in
   let pr3 = fun (_,a)-> pr2 a in
-  Debug.ho_1 "generalize_hps_par_def" pr1 (pr_list pr3)
+  Debug.no_1 "generalize_hps_par_def" pr1 (pr_list pr3)
       (fun _ -> generalize_hps_par_def_x prog unk_hps par_defs) par_defs
 
 let drop_unk_hps unk_hp_args cs=
@@ -1954,9 +1954,12 @@ let get_unk_hps_relation_x prog hpdefs cs=
     match undef with
       | [] -> [],[]
       | [(hp,args)] ->
-          let keep_unk_hps = List.concat (List.map (SAU.get_intersect_unk_hps args) unk_hps) in
-          let lhs = SAU.keep_data_view_hrel_nodes prog cs.CF.hprel_lhs (lhns@rhns) (lhvs@rhvs) args (keep_unk_hps@[hp]) in
-          let rhs = SAU.keep_data_view_hrel_nodes prog cs.CF.hprel_rhs (lhns@rhns) (lhvs@rhvs) args (keep_unk_hps@[hp]) in
+          let hds = (lhns@rhns) in
+          let hvs = (lhvs@rhvs) in
+          let keep_ptrs = SAU.loop_up_closed_ptr_args prog hds hvs args in
+          let keep_unk_hps = List.concat (List.map (SAU.get_intersect_unk_hps keep_ptrs) unk_hps) in
+          let lhs = SAU.keep_data_view_hrel_nodes prog cs.CF.hprel_lhs hds hvs keep_ptrs (keep_unk_hps@[hp]) in
+          let rhs = SAU.keep_data_view_hrel_nodes prog cs.CF.hprel_rhs hds hvs keep_ptrs (keep_unk_hps@[hp]) in
           let ltest = SAU.is_empty_f lhs in
           let rtest = SAU.is_empty_f rhs in
           if ltest && rtest then [], [cs]
@@ -2049,7 +2052,7 @@ let generalize_hps prog unk_hps cs par_defs=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2 = pr_list_ln string_of_par_def_w_name in
   let pr3 = pr_list Cprinter.string_of_hp_rel_def in
-  Debug.ho_2 "generalize_hp" pr1 pr2 (pr_pair pr1 pr3)
+  Debug.no_2 "generalize_hp" pr1 pr2 (pr_pair pr1 pr3)
       (fun _ _ -> generalize_hps_x prog unk_hps cs par_defs) cs par_defs
 
 (*========END generalization==========*)
@@ -2318,7 +2321,7 @@ let collect_sel_hp_def defs sel_hps unk_hps m=
       (* ( String.concat " OR " view_names) *) (pr3b vns) in
   let pr3 = pr_list_ln pr3a in
   let pr4 = (pr_list_ln Cprinter.string_of_hprel_def) in
-  Debug.ho_3 "collect_sel_hp_def" pr1 pr2 pr3 pr4
+  Debug.no_3 "collect_sel_hp_def" pr1 pr2 pr3 pr4
       (fun _ _ _ -> collect_sel_hp_def_x defs sel_hps unk_hps m) defs sel_hps m
 (*
   input: constrs: (formula * formula) list
