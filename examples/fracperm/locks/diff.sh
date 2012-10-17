@@ -33,3 +33,14 @@ echo "======= ls-no-deadlock2.ss ======"
 diff test-cases/ls-no-deadlock2.res test-cases/ls-no-deadlock2.n
 echo "======= ls-no-deadlock3.ss ======"
 diff test-cases/ls-no-deadlock3.res test-cases/ls-no-deadlock3.n
+
+######## Example of verifying deadlock freedom with disjunction########
+echo "======= ls-disj-deadlock.ss ======"
+diff test-cases/ls-disj-deadlock.res test-cases/ls-disj-deadlock.n
+
+echo "======= ls-disj-no-deadlock.ss ======"
+diff test-cases/ls-disj-no-deadlock.res test-cases/ls-disj-no-deadlock.n
+echo "======= ls-disj-no-deadlock2.ss ======"
+diff test-cases/ls-disj-no-deadlock2.res test-cases/ls-disj-no-deadlock2.n
+echo "======= ls-disj-no-deadlock3.ss ======"
+diff test-cases/ls-disj-no-deadlock3.res test-cases/ls-disj-no-deadlock3.n

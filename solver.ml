@@ -3131,7 +3131,6 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	              (nc, (mkEexStep ctx f np))
 	            else if case_brs==[] (* (List.length b.formula_case_branches )=0 *) then ((SuccCtx [ctx]),TrueConseq)
 	            else
-                  let _ = print_endline ("I am there") in
 	              let rec helper l = match l with
 	                | [] -> None
 	                | (p,e)::t -> 

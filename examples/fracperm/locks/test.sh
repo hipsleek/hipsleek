@@ -33,3 +33,14 @@ echo "======= ls-no-deadlock2.ss ======"
 ../../../hip ls-no-deadlock2.ss | grep -E 'Proc|assert' > test-cases/ls-no-deadlock2.res
 echo "======= ls-no-deadlock3.ss ======"
 ../../../hip ls-no-deadlock3.ss | grep -E 'Proc|assert' > test-cases/ls-no-deadlock3.res
+
+######## Example of verifying deadlock freedom with disjunction########
+echo "======= ls-disj-deadlock.ss ======"
+../../../hip ls-disj-deadlock.ss | grep -E 'Proc|assert' > test-cases/ls-disj-deadlock.res
+
+echo "======= ls-disj-no-deadlock.ss ======"
+../../../hip ls-disj-no-deadlock.ss | grep -E 'Proc|assert' > test-cases/ls-disj-no-deadlock.res
+echo "======= ls-disj-no-deadlock2.ss ======"
+../../../hip ls-disj-no-deadlock2.ss | grep -E 'Proc|assert' > test-cases/ls-disj-no-deadlock2.res
+echo "======= ls-disj-no-deadlock3.ss ======"
+../../../hip ls-disj-no-deadlock3.ss | grep -E 'Proc|assert' > test-cases/ls-disj-no-deadlock3.res
