@@ -439,7 +439,9 @@ and h_formula_2_mem_perm_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_v
                             let _ = print_endline ("Warning: h_formula_2_mem_perm: MCP.MemoF is currently not supported ") in
                             true
                         | MCP.OnePF f0 ->
+                            Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [Begin] check fractional variable "^ (Cprinter.string_of_spec_var var) ^ " is full_perm" ^"\n")) pos;
                             let b,_,_ = CP.imply_disj_orig [f0] full_f TP.imply imp_no in
+                            Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [End] check fractional variable "^ (Cprinter.string_of_spec_var var) ^ " is full_perm. ### res = " ^ (string_of_bool b) ^"\n")) pos;
                             b
                       )
                     in
@@ -483,7 +485,9 @@ and h_formula_2_mem_perm_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_v
                             let _ = print_endline ("Warning: h_formula_2_mem_perm: MCP.MemoF is currently not supported ") in
                             true
                         | MCP.OnePF f0 ->
+                            Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [Begin] check fractional variable "^ (Cprinter.string_of_spec_var var) ^ " is full_perm" ^"\n")) pos;
                             let b,_,_ = CP.imply_disj_orig [f0] full_f TP.imply imp_no in
+                            Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [End] check fractional variable "^ (Cprinter.string_of_spec_var var) ^ " is full_perm. ### res = " ^ (string_of_bool b) ^"\n")) pos;
                             b
                       )
                     in
@@ -3126,7 +3130,8 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	              let nc,np = helper_inner 1 new_ctx new_struc in 
 	              (nc, (mkEexStep ctx f np))
 	            else if case_brs==[] (* (List.length b.formula_case_branches )=0 *) then ((SuccCtx [ctx]),TrueConseq)
-	            else 
+	            else
+                  let _ = print_endline ("I am there") in
 	              let rec helper l = match l with
 	                | [] -> None
 	                | (p,e)::t -> 

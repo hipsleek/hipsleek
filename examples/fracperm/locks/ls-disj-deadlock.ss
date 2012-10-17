@@ -1,6 +1,5 @@
 /*
-  example proving deadlock freedom using disjunctive delayed formulae
-
+  example of deadlocks in the presence of disjunctive delayed formula
 */
 
 LOCK<> == self::lock<>
@@ -36,20 +35,18 @@ void main()
    lock l2 = new lock();
    init[LOCK](l2);
    release[LOCK](l2);
-   bool b = true;
-   //LS-{}
+   bool b = false;
+   //LS={}
    int id = fork(func,b,l1,l2);
    //DELAYED: l1 notin LS & b | l2 notin LS & !b
-   if (b){
-     //LS={}
-     ;
-   }else{
-     // this branch won't be taken
-     //LS={}
-     acquire[LOCK](l2);
-     //LS={l2}
-   }
-   // LS={} & b
-   join(id); //CHECK,ok because LS={} & b |- l1 notin LS & b 
+
+   //LS={}
+   acquire[LOCK](l2);
+   //LS={l2} & !b
+
+   join(id); //CHECK, error because LS={l2} & !b |/- (l1 notin LS & b | l2 notin LS & !b)
+
+   release[LOCK](l2);
+
    dprint;
 }

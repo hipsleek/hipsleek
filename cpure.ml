@@ -7908,8 +7908,12 @@ let extractLS_pure_x (f : formula) : formula =
           let n_f2 = helper f2 in
           Or (n_f1, n_f2, lbl, pos)
       | Not (f, lbl, pos) ->
-          let n_f = helper f in
-          Not (n_f, lbl, pos)
+          let vars = fv f in
+          let b = List.exists (fun v -> (name_of_spec_var v) = ls_name) vars in
+          if (b) then
+            let n_f = helper f in
+            Not (n_f, lbl, pos)
+          else (mkTrue no_pos)
       | Forall (sv, f, lbl, pos) ->
           let n_f = helper f in
           Forall (sv, n_f, lbl, pos)
