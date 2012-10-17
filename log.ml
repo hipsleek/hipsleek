@@ -85,8 +85,8 @@ let add_proof_log old_no pno tp ptype time res =
 			proof_log_list := !proof_log_list @ [pno];
 			end		
 		in
-	let tstoplog = Gen.Profiling.get_time () in
-	let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
+	  let tstoplog = Gen.Profiling.get_time () in
+	  let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
 	(* let _=print_endline ("log time: "^(string_of_float (tstoplog))^" and "^(string_of_float (tstartlog))) in ()	  *)
 	else ()
 					

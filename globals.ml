@@ -212,6 +212,10 @@ let string_of_loc_by_char_num (l : loc) =
 (*        | Some l -> (string_of_pos l.start_pos) *)
 (*    end;; *)
 
+(* Option for proof logging *)
+let proof_logging = ref false
+let proof_logging_txt = ref false
+let proof_logging_time = ref 0.000
 
 (*Proof logging facilities*)
 class ['a] store (x_init:'a) (epr:'a->string) =
@@ -265,15 +269,18 @@ let proving_info () =
 	else "..."(*"who called is_sat,imply,simplify to be displayed later..."*)
 	
 let wrap_proving_kind (str : string) exec_function args =
-  let b = proving_kind # is_avail in
-  let m = proving_kind # get in
-  let _ = proving_kind # set str in
-  (* let _ = print_string ((proving_info())^"\n") in       *)
+	let b =ref false in
+	let m= ref "" in
+	let _= if(!proof_logging_txt) then
+    let _= b := proving_kind # is_avail in
+    let _= m := proving_kind # get in
+    let _ = proving_kind # set str in ()
+	in	
   let res = exec_function args in
-	(* let _ = print_string ("wrap proving kind:"^s^" with: post_pos"^string_of_bool(post_pos # is_avail)^"\n") in *)
-  let _ = 
-    if b then proving_kind # set m 
-    else proving_kind # reset in
+  let _ = if(!proof_logging_txt) then
+      if !b then proving_kind # set !m 
+      else proving_kind # reset 
+	in
   res
 
  
@@ -643,11 +650,6 @@ let opt_ineq = ref false
 let infer_slicing = ref false
 let multi_provers = ref false
 let is_sat_slicing = ref false
-
-(* Option for proof logging *)
-let proof_logging = ref false
-let proof_logging_txt = ref false
-let proof_logging_time = ref 0.000
 
 (* Options for invariants *)
 let do_infer_inv = ref false

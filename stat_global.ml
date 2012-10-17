@@ -23,7 +23,7 @@ let last_trace  = new es_trace
 (*Functions for localizing the return exp being proved at POST*) 
 let compare_control_path path_list id_strict =
 	let eq_path_id pid1 pid2 = match pid1, pid2 with
-    | Some (i1, s1), (i2,s2) -> (*let _= print_endline (string_of_int i1^"compared"^string_of_int i2) in*) i1 = i2
+    | Some (i1, s1), (i2,s2) -> i1 = i2
   in
 	List.find ( fun ex-> eq_path_id ex id_strict) path_list                                                                                
 
@@ -64,24 +64,32 @@ let log_return_exp_loc (pt : path_trace) =
 
 (*Set the trace info *)
 let wrap_trace (tr : path_trace) exec_function args =
-	let _= if(!print_wrap_num) then
+	(* let _= if(!print_wrap_num) then                                    *)
+	(* 	begin                                                             *)
+	(*   wr_tr := !wr_tr+1;                                               *)
+	(*   print_endline ("*wrap_trace "^string_of_int !wr_tr^"*");         *)
+	(*   Stack.push ("*end_wrap_trace "^string_of_int !wr_tr^"*") wr_stk  *)
+	(* 	end                                                               *)
+	(* in                                                                 *)
+	let b =ref false in
+	let m= ref [] in
+	let _= if(!Globals.proof_logging_txt) then
 		begin
-	  wr_tr := !wr_tr+1;
-	  print_endline ("*wrap_trace "^string_of_int !wr_tr^"*");
-	  Stack.push ("*end_wrap_trace "^string_of_int !wr_tr^"*") wr_stk 
-		end
-	in
-  let b = last_trace # is_avail in
-  let m = last_trace # get in
-	let _= return_exp_loc := log_return_exp_loc tr in
-  let _ = last_trace # set tr in
+     let _= b := last_trace # is_avail in
+     let _= m := last_trace # get in
+	   let _= return_exp_loc := log_return_exp_loc tr in
+     let _ = last_trace # set tr in ()
+		end 
+	in	
   let res = exec_function args in
-  let _ = 
-    if b then last_trace # set m 
-    else last_trace # reset in
-  let _=while (not (Stack.is_empty wr_stk)) do 
-		print_endline (Stack.pop wr_stk) 
-	done	
+  let _ = if(!Globals.proof_logging_txt) then
+		begin
+     if !b then last_trace # set !m 
+     else last_trace # reset;
+     (* while (not (Stack.is_empty wr_stk)) do  *)
+		 (*   print_endline (Stack.pop wr_stk)      *)
+	   (* done                                    *)
+		end	
 	in 
   res
 

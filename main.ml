@@ -201,7 +201,7 @@ let process_source_full source =
 			let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
 			(* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in	() *)
 			end
-		  in
+		in
 		(* let _= if not !Globals.proof_logging && not !Globals.proof_logging_txt  then Cprinter.printer_of_proof_logging () in *)
     (* An Hoa : export the proof to html *)
     let _ = if !Globals.print_proof then
