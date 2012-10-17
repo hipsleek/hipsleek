@@ -15,6 +15,10 @@ echo "======= cell-w-ls.ss ======"
 diff test-cases/cell-w-ls.res test-cases/cell-w-ls.n
 echo "======= multicast.ss ======"
 diff test-cases/multicast.res test-cases/multicast.n
+echo "======= oracle-esop08.ss ======"
+diff test-cases/oracle-esop08.res test-cases/oracle-esop08.n
+echo "======= owicki-gries.ss ======"
+diff test-cases/owicki-gries.res test-cases/owicki-gries.n
 
 ########### Example of verifying deadlock freedom ####################
 echo "======= ls-deadlock1.ss ======"

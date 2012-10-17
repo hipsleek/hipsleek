@@ -13,9 +13,12 @@ echo "======= ls-bind.ss ======"
 ########### MOST IMPORTANT (rules + examples) ####################
 echo "======= cell-w-ls.ss ======"
 ../../../hip cell-w-ls.ss | grep -E 'Proc|assert' > test-cases/cell-w-ls.res
-
 echo "======= multicast.ss ======"
 ../../../hip multicast.ss | grep -E 'Proc|assert' > test-cases/multicast.res
+echo "======= oracle-esop08.ss ======"
+../../../hip oracle-esop08.ss | grep -E 'Proc|assert' > test-cases/oracle-esop08.res
+echo "======= owicki-gries.ss ======"
+../../../hip owicki-gries.ss | grep -E 'Proc|assert' > test-cases/owicki-gries.res
 
 ########### Example of verifying deadlock freedom ####################
 echo "======= ls-deadlock1.ss ======"

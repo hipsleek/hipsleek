@@ -2388,3 +2388,14 @@ let removeLS_mix_formula_x (mf : mix_formula) : mix_formula =
 let removeLS_mix_formula (mf : mix_formula) : mix_formula =
   Debug.no_1 "removeLS_mix_formula" !print_mix_formula !print_mix_formula
       removeLS_mix_formula_x mf
+
+(*remove constraints related to a list of spec vars*)
+let drop_svl_mix_formula (mf : mix_formula)  (svl:spec_var list) : mix_formula =
+  match mf with
+    | OnePF f -> 
+        let nf = drop_svl_pure f svl in
+        (OnePF nf)
+    | MemoF mp -> 
+        let f = fold_mem_lst (mkTrue no_pos) false true mf in
+        let nf = drop_svl_pure f svl in
+        (mix_of_pure nf)

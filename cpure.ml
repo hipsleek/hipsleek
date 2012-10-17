@@ -7991,3 +7991,66 @@ Do not consider transitivity*)
 let removeLS_pure (pf : formula) : formula = 
   Debug.no_1 "removeLS_pure" !print_formula !print_formula 
       removeLS_pure_x pf
+
+let existSV (v:spec_var) (svl:spec_var list) = List.exists (fun x -> eq_spec_var v x) svl
+
+let remove_svl_b_formula (bf : b_formula) (svl:spec_var list) : b_formula =
+  let (pf,st) = bf in
+  (match pf with
+    | BVar (sv,pos) ->
+        let b = existSV sv svl in
+        if b then mkTrue_b no_pos else  bf
+    | BagIn (sv,e,pos)
+    | BagNotIn (sv,e,pos) ->
+        let vars = afv e in
+        let b = List.exists (fun v -> existSV v svl) vars in
+        if b then mkTrue_b no_pos else  bf
+    | Lt (e1, e2, pos)
+    | Lte (e1, e2, pos)
+    | Gt (e1, e2, pos)
+    | Gte (e1, e2, pos)
+    | Eq (e1, e2, pos) (* these two could be arithmetic or pointer or bag or list *)
+    | Neq (e1, e2, pos) ->
+        let vars1 = afv e1 in
+        let vars2 = afv e2 in
+        let b = List.exists (fun v -> existSV v svl) (vars1@vars2) in
+        if b then mkTrue_b no_pos else  bf
+    | VarPerm (vp_ann,svl,pos) ->
+        let nsvl =  List.filter (fun v -> existSV v svl) svl in
+        if (nsvl=[]) then mkTrue_b no_pos else
+        (VarPerm (vp_ann,nsvl,pos),st)
+    | _ -> bf (*assume the rest does not contain constraints on svl*)
+  )
+
+(*remove constraints related to a list of spec vars*)
+let drop_svl_pure (pf : formula) (svl:spec_var list) : formula =
+  let rec helper f = 
+    match f with
+      | BForm (bf, lbl) ->
+          let n_bf = remove_svl_b_formula bf svl in
+          BForm (n_bf, lbl)
+      | And (f1, f2, pos) ->
+          let n_f1 = helper f1 in
+          let n_f2 = helper f2 in
+          And (n_f1, n_f2, pos)
+      | AndList b -> 
+          let nf = List.fold_left (fun ls_f (_,f_b) -> 
+              let nf = helper f_b in
+              And (ls_f, nf, no_pos)
+          ) (mkTrue no_pos) b in
+          nf
+      | Or (f1, f2, lbl, pos) ->
+          let n_f1 = helper f1 in
+          let n_f2 = helper f2 in
+          Or (n_f1, n_f2, lbl, pos)
+      | Not (f, lbl, pos) ->
+          let n_f = helper f in
+          Not (n_f, lbl, pos)
+      | Forall (sv, f, lbl, pos) ->
+          let n_f = helper f in
+          Forall (sv, n_f, lbl, pos)
+      | Exists (sv, f, lbl, pos) ->
+          let n_f = helper f in
+          Exists (sv, n_f, lbl, pos)
+  in helper pf
+

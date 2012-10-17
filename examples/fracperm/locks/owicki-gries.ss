@@ -9,9 +9,10 @@
   invariants of all locks present in the current state, i.e.
   the invariant of LOCK<x,y,z> in our example.
 
-  (2) Not able to have just a single interface for incrementor1 and
-  incrementor2. For example, if we have:
-  
+  (2) Not support the unifed interface for incrementor1 and
+  incrementor2. Need to have the notion of ghost updates.
+  For example, if we have:
+
   incrementor(l,x,contrib,ghost);
 
   Then we can write the code for main as follow
@@ -26,8 +27,6 @@
 
   This is addressed in POPL11 paper of Verifast
  */
-
-data lock{}
 
 data intCell{
   int val;
@@ -47,8 +46,8 @@ LOCK<x,y,z> == self::lock<>
   inv_lock x::intCell<x_val> * y::intCell(1/2)<y_val> * z::intCell(1/2)<z_val> & x_val=y_val+z_val;
 
 void main()
-  requires ls={}
-  ensures ls'={}; //'
+  requires LS={}
+  ensures LS'={}; //'
 {
   lock l = new lock();
   intCell xCell = new intCell(0);
@@ -62,15 +61,14 @@ void main()
   /* dprint; */
   int id = fork(incrementor1,l,xCell,yCell,zCell); // there is an automatic split here
   incrementor2(l,xCell,yCell,zCell);
-
   join(id);
   dprint;
 }
 
 //valid
 void incrementor1(lock l,intCell x,intCell y, intCell z)
-  requires l::LOCK(1/2)<x,y,z> * y::intCell(1/2)<0> & ls={}
-  ensures l::LOCK(1/2)<x,y,z> * y::intCell(1/2)<1> & ls'={}; //'
+  requires l::LOCK(1/2)<x,y,z> * y::intCell(1/2)<0> & l notin LS
+  ensures l::LOCK(1/2)<x,y,z> * y::intCell(1/2)<1> & LS'=LS; //'
 {
   acquire[LOCK](l,x,y,z);
   x.val++;
@@ -80,8 +78,8 @@ void incrementor1(lock l,intCell x,intCell y, intCell z)
 
 //valid
 void incrementor2(lock l,intCell x,intCell y, intCell z)
-  requires l::LOCK(1/2)<x,y,z> * z::intCell(1/2)<0> & ls={}
-  ensures l::LOCK(1/2)<x,y,z> * z::intCell(1/2)<1> & ls'={}; //'
+  requires l::LOCK(1/2)<x,y,z> * z::intCell(1/2)<0> & l notin LS
+  ensures l::LOCK(1/2)<x,y,z> * z::intCell(1/2)<1> & LS'=LS; //'
 {
   acquire[LOCK](l,x,y,z);
   x.val++;

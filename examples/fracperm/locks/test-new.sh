@@ -15,7 +15,10 @@ echo "======= cell-w-ls.ss ======"
 ../../../hip cell-w-ls.ss | grep -E 'Proc|assert' > test-cases/cell-w-ls.n
 echo "======= multicast.ss ======"
 ../../../hip multicast.ss | grep -E 'Proc|assert' > test-cases/multicast.n
-
+echo "======= oracle-esop08.ss ======"
+../../../hip oracle-esop08.ss | grep -E 'Proc|assert' > test-cases/oracle-esop08.n
+echo "======= owicki-gries.ss ======"
+../../../hip owicki-gries.ss | grep -E 'Proc|assert' > test-cases/owicki-gries.n
 ########### Example of verifying deadlock freedom ####################
 echo "======= ls-deadlock1.ss ======"
 ../../../hip ls-deadlock1.ss | grep -E 'Proc|assert' > test-cases/ls-deadlock1.n

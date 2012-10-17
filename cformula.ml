@@ -8211,11 +8211,10 @@ and extractLS (f : formula) : MCP.mix_formula =
   Debug.no_1 "extractLS" !print_formula !print_mix_formula
       extractLS_x f
 
-and extractLS_x (f : formula) : MCP.mix_formula  =
+and extractLS_x (f : formula): MCP.mix_formula  =
   let rec helper f =
     match f with
-      | Base{formula_base_pure = p}
-      | Exists{formula_exists_pure = p} ->
+      | Base{formula_base_pure = p} ->
           let p_delayed = MCP.extractLS_mix_formula p in
           (* remove formulae related to LS *)
           let p_pure = MCP.removeLS_mix_formula p in
@@ -8223,6 +8222,18 @@ and extractLS_x (f : formula) : MCP.mix_formula  =
           let p_pure = MCP.drop_varperm_mix_formula p_pure in
           (* remove formulae related to floating point: may be unsound *)
           let p_pure = MCP.drop_float_formula_mix_formula p_pure in
+          MCP.merge_mems p_delayed p_pure true
+      | Exists{formula_exists_pure = p;
+               formula_exists_qvars =evars} ->
+          let p_delayed = MCP.extractLS_mix_formula p in
+          (* remove formulae related to LS *)
+          let p_pure = MCP.removeLS_mix_formula p in
+          (* remove formulae related to varperm *)
+          let p_pure = MCP.drop_varperm_mix_formula p_pure in
+          (* remove formulae related to floating point: may be unsound *)
+          let p_pure = MCP.drop_float_formula_mix_formula p_pure in
+          (* conservatively drop formula related to exist vars *)
+          let p_pure = MCP.drop_svl_mix_formula p_pure evars in
           MCP.merge_mems p_delayed p_pure true
       | Or {formula_or_f1 = f1; formula_or_f2 =f2} ->
           let pf1 = helper f1 in
