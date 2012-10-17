@@ -2347,6 +2347,15 @@ let remove_dupl_conj_mix_formula (f:mix_formula):mix_formula =
   Debug.no_1 "remove_dupl_conj_mix_formula" !print_mix_formula !print_mix_formula 
       remove_dupl_conj_mix_formula_x f
 
+let drop_float_formula_mix_formula (mf : mix_formula) : mix_formula =
+  match mf with
+    | OnePF f -> 
+        let nf = Cpure.drop_float_formula f in
+        (OnePF nf)
+    | MemoF mp -> 
+        let f = fold_mem_lst (mkTrue no_pos) false true mf in
+        let nf = Cpure.drop_float_formula f in
+        (mix_of_pure nf)
 
 (*extract lockset constraints from a formula*)
 let extractLS_mix_formula_x (mf : mix_formula) : mix_formula =

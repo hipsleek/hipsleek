@@ -8217,7 +8217,13 @@ and extractLS_x (f : formula) : MCP.mix_formula  =
       | Base{formula_base_pure = p}
       | Exists{formula_exists_pure = p} ->
           let p_delayed = MCP.extractLS_mix_formula p in
-          p_delayed
+          (* remove formulae related to LS *)
+          let p_pure = MCP.removeLS_mix_formula p in
+          (* remove formulae related to varperm *)
+          let p_pure = MCP.drop_varperm_mix_formula p_pure in
+          (* remove formulae related to floating point: may be unsound *)
+          let p_pure = MCP.drop_float_formula_mix_formula p_pure in
+          MCP.merge_mems p_delayed p_pure true
       | Or {formula_or_f1 = f1; formula_or_f2 =f2} ->
           let pf1 = helper f1 in
           let pf2 = helper f2 in

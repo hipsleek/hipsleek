@@ -3041,8 +3041,8 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                       let ndf = MCP.m_apply_one (ls_var_uprimed, ls_var_primed) delayed_f in
                       let new_f = CF.formula_of_mix_formula ndf no_pos in
                       let _ = Debug.devel_pprint ("Proving delayed lockset constraints \n "
-                                                  ^ "### es = " ^ (Cprinter.string_of_estate es)
-                                                  ^ "### delayed_f = " ^ (Cprinter.string_of_formula new_f)
+                                                  ^ "\n### es = " ^ (Cprinter.string_of_estate es)
+                                                  ^ "\n### delayed_f = " ^ (Cprinter.string_of_formula new_f)
                                                   ^"\n") pos in
                       let rs,prf = heap_entail_one_context prog false (CF.Ctx es) new_f None None None pos in
                       (if (CF.isFailCtx rs) then
@@ -3194,6 +3194,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                         | None ->
                       (*Identify delayed constraints and propagate*)
                             let df,new_formula_base = partLS formula_base in
+                            (* let _ = print_endline ("delayed formula df = " ^ (Cprinter.string_of_mix_formula df)) in *)
                             let n_ctx_list, prf = heap_entail_one_context prog (if formula_cont!=None then true else is_folding) n_ctx new_formula_base tid (Some df) join_id pos in
                             (n_ctx_list, prf ,Some df)
 
