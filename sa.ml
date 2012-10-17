@@ -702,7 +702,7 @@ let rec collect_par_defs_one_side_one_hp_rhs_x prog lhs rhs (hrel, args) def_ptr
       let test2 = (not (SAU.is_empty_f r)) && test1 in
       if test2 then
         let l_r = (hrel, args, r, Some r, None) in
-        let _ =  DD.ninfo_pprint ("  partial defs - rhs: \n" ^
+        let _ =  DD.info_pprint ("  partial defs - rhs: \n" ^
           (let pr =  string_of_par_def_w_name in pr l_r) ) no_pos in
         [l_r]
       else []
@@ -737,7 +737,7 @@ let rec collect_par_defs_one_side_one_hp_x prog lhs rhs (hrel, args) def_ptrs
       let test2 = (not (SAU.is_empty_f r)) && test1 in
       if test2 then
         let l_r = (hrel, args, r, Some r, None) in
-        let _ =  DD.ninfo_pprint ("  partial defs - one side: \n" ^
+        let _ =  DD.info_pprint ("  partial defs - one side: \n" ^
           (let pr =  string_of_par_def_w_name in pr l_r) ) no_pos in
         [l_r]
         (* let closed_args = loop_up_ptr_args prog hd_nodes hv_nodes args in *)
@@ -826,7 +826,7 @@ and collect_par_defs_two_side_one_hp_x prog lhs rhs (hrel, args) predef rhs_hrel
                         loop_helper nlhs ss (res@[r])
   in
   let rs,lhs_n = loop_helper lhs r_selected_hrels [] in
-  let _ =  DD.ninfo_pprint ("  partial defs - two side: \n" ^
+  let _ =  DD.info_pprint ("  partial defs - two side: \n" ^
           (let pr = pr_list_ln string_of_par_def_w_name in pr rs) ) no_pos in
   rs,lhs_n
 
@@ -984,14 +984,14 @@ let rec collect_par_defs_one_constr_new_x prog constr =
         else r1
       in
       let rec_pdefs = List.concat (List.map helper rec_pair_hps) in
-      (*DONT DROP!!ll-next3!!.drop constraints that have one hp after collect partial def*)
-      (* let new_constrs= *)
-      (*   let num_hp = (List.length total_hps) in *)
-      (*   let num_pair_rec_hp = (List.length rec_pair_hps) in *)
-      (*   if (num_hp - num_pair_rec_hp) <= 1 then [constr] *)
-      (*   else [constr] *)
-      (* in *)
-      ([constr], rec_pdefs)
+      (*if constr contains only one rec hp -drop it*)
+      let new_constrs=
+        let num_hp = (List.length total_hps) in
+        let num_pair_rec_hp = (List.length rec_pair_hps) in
+        if (num_hp - num_pair_rec_hp) <= 1 then []
+        else [constr]
+      in
+      (new_constrs, rec_pdefs)
   in
   (* DD.ninfo_pprint ("  partial defs: \n" ^ *)
   (* (let pr = pr_list_ln string_of_par_def_w_name in pr (lpdefs @ rpdefs)) ) no_pos; *)
@@ -1203,9 +1203,15 @@ each constraints, apply lhs and rhs. each partial def in one side ==> generate n
 *)
 let subst_one_cs_w_partial_defs ldefs rdefs constr=
   let lhs,rhs = constr.CF.hprel_lhs,constr.CF.hprel_rhs in
+  (* (\*if constr is rec, remove all pdefs susbt present rec*\) *)
+  (* let lhps = CF.get_hp_rel_name_formula lhs in *)
+  (* let rhps = CF.get_hp_rel_name_formula rhs in *)
+  (* let rec_hps = Gen.BList.intersect_eq CP.eq_spec_var lhps rhps in *)
+  (* let ldefs1 = List.filter (fun (hp,_,_) -> not (CP.mem_svl hp rec_hps)) ldefs in *)
+  (* let rdefs1 = List.filter (fun (hp,_,_) -> not (CP.mem_svl hp rec_hps)) rdefs in *)
   (* DD.info_pprint ("    input: " ^(Cprinter.prtt_string_of_formula lhs) ^ " ==> " ^ *)
   (* (Cprinter.prtt_string_of_formula rhs)) no_pos; *)
-   DD.ninfo_pprint ("    input: " ^ (Cprinter.string_of_hprel constr)) no_pos;
+   DD.info_pprint ("    input: " ^ (Cprinter.string_of_hprel constr)) no_pos;
   (*subst lhs*)
   DD.ninfo_pprint "  subst lhs" no_pos;
   let lhs1 = List.fold_left subst_one_cs_w_one_partial_def lhs ldefs in
@@ -1224,7 +1230,7 @@ let subst_one_cs_w_partial_defs ldefs rdefs constr=
   (*                                (Cprinter.prtt_string_of_formula rhs2)) no_pos in *)
   let new_cs ={constr with CF.hprel_lhs = lhs2;
       CF.hprel_rhs = rhs2} in
-  let _ = DD.ninfo_pprint ("    output: " ^ (Cprinter.string_of_hprel new_cs)) no_pos in
+  let _ = DD.info_pprint ("    output: " ^ (Cprinter.string_of_hprel new_cs)) no_pos in
   new_cs
 
 let subst_cs_w_partial_defs_x hp_constrs par_defs=
@@ -1509,7 +1515,7 @@ and find_imply_subst_x constrs=
           else check_constr_duplicate (lhs,rhs) ss
   in
   let find_imply_one cs1 cs2=
-    let _ = Debug.ninfo_pprint ("    cs2: " ^ (Cprinter.string_of_hprel cs2)) no_pos in
+    let _ = Debug.info_pprint ("    cs2: " ^ (Cprinter.string_of_hprel cs2)) no_pos in
     match cs1.CF.hprel_lhs,cs2.CF.hprel_rhs with
       | CF.Base lhs1, CF.Base rhs2 ->
           let r = find_imply lhs1 cs1.CF.hprel_rhs cs2.CF.hprel_lhs rhs2 in
@@ -1534,7 +1540,7 @@ and find_imply_subst_x constrs=
                               CF.hprel_rhs = r;
                           }
                           in
-                          let _ = Debug.ninfo_pprint ("    new cs: " ^ (Cprinter.string_of_hprel new_cs)) no_pos in
+                          let _ = Debug.info_pprint ("    new cs: " ^ (Cprinter.string_of_hprel new_cs)) no_pos in
                           [new_cs]
                       end
                 | None -> []
@@ -1545,7 +1551,7 @@ and find_imply_subst_x constrs=
     match rest with
       | [] -> res
       | cs::ss ->  (* let _ = Debug.ninfo_pprint ("    ss size1: " ^ (string_of_int (List.length ss))) no_pos in *)
-          let _ = Debug.ninfo_pprint ("    cs1: " ^ (Cprinter.string_of_hprel cs)) no_pos in
+          let _ = Debug.info_pprint ("    cs1: " ^ (Cprinter.string_of_hprel cs)) no_pos in
           let r = List.concat (List.map (find_imply_one cs) (don@ss)) in
           (helper (don@[cs]) ss (res@r))
   in
@@ -1724,7 +1730,7 @@ let pardef_subst_fix_x unk_hps groups=
 and lib based predicates*)
 let pardef_subst_fix unk_hps groups=
   let pr1 = pr_list_ln (pr_list_ln string_of_par_def_w_name_short) in
-  Debug.no_1 "pardef_subst_fix" pr1 pr1
+  Debug.ho_1 "pardef_subst_fix" pr1 pr1
       (fun _ -> pardef_subst_fix_x unk_hps groups) groups
 
 (*=========SUBST DEF FIX==========*)

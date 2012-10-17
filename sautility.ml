@@ -246,7 +246,7 @@ and loop_up_ptr_args_one_node prog hd_nodes hv_nodes node_name=
   (* if ptrs = [] then look_up_view_node hv_nodes *)
   (* else *) ptrs
 
-(*should improve: shoul take care hrel also*)
+(*should improve: should take care hrel also*)
 let loop_up_closed_ptr_args prog hd_nodes hv_nodes node_names=
   let rec helper old_ptrs inc_ptrs=
     let new_ptrs = List.concat
@@ -795,18 +795,39 @@ let get_shortest_lnds ll_ldns min=
   in
   helper ll_ldns
 
+(*(hds,f) list*)
 let get_min_number ll_ldns=
   let rec helper ll min=
   match ll with
     | [] -> min
-    | (lnds,_)::lls ->
+    | (lnds,f)::lls ->
         let ns = List.length lnds in
         if ns < min then
           helper lls ns
         else helper lls min
   in
   (*start with length of the first one*)
-  helper (List.tl ll_ldns) (List.length (fst (List.hd ll_ldns)))
+  let fmin = List.length (fst (List.hd ll_ldns)) in
+  helper (List.tl ll_ldns) fmin
+
+let get_min_number_new prog args ll_ldns=
+  let helper1 dns=
+    let closed_args = (loop_up_closed_ptr_args prog dns [] args) in
+    let dns1 = List.filter (fun dn -> CP.mem_svl dn.CF.h_formula_data_node closed_args) dns in
+    (List.length dns1, dns1)
+  in
+  let rec helper ll r_min r_hns=
+  match ll with
+    | [] -> r_min,r_hns
+    | (lnds,_)::lls ->
+        let ns,nhds = helper1 lnds in
+        if ns < r_min then
+          helper lls ns nhds
+        else helper lls r_min r_hns
+  in
+  (*start with length of the first one*)
+  let fmin, fdns = helper1 (fst (List.hd ll_ldns)) in
+  helper (List.tl ll_ldns) fmin fdns
 
 let move_root_to_top root ldns=
   let rec helper lss res=
@@ -910,6 +931,7 @@ let get_longest_common_hnodes_list prog hp args fs=
    [hpdef] (* ([], fs, []) *)
  else begin
    let lldns = List.map (fun f -> (get_hdnodes f, f)) fs in
+   (* let min,sh_ldns = get_min_number_new prog args lldns in *)
    let min = get_min_number lldns in
    (* let _ =  DD.info_pprint ("    min: " ^ (string_of_int min) ) no_pos in *)
    if min = 0 then
