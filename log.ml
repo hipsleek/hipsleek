@@ -58,17 +58,7 @@ let file_to_proof_log () =
 		Hashtbl.iter (fun k log -> Hashtbl.add proof_log_tbl k log) tbl
 	with _ -> report_error no_pos "File of proof logging cannot be opened."
 
-
-	(* let oc =                                                                                                                                                   *)
-	(* 	(try Unix.mkdir "logs" 0o750 with _ -> ());                                                                                                              *)
-	(* 	 open_out_gen [Open_creat; Open_text; Open_append] 0o640  ("logs/bach_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in *)
-	(* 			let _=fprintf oc "%s" (sat_no^"let is_sat\n") in                                                                                                     *)
-	(* 	close_out oc;	                                                                                                                                          *)
-		
-(*function to print proof logging*)
-
-
-let log_append_properties (ls: string ) = (*For append more properties to log*)
+let log_append_properties (ls: string ) = (*For append more properties to log, currently not used*)
 	try
 	 let tl= List.nth !proof_log_list ((List.length !proof_log_list) -1) in
 	 let tlog=Hashtbl.find proof_log_tbl tl in
@@ -79,7 +69,7 @@ let log_append_properties (ls: string ) = (*For append more properties to log*)
 (*TO DO: check unique pno??*)
 let add_proof_log old_no pno tp ptype time res =
 	if !Globals.proof_logging || !Globals.proof_logging_txt then
-		let _= print_endline ("loging :"^pno^" "^proving_info () ^"\n"^trace_info ()) in
+		(* let _= print_endline ("loging :"^pno^" "^proving_info () ^"\n"^trace_info ()) in *)
 		let tstartlog = Gen.Profiling.get_time () in
 		let plog = {
 			log_id = pno;
@@ -113,7 +103,7 @@ let proof_log_to_text_file () =
 		in
 		let helper log=
 			"\n--------------\n"^
-			List.fold_left (fun a c->a^c^"\n") "" log.log_other_properties^
+			List.fold_left (fun a c->a^c) "" log.log_other_properties^
 			"\nid: "^log.log_id^"\nProver: "^log.log_prover^"\nType: "^(match log.log_type with | Some x-> string_of_log_type x | None -> "")^"\nTime: "^
 			(string_of_float(log.log_time))^"\nResult: "^(match log.log_res with
 		  |BOOL b -> string_of_bool b

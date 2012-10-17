@@ -2586,7 +2586,7 @@ and heap_entail_struc_list_partial_context (prog : prog_decl) (is_folding : bool
   ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
   ^ "\nctx:\n" ^ (Cprinter.string_of_list_partial_context cl)
   ^ "\nconseq:\n" ^ (to_string conseq))) pos; 
-	let _= print_endline("bach: heap_entail_struc_list_partial_context") in
+	(* let _= print_endline("bach: heap_entail_struc_list_partial_context") in *)
     let l = List.map 
       (fun c-> heap_entail_struc_partial_context prog is_folding  has_post c conseq tid pos pid f to_string) cl in
     let l_ctx , prf_l = List.split l in
@@ -2623,7 +2623,7 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
       (has_post: bool)(cl : partial_context) (conseq:'a) (tid: CP.spec_var option) pos (pid:control_path_id) 
       (f: prog_decl->bool->bool->context->'a -> CP.spec_var option ->  loc ->control_path_id->(list_context * proof)) to_string
       : (list_partial_context * proof) = 
-  print_string "\nbach:calling struct_partial_context ..";
+  (* print_string "\nbach:calling struct_partial_context .."; *)
   Debug.devel_zprint (lazy ("heap_entail_struc_partial_context:"
   ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
   ^ "\nctx:\n" ^ (Cprinter.string_of_partial_context cl)
@@ -2818,7 +2818,7 @@ and heap_entail_after_sat_struc_x prog is_folding has_post
     | Ctx es -> 
 				let exec ()=
 			begin	
-				let _= print_endline ("bach: heap_entail_after_sat_struc_x") in	
+				(* let _= print_endline ("bach: heap_entail_after_sat_struc_x") in	 *)
         Debug.devel_zprint (lazy ("heap_entail_after_sat_struc: invoking heap_entail_conjunct_lhs_struc"
         ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
         ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq))) pos;
@@ -2887,7 +2887,6 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	| Ctx es -> (* (); *)
               let exec () =
                 begin
-									let _= print_endline ("bach: INNER calling heap entail conjunct lhs") in
                   match f with
                     | ECase b   -> 
                           let ctx = add_to_context_num 1 ctx11 "case rule" in
@@ -3151,23 +3150,18 @@ and heap_entail_one_context prog is_folding  ctx conseq (tid: CP.spec_var option
 
 (*only struc_formula can have some thread id*)
 and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : context) (conseq : formula) pos : (list_context * proof) =
-	 let _= print_endline("bach: heap_entail_one_context_a") in
 	 Debug.devel_zprint (lazy ("heap_entail_one_context:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)^"\n")) pos;
     if isAnyFalseCtx ctx then (* check this first so that false => false is true (with false residual) *)
-			let _= print_endline("bach: USC1") in
 			  (SuccCtx [ctx], UnsatAnte)
     else if 	
-	  isStrictConstTrue conseq then let _= print_endline("bach: USC2") in (SuccCtx [ctx], TrueConseq)
+	  isStrictConstTrue conseq then (SuccCtx [ctx], TrueConseq)
     else
       (* UNSAT check *)
       let ctx = elim_unsat_ctx prog (ref 1) ctx in
-			let _= print_endline("bach: USC2.5") in
       let ctx = set_unsat_flag ctx true in 
       if isAnyFalseCtx ctx then
-					let _= print_endline("bach: USC3") in
         (SuccCtx [ctx], UnsatAnte)
       else
-				let _= print_endline("bach: USC4") in
         heap_entail_after_sat prog is_folding ctx conseq pos ([])	
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
@@ -3189,7 +3183,6 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
     | Ctx es -> 
 			let exec ()= 
 			begin
-				let _= print_endline("bach: heap_entail_after_sat_x") in
         Debug.devel_zprint (lazy ("heap_entail_after_sat: invoking heap_entail_conjunct_lhs"^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
         let es = (CF.add_to_estate_with_steps es ss) in
         let es = if (!Globals.ann_vp) then
@@ -8408,8 +8401,7 @@ let heap_entail_list_partial_context_init_x (prog : prog_decl) (is_folding : boo
         ^ "\nctx:\n" ^ (Cprinter.string_of_list_partial_context cl)
   ^"\n")) pos; 
   Gen.Profiling.push_time "entail_prune";  
-	let _= print_endline("bach : init_x") in
-  if cl==[] then let _= print_endline("bach: no call heap entail") in ([],UnsatAnte)
+  if cl==[] then ([],UnsatAnte)
   else begin
   let cl = reset_original_list_partial_context cl in
   let cl_after_prune = prune_ctx_list prog cl in

@@ -673,7 +673,6 @@ let do_infer_inc = ref false
 let add_count (t: int ref) = 
 	t := !t+1
 
-
 (* utility functions *)
 
 let omega_err = ref false

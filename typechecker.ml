@@ -1764,11 +1764,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
     (* if (Gen.is_empty cl) then fl
        else *)
     let failesc = CF.splitter_failesc_context !norm_flow_int None (fun x->x)(fun x -> x) cl in
-    ((check_exp1 failesc) @ fl)
-
-(*Xuan Bach: Logging the branch of return exp for proc *)				
-		
-(*Xuan Bach: TODO consider the case of fail*)			
+    ((check_exp1 failesc) @ fl)		
 																																	       
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   let pr = Cprinter.string_of_list_partial_context in
@@ -1782,11 +1778,9 @@ and pr_spec = Cprinter.string_of_struc_formula
 and pr_spec2 = Cprinter.string_of_struc_formula_for_spec
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
-  let _ = print_string ("got into check_post on the succCtx branch\n") in
+  (* let _ = print_string ("got into check_post on the succCtx branch\n") in *)
   (* let _ = print_string ("context before post: "^(Cprinter.string_of_list_partial_context ctx)^"\n") in *)
 	(* let _= print_endline ("Check post list ctx: "^Cprinter.string_of_list_partial_context ctx) in *)
-	let _= match pid with 
-	| (i,str)-> print_endline ("pid in post: " ^string_of_int i ^str) in
 	if !Globals.dis_post_chk then ctx else 
     let _ = if !print_proof then
       begin

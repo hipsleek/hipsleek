@@ -8,6 +8,7 @@ let string_of_path_trace x = pr_list (pr_pair (fun x->match x with (a,b)->"c_id:
 let return_exp_loc = ref ""
 let wr_tr = ref 0
 let wr_stk : string Stack.t = Stack.create ()
+let print_wrap_num =ref false (*For debugging wrap_trace: wrap's scope*)
 
 class es_trace =
 object
@@ -18,13 +19,20 @@ object
 end;;
 	
 let last_trace  = new es_trace
- 
+
+(*Functions for localizing the return exp being proved at POST*) 
 let compare_control_path path_list id_strict =
 	let eq_path_id pid1 pid2 = match pid1, pid2 with
     | Some (i1, s1), (i2,s2) -> (*let _= print_endline (string_of_int i1^"compared"^string_of_int i2) in*) i1 = i2
   in
 	List.find ( fun ex-> eq_path_id ex id_strict) path_list                                                                                
-	 		
+
+let string_of_loc_line_col (p : loc) = 
+    Printf.sprintf "(Line:%d,Col:%d)"
+    (* p.start_pos.Lexing.pos_fname  *)
+    p.start_pos.Lexing.pos_lnum
+	 (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)
+					 		
 let loc_of_return_exp (pid: control_path_id): string=
   let eq_path_id pid1 pid2 = match pid1, pid2 with
     | Some _, None -> false
@@ -36,29 +44,33 @@ let loc_of_return_exp (pid: control_path_id): string=
     let _, _, _, loc = List.find (fun (id, _, _ , _) -> eq_path_id pid id) !iast_label_table in
     loc
   in
-   (string_of_list_loc  [find_loc pid])
+		let p=(find_loc pid) in
+		let _=proving_loc #set p in
+   (string_of_loc_line_col  p)
 
 let log_return_exp_loc (pt : path_trace) =
 	let ret_loc = ref "" in
-	(* let _= print_endline ("gohere: "^string_of_path_trace pt) in *)
 	let _ =List.map (fun ((id_strict),_)-> 
 			try
-			(* let _= print_endline ("why?: ") in *)
 			let r=compare_control_path !Globals.return_exp_pid id_strict in
-			(* find_return_exps_paths_list *)
 			ret_loc := loc_of_return_exp r
 			with Not_found -> ()
 			) pt
 	in
 	if(!ret_loc<>"") then
-		"Return exp at: " ^ !ret_loc
+		"--Return exp at: " ^ !ret_loc
 		else ""(*"not found?"*) 
+(*End return exp localizing*)
 
 (*Set the trace info *)
 let wrap_trace (tr : path_trace) exec_function args =
-	let _= wr_tr := !wr_tr+1 in
-	let _=print_endline ("*wrap_trace "^string_of_int !wr_tr^"*") in
-	let _=Stack.push ("*end_wrap_trace "^string_of_int !wr_tr^"*") wr_stk in
+	let _= if(!print_wrap_num) then
+		begin
+	  wr_tr := !wr_tr+1;
+	  print_endline ("*wrap_trace "^string_of_int !wr_tr^"*");
+	  Stack.push ("*end_wrap_trace "^string_of_int !wr_tr^"*") wr_stk 
+		end
+	in
   let b = last_trace # is_avail in
   let m = last_trace # get in
 	let _= return_exp_loc := log_return_exp_loc tr in
@@ -80,12 +92,6 @@ let rec wrap_trace_helper (ctx: CF.context) exec args=
 		
 let trace_info () = 
   if(last_trace # is_avail) then
-        ("Trace::"^(last_trace # string_of)^"\n"^ !return_exp_loc)
+        (!return_exp_loc^"\nTrace::"^(last_trace # string_of)^"\n")
   else "..."				
-
-(* let find_return_exps_paths_list =                                                                                                *)
-(* 	if(List.length !iast_label_table >0) then                                                                                      *)
-(* 	List.fold_left ( fun a (id, str, _ , _) ->                                                                                     *)
-(* 		let _= print_endline ("Xuan bach") in if((String.compare str "return") = 0) then  a @ [id] else a @ []) [] !iast_label_table *)
-(* 	else                                                                                                                           *)
-(* 		let _= print_endline ("DCMR") in []	       		*)
+(*End trace info*)
