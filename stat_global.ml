@@ -71,27 +71,21 @@ let wrap_trace (tr : path_trace) exec_function args =
 	(*   Stack.push ("*end_wrap_trace "^string_of_int !wr_tr^"*") wr_stk  *)
 	(* 	end                                                               *)
 	(* in                                                                 *)
-	let b =ref false in
-	let m= ref [] in
-	let _= if(!Globals.proof_logging_txt) then
-		begin
-     let _= b := last_trace # is_avail in
-     let _= m := last_trace # get in
+	if(!Globals.proof_logging_txt) then
+     let b = last_trace # is_avail in
+     let m = last_trace # get in
 	   let _= return_exp_loc := log_return_exp_loc tr in
-     let _ = last_trace # set tr in ()
-		end 
-	in	
-  let res = exec_function args in
-  let _ = if(!Globals.proof_logging_txt) then
-		begin
-     if !b then last_trace # set !m 
-     else last_trace # reset;
+     let _ = last_trace # set tr in 
+     let res = exec_function args in
+     let _= if b then last_trace # set m 
+     else last_trace # reset
      (* while (not (Stack.is_empty wr_stk)) do  *)
 		 (*   print_endline (Stack.pop wr_stk)      *)
 	   (* done                                    *)
-		end	
-	in 
-  res
+     in 
+     res
+	else
+		 let res = exec_function args in res	
 
 let rec wrap_trace_helper (ctx: CF.context) exec args=
 	match ctx with

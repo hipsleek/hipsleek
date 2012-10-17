@@ -269,20 +269,18 @@ let proving_info () =
 	else "..."(*"who called is_sat,imply,simplify to be displayed later..."*)
 	
 let wrap_proving_kind (str : string) exec_function args =
-	let b =ref false in
-	let m= ref "" in
-	let _= if(!proof_logging_txt) then
-    let _= b := proving_kind # is_avail in
-    let _= m := proving_kind # get in
-    let _ = proving_kind # set str in ()
-	in	
-  let res = exec_function args in
-  let _ = if(!proof_logging_txt) then
-      if !b then proving_kind # set !m 
+	if(!proof_logging_txt) then
+    let b = proving_kind # is_avail in
+    let m = proving_kind # get in
+    let _ = proving_kind # set str in 	
+    let res = exec_function args in
+    let _ = if(!proof_logging_txt) then
+      if b then proving_kind # set m 
       else proving_kind # reset 
-	in
-  res
-
+	  in
+    res
+	else 	
+     let res = exec_function args in res
  
 (* let post_pos = ref no_pos *)
 (* let set_post_pos p = post_pos := p *)
