@@ -1730,7 +1730,7 @@ let pardef_subst_fix_x unk_hps groups=
 and lib based predicates*)
 let pardef_subst_fix unk_hps groups=
   let pr1 = pr_list_ln (pr_list_ln string_of_par_def_w_name_short) in
-  Debug.ho_1 "pardef_subst_fix" pr1 pr1
+  Debug.no_1 "pardef_subst_fix" pr1 pr1
       (fun _ -> pardef_subst_fix_x unk_hps groups) groups
 
 (*=========SUBST DEF FIX==========*)

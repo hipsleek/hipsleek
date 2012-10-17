@@ -896,6 +896,7 @@ let mk_hprel_def hp args defs pos=
   let def = (hp, (CP.HPRelDefn hp, (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos)), def)) in
   def
 
+(*because root is moved to top*)
 let mk_orig_hprel_def prog hp args sh_ldns=
   let rec get_last_ptrs ls_lnds=
     match ls_lnds with
@@ -906,12 +907,44 @@ let mk_orig_hprel_def prog hp args sh_ldns=
           else [])) nd.CF.h_formula_data_arguments)
       | nd::ndss -> get_last_ptrs ndss
   in
-  let next_roots = get_last_ptrs sh_ldns in
+  let other_args = List.tl args in
+  let rec look_up_ptrs hds r res=
+    (*r_nexts may be other args, we should remove them*)
+    if CP.mem_svl r other_args then
+      let new_v = CP.SpecVar (CP.type_of_spec_var r,
+                  (CP.name_of_spec_var r) ^ (string_of_int (Globals.fresh_int())),Unprimed)  in
+      ([new_v],hds, [(r,new_v)])
+    else
+      match hds with
+        | [] -> ([],res,[])
+        | hd::ss -> if CP.eq_spec_var r hd.CF.h_formula_data_node then
+              let r_nexts = List.concat (List.map ((fun (CP.SpecVar (t,v,p)) ->
+                  if (is_pointer t)
+                  then [CP.SpecVar (t,v,p)]
+                  else [])) hd.CF.h_formula_data_arguments) in
+              (r_nexts, res@ss,[])
+            else look_up_ptrs ss r (res@[hd])
+  in
+  let rec helper hds roots r_nexts r_ss=
+    match roots with
+      | [] -> (r_nexts,hds,r_ss)
+      | r::rs -> let nptrs,nhds,ss = look_up_ptrs hds r [] in
+                 helper nhds rs (r_nexts@nptrs) (r_ss@ss)
+  in
+  let rec get_last_ptrs_new ls_lnds roots root_nexts ss=
+    match root_nexts with
+      | [] -> roots,ss
+      | _ -> let nptrs,nhds,ss = helper ls_lnds root_nexts [] [] in
+             get_last_ptrs_new nhds root_nexts nptrs ss
+  in
+  let next_roots,ss = get_last_ptrs_new sh_ldns [(List.hd args)] [(List.hd args)] [] in
   let hdss = List.map (fun hd -> (CF.DataNode hd)) sh_ldns in
+  (*subst*)
+  let hdss = List.map (CF.h_subst ss) hdss in
   (*currently we just support one next root. should improve when support tree*)
   match next_roots with
      | [] -> report_error no_pos "sa.generalize_one_hp: sth wrong"
-     | [a] ->
+     | [a] ->  let _ = DD.info_pprint ("      last root:" ^ (Cprinter.string_of_spec_var a)) no_pos in
          (*generate new hp*)
          let n_hprel,n_hp =  add_raw_hp_rel prog ([a]@(List.tl args)) no_pos in
               (*first rel def for the orig*)
@@ -925,14 +958,14 @@ let mk_orig_hprel_def prog hp args sh_ldns=
      | _ -> report_error no_pos "sa.generalize_one_hp: now we does not handle more than two ptr fields"
 
 
-let get_longest_common_hnodes_list prog hp args fs=
+let get_longest_common_hnodes_list_x prog hp args fs=
  if List.length fs <= 1 then
    let hpdef = mk_hprel_def hp args fs no_pos in
    [hpdef] (* ([], fs, []) *)
  else begin
    let lldns = List.map (fun f -> (get_hdnodes f, f)) fs in
-   (* let min,sh_ldns = get_min_number_new prog args lldns in *)
-   let min = get_min_number lldns in
+   let min,sh_ldns = get_min_number_new prog args lldns in
+   (* let min = get_min_number lldns in *)
    (* let _ =  DD.info_pprint ("    min: " ^ (string_of_int min) ) no_pos in *)
    if min = 0 then
      (*mk_hprel_def*)
@@ -941,7 +974,7 @@ let get_longest_common_hnodes_list prog hp args fs=
      (* ([],fs, []) *)
    else
      (*get shortest list of hnodes*)
-     let sh_ldns, _ = get_shortest_lnds lldns min in
+     (* let sh_ldns, _ = get_shortest_lnds lldns min in *)
      (*assume root is the first arg*)
      let root = List.hd args in
      let sh_ldns1 = move_root_to_top root sh_ldns in
@@ -951,6 +984,14 @@ let get_longest_common_hnodes_list prog hp args fs=
      (* (List.map (fun hd -> (CF.DataNode hd)) sh_ldns1, n_fs, []) *)
      [orig_hpdef;new_hpdef]
  end
+
+let get_longest_common_hnodes_list prog hp args fs=
+  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
+  let pr2 = fun (_, def) -> Cprinter.string_of_hp_rel_def def in
+  let pr3 = !CP.print_sv in
+  let pr4 = !CP.print_svl in
+  Debug.ho_3 "get_longest_common_hnodes_list" pr3 pr4 pr1 (pr_list_ln pr2)
+      (fun _ _ _ -> get_longest_common_hnodes_list_x prog hp args fs) hp args fs
 
 (*==========END check_relaxeq=============*)
 let remove_longer_common_prefix fs=
