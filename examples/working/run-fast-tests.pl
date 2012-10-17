@@ -43,7 +43,7 @@ else
 if($prover){
 	%provers = ('cvcl' => 'cvcl', 'cvc3' => 'cvc3', 'oc' => 'oc','oc-2.1.6' => 'oc-2.1.6', 
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
-		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm', 'z3' => 'z3', 'z3-2.19' => 'z3-2.19', 'zm' => 'zm');
+		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm', 'z3' => 'z3', 'z3-2.19' => 'z3-2.19', 'zm' => 'zm', 'log' => 'log');
 	if (!exists($provers{$prover})){
         print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|sleek|hip_vperm|sleek_vperm [-flags \"arguments to be transmited to hip/sleek \"]\n";
 		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm', 'prm', 'z3' or 'zm'\n";
@@ -146,8 +146,9 @@ if($timings){
     $programCol = 1;
     $mainCol = 2;
     $childCol = 3;
-    $totalCol = 4;
-    $falseContextCol = 5;
+    $prooflogCol =4;	
+    $totalCol = 5;
+    $falseContextCol = 6;
     my $format = $workbook->add_format();
     $format->set_bold();
     $format->set_align('center');
@@ -156,6 +157,7 @@ if($timings){
     $worksheet->set_column($mainCol,$falseContextCol, 10);
     $worksheet->write($row, $mainCol, "Main", $format);
     $worksheet->write($row, $childCol, "Child", $format);
+    $worksheet->write($row, $prooflogCol, "Proof log", $format);	
     $worksheet->write($row, $totalCol, "Total time", $format);
     $worksheet->write($row, $falseContextCol, "No. false ctx", $format);
 
@@ -1007,6 +1009,7 @@ if($timings){
     $worksheet->write($row, $programCol, "Totals:", $format);
     $worksheet->write($row, $mainCol, "$mainSum", $format);
     $worksheet->write($row, $childCol, "$childSum", $format);
+    $worksheet->write($row, $prooflogCol, "$prooflogSum", $format);	
     $worksheet->write($row, $totalCol, $totalSum, $format);
     $worksheet->write($row, $falseContextCol, $falseContextSum, $format);
     $workbook->close();
@@ -1041,6 +1044,11 @@ sub log_one_line_of_timings{
      my $formatted_no = sprintf "%.2f", "$1";
      $worksheet->write($row, $childCol, $formatted_no, $format);
      $childSum = $childSum + $1;
+ }
+ if($outp =~ m/	Time for logging: (.*?) second/){
+     my $formatted_no = sprintf "%.2f", "$1";
+     $worksheet->write($row, $prooflogCol, $formatted_no, $format);
+     $prooflogSum = $prooflogSum + $1;
  }
  if($outp =~ m/\b(\w+) false contexts/){
      $format->set_num_format('0');

@@ -3,6 +3,7 @@
 (* command line processing                *)
 (******************************************)
 open Gen.Basic
+open Globals
 
 module M = Lexer.Make(Token.Token)
 
@@ -188,7 +189,28 @@ let process_source_full source =
     end);
     (* Stopping the prover *)
     let _ = Tpdispatcher.stop_prover () in
-    
+		(* Proof Logging *)
+		let _ = if !Globals.proof_logging || !Globals.proof_logging_txt then 
+			begin
+			let tstartlog = Gen.Profiling.get_time ()in	
+			let _= Log.proof_log_to_file () in
+                        let fname = ("logs/proof_log_"^Globals.norm_file_name (List.hd !Globals.source_files))^".txt" in
+			let _= if (!Globals.proof_logging_txt) 
+                        then 
+                          begin
+                            Debug.info_pprint ("Logging "^fname^"\n") no_pos;
+                            Log.proof_log_to_text_file ()
+                          end
+			else try Sys.remove fname 
+(* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *)
+			with _ ->()
+			 in
+			let tstoplog = Gen.Profiling.get_time () in
+			let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
+			(* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in	() *)
+			end
+		in
+		(* let _= if not !Globals.proof_logging && not !Globals.proof_logging_txt  then Cprinter.printer_of_proof_logging () in *)
     (* An Hoa : export the proof to html *)
     let _ = if !Globals.print_proof then
     		begin 
@@ -211,7 +233,10 @@ let process_source_full source =
 	^ "\tTime spent in main process: " 
 	^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
 	^ "\tTime spent in child processes: " 
-	^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
+	^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n"
+	^ if !Globals.proof_logging || !Globals.proof_logging_txt then "\tTime for logging: "^(string_of_float (!Globals.proof_logging_time))^" second(s)\n"
+	else ""
+	)
 
 let process_source_full_parse_only source =
   (* print_string ("\nProcessing file \"" ^ source ^ "\"\n");  *)

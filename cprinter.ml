@@ -10,6 +10,7 @@ open Cformula
 open Mcpure_D
 open Gen.Basic 
 open Label_only
+open Printf
 
 module P = Cpure
 module MP = Mcpure
@@ -2037,6 +2038,7 @@ let string_of_barrier_decl (v: Cast.barrier_decl): string = poly_string_of_pr pr
 
 let printer_of_view_decl (fmt: Format.formatter) (v: Cast.view_decl) : unit =
   poly_printer_of_pr fmt pr_view_decl v 
+
 
 (* function to print a list of strings *) 
 let rec string_of_ident_list l c = match l with 
