@@ -10,9 +10,9 @@ HeapPred HP_535(node a, node b).
 
 //pure formula
 //1.
-checkeq[] HP_535(x0,x)  -|- HP_535(x0,x) .
+checkeq[] x =a  + 2 -|- y = b + c.
 //VALID
-
+//checkeq[] x =a  & e = 3 -|- (forall (c: c = 3)).
 //2.
 //checkeq[] x = 1 -|- y = 1.
 //VALID

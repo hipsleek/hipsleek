@@ -255,7 +255,7 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
   let pr2 = add_str "inferred rels" (fun l -> string_of_int (List.length l)) in
   let pr2a = add_str "formulae" (pr_list Cprinter.string_of_formula) in
   let pr2b = add_str "inferred hp rels" (fun l -> string_of_int (List.length l)) in
-  let pr3 = pr_penta pr1 pr2a pr2 pr2b string_of_bool in
+  let pr3 = pr_penta pr1 pr2a  pr2 pr2b string_of_bool in
   Debug.no_1 "check_specs_infer" pr1 pr3
       (fun _ -> check_specs_infer_a  prog proc ctx e0 do_infer spec_list) spec_list
 
@@ -517,7 +517,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in
 	                (* let _ = print_string ("\n WN 1 :"^(Cprinter.string_of_list_partial_context res_ctx)) in *)
 	    	        let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
-	                (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in*)
+	                 (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in *)
                     let pos = CF.pos_of_formula post_cond in
 	    	        if (CF.isFailListPartialCtx_new res_ctx)
                     then (spec, [], [],[], [], false)
@@ -1933,7 +1933,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     let _ = print_endline "*************************************" in
                     let _ = print_endline (Infer.rel_ass_stk # string_of) in
                     let _ = print_endline "*************************************" in
-		            let _, ls_inferred_hps = Sa.infer_hps prog hp_lst_assume
+		            let ls_hprel, ls_inferred_hps = Sa.infer_hps prog hp_lst_assume
                     sel_hp_rels in
 		            let _ = print_endline "" in 
                     let _ = print_endline "*************************************" in
@@ -1948,19 +1948,18 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 		      let is_match_constrs il constrs = CEQ.checkeq_constrs il (List.map (fun hp -> hp.CF.hprel_lhs,hp.CF.hprel_rhs)
 									       hp_lst_assume) constrs in
 		      let match_defs il defs= CEQ.checkeq_defs il ls_inferred_hps defs in
-		      let _,_,inf_vars = CF.get_pre_post_vars [] proc.proc_static_specs in
-		      let _ = Debug.info_pprint ("VP: " ^ (!CP.print_svl inf_vars) ^ "\n") no_pos in
-		      let is_match_defs il defs = CEQ.checkeq_defs_bool il ls_inferred_hps defs inf_vars in
+		      (* let _,_,inf_vars = CF.get_pre_post_vars [] proc.proc_static_specs in *)
+		      let is_match_defs il defs = CEQ.checkeq_defs_bool il ls_inferred_hps defs sel_hp_rels in
 		      let (res1, res2) = match test_comps with
 			| None -> (false,false)
 			| Some tcs -> (
 			  let ass = tcs.Cast.expected_ass in
 			  let hpdefs = tcs.Cast.expected_hpdefs in
 			  match ass,hpdefs with
-			    | None, None -> print_string "none-none\n ";(false, false)
+			    | None, None -> (false, false)
 			    | Some (il,a), None -> (is_match_constrs il a, false) 
 			    | None, Some (il,d) -> (false, is_match_defs il d)
-			    | Some (il1,a), Some (il2,d) -> print_string "some_some\n "; (is_match_constrs il1 a, is_match_defs il2 d)
+			    | Some (il1,a), Some (il2,d) ->  (is_match_constrs il1 a, is_match_defs il2 d)
 			)
 		      in
 		      let _ = if(res1) then 
@@ -1976,6 +1975,52 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 		      let _ = Gen.Profiling.pop_time "Compare res with cp file" in
 		      ()
 		    ) in
+		    let _ = if(!Globals.gen_cpfile) then(
+		      let file_name = !Globals.cpfile in
+		      let hpdecls = prog.prog_hp_decls in
+		      let string_of_hp_decls hpdecls = 
+			(
+			  let string_of_hp_decl hpdecl =
+			    (
+			      let name = hpdecl.hp_name in
+			      let pr_arg arg = 
+				let t = CP.type_of_spec_var arg in 
+				(CP.name_of_type t) ^ " " ^ (Cprinter.string_of_spec_var arg) 
+			      in
+			      let args = pr_lst ", " pr_arg hpdecl.hp_vars in
+			      "HeapPred "^ name ^ "(" ^ args ^ ").\n"
+			    )
+			  in
+			  List.fold_left (fun piv e -> piv ^ string_of_hp_decl e) "" hpdecls 
+			)
+		      in
+		      
+		      let string_of_message sel_hp_rels hp_lst_assume ls_inferred_hps = 
+			let hp_decls = string_of_hp_decls hpdecls in
+			let pr_ass f1 f2 (x,y) = (f1 x)^" -> "^(f2 y) in
+			let pr1 =  pr_lst ",\n" (pr_ass Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
+			let ass_cont = pr1 (List.map (fun hp -> hp.CF.hprel_lhs,hp.CF.hprel_rhs)
+							hp_lst_assume) in (*hp_lst_assume*)
+			let hpdefs_cont =  pr1 (List.map (fun (_,hf,f2) -> CF.formula_of_heap hf no_pos,f2)
+							    ls_inferred_hps) in (*ls_inferred_hps*)
+			let ass = "ass " ^ (!CP.print_svl sel_hp_rels) ^ ": {\n" ^ ass_cont ^ "\n}\n" in
+			let hpdefs = "hpdefs " ^ (!CP.print_svl sel_hp_rels) ^ ": {\n"  ^ hpdefs_cont ^ "\n}\n"in
+			let test_comps = ass ^ hpdefs  in
+			let unmin_name = unmingle_name proc.proc_name in
+			let message = hp_decls ^ "\n" ^ unmin_name ^ "[\n" ^ test_comps ^ "]\n" in
+			message
+		      in
+		      let message = string_of_message sel_hp_rels hp_lst_assume ls_inferred_hps in
+		      try
+			let cout = open_out file_name in
+			(*let co = Format.formatter_of_out_channel cout in
+			Format.fprintf co "%s\n" message;*)
+			Printf.fprintf cout "%s\n" message;   (* write something *)   
+			close_out cout
+		      with Sys_error _ as e ->
+			Format.printf "Cannot open file \"%s\": %s\n" file_name (Printexc.to_string e)
+		    )
+		    in
                    (****)
                     let lst_rank = List.map (fun (_,a2,a3)-> (a2,a3)) lst_rank in
                     (*let _ = Ranking.do_nothing in*)

@@ -383,7 +383,6 @@ and check_rel_equiv (hvars: ident list) (r1:  (CP.spec_var * (CP.exp list) * loc
   let is_hard_r1 = (List.mem (CP.name_of_spec_var n1) hvars) in 
   let is_hard_r2 = (List.mem (CP.name_of_spec_var n2) hvars) in 
   let res = CP.eq_spec_var n1 n2 in (*eq_spec_var means same relation*)
-(*TODO: 1. same name ok, checkargs, 2.check if hard node => false, else, check args*)
   if(res) then (
     let res, new_mt = add_map_rel mt n1 n2 in if(res) then check_exp_list_equiv hvars el1 el2 new_mt
     else (false,[])
@@ -394,7 +393,7 @@ and check_rel_equiv (hvars: ident list) (r1:  (CP.spec_var * (CP.exp list) * loc
       let _ = Debug.ninfo_pprint ("ADD REL BEFORE: " ^ (string_of_map_table mt)) no_pos in
       let res, new_mt = add_map_rel mt n1 n2 in
       let _ = Debug.ninfo_pprint ("ADD REL AFTER: " ^ (string_of_map_table new_mt)) no_pos in
-      if(res) then check_exp_list_equiv hvars el1 el2 new_mt (*TODO, add mapptable*)
+      if(res) then check_exp_list_equiv hvars el1 el2 new_mt 
       else (false, [])
     )
   )
@@ -445,36 +444,28 @@ and match_equiv_emp (hf2: CF.h_formula): bool=
     | CF.HFalse -> false
     | CF.HEmp   -> true
 
+and add_map_rel_x (mt: map_table) (v1: CP.spec_var) (v2: CP.spec_var): (bool * map_table) = 
+  let vn1 = CP.full_name_of_spec_var v1 in
+  let vn2 = CP.full_name_of_spec_var v2 in
+  let rec check_exist (vn :ident) mto: bool = 
+    match mto with 
+      | []-> false 
+      | i1::y -> (String.compare vn (CP.full_name_of_spec_var i1)) == 0  || (check_exist vn y)
+  in
+  if(List.exists (fun (i1, i2) -> (((String.compare vn1 (CP.full_name_of_spec_var i1)) == 0 && (String.compare vn2 (CP.full_name_of_spec_var i2)) == 0) )) mt) then (true, mt)
+  else (
+    let mtl,mtr = List.split mt in
+    let check_v1 = check_exist vn1 mtl in
+    let check_v2 = check_exist vn2 mtr in
+    if(check_v1 || check_v2) then (false, []) else (true, ((v1,v2)::mt))
+  )
+
 and add_map_rel (mt: map_table) (v1: CP.spec_var) (v2: CP.spec_var): (bool * map_table) = 
-  (*if(CP.is_node_typ v1 && CP.is_node_typ v2) then ( *)
-    let vn1 = CP.full_name_of_spec_var v1 in
-    let vn2 = CP.full_name_of_spec_var v2 in
-    let _ = Debug.ninfo_pprint ("node 1: "  ^ vn1 ^ " node2 " ^ vn2 ^ "   " ^  string_of_map_table mt) no_pos in
-    let rec check_exist (vn :ident) mto: bool = 
-      match mto with 
-	| []-> false 
-	| i1::y -> (String.compare vn (CP.full_name_of_spec_var i1)) == 0  || (check_exist vn y)
-    in
-    if(List.exists (fun (i1, i2) -> (((String.compare vn1 (CP.full_name_of_spec_var i1)) == 0 && (String.compare vn2 (CP.full_name_of_spec_var i2)) == 0) )) mt) then (
-      let _ = Debug.ninfo_pprint ("Exists node 1: "  ^ vn1 ^ " node2 " ^ vn2 ^ "   " ^ string_of_map_table mt) no_pos in
-      (true, mt)
-    ) 
-    else (
-      let _ = Debug.ninfo_pprint ("not yet node 1: "  ^ vn1 ^ " node2 " ^ vn2 ^ "   " ^ string_of_map_table mt) no_pos in
-      let mtl,mtr = List.split mt in
-      let check_v1 = check_exist vn1 mtl in
-      let check_v2 = check_exist vn2 mtr in
-      if(check_v1 || check_v2) then (
-	let _ = Debug.ninfo_pprint ("ADD FAIL node 1: "  ^ vn1 ^ " node2 " ^ vn2 ^ "   " ^  string_of_map_table mt) no_pos in
-	(false, [])
-      )
-      else (
-	let _ = Debug.ninfo_pprint ("ADD: node 1: "  ^ vn1 ^ " node2 " ^ vn2 ^ "   " ^ string_of_map_table ((v1,v2)::mt)) no_pos in 
-	(true, ((v1,v2)::mt))
-      )
-    )
-(*  )
-  else (true,mt) *)
+  let pr1 = CP.full_name_of_spec_var in
+  let pr2 b = if(b) then "SUCCESS" else "FAIL" in
+  let pr3 = string_of_map_table in
+  Debug.no_2 "add_map_rel" pr1 pr1 (pr_pair pr2 pr3)
+      (fun _ _ ->  add_map_rel_x mt v1 v2) v1 v2
 
 and checkeq_mix_formulas (hvars: ident list)(mp1: MCP.mix_formula) (mp2: MCP.mix_formula)(mtl: map_table list): (bool * (map_table list))=
   match mp1,mp2 with
@@ -491,11 +482,11 @@ and checkeq_p_formula_x (hvars: ident list)(pf1: CP.formula) (pf2: CP.formula)(m
       if(res) then checkeq_p_formula_x hvars f2 pf2 mtl1 
       else (res, []) 
     )
-    | AndList _ -> report_error no_pos "not handle ANDLIST yet"
+    | AndList _ -> report_error no_pos "not handle checkeq 2 formula that have ANDLIST yet"
     | Or f -> match_equiv_orform hvars f pf2 mtl
     | Not(f,_,_) -> match_equiv_notform hvars f pf2 mtl
     | Forall _ 
-    | Exists _ -> report_error no_pos "not handle forall and exists yet"
+    | Exists _ -> report_error no_pos "not handle checkeq 2 formula that have forall and exists yet"
 
 and checkeq_p_formula  hvars pf1 pf2 mtl = 
   let pr1 = Cprinter.string_of_pure_formula in
@@ -523,9 +514,7 @@ and match_equiv_bform_x (hvars: ident list)(b1: CP.b_formula) (pf2: CP.formula)(
       else if(res2) then (true, mtl2)
       else (false, [])
     )
-    | AndList _ -> (
-      report_error no_pos "and list"
-    )
+    | AndList _ ->  report_error no_pos "not support andlist yet"
     | Or _
     | Not _
     | Forall _ 
@@ -549,47 +538,50 @@ and check_equiv_bform_x (hvars: ident list)(b1: CP.b_formula) (b2: CP.b_formula)
     | (BConst (false,_),_),  (BConst (false,_),_) -> (true,[mt])
     | (Eq (e11,e12,_), _) , (Eq (e21,e22,_) , _) 
     | (Neq (e11,e12,_), _) , (Neq (e21,e22,_) , _)  ->
-      (match e11,e12,e21,e22 with
-        | Var (v11,_),Var (v12,_),Var (v21,_),Var (v22,_)-> 
-	  let res11, mt11 = check_spec_var_equiv hvars v11 v21 mt in 
-	  let res12, mt12 = check_spec_var_equiv hvars v12 v22 mt11 in
-	  let res1,mt1 = if(res11&&res12) then (res11,mt12) else (false,mt) in 
-	  let res21, mt21 = check_spec_var_equiv hvars v11 v22 mt in 
-	  let res22, mt22 = check_spec_var_equiv hvars v12 v21 mt21 in 
-	  let res2,mt2 = if(res21&&res22) then (res21,mt22) else (false,mt) in 
-	  if(res1 && res2) then (true, [mt1] @ [mt2])   (*merge tables*)
-	  else if(res1) then (true, [mt1]) 
-	  else if(res2) then (true, [mt2])
-	  else (false, [])
-        | Var (v11,_),IConst (v12,_),Var (v21,_),IConst (v22,_)-> 
-	  let res1, mt1 = check_spec_var_equiv hvars v11 v21 mt in 
-          let res2 = (v12= v22) in
-	  if(res1 && res2) then (true, [mt1])   (*merge tables*)
-	  else (false, [])
-        | IConst (v11,_),Var (v12,_),IConst (v21,_),Var (v22,_)-> 
-	  let res1, mt1 = check_spec_var_equiv hvars v12 v22 mt in 
-          let res2 = (v11= v21) in
-	  if(res1 && res2) then (true, [mt1])   (*merge tables*)
-	  else (false, [])
-        | Var (v11,_),FConst (v12,_),Var (v21,_),FConst (v22,_)-> 
-	  let res1, mt1 = check_spec_var_equiv hvars v11 v21 mt in 
-          let res2 = (v12= v22) in
-	  if(res1 && res2) then (true, [mt1])   (*merge tables*)
-	  else (false, [])
-        | FConst (v11,_),Var (v12,_),FConst (v21,_),Var (v22,_)-> 
-	  let res1, mt1 = check_spec_var_equiv hvars v12 v22 mt in 
-          let res2 = (v11= v21) in
-	  if(res1 && res2) then (true, [mt1])   (*merge tables*)
-	  else (false, [])
-	| Var (v11,_),Null _,Var (v21,_),Null _-> 
-	  let res1, mt1 = check_spec_var_equiv hvars v11 v21 mt in 
-	  if(res1) then (true, [mt1])   (*merge tables*)
-	  else (false, [])
-        | Null _,Var (v12,_),Null _,Var (v22,_)-> 
-	  let res1, mt1 = check_spec_var_equiv hvars v12 v22 mt in 
-	  if(res1) then (true, [mt1])   (*merge tables*)
-	  else (false, [])
-        | _ -> (false, []
+      (
+	let helper e11 e12 e21 e22 = 
+	  match e11,e12,e21,e22 with
+            | Var (v11,_),Var (v12,_),Var (v21,_),Var (v22,_)-> 
+	      let res11, mt11 = check_spec_var_equiv hvars v11 v21 mt in 
+	      let res12, mt12 = check_spec_var_equiv hvars v12 v22 mt11 in
+	      let res1,mt1 = if(res11&&res12) then (res11,mt12) else (false,mt) in 
+	      let res21, mt21 = check_spec_var_equiv hvars v11 v22 mt in 
+	      let res22, mt22 = check_spec_var_equiv hvars v12 v21 mt21 in 
+	      let res2,mt2 = if(res21&&res22) then (res21,mt22) else (false,mt) in 
+	      if(res1 && res2) then (true, [mt1] @ [mt2])   (*merge tables*)
+	      else if(res1) then (true, [mt1]) 
+	      else if(res2) then (true, [mt2])
+	      else (false, [])
+            | Var (v11,_),IConst (v12,_),Var (v21,_),IConst (v22,_)-> 
+	      let res1, mt1 = check_spec_var_equiv hvars v11 v21 mt in 
+              let res2 = (v12= v22) in
+	      if(res1 && res2) then (true, [mt1])   (*merge tables*)
+	      else (false, [])
+            | Var (v11,_),FConst (v12,_),Var (v21,_),FConst (v22,_)-> 
+	      let res1, mt1 = check_spec_var_equiv hvars v11 v21 mt in 
+              let res2 = (v12= v22) in
+	      if(res1 && res2) then (true, [mt1])   (*merge tables*)
+	      else (false, [])
+	    | Var (v11,_),Null _,Var (v21,_),Null _-> 
+	      let res1, mt1 = check_spec_var_equiv hvars v11 v21 mt in 
+	      if(res1) then (true, [mt1])   (*merge tables*)
+	      else (false, [])
+            | _ -> (false, [])
+	in
+	let (res1,mtl1) = helper e11 e12 e21 e22 in
+	if(res1) then (res1,mtl1)
+	else (
+	  let (res2,mtl2) = helper e12 e11 e22 e21 in
+	  if(res2) then (res2,mtl2)
+	  else (
+	    let (res3,mtl3) = helper e11 e12 e22 e21 in
+	    if(res3) then (res3,mtl3)
+	    else (
+	      let (res4,mtl4) = helper e12 e11 e21 e22 in
+	      if(res4) then (res4,mtl4)
+	      else (false, [])
+	    )
+	  )
 	)
       )
     | (Lt (e11,e12,_), _) , (Lt (e21,e22,_) , _) 
@@ -696,7 +688,7 @@ and match_equiv_notform_x  (hvars: ident list)(f1: CP.formula) (pf2: CP.formula)
   (b,mtl2)
 
 
-let subst_with_mt (mt: map_table) (f: CF.formula): CF.formula = 
+let subst_with_mt (mt: map_table) (f: CF.formula): CF.formula =   (*Note: support function for other files*)
   let frs,ts = List.split mt in
   CF.subst_avoid_capture frs ts f
 

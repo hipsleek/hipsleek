@@ -591,7 +591,11 @@ let perm_prof = ref false
 
 let cp_test = ref false 
 
+let gen_cpfile = ref false 
+
 let file_cp = ref ""
+
+let cpfile = ref ""
 
   (*for cav experiments*)
   let f_1_slice = ref false

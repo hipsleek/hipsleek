@@ -917,11 +917,29 @@ $output_file = "log";
     "sa"=>[["ll-append3.ss",1, " -cp-test ","ll-append3.cp", "append", "SUCCESS.SUCCESS"],
 	   ["ll-append4.ss",1, " -cp-test ","ll-append4.cp", "append", "SUCCESS.SUCCESS"],
 	   ["ll-append5.ss",1, " -cp-test ","ll-append5.cp", "append", "SUCCESS.SUCCESS"],
-["ll-append6.ss",1, " -cp-test ","ll-append6.cp", "append", "SUCCESS.SUCCESS"],
-["ll-append7.ss",1, " -cp-test ","ll-append7.cp", "append", "SUCCESS.SUCCESS"],
-["ll-append8.ss",1, " -cp-test ","ll-append8.cp", "append", "SUCCESS.SUCCESS"],
-["ll-append9.ss",1, " -cp-test ","ll-append9.cp", "append", "SUCCESS.SUCCESS"],
-["ll-append10.ss",1, " -cp-test ","ll-append10.cp", "append", "SUCCESS.SUCCESS"]]
+		["ll-append6.ss",1, " -cp-test ","ll-append6.cp", "append", "SUCCESS.SUCCESS"],
+		["ll-append7.ss",1, " -cp-test ","ll-append7.cp", "append", "SUCCESS.SUCCESS"],
+		["ll-append8.ss",1, " -cp-test ","ll-append8.cp", "append", "SUCCESS.SUCCESS"],
+		["ll-append9.ss",1, " -cp-test ","ll-append9.cp", "append", "SUCCESS.SUCCESS"],
+		["ll-append10.ss",1, " -cp-test ","ll-append10.cp", "append", "SUCCESS.SUCCESS"]],
+
+    "sa2"=>[["ll-append3.ss",1, " -cp-test ","test/ll-append3.cp", "append", "SUCCESS.SUCCESS"],
+	   ["ll-append4.ss",1, " -cp-test ","test/ll-append4.cp", "append", "SUCCESS.SUCCESS"],
+	   ["ll-append5.ss",1, " -cp-test ","test/ll-append5.cp", "append", "SUCCESS.SUCCESS"],
+		["ll-append6.ss",1, " -cp-test ","test/ll-append6.cp", "append", "SUCCESS.SUCCESS"],
+		["ll-append7.ss",1, " -cp-test ","test/ll-append7.cp", "append", "SUCCESS.SUCCESS"],
+		["ll-append8.ss",1, " -cp-test ","test/ll-append8.cp", "append", "SUCCESS.SUCCESS"],
+		["ll-append9.ss",1, " -cp-test ","test/ll-append9.cp", "append", "SUCCESS.SUCCESS"],
+		["ll-append10.ss",1, " -cp-test ","test/ll-append10.cp", "append", "SUCCESS.SUCCESS"]],
+
+    "gen_cpfile"=>[["ll-append3.ss"," -gen-cpfile ","test/ll-append3.cp"],
+	   ["ll-append4.ss"," -gen-cpfile ","test/ll-append4.cp"],
+	   ["ll-append5.ss"," -gen-cpfile ","test/ll-append5.cp"],
+		["ll-append6.ss"," -gen-cpfile ","test/ll-append6.cp"],
+		["ll-append7.ss"," -gen-cpfile ","test/ll-append7.cp"],
+		["ll-append8.ss"," -gen-cpfile ","test/ll-append8.cp"],
+		["ll-append9.ss"," -gen-cpfile ","test/ll-append9.cp"],
+		["ll-append10.ss"," -gen-cpfile ","test/ll-append10.cp"]]
     );
 
 # list of file, string with result of each entailment&lemma....
@@ -1077,28 +1095,34 @@ sub hip_process_file {
 
 	foreach $test (@{$t_list})
 	{
-	    $extra_options = $test->[2];
-	    if ("$extra_options" eq "") {
-		print "Checking $test->[0]\n";
-	    } else {
-		print "Checking $test->[0] (runs with extra options: $extra_options)\n";
+	    if ("$param" =~ "gen_cpfile") {
+		print "Generating $test->[2]\n";
+		$extra_options = $test->[1];
+		$output = `$hip $script_arguments $test->[0]  $extra_options  $test->[2]  2>&1`;
 	    }
-	   
-	    if ("$param" =~ "sa") {
-		$output = `$hip $script_arguments $test->[0]  $extra_options  $test->[3]  2>&1`;
-		print LOGFILE "\n======================================\n";
-		print LOGFILE "$output";
-		$cp_ass = "Compare ass";
-		$cp_defs = "Compare defs";
-		$limit = $test->[1]*2+3;
-		print "sa";
-		for($i = 4; $i<$limit;$i+=2)
-		{
+	    else 
+	    {
+		$extra_options = $test->[2];
+		if ("$extra_options" eq "") {
+		    print "Checking $test->[0]\n";
+		} else {
+		    print "Checking $test->[0] (runs with extra options: $extra_options)\n";
+		}
+		
+		if ("$param" =~ "sa") {
+		    $output = `$hip $script_arguments $test->[0]  $extra_options  $test->[3]  2>&1`;
+		    print LOGFILE "\n======================================\n";
+		    print LOGFILE "$output";
+		    $cp_ass = "Compare ass";
+		    $cp_defs = "Compare defs";
+		    $limit = $test->[1]*2+3;
+		    for($i = 4; $i<$limit;$i+=2)
+		    {
 			#print "Output: $output \n";
 			#print "compare with: $cp_ass $test->[$i]\$.* SUCCESS \n";
-		    $res = "";
-		    if($output =~ /$cp_ass $test->[$i]\$.* SUCCESS/){
-			$res = $res ."SUCCESS";
+			$res = "";
+			if($output =~ /$cp_ass $test->[$i]\$.* SUCCESS/){
+			    $res = $res ."SUCCESS";
 		    } 
 		    else {
 			if($output =~ /$cp_ass $test->[$i]\$.* FAIL/) {
@@ -1113,21 +1137,21 @@ sub hip_process_file {
 			    $res = $res .".FAIL"; 
 			}
 		    }
-		    if($res !~ /$test->[$i+1]/)
-		    {
-			$error_count++;
-			$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
-			print "error at: $test->[0] $test->[$i]\n";
+			if($res !~ /$test->[$i+1]/)
+			{
+			    $error_count++;
+			    $error_files=$error_files."error at: $test->[0] $test->[$i]\n";
+			    print "error at: $test->[0] $test->[$i]\n";
+			}
 		    }
 		}
-	    }
-	    else{
-		#print "$hip $script_arguments $extra_options $exempl_path/hip/$test->[0] 2>&1 \n";
-	    $output = `$hip $script_arguments $extra_options $exempl_path_full/$test->[0] 2>&1`;
-	    print LOGFILE "\n======================================\n";
-	    print LOGFILE "$output";
-		$limit = $test->[1]*2+2;
-		#print "\nbegin"."$output"."end\n";
+		else{
+		    #print "$hip $script_arguments $extra_options $exempl_path/hip/$test->[0] 2>&1 \n";
+		    $output = `$hip $script_arguments $extra_options $exempl_path_full/$test->[0] 2>&1`;
+		    print LOGFILE "\n======================================\n";
+		    print LOGFILE "$output";
+		    $limit = $test->[1]*2+2;
+		    #print "\nbegin"."$output"."end\n";
 #            my @lines = split /\n/, $output;
 #            @results = [];
 #            foreach my $line (@lines) {
@@ -1148,25 +1172,26 @@ sub hip_process_file {
 #                #print $test->[$i+1] ."\n";
 #                if(@results[$i] ne $test->[$i+1])
 
-		for($i = 3; $i<$limit;$i+=2)
-		{
-		    if($output !~ /$procedure $test->[$i]\$.* $test->[$i+1]/)
+		    for($i = 3; $i<$limit;$i+=2)
 		    {
-			$error_count++;
-			$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
-			print "error at: $test->[0] $test->[$i]\n";
+			if($output !~ /$procedure $test->[$i]\$.* $test->[$i+1]/)
+			{
+			    $error_count++;
+			    $error_files=$error_files."error at: $test->[0] $test->[$i]\n";
+			    print "error at: $test->[0] $test->[$i]\n";
+			}
 		    }
 		}
-	    }
-	    #Termination checking result
-	    if ($output !~ "ERR:") {}
-	    else {
-		$error_count++;
-		$error_files=$error_files."term error at: $test->[0] $test->[$i]\n";
-		print "term error at: $test->[0] $test->[$i]\n";
-	    }
-	    if($timings) {
-		log_one_line_of_timings ($test->[0],$output);
+		#Termination checking result
+		if ($output !~ "ERR:") {}
+		else {
+		    $error_count++;
+		    $error_files=$error_files."term error at: $test->[0] $test->[$i]\n";
+		    print "term error at: $test->[0] $test->[$i]\n";
+		}
+		if($timings) {
+		    log_one_line_of_timings ($test->[0],$output);
+		}
 	    }
 	}
 	

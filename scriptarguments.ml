@@ -33,6 +33,10 @@ let set_file_cp arg =
   Globals.file_cp := arg;
    Globals.cp_test := true
 
+let set_gen_cpfile arg =
+  Globals.cpfile := arg;
+   Globals.gen_cpfile := true
+
 let set_frontend fe_str = match fe_str  with
   | "native" -> fe := NativeFE
   | "xml" -> fe := XmlFE
@@ -305,6 +309,8 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
   ("--sqt", Arg.Set Globals.seq_to_try,
    "translate seq to try");
   ("-cp-test", Arg.String set_file_cp,
+   "compare set of constraints");
+  ("-gen-cpfile", Arg.String set_gen_cpfile,
    "compare set of constraints");
   ] 
 
