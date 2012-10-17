@@ -1400,9 +1400,10 @@ let filter_irr_lhs_bf_hp lfb rfb=
   let rvars = CF.fv (CF.Base rfb) in
   CF.filter_irr_hp_lhs_bf lfb rvars
 
-let get_history_nodes_x root_svl hds history lfb done_args=
+let get_history_nodes_x root_svl hds history lfb done_args eqs=
   let hd_names = List.map (fun hd -> hd.CF.h_formula_data_node) hds in
-  let undefined_ptrs = Gen.BList.difference_eq CP.eq_spec_var root_svl hd_names in
+  let hd_closed_names = (List.fold_left SAU.close_def hd_names eqs) in
+  let undefined_ptrs = Gen.BList.difference_eq CP.eq_spec_var root_svl hd_closed_names in
   (* let _ = Debug.info_pprint ("      undefined_ptrs: " ^ (!CP.print_svl  undefined_ptrs)) no_pos in *)
   let pos = CF.pos_of_formula (CF.Base lfb) in
   let helper (fb,hps,keep_svl) hf=
@@ -1422,11 +1423,11 @@ let get_history_nodes_x root_svl hds history lfb done_args=
   in
   List.fold_left helper (lfb,[],[]) history
 
-let get_history_nodes root_svl hds history lfb done_args=
+let get_history_nodes root_svl hds history lfb done_args eqs=
   let pr1 = pr_list_ln Cprinter.string_of_h_formula in
   let pr2 = Cprinter.string_of_formula_base in
   Debug.no_2 "get_history_nodes" pr1 pr2 (fun (a,_,_) ->pr2 a)
-      (fun _ _ -> get_history_nodes_x root_svl hds history lfb done_args) history lfb
+      (fun _ _ -> get_history_nodes_x root_svl hds history lfb done_args eqs) history lfb
 
 let get_h_formula_data_fr_hnode hn=
   match hn with
@@ -1476,7 +1477,7 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps c
   (* let history = [] in *)
   (*get args which already captures by other hprel*)
   let done_args = CP.remove_dups_svl (List.concat (List.map (fun (_,args) -> args) (lhp_args))) in
-  let lhs_b,history_hrel,keep_root_hrels = get_history_nodes svl hds history lhs_b done_args in
+  let lhs_b,history_hrel,keep_root_hrels = get_history_nodes svl hds history lhs_b done_args (leqs@reqs) in
  (*end*)
   let lhs_b1,rhs_b1 = SAU.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b
     (hds@(List.concat (List.map get_h_formula_data_fr_hnode history))) hvs (leqs@reqs)
@@ -1491,8 +1492,18 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps c
   let lhs_b1 = {lhs_b1 with CF.formula_base_heap = IMM.apply_subs_h_formula crt_holes lhs_b1.CF.formula_base_heap} in
   let rhs_b1 = {rhs_b1 with CF.formula_base_heap = IMM.apply_subs_h_formula crt_holes rhs_b1.CF.formula_base_heap} in
   (*remove equals. args of one hp must be diff*)
-  let lhs_b2 = CF.subst_b leqs lhs_b1 in
-  let rhs_b2 = CF.subst_b (leqs@reqs) rhs_b1 in
+  let filter_helper ls ls_hp_args=
+    List.exists (fun (_,ls1) -> (Gen.BList.difference_eq CP.eq_spec_var ls ls1) = []) ls_hp_args
+  in
+  let rec elim_eqs_args eqs hp_args=
+    List.filter (fun (v1,v2) -> not(filter_helper [v1;v2] hp_args)) eqs
+  in
+  (* let nleqs = elim_eqs_args leqs (lhp_args@rhp_args) in *)
+  (* let nreqs = elim_eqs_args reqs (rhp_args) in *)
+  let nleqs = leqs in
+  let nreqs = reqs in
+  let lhs_b2 = CF.subst_b nleqs lhs_b1 in
+  let rhs_b2 = CF.subst_b (nleqs@nreqs) rhs_b1 in
   (*remove redundant: x=x*)
   let lhs_b3 = {lhs_b2 with CF.formula_base_pure = MCP.mix_of_pure
       (CP.remove_redundant (MCP.pure_of_mix lhs_b2.CF.formula_base_pure))} in

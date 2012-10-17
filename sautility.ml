@@ -411,11 +411,16 @@ let rename_hp_args_x lfb rfb=
     match args2 with
       | [] -> r,p,args1
       | a1::ass -> if CP.mem_svl a1 args1 then
-            let new_v = CP.SpecVar (HpT,
+            let new_v = CP.SpecVar (CP.type_of_spec_var a1,
                   "v_" ^ (string_of_int (Globals.fresh_int())),Unprimed)  in
-            let ss = List.combine [a1] [new_v] in
-            let p0 = CP.filter_var_new p [a1] in
-            let p1 = CP.subst ss p0 in
+            let p1 =
+              (* if CP.isConstTrue p then *)
+                CP.mkPtrEqn a1 new_v lpos
+              (* else *)
+              (*   let ss = List.combine [a1] [new_v] in *)
+              (*   let p0 = CP.filter_var_new p [a1] in *)
+              (*   CP.subst ss p0 *)
+            in
             let p2 = CP.mkAnd p p1 lpos in
             lhelper (args1@[new_v]) ass p2 true
           else lhelper (args1@[a1]) ass p r
@@ -424,18 +429,28 @@ let rename_hp_args_x lfb rfb=
     match args2 with
       | [] -> r,lp,rp,args1
       | a1::ass -> if CP.mem_svl a1 args1 then
-            let new_v = CP.SpecVar (HpT,
+            let new_v = CP.SpecVar (CP.type_of_spec_var a1,
                   "v_" ^ (string_of_int (Globals.fresh_int())),Unprimed)  in
             let ss = List.combine [a1] [new_v] in
             (*lhs*)
-            let lp0 = CP.filter_var_new lp [a1] in
-            let lp1 = CP.subst ss lp0 in
-            let lp2 = CP.mkAnd lp lp1 lpos in
+            (* let lp1 = *)
+            (*   (\* if CP.isConstTrue lp then *\) *)
+            (*     CP.mkPtrEqn a1 new_v lpos *)
+            (*   (\* else *\) *)
+            (*   (\*   let lp0 = CP.filter_var_new lp [a1] in *\) *)
+            (*   (\*   CP.subst ss lp0 *\) *)
+            (* in *)
+            (* let lp2 = CP.mkAnd lp lp1 lpos in *)
             (*rhs*)
-            let rp0 = CP.filter_var_new rp [a1] in
-            let rp1 = CP.subst ss rp0 in
+            let rp1 =
+              (* if CP.isConstTrue rp then *)
+                CP.mkPtrEqn a1 new_v rpos
+              (* else *)
+              (*   let rp0 = CP.filter_var_new rp [a1] in *)
+              (*   CP.subst ss rp0 *)
+            in
             let rp2 = CP.mkAnd rp rp1 rpos in
-            rhelper (args1@[new_v]) ass lp2 rp2 true
+            rhelper (args1@[new_v]) ass lp rp2 true
           else rhelper (args1@[a1]) ass lp rp r
   in
   let rename_one_lhp (hp,args)=
