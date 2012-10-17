@@ -26,6 +26,11 @@ let is_empty_f f=
             (CP.isConstTrue (MCP.pure_of_mix fb.CF.formula_base_pure))
     | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
 
+let is_empty_wop opf=
+  match opf with
+    | None -> false
+    | Some f ->  is_empty_f f
+
 let is_unk_f f=
    match f with
     | CF.Base fb ->
