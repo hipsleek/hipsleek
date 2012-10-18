@@ -506,6 +506,8 @@ let ann_derv = ref false
 
 let allow_ls = ref true (*enable lockset during verification*)
 
+let allow_locklevel = ref true (*enable locklevel during verification*)
+
 let ann_vp = ref true (* Disable variable permissions in default, turn on in para5*)
 
 let allow_ptr = ref true (*true -> enable pointer translation*)
