@@ -80,9 +80,11 @@ and checkeq_formulas_one (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(m
 		  (res,mtl2)
 		)
 		|_ -> (false,[])) (* error no_pos "f1: formula_base, f2 should be formula_base")   (false,mtl))*)
-    |CF.Exists({CF.formula_exists_heap = h1;
+    |CF.Exists( {CF.formula_exists_qvars = qvars1;
+		CF.formula_exists_heap = h1;
 		CF.formula_exists_pure = p1})->(match f2 with 
-		  |CF.Exists ({CF.formula_exists_heap = h2;
+		  |CF.Exists ({CF.formula_exists_qvars = qvars2;
+			       CF.formula_exists_heap = h2;
 			       CF.formula_exists_pure = p2}) -> (
 		    let (res,mtl1) = checkeq_h_formulas hvars h1 h2 mtl in 
 		    let (res,mtl2) = if(res) then 
@@ -92,8 +94,10 @@ and checkeq_formulas_one (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(m
 			)
 		      else  (res,mtl1)
 		    in
-		    let _ = Debug.ninfo_pprint ("EQ. FMT: " ^ (string_of_map_table_list mtl2)) no_pos in
-		    (res,mtl2)
+		    let _ = Debug.info_pprint ("EQ. FMT: " ^ (string_of_map_table_list mtl2)) no_pos in
+		    let new_mtl = check_qvars qvars1 qvars2 mtl2 in
+		    if(List.length new_mtl > 0) then (true, new_mtl) else  (false,[])
+		  (*res,mtl2*)
 		  )
 		  |_ ->  (false,[])) (*report_error no_pos "f1: formula_exists, f2 should be formula_exists" )(false,mtl))*)
     |CF.Or ({CF.formula_or_f1 = f11;
@@ -666,27 +670,53 @@ and match_equiv_notform  hvars b1 pf2 mtl =
 
 and match_equiv_notform_x  (hvars: ident list)(f1: CP.formula) (pf2: CP.formula)(mtl: map_table list): (bool * (map_table list)) =
   let rec match_equiv_notform_helper hvars f1 pf2 mt= 
-  match pf2 with
-    | BForm (b1,_) -> (false,[])
-    | And(pf1,pf2,_) ->  (
-      let res1, mtl1 = match_equiv_notform_helper hvars f1 pf1 mt in
-      let res2, mtl2 = match_equiv_notform_helper hvars f1 pf2 mt in 
-      if(res1 && res2) then (true, mtl1 @ mtl2)   (*merge tables*)
-      else if(res1) then (true, mtl1) 
-      else if(res2) then (true, mtl2)
-      else (false, [])
-    )
-    | AndList _ -> report_error no_pos "not handle ANDLIST yet"
-    | Or f -> (false,[])
-    | Not(f2,_,_) -> checkeq_p_formula hvars f1 f2 mtl
-    | Forall _ 
-    | Exists _ -> report_error no_pos "not handle forall and exists yet"
+    match pf2 with
+      | BForm (b1,_) -> (false,[])
+      | And(pf1,pf2,_) ->  (
+	let res1, mtl1 = match_equiv_notform_helper hvars f1 pf1 mt in
+	let res2, mtl2 = match_equiv_notform_helper hvars f1 pf2 mt in 
+	if(res1 && res2) then (true, mtl1 @ mtl2)   (*merge tables*)
+	else if(res1) then (true, mtl1) 
+	else if(res2) then (true, mtl2)
+	else (false, [])
+      )
+      | AndList _ -> report_error no_pos "not handle ANDLIST yet"
+      | Or f -> (false,[])
+      | Not(f2,_,_) -> checkeq_p_formula hvars f1 f2 mtl
+      | Forall _ 
+      | Exists _ -> report_error no_pos "not handle forall and exists yet"
   in
   let bs, mtls = List.split(List.map (fun mt ->  match_equiv_notform_helper hvars f1 pf2 mt) mtl) in
   let b = if( List.exists (fun c -> c==true) bs) then true else false in
   let mtl2 = List.concat mtls in
   (b,mtl2)
 
+and check_qvars qvars1 qvars2 mtl =
+(*there is no similar specvar in qvars*)
+  let rec helper sv mt =
+    match mt with
+      | [] -> None
+      | (a,b)::y -> if(CP.eq_spec_var sv a) then Some b
+	else if(CP.eq_spec_var sv b) then Some a
+	else helper sv y
+  in
+  let rec check_qvars_mt qvars1 qvars2 mt = 
+    if(List.length qvars1 == List.length qvars2) then (
+      match qvars1 with
+	| [] -> true
+	| sv::y -> (
+	  let sv2l = helper sv mt in
+	  match sv2l with
+	    | None -> false
+	    | Some sv2 -> (
+	      let y2 = List.filter (fun a -> not (CP.eq_spec_var a sv2) ) qvars2 in
+	      check_qvars_mt y y2 mt
+	    )
+	)
+    )
+    else false
+  in
+  List.concat (List.map (fun mt -> let res = check_qvars_mt qvars1 qvars2 mt in if(res) then [] else [mt]) mtl )
 
 let subst_with_mt (mt: map_table) (f: CF.formula): CF.formula =   (*Note: support function for other files*)
   let frs,ts = List.split mt in

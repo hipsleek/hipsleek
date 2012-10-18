@@ -1997,8 +1997,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 		      
 		      let string_of_message sel_hp_rels hp_lst_assume ls_inferred_hps = 
 			let hp_decls = string_of_hp_decls hpdecls in
-			let pr_ass f1 f2 (x,y) = (f1 x)^" -> "^(f2 y) in
-			let pr1 =  pr_lst ",\n" (pr_ass Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
+			let pr_ass f1 f2 (x,y) = (f1 x)^" --> "^(f2 y) in
+			let pr1 =  pr_lst ";\n" (pr_ass Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
 			let ass_cont = pr1 (List.map (fun hp -> hp.CF.hprel_lhs,hp.CF.hprel_rhs)
 							hp_lst_assume) in (*hp_lst_assume*)
 			let hpdefs_cont =  pr1 (List.map (fun (_,hf,f2) -> CF.formula_of_heap hf no_pos,f2)

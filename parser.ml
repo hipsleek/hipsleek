@@ -284,6 +284,7 @@ let peek_try =
          | [GT,_;DOT,_] -> raise Stream.Failure
          | [GT,_;DERIVE,_] -> raise Stream.Failure
          | [GT,_;EQV,_] -> raise Stream.Failure
+	 | [GT,_;CONSTR,_] -> raise Stream.Failure
          | [GT,_;LEFTARROW,_] -> raise Stream.Failure
          | [GT,_;RIGHTARROW,_] -> raise Stream.Failure
          | [GT,_;EQUIV,_] -> raise Stream.Failure
@@ -1012,12 +1013,12 @@ and_pure_constr: [[ peek_and_pure; `AND; t= pure_constr ->t]];
 (* (formula option , expr option )   *)
     
 pure_constr: 
-  [[ peek_pure_out; t= cexp_w -> 
+  [[ peek_pure_out; t= cexp_w ->
        match t with
        | Pure_f f -> f
        | Pure_c (P.Var (v,_)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
        | Pure_c (P.Ann_Exp (P.Var (v,_), Bool)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
-       | _ ->  report_error (get_pos_camlp4 _loc 1) "expected pure_constr, found cexp"
+       | _ -> report_error (get_pos_camlp4 _loc 1) "expected pure_constr, found cexp"
   ]];
 
 ann_term: 
@@ -1037,7 +1038,7 @@ cexp: [[t= cexp_w -> match t with
 
 slicing_label: [[ `DOLLAR -> true ]];
 
-cexp_w :
+cexp_w:
   [ "pure_lbl"
     [ofl= pure_label ; spc=SELF (*LEVEL "pure_or"*)          -> apply_pure_form1 (fun c-> label_formula c ofl) spc]   (*apply_cexp*)
 
@@ -2310,9 +2311,9 @@ test_ele:
   else if(String.compare t "hpdefs" == 0) then ExpectedHpDef (il,cs)
   else report_error no_pos "no_case"]];
 
-constrs: [[t = LIST0 constr SEP `COMMA -> t]];
+constrs: [[t = LIST0 constr SEP `SEMICOLON -> t]];
 
-constr : [[ t=disjunctive_constr; `LEFTARROW; b=disjunctive_constr -> {ass_lhs = F.subst_stub_flow n_flow t;
+constr : [[ t=disjunctive_constr; `CONSTR; b=disjunctive_constr -> {ass_lhs = F.subst_stub_flow n_flow t;
 ass_rhs = F.subst_stub_flow n_flow b}]];
 
 
