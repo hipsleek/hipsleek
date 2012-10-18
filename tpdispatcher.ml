@@ -1527,7 +1527,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   | SPASS -> z3_imply (* Smtsolver.imply  *)ante conseq (* timeout *)
 	| LOG -> find_bool_proof_res imp_no
   in
-	let tstop = Gen.Profiling.get_time () in
+	(*let tstop = Gen.Profiling.get_time () in*)
 	let _ = if should_output () then
 			begin
 				Prooftracer.push_pure_imply ante conseq r;

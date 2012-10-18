@@ -143,12 +143,16 @@ if($timings){
         $worksheet->write($row, 4, "$str_log");
     }
     $row = $row + 2;
+    $cl =3;
     $programCol = 1;
     $mainCol = 2;
     $childCol = 3;
-    $prooflogCol =4;	
-    $totalCol = 5;
-    $falseContextCol = 6;
+    if("$flags" =~ m/--enable-logging-txt\b/ ){
+     $cl=4;
+     $prooflogCol = $cl;	
+    }
+    $totalCol = $cl+1;
+    $falseContextCol = $cl+2;
     my $format = $workbook->add_format();
     $format->set_bold();
     $format->set_align('center');
@@ -157,7 +161,7 @@ if($timings){
     $worksheet->set_column($mainCol,$falseContextCol, 10);
     $worksheet->write($row, $mainCol, "Main", $format);
     $worksheet->write($row, $childCol, "Child", $format);
-    $worksheet->write($row, $prooflogCol, "Proof log", $format);	
+    $worksheet->write($row, $prooflogCol, "Proof log", $format);
     $worksheet->write($row, $totalCol, "Total time", $format);
     $worksheet->write($row, $falseContextCol, "No. false ctx", $format);
 
