@@ -995,10 +995,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        (*c let heap_form = CF.mkExists [ext_var] heap_node ext_null type_constr pos in*)
             (*If this is not a lock, level_f = true*)
 	        let heap_form = CF.mkBase heap_node level_f CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
-            let _ = print_endline ("heap = " ^ (Cprinter.string_of_formula heap_form)) in
+            (* let _ = print_endline ("heap = " ^ (Cprinter.string_of_formula heap_form)) in *)
             let heap_form = prune_preds prog false heap_form in
 	        let res = CF.normalize_max_renaming_list_failesc_context heap_form pos true ctx in
-            let _ = print_endline ("res = " ^ (Cprinter.string_of_list_failesc_context res)) in
+            (* let _ = print_endline ("res = " ^ (Cprinter.string_of_list_failesc_context res)) in *)
 	        res
 	      end;
         | Null pos ->

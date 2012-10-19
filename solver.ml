@@ -2402,6 +2402,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
     | Base ({ formula_base_heap = h;
 	  formula_base_pure = p;
 	  formula_base_pos = pos}) ->
+            let p = MCP.translate_level_mix_formula p in
 			let ph,_,_ = xpure_heap 1 prog h p 1 in
 			let npf = MCP.merge_mems p ph true in
 			not (TP.is_sat_mix_sub_no npf sat_subno true true)
@@ -2409,6 +2410,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
       formula_exists_heap = qh;
       formula_exists_pure = qp;
       formula_exists_pos = pos}) ->
+            let qp = MCP.translate_level_mix_formula qp in
 			let ph,_,_ = xpure_heap 1 prog qh qp 1 in
 			let npf = MCP.merge_mems qp ph true in
 			not (TP.is_sat_mix_sub_no npf sat_subno true true)

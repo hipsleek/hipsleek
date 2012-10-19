@@ -80,6 +80,8 @@ and p_formula =
 	  (* bag formulas *)
   | BagIn of (spec_var * exp * loc)
   | BagNotIn of (spec_var * exp * loc)
+  | BagLIn of (spec_var * exp * loc) (*in a bag of locklevels*)
+  | BagLNotIn of (spec_var * exp * loc) (*not in bag of locklevels*)
   | BagSub of (exp * exp * loc)
   | BagMin of (spec_var * spec_var * loc)
   | BagMax of (spec_var * spec_var * loc)
@@ -695,6 +697,12 @@ and bfv (bf : b_formula) =
     | BagNotIn (v, a1, _) ->
           let fv1 = afv a1 in
           [v] @ fv1
+    | BagLIn (v, a1, _) ->
+          let fv1 = afv a1 in
+          [v] @ fv1
+    | BagLNotIn (v, a1, _) ->
+          let fv1 = afv a1 in
+          [v] @ fv1
     | BagSub (a1, a2, _) -> combine_avars a1 a2
     | BagMax (v1, v2, _) ->remove_dups_svl ([v1] @ [v2])
     | BagMin (v1, v2, _) ->remove_dups_svl ([v1] @ [v2])
@@ -1152,6 +1160,7 @@ match pf with
   | Neq (e1,e2,_) -> (is_exp_arith e1)&&(is_exp_arith e2)
   | EqMax (e1,e2,e3,_) | EqMin (e1,e2,e3,_) -> (is_exp_arith e1)&&(is_exp_arith e2) && (is_exp_arith e3)
         (* bag formulas *)
+  | BagLIn _ | BagLNotIn _ 
   | BagIn _ | BagNotIn _ | BagSub _ | BagMin _ | BagMax _
   | VarPerm _
             (* list formulas *)
@@ -1968,6 +1977,8 @@ and pos_of_b_formula (b: b_formula) =
   | EqMax (_, _, _, p) -> p
   | EqMin (_, _, _, p) -> p
 	  (* bag formulas *)
+  | BagLIn (_, _, p) -> p
+  | BagLNotIn (_, _, p) -> p
   | BagIn (_, _, p) -> p
   | BagNotIn (_, _, p) -> p
   | BagSub (_, _, p) -> p
@@ -2016,6 +2027,8 @@ and subst_pos_pformula p pf= match pf with
   | Neq (e1, e2, _) -> Neq (e1, e2, p)
   | EqMax (e1, e2,e3, _) -> EqMax (e1, e2,e3, p)
   | EqMin (e1, e2,e3, _) -> EqMin (e1, e2,e3, p)
+  | BagLIn (sv, e, _) -> BagLIn (sv, e, p)
+  | BagLNotIn (sv, e, _) -> BagLNotIn (sv, e, p)
   | BagIn (sv, e, _) -> BagIn (sv, e, p)
   | BagNotIn (sv, e, _) -> BagNotIn (sv, e, p)
   | BagSub(e1, e2, _) -> BagSub (e1, e2, p)
@@ -2270,6 +2283,8 @@ and b_apply_subs sst bf =
     | EqMin (a1, a2, a3, pos) -> EqMin (e_apply_subs sst a1,
 	  e_apply_subs sst a2,
 	  e_apply_subs sst a3, pos)
+    | BagLIn (v, a1, pos) -> BagLIn (subs_one sst v, e_apply_subs sst a1, pos)
+    | BagLNotIn (v, a1, pos) -> BagLNotIn (subs_one sst v, e_apply_subs sst a1, pos)
     | BagIn (v, a1, pos) -> BagIn (subs_one sst v, e_apply_subs sst a1, pos)
     | BagNotIn (v, a1, pos) -> BagNotIn (subs_one sst v, e_apply_subs sst a1, pos)
           (* is it ok?... can i have a set of boolean values?... don't think so... *)
@@ -2319,6 +2334,8 @@ and b_apply_subs_varperm sst bf =
   | EqMin (a1, a2, a3, pos) -> EqMin (e_apply_subs sst a1,
 	e_apply_subs sst a2,
 	e_apply_subs sst a3, pos)
+  | BagLIn (v, a1, pos) -> BagLIn (subs_one sst v, e_apply_subs sst a1, pos)
+  | BagLNotIn (v, a1, pos) -> BagLNotIn (subs_one sst v, e_apply_subs sst a1, pos)
   | BagIn (v, a1, pos) -> BagIn (subs_one sst v, e_apply_subs sst a1, pos)
   | BagNotIn (v, a1, pos) -> BagNotIn (subs_one sst v, e_apply_subs sst a1, pos)
         (* is it ok?... can i have a set of boolean values?... don't think so... *)
@@ -2494,6 +2511,8 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
     | Neq (a1, a2, pos) -> Neq (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
     | EqMax (a1, a2, a3, pos) -> EqMax (a_apply_par_term sst a1, a_apply_par_term sst a2, a_apply_par_term sst a3, pos)
     | EqMin (a1, a2, a3, pos) -> EqMin (a_apply_par_term sst a1, a_apply_par_term sst a2, a_apply_par_term sst a3, pos)
+    | BagLIn (v, a1, pos) -> BagLIn (v, a_apply_par_term sst a1, pos)
+    | BagLNotIn (v, a1, pos) -> BagLNotIn (v, a_apply_par_term sst a1, pos)
     | BagIn (v, a1, pos) -> BagIn (v, a_apply_par_term sst a1, pos)
     | BagNotIn (v, a1, pos) -> BagNotIn (v, a_apply_par_term sst a1, pos)
     | BagSub (a1, a2, pos) -> BagSub (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
@@ -2585,6 +2604,8 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
     | Neq (a1, a2, pos) -> Neq (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
     | EqMax (a1, a2, a3, pos) -> EqMax (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, a_apply_one_term (fr, t) a3, pos)
     | EqMin (a1, a2, a3, pos) -> EqMin (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, a_apply_one_term (fr, t) a3, pos)
+    | BagLIn (v, a1, pos) -> BagLIn (v, a_apply_one_term (fr, t) a1, pos)
+    | BagLNotIn (v, a1, pos) -> BagLNotIn (v, a_apply_one_term (fr, t) a1, pos)
     | BagIn (v, a1, pos) -> BagIn (v, a_apply_one_term (fr, t) a1, pos)
     | BagNotIn (v, a1, pos) -> BagNotIn (v, a_apply_one_term (fr, t) a1, pos)
     | BagSub (a1, a2, pos) -> BagSub (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
@@ -3611,6 +3632,8 @@ and b_apply_one_exp (fr, t) bf =
   | EqMin (a1, a2, a3, pos) -> EqMin (e_apply_one_exp (fr, t) a1,
 									  e_apply_one_exp (fr, t) a2,
 									  e_apply_one_exp (fr, t) a3, pos)
+  | BagLIn (v, a1, pos) -> pf
+  | BagLNotIn (v, a1, pos) -> pf
   | BagIn (v, a1, pos) -> pf
   | BagNotIn (v, a1, pos) -> pf
 	(* is it ok?... can i have a set of boolean values?... don't think so... *)
@@ -4432,6 +4455,8 @@ and b_form_simplify_x (b:b_formula) :b_formula =
 			   (*    	end *)
 			   (*else
              	 EqMin (ne1, ne2, ne3, l)*)
+    |  BagLIn (v, e1, l) ->  BagLIn (v, purge_mult (simp_mult e1), l)
+    |  BagLNotIn (v, e1, l) ->  BagLNotIn (v, purge_mult (simp_mult e1), l)
     |  BagIn (v, e1, l) ->  BagIn (v, purge_mult (simp_mult e1), l)
     |  BagNotIn (v, e1, l) ->  BagNotIn (v, purge_mult (simp_mult e1), l)
     |  ListIn (e1, e2, l) -> ListIn (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
@@ -4702,6 +4727,12 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
 		        let (ne3,r3) = helper new_arg e3 in
 		        (EqMin (ne1,ne2,ne3,l),f_comb[r1;r2;r3])
 		            (* bag formulas *)
+	      | BagLIn (v,e,l)->
+		        let (ne1,r1) = helper new_arg e in
+		        (BagLIn (v,ne1,l),f_comb [r1])
+	      | BagLNotIn (v,e,l)->
+		        let (ne1,r1) = helper new_arg e in
+		        (BagLNotIn (v,ne1,l),f_comb [r1])
 	      | BagIn (v,e,l)->
 		        let (ne1,r1) = helper new_arg e in
 		        (BagIn (v,ne1,l),f_comb [r1])
@@ -4804,6 +4835,12 @@ let transform_b_formula f (e:b_formula) :b_formula =
 		  let ne3 = transform_exp f_exp e3 in
 		  EqMin (ne1,ne2,ne3,l)
 	  (* bag formulas *)
+		| BagLIn (v,e,l)->
+		  let ne1 = transform_exp f_exp e in
+		  BagLIn (v,ne1,l)
+		| BagLNotIn (v,e,l)->
+		  let ne1 = transform_exp f_exp e in
+		  BagLNotIn (v,ne1,l)
 		| BagIn (v,e,l)->
 		  let ne1 = transform_exp f_exp e in
 		  BagIn (v,ne1,l)
@@ -5153,6 +5190,8 @@ let norm_bform_a (bf:b_formula) : b_formula =
         | Gte (e1,e2,l) ->  norm_bform_leq e2 e1 l
         | Eq  (e1,e2,l) -> norm_bform_eq e1 e2 l
         | Neq (e1,e2,l) -> norm_bform_neq e1 e2 l 
+        | BagLIn (v,e,l) -> BagLIn (v, norm_exp e, l)
+        | BagLNotIn (v,e,l) -> BagLNotIn (v, norm_exp e, l)
         | BagIn (v,e,l) -> BagIn (v, norm_exp e, l)
         | BagNotIn (v,e,l) -> BagNotIn (v, norm_exp e, l)
         | ListIn (e1,e2,l) -> ListIn (norm_exp e1,norm_exp e2,l)
@@ -6076,6 +6115,8 @@ let norm_bform_b (bf:b_formula) : b_formula =
     | Neq (e1,e2,l) -> 
           let (e1,e2) = normalise_two_sides e1 e2 in
           norm_bform_neq e1 e2 l  
+    | BagLIn (v,e,l) -> BagLIn (v, norm_exp e, l)
+    | BagLNotIn (v,e,l) -> BagLNotIn (v, norm_exp e, l)
     | BagIn (v,e,l) -> BagIn (v, norm_exp e, l)
     | BagNotIn (v,e,l) -> BagNotIn (v, norm_exp e, l)
     | ListIn (e1,e2,l) -> ListIn (norm_exp e1,norm_exp e2,l)
@@ -8083,13 +8124,12 @@ let drop_svl_pure (pf : formula) (svl:spec_var list) : formula =
 
 (*Translate level(l) into l_mu before sending to provers*)
 let translate_level_pure_x (pf : formula) : formula =
-  let trans_bf = (fun bf -> None) in
-  let trans_exp = (fun e ->
+  let trans_exp (e:exp): exp =
       let rec helper e = 
         match e with
           | Level (SpecVar (t,id,p),l) ->
               let nid = id^"_mu" in
-              (Var (SpecVar (t,nid,p),l))
+              (Var (SpecVar (level_data_typ,nid,p),l))
           | Bag (exps,pos) -> 
               let nexps = List.map helper exps in
               Bag (nexps,pos)
@@ -8104,12 +8144,32 @@ let translate_level_pure_x (pf : formula) : formula =
               let nexp2 = helper exp2 in
               BagDiff (nexp1,nexp2,pos)
           | _ -> e
-      in Some (helper e)
-  ) in
+      in (helper e)
+  in
+  let trans_exp_opt e = Some (trans_exp e) in
+  let trans_bf = (fun bf ->
+      let rec helper bf =
+        let pf,sth = bf in 
+        (match pf with
+          | BagLIn (SpecVar (t,id,pr),e,pos) ->
+              let nid = id^"_mu" in
+              let nsv = SpecVar (level_data_typ,nid,pr) in
+              let npf = BagIn (nsv,e,pos) in
+              let nbf = npf,sth in
+              Some nbf
+          | BagLNotIn (SpecVar (t,id,pr),e,pos) ->
+              let nid = id^"_mu" in
+              let nsv = SpecVar (level_data_typ,nid,pr) in
+              let npf = BagNotIn (nsv,e,pos) in
+              let nbf = npf,sth in
+              Some nbf
+          |_ -> None)
+      in (helper bf))
+  in
   let rec helper f =
     match f with
       | BForm (bf, lbl) ->
-          let n_bf = transform_b_formula (trans_bf,trans_exp) bf in
+          let n_bf = transform_b_formula (trans_bf,trans_exp_opt) bf in
           BForm (n_bf, lbl)
       | And (f1, f2, pos) ->
           let n_f1 = helper f1 in
@@ -8193,6 +8253,22 @@ let infer_lsmu_pure_x (f:formula) : formula =
                     let np = BForm (nbf,lbl) in
                     And (p,np,pos)
                   else BForm (bf,lbl)
+              | BagIn (SpecVar (t,id,pr),e,pos) ->
+                  if (t=lock_typ) then
+                    let ne =  convert_ls_to_lsmu_exp e in
+                    let npf = BagLIn (SpecVar (t,id,pr),ne,pos) in
+                    let nbf = (npf,sth) in
+                    let np = BForm (nbf,lbl) in
+                    And (p,np,pos)
+                  else p
+              | BagNotIn (SpecVar (t,id,pr),e,pos) ->
+                  if (t=lock_typ) then
+                    let ne =  convert_ls_to_lsmu_exp e in
+                    let npf = BagLNotIn (SpecVar (t,id,pr),ne,pos) in
+                    let nbf = (npf,sth) in
+                    let np = BForm (nbf,lbl) in
+                    And (p,np,pos)
+                  else p
               | _ -> BForm (bf,lbl)
             )
         | And (f1,f2,pos) ->

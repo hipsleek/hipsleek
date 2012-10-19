@@ -624,6 +624,8 @@ let is_array_b_formula (pf,_) = match pf with
 						| _ -> (match (is_array_exp e2) with
 											| Some true -> Some true
 											| _ -> is_array_exp e3))
+    | CP.BagLIn (_,e,_) 
+    | CP.BagLNotIn (_,e,_)
     | CP.BagIn (_,e,_) 
     | CP.BagNotIn (_,e,_)
 		-> is_array_exp e
