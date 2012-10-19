@@ -461,12 +461,14 @@ let lock_name = "lock"
 let lock_typ = Named "lock"
 
 let ls_name = "LS"
+let lsmu_name = "LSMU"
 let ls_data_typ = "lock"
 
 let level_pred = "level"
 let level_name = "mu"
 let level_data_typ = Int
 let ls_typ = BagT (Named ls_data_typ)
+let lsmu_typ = BagT (Int)
 
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)

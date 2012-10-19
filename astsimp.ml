@@ -1891,7 +1891,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           let d_f_vars = CF.struc_fv dynamic_specs_list in
           if (List.exists (fun v -> CP.name_of_spec_var v = Globals.ls_name) (s_f_vars@s_f_vars)) then
             let ls_var = CP.mkLsVar Unprimed in
-            (ls_var::by_names)
+            let lsmu_var = CP.mkLsmuVar Unprimed in
+            (lsmu_var::ls_var::by_names)
           else by_names
      else by_names
     in
@@ -1942,8 +1943,9 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let struc_fv = CP.diff_svl (CF.struc_fv_infer final_static_specs_list) log_vars in
       (*LOCKSET variable*********)
       let ls_var = (ls_typ,ls_name) in
+      let lsmu_var = (lsmu_typ,lsmu_name) in
       (**************************)
-      let ffv = Gen.BList.difference_eq cmp (*(CF.struc_fv_infer final_static_specs_list)*) struc_fv (ls_var::(cret_type,res_name)::(Named raisable_class,eres_name)::args2) in
+      let ffv = Gen.BList.difference_eq cmp (*(CF.struc_fv_infer final_static_specs_list)*) struc_fv (lsmu_var::ls_var::(cret_type,res_name)::(Named raisable_class,eres_name)::args2) in
     if (ffv!=[]) then 
       Error.report_error { 
           Err.error_loc = no_pos; 
@@ -6537,7 +6539,7 @@ and err_prim_l_vars s l pos=
   List.iter (fun (c1,c2)-> match c2 with
     | Primed  ->
         (*LOCKSET: ignore "ghost" parameter ls*)
-        if (c1 = Globals.ls_name) then () else
+        if (c1 = Globals.ls_name || c1 = Globals.lsmu_name) then () else
         Error.report_error { 
           Error.error_loc = pos;
           Error.error_text = c1^"' "^s}
@@ -6713,8 +6715,10 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
               (*LOCKSET variable*********)
               let ls_pvar = (ls_name,Primed) in
               let ls_uvar = (ls_name,Unprimed) in
+              let lsmu_pvar = (lsmu_name,Primed) in
+              let lsmu_uvar = (lsmu_name,Unprimed) in
               (**************************)
-              let p = ls_uvar::ls_pvar::p in
+              let p = lsmu_uvar::lsmu_pvar::ls_uvar::ls_pvar::p in
               let ns,_ = case_normalize_struc_formula prog h p b.Iast.exp_while_specs false false strad in
               (Iast.While {b with Iast.exp_while_condition=nc; Iast.exp_while_body=nb;Iast.exp_while_specs = ns},h,p)
         | Iast.Try b-> 
@@ -6749,8 +6753,10 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
   (*LOCKSET variable*********)
   let ls_pvar = (ls_name,Primed) in
   let ls_uvar = (ls_name,Unprimed) in
+  let lsmu_pvar = (ls_name,Primed) in
+  let lsmu_uvar = (ls_name,Unprimed) in
   (**************************)
-  let p = ls_uvar::ls_pvar::(res_name,Unprimed)::(List.map (fun c1-> (c1.Iast.param_name,Primed)) (List.filter (fun c-> c.Iast.param_mod == Iast.RefMod) gl_proc_args)) in
+  let p = lsmu_uvar::lsmu_pvar::ls_uvar::ls_pvar::(res_name,Unprimed)::(List.map (fun c1-> (c1.Iast.param_name,Primed)) (List.filter (fun c-> c.Iast.param_mod == Iast.RefMod) gl_proc_args)) in
   let strad_s = 
     let pr,pst = IF.struc_split_fv f.Iast.proc_static_specs false in
     Gen.BList.intersect_eq (=) pr pst in

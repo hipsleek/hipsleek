@@ -2157,7 +2157,7 @@ and add_pure_formula_to_mix_formula (pure_f: CP.formula) (mix_f: MCP.mix_formula
 
 and one_formula_subst sst (f : one_formula) = 
   let sst = List.filter (fun (fr,t) -> 
-      if ((CP.name_of_spec_var fr)=Globals.ls_name) then false
+      if ((CP.name_of_spec_var fr)=Globals.ls_name || (CP.name_of_spec_var fr)=Globals.lsmu_name) then false
       else true
   ) sst in (*donot rename ghost LOCKSET name*)
   let df = f.formula_delayed in
@@ -7709,9 +7709,20 @@ let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:f
   let union_exp = CP.mkBagUnion [ls_uvar_exp;bag_exp] pos in (* union(ls,{l})*)
   let ls_f = CP.mkEqExp ls_pvar_exp union_exp pos in (*ls' = union(ls,{l})*)
   (**************)
-  let post = mkBase_simp lock_node (MCP.OnePF ls_f) in
+  (****LOCKSET LSMU****)
+  let lsmu_uvar = CP.mkLsmuVar Unprimed in
+  let lsmu_pvar = CP.mkLsmuVar Primed in
+  let lsmu_uvar_exp = CP.Var (lsmu_uvar,pos) in
+  let lsmu_pvar_exp = CP.Var (lsmu_pvar,pos) in
+  let varmu_exp = CP.Level (var,pos)in
+  let bagmu_exp = CP.mkBag [varmu_exp] pos in  (* {l.mu} *)
+  let unionmu_exp = CP.mkBagUnion [lsmu_uvar_exp;bagmu_exp] pos in (* union(LSMU,{l.mu})*)
+  let lsmu_f = CP.mkEqExp lsmu_pvar_exp unionmu_exp pos in (*lsmu' = union(lsmu,{l.mu})*)
+  let lock_f = CP.And (ls_f, lsmu_f,pos) in
+  (**************)
+  let post = mkBase_simp lock_node (MCP.OnePF lock_f) in
   (* let post = formula_of_heap_w_normal_flow lock_node pos in *)
-  let post = EAssume ([ls_uvar],post,lbl) in
+  let post = EAssume ([ls_uvar;lsmu_uvar],post,lbl) in
   let pre = formula_of_heap_w_normal_flow data_node pos in
   EBase { 
 	formula_struc_explicit_inst = [];
@@ -7724,7 +7735,7 @@ let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:f
 
 (*automatically generate pre/post conditions of init[lock_sort](lock_var,lock_args) *)
 let prepost_of_init (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos = 
-  Debug.no_4 "prepost_of_init"
+  Debug.ho_4 "prepost_of_init"
       !print_sv
       (fun str -> str)
       (fun str -> str)

@@ -1045,7 +1045,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (*LOCKSET: ls is not free var, it is a ghost argument in proc_args*)
                   (* let _ = print_endline (" ### pre_free_vars = " ^ (Cprinter.string_of_spec_var_list pre_free_vars)) in *)
                     let ls_var = [(CP.mkLsVar Unprimed)] in
-                    let pre_free_vars = List.filter (fun v -> CP.name_of_spec_var v <> Globals.ls_name) pre_free_vars in
+                    let pre_free_vars = List.filter (fun v -> CP.name_of_spec_var v <> Globals.ls_name && CP.name_of_spec_var v <> Globals.lsmu_name) pre_free_vars in
                     (* free vars get to be substituted by fresh vars *)
                     let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
                     let renamed_spec = 
@@ -1063,7 +1063,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (*ALSO rename ls to ls'*)
                     (* let st_ls = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) ls_vars in *)
                     (* let st3= st2@st_ls in (*TO CHECK*) *)
-                    (*how to handle LOCKSET when join*)
                     (*ALSO rename ls to ls'*)
                     let st_ls = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) ls_var in
                     let st3= st2@st_ls in
@@ -1342,7 +1341,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let pre_free_vars = List.filter (fun v -> (CP.type_of_spec_var v) != RelT) pre_free_vars in
                   (*LOCKSET: ls is not free var*)
                   let ls_var = [(CP.mkLsVar Unprimed)] in
-                  let pre_free_vars = List.filter (fun v -> CP.name_of_spec_var v <> Globals.ls_name) pre_free_vars in
+                  let pre_free_vars = List.filter (fun v -> CP.name_of_spec_var v <> Globals.ls_name && CP.name_of_spec_var v <> Globals.lsmu_name) pre_free_vars in
                   (* let _ = print_endline (" WN free vars to rename : "^(Cprinter.string_of_spec_var_list pre_free_vars)) in *)
                   let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
                   let renamed_spec = 
@@ -1758,8 +1757,10 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                 (*****LOCKSET variable: ls'=ls *********)
                 let args = 
                   if (!allow_ls) then
+                    let lsmu_var = (lsmu_typ,lsmu_name) in
                     let ls_var = (ls_typ,ls_name) in
-                     ls_var::proc.proc_args
+                    (*LS and LSMU are ghost variables*)
+                     lsmu_var::ls_var::proc.proc_args
                   else
                     proc.proc_args
                 in

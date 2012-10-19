@@ -1187,6 +1187,8 @@ and mkLevel sv pos = Level (sv, pos)
 (*create lockset var, primed or unprimed*)
 and mkLsVar p = (SpecVar (ls_typ, ls_name, p))
 
+and mkLsmuVar p = (SpecVar (lsmu_typ, lsmu_name, p))
+
 and mkBag svl pos = Bag (svl,pos)
 
 and mkEmptyBag pos = mkBag [] pos
@@ -8080,16 +8082,29 @@ let drop_svl_pure (pf : formula) (svl:spec_var list) : formula =
   in helper pf
 
 (*Translate level(l) into l_mu before sending to provers*)
-
-(*Translate level(l) into l_mu before sending to provers*)
-let translate_level_pure (pf : formula) : formula =
+let translate_level_pure_x (pf : formula) : formula =
   let trans_bf = (fun bf -> None) in
   let trans_exp = (fun e ->
-      match e with
-        | Level (SpecVar (t,id,p),l) ->
-            let nid = id^"_mu" in
-            Some (Var (SpecVar (t,nid,p),l))
-        | _ -> Some e
+      let rec helper e = 
+        match e with
+          | Level (SpecVar (t,id,p),l) ->
+              let nid = id^"_mu" in
+              (Var (SpecVar (t,nid,p),l))
+          | Bag (exps,pos) -> 
+              let nexps = List.map helper exps in
+              Bag (nexps,pos)
+          | BagUnion (exps,pos) ->
+              let nexps = List.map helper exps in
+              BagUnion (nexps,pos)
+          | BagIntersect (exps,pos) -> 
+              let nexps = List.map helper exps in
+              BagIntersect (nexps,pos)
+          | BagDiff (exp1,exp2,pos) -> 
+              let nexp1 = helper exp1 in
+              let nexp2 = helper exp2 in
+              BagDiff (nexp1,nexp2,pos)
+          | _ -> e
+      in Some (helper e)
   ) in
   let rec helper f =
     match f with
@@ -8121,3 +8136,7 @@ let translate_level_pure (pf : formula) : formula =
           Exists (sv, n_f, lbl, pos)
   in helper pf
 
+(*Translate level(l) into l_mu before sending to provers*)
+let translate_level_pure (pf : formula) : formula =
+  Debug.no_1 "translate_level_pure" !print_formula !print_formula 
+      translate_level_pure_x pf
