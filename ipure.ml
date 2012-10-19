@@ -55,7 +55,8 @@ and p_formula =
 and exp = 
   | Ann_Exp of (exp * typ)
   | Null of loc
-  | Var of ((ident * primed) * loc) 
+  | Level of ((ident * primed) * loc)
+  | Var of ((ident * primed) * loc)
 	  (* variables could be of type pointer, int, bags, lists etc *)
   | IConst of (int * loc)
   | FConst of (float * loc)
@@ -187,6 +188,7 @@ and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list =
     Gen.BList.remove_dups_eq (=) (fv1 @ fv2)
 
 and afv (af : exp) : (ident * primed) list = match af with
+  | Level (sv, _) -> [sv]
   | Var (sv, _) -> let id = fst sv in
 						if (id.[0] = '#') then [] else [sv]
   | Null _ 
@@ -487,6 +489,7 @@ and pos_of_formula (f : formula) = match f with
 and pos_of_exp (e : exp) = match e with
   | Null p 
   | Var (_, p) 
+  | Level (_, p) 
   | IConst (_, p) 
   | FConst (_, p) 
   | AConst (_, p) -> p
@@ -610,6 +613,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | AConst _ -> e
   | Ann_Exp (e,ty) -> Ann_Exp ((e_apply_one p e), ty)
   | Var (sv, pos) -> Var ((if eq_var sv fr then t else sv), pos)
+  | Level (sv, pos) -> Level ((if eq_var sv fr then t else sv), pos)
   | Add (a1, a2, pos) -> Add (e_apply_one p a1,
 							  e_apply_one p a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_one p a1,
@@ -778,6 +782,7 @@ and find_lexp_exp (e: exp) ls =
   match e with
 	| Null _
 	| Var _
+	| Level _
 	| IConst _
 	| AConst _
 	| FConst _ -> []
@@ -827,6 +832,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   match expr with
   | Null _ 
   | Var _ 
+  | Level _ 
   | IConst _ 
   | AConst _ 
   | FConst _ -> false
@@ -853,6 +859,7 @@ let rec contain_vars_exp (expr : exp) : bool =
 and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = match e with 
   | Null _ 
   | Var _ 
+  | Level _ 
   | IConst _ 
   | AConst _ 
   | FConst _ -> (e, None)

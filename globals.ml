@@ -458,10 +458,12 @@ let finalize_name = "finalize"
 let acquire_name = "acquire"
 let release_name = "release"
 let lock_name = "lock"
+let lock_typ = Named "lock"
 
 let ls_name = "LS"
 let ls_data_typ = "lock"
 
+let level_pred = "level"
 let level_name = "mu"
 let level_data_typ = Int
 let ls_typ = BagT (Named ls_data_typ)

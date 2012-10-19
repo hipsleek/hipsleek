@@ -202,7 +202,8 @@ let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
                                     | _ -> Pure_f (P.BForm(((fct f1 f2), None), None)))
                              )
   | Pure_f f1 , Pure_c f2 ->(match f1  with 
-						    | P.BForm((pf,il),oe) -> (match pf with 
+						    | P.BForm((pf,il),oe) -> 
+                                (match pf with 
                                                | P.Lt (a1, a2, _) 
                                                | P.Lte (a1, a2, _) 
                                                | P.Gt (a1, a2, _) 
@@ -921,7 +922,8 @@ and_pure_constr: [[ peek_and_pure; `AND; t= pure_constr ->t]];
 pure_constr: [[ peek_pure_out; t= cexp_w -> (*let _ = print_string ("pure_constr" ^ (string_of_int (get_pos_camlp4 _loc 1))) in*)
 					match t with
                     | Pure_f f -> f
-                    | Pure_c (P.Var (v,_)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
+                    | Pure_c (P.Var (v,_)) -> 
+                        P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
                     | _ ->  report_error (get_pos_camlp4 _loc 1) "expected pure_constr, found cexp"]];
 
 ann_term: 
@@ -1092,6 +1094,7 @@ cexp_w :
         if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
         else
           begin
+          (* if id=level_pred then Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None)) else *)
           if not(rel_names # mem id) then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation");
           Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
           end
@@ -1100,7 +1103,18 @@ cexp_w :
         (*   else Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))) *)
         (* with Invalid_argument _ -> Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))) *)
       | peek_cexp_list; ocl = opt_comma_list -> (* let tmp = List.map (fun c -> P.Var(c,get_pos_camlp4 _loc 1)) ocl in *) Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
-      | t = cid                -> (* print_string ("cexp:"^(fst t)^"\n"); *)Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
+      | t = cid                ->
+          let id,p = t in
+          if String.contains id '.' then
+            let strs = Gen.split_by "." id in
+            let lock = List.hd strs in
+            let mu = List.hd (List.tl strs) in
+            if mu=Globals.level_name then
+              Pure_c (P.Level ((lock,p), get_pos_camlp4 _loc 1))
+            else
+              Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
+          else
+            Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
       | `IMM -> Pure_c (P.AConst(Imm, get_pos_camlp4 _loc 1))
       | `MUT -> Pure_c (P.AConst(Mutable, get_pos_camlp4 _loc 1))
       | `LEND -> Pure_c (P.AConst(Lend, get_pos_camlp4 _loc 1))

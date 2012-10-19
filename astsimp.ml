@@ -4633,6 +4633,8 @@ and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
     | IP.AConst(a,pos) -> CP.AConst(a,pos)
     | IP.Var ((v, p), pos) -> 
           CP.Var ((trans_var (v,p) stab pos),pos)
+    | IP.Level ((v, p), pos) -> 
+          CP.Level ((trans_var (v,p) stab pos),pos)
     | IP.Ann_Exp (e, t) -> trans_pure_exp e stab
     | IP.IConst (c, pos) -> CP.IConst (c, pos)
     | IP.FConst (c, pos) -> CP.FConst (c, pos)
@@ -4689,7 +4691,7 @@ and must_unify_expect_x (k1 : typ) (k2 : typ) stab pos : typ  =
   let k = unify_expect k1 k2 stab in
   match k with
     | Some r -> r
-    | None -> report_error pos ("TYPE ERROR : Found "
+    | None -> report_error pos ("TYPE ERROR 1 : Found "
       ^(string_of_typ (get_type_entire stab k1))
       ^" but expecting "^(string_of_typ (get_type_entire  stab k2)))
 
@@ -4745,7 +4747,7 @@ and must_unify_expect_test k1 k2 pos =
   let k = unify_expect_modify false k1 k2 !type_table  in
   match k with
     | Some r -> r
-    | None -> report_error pos ("TYPE ERROR : Found "
+    | None -> report_error pos ("TYPE ERROR 2 : Found "
       ^(string_of_typ (k1))
       ^" but expecting "^(string_of_typ (k2)))
 
@@ -4954,6 +4956,12 @@ and gather_type_info_exp_x a0 stab et =
     | IP.Var ((sv, sp), pos) -> 
           let t = gather_type_info_var sv stab et pos
           in t
+    | IP.Level ((sv, sp), pos) ->
+          (*sv should be of lock_typ*)
+          let _ = gather_type_info_var sv stab lock_typ pos in
+          (*level(sv) should be of type Int*)
+          let _ = must_unify_expect Globals.level_data_typ et stab pos in
+          Globals.level_data_typ
     | IP.AConst (_,pos) -> 
           let t = I.ann_type in
           let _ = must_unify_expect t et stab pos in
