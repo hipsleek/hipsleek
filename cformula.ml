@@ -7717,7 +7717,8 @@ let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:f
   let varmu_exp = CP.Level (var,pos)in
   let bagmu_exp = CP.mkBag [varmu_exp] pos in  (* {l.mu} *)
   let unionmu_exp = CP.mkBagUnion [lsmu_uvar_exp;bagmu_exp] pos in (* union(LSMU,{l.mu})*)
-  let lsmu_f = CP.mkEqExp lsmu_pvar_exp unionmu_exp pos in (*lsmu' = union(lsmu,{l.mu})*)
+  let lsmu_f = CP.mkEqExp lsmu_pvar_exp unionmu_exp pos in (*lsmu' = union(lsmu,{l.mu})*) 
+  (**************)
   let lock_f = CP.And (ls_f, lsmu_f,pos) in
   (**************)
   let post = mkBase_simp lock_node (MCP.OnePF lock_f) in
@@ -7790,9 +7791,21 @@ let prepost_of_finalize_x (var:CP.spec_var) name sort (args:CP.spec_var list) (l
   let diff_exp = CP.mkBagDiff ls_uvar_exp bag_exp pos in (* diff(ls,{l})*)
   let ls_post_f = CP.mkEqExp ls_pvar_exp diff_exp pos in (*ls' = diff(ls,{l})*)
   (**************)
-  let post = mkBase_simp data_node (MCP.OnePF ls_post_f) in
+  (****LOCKSET****)
+  let lsmu_uvar = CP.mkLsmuVar Unprimed in
+  let lsmu_pvar = CP.mkLsmuVar Primed in
+  let lsmu_uvar_exp = CP.Var (lsmu_uvar,pos) in
+  let lsmu_pvar_exp = CP.Var (lsmu_pvar,pos) in
+  let varmu_exp = CP.Level (var,pos)in
+  let bagmu_exp = CP.mkBag [varmu_exp] pos in  (* {l.mu} *)
+  let diffmu_exp = CP.mkBagDiff lsmu_uvar_exp bagmu_exp pos in (* diff(lsmu,{l.mu})*)
+  let lsmu_post_f = CP.mkEqExp lsmu_pvar_exp diffmu_exp pos in (*ls' = diff(lsmu,{l.mu})*)
+  (**************)
+  let lock_post_f = CP.And (ls_post_f,lsmu_post_f,pos) in
+  (**************)
+  let post = mkBase_simp data_node (MCP.OnePF lock_post_f) in
   (* let post = formula_of_heap_w_normal_flow data_node pos in *)
-  let post = EAssume ([ls_uvar],post,lbl) in
+  let post = EAssume ([ls_uvar;lsmu_uvar],post,lbl) in
   let pre =  mkBase_simp lock_node (MCP.OnePF ls_pre_f) in
   (* let pre = formula_of_heap_w_normal_flow lock_node pos in *)
   EBase { 
@@ -7805,7 +7818,7 @@ let prepost_of_finalize_x (var:CP.spec_var) name sort (args:CP.spec_var list) (l
 
 (*automatically generate pre/post conditions of finalize[lock_sort](lock_var,lock_args) *)
 let prepost_of_finalize (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos : struc_formula = 
-  Debug.no_4 "prepost_of_finalize" !print_sv (fun str -> str) (fun str -> str) !print_svl
+  Debug.ho_4 "prepost_of_finalize" !print_sv (fun str -> str) (fun str -> str) !print_svl
       !print_struc_formula       (fun _ _ _ _ -> prepost_of_finalize_x var name sort args lbl pos) var name sort args
 
 let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
@@ -7842,12 +7855,24 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   let ls_post_f = CP.mkEqExp ls_pvar_exp union_exp pos in (*ls' = union(ls,{l})*)
   let not_in_f = CP.BForm (((CP.mkBagNotIn var ls_pvar_exp pos),None),None) in (* l notin ls' *)
   (**************)
+  (****LOCKSET LSMU****)
+  let lsmu_uvar = CP.mkLsmuVar Unprimed in
+  let lsmu_pvar = CP.mkLsmuVar Primed in
+  let lsmu_uvar_exp = CP.Var (lsmu_uvar,pos) in
+  let lsmu_pvar_exp = CP.Var (lsmu_pvar,pos) in
+  let varmu_exp = CP.Level (var,pos)in
+  let bagmu_exp = CP.mkBag [varmu_exp] pos in  (* {l.mu} *)
+  let unionmu_exp = CP.mkBagUnion [lsmu_uvar_exp;bagmu_exp] pos in (* union(lsmu,{l.mu})*)
+  let lsmu_post_f = CP.mkEqExp lsmu_pvar_exp unionmu_exp pos in (*lsmu' = union(lsmu,{l.mu})*)
+  (**************)
+  let lock_post_f = CP.And (ls_post_f, lsmu_post_f,pos) in
+  (**************)
   let read_f = mkPermInv fresh_perm in
   (*POST-CONDITION*)
-  let tmp = mkBase_simp lock_node (MCP.OnePF ls_post_f) in
+  let tmp = mkBase_simp lock_node (MCP.OnePF lock_post_f) in
   (* let tmp = formula_of_heap_w_normal_flow lock_node pos in *)
   let post = normalize 5 inv tmp pos in
-  let post = EAssume ([ls_uvar],post,lbl) in
+  let post = EAssume ([ls_uvar;lsmu_uvar],post,lbl) in
   (*PRE-CONDITION*)
   let pre = mkBase lock_node (MCP.memoise_add_pure_N (MCP.OnePF not_in_f) read_f) TypeTrue (mkTrueFlow ()) [] pos in
   EBase {
@@ -7859,7 +7884,7 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
 	formula_struc_pos = pos}
 
 let prepost_of_acquire (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
-  Debug.no_4 "prepost_of_acquire" !print_sv (fun str -> str) !print_svl !print_formula !print_struc_formula
+  Debug.ho_4 "prepost_of_acquire" !print_sv (fun str -> str) !print_svl !print_formula !print_struc_formula
       (fun _ _ _ _ -> prepost_of_acquire_x var sort args inv lbl pos) var sort args inv
 
 let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
@@ -7898,6 +7923,18 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   let diff_exp = CP.mkBagDiff ls_uvar_exp bag_exp pos in (* diff(ls,{l})*)
   let ls_post_f = CP.mkEqExp ls_pvar_exp diff_exp pos in (*ls' = diff(ls,{l})*)
   (**************)
+  (****LOCKSET MU****)
+  let lsmu_uvar = CP.mkLsmuVar Unprimed in
+  let lsmu_pvar = CP.mkLsmuVar Primed in
+  let lsmu_uvar_exp = CP.Var (lsmu_uvar,pos) in
+  let lsmu_pvar_exp = CP.Var (lsmu_pvar,pos) in
+  let varmu_exp = CP.Level (var,pos)in
+  let bagmu_exp = CP.mkBag [varmu_exp] pos in  (* {l.mu} *)
+  let diffmu_exp = CP.mkBagDiff lsmu_uvar_exp bagmu_exp pos in (* diff(lsmu,{l.mu})*)
+  let lsmu_post_f = CP.mkEqExp lsmu_pvar_exp diffmu_exp pos in (*lsmu' = diff(lsmu,{l.mu})*)
+  (**************)
+  let lock_post_f = CP.And (ls_post_f,lsmu_post_f,pos) in
+  (**************)
   (* let tmp = formula_of_heap_w_normal_flow lock_node pos in (\*not allow SPLIT in pre*\) *)
   (* let _ = print_endline ("lock_node =  " ^ (!print_h_formula lock_node)) in *)
   (* let _ = print_endline ("tmp =  " ^ (!print_formula tmp)) in *)
@@ -7914,8 +7951,8 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   (* let pre_evars, pre_base = split_quantifiers pre in *)
   (* let post_f = mkBase_simp lock_node_post (MCP.OnePF ls_post_f) in *)
   (*TOCHECK: ??? donot need lock_node*)
-  let post_f = mkBase_simp HTrue (MCP.OnePF ls_post_f) in
-  let post = EAssume ([ls_uvar],post_f,lbl) in
+  let post_f = mkBase_simp HTrue (MCP.OnePF lock_post_f) in
+  let post = EAssume ([ls_uvar;lsmu_uvar],post_f,lbl) in
   EBase { 
 	formula_struc_explicit_inst = [];
 	formula_struc_implicit_inst = [(* fresh_perm *)](* ::pre_evars *); (*instantiate*)
@@ -7925,7 +7962,7 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
 	formula_struc_pos = pos}
 
 let prepost_of_release (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
-  Debug.no_4 "prepost_of_release" !print_sv (fun str -> str) !print_svl !print_formula !print_struc_formula
+  Debug.ho_4 "prepost_of_release" !print_sv (fun str -> str) !print_svl !print_formula !print_struc_formula
       (fun _ _ _ _ -> prepost_of_release_x var sort args inv lbl pos) var sort args inv
 
 (*IMITATE CF.COMPOSE but do not compose 2 formulas*)
