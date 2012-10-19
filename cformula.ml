@@ -7736,7 +7736,7 @@ let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:f
 
 (*automatically generate pre/post conditions of init[lock_sort](lock_var,lock_args) *)
 let prepost_of_init (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos = 
-  Debug.ho_4 "prepost_of_init"
+  Debug.no_4 "prepost_of_init"
       !print_sv
       (fun str -> str)
       (fun str -> str)
@@ -7818,7 +7818,7 @@ let prepost_of_finalize_x (var:CP.spec_var) name sort (args:CP.spec_var list) (l
 
 (*automatically generate pre/post conditions of finalize[lock_sort](lock_var,lock_args) *)
 let prepost_of_finalize (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos : struc_formula = 
-  Debug.ho_4 "prepost_of_finalize" !print_sv (fun str -> str) (fun str -> str) !print_svl
+  Debug.no_4 "prepost_of_finalize" !print_sv (fun str -> str) (fun str -> str) !print_svl
       !print_struc_formula       (fun _ _ _ _ -> prepost_of_finalize_x var name sort args lbl pos) var name sort args
 
 let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
@@ -7884,7 +7884,7 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
 	formula_struc_pos = pos}
 
 let prepost_of_acquire (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
-  Debug.ho_4 "prepost_of_acquire" !print_sv (fun str -> str) !print_svl !print_formula !print_struc_formula
+  Debug.no_4 "prepost_of_acquire" !print_sv (fun str -> str) !print_svl !print_formula !print_struc_formula
       (fun _ _ _ _ -> prepost_of_acquire_x var sort args inv lbl pos) var sort args inv
 
 let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
@@ -7962,7 +7962,7 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
 	formula_struc_pos = pos}
 
 let prepost_of_release (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
-  Debug.ho_4 "prepost_of_release" !print_sv (fun str -> str) !print_svl !print_formula !print_struc_formula
+  Debug.no_4 "prepost_of_release" !print_sv (fun str -> str) !print_svl !print_formula !print_struc_formula
       (fun _ _ _ _ -> prepost_of_release_x var sort args inv lbl pos) var sort args inv
 
 (*IMITATE CF.COMPOSE but do not compose 2 formulas*)
@@ -8309,3 +8309,47 @@ and removeLS_x (f : formula) : formula  =
           let nf2 = helper f2 in
           Or {o with formula_or_f1 = nf1; formula_or_f2 = nf2}
   in helper f
+
+let infer_lsmu_formula_x (f : formula) : formula =
+  let rec helper f =
+  match f with
+  | Base b ->
+      let p = b.formula_base_pure in
+      let np = MCP.infer_lsmu_mix_formula p in
+      Base {b with formula_base_pure = np}
+  | Exists e ->
+      let p = e.formula_exists_pure in
+      let np = MCP.infer_lsmu_mix_formula p in
+      Exists {e with formula_exists_pure = np}
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+      let new_f1 = helper f1 in
+      let new_f2 = helper f2 in
+      let res = mkOr new_f1 new_f2 pos in
+      res
+  in helper f
+
+let infer_lsmu_formula (f : formula) : formula =
+  Debug.no_1 "infer_lsmu" 
+      !print_formula !print_formula 
+      infer_lsmu_formula_x f
+
+let infer_lsmu_struc_formula_x (f:struc_formula):struc_formula = 
+  let rec helper f = 
+    match f with
+      | EAssume (vars,post,lbl) -> EAssume (vars,(infer_lsmu_formula post),lbl)
+      | ECase b -> ECase ({b with formula_case_branches = List.map (fun (c1,c2)-> (c1,(helper c2))) b.formula_case_branches ; formula_case_pos=b.formula_case_pos})
+      | EBase b-> EBase {b with
+		  formula_struc_base = infer_lsmu_formula b.formula_struc_base;
+		  formula_struc_continuation =  Gen.map_opt helper b.formula_struc_continuation;
+	  }
+      | EInfer b -> EInfer ({b with formula_inf_continuation = helper b.formula_inf_continuation;})
+	  | EList b -> EList (Gen.map_l_snd helper b)
+	  | EOr b -> EOr {b with 
+		  formula_struc_or_f1 = helper b.formula_struc_or_f1; 
+		  formula_struc_or_f2 = helper b.formula_struc_or_f2; }
+  in helper f
+
+let infer_lsmu_struc_formula (f:struc_formula):struc_formula = 
+  Debug.no_1 "infer_lsmu_struc_formula"
+      !print_struc_formula !print_struc_formula
+      infer_lsmu_struc_formula_x f

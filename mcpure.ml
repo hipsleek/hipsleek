@@ -2402,3 +2402,13 @@ let drop_svl_mix_formula (mf : mix_formula)  (svl:spec_var list) : mix_formula =
         let f = fold_mem_lst (mkTrue no_pos) false true mf in
         let nf = drop_svl_pure f svl in
         (mix_of_pure nf)
+
+let infer_lsmu_mix_formula (mf : mix_formula)  : mix_formula =
+  match mf with
+    | OnePF f -> 
+        let nf = infer_lsmu_pure f in
+        (OnePF nf)
+    | MemoF mp -> 
+        let f = fold_mem_lst (mkTrue no_pos) false true mf in
+        let nf = infer_lsmu_pure f  in
+        (mix_of_pure nf)

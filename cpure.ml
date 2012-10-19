@@ -8140,3 +8140,90 @@ let translate_level_pure_x (pf : formula) : formula =
 let translate_level_pure (pf : formula) : formula =
   Debug.no_1 "translate_level_pure" !print_formula !print_formula 
       translate_level_pure_x pf
+(*Attempt to infer constraints on LSMU based on constraints on LS
+For example:
+LS'=LS --infer--> LSMU'=LSMU
+*)
+let infer_lsmu_pure_x (f:formula) : formula =
+  let convert_ls_to_lsmu_exp (e:exp) : exp =
+    let rec helper e =
+      match e with
+        | Var (SpecVar (t,id,p),pos) ->
+            if (t = Globals.lock_typ) then
+              Level (SpecVar (t,id,p),pos)
+            else if (id = ls_name) then
+              let nsv = SpecVar (lsmu_typ,lsmu_name,p) in
+              Var (nsv,pos)
+            else
+              let _ = print_endline ("[convert_ls_to_lsmu_exp] Warning: unexpected") in
+              e
+        | Bag (exps,pos) ->
+            let nexps = List.map helper exps in
+            Bag (nexps,pos)
+        | BagUnion (exps,pos) ->
+            let nexps = List.map helper exps in
+            BagUnion (nexps,pos)
+        | BagIntersect (exps,pos) ->
+            let nexps = List.map helper exps in
+            BagIntersect (nexps,pos)
+        | BagDiff (e1,e2,pos) ->
+            let ne1 = helper e1 in
+            let ne2 = helper e2 in
+            BagDiff (ne1,ne2,pos)
+        | _ ->
+            let _ = print_endline ("[convert_ls_to_lsmu_exp] Warning: unexpected") in
+            e
+    in helper e
+  in
+  let fct (p:formula) : formula=
+    let rec helper p =
+      match p with
+        | BForm (bf,lbl) -> 
+            let pf,sth = bf in
+            (match pf with
+              | Eq (e1, e2, pos) ->
+                  let vars1 = afv e1 in
+                  let vars2 = afv e2 in
+                  let b = List.exists (fun sv -> (name_of_spec_var sv) = ls_name) (vars1@vars2) in
+                  if (b) then
+                    let lsmu_e1 = convert_ls_to_lsmu_exp e1 in
+                    let lsmu_e2 = convert_ls_to_lsmu_exp e2 in
+                    let npf = Eq (lsmu_e1, lsmu_e2, pos) in
+                    let nbf = (npf,sth) in
+                    let np = BForm (nbf,lbl) in
+                    And (p,np,pos)
+                  else BForm (bf,lbl)
+              | _ -> BForm (bf,lbl)
+            )
+        | And (f1,f2,pos) ->
+            let nf1 = helper f1 in
+            let nf2 = helper f2 in
+            And (nf1,nf2,pos)
+        | AndList ls -> 
+            let nls = List.map (fun (lbl,f) ->
+                let nf = helper f in
+                (lbl,nf)
+            ) ls in
+            AndList nls
+        | Or (f1,f2,lbl,pos) ->
+            let nf1 = helper f1 in
+            let nf2 = helper f2 in
+            Or (nf1,nf2,lbl,pos)
+        | Not (f,lbl,pos) ->
+            let nf = helper f in
+            Not (nf,lbl,pos)
+        | Forall (var,f,lbl,pos) ->
+            let nf = helper f in
+            Forall (var,nf,lbl,pos)
+        | Exists (var,f,lbl,pos) ->
+            let nf = helper f in
+            Exists (var,nf,lbl,pos)
+    in helper p
+  in
+  let nf = fct f in
+  nf
+
+let infer_lsmu_pure (f:formula) : formula =
+  Debug.no_1 "infer_lsmu_pure"
+      !print_formula !print_formula
+      infer_lsmu_pure_x f

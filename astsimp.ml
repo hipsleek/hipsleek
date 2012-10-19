@@ -1813,7 +1813,12 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
             I.param_name = ls_name;
             I.param_mod = I.NoMod;
             I.param_loc = proc.I.proc_loc;} in 
-        ls_arg::this_arg :: proc.I.proc_args)
+        let lsmu_arg ={
+            I.param_type = lsmu_typ;
+            I.param_name = lsmu_name;
+            I.param_mod = I.NoMod;
+            I.param_loc = proc.I.proc_loc;} in 
+        lsmu_arg::ls_arg::this_arg :: proc.I.proc_args)
       else proc.I.proc_args in
     let p2v (p : I.param) = {
         E.var_name = p.I.param_name;
@@ -1840,10 +1845,30 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	let _ = check_valid_flows proc.I.proc_static_specs in
 	let _ = check_valid_flows proc.I.proc_dynamic_specs in
     (* let _ = print_endline ("trans_proc: "^ proc.I.proc_name ^": before set_pre_flow: specs = " ^ (Iprinter.string_of_struc_formula (proc.I.proc_static_specs@proc.I.proc_dynamic_specs))) in *)
-    
+
 	let static_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
 	(* let _ = print_string "trans_proc :: set_pre_flow PASSED 1\n" in *)
 	let dynamic_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true) in
+    (****** Infering LSMU from LS if there is LS in spec >>*********)
+    let static_specs_list =
+      if (!Globals.allow_locklevel) then
+        let vars = CF.struc_fv static_specs_list in
+        let b = List.exists (fun sv -> (CP.name_of_spec_var sv)=Globals.ls_name) vars in
+        if b then
+          CF.infer_lsmu_struc_formula static_specs_list
+        else static_specs_list
+      else static_specs_list
+    in
+    let dynamic_specs_list =
+      if (!Globals.allow_locklevel) then
+        let vars = CF.struc_fv dynamic_specs_list in
+        let b = List.exists (fun sv -> (CP.name_of_spec_var sv)=Globals.ls_name) vars in
+        if b then
+          CF.infer_lsmu_struc_formula dynamic_specs_list
+        else dynamic_specs_list
+      else dynamic_specs_list
+    in
+    (******<< Infering LSMU from LS if there is LS in spec  *********)
   (* Termination: Normalize the specification 
    * with the default termination information
    * Primitive functions: Term[] 

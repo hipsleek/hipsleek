@@ -1297,4 +1297,3 @@ let trans_special_formula s (p:formula) vars =
         )
     | _ -> p
   )
-  

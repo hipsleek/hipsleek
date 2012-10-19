@@ -3234,7 +3234,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                           in
                           let new_post = CF.removeLS post in
                           (*donot rename lockset variable when fork*)
-                          let new_ref_vars = List.filter (fun v -> CP.name_of_spec_var v <> Globals.ls_name) ref_vars in
+                          let new_ref_vars = List.filter (fun v -> CP.name_of_spec_var v <> Globals.ls_name && CP.name_of_spec_var v <> Globals.lsmu_name) ref_vars in
                           let rs2 = compose_context_formula_and rs1 new_post df id new_ref_vars pos in
 	                      let rs3 = add_path_id rs2 (pid,i) in
                           let rs4 = prune_ctx prog rs3 in
@@ -3270,13 +3270,14 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                 (************* <<< Compose variable permissions******************)
                 (* TOCHECK : why compose_context fail to set unsat_flag? *)
                 let ls_var = CP.mkLsVar Primed in
+                let lsmu_var = CP.mkLsmuVar Primed in
                 (*sequential spec does not have LOCKSET*)
                 (*this is similar to adding ls'=ls in the post-cond
                 of each spec*)
                 let post_fv = CF.fv new_post in
-                let new_ref_vars = if Gen.BList.mem_eq CP.eq_spec_var_ident ls_var post_fv 
+                let new_ref_vars = if Gen.BList.mem_eq CP.eq_spec_var_ident ls_var post_fv
                     then (*if LOCKSET ghost var is in the post-condition*)
-                      (ls_var::ref_vars)
+                      (ls_var::lsmu_var::ref_vars)
                     else (*if not -> do not consider ls_var as a ref-vars*)
                       ref_vars
                 in
