@@ -963,26 +963,42 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let field_types, vs = List.split args in
 	        let heap_args = List.map2 (fun n -> fun t -> CP.SpecVar (t, n, Primed))
 	          vs field_types in
-            (* let frac = Some (CP.FConst (1.0, pos)) in (\*LDK: a new node created with frac perm = 1.0*\) *) (*fresh_variable = full_perm*)
+            let res_var =  CP.SpecVar (Named c, res_name, Unprimed) in
+            let new_heap_args,level_f = if (!Globals.allow_locklevel && c=lock_name) then
+                  (*If this is a lock, astsimpl ensures that it has a single argument*)
+                  (*Bring locklevel out to form a new expression*)
+                  let arg = List.hd heap_args in
+                  let arg_var = CP.Var (arg,pos) in
+                  let level = CP.mkLevel res_var pos in
+                  let eqn = CP.mkEqExp level arg_var pos in
+                  let gt_f = CP.mkGtExp arg_var (CP.IConst (0,pos)) pos in
+                  let f = CP.And (eqn,gt_f,pos) in
+                  let nf = MCP.mix_of_pure f in
+                  ([],nf)
+                else (heap_args,MCP.mkMTrue pos)
+            in
 	        let heap_node = CF.DataNode ({
                 CF.h_formula_data_node = CP.SpecVar (Named c, res_name, Unprimed);
                 CF.h_formula_data_name = c;
 		        CF.h_formula_data_derv = false;
 		        CF.h_formula_data_imm = CF.ConstAnn(Mutable);
-		        CF.h_formula_data_perm = None; (*LDK: deal later*)
-			    CF.h_formula_data_origins = []; (*deal later ???*)
-			    CF.h_formula_data_original = true; (*deal later ???*)
+		        CF.h_formula_data_perm = None; (*None means full permission*)
+			    CF.h_formula_data_origins = [];
+			    CF.h_formula_data_original = true;
 
-                CF.h_formula_data_arguments =(*type_var :: ext_var :: *) heap_args;
+                CF.h_formula_data_arguments =(*type_var :: ext_var :: *) new_heap_args;
 				CF.h_formula_data_holes = []; (* An Hoa : Don't know what to do *)
                 CF.h_formula_data_remaining_branches = None;
                 CF.h_formula_data_pruning_conditions = [];
                 CF.h_formula_data_label = None;
                 CF.h_formula_data_pos = pos}) in
 	        (*c let heap_form = CF.mkExists [ext_var] heap_node ext_null type_constr pos in*)
-	        let heap_form = CF.mkBase heap_node (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
+            (*If this is not a lock, level_f = true*)
+	        let heap_form = CF.mkBase heap_node level_f CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
+            let _ = print_endline ("heap = " ^ (Cprinter.string_of_formula heap_form)) in
             let heap_form = prune_preds prog false heap_form in
 	        let res = CF.normalize_max_renaming_list_failesc_context heap_form pos true ctx in
+            let _ = print_endline ("res = " ^ (Cprinter.string_of_list_failesc_context res)) in
 	        res
 	      end;
         | Null pos ->

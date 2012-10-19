@@ -133,6 +133,7 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.Func _ -> failwith ("Func are not supported in Isabelle")
   | CP.AConst _ -> failwith ("AConst are not supported in Isabelle")
 	| CP.ArrayAt _ ->  failwith ("Arrays are not supported in Isabelle") (* An Hoa *)
+	| CP.Level _ ->  failwith ("level should not appear in Isabelle")
   
 (* pretty printing for a list of expressions *)
 and isabelle_of_formula_exp_list l = match l with

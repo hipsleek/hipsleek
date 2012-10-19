@@ -101,6 +101,7 @@ let rec smt_of_exp a =
 	match a with
 	| CP.Null _ -> "0"
 	| CP.Var (sv, _) -> smt_of_spec_var sv
+	| CP.Level _ -> illegal_format ("z3.smt_of_exp: level should not appear here")
 	| CP.IConst (i, _) -> if i >= 0 then string_of_int i else "(- 0 " ^ (string_of_int (0-i)) ^ ")"
 	| CP.AConst (i, _) -> string_of_int(int_of_heap_ann i)  (*string_of_heap_ann i*)
 	| CP.FConst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (float should not appear here)")
@@ -294,6 +295,7 @@ and collect_bformula_info b = match b with
 		combine_formula_info_list (rinfo :: args_infos) (* check if there are axioms then change the quantifier free part *)
 
 and collect_exp_info e = match e with
+  | CP.Level _
   | CP.Null _ | CP.Var _ | CP.AConst _ | CP.IConst _ | CP.FConst _ -> default_formula_info
   | CP.Add (e1,e2,_) | CP.Subtract (e1,e2,_) | CP.Max (e1,e2,_) | CP.Min (e1,e2,_) -> 
 		let ef1 = collect_exp_info e1 in

@@ -557,6 +557,7 @@ let rec is_array_exp e = match e with
     | CP.ArrayAt (_,_,_) -> Some true
   | CP.Func _ -> Some false
     | CP.AConst _ | CP.FConst _ | CP.IConst _ 
+    | CP.Level _
     | CP.Var _ | CP.Null _ -> Some false
     (* | _ -> Some false *)
 
@@ -588,6 +589,7 @@ let rec is_list_exp e = match e with
 											| _ -> is_list_exp exp) (Some false) el)
     | CP.ArrayAt (_,_,_) | CP.Func _ -> Some false
     | CP.Null _ | CP.AConst _
+    | CP.Level _
     | CP.FConst _ | CP.IConst _ | CP.Var _ -> Some false
     (* | _ -> Some false *)
 	  
@@ -900,7 +902,8 @@ let disj_cnt a c s =
     end
   else ()
 
-let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) = 
+let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
+  let f = CP.translate_level_pure f in
   let vrs = Cpure.fv f in
   let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 
   let f = Cpure.add_ann_constraints imm_vrs f in
@@ -1399,6 +1402,8 @@ let restore_suppress_imply_output_state () = match !suppress_imply_output_stack 
 				end
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
+  let ante = CP.translate_level_pure ante in
+  let conseq = CP.translate_level_pure conseq in
   let vrs = Cpure.fv ante in
   let vrs = (Cpure.fv conseq)@vrs in
   let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 

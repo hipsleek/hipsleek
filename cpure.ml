@@ -102,6 +102,7 @@ and p_formula =
 and exp =
   | Null of loc
   | Var of (spec_var * loc)
+  | Level of (spec_var * loc) (*represent locklevel of a lock spec_var*)
   | IConst of (int * loc)
   | FConst of (float * loc)
   | AConst of (heap_ann * loc)
@@ -524,6 +525,7 @@ let rec get_exp_type (e : exp) : typ =
   match e with
   | Null _ -> Named ""
   | Var (SpecVar (t, _, _), _) -> t
+  | Level _ -> Globals.level_data_typ
   | IConst _ -> Int
   | FConst _ -> Float
   | AConst _ -> AnnT
@@ -732,6 +734,7 @@ and afv (af : exp) : spec_var list =
     | AConst _ 
     | FConst _ -> []
     | Var (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
+    | Level (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
     | Add (a1, a2, _) -> combine_avars a1 a2
     | Subtract (a1, a2, _) -> combine_avars a1 a2
     | Mult (a1, a2, _) | Div (a1, a2, _) -> combine_avars a1 a2
@@ -1158,6 +1161,7 @@ match pf with
 (* Expression *)
 and is_exp_arith (e:exp) : bool=
   match e with
+    | Level _
     | Null _  | Var _ | IConst _ | AConst _ | FConst _ -> true
     | Add (e1,e2,_)  | Subtract (e1,e2,_)  | Mult (e1,e2,_) 
     | Div (e1,e2,_)  | Max (e1,e2,_)  | Min (e1,e2,_) -> (is_exp_arith e1) && (is_exp_arith e2)
@@ -1177,6 +1181,8 @@ and is_formula_arith (f:formula) :bool = match f with
         
 (* smart constructor *)
 
+(*Create a locklevel of a lock sv*)
+and mkLevel sv pos = Level (sv, pos)
 (*********BAG CONSTRAINT***************)
 (*create lockset var, primed or unprimed*)
 and mkLsVar p = (SpecVar (ls_typ, ls_name, p))
@@ -1919,6 +1925,7 @@ and name_of_type (t : typ) : ident =
 and pos_of_exp (e : exp) = match e with
   | Null p 
   | Var (_, p) 
+  | Level (_, p)
   | IConst (_, p) 
   | AConst (_, p) 
   | FConst (_, p) 
@@ -2342,6 +2349,7 @@ and subs_one sst v =
 and e_apply_subs sst e = match e with
   | Null _ | IConst _ | FConst _ | AConst _ -> e
   | Var (sv, pos) -> Var (subs_one sst sv, pos)
+  | Level (sv, pos) -> Level (subs_one sst sv, pos)
   | Add (a1, a2, pos) -> Add (e_apply_subs sst a1,
 	e_apply_subs sst a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_subs sst  a1,
@@ -2391,6 +2399,7 @@ and b_subst (zip: (spec_var * spec_var) list) (bf:b_formula) :b_formula =
 and e_apply_one (fr, t) e = match e with
   | Null _ | IConst _ | FConst _ | AConst _ -> e
   | Var (sv, pos) -> Var ((if eq_spec_var sv fr then t else sv), pos)
+  | Level (sv, pos) -> Level ((if eq_spec_var sv fr then t else sv), pos)
   | Add (a1, a2, pos) -> Add (e_apply_one (fr, t) a1,
 	e_apply_one (fr, t) a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_one (fr, t) a1,
@@ -2514,6 +2523,7 @@ and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
   | Div (a1, a2, pos) ->
         Div (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Var (sv, pos) -> subs_one_term sst sv e (* if eq_spec_var sv fr then t else e *)
+  | Level (sv, pos) -> subs_one_term sst sv e
   | Max (a1, a2, pos) -> Max (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Min (a1, a2, pos) -> Min (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
         (*| BagEmpty (pos) -> BagEmpty (pos)*)
@@ -2602,6 +2612,7 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | Div (a1, a2, pos) ->
         Div (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Var (sv, pos) -> if eq_spec_var sv fr then t else e
+  | Level (sv, pos) -> if eq_spec_var sv fr then t else e
   | Max (a1, a2, pos) -> Max (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Min (a1, a2, pos) -> Min (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
         (*| BagEmpty (pos) -> BagEmpty (pos)*)
@@ -2663,6 +2674,7 @@ and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*e
           let b2 , r2 = helper (not crt_var) a2 in
           (b1||b2, Div (r1 , r2 , pos))
     | Var (sv, pos) -> if ((variance==crt_var)||(eq_spec_var sv fr)) then (true, t) else (false, e)
+    | Level (sv, pos) -> if ((variance==crt_var)||(eq_spec_var sv fr)) then (true, t) else (false, e)
     | Max (a1, a2, pos) -> 
           let b1 , r1 = helper crt_var a1 in
           let b2 , r2 = helper crt_var a2 in
@@ -3618,6 +3630,7 @@ and b_apply_one_exp (fr, t) bf =
 and e_apply_one_exp (fr, t) e = match e with
   | Null _ | IConst _ | FConst _| AConst _ -> e
   | Var (sv, pos) -> if eq_spec_var sv fr then t else e
+  | Level (sv, pos) -> if eq_spec_var sv fr then t else e
   | Add (a1, a2, pos) -> Add (e_apply_one_exp (fr, t) a1,
 							  e_apply_one_exp (fr, t) a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_one_exp (fr, t) a1,
@@ -3835,6 +3848,7 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
   let is_simple e = match e with
 	| Null _ 
 	| Var _ 
+	| Level _ 
 	| IConst _ 
 	| AConst _ 
     | FConst _ -> true
@@ -3967,6 +3981,10 @@ and simp_mult_x (e : exp) :  exp =
             (match m with 
               | None -> e0 
               | Some c ->  Mult (IConst (c, l), e0, l))
+      | Level (v, l) ->
+            (match m with 
+              | None -> e0 
+              | Some c ->  Mult (IConst (c, l), e0, l))
       | IConst (v, l) ->
             (match m with 
               | None -> e0 
@@ -4025,6 +4043,7 @@ and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
   match e with
     |  Null _ 
     |  Var _ 
+    |  Level _ 
     |  AConst _ -> ((Some e), None)
     |  IConst (v, l) ->
            if v >= 0 then 
@@ -4169,6 +4188,7 @@ and purge_mult (e: exp) : exp =
 and purge_mult_x (e :  exp):  exp = match e with
   |  Null _ 
   |  Var _ 
+  |  Level _ 
   |  IConst _ 
   |  AConst _ 
   | FConst _ -> e
@@ -4474,6 +4494,7 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
         let f_comb = f_comb e in match e with
 	      | Null _ 
 	      | Var _ 
+	      | Level _ 
 	      | IConst _
 	      | AConst _
 	      | FConst _ -> (e,f_comb [])
@@ -4567,6 +4588,7 @@ let rec transform_exp f e  =
 	| None -> match e with
 	    | Null _ 
 	    | Var _ 
+	    | Level _ 
 	    | IConst _
 	    | AConst _
 	    | FConst _ -> e
@@ -4982,6 +5004,7 @@ let remove_dup_constraints (f:formula):formula =
 let rec get_head e = match e with 
     | Null _ -> "Null"
     | Var (v,_) -> name_of_spec_var v
+    | Level (v,_) -> name_of_spec_var v
     | IConst (i,_)-> string_of_int i
     | FConst (f,_) -> string_of_float f
     | AConst (f,_) -> string_of_heap_ann f
@@ -5038,6 +5061,7 @@ and norm_exp (e:exp) =
   (* let _ = print_string "\n !!!!!!!!!!!!!!!! norm exp aux \n" in *)
   let rec helper e = match e with
     | Var _ 
+    | Level _ 
     | Null _ | IConst _ | FConst _ | AConst _ -> e
     | Add (e1,e2,l) -> simp_addsub e (IConst(0,no_pos)) l 
     | Subtract (e1,e2,l) -> simp_addsub e1 e2 l 
@@ -7110,6 +7134,7 @@ let compute_instantiations_x pure_f v_of_int avail_v =
       | IConst _
       | FConst _
       | AConst _
+      | Level _
       | Null _ -> failwith ("expecting var"^ (!print_sv v) )
       | Var (v1,_) -> if (eq_spec_var v1 v) then rhs_e else failwith ("expecting var"^ (!print_sv v))
       | Add (e1,e2,p) -> check_in_one e1 e2 (Subtract (rhs_e,e2,p)) (Subtract (rhs_e,e1,p))
@@ -8028,6 +8053,48 @@ let drop_svl_pure (pf : formula) (svl:spec_var list) : formula =
     match f with
       | BForm (bf, lbl) ->
           let n_bf = remove_svl_b_formula bf svl in
+          BForm (n_bf, lbl)
+      | And (f1, f2, pos) ->
+          let n_f1 = helper f1 in
+          let n_f2 = helper f2 in
+          And (n_f1, n_f2, pos)
+      | AndList b -> 
+          let nf = List.fold_left (fun ls_f (_,f_b) -> 
+              let nf = helper f_b in
+              And (ls_f, nf, no_pos)
+          ) (mkTrue no_pos) b in
+          nf
+      | Or (f1, f2, lbl, pos) ->
+          let n_f1 = helper f1 in
+          let n_f2 = helper f2 in
+          Or (n_f1, n_f2, lbl, pos)
+      | Not (f, lbl, pos) ->
+          let n_f = helper f in
+          Not (n_f, lbl, pos)
+      | Forall (sv, f, lbl, pos) ->
+          let n_f = helper f in
+          Forall (sv, n_f, lbl, pos)
+      | Exists (sv, f, lbl, pos) ->
+          let n_f = helper f in
+          Exists (sv, n_f, lbl, pos)
+  in helper pf
+
+(*Translate level(l) into l_mu before sending to provers*)
+
+(*Translate level(l) into l_mu before sending to provers*)
+let translate_level_pure (pf : formula) : formula =
+  let trans_bf = (fun bf -> None) in
+  let trans_exp = (fun e ->
+      match e with
+        | Level (SpecVar (t,id,p),l) ->
+            let nid = id^"_mu" in
+            Some (Var (SpecVar (t,nid,p),l))
+        | _ -> Some e
+  ) in
+  let rec helper f =
+    match f with
+      | BForm (bf, lbl) ->
+          let n_bf = transform_b_formula (trans_bf,trans_exp) bf in
           BForm (n_bf, lbl)
       | And (f1, f2, pos) ->
           let n_f1 = helper f1 in

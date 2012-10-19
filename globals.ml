@@ -461,6 +461,9 @@ let lock_name = "lock"
 
 let ls_name = "LS"
 let ls_data_typ = "lock"
+
+let level_name = "mu"
+let level_data_typ = Int
 let ls_typ = BagT (Named ls_data_typ)
 
 (*precluded files*)

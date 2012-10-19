@@ -1199,9 +1199,12 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 	 let temp = expand_inline_fields ddef.I.data_fields in
 	 let _ = print_endline "[trans_data] expand inline fields result :" in
 	 let _ = print_endline (Iprinter.string_of_decl_list temp "\n") in *)
+  let fields = 
+      List.map trans_field (I.expand_inline_fields prog.I.prog_data_decls ddef.I.data_fields)
+  in
   let res = {
       C.data_name = ddef.I.data_name;
-      C.data_fields = List.map trans_field (I.expand_inline_fields prog.I.prog_data_decls ddef.I.data_fields);
+      C.data_fields = fields;
       C.data_parent_name = ddef.I.data_parent_name;
       C.data_methods = List.map (trans_proc prog) ddef.I.data_methods;
       C.data_invs = [];
@@ -2966,11 +2969,41 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_new_pos = pos } ->
             let data_def = I.look_up_data_def pos prog.I.prog_data_decls c in
             let all_fields = I.look_up_all_fields prog data_def in
-            let field_types = List.map I.get_field_typ all_fields in
-            (*=========processing waitlevel\===============*)
+            let field_types = 
+              if !Globals.allow_locklevel  && c=lock_name then [level_data_typ] else
+              List.map I.get_field_typ all_fields in
             let nargs = List.length args in
-            if ( != ) nargs (List.length field_types) then
-              Err.report_error{ Err.error_loc = pos; Err.error_text = "number of arguments does not match";}
+            (*=========processing waitlevel===============*)
+            if (!Globals.allow_locklevel && c=lock_name && nargs>1) then
+              Err.report_error{ Err.error_loc = pos; Err.error_text = "number of arguments does not match: " ^ lock_name ^ " should have at most 1 arguments";}
+            else if (!Globals.allow_locklevel && c=lock_name && nargs=0) then
+              (*add an extra local variable for locklevel*)
+              let fn = fresh_ty_var_name (Globals.level_data_typ) pos.start_pos.Lexing.pos_lnum in
+              let fn_decl = C.VarDecl
+                {
+                    C.exp_var_decl_type = Globals.level_data_typ;
+                    C.exp_var_decl_name = fn;
+                    C.exp_var_decl_pos = pos;
+                }
+              in
+              let arg = (Globals.level_data_typ,fn) in
+              let new_e = C.New {
+                  C.exp_new_class_name = c;
+                  C.exp_new_parent_name = data_def.I.data_parent_name;
+                  C.exp_new_arguments = [arg];
+                  C.exp_new_pos = pos;} in
+              let new_t = Named c in
+              let seq_e = C.mkSeq new_t fn_decl new_e pos in
+              ((C.Block {
+                  C.exp_block_type = new_t;
+                  C.exp_block_body = seq_e;
+                  C.exp_block_local_vars = []; (*the new fresh var can be out of the scope of this block*)
+                  C.exp_block_pos = pos; }),new_t)
+            else
+            (*=========processing locklevel===============*)
+            if (!= ) nargs (List.length field_types) 
+              && (not (c=lock_name)) then
+              Err.report_error{ Err.error_loc = pos; Err.error_text = "number of arguments does not match in New " ^ c;}
             else
               (let tmp = List.map (helper) args in
               let (cargs, cts) = List.split tmp in

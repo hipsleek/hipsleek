@@ -95,6 +95,7 @@ let rec smt_of_exp a =
 	match a with
 	| Cpure.Null _ -> "0"
 	| Cpure.Var (sv, _) -> smt_of_spec_var sv
+	| Cpure.Level _ -> illegal_format ("z3.smt_of_exp: level should not appear here")
 	| Cpure.IConst (i, _) -> if i >= 0 then string_of_int i else "(- 0 " ^ (string_of_int (0-i)) ^ ")"
 	| Cpure.AConst (i, _) -> string_of_heap_ann i
 	| Cpure.FConst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (float should not appear here)")
@@ -281,6 +282,7 @@ and collect_bformula_info b = match b with
 				combine_formula_info_list (rinfo :: args_infos) (* check if there are axioms then change the quantifier free part *)
 
 and collect_exp_info e = match e with
+    | Cpure.Level _ 
 	| Cpure.Null _ | Cpure.Var _ | Cpure.AConst _ | Cpure.IConst _ | Cpure.FConst _ -> default_formula_info
 	| Cpure.Add (e1,e2,_) | Cpure.Subtract (e1,e2,_) | Cpure.Max (e1,e2,_) | Cpure.Min (e1,e2,_) -> 
 		let ef1 = collect_exp_info e1 in

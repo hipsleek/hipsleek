@@ -239,6 +239,7 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
   | IConst _ | AConst _ -> false
   | FConst _ -> failwith ("[setmona.ml]: ERROR in constraints (float should not appear here)")
   | Var (sv, _) -> compute_fo_var sv order var_map
+  | Level _ -> failwith "[setmona.ml]: level should not appear here"
   | Add (e1, e2, _)
   | Subtract (e1, e2, _)
   | Max (e1, e2, _)

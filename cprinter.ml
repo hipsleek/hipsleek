@@ -630,6 +630,7 @@ let rec pr_formula_exp (e:P.exp) =
   match e with
     | P.Null l -> fmt_string "null"
     | P.Var (x, l) -> fmt_string (string_of_spec_var x)
+    | P.Level (x, l) -> fmt_string ("level(" ^ (string_of_spec_var x) ^ ")")
     | P.IConst (i, l) -> fmt_int i
     | P.AConst (i, l) -> fmt_string (string_of_heap_ann i)
     | P.FConst (f, l) -> fmt_string "FLOAT ";fmt_float f
@@ -2371,6 +2372,7 @@ let rec html_of_formula_exp e =
 	 match e with
     | P.Null l -> "<b>null</b>"
     | P.Var (x, l) -> html_of_spec_var x
+    | P.Level (x, l) -> "<level>" ^ html_of_spec_var x ^ "</level>"
     | P.IConst (i, l) -> string_of_int i
     | P.FConst (f, l) -> string_of_float f
     | P.AConst (f, l) -> string_of_heap_ann f
