@@ -909,6 +909,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         (*should translate waitlevel before level*)
         let f = CP.translate_waitlevel_pure f in
         let f = CP.translate_level_pure f in
+        let _ = Debug.devel_hprint (add_str "After translate_: " Cprinter.string_of_pure_formula) f no_pos in
         f
       else f
   in
@@ -1416,6 +1417,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         let ante = CP.translate_level_pure ante in
         let conseq = CP.translate_waitlevel_pure conseq in
         let conseq = CP.translate_level_pure conseq in
+        let _ = Debug.devel_hprint (add_str "After translate_: ante = " Cprinter.string_of_pure_formula) ante no_pos in
+        let _ = Debug.devel_hprint (add_str "After translate_: conseq = " Cprinter.string_of_pure_formula) conseq no_pos in
         (ante,conseq)
       else (ante,conseq)
   in
@@ -1594,7 +1597,7 @@ let tp_imply ante conseq imp_no timeout process =
 let tp_imply ante conseq imp_no timeout process =	
   let pr1 = Cprinter.string_of_pure_formula in
   let prout x = string_of_bool x in
-  Debug.no_2 "tp_imply" 
+  Debug.ho_2 "tp_imply" 
       (add_str "ante" pr1) 
       (add_str "conseq" pr1) 
       (add_str ("solver:"^(!called_prover)) prout) (fun _ _ -> tp_imply ante conseq imp_no timeout process) ante conseq
@@ -1696,9 +1699,16 @@ let rec simpl_in_quant formula negated rid =
 ;;
 
 let simpl_pair rid (ante, conseq) =
+  let conseq_vars = CP.fv conseq in
+  if (List.exists (fun v -> CP.name_of_spec_var v = waitlevel_name) conseq_vars) then
+    (ante,conseq)
+  else
   let l1 = CP.bag_vars_formula ante in
+  let vars = CP.fv ante in
+  let lock_vars = List.filter (fun v -> CP.type_of_spec_var v = lock_typ) vars in
   (*l1 is bag vars in both ante and conseq*)
-  let l1 = CP.remove_dups_svl (l1 @ (CP.bag_vars_formula conseq)) in
+  (*lock_vars are simplify*)
+  let l1 = CP.remove_dups_svl (l1 @ (CP.bag_vars_formula conseq) @lock_vars) in
   let antes = split_conjunctions ante in
   let fold_fun l_f_vars (ante, conseq)  = function
     | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) ->
@@ -1753,7 +1763,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
     match Netprover.call_prover (Imply (ante0,conseq0)) with
         Some res -> (res,[],None)       
       | None -> (false,[],None)
-  else begin 
+  else begin
 	let conseq = if CP.should_simplify conseq0 then simplify_a 12 conseq0 else conseq0 in
 	if CP.isConstTrue conseq then (true, [],None)
 	else
@@ -1811,7 +1821,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
   = let pf = Cprinter.string_of_pure_formula in
-  Debug.no_2 "imply_timeout 2" pf pf (fun (b,_,_) -> string_of_bool b)
+  Debug.ho_2 "imply_timeout 2" pf pf (fun (b,_,_) -> string_of_bool b)
       (fun a c -> imply_timeout a c imp_no timeout process) ante0 conseq0
 
 

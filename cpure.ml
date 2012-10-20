@@ -8141,8 +8141,75 @@ let drop_svl_pure (pf : formula) (svl:spec_var list) : formula =
           Exists (sv, n_f, lbl, pos)
   in helper pf
 
+(*
+Before sending to provers,
+translate l1=l2 into l1=l2 & level(l1)=level(l2)
+*)
+let translate_level_eqn_b_formula (bf:b_formula) : formula =
+  let pf,sth = bf in
+  (match pf with
+    | Eq (e1,e2,pos) ->
+          (match (e1, e2) with
+            | (Var (sv1,pos1), Var (sv2,pos2)) ->
+                if (type_of_spec_var sv1) = lock_typ then
+                  let mu1 = Level (sv1,pos1) in (* l1.mu *)
+                  let mu2 = Level (sv2,pos2) in (* l2.mu *)
+                  let npf = Eq (mu1,mu2,pos) in
+                  let nf = BForm ((npf,sth),None) in
+                  let f = BForm (bf,None) in
+                  And (f,nf,pos)
+                else
+                  BForm (bf,None)
+            | _ ->  BForm (bf,None))
+    |_ -> BForm (bf,None)
+  )
+
+(*
+Before sending to provers,
+translate l1=l2 into l1=l2 & level(l1)=level(l2)
+*)
+let translate_level_eqn_pure_x (pf : formula) : formula =
+  let rec helper f =
+    match f with
+      | BForm (bf, lbl) ->
+          let nf = translate_level_eqn_b_formula bf in
+          nf
+      | And (f1, f2, pos) ->
+          let n_f1 = helper f1 in
+          let n_f2 = helper f2 in
+          And (n_f1, n_f2, pos)
+      | AndList b -> 
+          let nf = List.fold_left (fun ls_f (_,f_b) -> 
+              let nf = helper f_b in
+              And (ls_f, nf, no_pos)
+          ) (mkTrue no_pos) b in
+          nf
+      | Or (f1, f2, lbl, pos) ->
+          let n_f1 = helper f1 in
+          let n_f2 = helper f2 in
+          Or (n_f1, n_f2, lbl, pos)
+      | Not (f, lbl, pos) ->
+          let n_f = helper f in
+          Not (n_f, lbl, pos)
+      | Forall (sv, f, lbl, pos) ->
+          let n_f = helper f in
+          Forall (sv, n_f, lbl, pos)
+      | Exists (sv, f, lbl, pos) ->
+          let n_f = helper f in
+          Exists (sv, n_f, lbl, pos)
+  in helper pf
+
+(*
+Before sending to provers,
+translate l1=l2 into l1=l2 & level(l1)=level(l2)
+*)
+let translate_level_eqn_pure (pf : formula) : formula =
+  Debug.no_1 "translate_level_eqn_pure" !print_formula !print_formula 
+      translate_level_eqn_pure_x pf
+
 (*Translate level(l) into l_mu before sending to provers*)
 let translate_level_pure_x (pf : formula) : formula =
+  let pf = translate_level_eqn_pure pf in
   let trans_exp (e:exp): exp =
       let rec helper e = 
         match e with
@@ -8545,5 +8612,5 @@ waitlevel=x ==def== (not LS={} | x=0)
 
 *)
 let translate_waitlevel_pure (pf : formula) : formula =
-  Debug.ho_1 "translate_waitlevel_pure" !print_formula !print_formula 
+  Debug.no_1 "translate_waitlevel_pure" !print_formula !print_formula 
       translate_waitlevel_pure_x pf

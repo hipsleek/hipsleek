@@ -1101,7 +1101,7 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
           stop(); raise exc
 
 let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
-  Debug.no_3 "imply_sat_helper"
+  Debug.ho_3 "imply_sat_helper"
       Cprinter.string_of_spec_var_list
       Cprinter.string_of_pure_formula
       string_of_hashtbl
@@ -1151,7 +1151,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
 
 let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.no_3 "mona.imply" pr pr (fun x -> x) string_of_bool 
+  Debug.ho_3 "mona.imply" pr pr (fun x -> x) string_of_bool 
   (fun _ _ _ -> imply_ops pr_w pr_s ante conseq imp_no) ante conseq imp_no
 
 let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
