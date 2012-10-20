@@ -464,6 +464,9 @@ let ls_name = "LS"
 let lsmu_name = "LSMU"
 let ls_data_typ = "lock"
 
+let waitlevel_name = "waitlevel"
+let waitlevel_typ = Int
+
 let level_pred = "level"
 let level_name = "mu"
 let level_data_typ = Int

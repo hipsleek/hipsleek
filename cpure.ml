@@ -1192,6 +1192,8 @@ and is_formula_arith (f:formula) :bool = match f with
 
 (*Create a locklevel of a lock sv*)
 and mkLevel sv pos = Level (sv, pos)
+
+and mkWaitlevelVar p = (SpecVar (waitlevel_typ, waitlevel_name, p))
 (*********BAG CONSTRAINT***************)
 (*create lockset var, primed or unprimed*)
 and mkLsVar p = (SpecVar (ls_typ, ls_name, p))
