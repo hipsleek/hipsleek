@@ -8000,19 +8000,21 @@ Do not consider transitivity*)
 let removeLS_b_formula (bf : b_formula) : b_formula =
   let (pf,st) = bf in
   (match pf with
+    | BagLIn (sv,e,pos)
+    | BagLNotIn (sv,e,pos)
     | BagIn (sv,e,pos)
     | BagNotIn (sv,e,pos) ->
         let vars = afv e in
-        let b = List.exists (fun v -> (name_of_spec_var v) = ls_name) vars in
+        let b = List.exists (fun v -> (name_of_spec_var v) = ls_name || (name_of_spec_var v) = lsmu_name) vars in
         if b then mkTrue_b no_pos else  bf
     | Eq (e1, e2, pos) (* these two could be arithmetic or pointer or bag or list *)
     | Neq (e1, e2, pos) ->
         let vars1 = afv e1 in
         let vars2 = afv e2 in
-        let b = List.exists (fun v -> (name_of_spec_var v) = ls_name) (vars1@vars2) in
+        let b = List.exists (fun v -> (name_of_spec_var v) = ls_name || (name_of_spec_var v) = lsmu_name) (vars1@vars2) in
         if b then mkTrue_b no_pos else  bf
     | VarPerm (vp_ann,svl,pos) ->
-        let nsvl =  List.filter (fun v -> name_of_spec_var v <> Globals.ls_name) svl in
+        let nsvl =  List.filter (fun v -> name_of_spec_var v <> Globals.ls_name && name_of_spec_var v <> Globals.lsmu_name) svl in
         if (nsvl=[]) then mkTrue_b no_pos else
         (VarPerm (vp_ann,nsvl,pos),st)
     | BagSub (e1,e2,pos) -> bf (*TO CHECK there 3 cases*)
