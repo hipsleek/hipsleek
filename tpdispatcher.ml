@@ -905,7 +905,13 @@ let disj_cnt a c s =
   else ()
 
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
-  let f = CP.translate_level_pure f in
+  let f = if (!Globals.allow_locklevel) then
+        (*should translate waitlevel before level*)
+        let f = CP.translate_waitlevel_pure f in
+        let f = CP.translate_level_pure f in
+        f
+      else f
+  in
   let vrs = Cpure.fv f in
   let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 
   let f = Cpure.add_ann_constraints imm_vrs f in
@@ -1404,8 +1410,15 @@ let restore_suppress_imply_output_state () = match !suppress_imply_output_stack 
 				end
 
 let tp_imply_no_cache ante conseq imp_no timeout process =
-  let ante = CP.translate_level_pure ante in
-  let conseq = CP.translate_level_pure conseq in
+  let ante,conseq = if (!Globals.allow_locklevel) then
+        (*should translate waitlevel before level*)
+        let ante = CP.translate_waitlevel_pure ante in
+        let ante = CP.translate_level_pure ante in
+        let conseq = CP.translate_waitlevel_pure conseq in
+        let conseq = CP.translate_level_pure conseq in
+        (ante,conseq)
+      else (ante,conseq)
+  in
   let vrs = Cpure.fv ante in
   let vrs = (Cpure.fv conseq)@vrs in
   let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 

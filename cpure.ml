@@ -1193,6 +1193,8 @@ and is_formula_arith (f:formula) :bool = match f with
 (*Create a locklevel of a lock sv*)
 and mkLevel sv pos = Level (sv, pos)
 
+and mkLevelVar p = (SpecVar (level_data_typ, level_name, p))
+
 and mkWaitlevelVar p = (SpecVar (waitlevel_typ, waitlevel_name, p))
 (*********BAG CONSTRAINT***************)
 (*create lockset var, primed or unprimed*)
@@ -1214,7 +1216,17 @@ and mkBagDiff e1 e2 pos = BagDiff (e1,e2,pos)
 and mkBagNotIn v exp pos = BagNotIn (v,exp,pos) 
 
 (* v in S*)
-and mkBagIn v exp pos = BagIn (v,exp,pos) 
+and mkBagIn v exp pos = BagIn (v,exp,pos)
+
+and mkBagInExp v exp pos =
+  let bf = mkBagIn v exp pos in
+  BForm ((bf, None),None)
+
+and mkBagLIn v exp pos = BagLIn (v,exp,pos)
+
+and mkBagLInExp v exp pos =
+  let bf = mkBagLIn v exp pos in
+  BForm ((bf, None),None)
 (******************************************)
 
 and mkRes t = SpecVar (t, res_name, Unprimed)
@@ -1431,6 +1443,9 @@ and mkLtExp (ae1 : exp) (ae2 : exp) pos :formula =
           else
             BForm ((Lt (ae1, ae2, pos), None),None)
     | _ ->  BForm ((Lt (ae1, ae2, pos), None),None)
+
+and mkLteExp (ae1 : exp) (ae2 : exp) pos :formula =
+  BForm ((Lt (ae1, ae2, pos), None),None)
 
 and mkEqExp (ae1 : exp) (ae2 : exp) pos :formula =
   match (ae1, ae2) with
@@ -8204,6 +8219,7 @@ let translate_level_pure_x (pf : formula) : formula =
 let translate_level_pure (pf : formula) : formula =
   Debug.no_1 "translate_level_pure" !print_formula !print_formula 
       translate_level_pure_x pf
+
 (*Attempt to infer constraints on LSMU based on constraints on LS
 For example:
 LS'=LS --infer--> LSMU'=LSMU
@@ -8307,3 +8323,198 @@ let infer_lsmu_pure (f:formula) : formula =
   Debug.no_1 "infer_lsmu_pure"
       !print_formula !print_formula
       infer_lsmu_pure_x f
+
+(*
+Before sending to provers,
+translate waitlevel into constraints related to LSMU:
+
+waitlevel<x ==def== forall level in LSMU. level<x
+waitlevel'<x ==def== forall level in LSMU'. level<x
+
+waitlevel=x ==def== (LS={} => x=0)
+  & (LS!={} => (forall level in LSMU. level<=x) & (exist level in LSMU. level=x)
+
+In other words,
+waitlevel=x ==def== (LS={} => x=0)
+  & (LS!={} => (forall level in LSMU. level<=x) & (x in LSMU)
+
+or
+
+waitlevel=x ==def== (not LS={} | x=0)
+  & ((not LS!={}) | ((forall level in LSMU. level<=x) & (x in LSMU))
+
+*)
+(*translate constraints
+  bf: define operator
+  pr: Primed or Unprimed
+*)
+let translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos : formula =
+  (*forall v. v in LSMU & v>0*)
+  (* let level_var = mkLevelVar Unprimed in *)
+  (* let fresh_var = fresh_spec_var level_var in *)
+  (* let fresh_var_exp = Var (fresh_var,pos) in *)
+  (* let lsmu_exp = Var (mkLsmuVar pr,pos) in *)
+  (* let f1 = mkBagInExp fresh_var lsmu_exp pos in (\*v in LSMU*\) *)
+  (* let f_gt_zero = mkGtExp fresh_var_exp (IConst (0,pos)) pos in (\*v>0*\) *)
+  (* let f = And (f1,f_gt_zero,pos) in (\*v in LSMU and v>0*\) *)
+  (* let init = Forall (fresh_var,f,None,pos) (\*forall v. v in LSMU & v>0*\) in *)
+  let pf,sth = bf in
+  (match pf with
+    (*Currently, we only consider two types on constraints
+      on waitlevel: < and = and waitlevel should be on LHS*)
+    | Lt _ ->
+        (* waitlevel< x ==define==> forall v. v in LSMU & v>0 & v<x*)
+
+        (*waitlevel<x ==define==> (ls={} => x>0) & (ls!={} => forall v. v in LSMU & v<x)
+          or
+          (ls!={} | x>0) & (ls={} | (forall v. v in LSMU & v<x))
+        *)
+        let level_var = mkLevelVar Unprimed in
+        let fresh_var = fresh_spec_var level_var in
+        let fresh_var_exp = Var (fresh_var,pos) in
+        let lsmu_exp = Var (mkLsmuVar pr,pos) in
+        let ls_exp = Var (mkLsVar pr,pos) in
+        (*---------------*)
+        let f_neq = mkNeqExp ls_exp (mkEmptyBag pos) pos in (* LS!={} *)
+        let f_gt_zero = mkGtExp x (IConst (0,pos)) pos in (*x>0*)
+        let f1 = Or (f_neq,f_gt_zero,None,pos) in (* ls!={} | x>0 *)
+        (*---------------*)
+        let f_eq_ls = mkEqExp ls_exp (mkEmptyBag pos) pos in (* LS={} *)
+
+        let f21 = mkBagInExp fresh_var lsmu_exp pos in (*v in LSMU*)
+        let f22 = mkLtExp fresh_var_exp x pos in (*v<x*)
+        let f2_and = And (f21,f22,pos) in (* v in LSMU & v<x *)
+        let f2_forall = Forall (fresh_var,f2_and,None,pos) (*forall v. v in LSMU & v<x*) in
+        let f2 = Or (f_eq_ls,f2_forall,None,pos) in (* (ls={} | (forall v. v in LSMU & v<x)) *)
+        And (f1,f2,pos)
+    | Eq _ ->
+        (* waitlevel=x ==def== (not LS={} | x=0) *)
+        (*   & ((not LS!={}) | ((forall level in LSMU. level<=x) & (x in LSMU)) *)
+        (* OR *)
+        (* waitlevel=x ==def== (LS!={} | x=0) *)
+        (*   & ((LS={}) | ((forall level in LSMU. level<=x) & (x in LSMU)) *)
+        let level_var = mkLevelVar Unprimed in
+        let fresh_var = fresh_spec_var level_var in
+        let fresh_var_exp = Var (fresh_var,pos) in
+        let lsmu_exp = Var (mkLsmuVar pr,pos) in
+        let ls_exp = Var (mkLsVar pr,pos) in
+        (*---------------*)
+        let f_neq = mkNeqExp ls_exp (mkEmptyBag pos) pos in (* LS!={} *)
+        let f_eq_zero = mkEqExp x (IConst (0,pos)) pos in (*x=0*)
+        let f1 = Or (f_neq,f_eq_zero,None,pos) in
+        (*---------------*)
+        let f_eq_ls = mkEqExp ls_exp (mkEmptyBag pos) pos in (* LS={} *)
+
+        let f_in_lsmu = mkBagInExp fresh_var lsmu_exp pos in (*v in LSMU*)
+        let f_lte = mkLteExp fresh_var_exp x pos in (*v<=x*)
+        let f_and = And (f_in_lsmu,f_lte,pos) in
+        let f221 = Forall (fresh_var,f_and,None,pos) in (*forall v. v in LSMU & v<=x*)
+        let f222 = (match x with (*x in LSMU*)
+          | Var (sv,posx) ->
+              mkBagInExp sv lsmu_exp pos
+          | Level (sv,posx) ->
+              mkBagLInExp sv lsmu_exp pos
+          | _ -> Error.report_error { Error.error_loc = pos; Error.error_text = "translate_waitlevel_p_formula: unexpected operator: only expecting integer value in waitlevel formulae" ^ (!print_exp x);})
+        in
+        let f22 = And (f221,f222,pos) in
+        let f2 = Or (f_eq_ls,f22,None,pos) in
+        And (f1,f2,pos)
+    | _ -> Error.report_error { Error.error_loc = pos; Error.error_text = "translate_waitlevel_p_formula: unexpected operator: only expecting < and = in waitlevel formulae";}
+  )
+
+let translate_waitlevel_p_formula (bf : b_formula) (x:exp) (pr:primed) pos : formula =
+  Debug.ho_2 "translate_waitlevel_p_formula" !print_b_formula !print_exp !print_formula
+      ( fun _ _ -> translate_waitlevel_p_formula_x bf x pr pos) bf x
+
+let translate_waitlevel_b_formula_x (bf:b_formula) : formula =
+    let rec helper bf =
+      let pf,sth = bf in
+      (match pf with
+          (*Currently, we only consider two types on constraints
+            on waitlevel: < and = and waitlevel should be on LHS*)
+        | Lt (e1,e2,pos)
+        | Eq (e1,e2,pos) ->
+            (match e1 with
+              | Var (sv1,pos1)->
+                  if (name_of_spec_var sv1 = Globals.waitlevel_name) then
+                    (match e2 with
+                      | Var (sv2,pos2)
+                      | Level (sv2,pos2) ->
+                          let nf = translate_waitlevel_p_formula bf e2 (primed_of_spec_var sv1) pos in
+                          nf
+                      | _ ->
+                          let _ = print_endline ("waitlevel should be comparable to only an integer or a locklevelin in formula " ^ (!print_b_formula bf)) in
+                          BForm (bf,None)
+                    )
+                  else
+                    let vars2 = afv e2 in
+                    let b = List.exists (fun v -> (name_of_spec_var v = Globals.waitlevel_name)) vars2 in
+                    if (b) then
+                      let _ = print_endline ("waitlevel should not be in LHS of formula " ^ (!print_b_formula bf)) in
+                      BForm (bf,None)
+                    else
+                      BForm (bf,None)
+              | _ -> BForm (bf,None)
+            )
+        |_ -> BForm (bf,None))
+    in (helper bf)
+
+let translate_waitlevel_b_formula (bf:b_formula) : formula =
+  Debug.no_1 "translate_waitlevel_b_formula" !print_b_formula !print_formula
+      translate_waitlevel_b_formula_x bf
+
+(*Translate waitlevel into constraints before sending to provers*)
+let translate_waitlevel_pure_x (pf : formula) : formula =
+  let rec helper f =
+    match f with
+      | BForm (bf, lbl) ->
+          let nf = translate_waitlevel_b_formula bf in
+          nf
+      | And (f1, f2, pos) ->
+          let n_f1 = helper f1 in
+          let n_f2 = helper f2 in
+          And (n_f1, n_f2, pos)
+      | AndList b -> 
+          let nf = List.fold_left (fun ls_f (_,f_b) -> 
+              let nf = helper f_b in
+              And (ls_f, nf, no_pos)
+          ) (mkTrue no_pos) b in
+          nf
+      | Or (f1, f2, lbl, pos) ->
+          let n_f1 = helper f1 in
+          let n_f2 = helper f2 in
+          Or (n_f1, n_f2, lbl, pos)
+      | Not (f, lbl, pos) ->
+          let n_f = helper f in
+          Not (n_f, lbl, pos)
+      | Forall (sv, f, lbl, pos) ->
+          let n_f = helper f in
+          Forall (sv, n_f, lbl, pos)
+      | Exists (sv, f, lbl, pos) ->
+          let n_f = helper f in
+          Exists (sv, n_f, lbl, pos)
+  in helper pf
+
+(*
+Before sending to provers,
+translate waitlevel into constraints related to LSMU:
+
+waitlevel<x ==def== forall level in LSMU. level<x
+waitlevel'<x ==def== forall level in LSMU'. level<x
+
+waitlevel=x ==def== (LS={} => x=0)
+  & (LS!={} => (forall level in LSMU. level<=x) & (exist level in LSMU. level=x)
+
+In other words,
+waitlevel=x ==def== (LS={} => x=0)
+  & (LS!={} => (forall level in LSMU. level<=x) & (x in LSMU)
+
+or
+
+waitlevel=x ==def== (not LS={} | x=0)
+  & ((not LS!={}) | ((forall level in LSMU. level<=x) & (x in LSMU))
+
+*)
+let translate_waitlevel_pure (pf : formula) : formula =
+  Debug.no_1 "translate_waitlevel_pure" !print_formula !print_formula 
+      translate_waitlevel_pure_x pf
