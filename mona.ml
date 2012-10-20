@@ -1201,7 +1201,7 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
 
 let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.ho_2 "mona.is_sat_ops" pr (fun x -> x) string_of_bool 
+  Debug.no_2 "mona.is_sat_ops" pr (fun x -> x) string_of_bool 
   (fun _ _ -> is_sat_ops_x pr_w pr_s f sat_no) f sat_no
 
 

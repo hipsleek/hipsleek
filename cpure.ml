@@ -8423,7 +8423,7 @@ let translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos : f
   )
 
 let translate_waitlevel_p_formula (bf : b_formula) (x:exp) (pr:primed) pos : formula =
-  Debug.ho_2 "translate_waitlevel_p_formula" !print_b_formula !print_exp !print_formula
+  Debug.no_2 "translate_waitlevel_p_formula" !print_b_formula !print_exp !print_formula
       ( fun _ _ -> translate_waitlevel_p_formula_x bf x pr pos) bf x
 
 let translate_waitlevel_b_formula_x (bf:b_formula) : formula =
@@ -8438,7 +8438,36 @@ let translate_waitlevel_b_formula_x (bf:b_formula) : formula =
               | Var (sv1,pos1)->
                   if (name_of_spec_var sv1 = Globals.waitlevel_name) then
                     (match e2 with
-                      | Var (sv2,pos2)
+                      | Var (sv2,pos2) -> 
+                          if (name_of_spec_var sv2 = Globals.waitlevel_name) then
+                            (*waitlevel'=waitlevel ==> exist x: waitlevel = x & waitlevel'= x*)
+                            (*waitlevel'<waitlevel ==> exist x: waitlevel < x & waitlevel'= x*)
+
+                            let level_var = mkLevelVar Unprimed in
+                            let fresh_var = fresh_spec_var level_var in
+                            let x_exp = Var (fresh_var,pos) in
+                            match pf with
+                              | Eq (e1,e2,pos) ->
+                                  (*waitlevel'=waitlevel ==> exist x: waitlevel = x & waitlevel'= x*)
+                                  (*translate waitlevel = x*)
+                                  let nf1 = translate_waitlevel_p_formula bf x_exp (primed_of_spec_var sv1) pos in
+                                  (*translate waitlevel' = x*)
+                                  let nf2 = translate_waitlevel_p_formula bf x_exp (primed_of_spec_var sv2) pos in
+                                  let nf = And (nf1,nf2,pos) in
+                                  (Exists (fresh_var,nf,None,pos))
+                              | Lt (e1,e2,pos) ->
+                                  (*waitlevel'<waitlevel ==> exist x: waitlevel < x & waitlevel'= x*)
+                                  (*translate waitlevel < x*)
+                                  let nf1 = translate_waitlevel_p_formula bf x_exp (primed_of_spec_var sv1) pos in
+                                  (*translate waitlevel' = x*)
+                                  let nbf = (Eq (e1,e2,pos),sth) in
+                                  let nf2 = translate_waitlevel_p_formula nbf x_exp (primed_of_spec_var sv2) pos in
+                                  let nf = And (nf1,nf2,pos) in
+                                  (Exists (fresh_var,nf,None,pos))
+                              | _ -> Error.report_error { Error.error_loc = pos; Error.error_text = "translate_waitlevel_p_formula: this case won't never happen";}
+                          else
+                          let nf = translate_waitlevel_p_formula bf e2 (primed_of_spec_var sv1) pos in
+                          nf
                       | Level (sv2,pos2) ->
                           let nf = translate_waitlevel_p_formula bf e2 (primed_of_spec_var sv1) pos in
                           nf
@@ -8516,5 +8545,5 @@ waitlevel=x ==def== (not LS={} | x=0)
 
 *)
 let translate_waitlevel_pure (pf : formula) : formula =
-  Debug.no_1 "translate_waitlevel_pure" !print_formula !print_formula 
+  Debug.ho_1 "translate_waitlevel_pure" !print_formula !print_formula 
       translate_waitlevel_pure_x pf
