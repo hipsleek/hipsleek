@@ -53,6 +53,14 @@ void func_release(lock l1)
   release[LOCK](l1);
 }
 
+void func_release_acquire(lock l1)
+  requires l1::LOCK(0.5)<> & l1 in LS & l1.mu>0 & waitlevel=l1.mu
+  ensures l1::LOCK(0.5)<> & LS'=LS & waitlevel'=waitlevel;//'
+{
+  release[LOCK](l1);
+  acquire[LOCK](l1);
+}
+
 //test initialization and finalization
 void f1()
   requires LS={}

@@ -1630,26 +1630,35 @@ let rewrite_in_list list formula =
   | x -> list
 ;;
 
-let rec rewrite_in_and_tree rid formula rform =
+(*do not rewrite bag_vars*)
+let rec rewrite_in_and_tree bag_vars rid formula rform =
+  let rec helper rid formula rform =
   match formula with
   | CP.And (x, y, l) ->
-      let (x, fx) = rewrite_in_and_tree rid x rform in
-      let (y, fy) = rewrite_in_and_tree rid y rform in
+      let (x, fx) = helper rid x rform in
+      let (y, fy) = helper rid y rform in
       (CP.And (x, y, l), (fun e -> fx (fy e)))
   | CP.AndList b -> 
 		let r1,r2 = List.fold_left (fun (a, f) (l,c)-> 
-		let r1,r2 = rewrite_in_and_tree rid c rform in
+		let r1,r2 = helper rid c rform in
 		(l,r1)::a, (fun e -> r2 (f e))) ([],(fun c-> c)) b in
 		(AndList r1, r2)
   | x ->
       let subst_fun =
         match rform with
-        | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) -> CP.subst [v1, v2]
-        | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _) -> CP.subst_term [v1, term]
-        | CP.BForm ((CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _), _), _) -> CP.subst_term [v1, term]
+        | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) ->
+            if (List.mem v1 bag_vars || (List.mem v2 bag_vars)) then  fun x -> x else
+              CP.subst [v1, v2]
+        | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _) ->
+            if (List.mem v1 bag_vars) then  fun x -> x else
+            CP.subst_term [v1, term]
+        | CP.BForm ((CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _), _), _) ->
+            if (List.mem v1 bag_vars) then  fun x -> x else
+            CP.subst_term [v1, term]
         | _ -> fun x -> x
       in
       if ((not rid) && x = rform) then (x, subst_fun) else (subst_fun x, subst_fun)
+  in helper rid formula rform
 ;;
 
 let is_irrelevant = function
@@ -1675,31 +1684,39 @@ let rec fold_with_subst fold_fun current = function
 ;;
 
 (* TODO goes in just once *)
+(*do not simpl bag_vars*)
 let rec simpl_in_quant formula negated rid =
+  let bag_vars = CP.bag_vars_formula formula in
+  let related_vars = List.map (fun v -> CP.find_closure_pure_formula v formula) bag_vars in
+  let bag_vars = List.concat related_vars in
+  let bag_vars = CP.remove_dups_svl bag_vars in
+  (* let _ = print_endline (" ### bag_vars = " ^ (Cprinter.string_of_spec_var_list bag_vars)) in *)
+  let rec helper formula negated rid = 
   match negated with
   | true ->
       begin match formula with
-      | CP.Not (f, lbl, l) -> CP.Not (simpl_in_quant f false rid, lbl, l)
-      | CP.Forall (v, f, lbl, l) -> CP.Forall (v, simpl_in_quant f true rid, lbl, l)
-      | CP.Exists (v, f, lbl, l) -> CP.Exists (v, simpl_in_quant f true rid, lbl, l)
-      | CP.Or (f, g, lbl, l) -> CP.mkOr (simpl_in_quant f false false) (simpl_in_quant g false false) lbl l
+      | CP.Not (f, lbl, l) -> CP.Not (helper f false rid, lbl, l)
+      | CP.Forall (v, f, lbl, l) -> CP.Forall (v, helper f true rid, lbl, l)
+      | CP.Exists (v, f, lbl, l) -> CP.Exists (v, helper f true rid, lbl, l)
+      | CP.Or (f, g, lbl, l) -> CP.mkOr (helper f false false) (helper g false false) lbl l
       | CP.And (_, _, _) ->
           let subfs = split_conjunctions formula in
-          let nformula = fold_with_subst (rewrite_in_and_tree rid) formula subfs in
+          let nformula = fold_with_subst (rewrite_in_and_tree bag_vars rid) formula subfs in
           let nformula = get_rid_of_eq nformula in
           nformula
-	  | CP.AndList b -> AndList (map_l_snd (fun c-> simpl_in_quant c negated rid) b)
+	  | CP.AndList b -> AndList (map_l_snd (fun c-> helper c negated rid) b)
       | x -> x
       end
   | false ->
       begin match formula with
-      | CP.Not (f, lbl, l) -> CP.Not (simpl_in_quant f true true, lbl, l)
-      | CP.Forall (v, f, lbl, l) -> CP.Forall (v, simpl_in_quant f false rid, lbl, l)
-      | CP.Exists (v, f, lbl, l) -> CP.Exists (v, simpl_in_quant f false rid, lbl, l)
-      | CP.And (f, g, l) -> CP.And (simpl_in_quant f true false, simpl_in_quant g true false, l)
-	  | CP.AndList b -> AndList (map_l_snd (fun c-> simpl_in_quant c negated rid) b)
+      | CP.Not (f, lbl, l) -> CP.Not (helper f true true, lbl, l)
+      | CP.Forall (v, f, lbl, l) -> CP.Forall (v, helper f false rid, lbl, l)
+      | CP.Exists (v, f, lbl, l) -> CP.Exists (v, helper f false rid, lbl, l)
+      | CP.And (f, g, l) -> CP.And (helper f true false, helper g true false, l)
+	  | CP.AndList b -> AndList (map_l_snd (fun c-> helper c negated rid) b)
       | x -> x
       end
+  in helper formula negated rid
 ;;
 
 let simpl_pair rid (ante, conseq) =
@@ -1707,7 +1724,9 @@ let simpl_pair rid (ante, conseq) =
   if (List.exists (fun v -> CP.name_of_spec_var v = waitlevel_name) conseq_vars) then
     (ante,conseq)
   else
-  let l1 = CP.bag_vars_formula ante in
+  let bag_vars = CP.bag_vars_formula ante in
+  let related_vars = List.map (fun v -> CP.find_closure_pure_formula v ante) bag_vars in
+  let l1 = List.concat related_vars in
   let vars = CP.fv ante in
   let lock_vars = List.filter (fun v -> CP.type_of_spec_var v = lock_typ) vars in
   (*l1 is bag vars in both ante and conseq*)
@@ -1727,7 +1746,9 @@ let simpl_pair rid (ante, conseq) =
   in
   let (ante1, conseq) = fold_with_subst (fold_fun l1) (ante, conseq) antes in
   let ante1 = get_rid_of_eq ante1 in
+  (* let _ = print_endline ("ante1 = " ^ (Cprinter.string_of_pure_formula ante1)) in *)
   let ante2 = simpl_in_quant ante1 true rid in
+  (* let _ = print_endline ("ante2 = " ^ (Cprinter.string_of_pure_formula ante2)) in *)
   let ante3 = simpl_in_quant ante2 true rid in
   (ante3, conseq)
 

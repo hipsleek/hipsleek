@@ -5675,7 +5675,7 @@ and detect_false (ante : MCP.mix_formula) (memset : CF.mem_formula) : bool =
     | MCP.MemoF at ->
         MCP.ptr_equations_aux_mp false at 
     | MCP.OnePF at ->
-        pure_ptr_equations at 
+        CP.pure_ptr_equations at 
   in
 	let eqset = CP.EMapSV.build_eset eqset in
 	(* let neq_pairs = CF.generate_disj_pairs_from_memf memset in *)
@@ -5727,7 +5727,7 @@ and solve_ineq_pure_formula_debug (ante : Cpure.formula) (memset : Cformula.mem_
       (fun ante memset conseq -> solve_ineq_pure_formula ante memset conseq ) ante memset conseq
 
 and solve_ineq_pure_formula (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
-  let eqset = CP.EMapSV.build_eset (MCP.pure_ptr_equations ante) in
+  let eqset = CP.EMapSV.build_eset (CP.pure_ptr_equations ante) in
   let rec helper (conseq : Cpure.formula) =
     match conseq with
       | Cpure.BForm (f, l) -> solve_ineq_b_formula (fun x y -> CP.EMapSV.is_equiv eqset x y) memset f

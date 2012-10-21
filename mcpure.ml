@@ -259,55 +259,63 @@ and m_apply_par_varperm (sst:(spec_var * spec_var) list) f =
   let pr2 = !print_mp_f in
   Debug.no_2 "m_apply_par_varperm" pr1 pr2 pr2 m_apply_par_varperm_x sst f
 
-and b_f_ptr_equations_aux with_null f =
-  let (pf, _) = f in
-  match pf with
-  | Eq (e1, e2, _) ->
-      let b = can_be_aliased_aux with_null e1 && can_be_aliased_aux with_null e2 in
-      if not b then [] else [(get_alias e1, get_alias e2)]
-  | _ -> [] 
+(*MOVE to cpure.ml*)
+(* and b_f_ptr_equations_aux with_null f = *)
+(*   let (pf, _) = f in *)
+(*   match pf with *)
+(*   | Eq (e1, e2, _) -> *)
+(*       let b = can_be_aliased_aux with_null e1 && can_be_aliased_aux with_null e2 in *)
+(*       if not b then [] else [(get_alias e1, get_alias e2)] *)
+(*   | _ -> []  *)
 
-and b_f_ptr_equations f = b_f_ptr_equations_aux true f
+(*MOVE to cpure.ml*)
+(* and b_f_ptr_equations f = b_f_ptr_equations_aux true f *)
 
-and is_bf_ptr_equations bf =
-  let (pf,_) = bf in
-  match pf with
-  | Eq (e1, e2, _) -> can_be_aliased_aux true e1 && can_be_aliased_aux true e2
-  | _ -> false
+(*MOVE to cpure.ml*)
+(* and is_bf_ptr_equations bf = *)
+(*   let (pf,_) = bf in *)
+(*   match pf with *)
+(*   | Eq (e1, e2, _) -> can_be_aliased_aux true e1 && can_be_aliased_aux true e2 *)
+(*   | _ -> false *)
 
-and is_pure_ptr_equations f = match f with
-  | BForm (bf,_) -> is_bf_ptr_equations bf
-  | _ -> false
+(*MOVE to cpure.ml*)
+(* and is_pure_ptr_equations f = match f with *)
+(*   | BForm (bf,_) -> is_bf_ptr_equations bf *)
+(*   | _ -> false *)
 
-and remove_ptr_equations f is_or = match f with
-  | BForm (bf,_) -> 
-    if is_bf_ptr_equations bf then 
-      if is_or then mkFalse no_pos
-      else mkTrue no_pos 
-    else f
-  | And (f1,f2,p) -> mkAnd (remove_ptr_equations f1 false) (remove_ptr_equations f2 false) p
-  | AndList b -> mkAndList (map_l_snd (fun c-> remove_ptr_equations c false) b)
-  | Or (f1,f2,o,p) -> mkOr (remove_ptr_equations f1 true) (remove_ptr_equations f2 true) o p
-  | Not (f,o,p) -> Not (remove_ptr_equations f false,o,p)
-  | Forall (v,f,o,p) -> Forall (v,remove_ptr_equations f false,o,p)
-  | Exists (v,f,o,p) -> Exists (v,remove_ptr_equations f false,o,p)
+(*MOVE to cpure.ml*)
+(* and remove_ptr_equations f is_or = match f with *)
+(*   | BForm (bf,_) ->  *)
+(*     if is_bf_ptr_equations bf then  *)
+(*       if is_or then mkFalse no_pos *)
+(*       else mkTrue no_pos  *)
+(*     else f *)
+(*   | And (f1,f2,p) -> mkAnd (remove_ptr_equations f1 false) (remove_ptr_equations f2 false) p *)
+(*   | AndList b -> mkAndList (map_l_snd (fun c-> remove_ptr_equations c false) b) *)
+(*   | Or (f1,f2,o,p) -> mkOr (remove_ptr_equations f1 true) (remove_ptr_equations f2 true) o p *)
+(*   | Not (f,o,p) -> Not (remove_ptr_equations f false,o,p) *)
+(*   | Forall (v,f,o,p) -> Forall (v,remove_ptr_equations f false,o,p) *)
+(*   | Exists (v,f,o,p) -> Exists (v,remove_ptr_equations f false,o,p) *)
 
-and pure_ptr_equations (f:formula) : (spec_var * spec_var) list = 
-  pure_ptr_equations_aux true f
+(*MOVE to cpure.ml*)
+(* and pure_ptr_equations (f:formula) : (spec_var * spec_var) list =  *)
+(*   pure_ptr_equations_aux true f *)
 
-and pure_ptr_equations_aux_x with_null (f:formula) : (spec_var * spec_var) list = 
-  let rec prep_f f = match f with
-    | And (f1, f2, pos) -> (prep_f f1) @ (prep_f f2)
-	| AndList b -> fold_l_snd prep_f b
-    | BForm (bf,_) -> b_f_ptr_equations_aux with_null bf
-    | _ -> [] in 
-  prep_f f
+(*MOVE to cpure.ml*)
+(* and pure_ptr_equations_aux_x with_null (f:formula) : (spec_var * spec_var) list =  *)
+(*   let rec prep_f f = match f with *)
+(*     | And (f1, f2, pos) -> (prep_f f1) @ (prep_f f2) *)
+(* 	| AndList b -> fold_l_snd prep_f b *)
+(*     | BForm (bf,_) -> b_f_ptr_equations_aux with_null bf *)
+(*     | _ -> [] in  *)
+(*   prep_f f *)
 
-and pure_ptr_equations_aux with_null (f:formula) : (spec_var * spec_var) list = 
-  let pr1 = string_of_bool in
-  let pr2 = !print_pure_f in
-  let pr3 = pr_list (pr_pair !print_sv !print_sv) in
-  Debug.no_2 "pure_ptr_equations_aux" pr1 pr2 pr3 pure_ptr_equations_aux_x with_null f 
+(*MOVE to cpure.ml*)
+(* and pure_ptr_equations_aux with_null (f:formula) : (spec_var * spec_var) list =  *)
+(*   let pr1 = string_of_bool in *)
+(*   let pr2 = !print_pure_f in *)
+(*   let pr3 = pr_list (pr_pair !print_sv !print_sv) in *)
+(*   Debug.no_2 "pure_ptr_equations_aux" pr1 pr2 pr3 pure_ptr_equations_aux_x with_null f  *)
 
 (* use_with_null_const for below *)
 (* assume that f is a satisfiable conjunct *) 
@@ -2171,22 +2179,23 @@ let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
 		| Some (v1, v2) -> Gen.BList.subset_eq eq_spec_var [v1; v2] ls 
 		| None -> false
 	) mg.memo_group_cons)) mem
-  
-let find_closure (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list = 
-  let rec helper (vs: spec_var list) (vv:(spec_var * spec_var) list) =
-    match vv with
-      | (v1,v2)::xs -> 
-          let v3 = if (List.exists (fun v -> eq_spec_var v v1) vs) then Some v2
-              else if (List.exists (fun v -> eq_spec_var v v2) vs) then Some v1
-              else 
-                None 
-          in
-          (match v3 with
-            | None -> helper vs xs
-            | Some x -> helper (x::vs) xs)
-      | [] -> vs
-  in
-  helper [v] vv
+
+(*Moved to cpure.ml*)
+(* let find_closure (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list =  *)
+(*   let rec helper (vs: spec_var list) (vv:(spec_var * spec_var) list) = *)
+(*     match vv with *)
+(*       | (v1,v2)::xs ->  *)
+(*           let v3 = if (List.exists (fun v -> eq_spec_var v v1) vs) then Some v2 *)
+(*               else if (List.exists (fun v -> eq_spec_var v v2) vs) then Some v1 *)
+(*               else  *)
+(*                 None  *)
+(*           in *)
+(*           (match v3 with *)
+(*             | None -> helper vs xs *)
+(*             | Some x -> helper (x::vs) xs) *)
+(*       | [] -> vs *)
+(*   in *)
+(*   helper [v] vv *)
 
 let find_closure_mix_formula_x (v:spec_var) (f:mix_formula) : spec_var list = find_closure v (ptr_equations_with_null f)
 
