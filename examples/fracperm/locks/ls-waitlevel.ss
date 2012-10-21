@@ -54,26 +54,26 @@ void func_release(lock l1)
 }
 
 //test initialization and finalization
-/* void f1() */
-/*   requires LS={} */
-/*   ensures LS'={}; //' */
-/* { */
-/*   int level = 100; */
-/*   lock l1 = new lock(level); */
-/*   dprint; */
-/*   //initialization */
-/*   init[LOCK](l1); */
-/*   release[LOCK](l1); */
-/*   dprint; */
-/*   // */
-/*   acquire[LOCK](l1); */
-/*   release[LOCK](l1); */
-/*   dprint; */
-/*   //finalization */
-/*   acquire[LOCK](l1); */
-/*   finalize[LOCK](l1); */
-/*   dprint; */
-/* } */
+void f1()
+  requires LS={}
+  ensures LS'={}; //'
+{
+  int level = 100;
+  lock l1 = new lock(level);
+  dprint;
+  //initialization
+  init[LOCK](l1);
+  release[LOCK](l1);
+  dprint;
+  //
+  acquire[LOCK](l1);
+  release[LOCK](l1);
+  dprint;
+  //finalization
+  acquire[LOCK](l1);
+  finalize[LOCK](l1);
+  dprint;
+}
 
 /* //test sequential procedure calls */
 /* void f2() */

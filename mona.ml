@@ -960,7 +960,7 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
   answer
 
 let check_answer (mona_file_content: string) (answ: string) (is_sat_b: bool)= 
-  Debug.ho_3 "check_answer"
+  Debug.no_3 "check_answer"
       (fun str -> str)
       (fun str -> str)
       string_of_bool
