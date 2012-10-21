@@ -7844,6 +7844,12 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_label = None;
       h_formula_view_pos = pos })
   in
+  (****waitlevel****)
+  let waitlevel_var = CP.mkWaitlevelVar Primed in (*waitlevel'*)
+  let waitlevel_exp = CP.mkVar waitlevel_var pos in
+  let level_exp = CP.mkLevel var pos in (* level(l) == l.mu *)
+  let gt_f = CP.mkLtExp waitlevel_exp level_exp pos in (* waitlevel'<l.mu*)
+  (**************)
   (****LOCKSET****)
   let ls_uvar = CP.mkLsVar Unprimed in
   let ls_pvar = CP.mkLsVar Primed in
@@ -7874,7 +7880,8 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   let post = normalize 5 inv tmp pos in
   let post = EAssume ([ls_uvar;lsmu_uvar],post,lbl) in
   (*PRE-CONDITION*)
-  let pre = mkBase lock_node (MCP.memoise_add_pure_N (MCP.OnePF not_in_f) read_f) TypeTrue (mkTrueFlow ()) [] pos in
+  let pre_mf = (MCP.memoise_add_pure_N (MCP.OnePF not_in_f) read_f) in
+  let pre = mkBase lock_node pre_mf TypeTrue (mkTrueFlow ()) [] pos in
   EBase {
 	formula_struc_explicit_inst = [];
 	formula_struc_implicit_inst = [fresh_perm]; (*instantiate f*)

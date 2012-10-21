@@ -2663,7 +2663,7 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | Div (a1, a2, pos) ->
         Div (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Var (sv, pos) -> if eq_spec_var sv fr then t else e
-  | Level (sv, pos) -> if eq_spec_var sv fr then t else e
+  | Level (sv, pos) -> e (* if eq_spec_var sv fr then t else e *) (*donot replace locklevel by any expression*)
   | Max (a1, a2, pos) -> Max (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Min (a1, a2, pos) -> Min (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
         (*| BagEmpty (pos) -> BagEmpty (pos)*)

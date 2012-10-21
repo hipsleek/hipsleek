@@ -60,6 +60,7 @@ void main()
   release[LOCK](l,xCell,yCell,zCell);
   /* dprint; */
   int id = fork(incrementor1,l,xCell,yCell,zCell); // there is an automatic split here
+  dprint;
   incrementor2(l,xCell,yCell,zCell);
   join(id);
   dprint;

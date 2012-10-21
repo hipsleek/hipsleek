@@ -1713,10 +1713,11 @@ let simpl_pair rid (ante, conseq) =
   (*l1 is bag vars in both ante and conseq*)
   (*lock_vars are simplify*)
   let l1 = CP.remove_dups_svl (l1 @ (CP.bag_vars_formula conseq) @lock_vars) in
+  (* let _ = print_endline (" ### l1 = " ^ (Cprinter.string_of_spec_var_list l1)) in *)
   let antes = split_conjunctions ante in
   let fold_fun l_f_vars (ante, conseq)  = function
     | CP.BForm ((CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _), _), _) ->
-		if (List.mem v1 l1) then ((ante, conseq), fun x -> x) else
+		if (List.mem v1 l1 || (List.mem v2 l1)) then ((ante, conseq), fun x -> x) else
         ((CP.subst [v1, v2] ante, CP.subst [v1, v2] conseq), (CP.subst [v1, v2]))
     | CP.BForm ((CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _), _), _)
     | CP.BForm ((CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _), _), _) ->
