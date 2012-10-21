@@ -924,7 +924,13 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
               output_string log_all (" [mona.ml]: --> SUCCESS\n");
               output_string log_all ("[mona.ml]: " ^ imp_sat_str ^ " --> true\n");
             end;
-            true
+            true;
+      | "Formula is satisfiable or unknown" -> (*TO CHECK*)
+            if !log_all_flag==true then begin
+              output_string log_all (" [mona.ml]: --> Formula is satisfiable or unknown\n");
+              output_string log_all ("[mona.ml]: " ^ imp_sat_str ^ " --> "  ^ (string_of_bool is_sat_b) ^ "\n");
+            end;
+            is_sat_b;
       | "Formula is unsatisfiable" -> 
             if !log_all_flag == true then
 		      output_string log_all ("[mona.ml]:" ^ imp_sat_str ^" --> false \n");
@@ -935,7 +941,7 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
             let _ = create_failure_file mona_file_content in
             restart "mona aborted execution";
             if !log_all_flag == true then
-		      output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure)\n");
+		      output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 1)\n");
             is_sat_b
       | _ ->
             let _ = create_failure_file mona_file_content in
@@ -947,14 +953,14 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
               | Not_found ->
                     begin
     	              if !log_all_flag == true then
-		                output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure)\n");
+		                output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 2)\n");
                       is_sat_b;
                     end
   in
   answer
 
 let check_answer (mona_file_content: string) (answ: string) (is_sat_b: bool)= 
-  Debug.no_3 "check_answer"
+  Debug.ho_3 "check_answer"
       (fun str -> str)
       (fun str -> str)
       string_of_bool
@@ -1101,7 +1107,7 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
           stop(); raise exc
 
 let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
-  Debug.ho_3 "imply_sat_helper"
+  Debug.no_3 "imply_sat_helper"
       Cprinter.string_of_spec_var_list
       Cprinter.string_of_pure_formula
       string_of_hashtbl
@@ -1151,7 +1157,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
 
 let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let pr = Cprinter.string_of_pure_formula in
-  Debug.ho_3 "mona.imply" pr pr (fun x -> x) string_of_bool 
+  Debug.no_3 "mona.imply" pr pr (fun x -> x) string_of_bool 
   (fun _ _ _ -> imply_ops pr_w pr_s ante conseq imp_no) ante conseq imp_no
 
 let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =

@@ -810,6 +810,10 @@ let assumption_filter_slicing (ante : CP.formula) (cons : CP.formula) : (CP.form
   (CP.join_conjunctions (pick_rel_constraints cons l_ante), cons)
 	   
 let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) =
+  let conseq_vars = CP.fv cons in
+  if (List.exists (fun v -> CP.name_of_spec_var v = waitlevel_name) conseq_vars) then
+    (ante,cons)
+  else
   if !do_slicing && !multi_provers then assumption_filter_slicing ante cons
   else CP.assumption_filter ante cons
 
@@ -1597,7 +1601,7 @@ let tp_imply ante conseq imp_no timeout process =
 let tp_imply ante conseq imp_no timeout process =	
   let pr1 = Cprinter.string_of_pure_formula in
   let prout x = string_of_bool x in
-  Debug.ho_2 "tp_imply" 
+  Debug.no_2 "tp_imply" 
       (add_str "ante" pr1) 
       (add_str "conseq" pr1) 
       (add_str ("solver:"^(!called_prover)) prout) (fun _ _ -> tp_imply ante conseq imp_no timeout process) ante conseq
@@ -1786,6 +1790,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 				  | Some (Some proc, true) -> (ante, cons) (* don't filter when in incremental mode - need to send full ante to prover *)
 				  | _ -> assumption_filter ante cons  ) cons) acpairs in
 		let pairs = List.concat pairs in
+        (* let _ = print_endline ("pairs = " ^ (pr_list (pr_pair Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula) pairs)) in *)
 		let pairs_length = List.length pairs in
 		let imp_sub_no = ref 0 in
         (* let _ = (let _ = print_string("\n!!!!!!! bef\n") in flush stdout ;) in *)
@@ -1798,6 +1803,8 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
             (*DROP VarPerm formula before checking*)
             let conseq = CP.drop_varperm_formula conseq in
             let ante = CP.drop_varperm_formula ante in
+            let _ = Debug.devel_hprint (add_str "ante 5: " Cprinter.string_of_pure_formula) ante no_pos in
+            let _ = Debug.devel_hprint (add_str "cons 5: " Cprinter.string_of_pure_formula) conseq no_pos in
 			let res1 =
 			  if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then
 				let res1 = tp_imply(*_debug*) (CP.drop_bag_formula ante) conseq imp_no timeout process in
@@ -1821,7 +1828,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
   = let pf = Cprinter.string_of_pure_formula in
-  Debug.ho_2 "imply_timeout 2" pf pf (fun (b,_,_) -> string_of_bool b)
+  Debug.no_2 "imply_timeout 2" pf pf (fun (b,_,_) -> string_of_bool b)
       (fun a c -> imply_timeout a c imp_no timeout process) ante0 conseq0
 
 

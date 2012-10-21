@@ -1170,8 +1170,11 @@ match pf with
 (* Expression *)
 and is_exp_arith (e:exp) : bool=
   match e with
+    | Var (sv,pos) ->
+        (*waitlevel is a kind of bag constraints*)
+        if (name_of_spec_var sv = Globals.waitlevel_name) then false else true
     | Level _
-    | Null _  | Var _ | IConst _ | AConst _ | FConst _ -> true
+    | Null _  | IConst _ | AConst _ | FConst _ -> true
     | Add (e1,e2,_)  | Subtract (e1,e2,_)  | Mult (e1,e2,_) 
     | Div (e1,e2,_)  | Max (e1,e2,_)  | Min (e1,e2,_) -> (is_exp_arith e1) && (is_exp_arith e2)
           (* bag expressions *)
@@ -1182,12 +1185,16 @@ and is_exp_arith (e:exp) : bool=
     | Func _ -> true
     | ArrayAt _ -> true (* An Hoa : a[i] is just a value *)
           
-and is_formula_arith (f:formula) :bool = match f with
+and is_formula_arith_x (f:formula) :bool = match f with
   | BForm (b,_) -> is_b_form_arith b 
   | And (f1,f2,_) | Or (f1,f2,_,_)-> (is_formula_arith f1)&&(is_formula_arith f2)
   | Not (f,_,_) | Forall (_,f,_,_) | Exists (_,f,_,_)-> (is_formula_arith f)
   | AndList l -> all_l_snd  is_formula_arith l
-        
+
+and is_formula_arith (f:formula) :bool =
+  Debug.no_1 "is_formula_arith" !print_formula string_of_bool
+      is_formula_arith_x f
+
 (* smart constructor *)
 
 (*Create a locklevel of a lock sv*)
@@ -1214,6 +1221,10 @@ and mkBagDiff e1 e2 pos = BagDiff (e1,e2,pos)
 
 (*v notin S*)
 and mkBagNotIn v exp pos = BagNotIn (v,exp,pos) 
+
+and mkBagNotInExp v exp pos =
+  let bf = mkBagNotIn v exp pos in
+  BForm ((bf, None),None)
 
 (* v in S*)
 and mkBagIn v exp pos = BagIn (v,exp,pos)
@@ -1445,7 +1456,7 @@ and mkLtExp (ae1 : exp) (ae2 : exp) pos :formula =
     | _ ->  BForm ((Lt (ae1, ae2, pos), None),None)
 
 and mkLteExp (ae1 : exp) (ae2 : exp) pos :formula =
-  BForm ((Lt (ae1, ae2, pos), None),None)
+  BForm ((Lte (ae1, ae2, pos), None),None)
 
 and mkEqExp (ae1 : exp) (ae2 : exp) pos :formula =
   match (ae1, ae2) with
@@ -8430,17 +8441,19 @@ let translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos : f
     (*Currently, we only consider two types on constraints
       on waitlevel: < and = and waitlevel should be on LHS*)
     | Lt _ ->
-        (* waitlevel< x ==define==> forall v. v in LSMU & v>0 & v<x*)
+        (* waitlevel< x ==define==> forall v. v in LSMU => v>0 & v<x*)
 
-        (*waitlevel<x ==define==> (ls={} => x>0) & (ls!={} => forall v. v in LSMU & v<x)
+        (*waitlevel<x ==define==> (ls={} => x>0) & (ls!={} => forall v. v in LSMU => v<x)
           or
-          (ls!={} | x>0) & (ls={} | (forall v. v in LSMU & v<x))
+          (ls!={} | x>0) & (ls={} | (forall v. v in LSMU => v<x))
+          or
+          (ls!={} | x>0) & (ls={} | (forall v. v notin LSMU | v<x))
         *)
         let level_var = mkLevelVar Unprimed in
         let fresh_var = fresh_spec_var level_var in
         let fresh_var_exp = Var (fresh_var,pos) in
         let lsmu_exp = Var (mkLsmuVar pr,pos) in
-        let ls_exp = Var (mkLsVar pr,pos) in
+        let ls_exp = Var (mkLsmuVar pr,pos) in (*TO CHECK*)
         (*---------------*)
         let f_neq = mkNeqExp ls_exp (mkEmptyBag pos) pos in (* LS!={} *)
         let f_gt_zero = mkGtExp x (IConst (0,pos)) pos in (*x>0*)
@@ -8448,23 +8461,27 @@ let translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos : f
         (*---------------*)
         let f_eq_ls = mkEqExp ls_exp (mkEmptyBag pos) pos in (* LS={} *)
 
-        let f21 = mkBagInExp fresh_var lsmu_exp pos in (*v in LSMU*)
+        let f21 = mkBagNotInExp fresh_var lsmu_exp pos in (*v notin LSMU*)
         let f22 = mkLtExp fresh_var_exp x pos in (*v<x*)
-        let f2_and = And (f21,f22,pos) in (* v in LSMU & v<x *)
-        let f2_forall = Forall (fresh_var,f2_and,None,pos) (*forall v. v in LSMU & v<x*) in
-        let f2 = Or (f_eq_ls,f2_forall,None,pos) in (* (ls={} | (forall v. v in LSMU & v<x)) *)
+        let f2_or = Or (f21,f22,None,pos) in (* v notin LSMU | v<x *)
+        let f2_forall = Forall (fresh_var,f2_or,None,pos) in (*forall v. v in LSMU => v<x* or forall v. v notin LSMU | v<x *)
+        let f2 = Or (f_eq_ls,f2_forall,None,pos) in (* (ls={} | (forall v. v notin LSMU | v<x)) *)
         And (f1,f2,pos)
     | Eq _ ->
         (* waitlevel=x ==def== (not LS={} | x=0) *)
         (*   & ((not LS!={}) | ((forall level in LSMU. level<=x) & (x in LSMU)) *)
         (* OR *)
         (* waitlevel=x ==def== (LS!={} | x=0) *)
-        (*   & ((LS={}) | ((forall level in LSMU. level<=x) & (x in LSMU)) *)
+        (*   & ((LS={}) | ((forall level. level in LSMU => level<=x) & (x in LSMU)) *)
+        (* OR *)
+        (* waitlevel=x ==def== (LS!={} | x=0) *)
+        (*   & ((LS={}) | ((forall level. level notin LSMU | level<=x) & (x in LSMU)) *)
+
         let level_var = mkLevelVar Unprimed in
         let fresh_var = fresh_spec_var level_var in
         let fresh_var_exp = Var (fresh_var,pos) in
         let lsmu_exp = Var (mkLsmuVar pr,pos) in
-        let ls_exp = Var (mkLsVar pr,pos) in
+        let ls_exp = Var (mkLsmuVar pr,pos) in (*TO CHECK*)
         (*---------------*)
         let f_neq = mkNeqExp ls_exp (mkEmptyBag pos) pos in (* LS!={} *)
         let f_eq_zero = mkEqExp x (IConst (0,pos)) pos in (*x=0*)
@@ -8472,10 +8489,11 @@ let translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos : f
         (*---------------*)
         let f_eq_ls = mkEqExp ls_exp (mkEmptyBag pos) pos in (* LS={} *)
 
-        let f_in_lsmu = mkBagInExp fresh_var lsmu_exp pos in (*v in LSMU*)
+        let f_notin_lsmu = mkBagNotInExp fresh_var lsmu_exp pos in (*v notin LSMU*)
         let f_lte = mkLteExp fresh_var_exp x pos in (*v<=x*)
-        let f_and = And (f_in_lsmu,f_lte,pos) in
-        let f221 = Forall (fresh_var,f_and,None,pos) in (*forall v. v in LSMU & v<=x*)
+        let f_or = Or (f_notin_lsmu,f_lte,None,pos) in
+        let f221 = Forall (fresh_var,f_or,None,pos) in 
+        (*forall v. v in LSMU => v<=x*) (*forall v. v notin LSMU | v<=x*)
         let f222 = (match x with (*x in LSMU*)
           | Var (sv,posx) ->
               mkBagInExp sv lsmu_exp pos
