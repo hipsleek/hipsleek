@@ -25,8 +25,15 @@ void func_test(int x, int y)
   ;
 }
 
+void func_empty2()
+  requires true
+  ensures LS'=LS & waitlevel'=waitlevel;//'
+{
+  ;
+}
+
 void func_empty(lock l1)
-  requires l1::LOCK(0.5)<>  & l1 notin LS & LS!={} /*& l1.mu>0 & waitlevel<l1.mu */
+  requires l1::LOCK(0.5)<>  & l1 notin LS /*& l1.mu>0 & waitlevel<l1.mu */
   ensures l1::LOCK(0.5)<> &LS'=LS & waitlevel'=waitlevel;//'
 {
   ;
