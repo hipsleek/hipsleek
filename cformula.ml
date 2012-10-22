@@ -3437,6 +3437,31 @@ let remove_neqNull_redundant_hnodes_f f0=
   in
   helper f0
 
+let remove_eqNulls f0 nullPtrs=
+  let remove p elim_svl=
+    if elim_svl = [] then p else
+	begin
+     let all = CP.remove_dups_svl (CP.fv p) in
+	 let keep_svl = Gen.BList.difference_eq CP.eq_spec_var all elim_svl in
+	 CP.filter_var_new p keep_svl
+	end
+  in
+  let rec helper f=
+    match f with
+    | Base fb ->
+        (*assume keep vars = dnodes*)
+        let new_p = remove (MCP.pure_of_mix fb.formula_base_pure) nullPtrs in
+		Base {fb with formula_base_pure = MCP.mix_of_pure new_p;
+                }
+    | Or orf -> let nf1 = helper orf.formula_or_f1 in
+                  let nf2 = helper orf.formula_or_f2 in
+                  ( Or {orf with formula_or_f1 = nf1;
+                      formula_or_f2 = nf2;})
+      | Exists fe -> let np = remove (MCP.pure_of_mix fe.formula_exists_pure) nullPtrs in
+                     (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
+  in
+  helper f0
+  
 (*drop HRel in the set hp_names and return corresponding subst of their args*)
 let rec drop_hrel_f f hp_names=
   match f with
