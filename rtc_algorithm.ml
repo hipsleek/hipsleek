@@ -320,6 +320,7 @@ class rTC=
 	
 	method rtc_v2 eq_graph diseq_graph graph_e num_var=
 (*		let _=G.iter_edges_e (fun x->print_endline ((G.E.src x)^(G.E.dst x)^" "^(G.E.label x) )) graph_e in let _=exit(0) in*)
+	  (* let _= print_endline ("RTC here!") in *)
 		let _=self#simplify_input eq_graph diseq_graph graph_e in
 		let num_vertices=bcc#init_map_once eq_graph in
 		(* let diseq_edges= ref [] in *)

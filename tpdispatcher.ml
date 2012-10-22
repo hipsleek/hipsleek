@@ -1204,6 +1204,7 @@ let simplify (f : CP.formula) : CP.formula =
                   begin
                     (omega_simplify f);
                   end
+					|MINISAT -> Smtsolver.simplify f				
 					| LOG -> find_formula_proof_res simpl_no
          | _ -> omega_simplify f in
         Gen.Profiling.pop_time "simplify";
