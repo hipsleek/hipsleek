@@ -94,11 +94,11 @@ let parse_file (parse) (source_file : string) =
             raise t) in
   let proc_one_def c = 
     match c with
-	  | DataDef ddef -> let _=print_endline ("datadef1") in process_data_def ddef
-	  | PredDef pdef -> let _=print_endline ("Preddef1") in process_pred_def_4_iast pdef
-	  | FuncDef fdef -> let _=print_endline ("Funcdef1") in process_func_def fdef
-      | RelDef rdef -> let _=print_endline ("Reldef1") in process_rel_def rdef
-      | AxiomDef adef -> let _=print_endline ("Axiodef1") in  process_axiom_def adef  (* An Hoa *)
+	  | DataDef ddef -> process_data_def ddef
+	  | PredDef pdef -> process_pred_def_4_iast pdef
+	  | FuncDef fdef -> process_func_def fdef
+      | RelDef rdef -> process_rel_def rdef
+      | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
       (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
 	  | LemmaDef _
       | Infer _
@@ -107,10 +107,10 @@ let parse_file (parse) (source_file : string) =
 	  | EntailCheck _
 	  | PrintCmd _ 
       | Time _
-	  | EmptyCmd -> let _=print_endline ("Empcmd1") in () in
+	  | EmptyCmd -> () in
   let proc_one_lemma c = 
     match c with
-	  | LemmaDef ldef -> let _=print_endline ("lem2") in process_lemma ldef
+	  | LemmaDef ldef -> process_lemma ldef
 	  | DataDef _
 	  | PredDef _
 	  | FuncDef _
@@ -122,11 +122,11 @@ let parse_file (parse) (source_file : string) =
     | Infer _
 	  | PrintCmd _ 
       | Time _
-	  | EmptyCmd ->  let _=print_endline ("emp2") in () in
+	  | EmptyCmd -> () in
   let proc_one_cmd c = 
     match c with
 	  | EntailCheck (iante, iconseq) -> 
-  let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in
+          (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
           process_entail_check iante iconseq
       | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
 	  | CaptureResidue lvar -> process_capture_residue lvar
@@ -141,9 +141,8 @@ let parse_file (parse) (source_file : string) =
       | RelDef _
       | AxiomDef _ (* An Hoa *)
 	  | LemmaDef _
-	  | EmptyCmd -> let _=print_endline ("emp3") in () in
+	  | EmptyCmd -> () in
   let cmds = parse_first [] in
-	let _= List.map (fun x-> print_string ("\nList of commands:" ^ (string_of_command x)^"\n")) cmds in
    List.iter proc_one_def cmds;
 	(* An Hoa : Parsing is completed. If there is undefined type, report error.
 	 * Otherwise, we perform second round checking!
@@ -197,7 +196,7 @@ let main () =
           let input = read_line () in
           match input with
             | "" -> ()
-            | _ ->  
+            | _ -> 
               try
                 let term_indx = String.index input terminator in
                 let s = String.sub input 0 (term_indx+1) in
@@ -207,16 +206,16 @@ let main () =
                 else try
                   let cmd = parse cts in
                   (match cmd with
-                     | DataDef ddef ->  process_data_def ddef
-                     | PredDef pdef ->  process_pred_def pdef
-                     | FuncDef fdef ->  process_func_def fdef
-                     | RelDef rdef ->   process_rel_def rdef
+                     | DataDef ddef -> process_data_def ddef
+                     | PredDef pdef -> process_pred_def pdef
+                     | FuncDef fdef -> process_func_def fdef
+                     | RelDef rdef -> process_rel_def rdef
                      | AxiomDef adef -> process_axiom_def adef
-                     | EntailCheck (iante, iconseq) ->  process_entail_check iante iconseq
-                     | Infer (ivars, iante, iconseq) ->   process_infer ivars iante iconseq
+                     | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
+                     | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
                      | CaptureResidue lvar -> process_capture_residue lvar
-                     | LemmaDef ldef -> process_lemma ldef
-                     | PrintCmd pcmd ->  process_print_command pcmd
+                     | LemmaDef ldef ->   process_lemma ldef
+                     | PrintCmd pcmd -> process_print_command pcmd
                      | LetDef (lvar, lbody) -> put_var lvar lbody
                      | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
                      | EmptyCmd -> ());
@@ -236,7 +235,7 @@ let main () =
               if !inter then prompt := "- "
         done
       else 
-			(* let _ = print_endline "Prior to parse_file" in*)
+        (* let _ = print_endline "Prior to parse_file" in *)
         let _ = List.map (parse_file NF.list_parse) !source_files in ()
     with
       | End_of_file -> print_string ("\n")
@@ -257,6 +256,8 @@ let _ =
     Gen.Profiling.push_time "Overall";
     (* let _ = print_endline "before main" in *)
     main ();
+		let _= print_endline ("Time T: "^(string_of_float (!Globals.minisat_time_T))) in
+			let _= print_endline ("Time BCC: "^(string_of_float (!Globals.minisat_time_BCC))) in 
     (* let _ = print_endline "after main" in *)
     Gen.Profiling.pop_time "Overall";
     let _ = 

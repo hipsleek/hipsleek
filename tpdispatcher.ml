@@ -1101,13 +1101,13 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
           stat_tp (lazy (Spass.is_sat f sat_no)) "spass"
       )
 	| MINISAT -> ( 
-        if (is_bag_constraint wf) then
-          mona_is_sat wf
-        (*else if (is_list_constraint wf) then
-          Coq.is_sat wf sat_no*)
-        else if (is_array_constraint f) then
-          Smtsolver.is_sat f sat_no
-	else
+        (* if (is_bag_constraint wf) then         *)
+        (*   mona_is_sat wf                       *)
+        (* (*else if (is_list_constraint wf) then *)
+        (*   Coq.is_sat wf sat_no*)               *)
+        (* else if (is_array_constraint f) then   *)
+        (*   Smtsolver.is_sat f sat_no            *)
+	(* else *)
 	  (
           Minisat.is_sat f sat_no
 	  )
@@ -1284,13 +1284,14 @@ let simplify (f : CP.formula) : CP.formula =
                 Spass.simplify f
             )
 	     | MINISAT -> (
-              if (is_bag_constraint f) then
-                Mona.simplify f
-              (*else if (is_list_constraint f) then
-                Coq.simplify f*)
-              else if (is_array_constraint f) then
-                Smtsolver.simplify f
-              else
+              (* if (is_bag_constraint f) then         *)
+              (*   Mona.simplify f                     *)
+              (* (*else if (is_list_constraint f) then *)
+              (*   Coq.simplify f*)                    *)
+              (* else if (is_array_constraint f) then  *)
+              (*   Smtsolver.simplify f                *)
+              (* else                                  *)
+							  (* Smtsolver.simplify f *)
                 Minisat.simplify f
             )
 	  | SUGAR -> (
@@ -1753,15 +1754,16 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
           stat_tp (lazy (Spass.imply ante conseq timeout)) "spass");
       ) 
        | MINISAT -> (
-        if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-          (called_prover :="Mona "; mona_imply ante_w conseq_s)
-        (*else if (is_list_constraint ante) || (is_list_constraint conseq) then
-          (called_prover :="Coq "; Coq.imply ante_w conseq_s)*)
-        else if (is_array_constraint ante) || (is_array_constraint conseq) then
-          (called_prover :="smtsolver "; Smtsolver.imply ante conseq timeout)
-        else
-          (called_prover :="minisat "; 
-	   Minisat.imply ante conseq timeout);
+        (* if (is_bag_constraint ante) || (is_bag_constraint conseq) then          *)
+        (*   (called_prover :="Mona "; mona_imply ante_w conseq_s)                 *)
+        (* (*else if (is_list_constraint ante) || (is_list_constraint conseq) then *)
+        (*   (called_prover :="Coq "; Coq.imply ante_w conseq_s)*)                 *)
+        (* else if (is_array_constraint ante) || (is_array_constraint conseq) then *)
+        (*   (called_prover :="smtsolver "; Smtsolver.imply ante conseq timeout)   *)
+        (* else                                                                    *)
+          (
+						(* called_prover :="minisat ";  *)
+	       Minisat.imply ante conseq timeout);
       ) 
        | SUGAR -> (
         if (is_bag_constraint ante) || (is_bag_constraint conseq) then

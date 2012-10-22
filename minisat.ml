@@ -1,6 +1,8 @@
 open Globals
 open Gen.Basic
 open Cpure
+(* open Rtc_new_stable *)
+(* open Rtc_new_algorithm *)
 open Rtc_algorithm
 
 module StringSet = Set.Make(String)
@@ -23,8 +25,8 @@ let minisat_path = "/usr/local/bin/minisat"
 let minisat_name = "minisat"
 let minisat_arg = "-pre"(*"-pre"*)
 
-let minisat_path2 = "minisat"
-let minisat_name2 = "minisat"
+let minisat_path2 = "minisat22"
+let minisat_name2 = "minisat22"
 let minisat_arg2 = "-pre"(*"-pre"*)
 
 let eq_path = "equality_logic"
@@ -525,15 +527,14 @@ let to_minisat_cnf (ante: Cpure.formula)  =
 				let res= ref "" in
 			 (*start generating cnf for the given CNF formula*)
 				  let temp= if(ante_str <> "0" & ante_str <> "") then (ante_str^" 0") else "p cnf 0 0" in
-				  	let bv= if(temp ="p cnf 0 0") then true else false in
-				  		let result = if(bv=false) then
-				     	 "p cnf "^(string_of_int !number_vars)^" "^ (string_of_int !number_clauses)
-				     	 ^"\n"^temp
-				    	else temp
-				  	in
+				  	(* let bv= if(temp ="p cnf 0 0") then true else false in *)
+				  		(* let result = if(temp <> "p cnf 0 0") then                                    *)
+				     	 (* "p cnf "^(string_of_int !number_vars)^" "^ (string_of_int !number_clauses) *) 
+				     	 (* ^"\n"^temp                                                                 *) 
+				    	(* else temp                                                                    *)
 							let index= ref 0 in 
 							let _=List.map (fun v-> let _= res := (string_of_int (!index+len))^" 0"^"\n"^(!res) and _= index:= !index+1    in() ) !bcl in
-				  	let final_res= result^"\n"^ !res in
+				  	let final_res= temp(*result*)^"\n"^ !res in
 						let _=Gen.Profiling.pop_time("stat_CNF_generation_of_B") in 
 							(final_res,ge,gd,gr_e)
 		else
@@ -586,10 +587,16 @@ let minisat_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
 			else
 	(*			let _= print_endline "check sat2" in*)
 				let _=Gen.Profiling.push_time("stat_generation_of_T") in
+				(* let tstartlog = Gen.Profiling.get_time () in *)
 				let cnf_T = get_cnf_from_cache ge gd gr_e in
+				(* let tstoplog = Gen.Profiling.get_time () in *)
+				(* let _= Globals.minisat_time_T := !Globals.minisat_time_T +. (tstoplog -. tstartlog) in  *)
 				let _=Gen.Profiling.pop_time("stat_generation_of_T") in
 				let _=Gen.Profiling.push_time("stat_check_sat_2") in
+				let tstartlog = Gen.Profiling.get_time () in
 				let res=check_problem_through_file (minisat_input^cnf_T) timeout in 
+				let tstoplog = Gen.Profiling.get_time () in
+				let _= Globals.minisat_time_T := !Globals.minisat_time_T +. (tstoplog -. tstartlog) in 
 				let _=Gen.Profiling.pop_time("stat_check_sat_2") in res
 		else false		
 

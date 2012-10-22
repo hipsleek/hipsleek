@@ -443,39 +443,36 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
 let rec convert_heap2_heap prog (h0 : IF.h_formula) : IF.h_formula =
   match h0 with
     | IF.Star (({ IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } as h))
-        -> let tmp1 = convert_heap2_heap prog h1 in let _= print_endline ("Heap Star") in
+        -> let tmp1 = convert_heap2_heap prog h1 in
         let tmp2 = convert_heap2_heap prog h2
         in IF.Star { (h) with
             IF.h_formula_star_h1 = tmp1;
             IF.h_formula_star_h2 = tmp2; }
     | IF.Conj (({ IF.h_formula_conj_h1 = h1; IF.h_formula_conj_h2 = h2 } as h))
-        -> let tmp1 = convert_heap2_heap prog h1 in let _= print_endline ("Heap Conj") in
+        -> let tmp1 = convert_heap2_heap prog h1 in
         let tmp2 = convert_heap2_heap prog h2
         in IF.Conj { (h) with
             IF.h_formula_conj_h1 = tmp1;
             IF.h_formula_conj_h2 = tmp2; }
     | IF.Phase (({ IF.h_formula_phase_rd = h1; IF.h_formula_phase_rw = h2 } as h))
-        -> let tmp1 = convert_heap2_heap prog h1 in let _= print_endline ("Heap Phase") in
+        -> let tmp1 = convert_heap2_heap prog h1 in
         let tmp2 = convert_heap2_heap prog h2
         in IF.Phase { (h) with
             IF.h_formula_phase_rd = tmp1;
             IF.h_formula_phase_rw = tmp2; }
-    | IF.HeapNode2 h2 -> let _= print_endline ("Heap Node2") in IF.HeapNode (node2_to_node prog h2)
-    | IF.HTrue   _ -> let _= print_endline ("Heap HTrue") in h0
-		| IF.HFalse  _ -> let _= print_endline ("Heap False") in h0
-		| IF.HeapNode _ -> let _= print_endline ("Heap HeapNode") in h0
+    | IF.HeapNode2 h2 -> IF.HeapNode (node2_to_node prog h2)
+    | IF.HTrue | IF.HFalse | IF.HeapNode _ -> h0
 
 and convert_heap2 prog (f0 : IF.formula) : IF.formula =
-	let _= print_endline ("----Convert_heap2------") in
   match f0 with
-    | IF.Or (({ IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } as f)) -> let _= print_endline ("Or fm") in
+    | IF.Or (({ IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } as f)) ->
           let tmp1 = convert_heap2 prog f1 in
           let tmp2 = convert_heap2 prog f2
           in IF.Or { (f) with IF.formula_or_f1 = tmp1; IF.formula_or_f2 = tmp2; }
-    | IF.Base (({ IF.formula_base_heap = h0 } as f)) -> let _= print_endline ("Base fm") in
+    | IF.Base (({ IF.formula_base_heap = h0 } as f)) ->
           let h = convert_heap2_heap prog h0
           in IF.Base { (f) with IF.formula_base_heap = h; }
-    | IF.Exists (({ IF.formula_exists_heap = h0 } as f)) -> let _= print_endline ("Exists fm") in
+    | IF.Exists (({ IF.formula_exists_heap = h0 } as f)) ->
           let h = convert_heap2_heap prog h0
           in IF.Exists { (f) with IF.formula_exists_heap = h; }
 
@@ -6226,17 +6223,17 @@ and case_normalize_formula prog (h:(ident*primed) list)(f:IF.formula):IF.formula
 	  
 and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula):IF.formula = 
   (*called for data invariants and assume formulas ... rename bound, convert_struc2 float out exps from heap struc*)
- let _ = print_string ("case_normalize_formula :: Input formula = " ^ Iprinter.string_of_formula f ^ "\n") in
+  (* let _ = print_string ("case_normalize_formula :: Input formula = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = convert_heap2 prog f in
- let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = IF.float_out_exps_from_heap f in
- let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = IF.float_out_min_max f in
- let _ = print_string ("case_normalize_formula :: CHECK POINT 3 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 3 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = IF.rename_bound_vars f in
- let _ = print_string ("case_normalize_formula :: CHECK POINT 4 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 4 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f,_,_ = case_normalize_renamed_formula prog h [] f in
- let _ = print_string ("case_normalize_formula :: CHECK POINT 5 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 5 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   f
       
 and case_normalize_struc_formula  prog (h:(ident*primed) list)(p:(ident*primed) list)(f:IF.struc_formula) allow_primes (lax_implicit:bool)

@@ -1,7 +1,7 @@
 open Globals
 
 let debug_on = ref false
-let devel_debug_on = ref true
+let devel_debug_on = ref false
 let devel_debug_print_orig_conseq = ref false
 
 let log_devel_debug = ref false

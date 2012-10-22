@@ -424,7 +424,7 @@ let enable_syn_base_case = ref false
 
 let enable_case_inference = ref false
 
-let print_core = ref true
+let print_core = ref false
 
 let print_err_sleek = ref false
 
@@ -438,7 +438,7 @@ let failure_analysis = ref false
 
 let seq_to_try = ref false
 
-let print_input = ref true
+let print_input = ref false
 
 let pass_global_by_value = ref false
 
@@ -520,7 +520,8 @@ let unable_to_fold_rhs_heap = ref false
 let add_count (t: int ref) = 
 	t := !t+1
 
-
+let minisat_time_T = ref 0.0
+let minisat_time_BCC = ref 0.0
 (* utility functions *)
 
 let omega_err = ref false
