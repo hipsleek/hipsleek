@@ -210,7 +210,7 @@ let rec smt_of_formula pr_w pr_s f =
 	| CP.Not (p,_, _) -> "(not " ^ (smt_of_formula pr_s pr_w p) ^ ")"
 	| CP.Forall (sv, p, _,_) ->
 		"(forall (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
-	| CP.Exists (sv, p, _,_) ->
+	| CP.Exists (sv, p, _,_) -> 
 		"(exists (" ^ (smt_of_typed_spec_var sv) ^ ") " ^ (helper p) ^ ")"
   in
   helper f
