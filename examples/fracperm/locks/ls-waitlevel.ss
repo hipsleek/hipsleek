@@ -46,6 +46,22 @@ void func_acquire(lock l1)
   acquire[LOCK](l1);
 }
 
+//FAIL
+void func_acquire_fail1(lock l1)
+  requires l1::LOCK(0.5)<> & l1 notin LS & l1.mu>0 & waitlevel<l1.mu
+  ensures l1::LOCK(0.5)<> & LS'=union(LS,{l1}) & waitlevel=waitlevel';//'
+{
+  acquire[LOCK](l1);
+}
+
+//FAIL
+void func_acquire_fail2(lock l1)
+  requires l1::LOCK(0.5)<> & l1 notin LS & l1.mu>0 & waitlevel<l1.mu
+  ensures l1::LOCK(0.5)<> & LS'=union(LS,{l1}) & waitlevel>waitlevel';//'
+{
+  acquire[LOCK](l1);
+}
+
 void func_release(lock l1)
   requires l1::LOCK(0.5)<> & l1 in LS & l1.mu>0 & waitlevel=l1.mu
   ensures l1::LOCK(0.5)<> & LS'=diff(LS,{l1}) & waitlevel'<waitlevel;//'
@@ -53,9 +69,34 @@ void func_release(lock l1)
   release[LOCK](l1);
 }
 
+//FAIL
+void func_release_fail1(lock l1)
+  requires l1::LOCK(0.5)<> & l1 in LS & l1.mu>0 & waitlevel=l1.mu
+  ensures l1::LOCK(0.5)<> & LS'=diff(LS,{l1}) & waitlevel'=waitlevel;//'
+{
+  release[LOCK](l1);
+}
+
+//FAIL
+void func_release_fail2(lock l1)
+  requires l1::LOCK(0.5)<> & l1 in LS & l1.mu>0 & waitlevel=l1.mu
+  ensures l1::LOCK(0.5)<> & LS'=diff(LS,{l1}) & waitlevel'>waitlevel;//'
+{
+  release[LOCK](l1);
+}
+
 void func_release_acquire(lock l1)
   requires l1::LOCK(0.5)<> & l1 in LS & l1.mu>0 & waitlevel=l1.mu
   ensures l1::LOCK(0.5)<> & LS'=LS & waitlevel'=waitlevel;//'
+{
+  release[LOCK](l1);
+  acquire[LOCK](l1);
+}
+
+//FAIL
+void func_release_acquire_fail(lock l1)
+  requires l1::LOCK(0.5)<> & l1 in LS & l1.mu>0 & waitlevel=l1.mu
+  ensures l1::LOCK(0.5)<> & LS'=LS & waitlevel'<waitlevel;//'
 {
   release[LOCK](l1);
   acquire[LOCK](l1);
@@ -83,105 +124,111 @@ void f1()
   dprint;
 }
 
-/* //test sequential procedure calls */
-/* void f2() */
-/*   requires LS={} */
-/*   ensures LS'={}; //' */
-/* { */
-/*   int level = 100; */
-/*   lock l1 = new lock(level); */
-/*   //initialization */
-/*   dprint; */
-/*   init[LOCK](l1); */
-/*   release[LOCK](l1); */
-/*   dprint; */
-/*   //sequential call */
-/*   func(l1); */
+//test sequential procedure calls
+void f2()
+  requires LS={}
+  ensures LS'={}; //'
+{
+  int level = 100;
+  lock l1 = new lock(level);
+  //initialization
+  dprint;
+  init[LOCK](l1);
+  release[LOCK](l1);
+  dprint;
+  //sequential call
+  func(l1);
 
-/*   // */
-/*   acquire[LOCK](l1); */
-/*   release[LOCK](l1); */
+  //
+  acquire[LOCK](l1);
+  release[LOCK](l1);
 
-/*   dprint; */
-/* } */
+  dprint;
+}
 
-/* //test fork/join */
-/* void f3() */
-/*   requires LS={} */
-/*   ensures LS'={}; //' */
-/* { */
-/*   int level = 100; */
-/*   lock l1 = new lock(level); */
-/*   //initialization */
-/*   dprint; */
-/*   init[LOCK](l1); */
-/*   release[LOCK](l1); */
-/*   dprint; */
-/*   // */
-/*   int id = fork(func,l1); */
-/*   dprint; */
-/*   // */
-/*   acquire[LOCK](l1); */
-/*   release[LOCK](l1); */
-/*   dprint; */
-/*   // */
-/*   join(id); */
-/*   dprint; */
-/* } */
+//test fork/join
+void f3()
+  requires LS={}
+  ensures LS'={}; //'
+{
+  int level = 100;
+  lock l1 = new lock(level);
+  //initialization
+  dprint;
+  init[LOCK](l1);
+  release[LOCK](l1);
+  dprint;
+  //
+  int id = fork(func,l1);
+  dprint;
+  //
+  acquire[LOCK](l1);
+  release[LOCK](l1);
+  dprint;
+  //
+  join(id);
+  dprint;
+}
 
-/* //test non-lexical acquire/release */
-/* void f4() */
-/*   requires LS={} */
-/*   ensures LS'={}; //' */
-/* { */
-/*   int level = 100; */
-/*   lock l1 = new lock(level); */
-/*   dprint; */
-/*   //initialization */
-/*   init[LOCK](l1); */
-/*   release[LOCK](l1); */
-/*   dprint; */
-/*   // */
-/*   func_acquire(l1); */
-/*   dprint; */
-/*   // */
-/*   func_release(l1); */
-/*   dprint; */
-/*   // */
-/*   acquire[LOCK](l1); */
-/*   release[LOCK](l1); */
-/*   dprint; */
-/*   // */
-/* } */
+//test non-lexical acquire/release
+void f4()
+  requires LS={}
+  ensures LS'={}; //'
+{
+  int level = 100;
+  lock l1 = new lock(level);
+  dprint;
+  //initialization
+  init[LOCK](l1);
+  release[LOCK](l1);
+  dprint;
+  //
+  func_acquire(l1);
+  dprint;
+  //
+  func_release(l1);
+  dprint;
+  //
+  func_acquire(l1);
+  dprint;
+  //
+  func_release(l1);
+  dprint;
+  //
+  acquire[LOCK](l1);
+  release[LOCK](l1);
+  dprint;
+  //
+}
 
-/* //test fork/join and non-lexical acquire/release */
-/* void f5() */
-/*   requires LS={} */
-/*   ensures LS'={}; //' */
-/* { */
-/*   int level = 100; */
-/*   lock l1 = new lock(level); */
-/*   dprint; */
-/*   //initialization */
-/*   init[LOCK](l1); */
-/*   release[LOCK](l1); */
-/*   dprint; */
-/*   // */
-/*   int id = fork(func,l1); */
-/*   dprint; */
-/*   // */
-/*   func_acquire(l1); */
-/*   dprint; */
-/*   // */
-/*   func_release(l1); */
-/*   dprint; */
-/*   // */
-/*   join(id); */
-/*   dprint; */
-/*   // */
-/*   acquire[LOCK](l1); */
-/*   release[LOCK](l1); */
-/*   dprint; */
-/*   // */
-/* } */
+//test fork/join and non-lexical acquire/release
+void f5()
+  requires LS={}
+  ensures LS'={}; //'
+{
+  int level = 100;
+  lock l1 = new lock(level);
+  dprint;
+  //initialization
+  init[LOCK](l1);
+  release[LOCK](l1);
+  dprint;
+  //
+  int id = fork(func,l1);
+  dprint;
+  //
+  func_acquire(l1);
+  dprint;
+  //
+  func_release(l1);
+  dprint;
+  //
+  join(id);
+  dprint;
+  //
+  acquire[LOCK](l1);
+  release[LOCK](l1);
+  dprint;
+  //
+}
 

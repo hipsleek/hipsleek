@@ -8360,3 +8360,21 @@ let infer_lsmu_struc_formula (f:struc_formula):struc_formula =
   Debug.no_1 "infer_lsmu_struc_formula"
       !print_struc_formula !print_struc_formula
       infer_lsmu_struc_formula_x f
+
+(*drop pure constraints related to svl*)
+and drop_svl (f : formula) (svl:CP.spec_var list): formula  =
+  let rec helper f =
+    match f with
+      | Base ({formula_base_pure = p} as b) ->
+          let np = MCP.drop_svl_mix_formula p svl in
+          Base {b with formula_base_pure=np}
+      | Exists ({formula_exists_pure = p;
+               formula_exists_qvars =evars} as o) ->
+          let nvars = Gen.BList.difference_eq CP.eq_spec_var svl evars in
+          let np = MCP.drop_svl_mix_formula p nvars in
+          Exists {o with formula_exists_pure=np}
+      | Or ({formula_or_f1 = f1; formula_or_f2 =f2} as o) ->
+          let nf1 = helper f1 in
+          let nf2 = helper f2 in
+          Or {o with formula_or_f1 = nf1; formula_or_f2 =nf2}
+  in helper f

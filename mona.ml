@@ -942,6 +942,7 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
             restart "mona aborted execution";
             if !log_all_flag == true then
 		      output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 1)\n");
+		      print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 1)\n");
             is_sat_b
       | _ ->
             let _ = create_failure_file mona_file_content in
@@ -954,6 +955,7 @@ let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)=
                     begin
     	              if !log_all_flag == true then
 		                output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 2)\n");
+		                print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 2)\n");
                       is_sat_b;
                     end
   in
