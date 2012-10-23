@@ -431,6 +431,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	          if (CF.isAnyFalseCtx ctx1) then
 	            let _ = Debug.devel_zprint (lazy ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
 	    		    (Cprinter.string_of_context_short ctx))) no_pos in
+	            let _ = print_endline (" Warning: False precondition detected in procedure "^proc.proc_name^"\n with context: "^ (Cprinter.string_of_context_short ctx)) in
 	            (spec,[],[],true)
 	          else
 	            let _ = Gen.Profiling.push_time ("method "^proc.proc_name) in
