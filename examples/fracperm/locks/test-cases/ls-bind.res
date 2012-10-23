@@ -1,2 +1,2 @@
-Procedure func$lock SUCCESS
 Procedure main$ SUCCESS
+Procedure func$lock SUCCESS

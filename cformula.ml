@@ -8276,7 +8276,7 @@ and norm_struc_vperm_x struc_f ref_vars val_vars = match struc_f with
 *)
 and partLS (f : formula) : MCP.mix_formula * formula =
   let pr_o = pr_pair !print_mix_formula !print_formula in
-  Debug.ho_1 "partLS" !print_formula pr_o
+  Debug.no_1 "partLS" !print_formula pr_o
       partLS_x f
 
 and partLS_x (f : formula) : MCP.mix_formula * formula =
@@ -8286,7 +8286,7 @@ and partLS_x (f : formula) : MCP.mix_formula * formula =
 
 (*extract lockset constraints from a formula*)
 and extractLS (f : formula) : MCP.mix_formula =
-  Debug.ho_1 "extractLS" !print_formula !print_mix_formula
+  Debug.no_1 "extractLS" !print_formula !print_mix_formula
       extractLS_x f
 
 and extractLS_x (f : formula): MCP.mix_formula  =
@@ -8325,7 +8325,7 @@ and extractLS_x (f : formula): MCP.mix_formula  =
 
 (*remove lockset constraints from a formula*)
 and removeLS (f : formula) : formula =
-  Debug.ho_1 "removeLS" !print_formula !print_formula
+  Debug.no_1 "removeLS" !print_formula !print_formula
       removeLS_x f
 
 (*remove lockset constraints from a formula*)

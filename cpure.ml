@@ -3178,7 +3178,7 @@ and elim_exists_with_ineq (f0: formula): formula =
 
 and elim_exists (f0 : formula) : formula =
   let pr = !print_formula in
-  Debug.ho_1 "elim_exists" pr pr elim_exists_x f0
+  Debug.no_1 "elim_exists" pr pr elim_exists_x f0
 
 
 (*
