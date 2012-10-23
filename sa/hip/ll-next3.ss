@@ -26,20 +26,12 @@ node get_next(ref node x)
   requires x::node<_,q> * HP(q)
   ensures x::node<_,null> * HP(res) & res=q & x'=x; //'
 
-G3(x,v_571,v_node_39_548') ::= HP_559(v_node_39_548') *
-   x::node<val_37_568,next_38_547'>&next_38_547'=null]
+*************************************
+[ RELASS [G4]x::node<Anon_12,next_47_551'> * x::node<Anon_12,q>&
+  v_node_48_552'=q & next_47_551'=null --> G4(x,v_570,v_node_48_552',q)&true]
+*************************************
 
-However, this is missing a relation x'=x or rather
-x=v_571. I am also not sure why x' in the original G is being
-renamed as x.
-
-[ HP_RELDEFN HP_559
-HP_559(v_node_39_548') ::= htrue&true,
- HP_RELDEFN H
-H(x) ::= x::node<val_37_543',next_37_544'>&true,
- HP_RELDEFN G3
-G3(x,v_571,v_node_39_548') ::= HP_559(v_node_39_548') * 
-   x::node<val_37_568,next_38_547'>&next_38_547'=null]
+Seems that we are getting false in this example..
 
 */
 {
