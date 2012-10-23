@@ -8738,6 +8738,58 @@ let norm_waitlevel_pure (f : formula) : formula =
   in
   transform_formula ((fun _-> None),(fun _-> None), (fun _-> None),f_b,f_e) f
 
+let contain_level_exp e =
+  match e with
+    | Level _ -> true
+    | _ -> false
+
+let contain_level_b_formula bf =
+  let (pf,il) = bf in
+  (match pf with	  
+	| Lt (e1,e2,l) 
+	| Lte (e1,e2,l)
+	| Gt (e1,e2,l)
+	| Gte (e1,e2,l)
+	| Eq (e1,e2,l)
+	| Neq (e1,e2,l) ->
+		let b1 = contain_level_exp e1 in
+		let b2 = contain_level_exp e2 in
+        b1||b2
+	| BagLIn _ -> true
+	| BagLNotIn _ -> true
+	| BagIn (v,e,l)
+	| BagNotIn (v,e,l)->
+        contain_level_exp e
+	| BagSub _
+	| ListIn _
+	| ListNotIn _
+	| ListAllN _
+	| ListPerm _
+	| RelForm _
+	| LexVar _
+	| BConst _
+	| BVar _ 
+	| BagMin _ 
+    | SubAnn _
+	| EqMax _
+	| EqMin _
+    | VarPerm _
+	| BagMax _ -> false
+  )
+
+let drop_locklevel_pure_x (f : formula) : formula =
+  let f_e e = Some e in
+  let f_b bf =
+    let nbf = if (contain_level_b_formula bf) then mkTrue_b no_pos
+        else bf
+    in Some nbf
+  in
+  transform_formula ((fun _-> None),(fun _-> None), (fun _-> None),f_b,f_e) f
+
+let drop_locklevel_pure (f : formula) : formula =
+  Debug.no_1 "drop_locklevel_pure" !print_formula !print_formula 
+      drop_locklevel_pure_x f
+
 (*Translate waitlevel into constraints before sending to provers*)
 let translate_waitlevel_pure_x (pf : formula) : formula =
   let fvars = fv pf in

@@ -49,8 +49,8 @@ echo "======= ls-disj-no-deadlock3.ss ======"
 
 ########### Example demonstrating locklevels ####################
 echo "======= ls-waitlevel.ss ======" #GENERAL TEST
-../../../hip ls-waitlevel.ss | grep -E 'Proc|assert|Warning' > test-cases/ls-waitlevel.n
+../../../hip ls-waitlevel.ss --locklevel | grep -E 'Proc|assert|Warning' > test-cases/ls-waitlevel.n
 echo "======= ls-unordered-locking.ss ======"
-../../../hip ls-unordered-locking.ss | grep -E 'Proc|assert|Warning' > test-cases/ls-unordered-locking.n
+../../../hip ls-unordered-locking.ss --locklevel | grep -E 'Proc|assert|Warning' > test-cases/ls-unordered-locking.n
 echo "======= ls-ordered-locking.ss ======"
-../../../hip ls-ordered-locking.ss | grep -E 'Proc|assert|Warning' > test-cases/ls-ordered-locking.n
+../../../hip ls-ordered-locking.ss --locklevel | grep -E 'Proc|assert|Warning' > test-cases/ls-ordered-locking.n

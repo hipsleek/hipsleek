@@ -915,7 +915,10 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         let f = CP.translate_level_pure f in
         let _ = Debug.devel_hprint (add_str "After translate_: " Cprinter.string_of_pure_formula) f no_pos in
         f
-      else f
+      else
+        (* let f = CP.drop_svl_pure f [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in *)
+        (* let f = CP.drop_locklevel_pure f in *)
+        f
   in
   let vrs = Cpure.fv f in
   let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 
@@ -1424,7 +1427,12 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         let _ = Debug.devel_hprint (add_str "After translate_: ante = " Cprinter.string_of_pure_formula) ante no_pos in
         let _ = Debug.devel_hprint (add_str "After translate_: conseq = " Cprinter.string_of_pure_formula) conseq no_pos in
         (ante,conseq)
-      else (ante,conseq)
+      else 
+        (* let ante = CP.drop_svl_pure ante [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in *)
+        (* let ante = CP.drop_locklevel_pure ante in *)
+        (* let conseq = CP.drop_svl_pure conseq [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in *)
+        (* let conseq = CP.drop_locklevel_pure conseq in *)
+        (ante,conseq)
   in
   let vrs = Cpure.fv ante in
   let vrs = (Cpure.fv conseq)@vrs in
