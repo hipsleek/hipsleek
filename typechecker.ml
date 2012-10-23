@@ -1047,6 +1047,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* let _ = print_endline (" ### pre_free_vars = " ^ (Cprinter.string_of_spec_var_list pre_free_vars)) in *)
                     let ls_var = [(CP.mkLsVar Unprimed)] in
                     let lsmu_var = [(CP.mkLsmuVar Unprimed)] in
+                    let waitlevel_var = [(CP.mkWaitlevelVar Unprimed)] in (*added for consistency, later waitlevel constraints are removed*)
                     (*when fork, do not consider waitlevel because it is not used
                     for delayed checking*)
                     let pre_free_vars = List.filter (fun v -> CP.name_of_spec_var v <> Globals.ls_name && CP.name_of_spec_var v <> Globals.lsmu_name) pre_free_vars in
@@ -1070,7 +1071,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (*ALSO rename ls to ls', lsmu to lsmu'*)
                     let st_ls = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) ls_var in
                     let st_lsmu = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) lsmu_var in
-                    let st3= st2@st_ls@st_lsmu in
+                    let st_waitlevel = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) waitlevel_var in
+                    let st3= st2@st_ls@st_lsmu@st_waitlevel in
                     let pre2 = CF.subst_struc_pre_varperm st3 renamed_spec in
                     let new_spec = (Cprinter.string_of_struc_formula pre2) in
                     (*Termination checking *) (*TO CHECK: neccessary ???*)
