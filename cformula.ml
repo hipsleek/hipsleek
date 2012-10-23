@@ -8280,6 +8280,8 @@ and extractLS_x (f : formula): MCP.mix_formula  =
           let p_delayed = MCP.extractLS_mix_formula p in
           (* remove formulae related to LS *)
           let p_pure = MCP.removeLS_mix_formula p in
+          (* remove formulae related to waitlevel *)
+          let p_pure = MCP.drop_svl_mix_formula p_pure [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in
           (* remove formulae related to varperm *)
           let p_pure = MCP.drop_varperm_mix_formula p_pure in
           (* remove formulae related to floating point: may be unsound *)
@@ -8290,11 +8292,13 @@ and extractLS_x (f : formula): MCP.mix_formula  =
           let p_delayed = MCP.extractLS_mix_formula p in
           (* remove formulae related to LS *)
           let p_pure = MCP.removeLS_mix_formula p in
+          (* remove formulae related to waitlevel *)
+          let p_pure = MCP.drop_svl_mix_formula p_pure [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in
           (* remove formulae related to varperm *)
           let p_pure = MCP.drop_varperm_mix_formula p_pure in
-          (* remove formulae related to floating point: may be unsound *)
+          (* remove formulae related to floating point: may be unsound TOCHECK*)
           let p_pure = MCP.drop_float_formula_mix_formula p_pure in
-          (* conservatively drop formula related to exist vars *)
+          (* conservatively drop formula related to exist vars: may be unsound TOCHECK *)
           let p_pure = MCP.drop_svl_mix_formula p_pure evars in
           MCP.merge_mems p_delayed p_pure true
       | Or {formula_or_f1 = f1; formula_or_f2 =f2} ->

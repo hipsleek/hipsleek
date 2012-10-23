@@ -1,0 +1,17 @@
+Procedure func_empty2$ SUCCESS
+Procedure func$lock SUCCESS
+Procedure func_release$lock SUCCESS
+Procedure func_release_fail1$lock FAIL-2
+Procedure func_empty$lock SUCCESS
+Procedure func_acquire_fail2$lock FAIL-2
+Procedure f5$ SUCCESS
+Procedure f3$ SUCCESS
+Procedure func_release_acquire$lock SUCCESS
+Procedure func_release_fail2$lock FAIL-2
+Procedure f1$ SUCCESS
+Procedure func_test$int~int SUCCESS
+Procedure func_acquire$lock SUCCESS
+Procedure func_acquire_fail1$lock FAIL-2
+Procedure f4$ SUCCESS
+Procedure func_release_acquire_fail$lock FAIL-2
+Procedure f2$ SUCCESS
