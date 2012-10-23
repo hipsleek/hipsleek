@@ -7719,7 +7719,11 @@ let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:f
   let unionmu_exp = CP.mkBagUnion [lsmu_uvar_exp;bagmu_exp] pos in (* union(LSMU,{l.mu})*)
   let lsmu_f = CP.mkEqExp lsmu_pvar_exp unionmu_exp pos in (*lsmu' = union(lsmu,{l.mu})*) 
   (**************)
-  let lock_f = CP.And (ls_f, lsmu_f,pos) in
+  let lock_f = if (!Globals.allow_locklevel) then
+        CP.And (ls_f, lsmu_f,pos)
+      else
+        ls_f
+  in
   (**************)
   let post = mkBase_simp lock_node (MCP.OnePF lock_f) in
   (* let post = formula_of_heap_w_normal_flow lock_node pos in *)
@@ -7801,7 +7805,11 @@ let prepost_of_finalize_x (var:CP.spec_var) name sort (args:CP.spec_var list) (l
   let diffmu_exp = CP.mkBagDiff lsmu_uvar_exp bagmu_exp pos in (* diff(lsmu,{l.mu})*)
   let lsmu_post_f = CP.mkEqExp lsmu_pvar_exp diffmu_exp pos in (*ls' = diff(lsmu,{l.mu})*)
   (**************)
-  let lock_post_f = CP.And (ls_post_f,lsmu_post_f,pos) in
+  let lock_post_f = if (!Globals.allow_locklevel) then
+        CP.And (ls_post_f,lsmu_post_f,pos)
+      else
+        ls_post_f
+  in
   (**************)
   let post = mkBase_simp data_node (MCP.OnePF lock_post_f) in
   (* let post = formula_of_heap_w_normal_flow data_node pos in *)
@@ -7871,7 +7879,11 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   let unionmu_exp = CP.mkBagUnion [lsmu_uvar_exp;bagmu_exp] pos in (* union(lsmu,{l.mu})*)
   let lsmu_post_f = CP.mkEqExp lsmu_pvar_exp unionmu_exp pos in (*lsmu' = union(lsmu,{l.mu})*)
   (**************)
-  let lock_post_f = CP.And (ls_post_f, lsmu_post_f,pos) in
+  let lock_post_f = if (!Globals.allow_locklevel) then
+        CP.And (ls_post_f,lsmu_post_f,pos)
+      else
+        ls_post_f
+  in
   (**************)
   let read_f = mkPermInv fresh_perm in
   (*POST-CONDITION*)
@@ -7947,7 +7959,11 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   let diffmu_exp = CP.mkBagDiff lsmu_uvar_exp bagmu_exp pos in (* diff(lsmu,{l.mu})*)
   let lsmu_post_f = CP.mkEqExp lsmu_pvar_exp diffmu_exp pos in (*lsmu' = diff(lsmu,{l.mu})*)
   (**************)
-  let lock_post_f = CP.And (ls_post_f,lsmu_post_f,pos) in
+  let lock_post_f = if (!Globals.allow_locklevel) then
+        CP.And (ls_post_f,lsmu_post_f,pos)
+      else
+        ls_post_f
+  in
   (**************)
   (* let tmp = formula_of_heap_w_normal_flow lock_node pos in (\*not allow SPLIT in pre*\) *)
   (* let _ = print_endline ("lock_node =  " ^ (!print_h_formula lock_node)) in *)
