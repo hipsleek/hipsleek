@@ -18,21 +18,24 @@ HeapPred HP_557(node a, node b).
 
 /* return the tail of a singly linked list */
 node get_next(ref node x)
-  infer[G4]
-  requires x::node<_,q>
-  ensures G4(x',x,res,q);//'
+  infer[H1,G4]
+  requires H1(x)
+  ensures G4(res,x',x);//'
 /*
 
-  requires x::node<_,q> 
-  ensures x::node<_,null> & res=q & x'=x; //'
+[ HP_RELDEFN H1
+H1(x) ::= 
+ H1(x)&x=v_563 & x=v_563
+ or x::node<val_36_543',next_36_544'> * x::node<val_36_562,next_36_544'>&true
+ ,
+ HP_RELDEFN G4
+G4(next_36_544',x,v_563) ::= H1(x)&x=v_563]
 
-[ HP_RELDEFN G4
-G4(x,v_570,v_node_40_552',q) ::= x::node<Anon_12,next_39_551'>&x=v_570 & v_node_40_552'=q & next_39_551'=null]
+ERROR : why is there a disjunction in H1?
 
 */
 {
   node tmp = x.next;
-  x.next = null;
   return tmp;
   //	dprint;
 }

@@ -18,16 +18,18 @@ HeapPred HP_557(node a, node b).
 
 /* return the tail of a singly linked list */
 node get_next(ref node x)
-  infer[G4]
-  requires x::node<_,q>
-  ensures G4(x',x,res,q);//'
+  infer[H1,G4]
+  requires H1(x)
+  ensures G4(res,x',x);//'
 /*
 
-  requires x::node<_,q> 
-  ensures x::node<_,null> & res=q & x'=x; //'
-
-[ HP_RELDEFN G4
-G4(x,v_570,v_node_40_552',q) ::= x::node<Anon_12,next_39_551'>&x=v_570 & v_node_40_552'=q & next_39_551'=null]
+[ HP_RELDEFN HP_559
+HP_559(v_node_31_548') ::=UNKNOWN,
+ HP_RELDEFN G4
+G4(v_node_31_548',x,v_571) ::= HP_559(v_node_31_548') * x::node<val_29_568,next_30_547'>&
+next_30_547'=null & x=v_571,
+ HP_RELDEFN H1
+H1(x) ::= x::node<val_29_543',next_29_544'> * HP_559(next_29_544')&true]
 
 */
 {
