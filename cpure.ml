@@ -3181,7 +3181,16 @@ and elim_exists (f0 : formula) : formula =
   Debug.ho_1 "elim_exists" pr pr elim_exists_x f0
 
 
+(*
+TODO: this formula
+ex v1: sst & ( sth | ex v2: v2 = v1 & v2 in LS)
+is wrongly translated to
+ex v1: sst & ( sth | v2 in LS)
 
+It SHOULD BE
+ex v1: sst & ( sth | v1 in LS)
+
+*)
 (* eliminate exists with the help of v=exp *)
 and elim_exists_x (f0 : formula) : formula = 
   let rec helper f0 =
@@ -8575,25 +8584,25 @@ let translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos : f
         let f221 = Forall (fresh_var,f_or,None,pos) in 
         (*forall v. v in LSMU => v<=x*) (*forall v. v notin LSMU | v<=x*)
         (***************************)
-        let level_var2 = mkLevelVar Unprimed in
-        let fresh_var2 = fresh_spec_var level_var in
-        let fresh_var2_exp = Var (fresh_var2,pos) in (*v2*)
-        let f_in_lsmu = mkBagInExp fresh_var2 lsmu_exp pos in (*v2 in LSMU*)
-        let f_eq_exist = mkEqExp fresh_var2_exp x pos in (*v=x*)
-        let f_and = And (f_in_lsmu,f_eq_exist,pos) in
-        let f_exists = Exists (fresh_var2,f_and,None,pos) in
+        (* let level_var2 = mkLevelVar Unprimed in *)
+        (* let fresh_var2 = fresh_spec_var level_var in *)
+        (* let fresh_var2_exp = Var (fresh_var2,pos) in (\*v2*\) *)
+        (* let f_in_lsmu = mkBagInExp fresh_var2 lsmu_exp pos in (\*v2 in LSMU*\) *)
+        (* let f_eq_exist = mkEqExp fresh_var2_exp x pos in (\*v=x*\) *)
+        (* let f_and = And (f_in_lsmu,f_eq_exist,pos) in *)
+        (* let f_exists = Exists (fresh_var2,f_and,None,pos) in *)
         (*Exists v2 . v2 in LSMU & v2=x*)
         (***************************)
         (*Note: Exists v2 . v2 in LSMU & v2=x SIMILAR TO x in LSMU *)
         (***************************)
-        let f222 = f_exists in
-        (* let f222 = (match x with (\*x in LSMU*\) *)
-        (*   | Var (sv,posx) -> *)
-        (*       mkBagInExp sv lsmu_exp pos *)
-        (*   | Level (sv,posx) -> *)
-        (*       mkBagLInExp sv lsmu_exp pos *)
-        (*   | _ -> Error.report_error { Error.error_loc = pos; Error.error_text = "translate_waitlevel_p_formula: unexpected operator: only expecting integer value in waitlevel formulae" ^ (!print_exp x);}) *)
-        (* in *)
+        (* let f222 = f_exists in *)
+        let f222 = (match x with (*x in LSMU*)
+          | Var (sv,posx) ->
+              mkBagInExp sv lsmu_exp pos
+          | Level (sv,posx) ->
+              mkBagLInExp sv lsmu_exp pos
+          | _ -> Error.report_error { Error.error_loc = pos; Error.error_text = "translate_waitlevel_p_formula: unexpected operator: only expecting integer value in waitlevel formulae" ^ (!print_exp x);})
+        in
         let f22 = And (f221,f222,pos) in
         let f2 = Or (f_eq_ls,f22,None,pos) in
         And (f1,f2,pos)
