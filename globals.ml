@@ -514,6 +514,11 @@ let allow_imm = ref false (*imm will delay checking guard conditions*)
 
 let ann_derv = ref false
 
+(*is used during deployment, e.g. on a website*)
+(*Will shorten the error/warning/... message delivered
+to end-users*)
+let is_deployed = ref true 
+
 let allow_ls = ref true (*enable lockset during verification*)
 
 let allow_locklevel = ref true (*enable locklevel during verification*)
