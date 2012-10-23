@@ -1,5 +1,5 @@
-HeapPred HP_622(node next_96_621).
-HeapPred HP_615(node y_614, node y).
+HeapPred HP_619(node next_96_565').
+HeapPred HP_614(node y_613, node y).
 HeapPred HP_583(node next_96_565', node x').
 HeapPred HP_612(node a, node b).
 HeapPred HP_619(node a).
@@ -20,20 +20,18 @@ ass [H1,G2]: {
 }
 hpdefs [H1,G2]: {
  HP_583(v_node_96_600)&true -->  
- v_node_96_600::node<val_96_620,next_96_621> * HP_622(next_96_621)&true
- or v_node_96_600::node<val_96_564',next_96_565'> * 
-    next_96_565'::node<val_96_620,next_96_621> * HP_622(next_96_621)&true
+ v_node_96_600::node<val_96_564',next_96_565'> * HP_619(next_96_565')&true
  or emp&v_node_96_600=null
  ;
- G2(x,y)&true -->  x::node<val_96_613,y_614> * HP_615(y_614,y)&true;
- H1(x)&true -->  x::node<val_96_620,next_96_621> * HP_622(next_96_621)&true;
- HP_615(y_614,y)&true -->  
- emp&y_614=y
- or y_614::node<val_96_613,y_618> * HP_615(y_618,y)&true
+ G2(x,y)&true -->  x::node<val_96_589,y_613> * HP_614(y_613,y)&true;
+ H1(x)&true -->  x::node<val_96_564',next_96_565'> * HP_619(next_96_565')&true;
+ HP_614(y_613,y)&true -->  
+ emp&y_613=y
+ or y_613::node<val_96_589,y_617> * HP_614(y_617,y)&true
  ;
- HP_622(next_96_621)&true -->  
- emp&next_96_621=null
- or next_96_621::node<val_96_620,next_96_625> * HP_622(next_96_625)&true
+ HP_619(next_96_565')&true -->  
+ emp&next_96_565'=null
+ or next_96_565'::node<val_96_564',next_96_622> * HP_619(next_96_622)&true
  
 }
 ]
