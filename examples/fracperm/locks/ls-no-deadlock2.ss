@@ -9,7 +9,7 @@ LOCK<> == self::lock<>
 lemma "splitLock" self::LOCK(f)<> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::LOCK(f1)<> * self::LOCK(f2)<> & 0.0<f<=1.0;
 
 void func(lock l1)
-  requires l1::LOCK(0.6)<> & l1 notin LS
+  requires l1::LOCK(0.6)<> & l1 notin LS & waitlevel<l1.mu
   ensures l1::LOCK(0.6)<> & LS'=LS;//'
 {
   acquire[LOCK](l1);

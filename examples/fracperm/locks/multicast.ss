@@ -47,7 +47,7 @@ void initialize(/* ref lock l, ref PACKET p, ref int M */)
 }
 
 void thread(/* ref lock l, ref PACKET p, ref int M */)
-  requires l::LOCK(1/M)<p,M> & LS={} & M=10
+  requires l::LOCK(1/M)<p,M> & LS={} & M=10 & waitlevel<l.mu
   ensures LS'={} & M'=M; //'
 {
   acquire[LOCK](l,p,M);

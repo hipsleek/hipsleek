@@ -1698,6 +1698,7 @@ let rec simpl_in_quant formula negated rid =
   let related_vars = List.map (fun v -> CP.find_closure_pure_formula v formula) bag_vars in
   let bag_vars = List.concat related_vars in
   let bag_vars = CP.remove_dups_svl bag_vars in
+  let bag_vars = bag_vars@[(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in
   (* let _ = print_endline (" ### bag_vars = " ^ (Cprinter.string_of_spec_var_list bag_vars)) in *)
   let rec helper formula negated rid = 
   match negated with
@@ -1728,11 +1729,12 @@ let rec simpl_in_quant formula negated rid =
 ;;
 
 let simpl_pair rid (ante, conseq) =
-  let conseq_vars = CP.fv conseq in
-  if (List.exists (fun v -> CP.name_of_spec_var v = waitlevel_name) conseq_vars) then
-    (ante,conseq)
-  else
+  (* let conseq_vars = CP.fv conseq in *)
+  (* if (List.exists (fun v -> CP.name_of_spec_var v = waitlevel_name) conseq_vars) then *)
+  (*   (ante,conseq) *)
+  (* else *)
   let bag_vars = CP.bag_vars_formula ante in
+  let bag_vars = bag_vars@[(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in
   let related_vars = List.map (fun v -> CP.find_closure_pure_formula v ante) bag_vars in
   let l1 = List.concat related_vars in
   let vars = CP.fv ante in
@@ -1762,7 +1764,7 @@ let simpl_pair rid (ante, conseq) =
 
 let simpl_pair rid (ante, conseq) =
   let pr_o = pr_pair Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula in
-  Debug.no_2 "simpl_pair"
+  Debug.ho_2 "simpl_pair"
       Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula pr_o
       (fun _ _ -> simpl_pair rid (ante, conseq)) ante conseq
 
@@ -1798,6 +1800,24 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
         Some res -> (res,[],None)       
       | None -> (false,[],None)
   else begin
+
+  let ante0,conseq0 = if (!Globals.allow_locklevel) then
+        (*should translate waitlevel before level*)
+        let ante0 = CP.translate_waitlevel_pure ante0 in
+        let ante0 = CP.translate_level_pure ante0 in
+        let conseq0 = CP.translate_waitlevel_pure conseq0 in
+        let conseq0 = CP.translate_level_pure conseq0 in
+        let _ = Debug.devel_hprint (add_str "After translate_: ante0 = " Cprinter.string_of_pure_formula) ante0 no_pos in
+        let _ = Debug.devel_hprint (add_str "After translate_: conseq0 = " Cprinter.string_of_pure_formula) conseq0 no_pos in
+        (ante0,conseq0)
+      else 
+        (* let ante0 = CP.drop_svl_pure ante0 [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in *)
+        (* let ante0 = CP.drop_locklevel_pure ante0 in *)
+        (* let conseq0 = CP.drop_svl_pure conseq0 [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in *)
+        (* let conseq0 = CP.drop_locklevel_pure conseq0 in *)
+        (ante0,conseq0)
+  in
+
 	let conseq = if CP.should_simplify conseq0 then simplify_a 12 conseq0 else conseq0 in
 	if CP.isConstTrue conseq then (true, [],None)
 	else
@@ -1875,7 +1895,26 @@ let imply_timeout_slicing (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : 
     match Netprover.call_prover (Imply (ante0,conseq0)) with
       | Some res -> (res,[],None)       
 	  | None -> (false,[],None)
-  else begin 
+  else begin
+
+  let ante0,conseq0 = if (!Globals.allow_locklevel) then
+        (*should translate waitlevel before level*)
+        let ante0 = CP.translate_waitlevel_pure ante0 in
+        let ante0 = CP.translate_level_pure ante0 in
+        let conseq0 = CP.translate_waitlevel_pure conseq0 in
+        let conseq0 = CP.translate_level_pure conseq0 in
+        let _ = Debug.devel_hprint (add_str "After translate_: ante0 = " Cprinter.string_of_pure_formula) ante0 no_pos in
+        let _ = Debug.devel_hprint (add_str "After translate_: conseq0 = " Cprinter.string_of_pure_formula) conseq0 no_pos in
+        (ante0,conseq0)
+      else 
+        (* let ante0 = CP.drop_svl_pure ante0 [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in *)
+        (* let ante0 = CP.drop_locklevel_pure ante0 in *)
+        (* let conseq0 = CP.drop_svl_pure conseq0 [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in *)
+        (* let conseq0 = CP.drop_locklevel_pure conseq0 in *)
+        (ante0,conseq0)
+  in
+
+
 	(*let _ = print_string ("Imply: => " ^(Cprinter.string_of_pure_formula ante0)^"\n==> "^(Cprinter.string_of_pure_formula conseq0)^"\n") in*)
 	let conseq = if CP.should_simplify conseq0 then simplify_a 12 conseq0 else conseq0 in (* conseq is Exists formula *)
 	if CP.isConstTrue conseq then (true, [], None)

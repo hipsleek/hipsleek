@@ -7,7 +7,7 @@ LOCK<> == self::lock<>
   inv_lock true;
 
 void func(lock l1)
-  requires l1::LOCK<> & l1 notin LS
+  requires l1::LOCK<> & l1 notin LS & waitlevel<l1.mu
   ensures l1::LOCK<> & LS'=LS;//'
 {
   acquire[LOCK](l1);

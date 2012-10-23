@@ -68,7 +68,7 @@ void main()
 
 //valid
 void incrementor1(lock l,intCell x,intCell y, intCell z)
-  requires l::LOCK(1/2)<x,y,z> * y::intCell(1/2)<0> & l notin LS
+  requires l::LOCK(1/2)<x,y,z> * y::intCell(1/2)<0> & l notin LS & waitlevel<l.mu
   ensures l::LOCK(1/2)<x,y,z> * y::intCell(1/2)<1> & LS'=LS; //'
 {
   acquire[LOCK](l,x,y,z);
@@ -79,7 +79,7 @@ void incrementor1(lock l,intCell x,intCell y, intCell z)
 
 //valid
 void incrementor2(lock l,intCell x,intCell y, intCell z)
-  requires l::LOCK(1/2)<x,y,z> * z::intCell(1/2)<0> & l notin LS
+  requires l::LOCK(1/2)<x,y,z> * z::intCell(1/2)<0> & l notin LS & waitlevel<l.mu
   ensures l::LOCK(1/2)<x,y,z> * z::intCell(1/2)<1> & LS'=LS; //'
 {
   acquire[LOCK](l,x,y,z);

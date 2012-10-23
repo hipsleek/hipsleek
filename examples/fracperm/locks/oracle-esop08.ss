@@ -61,9 +61,9 @@ void main()
   try{
 
   while (true)
-    requires l::LOCK(0.4)<x> * x::cell<l,v1,v2,v3> & v1=v2 & v3=1 & l in LS
-          or l::LOCK(1.0)<x> * x::cell<l,v1,v2,v3> & v1=v2 & v3=0 & l in LS // 0.4 + 0.6 = 1.0'
-    ensures l'::LOCK(1.0)<x> * x'::cell<self,v11,v22,v33> & l'=l & v11=v22 & v33=0 & LS'=LS & flow bexc;//'
+    requires l::LOCK(0.4)<x> * x::cell<l,v1,v2,v3> & v1=v2 & v3=1 & l in LS & waitlevel=l.mu & l.mu>0
+          or l::LOCK(1.0)<x> * x::cell<l,v1,v2,v3> & v1=v2 & v3=0 & l in LS & waitlevel=l.mu & l.mu>0 // 0.4 + 0.6 = 1.0'
+    ensures l'::LOCK(1.0)<x> * x'::cell<self,v11,v22,v33> & l'=l & v11=v22 & v33=0 & LS'=LS & waitlevel'=waitlevel & flow bexc;//'
   {
     if (x.val3==0){
       raise new bexc(); // break
@@ -82,13 +82,13 @@ void main()
 }
 
 void thread(lock l, cell x)
-  requires l::LOCK(0.6)<x> & l notin LS
+  requires l::LOCK(0.6)<x> & l notin LS & waitlevel<l.mu
   ensures LS'=LS; //'
 {
   try{
     //syntatic sugar
     while(true)
-      requires l::LOCK(0.6)<x> & l notin LS
+      requires l::LOCK(0.6)<x> & l notin LS & waitlevel<l.mu
       ensures LS'=LS & flow rexc; //'
     {
       dprint;
