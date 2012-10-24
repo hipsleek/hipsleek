@@ -34,7 +34,6 @@ void main()
   release(l2);
   //
   int id = fork(func,l1,l2); //DELAYED
-  dprint;
   //
   acquire(l1);
   acquire(l2);

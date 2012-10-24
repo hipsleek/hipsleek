@@ -8418,6 +8418,98 @@ let translate_level_pure (pf : formula) : formula =
   Debug.no_1 "translate_level_pure" !print_formula !print_formula 
       translate_level_pure_x pf
 
+
+let level_vars_exp e =
+  let rec helper e =
+  match e with
+    | Level (sv,_) -> [sv]
+    | Bag (exps,_)
+    | BagUnion (exps,_)
+    | BagIntersect (exps,_) ->
+        List.concat (List.map helper exps)
+    | BagDiff (e1,e2,_) ->
+        let vars1 = helper e1 in
+        let vars2 = helper e2 in
+        vars1@vars2
+    | _ -> []
+in helper e
+
+let level_vars_b_formula bf =
+  let (pf,il) = bf in
+  (match pf with	  
+	| Lt (e1,e2,l) 
+	| Lte (e1,e2,l)
+	| Gt (e1,e2,l)
+	| Gte (e1,e2,l)
+	| Eq (e1,e2,l)
+	| Neq (e1,e2,l) ->
+		let vars1 = level_vars_exp e1 in
+		let vars2 = level_vars_exp e2 in
+        vars1@vars2
+	| BagLNotIn (sv,_,_)
+	| BagLIn (sv,_,_) -> [sv]
+	| BagIn (v,e,l)
+	| BagNotIn (v,e,l)->
+        level_vars_exp e
+	| BagSub _
+	| ListIn _
+	| ListNotIn _
+	| ListAllN _
+	| ListPerm _
+	| RelForm _
+	| LexVar _
+	| BConst _
+	| BVar _ 
+	| BagMin _ 
+    | SubAnn _
+	| EqMax _
+	| EqMin _
+    | VarPerm _
+	| BagMax _ -> []
+  )
+
+(*for each level(l), add a constraint level(l) > 0*)
+let infer_level_pure_x (pf : formula) : formula =
+  let rec helper f =
+    match f with
+      | BForm (bf, lbl) ->
+          let vars = level_vars_b_formula bf in
+          if vars=[] then f else
+            List.fold_left (fun f sv ->
+                let level_exp = mkLevel sv no_pos in
+                let gt_exp = mkGtExp level_exp (IConst (0,no_pos)) no_pos in
+                And (gt_exp,f,no_pos)
+            ) f vars
+      | And (f1, f2, pos) ->
+          let n_f1 = helper f1 in
+          let n_f2 = helper f2 in
+          And (n_f1, n_f2, pos)
+      | AndList b -> 
+          let nf = List.fold_left (fun ls_f (_,f_b) -> 
+              let nf = helper f_b in
+              And (ls_f, nf, no_pos)
+          ) (mkTrue no_pos) b in
+          nf
+      | Or (f1, f2, lbl, pos) ->
+          let n_f1 = helper f1 in
+          let n_f2 = helper f2 in
+          Or (n_f1, n_f2, lbl, pos)
+      | Not (f, lbl, pos) ->
+          let n_f = helper f in
+          Not (n_f, lbl, pos)
+      | Forall (sv, f, lbl, pos) ->
+          let n_f = helper f in
+          Forall (sv, n_f, lbl, pos)
+      | Exists (sv, f, lbl, pos) ->
+          let n_f = helper f in
+          Exists (sv, n_f, lbl, pos)
+  in helper pf
+
+let infer_level_pure (f : formula) : formula =
+  Debug.no_1 "infer_level_pure"
+      !print_formula !print_formula
+      infer_level_pure_x f
+
 (*Attempt to infer constraints on LSMU based on constraints on LS
 For example:
 LS'=LS --infer--> LSMU'=LSMU
@@ -8515,6 +8607,7 @@ let infer_lsmu_pure_x (f:formula) : formula =
     in helper p
   in
   let nf = fct f in
+  let nf = infer_level_pure nf in
   nf
 
 let infer_lsmu_pure (f:formula) : formula =

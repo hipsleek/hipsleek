@@ -9,12 +9,12 @@ LOCK<> == self::lock<>
 lemma "splitLock" self::LOCK(f)<> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::LOCK(f1)<> * self::LOCK(f2)<> & 0.0<f<=1.0;
 
 void func(lock l1)
-  requires l1::LOCK(0.5)<> & l1 notin LS & l1.mu>0 & waitlevel<l1.mu
+  requires l1::LOCK(0.5)<> & l1 notin LS & waitlevel<l1.mu
   ensures l1::LOCK(0.5)<> & LS'=LS & waitlevel'=waitlevel;//'
 {
   
   acquire(l1);
-  
+
   release(l1);
   
 }
@@ -41,7 +41,7 @@ void func_empty(lock l1)
 }
 
 void func_acquire(lock l1)
-  requires l1::LOCK(0.5)<> & l1 notin LS & l1.mu>0 & waitlevel<l1.mu
+  requires l1::LOCK(0.5)<> & l1 notin LS & waitlevel<l1.mu
   ensures l1::LOCK(0.5)<> & LS'=union(LS,{l1}) & waitlevel<waitlevel';//'
 {
   acquire(l1);
@@ -49,7 +49,7 @@ void func_acquire(lock l1)
 
 //FAIL
 void func_acquire_fail1(lock l1)
-  requires l1::LOCK(0.5)<> & l1 notin LS & l1.mu>0 & waitlevel<l1.mu
+  requires l1::LOCK(0.5)<> & l1 notin LS & waitlevel<l1.mu
   ensures l1::LOCK(0.5)<> & LS'=union(LS,{l1}) & waitlevel=waitlevel';//'
 {
   acquire(l1);
@@ -57,14 +57,14 @@ void func_acquire_fail1(lock l1)
 
 //FAIL
 void func_acquire_fail2(lock l1)
-  requires l1::LOCK(0.5)<> & l1 notin LS & l1.mu>0 & waitlevel<l1.mu
+  requires l1::LOCK(0.5)<> & l1 notin LS & waitlevel<l1.mu
   ensures l1::LOCK(0.5)<> & LS'=union(LS,{l1}) & waitlevel>waitlevel';//'
 {
   acquire(l1);
 }
 
 void func_release(lock l1)
-  requires l1::LOCK(0.5)<> & l1 in LS & l1.mu>0 & waitlevel=l1.mu
+  requires l1::LOCK(0.5)<> & l1 in LS & waitlevel=l1.mu
   ensures l1::LOCK(0.5)<> & LS'=diff(LS,{l1}) & waitlevel'<waitlevel;//'
 {
   release(l1);
@@ -87,7 +87,7 @@ void func_release_fail2(lock l1)
 }
 
 void func_release_acquire(lock l1)
-  requires l1::LOCK(0.5)<> & l1 in LS & l1.mu>0 & waitlevel=l1.mu
+  requires l1::LOCK(0.5)<> & l1 in LS & waitlevel=l1.mu
   ensures l1::LOCK(0.5)<> & LS'=LS & waitlevel'=waitlevel;//'
 {
   release(l1);
@@ -95,11 +95,11 @@ void func_release_acquire(lock l1)
 }
 
 void func_release_acquire_while(lock l1)
-  requires l1::LOCK(0.5)<> & l1 in LS & l1.mu>0 & waitlevel=l1.mu
+  requires l1::LOCK(0.5)<> & l1 in LS & waitlevel=l1.mu
   ensures l1::LOCK(0.5)<> & LS'=LS & waitlevel'=waitlevel;//'
 {
   while(true)
-    requires l1::LOCK(0.5)<> & l1 in LS & l1.mu>0 & waitlevel=l1.mu
+    requires l1::LOCK(0.5)<> & l1 in LS & waitlevel=l1.mu
     ensures l1::LOCK(0.5)<> & LS'=LS & waitlevel'=waitlevel;//'
   {
     release(l1);
@@ -109,7 +109,7 @@ void func_release_acquire_while(lock l1)
 
 //FAIL
 void func_release_acquire_fail(lock l1)
-  requires l1::LOCK(0.5)<> & l1 in LS & l1.mu>0 & waitlevel=l1.mu
+  requires l1::LOCK(0.5)<> & l1 in LS & waitlevel=l1.mu
   ensures l1::LOCK(0.5)<> & LS'=LS & waitlevel'<waitlevel;//'
 {
   release(l1);
