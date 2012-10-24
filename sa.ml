@@ -1831,7 +1831,7 @@ let def_subst_fix_x unk_hps hpdefs=
  *)
 let def_subst_fix unk_hps hpdefs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  Debug.no_1 "def_subst_fix" pr1 pr1
+  Debug.ho_1 "def_subst_fix" pr1 pr1
       (fun _ -> def_subst_fix_x unk_hps hpdefs) hpdefs
 
   (*=========END SUBST FIX==========*)

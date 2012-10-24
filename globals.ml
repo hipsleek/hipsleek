@@ -422,6 +422,7 @@ let lock_name = "lock"
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
 let pragma_list = ref ([] : string list)
+let lib_files = ref ([] : string list)
 
 (*in case the option of saving provers temp files to a different directory is enabled, the value of 
   this variable is going to be changed accordingly in method set_tmp_files_path *)

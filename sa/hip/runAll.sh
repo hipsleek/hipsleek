@@ -14,3 +14,7 @@ echo "ll-append9.ss"
 ../../hip ll-append9.ss -cp-test ll-append9.cp | grep Compare
 echo "ll-append10.ss"
 ../../hip ll-append10.ss -cp-test ll-append10.cp | grep Compare
+echo "ex1.ss"
+../../hip ex1.ss -cp-test ex1.cp | grep Compare
+echo "ex1a.ss"
+../../hip ex1a.ss -cp-test ex1a.cp | grep Compare

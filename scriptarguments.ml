@@ -37,6 +37,9 @@ let set_gen_cpfile arg =
   Globals.cpfile := arg;
    Globals.gen_cpfile := true
 
+let set_lib_file arg =
+  Globals.lib_files := [arg]
+
 let set_frontend fe_str = match fe_str  with
   | "native" -> fe := NativeFE
   | "xml" -> fe := XmlFE
@@ -312,6 +315,8 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
    "compare set of constraints");
   ("-gen-cpfile", Arg.String set_gen_cpfile,
    "compare set of constraints");
+  ("-lib", Arg.String set_lib_file,
+   "lib");
   ] 
 
 (* arguments/flags used only by sleek *)	

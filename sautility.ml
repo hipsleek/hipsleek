@@ -861,36 +861,36 @@ let get_min_number_new prog args ll_ldns=
   let eqNull = helper_pure (snd (List.hd ll_ldns)) in
   helper (List.tl ll_ldns) fmin fdns eqNull
 
-let move_root_to_top root ldns=
-  let rec helper lss res=
-    match lss with
-      | [] -> res
-      | dn::dnss -> if CP.eq_spec_var root dn.CF.h_formula_data_node then
-            ([dn]@res@dnss)
-          else helper dnss (res@[dn])
-  in
-  let rec rename_last ldns ldone=
-    match ldns with
-      | [] -> ldone
-      | [dn] ->
-          let ptrs = dn.CF.h_formula_data_arguments in
-          let fresh_ptrs = CP.fresh_spec_vars ptrs in
-          (* let fresh_dn = {dn with CF.h_formula_data_arguments = fresh_ptrs} in *)
-          let new_ldns = (ldone@[dn]) in
-          let ss = List.combine ptrs fresh_ptrs in
-          let new_ldns1 = (List.map
-                               (fun dn -> let hf = CF.h_subst ss (CF.DataNode dn) in
-                                          match hf with
-                                            | CF.DataNode hd1 -> hd1
-                                            | _ -> report_error no_pos "sau.move_root_to_top"
-                               ) new_ldns)
-          in
-          new_ldns1
-      | dn::dnss -> rename_last dnss (ldone@[dn])
-  in
-  let nldns1 = helper ldns [] in
-  (* nldns1 *)
-  rename_last nldns1 []
+(* let move_root_to_top root ldns= *)
+(*   let rec helper lss res= *)
+(*     match lss with *)
+(*       | [] -> res *)
+(*       | dn::dnss -> if CP.eq_spec_var root dn.CF.h_formula_data_node then *)
+(*             ([dn]@res@dnss) *)
+(*           else helper dnss (res@[dn]) *)
+(*   in *)
+(*   let rec rename_last ldns ldone= *)
+(*     match ldns with *)
+(*       | [] -> ldone *)
+(*       | [dn] -> *)
+(*           let ptrs = dn.CF.h_formula_data_arguments in *)
+(*           let fresh_ptrs = CP.fresh_spec_vars ptrs in *)
+(*           (\* let fresh_dn = {dn with CF.h_formula_data_arguments = fresh_ptrs} in *\) *)
+(*           let new_ldns = (ldone@[dn]) in *)
+(*           let ss = List.combine ptrs fresh_ptrs in *)
+(*           let new_ldns1 = (List.map *)
+(*                                (fun dn -> let hf = CF.h_subst ss (CF.DataNode dn) in *)
+(*                                           match hf with *)
+(*                                             | CF.DataNode hd1 -> hd1 *)
+(*                                             | _ -> report_error no_pos "sau.move_root_to_top" *)
+(*                                ) new_ldns) *)
+(*           in *)
+(*           new_ldns1 *)
+(*       | dn::dnss -> rename_last dnss (ldone@[dn]) *)
+(*   in *)
+(*   let nldns1 = helper ldns [] in *)
+(*   (\* nldns1 *\) *)
+(*   rename_last nldns1 [] *)
 
 let add_raw_hp_rel_x prog unknown_ptrs pos=
   if (List.length unknown_ptrs > 0) then
@@ -1104,7 +1104,11 @@ let succ_susbt nrec_grps (hp,args,f)=
   let helper ls1 ls2=
     List.concat (List.map (fun f1 ->
         List.map (fun f2 ->
-             CF.mkStar f1 f2 CF.Flow_combine pos
+            let ptrs = CF.get_ptrs_f f1 in
+            let new_f2 =
+              if ptrs = [] then f2 else CF.drop_hnodes_f f2 ptrs
+            in
+             CF.mkStar f1 new_f2 CF.Flow_combine pos
     ) ls2) ls1)
   in
   let succ_hp_args = CF.get_HRels_f f in
@@ -1147,6 +1151,9 @@ let remove_longer_common_prefix_w_unk unk_hps fs=
   in
   helper fs []
 
+let is_trivial f (hp,args)=
+  let hpargs = CF.get_HRels_f f in
+  List.exists (fun hpargs1 -> check_hp_arg_eq (hp,args) hpargs1) hpargs
 
 let rec look_up_subst_hpdef hp args nrec_hpdefs=
   match nrec_hpdefs with
@@ -1188,9 +1195,11 @@ let succ_susbt_hpdef nrec_hpdefs all_succ_hp (hp,args,f)=
           let lsf_cmb = List.fold_left helper [nf] fs_list in
           (* DD.info_pprint ("       succ_susbt lsf_cmb:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula) *)
           (*                                                 in pr lsf_cmb)) no_pos; *)
+          (*remove trivial def*)
+          let lsf_cmb1 = List.filter (fun f -> not (is_trivial f (hp,args))) lsf_cmb in
         (*remove f which has common prefix*)
-          let lsf_cmb1 = (remove_longer_common_prefix lsf_cmb) in
+          let lsf_cmb2 = (remove_longer_common_prefix lsf_cmb1) in
           (* DD.info_pprint ("       succ_susbt lsf_cmb 1:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula) *)
           (*                                                   in pr lsf_cmb1)) no_pos; *)
-          (true,lsf_cmb1)
+          (true,lsf_cmb2)
     end

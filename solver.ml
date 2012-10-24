@@ -3568,7 +3568,7 @@ and check_one_target_x prog node (target : CP.spec_var) (lhs_pure : MCP.mix_form
   let lhs_targetasets =
     if CP.mem target lhs_targetasets1 then lhs_targetasets1
     else target :: lhs_targetasets1 in
-  let n_l_v =  h_node_list target_rhs_h in
+  let n_l_v = CF.get_ptrs target_rhs_h in
   let l = Gen.BList.intersect_eq CP.eq_spec_var lhs_targetasets n_l_v in
   (l!=[])     
 

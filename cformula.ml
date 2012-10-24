@@ -3173,13 +3173,19 @@ let rec check_eq_hrel_node  (rl1, args1 ,_)  (rl2, args2,_)=
     let svs2 = List.concat (List.map CP.afv args2) in
     (CP.eq_spec_var rl1 rl2) && (helper svs1 svs2)
 
-and h_node_list (f: h_formula): CP.spec_var list = match f with
+and get_ptrs_f (f: formula)=
+  match f with
+    | Base fb ->
+        get_ptrs fb.formula_base_heap
+    | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
+
+and get_ptrs (f: h_formula): CP.spec_var list = match f with
   | DataNode {h_formula_data_node = c}
   | ViewNode {h_formula_view_node = c} -> [c]
   | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2} 
   | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} 
   | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2} 
-      -> (h_node_list h1)@(h_node_list h2)
+      -> (get_ptrs h1)@(get_ptrs h2)
   | _ -> []
 
 and get_hnodes (f: h_formula) = match f with

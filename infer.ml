@@ -1582,7 +1582,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
           in
           let new_rhs_b,rvhp_rels,new_hrels,r_new_hp = update_fb rhs_b in
           (*add roots from history*)
-		  let matched_svl = CF.h_node_list es.CF.es_heap in
+		  let matched_svl = CF.get_ptrs es.CF.es_heap in
 		  let matched_svl1 = (List.fold_left SAU.close_def matched_svl (leqs@reqs)) in
 		  let sel_his = List.concat (List.map (fun hf -> match hf with
             | CF.DataNode hd -> if CP.mem_svl hd.CF.h_formula_data_node matched_svl1 then [] else [hf]
@@ -1592,7 +1592,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
             (selected_hps@(List.map (fun (hp,_,_) -> hp) new_hrels)) es.CF.es_crt_holes ((* es.CF.es_heap:: *)(*es.CF.es_history*) sel_his)
              eqNull in
           (*simply add constraints: *)
-          let hprel_def = List.concat (List.map CF.h_node_list (es.CF.es_history@(CF.get_hnodes es.CF.es_heap))) in
+          let hprel_def = List.concat (List.map CF.get_ptrs (es.CF.es_history@(CF.get_hnodes es.CF.es_heap))) in
           let closed_hprel_def = CP.subst_var_list (leqs@reqs) hprel_def in
           let closed_hprel_args_def,_,_,_,_ = SAU.find_defined_pointers_after_preprocess prog closed_hprel_def
             (hds@(List.concat (List.map get_h_formula_data_fr_hnode es.CF.es_history)))

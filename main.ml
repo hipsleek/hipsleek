@@ -113,6 +113,15 @@ let process_cp_file prog =
   {prog with Iast.prog_hp_decls = prog.Iast.prog_hp_decls @ hpdefs;
   Iast.prog_proc_decls = helper prog.Iast.prog_proc_decls proc_tcomps}
 
+let process_lib_file prog =
+  let parse_one_lib (ddecls,vdecls) lib=
+    let lib_prog = parse_file_full lib in
+    (ddecls@lib_prog.Iast.prog_data_decls),(vdecls@lib_prog.Iast.prog_view_decls)
+  in
+  let ddecls,vdecls = List.fold_left parse_one_lib ([],[]) !Globals.lib_files in
+  {prog with Iast.prog_data_decls = prog.Iast.prog_data_decls @ ddecls;
+      Iast.prog_view_decls = prog.Iast.prog_view_decls @ vdecls;}
+
 (***************end process compare file*****************)
 let process_source_full source =
   (* print_string ("\nProcessing file \"" ^ source ^ "\"\n");  *)
@@ -125,6 +134,8 @@ let process_source_full source =
   )
     else prog
   in
+  let prog = process_lib_file prog in
+  let _ = print_endline "L2: cp 1" in
   let _ = Gen.Profiling.pop_time "Process compare file" in
   (* Remove all duplicated declared prelude *)
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)

@@ -21,7 +21,6 @@ node get_next(ref node x)
   infer[G4]
   requires x::node<_,q>
   ensures G4(x',x,res,q);//'
-/*
 
   requires x::node<_,q> 
   ensures x::node<_,null> & res=q & x'=x; //'
