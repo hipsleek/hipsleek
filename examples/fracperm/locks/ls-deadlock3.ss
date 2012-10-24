@@ -24,18 +24,18 @@ void main()
    lock l1 = new lock();
    //initialization
    init[LOCK](l1);
-   release[LOCK](l1);
+   release(l1);
    //
-   acquire[LOCK](l1);
+   acquire(l1);
    //LS={l1}
    int id = fork(func,l1); //DELAYED
-   release[LOCK](l1);
+   release(l1);
    //LS={}
 
-   acquire[LOCK](l1);
+   acquire(l1);
    //LS={l1}
    join(id); // CHECK, Delayed checking failure
-   release[LOCK](l1);
-   dprint;
+   release(l1);
+   
 }
 

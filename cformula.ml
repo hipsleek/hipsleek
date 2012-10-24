@@ -7749,10 +7749,10 @@ let prepost_of_init (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:for
       (fun _ _ _ _ -> prepost_of_init_x var name sort args lbl pos) var name sort args
 
 (*automatically generate pre/post conditions of finalize[lock_sort](lock_var,lock_args) *)
-let prepost_of_finalize_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos : struc_formula = 
+let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formula_label) pos : struc_formula = 
   let data_node = DataNode ({
       h_formula_data_node = var;
-      h_formula_data_name = name;
+      h_formula_data_name = lock_name;
 	  h_formula_data_derv = false;
 	  h_formula_data_imm = ConstAnn(Mutable);
 	  h_formula_data_perm = None;
@@ -7825,9 +7825,9 @@ let prepost_of_finalize_x (var:CP.spec_var) name sort (args:CP.spec_var list) (l
 	formula_struc_pos = pos}
 
 (*automatically generate pre/post conditions of finalize[lock_sort](lock_var,lock_args) *)
-let prepost_of_finalize (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos : struc_formula = 
-  Debug.no_4 "prepost_of_finalize" !print_sv (fun str -> str) (fun str -> str) !print_svl
-      !print_struc_formula       (fun _ _ _ _ -> prepost_of_finalize_x var name sort args lbl pos) var name sort args
+let prepost_of_finalize (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formula_label) pos : struc_formula = 
+  Debug.no_3 "prepost_of_finalize" !print_sv (fun str -> str) print_svl
+      !print_struc_formula       (fun _ _ _ -> prepost_of_finalize_x var sort args lbl pos) var sort args
 
 let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
   let fresh_perm_name = Cpure.fresh_old_name "f" in
@@ -8407,3 +8407,93 @@ and drop_svl (f : formula) (svl:CP.spec_var list): formula  =
           let nf2 = helper f2 in
           Or {o with formula_or_f1 = nf1; formula_or_f2 =nf2}
   in helper f
+
+(*collect arguments of a heap node var sv, and its node name*)
+let collect_heap_args_formula_x (f:formula) (sv:CP.spec_var) : (CP.spec_var list* ident) =
+  let rec helper f =
+  match f with
+  | Base ({formula_base_heap = h;
+           formula_base_pure = p;})
+  | Exists ({formula_exists_heap = h;
+           formula_exists_pure = p;}) ->
+      let heaps = split_star_conjunctions h in
+      let vars = MCP.find_closure_mix_formula sv p in
+      let args_list = List.map (fun h ->
+          let c = get_node_var h in
+          let b = ((CP.eq_spec_var c sv) || (List.exists (fun v -> CP.eq_spec_var c v) vars)) in
+          if (b) then [(get_node_args h, get_node_name h)] else []
+      ) heaps in
+      let args_list = List.concat args_list in
+      if args_list=[] then ([],"")
+      else
+        (*If there are multiple nodes with the same node_name 
+          (due to fractional permission).
+        JUST PICKUP the first one*)
+        List.hd args_list
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+      let args1,id1 = helper f1 in
+      let args2,id2 = helper f2 in
+      if (args1=[] && args2!=[]) || (args1=[] && args2!=[]) || (id1!=id2) then
+        report_error pos ("collect_heap_args_formula: heap_args of node " ^ (!print_sv sv) ^ (" are inconsistent"))
+      else
+      (*any of them*)
+      (args1,id1)
+  in helper f
+
+(*collect arguments of a heap node var sv, and its node name*)
+let collect_heap_args_formula (f:formula) (sv:CP.spec_var) : (CP.spec_var list * ident) =
+  Debug.no_2 "collect_heap_args_formula"
+      !print_formula !print_sv (pr_pair !print_svl (fun v -> v))
+      collect_heap_args_formula_x f sv
+
+(*collect arguments of a heap node var sv, and its node name*)
+let collect_heap_args_context_x ctx (sv:CP.spec_var) : (CP.spec_var list * ident) =
+  let rec helper ctx =
+	match ctx with
+	| Ctx es ->
+        let args,id = collect_heap_args_formula es.es_formula sv in
+        args,id
+	| OCtx (ctx1, ctx2) ->
+        let args1,id1 = helper ctx1 in
+        let args2,id2 = helper ctx2 in
+      if (args1=[] && args2!=[]) || (args1!=[] && args2=[]) || (id1<>id2) then
+        report_error no_pos ("collect_heap_args_context: heap_args of node " ^ (!print_sv sv) ^ (" are inconsistent"))
+      else
+      (*any of them*)
+      (args1,id1)
+  in helper ctx
+
+(*collect arguments of a heap node var sv, and its node name*)
+let collect_heap_args_context ctx (sv:CP.spec_var) : (CP.spec_var list * ident) =
+  Debug.no_2 "collect_heap_args_context"
+      !print_context_short !print_sv (pr_pair !print_svl (fun v -> v))
+      collect_heap_args_context_x ctx sv
+
+let collect_heap_args_failesc_context ((fail_c,esc_c, succ_c):failesc_context) (sv:CP.spec_var) : (CP.spec_var list * ident) =
+  let args_list = List.map (fun (lbl,ctx) -> collect_heap_args_context ctx sv) succ_c in
+  (*check consistency in each context*)
+  if args_list=[] then ([],"") else
+    let head_args,head_id = List.hd args_list in
+    let _ = List.iter (fun (args,id) ->
+        if ((List.length head_args) != (List.length args)) || (id!=head_id) then
+          report_error no_pos ("collect_heap_args_failesc_context: heap_args of node " ^ (!print_sv sv) ^ (" are inconsistent"))
+        else ()
+    ) (List.tl args_list)
+    in
+  (*any of them*)
+    List.hd args_list
+
+(*collect arguments of a heap node var sv, and its node name*)
+let collect_heap_args_list_failesc_context (ctx:list_failesc_context) (sv:CP.spec_var): (CP.spec_var list * ident) =
+  let args_list = List.map (fun ctx -> collect_heap_args_failesc_context ctx sv) ctx in
+  (*check consistency in each failesc_context*)
+  if args_list=[] then ([],"") else
+    let head_args,head_id = List.hd args_list in
+    let _ = List.iter (fun (args,id) ->
+        if ((List.length head_args) != (List.length args)) || (id!=head_id) then
+          report_error no_pos ("collect_heap_args_list_failesc_context: heap_args of node " ^ (!print_sv sv) ^ (" are inconsistent"))
+        else ()
+    ) (List.tl args_list)
+    in
+  (*any of them*)
+    List.hd args_list

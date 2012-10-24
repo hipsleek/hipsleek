@@ -19,8 +19,8 @@ void func(lock l1)
   requires l1::LOCK(0.6)<> & l1 notin LS & waitlevel<l1.mu
   ensures l1::LOCK(0.6)<> & LS'=LS;//'
 {
-  acquire[LOCK](l1);
-  release[LOCK](l1);
+  acquire(l1);
+  release(l1);
 }
 
 void main()
@@ -30,12 +30,12 @@ void main()
   cell x = new cell(10);
   lock l1 = new lock();
   init[LOCK](l1);
-  release[LOCK](l1);
+  release(l1);
   //
   int id = fork(func,l1);
-  acquire[LOCK](l1);
+  acquire(l1);
   int i = x.val;
   x.val = i+1;
-  release[LOCK](l1);
+  release(l1);
   join(id);
 }

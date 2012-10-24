@@ -18,11 +18,11 @@ void func(bool b, lock l1,lock l2)
 {
   int i;
   if (b){
-    acquire[LOCK](l1);
-    release[LOCK](l1);
+    acquire(l1);
+    release(l1);
   }else{
-    acquire[LOCK](l2);
-    release[LOCK](l2);
+    acquire(l2);
+    release(l2);
   }
 }
 
@@ -32,10 +32,11 @@ void main()
 {
    lock l1 = new lock();
    init[LOCK](l1);
-   release[LOCK](l1);
+   release(l1);
+   //
    lock l2 = new lock();
    init[LOCK](l2);
-   release[LOCK](l2);
+   release(l2);
    bool b = true;
    //LS-{}
    int id = fork(func,b,l1,l2);
@@ -46,10 +47,10 @@ void main()
    }else{
      // this branch won't be taken
      //LS={}
-     acquire[LOCK](l2);
+     acquire(l2);
      //LS={l2}
    }
    // LS={} & b
    join(id); //CHECK,ok because LS={} & b |- l1 notin LS & b 
-   dprint;
+   
 }

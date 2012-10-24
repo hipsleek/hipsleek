@@ -40,7 +40,7 @@ LOCKB<x,y> == self::lock<>
 
 //valid
 // a lock protecting 1 location
-void main()
+void test()
   requires LS={}
   ensures LS'={}; //'
 {
@@ -52,17 +52,17 @@ void main()
   init[LOCKA](l,x);
   //l::LOCKA<x> * x::cell<0>
   /* dprint; */
-  release[LOCKA](l,x);
+  release(l);
   //l::LOCKA<x>
-  acquire[LOCKA](l,x);
+  acquire(l);
   //l::LOCKA<x> * x::cell<v> & v>=0
-  finalize[LOCKA](l,x);
+  finalize(l);
   //l::lock<> *  x::cellInv<>
 }
 
 //fail
 // a lock protecting 2 location
-void main1()
+void test1()
   requires LS={}
   ensures LS'={}; //'
 {
@@ -76,10 +76,10 @@ void main1()
   /* dprint; */
   x.val--;
   /* dprint; */
-  release[LOCKB](l,x,y); //can not, invariant not hold
+  release(l); //can not, invariant not hold
   /* dprint; */
   //finalize
-  acquire[LOCKB](l,x,y);
-  finalize[LOCKB](l,x,y);
+  acquire(l);
+  finalize(l);
 }
 

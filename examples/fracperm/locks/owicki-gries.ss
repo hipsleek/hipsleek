@@ -57,7 +57,7 @@ void main()
   //print;
   init[LOCK](l,xCell,yCell,zCell);
 
-  release[LOCK](l,xCell,yCell,zCell);
+  release(l);
   /* dprint; */
   int id = fork(incrementor1,l,xCell,yCell,zCell); // there is an automatic split here
   dprint;
@@ -71,10 +71,10 @@ void incrementor1(lock l,intCell x,intCell y, intCell z)
   requires l::LOCK(1/2)<x,y,z> * y::intCell(1/2)<0> & l notin LS & waitlevel<l.mu
   ensures l::LOCK(1/2)<x,y,z> * y::intCell(1/2)<1> & LS'=LS; //'
 {
-  acquire[LOCK](l,x,y,z);
+  acquire(l);
   x.val++;
   y.val=1;
-  release[LOCK](l,x,y,z);
+  release(l);
 }
 
 //valid
@@ -82,8 +82,8 @@ void incrementor2(lock l,intCell x,intCell y, intCell z)
   requires l::LOCK(1/2)<x,y,z> * z::intCell(1/2)<0> & l notin LS & waitlevel<l.mu
   ensures l::LOCK(1/2)<x,y,z> * z::intCell(1/2)<1> & LS'=LS; //'
 {
-  acquire[LOCK](l,x,y,z);
+  acquire(l);
   x.val++;
   z.val=1;
-  release[LOCK](l,x,y,z);
+  release(l);
 }

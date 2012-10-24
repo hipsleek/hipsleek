@@ -70,15 +70,15 @@ void main()
     };
     x.val1=i;
     x.val2=i;
-    release[LOCK](l,x);
+    release(l);
     /* dprint; */
     i=i+1;
-    acquire[LOCK](l,x);
+    acquire(l);
   } //end TRY
   }catch(bexc e){
       ; //no-op
   };
-  finalize[LOCK](l,x);
+  finalize(l);
 }
 
 void thread(lock l, cell x)
@@ -92,17 +92,17 @@ void thread(lock l, cell x)
       ensures LS'=LS & flow rexc; //'
     {
       dprint;
-      acquire[LOCK](l,x);
+      acquire(l);
       dprint;
       x.val1=x.val1 + x.val1;
       x.val2=x.val2 + x.val2;
       dprint;
       if (x.val1>10) {
         x.val3=0;
-        release[LOCK](l,x);
+        release(l);
         raise new rexc(); //return;
       }
-      release[LOCK](l,x);
+      release(l);
     };
     // End Try
   }catch (rexc e){

@@ -84,15 +84,15 @@ void testVar()
   //l::LOCKA<x> * x'=1
   //x++;
   x--; //fail due to the invariant
-  release[LOCKA](l,x);
+  release(l);
   //l::LOCKA<x>
 
   //x=x+1; //FAIL due to not @full[x]
 
-  acquire[LOCKA](l,x);
+  acquire(l);
   //l::LOCKA<x> * x>=1
   x++;
-  finalize[LOCKA](l,x);
+  finalize(l);
   //l::lock<>
 
 }
@@ -112,20 +112,20 @@ void testCell()
 
   x.val = x.val + 1;
 
-  release[LOCKB](l,x);
+  release(l);
 
 
   //l::LOCKB<x>
-  acquire[LOCKB](l,x);
+  acquire(l);
   //l::LOCKB<x> * x::cell<v> & v>=1
   //x.val = x.val - 1; //FAIL the invariant
-  release[LOCKB](l,x);
+  release(l);
 
 
   //l::LOCKB<x>
-  acquire[LOCKB](l,x);
+  acquire(l);
   //l::LOCKB<x> * x::cell<v> & v>=1
-  finalize[LOCKB](l,x);
+  finalize(l);
   //l::lock<> *  x::cellInv<>
 
 }

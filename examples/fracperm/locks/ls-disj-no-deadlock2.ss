@@ -24,15 +24,15 @@ void func(bool b, lock l1,lock l2)
   /* ensures LS'=LS; //' */
 {
   int i;
-  dprint;
+  
   if (b){
-    acquire[LOCK](l1);
-    release[LOCK](l1);
+    acquire(l1);
+    release(l1);
   }else{
-    acquire[LOCK](l2);
-    release[LOCK](l2);
+    acquire(l2);
+    release(l2);
   }
-  dprint;
+  
 }
 
 void main()
@@ -41,40 +41,41 @@ void main()
 {
    lock l1 = new lock();
    init[LOCK](l1);
-   release[LOCK](l1);
+   release(l1);
+   //
    lock l2 = new lock();
    init[LOCK](l2);
-   release[LOCK](l2);
+   release(l2);
 
    bool b; //b got unknown value
-   dprint;
+   
    //LS-{}
    int id = fork(func,b,l1,l2);
    //DELAYED: l1 notin LS & b | l2 notin LS & !b
-   dprint;
+   
 
    if (b){
      //LS={}
-     acquire[LOCK](l2);
+     acquire(l2);
      //LS={l1}
    }else{
      //LS={}
-     acquire[LOCK](l1);
+     acquire(l1);
      //LS={l2}
    }
-   dprint;
+   
    // LS={l2} & b | LS={l1} & !b
    join(id); //CHECK, no deadlock
    // LS={l2} & b | LS={l1} & !b
 
    if (b){
      //LS={l2}
-     release[LOCK](l2);
+     release(l2);
      //LS={}
    }else{
      //LS={l1}
-     release[LOCK](l1);
+     release(l1);
      //LS={}
    }
-   dprint;
+   
 }

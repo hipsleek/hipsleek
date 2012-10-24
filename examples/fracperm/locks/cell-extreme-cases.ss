@@ -33,7 +33,8 @@ void test()
   x = new cell(0);
   //x::cell<0> * l::lock<>
 
-  finalize[LOCKA](l,x); 
+  finalize(l); // fail
+  /* finalize[LOCKA](l,x); // fail */
   //fail because l is not in locked state
   //LOCKA <> lock
 
@@ -50,7 +51,8 @@ void test2()
   x = new cell(0);
   //x::cell<0> * l::lock<>
 
-  release[LOCKA](l,x); //FAIL
+  release(l); //FAIL
+  /* release[LOCKA](l,x); //FAIL */
   //fail because l is not in locked state
   //LOCKA <> lock
 
@@ -71,10 +73,10 @@ void test3()
   init[LOCKA](l,x);
   //l::LOCKA<x> * x::cell<0>
   //dprint;
-  release[LOCKA](l,x);
+  release(l);
   //l::LOCKA<x>
-  acquire[LOCKA](l,x);
-  acquire[LOCKA](l,x); 
+  acquire(l);
+  acquire(l); 
   // w/o LOCKSET: still SUCESS
   //acquire invariant twice => false context in the presence of heap
 
@@ -98,10 +100,10 @@ void test4()
   init[LOCKA](l,x);
   //l::LOCKA<x> * x::cell<0>
 
-  release[LOCKA](l,x);
+  release(l);
 
   //l::LOCKA<x>
   /* dprint; */
 
-  release[LOCKA](l,x); //FAIL
+  release(l); //FAIL
 }

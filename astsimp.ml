@@ -2771,8 +2771,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                     let pdef = I.look_up_proc_def_raw prog.I.prog_proc_decls mn in
                     (*CHECK a matched LOCK EXISTS*)
                     let _ = match lock with
-                      | None ->
-                          Err.report_error { Err.error_loc = pos; Err.error_text = ("trans_exp :: CallNRecv :: init/finalize requires an associated lock");}
+                      | None -> ()
+                          (* Err.report_error { Err.error_loc = pos; Err.error_text = ("trans_exp :: CallNRecv :: init/finalize/acquire/release requires an associated lock");} *)
                       | Some v ->
                           (try
                               let vdef = I.look_up_view_def_raw prog.I.prog_view_decls v in

@@ -16,8 +16,8 @@ void func(lock l1)
   requires l1::LOCK(0.6)<> & l1 notin LS & waitlevel<l1.mu
   ensures l1::LOCK(0.6)<> & LS'=LS;//'
 {
-  acquire[LOCK](l1);
-  release[LOCK](l1);
+  acquire(l1);
+  release(l1);
 }
 
 void main()
@@ -26,24 +26,25 @@ void main()
 {
   lock l1 = new lock();
   init[LOCK](l1);
-  release[LOCK](l1);
+  release(l1);
+  //
   lock l2 = new lock();
   init[LOCK2](l2);
-  release[LOCK2](l2);
+  release(l2);
   //
-  acquire[LOCK](l1);
+  acquire(l1);
   //LS={l1}
   int id = fork(func,l1); //DELAYED
   //LS={l1}
-  release[LOCK](l1);
+  release(l1);
   //LS={}
   //
-  acquire[LOCK2](l2);
+  acquire(l2);
   //LS={l2}
-  dprint;
+  
   join(id); // CHECK, ok
   //LS={l2}
-  release[LOCK2](l2);
+  release(l2);
   //LS={}
-  dprint;
+  
 }

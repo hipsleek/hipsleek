@@ -10,8 +10,8 @@ void func(lock l1)
   requires l1::LOCK<> & l1 notin LS & waitlevel<l1.mu
   ensures l1::LOCK<> & LS'=LS;//'
 {
-  acquire[LOCK](l1);
-  release[LOCK](l1);
+  acquire(l1);
+  release(l1);
 }
 
 void main()
@@ -21,15 +21,15 @@ void main()
    lock l1 = new lock();
    //initialization
    init[LOCK](l1);
-   release[LOCK](l1);
+   release(l1);
    //
-   acquire[LOCK](l1);
+   acquire(l1);
    //LS={l1}
 
    func(l1); //ERROR, double acquisition
 
-   release[LOCK](l1);
+   release(l1);
 
-   dprint;
+   
 }
 

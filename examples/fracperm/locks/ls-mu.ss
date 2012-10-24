@@ -37,19 +37,19 @@ void f1()
 {
   int level = 100;
   lock l1 = new lock(level);
-  dprint;
+  
   //initialization
   init[LOCK](l1);
   release[LOCK](l1);
-  dprint;
+  
   //
   acquire[LOCK](l1);
   release[LOCK](l1);
-  dprint;
+  
   //finalization
   acquire[LOCK](l1);
   finalize[LOCK](l1);
-  dprint;
+  
 }
 
 //test sequential procedure calls
@@ -60,10 +60,10 @@ void f2()
   int level = 100;
   lock l1 = new lock(level);
   //initialization
-  dprint;
+  
   init[LOCK](l1);
   release[LOCK](l1);
-  dprint;
+  
   //sequential call
   func(l1);
 
@@ -71,7 +71,7 @@ void f2()
   acquire[LOCK](l1);
   release[LOCK](l1);
 
-  dprint;
+  
 }
 
 //test fork/join
@@ -82,20 +82,20 @@ void f3()
   int level = 100;
   lock l1 = new lock(level);
   //initialization
-  dprint;
+  
   init[LOCK](l1);
   release[LOCK](l1);
-  dprint;
+  
   //
   int id = fork(func,l1);
-  dprint;
+  
   //
   acquire[LOCK](l1);
   release[LOCK](l1);
-  dprint;
+  
   //
   join(id);
-  dprint;
+  
 }
 
 //test non-lexical acquire/release
@@ -105,21 +105,21 @@ void f4()
 {
   int level = 100;
   lock l1 = new lock(level);
-  dprint;
+  
   //initialization
   init[LOCK](l1);
   release[LOCK](l1);
-  dprint;
+  
   //
   func_acquire(l1);
-  dprint;
+  
   //
   func_release(l1);
-  dprint;
+  
   //
   acquire[LOCK](l1);
   release[LOCK](l1);
-  dprint;
+  
   //
 }
 
@@ -130,27 +130,27 @@ void f5()
 {
   int level = 100;
   lock l1 = new lock(level);
-  dprint;
+  
   //initialization
   init[LOCK](l1);
   release[LOCK](l1);
-  dprint;
+  
   //
   int id = fork(func,l1);
-  dprint;
+  
   //
   func_acquire(l1);
-  dprint;
+  
   //
   func_release(l1);
-  dprint;
+  
   //
   join(id);
-  dprint;
+  
   //
   acquire[LOCK](l1);
   release[LOCK](l1);
-  dprint;
+  
   //
 }
 

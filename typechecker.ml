@@ -616,6 +616,17 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
   in 
   helper ctx spec 
 
+(*we infer automatically from ctx*)
+and infer_lock_invariant lock_var ctx pos =
+  let found_args,found_name = CF.collect_heap_args_list_failesc_context ctx lock_var in
+  let found_arg_names = List.map (fun v -> CP.name_of_spec_var v) found_args in
+  if (found_name = "") then
+    report_error pos "Scall : could not infer invariant name"
+  else if (found_name = lock_name) then
+    report_error pos "Scall : lock has not been initialized"
+  else
+    (found_name,found_arg_names)
+
 and check_exp prog proc ctx (e0:exp) label =
   let pr = Cprinter.string_of_list_failesc_context in
   Debug.no_2 "check_exp" pr (Cprinter.string_of_exp) pr (fun _ _ -> check_exp_a prog proc ctx e0 label) ctx e0
@@ -1158,10 +1169,18 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*=====================================*)
                   (*=== init[LOCK](lock,lock_args) ======*)
                   (*=====================================*)
+                  if (not (CF.isNonFalseListFailescCtx ctx)) then
+                    ctx
+                  else
+                  if (CF.isFailListFailescCtx ctx) then
+                    let _ = Debug.print_info "procedure call" ("\nempty/false context: Proving precondition in method " ^ mn ^ " has failed \n") pos in
+                    ctx
+                  else
                   let l = List.hd vs in
                   let lock_args = List.tl vs in
                   let lock_sort = match lock with
-                    | None -> ""
+                    | None -> 
+                        Err.report_error { Err.error_loc = pos; Err.error_text = ("SCall :: init/finalize/acquire/release requires an associated lock");}
                     | Some v -> v
                   in
                   let vdef = look_up_view_def_raw prog.prog_view_decls lock_sort in
@@ -1188,18 +1207,34 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*=====================================*)
                   (*===== finalize[LOCK](lock,args) =====*)
                   (*=====================================*)
+                  if (not (CF.isNonFalseListFailescCtx ctx)) then
+                    ctx
+                  else
+                  if (CF.isFailListFailescCtx ctx) then
+                    let _ = Debug.print_info "procedure call" ("\nempty/false context: Proving precondition in method " ^ mn ^ " has failed \n") pos in
+                    ctx
+                  else
                   let l = List.hd vs in
+                  let lock_var =  CP.SpecVar (lock_typ, l, Primed) in
                   let lock_args = List.tl vs in
                   let lock_sort = match lock with
                     | None -> ""
                     | Some v -> v
                   in
+                  let lock_sort,lock_args = if lock_sort <> "" then
+                        (*user provides annotations*)
+                        (lock_sort,lock_args)
+                      else
+                        (*we infer automatically from ctx*)
+                        infer_lock_invariant lock_var ctx pos
+                  in
                   let vdef = look_up_view_def_raw prog.prog_view_decls lock_sort in
                   let types = List.map (fun v -> CP.type_of_spec_var v) vdef.view_vars in
                   let new_args = List.map2 (fun arg typ ->  CP.SpecVar (typ, arg, Primed) ) lock_args types in
-                  let lock_data_name = vdef.view_data_name in
-                  let lock_var =  CP.SpecVar (Named lock_data_name, l, Primed) in
-                  let prepost = CF.prepost_of_finalize lock_var lock_data_name lock_sort new_args post_start_label pos in
+                  (* let lock_data_name = vdef.view_data_name in *)
+                  (* let lock_var =  CP.SpecVar (Named lock_data_name, l, Primed) in *)
+
+                  let prepost = CF.prepost_of_finalize lock_var lock_sort new_args post_start_label pos in
                   let ctx1 = normalize_list_failesc_context_w_lemma prog ctx in (*try to combine fractional permission before finalize*)
                   let to_print = "\nProving precondition in method " ^ mn ^ " for spec:\n" ^ (Cprinter.string_of_struc_formula prepost)  in
                   let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in
@@ -1221,11 +1256,26 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*==========================================*)
                   (*===== acquires[LOCK](lock,args) ==========*)
                   (*==========================================*)
+                  if (not (CF.isNonFalseListFailescCtx ctx)) then
+                    ctx
+                  else
+                  if (CF.isFailListFailescCtx ctx) then
+                    let _ = Debug.print_info "procedure call" ("\nempty/false context: Proving precondition in method " ^ mn ^ " has failed \n") pos in
+                    ctx
+                  else
                   let l = List.hd vs in
                   let lock_args = List.tl vs in
+                  let lock_var =  CP.SpecVar (lock_typ, l, Primed) in
                   let lock_sort = match lock with
                     | None -> ""
                     | Some v -> v
+                  in
+                  let lock_sort,lock_args = if lock_sort <> "" then
+                        (*user provides annotations*)
+                        (lock_sort,lock_args)
+                      else
+                        (*we infer automatically from ctx*)
+                        infer_lock_invariant lock_var ctx pos
                   in
                   let vdef = look_up_view_def_raw prog.prog_view_decls lock_sort in
                   let inv_lock = match vdef.view_inv_lock with
@@ -1235,8 +1285,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   in
                   let types = List.map (fun v -> CP.type_of_spec_var v) vdef.view_vars in
                   let new_args = List.map2 (fun arg typ ->  CP.SpecVar (typ, arg, Primed) ) lock_args types in
-                  let lock_data_name = vdef.view_data_name in
-                  let lock_var =  CP.SpecVar (Named lock_data_name, l, Primed) in
+                  (* let lock_data_name = vdef.view_data_name in *)
+                  (* let lock_var =  CP.SpecVar (Named lock_data_name, l, Primed) in *)
+
                   let self_var =  CP.SpecVar (Named vdef.view_data_name, self, Unprimed) in
                   let fr_vars = self_var::vdef.view_vars in
                   let to_vars = lock_var::new_args in
@@ -1270,11 +1321,26 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*==========================================*)
                   (*===== release[LOCK](lock,args) ==========*)
                   (*==========================================*)
+                  if (not (CF.isNonFalseListFailescCtx ctx)) then
+                    ctx
+                  else
+                  if (CF.isFailListFailescCtx ctx) then
+                    let _ = Debug.print_info "procedure call" ("\nempty/false context: Proving precondition in method " ^ mn ^ " has failed \n") pos in
+                    ctx
+                  else
                   let l = List.hd vs in
+                  let lock_var =  CP.SpecVar (lock_typ, l, Primed) in
                   let lock_args = List.tl vs in
                   let lock_sort = match lock with
                     | None -> ""
                     | Some v -> v
+                  in
+                  let lock_sort,lock_args = if lock_sort <> "" then
+                        (*user provides annotations*)
+                        (lock_sort,lock_args)
+                      else
+                        (*we infer automatically from ctx*)
+                        infer_lock_invariant lock_var ctx pos
                   in
                   let vdef = look_up_view_def_raw prog.prog_view_decls lock_sort in
                   let inv_lock = match vdef.view_inv_lock with
@@ -1284,10 +1350,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   in
                   let types = List.map (fun v -> CP.type_of_spec_var v) vdef.view_vars in
                   let new_args = List.map2 (fun arg typ ->  CP.SpecVar (typ, arg, Primed) ) lock_args types in
-
-                  let lock_data_name = vdef.view_data_name in
-                  let lock_var =  CP.SpecVar (Named lock_data_name, l, Primed) in
+                  (* let lock_data_name = vdef.view_data_name in *)
                   let self_var =  CP.SpecVar (Named vdef.view_data_name, self, Unprimed) in
+                  (* let lock_var =  CP.SpecVar (Named lock_data_name, l, Primed) in *)
+
                   (*LOCKSET variables*)
                   (* let ls_uvar = CP.mkLsVar Unprimed in *)
                   (* let ls_pvar = CP.mkLsVar Primed in *)
@@ -1463,6 +1529,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 else begin
                  (*   let _ = print_endline ("\nlocle2:" ^ proc.proc_name) in *)
       (* get source code position of failed branches *)
+                    (if (!Globals.is_deployed) then
+                          let _ = Debug.print_info "procedure call" ("\nProving precondition in method " ^ mn ^ " has failed \n") pos in
+                          res
+                     else
+                    (*FAILURE explaining*)
                     let to_print = "\nProving precondition in method " ^ proc.proc_name ^ " Failed.\n" in
                     let _ =
                       if not !Globals.disable_failure_explaining then
@@ -1504,7 +1575,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                             }
                         end
                     in
-                    res
+                    res)
                 end
               end
         | Seq ({exp_seq_type = te2;

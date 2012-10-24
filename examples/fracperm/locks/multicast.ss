@@ -43,24 +43,24 @@ void initialize(/* ref lock l, ref PACKET p, ref int M */)
   l = new lock();
   p = new PACKET(l,0,0);
   init[LOCK](l,p,M);
-  release[LOCK](l,p,M);
+  release(l);
 }
 
 void thread(/* ref lock l, ref PACKET p, ref int M */)
   requires l::LOCK(1/M)<p,M> & LS={} & M=10 & waitlevel<l.mu
   ensures LS'={} & M'=M; //'
 {
-  acquire[LOCK](l,p,M);
+  acquire(l);
   // . . . processing data . . .
   p.count++;
   if (p.count == M){
     // . . . Finalizing data . . .
-    finalize[LOCK](l,p,M);
+    finalize(l);
     delLock(l); //added by our system
     delete(p);
     //{ emp }
   }else{
-    release[LOCK](l,p,M); // {both branches entail the later case of the invariant}
+    release(l); // {both branches entail the later case of the invariant}
   }
 }
 
