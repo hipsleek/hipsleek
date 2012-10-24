@@ -28,3 +28,9 @@ echo "ll-next4"
 ../../hip ll-next4.ss -cp-test cp/ll-next4.cp | grep Compare
 echo "ll-next5"
 ../../hip ll-next5.ss -cp-test cp/ll-next5.cp | grep Compare
+echo "ll-delete"
+../../hip ll-delete.ss -cp-test cp/ll-delete.cp | grep Compare
+echo "ll-delete2"
+../../hip ll-delete2.ss -cp-test cp/ll-delete2.cp | grep Compare
+echo "ll-get_size"
+../../hip ll-get-size.ss -cp-test cp/ll-get-size.cp | grep Compare
