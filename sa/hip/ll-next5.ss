@@ -3,18 +3,8 @@ data node {
 	node next
 }
 
-HeapPred H(node a).
 HeapPred H1(node a).
-HeapPred H2(node a).
-HeapPred G(node a, node b).
-HeapPred G1(node a, node b).
-HeapPred G2(node a, node b).
-HeapPred HP_535(node a, node b).
-HeapPred G3(node a, node b, node c).
 HeapPred G4(node a, node b, node c, node d).
-HeapPred HP_535(node a, node b).
-HeapPred HP_537(node a, node b).
-HeapPred HP_557(node a, node b).
 
 /* return the tail of a singly linked list */
 node get_next(ref node x)
