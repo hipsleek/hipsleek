@@ -1492,12 +1492,12 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps c
   let lhs_b1 = {lhs_b1 with CF.formula_base_heap = IMM.apply_subs_h_formula crt_holes lhs_b1.CF.formula_base_heap} in
   let rhs_b1 = {rhs_b1 with CF.formula_base_heap = IMM.apply_subs_h_formula crt_holes rhs_b1.CF.formula_base_heap} in
   (*remove equals. args of one hp must be diff*)
-  let filter_helper ls ls_hp_args=
-    List.exists (fun (_,ls1) -> (Gen.BList.difference_eq CP.eq_spec_var ls ls1) = []) ls_hp_args
-  in
-  let rec elim_eqs_args eqs hp_args=
-    List.filter (fun (v1,v2) -> not(filter_helper [v1;v2] hp_args)) eqs
-  in
+  (* let filter_helper ls ls_hp_args= *)
+  (*   List.exists (fun (_,ls1) -> (Gen.BList.difference_eq CP.eq_spec_var ls ls1) = []) ls_hp_args *)
+  (* in *)
+  (* let rec elim_eqs_args eqs hp_args= *)
+  (*   List.filter (fun (v1,v2) -> not(filter_helper [v1;v2] hp_args)) eqs *)
+  (* in *)
   (* let nleqs = elim_eqs_args leqs (lhp_args@rhp_args) in *)
   (* let nreqs = elim_eqs_args reqs (rhp_args) in *)
   let nleqs = leqs in

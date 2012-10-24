@@ -1,9 +1,9 @@
-/*
+
 data node {
   int val;
   node next;
 }
-
+/*
 ll<> == self=null
 	or self::node<_, q> * q::ll<>
 	inv true;

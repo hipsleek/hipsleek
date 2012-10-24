@@ -1947,20 +1947,21 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 		      let test_comps = proc.Cast.proc_test_comps in
 		      let is_match_constrs il constrs = CEQ.checkeq_constrs il (List.map (fun hp -> hp.CF.hprel_lhs,hp.CF.hprel_rhs)
 									       hp_lst_assume) constrs in
-		      let match_defs il defs= CEQ.checkeq_defs il ls_inferred_hps defs in
+		      (* let match_defs il defs= CEQ.checkeq_defs il ls_inferred_hps defs in *)
 		      (* let _,_,inf_vars = CF.get_pre_post_vars [] proc.proc_static_specs in *)
 		      let is_match_defs il defs = CEQ.checkeq_defs_bool il ls_inferred_hps defs sel_hp_rels in
-		      let (res1, res2) = match test_comps with
-			| None -> (false,false)
-			| Some tcs -> (
-			  let ass = tcs.Cast.expected_ass in
-			  let hpdefs = tcs.Cast.expected_hpdefs in
-			  match ass,hpdefs with
-			    | None, None -> (false, false)
-			    | Some (il,a), None -> (is_match_constrs il a, false) 
-			    | None, Some (il,d) -> (false, is_match_defs il d)
-			    | Some (il1,a), Some (il2,d) ->  (is_match_constrs il1 a, is_match_defs il2 d)
-			)
+		      let (res1, res2) =
+                match test_comps with
+			      | None -> (false,false)
+			      | Some tcs -> (
+			          let ass = tcs.Cast.expected_ass in
+			          let hpdefs = tcs.Cast.expected_hpdefs in
+			          match ass,hpdefs with
+			            | None, None -> (false, false)
+			            | Some (il,a), None -> (is_match_constrs il a, false) 
+			            | None, Some (il,d) -> (false, is_match_defs il d)
+			            | Some (il1,a), Some (il2,d) ->  (is_match_constrs il1 a, is_match_defs il2 d)
+			      )
 		      in
 		      let _ = if(res1) then 
 			  print_string ("Compare ass " ^ proc.proc_name ^ " SUCCESS\n" )

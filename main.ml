@@ -116,6 +116,7 @@ let process_cp_file prog =
 let process_lib_file prog =
   let parse_one_lib (ddecls,vdecls) lib=
     let lib_prog = parse_file_full lib in
+    (*each template data of lib, find corres. data in progs, generate corres. view*)
     (ddecls@lib_prog.Iast.prog_data_decls),(vdecls@lib_prog.Iast.prog_view_decls)
   in
   let ddecls,vdecls = List.fold_left parse_one_lib ([],[]) !Globals.lib_files in

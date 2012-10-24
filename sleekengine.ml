@@ -35,6 +35,7 @@ let iobj_def =  {I.data_name = "Object";
 				 I.data_fields = [];
 				 I.data_parent_name = "";
 				 I.data_invs = []; (* F.mkTrue no_pos; *)
+                 I.data_is_template = false;
 				 I.data_methods = [] }
 
 let iprog = { I.prog_data_decls = [iobj_def];

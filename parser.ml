@@ -595,12 +595,25 @@ data_decl:
             data_fields = db;
             data_parent_name="Object"; (* Object; *)
             data_invs = [];
+            data_is_template = false;
+            data_methods = [];} ]];
+
+template_data_decl:
+    [[ dh=template_data_header ; db = data_body 
+        -> {data_name = dh;
+            data_fields = db;
+            data_parent_name="Object"; (* Object; *)
+            data_invs = [];
+            data_is_template = true;
             data_methods = [];} ]];
 
 with_typed_var: [[`OSQUARE; typ; `CSQUARE -> ()]];
 
 data_header:
     [[ `DATA; `IDENTIFIER t; OPT with_typed_var -> t ]];
+
+template_data_header:
+    [[ `TEMPL; `DATA; `IDENTIFIER t; OPT with_typed_var -> t ]];
 
 data_body: 
       [[`OBRACE; fl=field_list2;`SEMICOLON; `CBRACE -> fl
@@ -1530,11 +1543,13 @@ hprogn:
 					data_fields = [];
 					data_parent_name = "";
 					data_invs = []; (* F.mkTrue no_pos; *)
+                    data_is_template = false;
 					data_methods = [] } in
     let string_def = { data_name = "String";
 					   data_fields = [];
 					   data_parent_name = "Object";
 					   data_invs = []; (* F.mkTrue no_pos; *)
+                       data_is_template = false;
 					   data_methods = [] } in
     let rel_lst = rel_defs # get_stk in
     let hp_lst = hp_defs # get_stk in
@@ -1574,6 +1589,7 @@ decl:
 
 type_decl: 
   [[ t= data_decl  -> Data t
+   | t= template_data_decl  -> Data t
    | c=class_decl -> Data c
    | e=enum_decl  -> Enum e
    | v=view_decl; `SEMICOLON -> View v
@@ -1599,7 +1615,8 @@ class_decl:
       let cdef = { data_name = id;
                    data_parent_name = un_option par "Object";
                    data_fields = t1;
-                   data_invs = t2; 
+                   data_invs = t2;
+                   data_is_template = false;
                    data_methods = t3 } in
       let _ = List.map (fun d -> set_proc_data_decl d cdef) t3 in
       cdef]];

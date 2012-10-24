@@ -31,7 +31,7 @@ type sleek_token =
 	| REF |REL | REQUIRES (*| REQUIRESC*) | RES of string | RETURN
 	| SELFT of string | SPLIT | SUBSET | STATIC
   | THEN| THIS of string | TO | TRUE | LEXVAR
-  | TERM | LOOP | MAYLOOP
+  | TEMPL | TERM | LOOP | MAYLOOP
   | UNFOLD | UNION
   | VOID 
   | WHILE | FLOW of string
@@ -93,6 +93,7 @@ module Token = struct
     (* | PREF -> "@p_ref" *) | PVALUE -> "@value" | PFULL -> "@full" | PZERO -> "@zero"
     | INVLOCK->"inv_lock"
     | LOGICAL -> "logical"
+    | TEMPL ->"template"
     | TERM -> "Term"
     | LOOP -> "Loop"
     | MAYLOOP -> "MayLoop"

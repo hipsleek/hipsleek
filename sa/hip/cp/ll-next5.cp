@@ -11,7 +11,7 @@ ass [H1,G4]:{
 
 hpdefs [H1,G4]:{
   G4(next_28_525',x,v_544) --> x::node<val_28_524',next_28_525'>&x=v_544;
-  H1(x) --> x::node<val_28_524',next_28_525'>&true
+  H1(x) --> x::node<val_28_524',next_28_525'>
 
  }
 ]

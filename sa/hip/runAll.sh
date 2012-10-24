@@ -20,6 +20,8 @@ echo "ex1a.ss"
 ../../hip ex1a.ss -cp-test cp/ex1a.cp | grep Compare
 echo "ll-get-next"
 ../../hip ll-get-next.ss -cp-test cp/ll-get-next.cp | grep Compare
+echo "ll-get-next-next"
+../../hip ll-get-next-next.ss -cp-test cp/ll-get-next-next.cp | grep Compare
 echo "ll-next2"
 ../../hip ll-next2.ss -cp-test cp/ll-next2.cp | grep Compare
 echo "ll-next3"

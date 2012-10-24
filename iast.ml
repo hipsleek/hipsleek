@@ -40,6 +40,7 @@ and data_decl = { data_name : ident;
 		  data_fields : (typed_ident * loc * bool) list; (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
 		  data_parent_name : ident;
 		  data_invs : F.formula list;
+          data_is_template: bool;
 		  data_methods : proc_decl list }
 
 (*
@@ -1928,6 +1929,7 @@ let b_data_constr bn larg=
 		  data_fields = List.map (fun c-> c,no_pos,false) larg ;
 		  data_parent_name = if bn = b_datan then "Object" else b_datan;
 		  data_invs =[];
+          data_is_template = false;
 		  data_methods =[]; }
 	else report_error no_pos ("the first field of barrier "^bn^" is not state")
 	

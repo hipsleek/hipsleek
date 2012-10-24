@@ -19,6 +19,12 @@ let close_def defs (v1,v2)=
   else if CP.mem_svl v2 defs then (CP.remove_dups_svl defs@[v1])
   else (defs)
 
+ let get_hpdef_name hpdef=
+   match hpdef with
+     | CP.HPRelDefn hp -> hp
+     | _ -> report_error no_pos "sau.get_hp_name"
+
+
 let is_empty_f f=
    match f with
     | CF.Base fb ->
@@ -436,7 +442,7 @@ let rename_hp_args_x lfb rfb=
       | a1::ass -> if CP.mem_svl a1 args1 then
             let new_v = CP.SpecVar (CP.type_of_spec_var a1,
                   "v_" ^ (string_of_int (Globals.fresh_int())),Unprimed)  in
-            let ss = List.combine [a1] [new_v] in
+            (* let ss = List.combine [a1] [new_v] in *)
             (*lhs*)
             (* let lp1 = *)
             (*   (\* if CP.isConstTrue lp then *\) *)
@@ -494,8 +500,8 @@ let get_raw_defined_w_pure prog f=
 
 
 (*for unk hps*)
-(*check whether args of an unk hp is in keep_ptrs*)
-let get_intersect_unk_hps keep_ptrs (hp, args)=
+(*check whether args of an is in keep_ptrs*)
+let get_intersect_hps keep_ptrs (hp, args)=
   (*may need closed*)
   let diff = Gen.BList.difference_eq CP.eq_spec_var args keep_ptrs in
   if diff = [] then [hp]
@@ -534,12 +540,25 @@ and subst_view_hp_h_formula view_name (hp_name, _, p) hf =
 (*==========check_relaxeq=============*)
 (*currently we do not submit exists*)
 let check_stricteq_hnodes stricted_eq hns1 hns2=
+  (*allow dangl ptrs have diff names*)
+  let all_ptrs =
+    if stricted_eq then [] else
+    let ptrs1 = List.map (fun hd -> hd.CF.h_formula_data_node) hns1 in
+    let ptrs2 = List.map (fun hd -> hd.CF.h_formula_data_node) hns2 in
+    CP.remove_dups_svl (ptrs1@ptrs2)
+  in
   let check_stricteq_hnode hn1 hn2=
     let arg_ptrs1 = List.filter (fun (CP.SpecVar (t,_,_)) -> is_pointer t) hn1.CF.h_formula_data_arguments in
     let arg_ptrs2 = List.filter (fun (CP.SpecVar (t,_,_)) -> is_pointer t)  hn2.CF.h_formula_data_arguments in
-    (hn1.CF.h_formula_data_name = hn2.CF.h_formula_data_name) &&
-        (hn1.CF.h_formula_data_node = hn2.CF.h_formula_data_node) &&
-        ((Gen.BList.difference_eq CP.eq_spec_var arg_ptrs1 arg_ptrs2)=[])
+    let diff1 = (Gen.BList.difference_eq CP.eq_spec_var arg_ptrs1 arg_ptrs2) in
+    if (hn1.CF.h_formula_data_name = hn2.CF.h_formula_data_name) &&
+        (hn1.CF.h_formula_data_node = hn2.CF.h_formula_data_node) then
+        if stricted_eq then (diff1=[]) else
+          (*allow dangl ptrs have diff names*)
+          let diff2 = CP.intersect_svl diff1 all_ptrs in
+          (diff2 = [])
+    else
+      false
   in
   let rec helper hn hns2 rest2=
     match hns2 with
@@ -861,37 +880,6 @@ let get_min_number_new prog args ll_ldns=
   let eqNull = helper_pure (snd (List.hd ll_ldns)) in
   helper (List.tl ll_ldns) fmin fdns eqNull
 
-(* let move_root_to_top root ldns= *)
-(*   let rec helper lss res= *)
-(*     match lss with *)
-(*       | [] -> res *)
-(*       | dn::dnss -> if CP.eq_spec_var root dn.CF.h_formula_data_node then *)
-(*             ([dn]@res@dnss) *)
-(*           else helper dnss (res@[dn]) *)
-(*   in *)
-(*   let rec rename_last ldns ldone= *)
-(*     match ldns with *)
-(*       | [] -> ldone *)
-(*       | [dn] -> *)
-(*           let ptrs = dn.CF.h_formula_data_arguments in *)
-(*           let fresh_ptrs = CP.fresh_spec_vars ptrs in *)
-(*           (\* let fresh_dn = {dn with CF.h_formula_data_arguments = fresh_ptrs} in *\) *)
-(*           let new_ldns = (ldone@[dn]) in *)
-(*           let ss = List.combine ptrs fresh_ptrs in *)
-(*           let new_ldns1 = (List.map *)
-(*                                (fun dn -> let hf = CF.h_subst ss (CF.DataNode dn) in *)
-(*                                           match hf with *)
-(*                                             | CF.DataNode hd1 -> hd1 *)
-(*                                             | _ -> report_error no_pos "sau.move_root_to_top" *)
-(*                                ) new_ldns) *)
-(*           in *)
-(*           new_ldns1 *)
-(*       | dn::dnss -> rename_last dnss (ldone@[dn]) *)
-(*   in *)
-(*   let nldns1 = helper ldns [] in *)
-(*   (\* nldns1 *\) *)
-(*   rename_last nldns1 [] *)
-
 let add_raw_hp_rel_x prog unknown_ptrs pos=
   if (List.length unknown_ptrs > 0) then
     let hp_decl =
@@ -930,15 +918,15 @@ let mk_hprel_def hp args defs pos=
 
 (*because root is moved to top*)
 let mk_orig_hprel_def prog hp args sh_ldns eqNulls=
-  let rec get_last_ptrs ls_lnds=
-    match ls_lnds with
-      | [] -> report_error no_pos "sau.mk_orig_hprel_def: sth wrong"
-      | [nd] -> List.concat (List.map ((fun (CP.SpecVar (t,v,p)) ->
-          if (is_pointer t)
-          then [CP.SpecVar (t,v,p)]
-          else [])) nd.CF.h_formula_data_arguments)
-      | nd::ndss -> get_last_ptrs ndss
-  in
+  (* let rec get_last_ptrs ls_lnds= *)
+  (*   match ls_lnds with *)
+  (*     | [] -> report_error no_pos "sau.mk_orig_hprel_def: sth wrong" *)
+  (*     | [nd] -> List.concat (List.map ((fun (CP.SpecVar (t,v,p)) -> *)
+  (*         if (is_pointer t) *)
+  (*         then [CP.SpecVar (t,v,p)] *)
+  (*         else [])) nd.CF.h_formula_data_arguments) *)
+  (*     | nd::ndss -> get_last_ptrs ndss *)
+  (* in *)
   let other_args = List.tl args in
   let get_connected_helper ((CP.SpecVar (t,v,p)) as r)=
     if CP.mem_svl r other_args then
@@ -1045,7 +1033,7 @@ let get_longest_common_hnodes_list_x prog hp args fs=
      (*get shortest list of hnodes*)
      (* let sh_ldns, _ = get_shortest_lnds lldns min in *)
      (*assume root is the first arg*)
-     let root = List.hd args in
+     (* let root = List.hd args in *)
      (*let sh_ldns1 = move_root_to_top root sh_ldns in*)
      let orig_hpdef, hp_subst, new_hp, n_args,sh_ldns2 = mk_orig_hprel_def prog hp args sh_ldns eqNulls in
      let n_fs = List.map (process_one_f args n_args hp_subst sh_ldns2 eqNulls) lldns in
@@ -1151,6 +1139,22 @@ let remove_longer_common_prefix_w_unk unk_hps fs=
   in
   helper fs []
 
+let elim_irr_eq_exps args f=
+  let filter_fn h_svl p=
+    if CP.is_eq_exp p then
+      let p_svl = CP.fv p in
+      CP.subset p_svl h_svl
+    else true
+  in
+   match f with
+    | CF.Base fb ->
+        let h_svl = CP.remove_dups_svl (args@(CF.h_fv fb.CF.formula_base_heap)) in
+        let cons = CP.list_of_conjs (MCP.pure_of_mix fb.CF.formula_base_pure) in
+        let cons1 = List.filter (filter_fn h_svl) cons in
+        let new_p = MCP.mix_of_pure (CP.conj_of_list cons1 no_pos) in
+        CF.Base {fb with CF.formula_base_pure = new_p}
+    | _ -> report_error no_pos "cformula.get_HRels_f: not handle yet"
+
 let is_trivial f (hp,args)=
   let hpargs = CF.get_HRels_f f in
   List.exists (fun hpargs1 -> check_hp_arg_eq (hp,args) hpargs1) hpargs
@@ -1158,7 +1162,8 @@ let is_trivial f (hp,args)=
 let rec look_up_subst_hpdef hp args nrec_hpdefs=
   match nrec_hpdefs with
     | [] -> [](* report_error no_pos "sau.look_up_groups" *)
-    | (CP.HPRelDefn hp1,hprel1,f1)::gs -> begin
+    | (a1,hprel1,f1)::gs -> begin
+        let hp1 = get_hpdef_name a1 in
         if CP.eq_spec_var hp hp1 then
            let args1 = get_ptrs hprel1 in
            let ss = List.combine args1 args in
@@ -1175,7 +1180,11 @@ let succ_susbt_hpdef nrec_hpdefs all_succ_hp (hp,args,f)=
   let helper ls1 ls2=
     List.concat (List.map (fun f1 ->
         List.map (fun f2 ->
-             CF.mkStar f1 f2 CF.Flow_combine pos
+            (* let ptrs1 = CF.get_ptrs_f f1 in *)
+            (* let new_f2 = *)
+            (*   if ptrs1 = [] then f2 else CF.drop_hnodes_f f2 ptrs1 *)
+            (* in *)
+            CF.mkStar f1 f2 CF.Flow_combine pos
     ) ls2) ls1)
   in
   let succ_hp_args = CF.get_HRels_f f in
@@ -1197,9 +1206,51 @@ let succ_susbt_hpdef nrec_hpdefs all_succ_hp (hp,args,f)=
           (*                                                 in pr lsf_cmb)) no_pos; *)
           (*remove trivial def*)
           let lsf_cmb1 = List.filter (fun f -> not (is_trivial f (hp,args))) lsf_cmb in
+          (*simpl pure*)
+          let lsf_cmb2 = List.map (elim_irr_eq_exps args) lsf_cmb1 in
         (*remove f which has common prefix*)
-          let lsf_cmb2 = (remove_longer_common_prefix lsf_cmb1) in
+          let lsf_cmb3 = (remove_longer_common_prefix lsf_cmb2) in
           (* DD.info_pprint ("       succ_susbt lsf_cmb 1:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula) *)
           (*                                                   in pr lsf_cmb1)) no_pos; *)
-          (true,lsf_cmb2)
+          (true,lsf_cmb3)
     end
+
+let combine_hpdefs_x hpdefs=
+  (*partition the set by hp_name*)
+  let rec partition_hpdefs_by_hp_name defs parts=
+    match defs with
+      | [] -> parts
+      | (a1,a2,a3)::xs ->
+          let part,remains= List.partition (fun (a2,_,_) ->
+              let hp1 = get_hpdef_name a1 in
+              let hp2 = get_hpdef_name a2 in
+              CP.eq_spec_var hp1 hp2) xs
+          in
+          partition_hpdefs_by_hp_name remains (parts@[[(a1,a2,a3)]@part])
+  in
+  let extract_def args0 (_, hprel, f)=
+    let _,args = CF.extract_HRel hprel in
+    let ss = List.combine args args0 in
+    CF.list_of_disjs (CF.subst ss f)
+  in
+  let combine_one_hpdef grp=
+    match grp with
+      | [] -> report_error no_pos "sau.combine_one_hpdef"
+      | [def] -> def
+      | (hp0, hprel0, f0)::tl ->
+          let _,args0 = CF.extract_HRel hprel0 in
+          let fs = (CF.list_of_disjs f0)@(List.concat (List.map (extract_def args0) tl)) in
+          let fs1 = (remove_longer_common_prefix fs) in
+          let p = (CF.pos_of_formula f0) in
+          let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 p)
+                      (List.hd fs1) (List.tl fs1)
+          in
+          (hp0,hprel0, def)
+  in
+  let hp_groups = partition_hpdefs_by_hp_name hpdefs [] in
+  (List.map combine_one_hpdef hp_groups)
+
+let combine_hpdefs hpdefs=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  Debug.no_1 "combine_hpdefs" pr1 pr1
+      (fun _ -> combine_hpdefs_x hpdefs) hpdefs
