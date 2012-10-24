@@ -1,6 +1,7 @@
 /*
-  An example of deadlock-free programs
- */
+  example of deadlocks due to interractions of fork/join
+  and acquire/release
+*/
 
 //define lock invariant with name LOCK and empty list of args
 LOCK<> == self::lock<>
@@ -23,11 +24,14 @@ void main()
   ensures LS'={}; //'
 {
    lock l1 = new lock();
+   //initialization
    init[LOCK](l1); //initialize l1 with invariant LOCK
    release(l1);
+   //
+   int id = fork(func,l1); //DELAYED
+   //
    acquire(l1);
-   int id = fork(func,l1);
+   join(id); // CHECK, Delayed checking failure
    release(l1);
-   join(id);
    
 }

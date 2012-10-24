@@ -1,5 +1,5 @@
 /*
-  Test waitlevel
+  General usage
 */
 
 LOCK<> == self::lock<>
@@ -12,11 +12,8 @@ void func(lock l1)
   requires l1::LOCK(0.5)<> & l1 notin LS & waitlevel<l1.mu
   ensures l1::LOCK(0.5)<> & LS'=LS & waitlevel'=waitlevel;//'
 {
-  
   acquire(l1);
-
   release(l1);
-  
 }
 
 void func_test(int x, int y)

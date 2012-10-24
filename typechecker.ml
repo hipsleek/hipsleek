@@ -618,14 +618,16 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 
 (*we infer automatically from ctx*)
 and infer_lock_invariant lock_var ctx pos =
-  let found_args,found_name = CF.collect_heap_args_list_failesc_context ctx lock_var in
-  let found_arg_names = List.map (fun v -> CP.name_of_spec_var v) found_args in
-  if (found_name = "") then
-    report_error pos "Scall : could not infer invariant name"
-  else if (found_name = lock_name) then
-    report_error pos "Scall : lock has not been initialized"
-  else
-    (found_name,found_arg_names)
+  try 
+      let found_args,found_name = CF.collect_heap_args_list_failesc_context ctx lock_var in
+      let found_arg_names = List.map (fun v -> CP.name_of_spec_var v) found_args in
+      if (found_name = "") then
+        report_error pos "Scall : could not infer invariant name"
+      else if (found_name = lock_name) then
+        report_error pos "Scall : lock has not been initialized"
+      else
+        (found_name,found_arg_names)
+  with _ -> report_error pos ("Scall : could not find heap node for lock " ^ (Cprinter.string_of_spec_var lock_var))
 
 and check_exp prog proc ctx (e0:exp) label =
   let pr = Cprinter.string_of_list_failesc_context in
@@ -1256,6 +1258,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (*==========================================*)
                   (*===== acquires[LOCK](lock,args) ==========*)
                   (*==========================================*)
+                  let _ = proving_loc#set pos in
                   if (not (CF.isNonFalseListFailescCtx ctx)) then
                     ctx
                   else

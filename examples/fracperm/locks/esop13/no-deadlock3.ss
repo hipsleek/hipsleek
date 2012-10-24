@@ -1,11 +1,15 @@
 /*
   An example of deadlock-free programs
- */
+*/
 
 //define lock invariant with name LOCK and empty list of args
 LOCK<> == self::lock<>
   inv self!=null
   inv_lock true; //describe protected shared heap
+
+LOCK2<> == self::lock<>
+  inv self!=null
+  inv_lock true;
 
 //fractional permission splitting
 lemma "splitLock" self::LOCK(f)<> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::LOCK(f1)<> * self::LOCK(f2)<> & 0.0<f<=1.0;
@@ -20,14 +24,29 @@ void func(lock l1)
 
 void main()
   requires LS={}
-  ensures LS'={}; //'
+  ensures LS={};
 {
-   lock l1 = new lock();
-   init[LOCK](l1); //initialize l1 with invariant LOCK
-   release(l1);
-   acquire(l1);
-   int id = fork(func,l1);
-   release(l1);
-   join(id);
-   
+  lock l1 = new lock();
+  init[LOCK](l1);
+  release(l1);
+  //
+  lock l2 = new lock();
+  init[LOCK2](l2); //initialize l1 with invariant LOCK
+  release(l2);
+  //
+  acquire(l1);
+  //LS={l1}
+  int id = fork(func,l1); //DELAYED
+  //LS={l1}
+  release(l1);
+  //LS={}
+  //
+  acquire(l2);
+  //LS={l2}
+  
+  join(id); // CHECK, ok
+  //LS={l2}
+  release(l2);
+  //LS={}
+  
 }
