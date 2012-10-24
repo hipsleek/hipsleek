@@ -274,6 +274,7 @@ let peek_try =
        match Stream.npeek 2 strm with 
          | [_;IN_T,_]  -> ()
          | [_;NOTIN,_] -> ()
+	 | [GT,_; CBRACE,_] -> raise Stream.Failure (*vp*)
          | [SEMICOLON,_; CBRACE,_] -> raise Stream.Failure
          | [OPAREN,_; EXISTS,_ ] -> raise Stream.Failure
          | [GT,_;STAR,_] -> raise Stream.Failure

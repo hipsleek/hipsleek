@@ -58,6 +58,21 @@ and checkeq_formulas ivars f1 f2 =
   let pr3 = string_of_map_table_list in
   Debug.no_2 "checkeq_formulas" pr1 pr1 (pr_pair pr2 pr3)
       (fun _ _ ->  checkeq_formulas_x ivars f1 f2) f1 f2
+
+and checkeq_formulas_with_diff_x ivars f1 f2 = 
+  let mtl = [[]] in
+  let (res1, mix_mtl1) = (checkeq_formulas_one ivars f1 f2 mtl) in
+  let re_order mt = List.map (fun (a,b) -> (b,a)) mt in
+  let imtl = List.map (fun c -> re_order c) mix_mtl1 in
+  let (res2, mtl2) =  (checkeq_formulas_one ivars f2 f1 imtl) in
+  (res1&&res2,mix_mtl1)
+
+and checkeq_formulas_with_diff ivars f1 f2 = 
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 b = if(b) then "VALID" else "INVALID" in
+  let pr3 = string_of_map_table_list in
+  Debug.no_2 "checkeq_formulas_with_diff" pr1 pr1 (pr_pair pr2 pr3)
+      (fun _ _ ->  checkeq_formulas_with_diff_x ivars f1 f2) f1 f2
     
 and checkeq_formulas_a ivars f1 f2 mtl = 
   let (res1, mtl1) = (checkeq_formulas_one ivars f1 f2 mtl) in
@@ -848,33 +863,35 @@ let check_equiv_constr  hvars (constr1: CF.formula * CF.formula) (constr2: CF.fo
       (fun _ _ ->  check_equiv_constr_x hvars constr1 constr2) constr1 constr2
 
 let rec checkeq_constrs_x hvars (constrs: (CF.formula * CF.formula) list) ( infile_constrs: (CF.formula * CF.formula) list): bool =
-  let res = if(List.length constrs == 0 && (List.length infile_constrs == 0)) then true
-  else (
-    let rec check_head head constrs =
-      match constrs with
-	| [] -> (false, [])
-	| x::y -> (
-	  let r1,tmp = check_equiv_constr hvars head x in
-	  if(r1) then (
-	    let _ =  Debug.ninfo_pprint ("CONSTR MATCH") no_pos in
-	    (r1,y)
-	  )
-	  else (
-	    let r2,ncs = check_head head y in
-	    (r2,x::ncs)
-	  )
-	)
-    in
-    let res1,new_constrs = check_head (List.hd constrs) infile_constrs in
-    if(res1) then (
-      let _ = Debug.ninfo_hprint (add_str "Success eq constr: " Cprinter.string_of_hprel_lhs_rhs) (List.hd constrs) no_pos in
-      checkeq_constrs_x hvars (List.tl constrs) new_constrs 
-    )
+  let res = if(List.length constrs != List.length infile_constrs)
+    then report_error no_pos "length of constrs are not equal" 
+    else if(List.length constrs == 0 && (List.length infile_constrs == 0)) then true
     else (
-      let _ = Debug.ninfo_hprint (add_str "FAIL constr: " Cprinter.string_of_hprel_lhs_rhs) (List.hd constrs) no_pos in
-      res1
+      let rec check_head head constrs =
+	match constrs with
+	  | [] -> (false, [])
+	  | x::y -> (
+	    let r1,tmp = check_equiv_constr hvars head x in
+	    if(r1) then (
+	      let _ =  Debug.ninfo_pprint ("CONSTR MATCH") no_pos in
+	      (r1,y)
+	    )
+	    else (
+	      let r2,ncs = check_head head y in
+	      (r2,x::ncs)
+	    )
+	  )
+      in
+      let res1,new_constrs = check_head (List.hd constrs) infile_constrs in
+      if(res1) then (
+	let _ = Debug.ninfo_hprint (add_str "Success eq constr: " Cprinter.string_of_hprel_lhs_rhs) (List.hd constrs) no_pos in
+	checkeq_constrs_x hvars (List.tl constrs) new_constrs 
+      )
+      else (
+	let _ = Debug.ninfo_hprint (add_str "FAIL constr: " Cprinter.string_of_hprel_lhs_rhs) (List.hd constrs) no_pos in
+	res1
+      )
     )
-  )
   in
   res
 
