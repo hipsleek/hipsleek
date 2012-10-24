@@ -2,12 +2,13 @@
   example of deadlocks due to double acquisition in sequential settings
  */
 
+//define lock invariant with name LOCK and empty list of args
 LOCK<> == self::lock<>
   inv self!=null
-  inv_lock true;
+  inv_lock true;//describe protected shared heap
 
 void func(lock l1)
-  requires l1::LOCK<> & l1 notin LS & waitlevel<l1.mu
+  requires l1::LOCK<> & [waitlevel<l1.mu # l1 notin LS]
   ensures l1::LOCK<> & LS'=LS;//'
 {
   acquire(l1);
@@ -20,7 +21,7 @@ void main()
 {
    lock l1 = new lock();
    //initialization
-   init[LOCK](l1);
+   init[LOCK](l1);//initialize l1 with invariant LOCK
    release(l1);
    //
    acquire(l1);

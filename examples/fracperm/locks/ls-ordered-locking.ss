@@ -3,14 +3,16 @@
   are acquired in a strictly increasing order.
 */
 
+//define lock invariant with name LOCK and empty list of args
 LOCK<> == self::lock<>
   inv self!=null
-  inv_lock true;
+  inv_lock true; //describe protected shared heap
 
+//fractional permission splitting
 lemma "splitLock" self::LOCK(f)<> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::LOCK(f1)<> * self::LOCK(f2)<> & 0.0<f<=1.0;
 
 void func(lock l1, lock l2)
-  requires l1::LOCK(0.6)<> * l2::LOCK(0.6)<> & l1 notin LS & l2 notin LS & l1!=l2 & waitlevel<l1.mu & l1.mu < l2.mu
+  requires l1::LOCK(0.6)<> * l2::LOCK(0.6)<> & [waitlevel<l1.mu # l1 notin LS & l2 notin LS] & l1!=l2 & l1.mu < l2.mu
   ensures l1::LOCK(0.6)<> * l2::LOCK(0.6)<> & LS'=LS;//'
 {
   acquire(l1);
@@ -24,7 +26,7 @@ void main()
   ensures LS={};
 {
   lock l1 = new lock(1);
-  init[LOCK](l1);
+  init[LOCK](l1); //initialize l1 with invariant LOCK
   release(l1);
   //
   lock l2 = new lock(2);
