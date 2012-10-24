@@ -331,7 +331,7 @@ SHGram.Entry.of_parser "peek_print"
        (fun strm -> 
            match Stream.npeek 2 strm with
              | [AND,_;FLOW i,_] -> raise Stream.Failure
-             | [AND,_;OSQUARE,_] -> raise Stream.Failure
+             (* | [AND,_;OSQUARE,_] -> raise Stream.Failure *)
              | _ -> ())
  let peek_pure = 
    SHGram.Entry.of_parser "peek_pure"
@@ -370,7 +370,7 @@ let peek_dc =
        (fun strm -> 
            match Stream.npeek 2 strm with
              | [AND,_;FLOW i,_] -> raise Stream.Failure
-             | [AND,_;OSQUARE,_] -> raise Stream.Failure
+             (* | [AND,_;OSQUARE,_] -> raise Stream.Failure *)
              | _ -> ())
 
  let peek_heap_args = 
@@ -916,6 +916,10 @@ general_h_args:
 opt_pure_constr: [[t=OPT and_pure_constr -> un_option t (P.mkTrue no_pos)]];
     
 and_pure_constr: [[ peek_and_pure; `AND; t= pure_constr ->t]];
+
+(* pure_constr_t: [[ `OSQUARE; t= pure_constr; `CSQUARE ->t  *)
+(*                   | t= pure_constr ->t *)
+(* ]]; *)
     
 (* (formula option , expr option )   *)
     
@@ -943,6 +947,10 @@ cexp: [[t= cexp_w -> match t with
 
 slicing_label: [[ `DOLLAR -> true ]];
 
+(*Unified specification for locks and waitlevel [ p1 # p2 ] *)
+(*This is just syntactic sugar for p1 & p2 *)
+exl_pure : [[  pc1=cexp_w; `HASH; pc2=cexp_w -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos_camlp4 _loc 2)) pc1 pc2 ]];
+
 cexp_w :
   [ "pure_lbl"
     [ofl= pure_label ; spc=SELF (*LEVEL "pure_or"*)          -> apply_pure_form1 (fun c-> label_formula c ofl) spc]   (*apply_cexp*)
@@ -955,6 +963,9 @@ cexp_w :
   
   | "pure_and" RIGHTA
    [ pc1=SELF; peek_and; `AND; pc2=SELF              -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos_camlp4 _loc 2)) pc1 pc2]
+
+  | "pure_exclusive" RIGHTA
+   [ `OSQUARE; t=exl_pure; `CSQUARE -> t]
 
   |"bconstrp" RIGHTA
       [  lc=SELF; `NEQ;  cl=SELF       ->
