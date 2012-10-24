@@ -40,3 +40,9 @@ HeapPred G2(node a, node b).
 checkeq []  H1a(y) * HP_580(v_node_42_597,x) * x::node<val_42_586,y>&v_node_42_597=null -|-  G2(x,y) * x::node<_,null> & true.
 
 checkeq [] exists s: (a = s & s = e) -|- exists s: (s = c & s = f).
+
+checkeq [] a::node<2,d> & true -|- a::node<2,d> &true.
+
+
+checkeq [a] b::node<2,d> * c::node<_,null> -|- a::node<2,d>  * e::node<_,null>.
+
