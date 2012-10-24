@@ -4822,20 +4822,19 @@ let remove_true_conj_mix_formula (f:MCP.mix_formula):MCP.mix_formula =
   Debug.no_1 "remove_true_conj_mix_formula" !print_mix_formula !print_mix_formula 
       remove_true_conj_mix_formula_x f
 (*remove v=v from formula*)
+
 let remove_dupl_conj_eq_pure (p:CP.formula) =
   let ps = CP.split_conjunctions p in
   let ps1 = CP.remove_dupl_conj_eq ps in
   let ps2 = CP.join_conjunctions ps1 in 
   ps2
+
 (*remove v=v from formula*)
-let remove_dupl_conj_eq_mix_formula_x (f:MCP.mix_formula):MCP.mix_formula = 
-  (match f with
-    | MCP.MemoF _ -> 
-        (*Todo: implement this*)
-        (* let _ = print_string ("[cformula.ml][remove_dupl_conj_eq_mix_formula] Warning: not yet support MCP.MemoF \n") in *)
-        f
-    | MCP.OnePF p_f -> (MCP.OnePF (remove_dupl_conj_eq_pure p_f))
-  )
+let remove_dupl_conj_eq_mix_formula_x (f:MCP.mix_formula):MCP.mix_formula =
+  let nf= MCP.pure_of_mix f in
+  let nf = remove_dupl_conj_eq_pure nf in
+  MCP.mix_of_pure nf
+
 (*remove v=v from formula*)
 let remove_dupl_conj_eq_mix_formula (f:MCP.mix_formula):MCP.mix_formula = 
   Debug.no_1 "remove_dupl_conj_eq_mix_formula" !print_mix_formula !print_mix_formula 
@@ -6366,6 +6365,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
       es_var_measures = es.es_var_measures;
       (* WN : what is the purpose of es_var_stack?*)
       es_var_stack = es.es_var_stack;
+      es_pure = es.es_pure;
       es_infer_vars = es.es_infer_vars;
       es_infer_vars_rel = es.es_infer_vars_rel;
       es_infer_heap = es.es_infer_heap;

@@ -12,6 +12,7 @@ open Cast
 open Cformula
 open Prooftracer
 open Gen.Basic
+
 open Immutable
 open Perm
 open Mcpure_D
@@ -431,20 +432,10 @@ and h_formula_2_mem_perm_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_v
                 | Some var -> 
                     let full_f = Perm.mkFullPerm_pure var in
                     (*prove that p0 |- var=full_perm*)
-                    let res = 
-                      (match p0 with
-                        | MCP.MemoF f0 ->
-                            (* let full_f_memo = MCP.memoise_add_pure_N (MCP.mkMTrue pos) full_f in *)
-                            (* MCP.imply_memo f0 full_f_memo TP.imply imp_no *)
-                            let _ = print_endline ("Warning: h_formula_2_mem_perm: MCP.MemoF is currently not supported ") in
-                            true
-                        | MCP.OnePF f0 ->
-                            Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [Begin] check fractional variable "^ (Cprinter.string_of_spec_var var) ^ " is full_perm" ^"\n")) pos;
-                            let b,_,_ = CP.imply_disj_orig [f0] full_f TP.imply imp_no in
-                            Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [End] check fractional variable "^ (Cprinter.string_of_spec_var var) ^ " is full_perm. ### res = " ^ (string_of_bool b) ^"\n")) pos;
-                            b
-                      )
-                    in
+                    let f0 = MCP.pure_of_mix p0 in
+                    Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [Begin] check fractional variable "^ (Cprinter.string_of_spec_var var) ^ " is full_perm" ^"\n")) pos;
+                    let res,_,_ = CP.imply_disj_orig [f0] full_f TP.imply imp_no in
+                    Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [End] check fractional variable "^ (Cprinter.string_of_spec_var var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
                     if (res) then
                       CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*))
                     else []
@@ -477,20 +468,10 @@ and h_formula_2_mem_perm_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_v
                 | Some var -> 
                     let full_f = Perm.mkFullPerm_pure var in
                     (*prove that p0 |- var=full_perm*)
-                    let res = 
-                      (match p0 with
-                        | MCP.MemoF f0 ->
-                            (* let full_f_memo = MCP.memoise_add_pure_N (MCP.mkMTrue pos) full_f in *)
-                            (* MCP.imply_memo f0 full_f_memo TP.imply imp_no *)
-                            let _ = print_endline ("Warning: h_formula_2_mem_perm: MCP.MemoF is currently not supported ") in
-                            true
-                        | MCP.OnePF f0 ->
-                            Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [Begin] check fractional variable "^ (Cprinter.string_of_spec_var var) ^ " is full_perm" ^"\n")) pos;
-                            let b,_,_ = CP.imply_disj_orig [f0] full_f TP.imply imp_no in
-                            Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [End] check fractional variable "^ (Cprinter.string_of_spec_var var) ^ " is full_perm. ### res = " ^ (string_of_bool b) ^"\n")) pos;
-                            b
-                      )
-                    in
+                    let f0 = MCP.pure_of_mix p0 in
+                    Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [Begin] check fractional variable "^ (Cprinter.string_of_spec_var var) ^ " is full_perm" ^"\n")) pos;
+                    let res,_,_ = CP.imply_disj_orig [f0] full_f TP.imply imp_no in
+                    Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [End] check fractional variable "^ (Cprinter.string_of_spec_var var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
                     if (res) then
                       (match lbl_lst with
                         |None ->
@@ -713,6 +694,122 @@ and xpure_symbolic_slicing (prog : prog_decl) (f0 : formula) : (formula * CP.spe
   let pf, pa = xpure_symbolic_helper prog f0 in
   (pf, pa, formula_2_mem f0 prog)
 
+(*compute constraints on fractional heap nodes
+  x1::node(f1)<> * x2::node(f2)<> * x4::node(f4)<> * x3::node(f3)<> & x1=x2 & x3=x4
+  & f1+f2+f3+f4>1 --infer--> x1!=x3 & x1!=x4 & x2!=x3 & x2!=x4
+*)
+and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_formula =
+  if (not (CF.is_complex_heap h)) then MCP.mkMTrue no_pos else
+  let f = MCP.pure_of_mix p in
+  let heaps = split_star_conjunctions h in
+  (*group nodes with equal names into a partition*)
+  let rec fct heaps p =
+    match heaps with
+      | [] -> []
+      | hx::hxs ->
+          let res = fct hxs p in
+          let hx_var = CF.get_node_var hx in
+          (*partition res into those with equal names and others*)
+          let res_eq,res_others = List.partition (fun part ->
+              if part=[] then false else
+                let anode = List.hd part in
+                let anode_vars = List.map (fun h ->  CF.get_node_var h) part in
+                let vars = List.map (fun v -> MCP.find_closure_mix_formula v p) anode_vars in
+                let vars = List.concat vars in
+                (* let _ = print_endline ("hx = " ^ (Cprinter.string_of_h_formula hx)) in *)
+                (* let _ = print_endline ("hx_var = " ^ (Cprinter.string_of_spec_var hx_var)) in *)
+                (* let _ = print_endline ("part = " ^ (pr_list Cprinter.string_of_h_formula part)) in *)
+
+                (* let _ = print_endline ("vars = " ^ (Cprinter.string_of_spec_var_list vars)) in *)
+                let b = List.exists (fun v -> CP.eq_spec_var v hx_var) vars in
+                if (b) then (*same group*) true else false
+          ) res in
+          let res_eq = List.concat res_eq in
+          [(hx::res_eq)]@res_others
+  in
+  let partition heaps p =
+    let pr_in = pr_list Cprinter.string_of_h_formula in
+    let pr_out parts = (pr_list (fun part -> pr_list Cprinter.string_of_h_formula part) parts) in
+    Debug.no_2 "partition" pr_in Cprinter.string_of_mix_formula pr_out 
+        fct heaps p
+  in
+  (*[x1,x2],[x3,x4]*)
+  let parts = partition heaps p in
+  (*check if each partition are not equal*)
+  (*e.g. f1+f2+f3+f4>1*)
+  let rec check_x parts =
+    match parts with
+      | []
+      | [_] -> MCP.mkMTrue no_pos
+      | part1::part2::ps ->
+          let res = check_x (part2::ps) in
+          let p1_vars = List.map CF.get_node_var part1 in (*[x1,x2]*)
+          let p1_perm_vars = List.map CF.get_node_perm part1 in
+          let is_p1_full =
+            List.exists (fun v -> v=None) p1_perm_vars
+          in
+          (* [f1,f2]*)
+          let p1_perm_vars = List.concat (List.map Perm.get_cperm p1_perm_vars) in
+
+          let f1 = List.fold_left ( fun acc_f part ->
+              (*check a partition part1 agains another partition part*)
+              let p_vars = List.map CF.get_node_var part in (*[x3,x4]*)
+              let p_perm_vars = List.map CF.get_node_perm part in
+              let is_p_full =
+                List.exists (fun v -> v=None) p_perm_vars
+              in
+              if (is_p1_full || is_p_full) then
+                let np = CP.mkNeqVar (List.hd p_vars) (List.hd p1_vars) no_pos in
+                (mix_of_pure np)
+              else
+              (*TOCHECK: howabout None = full_perm*)
+              (*[f3,f4]*) 
+              let p_perm_vars = List.concat (List.map Perm.get_cperm p_perm_vars) in
+              (* [f1,f2,f3,f4]*)
+              let vars = p_perm_vars@p1_perm_vars in
+              let res = 
+                if (vars=[]) then false
+                else
+                  let sum_exp = List.fold_left (fun e v ->
+                      let v_exp = CP.mkVar v no_pos in
+                      CP.mkAdd e v_exp no_pos
+                  ) (CP.mkVar (List.hd vars) no_pos) (List.tl vars) in
+                  let full_exp = CP.mkFConst 1.0 no_pos in
+                  (*f1+f2+f2+f4>1.0*)
+                  let gt_exp = CP.mkGtExp sum_exp full_exp no_pos in
+                  Debug.devel_zprint (lazy ("xpure_perm: check: [Begin] check fractional permission constrainst: "^ (Cprinter.string_of_pure_formula gt_exp) ^ "\n")) no_pos;
+                  let b,_,_ = CP.imply_disj_orig [f] gt_exp TP.imply imp_no in
+                  Debug.devel_zprint (lazy ("xpure_perm: check: [End] check fractional permission constrainst \n")) no_pos;
+                  b
+              in
+              if(res) then
+                (*x1=x2, x3=x4, x1!=x3*)
+                if (p_vars=[] || p1_vars=[]) then
+                  let _ = print_endline ("xpure_perm: check: something wrong happened with heap nodes") in
+                  MCP.mkMTrue no_pos
+                else
+                let np = CP.mkNeqVar (List.hd p_vars) (List.hd p1_vars) no_pos in
+                (mix_of_pure np)
+              else MCP.mkMTrue no_pos
+          ) (MCP.mkMTrue no_pos) (part2::ps) in
+          (* END List.fold_left ( fun acc_f part -> *)
+          let nf = MCP.merge_mems res f1 true in
+          nf
+  in
+  let rec check parts =
+    let pr_in parts = (pr_list (fun part -> pr_list Cprinter.string_of_h_formula part) parts) in
+    Debug.no_1 "check" pr_in (Cprinter.string_of_mix_formula)
+        check_x parts
+  in
+  let frac_p = check parts in
+  (* let np = MCP.merge_mems frac_p p true in *)
+  frac_p
+
+and xpure_perm (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) : MCP.mix_formula =
+  Debug.no_2 "xpure_perm" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula
+	(fun _ _ -> xpure_perm_x prog h0 p0) h0 p0
+
+
 (* xpure heap in the presence of permissions *)
 (* similar to xpure_heap_mem_enum *)
 (* but use permission invariants instead of baga *)
@@ -722,6 +819,7 @@ and xpure_heap_perm (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which
 	(fun _ _ _ -> xpure_heap_perm_x prog h0 p0 which_xpure) h0 p0 which_xpure 
 
 and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula)  (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula  * CF.mem_formula) =
+  (* let frac_f = xpure_perm prog (h0 : h_formula)  (p0: mix_formula) in *)
   let memset = h_formula_2_mem_perm h0 p0 [] prog in
   let rec xpure_heap_helper (prog : prog_decl) (h0 : h_formula) (which_xpure :int) memset: MCP.mix_formula = 
     match h0 with
@@ -823,7 +921,9 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula)  (p0: mix_formula) (wh
       | HFalse -> MCP.mkMFalse no_pos
       | Hole _ -> MCP.mkMTrue no_pos (*report_error no_pos "[solver.ml]: An immutability marker was encountered in the formula\n"*)
   in
-  (xpure_heap_helper prog h0 which_xpure memset, memset)
+  let mf = xpure_heap_helper prog h0 which_xpure memset in
+  (* let nmf = MCP.merge_mems mf frac_f true in *)
+  (mf, memset)
 
 and xpure_symbolic (prog : prog_decl) (h0 : formula) : (MCP.mix_formula  * CP.spec_var list * CF.mem_formula) = 
   Debug.no_1 "xpure_symbolic" Cprinter.string_of_formula 
@@ -3255,12 +3355,24 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                 let add_vperm_full es =
                   let zero_vars = es.es_var_zero_perm in
                   let tmp = Gen.BList.difference_eq CP.eq_spec_var_ident full_vars zero_vars in
+                  (*TO CHECK: reuse es_pure with care*)
+                  (*currently, only extract constraints that
+                    are not related to LS,waitlevel,float,varperm*)
+                  let es_p = MCP.drop_varperm_mix_formula es.es_pure in
+                  (* let es_p = MCP.removeLS_mix_formula es_p in *)
+                  let es_p = MCP.drop_float_formula_mix_formula es_p in
+                  let es_p = MCP.drop_svl_mix_formula es_p [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in
+                  let new_f = CF.add_mix_formula_to_formula es_p es.es_formula in
+                  (****************)
                   if (tmp!=[]) then
                   (*all @full in the conseq should be in @zero in the ante*)
                     (Debug.devel_pprint ("heap_entail_conjunct_lhs_struc: failed in adding " ^ (string_of_vp_ann VP_Full) ^ " variable permissions in conseq: " ^
 						(Cprinter.string_of_spec_var_list tmp)^ "is not " ^(string_of_vp_ann VP_Zero)) pos;
                     Ctx {es with es_formula = mkFalse_nf pos})
-                  else Ctx {es with CF.es_var_zero_perm= Gen.BList.difference_eq CP.eq_spec_var_ident zero_vars full_vars}
+                  else Ctx {es with
+                      es_formula = new_f;
+                      es_pure = MCP.mkMTrue pos;
+                      CF.es_var_zero_perm= Gen.BList.difference_eq CP.eq_spec_var_ident zero_vars full_vars;}
                 in
                 (*TO DO: add_vperm_full only when VPERM*)
                 let rs = if (!Globals.ann_vp) then
@@ -4823,6 +4935,14 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
 		          | _ ->
 		                let h1, p1, fl1, t1, a1 = split_components ante in
 		                let h2, p2, fl2, t2, a2 = split_components conseq in
+                        (*ADD inequality constraints on heap nodes due to fractional permissions to ante
+                          For example: x::node(0.6)<> * y::node(0.6)<>
+                          then we have a constraint x!=y
+                        *)
+                        let nodes_f = xpure_perm prog h1 p1 in
+                        let p1 = MCP.merge_mems p1 nodes_f true in
+                        let p1 = MCP.remove_dupl_conj_mix_formula p1 in
+                        (*******************)
 			            if (isAnyConstFalse ante)&&(CF.subsume_flow_ff fl2 fl1) then 
 			              (SuccCtx [false_ctx_with_flow_and_orig_ante estate fl1 ante pos], UnsatAnte)
 			            else
@@ -8599,7 +8719,7 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
   (*let pr x = (string_of_int(List.length x))^"length" in*)
   let pr2 = Cprinter.string_of_list_partial_context in 
   Debug.no_2 (* loop_2_no *) "heap_entail_list_partial_context_init" pr2 (Cprinter.string_of_formula) 
-      (fun (x,_) -> pr2 x)
+      (fun (x,_) -> pr2 )
       (fun _ _ -> heap_entail_list_partial_context_init_x prog is_folding  cl conseq tid delayed_f join_id pos pid) cl conseq
 
 (*this does not have thread id*)

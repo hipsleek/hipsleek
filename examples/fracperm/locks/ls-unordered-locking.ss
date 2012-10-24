@@ -32,18 +32,12 @@ void main()
   init[LOCK](l2);
   release(l2);
   //
-  assume(l1'!=l2'); //TODO: this should be inferred automatically based on fractional permissions
-  
-  //
   int id = fork(func,l1,l2); //DELAYED
-  
   //
   acquire(l1);
   acquire(l2); //ok, l1.mu < l2.mu
   release(l1);
   release(l2);
-  
   //
   join(id); // CHECK, ok
-  
 }

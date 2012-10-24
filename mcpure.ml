@@ -2345,7 +2345,7 @@ let drop_varperm_mix_formula (mix_f:mix_formula) : mix_formula =
         f2
 
 (*Eq, Lt, Lte, Gt, Gte*)
-let remove_dupl_conj_mix_formula_x (f:mix_formula):mix_formula = 
+let remove_dupl_conj_mix_formula_x (f:mix_formula):mix_formula =
   (match f with
     | MemoF _ -> 
         (*Todo: implement this*)

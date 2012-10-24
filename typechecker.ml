@@ -1394,6 +1394,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 (*=========================*)
                 (*=== NORMAL METHOD CALL ==*)
                 (*=========================*)
+
                 let _ = proving_loc#set pos in
 	            let proc = look_up_proc_def pos prog.new_proc_decls mn in
 	            let farg_types, farg_names = List.split proc.proc_args in
@@ -1512,7 +1513,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     else
                     (*  let _ = print_endline "locle8" in *)
                       (*let p = CF.pos_of_struc_formula  proc.proc_static_specs_with_pre in*)
-                      let pre_with_new_pos = CF.subst_pos_struc_formula pos (proc.proc_stk_of_static_specs#top) in                      
+                      let pre_with_new_pos = CF.subst_pos_struc_formula pos (proc.proc_stk_of_static_specs#top) in
                       check_pre_post pre_with_new_pos ctx scall_pre_cond_pushed
                 in
 				let _ = if !print_proof then Prooftracer.add_pre e0 in
