@@ -13,16 +13,14 @@ node get_next(ref node x)
   ensures G4(res,x',x);//'
 /*
 
-[ HP_RELDEFN H1
-H1(x) ::= 
- H1(x)&x=v_563 & x=v_563
- or x::node<val_36_543',next_36_544'> * x::node<val_36_562,next_36_544'>&true
- ,
+HP_545(next_31_525') ::=UNKNOWN,
  HP_RELDEFN G4
-G4(next_36_544',x,v_563) ::= H1(x)&x=v_563]
+G4(next_31_525',x,v_544) ::= x::node<val_31_543,next_31_525'> * HP_545(next_31_525')&x=v_544,
+ HP_RELDEFN H1
+H1(x) ::= x::node<val_31_543,next_31_525'> * HP_545(next_31_525')&true]
 
-ERROR : why is there a disjunction in H1?
-
+ERROR : should be an error that number of parameters of G4 is
+ wrong..
 */
 {
   node tmp = x.next;
