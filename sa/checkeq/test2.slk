@@ -1,5 +1,5 @@
 data node { int val ; node next }.
-data node2 { int val ; node next }.
+data node2 { int val ; node2 next }.
 
 HeapPred ll(node x, int n).
 HeapPred rr(node x, int n).
@@ -28,3 +28,5 @@ checkeq [ll,rr] x::ll<a> -|- (exists b: y::rr<b>).
 
 */
 
+
+checkeq [b] x::node<3,b> -|- y::node<3,d> .

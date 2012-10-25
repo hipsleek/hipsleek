@@ -761,17 +761,29 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
   let _ = if (!Globals.print_core) then print_endline ("INPUT: \n ### formula 1= " ^ (Cprinter.string_of_formula f1) ^"\n ### formula 2= " ^ (Cprinter.string_of_formula f2)) else () in
 
   (*let f2 = Solver.prune_preds !cprog true f2 in *)
-  let (res, mt_list) = CEQ.checkeq_formulas ivars f1 f2 in
-  let _ = if(res) then(
-        print_string (num_id^": Valid.")
-  )
+  if(false) then(  (*!Globals.show_diff*)
+    let (res, mt_list) = CEQ.checkeq_formulas_with_diff ivars f1 f2 in
+    let _ = if(res) then(
+      print_string (num_id^": Valid.")
+    )
       else
         print_string (num_id^": Fail.\n")
-        (* print_endline ("\n VALID") else print_endline ("\n FAIL") *)
-  in
-  let _ = if(res) then Debug.info_pprint (CEQ.string_of_map_table (List.hd mt_list) ^ "\n") no_pos in
-  ()
- 
+  (* print_endline ("\n VALID") else print_endline ("\n FAIL") *)
+    in
+    ()
+  )
+  else (
+    let (res, mt_list) = CEQ.checkeq_formulas ivars f1 f2 in
+    let _ = if(res) then(
+      print_string (num_id^": Valid.")
+    )
+      else
+        print_string (num_id^": Fail.\n")
+  (* print_endline ("\n VALID") else print_endline ("\n FAIL") *)
+    in
+    let _ = if(res) then Debug.info_pprint (CEQ.string_of_map_table (List.hd mt_list) ^ "\n") no_pos in
+    ()
+   )
 let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in
