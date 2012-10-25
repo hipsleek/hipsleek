@@ -113,11 +113,12 @@ and checkeq_formulas_one_with_diff (hvars: ident list) (f1: CF.formula) (f2: CF.
 	      if(!Globals.show_diff) then Debug.info_pprint ("EQ. FMT: " ^ (string_of_map_table_list mtl2)) no_pos
 	    )
 	    else if(res2) then (
-	      if(!Globals.show_diff) then  Debug.info_pprint ("DIFF PART: " ^ (pr_hf diff1)) no_pos 
+	      if(!Globals.show_diff) then  (Debug.info_pprint ("DIFF PART: " ^ (pr_hf diff1)) no_pos ; 
+Debug.info_pprint ("EQ. FMT: " ^ (string_of_map_table_list mtl2)) no_pos)
 	    )
 	    else (
 	      (* if(!Globals.show_diff) then  Debug.info_pprint ("DIFF HEAP PART: " ^ (pr_hf diff1)) no_pos ; *)
-	      if(!Globals.show_diff) then  Debug.info_pprint ("DIFF PART: " ^ (pr_f diff2)) no_pos
+	      if(!Globals.show_diff) then ( Debug.info_pprint ("DIFF PART: " ^ (pr_f diff2)) no_pos; Debug.info_pprint ("EQ. FMT: " ^ (string_of_map_table_list mtl2)) no_pos)
 	    )
 	  )
 	  in
@@ -153,10 +154,10 @@ and checkeq_formulas_one_with_diff (hvars: ident list) (f1: CF.formula) (f2: CF.
 	  )
 	  in
 	  let res= res1&&res2 in
-	  if(res) then
+	  (*if(res) then
 	    let new_mtl = check_qvars qvars1 qvars2 mtl2 in
 	    if(List.length new_mtl > 0) then (true, mix_mtl2) (*temporary: should be new one*) else (false,mix_mtl2)
-	  else (res,mix_mtl2)
+	  else *) (res,mix_mtl2)
 	)
 	| _ ->  let _ = if(!Globals.show_diff) then Debug.info_pprint ("DIFF: Exists formula") no_pos in 
 		(false,[]))
@@ -184,11 +185,11 @@ and checkeq_formulas_one (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(m
 	      if(!Globals.show_diff) then Debug.info_pprint ("EQ. FMT: " ^ (string_of_map_table_list mtl2)) no_pos
 	    )
 	    else if(res2) then (
-	      if(!Globals.show_diff) then  Debug.info_pprint ("DIFF PART: " ^ (pr_hf diff1)) no_pos 
+	      if(!Globals.show_diff) then ( Debug.info_pprint ("DIFF PART: " ^ (pr_hf diff1)) no_pos; Debug.info_pprint ("Current EQ. FMT: " ^ (string_of_map_table_list mtl2)) no_pos) 
 	    )
 	    else (
 	      (* if(!Globals.show_diff) then  Debug.info_pprint ("DIFF HEAP PART: " ^ (pr_hf diff1)) no_pos ; *)
-	      if(!Globals.show_diff) then  Debug.info_pprint ("DIFF PART: " ^ (pr_f diff2)) no_pos
+	      if(!Globals.show_diff) then  (Debug.info_pprint ("DIFF PART: " ^ (pr_f diff2)) no_pos; Debug.info_pprint ("Current EQ. FMT: " ^ (string_of_map_table_list mtl2)) no_pos)
 	    )
 	  )
 	  in
@@ -215,19 +216,19 @@ and checkeq_formulas_one (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(m
 	      if(!Globals.show_diff) then Debug.info_pprint ("EQ. FMT: " ^ (string_of_map_table_list mtl2)) no_pos
 	    )
 	    else if(res2) then (
-	      if(!Globals.show_diff) then  Debug.info_pprint ("DIFF PART: " ^ (pr_hf diff1)) no_pos 
+	      if(!Globals.show_diff) then ( Debug.info_pprint ("DIFF PART: " ^ (pr_hf diff1)) no_pos ; Debug.info_pprint ("Current EQ. FMT: " ^ (string_of_map_table_list mtl2)) no_pos)
 	    )
 	    else (
 	      (* if(!Globals.show_diff) then  Debug.info_pprint ("DIFF HEAP PART: " ^ (pr_hf diff1)) no_pos ; *)
-	      if(!Globals.show_diff) then  Debug.info_pprint ("DIFF PART: " ^ (pr_f diff2)) no_pos
+	      if(!Globals.show_diff) then ( Debug.info_pprint ("DIFF PART: " ^ (pr_f diff2)) no_pos; Debug.info_pprint ("Current EQ. FMT: " ^ (string_of_map_table_list mtl2)) no_pos)
 	    )
 	  )
 	  in
 	  let res= res1&&res2 in
-	  if(res) then
+	  (*if(res) then
 	    let new_mtl = check_qvars qvars1 qvars2 mtl2 in
 	    if(List.length new_mtl > 0) then (true, new_mtl) else (false,mtl2)
-	  else (res,mtl2)
+	  else*) (res,mtl2)
 	)
 	| _ ->  let _ = if(!Globals.show_diff) then Debug.info_pprint ("DIFF: Exists formula") no_pos in 
 		(false,[]))
