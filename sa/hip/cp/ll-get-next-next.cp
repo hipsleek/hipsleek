@@ -17,7 +17,7 @@ hpdefs [H1,G1]:{
  HP_1(v_node_28_533') --> htrue&true;
  G1(x,v_node_28_533') --> x::node<_,v_node_26_566> * v_node_26_566::node<_,next_27_532'> * HP_1(v_node_28_533')&
       next_27_532'=null;
- H1(x) --> x::node<val_26_522',next_26_523'> *next_26_523'::node<val_26_579,next_26_526'>
+ H1(x) --> x::node<val_26_522',p1> *p1::node<val_26_579,p2>*HP_1(p2)
 
  }
 ]

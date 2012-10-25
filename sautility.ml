@@ -503,9 +503,13 @@ let get_raw_defined_w_pure prog f=
 (*check whether args of an is in keep_ptrs*)
 let get_intersect_hps keep_ptrs (hp, args)=
   (*may need closed*)
-  let diff = Gen.BList.difference_eq CP.eq_spec_var args keep_ptrs in
-  if diff = [] then [hp]
-  else []
+  (* let diff = Gen.BList.difference_eq CP.eq_spec_var args keep_ptrs in *)
+  (* if diff = [] then [hp] *)
+  (* else [] *)
+  Debug.ninfo_pprint (" keep_ptrs: "^ (!CP.print_svl keep_ptrs)) no_pos;
+  Debug.ninfo_pprint (" args: "^ (!CP.print_svl args)) no_pos;
+  let interse = CP.intersect_svl args keep_ptrs in
+  if interse = [] then [] else [hp]
 
 
 let rec subst_view_hp_formula view_name hp (f: CF.formula) =
@@ -1066,6 +1070,23 @@ let remove_longer_common_prefix fs=
   helper fs []
 
 (*fix subst*)
+let elim_irr_eq_exps args f=
+  let filter_fn h_svl p=
+    if CP.is_eq_exp p then
+      let p_svl = CP.fv p in
+      CP.subset p_svl h_svl
+    else true
+  in
+   match f with
+    | CF.Base fb ->
+        let h_svl = CP.remove_dups_svl (args@(CF.h_fv fb.CF.formula_base_heap)) in
+        let cons = CP.list_of_conjs (MCP.pure_of_mix fb.CF.formula_base_pure) in
+        let cons1 = CP.remove_redundant_helper cons [] in
+        let cons2 = List.filter (filter_fn h_svl) cons1 in
+        let new_p = MCP.mix_of_pure (CP.conj_of_list cons2 no_pos) in
+        CF.Base {fb with CF.formula_base_pure = new_p}
+    | _ -> report_error no_pos "cformula.get_HRels_f: not handle yet"
+
 let rec look_up_subst_group hp args nrec_grps=
   let rec susbt_group fs pardefs=
     match pardefs with
@@ -1115,13 +1136,50 @@ let succ_susbt nrec_grps (hp,args,f)=
           let lsf_cmb = List.fold_left helper [nf] fs_list in
           (* DD.info_pprint ("       succ_susbt lsf_cmb:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula) *)
           (*                                                 in pr lsf_cmb)) no_pos; *)
+          let lsf_cmb1 = List.map (elim_irr_eq_exps args) lsf_cmb in
         (*remove f which has common prefix*)
-          let lsf_cmb1 = remove_longer_common_prefix lsf_cmb in
+          let lsf_cmb2 = remove_longer_common_prefix lsf_cmb1 in
           (* DD.info_pprint ("       succ_susbt lsf_cmb 1:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula) *)
           (*                                                   in pr lsf_cmb1)) no_pos; *)
-          let fss = List.map (fun f1 -> (hp,args,f1)) lsf_cmb1 in
+          let fss = List.map (fun f1 -> (hp,args,f1)) lsf_cmb2 in
           (true,fss)
     end
+
+
+let ann_unk_svl prog par_defs=
+  (*partition the set by hp_name*)
+  let rec partition_pdefs_by_hp_name pdefs parts=
+    match pdefs with
+      | [] -> parts
+      | (a1,a2,a3,a4,a5,a6)::xs ->
+          let part,remains= List.partition (fun (hp_name,_,_,_,_,_) -> CP.eq_spec_var a1 hp_name) xs in
+          partition_pdefs_by_hp_name remains (parts@[[(a1,a2,a3,a4,a5,a6)]@part])
+  in
+  let add_unk_hp_f unk_hf opdef=
+    match opdef with
+      | None -> None
+      | Some f ->
+          let p = CF.pos_of_formula f in
+          Some (CF.mkAnd_f_hf f unk_hf p)
+  in
+  let add_unk_hp_pdef unk_hf0 unk_args0 (hp,args,unk_args,cond,olhs,orhs)=
+    let ss = List.combine unk_args0 unk_args in
+    let unk_hf = CF.h_subst ss unk_hf0 in
+    (hp,args,unk_args,cond,add_unk_hp_f unk_hf olhs, add_unk_hp_f unk_hf orhs)
+  in
+  let process_one_group par_defs=
+    let (hp,args0,unk_args0,cond0,olhs0,orhs0) = List.hd par_defs in
+    let _ = Debug.info_pprint ("     partial unk hp: " ^ (!CP.print_sv hp)) no_pos in
+    let unk_hf, unk_hps = add_raw_hp_rel_x prog unk_args0 no_pos in
+    let new_par_def0= (hp,args0,unk_args0,cond0,add_unk_hp_f unk_hf olhs0, add_unk_hp_f unk_hf orhs0) in
+    let tl_par_defs = List.map (add_unk_hp_pdef unk_hf unk_args0) (List.tl par_defs) in
+    ((List.hd unk_hps,unk_args0), new_par_def0::tl_par_defs)
+  in
+  let par_unk_defs,rems = List.partition (fun (_,_,unk_slv,_,_,_) -> unk_slv <> []) par_defs in
+  let parunk_groups = partition_pdefs_by_hp_name par_unk_defs [] in
+  let r = List.map process_one_group parunk_groups in
+  let new_hpargs,new_unk_pardefs = List.split r in
+  (new_hpargs, (List.concat new_unk_pardefs)@rems)
 
 let remove_longer_common_prefix_w_unk unk_hps fs=
   let rec helper cur res=
@@ -1138,22 +1196,6 @@ let remove_longer_common_prefix_w_unk unk_hps fs=
           else helper ss (res@[f])
   in
   helper fs []
-
-let elim_irr_eq_exps args f=
-  let filter_fn h_svl p=
-    if CP.is_eq_exp p then
-      let p_svl = CP.fv p in
-      CP.subset p_svl h_svl
-    else true
-  in
-   match f with
-    | CF.Base fb ->
-        let h_svl = CP.remove_dups_svl (args@(CF.h_fv fb.CF.formula_base_heap)) in
-        let cons = CP.list_of_conjs (MCP.pure_of_mix fb.CF.formula_base_pure) in
-        let cons1 = List.filter (filter_fn h_svl) cons in
-        let new_p = MCP.mix_of_pure (CP.conj_of_list cons1 no_pos) in
-        CF.Base {fb with CF.formula_base_pure = new_p}
-    | _ -> report_error no_pos "cformula.get_HRels_f: not handle yet"
 
 let is_trivial f (hp,args)=
   let hpargs = CF.get_HRels_f f in
@@ -1180,11 +1222,14 @@ let succ_susbt_hpdef nrec_hpdefs all_succ_hp (hp,args,f)=
   let helper ls1 ls2=
     List.concat (List.map (fun f1 ->
         List.map (fun f2 ->
-            (* let ptrs1 = CF.get_ptrs_f f1 in *)
-            (* let new_f2 = *)
-            (*   if ptrs1 = [] then f2 else CF.drop_hnodes_f f2 ptrs1 *)
-            (* in *)
-            CF.mkStar f1 f2 CF.Flow_combine pos
+            let ptrs1 = CF.get_ptrs_f f1 in
+            let ptrs2 = CF.get_ptrs_f f2 in
+            let svl1 = CF.fv f1 in
+            let irre_svl = CP.diff_svl ptrs2 svl1 in
+            let new_f2 =
+              if ptrs1 = [] then f2 else CF.drop_hnodes_f f2 (ptrs1@irre_svl)
+            in
+            CF.mkStar f1 new_f2 CF.Flow_combine pos
     ) ls2) ls1)
   in
   let succ_hp_args = CF.get_HRels_f f in
@@ -1212,6 +1257,8 @@ let succ_susbt_hpdef nrec_hpdefs all_succ_hp (hp,args,f)=
           let lsf_cmb3 = (remove_longer_common_prefix lsf_cmb2) in
           (* DD.info_pprint ("       succ_susbt lsf_cmb 1:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula) *)
           (*                                                   in pr lsf_cmb1)) no_pos; *)
+          (* DD.info_pprint ("       succ_susbt lsf_cmb 2:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula) *)
+          (*                                                   in pr lsf_cmb2)) no_pos; *)
           (true,lsf_cmb3)
     end
 
@@ -1254,3 +1301,4 @@ let combine_hpdefs hpdefs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   Debug.no_1 "combine_hpdefs" pr1 pr1
       (fun _ -> combine_hpdefs_x hpdefs) hpdefs
+
