@@ -449,6 +449,8 @@ let consume_all = ref false
 
 let enable_split_lemma_gen = ref false
 
+let show_diff = ref false
+
 let procs_verified = ref ([] : string list)
 
 let false_ctx_line_list = ref ([] : loc list)

@@ -37,13 +37,34 @@ checkeq [] x::node<a,null> & a=2 -|- y::node<c,null> & c=2 .
 // VALID --> [(flted_13_38, flted_13_44), (a, c), (x, y)]
 
 //(9)
-checkeq [] x::node<a,null> & a=2 -|- y::node<c,null> .
-// VALID --> [(flted_13_38, flted_13_44), (a, c), (x, y)]
+checkeq [x] x::node<a,null> & a=2 -|- x::node<c,null> .
+/*
+!!! DIFF PART: [ emp]
+!!! DIFF PART: []
+Checkeq (9) : Fail.
+
+where are the equality [(a,c),..]
+can we also have pure constraint in the FMT difference portion
+*/
+
 
 //(10)
+checkeq [] x::node<a,null> & a=2 -|- y::node<c,null> .
+/*
+!!! DIFF PART: [ emp]
+!!! DIFF PART: []
+Checkeq (9) : Fail.
+*/
+
+//(11)
 checkeq [x] x::node<a,null> * y::node<_,_> -|- x::node<c,null> .
+/*
+!!! DIFF PART: [ y::node<Anon_35,Anon_36>@M[Orig]]
+!!! EQ. FMT: [[(flted_57_164, flted_57_155), (c, a)]]
+*/
 
 
+//(12)
 checkeq [x] x::node<a,null> -|- y::node<c,null> .
 // VALID --> [(flted_13_38, flted_13_44), (a, c), (x, y)]
 
