@@ -634,8 +634,8 @@ let add_count (t: int ref) =
 (* for parser *)
 let parser_name = ref "default"
 
-let set_parser name =
-  parser_name := name
+let set_cil_parser () =
+  parser_name := "cil"
 
 (* utility functions *)
 

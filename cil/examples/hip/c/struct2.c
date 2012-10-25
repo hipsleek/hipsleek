@@ -1,7 +1,6 @@
 struct pair {
 	int x;
 	int y;
-  int ***aa;
 };
 
 struct quad {
@@ -15,6 +14,12 @@ int getsecondcomponent(struct quad q)
 	*(q.p1) = ptemp;
 	ptemp = *(q.p1);
 	struct pair pp = *(q.p1);
+	
+	struct pair *p;
+	p->x = 1;
+	p->y = 2;
+	(*p).x = 2;
+	
 	return pp.y;
 }
 

@@ -36,11 +36,10 @@ let parse_file_full file_name (primitive: bool) =
       let _ = Gen.Profiling.push_time "Parsing" in
       Globals.input_file_name:= file_name;
       let prog = (
-        if (!Globals.parser_name = "default") or primitive then
+        if not !Scriptarguments.cil_parser or primitive then
           Parser.parse_hip file_name (Stream.of_channel org_in_chnl)
-        else if (!Globals.parser_name = "cil") then
+        else
           Cilparser.parse_hip file_name
-        else Error.report_error_msg "Error!!! Invalid parser!"
       ) in
       close_in org_in_chnl;
          let _ = Gen.Profiling.pop_time "Parsing" in

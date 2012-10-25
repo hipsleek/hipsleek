@@ -230,8 +230,6 @@ cilversion: $(OBJDIR)/cilversion.ml
 $(OBJDIR)/cilversion.ml: src/cilversion.ml.in config.status
 	rm -f $@
 	./config.status --file=$@:$<
-	# TRUNG: copy cilversion.ml back to src folder for compiling hip/sleek
-	cp $(OBJDIR)/cilversion.ml src/cilversion.ml
 
 # build library
 .PHONY: cillib
@@ -395,7 +393,6 @@ quicktest: $(patsubst %,test/%,func init init1) \
 
 .PHONY: check
 check: quicktest
-
 
 ########################################################################
 

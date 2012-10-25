@@ -405,7 +405,7 @@ on `(hostname || uname -n) 2>/dev/null | sed 1q`
 "
 
 # Files that config.status was made for.
-config_files=" Makefile META config.mk bin/cilly.bat bin/patcher.bat bin/CilConfig.pm doc/index.html doc/header.html test/llvm/Makefile src/machdep-ml.c"
+config_files=" Makefile META config.mk test/llvm/Makefile src/machdep-ml.c"
 config_headers=" config.h"
 
 ac_cs_usage="\
@@ -445,7 +445,7 @@ Copyright (C) 2010 Free Software Foundation, Inc.
 This config.status script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it."
 
-ac_pwd='/home/locle/workspace/hg/cparser/sleekex/cil/cil-1.4.0'
+ac_pwd='/home/trungtq/Workspace/sleekex-cparser/cil'
 srcdir='.'
 INSTALL='/usr/bin/install -c'
 test -n "$AWK" || AWK=awk
@@ -637,7 +637,7 @@ S["CIL_VERSION_MAJOR"]="1"
 S["DEFAULT_CIL_MODE"]="GNUCC"
 S["DEFAULT_COMPILER"]="_GNUCC"
 S["HAS_MSVC"]="no"
-S["CILHOME"]="/home/locle/workspace/hg/cparser/sleekex/cil/cil-1.4.0"
+S["CILHOME"]="/home/trungtq/Workspace/sleekex-cparser/cil"
 S["FLEXLINK"]=""
 S["MINGW"]=""
 S["ARCHOS"]="x86_LINUX"
@@ -647,17 +647,17 @@ S["EGREP"]="/bin/grep -E"
 S["GREP"]="/bin/grep"
 S["CPP"]="gcc -E"
 S["target_os"]="linux-gnu"
-S["target_vendor"]="unknown"
-S["target_cpu"]="x86_64"
-S["target"]="x86_64-unknown-linux-gnu"
+S["target_vendor"]="pc"
+S["target_cpu"]="i686"
+S["target"]="i686-pc-linux-gnu"
 S["host_os"]="linux-gnu"
-S["host_vendor"]="unknown"
-S["host_cpu"]="x86_64"
-S["host"]="x86_64-unknown-linux-gnu"
+S["host_vendor"]="pc"
+S["host_cpu"]="i686"
+S["host"]="i686-pc-linux-gnu"
 S["build_os"]="linux-gnu"
-S["build_vendor"]="unknown"
-S["build_cpu"]="x86_64"
-S["build"]="x86_64-unknown-linux-gnu"
+S["build_vendor"]="pc"
+S["build_cpu"]="i686"
+S["build"]="i686-pc-linux-gnu"
 S["INSTALL_DATA"]="${INSTALL} -m 644"
 S["INSTALL_SCRIPT"]="${INSTALL}"
 S["INSTALL_PROGRAM"]="${INSTALL}"
@@ -775,7 +775,7 @@ D["HAVE_MKDIR"]=" 1"
 D["HAVE_SELECT"]=" 1"
 D["HAVE_SOCKET"]=" 1"
 D["HAVE___SYSV_SIGNAL"]=" 1"
-D["TYPE_SIZE_T"]=" \"unsigned long\""
+D["TYPE_SIZE_T"]=" \"unsigned int\""
 D["TYPE_WCHAR_T"]=" \"int\""
   for (key in D) D_is_set[key] = 1
   FS = ""

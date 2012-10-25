@@ -1,6 +1,6 @@
 # A bunch of variables  -*- Mode: makefile -*-
 export ARCHOS=x86_LINUX
 export HAS_MSVC=no
-export CILHOME=/home/locle/workspace/hg/cparser/sleekex/cil/cil-1.4.0
+export CILHOME=/home/trungtq/Workspace/sleekex-cparser/cil
 export DEFAULT_COMPILER=_GNUCC
 export _GNUCC=1

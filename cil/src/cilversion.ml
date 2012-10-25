@@ -1,4 +1,4 @@
-(* _build/cilversion.ml.  Generated from cilversion.ml.in by configure. *)
+(* obj/x86_LINUX/cilversion.ml.  Generated from cilversion.ml.in by configure. *)
 
 let cilVersionMajor = 1
 let cilVersionMinor = 4

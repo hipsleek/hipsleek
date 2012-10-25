@@ -122,12 +122,8 @@ let rec is_global_cil_exp (e: Cil.exp) : bool =
 and is_global_cil_lval (lv: Cil.lval) : bool =
   let lhost, offset = lv in
   match (lhost, offset) with
-  | Cil.Var v, Cil.NoOffset -> v.Cil.vglob;
-  | Cil.Var _, Cil.Field _ -> report_error_msg "is_global_cil_lval: handle (Cil.Var, Cil.Field) later!"
-  | Cil.Var _, Cil.Index _ -> report_error_msg "is_global_cil_lval: handle (Cil.Var, Cil.Index) later!"
-  | Cil.Mem v, Cil.NoOffset -> is_global_cil_exp v
-  | Cil.Mem _, Cil.Field _ -> report_error_msg "is_global_cil_lval: handle (Cil.Mem, Cil.Field) later!"
-  | Cil.Mem _, Cil.Index _ -> report_error_msg "is_global_cil_lval: handle (Cil.Mem, Cil.Index) later!"
+  | Cil.Var v, _ -> v.Cil.vglob;
+  | Cil.Mem m, _ -> is_global_cil_exp m
 
 
 (* ---------------------------------------- *)
@@ -228,7 +224,8 @@ let translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp 
   | Cil.CEnum _ -> report_error_msg "TRUNG TODO: Handle Cil.CEnum later!"
 
 
-let translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option) : (Iast.typed_ident * loc * bool) =
+let translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option) 
+                        : (Iast.typed_ident * loc * bool) =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let name = field.Cil.fname in
   let ty = translate_typ field.Cil.ftype in
@@ -237,7 +234,8 @@ let translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option) : (Ia
   | _ -> ((ty, name), pos, false)
 
 
-let translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option) : Iast.data_decl =
+let translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option)
+                       : Iast.data_decl =
   let name = comp.Cil.cname in
   let fields = List.map (fun x -> translate_fieldinfo x lopt) comp.Cil.cfields in
   let datadecl = {Iast.data_name = name;
@@ -351,6 +349,7 @@ let rec translate_lval (lv: Cil.lval) (lopt: Cil.location option) : Iast.exp =
                                      Iast.exp_arrayat_pos = pos} in
           newexp
       | Cil.Mem exp, Cil.Field _ ->
+          let _ = print_endline ("== exp = " ^ (string_of_cil_exp exp)) in
           let base = translate_exp exp lopt in
           let fields = collect_field offset in
           let newexp = Iast.Member {Iast.exp_member_base = base;
@@ -379,6 +378,7 @@ and translate_exp (e: Cil.exp) (lopt: Cil.location option): Iast.exp =
                                Iast.exp_unary_pos = pos} in
       newexp
   | Cil.BinOp (op, exp1, exp2, ty) ->
+      let _ = print_endline ("== exp = " ^ (string_of_cil_exp e)) in
       let e1 = translate_exp exp1 lopt in
       let e2 = translate_exp exp2 lopt in
       let o = translate_binary_operator op in
@@ -501,7 +501,9 @@ let translate_instr (instr: Cil.instr) : Iast.exp =
                         Iast.exp_call_nrecv_arguments = args;
                         Iast.exp_call_nrecv_path_id = None;
                         Iast.exp_call_nrecv_pos = p}
-    | Cil.Asm _ -> report_error_msg "TRUNG TODO: Handle Cil.Asm later!"
+    | Cil.Asm _ ->
+        let _ = print_endline ("== asm = " ^ (string_of_cil_instr instr)) in
+        report_error_msg "TRUNG TODO: Handle Cil.Asm later!"
   ) in
   let collected_exps = !supplement_exp @ [translated_instr] in
   let newexp = merge_iast_exp collected_exps None in
@@ -533,7 +535,8 @@ let rec translate_stmt (s: Cil.stmt) (lopt: Cil.location option) : Iast.exp =
   | Cil.Goto (sref, l) ->
       (* detect a infinite loop in Goto statement *)
       if (!sref.Cil.sid = s.Cil.sid) then (
-        let cond = Iast.BoolLit {Iast.exp_bool_lit_val = true; Iast.exp_bool_lit_pos = pos} in
+        let cond = Iast.BoolLit {Iast.exp_bool_lit_val = true;
+                                 Iast.exp_bool_lit_pos = pos} in
         let infinite_loop = Iast.While {Iast.exp_while_condition = cond;
                                         Iast.exp_while_body = Iast.Empty pos;
                                         Iast.exp_while_specs = Iast.mkSpecTrue n_flow pos;
@@ -571,7 +574,8 @@ let rec translate_stmt (s: Cil.stmt) (lopt: Cil.location option) : Iast.exp =
   | Cil.Switch _ -> report_error_msg "TRUNG TODO: Handle Cil.Switch later!"
   | Cil.Loop (blk, l, stmt_opt1, stmt_opt2) ->
       let p = translate_location l in
-      let cond = Iast.BoolLit {Iast.exp_bool_lit_val = true; Iast.exp_bool_lit_pos = p} in
+      let cond = Iast.BoolLit {Iast.exp_bool_lit_val = true;
+                               Iast.exp_bool_lit_pos = p} in
       let body = translate_block blk (Some l) in
       let newexp = Iast.While {Iast.exp_while_condition = cond;
                                Iast.exp_while_body = body;
@@ -625,7 +629,8 @@ and translate_block (blk: Cil.block) (lopt: Cil.location option): Iast.exp =
     )
 
 
-let translate_init (vname: ident) (init: Cil.init) (lopt: Cil.location option) : (ident * Iast.exp option * loc) list =
+let translate_init (vname: ident) (init: Cil.init) (lopt: Cil.location option)
+                   : (ident * Iast.exp option * loc) list =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   match init with
   | Cil.SingleInit exp ->
@@ -651,7 +656,8 @@ let translate_init (vname: ident) (init: Cil.init) (lopt: Cil.location option) :
     )
 
 
-let translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo) (lopt: Cil.location option) : Iast.exp_var_decl =
+let translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo) (lopt: Cil.location option)
+                         : Iast.exp_var_decl =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let ty = translate_typ vinfo.Cil.vtype in
   let name = vinfo.Cil.vname in
@@ -664,7 +670,8 @@ let translate_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo) (lopt: Cil.l
   vardecl
 
 
-let translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option): Iast.proc_decl =
+let translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option)
+                     : Iast.proc_decl =
   (* reset some local setting *)
   Hashtbl.clear lc_addressof_data;
   (* supporting functions *)
@@ -710,7 +717,8 @@ let translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option): Iast.proc
     Hashtbl.iter (fun _ e -> vars := !vars @ [e]) lc_addressof_data;
     !vars;
   ) in
-  let funbody = Iast.Block {Iast.exp_block_body = merge_iast_exp (slocals @ supplement_local_vars @ [sbody]) (Some pos);
+  let newsbody = merge_iast_exp (slocals @ supplement_local_vars @ [sbody]) (Some pos) in
+  let funbody = Iast.Block {Iast.exp_block_body = newsbody;
                             Iast.exp_block_jump_label = Iast.NoJumpLabel;
                             Iast.exp_block_local_vars = [];
                             Iast.exp_block_pos = pos} in
@@ -783,22 +791,28 @@ let translate_file (file: Cil.file) : Iast.prog_decl =
         let proc = translate_fundec fd (Some l) in
         proc_decls := !proc_decls @ [proc]
     | Cil.GAsm _ ->
-        (* let _ = print_endline ("== gl GAsm = " ^ (string_of_cil_global gl)) in *)
-        (* ()                                                                         *)
-        report_error_msg "TRUNG TODO: Handle Cil.GAsm later!"
+        let _ = print_endline ("== gl GAsm = " ^ (string_of_cil_global gl)) in
+        ()
+        (* report_error_msg "TRUNG TODO: Handle Cil.GAsm later!" *)
     | Cil.GPragma _ ->
         (* let _ = print_endline ("== gl GPragma = " ^ (string_of_cil_global gl)) in *)
         (* ()                                                                         *)
         report_error_msg "TRUNG TODO: Handle Cil.GPragma later!"
     | Cil.GText _ ->
-        (* let _ = print_endline ("== gl GText = " ^ (string_of_cil_global gl)) in *)
-        (* ()                                                                         *)
-        report_error_msg "TRUNG TODO: Handle Cil.GText later!"
+        let _ = print_endline ("== gl GText = " ^ (string_of_cil_global gl)) in
+        ()
+        (* report_error_msg "TRUNG TODO: Handle Cil.GText later!" *)
   ) globals;
-  let obj_def = {Iast.data_name = "Object"; Iast.data_fields = []; Iast.data_parent_name = "";
-                 Iast.data_invs = []; Iast.data_methods = []} in
-  let string_def = {Iast.data_name = "String"; Iast.data_fields = []; Iast.data_parent_name = "Object";
-                    Iast.data_invs = []; Iast.data_methods = []} in
+  let obj_def = {Iast.data_name = "Object";
+                 Iast.data_fields = [];
+                 Iast.data_parent_name = "";
+                 Iast.data_invs = [];
+                 Iast.data_methods = []} in
+  let string_def = {Iast.data_name = "String";
+                    Iast.data_fields = [];
+                    Iast.data_parent_name = "Object";
+                    Iast.data_invs = [];
+                    Iast.data_methods = []} in
   (* update some global settings *)
   Hashtbl.iter (fun _ d -> data_decls := !data_decls @ [d]) gl_pointers_data;
   Hashtbl.iter (fun _ v ->

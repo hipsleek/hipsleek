@@ -1,5 +1,8 @@
 //
 
+data pint {
+  int val;
+}
 data pointer {
   inline int pdata;
 }
