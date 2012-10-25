@@ -1,0 +1,70 @@
+data node { int val ; node next }.
+data node2 { int val ; node next }.
+
+HeapPred ll(node x, int n).
+HeapPred rr(node x, int n).
+
+//(1)
+checkeq [x] x::node<a,null> -|- x::node<c,null> .
+// VALID --> [{a,c},{b,d}]
+
+//(2)
+checkeq [] x::node<a,null> -|- x::node<c,null> .
+// VALID --> !! [(flted_10_27, flted_10_33), (a, c), (x, x)]
+
+//(3)
+checkeq [] x::node<a,null> -|- y::node<c,null> .
+// VALID --> [(flted_13_38, flted_13_44), (a, c), (x, y)]
+
+//(4)
+checkeq [] x::node<a,_> * y::node<_,_> -|- y::node<c,_> * x::node<_,_>.
+// VALID --> !! [(Anon_12, Anon_14), (Anon_11, Anon_13), (y, x), (flted_16_54, flted_16_63), (a, c), (x, y)]
+
+//(5)
+checkeq [x] x::node<a,_> * y::node<_,_> -|- y::node<c,_> * x::node<_,_>.
+// VALID --> !! [(Anon_12, Anon_14), (Anon_11, Anon_13), (y, x), (flted_16_54, flted_16_63), (a, c), (x, y)]
+
+//(6)
+checkeq [] x::node<a,_> * y::node<_,_> -|-  x::node<_,_> * y::node<c,_>.
+// VALID --> !! [(Anon_12, Anon_14), (Anon_11, Anon_13), (y, x), (flted_16_54, flted_16_63), (a, c), (x, y)]
+
+//(7)
+checkeq [] x::node<a,_> * y::node<_,_> -|-  x::node<_,_> * y::node<c,_>.
+// VALID --> !! [(Anon_12, Anon_14), (Anon_11, Anon_13), (y, x), (flted_16_54, flted_16_63), (a, c), (x, y)]
+
+//(8)
+checkeq [] x::node<a,null> & a=2 -|- y::node<c,null> & c=2 .
+// VALID --> [(flted_13_38, flted_13_44), (a, c), (x, y)]
+
+//(9)
+checkeq [] x::node<a,null> & a=2 -|- y::node<c,null> .
+// VALID --> [(flted_13_38, flted_13_44), (a, c), (x, y)]
+
+//(10)
+checkeq [x] x::node<a,null> * y::node<_,_> -|- x::node<c,null> .
+
+
+checkeq [x] x::node<a,null> -|- y::node<c,null> .
+// VALID --> [(flted_13_38, flted_13_44), (a, c), (x, y)]
+
+checkeq [x] x::node<a,b> -|- y::node<c,d> .
+// FAIL
+
+checkeq [b] x::node<3,b> -|- y::node<3,d> .
+// VALID --> [{a,c},{b,d},{x,y}]
+
+
+
+//checkeq [] x::ll<a> -|- y::rr<b> .
+// VALID --> [{x,y},{a,b}]
+
+
+/*
+checkeq [] x::ll<a> -|- (exists b: y::rr<b>).
+// VALID --> [{x,y},{ll,rr}]
+
+checkeq [ll,rr] x::ll<a> -|- (exists b: y::rr<b>).
+// FAIL
+
+*/
+
