@@ -424,6 +424,8 @@ let no_pos1 = { Lexing.pos_fname = "";
 let res_name = "res"
 let minisat_time_BCC = ref 0.
 let minisat_time_T = ref 0.
+let minisat_time_overall = ref 0.
+let minisat_time_cnf_conv = ref 0.
 
 let sl_error = "separation entailment"
 let logical_error = "logical bug"

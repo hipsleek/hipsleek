@@ -545,6 +545,7 @@ let command_for prover =
 
 (* Runs the specified prover and returns output *)
 let run st prover input timeout =
+	let tstartlog = Gen.Profiling.get_time () in
   (*let _ = print_endline "z3-2.19" in*)
 	let out_stream = open_out infile in
     (*let _ = print_endline ("input: " ^ input) in*)
@@ -552,6 +553,8 @@ let run st prover input timeout =
 	close_out out_stream;
 	let (cmd, cmd_arg) = command_for prover in
 	let set_process proc = prover_process := proc in
+		let tstoplog = Gen.Profiling.get_time () in
+			let _= Globals.minisat_time_T := !Globals.minisat_time_T +. (tstoplog -. tstartlog) in
 	let fnc () = 
 		let _ = Procutils.PrvComms.start false stdout (cmd, cmd, cmd_arg) set_process (fun () -> ()) in
 			get_answer !prover_process.inchannel input in

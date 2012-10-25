@@ -235,12 +235,19 @@ let _ =
   if !Globals.print_version_flag then begin
 	print_version ()
   end else
+		let tstartlog = Gen.Profiling.get_time () in
     let _ = Printexc.record_backtrace !Globals.trace_failure in
     (Tpdispatcher.start_prover ();
     Gen.Profiling.push_time "Overall";
     (* let _ = print_endline "before main" in *)
     main ();
     (* let _ = print_endline "after main" in *)
+		let tstoplog = Gen.Profiling.get_time () in
+		let _= Globals.minisat_time_overall := !Globals.minisat_time_overall +. (tstoplog -. tstartlog) in 
+		let _= print_endline ("Time check by minisat:"^(string_of_float !Globals.minisat_time_T)) in
+		let _= print_endline ("Time BCC: "^(string_of_float !Globals.minisat_time_BCC)) in
+		let _= print_endline ("Time CNF conversion: "^(string_of_float !Globals.minisat_time_cnf_conv)) in
+		let _= print_endline ("Time overall: "^(string_of_float !Globals.minisat_time_overall)) in
     Gen.Profiling.pop_time "Overall";
     let _ = 
       if (!Globals.profiling && not !inter) then 

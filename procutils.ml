@@ -143,7 +143,7 @@ struct
     close_pipes process;
     try 
         Unix.kill process.pid killing_signal;
-        ignore (Unix.waitpid [] process.pid)
+        ignore (Unix.waitpid [] process.pid);
     with
       | e -> 
           (ignore e;

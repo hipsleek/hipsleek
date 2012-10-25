@@ -120,6 +120,7 @@ class graphFindBCC =
 																							(let  
 																							 _= if(Stack.is_empty stack & (List.length !led)>1) then
 																											let _= List.map (fun e-> G.add_edge bcc e.ver1 e.ver2 ) !led in()
+																									(* else print_endline ("stack not empty")		 *)
 																							 in break := true)
 																						in ()
 																				end
@@ -127,7 +128,11 @@ class graphFindBCC =
 																				(* let _=G.iter_edges_e (fun x-> print_endline ("bcc:"^(G.E.src x)^" "^(G.E.dst x))) bcc in *)
 (*																				let _=print_endline ("---") in*)
 																				let exist_v1v2 =G.mem_edge bcc v22 v11 in 
-																						let _= if(exist_v1v2=true) then ()  else bcc<-G.create() in ()
+																						let _= if(exist_v1v2=true) then ()
+																							(* (print_endline ("bcc of e")) *)
+																						       else 
+																										(* let _= print_endline ("bcc not e") in *)
+																										bcc<-G.create() in ()
 																			 
 																end
 															in (*high <- MapDFS.add v1 (max_of w_high (MapDFS.find v1 high) ) high*) ();
@@ -298,7 +303,9 @@ class rTC=
 							end						
 					 ) neib_e2  
 
-			 in let _=loop_gc es in global_cache <- G.create ()
+			 in 
+			(* let _=loop_gc es in global_cache <- G.create () *) (*significantly affects on performance*)
+			loop_gc es 
 	
 	method print_all graph =
 		let _=Glabel.iter_edges_e (fun x->print_endline ("bach"^(Glabel.E.src x)^(Glabel.E.dst x)^" "^(!(Glabel.E.label x)))) graph in let _=exit(0) in () 
@@ -330,13 +337,9 @@ class rTC=
 												let check_add=bcc#add_diseq_edgev2 cpg e in
 													if(check_add=true) then
 (*														let _=Gen.Profiling.push_time("stat_get_BCC") in*)
-														let tstartlog = Gen.Profiling.get_time () in
 														let exist_bcc=bcc#getBCCGraph cpg (G.E.dst e) (G.E.src e) num_vertices in(*BCC must contain at least 3 vertex*)
-														let tstoplog = Gen.Profiling.get_time () in
-														let _= Globals.minisat_time_BCC := !Globals.minisat_time_BCC +. (tstoplog -. tstartlog) in 
 (*														let _=Gen.Profiling.pop_time("stat_get_BCC") in*)
 															let _= if(exist_bcc=true) then 
-									
 															let _= bcc#add_all_diseq_edges cpg diseq_graph in
 (*															let rec helper g =G.iter_vertex                                                                         *)
 (*																			(fun v-> try if((G.in_degree g v)=1)                                                            *)
@@ -352,7 +355,9 @@ class rTC=
 (*																			let _= print_endline "NEXT BCC OF DISEQ EDGE" in*)
 															() in ()
 		in 		
-			let _=G.iter_edges_e  (fun e-> rtc_helper e) diseq_graph in local_cache
+			let _=G.iter_edges_e  (fun e-> rtc_helper e) diseq_graph in 
+			(* let _=print_endline ("local cache: "^local_cache) in *)
+			local_cache
 															
 	end;;
 
