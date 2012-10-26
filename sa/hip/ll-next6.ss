@@ -10,7 +10,11 @@ HeapPred G4(node a, node b, node c, node d).
 node get_next(ref node x)
   infer[H1,G4]
   requires H1(x,q)
-  ensures G4(res,x',x,q2);//'
+  ensures G4(res,x',x,p);//'
+
+/*  requires x::node<_,_,null>
+  ensures true;
+*/
 /*
 
 [ HP_RELDEFN HP_550

@@ -5649,13 +5649,17 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 			                      })) in ()
     | IF.HRel (r, args, pos) ->
         (try
-		    let hpdef = I.look_up_hp_def_raw prog.I.prog_hp_decls r in
-		    let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) hpdef.I.hp_typed_vars in
-		    let args_exp_types = List.map (fun t -> (t)) args_ctypes in
-            let _ = gather_type_info_var r stab HpT in
-		    let _ = List.map2 (fun x y -> gather_type_info_exp x stab y) args args_exp_types in ()
+             let hpdef = I.look_up_hp_def_raw prog.I.prog_hp_decls r in
+             if (List.length args) == (List.length hpdef.I.hp_typed_vars) then
+              let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) hpdef.I.hp_typed_vars in
+		      let args_exp_types = List.map (fun t -> (t)) args_ctypes in
+              let _ = gather_type_info_var r stab HpT in
+		      let _ = List.map2 (fun x y -> gather_type_info_exp x stab y) args args_exp_types in ()
+            else
+              failwith ("number of arguments for heap relation "^r^" does not match")
 		  with
-		    | Not_found ->    failwith ("gather_type_info_heap: relation "^r^" cannot be found")
+		    | Not_found -> failwith ("iast.gather_type_info_heap :gather_type_info_heap: relation "^r^" cannot be found")
+            | Failure s -> failwith s
             | _ -> print_endline ("gather_type_info_heap: relation " ^ r)
           )
 
