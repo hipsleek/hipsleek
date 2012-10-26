@@ -3255,6 +3255,51 @@ and get_hp_rel_h_formula hf=
     | HFalse
     | HEmp -> ([],[],[])
 
+let rec get_hprel (f:formula) =
+  match f with
+    | Base  ({formula_base_heap = h1;
+		formula_base_pure = p1})
+    | Exists ({formula_exists_heap = h1;
+		 formula_exists_pure = p1}) -> (
+      get_hprel_h_formula h1
+    )
+    | Or orf  ->
+        let a1 = get_hprel orf.formula_or_f1 in
+        let a2 = get_hprel orf.formula_or_f2 in
+        (a1@a2)
+
+(*rel*)
+and get_hprel_h_formula hf0=
+  let rec helper hf=
+  match hf with
+    | Star { h_formula_star_h1 = hf1;
+             h_formula_star_h2 = hf2} ->
+        let hr1 = helper hf1 in
+        let hr2 = helper hf2 in
+        (hr1@hr2)
+    | Conj { h_formula_conj_h1 = hf1;
+             h_formula_conj_h2 = hf2;} ->
+        let hr1 = (helper hf1)in
+        let hr2 = (helper hf2) in
+        (hr1@hr2)
+    | Phase { h_formula_phase_rd = hf1;
+              h_formula_phase_rw = hf2;} ->
+        let hr1 = (helper hf1) in
+        let hr2 = (helper hf2) in
+        (hr1@hr2)
+    | DataNode hd -> []
+    | ViewNode hv -> []
+    | HRel hr -> ([hr])
+    | Hole _
+    | HTrue
+    | HFalse
+    | HEmp -> ([])
+  in
+  helper hf0
+
+
+and eq_hprel (hp1,eargs1,_) (hp2,eargs2,_)=
+  CP.eq_spec_var hp1 hp2
 
 and get_hp_rel_name_formula (f: formula) =
   match f with

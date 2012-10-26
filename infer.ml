@@ -1479,10 +1479,34 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps c
   let done_args = CP.remove_dups_svl (List.concat (List.map (fun (_,args) -> args) (lhp_args))) in
   let lhs_b,history_hrel,keep_root_hrels = get_history_nodes svl hds history lhs_b done_args (leqs@reqs) in
  (*end*)
+  (*since we have not supported hprel matching, remove matched hprels*)
+  (* let nleqs = elim_eqs_args leqs (lhp_args@rhp_args) in *)
+  (* let nreqs = elim_eqs_args reqs (rhp_args) in *)
+  let nleqs = leqs in
+  let nreqs = reqs in
+  let helper2 ss (hps,args)=
+    match hps with
+      | [] -> []
+      | [hp] -> [(hp, List.map (CP.subs_one ss) args)]
+      | _ -> report_error no_pos "infer.simplify_lhs_rhs: 1"
+  in
+  (* let lhs_hpargs = List.concat( List.map (helper2 nleqs) lhp_args) in *)
+  (* let rhs_hpargs = List.concat(List.map (helper2 (nleqs@nreqs)) rhp_args) in *)
+  (* let inter = Gen.BList.intersect_eq SAU.check_hp_arg_eq lhs_hpargs rhs_hpargs in *)
+  (* let inter_hps = List.map fst inter in *)
+  (* let keep_hrels1 = CP.diff_svl (CP.remove_dups_svl (keep_hrels@history_hrel)) inter_hps in *)
+  let keep_hrels1 = (CP.remove_dups_svl (keep_hrels@history_hrel)) in
+  (* let pr= pr_list (pr_pair !CP.print_sv !CP.print_svl) in *)
+  (* let _ = Debug.info_pprint ("    orig keep hprel:" ^ (!CP.print_svl (keep_hrels@history_hrel))) no_pos in *)
+  (* let _ = Debug.info_pprint ("   lhs keep hprel:" ^(pr lhs_hpargs)) no_pos in *)
+  (* let _ = Debug.info_pprint ("   rhs keep hprel:" ^(pr rhs_hpargs)) no_pos in *)
+  (* let _ = Debug.info_pprint ("    inter keep hprel:" ^(!CP.print_svl inter_hps)) no_pos in *)
+  (* let _ = Debug.info_pprint ("    keep hprel1:" ^ (!CP.print_svl keep_hrels1)) no_pos in *)
+  (*END*)
   let lhs_b1,rhs_b1 = SAU.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b
     (hds@(List.concat (List.map get_h_formula_data_fr_hnode history))) hvs (leqs@reqs)
     (* (rhs_keep_rootvars@lhs_keep_first_rootvars) *)(svl@keep_root_hrels) (lhs_keep_rootvars@keep_root_hrels)
-    (keep_hrels@history_hrel) in
+    keep_hrels1 in
   (*wo history*)
   (* let lhs_b1,rhs_b1 = SAU.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b *)
   (*   hds hvs (leqs@reqs) *)
@@ -1498,10 +1522,6 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps c
   (* let rec elim_eqs_args eqs hp_args= *)
   (*   List.filter (fun (v1,v2) -> not(filter_helper [v1;v2] hp_args)) eqs *)
   (* in *)
-  (* let nleqs = elim_eqs_args leqs (lhp_args@rhp_args) in *)
-  (* let nreqs = elim_eqs_args reqs (rhp_args) in *)
-  let nleqs = leqs in
-  let nreqs = reqs in
   let lhs_b2 = CF.subst_b nleqs lhs_b1 in
   let rhs_b2 = CF.subst_b (nleqs@nreqs) rhs_b1 in
   (*remove redundant: x=x*)
