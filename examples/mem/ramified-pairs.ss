@@ -6,13 +6,13 @@ data cell{
   int v;
 }
 
-pred order(f,s,flag) ==
-     f::cell<1> /\ s::cell<1> & flag
-  or f::cell<v> /\ s::cell<_> & v!=1 & !flag
+pred order<f,s,flag> ==
+     f::cell<1> & s::cell<1> & flag
+  or f::cell<v> & s::cell<_> & v!=1 & !flag
 
 void mark(pair p)
-  requires p::pair<f,s> * order(f,s,_)
-  ensures p::pair<f,s> * order(f,s,true);
+  requires p::pair<f,s> * order<f,s,_>
+  ensures p::pair<f,s> * order<f,s,true>;
 {
 if(p.fst.v == 1){
     //f::cell<1> /\ s::cell<1> 

@@ -4,9 +4,27 @@ data node {
 	node right;	
 }.
 
-pred dag<M> == self = null & M = {}
-	or self::node<v@M,l@L,r@L> * l::dag<Ml> & r::dag<Mr> & M = union(Ml,Mr,{self})
+pred dag0<M> == self = null & M = {}
+	or self::node<_,l@L,r@L> * l::dag0<Ml> & r::dag0<Mr> & M = union(Ml,Mr,{self})
 	inv true
 	mem M->(node<@M,@L,@L>).
-	
+
+pred dag1<v,M> == self = null & M = {}
+	or self::node<v@M,l@L,r@L> * l::dag1<v,Ml> & r::dag1<v,Mr> & M = union(Ml,Mr,{self})
+	inv true
+	mem M->(node<@M,@L,@L> & true).
+
+pred dag2<v,M> == self = null & M = {}
+	or self::node<0,l@L,r@L> * l::dag2<_,Ml> & r::dag2<_,Mr> & M = union(Ml,Mr,{self}) & v = 0
+	or self::node<1@I,l@L,r@L> * l::dag2<1,Ml> & r::dag2<1,Mr> & M = union(Ml,Mr,{self}) & v = 1
+	inv 0 <= v <= 1
+	mem M->(node<@M,@L,@L> & v = 0 | node<@I,@L,@L> & v = 1).
+
+pred dag3<v,M> == self = null & M = {}
+	or self::node<0,l@L,r@L> * l::dag3<0,Ml> & r::dag3<0,Mr> & M = union(Ml,Mr,{self}) & v = 0
+	or self::node<0,l@L,r@L> * l::dag3<_,Ml> & r::dag3<_,Mr> & M = union(Ml,Mr,{self}) & v = 1
+	or self::node<1,l@L,r@L> * l::dag3<2,Ml> & r::dag3<2,Mr> & M = union(Ml,Mr,{self}) & v = 2
+	inv 0 <= v <= 2
+	mem M->(node<@M,@L,@L> & 0 <= v <= 1 | node<@I,@L,@L> & 1 <= v <= 2).
+		
 checkentail true |- x::dag<M>.
