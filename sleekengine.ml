@@ -761,7 +761,7 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
   let _ = if (!Globals.print_core) then print_endline ("INPUT: \n ### formula 1= " ^ (Cprinter.string_of_formula f1) ^"\n ### formula 2= " ^ (Cprinter.string_of_formula f2)) else () in
 
   (*let f2 = Solver.prune_preds !cprog true f2 in *)
-  if(false) then(  (*!Globals.show_diff*)
+  if(!Globals.show_diff) then( 
     let (res, mt_list) = CEQ.checkeq_formulas_with_diff ivars f1 f2 in
     let _ = if(res) then(
       print_string (num_id^": Valid.")
