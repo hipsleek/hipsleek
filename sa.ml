@@ -2615,5 +2615,5 @@ let infer_hps prog (hp_constrs: CF.hprel list) sel_hp_rels:
  (CF.hprel list * SAU.hp_rel_def list) =
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  Debug.ho_1 "infer_hp" pr1 (pr_pair pr1 pr2)
+  Debug.no_1 "infer_hp" pr1 (pr_pair pr1 pr2)
       (fun _ -> infer_hps_x prog hp_constrs sel_hp_rels) hp_constrs
