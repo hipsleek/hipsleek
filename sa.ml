@@ -44,13 +44,15 @@ let rec elim_redundant_paras_lst_constr_x prog constrs =
   let drop_hp_args = drop_invalid_group drop_hp_args [] in
   let _ = Debug.ninfo_pprint ("  drops: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
                                                          in pr drop_hp_args)) no_pos in
-  let new_constrs = drop_process constrs drop_hp_args in
+  let new_constrs,ms = drop_process constrs drop_hp_args in
   (*find candidates in all assumes, if a case appears in all assmses => apply it*)
-  new_constrs
+  (ms,new_constrs)
 
 and elim_redundant_paras_lst_constr prog hp_constrs =
+  let pr0 = pr_list !CP.print_exp in
   let pr = pr_list_ln Cprinter.string_of_hprel in
-  Debug.no_1 "elim_redundant_paras_lst_constr" pr pr
+  let pr1 = pr_list (pr_triple !CP.print_sv pr0 pr0) in
+  Debug.no_1 "elim_redundant_paras_lst_constr" pr (pr_pair pr1 pr)
       (fun _ ->  elim_redundant_paras_lst_constr_x prog hp_constrs) hp_constrs
 
 (*each constraint, pick candidate args which can be droped in each hprel*)
@@ -104,26 +106,38 @@ and check_dropable_paras_LHS prog f1 f2 predef :((CP.spec_var*int list) list)=
   List.concat (List.map check_dropable_each_hp hp_paras)
 
 
-and drop_process (constrs: CF.hprel list) (drlocs: (CP.spec_var* int list) list): ( CF.hprel list) =
-  List.map (fun c -> drop_process_one_constr c drlocs) constrs
+and drop_process (constrs: CF.hprel list) (drlocs: (CP.spec_var* int list) list):
+      ( CF.hprel list* (CP.spec_var*CP.exp list*CP.exp list) list) =
+  let new_constrs, m = List.split(List.map (fun c -> drop_process_one_constr c drlocs) constrs) in
+  (new_constrs, Gen.BList.remove_dups_eq (fun (hp1,_,_) (hp2,_,_) -> CP.eq_spec_var hp1 hp2) (List.concat m))
 
-and drop_process_one_constr (constr: CF.hprel) drlocs: CF.hprel =
-  {constr with
-      CF.hprel_lhs = (filter_hp_rel_args_f constr.CF.hprel_lhs drlocs);
-      CF.hprel_rhs = (filter_hp_rel_args_f constr.CF.hprel_rhs drlocs)}
+and drop_process_one_constr (constr: CF.hprel) drlocs: CF.hprel * ((CP.spec_var*CP.exp list*CP.exp list) list) =
+  let nlhs,m1 = filter_hp_rel_args_f constr.CF.hprel_lhs drlocs in
+  let nrhs,m2 = (filter_hp_rel_args_f constr.CF.hprel_rhs drlocs) in
+  let m = Gen.BList.remove_dups_eq (fun (hp1,_,_) (hp2,_,_) -> CP.eq_spec_var hp1 hp2) (m1@m2) in
+  ({constr with
+      CF.hprel_lhs = nlhs;
+      CF.hprel_rhs = nrhs},m)
 
 
 and filter_hp_rel_args_f (f: CF.formula) (drlocs: (CP.spec_var* int list) list)=
   (* let rels, _ = List.split drlocs in *)
   let rec helper f drlocs = match f with
-    | CF.Base fb -> CF.Base {fb with CF.formula_base_heap = filter_hp_rel_args fb.CF.formula_base_heap drlocs;}
-    | CF.Or orf -> CF.Or {orf with CF.formula_or_f1 = helper orf.CF.formula_or_f1 drlocs;
-                CF.formula_or_f2 = helper orf.CF.formula_or_f2 drlocs;}
-    | CF.Exists fe -> CF.Exists {fe with CF.formula_exists_heap =  filter_hp_rel_args fe.CF.formula_exists_heap drlocs;}
+    | CF.Base fb -> let nh,m= filter_hp_rel_args fb.CF.formula_base_heap drlocs in
+                      (CF.Base {fb with CF.formula_base_heap = nh;}),m
+    | CF.Or orf ->
+        let n_orf1,m1 = helper orf.CF.formula_or_f1 drlocs in
+        let n_orf2,m2 = helper orf.CF.formula_or_f2 drlocs in
+        (CF.Or {orf with CF.formula_or_f1 = n_orf1;
+                CF.formula_or_f2 = n_orf2;}),m1@m2
+    | CF.Exists fe ->
+        let nh,m=filter_hp_rel_args fe.CF.formula_exists_heap drlocs  in
+        (CF.Exists {fe with CF.formula_exists_heap =  nh;}),m
   in 
   helper f drlocs
 
-and filter_hp_rel_args (hf: CF.h_formula) (drlocs: (CP.spec_var* int list) list): CF.h_formula=
+and filter_hp_rel_args (hf: CF.h_formula) (drlocs: (CP.spec_var* int list) list): CF.h_formula *
+ ((CP.spec_var*CP.exp list*CP.exp list) list)=
   (* let rels, _ = List.split drlocs in *)
   let rec look_up_drop_hp hp drops=
     match drops with
@@ -136,37 +150,40 @@ and filter_hp_rel_args (hf: CF.h_formula) (drlocs: (CP.spec_var* int list) list)
       | CF.Star {CF.h_formula_star_h1 = hf1;
                  CF.h_formula_star_h2 = hf2;
                  CF.h_formula_star_pos = pos} ->
-          let n_hf1 = helper hf1 in
-          let n_hf2 = helper hf2 in
-          (match n_hf1,n_hf2 with
-            | (CF.HEmp,CF.HEmp) -> CF.HEmp
-            | (CF.HEmp,_) -> n_hf2
-            | (_,CF.HEmp) -> n_hf1
-            | _ -> CF.Star {CF.h_formula_star_h1 = n_hf1;
-			                CF.h_formula_star_h2 = n_hf2;
-			                CF.h_formula_star_pos = pos}
-          )
+          let n_hf1,m1 = helper hf1 in
+          let n_hf2,m2 = helper hf2 in
+          let hf1=
+            (match n_hf1,n_hf2 with
+              | (CF.HEmp,CF.HEmp) -> CF.HEmp
+              | (CF.HEmp,_) -> n_hf2
+              | (_,CF.HEmp) -> n_hf1
+              | _ -> CF.Star {CF.h_formula_star_h1 = n_hf1;
+			                  CF.h_formula_star_h2 = n_hf2;
+			                  CF.h_formula_star_pos = pos}
+            )
+          in hf1,m1@m2
       | CF.Conj { CF.h_formula_conj_h1 = hf1;
 		          CF.h_formula_conj_h2 = hf2;
 		          CF.h_formula_conj_pos = pos} ->
-          let n_hf1 = helper hf1 in
-          let n_hf2 = helper hf2 in
-          CF.Conj { CF.h_formula_conj_h1 = n_hf1;
-		            CF.h_formula_conj_h2 = n_hf2;
-		            CF.h_formula_conj_pos = pos}
+          let n_hf1,m1 = helper hf1 in
+          let n_hf2,m2 = helper hf2 in
+          let hf1 = CF.Conj { CF.h_formula_conj_h1 = n_hf1;
+		                      CF.h_formula_conj_h2 = n_hf2;
+		                      CF.h_formula_conj_pos = pos}
+          in hf1,m1@m2
       | CF.Phase { CF.h_formula_phase_rd = hf1;
 		           CF.h_formula_phase_rw = hf2;
 		           CF.h_formula_phase_pos = pos} ->
-          let n_hf1 = helper hf1 in
-          let n_hf2 = helper hf2 in
-          CF.Phase { CF.h_formula_phase_rd = n_hf1;
+          let n_hf1,m1 = helper hf1 in
+          let n_hf2,m2 = helper hf2 in
+          (CF.Phase { CF.h_formula_phase_rd = n_hf1;
 		             CF.h_formula_phase_rw = n_hf2;
-		             CF.h_formula_phase_pos = pos}
-      | CF.DataNode hd -> hf0
-      | CF.ViewNode hv -> hf0
+		             CF.h_formula_phase_pos = pos}),m1@m2
+      | CF.DataNode hd -> hf0,[]
+      | CF.ViewNode hv -> hf0,[]
       | CF.HRel (sv, args, l) ->
 	            let locs =  look_up_drop_hp sv drlocs in
-                if locs = [] then hf0
+                if locs = [] then hf0,[]
                 else
                   begin
                     let rec filter_args args new_args index=
@@ -177,13 +194,13 @@ and filter_hp_rel_args (hf: CF.h_formula) (drlocs: (CP.spec_var* int list) list)
                             else filter_args ss (new_args@[a]) (index+1)
                     in
 	                let new_args = filter_args args [] 0 in
-	                if((List.length new_args) == 0) then CF.HEmp
-	                else (CF.HRel (sv, new_args, l))
+	                if((List.length new_args) == 0) then CF.HEmp,[(sv,args,[])]
+	                else (CF.HRel (sv, new_args, l)),[(sv,args,new_args)]
 	              end
       | CF.Hole _
       | CF.HTrue
       | CF.HFalse
-      | CF.HEmp -> hf0
+      | CF.HEmp -> hf0,[]
   in
   helper hf
 
@@ -254,8 +271,15 @@ let get_hp_split_cands_x constrs =
     cands 
   in
   (*remove duplicate*)
+  let extract_hp_name_helper hrel=
+    match hrel with
+      | CF.HRel (hp,_,_) -> hp
+      | _ -> report_error no_pos "sa.get_hp_split_cands"
+  in
   let cands = (List.concat (List.map helper constrs)) in
-  Gen.BList.remove_dups_eq (fun (CF.HRel (hp1,_,_)) (CF.HRel (hp2,_,_)) ->
+  Gen.BList.remove_dups_eq (fun hrel1 hrel2 ->
+      let hp1 = extract_hp_name_helper hrel1 in
+      let hp2 = extract_hp_name_helper hrel2 in
       CP.eq_spec_var hp1 hp2) cands
 
 let get_hp_split_cands constrs =
@@ -2121,7 +2145,7 @@ let get_unk_hps_relation_x prog hpdefs cs=
   let def_hps, remains = List.partition (fun (hp,_) -> CP.mem_svl hp cs_def_hps) hp_args in
   let unk_hps, undef = List.partition (fun (hp,_) -> CP.mem_svl hp cs_unk_hps) remains in
   (* (\*for debugging*\) *)
-  let pr = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in
+  (* let pr = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in *)
   (* let _ = Debug.ninfo_pprint ("     lhps: " ^ (pr lhp_args)) no_pos in *)
   (* let _ = Debug.ninfo_pprint ("     rhps: " ^ (pr rhp_args)) no_pos in *)
   (* let _ = Debug.ninfo_pprint ("     all hps: " ^ (pr hp_args)) no_pos in *)
@@ -2526,7 +2550,7 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * SA
   DD.ninfo_pprint "\n\n>>>>>> norm_hp_rel <<<<<<" no_pos;
   DD.ninfo_pprint ">>>>>> step 1a: drop arguments<<<<<<" no_pos;
   (* step 1: drop irr parameters *)
-  let constrs = elim_redundant_paras_lst_constr prog hp_constrs in
+  let drop_hp_args,constrs = elim_redundant_paras_lst_constr prog hp_constrs in
   Debug.ninfo_hprint (add_str "   AFTER DROP: " (pr_list_ln Cprinter.string_of_hprel)) constrs no_pos;
   DD.ninfo_pprint ">>>>>> step 1b: find unknown ptrs<<<<<<" no_pos;
   let constrs1,unk_hps,hp_defs_split = analize_unk prog constrs in
@@ -2561,9 +2585,16 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * SA
   (* let _ =  DD.info_pprint (" matching: " ^ *)
   (*   (let pr = pr_list_ln (fun (hp,view_names) -> (!CP.print_sv hp) ^ " === " ^ *)
   (*     ( String.concat " OR " view_names)) in pr m)) no_pos in *)
-  let sel_hp_defs = collect_sel_hp_def hp_defs3 sel_hp_rels unk_hp_svl m in
+  let sel_hpdefs, rems = List.partition
+    (fun (hprc, _, _) ->
+        let hp = SAU.get_hpdef_name hprc in
+        CP.mem_svl hp sel_hp_rels
+    ) hp_defs3 in
+  let sel_hpdefs1 = SAU.recover_dropped_args drop_hp_args sel_hpdefs in
+  let hp_defs4 = rems@sel_hpdefs1 in
+  let sel_hp_defs = collect_sel_hp_def hp_defs4 sel_hp_rels unk_hp_svl m in
   let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) sel_hp_defs in
-  (constr3, hp_defs2 @ unk_hp_def) (*return for cp*)
+  (constr3,  hp_defs4) (*return for cp*)
   (* loop 1 *)
   (*simplify constrs*)
   (* let constrs12 = simplify_constrs constrs1 in *)
@@ -2584,5 +2615,5 @@ let infer_hps prog (hp_constrs: CF.hprel list) sel_hp_rels:
  (CF.hprel list * SAU.hp_rel_def list) =
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  Debug.no_1 "infer_hp" pr1 (pr_pair pr1 pr2)
+  Debug.ho_1 "infer_hp" pr1 (pr_pair pr1 pr2)
       (fun _ -> infer_hps_x prog hp_constrs sel_hp_rels) hp_constrs

@@ -1464,3 +1464,41 @@ let combine_hpdefs hpdefs=
   Debug.no_1 "combine_hpdefs" pr1 pr1
       (fun _ -> combine_hpdefs_x hpdefs) hpdefs
 
+let recover_dropped_args_x drop_hp_args hp_defs=
+  let helper hrel=
+    match hrel with
+      | CF.HRel (hp, eargs, p ) -> (hp, eargs, p )
+      | _ -> report_error no_pos "SAU.recover_droped_args_x 1"
+  in
+  let recover_def drops def=
+    let hpdef,hprel,hp_body = def in
+    let hp1, eargs1, p = helper hprel in
+    let rec helper2 ldrops r_drop=
+      match ldrops with
+        | [] -> r_drop,def
+        | (hp, eargs, dropped_eargs)::ds ->
+          if CP.eq_spec_var hp hp1 then
+            let args = List.concat (List.map CP.afv dropped_eargs) in
+            let args1 = List.concat (List.map CP.afv eargs1) in
+            let ss = List.combine args args1 in
+            let new_eargs = CP.e_apply_subs_list ss eargs in
+            (r_drop@ds, (hpdef, (CF.HRel (hp1,new_eargs,p)),hp_body))
+          else helper2 ds (r_drop@[(hp, eargs, dropped_eargs)])
+    in
+    helper2 drops []
+  in
+  let rec helper1 drops hpdefs res=
+    match hpdefs with
+      | [] -> res
+      | def::ls ->
+          let drops1,def1 = recover_def drops def in
+          helper1 drops1 ls (res@[def1])
+  in
+  helper1 drop_hp_args hp_defs []
+
+let recover_dropped_args drop_hp_args hp_defs=
+  let pr0 = pr_list !CP.print_exp in
+  let pr1 = pr_list (pr_triple !CP.print_sv pr0 pr0) in
+  let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  Debug.no_2 "recover_dropped_args" pr1 pr2 pr2
+      (fun _ _ -> recover_dropped_args_x drop_hp_args hp_defs) drop_hp_args hp_defs

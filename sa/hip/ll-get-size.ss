@@ -4,13 +4,8 @@ data node {
 }
 
 HeapPred H(node a).
-HeapPred H1(node a).
-HeapPred H2(node a).
-HeapPred G(node a, node b).
-HeapPred G1(node a, node b).
-HeapPred G2(node a, node b).
-HeapPred G3(node a, node b, node c).
-HeapPred G4(node a, node b, node c, node d).
+HeapPred G(node a).
+
 
 
 /* return the tail of a singly linked list */
