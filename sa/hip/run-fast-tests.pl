@@ -1118,8 +1118,8 @@ sub hip_process_file {
 		    $limit = $test->[1]*2+3;
 		    for($i = 4; $i<$limit;$i+=2)
 		    {
-			#print "Output: $output \n";
-			#print "compare with: $cp_ass $test->[$i]\$.* SUCCESS \n";
+			print "Output: $output \n";
+			print "compare with: $cp_ass $test->[$i]\$.* SUCCESS \n";
 			$res = "";
 			if($output =~ /$cp_ass $test->[$i]\$.* SUCCESS/){
 			    $res = $res ."SUCCESS";

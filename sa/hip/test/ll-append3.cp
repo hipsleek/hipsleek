@@ -23,11 +23,9 @@ v_node_80_626!=null & y!=null -->  G1(x,y)&true
 }
 hpdefs [H1,G1]: {
  HP_603(v_node_80_620)&true -->  
- v_node_80_620::node<val_80_579',next_80_580'> * HP_648(next_80_580')&true
+ HP_648(next_80_580')&true
  or emp&v_node_80_620=null
  ;
- G1(x,y)&true -->  x::node<val_80_609,y_642> * HP_643(y_642,y)&true;
- H1(x)&true -->  x::node<val_80_579',next_80_580'> * HP_648(next_80_580')&true;
  HP_643(y_642,y)&true -->  
  emp&y_642=y
  or y_642::node<val_80_609,y_646> * HP_643(y_646,y)&y!=null
@@ -35,7 +33,9 @@ hpdefs [H1,G1]: {
  HP_648(next_80_580')&true -->  
  emp&next_80_580'=null
  or next_80_580'::node<val_80_579',next_80_651> * HP_648(next_80_651)&true
- 
+ ;
+ G1(x,y)&true -->  x::node<val_80_609,y_642> * HP_643(y_642,y)&true;
+ H1(x)&true -->  x::node<val_80_579',next_80_580'> * HP_648(next_80_580')&true
 }
 ]
 

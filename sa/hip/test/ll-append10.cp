@@ -23,12 +23,9 @@ v_node_53_604!=null -->  G2(x,y) * H1b(y)&true;
 }
 hpdefs [H1,H1a,H1b,G2]: {
  HP_581(v_node_53_598)&true -->  
- v_node_53_598::node<val_53_562',next_53_563'> * HP_617(next_53_563')&true
+ HP_617(next_53_563')&true
  or emp&v_node_53_598=null
  ;
- G2(x,y)&true -->  x::node<val_53_587,y_611> * HP_612(y_611,y)&true;
- H1(x)&true -->  x::node<val_53_562',next_53_563'> * HP_617(next_53_563')&true;
- H1a(y)&true -->  H1b(y)&true;
  HP_612(y_611,y)&true -->  
  emp&y_611=y
  or y_611::node<val_53_587,y_615> * HP_612(y_615,y)&true
@@ -37,6 +34,9 @@ hpdefs [H1,H1a,H1b,G2]: {
  emp&next_53_563'=null
  or next_53_563'::node<val_53_562',next_53_620> * HP_617(next_53_620)&true
  ;
+ G2(x,y)&true -->  x::node<val_53_587,y_611> * HP_612(y_611,y)&true;
+ H1(x)&true -->  x::node<val_53_562',next_53_563'> * HP_617(next_53_563')&true;
+ H1a(y)&true -->  H1b(y)&true;
  H1b(y)&true -->  htrue&true
 }
 ]
