@@ -4,7 +4,7 @@ data node {
 }
 
 HeapPred H1(node a).
-HeapPred G4(node a, node b, node c, node d).
+HeapPred G4(node a, node b, node c).
 
 /* return the tail of a singly linked list */
 node get_next(ref node x)

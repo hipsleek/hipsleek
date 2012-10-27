@@ -1112,7 +1112,6 @@ let remove_longer_common_prefix fs=
   helper fs []
 
 let remove_equiv_wo_unkhps_x hp unk_hps fs=
-  let unk_hps_and_self = (unk_hps@[hp]) in
   let rec partition_helper cur res_unkhp_fs res_elim_unkhp_fs rems=
     match cur with
       | [] -> res_unkhp_fs,res_elim_unkhp_fs,rems
@@ -1365,6 +1364,65 @@ let succ_susbt_hpdef nrec_hpdefs all_succ_hp (hp,args,f)=
           (true,lsf_cmb3)
     end
 
+(*check hf2 is subset of hf1*)
+let check_subset_h_fomula_x hf1 hf2=
+  let helper1 hn=
+    (hn.CF.h_formula_data_node, hn.CF.h_formula_data_arguments)
+  in
+  let helper2 (hp, eargs,_)=
+    (hp, List.concat (List.map CP.afv eargs))
+  in
+  let hnodes1, _, hrels1 = CF.get_hp_rel_h_formula hf1 in
+  let hnodes2, _, hrels2 = CF.get_hp_rel_h_formula hf2 in
+  (*quick check first*)
+  if (List.length hnodes2) < (List.length hnodes1) &&
+    (List.length hrels2) < (List.length hrels1) then
+    let hnargs1 = List.map helper1 hnodes1 in
+    let hnargs2 = List.map helper1 hnodes2 in
+    let hpargs1 = List.map helper2 hrels1 in
+    let hpargs2 = List.map helper2 hrels2 in
+    if (Gen.BList.difference_eq check_hp_arg_eq hnargs2 hnargs1) = [] then
+      ((Gen.BList.difference_eq check_hp_arg_eq hpargs2 hpargs1) = [])
+    else
+      false
+  else
+    false
+
+let check_subset_h_fomula hf1 hf2=
+  let pr1 = Cprinter.string_of_h_formula in
+  Debug.no_2 " check_subset_h_fomula"  pr1 pr1 string_of_bool
+      (fun _ _ ->  check_subset_h_fomula_x hf1 hf2) hf1 hf2
+
+let remove_subset fs0=
+  let size_compare f1 f2=
+    let s1 = get_data_view_hrel_vars_formula f1 in
+    let s2 = get_data_view_hrel_vars_formula f2 in
+    (List.length s2) - (List.length s1)
+  in
+  let check_subset f1 f2=
+    let (hf1,mf1,_,_,_) = CF.split_components f1 in
+    let (hf2,mf2,_,_,_) = CF.split_components f2 in
+    let np1 = CF.remove_neqNull_redundant_hnodes_hf hf1 (MCP.pure_of_mix mf1) in
+    let np2 = CF.remove_neqNull_redundant_hnodes_hf hf2 (MCP.pure_of_mix mf2) in
+    (* DD.info_pprint ("   p1: " ^(!CP.print_formula np1)) no_pos; *)
+    (* DD.info_pprint ("   p2: " ^ (!CP.print_formula np2)) no_pos; *)
+    let r2 = CP.equalFormula np1 np2 in
+    if r2 then
+      check_subset_h_fomula hf1 hf2
+    else false
+  in
+  let rec helper fs res=
+    match fs with
+      | [] -> res
+      | f::fss ->
+          if List.exists
+            (fun f2 -> check_subset f2 f) res then
+            helper fss res
+          else helper fss (res@[f])
+  in
+  let fs1 = List.sort size_compare fs0 in
+  helper fs1 []
+
 let combine_hpdefs_x hpdefs=
   (*partition the set by hp_name*)
   let rec partition_hpdefs_by_hp_name defs parts=
@@ -1391,9 +1449,10 @@ let combine_hpdefs_x hpdefs=
           let _,args0 = CF.extract_HRel hprel0 in
           let fs = (CF.list_of_disjs f0)@(List.concat (List.map (extract_def args0) tl)) in
           let fs1 = (remove_longer_common_prefix fs) in
+          let fs2 = remove_subset fs1 in
           let p = (CF.pos_of_formula f0) in
           let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 p)
-                      (List.hd fs1) (List.tl fs1)
+                      (List.hd fs2) (List.tl fs2)
           in
           (hp0,hprel0, def)
   in

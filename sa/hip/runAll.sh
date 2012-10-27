@@ -30,6 +30,8 @@ echo "ll-next4"
 ../../hip ll-next4.ss -cp-test cp/ll-next4.cp | grep Compare
 echo "ll-next5"
 ../../hip ll-next5.ss -cp-test cp/ll-next5.cp | grep Compare
+echo "ll-next6"
+../../hip ll-next6.ss -cp-test cp/ll-next6.cp | grep Compare
 echo "ll-delete"
 ../../hip ll-delete.ss -cp-test cp/ll-delete.cp | grep Compare
 echo "ll-delete2"
