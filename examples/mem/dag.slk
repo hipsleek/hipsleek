@@ -5,6 +5,8 @@ data node {
 }.
 
 pred dag<M> == self = null & M = {}
-	or (self::node<v@M,l@L,r@L> * l::dag<Ml> & r::dag<Mr>) & M = union(Ml,Mr,{self})
+	or self::node<v@M,l@L,r@L> * l::dag<Ml> & r::dag<Mr> & M = union(Ml,Mr,{self})
 	inv true
 	mem M->(node<@M,@L,@L>).
+	
+checkentail true |- x::dag<M>.
