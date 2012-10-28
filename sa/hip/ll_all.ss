@@ -32,11 +32,11 @@ HeapPred G1(node a).
 HeapPred G2(node a, node b).
 HeapPred G3(node a, node b, node c).
 
+/*
 void append2(node x, node y)
   infer [H2,G2]
   requires H2(x,y)
   ensures G2(x,y);
-  /*
 
 HP_599(y_598,y) ::= 
  emp&y_598=y
@@ -61,26 +61,40 @@ Possible answer:
   P3(x,y) == P1(y) & x=y
     or x::node<_,q> * P3(q,y)
 
-  */
+        H2(x,y) == x::node<_,q> * P2(q,y)
+        P2(x,y) == P1(y) & x=nil
+          or x::node<_,q> * H2(q,y)
+        G2(x,y) == x::node<_,q> * P3(q,y)
+        P3(x,y) == P1(y) & x=y
+          or x::node<_,q> * P3(q,y)
+
+   H2(x,y) == x::node<_,q> * P2(q,y) & P1(y)
+   P2(x,y) == x=nil
+     or x::node<_,q> * P2(q,y)
+   G2(x,y) == x::node<_,q> * P3(q,y) * P1(y)
+   P3(x,y) == x=y
+      or x::node<_,q> * P3(q,y)
+ 
 {    
 	if (x.next == null) 
            x.next = y;
 	else
            append2(x.next, y);
 }
+*/
 
-/*
-void append(node x, node y)
-  requires x::ll<n1> * y::ll<n2> & x!=null 
-         // n1>0 // & x!=null // & n1>0 & x != null
-  ensures x::ll<n1+n2>;
+void append(ref node x, node y)
+  infer [H2,G3]
+  requires H2(x,y)
+  ensures G3(x,x',y); //'
 {
-	if (x.next == null)
-	      x.next = y;
+	if (x == null)
+	      x = y;
 	else 
 		append(x.next, y);
 }
 
+/*
 // return the first element of a singly linked list 
 node ret_first(node x)
 
