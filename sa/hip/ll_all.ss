@@ -46,7 +46,22 @@ H2(x,y) ::= x::node<val_42_547',next_42_548'> * HP_604(next_42_548',y) * HP_597(
  HP_RELDEFN G2
 G2(x,y) ::= x::node<val_42_572,y_598> * HP_599(y_598,y) * HP_596(y)&true]
 
-   */
+Possible answer:
+ First obtain:
+  H2(x,y) == x::node<_,nil> * P1(y)
+    or x::node<_,q> * H2(q,y)
+  G2(x,y) == x::node<_,y> * P1(y)
+    or x::node<_,q> * G2(x,y)
+
+ Then derive:
+  H2(x,y) == x::node<_,q> * P2(q,y)
+  P2(x,y) == P1(y) & x=nil
+    or x::node<_,q> * H2(q,y)
+  G2(x,y) == x::node<_,q> * P3(q,y)
+  P3(x,y) == P1(y) & x=y
+    or x::node<_,q> * P3(q,y)
+
+  */
 {    
 	if (x.next == null) 
            x.next = y;
