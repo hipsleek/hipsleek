@@ -801,7 +801,152 @@ and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula)
   | EOr b -> EOr {b with formula_struc_or_f1 = subst_struc sst b.formula_struc_or_f1; formula_struc_or_f2 = subst_struc sst b.formula_struc_or_f2;}
   | EList b -> EList (Gen.map_l_snd (subst_struc sst) b)
              (* formula_ext_complete = b.formula_ext_complete;*)
-  
+
+
+(*======for generate tmp view=========*)
+let rec one_formula_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : one_formula) =
+  let h,p,id,pos = split_one_formula f in
+  {formula_heap = h_apply_one_w_data_name s h;
+   formula_pure = Ipure.apply_one s p;
+   formula_thread = (match id with
+     | None -> None
+     | Some v -> Some (subst_var s v));
+   formula_pos = pos}
+
+and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (f0 : h_formula) =
+  let subst_data_name ((c1,_),(c2,_)) c=
+    if c = c1 then c2 else c
+  in
+  let rec helper f=
+    match f with
+      | Conj ({h_formula_conj_h1 = h1;
+	           h_formula_conj_h2 = h2;
+	           h_formula_conj_pos = pos}) ->
+          Conj ({h_formula_conj_h1 = helper h1;
+	             h_formula_conj_h2 = helper h2;
+	             h_formula_conj_pos = pos})
+      | Phase ({h_formula_phase_rd = h1;
+	            h_formula_phase_rw = h2;
+	            h_formula_phase_pos = pos}) ->
+        Phase ({h_formula_phase_rd = helper h1;
+	            h_formula_phase_rw = helper h2;
+	            h_formula_phase_pos = pos})
+      | Star ({h_formula_star_h1 = f1;
+	           h_formula_star_h2 = f2;
+	           h_formula_star_pos = pos}) ->
+          Star ({h_formula_star_h1 = helper f1;
+	             h_formula_star_h2 = helper f2;
+	             h_formula_star_pos = pos})
+      | HeapNode ({h_formula_heap_node = x;
+	               h_formula_heap_name = c;
+	               h_formula_heap_derv = dr;
+	               h_formula_heap_imm = imm;
+	               h_formula_heap_full = full;
+	               h_formula_heap_with_inv = winv;
+	               h_formula_heap_perm = perm; (*LDK*)
+	               h_formula_heap_arguments = args;
+	               h_formula_heap_pseudo_data = ps_data;
+	               h_formula_heap_label = l;
+	               h_formula_heap_pos = pos}) ->
+          let imm = apply_one_imm s imm in
+          let perm1 = match perm with
+            | Some f -> Some (apply_one_iperm () s f)
+            | None -> None
+          in HeapNode ({h_formula_heap_node = subst_var s x;
+		                h_formula_heap_name = subst_data_name s c;
+	                    h_formula_heap_derv = dr;
+		                h_formula_heap_imm = imm;
+		                h_formula_heap_full = full;
+		                h_formula_heap_with_inv = winv;
+		                h_formula_heap_perm = perm1 ; (*LDK*)
+		                h_formula_heap_arguments = List.map (Ipure.e_apply_one s) args;
+		                h_formula_heap_pseudo_data = ps_data;
+		                h_formula_heap_label = l;
+		                h_formula_heap_pos = pos})
+      | HeapNode2 ({
+		  h_formula_heap2_node = x;
+		  h_formula_heap2_name = c;
+	      h_formula_heap2_derv = dr;
+		  h_formula_heap2_imm = imm;
+		  h_formula_heap2_full = full;
+		  h_formula_heap2_with_inv = winv;
+		  h_formula_heap2_arguments = args;
+	      h_formula_heap2_perm = perm; (*LDK*)
+		  h_formula_heap2_pseudo_data = ps_data;
+		  h_formula_heap2_label = l;
+		  h_formula_heap2_pos= pos}) ->
+          let imm = apply_one_imm s imm in
+          let perm1 = match perm with
+            | Some f -> Some (apply_one_iperm () s f)
+            | None -> None
+          in
+          HeapNode2 ({
+		      h_formula_heap2_node = subst_var s x;
+		      h_formula_heap2_name = subst_data_name s c;
+	          h_formula_heap2_derv = dr;
+		      h_formula_heap2_imm = imm;
+		      h_formula_heap2_full =full;
+		      h_formula_heap2_with_inv = winv;
+		      h_formula_heap2_perm = perm1; (*LDK*)
+		      h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(Ipure.e_apply_one s c2))) args;
+		      h_formula_heap2_pseudo_data =ps_data;
+		      h_formula_heap2_label = l;
+		      h_formula_heap2_pos = pos})
+      | HTrue -> f
+      | HFalse -> f
+      | HEmp -> f
+      | HRel (r, args, l) -> HRel (r, List.map (Ipure.e_apply_one s) args,l)
+  in
+  helper f0
+
+and apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : formula) = match f with
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+        Or ({formula_or_f1 = apply_one_w_data_name s f1; formula_or_f2 =  apply_one_w_data_name s f2; formula_or_pos = pos})
+  | Base ({formula_base_heap = h;
+	formula_base_pure = p;
+	formula_base_flow = fl;
+	formula_base_and = a;
+	formula_base_pos = pos }) ->
+        Base ({formula_base_heap = h_apply_one_w_data_name s h;
+		formula_base_pure = Ipure.apply_one s p;
+		formula_base_flow = fl;
+	    formula_base_and = List.map (one_formula_apply_one_w_data_name s) a;
+		formula_base_pos = pos})
+  | Exists ({formula_exists_qvars = qsv;
+	formula_exists_heap = qh;
+	formula_exists_pure = qp;
+	formula_exists_flow = fl;
+	formula_exists_and = a;
+	formula_exists_pos = pos}) ->
+	    if List.mem (fst fr) (List.map fst qsv) then f
+	    else Exists ({formula_exists_qvars = qsv;
+		formula_exists_heap =  h_apply_one_w_data_name s qh;
+		formula_exists_pure = Ipure.apply_one s qp;
+		formula_exists_flow = fl;
+	    formula_exists_and = List.map (one_formula_apply_one_w_data_name s) a;
+		formula_exists_pos = pos})
+
+and subst_w_data_name sst (f : formula) = match sst with
+  | s :: rest -> subst_w_data_name rest (apply_one_w_data_name s f)
+  | [] -> f
+
+and subst_w_data_name_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula):struc_formula = match f with
+	| EAssume (b,tag) -> EAssume ((subst_w_data_name sst b),tag)
+	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> ((Ipure.subst sst c1),(subst_w_data_name_struc sst c2))) b.formula_case_branches}
+	| EBase b->  EBase {
+			  formula_struc_implicit_inst = List.map (subst_var_list sst) b.formula_struc_implicit_inst;
+			  formula_struc_explicit_inst = List.map (subst_var_list sst) b.formula_struc_explicit_inst;
+			  formula_struc_exists = List.map (subst_var_list sst) b.formula_struc_exists;
+			  formula_struc_base = subst_w_data_name sst b.formula_struc_base;
+			  formula_struc_continuation = Gen.map_opt (subst_w_data_name_struc sst) b.formula_struc_continuation;
+			  formula_struc_pos = b.formula_struc_pos}
+  | EInfer b -> EInfer {b with
+      formula_inf_vars = List.map (subst_var_list sst) b.formula_inf_vars;
+      formula_inf_continuation = subst_w_data_name_struc sst b.formula_inf_continuation;}
+  | EOr b -> EOr {b with formula_struc_or_f1 = subst_w_data_name_struc sst b.formula_struc_or_f1; formula_struc_or_f2 = subst_w_data_name_struc sst b.formula_struc_or_f2;}
+  | EList b -> EList (Gen.map_l_snd (subst_w_data_name_struc sst) b)
+             (* formula_ext_complete = b.formula_ext_complete;*)
+(*======END for generate tmp view======*)
 
 let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula = match f with
 	| EAssume (b,tag) -> EAssume ((rename_bound_vars b),tag)

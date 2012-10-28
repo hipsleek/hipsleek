@@ -13,6 +13,7 @@ HeapPred H1a(node a).
 HeapPred H1b(node a).
 HeapPred H2(node a, node b).
 HeapPred HP1(node a, node b).
+/*
 ll<> == self=null
   or self::node<_,q>*q::ll<>
   inv true;
@@ -24,7 +25,7 @@ lseg<p> == self=p
 l2<y> == self::node<a,null> & y=self
   or self::node<_,q>*q::l2<y> 
   inv y!=null;
-
+*/
 void append(node x, node y)
 
   infer[H1,H1a,H1b,G2]

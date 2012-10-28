@@ -56,6 +56,7 @@ HeapPred HP_641(node a, node b).
 HeapPred T1(node a).
 HeapPred T2(node a, node b).
 
+/*
 ll<> == self=null
   or self::node<_,q>*q::ll<>
   inv true;
@@ -67,6 +68,7 @@ lseg<p> == self=p
 l2<y> == self::node<a,null> & y=self
   or self::node<_,q>*q::l2<y> 
   inv y!=null;
+*/
 
 void append(node x, node y)
 

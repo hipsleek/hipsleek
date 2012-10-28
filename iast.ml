@@ -1108,7 +1108,6 @@ and collect_formula (f0 : F.formula) : ident list =
 
 and find_data_view_x (dl:ident list) (f:Iformula.struc_formula) pos :  (ident list) * (ident list) =
   let x = collect_struc f in
-  let _ = print_endline ("x: " ^ (String.concat "," x)) in
   let (dl,el) = List.partition (fun v -> (List.mem v dl)) x in
   let dl = Gen.Basic.remove_dups dl in
   let el = Gen.Basic.remove_dups el in

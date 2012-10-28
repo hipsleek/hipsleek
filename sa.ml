@@ -2450,8 +2450,9 @@ let match_hps_views (hp_defs: SAU.hp_rel_def list) (vdcls: CA.view_decl list):
   let pr3a = fun (hp,vns) -> (!CP.print_sv hp) ^ " === " ^
       (* ( String.concat " OR " view_names) *) (pr2 vns) in
   let pr3 = pr_list_ln pr3a in
-  Debug.no_1 "match_hps_views" pr1 pr3
-      (fun _ -> match_hps_views_x hp_defs vdcls) hp_defs
+  let pr4 = pr_list_ln (Cprinter.string_of_view_decl) in
+  Debug.no_2 "match_hps_views" pr1 pr4 pr3
+      (fun _ _ -> match_hps_views_x hp_defs vdcls) hp_defs vdcls
 
 (*END matching*)
 
@@ -2650,7 +2651,7 @@ let check_horm_data_decl_x tmpl_data_decl data_decl=
 
 let check_horm_data_decl tmpl_data_decl data_decl=
   let pr1 = Iprinter.string_of_data_decl in
-  Debug.ho_2 "check_horm_data_decl" pr1 pr1 string_of_bool
+  Debug.no_2 "check_horm_data_decl" pr1 pr1 string_of_bool
       (fun _ _ -> check_horm_data_decl_x tmpl_data_decl data_decl)
       tmpl_data_decl data_decl
 
@@ -2669,11 +2670,11 @@ let build_horm_view_x templ_view_decls horm_dd=
   let generate_view ((tmp_data_name,tmp_data_fields),(data_name,data_fields))
         view=
     (*assume they have the same number of fields*)
-    let ss =
-            List.fold_left(fun a (c1,c2)-> ((c1,Unprimed),(c2,Unprimed))::((c1,Primed),(c2,Primed))::a) [] [(tmp_data_name,data_name)] in
     let n_view_name = view.Iast.view_name ^ "_" ^ data_name in
+    let ss =
+            List.fold_left(fun a (c1,c2)-> ((c1,Unprimed),(c2,Unprimed))::((c1,Primed),(c2,Primed))::a) [] [(tmp_data_name,data_name);(view.Iast.view_name,n_view_name)] in
     let n_view_invariant = Ipure.subst ss view.Iast.view_invariant in
-    let n_view_formula = Iformula.subst_struc ss view.Iast.view_formula in
+    let n_view_formula = Iformula.subst_w_data_name_struc ss view.Iast.view_formula in
     let n_view_inv_lock =
       match view.Iast.view_inv_lock with
         | None -> None
@@ -2699,7 +2700,7 @@ let build_horm_view_x templ_view_decls horm_dd=
 let build_horm_view templ_view_decls horm_dd=
   let pr1 = fun ((templ_data_name,_),(data_name,_)) -> (templ_data_name ^ ":" ^ data_name) in
   let pr2 = pr_list_ln Iprinter.string_of_view_decl in
-  Debug.ho_2 "build_horm_view" pr2 pr1 pr2
+  Debug.no_2 "build_horm_view" pr2 pr1 pr2
       (fun _ _ ->  build_horm_view_x templ_view_decls horm_dd) templ_view_decls horm_dd
 
 let compute_view_data_name templ_ddefs templ_vdefs vdef=
@@ -2707,7 +2708,7 @@ let compute_view_data_name templ_ddefs templ_vdefs vdef=
     if (String.length vdef.Iast.view_data_name) = 0 then
       let dl = List.map (fun v -> v.Iast.data_name) templ_ddefs in
       let (cands,_)= Iast.find_data_view dl vdef.Iast.view_formula no_pos in
-      let _ = print_endline ("Feasible self type: " ^ (String.concat "," cands)) in
+      (* let _ = print_endline ("Feasible self type: " ^ (String.concat "," cands)) in *)
       List.hd cands
     else vdef.Iast.view_data_name
   in
@@ -2732,5 +2733,5 @@ let generate_horm_view_x templ_data_decls templ_view_decls data_decls=
 let generate_horm_view templ_data_decls templ_view_decls data_decls=
   let pr1 = pr_list_ln Iprinter.string_of_data_decl in
   let pr2 = pr_list_ln Iprinter.string_of_view_decl in
-  Debug.ho_3 "generate_horm_view" pr1 pr2 pr1 pr2
+  Debug.no_3 "generate_horm_view" pr1 pr2 pr1 pr2
       (fun _ _ _ -> generate_horm_view_x templ_data_decls templ_view_decls data_decls) templ_data_decls templ_view_decls data_decls
