@@ -2547,7 +2547,7 @@ let collect_sel_hp_def defs sel_hps unk_hps m=
   input: constrs: (formula * formula) list
   output: definitions: (formula * formula) list
 *)
-let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * SAU.hp_rel_def list) =
+let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * SAU.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list) =
   DD.ninfo_pprint "\n\n>>>>>> norm_hp_rel <<<<<<" no_pos;
   DD.ninfo_pprint ">>>>>> step 1a: drop arguments<<<<<<" no_pos;
   (* step 1: drop irr parameters *)
@@ -2595,7 +2595,9 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * SA
   let hp_defs4 = rems@sel_hpdefs1 in
   let sel_hp_defs = collect_sel_hp_def hp_defs4 sel_hp_rels unk_hp_svl m in
   let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) sel_hp_defs in
-  (constr3,  hp_defs4) (*return for cp*)
+  (*for cp*)
+  let dropped_hps = List.filter (fun (hp,_,_) -> not(CP.mem_svl hp sel_hp_rels)) drop_hp_args in
+  (constr3,  hp_defs4,dropped_hps) (*return for cp*)
   (* loop 1 *)
   (*simplify constrs*)
   (* let constrs12 = simplify_constrs constrs1 in *)
@@ -2613,10 +2615,12 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * SA
 
 (*(pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula)*)
 let infer_hps prog (hp_constrs: CF.hprel list) sel_hp_rels:
- (CF.hprel list * SAU.hp_rel_def list) =
+ (CF.hprel list * SAU.hp_rel_def list*(CP.spec_var*CP.exp list * CP.exp list) list) =
+  let pr0 = pr_list !CP.print_exp in
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  Debug.no_1 "infer_hp" pr1 (pr_pair pr1 pr2)
+  let pr3 = pr_list (pr_triple !CP.print_sv pr0 pr0) in
+  Debug.no_1 "infer_hp" pr1 (pr_triple pr1 pr2 pr3)
       (fun _ -> infer_hps_x prog hp_constrs sel_hp_rels) hp_constrs
 
 (**===============END of NORMALIZATION==============**)

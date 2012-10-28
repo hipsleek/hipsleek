@@ -1933,8 +1933,11 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     let _ = print_endline "*************************************" in
                     let _ = print_endline (Infer.rel_ass_stk # string_of) in
                     let _ = print_endline "*************************************" in
-		            let ls_hprel, ls_inferred_hps = Sa.infer_hps prog hp_lst_assume
+		            let ls_hprel, ls_inferred_hps, dropped_hps = Sa.infer_hps prog hp_lst_assume
                     sel_hp_rels in
+                    (*dropped hps a list of hp * old exp args list * new exp args list
+                      to convet exp args to svl: (List.fold_left List.append [] (List.map CP.afv eargs))
+                    *)
 		            let _ = print_endline "" in 
                     let _ = print_endline "*************************************" in
                     let _ = print_endline "*******relational definition ********" in
