@@ -1935,9 +1935,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     let _ = print_endline "*************************************" in
 		            let ls_hprel, ls_inferred_hps, dropped_hps = Sa.infer_hps prog hp_lst_assume
                     sel_hp_rels in
-                    (*dropped hps a list of hp * old exp args list * new exp args list
-                      to convet exp args to svl: (List.fold_left List.append [] (List.map CP.afv eargs))
-                    *)
+                   
 		            let _ = print_endline "" in 
                     let _ = print_endline "*************************************" in
                     let _ = print_endline "*******relational definition ********" in
@@ -1982,6 +1980,26 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 		    let _ = if(!Globals.gen_cpfile) then(
 		      let file_name = !Globals.cpfile in
 		      let hpdecls = prog.prog_hp_decls in
+		      (*dropped_hps *)
+		      let revise_hpdecls hpdecl dropped_hps =
+			let name = hpdecl.Cast.hp_name in
+			try (
+			  let (sv,_,eargs) = List.find (fun (a,b,c) -> String.compare (CP.full_name_of_spec_var a) name == 0) dropped_hps in
+			  let new_hp_vars = List.fold_left List.append [] (List.map CP.afv eargs) in
+			  let new_name = Globals.hp_default_prefix_name ^ (string_of_int (Globals.fresh_int())) in
+			  let new_sv =  CP.SpecVar (HpT,new_name,Unprimed) in
+			  let new_hpdecl =  ({hpdecl with Cast.hp_name = new_name;
+							Cast.hp_vars = new_hp_vars}) in
+			  (new_hpdecl::[hpdecl],[(sv,new_sv)])
+			)
+			with 
+			  | Not_found -> ([hpdecl],[])
+		      in
+		      let pairs = List.map (fun c-> revise_hpdecls c dropped_hps) hpdecls in
+		      let e1,e2 = List.split pairs in
+		      let hpdecls = List.concat e1 in
+		      let name_mtb = List.concat e2 in (*mtb: name --> new_name*)
+		      
 		      let string_of_hp_decls hpdecls = 
 			(
 			  let string_of_hp_decl hpdecl =
@@ -2005,7 +2023,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			let pr1 =  pr_lst ";\n" (pr_ass Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
 			let ass_cont = pr1 (List.map (fun hp -> hp.CF.hprel_lhs,hp.CF.hprel_rhs)
 							hp_lst_assume) in (*hp_lst_assume*)
-			let hpdefs_cont =  pr1 (List.map (fun (_,hf,f2) -> CF.formula_of_heap hf no_pos,f2)
+			let change_hp f = CF.subst name_mtb f in
+			let hpdefs_cont =  pr1 (List.map (fun (_,hf,f2) -> change_hp (CF.formula_of_heap hf no_pos), change_hp f2)
 							    ls_inferred_hps) in (*ls_inferred_hps*)
 			let ass = "ass " ^ (!CP.print_svl sel_hp_rels) ^ ": {\n" ^ ass_cont ^ "\n}\n" in
 			let hpdefs = "hpdefs " ^ (!CP.print_svl sel_hp_rels) ^ ": {\n"  ^ hpdefs_cont ^ "\n}\n"in

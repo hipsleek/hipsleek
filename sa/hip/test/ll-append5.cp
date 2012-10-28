@@ -2,6 +2,7 @@ HeapPred HP_617(node next_56_561', node y).
 HeapPred HP_612(node y_611, node y).
 HeapPred HP_610(node y).
 HeapPred HP_609(node y).
+HeapPred HP_622(node v_node_56_602).
 HeapPred HP_579(node next_56_561', node x').
 HeapPred HP1(node a, node b).
 HeapPred H2(node a, node b).
@@ -18,7 +19,7 @@ ass [H2,G2]: {
  x::node<val_56_587,v_node_56_602> * G2(v_node_56_602,y)&v_node_56_602!=null -->  G2(x,y)&true
 }
 hpdefs [H2,G2]: {
- HP_579(v_node_56_596)&true -->  
+ HP_622(v_node_56_596)&true -->  
  emp&v_node_56_596=null
  or HP_610(y) * HP_617(next_56_561',y)&true
  ;

@@ -1,5 +1,6 @@
 HeapPred HP_616(node next_32_562').
 HeapPred HP_611(node y_610, node y).
+HeapPred HP_621(node v_node_32_603).
 HeapPred HP_580(node next_32_562', node x').
 HeapPred HP1(node a, node b).
 HeapPred H2(node a, node b).
@@ -17,7 +18,7 @@ ass [H1,G2]: {
 v_node_32_603!=null -->  G2(x,y)&true
 }
 hpdefs [H1,G2]: {
- HP_580(v_node_32_597)&true -->  
+ HP_621(v_node_32_597)&true -->  
  HP_616(next_32_562')&true
  or emp&v_node_32_597=null
  ;
