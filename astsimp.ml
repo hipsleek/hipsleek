@@ -5655,9 +5655,9 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 		      let args_exp_types = List.map (fun t -> (t)) args_ctypes in
               let _ = gather_type_info_var r stab HpT in
 		      let _ = List.map2 (fun x y -> gather_type_info_exp x stab y) args args_exp_types in ()
-            else
-              failwith ("number of arguments for heap relation "^r^" does not match")
-		  with
+             else
+                Err.report_error{ Err.error_loc = pos; Err.error_text = ("number of arguments for heap relation "^r^" does not match"); }
+         with
 		    | Not_found -> failwith ("iast.gather_type_info_heap :gather_type_info_heap: relation "^r^" cannot be found")
             | Failure s -> failwith s
             | _ -> print_endline ("gather_type_info_heap: relation " ^ r)

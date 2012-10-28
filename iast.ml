@@ -464,6 +464,7 @@ let bag_type = BagT Int
 (* utility functions *)
 
 let print_struc_formula = ref (fun (x:F.struc_formula) -> "Uninitialised printer")
+let print_h_formula = ref (fun (x:F.h_formula) -> "Uninitialised printer")
 let print_view_decl = ref (fun (x:view_decl) -> "Uninitialised printer")
 
 
@@ -1079,15 +1080,25 @@ and collect_formula (f0 : F.formula) : ident list =
   let rec helper (h0 : F.h_formula) = match h0 with
 	| F.HeapNode h ->
 		  let (v, p), c = h.F.h_formula_heap_node, h.F.h_formula_heap_name in
+          (* let _ = print_endline ("v:" ^ v ^ "  c:" ^ c) in *)
 		  if v = self then [c] else []
 	| F.Star h ->
-		  let h1, h2, pos = h.F.h_formula_star_h1, h.F.h_formula_star_h2, h.F.h_formula_star_pos in
+        let h1, h2, pos = h.F.h_formula_star_h1, h.F.h_formula_star_h2, h.F.h_formula_star_pos in
 		  let n1 = helper h1 in
 		  let n2 = helper h2 in
           let d1 = List.length n1 in
           let d2 = List.length n2 in
 		  if d1>0 & d2>0 then
-			report_error pos ("multiple occurrences of self as heap nodes in one branch are not allowed")
+			report_error pos ("Star:multiple occurrences of self as heap nodes in one branch are not allowed")
+		  else n1@n2
+    | F.Phase h ->
+        let h1, h2, pos = h.F. h_formula_phase_rd, h.F.h_formula_phase_rw, h.F.h_formula_phase_pos in
+		  let n1 = helper h1 in
+		  let n2 = helper h2 in
+          let d1 = List.length n1 in
+          let d2 = List.length n2 in
+		  if d1>0 & d2>0 then
+			report_error pos ("Phase: multiple occurrences of self as heap nodes in one branch are not allowed")
 		  else n1@n2
 	| _ -> [] in
   match f0 with
@@ -1095,13 +1106,20 @@ and collect_formula (f0 : F.formula) : ident list =
     | F.Exists f -> helper f.F.formula_exists_heap
     | F.Or f -> (collect_formula f.F.formula_or_f1) @ (collect_formula f.F.formula_or_f2)
 
-and find_data_view (dl:ident list) (f:Iformula.struc_formula) pos :  (ident list) * (ident list) =
+and find_data_view_x (dl:ident list) (f:Iformula.struc_formula) pos :  (ident list) * (ident list) =
   let x = collect_struc f in
+  let _ = print_endline ("x: " ^ (String.concat "," x)) in
   let (dl,el) = List.partition (fun v -> (List.mem v dl)) x in
   let dl = Gen.Basic.remove_dups dl in
   let el = Gen.Basic.remove_dups el in
   if (List.length dl>1) then report_error pos ("self points to different data node types")
   else (dl,el)
+
+and find_data_view (dl:ident list) (f:Iformula.struc_formula) pos :  (ident list) * (ident list) =
+  let pr1 a= String.concat  "," a in
+  let pr2 = !print_struc_formula in
+  Debug.no_2 "find_data_view" pr1 pr2 (pr_pair pr1 pr1)
+      (fun _ _ -> find_data_view_x dl f pos) dl f
 
 and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
   Debug.no_1 "syn_data_name" pr_no pr_no

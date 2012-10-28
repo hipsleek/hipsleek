@@ -117,7 +117,9 @@ let process_lib_file prog =
   let parse_one_lib (ddecls,vdecls) lib=
     let lib_prog = parse_file_full lib in
     (*each template data of lib, find corres. data in progs, generate corres. view*)
-    (ddecls@lib_prog.Iast.prog_data_decls),(vdecls@lib_prog.Iast.prog_view_decls)
+    let tmpl_data_decls = List.filter (fun dd -> dd.Iast.data_is_template) lib_prog.Iast.prog_data_decls in
+    let horm_views = Sa.generate_horm_view tmpl_data_decls lib_prog.Iast.prog_view_decls prog.Iast.prog_data_decls in
+    (ddecls@lib_prog.Iast.prog_data_decls),(vdecls@lib_prog.Iast.prog_view_decls@horm_views)
   in
   let ddecls,vdecls = List.fold_left parse_one_lib ([],[]) !Globals.lib_files in
   {prog with Iast.prog_data_decls = prog.Iast.prog_data_decls @ ddecls;
@@ -136,7 +138,6 @@ let process_source_full source =
     else prog
   in
   let prog = process_lib_file prog in
-  let _ = print_endline "L2: cp 1" in
   let _ = Gen.Profiling.pop_time "Process compare file" in
   (* Remove all duplicated declared prelude *)
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
