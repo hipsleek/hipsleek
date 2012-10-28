@@ -3657,7 +3657,7 @@ let filter_var_new_x (f : formula) (keep_slv : spec_var list) : formula =
   in
   let conjs = list_of_conjs f in
   let keep_slv = remove_dups_svl keep_slv in
-  let fv_list = List.map fv conjs in
+  (* let fv_list = List.map fv conjs in *)
   let rele_fs = filter_fix [] conjs keep_slv in
   conj_of_list rele_fs no_pos
 

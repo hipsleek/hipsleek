@@ -1786,7 +1786,7 @@ fixed_parameter:
         param_loc = get_pos_camlp4 _loc 3;
         param_name = id }]];
 
-ref_t: [[REF -> RefMod]];
+ref_t: [[`REF -> RefMod]];
   
 proc_body: [[t=block-> t]];
 

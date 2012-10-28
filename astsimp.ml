@@ -6623,10 +6623,10 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       ((formula_label list * (Gen.Baga(CP.PtrSV).baga * Cpure.b_formula list)) list) = 
   (*print_string ("sent to case inf: "^(Cprinter.string_of_formula init_form)^"\n");*)
   (*aux functions for case inference*)
-  let rec get_or_list (f: CF.formula):CF.formula list = match f with
-    | CF.Base _
-    | CF.Exists _ -> [f]
-    | CF.Or o -> (get_or_list o.CF.formula_or_f1)@(get_or_list o.CF.formula_or_f2) in
+  (* let rec get_or_list (f: CF.formula):CF.formula list = match f with *)
+  (*   | CF.Base _ *)
+  (*   | CF.Exists _ -> [f] *)
+  (*   | CF.Or o -> (get_or_list o.CF.formula_or_f1)@(get_or_list o.CF.formula_or_f2) in *)
   
   let rec get_pure_conj_list (f:CP.formula):(CP.formula * (bool*CP.b_formula) list) = match f with
     | CP.BForm (l,_) -> (CP.mkTrue no_pos , [(true,l)])

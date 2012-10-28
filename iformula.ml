@@ -888,8 +888,8 @@ and float_out_exps_from_heap_x (f:formula ):formula =
 		          (((fst c),nv),[(nn,npf)])) b.h_formula_heap2_arguments) in
         (HeapNode2 ({b with h_formula_heap2_arguments = na;h_formula_heap2_perm = na_perm}),(List.concat (ls_perm :: ls)))
     | HRel (r, args, l) ->
-        	let nargs = List.map Ipure.float_out_exp_min_max args in
-			let nargse = List.map fst nargs in
+        	(* let nargs = List.map Ipure.float_out_exp_min_max args in *)
+			(* let nargse = List.map fst nargs in *)
             let na,ls = List.split (List.map (fun c->
 			match c with
 			  | Ipure.Var _ -> (c,[])
@@ -1399,7 +1399,7 @@ let find_barr_node bname (f:int) (t:int) struc :bool=
 					| _ -> Bar_wrong_state)
 			else Bar_not_found 
 		 | HeapNode2 h -> Gen.report_error no_pos "malfunction with convert to heap node"
-		 | HTrue | HEmp | HFalse -> Bar_not_found in
+		 | HRel _ | HTrue | HEmp | HFalse -> Bar_not_found in
 	let rec find_node x f= match f with 
 		| Base {formula_base_heap = h; formula_base_pure = p} 
 		| Exists {formula_exists_heap = h; formula_exists_pure = p} -> 

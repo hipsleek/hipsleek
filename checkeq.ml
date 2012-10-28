@@ -118,7 +118,7 @@ and checkeq_formulas_one (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(m
 and checkeq_h_formulas_x (hvars: ident list)(hf1: CF.h_formula) (hf2: CF.h_formula)(mtl: map_table list): (bool * (map_table list))=
   let check_false_hf1 = check_false_formula hf1 in
   let check_false_hf2 = check_false_formula hf2 in
-  let modify_mtl mtl f = List.map (fun mt -> (mt,f)) mtl in
+  (* let modify_mtl mtl f = List.map (fun mt -> (mt,f)) mtl in *)
   if(check_false_hf1 && check_false_hf2) then (true, [[]])
   else 
     if(check_false_hf1 || check_false_hf2) 
@@ -226,18 +226,18 @@ and match_equiv_node (hvars: ident list) (n: CF.h_formula_data) (hf2: CF.h_formu
 and check_node_equiv (hvars: ident list)(n1: CF.h_formula_data) (n2:  CF.h_formula_data)(mt: map_table): (bool * map_table)=
   let var1 = n1.CF.h_formula_data_node in
   let name1 = n1.CF.h_formula_data_name in
-  let ann1 = n1.CF.h_formula_data_imm in
+  (* let ann1 = n1.CF.h_formula_data_imm in *)
   let args1 = n1.CF.h_formula_data_arguments in
   let is_hard_n1 = (List.mem (CP.name_of_spec_var n1.CF.h_formula_data_node) hvars) in
   let var2 = n2.CF.h_formula_data_node in
   let name2 = n2.CF.h_formula_data_name in
-  let ann2 = n2.CF.h_formula_data_imm in
+  (* let ann2 = n2.CF.h_formula_data_imm in *)
   let args2 = n2.CF.h_formula_data_arguments in
   let is_hard_n2 = (List.mem (CP.name_of_spec_var n2.CF.h_formula_data_node) hvars) in
-  let rec str hvars  = match hvars with
-    | [] -> ""
-    | a::y -> a ^ str y 
-  in
+  (* let rec str hvars  = match hvars with *)
+  (*   | [] -> "" *)
+  (*   | a::y -> a ^ str y  *)
+  (* in *)
  (* print_string (str hvars) ;*)
   let is_hard = is_hard_n1 || is_hard_n2 in
 (* if((not (CF.is_eq_node_name name1 name2)) || (is_hard && (not (CP.eq_spec_var var1 var2))) || (not (CF.is_eq_data_ann ann1 ann2)))  *)
@@ -953,12 +953,12 @@ and checkeq_h_formulas_with_diff ivars hf1 hf2 mtl=
   let pr1 = Cprinter.prtt_string_of_h_formula in
   let pr2 b = if(b) then "VALID" else "INVALID" in
   let pr3 =  pr_list_ln (pr_pair string_of_map_table Cprinter.prtt_string_of_h_formula) in
-  let pr4 = pr_list_ln Cprinter.prtt_string_of_h_formula in
+  (* let pr4 = pr_list_ln Cprinter.prtt_string_of_h_formula in *)
   Debug.no_2 "checkeq_h_formulas" pr1 pr1 (pr_pair pr2 pr3)
     (fun _ _ ->  checkeq_h_formulas_with_diff_x ivars hf1 hf2 mtl) hf1 hf2
 
 and checkeq_mix_formulas_with_diff (hvars: ident list)(mp1: MCP.mix_formula) (mp2: MCP.mix_formula)(mix_mtl: (map_table * CF.h_formula) list): (bool * ((map_table * CF.formula) list))=
-  let check_heap = List.exists (fun (mt, hf) -> CF.is_empty_heap hf) mix_mtl in  
+  (* let check_heap = List.exists (fun (mt, hf) -> CF.is_empty_heap hf) mix_mtl in   *)
   let count mix_mtls = match mix_mtls with
     | [] -> 0
     | (mt,x)::y -> CF.no_of_cnts_fml x (*no count of relation*)

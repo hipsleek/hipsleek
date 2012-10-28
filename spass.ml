@@ -80,7 +80,7 @@ let rec smt_of_typ t =
 			illegal_format "z3.smt_of_typ: spec not supported for SMT"
 		| Named _ -> "Int" (* objects and records are just pointers *)
 		| Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
-        | RelT -> illegal_format "z3.smt_of_typ: relt not supported for SMT"
+        | RelT | HpT -> illegal_format "z3.smt_of_typ: relt not supported for SMT"
 
 let smt_of_spec_var sv =
 	(Cpure.name_of_spec_var sv) ^ (if Cpure.is_primed sv then "_primed" else "")

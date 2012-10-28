@@ -1484,12 +1484,14 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps c
   (* let nreqs = elim_eqs_args reqs (rhp_args) in *)
   let nleqs = leqs in
   let nreqs = reqs in
-  let helper2 ss (hps,args)=
-    match hps with
-      | [] -> []
-      | [hp] -> [(hp, List.map (CP.subs_one ss) args)]
-      | _ -> report_error no_pos "infer.simplify_lhs_rhs: 1"
-  in
+
+  (* let helper2 ss (hps,args)= *)
+  (*   match hps with *)
+  (*     | [] -> [] *)
+  (*     | [hp] -> [(hp, List.map (CP.subs_one ss) args)] *)
+  (*     | _ -> report_error no_pos "infer.simplify_lhs_rhs: 1" *)
+  (* in *)
+
   (* let lhs_hpargs = List.concat( List.map (helper2 nleqs) lhp_args) in *)
   (* let rhs_hpargs = List.concat(List.map (helper2 (nleqs@nreqs)) rhp_args) in *)
   (* let inter = Gen.BList.intersect_eq SAU.check_hp_arg_eq lhs_hpargs rhs_hpargs in *)

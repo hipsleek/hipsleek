@@ -118,6 +118,7 @@ and aug_class_name (t : typ) = match t with
   | NUM -> "NUMAug"
   | Void -> "void"
   | Tree_sh -> "tree_share"
+  | HpT -> "HeapP"
   | (BagT t) -> "Set("^(aug_class_name t)^")"
   | (TVar i) -> "TVar["^(string_of_int i)^"]"
   | List t -> "List("^(aug_class_name t)^")"
@@ -1091,7 +1092,8 @@ and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (v
       let tmp1 = Gen.map4 helper vs vdef.C.view_vars modes vdef.C.view_partially_bound_vars in
       let tmp2 = List.concat tmp1 in
 	tmp2
-    end
+  end
+  | HRel _ -> []
   | Hole _ -> []
   | HTrue -> []
   | HEmp -> []
@@ -1584,7 +1586,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
 		       exp_seq_pos = pos}) in
 	seq1
     end
-  | Hole _ | HTrue | HEmp->
+  | Hole _ | HTrue | HEmp | HRel _ ->
       Empty no_pos
   | HFalse -> 
       return_false no_pos

@@ -1013,16 +1013,16 @@ and mkETrue flowt pos = EBase({
 	formula_struc_pos = pos})
   
 and mkOr f1 f2 pos =
-  let rec liniarize_or c = match c with
-	| Or f -> 
-		  let p11,p12,p13 = liniarize_or f.formula_or_f1 in
-		  let p21,p22,p23 = liniarize_or f.formula_or_f2 in
-		  (p11@p21, p12@p22, p13@p23)
-	| Exists _ -> ([],[],[c]) 
-	| Base f -> 
-		  if (isAnyConstFalse c) then ([],[c],[])
-		  else if (isAnyConstTrue c) then ([c],[],[])
-		  else ([],[],[c]) in
+  (* let rec liniarize_or c = match c with *)
+  (*   | Or f ->  *)
+  (*   	  let p11,p12,p13 = liniarize_or f.formula_or_f1 in *)
+  (*   	  let p21,p22,p23 = liniarize_or f.formula_or_f2 in *)
+  (*   	  (p11@p21, p12@p22, p13@p23) *)
+  (*   | Exists _ -> ([],[],[c])  *)
+  (*   | Base f ->  *)
+  (*   	  if (isAnyConstFalse c) then ([],[c],[]) *)
+  (*   	  else if (isAnyConstTrue c) then ([c],[],[]) *)
+  (*   	  else ([],[],[c]) in *)
   if isStrictConstTrue f1 || isStrictConstTrue f2 then
 	mkTrue (mkTrueFlow ()) pos
   else if isAnyConstFalse f1 then f2
@@ -1898,14 +1898,14 @@ and fv (f : formula) : CP.spec_var list = match f with
 		res
 	
 and f_h_fv (f : formula) : CP.spec_var list = 
-	let rec helper h = match h with
-	  | Star b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_star_h1 @ helper b.h_formula_star_h2)
-	  | Conj b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_conj_h1 @ helper b.h_formula_conj_h2)
-	  | Phase b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_phase_rd @ helper b.h_formula_phase_rw)
-	  | DataNode b -> [b.h_formula_data_node]
-	  | ViewNode b -> [b.h_formula_view_node]
-	  | HRel (r, args, pos) -> [r] (*vp*)
-	  | HTrue | HFalse | HEmp | Hole _ -> [] in
+	(* let rec helper h = match h with *)
+	(*   | Star b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_star_h1 @ helper b.h_formula_star_h2) *)
+	(*   | Conj b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_conj_h1 @ helper b.h_formula_conj_h2) *)
+	(*   | Phase b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_phase_rd @ helper b.h_formula_phase_rw) *)
+	(*   | DataNode b -> [b.h_formula_data_node] *)
+	(*   | ViewNode b -> [b.h_formula_view_node] *)
+	(*   | HRel (r, args, pos) -> [r] (\*vp*\) *)
+	(*   | HTrue | HFalse | HEmp | Hole _ -> [] in *)
 	match f with
 	  | Or b -> CP.remove_dups_svl (fv b.formula_or_f1 @ fv b.formula_or_f2)
 	  | Base b -> h_fv b.formula_base_heap
@@ -3146,6 +3146,11 @@ let extract_HRel hf=
     | HRel (hp, eargs, _ ) -> (hp, List.concat (List.map CP.afv eargs))
     | _ -> report_error no_pos "CF.extract_HRel"
 
+let extract_HRel_orig hf=
+  match hf with
+    | HRel (hp, eargs, p ) -> (hp, eargs,p)
+    | _ -> report_error no_pos "CF.extract_HRel"
+
 let get_HRels hf=
   let rec helper h=
     match h with
@@ -3733,24 +3738,26 @@ let rec subst_hrel_f f hprel_subst=
     | Exists fe -> Exists {fe with formula_exists_heap =  subst_hrel_hf fe.formula_exists_heap hprel_subst;}
 
 and subst_hrel_hf hf hprel_subst=
-  let helper (HRel (id,el,p)) (HRel (id1,el1,_), hf)=
-    if CP.eq_spec_var id id1 then
+  (* let helper (HRel (id,el,p)) (HRel (id1,el1,_), hf)= *)
+  let helper hrel1 (hrel2, hf)=
+    let id1,el1,_ = extract_HRel_orig hrel1 in
+    let id2,el2,_ = extract_HRel_orig hrel2 in
+    if CP.eq_spec_var id1 id2 then
       (*should specvar subst*)
-      let svl1 = (List.fold_left List.append [] (List.map CP.afv el)) in
-      let svl2 = (List.fold_left List.append [] (List.map CP.afv el1)) in
+      let svl1 = (List.fold_left List.append [] (List.map CP.afv el1)) in
+      let svl2 = (List.fold_left List.append [] (List.map CP.afv el2)) in
       let f = h_subst (List.combine svl2 svl1) hf in
       (true, f)
-    else (false, HRel (id,el,p))
+    else (false, hrel1)
   in
-  let rec find_and_subst (HRel (id,el,p)) subst =
+  let rec find_and_subst (* (HRel (id,el,p)) *) hrel subst =
     (* List.fold_left helper (HRel (id,el,p)) subst *)
     match subst with
-      | [] -> (HRel (id,el,p))
-      | (HRel (id1,el1,p1), hf)::ss ->
-          let stop,f = helper (HRel (id,el,p)) (HRel (id1,el1,p1), hf) in
+      | [] -> (* (HRel (id,el,p)) *) hrel
+      | ((*HRel (id1,el1,p1) *) hrel1, hf)::ss ->
+          let stop,f = helper (* (HRel (id,el,p)) *) hrel (hrel1, hf) in
           if stop then f
-          else find_and_subst (HRel (id,el,p)) ss
-      | _ -> report_error no_pos "cformula.find_and_subst"
+          else find_and_subst hrel ss
   in
   match hf with
     | Star {h_formula_star_h1 = hf1;
@@ -3794,7 +3801,8 @@ let rec subst_hrel_hview_f f subst=
     | Exists fe -> Exists {fe with formula_exists_heap =  subst_hrel_hview_hf fe.formula_exists_heap subst;}
 
 and subst_hrel_hview_hf hf0 subst=
-  let helper (HRel (id,el,p)) (id1, hf)=
+  let helper (* (HRel (id,el,p)) *) hrel (id1, hf)=
+    let id,el,_ = extract_HRel_orig hrel in
     if CP.eq_spec_var id id1 then
       (*should specvar subst*)
       let svl1 = (List.fold_left List.append [] (List.map CP.afv el)) in
@@ -3805,9 +3813,10 @@ and subst_hrel_hview_hf hf0 subst=
       let svl2 = hv.h_formula_view_node::hv.h_formula_view_arguments in
       let f = h_subst (List.combine svl2 svl1) hf in
       (true, f)
-    else (false, HRel (id,el,p))
+    else (false, hrel)
   in
-  let rec find_and_subst (HRel (id,el,p)) subst =
+  let rec find_and_subst (* (HRel (id,el,p)) *)hrel subst =
+    let id,el,p = extract_HRel_orig hrel in
     (* List.fold_left helper (HRel (id,el,p)) subst *)
     match subst with
       | [] -> (HRel (id,el,p))
@@ -3815,7 +3824,6 @@ and subst_hrel_hview_hf hf0 subst=
           let stop,f = helper (HRel (id,el,p)) (id1, hf) in
           if stop then f
           else find_and_subst (HRel (id,el,p)) ss
-      | _ -> report_error no_pos "cformula.find_and_subst"
   in
   let rec helper2 hf=
     match hf with
@@ -7477,12 +7485,12 @@ and split_struc_formula_a (f:struc_formula):(formula*formula) list = match f wit
 let rec filter_bar_branches (br:formula_label list option) (f0:struc_formula) :struc_formula = match br with
     | None -> f0
     | Some br -> 
-		let rec filter_formula (f:formula):formula list = match f with
-			| Base {formula_base_label = lbl} 
-			| Exists {formula_exists_label = lbl} -> (match lbl with
-			  | None -> Err.report_error { Err.error_loc = no_pos;Err.error_text = "view is unlabeled\n"} 
-			  | Some lbl -> if (List.mem lbl br) then (Gen.Profiling.inc_counter "total_unfold_disjs";[f]) else (Gen.Profiling.inc_counter "saved_unfolds";[]))
-			| Or b -> ((filter_formula b.formula_or_f1)@(filter_formula b.formula_or_f2)) in   
+		(* let rec filter_formula (f:formula):formula list = match f with *)
+		(* 	| Base {formula_base_label = lbl}  *)
+		(* 	| Exists {formula_exists_label = lbl} -> (match lbl with *)
+		(* 	  | None -> Err.report_error { Err.error_loc = no_pos;Err.error_text = "view is unlabeled\n"}  *)
+		(* 	  | Some lbl -> if (List.mem lbl br) then (Gen.Profiling.inc_counter "total_unfold_disjs";[f]) else (Gen.Profiling.inc_counter "saved_unfolds";[])) *)
+		(* 	| Or b -> ((filter_formula b.formula_or_f1)@(filter_formula b.formula_or_f2)) in    *)
 		let rec filter_helper (f:struc_formula):struc_formula = match f with
 			| EBase b -> (match b.formula_struc_continuation with
 				| None -> report_error no_pos "barrier is unlabeled \n"
