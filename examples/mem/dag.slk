@@ -14,17 +14,17 @@ pred dag1<v,M> == self = null & M = {}
 	inv true
 	mem M->(node<@M,@L,@L> & true).
 
-pred dag2<v,M> == self = null & M = {}
-	or self::node<0,l@L,r@L> * l::dag2<_,Ml> & r::dag2<_,Mr> & M = union(Ml,Mr,{self}) & v = 0
-	or self::node<1@I,l@L,r@L> * l::dag2<1,Ml> & r::dag2<1,Mr> & M = union(Ml,Mr,{self}) & v = 1
-	inv 0 <= v <= 1
-	mem M->(node<@M,@L,@L> & v = 0 | node<@I,@L,@L> & v = 1).
-
-pred dag3<v,M> == self = null & M = {}
-	or self::node<0,l@L,r@L> * l::dag3<0,Ml> & r::dag3<0,Mr> & M = union(Ml,Mr,{self}) & v = 0
-	or self::node<0,l@L,r@L> * l::dag3<_,Ml> & r::dag3<_,Mr> & M = union(Ml,Mr,{self}) & v = 1
-	or self::node<1,l@L,r@L> * l::dag3<2,Ml> & r::dag3<2,Mr> & M = union(Ml,Mr,{self}) & v = 2
+pred dag2<v,M> == self = null & M = {} & v = 0
+	or self::node<0,l@L,r@L> * l::dag2<_,Ml> & r::dag2<_,Mr> & M = union(Ml,Mr,{self}) & v = 1
+	or self::node<1@I,l@L,r@L> * l::dag2<1,Ml> & r::dag2<1,Mr> & M = union(Ml,Mr,{self}) & v = 2
 	inv 0 <= v <= 2
-	mem M->(node<@M,@L,@L> & 0 <= v <= 1 | node<@I,@L,@L> & 1 <= v <= 2).
+	mem M->(node<@M,@L,@L> & v = 1 ; node<@I,@L,@L> & v = 2).
+
+pred dag3<v,M> == self = null & M = {} & v = 0
+	or self::node<0,l@L,r@L> * l::dag3<1,Ml> & r::dag3<1,Mr> & M = union(Ml,Mr,{self}) & v = 1
+	or self::node<0,l@L,r@L> * l::dag3<_,Ml> & r::dag3<_,Mr> & M = union(Ml,Mr,{self}) & v = 2
+	or self::node<1,l@L,r@L> * l::dag3<3,Ml> & r::dag3<3,Mr> & M = union(Ml,Mr,{self}) & v = 3
+	inv 0 <= v <= 3
+	mem M->(node<@M,@L,@L> & 1 <= v <= 2 ; node<@I,@L,@L> & 2 <= v <= 3).
 		
-checkentail true |- x::dag<M>.
+checkentail true |- x::dag0<M>.

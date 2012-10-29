@@ -10,7 +10,7 @@ dag<v,M> == self = null & M = {}
 	or self::node<0@M,l@L,r@L> * l::dag<_,Ml> & r::dag<_,Mr> & M = union(Ml,Mr,{self}) & v=1
 	or self::node<1@I,l@L,r@L> * l::dag<2,Ml> & r::dag<2,Mr> & M = union(Ml,Mr,{self}) & v=2
 	inv 0<=v<=2
-	mem M->(node<@M,@L,@L> & 0<=v<=1 | node<@I,@L,@L> & 1<=v<=2);
+	mem M->(node<@M,@L,@L> & 0<=v<=1 ; node<@I,@L,@L> & 1<=v<=2);
 
 void mark(ref node x)
   requires x::dag<0,M>

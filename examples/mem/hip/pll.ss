@@ -5,7 +5,7 @@ data node {
 
 ll<v,M,n,S> == self = null & M = {} & n = 0 & S = 0 or self::node<value@v,p> * p::ll<v,Mp,n-1,Sp> & M = union(Mp,{self}) & S = value + Sp
 		inv n >= 0 & S >= 0
-		mem M->(node<@L,@M> | node<@A,@M>);
+		mem M->(node<@L,@M> ; node<@A,@M>);
 
 int length(node x)
 requires x::ll<@A,M,n,S>

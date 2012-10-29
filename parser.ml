@@ -727,16 +727,23 @@ opt_inv: [[t=OPT inv -> un_option t (P.mkTrue no_pos)]];
 
 opt_mem_perm_set: [[t=OPT mem_perm_set -> t ]];
 
-mem_perm_set: [[ `MEM; e = cexp; `LEFTARROW; `OPAREN;  mpl = LIST0 mem_perm_layout SEP `OR; `CPAREN 
+mem_perm_set: [[ `MEM; e = cexp; `LEFTARROW; `OPAREN;  mpl = LIST0 mem_perm_layout SEP `SEMICOLON; `CPAREN 
 				->  {	F.mem_formula_exp = e;
 					F.mem_formula_exact = false;
-					F.mem_formula_field_layout = mpl}				
-		| `MEME; e = cexp; `LEFTARROW; `OPAREN; mpl = LIST0 mem_perm_layout SEP `OR; `CPAREN 
+					F.mem_formula_field_layout = (fst (List.split mpl));
+					F.mem_formula_guards = (snd (List.split mpl))}				
+		| `MEME; e = cexp; `LEFTARROW; `OPAREN; mpl = LIST0 mem_perm_layout SEP `SEMICOLON; `CPAREN 
 				->  {	F.mem_formula_exp = e;
 					F.mem_formula_exact = true;
-					F.mem_formula_field_layout = mpl} ]];
+					F.mem_formula_field_layout = (fst (List.split mpl));
+					F.mem_formula_guards = (snd (List.split mpl))} ]];
 					
-mem_perm_layout:[[ `IDENTIFIER dn; `LT; annl = ann_list; `GT -> let perml = get_heap_ann_list annl in (dn,perml) ]];
+mem_perm_layout:[[ 
+`IDENTIFIER dn; `LT; annl = ann_list; `GT; guard = OPT pure_guard -> 
+let perml = get_heap_ann_list annl in (dn,perml),(un_option guard (P.mkTrue no_pos)) ]];
+
+pure_guard: [[ `AND; e = pure_constr -> e
+]];
 
 ann_list:[[b = LIST0 ann_heap SEP `COMMA -> b]];
 

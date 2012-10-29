@@ -10,7 +10,7 @@ ll<R> == self = null & R = {}
 	or self::node<_@L,v@L,p,_@A,_@M> * p::ll<Rp> & R = union(Rp,{self}) & v = 1
 	or self::node<_@L,v@L,p,_@M,_@A> * p::ll<Rp> & R = union(Rp,{self}) & v != 1
 	inv true
-    mem R->(node<@L,@L,@M,@A,@M> | node<@L,@L,@M,@M,@A>);
+    mem R->(node<@L,@L,@M,@A,@M> ; node<@L,@L,@M,@M,@A>);
     
 rll<R> == self = null & R = {}
 	or self::node<_@L,v@L,_@A,p,_@A> * p::rll<Rp> & R = union(Rp,{self}) & v = 1
