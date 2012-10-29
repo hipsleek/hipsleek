@@ -5054,7 +5054,7 @@ and normalize_no_rename_context_formula (ctx : context) (p : MCP.mix_formula) : 
 				   formula_or_pos = b.formula_or_pos
 				}in
 match ctx with
-  | Ctx es -> Ctx {es with es_formula = push_pure es.es_formula;es_unsat_flag  =false;}
+  | Ctx es -> Ctx {es with es_formula = push_pure es.es_formula;es_unsat_flag  =es.es_unsat_flag && MCP.isConstMTrue p;}
   | OCtx (c1, c2) ->
 	  let nc1 = normalize_no_rename_context_formula c1 p in
 	  let nc2 = normalize_no_rename_context_formula c2 p in

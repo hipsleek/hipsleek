@@ -3393,32 +3393,32 @@ and get_expl_inst es (f : MCP.mix_formula) =
   else (elim_exists_mix_formula to_elim_vars f no_pos) 
 
 and move_expl_inst_estate es (f : MCP.mix_formula) = 
-  let nf = 
+  let nf,nflg= 
     let f2 = get_expl_inst es f in
-    CF.mkStar es.es_formula (formula_of_mix_formula f2 no_pos) Flow_combine no_pos in
+    CF.mkStar es.es_formula (formula_of_mix_formula f2 no_pos) Flow_combine no_pos,MCP.isConstMTrue f2 in
   {es with
       (* why isn't es_gen_expl_vars updated? *)
       (* es_gen_impl_vars = Gen.BList.intersect_eq CP.eq_spec_var es.es_gen_impl_vars es.es_evars; *)
       es_ante_evars = es.es_ante_evars @ es.es_gen_impl_vars@es.es_evars (*es.es_evars*);
       es_formula = nf;
-      es_unsat_flag = false; } 
+      es_unsat_flag = es.es_unsat_flag && nflg; } 
 
 and move_impl_inst_estate es (f:MCP.mix_formula) = 
   let l_inst = es.es_gen_impl_vars@es.es_ivars in
   let f = MCP.find_rel_constraints f l_inst in
   let to_elim_vars = es.es_gen_expl_vars@es.es_evars in  
-  let nf = 
+  let nf,nflg = 
     let f2 = if ( to_elim_vars = []) then f else 
       (elim_exists_mix_formula to_elim_vars f no_pos) in
     (* let _ = print_endline("cris: impl inst = " ^ (Cprinter.string_of_mix_formula f2)) in *)
     (* let _ = print_endline("cris: f = " ^ (Cprinter.string_of_mix_formula f)) in *)
-    CF.mkStar es.es_formula (formula_of_mix_formula f2 no_pos) Flow_combine no_pos in
+    CF.mkStar es.es_formula (formula_of_mix_formula f2 no_pos) Flow_combine no_pos , MCP.isConstMTrue f2 in
   {es with
       (* why isn't es_gen_expl_vars updated? *)
       es_gen_impl_vars = Gen.BList.intersect_eq CP.eq_spec_var es.es_gen_impl_vars to_elim_vars (*es.es_evars*);
       es_ante_evars = es.es_ante_evars @ to_elim_vars;
       es_formula = nf;
-      es_unsat_flag = false; } 
+      es_unsat_flag = es.es_unsat_flag && nflg; } 
       
 
 
@@ -3738,7 +3738,7 @@ and eliminate_exist_from_LHS qvars qh qp qt qfl pos estate =
   let new_ctx = Ctx {estate with
       es_formula = new_baref;
       es_ante_evars = ws @ estate.es_ante_evars;
-      es_unsat_flag = false;} 
+      es_unsat_flag = estate.es_unsat_flag;} 
   in new_ctx
 
 and heap_n_pure_entail(*_debug*) prog is_folding  ctx0 conseq h p func drop_read_phase pos : (list_context * proof) =
@@ -4517,7 +4517,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                     let new_ctx = Ctx {estate with es_var_zero_perm = new_zero_vars;
                         es_formula = new_baref;
                         es_ante_evars = ws @ estate.es_ante_evars;
-                        es_unsat_flag = false;} in
+                        es_unsat_flag = estate.es_unsat_flag;} in
                     (* call the entailment procedure for the new context - with the existential vars substituted by fresh vars *)
                     let rs, prf1 = heap_entail_conjunct_helper 2 prog is_folding  new_ctx conseq rhs_h_matched_set pos in
                     (* --- added 11.05.2008 *)
@@ -5334,7 +5334,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 	      es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with
 		| Some s1,Some s2 -> (s1,s2)::a
 		| _ -> a) [] r_succ_match)@estate.es_success_pts;
-	      es_unsat_flag = false;} in
+	      es_unsat_flag = estate.es_unsat_flag && (Inf.no_infer_rel estate) ;} in
 	  let res_ctx = Ctx (CF.add_to_estate res_es "folding performed") in
 	  Debug.devel_zprint (lazy ("heap_entail_empty_heap: folding: formula is valid")) pos;
 	  Debug.devel_zprint (lazy ("heap_entail_empty_heap: folding: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
