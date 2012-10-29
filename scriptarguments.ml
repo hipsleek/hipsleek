@@ -289,6 +289,7 @@ let common_arguments = [
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
   ("--en-lemma-s", Arg.Set Globals.enable_split_lemma_gen, "Enable automatic generation of splitting lemmas");
   ("--show-diff", Arg.Set Globals.show_diff, "Show differences between formulae");
+  ("--show-diff-constrs", Arg.Set Globals.show_diff_constrs, "Show differences between list of constraint");
   ] 
 
 (* arguments/flags used only by hip *)	

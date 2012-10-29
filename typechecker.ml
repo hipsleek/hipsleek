@@ -1946,8 +1946,13 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 		    let _ = if(!Globals.cp_test) then(
 		      let _ = Gen.Profiling.push_time "Compare res with cp file" in
 		      let test_comps = proc.Cast.proc_test_comps in
-		      let is_match_constrs il constrs = CEQ.checkeq_constrs il (List.map (fun hp -> hp.CF.hprel_lhs,hp.CF.hprel_rhs)
-									       hp_lst_assume) constrs in
+		      let is_match_constrs il constrs = 
+			if(not(!Globals.show_diff_constrs)) then 
+			  CEQ.checkeq_constrs il (List.map (fun hp -> hp.CF.hprel_lhs,hp.CF.hprel_rhs) hp_lst_assume) constrs 
+			else
+			  let res,_ = CEQ.checkeq_constrs_with_diff il (List.map (fun hp -> hp.CF.hprel_lhs,hp.CF.hprel_rhs) hp_lst_assume) constrs in
+			  res
+		      in
 		      (* let match_defs il defs= CEQ.checkeq_defs il ls_inferred_hps defs in *)
 		      (* let _,_,inf_vars = CF.get_pre_post_vars [] proc.proc_static_specs in *)
 		      let is_match_defs il defs = CEQ.checkeq_defs_bool il ls_inferred_hps defs sel_hp_rels in
