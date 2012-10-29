@@ -1092,7 +1092,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let ctx1 = (CF.Ctx c1) in
                   let _ = CF.must_consistent_context "assign 1a" ctx1  in
                   (* TODO : eps bug below *)
-	          let tmp_ctx1 = CF.compose_context_formula ctx1 link [vsv] CF.Flow_combine pos in
+	          let tmp_ctx1 = CF.compose_context_formula ctx1 link [vsv] false CF.Flow_combine pos in
                   let _ = CF.must_consistent_context "assign 2" tmp_ctx1  in
 	          let tmp_ctx2 = CF.push_exists_context [CP.mkRes t] tmp_ctx1 in
                   let _ = CF.must_consistent_context "assign 3" tmp_ctx2  in

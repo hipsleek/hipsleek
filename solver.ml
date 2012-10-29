@@ -3034,7 +3034,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                       in
                                       (************* <<< Compose variable permissions******************)
                                       (* TOCHECK : why compose_context fail to set unsat_flag? *)
-	                              let rs1 = CF.compose_context_formula rs new_post ref_vars Flow_replace pos in
+	                              let rs1 = CF.compose_context_formula rs new_post ref_vars true Flow_replace pos in
 	                              let rs2 = CF.transform_context (elim_unsat_es_now prog (ref 1)) rs1 in
                                       if (!Globals.ann_vp) then
                                         Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: after checking VarPerm in EAssume: \n ### rs = "^(Cprinter.string_of_context rs2)^"\n")) pos;
@@ -4840,8 +4840,6 @@ and check_maymust_failure (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*
 
 (*maximising must bug with RAND (error information)*)
 and check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list))=
-  let _ = explain_mode # set true in
-  let r=
   if not !disable_failure_explaining then
     let r = ref (-9999) in
     let is_sat f = TP.is_sat_sub_no f r in
@@ -4867,9 +4865,6 @@ and check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kin
       end
   else
     (CF.mk_failure_may_raw "", ([], [], [(ante, cons)]))
-  in
-  let _ = explain_mode # reset in
-   r
 
 and build_and_failures i (failure_code:string) (failure_name:string) ((contra_list, must_list, may_list)
     :((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list)) 
@@ -6610,8 +6605,6 @@ and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h
   (* (r1,prf) *)
   (*  | None ->*)
   begin
-      let _ = explain_mode # set true in
-      let r =
     let (mix_rf,rsvl,mem_rf) = xpure_heap_symbolic prog rhs_b.formula_base_heap 0 in
     (* let _ = print_flush "UNMATCHED RHS" in *)
     let filter_redundant a c = CP.simplify_filter_ante TP.simplify_always a c in
@@ -6695,9 +6688,6 @@ and do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h
             (Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
             CF.mk_failure_may s logical_error), NoAlias)
       end
-      in
-       let _ = explain_mode # reset in
-      r
   end
 
 and process_unfold prog estate conseq a is_folding pos has_post pid =

@@ -4992,27 +4992,27 @@ and convert_must_failure_to_value (l:list_context) ante_flow conseq (bug_verifie
         end
 (*23.10.2008*)
 
-and compose_context_formula_x (ctx : context) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) : context = match ctx with
+and compose_context_formula_x (ctx : context) (phi : formula) (x : CP.spec_var list) (force_sat:bool) flow_tr (pos : loc) : context = match ctx with
   | Ctx es -> begin
 	  match phi with
 		| Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
-			let new_c1 = compose_context_formula_x ctx phi1 x flow_tr pos in
-			let new_c2 = compose_context_formula_x ctx phi2 x flow_tr pos in
+			let new_c1 = compose_context_formula_x ctx phi1 x force_sat flow_tr pos in
+			let new_c2 = compose_context_formula_x ctx phi2 x force_sat flow_tr pos in
 			let res = (mkOCtx new_c1 new_c2 pos ) in
 			  res
-		| _ -> Ctx {es with es_formula = compose_formula es.es_formula phi x flow_tr pos; es_unsat_flag =false;}
+		| _ -> Ctx {es with es_formula = compose_formula es.es_formula phi x flow_tr pos; es_unsat_flag = (not force_sat) && es.es_unsat_flag;}
 	end
   | OCtx (c1, c2) -> 
-	  let new_c1 = compose_context_formula_x c1 phi x flow_tr pos in
-	  let new_c2 = compose_context_formula_x c2 phi x flow_tr pos in
+	  let new_c1 = compose_context_formula_x c1 phi x force_sat flow_tr pos in
+	  let new_c2 = compose_context_formula_x c2 phi x force_sat flow_tr pos in
 	  let res = (mkOCtx new_c1 new_c2 pos) in
 		res
 
-and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) : context = 
+and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var list) (force_sat:bool) flow_tr (pos : loc) : context = 
   let pr1 = !print_context_short in
   let pr2 = !print_formula in
   let pr3 = !print_svl in
-  Debug.no_3 "compose_context_formula" pr1 pr2 pr3 pr1 (fun _ _ _ -> compose_context_formula_x ctx phi x flow_tr pos) ctx phi x
+  Debug.no_3 "compose_context_formula" pr1 pr2 pr3 pr1 (fun _ _ _ -> compose_context_formula_x ctx phi x force_sat flow_tr pos) ctx phi x
 
 (*TODO: expand simplify_context to normalize by flow type *)
 (* and simplify_context_0 (ctx:context):context =  *)
