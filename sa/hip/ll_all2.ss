@@ -24,11 +24,11 @@ ls<y> == self=y
 inv true;
 
 void append(ref node x, node y)
-//infer [H2,G3]
-//requires H2(x,y)
-//ensures G3(x,x',y); //'
-  requires x::ls<null> 
-  ensures x'::ls<y>; //'
+infer [H2,G3]
+requires H2(x,y)
+ensures G3(x,x',y); //'
+  /* requires x::ls<null> */
+  /* ensures x'::ls<y>; //' */
 {
     if (x==null) { x = y;
     }

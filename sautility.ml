@@ -20,6 +20,11 @@ type hp_rel_def = CP.rel_cat * CF.h_formula * CF.formula
 type par_def_w_name =  CP.spec_var * CP.spec_var list * CP.spec_var list * CF.formula * (CF.formula option) *
       (CF.formula option)
 
+let string_of_hp_rel_def hp_rel =
+ let str_of_hp_rel (r,f1, f2) = ( (CP.print_rel_cat r)^ ": " ^(Cprinter.string_of_h_formula f1) ^ ":: "
+ ^(Cprinter.prtt_string_of_formula f2)) in
+  (str_of_hp_rel hp_rel)
+
 let string_of_par_def_w_name pd=
   let pr1 = !CP.print_sv in
   let pr4 = !CP.print_svl in
@@ -407,17 +412,18 @@ and drop_data_view_hrel_nodes_hf_from_root prog hf hd_nodes hv_nodes eqs drop_ro
 (*END for drop non-selective subformulas*)
 (*fro infer_collect_hp*)
 let update_hp_args hf renamed_hps=
-  let rec look_up_helper hp0 ls_hp_args=
+  let rec look_up_helper hp0 args0 ls_hp_args=
     match ls_hp_args with
       | [] -> false,[]
-      | (hp1,args1)::hs ->
-          if CP.eq_spec_var hp0 hp1 then (true, args1)
-          else look_up_helper hp0 hs
+      | (hp1,old_args1,new_args1)::hs ->
+          if CP.eq_spec_var hp0 hp1 && (eq_spec_var_order_list args0 old_args1)  then (true, new_args1)
+          else look_up_helper hp0 args0 hs
   in
   let rec helper hf0=
     match hf0 with
       | CF.HRel (hp, eargs, p ) ->
-          let r,args1= look_up_helper hp renamed_hps in
+          let args0 = (List.fold_left List.append [] (List.map CP.afv eargs)) in
+          let r,args1= look_up_helper hp args0 renamed_hps in
           if r then (CF.HRel (hp,List.map (fun sv -> CP.mkVar sv p) args1, p))
           else hf0
       | CF.Conj hfc ->
@@ -502,11 +508,11 @@ let rename_hp_args_x lfb rfb=
   in
   let rename_one_lhp (hp,args)=
     let r,np,new_args= lhelper [] args lp false in
-    if r then [((hp,new_args),np)] else []
+    if r then [((hp,args,new_args),np)] else []
   in
   let rename_one_rhp (hp,args)=
     let r,nlp,nrp,new_args= rhelper [] args lp rp false in
-    if r then [((hp,new_args),(nlp,nrp))] else []
+    if r then [((hp,args,new_args),(nlp,nrp))] else []
   in
   let lpair = List.concat (List.map rename_one_lhp lls_hp_args) in
   let rpair = List.concat (List.map rename_one_rhp rls_hp_args) in
@@ -525,23 +531,28 @@ let rename_hp_args lfb rfb=
       (fun _ _ -> rename_hp_args_x lfb rfb) lfb rfb
 
 
-let get_raw_defined_w_pure prog f=
-  match f with
-    | CF.Base fb ->
-        let def_raw,_,_,_,_ = find_defined_pointers_raw prog f in
-        (*LOCLE: should get closed + eqnull in pure*)
-        let p_svl = CP.fv (MCP.pure_of_mix fb.CF.formula_base_pure) in
-        (def_raw@p_svl)
-    | _ -> report_error no_pos "sau.get_raw_defined_w_pure: not handle yet"
-
+let get_raw_defined_w_pure prog lhs rhs=
+  let helper f eqs=
+    match f with
+      | CF.Base fb ->
+          let def_raw,_,_,_,leqs = find_defined_pointers_raw prog f in
+          let def_raw1 = CP.remove_dups_svl def_raw in
+          (def_raw1,leqs)
+      | _ -> report_error no_pos "sau.get_raw_defined_w_pure: not handle yet"
+  in
+  let lsvl,leqs = helper lhs [] in
+  let rsvl,reqs = helper rhs leqs in
+  let eqs = (leqs@reqs) in
+  let svl = lsvl@rsvl in
+  let svl1 = if eqs = [] then svl else
+                (List.fold_left close_def svl eqs)
+  in
+  (CP.remove_dups_svl svl1)
 
 (*for unk hps*)
 (*check whether args of an is in keep_ptrs*)
 let get_intersect_hps keep_ptrs (hp, args)=
   (*may need closed*)
-  (* let diff = Gen.BList.difference_eq CP.eq_spec_var args keep_ptrs in *)
-  (* if diff = [] then [hp] *)
-  (* else [] *)
   Debug.ninfo_pprint (" keep_ptrs: "^ (!CP.print_svl keep_ptrs)) no_pos;
   Debug.ninfo_pprint (" args: "^ (!CP.print_svl args)) no_pos;
   let interse = CP.intersect_svl args keep_ptrs in
@@ -1306,6 +1317,8 @@ let rec look_up_subst_hpdef hp args nrec_hpdefs=
     | [] -> [](* report_error no_pos "sau.look_up_groups" *)
     | (a1,hprel1,f1)::gs -> begin
         let hp1 = get_hpdef_name a1 in
+        (* DD.info_pprint ("       hp: " ^ (!CP.print_sv hp)) no_pos; *)
+        (* DD.info_pprint ("       succ_susbt_def hp1: " ^ (!CP.print_sv hp1)) no_pos; *)
         if CP.eq_spec_var hp hp1 then
            let args1 = get_ptrs hprel1 in
            let ss = List.combine args1 args in
@@ -1324,7 +1337,7 @@ let compose_subs f1 f2 pos=
   let new_f21,_ = CF.drop_hrel_f new_f2 ptrs1 in
   CF.mkStar f1 new_f21 CF.Flow_combine pos
 
-let succ_susbt_hpdef nrec_hpdefs all_succ_hp (hp,args,f)=
+let succ_susbt_hpdef_x nrec_hpdefs all_succ_hp (hp,args,f)=
   (* DD.info_pprint ("       succ_susbt_def hp: " ^ (!CP.print_sv hp)) no_pos; *)
   let pos = no_pos in
   (*l1 x l2*)
@@ -1361,8 +1374,18 @@ let succ_susbt_hpdef nrec_hpdefs all_succ_hp (hp,args,f)=
           (*                                                   in pr lsf_cmb1)) no_pos; *)
           (* DD.info_pprint ("       succ_susbt lsf_cmb 2:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula) *)
           (*                                                   in pr lsf_cmb2)) no_pos; *)
-          (true,lsf_cmb3)
+          (* let b = lsf_cmb3 <> [] in *)
+          (lsf_cmb3 <> [],lsf_cmb3)
     end
+
+let succ_susbt_hpdef nrec_hpdefs all_succ_hp (hp,args,f)=
+  let pr1 = pr_list_ln (string_of_hp_rel_def) in
+  let pr2 = !CP.print_svl in
+  let pr3 = pr_triple !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula in
+  let pr4 = pr_pair string_of_bool (pr_list_ln Cprinter.prtt_string_of_formula) in
+  Debug.no_3 " succ_susbt_hpdef" pr1 pr2 pr3 pr4
+      (fun _ _ _ -> succ_susbt_hpdef_x nrec_hpdefs all_succ_hp (hp,args,f))
+      nrec_hpdefs all_succ_hp (hp,args,f)
 
 (*check hf2 is subset of hf1*)
 let check_subset_h_fomula_x hf1 hf2=
@@ -1500,5 +1523,5 @@ let recover_dropped_args drop_hp_args hp_defs=
   let pr0 = pr_list !CP.print_exp in
   let pr1 = pr_list (pr_triple !CP.print_sv pr0 pr0) in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  Debug.no_2 "recover_dropped_args" pr1 pr2 pr2
+  Debug.ho_2 "recover_dropped_args" pr1 pr2 pr2
       (fun _ _ -> recover_dropped_args_x drop_hp_args hp_defs) drop_hp_args hp_defs
