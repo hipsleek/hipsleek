@@ -1721,7 +1721,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_loc = proc.I.proc_loc;} in 
 	  (E.pop_scope (); cproc))))
 	in
-	wrap_proving_kind ("TRANS_PROC: "^proc.I.proc_name) trans_proc_x_op ()
+	wrap_proving_kind ("TRANS_PROC"(*^proc.I.proc_name*)) trans_proc_x_op ()
+	
 (** An Hoa : collect important variables in the specification
 	Important variables are the ones that appears in the
 	post-condition. Those variables are necessary in order

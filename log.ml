@@ -70,6 +70,7 @@ let log_append_properties (ls: string ) = (*For append more properties to log, c
 let add_proof_log old_no pno tp ptype time res =
 	if !Globals.proof_logging || !Globals.proof_logging_txt then
 		(* let _= print_endline ("loging :"^pno^" "^proving_info () ^"\n"^trace_info ()) in *)
+		if((proving_kind # string_of)<>"TRANS_PROC") then
 		let tstartlog = Gen.Profiling.get_time () in
 		let plog = {
 			log_id = pno;
@@ -92,6 +93,7 @@ let add_proof_log old_no pno tp ptype time res =
 					
 let proof_log_to_text_file () =
 	if !Globals.proof_logging_txt then
+		let tstartlog = Gen.Profiling.get_time () in
 		let oc = 
 		(try Unix.mkdir "logs" 0o750 with _ -> ());
 		open_out ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
@@ -110,6 +112,8 @@ let proof_log_to_text_file () =
 		  |FORMULA f -> string_of_pure_formula f)^"\n" in
 		let _= List.map (fun ix->let log=Hashtbl.find proof_log_tbl ix in
 		let _=fprintf oc "%s" (helper log) in ()) !proof_log_list in
+		let tstoplog = Gen.Profiling.get_time () in
+	  let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in 
 		close_out oc;
 	else ()	
 	
