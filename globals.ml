@@ -235,6 +235,13 @@ class ['a] store (x_init:'a) (epr:'a->string) =
        | Some l -> (epr l)
    end;;
 
+(* this will be set to true when we are in error explanation module *)
+class failure_mode =
+object
+  inherit [bool] store false string_of_bool
+end;;
+
+
 class prog_loc =
 object
   inherit [loc] store no_pos string_of_loc
@@ -255,6 +262,7 @@ end;;
 let proving_loc  = new prog_loc
 let post_pos = new prog_loc
 let proving_kind = new proving_type
+let explain_mode = new failure_mode
 let return_exp_pid = ref ([]: control_path_id list)	
 
 let proving_info () = 
