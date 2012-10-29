@@ -3633,6 +3633,24 @@ and drop_hnodes_hf hf0 hp_names=
     | HEmp -> hf
   in helper hf0
 
+and filter_not_rele_eq p keep_svl=
+  let rec filter_fn leqs res=
+    match leqs with
+      | [] -> res
+      | (sv1,sv2)::ss ->
+          let b1 = CP.mem_svl sv1 keep_svl in
+          let b2 = CP.mem_svl sv1 keep_svl in
+          match b1,b2 with
+            | true,true -> filter_fn ss res
+            | true,false -> filter_fn ss (res@[(sv2,sv1)])
+            | false,true -> filter_fn ss (res@[(sv1,sv2)])
+            | _ -> report_error no_pos "sau.filter_not_rele_eq: at least one sv belongs to keep_svl"
+  in
+  let eqs = (MCP.ptr_equations_without_null (MCP.mix_of_pure p)) in
+  let eqs1 = filter_fn eqs [] in
+  if eqs1 = [] then p else
+    let p1 = CP.subst eqs1 p in
+    CP.remove_redundant p1
 
 and drop_data_view_hrel_nodes f fn_data_select fn_view_select fn_hrel_select dnodes vnodes relnodes=
   match f with

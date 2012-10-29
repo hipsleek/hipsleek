@@ -1165,7 +1165,7 @@ let elim_irr_eq_exps args f=
   let filter_fn h_svl p=
     if CP.is_eq_exp p then
       let p_svl = CP.fv p in
-      CP.subset p_svl h_svl
+      (CP.diff_svl p_svl h_svl) = []
     else true
   in
    match f with
@@ -1218,32 +1218,43 @@ let succ_susbt_x nrec_grps unk_hps (hp,args,f)=
     (* let _ = DD.info_pprint ("       res:" ^ (pr1 res)) no_pos in *)
     res
   in
+  let elim_irr_eq_f args f=
+    let f1 = elim_irr_eq_exps args f in
+    let r =
+      if is_empty_f f1 then []
+      else [(hp,args,f1)]
+    in
+    r
+  in
   let succ_hp_args = CF.get_HRels_f f in
   (*filter hp out*)
   let succ_hp_args = List.filter (fun (hp1,_) -> not (CP.eq_spec_var hp hp1)) succ_hp_args in
   (* DD.info_pprint ("       succ_hp_args:" ^ (let pr = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) *)
   (*                                           in pr succ_hp_args)) no_pos; *)
   match succ_hp_args with
-    | [] -> (false,[(hp,args,f)])
+    | [] -> (false,elim_irr_eq_f args f)
     | _ -> begin
         let r = List.concat (List.map (fun (hp0,arg0) -> look_up_subst_group hp0 arg0 nrec_grps)  succ_hp_args) in
-        if List.length r = 0 then (false,[(hp,args,f)]) else
+        if List.length r = 0 then
+          (false,elim_irr_eq_f args f)
+        else
           let matched_hps, fs_list = List.split r in
         (*create template from f*)
           let nf,_ = CF.drop_hrel_f f matched_hps in
         (*combine fs_list*)
           let lsf_cmb = List.fold_left helper [nf]
             (List.filter (fun ls -> ls <>[]) fs_list) in
-          (* DD.info_pprint ("       succ_susbt lsf_cmb:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula) *)
-          (*                                                 in pr lsf_cmb)) no_pos; *)
+          DD.ninfo_pprint ("       succ_susbt lsf_cmb:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula)
+                                                          in pr lsf_cmb)) no_pos;
           let lsf_cmb1 = List.map (elim_irr_eq_exps args) lsf_cmb in
+          let lsf_cmb2 = List.filter (fun f -> not (is_empty_f f)) lsf_cmb1 in
         (*remove f which has common prefix*)
-          let lsf_cmb2 = remove_longer_common_prefix lsf_cmb1 in
-          (* DD.info_pprint ("       succ_susbt lsf_cmb 1:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula) *)
-          (*      in pr lsf_cmb1)) no_pos; *)
+          let lsf_cmb3 = remove_longer_common_prefix lsf_cmb2 in
+          DD.ninfo_pprint ("       succ_susbt lsf_cmb 1:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula)
+               in pr lsf_cmb1)) no_pos;
           (* DD.info_pprint ("       succ_susbt lsf_cmb 2:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula) *)
           (*      in pr lsf_cmb2)) no_pos; *)
-          let fss = List.map (fun f1 -> (hp,args,f1)) lsf_cmb2 in
+          let fss = List.map (fun f1 -> (hp,args,f1)) lsf_cmb3 in
           (true, fss)
     end
 
@@ -1347,6 +1358,14 @@ let succ_susbt_hpdef_x nrec_hpdefs all_succ_hp (hp,args,f)=
             compose_subs f1 f2 pos
     ) ls2) ls1)
   in
+  let def_elim_irr_eq_f args f=
+    let f1 = elim_irr_eq_exps args f in
+    let r =
+      if is_empty_f f1 then []
+      else [f1]
+    in
+    r
+  in
   let succ_hp_args = CF.get_HRels_f f in
   (*filter hp out*)
   let succ_hp_args = List.filter (fun (hp1,_) -> not (CP.eq_spec_var hp hp1) &&
@@ -1354,10 +1373,13 @@ let succ_susbt_hpdef_x nrec_hpdefs all_succ_hp (hp,args,f)=
   (* DD.info_pprint ("       succ_hp_args:" ^ (let pr = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) *)
   (*                                           in pr succ_hp_args)) no_pos; *)
   match succ_hp_args with
-    | [] -> (false,[f])
+    | [] ->
+        (false, def_elim_irr_eq_f args f)
     | _ -> begin
         let fs_list = (List.map (fun (hp0,arg0) -> look_up_subst_hpdef hp0 arg0 nrec_hpdefs) succ_hp_args) in
-        if List.length (List.concat fs_list) = 0 then (false,[f]) else
+        if List.length (List.concat fs_list) = 0 then
+          (false, def_elim_irr_eq_f args f)
+        else
         (*create template from f*)
           let nf,_ = CF.drop_hrel_f f (fst (List.split succ_hp_args)) in
         (*combine fs_list*)
@@ -1367,7 +1389,9 @@ let succ_susbt_hpdef_x nrec_hpdefs all_succ_hp (hp,args,f)=
           (*remove trivial def*)
           let lsf_cmb1 = List.filter (fun f -> not (is_trivial f (hp,args))) lsf_cmb in
           (*simpl pure*)
-          let lsf_cmb2 = List.map (elim_irr_eq_exps args) lsf_cmb1 in
+          let lsf_cmb2 = List.concat
+            (List.map (def_elim_irr_eq_f args) lsf_cmb1)
+          in
         (*remove f which has common prefix*)
           let lsf_cmb3 = (remove_longer_common_prefix lsf_cmb2) in
           (* DD.info_pprint ("       succ_susbt lsf_cmb 1:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula) *)
@@ -1375,7 +1399,7 @@ let succ_susbt_hpdef_x nrec_hpdefs all_succ_hp (hp,args,f)=
           (* DD.info_pprint ("       succ_susbt lsf_cmb 2:" ^ (let pr = pr_list_ln (Cprinter.prtt_string_of_formula) *)
           (*                                                   in pr lsf_cmb2)) no_pos; *)
           (* let b = lsf_cmb3 <> [] in *)
-          (lsf_cmb3 <> [],lsf_cmb3)
+          ((lsf_cmb3 <> []),lsf_cmb3)
     end
 
 let succ_susbt_hpdef nrec_hpdefs all_succ_hp (hp,args,f)=
@@ -1523,5 +1547,5 @@ let recover_dropped_args drop_hp_args hp_defs=
   let pr0 = pr_list !CP.print_exp in
   let pr1 = pr_list (pr_triple !CP.print_sv pr0 pr0) in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  Debug.ho_2 "recover_dropped_args" pr1 pr2 pr2
+  Debug.no_2 "recover_dropped_args" pr1 pr2 pr2
       (fun _ _ -> recover_dropped_args_x drop_hp_args hp_defs) drop_hp_args hp_defs

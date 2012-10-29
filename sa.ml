@@ -946,7 +946,7 @@ let rec collect_par_defs_one_side_one_hp_x prog lhs rhs (hrel, args) ldef_ptrs r
         else
           []
       in
-      let rprocess_helper def_ptrs=
+      let rprocess_helper def_ptrs include_l=
       (*find definition in lhs*)
         let undef_args = lookup_undef_args args [] def_ptrs in
         let test1= (List.length undef_args) = 0 in
@@ -958,21 +958,31 @@ let rec collect_par_defs_one_side_one_hp_x prog lhs rhs (hrel, args) ldef_ptrs r
       (* Debug.info_pprint (" keep_ptrs: "^ (!CP.print_svl keep_ptrs)) no_pos; *)
       (* Debug.info_pprint (" unk_hps: "^ (pr unk_hps)) no_pos; *)
       (* Debug.info_pprint (" keep_unk_hps: "^ (!CP.print_svl keep_unk_hps)) no_pos; *)
-        let l = CF.drop_data_view_hrel_nodes lhs SAU.check_nbelongsto_dnode SAU.check_nbelongsto_vnode SAU.check_neq_hrelnode keep_ptrs keep_ptrs keep_unk_hps in
-        let r = CF.drop_data_view_hrel_nodes rhs SAU.check_nbelongsto_dnode SAU.check_nbelongsto_vnode SAU.check_neq_hrelnode keep_ptrs keep_ptrs keep_unk_hps in
+        let r = CF.drop_data_view_hrel_nodes rhs
+          SAU.check_nbelongsto_dnode SAU.check_nbelongsto_vnode
+          SAU.check_neq_hrelnode keep_ptrs keep_ptrs keep_unk_hps
+        in
         let test2 = (not (SAU.is_empty_f r)) && test1 in
         if test2 then
           (*collect partial def ---> hp*)
-          let l1 = if (SAU.is_empty_f r) then None else Some l in
+          let l1 =
+            if include_l then
+              let l=CF.drop_data_view_hrel_nodes lhs SAU.check_nbelongsto_dnode 
+                SAU.check_nbelongsto_vnode SAU.check_neq_hrelnode keep_ptrs
+                keep_ptrs keep_unk_hps
+              in
+              if (SAU.is_empty_f r) then None else Some l
+            else None
+          in
           let l_r = (hrel, args, CP.intersect_svl args unk_svl, r, l1 , Some r) in
-          let _ =  DD.ninfo_pprint ("  partial defs - one side hp ---> def: \n" ^
+          let _ =  DD.info_pprint ("  partial defs - one side hp ---> def: \n" ^
                                           (let pr =  SAU.string_of_par_def_w_name in pr l_r) ) no_pos in
           [l_r]
         else
           []
       in
       let pdefs1 = lprocess_helper ldef_ptrs in
-      let pdefs2 = rprocess_helper (ldef_ptrs@rdef_ptrs) in
+      let pdefs2 = rprocess_helper (ldef_ptrs@rdef_ptrs) (pdefs1=[]) in
       let pdefs = pdefs1@pdefs2 in
        if pdefs = [] then
           (*CASE2: hp1(x1,x2,x3) --> h2(x1,x2,x3)* formula: hp such that have the same set of args in both sides*)
@@ -2280,7 +2290,7 @@ let get_unk_hps_relation_x prog hpdefs cs=
   (* (\*end for debugging*\) *)
   (*local helper*)
   let generate_unkhps_relation (hp1,args1) (hp2,args2) =
-          let _ = Debug.info_pprint ("     candidate unks: " ^ (!CP.print_svl [hp1;hp2])) no_pos in
+          let _ = Debug.ninfo_pprint ("     candidate unks: " ^ (!CP.print_svl [hp1;hp2])) no_pos in
           (* let pr = (pr_pair !CP.print_sv !CP.print_svl) in *)
           (* let _ = Debug.info_pprint ("     l unk_hp: " ^ (pr (hp1,args1))) no_pos in *)
           (* let _ = Debug.info_pprint ("     r unk_hp: " ^ (pr (hp2,args2))) no_pos in *)
@@ -2289,7 +2299,7 @@ let get_unk_hps_relation_x prog hpdefs cs=
     then []
     else
       begin
-          let _ = Debug.info_pprint ("     unks: " ^ (!CP.print_svl [hp1;hp2])) no_pos in
+          let _ = Debug.ninfo_pprint ("     unks: " ^ (!CP.print_svl [hp1;hp2])) no_pos in
           let args = CP.remove_dups_svl (args1@args2) in
           (* let keep_unk_hps = List.concat (List.map (SAU.get_intersect_unk_hps args) unk_hps) in *)
     (* let lhs = SAU.keep_data_view_hrel_nodes prog cs.CF.hprel_lhs (lhns@rhns) (lhvs@rhvs) args (keep_unk_hps@[hp1;hp2]) in *)
@@ -2307,7 +2317,7 @@ let get_unk_hps_relation_x prog hpdefs cs=
   let new_defs2,rem_cs2=
     if lunk_hps = [] || runk_hps = [] then ([],[cs])
     else
-      let _ = DD.info_pprint ">>>>>> unk hps equivalent: <<<<<<" no_pos in
+      let _ = DD.ninfo_pprint ">>>>>> unk hps equivalent: <<<<<<" no_pos in
       let rels = List.concat (List.map
              (fun lhp -> List.concat (List.map
                      (fun rhp -> generate_unkhps_relation lhp rhp) runk_hps)) lunk_hps) in

@@ -1,3 +1,4 @@
+HeapPred HP_2(node a, node b).
 
 get_next[
 ass [G4]:{
@@ -7,6 +8,8 @@ ass [G4]:{
  }
 
 hpdefs [G4]:{
-  G4(x,v_550,v_node_25_532',q) --> x::node<Anon_12,next_24_531'>&x=v_550 & v_node_25_532'=q & next_24_531'=null
+        HP_2(a,b) --> htrue&true;
+  G4(x,v_550,res,q) --> x::node<Anon_12,q1>*HP_2(res,q)
+  &x=v_550 & res=q & q1=null
  }
 ]
