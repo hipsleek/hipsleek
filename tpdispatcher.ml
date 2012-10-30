@@ -2127,7 +2127,7 @@ let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool 
   else not (List.exists (fun f -> not (is_sat_sub_no f sat_subno)) f_lst)
 
 let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool =
-  Debug.no_1 "is_sat_memo_sub_no_orig"
+  Debug.ho_1 "is_sat_memo_sub_no_orig"
   Cprinter.string_of_memo_pure_formula
 	string_of_bool
   (fun _ -> is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv) f

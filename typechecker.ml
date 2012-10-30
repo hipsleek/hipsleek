@@ -360,7 +360,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             (*************************************************************)
             (********* Check permissions variables in pre-condition ******)
             (*************************************************************) 
-            let ctx,ext_base = if (!Globals.ann_vp) && (not (CF.has_lexvar_formula b.CF.formula_struc_base)) then
+						let has_lexvar = CF.has_lexvar_formula b.CF.formula_struc_base in
+            let ctx,ext_base = if (!Globals.ann_vp) && (not has_lexvar) then
               check_varperm prog proc spec ctx b.CF.formula_struc_base pos_spec 
             else (ctx,b.CF.formula_struc_base)
             in
@@ -371,6 +372,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	      if !Globals.max_renaming 
 	      then (CF.transform_context (CF.normalize_es ext_base b.CF.formula_struc_pos false) ctx) (*apply normalize_es into ctx.es_state*)
 	      else (CF.transform_context (CF.normalize_clash_es ext_base b.CF.formula_struc_pos false) ctx) in
+			(* Termination: Move lexvar to es_var_measures *)
+			let nctx = if (not has_lexvar) then nctx else Term.strip_lexvar_lhs nctx in
             let (c,pre,rels,r) = match b.CF.formula_struc_continuation with | None -> (None,[],[],true) | Some l -> let r1,r2,r3,r4 = helper nctx l in (Some r1,r2,r3,r4) in
             stk_vars # pop_list vs;
 	    let _ = Debug.devel_zprint (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in
@@ -1571,7 +1574,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let pr2 = Cprinter.string_of_list_failesc_context in
                     let pr3 = Cprinter.string_of_struc_formula in
                     let f = wrap_proving_kind "PRE-2" (check_pre_post org_spec sctx) in
-                    Debug.no_2_loop "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  f should_output_html) org_spec sctx in
+                    Debug.ho_2_loop "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  f should_output_html) org_spec sctx in
 		  let _ = if !print_proof then Prooftracer.start_compound_object () in
                   let scall_pre_cond_pushed = if !print_proof then
                     begin
