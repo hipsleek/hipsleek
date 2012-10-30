@@ -1353,9 +1353,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let pure_cond = (CP.BForm ((CP.mkBVar v Primed pos, None), None)) in
 	          let then_cond_prim = MCP.mix_of_pure pure_cond in
 	          let else_cond_prim = MCP.mix_of_pure (CP.mkNot pure_cond None pos) in
-	          let then_ctx = combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
+	          let then_ctx = 
+				if !Globals.delay_if_sat then combine_list_failesc_context prog ctx then_cond_prim
+				else  combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
 	          Debug.devel_zprint (lazy ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_failesc_context then_ctx))) pos;
-	          let else_ctx =combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
+	          let else_ctx =
+				if !Globals.delay_if_sat then combine_list_failesc_context prog ctx else_cond_prim
+				else  combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
+			  
 	          Debug.devel_zprint (lazy ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_failesc_context else_ctx))) pos;
 	          let then_ctx1 = CF.add_cond_label_list_failesc_context pid 0 then_ctx in
 	          let else_ctx1 = CF.add_cond_label_list_failesc_context pid 1 else_ctx in 

@@ -1363,6 +1363,10 @@ and combine_list_failesc_context_and_unsat_now prog (ctx : list_failesc_context)
   let r = transform_list_failesc_context (idf,idf,(elim_unsat_es_now prog (ref 1))) r in
   let r = List.map CF.remove_dupl_false_fe r in
   TP.incr_sat_no () ; r
+  
+and combine_list_failesc_context prog (ctx : list_failesc_context) (f : MCP.mix_formula) : list_failesc_context = 
+  let r = transform_list_failesc_context (idf,idf,(combine_es_and prog f true)) ctx in
+  let r = List.map CF.remove_dupl_false_fe r in r
 
 
 and combine_context_and_unsat_now prog (ctx : context) (f : MCP.mix_formula) : context = 
@@ -2898,8 +2902,8 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                           let d = CP.diff_svl case_vs ivs in
 						  let combinator f ctx=  
 										let f = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) f) in
-										(*combine_context_and_unsat_now prog ctx f*)
-										transform_context (combine_es_and prog f true) ctx in	
+										if !Globals.delay_case_sat then transform_context (combine_es_and prog f true) ctx
+										else combine_context_and_unsat_now prog ctx f in	
                           if (d==[] && case_vs!=[]) then
                             begin
                               (* place to add case LHS to infer_pure *)
@@ -3009,7 +3013,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	                            let rs1 = CF.transform_context (normalize_es f pos true) ctx11 in
                                     (*add the post condition into formul_*_and  special compose_context_formula for concurrency*)
                                     let rs2 = compose_context_formula_and rs1 post id ref_vars pos in
-	                            let rs3 = add_path_id rs2 (pid,i) in
+									let rs3 = add_path_id rs2 (pid,i) in
                                     let rs4 = prune_ctx prog rs3 in
 	                            ((SuccCtx [rs4]),TrueConseq)
                               | None ->
@@ -3040,7 +3044,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                       (************* <<< Compose variable permissions******************)
                                       (* TOCHECK : why compose_context fail to set unsat_flag? *)
 	                              let rs1 = CF.compose_context_formula rs new_post ref_vars true Flow_replace pos in
-	                              let rs2 = (*CF.transform_context (elim_unsat_es_now prog (ref 1))*) rs1 in
+	                              let rs2 = if !Globals.force_post_sat then CF.transform_context (elim_unsat_es_now prog (ref 1)) rs1 else rs1 in
                                       if (!Globals.ann_vp) then
                                         Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: after checking VarPerm in EAssume: \n ### rs = "^(Cprinter.string_of_context rs2)^"\n")) pos;
 	                              let rs3 = add_path_id rs2 (pid,i) in

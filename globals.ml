@@ -657,6 +657,9 @@ let opt_ineq = ref false
 let infer_slicing = ref false
 let multi_provers = ref false
 let is_sat_slicing = ref false
+let delay_case_sat = ref false
+let force_post_sat = ref false
+let delay_if_sat = ref false
 
 (* Options for invariants *)
 let do_infer_inv = ref false
