@@ -1073,7 +1073,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	      wrap_proving_kind "ASSERT/ASSUME" assert_op ()
         | Assign ({ exp_assign_lhs = v;
           exp_assign_rhs = rhs;
-          exp_assign_pos = pos}) -> begin
+          exp_assign_pos = pos}) -> 
+						let assign_op ()=
+						begin
+						let _ = proving_loc#set pos in
             let b,res = (if !Globals.ann_vp then
               (*check for access permissions*)
               let t = Gen.unsome (type_of_exp rhs) in
@@ -1105,8 +1108,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        else (CF.Ctx c1) in
 	      let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
               let _ = CF.must_consistent_list_failesc_context "assign final" res  in
-              res
+              res		
 	  end
+		in  wrap_proving_kind "ASSIGN" assign_op ()		
 	| Barrier {exp_barrier_recv = b; exp_barrier_pos = pos} ->			
 	      let mkprf prf_l = PTracer.ContextList
 		{PTracer.context_list_ante = []; PTracer.context_list_conseq = CF.mkETrue (CF.mkTrueFlow ()) pos; PTracer.context_list_proofs = prf_l; } in
@@ -1538,7 +1542,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       if ir then (* Only check termination of a recursive call *)
                         let _ = DD.devel_zprint 
                           (lazy (">>>>>>> Termination Checking: " ^ mn ^ " <<<<<<<")) pos in
-                        (* Normalise the specification with variance 
+                        (* Normalise the specification with variance                     let f = wrap_proving_kind "PRE-2" (check_pre_post org_spec sctx) in
+
                          * to further inference or error reporting *)
                         if not (CF.isNonFalseListFailescCtx sctx) then
                           let _ = Term.add_unreachable_res sctx pos in ()
