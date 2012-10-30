@@ -39,16 +39,35 @@ let string_of_map_table_list (mtl: map_table list): string =
   "[" ^ (helper mtl) ^ "]"
     
 let rec checkeq_formulas_x ivars f1 f2 = 
-  let f1,f2 = CF.elim_exists f1,CF.elim_exists f2 in
   let mtl = [[]] in
-  let (res1, mtl1) = (checkeq_formulas_one ivars f1 f2 mtl) in
-  let re_order mt = List.map (fun (a,b) -> (b,a)) mt in
-  let imtl = List.map (fun c -> re_order c) mtl1 in
-  let (res2, mtl2) =  (checkeq_formulas_one ivars f2 f1 imtl) in
-  (res1&&res2, mtl1)
+  if(!Globals.dis_sem) then (
+    let (res1, mtl1) = (checkeq_formulas_one ivars f1 f2 mtl) in
+    let re_order mt = List.map (fun (a,b) -> (b,a)) mt in
+    let imtl = List.map (fun c -> re_order c) mtl1 in
+    let (res2, mtl2) =  (checkeq_formulas_one ivars f2 f1 imtl) in
+    (res1&&res2, mtl1)
+  )
+  else (
+    let evars fs = List.filter (fun f -> List.exists (fun ivar -> (String.compare (CP.full_name_of_spec_var f) ivar != 0)) ivars ) fs in 
+    let fs1,fs2 = evars (CF.fv f1),evars (CF.fv f2) in
+  (* print_string ("VARS 1: "^ Cprinter.string_of_spec_var_list (CF.fv f1) ^ "\n"); *)
+  (* print_string ("VARS 2: "^ Cprinter.string_of_spec_var_list (CF.fv f2) ^ "\n"); *)
+  (* print_string ("VARS NEED TO BE ADDED1: "^ Cprinter.string_of_spec_var_list fs1 ^ "\n"); *)
+  (* print_string ("VARS NEED TO BE ADDED2: "^ Cprinter.string_of_spec_var_list fs2 ^ "\n"); *)
+    let f1,f2 = CF.add_quantifiers fs1 f1, CF.add_quantifiers fs2 f2 in
+  (*  print_string ("F1 after add quantifiers: "^ Cprinter.prtt_string_of_formula f1 ^ "\n"); *)
+  (* print_string ("F2 after add quantifiers: "^ Cprinter.prtt_string_of_formula f2 ^ "\n"); *)
+    let f1,f2 = CF.elim_exists f1,CF.elim_exists f2 in
+  (* print_string ("F1 after elim exists: "^ Cprinter.prtt_string_of_formula f1 ^ "\n"); *)
+  (* print_string ("F2 after elim exists: "^ Cprinter.prtt_string_of_formula f2 ^ "\n"); *)
+    let (res1, mtl1) = (checkeq_formulas_one ivars f1 f2 mtl) in
+    let re_order mt = List.map (fun (a,b) -> (b,a)) mt in
+    let imtl = List.map (fun c -> re_order c) mtl1 in
+    let (res2, mtl2) =  (checkeq_formulas_one ivars f2 f1 imtl) in
+    (res1&&res2, mtl1)
+  )
 
 and checkeq_formulas ivars f1 f2 = 
-  let f1,f2 = CF.elim_exists f1,CF.elim_exists f2 in
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 b = if(b) then "VALID" else "INVALID" in
   let pr3 = string_of_map_table_list in
@@ -56,10 +75,19 @@ and checkeq_formulas ivars f1 f2 =
       (fun _ _ ->  checkeq_formulas_x ivars f1 f2) f1 f2
     
 and checkeq_formulas_a ivars f1 f2 mtl = 
-  let f1,f2 = CF.elim_exists f1, CF.elim_exists f2 in
-  let (res1, mtl1) = (checkeq_formulas_one ivars f1 f2 mtl) in
-  let (res2, mtl2) =  (checkeq_formulas_one ivars f2 f1 mtl) in
-  (res1&&res2, mtl1)
+  if(!Globals.dis_sem) then (
+    let (res1, mtl1) = (checkeq_formulas_one ivars f1 f2 mtl) in
+    let (res2, mtl2) =  (checkeq_formulas_one ivars f2 f1 mtl) in
+    (res1&&res2, mtl1)
+  )else(
+    let evars fs = List.filter (fun f -> List.exists (fun ivar -> (String.compare (CP.full_name_of_spec_var f) ivar == 0)) ivars ) fs in 
+    let fs1,fs2 = evars (CF.fv f1),evars (CF.fv f2) in
+    let f1,f2 = CF.add_quantifiers fs1 f1, CF.add_quantifiers fs2 f2 in
+    let f1,f2 = CF.elim_exists f1, CF.elim_exists f2 in
+    let (res1, mtl1) = (checkeq_formulas_one ivars f1 f2 mtl) in
+    let (res2, mtl2) =  (checkeq_formulas_one ivars f2 f1 mtl) in
+    (res1&&res2, mtl1)
+  )
 
 and checkeq_formulas_one (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(mtl: (map_table list)): (bool*(map_table list))=
   match f1 with
@@ -85,10 +113,10 @@ and checkeq_formulas_one (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(m
 	  let (res1,mtl1) = checkeq_h_formulas hvars h1 h2 mtl in 
 	  let (res2,mtl2) =  if(res1) then checkeq_mix_formulas hvars p1 p2 mtl1 else (false,[]) in
 	  let _= if(res2) then Debug.ninfo_pprint ("EQ. FMT: " ^ (string_of_map_table_list mtl2)) no_pos in
-	  (*if(res2) then
+	  if(res2) then
 	    let new_mtl = check_qvars qvars1 qvars2 mtl2 in
 	    if(List.length new_mtl > 0) then (true, new_mtl) else (false,mtl2)
-	  else*) (res2,mtl2)
+	  else (res2,mtl2)
 	)
 	| _ -> 	(false,[]))
     |CF.Or ({CF.formula_or_f1 = f11;
@@ -705,21 +733,19 @@ and match_equiv_notform_x  (hvars: ident list)(f1: CP.formula) (pf2: CP.formula)
     let _, mtls =  List.split false_part in
     (b, List.concat mtls)
 
-and check_qvars qvars1 qvars2 mtl =
-(*there is no similar specvar in qvars*)
-  let rec helper sv mt =
+and check_qvars_helper sv mt =
     match mt with
       | [] -> None
       | (a,b)::y -> if(CP.eq_spec_var sv a) then  Some b
 	else if(CP.eq_spec_var sv b) then Some a
-	else helper sv y
-  in
-  let rec check_qvars_mt qvars1 qvars2 mt = 
+	else check_qvars_helper sv y
+
+and check_qvars_mt qvars1 qvars2 mt = 
     if(List.length qvars1 == List.length qvars2) then (
       match qvars1 with
 	| [] -> true
 	| sv::y -> (
-	  let sv2l = helper sv mt in
+	  let sv2l = check_qvars_helper sv mt in
 	  match sv2l with
 	    | None -> false
 	    | Some sv2 -> (
@@ -729,8 +755,13 @@ and check_qvars qvars1 qvars2 mtl =
 	)
     )
     else false
-  in
+
+and check_qvars qvars1 qvars2 mtl =
+(*there is no similar specvar in qvars*)
   List.concat (List.map (fun mt -> let res = check_qvars_mt qvars1 qvars2 mt in if(res) then [mt] else []) mtl )
+
+and check_qvars_mix_mtl qvars1 qvars2 mix_mtl =
+  List.concat (List.map (fun (mt,f) -> let res = check_qvars_mt qvars1 qvars2 mt in if(res) then [(mt,f)] else []) mix_mtl )
 
 (*******************************check equivalent with diff***************************************)
 (************************************************************************************************)
@@ -786,8 +817,15 @@ let mtl = [[]] in
 
 and checkeq_formulas_with_diff_x ivars f1 f2 = 
   let mtl = [[]] in
-  let f1,f2 = CF.elim_exists f1,CF.elim_exists f2 in
-  checkeq_formulas_with_diff_mt ivars f1 f2 mtl
+  if(!Globals.dis_sem) then (
+    checkeq_formulas_with_diff_mt ivars f1 f2 mtl
+  ) else(
+    let evars fs = List.filter (fun f -> List.exists (fun ivar -> (String.compare (CP.full_name_of_spec_var f) ivar != 0)) ivars ) fs in 
+    let fs1,fs2 = evars (CF.fv f1),evars (CF.fv f2) in
+    let f1,f2 = CF.add_quantifiers fs1 f1, CF.add_quantifiers fs2 f2 in
+    let f1,f2 = CF.elim_exists f1,CF.elim_exists f2 in
+    checkeq_formulas_with_diff_mt ivars f1 f2 mtl
+  )
     
 and checkeq_formulas_with_diff ivars f1 f2 = 
   let pr1 = Cprinter.prtt_string_of_formula in
@@ -824,10 +862,10 @@ and checkeq_formulas_one_with_diff (hvars: ident list) (f1: CF.formula) (f2: CF.
 	  let (res2,mix_mtl2) =  checkeq_mix_formulas_with_diff hvars p1 p2 mix_mtl1 in
 	  let mtl2,diff2 = List.split mix_mtl2 in (*temporary*)
 	  let res= res1&&res2 in
-	  (*if(res) then
-	    let new_mtl = check_qvars qvars1 qvars2 mtl2 in
-	    if(List.length new_mtl > 0) then (true, mix_mtl2) (*temporary: should be new one*) else (false,mix_mtl2)
-	  else *) (res,mix_mtl2)
+	  if(res) then
+	    let new_mix_mtl = check_qvars_mix_mtl qvars1 qvars2 mix_mtl2 in
+	    if(List.length new_mix_mtl > 0) then (true, new_mix_mtl) else (false,mix_mtl2)
+	  else  (res,mix_mtl2)
 	)
 	| _ ->  let _ = if(!Globals.show_diff) then Debug.info_pprint ("DIFF: Exists formula") no_pos in 
 		 (false,[]))
