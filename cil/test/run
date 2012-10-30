@@ -1,2 +1,1 @@
 /usr/local/libexec/cil/obj/x86_LINUX/cilly.asm.exe hello.c --out ./hello.c.i
- ../../obj/x86_LINUX/cilly.asm.exe hello.c --dohip --out  ./hello.c.i
