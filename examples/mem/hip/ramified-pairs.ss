@@ -2,33 +2,20 @@ data pair {
 	int fst; 
 	int snd;
 }
-data cell{
-  int v;
-}
 
-pred order<f,s,flag> ==
-     f::cell<1> & s::cell<1> & flag
-  or f::cell<v> & s::cell<_> & v!=1 & !flag
-
-void mark(pair p)
-  requires p::pair<f,s> * order<f,s,_>
-  ensures p::pair<f,s> * order<f,s,true>;
+void mark(pair p, pair q)
+  requires p::pair<vpf,vps> & q::pair<vqf,vqs> & vpf != 1 & vqf != 1 & vps != 1 & vqs != 1
+  ensures p::pair<1,1> & q::pair<1,1> ;
 {
-if(p.fst.v == 1){
-    //f::cell<1> /\ s::cell<1> 
+if(p.fst == 1){
 	return;}
 else {
-	if (p.snd.v == 1){
-        //f::cell<v> /\ s::cell<1> & v!=1
-		p.fst.v = 1;
-        //f::cell<1> /\ s::cell<1> & v!=1 
+	if (p.snd == 1){
+		p.fst = 1;
 		return;}
 	else {
-    // f::cell<v> /\ s::cell<r> & v!=1 & r!=1 
-	p.snd.v = 1;
-    // f::cell<_> /\ s::cell<1> & v!=1 & r!=1 
-	p.fst.v = 1;}
-    // f::cell<1> /\ s::cell<1> & v!=1 & r!=1 
+	p.snd = 1;
+	p.fst = 1;}
 	}
 return;
 }
