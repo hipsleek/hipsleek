@@ -1527,7 +1527,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   | SPASS -> z3_imply (* Smtsolver.imply  *)ante conseq (* timeout *)
 	| LOG -> find_bool_proof_res imp_no
   in
-	let tstop = Gen.Profiling.get_time () in
+	(* let tstop = Gen.Profiling.get_time () in *)
+    let _ = Gen.Profiling.push_time "tp_is_sat" in 
 	let _ = if should_output () then
 			begin
 				Prooftracer.push_pure_imply ante conseq r;
@@ -2127,7 +2128,7 @@ let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool 
   else not (List.exists (fun f -> not (is_sat_sub_no f sat_subno)) f_lst)
 
 let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool =
-  Debug.ho_1 "is_sat_memo_sub_no_orig"
+  Debug.no_1 "is_sat_memo_sub_no_orig"
   Cprinter.string_of_memo_pure_formula
 	string_of_bool
   (fun _ -> is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv) f

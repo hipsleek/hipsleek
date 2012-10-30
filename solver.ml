@@ -5101,6 +5101,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   in
   (* remove variables that are already instantiated in the right hand side *)
   let fvlhs = MCP.mfv lhs_p in
+  (* WN : any reason why estate below is not being used .. *)
   let estate = {estate_orig with es_gen_expl_vars = List.filter (fun x -> not (List.mem x fvlhs)) estate_orig.es_gen_expl_vars } in
   (* An Hoa : END OF INSTANTIATION *)
   let _ = reset_int2 () in

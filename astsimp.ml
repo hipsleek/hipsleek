@@ -77,7 +77,7 @@ let undef_data_types = ref([] : (string * loc) list)
 (** An Hoa : Alias for the Scriptarguments.inter, necessary because this module
 			is compiled prior to Scriptarguments.
  **)
-let inter = ref false
+let inter_hoa = ref false
 
 (* let op_map = Hashtbl.create 19 *)
 
