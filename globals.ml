@@ -268,10 +268,11 @@ let return_exp_pid = ref ([]: control_path_id list)
 let proving_info () = 
 	if(proving_kind # is_avail) then
 		   (
+				  let temp= if(explain_mode # is_avail) then "FAILURE EXPLAINATION" else proving_kind # string_of in
       		if (post_pos # is_avail) 
-          then ("Proving Infor spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^(proving_kind # string_of))
+          then ("Proving Infor spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^temp)
           else if(proving_loc # is_avail)
-      	  then ("Proving Infor spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^(proving_kind # string_of))
+      	  then ("Proving Infor spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^temp)
 					else "..."
        )
 	else "..."(*"who called is_sat,imply,simplify to be displayed later..."*)

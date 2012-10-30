@@ -70,7 +70,6 @@ let log_append_properties (ls: string ) = (*For append more properties to log, c
 let add_proof_log old_no pno tp ptype time res =
 	if !Globals.proof_logging || !Globals.proof_logging_txt then
 		(* let _= print_endline ("loging :"^pno^" "^proving_info () ^"\n"^trace_info ()) in *)
-		if((proving_kind # string_of)<>"TRANS_PROC") then
 		let tstartlog = Gen.Profiling.get_time () in
 		let plog = {
 			log_id = pno;
@@ -81,7 +80,7 @@ let add_proof_log old_no pno tp ptype time res =
 			log_time = time;
 			log_res = res; } in
 		let _=Hashtbl.add proof_log_tbl pno plog in
-		let _= if(!Globals.proof_logging_txt) then
+		let _= if(!Globals.proof_logging_txt && ((proving_kind # string_of)<>"TRANS_PROC")) then
 			begin 
 			proof_log_list := !proof_log_list @ [pno];
 			end		
