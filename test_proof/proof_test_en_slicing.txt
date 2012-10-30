@@ -13,7 +13,11 @@ id: 112
 Prover: OMEGA CALCULATOR
 Type: Sat:  0<=y
 Time: 0.
-Result: true
+Result: true 
+
+>>> ERROR
+>>> added x'=x+1 & y'=y+1 & (x'>3 \/ x'<=3)  
+>>> why aren't the slices for x,y marked UNSAT in below?
 
 --------------
 Proving Infor spec:(Line:3,Col:10) loc:(Line:8,Col:8) kind::IF...
