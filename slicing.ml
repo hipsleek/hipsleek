@@ -57,14 +57,24 @@ struct
 
   let constr_of_atom (a: Atom.t) : t =
     (Some (ALabel.label_of_atom a), a)
+		
+	let atom_of_constr (c: t) : Atom.t = snd c
 
   let constr_of_atom_list (al: Atom.t list) : t list =
     List.map constr_of_atom al
+		
+	let atom_of_constr_list (cl: t list) : Atom.t list =
+		List.map atom_of_constr cl
 
   let string_of (c: t): string = 
     let (l, a) = c in
     "[" ^ (Gen.pr_option ALabel.string_of l) ^ "]" ^ 
     (Atom.string_of a)
+
+	let is_rel (c1: t) (c2: t) : bool = 
+		let lbl1 = get_label c1 in
+		let lbl2 = get_label c2 in
+		ALabel.cor_is_rel lbl1 lbl2
 end;;
 
 (* Slice - List of Atomic Constraints *)  
@@ -547,15 +557,31 @@ struct
 		      memo_group_aset = na;
 		    }])
       else
-        let l = MG_Constr_S.constr_of_atom_list (l1@l2) in
-        let sl = MG_S.split l in
+				(* Tracking changed slice *)
+        (* let l = MG_Constr_S.constr_of_atom_list (l1@l2) in *)
+				let l1 = MG_Constr_S.constr_of_atom_list l1 in
+				let l2 = MG_Constr_S.constr_of_atom_list l2 in
+				(* Find relevant constraints in l1 and l2 *)
+				(* If a constraint X is independent to all constraints of l2*)
+				(* then it is an unchanged constraint in the merged group *)
+				let merged_l, unmerged_l1, unmerged_l2 = 
+					List.fold_left (fun (m, u1, u2) c2 ->
+						let merged_by_c2, unmerged_by_c2 = List.partition (fun c1 -> MG_Constr_S.is_rel c1 c2) u1 in
+						match merged_by_c2 with
+						| [] -> (m, unmerged_by_c2, u2 @ [c2])
+						| _ -> (m @ merged_by_c2 @ [c2], unmerged_by_c2, u2)) ([], l1, []) l2 in
+        let sl = MG_S.split merged_l in
         let merged_mp = MF_S.memo_pure_of_mg_slice sl (Some filter_merged_cons) in
-        if (not slice_check_dups) then merged_mp
-        else List.map (fun mg -> { mg with memo_group_slice =
-          (Gen.Profiling.push_time "merge_mems_r_dups";
-          let n_slice = Gen.BList.remove_dups_eq eq_pure_formula mg.memo_group_slice in
-			    Gen.Profiling.pop_time "merge_mems_r_dups"; n_slice)
-        }) merged_mp
+				let unmerged_mp = MG_Constr_S.atom_of_constr_list (unmerged_l1 @ unmerged_l2) in
+				let unmerged_mp = List.map (fun c -> {c with memo_group_changed = false}) unmerged_mp in
+        let merged_no_dups = 
+					if (not slice_check_dups) then merged_mp
+					else List.map (fun mg -> { mg with memo_group_slice =
+            (Gen.Profiling.push_time "merge_mems_r_dups";
+            let n_slice = Gen.BList.remove_dups_eq eq_pure_formula mg.memo_group_slice in
+  			    Gen.Profiling.pop_time "merge_mems_r_dups"; n_slice)
+          }) merged_mp in
+				merged_no_dups @ unmerged_mp
     in r
 
   let create_memo_group (l1: b_formula list) (l2: formula list) 
