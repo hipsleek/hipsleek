@@ -133,6 +133,13 @@ and isConstMTrue f =
             | _ -> false)
     | _ -> false
       
+and isTrivMTerm f = match f with
+  | h::[]-> h.memo_group_fv==[] &&  h.memo_group_linking_vars==[] && h.memo_group_cons==[] && h.memo_group_aset==[] &&
+		(match h.memo_group_slice with
+			| h::[] -> isTrivTerm h
+			| _ -> false)
+  | _ -> false 
+    
 and isConstGroupTrue (f:memoised_group) : bool = match f.memo_group_slice with
   | [] -> f.memo_group_cons == [] && (EMapSV.is_empty f.memo_group_aset) 
   | x::[] -> f.memo_group_cons == [] && (EMapSV.is_empty f.memo_group_aset) && (isConstTrue x)
@@ -785,7 +792,7 @@ and combine_memo_branch b (f, l) =
     | s -> try memoise_add_pure_N f (List.assoc b l) with Not_found -> f
 
 and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups : memo_pure =
-  Debug.ho_3 "merge_mems_m" !print_mp_f !print_mp_f (fun b -> string_of_bool b)
+  Debug.no_3 "merge_mems_m" !print_mp_f !print_mp_f (fun b -> string_of_bool b)
 	!print_mp_f merge_mems_x l1 l2 slice_check_dups
 	
 and merge_mems_x (l1: memo_pure) (l2: memo_pure) slice_check_dups : memo_pure =
@@ -893,7 +900,7 @@ and memoise_add_pure_N_x l p = memoise_add_pure_aux l p Implied_N
 and memoise_add_pure_P_x l p = memoise_add_pure_aux l p Implied_P
 
 and create_memo_group_wrapper (l1:b_formula list) status : memo_pure =
-	  Debug.ho_2 "create_memo_group_wrapper"
+	  Debug.no_2 "create_memo_group_wrapper"
 		(fun bl -> List.fold_left (fun r b -> r ^ (!print_bf_f b)) "" bl)
 		(fun s -> "") !print_mp_f create_memo_group_wrapper_a l1 status 
 	  
@@ -909,7 +916,7 @@ and anon_partition (l1:(b_formula *(formula_label option)) list) =
 and create_memo_group (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =
   let pr1 = fun bl -> "[" ^ (List.fold_left (fun res (b,_) -> res ^ (!print_bf_f b)) "" bl) ^ "]" in
   let pr2 = fun fl -> "[" ^ (List.fold_left (fun res f -> res ^ (!print_p_f_f f)) "" fl) ^ "]" in
-  Debug.ho_3 "create_memo_group" pr1 pr2 (fun s -> "") !print_mp_f create_memo_group_x l1 l2 status
+  Debug.no_3 "create_memo_group" pr1 pr2 (fun s -> "") !print_mp_f create_memo_group_x l1 l2 status
 
 and create_memo_group_x 
   (l1: (b_formula * (formula_label option)) list) 
@@ -1901,7 +1908,11 @@ let isConstMFalse mx = match mx with
 let isConstMTrue mx = match mx with
   | MemoF mf -> isConstMTrue mf
   | OnePF f -> isConstTrue f
-  
+
+let isTrivMTerm mx = match mx with
+  | MemoF mf -> isTrivMTerm mf
+  | OnePF f -> isTrivTerm f
+   
 let m_apply_one s qp = match qp with
   | MemoF f -> MemoF (m_apply_one s f)
   | OnePF f -> OnePF (apply_subs [s] f)

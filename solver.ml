@@ -2316,7 +2316,7 @@ and elim_unsat_ctx (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : co
 and elim_unsat_es_now (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let pr1 = Cprinter.string_of_entail_state in
   let pr2 = Cprinter.string_of_context in
-  Debug.no_1 "elim_unsat_es_now" pr1 pr2 (fun _ -> elim_unsat_es_now_x prog sat_subno es) es
+  Debug.ho_1 "elim_unsat_es_now" pr1 pr2 (fun _ -> elim_unsat_es_now_x prog sat_subno es) es
 
 and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let f = es.es_formula in
@@ -2896,16 +2896,17 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                             | [] -> []
                             | (p,_)::_ -> CP.fv p in
                           let d = CP.diff_svl case_vs ivs in
+						  let combinator f ctx=  
+										let f = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) f) in
+										(*combine_context_and_unsat_now prog ctx f*)
+										transform_context (combine_es_and prog f true) ctx in	
                           if (d==[] && case_vs!=[]) then
                             begin
                               (* place to add case LHS to infer_pure *)
                               (* for each (c1,c2) from case_brs
                                  (i) add c1 into ctx11 & also infer_pure & perform unsat filter away those that are false
                                  perform entail against each c2 combine result as union *)
-							  let combinator f ctx=  
-										let f = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) f) in
-										(*combine_context_and_unsat_now prog ctx f*)
-										transform_context (combine_es_and prog f true) ctx in							  
+							  						  
                               let rs = List.map (fun (c1,c2) ->	
                                   (combinator c1 ctx, c1, c2)) case_brs in
                               (* remove away false context : need to keep at least one? *)
@@ -2944,7 +2945,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                     (* let _ = print_endline ("helper_inner: try all cases") in *)
                                     (*let _ = print_endline ("###: 4.1") in*)
 		                    List.map (fun (c1, c2) -> 
-			                let n_ctx = combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1) in 
+			                let n_ctx = combinator c1 ctx in 
                                         (*this unsat check is essential for completeness of result*)
                                         (*should return Failure bot instead*)
 				        if (isAnyFalseCtx n_ctx) then
@@ -3149,7 +3150,7 @@ and heap_entail (prog : prog_decl) (is_folding : bool)  (cl : list_context) (con
 
 (*conseq should be a struc_formula in order to have some thread id*)
 and heap_entail_one_context prog is_folding  ctx conseq (tid: CP.spec_var option) pos =
-  Debug.no_2 "heap_entail_one_context" (Cprinter.string_of_context) (Cprinter.string_of_formula) (fun (l,p) -> Cprinter.string_of_list_context l) 
+  Debug.ho_2_loop "heap_entail_one_context" (Cprinter.string_of_context) (Cprinter.string_of_formula) (fun (l,p) -> Cprinter.string_of_list_context l) 
       (fun ctx conseq -> heap_entail_one_context_a prog is_folding  ctx conseq pos) ctx conseq
 
 (*only struc_formula can have some thread id*)
@@ -3158,7 +3159,7 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
     if isAnyFalseCtx ctx then (* check this first so that false => false is true (with false residual) *)
 			  (SuccCtx [ctx], UnsatAnte)
     else if 	
-	  isStrictConstTrue conseq then (SuccCtx [ctx], TrueConseq)
+	  isStrictConstTrue conseq || isTrivTerm conseq || trivFlowDischarge ctx conseq then (SuccCtx [ctx], TrueConseq)
     else
       (* UNSAT check *)
       let ctx = elim_unsat_ctx prog (ref 1) ctx in

@@ -555,6 +555,15 @@ and isStrictConstTrue_x f = match f with
 and isStrictConstTrue (f:formula) = 
   Debug.no_1 "isStrictConstTrue" !print_formula string_of_bool isStrictConstTrue_x f
 
+and isTrivTerm_x f = match f with
+  | Base ({formula_base_heap = HEmp;formula_base_pure = p; formula_base_flow = fl;})
+  | Exists ({formula_exists_heap = HEmp;formula_exists_pure = p; formula_exists_flow = fl;}) ->  MCP.isTrivMTerm p && is_top_flow fl.formula_flow_interval
+	        (* don't need to care about formula_base_type  *)
+  | _ -> false
+  
+and isTrivTerm (f:formula) = 
+	Debug.no_1 "isTrivTerm" !print_formula string_of_bool isTrivTerm_x f
+  
 (* TRUNG TODO: should change name to isAnyConstEmp ? *)
 and isAnyConstTrue f = match f with
   | Exists ({formula_exists_heap = HEmp;
@@ -8259,3 +8268,26 @@ let rec is_top_flow f =   match f with
 
 let get_error_flow f = flow_formula_of_formula f
 let get_top_flow f = flow_formula_of_formula f
+
+
+let trivFlowDischarge_x ctx f = 
+	let rec helper fl_c ctx = match ctx with
+		| Ctx es -> (match es.es_formula with 
+						| Base {formula_base_flow = fl_a} 
+						| Exists {formula_exists_flow = fl_a} -> 
+								is_eq_flow fl_a.formula_flow_interval fl_c.formula_flow_interval && 
+								fl_a.formula_flow_link=None && fl_c.formula_flow_link=None		
+						| _ -> false)
+		| OCtx (c1,c2)-> helper fl_c c1 && helper fl_c c2 in
+	match f with
+		| Base {formula_base_heap = HEmp;
+				formula_base_pure = p; 
+				formula_base_flow = fl_c;} 
+		| Exists {formula_exists_heap = HEmp;
+				formula_exists_pure = p; 
+				formula_exists_flow = fl_c;} 		
+				-> (MCP.isTrivMTerm p || MCP.isConstMTrue p) && helper fl_c ctx
+		| _ -> false
+		
+let trivFlowDischarge ctx f = 
+	Debug.no_2 "trivFlowDischarge" (!print_context) (!print_formula) (string_of_bool) trivFlowDischarge_x ctx f
