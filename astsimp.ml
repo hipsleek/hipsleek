@@ -7038,7 +7038,7 @@ and mark_rec_and_call_order_x (cp: C.prog_decl) : C.prog_decl =
 and mark_rec_and_call_order (cp: C.prog_decl) : C.prog_decl =
   let pr p = pr_list (pr_proc_call_order) 
     (List.filter (fun x -> not (x.C.proc_body == None)) (C.list_of_procs p)) in
-  Debug.ho_1 "mark_rec_and_call_order" pr pr mark_rec_and_call_order_x cp
+  Debug.no_1 "mark_rec_and_call_order" pr pr mark_rec_and_call_order_x cp
 
 and mark_recursive_call (cp: C.prog_decl) scc_list cg : C.prog_decl =   irf_traverse_prog cp scc_list
 
@@ -7047,12 +7047,11 @@ and mark_call_order_x (cp: C.prog_decl) scc_list cg : C.prog_decl =
   let proc_top_names = List.map (fun p -> p.C.proc_name) proc_top in
   let scc_list = List.filter (fun scc -> Gen.BList.overlap_eq (=) scc proc_top_names) scc_list in
   let scc_list = scc_sort scc_list cg in
-  let _ = print_endline ("\nscc_list: " ^ (pr_list (fun scc -> (pr_list (fun s -> s) scc) ^ "\n") scc_list)) in
   let _, scc_list = List.fold_left (fun (index, acc) scc ->
 	  (index+1, acc @ [(index, scc)])) (0, []) scc_list in
   let call_hierarchy = List.concat (List.map (fun (i, scc) -> List.map (fun m -> (m,i)) scc) scc_list) in 
   let cal_index name lst = try List.assoc name lst with _ -> 0 in 
-   let tbl = C.proc_decls_map (fun p ->  
+  let tbl = C.proc_decls_map (fun p ->  
     { p with C.proc_call_order = cal_index p.C.proc_name call_hierarchy }
   ) cp.C.new_proc_decls in
   { cp with C.new_proc_decls = tbl }
@@ -7061,7 +7060,7 @@ and mark_call_order (cp: C.prog_decl) scc_list cg : C.prog_decl =
   let pr1 p = pr_list (fun c -> (pr_proc_call_order c) ^ "\n") 
     (List.filter (fun x -> x.C.proc_is_main) (C.list_of_procs p)) in
   let pr2 scc_list = pr_list (fun scc -> (pr_list (fun s -> s) scc) ^ "\n") scc_list in
-  Debug.ho_2 "mark_call_order" pr1 pr2 pr1
+  Debug.no_2 "mark_call_order" pr1 pr2 pr1
   (fun _ _ -> mark_call_order_x cp scc_list cg) cp scc_list
 
 and is_found (cp: C.prog_decl) (pname: Globals.ident) (scc: C.IG.V.t list) : bool =
@@ -7077,17 +7076,24 @@ and neighbors_of_scc (scc: C.IG.V.t list) (scc_list: C.IG.V.t list list) cg : C.
 	let neighbors = List.filter (fun m -> not (List.mem m scc)) (C.IGN.list_from_vertices cg scc) in
 	let scc_neighbors = List.find_all (fun s -> List.exists (fun m -> List.mem m neighbors) s) scc_list in 
 	scc_neighbors
-	
-and scc_sort (scc_list: C.IG.V.t list list) cg : C.IG.V.t list list =
+
+(* Warning: This method might have problem with OCaml 4.0 *)  
+and scc_sort_old (scc_list: C.IG.V.t list list) cg : C.IG.V.t list list =
   let compare_scc scc1 scc2 =
 		if (List.mem scc2 (neighbors_of_scc scc1 scc_list cg)) then 1
 		else if (List.mem scc1 (neighbors_of_scc scc2 scc_list cg)) then -1
 		else 0
-  in
-  let compare_scc scc1 scc2 =
-    let pr = pr_list (fun s -> s) in
-    Debug.ho_2 "compare_scc" pr pr (string_of_int) compare_scc scc1 scc2 
-  in List.fast_sort (fun s1 s2 -> compare_scc s1 s2) scc_list 
+  in List.fast_sort (fun s1 s2 -> compare_scc s1 s2) scc_list
+
+and scc_sort (scc_list: C.IG.V.t list list) cg : C.IG.V.t list list =
+  let topo_order = snd (C.IGT.fold (fun v (index, a) -> (index+1, (v, index)::a)) cg (0, [])) in 
+  let compare_scc scc1 scc2 = 
+    try
+      let i1 = List.assoc (List.hd scc1) topo_order in
+      let i2 = List.assoc (List.hd scc2) topo_order in
+      i2-i1
+    with _ -> 0
+  in List.fast_sort (fun s1 s2 -> compare_scc s1 s2) scc_list
 
 and irf_traverse_prog (cp: C.prog_decl) (scc_list: C.IG.V.t list list) : C.prog_decl = 
   { cp with
