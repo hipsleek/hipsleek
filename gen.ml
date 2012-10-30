@@ -1724,7 +1724,7 @@ struct
   let replace_dot_with_uscore s =
     let dot = Str.regexp "\\." in
     let caret = Str.regexp "\\^" in
-    Str.global_replace dot "_" 
+    Str.global_replace dot "" 
         (Str.global_replace caret "$" s)
 
   let replace_minus_with_uscore s =
@@ -1736,7 +1736,7 @@ struct
   let replace_path_sep_with_uscore s =
     let path_sep = Str.regexp "/" in
     let caret = Str.regexp "\\^" in
-    Str.global_replace path_sep "_" 
+    Str.global_replace path_sep "" 
         (Str.global_replace caret "$" s)
 
   let split_by sep s =

@@ -7060,7 +7060,7 @@ and mark_call_order (cp: C.prog_decl) scc_list cg : C.prog_decl =
   let pr1 p = pr_list (fun c -> (pr_proc_call_order c) ^ "\n") 
     (List.filter (fun x -> x.C.proc_is_main) (C.list_of_procs p)) in
   let pr2 scc_list = pr_list (fun scc -> (pr_list (fun s -> s) scc) ^ "\n") scc_list in
-  Debug.no_2 "mark_call_order" pr1 pr2 pr1
+  Debug.ho_2 "mark_call_order" pr1 pr2 pr1
   (fun _ _ -> mark_call_order_x cp scc_list cg) cp scc_list
 
 and is_found (cp: C.prog_decl) (pname: Globals.ident) (scc: C.IG.V.t list) : bool =
