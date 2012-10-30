@@ -2902,8 +2902,12 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                               (* for each (c1,c2) from case_brs
                                  (i) add c1 into ctx11 & also infer_pure & perform unsat filter away those that are false
                                  perform entail against each c2 combine result as union *)
+							  let combinator f ctx=  
+										let f = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) f) in
+										(*combine_context_and_unsat_now prog ctx f*)
+										transform_context (combine_es_and prog f true) ctx in							  
                               let rs = List.map (fun (c1,c2) ->	
-                                  (combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1), c1, c2)) case_brs in
+                                  (combinator c1 ctx, c1, c2)) case_brs in
                               (* remove away false context : need to keep at least one? *)
                               let rs2 = List.filter (fun (c1,_,_) -> not(isAnyFalseCtx c1)) rs in
                               let rs = if rs2==[] then [List.hd rs] else rs2 in
@@ -3035,7 +3039,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                       (************* <<< Compose variable permissions******************)
                                       (* TOCHECK : why compose_context fail to set unsat_flag? *)
 	                              let rs1 = CF.compose_context_formula rs new_post ref_vars true Flow_replace pos in
-	                              let rs2 = CF.transform_context (elim_unsat_es_now prog (ref 1)) rs1 in
+	                              let rs2 = (*CF.transform_context (elim_unsat_es_now prog (ref 1))*) rs1 in
                                       if (!Globals.ann_vp) then
                                         Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: after checking VarPerm in EAssume: \n ### rs = "^(Cprinter.string_of_context rs2)^"\n")) pos;
 	                              let rs3 = add_path_id rs2 (pid,i) in
