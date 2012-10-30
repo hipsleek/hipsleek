@@ -4,7 +4,8 @@ void foo(ref int x, ref int y)
 {
         x=x+1;
         y=y+1;
-        if (x>3)
+        bool b = x>3;
+        if (b)
            {
              x=x-1;
              y=y+1;
