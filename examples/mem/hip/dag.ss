@@ -5,7 +5,7 @@ data node {
 }
 
 
-dag<v,M> == self = null & M = {}
+dag<v,M> == self = null & M = {} & v = 0
 	or self::node<0@M,l@L,r@L> * l::dag<0,Ml> & r::dag<0,Mr> & M = union(Ml,Mr,{self}) & v=0
 	or self::node<0@M,l@L,r@L> * l::dag<_,Ml> & r::dag<_,Mr> & M = union(Ml,Mr,{self}) & v=1
 	or self::node<1@I,l@L,r@L> * l::dag<2,Ml> & r::dag<2,Mr> & M = union(Ml,Mr,{self}) & v=2

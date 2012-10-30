@@ -7816,10 +7816,12 @@ and trans_mem_formula (imem : IF.mem_formula) stab : CF.mem_perm_formula =
 	let mem_exp = trans_pure_exp imem.IF.mem_formula_exp stab in 
 	let helpl1, helpl2 = List.split imem.IF.mem_formula_field_layout in
 	let helpl2 = List.map trans_field_layout helpl2 in
+	let guards = List.map (fun c -> trans_pure_formula c stab) imem.IF.mem_formula_guards in 
 	let meml = List.combine helpl1 helpl2 in
 			{CF.mem_formula_exp  = mem_exp;
 			CF.mem_formula_exact = imem.IF.mem_formula_exact;
-			CF.mem_formula_field_layout =  meml}
+			CF.mem_formula_field_layout =  meml;
+			CF.mem_formula_guards = guards}
 			
 and trans_view_mem (vmem : IF.mem_formula option) stab : CF.mem_perm_formula option = 
 	match vmem with
@@ -7844,7 +7846,18 @@ and validate_mem_spec (prog : C.prog_decl) (vdef: C.view_decl) =
 	            let list_of_calcmem = 
 	            List.map (fun c -> CF.formula_of_mix_formula (Mem.xmem c prog.C.prog_view_decls a) pos) list_of_disjuncts in
 	            let combined_list = List.combine list_of_disjuncts list_of_calcmem in
-	            let _ = List.map (fun c-> compute_mem_spec prog (fst c) (snd c) pos) combined_list in ()
+	            let _ = List.map (fun c-> compute_mem_spec prog (fst c) (snd c) pos) combined_list in 
+	            let flag = List.for_all 
+	            (fun c-> let x_fvs = CP.fv c in
+		    let relevant_slice = CP.join_conjunctions (List.filter 
+			(fun c -> if (CP.disjoint x_fvs (CP.fv c)) then false else true)
+			(CP.split_conjunctions (MCP.pure_of_mix vdef.C.view_user_inv))) in
+	            Solver.simple_imply c relevant_slice) a.CF.mem_formula_guards
+	            in
+	            if flag then ()
+	            else 
+			Err.report_error {Err.error_loc = pos;
+			Err.error_text = "[astsimp.ml] : Mem Spec does not entail supplied invariant";}
 		    (*let calcmem = 
 		    MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula calcmem (TP.simplify_a 10) in 
 		    let lhs = CF.formula_of_mix_formula vdef.C.view_x_formula pos in
