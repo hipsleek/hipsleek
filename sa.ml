@@ -2278,8 +2278,8 @@ let generalize_hps_cs prog hpdefs unk_hps cs=
                 let _ = DD.ninfo_pprint ("         " ^ (!CP.print_sv hp) ^ " is defined already: drop the constraint") no_pos in
                 ([constr],[])
               else if CP.mem_svl hp unk_hps then
-                let _ = DD.ninfo_pprint ">>>>>> generalize_one_cs_hp: <<<<<<" no_pos in
-                let _ = DD.ninfo_pprint ("         " ^ (!CP.print_sv hp) ^ " is unknown. pass to next step") no_pos in
+                let _ = DD.info_pprint ">>>>>> generalize_one_cs_hp: <<<<<<" no_pos in
+                let _ = DD.info_pprint ("         " ^ (!CP.print_sv hp) ^ " is unknown. pass to next step") no_pos in
                 ([constr],[])
               else
                 let keep_ptrs = SAU.loop_up_closed_ptr_args prog (lhds@rhds) (lhvs@rhvs) args in
@@ -2392,7 +2392,7 @@ let get_unk_hps_relation_x prog hpdefs cs=
     if lunk_hps = [] || runk_hps = [] then ([],[cs])
     else
       let rels = List.combine lunk_hps runk_hps in
-      (rels,[])
+      (rels,[cs])
   in
   let cs3=
     if (rem_cs1@rem_cs2) = [] then []
@@ -2449,6 +2449,30 @@ let generate_defs_from_unk_rels prog unk_rels=
       rels
   in
   new_defs
+
+let generalize_pure_def_from_hpunk_x cs=
+  let mk_pure_def p pos (hp,args)=
+    let def1 = CP.filter_var_new p args in
+    let def2 = SAU.remove_irr_eqs args def1 in
+    if not (CP.isConstTrue def2) then
+      let d = SAU.mk_hprel_def hp args [(CF.formula_of_pure_formula def2 pos)]
+        pos
+      in
+        [d]
+    else []
+  in
+  let _, mxlhs, _,_,_ = (CF.split_components cs.CF.hprel_lhs) in
+  let _, prhs, _,_,_ = (CF.split_components cs.CF.hprel_rhs) in
+  let plhs = (MCP.pure_of_mix mxlhs) in
+  let pos = (CP.pos_of_formula plhs) in
+  let p = CP.mkAnd  plhs (MCP.pure_of_mix prhs) pos in
+  List.concat (List.map (mk_pure_def p pos) cs.CF.unk_hps)
+
+let generalize_pure_def_from_hpunk cs=
+  let pr1 = Cprinter.string_of_hprel in
+  let pr2 =  pr_list (pr_pair !CP.print_sv Cprinter.string_of_hp_rel_def) in
+  Debug.no_1 "generalize_pure_def_from_hpunk" pr1 pr2
+      (fun _ -> generalize_pure_def_from_hpunk_x cs) cs
 
 let generalize_hps_x prog unk_hps cs par_defs=
   DD.ninfo_pprint ">>>>>> step 6: generalization <<<<<<" no_pos;
@@ -2773,7 +2797,12 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * SA
   let hp_def_names =  List.map (fun (a1,_,_) -> SAU.get_hpdef_name a1) hp_defs in
   let unk_hps1 = List.filter (fun (hp,_) -> not (CP.mem_svl hp hp_def_names)) new_unk_hps in
   let unk_hp_svl = (List.map (fun (hp,_) -> hp) unk_hps1) in
-  let unk_hp_def = generate_hp_def_from_unk_hps unk_hps1 in
+  let unk_hp_pures, unk_hp_pure_def = List.split (List.concat
+    (List.map generalize_pure_def_from_hpunk constr3))
+  in
+  let unk_hps2 = List.filter (fun (hp,_) -> not(CP.mem_svl hp unk_hp_pures)) unk_hps1 in
+  let unk_hp_svl1 = List.filter (fun hp -> not(CP.mem_svl hp unk_hp_pures)) unk_hp_svl in
+  let unk_hp_def = generate_hp_def_from_unk_hps unk_hps2 in
    (*now just print it*)
   (* let hp_def_from_split = generate_hp_def_from_split hp_defs_split hp_defs unk_hps in *)
   DD.ninfo_pprint (" remains: " ^
@@ -2785,7 +2814,7 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * SA
   in
    DD.ninfo_pprint ">>>>>> step 7: mathching with predefined predicates <<<<<<" no_pos;
   let hp_defs2 = (def_subst_fix unk_hp_svl hp_defs1) in
-  let hp_defs3 = hp_defs2 @ unk_hp_def in
+  let hp_defs3 = hp_defs2 @ unk_hp_def @unk_hp_pure_def in
   let m = match_hps_views hp_defs3 prog.CA.prog_view_decls in
   let _ = DD.ninfo_pprint ("        sel_hp_rel:" ^ (!CP.print_svl sel_hp_rels)) no_pos in
   (* let _ =  DD.info_pprint (" matching: " ^ *)
@@ -2798,7 +2827,7 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * SA
     ) hp_defs3 in
   let sel_hpdefs1 = SAU.recover_dropped_args drop_hp_args sel_hpdefs in
   let hp_defs4 = rems@sel_hpdefs1 in
-  let sel_hp_defs = collect_sel_hp_def hp_defs4 sel_hp_rels unk_hp_svl m in
+  let sel_hp_defs = collect_sel_hp_def hp_defs4 sel_hp_rels unk_hp_svl1 m in
   let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) sel_hp_defs in
   (*for cp*)
   let dropped_hps = List.filter (fun (hp,_,_) -> not(CP.mem_svl hp sel_hp_rels)) drop_hp_args in

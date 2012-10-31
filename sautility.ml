@@ -1245,14 +1245,14 @@ let remove_equiv_wo_unkhps hp unk_hps fs=
       (fun _ _ -> remove_equiv_wo_unkhps_x hp unk_hps fs) unk_hps fs
 
 (*fix subst*)
+let filter_fn h_svl p=
+  if CP.is_eq_exp p then
+    let p_svl = CP.fv p in
+    (CP.diff_svl p_svl h_svl) = []
+  else true
+
 let elim_irr_eq_exps args f=
-  let filter_fn h_svl p=
-    if CP.is_eq_exp p then
-      let p_svl = CP.fv p in
-      (CP.diff_svl p_svl h_svl) = []
-    else true
-  in
-   match f with
+  match f with
     | CF.Base fb ->
         let h_svl = CP.remove_dups_svl (args@(CF.h_fv fb.CF.formula_base_heap)) in
         let cons = CP.list_of_conjs (MCP.pure_of_mix fb.CF.formula_base_pure) in
@@ -1361,7 +1361,7 @@ let succ_susbt nrec_grps unk_hps (hp,args,f)=
    let pr1 = pr_list_ln (pr_list_ln string_of_par_def_w_name_short) in
    let pr2 = pr_triple !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula in
    let pr3 = pr_pair string_of_bool (pr_list_ln pr2) in
-   Debug.no_2 "succ_susbt" pr1 pr2 pr3
+   Debug.ho_2 "succ_susbt" pr1 pr2 pr3
        (fun _ _ -> succ_susbt_x nrec_grps unk_hps (hp,args,f)) nrec_grps (hp,args,f)
 
 (*currently we dont use*)
@@ -1652,3 +1652,34 @@ let recover_dropped_args drop_hp_args hp_defs=
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
   Debug.no_2 "recover_dropped_args" pr1 pr2 pr2
       (fun _ _ -> recover_dropped_args_x drop_hp_args hp_defs) drop_hp_args hp_defs
+
+let remove_irr_eqs_x keep_svl p=
+  let rec rearrang_eq ls res=
+    match ls with
+      | [] -> res
+      | (sv1,sv2)::ss -> begin
+          let b1= CP.mem_svl sv1 keep_svl in
+          let b2 = CP.mem_svl sv2 keep_svl in
+          match b1,b2 with
+            | true,true -> rearrang_eq ss res
+            | true,false -> rearrang_eq ss (res@[(sv2,sv1)])
+            | false,true -> rearrang_eq ss (res@[(sv1,sv2)])
+            | _ -> rearrang_eq ss res
+      end
+  in
+  let eqs = (MCP.ptr_equations_without_null (MCP.mix_of_pure p)) in
+  let eqs1 = rearrang_eq eqs [] in
+  let eqs2 = Gen.BList.remove_dups_eq
+    (fun (sv11,_) (sv21,_) -> CP.eq_spec_var sv11 sv21) eqs1
+  in
+  let p1 = CP.subst eqs1 p in
+  let cons = CP.list_of_conjs p1 in
+  let cons1 = CP.remove_redundant_helper cons [] in
+  let cons2 = List.filter (filter_fn keep_svl) cons1 in
+  let new_p = (CP.conj_of_list cons2 no_pos) in
+  new_p
+
+let remove_irr_eqs keep_svl p=
+  let pr1 = !CP.print_formula in
+  Debug.no_2 "remove_irr_eqs" !CP.print_svl pr1 pr1
+      (fun _ _ -> remove_irr_eqs_x keep_svl p)  keep_svl p

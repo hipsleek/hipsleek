@@ -40,3 +40,7 @@ echo "ll-get_size"
 ../../hip ll-get-size.ss -cp-test cp/ll-get-size.cp | grep Compare
 echo "ll_all1"
 ../../hip ll_all1.ss -cp-test cp/ll_all1.cp | grep Compare
+echo "ll-ret-first"
+../../hip ll-ret-first.ss -cp-test cp/ll-ret-first.cp | grep Compare
+echo "ll-ret-first1"
+../../hip ll-ret-first1.ss -cp-test cp/ll-ret-first1.cp | grep Compare
