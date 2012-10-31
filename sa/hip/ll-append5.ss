@@ -59,4 +59,15 @@ PROBLEM : base case for G2(x,y)?
     append(x.next, y);
 }
 
-
+/*
+!!!    new hrel:  RELASS [HP_579,G2] unknown svl: [y];  unknown hps: [HP_609];  predefined: [x]; HP_579(v_node_56_596) * 
+  x::node<val_56_585,y>&v_node_56_596=null --> G2(x,y) * HP_609(y)&true
+!!!    new hrel:  RELASS [H2,HP_579] unknown svl: [y];  unknown hps: [HP_610];  predefined: ; H2(x,y) * 
+  HP_610(y)&true --> x::node<val_56_560',next_56_561'> * 
+  HP_579(next_56_561')&true
+!!!    new hrel:  RELASS [HP_579,H2] unknown svl: [y];  unknown hps: [HP_610];  predefined: ; HP_579(v_node_56_602)&
+  v_node_56_602!=null --> H2(v_node_56_602,y) * HP_610(y)&true
+!!!    new hrel:  RELASS [G2] unknown svl: [y];  unknown hps: [HP_609];  predefined: ; 
+  x::node<val_56_587,v_node_56_602> * G2(v_node_56_602,y) * HP_609(y)&
+  v_node_56_602!=null --> G2(x,y)&true
+ */

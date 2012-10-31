@@ -1357,8 +1357,18 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
   let undefs = CP.remove_dups_svl (List.concat (List.map
                   (process_one_hrel_arg ( CP.remove_dups_svl def_vs@hrel_args))
                   hrel_args)) in
-  DD.ninfo_pprint ("undef arg: " ^ (!CP.print_svl undefs)) pos;
-  (undefs,hds,hvs,lhrs,rhrs,leqNulls@reqNulls,selected_hps)
+  let l_args = List.concat (List.map (fun (_, exps, _) ->
+      let r =List.concat (List.map CP.afv exps) in
+      if (CP.intersect r closed_unmatched_svl) != [] then r else []
+  ) lhrs) in
+  let r_args = List.concat (List.map (fun (_, exps, _) ->  List.concat (List.map CP.afv exps)) rhrs) in
+  let r_args1 = (List.fold_left SAU.close_def r_args (leqs@reqs)) in
+  let def_vsargs = List.concat (List.map (SAU.loop_up_ptr_args_one_node prog hds hvs) def_vs) in
+  let used_svl = CP.remove_dups_svl (def_vsargs@def_vs@r_args1) in
+  let lundefs_args = CP.remove_dups_svl (CP.diff_svl l_args used_svl) in
+  (* DD.info_pprint ("undef arg: " ^ (!CP.print_svl undefs)) pos; *)
+  (* DD.info_pprint ("lundefs_args: " ^ (!CP.print_svl lundefs_args)) pos; *)
+  (undefs@lundefs_args,hds,hvs,lhrs,rhrs,leqNulls@reqNulls,selected_hps)
 
 let find_undefined_selective_pointers prog lfb rfb lmix_f rmix_f unmatched rhs_h_matched_set leqs reqs pos=
   let pr1 = Cprinter.string_of_formula_base in

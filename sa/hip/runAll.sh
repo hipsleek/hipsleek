@@ -38,3 +38,5 @@ echo "ll-delete2"
 ../../hip ll-delete2.ss -cp-test cp/ll-delete2.cp | grep Compare
 echo "ll-get_size"
 ../../hip ll-get-size.ss -cp-test cp/ll-get-size.cp | grep Compare
+echo "ll_all1"
+../../hip ll_all1.ss -cp-test cp/ll_all1.cp | grep Compare

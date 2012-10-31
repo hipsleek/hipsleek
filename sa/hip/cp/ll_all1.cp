@@ -3,7 +3,7 @@ HeapPred HP_2a(node a, node b).
 HeapPred HP_3(node a, node b, node c).
 HeapPred H1a(node a).
 
-append[
+append2[
 ass [H2,G2]:{
         x::node<_,b> * G2(b,y)&b!=null --> G2(x,y);
         HP_3(a,x,y) * x::node<_,y>&a=null --> G2(x,y);

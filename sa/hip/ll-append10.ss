@@ -57,3 +57,21 @@ G2(x,y) ::= x::node<val_58_611,y_612> * HP_613(y_612,y)&true]
     append(x.next, y);
 }
 
+/*
+!!!    new hrel:  RELASS [H1a,HP_551,G2,H1b] unknown svl: [y];  unknown hps: [H1b; 
+  H1a];  predefined: [x]; H1a(y) * HP_551(v_node_54_568) * 
+  x::node<val_54_557,y>&v_node_54_568=null --> G2(x,y) * H1b(y)&true
+!!!    new hrel:  RELASS [H1b] unknown svl: [y];  unknown hps: [H1b];  predefined: [x]; emp&
+  true --> H1b(y)&true
+!!!    new hrel:  RELASS [H1,H1a,HP_551] unknown svl: ;  unknown hps: ;  predefined: ; H1(x)&
+  true --> x::node<val_54_532',next_54_533'> * HP_551(next_54_533')&true
+!!!    new hrel:  RELASS [HP_551,H1,H1a] unknown svl: ;  unknown hps: ;  predefined: ; HP_551(v_node_54_574)&
+  v_node_54_574!=null --> H1(v_node_54_574)&true
+!!!    new hrel:  RELASS [H1a] unknown svl: [y];  unknown hps: [H1a];  predefined: ; H1a(y)&
+  true --> H1a(y)&true
+!!!    new hrel:  RELASS [G2,H1b] unknown svl: [y];  unknown hps: [H1b; 
+  H1a];  predefined: ; x::node<val_54_559,v_node_54_574> * 
+  G2(v_node_54_574,y) * H1b(y)&v_node_54_574!=null --> G2(x,y) * H1b(y)&true
+!!!    new hrel:  RELASS [H1b] unknown svl: [y];  unknown hps: [H1b];  predefined: ; emp&
+  true --> H1b(y)&true
+ */

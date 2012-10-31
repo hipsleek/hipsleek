@@ -3197,6 +3197,24 @@ and get_ptrs (f: h_formula): CP.spec_var list = match f with
       -> (get_ptrs h1)@(get_ptrs h2)
   | _ -> []
 
+and get_ptrs_w_args_f (f: formula)=
+  match f with
+    | Base fb ->
+        CP.remove_dups_svl (get_ptrs_w_args fb.formula_base_heap)
+    | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
+
+and get_ptrs_w_args (f: h_formula): CP.spec_var list = match f with
+  | DataNode {h_formula_data_node = c;
+             h_formula_data_arguments = args}
+  | ViewNode {h_formula_view_node = c;
+             h_formula_view_arguments = args} -> [c]@(List.filter CP.is_node_typ args)
+  | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
+  | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2}
+  | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2}
+      -> (get_ptrs_w_args h1)@(get_ptrs_w_args h2)
+  | HRel (_,eargs,_) -> (List.fold_left List.append [] (List.map CP.afv eargs))
+  | _ -> []
+
 and get_hnodes (f: h_formula) = match f with
   | DataNode _ -> [f]
   | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
