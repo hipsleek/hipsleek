@@ -8291,3 +8291,36 @@ let trivFlowDischarge_x ctx f =
 		
 let trivFlowDischarge ctx f = 
 	Debug.no_2 "trivFlowDischarge" (!print_context) (!print_formula) (string_of_bool) trivFlowDischarge_x ctx f
+	
+let rec reset_unsat_flag_formula f = 
+	match f with
+	| Base b -> Base (reset_unsat_flag_formula_base b)
+	| Or o -> Or (reset_unsat_flag_formula_or o)
+	| Exists e -> Exists (reset_unsat_flag_formula_exists e)
+
+and reset_unsat_flag_formula_base b =
+	{ b with formula_base_pure = MCP.reset_changed_mix b.formula_base_pure }
+	
+and reset_unsat_flag_formula_or o =
+	{ o with 
+			formula_or_f1 = reset_unsat_flag_formula o.formula_or_f1; 
+			formula_or_f2 = reset_unsat_flag_formula o.formula_or_f2 }
+			
+and reset_unsat_flag_formula_exists e =
+	{ e with formula_exists_pure = MCP.reset_changed_mix e.formula_exists_pure }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

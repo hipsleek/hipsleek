@@ -573,7 +573,7 @@ struct
         let sl = MG_S.split merged_l in
         let merged_mp = MF_S.memo_pure_of_mg_slice sl (Some filter_merged_cons) in
 				let unmerged_mp = MG_Constr_S.atom_of_constr_list (unmerged_l1 @ unmerged_l2) in
-				let unmerged_mp = List.map (fun c -> {c with memo_group_changed = false}) unmerged_mp in
+				(* let unmerged_mp = List.map (fun c -> {c with memo_group_changed = false}) unmerged_mp in *)
         let merged_no_dups = 
 					if (not slice_check_dups) then merged_mp
 					else List.map (fun mg -> { mg with memo_group_slice =
