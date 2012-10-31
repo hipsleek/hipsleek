@@ -515,7 +515,7 @@ and analize_unk prog constrs =
    let new_cs, unk_hps,equivs = update_helper constrs
      (List.map (fun (hp,_,_) -> hp ) full_unk_hp_args2_locs) [] [] equivs0
    in
-   (new_cs, Gen.BList.remove_dups_eq SAU.check_simp_hp_eq unk_hps, equivs)
+   (new_cs, SAU.elim_eq_shorter_hpargs unk_hps, equivs)
 
 and update_unk_one_constr prog unk_hp_locs cur_full_unk_hps equivs0 constr=
   (*return: unk_args*)
@@ -753,16 +753,9 @@ and update_unk_one_constr prog unk_hp_locs cur_full_unk_hps equivs0 constr=
         let r11,r12,r13 = if rem_unk_args_locs = [] then [],[],[]
             else gen_unk_hp rem_unk_args_locs
         in
-        (* let pr3 =  pr_list_ln (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) *)
-        (*                       (pr_list (pr_pair !CP.print_sv !CP.print_svl))) in *)
-        (* let _ = Debug.info_pprint ("  r13: " ^ (pr3 r13)) no_pos in *)
         (*matched eqv*)
         let ls = List.concat eqvs in
         let unk_hpargs,unk_hfss = List.split (List.map (process_one_match_eqv) ls) in
-        (* let _ = DD.info_pprint ("   unk_hfss:" ^ ( *)
-        (*     let pr = pr_list_ln Cprinter.prtt_string_of_h_formula in *)
-        (*     pr (List.concat unk_hfss)) *)
-        (* ) no_pos in *)
         ((unk_hpargs@r11), (List.concat unk_hfss)@(r12), (equivs@new_equivs@r13))
      end
   in
@@ -887,7 +880,7 @@ and update_unk_one_constr prog unk_hp_locs cur_full_unk_hps equivs0 constr=
   let lhs,rhs,new_unk_hps, new_full_unk_hps ,new_unk_svl, new_equv = helper constr.CF.hprel_lhs constr.CF.hprel_rhs equivs0 unk_hp_names in
   let new_constr = {constr with
       CF.unk_svl = CP.remove_dups_svl (constr.CF.unk_svl@new_unk_svl);
-      CF.unk_hps = Gen.BList.remove_dups_eq SAU.check_hp_arg_eq (constr.CF.unk_hps@new_unk_hps);
+      CF.unk_hps = SAU.elim_eq_shorter_hpargs (constr.CF.unk_hps@new_unk_hps);
       CF.hprel_lhs = lhs;
       CF.hprel_rhs = rhs;
   }
@@ -2278,8 +2271,8 @@ let generalize_hps_cs prog hpdefs unk_hps cs=
                 let _ = DD.ninfo_pprint ("         " ^ (!CP.print_sv hp) ^ " is defined already: drop the constraint") no_pos in
                 ([constr],[])
               else if CP.mem_svl hp unk_hps then
-                let _ = DD.info_pprint ">>>>>> generalize_one_cs_hp: <<<<<<" no_pos in
-                let _ = DD.info_pprint ("         " ^ (!CP.print_sv hp) ^ " is unknown. pass to next step") no_pos in
+                let _ = DD.ninfo_pprint ">>>>>> generalize_one_cs_hp: <<<<<<" no_pos in
+                let _ = DD.ninfo_pprint ("         " ^ (!CP.print_sv hp) ^ " is unknown. pass to next step") no_pos in
                 ([constr],[])
               else
                 let keep_ptrs = SAU.loop_up_closed_ptr_args prog (lhds@rhds) (lhvs@rhvs) args in
@@ -2854,7 +2847,7 @@ let infer_hps prog (hp_constrs: CF.hprel list) sel_hp_rels:
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr3 = pr_list (pr_triple !CP.print_sv pr0 pr0) in
-  Debug.no_1 "infer_hp" pr1 (pr_triple pr1 pr2 pr3)
+  Debug.no_1 "infer_hps" pr1 (pr_triple pr1 pr2 pr3)
       (fun _ -> infer_hps_x prog hp_constrs sel_hp_rels) hp_constrs
 
 (**===============END of NORMALIZATION==============**)

@@ -99,6 +99,33 @@ let rec eq_spec_var_order_list l1 l2=
 let check_hp_arg_eq (hp1, args1) (hp2, args2)=
   ((CP.eq_spec_var hp1 hp2) && (eq_spec_var_order_list args1 args2))
 
+let check_simp_hp_eq (hp1, _) (hp2, _)=
+   (CP.eq_spec_var hp1 hp2)
+
+let check_hp_args_imply (hp1, args1) (hp2, args2)=
+  ((CP.eq_spec_var hp1 hp2) && (CP.diff_svl args1 args2 = []))
+
+let elim_eq_shorter_hpargs_x ls=
+  let rec loop_helper cur_ls res=
+    match cur_ls with
+      | [] -> res
+      | hpargs::ss ->
+          if List.exists (check_hp_args_imply hpargs) res then
+            loop_helper ss res
+          else loop_helper ss (res@[hpargs])
+  in
+  let sort_fn (_,args1) (_,args2)=
+    (List.length args2) - (List.length args1)
+  in
+  let sorted_ls = List.sort sort_fn ls in
+  let filterd_ls = loop_helper sorted_ls [] in
+  (Gen.BList.remove_dups_eq check_simp_hp_eq filterd_ls)
+
+let elim_eq_shorter_hpargs ls=
+  let pr = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in
+  Debug.no_1 "elim_eq_shorter_hpargs" pr pr
+      (fun _ -> elim_eq_shorter_hpargs_x ls) ls
+
 let mkHRel hp args pos=
   let eargs = List.map (fun x -> CP.mkVar x pos) args in
    ( CF.HRel (hp, eargs, pos))
@@ -116,9 +143,6 @@ and get_hdnodes_hf (hf: CF.h_formula) = match hf with
   | CF.Phase {CF.h_formula_phase_rd = h1; CF.h_formula_phase_rw = h2} 
       -> (get_hdnodes_hf h1)@(get_hdnodes_hf h2)
   | _ -> []
-
-let check_simp_hp_eq (hp1, _) (hp2, _)=
-   (CP.eq_spec_var hp1 hp2)
 
 let rec get_data_view_hrel_vars_formula f=
   let rec helper f0=
@@ -1041,7 +1065,7 @@ let add_raw_hp_rel prog unknown_args pos=
   let pr1 = !CP.print_svl in
   let pr2 = Cprinter.string_of_h_formula in
   let pr4 (hf,_) = pr2 hf in
-  Debug.no_1 "add_raw_hp_rel" pr1 pr4
+  Debug.ho_1 "add_raw_hp_rel" pr1 pr4
       (fun _ -> add_raw_hp_rel_x prog unknown_args pos) unknown_args
 
 let mk_hprel_def hp args defs pos=
@@ -1361,7 +1385,7 @@ let succ_susbt nrec_grps unk_hps (hp,args,f)=
    let pr1 = pr_list_ln (pr_list_ln string_of_par_def_w_name_short) in
    let pr2 = pr_triple !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula in
    let pr3 = pr_pair string_of_bool (pr_list_ln pr2) in
-   Debug.ho_2 "succ_susbt" pr1 pr2 pr3
+   Debug.no_2 "succ_susbt" pr1 pr2 pr3
        (fun _ _ -> succ_susbt_x nrec_grps unk_hps (hp,args,f)) nrec_grps (hp,args,f)
 
 (*currently we dont use*)
