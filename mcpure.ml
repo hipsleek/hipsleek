@@ -799,7 +799,7 @@ and combine_memo_branch b (f, l) =
     | s -> try memoise_add_pure_N f (List.assoc b l) with Not_found -> f
 
 and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups : memo_pure =
-  Debug.no_3 "merge_mems_m" !print_mp_f !print_mp_f (fun b -> string_of_bool b)
+  Debug.ho_3 "merge_mems_m" !print_mp_f !print_mp_f (fun b -> string_of_bool b)
 	!print_mp_f merge_mems_x l1 l2 slice_check_dups
 	
 and merge_mems_x (l1: memo_pure) (l2: memo_pure) slice_check_dups : memo_pure =
@@ -1349,7 +1349,7 @@ let memo_find_relevant_slice_slicing fv l =
 	  memo_group_cons = acc.memo_group_cons @ s.memo_group_cons;
 	  memo_group_slice = acc.memo_group_slice @ s.memo_group_slice;
 	  memo_group_changed = acc.memo_group_changed || s.memo_group_changed;
-		memo_group_unsat = false; (* TODO: Slicing UNSAT *)
+		memo_group_unsat = true; (* TODO: Slicing UNSAT *)
 	  memo_group_aset = EMapSV.merge_eset acc.memo_group_aset s.memo_group_aset;
 	}
   ) rs l
