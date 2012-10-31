@@ -303,14 +303,14 @@ let rec translate_lval (lv: Cil.lval) (lopt: Cil.location option) : Iast.exp =
       let rec collect_index (off: Cil.offset) : Iast.exp list = (
         match off with
         | Cil.NoOffset -> []
-        | Cil.Field _ -> report_error_msg "Error!!! Invalid value! Have to be Cil.NoOffset or Cil.Index!"
+        | Cil.Field _ -> report_error_msg "TRUNG TODO: collect_index: handle Cil.Field _ later"
         | Cil.Index (e, o) -> [(translate_exp e lopt)] @ (collect_index o)
       ) in
       let rec collect_field (off: Cil.offset) : ident list = (
         match off with
         | Cil.NoOffset -> []
         | Cil.Field (f, o) -> [(f.Cil.fname)] @ (collect_field o)
-        | Cil.Index _ -> report_error_msg "Error!!! Invalid value! Have to be Cil.NoOffset or Cil.Field!"
+        | Cil.Index _ -> report_error_msg "TRUNG TODO: collect_field: handle Cil.Index _ later"
       ) in
       let (lhost, offset) = lv in
       match (lhost, offset) with
@@ -349,6 +349,9 @@ let rec translate_lval (lv: Cil.lval) (lopt: Cil.location option) : Iast.exp =
                                      Iast.exp_arrayat_pos = pos} in
           newexp
       | Cil.Mem exp, Cil.Field _ ->
+          let _ = match exp with
+            | Cil.Lval _ -> let _ = print_endline ("== lval ") in ()
+            | _ -> let _ = print_endline ("== unk ") in () in
           let _ = print_endline ("== exp = " ^ (string_of_cil_exp exp)) in
           let base = translate_exp exp lopt in
           let fields = collect_field offset in
@@ -378,7 +381,6 @@ and translate_exp (e: Cil.exp) (lopt: Cil.location option): Iast.exp =
                                Iast.exp_unary_pos = pos} in
       newexp
   | Cil.BinOp (op, exp1, exp2, ty) ->
-      let _ = print_endline ("== exp = " ^ (string_of_cil_exp e)) in
       let e1 = translate_exp exp1 lopt in
       let e2 = translate_exp exp2 lopt in
       let o = translate_binary_operator op in
