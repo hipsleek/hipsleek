@@ -2320,7 +2320,7 @@ and elim_unsat_ctx (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : co
 and elim_unsat_es_now (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let pr1 = Cprinter.string_of_entail_state in
   let pr2 = Cprinter.string_of_context in
-  Debug.ho_1 "elim_unsat_es_now" pr1 pr2 (fun _ -> elim_unsat_es_now_x prog sat_subno es) es
+  Debug.no_1 "elim_unsat_es_now" pr1 pr2 (fun _ -> elim_unsat_es_now_x prog sat_subno es) es
 
 and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let f = es.es_formula in
@@ -2872,7 +2872,8 @@ and count_octx x = match x with
   | _ -> 1
 
 and heap_entail_conjunct_lhs_struc p is_folding  has_post ctx conseq (tid:CP.spec_var option) pos pid : (list_context * proof) = 
-  let pr x = match x with Ctx _ -> "Ctx " | OCtx _ -> ("OCtx "^(Cprinter.string_of_context_short x)) in
+  let pr x = (match x with Ctx _ -> "Ctx " | OCtx _ -> "OCtx ") 
+		^ (Cprinter.string_of_context_short x) in
   let pr2 = pr_opt Cprinter.string_of_spec_var in
   Debug.no_3 "heap_entail_conjunct_lhs_struc"
       pr (Cprinter.string_of_struc_formula) pr2

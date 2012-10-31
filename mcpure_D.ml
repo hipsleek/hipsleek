@@ -8,6 +8,7 @@ and memoised_group = {
   memo_group_fv           : spec_var list;
   memo_group_linking_vars : spec_var list;
   memo_group_changed      : bool;
+	memo_group_unsat        : bool; (* false if the slice has been checked UNSAT *)
   memo_group_cons         : memoised_constraint list; (*used for pruning*)
   memo_group_slice        : formula list; (*constraints that can not be used for pruning but belong to the current slice non-the less*)
   memo_group_aset         : var_aset; (* alias set *)

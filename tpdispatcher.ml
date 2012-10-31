@@ -2122,7 +2122,7 @@ let is_sat_sub_no (f : CP.formula) sat_subno : bool =
 
 let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool =
 	(* Slicing: Only check changed slice *)
-	let f = List.filter (fun c -> c.memo_group_changed) f in
+	let f = List.filter (fun c -> c.memo_group_unsat) f in
   let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in
   if !f_2_slice || !dis_slicing then (is_sat_sub_no (CP.join_conjunctions f_lst) sat_subno)
   else not (List.exists (fun f -> not (is_sat_sub_no f sat_subno)) f_lst)
@@ -2293,7 +2293,7 @@ let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =
   else is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv
 
 let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =
-  Debug.ho_1 "is_sat_memo_sub_no" Cprinter.string_of_memo_pure_formula string_of_bool
+  Debug.no_1 "is_sat_memo_sub_no" Cprinter.string_of_memo_pure_formula string_of_bool
 	(fun f -> is_sat_memo_sub_no f sat_subno with_dupl with_inv) f	  
 	  (*
 let is_sat_memo_sub_no_new (mem : memo_pure) sat_subno with_dupl with_inv : bool =

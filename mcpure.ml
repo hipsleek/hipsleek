@@ -195,8 +195,9 @@ and subst_avoid_capture_memo_x (fr : spec_var list) (t : spec_var list) (f_l : m
     (*let _ = print_string ("rapp1: "^(print_alias_set f.memo_group_aset)^"\n") in
 	  let _ = print_string ("rapp2: "^(print_alias_set r)^"\n") in*)
    {memo_group_fv = List.map (fun v-> subs_one s v) f.memo_group_fv;
-	memo_group_linking_vars = List.map (fun v-> subs_one s v) f.memo_group_linking_vars; 
+		memo_group_linking_vars = List.map (fun v-> subs_one s v) f.memo_group_linking_vars; 
     memo_group_changed = f.memo_group_changed;
+		memo_group_unsat = f.memo_group_unsat; (* TODO: Slicing UNSAT *)
     memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_subs s d.memo_formula;}) f.memo_group_cons;
     memo_group_slice = List.map (par_subst s) f.memo_group_slice; 
     memo_group_aset = r} in
@@ -238,6 +239,10 @@ and m_apply_par_x (sst:(spec_var * spec_var) list) f =
 	{ memo_group_fv = Gen.BList.remove_dups_eq (eq_spec_var) (List.map (fun v-> subst_var_par sst v) c.memo_group_fv);
 	  memo_group_linking_vars = Gen.BList.remove_dups_eq (eq_spec_var) (List.map (fun v-> subst_var_par sst v) c.memo_group_linking_vars);
 	  memo_group_changed = c.memo_group_changed;
+		(* Slicing: A substituted slice keeps its unsat flag *)
+		(* if it is not merged to other slices               *)
+		(* TODO: Slicing UNSAT: x>3 & y<=3 --> x>3 & x<=3 *)
+		memo_group_unsat = c.memo_group_unsat; 
 	  memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_subs sst d.memo_formula;}) c.memo_group_cons;
 	  memo_group_slice = List.map (apply_subs sst) c.memo_group_slice; 
 	  memo_group_aset = r }) f in  
@@ -255,6 +260,7 @@ and m_apply_par_varperm_x (sst:(spec_var * spec_var) list) f =
 	{ memo_group_fv = Gen.BList.remove_dups_eq (eq_spec_var) (List.map (fun v-> subst_var_par sst v) c.memo_group_fv); (*TO CHECK: var does not contain VarPerm*)
 	  memo_group_linking_vars = Gen.BList.remove_dups_eq (eq_spec_var) (List.map (fun v-> subst_var_par sst v) c.memo_group_linking_vars);
 	  memo_group_changed = c.memo_group_changed;
+		memo_group_unsat = c.memo_group_unsat; (* TODO: Slicing UNSAT *)
 	  memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_subs_varperm sst d.memo_formula;}) c.memo_group_cons;
 	  memo_group_slice = List.map (apply_subs_varperm sst) c.memo_group_slice; 
 	  memo_group_aset = r }) f in  
@@ -482,6 +488,7 @@ and mkMFalse pos : memo_pure =
   [{memo_group_fv = [];
 	  memo_group_linking_vars = [];
 	  memo_group_changed = false; 
+		memo_group_unsat = false; (* Slicing: Do not need to check UNSAT with False slice *)
 	  memo_group_cons = [];
 	  memo_group_slice = [mkFalse pos];
 	  memo_group_aset = empty_var_aset}]
@@ -1035,6 +1042,8 @@ and memo_pure_push_exists_slice_x (f_simp, do_split) (qv: spec_var list) (f0: me
       memo_group_fv = n_memo_group_fv;
       memo_group_linking_vars = n_memo_group_lv;
       memo_group_changed = true;
+			(* TODO: Slicing UNSAT *)
+			memo_group_unsat = true; 
       memo_group_cons = rem_cons;
       memo_group_slice = rem_slice @ after_elim_trues;
       memo_group_aset = rem_aset;
@@ -1340,6 +1349,7 @@ let memo_find_relevant_slice_slicing fv l =
 	  memo_group_cons = acc.memo_group_cons @ s.memo_group_cons;
 	  memo_group_slice = acc.memo_group_slice @ s.memo_group_slice;
 	  memo_group_changed = acc.memo_group_changed || s.memo_group_changed;
+		memo_group_unsat = false; (* TODO: Slicing UNSAT *)
 	  memo_group_aset = EMapSV.merge_eset acc.memo_group_aset s.memo_group_aset;
 	}
   ) rs l
@@ -1395,12 +1405,19 @@ let transform_memo_formula f l : memo_pure =
 	| Some e1 -> e1
 	| None  -> List.map (fun c -> {
       memo_group_fv = c.memo_group_fv;
-	  memo_group_linking_vars = c.memo_group_linking_vars;
+	  	memo_group_linking_vars = c.memo_group_linking_vars;
       memo_group_changed = true;
+			(* TODO: Slicing UNSAT: The transformed formula seems not be changed *)
+			memo_group_unsat = c.memo_group_unsat; 
       memo_group_cons = List.map (fun c -> {c with memo_formula = transform_b_formula (f_b_formula, f_exp) c.memo_formula}) c.memo_group_cons;
       memo_group_slice = List.map (transform_formula f) c.memo_group_slice;
       memo_group_aset = match (f_aset c.memo_group_aset) with | None -> c.memo_group_aset | Some s -> s;
     }) l
+		
+let transform_memo_formula f l =
+	let pr = !print_mp_f in
+	Debug.no_1 "transform_memo_formula" pr pr
+	(fun _ -> transform_memo_formula f l) l
 
 let process_cons_l (f:memoised_constraint list):formula list =
   let filtl = List.filter (fun c-> match c.memo_status with | Implied_R -> false |_-> true) f in
@@ -1822,6 +1839,7 @@ let imply_memo ante_memo0 conseq_memo t_imply imp_no =
              memo_group_linking_vars = [];
              memo_group_cons = filter_merged_cons na [a.memo_group_cons; c.memo_group_cons];
              memo_group_changed = true;
+						 memo_group_unsat = false; (* Slicing UNSAT: The UNSAT check has already done *)
              memo_group_slice = a.memo_group_slice @ c.memo_group_slice;
              memo_group_aset = na;}) h t]
     else ante_memo0 in
@@ -1842,6 +1860,9 @@ let imply_memo ante_memo0 conseq_memo t_imply imp_no=
   (r1,r2,r3)*)
 
 let reset_changed f = List.map (fun c-> {c with memo_group_changed = false}) f
+
+let reset_unsat_flag_mem mp = 
+	List.map (fun m -> { m with memo_group_unsat = false }) mp
   
 let trans_memo_group (e: memoised_group) (arg: 'a) f f_arg f_comb : (memoised_group * 'b) = 
   let f_grp, f_memo_cons, f_aset, f_slice,f_fv = f in
@@ -1969,9 +1990,9 @@ let merge_mems f1 f2 slice_dup =
   Debug.no_3 "merge_mems " !print_mix_f !print_mix_f (fun x -> "?")
   !print_mix_f merge_mems f1 f2 slice_dup
 
-let reset_changed_mix m = 
+let reset_unsat_flag_mix m = 
 	match m with
-	| MemoF mf -> MemoF (reset_changed mf)
+	| MemoF mf -> MemoF (reset_unsat_flag_mem mf)
 	| _ -> m  
   
 let replace_mix_formula_label lb s = match s with

@@ -407,6 +407,7 @@ struct
       memo_group_cons = [];
       memo_group_slice = [f];
       memo_group_changed = false;
+			memo_group_unsat = false; (* TODO: Slicing UNSAT *)
       memo_group_aset = empty_var_aset;
     }
 
@@ -449,13 +450,14 @@ struct
       memo_group_cons = cons;
       memo_group_slice = slice;
       memo_group_changed = true;
+			memo_group_unsat = true;
       memo_group_aset = aset;
     }
 
   let memo_pure_of_pure_slice (sl: PS.t list) (status: prune_status) f_opt : memo_pure = 
     List.map (fun s -> memo_group_of_pure_slice s status f_opt) sl
 
-  let memo_group_of_memo_slice (s: MS.t) f_opt : memoised_group =
+  let memo_group_of_memo_slice (s: MS.t) f_opt changed_flag unsat_flag : memoised_group =
     let sv, wv = ML.fv_of_label (MS.get_label s) in
     let cons, slice, aset = List.fold_left (
       fun (c, s, a) m_ctr -> match m_ctr with 
@@ -474,12 +476,13 @@ struct
       memo_group_linking_vars = Gen.BList.remove_dups_eq eq_spec_var wv;
       memo_group_cons = cons;
       memo_group_slice = slice;
-      memo_group_changed = true;
+      memo_group_changed = changed_flag;
+			memo_group_unsat = unsat_flag;
       memo_group_aset = aset;
     }
 
-  let memo_pure_of_memo_slice (sl: MS.t list) f_opt : memo_pure = 
-    List.map (fun s -> memo_group_of_memo_slice s f_opt) sl
+  let memo_pure_of_memo_slice (sl: MS.t list) f_opt changed_flag unsat_flag : memo_pure = 
+    List.map (fun s -> memo_group_of_memo_slice s f_opt changed_flag unsat_flag) sl
 
   let memo_group_of_mg_slice (s: MGS.t) f_opt : memoised_group =
     let sv, wv = MGL.fv_of_label (MGS.get_label s) in
@@ -488,6 +491,24 @@ struct
         (c@mg.memo_group_cons, s@mg.memo_group_slice, EMapSV.merge_eset a mg.memo_group_aset)
     ) ([], [], empty_var_aset) (snd s)
     in
+		(* The new slice is changed because of merging *)
+		let is_changed = (List.length (snd s)) > 1 in
+		let unsat_checked = match (snd s) with
+		| [] -> false
+		| mg::[] -> mg.memo_group_unsat
+		| mg::mgl -> 
+			(* Find the largest slice to check it changed or not *)
+			let _, largest_mg, rest_mgs = List.fold_left (fun (la, a, r) m ->
+				let lm = List.length m.memo_group_cons in
+				if (lm > la) then (lm, m, r@[a]) else (la, a, r@[m]))
+				(List.length mg.memo_group_cons, mg, []) mgl in
+			let rest_constrs = List.concat (List.map (fun mg -> mg.memo_group_cons) rest_mgs) in
+			if (List.exists (fun c1 ->
+				not (List.exists (fun c2 ->
+					equalBFormula_aset aset c1.memo_formula c2.memo_formula) largest_mg.memo_group_cons))
+				rest_constrs) then true
+			else largest_mg.memo_group_unsat
+		in
     let cons = match f_opt with
     | None -> cons
     | Some f -> f aset [cons]
@@ -497,7 +518,8 @@ struct
       memo_group_linking_vars = Gen.BList.remove_dups_eq eq_spec_var wv;
       memo_group_cons = cons;
       memo_group_slice = slice;
-      memo_group_changed = true;
+      memo_group_changed = is_changed;
+			memo_group_unsat = unsat_checked;
       memo_group_aset = aset;
     }
     
@@ -553,6 +575,7 @@ struct
 		      memo_group_linking_vars = remove_dups_svl (h1.memo_group_linking_vars @ h2.memo_group_linking_vars);
 		      memo_group_cons = filter_merged_cons na [h1.memo_group_cons; h2.memo_group_cons];
 		      memo_group_changed = true;
+					memo_group_unsat = true; (* The slice has been changed so we need to check UNSAT again *)
 		      memo_group_slice = h1.memo_group_slice @ h2.memo_group_slice;
 		      memo_group_aset = na;
 		    }])
@@ -564,6 +587,7 @@ struct
 				(* Find relevant constraints in l1 and l2 *)
 				(* If a constraint X is independent to all constraints of l2*)
 				(* then it is an unchanged constraint in the merged group *)
+				(* TODO: Check duplicate slice *)
 				let merged_l, unmerged_l1, unmerged_l2 = 
 					List.fold_left (fun (m, u1, u2) c2 ->
 						let merged_by_c2, unmerged_by_c2 = List.partition (fun c1 -> MG_Constr_S.is_rel c1 c2) u1 in
@@ -571,6 +595,7 @@ struct
 						| [] -> (m, unmerged_by_c2, u2 @ [c2])
 						| _ -> (m @ merged_by_c2 @ [c2], unmerged_by_c2, u2)) ([], l1, []) l2 in
         let sl = MG_S.split merged_l in
+				(* Set unsat_flag = true for all changed slices *)
         let merged_mp = MF_S.memo_pure_of_mg_slice sl (Some filter_merged_cons) in
 				let unmerged_mp = MG_Constr_S.atom_of_constr_list (unmerged_l1 @ unmerged_l2) in
 				(* let unmerged_mp = List.map (fun c -> {c with memo_group_changed = false}) unmerged_mp in *)
@@ -602,6 +627,7 @@ struct
         let n_l = Pure_Constr_S.constr_of_atom_list l in
         Pure_S.split n_l 
     in
+		(* Set unsat_flag = true for all new slices *)
     MF_S.memo_pure_of_pure_slice sl status (Some filter_merged_cons)
 
   let split_mem_grp (g : memoised_group) : memo_pure = 
@@ -610,7 +636,7 @@ struct
       let l =  Memo_Constr.memo_constr_of_memo_group g in
       let n_l = Memo_Constr_S.constr_of_atom_list l in 
       let sl = Memo_S.split n_l in
-      MF_S.memo_pure_of_memo_slice sl None
+      MF_S.memo_pure_of_memo_slice sl None g.memo_group_changed g.memo_group_unsat (* TODO: Slicing UNSAT *)
 
   let get_rel_ctr (n: int) (pf: formula) (mp: Memo_Group.t list) : Memo_Group.t list = 
     let ps = MG_Constr_S.constr_of_atom_list mp in

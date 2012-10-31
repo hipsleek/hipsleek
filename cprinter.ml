@@ -837,7 +837,7 @@ let pr_memoise_group_vb m_gr =
           (fun c-> wrap_box ("H",1) (fun _ -> fmt_string 
 						"SLICE["; pr_list_of_spec_var c.memo_group_fv; fmt_string "]["; 
 						pr_list_of_spec_var c.memo_group_linking_vars; fmt_string "]";
-						fmt_string (if c.memo_group_changed then "(changed):" else ":")) (); 
+						fmt_string (if c.memo_group_unsat then "(sat?):" else ":")) (); 
               fmt_cut ();fmt_string "  ";
               wrap_box ("B",1) pr_memoise c.memo_group_cons;
               fmt_cut ();fmt_string "  ";

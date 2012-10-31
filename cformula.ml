@@ -8299,7 +8299,7 @@ let rec reset_unsat_flag_formula f =
 	| Exists e -> Exists (reset_unsat_flag_formula_exists e)
 
 and reset_unsat_flag_formula_base b =
-	{ b with formula_base_pure = MCP.reset_changed_mix b.formula_base_pure }
+	{ b with formula_base_pure = MCP.reset_unsat_flag_mix b.formula_base_pure }
 	
 and reset_unsat_flag_formula_or o =
 	{ o with 
@@ -8307,7 +8307,7 @@ and reset_unsat_flag_formula_or o =
 			formula_or_f2 = reset_unsat_flag_formula o.formula_or_f2 }
 			
 and reset_unsat_flag_formula_exists e =
-	{ e with formula_exists_pure = MCP.reset_changed_mix e.formula_exists_pure }
+	{ e with formula_exists_pure = MCP.reset_unsat_flag_mix e.formula_exists_pure }
 
 
 
