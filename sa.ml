@@ -367,7 +367,7 @@ let build_hp_unk_locs known_svl fn_cmp (hp_name, args)=
    let rec helper args res index all=
     match args with
       | [] -> res
-      | a::ass -> if (fn_cmp a all) then
+      | a::ass -> if (fn_cmp a all) (* || not(CP.is_node_typ a) *) then
             helper ass res (index+1) all
           else helper ass (res@[index]) (index+1) all
   in
