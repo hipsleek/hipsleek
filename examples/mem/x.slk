@@ -3,8 +3,17 @@ data pair {
  int snd;
 }.
 
+data cell{
+	int val;
+}.
+
+
+checkentail f::cell<w> & s::cell<1> & v != 1 & (w = v | w = 1) |- f::cell<1> & s::cell<1>. 
+print residue.
+
 checkentail x::pair<a@M,_@A> * x::pair<b@A,_@A> |- true.
 print residue.
 
 checkentail x::pair<a@M,_@A> * x::pair<_@A,b@M> & a = 1 & b =2 |- x::pair<1,2>.
 print residue.
+

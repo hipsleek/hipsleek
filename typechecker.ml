@@ -732,7 +732,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          else (CF.Ctx c1) in
 	        let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
             let _ = CF.must_consistent_list_failesc_context "assign final" res  in
-            res
+            (*if !Globals.allow_mem 
+            then let ramified_res = CF.transform_list_failesc_context (idf,idf,(fun c -> Mem.ramify_assign v rhs c)) res in
+            let _ = CF.must_consistent_list_failesc_context "ramify final" ramified_res in ramified_res
+            else *)res 
 	      end
 		| Barrier {exp_barrier_recv = b; exp_barrier_pos = pos} ->			
 			let mkprf prf_l = PTracer.ContextList
