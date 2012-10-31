@@ -1,3 +1,31 @@
+NO SLICING
+==========
+assert x>2;
+assert y>=0;
+assert x1=x+1;
+assert y1=y+1;
+assert b = x1>3;
+ push;
+ assert b;
+ assert x2=x1-1;
+ assert y2=y1+1;
+  push;
+  assert !(x2=x & y2>1)
+  checksat;
+  pop
+ pop;
+ push;
+ assert !b
+ assert y2=2;
+  push;
+  assert !(x1=x & y2>1)
+  checksat;
+  pop
+ pop;
+==============================================
+
+
+
 
 --------------
 Prover: OMEGA CALCULATOR
