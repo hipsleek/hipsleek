@@ -497,7 +497,7 @@ struct
 		| [] -> false
 		| mg::[] -> mg.memo_group_unsat
 		| mg::mgl -> 
-			(* Find the largest slice to check it changed or not *)
+			(* Find the largest slice and check it changed or not *)
 			let _, largest_mg, rest_mgs = List.fold_left (fun (la, a, r) m ->
 				let lm = List.length m.memo_group_cons in
 				if (lm > la) then (lm, m, r@[a]) else (la, a, r@[m]))
