@@ -160,7 +160,7 @@ and enum_item = string * expression * cabsloc
 ** Declaration definition (at toplevel)
 *)
 and definition =
-   FUNDEF of single_name * block * cabsloc * cabsloc
+   FUNDEF of single_name * hipspecs * block * cabsloc * cabsloc
  | DECDEF of init_name_group * cabsloc        (* global variable(s), or function prototype *)
  | TYPEDEF of name_group * cabsloc
  | ONLYTYPEDEF of specifier * cabsloc
@@ -173,6 +173,8 @@ and definition =
  (* expression transformer: source and destination *)
  | EXPRTRANSFORMER of expression * expression * cabsloc
 
+(* specification for each function, used by hip/sleek *)
+and hipspecs = Iformula.struc_formula
 
 (* the string is a file name, and then the list of toplevel forms *)
 and file = string * definition list

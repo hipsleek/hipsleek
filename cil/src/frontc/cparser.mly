@@ -139,10 +139,11 @@ let doDeclaration (loc: cabsloc) (specs: spec_elem list) (nl: init_name list) : 
 let doFunctionDef (loc: cabsloc)
                   (lend: cabsloc)
                   (specs: spec_elem list) 
-                  (n: name) 
+                  (n: name)
+                  (hspecs: hipspecs)
                   (b: block) : definition = 
   let fname = (specs, n) in
-  FUNDEF (fname, b, loc, lend)
+  FUNDEF (fname, hspecs, b, loc, lend)
 
 
 let doOldParDecl (names: string list)

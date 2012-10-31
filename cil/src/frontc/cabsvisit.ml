@@ -306,12 +306,12 @@ and visitCabsDefinition vis (d: definition) : definition list =
   doVisitList vis vis#vdef childrenDefinition d
 and childrenDefinition vis d = 
   match d with 
-    FUNDEF (sn, b, l, lend) -> 
+    FUNDEF (sn, sp, b, l, lend) -> 
       let sn' = childrenSingleName vis NFun sn in
       let b' = visitCabsBlock vis b in
       (* End the scope that was started by childrenFunctionName *)
       vis#vExitScope ();
-      if sn' != sn || b' != b then FUNDEF (sn', b', l, lend) else d
+      if sn' != sn || b' != b then FUNDEF (sn', sp, b', l, lend) else d
         
   | DECDEF ((s, inl), l) -> 
       let s' = visitCabsSpecifier vis s in

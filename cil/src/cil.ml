@@ -676,6 +676,7 @@ and fundec =
       mutable sallstmts: stmt list;   (** After you call {!Cil.computeCFGInfo} 
                                       * this field is set to contain all 
                                       * statements in the function *)
+      mutable sspecs: Iformula.struc_formula;       (** static specs of function, used by hip/sleek system *)
     }
 
 
@@ -4935,6 +4936,7 @@ let emptyFunction name =
     sbody = mkBlock [];
     smaxstmtid = None;
     sallstmts = [];
+    sspecs = Iformula.EList [];
   } 
 
 

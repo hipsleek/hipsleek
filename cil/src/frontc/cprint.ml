@@ -788,7 +788,7 @@ and print_defs defs =
 
 and print_def def =
   match def with
-    FUNDEF (proto, body, loc, _) ->
+    FUNDEF (proto, spec, body, loc, _) ->
       comprint "fundef";
       if !printCounters then begin
         try
@@ -803,6 +803,7 @@ and print_def def =
       end;
       setLoc(loc);
       print_single_name proto;
+      print (Iprinter.string_of_struc_formula spec); new_line ();
       print_block body;
       force_new_line ();
 

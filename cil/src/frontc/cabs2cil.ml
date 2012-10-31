@@ -5561,7 +5561,8 @@ and doAliasFun vtype (thisname:string) (othername:string)
                               else A.RETURN(call, loc)
   in
   let body = { A.blabels = []; A.battrs = []; A.bstmts = [stmt] } in
-  let fdef = A.FUNDEF (sname, body, loc, loc) in
+  let specs = Iformula.EList [] in
+  let fdef = A.FUNDEF (sname, specs, body, loc, loc) in
   ignore (doDecl true fdef);
   (* get the new function *)
   let v,_ = try lookupGlobalVar thisname
@@ -5646,7 +5647,7 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
         
   (* If there are multiple definitions of extern inline, turn all but the 
    * first into a prototype *)
-  | A.FUNDEF (((specs,(n,dt,a,loc')) : A.single_name),
+  | A.FUNDEF (((specs,(n,dt,a,loc')) : A.single_name), hspecs,
               (body : A.block), loc, _) 
       when isglobal && isExtern specs && isInline specs 
            && (H.mem genv (n ^ "__extinline")) -> 
@@ -5667,7 +5668,7 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
        (* Treat it as a prototype *)
        doDecl isglobal (A.DECDEF ((specs, [((n,dt,a,loc'), A.NO_INIT)]), loc))
 
-  | A.FUNDEF (((specs,(n,dt,a, _)) : A.single_name),
+  | A.FUNDEF (((specs,(n,dt,a, _)) : A.single_name), hspecs,
               (body : A.block), loc1, loc2) when isglobal ->
     begin
       let funloc = convLoc loc1 in
@@ -5690,8 +5691,9 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
                  sformals = []; (* Not final yet *)
                  smaxid   = 0;
                  sbody    = dummyFunDec.sbody; (* Not final yet *)
-		 smaxstmtid = None;
+                 smaxstmtid = None;
                  sallstmts = [];
+                 sspecs = hspecs;
                };
 	    !currentFunctionFDEC.svar.vdecl <- funloc;
 
