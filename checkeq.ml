@@ -1225,7 +1225,7 @@ let check_equiv_constr_with_diff  hvars (constr1: CF.formula * CF.formula) (cons
   let pr1 = (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
   let pr2 b = if(b) then "VALID\n" else "INVALID\n" in
   let pr3 = pr_list_ln (pr_triple string_of_map_table pr1 pr1) in
-  Debug.ho_2 "check_equiv_constr_with_diff" pr1 pr1 (pr_pair pr2 pr3)
+  Debug.no_2 "check_equiv_constr_with_diff" pr1 pr1 (pr_pair pr2 pr3)
       (fun _ _ ->  check_equiv_constr_with_diff_x hvars constr1 constr2) constr1 constr2
 
 let rec checkeq_constrs_with_diff_step1_x hvars (constrs: (CF.formula * CF.formula) list) ( infile_constrs: (CF.formula * CF.formula) list): (bool * ((CF.formula * CF.formula) list) * ((CF.formula * CF.formula) list)) =
@@ -1302,7 +1302,7 @@ let rec checkeq_constrs_with_diff hvars (constrs: (CF.formula * CF.formula) list
   let pr_constr = (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
   let pr_mix_mtl =   pr_list_ln (pr_triple string_of_map_table pr_constr pr_constr) in
   let pr3 = pr_list_ln (pr_triple pr_constr pr_constr pr_mix_mtl) in
-  Debug.ho_2 "check_constrs_with_diff" pr1 pr1 (pr_pair pr2 pr3)
+  Debug.no_2 "check_constrs_with_diff" pr1 pr1 (pr_pair pr2 pr3)
       (fun _ _ -> checkeq_constrs_with_diff_x hvars constrs infile_constrs) constrs infile_constrs
 
 (*******************************check equivalent definition**************************************)
@@ -1392,7 +1392,7 @@ let checkeq_defs hvars (defs: (CP.rel_cat * CF.h_formula * CF.formula) list) ( i
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr3 = pr_list_ln (pr_pair Cprinter.string_of_spec_var_list Cprinter.string_of_spec_var) in
-  Debug.ho_2 "check_defs" pr2 pr1 (pr3)
+  Debug.no_2 "check_defs" pr2 pr1 (pr3)
     (fun _ _ -> checkeq_defs_x hvars defs infile_defs) defs infile_defs
 
 let checkeq_defs_bool hvars (defs: (CP.rel_cat * CF.h_formula * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) inf_vars=
@@ -1408,5 +1408,5 @@ let checkeq_defs_bool hvars (defs: (CP.rel_cat * CF.h_formula * CF.formula) list
   let mixs = List.map (fun c -> (helper c mtb,c)) inf_vars in
   let rs,vars = List.split mixs in
   let _,remain_vars = List.split (List.filter (fun (r,v) -> r == false) mixs) in
-  print_string ("HEAP PREDICATES THAT IS DIFF: "^Cprinter.string_of_spec_var_list remain_vars);
-  not (List.exists (fun c -> not(c)) rs)
+  let res = not (List.exists (fun c -> not(c)) rs) in
+  (res,remain_vars)

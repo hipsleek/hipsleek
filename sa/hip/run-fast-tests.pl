@@ -1110,6 +1110,7 @@ sub hip_process_file {
 		}
 		
 		if ("$param" =~ "sa") {
+			#print "$hip $script_arguments $test->[0]  $extra_options  $test->[3]  2>&1 \n";	
 		    $output = `$hip $script_arguments $test->[0]  $extra_options  $test->[3]  2>&1`;
 		    print LOGFILE "\n======================================\n";
 		    print LOGFILE "$output";

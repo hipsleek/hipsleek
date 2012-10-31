@@ -29,7 +29,7 @@ hpdefs [H1,G1]: {
  ;
  HP_613(y_612,y)&true -->  
  emp&y_612=y
- or y_612::node<val_82_579,y_616> * HP_613(y_616,y)&y!=null
+ or y_612::node<val_82_579,y_616> * HP_613(y_616,z)&y!=null
  ;
  HP_618(next_82_550')&true -->  
  emp&next_82_550'=null
