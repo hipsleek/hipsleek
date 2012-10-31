@@ -1065,7 +1065,7 @@ let add_raw_hp_rel prog unknown_args pos=
   let pr1 = !CP.print_svl in
   let pr2 = Cprinter.string_of_h_formula in
   let pr4 (hf,_) = pr2 hf in
-  Debug.ho_1 "add_raw_hp_rel" pr1 pr4
+  Debug.no_1 "add_raw_hp_rel" pr1 pr4
       (fun _ -> add_raw_hp_rel_x prog unknown_args pos) unknown_args
 
 let mk_hprel_def hp args defs pos=

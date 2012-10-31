@@ -2384,7 +2384,10 @@ let get_unk_hps_relation_x prog hpdefs cs=
   let new_defs2,rem_cs2=
     if lunk_hps = [] || runk_hps = [] then ([],[cs])
     else
-      let rels = List.combine lunk_hps runk_hps in
+      let rels = List.concat (List.map
+                       (fun a -> List.map (fun b -> (a,b)) runk_hps)
+                       lunk_hps)
+      in
       (rels,[cs])
   in
   let cs3=

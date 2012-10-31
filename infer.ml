@@ -1366,8 +1366,8 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
   let def_vsargs = List.concat (List.map (SAU.loop_up_ptr_args_one_node prog hds hvs) def_vs) in
   let used_svl = CP.remove_dups_svl (def_vsargs@def_vs@r_args1) in
   let lundefs_args = CP.remove_dups_svl (CP.diff_svl l_args used_svl) in
-  (* DD.info_pprint ("undef arg: " ^ (!CP.print_svl undefs)) pos; *)
-  (* DD.info_pprint ("lundefs_args: " ^ (!CP.print_svl lundefs_args)) pos; *)
+  DD.info_pprint ("undef arg: " ^ (!CP.print_svl undefs)) pos;
+  DD.info_pprint ("lundefs_args: " ^ (!CP.print_svl lundefs_args)) pos;
   (undefs@lundefs_args,hds,hvs,lhrs,rhrs,leqNulls@reqNulls,selected_hps)
 
 let find_undefined_selective_pointers prog lfb rfb lmix_f rmix_f unmatched rhs_h_matched_set leqs reqs pos=
