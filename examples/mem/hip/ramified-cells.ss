@@ -4,10 +4,10 @@ data cell {
 
 
 void ex0(ref cell f, ref cell s)
-  requires f::cell<v> & s::cell<r> & v != 1 & r != 1
+  requires f::cell<v> & s::cell<r> & v != 1 & r != 1 & (v = r | v != r)
   ensures f'::cell<v> & s'::cell<1> & v != 1; 
-  requires f::cell<v> && s::cell<r> & v != 1 & r != 1
-  ensures f'::cell<1> & s'::cell<1>; 
+  requires f::cell<v> && s::cell<r> & v != 1  & r != 1
+  ensures f'::cell<_> & s'::cell<_>; 
 {
 	cell m = new cell(1);
 	s = m;
