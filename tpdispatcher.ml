@@ -2126,14 +2126,14 @@ let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool 
 		(is_sat_sub_no (CP.join_conjunctions f_lst) sat_subno)
   else 
 		let f = if !do_slicing
-			(* Slicing: Only check changed slice *) 
+			(* Slicing: Only check changed slice *)
 			then List.filter (fun c -> c.memo_group_unsat) f
 			else f in
 		let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in
-		not (List.exists (fun f -> not (is_sat_sub_no f sat_subno)) f_lst)	
+		not (List.exists (fun f -> not (is_sat_sub_no f sat_subno)) f_lst)
 
 let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool =
-  Debug.ho_1 "is_sat_memo_sub_no_orig"
+  Debug.no_1 "is_sat_memo_sub_no_orig"
   Cprinter.string_of_memo_pure_formula
 	string_of_bool
   (fun _ -> is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv) f
