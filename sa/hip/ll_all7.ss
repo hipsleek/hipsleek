@@ -24,46 +24,42 @@ HeapPred G2(node a, node b).
 HeapPred G3(node a, node b, node c).
 
 
-// function to set the tail of a list 
- void set_next(node x, node y)
 
-    infer [H2,G2]
-	requires H2(x,y)
-	ensures G2(x,y);
-/*
-Inferred:
----------
-P_565(y) ::=UNKNOWN,
- HP_RELDEFN H2
-H2(x,y) ::= x::node<val_35_547',next_35_548'> * HP_565(y)&true,
- HP_RELDEFN G2
-G2(x,y) ::= x::node<val_35_564,y> * HP_565(y)&true]
 
-ERROR : Should be:
-------------------
- H2(x,y) == x::node<_,q> * P(q,y)
- G2(x,y) == x::node<_,y> * P(q,y)
-*/
-
-{
-	x.next = y;
-}
-
-/*
 // return the tail of a singly linked list 
 node get_next(node x)
+    infer [H1,G2]
+	requires H1(x)
+	ensures G2(x,res);
+    /*
+Say I obtained
+Intermediate form where P is unknown.
+   P(_) ::=UNKNOWN,
+   H1(x) ::= x::node<_,n> * P(n)&true
+   G2(x,v) ::= x::node<_,v> * P(v)&true,
 
+We need a further step to transform it to
+pure by writing P(v) ==> v=P# where P# is
+a logical variable linking predicate definition.
 
+   P(_) ::=UNKNOWN,
+   H1(x) ::= x::node<_,n> & n=P#  
+   G2(x,v) ::= x::node<_,v> & v=P#_ ,
 
+Finally:
+   H1(x) ::= x::node<_,P#>  
+   G2(x,v) ::= x::node<_,v> & v=P#_,
+
+     */
 {
   //dprint;
 	node tmp = x.next;
     //assume false;
-	x.next = null;
 	return tmp;
 }
 
 
+/*
 void set_null2(node x)
 
 

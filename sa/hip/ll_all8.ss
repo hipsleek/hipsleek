@@ -24,55 +24,30 @@ HeapPred G2(node a, node b).
 HeapPred G3(node a, node b, node c).
 
 
-// function to set the tail of a list 
- void set_next(node x, node y)
-
-    infer [H2,G2]
-	requires H2(x,y)
-	ensures G2(x,y);
-/*
-Inferred:
----------
-P_565(y) ::=UNKNOWN,
- HP_RELDEFN H2
-H2(x,y) ::= x::node<val_35_547',next_35_548'> * HP_565(y)&true,
- HP_RELDEFN G2
-G2(x,y) ::= x::node<val_35_564,y> * HP_565(y)&true]
-
-ERROR : Should be:
-------------------
- H2(x,y) == x::node<_,q> * P(q,y)
- G2(x,y) == x::node<_,y> * P(q,y)
-*/
-
-{
-	x.next = y;
-}
-
-/*
-// return the tail of a singly linked list 
-node get_next(node x)
-
-
-
-{
-  //dprint;
-	node tmp = x.next;
-    //assume false;
-	x.next = null;
-	return tmp;
-}
-
-
 void set_null2(node x)
+    infer [H1,G1]
+	requires H1(x)
+	ensures G1(x);
+    /*
+!!! HP_573([next_33_581])= HP_583(next_33_581)&true
+[ HP_583(next_33_581) ::=UNKNOWN,
+ G1(x_585) ::= x_585::node<val_33_582,next_33_550'>&next_33_550'=null,
+ H1(x_584) ::= x_584::node<val_33_549',next_33_550'> * HP_583(next_33_550')&true]
 
-
+Should be:
+ H1(x)=x::node<_,q>* P(q)
+ G1(x)=x::node<_,null>*P(q)
+     */
 {
 	if (4>3) 
 		x.next = null;
 	else 
 		x.next = null;
 }	
+
+
+
+/*
 
 
 // function to set null the tail of a list 
