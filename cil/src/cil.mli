@@ -594,6 +594,9 @@ and exp =
     (** Binary operation. Includes the type of the result. The arithmetic 
      * conversions are made explicit for the arguments. *)
 
+  | Question   of exp * exp * exp * typ
+    (** (a ? b : c) operation. Includes the type of the result *)
+
   | CastE      of typ * exp            
     (** Use {!Cil.mkCast} to make casts.  *)
 
@@ -1352,6 +1355,10 @@ val doubleType: typ
 (** An unsigned integer type that fits pointers. Depends on {!Cil.msvcMode} 
  *  and is set when you call {!Cil.initCIL}. *)
 val upointType: typ ref
+
+(** An unsigned integer type that fits pointer difference. Depends on
+ *  {!Cil.msvcMode} and is set when you call {!Cil.initCIL}. *)
+val ptrdiffType: typ ref
 
 (** An unsigned integer type that is the type of sizeof. Depends on 
  * {!Cil.msvcMode} and is set when you call {!Cil.initCIL}.  *)

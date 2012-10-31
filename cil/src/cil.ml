@@ -488,6 +488,9 @@ and exp =
                                             type of the result. The arithemtic
                                             conversions are made  explicit
                                             for the arguments *)
+  | Question   of exp * exp * exp * typ
+                                        (** (a ? b : c) operation. Includes
+                                            the type of the result *)
   | CastE      of typ * exp            (** Use {!Cil.mkCast} to make casts *)
 
   | AddrOf     of lval                 (** Always use {!Cil.mkAddrOf} to 
@@ -1257,6 +1260,9 @@ let doubleType = TFloat(FDouble, [])
 (* An integer type that fits pointers. Initialized by initCIL *)
 let upointType = ref voidType 
 
+(* An integer type that fits a pointer difference. Initialized by initCIL *)
+let ptrdiffType = ref voidType
+
 (* An integer type that fits wchar_t. Initialized by initCIL *)
 let wcharKind = ref IChar
 let wcharType = ref voidType 
@@ -1395,7 +1401,9 @@ let attributeHash: (string, attributeClass) H.t =
 
   List.iter (fun a -> H.add table a (AttrFunType false))
     [ "format"; "regparm"; "longcall"; 
-      "noinline"; "always_inline"; ];
+      "noinline"; "always_inline"; "leaf";
+      "artificial"; "warn_unused_result"; "nonnull";
+    ];
 
   List.iter (fun a -> H.add table a (AttrFunType true))
     [ "stdcall";"cdecl"; "fastcall" ];
@@ -1754,6 +1762,7 @@ let bitwiseLevel = 75
 let questionLevel = 100
 let getParenthLevel (e: exp) = 
   match e with 
+  | Question _ -> questionLevel
   | BinOp((LAnd | LOr), _,_,_) -> 80
                                         (* Bit operations. *)
   | BinOp((BOr|BXor|BAnd),_,_,_) -> bitwiseLevel (* 75 *)
@@ -1869,8 +1878,9 @@ let rec typeOf (e: exp) : typ =
   | Lval(lv) -> typeOfLval lv
   | SizeOf _ | SizeOfE _ | SizeOfStr _ -> !typeOfSizeOf
   | AlignOf _ | AlignOfE _ -> !typeOfSizeOf
-  | UnOp (_, _, t) -> t
-  | BinOp (_, _, _, t) -> t
+  | UnOp (_, _, t)
+  | BinOp (_, _, _, t)
+  | Question (_, _, _, t)
   | CastE (t, _) -> t
   | AddrOf (lv) -> TPtr(typeOfLval lv, [])
   | StartOf (lv) -> begin
@@ -2878,6 +2888,19 @@ let initGccBuiltins () : unit =
   H.add h "__builtin_atan2l" (longDoubleType, [ longDoubleType; 
                                                 longDoubleType ], false);
 
+  let addSwap sizeInBits =
+    try
+      assert (sizeInBits mod 8 = 0);
+      let sizeInBytes = sizeInBits / 8 in
+      let sizedIntType = TInt (intKindForSize sizeInBytes false, []) in
+      let name = Printf.sprintf "__builtin_bswap%d" sizeInBits in
+      H.add h name (sizedIntType, [ sizedIntType ], false)
+    with Not_found ->
+      ()
+  in
+  addSwap 32;
+  addSwap 64;
+
   H.add h "__builtin_ceil" (doubleType, [ doubleType ], false);
   H.add h "__builtin_ceilf" (floatType, [ floatType ], false);
   H.add h "__builtin_ceill" (longDoubleType, [ longDoubleType ], false);
@@ -3268,6 +3291,13 @@ class defaultCilPrinterClass : cilPrinter = object (self)
           ++ (self#pExpPrec level () e2)
           ++ unalign
 
+    | Question(e1,e2,e3,_) ->
+        (self#pExpPrec level () e1)
+          ++ text " ? "
+          ++ (self#pExpPrec level () e2)
+          ++ text " : "
+          ++ (self#pExpPrec level () e3)
+
     | CastE(t,e) -> 
         text "(" 
           ++ self#pType None () t
@@ -3421,27 +3451,21 @@ class defaultCilPrinterClass : cilPrinter = object (self)
             when Util.equals lv lv' && one = Int64.one && not !printCilAsIs ->
               self#pLineDirective l
                 ++ self#pLvalPrec indexLevel () lv
-                ++ text (" = ")
-                ++ self#pLvalPrec indexLevel () lv
-                ++ text (" + 1" ^ printInstrTerminator)
+                ++ text (" ++" ^ printInstrTerminator)
 
         | BinOp((MinusA|MinusPI),Lval(lv'),
                 Const(CInt64(one,_,_)), _) 
             when Util.equals lv lv' && one = Int64.one && not !printCilAsIs ->
                   self#pLineDirective l
                     ++ self#pLvalPrec indexLevel () lv
-                    ++ text (" = ")
-                    ++ self#pLvalPrec indexLevel () lv
-                    ++ text (" - 1" ^ printInstrTerminator)
+                    ++ text (" --" ^ printInstrTerminator) 
 
         | BinOp((PlusA|PlusPI|IndexPI),Lval(lv'),Const(CInt64(mone,_,_)),_)
             when Util.equals lv lv' && mone = Int64.minus_one 
                 && not !printCilAsIs ->
               self#pLineDirective l
                 ++ self#pLvalPrec indexLevel () lv
-                ++ text (" = ")
-                ++ self#pLvalPrec indexLevel () lv
-                ++ text (" - 1" ^ printInstrTerminator)
+                ++ text (" --" ^ printInstrTerminator)
 
         | BinOp((PlusA|PlusPI|IndexPI|MinusA|MinusPP|MinusPI|BAnd|BOr|BXor|
           Mult|Div|Mod|Shiftlt|Shiftrt) as bop,
@@ -3449,9 +3473,8 @@ class defaultCilPrinterClass : cilPrinter = object (self)
                 && not !printCilAsIs ->
                   self#pLineDirective l
                     ++ self#pLval () lv
-                    ++ text " = "
-                    ++ self#pLval () lv
-                    ++ text (" ") ++ d_binop () bop ++ text (" ")
+                    ++ text " " ++ d_binop () bop
+                    ++ text "= "
                     ++ self#pExp () e
                     ++ text printInstrTerminator
                     
@@ -3922,7 +3945,6 @@ class defaultCilPrinterClass : cilPrinter = object (self)
 
     | GVar (vi, io, l) ->
         self#pLineDirective ~forcefile:true l ++
-          text ("global ") ++
           self#pVDecl () vi
           ++ chr ' '
           ++ (match io.init with
@@ -4017,7 +4039,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
      | GVar (vi, {init = Some i}, l) -> begin
          fprint out !lineLength 
            (self#pLineDirective ~forcefile:true l ++
-                self#pVDecl () vi
+              self#pVDecl () vi
               ++ text " = " 
               ++ (let islong = 
                 match i with
@@ -4046,10 +4068,8 @@ class defaultCilPrinterClass : cilPrinter = object (self)
        
   method private pFunDecl () f =
       self#pVDecl () f.svar
-      ++ line
-      ++ text "  requires true" ++ line
-      ++ text "  ensures true" ++ line
-      ++ text "{"
+      ++  line
+      ++ text "{ "
       ++ (align
             (* locals. *)
             ++ line
@@ -4586,6 +4606,10 @@ class plainCilPrinterClass =
       dprintf "%a(@[%a,@?%a@])" d_plainbinop b
         self#pExp e1 self#pExp e2
 
+  | Question(e1,e2,e3,_) ->
+      dprintf "Question(@[%a,@?%a,@?%a@])"
+        self#pExp e1 self#pExp e2 self#pExp e3
+
   | SizeOf (t) -> 
       text "sizeof(" ++ self#pType None () t ++ chr ')'
   | SizeOfE (e) -> 
@@ -4947,16 +4971,16 @@ let loadBinaryFile (filename : string) : file =
   let inchan = open_in_bin filename in
   let loaded : savedFile = (Marshal.from_channel inchan : savedFile) in
   close_in inchan ;
-  nextGlobalVID := max loaded.savedNextVID !nextGlobalVID;
-  nextCompinfoKey := max loaded.savedNextCompinfoKey !nextCompinfoKey;
   (* nextGlobalVID = 11 because CIL initialises many dummy variables *)
   if !nextGlobalVID != 11 || !nextCompinfoKey != 1 then begin
     (* In this case, we should change all of the varinfo and compinfo
        keys in loaded.savedFile to prevent conflicts.  But since that hasn't
        been implemented yet, just print a warning.  If you do implement this,
        please send it to the CIL maintainers. *)
-    ignore (E.warn "You are probably loading a binary file after another file has been loaded.  This isn't currently supported, so varinfo and compinfo id numbers may conflict.")
+    ignore (E.warn "You are possibly loading a binary file after another file has been loaded.  This isn't currently supported, so varinfo and compinfo id numbers may conflict.")
   end;
+  nextGlobalVID := max loaded.savedNextVID !nextGlobalVID;
+  nextCompinfoKey := max loaded.savedNextCompinfoKey !nextCompinfoKey;
   loaded.savedFile
 
 
@@ -5083,6 +5107,9 @@ and childrenExp (vis: cilVisitor) (e: exp) : exp =
   | BinOp (bo, e1, e2, t) -> 
       let e1' = vExp e1 in let e2' = vExp e2 in let t' = vTyp t in
       if e1' != e1 || e2' != e2 || t' != t then BinOp(bo, e1',e2',t') else e
+  | Question (e1, e2, e3, t) ->
+      let e1' = vExp e1 in let e2' = vExp e2 in let e3' = vExp e3 in let t' = vTyp t in
+      if e1' != e1 || e2' != e2 || e3' != e3 || t' != t then Question(e1',e2',e3',t') else e
   | CastE (t, e1) ->           
       let t' = vTyp t in let e1' = vExp e1 in
       if t' != t || e1' != e1 then CastE(t', e1') else e
@@ -5971,6 +5998,7 @@ let rec isConstant = function
   | Const _ -> true
   | UnOp (_, e, _) -> isConstant e
   | BinOp (_, e1, e2, _) -> isConstant e1 && isConstant e2
+  | Question (e1, e2, e3, _) -> isConstant e1 && isConstant e2 && isConstant e3
   | Lval (Var vi, NoOffset) -> 
       (vi.vglob && isArrayType vi.vtype || isFunctionType vi.vtype)
   | Lval _ -> false
@@ -6556,7 +6584,9 @@ let rec xform_switch_stmt s break_dest cont_dest = begin
         Not_found -> (* this is a list of specific cases *)
           match cases with
           | Case (ce,cl) :: lab_tl ->
-              let make_eq exp =  BinOp(Eq,e,exp,intType) in
+              (* assume that integer promotion and type conversion of cases is
+               * performed by cabs2cil. *)
+              let make_eq exp =  BinOp(Eq, e, exp, typeOf e) in
               let make_or_from_cases =
                 List.fold_left
                     (fun pred label -> match label with
@@ -6697,6 +6727,7 @@ let initCIL () =
       else E.s(E.unimp "initCIL: cannot find the right ikind for type %s\n" name)
     in      
     upointType := TInt(findIkindSz true !M.theMachine.M.sizeof_ptr, []);
+    ptrdiffType := TInt(findIkindSz false !M.theMachine.M.sizeof_ptr, []);
     kindOfSizeOf := findIkindName !M.theMachine.M.size_t;
     typeOfSizeOf := TInt(!kindOfSizeOf, []);
     wcharKind := findIkindName !M.theMachine.M.wchar_t;

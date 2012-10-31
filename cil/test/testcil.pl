@@ -187,8 +187,6 @@ addTest("testrun/const-struct-init WARNINGS_ARE_ERRORS=1");
 addTest("test/const-struct-init WARNINGS_ARE_ERRORS=1");
 addTest("test/warnings-noreturn WARNINGS_ARE_ERRORS=1");
 addTest("testrun/warnings-unused-label WARNINGS_ARE_ERRORS=1");
-addBadComment("testrun/warnings-unused-label", 
-	      "Minor. We don't do a good enough job at eliminating unused labels");
 addTest("test/warnings-cast WARNINGS_ARE_ERRORS=1");
 addTest("testrun/castincr WARNINGS_ARE_ERRORS=1");
 addTest("test/castunion");
@@ -208,8 +206,10 @@ addTest("testrun/offsetof");
 addTest("testrun/offsetof1");
 addTest("testrun/offsetof2");
 addTest("testrun/offsetof3");
+addTest("testrun/question-fold-float USE_LOGICAL_OPERATORS=1");
 addTest("testrun/question");
 addTest("testrun/question2");
+addTest("testrun/question3 USE_LOGICAL_OPERATORS=1");
 addTest("test/argcast");
 addBadComment("test/argcast", 
 	      "Notbug. CIL bases type for implicit functions based on first call's argument.");
@@ -268,7 +268,6 @@ addTest("testrun/const12 ");
 addTest("test/const13 WARNINGS_ARE_ERRORS=1");
 addBadComment("test/const13", "Minor. Const warnings from generated code - need more casts.");
 addTest("test/const14");
-addBadComment("test/const14", "Bug. Missing cast to result type when short-cutting expressions to 0.");
 addTest("testrun/const15 ");
 addTest("test/deref _GNUCC=1");
 addTest("test_i/empty");
@@ -388,6 +387,7 @@ addTest("testrun/scope8");
 addTest("testrun/scope9 ");
 addTest("testrun/scope10 ");
 addTest("testrun/scope11 ");
+addTest("test/scope12 ");
 addTest("test/voidstar");
 addTest("testrun/memcpy1");
 
@@ -563,7 +563,7 @@ addTest("merge-ar ");
 
 addTest("testrun/sizeof1");
 addTest("testrun/sizeof2");
-addTest("runall/sizeof3");
+addTest("testrun/sizeof3");
 addTest("test/outofmem ");
 addTest("testrun/builtin ");
 addTest("test/builtin2 ");
@@ -614,8 +614,7 @@ addTest("scott/open $gcc");
 addTest("scott/constfold");
 addTest("scott/mode_sizes $gcc");       # mode(__QI__) stuff
 addTest("scott-nolink/brlock $gcc");
-addTest("scott/regparm0 $gcc");         # this works, unfortunately..
-addBadComment("scott/regparm0", "Bug. Also gcc bug. regparm attribute not handled well, compounded by gcc treating multiple regparm attributes inconsistently between function declarations and definitions.");
+addTest("scott/regparm0 $gcc");         # this works, unfortunately... but the bug has been fixed nonetheless
 addTest("scott/unscomp");               # kernel/fs/buffer.c
 addTest("scott/thing");
 
@@ -660,7 +659,7 @@ addTest("baddef");
 #runTest $make apache/rewrite
 
 addTest("test/init");
-addTest("test/initial");
+addTest("test/initial WARNINGS_ARE_ERRORS=1");
 addTest("test/jmp_buf");
 addTest("test/static");
 
