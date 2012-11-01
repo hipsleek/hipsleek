@@ -38,8 +38,13 @@ void insert(node x, int a)
  or v_node_35_602::node<val_34_575,v_node_35_612> * HP_609(v_node_35_612)&
     true
  ,
+
  H1(x_614) ::= x_614::node<val_34_548',next_34_549'> * HP_615(next_34_549')&true,
  G1(x_608) ::= x_608::node<val_34_575,v_node_35_602> * HP_609(v_node_35_602)&true]
+
+PROBLEM:
+ Can improve to
+ HP_609(v) = v::node<_,q>*HP_615(q)
 
       */
 {
