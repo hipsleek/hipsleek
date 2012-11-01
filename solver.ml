@@ -2481,7 +2481,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
       formula_exists_pure = qp;
       formula_exists_pos = pos}) ->
 			let ph,_,_ = xpure_heap 1 prog qh 1 in
-			let _ = print_string("\nHFormula : "^(Cprinter.string_of_h_formula qh)^"\nXPure :"^(Cprinter.string_of_mix_formula ph)^"\n") in
+			(*let _ = print_string("\nHFormula : "^(Cprinter.string_of_h_formula qh)^"\nXPure :"^(Cprinter.string_of_mix_formula ph)^"\n") in*)
 			let npf = MCP.merge_mems qp ph true in
 			not (TP.is_sat_mix_sub_no npf sat_subno true true)
 
@@ -6814,6 +6814,9 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
     let rhs_h,rhs_p,_,_,_ = CF.extr_formula_base rhs_b in
     let rhs_lst = split_linear_node_guided ( CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
     let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
+    (*let _ = print_string("\nAnte: "^(Cprinter.string_of_formula ante)^"\n") in
+    let _ = print_string("\nConseq: "^(Cprinter.string_of_formula conseq)^"\n") in
+    let _ = print_string("\nAliases: "^(Cprinter.string_of_list_f Cprinter.string_of_spec_var posib_r_alias)^"\n") in*)
     let rhs_eqset = estate.es_rhs_eqset in
     (* let _ = print_endline "CA:1" in *)
     let actions = Context.compute_actions prog rhs_eqset lhs_h lhs_p rhs_p posib_r_alias rhs_lst estate.es_is_normalizing pos in

@@ -471,6 +471,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
     | HTrue -> []
     | HFalse -> []
     | HEmp -> []
+    | StarMinus _ 
     | Hole _ -> []
     | DataNode ({h_formula_data_node = p1; 
 		         h_formula_data_imm = imm1;

@@ -539,6 +539,21 @@ match (ann_lst_l, ann_lst_r) with
 
       end
     | (_, _) ->	false
+    
+let rec is_same_field_layout (ann_lst_l: CF.ann list) (ann_lst_r: CF.ann list): bool =	
+match (ann_lst_l, ann_lst_r) with
+    | ([], []) -> true
+    | (ann_l :: tl, ann_r :: tr ) ->
+      begin
+	match ann_l, ann_r with 
+	  | CF.ConstAnn(Mutable), CF.ConstAnn(Mutable)
+  	  | CF.ConstAnn(Imm), CF.ConstAnn(Imm) 
+  	  | CF.ConstAnn(Lend), CF.ConstAnn(Lend)
+  	  | CF.ConstAnn(Accs), CF.ConstAnn(Accs)-> true && (is_compatible_field_layout tl tr)
+  	  | _ , _ -> false
+
+      end
+    | (_, _) ->	false    
 
 let rec check_mem_non_inter (h1: CF.h_formula) (h2:CF.h_formula) (vl:C.view_decl list) : bool = 
 	let mpf1 = fst (xmem_heap h1 vl) in
@@ -577,9 +592,13 @@ let rec check_mem_conjconj (h1: CF.h_formula) (h2:CF.h_formula) (vl:C.view_decl 
 	if exact1 && exact2 then 
 	let t = List.map (fun f1 -> 
 		let matched_fields = (List.filter (fun f2-> if (String.compare (fst f1) (fst f2)) == 0 then true else false) fl2)
-		in List.exists (fun c -> (is_compatible_field_layout (snd f1) (snd c))) matched_fields) fl1
+		in List.exists (fun c -> (is_same_field_layout (snd f1) (snd c))) matched_fields) fl1
 	in List.for_all (fun c -> c) t
 	else false		
+
+let check_mem_starminus (h1: CF.h_formula) (h2:CF.h_formula) (vl:C.view_decl list) : bool = 
+	if (CF.is_data h1) || (CF.is_view h1) then if (CF.is_data h2) || (CF.is_view h2) then true
+	else false else false
 
 let rec check_mem_sat (h: CF.h_formula) (vl:C.view_decl list) : bool = 
 match h with 
@@ -598,6 +617,9 @@ match h with
 | CF.Star({CF.h_formula_star_h1 = h1;
 	   CF.h_formula_star_h2 = h2;
 	   CF.h_formula_star_pos = pos}) -> (check_mem_sat h1 vl) && (check_mem_sat h2 vl)
+| CF.StarMinus({CF.h_formula_starminus_h1 = h1;
+	   CF.h_formula_starminus_h2 = h2;
+	   CF.h_formula_starminus_pos = pos}) -> (check_mem_starminus h1 h2 vl)
 | _ -> true
 
 
@@ -810,7 +832,7 @@ Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on 
 		      let new_h2 = CF.mkStarH h31 h41 pos1 11 in
 		      let new_p2 = CP.mkAnd p3 p4 pos1 in
                       let new_h2, new_p = compact_nodes_with_same_name_in_h_formula new_h2 aset in 
-		      h42, new_h2 , (CP.mkAnd new_p new_p2 pos1)
+		      new_h2, h42 , (CP.mkAnd new_p new_p2 pos1)
 	          | CF.Conj {CF.h_formula_conj_h1 = h11;
 				CF.h_formula_conj_h2 = h12;
 			        CF.h_formula_conj_pos = pos1} ->
@@ -819,7 +841,7 @@ Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on 
 		      let new_h2 = CF.mkConjH h31 h41 pos1 in
 		      let new_p2 = CP.mkAnd p3 p4 pos1 in
                       let new_h2, new_p = compact_nodes_with_same_name_in_h_formula new_h2 aset in 
-		      h42, new_h2 , (CP.mkAnd new_p new_p2 pos1)
+		      new_h2,h42 , (CP.mkAnd new_p new_p2 pos1)
 	          | CF.ConjStar {CF.h_formula_conjstar_h1 = h11;
 				CF.h_formula_conjstar_h2 = h12;
 			        CF.h_formula_conjstar_pos = pos1} ->
@@ -828,7 +850,7 @@ Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on 
 		      let new_h2 = CF.mkConjStarH h31 h41 pos1 in
 		      let new_p2 = CP.mkAnd p3 p4 pos1 in
                       let new_h2, new_p = compact_nodes_with_same_name_in_h_formula new_h2 aset in 
-		      h42, new_h2 , (CP.mkAnd new_p new_p2 pos1)
+		      new_h2,h42 , (CP.mkAnd new_p new_p2 pos1)
 	          | CF.ConjConj {CF.h_formula_conjconj_h1 = h11;
 				CF.h_formula_conjconj_h2 = h12;
 			        CF.h_formula_conjconj_pos = pos1} ->
@@ -837,7 +859,7 @@ Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on 
 		      let new_h2 = CF.mkConjConjH h31 h41 pos1 in
 		      let new_p2 = CP.mkAnd p3 p4 pos1 in
                       let new_h2, new_p = compact_nodes_with_same_name_in_h_formula new_h2 aset in 
-		      h42, new_h2 , (CP.mkAnd new_p new_p2 pos1)		               		     
+		      new_h2, h42 , (CP.mkAnd new_p new_p2 pos1)		               		     
 	              (*let new_h2 = CF.mkConjConjH h12 h2 pos1 in
 	              let h31, h32, p3 = compact_nodes_op h11 new_h2 aset func in
                       let new_h2,new_p2 = compact_nodes_with_same_name_in_h_formula h32 aset in 
@@ -874,14 +896,14 @@ and compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.spec_v
       | CF.ConjConj{CF.h_formula_conjconj_h1 = h1;
 		CF.h_formula_conjconj_h2 = h2;
 	        CF.h_formula_conjconj_pos = pos} ->
-	        let h1,h2,_ = compact_nodes_op h1 h2 aset join_ann_conjconj in
+	        let h1,h2,p = compact_nodes_op h1 h2 aset join_ann_conjconj in
 		let res = CF.mkConjConjH h1 h2 pos in
-		res,(CP.mkTrue no_pos)		 	        
+		res,p		 	        
       | CF.Phase h ->  let h1_h,h1_p = compact_nodes_with_same_name_in_h_formula h.CF.h_formula_phase_rd aset in
       		let h2_h,h2_p = compact_nodes_with_same_name_in_h_formula h.CF.h_formula_phase_rw aset in
-      		let and_p = CP.mkAnd h1_p h2_p h.CF.h_formula_phase_pos in
+      		let _ = CP.mkAnd h1_p h2_p h.CF.h_formula_phase_pos in
       		CF.Phase {h with CF.h_formula_phase_rd = h1_h;
- 	      CF.h_formula_phase_rw = h2_h;},and_p
+ 	      CF.h_formula_phase_rw = h2_h;},(CP.mkTrue no_pos)
       | _ -> f,(CP.mkTrue no_pos)
 
 let rec compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
@@ -889,10 +911,10 @@ let rec compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
     | CF.Base f   -> let new_h,new_p = 
     	compact_nodes_with_same_name_in_h_formula f.CF.formula_base_heap (Context.comp_aliases f.CF.formula_base_pure)
     	in 
-    	(*let new_mcp = MCP.merge_mems f.CF.formula_base_pure (MCP.mix_of_pure new_p) true in*)
+    	let new_mcp = MCP.merge_mems f.CF.formula_base_pure (MCP.mix_of_pure new_p) true in
     	CF.Base { f with
         CF.formula_base_heap = new_h;       
-	(*CF.formula_base_pure = new_mcp;*)}
+	CF.formula_base_pure = new_mcp;}
     | CF.Or f     -> CF.Or { f with 
         CF.formula_or_f1 = compact_nodes_with_same_name_in_formula f.CF.formula_or_f1; 
         CF.formula_or_f2 = compact_nodes_with_same_name_in_formula f.CF.formula_or_f2; }
@@ -912,12 +934,12 @@ let rec compact_nodes_with_same_name_in_formula (cf: CF.formula): CF.formula =
     				| _ -> false)
     	| _ -> false) (CP.list_of_conjs new_p) in
     	let new_p = CP.conj_of_list p_list f.CF.formula_exists_pos in*)
- 	(*let new_mcp = MCP.merge_mems mp (MCP.mix_of_pure new_p) true in*)
+ 	let new_mcp = MCP.merge_mems mp (MCP.mix_of_pure new_p) true in
 	(*let new_mcp = MCP.memo_pure_push_exists f.CF.formula_exists_qvars new_mcp in*)
     	CF.Exists { f with
     	CF.formula_exists_qvars = qevars;
         CF.formula_exists_heap = new_h;
-        (*CF.formula_exists_pure = new_mcp;*)}
+        CF.formula_exists_pure = new_mcp;}
 
 let rec compact_nodes_with_same_name_in_struc (f: CF.struc_formula): CF.struc_formula = (* f *)
   if not (!Globals.allow_field_ann ) then f
@@ -1036,5 +1058,3 @@ let ramify_assign v rhs es =
 	(*let _ = print_string("\nAssign : "^(string_of_formula f)^"\n") in*)
 	let _ = print_string("\nMay Aliases: "^(string_of_list_f string_of_spec_var (get_may_aliases var h))^"\n")
 	in CF.Ctx es
-	
-
