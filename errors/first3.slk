@@ -21,14 +21,17 @@ print residue.
 checkentail x::node<2,null> |- x::node<c,d>@L * htrue.
 print residue.
 
+checkentail x::node<2,null> |- x::node<_,_>@L * emp.
+print residue.
 
-//checkentail_exact x::node<2,null> |- x::node<c,d>@L.
+
+checkentail_exact x::node<2,null> |- x::node<c,d>@L.
 // --> no residue
-//print residue.
+print residue.
 
-//checkentail_inexact x::node<2,null> |- x::node<c,d>@L.
+checkentail_inexact x::node<2,null> |- x::node<c,d>@L.
 //--> allow residue
-//print residue.
+print residue.
 
 // --classic
 //     post-condition  // use exact

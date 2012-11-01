@@ -42,6 +42,8 @@ type command =
   | LemmaDef of I.coercion_decl
   | LetDef of (ident * meta_formula)
   | EntailCheck of (meta_formula * meta_formula)
+  | EntailCheckExact of (meta_formula * meta_formula)
+  | EntailCheckInexact of (meta_formula * meta_formula)
   | BarrierCheck of I.barrier_decl
   | Infer of (ident list * meta_formula * meta_formula)
   | CaptureResidue of ident
@@ -83,6 +85,8 @@ let string_of_command c = match c with
   | LemmaDef  _ -> "LemmaDef"
   | LetDef  _ -> "LetDef"   
   | EntailCheck _ -> "EntailCheck"
+  | EntailCheckExact _ -> "EntailCheckExact"
+  | EntailCheckInexact _ -> "EntailCheckInexact"
   | BarrierCheck _ -> "BarrierCheck"
   | Infer _ -> "Infer"
   | CaptureResidue _ -> "CaptureResidue"  

@@ -565,13 +565,15 @@ non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 non_empty_command:
     [[  t=data_decl           -> DataDef t
       | `PRED;t=view_decl     -> PredDef t
-	  | t=barrier_decl        -> BarrierCheck t
+      | t=barrier_decl        -> BarrierCheck t
       | t = func_decl         -> FuncDef t
       | t = rel_decl          -> RelDef t
       | `LEMMA;t= coercion_decl -> LemmaDef t
-	  | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
+      | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
       | t=let_decl            -> t
       | t=checkentail_cmd     -> EntailCheck t
+      | t=checkentailexact_cmd   -> EntailCheckExact t
+      | t=checkentailinexact_cmd -> EntailCheckInexact t
       | t=infer_cmd           -> Infer t  
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
@@ -1261,6 +1263,12 @@ opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
 
 checkentail_cmd:
   [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b)]];
+
+checkentailexact_cmd:
+  [[ `CHECKENTAIL_EXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b)]];
+
+checkentailinexact_cmd:
+  [[ `CHECKENTAIL_INEXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b)]];
 
 infer_cmd:
   [[ `INFER; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
