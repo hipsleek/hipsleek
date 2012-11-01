@@ -18,5 +18,5 @@ pred ll<v,M> ==  self = null & M = {} & v = 0
 	inv 0<=v<=2
 	memE M->(node<@M,@M> & v = 1 ; node<@I,@M> & v = 2).
 	
-checkentail  s::cell<1> * (f::cell<v> *- s::cell<r>) |- f::cell<_> & s::cell<1>.
+checkentail  s::cell<1> * (f::cell<v> *- s::cell<r>)  & v != 1 & r != 1 |- f::cell<_> & s::cell<1>.
 print residue.

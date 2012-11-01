@@ -1041,6 +1041,9 @@ and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (v
   | Star ({h_formula_star_h1 = h1;
 	   h_formula_star_h2 = h2;
 	   h_formula_star_pos = pos})
+  | StarMinus ({h_formula_starminus_h1 = h1;
+	   h_formula_starminus_h2 = h2;
+	   h_formula_starminus_pos = pos})	   
   | Conj ({h_formula_conj_h1 = h1;
 	   h_formula_conj_h2 = h2;
 	   h_formula_conj_pos = pos})
@@ -1466,6 +1469,9 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
   | Star ({h_formula_star_h1 = h1;
 	   h_formula_star_h2 = h2;
 	   h_formula_star_pos = pos})
+  | StarMinus ({h_formula_starminus_h1 = h1;
+	   h_formula_starminus_h2 = h2;
+	   h_formula_starminus_pos = pos})	   
   | Conj ({h_formula_conj_h1 = h1;
 	   h_formula_conj_h2 = h2;
 	   h_formula_conj_pos = pos})

@@ -799,7 +799,7 @@ Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on 
 		                  let new_h2 = CF.mkConjConjH h32 h42 pos2 in
 		                  let new_p2 = CP.mkAnd p3 p4 pos2 in
                                   let new_h2, new_p = compact_nodes_with_same_name_in_h_formula new_h2 aset in 
-		                  h41, new_h2 , (CP.mkAnd new_p new_p2 pos2)		               		                  
+		                  h41, new_h2 , (CP.mkAnd new_p new_p2 pos2)	       	               		                  
 		          | _ -> (h1, h2,(CP.mkTrue no_pos)) in
 		      	res_h1, res_h2,res_p
 	          | CF.Star {CF.h_formula_star_h1 = h11;
