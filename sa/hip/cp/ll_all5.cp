@@ -1,5 +1,4 @@
 HeapPred HP_1(node a).
-HeapPred HP_2a(node a, node b).
 HeapPred HP_3(node a, node b, node c).
 
 set_next[
@@ -11,8 +10,7 @@ ass [H2,G2]:{
 	}
 
 hpdefs [G2,H2]:{
- HP_2a(x,y) --> htrue&true;
- H2(x,y) --> x::node<_,q> * HP_2a(q,y);
- G2(x,y) --> x::node<_,y> * HP_2a(q,y)
+ H2(x,y) --> x::node<_,q> & y=q1;
+ G2(x,y) --> x::node<_,y> & y=q1
  }
 ]
