@@ -29,11 +29,15 @@ HeapPred G3(node a, node b, node c).
 // return the tail of a singly linked list 
 node get_next(node x)
 
-        infer [H1,G2]
-	requires H1(x)
-	ensures G2(x,res);
+  infer [H1,G2]
+  requires H1(x)
+     ensures G2(x,res);
 
-
+// SUCCESS
+/*
+  requires x::node<_,p>
+  ensures x::node<_,null> & res=p;
+*/
 {
   //dprint;
 	node tmp = x.next;

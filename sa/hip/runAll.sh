@@ -42,10 +42,14 @@ echo "ll_all1"
 ../../hip ll_all1.ss -cp-test cp/ll_all1.cp | grep Compare
 echo "ll_all3"
 ../../hip ll_all3.ss -cp-test cp/ll_all3.cp | grep Compare
+echo "ll_all4"
+../../hip ll_all4.ss -cp-test cp/ll_all4.cp | grep Compare
 echo "ll_all5"
 ../../hip ll_all5.ss -cp-test cp/ll_all5.cp | grep Compare
 echo "ll_all7"
 ../../hip ll_all7.ss -cp-test cp/ll_all7.cp | grep Compare
+echo "ll_all8"
+../../hip ll_all8.ss -cp-test cp/ll_all8.cp | grep Compare
 echo "ll-ret-first"
 ../../hip ll-ret-first.ss -cp-test cp/ll-ret-first.cp | grep Compare
 echo "ll-ret-first1"
