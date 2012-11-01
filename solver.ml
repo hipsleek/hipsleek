@@ -2326,7 +2326,7 @@ and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_st
   let f = es.es_formula in
   let _ = reset_int2 () in
   let b = unsat_base_nth "1" prog sat_subno f in
-	(* Slicing: Set the flag memo_group_changed to false *)
+	(* Slicing: Set the flag memo_group_unsat to false *)
 	let f = reset_unsat_flag_formula f in
   let es = { es with es_formula = f; es_unsat_flag = true } in
   if not b then Ctx es else 

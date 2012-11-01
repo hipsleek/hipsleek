@@ -1349,7 +1349,7 @@ let memo_find_relevant_slice_slicing fv l =
 	  memo_group_cons = acc.memo_group_cons @ s.memo_group_cons;
 	  memo_group_slice = acc.memo_group_slice @ s.memo_group_slice;
 	  memo_group_changed = acc.memo_group_changed || s.memo_group_changed;
-		memo_group_unsat = false; (* TODO: Slicing UNSAT *)
+		memo_group_unsat = true; (* TODO: Slicing UNSAT *)
 	  memo_group_aset = EMapSV.merge_eset acc.memo_group_aset s.memo_group_aset;
 	}
   ) rs l
