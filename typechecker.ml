@@ -1942,6 +1942,15 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     let _ = print_endline "*************************************" in
                     let _ = print_endline (Sa.rel_def_stk # string_of) in
                     let _ = print_endline "*************************************" in
+		    let print_res_list rl =
+		      let pr1 =  pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula in
+		      let pr_mix_mtl =   pr_list_ln (pr_triple CEQ.string_of_map_table pr1 pr1) in
+		      let pr_res (c1,c2,mtb)= 
+			let (_,d1,d2) = List.hd mtb in
+			"Constr1: " ^ pr1 c1 ^ "\nConstr2: " ^ pr1 c2 ^ "\nDiff1: " ^ pr1 d1 ^ "\nDiff2: " ^ pr1 d2 
+		      in
+		      List.fold_left (fun piv sr -> piv  ^ sr ^ "\n" ) "" (List.map (fun r -> (pr_res) r) rl)
+		    in
 
 		    let _ = if(!Globals.cp_test) then(
 		      let _ = Gen.Profiling.push_time "Compare res with cp file" in
@@ -1950,16 +1959,6 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			if(not(!Globals.show_diff_constrs)) then 
 			  CEQ.checkeq_constrs il (List.map (fun hp -> hp.CF.hprel_lhs,hp.CF.hprel_rhs) hp_lst_assume) constrs 
 			else
-			  let print_res_list rl =
-			    let pr1 =  pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula in
-			    let pr_mix_mtl =   pr_list_ln (pr_triple CEQ.string_of_map_table pr1 pr1) in
-			    let pr_res (c1,c2,mtb)= 
-			      let (_,d1,d2) = List.hd mtb in
-			      "Constr1: " ^ pr1 c1 ^ "\nConstr2: " ^ pr1 c2 ^ "\nDiff1: " ^ pr1 d1 ^ "\nDiff2: " ^ pr1 d2 
-			    in
-			    List.fold_left (fun piv sr -> piv  ^ sr ^ "\n" ) "" (List.map (fun r -> (pr_res) r) rl)
-			  in
-
 			  let res,res_list = CEQ.checkeq_constrs_with_diff il (List.map (fun hp -> hp.CF.hprel_lhs,hp.CF.hprel_rhs) hp_lst_assume) constrs in
 			  if(not(res)) then print_string ("\nDiff constrs " ^ proc.proc_name ^ " {\n" ^ (print_res_list res_list) ^ "\n}\n" );
 			  res
@@ -1967,9 +1966,15 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 		      (* let match_defs il defs= CEQ.checkeq_defs il ls_inferred_hps defs in *)
 		      (* let _,_,inf_vars = CF.get_pre_post_vars [] proc.proc_static_specs in *)
 		      let is_match_defs il defs = 
-			let r,rvars = CEQ.checkeq_defs_bool il ls_inferred_hps defs sel_hp_rels in
-			let _ = if(!Globals.show_diff_constrs) then print_string ("\nDiff hps " ^ proc.proc_name ^" " ^ Cprinter.string_of_spec_var_list rvars ^ "\n" ) in
-			r
+			if(!Globals.show_diff_constrs) then (
+			  let res,res_list = CEQ.checkeq_defs_with_diff il ls_inferred_hps defs sel_hp_rels in
+			  if(not(res)) then print_string ("\nDiff defs " ^ proc.proc_name ^ " {\n" ^ (print_res_list res_list) ^ "\n}\n" );
+			  res
+			)
+			else (
+			  let r,rvars = CEQ.checkeq_defs_bool il ls_inferred_hps defs sel_hp_rels in 
+			  r
+			)
 		      in
 		      let (res1, res2) =
                 match test_comps with
