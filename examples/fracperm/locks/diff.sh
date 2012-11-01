@@ -52,6 +52,8 @@ diff test-cases/ls-disj-no-deadlock3.res test-cases/ls-disj-no-deadlock3.n
 ########### Example demonstrating locklevels ####################
 echo "======= ls-waitlevel.ss ======" #GENERAL TEST
 diff test-cases/ls-waitlevel.res test-cases/ls-waitlevel.n
+echo "======= ls-waitlevel2.ss ======" #GENERAL TEST
+diff test-cases/ls-waitlevel2.res test-cases/ls-waitlevel2.n
 echo "======= ls-unordered-locking.ss ======"
 diff test-cases/ls-unordered-locking.res test-cases/ls-unordered-locking.n
 echo "======= ls-ordered-locking.ss ======"

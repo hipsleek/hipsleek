@@ -8619,8 +8619,9 @@ let infer_lsmu_pure (f:formula) : formula =
 Before sending to provers,
 translate waitlevel into constraints related to LSMU:
 
-waitlevel<x ==def== forall level in LSMU. level<x
-waitlevel'<x ==def== forall level in LSMU'. level<x
+waitlevel>x ==define==> (ls={} => x<0) & (ls!={} => exist v. v in LSMU & v>x)
+
+waitlevel<x ==define==> (ls={} => x>0) & (ls!={} => forall v. v in LSMU => v<x)
 
 waitlevel=x ==def== (LS={} => x=0)
   & (LS!={} => (forall level in LSMU. level<=x) & (exist level in LSMU. level=x)
@@ -8641,7 +8642,7 @@ waitlevel=x ==def== (not LS={} | x=0)
 *)
 
 (*TODO: may want to extend it to <=, >, >= *)
-let translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos : formula =
+let rec translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos : formula =
   (*forall v. v in LSMU & v>0*)
   (* let level_var = mkLevelVar Unprimed in *)
   (* let fresh_var = fresh_spec_var level_var in *)
@@ -8656,9 +8657,8 @@ let translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos : f
     (*Currently, we only consider two types on constraints
       on waitlevel: < and = and waitlevel should be on LHS*)
     | Lt _ ->
-        (* waitlevel< x ==define==> forall v. v in LSMU => v>0 & v<x*)
-
-        (*waitlevel<x ==define==> (ls={} => x>0) & (ls!={} => forall v. v in LSMU => v<x)
+        (* WRONG: waitlevel< x ==define==> forall v. v in LSMU => v>0 & v<x*)
+        (* CORRECT: waitlevel<x ==define==> (ls={} => x>0) & (ls!={} => forall v. v in LSMU => v<x)
           or
           (ls!={} | x>0) & (ls={} | (forall v. v in LSMU => v<x))
           or
@@ -8732,19 +8732,42 @@ let translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos : f
         let f22 = And (f221,f222,pos) in
         let f2 = Or (f_eq_ls,f22,None,pos) in
         And (f1,f2,pos)
-    | _ -> Error.report_error { Error.error_loc = pos; Error.error_text = "translate_waitlevel_p_formula: unexpected operator: only expecting < and = in waitlevel formulae";}
+    | Gt _ ->
+        (* waitlevel>x ==define==> (ls={} => x<0) & (ls!={} => exist v. v in LSMU & v>x)
+          or
+          (ls!={} | x<0) & (ls={} | (exist v. v in LSMU & v>x))
+        *)
+        let level_var = mkLevelVar Unprimed in
+        let fresh_var = fresh_spec_var level_var in
+        let fresh_var_exp = Var (fresh_var,pos) in
+        let lsmu_exp = Var (mkLsmuVar pr,pos) in
+        let ls_exp = Var (mkLsmuVar pr,pos) in (*TO CHECK*)
+        (*---------------*)
+        let f_neq = mkNeqExp ls_exp (mkEmptyBag pos) pos in (* LS!={} *)
+        let f_lt_zero = mkLtExp x (IConst (0,pos)) pos in (*x<0*)
+        let f1 = Or (f_neq,f_lt_zero,None,pos) in (* ls!={} | x<0 *)
+        (*---------------*)
+        let f_eq_ls = mkEqExp ls_exp (mkEmptyBag pos) pos in (* LS={} *)
+        let f21 = mkBagInExp fresh_var lsmu_exp pos in (*v in LSMU*)
+        let f22 = mkGtExp fresh_var_exp x pos in (*v>x*)
+        let f2_and = And (f21,f22,pos) in (* v in LSMU & v<x *)
+        let f2_exists = Exists (fresh_var,f2_and,None,pos) in (*exists v. v in LSMU & v>x *)
+        And (f1,f2_exists,pos) (* (ls!={} | x<0) & (ls={} | (exist v. v in LSMU & v>x)) *)
+    | _ -> Error.report_error { Error.error_loc = pos; Error.error_text = "translate_waitlevel_p_formula: unexpected operator: only expecting <, > and = in waitlevel formulae";}
   )
 
-let translate_waitlevel_p_formula (bf : b_formula) (x:exp) (pr:primed) pos : formula =
+and translate_waitlevel_p_formula (bf : b_formula) (x:exp) (pr:primed) pos : formula =
   Debug.no_2 "translate_waitlevel_p_formula" !print_b_formula !print_exp !print_formula
       ( fun _ _ -> translate_waitlevel_p_formula_x bf x pr pos) bf x
 
-let translate_waitlevel_b_formula_x (bf:b_formula) : formula =
+and translate_waitlevel_b_formula_x (bf:b_formula) : formula =
     let rec helper bf =
       let pf,sth = bf in
       (match pf with
           (*Currently, we only consider two types on constraints
             on waitlevel: < and = and waitlevel should be on LHS*)
+        (*BASE CASE*)
+        | Gt (e1,e2,pos)
         | Lt (e1,e2,pos)
         | Eq (e1,e2,pos) ->
             (match e1 with
@@ -8755,7 +8778,7 @@ let translate_waitlevel_b_formula_x (bf:b_formula) : formula =
                           if (name_of_spec_var sv2 = Globals.waitlevel_name) then
                             (*waitlevel'=waitlevel ==> exist x: waitlevel = x & waitlevel'= x*)
                             (*waitlevel'<waitlevel ==> exist x: waitlevel < x & waitlevel'= x*)
-
+                            (*waitlevel'>waitlevel ==> exist x: waitlevel > x & waitlevel'= x*)
                             let level_var = mkLevelVar Unprimed in
                             let fresh_var = fresh_spec_var level_var in
                             let x_exp = Var (fresh_var,pos) in
@@ -8771,6 +8794,18 @@ let translate_waitlevel_b_formula_x (bf:b_formula) : formula =
                               | Lt (e1,e2,pos) ->
                                   (*waitlevel'<waitlevel ==> exist x: waitlevel < x & waitlevel'= x*)
                                   (*translate waitlevel < x*)
+                                  let nf1 = translate_waitlevel_p_formula bf x_exp (primed_of_spec_var sv1) pos in
+                                  (*translate waitlevel' = x*)
+                                  let nbf = (Eq (e1,e2,pos),sth) in
+                                  let nf2 = translate_waitlevel_p_formula nbf x_exp (primed_of_spec_var sv2) pos in
+                                  let nf = And (nf1,nf2,pos) in
+                                  (Exists (fresh_var,nf,None,pos))
+                              | Gt (e1,e2,pos) ->
+                                  (*This case indeed cannot happen because we
+                                  have already normalized
+                                  waitlevel'> waitlevel to waitlevel<waitlevel'*)
+                                  (*waitlevel'>waitlevel ==> exist x: waitlevel > x & waitlevel'= x*)
+                                  (*translate waitlevel > x*)
                                   let nf1 = translate_waitlevel_p_formula bf x_exp (primed_of_spec_var sv1) pos in
                                   (*translate waitlevel' = x*)
                                   let nbf = (Eq (e1,e2,pos),sth) in
@@ -8798,16 +8833,36 @@ let translate_waitlevel_b_formula_x (bf:b_formula) : formula =
                       BForm (bf,None)
               | _ -> BForm (bf,None)
             )
+        | Lte (e1,e2,pos) -> (*e1<=e2 ~= e1<e2 | e1=e2*) (*This might stress mona too much*)
+            let fvars1 = afv e1 in
+            let fvars2 = afv e2 in
+            let b = List.exists (fun v -> (name_of_spec_var v = Globals.waitlevel_name)) (fvars1@fvars2) in
+            if not b then  BForm (bf,None) else
+              let tmp_e1 =  mkLtExp e1 e2 pos in (*e1<e2*)
+              let tmp_e2 =  mkEqExp e1 e2 pos in (*e1=e2*)
+              let tmp_f = Or (tmp_e1,tmp_e2,None,pos) in (*e1<=e2 ~= e1<e2 | e1=e2*)
+              let res_f = translate_waitlevel_pure tmp_f in
+              res_f
+        | Gte (e1,e2,pos) -> (*e1>=e2 ~= e1>e2 | e1=e2*) (*This might stress mona too much*)
+            let fvars1 = afv e1 in
+            let fvars2 = afv e2 in
+            let b = List.exists (fun v -> (name_of_spec_var v = Globals.waitlevel_name)) (fvars1@fvars2) in
+            if not b then  BForm (bf,None) else
+              let tmp_e1 =  mkGtExp e1 e2 pos in (*e1>e2*)
+              let tmp_e2 =  mkEqExp e1 e2 pos in (*e1=e2*)
+              let tmp_f = Or (tmp_e1,tmp_e2,None,pos) in (*e1>=e2 ~= e1>e2 | e1=e2*)
+              let res_f = translate_waitlevel_pure tmp_f in
+              res_f
         |_ -> BForm (bf,None))
     in (helper bf)
 
-let translate_waitlevel_b_formula (bf:b_formula) : formula =
+and translate_waitlevel_b_formula (bf:b_formula) : formula =
   Debug.no_1 "translate_waitlevel_b_formula" !print_b_formula !print_formula
       translate_waitlevel_b_formula_x bf
 
 (*First normalize waitlevel into its normal form of 2 types
   waitlevel<x or waitlevel=x*)
-let norm_waitlevel_pure (f : formula) : formula =
+and norm_waitlevel_pure (f : formula) : formula =
   let f_e e = Some e in
   let f_b bf: b_formula option =
     let pf,sth = bf in
@@ -8839,7 +8894,7 @@ let norm_waitlevel_pure (f : formula) : formula =
           let b2 = List.exists (fun v -> (name_of_spec_var v = Globals.waitlevel_name)) vars2 in
           if (not b1 && b2) then
             (*if waitlevel is on RHS but not on LHS, move it to LHS*)
-            Gt (e2,e1,l)
+            Lt (e2,e1,l)
           else pf
 		| Gte (e1,e2,l) ->
 		  let vars1 = afv e1 in
@@ -8848,7 +8903,7 @@ let norm_waitlevel_pure (f : formula) : formula =
           let b2 = List.exists (fun v -> (name_of_spec_var v = Globals.waitlevel_name)) vars2 in
           if (not b1 && b2) then
             (*if waitlevel is on RHS but not on LHS, move it to LHS*)
-            Gte (e2,e1,l)
+            Lte (e2,e1,l)
           else pf
 		| Eq (e1,e2,l) ->
 		  let vars1 = afv e1 in
@@ -8873,12 +8928,12 @@ let norm_waitlevel_pure (f : formula) : formula =
   in
   transform_formula ((fun _-> None),(fun _-> None), (fun _-> None),f_b,f_e) f
 
-let contain_level_exp e =
+and contain_level_exp e =
   match e with
     | Level _ -> true
     | _ -> false
 
-let contain_level_b_formula bf =
+and contain_level_b_formula bf =
   let (pf,il) = bf in
   (match pf with	  
 	| Lt (e1,e2,l) 
@@ -8912,7 +8967,7 @@ let contain_level_b_formula bf =
 	| BagMax _ -> false
   )
 
-let drop_locklevel_pure_x (f : formula) : formula =
+and drop_locklevel_pure_x (f : formula) : formula =
   let f_e e = Some e in
   let f_b bf =
     let nbf = if (contain_level_b_formula bf) then mkTrue_b no_pos
@@ -8921,12 +8976,12 @@ let drop_locklevel_pure_x (f : formula) : formula =
   in
   transform_formula ((fun _-> None),(fun _-> None), (fun _-> None),f_b,f_e) f
 
-let drop_locklevel_pure (f : formula) : formula =
+and drop_locklevel_pure (f : formula) : formula =
   Debug.no_1 "drop_locklevel_pure" !print_formula !print_formula 
       drop_locklevel_pure_x f
 
 (*Translate waitlevel into constraints before sending to provers*)
-let translate_waitlevel_pure_x (pf : formula) : formula =
+and translate_waitlevel_pure_x (pf : formula) : formula =
   let fvars = fv pf in
   let b = List.exists (fun v -> (name_of_spec_var v = Globals.waitlevel_name)) fvars in
   if not b then pf else
@@ -8983,7 +9038,7 @@ waitlevel=x ==def== (not LS={} | x=0)
   & ((not LS!={}) | ((forall level in LSMU. level<=x) & (x in LSMU))
 
 *)
-let translate_waitlevel_pure (pf : formula) : formula =
+and translate_waitlevel_pure (pf : formula) : formula =
   Debug.no_1 "translate_waitlevel_pure" !print_formula !print_formula 
       translate_waitlevel_pure_x pf
 
