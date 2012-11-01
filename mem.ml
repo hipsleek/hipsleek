@@ -458,6 +458,29 @@ match f with
 | CF.ConjStar _		    
 | CF.ConjConj _ -> true
 | _ -> false
+
+let rec contains_starminus (f:CF.h_formula) : bool = 
+(*let _ = print_string ("Checking Conj = "^ (string_of_h_formula f) ^ "\n") in *)
+match f with
+| CF.DataNode (h1) -> false
+| CF.ViewNode (h1) -> false
+| CF.Star ({CF.h_formula_star_h1 = h1;
+		   CF.h_formula_star_h2 = h2;
+		   CF.h_formula_star_pos = pos}) 
+| CF.Phase ({CF.h_formula_phase_rd = h1;
+		    CF.h_formula_phase_rw = h2;
+		    CF.h_formula_phase_pos = pos})
+| CF.Conj({CF.h_formula_conj_h1 = h1;
+		   CF.h_formula_conj_h2 = h2;
+		   CF.h_formula_conj_pos = pos})
+| CF.ConjStar({CF.h_formula_conjstar_h1 = h1;
+		   CF.h_formula_conjstar_h2 = h2;
+		   CF.h_formula_conjstar_pos = pos})
+| CF.ConjConj({CF.h_formula_conjconj_h1 = h1;
+		   CF.h_formula_conjconj_h2 = h2;
+		   CF.h_formula_conjconj_pos = pos})-> (contains_starminus h1) || (contains_starminus h2)
+| CF.StarMinus _ -> true
+| _ -> false
               
 let rec split_heap (h:CF.h_formula) : (CF.h_formula * CF.h_formula) = 
 	(*let _ = print_string ("Splitting Heap H = "^ (string_of_h_formula h) ^ "\n") in *)
@@ -1058,3 +1081,64 @@ let ramify_assign v rhs es =
 	(*let _ = print_string("\nAssign : "^(string_of_formula f)^"\n") in*)
 	let _ = print_string("\nMay Aliases: "^(string_of_list_f string_of_spec_var (get_may_aliases var h))^"\n")
 	in CF.Ctx es
+	
+let rec ramify_starminus_in_h_formula (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula * CP.formula = 
+  (*let _ = print_string("Compacting :"^ (string_of_h_formula f)^ "\n") in*)
+  if not (!Globals.allow_mem) then f,(CP.mkTrue no_pos) else
+  if not (contains_starminus f) then f,(CP.mkTrue no_pos) else
+    match f with
+      | CF.Star {CF.h_formula_star_h1 = h1;
+                 CF.h_formula_star_h2 = h2;
+                 CF.h_formula_star_pos = pos } ->             
+	let h1,h2,_ = compact_nodes_op h1 h2 aset join_ann in
+	let res = CF.mkStarH h1 h2 pos 12 in
+	res,(CP.mkTrue no_pos)
+      | CF.Conj{CF.h_formula_conj_h1 = h1;
+		CF.h_formula_conj_h2 = h2;
+	        CF.h_formula_conj_pos = pos} ->
+	        let h1,h2,_ = compact_nodes_op h1 h2 aset join_ann_conj in
+		let res = CF.mkConjH h1 h2 pos in
+		res,(CP.mkTrue no_pos)
+      | CF.ConjStar{CF.h_formula_conjstar_h1 = h1;
+		CF.h_formula_conjstar_h2 = h2;
+	        CF.h_formula_conjstar_pos = pos} ->
+	        let h1,h2,_ = compact_nodes_op h1 h2 aset join_ann_conjstar in
+		let res = CF.mkConjStarH h1 h2 pos in
+		res,(CP.mkTrue no_pos)
+      | CF.ConjConj{CF.h_formula_conjconj_h1 = h1;
+		CF.h_formula_conjconj_h2 = h2;
+	        CF.h_formula_conjconj_pos = pos} ->
+	        let h1,h2,p = compact_nodes_op h1 h2 aset join_ann_conjconj in
+		let res = CF.mkConjConjH h1 h2 pos in
+		res,p		 	        
+      | CF.Phase h ->  let h1_h,h1_p = compact_nodes_with_same_name_in_h_formula h.CF.h_formula_phase_rd aset in
+      		let h2_h,h2_p = compact_nodes_with_same_name_in_h_formula h.CF.h_formula_phase_rw aset in
+      		let _ = CP.mkAnd h1_p h2_p h.CF.h_formula_phase_pos in
+      		CF.Phase {h with CF.h_formula_phase_rd = h1_h;
+ 	      CF.h_formula_phase_rw = h2_h;},(CP.mkTrue no_pos)
+      | _ -> f,(CP.mkTrue no_pos)
+	
+let rec ramify_starminus_in_formula (cf: CF.formula): CF.formula =
+  match cf with
+    | CF.Base f   -> let new_h,new_p = 
+    	ramify_starminus_in_h_formula f.CF.formula_base_heap (Context.comp_aliases f.CF.formula_base_pure)
+    	in 
+    	let new_mcp = MCP.merge_mems f.CF.formula_base_pure (MCP.mix_of_pure new_p) true in
+    	CF.Base { f with
+        CF.formula_base_heap = new_h;       
+	CF.formula_base_pure = new_mcp;}
+    | CF.Or f     -> CF.Or { f with 
+        CF.formula_or_f1 = ramify_starminus_in_formula f.CF.formula_or_f1; 
+        CF.formula_or_f2 = ramify_starminus_in_formula f.CF.formula_or_f2; }
+    | CF.Exists f -> 
+    	let qevars = f.CF.formula_exists_qvars in 
+    	let h = f.CF.formula_exists_heap in
+    	let mp = f.CF.formula_exists_pure in
+    	let new_h,new_p = 
+    	ramify_starminus_in_h_formula h (Context.comp_aliases mp)
+    	in
+ 	let new_mcp = MCP.merge_mems mp (MCP.mix_of_pure new_p) true in
+    	CF.Exists { f with
+    	CF.formula_exists_qvars = qevars;
+        CF.formula_exists_heap = new_h;
+        CF.formula_exists_pure = new_mcp;}
