@@ -291,6 +291,7 @@ let peek_try =
          | [SEMICOLON,_; CBRACE,_] -> raise Stream.Failure
          | [OPAREN,_; EXISTS,_ ] -> raise Stream.Failure
          | [GT,_;STAR,_] -> raise Stream.Failure
+         | [GT,_;STARMINUS,_] -> raise Stream.Failure
          | [GT,_;INV,_] -> raise Stream.Failure
          | [GT,_;AND,_] -> raise Stream.Failure
          | [GT,_;ANDSTAR,_] -> raise Stream.Failure
@@ -479,10 +480,10 @@ let peek_dc =
 let peek_star = 
    SHGram.Entry.of_parser "peek_star"
        (fun strm ->
-           match Stream.npeek 3strm with
+           match Stream.npeek 3 strm with
              |[AND,_;IDENTIFIER id,_; COLONCOLON,_] -> raise Stream.Failure
              |[STAR,_;OPAREN,_;_] -> raise Stream.Failure
-             | _ -> ())
+             | _ -> ())                   
              
 let peek_heap_and = 
    SHGram.Entry.of_parser "peek_heap_and"
@@ -515,7 +516,18 @@ let peek_heap_andand =
              |[ANDAND,_;SELFT t,_; COLONCOLON,_; _,_] -> ()
              |[ANDAND,_;THIS t,_; COLONCOLON,_; _,_] -> ()
              |[ANDAND,_;RES t,_; COLONCOLON,_; _,_] -> ()
-             | _ -> raise Stream.Failure)                          
+             | _ -> raise Stream.Failure)   
+             
+let peek_heap_starminus = 
+   SHGram.Entry.of_parser "peek_heap_starminus"
+       (fun strm ->
+           match Stream.npeek 4 strm with
+             |[STARMINUS,_;OPAREN ,_; IDENTIFIER id,_; COLONCOLON,_] -> ()
+             |[STARMINUS,_;IDENTIFIER id,_; COLONCOLON,_; _,_] -> ()
+             |[STARMINUS,_;SELFT t,_; COLONCOLON,_; _,_] -> ()
+             |[STARMINUS,_;THIS t,_; COLONCOLON,_; _,_] -> ()
+             |[STARMINUS,_;RES t,_; COLONCOLON,_; _,_] -> ()
+             | _ -> raise Stream.Failure)                                    
 
 let peek_array_type =
    SHGram.Entry.of_parser "peek_array_type"
@@ -992,9 +1004,11 @@ heap_rd:
 
 heap_rw:
   [[ hrd=heap_wr; `STAR; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStar hrd hc (get_pos_camlp4 _loc 2)
+   | hrd=heap_wr; peek_heap_starminus; `STARMINUS; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStarMinus hrd hc (get_pos_camlp4 _loc 2)
    | shc=heap_wr; peek_heap_andand; `ANDAND; `OPAREN; wr = heap_constr; `CPAREN -> F.mkConjConj shc wr (get_pos_camlp4 _loc 2)
    | shc=heap_wr; peek_heap_andstar; `ANDSTAR; `OPAREN; wr = heap_constr; `CPAREN -> F.mkConjStar shc wr (get_pos_camlp4 _loc 2)
    | shc=heap_wr; peek_heap_and; `AND; `OPAREN; wr = heap_constr; `CPAREN -> F.mkConj shc wr (get_pos_camlp4 _loc 2)
+   | shc=heap_wr; peek_heap_starminus; `STARMINUS; wr = simple_heap_constr -> F.mkStarMinus shc wr (get_pos_camlp4 _loc 2) 
    | shc=heap_wr; peek_heap_andand; `ANDAND; wr = simple_heap_constr -> F.mkConjConj shc wr (get_pos_camlp4 _loc 2) 
    | shc=heap_wr; peek_heap_andstar; `ANDSTAR; wr = simple_heap_constr -> F.mkConjStar shc wr (get_pos_camlp4 _loc 2)
    | shc=heap_wr; peek_heap_and; `AND; wr = simple_heap_constr -> F.mkConj shc wr (get_pos_camlp4 _loc 2)

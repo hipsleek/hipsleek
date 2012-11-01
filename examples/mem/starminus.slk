@@ -1,0 +1,22 @@
+data node{
+	int val;
+	node next;
+}.
+
+data pair {
+ int fst;
+ int snd;
+}.
+
+data cell{
+	int val;
+}.
+
+pred ll<v,M> ==  self = null & M = {} & v = 0
+	or self::node<0,p> * p::ll<0,Mp> & M = union(Mp,{self}) & v = 1
+	or self::node<_@I,p> * p::ll<1,Mp> & M = union(Mp,{self}) & v = 2
+	inv 0<=v<=2
+	memE M->(node<@M,@M> & v = 1 ; node<@I,@M> & v = 2).
+	
+checkentail  s::cell<1> * (f::cell<v> *- s::cell<r>) |- f::cell<_> & s::cell<1>.
+print residue.

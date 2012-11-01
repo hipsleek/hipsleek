@@ -153,6 +153,7 @@ and flow_treatment =
 		  
 and h_formula = (* heap formula *)
   | Star of h_formula_star
+  | StarMinus of h_formula_starminus
   | Conj of h_formula_conj
   | ConjStar of h_formula_conjstar
   | ConjConj of h_formula_conjconj    
@@ -168,6 +169,10 @@ and h_formula = (* heap formula *)
 and h_formula_star = {  h_formula_star_h1 : h_formula;
                         h_formula_star_h2 : h_formula;
                         h_formula_star_pos : loc }
+                        
+and h_formula_starminus = {  h_formula_starminus_h1 : h_formula;
+                        h_formula_starminus_h2 : h_formula;
+                        h_formula_starminus_pos : loc }                        
 
 and h_formula_conj = { h_formula_conj_h1 : h_formula;
 h_formula_conj_h2 : h_formula;
@@ -1083,6 +1088,21 @@ and mkStarH_x (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
            else Star { h_formula_star_h1 = f1;
                        h_formula_star_h2 = f2;
                        h_formula_star_pos = pos }
+                       
+and mkStarMinusH (f1 : h_formula) (f2 : h_formula) (pos : loc) (no: int) = 
+  let pr = !print_h_formula in
+  Debug.no_3 "mkStarH" string_of_int pr pr pr (fun _ _ _ -> mkStarMinusH_x f1 f2 pos) no f1 f2
+
+and mkStarMinusH_x (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
+  | HFalse -> HFalse
+  | HEmp -> f2
+  | _ -> match f2 with
+    | HFalse -> HFalse
+    | HEmp -> f1
+    | _ -> if (f1 = HTrue) && (f2 = HTrue) then HTrue 
+           else StarMinus { h_formula_starminus_h1 = f1;
+                       h_formula_starminus_h2 = f2;
+                       h_formula_starminus_pos = pos }                       
 
 and mkConjH (f1 : h_formula) (f2 : h_formula) (pos : loc) = 
   if (f1 = HFalse) || (f2 = HFalse) then HFalse
@@ -1323,7 +1343,10 @@ and is_data (h : h_formula) = match h with
 and is_hformula_contain_htrue (h: h_formula) : bool =
   match h with
   | Star { h_formula_star_h1 = h1;
-           h_formula_star_h2 = h2; } -> (is_hformula_contain_htrue h1) || (is_hformula_contain_htrue h2)
+           h_formula_star_h2 = h2; } 
+  | StarMinus { h_formula_starminus_h1 = h1;
+           h_formula_starminus_h2 = h2; }         
+           -> (is_hformula_contain_htrue h1) || (is_hformula_contain_htrue h2)
   | Conj { h_formula_conj_h1 = h1;
            h_formula_conj_h2 = h2; }
   | ConjStar { h_formula_conjstar_h1 = h1;
@@ -2022,6 +2045,7 @@ and h_fv_node v perm ann param_ann vs =
 and f_h_fv (f : formula) : CP.spec_var list = 
 	let rec helper h = match h with
 	  | Star b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_star_h1 @ helper b.h_formula_star_h2)
+	  | StarMinus b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_starminus_h1 @ helper b.h_formula_starminus_h2)	  
 	  | Conj b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_conj_h1 @ helper b.h_formula_conj_h2)
 	  | ConjStar b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_conjstar_h1 @ helper b.h_formula_conjstar_h2)
 	  | ConjConj b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_conjconj_h1 @ helper b.h_formula_conjconj_h2)	  	  
@@ -2037,7 +2061,10 @@ and f_h_fv (f : formula) : CP.spec_var list =
 and h_fv (h : h_formula) : CP.spec_var list = match h with
   | Star ({h_formula_star_h1 = h1; 
 	h_formula_star_h2 = h2; 
-	h_formula_star_pos = pos}) -> CP.remove_dups_svl (h_fv h1 @ h_fv h2)
+	h_formula_star_pos = pos})
+  | StarMinus ({h_formula_starminus_h1 = h1; 
+	h_formula_starminus_h2 = h2; 
+	h_formula_starminus_pos = pos}) -> CP.remove_dups_svl (h_fv h1 @ h_fv h2)
   | Conj ({h_formula_conj_h1 = h1; 
 	h_formula_conj_h2 = h2; 
 	h_formula_conj_pos = pos}) 
@@ -2091,7 +2118,9 @@ and f_top_level_vars (f : formula) : CP.spec_var list =
 
 and top_level_vars (h : h_formula) : CP.spec_var list = match h with
   | Star ({h_formula_star_h1 = h1; 
-	h_formula_star_h2 = h2}) -> (top_level_vars h1) @ (top_level_vars h2)
+	h_formula_star_h2 = h2}) 
+  | StarMinus ({h_formula_starminus_h1 = h1; 
+	h_formula_starminus_h2 = h2}) -> (top_level_vars h1) @ (top_level_vars h2)
   | Conj ({h_formula_conj_h1 = h1; 
 	h_formula_conj_h2 = h2})
   | ConjStar ({h_formula_conjstar_h1 = h1; 
@@ -2394,6 +2423,12 @@ and h_subst sst (f : h_formula) =
 		Star ({h_formula_star_h1 = h_subst sst f1; 
 		h_formula_star_h2 = h_subst sst f2; 
 		h_formula_star_pos = pos})
+  | StarMinus ({h_formula_starminus_h1 = f1; 
+					h_formula_starminus_h2 = f2; 
+					h_formula_starminus_pos = pos}) -> 
+		StarMinus ({h_formula_starminus_h1 = h_subst sst f1; 
+		h_formula_starminus_h2 = h_subst sst f2; 
+		h_formula_starminus_pos = pos})		
   | Phase ({h_formula_phase_rd = f1; 
 						h_formula_phase_rw = f2; 
 						h_formula_phase_pos = pos}) -> 
@@ -2602,6 +2637,12 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
         Star ({h_formula_star_h1 = h_apply_one s f1; 
 	    h_formula_star_h2 = h_apply_one s f2; 
 	    h_formula_star_pos = pos})
+  | StarMinus ({h_formula_starminus_h1 = f1; 
+	h_formula_starminus_h2 = f2; 
+	h_formula_starminus_pos = pos}) -> 
+        StarMinus ({h_formula_starminus_h1 = h_apply_one s f1; 
+	    h_formula_starminus_h2 = h_apply_one s f2; 
+	    h_formula_starminus_pos = pos})	    
   | Phase ({h_formula_phase_rd = f1; 
 	h_formula_phase_rw = f2; 
 	h_formula_phase_pos = pos}) -> 
@@ -5728,6 +5769,7 @@ and filter_heap (f:formula):formula option = match f with
   | Base b-> begin 
       match b.formula_base_heap with
 	| Star _
+	| StarMinus _	
 	| Conj _
 	| ConjStar _
 	| ConjConj _
@@ -5743,6 +5785,7 @@ and filter_heap (f:formula):formula option = match f with
       begin
 	match b.formula_exists_heap with
 	  | Star _
+          | StarMinus _
 	  | Conj _
 	  | ConjStar _	  
           | ConjConj _	  
@@ -5816,6 +5859,9 @@ let rec replace_heap_formula_label nl f = match f with
   | Star b -> Star {b with 
 		      h_formula_star_h1 = replace_heap_formula_label nl b.h_formula_star_h1; 
 		      h_formula_star_h2 = replace_heap_formula_label nl b.h_formula_star_h2; }
+  | StarMinus b -> StarMinus {b with 
+		      h_formula_starminus_h1 = replace_heap_formula_label nl b.h_formula_starminus_h1; 
+		      h_formula_starminus_h2 = replace_heap_formula_label nl b.h_formula_starminus_h2; }		      
   | Phase b -> Phase {b with 
 		      h_formula_phase_rd = replace_heap_formula_label nl b.h_formula_phase_rd; 
 		      h_formula_phase_rw = replace_heap_formula_label nl b.h_formula_phase_rw; }
@@ -5869,6 +5915,7 @@ and replace_formula_label_fresh f = replace_formula_label1 (fun c -> (fresh_bran
 and residue_labels_in_formula f = 
   let rec residue_labels_in_heap f = match f with
     | Star b -> (residue_labels_in_heap b.h_formula_star_h1) @ (residue_labels_in_heap b.h_formula_star_h2)
+    | StarMinus b -> (residue_labels_in_heap b.h_formula_starminus_h1) @ (residue_labels_in_heap b.h_formula_starminus_h2)    
     | Conj b -> (residue_labels_in_heap b.h_formula_conj_h1) @ (residue_labels_in_heap b.h_formula_conj_h2)
     | ConjStar b -> (residue_labels_in_heap b.h_formula_conjstar_h1) @ (residue_labels_in_heap b.h_formula_conjstar_h2)
     | ConjConj b -> (residue_labels_in_heap b.h_formula_conjconj_h1) @ (residue_labels_in_heap b.h_formula_conjconj_h2)
@@ -5904,6 +5951,11 @@ let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) op
             let (e2,r2)=helper s.h_formula_star_h2 new_arg in
             (Star {s with h_formula_star_h1 = e1;
                           h_formula_star_h2 = e2;},f_comb [r1;r2])
+        | StarMinus s -> 
+            let (e1,r1)=helper s.h_formula_starminus_h1 new_arg in
+            let (e2,r2)=helper s.h_formula_starminus_h2 new_arg in
+            (StarMinus {s with h_formula_starminus_h1 = e1;
+                          h_formula_starminus_h2 = e2;},f_comb [r1;r2])                          
         | Conj s -> 
             let (e1,r1)=helper s.h_formula_conj_h1 new_arg in
             let (e2,r2)=helper s.h_formula_conj_h2 new_arg in
@@ -5960,6 +6012,9 @@ let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_fo
 	      | Star s -> Star {s with 
 			  h_formula_star_h1 = transform_h_formula f s.h_formula_star_h1;
 			  h_formula_star_h2 = transform_h_formula f s.h_formula_star_h2;}
+	      | StarMinus s -> StarMinus {s with 
+			  h_formula_starminus_h1 = transform_h_formula f s.h_formula_starminus_h1;
+			  h_formula_starminus_h2 = transform_h_formula f s.h_formula_starminus_h2;}			  
 	      | Conj s -> Conj {s with 
 			  h_formula_conj_h1 = transform_h_formula f s.h_formula_conj_h1;
 			  h_formula_conj_h2 = transform_h_formula f s.h_formula_conj_h2;}
@@ -6274,6 +6329,7 @@ let rename_labels transformer e =
 	let f_f e = None in
 	let rec f_h_f e = match e with 
 		| Star s -> None
+		| StarMinus s -> None
 		| Conj s -> None
 		| ConjStar s -> None
 		| ConjConj s -> None				
@@ -6314,6 +6370,7 @@ let rename_labels_formula_ante  e=
             | ConjConj s -> None
 	    | Phase s -> None
 	    | Star s -> None
+	    | StarMinus s -> None
 	    | DataNode d -> Some (DataNode {d with h_formula_data_label = n_l_f d.h_formula_data_label})
 	    | ViewNode v -> Some (ViewNode {v with h_formula_view_label = n_l_f v.h_formula_view_label})
 	    | Hole _
@@ -7281,6 +7338,9 @@ let mark_derv_self name f =
       | Star s -> Star {s with 
           h_formula_star_h1 = h_h s.h_formula_star_h1;
           h_formula_star_h2 = h_h s.h_formula_star_h2;} 
+      | StarMinus s -> StarMinus {s with 
+          h_formula_starminus_h1 = h_h s.h_formula_starminus_h1;
+          h_formula_starminus_h2 = h_h s.h_formula_starminus_h2;} 
       | Conj c -> Conj {c with 
           h_formula_conj_h1 = h_h c.h_formula_conj_h1;
           h_formula_conj_h2 = h_h c.h_formula_conj_h2;}
@@ -8308,6 +8368,7 @@ let sum_of_int_lst lst = List.fold_left (+) 0 lst
 
 let rec no_of_cnts_heap heap = match heap with
   | Star h -> no_of_cnts_heap h.h_formula_star_h1 + no_of_cnts_heap h.h_formula_star_h2
+  | StarMinus h -> no_of_cnts_heap h.h_formula_starminus_h1 + no_of_cnts_heap h.h_formula_starminus_h2  
   | Conj h -> no_of_cnts_heap h.h_formula_conj_h1 + no_of_cnts_heap h.h_formula_conj_h2
   | ConjStar h -> no_of_cnts_heap h.h_formula_conjstar_h1 + no_of_cnts_heap h.h_formula_conjstar_h2
   | ConjConj h -> no_of_cnts_heap h.h_formula_conjconj_h1 + no_of_cnts_heap h.h_formula_conjconj_h2    
@@ -8388,6 +8449,10 @@ let rec find_barr bln v f =
 	  | Star h -> 
 	    let rd = h_bars eqs h.h_formula_star_h1 in
 		let rw = h_bars eqs h.h_formula_star_h2 in
+	   (match rd with | None -> rw | _ -> tester rd rw)
+	   | StarMinus h -> 
+	    let rd = h_bars eqs h.h_formula_starminus_h1 in
+		let rw = h_bars eqs h.h_formula_starminus_h2 in
 	   (match rd with | None -> rw | _ -> tester rd rw)	  
 	  | Conj c -> 
 	    let rd = h_bars eqs c.h_formula_conj_h1 in

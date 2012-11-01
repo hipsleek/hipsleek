@@ -98,6 +98,7 @@ and h_formula = (* heap formula *)
   | ConjStar of h_formula_conjstar
   | ConjConj of h_formula_conjconj
   | Star of h_formula_star
+  | StarMinus of h_formula_starminus
   | HeapNode of h_formula_heap
   | HeapNode2 of h_formula_heap2
 	  (* Don't distinguish between view and data node for now, as that requires look up *)
@@ -110,7 +111,11 @@ and h_formula = (* heap formula *)
 and h_formula_star = { h_formula_star_h1 : h_formula;
 		       h_formula_star_h2 : h_formula;
 		       h_formula_star_pos : loc }
-
+		       
+and h_formula_starminus = { h_formula_starminus_h1 : h_formula;
+		       h_formula_starminus_h2 : h_formula;
+		       h_formula_starminus_pos : loc }
+		       
 and h_formula_conj = { h_formula_conj_h1 : h_formula;
 		       h_formula_conj_h2 : h_formula;
 		       h_formula_conj_pos : loc }
@@ -364,6 +369,17 @@ and mkStar f1 f2 pos = match f1 with
            else Star { h_formula_star_h1 = f1;
                        h_formula_star_h2 = f2;
                        h_formula_star_pos = pos }
+                       
+and mkStarMinus f1 f2 pos = match f1 with
+  | HFalse -> HFalse
+  | HEmp -> f2
+  | _ -> match f2 with
+    | HFalse -> HFalse
+    | HEmp -> f1
+    | _ -> if (f1 = HTrue) && (f2 = HTrue) then HTrue
+           else StarMinus { h_formula_starminus_h1 = f1;
+                       h_formula_starminus_h2 = f2;
+                       h_formula_starminus_pos = pos }
 
 and mkConj f1 f2 pos =
   if (f1 = HFalse) || (f2 = HFalse) then HFalse
@@ -495,6 +511,9 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
   | Phase ({h_formula_phase_rd = h1; 
 	   h_formula_phase_rw = h2; 
 	   h_formula_phase_pos = pos}) 
+  | StarMinus ({h_formula_starminus_h1 = h1; 
+	   h_formula_starminus_h2 = h2; 
+	   h_formula_starminus_pos = pos})
   | Star ({h_formula_star_h1 = h1; 
 	   h_formula_star_h2 = h2; 
 	   h_formula_star_pos = pos}) ->  Gen.BList.remove_dups_eq (=) ((h_fv h1)@(h_fv h2))
@@ -766,6 +785,12 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
         Phase ({h_formula_phase_rd = h_apply_one s h1; 
 	    h_formula_phase_rw = h_apply_one s h2; 
 	    h_formula_phase_pos = pos}) 
+  | StarMinus ({h_formula_starminus_h1 = f1; 
+	h_formula_starminus_h2 = f2; 
+	h_formula_starminus_pos = pos}) -> 
+        StarMinus ({h_formula_starminus_h1 = h_apply_one s f1; 
+	    h_formula_starminus_h2 = h_apply_one s f2; 
+	    h_formula_starminus_pos = pos})	    
   | Star ({h_formula_star_h1 = f1; 
 	h_formula_star_h2 = f2; 
 	h_formula_star_pos = pos}) -> 
@@ -906,6 +931,11 @@ and float_out_exps_from_heap_x (f:formula ) (rel0: rel option) :formula =
 	let r21,r22 = float_out_exps b.h_formula_star_h2 in
 	  (Star ({h_formula_star_h1  =r11; h_formula_star_h2=r21;h_formula_star_pos = b.h_formula_star_pos}), 
 	   (r12@r22))
+    | StarMinus b-> 
+	let r11,r12 = float_out_exps b.h_formula_starminus_h1 in
+	let r21,r22 = float_out_exps b.h_formula_starminus_h2 in
+	  (StarMinus ({h_formula_starminus_h1  =r11; h_formula_starminus_h2=r21;h_formula_starminus_pos = b.h_formula_starminus_pos}), 
+	   (r12@r22))	   
     | Conj b-> 
 	let r11,r12 = float_out_exps b.h_formula_conj_h1 in
 	let r21,r22 = float_out_exps b.h_formula_conj_h2 in
@@ -1164,6 +1194,28 @@ match h with
 		  h_formula_star_pos = l;
 		}),
             np)
+    |  StarMinus
+	{
+          h_formula_starminus_h1 = f1;
+          h_formula_starminus_h2 = f2;
+          h_formula_starminus_pos = l
+	} ->
+	 let (nf1, np1) = float_out_heap_min_max f1 in
+	 let (nf2, np2) = float_out_heap_min_max f2 in
+	 let np =
+           (match (np1, np2) with
+              | (None, None) -> None
+              | (Some _, None) -> np1
+              | (None, Some _) -> np2
+              | (Some e1, Some e2) -> Some (Ipure.And (e1, e2, l)))
+	 in
+           (( StarMinus
+		{
+		  h_formula_starminus_h1 = nf1;
+		  h_formula_starminus_h2 = nf2;
+		  h_formula_starminus_pos = l;
+		}),
+            np)            
     |  Conj
 	{
           h_formula_conj_h1 = f1;
@@ -1524,7 +1576,8 @@ let find_barr_node bname (f:int) (t:int) struc :bool=
 		 | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2}
 		 | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
 		 | ConjStar {h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2}
-		 | ConjConj {h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2}		 		 
+		 | ConjConj {h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2}	
+		 | StarMinus {h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2}	 		 
 		 | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} -> 
 			(match find_h_node x h1 with 
 				| Bar_not_found -> find_h_node x h2 

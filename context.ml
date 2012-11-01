@@ -1189,7 +1189,7 @@ and input_h_formula_in2_frame (frame, id_hole) (to_input : h_formula) : h_formul
     | DataNode _ 
     | ViewNode _
     | HEmp
-    | HTrue | HFalse -> frame
+    | HTrue | HFalse | StarMinus _ -> frame
           
 and update_ctx_es_formula ctx0 f = 
   match ctx0 with

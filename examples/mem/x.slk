@@ -38,9 +38,9 @@ checkentail  m::cell<1> * g::cell<v> & s::cell<r> & s = m & r != 1 & v != 1 & (g
 print residue.
 //(5) Fail
 
-checkentail  m::cell<1> * g::cell<v> & s::cell<r> & s = m & r != 1 & v != 1 & (g = f | g = m) |- f::cell<_> & s::cell<1>.
+checkentail  m::cell<1> * g::cell<v> & s::cell<r> & s = m & r != 1 & v != 1 & (g = f | g = m) |- g::cell<_> & s::cell<1>.
 print residue.
-//(6) Fail
+//(6) Valid
 
 checkentail c::node<v,p> & x::ll<u,M> & u != 2 & v = 1 |- c::node<1,p> & x::ll<u,M> & u != 2.
 print residue.

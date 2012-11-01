@@ -115,6 +115,8 @@ let rec fixcalc_of_pure_formula f = match f with
 let rec fixcalc_of_h_formula f = match f with
   | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} -> 
     "(" ^ fixcalc_of_h_formula h1 ^ op_and ^ fixcalc_of_h_formula h2 ^ ")"
+  | StarMinus {h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2} -> 
+    "(" ^ fixcalc_of_h_formula h1 ^ op_and ^ fixcalc_of_h_formula h2 ^ ")"    
   | Phase _ -> illegal_format ("Fixcalc.fixcalc_of_h_formula: Not supported Phase-formula")
   | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2} 
   | ConjStar {h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2} 

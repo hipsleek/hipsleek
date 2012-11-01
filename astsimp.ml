@@ -464,6 +464,12 @@ let rec convert_heap2_heap prog (h0 : IF.h_formula) : IF.h_formula =
         in IF.Star { (h) with
             IF.h_formula_star_h1 = tmp1;
             IF.h_formula_star_h2 = tmp2; }
+    | IF.StarMinus (({ IF.h_formula_starminus_h1 = h1; IF.h_formula_starminus_h2 = h2 } as h))
+        -> let tmp1 = convert_heap2_heap prog h1 in
+        let tmp2 = convert_heap2_heap prog h2
+        in IF.StarMinus { (h) with
+            IF.h_formula_starminus_h1 = tmp1;
+            IF.h_formula_starminus_h2 = tmp2; }            
     | IF.Conj (({ IF.h_formula_conj_h1 = h1; IF.h_formula_conj_h2 = h2 } as h))
         -> let tmp1 = convert_heap2_heap prog h1 in
         let tmp2 = convert_heap2_heap prog h2
@@ -1424,6 +1430,7 @@ and find_m_prop_heap_x eq_f h = match h with
         let l = eq_f h.CF.h_formula_view_node in
         List.map (fun v -> C.mk_mater_prop v true [ h.CF.h_formula_view_name]) l 
   | CF.Star h -> (find_m_prop_heap_x eq_f h.CF.h_formula_star_h1)@(find_m_prop_heap_x eq_f h.CF.h_formula_star_h2)
+  | CF.StarMinus h -> (find_m_prop_heap_x eq_f h.CF.h_formula_starminus_h1)@(find_m_prop_heap_x eq_f h.CF.h_formula_starminus_h2)
   | CF.Conj h -> (find_m_prop_heap_x eq_f h.CF.h_formula_conj_h1)@(find_m_prop_heap_x eq_f h.CF.h_formula_conj_h2)
   | CF.ConjStar h -> (find_m_prop_heap_x eq_f h.CF.h_formula_conjstar_h1)@(find_m_prop_heap_x eq_f h.CF.h_formula_conjstar_h2)
   | CF.ConjConj h -> (find_m_prop_heap_x eq_f h.CF.h_formula_conjconj_h1)@(find_m_prop_heap_x eq_f h.CF.h_formula_conjconj_h2)    
@@ -1989,6 +1996,12 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
 		                  CF.h_formula_star_h2 = h2;
 		                  CF.h_formula_star_pos = _
 		              } 
+              | CF.StarMinus
+		              {
+		                  CF.h_formula_starminus_h1 = h1;
+		                  CF.h_formula_starminus_h2 = h2;
+		                  CF.h_formula_starminus_pos = _
+		              } 		              
               | CF.Conj
 		              {
 		                  CF.h_formula_conj_h1 = h1;
@@ -4362,6 +4375,16 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
               let tmp_h = CF.mkStarH lf1 lf2 pos 1 in
               let tmp_type = CF.mkAndType type1 type2 in 
 	          (tmp_h, tmp_type)
+        | IF.StarMinus {
+              IF.h_formula_starminus_h1 = f1;
+              IF.h_formula_starminus_h2 = f2;
+              IF.h_formula_starminus_pos = pos
+          } ->
+              let (lf1, type1) = linearize_heap f1 pos in
+              let (lf2, type2) = linearize_heap f2 pos in
+              let tmp_h = CF.mkStarMinusH lf1 lf2 pos 1 in
+              let tmp_type = CF.mkAndType type1 type2 in 
+	          (tmp_h, tmp_type)	          
         | IF.Phase
                 {
                     IF.h_formula_phase_rd = f1;
@@ -5768,6 +5791,12 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
                 IF.h_formula_star_h2 = h2;
                 IF.h_formula_star_pos = pos
 	        } 
+    | IF.StarMinus
+	        {
+                IF.h_formula_starminus_h1 = h1;
+                IF.h_formula_starminus_h2 = h2;
+                IF.h_formula_starminus_pos = pos
+	        } 	        
     | IF.Conj
 	        {
                 IF.h_formula_conj_h1 = h1;
@@ -6047,6 +6076,12 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
 	        IF.h_formula_star_pos = pos
 	        } ->
           IF.mkStar (imm_heap f1) (imm_heap f2) pos 
+    | IF.StarMinus
+	        {	  IF.h_formula_starminus_h1 = f1;
+	        IF.h_formula_starminus_h2 = f2;
+	        IF.h_formula_starminus_pos = pos
+	        } ->
+          IF.mkStarMinus (imm_heap f1) (imm_heap f2) pos           
     | IF.Conj
 	        {
 	            IF.h_formula_conj_h1 = f1;
@@ -6122,6 +6157,17 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
 	        let tmp_h = IF.mkStar lf1 lf2 pos in
 	        let tmp_link = IP.mkAnd link1 link2 pos in
 	        (new_used_names2, (qv1 @ qv2), tmp_h, tmp_link)
+      | IF.StarMinus
+	          {
+	              IF.h_formula_starminus_h1 = f1;
+	              IF.h_formula_starminus_h2 = f2;
+	              IF.h_formula_starminus_pos = pos
+	          } ->
+	        let new_used_names1, qv1, lf1, link1 = linearize_heap used_names f1 in
+	        let new_used_names2, qv2, lf2, link2 = linearize_heap new_used_names1 f2 in
+	        let tmp_h = IF.mkStarMinus lf1 lf2 pos in
+	        let tmp_link = IP.mkAnd link1 link2 pos in
+	        (new_used_names2, (qv1 @ qv2), tmp_h, tmp_link)	        
 
       | IF.Conj
 	          {

@@ -276,6 +276,7 @@ rule tokenizer file_name = parse
   | '&' { AND }
   | "&*" { ANDSTAR }
   | "&&" { ANDAND }
+  | "*-" { STARMINUS }
   | "@" { AT }
   | "@@" { ATAT }
   | "@I" {IMM}
