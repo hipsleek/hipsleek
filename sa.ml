@@ -2631,9 +2631,9 @@ let match_one_hp_one_view_x hp hp_name args def_fs (vdcl: CA.view_decl): bool=
     let v_fl2 = List.map CF.elim_exists v_fl1 in
      (*for debugging*)
     (* let pr = pr_list_ln Cprinter.prtt_string_of_formula in *)
-    (* let _ = Debug.ninfo_pprint ("     def_fs: " ^ (pr def_fs)) no_pos in *)
-    (* let _ = Debug.ninfo_pprint ("     def_fs1: " ^ (pr def_fs1)) no_pos in *)
-    (* let _ = Debug.ninfo_pprint ("     v_fl1: " ^ (pr v_fl1)) no_pos in *)
+    (* let _ = Debug.info_pprint ("     def_fs: " ^ (pr def_fs)) no_pos in *)
+    (* let _ = Debug.info_pprint ("     def_fs1: " ^ (pr def_fs1)) no_pos in *)
+    (* let _ = Debug.info_pprint ("     v_fl1: " ^ (pr v_fl1)) no_pos in *)
     (*END for debugging*)
     SAU.checkeq_formula_list def_fs1 v_fl2
   else

@@ -50,6 +50,10 @@ echo "ll_all7"
 ../../hip ll_all7.ss -cp-test cp/ll_all7.cp | grep Compare
 echo "ll_all8"
 ../../hip ll_all8.ss -cp-test cp/ll_all8.cp | grep Compare
+echo "ll_all10"
+../../hip ll_all10.ss -cp-test cp/ll_all10.cp | grep Compare
+echo "ll_all_14"
+../../hip ll_all_14.ss -cp-test cp/ll_all_14.cp | grep Compare
 echo "ll-ret-first"
 ../../hip ll-ret-first.ss -cp-test cp/ll-ret-first.cp | grep Compare
 echo "ll-ret-first1"

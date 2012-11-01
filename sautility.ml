@@ -623,7 +623,7 @@ and subst_view_hp_h_formula view_name (hp_name, _, p) hf =
 
 (*==========check_relaxeq=============*)
 (*currently we do not submit exists*)
-let check_stricteq_hnodes stricted_eq hns1 hns2=
+let check_stricteq_hnodes_x stricted_eq hns1 hns2=
   (*allow dangl ptrs have diff names*)
   let all_ptrs =
     if stricted_eq then [] else
@@ -635,8 +635,13 @@ let check_stricteq_hnodes stricted_eq hns1 hns2=
     let arg_ptrs1 = List.filter CP.is_node_typ hn1.CF.h_formula_data_arguments in
     let arg_ptrs2 = List.filter CP.is_node_typ  hn2.CF.h_formula_data_arguments in
     if (hn1.CF.h_formula_data_name = hn2.CF.h_formula_data_name) &&
-        (hn1.CF.h_formula_data_node = hn2.CF.h_formula_data_node) then
+        (CP.eq_spec_var hn1.CF.h_formula_data_node hn2.CF.h_formula_data_node) then
       let diff1 = (Gen.BList.difference_eq CP.eq_spec_var arg_ptrs1 arg_ptrs2) in
+      (*for debugging*)
+      (* let _ = Debug.info_pprint ("     arg_ptrs1: " ^ (!CP.print_svl arg_ptrs1)) no_pos in *)
+      (* let _ = Debug.info_pprint ("     arg_ptrs2: " ^ (!CP.print_svl arg_ptrs2)) no_pos in *)
+      (* let _ = Debug.info_pprint ("     diff1: " ^ (!CP.print_svl diff1)) no_pos in *)
+      (*END for debugging*)
       if stricted_eq then (diff1=[]) else
           (*allow dangl ptrs have diff names*)
         let diff2 = CP.intersect_svl diff1 all_ptrs in
@@ -664,6 +669,13 @@ let check_stricteq_hnodes stricted_eq hns1 hns2=
   if (List.length hns1) <= (List.length hns2) then
     helper2 hns1 hns2
   else false
+
+let check_stricteq_hnodes stricted_eq hns1 hns2=
+  let pr1 hd = Cprinter.prtt_string_of_h_formula (CF.DataNode hd) in
+  let pr2 = pr_list_ln pr1 in
+  Debug.no_3 "check_stricteq_hnodes" string_of_bool pr2 pr2 string_of_bool
+      (fun _ _ _ -> check_stricteq_hnodes_x stricted_eq hns1 hns2)  stricted_eq hns1 hns2
+
 
 let check_stricteq_hrels hrels1 hrels2=
    let check_stricteq_hr (hp1, eargs1, _) (hp2, eargs2, _)=
