@@ -48,3 +48,5 @@ echo "ll-ret-first"
 ../../hip ll-ret-first.ss -cp-test cp/ll-ret-first.cp | grep Compare
 echo "ll-ret-first1"
 ../../hip ll-ret-first1.ss -cp-test cp/ll-ret-first1.cp | grep Compare
+echo "ll-ret-first2"
+../../hip ll-ret-first2.ss -cp-test cp/ll-ret-first2.cp | grep Compare

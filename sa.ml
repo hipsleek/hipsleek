@@ -2808,9 +2808,16 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * SA
       let hp2 = SAU.get_hpdef_name b1 in
       CP.eq_spec_var hp1 hp2) (hp_defs))
   in
-   DD.ninfo_pprint ">>>>>> step 7: mathching with predefined predicates <<<<<<" no_pos;
   let hp_defs2 = (def_subst_fix unk_hp_svl hp_defs1) in
-  let hp_defs3 = hp_defs2 @ unk_hp_def @unk_hp_pure_def in
+  (*currently, we discard all non-node unk hp*)
+  (* unk_hps3: all non-node unk hps *)
+  let non_node_unk_hps = List.filter (fun (_,args) ->
+      List.for_all (fun a -> not (CP.is_node_typ a)) args) unk_hps2
+  in
+  let hp_defs21 = SAU.drop_non_node_unk_hps hp_defs2 non_node_unk_hps in
+  (****************************************************)
+  DD.ninfo_pprint ">>>>>> step 7: mathching with predefined predicates <<<<<<" no_pos;
+  let hp_defs3 = hp_defs21 @ unk_hp_def @unk_hp_pure_def in
   let m = match_hps_views hp_defs3 prog.CA.prog_view_decls in
   let _ = DD.ninfo_pprint ("        sel_hp_rel:" ^ (!CP.print_svl sel_hp_rels)) no_pos in
   (* let _ =  DD.info_pprint (" matching: " ^ *)
@@ -2827,21 +2834,7 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * SA
   let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) sel_hp_defs in
   (*for cp*)
   let dropped_hps = List.filter (fun (hp,_,_) -> not(CP.mem_svl hp sel_hp_rels)) drop_hp_args in
-  (constr3,  hp_defs4,dropped_hps) (*return for cp*)
-  (* loop 1 *)
-  (*simplify constrs*)
-  (* let constrs12 = simplify_constrs constrs1 in *)
-  (* (\*step 3: pick partial definition*\) *)
-  (* let constrs13, par_defs1 = collect_partial_definitions prog constrs12 in *)
-  (* (\*step 4: pick complete def*\) *)
-  (* (\*step 5: subst new partial def into constrs*\) *)
-  (* let constrs14 = subst_cs constrs13 par_defs1 in *)
-  (* (\*loop 2*\) *)
-  (* (\*simplify constrs*\) *)
-  (* let constrs22 = simplify_constrs constrs14 in *)
-  (* (\*step 3: pick partial definition*\) *)
-  (* let constrs23, par_defs2 = collect_partial_definitions prog constrs22 in *)
-  (* let par_defs_diff = Gen.BList.difference_eq check_partial_def_eq par_defs2 par_defs1 in *)
+  (constr3, hp_defs4, dropped_hps) (*return for cp*)
 
 (*(pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula)*)
 let infer_hps prog (hp_constrs: CF.hprel list) sel_hp_rels:
@@ -2853,7 +2846,9 @@ let infer_hps prog (hp_constrs: CF.hprel list) sel_hp_rels:
   Debug.no_1 "infer_hps" pr1 (pr_triple pr1 pr2 pr3)
       (fun _ -> infer_hps_x prog hp_constrs sel_hp_rels) hp_constrs
 
-(**===============END of NORMALIZATION==============**)
+(**===============**********************==============**)
+ (******************END of NORMALIZATION**************)
+(**===============**********************==============**)
 
 let check_horm_data_decl_x tmpl_data_decl data_decl=
   (*subs type s= temp t, t into tmpl ptr fiels*)

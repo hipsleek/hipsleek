@@ -1707,3 +1707,18 @@ let remove_irr_eqs keep_svl p=
   let pr1 = !CP.print_formula in
   Debug.no_2 "remove_irr_eqs" !CP.print_svl pr1 pr1
       (fun _ _ -> remove_irr_eqs_x keep_svl p)  keep_svl p
+
+
+let drop_non_node_unk_hps_x hp_defs ls_non_node_unk_hpargs =
+  let drop_one_hpdef lnon_node_hp_names (rc, hf, f)=
+    let f1,_ = CF.drop_hrel_f f lnon_node_hp_names in
+    (rc, hf, f1)
+  in
+  let non_node_hp_names = List.map fst ls_non_node_unk_hpargs in
+  List.map (drop_one_hpdef non_node_hp_names) hp_defs
+
+let drop_non_node_unk_hps hp_defs non_node_unk_hps =
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  let pr2 = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in
+  Debug.no_2 "drop_non_node_unk_hps" pr1 pr2 pr1
+      (fun _ _ -> drop_non_node_unk_hps_x hp_defs non_node_unk_hps) hp_defs non_node_unk_hps
