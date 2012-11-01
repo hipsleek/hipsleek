@@ -612,7 +612,22 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
-  Debug.ho_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
+  Debug.no_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
+
+let run_entail_check_common_x (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  (* store the current value of do_checkentail_exact *)
+  let flag = !Globals.do_checkentail_exact in
+  Globals.do_checkentail_exact := !Globals.do_classic_reasoning;
+  let res = run_entail_check iante0 iconseq0 in
+  (* restore flag do_checkentail_exact *)
+  Globals.do_checkentail_exact := flag;
+  res
+
+(* The allowing or forbidding residue in RHS of entailments depends on option --classic *)
+let run_entail_check_common (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  let pr = string_of_meta_formula in
+  let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
+  Debug.no_2 "run_entail_check_common" pr pr pr_2 run_entail_check_common_x iante0 iconseq0
 
 let run_entail_check_exact_x (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (* store the current value of do_checkentail_exact *)
@@ -623,6 +638,7 @@ let run_entail_check_exact_x (iante0 : meta_formula) (iconseq0 : meta_formula) =
   Globals.do_checkentail_exact := flag;
   res
 
+(* Always forbidding residue in RHS of entailments *)
 let run_entail_check_exact (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
@@ -637,6 +653,7 @@ let run_entail_check_inexact_x (iante0 : meta_formula) (iconseq0 : meta_formula)
   Globals.do_checkentail_exact := flag;
   res
 
+(* Always allowing residue in RHS of entailments *)
 let run_entail_check_inexact (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
@@ -725,6 +742,22 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   Debug.no_2 "process_entail_check" pr pr (fun _ -> "?") process_entail_check iante0 iconseq0
 
+let process_entail_check_common_x (iante : meta_formula) (iconseq : meta_formula) =
+  (* store the current value of do_checkentail_exact*)
+  let flag = !Globals.do_checkentail_exact in
+  Globals.do_checkentail_exact := !Globals.do_classic_reasoning;
+  let res = process_entail_check iante iconseq in
+  (* restore flag do_checkentail_exact *)
+  Globals.do_checkentail_exact := flag;
+  (* return value *)
+  res
+
+(* The allowing or forbidding residue in RHS of entailments depends on option --classic *) 
+let process_entail_check_common (iante : meta_formula) (iconseq : meta_formula) =
+  let pr = string_of_meta_formula in
+  Debug.no_2 "process_entail_check_common" pr pr (fun _ -> "?") process_entail_check_common_x iante iconseq
+
+(* Always forbid residue in RHS of entailments *)
 let process_entail_check_exact_x (iante : meta_formula) (iconseq : meta_formula) =
   (* store the current value of do_checkentail_exact*)
   let flag = !Globals.do_checkentail_exact in
@@ -735,6 +768,7 @@ let process_entail_check_exact_x (iante : meta_formula) (iconseq : meta_formula)
   (* return value *)
   res
 
+(* Always forbidding residue in RHS of entailments *)
 let process_entail_check_exact (iante : meta_formula) (iconseq : meta_formula) =
   let pr = string_of_meta_formula in
   Debug.no_2 "process_entail_check_exact" pr pr (fun _ -> "?") process_entail_check_exact_x iante iconseq
@@ -748,6 +782,7 @@ let process_entail_check_inexact_x (iante : meta_formula) (iconseq : meta_formul
   Globals.do_checkentail_exact := flag;
   res
 
+(* Always allowing residue in RHS of entailments *)
 let process_entail_check_inexact (iante : meta_formula) (iconseq : meta_formula) =
   let pr = string_of_meta_formula in
   Debug.no_2 "process_entail_check_inexact" pr pr (fun _ -> "?") process_entail_check_inexact_x iante iconseq
