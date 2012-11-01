@@ -83,6 +83,7 @@ struct
 
  let map_l_snd f x = List.map (fun (l,c)-> (l,f c)) x
  let fold_l_snd f x = List.fold_left (fun a (_,c)-> a@(f c)) []  x
+ let fold_l_snd_f fj f st x = List.fold_left (fun a (_,c)-> fj a (f c)) st  x
  let map_l_snd_res f x = List.split (List.map (fun (l,c) -> let r1,r2 = f c in ((l,r1),r2)) x)
  let exists_l_snd f x = List.exists (fun (_,c)-> f c) x
  let all_l_snd f x = List.for_all (fun (_,c)-> f c) x
@@ -1723,7 +1724,7 @@ struct
   let replace_dot_with_uscore s =
     let dot = Str.regexp "\\." in
     let caret = Str.regexp "\\^" in
-    Str.global_replace dot "_" 
+    Str.global_replace dot "" 
         (Str.global_replace caret "$" s)
 
   let replace_minus_with_uscore s =
@@ -1735,7 +1736,7 @@ struct
   let replace_path_sep_with_uscore s =
     let path_sep = Str.regexp "/" in
     let caret = Str.regexp "\\^" in
-    Str.global_replace path_sep "_" 
+    Str.global_replace path_sep "" 
         (Str.global_replace caret "$" s)
 
   let split_by sep s =

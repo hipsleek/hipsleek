@@ -167,7 +167,7 @@ let ho_aux df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) 
                   ("\n NOW :"^(pr_o x)))) in
           (new_test, new_pr_o) in
   let s,h = push_call_gen s df in
-  (if loop_d then print_string ("\n"^h^" ENTRY :"^(List.hd args)^"\n"));
+  (if loop_d then print_string ("\n"^h^" ENTRY :"^(String.concat "  " args)^"\n"));
   flush stdout;
   let r = (try
     pop_aft_apply_with_exc f e

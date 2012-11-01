@@ -14,8 +14,8 @@ void m1 (ref int i, e1 z) throws e1
 	requires z::e1<>
 	//ensures i'=3 or eres::e1<> & i>0;
 	ensures 
-        res::e4<> & i>0 & i'=2 & flow e4 
-        or res::e1<> & i>0 & i'=i & flow e1
+        eres::e4<> & i>0 & i'=2 & flow e4 
+        or eres::e1<> & i>0 & i'=i & flow e1
         or z::e1<> & i<=0 & i'=3 & flow __norm
         ;//'
 {
@@ -28,7 +28,7 @@ void m1 (ref int i, e1 z) throws e1
 		i=2;
 		//dprint;
 		raise new e4();
-        dprint;
+       // dprint;
 	};
     //dprint;
 	i=3;
@@ -39,7 +39,7 @@ void m2 (ref int i) throws e1
 	//ensures i'=3 or eres::e1<> & i>0;
 	//ensures eres::e4<>&i'=2;
 	//ensures i<=0 & i'=3;
-	ensures res::e4<> & i'=2 & flow e4 or i<=0 & i'=3 ;
+	ensures eres::e4<> & i'=2 & flow e4 or i<=0 & i'=3 ;
 {
 	//dprint;
 	try{
@@ -69,8 +69,8 @@ requires i>0
 ensures i'=i+3;
 {
 	i=i+1;
-    dprint;
+    //dprint;
 	i=i+2;
-	dprint;
+	//dprint;
 }
 

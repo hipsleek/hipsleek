@@ -28,8 +28,9 @@ ensures res = nn;
     else 
       {
         //dprint;
+        x.val = 0;
         int r = 1+length(x.next);
-        dprint;
+        //dprint;
         return r;
       }
 }

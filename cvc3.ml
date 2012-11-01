@@ -69,10 +69,11 @@ and cvc3_of_exp a = match a with
   	    failwith ("[cvc3.ml]: ERROR in constraints (set should not appear here)");
   | CP.List _ | CP.ListCons _ | CP.ListHead _ | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _ | CP.ListReverse _ ->
         failwith ("Lists are not supported in cvc3")
-	| CP.Func _ -> failwith ("Functions are not supported in cvc3")
-	| CP.ArrayAt _ -> (* An Hoa *)
+  | CP.Func _ -> failwith ("Functions are not supported in cvc3")
+  | CP.ArrayAt _ -> (* An Hoa *)
         failwith ("Arrays are not supported in cvc3")
-    | CP.AConst _ -> failwith ("aconst not supported in cvc3")
+  | CP.AConst _ -> failwith ("aconst not supported in cvc3")
+  | CP.Tsconst _ -> failwith ("tsconst not supported in cvc3")
 
 and cvc3_of_b_formula b =
   let (pf,_) = b in
@@ -130,7 +131,12 @@ and cvc3_of_sv_type sv = match sv with
   | _ -> "INT"
 
 and cvc3_of_formula f = match f with
-  | CP.BForm (b,_) -> "(" ^ (cvc3_of_b_formula b) ^ ")"
+  | CP.BForm (b,_) -> 
+        begin
+          match (fst CP.drop_complex_ops) (fst b) with
+            | None -> "(" ^ (cvc3_of_b_formula b) ^ ")"
+            | Some f -> cvc3_of_formula f
+		end
   | CP.And (p1, p2, _) -> "(" ^ (cvc3_of_formula p1) ^ " AND " ^ (cvc3_of_formula p2) ^ ")"
   | CP.AndList _ -> Gen.report_error no_pos "cvc3.ml: encountered AndList, should have been already handled"
   | CP.Or (p1, p2,_, _) -> "(" ^ (cvc3_of_formula p1) ^ " OR " ^ (cvc3_of_formula p2) ^ ")"

@@ -105,6 +105,7 @@ let rec string_of_formula_exp = function
   | P.Var (x, l)        -> string_of_id x
   | P.IConst (i, l)           -> string_of_int i
   | P.AConst (i, l)           -> string_of_heap_ann i
+  | P.Tsconst (i,l)			  -> Tree_shares.Ts.string_of i
   | P.FConst (f, _) -> string_of_float f
   | P.Add (e1, e2, l)	      -> (match e1 with 
 	  | P.Null _ 
@@ -403,6 +404,7 @@ let rec string_of_struc_formula c = match c with
 	| F.EAssume (b,(n1,n2))-> "EAssume: "^(string_of_int n1)^","^n2^":"^(string_of_formula b)
 	| F.EInfer{F.formula_inf_vars = lvars;
 			   F.formula_inf_post = postf;
+         F.formula_inf_xpost = postxf;
 			   F.formula_inf_continuation = continuation;} ->
         let ps =if (lvars==[] && postf) then "@post " else "" in
 		let string_of_inf_vars = Cprinter.str_ident_list (List.map (fun v -> fst v) lvars) in
@@ -464,6 +466,7 @@ let rec string_of_exp = function
           (String.concat "," (List.map (fun (c1,c2,c3)->(string_of_typ c2)^" "^c1) lv))^"\n")
         ^ (string_of_exp e) ^ "}\n"
   | Break b -> string_of_control_path_id_opt b.exp_break_path_id ("break "^(string_of_label b.exp_break_jump_label))
+  | Barrier b -> "barrier "^b.exp_barrier_recv
   | Cast e -> "(" ^ (string_of_typ e.exp_cast_target_type) ^ ")" ^ (string_of_exp e.exp_cast_body)
   | Continue b -> string_of_control_path_id_opt b.exp_continue_path_id ("continue "^(string_of_label b.exp_continue_jump_label))
   | Catch c -> ("catch (" ^ (match c.exp_catch_var with | Some x-> x | None -> "") ^ ": " ^ c.exp_catch_flow_type ^")\n"^(string_of_exp c.exp_catch_body))
@@ -614,6 +617,14 @@ let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_lis
 let string_of_global_var_decl d = "global " ^ (string_of_exp (VarDecl d))
 ;;
 
+
+let string_of_barrier_decl b = 
+	let pr_trans (s,d,l) = 
+		"("^(string_of_int s)^"->"^(string_of_int d)^
+		",[{ "^(String.concat "}\n{" (List.map string_of_struc_formula l)^"}")^")" in
+	"barrier: "^b.barrier_name^"<"^(string_of_int b.barrier_thc)^";"^(string_of_typed_var_list b.barrier_shared_vars) ^
+	"\n transitions: \n ["^(String.concat "\n " (List.map pr_trans b.barrier_tr_list))^ "]\n";;
+
 (* pretty printig for view declaration *)
 let string_of_view_decl v = v.view_name ^ "<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
                             (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula v.view_invariant) ^ " inv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) ^" view_data_name: " ^ v.view_data_name                  (* incomplete *)
@@ -621,7 +632,12 @@ let string_of_view_decl v = v.view_name ^ "<" ^ (concatenate_string_list v.view_
 
 let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")
 
-let string_of_coerc_decl c = "coerc "^c.coercion_name^"\n\t head: "^(string_of_formula c.coercion_head)^"\n\t body:"^
+let string_of_coerc_type c = match c with 
+  | Left -> "<="
+  | Equiv -> "<=>"
+  | Right -> "=>"
+
+let string_of_coerc_decl c = (string_of_coerc_type c.coercion_type)^"coerc "^c.coercion_name^"\n\t head: "^(string_of_formula c.coercion_head)^"\n\t body:"^
 							 (string_of_formula c.coercion_body)^"\n" 
 
 (* pretty printing for one parameter *) 
@@ -678,6 +694,13 @@ let rec string_of_view_decl_list l = match l with
  | []        -> ""
  | h::[]     -> (string_of_view_decl h) 
  | h::t      -> (string_of_view_decl h) ^ "\n" ^ (string_of_view_decl_list t)
+;;
+
+(* pretty printing for a list of barrier_decl *)
+let rec string_of_barrier_decl_list l = match l with 
+ | []        -> ""
+ | h::[]     -> (string_of_barrier_decl h) 
+ | h::t      -> (string_of_barrier_decl h) ^ "\n" ^ (string_of_barrier_decl_list t)
 ;;
 
 (* pretty printing for a list of coerc_decl *)
@@ -742,6 +765,7 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
   (string_of_global_var_decl_list p.prog_global_var_decls) ^ "\n" ^
   (string_of_enum_decl_list p.prog_enum_decls) ^"\n" ^
   (string_of_view_decl_list p.prog_view_decls) ^"\n" ^
+  (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n" ^
   (string_of_rel_decl_list p.prog_rel_decls) ^"\n" ^
   (string_of_axiom_decl_list p.prog_axiom_decls) ^"\n" ^
   (string_of_coerc_decl_list p.prog_coercion_decls) ^ "\n\n" ^ 

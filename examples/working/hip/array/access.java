@@ -6,8 +6,8 @@
  * @author Vu An Hoa
  */
 
-// relation dom(int[] a, int low, int high) == 
-// 	(dom(a,low-1,high) | dom(a,low,high+1)).
+ relation dom(int[] a, int low, int high) == 
+ 	(dom(a,low-1,high) | dom(a,low,high+1)).
 
 relation bnd(int[] a, int i, int j, int low, int high) == 
 	(i > j | i<=j & forall ( k : (k < i | k > j | low <= a[k] <= high))).

@@ -1,6 +1,5 @@
-Starting Reduce... 
 Starting Omega...oc
-Entail  (1): Fail.(may) cause:(failure_code=15.3)  true |-  y!=null (may-bug).
 
+Entail (1) : Fail.(may) cause: true |-  y!=null. LOCS:[0] (may-bug)
 
-Stop Omega... 15 invocations 
+Stop Omega... 14 invocations 

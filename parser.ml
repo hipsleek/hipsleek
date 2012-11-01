@@ -15,6 +15,7 @@ open Perm
   module P = Ipure
   module E1 = Error
   module I = Iast
+  module Ts = Tree_shares.Ts
   
   module SHGram = Camlp4.Struct.Grammar.Static.Make(Lexer.Make(Token))
   
@@ -23,6 +24,7 @@ open Perm
 	| Enum of enum_decl
 	| View of view_decl
     | Hopred of hopred_decl
+	| Barrier of barrier_decl
 		
   type decl = 
     | Type of type_decl
@@ -33,7 +35,7 @@ open Perm
     | Logical_var of exp_var_decl (* Globally logical vars *)
     | Proc of proc_decl
     | Coercion of coercion_decl
-		
+				
   type member = 
 	| Field of (typed_ident * loc)
 	| Inv of F.formula
@@ -47,6 +49,9 @@ open Perm
 	| AnnMode of mode
 	| AnnType of typ
 
+	
+let macros = ref (Hashtbl.create 19)
+
 (* An Hoa : Counting of holes "#" *)
 let hash_count = ref 0
 
@@ -54,6 +59,7 @@ let hash_count = ref 0
 let generic_pointer_type_name = "_GENERIC_POINTER_"
 let func_names = new Gen.stack (* list of names of ranking functions *)
 let rel_names = new Gen.stack (* list of names of relations declared *)
+let view_names = new Gen.stack (* list of names of views declared *)
 
 let get_pos x = 
   {start_pos = Parsing.symbol_start_pos ();
@@ -207,7 +213,7 @@ let cexp_to_pure_slicing fct f sl = match f with
   | Pure_c f -> Pure_f (P.BForm (((fct f), sl), None))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"	
 
-let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
+let cexp_to_pure2 fct f01 f02 = match (f01,f02) with
   | Pure_c f1 , Pure_c f2 -> (match f1 with
                              | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct c f2), None), None)) explist
                                in let len =  List.length tmp
@@ -223,7 +229,22 @@ let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
                                     | _ -> (
                                         let typ1 = P.typ_of_exp f1 in 
                                         let typ2 = P.typ_of_exp f2 in
-                                        if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) then 
+                                         (* let _ = print_endline ("typ1:" ^ (string_of_typ typ1 )) in *)
+                                        (* let _ = print_endline ("typ2:" ^ (string_of_typ typ2 )) in *)
+                                         let arr_typ_check typ1 typ2 =
+                                         ( match typ1 with
+                                            | Array (t1,_) -> if t1== UNK || t1 == typ2 then true else
+                                                  ( match typ2 with
+                                                    | Array (t2,_) -> if t2== UNK || t1==t2 then true else false
+                                                    | _ -> false
+                                                  )
+                                            | _ -> ( match typ2 with
+                                                  | Array (t,_) -> if t== UNK then true else false
+                                                  | _ -> false
+                                            )
+                                         )
+                                        in
+                                        if (typ1 = typ2) || (typ1 == UNK) || (typ2 == UNK) || (arr_typ_check typ1 typ2) then 
                                           Pure_f (P.BForm(((fct f1 f2), None), None))
                                         else
                                           report_error (get_pos 1) "with 2 convert expected the same cexp types, found different types"
@@ -301,10 +322,13 @@ let peek_try =
  let peek_invocation = 
  SHGram.Entry.of_parser "peek_invocation" 
      (fun strm ->
-       match Stream.npeek 2 strm with
-          | [_; OPAREN,_] -> ()
+         match Stream.npeek 5 strm with
+           | [_; OPAREN,_;_;_;_] -> ()
+       (* match Stream.npeek 2 strm with *)
+       (*    | [_; OPAREN,_] -> () *)
           (* | [_; OBRACE,_] -> () *)
-          | [_; OSQUARE,_] -> ()
+           | [_; OSQUARE,_; _; CSQUARE, _ ; OPAREN,_] -> ()
+          (* | [_; OSQUARE,_] -> () *)
           | _ -> raise Stream.Failure)
 		  
  let peek_member_name = 
@@ -440,7 +464,7 @@ let peek_star =
              |[STAR,_;OPAREN,_] -> raise Stream.Failure
              | _ -> ())
 
-let peek_array_type = 
+let peek_array_type =
    SHGram.Entry.of_parser "peek_array_type"
        (fun strm ->
            match Stream.npeek 2 strm with
@@ -522,14 +546,16 @@ and get_heap_ann annl : F.ann =
 let sprog = SHGram.Entry.mk "sprog" 
 let hprog = SHGram.Entry.mk "hprog"
 let sprog_int = SHGram.Entry.mk "sprog_int"
-
+let opt_spec_list_file = SHGram.Entry.mk "opt_spec_list_file"
 
 EXTEND SHGram
-  GLOBAL: sprog hprog sprog_int;
+  GLOBAL: sprog hprog sprog_int opt_spec_list_file;
   sprog:[[ t = command_list; `EOF -> t ]];
   sprog_int:[[ t = command; `EOF -> t ]];
   hprog:[[ t = hprogn; `EOF ->  t ]];
   
+macro: [[`PMACRO; n=id; `EQEQ ; tc=tree_const -> if !Globals.perm=(Globals.Dperm) then Hashtbl.add !macros n tc else  report_error (get_pos 1) ("distinct share reasoning not enabled")]];
+
 command_list: [[ t = LIST0 non_empty_command_dot -> t ]];
   
 command: [[ t=OPT non_empty_command_dot-> un_option t EmptyCmd]];
@@ -539,7 +565,8 @@ non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 non_empty_command:
     [[  t=data_decl           -> DataDef t
       | `PRED;t=view_decl     -> PredDef t
-      | t = func_decl          -> FuncDef t
+	  | t=barrier_decl        -> BarrierCheck t
+      | t = func_decl         -> FuncDef t
       | t = rel_decl          -> RelDef t
       | `LEMMA;t= coercion_decl -> LemmaDef t
 	  | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
@@ -548,7 +575,8 @@ non_empty_command:
       | t=infer_cmd           -> Infer t  
       | t=captureresidue_cmd  -> CaptureResidue t
       | t=print_cmd           -> PrintCmd t
-      | t=time_cmd            -> t]];
+      | t=time_cmd            -> t 
+	  | t=macro				  -> EmptyCmd]];
   
 data_decl:
     [[ dh=data_header ; db = data_body 
@@ -607,7 +635,17 @@ field_list2:[[
 (*    ]];  *)
 
  (********** Views **********)
+ 
+barrier_decl:
+	[[ `BARRIER; `IDENTIFIER n; `OSQUARE; thc=integer_literal; `CSQUARE; `LT; shv=LIST1 typed_id_list SEP `COMMA;`GT;`EQEQ; bc=barrier_constr -> 
+		{barrier_thc = thc; barrier_name = n; barrier_shared_vars = shv; barrier_tr_list =bc;}]];
+  
 
+  
+barrier_constr: [[`OSQUARE; t=LIST1 b_trans SEP `COMMA ; `CSQUARE-> t]];
+  
+b_trans : [[`OPAREN; fs=integer_literal; `COMMA; ts= integer_literal; `COMMA ;`OSQUARE;t=LIST1 spec_list SEP `COMMA;`CSQUARE; `CPAREN -> (fs,ts,t)]];
+ 
 view_decl: 
   [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock
       -> { vh with view_formula = (fst vb);
@@ -634,9 +672,30 @@ opt_infer_post: [[t=OPT infer_post -> un_option t true ]];
  
 infer_post : 
   [[
-    `PRE -> false
+   `PRE -> false
    | `POST  -> true
    ]];
+
+opt_infer_xpost: [[t=OPT infer_xpost -> un_option t None ]];
+ 
+infer_xpost : 
+  [[
+   `XPRE -> Some false
+   | `XPOST  -> Some true
+  ]];
+
+opt_transpec: [[t=OPT transpec -> un_option t None ]];
+
+transpec:
+  [[ `OBRACE; `IDENTIFIER old_view_name; `LEFTARROW; `IDENTIFIER new_view_name; `CBRACE ->
+(*    if not(view_names # mem old_view_name) then *)
+(*      report_error (get_pos_camlp4 _loc 1) ("Predicate " ^ old_view_name ^ " is not initialized.")*)
+(*    else if not(view_names # mem new_view_name) then *)
+(*      report_error (get_pos_camlp4 _loc 1) ("Predicate " ^ new_view_name ^ " is not initialized.")*)
+(*    else *)
+      Some (old_view_name, new_view_name)
+  ]];
+
 
 ann_heap: 
   [[
@@ -667,7 +726,8 @@ view_header:
       (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
       (*   report_error (get_pos_camlp4 _loc 1) ("variables in view header are not allowed to be primed") *)
       (* else *)
-        let modes = get_modes anns in
+      let modes = get_modes anns in
+      let _ = view_names # push vn in
         { view_name = vn;
           view_data_name = "";
           view_vars = (* List.map fst *) cids;
@@ -1130,10 +1190,14 @@ cexp_w :
       | `IMM -> Pure_c (P.AConst(Imm, get_pos_camlp4 _loc 1))
       | `MUT -> Pure_c (P.AConst(Mutable, get_pos_camlp4 _loc 1))
       | `LEND -> Pure_c (P.AConst(Lend, get_pos_camlp4 _loc 1))
+	  | `AT;t=tree_const  -> if !Globals.perm=Dperm then Pure_c (P.Tsconst(t,get_pos_camlp4 _loc 1)) else report_error (get_pos 1) ("distinct share reasoning not enabled")
+	  | `ATAT;t=id	-> 
+							let t = try Hashtbl.find !macros t with _ -> (print_string ("warning, undefined macro "^t); Ts.top) in
+							Pure_c (P.Tsconst(t,get_pos_camlp4 _loc 1))
       | `INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
       | `FLOAT_LIT (f,_)                          -> (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos_camlp4 _loc 1))
       | `OPAREN; t=SELF; `CPAREN                -> t  
-     |  i=cid; (* An Hoa : extend with multi-dimensional array access *) `OSQUARE; c = LIST1 cexp SEP `COMMA; `CSQUARE                            -> Pure_c (P.ArrayAt (i, c, get_pos_camlp4 _loc 1))
+      |  i=cid; (* An Hoa : extend with multi-dimensional array access *) `OSQUARE; c = LIST1 cexp SEP `COMMA; `CSQUARE                            -> Pure_c (P.ArrayAt (i, c, get_pos_camlp4 _loc 1))
       | `MAX; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN 
         -> apply_cexp_form2 (fun c1 c2-> P.mkMax c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
       | `MIN; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN 
@@ -1157,6 +1221,15 @@ cexp_w :
 		  
 	  ];
 
+	  
+tree_const:[[
+	 `OPAREN;`COMMA;`CPAREN->Ts.bot
+	| `HASH -> Ts.top 
+	|`OPAREN;l=tree_const; `COMMA;`CPAREN-> Ts.mkNode l Ts.bot
+	|`OPAREN;`COMMA; r=tree_const; `CPAREN-> Ts.mkNode Ts.bot r
+	|`OPAREN;l=tree_const;`COMMA; r=tree_const; `CPAREN-> Ts.mkNode l r
+]];
+	  
 (* [[ *)
 (*     il=OPT measures2 -> un_option il [] *)
 (* ]]; *)
@@ -1395,10 +1468,11 @@ hprogn:
       let logical_var_defs = ref ([] : exp_var_decl list) in
       let enum_defs = ref ([] : enum_decl list) in
       let view_defs = ref ([] : view_decl list) in
+	  let barrier_defs = ref ([] : barrier_decl list) in
       (* ref ([] : rel_decl list) in (\* An Hoa *\) *)
       let func_defs = new Gen.stack in (* list of ranking functions *)
       let rel_defs = new Gen.stack in(* list of relations *)
-	  let axiom_defs = ref ([] : axiom_decl list) in (* [4/10/2011] An Hoa *)
+      let axiom_defs = ref ([] : axiom_decl list) in (* [4/10/2011] An Hoa *)
       let proc_defs = ref ([] : proc_decl list) in
       let coercion_defs = ref ([] : coercion_decl list) in
       let hopred_defs = ref ([] : hopred_decl list) in
@@ -1409,6 +1483,7 @@ hprogn:
           | Enum edef -> enum_defs := edef :: !enum_defs
           | View vdef -> view_defs := vdef :: !view_defs
           | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
+		  | Barrier bdef -> barrier_defs := bdef :: !barrier_defs
           end
         | Func fdef -> func_defs # push fdef 
         | Rel rdef -> rel_defs # push rdef 
@@ -1441,9 +1516,14 @@ hprogn:
       prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
       prog_proc_decls = !proc_defs;
       prog_coercion_decls = !coercion_defs; 
-      prog_hopred_decls = !hopred_defs;} ]];
+      prog_hopred_decls = !hopred_defs;
+	  prog_barrier_decls = !barrier_defs; } ]];
 
-opt_decl_list: [[t=LIST0 decl -> t]];
+opt_decl_list: [[t=LIST0 mdecl -> List.concat t]];
+  
+mdecl: 
+	[[ t=macro -> []
+	  |t=decl -> [t]]];
   
 decl:
   [[ t=type_decl                  -> Type t
@@ -1460,6 +1540,7 @@ type_decl:
    | c=class_decl -> Data c
    | e=enum_decl  -> Enum e
    | v=view_decl; `SEMICOLON -> View v
+   | b=barrier_decl ; `SEMICOLON   -> Barrier b
    | h=hopred_decl-> Hopred h ]];
 
    
@@ -1523,6 +1604,10 @@ enumerator:
  
 (****Specs *******)
 opt_sq_clist : [[t = OPT sq_clist -> un_option t []]];
+
+opt_spec_list_file: [[t = LIST0 spec_list_file -> t]];
+
+spec_list_file: [[`IDENTIFIER id; t = opt_spec_list -> (id, t)]];
  
 opt_spec_list: [[t = LIST0 spec_list_grp -> label_struc_groups_auto t]];
   
@@ -1547,9 +1632,11 @@ spec_list_grp:
 
 spec: 
   [[
-    `INFER; postf= opt_infer_post; `OSQUARE; ivl = opt_vlist; `CSQUARE; s = SELF ->
+    `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; `OSQUARE; ivl = opt_vlist; `CSQUARE; s = SELF ->
      F.EInfer {
        F.formula_inf_post = postf; 
+       F.formula_inf_xpost = postxf; 
+       F.formula_inf_transpec = transpec;
        F.formula_inf_vars = ivl;
        F.formula_inf_continuation = s;
        F.formula_inf_pos = get_pos_camlp4 _loc 1;
@@ -1724,6 +1811,7 @@ valid_declaration_statement:
   | t=debug_statement -> t
   | t=time_statement -> t
   | t=bind_statement -> t
+  | t=barr_statement -> t
   | t=unfold_statement -> t]
   | [t= empty_statement -> t]
 ];
@@ -1731,6 +1819,8 @@ valid_declaration_statement:
 empty_statement: [[`SEMICOLON -> Empty (get_pos_camlp4 _loc 1) ]];
 
 unfold_statement: [[ `UNFOLD; t=cid  ->	Unfold { exp_unfold_var = t; exp_unfold_pos = get_pos_camlp4 _loc 1 }]];
+ 
+barr_statement : [[`BARRIER; `IDENTIFIER t -> I.Barrier {exp_barrier_recv = t ; exp_barrier_pos = get_pos_camlp4 _loc 1}]];
  
 assert_statement:
   [[ `ASSERT; ol= opt_label; f=formulas -> 
@@ -1762,14 +1852,17 @@ bind_statement:
 
 java_statement: [[ `JAVA s -> Java { exp_java_code = s;exp_java_pos = get_pos_camlp4 _loc 1 }]];
 
+(*TO CHECK*)
 expression_statement: [[(* t=statement_expression -> t *)
-        t= invocation_expression -> t
+        (* t= invocation_expression -> t *)
+        peek_invocation; t= invocation_expression -> t
       | t= object_creation_expression -> t
       | t= post_increment_expression -> t
       | t= post_decrement_expression -> t
       | t= pre_increment_expression -> t  
       | t= pre_decrement_expression -> t
-      | peek_exp_st; t= assignment_expression -> t]]; 
+      | peek_exp_st; t= assignment_expression -> t
+]]; 
 
 (*statement_expression:
   [[
@@ -1855,7 +1948,8 @@ return_statement:
 raise_statement:
 	[[ `RAISE; t=expression ->
       Raise { exp_raise_type = Const_flow "" ;
-						  exp_raise_val = Some t;
+			  exp_raise_val = Some t;
+			  exp_raise_use_type = false;
               exp_raise_from_final = false;
               exp_raise_path_id = None; 
               exp_raise_pos = get_pos_camlp4 _loc 1 }]];
@@ -1875,6 +1969,7 @@ catch_clause:
 		  Catch { exp_catch_var = Some id2;
               exp_catch_flow_type = id1;
               exp_catch_flow_var = None;
+			  exp_catch_alt_var_type = None;
               exp_catch_body = vds;																					   
               exp_catch_pos = get_pos_camlp4 _loc 1 }]];
 
@@ -2033,13 +2128,13 @@ cast_expression:
              exp_cast_pos = get_pos_camlp4 _loc 1 }]];
 
 invocation_expression:
- [[ peek_invocation; qi=qualified_identifier; `OPAREN; oal=opt_argument_list; `CPAREN ->
+ [[ (* peek_invocation; *) qi=qualified_identifier; `OPAREN; oal=opt_argument_list; `CPAREN ->
 	  CallRecv { exp_call_recv_receiver = fst qi;
                exp_call_recv_method = snd qi;
                exp_call_recv_arguments = oal;
                exp_call_recv_path_id = None;
                exp_call_recv_pos = get_pos_camlp4 _loc 1 }
-  | peek_invocation; `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN ->
+  | (* peek_invocation; *) `IDENTIFIER id; l = opt_lock_info ; `OPAREN; oal=opt_argument_list; `CPAREN ->
     CallNRecv { exp_call_nrecv_method = id;
                 exp_call_nrecv_lock = l;
                 exp_call_nrecv_arguments = oal;
@@ -2101,7 +2196,8 @@ primary_expression_no_array_no_parenthesis :
            exp_member_fields = [id];
            exp_member_path_id = None ;
            exp_member_pos = get_pos_camlp4 _loc 3 }
-  | t = invocation_expression -> t
+  (* | t = invocation_expression -> t *)
+  | peek_invocation; t = invocation_expression -> t
   | t = new_expression -> t
   | `THIS _ -> This{exp_this_pos = get_pos_camlp4 _loc 1} 
   ]
@@ -2148,5 +2244,5 @@ let parse_hip_string n s = SHGram.parse_string hprog (PreCast.Loc.mk n) s
 (* let parse_hip_string n s = 
   let pr x = x in
   let pr_no x = "?" in DD.no_2 "parse_hip_string" pr pr pr_no parse_hip_string n s *)
-
+let parse_spec s = SHGram.parse_string opt_spec_list_file (PreCast.Loc.mk "spec string") s
  

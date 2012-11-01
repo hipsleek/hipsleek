@@ -49,4 +49,7 @@ echo -e "\n##################### bags tests (runs with -tp mona) ###very slow!##
 
 time ./run-fast-tests.pl bags -flags "--eps" $@ -tp mona
 
+echo -e "\n##################### array tests (runs with -tp z3) #####################"
+
+time ./run-fast-tests.pl array -flags "--eps" $@ -tp z3
 

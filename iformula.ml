@@ -34,6 +34,8 @@ and struc_or_formula =
 and struc_infer_formula =
   {
     formula_inf_post : bool; (* true if post to be inferred *)
+    formula_inf_xpost : bool option; (* None -> no auto-var; Some _ -> true if post to be inferred *)
+    formula_inf_transpec : (ident * ident) option;
     formula_inf_vars : (ident * primed) list;
     formula_inf_continuation : struc_formula;
     formula_inf_pos : loc
@@ -134,6 +136,9 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 			h_formula_heap2_pseudo_data : bool;
 			h_formula_heap2_label : formula_label option;
 			h_formula_heap2_pos : loc }
+
+(* Interactive command line *)
+let cmd: (string * (bool * struc_formula option * string option)) ref = ref ("", (false, None, None))
 
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
@@ -443,14 +448,14 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
               h_formula_heap_perm = perm; (*LDK*)
               h_formula_heap_imm = imm; 
               h_formula_heap_arguments = b} ->
-     let perm_vars = fv_iperm perm in
+     let perm_vars = (fv_iperm ()) perm in
      let imm_vars =  fv_imm imm in
      Gen.BList.remove_dups_eq (=) (imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map Ipure.afv b))))
   | HeapNode2 { h_formula_heap2_node = name ;
                 h_formula_heap2_perm = perm; (*LDK*)
               h_formula_heap2_imm = imm; 
 		h_formula_heap2_arguments = b}-> 
-     let perm_vars =  fv_iperm perm in
+     let perm_vars =  (fv_iperm ()) perm in
      let imm_vars =  fv_imm imm in
       Gen.BList.remove_dups_eq (=)  (imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) )))
   | HTrue -> []
@@ -707,7 +712,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 	h_formula_heap_pos = pos}) -> 
       let imm = apply_one_imm s imm in
       let perm1 = match perm with
-        | Some f -> Some (apply_one_iperm s f)
+        | Some f -> Some (apply_one_iperm () s f)
         | None -> None
       in HeapNode ({h_formula_heap_node = subst_var s x; 
 		h_formula_heap_name = c;
@@ -734,7 +739,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		h_formula_heap2_pos= pos}) -> 
       let imm = apply_one_imm s imm in
       let perm1 = match perm with
-        | Some f -> Some (apply_one_iperm s f)
+        | Some f -> Some (apply_one_iperm () s f)
         | None -> None
       in
         HeapNode2 ({
@@ -835,7 +840,7 @@ and float_out_exps_from_heap_x (f:formula ):formula =
     | HeapNode b->
         (*LDK*)
         let perm = b.h_formula_heap_perm in
-        let na_perm, ls_perm = float_out_iperm perm b.h_formula_heap_pos in
+        let na_perm, ls_perm = float_out_iperm () perm b.h_formula_heap_pos in
         let na,ls = List.split (List.map (fun c->
 			match c with
 			  | Ipure.Var _ -> (c,[])
@@ -859,7 +864,7 @@ and float_out_exps_from_heap_x (f:formula ):formula =
     | HeapNode2 b ->
         (*LDK*)
         let perm = b.h_formula_heap2_perm in
-        let na_perm, ls_perm = float_out_iperm perm b.h_formula_heap2_pos in
+        let na_perm, ls_perm = float_out_iperm () perm b.h_formula_heap2_pos in
         let na,ls = List.split (List.map (fun c->
 	        match (snd c) with
 	          | Ipure.Var _ -> (c,[])
@@ -1077,7 +1082,7 @@ match h with
 	    let args = h1.h_formula_heap_arguments in
         (*LDK*)
 	    let perm = h1.h_formula_heap_perm in
-	    let nl_perm, new_p_perm = float_out_mix_max_iperm perm l in
+	    let nl_perm, new_p_perm = float_out_mix_max_iperm () perm l in
 	          let nl, new_p =
 	            List.fold_left
                     (fun (a, c) d -> 
@@ -1097,7 +1102,7 @@ match h with
 	    let l = h1. h_formula_heap2_pos in
 	    let args = h1. h_formula_heap2_arguments in
 	    let perm = h1. h_formula_heap2_perm in
-	    let nl_perm, new_p_perm = float_out_mix_max_iperm perm l in
+	    let nl_perm, new_p_perm = float_out_mix_max_iperm () perm l in
 	    let nl, new_p =
 	      List.fold_left
               (fun (a, c) (d1,d2) ->
@@ -1325,3 +1330,83 @@ let float_out_thread_struc_formula (f:struc_formula):struc_formula =
   Debug.no_1 "float_out_thread_struc_formula"
       !print_struc_formula !print_struc_formula
       float_out_thread_struc_formula_x f
+
+let mkEInfer xpost transpec pos = EInfer { 
+    formula_inf_post = true;
+    formula_inf_xpost = xpost;
+    formula_inf_transpec = transpec;
+    formula_inf_vars = [];
+    formula_inf_continuation = EList [];
+    formula_inf_pos = pos}
+
+let merge_cmd einfer spec = match einfer with
+  | EInfer e -> EInfer {e with formula_inf_continuation = spec}
+  | EBase _ -> einfer
+  | _ -> Gen.report_error no_pos "Error in merge_cmd"
+
+
+type find_bar_node = 
+	| Bar_wrong_state 
+	| Bar_state_var of (ident*primed)
+	| Bar_state_ok
+	| Bar_not_found
+	  
+let find_barr_node bname (f:int) (t:int) struc :bool= 
+	let rec find_h_node x h = match h with 
+		 | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2}
+		 | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
+		 | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} -> 
+			(match find_h_node x h1 with 
+				| Bar_not_found -> find_h_node x h2 
+				| _ as x-> x)
+		 | HeapNode h -> 
+			if fst h.h_formula_heap_node = self && h.h_formula_heap_name=bname then 
+				(match  h.h_formula_heap_arguments with 
+					| [] -> Bar_wrong_state
+					| (P.Var (v,_))::_-> Bar_state_var v
+					| (P.IConst (v,_))::_ -> if x=v then Bar_state_ok else Bar_wrong_state
+					| _ -> Bar_wrong_state)
+			else Bar_not_found 
+		 | HeapNode2 h -> Gen.report_error no_pos "malfunction with convert to heap node"
+		 | HTrue | HEmp | HFalse -> Bar_not_found in
+	let rec find_node x f= match f with 
+		| Base {formula_base_heap = h; formula_base_pure = p} 
+		| Exists {formula_exists_heap = h; formula_exists_pure = p} -> 
+		  (match find_h_node x h with 
+			| Bar_wrong_state -> false
+		    | Bar_state_var v -> P.find_p_val x v p
+			| Bar_state_ok -> true
+			| Bar_not_found -> false)
+		| Or e -> find_node x e.formula_or_f1 && find_node x e.formula_or_f2 in
+	let rec helper b f0 = match f0 with
+		| EAssume (e,tag) -> if b then find_node t e else false
+		| ECase e -> Gen.Basic.all_l_snd (helper b) e.formula_case_branches
+		| EBase e-> (match e.formula_struc_continuation with | None -> false | Some cont-> helper (if b then b else find_node f e.formula_struc_base) cont)
+		| EInfer e -> helper b e.formula_inf_continuation
+		| EList e -> Gen.Basic.all_l_snd (helper b) e
+		| EOr e -> helper b e.formula_struc_or_f1 && helper b e.formula_struc_or_f2 in
+	helper false struc 
+
+	
+let add_post_for_flow fl_names f = 
+	let rec fct c = match c with
+		| Or b -> Or { formula_or_f1 = fct b.formula_or_f1; formula_or_f2 = fct b.formula_or_f2; formula_or_pos = b.formula_or_pos}
+		| Base b -> 
+			if (String.compare b.formula_base_flow n_flow) == 0 then  
+				let l = List.map (fun c-> Base {b with formula_base_flow = c}) fl_names in
+				List.fold_left (fun a c-> mkOr a c b.formula_base_pos) c l 
+			else c
+		| Exists b ->
+			if (String.compare b.formula_exists_flow n_flow) == 0 then  
+				let l = List.map (fun c-> Exists {b with formula_exists_flow = c}) fl_names in
+				List.fold_left (fun a c-> mkOr a c b.formula_exists_pos) c l 
+			else c in	
+	let rec helper f =  match f with
+		| ECase c -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> c1,helper c2) c.formula_case_branches} 
+		| EBase b -> EBase {b with formula_struc_continuation = Gen.map_opt helper b.formula_struc_continuation}
+		| EInfer b -> EInfer {b with formula_inf_continuation = helper b.formula_inf_continuation;}
+		| EList b -> EList (Gen.map_l_snd helper b)
+		| EOr b -> EOr {b with formula_struc_or_f1 = helper b.formula_struc_or_f1; formula_struc_or_f2 = helper b.formula_struc_or_f2;}
+		| EAssume (e,pid)-> EAssume (fct e, pid) in
+	helper f
+	

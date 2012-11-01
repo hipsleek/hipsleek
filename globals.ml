@@ -93,9 +93,11 @@ type typ =
   | Named of ident (* named type, could be enumerated or object *)
   | Array of (typ * int) (* base type and dimension *)
   | RelT (* relation type *)
+  | Tree_sh
   (* | FuncT (\* function type *\) *)
 
 
+let barrierT = Named "barrier"
 (*
   Data types for code gen
 *)
@@ -103,6 +105,16 @@ type typ =
 type mode = 
   | ModeIn
   | ModeOut
+  
+  
+
+type perm_type =
+  | NoPerm (*no permission at all*)
+  | Frac (*fractional permissions*)
+  | Count (*counting permissions*)
+  | Dperm (*distinct fractional shares*)
+  
+let perm = ref NoPerm
 
 (* let rec string_of_prim_type = function  *)
 (*   | Bool          -> "boolean" *)
@@ -200,7 +212,12 @@ let string_of_loc_by_char_num (l : loc) =
 (*        | Some l -> (string_of_pos l.start_pos) *)
 (*    end;; *)
 
+(* Option for proof logging *)
+let proof_logging = ref false
+let proof_logging_txt = ref false
+let proof_logging_time = ref 0.000
 
+(*Proof logging facilities*)
 class ['a] store (x_init:'a) (epr:'a->string) =
    object 
      val emp_val = x_init
@@ -214,7 +231,7 @@ class ['a] store (x_init:'a) (epr:'a->string) =
        | Some p -> p
      method reset = lc <- None
      method string_of : string = match lc with
-       | None -> "None"
+       | None -> "Why None?"
        | Some l -> (epr l)
    end;;
 
@@ -226,9 +243,45 @@ object
        | Some l -> (string_of_pos l.start_pos)
 end;;
 
-let proving_loc  = new prog_loc
+class proving_type =
+object
+  inherit [string] store "None" (fun x -> x)
+     (* method string_of_string : string = match lc with *)
+     (*   | None -> "None" *)
+     (*   | Some l -> l *)
+end;;
 
+(*Some global vars for logging*)
+let proving_loc  = new prog_loc
 let post_pos = new prog_loc
+let proving_kind = new proving_type
+let return_exp_pid = ref ([]: control_path_id list)	
+
+let proving_info () = 
+	if(proving_kind # is_avail) then
+		   (
+      		if (post_pos # is_avail) 
+          then ("Proving Infor spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^(proving_kind # string_of))
+          else if(proving_loc # is_avail)
+      	  then ("Proving Infor spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^(proving_kind # string_of))
+					else "..."
+       )
+	else "..."(*"who called is_sat,imply,simplify to be displayed later..."*)
+	
+let wrap_proving_kind (str : string) exec_function args =
+	if(!proof_logging_txt) then
+    let b = proving_kind # is_avail in
+    let m = proving_kind # get in
+    let _ = proving_kind # set str in 	
+    let res = exec_function args in
+    let _ = if(!proof_logging_txt) then
+      if b then proving_kind # set m 
+      else proving_kind # reset 
+	  in
+    res
+	else 	
+     let res = exec_function args in res
+ 
 (* let post_pos = ref no_pos *)
 (* let set_post_pos p = post_pos := p *)
 
@@ -254,6 +307,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | BagT t        -> "bag("^(string_of_typ t)^")"
   | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List t        -> "list("^(string_of_typ t)^")"
+  | Tree_sh		  -> "Tsh"
   | RelT        -> "RelT"
   (* | Prim t -> string_of_prim_type t  *)
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
@@ -272,6 +326,7 @@ let rec string_of_typ_alpha = function
   | Void          -> "void"
   | NUM          -> "NUM"
   | AnnT          -> "AnnT"
+  | Tree_sh		  -> "Tsh"
   | BagT t        -> "bag_"^(string_of_typ t)
   | TVar t        -> "TVar_"^(string_of_int t)
   | List t        -> "list_"^(string_of_typ t)
@@ -418,10 +473,17 @@ let source_files = ref ([] : string list)
 
 let input_file_name =ref ""
 
+let use_split_match = ref false
+
+let consume_all = ref false
+
+let enable_split_lemma_gen = ref false
+
 let procs_verified = ref ([] : string list)
 
 let false_ctx_line_list = ref ([] : loc list)
 
+let b_datan = "barrier"
 
 let verify_callees = ref false
 
@@ -556,6 +618,8 @@ let enable_incremental_proving = ref false
 
 let disable_multiple_specs =ref false
 
+let perm_prof = ref false
+
   (*for cav experiments*)
   let f_1_slice = ref false
   let f_2_slice = ref false
@@ -597,12 +661,17 @@ let do_abd_from_post = ref false
 (* Flag of being unable to fold rhs_heap *)
 let unable_to_fold_rhs_heap = ref false
 
+(* Used in parse_shape.ml *)
+let domain_name = ref ""
+
+(* Options for incremental spec *)
+let do_infer_inc = ref false
+
 (* Inference *)
 (*let call_graph : ((string list) list) ref = ref [[]]*)
 
 let add_count (t: int ref) = 
 	t := !t+1
-
 
 (* utility functions *)
 
@@ -659,7 +728,6 @@ let locs_of_path_trace (pt: path_trace): loc list =
     loc_of_label plbl label_list
   in
   List.map (fun (pid, plbl) -> find_loc (Some pid) plbl) pt
-
 
 let locs_of_partial_context ctx =
   let failed_branches = fst ctx in
@@ -866,3 +934,9 @@ let open_log_out s =
 	Unix.mkdir "logs" 0o750
  with _ -> ());
  open_out ("logs/"^s)
+
+let norm_file_name str =
+	for i = 0 to (String.length str) - 1 do
+		if str.[i] = '.' || str.[i] = '/' then str.[i] <- '_'
+	done;
+	str
