@@ -1945,7 +1945,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 		    let print_res_list rl =
 		      let pr1 =  pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula in
 		      let pr_mix_mtl =   pr_list_ln (pr_triple CEQ.string_of_map_table pr1 pr1) in
-		      let pr_res (c1,c2,mtb)= 
+		      let pr_res (c1,c2,mtb) = 
 			let (_,d1,d2) = List.hd mtb in
 			"Constr1: " ^ pr1 c1 ^ "\nConstr2: " ^ pr1 c2 ^ "\nDiff1: " ^ pr1 d1 ^ "\nDiff2: " ^ pr1 d2 
 		      in

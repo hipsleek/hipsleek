@@ -2334,7 +2334,6 @@ constrs: [[t = LIST0 constr SEP `SEMICOLON -> t]];
 constr : [[ t=disjunctive_constr; `CONSTR; b=disjunctive_constr -> {ass_lhs = F.subst_stub_flow n_flow t;
 ass_rhs = F.subst_stub_flow n_flow b}]];
 
-
 (*end of cp_list*)
 END;;
 
