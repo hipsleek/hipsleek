@@ -43,11 +43,11 @@ pure by writing P(v) ==> v=P# where P# is
 a logical variable linking predicate definition.
 
    P(_) ::=UNKNOWN,
-   H1(x) ::= x::node<_,n> & n=P#  
+   H1(x) ::= x::node<_,n> & n=P#
    G2(x,v) ::= x::node<_,v> & v=P#_ ,
 
 Finally:
-   H1(x) ::= x::node<_,P#>  
+   H1(x) ::= x::node<_,P#>
    G2(x,v) ::= x::node<_,v> & v=P#_,
 
      */

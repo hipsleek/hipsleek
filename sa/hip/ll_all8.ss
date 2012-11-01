@@ -34,7 +34,7 @@ void set_null2(node x)
  G1(x_585) ::= x_585::node<val_33_582,next_33_550'>&next_33_550'=null,
  H1(x_584) ::= x_584::node<val_33_549',next_33_550'> * HP_583(next_33_550')&true]
 
-Should be:
+Should be: same with ll_all9.ss
  H1(x)=x::node<_,q>* P(q)
  G1(x)=x::node<_,null>*P(q)
      */

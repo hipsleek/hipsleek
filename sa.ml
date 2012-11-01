@@ -2811,10 +2811,11 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * SA
   let hp_defs2 = (def_subst_fix unk_hp_svl hp_defs1) in
   (*currently, we discard all non-node unk hp*)
   (* unk_hps3: all non-node unk hps *)
-  let non_node_unk_hps = List.filter (fun (_,args) ->
-      List.for_all (fun a -> not (CP.is_node_typ a)) args) unk_hps2
-  in
-  let hp_defs21 = SAU.drop_non_node_unk_hps hp_defs2 non_node_unk_hps in
+  (* let non_node_unk_hps = List.filter (fun (_,args) -> *)
+  (*     List.for_all (fun a -> not (CP.is_node_typ a)) args) unk_hps2 *)
+  (* in *)
+  (* let hp_defs21 = SAU.drop_non_node_unk_hps hp_defs2 non_node_unk_hps in *)
+  let hp_defs21 = SAU.transform_unk_hps_to_pure hp_defs2 unk_hps2 in
   (****************************************************)
   DD.ninfo_pprint ">>>>>> step 7: mathching with predefined predicates <<<<<<" no_pos;
   let hp_defs3 = hp_defs21 @ unk_hp_def @unk_hp_pure_def in

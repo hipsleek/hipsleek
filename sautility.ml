@@ -1696,7 +1696,7 @@ let remove_irr_eqs_x keep_svl p=
   let eqs2 = Gen.BList.remove_dups_eq
     (fun (sv11,_) (sv21,_) -> CP.eq_spec_var sv11 sv21) eqs1
   in
-  let p1 = CP.subst eqs1 p in
+  let p1 = CP.subst eqs2 p in
   let cons = CP.list_of_conjs p1 in
   let cons1 = CP.remove_redundant_helper cons [] in
   let cons2 = List.filter (filter_fn keep_svl) cons1 in
@@ -1722,3 +1722,54 @@ let drop_non_node_unk_hps hp_defs non_node_unk_hps =
   let pr2 = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in
   Debug.no_2 "drop_non_node_unk_hps" pr1 pr2 pr1
       (fun _ _ -> drop_non_node_unk_hps_x hp_defs non_node_unk_hps) hp_defs non_node_unk_hps
+
+let transform_unk_hps_to_pure_x hp_defs unk_hpargs =
+  let transform_hp_unk (hp,args)=
+    let hp_name = CP.name_of_spec_var hp in
+    let fr_args = List.map (fun sv -> CP.fresh_spec_var_prefix hp_name sv) args in
+    (hp,fr_args)
+  in
+  (*returns eqs/ss: mkEqexp/subst ss*)
+  let look_up_get_eqs_ss args0 ls_unk_hpargs_fr (used_hp,used_args)=
+    try
+        let _,fr_args = List.find (fun (hp,_) -> CP.eq_spec_var hp used_hp) ls_unk_hpargs_fr in
+        let ss = List.combine used_args fr_args in
+        let rs1,rs2 = List.partition (fun (sv1,_) -> CP.mem_svl sv1 args0) ss in
+        ([used_hp],rs1,rs2)
+    with
+      | Not_found -> ([],[],[])
+  in
+  let subst_pure_hp_unk args0 ls_unk_hpargs_fr f=
+    let ls_used_hp_args = CF.get_HRels_f f in
+    (*look up*)
+    let r = List.map (look_up_get_eqs_ss args0 ls_unk_hpargs_fr) ls_used_hp_args in
+    let ls_used_unk_hps,ls_eqs, ls_ss = split3 r in
+    let used_unk_hps = List.concat ls_used_unk_hps in
+    let eqs = List.concat ls_eqs in
+    let ss = List.concat ls_ss in
+    (*remove unkhps*)
+    let f1,_ = CF.drop_hrel_f f used_unk_hps in
+    (*subst*)
+    let f2 = CF.subst ss f1 in
+    (*add pure eqs*)
+    let pos = CF.pos_of_formula f2 in
+    let p_eqs = List.map (fun (sv1,sv2) -> CP.mkPtrEqn sv1 sv2 pos) eqs in
+    let p = CP.conj_of_list p_eqs pos in
+    let f3 = CF.mkAnd_pure f2 (MCP.mix_of_pure p) pos in
+    f3
+  in
+  let subst_pure_hp_unk_hpdef ls_unk_hpargs_fr (rc, hf, def)=
+    let _,args0 = CF.extract_HRel hf in
+    let fs = CF.list_of_disjs def in
+    let fs1 = List.map (subst_pure_hp_unk args0 ls_unk_hpargs_fr) fs in
+    let def1 = CF.disj_of_list fs1 (CF.pos_of_formula def) in
+    (rc, hf, def1)
+  in
+  let ls_unk_hpargs_fr = List.map transform_hp_unk unk_hpargs in
+  List.map (subst_pure_hp_unk_hpdef ls_unk_hpargs_fr) hp_defs
+
+let transform_unk_hps_to_pure hp_defs unk_hpargs =
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  let pr2 = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in
+  Debug.no_2 "transform_unk_hps_to_pure" pr1 pr2 pr1
+      (fun _ _ -> transform_unk_hps_to_pure_x hp_defs unk_hpargs) hp_defs unk_hpargs
