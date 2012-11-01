@@ -6,32 +6,32 @@
 (declare-const x2 Int)
 (declare-const y2 Int)
 (declare-const b Bool)
-(assert (> x 2));
-(assert (= x1 (+ x 1)));
-(assert (=  b (> x1 3)));
- (push);
-   (assert b);
+(assert (> x 2))
+(assert (= x1 (+ x 1)))
+(assert (=  b (> x1 3)))
+ (push)
+   (assert b) 
    (check-sat)
-   (assert (= x2 (- x1 1)));
-   (push);
+   (assert (= x2 (- x1 1)))
+   (push)
      (assert (not (= x2 x)))
-     (check-sat);
+     (check-sat)
    (pop)
- (pop);
- (push);
+ (pop)
+ (push)
    (assert (not b))
    (check-sat)
- (pop);
+ (pop)
  (push)
-   (assert (>= y 0));
-   (assert (= y1 (+ y 1)));
+   (assert (>= y 0))
+   (assert (= y1 (+ y 1)))
    (push);
-     (assert (= y2 (+ y1 1)));
+     (assert (= y2 (+ y1 1)))
      (check-sat)
-     (push);
+     (push)
        (assert (not (> y2 1)))
-       (check-sat);
+       (check-sat)
      (pop)
-   (pop);
- (pop);
+   (pop)
+ (pop)
 (pop)
