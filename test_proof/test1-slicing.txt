@@ -1,0 +1,37 @@
+(push); SLICING
+(declare-const x Int)
+(declare-const y Int)
+(declare-const x1 Int)
+(declare-const y1 Int)
+(declare-const x2 Int)
+(declare-const y2 Int)
+(declare-const b Bool)
+(assert (> x 2));
+(assert (= x1 (+ x 1)));
+(assert (=  b (> x1 3)));
+ (push);
+   (assert b);
+   (check-sat)
+   (assert (= x2 (- x1 1)));
+   (push);
+     (assert (not (= x2 x)))
+     (check-sat);
+   (pop)
+ (pop);
+ (push);
+   (assert (not b))
+   (check-sat)
+ (pop);
+ (push)
+   (assert (>= y 0));
+   (assert (= y1 (+ y 1)));
+   (push);
+     (assert (= y2 (+ y1 1)));
+     (check-sat)
+     (push);
+       (assert (not (> y2 1)))
+       (check-sat);
+     (pop)
+   (pop);
+ (pop);
+(pop)
