@@ -473,7 +473,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	    let s1,p1,r1,b1 = helper ctx b.CF.formula_struc_or_f1 in
 	    let s2,p2,r2,b2 = helper ctx b.CF.formula_struc_or_f2 in
 	    (CF.norm_specs (CF.EOr {b with CF.formula_struc_or_f1 = s1;CF.formula_struc_or_f2 = s2;}), p1@p2, r1@r2, pr_id b1 && pr_id b2)
-      | CF.EAssume (var_ref,post_cond,post_label) ->
+      | CF.EAssume (var_ref,post_cond,post_label,etype) ->
             let curr_vars = stk_vars # get_stk in
             (* let ovars = CF.fv post_cond in *)
             (* let ov = CP.diff_svl ovars curr_vars in *)
@@ -565,7 +565,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       (* TODO : collecting rel twice as a temporary fix to losing ranking rel inferred during check_post *)
                       (*                      let rel1 =  Inf.collect_rel_list_partial_context res_ctx in*)
                       (*                      DD.dinfo_pprint ">>>>> Performing check_post STARTS" no_pos;*)
-                      let tmp_ctx = check_post prog proc res_ctx post_cond pos_post post_label in
+                      let tmp_ctx = check_post prog proc res_ctx post_cond pos_post post_label etype in
                       (*                      DD.dinfo_pprint ">>>>> Performing check_post ENDS" no_pos;*)
                       (* Termination: collect error messages from successful states *)
                       let term_err_msg = CF.collect_term_err_list_partial_context tmp_ctx in 
@@ -650,7 +650,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                                   DD.devel_pprint ("Final Post :"^(Cprinter.string_of_formula post_fml)) pos;
                                   (* print_endline ("Initial Residual Post : "^(pr_list Cprinter.string_of_formula flist)); *)
                                   (* print_endline ("Final Residual Post : "^(Cprinter.string_of_formula post_fml)); *)
-                                  let inferred_post = CF.EAssume (CP.remove_dups_svl (var_ref(* @post_vars *)),post_fml,post_label) in
+                                  let inferred_post = CF.EAssume (CP.remove_dups_svl (var_ref(* @post_vars *)),post_fml,post_label, etype) in
                                   inferred_post
                                 end in
                           (i_post, i_pre)
@@ -1015,9 +1015,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               unfold_failesc_context (prog,None) ctx sv true pos
 	          (* for code *)
         | Assert ({ exp_assert_asserted_formula = c1_o;
-          exp_assert_assumed_formula = c2;
-          exp_assert_path_id = (pidi,s);
-          exp_assert_pos = pos}) -> 
+                    exp_assert_assumed_formula = c2;
+                    exp_assert_path_id = (pidi,s);
+                    exp_assert_type = atype;
+                    exp_assert_pos = pos}) -> 
 	      let assert_op ()=
 		let _ = if !print_proof && (match c1_o with | None -> false | Some _ -> true) then 
                   begin
@@ -1069,7 +1070,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	      in
         (* store flag do_classic_frame_rule  *)
         let flag = !Globals.do_classic_frame_rule in
-        Globals.do_classic_frame_rule := !Globals.option_classic;
+        Globals.do_classic_frame_rule := (match atype with
+                                          | None -> !Globals.opt_classic
+                                          | Some b -> b);
         let res = wrap_proving_kind "ASSERT/ASSUME" assert_op () in
         (* restore flag do_classic_frame_rule  *)
         Globals.do_classic_frame_rule := flag;
@@ -1772,17 +1775,19 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
     let failesc = CF.splitter_failesc_context !norm_flow_int None (fun x->x)(fun x -> x) cl in
     ((check_exp1 failesc) @ fl)		
 																																	       
-and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
+and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
   let pr = Cprinter.string_of_list_partial_context in
   let pr1 = Cprinter.string_of_formula in
   (*  let pr2 = Cprinter.string_of_list_partial_context in*)
-  let f = wrap_proving_kind "POST" (check_post_x prog proc ctx post pos) in
-  Debug.no_2 "check_post" pr pr1 pr (fun _ _ -> f pid) ctx post
+  let f = wrap_proving_kind "POST" (check_post_x prog proc ctx post pos pid) in
+  Debug.no_2 "check_post" pr pr1 pr (fun _ _ -> f etype) ctx post
 
-and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
+and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
   (* store flag do_classic_frame_rule  *)
   let flag = !Globals.do_classic_frame_rule in
-  Globals.do_classic_frame_rule := !Globals.option_classic;
+  Globals.do_classic_frame_rule := (match etype with
+                                    | None -> !Globals.opt_classic
+                                    | Some b -> b);
   let res = check_post_x_x prog proc ctx post pos pid in
   (* restore flag do_classic_frame_rule  *)
   Globals.do_classic_frame_rule := flag;
@@ -1792,7 +1797,7 @@ and pr_spec = Cprinter.string_of_struc_formula
 
 and pr_spec2 = Cprinter.string_of_struc_formula_for_spec
 
-and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
+and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label): CF.list_partial_context  =
   (* let _ = print_string ("got into check_post on the succCtx branch\n") in *)
   (* let _ = print_string ("context before post: "^(Cprinter.string_of_list_partial_context ctx)^"\n") in *)
 	(* let _= print_endline ("Check post list ctx: "^Cprinter.string_of_list_partial_context ctx) in *)

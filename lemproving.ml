@@ -62,8 +62,8 @@ let run_entail_check (iante : lem_formula) (iconseq : lem_formula) (cprog: C.pro
   (* store the current value of do_classic_frame_rule *)
   let flag = !Globals.do_classic_frame_rule in
   Globals.do_classic_frame_rule := (match exact with
-    | None -> !Globals.option_classic;
-    | Some b -> b);
+                                    | None -> !Globals.opt_classic;
+                                    | Some b -> b);
   let res = run_entail_check_helper iante iconseq cprog in
   (* restore flag do_classic_frame_rule *)
   Globals.do_classic_frame_rule := flag;

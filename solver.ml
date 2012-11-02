@@ -909,7 +909,7 @@ and prune_pred_struc_x prog (simp_b:bool) f =
       | ECase c -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> (c1, helper c2)) c.formula_case_branches;}
       | EBase b -> EBase {b with formula_struc_base = prune_preds prog simp_b b.formula_struc_base;
             formula_struc_continuation = map_opt helper b.formula_struc_continuation}
-      | EAssume (v,f,l) -> EAssume (v,prune_preds prog simp_b f,l)
+      | EAssume (v,f,l,t) -> EAssume (v,prune_preds prog simp_b f,l,t)
       | EInfer b -> EInfer {b with  formula_inf_continuation = helper b.formula_inf_continuation}
       | EList b -> EList (map_l_snd helper b)
       | EOr b-> EOr {b with formula_struc_or_f1 = helper b.formula_struc_or_f1; formula_struc_or_f2 = helper b.formula_struc_or_f2;} in    
@@ -2993,7 +2993,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 				    (res_ctx,res_prf)
                                         (*  let _ = print_endline ("###: 3") in*)
                             )
-                    | EAssume (ref_vars, post, (i,y)) ->
+                    | EAssume (ref_vars, post, (i,y), _) ->
 		          if not has_post then report_error pos ("malfunction: this formula "^ y ^" can not have a post condition!")
 	                  else
                             (match tid with
@@ -8160,7 +8160,7 @@ and normalize_struc_formula_w_coers prog estate (f:struc_formula) coers : struc_
     | ECase b-> ECase {b with formula_case_branches = map_l_snd helper b.formula_case_branches}
     | EBase b-> EBase {b with formula_struc_base = n_form b.formula_struc_base; formula_struc_continuation = map_opt helper b.formula_struc_continuation}
     | EInfer b-> EInfer{b with formula_inf_continuation= helper b.formula_inf_continuation}
-    | EAssume (a1,a2,a3)-> EAssume (a1, n_form a2, a3) in
+    | EAssume (a1,a2,a3,a4)-> EAssume (a1, n_form a2, a3, a4) in
   helper f
       
       
@@ -8306,9 +8306,9 @@ and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula =
 	    | None -> Some f1
 	    | Some l -> Some (combine_struc f1 l) in
 	  EBase {b with formula_struc_continuation = cont }																											  
-    | EAssume (x1,b, (y1',y2') )-> 
+    | EAssume (x1,b, (y1',y2'), t1 )-> 
 	  (match f1 with
-	    | EAssume (x2,d,(y1,y2)) -> EAssume ((x1@x2),(normalize_combine b d (Cformula.pos_of_formula d)),(y1,(y2^y2')))
+	    | EAssume (x2,d,(y1,y2),t2) -> EAssume ((x1@x2),(normalize_combine b d (Cformula.pos_of_formula d)),(y1,(y2^y2')),t1)
 	    | _-> combine_struc f2 f1)
     | EInfer e -> (match f1 with 
 	| EInfer e2 -> EInfer {e with formula_inf_vars = e.formula_inf_vars @ e2.formula_inf_vars;
@@ -8734,10 +8734,10 @@ let rec simplify_relation_x (sp:struc_formula) subst_fml pre_vars post_vars prog
         simplify_pre (CF.normalize 1 b.formula_struc_base (CF.formula_of_pure_formula pre no_pos) no_pos) lst_assume
       else b.formula_struc_base in
     (EBase {b with formula_struc_base = base; formula_struc_continuation = r}, [])
-  | EAssume(svl,f,fl) ->
+  | EAssume(svl,f,fl,t) ->
 	  let pvars = CP.remove_dups_svl (CP.diff_svl (CF.fv f) post_vars) in
 	  let (new_f,pres) = simplify_post f pvars prog subst_fml pre_vars inf_post evars svl in
-	  (EAssume(svl,new_f,fl), pres)
+	  (EAssume(svl,new_f,fl,t), pres)
   | EInfer b -> report_error no_pos "Do not expect EInfer at this level"
 	| EList b ->   
 		let new_sp, pres = map_l_snd_res (fun s-> simplify_relation s subst_fml pre_vars post_vars prog inf_post evars lst_assume) b in
