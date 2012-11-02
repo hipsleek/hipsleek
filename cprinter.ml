@@ -834,7 +834,10 @@ let pr_memoise_group_vb m_gr =
   fmt_cut();
   wrap_box ("V",1)
       ( fun m_gr -> fmt_string "(";pr_list_op_none "" 
-          (fun c-> wrap_box ("H",1) (fun _ -> fmt_string "SLICE["; pr_list_of_spec_var c.memo_group_fv; fmt_string "]["; pr_list_of_spec_var c.memo_group_linking_vars; fmt_string "]:") (); 
+          (fun c-> wrap_box ("H",1) (fun _ -> fmt_string 
+						"SLICE["; pr_list_of_spec_var c.memo_group_fv; fmt_string "]["; 
+						pr_list_of_spec_var c.memo_group_linking_vars; fmt_string "]";
+						fmt_string (if c.memo_group_unsat then "(sat?):" else ":")) (); 
               fmt_cut ();fmt_string "  ";
               wrap_box ("B",1) pr_memoise c.memo_group_cons;
               fmt_cut ();fmt_string "  ";
@@ -1591,6 +1594,7 @@ let pr_estate (es : entail_state) =
   (* pr_wrap_test "es_infer_invs: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_invs;  *)
   pr_wrap_test "es_var_zero_perm: " (fun _ -> false) (pr_seq "" pr_spec_var) es.es_var_zero_perm; (*always print*)
   (* pr_vwrap "es_infer_invs:  " pr_list_pure_formula es.es_infer_invs; *)
+  pr_wrap_test "es_unsat_flag: " (fun _-> false) (fun c-> fmt_string (string_of_bool c)) es.es_unsat_flag;  
   fmt_close ()
 
 

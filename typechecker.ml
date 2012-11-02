@@ -360,7 +360,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             (*************************************************************)
             (********* Check permissions variables in pre-condition ******)
             (*************************************************************) 
-            let ctx,ext_base = if (!Globals.ann_vp) && (not (CF.has_lexvar_formula b.CF.formula_struc_base)) then
+						let has_lexvar = CF.has_lexvar_formula b.CF.formula_struc_base in
+            let ctx,ext_base = if (!Globals.ann_vp) && (not has_lexvar) then
               check_varperm prog proc spec ctx b.CF.formula_struc_base pos_spec 
             else (ctx,b.CF.formula_struc_base)
             in
@@ -371,6 +372,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	      if !Globals.max_renaming 
 	      then (CF.transform_context (CF.normalize_es ext_base b.CF.formula_struc_pos false) ctx) (*apply normalize_es into ctx.es_state*)
 	      else (CF.transform_context (CF.normalize_clash_es ext_base b.CF.formula_struc_pos false) ctx) in
+			(* Termination: Move lexvar to es_var_measures *)
+			let nctx = if (not has_lexvar) then nctx else Term.strip_lexvar_lhs nctx in
             let (c,pre,rels,r) = match b.CF.formula_struc_continuation with | None -> (None,[],[],true) | Some l -> let r1,r2,r3,r4 = helper nctx l in (Some r1,r2,r3,r4) in
             stk_vars # pop_list vs;
 	    let _ = Debug.devel_zprint (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in
@@ -1079,7 +1082,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         res
         | Assign ({ exp_assign_lhs = v;
           exp_assign_rhs = rhs;
-          exp_assign_pos = pos}) -> begin
+          exp_assign_pos = pos}) -> 
+						let assign_op ()=
+						begin
+						let _ = proving_loc#set pos in
             let b,res = (if !Globals.ann_vp then
               (*check for access permissions*)
               let t = Gen.unsome (type_of_exp rhs) in
@@ -1101,7 +1107,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let ctx1 = (CF.Ctx c1) in
                   let _ = CF.must_consistent_context "assign 1a" ctx1  in
                   (* TODO : eps bug below *)
-	          let tmp_ctx1 = CF.compose_context_formula ctx1 link [vsv] CF.Flow_combine pos in
+	          let tmp_ctx1 = CF.compose_context_formula ctx1 link [vsv] false CF.Flow_combine pos in
                   let _ = CF.must_consistent_context "assign 2" tmp_ctx1  in
 	          let tmp_ctx2 = CF.push_exists_context [CP.mkRes t] tmp_ctx1 in
                   let _ = CF.must_consistent_context "assign 3" tmp_ctx2  in
@@ -1111,8 +1117,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        else (CF.Ctx c1) in
 	      let res = CF.transform_list_failesc_context (idf,idf,fct) ctx1 in
               let _ = CF.must_consistent_list_failesc_context "assign final" res  in
-              res
+              res		
 	  end
+		in  wrap_proving_kind "ASSIGN" assign_op ()		
 	| Barrier {exp_barrier_recv = b; exp_barrier_pos = pos} ->			
 	      let mkprf prf_l = PTracer.ContextList
 		{PTracer.context_list_ante = []; PTracer.context_list_conseq = CF.mkETrue (CF.mkTrueFlow ()) pos; PTracer.context_list_proofs = prf_l; } in
@@ -1355,9 +1362,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let pure_cond = (CP.BForm ((CP.mkBVar v Primed pos, None), None)) in
 	          let then_cond_prim = MCP.mix_of_pure pure_cond in
 	          let else_cond_prim = MCP.mix_of_pure (CP.mkNot pure_cond None pos) in
-	          let then_ctx = combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
+	          let then_ctx = 
+				if !Globals.delay_if_sat then combine_list_failesc_context prog ctx then_cond_prim
+				else  combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
 	          Debug.devel_zprint (lazy ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_failesc_context then_ctx))) pos;
-	          let else_ctx =combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
+	          let else_ctx =
+				if !Globals.delay_if_sat then combine_list_failesc_context prog ctx else_cond_prim
+				else  combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
+			  
 	          Debug.devel_zprint (lazy ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_failesc_context else_ctx))) pos;
 	          let then_ctx1 = CF.add_cond_label_list_failesc_context pid 0 then_ctx in
 	          let else_ctx1 = CF.add_cond_label_list_failesc_context pid 1 else_ctx in 
@@ -1544,7 +1556,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       if ir then (* Only check termination of a recursive call *)
                         let _ = DD.devel_zprint 
                           (lazy (">>>>>>> Termination Checking: " ^ mn ^ " <<<<<<<")) pos in
-                        (* Normalise the specification with variance 
+                        (* Normalise the specification with variance                     let f = wrap_proving_kind "PRE-2" (check_pre_post org_spec sctx) in
+
                          * to further inference or error reporting *)
                         if not (CF.isNonFalseListFailescCtx sctx) then
                           let _ = Term.add_unreachable_res sctx pos in ()

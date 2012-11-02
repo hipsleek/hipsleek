@@ -1527,7 +1527,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   | SPASS -> z3_imply (* Smtsolver.imply  *)ante conseq (* timeout *)
 	| LOG -> find_bool_proof_res imp_no
   in
-	(*let tstop = Gen.Profiling.get_time () in*)
+	(* let tstop = Gen.Profiling.get_time () in *)
+    let _ = Gen.Profiling.push_time "tp_is_sat" in 
 	let _ = if should_output () then
 			begin
 				Prooftracer.push_pure_imply ante conseq r;
@@ -2120,9 +2121,16 @@ let is_sat_sub_no (f : CP.formula) sat_subno : bool =
     (string_of_bool ) is_sat_sub_no f sat_subno;;
 
 let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool =
-  let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in
-  if !f_2_slice || !dis_slicing then (is_sat_sub_no (CP.join_conjunctions f_lst) sat_subno)
-  else not (List.exists (fun f -> not (is_sat_sub_no f sat_subno)) f_lst)
+  if !f_2_slice || !dis_slicing then
+		let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in
+		(is_sat_sub_no (CP.join_conjunctions f_lst) sat_subno)
+  else 
+		let f = if !do_slicing
+			(* Slicing: Only check changed slice *)
+			then List.filter (fun c -> c.memo_group_unsat) f
+			else f in
+		let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in
+		not (List.exists (fun f -> not (is_sat_sub_no f sat_subno)) f_lst)
 
 let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool =
   Debug.no_1 "is_sat_memo_sub_no_orig"

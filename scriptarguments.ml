@@ -11,7 +11,7 @@ let pred_to_compile = ref ([] : string list)
 let print_version_flag = ref false
 
 
-let inter = ref false
+let inter_hoa = ref false
 
 let enable_gui = ref false
 
@@ -264,6 +264,10 @@ let common_arguments = [
   ("--slc-multi-provers", Arg.Set Globals.multi_provers, "Enable multiple provers for proving multiple properties");
   ("--slc-sat-slicing", Arg.Set Globals.is_sat_slicing, "Enable slicing before sending formulas to provers");
   ("--slc-lbl-infer", Arg.Set Globals.infer_slicing, "Enable slicing label inference");
+  ("--delay-case-sat", Arg.Set Globals.delay_case_sat, "Disable unsat checking for case entailment");
+  ("--force-post-sat", Arg.Set Globals.force_post_sat, "Force unsat checking when assuming a postcondition");
+  ("--delay-if-sat", Arg.Set Globals.delay_if_sat, "Disable unsat checking for a conditional");
+  
 	
 	(* Proof Logging *)
 	("--enable-logging", Arg.Set Globals.proof_logging, "Enable proof logging");
@@ -310,7 +314,7 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
 let sleek_specific_arguments = [
    ("-fe", Arg.Symbol (["native"; "xml"], set_frontend),
 	"Choose frontend:\n\tnative: Native (default)\n\txml: XML");
-   ("-int", Arg.Set inter,
+   ("-int", Arg.Set inter_hoa,
     "Run in interactive mode.");
    ("--slk-err", Arg.Set Globals.print_err_sleek,
 	"print sleek errors");
@@ -341,5 +345,5 @@ let check_option_consistency () =
     Gen.Basic.report_error Globals.no_pos "immutability and permission options cannot be turned on at the same time"
     end
 ;; (*Clean warning*)
-Astsimp.inter := !inter 
-;;
+Astsimp.inter_hoa := !inter_hoa;;
+

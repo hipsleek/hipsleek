@@ -50,7 +50,7 @@ let print_version () =
 
 let process_cmd_line () = Arg.parse Scriptarguments.sleek_arguments set_source_file usage_msg
 
-let inter = Scriptarguments.inter
+let inter = Scriptarguments.inter_hoa
 
 let prompt = ref "SLEEK> "
 let terminator = '.'

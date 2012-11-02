@@ -831,6 +831,10 @@ and isConstTrue (p:formula) = match p with
   | BForm ((BConst (true, pos), _),_) -> true
   | AndList b -> all_l_snd isConstTrue b
   | _ -> false
+  
+and isTrivTerm (p:formula) = match p with
+  | BForm ((LexVar l, _),_) -> (l.lex_ann == Term || l.lex_ann==MayLoop) && l.lex_exp==[]
+  | _ -> false
         
 and isConstBTrue (p:b_formula) =
   let (pf,_) = p in
@@ -8359,4 +8363,6 @@ let get_inst_int v f =
 		| IConst (i,_) -> Some i
 		| _ -> None in
 	get_inst fct v f
+		
+		
 		
