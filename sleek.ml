@@ -98,30 +98,32 @@ let parse_file (parse) (source_file : string) =
 	  | PredDef pdef -> process_pred_def_4_iast pdef
 	  | BarrierCheck bdef -> process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars)
 	  | FuncDef fdef -> process_func_def fdef
-      | RelDef rdef -> process_rel_def rdef
-      | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
+    | RelDef rdef -> process_rel_def rdef
+    | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
       (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
-	  | LemmaDef _ | Infer _ | CaptureResidue _ | LetDef _ | EntailCheck _ | PrintCmd _ 
-      | Time _ | EmptyCmd -> () in
+    | LemmaDef _ | Infer _ | CaptureResidue _ | LetDef _ | PrintCmd _
+    | EntailCheck _ | EntailCheckExact _ | EntailCheckInexact _ 
+    | Time _ | EmptyCmd -> () in
   let proc_one_lemma c = 
     match c with
 	  | LemmaDef ldef -> process_lemma ldef
 	  | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | AxiomDef _ (* An Hoa *)
-	  | CaptureResidue _ | LetDef _ | EntailCheck _ | Infer _ | PrintCmd _  | Time _ | EmptyCmd -> () in
+	  | CaptureResidue _ | LetDef _ | Infer _ | PrintCmd _  | Time _ | EmptyCmd
+    | EntailCheck _ | EntailCheckExact _ | EntailCheckInexact _ -> () in
   let proc_one_cmd c = 
     match c with
-	  | EntailCheck (iante, iconseq) -> 
-          (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
-          process_entail_check iante iconseq
-      | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
-	  | CaptureResidue lvar -> process_capture_residue lvar
-	  | PrintCmd pcmd -> process_print_command pcmd
-	  | LetDef (lvar, lbody) -> put_var lvar lbody
-	  | BarrierCheck bdef -> process_barrier_def bdef
-      | Time (b,s,_) -> 
-            if b then Gen.Profiling.push_time s 
-            else Gen.Profiling.pop_time s
-	  | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ | EmptyCmd -> () in
+    | EntailCheck (iante, iconseq) -> process_entail_check_common iante iconseq
+    | EntailCheckExact (iante, iconseq) -> process_entail_check_exact iante iconseq
+    | EntailCheckInexact (iante, iconseq) -> process_entail_check_inexact iante iconseq
+    | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
+    | CaptureResidue lvar -> process_capture_residue lvar
+    | PrintCmd pcmd -> process_print_command pcmd
+    | LetDef (lvar, lbody) -> put_var lvar lbody
+    | BarrierCheck bdef -> process_barrier_def bdef
+    | Time (b,s,_) -> 
+        if b then Gen.Profiling.push_time s 
+        else Gen.Profiling.pop_time s
+    | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ | EmptyCmd -> () in
   let cmds = parse_first [] in
    List.iter proc_one_def cmds;
 	(* An Hoa : Parsing is completed. If there is undefined type, report error.
@@ -190,12 +192,14 @@ let main () =
                   (match cmd with
                      | DataDef ddef -> process_data_def ddef
                      | PredDef pdef -> process_pred_def pdef
-					 | BarrierCheck bdef -> 
-							(process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars) ; process_barrier_def bdef)
+                     | BarrierCheck bdef -> 
+                         (process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars) ; process_barrier_def bdef)
                      | FuncDef fdef -> process_func_def fdef
                      | RelDef rdef -> process_rel_def rdef
                      | AxiomDef adef -> process_axiom_def adef
-                     | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
+                     | EntailCheck (iante, iconseq) -> process_entail_check_common iante iconseq
+                     | EntailCheckExact (iante, iconseq) -> process_entail_check_exact iante iconseq
+                     | EntailCheckInexact (iante, iconseq) -> process_entail_check_inexact iante iconseq
                      | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
                      | CaptureResidue lvar -> process_capture_residue lvar
                      | LemmaDef ldef ->   process_lemma ldef

@@ -1691,6 +1691,7 @@ module IGO = Graph.Oper.P(IG)
 module IGC = Graph.Components.Make(IG)
 module IGP = Graph.Path.Check(IG)
 module IGN = Graph.Oper.Neighbourhood(IG)
+module IGT = Graph.Topological.Make(IG)
 
 let ex_args f a b = f b a
 

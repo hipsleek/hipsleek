@@ -1,0 +1,44 @@
+data node {
+	int val;
+	node next;
+}.
+
+checkentail x::node<_,_> |- htrue.
+print residue.
+
+checkentail x::node<_,_> |- emp.
+print residue.
+
+checkentail x::node<_,_> |- x::node<c,d>.
+print residue.
+
+checkentail x::node<2,null> |- x::node<c,d>@I.
+print residue.
+
+checkentail x::node<2,null> |- x::node<c,d>@L.
+print residue.
+
+checkentail x::node<2,null> |- x::node<c,d>@L * htrue.
+print residue.
+
+checkentail x::node<2,null> |- x::node<_,_>@L * emp.
+print residue.
+
+
+checkentail_exact x::node<2,null> |- x::node<c,d>@L.
+// --> no residue
+print residue.
+
+checkentail_inexact x::node<2,null> |- x::node<c,d>@L.
+//--> allow residue
+print residue.
+
+// --classic
+//     post-condition  // use exact
+//     assert
+// --without classic
+//     post-condition  // use inexact
+//     assert
+// bind // inexact always
+// precondition // inexact always
+

@@ -146,9 +146,13 @@ if($timings){
     $programCol = 1;
     $mainCol = 2;
     $childCol = 3;
-    $prooflogCol =4;	
-    $totalCol = 5;
-    $falseContextCol = 6;
+    $cl = $childCol;
+    if("$flags" =~ m/--enable-logging-txt\b/ ){
+     $cl=$childCol+1;
+     $prooflogCol = $cl;	
+    }
+    $totalCol = $cl+1;
+    $falseContextCol = $cl+2;
     my $format = $workbook->add_format();
     $format->set_bold();
     $format->set_align('center');
@@ -157,7 +161,9 @@ if($timings){
     $worksheet->set_column($mainCol,$falseContextCol, 10);
     $worksheet->write($row, $mainCol, "Main", $format);
     $worksheet->write($row, $childCol, "Child", $format);
-    $worksheet->write($row, $prooflogCol, "Proof log", $format);	
+    if("$flags" =~ m/--enable-logging-txt\b/ ){
+       $worksheet->write($row, $prooflogCol, "Proof log", $format);
+    }
     $worksheet->write($row, $totalCol, "Total time", $format);
     $worksheet->write($row, $falseContextCol, "No. false ctx", $format);
 
@@ -980,6 +986,7 @@ if($timings){
     $mainSum = 0.0;
     $childSum = 0.0;
     $totalSum = 0.0;
+    $prooflogSum =0.0;
     $falseContextSum = 0;
 }
 
@@ -1009,7 +1016,9 @@ if($timings){
     $worksheet->write($row, $programCol, "Totals:", $format);
     $worksheet->write($row, $mainCol, "$mainSum", $format);
     $worksheet->write($row, $childCol, "$childSum", $format);
-    $worksheet->write($row, $prooflogCol, "$prooflogSum", $format);	
+    if("$flags" =~ m/--enable-logging-txt\b/ ){
+      $worksheet->write($row, $prooflogCol, "$prooflogSum", $format);	
+    }
     $worksheet->write($row, $totalCol, $totalSum, $format);
     $worksheet->write($row, $falseContextCol, $falseContextSum, $format);
     $workbook->close();

@@ -614,6 +614,51 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
   Debug.no_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
 
+let run_entail_check_common_x (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  (* store the current value of do_checkentail_exact *)
+  let flag = !Globals.do_checkentail_exact in
+  Globals.do_checkentail_exact := !Globals.do_classic_reasoning;
+  let res = run_entail_check iante0 iconseq0 in
+  (* restore flag do_checkentail_exact *)
+  Globals.do_checkentail_exact := flag;
+  res
+
+(* The allowing or forbidding residue in RHS of entailments depends on option --classic *)
+let run_entail_check_common (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  let pr = string_of_meta_formula in
+  let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
+  Debug.no_2 "run_entail_check_common" pr pr pr_2 run_entail_check_common_x iante0 iconseq0
+
+let run_entail_check_exact_x (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  (* store the current value of do_checkentail_exact *)
+  let flag = !Globals.do_checkentail_exact in
+  Globals.do_checkentail_exact := true;
+  let res = run_entail_check iante0 iconseq0 in
+  (* restore flag do_checkentail_exact *)
+  Globals.do_checkentail_exact := flag;
+  res
+
+(* Always forbidding residue in RHS of entailments *)
+let run_entail_check_exact (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  let pr = string_of_meta_formula in
+  let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
+  Debug.no_2 "run_entail_check_exact" pr pr pr_2 run_entail_check_exact_x iante0 iconseq0
+
+let run_entail_check_inexact_x (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  (* store the current value of do_checkentail_exact *)
+  let flag = !Globals.do_checkentail_exact in
+  Globals.do_checkentail_exact := false;
+  let res = run_entail_check iante0 iconseq0 in
+  (* restore flag do_checkentail_exact *)
+  Globals.do_checkentail_exact := flag;
+  res
+
+(* Always allowing residue in RHS of entailments *)
+let run_entail_check_inexact (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  let pr = string_of_meta_formula in
+  let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
+  Debug.no_2 "run_entail_check_inexact" pr pr pr_2 run_entail_check_inexact_x iante0 iconseq0
+
 let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
   DD.ninfo_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
   (* Termination: SLEEK result printing *)
@@ -696,6 +741,51 @@ let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_f
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   Debug.no_2 "process_entail_check" pr pr (fun _ -> "?") process_entail_check iante0 iconseq0
+
+let process_entail_check_common_x (iante : meta_formula) (iconseq : meta_formula) =
+  (* store the current value of do_checkentail_exact*)
+  let flag = !Globals.do_checkentail_exact in
+  Globals.do_checkentail_exact := !Globals.do_classic_reasoning;
+  let res = process_entail_check iante iconseq in
+  (* restore flag do_checkentail_exact *)
+  Globals.do_checkentail_exact := flag;
+  (* return value *)
+  res
+
+(* The allowing or forbidding residue in RHS of entailments depends on option --classic *) 
+let process_entail_check_common (iante : meta_formula) (iconseq : meta_formula) =
+  let pr = string_of_meta_formula in
+  Debug.no_2 "process_entail_check_common" pr pr (fun _ -> "?") process_entail_check_common_x iante iconseq
+
+(* Always forbid residue in RHS of entailments *)
+let process_entail_check_exact_x (iante : meta_formula) (iconseq : meta_formula) =
+  (* store the current value of do_checkentail_exact*)
+  let flag = !Globals.do_checkentail_exact in
+  Globals.do_checkentail_exact := true;
+  let res = process_entail_check iante iconseq in
+  (* restore flag do_checkentail_exact *)
+  Globals.do_checkentail_exact := flag;
+  (* return value *)
+  res
+
+(* Always forbidding residue in RHS of entailments *)
+let process_entail_check_exact (iante : meta_formula) (iconseq : meta_formula) =
+  let pr = string_of_meta_formula in
+  Debug.no_2 "process_entail_check_exact" pr pr (fun _ -> "?") process_entail_check_exact_x iante iconseq
+
+let process_entail_check_inexact_x (iante : meta_formula) (iconseq : meta_formula) =
+  (* store the current value of do_checkentail_exact*)
+  let flag = !Globals.do_checkentail_exact in
+  Globals.do_checkentail_exact := false;
+  let res = process_entail_check iante iconseq in
+  (* restore flag do_checkentail_exact *)
+  Globals.do_checkentail_exact := flag;
+  res
+
+(* Always allowing residue in RHS of entailments *)
+let process_entail_check_inexact (iante : meta_formula) (iconseq : meta_formula) =
+  let pr = string_of_meta_formula in
+  Debug.no_2 "process_entail_check_inexact" pr pr (fun _ -> "?") process_entail_check_inexact_x iante iconseq
 
 let process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 

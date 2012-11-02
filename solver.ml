@@ -4644,7 +4644,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                               Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: conseq has an empty heap component"
                                               ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
                                               ^ "\nconseq:\n"  ^ (Cprinter.string_of_formula conseq))) pos;
-                                              if (!Globals.do_classic_reasoning && not(estate.es_allow_residue) && (h1 != HEmp) && (h1 != HFalse) && (h2 = HEmp)) then (
+                                              if (!Globals.do_checkentail_exact && not(estate.es_allow_residue) && (h1 != HEmp) && (h1 != HFalse) && (h2 = HEmp)) then (
                                                   let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
                                                   let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must "residue is forbidden." "" )) in
                                                   let proof = mkForbidResidue ctx0 conseq in
@@ -4911,11 +4911,11 @@ and build_and_failures_x (failure_code:string) (failure_name:string) ((contra_li
         | _ ->
               let strs,locs= List.split (List.map build_failure_msg failure_list) in
               (*get line number only*)
-              let rec get_line_number ll rs=
-                match ll with
-                  | [] -> rs
-                  | l::ls -> get_line_number ls (rs @ [l.start_pos.Lexing.pos_lnum])
-              in
+              (* let rec get_line_number ll rs= *)
+              (*   match ll with *)
+              (*     | [] -> rs *)
+              (*     | l::ls -> get_line_number ls (rs @ [l.start_pos.Lexing.pos_lnum]) *)
+              (* in *)
               (*shoudl use ll in future*)
               (* let ll = Gen.Basic.remove_dups (get_line_number (List.concat locs) []) in*)
               let msg =
@@ -5103,9 +5103,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
     lhs_p
   in
   (* remove variables that are already instantiated in the right hand side *)
-  let fvlhs = MCP.mfv lhs_p in
+  (*let fvlhs = MCP.mfv lhs_p in
   (* WN : any reason why estate below is not being used .. *)
-  let estate = {estate_orig with es_gen_expl_vars = List.filter (fun x -> not (List.mem x fvlhs)) estate_orig.es_gen_expl_vars } in
+  let estate = {estate_orig with es_gen_expl_vars = List.filter (fun x -> not (List.mem x fvlhs)) estate_orig.es_gen_expl_vars } in*) (*Clean warning*)
   (* An Hoa : END OF INSTANTIATION *)
   let _ = reset_int2 () in
   let curr_lhs_h   = mkStarH lhs_h estate_orig.es_heap pos in

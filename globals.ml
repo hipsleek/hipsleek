@@ -667,6 +667,9 @@ let do_infer_inv = ref false
 (* Option for using classical reasoning in separation logic *)
 let do_classic_reasoning = ref false
 
+(* Flag decide whether check entailment exactly (no residue) or inexactly (allow residue) *)
+let do_checkentail_exact = ref false
+
 (* Options for abduction *)
 let do_abd_from_post = ref false
 

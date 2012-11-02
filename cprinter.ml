@@ -1084,7 +1084,7 @@ let rec pr_h_formula_for_spec h =
   | HTrue -> fmt_bool true
   | HFalse -> fmt_bool false
   | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
-
+  | HEmp -> ()(*Clean warning*) 
 (** convert formula exp to a string via pr_formula_exp *)
 let string_of_formula_exp (e:P.exp) : string =  poly_string_of_pr  pr_formula_exp e
 

@@ -1069,8 +1069,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                               List.map CF.remove_dupl_false_fe r in
                       (ps@res)
 	        end
-	      in 
-	      wrap_proving_kind "ASSERT/ASSUME" assert_op ()
+	      in
+        (* store flag do_checkentail_exact  *)
+        let flag = !Globals.do_checkentail_exact in
+        Globals.do_checkentail_exact := !Globals.do_classic_reasoning;
+        let res = wrap_proving_kind "ASSERT/ASSUME" assert_op () in
+        (* restore flag do_checkentail_exact  *)
+        Globals.do_checkentail_exact := flag;
+        res
         | Assign ({ exp_assign_lhs = v;
           exp_assign_rhs = rhs;
           exp_assign_pos = pos}) -> 
@@ -1786,11 +1792,20 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   let f = wrap_proving_kind "POST" (check_post_x prog proc ctx post pos) in
   Debug.no_2 "check_post" pr pr1 pr (fun _ _ -> f pid) ctx post
 
+and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
+  (* store flag do_checkentail_exact  *)
+  let flag = !Globals.do_checkentail_exact in
+  Globals.do_checkentail_exact := !Globals.do_classic_reasoning;
+  let res = check_post_x_x prog proc ctx post pos pid in
+  (* restore flag do_checkentail_exact  *)
+  Globals.do_checkentail_exact := flag;
+  res
+
 and pr_spec = Cprinter.string_of_struc_formula
 
 and pr_spec2 = Cprinter.string_of_struc_formula_for_spec
 
-and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
+and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (* let _ = print_string ("got into check_post on the succCtx branch\n") in *)
   (* let _ = print_string ("context before post: "^(Cprinter.string_of_list_partial_context ctx)^"\n") in *)
 	(* let _= print_endline ("Check post list ctx: "^Cprinter.string_of_list_partial_context ctx) in *)
