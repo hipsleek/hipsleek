@@ -1,4 +1,4 @@
-(push);NO-SLICING
+(push); NO-SLICING
 (declare-const x Int)
 (declare-const y Int)
 (declare-const x1 Int)
