@@ -39,30 +39,68 @@ let open_process_full cmd args =
   (inchan, outchan, errchan, id)
 ;;
 
-let read_file_old filename = 
+let rec icollect_output chn accumulated_output : string list =
+	let output = try
+					 let line = input_line chn in
+                     (*let _ = print_endline ("locle2" ^ line) in*)
+                     if ((String.length line) > 7) then (*something diff to sat/unsat/unknown, retry-may lead to timeout here*)
+					 icollect_output chn (accumulated_output @ [line])
+                    else accumulated_output @ [line]
+				with
+					| End_of_file -> accumulated_output in
+		output
+		
+let read_file_2 filename = 
   (*let _= print_endline ("file:"^ !Globals.source_file) in*)
   let lines = ref "" in
+  let list_check = ref ([]:(string) list) in
   let chan = open_in filename in
   try
       while true; do
-        lines := !lines ^ (input_line chan) 
-      done; ""
-  with End_of_file ->
+        let b = input_line chan in
+					let _=lines := !lines^b^"\n" in
+					(* let _=print_endline (b) in *)
+           try 
+             let ic= BatString.find b "(check-sat)" in
+				     try
+						   let ise= BatString.find b ";" in	
+				       if (ic < ise) then
+								begin 
+								  list_check := !list_check @ [!lines];
+									lines := ""
+								end    	     
+				     with _ -> let _=list_check := !list_check @ [!lines] in lines := ""    	    
+					with _->()
+      done; 
       close_in chan;
-      !lines
+			([],"")
+  with End_of_file ->
+		begin	
+      close_in chan;
+			(* let _= List.map (fun x-> print_endline (x)) !list_check in *)
+      (!list_check,!lines)
+	  end		
 ;;
+
+let incr_nums_check_sat ()=
+	  Globals.nums_of_check_sat := !Globals.nums_of_check_sat + 1 	 
 
 let read_file filename =
   let chan = open_in filename in
   let lip= Std.input_list chan in
   let _= close_in in
   (*let _= print_endline ("file2:"^ !Globals.source_file) in *)
-  List.fold_left ( fun a b->
-      let _=try 
-                let _= BatString.find b "(check-sat)" in
-                Globals.nums_of_check_sat := !Globals.nums_of_check_sat + 1 
-            with _ ->() 
-      in a^"\n"^b) "" lip 
+  List.fold_left ( fun a b-> 
+		let _=
+      try 
+         let ic= BatString.find b "(check-sat)" in
+				 try
+						 let ise= BatString.find b ";" in	
+				     if (ic < ise) then incr_nums_check_sat ()     	     
+				 with _ -> incr_nums_check_sat ()
+      with _-> ()
+		in a^"\n"^b	 
+     ) "" lip 
 ;;
 
 let start ()= 
@@ -101,32 +139,64 @@ let stop (pin,pout,perr,id) (killing_signal: int)  =
 let main_fnc () =
   let _= process_cmd_line () in
   let formula= read_file !Globals.source_file in
-  (*let _= print_endline (string_of_int !Globals.nums_of_check_sat) in*)
+	(* let _= print_endline (formula) in *)
+  let _= print_endline (string_of_int !Globals.nums_of_check_sat) in
   let (pin,pout,perr,id)=start () in (*start z3 with interactive mode*)
   begin 
-      let br = ref 0 in
+			let break = ref 0 in
       let rec helper c = 
         try
             let line = input_line c in 
-            let _=print_endline (line) in 
-            let _= br := !br + 1 in
-            if (!br < !Globals.nums_of_check_sat) then helper c
-              else
-              let _= print_endline("---------") in
-              br := 0
+            let _= print_endline (line) in
+						let _= print_endline (string_of_int !break) in
+						let _= break := !break + 1 in
+						if (!break < !Globals.nums_of_check_sat) then 
+               helper c 
+						else 
+							break := 0	 
         with 
-          | End_of_file -> print_endline ("end")
+          | End_of_file -> print_endline ("Reach end!!")
       in
-	  let i= ref 0 in
-	  while (!i< !Globals.n_exec) do
+	  	let i= ref 0 in
+	  	while (!i < !Globals.n_exec) do
         let _= output_string (pout) formula in
         let _= flush (pout) in
         let _= helper pin in
-		i := !i+1
-	  done; 
-	  stop (pin,pout,perr,id)
+			i := !i+1
+	  	done; 
+	  	stop (pin,pout,perr,id)
   end
 ;;
 
-let _= main_fnc () in ()
+let main2 () =
+  let _= process_cmd_line () in
+  let (formula_list,last)= read_file_2 !Globals.source_file in
+  let (pin,pout,perr,id)=start () in (*start z3 with interactive mode*)
+  begin 
+	   	let helper chi =
+              let str_list= icollect_output chi [] in
+			  let _=List.map (fun x-> print_endline (x)) str_list in ()
+			in
+	  	let i= ref 0 in
+        let _= output_string (pout) "(push 0)\n" in
+        let _= flush (pout) in
+	  	while (!i < !Globals.n_exec) do
+				let _= List.map ( fun formula ->
+                           let _= output_string (pout) formula in
+                           let _= flush (pout) in
+                           let _= helper pin in ()
+			          ) formula_list
+				in
+		let _= output_string (pout) last in
+	    (* let _= print_endline (last) in *)
+        let _= flush (pout) in	
+		let _= output_string (pout) "(pop 0)\n" in
+        let _= flush (pout) in
+			i := !i+1
+	  	done;
+	  	stop (pin,pout,perr,id)
+  end
+;;
+
+let _= main2 () in ()
 ;;
