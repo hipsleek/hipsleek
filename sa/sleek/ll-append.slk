@@ -9,9 +9,9 @@ HeapPred G(node a, node b, node c, node d).
 
 relation T(int a).
 
-infer[P] P(x) |- x::node<_,b>.
-print residue.
-//infer[H] H(x,y) |- x::node<_,b>.
+//infer[P] P(x) |- x::node<_,b>.
+//print residue.
+infer[H] H(x,y) |- x::node<_,b>.
 //print residue.
 //[(RELASS [H,HP_27], H(x,y)&true&{FLOW,(19,20)=__norm}[], x::node<Anon_11,b>@M[Orig] * HP_27(b)&true&{FLOW,(19,20)=__norm}[])])
 

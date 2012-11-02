@@ -1,10 +1,11 @@
 HeapPred HP_1(node a).
+HeapPred HP_1a(node a).
 HeapPred HP_2(node a, node b).
 
 append[
-ass [H1,G2]:{ 	HP_2(a,x) * x::node<_,y>&a=null & y=null --> G2(x,y);
-			H1(x) --> x::node<_,b> * HP_2(b,x);
-			HP_2(a,x)&a!=null --> H1(a);
+ass [H1,G2]:{ 	HP_1a(a) * x::node<_,y>&a=null & y=null --> G2(x,y);
+			H1(x) --> x::node<_,b> * HP_1a(b);
+			HP_1a(a)&a!=null --> H1(a);
 			x::node<_,b> * G2(b,y)&b!=null & y=null --> G2(x,y) }
 
 hpdefs [H1,G2]:{H1(x) --> x::node<_,p>*HP_1(p);

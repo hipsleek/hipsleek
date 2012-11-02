@@ -1,13 +1,23 @@
-HeapPred HP_1(node a).
 HeapPred HP_1a(node a).
+HeapPred HP_1(node a).
 HeapPred HP_2(node a, node b).
 
 append[
-ass []:{  	HP1(a,x) * x::node<_,y>&a=null --> G2(x,y) ;
-		H1(x) -->  x::node<_,b> * HP1(b,x);
-		HP1(a,x)&a!=null --> H1(a);
+ass []:{  	HP_1a(a) * x::node<_,y>&a=null --> G2(x,y) ;
+		H1(x) -->  x::node<_,b> * HP_1a(b);
+		HP_1a(a)&a!=null --> H1(a);
 		x::node<_,b> * G2(b,y)&b!=null --> G2(x,y)}
 
+hpdefs [G2,H1]:{
+ G2(x,y) --> x::node<_,p> * HP_2(p,y) & y= HP_613_y;
+ H1(x) --> x::node<_,p>*HP_1(p);
+ HP_1(x) --> x=null or x::node<_,p1> * HP_1(p1);
+ HP_2(x,p) --> x=p or x::node<_,p1> * HP_2(p1,p)
+ }
+]
+
+/*
+unknown hps
 hpdefs [G2,H1]:{
  G2(x,y) --> x::node<_,p> * HP_2(p,y) * HP_1a(y);
  H1(x) --> x::node<_,p>*HP_1(p);
@@ -15,7 +25,7 @@ hpdefs [G2,H1]:{
  HP_2(x,p) --> x=p or x::node<_,p1> * HP_2(p1,p);
  HP_1a(y) --> htrue&true
  }
-]
+*/
 
 /*
 HP_RELDEFN HP_580:  HP_580(v_node_96_597)::  

@@ -40,21 +40,21 @@ HP_550(v_node_30_573,y,x) * x::node<val_30_558,v_node_30_573> & v_node_30_573!=n
 x::node<val_30_558,v_node_30_573> * G(v_node_30_573,y)& v_node_30_573!=null --> G(x,y)
 */
 
-HeapPred H(node a).
+/* HeapPred H(node a). */
 //HeapPred H1(node a).
-HeapPred G2(node a, node b).
+/* HeapPred G2(node a, node b). */
 HeapPred G1(node a, node b).
-  HeapPred G3(node b,node c, node d).
+  /* HeapPred G3(node b,node c, node d). */
 
 HeapPred H1(node a).
-HeapPred H2(node a).
+/* HeapPred H2(node a). */
 //HeapPred G1(node a, node b, node c).
 
-HeapPred HP1(node a, node b).
-HeapPred HP_648(node a).
-HeapPred HP_641(node a, node b).
-HeapPred T1(node a).
-HeapPred T2(node a, node b).
+/* HeapPred HP1(node a, node b). */
+/* HeapPred HP_648(node a). */
+/* HeapPred HP_641(node a, node b). */
+/* HeapPred T1(node a). */
+/* HeapPred T2(node a, node b). */
 
 /*
 ll<> == self=null

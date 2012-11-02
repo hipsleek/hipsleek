@@ -1,9 +1,9 @@
-HeapPred HP_2(node a, node b).
+HeapPred HP_1a( node b).
 
 get_next[
 ass [H1,G2]:{
-     HP_2(p,x) * x::node<_,p> --> G2(x,p);
-     H1(x) --> x::node<_, p1> * HP_2(p1,x)
+     HP_1a(p) * x::node<_,p> --> G2(x,p);
+     H1(x) --> x::node<_, p1> * HP_1a(p1)
 	}
 
 hpdefs [G2,H1]:{
