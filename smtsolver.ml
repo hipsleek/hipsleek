@@ -625,7 +625,9 @@ let check_formula f timeout =
         (*due to global stack - incremental, push current env into a stack before working and
         removing it after that. may be improved *)
         let new_f = "(push)\n" ^ f ^ "(pop)\n" in
-				let _= if(!proof_logging_txt) then add_to_z3_proof_log_list new_f in
+				let _= if(!proof_logging_txt && (proving_kind # string_of)<>"TRANS_PROC") then 
+					        add_to_z3_proof_log_list new_f 
+				in
         output_string (!prover_process.outchannel) new_f;
         flush (!prover_process.outchannel);
         iget_answer (!prover_process.inchannel) f
