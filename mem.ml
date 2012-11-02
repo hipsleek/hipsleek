@@ -460,7 +460,7 @@ match f with
 | _ -> false
 
 let rec contains_starminus (f:CF.h_formula) : bool = 
-(*let _ = print_string ("Checking Conj = "^ (string_of_h_formula f) ^ "\n") in *)
+(*let _ = print_string ("Checking StarMinus = "^ (string_of_h_formula f) ^ "\n") in *)
 match f with
 | CF.DataNode (h1) -> false
 | CF.ViewNode (h1) -> false
@@ -572,11 +572,11 @@ match (ann_lst_l, ann_lst_r) with
 	  | CF.ConstAnn(Mutable), CF.ConstAnn(Mutable)
   	  | CF.ConstAnn(Imm), CF.ConstAnn(Imm) 
   	  | CF.ConstAnn(Lend), CF.ConstAnn(Lend)
-  	  | CF.ConstAnn(Accs), CF.ConstAnn(Accs)-> true && (is_compatible_field_layout tl tr)
+  	  | CF.ConstAnn(Accs), CF.ConstAnn(Accs)-> true && (is_same_field_layout tl tr)
   	  | _ , _ -> false
 
       end
-    | (_, _) ->	false    
+    | (_, _) ->	 false    
 
 let rec check_mem_non_inter (h1: CF.h_formula) (h2:CF.h_formula) (vl:C.view_decl list) : bool = 
 	let mpf1 = fst (xmem_heap h1 vl) in
@@ -1081,61 +1081,230 @@ let ramify_assign v rhs es =
 	(*let _ = print_string("\nAssign : "^(string_of_formula f)^"\n") in*)
 	let _ = print_string("\nMay Aliases: "^(string_of_list_f string_of_spec_var (get_may_aliases var h))^"\n")
 	in CF.Ctx es
+
+let rec split_into_list f = match f with
+  | CF.Phase({CF.h_formula_phase_rd = h1;
+	CF.h_formula_phase_rw = h2;
+	CF.h_formula_phase_pos = pos})
+  | CF.Star({CF.h_formula_star_h1 = h1;
+	CF.h_formula_star_h2 = h2;
+	CF.h_formula_star_pos = pos}) 
+  | CF.Conj({CF.h_formula_conj_h1 = h1;
+	CF.h_formula_conj_h2 = h2;
+	CF.h_formula_conj_pos = pos})
+  | CF.ConjStar({CF.h_formula_conjstar_h1 = h1;
+	CF.h_formula_conjstar_h2 = h2;
+	CF.h_formula_conjstar_pos = pos})	
+  | CF.ConjConj({CF.h_formula_conjconj_h1 = h1;
+	CF.h_formula_conjconj_h2 = h2;
+	CF.h_formula_conjconj_pos = pos}) -> List.append (split_into_list h1) (split_into_list h2)
+  | CF.DataNode _
+  | CF.ViewNode _ -> [f]	
+  | _ -> []
+
+
+let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: CF.h_formula) (h2mpf: CF.mem_perm_formula option)
+(mcp: MCP.mix_formula) (p_vars: CP.spec_var list) (q_vars: CP.spec_var list) : CF.h_formula * CP.formula = 
+(match h1mpf,h2mpf with
+| Some(memf1), Some(memf2) -> h1,(CP.mkTrue no_pos)
+| Some(memf1), None -> h1,(CP.mkTrue no_pos)
+| None , Some(memf2) -> 
+	(match h2 with
+	| CF.ViewNode {CF.h_formula_view_node = vn;
+		       CF.h_formula_view_arguments = vargs} -> 
+		       let case_and_layouts = List.combine memf2.CF.mem_formula_guards memf2.CF.mem_formula_field_layout in
+		       let sublist = List.combine q_vars vargs in
+		       let pure_p = (MCP.pure_of_mix mcp) in
+		       let compatible_cases = List.filter (fun (c,_) ->
+		       	let after_sbst_guard = CP.subst sublist c in		
+		       	let r,_,_ =  
+		       	(*let _ = print_string("\nPure :"^(string_of_pure_formula pure_p)^"\n") in
+		       	let _ = print_string("Case :"^(string_of_pure_formula after_sbst_guard)^"\n") in*)
+		       	TP.imply pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts in
+		       (match h1 with
+		       	| CF.DataNode { CF.h_formula_data_name = dn;
+			       		CF.h_formula_data_param_imm = paimm} -> 
+			       		if List.exists (fun (_,(id,_)) -> (String.compare id dn == 0)) compatible_cases
+					then			      
+		       			 (if List.exists (fun (_,(id,al)) -> 
+		       			   (*let _ = print_string("Ann List : "^(string_of_list_f string_of_imm al)^"\n") in
+		       			   let _ = print_string("Data Ann List : "^(string_of_list_f string_of_imm paimm)^"\n") in
+		       			   let _ = if (is_same_field_layout paimm al) then print_string("true") else () in*)
+		       			   (is_same_field_layout paimm al)) compatible_cases 
+		       			  then 
+		       			  	(*let _ = print_string("H: "^(string_of_h_formula h1)^"\n") in*)
+		       			  	h1,(CP.mkTrue no_pos)
+		       			  else 
+	       			 	   (let old_args = CF.get_node_args h1 in
+					   let fresh_args = CP.fresh_spec_vars old_args in
+					   let comb = List.combine old_args fresh_args in
+					   let comb_with_paimm = List.combine comb paimm in
+					   let comb_filtered = List.filter (fun (_,c) -> CF.isMutable c) comb_with_paimm in
+					   let comb,_ = List.split comb_filtered in
+					   let new_h1 = CF.h_subst comb h1 in
+					   (*let _ = print_string("New H: "^(string_of_h_formula new_h1)^"\n") in*)
+		       			   new_h1,(CP.mkTrue no_pos))
+		       			  )
+		       			else h1,(CP.mkTrue no_pos)
+			| _ -> h1,(CP.mkTrue no_pos))	 (* Shouldn't get here *)		       
+	| _ -> h1,(CP.mkTrue no_pos))	 (* Shouldn't get here *)	
+| None , None -> 
+	if String.compare (CF.get_node_name h1) (CF.get_node_name h2) == 0 then
+	(match h1 with
+	| CF.DataNode {CF.h_formula_data_param_imm = paimm;} -> 
+		let old_args = CF.get_node_args h1 in
+		let new_args = CF.get_node_args h2 in
+		let fresh_args = CP.fresh_spec_vars old_args in
+		let comb1 = List.combine fresh_args new_args in
+		let comb2 = List.combine fresh_args old_args in
+		let comb = List.combine comb1 comb2 in
+		let comb_with_paimm = List.combine comb paimm in
+		let comb_filtered = List.filter (fun (_,c) -> CF.isMutable c) comb_with_paimm in
+		let comb,_ = List.split comb_filtered in
+		let _,lst = List.split comb in
+		let fr,ol = List.split lst in
+		let new_h1 = CF.h_subst (List.combine ol fr) h1 in
+		let conjlt = List.map (fun ((v1,v2),(v3,v4)) -> 
+		let p1  = CP.mkEqVar v1 v2 no_pos in
+		let p2  = CP.mkEqVar v3 v4 no_pos in
+		let p = CP.mkOr p1 p2 None no_pos in
+		p
+		) comb in
+		let new_p = CP.join_conjunctions conjlt in
+		new_h1,new_p
+	| _ -> h1,(CP.mkTrue no_pos)) (* Shouldn't get here *)
+	else h1,(CP.mkTrue no_pos)
 	
-let rec ramify_starminus_in_h_formula (f: CF.h_formula) (aset: CP.spec_var list list) : CF.h_formula * CP.formula = 
-  (*let _ = print_string("Compacting :"^ (string_of_h_formula f)^ "\n") in*)
-  if not (!Globals.allow_mem) then f,(CP.mkTrue no_pos) else
+)
+
+let ramify_star (p: CF.h_formula) (ql: CF.h_formula list) (vl:C.view_decl list) (mcp: MCP.mix_formula) : CF.h_formula * CP.formula = 
+match p with
+	| CF.DataNode {CF.h_formula_data_name = name;
+                       CF.h_formula_data_node = dn;
+                       CF.h_formula_data_imm = imm;
+                       CF.h_formula_data_arguments = dargs;
+                       CF.h_formula_data_pos = pos} -> 
+                       if(CF.isMutable imm) then
+                       List.fold_left (fun (h,f) q  -> 
+		       let q_mpf, q_vars  = 
+		       if (CF.is_view q) then
+		       let q_vdef = C.look_up_view_def_raw vl (CF.get_node_name q) in
+		       let q_viewvars = q_vdef.C.view_vars in
+		       q_vdef.C.view_mem,q_viewvars 
+		       else None,[] in
+		       let new_p,f2 = ramify_star_one h None q q_mpf mcp [] q_vars in
+		       let new_f = CP.mkAnd f f2 pos in
+		       (new_p,new_f)) (p,(CP.mkTrue no_pos)) ql
+		       else p,(CP.mkTrue no_pos)		    
+	| CF.ViewNode {CF.h_formula_view_node = vn;
+		       CF.h_formula_view_name = name;
+		       CF.h_formula_view_imm = imm;
+		       CF.h_formula_view_arguments = vargs;
+		       CF.h_formula_view_pos = pos} -> 
+		       let p_vdef = C.look_up_view_def_raw vl name in
+		       let p_mpf = p_vdef.C.view_mem in
+		       let p_vars = p_vdef.C.view_vars in
+		       if(CF.isMutable imm) then
+		       List.fold_left (fun (h,f) q -> 
+		       let q_mpf,q_vars = 
+		       if (CF.is_view q) then
+		       let q_vdef = C.look_up_view_def_raw vl (CF.get_node_name q) in
+		       let q_vars = q_vdef.C.view_vars in
+		       q_vdef.C.view_mem, q_vars
+		       else None,[] in  
+		       let new_p,f2 = ramify_star_one h p_mpf q q_mpf mcp p_vars q_vars in
+		       let new_f = CP.mkAnd f f2 pos in
+		       (new_p,new_f)) (p,(CP.mkTrue no_pos)) ql
+		       else p,(CP.mkTrue no_pos)
+        | _ -> p,(CP.mkTrue no_pos)
+
+let ramify_phase = ramify_star
+
+let ramify_conj = ramify_star
+
+let ramify_conjconj = ramify_star
+
+let ramify_conjstar = ramify_star
+
+let rec ramify_starminus_in_h_formula (f: CF.h_formula) (vl:C.view_decl list) (aset: CP.spec_var list list) (fl: CF.h_formula list)
+func (mcp: MCP.mix_formula ) : CF.h_formula * CP.formula = 
   if not (contains_starminus f) then f,(CP.mkTrue no_pos) else
+  let fl = if not ((List.length fl) > 0) then split_into_list f else fl in
+  (*let _ = print_string("Ramification :"^ (string_of_h_formula f)^ "\n") in*)
     match f with
       | CF.Star {CF.h_formula_star_h1 = h1;
                  CF.h_formula_star_h2 = h2;
-                 CF.h_formula_star_pos = pos } ->             
-	let h1,h2,_ = compact_nodes_op h1 h2 aset join_ann in
-	let res = CF.mkStarH h1 h2 pos 12 in
-	res,(CP.mkTrue no_pos)
+                 CF.h_formula_star_pos = pos } ->  
+        let res_h1,res_p1 = ramify_starminus_in_h_formula h1 vl aset fl ramify_star mcp in
+        let res_h2,res_p2 = ramify_starminus_in_h_formula h2 vl aset fl ramify_star mcp in           
+	let res_h = CF.mkStarH res_h1 res_h2 pos 12 in
+	let res_p = CP.mkAnd res_p1 res_p2 pos in
+	res_h,res_p
       | CF.Conj{CF.h_formula_conj_h1 = h1;
 		CF.h_formula_conj_h2 = h2;
 	        CF.h_formula_conj_pos = pos} ->
-	        let h1,h2,_ = compact_nodes_op h1 h2 aset join_ann_conj in
-		let res = CF.mkConjH h1 h2 pos in
-		res,(CP.mkTrue no_pos)
+        let res_h1,res_p1 = ramify_starminus_in_h_formula h1 vl aset fl ramify_conj mcp in
+        let res_h2,res_p2 = ramify_starminus_in_h_formula h2 vl aset fl ramify_conj mcp in           
+	let res_h = CF.mkConjH res_h1 res_h2 pos in
+	let res_p = CP.mkAnd res_p1 res_p2 pos in
+	res_h,res_p
       | CF.ConjStar{CF.h_formula_conjstar_h1 = h1;
 		CF.h_formula_conjstar_h2 = h2;
 	        CF.h_formula_conjstar_pos = pos} ->
-	        let h1,h2,_ = compact_nodes_op h1 h2 aset join_ann_conjstar in
-		let res = CF.mkConjStarH h1 h2 pos in
-		res,(CP.mkTrue no_pos)
+        let res_h1,res_p1 = ramify_starminus_in_h_formula h1 vl aset fl ramify_conjstar mcp in
+        let res_h2,res_p2 = ramify_starminus_in_h_formula h2 vl aset fl ramify_conjstar mcp in           
+	let res_h = CF.mkConjStarH res_h1 res_h2 pos in
+	let res_p = CP.mkAnd res_p1 res_p2 pos in
+	res_h,res_p
       | CF.ConjConj{CF.h_formula_conjconj_h1 = h1;
 		CF.h_formula_conjconj_h2 = h2;
 	        CF.h_formula_conjconj_pos = pos} ->
-	        let h1,h2,p = compact_nodes_op h1 h2 aset join_ann_conjconj in
-		let res = CF.mkConjConjH h1 h2 pos in
-		res,p		 	        
-      | CF.Phase h ->  let h1_h,h1_p = compact_nodes_with_same_name_in_h_formula h.CF.h_formula_phase_rd aset in
-      		let h2_h,h2_p = compact_nodes_with_same_name_in_h_formula h.CF.h_formula_phase_rw aset in
-      		let _ = CP.mkAnd h1_p h2_p h.CF.h_formula_phase_pos in
-      		CF.Phase {h with CF.h_formula_phase_rd = h1_h;
- 	      CF.h_formula_phase_rw = h2_h;},(CP.mkTrue no_pos)
+        let res_h1,res_p1 = ramify_starminus_in_h_formula h1 vl aset fl ramify_conjconj mcp in
+        let res_h2,res_p2 = ramify_starminus_in_h_formula h2 vl aset fl ramify_conjconj mcp in           
+	let res_h = CF.mkConjConjH res_h1 res_h2 pos in
+	let res_p = CP.mkAnd res_p1 res_p2 pos in
+	res_h,res_p		 	        
+      | CF.Phase {CF.h_formula_phase_rd = h1;
+		CF.h_formula_phase_rw = h2;
+	        CF.h_formula_phase_pos = pos} ->
+        let res_h1,res_p1 = ramify_starminus_in_h_formula h1 vl aset fl ramify_phase mcp in
+        let res_h2,res_p2 = ramify_starminus_in_h_formula h2 vl aset fl ramify_phase mcp in           
+	let res_h = CF.mkPhaseH res_h1 res_h2 pos in
+	let res_p = CP.mkAnd res_p1 res_p2 pos in
+	res_h,res_p
+     | CF.StarMinus({CF.h_formula_starminus_h1 = h1;
+	CF.h_formula_starminus_h2 = h2;
+	CF.h_formula_starminus_pos = pos}) -> 
+	if (CF.is_data h2) || (CF.is_view h2) then 
+	let aset_sv  = Context.get_aset aset (CF.get_node_var h2) in
+	let ramify_list = List.filter (fun c -> let sp_c = (CF.get_node_var c) in
+	((CP.mem sp_c aset_sv) || (CP.eq_spec_var (CF.get_node_var h2) sp_c))) fl in
+	let res_h1, res_p1 = if (List.length ramify_list) > 0 then func h1 ramify_list vl mcp else h1,(CP.mkTrue no_pos) in
+	res_h1,res_p1
+	else CF.HTrue,(CP.mkTrue no_pos)	
       | _ -> f,(CP.mkTrue no_pos)
 	
-let rec ramify_starminus_in_formula (cf: CF.formula): CF.formula =
+let rec ramify_starminus_in_formula (cf: CF.formula) (vl:C.view_decl list): CF.formula =
+  if not (!Globals.allow_mem) then cf else
   match cf with
-    | CF.Base f   -> let new_h,new_p = 
-    	ramify_starminus_in_h_formula f.CF.formula_base_heap (Context.comp_aliases f.CF.formula_base_pure)
+    | CF.Base f   -> 
+        let old_p = f.CF.formula_base_pure in
+        let new_h,new_p = 
+    	ramify_starminus_in_h_formula f.CF.formula_base_heap vl (Context.comp_aliases old_p) [] ramify_star old_p
     	in 
     	let new_mcp = MCP.merge_mems f.CF.formula_base_pure (MCP.mix_of_pure new_p) true in
     	CF.Base { f with
         CF.formula_base_heap = new_h;       
 	CF.formula_base_pure = new_mcp;}
     | CF.Or f     -> CF.Or { f with 
-        CF.formula_or_f1 = ramify_starminus_in_formula f.CF.formula_or_f1; 
-        CF.formula_or_f2 = ramify_starminus_in_formula f.CF.formula_or_f2; }
+        CF.formula_or_f1 = ramify_starminus_in_formula f.CF.formula_or_f1 vl; 
+        CF.formula_or_f2 = ramify_starminus_in_formula f.CF.formula_or_f2 vl; }
     | CF.Exists f -> 
     	let qevars = f.CF.formula_exists_qvars in 
     	let h = f.CF.formula_exists_heap in
     	let mp = f.CF.formula_exists_pure in
     	let new_h,new_p = 
-    	ramify_starminus_in_h_formula h (Context.comp_aliases mp)
+    	ramify_starminus_in_h_formula h vl (Context.comp_aliases mp) [] ramify_star mp
     	in
  	let new_mcp = MCP.merge_mems mp (MCP.mix_of_pure new_p) true in
     	CF.Exists { f with

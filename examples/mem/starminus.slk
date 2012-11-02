@@ -13,16 +13,79 @@ data cell{
 }.
 
 pred ll<v,M> ==  self = null & M = {} & v = 0
-	or self::node<0,p> * p::ll<0,Mp> & M = union(Mp,{self}) & v = 1
-	or self::node<_@I,p> * p::ll<1,Mp> & M = union(Mp,{self}) & v = 2
+	or self::node<0,p> * p::ll<1,Mp> & M = union(Mp,{self}) & v = 1
+	or self::node<1@I,p> * p::ll<2,Mp> & M = union(Mp,{self}) & v = 2
 	inv 0<=v<=2
 	memE M->(node<@M,@M> & v = 1 ; node<@I,@M> & v = 2).
 	
 checkentail 	f::cell<v> *- s::cell<r> |- emp.
 print residue.
+//(1)
 
 checkentail 	f::cell<v> *- (t::cell<_> * s::cell<r>) |- f::cell<_>.
 print residue.
+//(2) Should Fail
 	
+checkentail  s::cell<1> * (f::cell<v> *- s::cell<r>)  & v != 1 & r != 1 |- f::cell<v> & s::cell<1> & v != 1.
+print residue.
+//(3) Should Fail
+
 checkentail  s::cell<1> * (f::cell<v> *- s::cell<r>)  & v != 1 & r != 1 |- f::cell<_> & s::cell<1>.
 print residue.
+//(4)
+
+checkentail  f::cell<1> * (s::cell<1> *- f::cell<r>)  & v != 1 & r != 1 |- f::cell<1> & s::cell<1>.
+print residue.
+//(5)
+
+checkentail x::node<1,_> * (c::node<v,p> *- x::ll<u,M>) & v != 1 & u != 1 |- c::node<v,p> & x::node<1,_> & v!= 1.
+print residue.
+//(6) Should Fail
+
+checkentail x::node<1,_> * (c::node<v,p> *- x::ll<u,M>) & v != 1 & u != 1 |- c::node<_,p> & x::node<1,_>.
+print residue.
+//(7) Should Fail
+
+checkentail x::node<1,_> * (c::node<v,p> *- x::ll<u,M>) & v != 1 & u != 1 |- c::node<_,_> & x::node<1,_>.
+print residue.
+//(8)
+
+checkentail x::node<1,_> * (c::node<v,p>@I *- x::ll<u,M>) & v != 1 & u != 1 |- c::node<v,p>@I & x::node<1,_> & v != 1.
+print residue.
+//(9)
+
+checkentail x::node<1,_> * (y::ll<v,N>@I *- x::ll<u,M>) & v != 1 & u != 1 |- y::ll<v,N>@I & x::node<1,_> & v != 1.
+print residue.
+//(10)
+
+checkentail x::node<1,_> * (y::ll<v,N>@I *- x::ll<u,M>) & v != 1 & u != 1 |- y::ll<v,N>@I & v != 1.
+print residue.
+//(11)
+
+checkentail x::pair<1,1> * (y::pair<f@I,s@I> *- x::pair<_,_>) & f != 1 & s != 1 |- x::pair<1,1> & y::pair<f@I,s@I> & f!=1.
+print residue.
+//(12)
+
+checkentail x::pair<1,1> * (y::pair<f@I,s> *- x::pair<_,_>) & f != 1 & s != 1 |- x::pair<1,1> & y::pair<f@I,s> & f!=1 & s != 1.
+print residue.
+//(13) Should Fail
+
+checkentail x::pair<1,1> * (y::pair<f@I,s> *- x::pair<_,_>) & f != 1 & s != 1 |- x::pair<1,1> & y::pair<f@I,_> & f!=1 .
+print residue.
+//(14)
+
+checkentail x::ll<2,Mx> * (y::node<0,_> *- x::ll<1,Mx>) |- x::ll<2,Mx> & y::node<0,_>.
+print residue.
+//(15) Should Fail
+
+checkentail x::ll<2,Mx> * (y::node<0,_> *- x::ll<1,Mx>) |- x::ll<2,Mx> & y::node<_,_>.
+print residue.
+//(16)
+
+checkentail x::ll<2,Mx> * (y::node<1@I,_> *- x::ll<1,Mx>) |- x::ll<2,Mx> & y::node<1@I,_>.
+print residue.
+//(17)
+
+checkentail x::ll<1,Mx> * (y::node<1,_> *- x::ll<1,Mx>) |- x::ll<1,Mx> & y::node<1,_>.
+print residue.
+//(18)
