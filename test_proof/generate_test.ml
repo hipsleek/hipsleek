@@ -1,3 +1,5 @@
+open Printf
+
 let vn = "x" (*define variable name*)
 let bn = "b" (*define boolean variable name*)
 	
@@ -30,19 +32,29 @@ let helper_ensures num_vars=
 		let vnt i = vn^(string_of_int i) in
 		let _= 
       		while !i < num_vars-1; do
-      			str := !str^(vnt !i)^(string_of_int !i)^"= "^(vnt !i)^"+"^add_num^" & ";
+      			str := !str^(vnt !i)^"'"^"= "^(vnt !i)^"+"^add_num^" & ";
       			i := !i+1 
       		done;
-        	str := !str^(vnt !i)^(string_of_int !i)^"= "^(vnt !i)^"+"^add_num^";";
+        	str := !str^(vnt !i)^"'"^"= "^(vnt !i)^"+"^add_num^";";
     in	!str	
 
-let helper_body1 num_vars alg=
+let num_tabs k= 
+	let i = ref 0 in
+		let str = ref "" in
+		let _= 
+      		while !i < k; do
+      			str := !str^"\t";
+						i := !i+1
+      		done;
+    in	!str	
+		
+let helper_body1 num_vars alg num=
 	let i = ref 0 in
 		let str = ref "" in
 		let add_num = "1" in
 		let _= 
       		while !i < num_vars; do
-      			str := !str^"\t"^vn^(string_of_int !i)^"= "^vn^(string_of_int !i)^alg^add_num^";\n";
+      			str := !str^(num_tabs num)^vn^(string_of_int !i)^"= "^vn^(string_of_int !i)^alg^add_num^";\n";
       			i := !i+1 
       		done;
     in	!str	
@@ -66,12 +78,8 @@ let helper_body3 num_vars=
 		let _= 
       		while !i < num_vars; do
             str := !str^"\t"^"if ("^bn^(string_of_int !i)^")\n\t"^"{\n";
-						if(!i mod 2 = 0) then alg := "+" else alg := "-";			
-						while !j < num_vars; do				
-      			str := !str^"\t"^(helper_body1 1 !alg);
-					  j := !j+1 
-						done;
-						j := 0;
+						if(!i mod 2 = 0) then alg := "+" else alg := "-";							
+      			str := !str^(helper_body1 num_vars !alg 2);
       			i := !i+1 
       		done;
 					while !j < num_vars; do				
@@ -85,7 +93,7 @@ let construct_string num_vars =
   let declare_fun = "void spring ("^declare_args^")\n" in (*1*)
 	let declare_requires = "requires "^helper2 num_vars^"\n" in (*2*)
 	let declare_ensures = "ensures "^helper_ensures num_vars^"\n{\n" in (*3*)
-	let temp= helper_body1 num_vars "+" in
+	let temp= helper_body1 num_vars "+" 1 in
 	let declare_body1= temp^temp in
 	let declare_body2=helper_body2 num_vars in
 	let declare_body3 = helper_body3 num_vars in
@@ -93,13 +101,12 @@ let construct_string num_vars =
 
 let generate_test num_vars =	 
 	if (num_vars >= 2) then
-		print_endline (construct_string num_vars)
-		(* let oc =                                              *)
-		(* (try Unix.mkdir "spring" 0o750 with _ -> ());         *)
-		(* let with_option= string_of_int num_vars in            *)
-		(* open_out ("spring/spring-"^with_option^".ss") in      *)
-		
-		(* let _= fprintf oc "%s" (construct_string num_vars) in *)
-		(* close_out oc                                          *)
+		let _=print_endline (construct_string num_vars) in
+		let oc =
+		(try Unix.mkdir "spring" 0o750 with _ -> ());
+		let with_option= string_of_int num_vars in
+		open_out ("spring/spring-"^with_option^".ss") in
+		let _= fprintf oc "%s" (construct_string num_vars) in
+		close_out oc
 	else 
 		print_endline ("Should provide a number >= 2")
