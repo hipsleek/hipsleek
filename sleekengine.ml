@@ -546,14 +546,14 @@ let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
 let run_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (exact: bool option) =
-  (* store the current value of do_checkentail_exact *)
-  let flag = !Globals.do_checkentail_exact in
-  Globals.do_checkentail_exact := (match exact with
-    | None -> !Globals.do_classic_reasoning;
+  (* store the current value of do_classic_frame_rule *)
+  let flag = !Globals.do_classic_frame_rule in
+  Globals.do_classic_frame_rule := (match exact with
+    | None -> !Globals.option_classic;
     | Some b -> b);
   let res = run_infer_one_pass [] iante iconseq in
-  (* restore flag do_checkentail_exact *)
-  Globals.do_checkentail_exact := flag;
+  (* restore flag do_classic_frame_rule *)
+  Globals.do_classic_frame_rule := flag;
   res
 
 (* the value of flag "exact" decides the type of entailment checking              *)

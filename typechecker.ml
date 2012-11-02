@@ -1067,12 +1067,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       (ps@res)
 	        end
 	      in
-        (* store flag do_checkentail_exact  *)
-        let flag = !Globals.do_checkentail_exact in
-        Globals.do_checkentail_exact := !Globals.do_classic_reasoning;
+        (* store flag do_classic_frame_rule  *)
+        let flag = !Globals.do_classic_frame_rule in
+        Globals.do_classic_frame_rule := !Globals.option_classic;
         let res = wrap_proving_kind "ASSERT/ASSUME" assert_op () in
-        (* restore flag do_checkentail_exact  *)
-        Globals.do_checkentail_exact := flag;
+        (* restore flag do_classic_frame_rule  *)
+        Globals.do_classic_frame_rule := flag;
         res
         | Assign ({ exp_assign_lhs = v;
           exp_assign_rhs = rhs;
@@ -1780,12 +1780,12 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   Debug.no_2 "check_post" pr pr1 pr (fun _ _ -> f pid) ctx post
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
-  (* store flag do_checkentail_exact  *)
-  let flag = !Globals.do_checkentail_exact in
-  Globals.do_checkentail_exact := !Globals.do_classic_reasoning;
+  (* store flag do_classic_frame_rule  *)
+  let flag = !Globals.do_classic_frame_rule in
+  Globals.do_classic_frame_rule := !Globals.option_classic;
   let res = check_post_x_x prog proc ctx post pos pid in
-  (* restore flag do_checkentail_exact  *)
-  Globals.do_checkentail_exact := flag;
+  (* restore flag do_classic_frame_rule  *)
+  Globals.do_classic_frame_rule := flag;
   res
 
 and pr_spec = Cprinter.string_of_struc_formula

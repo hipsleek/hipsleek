@@ -4631,7 +4631,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                               Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: conseq has an empty heap component"
                                               ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
                                               ^ "\nconseq:\n"  ^ (Cprinter.string_of_formula conseq))) pos;
-                                              if (!Globals.do_checkentail_exact && not(estate.es_allow_residue) && (h1 != HEmp) && (h1 != HFalse) && (h2 = HEmp)) then (
+                                              if (!Globals.do_classic_frame_rule && not(estate.es_allow_residue) && (h1 != HEmp) && (h1 != HFalse) && (h2 = HEmp)) then (
                                                   let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
                                                   let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must "residue is forbidden." "" )) in
                                                   let proof = mkForbidResidue ctx0 conseq in

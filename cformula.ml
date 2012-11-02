@@ -54,7 +54,6 @@ and struc_formula =
   | EBase of struc_base_formula
   | EAssume of ((Cpure.spec_var list) * formula * formula_label)
   | EInfer of struc_infer_formula
-  
 
 and struc_or_formula = 
   {

@@ -59,14 +59,14 @@ let run_entail_check_helper (iante: lem_formula) (iconseq: lem_formula) (cprog: 
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
 let run_entail_check (iante : lem_formula) (iconseq : lem_formula) (cprog: C.prog_decl) (exact : bool option) =
-  (* store the current value of do_checkentail_exact *)
-  let flag = !Globals.do_checkentail_exact in
-  Globals.do_checkentail_exact := (match exact with
-    | None -> !Globals.do_classic_reasoning;
+  (* store the current value of do_classic_frame_rule *)
+  let flag = !Globals.do_classic_frame_rule in
+  Globals.do_classic_frame_rule := (match exact with
+    | None -> !Globals.option_classic;
     | Some b -> b);
   let res = run_entail_check_helper iante iconseq cprog in
-  (* restore flag do_checkentail_exact *)
-  Globals.do_checkentail_exact := flag;
+  (* restore flag do_classic_frame_rule *)
+  Globals.do_classic_frame_rule := flag;
   res
 
 let print_exc (check_id: string) =

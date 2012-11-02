@@ -287,6 +287,8 @@ let peek_try =
          | [GT,_;CPAREN,_] -> raise Stream.Failure  
          | [GT,_;SEMICOLON,_]-> raise Stream.Failure
          | [GT,_;ENSURES,_]-> raise Stream.Failure
+         | [GT,_;ENSURES_EXACT,_]-> raise Stream.Failure
+         | [GT,_;ENSURES_INEXACT,_]-> raise Stream.Failure
          | [GT,_;IMM,_] -> raise Stream.Failure 
          | [GT,_;AT,_] -> raise Stream.Failure 
          | [GT,_;MUT,_] -> raise Stream.Failure 
@@ -359,13 +361,6 @@ let peek_try =
           | [FLOAT,_;OSQUARE,_] -> ()
           | [BOOL,_;OSQUARE,_] -> ()
           |  _ -> raise Stream.Failure)
-
- (* let peek_ensures =  *)
- (* SHGram.Entry.of_parser "peek_ensures"  *)
- (*     (fun strm -> *)
- (*       match Stream.npeek 3 strm with *)
- (*          | [ENSURES,_;i,_;j,_]-> print_string((Token.to_string i)^(Token.to_string j));() *)
- (*          | _ -> raise Stream.Failure) *)
 
 let peek_print = 
 SHGram.Entry.of_parser "peek_print"
