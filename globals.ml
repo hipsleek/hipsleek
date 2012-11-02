@@ -264,7 +264,11 @@ let post_pos = new prog_loc
 let proving_kind = new proving_type
 let explain_mode = new failure_mode
 let return_exp_pid = ref ([]: control_path_id list)	
+let z3_proof_log_list = ref ([]: string list)
 
+let add_to_z3_proof_log_list (f: string) =
+	z3_proof_log_list := !z3_proof_log_list @ [f]
+	 
 let proving_info () = 
 	if(proving_kind # is_avail) then
 		   (

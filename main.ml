@@ -195,11 +195,14 @@ let process_source_full source =
 	let tstartlog = Gen.Profiling.get_time ()in	
 	let _= Log.proof_log_to_file () in
         let fname = ("logs/proof_log_"^Globals.norm_file_name (List.hd !Globals.source_files))^".txt" in
+				let fz3name= ("logs/z3_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
 	let _= if (!Globals.proof_logging_txt) 
         then 
           begin
             Debug.info_pprint ("Logging "^fname^"\n") no_pos;
-            Log.proof_log_to_text_file ()
+						Debug.info_pprint ("Logging "^fz3name^"\n") no_pos;
+            Log.proof_log_to_text_file ();
+						Log.z3_proofs_list_to_file ()
           end
 	else try Sys.remove fname 
           (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *)
