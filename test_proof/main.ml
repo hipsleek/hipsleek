@@ -199,7 +199,8 @@ let main_runz3 () =
 
 let main_generate_tests () =
   let num_vars= !Globals.num_vars_test in
-	Generate_test.generate_test num_vars
+	let _=Generate_test.generate_test num_vars in
+	print_endline ("Generated file in: spring/spring-"^(string_of_int num_vars)^".ss")
 ;;
 
 
