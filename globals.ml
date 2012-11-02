@@ -664,11 +664,17 @@ let delay_if_sat = ref false
 (* Options for invariants *)
 let do_infer_inv = ref false
 
-(* Option for using classical reasoning in separation logic *)
-let do_classic_reasoning = ref false
+(** for classic frame rule of separation logic *)
+let opt_classic = ref false                (* option --classic is turned on or not? *)
+let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
 
-(* Flag decide whether check entailment exactly (no residue) or inexactly (allow residue) *)
-let do_checkentail_exact = ref false
+(** for type of frame inference rule that will be used in specs commands *)
+(* type = None       --> option --classic will be used to decides whether using classic rule or not? *)
+(*        Some true  --> always perform classic rule, regardless of --classic option                 *)
+(*        Some false --> always perform intutitive rule, regardless of --classic option              *)
+type ensures_type = bool option
+type assert_type = bool option
+type entail_type = bool option
 
 (* Options for abduction *)
 let do_abd_from_post = ref false
@@ -840,9 +846,8 @@ let formula_cache_no_series = ref 0
 let fresh_formula_cache_no  () = 
   formula_cache_no_series := !formula_cache_no_series +1;
   !formula_cache_no_series
-    
-let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
+let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
 let string_of_loc (p : loc) = p.start_pos.Lexing.pos_fname ^ "_" ^ (string_of_int p.start_pos.Lexing.pos_lnum)^"_"^
 	(string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol))

@@ -310,16 +310,10 @@ module SleekHelper = struct
     | SC.PredDef pdef -> 
         log "processing pred def";
         SE.process_pred_def pdef; None
-    | SC.EntailCheck (iante, iconseq) -> 
+    | SC.EntailCheck (iante, iconseq, etype) -> 
         log "processing entail check";
-        Globals.do_checkentail_exact := !Globals.do_classic_reasoning; 
-        Some (SE.run_entail_check_common iante iconseq)
-    | SC.EntailCheckExact (iante, iconseq) -> 
-        log "processing entail check exactly";
-        Some (SE.run_entail_check_exact iante iconseq)
-    | SC.EntailCheckInexact (iante, iconseq) -> 
-        log "processing entail check inexactly";
-        Some (SE.run_entail_check_inexact iante iconseq)
+        Globals.do_classic_frame_rule := !Globals.opt_classic; 
+        Some (SE.run_entail_check iante iconseq etype)
     | SC.CaptureResidue lvar -> 
         log "processing capture residue";
         SE.process_capture_residue lvar; None
