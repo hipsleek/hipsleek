@@ -313,13 +313,13 @@ module SleekHelper = struct
     | SC.EntailCheck (iante, iconseq) -> 
         log "processing entail check";
         Globals.do_checkentail_exact := !Globals.do_classic_reasoning; 
-        Some (SE.run_entail_check_common iante iconseq)
+        Some (SE.run_entail_check iante iconseq None)
     | SC.EntailCheckExact (iante, iconseq) -> 
         log "processing entail check exactly";
-        Some (SE.run_entail_check_exact iante iconseq)
+        Some (SE.run_entail_check iante iconseq (Some true))
     | SC.EntailCheckInexact (iante, iconseq) -> 
         log "processing entail check inexactly";
-        Some (SE.run_entail_check_inexact iante iconseq)
+        Some (SE.run_entail_check iante iconseq (Some false))
     | SC.CaptureResidue lvar -> 
         log "processing capture residue";
         SE.process_capture_residue lvar; None

@@ -112,9 +112,9 @@ let parse_file (parse) (source_file : string) =
     | EntailCheck _ | EntailCheckExact _ | EntailCheckInexact _ -> () in
   let proc_one_cmd c = 
     match c with
-    | EntailCheck (iante, iconseq) -> process_entail_check_common iante iconseq
-    | EntailCheckExact (iante, iconseq) -> process_entail_check_exact iante iconseq
-    | EntailCheckInexact (iante, iconseq) -> process_entail_check_inexact iante iconseq
+    | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq None
+    | EntailCheckExact (iante, iconseq) -> process_entail_check iante iconseq (Some true)
+    | EntailCheckInexact (iante, iconseq) -> process_entail_check iante iconseq (Some false)
     | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
     | CaptureResidue lvar -> process_capture_residue lvar
     | PrintCmd pcmd -> process_print_command pcmd
@@ -197,9 +197,9 @@ let main () =
                      | FuncDef fdef -> process_func_def fdef
                      | RelDef rdef -> process_rel_def rdef
                      | AxiomDef adef -> process_axiom_def adef
-                     | EntailCheck (iante, iconseq) -> process_entail_check_common iante iconseq
-                     | EntailCheckExact (iante, iconseq) -> process_entail_check_exact iante iconseq
-                     | EntailCheckInexact (iante, iconseq) -> process_entail_check_inexact iante iconseq
+                     | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq None
+                     | EntailCheckExact (iante, iconseq) -> process_entail_check iante iconseq (Some true)
+                     | EntailCheckInexact (iante, iconseq) -> process_entail_check iante iconseq (Some false)
                      | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
                      | CaptureResidue lvar -> process_capture_residue lvar
                      | LemmaDef ldef ->   process_lemma ldef
