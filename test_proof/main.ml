@@ -168,14 +168,13 @@ let main_fnc () =
   end
 ;;
 
-let main2 () =
-  let _= process_cmd_line () in
+let main_runz3 () =
   let (formula_list,last)= read_file_2 !Globals.source_file in
   let (pin,pout,perr,id)=start () in (*start z3 with interactive mode*)
   begin 
 	   	let helper chi =
               let str_list= icollect_output chi [] in
-			  let _=List.map (fun x-> print_endline (x)) str_list in ()
+			        let _=List.map (fun x-> print_endline (x)) str_list in ()
 			in
 	  	let i= ref 0 in
         let _= output_string (pout) "(push 0)\n" in
@@ -198,5 +197,18 @@ let main2 () =
   end
 ;;
 
-let _= main2 () in ()
+let main_generate_tests () =
+  let num_vars= !Globals.num_vars_test in
+	Generate_test.generate_test num_vars
+;;
+
+
+(*-------------------Execute main here--------------------------*)
+let _= process_cmd_line () in
+  if(!Globals.num_vars_test = 0) then
+     let _= main_runz3 () in ()
+	else 
+		 let _= main_generate_tests () in ()
+(*--------------------------------------------------------------*)
+			
 ;;

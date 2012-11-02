@@ -3,6 +3,8 @@
 let run_specific_arguments = [ 
   ("-n", Arg.String Globals.set_number_exec, 
    "The number of execution");
+	("-gent", Arg.String Globals.set_do_generate_test, 
+   "Automatically generate tests");
   ] 
 
 (* all hip's arguments and flags *)	
