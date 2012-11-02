@@ -3164,9 +3164,9 @@ and heap_entail_one_context prog is_folding  ctx conseq (tid: CP.spec_var option
 and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : context) (conseq : formula) pos : (list_context * proof) =
 	 Debug.devel_zprint (lazy ("heap_entail_one_context:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)^"\n")) pos;
     if isAnyFalseCtx ctx then (* check this first so that false => false is true (with false residual) *)
-			  (SuccCtx [ctx], UnsatAnte)
-    else if 	
-	  isStrictConstTrue conseq || isTrivTerm conseq || trivFlowDischarge ctx conseq then (SuccCtx [ctx], TrueConseq)
+      (SuccCtx [ctx], UnsatAnte)
+    else if (not !Globals.do_classic_frame_rule) && (isStrictConstTrue conseq || isTrivTerm conseq || trivFlowDischarge ctx conseq) then
+      (SuccCtx [ctx], TrueConseq)
     else
       (* UNSAT check *)
       let ctx = elim_unsat_ctx prog (ref 1) ctx in
