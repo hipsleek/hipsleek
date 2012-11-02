@@ -235,6 +235,13 @@ class ['a] store (x_init:'a) (epr:'a->string) =
        | Some l -> (epr l)
    end;;
 
+(* this will be set to true when we are in error explanation module *)
+class failure_mode =
+object
+  inherit [bool] store false string_of_bool
+end;;
+
+
 class prog_loc =
 object
   inherit [loc] store no_pos string_of_loc
@@ -255,15 +262,17 @@ end;;
 let proving_loc  = new prog_loc
 let post_pos = new prog_loc
 let proving_kind = new proving_type
+let explain_mode = new failure_mode
 let return_exp_pid = ref ([]: control_path_id list)	
 
 let proving_info () = 
 	if(proving_kind # is_avail) then
 		   (
+				  let temp= if(explain_mode # is_avail) then "FAILURE EXPLAINATION" else proving_kind # string_of in
       		if (post_pos # is_avail) 
-          then ("Proving Infor spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^(proving_kind # string_of))
+          then ("Proving Infor spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^temp)
           else if(proving_loc # is_avail)
-      	  then ("Proving Infor spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^(proving_kind # string_of))
+      	  then ("Proving Infor spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^temp)
 					else "..."
        )
 	else "..."(*"who called is_sat,imply,simplify to be displayed later..."*)
@@ -648,6 +657,9 @@ let opt_ineq = ref false
 let infer_slicing = ref false
 let multi_provers = ref false
 let is_sat_slicing = ref false
+let delay_case_sat = ref false
+let force_post_sat = ref false
+let delay_if_sat = ref false
 
 (* Options for invariants *)
 let do_infer_inv = ref false

@@ -24,7 +24,7 @@ let last_trace  = new es_trace
 let compare_control_path path_list id_strict =
 	let eq_path_id pid1 pid2 = match pid1, pid2 with
     | Some (i1, s1), (i2,s2) -> i1 = i2
-    | None _, _-> false
+    | None , _-> false
   in
 	List.find ( fun ex-> eq_path_id ex id_strict) path_list                                                                                
 

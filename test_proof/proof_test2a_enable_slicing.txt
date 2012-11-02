@@ -1,0 +1,135 @@
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:3,Col:10) kind::CHECK-SPECS...
+id: 111
+Prover: OMEGA CALCULATOR
+Type: Sat:  0<=y'
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:3,Col:10) kind::CHECK-SPECS...
+id: 112
+Prover: OMEGA CALCULATOR
+Type: Sat:  3<=x'
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:3,Col:10) kind::CHECK-SPECS...
+id: 113
+Prover: OMEGA CALCULATOR
+>> REDUNDANT ***
+Type: Sat:  MayLoop
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:5,Col:10) kind::PRE-2
+Trace::[(c_id:70:,p_label: -1)]
+
+id: 114
+Prover: OMEGA CALCULATOR
+>> REDUNDANT ***
+>>   0<=y'
+Type: Sat:  0<=y'
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:5,Col:10) kind::PRE-2
+Trace::[(c_id:70:,p_label: -1)]
+
+id: 115
+Prover: OMEGA CALCULATOR
+Type: Sat:  3<=x & res=1+x
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:6,Col:10) kind::PRE-2
+Trace::[(c_id:140:,p_label: 79),(c_id:70:,p_label: -1)]
+
+id: 116
+Prover: OMEGA CALCULATOR
+Type: Sat:  x'=1+x & (1*1)+res=x' & 3<=x
+Time: 0.004
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:6,Col:10) kind::PRE-2
+Trace::[(c_id:140:,p_label: 79),(c_id:70:,p_label: -1)]
+
+id: 117
+Prover: OMEGA CALCULATOR
+>> REDUNDANT ***
+>>   0<=y'
+Type: Sat:  0<=y'
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:7,Col:10) kind::PRE-2
+Trace::[(c_id:142:,p_label: 80),(c_id:140:,p_label: 79),(c_id:70:,p_label: -1)]
+
+id: 118
+Prover: OMEGA CALCULATOR
+Type: Sat:  0<=y & res=1+y
+Time: 0.004
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:7,Col:10) kind::PRE-2
+Trace::[(c_id:142:,p_label: 80),(c_id:140:,p_label: 79),(c_id:70:,p_label: -1)]
+
+id: 119
+Prover: OMEGA CALCULATOR
+>> REDUNDANT ***
+>>  x'=1+x & (1*1)+res=x' & 3<=x
+Type: Sat:  3<=x & (1*1)+x'=1+x
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:8,Col:10) kind::PRE-2
+Trace::[(c_id:144:,p_label: 79),(c_id:142:,p_label: 80),(c_id:140:,p_label: 79),(c_id:70:,p_label: -1)]
+
+id: 120
+Prover: OMEGA CALCULATOR
+Type: Sat:  y'=1+y & res=1+y' & 0<=y
+Time: 0.004
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:8,Col:10) kind::PRE-2
+Trace::[(c_id:144:,p_label: 79),(c_id:142:,p_label: 80),(c_id:140:,p_label: 79),(c_id:70:,p_label: -1)]
+
+id: 121
+Prover: OMEGA CALCULATOR
+>> REDUNDANT ***
+>>  3<=x & (1*1)+x'=1+x
+Type: Sat:  3<=x & (1*1)+x'=1+x
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:8,Col:10) kind::POST
+Trace::[(c_id:146:,p_label: 79),(c_id:144:,p_label: 79),(c_id:142:,p_label: 80),(c_id:140:,p_label: 79),(c_id:70:,p_label: -1)]
+
+id: 122
+Prover: OMEGA CALCULATOR
+Type: Imply: ante: 0<=y & y'=1+1+y
+	     conseq:  2<=y'
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:8,Col:10) kind::POST
+Trace::[(c_id:146:,p_label: 79),(c_id:144:,p_label: 79),(c_id:142:,p_label: 80),(c_id:140:,p_label: 79),(c_id:70:,p_label: -1)]
+
+id: 123
+Prover: OMEGA CALCULATOR
+Type: Imply: ante: 3<=x & (1*1)+x'=1+x
+	     conseq:  x=x'
+Time: 0.004001
+Result: true

@@ -77,7 +77,7 @@ let undef_data_types = ref([] : (string * loc) list)
 (** An Hoa : Alias for the Scriptarguments.inter, necessary because this module
 			is compiled prior to Scriptarguments.
  **)
-let inter = ref false
+let inter_hoa = ref false
 
 (* let op_map = Hashtbl.create 19 *)
 
@@ -1721,7 +1721,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_loc = proc.I.proc_loc;} in 
 	  (E.pop_scope (); cproc))))
 	in
-	wrap_proving_kind ("TRANS_PROC: "^proc.I.proc_name) trans_proc_x_op ()
+	wrap_proving_kind ("TRANS_PROC"(*^proc.I.proc_name*)) trans_proc_x_op ()
+	
 (** An Hoa : collect important variables in the specification
 	Important variables are the ones that appears in the
 	post-condition. Those variables are necessary in order
@@ -6576,10 +6577,10 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       ((formula_label list * (Gen.Baga(CP.PtrSV).baga * Cpure.b_formula list)) list) = 
   (*print_string ("sent to case inf: "^(Cprinter.string_of_formula init_form)^"\n");*)
   (*aux functions for case inference*)
-  let rec get_or_list (f: CF.formula):CF.formula list = match f with
-    | CF.Base _
-    | CF.Exists _ -> [f]
-    | CF.Or o -> (get_or_list o.CF.formula_or_f1)@(get_or_list o.CF.formula_or_f2) in
+  (* let rec get_or_list (f: CF.formula):CF.formula list = match f with *)
+  (*   | CF.Base _ *)
+  (*   | CF.Exists _ -> [f] *)
+  (*   | CF.Or o -> (get_or_list o.CF.formula_or_f1)@(get_or_list o.CF.formula_or_f2) in *)
   
   let rec get_pure_conj_list (f:CP.formula):(CP.formula * (bool*CP.b_formula) list) = match f with
     | CP.BForm (l,_) -> (CP.mkTrue no_pos , [(true,l)])

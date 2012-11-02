@@ -555,6 +555,15 @@ and isStrictConstTrue_x f = match f with
 and isStrictConstTrue (f:formula) = 
   Debug.no_1 "isStrictConstTrue" !print_formula string_of_bool isStrictConstTrue_x f
 
+and isTrivTerm_x f = match f with
+  | Base ({formula_base_heap = HEmp;formula_base_pure = p; formula_base_flow = fl;})
+  | Exists ({formula_exists_heap = HEmp;formula_exists_pure = p; formula_exists_flow = fl;}) ->  MCP.isTrivMTerm p && is_top_flow fl.formula_flow_interval
+	        (* don't need to care about formula_base_type  *)
+  | _ -> false
+  
+and isTrivTerm (f:formula) = 
+	Debug.no_1 "isTrivTerm" !print_formula string_of_bool isTrivTerm_x f
+  
 (* TRUNG TODO: should change name to isAnyConstEmp ? *)
 and isAnyConstTrue f = match f with
   | Exists ({formula_exists_heap = HEmp;
@@ -985,16 +994,16 @@ and mkETrue flowt pos = EBase({
 	formula_struc_pos = pos})
   
 and mkOr f1 f2 pos =
-  let rec liniarize_or c = match c with
-	| Or f -> 
-		  let p11,p12,p13 = liniarize_or f.formula_or_f1 in
-		  let p21,p22,p23 = liniarize_or f.formula_or_f2 in
-		  (p11@p21, p12@p22, p13@p23)
-	| Exists _ -> ([],[],[c]) 
-	| Base f -> 
-		  if (isAnyConstFalse c) then ([],[c],[])
-		  else if (isAnyConstTrue c) then ([c],[],[])
-		  else ([],[],[c]) in
+  (* let rec liniarize_or c = match c with *)
+  (*       | Or f ->  *)
+  (*       	  let p11,p12,p13 = liniarize_or f.formula_or_f1 in *)
+  (*       	  let p21,p22,p23 = liniarize_or f.formula_or_f2 in *)
+  (*       	  (p11@p21, p12@p22, p13@p23) *)
+  (*       | Exists _ -> ([],[],[c])  *)
+  (*       | Base f ->  *)
+  (*       	  if (isAnyConstFalse c) then ([],[c],[]) *)
+  (*       	  else if (isAnyConstTrue c) then ([c],[],[]) *)
+  (*       	  else ([],[],[c]) in *)
   if isStrictConstTrue f1 || isStrictConstTrue f2 then
 	mkTrue (mkTrueFlow ()) pos
   else if isAnyConstFalse f1 then f2
@@ -1865,13 +1874,13 @@ and fv (f : formula) : CP.spec_var list = match f with
 		res
 	
 and f_h_fv (f : formula) : CP.spec_var list = 
-	let rec helper h = match h with
-	  | Star b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_star_h1 @ helper b.h_formula_star_h2)
-	  | Conj b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_conj_h1 @ helper b.h_formula_conj_h2)
-	  | Phase b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_phase_rd @ helper b.h_formula_phase_rw)
-	  | DataNode b -> [b.h_formula_data_node]
-	  | ViewNode b -> [b.h_formula_view_node]
-	  | HTrue | HFalse | HEmp | Hole _ -> [] in
+	(* let rec helper h = match h with *)
+	(*   | Star b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_star_h1 @ helper b.h_formula_star_h2) *)
+	(*   | Conj b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_conj_h1 @ helper b.h_formula_conj_h2) *)
+	(*   | Phase b ->  Gen.BList.remove_dups_eq (=) (helper b.h_formula_phase_rd @ helper b.h_formula_phase_rw) *)
+	(*   | DataNode b -> [b.h_formula_data_node] *)
+	(*   | ViewNode b -> [b.h_formula_view_node] *)
+	(*   | HTrue | HFalse | HEmp | Hole _ -> [] in *)
 	match f with
 	  | Or b -> CP.remove_dups_svl (fv b.formula_or_f1 @ fv b.formula_or_f2)
 	  | Base b -> h_fv b.formula_base_heap
@@ -4992,27 +5001,27 @@ and convert_must_failure_to_value (l:list_context) ante_flow conseq (bug_verifie
         end
 (*23.10.2008*)
 
-and compose_context_formula_x (ctx : context) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) : context = match ctx with
+and compose_context_formula_x (ctx : context) (phi : formula) (x : CP.spec_var list) (force_sat:bool) flow_tr (pos : loc) : context = match ctx with
   | Ctx es -> begin
 	  match phi with
 		| Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
-			let new_c1 = compose_context_formula_x ctx phi1 x flow_tr pos in
-			let new_c2 = compose_context_formula_x ctx phi2 x flow_tr pos in
+			let new_c1 = compose_context_formula_x ctx phi1 x force_sat flow_tr pos in
+			let new_c2 = compose_context_formula_x ctx phi2 x force_sat flow_tr pos in
 			let res = (mkOCtx new_c1 new_c2 pos ) in
 			  res
-		| _ -> Ctx {es with es_formula = compose_formula es.es_formula phi x flow_tr pos; es_unsat_flag =false;}
+		| _ -> Ctx {es with es_formula = compose_formula es.es_formula phi x flow_tr pos; es_unsat_flag = (not force_sat) && es.es_unsat_flag;}
 	end
   | OCtx (c1, c2) -> 
-	  let new_c1 = compose_context_formula_x c1 phi x flow_tr pos in
-	  let new_c2 = compose_context_formula_x c2 phi x flow_tr pos in
+	  let new_c1 = compose_context_formula_x c1 phi x force_sat flow_tr pos in
+	  let new_c2 = compose_context_formula_x c2 phi x force_sat flow_tr pos in
 	  let res = (mkOCtx new_c1 new_c2 pos) in
 		res
 
-and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) : context = 
+and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var list) (force_sat:bool) flow_tr (pos : loc) : context = 
   let pr1 = !print_context_short in
   let pr2 = !print_formula in
   let pr3 = !print_svl in
-  Debug.no_3 "compose_context_formula" pr1 pr2 pr3 pr1 (fun _ _ _ -> compose_context_formula_x ctx phi x flow_tr pos) ctx phi x
+  Debug.no_3 "compose_context_formula" pr1 pr2 pr3 pr1 (fun _ _ _ -> compose_context_formula_x ctx phi x force_sat flow_tr pos) ctx phi x
 
 (*TODO: expand simplify_context to normalize by flow type *)
 (* and simplify_context_0 (ctx:context):context =  *)
@@ -5054,7 +5063,7 @@ and normalize_no_rename_context_formula (ctx : context) (p : MCP.mix_formula) : 
 				   formula_or_pos = b.formula_or_pos
 				}in
 match ctx with
-  | Ctx es -> Ctx {es with es_formula = push_pure es.es_formula;es_unsat_flag  =false;}
+  | Ctx es -> Ctx {es with es_formula = push_pure es.es_formula;es_unsat_flag  =es.es_unsat_flag && MCP.isConstMTrue p;}
   | OCtx (c1, c2) ->
 	  let nc1 = normalize_no_rename_context_formula c1 p in
 	  let nc2 = normalize_no_rename_context_formula c2 p in
@@ -6518,12 +6527,12 @@ and split_struc_formula_a (f:struc_formula):(formula*formula) list = match f wit
 let rec filter_bar_branches (br:formula_label list option) (f0:struc_formula) :struc_formula = match br with
     | None -> f0
     | Some br -> 
-		let rec filter_formula (f:formula):formula list = match f with
-			| Base {formula_base_label = lbl} 
-			| Exists {formula_exists_label = lbl} -> (match lbl with
-			  | None -> Err.report_error { Err.error_loc = no_pos;Err.error_text = "view is unlabeled\n"} 
-			  | Some lbl -> if (List.mem lbl br) then (Gen.Profiling.inc_counter "total_unfold_disjs";[f]) else (Gen.Profiling.inc_counter "saved_unfolds";[]))
-			| Or b -> ((filter_formula b.formula_or_f1)@(filter_formula b.formula_or_f2)) in   
+		(* let rec filter_formula (f:formula):formula list = match f with *)
+		(* 	| Base {formula_base_label = lbl}  *)
+		(* 	| Exists {formula_exists_label = lbl} -> (match lbl with *)
+		(* 	  | None -> Err.report_error { Err.error_loc = no_pos;Err.error_text = "view is unlabeled\n"}  *)
+		(* 	  | Some lbl -> if (List.mem lbl br) then (Gen.Profiling.inc_counter "total_unfold_disjs";[f]) else (Gen.Profiling.inc_counter "saved_unfolds";[])) *)
+		(* 	| Or b -> ((filter_formula b.formula_or_f1)@(filter_formula b.formula_or_f2)) in    *)
 		let rec filter_helper (f:struc_formula):struc_formula = match f with
 			| EBase b -> (match b.formula_struc_continuation with
 				| None -> report_error no_pos "barrier is unlabeled \n"
@@ -8259,3 +8268,59 @@ let rec is_top_flow f =   match f with
 
 let get_error_flow f = flow_formula_of_formula f
 let get_top_flow f = flow_formula_of_formula f
+
+
+let trivFlowDischarge_x ctx f = 
+	let rec helper fl_c ctx = match ctx with
+		| Ctx es -> (match es.es_formula with 
+						| Base {formula_base_flow = fl_a} 
+						| Exists {formula_exists_flow = fl_a} -> 
+								is_eq_flow fl_a.formula_flow_interval fl_c.formula_flow_interval && 
+								fl_a.formula_flow_link=None && fl_c.formula_flow_link=None		
+						| _ -> false)
+		| OCtx (c1,c2)-> helper fl_c c1 && helper fl_c c2 in
+	match f with
+		| Base {formula_base_heap = HEmp;
+				formula_base_pure = p; 
+				formula_base_flow = fl_c;} 
+		| Exists {formula_exists_heap = HEmp;
+				formula_exists_pure = p; 
+				formula_exists_flow = fl_c;} 		
+				-> (MCP.isTrivMTerm p || MCP.isConstMTrue p) && helper fl_c ctx
+		| _ -> false
+		
+let trivFlowDischarge ctx f = 
+	Debug.no_2 "trivFlowDischarge" (!print_context) (!print_formula) (string_of_bool) trivFlowDischarge_x ctx f
+	
+let rec reset_unsat_flag_formula f = 
+	match f with
+	| Base b -> Base (reset_unsat_flag_formula_base b)
+	| Or o -> Or (reset_unsat_flag_formula_or o)
+	| Exists e -> Exists (reset_unsat_flag_formula_exists e)
+
+and reset_unsat_flag_formula_base b =
+	{ b with formula_base_pure = MCP.reset_unsat_flag_mix b.formula_base_pure }
+	
+and reset_unsat_flag_formula_or o =
+	{ o with 
+			formula_or_f1 = reset_unsat_flag_formula o.formula_or_f1; 
+			formula_or_f2 = reset_unsat_flag_formula o.formula_or_f2 }
+			
+and reset_unsat_flag_formula_exists e =
+	{ e with formula_exists_pure = MCP.reset_unsat_flag_mix e.formula_exists_pure }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
