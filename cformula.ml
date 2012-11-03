@@ -2273,6 +2273,12 @@ and subst_varperm_x sst (f : formula) =
 
 
 (** An Hoa: Function to substitute variables in a heap formula in parallel **)
+and dn_subst sst dn=
+  ({ dn with h_formula_data_perm = map_opt (CP.subst_var_par sst) dn.h_formula_data_perm;
+			 h_formula_data_arguments = List.map (CP.subst_var_par sst) dn.h_formula_data_arguments;
+			 h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) dn.h_formula_data_pruning_conditions;
+   })
+
 and h_subst sst (f : h_formula) = 
 	match f with
   | Star ({h_formula_star_h1 = f1; 
@@ -3136,6 +3142,19 @@ let is_HRel hf=
     | HRel _ -> true
     | _ -> false
 
+let is_HRel_f (f0:formula) =
+  let rec helper f=
+  match f with
+    | Base ({ formula_base_heap = h1;})
+    | Exists ({formula_exists_heap = h1;}) ->
+        (
+            is_HRel h1
+        )
+    | Or orf  ->
+       (helper orf.formula_or_f1) && (helper orf.formula_or_f2)
+  in
+  helper f0
+
 let get_HRel hf=
   match hf with
     | HRel (hp, eargs, _ ) -> Some (hp, List.concat (List.map CP.afv eargs))
@@ -3449,9 +3468,9 @@ and filter_vars_hf hf rvs=
         let n_hf1 =  filter_vars_hf hf1 rvs in
         let n_hf2 = filter_vars_hf hf2 rvs in
         (match n_hf1,n_hf2 with
-          | (HTrue,HTrue) -> HTrue
-          | (HTrue,_) -> n_hf2
-          | (_,HTrue) -> n_hf1
+          | (HEmp,HEmp) -> HTrue
+          | (HEmp,_) -> n_hf2
+          | (_,HEmp) -> n_hf1
           | _ -> Star {h_formula_star_h1 = n_hf1;
                        h_formula_star_h2 = n_hf2;
                        h_formula_star_pos = pos}
@@ -3473,14 +3492,66 @@ and filter_vars_hf hf rvs=
               h_formula_phase_rw = n_hf2;
               h_formula_phase_pos = pos} 
     | DataNode hd -> if CP.mem_svl hd.h_formula_data_node rvs then hf
-        else HTrue
+        else HEmp
     | ViewNode hv -> if CP.mem_svl hv.h_formula_view_node rvs then hf
-        else HTrue
+        else HEmp
     | HRel _ -> hf
     | Hole _
     | HTrue
     | HFalse
     | HEmp -> hf
+
+let rec subst_hprel (f0: formula) from_hps to_hp=
+  let rec helper f=
+   match f with
+      | Base fb -> let nh = subst_hprel_hf fb.formula_base_heap from_hps to_hp in
+                   (Base {fb with formula_base_heap = nh})
+      | Or orf -> let nf1 = helper orf.formula_or_f1 in
+                  let nf2 = helper orf.formula_or_f2 in
+                  ( Or {orf with formula_or_f1 = nf1;
+                      formula_or_f2 = nf2;})
+	  | Exists fe -> let nh = subst_hprel_hf fe.formula_exists_heap from_hps to_hp in
+                     (Exists {fe with formula_exists_heap = nh;})
+  in
+  helper f0
+
+and subst_hprel_hf hf0 from_hps to_hp=
+  let rec helper hf=
+    match hf with
+      | Star {h_formula_star_h1 = hf1;
+              h_formula_star_h2 = hf2;
+              h_formula_star_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          Star {h_formula_star_h1 = n_hf1;
+                h_formula_star_h2 = n_hf2;
+                h_formula_star_pos = pos}
+      | Conj { h_formula_conj_h1 = hf1;
+             h_formula_conj_h2 = hf2;
+             h_formula_conj_pos = pos} ->
+        let n_hf1 = helper hf1 in
+        let n_hf2 = helper hf2 in
+        Conj { h_formula_conj_h1 = n_hf1;
+               h_formula_conj_h2 = n_hf2;
+               h_formula_conj_pos = pos}
+    | Phase { h_formula_phase_rd = hf1;
+              h_formula_phase_rw = hf2;
+              h_formula_phase_pos = pos} ->
+        let n_hf1 = helper hf1 in
+        let n_hf2 = helper hf2 in
+        Phase { h_formula_phase_rd = n_hf1;
+              h_formula_phase_rw = n_hf2;
+              h_formula_phase_pos = pos}
+    | HRel (hp, eargs, p) -> if CP.mem_svl hp from_hps then  HRel (to_hp, eargs, p)
+        else hf
+    | DataNode _
+    | ViewNode _
+    | Hole _
+    | HTrue
+    | HFalse
+    | HEmp -> hf
+  in
+  helper hf0
 
 let xpure_for_hnodes hf=
 let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula hf in
@@ -3598,20 +3669,20 @@ and drop_hrel_hf hf hp_names=
     | HFalse
     | HEmp -> (hf,[])
 
-and drop_hnodes_f f hp_names=
+and drop_hnodes_f f hn_names=
   match f with
-    | Base fb -> let nfb = drop_hnodes_hf fb.formula_base_heap hp_names in
+    | Base fb -> let nfb = drop_hnodes_hf fb.formula_base_heap hn_names in
                  (* let np = remove_neqNull_redundant_hnodes_hf nfb (MCP.pure_of_mix fb.formula_base_pure) in *)
         (Base {fb with formula_base_heap =  nfb;
             (* formula_base_pure = MCP.mix_of_pure np *) })
-    | Or orf -> let nf1 =  drop_hnodes_f orf.formula_or_f1 hp_names in
-                let nf2 =  drop_hnodes_f orf.formula_or_f2 hp_names in
+    | Or orf -> let nf1 =  drop_hnodes_f orf.formula_or_f1 hn_names in
+                let nf2 =  drop_hnodes_f orf.formula_or_f2 hn_names in
        ( Or {orf with formula_or_f1 = nf1;
                 formula_or_f2 = nf2;})
-    | Exists fe -> let nfe = drop_hnodes_hf fe.formula_exists_heap hp_names in
+    | Exists fe -> let nfe = drop_hnodes_hf fe.formula_exists_heap hn_names in
         (Exists {fe with formula_exists_heap = nfe ;})
 
-and drop_hnodes_hf hf0 hp_names=
+and drop_hnodes_hf hf0 hn_names=
   let rec helper hf=
   match hf with
     | Star {h_formula_star_h1 = hf1;
@@ -3645,7 +3716,7 @@ and drop_hnodes_hf hf0 hp_names=
         (Phase { h_formula_phase_rd = n_hf1;
               h_formula_phase_rw = n_hf2;
               h_formula_phase_pos = pos})
-    | DataNode hd ->  if CP.mem_svl hd.h_formula_data_node hp_names then HEmp
+    | DataNode hd ->  if CP.mem_svl hd.h_formula_data_node hn_names then HEmp
         else hf
     | ViewNode _
     | HRel _

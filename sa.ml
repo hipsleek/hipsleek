@@ -668,11 +668,7 @@ and update_unk_one_constr prog unk_hp_locs cur_full_unk_hps equivs0 constr=
     (*generate new unk annotation and create corr. equivs*)
     let gen_unk_hp hp_unk_svl_locs=
       let hp_unk_svl = fst (List.split hp_unk_svl_locs) in
-      let unk_hf, unk_hp = SAU.add_raw_hp_rel prog hp_unk_svl no_pos in
-      let sunk_hp = match unk_hp with
-        | [a] -> a
-        | _ -> report_error no_pos "sa.get_unk_hp 1"
-      in
+      let unk_hf, sunk_hp = SAU.add_raw_hp_rel prog hp_unk_svl no_pos in
       (*generate all matching: hp with similar unk_svl*)
       let new_equivs = gen_eqv equivs hp hp_unk_svl_locs cs_unk_svl [(sunk_hp, hp_unk_svl)] cs_unk_hps in
       (* let pr3 =  pr_list_ln (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) *)
@@ -1952,13 +1948,16 @@ let generalize_one_hp prog unk_hps par_defs=
   let args0 = List.map (CP.fresh_spec_var) args in
   (* DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")") no_pos; *)
   let defs = List.map (obtain_and_norm_def args0) par_defs in
+  (*normalize linked ptrs*)
   let defs1 = SAU.norm_hnodes args0 defs in
-    (*remove duplicate*)
+  (*remove duplicate*)
   let defs2 = Gen.BList.remove_dups_eq (fun f1 f2 -> SAU.check_relaxeq_formula f1 f2) defs1 in
   let defs3 = SAU.remove_equiv_wo_unkhps hp unk_hps defs2 in
+  (*remove duplicate with self-recursive*)
+   let defs4 = SAU.remove_dups_recursive hp args0 unk_hps defs3 in
   (*find longest hnodes common for more than 2 formulas*)
   (*each hds of hdss is def of a next_root*)
-  let defs = SAU.get_longest_common_hnodes_list prog hp args0 defs3 in
+  let defs = SAU.get_longest_common_hnodes_list prog hp args0 defs4 in
   defs
 
 let get_def_body (a1,args,unk_args,a3,olf,orf)=
@@ -2011,8 +2010,8 @@ let pardef_subst_fix_x unk_hps groups=
     (*remove itself hp and unk_hps*)
     let succ_hps1 = List.filter (fun hp1 -> not (CP.eq_spec_var hp1 hp) &&
         not (CP.mem_svl hp1 unk_hps)) succ_hps in
-    (* DD.ninfo_pprint ("       process_dep_group succ_hps1: " ^ (!CP.print_svl succ_hps1)) no_pos; *)
-    if (CP.intersect succ_hps1 rec_hps) = [] then
+    (* DD.info_pprint ("       process_dep_group succ_hps1: " ^ (!CP.print_svl succ_hps1)) no_pos; *)
+    (* if (CP.intersect succ_hps1 rec_hps) = [] then *)
       (*not depends on any recursive hps, susbt it*)
       let ters,fss = List.split (List.map (SAU.succ_susbt nrec_grps unk_hps) grp) in
       (*check all is false*)
@@ -2021,21 +2020,72 @@ let pardef_subst_fix_x unk_hps groups=
       let new_grp_ls = List.concat fss in
       let ter = List.for_all (fun b -> not b) ters in
       (not ter, new_grp_ls)
-    else
-      (*return*)
-      (false,grp)
+    (* else *)
+    (*   (\*return*\) *)
+    (*   (false,grp) *)
   in
-  let subst_first_dep_group deps rec_hps nrec_grps=
-    let rec local_helper deps res=
-      match deps with
-        | [] -> (false,res)
-        | grp::gs -> let r,grp1 = process_dep_group grp rec_hps nrec_grps in
-                     if r then (true,(res@[grp1]@gs))
-                     else local_helper gs (res@[grp])
+  let subst_dep_groups_x deps rec_hps nrec_grps=
+    (* let rec local_helper deps res= *)
+    (*   match deps with *)
+    (*     | [] -> (false,res) *)
+    (*     | grp::gs -> let r,grp1 = process_dep_group grp rec_hps nrec_grps in *)
+    (*                  if r then (true,(res@[grp1]@gs)) *)
+    (*                  else local_helper gs (res@[grp]) *)
+    (* in *)
+
+    (*local_helper deps []*)
+    let bs, new_deps = List.split (List.map (fun grp -> process_dep_group grp rec_hps nrec_grps) deps) in
+    (List.fold_left (fun b1 b2 -> b1 || b2) false bs, new_deps)
+  in
+  (*for debugging*)
+  let subst_dep_groups deps rec_hps nrec_grps=
+    let pr0 = (pr_list_ln SAU.string_of_par_def_w_name_short) in
+    let pr1 =  pr_list_ln pr0 in
+    let pr2 = pr_pair string_of_bool pr1 in
+    Debug.no_2 "subst_dep_groups" pr1 pr1 pr2
+        (fun _ _ -> subst_dep_groups_x deps rec_hps nrec_grps) deps nrec_grps
+  in
+  (*END for debugging*)
+  (*sort order of nrec_grps to subst*)
+  let topo_sort_x dep_grps nrec_grps=
+    (*get name of n_rec_hps, intial its number with 0*)
+    let ini_order_from_grp grp=
+      let (hp,_,_) = List.hd grp in
+      (grp,hp,0) (*called one topo*)
     in
-    (* if nrec_grps = [] then (false, deps) else *)
-      local_helper deps []
+    let update_order_from_grp updated_hps incr (grp,hp, old_n)=
+      if CP.mem_svl hp updated_hps then
+        (grp,hp,old_n+incr)
+      else (grp,hp,old_n)
+    in
+  (*each grp, find succ_hp, add number of each succ hp + 1*)
+    let process_one_dep_grp topo dep_grp=
+      let (hp,_,_) = List.hd dep_grp in
+      let succ_hps = List.concat (List.map (fun (_,_,f) -> CF.get_hp_rel_name_formula f) dep_grp) in
+    (*remove dups*)
+      let succ_hps1 = Gen.BList.remove_dups_eq CP.eq_spec_var succ_hps in
+    (* DD.ninfo_pprint ("       process_dep_group succ_hps: " ^ (!CP.print_svl succ_hps)) no_pos; *)
+    (*remove itself hp and unk_hps*)
+      let succ_hps2 = List.filter (fun hp1 -> not (CP.eq_spec_var hp1 hp) &&
+          not (CP.mem_svl hp1 unk_hps)) succ_hps1
+      in
+      List.map (update_order_from_grp succ_hps2 1) topo
+    in
+    let topo0 = List.map ini_order_from_grp nrec_grps in
+    let topo1 = List.fold_left process_one_dep_grp topo0 dep_grps in
+    (*sort decreasing and return the topo list*)
+    let topo2 = List.sort (fun (_,_,n1) (_,_,n2) -> n2-n1) topo1 in
+    topo2
   in
+  (*for debugging*)
+  let topo_sort dep_grps nrec_grps=
+    let pr0 = (pr_list_ln SAU.string_of_par_def_w_name_short) in
+    let pr1 =  pr_list_ln pr0 in
+    let pr2 =  pr_list_ln (pr_triple pr0 !CP.print_sv string_of_int) in
+    Debug.no_2 "topo_sort" pr1 pr1 pr2
+        (fun _ _ -> topo_sort_x dep_grps nrec_grps) dep_grps nrec_grps
+  in
+  (*END for debugging*)
   let helper_x grps rec_inds nrec_inds=
     let indeps,deps = List.partition is_independ_group grps in
     (*classify indeps into rec and non_rec*)
@@ -2048,10 +2098,34 @@ let pardef_subst_fix_x unk_hps groups=
     let rec_hps = List.map
       (fun grp -> let (hp,_,_) = List.hd grp in hp)
       (res_rec_inds@lrec_deps) in
-    (*find the first depend grp in deps to subst,
-    if can not find, return false for terminating*)
-    let r, deps1 = subst_first_dep_group deps rec_hps (res_nrec_inds@l_nrec_deps) in
-    ((List.length indeps>0 || r), deps1, res_rec_inds,res_nrec_inds)
+    (*topo deps*)
+    let topo_nrec_grps = topo_sort deps (res_nrec_inds@l_nrec_deps) in
+    let topo_nrec_grps1 = List.map (fun (grp,hp,_) -> (grp,hp)) topo_nrec_grps in
+    let rec loop_helper deps0 nrec_grps=
+      let rec look_up_newer_nrec ls (cur_grp,hp)=
+        match ls with
+          | [] -> cur_grp
+          | dep_grp::gss ->
+              let hp1,_,_ = List.hd dep_grp in
+              if CP.eq_spec_var hp1 hp then dep_grp
+              else look_up_newer_nrec gss (cur_grp,hp)
+      in
+      match nrec_grps with
+        | [] -> deps0
+        | (nrec_grp,nrec_hp)::ss ->
+            (*find the latest in deps0, if applicable*)
+            let nrec_grp1 = look_up_newer_nrec deps0 (nrec_grp,nrec_hp) in
+            let _, deps1 = subst_dep_groups deps0 rec_hps [nrec_grp1] in
+            loop_helper deps1 ss
+    in
+    let deps1 = loop_helper deps topo_nrec_grps1 in
+    (* let r, deps1 = subst_dep_groups deps rec_hps (res_nrec_inds@l_nrec_deps) in *)
+    (* ((List.length indeps>0 || r), deps1, res_rec_inds,res_nrec_inds) *)
+    (*re-classify rec_ndep*)
+    let indeps2,deps2 = List.partition is_independ_group deps1 in
+    (*classify indeps into rec and non_rec*)
+    let rec_inds2, nrec_indeps2 = List.partition is_rec_group indeps2 in
+    (false, deps2, res_rec_inds@rec_inds2,res_nrec_inds@nrec_indeps2)
   in
   (*for debugging*)
    let helper grps rec_inds nrec_inds=
@@ -2064,7 +2138,10 @@ let pardef_subst_fix_x unk_hps groups=
   let rec helper_fix cur rec_indps nrec_indps=
     let r,new_cur,new_rec_indps,new_nrec_indps = helper cur rec_indps nrec_indps in
     if r then helper_fix new_cur new_rec_indps new_nrec_indps
-    else (new_cur@new_rec_indps@new_nrec_indps)
+    else
+      (*subs new_cur with new_rec_indps (new_nrec_indps is substed already)*)
+      let new_cur1 = SAU.succ_susbt_with_rec_indp new_rec_indps unk_hps new_cur in
+      (new_cur1@new_rec_indps@new_nrec_indps)
   in
   helper_fix groups [] []
 
@@ -2179,7 +2256,7 @@ let def_subst_fix_x unk_hps hpdefs=
     if r then
       (*reaarnge cur for terminating*)
       let new_cur1 = (List.tl new_cur)@[List.hd new_cur] in
-      helper_fix new_cur1 new_rec_indps new_nrec_indps
+      helper_fix new_cur new_rec_indps new_nrec_indps
     else (new_cur@new_rec_indps@new_nrec_indps)
   in
   helper_fix hpdefs [] []
@@ -2492,7 +2569,7 @@ let generalize_hps prog unk_hps cs par_defs=
   let pr2 = pr_list_ln SAU.string_of_par_def_w_name in
   let pr3 = pr_list Cprinter.string_of_hp_rel_def in
   let pr4 = pr_list(pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var_list) in
-  Debug.no_2 "generalize_hp" pr1 pr2 (pr_triple pr1 pr3 pr4)
+  Debug.ho_2 "generalize_hp" pr1 pr2 (pr_triple pr1 pr3 pr4)
       (fun _ _ -> generalize_hps_x prog unk_hps cs par_defs) cs par_defs
 
 (*========END generalization==========*)

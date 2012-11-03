@@ -14,10 +14,15 @@ ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0;
 
-ls<> == self = null  
-	or self::node<_, q> * q::ls<> 
+ls2<> == self = null  
+	or self::node<_, q> * q::ls2<> 
   inv true;
-
+/*
+ls1<> == self = null
+	or self::node<_, q> * q::ls1<>
+  or self::node<_, q> & q = null
+  inv true;
+*/
 
 HeapPred H(node a).
 HeapPred H1(node a).

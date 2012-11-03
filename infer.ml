@@ -1506,7 +1506,7 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps c
   let lhs_b,history_hrel,keep_root_hrels,his_ss = get_history_nodes svl hds history lhs_b done_args (leqs@reqs) in
   (*from history, we can keep more svl, hprels*)
   let keep_his_svl = CP.remove_dups_svl (List.fold_left SAU.close_def (svl@keep_root_hrels) his_ss) in
-  let _ = Debug.info_pprint ("    keep_his_svl:" ^(!CP.print_svl keep_his_svl)) no_pos in
+  (* let _ = Debug.info_pprint ("    keep_his_svl:" ^(!CP.print_svl keep_his_svl)) no_pos in *)
   let keep_his_hps = List.concat (List.map (fun (hp,args) -> if CP.diff_svl args keep_his_svl = [] then [hp] else [])
                                      (l_rem_hp_args@r_rem_hp_args)) in
  (*end*)
@@ -1580,12 +1580,12 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
         let _ =
           (* let pr_elem = Cpure.SV.string_of in *)
           (* let pr2 = pr_list (pr_pair pr_elem pr_elem) in *)
-          DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
-          DD.info_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
-          DD.info_pprint ("  footprint: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos;
-          DD.info_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
-          DD.info_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
-          DD.info_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
+          DD.ninfo_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
+          DD.ninfo_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
+          DD.ninfo_pprint ("  footprint: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos;
+          DD.ninfo_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
+          DD.ninfo_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
+          DD.ninfo_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
           (* DD.info_pprint ("  lhs aliases: " ^  (pr2 leqs)) pos; (\* aliases from LHS *\) *)
           (* DD.info_pprint ("  rhs aliases: " ^  (pr2 reqs)) pos;  (\* aliases from LHS *\) *)
         in
@@ -1617,7 +1617,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
                   begin
                       match hf with
                         | HRel hp ->
-                            (CF.mkAnd_fb_hf fb hf pos), vhp_rels,[hp],(Some (hf,vhp_rels))
+                            (CF.mkAnd_fb_hf fb hf pos), [vhp_rels],[hp],(Some (hf,vhp_rels))
                         | _ -> report_error pos "infer.infer_collect_hp_rel_x: add_raw_hp_rel should return a hrel"
                   end
           in
@@ -1647,7 +1647,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
               hprel_rhs = CF.Base new_rhs_b;
           } in
           let _ = rel_ass_stk # push hp_rel in
-          DD.info_pprint ("  hp_rel: " ^ (Cprinter.string_of_hprel hp_rel)) pos;
+          DD.ninfo_pprint ("  hp_rel: " ^ (Cprinter.string_of_hprel hp_rel)) pos;
           let update_es_f f new_hp=
             match new_hp with
               | None -> f
