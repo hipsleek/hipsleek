@@ -86,6 +86,14 @@ checkentail x::ll<2,Mx> * (y::node<1@I,_> *- x::ll<1,Mx>) |- x::ll<2,Mx> & y::no
 print residue.
 //(17)
 
-checkentail x::ll<1,Mx> * (y::node<1,_> *- x::ll<1,Mx>) |- x::ll<1,Mx> & y::node<1,_>.
+checkentail a::cell<_> * x::ll<1,Mx> * (y::node<1,_> *- x::ll<1,Mx>) |- x::ll<1,Mx> & y::node<1,_>.
 print residue.
 //(18)
+
+checkentail x::node<1@I,_> * (y::ll<u,My> *- x::node<0,_>) & u = 1 |- x::node<1@I,_> & y::ll<u,My> & u = 1 .
+print residue.
+//(19) Should Fail
+
+checkentail x::node<1@I,_> * (y::ll<u,My> *- x::node<0,_>) & u = 1 |- x::node<1@I,_> & y::ll<_,My>.
+print residue.
+//(20) 
