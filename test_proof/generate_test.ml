@@ -3,26 +3,53 @@ open Printf
 let vn = "x" (*define variable name*)
 let bn = "b" (*define boolean variable name*)
 let l_ints = ref [] 
-let gen_var crt_num primed = vn^(string_of_int crt_num)^(if primed then if !Globals.use_boogie then "" else "'" else if !Globals.use_boogie then "o" else "")
 
-let gen_prog_var crt_num = vn^(string_of_int crt_num)
-let gen_prog_bool crt_num = bn^(string_of_int crt_num)
+let gen_var crt_num primed =
+	if !Globals.use_frama_c then
+		"*"^vn^(string_of_int crt_num)
+	else 
+  	vn^(string_of_int crt_num)^
+  	(if primed then 
+  		if !Globals.use_boogie then "" 
+  		else "'" 
+  	else if !Globals.use_boogie then "o" 
+  	else "")
+
+let gen_prog_var crt_num =
+	if !Globals.use_frama_c then 
+		gen_var crt_num false
+	else vn^(string_of_int crt_num)
+
+let gen_prog_bool crt_num =
+	if (!Globals.use_frama_c) then
+		(gen_var crt_num false) ^ " > 4" 
+	else bn^(string_of_int crt_num)
 		
 let gen_header_typed_var crt_num primed = 
-	if !Globals.use_boogie then gen_var crt_num primed ^":int" else ("ref int "^ gen_var crt_num primed)
+	if !Globals.use_boogie then 
+		gen_var crt_num primed ^":int" 
+	else if !Globals.use_frama_c then
+		"int " ^ (gen_var crt_num primed)
+	else ("ref int "^ gen_var crt_num primed)
 	
-let gen_typed_var_list num_vars primed=  String.concat "," (List.map (fun c-> gen_header_typed_var c primed) !l_ints) 
-	
+let gen_typed_var_list num_vars primed = 
+	String.concat ", " (List.map (fun c-> gen_header_typed_var c primed) !l_ints) 
 			
 let gen_requires num_vars=
-		let conj = if !Globals.use_boogie then " && " else " & " in
+		let conj = 
+			if !Globals.use_boogie || !Globals.use_frama_c 
+			then " && " else " & " in
 		let gen_one_constr crt_num = gen_var crt_num false ^">2" in
 		String.concat conj (List.map gen_one_constr !l_ints)
 		
 let helper_ensures num_vars=
-		let conj = if !Globals.use_boogie then " && " else " & " in
-		let eqs = if !Globals.use_boogie then " == " else " = " in
-		let add_num= if (num_vars mod 2 = 0 ) then "2" else "3" in
+		let conj = 
+			if !Globals.use_boogie || !Globals.use_frama_c 
+			then " && " else " & " in
+		let eqs = 
+			if !Globals.use_boogie || !Globals.use_frama_c 
+			then " == " else " = " in
+		let add_num = if (num_vars mod 2 = 0 ) then "2" else "3" in
 		let gen_one_constr crt_num = (gen_var crt_num true)^eqs^(gen_var crt_num false)^"+"^add_num in 
 		(String.concat conj (List.map gen_one_constr !l_ints))^";"
 		
@@ -53,7 +80,8 @@ let bool_inits num_vars=
 		String.concat "" (List.map gen_const !l_ints)
 
 let helper_body3 num_vars=
-	let gen_const c = "\t if ("^(gen_prog_bool c)^")\n\t{\n"^(incs_decs num_vars (if(c mod 2 = 0) then "+" else "-") 2) in
+	let gen_const c = 
+		"\t if ("^(gen_prog_bool c)^")\n\t{\n"^(incs_decs num_vars (if(c mod 2 = 0) then "+" else "-") 2) in
 	(String.concat "" (List.map gen_const !l_ints)) ^ (String.concat "" (List.map (fun _ -> "\t}\n") !l_ints))
 							
 let construct_string num_vars =
@@ -77,7 +105,24 @@ let boogie_string num_vars =
 		"{"^ (boogie_var_inits num_vars) ^temp^temp^(bool_inits num_vars)^(helper_body3 num_vars) in
 	proc_header^specs^func_header^func_body^"}" 
 	
-let construct_string_1 num_vars = if !Globals.use_boogie then boogie_string num_vars else construct_string num_vars
+let frama_c_string num_vars =
+	let declare_args = gen_typed_var_list num_vars false in	
+  let declare_fun = "void spring (" ^ declare_args ^ ")\n" in
+	let spec =
+		"/*@ requires " ^ (gen_requires num_vars) ^ ";\n" ^
+		"    ensures " ^ (helper_ensures num_vars) ^ "\n" ^ 
+		" */\n" 
+	in
+	let body =
+		let temp = incs_decs num_vars "+" 1 in
+		"{" ^ temp ^ temp ^ (helper_body3 num_vars) ^ "}"
+	in
+	spec ^ declare_fun ^ body
+	
+let construct_string_1 num_vars = 
+	if !Globals.use_boogie then boogie_string num_vars
+	else if !Globals.use_frama_c then frama_c_string num_vars
+	else construct_string num_vars
 
 let generate_test num_vars =	 
 	if (num_vars >= 2) then (
@@ -86,7 +131,11 @@ let generate_test num_vars =
 		let oc =
 		(try Unix.mkdir "spring" 0o750 with _ -> ());
 		let with_option= string_of_int num_vars in
-		let term = if !Globals.use_boogie then ".bpl" else ".ss" in
+		let term = 
+			if !Globals.use_boogie then ".bpl"
+			else if !Globals.use_frama_c then ".c" 
+			else ".ss" 
+		in
 		open_out ("spring/spring-"^with_option^term) in
 		let _= fprintf oc "%s" (construct_string_1 num_vars) in
 		close_out oc)
