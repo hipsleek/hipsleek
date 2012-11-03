@@ -21,13 +21,14 @@ let gen_requires num_vars=
 		
 let helper_ensures num_vars=
 		let conj = if !Globals.use_boogie then " && " else " & " in
+		let eqs = if !Globals.use_boogie then " == " else " = " in
 		let add_num= if (num_vars mod 2 = 0 ) then "2" else "3" in
-		let gen_one_constr crt_num = (gen_var crt_num true)^"= "^(gen_var crt_num false)^"+"^add_num in 
+		let gen_one_constr crt_num = (gen_var crt_num true)^eqs^(gen_var crt_num false)^"+"^add_num in 
 		(String.concat conj (List.map gen_one_constr !l_ints))^";"
 		
 let boogie_var_inits num_vars = 
-	let inits = String.concat "" (List.map (fun c-> (gen_prog_var c)^":= "^(gen_var c false)^";\n") !l_ints) in
-	let v_decl = String.concat "" (List.map (fun c-> "var "^(gen_prog_bool c)^":bool;\n") !l_ints) in
+	let inits = String.concat "" (List.map (fun c-> "\t "^(gen_prog_var c)^":= "^(gen_var c false)^";\n") !l_ints) in
+	let v_decl = String.concat "" (List.map (fun c-> "\t var "^(gen_prog_bool c)^":bool;\n") !l_ints) in
 	v_decl^inits
 		
 let num_tabs k= 
@@ -67,10 +68,10 @@ let construct_string num_vars =
 	declare_fun^declare_requires^declare_ensures^declare_body1^declare_body2^declare_body3^"}" 
 	
 let boogie_string num_vars = 
-  let part_header = "spring("^(gen_typed_var_list num_vars false) ^") returns ("^(gen_typed_var_list num_vars true)^")" in
-  let proc_header = "procedure "^part_header^";" in
-  let func_header = "implementation "^part_header in
-  let specs =  "requires "^gen_requires num_vars^";\nensures "^helper_ensures num_vars in
+  let part_header = "spring("^(gen_typed_var_list num_vars false) ^")\n\t\t returns ("^(gen_typed_var_list num_vars true)^")" in
+  let proc_header = "procedure "^part_header^";\n" in
+  let func_header = "\n implementation "^part_header^"\n" in
+  let specs =  " requires "^gen_requires num_vars^";\n ensures "^helper_ensures num_vars^"\n" in
   let func_body = 
 		let temp= incs_decs num_vars "+" 1 in
 		"{"^ (boogie_var_inits num_vars) ^temp^temp^(bool_inits num_vars)^(helper_body3 num_vars) in
@@ -85,7 +86,8 @@ let generate_test num_vars =
 		let oc =
 		(try Unix.mkdir "spring" 0o750 with _ -> ());
 		let with_option= string_of_int num_vars in
-		open_out ("spring/spring-"^with_option^".ss") in
+		let term = if !Globals.use_boogie then ".bpl" else ".ss" in
+		open_out ("spring/spring-"^with_option^term) in
 		let _= fprintf oc "%s" (construct_string_1 num_vars) in
 		close_out oc)
 	else 
