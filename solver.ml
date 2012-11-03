@@ -5605,7 +5605,8 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
 	      let a0l = List.filter is_sat (CP.split_disjunctions a0) in
 	      let a1l = List.filter is_sat (CP.split_disjunctions a1) in 
 	      (a0l,a1l) in
-	    CP.imply_conj_orig a0l a1l (CP.split_conjunctions c) TP.imply imp_no
+        let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
+	    CP.imply_conj_orig a0l a1l new_rhs TP.imply imp_no
                 (* original code	        
 	           CP.imply_conj_orig
                    (CP.split_disjunctions a0) 

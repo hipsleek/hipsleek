@@ -553,6 +553,8 @@ let elim_exists_flag = ref true
 
 let filtering_flag = ref true
 
+let split_rhs_flag = ref true
+
 let n_xpure = ref 1
 
 let check_coercions = ref false

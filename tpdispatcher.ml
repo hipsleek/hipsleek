@@ -1745,6 +1745,8 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
   proof_no := !proof_no + 1 ;
   let imp_no = (string_of_int !proof_no) in
+  (* let count_inner = ref 0 in *)
+  let ante_inner = ref [] in
 	let tstart = Gen.Profiling.get_time () in		
   Debug.devel_zprint (lazy ("IMP #" ^ imp_no)) no_pos;  
   Debug.devel_zprint (lazy ("imply_timeout: ante: " ^ (!print_pure ante0))) no_pos;
@@ -1768,7 +1770,9 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
 		let acpairs = imply_label_filter ante conseq in
 		let pairs = List.map (fun (ante,conseq) -> 
             let _ = Debug.devel_hprint (add_str "ante 1: " Cprinter.string_of_pure_formula) ante no_pos in
-			let cons = split_conjunctions conseq in
+            (* RHS split already done outside *)
+			(* let cons = split_conjunctions conseq in *)
+			let cons = [conseq] in
 			List.map (fun cons-> 
             let (ante,cons) = simpl_pair false (requant ante, requant cons) in
             let _ = Debug.devel_hprint (add_str "ante 3: " Cprinter.string_of_pure_formula) ante no_pos in
@@ -1779,6 +1783,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
 				  | _ -> assumption_filter ante cons  ) cons) acpairs in
 		let pairs = List.concat pairs in
 		let pairs_length = List.length pairs in
+        let _ = (ante_inner := List.map fst pairs) in
 		let imp_sub_no = ref 0 in
         (* let _ = (let _ = print_string("\n!!!!!!! bef\n") in flush stdout ;) in *)
 		let fold_fun (res1,res2,res3) (ante, conseq) =
@@ -1810,6 +1815,8 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
   end;
 	in 
 	let tstop = Gen.Profiling.get_time () in
+    (* let _ = print_string ("length of pairs: "^(string_of_int (List.length !ante_inner))) in *)
+    let ante0 = CP.join_conjunctions !ante_inner in
 	let _= add_proof_log old_imp_no imp_no (string_of_prover !tp) (IMPLY (ante0, conseq0)) (tstop -. tstart) (BOOL (match final_res with | r,_,_ -> r)) in
 	final_res
 ;;
