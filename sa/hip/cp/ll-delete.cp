@@ -14,7 +14,9 @@ ass [D,E]:{
  }
 
 hpdefs [D,E]:{
-  E(x,v_594) --> emp&x=v_594 & x=null;
+  E(x,v) -->
+     x=null & x=v
+   or x::node<_,p> * E(p,_)& v=null;
   D(x) --> x=null or x::node<_,p>*D(p)
 
  }
@@ -26,9 +28,4 @@ hpdefs [D,E]:{
   HP_2(v_node_32_557',x)&x!=null --> D(v_node_32_557');
   D(x)&x!=null --> x::node<val_32_555',next_32_556'> * HP_2(next_32_556',x)
 
-hpdefs [D,E]:{
-  E(x,v_594) --> emp&x=v_594 & x=null;
-  D(x) --> x=null or x::node<_,p>*D(p)
-
- }
 */

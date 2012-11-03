@@ -945,15 +945,17 @@ let check_partial_def_eq par_def1 par_def2=
 let rec collect_par_defs_one_side_one_hp_rhs_x prog lhs rhs (hrel, args) def_ptrs
       eqs hd_nodes hv_nodes unk_hps unk_svl predef=
   begin
-      Debug.ninfo_pprint (" rhs hp: "^ (!CP.print_sv hrel)) no_pos;
+      Debug.info_pprint (" rhs hp: "^ (!CP.print_sv hrel)) no_pos;
+      let def_ptrs1 = (List.fold_left SAU.close_def def_ptrs eqs) in
       (*find definition in both lhs and rhs*)
-      let undef_args = lookup_undef_args args [] def_ptrs in
+      let undef_args = lookup_undef_args args [] def_ptrs1 in
       let test1= (List.length undef_args) = 0 in
         (*case 1*)
         (*this hp is well defined, synthesize partial def*)
       let keep_ptrs = SAU.loop_up_closed_ptr_args prog hd_nodes hv_nodes args in
       let keep_ptrs1 = (List.fold_left SAU.close_def keep_ptrs eqs) in
-      (* let _ = Debug.info_pprint ("    keep_ptrs1:" ^ (!CP.print_svl keep_ptrs1)) no_pos in *)
+      let _ = Debug.info_pprint ("    undef_args:" ^ (!CP.print_svl undef_args)) no_pos in
+      let _ = Debug.info_pprint ("    keep_ptrs1:" ^ (!CP.print_svl keep_ptrs1)) no_pos in
       let keep_unk_hps = List.concat (List.map (SAU.get_intersect_hps keep_ptrs1) unk_hps) in
       (* let pr= pr_list (pr_pair !CP.print_sv !CP.print_svl) in *)
       (* let _ = Debug.info_pprint ("   unk_hps:" ^(pr unk_hps)) no_pos in *)
@@ -971,10 +973,11 @@ let rec collect_par_defs_one_side_one_hp_rhs_x prog lhs rhs (hrel, args) def_ptr
       let l = CF.drop_data_view_hrel_nodes nlhs SAU.check_nbelongsto_dnode SAU.check_nbelongsto_vnode SAU.check_neq_hrelnode keep_ptrs1 keep_ptrs1 keep_unk_hps in
       (* let r = CF.drop_data_view_hrel_nodes rhs SAU.check_nbelongsto_dnode SAU.check_nbelongsto_vnode SAU.check_neq_hrelnode keep_ptrs1 keep_ptrs1 keep_unk_hps in *)
       (* let r = if SAU.is_empty_f r then None else Some r in *)
+      let _ = Debug.info_pprint ("   l:" ^(Cprinter.prtt_string_of_formula l)) no_pos in
       let test2 = (not (SAU.is_empty_f l)) && test1 in
       if test2 then
         let l_r = (hrel, args, CP.intersect_svl args unk_svl, l, Some l, None) in
-        let _ =  DD.ninfo_pprint ("  partial defs - rhs: \n" ^
+        let _ =  DD.info_pprint ("  partial defs - rhs: \n" ^
           (let pr =  SAU.string_of_par_def_w_name in pr l_r) ) no_pos in
         [l_r]
       else []
@@ -991,7 +994,7 @@ and collect_par_defs_one_side_one_hp_rhs prog lhs rhs (hrel, args) def_ptrs
 
 (*collect partial def ---> hp*)
 let rec collect_par_defs_one_side_one_hp_x prog lhs rhs (hrel, args) ldef_ptrs rdef_ptrs
-      rhrels eq hd_nodes hv_nodes unk_hps unk_svl predef=
+      rhrels eqs hd_nodes hv_nodes unk_hps unk_svl predef=
   begin
       Debug.ninfo_pprint (" lhs hp: "^ (!CP.print_sv hrel)) no_pos;
       let lprocess_helper def_ptrs=
@@ -1011,7 +1014,7 @@ let rec collect_par_defs_one_side_one_hp_x prog lhs rhs (hrel, args) ldef_ptrs r
         if test2 then
           (*collect partial def ---> hp*)
           let l_r = (hrel, args, CP.intersect_svl args unk_svl, r, Some r, None) in
-          let _ =  DD.ninfo_pprint ("  partial defs - one side def ---> hp: \n" ^
+          let _ =  DD.info_pprint ("  partial defs - one side def ---> hp: \n" ^
                                           (let pr =  SAU.string_of_par_def_w_name in pr l_r) ) no_pos in
           [l_r]
         else
@@ -1044,7 +1047,7 @@ let rec collect_par_defs_one_side_one_hp_x prog lhs rhs (hrel, args) ldef_ptrs r
             if (SAU.is_empty_f r) then None else Some l
           in
           let l_r = (hrel, args, CP.intersect_svl args unk_svl, r, l1 , Some r) in
-          let _ =  DD.ninfo_pprint ("  partial defs - one side hp ---> def: \n" ^
+          let _ =  DD.info_pprint ("  partial defs - one side hp ---> def: \n" ^
                                           (let pr =  SAU.string_of_par_def_w_name in pr l_r) ) no_pos in
           [l_r]
         else
@@ -1131,7 +1134,7 @@ and collect_par_defs_two_side_one_hp_x prog lhs rhs (hrel, args) predef rhs_hrel
                         loop_helper nlhs ss (res@[r])
   in
   let rs,lhs_n = loop_helper lhs r_selected_hrels [] in
-  let _ =  DD.ninfo_pprint ("  partial defs - two side: \n" ^
+  let _ =  DD.info_pprint ("  partial defs - two side: \n" ^
           (let pr = pr_list_ln SAU.string_of_par_def_w_name in pr rs) ) no_pos in
   rs,lhs_n
 
@@ -1230,8 +1233,8 @@ let collect_par_defs_unk_hps lhs rhs lunk_hp_arg runk_hp_arg=
 
 let rec collect_par_defs_one_constr_new_x prog constr =
   let lhs, rhs = constr.CF.hprel_lhs, constr.CF.hprel_rhs in
-  DD.ninfo_pprint ">>>>>> collect partial def for hp_rel <<<<<<" no_pos;
-  DD.ninfo_pprint (" hp_rel: " ^ (Cprinter.string_of_hprel constr)) no_pos;
+  DD.info_pprint ">>>>>> collect partial def for hp_rel <<<<<<" no_pos;
+  DD.info_pprint (" hp_rel: " ^ (Cprinter.string_of_hprel constr)) no_pos;
   let rec get_rec_pair_hps ls (hrel1, arg1)=
     match ls with
       | [] -> []
@@ -1274,7 +1277,7 @@ let rec collect_par_defs_one_constr_new_x prog constr =
   let rpdefs = List.concat (List.map (fun hrel ->
       collect_par_defs_one_side_one_hp_rhs prog nlhs nrhs hrel
           (l_def_ptrs@cs_predef_ptrs)
-          leqs (l_dnodes@r_dnodes) (l_vnodes@r_vnodes) constr.CF.unk_hps constr.CF.unk_svl constr.CF.predef_svl)
+          (leqs@reqs) (l_dnodes@r_dnodes) (l_vnodes@r_vnodes) constr.CF.unk_hps constr.CF.unk_svl constr.CF.predef_svl)
                                rnon_unk_hps) in
   (*CASE2: hp1(x1,x2,x3) --> h2(x1,x2,x3)* formula: hp such that have the same set of args in both sides - call in side lhs*)
   (*CASE 3: recursive contraints*)
