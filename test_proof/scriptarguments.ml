@@ -5,6 +5,7 @@ let run_specific_arguments = [
    "The number of execution");
 	("-gent", Arg.String Globals.set_do_generate_test, 
    "Automatically generate tests with provided number");
+   ("-boogie", Arg.Set Globals.use_boogie, "generate boogie inputs");
   ] 
 
 (* all hip's arguments and flags *)	
