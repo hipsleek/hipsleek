@@ -30,10 +30,9 @@ HeapPred G3(node a, node b, node c).
 
 
 node delete_mid(node x)
-
-     infer [H1,G2]
-     requires H1(x)
-     ensures G2(x,res);
+ infer [H1,G2]
+ requires H1(x)
+ ensures G2(x,res);
 /*
   requires x::ls<>
   ensures res::ls<>;

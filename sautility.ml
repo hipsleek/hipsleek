@@ -1416,7 +1416,8 @@ let succ_susbt_with_rec_indp_x rec_indp_grps unk_hps depend_grps=
   let succ_susbt_one_pardef rec_indp_hps (hp,args,f)=
     (* let _ = DD.info_pprint ("       hp: " ^ (!CP.print_sv hp)) no_pos in *)
     (* let _ = DD.info_pprint ("       rec_indp_hps: " ^ (!CP.print_svl rec_indp_hps)) no_pos in *)
-    let succ_hps = (CF.get_hp_rel_name_formula f) in
+    let succ_hprels = CF.get_hprel f in
+    let succ_hps = (List.map (fun (hp,_,_) -> hp) succ_hprels) in
     let succ_hps1 = List.filter (fun hp1 -> not (CP.eq_spec_var hp1 hp)) succ_hps in
     (* let _ = DD.info_pprint ("       succ_hps1: " ^ (!CP.print_svl succ_hps1)) no_pos in *)
     let new_pardefs=
@@ -1429,7 +1430,9 @@ let succ_susbt_with_rec_indp_x rec_indp_grps unk_hps depend_grps=
         [(hp,args,f)]
       else
         let _, fss = succ_susbt rec_indp_grps unk_hps (hp,args,f) in
-        let fss1 = List.map (fun (hp,args,f) -> (hp,args, CF.subst_hprel f succ_hps1 hp)) fss in
+        let hprel = mkHRel hp args no_pos in
+        let ss = List.map (fun hprel1 -> ((CF.HRel hprel1), hprel)) succ_hprels in
+        let fss1 = List.map (fun (hp,args,f) -> (hp,args, CF.subst_hrel_f f ss)) fss in
         fss1
     in
     new_pardefs
