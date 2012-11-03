@@ -612,20 +612,21 @@ let restart reason =
 
 (* send formula to z3 and receive result -true/false/unknown*)
 let check_formula f timeout =
-  (*  try*)
+  (* try*)
   begin
-      if not !is_z3_running then start ()
-      else if (!z3_call_count = !z3_restart_interval) then
-        begin
-	        restart("Regularly restart:1 ");
-	        z3_call_count := 0;
-        end;
-      let fnc f = 
-        let _ = incr z3_call_count in
-        (*due to global stack - incremental, push current env into a stack before working and
+    if not !is_z3_running then start ()
+    else if (!z3_call_count = !z3_restart_interval) then
+      begin
+	    restart("Regularly restart:1 ");
+	    z3_call_count := 0;
+      end;
+    let fnc f = 
+      let _ = incr z3_call_count in
+      (*due to global stack - incremental, push current env into a stack before working and
         removing it after that. may be improved *)
         let new_f = "(push)\n" ^ f ^ "(pop)\n" in
-				let _= if(!proof_logging_txt && (proving_kind # string_of)<>"TRANS_PROC") then 
+				(* let _= if(!proof_logging_txt && (proving_kind # string_of)<>"TRANS_PROC") then  *)
+				let _= if(!proof_logging_txt) then 
 					        add_to_z3_proof_log_list new_f 
 				in
         output_string (!prover_process.outchannel) new_f;

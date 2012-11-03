@@ -187,8 +187,8 @@ let common_arguments = [
 	"print input representation");
 	("--dis-cache", Arg.Set Globals.no_cache_formula,
     "Do not cache result of satisfiability and validity checking");
-	(*("--enable-cache", Arg.Clear Globals.no_cache_formula,
-    "Cache result of satisfiability and validity checking");*)
+	("--enable-cache", Arg.Clear Globals.no_cache_formula,
+    "Cache result of satisfiability and validity checking");
 	("--web", Arg.String (fun s -> (Tpdispatcher.Netprover.set_use_socket_for_web s); Tpdispatcher.webserver := true; Typechecker.webserver := true; Paralib1v2.webs := true; Paralib1.webs := true) ,  
 	"<host:port>: use external web service via socket");
 	("-para", Arg.Int Typechecker.parallelize, 
