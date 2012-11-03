@@ -5,6 +5,8 @@ let nums_of_check_sat = ref 0
 
 let use_boogie = ref false
 
+let use_frama_c = ref false
+
 let set_number_exec si=
     n_exec :=  (int_of_string si)
 

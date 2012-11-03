@@ -171,6 +171,7 @@ let omegacalc = ref ("oc":string)
 
 let start_with str prefix =
   (String.length str >= String.length prefix) && (String.sub str 0 (String.length prefix) = prefix) 
+	
 let send_cmd cmd =
   if !is_omega_running then output_string (!process.outchannel) (cmd ^ "\n")
 
