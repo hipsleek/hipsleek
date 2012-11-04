@@ -1,3 +1,14 @@
+
+P => A & B
+
+not(P) \/ (A&B)
+
+P /\ ~( A & B)
+
+P /\ (~(A) \/ ~(B))
+
+(P/\~A) \/ (P/\~B)  ==> UNSAT!
+
 ../hip spring/spring-5.ss --enable-logging-txt -tp z3 --log-z3 
 
 Z3 log/no_slicing_z3_proof_log_spring_spring-5_ss.txt
