@@ -19,3 +19,8 @@ print residue.
 checkentail x::pair<_@A,b@M> & x1::pair<a@M,d@L> & x=x1 & d=3|- x::pair<c@A,y@I> & y=3.
 print residue.
 // Allow shared writing and reading in fields and memory can be inexact
+
+//(5)
+checkentail  z::pair<_,_> * (x::pair<f,s> & y::pair<_,_>) |- x::pair<f,s>.
+print residue.
+

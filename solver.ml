@@ -6740,6 +6740,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let new_ante_p = (MCP.memoise_add_pure_N new_ante_p p_ante ) in
               let new_conseq_p = (MCP.memoise_add_pure_N new_conseq_p p_conseq ) in
 	          (* An Hoa : put the remain of l_node back to lhs if there is memory remaining after matching *)
+	          (*let _ = print_string("\nl_h : "^(Cprinter.string_of_h_formula l_h)^"\n") in
+	          let _ = print_string("rem_l_node : "^(Cprinter.string_of_h_formula rem_l_node)^"\n") in
+	          let _ = print_string("l_node : "^(Cprinter.string_of_h_formula l_node)^"\n") in*)
 	          let l_h = match rem_l_node with
 		        | HTrue | HFalse | HEmp-> l_h
 		        | _ -> mkStarH rem_l_node l_h pos 27 in

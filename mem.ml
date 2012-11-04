@@ -1254,6 +1254,8 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 	| CF.DataNode {CF.h_formula_data_param_imm = paimm;} -> 
 		let old_args = CF.get_node_args h1 in
 		let new_args = CF.get_node_args h2 in
+		let h1_var = CF.get_node_var h1 in
+		let h2_var = CF.get_node_var h2 in
 		let fresh_args = CP.fresh_spec_vars old_args in
 		let comb1 = List.combine fresh_args new_args in
 		let comb2 = List.combine fresh_args old_args in
@@ -1271,6 +1273,10 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 		p
 		) comb in
 		let new_p = CP.join_conjunctions conjlt in
+		let var_p = if (CP.is_primed h2_var) then 
+		CP.mkOr (CP.mkEqVar (CP.to_primed h1_var) h1_var no_pos) (CP.mkEqVar (CP.to_primed h1_var) h2_var no_pos) None no_pos 
+		else CP.mkTrue no_pos in
+		let new_p = CP.mkAnd new_p var_p no_pos in	
 		new_h1,new_p
 	| _ -> h1,(CP.mkTrue no_pos)) (* Shouldn't get here *)
 	else h1,(CP.mkTrue no_pos)
@@ -1379,7 +1385,7 @@ func (mcp: MCP.mix_formula ) : CF.h_formula * CP.formula =
 	let aset_sv  = Context.get_aset aset (CF.get_node_var h2) in
 	let ramify_list = List.filter (fun c -> let sp_c = (CF.get_node_var c) in
 	((CP.mem sp_c aset_sv) || (CP.eq_spec_var (CF.get_node_var h2) sp_c))) fl in
-	let res_h1, res_p1 = if (List.length ramify_list) > 0 then func h1 ramify_list vl mcp else h1,(CP.mkTrue no_pos) in
+	let res_h1, res_p1 = if (List.length ramify_list) > 0 then func h1 ramify_list vl mcp else f,(CP.mkTrue no_pos) in
 	res_h1,res_p1
 	else CF.HTrue,(CP.mkTrue no_pos)	
       | _ -> f,(CP.mkTrue no_pos)

@@ -4,8 +4,8 @@ data pair {
 }
 
 void mark(pair p, pair q)
-  requires p::pair<vpf,vps> & q::pair<vqf,vqs> & vpf != 1 & vqf != 1 & vps != 1 & vqs != 1
-  ensures p::pair<1,1> & q::pair<1,1> ;
+  requires p::pair<f,s> & q::pair<1,1> & f != 1 & s !=1
+  ensures p::pair<1,1> & q::pair<_,_> ;
 {
 if(p.fst == 1){
 	return;}
@@ -15,6 +15,7 @@ else {
 		return;}
 	else {
 	p.snd = 1;
+	dprint;
 	p.fst = 1;}
 	}
 return;
