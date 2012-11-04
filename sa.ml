@@ -2011,8 +2011,10 @@ let pardef_subst_fix_x unk_hps groups=
     let succ_hps = fst (List.split succ_hp_args) in
     (* DD.ninfo_pprint ("       process_dep_group succ_hps: " ^ (!CP.print_svl succ_hps)) no_pos; *)
     (*remove itself hp and unk_hps*)
+
     let succ_hps1 = List.filter (fun hp1 -> not (CP.eq_spec_var hp1 hp) &&
         not (CP.mem_svl hp1 unk_hps)) succ_hps in
+
     (* DD.info_pprint ("       process_dep_group succ_hps1: " ^ (!CP.print_svl succ_hps1)) no_pos; *)
     (* if (CP.intersect succ_hps1 rec_hps) = [] then *)
       (*not depends on any recursive hps, susbt it*)
@@ -2295,8 +2297,16 @@ let generalize_hps_par_def_x prog unk_hps par_defs=
           let part,remains= List.partition (fun (hp_name,_,_) -> CP.eq_spec_var a1 hp_name) xs in
           partition_pdefs_by_hp_name remains (parts@[[(a1,a2,a3)]@part])
   in
+  let is_valid_pardef (_,args,f)=
+    let ls_args = snd (List.split (CF.get_HRels_f f)) in
+    let root_args = List.map List.hd ls_args in
+    let ptrs = CF.get_ptrs_f f in
+    let dups = (CP.intersect_svl ptrs root_args) in
+    not (CP.mem_svl (List.hd args) dups)
+  in
   let par_defs1 = List.map get_def_body par_defs in
-  let groups = partition_pdefs_by_hp_name par_defs1 [] in
+  let par_defs2 = List.filter is_valid_pardef par_defs1 in
+  let groups = partition_pdefs_by_hp_name par_defs2 [] in
   (*remove dups in each group*)
   let groups1 = List.map remove_dups_pardefs groups in
   (*

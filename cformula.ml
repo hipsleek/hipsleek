@@ -2274,9 +2274,11 @@ and subst_varperm_x sst (f : formula) =
 
 (** An Hoa: Function to substitute variables in a heap formula in parallel **)
 and dn_subst sst dn=
-  ({ dn with h_formula_data_perm = map_opt (CP.subst_var_par sst) dn.h_formula_data_perm;
-			 h_formula_data_arguments = List.map (CP.subst_var_par sst) dn.h_formula_data_arguments;
-			 h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) dn.h_formula_data_pruning_conditions;
+  ({ dn with
+      h_formula_data_node = CP.subst_var_par sst dn.h_formula_data_node;
+      h_formula_data_perm = map_opt (CP.subst_var_par sst) dn.h_formula_data_perm;
+	  h_formula_data_arguments = List.map (CP.subst_var_par sst) dn.h_formula_data_arguments;
+	  h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) dn.h_formula_data_pruning_conditions;
    })
 
 and h_subst sst (f : h_formula) = 

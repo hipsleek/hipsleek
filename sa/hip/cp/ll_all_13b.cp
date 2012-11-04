@@ -10,8 +10,8 @@ ass [H1,G1]:{
  H1(x)&x!=null --> x::node<_,next_68_566'> * HP_1a(next_68_566')
  }
 
-hpdefs [G1]:{
-       H1(x) --> x=null or x::node<_,p> * H1(p);
+hpdefs [H1,G1]:{
+     H1(x) --> x=null or x::node<_,p> * H1(p);
      G1(x) --> x=null or x::node<_,p> * G1(p)
  }
 ]

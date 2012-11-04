@@ -54,7 +54,7 @@ which is equivalent to:
    H1(x) = x=null
     or x::node<_,q>*H1(x)
    G2(x,res) = res=null
-    or res::node<_,q>* G2(_,res)
+    or res::node<_,q>* G2(_,q)
 
 
 */
