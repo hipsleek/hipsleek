@@ -534,13 +534,13 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 	   h_formula_conj_pos = pos}) ->  if (!Globals.allow_mem) then 
            let l1 = helper f1 in
            let res1 = List.map (fun (lhs1, node1, hole1, match1) -> 
-           if not (is_empty_heap node1) then 
+           if not (is_empty_heap node1) && (is_empty_heap rhs_rest) then 
            let ramify_f2 = mkStarMinusH f2 node1 pos 37 in
            (mkConjH lhs1 ramify_f2 pos , node1, hole1, match1)
            else (mkConjH lhs1 f2 pos , node1, hole1, match1)) l1 in  
            let l2 = helper f2 in
            let res2 = List.map (fun (lhs2, node2, hole2, match2) -> 
-           if not (is_empty_heap node2) then 
+           if not (is_empty_heap node2) && (is_empty_heap rhs_rest) then 
            let ramify_f1 = mkStarMinusH f1 node2 pos 38 in
            (mkConjH ramify_f1 lhs2 pos , node2, hole2, match2)
            else

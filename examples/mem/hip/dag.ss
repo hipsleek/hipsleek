@@ -6,17 +6,17 @@ data node {
 
 
 dag<v,M> == self = null & M = {} & v = 0
-	or self::node<0@M,l@L,r@L> * l::dag<0,Ml> & r::dag<0,Mr> & M = union(Ml,Mr,{self}) & v=0
-	or self::node<0@M,l@L,r@L> * l::dag<_,Ml> & r::dag<_,Mr> & M = union(Ml,Mr,{self}) & v=1
-	or self::node<1@I,l@L,r@L> * l::dag<2,Ml> & r::dag<2,Mr> & M = union(Ml,Mr,{self}) & v=2
-	inv 0<=v<=2
-	mem M->(node<@M,@L,@L> & 0<=v<=1 ; node<@I,@L,@L> & 1<=v<=2);
+	or self::node<0@M,l@L,r@L> * l::dag<1,Ml> & r::dag<1,Mr> & M = union(Ml,Mr,{self}) & v=1
+	or self::node<0@M,l@L,r@L> * l::dag<_,Ml> & r::dag<_,Mr> & M = union(Ml,Mr,{self}) & v=2
+	or self::node<1@I,l@L,r@L> * l::dag<3,Ml> & r::dag<3,Mr> & M = union(Ml,Mr,{self}) & v=3
+	inv 0<=v<=3
+	mem M->(node<@M,@L,@L> & 1<=v<=2 ; node<@I,@L,@L> & 2<=v<=3);
 
 void mark(ref node x)
-  requires x::dag<0,M>
-  ensures x::dag<2,M>;
   requires x::dag<1,M>
-  ensures x::dag<2,M>;
+  ensures x::dag<3,M>;
+  requires x::dag<2,M>
+  ensures x::dag<3,M>;
 {
 node l,r;
 if(x == null) return;
