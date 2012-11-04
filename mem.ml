@@ -1106,8 +1106,108 @@ let rec split_into_list f = match f with
 let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: CF.h_formula) (h2mpf: CF.mem_perm_formula option)
 (mcp: MCP.mix_formula) (p_vars: CP.spec_var list) (q_vars: CP.spec_var list) : CF.h_formula * CP.formula = 
 (match h1mpf,h2mpf with
-| Some(memf1), Some(memf2) -> h1,(CP.mkTrue no_pos)
-| Some(memf1), None -> h1,(CP.mkTrue no_pos)
+| Some(memf1), Some(memf2) -> (match h2 with
+	| CF.ViewNode {CF.h_formula_view_node = vn2;
+		       CF.h_formula_view_arguments = vargs2} ->
+		       let case_and_layouts2 = List.combine memf2.CF.mem_formula_guards memf2.CF.mem_formula_field_layout in
+		       let sublist2 = List.combine q_vars vargs2 in
+		       let pure_p = (MCP.pure_of_mix mcp) in
+		       let compatible_cases2 = List.filter (fun (c,_) ->
+		       let after_sbst_guard = CP.subst sublist2 c in		
+		       let r,_,_ =  
+		       TP.imply pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts2 in
+		       (match h1 with
+			| CF.ViewNode {CF.h_formula_view_node = vn1;
+				CF.h_formula_view_arguments = vargs1} -> 
+				let case_and_layouts1 = List.combine memf1.CF.mem_formula_guards memf1.CF.mem_formula_field_layout in
+       				let sublist1 = List.combine p_vars vargs1 in
+       				let compatible_cases1 = List.filter (fun (c,_) ->
+       				let after_sbst_guard = CP.subst sublist1 c in		
+			       	let r,_,_ =
+			       	TP.imply pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts1 in
+			       	let field_names = List.map (fun (_,(id,_)) -> id ) compatible_cases1 in
+			       	let field_names_no_dup = remove_dups field_names in
+			       	if List.exists (fun (_,(id,_)) -> (List.mem id field_names_no_dup)) compatible_cases2 
+			       	then (if List.exists (fun (_,(_,al2)) -> List.exists (fun(_,(_,al1)) ->
+			       		(is_same_field_layout al1 al2)) compatible_cases1
+			       		) compatible_cases2
+					then h1,(CP.mkTrue no_pos)
+					else let compatible_fls = List.map (fun (_,(_,fl)) -> fl) compatible_cases2 in
+					let ramified_cases = List.filter (fun (_,(_,fl)) ->
+					List.exists (fun c -> (is_same_field_layout c fl)) compatible_fls)
+					case_and_layouts1 in
+					let ch_vars = List.map (fun (g,_) -> CP.fv g) ramified_cases in
+					let ch_vars_lt = remove_dups (List.concat ch_vars) in
+					let old_args = vargs1 in
+					let fresh_args = CP.fresh_spec_vars old_args in
+					let comb = List.combine old_args fresh_args in
+					let comb_with_sublist = List.combine comb sublist1 in
+					let comb_filtered = List.filter (fun ((_,_),(parg,_)) ->
+					List.mem parg ch_vars_lt 
+					) comb_with_sublist in
+					let comb,_ = List.split comb_filtered in
+					let new_h1 = CF.h_subst comb h1 in
+ 					let conjlt1 = List.map (fun (v1,v2) -> 
+					CP.mkEqVar v1 v2 no_pos
+					) comb in
+					let p1 = CP.join_conjunctions conjlt1 in
+					let conjlt2 = List.map (fun (g,_) ->
+					CP.subst comb g							
+					) ramified_cases in
+					let p2 = CP.join_conjunctions conjlt2 in
+					let new_p = CP.mkOr p1 p2 None no_pos in
+ 					(new_h1,new_p) 
+					)
+			       	else h1,(CP.mkTrue no_pos)
+		       	| _ -> h1,(CP.mkTrue no_pos)) (* Shouldn't get here *)
+		       			
+	| _ -> h1,(CP.mkTrue no_pos)) (* Shouldn't get here *)
+| Some(memf1), None -> (match h2 with
+			| CF.DataNode { CF.h_formula_data_name = dn;
+			       		CF.h_formula_data_param_imm = paimm} -> 
+			       		(match h1 with
+			       		| CF.ViewNode {CF.h_formula_view_node = vn;
+		       				CF.h_formula_view_arguments = vargs} -> 
+		       				let case_and_layouts = List.combine memf1.CF.mem_formula_guards 						memf1.CF.mem_formula_field_layout in
+		       				let sublist = List.combine p_vars vargs in
+		       				let pure_p = (MCP.pure_of_mix mcp) in
+		       				let compatible_cases = List.filter (fun (c,_) ->
+		       				let after_sbst_guard = CP.subst sublist c in		
+					       	let r,_,_ =
+					       	TP.imply pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts in
+					       	if List.exists (fun (_,(id,_)) -> (String.compare id dn == 0)) compatible_cases
+						then (if List.exists (fun (_,(id,al)) -> 
+							(is_same_field_layout paimm al)) compatible_cases
+							then h1,(CP.mkTrue no_pos)
+							else let ramified_cases = List.filter (fun (_,(_,fl)) ->
+							(is_same_field_layout paimm fl)(*||(is_compatible_field_layout paimm fl)*))
+							case_and_layouts in
+							let ch_vars = List.map (fun (g,_) -> CP.fv g) ramified_cases in
+							let ch_vars_lt = remove_dups (List.concat ch_vars) in
+							let old_args = vargs in
+							let fresh_args = CP.fresh_spec_vars old_args in
+					                let comb = List.combine old_args fresh_args in
+					                let comb_with_sublist = List.combine comb sublist in
+					                let comb_filtered = List.filter (fun ((_,_),(parg,_)) ->
+					                List.mem parg ch_vars_lt 
+					                ) comb_with_sublist in
+					                let comb,_ = List.split comb_filtered in
+					              	let new_h1 = CF.h_subst comb h1 in
+ 					   		let conjlt1 = List.map (fun (v1,v2) -> 
+							CP.mkEqVar v1 v2 no_pos
+							) comb in
+							let p1 = CP.join_conjunctions conjlt1 in
+							let conjlt2 = List.map (fun (g,_) ->
+							CP.subst comb g							
+							) ramified_cases in
+							let p2 = CP.join_conjunctions conjlt2 in
+							let new_p = CP.mkOr p1 p2 None no_pos in
+ 					   		(new_h1,new_p)
+						)
+						else  h1,(CP.mkTrue no_pos)
+		       			| _ -> h1,(CP.mkTrue no_pos)) (* shouldn't get here *)
+			       		
+			| _ -> h1,(CP.mkTrue no_pos)) (* shouldn't get here *)
 | None , Some(memf2) -> 
 	(match h2 with
 	| CF.ViewNode {CF.h_formula_view_node = vn;
@@ -1126,7 +1226,7 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 			       		CF.h_formula_data_param_imm = paimm} -> 
 			       		if List.exists (fun (_,(id,_)) -> (String.compare id dn == 0)) compatible_cases
 					then			      
-		       			 (if List.exists (fun (_,(id,al)) -> 
+		       			 (if List.exists (fun (_,(i_,al)) -> 
 		       			   (*let _ = print_string("Ann List : "^(string_of_list_f string_of_imm al)^"\n") in
 		       			   let _ = print_string("Data Ann List : "^(string_of_list_f string_of_imm paimm)^"\n") in
 		       			   let _ = if (is_same_field_layout paimm al) then print_string("true") else () in*)

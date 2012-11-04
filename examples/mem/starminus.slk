@@ -97,3 +97,11 @@ print residue.
 checkentail x::node<1@I,_> * (y::ll<u,My> *- x::node<0,_>) & u = 1 |- x::node<1@I,_> & y::ll<_,My>.
 print residue.
 //(20) 
+
+checkentail x::ll<2,Mx> * (y::ll<u,My> *- x::ll<1,Mx>) & u = 1 |- x::ll<2,Mx> & y::ll<u,My> & u = 1.
+print residue.
+//(21) Should Fail
+
+checkentail x::ll<2,Mx> * (y::ll<u,My> *- x::ll<1,Mx>) & u = 1 |- x::ll<2,Mx> & y::ll<_,My>.
+print residue.
+//(22)
