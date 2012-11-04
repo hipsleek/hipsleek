@@ -47,6 +47,46 @@ Procedure trav$node FAIL-2
 Exception Failure("hd") Occurred!
 
 // should just be "fail.."
+
+    bool b = rand();
+	if (b) return x.next;
+    // H1(x) --> x::node<val_53_555',next_53_556'> * HP_577(next_53_556')
+    // HP_577(v_node_53_557') --> G1(v_node_53_557'),
+	else {
+    // H1(x) --> x::node<val_55_558',next_55_559'> * HP_582(next_55_559')
+      x.next = trav(x.next);
+    // HP_582(v_node_55_560') --> H1(v_node_55_560'),
+      return x;
+//G1(v_node_55_605) * x::node<val_55_588,v_node_55_605>&
+//  v_node_56_564'=x --> G1(v_node_56_564')&true,
+
+NORMALIZATION
+=============
+From:
+    // H1(x) --> x::node<val_53_555',next_53_556'> * HP_577(next_53_556')
+    // H1(x) --> x::node<val_55_558',next_55_559'> * HP_582(next_55_559')
+Deduce HP_577 = HP_582
+
+From:
+    // HP_582(v_node_55_560') --> H1(v_node_55_560'),
+Deduce HP_582 = H1
+
+Hence: H1(x) --> x::node<_,q>*H1(q)
+
+From:
+// H1(v_node_53_557') --> G1(v_node_53_557'),
+//G1(v_node_55_605) * x::node<val_55_588,v_node_55_605>&
+//  v_node_56_564'=x --> G1(v_node_56_564'),
+
+Deduce:
+  G1(res) <- H1(res)
+  G1(res) <- res::node<_,q>*G1(q)
+  H1(x) -> x::node<_,q>*H1(q)
+
+Thus:
+  H1(x)   <-> x::node<_,q>*H1(q)
+  G1(res) <-> H1(res)
+
 */
 {
     bool b = rand();

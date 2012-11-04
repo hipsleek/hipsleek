@@ -1,3 +1,4 @@
+
 /* singly linked lists */
 
 /* representation of a node */
@@ -6,7 +7,6 @@ data node {
 	int val; 
 	node next;	
 }
-
 
 /* view for a singly linked list */
 
@@ -61,6 +61,67 @@ Below is UNSOUND
  or next_55_625::node<val_55_610,next_55_625> * 
     next_53_556'::node<val_55_616,next_55_625>&true
  or emp
+
+
+    bool b = rand();
+	if (b) return x.next;
+//H1(x) --> x::node<val_68_555',next_68_556'> * HP_577(next_68_556')
+//HP_577(v_node_68_557') * x::node<val_68_601,v_node_68_557'>&true 
+// --> G2(v_node_68_557',x)&true,
+	else {
+    x.next = trav(x.next);
+//H1(x) --> x::node<val_70_558',next_70_559'> * HP_582(next_70_559')
+//HP_582(v_node_70_560')&true --> H1(v_node_70_560')&true,
+//G2(v_node_70_605,v_node_70_595) * 
+//   x::node<val_70_588,v_node_70_605>&v_node_71_564'=x 
+//   --> G2(v_node_71_564',x) * HP_607(v_node_70_605,x)
+ERROR :  HP_607(v_node_70_605,x) should not be there..
+      return x;
+
+x::node<val_70_558',next_70_559'> * HP_582(next_70_559')
+ |- H1(v_node_70_560') *-> G2(v_node_70_605,v_node_70_595)
+
+
+
+For 13c1, you should obtain:
+
+  H1(x) = x:node<_,q>*H1(x)
+  G2(res,_) <- H1(res)
+  G2(res,_) <- G2(n,_)* res::node<_,n>
+
+This indicates a problem since H1(x) did not have a base
+case! Normalization should arise from:
+
+//H1(x) --> x::node<val_68_555',next_68_556'> * HP_577(next_68_556')
+//H1(x) --> x::node<val_70_558',next_70_559'> * HP_582(next_70_559')
+==> HP_577 same as HP_582
+
+//HP_582(v_node_70_560') --> H1(v_node_70_560'),
+Hence:
+  H1(x) = x:node<_,q>*H1(x)
+
+For G2, we have:
+//HP_577(v_node_68_557') * x::node<val_68_601,v_node_68_557'>&true 
+// --> G2(v_node_68_557',x)&true,
+//G2(v_node_70_605,v_node_70_595) * 
+//   x::node<val_70_588,v_node_70_605>&v_node_71_564'=x 
+//   --> G2(v_node_71_564',x)
+
+which simplifies to:
+//H1(res) * x::node<_,res> --> G2(res,x),
+//G2(n,_)*x::node<_,n>&res=x --> G2(res,x) 
+
+The presence of G2(n,_) indicates that there isn't a
+formal link between res and x. Hence, we can rewrite to:
+
+  G2(res,_) <- H1(res) * x::node<_,res>
+  G2(res,_) <- G2(n,_)* res::node<_,n>
+
+// dropping x:;node<_,res>, we obtain:
+
+  G2(res,_) <- H1(res)
+  G2(res,_) <- G2(n,_)* res::node<_,n>
+
 
 */
 {
