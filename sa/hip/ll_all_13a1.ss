@@ -37,38 +37,49 @@ node delete_mid(node x)
   requires x::ls<>
   ensures res::ls<>;
 
- RELASS [G2,HP_616]
-  x::node<v_int_60_613,next_60_597> * 
-  G2(next_60_597,v_node_60_614) * 
-  v_node_60_566'::node<v_int_60_613,v_node_60_614>&
-  true --> G2(x,v_node_60_566') * HP_616(v_node_60_614,v_node_60_566')&true,
- RELASS [HP_585,G2]
-  HP_585(v_node_59_558') * 
-  x::node<val_59_608,v_node_59_558'>&true 
-  --> G2(x,v_node_59_558')&true,
- RELASS [H1,G2]H1(x)&x=null & v_node_56_555'=null --> G2(x,v_node_56_555')&
+ [ RELASS [G2,HP_599]
+  G2(q_597,v_node_81_595) * 
+  v_node_81_560'::node<v_596,v_node_81_595> * x::node<v_596,q_597>&
+  true --> G2(x,v_node_81_560') 
+      * HP_599(q_597,v_node_81_595,v_node_81_560')  true,
+
+ // ERROR : where did HP_599 came from?
+
+ RELASS [HP_579,G2]HP_579(v_node_80_558') * x::node<v_589,v_node_80_558'>&
+  true --> G2(x,v_node_80_558')&true,
+ RELASS [H1,G2]H1(x)&x=null & v_node_76_557'=null --> G2(x,v_node_76_557')&
   true,
- RELASS [HP_590,H1]HP_590(next_60_597)&true --> H1(next_60_597)&true,
- RELASS [H1,HP_590]H1(x)&x!=null --> x::node<val_60_559',next_60_560'> * 
-  HP_590(next_60_560')&true,
- RELASS [H1,HP_585]H1(x)&x!=null --> x::node<val_59_556',next_59_557'> * 
-  HP_585(next_59_557')&true]
+ RELASS [HP_580,H1]HP_580(q_27')&true --> H1(q_27')&true,
+ RELASS [H1,HP_580]H1(x)&x!=null --> x::node<v_26',q_27'> * HP_580(q_27')&
+  true,
+ RELASS [H1,HP_579]H1(x)&x!=null --> x::node<v_26',q_27'> * HP_579(q_27')&
+  true]
 
-What happen to below?
-   G2(x,res) = x::node<_,q> & res=q
 
-Isn't this a possible case that is not captured below..
+	if (x == null) 
+		return x;
+   //H1(x)&x=null & v_node_76_557'=null --> G2(x,v_node_76_557')&true,
+	else {
+        bool b = rand();
+  //H1(x)&x!=null --> x::node<v_26',q_27'> * HP_580(q_27')& true,
+  //H1(x)&x!=null --> x::node<v_26',q_27'> * HP_579(q_27')&true
+  // due to disjunctive state ..
 
-[ G2(x,res) ::= 
-    x::node<v_int_81_613,next_81_597> * G2(next_81_597,v_node_81_614) * 
-    res::node<v_int_81_613,v_node_81_614>&true
- or emp&x=null & res=null
- ,
- H1(x_631) ::= x_631::ls[LHSCase]&true]
-* 
-  
- H1(x) & x=null & res=x --> G1(x,res)
- H1(x) & x!=null 
+        bind x to (v,q) in {
+		  if (b) return q;
+          // HP_579(v_node_80_558') * x::node<v_589,v_node_80_558'>&true 
+             --> G2(x,v_node_80_558')&true,
+
+		  else return new node(v, delete_mid(q));
+          // HP_580(q_27')&true --> H1(q_27')&true,
+  // G2(q_597,v_node_81_595) * v_node_81_560'::node<v_596,v_node_81_595> 
+  // * x::node<v_596,q_597>&true 
+  // --> G2(x,v_node_81_560') 
+  //      * HP_599(q_597,v_node_81_595,v_node_81_560') & true,
+
+        }
+	}
+
 
 */
 {
@@ -76,8 +87,10 @@ Isn't this a possible case that is not captured below..
 		return x;
 	else {
         bool b = rand();
-		if (b) return x.next;
-		else return new node(x.val, delete_mid(x.next));
+        bind x to (v,q) in {
+		  if (b) return q;
+		  else return new node(v, delete_mid(q));
+        }
 	}
 }
 
