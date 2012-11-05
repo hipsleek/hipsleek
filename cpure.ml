@@ -7508,6 +7508,17 @@ let is_eq_exp (f:formula) = match f with
     | _ -> false)
   | _ -> false
 
+let is_neq_null_exp (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Neq (sv1,sv2,_),_) ->
+        if (is_null_const_exp sv2) then
+          not (is_null_const_exp sv1)
+        else
+          (is_null_const_exp sv1)
+    | _ -> false)
+  | _ -> false
+
 let is_beq_exp (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with

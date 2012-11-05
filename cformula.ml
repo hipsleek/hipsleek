@@ -3563,6 +3563,67 @@ let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula hf in
   new_mf
 
 
+(*check the form: hp(x,y) = x!=null & y !=null*)
+let is_only_neqNull_x args unk_hps f0=
+  let is_only_neqNull_pure p=
+    let neqNulls = List.map (fun sv -> CP.mkNeqNull sv no_pos) args in
+    let ps = (CP.split_conjunctions p) in
+    let ps1 = CP.remove_redundant_helper ps [] in
+    (Gen.BList.difference_eq CP.equalFormula ps1 neqNulls) = []
+  in
+  let rec helper f=
+    match f with
+      | Base fb ->
+          if is_empty_heap fb.formula_base_heap then
+            is_only_neqNull_pure (MCP.pure_of_mix fb.formula_base_pure)
+          else
+            let hds,hvs,hrels = get_hp_rel_h_formula fb.formula_base_heap in
+            if hds=[] && hvs=[] then
+              let hps = List.map (fun (hp,_,_) -> hp) hrels in
+              if (CP.diff_svl hps unk_hps = []) then
+                is_only_neqNull_pure (MCP.pure_of_mix fb.formula_base_pure)
+              else false
+            else false
+      | Exists fe ->
+          if is_empty_heap fe.formula_exists_heap then
+            is_only_neqNull_pure (MCP.pure_of_mix fe.formula_exists_pure)
+          else
+            let hds,hvs,hrels = get_hp_rel_h_formula fe.formula_exists_heap in
+            if hds=[] && hvs=[] then
+              let hps = List.map (fun (hp,_,_) -> hp) hrels in
+              if (CP.diff_svl hps unk_hps = []) then
+                is_only_neqNull_pure (MCP.pure_of_mix fe.formula_exists_pure)
+              else false
+            else false
+      | Or orf -> (helper orf.formula_or_f1) && (helper orf.formula_or_f2)
+  in
+  helper f0
+
+let is_only_neqNull args unk_hps f0=
+  let pr1 = !print_formula in
+  Debug.no_2 "is_only_neqNull" !CP.print_svl pr1 string_of_bool
+      (fun _ _ -> is_only_neqNull_x args unk_hps f0) args f0
+
+let remove_neqNulls p=
+  let ps = (CP.split_conjunctions p) in
+  let ps1 = CP.remove_redundant_helper ps [] in
+  let ps2 = List.filter (fun p -> not (CP.is_neq_null_exp p)) ps1 in
+  (CP.join_conjunctions ps2)
+
+let remove_neqNulls_f f0=
+  let rec helper f=
+    match f with
+      | Base fb -> let np = remove_neqNulls (MCP.pure_of_mix fb.formula_base_pure) in
+                   (Base {fb with formula_base_pure = MCP.mix_of_pure np})
+      | Or orf -> let nf1 = helper orf.formula_or_f1 in
+                  let nf2 = helper orf.formula_or_f2 in
+                  ( Or {orf with formula_or_f1 = nf1;
+                      formula_or_f2 = nf2;})
+		      | Exists fe -> let np = remove_neqNulls(MCP.pure_of_mix fe.formula_exists_pure) in
+                             (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
+  in
+  helper f0
+
 (*elim redundant x!=null in p*)
 let remove_neqNull_redundant_hnodes hds p=
   (*currently we just work with data nodes*)
@@ -3756,7 +3817,9 @@ and drop_data_view_hrel_nodes f fn_data_select fn_view_select fn_hrel_select dno
           dnodes vnodes relnodes in
         (*assume keep vars = dnodes*)
         let new_p = CP.filter_var_new (MCP.pure_of_mix fb.formula_base_pure) dnodes in
+        (*currently we drop all neqnull*)
         let new_p1 = remove_neqNull_redundant_hnodes_hf new_hf new_p in
+        (* let new_p1 = remove_neqNulls new_p in *)
         Base {fb with formula_base_heap = new_hf;
             formula_base_pure = MCP.mix_of_pure new_p1;
                 }
