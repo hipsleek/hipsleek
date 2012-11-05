@@ -70,8 +70,10 @@ let common_arguments = [
 	"Existentially quantify the fresh vars in the residue after applying ENT-LHS-EX");
 	("-noee", Arg.Clear Globals.elim_exists_flag,
 	"No eleminate existential quantifiers before calling TP.");
-	("--no-filter", Arg.Clear Globals.filtering_flag,
-	"No assumption filtering.");
+	(* ("--no-filter", Arg.Clear Globals.filtering_flag, *)
+	(* "No assumption filtering."); *)
+	("--filter", Arg.Set Globals.filtering_flag,
+	"Enable assumption filtering.");
 	("--no-split-rhs", Arg.Clear Globals.split_rhs_flag,
 	"No Splitting of RHS(conseq).");
 	("--dlp", Arg.Clear Globals.check_coercions,

@@ -121,8 +121,9 @@ let z3_proofs_list_to_file () =
 		let tstartlog = Gen.Profiling.get_time () in
 		let oc = 
 		(try Unix.mkdir "logs" 0o750 with _ -> ());
-		let with_option= if(!Globals.do_slicing) then "slicing" else "no_slicing" in
-		open_out ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
+		let with_option= if(!Globals.do_slicing) then "slice" else "noslice" in
+		(* let with_option= with_option^"_"^if(!Globals.split_rhs_flag) then "rhs" else "norhs" in *)
+		open_out ("logs/"^with_option^(Globals.norm_file_name (List.hd !Globals.source_files)) ^".z3") in
 		let _= List.map (fun ix-> let _=fprintf oc "%s" ix in ()) !z3_proof_log_list in
 		let tstoplog = Gen.Profiling.get_time () in
 	  let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in 
