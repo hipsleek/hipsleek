@@ -7519,6 +7519,40 @@ let is_neq_null_exp (f:formula) = match f with
     | _ -> false)
   | _ -> false
 
+let check_dang_or_null_exp_x root (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+      | (Eq (esv1, esv2 ,_),_) ->
+          begin
+              match esv1,esv2 with
+                | Var (sv1,_), Null _ ->
+                     if eq_spec_var sv1 root then
+                       (false,true)
+                     else (false,false)
+                | Var (sv1,_), Var (sv2, _) ->
+                    (
+                        let b1 = eq_spec_var sv1 root in
+                        let b2 = eq_spec_var sv2 root in
+                        match b1,b2 with
+                          | true,true
+                          | false,false -> (false,false)
+                          | _ -> (true,false)
+                    )
+                | Null _, Var (sv2,_) ->
+                    if eq_spec_var sv2 root then
+                       (false,true)
+                     else (false,false)
+                | _ -> (false,false)
+          end
+      | _ -> (false,false)
+    )
+  | _ -> (false,false)
+
+let check_dang_or_null_exp root (f:formula) =
+  let pr1 = pr_pair string_of_bool string_of_bool in
+  Debug.no_2 "check_dang_or_null_exp" !print_sv !print_formula pr1
+      (fun _ _ -> check_dang_or_null_exp_x root f) root f
+
 let is_beq_exp (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
