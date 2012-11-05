@@ -43,6 +43,7 @@ ensures x::node<v,_@A> * cached'::node<v,_>;
 {
  cached.val = x.val;
 }
+
 void add_in(int key, ref node cached, node q) 
 /*
 requires cached::node<_,_> & q::ll<R> 
@@ -68,16 +69,16 @@ requires q::ll<Rq> & cached::node<_,_>
 ensures  q::lseg<R1,res> * res::node<key,q2> * q2::ll<R2> & cached'::node<key,_> & Rq = union(R1,R2,{res});
 */
 
-requires q::ll<Rq> && cached::node<k,_> & key = k
+requires q::ll<Rq> & cached::node<k,_> & key = k
 ensures  q::ll<Rq> & cached::node<k,_> & res = cached;
 
-requires q::ll<Rq> && cached::node<k,_> & key != k & flag != 1
-ensures res::node<key,_> * (q::ll<Rq> & cached::node<k,_>);
+requires q::ll<Rq> & cached::node<k,_> & key != k & flag != 1
+ensures res::node<key,_> * q::ll<Rq> & cached'::node<_,_>;
+
+requires q::ll<Rq> & cached::node<k,_> & key != k & flag = 1
+ensures res::node<key,_> * q::ll<Rq> & cached'::node<_,_> ;
 
 /*
-requires q::ll<Rq> & cached::node<k,_> & key != k & flag = 1
-ensures res::node<key,_> * (q::ll<Rq> & cached::node<key,_>);
-
 requires q::ll<Rq> & cached::node<k,_> & key != k
 ensures q::ll<Rq> & cached::node<k,_> & res = q;
 */

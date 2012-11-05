@@ -1134,7 +1134,8 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 					then h1,(CP.mkTrue no_pos)
 					else let compatible_fls = List.map (fun (_,(_,fl)) -> fl) compatible_cases2 in
 					let ramified_cases = List.filter (fun (_,(_,fl)) ->
-					List.exists (fun c -> (is_same_field_layout c fl)) compatible_fls)
+					List.exists (fun c -> 
+					(is_same_field_layout c fl) || (is_compatible_field_layout c fl)) compatible_fls)
 					case_and_layouts1 in
 					let ch_vars = List.map (fun (g,_) -> CP.fv g) ramified_cases in
 					let ch_vars_lt = remove_dups (List.concat ch_vars) in
@@ -1183,7 +1184,7 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 							(is_same_field_layout paimm al)) compatible_cases
 							then h1,(CP.mkTrue no_pos)
 							else let ramified_cases = List.filter (fun (_,(_,fl)) ->
-							(is_same_field_layout paimm fl)(*||(is_compatible_field_layout paimm fl)*))
+							(is_same_field_layout paimm fl) ||(is_compatible_field_layout paimm fl))
 							case_and_layouts in
 							let ch_vars = List.map (fun (g,_) -> CP.fv g) ramified_cases in
 							let ch_vars_lt = remove_dups (List.concat ch_vars) in
@@ -1291,6 +1292,7 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 )
 
 let ramify_star (p: CF.h_formula) (ql: CF.h_formula list) (vl:C.view_decl list) (mcp: MCP.mix_formula) : CF.h_formula * CP.formula = 
+(*let _ = print_string("Ramification :"^ (string_of_list_f string_of_h_formula ql)^ "\n") in*)
 match p with
 	| CF.DataNode {CF.h_formula_data_name = name;
                        CF.h_formula_data_node = dn;
@@ -1342,7 +1344,6 @@ let ramify_conjstar = ramify_star
 let rec ramify_starminus_in_h_formula (f: CF.h_formula) (vl:C.view_decl list) (aset: CP.spec_var list list) (fl: CF.h_formula list)
 func (mcp: MCP.mix_formula ) : CF.h_formula * CP.formula = 
   if not (contains_starminus f) then f,(CP.mkTrue no_pos) else
-  let fl = if not ((List.length fl) > 0) then split_into_list f else fl in
   (*let _ = print_string("Ramification :"^ (string_of_h_formula f)^ "\n") in*)
     match f with
       | CF.Star {CF.h_formula_star_h1 = h1;
@@ -1391,6 +1392,7 @@ func (mcp: MCP.mix_formula ) : CF.h_formula * CP.formula =
 	if (CF.is_data h2) || (CF.is_view h2) then 
 	let aset_sv  = Context.get_aset aset (CF.get_node_var h2) in
 	let ramify_list = List.filter (fun c -> let sp_c = (CF.get_node_var c) in
+	(*let _ = print_string("Svar :"^(string_of_spec_var sp_c)^"\n") in*)
 	((CP.mem sp_c aset_sv) || (CP.eq_spec_var (CF.get_node_var h2) sp_c))) fl in
 	let res_h1, res_p1 = if (List.length ramify_list) > 0 then func h1 ramify_list vl mcp else f,(CP.mkTrue no_pos) in
 	res_h1,res_p1
@@ -1402,8 +1404,9 @@ let rec ramify_starminus_in_formula (cf: CF.formula) (vl:C.view_decl list): CF.f
   match cf with
     | CF.Base f   -> 
         let old_p = f.CF.formula_base_pure in
+        let fl = split_into_list f.CF.formula_base_heap in
         let new_h,new_p = 
-    	ramify_starminus_in_h_formula f.CF.formula_base_heap vl (Context.comp_aliases old_p) [] ramify_star old_p
+    	ramify_starminus_in_h_formula f.CF.formula_base_heap vl (Context.comp_aliases old_p) fl ramify_star old_p
     	in 
     	let new_mcp = MCP.merge_mems f.CF.formula_base_pure (MCP.mix_of_pure new_p) true in
     	CF.Base { f with
@@ -1416,8 +1419,9 @@ let rec ramify_starminus_in_formula (cf: CF.formula) (vl:C.view_decl list): CF.f
     	let qevars = f.CF.formula_exists_qvars in 
     	let h = f.CF.formula_exists_heap in
     	let mp = f.CF.formula_exists_pure in
+        let fl = split_into_list h in
     	let new_h,new_p = 
-    	ramify_starminus_in_h_formula h vl (Context.comp_aliases mp) [] ramify_star mp
+    	ramify_starminus_in_h_formula h vl (Context.comp_aliases mp) fl ramify_star mp
     	in
  	let new_mcp = MCP.merge_mems mp (MCP.mix_of_pure new_p) true in
     	CF.Exists { f with

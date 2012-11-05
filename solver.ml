@@ -1841,6 +1841,16 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
           let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
           let uf2 = unfold_heap_x prog f2 aset v fl uf pos in
           normalize_combine_conj uf1 uf2 pos
+    | ConjConj ({h_formula_conjconj_h1 = f1;
+	  h_formula_conjconj_h2 = f2}) ->
+          let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
+          let uf2 = unfold_heap_x prog f2 aset v fl uf pos in
+          normalize_combine_conj uf1 uf2 pos
+    | ConjStar ({h_formula_conjstar_h1 = f1;
+	  h_formula_conjstar_h2 = f2}) ->
+          let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
+          let uf2 = unfold_heap_x prog f2 aset v fl uf pos in
+          normalize_combine_conj uf1 uf2 pos                    
     | Phase ({h_formula_phase_rd = f1;
 	  h_formula_phase_rw = f2}) ->
           let uf1 = unfold_heap_x prog f1 aset v fl uf pos in
@@ -5090,11 +5100,17 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
      (* let _ = print_endline ("locle cons: " ^ (Cprinter.string_of_formula conseq)) in *)
   match ctx0 with
   | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!")
-  | Ctx estate -> (
+  | Ctx estate -> 
       let ante0 = estate.es_formula in
       (*print_string ("\nAN HOA CHECKPOINT :: Antecedent: " ^ (Cprinter.string_of_formula ante))*)
       let ante = if(!Globals.allow_mem) then Mem.ramify_starminus_in_formula ante0 prog.prog_view_decls else ante0 in
+      let ctx0 = CF.set_context_formula ctx0 ante in
       (*Debug.devel_zprint (lazy ("heap_entail_conjunct_helper:\nRamify:\n" ^ (Cprinter.string_of_formula ante0)^ "\nto:\n" ^ (Cprinter.string_of_formula ante))) pos;*)
+           
+  match ctx0 with
+  | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!")
+  | Ctx estate -> (
+      let ante = estate.es_formula in
       match ante with
       | Exists ({formula_exists_qvars = qvars;
                  formula_exists_heap = qh;

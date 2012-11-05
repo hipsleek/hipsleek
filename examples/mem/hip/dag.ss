@@ -14,9 +14,9 @@ dag<v,M> == self = null & M = {}
 	
 dag2<v,M> == self = null & M = {}
 	or self::node<0,l@L,r@L> * l::dag2<_,Ml> & r::dag2<_,Mr> & M = union(Ml,Mr,{self}) & v = 0
-	or self::node<1@I,l@L,r@L> * l::dag2<2,Ml> & r::dag2<2,Mr> & M = union(Ml,Mr,{self}) & v = 1
+	or self::node<1@I,l@L,r@L> * l::dag2<1,Ml> & r::dag2<1,Mr> & M = union(Ml,Mr,{self}) & v = 1
 	inv true
-	mem M->(node<@M,@L,@L> & v = 0 ; node<@I,@L,@L> & v = 1);	
+	mem M->(node<@M,@L,@L> & v = 0 ; node<@I,@L,@L> & v = 1);
 
 void mark(ref node x)
   requires x::dag<0,M>
@@ -51,3 +51,4 @@ mark2(l);
 mark2(r);
 }
 }
+
