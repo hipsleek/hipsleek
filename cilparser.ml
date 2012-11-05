@@ -709,6 +709,7 @@ let translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option)
   let fheader = fundec.Cil.svar in
   let name = fheader.Cil.vname in
   let mingled_name = "" in (* TRUNG TODO: check mingled_name later *)
+  let static_specs = fundec.Cil.sspecs in
   let return = translate_funtyp (fheader.Cil.vtype) in
   let args = collect_params fheader in
   let slocals = List.map (fun x -> translate_var_decl x lopt) fundec.Cil.slocals in
@@ -732,7 +733,7 @@ let translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option)
     Iast.proc_constructor = false;
     Iast.proc_args = args;
     Iast.proc_return = return;
-    Iast.proc_static_specs = Iformula.EList [];
+    Iast.proc_static_specs = static_specs;
     Iast.proc_dynamic_specs = Iformula.mkEFalseF ();
     Iast.proc_exceptions = [];
     Iast.proc_body = Some funbody;

@@ -249,6 +249,7 @@ let transformOffsetOf (speclist, dtype) member =
 %token <string * Cabs.cabsloc> CST_INT
 %token <string * Cabs.cabsloc> CST_FLOAT
 %token <string * Cabs.cabsloc> NAMED_TYPE
+%token <string * Cabs.cabsloc> HIPSPECS                       /* hip specification */
 
 /* Each character is its own list element, and the terminating nul is not
    included in this list. */
@@ -1220,12 +1221,12 @@ abs_direct_decl_opt:
 |   /* empty */                     { JUSTBASE }
 ;
 function_def:  /* (* ISO 6.9.1 *) */
-  function_def_start block   
+  function_def_start hipspecs_opt block   
           { let (loc, specs, decl) = $1 in
             currentFunctionName := "<__FUNCTION__ used outside any functions>";
             !Lexerhack.pop_context (); (* The context pushed by 
                                     * announceFunctionName *)
-            doFunctionDef ((*handleLoc*) loc) (trd3 $2) specs decl (fst3 $2)
+            doFunctionDef ((*handleLoc*) loc) (trd3 $3) specs decl $2 (fst3 $3)
           } 
 
 
@@ -1550,7 +1551,14 @@ asmcloberlst_ne:
    one_string_constant                           { [$1] }
 |  one_string_constant COMMA asmcloberlst_ne     { $1 :: $3 }
 ;
-  
+
+/** hip specification */
+hipspecs_opt:
+  /* empty */         { Iformula.EList [] }
+| HIPSPECS            { let s = String.trim (fst $1) in
+                        let hspecs = Parser.parse_specs_string "hipspecs" s in
+                        hspecs }    /* TRUNG TODO: still need to refine the location of specs in (snd $1) */ 
+
 %%
 
 

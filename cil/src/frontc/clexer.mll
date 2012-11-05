@@ -354,6 +354,12 @@ let lex_comment remainder lexbuf =
   if ch = '\n' then E.newline();
   prefix :: remainder lexbuf
 
+(* collect the hipspecs string *)
+let lex_hipspecs remainder lexbuf =
+  let ch = Lexing.lexeme_char lexbuf 0 in
+  let prefix = String.make 1 ch in
+  prefix ^ (remainder lexbuf)
+
 let make_char (i:int64):char =
   let min_val = Int64.zero in
   let max_val = Int64.of_int 255 in
@@ -446,19 +452,20 @@ let no_parse_pragma =
 	     | "mark"
 
 
-rule initial =
-	parse 	"/*"			{ let il = comment lexbuf in
-	                                  let sl = intlist_to_string il in
-					  addComment sl;
-                                          addWhite lexbuf;
-                                          initial lexbuf}
-|               "//"                    { let il = onelinecomment lexbuf in
-                                          let sl = intlist_to_string il in
-                                          addComment sl;
-                                          E.newline();
-                                          addWhite lexbuf;
-                                          initial lexbuf
-                                           }
+rule initial = parse 	
+  "/*@"       { let hs = hipspecs lexbuf in                (* hip specification *)
+                HIPSPECS (hs, currentLoc ()) }
+| "/*"        { let il = comment lexbuf in
+                let sl = intlist_to_string il in
+                addComment sl;
+                addWhite lexbuf;
+                initial lexbuf}
+| "//"        { let il = onelinecomment lexbuf in
+                let sl = intlist_to_string il in
+                addComment sl;
+                E.newline();
+                addWhite lexbuf;
+                initial lexbuf}
 |		blank			{ addWhite lexbuf; initial lexbuf}
 |               '\n'                    { E.newline ();
                                           if !pragmaLine then
@@ -686,6 +693,10 @@ and msasmnobrace = parse
 |  _                    { let cur = Lexing.lexeme lexbuf in 
 
                           cur ^ (msasmnobrace lexbuf) }
+
+and hipspecs = parse
+  "*/"                  { "" }
+|  _                    { lex_hipspecs hipspecs lexbuf }
 
 {
 

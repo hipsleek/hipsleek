@@ -1391,7 +1391,7 @@ let get_shape_from_file view_node keep_vars proc_name =
 let get_spec_from_file prog = 
   let input_spec = (get_file_name Sys.argv.(1)) ^ ".spec" in
   let input_str = syscall ("cat " ^ input_spec) in
-  let res = Parser.parse_spec input_str in
+  let res = Parser.parse_specs_list input_str in
   (*  print_endline ("SPEC" ^ (Iprinter.string_of_struc_formula res));*)
 (*  let id,command = get_cmd_from_file in*)
   let id, command = !(IF.cmd) in
