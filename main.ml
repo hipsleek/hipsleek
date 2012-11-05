@@ -194,8 +194,8 @@ let process_source_full source =
       begin
 	let tstartlog = Gen.Profiling.get_time ()in	
 	let _= Log.proof_log_to_file () in
-        let fname = ("logs/proof_log_"^Globals.norm_file_name (List.hd !Globals.source_files))^".txt" in
-				let with_option= if(!Globals.do_slicing) then "slicing" else "no_slicing" in
+	      let with_option= if(!Globals.do_slicing) then "slicing" else "no_slicing" in
+        let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt"  in
 				let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
 	let _= if (!Globals.proof_logging_txt) 
         then 
@@ -239,6 +239,9 @@ let process_source_full source =
 	^ "\tTime spent in child processes: " 
 	^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n"
 	^ if !Globals.proof_logging || !Globals.proof_logging_txt then "\tTime for logging: "^(string_of_float (!Globals.proof_logging_time))^" second(s)\n"
+	else ""
+	^ if(!Tpdispatcher.tp = Tpdispatcher.Z3) then "\tZ3 Prover Time: "
+	^ (string_of_float !Globals.z3_time) ^ " second(s)\n"
 	else ""
 	)
 

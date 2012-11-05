@@ -614,6 +614,7 @@ let restart reason =
 let check_formula f timeout =
   (* try*)
   begin
+		  let tstartlog = Gen.Profiling.get_time () in 
     if not !is_z3_running then start ()
     else if (!z3_call_count = !z3_restart_interval) then
       begin
@@ -638,6 +639,8 @@ let check_formula f timeout =
         restart ("[z3.ml]Timeout when checking sat!" ^ (string_of_float timeout));
         { original_output_text = []; sat_result = Unknown; } in
       let res = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc f timeout fail_with_timeout in
+			let tstoplog = Gen.Profiling.get_time () in
+	    let _= Globals.z3_time := !Globals.z3_time +. (tstoplog -. tstartlog) in 
       res
   end
 

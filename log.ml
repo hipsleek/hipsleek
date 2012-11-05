@@ -95,7 +95,8 @@ let proof_log_to_text_file () =
 		let tstartlog = Gen.Profiling.get_time () in
 		let oc = 
 		(try Unix.mkdir "logs" 0o750 with _ -> ());
-		open_out ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
+		let with_option= if(!Globals.do_slicing) then "slicing" else "no_slicing" in
+		open_out ("logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
 		let string_of_log_type lt =
 			match lt with
 			|IMPLY (ante, conseq) -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
