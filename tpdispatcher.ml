@@ -726,6 +726,9 @@ let sat_label_filter fct f =
 		| Or (f1,f2,_ ,_)-> (helper f1)||(helper f2)
 		| _ -> test f in 
 	helper f
+	
+let sat_label_filter fct f = 
+	Gen.Profiling.do_1 "sat_label_filter" (sat_label_filter fct) f
   
 let sat_label_filter fct f =  Debug.no_1 "sat_label_filter" !print_formula string_of_bool (fun _ -> sat_label_filter fct f) f
   
@@ -1717,6 +1720,9 @@ let simpl_pair rid (ante, conseq) =
   let ante2 = simpl_in_quant ante1 true rid in
   let ante3 = simpl_in_quant ante2 true rid in
   (ante3, conseq)
+
+let simpl_pair rid (ante, conseq) =
+	Gen.Profiling.do_1 "is_sat" (simpl_pair rid) (ante, conseq)
 ;;
 
 let is_sat (f : CP.formula) (old_sat_no : string): bool =

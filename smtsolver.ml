@@ -627,6 +627,7 @@ let check_formula f timeout =
         let new_f = "(push)\n" ^ f ^ "(pop)\n" in
 				(* let _= if(!proof_logging_txt && (proving_kind # string_of)<>"TRANS_PROC") then  *)
 				let _= if(!proof_logging_txt) then 
+					print_endline new_f;
 					        add_to_z3_proof_log_list new_f 
 				in
         output_string (!prover_process.outchannel) new_f;
