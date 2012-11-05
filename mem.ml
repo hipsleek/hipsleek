@@ -1140,19 +1140,22 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 					let ch_vars_lt = remove_dups (List.concat ch_vars) in
 					let old_args = vargs1 in
 					let fresh_args = CP.fresh_spec_vars old_args in
-					let comb = List.combine old_args fresh_args in
+					let comb = List.combine fresh_args old_args in
 					let comb_with_sublist = List.combine comb sublist1 in
 					let comb_filtered = List.filter (fun ((_,_),(parg,_)) ->
 					List.mem parg ch_vars_lt 
 					) comb_with_sublist in
 					let comb,_ = List.split comb_filtered in
-					let new_h1 = CF.h_subst comb h1 in
+					let ramified_subst = List.map 
+			                (fun ((nw,_),(parg,_)) -> (parg,nw)) comb_filtered in
+			                let comb0 = List.map (fun (a,b) -> (b,a)) comb in
+					let new_h1 = CF.h_subst comb0 h1 in
  					let conjlt1 = List.map (fun (v1,v2) -> 
 					CP.mkEqVar v1 v2 no_pos
-					) comb in
+					) comb0 in
 					let p1 = CP.join_conjunctions conjlt1 in
 					let conjlt2 = List.map (fun (g,_) ->
-					CP.subst comb g							
+					CP.subst ramified_subst g							
 					) ramified_cases in
 					let p2 = CP.join_conjunctions conjlt2 in
 					let new_p = CP.mkOr p1 p2 None no_pos in
@@ -1186,22 +1189,26 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 							let ch_vars_lt = remove_dups (List.concat ch_vars) in
 							let old_args = vargs in
 							let fresh_args = CP.fresh_spec_vars old_args in
-					                let comb = List.combine old_args fresh_args in
+					                let comb = List.combine fresh_args old_args in
 					                let comb_with_sublist = List.combine comb sublist in
 					                let comb_filtered = List.filter (fun ((_,_),(parg,_)) ->
 					                List.mem parg ch_vars_lt 
 					                ) comb_with_sublist in
 					                let comb,_ = List.split comb_filtered in
-					              	let new_h1 = CF.h_subst comb h1 in
+					                let ramified_subst = List.map 
+					                (fun ((nw,_),(parg,_)) -> (parg,nw)) comb_filtered in
+					                let comb0 = List.map (fun (a,b) -> (b,a)) comb in
+					              	let new_h1 = CF.h_subst comb0 h1 in
  					   		let conjlt1 = List.map (fun (v1,v2) -> 
 							CP.mkEqVar v1 v2 no_pos
-							) comb in
+							) comb0 in
 							let p1 = CP.join_conjunctions conjlt1 in
 							let conjlt2 = List.map (fun (g,_) ->
-							CP.subst comb g							
+							CP.subst ramified_subst g						
 							) ramified_cases in
 							let p2 = CP.join_conjunctions conjlt2 in
 							let new_p = CP.mkOr p1 p2 None no_pos in
+							(*let _ = print_string("\nNew P: "^(string_of_pure_formula new_p)^"\n") in*)
  					   		(new_h1,new_p)
 						)
 						else  h1,(CP.mkTrue no_pos)

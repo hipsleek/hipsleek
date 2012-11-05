@@ -68,10 +68,10 @@ requires q::ll<Rq> & cached::node<_,_>
 ensures  q::lseg<R1,res> * res::node<key,q2> * q2::ll<R2> & cached'::node<key,_> & Rq = union(R1,R2,{res});
 */
 
-requires q::ll<Rq> & cached::node<k,_> & key = k
+requires q::ll<Rq> && cached::node<k,_> & key = k
 ensures  q::ll<Rq> & cached::node<k,_> & res = cached;
 
-requires q::ll<Rq> & cached::node<k,_> & key != k & flag != 1
+requires q::ll<Rq> && cached::node<k,_> & key != k & flag != 1
 ensures res::node<key,_> * (q::ll<Rq> & cached::node<k,_>);
 
 /*

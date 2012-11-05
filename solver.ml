@@ -5091,9 +5091,10 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
   match ctx0 with
   | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!")
   | Ctx estate -> (
-      let ante = estate.es_formula in
+      let ante0 = estate.es_formula in
       (*print_string ("\nAN HOA CHECKPOINT :: Antecedent: " ^ (Cprinter.string_of_formula ante))*)
-      let ante = if(!Globals.allow_mem) then Mem.ramify_starminus_in_formula ante prog.prog_view_decls else ante in
+      let ante = if(!Globals.allow_mem) then Mem.ramify_starminus_in_formula ante0 prog.prog_view_decls else ante0 in
+      (*Debug.devel_zprint (lazy ("heap_entail_conjunct_helper:\nRamify:\n" ^ (Cprinter.string_of_formula ante0)^ "\nto:\n" ^ (Cprinter.string_of_formula ante))) pos;*)
       match ante with
       | Exists ({formula_exists_qvars = qvars;
                  formula_exists_heap = qh;
