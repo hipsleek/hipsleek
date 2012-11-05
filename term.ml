@@ -335,7 +335,6 @@ let collect_update_formula (transition: CP.formula) (old_exp: CP.exp) (new_exp: 
   let pr_e = !CP.print_exp in
   Debug.no_3 "collect_update_formula" pr_f pr_e pr_e pr_f collect_update_formula_x transition old_exp new_exp
 
-
 let collect_specs_formula_x (transition: CP.formula) : CP.formula =
   let rec collect_helper (f: CP.formula) : CP.formula = (
     match f with
@@ -364,11 +363,9 @@ let collect_specs_formula_x (transition: CP.formula) : CP.formula =
   ) in
   collect_helper transition
 
-
 let collect_specs_formula (transition: CP.formula) : CP.formula =
   let pr_f = !CP.print_formula in
   Debug.no_1 "collect_specs_formula" pr_f pr_f collect_specs_formula_x transition
-
 
 let refine_specs_adapt_sequence_x (specs: CP.formula) (seq_src: CP.sequence) (seq_dst: CP.sequence) =
   let can_drop_bformula (f: CP.formula) (seq: CP.sequence) = (
@@ -420,11 +417,9 @@ let refine_specs_adapt_sequence_x (specs: CP.formula) (seq_src: CP.sequence) (se
   let newspecs = drop_helper tmpspecs seq_dst in
   newspecs
 
-
 let refine_specs_adapt_sequence (specs: CP.formula) (seq_src: CP.sequence) (seq_dst: CP.sequence) =
   let pr_f = !CP.print_formula in
   Debug.no_1 "refine_specs_adapt_sequence" pr_f pr_f (fun x -> refine_specs_adapt_sequence_x x seq_src seq_dst) specs
-
 
 (* let rec has_variance_struc struc_f = *)
 (*   List.exists (fun ef -> has_variance_ext ef) struc_f *)

@@ -12,8 +12,8 @@ void loop(float x, float y)
           case
           {
             y <= 1.0     -> requires Loop ensures false;
-            1 < y <= 2.0 -> requires true ensures true;
-            y >  2.0     -> requires Term[Seq{-y/x @ (-infty, 0), y/x<0.1}] ensures true;
+            1 < y <= 2.0 -> requires Term[1, Seq{-y @ (-infty, -1), y<=2.0}] ensures true;
+            y >  2.0     -> requires Term[0, Seq{-y/x @ (-infty, 0), y/x<0.1}] ensures true;
           }
       }
   }
