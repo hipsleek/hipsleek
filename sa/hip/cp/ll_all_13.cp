@@ -13,7 +13,7 @@ ass [H1,G2]:{
  }
 
 hpdefs [H1,G2]:{
-     H1(x) --> x=null or x::node<_,p> * H1(p);
+     H1(a) --> a=null or a::node<_,p> * H1(p);
      G2(x_682,v_node_63_683) -->
          emp&x_682=null & v_node_63_683=null
       or x_682::node<a,next_65_642>&v_node_63_683=next_65_642

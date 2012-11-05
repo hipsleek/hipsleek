@@ -38,10 +38,10 @@ node trav(node x)
      infer [H1,G1]
      requires H1(x)
      ensures G1(res);
-/*
-  requires x::ls<>
-  ensures x::ls<>;
 
+  /* requires x::ls2<> */
+  /* ensures x::ls2<>; */
+/*
 Procedure trav$node FAIL-2
 
 Exception Failure("hd") Occurred!

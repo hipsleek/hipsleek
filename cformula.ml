@@ -3562,6 +3562,7 @@ let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula hf in
   let new_mf = MCP.mix_of_pure (CP.join_conjunctions neqNulls) in
   new_mf
 
+
 (*elim redundant x!=null in p*)
 let remove_neqNull_redundant_hnodes hds p=
   (*currently we just work with data nodes*)

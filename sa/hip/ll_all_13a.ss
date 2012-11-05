@@ -18,6 +18,11 @@ ls<> == self = null
 	or self::node<_, q> * q::ls<> 
   inv true;
 
+ls1<> == self = null
+    or self::node<_, _>
+	or self::node<_, q> * q::ls1<> 
+  inv true;
+
 
 HeapPred H(node a).
 HeapPred H1(node a).
@@ -33,6 +38,7 @@ node delete_mid(node x)
  infer [H1,G2]
  requires H1(x)
  ensures G2(x,res);
+
 /*
   requires x::ls<>
   ensures res::ls<>;
