@@ -956,17 +956,30 @@ let check_partial_def_eq par_def1 par_def2=
       (fun _ _ -> check_partial_def_eq_x par_def1 par_def2) par_def1 par_def2
 
 (*if root + next ptr is inside args: ll_all_13a: G***)
-let elim_direct_root_pto undef_args args prog hd_nodes hv_nodes=
-  let root = List.hd args in
-  let next_ptrs_from_root = SAU.loop_up_closed_ptr_args prog hd_nodes hv_nodes [root] in
-  let next_ptrs_from_root1 = (CP.remove_dups_svl next_ptrs_from_root) in
-  let add_defs =
-    if (next_ptrs_from_root1 <> []) && CP.diff_svl next_ptrs_from_root1 args = [] then
-      ([root]@next_ptrs_from_root1)
-    else []
+let elim_direct_root_pto_x undef_args args prog hd_nodes hv_nodes=
+  let root =
+    if args = [] then report_error no_pos "sa.elim_direct_root_pto: hp should have at least one arguments"
+    else List.hd args
   in
-  let undef_args1 = CP.diff_svl undef_args add_defs in
-  undef_args1
+  if CP.mem_svl root undef_args then
+    let next_ptrs_from_root = SAU.loop_up_closed_ptr_args prog hd_nodes hv_nodes [root] in
+    let next_ptrs_from_root1 = (CP.remove_dups_svl next_ptrs_from_root) in
+    let next_ptrs_from_root2 = CP.diff_svl next_ptrs_from_root1 [root] in
+    let _ = Debug.info_pprint ("    next_ptrs_from_root2:" ^ (!CP.print_svl next_ptrs_from_root2)) no_pos in
+    let add_defs =
+      if (next_ptrs_from_root2 <> []) && CP.diff_svl next_ptrs_from_root2 args = [] then
+        ([root]@next_ptrs_from_root1)
+      else []
+    in
+    let undef_args1 = CP.diff_svl undef_args add_defs in
+    undef_args1
+  else
+    undef_args
+
+let elim_direct_root_pto undef_args args prog hd_nodes hv_nodes=
+  let pr1 = !CP.print_svl in
+  Debug.ho_2 "elim_direct_root_pto" pr1 pr1 pr1
+      (fun _ _ -> elim_direct_root_pto_x undef_args args prog hd_nodes hv_nodes) undef_args args
 
 (*collect partial def for rhs hrels. diff from lhs, rhs includes rhs formula also*)
 let rec collect_par_defs_one_side_one_hp_rhs_x prog lhs rhs (hrel, args) def_ptrs
@@ -1006,7 +1019,7 @@ let rec collect_par_defs_one_side_one_hp_rhs_x prog lhs rhs (hrel, args) def_ptr
       let test2 = (not (SAU.is_empty_f l)) && test1 && (not (CF.is_only_neqNull args keep_unk_hps l)) in
       if test2 then
         let l_r = (hrel, args, CP.intersect_svl args unk_svl, l, Some l, None) in
-        let _ =  DD.ninfo_pprint ("  partial defs - rhs: \n" ^
+        let _ =  DD.info_pprint ("  partial defs - rhs: \n" ^
           (let pr =  SAU.string_of_par_def_w_name in pr l_r) ) no_pos in
         [l_r]
       else []
@@ -1025,7 +1038,8 @@ and collect_par_defs_one_side_one_hp_rhs prog lhs rhs (hrel, args) def_ptrs
 let rec collect_par_defs_one_side_one_hp_x prog lhs rhs (hrel, args) ldef_ptrs rdef_ptrs
       rhrels eqs hd_nodes hv_nodes unk_hps unk_svl predef=
   begin
-      Debug.ninfo_pprint (" lhs hp: "^ (!CP.print_sv hrel)) no_pos;
+      Debug.info_pprint (" lhs hp: "^ (!CP.print_sv hrel)) no_pos;
+      let _ = Debug.info_pprint (" lhs args: "^ (!CP.print_svl args)) no_pos in
       let lprocess_helper def_ptrs=
       (*find definition in lhs*)
         let undef_args = lookup_undef_args args [] def_ptrs in
@@ -1045,7 +1059,7 @@ let rec collect_par_defs_one_side_one_hp_x prog lhs rhs (hrel, args) ldef_ptrs r
         if test2 then
           (*collect partial def ---> hp*)
           let l_r = (hrel, args, CP.intersect_svl args unk_svl, r, Some r, None) in
-          let _ =  DD.ninfo_pprint ("  partial defs - one side def ---> hp: \n" ^
+          let _ =  DD.info_pprint ("  partial defs - one side def ---> hp: \n" ^
                                           (let pr =  SAU.string_of_par_def_w_name in pr l_r) ) no_pos in
           [l_r]
         else
@@ -1214,7 +1228,7 @@ let collect_par_defs_recursive_hp_x prog lhs rhs (hrel, args) rec_args def_ptrs 
   let rec_pdefs = if undef_args = [] then (build_partial_def())
   else []
   in
-  let _ = DD.info_pprint ("  rec partial defs: \n" ^
+  let _ = DD.ninfo_pprint ("  rec partial defs: \n" ^
               (let pr = pr_list_ln SAU.string_of_par_def_w_name in pr (rec_pdefs)) ) no_pos in
   rec_pdefs
 
@@ -1998,7 +2012,7 @@ let generalize_one_hp prog unk_hps par_defs=
         let defs4 = SAU.remove_dups_recursive hp args0 unk_hps defs3 in
   (*find longest hnodes common for more than 2 formulas*)
   (*each hds of hdss is def of a next_root*)
-        let defs = SAU.get_longest_common_hnodes_list prog hp args0 defs4 in
+        let defs = SAU.get_longest_common_hnodes_list prog unk_hps hp args0 defs4 in
         defs
     end
 
@@ -2344,9 +2358,16 @@ let generalize_hps_par_def_x prog unk_hps par_defs=
           let part,remains= List.partition (fun (hp_name,_,_) -> CP.eq_spec_var a1 hp_name) xs in
           partition_pdefs_by_hp_name remains (parts@[[(a1,a2,a3)]@part])
   in
+  (*remove neqNUll redundant*)
+  let remove_neqNull_helper (hp,args,f)=
+    let f1 = CF.remove_neqNulls_f f in
+    if SAU.is_empty_f f1 then [] else [(hp,args,f1)]
+  in
   let par_defs1 = List.map get_def_body par_defs in
   let par_defs2 = List.filter is_valid_pardef par_defs1 in
-  let groups = partition_pdefs_by_hp_name par_defs2 [] in
+  (*remove neqNull*)
+  let par_defs3 = List.concat (List.map remove_neqNull_helper par_defs2) in
+  let groups = partition_pdefs_by_hp_name par_defs3 [] in
   (*remove dups in each group*)
   let groups1 = List.map SAU.remove_dups_pardefs groups in
   (*
@@ -2583,7 +2604,7 @@ let generalize_pure_def_from_hpunk_x cs=
     let def1 = CP.filter_var_new p args in
     let def2 = SAU.remove_irr_eqs args def1 in
     if not (CP.isConstTrue def2) then
-      let d = SAU.mk_hprel_def hp args [(CF.formula_of_pure_formula def2 pos)]
+      let d = SAU.mk_hprel_def [hp] hp args [(CF.formula_of_pure_formula def2 pos)]
         pos
       in d
     else []
@@ -2623,7 +2644,7 @@ let generalize_hps prog unk_hps cs par_defs=
   let pr2 = pr_list_ln SAU.string_of_par_def_w_name in
   let pr3 = pr_list Cprinter.string_of_hp_rel_def in
   let pr4 = pr_list(pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var_list) in
-  Debug.no_2 "generalize_hp" pr1 pr2 (pr_triple pr1 pr3 pr4)
+  Debug.ho_2 "generalize_hp" pr1 pr2 (pr_triple pr1 pr3 pr4)
       (fun _ _ -> generalize_hps_x prog unk_hps cs par_defs) cs par_defs
 
 (*========END generalization==========*)

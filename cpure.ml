@@ -7508,16 +7508,23 @@ let is_eq_exp (f:formula) = match f with
     | _ -> false)
   | _ -> false
 
-let is_neq_null_exp (f:formula) = match f with
+let is_neq_null_exp_x (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
     | (Neq (sv1,sv2,_),_) ->
-        if (is_null_const_exp sv2) then
-          not (is_null_const_exp sv1)
-        else
-          (is_null_const_exp sv1)
+        begin
+            match sv1,sv2 with
+              | Var _, Null _ -> true
+              | Null _, Var _ -> true
+              | _ -> false
+        end
     | _ -> false)
   | _ -> false
+
+let is_neq_null_exp (f:formula)=
+  let pr1 = !print_formula in
+  Debug.no_1 "is_neq_null_exp" pr1 string_of_bool
+      (fun _ -> is_neq_null_exp_x f) f
 
 let check_dang_or_null_exp_x root (f:formula) = match f with
   | BForm (bf,_) ->
