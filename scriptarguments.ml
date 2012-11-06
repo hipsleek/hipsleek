@@ -271,8 +271,8 @@ let common_arguments = [
   ("--delay-case-sat", Arg.Set Globals.delay_case_sat, "Disable unsat checking for case entailment");
   ("--force-post-sat", Arg.Set Globals.force_post_sat, "Force unsat checking when assuming a postcondition");
   ("--delay-if-sat", Arg.Set Globals.delay_if_sat, "Disable unsat checking for a conditional");
-  
-	
+  ("--delay-proving-sat", Arg.Set Globals.delay_proving_sat, "Disable unsat checking prior to proving requires");
+
 	(* Proof Logging *)
 	("--enable-logging", Arg.Set Globals.proof_logging, "Enable proof logging");
 	("--enable-logging-txt", Arg.Set Globals.proof_logging_txt, "Enable proof logging output text file in addition");
