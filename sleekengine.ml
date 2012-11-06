@@ -581,7 +581,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
       ^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") 
     else () 
   in
-  let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in
+  let ctx = CF.transform_context (Solver.elim_unsat_es 9 !cprog (ref 1)) ctx in
   let rs1, _ = 
     if not !Globals.disable_failure_explaining then
       Solver.heap_entail_struc_init_bug_inv !cprog false false 

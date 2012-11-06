@@ -1338,29 +1338,29 @@ and combine_es_and prog (f : MCP.mix_formula) (reset_flag:bool) (es : entail_sta
   else Ctx {es with es_formula = r1;}
   else Ctx {es with es_formula = r1;}
 
-and combine_list_context_and_unsat_now prog (ctx : list_context) (f : MCP.mix_formula) : list_context = 
+(*and combine_list_context_and_unsat_now prog (ctx : list_context) (f : MCP.mix_formula) : list_context = 
   let r = transform_list_context ((combine_es_and prog f true),(fun c->c)) ctx in
   let r = transform_list_context ((elim_unsat_es_now prog (ref 1)),(fun c->c)) r in
-  TP.incr_sat_no () ; r
+  TP.incr_sat_no () ; r*)
 
 and list_context_and_unsat_now prog (ctx : list_context) : list_context = 
-  let r = transform_list_context ((elim_unsat_es prog (ref 1)),(fun c->c)) ctx in
+  let r = transform_list_context ((elim_unsat_es 7 prog (ref 1)),(fun c->c)) ctx in
   TP.incr_sat_no () ; r
 
-and list_partial_context_and_unsat_now prog (ctx : list_partial_context) : list_partial_context = 
+(*and list_partial_context_and_unsat_now prog (ctx : list_partial_context) : list_partial_context = 
   (* let r = transform_list_partial_context ((combine_es_and prog f true),(fun c->c)) ctx in *)
   let r = transform_list_partial_context ((elim_unsat_es_now prog (ref 1)),(fun c->c)) ctx in
   let r = remove_dupl_false_pc_list r in
-  TP.incr_sat_no () ; r
+  TP.incr_sat_no () ; r*)
 
 and list_failesc_context_and_unsat_now prog (ctx : list_failesc_context) : list_failesc_context = 
-  let r = transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) ctx in
+  let r = transform_list_failesc_context (idf,idf,(elim_unsat_es 6 prog (ref 1))) ctx in
   let r = List.map CF.remove_dupl_false_fe r in
   TP.incr_sat_no () ; r
 
 and combine_list_failesc_context_and_unsat_now prog (ctx : list_failesc_context) (f : MCP.mix_formula) : list_failesc_context = 
   let r = transform_list_failesc_context (idf,idf,(combine_es_and prog f true)) ctx in
-  let r = transform_list_failesc_context (idf,idf,(elim_unsat_es_now prog (ref 1))) r in
+  let r = transform_list_failesc_context (idf,idf,(elim_unsat_es_now 2 prog (ref 1))) r in
   let r = List.map CF.remove_dupl_false_fe r in
   TP.incr_sat_no () ; r
   
@@ -1371,12 +1371,12 @@ and combine_list_failesc_context prog (ctx : list_failesc_context) (f : MCP.mix_
 
 and combine_context_and_unsat_now prog (ctx : context) (f : MCP.mix_formula) : context = 
   let r = transform_context (combine_es_and prog f true) ctx in
-  let r = transform_context (elim_unsat_es_now prog (ref 1)) r in
+  let r = transform_context (elim_unsat_es_now 3 prog (ref 1)) r in
   TP.incr_sat_no () ; r
       (* expand all predicates in a definition *)
 
 and context_and_unsat_now prog (ctx : context)  : context = 
-  let r = transform_context (elim_unsat_es prog (ref 1)) ctx in
+  let r = transform_context (elim_unsat_es 5 prog (ref 1)) ctx in
   TP.incr_sat_no () ; r
       (* expand all predicates in a definition *)
 
@@ -2301,26 +2301,26 @@ and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool =
       (fun _ -> unsat_base_x prog sat_subno f) f
       
 
-and elim_unsat_es (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
+and elim_unsat_es i (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let pr1 = Cprinter.string_of_entail_state in
   let pr2 = Cprinter.string_of_context in
-  Debug.no_1 "elim_unsat_es" pr1 pr2 (fun _ -> elim_unsat_es_x prog sat_subno es) es
+  Debug.no_1_num i "elim_unsat_es" pr1 pr2 (fun _ -> elim_unsat_es_x prog sat_subno es) es
       
 and elim_unsat_es_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   if (es.es_unsat_flag) then Ctx es
-  else elim_unsat_es_now prog sat_subno es
+  else elim_unsat_es_now 4 prog sat_subno es
 
 
 and elim_unsat_ctx (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : context =
   let rec helper c = match c with
-    | Ctx es -> let exec ()= elim_unsat_es prog sat_subno es in wrap_trace es.es_path_label exec ()
+    | Ctx es -> let exec ()= elim_unsat_es 1 prog sat_subno es in wrap_trace es.es_path_label exec ()
     | OCtx(c1,c2) -> OCtx(helper c1,helper c2)
   in helper ctx
 
-and elim_unsat_es_now (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
+and elim_unsat_es_now i (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let pr1 = Cprinter.string_of_entail_state in
   let pr2 = Cprinter.string_of_context in
-  Debug.no_1 "elim_unsat_es_now" pr1 pr2 (fun _ -> elim_unsat_es_now_x prog sat_subno es) es
+  Debug.no_1_num i "elim_unsat_es_now" pr1 pr2 (fun _ -> elim_unsat_es_now_x prog sat_subno es) es
 
 and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let f = es.es_formula in
@@ -2332,11 +2332,11 @@ and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_st
   if not b then Ctx es else 
     false_ctx_with_orig_ante es f no_pos
 
-and elim_unsat_ctx_now (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : context =
+(*and elim_unsat_ctx_now i (prog : prog_decl) (sat_subno:  int ref) (ctx : context) : context =
   let rec helper c = match c with
-    | Ctx es -> elim_unsat_es_now prog sat_subno es
+    | Ctx es -> elim_unsat_es_now i prog sat_subno es
     | OCtx(c1,c2) -> OCtx(helper c1,helper c2)
-  in helper ctx
+  in helper ctx*)
 
 and elim_unsat_for_unfold (prog : prog_decl) (f : formula) : formula = 
   Debug.no_1 "elim_unsat_for_unfold" (Cprinter.string_of_formula) (Cprinter.string_of_formula)
@@ -3053,7 +3053,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                       (************* <<< Compose variable permissions******************)
                                       (* TOCHECK : why compose_context fail to set unsat_flag? *)
 	                              let rs1 = CF.compose_context_formula rs new_post ref_vars true Flow_replace pos in
-	                              let rs2 = if !Globals.force_post_sat then CF.transform_context (elim_unsat_es_now prog (ref 1)) rs1 else rs1 in
+	                              let rs2 = if !Globals.force_post_sat then CF.transform_context (elim_unsat_es_now 5 prog (ref 1)) rs1 else rs1 in
                                       if (!Globals.ann_vp) then
                                         Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: after checking VarPerm in EAssume: \n ### rs = "^(Cprinter.string_of_context rs2)^"\n")) pos;
 	                              let rs3 = add_path_id rs2 (pid,i) in
@@ -3175,9 +3175,12 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
 	  isStrictConstTrue conseq || isTrivTerm conseq || trivFlowDischarge ctx conseq then (SuccCtx [ctx], TrueConseq)
     else
       (* UNSAT check *)
-      let ctx = elim_unsat_ctx prog (ref 1) ctx in
-      let ctx = set_unsat_flag ctx true in 
-      if isAnyFalseCtx ctx then
+	  let ctx = if !Globals.delay_proving_sat then  ctx 
+		else
+			let ctx = elim_unsat_ctx prog (ref 1) ctx in
+			let ctx = set_unsat_flag ctx true in 
+			ctx in
+	  if isAnyFalseCtx ctx then
         (SuccCtx [ctx], UnsatAnte)
       else
         heap_entail_after_sat prog is_folding ctx conseq pos ([])	
@@ -5267,7 +5270,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
     (*let lhs_p = MCP.remove_dupl_conj_mix_formula lhs_p in*)
     if not(stk_estate # is_empty) then
       let new_estate = stk_estate # top in
-      let ctx1 = (elim_unsat_es_now prog (ref 1) new_estate) in
+      let ctx1 = (elim_unsat_es_now 8 prog (ref 1) new_estate) in
       let ctx1 = if stk_rel_ass # is_empty then add_infer_pure_to_ctx (stk_inf_pure # get_stk) ctx1 
       else add_infer_rel_to_ctx (stk_rel_ass # get_stk) ctx1
       in
@@ -6989,7 +6992,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   | Some (new_estate,pf) ->
                         begin
                           (* explicitly force unsat checking to be done here *)
-                          let ctx1 = (elim_unsat_es_now prog (ref 1) new_estate) in
+                          let ctx1 = (elim_unsat_es_now 6 prog (ref 1) new_estate) in
                           (* let ctx1 = set_unsat_flag ctx1 false in  *)
                           let r1, prf = heap_entail_one_context prog is_folding ctx1 conseq None pos in
                           match relass with

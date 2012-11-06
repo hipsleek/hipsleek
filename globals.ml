@@ -668,6 +668,7 @@ let delay_case_sat = ref false
 let force_post_sat = ref false
 let delay_if_sat = ref false
 let delay_proving_sat = ref false
+let disable_assume_cmd_sat = ref false
 
 (* Options for invariants *)
 let do_infer_inv = ref false

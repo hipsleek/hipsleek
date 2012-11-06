@@ -490,7 +490,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
               let _ = post_pos#set (CF.pos_of_formula post_cond) in
               Debug.devel_zprint (lazy ("check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n")) no_pos;
               (*let _ = print_endline  ("todo:check_specs: EAssume: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
-	      let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
+	      let ctx1 = if !Globals.delay_proving_sat then ctx else CF.transform_context (elim_unsat_es 2 prog (ref 1)) ctx in
 	      if (CF.isAnyFalseCtx ctx1) then
 	        let _ = Debug.devel_zprint (lazy ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
 	    	    (Cprinter.string_of_context_short ctx))) no_pos in
@@ -855,7 +855,7 @@ and check_scall_join prog ctx e0 (post_start_label:formula_label) ret_t mn lock 
               CF.Ctx new_es
   in
   let res = CF.transform_list_failesc_context (idf,idf,fct) ctx in
-  let res = CF.transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) res in (*join a thread may cause UNSAT*)
+  let res = CF.transform_list_failesc_context (idf,idf,(elim_unsat_es 3 prog (ref 1))) res in (*join a thread may cause UNSAT*)
   let _ = Debug.devel_pprint ("\ncheck_exp: SCall : join : after join(" ^ (Cprinter.string_of_spec_var tid) ^") \n ### res: " ^ (Cprinter.string_of_list_failesc_context res)) pos in
   res
       (*=========================*)
@@ -1065,7 +1065,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         | Some c ->
                               let c = prune_preds prog false c in (* specialise assumed formula *)
                               let assumed_ctx = CF.normalize_max_renaming_list_failesc_context c pos false new_ctx in
-                              let r =CF.transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) assumed_ctx in
+                              let r =if !Globals.disable_assume_cmd_sat then assumed_ctx 
+									else 
+									CF.transform_list_failesc_context (idf,idf,(elim_unsat_es 4 prog (ref 1))) assumed_ctx in
                               List.map CF.remove_dupl_false_fe r in
                       (ps@res)
 	        end

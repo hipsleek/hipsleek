@@ -272,7 +272,8 @@ let common_arguments = [
   ("--force-post-sat", Arg.Set Globals.force_post_sat, "Force unsat checking when assuming a postcondition");
   ("--delay-if-sat", Arg.Set Globals.delay_if_sat, "Disable unsat checking for a conditional");
   ("--delay-proving-sat", Arg.Set Globals.delay_proving_sat, "Disable unsat checking prior to proving requires");
-
+  ("--delay-assume-cmd-sat", Arg.Set Globals.disable_assume_cmd_sat, "Disable unsat checking done at an ASSUME COMMAND");
+  
 	(* Proof Logging *)
 	("--enable-logging", Arg.Set Globals.proof_logging, "Enable proof logging");
 	("--enable-logging-txt", Arg.Set Globals.proof_logging_txt, "Enable proof logging output text file in addition");
