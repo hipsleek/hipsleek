@@ -2250,11 +2250,20 @@ and elim_exists_ctx_list (ctx0 : list_context) =
 and elim_exists_partial_ctx_list (ctx0 : list_partial_context) = 
   transform_list_partial_context (entail_state_elim_exists, (fun c-> c)) ctx0
 
-and elim_exists_failesc_ctx_list (ctx0 : list_failesc_context) = 
+and elim_exists_failesc_ctx_list_x (ctx0 : list_failesc_context) = 
   transform_list_failesc_context (idf,idf,entail_state_elim_exists) ctx0
+  
+and elim_exists_failesc_ctx_list (ctx0 : list_failesc_context) =
+  Gen.Profiling.do_1 "elim_exists_failesc_ctx_list" 
+  elim_exists_failesc_ctx_list_x ctx0
 
+and elim_exists_ctx_x (ctx0:context) =
+	if !Globals.elim_exists then
+		transform_context entail_state_elim_exists ctx0
+	else ctx0
+	
 and elim_exists_ctx (ctx0:context) =
-  transform_context entail_state_elim_exists ctx0
+	Gen.Profiling.do_1 "elim_exists_ctx" elim_exists_ctx_x ctx0
 
 and elim_ante_evars (es:entail_state) : context = 
   let f = push_exists es.es_ante_evars es.es_formula in
@@ -3030,6 +3039,8 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                       (*check reachable or not*)
                                       (*let ctx1,_= heap_entail_one_context prog is_folding ctx11 (mkTrue_nf pos) pos in*)
 	                              let rs = clear_entailment_history (fun x -> Some (xpure_heap_symbolic prog x 0)) ctx11 in
+                                (* print_endline ("CTX11: " ^ (!print_context ctx11)); *)
+                                (* print_endline ("RS CTX: " ^ (!print_context rs));   *)
                                       (*************Compose variable permissions >>> ******************)
                                       if (!Globals.ann_vp) then
                                         Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: before checking VarPerm in EAssume:"^ "\n ###rs =" ^ (Cprinter.string_of_context rs)^ "\n ###f =" ^ (Cprinter.string_of_struc_formula f)^"\n")) pos;

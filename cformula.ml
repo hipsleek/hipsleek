@@ -1186,14 +1186,31 @@ and mkPhase_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let a = a1@a2 in (*assume merging a1 and a2*)
   mkBase h p t fl a pos (*TO CHECK: how about a1,a2: DONE*)
       
-and mkAnd_pure (f1 : formula) (p2 : MCP.mix_formula) (pos : loc):formula = 
-  if (isAnyConstFalse f1) then f1
-  else 
-	let h1, p1, fl1, t1, a1 = split_components f1 in		
-    if (MCP.isConstMTrue p1) then mkBase h1 p2 t1 fl1 a1 pos
-	else 
-      mkBase h1 (MCP.merge_mems p1 p2 true) t1 fl1 a1 pos
+(* and mkAnd_pure_x (f1 : formula) (p2 : MCP.mix_formula) (pos : loc):formula = *)
+(*   if (isAnyConstFalse f1) then f1                                            *)
+(*   else                                                                       *)
+(* 	let h1, p1, fl1, t1, a1 = split_components f1 in		                        *)
+(*     if (MCP.isConstMTrue p1) then mkBase h1 p2 t1 fl1 a1 pos                 *)
+(* 	  else                                                                      *)
+(*       mkBase h1 (MCP.merge_mems p1 p2 true) t1 fl1 a1 pos                    *)
 
+and mkAnd_pure_x (f1: formula) (p2: MCP.mix_formula) (pos: loc): formula =
+  if (isAnyConstFalse f1) then f1
+  else if (MCP.isConstMTrue p2) then f1
+  else
+    match f1 with
+    | Base ({ formula_base_pure = p; } as b) ->
+      Base { b with formula_base_pure = MCP.merge_mems p p2 true; }
+    | Exists ({ formula_exists_pure = p; } as e) ->
+      Exists { e with formula_exists_pure = MCP.merge_mems p p2 true; }
+    | Or ({ formula_or_f1 = f1; formula_or_f2 = f2; } as o) ->
+      Or { o with 
+        formula_or_f1 = mkAnd_pure f1 p2 pos;
+        formula_or_f2 = mkAnd_pure f2 p2 pos }
+
+and mkAnd_pure (f1 : formula) (p2 : MCP.mix_formula) (pos : loc):formula = 
+  Debug.no_2 "mkAnd_pure" !print_formula !print_mix_f !print_formula 
+  (fun _ _ -> mkAnd_pure_x f1 p2 pos) f1 p2
           
 and mkExists_w_lbl (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl:flow_formula) a (pos : loc) lbl=
   let tmp_b = {formula_base_heap = h;
@@ -2737,13 +2754,19 @@ and push_struc_exists (qvars : CP.spec_var list) (f : struc_formula) = match f w
 	| EOr b -> EOr {b with formula_struc_or_f1 = push_struc_exists qvars b.formula_struc_or_f1;formula_struc_or_f2 = push_struc_exists qvars b.formula_struc_or_f2;}
 	| EList b -> EList (map_l_snd (push_struc_exists qvars) b)
 
-and push_exists (qvars : CP.spec_var list) (f : formula) = match f with
+and push_exists_x (qvars : CP.spec_var list) (f : formula) = 
+  match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
-	    let new_f1 = push_exists qvars f1 in
-	    let new_f2 = push_exists qvars f2 in
+	    let new_f1 = push_exists_x qvars f1 in
+	    let new_f2 = push_exists_x qvars f2 in
 	    let resform = mkOr new_f1 new_f2 pos in
 		resform
   | _ -> add_quantifiers qvars f
+
+and push_exists (qvars : CP.spec_var list) (f : formula) =
+  if qvars==[] then f
+  else Debug.no_2 "push_exists" !print_svl !print_formula !print_formula
+  push_exists_x qvars f
 
 (* 19.05.2008 *)
 and pop_exists (qvars : CP.spec_var list) (f : formula) = match f with
@@ -3885,6 +3908,10 @@ let must_consistent_context (s:string) l : unit =
     let b = consistent_context l in
     if b then  print_endline ("\nSuccessfully Tested Consistency at "^s)
     else report_error no_pos ("ERROR at "^s^": context inconsistent")
+		
+let must_consistent_context (s:string) l : unit =
+	Gen.Profiling.do_1 "must_consistent_context"
+	(must_consistent_context s) l
 
 let consistent_branch_ctx ((_,c):branch_ctx) : bool = consistent_context c
 
@@ -5020,11 +5047,14 @@ and compose_context_formula_x (ctx : context) (phi : formula) (x : CP.spec_var l
 	  let res = (mkOCtx new_c1 new_c2 pos) in
 		res
 
-and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var list) (force_sat:bool) flow_tr (pos : loc) : context = 
+and compose_context_formula_d (ctx : context) (phi : formula) (x : CP.spec_var list) (force_sat:bool) flow_tr (pos : loc) : context = 
   let pr1 = !print_context_short in
   let pr2 = !print_formula in
   let pr3 = !print_svl in
   Debug.no_3 "compose_context_formula" pr1 pr2 pr3 pr1 (fun _ _ _ -> compose_context_formula_x ctx phi x force_sat flow_tr pos) ctx phi x
+	
+and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var list) (force_sat:bool) flow_tr (pos : loc) : context = 
+	Gen.Profiling.do_1 "compose_context_formula" (compose_context_formula_d ctx phi x force_sat flow_tr) pos
 
 (*TODO: expand simplify_context to normalize by flow type *)
 (* and simplify_context_0 (ctx:context):context =  *)
@@ -6149,7 +6179,7 @@ let rename_labels_formula_ante  e=
 	
 	transform_formula (f_e_f,f_f,f_h_f,(f_m,f_a,f_p_f,f_b,f_e)) e
 			 
-let erase_propagated f = 
+let rec erase_propagated f = 
   let f_e_f e = None in
 	let f_f e = None in
 	let rec f_h_f e =  None in
@@ -6177,8 +6207,16 @@ and push_exists_list_partial_context (qvars : CP.spec_var list) (ctx : list_part
 and push_exists_list_failesc_context (qvars : CP.spec_var list) (ctx : list_failesc_context) : list_failesc_context = 
   transform_list_failesc_context (idf,idf,(fun es -> Ctx{es with es_formula = push_exists qvars es.es_formula})) ctx
   
-and push_exists_context (qvars : CP.spec_var list) (ctx : context) : context = 
+and push_exists_context_x (qvars : CP.spec_var list) (ctx : context) : context = 
   transform_context (fun es -> Ctx{es with es_formula = push_exists qvars es.es_formula}) ctx
+	
+and push_exists_context_d (qvars : CP.spec_var list) (ctx : context) : context =
+	let pr = !print_context in 
+	Debug.no_2 "push_exists_context" (pr_list !print_sv) pr pr
+	push_exists_context_x qvars ctx 
+	
+and push_exists_context (qvars : CP.spec_var list) (ctx : context) : context =
+	Gen.Profiling.do_1 "push_exists_context" (push_exists_context_d qvars) ctx 
         
 and push_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : context)  : context = 
  transform_context (fun es -> Ctx{es with 

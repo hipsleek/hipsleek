@@ -1508,6 +1508,7 @@ struct
 		  (* 	profiling_stack :=List.map (fun (c1,t1,b1)->if (String.compare c1 msg)=0 then (c1,t1,false) else (c1,t1,b1)) !profiling_stack; *)
 		  (* 	print_string ("\n double accounting for "^msg^"\n") *)
           (* print_string ("\n skip double accounting for "^msg^"\n")  *)
+					tasks # add_task_instance m1 0.
 	    end	
         else tasks # add_task_instance m1 (t2-.t1) 
 	  else 

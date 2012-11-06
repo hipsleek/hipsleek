@@ -926,7 +926,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let coq_is_sat f = Coq.is_sat_ops pr_weak pr_strong f sat_no in 
   let z3_is_sat f = Smtsolver.is_sat_ops pr_weak_z3 pr_strong_z3 f sat_no in
 
-  let _ = Gen.Profiling.push_time "tp_is_sat" in
+  (* let _ = Gen.Profiling.push_time "tp_is_sat" in *)
   let res = 
   match !tp with
 	| DP -> 
@@ -1054,8 +1054,11 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     | SPASS -> Spass.is_sat f sat_no
 		| LOG -> find_bool_proof_res sat_no
 	in 
-	let _ = Gen.Profiling.pop_time "tp_is_sat" in
+	(* let _ = Gen.Profiling.pop_time "tp_is_sat" in *)
 	res
+
+let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) = 
+  Gen.Profiling.do_1 "tp_is_sat_no_cache" (tp_is_sat_no_cache f) sat_no
 	
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) = 
 	Debug.no_2 "tp_is_sat_no_cache" 
@@ -1721,8 +1724,10 @@ let simpl_pair rid (ante, conseq) =
   let ante3 = simpl_in_quant ante2 true rid in
   (ante3, conseq)
 
+let simpl_pair rid (ante, conseq) = (ante, conseq)
+
 let simpl_pair rid (ante, conseq) =
-	Gen.Profiling.do_1 "is_sat" (simpl_pair rid) (ante, conseq)
+	Gen.Profiling.do_1 "simpl_pair" (simpl_pair rid) (ante, conseq)
 ;;
 
 let is_sat (f : CP.formula) (old_sat_no : string): bool =
