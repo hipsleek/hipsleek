@@ -2708,7 +2708,7 @@ let generate_defs_from_unk_rels prog unk_rels=
 let generalize_pure_def_from_hpunk_x prog cs=
   let mk_pure_def p pos (hp,args)=
     let def1 = CP.filter_var_new p args in
-    let def2 = SAU.remove_irr_eqs args def1 in
+    let def2,_ = SAU.remove_irr_eqs args def1 in
     if not (CP.isConstTrue def2) then
       let d = SAU.mk_hprel_def prog [hp] hp args [(CF.formula_of_pure_formula def2 pos)]
         pos
