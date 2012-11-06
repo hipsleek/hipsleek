@@ -1331,7 +1331,7 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
   let def_vs = CP.remove_dups_svl (List.fold_left SAU.close_def def_vs (eqs)) in
   (* DD.info_pprint ("defined ptr (wo caring its args): " ^ (!CP.print_svl def_vs)) pos; *)
   let get_undefined_args_hnode prog def_svl hd_nodes hv_nodes dn_name=
-    let arg_svl = SAU.loop_up_ptr_args_one_node prog hd_nodes hv_nodes dn_name in
+    let arg_svl = SAU.look_up_ptr_args_one_node prog hd_nodes hv_nodes dn_name in
     DD.ninfo_pprint ("node " ^ (!CP.print_sv dn_name) ^ " has args: " ^(!CP.print_svl arg_svl)) pos;
     let diff_svl = Gen.BList.difference_eq CP.eq_spec_var arg_svl def_svl in
     diff_svl
@@ -1342,11 +1342,25 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
   in
   (*selective*)
   let unmatched_svl = SAU.get_ptrs unmatched in
+  let add_unmatched_svl =
+    if CF.is_HRel unmatched then
+      let unm_hp,_ = CF.extract_HRel unmatched in
+      let rec search_helper hrels=
+        match hrels with
+          | [] -> []
+          | (hp1,eargs,_)::hss ->
+              if CP.eq_spec_var hp1 unm_hp then
+                List.concat (List.map CP.afv eargs)
+              else search_helper hss
+      in
+      search_helper lhrs
+    else []
+  in
+  let unmatched_svl1 = CP.remove_dups_svl (unmatched_svl@add_unmatched_svl) in
   (* let _ = Debug.info_pprint ("    unmatched:" ^(!CP.print_svl unmatched_svl)) no_pos in *)
-  let closed_unmatched_svl0 = List.concat (List.map (SAU.loop_up_ptr_args_one_node prog hds hvs) unmatched_svl) in
+  let closed_unmatched_svl0 = List.concat (List.map (SAU.look_up_ptr_args_one_node prog hds hvs) unmatched_svl1) in
   let closed_unmatched_svl = CP.remove_dups_svl
-    (List.fold_left SAU.close_def  (unmatched_svl@closed_unmatched_svl0) (eqs)) in
-  (* let _ = Debug.info_pprint ("    closed unmatched:" ^(!CP.print_svl closed_unmatched_svl)) no_pos in *)
+    (List.fold_left SAU.close_def  (unmatched_svl1@closed_unmatched_svl0) (eqs)) in
   (*END selective*)
   (*get all args of hp_rel to check whether they are fully embbed*)
   let hp_args = (List.map (fun (hp, exps, _) -> (hp, List.concat (List.map CP.afv exps))) hrs) in
@@ -1358,7 +1372,7 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
   let hrel_args2 = CP.remove_dups_svl (List.fold_left SAU.close_def hrel_args1 (eqs)) in
   (*find undefined ptrs of all hrel args*)
   let undefs = CP.remove_dups_svl (List.concat (List.map
-                  (process_one_hrel_arg ( CP.remove_dups_svl def_vs@hrel_args2))
+                  (process_one_hrel_arg ( CP.remove_dups_svl (def_vs@hrel_args2)))
                   hrel_args2))
   in
   (*remove root, first parameter of lhs and raw defined*)
@@ -1372,7 +1386,7 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
   ) lhrs) in
   let r_args = List.concat (List.map (fun (_, exps, _) ->  List.concat (List.map CP.afv exps)) rhrs) in
   let r_args1 = (List.fold_left SAU.close_def r_args (leqs@reqs)) in
-  let def_vsargs = List.concat (List.map (SAU.loop_up_ptr_args_one_node prog hds hvs) def_vs) in
+  let def_vsargs = List.concat (List.map (SAU.look_up_ptr_args_one_node prog hds hvs) def_vs) in
   let used_svl = CP.remove_dups_svl (def_vsargs@def_vs@r_args1) in
   let lundefs_args = CP.remove_dups_svl (CP.diff_svl l_args used_svl) in
   (* DD.info_pprint ("undef1 arg: " ^ (!CP.print_svl undefs1)) pos; *)
@@ -1381,13 +1395,14 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
 
 let find_undefined_selective_pointers prog lfb rfb lmix_f rmix_f unmatched rhs_h_matched_set leqs reqs pos=
   let pr1 = Cprinter.string_of_formula_base in
+  let pr2 = Cprinter.prtt_string_of_h_formula in
   (* let pr2 = !print_svl in *)
   (* let pr3 =  pr_pair string_of_typ !print_sv in *)
   let pr4 = pr_list !print_sv in
-  let pr5 = fun (undefs,_,_,_) -> pr4 undefs in
-  Debug.no_2 "find_undefined_selective_pointers" pr1 pr1 pr5
-( fun _ _ -> find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched
-    rhs_h_matched_set leqs reqs pos) lfb rfb
+  let pr5 = fun (undefs,_,_,_,_,_,_) -> pr4 undefs in
+  Debug.no_3 "find_undefined_selective_pointers" pr2 pr1 pr1 pr5
+( fun _ _ _-> find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched
+    rhs_h_matched_set leqs reqs pos) unmatched lfb rfb
 
 (*obse*)
 let find_pointers_x prog fb mix_f rhs_h_matched_set eqs pos=

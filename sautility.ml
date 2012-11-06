@@ -363,7 +363,7 @@ Debug.no_1 " loop_up_ptr_args_data_node" pr1 !CP.print_svl
 (*   (\*get pointer*\) *)
 (*   snd (List.split (List.filter (fun (t, v) -> is_pointer t) targs)) *)
 
-and loop_up_ptr_args_one_node prog hd_nodes hv_nodes node_name=
+and look_up_ptr_args_one_node prog hd_nodes hv_nodes node_name=
   let rec look_up_data_node ls=
     match ls with
       | [] -> []
@@ -386,7 +386,7 @@ and loop_up_ptr_args_one_node prog hd_nodes hv_nodes node_name=
 let loop_up_closed_ptr_args prog hd_nodes hv_nodes node_names=
   let rec helper old_ptrs inc_ptrs=
     let new_ptrs = List.concat
-      (List.map (loop_up_ptr_args_one_node prog hd_nodes hv_nodes) inc_ptrs) in
+      (List.map (look_up_ptr_args_one_node prog hd_nodes hv_nodes) inc_ptrs) in
     let diff_ptrs = List.filter (fun id -> not (CP.mem_svl id old_ptrs)) new_ptrs in
     let diff_ptrs = Gen.BList.remove_dups_eq CP.eq_spec_var diff_ptrs in
     if diff_ptrs = [] then old_ptrs
@@ -413,7 +413,7 @@ let rec find_defined_pointers_raw prog f=
   (def_vs_wo_args, hds, hvs, hrs, eqs)
 
 and check_node_args_defined prog def_svl hd_nodes hv_nodes dn_name=
-  let arg_svl = loop_up_ptr_args_one_node prog hd_nodes hv_nodes dn_name in
+  let arg_svl = look_up_ptr_args_one_node prog hd_nodes hv_nodes dn_name in
   (* DD.info_pprint ("  arg_svl" ^ (!CP.print_svl arg_svl)) no_pos; *)
   let diff_svl = Gen.BList.difference_eq CP.eq_spec_var arg_svl def_svl in
   (* DD.info_pprint ("  diff_svl" ^ (!CP.print_svl diff_svl)) no_pos; *)

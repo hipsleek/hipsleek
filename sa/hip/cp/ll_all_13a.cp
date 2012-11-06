@@ -1,16 +1,16 @@
-HeapPred HP_616(node a,node b).
-HeapPred HP_585(node a).
-HeapPred HP_590(node a).
+HeapPred HP_597(node a).
+HeapPred HP_602(node a).
 
 delete_mid[
 ass [H1,G2]:{
-   x::node<v_int_81_613,next_81_597> * G2(next_81_597,v_node_81_614) * v_node_81_566'::node<v_int_81_613,v_node_81_614>
-      --> G2(x,v_node_81_566') * HP_616(v_node_81_614,v_node_81_566');
-   HP_585(v_node_80_558') * x::node<val_80_608,v_node_80_558'>&true --> G2(x,v_node_80_558');
-   H1(x)&x=null & v_node_77_555'=null --> G2(x,v_node_77_555');
-   HP_590(next_81_597) --> H1(next_81_597);
-   H1(x)&x!=null --> x::node<val_81_559',next_81_560'> *  HP_590(next_81_560')&true;
-   H1(x)&x!=null --> x::node<val_80_556',next_80_557'> * HP_585(next_80_557')&true
+  x::node<v_int_86_625,next_86_609> * G2(next_86_609,v_node_86_626) * 
+  v_node_86_578'::node<v_int_86_625,v_node_86_626>&
+  true --> G2(x,v_node_86_578');
+ HP_597(v_node_85_570') * x::node<val_85_620,v_node_85_570'> --> G2(x,v_node_85_570');
+ H1(x)&x=null & v_node_82_567'=null --> G2(x,v_node_82_567');
+ HP_602(next_86_609)&true --> H1(next_86_609);
+ H1(x)&x!=null --> x::node<val_86_571',next_86_572'> * HP_602(next_86_572');
+ H1(x)&x!=null --> x::node<val_85_568',next_85_569'> * HP_597(next_85_569')
  }
 
 hpdefs [H1,G2]:{
