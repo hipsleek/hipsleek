@@ -332,6 +332,7 @@ let consistent_formula f : bool =
           (helper f1) && (helper f2)
   in helper f
 
+(* WN : what is the purpose of this "consistency" checking? *)
 let must_consistent_formula (s:string) (l:formula) : unit =
   if !consistency_checking then
     let b = consistent_formula l in
@@ -2952,9 +2953,11 @@ and compose_formula_x (delta : formula) (phi : formula) (x : CP.spec_var list) f
   let new_delta = subst rho2 delta in
   let new_phi = subst rho1 phi in
   let new_f = normalize_keep_flow new_delta new_phi flow_tr pos in
-  let _ = must_consistent_formula "compose_formula 1" new_f in
+   (* WN : this checking seems to be for debugging purpose of *)
+   (*   MCP formulae  *)
+  (* let _ = must_consistent_formula "compose_formula 1" new_f in *)
   let resform = push_exists rs new_f in
-  let _ = must_consistent_formula "compose_formula 2" resform in
+  (* let _ = must_consistent_formula "compose_formula 2" resform in *)
   resform
 
 and compose_formula (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =

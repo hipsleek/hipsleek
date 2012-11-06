@@ -2484,14 +2484,20 @@ and subs_to_inst_vars_x (st : ((CP.spec_var * CP.spec_var) * Label_only.spec_lab
   let pr2 xs = pr_list (pr_pair pr_sv pr_sv) xs in
   Debug.no_2 "get_eqns_expl_inst" pr2 pr_svl pr_r (fun _ _ -> get_eqns_expl_inst_x st ivars pos) st ivars *)
 
+
+and elim_exists (f0 : formula) : formula =
+  let pr =  Cprinter.string_of_formula in
+  Debug.no_1 "Solver.elim_exists" pr pr elim_exists_x f0
+
+
 (* WN : why isn't this in cformula.ml? *)
 (* removing existentail using ex x. (x=y & P(x)) <=> P(y) *)
-and elim_exists (f0 : formula) : formula = match f0 with
+and elim_exists_x (f0 : formula) : formula = match f0 with
   | Or ({ formula_or_f1 = f1;
     formula_or_f2 = f2;
     formula_or_pos = pos}) ->
-        let ef1 = elim_exists f1 in
-        let ef2 = elim_exists f2 in
+        let ef1 = elim_exists_x f1 in
+        let ef2 = elim_exists_x f2 in
 	mkOr ef1 ef2 pos
   | Base _ -> f0
   | Exists ({ formula_exists_qvars = qvar :: rest_qvars;
@@ -2506,11 +2512,11 @@ and elim_exists (f0 : formula) : formula = match f0 with
           let tmp = mkBase h pp1 t fl a pos in (*TO CHECK*)
           let new_baref = subst st tmp in
           let tmp2 = add_quantifiers rest_qvars new_baref in
-          let tmp3 = elim_exists tmp2 in
+          let tmp3 = elim_exists_x tmp2 in
           tmp3
         else (* if qvar is not equated to any variables, try the next one *)
           let tmp1 = mkExists rest_qvars h p t fl a pos in (*TO CHECK*)
-          let tmp2 = elim_exists tmp1 in
+          let tmp2 = elim_exists_x tmp1 in
           let tmp3 = add_quantifiers [qvar] tmp2 in
           tmp3 in
         r

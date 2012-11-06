@@ -689,7 +689,6 @@ let simplify (pe : formula) : formula =
   let pf = !print_pure in
   Debug.no_1 "Omega.simplify" pf pf simplify pe
 
-
 (* let simplify_ho is_complex (orig_pe : formula) : formula = *)
 (*  (\* print_endline "LOCLE: simplify";*\) *)
 (*   (\*let _ = print_string ("\nomega_simplify: f before"^(omega_of_formula pe)) in*\) *)
