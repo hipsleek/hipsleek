@@ -40,7 +40,7 @@ echo "ll-get_size"
 ../../hip ll-get-size.ss -cp-test cp/ll-get-size.cp | grep Compare
 echo "ll_all1"
 ../../hip ll_all1.ss -cp-test cp/ll_all1.cp | grep Compare
-echo "ll_all3"
+echo "ll_all3 - cp fault"
 ../../hip ll_all3.ss -cp-test cp/ll_all3.cp | grep Compare
 echo "ll_all4"
 ../../hip ll_all4.ss -cp-test cp/ll_all4.cp | grep Compare
@@ -58,6 +58,8 @@ echo "ll_all_13a - cp fault"
 ../../hip ll_all_13a.ss -cp-test cp/ll_all_13a.cp | grep Compare
 echo "ll_all_13b"
 ../../hip ll_all_13b.ss -cp-test cp/ll_all_13b.cp | grep Compare
+echo "ll_all_13c1"
+../../hip ll_all_13c1.ss -cp-test cp/ll_all_13c1.cp | grep Compare
 echo "ll_all_14"
 ../../hip ll_all_14.ss -cp-test cp/ll_all_14.cp | grep Compare
 echo "ll-ret-first"

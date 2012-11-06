@@ -3,7 +3,7 @@ HeapPred HP_2(node a, node b).
 
 ret_first[
 ass [H1,G2]:{
-    H1(x) & x'=x & v=x' --> G2(x,v)
+    H1(x)  & x=v --> G2(x,v)
 	}
 
 hpdefs [H1,G2]:{
