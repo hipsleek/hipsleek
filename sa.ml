@@ -2115,10 +2115,10 @@ let generalize_one_hp prog unk_hps par_defs=
         let defs2 = Gen.BList.remove_dups_eq (fun f1 f2 -> SAU.check_relaxeq_formula f1 f2) defs1 in
         let defs3 = SAU.remove_equiv_wo_unkhps hp unk_hps defs2 in
    (*remove duplicate with self-recursive*)
-        let defs4 = SAU.remove_dups_recursive hp args0 unk_hps defs3 in
+        (* let base_case_exist,defs4 = SAU.remove_dups_recursive hp args0 unk_hps defs3 in *)
   (*find longest hnodes common for more than 2 formulas*)
   (*each hds of hdss is def of a next_root*)
-        let defs = SAU.get_longest_common_hnodes_list prog unk_hps hp args0 defs4 in
+        let defs = SAU.get_longest_common_hnodes_list prog unk_hps hp args0 defs3 in
         defs
     end
 
@@ -2332,7 +2332,7 @@ let pardef_subst_fix prog unk_hps groups=
       - depend on non-recursive groups: susbst
       - depend on recusive groups: wait
 *)
-let def_subst_fix_x unk_hps hpdefs=
+let def_subst_fix_x prog unk_hps hpdefs=
   (*remove dups*)
   (* let unk_hps = CP.remove_dups_svl unk_hps in *)
   let is_rec_hpdef (a1,_,f)=
@@ -2367,7 +2367,7 @@ let def_subst_fix_x unk_hps hpdefs=
     if (CP.diff_svl succ_hps1 rec_hps) <> [] then
       (*not depends on any recursive hps, susbt it*)
       let args = SAU.get_ptrs hprel in
-      let ters,new_fs = List.split (List.map (fun f1 -> SAU.succ_susbt_hpdef nrec_hpdefs succ_hps1 (hp,args,f1)) fs) in
+      let ters,new_fs = List.split (List.map (fun f1 -> SAU.succ_susbt_hpdef prog nrec_hpdefs succ_hps1 (hp,args,f1)) fs) in
       (*check all is false*)
       (* let pr = pr_list string_of_bool in *)
       (* DD.ninfo_pprint ("       bool: " ^ (pr ters)) no_pos; *)
@@ -2435,10 +2435,10 @@ let def_subst_fix_x unk_hps hpdefs=
 
 (*this subst is to elim intermediate hps in final inferred hprel def
  *)
-let def_subst_fix unk_hps hpdefs=
+let def_subst_fix prog unk_hps hpdefs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   Debug.no_1 "def_subst_fix" pr1 pr1
-      (fun _ -> def_subst_fix_x unk_hps hpdefs) hpdefs
+      (fun _ -> def_subst_fix_x prog unk_hps hpdefs) hpdefs
 
   (*=========END SUBST FIX==========*)
 
@@ -2705,12 +2705,12 @@ let generate_defs_from_unk_rels prog unk_rels=
   in
   new_defs
 
-let generalize_pure_def_from_hpunk_x cs=
+let generalize_pure_def_from_hpunk_x prog cs=
   let mk_pure_def p pos (hp,args)=
     let def1 = CP.filter_var_new p args in
     let def2 = SAU.remove_irr_eqs args def1 in
     if not (CP.isConstTrue def2) then
-      let d = SAU.mk_hprel_def [hp] hp args [(CF.formula_of_pure_formula def2 pos)]
+      let d = SAU.mk_hprel_def prog [hp] hp args [(CF.formula_of_pure_formula def2 pos)]
         pos
       in d
     else []
@@ -2722,11 +2722,11 @@ let generalize_pure_def_from_hpunk_x cs=
   let p = CP.mkAnd  plhs (MCP.pure_of_mix prhs) pos in
   List.concat (List.map (mk_pure_def p pos) cs.CF.unk_hps)
 
-let generalize_pure_def_from_hpunk cs=
+let generalize_pure_def_from_hpunk prog cs=
   let pr1 = Cprinter.string_of_hprel in
   let pr2 =  pr_list (pr_pair !CP.print_sv Cprinter.string_of_hp_rel_def) in
   Debug.no_1 "generalize_pure_def_from_hpunk" pr1 pr2
-      (fun _ -> generalize_pure_def_from_hpunk_x cs) cs
+      (fun _ -> generalize_pure_def_from_hpunk_x prog cs) cs
 
 let generalize_hps_x prog unk_hps cs par_defs=
   DD.ninfo_pprint ">>>>>> step 6: generalization <<<<<<" no_pos;
@@ -3052,7 +3052,7 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * SA
   let unk_hps1 = List.filter (fun (hp,_) -> not (CP.mem_svl hp hp_def_names)) new_unk_hps in
   let unk_hp_svl = (List.map (fun (hp,_) -> hp) unk_hps1) in
   let unk_hp_pures, unk_hp_pure_def = List.split (List.concat
-    (List.map generalize_pure_def_from_hpunk constr3))
+    (List.map (generalize_pure_def_from_hpunk prog) constr3))
   in
   let unk_hps2 = List.filter (fun (hp,_) -> not(CP.mem_svl hp unk_hp_pures)) unk_hps1 in
   let unk_hp_svl1 = List.filter (fun hp -> not(CP.mem_svl hp unk_hp_pures)) unk_hp_svl in
@@ -3066,7 +3066,7 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * SA
       let hp2 = SAU.get_hpdef_name b1 in
       CP.eq_spec_var hp1 hp2) (hp_defs))
   in
-  let hp_defs2 = (def_subst_fix unk_hp_svl hp_defs1) in
+  let hp_defs2 = (def_subst_fix prog unk_hp_svl hp_defs1) in
   (*currently, we discard all non-node unk hp*)
   (* unk_hps3: all non-node unk hps *)
   (* let non_node_unk_hps = List.filter (fun (_,args) -> *)

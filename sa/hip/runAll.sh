@@ -32,9 +32,9 @@ echo "ll-next5"
 ../../hip ll-next5.ss -cp-test cp/ll-next5.cp | grep Compare
 echo "ll-next6"
 ../../hip ll-next6.ss -cp-test cp/ll-next6.cp | grep Compare
-echo "ll-delete"
+echo "ll-delete - cp fault"
 ../../hip ll-delete.ss -cp-test cp/ll-delete.cp | grep Compare
-echo "ll-delete2"
+echo "ll-delete2 - cp fault"
 ../../hip ll-delete2.ss -cp-test cp/ll-delete2.cp | grep Compare
 echo "ll-get_size"
 ../../hip ll-get-size.ss -cp-test cp/ll-get-size.cp | grep Compare
@@ -52,9 +52,9 @@ echo "ll_all8"
 ../../hip ll_all8.ss -cp-test cp/ll_all8.cp | grep Compare
 echo "ll_all10"
 ../../hip ll_all10.ss -cp-test cp/ll_all10.cp | grep Compare
-echo "ll_all_13 - cp fail"
+echo "ll_all_13"
 ../../hip ll_all_13.ss -cp-test cp/ll_all_13.cp | grep Compare
-echo "ll_all_13a - cp fail"
+echo "ll_all_13a - cp fault"
 ../../hip ll_all_13a.ss -cp-test cp/ll_all_13a.cp | grep Compare
 echo "ll_all_13b"
 ../../hip ll_all_13b.ss -cp-test cp/ll_all_13b.cp | grep Compare
