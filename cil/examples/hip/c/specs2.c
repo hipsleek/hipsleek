@@ -21,10 +21,7 @@ int foo2()
 }
 
 int foo3()
-/*@
-  requires true 
-  ensures res > 0;
-*/
+//@ requires true ensures res > 0;
 {
   int x = 10;
   //@ assert x' < 11;
@@ -32,10 +29,7 @@ int foo3()
 }
 
 int foo4()
-/*@
-  requires true 
-  ensures res > 0;
-*/
+//@ requires true ensures res > 0;
 {
   int x = 10;
   //@ assert x' > 11;
