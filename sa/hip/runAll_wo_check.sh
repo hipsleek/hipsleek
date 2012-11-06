@@ -52,6 +52,10 @@ echo "ll_all8"
 ../../hip ll_all8.ss
 echo "ll_all10"
 ../../hip ll_all10.ss
+echo "ll_all_13"
+../../hip ll_all_13.ss
+echo "ll_all_13a"
+../../hip ll_all_13a.ss
 echo "ll_all_13b"
 ../../hip ll_all_13b.ss
 echo "ll_all_14"

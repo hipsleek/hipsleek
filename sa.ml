@@ -1704,15 +1704,7 @@ each constraints, apply lhs and rhs. each partial def in one side ==> generate n
 *)
 let subst_one_cs_w_partial_defs ldefs rdefs constr=
   let lhs,rhs = constr.CF.hprel_lhs,constr.CF.hprel_rhs in
-  (* (\*if constr is rec, remove all pdefs susbt present rec*\) *)
-  (* let lhps = CF.get_hp_rel_name_formula lhs in *)
-  (* let rhps = CF.get_hp_rel_name_formula rhs in *)
-  (* let rec_hps = Gen.BList.intersect_eq CP.eq_spec_var lhps rhps in *)
-  (* let ldefs1 = List.filter (fun (hp,_,_) -> not (CP.mem_svl hp rec_hps)) ldefs in *)
-  (* let rdefs1 = List.filter (fun (hp,_,_) -> not (CP.mem_svl hp rec_hps)) rdefs in *)
-  (* DD.info_pprint ("    input: " ^(Cprinter.prtt_string_of_formula lhs) ^ " ==> " ^ *)
-  (* (Cprinter.prtt_string_of_formula rhs)) no_pos; *)
-   DD.ninfo_pprint ("    input: " ^ (Cprinter.string_of_hprel constr)) no_pos;
+  DD.ninfo_pprint ("    input: " ^ (Cprinter.string_of_hprel constr)) no_pos;
   (*subst lhs*)
   DD.ninfo_pprint "  subst lhs" no_pos;
   let lhs1 = List.fold_left subst_one_cs_w_one_partial_def lhs ldefs in
@@ -2319,9 +2311,9 @@ let pardef_subst_fix_x prog unk_hps groups=
     if r then helper_fix new_cur new_rec_indps new_nrec_indps
     else
       (*subs new_cur with new_rec_indps (new_nrec_indps is substed already)*)
-      let new_rec_indps1 = List.map SAU.remove_dups_pardefs new_rec_indps in
-      let new_cur1 = SAU.succ_susbt_with_rec_indp prog new_rec_indps1 unk_hps new_cur in
-      (new_cur1@new_rec_indps1@new_nrec_indps)
+      (* let new_rec_indps1 = List.map SAU.remove_dups_pardefs new_rec_indps in *)
+      let new_cur1 = SAU.succ_susbt_with_rec_indp prog new_rec_indps unk_hps new_cur in
+      (new_cur1@new_rec_indps@new_nrec_indps)
   in
   helper_fix groups [] []
 

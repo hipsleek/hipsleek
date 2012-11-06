@@ -16,7 +16,8 @@ ass [H1,G2]:{
 hpdefs [H1,G2]:{
      H1(x) --> x=null or x::node<_,p> * H1(p);
      G2(x_634,v_node_77_635) --> x_634::node<v_int_81_613,next_81_597> * G2(next_81_597,v_node_81_614) *
-             v_node_77_635::node<v_int_81_613,v_node_81_614>&true
+             v_node_77_635::node<v_int_81_613,v_node_81_614>
+       or  x_654::node<val_85_666,v_node_82_655>
        or emp&x_634=null & v_node_77_635=null
  }
 ]

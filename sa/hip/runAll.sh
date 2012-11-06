@@ -52,6 +52,10 @@ echo "ll_all8"
 ../../hip ll_all8.ss -cp-test cp/ll_all8.cp | grep Compare
 echo "ll_all10"
 ../../hip ll_all10.ss -cp-test cp/ll_all10.cp | grep Compare
+echo "ll_all_13 - cp fail"
+../../hip ll_all_13.ss -cp-test cp/ll_all_13.cp | grep Compare
+echo "ll_all_13a - cp fail"
+../../hip ll_all_13a.ss -cp-test cp/ll_all_13a.cp | grep Compare
 echo "ll_all_13b"
 ../../hip ll_all_13b.ss -cp-test cp/ll_all_13b.cp | grep Compare
 echo "ll_all_14"
