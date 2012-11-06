@@ -114,6 +114,7 @@ let rec is_global_cil_exp (e: Cil.exp) : bool =
   | Cil.AlignOfE _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.AlignOfE!"
   | Cil.UnOp _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.UnOp!"
   | Cil.BinOp _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.BinOp!"
+  | Cil.Question _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.Question!"
   | Cil.CastE (_, e1) -> is_global_cil_exp e1
   | Cil.AddrOf lv -> is_global_cil_lval lv
   | Cil.StartOf lv -> is_global_cil_lval lv 
@@ -388,7 +389,17 @@ and translate_exp (e: Cil.exp) (lopt: Cil.location option): Iast.exp =
                                 Iast.exp_binary_oper1 = e1;
                                 Iast.exp_binary_oper2 = e2;
                                 Iast.exp_binary_path_id = None;
-                                Iast.exp_binary_pos = pos } in
+                                Iast.exp_binary_pos = pos} in
+      newexp
+  | Cil.Question (exp1, exp2, exp3, _) ->
+      let e1 = translate_exp exp1 lopt in
+      let e2 = translate_exp exp2 lopt in
+      let e3 = translate_exp exp3 lopt in
+      let newexp = Iast.Cond {Iast.exp_cond_condition = e1;
+                              Iast.exp_cond_then_arm = e2;
+                              Iast.exp_cond_else_arm = e3;
+                              Iast.exp_cond_path_id = None;
+                              Iast.exp_cond_pos = pos} in
       newexp
   | Cil.CastE (ty, exp) ->
       let t = translate_typ ty in
@@ -494,6 +505,7 @@ let translate_instr (instr: Cil.instr) : Iast.exp =
           | Cil.AlignOfE _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.AlignOfE!" 
           | Cil.UnOp _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.UnOp!" 
           | Cil.BinOp _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.BinOp!"
+          | Cil.Question _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.Question!"
           | Cil.CastE _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.CastE!"
           | Cil.AddrOf _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.AddrOf!" 
           | Cil.StartOf _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.StartOf!" in
@@ -610,6 +622,7 @@ let rec translate_stmt (s: Cil.stmt) (lopt: Cil.location option) : Iast.exp =
                              Iast.exp_try_path_id = None;
                              Iast.exp_try_pos = p} in
       newexp
+  | Cil.HipStmt (iast_exp, l) -> iast_exp
 
 
 and translate_block (blk: Cil.block) (lopt: Cil.location option): Iast.exp =
@@ -794,7 +807,7 @@ let translate_file (file: Cil.file) : Iast.prog_decl =
         let proc = translate_fundec fd (Some l) in
         proc_decls := !proc_decls @ [proc]
     | Cil.GAsm _ ->
-        let _ = print_endline ("== gl GAsm = " ^ (string_of_cil_global gl)) in
+        (* let _ = print_endline ("== gl GAsm = " ^ (string_of_cil_global gl)) in *)
         ()
         (* report_error_msg "TRUNG TODO: Handle Cil.GAsm later!" *)
     | Cil.GPragma _ ->

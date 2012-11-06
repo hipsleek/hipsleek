@@ -559,9 +559,10 @@ let hprog = SHGram.Entry.mk "hprog"
 let sprog_int = SHGram.Entry.mk "sprog_int"
 let opt_spec_list_file = SHGram.Entry.mk "opt_spec_list_file"
 let opt_spec_list = SHGram.Entry.mk "opt_spec_list"
+let statement = SHGram.Entry.mk "statement"
 
 EXTEND SHGram
-  GLOBAL: sprog hprog sprog_int opt_spec_list_file opt_spec_list;
+  GLOBAL: sprog hprog sprog_int opt_spec_list_file opt_spec_list statement;
   sprog:[[ t = command_list; `EOF -> t ]];
   sprog_int:[[ t = command; `EOF -> t ]];
   hprog:[[ t = hprogn; `EOF ->  t ]];
@@ -2272,3 +2273,6 @@ let parse_specs_list s =
 
 let parse_specs_string n s =
   SHGram.parse_string opt_spec_list (PreCast.Loc.mk n) s
+
+let parse_statement n s =
+  SHGram.parse_string statement (PreCast.Loc.mk n) s

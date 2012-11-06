@@ -84,6 +84,7 @@ begin
   | ASM(_,_,_,loc) -> loc
   | TRY_EXCEPT(_, _, _, loc) -> loc
   | TRY_FINALLY(_, _, loc) -> loc
+  | HIP_STMT (_, loc) -> loc
 end
 
 

@@ -6029,6 +6029,7 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
               | Block b -> blockFallsThrough b
               | TryFinally (b, h, _) -> blockFallsThrough h
               | TryExcept (b, _, h, _) -> true (* Conservative *)
+              | HipStmt _ -> false
             and blockFallsThrough b = 
               let rec fall = function
                   [] -> true
@@ -6076,6 +6077,7 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
               | Block b -> blockCanBreak b
               | TryFinally (b, h, _) -> blockCanBreak b || blockCanBreak h
               | TryExcept (b, _, h, _) -> blockCanBreak b || blockCanBreak h
+              | HipStmt _ -> false
             and blockCanBreak b = 
               List.exists stmtCanBreak b.bstmts
             in
@@ -6575,7 +6577,7 @@ and doStatement (s : A.statement) : chunk =
           E.s (error "Try statements cannot contain switch cases");
         
         s2c (mkStmt (TryFinally (c2block b', c2block h', loc')))
-        
+
     | TRY_EXCEPT (b, e, h, loc) -> 
         let loc' = convLoc loc in
         currentLoc := loc';
@@ -6598,6 +6600,11 @@ and doStatement (s : A.statement) : chunk =
           | _ -> E.s (error "Except expression contains too many statements")
         in
         s2c (mkStmt (TryExcept (c2block b', (il', e'), c2block h', loc')))
+
+    | HIP_STMT (iast_exp, loc) ->
+        let loc' = convLoc loc in
+        currentLoc := loc';
+        s2c (mkStmt (HipStmt (iast_exp, loc')))
 
   with e when continueOnError -> begin
     (ignore (E.log "Error in doStatement (%s)\n" (Printexc.to_string e)));

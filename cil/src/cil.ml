@@ -785,7 +785,7 @@ and stmtkind =
          exception !!! The location corresponds to the try keyword. 
      *)      
   | TryExcept of block * (instr list * exp) * block * location
-    
+  | HipStmt of Iast.exp * location
 
 (** Instructions. They may cause effects directly but may not have control
     flow.*)
@@ -1113,6 +1113,7 @@ let rec get_stmtLoc (statement : stmtkind) =
                  else get_stmtLoc ((List.hd b.bstmts).skind)
     | TryFinally (_, _, l) -> l
     | TryExcept (_, _, _, l) -> l
+    | HipStmt (_, l) -> l
 
 
 (* The next variable identifier to use. Counts up *)
@@ -3880,6 +3881,11 @@ class defaultCilPrinterClass : cilPrinter = object (self)
           ++ text ") " ++ unalign
           ++ self#pBlock () h
 
+    | HipStmt (iast_exp, l) -> 
+        self#pLineDirective l 
+          ++ text "/*@ "
+          ++ text (Iprinter.string_of_exp iast_exp)
+          ++ text " */"
 
   (*** GLOBALS ***)
   method pGlobal () (g:global) : doc =       (* global (vars, types, etc.) *)
@@ -5309,6 +5315,7 @@ and childrenStmt (toPrepend: instr list ref) : cilVisitor -> stmt -> stmt =
         if b' != b || il'' != il || e' != e || h' != h then 
           TryExcept(b', (il'', e'), h', l) 
         else s.skind
+    | HipStmt _ -> s.skind
   in
   if skind' != s.skind then s.skind <- skind';
   (* Visit the labels *)
@@ -5801,7 +5808,8 @@ let rec peepHole1 (* Process one instruction and possibly replace it *)
           peepHole1 doone b.bstmts; 
           peepHole1 doone h.bstmts;
           s.skind <- TryExcept(b, (doInstrList il, e), h, l);
-      | Return _ | Goto _ | Break _ | Continue _ -> ())
+      | Return _ | Goto _ | Break _ | Continue _ -> ()
+      | HipStmt _ -> ())
     ss
 
 let rec peepHole2  (* Process two instructions and possibly replace them both *)
@@ -5835,7 +5843,8 @@ let rec peepHole2  (* Process two instructions and possibly replace them both *)
           peepHole2 dotwo h.bstmts;
           s.skind <- TryExcept (b, (doInstrList il, e), h, l)
 
-      | Return _ | Goto _ | Break _ | Continue _ -> ())
+      | Return _ | Goto _ | Break _ | Continue _ -> ()
+      | HipStmt _ -> ())
     ss
 
 
@@ -6478,6 +6487,7 @@ and succpred_stmt s fallthrough =
                 end
   | TryExcept _ | TryFinally _ -> 
       failwith "computeCFGInfo: structured exception handling not implemented"
+  | HipStmt _ -> ()
 
 (* [weimer] Sun May  5 12:25:24 PDT 2002
  * This code was pulled from ext/switch.ml because it looks like we really
@@ -6633,9 +6643,9 @@ let rec xform_switch_stmt s break_dest cont_dest = begin
           let new_block = mkBlock [ this_stmt ; break_stmt ] in
           s.skind <- Block new_block
   | Block(b) -> xform_switch_block b break_dest cont_dest
-
   | TryExcept _ | TryFinally _ -> 
       failwith "xform_switch_statement: structured exception handling not implemented"
+  | HipStmt _ -> ()
 
 end and xform_switch_block b break_dest cont_dest =
   try 

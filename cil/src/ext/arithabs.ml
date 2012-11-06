@@ -262,6 +262,7 @@ let fundecToCFGInfo (fdec: fundec) : S.cfgInfo =
               [ ([], vsToRegList vused) ]
                 
           | Break _ | Continue _ | Goto _ | Block _ | Loop _ | Return _ -> [ ]
+          | HipStmt _ -> []
           | TryExcept _ | TryFinally _ -> assert false
         in
         { S.bstmt = s;

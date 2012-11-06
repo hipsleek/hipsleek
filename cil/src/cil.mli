@@ -990,6 +990,8 @@ and stmtkind =
          exception !!!
      *)      
   | TryExcept of block * (instr list * exp) * block * location
+  | HipStmt of Iast.exp * location
+
   
 
 (** {b Instructions}. 

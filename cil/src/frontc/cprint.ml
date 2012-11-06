@@ -712,7 +712,13 @@ and print_statement stat =
       print_block b;
       printl ["__except";"("]; print_expression e; print ")";
       print_block h
-      
+
+  | HIP_STMT (iast_exp, loc) ->
+      setLoc loc;
+      print "/*@ ";
+      print (Iprinter.string_of_exp iast_exp);
+      print " */";
+
 and print_block blk = 
   new_line();
   print "{";

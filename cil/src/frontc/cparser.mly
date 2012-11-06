@@ -915,8 +915,10 @@ statement:
                           if not !Cprint.msvcMode then 
                             parse_error "try/finally in GCC code";
                           TRY_FINALLY (b, h, (*handleLoc*) $1) }
-
 |   error location   SEMICOLON   { (NOP $2)}
+|   HIPSPECS            { let s = String.trim (fst $1) in
+                          let stmt = Parser.parse_statement "hip statement" s in
+                          HIP_STMT (stmt, snd $1) }    /* TRUNG TODO: still need to refine the location of specs in (snd $1) */ 
 ;
 
 

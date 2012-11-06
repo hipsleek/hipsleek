@@ -228,6 +228,8 @@ and statement =
    (** MS SEH *)
  | TRY_EXCEPT of block * expression * block * cabsloc
  | TRY_FINALLY of block * block * cabsloc
+ | HIP_STMT of Iast.exp * cabsloc
+
  
 and for_clause = 
    FC_EXP of expression

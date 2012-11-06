@@ -1589,6 +1589,7 @@ let analyzeStmt (stmt : stmt) (state : state) : bool =
   | Continue _ -> E.s (E.bug "break, switch, or continue not removed")
   | TryFinally _
   | TryExcept _ -> E.s (E.unimp "exceptions")
+  | HipStmt _ -> ()
   end;
   !return
 

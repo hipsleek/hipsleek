@@ -271,7 +271,7 @@ let fundecToCFGInfo (fdec: fundec) : S.cfgInfo =
               let vused = Usedef.computeUseExp e in 
               [ ([], vsToRegList vused) ]
                 
-          | Break _ | Continue _ | Goto _ | Block _ | Loop _ | Return _ -> [ ]
+          | Break _ | Continue _ | Goto _ | Block _ | Loop _ | Return _ | HipStmt _ -> [ ]
           | TryExcept _ | TryFinally _ -> assert false
         in
         { S.bstmt = s;
