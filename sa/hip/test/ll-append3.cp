@@ -1,6 +1,6 @@
-HeapPred HP_618(node next_82_550').
-HeapPred HP_613(node y_612, node y).
-HeapPred HP_623(node v_node_82_596).
+HeapPred HP_623(node next_82_550').
+HeapPred HP_617(node y_615_616, node y_615).
+HeapPred HP_628(node v_node_82_596).
 HeapPred HP_573(node next_82_550', node x').
 HeapPred T2(node a, node b).
 HeapPred T1(node a).
@@ -16,27 +16,27 @@ HeapPred H(node a).
 
 append[
 ass [H1,G1]: {
-x::node<val_82_581,v_node_82_596> * G1(v_node_82_596,y)&
-v_node_82_596!=null & y!=null -->  G2(x,y)&true;
- HP_573(v_node_82_590,x) * x::node<val_82_579,y>&v_node_82_590=null -->  G2(x,y)&true;
+ HP_573(v_node_82_590,x) * x::node<val_82_579,y>&v_node_82_590=null -->  G1(x,y)&true;
  H1(x)&true -->  x::node<val_82_549',next_82_550'> * HP_573(next_82_550',x)&true;
- HP_573(v_node_82_596,null)&v_node_82_596!=null -->  H1(v_node_82_596)&true
- 
+ HP_573(v_node_82_596,x)&v_node_82_596!=null -->  H1(v_node_82_596)&true;
+ x::node<val_82_581,v_node_82_596> * G1(v_node_82_596,y)&
+v_node_82_596!=null & y!=null -->  G1(x,y)&true
 }
 hpdefs [H1,G1]: {
- HP_623(v_node_82_590)&true -->  
- HP_618(next_82_550')&true
+ HP_628(v_node_82_613)&true -->  
+ emp&v_node_82_613=null
+ or HP_623(next_82_550')&true
  ;
- HP_613(y_612,y)&true -->  
- emp&y_612=y
- or y_612::node<val_82_579,y_616> * HP_613(y_616,z)&y!=null
+ HP_617(y_615_616,y_615)&true -->  
+ y_615_616::node<val_82_579,y_615_620> * HP_617(y_615_620,y_615)&y_615!=null
+ or emp&y_615_616=y_615
  ;
- HP_618(next_82_550')&true -->  
- emp&next_82_550'=null
- or next_82_550'::node<val_82_549',next_82_621> * HP_618(next_82_621)&true
+ HP_623(next_82_550')&true -->  
+ next_82_550'::node<val_82_549',next_82_626> * HP_623(next_82_626)&true
+ or emp&next_82_550'=null
  ;
- G1(x,y)&true -->  x::node<val_82_579,y_612> * HP_613(y_612,y)&true;
- H1(x)&true -->  x::node<val_82_549',next_82_550'> * HP_618(next_82_550')&true
+ G1(x_614,y_615)&true -->  x_614::node<val_82_579,y_615_616> * HP_617(y_615_616,y_615)&true;
+ H1(x_622)&true -->  x_622::node<val_82_549',next_82_550'> * HP_623(next_82_550')&true
 }
 ]
 
