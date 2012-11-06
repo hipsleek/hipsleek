@@ -1,3 +1,8 @@
+int foo0()
+{
+  return 1;
+}
+
 int foo1()
 /*@
   requires true 
