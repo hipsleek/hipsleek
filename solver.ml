@@ -6955,8 +6955,14 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             let r1,r2 = do_coercion prog ln estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
             (r1,Search r2)
       | Context.Undefined_action mr -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "undefined action" estate (Base rhs_b) None pos, CF.mk_failure_must "undefined action" Globals.sl_error)), NoAlias)
-      | Context.M_Nothing_to_do s -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
-        CF.mk_failure_may ("Nothing_to_do?"^s) Globals.sl_error)), NoAlias)
+      | Context.M_Nothing_to_do s -> 
+		let res = (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos,
+        CF.mk_failure_may ("Nothing_to_do?"^s) Globals.sl_error)), NoAlias) in
+		if (!Globals.delay_proving_sat) then 
+			let n_ctx = elim_unsat_es_now 13 prog (ref 2) estate in
+			 if isAnyFalseCtx n_ctx then (SuccCtx [n_ctx], UnsatAnte)
+			 else res
+		else res
             (* to Thai : please move inference code from M_unmatched_rhs here
                and then restore M_unmatched_rhs to previous code without
                any inference *)
