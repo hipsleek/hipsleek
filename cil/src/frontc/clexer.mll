@@ -460,6 +460,8 @@ rule initial = parse
                 addComment sl;
                 addWhite lexbuf;
                 initial lexbuf}
+| "//@"       { let hs = oneline_hipspecs lexbuf in                (* hip specification *)
+                HIPSPECS (hs, currentLoc ()) }
 | "//"        { let il = onelinecomment lexbuf in
                 let sl = intlist_to_string il in
                 addComment sl;
@@ -697,6 +699,10 @@ and msasmnobrace = parse
 and hipspecs = parse
   "*/"                  { "" }
 |  _                    { lex_hipspecs hipspecs lexbuf }
+
+and oneline_hipspecs = parse
+  '\n'|eof              { "" }
+| _                     { lex_hipspecs oneline_hipspecs lexbuf }
 
 {
 
