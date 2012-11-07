@@ -127,7 +127,7 @@ let construct_string_1 num_vars =
 let generate_test num_vars =	 
 	if (num_vars >= 2) then (
 		l_ints:= (let rec f l i = if i>=0 then f (i::l) (i-1) else l in f [] (num_vars-1));
-		let _=print_endline (construct_string_1 num_vars) in
+		(* let _=print_endline (construct_string_1 num_vars) in *)
 		let oc =
 		(try Unix.mkdir "spring" 0o750 with _ -> ());
 		let with_option= string_of_int num_vars in

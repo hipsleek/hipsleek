@@ -2,6 +2,8 @@ open Printf
 
 let vn = "x" (*define variable name*)
 let bn = "b" (*define boolean variable name*)
+let cons1="one"
+let cons2="four"
 	
 let helper1 num_vars=
 	let i = ref 0 in
@@ -78,7 +80,7 @@ let helper_body3 num_vars=
       		while !i < num_vars; do
             str := !str^"\t"^"if ("^bn^(string_of_int !i)^")\n\t"^"{\n";
 						if(!i mod 2 = 0) then alg := "+" else alg := "-";							
-      			str := !str^(helper_body1 num_vars !alg 2 "1");
+      			str := !str^(helper_body1 num_vars !alg 2 cons1);
       			i := !i+1 
       		done;
 					while !j < num_vars; do				
@@ -95,7 +97,7 @@ let helper_body_if_else num_vars=
       		while !i < num_vars; do
             str := !str^"\t"^"if ("^bn^(string_of_int !i)^")\n\t"^"{\n";
 						if(!i mod 2 = 0) then alg := "+" else alg := "-";							
-      			str := !str^(helper_body1 num_vars !alg 2 "1");
+      			str := !str^(helper_body1 num_vars !alg 2 cons1);
       			i := !i+1 
       		done;
 					i := 0;
@@ -113,7 +115,7 @@ let construct_string num_vars =
   let declare_fun = "void spring ("^declare_args^")\n" in (*1*)
 	let declare_requires = "requires "^helper2 num_vars^"\n" in (*2*)
 	let declare_ensures = "ensures "^helper_ensures num_vars^"\n{\n" in (*3*)
-	let temp= helper_body1 num_vars "+" 1 "1" in
+	let temp= helper_body1 num_vars "+" 1 cons1 in
 	let declare_body1= temp^temp in
 	let declare_body2=helper_body2 num_vars in
 	if(not !Globals.if_else) then
