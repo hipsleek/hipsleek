@@ -1310,7 +1310,7 @@ match p with
 		       let new_p,f2 = ramify_star_one h None q q_mpf mcp [] q_vars in
 		       let new_f = CP.mkAnd f f2 pos in
 		       (new_p,new_f)) (p,(CP.mkTrue no_pos)) ql
-		       else p,(CP.mkTrue no_pos)		    
+		       else CF.HFalse,(CP.mkTrue no_pos)		    
 	| CF.ViewNode {CF.h_formula_view_node = vn;
 		       CF.h_formula_view_name = name;
 		       CF.h_formula_view_imm = imm;
@@ -1330,7 +1330,7 @@ match p with
 		       let new_p,f2 = ramify_star_one h p_mpf q q_mpf mcp p_vars q_vars in
 		       let new_f = CP.mkAnd f f2 pos in
 		       (new_p,new_f)) (p,(CP.mkTrue no_pos)) ql
-		       else p,(CP.mkTrue no_pos)
+		       else CF.HFalse,(CP.mkTrue no_pos)
         | _ -> p,(CP.mkTrue no_pos)
 
 let ramify_phase = ramify_star
