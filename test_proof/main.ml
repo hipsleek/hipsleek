@@ -41,7 +41,7 @@ let open_process_full cmd args =
 
 let rec icollect_output chn accumulated_output : string list =
 	let output = try
-					 let line = input_line chn in
+					 let line = input_line chn in (*if the last result is unknown => lead to timeout of collecting output*)
                      (*let _ = print_endline ("locle2" ^ line) in*)
                      if ((String.length line) > 7) then (*something diff to sat/unsat/unknown, retry-may lead to timeout here*)
 					 icollect_output chn (accumulated_output @ [line])
@@ -71,6 +71,7 @@ let read_file_2 filename =
 								end    	     
 				     with _ -> let _=list_check := !list_check @ [!lines] in lines := ""    	    
 					with _->()
+					
       done; 
       close_in chan;
 			([],"")
@@ -80,6 +81,45 @@ let read_file_2 filename =
 			(* let _= List.map (fun x-> print_endline (x)) !list_check in *)
       (!list_check,!lines)
 	  end		
+;;
+
+let read_file_boogie filename = 
+    (*let _= print_endline ("file:"^ !Globals.source_file) in*)
+  let lines = ref "" in
+	let first_push = ref false in
+  let first_decl = ref "" in
+  let chan = open_in filename in
+  try
+      while true; do
+        let b = input_line chan in
+					(* let _=print_endline (b) in *)
+					if(not !first_push) then
+           try 
+             let ic= BatString.find b "(push" in
+				     try
+						   let ise= BatString.find b ";" in	
+				       if (ic < ise) then
+								begin 
+									first_push := true;
+								  first_decl := !lines;
+									lines := b
+								end   	     
+				     with _ ->
+							let _= first_push := true in 
+							let _=first_decl := !lines in lines := b    	    
+					with _-> 	
+						lines := !lines^b^"\n"
+					else
+						lines := !lines^b^"\n"	  
+      done; 
+      close_in chan;
+			("","")
+  with End_of_file ->
+		begin	
+      close_in chan;
+			(* let _= List.map (fun x-> print_endline (x)) !list_check in *)
+      (!first_decl,!lines)
+	  end
 ;;
 
 let incr_nums_check_sat ()=
@@ -197,6 +237,28 @@ let main_runz3 () =
   end
 ;;
 
+let main_run_boogie () =
+  let (first_decl,body)= read_file_boogie !Globals.source_file in
+  let (pin,pout,perr,id)=start () in (*start z3 with interactive mode*)
+  begin 
+	   	let helper chi =
+              let str_list= icollect_output chi [] in
+			        let _=List.map (fun x-> print_endline (x)) str_list in ()
+			in
+	  	let i= ref 0 in
+      let _= output_string (pout) first_decl in
+      let _= flush (pout) in
+	  	while (!i < !Globals.n_exec) do
+            let _= output_string (pout) body in
+            let _= flush (pout) in
+            let _= helper pin in 
+			i := !i+1
+	  	done;
+	  	stop (pin,pout,perr,id)
+  end
+;;
+
+
 let main_generate_tests () =
   let num_vars= !Globals.num_vars_test in
 	let _=Generate_test.generate_test num_vars in
@@ -207,7 +269,10 @@ let main_generate_tests () =
 (*-------------------Execute main here--------------------------*)
 let _= process_cmd_line () in
   if(!Globals.num_vars_test = 0) then
-     let _= main_runz3 () in ()
+		if(!Globals.run_boogie) then
+			let _= main_run_boogie () in ()
+		else	
+      let _= main_runz3 () in ()
 	else 
 		 let _= main_generate_tests () in ()
 (*--------------------------------------------------------------*)

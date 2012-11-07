@@ -4,6 +4,7 @@ let num_vars_test = ref 0
 let nums_of_check_sat = ref 0
 
 let use_boogie = ref false
+let run_boogie = ref false
 
 let use_frama_c = ref false
 
@@ -13,3 +14,4 @@ let set_number_exec si=
 let set_do_generate_test num=
 	  num_vars_test := (int_of_string num)	
 
+	
