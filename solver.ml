@@ -2229,7 +2229,8 @@ and elim_exists_pure_branch_x (w : CP.spec_var list) (f0 : CP.formula) pos : CP.
 
 (* --- added 11.05.2008 *)
 and entail_state_elim_exists es = 
-  let f_prim = elim_exists es.es_formula in
+  let f_prim = es.es_formula in
+  let f_prim = elim_exists f_prim in
   (* 05.06.08 *)
   (* we also try to eliminate exist vars for which a find a substitution of the form v = exp from the pure part *)
   (*let _ = print_string("[solver.ml, elim_exists_ctx]: Formula before exp exist elim: " ^ Cprinter.string_of_formula f_prim ^ "\n") in*)
@@ -4548,7 +4549,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                     (* let _ = print_endline ("heap_entail_conjunct_helper: rename es.es_var_zero_perm: \n ### old = " ^ (Cprinter.string_of_spec_var_list estate.es_var_zero_perm) ^ "\n ### new = " ^ (Cprinter.string_of_spec_var_list new_zero_vars)) in *)
                     (* new ctx is the new context after substituting the fresh vars for the exist quantified vars *)
                     let new_ctx = Ctx {estate with es_var_zero_perm = new_zero_vars;
-                        es_formula = new_baref;
+                        es_formula = (* new_baref *) estate.es_formula;
                         es_ante_evars = ws @ estate.es_ante_evars;
                         es_unsat_flag = estate.es_unsat_flag;} in
                     (* call the entailment procedure for the new context - with the existential vars substituted by fresh vars *)

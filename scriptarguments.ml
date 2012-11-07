@@ -69,7 +69,7 @@ let common_arguments = [
 	("--LHS-wrap-exist", Arg.Set Globals.wrap_exist,
 	"Existentially quantify the fresh vars in the residue after applying ENT-LHS-EX");
 	("-noee", Arg.Clear Globals.elim_exists_flag,
-	"No eleminate existential quantifiers before calling TP.");
+	"No eliminate existential quantifiers before calling TP.");
 	(* ("--no-filter", Arg.Clear Globals.filtering_flag, *)
 	(* "No assumption filtering."); *)
 	("--filter", Arg.Set Globals.filtering_flag,
@@ -187,8 +187,8 @@ let common_arguments = [
 	"print core representation");
 	("--pip", Arg.Set Globals.print_input,
 	"print input representation");
-	("--dis-cache", Arg.Set Globals.no_cache_formula,
-    "Do not cache result of satisfiability and validity checking");
+	(* ("--dis-cache", Arg.Set Globals.no_cache_formula, *)
+    (* "Do not cache result of satisfiability and validity checking"); *)
 	("--enable-cache", Arg.Clear Globals.no_cache_formula,
     "Cache result of satisfiability and validity checking");
 	("--web", Arg.String (fun s -> (Tpdispatcher.Netprover.set_use_socket_for_web s); Tpdispatcher.webserver := true; Typechecker.webserver := true; Paralib1v2.webs := true; Paralib1.webs := true) ,  

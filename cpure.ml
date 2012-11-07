@@ -2959,7 +2959,7 @@ and split_ex_quantifiers (f0 : formula) : (spec_var list * formula) = match f0 w
 
   EX x . x = T & P(x) ~-> P[T], T is term
   EX x . P[x] \/ Q[x] ~-> (EX x . P[x]) \/ (EX x . Q[x])
-  EX x . P & Q[x] ~-> P & Q[x], x notin FV(P)
+  EX x . P & Q[x] ~-> P & EX x. Q[x], x notin FV(P)
 
 *)
 
