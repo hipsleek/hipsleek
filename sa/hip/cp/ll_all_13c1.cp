@@ -6,7 +6,7 @@ HeapPred HP_643(node a).
 trav[
 ass [H1,G2]:{
  G2(v_node_131_605,v_node_131_595) * x::node<val_131_588,v_node_131_605>&
-  v_node_132_564'=x --> G2(v_node_132_564',x) * HP_607(v_node_131_605,x);
+  v_node_132_564'=x --> G2(v_node_132_564',x);
  HP_577(v_node_129_557') * x::node<_,v_node_129_557'> --> G2(v_node_129_557',x);
  HP_582(v_node_131_560')&true --> H1(v_node_131_560');
  H1(x) --> x::node<_,next_131_559'> * HP_582(next_131_559');

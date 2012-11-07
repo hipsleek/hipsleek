@@ -4,7 +4,7 @@ HeapPred HP_1b(node b).
 
 front[
 ass [F,G]:{
-    HP_1a(p) * x::node<v_int,p> --> G(x,v_int) * HP_1b(p);
+    HP_1a(p) * x::node<v_int,p> --> G(x,v_int);
     F(x) --> x::node<_,p> *HP_1a(p)
 
 	}
