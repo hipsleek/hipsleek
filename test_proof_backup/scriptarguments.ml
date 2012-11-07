@@ -11,6 +11,9 @@ let run_specific_arguments = [
    "Automatically generate tests for if with provided number of: min max off-set");
 	("-gen-ifel-range",Arg.Unit Globals.set_generate_if_else_range,
    "Automatically generate tests for if_else with provided number of: min max off-set");
+	("-boogie", Arg.Set Globals.use_boogie, "generate boogie inputs");
+	("-run-boogie", Arg.Set Globals.run_boogie, "Run boogie inputs");
+	("-frama-c", Arg.Set Globals.use_frama_c, "generate Frama-C inputs");
   ] 
 
 (* all hip's arguments and flags *)	

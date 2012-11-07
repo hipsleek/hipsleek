@@ -83,6 +83,20 @@ let read_file_2 filename =
 	  end		
 ;;
 
+let incr_nums_check_sat ()=
+	  Globals.nums_of_check_sat := !Globals.nums_of_check_sat + 1 	 
+
+;;		
+let count_num_check_sat str =
+      try 
+         let ic= BatString.find str "(check-sat)" in
+				 try
+						 let ise= BatString.find str ";" in	
+				     if (ic < ise) then incr_nums_check_sat ()     	     
+				 with _ -> incr_nums_check_sat ()
+      with _-> ()
+;;
+
 let read_file_boogie filename = 
     (*let _= print_endline ("file:"^ !Globals.source_file) in*)
   let lines = ref "" in
@@ -107,10 +121,12 @@ let read_file_boogie filename =
 				     with _ ->
 							let _= first_push := true in 
 							let _=first_decl := !lines in lines := b    	    
-					with _-> 	
-						lines := !lines^b^"\n"
+					with _->	
+						let _= lines := !lines^b^"\n" in
+							count_num_check_sat b
 					else
-						lines := !lines^b^"\n"	  
+						let _= lines := !lines^b^"\n" in
+						  count_num_check_sat b
       done; 
       close_in chan;
 			("","")
@@ -122,8 +138,6 @@ let read_file_boogie filename =
 	  end
 ;;
 
-let incr_nums_check_sat ()=
-	  Globals.nums_of_check_sat := !Globals.nums_of_check_sat + 1 	 
 
 let read_file filename =
   let chan = open_in filename in
@@ -239,6 +253,8 @@ let main_runz3 () =
 
 let main_run_boogie () =
   let (first_decl,body)= read_file_boogie !Globals.source_file in
+	(* let _=print_endline (first_decl) in *)
+	(* let _=print_endline (body) in       *)
   let (pin,pout,perr,id)=start () in (*start z3 with interactive mode*)
   begin 
 	   	let helper chi =
@@ -249,9 +265,13 @@ let main_run_boogie () =
       let _= output_string (pout) first_decl in
       let _= flush (pout) in
 	  	while (!i < !Globals.n_exec) do
+				    let _= output_string (pout) "(push 1)" in
             let _= output_string (pout) body in
-            let _= flush (pout) in
-            let _= helper pin in 
+            let _= output_string (pout) "(pop 1)" in
+            let _= flush (pout) in	
+						for j=0 to !Globals.nums_of_check_sat-1 do
+            let _= helper pin in () 
+						done;
 			i := !i+1
 	  	done;
 	  	stop (pin,pout,perr,id)
@@ -261,8 +281,12 @@ let main_run_boogie () =
 
 let main_generate_tests () =
   let num_vars= !Globals.num_vars_test in
-	let _=Generate_test.generate_test num_vars in
-	print_endline ("Generated file in: spring/spring-"^(string_of_int num_vars)^".ss")
+	if(!Globals.use_imp) then
+		let _=Generate_imp_test.generate_test num_vars in
+	  ()
+	else
+	  let _=Generate_test.generate_test num_vars in
+	  print_endline ("Generated file in: spring/spring-"^(string_of_int num_vars)^".ss")
 ;;
 
 
