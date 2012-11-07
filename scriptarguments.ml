@@ -122,6 +122,7 @@ let common_arguments = [
 	("--ann-vp", Arg.Set Globals.ann_vp,"manual annotation of variable permissions");
 	("--dis-ann-vp", Arg.Clear Globals.ann_vp,"manual annotation of variable permissions");
 	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
+	("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
 	("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
 	("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
 	("--no-coercion", Arg.Clear Globals.use_coercion,
