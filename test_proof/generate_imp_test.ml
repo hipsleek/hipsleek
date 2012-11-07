@@ -115,8 +115,9 @@ let construct_string num_vars =
   let declare_fun = "void spring ("^declare_args^")\n" in (*1*)
 	let declare_requires = "requires "^helper2 num_vars^"\n" in (*2*)
 	let declare_ensures = "ensures "^helper_ensures num_vars^"\n{\n" in (*3*)
+	let declare_cons= "\tint "^cons1^"= 1;\n"^"\tint "^cons2^"= 4;\n" in
 	let temp= helper_body1 num_vars "+" 1 cons1 in
-	let declare_body1= temp^temp in
+	let declare_body1= declare_cons^temp^temp in
 	let declare_body2=helper_body2 num_vars in
 	if(not !Globals.if_else) then
 	  let declare_body3 = helper_body3 num_vars in 
