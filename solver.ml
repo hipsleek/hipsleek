@@ -397,7 +397,7 @@ and xpure_x (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var list 
     (a, [], c)
 
 and xpure_heap i (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (mix_formula * CP.spec_var list * CF.mem_formula)=
-  Debug.ho_2_num i "xpure_heap" Cprinter.string_of_h_formula string_of_int 
+  Debug.no_2_num i "xpure_heap" Cprinter.string_of_h_formula string_of_int 
       (fun (mf,svl,m) -> pr_triple Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula (mf,svl,m)) 
       (fun _ _ -> xpure_heap_new prog h0 which_xpure) h0 which_xpure
 
