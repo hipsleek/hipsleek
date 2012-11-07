@@ -63,7 +63,7 @@ let helper_body1 num_vars alg num add_num=
 let helper_body2 num_vars=
 	let i = ref 0 in
 		let str = ref "" in
-		let gt_num = "4" in
+		let gt_num = cons2 in
 		let _= 
       		while !i < num_vars; do
       			str := !str^"\t"^"bool "^bn^(string_of_int !i)^"= "^vn^(string_of_int !i)^">"^gt_num^";\n";
