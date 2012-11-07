@@ -1142,9 +1142,9 @@ sub hip_process_file {
 			{
 			    $error_count++;
 			    $error_files=$error_files."error at: $test->[0] $test->[$i]\n";
-				print $output;
-					($content) = $output =~ m/ Diff defs $test->[$i] {.*} /;
-					print $content;
+				#print $output;
+				#	($content) = $output =~ m/ Diff defs $test->[$i] {.*} /;
+				#	print $content;
 			    print "error at: $test->[0] $test->[$i]\n";
 			}
 		    }

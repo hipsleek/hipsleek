@@ -1613,23 +1613,68 @@ let checkeq_defs_bool hvars (defs: (CP.rel_cat * CF.h_formula * CF.formula) list
   let res = not (List.exists (fun c -> not(c)) rs) in
   (res,remain_vars)
 
+let check_equiv_def_with_diff hvars (def1: (CF.formula * CF.formula)) (def2: (CF.formula * CF.formula)) hp_map =
+  let is_hp_pair p (hp1, hp2) hp_map =
+    let a,b = p in
+    if(CP.is_hprel_typ a && CP.is_hprel_typ b) then 
+      if(CP.eq_spec_var a hp1 && CP.eq_spec_var b hp2) then false 
+      else 
+	  (*HERE: check if pair is in hp_map already. NOTE: a,b: gen, infile <-> hp_map:  [gen], infile*)
+	  try
+	    let (cands, _) = List.find (fun (hps,hp) -> CP.eq_spec_var b hp) hp_map in
+	    let b = List.exists (fun c -> CP.eq_spec_var a c) cands in
+	    if(b) then false else true
+	  with 
+	    |Not_found -> true
+    else false
+  in
+  let rec helper mt (hp1,hp2) hp_map= 
+    match mt with
+      | [] -> []
+      | x::y -> if(is_hp_pair x (hp1, hp2) hp_map) then x::(helper y (hp1,hp2) hp_map) else (helper y  (hp1,hp2) hp_map)
+  in 
+  let hp1,_ = def1 in
+  let hp2,_ = def2 in
+  let (hp1, hp2) =  ((List.hd (CF.get_hp_rel_name_formula hp1)),(List.hd  (CF.get_hp_rel_name_formula hp2))) in
+  let m,mtl = check_equiv_constr_with_diff hvars def1 def2 in (*bool, map_table_list*)
+  if(m)then
+    (
+      let rec get_min_mt mts =
+	match mts with
+	  | [] -> report_error no_pos "check_equiv_def_with_diff: eliminated already."
+	  | [x] -> (List.length x,[x])
+	  | hd::tl -> (
+	    let (t,mts1) = get_min_mt tl in
+	    let c = List.length hd in
+	    if(c < t) then (c, [hd])
+	    else if(c == t) then (c,hd::mts1)
+	    else (t,mts1)
+	  )	  
+      in
+      let rel_mtl = List.map (fun (mt,fs1,fs2) -> helper mt (hp1, hp2) hp_map) mtl in 
+      let tmp = List.exists (fun mt -> List.length mt == 0) rel_mtl in
+      let (_,mts) = get_min_mt rel_mtl in
+      if(tmp) then (m,mtl,[]) else (m,mtl,mts)
+    )
+  else (m,mtl,[])
+
 let checkeq_defs_with_diff_x hvars (defs: (CP.rel_cat * CF.h_formula * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) inf_vars :  (bool*(((CF.formula * CF.formula) *  (CF.formula * CF.formula) * ((map_table * (CF.formula * CF.formula)*(CF.formula * CF.formula)) list)) list))=
   let mtb = checkeq_defs hvars defs infile_defs in
-  let helper v mtb =
-    let exist v mt =
+  let exists_helper v1 v2 mtb =
+    let exist v1 v2 mt =
       let (ls, key) = mt in
-      CP.eq_spec_var v key && List.exists (fun c -> CP.eq_spec_var c v) ls
+      CP.eq_spec_var v2 key && List.exists (fun c -> CP.eq_spec_var c v1) ls
     in
-    List.fold_left (fun piv mt -> if(piv) then true else if(exist v mt) then true else false) false mtb
+    List.fold_left (fun piv mt -> if(piv) then true else if(exist v1 v2 mt) then true else false) false mtb
   in
-  let mixs = List.map (fun c -> (helper c mtb,c)) inf_vars in
+  let mixs = List.map (fun c -> (exists_helper c c mtb,c)) inf_vars in
   let rs,vars = List.split mixs in
   let _,remain_vars = List.split (List.filter (fun (r,v) -> r == false) mixs) in
   let res = not (List.exists (fun c -> not(c)) rs) in
   if(res) then (res,[])
   else (
-    let rec check_hps vars = (
-      let find_hpdef v defs infile_defs =
+    let rec check_hps pair_vars = (
+      let find_hpdef v1 v2 =
 	try (
 	  let check_hp hp v =
 	    let hp_names = CF.get_hp_rel_name_formula hp in
@@ -1639,19 +1684,55 @@ let checkeq_defs_with_diff_x hvars (defs: (CP.rel_cat * CF.h_formula * CF.formul
 	    in
 	    CP.eq_spec_var hp_name v
 	  in
-	  let def1 = List.find (fun (_,hp,_) -> check_hp (CF.formula_of_heap hp no_pos) v) defs in
-	  let def2 = List.find (fun (hp,_) -> check_hp hp v) infile_defs in
+	  let def1 = List.find (fun (_,hp,_) -> check_hp (CF.formula_of_heap hp no_pos) v1) defs in
+	  let def2 = List.find (fun (hp,_) -> check_hp hp v2) infile_defs in
 	  let (a,b,c) = def1 in
 	  ((CF.formula_of_heap b no_pos,c),def2)
 	)
 	with Not_found -> report_error no_pos "Diff HP not found in either defs or infile_defs"
       in
-      let hps = List.map (fun v -> find_hpdef v defs infile_defs) vars in
-      let res_list = List.map (fun (d1,d2) -> let b,mtl =  check_equiv_constr_with_diff hvars d1 d2 in (d1,d2,mtl)) hps in
+      let check_one_def v1 v2 =
+	let (d1,d2) = find_hpdef v1 v2 in
+	let b,mtl,new_hps =  check_equiv_def_with_diff hvars d1 d2 mtb in
+	if(b) then
+	  (
+	    (*filter all hps that equal already, if null -> deep true, if not => add diff for father defs , no deep true here :*)
+	    if(List.length new_hps == 0) then [] 
+	    else 
+	      (
+		let hps = List.hd new_hps in (*choose one only *)
+
+		let modify_mtl d1 d2 mtl hps=
+		  let find_hrel hprel_name hrs pv = 
+		    let res =
+		      try (
+			let hr = List.find (fun (n,_,_) -> CP.eq_spec_var n hprel_name) hrs in
+			CF.HRel hr
+		      )
+		      with Not_found -> CF.HEmp
+		    in
+		    CF.mkStarH res pv no_pos
+		  in
+		  let (_,f1) = d1 in
+		  let (_,f2) = d2 in
+		  let hrs1, hrs2 = CF.get_hprel f1,CF.get_hprel f2 in
+		  let (diff1,diff2) = List.fold_left (fun (pv1,pv2) (a,b) -> (find_hrel a hrs1 pv1,find_hrel b hrs2 pv2)) (CF.HEmp, CF.HEmp) hps in
+		  List.map (fun (mt,(a,df1),(b,df2)) -> (mt, (a,CF.formula_of_heap diff1 no_pos), (b,CF.formula_of_heap diff2 no_pos))) mtl
+		in
+		let parent_def = (d1,d2,modify_mtl d1 d2 mtl hps) in
+		let new_diff = check_hps hps in
+		 parent_def::new_diff
+		(* parent_def::(List.concat ( List.map (fun each_hps -> check_hps each_hps) new_hps)) *)
+	      )
+	  )
+	else [(d1,d2,mtl)]
+      in 
+      let res_list = List.concat ( List.map (fun (v1,v2) -> check_one_def v1 v2) pair_vars) in
       res_list
     )
     in
-    (res,check_hps remain_vars) 
+    let pair_vars = List.map (fun v-> (v,v)) remain_vars in
+    (res,check_hps pair_vars) 
   (*TODO: here, b can used to decide if it's actually false or just false with HP diff_name (check again here)*)   
   )
     
