@@ -231,7 +231,29 @@ let main () =
 
 (* let main () =  *)
 (*   Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
-
+let sleek_proof_log_Z3 src_files =
+ if !Globals.proof_logging || !Globals.proof_logging_txt then 
+      begin
+	let tstartlog = Gen.Profiling.get_time ()in	
+	(* let _= Log.proof_log_to_file () in                                                                                             *)
+		let with_option= if(!Globals.do_slicing) then "sleek_slice" else "sleek_noslice" in
+  (*       let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt"  in     *)
+	let fz3name= ("logs/"^with_option^(Globals.norm_file_name (List.hd src_files)) ^".z3")  in
+	let _=print_endline ("bach") in
+	let _= if (!Globals.proof_logging_txt) 
+        then 
+          begin
+            (* Debug.info_pprint ("Logging "^fname^"\n") no_pos; *)
+						Debug.info_pprint ("Logging "^fz3name^"\n") no_pos;
+            (* Log.proof_log_to_text_file (); *)
+						Log.sleek_z3_proofs_list_to_file src_files
+          end
+	in
+			let tstoplog = Gen.Profiling.get_time () in
+			let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
+			(* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in	() *)
+			end
+		
 let _ =
    wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
@@ -246,6 +268,7 @@ let _ =
     main ();
     (* let _ = print_endline "after main" in *)
     Gen.Profiling.pop_time "Overall";
+		let _= sleek_proof_log_Z3 !source_files in
     let _ = 
       if (!Globals.profiling && not !inter) then 
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in
