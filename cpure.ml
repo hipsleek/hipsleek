@@ -4523,8 +4523,10 @@ and b_form_simplify_x (b:b_formula) :b_formula =
     let (lhs, lsm) = split_sums t1 in
     let (rhs, rsm) = split_sums t2 in
     let (lh, rh) = move_lr lhs lsm rhs rsm l in
-	  (* let lh = purge_mult lh in *)
-	  (* let rh = purge_mult rh in *)
+         (* purge_mult will convert 1*x => x and 0*x => 0
+            but this code seems inefficient *)
+	  let lh = purge_mult lh in
+	  let rh = purge_mult rh in
 	  (lh, rh) in
   let do_all3 e1 e2 e3 l =
 	  let t1 = simp_mult e1 in

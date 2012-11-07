@@ -8272,10 +8272,15 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 
 		                                                                                                                  - also check that v1 is not contained in FV(exp2)
         *************************************************************************************************************************)
 
-(* apply elim_exist_exp_loop until no change *)
 and elim_exists_exp (f0 : formula) : (formula) =
+  let pr = Cprinter.string_of_formula in
+  Debug.no_1 "elim_exists_exp" pr pr elim_exists_exp_x f0  
+
+
+(* apply elim_exist_exp_loop until no change *)
+and elim_exists_exp_x (f0 : formula) : (formula) =
   let f, flag = elim_exists_exp_loop f0 in
-  if flag then (elim_exists_exp f)
+  if flag then (elim_exists_exp_x f)
   else f 
 
 (* removing existentail using ex x. (x=e & P(x)) <=> P(e) *)
