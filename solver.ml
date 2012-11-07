@@ -397,14 +397,27 @@ and xpure_x (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var list 
     (a, [], c)
 
 and xpure_heap i (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (mix_formula * CP.spec_var list * CF.mem_formula)=
-  Debug.no_2_num i "xpure_heap" Cprinter.string_of_h_formula string_of_int 
+  Debug.ho_2_num i "xpure_heap" Cprinter.string_of_h_formula string_of_int 
       (fun (mf,svl,m) -> pr_triple Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula (mf,svl,m)) 
       (fun _ _ -> xpure_heap_new prog h0 which_xpure) h0 which_xpure
 
 and xpure_heap_new (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (mix_formula * CP.spec_var list * CF.mem_formula) =
   let (mf,svl,diff) as x = xpure_heap_x prog h0 which_xpure in
   if (!Globals.ineq_opt_flag) then x
-  else (mf,[],diff)
+  else
+    (* Transform dlist to pure formula *)
+    let rec merge dlist =
+      match dlist with
+      | [] -> CP.mkTrue no_pos
+      | x::xs -> List.fold_left (fun a y ->
+          CP.mkAnd (CP.mkPure (CP.mkNeq x y no_pos)) a no_pos) (merge xs) xs
+    in 
+    let diff_l = List.map (fun dlist ->
+      let dlist = List.map (fun x -> CP.mkVar x no_pos) dlist in
+      merge dlist) diff.mem_formula_mset in
+    let diff_l = CP.conj_of_list diff_l no_pos in
+    let mf = MCP.merge_mems mf (MCP.mix_of_pure diff_l) true in
+    (mf,svl,{diff with mem_formula_mset = []})
 
 and xpure_heap_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (mix_formula * CP.spec_var list * CF.mem_formula) =
   (* let h0 = merge_partial_h_formula h0 in *) (*this will not work with frac permissions*)
