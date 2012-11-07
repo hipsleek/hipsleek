@@ -2095,12 +2095,24 @@ let subst_cs hp_constrs par_defs=
 (*===========end subst============*)
 (*========generalization==========*)
 (*for par_defs*)
-let generalize_one_hp prog unk_hps par_defs=
+let generalize_one_hp prog non_ptr_unk_hps unk_hps par_defs=
   (*collect definition for each partial definition*)
   let obtain_and_norm_def args0 (a1,args,f)=
     (*normalize args*)
     let subst = List.combine args args0 in
-    (CF.subst subst f)
+    let f1 = (CF.subst subst f) in
+    (*root = p && p:: node<_,_> ==> root = p& root::node<_,_> & *)
+    (*make explicit root*)
+    let r =
+      if args0 = [] then report_error no_pos "sa.obtain_and_norm_def: hp has at least one arg"
+      else (List.hd args0)
+    in
+    let f2 = SAU.mk_expl_root r f1 in
+    f2
+  in
+  let remove_non_ptr_unk_hp f=
+    let nf,_ = CF.drop_hrel_f f non_ptr_unk_hps in
+    nf
   in
   DD.ninfo_pprint ">>>>>> generalize_one_hp: <<<<<<" no_pos;
   if par_defs = [] then [] else
@@ -2111,14 +2123,16 @@ let generalize_one_hp prog unk_hps par_defs=
         let defs = List.map (obtain_and_norm_def args0) par_defs in
   (*normalize linked ptrs*)
         let defs1 = SAU.norm_hnodes args0 defs in
+        (*remove unkhp of non-node*)
+        let defs2 = (* List.map remove_non_ptr_unk_hp *) defs1 in
   (*remove duplicate*)
-        let defs2 = Gen.BList.remove_dups_eq (fun f1 f2 -> SAU.check_relaxeq_formula f1 f2) defs1 in
-        let defs3 = SAU.remove_equiv_wo_unkhps hp unk_hps defs2 in
+        let defs3 = Gen.BList.remove_dups_eq (fun f1 f2 -> SAU.check_relaxeq_formula f1 f2) defs2 in
+        let defs4 = SAU.remove_equiv_wo_unkhps hp unk_hps defs3 in
    (*remove duplicate with self-recursive*)
         (* let base_case_exist,defs4 = SAU.remove_dups_recursive hp args0 unk_hps defs3 in *)
   (*find longest hnodes common for more than 2 formulas*)
   (*each hds of hdss is def of a next_root*)
-        let defs = SAU.get_longest_common_hnodes_list prog unk_hps hp args0 defs3 in
+        let defs = SAU.get_longest_common_hnodes_list prog unk_hps hp args0 defs4 in
         defs
     end
 
@@ -2455,7 +2469,7 @@ let is_valid_pardef (_,args,f)=
   let b1 = not (CP.mem_svl root_arg dups) in
   (b1 (* && (not (check_unsat f)) *))
 
-let generalize_hps_par_def_x prog unk_hps par_defs=
+let generalize_hps_par_def_x prog non_ptr_unk_hps unk_hps par_defs=
   (*partition the set by hp_name*)
   let rec partition_pdefs_by_hp_name pdefs parts=
     match pdefs with
@@ -2486,14 +2500,14 @@ let generalize_hps_par_def_x prog unk_hps par_defs=
   (*remove empty*)
   let groups3 = List.filter (fun grp -> grp <> []) groups2 in
   (*each group, do union partial definition*)
-  List.concat ((List.map (generalize_one_hp prog unk_hps) groups3))
+  List.concat ((List.map (generalize_one_hp prog non_ptr_unk_hps unk_hps) groups3))
 
-let generalize_hps_par_def prog unk_hps par_defs=
+let generalize_hps_par_def prog non_ptr_unk_hps unk_hps par_defs=
   let pr1 = pr_list_ln SAU.string_of_par_def_w_name in
   let pr2 = Cprinter.string_of_hp_rel_def in
   let pr3 = fun (_,a)-> pr2 a in
   Debug.no_1 "generalize_hps_par_def" pr1 (pr_list pr3)
-      (fun _ -> generalize_hps_par_def_x prog unk_hps par_defs) par_defs
+      (fun _ -> generalize_hps_par_def_x prog non_ptr_unk_hps unk_hps par_defs) par_defs
 
 let drop_unk_hps unk_hp_args cs=
   let unk_hps,_ = List.split unk_hp_args in
@@ -2734,7 +2748,9 @@ let generalize_hps_x prog unk_hps cs par_defs=
   (* let new_unk_hps, new_par_defs = SAU.ann_unk_svl prog par_defs in *)
   (* let total_unk_hps = unk_hps @ new_unk_hps in *)
 (*general par_defs*)
-  let pair_names_defs = generalize_hps_par_def prog unk_hps par_defs in
+  let non_ptr_unk_hps = List.concat (List.map (fun (hp,args) -> if List.exists (fun a -> not ( CP.is_node_typ a)) args
+      then [hp] else []) unk_hps) in
+  let pair_names_defs = generalize_hps_par_def prog non_ptr_unk_hps unk_hps par_defs in
   let hp_names,hp_defs = List.split pair_names_defs in
 (*for each constraints, we may pick more definitions*)
   (* let cs1 = List.map (drop_unk_hps unk_hps) cs in *)

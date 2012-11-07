@@ -932,6 +932,31 @@ let check_com_pre_eq_formula f1 f2=
 (******************************************************************)
    (****************SIMPL HP PARDEF/CF.formula*****************)
 (******************************************************************)
+let mk_expl_root r f0=
+  let rec find_r_subst ss res=
+    match ss with
+      | [] -> res
+      | (sv1,sv2)::tl->
+          if CP.eq_spec_var r sv1 then
+            find_r_subst tl (res@[(sv2,sv1)])
+          else if CP.eq_spec_var r sv2 then
+            find_r_subst tl (res@[(sv1,sv2)])
+          else find_r_subst tl (res)
+  in
+  let helper f=
+    match f with
+    | CF.Base fb ->
+        let eqs = (MCP.ptr_equations_without_null fb.CF.formula_base_pure) in
+        let r_ss = find_r_subst eqs [] in
+        let new_h1 =
+          if r_ss= [] then fb.CF.formula_base_heap else
+            CF.h_subst r_ss fb.CF.formula_base_heap
+        in
+        CF.Base {fb with CF.formula_base_heap = new_h1}
+    | _ -> report_error no_pos "cformula.mk_expl_root: not handle yet"
+  in
+  helper f0
+
 let filter_fn h_svl p=
   if CP.is_eq_exp p then
     let p_svl = CP.fv p in
@@ -996,7 +1021,7 @@ let elim_irr_eq_exps prog args f=
         let new_h2 = filter_unconnected_hf args new_h1 in
         CF.Base {fb with CF.formula_base_pure = MCP.mix_of_pure new_p;
             CF.formula_base_heap = new_h2}
-    | _ -> report_error no_pos "cformula.get_HRels_f: not handle yet"
+    | _ -> report_error no_pos "cformula. elim_irr_eq_exps: not handle yet"
 
 
 let remove_dups_pardefs_x grp=
@@ -1756,13 +1781,13 @@ let mk_orig_hprel_def prog unk_hps hp args sh_ldns eqNulls hprels=
   let dnss = (new_sh_dns@rem_dns) in
   let hdss = List.map (fun hd -> (CF.DataNode hd)) dnss in
   (*subst*)
-  let pr2 = pr_list Cprinter.string_of_h_formula in
-  let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
-  let _ = DD.ninfo_pprint ("      subst:" ^ (pr1 ss)) no_pos in 
+  (* let pr2 = pr_list Cprinter.string_of_h_formula in *)
+  (* let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
+  (* let _ = DD.ninfo_pprint ("      subst:" ^ (pr1 ss)) no_pos in  *)
   (*let hdss = List.map (CF.h_subst ss) hdss in *)
-  let _ = DD.ninfo_pprint ("      old sh_hdss:" ^ (pr2 (List.map (fun hd -> CF.DataNode hd) sh_ldns))) no_pos in
-  let _ = DD.ninfo_pprint ("      new sh_hdss:" ^ (pr2 (hdss))) no_pos in
-  let _ = DD.ninfo_pprint ("      eqNulls:" ^ (!CP.print_svl eqNulls)) no_pos in
+  (* let _ = DD.ninfo_pprint ("      old sh_hdss:" ^ (pr2 (List.map (fun hd -> CF.DataNode hd) sh_ldns))) no_pos in *)
+  (* let _ = DD.ninfo_pprint ("      new sh_hdss:" ^ (pr2 (hdss))) no_pos in *)
+  (* let _ = DD.ninfo_pprint ("      eqNulls:" ^ (!CP.print_svl eqNulls)) no_pos in *)
   (*currently we just support one next root. should improve when support tree*)
   match next_roots with
      | [] -> report_error no_pos "sa.generalize_one_hp: sth wrong"
@@ -1813,6 +1838,11 @@ let get_longest_common_hnodes_list_x prog unk_hps hp args fs=
        let com_hps = List.map (fun (hp,_,_)-> hp) hprels in
        let n_fs = List.map (process_one_f args n_args hp_subst sh_ldns2 eqNulls com_hps) lldns in
        let n_fs1 = List.filter (fun f -> not ((is_empty_f f) || (CF.is_only_neqNull n_args [] f))) n_fs in
+       (*for debugging*)
+       (* let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in *)
+       (* let _ = Debug.info_pprint ("  n_fs: "^ (pr1 n_fs)) no_pos in *)
+       (* let _ = Debug.info_pprint ("  n_fs1: "^ (pr1 n_fs1)) no_pos in *)
+       (*END for debugging*)
        let n_fs2 = Gen.BList.remove_dups_eq (fun f1 f2 -> check_relaxeq_formula f1 f2) n_fs1 in
        let new_hpdef = mk_hprel_def prog unk_hps new_hp n_args n_fs2 no_pos in
        if new_hpdef = [] then
@@ -1827,7 +1857,7 @@ let get_longest_common_hnodes_list prog unk_hps hp args fs=
   let pr2 = fun (_, def) -> Cprinter.string_of_hp_rel_def def in
   let pr3 = !CP.print_sv in
   let pr4 = !CP.print_svl in
-  Debug.ho_3 "get_longest_common_hnodes_list" pr3 pr4 pr1 (pr_list_ln pr2)
+  Debug.no_3 "get_longest_common_hnodes_list" pr3 pr4 pr1 (pr_list_ln pr2)
       (fun _ _ _ -> get_longest_common_hnodes_list_x prog unk_hps hp args fs) hp args fs
 
 (************************************************************)

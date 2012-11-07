@@ -15,7 +15,7 @@ hpdefs [F,G]:{
 
  }
 ]
-
+//currently, we do not capture non_ptrs, so res = HP_1_n is not captured
 /*
 hpdefs [F,G]:{
  HP_1(p) --> htrue&true;

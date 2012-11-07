@@ -60,11 +60,13 @@ echo "ll_all_13b"
 ../../hip ll_all_13b.ss -cp-test cp/ll_all_13b.cp | grep Compare
 echo "ll_all_13c1"
 ../../hip ll_all_13c1.ss -cp-test cp/ll_all_13c1.cp | grep Compare
+echo "ll_all_13e"
+../../hip ll_all_13e.ss -cp-test cp/ll_all_13e.cp | grep Compare
 echo "ll_all_14"
 ../../hip ll_all_14.ss -cp-test cp/ll_all_14.cp | grep Compare
 echo "ll-ret-first"
 ../../hip ll-ret-first.ss -cp-test cp/ll-ret-first.cp | grep Compare
 echo "ll-ret-first1"
 ../../hip ll-ret-first1.ss -cp-test cp/ll-ret-first1.cp | grep Compare
-echo "ll-ret-first2"
+echo "ll-ret-first2: have not captured non-ptr values"
 ../../hip ll-ret-first2.ss -cp-test cp/ll-ret-first2.cp | grep Compare
