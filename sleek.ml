@@ -39,7 +39,7 @@ let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 let source_files = ref ([] : string list)
 
 let set_source_file arg = 
-  source_files := arg :: !source_files
+  source_files := arg :: !source_files 
 
 let print_version () =
   print_endline ("SLEEK: A Separation Logic Entailment Checker");
@@ -234,19 +234,20 @@ let main () =
 let sleek_proof_log_Z3 src_files =
  if !Globals.proof_logging || !Globals.proof_logging_txt then 
       begin
+	let _=sleek_src_files := src_files in			
 	let tstartlog = Gen.Profiling.get_time ()in	
 	(* let _= Log.proof_log_to_file () in                                                                                             *)
 		let with_option= if(!Globals.do_slicing) then "sleek_slice" else "sleek_noslice" in
-  (*       let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt"  in     *)
+		let with_option_logtxt= if(!Globals.do_slicing) then "slicing" else "no_slicing" in
+  let fname = "logs/"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
 	let fz3name= ("logs/"^with_option^(Globals.norm_file_name (List.hd src_files)) ^".z3")  in
-	let _=print_endline ("bach") in
 	let _= if (!Globals.proof_logging_txt) 
         then 
           begin
-            (* Debug.info_pprint ("Logging "^fname^"\n") no_pos; *)
+            Debug.info_pprint ("Logging "^fname^"\n") no_pos;
 						Debug.info_pprint ("Logging "^fz3name^"\n") no_pos;
-            (* Log.proof_log_to_text_file (); *)
-						Log.sleek_z3_proofs_list_to_file src_files
+            Log.proof_log_to_text_file !source_files;
+						Log.z3_proofs_list_to_file !source_files
           end
 	in
 			let tstoplog = Gen.Profiling.get_time () in

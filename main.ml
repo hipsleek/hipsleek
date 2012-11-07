@@ -197,13 +197,13 @@ let process_source_full source =
 	      let with_option= if(!Globals.do_slicing) then "slicing" else "no_slicing" in
         let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt"  in
 				let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
-	let _= if (!Globals.proof_logging_txt) 
+	      let _= if (!Globals.proof_logging_txt) 
         then 
           begin
             Debug.info_pprint ("Logging "^fname^"\n") no_pos;
 						Debug.info_pprint ("Logging "^fz3name^"\n") no_pos;
-            Log.proof_log_to_text_file ();
-						Log.z3_proofs_list_to_file ()
+            Log.proof_log_to_text_file !Globals.source_files;
+						Log.z3_proofs_list_to_file !Globals.source_files
           end
 	else try Sys.remove fname 
           (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *)

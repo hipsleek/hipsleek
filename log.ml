@@ -25,6 +25,7 @@ type proof_log = {
 	log_res : proof_res;
 }
 
+
 let proof_log_tbl : (string, proof_log) Hashtbl.t = Hashtbl.create 700
 
 let proof_log_list  = ref [] (*For printing to text file with the original oder of proof execution*)
@@ -90,13 +91,13 @@ let add_proof_log old_no pno tp ptype time res =
 	(* let _=print_endline ("log time: "^(string_of_float (tstoplog))^" and "^(string_of_float (tstartlog))) in ()	  *)
 	else ()
 					
-let proof_log_to_text_file () =
+let proof_log_to_text_file (src_files) =
 	if !Globals.proof_logging_txt then
 		let tstartlog = Gen.Profiling.get_time () in
 		let oc = 
 		(try Unix.mkdir "logs" 0o750 with _ -> ());
 		let with_option= if(!Globals.do_slicing) then "slicing" else "no_slicing" in
-		open_out ("logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
+		open_out ("logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in
 		let string_of_log_type lt =
 			match lt with
 			|IMPLY (ante, conseq) -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
@@ -117,7 +118,7 @@ let proof_log_to_text_file () =
 		close_out oc;
 	else ()	
 
-let z3_proofs_list_to_file () =
+let z3_proofs_list_to_file (src_files) =
 	if !Globals.proof_logging_txt then
 		let tstartlog = Gen.Profiling.get_time () in
 		let oc = 
@@ -125,24 +126,24 @@ let z3_proofs_list_to_file () =
 		let with_option= if(!Globals.do_slicing) then "slice" else "noslice" in
 		let with_option= with_option^"_"^if(!Globals.split_rhs_flag) then "rhs" else "norhs" in
     let with_option= with_option^"_"^if(not !Globals.elim_exists) then "noee" else "ee" in
-		open_out ("logs/"^with_option^"_"^(Globals.norm_file_name (List.hd !Globals.source_files)) ^".z3") in
+		open_out ("logs/"^with_option^"_"^(Globals.norm_file_name (List.hd src_files)) ^".z3") in
 		let _= List.map (fun ix-> let _=fprintf oc "%s" ix in ()) !z3_proof_log_list in
 		let tstoplog = Gen.Profiling.get_time () in
 	  let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in 
 		close_out oc;
 	else ()	
 
-let sleek_z3_proofs_list_to_file source_files =
-	if !Globals.proof_logging_txt then
-		let tstartlog = Gen.Profiling.get_time () in
-		let oc = 
-		(try Unix.mkdir "logs" 0o750 with _ -> ());
-		let with_option= if(!Globals.do_slicing) then "sleek_slice" else "sleek_noslice" in
-		(* let with_option= with_option^"_"^if(!Globals.split_rhs_flag) then "rhs" else "norhs" in *)
-		open_out ("logs/"^with_option^(Globals.norm_file_name (List.hd source_files)) ^".z3") in
-		let _= List.map (fun ix-> let _=fprintf oc "%s" ix in ()) !z3_proof_log_list in
-		let tstoplog = Gen.Profiling.get_time () in
-	  let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in 
-		close_out oc;
-	else ()			
+(* let sleek_z3_proofs_list_to_file source_files =                                                    *)
+(* 	if !Globals.proof_logging_txt then                                                               *)
+(* 		let tstartlog = Gen.Profiling.get_time () in                                                   *)
+(* 		let oc =                                                                                       *)
+(* 		(try Unix.mkdir "logs" 0o750 with _ -> ());                                                    *)
+(* 		let with_option= if(!Globals.do_slicing) then "sleek_slice" else "sleek_noslice" in            *)
+(* 		(* let with_option= with_option^"_"^if(!Globals.split_rhs_flag) then "rhs" else "norhs" in *)  *)
+(* 		open_out ("logs/"^with_option^(Globals.norm_file_name (List.hd source_files)) ^".z3") in       *)
+(* 		let _= List.map (fun ix-> let _=fprintf oc "%s" ix in ()) !z3_proof_log_list in                *)
+(* 		let tstoplog = Gen.Profiling.get_time () in                                                    *)
+(* 	  let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in *)
+(* 		close_out oc;                                                                                  *)
+(* 	else ()                                                                                          *)
 		
