@@ -1163,9 +1163,9 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
  					(new_h1,new_p) 
 					)
 			       	else h1,(CP.mkTrue no_pos)
-		       	| _ -> h1,(CP.mkTrue no_pos)) (* Shouldn't get here *)
+		       	| _ -> CF.HTrue,(CP.mkTrue no_pos)) (* Shouldn't get here *)
 		       			
-	| _ -> h1,(CP.mkTrue no_pos)) (* Shouldn't get here *)
+	| _ ->CF.HTrue,(CP.mkTrue no_pos)) (* Shouldn't get here *)
 | Some(memf1), None -> (match h2 with
 			| CF.DataNode { CF.h_formula_data_name = dn;
 			       		CF.h_formula_data_param_imm = paimm} -> 
@@ -1213,9 +1213,9 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
  					   		(new_h1,new_p)
 						)
 						else  h1,(CP.mkTrue no_pos)
-		       			| _ -> h1,(CP.mkTrue no_pos)) (* shouldn't get here *)
+		       			| _ -> CF.HTrue,(CP.mkTrue no_pos)) (* shouldn't get here *)
 			       		
-			| _ -> h1,(CP.mkTrue no_pos)) (* shouldn't get here *)
+			| _ -> CF.HTrue,(CP.mkTrue no_pos)) (* shouldn't get here *)
 | None , Some(memf2) -> 
 	(match h2 with
 	| CF.ViewNode {CF.h_formula_view_node = vn;
@@ -1254,12 +1254,12 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 		       			   new_h1,(CP.mkTrue no_pos))
 		       			  )
 		       			else h1,(CP.mkTrue no_pos)
-			| _ -> h1,(CP.mkTrue no_pos))	 (* Shouldn't get here *)		       
-	| _ -> h1,(CP.mkTrue no_pos))	 (* Shouldn't get here *)	
+			| _ -> CF.HTrue,(CP.mkTrue no_pos))	 (* Shouldn't get here *)		       
+	| _ -> CF.HTrue,(CP.mkTrue no_pos))	 (* Shouldn't get here *)	
 | None , None -> 
-	if String.compare (CF.get_node_name h1) (CF.get_node_name h2) == 0 then
 	(match h1 with
 	| CF.DataNode {CF.h_formula_data_param_imm = paimm;} -> 
+	if String.compare (CF.get_node_name h1) (CF.get_node_name h2) == 0 then
 		let old_args = CF.get_node_args h1 in
 		let new_args = CF.get_node_args h2 in
 		let h1_var = CF.get_node_var h1 in
@@ -1286,8 +1286,9 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 		else CP.mkTrue no_pos in
 		let new_p = CP.mkAnd new_p var_p no_pos in	
 		new_h1,new_p
-	| _ -> h1,(CP.mkTrue no_pos)) (* Shouldn't get here *)
-	else h1,(CP.mkTrue no_pos)
+	else h1,(CP.mkTrue no_pos)	
+	| _ -> CF.HTrue,(CP.mkTrue no_pos)) (* Shouldn't get here *)
+	
 	
 )
 
