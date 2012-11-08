@@ -240,7 +240,7 @@ and m_apply_par_x (sst:(spec_var * spec_var) list) f =
 and m_apply_par (sst:(spec_var * spec_var) list) f = 
   let pr1 = pr_list (pr_pair !print_sv_f !print_sv_f ) in
   let pr2 = !print_mp_f in
-  Debug.ho_2 "m_apply_par" pr1 pr2 pr2 m_apply_par_x sst f
+  Debug.no_2 "m_apply_par" pr1 pr2 pr2 m_apply_par_x sst f
 
 and m_apply_par_varperm_x (sst:(spec_var * spec_var) list) f = 
   let r1 = List.map (fun c -> 

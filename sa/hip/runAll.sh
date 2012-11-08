@@ -58,6 +58,8 @@ echo "ll_all_13a - cp fault"
 ../../hip ll_all_13a.ss -cp-test cp/ll_all_13a.cp | grep Compare
 echo "ll_all_13b"
 ../../hip ll_all_13b.ss -cp-test cp/ll_all_13b.cp | grep Compare
+echo "ll_all_13c"
+../../hip ll_all_13c.ss -cp-test cp/ll_all_13c.cp | grep Compare
 echo "ll_all_13c1"
 ../../hip ll_all_13c1.ss -cp-test cp/ll_all_13c1.cp | grep Compare
 echo "ll_all_13e"
