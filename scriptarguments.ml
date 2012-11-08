@@ -245,12 +245,16 @@ let common_arguments = [
     ("--enable_null_aliasing", Arg.Set Globals.enulalias, "enable null aliasing ");
   
   (*for cav experiments*)
-  ("--force_one_slice", Arg.Set Globals.f_1_slice,"");
+  (*maintains one slice if memo formulas are used otherwise has no effect*)
+  ("--force_one_slice", Arg.Set Globals.f_1_slice,"use one slice for memo formulas");
   ("--force_no_memo", Arg.Set Globals.no_memoisation,"");
   ("--no_incremental", Arg.Set Globals.no_incremental,"");
   ("--no_LHS_prop_drop", Arg.Set Globals.no_LHS_prop_drop,"");
   ("--no_RHS_prop_drop", Arg.Set Globals.no_RHS_prop_drop,"");
+  (* if memo formulas are not used, use a similar slicing for unsat checks at the Tpdispatcher *)
   ("--force_sat_slice", Arg.Set Globals.do_sat_slice, "for no eps, use sat slicing");
+  (*maintains multi slices but combines them into one slice just before going to the prover
+    in Tpdispatcher. If memo formulas are not used it has no effect*)
   ("--force_one_slice_proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
 
   (* Termination options *)
@@ -268,12 +272,16 @@ let common_arguments = [
 
   (* Slicing *)
   ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");
-  ("--dis-slicing", Arg.Set Globals.dis_slicing, "Disable slicing");
-  ("--slc-opt-imply", Arg.Set_int Globals.opt_imply, "Enable optimal implication for forced slicing");
-  ("--slc-opt-ineq", Arg.Set Globals.opt_ineq, "Enable optimal SAT checking with inequalities for forced slicing");
+  (*("--dis-slicing", Arg.Set Globals.dis_slicing, "Disable slicing, equivalent to ");*)
+  (* similar to --force-one-slice *)
+
+  (* ("--slc-opt-imply", Arg.Set_int Globals.opt_imply, "Enable optimal implication for forced slicing"); *)
+  (* not used *)
+  ("--slc-ann-ineq", Arg.Set Globals.opt_ineq, "Enable inference of annotated slicing for ineq");
   ("--slc-multi-provers", Arg.Set Globals.multi_provers, "Enable multiple provers for proving multiple properties");
   ("--slc-sat-slicing", Arg.Set Globals.is_sat_slicing, "Enable slicing before sending formulas to provers");
-  ("--slc-lbl-infer", Arg.Set Globals.infer_slicing, "Enable slicing label inference");
+  (* similar to --force-sat-slice when no memo formula used *) 
+  ("--slc-ann-infer", Arg.Set Globals.infer_slicing, "Enable slicing label inference");
   ("--delay-case-sat", Arg.Set Globals.delay_case_sat, "Disable unsat checking for case entailment");
   ("--force-post-sat", Arg.Set Globals.force_post_sat, "Force unsat checking when assuming a postcondition");
   ("--delay-if-sat", Arg.Set Globals.delay_if_sat, "Disable unsat checking for a conditional");

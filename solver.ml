@@ -5123,8 +5123,10 @@ and heap_entail_empty_rhs_heap i p i_f es lhs rhs pos =
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) pos : (list_context * proof) =
   (* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
+  let smart_unsat_estate = ref None in
   let lhs_h = lhs.formula_base_heap in
   let lhs_p = lhs.formula_base_pure in
+    (* memo slices that may not have been unsat *)
   let lhs_t = lhs.formula_base_type in
   let lhs_fl = lhs.formula_base_flow in
   let lhs_a = lhs.formula_base_and in
@@ -5213,7 +5215,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let stk_estate = new Gen.stack in (* of estate *)
   Debug.devel_zprint (lazy ("heap_entail_empty_heap: ctx:\n" ^ (Cprinter.string_of_estate estate))) pos;
   Debug.devel_zprint (lazy ("heap_entail_empty_heap: rhs:\n" ^ (Cprinter.string_of_mix_formula rhs_p))) pos;
-  
+ (* TO DOCUMENT : Loc : What are result types here? *)
+ (* 1. bool - succeed or not 
+    2. list of pairs of formula label options
+    3. label option
+    4. (failure list, (list, list, list))
+ *) 
   let fold_fun_impt (is_ok,succs,fails, (fc_kind,(contra_list, must_list, may_list))) (rhs_p:MCP.mix_formula) =
     begin
       let m_lhs = lhs_new in
@@ -5251,7 +5258,21 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       in
       let i_res1,i_res2,i_res3 =
         if i_res1==true then (i_res1,i_res2,i_res3)
-        else 
+        else
+          let finish_flag = 
+           if (!Globals.delay_proving_sat && !smart_unsat_estate=None) then
+             if (!Globals.filtering_flag || !Globals.allow_pred_spec || !Globals.do_slicing )
+             then 
+               let n_es = elim_unsat_es 11 prog (ref 1) estate in
+                if CF.isAnyFalseCtx n_es then  
+                  (smart_unsat_estate := Some (estate_of_context n_es no_pos);true)
+                else false
+             else false
+           else false  in 
+          if finish_flag 
+          then (true,[],None)
+          else
+          let estate = Gen.unsome_safe !smart_unsat_estate estate in
           let (ip1,ip2,relass) = Inf.infer_pure_m estate split_ante1 split_ante0 m_lhs split_conseq pos in
           begin
             match ip1 with
@@ -5329,6 +5350,10 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       (SuccCtx[ctx1],UnsatAnte)
     else
       let inf_p = (stk_inf_pure # get_stk) in
+      let estate = Gen.unsome_safe !smart_unsat_estate estate in
+      let (lhs_h,lhs_p) = if (CF.isAnyConstFalse estate.es_formula)
+      then (HFalse,MCP.mkMFalse no_pos) 
+      else (lhs_h,lhs_p) in
       let estate = add_infer_pure_to_estate inf_p estate in
       let estate = add_infer_rel_to_estate (stk_rel_ass # get_stk) estate in
       let to_add = MCP.mix_of_pure (CP.join_conjunctions inf_p) in

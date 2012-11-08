@@ -1753,6 +1753,12 @@ let amsg s = print_string s; flush_all ()
 (** print only if -v *)
 let msg s = if !verbose then amsg s
 
+(* get from option type, if present *)
+let unsome_safe x a =
+  match x with
+    | Some a -> a
+    | None -> a
+
 (** removing 'option' types *)
 let unsome : 'a option -> 'a = 
   function
