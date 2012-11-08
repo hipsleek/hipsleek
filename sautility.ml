@@ -494,7 +494,7 @@ let keep_data_view_hrel_nodes_two_f prog f1 f2 hd_nodes hv_nodes keep_rootvars k
   let nf2 = CF.drop_data_view_hrel_nodes f2 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode keep_ptrs keep_ptrs keep_hrels in
   (nf1,nf2)
 
-let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes eqs keep_rootvars lrootvars keep_hrels=
+let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs reqs his_ss keep_rootvars lrootvars keep_hrels=
   let filter_eqs keep_svl eqs0=
     let rec helper eqs res=
       match eqs with
@@ -504,8 +504,9 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes eqs keep_root
             let b2 = CP.mem_svl sv2 keep_svl in
             let new_eq=
               match b1,b2 with
-                | true,false -> [(sv2,sv1)]
-                | false,true -> [(sv1,sv2)]
+                | true,false -> [((* CP.subs_one res *) sv2, (* CP.subs_one res *) sv1)] (*m_apply_par*)
+                | true,true
+                | false,true -> [((* CP.subs_one res *) sv1, (* CP.subs_one res *) sv2)]
                 | _ -> []
             in
             helper ss (res@new_eq)
@@ -518,6 +519,13 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes eqs keep_root
       (CP.diff_svl p_svl null_svl) <> []
     else true
   in
+  let filter_eq_in_one_hp eqs hpargs=
+    let helper l_eqs (_,args)=
+      List.filter (fun (sv1,sv2) -> not (CP.mem_svl sv1 args && CP.mem_svl sv2 args)) l_eqs
+    in
+    List.fold_left helper eqs hpargs
+  in
+  let eqs = (leqs@reqs@his_ss) in
   let _ = Debug.ninfo_pprint ("keep_vars root: " ^ (!CP.print_svl keep_rootvars)) no_pos in
   let keep_closed_rootvars = CP.remove_dups_svl (List.fold_left close_def keep_rootvars eqs) in
   let _ = Debug.ninfo_pprint ("keep_vars 1: " ^ (!CP.print_svl keep_closed_rootvars)) no_pos in
@@ -530,8 +538,8 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes eqs keep_root
   let _ = Debug.ninfo_pprint ("lhs keep_vars: " ^ (!CP.print_svl lkeep_vars)) no_pos in
   let nf1 = CF.drop_data_view_hrel_nodes_fb f1 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode keep_vars keep_vars keep_hrels (keep_vars@lkeep_vars) in
   let nf2 = CF.drop_data_view_hrel_nodes_fb f2 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode keep_vars keep_vars keep_hrels keep_vars in
-  let _ = Debug.ninfo_pprint ("nf1: " ^ (Cprinter.string_of_formula_base nf1)) no_pos in
-  let _ = Debug.ninfo_pprint ("nf2: " ^ (Cprinter.string_of_formula_base nf2)) no_pos in
+  (* let _ = Debug.info_pprint ("nf1: " ^ (Cprinter.string_of_formula_base nf1)) no_pos in *)
+  (* let _ = Debug.info_pprint ("nf2: " ^ (Cprinter.string_of_formula_base nf2)) no_pos in *)
   (*make explicit null ptrs*)
   let largs= CF.h_fv nf1.CF.formula_base_heap in
   let rargs= CF.h_fv nf2.CF.formula_base_heap in
@@ -546,17 +554,36 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes eqs keep_root
   (* let _ = DD.info_pprint ("      eqNulls2: " ^ (!CP.print_svl eqNulls2)) no_pos in *)
   let null_ps = List.map (fun sv -> CP.mkNull sv no_pos) eqNulls2 in
   let new_eqs = filter_eqs all_args eqs in
-  let ps10 = CP.list_of_conjs (MCP.pure_of_mix nf1.CF.formula_base_pure) in
-  let new_ps10 = List.map (CP.subst new_eqs) ps10 in
+  let new_eqs1 = List.filter (fun (sv1,sv2) -> not (CP.mem_svl sv1 eqNulls2 && CP.mem_svl sv2 eqNulls2)) new_eqs in
+  let new_eqs1 = filter_eq_in_one_hp new_eqs1 hpargs in
+  let nf1a = CF.subst_b new_eqs1 nf1 in
+  (* let _ = DD.info_pprint ("       new_eqs1: " ^ (let pr = pr_list(pr_pair !CP.print_sv !CP.print_sv) in pr new_eqs1)) no_pos in *)
+  (* let _ = Debug.info_pprint ("nf1a: " ^ (Cprinter.string_of_formula_base nf1a)) no_pos in *)
+  let ps10 = CP.list_of_conjs (MCP.pure_of_mix nf1a.CF.formula_base_pure) in
+  let new_ps10 = (* List.map (CP.subst new_eqs) *) ps10 in
   (* let _ = Debug.info_pprint ("new_ps10: " ^ (let pr = pr_list !CP.print_formula in pr new_ps10)) no_pos in *)
   (* let _ = Debug.info_pprint ("null_ps: " ^ (let pr = pr_list !CP.print_formula in pr null_ps)) no_pos in *)
   let new_ps11 = List.filter (filter_fn eqNulls2) new_ps10 in
   let new_ps12 = new_ps11@null_ps  in
   let new_ps13 = CP.remove_redundant_helper new_ps12 [] in
   let new_p13 = CP.conj_of_list new_ps13 no_pos in
-  let nf11 = {nf1 with CF.formula_base_pure = MCP.mix_of_pure new_p13} in
+  let nf11 = {nf1a with CF.formula_base_pure = MCP.mix_of_pure new_p13} in
   (*rhs - nf2: not handle yet*)
-  (nf11,nf2)
+  let new_nf2 = CF.subst_b (new_eqs1@reqs) nf2 in
+  (* {nf2 with CF.formula_base_pure =  MCP.mix_of_pure *)
+          (* (CP.subst new_eqs (MCP.pure_of_mix nf2.CF.formula_base_pure))} in *)
+  (* let _ = Debug.info_pprint ("nf11: " ^ (Cprinter.string_of_formula_base nf11)) no_pos in *)
+  (* let _ = Debug.info_pprint ("new_nf2: " ^ (Cprinter.string_of_formula_base new_nf2)) no_pos in *)
+  (*subst again*)
+  let nleqs = (MCP.ptr_equations_without_null nf11.CF.formula_base_pure) in
+  let nreqs = (MCP.ptr_equations_without_null new_nf2.CF.formula_base_pure) in
+  let nleqs1 = List.filter (fun (sv1,sv2) -> not (CP.mem_svl sv1 eqNulls2 && CP.mem_svl sv2 eqNulls2)) nleqs in
+  let nleqs2 = filter_eq_in_one_hp nleqs1 hpargs in
+  let nreqs1 = List.filter (fun (sv1,sv2) -> not (CP.mem_svl sv1 eqNulls2 && CP.mem_svl sv2 eqNulls2)) nreqs in
+  let nreqs2 = filter_eq_in_one_hp nreqs1 hpargs in
+  let lhs_b2 = CF.subst_b (nleqs2) nf11 in (*m_apply_par*)
+  let rhs_b2 = CF.subst_b (nleqs2@nreqs2) new_nf2 in
+  (lhs_b2,rhs_b2)
 
 let rec drop_data_view_hrel_nodes_from_root prog f hd_nodes hv_nodes eqs drop_rootvars=
    match f with
@@ -1223,7 +1250,17 @@ let norm_hnodes_x args fs=
   let norm_one_f base_ldns f=
     let hnds = get_hdnodes f in
     let _,_, ss = norm_hnodes_two_hns base_ldns [] hnds [] in
-    CF.subst ss f
+    let cur_svl = CF.fv f in
+    let to_subst = List.map snd ss in
+    let inter= CP.intersect_svl (CP.remove_dups_svl cur_svl)
+      (CP.remove_dups_svl to_subst) in
+    let f1=
+      if inter = [] then f else
+        let fr_inter = CP.fresh_spec_vars inter in
+        let ss1 = List.combine inter fr_inter in
+        CF.subst ss1 f
+    in
+    CF.subst ss f1
   in
   let move_root ldns=
     let rec move_root_to_top arg lldns rest=

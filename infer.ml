@@ -1597,8 +1597,8 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps c
   (*since we have not supported hprel matching, remove matched hprels*)
   (* let nleqs = elim_eqs_args leqs (lhp_args@rhp_args) in *)
   (* let nreqs = elim_eqs_args reqs (rhp_args) in *)
-  let nleqs = leqs in
-  let nreqs = reqs in
+  (* let nleqs = leqs in *)
+  (* let nreqs = reqs in *)
   let keep_hrels1 = (CP.remove_dups_svl (keep_hrels@history_hrel@keep_his_hps)) in
   (* let pr= pr_list (pr_pair !CP.print_sv !CP.print_svl) in *)
   (* let _ = Debug.info_pprint ("    orig keep hprel:" ^ (!CP.print_svl (keep_hrels@history_hrel))) no_pos in *)
@@ -1608,7 +1608,7 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps c
   (* let _ = Debug.info_pprint ("    keep hprel1:" ^ (!CP.print_svl keep_hrels1)) no_pos in *)
   (*END*)
   let lhs_b1,rhs_b1 = SAU.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b
-    (hds@(List.concat (List.map get_h_formula_data_fr_hnode history))) hvs (leqs@reqs@his_ss)
+    (hds@(List.concat (List.map get_h_formula_data_fr_hnode history))) hvs (lhp_args@rhp_args) leqs reqs his_ss
     (* (rhs_keep_rootvars@lhs_keep_first_rootvars) *)(svl@keep_root_hrels) (lhs_keep_rootvars@keep_root_hrels)
     keep_hrels1 in
   (*wo history*)
@@ -1626,8 +1626,8 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps c
   (* let rec elim_eqs_args eqs hp_args= *)
   (*   List.filter (fun (v1,v2) -> not(filter_helper [v1;v2] hp_args)) eqs *)
   (* in *)
-  let lhs_b2 = CF.subst_b (nleqs) lhs_b1 in
-  let rhs_b2 = CF.subst_b (nleqs@nreqs) rhs_b1 in
+  let lhs_b2 = (* CF.subst_b (nleqs) *) lhs_b1 in (*m_apply_par*)
+  let rhs_b2 = (* CF.subst_b (nleqs@nreqs) *) rhs_b1 in
   (*remove redundant: x=x*)
   let lhs_b3 = {lhs_b2 with CF.formula_base_pure = MCP.mix_of_pure
       (CP.remove_redundant (MCP.pure_of_mix lhs_b2.CF.formula_base_pure))} in

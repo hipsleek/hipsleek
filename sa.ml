@@ -2095,7 +2095,7 @@ let subst_cs hp_constrs par_defs=
 (*===========end subst============*)
 (*========generalization==========*)
 (*for par_defs*)
-let generalize_one_hp prog non_ptr_unk_hps unk_hps par_defs=
+let generalize_one_hp_x prog non_ptr_unk_hps unk_hps par_defs=
   (*collect definition for each partial definition*)
   let obtain_and_norm_def args0 (a1,args,f)=
     (*normalize args*)
@@ -2135,6 +2135,12 @@ let generalize_one_hp prog non_ptr_unk_hps unk_hps par_defs=
         let defs = SAU.get_longest_common_hnodes_list prog unk_hps hp args0 defs4 in
         defs
     end
+
+let generalize_one_hp prog non_ptr_unk_hps unk_hps par_defs=
+  let pr1 = pr_list_ln SAU.string_of_par_def_w_name_short in
+  let pr2 = pr_list_ln (pr_pair !CP.print_sv Cprinter.string_of_hp_rel_def) in
+  Debug.no_1 "generalize_one_hp" pr1 pr2
+      (fun _ -> generalize_one_hp_x prog non_ptr_unk_hps unk_hps par_defs) par_defs
 
 let get_def_body (a1,args,unk_args,a3,olf,orf)=
   match olf,orf with

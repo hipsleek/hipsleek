@@ -3,7 +3,7 @@ HeapPred HP_1(node a).
 
 get_next[
 ass [H1,G4]:{
-  HP_1a(v_node_29_526') * x::node<val_28_543,v_node_29_526'>&true --> G4(v_node_29_526',x,v_544)& x=v_544;
+  HP_1a(v_node_29_526') * x::node<val_28_543,v_node_29_526'>&x=x' --> G4(v_node_29_526',x,x');
   H1(x) -->  HP_1a(next_28_525') * x::node<val_28_524',next_28_525'>
 
 

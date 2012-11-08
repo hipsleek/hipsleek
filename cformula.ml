@@ -2238,11 +2238,15 @@ and subst_x sst (f : formula) =
 									formula_exists_pos = pos})
   in helper f
 
-and subst_b sst (b:formula_base): formula_base =
+and subst_b_x sst (b:formula_base): formula_base =
   {b with formula_base_heap = h_subst sst b.formula_base_heap;
 	  formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_par sst b.formula_base_pure);
       formula_base_and = (List.map (fun f -> one_formula_subst sst f) b.formula_base_and);}
 
+and subst_b sst (f : formula_base) = 
+  let pr1 = pr_list (pr_pair !print_sv !print_sv) in
+  let pr2 = !print_formula_base in
+  Debug.no_2 "subst_b" pr1 pr2 pr2 subst_b_x sst f 
 (** An Hoa : End of formula substitution **)
 
 (*sub everything including VarPerm*)
