@@ -720,7 +720,8 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in
   try 
-    let valid, rs = run_entail_check iante0 iconseq0 in
+    let valid, rs = 
+      wrap_proving_kind ("SLEEK_ENT"^nn) (run_entail_check iante0) iconseq0 in
     print_entail_result valid rs num_id
   with ex -> 
          let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
