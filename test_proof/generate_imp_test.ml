@@ -131,6 +131,8 @@ let generate_test num_vars =
 		(* let _=print_endline (construct_string num_vars) in *)
 		let oc =
 		  (try Unix.mkdir "spring" 0o750 with _ -> ());
+			(try Unix.mkdir "spring/if" 0o750 with _ -> ());
+			(try Unix.mkdir "spring/if-else" 0o750 with _ -> ());
 		  let with_option= string_of_int num_vars in
 		  let with_else_op = if(!Globals.if_else) then "if-else" else "if" in 
 		  let path_file_generated = "spring/"^with_else_op^"/spring-"^with_else_op^"-"^with_option^".ss" in
