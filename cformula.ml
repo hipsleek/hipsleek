@@ -3252,6 +3252,24 @@ and get_hnodes (f: h_formula) = match f with
       -> (get_hnodes h1)@(get_hnodes h2)
   | _ -> []
 
+
+let rec get_h_size_f (f: formula)=
+  match f with
+    | Base fb ->
+        (get_h_size fb.formula_base_heap)
+    | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
+
+and get_h_size (f0: h_formula) =
+ let rec helper f=
+   match f with
+     | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
+     | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2}
+     | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2}
+         -> (helper h1)+(helper h2)
+     | _ -> 1
+ in
+ helper f0
+
 let get_hdnodes_hrel_hf (hf0: h_formula) =
   let rec helper hf=
     match hf with

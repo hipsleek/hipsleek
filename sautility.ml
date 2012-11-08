@@ -1065,6 +1065,17 @@ let remove_dups_pardefs grp=
       (fun _ -> remove_dups_pardefs_x grp) grp
 
 let remove_longer_common_prefix fs=
+  let sort_fn (s1,_) (s2,_)=
+    s1-s2
+  in
+  let sort_formula fs1=
+    let fs_w_size = List.map (fun f -> (CF.get_h_size_f f, f)) fs1 in
+    let sorted_fs_w_size = List.sort sort_fn fs_w_size in
+    let fs2 = List.map snd sorted_fs_w_size in
+    (* let pr = pr_list_ln Cprinter.prtt_string_of_formula in *)
+    (*  let _ = DD.info_pprint ( "sorted-increasing size: " ^ (pr fs2)) no_pos in *)
+    fs2
+  in
   let rec helper cur res=
     match cur with
       | [] -> res
@@ -1076,7 +1087,8 @@ let remove_longer_common_prefix fs=
             helper ss res
           else helper ss (res@[f])
   in
-  helper fs []
+  let fs1 = sort_formula fs in
+  helper fs1 []
 
 let remove_longer_common_prefix_w_unk unk_hps fs=
   let rec helper cur res=
@@ -1706,15 +1718,16 @@ let remove_dups_recursive_x hp args unk_hps defs=
     let ls_poss_base_fs,ls_base_fs = List.split parts in
     let base_fs = List.concat ls_base_fs in
     let poss_base_fs = List.concat ls_poss_base_fs in
+    let dep_fs1 = remove_longer_common_prefix dep_fs in
     if base_fs = [] then
       let poss_base_fs1 = List.map snd poss_base_fs in
       let poss_base_fs2 = List.filter (fun f -> not(is_empty_f f)) poss_base_fs1 in
       (* Gen.BList.remove_dups_eq (fun f1 f2 -> check_relaxeq_formula f1 f2) defs *)
-      (false,(rec_fs@dep_fs@poss_base_fs2))
+      (false,(rec_fs@dep_fs1@poss_base_fs2))
     else
       let accept_dang = check_root_accept_dang_fs root defs in
       let new_base_fs = match_with_base accept_dang poss_base_fs base_fs in
-      (true,(rec_fs@dep_fs@base_fs@new_base_fs))
+      (true,(rec_fs@dep_fs1@base_fs@new_base_fs))
   else
     (true,defs)
 
