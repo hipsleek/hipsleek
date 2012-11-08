@@ -139,6 +139,8 @@ let common_arguments = [
     "Number of unfolding using XPure");
 	("--enable-smart-xpure", Arg.Set Globals.smart_xpure,
     "Smart xpure with 0 then 1; otherwise just 1 ; not handled by infer yet");
+	("--enable-smart-memo", Arg.Set Globals.smart_memo,
+    "Smart memo with no_complex; if fail try complex formula");
 	("-num-self-fold-search", Arg.Set_int Globals.num_self_fold_search,
     "Allow Depth of Unfold/Fold Self Search");
 	("--enable-self-fold-search", Arg.Set Globals.self_fold_search_flag,
@@ -221,7 +223,8 @@ let common_arguments = [
     ("--esn", Arg.Set Globals.enable_norm_simp, "enable simplifier in fast imply");
     ("--eps", Arg.Set Globals.allow_pred_spec,"enable predicate specialization together with memoized formulas");
     ("-version", Arg.Set Globals.print_version_flag,"current version of software");
-    ("--dfe", Arg.Set Globals.disable_failure_explaining,"disable failure explaining");
+    (* ("--dfe", Arg.Set Globals.disable_failure_explaining,"disable failure explaining"); *)
+    ("--enable_failure_analysis", Arg.Clear Globals.disable_failure_explaining,"enable failure explanation analysis");
     ("--refine-error", Arg.Set Globals.simplify_error,
 	"Simplify the error");
     (*("--redlog-int-relax", Arg.Set Redlog.integer_relax_mode, "use redlog real q.e to prove intefer formula  *experiment*");*)

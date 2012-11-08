@@ -5662,9 +5662,9 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
           begin
             DD.devel_pprint ">>>>>> imply_mix_formula: memo <<<<<<" no_pos;
             (*print_endline "imply_mix_formula: first";*)
-            let r1,r2,r3 = MCP.imply_memo a c TP.imply imp_no in
+            let r1,r2,r3 = MCP.imply_memo 1 a c TP.imply imp_no in
             if r1 || not(!Globals.smart_xpure) then (r1,r2,r3) 
-            else MCP.imply_memo a1 c TP.imply imp_no 
+            else MCP.imply_memo 2 a1 c TP.imply imp_no 
               (* TODO : This to be avoided if a1 is the same as a0; also pick just complex constraints *)
           end
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->

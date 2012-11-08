@@ -514,6 +514,7 @@ let verify_callees = ref false
 
 let elim_unsat = ref false
 let smart_xpure = ref false
+let smart_memo = ref false
 
 (* let lemma_heuristic = ref false *)
 
@@ -616,7 +617,7 @@ let pass_global_by_value = ref false
 
 let allow_pred_spec = ref false
 
-let disable_failure_explaining = ref false
+let disable_failure_explaining = ref true
 
 let simplify_error = ref false
 

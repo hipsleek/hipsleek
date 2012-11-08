@@ -739,8 +739,11 @@ and fold_mem_lst_gen (f_init:formula) with_dupl with_inv with_slice with_disj ls
   let r = fold_mem_lst_to_lst_gen lst with_dupl with_inv with_slice with_disj in
   List.fold_left (fun a c -> mkAnd a c no_pos) f_init r      
       
-and fold_mem_lst_no_disj (f_init:formula) with_dupl with_inv lst : formula =
+and fold_mem_lst_no_complex (*no disj*) (f_init:formula) with_dupl with_inv lst : formula =
   fold_mem_lst_gen f_init with_dupl with_inv true false lst
+
+and fold_mem_lst_with_complex (f_init:formula) with_dupl with_inv (lst:memo_pure) : formula =
+  fold_mem_lst_gen f_init with_dupl with_inv true true lst
 
 (*
 and fold_mem_lst (f_init:formula) with_dupl with_inv (lst:memo_pure) : formula =
@@ -748,10 +751,7 @@ and fold_mem_lst (f_init:formula) with_dupl with_inv (lst:memo_pure) : formula =
 	!print_p_f_f !print_mp_f !print_p_f_f
 	(fun _ _ -> fold_mem_lst_x f_init with_dupl with_inv lst) f_init lst
 *)
-	
-and fold_mem_lst (f_init:formula) with_dupl with_inv (lst:memo_pure) : formula =
-  fold_mem_lst_gen f_init with_dupl with_inv true true lst
-  
+	  
 (* folds just the pruning constraints, ignores the memo_group_slice *) 
 and fold_mem_lst_cons init_cond lst with_dupl with_inv with_slice : formula = 
   (*fold_mem_lst_to_lst lst false true false*)
@@ -789,8 +789,8 @@ and filter_merged_cons aset l =
   r
 	  
 and mkOr_mems (l1: memo_pure) (l2: memo_pure) (*with_dupl with_inv*) : memo_pure = 
-  let f1 = fold_mem_lst (mkTrue no_pos) false true l1 in
-  let f2 = fold_mem_lst (mkTrue no_pos) false true l2 in
+  let f1 = fold_mem_lst_with_complex (mkTrue no_pos) false true l1 in
+  let f2 = fold_mem_lst_with_complex (mkTrue no_pos) false true l2 in
   memoise_add_pure_N [] (mkOr f1 f2 None no_pos)
       
 and combine_memo_branch b (f, l) =
@@ -1585,8 +1585,8 @@ and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no
   (* let n_ante = if n_ante == [] then ante_disj else n_ante in *)
   let r = match with_disj with  
     | 0 -> fold_mem_lst_gen (mkTrue no_pos) !no_LHS_prop_drop true false true n_ante
-    | 1 -> fold_mem_lst_no_disj (mkTrue no_pos) !no_LHS_prop_drop true n_ante
-    | _ -> fold_mem_lst (mkTrue no_pos) !no_LHS_prop_drop true n_ante in
+    | 1 -> fold_mem_lst_no_complex (mkTrue no_pos) !no_LHS_prop_drop true n_ante
+    | _ -> fold_mem_lst_with_complex (mkTrue no_pos)     !no_LHS_prop_drop true n_ante in
   let _ = Debug.devel_pprint str no_pos in
   let _ = Debug.trace_hprint (add_str "ante" !Cpure.print_formula) r no_pos in
   let _ = Debug.trace_hprint (add_str "conseq" !Cpure.print_formula) conseq no_pos in
@@ -1762,17 +1762,24 @@ and pick_relevant_lhs_constraints_opt_3 fv ante_disj = (* exhausted search *)
   let r = exhaustive_collect_with_selection fv ante_with_ulv in
   let _ = Gen.Profiling.pop_time "--opt-imply 3" in r
 	
-let mimply_one_conj ante_memo0 conseq t_imply imp_no = 
-  let xp01,xp02,xp03 = mimply_process_ante 0 ante_memo0 conseq 
-    (*("IMP #" ^ (string_of_int !imp_no) ^ (*"." ^ (string_of_int 1(*!imp_subno*)) ^*) " with XPure0 no complex")*) "" 
-    "imply_proc_one_ncplx" t_imply imp_no in  
-  if not xp01  then  
-    let xp01,xp02,xp03 = mimply_process_ante 2 ante_memo0 conseq 
-     (* ("IMP #" ^ (string_of_int !imp_no) ^ (*"." ^ (string_of_int 1(*!imp_subno*)) ^ *)" with XPure0")*) ""
-      "imply_proc_one_full" t_imply imp_no in  
-    if not xp01 then (Gen.Profiling.inc_counter "with_disj_cnt_2_f";(xp01,xp02,xp03)	)
-    else (Gen.Profiling.inc_counter "with_disj_cnt_2_s";(xp01,xp02,xp03)	)
-  else (Gen.Profiling.inc_counter "with_disj_cnt_0_s";(xp01,xp02,xp03)	)
+let mimply_one_conj ante_memo0 conseq t_imply imp_no =
+  (* TODO CG : if no complex at all just try one of them *)
+  let no_complex = false in
+  if not(!Globals.smart_memo) || no_complex
+  then mimply_process_ante 2 ante_memo0 conseq
+    (* ("IMP #" ^ (string_of_int !imp_no) ^ (*"." ^ (string_of_int 1(*!imp_subno*)) ^ *)" with XPure0")*) ""
+    "imply_proc_one_full" t_imply imp_no 
+  else
+    let xp01,xp02,xp03 = mimply_process_ante 0 ante_memo0 conseq 
+      (*("IMP #" ^ (string_of_int !imp_no) ^ (*"." ^ (string_of_int 1(*!imp_subno*)) ^*) " with XPure0 no complex")*) "" 
+      "imply_proc_one_ncplx" t_imply imp_no in  
+    if not xp01  then  
+      let xp01,xp02,xp03 = mimply_process_ante 2 ante_memo0 conseq 
+        (* ("IMP #" ^ (string_of_int !imp_no) ^ (*"." ^ (string_of_int 1(*!imp_subno*)) ^ *)" with XPure0")*) ""
+        "imply_proc_one_full" t_imply imp_no in  
+      if not xp01 then (Gen.Profiling.inc_counter "with_disj_cnt_2_f";(xp01,xp02,xp03)	)
+      else (Gen.Profiling.inc_counter "with_disj_cnt_2_s";(xp01,xp02,xp03)	)
+    else (Gen.Profiling.inc_counter "with_disj_cnt_0_s";(xp01,xp02,xp03)	)
 
 let mimply_one_conj ante_memo0 conseq_conj t_imply imp_no = 
   Debug.no_4_opt (fun (x,_,_) -> not x) "mimply_one_conj " (!print_mp_f) (!print_p_f_f) (fun _ -> "?")
@@ -1800,7 +1807,7 @@ let mimply_conj ante_memo0 conseq_conj t_imply imp_no =
       (fun _ _ -> mimply_conj ante_memo0 conseq_conj t_imply imp_no) ante_memo0 conseq_conj
 
 let rec imply_memo ante_memo0 conseq_memo t_imply imp_no =
- Debug.no_2 "imply_memo 1" (!print_mp_f)
+ Debug.no_2 "imply_memo(inner)" (!print_mp_f)
       (!print_mp_f)
       (fun (r,_,_) -> string_of_bool r)
       (fun ante_memo0 conseq_memo -> imply_memo_x ante_memo0 conseq_memo t_imply imp_no) ante_memo0 conseq_memo
@@ -1813,7 +1820,7 @@ and imply_memo_x ante_memo0 conseq_memo t_imply imp_no (* A -> B & C *)
         let r = List.concat (List.map list_of_conjs r) in
 	      let (r1,r2,r3)=(mimply_conj ante_memo0 r t_imply imp_no) in (* A -> B *)
 	      if r1 then 
-	        let r1,r22,r23 = (imply_memo ante_memo0 rest t_imply imp_no) in (* A -> C *)
+	        let r1,r22,r23 = (imply_memo_x ante_memo0 rest t_imply imp_no) in (* A -> C *)
 	        (r1,r2@r22,r23)
 	      else (r1,r2,r3)
     | [] -> (true, [], None)
@@ -1845,8 +1852,8 @@ let imply_memo ante_memo0 conseq_memo t_imply imp_no =
     else ante_memo0 in
   imply_memo ante_memo0 conseq_memo t_imply imp_no
 
-let imply_memo ante_memo0 conseq_memo t_imply imp_no=
- Debug.no_2 "imply_memo 2" (!print_mp_f)
+let imply_memo i ante_memo0 conseq_memo t_imply imp_no=
+ Debug.no_2_num i "imply_memo 2" (!print_mp_f)
       (!print_mp_f)
       (fun (r,_,_) -> string_of_bool r)
       (fun ante_memo0 conseq_memo -> imply_memo ante_memo0 conseq_memo t_imply imp_no) ante_memo0 conseq_memo
@@ -1908,7 +1915,7 @@ let mix_of_pure f =
 	  
 let pure_of_mix f = match f with
   | OnePF f -> f
-  | MemoF f -> fold_mem_lst (mkTrue no_pos) false true f 
+  | MemoF f -> fold_mem_lst_with_complex (mkTrue no_pos) false true f 
   
 let mkMFalse_no_mix = mkMFalse
 
@@ -2048,10 +2055,10 @@ let ptr_bag_equations_without_null f = (ptr_equations_aux true f) @ (bag_equatio
   | MemoF f -> MemoF (filter_useless_memo_pure sim_f b fv f)
   | OnePF _ -> f
  
-let fold_mem_lst_m = fold_mem_lst
+let fold_mem_lst_m = fold_mem_lst_with_complex
  
 let fold_mem_lst init_f with_dupl with_inv f : formula= match f with
-  | MemoF f -> fold_mem_lst init_f with_dupl with_inv f 
+  | MemoF f -> fold_mem_lst_with_complex init_f with_dupl with_inv f 
   | OnePF f -> (mkAnd init_f f no_pos)
 (*
 let fold_mem_lst init_f with_dupl with_inv f =
