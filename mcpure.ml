@@ -1567,7 +1567,8 @@ let replace_memo_pure_label nl f =
   List.map (fun c-> {c with memo_group_slice = List.map (replace_pure_formula_label nl) c.memo_group_slice;}) f
  
  (* imply functions *)
-
+let memo_impl_fail_vars = ref [] 
+ 
 let rec mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no =
  Debug.no_3 "mimply_process_ante" (fun x -> string_of_int x) (!print_mp_f) (!print_p_f_f)  
   (fun (c,_,_)-> string_of_bool c) 
@@ -1592,8 +1593,9 @@ and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no
   let _ = Debug.trace_hprint (add_str "conseq" !Cpure.print_formula) conseq no_pos in
 
   (Gen.Profiling.push_time str_time;
-  let r = t_imply r conseq ("imply_process_ante:"^(string_of_int !imp_no)) false None in
+  let (rb,_,_) as r = t_imply r conseq ("imply_process_ante:"^(string_of_int !imp_no)) false None in
   Gen.Profiling.pop_time str_time;
+  memo_impl_fail_vars:= (if rb then [] else  List.concat (List.map (fun c-> c.memo_group_fv) n_ante));
   r)
 
 and pick_relevant_lhs_constraints choose_algo (nlv, lv) ante_disj =

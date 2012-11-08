@@ -8351,18 +8351,11 @@ and reset_unsat_flag_formula_or o =
 and reset_unsat_flag_formula_exists e =
 	{ e with formula_exists_pure = MCP.reset_unsat_flag_mix e.formula_exists_pure }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+let fid(c: 'a)	: ('a option) = Some c 
+	
+let mark_estate_sat_slices estate svl = 
+	let tr_g g = Some (List.map (fun g-> {g with  Mcpure_D.memo_group_unsat = 
+				if Gen.BList.overlap_eq CP.eq_spec_var svl g.Mcpure_D.memo_group_fv  
+					then false
+					else g.Mcpure_D.memo_group_unsat}) g) in
+	{estate with es_formula = transform_formula (fid,(fun c-> None),fid,(tr_g,fid, fid, fid, fid)) estate.es_formula;}

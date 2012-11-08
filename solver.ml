@@ -5263,6 +5263,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
            if (!Globals.delay_proving_sat && !smart_unsat_estate=None) then
              if (!Globals.filtering_flag || !Globals.allow_pred_spec || !Globals.do_slicing )
              then 
+			   let estate = mark_estate_sat_slices estate !memo_impl_fail_vars in
                let n_es = elim_unsat_es 11 prog (ref 1) estate in
                 if CF.isAnyFalseCtx n_es then  
                   (smart_unsat_estate := Some (estate_of_context n_es no_pos);true)
