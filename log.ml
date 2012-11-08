@@ -18,7 +18,7 @@ type proof_res =
 
 type proof_log = {
 	log_id : string; (* TODO: Should change to integer for performance *)
-	mutable log_other_properties : string list; (* TODO: Should change to integer for performance *)
+	log_other_properties : string list; (* TODO: Should change to integer for performance *)
 	log_prover : string;
 	log_type : proof_type option;
 	log_time : float;
@@ -59,13 +59,13 @@ let file_to_proof_log () =
 		Hashtbl.iter (fun k log -> Hashtbl.add proof_log_tbl k log) tbl
 	with _ -> report_error no_pos "File of proof logging cannot be opened."
 
-let log_append_properties (ls: string ) = (*For append more properties to log, currently not used*)
-	try
-	 let tl= List.nth !proof_log_list ((List.length !proof_log_list) -1) in
-	 let tlog=Hashtbl.find proof_log_tbl tl in
-	 let _= tlog.log_other_properties <- tlog.log_other_properties @ [ls] in
-	 print_endline (ls)
-  with _-> ()
+(* let log_append_properties (ls: string ) = (\*For append more properties to log, currently not used*\) *)
+(* 	try *)
+(* 	 let tl= List.nth !proof_log_list ((List.length !proof_log_list) -1) in *)
+(* 	 let tlog=Hashtbl.find proof_log_tbl tl in *)
+(* 	 let _= tlog.log_other_properties <- tlog.log_other_properties @ [ls] in *)
+(* 	 print_endline (ls) *)
+(*   with _-> () *)
 	
 (*TO DO: check unique pno??*)
 let add_proof_log old_no pno tp ptype time res =
@@ -92,31 +92,31 @@ let add_proof_log old_no pno tp ptype time res =
 	else ()
 					
 let proof_log_to_text_file (src_files) =
-	if !Globals.proof_logging_txt then
-		let tstartlog = Gen.Profiling.get_time () in
-		let oc = 
-		(try Unix.mkdir "logs" 0o750 with _ -> ());
-		let with_option= if(!Globals.do_slicing) then "slicing" else "no_slicing" in
-		open_out ("logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in
-		let string_of_log_type lt =
-			match lt with
-			|IMPLY (ante, conseq) -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
+  if !Globals.proof_logging_txt then
+    let tstartlog = Gen.Profiling.get_time () in
+    let oc = 
+      (try Unix.mkdir "logs" 0o750 with _ -> ());
+      let with_option= if(!Globals.do_slicing) then "slicing" else "no_slicing" in
+      open_out ("logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in
+    let string_of_log_type lt =
+      match lt with
+	|IMPLY (ante, conseq) -> "Imply: ante:" ^(string_of_pure_formula ante) ^"\n\t     conseq: " ^(string_of_pure_formula conseq)
     	|SAT f-> "Sat: "^(string_of_pure_formula f) 
     	|SIMPLIFY f -> "Simplify: "^(string_of_pure_formula f)
-		in
-		let helper log=
-			"\n--------------\n"^
-			List.fold_left (fun a c->a^c) "" log.log_other_properties^
-			"\nid: "^log.log_id^"\nProver: "^log.log_prover^"\nType: "^(match log.log_type with | Some x-> string_of_log_type x | None -> "")^"\nTime: "^
-			(string_of_float(log.log_time))^"\nResult: "^(match log.log_res with
-		  |BOOL b -> string_of_bool b
-		  |FORMULA f -> string_of_pure_formula f)^"\n" in
-		let _= List.map (fun ix->let log=Hashtbl.find proof_log_tbl ix in
-		let _=fprintf oc "%s" (helper log) in ()) !proof_log_list in
-		let tstoplog = Gen.Profiling.get_time () in
-	  let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in 
-		close_out oc;
-	else ()	
+    in
+    let helper log=
+      "\n--------------\n"^
+	  List.fold_left (fun a c->a^c) "" log.log_other_properties^
+	  "\nid: "^log.log_id^"\nProver: "^log.log_prover^"\nType: "^(match log.log_type with | Some x-> string_of_log_type x | None -> "????")^"\nTime: "^
+	  (string_of_float(log.log_time))^"\nResult: "^(match log.log_res with
+	    |BOOL b -> string_of_bool b
+	    |FORMULA f -> string_of_pure_formula f)^"\n" in
+    let _= List.map (fun ix->let log=Hashtbl.find proof_log_tbl ix in
+    let _=fprintf oc "%s" (helper log) in ()) !proof_log_list in
+    let tstoplog = Gen.Profiling.get_time () in
+    let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in 
+    close_out oc;
+  else ()	
 
 let z3_proofs_list_to_file (src_files) =
 	if !Globals.proof_logging_txt then
