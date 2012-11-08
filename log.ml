@@ -25,11 +25,14 @@ type proof_log = {
 	log_res : proof_res;
 }
 
+let sleek_counter= ref 0
 
 let proof_log_tbl : (string, proof_log) Hashtbl.t = Hashtbl.create 700
 
 let proof_log_list  = ref [] (*For printing to text file with the original oder of proof execution*)
-	
+
+let proof_gt5_log_list = ref [] (*Logging proofs require more than 5 secs to be proved*)
+		
 let find_bool_proof_res pno =
 	try 
 		let log = Hashtbl.find proof_log_tbl pno in
@@ -133,6 +136,31 @@ let z3_proofs_list_to_file (src_files) =
 		close_out oc;
 	else ()	
 
+let proof_greater_5secs_to_file (src_files) =
+	if !Globals.proof_logging_txt then
+		let tstartlog = Gen.Profiling.get_time () in
+		let oc = 
+		(try Unix.mkdir "logs" 0o750 with _ -> ());
+		let with_option= if(!Globals.do_slicing) then "slice" else "noslice" in
+		let with_option= with_option^"_"^if(!Globals.split_rhs_flag) then "rhs" else "norhs" in
+    let with_option= with_option^"_"^if(not !Globals.elim_exists) then "noee" else "ee" in
+		open_out ("logs/greater_5sec_"^with_option^"_"^(Globals.norm_file_name (List.hd src_files)) ^".log5") in
+		let _= List.map (fun ix-> let _=fprintf oc "%s" ix in ()) !proof_gt5_log_list in
+		let tstoplog = Gen.Profiling.get_time () in
+	  let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in 
+		close_out oc;
+	else ()	
+
+let wrap_calculate_time exec_func src_file args=
+	  let _= sleek_counter := !sleek_counter +1 in
+		let tstartlog = Gen.Profiling.get_time () in
+    let _= exec_func args in
+		let tstoplog = Gen.Profiling.get_time () in 
+		let period = (tstoplog -. tstartlog) in
+	  if (period> 0.7) then
+			proof_gt5_log_list :=  
+			(!proof_gt5_log_list@[(Globals.norm_file_name (List.hd src_file))^"-check-entail-num-"^string_of_int !sleek_counter^"--Time--"^string_of_float (period)^"\n"]) 		
+	
 (* let sleek_z3_proofs_list_to_file source_files =                                                    *)
 (* 	if !Globals.proof_logging_txt then                                                               *)
 (* 		let tstartlog = Gen.Profiling.get_time () in                                                   *)
