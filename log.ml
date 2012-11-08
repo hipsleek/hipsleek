@@ -84,10 +84,21 @@ let add_proof_log old_no pno tp ptype time res =
 			log_time = time;
 			log_res = res; } in
 		let _=Hashtbl.add proof_log_tbl pno plog in
-		let _= if(!Globals.proof_logging_txt && ((proving_kind # string_of)<>"TRANS_PROC")) then
+		let _=try
+			let _= BatString.find (Sys.argv.(0)) "hip" in
+		  if(!Globals.proof_logging_txt && ((proving_kind # string_of)<>"TRANS_PROC")) then
 			begin 
 			proof_log_list := !proof_log_list @ [pno];
 			end		
+		with _->
+			if(!Globals.proof_logging_txt) then
+			try
+				let temp=(proving_kind # string_of) in
+				let _=BatString.find 	temp "SLEEK_ENT" in
+			begin 
+			proof_log_list := !proof_log_list @ [pno];
+			end		 	
+		  with _->()	
 		in
 	  let tstoplog = Gen.Profiling.get_time () in
 	  let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
