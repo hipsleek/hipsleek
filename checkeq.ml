@@ -38,14 +38,18 @@ let string_of_map_table_list (mtl: map_table list): string =
   in 
   "[" ^ (helper mtl) ^ "]"
 let simplify_2f f1 f2 hvars = (
+    (* print_string ("INPUT f1: "^(Cprinter.prtt_string_of_formula f1)^"\n"); *)
+    (* print_string ("INPUT f2: "^(Cprinter.prtt_string_of_formula f2)^ "\n"); *)
   match f1,f2 with
     | CF.Or _, _ 
     | _, CF.Or _ -> (f1,f2)
     | _ ->(
-      let evars fs = List.filter (fun f -> List.exists (fun ivar -> (String.compare (CP.full_name_of_spec_var f) ivar != 0)) hvars ) fs in 
+      let evars fs = if(List.length hvars == 0) then fs else List.filter (fun f -> List.exists (fun ivar -> (String.compare (CP.full_name_of_spec_var f) ivar != 0)) hvars ) fs in 
       let fs1,fs2 = evars (CF.fv f1),evars (CF.fv f2) in
       let f1,f2 = CF.add_quantifiers fs1 f1, CF.add_quantifiers fs2 f2 in
       let f1,f2 = CF.elim_exists f1,CF.elim_exists f2 in
+    (* print_string (" OUTPUT f1: "^(Cprinter.prtt_string_of_formula f1)^"\n"); *)
+    (* print_string ("OUTPUT f2: "^(Cprinter.prtt_string_of_formula f2)^ "\n"); *)
       (f1,f2)
     )
 )
@@ -938,8 +942,11 @@ and checkeq_formulas_with_diff_x ivars f1 f2 =
 	in
 	Debug.info_pprint (str) no_pos 
       in 
-      let _ = List.map (fun (a,b,c) -> print_triple a b c) fs in
-      ()
+      if(List.length fs > 0) then (
+	let _ = List.map (fun (a,b,c) -> print_triple a b c) fs in
+	()
+      )
+      else 	Debug.info_pprint ("no diff info") no_pos 
     )
   )
   in
@@ -978,8 +985,8 @@ and checkeq_formulas_one_with_diff_x (hvars: ident list) (f1: CF.formula) (f2: C
 	    let mtl2,diff2 = List.split mix_mtl2 in (*temporary*)
 	    (res1&&res2,mix_mtl2)
 	  )
-	  |_ ->  let _ = if(!Globals.show_diff) then Debug.info_pprint ("DIFF: Base formula") no_pos in
-		 (false,[])
+	  |_ ->  let _ = if(!Globals.show_diff) then Debug.ninfo_pprint ("DIFF: Base formula") no_pos in
+		 (false,[([],f1)])
       )
       |CF.Exists({CF.formula_exists_qvars = qvars1;
 		  CF.formula_exists_heap = h1;
@@ -998,23 +1005,25 @@ and checkeq_formulas_one_with_diff_x (hvars: ident list) (f1: CF.formula) (f2: C
 	      if(List.length new_mix_mtl > 0) then (true, new_mix_mtl) else (false,mix_mtl2)
 	    else  (res,mix_mtl2)
 	  )
-	  | _ ->  let _ = if(!Globals.show_diff) then Debug.info_pprint ("DIFF: Exists formula") no_pos in 
-		  (false,[]))
+	  | _ ->  let _ = if(!Globals.show_diff) then Debug.ninfo_pprint ("DIFF: Exists formula") no_pos in 
+		  (false,[([],f1)]))
       |CF.Or ({CF.formula_or_f1 = f11;
 	       CF.formula_or_f2 = f12})  ->  (match f2 with
 		 |CF.Or ({CF.formula_or_f1 = f21;
 			  CF.formula_or_f2 = f22})  -> (
-		   let _ =  if(!Globals.show_diff) then Debug.info_pprint ("DIFF: Or formula") no_pos in  
-		   (false,[])
+		   let _ =  if(!Globals.show_diff) then Debug.ninfo_pprint ("DIFF: Or formula") no_pos in  
+		  (false,[([],f1)])
 		 )
-		 |_ ->   let _ =  if(!Globals.show_diff) then Debug.info_pprint ("DIFF: Or formula") no_pos in  (false,[]))
+		 |_ ->   let _ =  if(!Globals.show_diff) then Debug.ninfo_pprint ("DIFF: Or formula") no_pos in  (false,[([],f1)]))
   in
   let (res,new_mtl) = helper hvars f1 f2 mtl in
   if(not(res) && not(!Globals.dis_sem)) then (
     let (f1,f2) = simplify_2f f1 f2 hvars in
+    (* print_string ("f1: "^(Cprinter.prtt_string_of_formula f1)^"\n"); *)
+    (* print_string ("f2: "^(Cprinter.prtt_string_of_formula f2)^ "\n"); *)
     let (res2,new_mtl2) = helper hvars f1 f2 mtl in
     if(res2) then  (res2,new_mtl2)
-    else (res,new_mtl)
+    else (res,new_mtl2)
   )
   else (res,new_mtl)
 					      
@@ -1029,22 +1038,22 @@ and check_or_with_diff_x f1 f2 hvars mtl =
   let new_mtl mtl1 d1 d2 f = List.map (fun mt -> (mt,d1,d2, f)) mtl1 in
   let new_mix_mtl mix_mtl f = List.map (fun (mt,d1,d2) -> (mt, d1,d2,f)) mix_mtl in
   let rec check_one2 f1 f2 hvars mt = 
-    (* print_string ("Check f1_2: " ^ (Cprinter.prtt_string_of_formula f1) ^ "\n") ; *)
-    (* print_string ("Check f2: " ^ (Cprinter.prtt_string_of_formula f2) ^ "\n") ; *)
+      (* print_string ("Check f1_2: " ^ (Cprinter.prtt_string_of_formula f1) ^ "\n") ;  *)
+      (* print_string ("Check f2_2: " ^ (Cprinter.prtt_string_of_formula f2) ^ "\n") ;  *)
     match f2 with 
       | CF.Or ({CF.formula_or_f1 = f21;
 	     CF.formula_or_f2 = f22})  -> (
 	let (res1, mix_mtl1) = check_one2 f1 f21 hvars mt in
 	let (res2, mix_mtl2) = check_one2 f1 f22 hvars mt in
-	let new_mix_mtl2 mix_mtl f2 = List.map (fun (mt,d1,d2,f) -> if (CF.isStrictConstTrue f) then (mt,d1,d2,f2) else if (CF.isStrictConstTrue f2) then (mt,d1,d2,f) else (mt,d1,d2, CF.mkOr f f2 no_pos)) mix_mtl in 
+	let new_mix_mtl2 mix_mtl f2 = List.map (fun (mt,d1,d2,f) ->  (* print_string ("mix with: " ^ (Cprinter.prtt_string_of_formula f2) ^ "\n") ; *)if (CF.isStrictConstTrue f) then (mt,d1,d2,f2) else if (CF.isStrictConstTrue f2) then (mt,d1,d2,f) else (mt,d1,d2, CF.mkOr f f2 no_pos)) mix_mtl in 
 	if(res1 && res2) then 
 	  (
 	    let nmix_mtl1 = new_mix_mtl2 mix_mtl1 f22 in 
 	    let nmix_mtl2 = new_mix_mtl2 mix_mtl2 f21 in 
 	    (true, nmix_mtl1@nmix_mtl2)
 	  )
-	else if(res1) then let nmix_mtl1 = new_mix_mtl2 mix_mtl1 f22 in (true,mix_mtl1)
-	else if(res2) then let nmix_mtl2 = new_mix_mtl2 mix_mtl2 f21 in (true,mix_mtl2)
+	else if(res1) then let nmix_mtl1 = new_mix_mtl2 mix_mtl1 f22 in (true,nmix_mtl1)
+	else if(res2) then let nmix_mtl2 = new_mix_mtl2 mix_mtl2 f21 in (true,nmix_mtl2)
 	else (
 	  let count mix_mtls = match mix_mtls with
 	    | [] -> 0
@@ -1053,18 +1062,19 @@ and check_or_with_diff_x f1 f2 hvars mtl =
 	  let choose_helper m1 m2 f1 f2 = let c1 = count m1 in
 	  		     let c2 = count m2 in
 	  		     if(c2 > c1) then new_mix_mtl2 m1 f2 else
-	  		       if(c1 > c2) then new_mix_mtl2 m2 f1 else
-	  			 (new_mix_mtl2 m1 f2)@(new_mix_mtl2 m2 f1)
+	  		       if(c1 > c2) then new_mix_mtl2 m2 f1 else ( 
+	  			 (new_mix_mtl2 m1 f2)@(new_mix_mtl2 m2 f1))
 	  in
 	  let nmix_mtl = choose_helper mix_mtl1 mix_mtl2 f21 f22 in
 	  (false, nmix_mtl)
 	)
       )
       | _ ->  let (res,mix_mtl) =  checkeq_formulas_with_diff_mt hvars f1 f2 [mt] in
+	      let mix_mtl = if(res && List.length mix_mtl > 0) then [(List.hd mix_mtl)] else mix_mtl in
 	      (res, new_mix_mtl mix_mtl (CF.mkTrue_nf no_pos))
   in
   let rec check_one1 f1 hvars mix_mtl=
-    (* print_string ("Check f1: " ^ (Cprinter.prtt_string_of_formula f1) ^ "\n") ; *) 
+     (* print_string ("Check f1: " ^ (Cprinter.prtt_string_of_formula f1) ^ "\n") ;  *)
     match f1 with
       | CF.Or ({CF.formula_or_f1 = f11;
 	     CF.formula_or_f2 = f12})  -> (
@@ -1075,10 +1085,10 @@ and check_or_with_diff_x f1 f2 hvars mtl =
       )
       | _ -> (
 	let helper mt d1 d2 f2 =  
-	  (* print_string ("Inside one pass: Check f1: " ^ (Cprinter.prtt_string_of_formula f1) ^ "\n") ; *)
-	  (* print_string ("Inside one pass: Check f2: " ^ (Cprinter.prtt_string_of_formula f2) ^ "\n") ; *)
+	    (* print_string ("Inside one pass: Check f1: " ^ (Cprinter.prtt_string_of_formula f1) ^ "\n") ;   *)
+	    (* print_string ("Inside one pass: Check f2: " ^ (Cprinter.prtt_string_of_formula f2) ^ "\n") ;  *) 
 	  let (r,l) = check_one2 f1 f2 hvars mt in 
-	  (* let _ = if(r) then print_string ("Res: TRUE\n") else  print_string ("Res: FALSE\n") in *)
+	    (* let _ = if(r) then print_string ("Res: TRUE\n") else  print_string ("Res: FALSE\n") in   *)
 	  let new_diff d1 d2 = if (CF.isStrictConstTrue d1) then d2 else if (CF.isStrictConstTrue d2) then d1 else CF.mkOr d1 d2 no_pos in 
 	  let new_mtl = List.map (fun (mt, d21, d22,f) -> (mt,new_diff d1 d21,new_diff d2 d22,f)) l in
 	  (r,(mt,new_mtl))	
@@ -1736,6 +1746,9 @@ let checkeq_defs_with_diff_x hvars (defs: (CP.rel_cat * CF.h_formula * CF.formul
 let checkeq_defs_with_diff hvars (defs: (CP.rel_cat * CF.h_formula * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) inf_vars =
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
-  let pr3 = pr_list_ln (pr_pair Cprinter.string_of_spec_var_list Cprinter.string_of_spec_var) in
-  Debug.no_2 "checkeq_defs_with_diff" pr2 pr1 (pr3)
+  let pr4 b = if(b) then "VALID" else "INVALID" in
+  let pr5 = pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula in
+  let pr6 = pr_list_ln (pr_triple string_of_map_table pr5 pr5) in
+  let pr7 =pr_list_ln (pr_triple pr5 pr5 pr6) in
+  Debug.no_2 "checkeq_defs_with_diff" pr2 pr1 (pr_pair pr4 pr7)
     (fun _ _ -> checkeq_defs_with_diff_x hvars defs infile_defs inf_vars) defs infile_defs
