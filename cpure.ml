@@ -5878,7 +5878,7 @@ let rec imply_disj_orig_x ante_disj conseq t_imply imp_no =
 	    let r1,r2,r3 = (t_imply h conseq (string_of_int !imp_no) true None) in
         Debug.devel_hprint (add_str "res : " (string_of_bool)) r1 no_pos;
 	    if r1 then
-	      let r1,r22,r23 = (imply_disj_orig rest conseq t_imply imp_no) in
+	      let r1,r22,r23 = (imply_disj_orig_x rest conseq t_imply imp_no) in
 	      (r1,r2@r22,r23)
 	    else (r1,r2,r3)
     | [] -> (true,[],None)
@@ -5890,12 +5890,18 @@ and imply_disj_orig ante_disj conseq t_imply imp_no =
 
 let rec imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no =
   let xp01,xp02,xp03 = imply_disj_orig ante_disj0 conseq t_imply imp_no in
-  if not(xp01) then
+  if not(xp01) && !Globals.smart_xpure then
     let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
     let (xp11,xp12,xp13) = imply_disj_orig ante_disj1 conseq t_imply imp_no in
     let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
 	(xp11,xp12,xp13)
   else (xp01,xp02,xp03)
+
+let imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no =
+  let pr = !print_formula in
+  Debug.no_3 "imply_one_conj_orig" (pr_list pr) (pr_list pr) pr (fun (b,_,_) -> string_of_bool b)
+      (fun _ _ _ -> imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no) 
+      ante_disj0 ante_disj1 conseq
 
 let rec imply_conj_orig ante_disj0 ante_disj1 conseq_conj t_imply imp_no
    : bool * (Globals.formula_label option * Globals.formula_label option) list *
@@ -5912,7 +5918,7 @@ and imply_conj_orig_x ante_disj0 ante_disj1 conseq_conj t_imply imp_no
     | h :: rest ->
 	    let (r1,r2,r3)=(imply_one_conj_orig ante_disj0 ante_disj1 h t_imply imp_no) in
 	    if r1 then
-	      let r1,r22,r23 = (imply_conj_orig ante_disj0 ante_disj1 rest t_imply imp_no) in
+	      let r1,r22,r23 = (imply_conj_orig_x ante_disj0 ante_disj1 rest t_imply imp_no) in
 	      (r1,r2@r22,r23)
 	    else (r1,r2,r3)
     | [] -> (true,[],None)

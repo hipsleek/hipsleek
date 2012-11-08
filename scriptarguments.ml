@@ -137,6 +137,8 @@ let common_arguments = [
     "Turn on unsatisfiable formulae elimination during type-checking");
 	("-nxpure", Arg.Set_int Globals.n_xpure,
     "Number of unfolding using XPure");
+	("--enable-smart-xpure", Arg.Set Globals.smart_xpure,
+    "Smart xpure with 0 then 1; otherwise just 1 ; not handled by infer yet");
 	("-num-self-fold-search", Arg.Set_int Globals.num_self_fold_search,
     "Allow Depth of Unfold/Fold Self Search");
 	("--enable-self-fold-search", Arg.Set Globals.self_fold_search_flag,

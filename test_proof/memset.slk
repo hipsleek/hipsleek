@@ -2,6 +2,6 @@ data cell{
   int val;
 }.
 
-checkentail x::cell<_>*y::cell<_> |- x!=y.
+//checkentail x::cell<_>*y::cell<_> |- x!=y.
 
-checkentail  x::cell<_>*y::cell<_> & x=y |- false.
+checkentail   x::cell<_>*y::cell<_> & x=y  |- false .

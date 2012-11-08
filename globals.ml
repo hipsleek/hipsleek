@@ -304,7 +304,7 @@ let wrap_proving_kind (str : string) exec_function args =
     in res
  
 (* let wrap_proving_kind (str : string) exec_function args = *)
-(*   Debug.ho_1 "wrap_proving_kind" pr_id pr_none  *)
+(*   Debug.no_1 "wrap_proving_kind" pr_id pr_none  *)
 (*       (fun _ -> wrap_proving_kind str exec_function args) str *)
 
 (* let post_pos = ref no_pos *)
@@ -513,6 +513,7 @@ let b_datan = "barrier"
 let verify_callees = ref false
 
 let elim_unsat = ref false
+let smart_xpure = ref false
 
 (* let lemma_heuristic = ref false *)
 

@@ -1047,12 +1047,17 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
   (* let _ = print_endline ("[trans_data] output = " ^ (Cprinter.string_of_data_decl res)) in *)
   res
 
-
+(* TODO CG : should normalise nxpure better *)
+  (* xform: self=null & n=0 | n=1 & self!=null | n=2 & self!=null |  *)
+  (*          self!=null & 3<=n *)
 and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
-  Debug.no_3 "compute_view_x_formula"
-      Cprinter.string_of_program Cprinter.string_of_view_decl string_of_int 
-      (fun x -> "")
-      compute_view_x_formula_x prog vdef n
+  Debug.ho_eff_2 "compute_view_x_formula" [true]
+      (* Cprinter.string_of_program *)
+      Cprinter.string_of_view_decl  
+      string_of_int 
+      (fun x ->   "void")
+(* Cprinter.string_of_view_decl vdef) *)
+      (compute_view_x_formula_x prog) vdef n
 	  
 and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
 	let compute_view_x_formula_x_op ()=

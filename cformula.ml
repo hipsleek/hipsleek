@@ -1235,6 +1235,7 @@ and mkExists_w_lbl (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula
 
 and is_empty_heap (h : h_formula) = match h with
   | HEmp -> true
+  | HFalse -> true
   | _ -> false
 
 and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl:flow_formula) a (pos : loc) = 
