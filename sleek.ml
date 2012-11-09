@@ -259,7 +259,7 @@ let sleek_proof_log_Z3 src_files =
 			end
 		
 let _ =
-   wrap_exists_implicit_explicit := false ;
+  wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
   Scriptarguments.check_option_consistency ();
   if !Globals.print_version_flag then begin
@@ -272,9 +272,22 @@ let _ =
     main ();
     (* let _ = print_endline "after main" in *)
     Gen.Profiling.pop_time "Overall";
+    Tpdispatcher.stop_prover ();
+    
+    (* Get the total proof time *)
+    let ptime4 = Unix.times () in
+    let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime in
+    let _ = print_string ("\nTotal verification time: " 
+    ^ (string_of_float t4) ^ " second(s)\n"
+    ^ "\tTime spent in main process: " 
+    ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
+    ^ "\tTime spent in child processes: " 
+    ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
+    in
+    
 		let _= sleek_proof_log_Z3 !source_files in
     let _ = 
       if (!Globals.profiling && not !inter) then 
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in
-    Tpdispatcher.stop_prover ();
+    
     print_string "\n")
