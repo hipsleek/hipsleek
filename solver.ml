@@ -31,7 +31,7 @@ module TP = Tpdispatcher
 
 
 (** An Hoa : switch to do unfolding on duplicated pointers **)
-let unfold_duplicated_pointers = ref false
+let unfold_duplicated_pointers = ref true
 
 (** An Hoa : to store the number of unfolding performed on duplicated pointers **)
 let num_unfold_on_dup = ref 0

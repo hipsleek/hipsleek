@@ -827,8 +827,9 @@ let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP
 	assumption_filter ante cons
 
 	  
-(* rename variables for better caching of formulas *)
-let simplify_var_name (e: CP.formula) : CP.formula =
+(* rename and shorten variables for better caching of formulas *)
+(* TODO WN: check if it avoids name clashes? *)
+let norm_var_name (e: CP.formula) : CP.formula =
   let shorten_sv (CP.SpecVar (typ, name, prm)) vnames =
     let short_name =
       try
@@ -875,6 +876,10 @@ let simplify_var_name (e: CP.formula) : CP.formula =
         CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl)
   in
   simplify e (Hashtbl.create 100)
+
+let norm_var_name (e: CP.formula) : CP.formula =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_1 "norm_var_name" pr pr norm_var_name e
 
 (* Statistical function for formula size counting *)
 let disj_cnt a c s =
@@ -1077,26 +1082,47 @@ let tp_is_sat_perm f sat_no =
   else tp_is_sat_no_cache f sat_no
  
 let tp_is_sat_perm f sat_no =  Debug.no_1_loop "tp_is_sat_perm" Cprinter.string_of_pure_formula string_of_bool (fun _ -> tp_is_sat_perm f sat_no) f
- 
-let tp_is_sat (f:CP.formula) (sat_no :string) = 
-  let f = CP.elim_idents f in
-  if !Globals.no_cache_formula then
-    tp_is_sat_perm f sat_no
-  else
-    (*let _ = Gen.Profiling.push_time "cache overhead" in*)
-    let sf = simplify_var_name f in
-    let fstring = Cprinter.string_of_pure_formula sf in
-    (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
-    let res =
-      try
-        Hashtbl.find !sat_cache fstring
-      with Not_found ->
-        let r = tp_is_sat_perm(*_debug*) f sat_no in
+
+let cache_status = ref false 
+let cache_sat_count = ref 0 
+let cache_sat_miss = ref 0 
+let cache_imply_count = ref 0 
+let cache_imply_miss = ref 0 
+
+let sat_cache is_sat (f:CP.formula) : bool  = 
+  (*let _ = Gen.Profiling.push_time "cache overhead" in*)
+  let sf = norm_var_name f in
+  let fstring = Cprinter.string_of_pure_formula sf in
+  let _ = cache_sat_count := !cache_sat_count+1 in
+  let _ = cache_status := true in
+  (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
+  let res =
+    try
+      Hashtbl.find !sat_cache fstring
+    with Not_found ->
+        let _ = cache_sat_miss := !cache_sat_miss+1 in
+        let _ = cache_status := false in
+        let r = is_sat f in
         (*let _ = Gen.Profiling.push_time "cache overhead" in*)
         let _ = Hashtbl.add !sat_cache fstring r in
         (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
         r
-    in res
+  in res
+
+let sat_cache is_sat (f:CP.formula) : bool = 
+  let pr = Cprinter.string_of_pure_formula in
+  let pr2 b = ("found?:"^(string_of_bool !cache_status)
+    ^" ans:"^(string_of_bool b)) in
+  Debug.no_1 "sat_cache" pr pr2 (sat_cache is_sat) f
+
+let tp_is_sat (f:CP.formula) (sat_no :string) = 
+  (* TODO WN : can below remove duplicate constraints? *)
+  let f = CP.elim_idents f in
+  let fn_sat f = tp_is_sat_perm f sat_no in
+  if !Globals.no_cache_formula then
+    fn_sat f
+  else
+    sat_cache fn_sat f
 
 let tp_is_sat f sat_no =
   Debug.no_1_loop "tp_is_sat" Cprinter.string_of_pure_formula string_of_bool 
@@ -1579,27 +1605,57 @@ let tp_imply_perm ante conseq imp_no timeout process =
 	let pr =  Cprinter.string_of_pure_formula in
 	Debug.no_2_loop "tp_imply_perm" pr pr string_of_bool (fun _ _ -> tp_imply_perm ante conseq imp_no timeout process ) ante conseq
   
-let tp_imply ante conseq imp_no timeout process =
-  let ante = CP.elim_idents ante in
-  let conseq = CP.elim_idents conseq in
-  if !Globals.no_cache_formula then
-    tp_imply_perm ante conseq imp_no timeout process
-  else
-    (*let _ = Gen.Profiling.push_time "cache overhead" in*)
-    let f = CP.mkOr conseq (CP.mkNot ante None no_pos) None no_pos in
-    let sf = simplify_var_name f in
-    let fstring = Cprinter.string_of_pure_formula sf in
-    (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
-    let res = 
-      try
-        Hashtbl.find !imply_cache fstring
-      with Not_found ->
-        let r = tp_imply_perm ante conseq imp_no timeout process in
+let imply_cache fn_imply ante conseq : bool  = 
+  (*let _ = Gen.Profiling.push_time "cache overhead" in*)
+  let f = CP.mkOr conseq (CP.mkNot ante None no_pos) None no_pos in
+  let sf = norm_var_name f in
+  let fstring = Cprinter.string_of_pure_formula sf in
+  let _ = cache_imply_count := !cache_imply_count+1 in
+  let _ = cache_status := true in
+  (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
+  let res =
+    try
+      Hashtbl.find !imply_cache fstring
+    with Not_found ->
+        let _ = cache_imply_miss := !cache_imply_miss+1 in
+        let _ = cache_status := false in
+        let r = fn_imply ante conseq in
         (*let _ = Gen.Profiling.push_time "cache overhead" in*)
         let _ = Hashtbl.add !imply_cache fstring r in
         (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
         r
-    in res
+  in res
+
+let imply_cache fn_imply ante conseq : bool  = 
+  let pr = Cprinter.string_of_pure_formula in
+  let pr2 b = ("found?:"^(string_of_bool !cache_status)
+    ^" ans:"^(string_of_bool b)) in
+  Debug.no_2 "imply_cache" pr pr pr2 (imply_cache fn_imply) ante conseq
+
+let tp_imply ante conseq imp_no timeout process =
+  (* TODO WN : can below remove duplicate constraints? *)
+  let ante = CP.elim_idents ante in
+  let conseq = CP.elim_idents conseq in
+  let fn_imply a c = tp_imply_perm a c imp_no timeout process in
+  if !Globals.no_cache_formula then
+    fn_imply ante conseq
+  else
+    imply_cache fn_imply ante conseq
+    (* (\*let _ = Gen.Profiling.push_time "cache overhead" in*\) *)
+    (* let f = CP.mkOr conseq (CP.mkNot ante None no_pos) None no_pos in *)
+    (* let sf = norm_var_name f in *)
+    (* let fstring = Cprinter.string_of_pure_formula sf in *)
+    (* (\*let _ = Gen.Profiling.pop_time "cache overhead" in*\) *)
+    (* let res =  *)
+    (*   try *)
+    (*     Hashtbl.find !imply_cache fstring *)
+    (*   with Not_found -> *)
+    (*     let r = tp_imply_perm ante conseq imp_no timeout process in *)
+    (*     (\*let _ = Gen.Profiling.push_time "cache overhead" in*\) *)
+    (*     let _ = Hashtbl.add !imply_cache fstring r in *)
+    (*     (\*let _ = Gen.Profiling.pop_time "cache overhead" in*\) *)
+    (*     r *)
+    (* in res *)
 
 let tp_imply ante conseq imp_no timeout process =	
   let pr1 = Cprinter.string_of_pure_formula in
