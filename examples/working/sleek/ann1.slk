@@ -81,23 +81,23 @@ infer [] y::node<_,_>@w & w<:@M |- y::node<a,b>@I .
 // (25) 
 infer [] y::node<_,_>@w & w<:@M |- y::node<a,b>@L .
 
-// (25) 
+// (26) 
 infer [] y::node<_,_>@w & w<:@I |- y::node<a,b>@L .
 
 //infer [y] true |- y::node<a,b>@v & v<:L.
 //infer [y,w] y::node<_,_>@w |- y::node<a,b>@v & v<:L.
 //print residue.
 
-// (26)
+// (27) FAIL
 infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v=@M.
 
 
-// (27)
+// (28)
 infer [] y::node<_,_>@M |- [v] y::node<a,b>@v & v=@I.
 
 
-// (28)
+// (29)
 infer [] y::node<_,_>@M |- [v] y::node<a,b>@v & v<:@I.
 
-// (29)
+// (30) FAIL
 infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v<:@M.
