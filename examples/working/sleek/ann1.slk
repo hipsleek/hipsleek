@@ -27,55 +27,58 @@ infer [] v<:@M |- v=@M.
 // (7)
 infer [] true |- @M<:@I & @I<:@L.
 
-// (8) fail
+// (8) FAIL
 infer [] true |- @I<:@M.
 
-// (9) fail
+// (9) FAIL
 infer [] true |- @L<:@I.
 
 // (10) valid
+infer [] y::node<_,_>@M |- [v] y::node<a,b>@v & v<:@M.
+
+// (11) Fail (due to incompleteness)
 infer [] y::node<_,_>@M |- y::node<a,b>@v & v<:@M.
 
-// (11)
+// (12)
 infer [] y::node<_,_>@v & v<:@M |- y::node<a,b>@M.
 
-// (12)
+// (13)
 infer [] y::node<_,_>@L |- y::node<a,b>@v & v<:@L.
 
-// (13)
+// (14)
 infer [] y::node<_,_>@v & v<:@L |- y::node<a,b>@L.
 
-// (14) valid
-infer [] y::node<_,_>@I |- y::node<a,b>@v & v<:@I.
-
-// (15)
-infer [] y::node<_,_>@v & v<:@I |- y::node<a,b>@I.
+// (15) valid
+infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v<:@I.
 
 // (16)
+infer [] y::node<_,_>@v & v<:@I |- y::node<a,b>@I.
+
+// (17)
 infer [] y::node<_,_>@v |- y::node<a,b>@L.
 
-// (17) fail
+// (18) FAIL
 infer [] y::node<_,_>@v |- y::node<a,b>@I.
 
-// (18)
+// (19)
 infer [] @L<:v & v<:@M |- false.
 
-// (19) fail
+// (20) FAIL
 infer [] y::node<_,_>@L |- [v] y::node<a,b>@v & v<:@M.
 
-// (20)
+// (21)
 infer [] y::node<_,_>@w |- y::node<a,b>@w .
 
-// (21) fail
+// (22) FAIL
 infer [] y::node<_,_>@w & w<:@I |- y::node<a,b>@M .
 
-// (22) fail
+// (23) FAIL
 infer [] y::node<_,_>@w & w<:@L |- y::node<a,b>@I .
 
-// (23) 
+// (24) 
 infer [] y::node<_,_>@w & w<:@M |- y::node<a,b>@I .
 
-// (24) 
+// (25) 
 infer [] y::node<_,_>@w & w<:@M |- y::node<a,b>@L .
 
 // (25) 
@@ -84,3 +87,17 @@ infer [] y::node<_,_>@w & w<:@I |- y::node<a,b>@L .
 //infer [y] true |- y::node<a,b>@v & v<:L.
 //infer [y,w] y::node<_,_>@w |- y::node<a,b>@v & v<:L.
 //print residue.
+
+// (26)
+infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v=@M.
+
+
+// (27)
+infer [] y::node<_,_>@M |- [v] y::node<a,b>@v & v=@I.
+
+
+// (28)
+infer [] y::node<_,_>@M |- [v] y::node<a,b>@v & v<:@I.
+
+// (29)
+infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v<:@M.
