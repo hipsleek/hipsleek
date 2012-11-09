@@ -223,27 +223,34 @@ and m_apply_one (s: spec_var * spec_var) f = m_apply_par [s] f
 
 and m_apply_one_varperm (s: spec_var * spec_var) f = m_apply_par_varperm [s] f
 
-  (* let r1 = List.map (fun c ->  *)
-  (*   	       let r = EMapSV.subs_eset(\*_debug !print_sv_f*\) s c.memo_group_aset in *)
-  (*   		 {memo_group_fv = Gen.BList.remove_dups_eq (=) (List.map (fun v-> subst_var s v) c.memo_group_fv); *)
-  (*   		  memo_group_changed = c.memo_group_changed; *)
-  (*   		  memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_one s d.memo_formula;}) c.memo_group_cons; *)
-  (*   		  memo_group_slice = List.map (apply_one s) c.memo_group_slice;  *)
-  (*   		  memo_group_aset = r }) f in   *)
-  (* let r = filter_mem_triv r1 in *)
-  (*   r *)
-
 and m_apply_par_x (sst:(spec_var * spec_var) list) f = 
   let r1 = List.map (fun c -> 
-	let r = EMapSV.subs_eset_par(*_debug !print_sv_f*) sst c.memo_group_aset in
-	{ memo_group_fv = Gen.BList.remove_dups_eq (eq_spec_var) (List.map (fun v-> subst_var_par sst v) c.memo_group_fv);
-	  memo_group_linking_vars = Gen.BList.remove_dups_eq (eq_spec_var) (List.map (fun v-> subst_var_par sst v) c.memo_group_linking_vars);
+	let r = EMapSV.subs_eset_par sst c.memo_group_aset in
+  (* Slicing: Linking Variables Inference        *)
+  (* We might have some new linking variables    *)
+  (* that need to add to memo_group_linking_vars *)
+  let subs_cons, lv = List.split (List.map (fun d ->
+    let subs_memo = b_apply_subs sst d.memo_formula in
+    let lv = match snd subs_memo with
+    | None -> []
+    | Some (_, _, le) -> List.concat (List.map (fun e -> CP.afv e) le) 
+    in { d with memo_formula = subs_memo; }, lv) c.memo_group_cons) in
+	{ memo_group_fv = Gen.BList.remove_dups_eq eq_spec_var (List.map (fun v -> subst_var_par sst v) c.memo_group_fv);
+	  memo_group_linking_vars = 
+      Gen.BList.remove_dups_eq eq_spec_var
+        ((List.map (fun v1 -> 
+          let v2 = subst_var_par sst v1 in
+          (* print_endline ("\nADD LV: " ^ (!print_sv v2)); *)
+          (* Hashtbl.add !linking_var_tbl (name_of_spec_var v2); *)
+          linking_var_tbl := (name_of_spec_var v2)::!linking_var_tbl;
+          v2) c.memo_group_linking_vars) @
+        (List.concat lv));
 	  memo_group_changed = c.memo_group_changed;
 		(* Slicing: A substituted slice keeps its unsat flag *)
 		(* if it is not merged to other slices               *)
 		(* TODO: Slicing UNSAT: x>3 & y<=3 --> x>3 & x<=3 *)
 		memo_group_unsat = c.memo_group_unsat; 
-	  memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_subs sst d.memo_formula;}) c.memo_group_cons;
+	  memo_group_cons = subs_cons;
 	  memo_group_slice = List.map (apply_subs sst) c.memo_group_slice; 
 	  memo_group_aset = r }) f in  
   let r = filter_mem_triv r1 in
@@ -256,12 +263,21 @@ and m_apply_par (sst:(spec_var * spec_var) list) f =
 
 and m_apply_par_varperm_x (sst:(spec_var * spec_var) list) f = 
   let r1 = List.map (fun c -> 
-	let r = EMapSV.subs_eset_par(*_debug !print_sv_f*) sst c.memo_group_aset in (*TO CHECK*)
+	let r = EMapSV.subs_eset_par sst c.memo_group_aset in
+  let subs_cons, lv = List.split (List.map (fun d ->
+    let subs_memo = b_apply_subs_varperm sst d.memo_formula in
+    let lv = match snd subs_memo with
+    | None -> []
+    | Some (_, _, le) -> List.concat (List.map (fun e -> CP.afv e) le) 
+    in { d with memo_formula = subs_memo; }, lv) c.memo_group_cons) in
 	{ memo_group_fv = Gen.BList.remove_dups_eq (eq_spec_var) (List.map (fun v-> subst_var_par sst v) c.memo_group_fv); (*TO CHECK: var does not contain VarPerm*)
-	  memo_group_linking_vars = Gen.BList.remove_dups_eq (eq_spec_var) (List.map (fun v-> subst_var_par sst v) c.memo_group_linking_vars);
+	  memo_group_linking_vars = 
+      Gen.BList.remove_dups_eq eq_spec_var
+        ((List.map (fun v -> subst_var_par sst v) c.memo_group_linking_vars) @
+        (List.concat lv));
 	  memo_group_changed = c.memo_group_changed;
 		memo_group_unsat = c.memo_group_unsat; (* TODO: Slicing UNSAT *)
-	  memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_subs_varperm sst d.memo_formula;}) c.memo_group_cons;
+	  memo_group_cons = subs_cons;
 	  memo_group_slice = List.map (apply_subs_varperm sst) c.memo_group_slice; 
 	  memo_group_aset = r }) f in  
   let r = filter_mem_triv r1 in
@@ -1565,8 +1581,18 @@ let memo_check_syn_fast (p,pn,pr_branches) crt_br corr  =
  
 let replace_memo_pure_label nl f = 
   List.map (fun c-> {c with memo_group_slice = List.map (replace_pure_formula_label nl) c.memo_group_slice;}) f
+  
+(* SAT functions *)
+let is_sat_memo_sub_no_complete f with_dupl with_inv t_is_sat =
+  let perf = List.filter (fun c -> c.memo_group_unsat) f in
+  let is_sat m = 
+    let rel_m = AnnoS.get_rel_mem 2 m f in
+    (* let _ = print_endline ("REL_M: " ^ (!print_mp_f rel_m)) in *)
+    let merged_m = fold_mem_lst_gen (mkTrue no_pos) with_dupl with_inv true true rel_m in
+    t_is_sat merged_m
+  in (not (List.exists (fun f -> not (is_sat f)) perf))
  
- (* imply functions *)
+(* IMPLY functions *)
 let memo_impl_fail_vars = ref [] 
  
 let rec mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no =
@@ -1587,7 +1613,7 @@ and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no
   let r = match with_disj with  
     | 0 -> fold_mem_lst_gen (mkTrue no_pos) !no_LHS_prop_drop true false true n_ante
     | 1 -> fold_mem_lst_no_complex (mkTrue no_pos) !no_LHS_prop_drop true n_ante
-    | _ -> fold_mem_lst_with_complex (mkTrue no_pos)     !no_LHS_prop_drop true n_ante in
+    | _ -> fold_mem_lst_with_complex (mkTrue no_pos) !no_LHS_prop_drop true n_ante in
   let _ = Debug.devel_pprint str no_pos in
   let _ = Debug.trace_hprint (add_str "ante" !Cpure.print_formula) r no_pos in
   let _ = Debug.trace_hprint (add_str "conseq" !Cpure.print_formula) conseq no_pos in

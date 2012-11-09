@@ -282,6 +282,7 @@ let common_arguments = [
   ("--slc-sat-slicing", Arg.Set Globals.is_sat_slicing, "Enable slicing before sending formulas to provers");
   (* similar to --force-sat-slice when no memo formula used *) 
   ("--slc-ann-infer", Arg.Set Globals.infer_slicing, "Enable slicing label inference");
+  ("--slc-lvar-infer", Arg.Set Globals.infer_lvar_slicing, "Enable linking variable inference");
   ("--delay-case-sat", Arg.Set Globals.delay_case_sat, "Disable unsat checking for case entailment");
   ("--force-post-sat", Arg.Set Globals.force_post_sat, "Force unsat checking when assuming a postcondition");
   ("--delay-if-sat", Arg.Set Globals.delay_if_sat, "Disable unsat checking for a conditional");

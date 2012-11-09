@@ -168,6 +168,25 @@ let exp_to_spec_var e =
     | Var (sv, _) -> sv
     | _ -> report_error no_pos ("Not a spec var\n")
 
+(* Slicing Utils *)
+(* let linking_var_tbl = ref (Hashtbl.create 10) *)
+let linking_var_tbl = ref []
+
+let rec set_il_formula f il =
+  if not !Globals.do_slicing then f
+  else match f with
+    | BForm (bf, lbl) -> BForm (set_il_b_formula bf il, lbl)
+    | _ -> f
+      
+and set_il_b_formula bf il =
+  let (pf, o_il) = bf in
+  match o_il with
+    | None -> (pf, il)
+    | Some (_, _, l_exp) ->
+      match il with
+        | None -> bf
+        | Some (b, i, le) -> (pf, Some (b, i, le@l_exp))
+
 let print_b_formula = ref (fun (c:b_formula) -> "cpure printer has not been initialized")
 let print_p_formula = ref (fun (c:p_formula) -> "cpure printer has not been initialized")
 let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
@@ -2425,37 +2444,33 @@ and var_in_target v sst = List.fold_left (fun curr -> fun (_,t) -> curr or (eq_s
 
 (*subst everything excluding VarPerm*)
 and b_apply_subs sst bf =
+  let pr = !print_b_formula in
+  Debug.no_1 "b_apply_subs" pr 
+  pr (fun _ -> b_apply_subs_x sst bf) bf
+
+and b_apply_subs_x sst bf =
   let (pf,sl) = bf in
   let npf = match pf with
     | BConst _ -> pf
     | BVar (bv, pos) -> BVar (subs_one sst bv, pos)
-    | Lt (a1, a2, pos) -> Lt (e_apply_subs sst a1,
-	  e_apply_subs sst a2, pos)
-    | Lte (a1, a2, pos) -> Lte (e_apply_subs sst a1,
-	  e_apply_subs sst a2, pos)
-    | Gt (a1, a2, pos) -> Gt (e_apply_subs sst a1,
-	  e_apply_subs sst a2, pos)
-    | Gte (a1, a2, pos) -> Gte (e_apply_subs sst a1,
-	  e_apply_subs sst a2, pos)
-    | SubAnn (a1, a2, pos) -> SubAnn (e_apply_subs sst a1,
-	  e_apply_subs sst a2, pos)
-    | Eq (a1, a2, pos) -> Eq (e_apply_subs sst a1,
-	  e_apply_subs sst a2, pos)
-    | Neq (a1, a2, pos) -> Neq (e_apply_subs sst a1,
-	  e_apply_subs sst a2, pos)
-    | EqMax (a1, a2, a3, pos) -> EqMax (e_apply_subs sst a1,
-	  e_apply_subs sst a2,
-	  e_apply_subs sst a3, pos)
-    | EqMin (a1, a2, a3, pos) -> EqMin (e_apply_subs sst a1,
-	  e_apply_subs sst a2,
-	  e_apply_subs sst a3, pos)
+    | Lt (a1, a2, pos) -> Lt (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+    | Lte (a1, a2, pos) -> Lte (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+    | Gt (a1, a2, pos) -> Gt (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+    | Gte (a1, a2, pos) -> Gte (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+    | SubAnn (a1, a2, pos) -> SubAnn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+    | Eq (a1, a2, pos) -> Eq (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+    | Neq (a1, a2, pos) -> Neq (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+    | EqMax (a1, a2, a3, pos) -> 
+      EqMax (e_apply_subs sst a1, e_apply_subs sst a2, e_apply_subs sst a3, pos)
+    | EqMin (a1, a2, a3, pos) -> 
+      EqMin (e_apply_subs sst a1, e_apply_subs sst a2, e_apply_subs sst a3, pos)
     | BagIn (v, a1, pos) -> BagIn (subs_one sst v, e_apply_subs sst a1, pos)
     | BagNotIn (v, a1, pos) -> BagNotIn (subs_one sst v, e_apply_subs sst a1, pos)
           (* is it ok?... can i have a set of boolean values?... don't think so... *)
     | BagSub (a1, a2, pos) -> BagSub (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | BagMax (v1, v2, pos) -> BagMax (subs_one sst v1, subs_one sst v2, pos)
     | BagMin (v1, v2, pos) -> BagMin (subs_one sst v1, subs_one sst v2, pos)
-  | VarPerm (ct,ls,pos) -> VarPerm (ct,ls,pos) (*substitue VarPerm using b_apply_subs_varperm *)
+    | VarPerm (ct,ls,pos) -> VarPerm (ct,ls,pos) (*substitue VarPerm using b_apply_subs_varperm *)
     | ListIn (a1, a2, pos) -> ListIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
@@ -2465,61 +2480,137 @@ and b_apply_subs sst bf =
         LexVar { t_info with
 				  lex_exp = e_apply_subs_list sst t_info.lex_exp;
 					lex_tmp = e_apply_subs_list sst t_info.lex_tmp; } 
-   in let nsl = match sl with
-	| None -> None
-	| Some (il, lbl, le) -> Some (il, lbl, List.map (fun e -> e_apply_subs sst e) le)
+  in
+  (* Slicing: Add the inferred linking variables into sl field *)
+  (* We also restore the prior inferred information            *)
+  let infer_lvar_enabled = !do_slicing && !infer_lvar_slicing in
+  let fv = bfv bf in
+  let inf_lv = 
+    if infer_lvar_enabled then
+      match pf with
+      | Eq (_, _, pos) ->
+        (* Find all fv of bf that do not appear in linking_var_tbl *)
+        (* If only one var like this then it is also a linking var *)
+        begin let res = List.find_all (fun v1 ->
+          try
+            let v2 = List.assoc v1 sst in
+            (* not (Hashtbl.find !linking_var_tbl (name_of_spec_var v2)) *)
+            not (List.mem (name_of_spec_var v2) !linking_var_tbl)
+          with Not_found -> true 
+        ) fv in
+        match res with
+        | r::[] -> [r]
+        | _ -> []
+        end
+        | _ -> []
+    else [] 
+  in 
+  (* Restore prior inferred linking variables *)
+  let pri_lv =
+    if infer_lvar_enabled then
+      List.fold_left (fun a (v1, v2) ->
+        (* let _ = print_endline ("V1: " ^ (!print_sv v1)) in                                                        *)
+        (* let _ = print_endline ("V2: " ^ (!print_sv v2)) in                                                        *)
+        (* let _ = print_endline ("BF: " ^ (!print_b_formula bf)) in                                                 *)
+        (* let _ = print_endline ("C1: " ^ (string_of_bool (Gen.BList.mem_eq eq_spec_var v1 fv))) in                 *)
+        (* let _ = print_endline ("C2: " ^ (string_of_bool (Hashtbl.mem !linking_var_tbl (name_of_spec_var v2)))) in *)
+        (* let _ = print_endline ("C2: " ^ (string_of_bool (List.mem (name_of_spec_var v2) !linking_var_tbl))) in    *)
+        if (Gen.BList.mem_eq eq_spec_var v1 fv) &&
+           (* (Hashtbl.mem !linking_var_tbl (name_of_spec_var v2))  *)
+           (List.mem (name_of_spec_var v2) !linking_var_tbl)
+        then a @ [v2]
+        else a
+      ) [] sst
+    else [] 
+  in
+  (* print_endline ("PRI LV: " ^ (pr_list !print_sv pri_lv)); *)
+  let inf_sl = match inf_lv @ pri_lv with
+  | [] -> None
+  | _ -> 
+    Some (false, fresh_int (), List.map (fun v -> mkVar v no_pos) (inf_lv @ pri_lv))
+  in
+  let nsl = match sl with
+	| None -> inf_sl
+	| Some (il, lbl, le) -> 
+    let inf_le = match inf_sl with
+    | None -> []
+    | Some (_, _, le) -> le 
+    in Some (il, lbl, inf_le @ List.map (fun e ->
+      (* With a substitution (v1, v2),      *)
+      (* if v1 is a linking variable        *)
+      (* then v2 is also a linking variable *)
+      let _ = 
+        if infer_lvar_enabled then
+          match e with
+          | Var (SpecVar _ as v1, _) ->
+            (try
+              let v2 = List.assoc v1 sst in
+              (* print_endline ("ADD LV: " ^ (!print_sv v2)); *)
+              (* Hashtbl.add !linking_var_tbl (name_of_spec_var v2) true *)
+              linking_var_tbl := (name_of_spec_var v2)::!linking_var_tbl
+            with Not_found -> ()) 
+          | _ -> () 
+        else () in 
+      e_apply_subs sst e) le)
   in (npf,nsl)
 		 
 (* and subs_one sst v = List.fold_left (fun old -> fun (fr,t) -> if (eq_spec_var fr v) then t else old) v sst  *)
 
 (*subst everything including VarPerm*)
-and b_apply_subs_varperm sst bf =
-  let (pf,sl) = bf in
-  let npf = match pf with
-  | BConst _ -> pf
-  | BVar (bv, pos) -> BVar (subs_one sst bv, pos)
-  | Lt (a1, a2, pos) -> Lt (e_apply_subs sst a1,
-	e_apply_subs sst a2, pos)
-  | Lte (a1, a2, pos) -> Lte (e_apply_subs sst a1,
-	e_apply_subs sst a2, pos)
-  | Gt (a1, a2, pos) -> Gt (e_apply_subs sst a1,
-	e_apply_subs sst a2, pos)
-  | Gte (a1, a2, pos) -> Gte (e_apply_subs sst a1,
-	e_apply_subs sst a2, pos)
-  | SubAnn (a1, a2, pos) -> SubAnn (e_apply_subs sst a1,
-	e_apply_subs sst a2, pos)
-  | Eq (a1, a2, pos) -> Eq (e_apply_subs sst a1,
-	e_apply_subs sst a2, pos)
-  | Neq (a1, a2, pos) -> Neq (e_apply_subs sst a1,
-	e_apply_subs sst a2, pos)
-  | EqMax (a1, a2, a3, pos) -> EqMax (e_apply_subs sst a1,
-	e_apply_subs sst a2,
-	e_apply_subs sst a3, pos)
-  | EqMin (a1, a2, a3, pos) -> EqMin (e_apply_subs sst a1,
-	e_apply_subs sst a2,
-	e_apply_subs sst a3, pos)
-  | BagIn (v, a1, pos) -> BagIn (subs_one sst v, e_apply_subs sst a1, pos)
-  | BagNotIn (v, a1, pos) -> BagNotIn (subs_one sst v, e_apply_subs sst a1, pos)
-        (* is it ok?... can i have a set of boolean values?... don't think so... *)
-  | BagSub (a1, a2, pos) -> BagSub (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-  | BagMax (v1, v2, pos) -> BagMax (subs_one sst v1, subs_one sst v2, pos)
-  | BagMin (v1, v2, pos) -> BagMin (subs_one sst v1, subs_one sst v2, pos)
-  | VarPerm (ct,ls,pos) ->
-      let ls1 = List.map (subs_one sst) ls in
-      VarPerm (ct,ls1,pos)
-  | ListIn (a1, a2, pos) -> ListIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-  | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-  | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-  | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-  | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (* An Hoa *)
-  | LexVar t_info -> 
-      LexVar { t_info with
-		  lex_exp = e_apply_subs_list sst t_info.lex_exp;
-		  lex_tmp = e_apply_subs_list sst t_info.lex_tmp; } 
-  in let nsl = match sl with
-	| None -> None
-	| Some (il, lbl, le) -> Some (il, lbl, List.map (fun e -> e_apply_subs sst e) le)
-  in (npf,nsl)
+and b_apply_subs_varperm sst bf = 
+  let (pf, sl) = bf in
+  match pf with
+  | VarPerm (ct,ls,pos) ->            
+    let ls1 = List.map (subs_one sst) ls in (VarPerm (ct,ls1,pos), sl) (* TODO: Slicing *)
+  | _ -> b_apply_subs sst bf
+         
+(* and b_apply_subs_varperm sst bf =                                                        *)
+(*   let (pf,sl) = bf in                                                                    *)
+(*   let npf = match pf with                                                                *)
+(*   | BConst _ -> pf                                                                       *)
+(*   | BVar (bv, pos) -> BVar (subs_one sst bv, pos)                                        *)
+(*   | Lt (a1, a2, pos) -> Lt (e_apply_subs sst a1,                                         *)
+(* 	e_apply_subs sst a2, pos)                                                               *)
+(*   | Lte (a1, a2, pos) -> Lte (e_apply_subs sst a1,                                       *)
+(* 	e_apply_subs sst a2, pos)                                                               *)
+(*   | Gt (a1, a2, pos) -> Gt (e_apply_subs sst a1,                                         *)
+(* 	e_apply_subs sst a2, pos)                                                               *)
+(*   | Gte (a1, a2, pos) -> Gte (e_apply_subs sst a1,                                       *)
+(* 	e_apply_subs sst a2, pos)                                                               *)
+(*   | SubAnn (a1, a2, pos) -> SubAnn (e_apply_subs sst a1,                                 *)
+(* 	e_apply_subs sst a2, pos)                                                               *)
+(*   | Eq (a1, a2, pos) -> Eq (e_apply_subs sst a1,                                         *)
+(* 	e_apply_subs sst a2, pos)                                                               *)
+(*   | Neq (a1, a2, pos) -> Neq (e_apply_subs sst a1,                                       *)
+(* 	e_apply_subs sst a2, pos)                                                               *)
+(*   | EqMax (a1, a2, a3, pos) -> EqMax (e_apply_subs sst a1,                               *)
+(* 	e_apply_subs sst a2,                                                                    *)
+(* 	e_apply_subs sst a3, pos)                                                               *)
+(*   | EqMin (a1, a2, a3, pos) -> EqMin (e_apply_subs sst a1,                               *)
+(* 	e_apply_subs sst a2,                                                                    *)
+(* 	e_apply_subs sst a3, pos)                                                               *)
+(*   | BagIn (v, a1, pos) -> BagIn (subs_one sst v, e_apply_subs sst a1, pos)               *)
+(*   | BagNotIn (v, a1, pos) -> BagNotIn (subs_one sst v, e_apply_subs sst a1, pos)         *)
+(*         (* is it ok?... can i have a set of boolean values?... don't think so... *)      *)
+(*   | BagSub (a1, a2, pos) -> BagSub (e_apply_subs sst a1, e_apply_subs sst a2, pos)       *)
+(*   | BagMax (v1, v2, pos) -> BagMax (subs_one sst v1, subs_one sst v2, pos)               *)
+(*   | BagMin (v1, v2, pos) -> BagMin (subs_one sst v1, subs_one sst v2, pos)               *)
+(*   | VarPerm (ct,ls,pos) ->                                                               *)
+(*       let ls1 = List.map (subs_one sst) ls in                                            *)
+(*       VarPerm (ct,ls1,pos)                                                               *)
+(*   | ListIn (a1, a2, pos) -> ListIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)       *)
+(*   | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_subs sst a1, e_apply_subs sst a2, pos) *)
+(*   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)   *)
+(*   | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)   *)
+(*   | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (* An Hoa *)  *)
+(*   | LexVar t_info ->                                                                     *)
+(*       LexVar { t_info with                                                               *)
+(* 		  lex_exp = e_apply_subs_list sst t_info.lex_exp;                                     *)
+(* 		  lex_tmp = e_apply_subs_list sst t_info.lex_tmp; }                                   *)
+(*   in let nsl = match sl with                                                             *)
+(* 	| None -> None                                                                          *)
+(* 	| Some (il, lbl, le) -> Some (il, lbl, List.map (fun e -> e_apply_subs sst e) le)       *)
+(*   in (npf,nsl)                                                                           *)
 
 and subs_one sst v = 
   let rec helper sst v = match sst with
@@ -6954,7 +7045,7 @@ and fv_with_slicing_label_new_1 f = (* OUT: (non-linking vars, linking vars) of 
   match f with
 	| BForm (bf, _) -> bfv_with_slicing_label bf
 	| And (f1, f2, _) ->
-	    let (vs1, lkl1) = fv_with_slicing_label_new_1 f1 in
+	  let (vs1, lkl1) = fv_with_slicing_label_new_1 f1 in
 		let (vs2, lkl2) = fv_with_slicing_label_new_1 f2 in
 		let lkl = Gen.BList.remove_dups_eq eq_spec_var (lkl1 @ lkl2) in
 		let n_vs1 = Gen.BList.difference_eq eq_spec_var vs1 lkl2 in

@@ -702,7 +702,7 @@ let rec pr_b_formula (e:P.b_formula) =
   let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in
   let f_b_no e =  pr_bracket (fun x -> true) pr_formula_exp e in
   let (pf,il) = e in
-  pr_slicing_label il;
+  (* pr_slicing_label il; *)
   match pf with
     | P.LexVar t_info -> 
       fmt_string (string_of_term_ann t_info.CP.lex_ann);

@@ -780,7 +780,7 @@ and find_lexp_exp (e: exp) ls =
 	| AConst _
 	| Tsconst _
 	| FConst _ -> []
-    | Ann_Exp(e,_) -> find_lexp_exp e ls
+  | Ann_Exp(e,_) -> find_lexp_exp e ls
 	| Add (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| Subtract (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| Mult (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -1270,4 +1270,24 @@ let rec typ_of_exp (e: exp) : typ =
       let len = List.length ex_list in
       Globals.Array (ty, len)
   (* Func expressions *)
-  | Func _                    -> Gen.Basic.report_error pos "typ_of_exp doesn't support Func";
+  | Func _                    -> Gen.Basic.report_error pos "typ_of_exp doesn't support Func"
+    
+(* Slicing Utils *)
+let rec set_il_formula f il =
+  match f with
+    | BForm (bf, lbl) -> BForm (set_il_b_formula bf il, lbl)
+    | _ -> f
+      
+and set_il_b_formula bf il =
+  let (pf, o_il) = bf in
+  match o_il with
+    | None -> (pf, il)
+    | Some (_, _, l_exp) ->
+      match il with
+        | None -> bf
+        | Some (b, i, le) -> (pf, Some (b, i, le@l_exp))
+      
+and set_il_exp exp il =
+  let (pe, _) = exp in (pe, il)
+  
+  

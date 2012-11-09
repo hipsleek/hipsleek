@@ -471,30 +471,7 @@ let peek_array_type =
              |[_;OSQUARE,_] -> (* An Hoa*) (*let _ = print_endline "Array found!" in*) ()
              | _ -> raise Stream.Failure)
 
-(* Slicing Utils *)
-let rec set_il_formula f il =
-  match f with
-	| P.BForm (bf, lbl) -> P.BForm (set_il_b_formula bf il, lbl)
-	| _ -> f
-
-(* TOCHECK : not sure why Debug.ml module cannot be called from here *)
-and set_il_b_formula bf il =
- DD.no_1 "set_il_b_formula" Iprinter.string_of_b_formula Iprinter.string_of_b_formula
-	(fun bf -> set_il_b_formula_x bf il) bf
-	  
-and set_il_b_formula_x bf il =
-  let (pf, o_il) = bf in
-  match o_il with
-	| None -> (pf, il)
-	| Some (_, _, l_exp) ->
-	  match il with
-		| None -> bf
-		| Some (b, i, le) -> (pf, Some (b, i, le@l_exp))
-	  
-and set_il_exp exp il =
-  let (pe, _) = exp in (pe, il)
-
-and contain_vars_pure_double f =
+let contain_vars_pure_double f =
   match f with
 	| Pure_f _ -> false
 	| Pure_c pc -> P.contain_vars_exp pc
@@ -510,12 +487,12 @@ and contain_vars_pure_double f =
 (* 	pr_pure_double *)
 (* 	set_slicing_utils_pure_double_x f il *)
 				   
-and set_slicing_utils_pure_double f il =
+let set_slicing_utils_pure_double f il =
   (*
 	il = true  -> Pure_f pf is a linking constraint
 	il = false -> Pure_f pf is not a linking constraint,
 	              but we need to find its linking variables
-                  or linking expressions in !F.linking_exp_list,
+                or linking expressions in !F.linking_exp_list,
 	              if any. Those linking variables/expressions
 	              were added into the list at Pure_c cases.
   *)
@@ -524,7 +501,7 @@ and set_slicing_utils_pure_double f il =
 	  | Pure_f pf ->
 		let ls = P.find_lexp_formula pf !Ipure.linking_exp_list in
 		if (ls == [] && not il) then f
-		else Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), ls)))
+		else Pure_f (P.set_il_formula pf (Some (il, Globals.fresh_int(), ls)))
 	  (*if il then Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), [])))
 	  else
 		let ls = P.find_lexp_formula pf !Ipure.linking_exp_list in
@@ -533,7 +510,7 @@ and set_slicing_utils_pure_double f il =
 	| Pure_c pc -> let _ = Hashtbl.add !Ipure.linking_exp_list pc 0 in f
   else f
 
-and get_heap_ann annl : F.ann = 
+let rec get_heap_ann annl : F.ann = 
   match annl with
     | (Some a) :: r -> a
     | None :: r -> get_heap_ann r

@@ -2161,7 +2161,7 @@ let is_sat_memo_sub_no_slicing (f : memo_pure) sat_subno with_dupl with_inv : bo
   else (* Improve completeness of SAT checking *)
 	  let f_l = MCP.fold_mem_lst_to_lst_gen_for_sat_slicing f with_dupl with_inv true true in
 	  not (List.exists (fun f -> not (is_sat_sub_no f sat_subno)) f_l)
-
+    
 let is_sat_memo_sub_no_slicing (f : memo_pure) sat_subno with_dupl with_inv : bool =
   Debug.no_1 "is_sat_memo_sub_no_slicing"
   Cprinter.string_of_memo_pure_formula
@@ -2176,26 +2176,26 @@ let rec is_sat_memo_sub_no_ineq_slicing (mem : memo_pure) sat_subno with_dupl wi
 
 and is_sat_memo_sub_no_ineq_slicing_x1 (mem : memo_pure) sat_subno with_dupl with_inv : bool =
   let is_sat_one_slice mg =
-	if (MCP.is_ineq_linking_memo_group mg)
-	then (* mg is a linking inequality *)
-	  true
-	else
-	  let aset = mg.memo_group_aset in
-	  let apart = EMapSV.partition aset in
-	  (*let _ = print_string ("\nis_sat_memo_sub_no_ineq_slicing: apart: " ^ (pr_list Cprinter.string_of_spec_var_list apart) ^ "\n") in*)
-	  let r = List.fold_left (fun acc p -> if acc then acc else MCP.exists_contradiction_eq mem p) false apart in
-	  (*let _ = print_string ("\nis_sat_memo_sub_no_ineq_slicing: r: " ^ (string_of_bool r) ^ "\n") in*)
-	  if r then false (* found an equality contradiction *)
-	  else
-		
-		let related_ineq = List.find_all (fun img ->
-		  (MCP.is_ineq_linking_memo_group img) && (Gen.BList.subset_eq eq_spec_var img.memo_group_fv mg.memo_group_fv)) mem in
-		let f = join_conjunctions (MCP.fold_mem_lst_to_lst (mg::related_ineq) with_dupl with_inv true) in
-		
-		(*
-		let f = MCP.fold_slice_gen mg with_dupl with_inv true true in
-		*)
-		is_sat_sub_no f sat_subno
+  	if (MCP.is_ineq_linking_memo_group mg)
+  	then (* mg is a linking inequality *)
+  	  true
+  	else
+  	  let aset = mg.memo_group_aset in
+  	  let apart = EMapSV.partition aset in
+  	  (*let _ = print_string ("\nis_sat_memo_sub_no_ineq_slicing: apart: " ^ (pr_list Cprinter.string_of_spec_var_list apart) ^ "\n") in*)
+  	  let r = List.fold_left (fun acc p -> if acc then acc else MCP.exists_contradiction_eq mem p) false apart in
+  	  (*let _ = print_string ("\nis_sat_memo_sub_no_ineq_slicing: r: " ^ (string_of_bool r) ^ "\n") in*)
+  	  if r then false (* found an equality contradiction *)
+  	  else
+  		
+  		let related_ineq = List.find_all (fun img ->
+  		  (MCP.is_ineq_linking_memo_group img) && (Gen.BList.subset_eq eq_spec_var img.memo_group_fv mg.memo_group_fv)) mem in
+  		let f = join_conjunctions (MCP.fold_mem_lst_to_lst (mg::related_ineq) with_dupl with_inv true) in
+  		
+  		(*
+  		let f = MCP.fold_slice_gen mg with_dupl with_inv true true in
+  		*)
+  		is_sat_sub_no f sat_subno
   in
   List.fold_left (fun acc mg -> if not acc then acc else is_sat_one_slice mg) true mem
 (*
@@ -2311,8 +2311,12 @@ and is_sat_memo_sub_no_ineq_slicing_x2 (mem : memo_pure) sat_subno with_dupl wit
 
 let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =
   (* Modified version with UNSAT optimization *)
-  if !do_slicing && !multi_provers then is_sat_memo_sub_no_slicing f sat_subno with_dupl with_inv
-  else if !do_slicing & !opt_ineq then is_sat_memo_sub_no_ineq_slicing f sat_subno with_dupl with_inv
+  if !do_slicing && !multi_provers then 
+    is_sat_memo_sub_no_slicing f sat_subno with_dupl with_inv
+  else if !do_slicing && !opt_ineq then 
+    is_sat_memo_sub_no_ineq_slicing f sat_subno with_dupl with_inv
+  else if !do_slicing && !infer_lvar_slicing then
+    MCP.is_sat_memo_sub_no_complete f with_dupl with_inv (fun f -> is_sat_sub_no f sat_subno)
   else is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv
 
 let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =

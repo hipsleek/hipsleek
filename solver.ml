@@ -417,7 +417,7 @@ and xpure_heap_new (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (mix
         merge dlist) diff.mem_formula_mset in
     let diff_l = CP.conj_of_list diff_l no_pos in
     let mf = MCP.merge_mems mf (MCP.mix_of_pure diff_l) true in
-    (mf,svl,{diff with mem_formula_mset = []})
+    (mf,svl,{mem_formula_mset = []})
 
 and xpure_heap_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (mix_formula * CP.spec_var list * CF.mem_formula) =
   (* let h0 = merge_partial_h_formula h0 in *) (*this will not work with frac permissions*)
