@@ -236,11 +236,11 @@ let common_arguments = [
     (*("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");*)
     ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
     ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
-    ("--enable_redundant_elim", Arg.Set Globals.enable_redundant_elim, "enable redundant elimination under eps");
+    ("--enable-redundant-elim", Arg.Set Globals.enable_redundant_elim, "enable redundant elimination under eps");
     ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
     (* ("--dap", Arg.Clear Globals.disable_aggressive_prune, "never use aggressive prunning"); *)
-    (* ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for pruning"); *)
-    ("--dfp",Arg.Clear Globals.enable_fast_imply, " disable syntactic imply only for --esp");
+    ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for --eps pruning; incomplete");
+    (* ("--dfp",Arg.Clear Globals.enable_fast_imply, " disable syntactic imply only for --eps"); *)
     ("--memo_print", Arg.Set_int Globals.memo_verbosity,
     "level of detail in memo printing 0-verbose 1-brief 2-standard(default)");
     ("--increm",Arg.Set Globals.enable_incremental_proving, " enable incremental proving ");
