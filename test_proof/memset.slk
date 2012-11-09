@@ -6,6 +6,6 @@ data cell{
 
 // checkentail   x::cell<_>*y::cell<_> & x=y  |- false .
 
-checkentail y=1 & y>0 & x>1 |- x>6 .
+checkentail y=1 & y>0 & x>1 |- a>a .
 
 // --enable-slicing --delay-proving-sat --enable-logging-txt 

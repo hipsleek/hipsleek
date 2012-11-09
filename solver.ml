@@ -226,7 +226,7 @@ a : Cformula.list_failesc_context
 *)  
 let heap_entail_agressive_prunning (crt_heap_entailer:'a -> 'b) (prune_fct:'a -> 'a) (res_checker:'b-> bool) (argument:'a) :'b =
   begin
-   Globals.prune_with_slice := !Globals.enable_aggressive_prune;
+   (* Globals.prune_with_slice := !Globals.enable_aggressive_prune; *)
    let first_res = crt_heap_entailer argument in
    first_res
   end
@@ -944,7 +944,8 @@ and prune_pred_struc_x prog (simp_b:bool) f =
       (*let _ = print_string ("prunning: "^(Cprinter.string_of_struc_formula f)^"\n") in*)
       
 
-and prune_preds_x prog (simp_b:bool) (f:formula):formula =   
+and prune_preds_x prog (simp_b:bool) (f:formula):formula =
+  let simp_b = simp_b && !Globals.enable_redundant_elim in 
   let imply_w f1 f2 = let r,_,_ = TP.imply f1 f2 "elim_rc" false None in r in   
   let f_p_simp c = if simp_b then MCP.elim_redundant(*_debug*) (imply_w,TP.simplify_a 3) c else c in
   let rec fct i op oh = if (i== !Globals.prune_cnt_limit) then (op,oh)
@@ -1124,7 +1125,7 @@ and filter_prun_cond old_mem prun_cond rem_br = List.fold_left (fun (yes_prune, 
 	  | Some y_p ->(Gen.Profiling.inc_counter "syn_memo_hit";(y_p@yes_prune, no_prune,new_mem))
           | None -> (*decide if i ^ a = false*)
 		let imp = 
-		  let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos), None) [corr] false true !Globals.prune_with_slice in
+		  let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos), None) [corr] false true !Globals.enable_aggressive_prune in
                   let r = if (!Globals.enable_fast_imply) then false
                   else 
                     let r1,_,_ = TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true None in
@@ -5688,6 +5689,8 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
           begin
             DD.devel_pprint ">>>>>> imply_mix_formula: memo <<<<<<" no_pos;
             (*print_endline "imply_mix_formula: first";*)
+            if (MCP.isConstMFalse conseq_m) then (false,[],None)
+            else 
             let r1,r2,r3 = MCP.imply_memo 1 a c TP.imply imp_no in
             if r1 || not(!Globals.smart_xpure) then (r1,r2,r3) 
             else MCP.imply_memo 2 a1 c TP.imply imp_no 
@@ -6941,7 +6944,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               let rec prune_helper c =
                 match c with
                   | OCtx (c1,c2) -> OCtx(prune_helper c1, prune_helper c2)
-                  | Ctx es -> Ctx ({es with es_formula = prune_preds prog true es.es_formula})
+                  | Ctx es -> Ctx ({es with es_formula = prune_preds prog false (*true*) es.es_formula})
               in
               (* TODO: prune_helper slows down the spaguetti benchmark *)
 	      let res_rs, prf1 = heap_entail_one_context prog is_folding (prune_helper ctx1) (*ctx1*) conseq None pos in
