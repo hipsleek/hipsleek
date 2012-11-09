@@ -2142,7 +2142,8 @@ let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool 
   if !f_2_slice || !dis_slicing then
 		let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in
 		(is_sat_sub_no (CP.join_conjunctions f_lst) sat_subno)
-  else 
+  else if (MCP.isConstMFalse (MemoF f)) then false
+  else
 		let f = if !do_slicing
 			(* Slicing: Only check changed slice *)
 			then List.filter (fun c -> c.memo_group_unsat) f
