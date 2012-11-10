@@ -5623,7 +5623,7 @@ let type_of_formula (f: formula) : formula_type =
         let h = b.formula_base_heap in
         let hs = split_star_conjunctions h in
         if ((List.length hs)>1) then Complex 
-        else Simple
+        else Simple 
     | Exists e ->
         let h = e.formula_exists_heap in
         let hs = split_star_conjunctions h in

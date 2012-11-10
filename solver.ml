@@ -4039,6 +4039,12 @@ and coer_target_a prog (coer : coercion_decl) (node:CF.h_formula) (target_rhs : 
   let coer_lhs_heap, coer_lhs_guard,coer_lhs_flow, _, _ = split_components coer_lhs in
   let rhs_heap, rhs_pure, rhs_flow, _ ,_ = split_components target_rhs in
   let lhs_heap, lhs_pure, lhs_flow, _ ,_ = split_components lhs in
+  let coer_lhs_heap = if(coer.coercion_case = Cast.Ramify) then (match coer_lhs_heap with
+  			| StarMinus({h_formula_starminus_h1 = h1;
+				     h_formula_starminus_h2 = h2}) -> h1
+  			| _ -> coer_lhs_heap) 
+  else coer_lhs_heap  
+  in
   (* node - the node to which we want to apply the coercion rule *)
   (* need to find the substitution *)
   match node, coer_lhs_heap with
@@ -7949,8 +7955,53 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
   let coer_lhs = coer.coercion_head in
   let coer_rhs = coer.coercion_body in
   let lhs_heap, lhs_guard, lhs_flow, _, lhs_a = split_components coer_lhs in
+  (*let _ = print_string("coer_rhs : "^(Cprinter.string_of_formula coer_rhs)^"\n") in*)
+  let coer_lhs,coer_rhs,lhs_heap,(i,f) = if(coer.coercion_case = Cast.Ramify) then
+	  let lhs_hf,lhs_p,lhs_fl,lhs_t,lhs_a = split_components f in
+	  let lhs_h,_,_,_,_  = CF.extr_formula_base lhs_b in
+	  let h2_node = Mem.find_node_starminus lhs_h (CF.get_node_var node) in
+	  let h2_node,lhs_hf = (match h2_node with
+	    	| Some(v) -> v,Mem.drop_node_h_formula lhs_hf (CF.get_node_var v)
+	    	| None  -> CF.HEmp,lhs_hf) in
+	    let coer_lhs_starminus_node,lhs_heap = (match lhs_heap with
+		  			| StarMinus({h_formula_starminus_h1 = h1;
+						     h_formula_starminus_h2 = h2}) -> h2,h1
+  					| _ -> lhs_heap,lhs_heap) in
+  	    (*let _ = print_string("h2_node : "^(Cprinter.string_of_h_formula h2_node)^"\n") in
+      	    let _ = print_string("coer_lhs_starminus_node : "^(Cprinter.string_of_h_formula coer_lhs_starminus_node)^"\n") in*)
+            (match h2_node, coer_lhs_starminus_node with
+    		| ViewNode ({ h_formula_view_node = p1;
+	 	  h_formula_view_name = c1;
+	  	  h_formula_view_origins = origs;
+	 	  h_formula_view_perm = perm1;
+	 	  h_formula_view_arguments = ps1}),
+	  	  ViewNode ({h_formula_view_node = p2;
+	  	  h_formula_view_name = c2;
+	  	  h_formula_view_perm = perm2;
+	  	  h_formula_view_arguments = ps2}) 
+    		| DataNode ({ h_formula_data_node = p1;
+		  h_formula_data_name = c1;
+		  h_formula_data_origins = origs;
+		  h_formula_data_perm = perm1;
+		  h_formula_data_arguments = ps1}),
+		  DataNode ({h_formula_data_node = p2;
+		  h_formula_data_name = c2;
+		  h_formula_data_perm = perm2;
+		  h_formula_data_arguments = ps2}) when c1=c2 ->
+		        (* apply the substitution *) 
+	        	let coer_rhs_new = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs in
+		        let coer_lhs_new = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_lhs in 
+		        let f_new = mkBase lhs_hf lhs_p lhs_t lhs_fl lhs_a pos in		        
+		        coer_lhs_new,coer_rhs_new,lhs_heap,(1,f_new)
+		 | _ -> coer_lhs,coer_rhs,lhs_heap,(0, mkTrue (mkTrueFlow ()) no_pos))
+	else coer_lhs,coer_rhs,lhs_heap,(1,f) in
+  if i == 0 then (0,f)
+  else
+  (* node - the node to which we want to apply the coercion rule *)
+  (* need to find the substitution *)
+  (*let _ = print_string("coer_lhs_new : "^(Cprinter.string_of_formula coer_lhs)^"\n") in*)
+  let _, lhs_guard, lhs_flow, _, lhs_a = split_components coer_lhs in
   let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in  (* TODO : check with_dupl, with_inv *)
-
   (*SIMPLE lhs*)
   match node, lhs_heap with (*node -> current heap node | lhs_heap -> head of the coercion*)
     | ViewNode ({ h_formula_view_node = p1;
@@ -8236,7 +8287,19 @@ and apply_left_coercion estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_t 
       *)
 and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode lhs_b rhs_b c1 is_folding pos=
   (*left-coercion can be simple or complex*)
-  if (coer.coercion_case = Cast.Simple) then
+  (*let resth1 = if (coer.coercion_case = Cast.Ramify) then
+    	let _ = print_string("anode = "^(Cprinter.string_of_h_formula anode)^"\n") in
+    	let _ = print_string("lhs_b = "^(Cprinter.string_of_formula_base lhs_b)^"\n") in
+    	let _ = print_string("resth1 = "^(Cprinter.string_of_h_formula resth1)^"\n") in
+    	let lhs_h,lhs_p,lhs_t,lhs_fl,lhs_a = CF.extr_formula_base lhs_b in
+    	let h2_var_starminus = Mem.find_node_starminus lhs_h (CF.get_node_var anode) in
+    	match h2_var_starminus with
+    	| Some(v) -> Mem.drop_node_h_formula resth1 v
+    	| None  -> resth1
+  	else resth1
+  in*)
+  if (coer.coercion_case = Cast.Simple || coer.coercion_case = Cast.Ramify) then
+    (*let _ = print_string("resth1 = "^(Cprinter.string_of_h_formula resth1)^"\n") in*)
     (*simple lemmas with simple lhs with single node*)
     let lhs_h,lhs_p,lhs_t,lhs_fl,lhs_a = CF.extr_formula_base lhs_b in
     let f = mkBase resth1 lhs_p lhs_t lhs_fl lhs_a pos in
@@ -8804,7 +8867,8 @@ and normalize_formula_w_coers_x prog estate (f:formula) (coers:coercion_decl lis
         match c.coercion_case with
           | Cast.Simple -> false
           | Cast.Complex -> false
-		  | Cast.Normalize false -> false
+          | Cast.Ramify -> false
+	  | Cast.Normalize false -> false
           | Cast.Normalize true -> true) coers
     in
      (*let _ = print_string ("normalize_formula_w_coers: "  

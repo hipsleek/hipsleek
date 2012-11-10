@@ -38,7 +38,7 @@ slseg<n,sm,lg,R,p> == self = p & R = {} & n = 0 & sm <= lg
 	
 lemma self::sll<n,sm,lg,R> -> self::ll<n,R>;
 
-lemma self::ll<n,R> <-> self::lseg<n,R,p>;
+lemma self::ll<n,R> -> self::lseg<n,R,p>;
 
 void overlaid_insert(ref node x, ref node s,int v)
 requires x::ll<n,R> & s::sll<n,sm,lg,R>

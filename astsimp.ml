@@ -1866,8 +1866,15 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
             match head with
               | CF.ViewNode vn -> vn.CF.h_formula_view_name
               | CF.DataNode dn -> dn.CF.h_formula_data_name
+              | CF.StarMinus {CF.h_formula_starminus_h1 = h1;
+		CF.h_formula_starminus_h2 = h2;
+		CF.h_formula_starminus_pos = pos} -> (match h1 with
+					              | CF.ViewNode vn -> vn.CF.h_formula_view_name
+					              | CF.DataNode dn -> dn.CF.h_formula_data_name
+					              | _ -> let _ = 
+					              print_string "[astimp] Warning: head node of ramification is neither a view node nor a data node\n" in "")
               | _ -> 
-                    let _ = print_string "[astsimp] Warning: lhs head node of a coercion is neither a view node nor a data node \n" in 
+                    let _ = print_string "[astsimp] Warning: lhs head node of a coercion is neither a view node nor a data node\n" in 
                     ""
           else
             let _ = print_string "[astsimp] Warning: lhs of a coercion is neither simple or complex\n" in 

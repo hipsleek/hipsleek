@@ -2193,6 +2193,7 @@ let string_of_coercion_type (t:Cast.coercion_type) = match t with
 let string_of_coercion_case (t:Cast.coercion_case) = match t with
   | Cast.Simple -> "Simple"
   | Cast.Complex -> "Complex"
+  | Cast.Ramify -> "Ramify"
   | Cast.Normalize b-> "Normalize "^(string_of_bool b)
     (* coercion_univ_vars : P.spec_var list; (\* list of universally quantified variables. *\) *)
 let string_of_coerc_opt op c = 

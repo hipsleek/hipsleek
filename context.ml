@@ -471,7 +471,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
     | HTrue -> []
     | HFalse -> []
     | HEmp -> []
-    | StarMinus _ 
+    (*| StarMinus _ *)
     | Hole _ -> []
     | DataNode ({h_formula_data_node = p1; 
 		         h_formula_data_imm = imm1;
@@ -529,6 +529,18 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res1:"  ^ helper0 res1) in *)
 	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res2:"  ^ helper0 res2) in  *)
           res1 @ res2
+    | StarMinus ({h_formula_starminus_h1 = f1;
+	  h_formula_starminus_h2 = f2;
+	  h_formula_starminus_pos = pos}) ->
+          let l1 = helper f1 in
+          let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkStarMinusH lhs1 f2 pos 12 , node1, hole1, match1)) l1 in  
+          let l2 = helper f2 in
+          let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkStarMinusH f1 lhs2 pos 13, node2, hole2, match2)) l2 in
+	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x f:"  ^ (Cprinter.string_of_h_formula f)) in *)
+	  (* let helper0 lst = List.fold_left (fun res (a,_,_,_) -> res ^ (Cprinter.string_of_h_formula a) ) "" lst in *)
+	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res1:"  ^ helper0 res1) in *)
+	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res2:"  ^ helper0 res2) in  *)
+          res1 @ res2          
     | Conj({h_formula_conj_h1 = f1;
 	   h_formula_conj_h2 = f2;
 	   h_formula_conj_pos = pos}) ->  if (!Globals.allow_mem) then 

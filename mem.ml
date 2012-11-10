@@ -512,6 +512,62 @@ let rec split_heap (h:CF.h_formula) : (CF.h_formula * CF.h_formula) =
 		   else (h,CF.HEmp)
 	| _ -> (h, CF.HEmp)
 
+let rec drop_node_h_formula (h:CF.h_formula) (sv:CP.spec_var) : (CF.h_formula) = 
+match h with
+	| CF.DataNode _ 
+	| CF.ViewNode _ -> if CP.eq_spec_var (CF.get_node_var h) sv then CF.HEmp else h
+	| CF.Conj({CF.h_formula_conj_h1 = h1;
+		   CF.h_formula_conj_h2 = h2;
+		   CF.h_formula_conj_pos = pos}) ->
+		   CF.mkConjH (drop_node_h_formula h1 sv) (drop_node_h_formula h2 sv) pos
+	| CF.ConjStar({CF.h_formula_conjstar_h1 = h1;
+		   CF.h_formula_conjstar_h2 = h2;
+		   CF.h_formula_conjstar_pos = pos})->
+		   CF.mkConjStarH (drop_node_h_formula h1 sv) (drop_node_h_formula h2 sv) pos
+	| CF.ConjConj({CF.h_formula_conjconj_h1 = h1;
+		   CF.h_formula_conjconj_h2 = h2;
+		   CF.h_formula_conjconj_pos = pos}) ->
+		   CF.mkConjConjH (drop_node_h_formula h1 sv) (drop_node_h_formula h2 sv) pos		   		   
+  	| CF.Phase({CF.h_formula_phase_rd = h1;
+		    CF.h_formula_phase_rw = h2;
+		    CF.h_formula_phase_pos = pos}) -> 
+		    CF.mkPhaseH (drop_node_h_formula h1 sv) (drop_node_h_formula h2 sv) pos
+	| CF.Star({CF.h_formula_star_h1 = h1;
+		   CF.h_formula_star_h2 = h2;
+		   CF.h_formula_star_pos = pos}) ->
+ 		   CF.mkStarH (drop_node_h_formula h1 sv) (drop_node_h_formula h2 sv) pos 53
+	| _ -> h
+
+let rec find_node_starminus (h:CF.h_formula) (sv:CP.spec_var) : CF.h_formula option = 
+match h with
+	| CF.Conj({CF.h_formula_conj_h1 = h1;
+		   CF.h_formula_conj_h2 = h2;
+		   CF.h_formula_conj_pos = pos}) 
+	| CF.ConjStar({CF.h_formula_conjstar_h1 = h1;
+		   CF.h_formula_conjstar_h2 = h2;
+		   CF.h_formula_conjstar_pos = pos})
+	| CF.ConjConj({CF.h_formula_conjconj_h1 = h1;
+		   CF.h_formula_conjconj_h2 = h2;
+		   CF.h_formula_conjconj_pos = pos})	   		   
+  	| CF.Phase({CF.h_formula_phase_rd = h1;
+		    CF.h_formula_phase_rw = h2;
+		    CF.h_formula_phase_pos = pos})
+	| CF.Star({CF.h_formula_star_h1 = h1;
+		   CF.h_formula_star_h2 = h2;
+		   CF.h_formula_star_pos = pos}) ->
+		   let sv1 = find_node_starminus h1 sv in
+		   let sv2 = find_node_starminus h2 sv in
+		   (match sv1,sv2 with
+		   | Some(_), Some(_) -> sv1 (*shouldn't happen*)
+		   | Some(_),None  -> sv1
+		   | None, Some(_) -> sv2
+		   | None,None -> None)
+	| CF.StarMinus ({CF.h_formula_starminus_h1 = h1;
+		   CF.h_formula_starminus_h2 = h2;
+		   CF.h_formula_starminus_pos = pos}) ->
+		   if CP.eq_spec_var (CF.get_node_var h1) sv then Some(h2) else None
+	| _ -> None
+
 let rec remove_phases (h: IF.h_formula): IF.h_formula = 
 	(*let _ = print_string ("Removing Phase from H = "^ (Iprinter.string_of_h_formula h) ^ "\n") in *)
 	match h with

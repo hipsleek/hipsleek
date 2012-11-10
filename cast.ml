@@ -132,6 +132,7 @@ and proc_decl = {
 and coercion_case =
   | Simple
   | Complex
+  | Ramify
   | Normalize of bool
 
 and coercion_decl = { 
@@ -1030,9 +1031,18 @@ let look_up_coercion_def_raw coers (c : ident) : coercion_decl list =
 
 (*a coercion can be simple, complex or normalizing*)
 let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
+  let h,_,_,_,_ = F.split_components lhs in
+  let hs = F.split_star_conjunctions h in
+  let flag = if (List.length hs) == 1 then 
+	  let sm = List.hd hs in (match sm with
+	  | F.StarMinus _ -> true
+	  | _ -> false)
+	  else false in
+  if(flag) then Ramify
+  else
   let fct f = match f with
       | Cformula.Base {F.formula_base_heap=h}
-	  | Cformula.Exists {F.formula_exists_heap=h} ->      
+      | Cformula.Exists {F.formula_exists_heap=h} ->      
           let hs = F.split_star_conjunctions h in
 		  let self_n = List.for_all (fun c-> (P.name_of_spec_var (F.get_node_var c)) = self) hs in
           (List.length hs),self_n, List.map F.get_node_name hs
@@ -1052,7 +1062,7 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
 			else Complex
 		
 let case_of_coercion lhs rhs =
-	let pr1 r = match r with | Simple -> "simple" | Complex -> "complex" | Normalize b-> "normalize "^string_of_bool b in
+	let pr1 r = match r with | Simple -> "simple" | Complex -> "complex" | Ramify -> "ramify" | Normalize b-> "normalize "^string_of_bool b in
 	Debug.no_2 "case_of_coercion" !Cformula.print_formula !Cformula.print_formula pr1 case_of_coercion_x lhs rhs  
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
