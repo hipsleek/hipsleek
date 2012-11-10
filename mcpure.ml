@@ -1582,14 +1582,19 @@ let memo_check_syn_fast (p,pn,pr_branches) crt_br corr  =
 let replace_memo_pure_label nl f = 
   List.map (fun c-> {c with memo_group_slice = List.map (replace_pure_formula_label nl) c.memo_group_slice;}) f
   
+let is_linking_constraint m =
+  Gen.BList.subset_eq eq_spec_var m.memo_group_fv m.memo_group_linking_vars 
+  
 (* SAT functions *)
 let is_sat_memo_sub_no_complete f with_dupl with_inv t_is_sat =
   let perf = List.filter (fun c -> c.memo_group_unsat) f in
   let is_sat m = 
-    let rel_m = AnnoS.get_rel_mem 2 m f in
-    (* let _ = print_endline ("REL_M: " ^ (!print_mp_f rel_m)) in *)
-    let merged_m = fold_mem_lst_gen (mkTrue no_pos) with_dupl with_inv true true rel_m in
-    t_is_sat merged_m
+    if is_linking_constraint m then true
+    else
+      let rel_m = AnnoS.get_rel_mem 2 m f in
+      (* let _ = print_endline ("REL_M: " ^ (!print_mp_f rel_m)) in *)
+      let merged_m = fold_mem_lst_gen (mkTrue no_pos) with_dupl with_inv true true rel_m in
+      t_is_sat merged_m
   in (not (List.exists (fun f -> not (is_sat f)) perf))
  
 (* IMPLY functions *)
@@ -2262,19 +2267,18 @@ let is_ineq_linking_memo_group (mg : memoised_group) : bool =
 
 let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
   (*List.exists (fun mg -> (is_ineq_linking_memo_group mg) && (Gen.BList.subset_eq eq_spec_var mg.memo_group_fv ls)) mem*)
-  
   List.exists (fun mg ->
-	(is_ineq_linking_memo_group mg) &&
-	(List.exists (fun mc ->
-	  let bf = mc.memo_formula in
-	  (*let fv = match (get_bform_neq_args_with_const bf) with
-		| Some (v1, v2) -> [v1; v2]
-		| None -> []
-	  in Gen.BList.subset_eq eq_spec_var fv ls*)
-	  match (get_bform_neq_args_with_const bf) with
-		| Some (v1, v2) -> Gen.BList.subset_eq eq_spec_var [v1; v2] ls 
-		| None -> false
-	) mg.memo_group_cons)) mem
+    (is_ineq_linking_memo_group mg) &&
+    (List.exists (fun mc ->
+      let bf = mc.memo_formula in
+  	  (* let fv = match (get_bform_neq_args_with_const bf) with *)
+  		(* | Some (v1, v2) -> [v1; v2]                            *)
+  		(* | None -> []                                           *)
+  	  (* in Gen.BList.subset_eq eq_spec_var fv ls               *)
+  	  match (get_bform_neq_args_with_const bf) with
+  		| Some (v1, v2) -> Gen.BList.subset_eq eq_spec_var [v1; v2] ls 
+  		| None -> false
+  	) mg.memo_group_cons)) mem
   
 let find_closure (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list = 
   let rec helper (vs: spec_var list) (vv:(spec_var * spec_var) list) =
