@@ -1447,7 +1447,7 @@ object
   method print_task_instance msg : unit = 	
     try 
  	  let (t1,cnt1,_) = Hashtbl.find tasks msg in
-	  print_endline ("Time :"^(string_of_float t1)^"(sec)")
+	  print_endline ("Time("^msg^") : "^(string_of_float t1)^" (seconds)")
     with Not_found -> 
 	  print_endline ("Task "^msg^" does not exist in profiling table.")
   method print : unit = 
