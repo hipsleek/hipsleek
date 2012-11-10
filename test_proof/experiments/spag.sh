@@ -16,7 +16,6 @@ for ((i = 10; i <= $1; i++))
 do
 	# No caching
 	echo "spaguetti-$i"
-	./kill $2
 	(time (./timeout -TERM $TIMEOUT $SLEEK -tp $2 $SPAG/spaguetti-$i.slk)) >$LOG/spaguetti.$2.$1 2>&1
 	(time (./timeout -TERM $TIMEOUT $SLEEK -tp $2 $SPAG/spaguetti-$i.slk --eps)) >$LOG/spaguetti.eps.$2.$1 2>&1
 	(time (./timeout -TERM $TIMEOUT $SLEEK -tp $2 $SPAG/spaguetti-$i.slk --eps --efp)) >$LOG/spaguetti.efp.$2.$1 2>&1

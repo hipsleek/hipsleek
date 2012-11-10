@@ -699,7 +699,15 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
         (*should check bot with is_bot_status*)
         else ""
       in
-      print_string (num_id^": Fail."^s^"\n"^term_output^"\n");
+      (* Get the timeout message *)
+      let timeout = 
+        if !Globals.sleek_timeout_limit > 0. then
+          match CF.get_may_failure residue with
+          | Some "timeout" -> " (timeout) "
+          | _ -> ""
+        else ""
+      in
+      print_string (num_id^": Fail."^timeout^s^"\n"^term_output^"\n");
           (*if !Globals.print_err_sleek then *)
           (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
     end

@@ -394,6 +394,11 @@ let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
             try
                 check_formula 1 fomega !in_timeout
             with
+              | Procutils.PrvComms.Timeout as exc ->
+                if !Globals.dis_provers_timeout then (stop (); raise exc)
+                else begin
+                  Printf.eprintf "SAT Unexpected exception : %s" (Printexc.to_string exc);
+                  stop (); raise exc end
               | End_of_file ->
                   (*let _ = print_endline "SAT: End_of_file" in*)
                   restart ("End_of_file when checking #SAT \n");
@@ -481,6 +486,11 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
               try
                   not (check_formula 2 (fomega ^ "\n") !in_timeout)
               with
+                | Procutils.PrvComms.Timeout as exc -> 
+                  if !Globals.dis_provers_timeout then (stop (); raise exc)
+                  else begin
+                    Printf.eprintf "IMPLY : Unexpected exception : %s" (Printexc.to_string exc);
+                    stop (); raise exc end
                 | End_of_file ->
                     (*let _ = print_endline "IMPLY: End_of_file" in*)
                     restart ("IMPLY : End_of_file when checking \n");

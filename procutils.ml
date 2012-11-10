@@ -89,7 +89,7 @@ struct
       let res = maybe_raise_timeout fnc arg tsec in
       res
     with 
-      | Timeout -> print_endline ("[procutils] Timeout caught"); with_timeout ()
+      | Timeout -> (* print_endline ("[procutils] Timeout caught"); *) with_timeout ()
       | exc -> (* prerr_endline (Printexc.to_string exc); *) raise exc
 
   let maybe_raise_and_catch_timeout_bool (fnc: 'a -> bool) (arg: 'a) (tsec: float) (with_timeout: unit -> bool): bool =
