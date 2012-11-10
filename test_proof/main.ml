@@ -281,7 +281,7 @@ let main_run_boogie () =
 
 let main_generate_tests () =
   let num_vars= !Globals.num_vars_test in
-	if(!Globals.use_imp) then
+	if(!Globals.use_imp)&& not !Globals.use_boogie then
 		let _=Generate_imp_test.generate_test num_vars in
 	  ()
 	else
