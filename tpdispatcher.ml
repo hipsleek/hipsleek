@@ -1090,22 +1090,22 @@ let cache_imply_count = ref 0
 let cache_imply_miss = ref 0 
 
 let sat_cache is_sat (f:CP.formula) : bool  = 
-  (*let _ = Gen.Profiling.push_time "cache overhead" in*)
+  let _ = Gen.Profiling.push_time_always "cache overhead" in
   let sf = norm_var_name f in
   let fstring = Cprinter.string_of_pure_formula sf in
   let _ = cache_sat_count := !cache_sat_count+1 in
   let _ = cache_status := true in
-  (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
+  let _ = Gen.Profiling.pop_time_always "cache overhead" in
   let res =
     try
       Hashtbl.find !sat_cache fstring
     with Not_found ->
-        let _ = cache_sat_miss := !cache_sat_miss+1 in
-        let _ = cache_status := false in
         let r = is_sat f in
-        (*let _ = Gen.Profiling.push_time "cache overhead" in*)
+        let _ = Gen.Profiling.push_time_always "cache overhead" in
+        let _ = cache_status := false in
+        let _ = cache_sat_miss := !cache_sat_miss+1 in
         let _ = Hashtbl.add !sat_cache fstring r in
-        (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
+        let _ = Gen.Profiling.pop_time_always "cache overhead" in
         r
   in res
 
@@ -1606,23 +1606,23 @@ let tp_imply_perm ante conseq imp_no timeout process =
 	Debug.no_2_loop "tp_imply_perm" pr pr string_of_bool (fun _ _ -> tp_imply_perm ante conseq imp_no timeout process ) ante conseq
   
 let imply_cache fn_imply ante conseq : bool  = 
-  (*let _ = Gen.Profiling.push_time "cache overhead" in*)
+  let _ = Gen.Profiling.push_time_always "cache overhead" in
   let f = CP.mkOr conseq (CP.mkNot ante None no_pos) None no_pos in
   let sf = norm_var_name f in
   let fstring = Cprinter.string_of_pure_formula sf in
   let _ = cache_imply_count := !cache_imply_count+1 in
   let _ = cache_status := true in
-  (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
+  let _ = Gen.Profiling.pop_time_always "cache overhead" in
   let res =
     try
       Hashtbl.find !imply_cache fstring
     with Not_found ->
-        let _ = cache_imply_miss := !cache_imply_miss+1 in
-        let _ = cache_status := false in
         let r = fn_imply ante conseq in
-        (*let _ = Gen.Profiling.push_time "cache overhead" in*)
+        let _ = Gen.Profiling.push_time "cache overhead" in
+        let _ = cache_status := false in
+        let _ = cache_imply_miss := !cache_imply_miss+1 in
         let _ = Hashtbl.add !imply_cache fstring r in
-        (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
+        let _ = Gen.Profiling.pop_time "cache overhead" in
         r
   in res
 

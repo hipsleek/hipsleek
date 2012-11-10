@@ -266,7 +266,7 @@ let _ =
   process_cmd_line ();
   Scriptarguments.check_option_consistency ();
   if !Globals.print_version_flag then begin
-	print_version ()
+    print_version ()
   end else
     let _ = Printexc.record_backtrace !Globals.trace_failure in
     (Tpdispatcher.start_prover ();
@@ -276,20 +276,24 @@ let _ =
     (* let _ = print_endline "after main" in *)
     Gen.Profiling.pop_time "Overall";
     Tpdispatcher.stop_prover ();
-    
     (* Get the total proof time *)
     let _ = if not(!Globals.no_cache_formula) then
       begin
+        let fp a = (string_of_float ((floor(100. *.a))/.100.)) in
+        let calc_hit_percent c m = (100. *. ((float_of_int (c - m)) /. (float_of_int c))) in
+        let string_of_hit_percent c m = (fp (calc_hit_percent c m))^"%" in
         let s_c = !Tpdispatcher.cache_sat_count in
         let s_m = !Tpdispatcher.cache_sat_miss in
         let i_c = !Tpdispatcher.cache_imply_count in
         let i_m = !Tpdispatcher.cache_imply_miss in
         print_endline ("\nSAT Count   : "^(string_of_int s_c)); 
-        print_endline ("SAT % Hit   : "^(string_of_int (100*(s_c-s_m)/s_c))^"%"); 
+        print_endline ("SAT % Hit   : "^(string_of_hit_percent s_c s_m));
         print_endline ("IMPLY Count : "^(string_of_int i_c)); 
-        print_endline ("IMPLY % Hit : "^(string_of_int (100*(i_c-i_m)/i_c))^"%"); 
+        print_endline ("IMPLY % Hit : "^(string_of_hit_percent i_c i_m))
+        ;(Gen.Profiling.print_info_task "cache overhead")
       end
-      in
+          else ()
+    in
     let ptime4 = Unix.times () in
     let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime in
     let _ = print_string ("\nTotal verification time: " 
@@ -299,10 +303,8 @@ let _ =
     ^ "\tTime spent in child processes: " 
     ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
     in
-    
-		let _= sleek_proof_log_Z3 !source_files in
+    let _= sleek_proof_log_Z3 !source_files in
     let _ = 
       if (!Globals.profiling && not !inter) then 
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in
-    
     print_string "\n")
