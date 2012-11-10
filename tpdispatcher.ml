@@ -1113,7 +1113,7 @@ let sat_cache is_sat (f:CP.formula) : bool =
   let pr = Cprinter.string_of_pure_formula in
   let pr2 b = ("found?:"^(string_of_bool !cache_status)
     ^" ans:"^(string_of_bool b)) in
-  Debug.ho_1 "sat_cache" pr pr2 (sat_cache is_sat) f
+  Debug.no_1 "sat_cache" pr pr2 (sat_cache is_sat) f
 
 let tp_is_sat (f:CP.formula) (sat_no :string) = 
   (* TODO WN : can below remove duplicate constraints? *)

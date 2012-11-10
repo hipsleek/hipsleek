@@ -696,6 +696,24 @@ let pr_var_measures (t_ann, ls1,ls2) =
     pr_set pr_formula_exp ls2
   else ()
 
+let sort_exp a b =
+  match a with
+    | P.Var (v1,_) ->
+          begin
+            match b with
+              | P.Var (v2,_) -> 
+                    if (String.compare (string_of_spec_var v1) (string_of_spec_var v2))<=0 
+                    then (a,b) 
+                    else (b,a)
+              | _ -> (a,b)
+          end
+    | _ ->
+          begin
+            match b with
+              | P.Var v2 -> (b,a)
+              | _ -> (a,b)
+          end
+
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
   let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
@@ -717,8 +735,12 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.Gt (e1, e2, l) -> f_b e1; fmt_string op_gt ; f_b e2
     | P.Gte (e1, e2, l) -> f_b e1; fmt_string op_gte ; f_b e2
     | P.SubAnn (e1, e2, l) -> f_b e1; fmt_string op_sub_ann ; f_b e2
-    | P.Eq (e1, e2, l) -> f_b_no e1; fmt_string op_eq ; f_b_no e2
-    | P.Neq (e1, e2, l) -> f_b e1; fmt_string op_neq ; f_b e2;(* fmt_string (string_of_pos l.start_pos);*)
+    | P.Eq (e1, e2, l) -> 
+          let (e1,e2) = sort_exp e1 e2 in
+          f_b_no e1; fmt_string op_eq ; f_b_no e2
+    | P.Neq (e1, e2, l) -> 
+          let (e1,e2) = sort_exp e1 e2 in
+          f_b e1; fmt_string op_neq ; f_b e2;(* fmt_string (string_of_pos l.start_pos);*)
     | P.EqMax (e1, e2, e3, l) ->   
           let arg2 = bin_op_to_list op_max_short exp_assoc_op e2 in
           let arg3 = bin_op_to_list op_max_short exp_assoc_op e3 in
