@@ -628,8 +628,10 @@ let disable_elim_redundant_ctr = ref false
 
 let enable_strong_invariant = ref false
 let enable_aggressive_prune = ref false
-let disable_aggressive_prune = ref false
-let prune_with_slice = ref false
+let enable_redundant_elim = ref false
+
+(* let disable_aggressive_prune = ref false *)
+(* let prune_with_slice = ref false *)
 
 let enulalias = ref false
 

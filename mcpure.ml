@@ -1864,7 +1864,7 @@ let imply_memo ante_memo0 conseq_memo t_imply imp_no =
   else
   let ante_memo0 = 
     if !f_2_slice  || !dis_slicing (* Use one slice for proving (sat, imply) *)
-	then
+	  then
 	  match ante_memo0 with
        | [] -> []
        | [h] -> [h]

@@ -121,8 +121,10 @@ let proof_log_to_text_file (src_files) =
     let helper log=
       "\n--------------\n"^
 	  List.fold_left (fun a c->a^c) "" log.log_other_properties^
-	  "\nid: "^log.log_id^"\nProver: "^log.log_prover^"\nType: "^(match log.log_type with | Some x-> string_of_log_type x | None -> "????")^"\nTime: "^
-	  (string_of_float(log.log_time))^"\nResult: "^(match log.log_res with
+	  (* "\nid: "^log.log_id^ *)
+      "\nProver: "^log.log_prover^"\nType: "^(match log.log_type with | Some x-> string_of_log_type x | None -> "????")^
+      (* "\nTime: "^(string_of_float(log.log_time))^ *)
+      "\nResult: "^(match log.log_res with
 	    |BOOL b -> string_of_bool b
 	    |FORMULA f -> string_of_pure_formula f)^"\n" in
     let _= List.map (fun ix->let log=Hashtbl.find proof_log_tbl ix in

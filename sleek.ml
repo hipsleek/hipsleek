@@ -226,7 +226,10 @@ let main () =
         (* let _ = print_endline "Prior to parse_file" in *)
         let _ = List.map (parse_file NF.list_parse) !source_files in ()
     with
-      | End_of_file -> print_string ("\n")
+      | End_of_file -> 
+            begin
+              print_string ("\n")
+            end
       (* | Not_found -> print_string ("Not found exception caught!\n") *)
 
 (* let main () =  *)
@@ -259,7 +262,7 @@ let sleek_proof_log_Z3 src_files =
 			end
 		
 let _ =
-   wrap_exists_implicit_explicit := false ;
+  wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
   Scriptarguments.check_option_consistency ();
   if !Globals.print_version_flag then begin
@@ -272,9 +275,34 @@ let _ =
     main ();
     (* let _ = print_endline "after main" in *)
     Gen.Profiling.pop_time "Overall";
+    Tpdispatcher.stop_prover ();
+    
+    (* Get the total proof time *)
+    let _ = if not(!Globals.no_cache_formula) then
+      begin
+        let s_c = !Tpdispatcher.cache_sat_count in
+        let s_m = !Tpdispatcher.cache_sat_miss in
+        let i_c = !Tpdispatcher.cache_imply_count in
+        let i_m = !Tpdispatcher.cache_imply_miss in
+        print_endline ("\nSAT Count   : "^(string_of_int s_c)); 
+        print_endline ("SAT % Hit   : "^(string_of_int (100*(s_c-s_m)/s_c))^"%"); 
+        print_endline ("IMPLY Count : "^(string_of_int i_c)); 
+        print_endline ("IMPLY % Hit : "^(string_of_int (100*(i_c-i_m)/i_c))^"%"); 
+      end
+      in
+    let ptime4 = Unix.times () in
+    let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime in
+    let _ = print_string ("\nTotal verification time: " 
+    ^ (string_of_float t4) ^ " second(s)\n"
+    ^ "\tTime spent in main process: " 
+    ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
+    ^ "\tTime spent in child processes: " 
+    ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
+    in
+    
 		let _= sleek_proof_log_Z3 !source_files in
     let _ = 
       if (!Globals.profiling && not !inter) then 
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in
-    Tpdispatcher.stop_prover ();
+    
     print_string "\n")

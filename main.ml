@@ -189,32 +189,11 @@ let process_source_full source =
     end);
     (* Stopping the prover *)
     let _ = Tpdispatcher.stop_prover () in
-    (* Proof Logging *)
-    let _ = if !Globals.proof_logging || !Globals.proof_logging_txt then 
-      begin
-	let tstartlog = Gen.Profiling.get_time ()in	
-	let _= Log.proof_log_to_file () in
-	      let with_option= if(!Globals.do_slicing) then "slicing" else "no_slicing" in
-        let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt"  in
-				let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
-	      let _= if (!Globals.proof_logging_txt) 
-        then 
-          begin
-            Debug.info_pprint ("Logging "^fname^"\n") no_pos;
-						Debug.info_pprint ("Logging "^fz3name^"\n") no_pos;
-            Log.proof_log_to_text_file !Globals.source_files;
-						Log.z3_proofs_list_to_file !Globals.source_files
-          end
-	else try Sys.remove fname 
-          (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *)
-			with _ ->()
-			 in
-			let tstoplog = Gen.Profiling.get_time () in
-			let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
-			(* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in	() *)
-			end
-		in
-		(* let _= if not !Globals.proof_logging && not !Globals.proof_logging_txt  then Cprinter.printer_of_proof_logging () in *)
+    
+    (* Get the total verification time *)
+    let ptime4 = Unix.times () in
+    let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
+    
     (* An Hoa : export the proof to html *)
     let _ = if !Globals.print_proof then
     		begin 
@@ -224,11 +203,35 @@ let process_source_full source =
     		end
     in
     
+    (* Proof Logging *)
+    let _ = if !Globals.proof_logging || !Globals.proof_logging_txt then 
+      begin
+        let tstartlog = Gen.Profiling.get_time () in
+        let _= Log.proof_log_to_file () in
+        let with_option= if(!Globals.do_slicing) then "slicing" else "no_slicing" in
+        let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt"  in
+        let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
+        let _= if (!Globals.proof_logging_txt) 
+        then 
+          begin
+            Debug.info_pprint ("Logging "^fname^"\n") no_pos;
+            Debug.info_pprint ("Logging "^fz3name^"\n") no_pos;
+            Log.proof_log_to_text_file !Globals.source_files;
+            Log.z3_proofs_list_to_file !Globals.source_files
+          end
+        else try Sys.remove fname 
+          (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *)
+        with _ -> ()
+        in
+        let tstoplog = Gen.Profiling.get_time () in
+        let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
+        (* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in    () *)
+      end
+    in
+    
     (* print mapping table control path id and loc *)
     (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
     
-    let ptime4 = Unix.times () in
-    let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
     print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
 		(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
 		    ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
@@ -238,11 +241,12 @@ let process_source_full source =
 	^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
 	^ "\tTime spent in child processes: " 
 	^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n"
-	^ if !Globals.proof_logging || !Globals.proof_logging_txt then "\tTime for logging: "^(string_of_float (!Globals.proof_logging_time))^" second(s)\n"
-	else ""
-	^ if(!Tpdispatcher.tp = Tpdispatcher.Z3) then "\tZ3 Prover Time: "
-	^ (string_of_float !Globals.z3_time) ^ " second(s)\n"
-	else ""
+	^ if !Globals.proof_logging || !Globals.proof_logging_txt then 
+      "\tTime for logging: "^(string_of_float (!Globals.proof_logging_time))^" second(s)\n"
+    else ""
+	^ if(!Tpdispatcher.tp = Tpdispatcher.Z3) then 
+      "\tZ3 Prover Time: " ^ (string_of_float !Globals.z3_time) ^ " second(s)\n"
+    else "\n"
 	)
 
 let process_source_full_parse_only source =

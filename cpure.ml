@@ -3970,13 +3970,17 @@ and e_apply_one_list_exp (fr, t) alist = match alist with
 	Utilities for simplifications:
 	- we do some basic simplifications: eliminating identities where the LHS = RHS
 ******************************************************************************************************************)
-and elim_idents (f : formula) : formula = match f with
-  | And (f1, f2, pos) -> mkAnd (elim_idents f1) (elim_idents f2) pos
-  | AndList b->AndList (map_l_snd elim_idents b)
-  | Or (f1, f2, lbl, pos) -> mkOr (elim_idents f1) (elim_idents f2) lbl pos
-  | Not (f1, lbl, pos) -> mkNot (elim_idents f1) lbl pos
-  | Forall (sv, f1, lbl, pos) -> mkForall [sv] (elim_idents f1) lbl pos
-  | Exists (sv, f1, lbl, pos) -> mkExists [sv] (elim_idents f1) lbl pos
+and elim_idents (f : formula) : formula = 
+  let pr = !print_formula in
+  Debug.no_1 "elim_idents" pr pr elim_idents_x f 
+
+and elim_idents_x (f : formula) : formula = match f with
+  | And (f1, f2, pos) -> mkAnd (elim_idents_x f1) (elim_idents_x f2) pos
+  | AndList b->AndList (map_l_snd elim_idents_x b)
+  | Or (f1, f2, lbl, pos) -> mkOr (elim_idents_x f1) (elim_idents_x f2) lbl pos
+  | Not (f1, lbl, pos) -> mkNot (elim_idents_x f1) lbl pos
+  | Forall (sv, f1, lbl, pos) -> mkForall [sv] (elim_idents_x f1) lbl pos
+  | Exists (sv, f1, lbl, pos) -> mkExists [sv] (elim_idents_x f1) lbl pos
   | BForm (f1,lbl) -> BForm(elim_idents_b_formula f1, lbl)
 
 and elim_idents_b_formula (f : b_formula) : b_formula =

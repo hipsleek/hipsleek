@@ -42,8 +42,10 @@ let common_arguments = [
     "Simplify the entail state before printing the dprint state."); (* An Hoa *) *)
 	("-wpf", Arg.Set Globals.print_proof,
 	"Print all the verification conditions, the input to external prover and its output.");
-	("--ufdp", Arg.Set Solver.unfold_duplicated_pointers,
-	"Do unfolding when there are duplicated pointers."); (* An Hoa *)
+	(* ("--ufdp", Arg.Set Solver.unfold_duplicated_pointers, *)
+	(* "Do unfolding of predicates with duplicated pointers."); (\* An Hoa *\) *)
+	("--dis-ufdp", Arg.Clear Solver.unfold_duplicated_pointers,
+	"Disable unfolding of predicates with duplicated pointers."); (* An Hoa *)
 	("--ahwytdi", Arg.Set Smtsolver.try_induction,
 	"Try induction in case of failure implication."); (* An Hoa *)
     ("--smtimply", Arg.Set Smtsolver.outconfig.Smtsolver.print_implication,
@@ -236,9 +238,11 @@ let common_arguments = [
     (*("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");*)
     ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
     ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
+    ("--enable-redundant-elim", Arg.Set Globals.enable_redundant_elim, "enable redundant elimination under eps");
     ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
-    ("--dap", Arg.Clear Globals.disable_aggressive_prune, "never use aggressive prunning");
-    ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for pruning");
+    (* ("--dap", Arg.Clear Globals.disable_aggressive_prune, "never use aggressive prunning"); *)
+    ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for --eps pruning; incomplete");
+    (* ("--dfp",Arg.Clear Globals.enable_fast_imply, " disable syntactic imply only for --eps"); *)
     ("--memo_print", Arg.Set_int Globals.memo_verbosity,
     "level of detail in memo printing 0-verbose 1-brief 2-standard(default)");
     ("--increm",Arg.Set Globals.enable_incremental_proving, " enable incremental proving ");
