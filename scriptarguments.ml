@@ -96,6 +96,10 @@ let common_arguments = [
 	"Timeout for sat checking");
 	("--imply-timeout", Arg.Set_float Globals.imply_timeout_limit,
     "Timeout for imply checking");
+  ("--sleek-timeout", Arg.Set_float Globals.sleek_timeout_limit,
+    "Timeout for SLEEK entailment");
+  ("--dis-provers-timeout", Arg.Set Globals.dis_provers_timeout,
+    "Disable timeout on provers");
 	("--log-proof", Arg.String Prooftracer.set_proof_file,
     "Log (failed) proof to file");
     ("--trace-failure", Arg.Set Globals.trace_failure,

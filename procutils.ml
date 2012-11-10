@@ -84,6 +84,14 @@ struct
           (* with_timeout () *)
               end
 
+  let maybe_raise_and_catch_timeout_silent (fnc: 'a -> 'b) (arg: 'a) (tsec: float) (with_timeout: unit -> 'b): 'b =
+    try
+      let res = maybe_raise_timeout fnc arg tsec in
+      res
+    with 
+      | Timeout -> print_endline ("[procutils] Timeout caught"); with_timeout ()
+      | exc -> (* prerr_endline (Printexc.to_string exc); *) raise exc
+
   let maybe_raise_and_catch_timeout_bool (fnc: 'a -> bool) (arg: 'a) (tsec: float) (with_timeout: unit -> bool): bool =
     Debug.no_1 "maybe_raise_and_catch_timeout" string_of_float string_of_bool 
         (fun _ -> maybe_raise_and_catch_timeout fnc arg tsec with_timeout) tsec 

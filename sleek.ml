@@ -112,7 +112,9 @@ let parse_file (parse) (source_file : string) =
     | EntailCheck _ | EntailCheckExact _ | EntailCheckInexact _ -> () in
   let proc_one_cmd c = 
     match c with
-    | EntailCheck (iante, iconseq) -> let pr_op ()= process_entail_check_common iante iconseq in Log.wrap_calculate_time pr_op !source_files () 
+    | EntailCheck (iante, iconseq) -> 
+      let pr_op () = process_entail_check_common iante iconseq in 
+      Log.wrap_calculate_time pr_op !source_files () 
     | EntailCheckExact (iante, iconseq) -> process_entail_check_exact iante iconseq
     | EntailCheckInexact (iante, iconseq) -> process_entail_check_inexact iante iconseq
     | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq

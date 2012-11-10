@@ -453,6 +453,7 @@ let logical_error = "logical bug"
 let fnc_error = "function call"
 let lemma_error = "lemma"
 let undefined_error = "undefined"
+let timeout_error = "timeout"
 
 let eres_name = "eres"
 
@@ -722,6 +723,9 @@ let seq_number = ref 10
 
 let sat_timeout_limit = ref 2.
 let imply_timeout_limit = ref 3.
+
+let dis_provers_timeout = ref false
+let sleek_timeout_limit = ref 0.
   
 (* let reporter = ref (fun _ -> raise Not_found) *)
 

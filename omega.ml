@@ -98,14 +98,14 @@ and omega_of_b_formula b =
   | Eq (a1, a2, _) -> begin
         if is_null a2 then	(omega_of_exp a1)^ " < 1"
         else if is_null a1 then (omega_of_exp a2) ^ " < 1"
-        else  				(omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
+        else (omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
   end
   | Neq (a1, a2, _) -> begin
         if is_null a2 then
-        				(omega_of_exp a1) ^ " > 0"
+          (omega_of_exp a1) ^ " > 0"
         else if is_null a1 then						
-        				(omega_of_exp a2) ^ " > 0"
-        else		(omega_of_exp a1)^ " != " ^ (omega_of_exp a2)
+          (omega_of_exp a2) ^ " > 0"
+        else (omega_of_exp a1)^ " != " ^ (omega_of_exp a2)
     end
   | EqMax (a1, a2, a3, _) ->
       let a1str = omega_of_exp a1 in
@@ -305,8 +305,10 @@ let check_formula f timeout =
       let fail_with_timeout () = 
         restart ("[omega.ml]Timeout when checking sat for \n" ^ (string_of_float timeout));
         true (* it was checking for sat*) in
-      let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_string_bool fnc f timeout fail_with_timeout in 
-      res
+      if not (!dis_provers_timeout) then
+        let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_string_bool fnc f timeout fail_with_timeout in
+        res
+      else fnc f
   end
 
 let check_formula i f timeout =
@@ -659,10 +661,11 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
 	                    match_vars (fv pe) rel
 	                  end
 	                with
-                      | Procutils.PrvComms.Timeout ->
+                      | Procutils.PrvComms.Timeout as exc ->
                             (*log ERROR ("TIMEOUT");*)
                             restart ("Timeout when checking #simplify ");
-                            pe
+                            if not (!Globals.dis_provers_timeout) then pe
+                            else raise exc (* Timeout exception of a higher-level function *)
                       | End_of_file ->
                             restart ("End_of_file when checking #simplify \n");
                             pe
@@ -677,7 +680,10 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
                   (*   let time = (post_time -. pre_time) *. 1000. in *)
                   (*let _ = print_string ("\nomega_simplify: f after"^(omega_of_formula simp_f)) in*)
                   simp_f
-              with _ -> pe (* not simplified *)
+              with
+              (* Timeout exception of provers is not expected at this level *)
+              | Procutils.PrvComms.Timeout as exc -> raise exc 
+              | _ -> pe (* not simplified *)
             end
   end
 

@@ -612,6 +612,19 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   run_infer_one_pass [] iante0 iconseq0
 
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  if !sleek_timeout_limit > 0. then
+    let entail_check = fun _ -> run_entail_check iante0 iconseq0 in
+    let fail_with_timeout () =
+      let fctx = CF.mkFailCtx_in (CF.Trivial_Reason 
+        (CF.mk_failure_may "timeout" Globals.timeout_error)) in
+      (false, fctx)
+    in
+    let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_silent entail_check ()
+      !sleek_timeout_limit fail_with_timeout in 
+    res 
+  else run_entail_check iante0 iconseq0
+
+let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
   Debug.no_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
