@@ -7,19 +7,13 @@ data node {
 	node next;	
 }.
 
-/* view for a singly linked list */
-
-pred ll<n> == self = null & n = 0 
-	or self::node<_, q> * q::ll<n-1> 
-  inv n >= 0 .
-
 pred lst<> == self=null
   or self::node<_,q> * q::lst<>
   inv true .
 
-checkentail x::ll<n> & x!=null |- n>0 .
-
-checkentail x::node<_,_>*y::node<_,_> |- x!=y .
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0 .
 
   /*
 ERROR: at errors/list-bug.slk_17_23 

@@ -402,7 +402,7 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
   in
   try
     let vdef =
-      I.look_up_view_def_raw prog.I.prog_view_decls
+      I.look_up_view_def_raw 6 prog.I.prog_view_decls
           h0.IF.h_formula_heap2_name in
     let args = h0.IF.h_formula_heap2_arguments in
     let hargs =
@@ -427,7 +427,7 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
   with
     | Not_found ->
           let ddef =
-            I.look_up_data_def h0.IF.h_formula_heap2_pos prog.I.prog_data_decls
+            I.look_up_data_def 6 h0.IF.h_formula_heap2_pos prog.I.prog_data_decls
                 h0.IF.h_formula_heap2_name in
           let params = List.map I.get_field_name ddef.I.data_fields (* An Hoa : un-hard-code *) in
           let hargs = match_args params h0.IF.h_formula_heap2_arguments in
@@ -447,8 +447,8 @@ let node2_to_node_x prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
             }
           in h
 
-let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
-  Debug.no_1 "node2_to_node"
+let node2_to_node i prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
+  Debug.no_1_num i "node2_to_node"
       (fun f -> Iprinter.string_of_h_formula (IF.HeapNode2 f) )
       (fun f -> Iprinter.string_of_h_formula (IF.HeapNode f))
       (fun _ -> node2_to_node_x prog h0) h0
@@ -474,7 +474,7 @@ let rec convert_heap2_heap prog (h0 : IF.h_formula) : IF.h_formula =
         in IF.Phase { (h) with
             IF.h_formula_phase_rd = tmp1;
             IF.h_formula_phase_rw = tmp2; }
-    | IF.HeapNode2 h2 -> IF.HeapNode (node2_to_node prog h2)
+    | IF.HeapNode2 h2 -> IF.HeapNode (node2_to_node 1 prog h2)
     | IF.HTrue | IF.HFalse | IF.HEmp | IF.HeapNode _ -> h0
 
 and convert_heap2 prog (f0 : IF.formula) : IF.formula =
@@ -490,17 +490,21 @@ and convert_heap2 prog (f0 : IF.formula) : IF.formula =
           let h = convert_heap2_heap prog h0
           in IF.Exists { (f) with IF.formula_exists_heap = h; }
 
-and convert_struc2 prog (f0:IF.struc_formula):IF.struc_formula = match f0 with
+and convert_struc2 i prog (f0:IF.struc_formula):IF.struc_formula =
+  let pr = pr_none in
+  Debug.no_1_num i "convert_struc2" pr pr (convert_struc2_x prog) f0
+
+and convert_struc2_x prog (f0:IF.struc_formula):IF.struc_formula = match f0 with
   | IF.EAssume (b,tag)-> IF.EAssume ((convert_heap2 prog b),tag)
-  | IF.ECase b -> IF.ECase {b with IF.formula_case_branches = map_l_snd (convert_struc2 prog) b.IF.formula_case_branches};
+  | IF.ECase b -> IF.ECase {b with IF.formula_case_branches = map_l_snd (convert_struc2_x prog) b.IF.formula_case_branches};
   | IF.EBase b -> IF.EBase{b with 
 		IF.formula_struc_base = convert_heap2 prog b.IF.formula_struc_base;
-		IF.formula_struc_continuation = map_opt (convert_struc2 prog) b.IF.formula_struc_continuation}
-  | IF.EInfer b -> IF.EInfer {b with IF.formula_inf_continuation = convert_struc2 prog b.IF.formula_inf_continuation}
-  | IF.EList b -> IF.EList (map_l_snd (convert_struc2 prog) b)
+		IF.formula_struc_continuation = map_opt (convert_struc2_x prog) b.IF.formula_struc_continuation}
+  | IF.EInfer b -> IF.EInfer {b with IF.formula_inf_continuation = convert_struc2_x prog b.IF.formula_inf_continuation}
+  | IF.EList b -> IF.EList (map_l_snd (convert_struc2_x prog) b)
   | IF.EOr b -> IF.EOr {b with
-					IF.formula_struc_or_f1 = convert_struc2 prog b.IF.formula_struc_or_f1;
-					IF.formula_struc_or_f2 = convert_struc2 prog b.IF.formula_struc_or_f2;}
+					IF.formula_struc_or_f1 = convert_struc2_x prog b.IF.formula_struc_or_f1;
+					IF.formula_struc_or_f2 = convert_struc2_x prog b.IF.formula_struc_or_f2;}
 
 	  
 let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
@@ -514,7 +518,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
             (* if c = vname *)
             (* then [] *)
             (* else *)
-            (try let _ = I.look_up_view_def_raw view_decls0 c in [ (vname, c) ]
+            (try let _ = I.look_up_view_def_raw 7 view_decls0 c in [ (vname, c) ]
             with | Not_found -> [])
       | _ -> [] in
   let rec gen_name_pairs vname (f : IF.formula) : (ident * ident) list =
@@ -2320,7 +2324,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 | E.VarInfo vi ->
                       (match vi.E.var_type with
                         | Named c -> 
-                              let ddef = I.look_up_data_def pos prog.I.prog_data_decls c in
+                              let ddef = I.look_up_data_def 5 pos prog.I.prog_data_decls c in
                               if ( != ) (List.length vs) (List.length ddef.I.data_fields) then
                                 Err.report_error { Err.error_loc = pos; Err.error_text = "bind " ^ (v ^ ": different number of variables");}
                               else
@@ -2391,7 +2395,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             let mingled_mn = C.mingle_name mn cts in
             let class_name = string_of_typ crecv_t in
             (try
-              let cdef = I.look_up_data_def pos prog.I.prog_data_decls class_name in
+              let cdef = I.look_up_data_def 4 pos prog.I.prog_data_decls class_name in
               let all_methods = I.look_up_all_methods prog cdef in
               let pdef = I.look_up_proc_def_mingled_name all_methods mingled_mn in
               if ( != ) (List.length args) (List.length pdef.I.proc_args) then
@@ -2517,7 +2521,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                             Err.report_error { Err.error_loc = pos; Err.error_text = ("trans_exp :: CallNRecv :: init/finalize requires an associated lock");}
                       | Some v ->
                             (try
-                              let vdef = I.look_up_view_def_raw prog.I.prog_view_decls v in
+                              let vdef = I.look_up_view_def_raw 8 prog.I.prog_view_decls v in
                               let n1 = List.length args in
                               let n2 = List.length (vdef.I.view_vars) in
                               if (n1-1) != n2 then
@@ -2741,7 +2745,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_new_class_name = c;
             I.exp_new_arguments = args;
             I.exp_new_pos = pos } ->
-            let data_def = I.look_up_data_def pos prog.I.prog_data_decls c in
+            let data_def = I.look_up_data_def 3 pos prog.I.prog_data_decls c in
             let all_fields = I.look_up_all_fields prog data_def in
             let field_types = List.map I.get_field_typ all_fields in
             let nargs = List.length args in
@@ -3425,7 +3429,7 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
                 C.exp_assign_pos = pos; }
           else C.Unit pos in
           let dname = CP.name_of_type base_t in
-          let ddef = I.look_up_data_def pos prog.I.prog_data_decls dname in
+          let ddef = I.look_up_data_def 2 pos prog.I.prog_data_decls dname in
           let rec gen_names (fn : ident) (flist : I.typed_ident list) :
                 ((I.typed_ident option) * (ident list)) =
             (match flist with
@@ -4057,7 +4061,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
 				(result_heap, CF.TypeTrue)
 			  else (* Not a field access, proceed with the original code *)
                 (try
-                  let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c in
+                  let vdef = I.look_up_view_def_raw 9 prog.I.prog_view_decls c in
                   let labels = vdef.I.view_labels in
                   let hvars = match_exp (List.combine exps labels) pos in
                   let c0 =
@@ -5079,7 +5083,7 @@ and gather_type_info_b_formula_x prog b0 stab =
     | IP.LexVar(t_ann, ls1, ls2, pos) ->
 	      let _ = List.map (fun e -> gather_type_info_exp e stab (Int)) ls1 in
 	      let _ = List.map (fun e -> gather_type_info_exp e stab (Int)) ls2 in
-        ()
+          ()
     | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) |
 	          IP.Gte (a1, a2, pos) ->
           let new_et = fresh_tvar stab in
@@ -5423,15 +5427,15 @@ and gather_type_info_struc_f prog (f0:IF.struc_formula) stab =
 
 and gather_type_info_struc_f_x prog (f0:IF.struc_formula) stab = 
   let rec inner_collector (f0:IF.struc_formula) =  match f0 with
-      | IF.EAssume (b,_)-> let _ = gather_type_info_formula prog b stab true in ()
-      | IF.ECase b ->  List.iter (fun (c1,c2)->
-			let _ = gather_type_info_pure prog c1 stab in
-			inner_collector c2) b.IF.formula_case_branches
-      | IF.EBase b ->  let _ = gather_type_info_formula prog b.IF.formula_struc_base stab false in
-	    let _ = match b.IF.formula_struc_continuation with | None -> () | Some l -> inner_collector l in ()								
-      | IF.EInfer b -> let _ = inner_collector b.IF.formula_inf_continuation in ()
-	  | IF.EList b -> List.iter (fun (_,c)-> inner_collector c) b
-	  | IF.EOr b -> inner_collector b.IF.formula_struc_or_f1;inner_collector b.IF.formula_struc_or_f2 in
+    | IF.EAssume (b,_)-> let _ = gather_type_info_formula prog b stab true in ()
+    | IF.ECase b ->  List.iter (fun (c1,c2)->
+		  let _ = gather_type_info_pure prog c1 stab in
+		  inner_collector c2) b.IF.formula_case_branches
+    | IF.EBase b ->  let _ = gather_type_info_formula prog b.IF.formula_struc_base stab false in
+	  let _ = match b.IF.formula_struc_continuation with | None -> () | Some l -> inner_collector l in ()								
+    | IF.EInfer b -> let _ = inner_collector b.IF.formula_inf_continuation in ()
+	| IF.EList b -> List.iter (fun (_,c)-> inner_collector c) b
+	| IF.EOr b -> inner_collector b.IF.formula_struc_or_f1;inner_collector b.IF.formula_struc_or_f2 in
   begin
     inner_collector f0;
     (* TODO WN : to remove check_shallow_var *)
@@ -5538,7 +5542,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 	      (gather_type_info_heap_x prog h1 stab;
 	      gather_type_info_heap_x prog h2 stab)
     | IF.HeapNode2 h2 ->
-	      let h = node2_to_node prog h2 in
+	      let h = node2_to_node 2 prog h2 in
 	      let fh = IF.HeapNode h in gather_type_info_heap_x prog fh stab
     | IF.HeapNode
 	        {
@@ -5550,94 +5554,94 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
                 IF.h_formula_heap_pos = pos
 	        } ->
           Debug.trace_hprint (add_str "view" Iprinter.string_of_h_formula) h0 no_pos;
-          let ft = cperm_typ () in
-          let gather_type_info_ann c stab = match c with
-            | IF.ConstAnn _ -> ()
-            | IF.PolyAnn ((i,_),_) -> ignore(gather_type_info_var i stab AnnT pos) in
-          let gather_type_info_perm p stab = match p with
-            | None -> ()
-            | Some e -> let _ = gather_type_info_exp e stab ft in () in
-          let _ = gather_type_info_perm perm stab in
-          let _ = gather_type_info_ann ann stab in
-		  (* let _ = print_endline ("[gather_type_info_heap_x] input formula = " ^ Iprinter.string_of_h_formula h0) in *)
-		  (* An Hoa : Deal with the generic pointer! *)
-		  if (c = Parser.generic_pointer_type_name) then 
-			(* Assumptions:
-			 * (i)  ies to contain a single argument, namely the value of the pointer
-			 * (ii) the head of the heap node is of form "V[.TypeOfV].FieldAccess"
-			 *      where [.TypeOfV] is optional type of V. If it is present, it is
-			 *      the type of V pointer. Otherwise, we try to find this information
-			 *      based on its fields.
-			 * (iii) Temporarily assume that only one field; the case of inline fields
-			 *      will be dealt with later.
-			 *)
-			(* Step 1: Extract the main variable i.e. the root of the pointer *)
-			(* let _ = print_endline ("[gather_type_info_heap_x] heap pointer = " ^ v) in *)
-			let tokens = Str.split (Str.regexp "\\.") v in
-			(* let _ = print_endline ("[gather_type_info_heap_x] tokens = {" ^ (String.concat "," tokens) ^ "}") in *)
-			let rootptr = List.hd tokens in
-			(* Step 2: Determine the type of [rootptr] and the field by looking 
-			 * up the current state of stab & information supplied by the user.
-			 *)
-			let s = List.nth tokens 1 in
-			let type_found,type_rootptr = try (* looking up in the list of data types *)
-			  (* Good user provides type for [rootptr] ==> done! *)
-			  let ddef = I.look_up_data_def_raw prog.I.prog_data_decls s in 
-			  (* let _ = print_endline ("[gather_type_info_heap_x] root pointer type = " ^ ddef.I.data_name) in *)
-			  (true, Named ddef.I.data_name)
-			with 
-			  | Not_found -> (false,UNK) (* Lazy user ==> perform type reasoning! *) in
-			(* After this, if type_found = false then we know that 
-			 * s is a name of field of some data type
-			 *)
-			let type_found,type_rootptr = if type_found then (type_found,type_rootptr)
-			else try (* looking up in the collected types table for [rootptr] *)
-			  let vi = H.find stab rootptr in
-			  match vi.sv_info_kind with
-				| UNK -> (false,UNK)
-				| _ -> (true,vi.sv_info_kind) (* type of [rootptr] is known ==> done! *)
-			with
-			  | Not_found -> (false,UNK) in
-			let type_found,type_rootptr = if type_found then (type_found,type_rootptr)
-			else (* inferring the type from the name of the field *)
-			  let dts = I.look_up_types_containing_field prog.I.prog_data_decls s in
-			  if (List.length dts = 1) then
-				(* the field uniquely determines the data type ==> done! *)
-				(* let _ = print_endline ("[gather_type_info_heap_x] Only type " ^ (List.hd dts) ^ " has field " ^ s) in *)
-				(true,Named (List.hd dts))
-			  else
-				(false,UNK) in
-			(* Step 3: Collect the remaining type information *)
-			if type_found then
-			  (* Know the type of rootptr ==> Know the type of the field *)
-			  let _ = H.add stab rootptr { sv_info_kind = type_rootptr; id = 0 } in
-			  (* Filter out user type indication, List.tl to remove the root as well *)
-			  let field_access_seq = List.tl (List.filter (fun x -> I.is_not_data_type_identifier prog.I.prog_data_decls x) tokens) in
-			  (* Get the type of the field which is the type of the pointer *)
-			  let ptr_type = I.get_type_of_field_seq prog.I.prog_data_decls type_rootptr field_access_seq in
-			  (* let _ = print_endline ("[gather_type_info_heap_x] pointer type found = " ^ (string_of_typ ptr_type)) in *)
-			  let _ = gather_type_info_exp (List.hd ies) stab ptr_type in ()
-			else ()
-		  else (* End dealing with generic ptr, continue what the original system did *)
-	        let _ = 
-              (try
-                let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c in
-                (*let ss = pr_list (pr_pair string_of_typ pr_id) vdef.I.view_typed_vars in*)
-	            (* let _ = print_string ("\n searching for: "^(\* c^ *\)" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^" types:"^ss^"\n") in *)
-                try_unify_view_type_args prog c vdef v ies stab pos 
-              with
-                | Not_found ->
-		              (try
-                        let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c in
-                        let _ = try_unify_data_type_args prog c ddef v ies stab pos in ()
-		              with
-		                | Not_found ->
-			                  (*let _ = print_string (Iprinter.string_of_program prog) in*)
-			                  Err.report_error
-			                      {
-			                          Err.error_loc = pos;
-			                          Err.error_text = c ^ " is neither 2 a data nor view name";
-			                      })) in ()
+                let ft = cperm_typ () in
+                let gather_type_info_ann c stab = match c with
+                  | IF.ConstAnn _ -> ()
+                  | IF.PolyAnn ((i,_),_) -> ignore(gather_type_info_var i stab AnnT pos) in
+                let gather_type_info_perm p stab = match p with
+                  | None -> ()
+                  | Some e -> let _ = gather_type_info_exp e stab ft in () in
+                let _ = gather_type_info_perm perm stab in
+                let _ = gather_type_info_ann ann stab in
+		        (* let _ = print_endline ("[gather_type_info_heap_x] input formula = " ^ Iprinter.string_of_h_formula h0) in *)
+		        (* An Hoa : Deal with the generic pointer! *)
+		        if (c = Parser.generic_pointer_type_name) then 
+			      (* Assumptions:
+			       * (i)  ies to contain a single argument, namely the value of the pointer
+			       * (ii) the head of the heap node is of form "V[.TypeOfV].FieldAccess"
+			       *      where [.TypeOfV] is optional type of V. If it is present, it is
+			       *      the type of V pointer. Otherwise, we try to find this information
+			       *      based on its fields.
+			       * (iii) Temporarily assume that only one field; the case of inline fields
+			       *      will be dealt with later.
+			       *)
+			      (* Step 1: Extract the main variable i.e. the root of the pointer *)
+			      (* let _ = print_endline ("[gather_type_info_heap_x] heap pointer = " ^ v) in *)
+			      let tokens = Str.split (Str.regexp "\\.") v in
+			      (* let _ = print_endline ("[gather_type_info_heap_x] tokens = {" ^ (String.concat "," tokens) ^ "}") in *)
+			      let rootptr = List.hd tokens in
+			      (* Step 2: Determine the type of [rootptr] and the field by looking 
+			       * up the current state of stab & information supplied by the user.
+			       *)
+			      let s = List.nth tokens 1 in
+			      let type_found,type_rootptr = try (* looking up in the list of data types *)
+			        (* Good user provides type for [rootptr] ==> done! *)
+			        let ddef = I.look_up_data_def_raw prog.I.prog_data_decls s in 
+			        (* let _ = print_endline ("[gather_type_info_heap_x] root pointer type = " ^ ddef.I.data_name) in *)
+			        (true, Named ddef.I.data_name)
+			      with 
+			        | Not_found -> (false,UNK) (* Lazy user ==> perform type reasoning! *) in
+			      (* After this, if type_found = false then we know that 
+			       * s is a name of field of some data type
+			       *)
+			      let type_found,type_rootptr = if type_found then (type_found,type_rootptr)
+			      else try (* looking up in the collected types table for [rootptr] *)
+			        let vi = H.find stab rootptr in
+			        match vi.sv_info_kind with
+				      | UNK -> (false,UNK)
+				      | _ -> (true,vi.sv_info_kind) (* type of [rootptr] is known ==> done! *)
+			      with
+			        | Not_found -> (false,UNK) in
+			      let type_found,type_rootptr = if type_found then (type_found,type_rootptr)
+			      else (* inferring the type from the name of the field *)
+			        let dts = I.look_up_types_containing_field prog.I.prog_data_decls s in
+			        if (List.length dts = 1) then
+				      (* the field uniquely determines the data type ==> done! *)
+				      (* let _ = print_endline ("[gather_type_info_heap_x] Only type " ^ (List.hd dts) ^ " has field " ^ s) in *)
+				      (true,Named (List.hd dts))
+			        else
+				      (false,UNK) in
+			      (* Step 3: Collect the remaining type information *)
+			      if type_found then
+			        (* Know the type of rootptr ==> Know the type of the field *)
+			        let _ = H.add stab rootptr { sv_info_kind = type_rootptr; id = 0 } in
+			        (* Filter out user type indication, List.tl to remove the root as well *)
+			        let field_access_seq = List.tl (List.filter (fun x -> I.is_not_data_type_identifier prog.I.prog_data_decls x) tokens) in
+			        (* Get the type of the field which is the type of the pointer *)
+			        let ptr_type = I.get_type_of_field_seq prog.I.prog_data_decls type_rootptr field_access_seq in
+			        (* let _ = print_endline ("[gather_type_info_heap_x] pointer type found = " ^ (string_of_typ ptr_type)) in *)
+			        let _ = gather_type_info_exp (List.hd ies) stab ptr_type in ()
+			      else ()
+		        else (* End dealing with generic ptr, continue what the original system did *)
+	              let _ = 
+                    (try
+                      let vdef = I.look_up_view_def_raw 10 prog.I.prog_view_decls c in
+                      (*let ss = pr_list (pr_pair string_of_typ pr_id) vdef.I.view_typed_vars in*)
+	                  (* let _ = print_string ("\n searching for: "^(\* c^ *\)" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^" types:"^ss^"\n") in *)
+                      try_unify_view_type_args prog c vdef v ies stab pos 
+                    with
+                      | Not_found ->
+		                    (try
+                              let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c in
+                              let _ = try_unify_data_type_args prog c ddef v ies stab pos in ()
+		                    with
+		                      | Not_found ->
+			                        (*let _ = print_string (Iprinter.string_of_program prog) in*)
+			                        Err.report_error
+			                            {
+			                                Err.error_loc = pos;
+			                                Err.error_text = c ^ " is neither 2 a data nor view name";
+			                            })) in ()
     | IF.HTrue | IF.HFalse | IF.HEmp -> ()
 
 and get_spec_var_stab (v : ident) stab pos =
@@ -5679,7 +5683,7 @@ and get_spec_var_stab_infer_x (v : ident) fvs pos =
 and get_spec_var_stab_infer_with_prime (v, p) fvs pos =
   let get_var_type v fv_list: (typ * bool) = 
     let res_list = CP.remove_dups_svl (List.filter 
-      (fun c -> v = CP.name_of_spec_var c & p = CP.primed_of_spec_var c) fv_list) in
+        (fun c -> v = CP.name_of_spec_var c & p = CP.primed_of_spec_var c) fv_list) in
     match res_list with
       | [] -> (Void,false)
       | [sv] -> (CP.type_of_spec_var sv,true)
@@ -5711,8 +5715,8 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
   let pr = (pr_list (fun (i,p) -> i)) in
   let pr_out (f,h,expl) = 
     ("\n ### f = " ^ (Iprinter.string_of_formula f)
-     ^"\n ### h = " ^ (pr h)
-     ^"\n ### expl = " ^ (pr expl)) 
+    ^"\n ### h = " ^ (pr h)
+    ^"\n ### expl = " ^ (pr expl)) 
   in 
   Debug.no_3 "case_normalize_renamed_formula" 
       pr pr Iprinter.string_of_formula pr_out
@@ -5796,7 +5800,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
       | IF.HeapNode b ->
 	        let pos = b.IF.h_formula_heap_pos in
 	        let labels = try
-	          let vdef = I.look_up_view_def_raw prog.I.prog_view_decls b.IF.h_formula_heap_name in
+	          let vdef = I.look_up_view_def_raw 11 prog.I.prog_view_decls b.IF.h_formula_heap_name in
 	          vdef.I.view_labels
 	        with
 	          | Not_found ->List.map (fun _ -> Label_only.empty_spec_label) b.IF.h_formula_heap_arguments in	
@@ -5856,7 +5860,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
       | IF.HTrue ->  (used_names, [], IF.HTrue,  IP.mkTrue no_pos)
       | IF.HFalse -> (used_names, [], IF.HFalse, IP.mkTrue no_pos)
       | IF.HEmp -> (used_names, [], IF.HEmp, IP.mkTrue no_pos) in 
-	  
+  
   let linearize_heap (used_names:((ident*primed) list)) (f : IF.h_formula):
         (((ident*primed) list) * ((ident*primed) list) * IF.h_formula * Ipure.formula) =
     let (a,b,h,r) = linearize_heap used_names f in
@@ -5870,7 +5874,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
       let idents, _ = List.split vs in
       (string_of_ident_list idents) in
     Debug.no_2 "linearize_heap" pr0 pr1 pr2 (fun _ _ -> linearize_heap used_names f) used_names f  in
-	
+  
   let rec normalize_base heap cp fl a evs pos : IF.formula* ((ident*primed)list)* ((ident*primed)list) =
     let heap = Immutable.normalize_h_formula heap false in 
     let nu, h_evars, new_h, link_f = linearize_heap [] heap in
@@ -5881,19 +5885,19 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
     let rec split3 ls = match ls with
       | [] -> [],[],[]
       | (x1,x2,x3)::xs -> 
-          let ls1,ls2,ls3 = split3 xs in
-          (x1::ls1,x2::ls2,x3::ls3)
+            let ls1,ls2,ls3 = split3 xs in
+            (x1::ls1,x2::ls2,x3::ls3)
     in
     let new_a, used_vars_a,to_expl_a = split3 tmp_a in
     let rec func2 (fs: (IF.formula * IF.one_formula) list) : ((IF.one_formula list) * ((ident*primed)list)) =
       match fs with
         | [] -> [],[]
         | (f1,f2):: xs ->
-            let rs,evars2 = func2 xs in
-            let evars1,_ = IF.split_quantifiers f1 in
-            let f = IF.one_formula_of_formula f1 in
-            let f1 = {f with IF.formula_thread = f2.IF.formula_thread} in
-            (f1::rs,evars1@evars2)
+              let rs,evars2 = func2 xs in
+              let evars1,_ = IF.split_quantifiers f1 in
+              let f = IF.one_formula_of_formula f1 in
+              let f1 = {f with IF.formula_thread = f2.IF.formula_thread} in
+              (f1::rs,evars1@evars2)
     in
     let tmp = List.combine new_a a in
     let new_a, evars_a = func2 tmp in
@@ -5940,34 +5944,35 @@ and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula):IF.formu
   let f = IF.rename_bound_vars f in
   let f,_,_ = case_normalize_renamed_formula prog h [] f in
   f
-      
+
+(* TODO : WN : type error with empty predicate errors/list-bug.slk *) 
 and case_normalize_struc_formula  prog (h:(ident*primed) list)(p:(ident*primed) list)(f:IF.struc_formula) allow_primes (lax_implicit:bool)
       strad_vs :IF.struc_formula* ((ident*primed)list) = 	
   let pr0 = pr_list (fun (i,p) -> i) in
   let pr1 = Iprinter.string_of_struc_formula in
   let pr2 (x,_) = pr1 x in
-  Debug.no_3_loop "case_normalize_struc_formula" pr0 pr0 pr1 pr2 (fun _ _ _ -> case_normalize_struc_formula_x prog h p f allow_primes lax_implicit strad_vs) h p f
+  Debug.no_3 "case_normalize_struc_formula" pr0 pr0 pr1 pr2 (fun _ _ _ -> case_normalize_struc_formula_x prog h p f allow_primes lax_implicit strad_vs) h p f
       
 and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed) list)(f:IF.struc_formula) allow_primes (lax_implicit:bool)
       strad_vs :IF.struc_formula* ((ident*primed)list) = 	
   let ilinearize_formula (f:IF.formula)(h:(ident*primed) list): IF.formula = 
     let need_quant = Gen.BList.difference_eq (=) (IF.all_fv f) h in
     let _ = if not (List.for_all(fun (c1,c2)->c2==Unprimed)need_quant) then 
-          let vars = List.filter (fun (c1,c2)->c2==Primed) need_quant in
-          let msg = "Pass-by-value parameters and local variables can not escape out of scope: " ^ (string_of_primed_ident_list vars) in
-          Err.report_error{ 
-              Err.error_loc = IF.pos_of_formula f; 
-              Err.error_text = msg; } 
+      let vars = List.filter (fun (c1,c2)->c2==Primed) need_quant in
+      let msg = "Pass-by-value parameters and local variables can not escape out of scope: " ^ (string_of_primed_ident_list vars) in
+      Err.report_error{ 
+          Err.error_loc = IF.pos_of_formula f; 
+          Err.error_text = msg; } 
 
-        (*   Err.report_error{  *)
-        (* Err.error_loc = IF.pos_of_formula f;  *)
-        (* Err.error_text = "call-by-value parameters & existential vars should not be primed"; }  *)
+    (*   Err.report_error{  *)
+    (* Err.error_loc = IF.pos_of_formula f;  *)
+    (* Err.error_text = "call-by-value parameters & existential vars should not be primed"; }  *)
     in
     (* let _ = if (List.length need_quant)>0 then  *)
     (*   print_string ("\n warning "^(string_of_loc (IF.pos_of_formula f))^" quantifying: "^(Iprinter.string_of_var_list need_quant)^"\n") in *)
     IF.push_exists need_quant f in
   (* let _ = print_string ("case_normalize_struc_formula :: CHECK POINT 0 ==> f = " ^ Iprinter.string_of_struc_formula f ^ "\n") in *)
-  let nf = convert_struc2 prog f in
+  let nf = convert_struc2 1 prog f in
   (* let _ = print_string ("case_normalize_struc_formula :: CHECK POINT 0.5 ==> f = " ^ Iprinter.string_of_struc_formula f ^ "\n") in *)
   let nf = IF.float_out_thread_struc_formula nf in
   (* let _ = print_string ("case_normalize_struc_formula :: CHECK POINT 1 ==> nf = " ^ Iprinter.string_of_struc_formula nf ^ "\n") in *)
@@ -6029,15 +6034,15 @@ and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed)
                 IF.formula_struc_continuation = nc;
                 IF.formula_struc_pos = b.IF.formula_struc_pos},rdups (h2@h3))
       | IF.EInfer b -> (* Tricky thing *)
-        (IF.EInfer {b with IF.formula_inf_continuation = fst (helper h strad_vs b.IF.formula_inf_vars b.IF.formula_inf_continuation)}, [])
+            (IF.EInfer {b with IF.formula_inf_continuation = fst (helper h strad_vs b.IF.formula_inf_vars b.IF.formula_inf_continuation)}, [])
 	  | IF.EList b -> 
-		let ll1, ll2 = map_l_snd_res (helper h strad_vs vars) b in	  
-		(IF.EList ll1, rdups (List.concat ll2))
+		    let ll1, ll2 = map_l_snd_res (helper h strad_vs vars) b in	  
+		    (IF.EList ll1, rdups (List.concat ll2))
 	  | IF.EOr b-> 
 			let f1,l1 = helper h strad_vs vars b.IF.formula_struc_or_f1 in
 			let f2,l2 = helper h strad_vs vars b.IF.formula_struc_or_f2 in
 			(IF.EOr {b with IF.formula_struc_or_f1 = f1; IF.formula_struc_or_f2 = f2;},rdups (l1@l2))
-		in	
+  in	
   (helper h strad_vs [] nf)
       
 and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl = 
@@ -6308,15 +6313,15 @@ and check_eprim_in_formula s f = match f with
   | IF.Exists e-> err_prim_l_vars s e.IF.formula_exists_qvars e.IF.formula_exists_pos
         
 and check_eprim_in_struc_formula s f = match f with
-    | IF.ECase b-> List.iter (fun (_,c2)-> check_eprim_in_struc_formula s c2) b.IF.formula_case_branches
-    | IF.EBase b-> 
-          (err_prim_l_vars s b.IF.formula_struc_exists b.IF.formula_struc_pos; 
-          check_eprim_in_formula s b.IF.formula_struc_base;
-          match b.IF.formula_struc_continuation with | None-> () | Some l-> check_eprim_in_struc_formula s l)
-    | IF.EAssume (b,_) -> check_eprim_in_formula " is not a ref param " b
-    | IF.EInfer b -> check_eprim_in_struc_formula s b.IF.formula_inf_continuation
-	| IF.EList b -> List.iter (fun (_,c)-> check_eprim_in_struc_formula s c) b
-	| IF.EOr b -> check_eprim_in_struc_formula s b.IF.formula_struc_or_f1; check_eprim_in_struc_formula s b.IF.formula_struc_or_f2
+  | IF.ECase b-> List.iter (fun (_,c2)-> check_eprim_in_struc_formula s c2) b.IF.formula_case_branches
+  | IF.EBase b-> 
+        (err_prim_l_vars s b.IF.formula_struc_exists b.IF.formula_struc_pos; 
+        check_eprim_in_formula s b.IF.formula_struc_base;
+        match b.IF.formula_struc_continuation with | None-> () | Some l-> check_eprim_in_struc_formula s l)
+  | IF.EAssume (b,_) -> check_eprim_in_formula " is not a ref param " b
+  | IF.EInfer b -> check_eprim_in_struc_formula s b.IF.formula_inf_continuation
+  | IF.EList b -> List.iter (fun (_,c)-> check_eprim_in_struc_formula s c) b
+  | IF.EOr b -> check_eprim_in_struc_formula s b.IF.formula_struc_or_f1; check_eprim_in_struc_formula s b.IF.formula_struc_or_f2
 
 and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:Iast.exp) :
       Iast.exp*((ident*primed) list)*((ident*primed) list) =  match f with
@@ -6522,19 +6527,19 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
   }
 
 and case_normalize_barrier_x prog bd = 
-   (*let lv = bd.I.barrier_shared_vars in
-   let u = (self,Unprimed)::(List.map (fun (_,c)-> (c,Unprimed)) lv) in
-   let p = (self,Primed)::(List.map (fun (_,c)-> (c,Primed)) lv) in*)
-   let u = [(self,Unprimed)] in
-   let p = [(self,Primed)] in
-   let fct f = fst (case_normalize_struc_formula prog u p f false false []) in
+  (*let lv = bd.I.barrier_shared_vars in
+    let u = (self,Unprimed)::(List.map (fun (_,c)-> (c,Unprimed)) lv) in
+    let p = (self,Primed)::(List.map (fun (_,c)-> (c,Primed)) lv) in*)
+  let u = [(self,Unprimed)] in
+  let p = [(self,Primed)] in
+  let fct f = fst (case_normalize_struc_formula prog u p f false false []) in
   {bd with I.barrier_tr_list = List.map (fun (f,t,sp)-> (f,t,List.map fct sp)) bd.I.barrier_tr_list}
-   
+      
 and case_normalize_barrier prog bd =    
-	let pr_in = Iprinter.string_of_barrier_decl in
-	Debug.no_1 "case_normalize_barrier " pr_in pr_in (case_normalize_barrier_x prog) bd
-  
-   
+  let pr_in = Iprinter.string_of_barrier_decl in
+  Debug.no_1 "case_normalize_barrier " pr_in pr_in (case_normalize_barrier_x prog) bd
+      
+      
 (* AN HOA : WHAT IS THIS FUNCTION SUPPOSED TO DO ? *)
 and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl =
   Debug.no_1 "case_normalize_program" (Iprinter.string_of_program) (Iprinter.string_of_program) case_normalize_program_x prog
@@ -6551,8 +6556,8 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
         (match inv_lock with
           | None -> None
           | Some f ->
-              let new_f = case_normalize_formula prog p f in (* it has to be p to maintain self in the invariant*)
-              Some new_f)
+                let new_f = case_normalize_formula prog p f in (* it has to be p to maintain self in the invariant*)
+                Some new_f)
       in
       { c with Iast.view_formula = 	wf; Iast.view_inv_lock = inv_lock}) tmp_views in
   (*let _ = print_string ("case_normalize_program: view_a: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in*)
@@ -6877,7 +6882,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
 
   let get_safe_prune_conds (pc:(CP.b_formula * formula_label list) list) (orig_pf:(formula_label * CP.formula) list)
         : (CP.b_formula * formula_label list) list = 
- 
+    
     let safe_test bf ls =
       let neg_bf = CP.mkNot_b_norm  bf in
       match neg_bf with
@@ -6959,37 +6964,37 @@ and barrier_prune_inv_inference_x cp bd =
 		let a2 = match c2 with | None -> a2 | Some v -> (v,c3)::a2 in
 		(a1,a2)) ([],[]) l in
 	let rec fix_p_state l= match l with
-		| [] -> []
-		| (v,lbl)::t-> 
+	  | [] -> []
+	  | (v,lbl)::t-> 
 			let l_v,l_nv = List.partition (fun (v2,_)-> v=v2) t in
 			(v, lbl:: (snd (List.split l_v)))::(fix_p_state l_nv) in
 	let rec fix_perm l= match l with
-		| [] -> []
-		| (v,lbl)::t-> 
+	  | [] -> []
+	  | (v,lbl)::t-> 
 			let l_v,l_nv = List.partition (fun (v2,_)-> Tree_shares.Ts.eq v v2) t in
 			(v, lbl:: (snd (List.split l_v)))::(fix_perm l_nv) in		
 	fix_p_state l_state, fix_perm l_perm in
   { bd with  
-	C.barrier_prune_branches = branches; 
-	C.barrier_prune_conditions_state = state_conds;
-	C.barrier_prune_conditions_perm = perm_conds;
-	C.barrier_prune_conditions = [] ;	
-    C.barrier_prune_conditions_baga = [];	
-    C.barrier_prune_invariants = [];}
-  
+	  C.barrier_prune_branches = branches; 
+	  C.barrier_prune_conditions_state = state_conds;
+	  C.barrier_prune_conditions_perm = perm_conds;
+	  C.barrier_prune_conditions = [] ;	
+      C.barrier_prune_conditions_baga = [];	
+      C.barrier_prune_invariants = [];}
+      
 and barrier_prune_inv_inference cp bd = 
-	let pr = Cprinter.string_of_barrier_decl in
-	Debug.no_1 "barrier_prune_inv_inference" pr pr (barrier_prune_inv_inference_x cp) bd
+  let pr = Cprinter.string_of_barrier_decl in
+  Debug.no_1 "barrier_prune_inv_inference" pr pr (barrier_prune_inv_inference_x cp) bd
 
 
-  
-  
+      
+      
 and coerc_spec prog is_l c = 
   if not !Globals.allow_pred_spec then [c] 
   else 
     let prun_f = Solver.prune_preds prog true  in
     [{c with C.coercion_head = prun_f c.C.coercion_head; C.coercion_body = prun_f c.C.coercion_body}]
-  
+        
 
 and pred_prune_inference (cp:C.prog_decl):C.prog_decl = 
   Debug.no_1 "pred_prune_inference" pr_no pr_no pred_prune_inference_x cp 
@@ -7007,11 +7012,11 @@ and pred_prune_inference_x (cp:C.prog_decl):C.prog_decl =
             C.view_un_struc_formula = unstruc;}) preds in
     let prog_views_pruned = { prog_views_inf with C.prog_view_decls  = preds;} in
 	let prune_bar c = { c with 
-		 C.barrier_tr_list = List.map (fun (a1,a2,c)-> a1,a2,List.map (Solver.prune_pred_struc prog_views_pruned true) c) c.C.barrier_tr_list;
-		 C.barrier_def= CF.erase_propagated (Solver.prune_pred_struc prog_views_pruned true c.C.barrier_def)} in
+		C.barrier_tr_list = List.map (fun (a1,a2,c)-> a1,a2,List.map (Solver.prune_pred_struc prog_views_pruned true) c) c.C.barrier_tr_list;
+		C.barrier_def= CF.erase_propagated (Solver.prune_pred_struc prog_views_pruned true c.C.barrier_def)} in
 	let prune_bar c = Debug.no_1 "prune_bar" Cprinter.string_of_barrier_decl Cprinter.string_of_barrier_decl prune_bar c in
 	let bars = List.map prune_bar bars in
-		 
+	
 	let prog_barriers_pruned ={prog_views_pruned with C.prog_barrier_decls = bars} in
     let proc_spec f = 
       let simp_b = not ((String.compare f.C.proc_file "primitives")==0 or (f.C.proc_file="")) in
@@ -7023,11 +7028,11 @@ and pred_prune_inference_x (cp:C.prog_decl):C.prog_decl =
     let l_coerc = List.concat (List.map (coerc_spec prog_barriers_pruned true) prog_barriers_pruned.C.prog_left_coercions) in
     let r_coerc = List.concat (List.map (coerc_spec prog_barriers_pruned false) prog_barriers_pruned.C.prog_right_coercions) in
     let r = { prog_barriers_pruned with 
-          C.new_proc_decls = procs;
-          C.prog_left_coercions  = l_coerc;
-          C.prog_right_coercions = r_coerc;} in
+        C.new_proc_decls = procs;
+        C.prog_left_coercions  = l_coerc;
+        C.prog_right_coercions = r_coerc;} in
     Gen.Profiling.pop_time "pred_inference" ;r
-   
+        
 and pr_proc_call_order p = 
   let n = p.Cast.proc_name in
   let c = p.Cast.proc_call_order in
@@ -7062,7 +7067,7 @@ and mark_call_order_x (cp: C.prog_decl) scc_list cg : C.prog_decl =
   let call_hierarchy = List.concat (List.map (fun (i, scc) -> List.map (fun m -> (m,i)) scc) scc_list) in 
   let cal_index name lst = try List.assoc name lst with _ -> 0 in 
   let tbl = C.proc_decls_map (fun p ->  
-    { p with C.proc_call_order = cal_index p.C.proc_name call_hierarchy }
+      { p with C.proc_call_order = cal_index p.C.proc_name call_hierarchy }
   ) cp.C.new_proc_decls in
   { cp with C.new_proc_decls = tbl }
 
@@ -7071,28 +7076,28 @@ and mark_call_order (cp: C.prog_decl) scc_list cg : C.prog_decl =
     (List.filter (fun x -> x.C.proc_is_main) (C.list_of_procs p)) in
   let pr2 scc_list = pr_list (fun scc -> (pr_list (fun s -> s) scc) ^ "\n") scc_list in
   Debug.no_2 "mark_call_order" pr1 pr2 pr1
-  (fun _ _ -> mark_call_order_x cp scc_list cg) cp scc_list
+      (fun _ _ -> mark_call_order_x cp scc_list cg) cp scc_list
 
 and is_found (cp: C.prog_decl) (pname: Globals.ident) (scc: C.IG.V.t list) : bool =
   List.exists (fun m ->
 	  let mn = (C.look_up_proc_def_raw cp.C.new_proc_decls m).C.proc_name in
-	mn = pname) scc
-			  
+	  mn = pname) scc
+	  
 and find_scc_group (cp: C.prog_decl) (pname: Globals.ident) (scc_list: C.IG.V.t list list) : (C.IG.V.t list) =
   try List.find (fun scc -> is_found cp pname scc) scc_list
   with _ -> []
-	
+	  
 and neighbors_of_scc (scc: C.IG.V.t list) (scc_list: C.IG.V.t list list) cg : C.IG.V.t list list =
-	let neighbors = List.filter (fun m -> not (List.mem m scc)) (C.IGN.list_from_vertices cg scc) in
-	let scc_neighbors = List.find_all (fun s -> List.exists (fun m -> List.mem m neighbors) s) scc_list in 
-	scc_neighbors
+  let neighbors = List.filter (fun m -> not (List.mem m scc)) (C.IGN.list_from_vertices cg scc) in
+  let scc_neighbors = List.find_all (fun s -> List.exists (fun m -> List.mem m neighbors) s) scc_list in 
+  scc_neighbors
 
 (* Warning: This method might have problem with OCaml 4.0 *)  
 and scc_sort_old (scc_list: C.IG.V.t list list) cg : C.IG.V.t list list =
   let compare_scc scc1 scc2 =
-		if (List.mem scc2 (neighbors_of_scc scc1 scc_list cg)) then 1
-		else if (List.mem scc1 (neighbors_of_scc scc2 scc_list cg)) then -1
-		else 0
+	if (List.mem scc2 (neighbors_of_scc scc1 scc_list cg)) then 1
+	else if (List.mem scc1 (neighbors_of_scc scc2 scc_list cg)) then -1
+	else 0
   in List.fast_sort (fun s1 s2 -> compare_scc s1 s2) scc_list
 
 and scc_sort (scc_list: C.IG.V.t list list) cg : C.IG.V.t list list =
@@ -7107,89 +7112,89 @@ and scc_sort (scc_list: C.IG.V.t list list) cg : C.IG.V.t list list =
 
 and irf_traverse_prog (cp: C.prog_decl) (scc_list: C.IG.V.t list list) : C.prog_decl = 
   { cp with
-    C.new_proc_decls = C.proc_decls_map (fun proc ->
-      irf_traverse_proc cp proc (find_scc_group cp proc.C.proc_name scc_list)
-    ) cp.C.new_proc_decls;
+      C.new_proc_decls = C.proc_decls_map (fun proc ->
+          irf_traverse_proc cp proc (find_scc_group cp proc.C.proc_name scc_list)
+      ) cp.C.new_proc_decls;
   }
 
 and irf_traverse_proc (cp: C.prog_decl) (proc: C.proc_decl) (scc: C.IG.V.t list) : C.proc_decl =
   let marked_rec_body, call_list = match proc.C.proc_body with
     | None -> None, []
     | Some b -> 
-        let body, cl = irf_traverse_exp cp b scc in
-        Some body, cl
+          let body, cl = irf_traverse_exp cp b scc in
+          Some body, cl
   in let is_rec =
     if (List.length scc) > 1 then true (* Mutual recursive function *)
     else List.exists (fun mn -> mn = proc.C.proc_name) call_list
   in { proc with
-    C.proc_body = marked_rec_body;
-    C.proc_is_recursive = is_rec }
+      C.proc_body = marked_rec_body;
+      C.proc_is_recursive = is_rec }
 
 and irf_traverse_exp (cp: C.prog_decl) (exp: C.exp) (scc: C.IG.V.t list) : (C.exp * ident list) =
   match exp with
-  | C.Label e -> 
-      let ex, il = irf_traverse_exp cp e.C.exp_label_exp scc in
-      (C.Label {e with C.exp_label_exp = ex}, il)
-  | C.CheckRef _ 
-  | C.Java _
-  | C.Assert _ -> (exp, [])
-  | C.Assign e -> 
-      let ex, il = irf_traverse_exp cp e.C.exp_assign_rhs scc in
-      (C.Assign {e with C.exp_assign_rhs = ex}, il)
-  | C.BConst e -> (exp, [])
-  | C.Barrier _ -> (exp,[])
-  | C.Bind e -> 
-      let ex, il = irf_traverse_exp cp e.C.exp_bind_body scc in
-      (C.Bind {e with Cast.exp_bind_body = ex}, il)
-  | C.Block e -> 
-      let ex, il = irf_traverse_exp cp e.C.exp_block_body scc in
-      (C.Block {e with C.exp_block_body = ex}, il)
-  | C.Cond e -> 
-      let ex1, il1 = irf_traverse_exp cp e.C.exp_cond_then_arm scc in
-      let ex2, il2 = irf_traverse_exp cp e.C.exp_cond_else_arm scc in
-      (C.Cond {e with
-        C.exp_cond_then_arm = ex1; C.exp_cond_else_arm = ex2}, il1@il2)
-  | C.Cast e -> 
-      let ex, il = irf_traverse_exp cp e.C.exp_cast_body scc in
-      (C.Cast {e with C.exp_cast_body = ex}, il)
-  | C.Catch e -> 
-      let ex, il = irf_traverse_exp cp e.C.exp_catch_body scc in
-      (C.Catch {e with C.exp_catch_body = ex}, il)
-  | C.Debug _
-  | C.Dprint _
-  | C.FConst _ 
-  | C.IConst _
-  | C.New _
-  | C.Null _ 
-  | C.EmptyArray _ 
-  | C.Print _ -> (exp, [])
-  | C.Seq e -> 
-      let ex1, il1 = irf_traverse_exp cp e.C.exp_seq_exp1 scc in
-      let ex2, il2 = irf_traverse_exp cp e.C.exp_seq_exp2 scc in
-      (C.Seq {e with
-        C.exp_seq_exp1 = ex1; C.exp_seq_exp2 = ex2}, il1@il2)
-  | C.This _
-  | C.Time _
-  | C.Var _
-  | C.VarDecl _
-  | C.Unfold _
-  | C.Unit _ -> (exp, [])
-  | C.While e ->
-      let ex, il = irf_traverse_exp cp e.C.exp_while_body scc in
-      (C.While {e with C.exp_while_body = ex}, il)
-  | C.Sharp _ -> (exp, [])
-  | C.Try e -> 
-      let ex1, il1 = irf_traverse_exp cp e.C.exp_try_body scc in
-      let ex2, il2 = irf_traverse_exp cp e.C.exp_catch_clause scc in
-      (C.Try {e with
-        C.exp_try_body = ex1; C.exp_catch_clause = ex2}, il1@il2)
-  | C.ICall e -> 
-      (C.ICall {e with C.exp_icall_is_rec = (is_found cp e.C.exp_icall_method_name scc)}, 
-      [e.C.exp_icall_method_name])
-  | C.SCall e -> 
-      (C.SCall {e with C.exp_scall_is_rec = (is_found cp e.C.exp_scall_method_name scc)},
-      [e.C.exp_scall_method_name])
-		  
+    | C.Label e -> 
+          let ex, il = irf_traverse_exp cp e.C.exp_label_exp scc in
+          (C.Label {e with C.exp_label_exp = ex}, il)
+    | C.CheckRef _ 
+    | C.Java _
+    | C.Assert _ -> (exp, [])
+    | C.Assign e -> 
+          let ex, il = irf_traverse_exp cp e.C.exp_assign_rhs scc in
+          (C.Assign {e with C.exp_assign_rhs = ex}, il)
+    | C.BConst e -> (exp, [])
+    | C.Barrier _ -> (exp,[])
+    | C.Bind e -> 
+          let ex, il = irf_traverse_exp cp e.C.exp_bind_body scc in
+          (C.Bind {e with Cast.exp_bind_body = ex}, il)
+    | C.Block e -> 
+          let ex, il = irf_traverse_exp cp e.C.exp_block_body scc in
+          (C.Block {e with C.exp_block_body = ex}, il)
+    | C.Cond e -> 
+          let ex1, il1 = irf_traverse_exp cp e.C.exp_cond_then_arm scc in
+          let ex2, il2 = irf_traverse_exp cp e.C.exp_cond_else_arm scc in
+          (C.Cond {e with
+              C.exp_cond_then_arm = ex1; C.exp_cond_else_arm = ex2}, il1@il2)
+    | C.Cast e -> 
+          let ex, il = irf_traverse_exp cp e.C.exp_cast_body scc in
+          (C.Cast {e with C.exp_cast_body = ex}, il)
+    | C.Catch e -> 
+          let ex, il = irf_traverse_exp cp e.C.exp_catch_body scc in
+          (C.Catch {e with C.exp_catch_body = ex}, il)
+    | C.Debug _
+    | C.Dprint _
+    | C.FConst _ 
+    | C.IConst _
+    | C.New _
+    | C.Null _ 
+    | C.EmptyArray _ 
+    | C.Print _ -> (exp, [])
+    | C.Seq e -> 
+          let ex1, il1 = irf_traverse_exp cp e.C.exp_seq_exp1 scc in
+          let ex2, il2 = irf_traverse_exp cp e.C.exp_seq_exp2 scc in
+          (C.Seq {e with
+              C.exp_seq_exp1 = ex1; C.exp_seq_exp2 = ex2}, il1@il2)
+    | C.This _
+    | C.Time _
+    | C.Var _
+    | C.VarDecl _
+    | C.Unfold _
+    | C.Unit _ -> (exp, [])
+    | C.While e ->
+          let ex, il = irf_traverse_exp cp e.C.exp_while_body scc in
+          (C.While {e with C.exp_while_body = ex}, il)
+    | C.Sharp _ -> (exp, [])
+    | C.Try e -> 
+          let ex1, il1 = irf_traverse_exp cp e.C.exp_try_body scc in
+          let ex2, il2 = irf_traverse_exp cp e.C.exp_catch_clause scc in
+          (C.Try {e with
+              C.exp_try_body = ex1; C.exp_catch_clause = ex2}, il1@il2)
+    | C.ICall e -> 
+          (C.ICall {e with C.exp_icall_is_rec = (is_found cp e.C.exp_icall_method_name scc)}, 
+          [e.C.exp_icall_method_name])
+    | C.SCall e -> 
+          (C.SCall {e with C.exp_scall_is_rec = (is_found cp e.C.exp_scall_method_name scc)},
+          [e.C.exp_scall_method_name])
+		      
 
 and slicing_label_inference_program (prog : I.prog_decl) : I.prog_decl =
   {prog with
@@ -7310,68 +7315,68 @@ and fm_main g lv =
   helper g lp (unlocked_v, [])
 
 
-  
-  
+      
+      
 
 and check_barrier_wf prog bd = 
-	(*aux es *)
+  (*aux es *)
   
   (*let rec wrapp_frac_fv f = match f with
     | CF.Or ({CF.formula_or_f1 = f1; CF.formula_or_f2 = f2; CF.formula_or_pos = pos}) ->
-         CF.mkOr (wrapp_frac_fv f1) (wrapp_frac_fv f2) pos
+    CF.mkOr (wrapp_frac_fv f1) (wrapp_frac_fv f2) pos
     | CF.Base b -> 
-        let l = Gen.BList.remove_dups_eq CP.eq_spec_var (MCP.mfv b.CF.formula_base_pure) in
-        CF.add_quantifiers l f
+    let l = Gen.BList.remove_dups_eq CP.eq_spec_var (MCP.mfv b.CF.formula_base_pure) in
+    CF.add_quantifiers l f
     | CF.Exists e -> 
-        let l = Gen.BList.remove_dups_eq CP.eq_spec_var (MCP.mfv e.CF.formula_exists_pure) in
-        CF.add_quantifiers l f in*)
+    let l = Gen.BList.remove_dups_eq CP.eq_spec_var (MCP.mfv e.CF.formula_exists_pure) in
+    CF.add_quantifiers l f in*)
   let empty_es = CF.empty_es (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let rec group_tr l =  match l with
     | [] -> []
     | (hf,ht,hp)::t -> 
-      let u,l = List.partition (fun (fl,_,_)-> fl=hf) t in
-      let u = hp::(List.map (fun (_,_,c)->c) u) in
-      let u = List.map (List.map (fun c-> 
-        let pres = List.map fst (CF.split_struc_formula c) in
-        List.fold_left (fun a c-> CF.mkOr a c no_pos) (CF.mkFalse (CF.mkFalseFlow) no_pos) pres)) u in 
-      (hf,u)::(group_tr l) in
-	  
-	let f_gen_base st v perm = 
-	  let st_v = CP.SpecVar (Int,fresh_name (),Unprimed) in
-	  let h = CF.DataNode {
-                        CF.h_formula_data_node = CP.SpecVar (Named bd.C.barrier_name, self,Unprimed);
-                        CF.h_formula_data_name = bd.C.barrier_name;
-                        CF.h_formula_data_imm = CF.ConstAnn Mutable;
-                        CF.h_formula_data_perm = Some v;
-                        CF.h_formula_data_arguments = st_v::List.tl bd.C.barrier_shared_vars;
-                        CF.h_formula_data_label = None; 
-                        CF.h_formula_data_remaining_branches = None ;
-                        CF.h_formula_data_pruning_conditions = [] ;
-						CF.h_formula_data_origins = [] ;
-						CF.h_formula_data_original = true;
-						CF.h_formula_data_holes =[];
-						CF.h_formula_data_derv = false;
-                        CF.h_formula_data_pos = no_pos } in
-	  let p2 = CP.mkEqVarInt st_v st no_pos in
-	  let p = Mcpure.mix_of_pure (CP.mkAnd p2 perm no_pos) in
-	  CF.mkExists [v;st_v] h p CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in
-	let f_gen_base st v perm = Debug.no_1 "f_gen_base" Cprinter.string_of_pure_formula Cprinter.string_of_formula (f_gen_base st v) perm in
-	let f_gen st = f_gen_base st (CP.fresh_perm_var ()) (CP.mkTrue no_pos) in
-	let f_gen_tot st = 
-		let v = CP.fresh_perm_var () in
-		let pf = CP.mkEq (CP.Var (v,no_pos)) (CP.Tsconst (Tree_shares.Ts.top,no_pos)) no_pos  in
-		f_gen_base st v (CP.BForm ((pf,None),None)) in
-				
-	let one_entail f1 f2 = 
-		let ctx = CF.build_context (CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) f1 no_pos in
-		(*let _ = if !Globals.print_core then print_string ("\n"^(Cprinter.string_of_formula f1)^" |- "^(Cprinter.string_of_formula f2)^"\n") else () in*)
+          let u,l = List.partition (fun (fl,_,_)-> fl=hf) t in
+          let u = hp::(List.map (fun (_,_,c)->c) u) in
+          let u = List.map (List.map (fun c-> 
+              let pres = List.map fst (CF.split_struc_formula c) in
+              List.fold_left (fun a c-> CF.mkOr a c no_pos) (CF.mkFalse (CF.mkFalseFlow) no_pos) pres)) u in 
+          (hf,u)::(group_tr l) in
+  
+  let f_gen_base st v perm = 
+	let st_v = CP.SpecVar (Int,fresh_name (),Unprimed) in
+	let h = CF.DataNode {
+        CF.h_formula_data_node = CP.SpecVar (Named bd.C.barrier_name, self,Unprimed);
+        CF.h_formula_data_name = bd.C.barrier_name;
+        CF.h_formula_data_imm = CF.ConstAnn Mutable;
+        CF.h_formula_data_perm = Some v;
+        CF.h_formula_data_arguments = st_v::List.tl bd.C.barrier_shared_vars;
+        CF.h_formula_data_label = None; 
+        CF.h_formula_data_remaining_branches = None ;
+        CF.h_formula_data_pruning_conditions = [] ;
+		CF.h_formula_data_origins = [] ;
+		CF.h_formula_data_original = true;
+		CF.h_formula_data_holes =[];
+		CF.h_formula_data_derv = false;
+        CF.h_formula_data_pos = no_pos } in
+	let p2 = CP.mkEqVarInt st_v st no_pos in
+	let p = Mcpure.mix_of_pure (CP.mkAnd p2 perm no_pos) in
+	CF.mkExists [v;st_v] h p CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in
+  let f_gen_base st v perm = Debug.no_1 "f_gen_base" Cprinter.string_of_pure_formula Cprinter.string_of_formula (f_gen_base st v) perm in
+  let f_gen st = f_gen_base st (CP.fresh_perm_var ()) (CP.mkTrue no_pos) in
+  let f_gen_tot st = 
+	let v = CP.fresh_perm_var () in
+	let pf = CP.mkEq (CP.Var (v,no_pos)) (CP.Tsconst (Tree_shares.Ts.top,no_pos)) no_pos  in
+	f_gen_base st v (CP.BForm ((pf,None),None)) in
+  
+  let one_entail f1 f2 = 
+	let ctx = CF.build_context (CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos) f1 no_pos in
+	(*let _ = if !Globals.print_core then print_string ("\n"^(Cprinter.string_of_formula f1)^" |- "^(Cprinter.string_of_formula f2)^"\n") else () in*)
     Gen.Profiling.inc_counter "barrier_proofs";
-		let rs1, _ = Solver.heap_entail_init prog false (CF.SuccCtx[ctx]) f2 no_pos in
-		CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
-	
-	let one_entail f1 f2  = Debug.no_2 "one_entail" Cprinter.string_of_formula Cprinter.string_of_formula Cprinter.string_of_list_context one_entail f1 f2 in
-		
-	let one_ctx_entail c1 c2 =
+	let rs1, _ = Solver.heap_entail_init prog false (CF.SuccCtx[ctx]) f2 no_pos in
+	CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
+  
+  let one_entail f1 f2  = Debug.no_2 "one_entail" Cprinter.string_of_formula Cprinter.string_of_formula Cprinter.string_of_list_context one_entail f1 f2 in
+  
+  let one_ctx_entail c1 c2 =
     let r = 
       Gen.Profiling.inc_counter "barrier_proofs"; 
 	  let c1 = CF.set_context_formula (CF.Ctx empty_es) c1 in
@@ -7380,71 +7385,71 @@ and check_barrier_wf prog bd =
       (*print_string "cica start\n";*)
       fst (Solver.heap_entail_init prog false (CF.SuccCtx[c1]) (*wrapp_frac_fv*) c2 no_pos) in
     match r with
-     | CF.SuccCtx l ->  List.for_all  (fun c-> (CF.isAnyFalseCtx c || CF.ctx_no_heap c)) l
-     | CF.FailCtx _ -> ((*print_string "result : failed \n";*) false) in
-	(*end auxes*)
-	
-	let one_ctx_entail c1 c2 = Debug.no_2_loop "one_ctx_entail" Cprinter.string_of_formula Cprinter.string_of_formula string_of_bool one_ctx_entail c1 c2 in
-	  	
+      | CF.SuccCtx l ->  List.for_all  (fun c-> (CF.isAnyFalseCtx c || CF.ctx_no_heap c)) l
+      | CF.FailCtx _ -> ((*print_string "result : failed \n";*) false) in
+  (*end auxes*)
+  
+  let one_ctx_entail c1 c2 = Debug.no_2_loop "one_ctx_entail" Cprinter.string_of_formula Cprinter.string_of_formula string_of_bool one_ctx_entail c1 c2 in
+  
   let prep_t (fs,ts,fl) = 
     let t_str = "("^(string_of_int fs)^"->"^(string_of_int ts)^")" in
 	(*	print_string ("transition: "^t_str^"\n"); flush stdout;*)
 	let pres, posts = List.split (List.map (fun f-> match CF.split_struc_formula f with
 	  | (p1,p2)::[] -> 
-		 (* if Solver1.unsat_base_nth "0" prog (ref 0) p1 then raise  (Err.Malformed_barrier (" unsat pre for transition "^t_str ))
-		  else if Solver1.unsat_base_nth "0" prog (ref 0) p2 then raise  (Err.Malformed_barrier (" unsat post for transition  "^t_str))
-		  else*) (*checks: each contain a barrier fs in pre and ts in post*)
-		   if (CF.isFailCtx (one_entail p1 (f_gen fs))) then raise (Err.Malformed_barrier ("a precondition does not contain a barrier share for transition "^t_str))
-		   else if (CF.isFailCtx (one_entail p2 (f_gen ts))) then raise (Err.Malformed_barrier ("a postcondition does not contain a barrier share for transition "^t_str))
-		   else (*check precision P * P = false , shold be redundant at this point*)
-		   
-        let f = (*Solver.normalize_frac_formula prog*) (CF.mkStar p1 p1 CF.Flow_combine no_pos) in
-		let f = Solver.normalize_formula_w_coers prog empty_es f prog.C.prog_left_coercions in
-        Gen.Profiling.inc_counter "barrier_proofs";
-			if Solver.unsat_base_nth "0" prog (ref 0) f then (p1,p2)  
-			else raise  (Err.Malformed_barrier "imprecise specification, this should not occur as long as the prev check is correct")
+		    (* if Solver1.unsat_base_nth "0" prog (ref 0) p1 then raise  (Err.Malformed_barrier (" unsat pre for transition "^t_str ))
+		       else if Solver1.unsat_base_nth "0" prog (ref 0) p2 then raise  (Err.Malformed_barrier (" unsat post for transition  "^t_str))
+		       else*) (*checks: each contain a barrier fs in pre and ts in post*)
+		    if (CF.isFailCtx (one_entail p1 (f_gen fs))) then raise (Err.Malformed_barrier ("a precondition does not contain a barrier share for transition "^t_str))
+		    else if (CF.isFailCtx (one_entail p2 (f_gen ts))) then raise (Err.Malformed_barrier ("a postcondition does not contain a barrier share for transition "^t_str))
+		    else (*check precision P * P = false , shold be redundant at this point*)
+		      
+              let f = (*Solver.normalize_frac_formula prog*) (CF.mkStar p1 p1 CF.Flow_combine no_pos) in
+		      let f = Solver.normalize_formula_w_coers prog empty_es f prog.C.prog_left_coercions in
+              Gen.Profiling.inc_counter "barrier_proofs";
+			  if Solver.unsat_base_nth "0" prog (ref 0) f then (p1,p2)  
+			  else raise  (Err.Malformed_barrier "imprecise specification, this should not occur as long as the prev check is correct")
 	  | _ -> raise  (Err.Malformed_barrier " disjunctive specification?")) fl) in
 	(*the pre sum totals full barrier fs get residue F1*)
 	let tot_pre = List.fold_left (fun a c-> CF.mkStar a c CF.Flow_combine no_pos) (CF.mkTrue_nf no_pos) pres in
 	let tot_pre = Solver.normalize_formula_w_coers prog empty_es tot_pre prog.C.prog_left_coercions in
     (*let tot_pre = Solver.normalize_frac_formula prog tot_pre in*)
     (*let _ = print_string (Cprinter.string_of_formula tot_pre) in *)
-  Gen.Profiling.inc_counter "barrier_proofs";
+    Gen.Profiling.inc_counter "barrier_proofs";
 	if Solver.unsat_base_nth "0" prog (ref 0) tot_pre then raise  (Err.Malformed_barrier (" contradiction in pres for transition "^t_str ))
 	else
-		let tot_pre_bar = f_gen_tot fs in
-		let _ = Debug.devel_zprint (lazy ("check_barriers: whole pre:  "^ (Cprinter.string_of_formula tot_pre))) no_pos in
-		let _ = Debug.devel_zprint (lazy ("check_barriers: whole pre barr: "^ (Cprinter.string_of_formula tot_pre_bar))) no_pos in
-		let fpre = one_entail tot_pre tot_pre_bar in
-		if CF.isFailCtx fpre then  raise  (Err.Malformed_barrier (" preconditions do not contain the entire barrier in transition "^t_str ))
-		else (*the post sum totals full barrier ts get residue F2*)
-			let tot_post = List.fold_left (fun a c-> CF.mkStar a c CF.Flow_combine no_pos) (CF.mkTrue_nf no_pos) posts in
-			let tot_post = Solver.normalize_formula_w_coers prog empty_es tot_post prog.C.prog_left_coercions in
-            (*let tot_post = Solver.normalize_frac_formula prog tot_post in*)
-			Gen.Profiling.inc_counter "barrier_proofs";
-			if Solver.unsat_base_nth "0" prog (ref 0) tot_post then raise (Err.Malformed_barrier (" contradiction in post for transition "^t_str ))
-			else 
-				let tot_post_bar = f_gen_tot ts in
-				let _ = Debug.devel_zprint (lazy ("check_barriers: whole post:  "^ (Cprinter.string_of_formula tot_post))) no_pos in
-				let _ = Debug.devel_zprint (lazy ("check_barriers: whole post barr: "^ (Cprinter.string_of_formula tot_post_bar))) no_pos in
-				let fpost = one_entail tot_post tot_post_bar in
-				if CF.isFailCtx fpost then  raise  (Err.Malformed_barrier (" postconditions do not contain the entire barrier in transition "^t_str ))
-				else (*show F1 = F2*)
-				let _ = Debug.devel_zprint (lazy ("check_barriers: pre: "^ (Cprinter.string_of_list_context fpre))) no_pos in
-				let _ = Debug.devel_zprint (lazy ("check_barriers: post: "^ (Cprinter.string_of_list_context fpost))) no_pos in
-				
-				
-				let fpre,fpost  = 	(*add existential quantif for pure vars that do not appear on the other side*)
-					
-					let fpost = match fpost with | CF.SuccCtx l -> CF.formula_of_context (List.hd l) | _ ->raise (Err.Malformed_barrier "error in check") in
-					let fpre = match fpre with | CF.SuccCtx l -> CF.formula_of_context (List.hd l) | _ ->raise (Err.Malformed_barrier "error in check") in
-					let h_fv = List.tl bd.C.barrier_shared_vars in
-					let pre_ex  = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpre)  h_fv in
-					let post_ex = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpost) h_fv in
-					CF.push_exists pre_ex  fpre,CF.push_exists post_ex  fpost in				
-				let r = one_ctx_entail fpre fpost && one_ctx_entail fpost fpre in
-				if r then () 
-				else  raise (Err.Malformed_barrier (" frames do not match "^t_str )) in
+	  let tot_pre_bar = f_gen_tot fs in
+	  let _ = Debug.devel_zprint (lazy ("check_barriers: whole pre:  "^ (Cprinter.string_of_formula tot_pre))) no_pos in
+	  let _ = Debug.devel_zprint (lazy ("check_barriers: whole pre barr: "^ (Cprinter.string_of_formula tot_pre_bar))) no_pos in
+	  let fpre = one_entail tot_pre tot_pre_bar in
+	  if CF.isFailCtx fpre then  raise  (Err.Malformed_barrier (" preconditions do not contain the entire barrier in transition "^t_str ))
+	  else (*the post sum totals full barrier ts get residue F2*)
+		let tot_post = List.fold_left (fun a c-> CF.mkStar a c CF.Flow_combine no_pos) (CF.mkTrue_nf no_pos) posts in
+		let tot_post = Solver.normalize_formula_w_coers prog empty_es tot_post prog.C.prog_left_coercions in
+        (*let tot_post = Solver.normalize_frac_formula prog tot_post in*)
+		Gen.Profiling.inc_counter "barrier_proofs";
+		if Solver.unsat_base_nth "0" prog (ref 0) tot_post then raise (Err.Malformed_barrier (" contradiction in post for transition "^t_str ))
+		else 
+		  let tot_post_bar = f_gen_tot ts in
+		  let _ = Debug.devel_zprint (lazy ("check_barriers: whole post:  "^ (Cprinter.string_of_formula tot_post))) no_pos in
+		  let _ = Debug.devel_zprint (lazy ("check_barriers: whole post barr: "^ (Cprinter.string_of_formula tot_post_bar))) no_pos in
+		  let fpost = one_entail tot_post tot_post_bar in
+		  if CF.isFailCtx fpost then  raise  (Err.Malformed_barrier (" postconditions do not contain the entire barrier in transition "^t_str ))
+		  else (*show F1 = F2*)
+			let _ = Debug.devel_zprint (lazy ("check_barriers: pre: "^ (Cprinter.string_of_list_context fpre))) no_pos in
+			let _ = Debug.devel_zprint (lazy ("check_barriers: post: "^ (Cprinter.string_of_list_context fpost))) no_pos in
+			
+			
+			let fpre,fpost  = 	(*add existential quantif for pure vars that do not appear on the other side*)
+			  
+			  let fpost = match fpost with | CF.SuccCtx l -> CF.formula_of_context (List.hd l) | _ ->raise (Err.Malformed_barrier "error in check") in
+			  let fpre = match fpre with | CF.SuccCtx l -> CF.formula_of_context (List.hd l) | _ ->raise (Err.Malformed_barrier "error in check") in
+			  let h_fv = List.tl bd.C.barrier_shared_vars in
+			  let pre_ex  = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpre)  h_fv in
+			  let post_ex = Gen.BList.difference_eq CP.eq_spec_var  (CF.fv fpost) h_fv in
+			  CF.push_exists pre_ex  fpre,CF.push_exists post_ex  fpost in				
+			let r = one_ctx_entail fpre fpost && one_ctx_entail fpost fpre in
+			if r then () 
+			else  raise (Err.Malformed_barrier (" frames do not match "^t_str )) in
   
   let prep_t f = Debug.no_1 "prep_t" (fun c-> "") (fun c-> "") prep_t f in
   
@@ -7454,44 +7459,44 @@ and check_barrier_wf prog bd =
       (*should be made to use "and" on xpures to detect the contradiction, probably by looking only at the pures after normalization*)
       if  Solver.unsat_base_nth "0" prog (ref 0) (CF.mkStar f1 f2 CF.Flow_combine no_pos) then () 
       else raise (Err.Malformed_barrier (" no contradiction found in preconditions of transitions from "^(string_of_int st)^"  for preconditions: \n f1:   "^
-	  (Cprinter.string_of_formula f1)^"\n f2:    "^(Cprinter.string_of_formula f2))) in
-	  let rec check_one p1 p2 = List.iter (fun c1 -> List.iter (incomp c1) p1) p2 in 
+	      (Cprinter.string_of_formula f1)^"\n f2:    "^(Cprinter.string_of_formula f2))) in
+	let rec check_one p1 p2 = List.iter (fun c1 -> List.iter (incomp c1) p1) p2 in 
     let rec helper l = match l with
-     | [] -> ()
-     | p::r -> helper r ; List.iter (check_one p) r in
+      | [] -> ()
+      | p::r -> helper r ; List.iter (check_one p) r in
     helper l in
-   
+  
   let prep_grp f = Debug.no_1 "prep_grp" (fun c-> "") (fun c-> "") prep_grp f in
   
   List.iter prep_t bd.C.barrier_tr_list;
   List.iter prep_grp (group_tr bd.C.barrier_tr_list)
-   
+      
 
-				
+	  
 and trans_bdecl_x prog bd = 
   if Gen.BList.check_dups_eq (fun (c1,c2,_) (d1,d2,_)-> c1=d1 && c2=d2) bd.I.barrier_tr_list then 
-	  raise  (Err.Malformed_barrier ("several descriptions for the same transition "))
-   else (); 
-   (*thread count consistency*)
-  List.iter (fun (fs,ts,specl)-> if (List.length specl)<> bd.I.barrier_thc then 	
-		raise  (Err.Malformed_barrier (" eroneous thread specification number for transition : "^(string_of_int fs)^"->"^(string_of_int ts))) 
+	raise  (Err.Malformed_barrier ("several descriptions for the same transition "))
+  else (); 
+    (*thread count consistency*)
+    List.iter (fun (fs,ts,specl)-> if (List.length specl)<> bd.I.barrier_thc then 	
+	  raise  (Err.Malformed_barrier (" eroneous thread specification number for transition : "^(string_of_int fs)^"->"^(string_of_int ts))) 
 	else ();
-	if not (List.for_all (IF.find_barr_node bd.I.barrier_name fs ts)  specl) then 
-		raise  (Err.Malformed_barrier (" eroneous thread specification pre/post cond bar states do not match : "^(string_of_int fs)^"->"^(string_of_int ts)))
-	else ()) bd.I.barrier_tr_list;
-  let stab = H.create 103 in
-  H.add stab self { sv_info_kind = (Named bd.I.barrier_name);id = fresh_int () };
-  List.iter (fun (t,c)-> H.add stab c {sv_info_kind = t;id = fresh_int ()}) bd.I.barrier_shared_vars ; 
-  (*let vl = self::(List.map snd bd.I.barrier_shared_vars) in*)
-  let vl = [self] in
-  
-  let fct f = trans_I2C_struc_formula prog true vl f stab false in
-  let l = List.map (fun (f,t,sp)-> (f,t,List.map fct sp)) bd.I.barrier_tr_list in
-  let bdef = let fct a l = match l with 
-			| CF.EList l -> a@l 
-			| _ -> (empty_spec_label_def, l)::a in
-		CF.mkEList (List.fold_left (fun a (_,_,l)-> List.fold_left fct a l) [] l) in
-  { C.barrier_thc = bd.I.barrier_thc;
+	    if not (List.for_all (IF.find_barr_node bd.I.barrier_name fs ts)  specl) then 
+		  raise  (Err.Malformed_barrier (" eroneous thread specification pre/post cond bar states do not match : "^(string_of_int fs)^"->"^(string_of_int ts)))
+	    else ()) bd.I.barrier_tr_list;
+    let stab = H.create 103 in
+    H.add stab self { sv_info_kind = (Named bd.I.barrier_name);id = fresh_int () };
+    List.iter (fun (t,c)-> H.add stab c {sv_info_kind = t;id = fresh_int ()}) bd.I.barrier_shared_vars ; 
+    (*let vl = self::(List.map snd bd.I.barrier_shared_vars) in*)
+    let vl = [self] in
+    
+    let fct f = trans_I2C_struc_formula prog true vl f stab false in
+    let l = List.map (fun (f,t,sp)-> (f,t,List.map fct sp)) bd.I.barrier_tr_list in
+    let bdef = let fct a l = match l with 
+	  | CF.EList l -> a@l 
+	  | _ -> (empty_spec_label_def, l)::a in
+	CF.mkEList (List.fold_left (fun a (_,_,l)-> List.fold_left fct a l) [] l) in
+    { C.barrier_thc = bd.I.barrier_thc;
 	C.barrier_name = bd.I.barrier_name;
 	C.barrier_shared_vars = List.map (fun (_,c)-> trans_var (c,Unprimed) stab no_pos) bd.I.barrier_shared_vars;
 	C.barrier_tr_list = l;
@@ -7502,11 +7507,11 @@ and trans_bdecl_x prog bd =
     C.barrier_prune_invariants = [];
 	C.barrier_prune_conditions_state = [];
 	C.barrier_prune_conditions_perm =[]}
-  
+        
 and trans_bdecl prog bd =
-	let pr_in = Iprinter.string_of_barrier_decl in
-	let pr_out c = Cprinter.string_of_barrier_decl c in
-	Debug.no_1 "trans_bdecl " pr_in pr_out (trans_bdecl_x prog) bd
+  let pr_in = Iprinter.string_of_barrier_decl in
+  let pr_out c = Cprinter.string_of_barrier_decl c in
+  Debug.no_1 "trans_bdecl " pr_in pr_out (trans_bdecl_x prog) bd
   
 (*
 and normalize_barr_decl cprog p = 
