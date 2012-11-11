@@ -255,7 +255,7 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
   let pr2a = add_str "formulae" (pr_list Cprinter.string_of_formula) in
   let pr3 = pr_quad pr1 pr2a pr2 string_of_bool in
   let f = wrap_proving_kind "CHECK-SPECS" (check_specs_infer_a prog proc ctx e0 do_infer) in
-  Debug.no_1 "check_specs_infer" pr1 pr3
+  Debug.no_1_loop "check_specs_infer" pr1 pr3
       (fun _ -> f spec_list) spec_list
 
 (* Termination *)      
@@ -277,7 +277,7 @@ and check_bounded_term_x prog ctx post_pos =
         CP.mkPure (CP.mkGte e (CP.mkIConst 0 m_pos) m_pos)) m in
     let bnd_formula = CF.formula_of_pure_formula
       (CP.join_conjunctions bnd_formula_l) m_pos in
-    let rs, _ = heap_entail_one_context prog false ctx bnd_formula None post_pos in
+    let rs, _ = heap_entail_one_context 12 prog false ctx bnd_formula None post_pos in
     let _ = Debug.trace_hprint (add_str "Result context" 
         !CF.print_list_context) rs no_pos in
     let term_pos = (m_pos, no_pos) in
@@ -1853,7 +1853,7 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   let pr1 = Cprinter.string_of_formula in
   (*  let pr2 = Cprinter.string_of_list_partial_context in*)
   let f = wrap_proving_kind "POST" (check_post_x prog proc ctx post pos) in
-  Debug.no_2 "check_post" pr pr1 pr (fun _ _ -> f pid) ctx post
+  Debug.no_2_loop "check_post" pr pr1 pr (fun _ _ -> f pid) ctx post
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (* store flag do_checkentail_exact  *)
@@ -2168,7 +2168,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 
 let check_proc (prog : prog_decl) (proc : proc_decl) : bool =
   let pr p = pr_id (name_of_proc p)  in
-  Debug.no_1_opt (fun _ -> not(is_primitive_proc proc)) 
+  Debug.no_1_opt (fun _ -> not(is_primitive_proc proc))
       "check_proc" pr string_of_bool (check_proc prog) proc
 
 let check_phase_only prog proc =

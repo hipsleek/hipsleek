@@ -997,6 +997,7 @@ let rec pr_h_formula h =
       h_formula_view_label = pid;
       h_formula_view_remaining_branches = ann;
       h_formula_view_pruning_conditions = pcond;
+	  h_formula_view_unfold_num = ufn;
       h_formula_view_pos =pos}) ->
         let perm_str = string_of_cperm perm in
           fmt_open_hbox ();
@@ -1009,7 +1010,8 @@ let rec pr_h_formula h =
 	      pr_derv dr;
           (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
           if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
-	      if original then fmt_string "[Orig]"
+	      fmt_string ("["^(string_of_int ufn)^"]");
+		  if original then fmt_string "[Orig]"
 	      else fmt_string "[Derv]";
  	  if lhs_case then fmt_string "[LHSCase]";
          pr_remaining_branches ann; 

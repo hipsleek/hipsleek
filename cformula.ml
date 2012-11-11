@@ -2810,16 +2810,18 @@ and rename_struc_bound_vars (f:struc_formula):struc_formula = match f with
 	| EList b -> EList (map_l_snd rename_struc_bound_vars b)
 
 
-and rename_bound_vars (f : formula) = rename_bound_vars_x f
+and rename_bound_vars (f : formula) = fst (rename_bound_vars_x f)
+
+and rename_bound_vars_with_subst (f : formula) = rename_bound_vars_x f
 
 
 and rename_bound_vars_x (f : formula) = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
-	    let rf1 = rename_bound_vars_x f1 in
-	    let rf2 = rename_bound_vars_x f2 in
+	    let rf1,l1 = rename_bound_vars_x f1 in
+	    let rf2,l2 = rename_bound_vars_x f2 in
 	    let resform = mkOr rf1 rf2 pos in
-		resform
-  | Base _ -> f
+		resform,l1@l2
+  | Base _ -> (f,[])
   | Exists _ ->
 	    let qvars, base_f = split_quantifiers f in
 	    let new_qvars = CP.fresh_spec_vars qvars in
@@ -2829,8 +2831,8 @@ and rename_bound_vars_x (f : formula) = match f with
 	    let rho = List.combine qvars new_qvars in
 	    let new_base_f = subst_varperm rho base_f in (*TO CHECK*)
 	    let resform = add_quantifiers new_qvars new_base_f in
-		resform
-
+		(resform,rho)
+		
 and propagate_perm_formula (f : formula) (permvar:cperm_var) : formula =
   Debug.no_2 "propagate_perm_formula"
       !print_formula
