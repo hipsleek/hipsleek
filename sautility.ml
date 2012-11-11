@@ -101,6 +101,16 @@ let is_empty_f f=
             (CP.isConstTrue (MCP.pure_of_mix fb.CF.formula_base_pure))
     | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
 
+let is_empty_heap_f f0=
+  let rec helper f=
+    match f with
+      | CF.Base fb ->
+          (CF.is_empty_heap fb.CF.formula_base_heap)
+      | CF.Exists fe -> (CF.is_empty_heap fe.CF.formula_exists_heap)
+      | CF.Or orf -> (helper orf.CF.formula_or_f1) && (helper orf.CF.formula_or_f2)
+  in
+  helper f0
+
 let is_empty_wop opf=
   match opf with
     | None -> false
@@ -1402,7 +1412,7 @@ let drop_hp_arguments prog hp args0 fs=
   let pr1 = pr_list_ln (Cprinter.prtt_string_of_formula) in
   let pr2 = !CP.print_svl in
   let pr3 = pr_pair pr2 pr1 in
-  Debug.ho_3 "drop_hp_arguments" !CP.print_sv pr2 pr1 pr3
+  Debug.no_3 "drop_hp_arguments" !CP.print_sv pr2 pr1 pr3
       (fun _ _ _ -> drop_hp_arguments_x prog hp args0 fs) hp args0 fs
 
 
@@ -1931,7 +1941,7 @@ let get_longest_common_hnodes_list prog unk_hps hp args fs=
   let pr2 = fun (_, def) -> Cprinter.string_of_hp_rel_def def in
   let pr3 = !CP.print_sv in
   let pr4 = !CP.print_svl in
-  Debug.ho_3 "get_longest_common_hnodes_list" pr3 pr4 pr1 (pr_list_ln pr2)
+  Debug.no_3 "get_longest_common_hnodes_list" pr3 pr4 pr1 (pr_list_ln pr2)
       (fun _ _ _ -> get_longest_common_hnodes_list_x prog unk_hps hp args fs) hp args fs
 
 (************************************************************)
@@ -2052,7 +2062,7 @@ let succ_susbt prog nrec_grps unk_hps allow_rec_subst (hp,args,f)=
    let pr1 = pr_list_ln (pr_list_ln string_of_par_def_w_name_short) in
    let pr2 = pr_triple !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula in
    let pr3 = pr_pair string_of_bool (pr_list_ln pr2) in
-   Debug.ho_3 "succ_susbt" pr1 string_of_bool pr2 pr3
+   Debug.no_3 "succ_susbt" pr1 string_of_bool pr2 pr3
        (fun _ _  _ -> succ_susbt_x prog nrec_grps unk_hps allow_rec_subst (hp,args,f)) nrec_grps allow_rec_subst (hp,args,f)
 
 let succ_subst_with_mutrec_x prog deps unk_hps=
@@ -2149,7 +2159,7 @@ let succ_subst_with_mutrec_x prog deps unk_hps=
 (*out: rec_indp,rec_dep,nrec_deps*)
 let succ_subst_with_mutrec prog deps unk_hps=
   let pr1 = pr_list_ln (pr_list_ln string_of_par_def_w_name_short) in
-  Debug.ho_1 " succ_subst_with_mutrec" pr1 (pr_quad pr1 pr1 pr1 !CP.print_svl)
+  Debug.no_1 " succ_subst_with_mutrec" pr1 (pr_quad pr1 pr1 pr1 !CP.print_svl)
       (fun _ -> succ_subst_with_mutrec_x prog deps unk_hps) deps
 
 let succ_susbt_with_rec_indp_x prog rec_indp_grps unk_hps depend_grps=

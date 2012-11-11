@@ -3166,15 +3166,41 @@ let get_HRel hf=
     | HRel (hp, eargs, _ ) -> Some (hp, List.concat (List.map CP.afv eargs))
     | _ -> None
 
+
 let extract_HRel hf=
   match hf with
     | HRel (hp, eargs, _ ) -> (hp, List.concat (List.map CP.afv eargs))
     | _ -> report_error no_pos "CF.extract_HRel"
 
+let extract_HRel_f (f0:formula) =
+  let rec helper f=
+  match f with
+    | Base ({ formula_base_heap = h1;})
+    | Exists ({formula_exists_heap = h1;}) ->
+        (
+            extract_HRel h1
+        )
+    | _ -> report_error no_pos "CF.extract_HRel"
+  in
+  helper f0
+
 let extract_HRel_orig hf=
   match hf with
     | HRel (hp, eargs, p ) -> (hp, eargs,p)
+    | _ -> report_error no_pos "CF.extract_HRel__orig"
+
+
+let extract_HRel_orig_f (f0:formula) =
+  let rec helper f=
+  match f with
+    | Base ({ formula_base_heap = h1;})
+    | Exists ({formula_exists_heap = h1;}) ->
+        (
+            extract_HRel_orig h1
+        )
     | _ -> report_error no_pos "CF.extract_HRel"
+  in
+  helper f0
 
 let get_HRels hf=
   let rec helper h=
