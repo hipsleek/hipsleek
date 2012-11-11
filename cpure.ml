@@ -5985,7 +5985,7 @@ and imply_disj_orig ante_disj conseq t_imply imp_no =
 
 let rec imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no =
   let xp01,xp02,xp03 = imply_disj_orig ante_disj0 conseq t_imply imp_no in
-  if not(xp01) && !Globals.smart_xpure then
+  if not(xp01) && !Globals.super_smart_xpure then
     let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
     let (xp11,xp12,xp13) = imply_disj_orig ante_disj1 conseq t_imply imp_no in
     let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in

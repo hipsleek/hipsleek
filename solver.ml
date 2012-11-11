@@ -382,7 +382,8 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
       | HEmp   -> {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
          
   in helper f
-  
+
+
 let rec xpure (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var list * CF.mem_formula) =
   Debug.no_1 "xpure"
       Cprinter.string_of_formula
@@ -397,8 +398,9 @@ and xpure_x (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var list 
     (a, [], c)
 
 and xpure_heap i (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (mix_formula * CP.spec_var list * CF.mem_formula)=
-  Debug.no_2_num i "xpure_heap" Cprinter.string_of_h_formula string_of_int 
-      (fun (mf,svl,m) -> pr_triple Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula (mf,svl,m)) 
+  let _ = smart_same_flag := true in
+  let pr (mf,svl,m) = (pr_triple Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list Cprinter.string_of_mem_formula (mf,svl,m))^"#"^(string_of_bool !smart_same_flag) in
+  Debug.no_2_num i "xpure_heap" Cprinter.string_of_h_formula string_of_int pr
       (fun _ _ -> xpure_heap_new prog h0 which_xpure) h0 which_xpure
 
 and xpure_heap_new (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (mix_formula * CP.spec_var list * CF.mem_formula) =
@@ -727,8 +729,13 @@ and heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list =
     | Hole _ | HTrue | HFalse | HEmp -> [] in
   helper h0
 
+and smart_same_flag = ref true 
+(* this flag is to indicate if xpure0 and xpure1 
+   are semantically the same *)
+
 and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula)  xp_no: (MCP.mix_formula * CP.spec_var list) = 
-  let pr = pr_pair Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list in
+  (* let _ = smart_same_flag := true in *)
+  let pr (a,b) = pr_triple Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list string_of_bool (a,b,!smart_same_flag) in
   Debug.no_2 "xpure_heap_symbolic_i" string_of_int 
       Cprinter.string_of_h_formula pr
       (fun xp_no h0 -> xpure_heap_symbolic_i_x prog h0 xp_no) xp_no h0
@@ -747,11 +754,13 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
       h_formula_view_pos = pos}) ->
           let ba = look_up_view_baga prog c p vs in
           let vdef = look_up_view_def pos prog.prog_view_decls c in
+          let diff_flag = not(vdef.view_xpure_flag) in
+          let _ = if diff_flag then smart_same_flag := false in
           let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
           let to_svs = p :: vs in
           (match lbl_lst with
             | None -> 
-                  let vinv = if (xp_no=1) then vdef.view_x_formula else vdef.view_user_inv in
+                  let vinv = if (xp_no=1 && diff_flag) then vdef.view_x_formula else vdef.view_user_inv in
                   let subst_m_fun f = MCP.subst_avoid_capture_memo from_svs to_svs f in
                   (subst_m_fun vinv, ba)
             | Some ls ->  
@@ -813,10 +822,12 @@ and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP
           (match lbl_lst with
             | None -> (*--imm only*)
                   (*LDK: add fractional invariant 0<f<=1, if applicable*)
+                  let diff_flag = not(vdef.view_xpure_flag) in
+                  let _ = if diff_flag then smart_same_flag := false in
                   let frac_inv = match frac with
                     | None -> CP.mkTrue pos
                     | Some f -> mkPermInv () f in
-                  let vinv = if (xp_no=1) then vdef.view_x_formula else vdef.view_user_inv in
+                  let vinv = if (xp_no=1 && diff_flag) then vdef.view_x_formula else vdef.view_user_inv in
                   (*add fractional invariant*)
                   let frac_inv_mix = MCP.OnePF frac_inv in
                   let vinv = CF.add_mix_formula_to_mix_formula frac_inv_mix vinv in
@@ -2325,7 +2336,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
     | Base ({ formula_base_heap = h;
       formula_base_pure = p;
       formula_base_pos = pos}) ->
-	  let ph,_,_ = xpure_heap 1 prog h 1 in
+	  let ph,_,_ = xpure_heap 0 prog h 1 in
 	  let npf = MCP.merge_mems p ph true in
 	  not (TP.is_sat_mix_sub_no npf sat_subno true true)
     | Exists ({ formula_exists_qvars = qvars;
@@ -5167,13 +5178,20 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   (* WN : any reason why estate below is not being used .. *)
   let estate = {estate_orig with es_gen_expl_vars = List.filter (fun x -> not (List.mem x fvlhs)) estate_orig.es_gen_expl_vars } in*) (*Clean warning*)
   (* An Hoa : END OF INSTANTIATION *)
+  (* if smart_xpure then try 0, then 1 
+     else try 1 
+  *)
   let _ = reset_int2 () in
   let curr_lhs_h   = mkStarH lhs_h estate_orig.es_heap pos in
   let curr_lhs_h, lhs_p = normalize_frac_heap prog curr_lhs_h lhs_p in
-  let (xpure_lhs_h1, _, memset) as xx = xpure_heap 9 prog curr_lhs_h 1 in
+  let (xpure_lhs_h1, yy, memset) as xp1 = xpure_heap 9 prog curr_lhs_h 1 in
+  let diff_flag = not(!smart_same_flag) in
+  let _ = Globals.super_smart_xpure := !Globals.smart_xpure && diff_flag in
+  let (xpure_lhs_h0, _, _) as xp0 = xpure_heap 10 prog curr_lhs_h 0 in
+  let xp1 = if diff_flag then xp1 else (xpure_lhs_h0,yy,memset) in
   let xpure_lhs_h0, _, _ = 
-    if (!Globals.smart_xpure) then xpure_heap 10 prog curr_lhs_h 0 
-    else xx
+    if (!Globals.super_smart_xpure) then xp0
+    else xp1
   in
   (* add the information about the dropped reading phases *)
   let xpure_lhs_h1 = MCP.merge_mems xpure_lhs_h1 estate_orig.es_aux_xpure_1 true in
@@ -5236,13 +5254,13 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       let m_lhs = lhs_new in
       let tmp3 = MCP.merge_mems m_lhs xpure_lhs_h1 true in
       let tmp2 = 
-        if (!Globals.smart_xpure) then MCP.merge_mems m_lhs xpure_lhs_h0 true 
+        if (!Globals.super_smart_xpure) then MCP.merge_mems m_lhs xpure_lhs_h0 true 
         else tmp3
       in
       let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars(* @estate.es_gen_impl_vars *) in
       let (split_ante1, new_conseq1) as xx = heap_entail_build_mix_formula_check exist_vars tmp3 rhs_p pos in
       let split_ante0, new_conseq0 = 
-        if (!Globals.smart_xpure) then heap_entail_build_mix_formula_check exist_vars tmp2 rhs_p pos
+        if (!Globals.super_smart_xpure) then heap_entail_build_mix_formula_check exist_vars tmp2 rhs_p pos
         else xx
           in
       (* let _ = print_string ("An Hoa :: heap_entail_empty_rhs_heap :: After heap_entail_build_mix_formula_check\n" ^ *)
@@ -5701,7 +5719,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
             if (MCP.isConstMFalse conseq_m) then (false,[],None)
             else 
             let r1,r2,r3 = MCP.imply_memo 1 a c TP.imply imp_no in
-            if r1 || not(!Globals.smart_xpure) then (r1,r2,r3) 
+            if r1 || not(!Globals.super_smart_xpure) then (r1,r2,r3) 
             else MCP.imply_memo 2 a1 c TP.imply imp_no 
               (* TODO : This to be avoided if a1 is the same as a0; also pick just complex constraints *)
           end

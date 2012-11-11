@@ -515,6 +515,9 @@ let verify_callees = ref false
 
 let elim_unsat = ref false
 let smart_xpure = ref false
+let super_smart_xpure = ref false
+  (* this flag is dynamically set depending on
+     smart_xpure and xpure0!=xpure1 *)
 let smart_memo = ref false
 
 (* let lemma_heuristic = ref false *)
