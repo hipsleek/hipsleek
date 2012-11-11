@@ -15,6 +15,8 @@ let no_elim_exists = ref false
 let no_simplify = ref false
 let no_cache = ref true
 let timeout = ref 10.0 (* default timeout is 15 seconds *)
+let dis_omega = ref true
+let pasf = ref false
 
 (* logging *)
 let is_log_all = ref false
@@ -40,7 +42,7 @@ let cached_count = ref 0
 
 let prompt_regexp = Str.regexp "^[0-9]+:$"
 
-let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
+let process = ref {name = "rl"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
 let print_b_formula = ref (fun (c:CP.b_formula) -> "cpure printer has not been initialized")
 let print_p_formula = ref (fun (c:CP.p_formula) -> "cpure printer has not been initialized")
@@ -49,6 +51,11 @@ let print_formula = ref (fun (c:CP.formula) -> "cpure printer has not been initi
 let print_svl = ref (fun (c:CP.spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:CP.spec_var) -> "cpure printer has not been initialized")
 
+type rl_mode = 
+  | OFSF 
+  | PASF
+
+let rl_current_mode = ref OFSF
 
 (**********************
  * auxiliari function *
@@ -92,6 +99,14 @@ let send_cmd cmd =
     let _ = read_till_prompt !process.inchannel in
     ()
 
+let set_rl_mode mode =
+  if (!rl_current_mode == mode) then ()
+  else
+    rl_current_mode := mode;
+    match mode with
+    | PASF -> send_cmd "rlset pasf"
+    | OFSF -> send_cmd "rlset ofsf"
+
 (* start Reduce system in a separated process and load redlog package *)
 let start () =
   if not !is_reduce_running then begin
@@ -105,6 +120,7 @@ let start () =
 		send_cmd "off varopt"; (* An Hoa : turn off variable rearrangement *)
 		send_cmd "off arbvars"; (* An Hoa : do not introduce arbcomplex(_) *)
       in
+      rl_current_mode := OFSF;
       let set_process proc = process := proc in
       let _ = Procutils.PrvComms.start !is_log_all log_file ("redlog", "redcsl",  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in
       print_endline "Starting Reduce... "; flush stdout
@@ -153,9 +169,17 @@ let send_and_receive f =
         let fail_with_timeout () =
           restart "Timeout!";
           "" in
-        let answ = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc () !timeout fail_with_timeout in
+        let answ =
+          if not (!dis_provers_timeout) then
+            Procutils.PrvComms.maybe_raise_and_catch_timeout fnc () !timeout fail_with_timeout
+          else fnc ()
+        in
         answ
     with
+        (* Timeout exception is not expected here except for dis_provers_timeout *)
+      | Procutils.PrvComms.Timeout as exc ->
+          restart "Restarting Reduce because of timeout.";
+          raise exc
       | ex ->
         print_endline (Printexc.to_string ex);
         restart "Reduce crashed or something really bad happenned!";
@@ -224,7 +248,11 @@ let run_with_timeout func err_msg =
     restart ("After timeout"^err_msg);
     None
   in
-  let res = Procutils.PrvComms.maybe_raise_and_catch_timeout func () !timeout fail_with_timeout in
+  let res =
+    if not (!dis_provers_timeout) then
+      Procutils.PrvComms.maybe_raise_and_catch_timeout func () !timeout fail_with_timeout
+    else func ()
+  in
   res
 
 (**************************
@@ -1034,7 +1062,8 @@ let options_to_bool opts default =
   | None -> default
 
 let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * float =
-  if is_linear_formula f then
+  let is_linear = is_linear_formula f in
+  if (not !dis_omega) && is_linear then
     call_omega (lazy (Omega.is_sat f sat_no))
   else
     let sf = if (!no_pseudo_ops || CP.is_float_formula f) 
@@ -1042,6 +1071,10 @@ let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * floa
     else strengthen_formula f in
     let frl = rl_of_formula pr_w pr_s sf in
     let rl_input = "rlex(" ^ frl ^ ")" in
+    let _ = if !pasf then begin 
+      if is_linear then set_rl_mode PASF
+      else set_rl_mode OFSF end
+    in 
     let runner () = check_formula rl_input in
     let err_msg = "Timeout when checking #is_sat " ^ sat_no ^ "!" in
     let proc =  lazy (run_with_timeout runner err_msg) in
@@ -1090,11 +1123,17 @@ let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * floa
     if !no_elim_exists then f else elim_exist_quantifier f
   in
   let valid f = 
-    let wf = if (!no_pseudo_ops || CP.is_float_formula f) then f else weaken_formula f in
+    let wf = if (!no_pseudo_ops || CP.is_float_formula f) 
+      then f 
+      else weaken_formula f in
+    let _ = if !pasf then begin 
+      if (is_linear_formula f) then set_rl_mode PASF
+      else set_rl_mode OFSF end
+    in 
     is_valid_ops pr_w pr_s wf imp_no
   in
   let res = 
-    if is_linear_formula f then
+    if (not !dis_omega) && (is_linear_formula f) then
       call_omega (lazy (Omega.is_valid_with_default_ops pr_w pr_s f !timeout))
     (* (is_valid f imp_no) *)
     else
