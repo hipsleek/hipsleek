@@ -4084,7 +4084,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 		      else
 			(* else drop the read phase (don't add back the frame) *)
 			let xpure_rd_0, _, memset_rd = xpure_heap 2 prog h1 0 in
-			let xpure_rd_1, _, memset_rd = xpure_heap 2 prog h1 1 in
+			let xpure_rd_1, _, memset_rd = xpure_heap 3 prog h1 1 in
 			(* add the pure info for the dropped reading phase *)
 			List.map 
 			    (Cformula.transform_context 
@@ -4165,8 +4165,8 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 			      List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH h1 f pos)) cl 
 			    else
 			      (* drop read phase *)
-			      let xpure_rd_0, _, memset_rd = xpure_heap 3 prog h1 0 in
-			      let xpure_rd_1, _, memset_rd = xpure_heap 3 prog h1 1 in
+			      let xpure_rd_0, _, memset_rd = xpure_heap 4 prog h1 0 in
+			      let xpure_rd_1, _, memset_rd = xpure_heap 5 prog h1 1 in
 			      (* add the pure info corresponding to the dropped reading phase *)
 			      List.map 
 			          (Cformula.transform_context 
@@ -4211,8 +4211,8 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
   			    List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH h1 f pos)) cl
 			  else
 			    (* drop read phase *)
-			    let xpure_rd_0, _, memset_rd = xpure_heap 3 prog h1 0 in
-			    let xpure_rd_1, _, memset_rd = xpure_heap 3 prog h1 1 in
+			    let xpure_rd_0, _, memset_rd = xpure_heap 6 prog h1 0 in
+			    let xpure_rd_1, _, memset_rd = xpure_heap 7 prog h1 1 in
 			    (* add the pure info corresponding to the dropped reading phase *)
 			    List.map
 			        (Cformula.transform_context
@@ -4894,7 +4894,7 @@ and xpure_imply_x (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : b
   let lhs_h = r.formula_base_heap in  
   let lhs_p = r.formula_base_pure in
   let _ = reset_int2 () in
-  let xpure_lhs_h, _, memset = xpure_heap 4 prog (mkStarH lhs_h estate.es_heap pos) 1 in
+  let xpure_lhs_h, _, memset = xpure_heap 8 prog (mkStarH lhs_h estate.es_heap pos) 1 in
   let tmp1 = MCP.merge_mems lhs_p xpure_lhs_h true in
   let new_ante, new_conseq = heap_entail_build_mix_formula_check (estate.es_evars@estate.es_gen_expl_vars@estate.es_gen_impl_vars@estate.es_ivars) tmp1 
     (MCP.memoise_add_pure_N (MCP.mkMTrue pos) rhs_p) pos in
@@ -5170,9 +5170,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let _ = reset_int2 () in
   let curr_lhs_h   = mkStarH lhs_h estate_orig.es_heap pos in
   let curr_lhs_h, lhs_p = normalize_frac_heap prog curr_lhs_h lhs_p in
-  let (xpure_lhs_h1, _, memset) as xx = xpure_heap 5 prog curr_lhs_h 1 in
+  let (xpure_lhs_h1, _, memset) as xx = xpure_heap 9 prog curr_lhs_h 1 in
   let xpure_lhs_h0, _, _ = 
-    if (!Globals.smart_xpure) then xpure_heap 5 prog curr_lhs_h 0 
+    if (!Globals.smart_xpure) then xpure_heap 10 prog curr_lhs_h 0 
     else xx
   in
   (* add the information about the dropped reading phases *)

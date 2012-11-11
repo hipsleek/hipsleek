@@ -2457,3 +2457,4 @@ let remove_dupl_conj_mix_formula_x (f:mix_formula):mix_formula =
 let remove_dupl_conj_mix_formula (f:mix_formula):mix_formula = 
   Debug.no_1 "remove_dupl_conj_mix_formula" !print_mix_formula !print_mix_formula 
       remove_dupl_conj_mix_formula_x f
+

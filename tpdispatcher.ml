@@ -2628,3 +2628,10 @@ let imply_raw ante conseq =
 let imply_raw_mix ante conseq =
   let (res,_,_) = mix_imply ante conseq "99" in
   res
+
+let check_diff xp0 xp1 =
+  let (x,_,_) = mix_imply xp0 xp1 "check_diff" in x
+
+let check_diff xp0 xp1 =
+  let pr1 = Cprinter.string_of_mix_formula in
+  Debug.no_2 "check_diff" pr1 pr1 string_of_bool check_diff xp0 xp1
