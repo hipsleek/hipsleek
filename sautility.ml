@@ -136,6 +136,21 @@ let rec eq_spec_var_order_list l1 l2=
 let check_hp_arg_eq (hp1, args1) (hp2, args2)=
   ((CP.eq_spec_var hp1 hp2) && (eq_spec_var_order_list args1 args2))
 
+let eq_two_int_order_list l10 l20=
+  let rec helper l1 l2=
+    match l1,l2 with
+      |[],[] -> true
+    | v1::ls1,v2::ls2 ->
+        if v1 = v2 then
+          helper ls1 ls2
+        else false
+    | _ -> false
+  in
+  helper l10 l20
+
+let check_hp_locs_eq (hp1, locs1) (hp2, locs2)=
+  ((CP.eq_spec_var hp1 hp2) && (eq_two_int_order_list locs1 locs2))
+
 let check_simp_hp_eq (hp1, _) (hp2, _)=
    (CP.eq_spec_var hp1 hp2)
 
@@ -367,9 +382,17 @@ and look_up_ptr_args_one_node prog hd_nodes hv_nodes node_name=
   let rec look_up_data_node ls=
     match ls with
       | [] -> []
-      | dn::ds -> if CP.eq_spec_var node_name dn.CF.h_formula_data_node then
-            loop_up_ptr_args_data_node prog dn
-          else look_up_data_node ds
+      | dn::ds ->
+          if CP.eq_spec_var node_name dn.CF.h_formula_data_node then
+            (* loop_up_ptr_args_data_node prog dn *)
+              List.filter CP.is_node_typ dn.CF.h_formula_data_arguments
+          else
+              (* let args =  List.filter CP.is_node_typ dn.CF.h_formula_data_arguments in *)
+          (*     if (CP.intersect_svl args cur_ptrs) <> [] then *)
+          (*       [dn.CF.h_formula_data_node] *)
+          (*     else [] *)
+          (* in *)
+            look_up_data_node ds
   in
   (* let rec look_up_view_node ls= *)
   (*   match ls with *)
@@ -386,7 +409,8 @@ and look_up_ptr_args_one_node prog hd_nodes hv_nodes node_name=
 let loop_up_closed_ptr_args prog hd_nodes hv_nodes node_names=
   let rec helper old_ptrs inc_ptrs=
     let new_ptrs = List.concat
-      (List.map (look_up_ptr_args_one_node prog hd_nodes hv_nodes) inc_ptrs) in
+      (List.map (look_up_ptr_args_one_node prog hd_nodes hv_nodes)
+           inc_ptrs) in
     let diff_ptrs = List.filter (fun id -> not (CP.mem_svl id old_ptrs)) new_ptrs in
     let diff_ptrs = Gen.BList.remove_dups_eq CP.eq_spec_var diff_ptrs in
     if diff_ptrs = [] then old_ptrs
@@ -1343,12 +1367,12 @@ let drop_hp_arguments_x prog hp args0 fs=
     let used_svl = loop_up_closed_ptr_args prog hd_nodes hv_nodes (def_vs_wo_args@args0) in
     let hpargs = (List.map (fun (hp1,eargs,_)-> hp1,(List.concat (List.map CP.afv eargs))) hrs) in
     let rec_hpargs, rem_hpargs = List.partition (fun (hp1, _) -> CP.eq_spec_var hp1 hp) hpargs in
-    let rec_args =
-      match rec_hpargs with
-        | [] -> []
-        | [(_,args)] -> args
-        | _ -> report_error no_pos "sau.drop_hp_arguments"
-    in
+    let rec_args = CP.remove_dups_svl (List.concat (List.map snd rec_hpargs)) in
+     (*  match rec_hpargs with *)
+    (*     | [] -> [] *)
+    (*     | [(_,args)] -> args *)
+    (*     | _ -> report_error no_pos "sau.drop_hp_arguments" *)
+    (* in *)
     if rec_args = [] then [] else
       let res = helper (CP.remove_dups_svl
                             ((List.concat (List.map snd rem_hpargs))@
@@ -1378,7 +1402,7 @@ let drop_hp_arguments prog hp args0 fs=
   let pr1 = pr_list_ln (Cprinter.prtt_string_of_formula) in
   let pr2 = !CP.print_svl in
   let pr3 = pr_pair pr2 pr1 in
-  Debug.no_3 "drop_hp_arguments" !CP.print_sv pr2 pr1 pr3
+  Debug.ho_3 "drop_hp_arguments" !CP.print_sv pr2 pr1 pr3
       (fun _ _ _ -> drop_hp_arguments_x prog hp args0 fs) hp args0 fs
 
 
@@ -1907,7 +1931,7 @@ let get_longest_common_hnodes_list prog unk_hps hp args fs=
   let pr2 = fun (_, def) -> Cprinter.string_of_hp_rel_def def in
   let pr3 = !CP.print_sv in
   let pr4 = !CP.print_svl in
-  Debug.no_3 "get_longest_common_hnodes_list" pr3 pr4 pr1 (pr_list_ln pr2)
+  Debug.ho_3 "get_longest_common_hnodes_list" pr3 pr4 pr1 (pr_list_ln pr2)
       (fun _ _ _ -> get_longest_common_hnodes_list_x prog unk_hps hp args fs) hp args fs
 
 (************************************************************)
@@ -1977,7 +2001,11 @@ let succ_susbt_x prog nrec_grps unk_hps allow_rec_subst (hp,args,f)=
             (* let _ = DD.info_pprint ("       f2:" ^ (pr f2)) no_pos in *)
             let ptrs = get_data_view_hrel_vars_formula f1 in
             let new_f2 = CF.drop_hnodes_f f2 ptrs in
-            let new_f21,_ = CF.drop_hrel_f new_f2 ptrs in
+            let ls_hpargs1 = CF.get_HRels_f f1 in
+            let ls_hpargs2 = CF.get_HRels_f new_f2 in
+            let ls_inter = Gen.BList.intersect_eq check_hp_arg_eq ls_hpargs2 ls_hpargs1 in
+            let dups_hps = List.map fst ls_inter in
+            let new_f21,_ = CF.drop_hrel_f new_f2 dups_hps in
          (* let _ = DD.info_pprint ("       new_f21:" ^ (pr new_f21)) no_pos in *)
          CF.mkStar f1 new_f21 CF.Flow_combine pos
     ) ls2) ls1)
@@ -2024,9 +2052,105 @@ let succ_susbt prog nrec_grps unk_hps allow_rec_subst (hp,args,f)=
    let pr1 = pr_list_ln (pr_list_ln string_of_par_def_w_name_short) in
    let pr2 = pr_triple !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula in
    let pr3 = pr_pair string_of_bool (pr_list_ln pr2) in
-   Debug.no_3 "succ_susbt" pr1 string_of_bool pr2 pr3
+   Debug.ho_3 "succ_susbt" pr1 string_of_bool pr2 pr3
        (fun _ _  _ -> succ_susbt_x prog nrec_grps unk_hps allow_rec_subst (hp,args,f)) nrec_grps allow_rec_subst (hp,args,f)
 
+let succ_subst_with_mutrec_x prog deps unk_hps=
+  let find_succ_one_dep_grp dep_grp=
+    let (hp,_,_) = List.hd dep_grp in
+    let succ_hps = List.concat (List.map (fun (_,_,f) -> CF.get_hp_rel_name_formula f) dep_grp) in
+    (*remove dups*)
+    let succ_hps1 = Gen.BList.remove_dups_eq CP.eq_spec_var succ_hps in
+    (* DD.ninfo_pprint ("       succ_hps: " ^ (!CP.print_svl succ_hps)) no_pos; *)
+      (*remove unk_hps*)
+      (* let succ_hps2 = List.filter (fun hp1 -> not (CP.mem_svl hp1 unk_hps)) succ_hps1
+      in *)
+    (hp,succ_hps1)
+  in
+  let update_helper hp0 succ0 (hp1,succ1)=
+    if CP.mem_svl hp0 succ1 then (hp1,CP.remove_dups_svl (succ0@succ1))
+    else (hp1,succ1)
+  in
+  let check_mutrec ls_hp_succ=
+    let rec subst_helper ls res=
+      match ls with
+        | [] -> res
+        | (hp,succ_hps)::tl ->
+            let indir_succ_hps = List.concat (List.map (fun (hp,succ1) -> if CP.mem_svl hp succ_hps
+                then succ1 else []) (tl@res)) in
+            let new_succ = CP.remove_dups_svl (succ_hps@indir_succ_hps) in
+            let new_res = List.map (update_helper hp new_succ) res in
+            let new_tl = List.map (update_helper hp new_succ) tl in
+            subst_helper new_tl (new_res@[(hp,new_succ)])
+    in
+    let closed_ls_hp_succ = subst_helper ls_hp_succ [] in
+    List.concat (List.map (fun (hp,succ) -> if CP.mem_svl hp succ then [hp] else []) closed_ls_hp_succ)
+  in
+  let check_subst_diverge ls_mut_rec_hp_succ=
+    let rec rec_check_diverge hp last history=
+      (*START debugging*)
+      (* let _ = DD.info_pprint ("       hp: " ^ (!CP.print_sv hp)) no_pos in *)
+      (* let _ = DD.info_pprint ("       last: " ^ (!CP.print_svl last)) no_pos in *)
+      (* let _ = DD.info_pprint ("       history: " ^ (let pr = pr_list !CP.print_svl in pr history)) no_pos in *)
+      (*END debugging*)
+      let last1 = List.filter (fun hp0 -> not (CP.eq_spec_var hp0 hp)) last in
+      if last1 = [] then false else
+        if List.exists
+          (fun prev_succ -> CP.diff_svl prev_succ last1 = []) history then true
+        else
+          let new_succ = List.concat (List.map (fun (hp0,succ0) -> if CP.mem_svl hp0 last1 then succ0 else []) ls_mut_rec_hp_succ) in
+          let new_last = CP.remove_dups_svl (new_succ) in
+          rec_check_diverge hp new_last (history@[last1])
+    in
+    let rec_diverge,rec_terminating = List.partition
+      (fun (hp0,succ0) -> rec_check_diverge hp0 succ0 []) ls_mut_rec_hp_succ in
+    (List.map fst rec_terminating, List.map fst rec_diverge)
+  in
+  let subst_one_mutrec_grp all_orig_mut_rec_grps terminating_mutrec_grp=
+    let rec susbt_helper grp=
+      let bs, ls_new_grp = List.split (List.map (succ_susbt prog all_orig_mut_rec_grps unk_hps false) grp) in
+      let b = List.fold_left (fun b1 b2 -> b1 || b2) false bs in
+      let new_grp = List.concat ls_new_grp in
+      if b then susbt_helper new_grp else new_grp
+    in
+    susbt_helper terminating_mutrec_grp
+  in
+  let ls_hp_succ = List.map find_succ_one_dep_grp deps in
+  let mut_rec_hps = check_mutrec ls_hp_succ in
+  (*START debugging*)
+  (* let pr1 = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in *)
+  (* let _ = DD.info_pprint ("       ls_hp_succ: " ^ (pr1 ls_hp_succ)) no_pos in *)
+  (* let _ = DD.info_pprint ("       mut_rec_hps: " ^ (!CP.print_svl mut_rec_hps)) no_pos in *)
+  (*END debugging*)
+  if mut_rec_hps = [] then ([],[],deps,[]) else
+  (*partition*)
+    let mut_rec_deps,nmut_rec_deps= List.partition
+      (fun grp -> let (hp,_,_) = List.hd grp in
+                  CP.mem_svl hp mut_rec_hps
+      )
+      deps
+    in
+    (*check safe subst*)
+    let ls_mut_rec_hp_succ = List.filter (fun (hp,_) -> CP.mem_svl hp mut_rec_hps) ls_hp_succ in
+    let to_be_subst,to_be_not_subst = check_subst_diverge ls_mut_rec_hp_succ in
+    (*START debugging*)
+    (* let _ = DD.info_pprint ("       to_be_subst: " ^ (!CP.print_svl to_be_subst)) no_pos in *)
+    (* let _ = DD.info_pprint ("       to_be_not_subst: " ^ (!CP.print_svl to_be_not_subst)) no_pos in *)
+    (*END debugging*)
+    let rem,to_be_subst_grps = List.partition
+      (fun grp -> let (hp0,_,_) = List.hd grp in
+                  CP.mem_svl hp0 to_be_not_subst
+      ) mut_rec_deps
+    in
+    (*subst*)
+    let substed_mit_rec_indp = List.map (subst_one_mutrec_grp mut_rec_deps) to_be_subst_grps in
+  (substed_mit_rec_indp,rem,nmut_rec_deps,to_be_subst)
+
+(*out: rec_indp,rec_dep,nrec_deps*)
+let succ_subst_with_mutrec prog deps unk_hps=
+  let pr1 = pr_list_ln (pr_list_ln string_of_par_def_w_name_short) in
+  Debug.ho_1 " succ_subst_with_mutrec" pr1 (pr_quad pr1 pr1 pr1 !CP.print_svl)
+      (fun _ -> succ_subst_with_mutrec_x prog deps unk_hps) deps
 
 let succ_susbt_with_rec_indp_x prog rec_indp_grps unk_hps depend_grps=
   let get_hp_name_from_grp grp=

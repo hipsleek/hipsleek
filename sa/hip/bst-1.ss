@@ -4,17 +4,16 @@ data node2 {
   node2 right;
 }
 
-bst0<m> == self = null & m = 0
-	or self::node2<_, p, q> * p::bst0<m1> * q::bst0<m2> & m = 1 + m1 + m2
-	inv m >= 0;
+bst0<> == self = null
+	or self::node2<_, p, q> * p::bst0<> * q::bst0<>
+	inv true;
 
 HeapPred G1(node2 a).
 HeapPred H1(node2 a).
 
 int count(node2 z)
-  /* infer[CNT] */
-  /* requires z::bst0<n> */
-  /* ensures  z::bst0<n1> & CNT(res,n,n1);//res = n & n>=0 & n=n1; */
+  /*  requires z::bst0<> */
+  /* ensures  z::bst0<>; */
   infer[H1,G1]
   requires H1(z)
   ensures G1(z);
@@ -30,3 +29,15 @@ int count(node2 z)
 		return (1 + cleft + cright);
 	}
 }
+
+/*
+H1(z)& z!=null --> z::node2<val_28_537',left_28_538',right_28_539'> *
+    HP_557(left_28_538',right_28_539');
+HP_557(v_node2_28_540',right_28_573) * z::node2<_,v_node2_28_540',right_28_539'> -    -> H1(v_node2_28_540');
+z::node2<_,v_node2_27_573,right_27_566>*G1(v_node2_27_573) & z!=null
+     -->  H1(right_27_566);
+H1(z)&z=null --> G1(z);
+z::node2<_,v_node2_28_580,right_28_573> *
+     G1(v_node2_28_580) * G1(right_28_573)&true --> G1(z);
+
+ */
