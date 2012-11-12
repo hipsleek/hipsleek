@@ -92,6 +92,9 @@ let parse_file (parse) (source_file : string) =
       | M.Loc.Exc_located (l,t)-> 
             (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
             raise t) in
+  let parse_first (cmds:command list) : (command list)  =
+    let pr = pr_list string_of_command in
+    Debug.no_1 "parse_first" pr pr parse_first cmds in
   let proc_one_def c = 
     match c with
 	  | DataDef ddef -> process_data_def ddef
@@ -170,7 +173,7 @@ let main () =
   let quit = ref false in
   let parse x =
     match !Scriptarguments.fe with
-      | Scriptarguments.NativeFE -> NF.parse x
+      | Scriptarguments.NativeFE -> NF.parse_slk x
       | Scriptarguments.XmlFE -> XF.parse x in
   let parse x = Debug.no_1 "parse" pr_id string_of_command parse x in
   let buffer = Buffer.create 10240 in

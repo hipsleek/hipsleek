@@ -78,7 +78,7 @@ let var_tab : var_table_t = H.create 10240
 
 let string_of_command c = match c with
   | DataDef _ -> "DataDef"
-  | PredDef _ -> "PredDef" 
+  | PredDef i -> "PredDef "^(Iprinter.string_of_view_decl i)
   | FuncDef  _ -> "FuncDef"  
   | RelDef  _ -> "RelDef"  
   | AxiomDef  _ -> "AxiomDef"  
