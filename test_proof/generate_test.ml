@@ -6,7 +6,9 @@ let l_ints = ref []
 
 let gen_var crt_num primed =
 	if !Globals.use_frama_c then
-		"*"^vn^(string_of_int crt_num)
+		(if primed then "" else "\\old(")^
+    "*"^vn^(string_of_int crt_num)^
+    (if primed then "" else ")")
 	else 
   	vn^(string_of_int crt_num)^
   	(if primed then 
@@ -17,19 +19,19 @@ let gen_var crt_num primed =
 
 let gen_prog_var crt_num =
 	if !Globals.use_frama_c then 
-		gen_var crt_num false
+		gen_var crt_num true
 	else vn^(string_of_int crt_num)
 
 let gen_prog_bool crt_num =
 	if (!Globals.use_frama_c) then
-		(gen_var crt_num false) ^ " > 4" 
+		(gen_var crt_num true) ^ " > 4" 
 	else bn^(string_of_int crt_num)
 		
 let gen_header_typed_var crt_num primed = 
 	if !Globals.use_boogie then 
 		gen_var crt_num primed ^":int" 
 	else if !Globals.use_frama_c then
-		"int " ^ (gen_var crt_num primed)
+		"int " ^ (gen_var crt_num true)
 	else ("ref int "^ gen_var crt_num primed)
 	
 let gen_typed_var_list num_vars primed = 
@@ -39,7 +41,9 @@ let gen_requires num_vars=
 		let conj = 
 			if !Globals.use_boogie || !Globals.use_frama_c 
 			then " && " else " & " in
-		let gen_one_constr crt_num = gen_var crt_num false ^">2" in
+		let gen_one_constr crt_num = 
+      (if !Globals.use_frama_c then gen_var crt_num true
+      else gen_var crt_num false) ^ ">2" in
 		String.concat conj (List.map gen_one_constr !l_ints)
 		
 let helper_ensures num_vars=
@@ -49,7 +53,7 @@ let helper_ensures num_vars=
 		let eqs = 
 			if !Globals.use_boogie || !Globals.use_frama_c 
 			then " == " else " = " in
-		let add_num = if (num_vars mod 2 = 0 ) then "2" else "3" in
+		let add_num = if (num_vars mod 2 = 0) then "2" else "3" in
 		let gen_one_constr crt_num = (gen_var crt_num true)^eqs^(gen_var crt_num false)^"+"^add_num in 
 		(String.concat conj (List.map gen_one_constr !l_ints))^";"
 		
