@@ -80,6 +80,12 @@ let process_coercion_check iante0 iconseq0 (lemma_name: string)  (cprog: C.prog_
 let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
     let pos = CF.pos_of_formula coer.C.coercion_head in
     let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
+    (*let _ = print_string("lhs_unfoldfed: "^(Cprinter.string_of_formula lhs)^"\n") in*)
+    let lhs = if(coer.C.coercion_case == C.Ramify) then 
+    	Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
+    	else lhs
+    in
+    (*let _ = print_string("lhs_unfoldfed_ramified: "^(Cprinter.string_of_formula lhs)^"\n") in*)
     let lhs = CF.add_original lhs true in
     let lhs = CF.reset_origins lhs in
     let rhs = CF.add_original rhs true in
@@ -99,6 +105,12 @@ let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
 let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
     let pos = CF.pos_of_formula coer.C.coercion_head in
     let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
+    (*let _ = print_string("lhs_unfoldfed_struc: "^(Cprinter.string_of_formula lhs)^"\n") in*)
+    let lhs = if(coer.C.coercion_case == C.Ramify) then 
+    	Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
+    	else lhs
+    in
+   (*let _ = print_string("lhs_unfoldfed_ramified: "^(Cprinter.string_of_formula lhs)^"\n") in*)
     let lhs = CF.add_original lhs true in
     let lhs = CF.reset_origins lhs in
     let rhs = CF.add_struc_original true rhs in
@@ -117,7 +129,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
 
 (* sets the lhs & rhs of the entailment when proving l2r lemma (coercion), where the rhs (coercion body) is normalized  *)
 let check_left_coercion coer (cprog: C.prog_decl) =
-  (* let _ = print_string ("\nCoercion name: " ^ coer.C.coercion_name) in *)
+  (*let _ = print_string ("\nCoercion name: " ^ coer.C.coercion_name) in *)
   let ent_lhs =coer.C.coercion_head in
   let ent_rhs = coer.C.coercion_body_norm in
   check_coercion_struc coer ent_lhs ent_rhs cprog

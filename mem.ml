@@ -1485,3 +1485,267 @@ let rec ramify_starminus_in_formula (cf: CF.formula) (vl:C.view_decl list): CF.f
     	CF.formula_exists_qvars = qevars;
         CF.formula_exists_heap = new_h;
         CF.formula_exists_pure = new_mcp;}
+
+
+let get_neq_for_ramify (h:CF.h_formula) (r:CF.h_formula) (p:CP.formula) vl pos : CP.formula = 
+if (CF.is_data h) then
+        if (CF.is_data r) then
+     	let p1 = CP.mkNeqVar (CF.get_node_var r) (CF.get_node_var h) pos in
+	CP.mkAnd p1 p pos
+	else (* r is a view *) 
+        let vdef =  C.look_up_view_def_raw vl (CF.get_node_name r) in
+        let args = vdef.C.view_vars in
+        let rargs = (CF.get_node_args r) in
+        let sst = List.combine args rargs in 
+        let mpf = Gen.unsome vdef.C.view_mem in (* get the memory exp of the view *) 
+        let mexp = CP.e_apply_subs sst mpf.CF.mem_formula_exp in
+        let p1 = CP.BForm((CP.BagNotIn((CF.get_node_var h),mexp,pos),None),None) in
+        CP.mkAnd p1 p pos
+else if (CF.is_view h) then
+	let vdef = C.look_up_view_def_raw vl (CF.get_node_name h) in
+	let mpf = Gen.unsome vdef.C.view_mem in
+	let args = vdef.C.view_vars in
+        let hargs = (CF.get_node_args h) in
+        let sst = List.combine args hargs in 
+	let mexp = CP.e_apply_subs sst mpf.CF.mem_formula_exp in	          
+        if(CF.is_data r) then
+	let p1 = CP.BForm((CP.BagNotIn((CF.get_node_var r),mexp,pos),None),None) in
+        CP.mkAnd p1 p pos
+        else (* r is a view *) 
+	let vdef_r =  C.look_up_view_def_raw vl (CF.get_node_name r) in
+	let mpf_r = Gen.unsome vdef_r.C.view_mem in
+        let args_r = vdef_r.C.view_vars in
+        let rargs_r = (CF.get_node_args r) in
+        let sst_r = List.combine args_r rargs_r in
+        let mexp_r = CP.e_apply_subs sst_r mpf_r.CF.mem_formula_exp in (* get the memory exp of the view *) 
+        let bagexp = CP.BagIntersect(mexp::[mexp_r],pos) in
+        let emp_bag = CP.Bag([],pos) in
+        let p1 = CP.mkNeqExp bagexp emp_bag pos in
+        CP.mkAnd p1 p pos 
+else p
+
+        
+(* Generate basic cases to Ramify a complex heap in formula h *- r *)
+let rec ramify_complex_heap (h:CF.h_formula) (r:CF.h_formula) (p:CP.formula) (vl:C.view_decl list) :
+(CF.h_formula * CP.formula) list = 
+let ct = (CP.mkTrue no_pos) in
+match h with
+| CF.Star {CF.h_formula_star_h1 = h1;
+           CF.h_formula_star_h2 = h2;
+           CF.h_formula_star_pos = pos } 
+| CF.ConjStar{CF.h_formula_conjstar_h1 = h1;
+	CF.h_formula_conjstar_h2 = h2;
+        CF.h_formula_conjstar_pos = pos}                            
+| CF.Conj{CF.h_formula_conj_h1 = h1;
+	CF.h_formula_conj_h2 = h2;
+        CF.h_formula_conj_pos = pos} 
+| CF.ConjConj{CF.h_formula_conjconj_h1 = h1;
+	CF.h_formula_conjconj_h2 = h2;
+        CF.h_formula_conjconj_pos = pos}
+| CF.Phase {CF.h_formula_phase_rd = h1;
+	CF.h_formula_phase_rw = h2;
+        CF.h_formula_phase_pos = pos} -> 
+        let lp = get_neq_for_ramify h2 r p vl pos in
+        let rp = get_neq_for_ramify h1 r p vl pos in
+        let res_lst1 = ramify_complex_heap h1 r lp vl in
+        let res_lst2 = ramify_complex_heap h2 r rp vl in
+        let res_lst = List.map (fun (h2,p2) -> 
+	        List.map (fun (h1,p1) -> let res_h = CF.mkStarH h1 h2 pos 11 in
+	        	let res_p = CP.mkAnd p1 p2 pos in (res_h,res_p)
+	         ) res_lst1 ) res_lst2 in 
+        let res_lst = List.flatten res_lst in      
+	res_lst
+| CF.StarMinus({CF.h_formula_starminus_h1 = h1;
+	CF.h_formula_starminus_h2 = h2;
+	CF.h_formula_starminus_pos = pos}) -> 
+	if (CF.is_data h2) || (CF.is_view h2) then 
+	List.flatten (List.map (fun (h,p) -> ramify_complex_heap h r p vl) (ramify_complex_heap h1 h2 p vl))
+	else [CF.HTrue,ct]
+| CF.DataNode {CF.h_formula_data_name = name;
+     CF.h_formula_data_node = dn;
+     CF.h_formula_data_imm = imm;
+     CF.h_formula_data_arguments = dargs;
+     CF.h_formula_data_pos = pos} -> 
+     (match r with 
+     |  CF.DataNode {CF.h_formula_data_name = rname;
+     	CF.h_formula_data_node = rdn;
+     	CF.h_formula_data_imm = rimm;
+     	CF.h_formula_data_arguments = rdargs;
+     	CF.h_formula_data_pos = rpos} -> 
+     	if(String.compare name rname == 0) then
+     	let first_case_h = CF.HEmp in (* h = r *)
+     	let first_case_p = CP.mkEqVar dn rdn pos in
+     	let combined_args = List.combine dargs rdargs in
+     	let conj_list = List.map (fun (v1,v2) -> CP.mkEqVar v1 v2 pos) combined_args in
+     	let first_case_p = CP.mkAnd first_case_p (CP.join_conjunctions conj_list) pos in
+     	let second_case_h = h in (* h != r *)
+     	let second_case_p = CP.mkNeqVar dn rdn rpos in
+     	let first_case_p = CP.mkAnd first_case_p p pos in
+     	let second_case_p = CP.mkAnd second_case_p p rpos in
+     	[(first_case_h,first_case_p)]@[(second_case_h,second_case_p)]
+     	else [(h,p)]
+     |  CF.ViewNode {CF.h_formula_view_node = rvn;
+        CF.h_formula_view_name = rname;
+        CF.h_formula_view_imm = rimm;
+        CF.h_formula_view_arguments = rvargs;
+        CF.h_formula_view_pos = rpos} -> 
+        let vdef =  C.look_up_view_def_raw vl rname in
+        let args = vdef.C.view_vars in
+        let sst = List.combine args rvargs in 
+        let mpf = Gen.unsome vdef.C.view_mem in
+        let mpf_mexp = CP.e_apply_subs sst mpf.CF.mem_formula_exp in
+        let mpf_fl = mpf.CF.mem_formula_field_layout in
+        if List.exists (fun (id,_) -> String.compare id name == 0) mpf_fl then
+        let first_case_h = CF.HEmp in (* h = r *)       
+     	let first_case_p = CP.BForm((CP.BagIn(dn,mpf_mexp,pos),None),None) in
+     	let second_case_h = h in (* h != r *)
+    	let second_case_p = CP.BForm((CP.BagNotIn(dn,mpf_mexp,pos),None),None) in
+     	let first_case_p = CP.mkAnd first_case_p p pos in
+     	let second_case_p = CP.mkAnd second_case_p p rpos in
+     	[(first_case_h,first_case_p)]@[(second_case_h,second_case_p)]
+        else [(h,p)]            
+     | _ -> [])               			
+| CF.ViewNode {CF.h_formula_view_node = vn;
+     CF.h_formula_view_name = name;
+     CF.h_formula_view_imm = imm;
+     CF.h_formula_view_arguments = vargs;
+     CF.h_formula_view_pos = pos} ->
+     let vdef =  C.look_up_view_def_raw vl name in
+     let mpf = Gen.unsome vdef.C.view_mem in
+     let args = vdef.C.view_vars in
+     let sst = List.combine args vargs in
+     let mpf_mexp = CP.e_apply_subs sst mpf.CF.mem_formula_exp in
+     let mpf_fl = mpf.CF.mem_formula_field_layout in
+     (match r with 
+     |  CF.DataNode {CF.h_formula_data_name = rname;
+     	CF.h_formula_data_node = rdn;
+     	CF.h_formula_data_imm = rimm;
+     	CF.h_formula_data_arguments = rdargs;
+     	CF.h_formula_data_pos = rpos} -> 
+     	if List.exists (fun (id,_) -> String.compare id rname == 0) mpf_fl then
+     	let first_case_h = CF.mkStarMinusH h r pos 57 in (* Will need a matching lemma for a cyclic proof *)
+     	let first_case_p = CP.BForm((CP.BagIn(rdn,mpf_mexp,pos),None),None) in   
+     	let second_case_h = h in (* h != r *)
+    	let second_case_p = CP.BForm((CP.BagNotIn(rdn,mpf_mexp,pos),None),None) in  	
+     	let first_case_p = CP.mkAnd first_case_p p pos in
+     	let second_case_p = CP.mkAnd second_case_p p rpos in
+     	[(first_case_h,first_case_p)]@[(second_case_h,second_case_p)]
+     	else [(h,p)] 
+     |  CF.ViewNode {CF.h_formula_view_node = rvn;
+        CF.h_formula_view_name = rname;
+        CF.h_formula_view_imm = rimm;
+        CF.h_formula_view_arguments = rvargs;
+        CF.h_formula_view_pos = rpos} ->
+        let vdef_r =  C.look_up_view_def_raw vl name in
+	let mpf_r = Gen.unsome vdef_r.C.view_mem in
+        let args_r = vdef_r.C.view_vars in
+	let sst_r = List.combine args_r rvargs in
+	let mpf_r_mexp = CP.e_apply_subs sst_r mpf_r.CF.mem_formula_exp in
+	let mpf_r_fl = mpf_r.CF.mem_formula_field_layout in
+	let check_list = List.map (fun (id,_) -> id) mpf_r_fl in
+    	if List.exists (fun (id,_) -> List.mem id check_list) mpf_fl then
+        let bagexp = CP.BagIntersect(mpf_mexp::[mpf_r_mexp],pos) in
+        let emp_bag = CP.Bag([],pos) in
+    	let first_case_h = CF.mkStarMinusH h r pos 59 in (* Will need a matching lemma for a cyclic proof *)
+        let first_case_p = CP.mkNeqExp bagexp emp_bag pos in    	
+       	let second_case_h = h in (* h != r *)
+        let second_case_p = CP.mkEqExp bagexp emp_bag pos in       	
+     	let first_case_p = CP.mkAnd first_case_p p pos in
+     	let second_case_p = CP.mkAnd second_case_p p rpos in
+     	[(first_case_h,first_case_p)]@[(second_case_h,second_case_p)] 
+    	else [(h,p)]          
+     | _ -> [])              
+| _ -> []         
+
+
+let rec ramify_unfolded_heap (h: CF.h_formula) (p: CP.formula) vl : (CF.h_formula * CP.formula) list =
+  if not (contains_starminus h) then [h,(CP.mkTrue no_pos)] else
+    match h with
+      | CF.Star {CF.h_formula_star_h1 = h1;
+                 CF.h_formula_star_h2 = h2;
+                 CF.h_formula_star_pos = pos } ->  
+        let res_lst1 = ramify_unfolded_heap h1 p vl in
+        let res_lst2 = ramify_unfolded_heap h2 p vl in
+        let res_lst = List.map (fun (h2,p2) -> 
+	        List.map (fun (h1,p1) -> let res_h = CF.mkStarH h1 h2 pos 11 in
+	        	let res_p = CP.mkAnd p1 p2 pos in (res_h,res_p)
+	         ) res_lst1 ) res_lst2 in 
+        let res_lst = List.flatten res_lst in      
+	res_lst
+      | CF.Conj{CF.h_formula_conj_h1 = h1;
+		CF.h_formula_conj_h2 = h2;
+	        CF.h_formula_conj_pos = pos} ->
+        let res_lst1 = ramify_unfolded_heap h1 p vl in
+        let res_lst2 = ramify_unfolded_heap h2 p vl in
+        let res_lst = List.map (fun (h2,p2) -> 
+	        List.map (fun (h1,p1) -> let res_h = CF.mkConjH h1 h2 pos in
+	        	let res_p = CP.mkAnd p1 p2 pos in (res_h,res_p)
+	         ) res_lst1 ) res_lst2 in 
+        let res_lst = List.flatten res_lst in      
+	res_lst
+      | CF.ConjStar{CF.h_formula_conjstar_h1 = h1;
+		CF.h_formula_conjstar_h2 = h2;
+	        CF.h_formula_conjstar_pos = pos} ->
+        let res_lst1 = ramify_unfolded_heap h1 p vl in
+        let res_lst2 = ramify_unfolded_heap h2 p vl in
+        let res_lst = List.map (fun (h2,p2) -> 
+	        List.map (fun (h1,p1) -> let res_h = CF.mkConjStarH h1 h2 pos in
+	        	let res_p = CP.mkAnd p1 p2 pos in (res_h,res_p)
+	         ) res_lst1 ) res_lst2 in 
+        let res_lst = List.flatten res_lst in      
+	res_lst
+      | CF.ConjConj{CF.h_formula_conjconj_h1 = h1;
+		CF.h_formula_conjconj_h2 = h2;
+	        CF.h_formula_conjconj_pos = pos} ->
+        let res_lst1 = ramify_unfolded_heap h1 p vl in
+        let res_lst2 = ramify_unfolded_heap h2 p vl in
+        let res_lst = List.map (fun (h2,p2) -> 
+	        List.map (fun (h1,p1) -> let res_h = CF.mkConjConjH h1 h2 pos in
+	        	let res_p = CP.mkAnd p1 p2 pos in (res_h,res_p)
+	         ) res_lst1 ) res_lst2 in 
+        let res_lst = List.flatten res_lst in      
+	res_lst		 	        
+      | CF.Phase {CF.h_formula_phase_rd = h1;
+		CF.h_formula_phase_rw = h2;
+	        CF.h_formula_phase_pos = pos} ->
+        let res_lst1 = ramify_unfolded_heap h1 p vl in
+        let res_lst2 = ramify_unfolded_heap h2 p vl in
+        let res_lst = List.map (fun (h2,p2) -> 
+	        List.map (fun (h1,p1) -> let res_h = CF.mkPhaseH h1 h2 pos in
+	        	let res_p = CP.mkAnd p1 p2 pos in (res_h,res_p)
+	         ) res_lst1 ) res_lst2 in 
+        let res_lst = List.flatten res_lst in      
+	res_lst
+     | CF.StarMinus({CF.h_formula_starminus_h1 = h1;
+	CF.h_formula_starminus_h2 = h2;
+	CF.h_formula_starminus_pos = pos}) -> 
+	if (CF.is_data h2) || (CF.is_view h2) then 
+        ramify_complex_heap h1 h2 p vl
+	else [CF.HTrue,(CP.mkTrue no_pos)]	
+      | _ -> [h,(CP.mkTrue no_pos)]
+
+let rec ramify_unfolded_formula (cf:CF.formula) vl : CF.formula = 
+  match cf with
+    | CF.Or f -> 
+             let f1 = f.CF.formula_or_f1 in
+             let f2 = f.CF.formula_or_f2 in
+    	     CF.Or {f with 
+	     CF.formula_or_f1 = (ramify_unfolded_formula f1 vl);
+	     CF.formula_or_f2 = (ramify_unfolded_formula f2 vl)}
+    | CF.Base f ->
+    		let pos = f.CF.formula_base_pos in
+    		let h,mcp,fl,t,a = CF.split_components cf in
+    		let p = MCP.pure_of_mix mcp in
+    		let ramify_cases = ramify_unfolded_heap h (CP.mkTrue no_pos) vl in
+    		let or_list = List.map (fun (h,rp) -> let p = CP.mkAnd p rp pos in
+    			CF.mkBase h (MCP.mix_of_pure p) t fl a pos) ramify_cases in
+    		CF.disj_of_list or_list pos
+    | CF.Exists f ->
+		let pos = f.CF.formula_exists_pos in
+    		let h,mcp,fl,t,a = CF.split_components cf in
+    		let qvars = f.CF.formula_exists_qvars in
+    		let p = MCP.pure_of_mix mcp in
+    		let ramify_cases = ramify_unfolded_heap h (CP.mkTrue no_pos) vl in
+    		let or_list = List.map (fun (h,rp) -> let p = CP.mkAnd p rp pos in
+    			CF.mkExists qvars h (MCP.mix_of_pure p) t fl a pos) ramify_cases in
+    		CF.disj_of_list or_list pos

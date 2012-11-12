@@ -13,13 +13,18 @@ pred lseg<p,M> ==  self = p & M = {}
 	inv true
 	memE M->(node<@M,@M>).
 	
-//lemma self::ll<M> & M != {} <->
-//	self::lseg<p,M1> * p::node<_,q> * q::ll<M2> & M = union(M1,M2,{p}).
+lemma self::ll<M> & M != {} <-> self::lseg<p,M1> * p::node<_,q> * q::ll<M2> & M = union(M1,M2,{p}).
 	
 lemma self::ll<M> *- p::node<_,q> & p in M -> self::lseg<p,M1> * q::ll<M2>  & M = union(M1,M2,{p}).
 
-lemma self::ll<M> *- p::ll<Mp> & p in M -> self::lseg<p,M1> & M = union(M1,Mp).
+lemma self::ll<M> *- p::ll<Mp> & p in M  -> self::lseg<p,M1> & M = union(M1,Mp).
 	
+checkentail y::ll<My> * (x::ll<M> *- c::node<_,p>) & c in M |- x::lseg<c,M1> * p::ll<M2> & M = union(M1,M2,{c}).
+print residue.
+
+checkentail y::ll<My> * (x::ll<M> *- c::ll<Mc>) & c in M |- x::lseg<c,M1> * y::ll<My> & M = union(M1,Mc).
+print residue.
+
 //checkentail x::ll<M> *- y::node<_,p> |- x::lseg<y,M1> * q::ll<M2> & M = union(M1,M2,{y}).
 //print residue.
 /*
@@ -29,20 +34,15 @@ print residue.
 checkentail x::ll<M> * p::node<_,_> |- case { p in M -> [] x::ll<M> * p::node<_,_>;
 			         		p notin M -> [] x::ll<M>;}.
 print residue.
-*/
-//checkentail p::ll<Mp> & self = x & M = union(Mp,{self}) & x in M & M != {} & x notin Mp  & p = q
-	//or self::node<_,p> * p::ll<Mp> & self != x & M = union(Mp,{self}) & x in M & M != {} & x notin Mp 
-	//or self::node<_,p> * p::ll<Mp> & M = union(Mp,{self}) & x in M & M != {} & x notin Mp & x != self
-	//or self::node<_,p> * p::lseg<x,M3> * q::ll<M4>  & M = union(Mp,{self}) & Mp = union(M3,M4,{x}) & x in M & M != {} & x in Mp 
-//	|- self::lseg<x,M1> * q::ll<M2> & M = union(M1,M2,{x}).
-//print residue.
+
+checkentail p::ll<Mp> & self = x & M = union(Mp,{self}) & x in M & M != {}  & p = q & x notin Mp
+or self::node<_,p> * p::ll<Mp> & self != x & M = union(Mp,{self}) & x in M & M != {} & x notin Mp 
+or self::node<_,p> * p::ll<Mp> & M = union(Mp,{self}) & x in M & M != {} & x notin Mp & x != self
+or self::node<_,p> * p::lseg<x,M3> * q::ll<M4>  & M = union(Mp,{self}) & Mp = union(M3,M4,{x}) & x in M & M != {} & x in Mp & x != self
+	|- self::lseg<x,M1> * q::ll<M2> & M = union(M1,M2,{x}).
+print residue.
 
 //checkentail self::node<_,p> * p::lseg<x,M3> * q::ll<M4>  & M = union(Mp,{self}) & Mp = union(M3,M4,{x}) & x in M & M != {} & x in Mp 
 //	|- self::lseg<x,M1> * q::ll<M2> & M = union(M1,M2,{x}).
 //print residue.
-
-checkentail y::ll<My> * (x::ll<M> *- c::node<_,p>) & c in M |- x::lseg<c,M1> * p::ll<M2> & M = union(M1,M2,{c}).
-print residue.
-
-checkentail y::ll<My> * (x::ll<M> *- c::ll<Mc>) & c in M |- x::lseg<c,M1> & M = union(M1,Mc).
-print residue.
+*/
