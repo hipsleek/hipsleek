@@ -1237,7 +1237,7 @@ Omega may perform unsound approximation with real numbers
 such as f=f1+f2&f1>0&f2>0 => f>=2
 *)
 let simplify (f: CP.formula) : CP.formula =
-  if (is_linear_formula f  && not (CP.is_float_formula f)) then
+  if (is_linear_formula f && not (CP.is_float_formula f)) then
     Omega.simplify f
   else
     if (!no_simplify) then
