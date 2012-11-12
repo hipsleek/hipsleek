@@ -24,14 +24,17 @@ global node q;
 
 void delete_cache(ref node cached, node q)
 requires  cached::node<_,p> & q::ll<M> & cached in M
-ensures q::lseg<M1,cached> * p::ll<M2> & M = union(M1,M2,{cached}); 
+ensures q::lseg<M1,cached> * p::ll<M2> & M = union(M1,M2,{cached}) & cached' = null; 
 {
 	delete(cached);
 } 
 
 void delete(ref node cached)
 requires cached::node<_,_>
-ensures emp;
+ensures cached' = null;
+{
+cached = null;
+}
 
 node add_L(ref node x, node y)
 requires x::node<_,_> * y::ll<Ry>
