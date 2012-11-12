@@ -535,7 +535,7 @@ let has_exists2 f0 =
 (* e1 > e2 ~> e1 >= e2 + 1 *)
 (* e1 != e2 ~> e1 >= e2 + 1 or e1 <= e2 - 1  *)
  
- let rec strengthen_formula f0 =
+let rec strengthen_formula f0 =
   match f0 with
   | CP.BForm ((pf,il),lbl) -> 
       let r = match pf with
@@ -547,7 +547,7 @@ let has_exists2 f0 =
             CP.Or (CP.BForm ((lp,il), lbl), CP.BForm ((rp,il), lbl), lbl, l)
         | _ -> f0
       in r
-  | CP.Not (f, lbl, l) -> CP.Not (strengthen_formula f, lbl, l)
+  | CP.Not (f, lbl, l) -> CP.Not (weaken_formula (* strengthen_formula *) f, lbl, l)
   | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, strengthen_formula f, lbl, l)
   | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, strengthen_formula f, lbl, l)
   | CP.And (f1, f2, l) -> CP.And (strengthen_formula f1, strengthen_formula f2, l)
@@ -555,13 +555,13 @@ let has_exists2 f0 =
   | CP.Or (f1, f2, lbl, l) -> CP.Or (strengthen_formula f1, strengthen_formula f2, lbl, l)
 
 
- let strengthen_formula f =
-   let pr = string_of_formula in
-   Debug.no_1 "strengthen_formula"
-       pr pr
-       strengthen_formula f
+(* let strengthen_formula f =         *)
+(*    let pr = string_of_formula in   *)
+(*    Debug.no_1 "strengthen_formula" *)
+(*        pr pr                       *)
+(*        strengthen_formula f        *)
 
-let strengthen2 f0 =
+and strengthen2 f0 =
   let f_f f =
 	match f with
 	| CP.BForm ((CP.Neq (e1, e2, l), il), lbl) ->
@@ -582,7 +582,7 @@ let strengthen2 f0 =
 (* e1 <= e2 ~> e1 < e2 + 1 *)
 (* e1 >= e2 ~> e1 > e2 - 1 *)
 (* e1 = e2 ~> e2 - 1 < e1 < e2 + 1 *)
-let rec weaken_formula f0 =
+and weaken_formula f0 =
   match f0 with
   | CP.BForm ((pf,il),lbl) ->
       let r = match pf with
@@ -594,14 +594,14 @@ let rec weaken_formula f0 =
             CP.And (CP.BForm ((lp,il),lbl), CP.BForm ((rp,il),lbl), l)
         | _ -> f0
       in r
-  | CP.Not (f,lbl,l) -> CP.Not (weaken_formula f, lbl, l)
+  | CP.Not (f,lbl,l) -> CP.Not (strengthen_formula (* weaken_formula *) f, lbl, l)
   | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, weaken_formula f, lbl, l)
   | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, weaken_formula f, lbl, l)
   | CP.And (f1, f2, l) -> CP.And (weaken_formula f1, weaken_formula f2, l)
   | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | CP.Or (f1, f2, lbl, l) -> CP.Or (weaken_formula f1, weaken_formula f2, lbl, l)
 
-let weaken2 f0 =
+and weaken2 f0 =
   let f_f f = match f with
     | CP.BForm ((CP.Eq (e1, e2, l),il), lbl) ->
         let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
