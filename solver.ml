@@ -6626,9 +6626,9 @@ and do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos =
 
 and push_hole_action_x a1 r1=
   match Context.action_get_holes a1 with
-    | None -> (Debug.info_zprint (lazy "NoHoles") no_pos; r1)
+    | None -> (Debug.ninfo_zprint (lazy "NoHoles") no_pos; r1)
     | Some h -> 
-          (Debug.info_zprint (lazy "YesHoles") no_pos;
+          (Debug.ninfo_zprint (lazy "YesHoles") no_pos;
           push_crt_holes_list_ctx r1 h)
 
 and push_hole_action a1 r1 =
@@ -6868,7 +6868,7 @@ and init_para lhs_h rhs_h lhs_aset prog pos = match (lhs_h, rhs_h) with
 and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
    if not(Context.is_complex_action a) then
     begin
-      Debug.info_zprint (lazy ("process_action :"
+      Debug.ninfo_zprint (lazy ("process_action :"
       ^ "\n ### action = " ^ (Context.string_of_action_res a)
       ^ "\n ### estate = " ^ ( Cprinter.string_of_entail_state_short estate)
       ^ "\n ### conseq = " ^ (Cprinter.string_of_formula conseq)
@@ -7165,9 +7165,9 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             
             (ctx_lst, pf) in
     if (Context.is_complex_action a) 
-    then (Debug.info_zprint (lazy "Detected Iscomplex") no_pos;  (r1,r2))
+    then (Debug.ninfo_zprint (lazy "Detected Iscomplex") no_pos;  (r1,r2))
     else begin
-      Debug.info_zprint (lazy "pushing_hole_action") no_pos; (push_hole_action a r1,r2)
+      Debug.ninfo_zprint (lazy "pushing_hole_action") no_pos; (push_hole_action a r1,r2)
           end
 
 and process_action caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
