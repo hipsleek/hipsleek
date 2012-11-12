@@ -203,7 +203,7 @@ let action_get_holes a = match a with
  
 let action_get_holes (a:action):(h_formula*int) list option = 
   let pr1 = string_of_action_res in
-  let pr2 = pr_option pr_no in
+  let pr2 = pr_option (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int)) in
   Debug.no_1 "action_get_holes" pr1 pr2 action_get_holes a
 
 let action_wt_get_holes (_,a) = action_get_holes a
