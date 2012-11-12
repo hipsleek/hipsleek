@@ -2531,7 +2531,7 @@ let start_prover () =
   | Redlog | RM -> 
     begin
       Redlog.start ();
-	    (* Omega.start (); *)
+	    Omega.start ();
 	  end
   | Cvc3 -> 
         begin
@@ -2577,7 +2577,7 @@ let stop_prover () =
     | Redlog | RM -> 
         begin
           Redlog.stop();
-	        (* Omega.stop(); *)
+	        Omega.stop();
 	      end
     | Cvc3 -> 
           begin

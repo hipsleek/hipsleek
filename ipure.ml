@@ -523,7 +523,8 @@ and fresh_var (sv : (ident*primed)):(ident*primed) =
 and fresh_vars (svs : (ident*primed) list):(ident*primed) list = List.map fresh_var svs
 
 
-and eq_var (f: (ident*primed))(t:(ident*primed)):bool = ((String.compare (fst f) (fst t))==0) &&(snd f)==(snd t) 
+and eq_var (f: (ident*primed))(t:(ident*primed)):bool = 
+  ((String.compare (fst f) (fst t))==0) &&(snd f)==(snd t) 
 
 and subst sst (f : formula) = match sst with
   | s :: rest -> subst rest (apply_one s f)
@@ -850,6 +851,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   | ListReverse (exp, _) -> contain_vars_exp exp
   | Func _ -> true
   | ArrayAt _ -> true 
+
 and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = match e with 
   | Null _ 
   | Var _ 

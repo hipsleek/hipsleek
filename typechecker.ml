@@ -1211,7 +1211,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	    Gen.Profiling.push_time "[check_exp] BConst";
 	    let res_v = CP.mkRes bool_type in
 	    let tmp1 = CP.BForm ((CP.BVar (res_v, pos), None), None) in
-      let tmp1 = CP.set_il_formula tmp1 (Some (false, fresh_int (), [CP.mkVar res_v pos])) in
+      (* TODO: Slicing - Can we mark a boolean constant as linking var                 *)
+      (* let tmp1 =                                                                    *)
+      (*   if !Globals.infer_lvar_slicing then                                         *)
+      (*     CP.set_il_formula tmp1 (Some (false, fresh_int (), [CP.mkVar res_v pos])) *)
+      (*   else tmp1                                                                   *)
+      (* in                                                                            *)
 	    let tmp2 =
 	      if b then tmp1
 	      else CP.Not (tmp1, None, pos) in
@@ -1464,7 +1469,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	      let c_e = CP.IConst (i, pos) in
 	      let res_v = CP.Var (CP.mkRes int_type, pos) in
         let c = CP.mkEqExp res_v c_e pos in
-        let c = CP.set_il_formula c (Some (false, fresh_int(), [res_v])) in
+        let c = 
+          if !Globals.infer_lvar_slicing then 
+            CP.set_il_formula c (Some (false, fresh_int(), [res_v]))
+          else c 
+        in
 	      let f = CF.formula_of_mix_formula (MCP.mix_of_pure c) pos in
 	      let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	      Gen.Profiling.pop_time "[check_exp] IConst";
@@ -1473,7 +1482,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	      let c_e = CP.FConst (f, pos) in
 	      let res_v = CP.Var (CP.mkRes float_type, pos) in
         let c = CP.mkEqExp res_v c_e pos in
-        let c = CP.set_il_formula c (Some (false, fresh_int(), [res_v])) in
+        let c =
+          if !Globals.infer_lvar_slicing then
+            CP.set_il_formula c (Some (false, fresh_int(), [res_v]))
+          else c
+        in
 	      let f = CF.formula_of_mix_formula (MCP.mix_of_pure c) pos in
 	      let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	      res_ctx

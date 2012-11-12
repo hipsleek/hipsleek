@@ -615,6 +615,7 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   if !sleek_timeout_limit > 0. then
     let entail_check = fun _ -> run_entail_check iante0 iconseq0 in
     let fail_with_timeout () =
+      print_endline ("SLEEK Timeout."); flush stdout;
       let fctx = CF.mkFailCtx_in (CF.Trivial_Reason 
         (CF.mk_failure_may "timeout" Globals.timeout_error)) in
       (false, fctx)
@@ -707,7 +708,7 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
           | _ -> ""
         else ""
       in
-      print_string (num_id^": Fail."^timeout^s^"\n"^term_output^"\n");
+      print_string (num_id^": Fail."^timeout^s^"\n"^term_output^"\n"); flush stdout;
           (*if !Globals.print_err_sleek then *)
           (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
     end
@@ -747,8 +748,8 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
       wrap_proving_kind ("SLEEK_ENT"^nn) (run_entail_check iante0) iconseq0 in
     print_entail_result valid rs num_id
   with ex -> 
-         let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
-         in ()
+    let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
+    in ()
   (* with e -> print_exc num_id *)
 
 let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =

@@ -471,10 +471,22 @@ let peek_array_type =
              |[_;OSQUARE,_] -> (* An Hoa*) (*let _ = print_endline "Array found!" in*) ()
              | _ -> raise Stream.Failure)
 
-let contain_vars_pure_double f =
-  match f with
-	| Pure_f _ -> false
-	| Pure_c pc -> P.contain_vars_exp pc
+(* let contain_vars_pure_double f =      *)
+(*   match f with                        *)
+(* 	| Pure_f _ -> false                  *)
+(* 	| Pure_c pc -> P.contain_vars_exp pc *)
+
+(* Determine whether an ineq e1!=e2 *)
+(* is a linking constraints         *)
+let is_ineq_linking_constraint e1 e2 = 
+  match e1, e2 with
+  | Pure_c c1, Pure_c c2 ->
+    (* let _ = print_endline "INEQ" in                                    *)
+    (* let _ = print_endline ((pr_list (fun (id, _) -> id) (P.afv c1)) in *)
+    (* let _ = print_endline ((pr_list (fun (id, _) -> id) (P.afv c2)) in *)
+    (List.length (Gen.BList.remove_dups_eq P.eq_var 
+      ((P.afv c1) @ (P.afv c2)))) > 1 
+  | _ -> false
 
 (* and set_slicing_utils_pure_double f il = *)
 (*   let pr_pure_double = function *)
@@ -1023,7 +1035,8 @@ cexp_w :
   |"bconstrp" RIGHTA
       [  lc=SELF; `NEQ;  cl=SELF       ->
 	  let f = cexp_to_pure2 (fun c1 c2 -> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
-	  set_slicing_utils_pure_double f (*false*) (if !opt_ineq then (*(contain_vars_pure_double lc) && (contain_vars_pure_double cl)*) true else false)
+	  set_slicing_utils_pure_double f (*false*) 
+    (if !opt_ineq && (is_ineq_linking_constraint lc cl) then true else false)
 	  | lc=SELF; `EQ;   cl=SELF  ->
 	  let f = cexp_to_pure2 (fun c1 c2 -> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
 	  set_slicing_utils_pure_double f false
