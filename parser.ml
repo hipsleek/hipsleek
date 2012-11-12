@@ -481,23 +481,20 @@ let peek_array_type =
 let is_ineq_linking_constraint e1 e2 = 
   match e1, e2 with
   | Pure_c c1, Pure_c c2 ->
-    (* let _ = print_endline "INEQ" in                                    *)
-    (* let _ = print_endline ((pr_list (fun (id, _) -> id) (P.afv c1)) in *)
-    (* let _ = print_endline ((pr_list (fun (id, _) -> id) (P.afv c2)) in *)
     (List.length (Gen.BList.remove_dups_eq P.eq_var 
       ((P.afv c1) @ (P.afv c2)))) > 1 
   | _ -> false
 
-(* and set_slicing_utils_pure_double f il = *)
-(*   let pr_pure_double = function *)
+(* let rec set_slicing_utils_pure_double f il =        *)
+(*   let pr_pure_double = function                     *)
 (* 	| Pure_f pf -> Iprinter.string_of_pure_formula pf *)
-(* 	| Pure_c pc -> Iprinter.string_of_formula_exp pc *)
-(*   in  *)
-(*   DD.no_2 "set_slicing_utils_pure_double" *)
-(* 	pr_pure_double  *)
-(* 	string_of_bool *)
-(* 	pr_pure_double *)
-(* 	set_slicing_utils_pure_double_x f il *)
+(* 	| Pure_c pc -> Iprinter.string_of_formula_exp pc  *)
+(*   in                                                *)
+(*   DD.no_2 "set_slicing_utils_pure_double"           *)
+(* 	pr_pure_double                                    *)
+(* 	string_of_bool                                    *)
+(* 	pr_pure_double                                    *)
+(* 	set_slicing_utils_pure_double_x f il              *)
 				   
 let set_slicing_utils_pure_double f il =
   (*
@@ -1035,8 +1032,8 @@ cexp_w :
   |"bconstrp" RIGHTA
       [  lc=SELF; `NEQ;  cl=SELF       ->
 	  let f = cexp_to_pure2 (fun c1 c2 -> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
-	  set_slicing_utils_pure_double f (*false*) 
-    (if !opt_ineq && (is_ineq_linking_constraint lc cl) then true else false)
+	  set_slicing_utils_pure_double f 
+    (if !opt_ineq (* && (is_ineq_linking_constraint lc cl) *) then true else false)
 	  | lc=SELF; `EQ;   cl=SELF  ->
 	  let f = cexp_to_pure2 (fun c1 c2 -> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
 	  set_slicing_utils_pure_double f false

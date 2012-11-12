@@ -1251,8 +1251,11 @@ and is_varperm_of_typ_b (b : b_formula) typ: bool =
 and trans_eq_bform (b : b_formula) : b_formula =
   let (pf, il) = b in
   match pf with
-	| Neq _ -> (pf, Some (true, Globals.fresh_int(), []))
-	      (*if (List.length (bfv b)) > 1 then (pf, Some (true, Globals.fresh_int(), [])) else (pf, None)*)
+	| Neq _ -> 
+    (* (pf, Some (true, Globals.fresh_int(), [])) *)
+    if (List.length (bfv b)) > 1
+    then (pf, Some (true, Globals.fresh_int(), []))
+    else (pf, None)
 	| Eq _ -> (pf, None)
 	| _ -> b
           
