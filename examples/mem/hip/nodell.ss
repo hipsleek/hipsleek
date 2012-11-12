@@ -17,17 +17,16 @@ lseg<R,p> == self = p & R = {}
 	inv true
 	mem R->(node<@M,@M>);
 
-lemma self::ll<R> *- x::node<_,p> & x in R -> self::lseg<R1,x> * q::ll<R2> & R = union(R1,R2,{x});
+lemma self::ll<R> *- x::node<_,p> & x in R -> self::lseg<R1,x> * p::ll<R2> & R = union(R1,R2,{x});
 
 global node cached;
 global node q;
 
 void delete_cache(ref node cached, node q)
-requires  cached::node<_,_> & q::ll<M> & cached in M
-ensures q::lseg<M1,cached> * r::ll<M2> & M = union(M1,M2,{cached}); 
+requires  cached::node<_,p> & q::ll<M> & cached in M
+ensures q::lseg<M1,cached> * p::ll<M2> & M = union(M1,M2,{cached}); 
 {
 	delete(cached);
-	dprint;
 } 
 
 void delete(ref node cached)
