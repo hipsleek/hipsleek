@@ -277,6 +277,7 @@ let common_arguments = [
   ("--dis-term-msg", Arg.Set Globals.dis_term_msg, "turn off the printing of termination messages");
   ("--dis-post-check", Arg.Set Globals.dis_post_chk, "turn off the post_condition and loop checking");
   ("--dis-assert-check", Arg.Set Globals.dis_ass_chk, "turn off the assertion checking");
+  ("--dis-log-filter", Arg.Clear Globals.log_filter, "turn off the log initial filtering");
 
   (* Slicing *)
   ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");

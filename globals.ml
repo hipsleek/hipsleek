@@ -674,6 +674,7 @@ let dis_bnd_chk = ref false
 let dis_term_msg = ref false
 let dis_post_chk = ref false
 let dis_ass_chk = ref false
+let log_filter = ref true
   
 (* Options for slicing *)
 let do_slicing = ref false

@@ -1,0 +1,30 @@
+
+//checkentail x>3 & x!=y & y>3 |- x>2. //works well
+
+//checkentail x>3 & x!=y & y>3 |- x>y. // works well
+
+//checkentail x>3 & x!=y & x=y |- x>y. // no SAT calls
+
+//checkentail x>3 & x!=y & x=r |- x>y. // no SAT calls
+
+//checkentail x!=y |- x>y.  // no SAT call
+
+/*
+!!!:0: 0: SAT #1
+!!!:0: 0:  x!=x
+is_sat_memo_sub_no_ineq_slicing_complete@4@3@2@1
+is_sat_memo_sub_no_ineq_slicing_complete inp1 : (([x!=x]))
+is_sat_memo_sub_no_ineq_slicing_complete@4 EXIT out :false
+*/
+//checkentail x!=x |- x>y.  // SAT call present!
+
+checkentail x!=y & y=x |- x>y.  // no SAT call!
+
+/*
+!!!:0: 0: SAT #1
+!!!:0: 0:  r=y
+is_sat_memo_sub_no_ineq_slicing_complete@4@3@2@1
+is_sat_memo_sub_no_ineq_slicing_complete inp1 : (([x!=y][r=y]))
+is_sat_memo_sub_no_ineq_slicing_complete@4 EXIT out :true
+*/
+//checkentail x!=y & y=r |- x>y.  // only SAT r=y. How about x!=y?

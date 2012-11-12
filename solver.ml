@@ -2803,8 +2803,10 @@ and heap_entail_struc_init (prog : prog_decl) (is_folding : bool)  (has_post: bo
   let length_ctx ctx = match ctx with
     | CF.FailCtx _ -> 0
     | CF.SuccCtx ctx0 -> List.length ctx0 in
+  let pr = Cprinter.string_of_list_context in
   let pr_out (ctx_lst, pf) = string_of_int (length_ctx ctx_lst) in 
-  Debug.no_1 "heap_entail_struc_init" (fun _ -> "?") pr_out (fun _ -> heap_entail_struc_init_x prog is_folding has_post cl conseq pos pid) prog
+  let pr_out (ctx_lst, pf) = Cprinter.string_of_list_context ctx_lst in
+  Debug.no_1 "heap_entail_struc_init" pr pr_out (fun _ -> heap_entail_struc_init_x prog is_folding has_post cl conseq pos pid) cl
 
 (* check entailment:                                          *)
 (* each entailment should produce one proof, be it failure or *)

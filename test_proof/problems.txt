@@ -1,3 +1,7 @@
+--ufdp affects delay-proving-sat
+
+
+
 
 P => A & B
 

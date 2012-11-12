@@ -72,38 +72,41 @@ let file_to_proof_log () =
 	
 (*TO DO: check unique pno??*)
 let add_proof_log old_no pno tp ptype time res =
-	if !Globals.proof_logging || !Globals.proof_logging_txt then
-		(* let _= print_endline ("loging :"^pno^" "^proving_info () ^"\n"^trace_info ()) in *)
-		let tstartlog = Gen.Profiling.get_time () in
-		let plog = {
-			log_id = pno;
-			log_other_properties = [proving_info ()]@[trace_info ()];
-			(* log_old_id = old_no; *)
-			log_prover = tp;
-			log_type = Some ptype;
-			log_time = time;
-			log_res = res; } in
-		let _=Hashtbl.add proof_log_tbl pno plog in
-		let _=try
-			let _= BatString.find (Sys.argv.(0)) "hip" in
-		  if(!Globals.proof_logging_txt && ((proving_kind # string_of)<>"TRANS_PROC")) then
+  if !Globals.proof_logging || !Globals.proof_logging_txt then
+	(* let _= print_endline ("loging :"^pno^" "^proving_info () ^"\n"^trace_info ()) in *)
+	let tstartlog = Gen.Profiling.get_time () in
+	let plog = {
+		log_id = pno;
+		log_other_properties = [proving_info ()]@[trace_info ()];
+		(* log_old_id = old_no; *)
+		log_prover = tp;
+		log_type = Some ptype;
+		log_time = time;
+		log_res = res; } in
+	let _=Hashtbl.add proof_log_tbl pno plog in
+	let _=try
+	  let _= BatString.find (Sys.argv.(0)) "hip" in
+	  if(!Globals.proof_logging_txt && ((proving_kind # string_of)<>"TRANS_PROC")) then
+		begin 
+		  proof_log_list := !proof_log_list @ [pno];
+		end		
+	with _->
+		if(!Globals.proof_logging_txt) then
+		  try
+			let temp=(proving_kind # string_of) in
+			let _ =
+              if !Globals.log_filter
+              then BatString.find temp "SLEEK_ENT"
+              else 0 in
 			begin 
-			proof_log_list := !proof_log_list @ [pno];
-			end		
-		with _->
-			if(!Globals.proof_logging_txt) then
-			try
-				let temp=(proving_kind # string_of) in
-				let _=BatString.find 	temp "SLEEK_ENT" in
-			begin 
-			proof_log_list := !proof_log_list @ [pno];
+			  proof_log_list := !proof_log_list @ [pno];
 			end		 	
 		  with _->()	
-		in
-	  let tstoplog = Gen.Profiling.get_time () in
-	  let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
-	(* let _=print_endline ("log time: "^(string_of_float (tstoplog))^" and "^(string_of_float (tstartlog))) in ()	  *)
-	else ()
+	in
+	let tstoplog = Gen.Profiling.get_time () in
+	let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
+	                                                                                                   (* let _=print_endline ("log time: "^(string_of_float (tstoplog))^" and "^(string_of_float (tstartlog))) in ()	  *)
+  else ()
 					
 let proof_log_to_text_file (src_files) =
   if !Globals.proof_logging_txt then

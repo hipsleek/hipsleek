@@ -1606,6 +1606,14 @@ let is_sat_memo_sub_no_complete f with_dupl with_inv t_is_sat =
 let is_ineq_linking_memo_group (mg : memoised_group) : bool =
   List.exists (fun mc -> is_ineq_linking_bform mc.memo_formula) mg.memo_group_cons
 
+let is_ineq_linking_memo_group (mg : memoised_group) : bool =
+  let pr = !print_mg_f in
+  Debug.no_1 "is_ineq_linking_memo_group" pr string_of_bool
+      is_ineq_linking_memo_group mg
+
+
+
+
 let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
   (*List.exists (fun mg -> (is_ineq_linking_memo_group mg) && (Gen.BList.subset_eq eq_spec_var mg.memo_group_fv ls)) mem*)
   List.exists (fun mg ->
@@ -1620,6 +1628,13 @@ let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
         | Some (v1, v2) -> Gen.BList.subset_eq eq_spec_var [v1; v2] ls 
         | None -> false
     ) mg.memo_group_cons)) mem
+
+(* WN : this procedure avoided some SAT calls from
+is_sat_memo_sub_no_ineq_slicing_complete inp1 : (([x!=y][x=y & 4<=x]))
+is_sat_memo_sub_no_ineq_slicing_complete@4 EXIT out :false
+ Can we allow SAT calls to be invoked here,
+ as we like to make prover calls explicit.
+ *)
          
 let is_sat_memo_sub_no_ineq_slicing_complete (mem : memo_pure) with_dupl with_inv t_is_sat : bool =
   if (isConstMFalse mem) then false
@@ -1640,7 +1655,13 @@ let is_sat_memo_sub_no_ineq_slicing_complete (mem : memo_pure) with_dupl with_in
     in
     (* List.fold_left (fun acc mg -> if not acc then acc else is_sat_one_slice mg) true mem *)
     not (List.exists (fun mg -> not (is_sat_one_slice mg)) mem)
- 
+
+let is_sat_memo_sub_no_ineq_slicing_complete (mem : memo_pure) with_dupl with_inv t_is_sat : bool =
+  let pr = !print_mp_f in
+  Debug.no_1 "is_sat_memo_sub_no_ineq_slicing_complete"
+      pr string_of_bool
+      (fun _ -> is_sat_memo_sub_no_ineq_slicing_complete mem with_dupl with_inv t_is_sat) mem 
+
 (* IMPLY functions *)
 let memo_impl_fail_vars = ref [] 
  
