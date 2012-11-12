@@ -3385,7 +3385,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
     (* Process the action to get the new entail state *)
     let b = {(CF.mkTrue_b_nf no_pos) with formula_base_and = formula_and_of_formula f} in (*TO CHECK: ignore formula_*_and *)
 
-    let res = process_action 0 prog es conseq b b action [] is_folding pos in
+    let res = process_action 0 0 prog es conseq b b action [] is_folding pos in
     (res, match action with
       | Context.M_Nothing_to_do _ -> false
       | _ -> let _ = num_unfold_on_dup := !num_unfold_on_dup + 1 in 
@@ -6300,7 +6300,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
     let rhs_eqset = estate.es_rhs_eqset in
     (* let _ = print_endline "CA:1" in *)
     let actions = Context.compute_actions prog rhs_eqset lhs_h lhs_p rhs_p posib_r_alias rhs_lst estate.es_is_normalizing pos in
-    process_action 1 prog estate conseq lhs_b rhs_b actions rhs_h_matched_set is_folding pos
+    process_action 1 1 prog estate conseq lhs_b rhs_b actions rhs_h_matched_set is_folding pos
 
 and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   (*LDK*)
@@ -7152,14 +7152,14 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               | [] ->           
                     (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Cond action - none succeeded" estate (Base rhs_b) None pos
                         , CF.mk_failure_must "Cond action - none succeeded" Globals.sl_error)), NoAlias)
-              | [(_,act)] -> process_action 130 prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos       
+              | [(_,act)] -> process_action 2 130 prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos       
               | (_,act)::xs ->
-                    let (r,prf) = process_action 131 prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos in
+                    let (r,prf) = process_action 3 131 prog estate conseq lhs_b rhs_b act rhs_h_matched_set is_folding pos in
                     if isFailCtx r then helper xs
                     else (r,prf)
             in helper l
       | Context.Search_action l ->
-            let r = List.map (fun (_,a1) -> process_action 14 prog estate conseq lhs_b rhs_b a1 rhs_h_matched_set is_folding pos) l in
+            let r = List.map (fun (_,a1) -> process_action 4 14 prog estate conseq lhs_b rhs_b a1 rhs_h_matched_set is_folding pos) l in
             let (ctx_lst, pf) = List.fold_left combine_results (List.hd r) (List.tl r) in
             (* List.fold_left combine_results (List.hd r) (List.tl r) in *)
             
@@ -7170,13 +7170,13 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       Debug.ninfo_zprint (lazy "pushing_hole_action") no_pos; (push_hole_action a r1,r2)
           end
 
-and process_action caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
+and process_action i caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
   let pr1 = Context.string_of_action_res_simpl in
   let length_ctx ctx = match ctx with
     | CF.FailCtx _ -> 0
     | CF.SuccCtx ctx0 -> List.length ctx0 in
   let pr2 x = "\nctx length:" ^ (string_of_int (length_ctx (fst x))) ^ " \n Context:"^ Cprinter.string_of_list_context_short (fst x) in
-  Debug.no_4 "process_action" string_of_int pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
+  Debug.no_4_num i "process_action" string_of_int pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr2
       (fun _ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) caller a estate conseq
       
       
