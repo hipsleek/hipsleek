@@ -280,7 +280,7 @@ let common_arguments = [
   ("--dis-log-filter", Arg.Clear Globals.log_filter, "turn off the log initial filtering");
 
   (* Slicing *)
-  ("--en-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");
+  ("--en-slicing", (Arg.Set Globals.do_slicing; Arg.Set Globals.allow_pred_spec), "Enable forced slicing");
   (*("--dis-slicing", Arg.Set Globals.dis_slicing, "Disable slicing, equivalent to ");*)
   (* similar to --force-one-slice *)
 
