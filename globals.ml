@@ -683,6 +683,7 @@ let opt_imply = ref 0
 let opt_ineq = ref false
 let infer_slicing = ref false
 let infer_lvar_slicing = ref false
+let slicing_rel_level = ref 2
 let multi_provers = ref false
 let is_sat_slicing = ref false
 let delay_case_sat = ref false

@@ -1612,8 +1612,6 @@ let is_ineq_linking_memo_group (mg : memoised_group) : bool =
       is_ineq_linking_memo_group mg
 
 
-
-
 let exists_contradiction_eq (mem : memo_pure) (ls : spec_var list) : bool =
   (*List.exists (fun mg -> (is_ineq_linking_memo_group mg) && (Gen.BList.subset_eq eq_spec_var mg.memo_group_fv ls)) mem*)
   List.exists (fun mg ->
@@ -1639,7 +1637,9 @@ is_sat_memo_sub_no_ineq_slicing_complete@4 EXIT out :false
 let is_sat_memo_sub_no_ineq_slicing_complete (mem : memo_pure) with_dupl with_inv t_is_sat : bool =
   if (isConstMFalse mem) then false
   else
+    (* create a single eset for memo pure *)
     let m_aset = List.fold_left (fun a mg -> EMapSV.merge_eset a mg.memo_group_aset) [] mem in
+    (* parition the eset *)
     let m_apart = EMapSV.partition m_aset in
     let is_sat_one_slice mg =
       if (is_ineq_linking_memo_group mg)
@@ -1674,7 +1674,7 @@ let rec mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_
 and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no =
   let n_ante = 
     if !do_slicing then 
-      AnnoS.get_rel_ctr 2 conseq ante_disj
+      AnnoS.get_rel_ctr !slicing_rel_level conseq ante_disj
     else
       AutoS.get_rel_ctr 1 conseq ante_disj
   in
@@ -1686,10 +1686,8 @@ and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no
     | _ -> fold_mem_lst_with_complex (mkTrue no_pos) !no_LHS_prop_drop true n_ante in
   let _ = Debug.devel_pprint str no_pos in
   let _ = Debug.trace_hprint (add_str "ante" !Cpure.print_formula) r no_pos in
-  let _ = Debug.trace_hprint (add_str "conseq" !Cpure.print_formula) conseq no_pos in
-  
-  print_endline ("ANTE: " ^ (!Cpure.print_formula r));
-  
+  let _ = Debug.trace_hprint (add_str "conseq" !Cpure.print_formula) conseq no_pos in  
+  (* print_endline ("ANTE: " ^ (!Cpure.print_formula r)); *)
   (Gen.Profiling.push_time str_time;
   let (rb,_,_) as r = t_imply r conseq ("imply_process_ante:"^(string_of_int !imp_no)) false None in
   Gen.Profiling.pop_time str_time;

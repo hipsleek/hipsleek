@@ -1,0 +1,6 @@
+checkentail x=1 & y=2 & z=x+y & t1p=x+t1 & t2p=y+t2 & t3p=z+t3 |- t1p=t1+1.
+
+checkentail x=1 & y=2 & z=x+y & t1p=x+t1 & t2p=y+t2 & t3p=z+t3 |- t2p=t2+2.
+
+//Need --slc-rel-level 3
+checkentail x=1 & y=2 & z=x+y & t1p=x+t1 & t2p=y+t2 & t3p=z+t3 |- t3p=t3+3.

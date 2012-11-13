@@ -1258,6 +1258,44 @@ and trans_eq_bform (b : b_formula) : b_formula =
     else (pf, None)
 	| Eq _ -> (pf, None)
 	| _ -> b
+
+and trans_const_bforms (bl: b_formula list) : b_formula list =
+	let eq_constrs, others = List.partition (fun (pf, _) ->
+		match pf with | Eq _ -> true | _ -> false) bl in
+	let const_vars, eq_consts, eq_others = partition_by_const eq_constrs in
+	(* mark_linking_const_var in eq_others @ others *)
+	let marked_others = List.map (fun ((pf, il) as b) ->
+		let lnk_vars, _ = List.partition (fun v -> 
+			Gen.BList.mem_eq eq_spec_var v const_vars) (bfv b) in
+		let lnk_var_exps = List.map (fun v -> mkVar v no_pos) lnk_vars in	 
+		let n_il = match il with
+		| None -> Some (false, Globals.fresh_int (), lnk_var_exps)
+		| Some (is_lnk, _, e_lnk) -> Some (is_lnk, Globals.fresh_int (), e_lnk @ lnk_var_exps)
+		in (pf, n_il)) (others @ eq_others)
+	in eq_consts @ marked_others
+	
+and partition_by_const eql =
+	let rec helper (lbl, eq_const_lst) eq_lst = 
+		let n_lbl, eq_consts, eq_others = 
+			List.fold_left (fun (a_lbl, a_eq_consts, a_others) e ->
+				let lnk_vars, const_vars = 
+					List.partition (fun v -> Gen.BList.mem_eq eq_spec_var v a_lbl) (bfv e) in
+				(* const_vars = Gen.BList.difference_eq eq_spec_var (bfv e) a_lbl *)
+				(* Condition for a new linking constant variables *)
+				if (List.length const_vars) == 1 then
+					let lnk_var_exps = List.map (fun v -> mkVar v no_pos) lnk_vars in
+					let (pf, il) = e in
+					let n_il = match il with
+					| None -> Some (false, Globals.fresh_int (), lnk_var_exps)
+					| Some (is_lnk, _, e_lnk) -> Some (is_lnk, Globals.fresh_int (), e_lnk @ lnk_var_exps)
+					in
+					let n_e = (pf, n_il) in
+					(a_lbl @ const_vars), (a_eq_consts @ [n_e]), a_others
+				else a_lbl, a_eq_consts, (a_others @ [e])
+			) (lbl, [], []) eq_lst in
+		if eq_consts == [] then (lbl, eq_const_lst, eq_lst)
+		else helper (n_lbl, eq_const_lst @ eq_consts) eq_others
+	in helper ([], []) eql
           
 and is_b_form_arith (b: b_formula) :bool = let (pf,_) = b in
 match pf with

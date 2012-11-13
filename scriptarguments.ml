@@ -143,13 +143,13 @@ let common_arguments = [
     "Turn on unsatisfiable formulae elimination during type-checking");
 	("-nxpure", Arg.Set_int Globals.n_xpure,
     "Number of unfolding using XPure");
-	("--enable-smart-xpure", Arg.Set Globals.smart_xpure,
+	("--en-smart-xpure", Arg.Set Globals.smart_xpure,
     "Smart xpure with 0 then 1; otherwise just 1 ; not handled by infer yet");
-	("--enable-smart-memo", Arg.Set Globals.smart_memo,
+	("--en-smart-memo", Arg.Set Globals.smart_memo,
     "Smart memo with no_complex; if fail try complex formula");
 	("-num-self-fold-search", Arg.Set_int Globals.num_self_fold_search,
     "Allow Depth of Unfold/Fold Self Search");
-	("--enable-self-fold-search", Arg.Set Globals.self_fold_search_flag,
+	("--en-self-fold-search", Arg.Set Globals.self_fold_search_flag,
     "Enable Limited Search with Self Unfold/Fold");
 	("-parse", Arg.Set parse_only,"Parse only");
 	("-core", Arg.Set typecheck_only,"Type-Checking and Core Preprocessing only");
@@ -200,7 +200,7 @@ let common_arguments = [
 	"print input representation");
 	(* ("--dis-cache", Arg.Set Globals.no_cache_formula, *)
     (* "Do not cache result of satisfiability and validity checking"); *)
-	("--enable-cache", Arg.Clear Globals.no_cache_formula,
+	("--en-cache", Arg.Clear Globals.no_cache_formula,
     "Cache result of satisfiability and validity checking");
 	("--web", Arg.String (fun s -> (Tpdispatcher.Netprover.set_use_socket_for_web s); Tpdispatcher.webserver := true; Typechecker.webserver := true; Paralib1v2.webs := true; Paralib1.webs := true) ,  
 	"<host:port>: use external web service via socket");
@@ -230,7 +230,7 @@ let common_arguments = [
     ("--eps", Arg.Set Globals.allow_pred_spec,"enable predicate specialization together with memoized formulas");
     ("-version", Arg.Set Globals.print_version_flag,"current version of software");
     (* ("--dfe", Arg.Set Globals.disable_failure_explaining,"disable failure explaining"); *)
-    ("--enable_failure_analysis", Arg.Clear Globals.disable_failure_explaining,"enable failure explanation analysis");
+    ("--en-failure-analysis", Arg.Clear Globals.disable_failure_explaining,"enable failure explanation analysis");
     ("--refine-error", Arg.Set Globals.simplify_error,
 	"Simplify the error");
     (*("--redlog-int-relax", Arg.Set Redlog.integer_relax_mode, "use redlog real q.e to prove intefer formula  *experiment*");*)
@@ -240,30 +240,30 @@ let common_arguments = [
     ("--redlog-timeout", Arg.Set_float Redlog.timeout, "<sec> checking a formula using redlog with a timeout after <sec> seconds");
     (*("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog");*)
     (*("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");*)
-    ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
+    ("--dis-elimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
     ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
-    ("--enable-redundant-elim", Arg.Set Globals.enable_redundant_elim, "enable redundant elimination under eps");
+    ("--en-red-elim", Arg.Set Globals.enable_redundant_elim, "enable redundant elimination under eps");
     ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
     (* ("--dap", Arg.Clear Globals.disable_aggressive_prune, "never use aggressive prunning"); *)
     ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for --eps pruning; incomplete");
     (* ("--dfp",Arg.Clear Globals.enable_fast_imply, " disable syntactic imply only for --eps"); *)
-    ("--memo_print", Arg.Set_int Globals.memo_verbosity,
+    ("-memo-print", Arg.Set_int Globals.memo_verbosity,
     "level of detail in memo printing 0-verbose 1-brief 2-standard(default)");
     ("--increm",Arg.Set Globals.enable_incremental_proving, " enable incremental proving ");
-    ("--enable_null_aliasing", Arg.Set Globals.enulalias, "enable null aliasing ");
+    ("--en-null-aliasing", Arg.Set Globals.enulalias, "enable null aliasing ");
   
   (*for cav experiments*)
   (*maintains one slice if memo formulas are used otherwise has no effect*)
-  ("--force_one_slice", Arg.Set Globals.f_1_slice,"use one slice for memo formulas");
-  ("--force_no_memo", Arg.Set Globals.no_memoisation,"");
-  ("--no_incremental", Arg.Set Globals.no_incremental,"");
-  ("--no_LHS_prop_drop", Arg.Set Globals.no_LHS_prop_drop,"");
-  ("--no_RHS_prop_drop", Arg.Set Globals.no_RHS_prop_drop,"");
+  ("--force-one-slice", Arg.Set Globals.f_1_slice,"use one slice for memo formulas");
+  ("--force-no-memo", Arg.Set Globals.no_memoisation,"");
+  ("--no-incremental", Arg.Set Globals.no_incremental,"");
+  ("--no-LHS-prop-drop", Arg.Set Globals.no_LHS_prop_drop,"");
+  ("--no-RHS-prop-drop", Arg.Set Globals.no_RHS_prop_drop,"");
   (* if memo formulas are not used, use a similar slicing for unsat checks at the Tpdispatcher *)
-  ("--force_sat_slice", Arg.Set Globals.do_sat_slice, "for no eps, use sat slicing");
+  ("--force-sat-slice", Arg.Set Globals.do_sat_slice, "for no eps, use sat slicing");
   (*maintains multi slices but combines them into one slice just before going to the prover
     in Tpdispatcher. If memo formulas are not used it has no effect*)
-  ("--force_one_slice_proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
+  ("--force-one-slice-proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
 
   (* Termination options *)
   ("--dis-term-check", Arg.Set Globals.dis_term_chk, "turn off the termination checking");
@@ -280,7 +280,8 @@ let common_arguments = [
   ("--dis-log-filter", Arg.Clear Globals.log_filter, "turn off the log initial filtering");
 
   (* Slicing *)
-  ("--enable-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");
+  ("--en-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");
+	("--slc-rel-level", Arg.Set_int Globals.slicing_rel_level, "Set depth for GetCtr function");
   (*("--dis-slicing", Arg.Set Globals.dis_slicing, "Disable slicing, equivalent to ");*)
   (* similar to --force-one-slice *)
 
@@ -297,11 +298,11 @@ let common_arguments = [
   ("--delay-if-sat", Arg.Set Globals.delay_if_sat, "Disable unsat checking for a conditional");
   ("--delay-proving-sat", Arg.Set Globals.delay_proving_sat, "Disable unsat checking prior to proving requires");
   ("--delay-assert-sat", Arg.Set Globals.disable_assume_cmd_sat, "Disable unsat checking done at an ASSUME COMMAND");
-  ("--enable-precond-sat", Arg.Clear Globals.disable_pre_sat, "Enable unsat checking of method preconditions");
+  ("--en-precond-sat", Arg.Clear Globals.disable_pre_sat, "Enable unsat checking of method preconditions");
   
 	(* Proof Logging *)
-	("--enable-logging", Arg.Set Globals.proof_logging, "Enable proof logging");
-	("--enable-logging-txt", Arg.Set Globals.proof_logging_txt, "Enable proof logging output text file in addition");
+	("--en-logging", Arg.Set Globals.proof_logging, "Enable proof logging");
+	("--en-logging-txt", Arg.Set Globals.proof_logging_txt, "Enable proof logging output text file in addition");
 
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
