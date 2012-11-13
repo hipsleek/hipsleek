@@ -1209,6 +1209,20 @@ let rec find_p_val x v p = match p with
 (* get type of an expression *)
 let rec typ_of_exp (e: exp) : typ =
   let pos = pos_of_exp e in
+  let arr_typ_check typ1 typ2 =
+    ( match typ1 with
+      | Array (t1,_) -> if t1== UNK || t1 == typ2 then typ2 else
+            ( match typ2 with
+              | Array (t2,_) -> if t2== UNK || t1==t2 then typ1 else
+                    Gen.Basic.report_error pos "Ununified type in 2 expressions 1"
+              | _ -> Gen.Basic.report_error pos "Ununified type in 2 expressions 2"
+            )
+      | _ -> ( match typ2 with
+            | Array (t,_) -> if t== UNK then typ1 else Gen.Basic.report_error pos "Ununified type in 2 expressions 3"
+            | _ -> Gen.Basic.report_error pos "Ununified type in 2 expressions 4"
+      )
+    )
+  in
   let merge_types typ1 typ2 =
     (* let _ = print_endline ("typ1:" ^ (string_of_typ typ1 )) in *)
     (* let _ = print_endline ("typ2:" ^ (string_of_typ typ2 )) in *)
@@ -1217,7 +1231,8 @@ let rec typ_of_exp (e: exp) : typ =
     else match typ2  with
       | UNK
       | Array (UNK,_) -> typ1
-      | _ -> Gen.Basic.report_error pos "Ununified type in 2 expressions"
+      | _ -> arr_typ_check typ1 typ2
+          (* Gen.Basic.report_error pos "Ununified type in 2 expressions" *)
   in
   match e with
   | Ann_Exp (ex, ty)          -> let ty2 = typ_of_exp ex in
