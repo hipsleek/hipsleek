@@ -2379,8 +2379,8 @@ let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =
   if !do_slicing && !multi_provers then 
     is_sat_memo_sub_no_slicing f sat_subno with_dupl with_inv
   else if !do_slicing && !opt_ineq then 
-    is_sat_memo_sub_no_ineq_slicing f sat_subno with_dupl with_inv
-    (* MCP.is_sat_memo_sub_no_ineq_slicing_complete f with_dupl with_inv (fun f -> is_sat_sub_no f sat_subno) *)
+    (* is_sat_memo_sub_no_ineq_slicing f sat_subno with_dupl with_inv *)
+    MCP.is_sat_memo_sub_no_ineq_slicing_complete f with_dupl with_inv (fun f -> is_sat_sub_no f sat_subno)
   else if !do_slicing && !infer_lvar_slicing then
     MCP.is_sat_memo_sub_no_complete f with_dupl with_inv (fun f -> is_sat_sub_no f sat_subno)
   else is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv

@@ -950,24 +950,23 @@ and smt_imply  pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula)
 
 and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
   (* let _ = print_endline ("smt_imply : " ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in *)
-  let res, should_run_smt = if (has_exists conseq) then
-        let (pr_w,pr_s) = CP.drop_complex_ops in
-	try (match (Omega.imply_with_check_ops pr_w pr_s ante conseq "" timeout) with
-	  | None -> (false, true)
-	  | Some r -> (r, false)
-	)
-	with | _ -> (false, true)
-  else (false, true) in
+  let res, should_run_smt = (false, true) in
+		(* if (has_exists conseq) then                                                    *)
+		(* 	let (pr_w,pr_s) = CP.drop_complex_ops in                                      *)
+		(* 	try (match (Omega.imply_with_check_ops pr_w pr_s ante conseq "" timeout) with *)
+		(* 	| None -> (false, true)                                                       *)
+		(* 	| Some r -> (r, false))                                                       *)
+		(* 	with | _ -> (false, true)                                                     *)
+	  (* else (false, true) in                                                          *)
   if (should_run_smt) then
-	let input = to_smt pr_weak pr_strong ante (Some conseq) prover in
-	let _ = !set_generated_prover_input input in
-        let output = if !smtsolver_name = "z3-2.19" then
-              run "is_imply" prover input timeout
-            else
-              check_formula input timeout
-        in
-        let _ = !set_prover_original_output (String.concat "\n" output.original_output_text) in
-	let res = match output.sat_result with
+		let input = to_smt pr_weak pr_strong ante (Some conseq) prover in
+		let _ = !set_generated_prover_input input in
+		let output = if !smtsolver_name = "z3-2.19" 
+			then run "is_imply" prover input timeout
+      else check_formula input timeout
+    in
+		let _ = !set_prover_original_output (String.concat "\n" output.original_output_text) in
+		let res = match output.sat_result with
 	  | Sat -> false
 	  | UnSat -> true
 	  | Unknown -> false
@@ -975,10 +974,10 @@ and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula
             (* try Omega.imply ante conseq "" !imply_timeout  *)
             (* with | _ -> false *)
     in
-	let _ = process_stdout_print ante conseq input output res in
-	res
-  else
-	res
+		let _ = process_stdout_print ante conseq input output res in
+		res
+  else res
+	
 and has_exists conseq = match conseq with
   | CP.Exists _ -> true
   | _ -> false
@@ -1017,29 +1016,29 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
  *)
 let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout : bool = 
 	 (* let _ = print_endline ("smt_is_sat : " ^ (!print_pure f) ^ "\n") in *)
-  let res, should_run_smt = if ((*has_exists*)Cpure.contains_exists f)   then
-		try
-            let (pr_w,pr_s) = CP.drop_complex_ops in
-            let optr = (Omega.is_sat_with_check_ops pr_w pr_s f sat_no) in
-        ( match optr with
-          | Some r -> (r, false)
-          | None -> (true, false)
-        )
-        with | _ -> (true, false)
-	else (false, true) in
+  let res, should_run_smt = (false, true) in
+		(* if (Cpure.contains_exists f) then                               *)
+		(* try                                                             *)
+		(* 	let (pr_w,pr_s) = CP.drop_complex_ops in                       *)
+		(* 	let optr = (Omega.is_sat_with_check_ops pr_w pr_s f sat_no) in *)
+		(* 	(match optr with                                               *)
+		(* 		| Some r -> (r, false)                                       *)
+		(* 		| None -> (true, false))                                     *)
+		(* 	with | _ -> (true, false)                                      *)
+		(* else (false, true) in                                           *)
 	if (should_run_smt) then
-	let input = to_smt pr_weak pr_strong f None prover in
-(*    let new_input = if (Cpure.contains_exists f) then ("(set-option :mbqi true)\n" ^ input) else input in *)
-	let output =
-      if !smtsolver_name = "z3-2.19" then run "is_unsat" prover input timeout
+		let input = to_smt pr_weak pr_strong f None prover in
+		(* let new_input = if (Cpure.contains_exists f) then ("(set-option :mbqi true)\n" ^ input) else input in *)
+		let output =
+			if !smtsolver_name = "z3-2.19" then run "is_unsat" prover input timeout
       else check_formula input timeout
     in
-	let res = match output.sat_result with
+		let res = match output.sat_result with
 		| UnSat -> false
 		| _ -> true in
-	let _ = process_stdout_print f (CP.mkFalse no_pos) input output res in
+		let _ = process_stdout_print f (CP.mkFalse no_pos) input output res in
 		res
-    else res
+	else res
 
 (*let default_is_sat_timeout = 2.0*)
 let is_sat_ops pr_weak pr_strong f sat_no = smt_is_sat pr_weak pr_strong f sat_no Z3 z3_sat_timeout_limit
@@ -1067,9 +1066,10 @@ let is_sat f sat_no = Debug.no_2_loop "is_sat" (!print_pure) (fun x->x) string_o
 (**
  * To be implemented
  *)
-let simplify (f: CP.formula) : CP.formula = (*f*)
+let simplify (f: CP.formula) : CP.formula = 
   (*let _ = print_endline "locle: simplify" in*)
-  try (Omega.simplify f) with | _ -> f
+  (* try (Omega.simplify f) with | _ -> f *)
+	f
 
 
 let simplify (pe : CP.formula) : CP.formula =
