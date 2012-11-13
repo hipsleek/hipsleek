@@ -148,8 +148,9 @@ let get_result_file filename =
   (*let _= print_endline ("file2:"^ !Globals.source_file) in *)
 	let flag= ref false in
   let _= List.map ( fun x->
+		(* let _=print_endline (x) in *)
 		let _=try
-			BatString.find x "FAIL. (Timeout)";
+			BatString.find x "Fail. (timeout)";
 		  num_timeout := !num_timeout +1
 			with _->() in 
 		if(!flag = false) then
@@ -393,7 +394,7 @@ let get_result res_file middle_fix=
 										try
 											BatString.find x "Time spent in child processes: ";
 									    temp:= !temp ^ BatString.strip ~chars:"\tTime spent in child processes: , second(s)" x   ;
-											resi := "\t"^ !temp ^"\t"^ !resi ^"\t" ^string_of_int t1 ^"\t" ^string_of_int t2;
+											resi := "\t"^ !temp ^"\t"^ !resi ^string_of_int t1 ^"\t" ^string_of_int t2;
 							
 											ll.(i-10) <- (ll.(i-10) ^ !resi ^ "\n");
 											print_endline (ll.(i-10));
@@ -410,7 +411,7 @@ let get_result res_file middle_fix=
 ;;
 
 let main_get_result ()= 
- let _=get_result "norm.result" "" in
+ let _=get_result "norm.result" "" in 
  let _=get_result "ans.result" "efp.ans." in
  let _=get_result "aus.result" "efp.aus." in ()
 ;;

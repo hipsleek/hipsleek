@@ -296,11 +296,19 @@ and is_cnf f = (*Should use heuristic in CNF*)
 	| And (BForm(b,_),f2,_)->is_cnf f2 
 	| And (f1,BForm(b,_),_)->is_cnf f1 
 	| And (f1,f2,_)-> if(is_cnf f1) then is_cnf f2 else false
+	| _->	 let _=print_endline ("CNF conv here: "^Cprinter.string_of_pure_formula f) in true
 
 (* distributive law 1 - (f & k) v (g & h) -> (f v g) & (f v h) & (k v g) & (k v h) *)
 let dist_1 f = 
   match f with (*using heuristic for the first one*)
   | Or(f1, And(f2, f3,_),l1,l2) -> Or (f1,f3,l1,l2)(*And(Or(f1, f2,l1,l2), Or(f1, f3,l1,l2),l2)*) (*The main here- when using slicing*)
+	| Or(And(f1, f2,_), And(f3, f4,_),l1,l2) ->And(And(Or(f1, f3,l1,l2), Or(f1, f4,l1,l2),l2), And(Or(f2, f3,l1,l2), Or(f2, f4,l1,l2),l2),l2)
+  | Or(And(f2, f3,_), f1,l1,l2) -> And(Or(f1, f2,l1,l2), Or(f1, f3,l1,l2),l2)
+  | _ -> f
+
+let dist_no_slicing f = 
+  match f with 
+  | Or(f1, And(f2, f3,_),l1,l2) -> And(Or(f1, f2,l1,l2), Or(f1, f3,l1,l2),l2) (*The main here- when using slicing*)
 	| Or(And(f1, f2,_), And(f3, f4,_),l1,l2) ->And(And(Or(f1, f3,l1,l2), Or(f1, f4,l1,l2),l2), And(Or(f2, f3,l1,l2), Or(f2, f4,l1,l2),l2),l2)
   | Or(And(f2, f3,_), f1,l1,l2) -> And(Or(f1, f2,l1,l2), Or(f1, f3,l1,l2),l2)
   | _ -> f
@@ -320,17 +328,24 @@ let rec nnf_to_xxx f rule =
 
 let nnf_to_cnf f= nnf_to_xxx f dist_1 
 
+let nnf_to_cnf_no_slicing f=	nnf_to_xxx f dist_no_slicing
 (*let to_cnf f = nnf_to_cnf (minisat_cnf_of_formula f)*)
 
 (*The old CNF conversion*)
-(* let rec to_cnf f =                                                               *)
-(* 	let res= (*Debug-bach*)                                                         *)
-(* 	let cnf_form=(nnf_to_cnf ((*minisat_cnf_of_formula*) f) ) in                    *)
-(*  		if(is_cnf cnf_form) then cnf_form  else to_cnf cnf_form(*(to_cnf cnf_form)*) *)
-(*   in                                                                              *)
-(* 	let _=print_endline ("CNF form: "^Cprinter.string_of_pure_formula res) in       *)
-(* 	res                                                                             *)
+let rec to_cnf f =
+	let res= (*Debug-bach*)
+	let cnf_form=(nnf_to_cnf_no_slicing f) in
+ 		if(is_cnf cnf_form) then cnf_form  else to_cnf cnf_form(*(to_cnf cnf_form)*)
+  in
+	let _=print_endline ("CNF form: "^Cprinter.string_of_pure_formula res) in
+	res
 
+let to_cnf_no_slicing f=
+	 let _=print_endline ("Orig: "^Cprinter.string_of_pure_formula f) in
+		let nnf= minisat_cnf_of_formula f in 
+		 let _=print_endline ("NNF here: "^Cprinter.string_of_pure_formula nnf) in
+	    to_cnf nnf
+  
 (*The no need CNF conversion adapt to slicing, we just need the distributive law*)		
 	
 let minisat_cnf_of_formula f =
@@ -509,7 +524,7 @@ let check_problem_through_file (input: string) (timeout: float) : bool =
 			minisat_call_count := !minisat_call_count + 1;
       let (prover_output, running_state) = get_answer !minisat_process.inchannel in
       is_minisat_running := running_state;
-			(* let tstoplog = Gen.Profiling.get_time () in                                            *)
+			(* let tstoplog = Gen.Profilingminisat_cnf_of_formula.get_time () in                                            *)
 			(* let _= Globals.minisat_time_T := !Globals.minisat_time_T +. (tstoplog -. tstartlog) in *)
       prover_output;
 			
@@ -565,8 +580,12 @@ let to_minisat_cnf (ante: Cpure.formula)  =
 		let _= number_vars := 0  in
 		(* let _=Gen.Profiling.push_time("stat_CNF_ori_conversion") in *)
 		(* let ante_cnf=to_cnf ante in(*convert the given formula in to CNF here*) *)
-		let cnf_ante=nnf_to_cnf ante in
-		let _=print_endline ("CNF :" ^ (Cprinter.string_of_pure_formula cnf_ante))in 
+		let cnf_ante=if (!Globals.do_slicing) then nnf_to_cnf ante
+		               else 
+										(* nnf_to_cnf ante *)
+										to_cnf_no_slicing ante
+		in
+		let _=print_endline ("To minisat cnf :" ^ (Cprinter.string_of_pure_formula cnf_ante))in
 		match ante with
 		| BForm ((BConst (a,_),_),_)-> if (a) then (false,"t",G.create(),G.create(),Glabel.create()) else (false,"f",G.create(),G.create(),Glabel.create())
 		|	_ ->
