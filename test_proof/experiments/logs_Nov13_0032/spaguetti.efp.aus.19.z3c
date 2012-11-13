@@ -1,0 +1,3016 @@
+Starting z3... 
+
+Entail (1) : Valid. 
+
+
+Entail (2) : Fail.
+
+
+Entail (3) : Fail.
+
+
+Entail (4) : Valid. 
+
+
+Entail (5) : Fail.
+
+
+Entail (6) : Fail.
+
+
+Entail (7) : Valid. 
+
+
+Entail (8) : Fail.
+
+
+Entail (9) : Valid. 
+
+
+Entail (10) : Valid. 
+
+
+Entail (11) : Valid. 
+
+
+Entail (12) : Valid. 
+
+
+Entail (13) : Fail.
+
+
+Entail (14) : Valid. 
+
+
+Entail (15) : Fail.
+
+
+Entail (16) : Valid. 
+
+
+Entail (17) : Valid. 
+
+
+Entail (18) : Fail.
+
+
+Entail (19) : Valid. 
+
+
+Entail (20) : Fail.
+
+
+Entail (21) : Fail.
+
+
+Entail (22) : Valid. 
+
+
+Entail (23) : Valid. 
+
+
+Entail (24) : Valid. 
+
+
+Entail (25) : Valid. 
+
+
+Entail (26) : Fail.
+
+
+Entail (27) : Valid. 
+
+
+Entail (28) : Fail.
+
+
+Entail (29) : Valid. 
+
+
+Entail (30) : Fail.
+
+
+Entail (31) : Valid. 
+
+
+Entail (32) : Valid. 
+
+
+Entail (33) : Valid. 
+
+
+Entail (34) : Fail.
+
+
+Entail (35) : Fail.
+
+
+Entail (36) : Fail.
+
+
+Entail (37) : Valid. 
+
+
+Entail (38) : Valid. 
+
+
+Entail (39) : Valid. 
+
+
+Entail (40) : Valid. 
+
+
+Entail (41) : Valid. 
+
+
+Entail (42) : Valid. 
+
+
+Entail (43) : Valid. 
+
+
+Entail (44) : Fail.
+
+
+Entail (45) : Fail.
+
+
+Entail (46) : Valid. 
+
+
+Entail (47) : Valid. 
+
+
+Entail (48) : Fail.
+
+
+Entail (49) : Valid. 
+
+
+Entail (50) : Fail.
+
+
+Entail (51) : Valid. 
+
+
+Entail (52) : Valid. 
+
+
+Entail (53) : Fail.
+
+
+Entail (54) : Valid. 
+
+
+Entail (55) : Valid. 
+
+
+Entail (56) : Fail.
+
+
+Entail (57) : Fail.
+
+
+Entail (58) : Fail.
+
+
+Entail (59) : Valid. 
+
+
+Entail (60) : Valid. 
+
+
+Entail (61) : Fail.
+
+
+Entail (62) : Valid. 
+
+
+Entail (63) : Fail.
+
+
+Entail (64) : Fail.
+
+
+Entail (65) : Valid. 
+
+
+Entail (66) : Fail.
+
+
+Entail (67) : Fail.
+
+
+Entail (68) : Valid. 
+
+
+Entail (69) : Valid. 
+
+
+Entail (70) : Fail.
+
+
+Entail (71) : Fail.
+
+
+Entail (72) : Fail.
+
+
+Entail (73) : Valid. 
+
+
+Entail (74) : Valid. 
+
+
+Entail (75) : Fail.
+
+
+Entail (76) : Valid. 
+
+
+Entail (77) : Valid. 
+
+
+Entail (78) : Fail.
+
+
+Entail (79) : Valid. 
+
+
+Entail (80) : Fail.
+
+
+Entail (81) : Valid. 
+
+
+Entail (82) : Fail.
+
+
+Entail (83) : Fail.
+
+
+Entail (84) : Fail.
+
+
+Entail (85) : Fail.
+
+
+Entail (86) : Fail.
+
+
+Entail (87) : Fail.
+
+
+Entail (88) : Fail.
+
+
+Entail (89) : Fail.
+
+
+Entail (90) : Fail.
+
+
+Entail (91) : Valid. 
+
+
+Entail (92) : Valid. 
+
+
+Entail (93) : Fail.
+
+
+Entail (94) : Fail.
+
+
+Entail (95) : Valid. 
+
+
+Entail (96) : Fail.
+
+
+Entail (97) : Fail.
+
+
+Entail (98) : Fail.
+
+
+Entail (99) : Valid. 
+
+
+Entail (100) : Valid. 
+
+
+Entail (101) : Valid. 
+
+
+Entail (102) : Fail.
+
+
+Entail (103) : Valid. 
+
+
+Entail (104) : Fail.
+
+
+Entail (105) : Fail.
+
+
+Entail (106) : Valid. 
+
+
+Entail (107) : Fail.
+
+
+Entail (108) : Valid. 
+
+
+Entail (109) : Valid. 
+
+
+Entail (110) : Valid. 
+
+
+Entail (111) : Valid. 
+
+
+Entail (112) : Fail.
+
+
+Entail (113) : Valid. 
+
+
+Entail (114) : Fail.
+
+
+Entail (115) : Fail.
+
+
+Entail (116) : Fail.
+
+
+Entail (117) : Valid. 
+
+
+Entail (118) : Valid. 
+
+
+Entail (119) : Valid. 
+
+
+Entail (120) : Valid. 
+
+
+Entail (121) : Valid. 
+
+
+Entail (122) : Fail.
+
+
+Entail (123) : Valid. 
+
+
+Entail (124) : Valid. 
+
+
+Entail (125) : Valid. 
+
+
+Entail (126) : Fail.
+
+
+Entail (127) : Fail.
+
+
+Entail (128) : Valid. 
+
+
+Entail (129) : Valid. 
+
+
+Entail (130) : Fail.
+
+
+Entail (131) : Fail.
+
+
+Entail (132) : Fail.
+
+
+Entail (133) : Valid. 
+
+
+Entail (134) : Valid. 
+
+
+Entail (135) : Valid. 
+
+
+Entail (136) : Valid. 
+
+
+Entail (137) : Valid. 
+
+
+Entail (138) : Fail.
+
+
+Entail (139) : Valid. 
+
+
+Entail (140) : Fail.
+
+
+Entail (141) : Valid. 
+
+
+Entail (142) : Fail.
+
+
+Entail (143) : Valid. 
+
+
+Entail (144) : Fail.
+
+
+Entail (145) : Fail.
+
+
+Entail (146) : Fail.
+
+
+Entail (147) : Fail.
+
+
+Entail (148) : Fail.
+
+
+Entail (149) : Valid. 
+
+
+Entail (150) : Fail.
+
+
+Entail (151) : Fail.
+
+
+Entail (152) : Valid. 
+
+
+Entail (153) : Fail.
+
+
+Entail (154) : Valid. 
+
+
+Entail (155) : Fail.
+
+
+Entail (156) : Fail.
+
+
+Entail (157) : Fail.
+
+
+Entail (158) : Valid. 
+
+
+Entail (159) : Valid. 
+
+
+Entail (160) : Fail.
+
+
+Entail (161) : Valid. 
+
+
+Entail (162) : Valid. 
+
+
+Entail (163) : Valid. 
+
+
+Entail (164) : Fail.
+
+
+Entail (165) : Valid. 
+
+
+Entail (166) : Valid. 
+
+
+Entail (167) : Fail.
+
+
+Entail (168) : Valid. 
+
+
+Entail (169) : Fail.
+
+
+Entail (170) : Fail.
+
+
+Entail (171) : Fail.
+
+
+Entail (172) : Fail.
+
+
+Entail (173) : Fail.
+
+
+Entail (174) : Valid. 
+
+
+Entail (175) : Fail.
+
+
+Entail (176) : Fail.
+
+
+Entail (177) : Valid. 
+
+
+Entail (178) : Valid. 
+
+
+Entail (179) : Valid. 
+
+
+Entail (180) : Fail.
+
+
+Entail (181) : Fail.
+
+
+Entail (182) : Fail.
+
+
+Entail (183) : Fail.
+
+
+Entail (184) : Valid. 
+
+
+Entail (185) : Fail.
+
+
+Entail (186) : Fail.
+
+
+Entail (187) : Fail.
+
+
+Entail (188) : Valid. 
+
+
+Entail (189) : Valid. 
+
+
+Entail (190) : Valid. 
+
+
+Entail (191) : Fail.
+
+
+Entail (192) : Valid. 
+
+
+Entail (193) : Fail.
+
+
+Entail (194) : Valid. 
+
+
+Entail (195) : Valid. 
+
+
+Entail (196) : Fail.
+
+
+Entail (197) : Valid. 
+
+
+Entail (198) : Fail.
+
+
+Entail (199) : Fail.
+
+
+Entail (200) : Valid. 
+
+
+Entail (201) : Valid. 
+
+
+Entail (202) : Fail.
+
+
+Entail (203) : Valid. 
+
+
+Entail (204) : Valid. 
+
+
+Entail (205) : Valid. 
+
+
+Entail (206) : Valid. 
+
+
+Entail (207) : Fail.
+
+
+Entail (208) : Fail.
+
+
+Entail (209) : Fail.
+
+
+Entail (210) : Valid. 
+
+
+Entail (211) : Valid. 
+
+
+Entail (212) : Valid. 
+
+
+Entail (213) : Valid. 
+
+
+Entail (214) : Fail.
+
+
+Entail (215) : Valid. 
+
+
+Entail (216) : Fail.
+
+
+Entail (217) : Valid. 
+
+
+Entail (218) : Fail.
+
+
+Entail (219) : Valid. 
+
+
+Entail (220) : Fail.
+
+
+Entail (221) : Valid. 
+
+
+Entail (222) : Fail.
+
+
+Entail (223) : Fail.
+
+
+Entail (224) : Valid. 
+
+
+Entail (225) : Valid. 
+
+
+Entail (226) : Valid. 
+
+
+Entail (227) : Valid. 
+
+
+Entail (228) : Valid. 
+
+
+Entail (229) : Valid. 
+
+
+Entail (230) : Valid. 
+
+
+Entail (231) : Fail.
+
+
+Entail (232) : Valid. 
+
+
+Entail (233) : Fail.
+
+
+Entail (234) : Fail.
+
+
+Entail (235) : Fail.
+
+
+Entail (236) : Valid. 
+
+
+Entail (237) : Valid. 
+
+
+Entail (238) : Fail.
+
+
+Entail (239) : Fail.
+
+
+Entail (240) : Valid. 
+
+
+Entail (241) : Fail.
+
+
+Entail (242) : Valid. 
+
+
+Entail (243) : Fail.
+
+
+Entail (244) : Valid. 
+
+
+Entail (245) : Valid. 
+
+
+Entail (246) : Valid. 
+
+
+Entail (247) : Valid. 
+
+
+Entail (248) : Fail.
+
+
+Entail (249) : Valid. 
+
+
+Entail (250) : Valid. 
+
+
+Entail (251) : Fail.
+
+
+Entail (252) : Fail.
+
+
+Entail (253) : Valid. 
+
+
+Entail (254) : Fail.
+
+
+Entail (255) : Fail.
+
+
+Entail (256) : Valid. 
+
+
+Entail (257) : Fail.
+
+
+Entail (258) : Fail.
+
+
+Entail (259) : Fail.
+
+
+Entail (260) : Fail.
+
+
+Entail (261) : Valid. 
+
+
+Entail (262) : Fail.
+
+
+Entail (263) : Fail.
+
+
+Entail (264) : Valid. 
+
+
+Entail (265) : Valid. 
+
+
+Entail (266) : Valid. 
+
+
+Entail (267) : Valid. 
+
+
+Entail (268) : Fail.
+
+
+Entail (269) : Valid. 
+
+
+Entail (270) : Valid. 
+
+
+Entail (271) : Fail.
+
+
+Entail (272) : Valid. 
+
+
+Entail (273) : Valid. 
+
+
+Entail (274) : Fail.
+
+
+Entail (275) : Valid. 
+
+
+Entail (276) : Fail.
+
+
+Entail (277) : Fail.
+
+
+Entail (278) : Fail.
+
+
+Entail (279) : Fail.
+
+
+Entail (280) : Fail.
+
+
+Entail (281) : Fail.
+
+
+Entail (282) : Valid. 
+
+
+Entail (283) : Valid. 
+
+
+Entail (284) : Valid. 
+
+
+Entail (285) : Valid. 
+
+
+Entail (286) : Valid. 
+
+
+Entail (287) : Fail.
+
+
+Entail (288) : Valid. 
+
+
+Entail (289) : Fail.
+
+
+Entail (290) : Valid. 
+
+
+Entail (291) : Fail.
+
+
+Entail (292) : Fail.
+
+
+Entail (293) : Valid. 
+
+
+Entail (294) : Fail.
+
+
+Entail (295) : Valid. 
+
+
+Entail (296) : Valid. 
+
+
+Entail (297) : Fail.
+
+
+Entail (298) : Valid. 
+
+
+Entail (299) : Valid. 
+
+
+Entail (300) : Valid. 
+
+
+Entail (301) : Valid. 
+
+
+Entail (302) : Fail.
+
+
+Entail (303) : Fail.
+
+
+Entail (304) : Valid. 
+
+
+Entail (305) : Fail.
+
+
+Entail (306) : Valid. 
+
+
+Entail (307) : Valid. 
+
+
+Entail (308) : Valid. 
+
+
+Entail (309) : Fail.
+
+
+Entail (310) : Fail.
+
+
+Entail (311) : Fail.
+
+
+Entail (312) : Valid. 
+
+
+Entail (313) : Fail.
+
+
+Entail (314) : Valid. 
+
+
+Entail (315) : Valid. 
+
+
+Entail (316) : Fail.
+
+
+Entail (317) : Valid. 
+
+
+Entail (318) : Fail.
+
+
+Entail (319) : Valid. 
+
+
+Entail (320) : Valid. 
+
+
+Entail (321) : Valid. 
+
+
+Entail (322) : Valid. 
+
+
+Entail (323) : Fail.
+
+
+Entail (324) : Valid. 
+
+
+Entail (325) : Fail.
+
+
+Entail (326) : Fail.
+
+
+Entail (327) : Fail.
+
+
+Entail (328) : Fail.
+
+
+Entail (329) : Fail.
+
+
+Entail (330) : Fail.
+
+
+Entail (331) : Valid. 
+
+
+Entail (332) : Fail.
+
+
+Entail (333) : Valid. 
+
+
+Entail (334) : Valid. 
+
+
+Entail (335) : Fail.
+
+
+Entail (336) : Valid. 
+
+
+Entail (337) : Valid. 
+
+
+Entail (338) : Valid. 
+
+
+Entail (339) : Fail.
+
+
+Entail (340) : Valid. 
+
+
+Entail (341) : Fail.
+
+
+Entail (342) : Valid. 
+
+
+Entail (343) : Valid. 
+
+
+Entail (344) : Fail.
+
+
+Entail (345) : Valid. 
+
+
+Entail (346) : Valid. 
+
+
+Entail (347) : Fail.
+
+
+Entail (348) : Fail.
+
+
+Entail (349) : Fail.
+
+
+Entail (350) : Fail.
+
+
+Entail (351) : Fail.
+
+
+Entail (352) : Fail.
+
+
+Entail (353) : Valid. 
+
+
+Entail (354) : Valid. 
+
+
+Entail (355) : Fail.
+
+
+Entail (356) : Valid. 
+
+
+Entail (357) : Fail.
+
+
+Entail (358) : Valid. 
+
+
+Entail (359) : Fail.
+
+
+Entail (360) : Valid. 
+
+
+Entail (361) : Fail.
+
+
+Entail (362) : Valid. 
+
+
+Entail (363) : Fail.
+
+
+Entail (364) : Fail.
+
+
+Entail (365) : Valid. 
+
+
+Entail (366) : Valid. 
+
+
+Entail (367) : Fail.
+
+
+Entail (368) : Valid. 
+
+
+Entail (369) : Valid. 
+
+
+Entail (370) : Fail.
+
+
+Entail (371) : Valid. 
+
+
+Entail (372) : Valid. 
+
+
+Entail (373) : Valid. 
+
+
+Entail (374) : Valid. 
+
+
+Entail (375) : Fail.
+
+
+Entail (376) : Fail.
+
+
+Entail (377) : Valid. 
+
+
+Entail (378) : Valid. 
+
+
+Entail (379) : Fail.
+
+
+Entail (380) : Valid. 
+
+
+Entail (381) : Valid. 
+
+
+Entail (382) : Valid. 
+
+
+Entail (383) : Fail.
+
+
+Entail (384) : Valid. 
+
+
+Entail (385) : Valid. 
+
+
+Entail (386) : Valid. 
+
+
+Entail (387) : Fail.
+
+
+Entail (388) : Fail.
+
+
+Entail (389) : Valid. 
+
+
+Entail (390) : Fail.
+
+
+Entail (391) : Fail.
+
+
+Entail (392) : Fail.
+
+
+Entail (393) : Valid. 
+
+
+Entail (394) : Valid. 
+
+
+Entail (395) : Valid. 
+
+
+Entail (396) : Valid. 
+
+
+Entail (397) : Valid. 
+
+
+Entail (398) : Fail.
+
+
+Entail (399) : Fail.
+
+
+Entail (400) : Fail.
+
+
+Entail (401) : Valid. 
+
+
+Entail (402) : Valid. 
+
+
+Entail (403) : Valid. 
+
+
+Entail (404) : Valid. 
+
+
+Entail (405) : Valid. 
+
+
+Entail (406) : Valid. 
+
+
+Entail (407) : Valid. 
+
+
+Entail (408) : Valid. 
+
+
+Entail (409) : Fail.
+
+
+Entail (410) : Fail.
+
+
+Entail (411) : Fail.
+
+
+Entail (412) : Valid. 
+
+
+Entail (413) : Fail.
+
+
+Entail (414) : Fail.
+
+
+Entail (415) : Valid. 
+
+
+Entail (416) : Valid. 
+
+
+Entail (417) : Fail.
+
+
+Entail (418) : Fail.
+
+
+Entail (419) : Valid. 
+
+
+Entail (420) : Valid. 
+
+
+Entail (421) : Fail.
+
+
+Entail (422) : Valid. 
+
+
+Entail (423) : Valid. 
+
+
+Entail (424) : Valid. 
+
+
+Entail (425) : Valid. 
+
+
+Entail (426) : Valid. 
+
+
+Entail (427) : Fail.
+
+
+Entail (428) : Valid. 
+
+
+Entail (429) : Fail.
+
+
+Entail (430) : Valid. 
+
+
+Entail (431) : Valid. 
+
+
+Entail (432) : Valid. 
+
+
+Entail (433) : Valid. 
+
+
+Entail (434) : Valid. 
+
+
+Entail (435) : Fail.
+
+
+Entail (436) : Valid. 
+
+
+Entail (437) : Valid. 
+
+
+Entail (438) : Valid. 
+
+
+Entail (439) : Valid. 
+
+
+Entail (440) : Valid. 
+
+
+Entail (441) : Fail.
+
+
+Entail (442) : Valid. 
+
+
+Entail (443) : Valid. 
+
+
+Entail (444) : Valid. 
+
+
+Entail (445) : Fail.
+
+
+Entail (446) : Valid. 
+
+
+Entail (447) : Fail.
+
+
+Entail (448) : Valid. 
+
+
+Entail (449) : Fail.
+
+
+Entail (450) : Fail.
+
+
+Entail (451) : Valid. 
+
+
+Entail (452) : Valid. 
+
+
+Entail (453) : Valid. 
+
+
+Entail (454) : Valid. 
+
+
+Entail (455) : Valid. 
+
+
+Entail (456) : Valid. 
+
+
+Entail (457) : Valid. 
+
+
+Entail (458) : Valid. 
+
+
+Entail (459) : Fail.
+
+
+Entail (460) : Valid. 
+
+
+Entail (461) : Valid. 
+
+
+Entail (462) : Valid. 
+
+
+Entail (463) : Fail.
+
+
+Entail (464) : Valid. 
+
+
+Entail (465) : Valid. 
+
+
+Entail (466) : Valid. 
+
+
+Entail (467) : Fail.
+
+
+Entail (468) : Fail.
+
+
+Entail (469) : Fail.
+
+
+Entail (470) : Fail.
+
+
+Entail (471) : Fail.
+
+
+Entail (472) : Valid. 
+
+
+Entail (473) : Valid. 
+
+
+Entail (474) : Fail.
+
+
+Entail (475) : Valid. 
+
+
+Entail (476) : Fail.
+
+
+Entail (477) : Valid. 
+
+
+Entail (478) : Fail.
+
+
+Entail (479) : Valid. 
+
+
+Entail (480) : Fail.
+
+
+Entail (481) : Valid. 
+
+
+Entail (482) : Fail.
+
+
+Entail (483) : Valid. 
+
+
+Entail (484) : Valid. 
+
+
+Entail (485) : Valid. 
+
+
+Entail (486) : Valid. 
+
+
+Entail (487) : Valid. 
+
+
+Entail (488) : Valid. 
+
+
+Entail (489) : Valid. 
+
+
+Entail (490) : Fail.
+
+
+Entail (491) : Fail.
+
+
+Entail (492) : Fail.
+
+
+Entail (493) : Valid. 
+
+
+Entail (494) : Fail.
+
+
+Entail (495) : Fail.
+
+
+Entail (496) : Fail.
+
+
+Entail (497) : Fail.
+
+
+Entail (498) : Fail.
+
+
+Entail (499) : Fail.
+
+
+Entail (500) : Valid. 
+
+
+Entail (501) : Valid. 
+
+
+Entail (502) : Valid. 
+
+
+Entail (503) : Valid. 
+
+
+Entail (504) : Valid. 
+
+
+Entail (505) : Valid. 
+
+
+Entail (506) : Fail.
+
+
+Entail (507) : Fail.
+
+
+Entail (508) : Fail.
+
+
+Entail (509) : Valid. 
+
+
+Entail (510) : Valid. 
+
+
+Entail (511) : Fail.
+
+
+Entail (512) : Fail.
+
+
+Entail (513) : Valid. 
+
+
+Entail (514) : Fail.
+
+
+Entail (515) : Valid. 
+
+
+Entail (516) : Fail.
+
+
+Entail (517) : Fail.
+
+
+Entail (518) : Valid. 
+
+
+Entail (519) : Fail.
+
+
+Entail (520) : Valid. 
+
+
+Entail (521) : Fail.
+
+
+Entail (522) : Fail.
+
+
+Entail (523) : Fail.
+
+
+Entail (524) : Fail.
+
+
+Entail (525) : Valid. 
+
+
+Entail (526) : Fail.
+
+
+Entail (527) : Valid. 
+
+
+Entail (528) : Fail.
+
+
+Entail (529) : Fail.
+
+
+Entail (530) : Fail.
+
+
+Entail (531) : Fail.
+
+
+Entail (532) : Fail.
+
+
+Entail (533) : Fail.
+
+
+Entail (534) : Fail.
+
+
+Entail (535) : Valid. 
+
+
+Entail (536) : Fail.
+
+
+Entail (537) : Valid. 
+
+
+Entail (538) : Valid. 
+
+
+Entail (539) : Fail.
+
+
+Entail (540) : Fail.
+
+
+Entail (541) : Valid. 
+
+
+Entail (542) : Fail.
+
+
+Entail (543) : Fail.
+
+
+Entail (544) : Fail.
+
+
+Entail (545) : Fail.
+
+
+Entail (546) : Valid. 
+
+
+Entail (547) : Fail.
+
+
+Entail (548) : Fail.
+
+
+Entail (549) : Fail.
+
+
+Entail (550) : Valid. 
+
+
+Entail (551) : Valid. 
+
+
+Entail (552) : Valid. 
+
+
+Entail (553) : Fail.
+
+
+Entail (554) : Valid. 
+
+
+Entail (555) : Valid. 
+
+
+Entail (556) : Valid. 
+
+
+Entail (557) : Valid. 
+
+
+Entail (558) : Fail.
+
+
+Entail (559) : Valid. 
+
+
+Entail (560) : Valid. 
+
+
+Entail (561) : Valid. 
+
+
+Entail (562) : Valid. 
+
+
+Entail (563) : Fail.
+
+
+Entail (564) : Valid. 
+
+
+Entail (565) : Valid. 
+
+
+Entail (566) : Fail.
+
+
+Entail (567) : Fail.
+
+
+Entail (568) : Valid. 
+
+
+Entail (569) : Fail.
+
+
+Entail (570) : Valid. 
+
+
+Entail (571) : Valid. 
+
+
+Entail (572) : Valid. 
+
+
+Entail (573) : Fail.
+
+
+Entail (574) : Fail.
+
+
+Entail (575) : Fail.
+
+
+Entail (576) : Valid. 
+
+
+Entail (577) : Valid. 
+
+
+Entail (578) : Fail.
+
+
+Entail (579) : Fail.
+
+
+Entail (580) : Fail.
+
+
+Entail (581) : Fail.
+
+
+Entail (582) : Valid. 
+
+
+Entail (583) : Valid. 
+
+
+Entail (584) : Valid. 
+
+
+Entail (585) : Fail.
+
+
+Entail (586) : Valid. 
+
+
+Entail (587) : Fail.
+
+
+Entail (588) : Fail.
+
+
+Entail (589) : Fail.
+
+
+Entail (590) : Fail.
+
+
+Entail (591) : Fail.
+
+
+Entail (592) : Fail.
+
+
+Entail (593) : Fail.
+
+
+Entail (594) : Valid. 
+
+
+Entail (595) : Valid. 
+
+
+Entail (596) : Fail.
+
+
+Entail (597) : Valid. 
+
+
+Entail (598) : Fail.
+
+
+Entail (599) : Valid. 
+
+
+Entail (600) : Valid. 
+
+
+Entail (601) : Fail.
+
+
+Entail (602) : Fail.
+
+
+Entail (603) : Valid. 
+
+
+Entail (604) : Valid. 
+
+
+Entail (605) : Valid. 
+
+
+Entail (606) : Valid. 
+
+
+Entail (607) : Valid. 
+
+
+Entail (608) : Fail.
+
+
+Entail (609) : Valid. 
+
+
+Entail (610) : Fail.
+
+
+Entail (611) : Valid. 
+
+
+Entail (612) : Fail.
+
+
+Entail (613) : Valid. 
+
+
+Entail (614) : Valid. 
+
+
+Entail (615) : Fail.
+
+
+Entail (616) : Fail.
+
+
+Entail (617) : Fail.
+
+
+Entail (618) : Fail.
+
+
+Entail (619) : Valid. 
+
+
+Entail (620) : Fail.
+
+
+Entail (621) : Fail.
+
+
+Entail (622) : Valid. 
+
+
+Entail (623) : Fail.
+
+
+Entail (624) : Fail.
+
+
+Entail (625) : Valid. 
+
+
+Entail (626) : Fail.
+
+
+Entail (627) : Fail.
+
+
+Entail (628) : Valid. 
+
+
+Entail (629) : Valid. 
+
+
+Entail (630) : Fail.
+
+
+Entail (631) : Fail.
+
+
+Entail (632) : Fail.
+
+
+Entail (633) : Valid. 
+
+
+Entail (634) : Valid. 
+
+
+Entail (635) : Fail.
+
+
+Entail (636) : Valid. 
+
+
+Entail (637) : Fail.
+
+
+Entail (638) : Fail.
+
+
+Entail (639) : Fail.
+
+
+Entail (640) : Valid. 
+
+
+Entail (641) : Valid. 
+
+
+Entail (642) : Valid. 
+
+
+Entail (643) : Fail.
+
+
+Entail (644) : Valid. 
+
+
+Entail (645) : Fail.
+
+
+Entail (646) : Fail.
+
+
+Entail (647) : Valid. 
+
+
+Entail (648) : Valid. 
+
+
+Entail (649) : Valid. 
+
+
+Entail (650) : Valid. 
+
+
+Entail (651) : Valid. 
+
+
+Entail (652) : Valid. 
+
+
+Entail (653) : Valid. 
+
+
+Entail (654) : Valid. 
+
+
+Entail (655) : Valid. 
+
+
+Entail (656) : Valid. 
+
+
+Entail (657) : Valid. 
+
+
+Entail (658) : Valid. 
+
+
+Entail (659) : Valid. 
+
+
+Entail (660) : Fail.
+
+
+Entail (661) : Fail.
+
+
+Entail (662) : Valid. 
+
+
+Entail (663) : Fail.
+
+
+Entail (664) : Fail.
+
+
+Entail (665) : Fail.
+
+
+Entail (666) : Fail.
+
+
+Entail (667) : Valid. 
+
+
+Entail (668) : Valid. 
+
+
+Entail (669) : Valid. 
+
+
+Entail (670) : Fail.
+
+
+Entail (671) : Valid. 
+
+
+Entail (672) : Fail.
+
+
+Entail (673) : Valid. 
+
+
+Entail (674) : Valid. 
+
+
+Entail (675) : Fail.
+
+
+Entail (676) : Valid. 
+
+
+Entail (677) : Valid. 
+
+
+Entail (678) : Valid. 
+
+
+Entail (679) : Fail.
+
+
+Entail (680) : Valid. 
+
+
+Entail (681) : Fail.
+
+
+Entail (682) : Fail.
+
+
+Entail (683) : Fail.
+
+
+Entail (684) : Valid. 
+
+
+Entail (685) : Valid. 
+
+
+Entail (686) : Valid. 
+
+
+Entail (687) : Fail.
+
+
+Entail (688) : Fail.
+
+
+Entail (689) : Fail.
+
+
+Entail (690) : Valid. 
+
+
+Entail (691) : Fail.
+
+
+Entail (692) : Valid. 
+
+
+Entail (693) : Fail.
+
+
+Entail (694) : Valid. 
+
+
+Entail (695) : Fail.
+
+
+Entail (696) : Valid. 
+
+
+Entail (697) : Fail.
+
+
+Entail (698) : Fail.
+
+
+Entail (699) : Fail.
+
+
+Entail (700) : Fail.
+
+
+Entail (701) : Fail.
+
+
+Entail (702) : Valid. 
+
+
+Entail (703) : Valid. 
+
+
+Entail (704) : Fail.
+
+
+Entail (705) : Valid. 
+
+
+Entail (706) : Valid. 
+
+
+Entail (707) : Fail.
+
+
+Entail (708) : Fail.
+
+
+Entail (709) : Valid. 
+
+
+Entail (710) : Valid. 
+
+
+Entail (711) : Fail.
+
+
+Entail (712) : Valid. 
+
+
+Entail (713) : Valid. 
+
+
+Entail (714) : Fail.
+
+
+Entail (715) : Valid. 
+
+
+Entail (716) : Fail.
+
+
+Entail (717) : Fail.
+
+
+Entail (718) : Fail.
+
+
+Entail (719) : Fail.
+
+
+Entail (720) : Valid. 
+
+
+Entail (721) : Fail.
+
+
+Entail (722) : Fail.
+
+
+Entail (723) : Valid. 
+
+
+Entail (724) : Valid. 
+
+
+Entail (725) : Valid. 
+
+
+Entail (726) : Fail.
+
+
+Entail (727) : Valid. 
+
+
+Entail (728) : Fail.
+
+
+Entail (729) : Fail.
+
+
+Entail (730) : Valid. 
+
+
+Entail (731) : Valid. 
+
+
+Entail (732) : Valid. 
+
+
+Entail (733) : Fail.
+
+
+Entail (734) : Valid. 
+
+
+Entail (735) : Valid. 
+
+
+Entail (736) : Fail.
+
+
+Entail (737) : Valid. 
+
+
+Entail (738) : Valid. 
+
+
+Entail (739) : Fail.
+
+
+Entail (740) : Valid. 
+
+
+Entail (741) : Fail.
+
+
+Entail (742) : Valid. 
+
+
+Entail (743) : Fail.
+
+
+Entail (744) : Fail.
+
+
+Entail (745) : Valid. 
+
+
+Entail (746) : Valid. 
+
+
+Entail (747) : Fail.
+
+
+Entail (748) : Fail.
+
+
+Entail (749) : Fail.
+
+
+Entail (750) : Fail.
+
+
+Entail (751) : Valid. 
+
+
+Entail (752) : Valid. 
+
+
+Entail (753) : Valid. 
+
+
+Entail (754) : Valid. 
+
+
+Entail (755) : Valid. 
+
+
+Entail (756) : Valid. 
+
+
+Entail (757) : Valid. 
+
+
+Entail (758) : Valid. 
+
+
+Entail (759) : Valid. 
+
+
+Entail (760) : Fail.
+
+
+Entail (761) : Fail.
+
+
+Entail (762) : Fail.
+
+
+Entail (763) : Valid. 
+
+
+Entail (764) : Fail.
+
+
+Entail (765) : Valid. 
+
+
+Entail (766) : Valid. 
+
+
+Entail (767) : Fail.
+
+
+Entail (768) : Fail.
+
+
+Entail (769) : Valid. 
+
+
+Entail (770) : Valid. 
+
+
+Entail (771) : Fail.
+
+
+Entail (772) : Valid. 
+
+
+Entail (773) : Valid. 
+
+
+Entail (774) : Fail.
+
+
+Entail (775) : Fail.
+
+
+Entail (776) : Valid. 
+
+
+Entail (777) : Fail.
+
+
+Entail (778) : Fail.
+
+
+Entail (779) : Valid. 
+
+
+Entail (780) : Valid. 
+
+
+Entail (781) : Fail.
+
+
+Entail (782) : Valid. 
+
+
+Entail (783) : Valid. 
+
+
+Entail (784) : Valid. 
+
+
+Entail (785) : Fail.
+
+
+Entail (786) : Valid. 
+
+
+Entail (787) : Fail.
+
+
+Entail (788) : Valid. 
+
+
+Entail (789) : Fail.
+
+
+Entail (790) : Fail.
+
+
+Entail (791) : Fail.
+
+
+Entail (792) : Valid. 
+
+
+Entail (793) : Valid. 
+
+
+Entail (794) : Fail.
+
+
+Entail (795) : Valid. 
+
+
+Entail (796) : Fail.
+
+
+Entail (797) : Valid. 
+
+
+Entail (798) : Valid. 
+
+
+Entail (799) : Valid. 
+
+
+Entail (800) : Fail.
+
+
+Entail (801) : Fail.
+
+
+Entail (802) : Valid. 
+
+
+Entail (803) : Fail.
+
+
+Entail (804) : Fail.
+
+
+Entail (805) : Valid. 
+
+
+Entail (806) : Valid. 
+
+
+Entail (807) : Valid. 
+
+
+Entail (808) : Fail.
+
+
+Entail (809) : Fail.
+
+
+Entail (810) : Fail.
+
+
+Entail (811) : Fail.
+
+
+Entail (812) : Fail.
+
+
+Entail (813) : Valid. 
+
+
+Entail (814) : Valid. 
+
+
+Entail (815) : Valid. 
+
+
+Entail (816) : Fail.
+
+
+Entail (817) : Fail.
+
+
+Entail (818) : Fail.
+
+
+Entail (819) : Fail.
+
+
+Entail (820) : Fail.
+
+
+Entail (821) : Valid. 
+
+
+Entail (822) : Fail.
+
+
+Entail (823) : Fail.
+
+
+Entail (824) : Valid. 
+
+
+Entail (825) : Fail.
+
+
+Entail (826) : Fail.
+
+
+Entail (827) : Valid. 
+
+
+Entail (828) : Fail.
+
+
+Entail (829) : Valid. 
+
+
+Entail (830) : Valid. 
+
+
+Entail (831) : Valid. 
+
+
+Entail (832) : Valid. 
+
+
+Entail (833) : Valid. 
+
+
+Entail (834) : Valid. 
+
+
+Entail (835) : Fail.
+
+
+Entail (836) : Fail.
+
+
+Entail (837) : Valid. 
+
+
+Entail (838) : Valid. 
+
+
+Entail (839) : Valid. 
+
+
+Entail (840) : Valid. 
+
+
+Entail (841) : Valid. 
+
+
+Entail (842) : Fail.
+
+
+Entail (843) : Fail.
+
+
+Entail (844) : Valid. 
+
+
+Entail (845) : Fail.
+
+
+Entail (846) : Valid. 
+
+
+Entail (847) : Valid. 
+
+
+Entail (848) : Valid. 
+
+
+Entail (849) : Fail.
+
+
+Entail (850) : Valid. 
+
+
+Entail (851) : Valid. 
+
+
+Entail (852) : Valid. 
+
+
+Entail (853) : Fail.
+
+
+Entail (854) : Valid. 
+
+
+Entail (855) : Fail.
+
+
+Entail (856) : Fail.
+
+
+Entail (857) : Valid. 
+
+
+Entail (858) : Fail.
+
+
+Entail (859) : Fail.
+
+
+Entail (860) : Valid. 
+
+
+Entail (861) : Valid. 
+
+
+Entail (862) : Valid. 
+
+
+Entail (863) : Fail.
+
+
+Entail (864) : Valid. 
+
+
+Entail (865) : Fail.
+
+
+Entail (866) : Valid. 
+
+
+Entail (867) : Valid. 
+
+
+Entail (868) : Valid. 
+
+
+Entail (869) : Valid. 
+
+
+Entail (870) : Valid. 
+
+
+Entail (871) : Fail.
+
+
+Entail (872) : Valid. 
+
+
+Entail (873) : Valid. 
+
+
+Entail (874) : Fail.
+
+
+Entail (875) : Fail.
+
+
+Entail (876) : Fail.
+
+
+Entail (877) : Valid. 
+
+
+Entail (878) : Fail.
+
+
+Entail (879) : Fail.
+
+
+Entail (880) : Fail.
+
+
+Entail (881) : Valid. 
+
+
+Entail (882) : Fail.
+
+
+Entail (883) : Valid. 
+
+
+Entail (884) : Valid. 
+
+
+Entail (885) : Fail.
+
+
+Entail (886) : Valid. 
+
+
+Entail (887) : Valid. 
+
+
+Entail (888) : Valid. 
+
+
+Entail (889) : Valid. 
+
+
+Entail (890) : Fail.
+
+
+Entail (891) : Valid. 
+
+
+Entail (892) : Fail.
+
+
+Entail (893) : Valid. 
+
+
+Entail (894) : Fail.
+
+
+Entail (895) : Valid. 
+
+
+Entail (896) : Fail.
+
+
+Entail (897) : Valid. 
+
+
+Entail (898) : Valid. 
+
+
+Entail (899) : Fail.
+
+
+Entail (900) : Valid. 
+
+
+Entail (901) : Valid. 
+
+
+Entail (902) : Valid. 
+
+
+Entail (903) : Valid. 
+
+
+Entail (904) : Fail.
+
+
+Entail (905) : Fail.
+
+
+Entail (906) : Fail.
+
+
+Entail (907) : Fail.
+
+
+Entail (908) : Fail.
+
+
+Entail (909) : Valid. 
+
+
+Entail (910) : Fail.
+
+
+Entail (911) : Fail.
+
+
+Entail (912) : Fail.
+
+
+Entail (913) : Fail.
+
+
+Entail (914) : Fail.
+
+
+Entail (915) : Fail.
+
+
+Entail (916) : Valid. 
+
+
+Entail (917) : Valid. 
+
+
+Entail (918) : Fail.
+
+
+Entail (919) : Valid. 
+
+
+Entail (920) : Fail.
+
+
+Entail (921) : Valid. 
+
+
+Entail (922) : Fail.
+
+
+Entail (923) : Valid. 
+
+
+Entail (924) : Valid. 
+
+
+Entail (925) : Valid. 
+
+
+Entail (926) : Fail.
+
+
+Entail (927) : Valid. 
+
+
+Entail (928) : Valid. 
+
+
+Entail (929) : Valid. 
+
+
+Entail (930) : Fail.
+
+
+Entail (931) : Valid. 
+
+
+Entail (932) : Valid. 
+
+
+Entail (933) : Valid. 
+
+
+Entail (934) : Valid. 
+
+
+Entail (935) : Valid. 
+
+
+Entail (936) : Valid. 
+
+
+Entail (937) : Fail.
+
+
+Entail (938) : Valid. 
+
+
+Entail (939) : Valid. 
+
+
+Entail (940) : Valid. 
+
+
+Entail (941) : Valid. 
+
+
+Entail (942) : Fail.
+
+
+Entail (943) : Valid. 
+
+
+Entail (944) : Fail.
+
+
+Entail (945) : Fail.
+
+
+Entail (946) : Valid. 
+
+
+Entail (947) : Valid. 
+
+
+Entail (948) : Valid. 
+
+
+Entail (949) : Valid. 
+
+
+Entail (950) : Fail.
+
+
+Entail (951) : Fail.
+
+
+Entail (952) : Valid. 
+
+
+Entail (953) : Valid. 
+
+
+Entail (954) : Valid. 
+
+
+Entail (955) : Valid. 
+
+
+Entail (956) : Valid. 
+
+
+Entail (957) : Fail.
+
+
+Entail (958) : Fail.
+
+
+Entail (959) : Fail.
+
+
+Entail (960) : Fail.
+
+
+Entail (961) : Fail.
+
+
+Entail (962) : Valid. 
+
+
+Entail (963) : Valid. 
+
+
+Entail (964) : Fail.
+
+
+Entail (965) : Fail.
+
+
+Entail (966) : Valid. 
+
+
+Entail (967) : Fail.
+
+
+Entail (968) : Fail.
+
+
+Entail (969) : Valid. 
+
+
+Entail (970) : Fail.
+
+
+Entail (971) : Valid. 
+
+
+Entail (972) : Valid. 
+
+
+Entail (973) : Valid. 
+
+
+Entail (974) : Fail.
+
+
+Entail (975) : Fail.
+
+
+Entail (976) : Valid. 
+
+
+Entail (977) : Fail.
+
+
+Entail (978) : Fail.
+
+
+Entail (979) : Valid. 
+
+
+Entail (980) : Fail.
+
+
+Entail (981) : Valid. 
+
+
+Entail (982) : Valid. 
+
+
+Entail (983) : Valid. 
+
+
+Entail (984) : Fail.
+
+
+Entail (985) : Valid. 
+
+
+Entail (986) : Fail.
+
+
+Entail (987) : Fail.
+
+
+Entail (988) : Valid. 
+
+
+Entail (989) : Valid. 
+
+
+Entail (990) : Fail.
+
+
+Entail (991) : Valid. 
+
+
+Entail (992) : Fail.
+
+
+Entail (993) : Fail.
+
+
+Entail (994) : Valid. 
+
+
+Entail (995) : Valid. 
+
+
+Entail (996) : Fail.
+
+
+Entail (997) : Fail.
+
+
+Entail (998) : Valid. 
+
+
+Entail (999) : Fail.
+
+
+Entail (1000) : Fail.
+
+Stop z3... 12004 invocations 
+SAT Count   : 14293
+SAT % Hit   : 16.04%
+IMPLY Count : 5
+IMPLY % Hit : 20.%
+Time(cache overhead) : 0.52 (seconds)
+
+Total verification time: 66.66 second(s)
+	Time spent in main process: 57.87 second(s)
+	Time spent in child processes: 8.79 second(s)
+
+
+real	1m7.285s
+user	1m6.180s
+sys	0m0.480s
