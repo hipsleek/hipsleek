@@ -1674,7 +1674,7 @@ let rec mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_
 and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no =
   let n_ante = 
     if !do_slicing then 
-      AnnoS.get_rel_ctr 2 conseq ante_disj
+      AnnoS.get_rel_ctr !slicing_rel_level conseq ante_disj
     else
       AutoS.get_rel_ctr 1 conseq ante_disj
   in

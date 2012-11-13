@@ -139,6 +139,38 @@ let read_file_boogie filename =
 ;;
 
 
+let get_result_file filename =
+  let chan = open_in filename in
+  let lip= Std.input_list chan in
+  let _= close_in in
+	let accumulate = ref [] in
+	let num_timeout = ref 0 in
+  (*let _= print_endline ("file2:"^ !Globals.source_file) in *)
+	let flag= ref false in
+  let _= List.map ( fun x->
+		let _=try
+			BatString.find x "FAIL. (Timeout)";
+		  num_timeout := !num_timeout +1
+			with _->() in 
+		if(!flag = false) then
+		  try 
+			  BatString.find x "Stop";
+			  flag := true
+		  with _-> ()
+		else	
+			try
+			  BatString.find x "real";
+			  flag := false
+		  with _->
+			(* let _= print_endline (x) in *)
+			(* let _= print_endline (filename) in *)
+				accumulate := !accumulate @ [x]
+		) lip 
+	in
+	 (!accumulate,!num_timeout) 
+		
+;;
+
 let read_file filename =
   let chan = open_in filename in
   let lip= Std.input_list chan in
@@ -289,12 +321,106 @@ let main_generate_tests () =
 	  print_endline ("Generated file in: spring/spring-"^(string_of_int num_vars)^".ss")
 ;;
 
+let get_result res_file middle_fix=
+	let filename= if(!Globals.logs_dir <>"") then 
+		ref ("./experiments/"^(!Globals.logs_dir)^"/spaguetti.")
+		else 
+		ref ("./experiments/logs_Nov13_0032/spaguetti.")	 
+	in
+	let out_stream = open_out res_file in
+	let ll= Array.make 11 "" in
+    (*let _ = print_endline ("input: " ^ input) in*)
+	for i=10 to 20 do (*NO SLICING*)
+     	let l1,t1=get_result_file (!filename^middle_fix^(string_of_int i)^"."^ !Globals.tp) in
+			let l2,t2=get_result_file (!filename^middle_fix^(string_of_int i)^"."^ !Globals.tp^"c") in
+			let resi= ref "" in
+			let temp = ref "" in	
+			let _= List.map ( fun x-> 
+				          (* let _= 	print_endline (x) in *)
+				          try (*NO cast*)
+									BatString.find x "Time spent in main process: ";
+									resi := !resi ^ BatString.strip ~chars:"\tTime spent in main process: , second(s)" x;
+									(* print_endline (!resi); *)
+									(* output_string out_stream (s^"\t");  *)
+									resi := !resi^"\t"
+									with _->
+										try
+											BatString.find x "Time spent in child processes: ";
+									    resi := !resi^ BatString.strip ~chars:"\tTime spent in child processes: , second(s)" x;
+											ll.(i-10) <- !resi;
+												(* print_endline (!resi^ "--"^string_of_int i) *)
+									     (* output_string out_stream (s^"\t");  *)
+											with _-> ()
+				) l1 in (*CAST*)
+					(* print_endline (string_of_int i) *)
+			let _= resi:= "" in
+			let _= List.map ( fun x->
+				          try (*NO cast*)
+									BatString.find x "SAT Count   : ";
+									resi := BatString.strip ~chars:"SAT Count   : , " x;
+									(* output_string out_stream (s^"\t");  *)
+									resi := !resi ^"\t"
+									with _->
+										try
+											BatString.find x "SAT % Hit   : ";
+									    resi := !resi ^(BatString.strip ~chars:"SAT % Hit   : ,%" x);
+										resi := !resi ^"\t";
+									     (* output_string out_stream (s^"\t");  *)
+											with _->
+													try
+											BatString.find x "IMPLY Count : ";
+									    resi := !resi ^BatString.strip ~chars:"IMPLY Count : , " x ;
+											resi := !resi ^"\t";
+									
+											with _->
+													try
+											BatString.find x "IMPLY % Hit : ";
+									    resi :=  !resi^ BatString.strip ~chars:"IMPLY % Hit : ,%" x ;
+											resi := !resi ^"\t";
+										
+											with _->
+													try
+											BatString.find x "Time(cache overhead) : ";
+									    resi := !resi ^ BatString.strip ~chars:"Time(cache overhead) : , (seconds)" x ;
+											resi := !resi ^"\t";
+											
+											with _->
+											 try
+									BatString.find x "Time spent in main process: ";
+									temp :=   BatString.strip ~chars:"\tTime spent in main process: , second(s)" x ;
+								  temp := !temp ^ "\t"
+									with _->
+										try
+											BatString.find x "Time spent in child processes: ";
+									    temp:= !temp ^ BatString.strip ~chars:"\tTime spent in child processes: , second(s)" x   ;
+											resi := "\t"^ !temp ^"\t"^ !resi ^"\t" ^string_of_int t1 ^"\t" ^string_of_int t2;
+							
+											ll.(i-10) <- (ll.(i-10) ^ !resi ^ "\n");
+											print_endline (ll.(i-10));
+											print_endline ("Test: "^string_of_int i);
+											with _-> ()
+												
+				) l2 in ()
+	done;
+	for i=0 to 10 do
+		 output_string out_stream (ll.(i));
+	done;	
+ close_out out_stream;
 
+;;
+
+let main_get_result ()= 
+ let _=get_result "norm.result" "" in
+ let _=get_result "ans.result" "efp.ans." in
+ let _=get_result "aus.result" "efp.aus." in ()
+;;
 (*-------------------Execute main here--------------------------*)
 let _= process_cmd_line () in
   if(!Globals.num_vars_test = 0) then
 		if(!Globals.run_boogie) then
 			let _= main_run_boogie () in ()
+		else if(!Globals.get_result) then
+			let _= main_get_result () in ()	
 		else	
       let _= main_runz3 () in ()
 	else 

@@ -34,6 +34,7 @@ type tp_type =
   | AUTO (* Omega, Z3, Mona, Coq *)
   | DP (*ineq prover for proof slicing experim*)
   | SPASS
+	| MINISAT
   | LOG (* Using previous results instead of invoking the actual provers *)
 
 let test_db = false
@@ -81,6 +82,7 @@ let string_of_prover prover = match prover with
 	| AUTO -> "AUTO - omega, z3, mona, coq"
 	| DP -> "Disequality Solver"
 	| SPASS -> "SPASS"
+	| MINISAT -> "MINISAT"
 	| LOG -> "LOG"
   
  
@@ -422,6 +424,8 @@ let set_tp tp_str =
     (Redlog.is_presburger := true; tp := RM)
   else if tp_str = "spass" then
     (tp := SPASS; prover_str := "z3"::!prover_str;)
+	else if tp_str = "minisat" then
+    (tp := MINISAT; prover_str := "z3"::!prover_str;)	
 	else if tp_str = "log" then
 		(tp := LOG; prover_str := "log"::!prover_str)
   else
@@ -449,6 +453,7 @@ let string_of_tp tp = match tp with
    | AUTO -> "auto"
   | DP -> "dp"
   | SPASS -> "spass"
+	| MINISAT -> "minisat"
 	| LOG -> "log"
 
 let name_of_tp tp = match tp with
@@ -472,6 +477,7 @@ let name_of_tp tp = match tp with
   | AUTO -> "Omega, Z3, Mona, Coq"
   | DP -> "DP"
   | SPASS -> "SPASS"
+	| MINISAT -> "MINISAT"
 	| LOG -> "LOG"
 
 let log_file_of_tp tp = match tp with
@@ -1057,6 +1063,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     else
 		  z3_is_sat wf
     | SPASS -> Spass.is_sat f sat_no
+		| MINISAT -> Minisat.is_sat f sat_no
 		| LOG -> find_bool_proof_res sat_no
 	in 
 	(* let _ = Gen.Profiling.pop_time "tp_is_sat" in *)
@@ -1557,6 +1564,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
       else
         z3_imply (* Smtsolver.imply *) ante conseq (* timeout *)
   | SPASS -> z3_imply (* Smtsolver.imply  *)ante conseq (* timeout *)
+	| MINISAT -> Minisat.imply ante conseq timeout
 	| LOG -> find_bool_proof_res imp_no
   in
 	(* let tstop = Gen.Profiling.get_time () in *)
@@ -2367,8 +2375,8 @@ let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =
   if !do_slicing && !multi_provers then 
     is_sat_memo_sub_no_slicing f sat_subno with_dupl with_inv
   else if !do_slicing && !opt_ineq then 
-    (* is_sat_memo_sub_no_ineq_slicing f sat_subno with_dupl with_inv *)
-    MCP.is_sat_memo_sub_no_ineq_slicing_complete f with_dupl with_inv (fun f -> is_sat_sub_no f sat_subno)
+    is_sat_memo_sub_no_ineq_slicing f sat_subno with_dupl with_inv
+    (* MCP.is_sat_memo_sub_no_ineq_slicing_complete f with_dupl with_inv (fun f -> is_sat_sub_no f sat_subno) *)
   else if !do_slicing && !infer_lvar_slicing then
     MCP.is_sat_memo_sub_no_complete f with_dupl with_inv (fun f -> is_sat_sub_no f sat_subno)
   else is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv
@@ -2563,6 +2571,7 @@ let start_prover () =
   (*     Smtsolver.start(); *)
   (*     Coq.start (); *)
 	| LOG -> file_to_proof_log ()
+	| MINISAT -> Minisat.start ()
   | _ -> Omega.start()
   
 let stop_prover () =
@@ -2601,6 +2610,7 @@ let stop_prover () =
 	  | DP -> Smtsolver.stop()
     | Z3 ->
       Smtsolver.stop();
+		| MINISAT -> Minisat.stop ();	
     (* | AUTO -> *)
 	  (*     Omega.stop(); *)
     (*     (\* Mona.stop(); *\) *)
