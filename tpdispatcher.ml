@@ -34,7 +34,7 @@ type tp_type =
   | AUTO (* Omega, Z3, Mona, Coq *)
   | DP (*ineq prover for proof slicing experim*)
   | SPASS
-	| MINISAT
+  | MINISAT
   | LOG (* Using previous results instead of invoking the actual provers *)
 
 let test_db = false
@@ -77,7 +77,7 @@ let string_of_prover prover = match prover with
 	| Z3 -> "Z3"
 	| Redlog -> "REDLOG (REDUCE LOGIC)"
 	| RM -> ""
-	| ZM -> "Omega, z3"
+	| ZM -> "Z3, Mona"
 	| OZ -> "Omega, z3"
 	| AUTO -> "AUTO - omega, z3, mona, coq"
 	| DP -> "Disequality Solver"
@@ -423,11 +423,12 @@ let set_tp tp_str =
   else if tp_str = "prm" then
     (Redlog.is_presburger := true; tp := RM)
   else if tp_str = "spass" then
-    (tp := SPASS; prover_str := "z3"::!prover_str;)
-	else if tp_str = "minisat" then
+    (* (tp := SPASS; prover_str := "z3"::!prover_str;) *)
+    (tp := SPASS; prover_str:= "SPASS-MOD"::!prover_str)
+  else if tp_str = "minisat" then
     (tp := MINISAT; prover_str := "z3"::!prover_str;)	
-	else if tp_str = "log" then
-		(tp := LOG; prover_str := "log"::!prover_str)
+  else if tp_str = "log" then
+    (tp := LOG; prover_str := "log"::!prover_str)
   else
 	();
   check_prover_existence !prover_str
@@ -450,11 +451,11 @@ let string_of_tp tp = match tp with
   | RM -> "rm"
   | ZM -> "zm"
   | OZ -> "oz"
-   | AUTO -> "auto"
+  | AUTO -> "auto"
   | DP -> "dp"
   | SPASS -> "spass"
-	| MINISAT -> "minisat"
-	| LOG -> "log"
+  | MINISAT -> "minisat"
+  | LOG -> "log"
 
 let name_of_tp tp = match tp with
   | OmegaCalc -> "Omega Calculator"
@@ -477,8 +478,8 @@ let name_of_tp tp = match tp with
   | AUTO -> "Omega, Z3, Mona, Coq"
   | DP -> "DP"
   | SPASS -> "SPASS"
-	| MINISAT -> "MINISAT"
-	| LOG -> "LOG"
+  | MINISAT -> "MINISAT"
+  | LOG -> "LOG"
 
 let log_file_of_tp tp = match tp with
   | OmegaCalc -> "allinput.oc"
@@ -490,6 +491,7 @@ let log_file_of_tp tp = match tp with
   | Z3 -> "allinput.z3"
   | AUTO -> "allinput.auto"
   | OZ -> "allinput.oz"
+  | SPASS -> "allinput.spass"
   | _ -> ""
 
 let get_current_tp_name () = name_of_tp !tp
@@ -1232,6 +1234,7 @@ let simplify (f : CP.formula) : CP.formula =
                   begin
                     (omega_simplify f);
                   end
+          | SPASS -> Spass.simplify f
 					| LOG -> find_formula_proof_res simpl_no
          | _ -> omega_simplify f in
         Gen.Profiling.pop_time "simplify";
@@ -1563,7 +1566,8 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
         (called_prover := "mona "; mona_imply ante_w conseq_s)
       else
         z3_imply (* Smtsolver.imply *) ante conseq (* timeout *)
-  | SPASS -> z3_imply (* Smtsolver.imply  *)ante conseq (* timeout *)
+  | SPASS -> (* z3_imply (* Smtsolver.imply  *)ante conseq (* timeout *) *)
+    Spass.imply ante conseq timeout
 	| MINISAT -> Minisat.imply ante conseq timeout
 	| LOG -> find_bool_proof_res imp_no
   in
@@ -2565,6 +2569,7 @@ let start_prover () =
   | DP -> Smtsolver.start();
   | Z3 ->
       Smtsolver.start();
+  | SPASS -> Spass.start();
   (* | AUTO -> *)
   (*     Omega.start(); *)
   (*     Mona.start(); *)
@@ -2610,6 +2615,7 @@ let stop_prover () =
 	  | DP -> Smtsolver.stop()
     | Z3 ->
       Smtsolver.stop();
+    | SPASS -> Spass.stop();
 		| MINISAT -> Minisat.stop ();	
     (* | AUTO -> *)
 	  (*     Omega.stop(); *)
