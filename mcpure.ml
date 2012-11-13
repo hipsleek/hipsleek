@@ -1666,7 +1666,7 @@ let is_sat_memo_sub_no_ineq_slicing_complete (mem : memo_pure) with_dupl with_in
 let memo_impl_fail_vars = ref [] 
  
 let rec mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no =
- Debug.no_3 "mimply_process_ante" (fun x -> string_of_int x) (!print_mp_f) (!print_p_f_f)  
+ Debug.ho_3 "mimply_process_ante" (fun x -> string_of_int x) (!print_mp_f) (!print_p_f_f)  
   (fun (c,_,_)-> string_of_bool c) 
   (fun with_disj ante_disj conseq -> mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no) 
     with_disj ante_disj conseq
@@ -1674,7 +1674,7 @@ let rec mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_
 and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no =
   let n_ante = 
     if !do_slicing then 
-      AnnoS.get_rel_ctr 2 conseq ante_disj
+      AnnoS.get_rel_ctr !slicing_rel_level conseq ante_disj
     else
       AutoS.get_rel_ctr 1 conseq ante_disj
   in

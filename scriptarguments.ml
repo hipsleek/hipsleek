@@ -281,6 +281,7 @@ let common_arguments = [
 
   (* Slicing *)
   ("--en-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");
+	("--slc-rel-level", Arg.Set_int Globals.slicing_rel_level, "Set depth for GetCtr function");
   (*("--dis-slicing", Arg.Set Globals.dis_slicing, "Disable slicing, equivalent to ");*)
   (* similar to --force-one-slice *)
 

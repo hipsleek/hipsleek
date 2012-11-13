@@ -635,9 +635,12 @@ struct
   let create_memo_group (l1: b_formula list) (l2: formula list) 
     (status: prune_status) filter_merged_cons : memo_pure =
     (* Normalize l1 and l2 to lists of atomic constraints *)
+		(* Slicing: Infer ineq linking constraints *)
+		(* and constant linking variables          *)
+		let l1 = if !infer_lvar_slicing then trans_const_bforms l1 else l1 in
     let l1 = List.map (fun b -> 
-      let n_b = if !opt_ineq then trans_eq_bform b else b in
-      Pure_Constr.atom_of_b_formula n_b) l1 in
+      let b = if !opt_ineq then trans_eq_bform b else b in
+      Pure_Constr.atom_of_b_formula b) l1 in
     let l2 = List.map (fun f -> Pure_Constr.atom_of_formula f) l2 in
     let sl =
       let l = l1 @ l2 in
