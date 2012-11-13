@@ -2544,7 +2544,7 @@ let start_prover () =
   | Redlog | RM -> 
     begin
       Redlog.start ();
-	    Omega.start ();
+	    (* Omega.start (); *)
 	  end
   | Cvc3 -> 
         begin
@@ -2566,6 +2566,11 @@ let start_prover () =
 	  Mona.start();
 	  Omega.start();
 	end
+	| ZM ->
+		begin
+			Mona.start();
+			Smtsolver.start();
+		end
   | DP -> Smtsolver.start();
   | Z3 ->
       Smtsolver.start();
@@ -2611,6 +2616,11 @@ let stop_prover () =
 	      begin
 		      Mona.stop();
 		      Omega.stop();
+	      end
+		| ZM ->
+	      begin
+		      Mona.stop();
+		      Smtsolver.stop();
 	      end
 	  | DP -> Smtsolver.stop()
     | Z3 ->
