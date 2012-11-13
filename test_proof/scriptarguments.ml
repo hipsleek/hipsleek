@@ -8,7 +8,8 @@ let run_specific_arguments = [
 	("-frama-c", Arg.Set Globals.use_frama_c, "Generate Frama-C inputs");
         ("-prog-if-else", Arg.Set Globals.if_else, "Generate the ELSE branch additionally");
         ("-run-boogie", Arg.Set Globals.run_boogie, "Run Z3 with boogie inputs");
-				("-tp", Arg.String Globals.set_tp,"Collect result")
+        ("-tp", Arg.String Globals.set_tp,"Collect result");
+        ("-dir", Arg.String Globals.set_dir, "Directory of logs")
   ] 
 
 (* all hip's arguments and flags *)	

@@ -3,6 +3,7 @@ let n_exec = ref 1
 let num_vars_test = ref 0
 let nums_of_check_sat = ref 0
 let tp = ref ""
+let logs_dir = ref ""
 
 let use_boogie = ref false
 let use_imp = ref false
@@ -21,4 +22,6 @@ let set_do_generate_test num=
 let set_tp prover=
 	  let _= tp := prover in
 		 get_result := true
+
+let set_dir dir = logs_dir := dir
 	

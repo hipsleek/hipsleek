@@ -317,7 +317,7 @@ let main_generate_tests () =
 ;;
 
 let get_result res_file middle_fix=
-	let filename= ref "./experiments/logs_Nov13_0032/spaguetti." in
+	let filename= ref ("./experiments/"^(!Globals.logs_dir)^"/spaguetti.") in
 	let out_stream = open_out res_file in
 	let ll= Array.make 11 "" in
     (*let _ = print_endline ("input: " ^ input) in*)
