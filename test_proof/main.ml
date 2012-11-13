@@ -144,9 +144,14 @@ let get_result_file filename =
   let lip= Std.input_list chan in
   let _= close_in in
 	let accumulate = ref [] in
+	let num_timeout = ref 0 in
   (*let _= print_endline ("file2:"^ !Globals.source_file) in *)
 	let flag= ref false in
   let _= List.map ( fun x->
+		let _=try
+			BatString.find x "FAIL. (Timeout)";
+		  num_timeout := !num_timeout +1
+			with _->() in 
 		if(!flag = false) then
 		  try 
 			  BatString.find x "Stop";
@@ -162,7 +167,7 @@ let get_result_file filename =
 				accumulate := !accumulate @ [x]
 		) lip 
 	in
-	 !accumulate 
+	 (!accumulate,!num_timeout) 
 		
 ;;
 
@@ -317,13 +322,17 @@ let main_generate_tests () =
 ;;
 
 let get_result res_file middle_fix=
-	let filename= ref ("./experiments/"^(!Globals.logs_dir)^"/spaguetti.") in
+	let filename= if(!Globals.logs_dir <>"") then 
+		ref ("./experiments/"^(!Globals.logs_dir)^"/spaguetti.")
+		else 
+		ref ("./experiments/logs_Nov13_0032/spaguetti.")	 
+	in
 	let out_stream = open_out res_file in
 	let ll= Array.make 11 "" in
     (*let _ = print_endline ("input: " ^ input) in*)
 	for i=10 to 20 do (*NO SLICING*)
-     	let l1=get_result_file (!filename^middle_fix^(string_of_int i)^"."^ !Globals.tp) in
-			let l2=get_result_file (!filename^middle_fix^(string_of_int i)^"."^ !Globals.tp^"c") in
+     	let l1,t1=get_result_file (!filename^middle_fix^(string_of_int i)^"."^ !Globals.tp) in
+			let l2,t2=get_result_file (!filename^middle_fix^(string_of_int i)^"."^ !Globals.tp^"c") in
 			let resi= ref "" in
 			let temp = ref "" in	
 			let _= List.map ( fun x-> 
@@ -338,7 +347,6 @@ let get_result res_file middle_fix=
 										try
 											BatString.find x "Time spent in child processes: ";
 									    resi := !resi^ BatString.strip ~chars:"\tTime spent in child processes: , second(s)" x;
-											resi := !resi^"\t";
 											ll.(i-10) <- !resi;
 												(* print_endline (!resi^ "--"^string_of_int i) *)
 									     (* output_string out_stream (s^"\t");  *)
@@ -385,9 +393,11 @@ let get_result res_file middle_fix=
 										try
 											BatString.find x "Time spent in child processes: ";
 									    temp:= !temp ^ BatString.strip ~chars:"\tTime spent in child processes: , second(s)" x   ;
-											resi := !temp ^"\t"^ !resi ;
+											resi := !temp ^"\t"^ !resi ^"\t" ^string_of_int t1 ^"\t" ^string_of_int t2;
+							
 											ll.(i-10) <- (ll.(i-10) ^ !resi ^ "\n");
-											print_endline (ll.(i-10))
+											print_endline (ll.(i-10));
+											print_endline ("Test: "^string_of_int i);
 											with _-> ()
 												
 				) l2 in ()
