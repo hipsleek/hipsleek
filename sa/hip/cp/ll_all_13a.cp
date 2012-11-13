@@ -15,14 +15,10 @@ ass [H1,G2]:{
 
 hpdefs [H1,G2]:{
   H1(x) --> x=null or x::node<_,p> * H1(p);
-  G2(x_653,res_654) --> res_654=null & x_653=null
-    or x_653::node<_,res_654>
-    or x_653::node<_,next_86_609> * G2(next_86_609,v_node_86_626) *
-       res_654::node<_,v_node_86_626>
+  G2(x_695,res_696) -->
+       res_696=null & x_695=null
+   or  x_695::node<_,res_696>
+   or  x_695::node<v_int_86_667,next_86_651> * G2(next_86_651,v_node_86_668) *
+         res_696::node<v_int_86_667,v_node_86_668>
  }
 ]
-
-/*
-G2(x1,v) --> x1::node<_,next_81_597> * G2(next_81_597,v_node_81_614)* v::node<_,v_node_81_614>
-        or emp&x1=null & v=null
-*/

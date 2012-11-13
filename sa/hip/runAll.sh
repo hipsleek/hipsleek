@@ -32,15 +32,15 @@ echo "ll-next5"
 ../../hip ll-next5.ss -cp-test cp/ll-next5.cp | grep Compare
 echo "ll-next6"
 ../../hip ll-next6.ss -cp-test cp/ll-next6.cp | grep Compare
-echo "ll-delete - cp fault"
+echo "ll-delete"
 ../../hip ll-delete.ss -cp-test cp/ll-delete.cp | grep Compare
-echo "ll-delete2 - cp fault"
+echo "ll-delete2"
 ../../hip ll-delete2.ss -cp-test cp/ll-delete2.cp | grep Compare
 echo "ll-get_size"
 ../../hip ll-get-size.ss -cp-test cp/ll-get-size.cp | grep Compare
 echo "ll_all1"
 ../../hip ll_all1.ss -cp-test cp/ll_all1.cp | grep Compare
-echo "ll_all3 - cp fault"
+echo "ll_all3"
 ../../hip ll_all3.ss -cp-test cp/ll_all3.cp | grep Compare
 echo "ll_all4"
 ../../hip ll_all4.ss -cp-test cp/ll_all4.cp | grep Compare
@@ -54,7 +54,7 @@ echo "ll_all10"
 ../../hip ll_all10.ss -cp-test cp/ll_all10.cp | grep Compare
 echo "ll_all_13"
 ../../hip ll_all_13.ss -cp-test cp/ll_all_13.cp | grep Compare
-echo "ll_all_13a - cp fault"
+echo "ll_all_13a"
 ../../hip ll_all_13a.ss -cp-test cp/ll_all_13a.cp | grep Compare
 echo "ll_all_13b"
 ../../hip ll_all_13b.ss -cp-test cp/ll_all_13b.cp | grep Compare
@@ -70,5 +70,7 @@ echo "ll-ret-first"
 ../../hip ll-ret-first.ss -cp-test cp/ll-ret-first.cp | grep Compare
 echo "ll-ret-first1"
 ../../hip ll-ret-first1.ss -cp-test cp/ll-ret-first1.cp | grep Compare
+echo "bt-count-1.ss"
+../../hip bt-count-1.ss -cp-test cp/bt-count-1.ss | grep Compare
 echo "ll-ret-first2: have not captured non-ptr values"
 ../../hip ll-ret-first2.ss -cp-test cp/ll-ret-first2.cp | grep Compare

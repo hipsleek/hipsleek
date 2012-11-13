@@ -1687,6 +1687,8 @@ let remove_dups_recursive_x hp args unk_hps defs=
            (* let _ = DD.info_pprint ("       new_last_svl: " ^ (!CP.print_svl new_last_svl)) no_pos in *)
            if (List.length n_matcheds2) = (List.length hns) then
              let last_svl1 = List.filter CP.is_node_typ new_last_svl in
+             let _ = DD.info_pprint ("       last_svl1: " ^ (!CP.print_svl last_svl1)) no_pos in
+             let _ = DD.info_pprint ("       args: " ^ (!CP.print_svl args)) no_pos in
              let ss = List.combine last_svl1 [List.hd args] in
              let n_rest2 = List.map (CF.dn_subst (ss)) rest2 in
              let n_matcheds21,r_ss1 = recover_subst r_ss n_matcheds2 in
@@ -1769,7 +1771,7 @@ let remove_dups_recursive_x hp args unk_hps defs=
 let remove_dups_recursive hp args unk_hps defs=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
   let pr2 = pr_pair string_of_bool pr1 in
-  Debug.no_3 "remove_dups_recursive" !CP.print_sv !CP.print_svl pr1 pr2
+  Debug.ho_3 "remove_dups_recursive" !CP.print_sv !CP.print_svl pr1 pr2
       (fun _ _ _ -> remove_dups_recursive_x hp args unk_hps defs) hp args defs
 
 let simplify_set_of_formulas_x prog hp args unk_hps defs=
