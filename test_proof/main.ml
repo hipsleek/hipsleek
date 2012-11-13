@@ -393,7 +393,7 @@ let get_result res_file middle_fix=
 										try
 											BatString.find x "Time spent in child processes: ";
 									    temp:= !temp ^ BatString.strip ~chars:"\tTime spent in child processes: , second(s)" x   ;
-											resi := !temp ^"\t"^ !resi ^"\t" ^string_of_int t1 ^"\t" ^string_of_int t2;
+											resi := "\t"^ !temp ^"\t"^ !resi ^"\t" ^string_of_int t1 ^"\t" ^string_of_int t2;
 							
 											ll.(i-10) <- (ll.(i-10) ^ !resi ^ "\n");
 											print_endline (ll.(i-10));
