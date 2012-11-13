@@ -149,7 +149,7 @@ let get_result_file filename =
   let _= List.map ( fun x->
 		if(!flag = false) then
 		  try 
-			  BatString.find x "Stop z3";
+			  BatString.find x "Stop";
 			  flag := true
 		  with _-> ()
 		else	
