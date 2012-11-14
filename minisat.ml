@@ -580,12 +580,9 @@ let to_minisat_cnf (ante: Cpure.formula)  =
 		let _= number_vars := 0  in
 		(* let _=Gen.Profiling.push_time("stat_CNF_ori_conversion") in *)
 		(* let ante_cnf=to_cnf ante in(*convert the given formula in to CNF here*) *)
-		let cnf_ante=if (!Globals.do_slicing) then nnf_to_cnf ante
-		               else 
-										(* nnf_to_cnf ante *)
-										to_cnf_no_slicing ante
+		let cnf_ante=nnf_to_cnf ante
 		in
-		let _=print_endline ("To minisat cnf :" ^ (Cprinter.string_of_pure_formula cnf_ante))in
+		(* let _=print_endline ("To minisat cnf :" ^ (Cprinter.string_of_pure_formula cnf_ante))in *)
 		match ante with
 		| BForm ((BConst (a,_),_),_)-> if (a) then (false,"t",G.create(),G.create(),Glabel.create()) else (false,"f",G.create(),G.create(),Glabel.create())
 		|	_ ->

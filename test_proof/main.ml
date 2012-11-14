@@ -172,6 +172,44 @@ let get_result_file filename =
 		
 ;;
 
+let get_result_file_spring filename =
+  let chan = open_in filename in
+  let lip= Std.input_list chan in
+  let _= close_in in
+	let accumulate = ref [] in
+	let num_timeout = ref 0 in
+	let num_schedule = ref "" in
+  (*let _= print_endline ("file2:"^ !Globals.source_file) in *)
+	let flag= ref false in
+  let _= List.map ( fun x->
+		(* let _=print_endline (x) in *)
+		 try (*NO cast*)
+									BatString.find x "goals scheduled";
+									num_schedule :=  BatString.strip ~chars:"[wp] , goals scheduled" x;
+		 with _->
+		let _=try
+			BatString.find x "Error: Failure(\"timeout\")";
+		  num_timeout := !num_timeout +1
+			with _->() in 
+		if(!flag = false) then
+		  try 
+			  BatString.find x "Total time:";
+			  flag := true
+		  with _-> ()
+		else	
+			try
+			  BatString.find x "real";
+			  flag := false
+		  with _->
+			(* let _= print_endline (x) in *)
+			(* let _= print_endline (filename) in *)
+				accumulate := !accumulate @ [x]
+		) lip 
+	in
+	 (!accumulate,!num_timeout,int_of_string !num_schedule) 
+		
+;;
+
 let read_file filename =
   let chan = open_in filename in
   let lip= Std.input_list chan in
@@ -407,13 +445,81 @@ let get_result res_file middle_fix=
 		 output_string out_stream (ll.(i));
 	done;	
  close_out out_stream;
+;;
+
+let get_result_spring res_file =
+	let filename= if(!Globals.logs_dir <>"") then 
+		ref ("./experiments/"^(!Globals.logs_dir)^"/spring.")
+		else 
+		ref ("./experiments/logs_Nov14_0959/spring.")	 
+	in
+	let ll1= Array.make 9 "" in
+	let ll2= Array.make 9 "" in
+    (*let _ = print_endline ("input: " ^ input) in*)
+	for i=2 to 10 do (*NO SLICING*)
+     	let l1,t1,nums1=get_result_file_spring (!filename^(string_of_int i)^".s") in
+			let l2,t2,nums2=get_result_file_spring (!filename^(string_of_int i)^".ss") in
+			let resi= ref "" in
+			let temp = ref "" in	
+			let _= List.map ( fun x-> 
+				          (* let _= 	print_endline (x) in *)
+				          try (*NO cast*)
+									BatString.find x "Main: ";
+									resi := !resi ^ BatString.strip ~chars:"Main: , " x;
+									(* print_endline (!resi); *)
+									(* output_string out_stream (s^"\t");  *)
+									resi := !resi^"\t"
+									with _->
+										try
+											BatString.find x "Child: ";
+									    resi := !resi^ BatString.strip ~chars:"Child: , " x;
+											ll1.(i-2) <- !resi^"\t"^string_of_int t1^"\t"^string_of_int nums1^"\n";
+												(* print_endline (!resi^ "--"^string_of_int i) *)
+									     (* output_string out_stream (s^"\t");  *)
+											with _-> ()
+				) l1 in (*CAST*)
+					(* print_endline (string_of_int i) *)
+			let _= resi:= "" in
+			let _= List.map ( fun x->
+				          (* let _= 	print_endline (x) in *)
+				          try (*NO cast*)
+									BatString.find x "Main: ";
+									resi := !resi ^ BatString.strip ~chars:"Main: , " x;
+									(* print_endline (!resi); *)
+									(* output_string out_stream (s^"\t");  *)
+									resi := !resi^"\t"
+									with _->
+										try
+											BatString.find x "Child: ";
+									    resi := !resi^ BatString.strip ~chars:"Child: , " x;
+											ll2.(i-2) <- !resi^"\t"^string_of_int t2^"\t"^string_of_int nums2^"\n";
+												(* print_endline (!resi^ "--"^string_of_int i) *)
+									     (* output_string out_stream (s^"\t");  *)
+											with _-> ()
+												
+				) l2 in ()
+	done;
+	let out_stream = open_out (res_file^".s") in
+	for i=0 to 8 do
+		 output_string out_stream (ll1.(i));
+	done;	
+ close_out out_stream;
+ let out_stream = open_out (res_file^".ss") in
+	for i=0 to 8 do
+		 output_string out_stream (ll2.(i));
+	done;	
+ close_out out_stream;
 
 ;;
 
 let main_get_result ()= 
- let _=get_result "norm.result" "" in 
- let _=get_result "ans.result" "efp.ans." in
- let _=get_result "aus.result" "efp.aus." in ()
+ if (!Globals.tp<>"spring") then	
+  let _=get_result "norm.result" "" in 
+  let _=get_result "ans.result" "efp.ans." in
+  let _=get_result "aus.result" "efp.aus." in ()
+ else
+	let _=get_result_spring "result" in ()
+	
 ;;
 (*-------------------Execute main here--------------------------*)
 let _= process_cmd_line () in
