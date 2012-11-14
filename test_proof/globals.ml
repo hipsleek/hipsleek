@@ -4,6 +4,7 @@ let num_vars_test = ref 0
 let nums_of_check_sat = ref 0
 let tp = ref ""
 let logs_dir = ref ""
+let sp= ref 0
 
 let use_boogie = ref false
 let use_imp = ref false
@@ -24,4 +25,5 @@ let set_tp prover=
 		 get_result := true
 
 let set_dir dir = logs_dir := dir
-	
+
+let set_sp i= sp :=int_of_string i		

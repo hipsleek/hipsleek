@@ -9,6 +9,7 @@ let run_specific_arguments = [
         ("-prog-if-else", Arg.Set Globals.if_else, "Generate the ELSE branch additionally");
         ("-run-boogie", Arg.Set Globals.run_boogie, "Run Z3 with boogie inputs");
         ("-tp", Arg.String Globals.set_tp,"Collect result");
+				("-sp", Arg.String Globals.set_sp,"Number of Spring tests");
         ("-dir", Arg.String Globals.set_dir, "Directory of logs")
   ] 
 

@@ -447,16 +447,16 @@ let get_result res_file middle_fix=
  close_out out_stream;
 ;;
 
-let get_result_spring res_file =
+let get_result_spring res_file n=
 	let filename= if(!Globals.logs_dir <>"") then 
 		ref ("./experiments/"^(!Globals.logs_dir)^"/spring.")
 		else 
 		ref ("./experiments/logs_Nov14_0959/spring.")	 
 	in
-	let ll1= Array.make 9 "" in
-	let ll2= Array.make 9 "" in
+	let ll1= Array.make (n-1) "" in
+	let ll2= Array.make (n-1) "" in
     (*let _ = print_endline ("input: " ^ input) in*)
-	for i=2 to 10 do (*NO SLICING*)
+	for i=2 to n do (*NO SLICING*)
      	let l1,t1,nums1=get_result_file_spring (!filename^(string_of_int i)^".s") in
 			let l2,t2,nums2=get_result_file_spring (!filename^(string_of_int i)^".ss") in
 			let resi= ref "" in
@@ -500,12 +500,12 @@ let get_result_spring res_file =
 				) l2 in ()
 	done;
 	let out_stream = open_out (res_file^".s") in
-	for i=0 to 8 do
+	for i=0 to n-2 do
 		 output_string out_stream (ll1.(i));
 	done;	
  close_out out_stream;
  let out_stream = open_out (res_file^".ss") in
-	for i=0 to 8 do
+	for i=0 to n-2 do
 		 output_string out_stream (ll2.(i));
 	done;	
  close_out out_stream;
@@ -518,7 +518,7 @@ let main_get_result ()=
   let _=get_result "ans.result" "efp.ans." in
   let _=get_result "aus.result" "efp.aus." in ()
  else
-	let _=get_result_spring "result" in ()
+	let _=get_result_spring "result" !Globals.sp in ()
 	
 ;;
 (*-------------------Execute main here--------------------------*)
