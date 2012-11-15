@@ -1771,7 +1771,7 @@ let remove_dups_recursive_x hp args unk_hps defs=
 let remove_dups_recursive hp args unk_hps defs=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
   let pr2 = pr_pair string_of_bool pr1 in
-  Debug.ho_3 "remove_dups_recursive" !CP.print_sv !CP.print_svl pr1 pr2
+  Debug.no_3 "remove_dups_recursive" !CP.print_sv !CP.print_svl pr1 pr2
       (fun _ _ _ -> remove_dups_recursive_x hp args unk_hps defs) hp args defs
 
 let simplify_set_of_formulas_x prog hp args unk_hps defs=
