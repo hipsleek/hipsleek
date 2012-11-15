@@ -72,13 +72,22 @@ checkeq [x] x::node<a,null> & a=2 -|- x::node<2,null> .
 /*
 !!! EQ. FMT: [[(flted_82_185, flted_82_193), (a, flted_82_194)]]
 !!! EQ. FMT: [[(flted_82_193, flted_82_185), (flted_82_194, a)]]
-Checkeq (12) : Fail.
-
-ERROR: why no diff printed? Can equality be more aggressive
+Checkeq (12) : Valid.
+!!! [(flted_71_171, flted_71_179), (a, flted_71_180)]
 */
 
-
 //(13)
+checkeq [x] x::node<a,null> & a=2 -|- x::node<b,null> & b=c & c=2 .
+/*
+!!! DIFF PART: [ emp&a=2]
+!!! Current EQ. FMT: [[(flted_80_186, flted_80_193), (a, b)]]
+!!! DIFF PART: [ emp&b=c & c=2]
+!!! Current EQ. FMT: [[(flted_80_193, flted_80_186), (b, a)]]
+Checkeq (13) : Fail.
+
+*/
+
+//(14)
 checkeq [] x::node<a,null> & a=2 -|- y::node<c,null> & c=3 .
 /*
 !!! DIFF PART: [ emp&a=2]
@@ -88,7 +97,7 @@ Checkeq (13) : Fail.
 ERROR : maybe can print EQ FMT so far..
 */
 
-//(14)
+//(15)
 checkeq [x] x::node<a,null> * y::node<_,_> -|- x::node<c,null> .
 /*
 !!! DIFF PART: [ y::node<Anon_35,Anon_36>@M[Orig]]
@@ -96,7 +105,7 @@ checkeq [x] x::node<a,null> * y::node<_,_> -|- x::node<c,null> .
 */
 
 
-//(12)
+//(16)
 checkeq [x] x::node<a,null> -|- y::node<c,null> .
 // VALID --> [(flted_13_38, flted_13_44), (a, c), (x, y)]
 
