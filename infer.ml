@@ -1395,7 +1395,7 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
       CP.remove_dups_svl (CP.diff_svl args def_svl)
     else []
   in
-  let get_lhs_fold_fwd_svl rhs_args lhs_hds ls_lhs_hpargs=
+  let get_lhs_fold_fwd_svl selected_hps def_vs rhs_args lhs_hds ls_lhs_hpargs=
     (* let _ = DD.info_pprint (" rhs_args: " ^ (!CP.print_svl rhs_args)) pos in *)
     let rec find_pto cur_hds sv=
       match cur_hds with
@@ -1404,13 +1404,15 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
                     if CP.mem_svl sv ptr_args then [hd.CF.h_formula_data_node]
                     else find_pto tl sv
     in
-    let process_one (_,args)=
-      let not_fwd_slv = CP.remove_dups_svl (CP.diff_svl args rhs_args) in
+    let process_one (hp,args)=
+      if CP.mem_svl hp selected_hps then
+        let not_fwd_slv = CP.remove_dups_svl (CP.diff_svl args (def_vs@rhs_args)) in
       (*check whether it is in form of lhs unfold*)
-      let should_be_lhs_folded = List.map (fun sv -> sv,find_pto lhs_hds sv) not_fwd_slv in
-      let ls_fwd_svl = List.map (fun (sv,ptos) -> if CP.diff_svl ptos rhs_args = [] then [] else [sv])
+        let should_be_lhs_folded = List.map (fun sv -> sv,find_pto lhs_hds sv) not_fwd_slv in
+        let ls_fwd_svl = List.map (fun (sv,ptos) -> if CP.diff_svl ptos rhs_args = [] then [] else [sv])
           should_be_lhs_folded in
-      (List.concat ls_fwd_svl)
+        (List.concat ls_fwd_svl)
+      else []
     in
     let ls_not_fwd_svl = List.map process_one ls_lhs_hpargs in
     (*should separate list of list *)
@@ -1451,25 +1453,26 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
   (* let undefs1 = CP.diff_svl undefs lraw_defined_root_args1 in *)
   let l_args = List.concat (List.map (fun (_, exps, _) ->
       let r =List.concat (List.map CP.afv exps) in
-      if (CP.intersect r closed_unmatched_svl) != [] then r else []
+      if (CP.intersect_svl r closed_unmatched_svl) != [] then r else []
   ) lhrs) in
   let r_args = List.concat (List.map (fun (_, exps, _) ->  List.concat (List.map CP.afv exps)) rhrs) in
   let r_args1 = (List.fold_left SAU.close_def r_args (leqs@reqs)) in
   let def_vsargs = List.concat (List.map (SAU.look_up_ptr_args_one_node prog hds hvs) def_vs) in
   let used_svl = CP.remove_dups_svl (def_vsargs@def_vs@r_args1) in
   let lundefs_args = CP.remove_dups_svl (CP.diff_svl l_args used_svl) in
-  DD.info_pprint ("leqNulls: " ^ (!CP.print_svl leqNulls)) pos;
-  DD.info_pprint ("rhs_h_matched_set: " ^ (!CP.print_svl rhs_h_matched_set)) pos;
-  DD.info_pprint ("def_vs: " ^ (!CP.print_svl def_vs)) pos;
-  DD.info_pprint ("def_vsargs: " ^ (!CP.print_svl def_vsargs)) pos;
-  DD.info_pprint ("used_svl: " ^ (!CP.print_svl used_svl)) pos;
-  DD.info_pprint ("l_args: " ^ (!CP.print_svl l_args)) pos;
+  DD.ninfo_pprint ("leqNulls: " ^ (!CP.print_svl leqNulls)) pos;
+  DD.ninfo_pprint ("rhs_h_matched_set: " ^ (!CP.print_svl rhs_h_matched_set)) pos;
+  DD.ninfo_pprint ("def_vs: " ^ (!CP.print_svl def_vs)) pos;
+  DD.ninfo_pprint ("def_vsargs: " ^ (!CP.print_svl def_vsargs)) pos;
+  DD.ninfo_pprint ("used_svl: " ^ (!CP.print_svl used_svl)) pos;
+  DD.ninfo_pprint ("l_args: " ^ (!CP.print_svl l_args)) pos;
+  DD.info_pprint ("selected_hps: " ^ (!CP.print_svl selected_hps)) pos;
   DD.info_pprint ("lundefs_args: " ^ (!CP.print_svl lundefs_args)) pos;
   let n_lfb = CF.subst_b leqs lfb in
   let n_unmatched = CF.h_subst leqs unmatched in
-  (* let n_unmatched= CF.h_subst leqs unmatched in *)
   (*START debugging*)
-  (* let _ = DD.info_pprint (" n_lfb: " ^ (Cprinter.string_of_formula_base n_lfb)) pos in *)
+  let _ = DD.info_pprint (" n_lfb: " ^ (Cprinter.string_of_formula_base n_lfb)) pos in
+  let _ = DD.info_pprint (" n_unmatched: " ^ (Cprinter.string_of_h_formula n_unmatched)) pos in
   (*END debugging*)
   let n_lhds, _, n_lhrs = CF.get_hp_rel_bformula n_lfb in
   (*find undefined ptrs of all hrel args*)
@@ -1480,8 +1483,10 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
       let rhs_hpargs = CF.extract_HRel n_unmatched in
       (*since h_subst is not as expected we use closed set*)
       let closed_rhs_hpargs = SAU.find_close (snd rhs_hpargs) leqs in
-      let svl = get_lhs_fold_fwd_svl closed_rhs_hpargs n_lhds (List.map helper n_lhrs) in
-      (svl,CP.diff_svl lundefs_args svl)
+      let svl = get_lhs_fold_fwd_svl selected_hps def_vs closed_rhs_hpargs n_lhds (List.map helper n_lhrs) in
+       (* let closed_svl = SAU.find_close svl leqs in *)
+       DD.info_pprint ("svl: " ^ (!CP.print_svl svl)) pos;
+      (svl,[])
     else
       let hds = SAU.get_hdnodes_hf n_unmatched in
       let hd =
