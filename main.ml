@@ -96,7 +96,11 @@ let parse_file_cp file_name =
        raise t)
 
 let process_cp_file prog =
-  let (hpdefs, proc_tcomps) = parse_file_cp !Globals.file_cp in 
+  let file_to_cp = if(String.compare !Globals.file_cp "" != 0) then !Globals.file_cp else (
+    "sa/hip/test/ll-append3.cp"
+  )
+  in
+  let (hpdefs, proc_tcomps) = parse_file_cp file_to_cp in 
   let helper procs tcomps =
     let rec update_tcomp proc tcomps =
       let proc_name = proc.Iast.proc_name in
@@ -132,7 +136,7 @@ let process_source_full source =
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source in
   let _ = Gen.Profiling.push_time "Process compare file" in
-  let prog = if(!Globals.cp_test) then (
+  let prog = if(!Globals.cp_test || !Globals.cp_prefile) then (
     process_cp_file prog 
   )
     else prog

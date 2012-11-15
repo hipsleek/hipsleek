@@ -598,6 +598,8 @@ let perm_prof = ref false
 
 let cp_test = ref false 
 
+let cp_prefile = ref false 
+
 let gen_cpfile = ref false 
 
 let file_cp = ref ""

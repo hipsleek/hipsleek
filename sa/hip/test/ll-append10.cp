@@ -10,7 +10,7 @@ HeapPred G3(node b, node c, node d).
 HeapPred G1(node a).
 HeapPred G2(node a, node b).
 
-append[
+#append:SUCCESS[
 ass [H1,H1a,H1b,G2]: {
  H1a(y) * HP_551(v_node_54_568) * x::node<val_54_557,y>&v_node_54_568=null -->  G2(x,y) * H1b(y)&true;
  emp&v_node_54_568=null -->  H1b(y)&true;
@@ -31,18 +31,18 @@ hpdefs [H1,H1a,H1b,G2]: {
  or next_54_533'::node<val_54_532',next_54_607> * HP_604(next_54_607)&true
  ;
  HP_551(v_node_54_594)&true -->  
- v_node_54_594::node<val_54_532',next_54_584>&next_54_584=null
- or v_node_54_594::node<val_54_532',next_54_585> * 
+ v_node_54_594::node<val_54_532',next_54_533'> * 
+ next_54_533'::node<val_54_532',next_54_584>&next_54_584=null
+ or v_node_54_594::node<val_54_532',next_54_533'> * 
+    next_54_533'::node<val_54_532',next_54_585> * 
     next_54_585::node<val_54_532',next_54_586>&next_54_586=null
- or v_node_54_594::node<val_54_532',next_54_587> * 
+ or v_node_54_594::node<val_54_532',next_54_533'> * 
+    next_54_533'::node<val_54_532',next_54_587> * 
     next_54_587::node<val_54_532',next_54_588>&next_54_588=null
- or v_node_54_594::node<val_54_532',next_54_533'> * 
-    next_54_533'::node<val_54_532',next_54_589>&next_54_589=null
- or v_node_54_594::node<val_54_532',next_54_533'> * 
-    next_54_533'::node<val_54_532',next_54_590> * 
+ or v_node_54_594::node<val_54_532',next_54_589>&next_54_589=null
+ or v_node_54_594::node<val_54_532',next_54_590> * 
     next_54_590::node<val_54_532',next_54_591>&next_54_591=null
- or v_node_54_594::node<val_54_532',next_54_533'> * 
-    next_54_533'::node<val_54_532',next_54_592> * 
+ or v_node_54_594::node<val_54_532',next_54_592> * 
     next_54_592::node<val_54_532',next_54_593>&next_54_593=null
  or emp&v_node_54_594=null
  ;

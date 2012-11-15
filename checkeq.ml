@@ -106,7 +106,7 @@ and checkeq_formulas_one ivars f1 f2 mtl =
     (fun _ _ _ ->  checkeq_formulas_one_x ivars f1 f2 mtl) f1 f2 mtl
 
 and checkeq_formulas_one_x (hvars: ident list) (f1: CF.formula) (f2: CF.formula)(mtl: (map_table list)): (bool*(map_table list))=
-  
+  let check_no f1 f2 = (CF.no_of_cnts_fml f1 == CF.no_of_cnts_fml f2) in
   let helper hvars f1 f2 mtl = 
     match f1 with
       |CF.Base({CF.formula_base_heap = h1;
@@ -143,10 +143,10 @@ and checkeq_formulas_one_x (hvars: ident list) (f1: CF.formula) (f2: CF.formula)
 	  )
     	  |_ -> (false,[]))
   in
-  let (res,new_mtl) = helper hvars f1 f2 mtl in
+  let (res,new_mtl) = if(check_no f1 f2) then helper hvars f1 f2 mtl else (false,[]) in
   if(not(res) && not(!Globals.dis_sem)) then (
     let (f1,f2) = simplify_2f f1 f2 hvars in
-    let (res2,new_mtl2) = helper hvars f1 f2 mtl in
+    let (res2,new_mtl2) = if(check_no f1 f2) then helper hvars f1 f2 mtl else (false,[])  in
     if(res2) then  (res2,new_mtl2)
     else (res,new_mtl)
   )

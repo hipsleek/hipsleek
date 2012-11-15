@@ -192,10 +192,10 @@ and cp_file_comps =
 and test_comps = {
   expected_ass: (((ident list) * (ass list)) option);
   expected_hpdefs: (((ident list) * (ass list)) option) }
-
+    
 and expected_comp = 
-  | ExpectedAss of ((ident list) * (ass list)) 
-  | ExpectedHpDef of ((ident list) * (ass list))
+    | ExpectedAss of ((ident list) * (ass list)) 
+    | ExpectedHpDef of ((ident list) * (ass list))
 
 and ass = {
   ass_lhs: F.formula;

@@ -1956,7 +1956,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 		      List.fold_left (fun piv sr -> piv  ^ sr ^ "\n" ) "" (List.map (fun r -> (pr_res) r) rl)
 		    in
 
-		    let _ = if(!Globals.cp_test) then(
+		    let _ = if(!Globals.cp_test || !Globals.cp_prefile) then(
 		      let _ = Gen.Profiling.push_time "Compare res with cp file" in
 		      let test_comps = proc.Cast.proc_test_comps in
 		      let is_match_constrs il constrs = 
@@ -1981,32 +1981,42 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			)
 		      in
 		      let (res1, res2) =
-                match test_comps with
-			      | None -> (false,false)
-			      | Some tcs -> (
-			          let ass = tcs.Cast.expected_ass in
-			          let hpdefs = tcs.Cast.expected_hpdefs in
-			          match ass,hpdefs with
-			            | None, None -> (false, false)
-			            | Some (il,a), None -> (is_match_constrs il a, false) 
-			            | None, Some (il,d) -> (false, is_match_defs il d)
-			            | Some (il1,a), Some (il2,d) ->  (is_match_constrs il1 a, is_match_defs il2 d)
-			      )
+			match test_comps with
+			  | None -> (false,false)
+			  | Some (tcs) -> (
+			    let ass = tcs.Cast.expected_ass in
+			    let hpdefs = tcs.Cast.expected_hpdefs in
+			    match ass,hpdefs with
+			      | None, None -> (false, false)
+			      | Some (il,a), None -> (is_match_constrs il a, false) 
+			      | None, Some (il,d) -> (false, is_match_defs il d)
+			      | Some (il1,a), Some (il2,d) ->  (is_match_constrs il1 a, is_match_defs il2 d)
+			  )
 		      in
-		      let _ = if(res1) then 
-			  print_string ("Compare ass " ^ proc.proc_name ^ " SUCCESS\n" )
-			else 
-			  print_string ("Compare ass " ^ proc.proc_name ^ " FAIL\n" )
+		      let is_have_tc = match test_comps with
+			  | None -> false 
+			  | _ -> true
 		      in
-		      let _ = if(res2) then 
-			  print_string ("Compare defs " ^ proc.proc_name ^ " SUCCESS\n" )
-			else 
-			  print_string ("Compare defs " ^ proc.proc_name ^ " FAIL\n" )
+		      let _ = 
+			if(is_have_tc) then (
+			  let _ = if(res1) then 
+			      print_string ("Compare ass " ^ proc.proc_name ^ " SUCCESS\n" )
+			    else 
+			      print_string ("Compare ass " ^ proc.proc_name ^ " FAIL\n" )
+			  in
+			  let _ = if(res2) then 
+			      print_string ("Compare defs " ^ proc.proc_name ^ " SUCCESS\n" )
+			    else 
+			      print_string ("Compare defs " ^ proc.proc_name ^ " FAIL\n" )
+			  in
+			  ()
+			)
 		      in
 		      let _ = Gen.Profiling.pop_time "Compare res with cp file" in
 		      ()
 		    ) in
 		    let _ = if(!Globals.gen_cpfile) then(
+		      let _ = Gen.Profiling.push_time "Gen cp file" in
 		      let file_name = !Globals.cpfile in
 		      let hpdecls = prog.prog_hp_decls in
 		      (*dropped_hps *)
@@ -2059,11 +2069,13 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			let hpdefs = "hpdefs " ^ (!CP.print_svl sel_hp_rels) ^ ": {\n"  ^ hpdefs_cont ^ "\n}\n"in
 			let test_comps = ass ^ hpdefs  in
 			let unmin_name = unmingle_name proc.proc_name in
-			let message = hp_decls ^ "\n" ^ unmin_name ^ "[\n" ^ test_comps ^ "]\n" in
+			let expected_res = "SUCCESS" in (*TODO: final res here (in inference, often SUCCESS*)
+			let message = hp_decls ^ "\n#" ^ unmin_name ^":" ^ expected_res ^"[\n" ^ test_comps ^ "]\n" in
 			message
 		      in
 		      let message = string_of_message sel_hp_rels hp_lst_assume ls_inferred_hps in
-		      try
+		      
+		      let _ = try
 			let cout = open_out file_name in
 			(*let co = Format.formatter_of_out_channel cout in
 			Format.fprintf co "%s\n" message;*)
@@ -2071,9 +2083,12 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			close_out cout
 		      with Sys_error _ as e ->
 			Format.printf "Cannot open file \"%s\": %s\n" file_name (Printexc.to_string e)
+		      in
+		      let _ = Gen.Profiling.pop_time "Gen cp file" in
+		      ()			
 		    )
 		    in
-                   (****)
+                   (********************************************)
                     let lst_rank = List.map (fun (_,a2,a3)-> (a2,a3)) lst_rank in
                     (*let _ = Ranking.do_nothing in*)
                     Debug.trace_hprint (add_str "SPECS (after simplify_ann)" pr_spec) new_spec no_pos;

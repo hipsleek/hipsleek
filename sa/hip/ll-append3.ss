@@ -85,6 +85,21 @@ void append(node x, node y)
     append(x.next, y);
 }
 
+void append2(node x, node y)
+
+//G1 can not be a lseg because y!=null
+  infer[H1,G1]
+  requires H1(x)*y::node<a,null>
+     ensures G1(x,y) *y::node<a,null>;
+
+
+{
+  if (x.next == null)
+    x.next = y;
+  else
+    append2(x.next, y);
+}
+
 /*
 [ HP_RELDEFN HP_644
 HP_644(y_643,y) ::=

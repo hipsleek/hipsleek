@@ -2309,7 +2309,7 @@ cp_comp: [[ r=hp_decl; `DOT -> Hpdecl r
 	  | t=test -> ProcERes t]]; 
 
 test: 
-  [[t = id; `OSQUARE; tl=test_list; `CSQUARE ->  (t,tl) ]];
+  [[`HASH; t = id;`COLON; s = id ; `OSQUARE; tl=test_list; `CSQUARE ->  (t,tl) ]];
 
 test_list: [[t = LIST0 test_ele -> 
     let ass  =  ref (None : ((ident list) * (ass list)) option) in

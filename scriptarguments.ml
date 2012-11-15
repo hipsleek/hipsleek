@@ -316,6 +316,8 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
    "translate seq to try");
   ("-cp-test", Arg.String set_file_cp,
    "compare set of constraints");
+  ("-cp-pre-test", Arg.Set Globals.cp_prefile,
+   "compare set of constraints");
   ("-gen-cpfile", Arg.String set_gen_cpfile,
    "compare set of constraints");
   ("-lib", Arg.String set_lib_file,

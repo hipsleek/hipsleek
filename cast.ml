@@ -129,7 +129,7 @@ and proc_decl = {
     proc_is_recursive : bool;
     proc_file : string;
     proc_loc : loc;
-    proc_test_comps : test_comps option}
+    proc_test_comps :  test_comps option}
 
 and test_comps = 
     {

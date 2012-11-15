@@ -923,23 +923,23 @@ $output_file = "log";
 		["ll-append9.ss",1, " -cp-test ","ll-append9.cp", "append", "SUCCESS.SUCCESS"],
 		["ll-append10.ss",1, " -cp-test ","ll-append10.cp", "append", "SUCCESS.SUCCESS"]],
 
-    "sa2"=>[["ll-append3.ss",1, " -cp-test ","test/ll-append3.cp", "append", "SUCCESS.SUCCESS"],
-	   ["ll-append4.ss",1, " -cp-test ","test/ll-append4.cp", "append", "SUCCESS.SUCCESS"],
-	   ["ll-append5.ss",1, " -cp-test ","test/ll-append5.cp", "append", "SUCCESS.SUCCESS"],
-		["ll-append6.ss",1, " -cp-test ","test/ll-append6.cp", "append", "SUCCESS.SUCCESS"],
-		["ll-append7.ss",1, " -cp-test ","test/ll-append7.cp", "append", "SUCCESS.SUCCESS"],
-		["ll-append8.ss",1, " -cp-test ","test/ll-append8.cp", "append", "SUCCESS.SUCCESS"],
-		["ll-append9.ss",1, " -cp-test ","test/ll-append9.cp", "append", "SUCCESS.SUCCESS"],
-		["ll-append10.ss",1, " -cp-test ","test/ll-append10.cp", "append", "SUCCESS.SUCCESS"]],
+    "sa2"=>[["ll-append3.ss"],
+	   ["ll-append4.ss"],
+	   ["ll-append5.ss"],
+		["ll-append6.ss"],
+		["ll-append7.ss"],
+		["ll-append8.ss"],
+		["ll-append9.ss"],
+		["ll-append10.ss"]],
 
-    "gen_cpfile"=>[["ll-append3.ss"," -gen-cpfile ","test/ll-append3.cp"],
-	   ["ll-append4.ss"," -gen-cpfile ","test/ll-append4.cp"],
-	   ["ll-append5.ss"," -gen-cpfile ","test/ll-append5.cp"],
-		["ll-append6.ss"," -gen-cpfile ","test/ll-append6.cp"],
-		["ll-append7.ss"," -gen-cpfile ","test/ll-append7.cp"],
-		["ll-append8.ss"," -gen-cpfile ","test/ll-append8.cp"],
-		["ll-append9.ss"," -gen-cpfile ","test/ll-append9.cp"],
-		["ll-append10.ss"," -gen-cpfile ","test/ll-append10.cp"]]
+    "gen_cpfile"=>[["ll-append3.ss"],
+	   ["ll-append4.ss"],
+	   ["ll-append5.ss"],
+		["ll-append6.ss"],
+		["ll-append7.ss"],
+		["ll-append8.ss"],
+		["ll-append9.ss"],
+		["ll-append10.ss"]]
     );
 
 # list of file, string with result of each entailment&lemma....
@@ -1095,10 +1095,12 @@ sub hip_process_file {
 
 	foreach $test (@{$t_list})
 	{
+	    ($filename) = $test->[0] =~ /(.*)\./s;
+	    $cpfile =  "$exempl_path/test/$filename.cp";
 	    if ("$param" =~ "gen_cpfile") {
-		print "Generating $test->[2]\n";
-		$extra_options = $test->[1];
-		$output = `$hip $script_arguments $test->[0]  $extra_options  $test->[2]  2>&1`;
+		print "Generating $cpfile\n";
+		$options = "-gen-cpfile";
+		$output = `$hip $script_arguments $test->[0]  $options $cpfile  2>&1`;
 	    }
 	    else 
 	    {
@@ -1110,44 +1112,45 @@ sub hip_process_file {
 		}
 		
 		if ("$param" =~ "sa") {
-			#print "$hip $script_arguments $test->[0]  $extra_options  $test->[3]  2>&1 \n";	
-		    $output = `$hip $script_arguments $test->[0]  $extra_options  $test->[3]  2>&1`;
+		    $options = "-cp-test" ;		    
+		    #print "$hip $exempl_path/$test->[0]  $options   $cpfile $script_arguments 2>&1 \n";	
+		    $output = `$hip $exempl_path/$test->[0]  $options  $cpfile  $script_arguments 2>&1`;
 		    print LOGFILE "\n======================================\n";
 		    print LOGFILE "$output";
+		    $expected_res = "Expected res";	
 		    $cp_ass = "Compare ass";
 		    $cp_defs = "Compare defs";
-		    $limit = $test->[1]*2+3;
-		    for($i = 4; $i<$limit;$i+=2)
-		    {
-			#print "Output: $output \n";
-			#print "compare with: $cp_ass $test->[$i]\$.* SUCCESS \n";
-			$res = "";
-			if($output =~ /$cp_ass $test->[$i]\$.* SUCCESS/){
-			    $res = $res ."SUCCESS";
-		    } 
-		    else {
-			if($output =~ /$cp_ass $test->[$i]\$.* FAIL/) {
-			    $res = $res ."FAIL";
+		    my $cpfile_as_string = do {
+		    	open( my $fh, $cpfile ) or die "Can't open $filename: $!";
+		    	local $/ = undef;
+		    	<$fh>;
+		    };
+		    my @matches = $cpfile_as_string =~ /#([^\[]*)\[/g;
+		    foreach (@matches) {
+			($proc_name) = $_ =~ /(.*)\:/s;
+			($proc_res) = $_ =~ /\:(.*)/s;
+			$r = 1;
+			#print $output;
+			if($output =~ /$procedure $proc_name\$.* $proc_res/) {
+			    $r = 0;
 			}
-		    } 
-		    if($output =~ /$cp_defs $test->[$i]\$.* SUCCESS/) {
-			$res = $res .".SUCCESS";
-		    } 
-		    else {
-			if($output =~ /$cp_defs $test->[$i]\$.* FAIL/){
-			    $res = $res .".FAIL"; 
+			if($proc_res =~ /SUCCESS/s) {
+			    if($output =~ /$cp_ass $proc_name\$.* FAIL/) {$r = 3};
+			    if($output =~ /$cp_defs $proc_name\$.* FAIL/) {$r = 4};
 			}
-		    }
-			if($res !~ /$test->[$i+1]/)
+			if($r != 0)
 			{
 			    $error_count++;
-			    $error_files=$error_files."error at: $test->[0] $test->[$i]\n";
-				#print $output; Diff defs append$node~node {
-					($content1) = $output =~ /Diff constrs $test->[$i]\$.* {(.*)}/s;
-					if(!($content1 eq '')) {print "Diff constrs $test->[$i] {$content1}\n"};
-					($content2) = $output =~ /Diff defs $test->[$i]\$.* {(.*)}/s;
-					if(!($content2 eq '')) {print "Diff defs $test->[$i] {$content2}\n"};
-			    print "error at: $test->[0] $test->[$i]\n";
+			    $error_files=$error_files."error at: $test->[0] $proc_name\n";
+					if($r == 3) { 
+						($content1) = $output =~ /Diff constrs $proc_name\$.* {(.*)}/s;
+						if(!($content1 eq '')) {print "Diff constrs $proc_name {$content1}\n"};
+					};
+					if($r == 4) {
+						($content2) = $output =~ /Diff defs $proc_name\$.* {(.*)}/s;
+						if(!($content2 eq '')) {print "Diff defs $proc_name {$content2}\n"};
+					};
+			    print "error at: $test->[0] $proc_name\n";
 			}
 		    }
 		}

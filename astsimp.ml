@@ -7533,7 +7533,7 @@ and trans_test_comps prog tcomps =
 		  match tcomps with
 		    | None -> None
 		    | Some t ->
-		      Some {
+		      Some  {
 		      C.expected_ass = trans_expected_ass prog t.Iast.expected_ass;
 		      C.expected_hpdefs = trans_expected_ass prog t.Iast.expected_hpdefs;
 		    }
