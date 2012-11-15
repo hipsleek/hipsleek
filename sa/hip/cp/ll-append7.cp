@@ -2,7 +2,7 @@ HeapPred HP_1(node a).
 HeapPred HP_580(node a).
 HeapPred HP_2(node a, node b).
 
-append[
+#append:SUCCESS[
 ass [H1,G2]:{
     x::node<_,b> * G2(b,y')&b!=null & y=null & y'=null --> G2(x,y);
  	HP_580(a) * x::node<_,y'>&a=null & y=null & y'=null --> G2(x,y);

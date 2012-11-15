@@ -1,7 +1,7 @@
 HeapPred HP_1(node a).
 HeapPred HP_1a(node a).
 
-foo[
+#foo:SUCCESS[
 ass [H,H1]:{
     H(x)&x=null --> H1(x)&true;
     x::node<_,x'> * H1(x')&true --> H1(x)&true;

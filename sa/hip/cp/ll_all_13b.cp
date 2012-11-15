@@ -1,7 +1,7 @@
 HeapPred HP_1a(node a).
 HeapPred HP_1b(node a).
 
-trav[
+#trav:SUCCESS[
 ass [H1,G1]:{
  x::node<_,v_node_68_596> * G1(v_node_68_596) --> G1(x);
  H1(x)&x!=null --> G1(x)&true;

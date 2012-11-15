@@ -1,7 +1,7 @@
 HeapPred HP_597(node a).
 HeapPred HP_602(node a).
 
-delete_mid[
+#delete_mid:SUCCESS[
 ass [H1,G2]:{
   x::node<v_int_86_625,next_86_609> * G2(next_86_609,v_node_86_626) * 
   v_node_86_578'::node<v_int_86_625,v_node_86_626>&

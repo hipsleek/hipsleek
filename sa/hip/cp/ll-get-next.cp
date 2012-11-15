@@ -1,7 +1,7 @@
 HeapPred HP_1a(node a).
 HeapPred HP_1(node a).
 
-get_next[
+#get_next:SUCCESS[
 ass [H,G]:{
   HP_1a(p1) * x::node<_,p>&p=null --> G(x,p1);
   H(x) --> x::node<_,p> * HP_1a(p)

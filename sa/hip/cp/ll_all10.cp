@@ -2,7 +2,7 @@ HeapPred HP_1a( node b).
 HeapPred HP_1b( node b).
 HeapPred HP_1(node a).
 
-get_next_next[
+#get_next_next:SUCCESS[
 ass [H1,G2]:{
   x::node<_,p> *  HP_1b(y) * p::node<_,y> --> G2(x,y);
  HP_1a(p1) --> p1::node<_,p2> * HP_1b(p2);

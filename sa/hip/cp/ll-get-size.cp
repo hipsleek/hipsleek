@@ -1,7 +1,7 @@
 HeapPred HP_1a(node a).
 HeapPred HP_1(node a).
 
-get_size[
+#get_size:SUCCESS[
 ass [H,G]:{
   x::node<val_25_598,v_node_25_608> * G(v_node_25_608) --> G(x);
   H(x)&x=null --> G(x);

@@ -2,7 +2,7 @@ HeapPred HP_588(node a).
 HeapPred HP_580(node a).
 HeapPred HP_1(node a).
 
-get_next_next[
+#get_next_next:SUCCESS[
 ass [H1,G1]:{
   HP_588(v_node_28_542') * x::node<_,v_node_26_602> * v_node_26_602::node<_,next_27_541'>& next_27_541'=null --> G1(x,v_node_28_542');
  HP_580(v_node_26_533') --> v_node_26_533'::node<val_26_534',next_26_535'> *  HP_588(next_26_535');

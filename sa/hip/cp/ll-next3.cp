@@ -1,6 +1,6 @@
 HeapPred HP_2(node a, node b).
 
-get_next[
+#get_next:SUCCESS[
 ass [G4]:{
   x::node<Anon_12,next_24_531'> & x=x' &next_24_531'=null &
   v_node_25_532'=q --> G4(x,x',v_node_25_532',q)

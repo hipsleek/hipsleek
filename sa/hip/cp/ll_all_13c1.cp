@@ -4,7 +4,7 @@ HeapPred HP_577(node a).
 HeapPred HP_582(node a).
 HeapPred HP_643(node a).
 
-trav[
+#trav:SUCCESS[
 ass [H1,G2]:{
  G2(v_node_131_605,v_node_131_595) * x::node<val_131_588,v_node_131_605>&
   v_node_132_564'=x --> G2(v_node_132_564',x);

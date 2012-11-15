@@ -3,7 +3,7 @@ HeapPred HP_1(node a).
 HeapPred HP_621(node a).
 HeapPred HP_606(node a).
 
-delete_list[
+#delete_list:SUCCESS[
 ass [D,E]:{
 
   D(x)&x=null & x'=null --> E(x,x');

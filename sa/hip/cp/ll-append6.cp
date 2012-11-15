@@ -2,7 +2,7 @@ HeapPred HP_1(node a).
 HeapPred HP_1a(node a).
 HeapPred HP_2(node a, node b).
 
-append[
+#append:SUCCESS[
 ass [H1,G2]:{ 
   x::node<val_37_596,v_node_37_611> * G2(v_node_37_611,y) * 
     y::node<a,flted_34_587>&flted_34_587=null & v_node_37_611!=null --> G2(x,y)&true;

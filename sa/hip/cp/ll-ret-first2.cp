@@ -2,7 +2,7 @@ HeapPred HP_1(node a).
 HeapPred HP_1a(node b).
 HeapPred HP_1b(node b).
 
-front[
+#front:SUCCESS[
 ass [F,G]:{
     HP_1a(p) * x::node<v_int,p> --> G(x,v_int);
     F(x) --> x::node<_,p> *HP_1a(p)

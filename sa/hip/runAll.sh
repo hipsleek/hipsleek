@@ -71,6 +71,6 @@ echo "ll-ret-first"
 echo "ll-ret-first1"
 ../../hip ll-ret-first1.ss -cp-test cp/ll-ret-first1.cp | grep Compare
 echo "bt-count-1.ss"
-../../hip bt-count-1.ss -cp-test cp/bt-count-1.ss | grep Compare
+../../hip bt-count-1.ss -cp-test cp/bt-count-1.cp | grep Compare
 echo "ll-ret-first2: have not captured non-ptr values"
 ../../hip ll-ret-first2.ss -cp-test cp/ll-ret-first2.cp | grep Compare

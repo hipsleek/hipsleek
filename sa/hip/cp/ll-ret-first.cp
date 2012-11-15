@@ -1,7 +1,7 @@
 HeapPred HP_1(node a).
 HeapPred HP_1a(node a).
 
-front[
+#front:SUCCESS[
 ass [F]:{
          F(x)&true --> x::node<val_13_519',next_13_520'> *  HP_1a(next_13_520')&true
 	}

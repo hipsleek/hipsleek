@@ -3,7 +3,7 @@ HeapPred HP_1a(node a).
 HeapPred HP_1b(node a).
 HeapPred HP_1c(node a).
 
-get_next[
+#get_next:SUCCESS[
 ass [H1,G4]:{
     HP_541(v_node_31_529',q) *  x'::node<_,v_node_31_529'>&x=x'
           --> G4(v_node_31_529',x',x,p) * HP_1a(q);

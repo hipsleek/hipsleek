@@ -84,7 +84,7 @@ void append(node x, node y)
   else
     append(x.next, y);
 }
-
+/*
 void append2(node x, node y)
 
 //G1 can not be a lseg because y!=null
@@ -99,7 +99,7 @@ void append2(node x, node y)
   else
     append2(x.next, y);
 }
-
+*/
 /*
 [ HP_RELDEFN HP_644
 HP_644(y_643,y) ::=

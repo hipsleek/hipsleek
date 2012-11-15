@@ -2,7 +2,7 @@ HeapPred HP_1c(node a).
 HeapPred HP_1a(node a).
 HeapPred HP_1b(node a).
 
-foo[
+#foo:SUCCESS[
 ass [H,H1]:{
     HP_1c(x') * x::node<_,x'>&x'=null --> H1(x);
     x::node<_,x'> * H1(x')&x'!=null --> H1(x);
