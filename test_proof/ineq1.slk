@@ -1,0 +1,36 @@
+// (1) equality is important
+checkentail x!=y  & x=b & b=y |- false.
+/*
+Why isn't x!=y marked as annotated?
+ ### ante =  emp&(
+(SLICE[x,y][x,y](sat?):
+   [x!=y(IN)]
+   [true]
+   alias set:[@]
+ SLICE[y,x,b][](sat?):
+   []
+   [true]
+   alias set:[@{y, b, x}]))&
+
+ no proof in log file at all?
+*/ 
+
+// (2) detecting self contradiction?
+checkentail x!=x & x=b |-false.
+/*
+Type: Sat:  b=x & x!=x
+*/
+
+// (3) detecting self contradiction?
+checkentail x!=x |-false.
+/*
+Type: Sat:  b=x & x!=x
+*/
+
+// (4) slicing properly done?
+checkentail x!=y & x=b |-false.
+/*
+Type: Sat:  b=x
+why isn't x!=y picked for UNSAT?
+*/
+
