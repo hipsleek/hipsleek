@@ -449,7 +449,7 @@ let get_result res_file middle_fix=
 
 let get_result_spring res_file n=
 	let filename= if(!Globals.logs_dir <>"") then 
-		ref ("./experiments/"^(!Globals.logs_dir)^"/spring.")
+		ref ("./"^(!Globals.logs_dir)^"/spring.")
 		else 
 		ref ("./experiments/logs_Nov14_0959/spring.")	 
 	in
