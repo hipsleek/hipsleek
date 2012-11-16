@@ -7821,7 +7821,7 @@ let rec get_Neg_RelForm pf = match pf with
 
 let assumption_filter (ante : formula) (conseq : formula) : (formula * formula) =
   if !filtering_flag (*&& (not !allow_pred_spec)*) then (filter_ante ante conseq, conseq)
-  else(ante, conseq)
+  else (ante, conseq)
 
 (* need unsat checking for disjunctive LHS *)
 let assumption_filter_aggressive is_sat (ante : formula) (conseq : formula) : (formula * formula) =

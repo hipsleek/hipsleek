@@ -981,7 +981,7 @@ and prune_preds_x prog (simp_b:bool) (f:formula):formula =
           let rp = f_p_simp rp in
           mkBase_w_lbl rh rp b.formula_base_type  b.formula_base_flow b.formula_base_and b.formula_base_pos b.formula_base_label in
   (* if not !Globals.allow_pred_spec then f *)
-  if !Globals.dis_ps then f
+  if !Globals.dis_ps then let _ = print_endline ("No pruning") in f
   else
     (
         Gen.Profiling.push_time "prune_preds_filter";
@@ -996,7 +996,7 @@ and prune_preds_x prog (simp_b:bool) (f:formula):formula =
 and prune_preds prog (simp_b:bool) (f:formula):formula =   
   let p1 = string_of_bool in
   let p2 = Cprinter.string_of_formula in
-  Debug.ho_2 "prune_preds" p1 p2 p2 (fun _ _ -> prune_preds_x prog simp_b f) simp_b f
+  Debug.no_2 "prune_preds" p1 p2 p2 (fun _ _ -> prune_preds_x prog simp_b f) simp_b f
 
 and heap_prune_preds_mix prog (hp:h_formula) (old_mem:MCP.mix_formula): (h_formula*MCP.mix_formula*bool)= match old_mem with
   | MCP.MemoF f -> 

@@ -282,7 +282,7 @@ let common_arguments = [
   (* Slicing *)
   (* ("--en-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing"); *)
   
-  ("--es", Arg.Set Globals.en_slc_ps, 
+  ("--es", (Arg.Set Globals.en_slc_ps; Arg.Clear Globals.dis_ps), 
     "Enable slicing with predicate specialization");
   ("--dis-ps", Arg.Set Globals.dis_ps, "Disable predicate specialization (default)");
 	("--dis-ann", Arg.Set Globals.dis_slc_ann, "Disable aggressive slicing with annotation scheme (not default)");
