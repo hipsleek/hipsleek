@@ -1687,8 +1687,8 @@ let remove_dups_recursive_x hp args unk_hps defs=
            (* let _ = DD.info_pprint ("       new_last_svl: " ^ (!CP.print_svl new_last_svl)) no_pos in *)
            if (List.length n_matcheds2) = (List.length hns) then
              let last_svl1 = List.filter CP.is_node_typ new_last_svl in
-             let _ = DD.info_pprint ("       last_svl1: " ^ (!CP.print_svl last_svl1)) no_pos in
-             let _ = DD.info_pprint ("       args: " ^ (!CP.print_svl args)) no_pos in
+             let _ = DD.ninfo_pprint ("       last_svl1: " ^ (!CP.print_svl last_svl1)) no_pos in
+             let _ = DD.ninfo_pprint ("       args: " ^ (!CP.print_svl args)) no_pos in
              let ss = List.combine last_svl1 [List.hd args] in
              let n_rest2 = List.map (CF.dn_subst (ss)) rest2 in
              let n_matcheds21,r_ss1 = recover_subst r_ss n_matcheds2 in
@@ -2455,12 +2455,12 @@ let drop_non_node_unk_hps hp_defs non_node_unk_hps =
   Debug.no_2 "drop_non_node_unk_hps" pr1 pr2 pr1
       (fun _ _ -> drop_non_node_unk_hps_x hp_defs non_node_unk_hps) hp_defs non_node_unk_hps
 
-let transform_unk_hps_to_pure_x hp_defs unk_hpargs =
-  let transform_hp_unk (hp,args)=
-    let hp_name = CP.name_of_spec_var hp in
-    let fr_args = List.map (fun sv -> CP.fresh_spec_var_prefix hp_name sv) args in
-    (hp,fr_args)
-  in
+let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
+  (* let transform_hp_unk (hp,args)= *)
+  (*   let hp_name = CP.name_of_spec_var hp in *)
+  (*   let fr_args = List.map (fun sv -> CP.fresh_spec_var_prefix hp_name sv) args in *)
+  (*   (hp,fr_args) *)
+  (* in *)
   (*returns eqs/ss: mkEqexp/subst ss*)
   let look_up_get_eqs_ss args0 ls_unk_hpargs_fr (used_hp,used_args)=
     try
@@ -2497,7 +2497,8 @@ let transform_unk_hps_to_pure_x hp_defs unk_hpargs =
     let def1 = CF.disj_of_list fs1 (CF.pos_of_formula def) in
     (rc, hf, def1)
   in
-  let ls_unk_hpargs_fr = List.map transform_hp_unk unk_hpargs in
+  let ls_unk_hpargs_fr = unk_hp_frargs in
+  (* let ls_unk_hpargs_fr = List.map transform_hp_unk unk_hpargs in *)
   List.map (subst_pure_hp_unk_hpdef ls_unk_hpargs_fr) hp_defs
 
 let transform_unk_hps_to_pure hp_defs unk_hpargs =
