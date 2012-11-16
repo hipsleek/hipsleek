@@ -19,7 +19,7 @@ hpdefs [H1,H2,H1a,H1b,G1,G2][]:{
  HP_2(x,p) --> x=p or x::node<_,p1> * HP_2(p1,p);
  HP_1(x) --> x=null or x::node<_,p1> * HP_1(p1);
  H1a(y) -->  H1b(y);
- H1a(y) --> true;
- H1b(y) -->  true
+ H1a(y) --> emp&y=H1b_y_659;
+ H1b(y) --> emp&y=H1b_y_659
  }
 ]

@@ -7,7 +7,7 @@ ass [H1,G2][]:{
 	}
 
 hpdefs [H1,G2][]:{
- H1(p) --> htrue&true;
+ H1(x) --> emp&x=H1_x_540;
  G2(x,y) --> x=y
 
  }

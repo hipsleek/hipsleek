@@ -14,6 +14,8 @@ echo "ll-append9.ss"
 ../../hip ll-append9.ss -cp-test cp/ll-append9.cp | grep Compare
 echo "ll-append10.ss"
 ../../hip ll-append10.ss -cp-test cp/ll-append10.cp | grep Compare
+echo "ll-app3.ss"
+../../hip ll-app3.ss -cp-test cp/ll-app3.cp | grep Compare
 echo "ex1.ss"
 ../../hip ex1.ss -cp-test cp/ex1.cp | grep Compare
 echo "ex1a.ss"
@@ -72,5 +74,7 @@ echo "ll-ret-first1"
 ../../hip ll-ret-first1.ss -cp-test cp/ll-ret-first1.cp | grep Compare
 echo "bt-count-1.ss"
 ../../hip bt-count-1.ss -cp-test cp/bt-count-1.cp | grep Compare
+echo "bt-trav.ss"
+../../hip bt-trav.ss -cp-test cp/bt-trav.cp | grep Compare
 echo "ll-ret-first2: have not captured non-ptr values"
 ../../hip ll-ret-first2.ss -cp-test cp/ll-ret-first2.cp | grep Compare

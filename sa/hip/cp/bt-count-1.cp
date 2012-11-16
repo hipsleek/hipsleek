@@ -4,11 +4,12 @@ HeapPred HP_557(node2 a,node2 b).
 
 count:SUCCESS[
 ass [H1,G1][]:{
-  z::node2<val_27_565,v_node2_27_574,right_27_566> * HP_579(v_node2_27_574) * G1(right_27_566)&true --> G1(z)&true;
+  z::node2<val_27_565,v_node2_27_574,right_27_566>* G1(v_node2_27_574) * G1(right_27_566)&true --> G1(z)&true;
   H1(z)&z=null --> G1(z);
-  HP_567(right_27_566) * G1(v_node2_27_574)& true --> H1(right_27_566) * HP_579(v_node2_27_574)&true;
+  HP_567(right_27_566) & true --> H1(right_27_566) &true;
   HP_557(v_node2_27_533',right_27_566)& true --> H1(v_node2_27_533') * HP_567(right_27_566)&true;
   H1(z)&  z!=null --> z::node2<val_27_530',left_27_531',right_27_532'> * HP_557(left_27_531',right_27_532')
+
  }
 
 hpdefs [H1,G1][]:{

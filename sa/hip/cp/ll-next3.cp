@@ -8,7 +8,7 @@ ass [G4][]:{
  }
 
 hpdefs [G4][]:{
-        HP_2(a,b) --> htrue&true;
+  HP_2(a,b) --> a=b;
   G4(x,v_550,res,q) --> x::node<Anon_12,q1>*HP_2(res,q)
   &x=v_550 & res=q & q1=null
  }

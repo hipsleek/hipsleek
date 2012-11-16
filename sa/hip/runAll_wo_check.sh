@@ -14,6 +14,8 @@ echo "ll-append9.ss"
 ../../hip ll-append9.ss
 echo "ll-append10.ss"
 ../../hip ll-append10.ss
+echo "ll-app3.ss"
+../../hip ll-app3.ss
 echo "ex1.ss"
 ../../hip ex1.ss
 echo "ex1a.ss"
