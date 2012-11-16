@@ -619,7 +619,7 @@ let print_input = ref false
 
 let pass_global_by_value = ref false
 
-let allow_pred_spec = ref false
+(* let allow_pred_spec = ref false *)
 
 let disable_failure_explaining = ref true
 
@@ -677,7 +677,10 @@ let dis_ass_chk = ref false
 let log_filter = ref true
   
 (* Options for slicing *)
-let do_slicing = ref false
+(* let do_slicing = ref false *)
+let en_slc_ps = ref false
+let dis_ps = ref false
+let dis_slc_ann = ref false
 let dis_slicing = ref false
 let opt_imply = ref 0
 let opt_ineq = ref false

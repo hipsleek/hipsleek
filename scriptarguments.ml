@@ -227,7 +227,7 @@ let common_arguments = [
 	("--use-tmp",Arg.Unit Globals.set_tmp_files_path, 
 	"Use a local folder located in /tmp/your_username for the prover's temporary files");  
     ("--esn", Arg.Set Globals.enable_norm_simp, "enable simplifier in fast imply");
-    ("--eps", Arg.Set Globals.allow_pred_spec,"enable predicate specialization together with memoized formulas");
+    (* ("--eps", Arg.Set Globals.allow_pred_spec, "enable predicate specialization together with memoized formulas"); *)
     ("-version", Arg.Set Globals.print_version_flag,"current version of software");
     (* ("--dfe", Arg.Set Globals.disable_failure_explaining,"disable failure explaining"); *)
     ("--en-failure-analysis", Arg.Clear Globals.disable_failure_explaining,"enable failure explanation analysis");
@@ -280,7 +280,11 @@ let common_arguments = [
   ("--dis-log-filter", Arg.Clear Globals.log_filter, "turn off the log initial filtering");
 
   (* Slicing *)
-  ("--en-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing");
+  (* ("--en-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing"); *)
+  
+  ("--es", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization (default)");
+  ("--dis-ps", Arg.Set Globals.dis_ps, "Disable predicate specialization (not default)");
+	("--dis-ann", Arg.Set Globals.dis_slc_ann, "Disable aggressive slicing with annotation scheme (not default)");
 	("--slc-rel-level", Arg.Set_int Globals.slicing_rel_level, "Set depth for GetCtr function");
   (*("--dis-slicing", Arg.Set Globals.dis_slicing, "Disable slicing, equivalent to ");*)
   (* similar to --force-one-slice *)

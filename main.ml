@@ -208,7 +208,8 @@ let process_source_full source =
       begin
         let tstartlog = Gen.Profiling.get_time () in
         let _= Log.proof_log_to_file () in
-        let with_option= if(!Globals.do_slicing) then "slicing" else "no_slicing" in
+        (* let with_option = if(!Globals.do_slicing) then "slicing" else "no_slicing" in *)
+        let with_option = "" in
         let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt"  in
         let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
         let _= if (!Globals.proof_logging_txt) 

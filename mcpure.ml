@@ -173,14 +173,16 @@ and group_mem_by_fv (lst: memo_pure):memo_pure =
   Debug.no_1 "group_mem_by_fv" !print_mp_f !print_mp_f group_mem_by_fv_x lst
 	
 and group_mem_by_fv_x (lst: memo_pure):memo_pure =
-  if !do_slicing then AnnoS.group_mem_by_fv lst
+  (* if !do_slicing then AnnoS.group_mem_by_fv lst *)
+	if not !dis_slc_ann then AnnoS.group_mem_by_fv lst
   else AutoS.group_mem_by_fv lst
 
 and regroup_memo_group (lst: memo_pure) : memo_pure =
   Debug.no_1 "regroup_memo_group" !print_mp_f !print_mp_f regroup_memo_group_x lst
 
 and regroup_memo_group_x (lst: memo_pure) : memo_pure =
-  if !do_slicing then AnnoS.regroup_memo_group lst
+  (* if !do_slicing then AnnoS.regroup_memo_group lst *)
+	if not !dis_slc_ann then AnnoS.regroup_memo_group lst
   else AutoS.regroup_memo_group lst
 
 and subst_avoid_capture_memo (fr : spec_var list) (t : spec_var list) (f_l : memo_pure) : memo_pure =
@@ -545,11 +547,11 @@ and fold_mem_lst_to_lst_gen  (mem:memo_pure) with_R with_P with_slice with_disj:
 	
 (* returns list of AND formulas, each slice will be a formula *)
 and fold_mem_lst_to_lst_gen_x (mem:memo_pure) with_R with_P with_slice with_disj : formula list =
-  (*fold_mem_lst_to_lst_gen_orig mem with_R with_P with_slice with_disj*)
-  if !do_slicing && !multi_provers then
-	  fold_mem_lst_to_lst_gen_slicing mem with_R with_P with_slice with_disj
-  else
-	  fold_mem_lst_to_lst_gen_orig mem with_R with_P with_slice with_disj
+  fold_mem_lst_to_lst_gen_orig mem with_R with_P with_slice with_disj
+  (* if !do_slicing && !multi_provers then                                    *)
+	(*   fold_mem_lst_to_lst_gen_slicing mem with_R with_P with_slice with_disj *)
+  (* else                                                                     *)
+	(*   fold_mem_lst_to_lst_gen_orig mem with_R with_P with_slice with_disj    *)
 
 and fold_slice_gen (mg : memoised_group) with_R with_P with_slice with_disj : formula =
   let rec has_disj_f c = match c with | Or _ -> true | _ -> false in
@@ -855,7 +857,8 @@ and merge_mems_nx (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
   let r = 
     if (isConstMFalse l1) || (isConstMTrue l2) then l1
 	  else if (isConstMFalse l2) || (isConstMTrue l1) then l2
-	  else if !do_slicing then AnnoS.merge_mems_nx l1 l2 slice_check_dups filter_merged_cons
+	  (* else if !do_slicing then AnnoS.merge_mems_nx l1 l2 slice_check_dups filter_merged_cons *)
+		else if not !dis_slc_ann then AnnoS.merge_mems_nx l1 l2 slice_check_dups filter_merged_cons
     else AutoS.merge_mems_nx l1 l2 slice_check_dups filter_merged_cons
   in r
 
@@ -951,7 +954,8 @@ and create_memo_group_x
   let l1, to_slice2 = anon_partition l1 in
   let l1, to_slice1 = memo_norm l1 in
   let l2 = to_slice1 @ to_slice2 @ l2 in
-  if !do_slicing then
+  (* if !do_slicing then *)
+	if not !dis_slc_ann then
     AnnoS.create_memo_group l1 l2 status filter_merged_cons
   else 
     AutoS.create_memo_group l1 l2 status filter_merged_cons
@@ -965,7 +969,8 @@ and split_mem_grp (g:memoised_group): memo_pure =
   Debug.no_1 "split_mem_grp" !print_mg_f !print_mp_f split_mem_grp_x g
 
 and split_mem_grp_x (g:memoised_group): memo_pure =
-  if !do_slicing then AnnoS.split_mem_grp g
+  (* if !do_slicing then AnnoS.split_mem_grp g *)
+	if not !dis_slc_ann then AnnoS.split_mem_grp g
   else AutoS.split_mem_grp g
 
 (* this pushes an exist into a memo-pure;
@@ -1053,7 +1058,8 @@ and memo_pure_push_exists_slice_x (f_simp, do_split) (qv: spec_var list) (f0: me
     let after_elim_trues = List.filter (fun c -> not (isConstTrue c)) (split_conjunctions after_simpl) in
     let n_memo_group_fv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv qv in
     let n_memo_group_lv = 
-      if !do_slicing then 
+      (* if !do_slicing then *)
+			if not !dis_slc_ann then
         Gen.BList.difference_eq eq_spec_var
           (Gen.BList.remove_dups_eq eq_spec_var mg.memo_group_linking_vars) qv
       else []
@@ -1075,7 +1081,9 @@ and memo_pure_push_exists_slice_x (f_simp, do_split) (qv: spec_var list) (f0: me
   (* Consider only constraints which are relevant to qv *)
   let rel_mg, non_rel_mg = List.partition (fun mg -> Gen.BList.overlap_eq eq_spec_var qv mg.memo_group_fv) f0 in
   let rel_mg = 
-    if !do_slicing then (* Merge relevant constraints together - For soundness *)
+    (* if !do_slicing then *)
+		if not !dis_slc_ann then
+			(* Merge relevant constraints together - For soundness *)
       let l = MG_Constr_AnS.constr_of_atom_list rel_mg in
       let sl = MG_AnS.split_by_fv qv l in
       MF_AnS.memo_pure_of_mg_slice sl None
@@ -1673,7 +1681,8 @@ let rec mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_
 
 and mimply_process_ante_x with_disj ante_disj conseq str str_time t_imply imp_no =
   let n_ante = 
-    if !do_slicing then 
+    (* if !do_slicing then  *)
+		if not !dis_slc_ann then
       AnnoS.get_rel_ctr !slicing_rel_level conseq ante_disj
     else
       AutoS.get_rel_ctr 1 conseq ante_disj
@@ -2002,9 +2011,11 @@ let consistent_mix_formula (m:mix_formula) : bool =
     | MemoF mp -> consistent_memo_pure mp
     | OnePF _ -> true
   
-let mix_of_pure f = 
-    if (!Globals.allow_pred_spec or !Globals.do_slicing) then MemoF (memoise_add_pure_N (mkMTrue ()) f)
-    else OnePF f
+let mix_of_pure f =
+	(* if (!Globals.allow_pred_spec or !Globals.do_slicing) *)
+  if !Globals.en_slc_ps
+	then MemoF (memoise_add_pure_N (mkMTrue ()) f)
+  else OnePF f
 
 let mix_of_pure f =
   Debug.no_1 "mix_of_pure"
@@ -2020,12 +2031,16 @@ let mkMFalse_no_mix = mkMFalse
 let mkMTrue_no_mix = mkMTrue
   
 let mkMTrue pos = 
-    if (!Globals.allow_pred_spec or !Globals.do_slicing) then  MemoF (mkMTrue pos)
-    else OnePF (mkTrue pos)
+	(* if (!Globals.allow_pred_spec or !Globals.do_slicing) *)
+	if !Globals.en_slc_ps
+	then  MemoF (mkMTrue pos)
+	else OnePF (mkTrue pos)
 	  
 let mkMFalse pos = 
-    if (!Globals.allow_pred_spec or !Globals.do_slicing) then MemoF (mkMFalse pos)
-    else OnePF (mkFalse pos)  
+	(* if (!Globals.allow_pred_spec or !Globals.do_slicing) *)
+	if !Globals.en_slc_ps
+	then MemoF (mkMFalse pos)
+	else OnePF (mkFalse pos)  
   
 let isConstMFalse mx = match mx with
   | MemoF mf -> isConstMFalse mf

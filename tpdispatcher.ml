@@ -826,8 +826,9 @@ let assumption_filter_slicing (ante : CP.formula) (cons : CP.formula) : (CP.form
   (CP.join_conjunctions (pick_rel_constraints cons l_ante), cons)
 	   
 let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) =
-  if !do_slicing && !multi_provers then assumption_filter_slicing ante cons
-  else CP.assumption_filter ante cons
+	CP.assumption_filter ante cons
+  (* if !do_slicing && !multi_provers then assumption_filter_slicing ante cons *)
+  (* else CP.assumption_filter ante cons                                       *)
 
 let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) =
   let pr = Cprinter.string_of_pure_formula in
@@ -1241,21 +1242,18 @@ let simplify (f : CP.formula) : CP.formula =
 				let tstop = Gen.Profiling.get_time () in
 
             (*let _ = print_string ("\nsimplify: f after"^(Cprinter.string_of_pure_formula r)) in*)
-	    (* To recreate <IL> relation after simplifying *)
-           (*let _ = print_string ("TP.simplify: ee formula:\n" ^ (Cprinter.string_of_pure_formula (Redlog.elim_exist_quantifier f))) in*)
-        let res = if !Globals.do_slicing then
-	      let rel_vars_lst =
-		    let bfl = CP.break_formula f in
-		    (*let bfl_no_il = List.filter
-
-			  (fun (_,il) -> match il with
-			  | None -> true
-			  | _ -> false) bfl in*)
-                  (List.map (fun (svl,lkl,_) -> (svl,lkl)) (CP.group_related_vars bfl))
-		  in
-		  CP.set_il_formula_with_dept_list r rel_vars_lst
-	    else r
-			in 	
+	    	(* To recreate <IL> relation after simplifying *)
+        let res = 
+					(* if !Globals.do_slicing then *)
+					if not !Globals.dis_slc_ann then
+						let rel_vars_lst =
+							let bfl = CP.break_formula f in
+							(* let bfl_no_il = List.filter (fun (_,il) -> match il with *)
+							(* | None -> true | _ -> false) bfl in                      *)
+              (List.map (fun (svl,lkl,_) -> (svl,lkl)) (CP.group_related_vars bfl))
+						in CP.set_il_formula_with_dept_list r rel_vars_lst
+					else r
+				in 	
 			let _= add_proof_log simpl_no simpl_no (string_of_prover !tp) (SIMPLIFY f) (tstop -. tstart) (FORMULA res) in
 			 res
       with | _ -> f)
@@ -2020,11 +2018,11 @@ let imply_timeout_slicing (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : 
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) =
-  if !do_slicing && !multi_provers then
-	imply_timeout_slicing ante0 conseq0 imp_no timeout process
-  else
+  (* if !do_slicing && !multi_provers then                      *)
+	(* imply_timeout_slicing ante0 conseq0 imp_no timeout process *)
+  (* else                                                       *)
+	(* imply_timeout ante0 conseq0 imp_no timeout process         *)
 	imply_timeout ante0 conseq0 imp_no timeout process
-
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
@@ -2199,7 +2197,7 @@ let is_sat_sub_no_slicing (f:CP.formula) sat_subno : bool =
 
 let is_sat_sub_no (f : CP.formula) sat_subno : bool =
   if !is_sat_slicing then is_sat_sub_no_slicing f sat_subno
-  else if !do_slicing && !multi_provers then is_sat_sub_no_slicing f sat_subno
+  (* else if !do_slicing && !multi_provers then is_sat_sub_no_slicing f sat_subno *)
   else is_sat_sub_no_c f sat_subno false
 
 let is_sat_sub_no (f : CP.formula) sat_subno : bool =  
@@ -2212,10 +2210,10 @@ let is_sat_memo_sub_no_orig (f : memo_pure) sat_subno with_dupl with_inv : bool 
 		(is_sat_sub_no (CP.join_conjunctions f_lst) sat_subno)
   else if (MCP.isConstMFalse (MemoF f)) then false
   else
-		let f = if !do_slicing
-			(* Slicing: Only check changed slice *)
-			then List.filter (fun c -> c.memo_group_unsat) f
-			else f in
+		(* let f = if !do_slicing                            *)
+		(* 	(* Slicing: Only check changed slice *)          *)
+		(* 	then List.filter (fun c -> c.memo_group_unsat) f *)
+		(* 	else f in                                        *)
 		let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in
 		not (List.exists (fun f -> not (is_sat_sub_no f sat_subno)) f_lst)
 
@@ -2376,12 +2374,14 @@ and is_sat_memo_sub_no_ineq_slicing_x1 (mem : memo_pure) sat_subno with_dupl wit
 
 let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =
   (* Modified version with UNSAT optimization *)
-  if !do_slicing && !multi_provers then 
-    is_sat_memo_sub_no_slicing f sat_subno with_dupl with_inv
-  else if !do_slicing && !opt_ineq then 
+  (* if !do_slicing && !multi_provers then                       *)
+  (*   is_sat_memo_sub_no_slicing f sat_subno with_dupl with_inv *)
+  (* if !do_slicing && !opt_ineq then  *)
+	if (not !dis_slc_ann) && !opt_ineq then
     (* is_sat_memo_sub_no_ineq_slicing f sat_subno with_dupl with_inv *)
     MCP.is_sat_memo_sub_no_ineq_slicing_complete f with_dupl with_inv (fun f -> is_sat_sub_no f sat_subno)
-  else if !do_slicing && !infer_lvar_slicing then
+  (* else if !do_slicing && !infer_lvar_slicing then *)
+	else if (not !dis_slc_ann) && !infer_lvar_slicing then
     MCP.is_sat_memo_sub_no_complete f with_dupl with_inv (fun f -> is_sat_sub_no f sat_subno)
   else is_sat_memo_sub_no_orig f sat_subno with_dupl with_inv
 

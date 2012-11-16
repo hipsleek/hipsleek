@@ -173,7 +173,8 @@ let exp_to_spec_var e =
 let linking_var_tbl = ref []
 
 let rec set_il_formula f il =
-  if not !Globals.do_slicing then f
+  (* if not !Globals.do_slicing then f *)
+	if !Globals.dis_slc_ann then f
   else match f with
     | BForm (bf, lbl) -> BForm (set_il_b_formula bf il, lbl)
     | _ -> f
@@ -2525,7 +2526,8 @@ and b_apply_subs_x sst bf =
   in
   (* Slicing: Add the inferred linking variables into sl field *)
   (* We also restore the prior inferred information            *)
-  let infer_lvar_enabled = !do_slicing && !infer_lvar_slicing in
+  (* let infer_lvar_enabled = !do_slicing && !infer_lvar_slicing in *)
+	let infer_lvar_enabled = (not !dis_slc_ann) && !infer_lvar_slicing in
   let fv = bfv bf in
   let inf_lv = 
     if infer_lvar_enabled then

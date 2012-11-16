@@ -505,7 +505,8 @@ let set_slicing_utils_pure_double f il =
 	              if any. Those linking variables/expressions
 	              were added into the list at Pure_c cases.
   *)
-  if !Globals.do_slicing then
+  (* if !Globals.do_slicing then *)
+	if not !Globals.dis_slc_ann then
 	match f with
 	  | Pure_f pf ->
 		let ls = P.find_lexp_formula pf !Ipure.linking_exp_list in

@@ -980,7 +980,8 @@ and prune_preds_x prog (simp_b:bool) (f:formula):formula =
           (* let _ = print_endline ("\nprune_preds: before: rp = " ^ (Cprinter.string_of_mix_formula rp)) in *)
           let rp = f_p_simp rp in
           mkBase_w_lbl rh rp b.formula_base_type  b.formula_base_flow b.formula_base_and b.formula_base_pos b.formula_base_label in
-  if not !Globals.allow_pred_spec then f
+  (* if not !Globals.allow_pred_spec then f *)
+  if !Globals.dis_ps then f
   else
     (
         Gen.Profiling.push_time "prune_preds_filter";
@@ -5292,7 +5293,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         else
           let finish_flag = 
            if (!Globals.delay_proving_sat && !smart_unsat_estate=None) then
-             if (!Globals.filtering_flag || !Globals.allow_pred_spec || !Globals.do_slicing )
+             if (!Globals.filtering_flag || (not !Globals.dis_ps))
+              (* !Globals.allow_pred_spec || !Globals.do_slicing *)
              then 
 			   let estate = mark_estate_sat_slices estate !memo_impl_fail_vars in
                let n_es = elim_unsat_es 11 prog (ref 1) estate in

@@ -943,7 +943,8 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 		  let cprog1 = fill_base_case cprog1 in
           let cprog2 = sat_warnings cprog1 in   
 		  let cprog2 = Solver.normalize_perm_prog cprog2 in
-          let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pred_spec) then pred_prune_inference cprog2 else cprog2 in
+          let cprog3 = if (!Globals.enable_case_inference || (not !Globals.dis_ps) (* or !Globals.allow_pred_spec *)) 
+            then pred_prune_inference cprog2 else cprog2 in
 		  (*let cprog3 = normalize_fracs cprog3 in*)
           let _ = List.map (check_barrier_wf cprog3) cprog3.C.prog_barrier_decls in   
           (*let cprog4 = (add_pre_to_cprog cprog3) in*)
@@ -1069,45 +1070,45 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 	let _=proving_loc # set pos in
     (if n > 0 then
       (		
-	      if !do_slicing && !multi_provers then
-		    let rec trans_formula_to_memo = function
-		      | CF.Or ({ CF.formula_or_f1 = f1; CF.formula_or_f2 = f2 }) ->
-			        let mpf1 = trans_formula_to_memo f1 in
-			        let mpf2 = trans_formula_to_memo f2 in
-			        mkOr_mems mpf1 mpf2
-		      | CF.Base ({ CF.formula_base_pure = p }) -> p
-		      | CF.Exists ({ CF.formula_exists_pure = p }) -> p
-		    in
+	      (* if !do_slicing && !multi_provers then                                                                           *)
+		    (* let rec trans_formula_to_memo = function                                                                        *)
+		    (*   | CF.Or ({ CF.formula_or_f1 = f1; CF.formula_or_f2 = f2 }) ->                                                 *)
+			  (*       let mpf1 = trans_formula_to_memo f1 in                                                                    *)
+			  (*       let mpf2 = trans_formula_to_memo f2 in                                                                    *)
+			  (*       mkOr_mems mpf1 mpf2                                                                                       *)
+		    (*   | CF.Base ({ CF.formula_base_pure = p }) -> p                                                                 *)
+		    (*   | CF.Exists ({ CF.formula_exists_pure = p }) -> p                                                             *)
+		    (* in                                                                                                              *)
 
-		    let rec trans_exists_to_base f = match f with
-		      | CF.Or o ->
-			        let ({ CF.formula_or_f1 = f1; CF.formula_or_f2 = f2 }) = o in
-			        let nf1 = trans_exists_to_base f1 in
-			        let nf2 = trans_exists_to_base f2 in
-			        CF.Or { o with CF.formula_or_f1 = nf1; CF.formula_or_f2 = nf2 }
-		      | CF.Base _ -> f
-		      | CF.Exists ({ CF.formula_exists_qvars = qvars; CF.formula_exists_pure = p; CF.formula_exists_pos = pos }) ->
-			        let np = memo_pure_push_exists_lhs qvars p in (* Not push Exists on linking vars at LHS *)
-			        CF.formula_of_mix_formula np pos
-		    in 
+		    (* let rec trans_exists_to_base f = match f with                                                                   *)
+		    (*   | CF.Or o ->                                                                                                  *)
+			  (*       let ({ CF.formula_or_f1 = f1; CF.formula_or_f2 = f2 }) = o in                                             *)
+			  (*       let nf1 = trans_exists_to_base f1 in                                                                      *)
+			  (*       let nf2 = trans_exists_to_base f2 in                                                                      *)
+			  (*       CF.Or { o with CF.formula_or_f1 = nf1; CF.formula_or_f2 = nf2 }                                           *)
+		    (*   | CF.Base _ -> f                                                                                              *)
+		    (*   | CF.Exists ({ CF.formula_exists_qvars = qvars; CF.formula_exists_pure = p; CF.formula_exists_pos = pos }) -> *)
+			  (*       let np = memo_pure_push_exists_lhs qvars p in (* Not push Exists on linking vars at LHS *)                *)
+			  (*       CF.formula_of_mix_formula np pos                                                                          *)
+		    (* in                                                                                                              *)
 
-		    let (sxform', saddr_vars', sms) = Solver.xpure_symbolic_slicing prog (C.formula_of_unstruc_view_f vdef) in
-		    let sxform = trans_exists_to_base sxform' in
+		    (* let (sxform', saddr_vars', sms) = Solver.xpure_symbolic_slicing prog (C.formula_of_unstruc_view_f vdef) in      *)
+		    (* let sxform = trans_exists_to_base sxform' in                                                                    *)
 		    
-		    let addr_vars = CP.remove_dups_svl saddr_vars' in
-		    let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
-		    let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) sxform pos in
-		    let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
-		    let _ = if not(CF.isFailCtx rs)
-            then
-			  let pxform = trans_formula_to_memo sxform in
-			  (vdef.C.view_x_formula <- pxform;
-              vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv pxform;
-              vdef.C.view_addr_vars <- addr_vars;
-              vdef.C.view_baga <- (match sms.CF.mem_formula_mset with | [] -> [] | h::_ -> h) ;
-              compute_view_x_formula prog vdef (n - 1))
-            else report_error pos "view formula does not entail supplied invariant\n" in ()
-	      else
+		    (* let addr_vars = CP.remove_dups_svl saddr_vars' in                                                               *)
+		    (* let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in                                             *)
+		    (* let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) sxform pos in             *)
+		    (* let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in                            *)
+		    (* let _ = if not(CF.isFailCtx rs)                                                                                 *)
+        (*     then                                                                                                        *)
+			  (* let pxform = trans_formula_to_memo sxform in                                                                    *)
+			  (* (vdef.C.view_x_formula <- pxform;                                                                               *)
+        (*       vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv pxform;                                      *)
+        (*       vdef.C.view_addr_vars <- addr_vars;                                                                       *)
+        (*       vdef.C.view_baga <- (match sms.CF.mem_formula_mset with | [] -> [] | h::_ -> h) ;                         *)
+        (*       compute_view_x_formula prog vdef (n - 1))                                                                 *)
+        (*     else report_error pos "view formula does not entail supplied invariant\n" in ()                             *)
+	      (* else                                                                                                            *)
 		    let (xform', addr_vars', ms) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in	
 		    let addr_vars = CP.remove_dups_svl addr_vars' in
 		    let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
@@ -6990,7 +6991,8 @@ and barrier_prune_inv_inference cp bd =
       
       
 and coerc_spec prog is_l c = 
-  if not !Globals.allow_pred_spec then [c] 
+  (* if not !Globals.allow_pred_spec then [c] *)
+  if !Globals.dis_ps then [c]
   else 
     let prun_f = Solver.prune_preds prog true  in
     [{c with C.coercion_head = prun_f c.C.coercion_head; C.coercion_body = prun_f c.C.coercion_body}]
