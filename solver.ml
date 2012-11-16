@@ -981,7 +981,7 @@ and prune_preds_x prog (simp_b:bool) (f:formula):formula =
           let rp = f_p_simp rp in
           mkBase_w_lbl rh rp b.formula_base_type  b.formula_base_flow b.formula_base_and b.formula_base_pos b.formula_base_label in
   (* if not !Globals.allow_pred_spec then f *)
-  if !Globals.dis_ps then let _ = print_endline ("No pruning") in f
+  if !Globals.dis_ps then f
   else
     (
         Gen.Profiling.push_time "prune_preds_filter";
