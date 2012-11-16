@@ -282,8 +282,9 @@ let common_arguments = [
   (* Slicing *)
   (* ("--en-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing"); *)
   
-  ("--es", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization (default)");
-  ("--dis-ps", Arg.Set Globals.dis_ps, "Disable predicate specialization (not default)");
+  ("--es", Arg.Set Globals.en_slc_ps, 
+    "Enable slicing with predicate specialization");
+  ("--dis-ps", Arg.Set Globals.dis_ps, "Disable predicate specialization (default)");
 	("--dis-ann", Arg.Set Globals.dis_slc_ann, "Disable aggressive slicing with annotation scheme (not default)");
 	("--slc-rel-level", Arg.Set_int Globals.slicing_rel_level, "Set depth for GetCtr function");
   (*("--dis-slicing", Arg.Set Globals.dis_slicing, "Disable slicing, equivalent to ");*)
