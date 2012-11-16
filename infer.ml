@@ -1409,7 +1409,7 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
         let not_fwd_slv = CP.remove_dups_svl (CP.diff_svl args (def_vs@rhs_args)) in
       (*check whether it is in form of lhs unfold*)
         let should_be_lhs_folded = List.map (fun sv -> sv,find_pto lhs_hds sv) not_fwd_slv in
-        let ls_fwd_svl = List.map (fun (sv,ptos) -> if CP.diff_svl ptos rhs_args = [] then [] else [sv])
+        let ls_fwd_svl = List.map (fun (sv,ptos) -> if ptos <> [] && CP.diff_svl ptos rhs_args = [] then [] else [sv])
           should_be_lhs_folded in
         (List.concat ls_fwd_svl)
       else []
@@ -1485,7 +1485,7 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
       let closed_rhs_hpargs = SAU.find_close (snd rhs_hpargs) leqs in
       let svl = get_lhs_fold_fwd_svl selected_hps def_vs closed_rhs_hpargs n_lhds (List.map helper n_lhrs) in
        (* let closed_svl = SAU.find_close svl leqs in *)
-       DD.info_pprint ("svl: " ^ (!CP.print_svl svl)) pos;
+       DD.ninfo_pprint ("svl: " ^ (!CP.print_svl svl)) pos;
       (svl,[])
     else
       let hds = SAU.get_hdnodes_hf n_unmatched in
@@ -1768,7 +1768,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
           let new_es = {es with CF. es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@rvhp_rels;
               CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ [hp_rel];
               CF.es_formula = new_es_formula} in
-          DD.info_pprint ("  new lhs: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
+          DD.ninfo_pprint ("  new lhs: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
           (true, new_es)
       end
 
