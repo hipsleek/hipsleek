@@ -1944,7 +1944,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     let _ = print_endline "*************************************" in
 		    let print_res_list rl def=
 		      let pr1 =  pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula in
-		      let pr_mix_mtl =   pr_list_ln (pr_triple CEQ.string_of_map_table pr1 pr1) in
+		      (* let pr_mix_mtl =   pr_list_ln (pr_triple CEQ.string_of_map_table pr1 pr1) in *)
 		      let pr_res (c1,c2,mtb) = 
 			if(List.length mtb == 0) then  "no-diff-info"
 			else (
@@ -1969,14 +1969,14 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 		      in
 		      (* let match_defs il defs= CEQ.checkeq_defs il ls_inferred_hps defs in *)
 		      (* let _,_,inf_vars = CF.get_pre_post_vars [] proc.proc_static_specs in *)
-		      let is_match_defs il defs = 
+		      let is_match_defs il sl defs = 
 			if(!Globals.show_diff_constrs) then (
-			  let res,res_list = CEQ.checkeq_defs_with_diff il ls_inferred_hps defs sel_hp_rels in
+			  let res,res_list = CEQ.checkeq_defs_with_diff il sl ls_inferred_hps defs sel_hp_rels in
 			  if(not(res)) then print_string ("\nDiff defs " ^ proc.proc_name ^ " {\n" ^ (print_res_list res_list true) ^ "\n}\n" );
 			  res
 			)
 			else (
-			  let r,rvars = CEQ.checkeq_defs_bool il ls_inferred_hps defs sel_hp_rels in 
+			  let r,rvars = CEQ.checkeq_defs_bool il sl ls_inferred_hps defs sel_hp_rels in 
 			  r
 			)
 		      in
@@ -1988,9 +1988,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			    let hpdefs = tcs.Cast.expected_hpdefs in
 			    match ass,hpdefs with
 			      | None, None -> (false, false)
-			      | Some (il,a), None -> (is_match_constrs il a, false) 
-			      | None, Some (il,d) -> (false, is_match_defs il d)
-			      | Some (il1,a), Some (il2,d) ->  (is_match_constrs il1 a, is_match_defs il2 d)
+			      | Some (il,sl,a), None -> (is_match_constrs il a, false) 
+			      | None, Some (il,sl,d) -> (false, is_match_defs il sl d)
+			      | Some (il1,sl1,a), Some (il2,sl2,d) ->  (is_match_constrs il1 a, is_match_defs il2 sl2 d)
 			  )
 		      in
 		      let is_have_tc = match test_comps with
@@ -2065,12 +2065,12 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			let change_hp f = CF.subst name_mtb f in
 			let hpdefs_cont =  pr1 (List.map (fun (_,hf,f2) -> change_hp (CF.formula_of_heap hf no_pos), change_hp f2)
 							    ls_inferred_hps) in (*ls_inferred_hps*)
-			let ass = "ass " ^ (!CP.print_svl sel_hp_rels) ^ ": {\n" ^ ass_cont ^ "\n}\n" in
-			let hpdefs = "hpdefs " ^ (!CP.print_svl sel_hp_rels) ^ ": {\n"  ^ hpdefs_cont ^ "\n}\n"in
+			let ass = "ass " ^ (!CP.print_svl sel_hp_rels) ^ "[]: {\n" ^ ass_cont ^ "\n}\n" in
+			let hpdefs = "hpdefs " ^ (!CP.print_svl sel_hp_rels) ^ "[]: {\n"  ^ hpdefs_cont ^ "\n}\n"in
 			let test_comps = ass ^ hpdefs  in
 			let unmin_name = unmingle_name proc.proc_name in
 			let expected_res = "SUCCESS" in (*TODO: final res here (in inference, often SUCCESS*)
-			let message = hp_decls ^ "\n#" ^ unmin_name ^":" ^ expected_res ^"[\n" ^ test_comps ^ "]\n" in
+			let message = hp_decls ^ "\n" ^ unmin_name ^":" ^ expected_res ^"[\n" ^ test_comps ^ "]\n" in
 			message
 		      in
 		      let message = string_of_message sel_hp_rels hp_lst_assume ls_inferred_hps in

@@ -133,8 +133,8 @@ and proc_decl = {
 
 and test_comps = 
     {
-      expected_ass: (ident list * (Cformula.formula * Cformula.formula) list) option;
-      expected_hpdefs: (ident list * (Cformula.formula * Cformula.formula) list) option;
+      expected_ass: (ident list * ident list *(Cformula.formula * Cformula.formula) list) option;
+      expected_hpdefs: (ident list * ident list *(Cformula.formula * Cformula.formula) list) option;
     }
 
 (*TODO: should we change lemma need struc formulas?

@@ -2309,11 +2309,11 @@ cp_comp: [[ r=hp_decl; `DOT -> Hpdecl r
 	  | t=test -> ProcERes t]]; 
 
 test: 
-  [[`HASH; t = id;`COLON; s = id ; `OSQUARE; tl=test_list; `CSQUARE ->  (t,tl) ]];
+  [[t = id;`COLON; s = id ; `OSQUARE; tl=test_list; `CSQUARE ->  (t,tl) ]];
 
 test_list: [[t = LIST0 test_ele -> 
-    let ass  =  ref (None : ((ident list) * (ass list)) option) in
-    let hpdefs  = ref (None : ((ident list) * (ass list)) option) in
+    let ass  =  ref (None : ((ident list) *(ident list) * (ass list)) option) in
+    let hpdefs  = ref (None : ((ident list) * (ident list) *(ass list)) option) in
     let choose d = match d with
       | ExpectedAss t  ->  ass := Some t
       | ExpectedHpDef t ->  hpdefs := Some t
@@ -2323,10 +2323,11 @@ test_list: [[t = LIST0 test_ele ->
       expected_hpdefs = !hpdefs}]];
 
 test_ele: 
-  [[t = id; `OSQUARE; il=OPT id_list; `CSQUARE; `COLON;`OBRACE;cs=constrs;`CBRACE  ->  
+  [[t = id; `OSQUARE; il=OPT id_list; `CSQUARE; `OSQUARE; sl=OPT id_list; `CSQUARE; `COLON;`OBRACE;cs=constrs;`CBRACE  ->  
   let il = un_option il [] in 
-  if(String.compare "ass" t == 0) then ExpectedAss (il,cs)
-  else if(String.compare t "hpdefs" == 0) then ExpectedHpDef (il,cs)
+  let sl = un_option sl [] in 
+  if(String.compare "ass" t == 0) then ExpectedAss (il,sl,cs)
+  else if(String.compare t "hpdefs" == 0) then ExpectedHpDef (il,sl,cs)
   else report_error no_pos "no_case"]];
 
 constrs: [[t = LIST0 constr SEP `SEMICOLON -> t]];

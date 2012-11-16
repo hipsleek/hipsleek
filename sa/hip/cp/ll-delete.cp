@@ -3,8 +3,8 @@ HeapPred HP_1(node a).
 HeapPred HP_621(node a).
 HeapPred HP_606(node a).
 
-#delete_list:SUCCESS[
-ass [D,E]:{
+delete_list:SUCCESS[
+ass [D,E][]:{
 
   D(x)&x=null & x'=null --> E(x,x');
   x::node<_,v_node_32_619> * E(v_node_32_619,v_node_32_620)&x'=null --> E(x,x') * HP_621(v_node_32_620);
@@ -13,7 +13,7 @@ ass [D,E]:{
 
  }
 
-hpdefs [D,E]:{
+hpdefs [D,E][]:{
   E(x,v) -->
      x=null & x=v
    or x::node<_,p> * E(p,_)& v=null;

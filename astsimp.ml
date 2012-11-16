@@ -7555,7 +7555,7 @@ and trans_expected_ass prog ass =
    let helper assl = List.map (fun one_ass -> trans_constr prog (one_ass.Iast.ass_lhs,one_ass.Iast.ass_rhs)) assl in		    
    match ass with
       | None -> None 
-      | Some (il,assl) -> Some(il,helper assl)
+      | Some (il,sl,assl) -> Some(il,sl,helper assl)
 
 (******end trans_test_components**********)
 	  

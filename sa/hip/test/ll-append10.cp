@@ -10,8 +10,8 @@ HeapPred G3(node b, node c, node d).
 HeapPred G1(node a).
 HeapPred G2(node a, node b).
 
-#append:SUCCESS[
-ass [H1,H1a,H1b,G2]: {
+append:SUCCESS[
+ass [H1,H1a,H1b,G2][]: {
  H1a(y) * HP_551(v_node_54_568) * x::node<val_54_557,y>&v_node_54_568=null -->  G2(x,y) * H1b(y)&true;
  emp&v_node_54_568=null -->  H1b(y)&true;
  H1(x)&true -->  x::node<val_54_532',next_54_533'> * HP_551(next_54_533')&true;
@@ -21,7 +21,7 @@ ass [H1,H1a,H1b,G2]: {
 v_node_54_574!=null -->  G2(x,y) * H1b(y)&true;
  H1a(y)&true -->  H1b(y)&true
 }
-hpdefs [H1,H1a,H1b,G2]: {
+hpdefs [H1,H1a,H1b,G2][]: {
  HP_598(y_596_597,y_596)&true -->  
  emp&y_596_597=y_596
  or y_596_597::node<val_54_557,y_596_601> * HP_598(y_596_601,y_596)&true

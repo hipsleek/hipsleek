@@ -1125,7 +1125,7 @@ sub hip_process_file {
 		    	local $/ = undef;
 		    	<$fh>;
 		    };
-		    my @matches = $cpfile_as_string =~ /#([^\[]*)\[/g;
+		    my @matches = $cpfile_as_string =~ /([a-z]+\:[A-Z]+)\[/g;
 		    foreach (@matches) {
 			($proc_name) = $_ =~ /(.*)\:/s;
 			($proc_res) = $_ =~ /\:(.*)/s;
