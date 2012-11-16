@@ -1400,7 +1400,8 @@ let ramify_conjstar = ramify_star
 
 let rec ramify_starminus_in_h_formula (f: CF.h_formula) (vl:C.view_decl list) (aset: CP.spec_var list list) (fl: CF.h_formula list)
 func (mcp: MCP.mix_formula ) : CF.h_formula * CP.formula = 
-  if not (contains_starminus f) then f,(CP.mkTrue no_pos) else
+  if not (contains_starminus f) then f,(CP.mkTrue no_pos) else 
+  (*let _ = Globals.ramification_entailments := !Globals.ramification_entailments + 1 in*)
   (*let _ = print_string("Ramification :"^ (string_of_h_formula f)^ "\n") in*)
     match f with
       | CF.Star {CF.h_formula_star_h1 = h1;
@@ -1457,6 +1458,7 @@ func (mcp: MCP.mix_formula ) : CF.h_formula * CP.formula =
       | _ -> f,(CP.mkTrue no_pos)
 	
 let rec ramify_starminus_in_formula (cf: CF.formula) (vl:C.view_decl list): CF.formula =
+  (*let _ = Globals.total_entailments := !Globals.total_entailments + 1 in*)
   if not (!Globals.allow_mem) then cf else
   match cf with
     | CF.Base f   -> 
