@@ -13,9 +13,9 @@ HeapPred H1(node2 a).
 
 //DFS
   bool search(node2 x, int a)
-  /* infer[H1,G1] */
-  /* requires H1(x) */
-  /* ensures G1(x); */
+  infer[H1,G1]
+  requires H1(x)
+  ensures G1(x);
 
   /* requires x::bst0<> */
   /* ensures x::bst0<> & (res | !res);//'n>=0 & h>=0 & n=n1 & h=h1 */

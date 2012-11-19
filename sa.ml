@@ -251,8 +251,42 @@ let get_only_hrel f = match f with
   )
   | CF.Or f  -> report_error no_pos "not handle yet"
 
+let get_hp_split_cands_one_cs prog unk_hps lhs rhs=
+  let do_partition hns hvs eqs args=
+    let rec part_helper args0 parts=
+      match args0 with
+        | [] -> parts
+        | [a] -> (parts@[[a]])
+        | a::tl ->
+            let part1 = SAU.find_close [a] eqs in
+            let part2 = SAU.loop_up_closed_ptr_args prog hns hvs (CP.remove_dups_svl part1) in
+            let part3 = CP.remove_dups_svl (a::(CP.intersect_svl (SAU.find_close part2 eqs) tl)) in
+            part_helper (CP.diff_svl tl part3) (parts@[part3])
+    in
+    part_helper args []
+  in
+  let lhns, lhvs, lhrs = CF.get_hp_rel_formula lhs in
+  let rhns, rhvs, rhrs = CF.get_hp_rel_formula rhs in
+  let ( _,lmix_f,_,_,_) = CF.split_components lhs in
+  let leqs = (MCP.ptr_equations_without_null lmix_f) in
+  let ( _,rmix_f,_,_,_) = CF.split_components rhs in
+  let reqs = (MCP.ptr_equations_without_null rmix_f) in
+  let cands = lhrs @ rhrs in
+  let cands1 = List.filter (fun (hp,el,l) -> not (CP.mem_svl hp unk_hps) && (List.length el) >= 2) cands in
+  let cands2 = List.map (fun (hp,el,l) ->
+      let args = List.concat (List.map CP.afv el) in
+      let parts = do_partition (lhns@rhns) (lhvs@rhvs) (leqs@reqs) args in
+      (hp,args, parts,l)
+  ) cands1
+  in
+  cands2
+
+let get_hp_split_cands_x prog constrs=
+ List.concat (List.map (fun cs -> get_hp_split_cands_one_cs prog (List.map fst cs.CF.unk_hps)
+     cs.CF.hprel_lhs cs.CF.hprel_rhs) constrs)
+
 (*todo: rhs is only hp with more than 1 param*)
-let get_hp_split_cands_x constrs =
+let get_hp_split_cands_x_old constrs =
   let helper (lhs,rhs)=
     (*try(
         let sv,el,l = get_only_hrel rhs in
@@ -282,83 +316,120 @@ let get_hp_split_cands_x constrs =
       let hp2 = extract_hp_name_helper hrel2 in
       CP.eq_spec_var hp1 hp2) cands
 
-let get_hp_split_cands constrs =
-  let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
-  let pr2 = pr_list_ln (Cprinter.string_of_hrel_formula) in
-  Debug.no_1 "get_hp_split_cands" pr1 pr2
-  (fun _ -> get_hp_split_cands_x constrs) constrs
+let get_hp_split_cands prog constrs =
+  let pr1 = pr_list_ln Cprinter.string_of_hprel in
+  let pr2 = pr_list_ln (pr_quad !CP.print_sv !CP.print_svl (pr_list !CP.print_svl) string_of_full_loc) in
+  Debug.ho_1 "get_hp_split_cands" pr1 pr2
+  (fun _ -> get_hp_split_cands_x prog constrs) constrs
 
-(*split one hp -> mutiple hp and produce corresponding heap formulas for substitution*)
-let hp_split_x hps =
-  (*each arg, create new hp and its corresponding HRel formula*)
-  let helper1 l arg =
-    let new_hp_name = Globals.hp_default_prefix_name ^ (string_of_int (Globals.fresh_int())) in
-    let new_hp_sv = CP.SpecVar (HpT,new_hp_name, Unprimed) in
-    (*should refresh arg*)
-    (new_hp_sv, CF.HRel (new_hp_sv, [arg], l))
+(*split one hp -> mutiple hp and produce corresponding heap formulas for substitution
+ - one cand: (hp,args, parts,p)
+*)
+let check_split_global_x prog cands =
+   let rec partition_cands_by_hp_name cands0 parts=
+    match cands0 with
+      | [] -> parts
+      | (hp_name,args, ls_args,p)::xs ->
+          let part,remains= List.partition (fun (hp_name1,_,_,_) -> CP.eq_spec_var hp_name1 hp_name) xs in
+          partition_cands_by_hp_name remains (parts@[[(hp_name,args,ls_args,p)]@part])
   in
-  (*rhs is only hp with more than 1 parameter*)
-  (*for each hp*)
-  let helper hf =
-    match hf with
-      | (CF.HRel (sv,el,l)) ->
-          let hps = List.map (helper1 l) el in
-          let new_hp_names,new_hrel_fs = List.split hps in
-          let new_hrels_comb = List.fold_left (fun hf1 hf2 -> CF.mkStarH hf1 hf2 l) (List.hd new_hrel_fs) (List.tl new_hrel_fs) in
-          ((sv,new_hp_names),(sv, CF.HRel (sv,el,l), new_hrels_comb))
-      | _ -> report_error no_pos "sa.hp_split_x: can not happen"
+  (*each partition, create new hp and its corresponding HRel formula*)
+  let helper1 pos args =
+    let hf,new_hp_sv = SAU.add_raw_hp_rel prog args pos in
+    (new_hp_sv, hf)
   in
-  let res = List.map helper hps in
-  List.split res
+  (*for each grp*)
+  let intersect_cand_one_hp grp=
+    let rec parts_norm args0 grp0 res=
+      match grp0 with
+        | [] -> res
+        | (_,args1,parts1,_)::tl ->
+            let ss = List.combine args1 args0 in
+            let parts11 = List.map (fun largs -> List.map (CP.subs_one ss) largs) parts1 in
+            parts_norm args0 tl (res@[parts11])
+    in
+    let rec cmp_two_list_args ls_args1 ls_args2=
+      match ls_args1,ls_args2 with
+        | [],[] -> true
+        | args1::tl1,args2::tl2 ->
+            if SAU.eq_spec_var_order_list args1 args2 then
+              cmp_two_list_args tl1 tl2
+            else false
+    in
+    let (hp,args0,parts0,p0)=
+      match grp with
+        | [] -> report_error no_pos "sa.intersect_cand_one_hp"
+        | hd::_ -> hd
+    in
+    let size = List.length parts0 in
+    if List.exists (fun (_,args1,parts1,_) -> (List.length parts1)!=size) (List.tl grp) then
+      []
+    else
+      let tl_parts = parts_norm args0 (List.tl grp) [] in
+      if List.for_all (fun part -> cmp_two_list_args parts0 part) tl_parts then
+        [(hp,args0,parts0,p0)]
+      else []
+  in
+  let generate_split (hp,args0,parts0,p0) =
+    let hps = List.map (helper1 p0) parts0 in
+    let new_hp_names,new_hrel_fs = List.split hps in
+    let new_hrels_comb = List.fold_left (fun hf1 hf2 -> CF.mkStarH hf1 hf2 p0) (List.hd new_hrel_fs) (List.tl new_hrel_fs) in
+    let hrel0 = SAU.mkHRel hp args0 p0 in
+    (hp, args0, hrel0,new_hrels_comb)
+  in
+  let grps = partition_cands_by_hp_name cands [] in
+  (*each group, the partition should be similar*)
+  let to_split = List.concat (List.map intersect_cand_one_hp grps) in
+  let res = List.map generate_split to_split in
+  res
 
-let hp_split hps =
-  let pr1 = !CP.print_sv in
-  let pr2 = !CP.print_svl in
-  let pr3 = (pr_list (pr_pair pr1 pr2)) in
-  let pr4 = Cprinter.string_of_h_formula in
-  let pr5 = pr_list pr4 in
-  let pr6 = pr_list (pr_triple pr1 pr4 pr4) in
-   Debug.no_1 "hp_split" pr5 (pr_pair pr3 pr6)
-       (fun _ -> hp_split_x hps) hps
+let check_split_global prog cands =
+  let pr1 = pr_list_ln (pr_quad !CP.print_sv !CP.print_svl (pr_list !CP.print_svl) string_of_full_loc) in
+  let pr2 = Cprinter.string_of_h_formula in
+  let pr3 = pr_list (pr_quad !CP.print_sv !CP.print_svl pr2 pr2) in
+  Debug.ho_1 "check_split_global" pr1 pr3
+       (fun _ -> check_split_global_x prog cands) cands
 
 let subst_constr_with_new_hps_x hp_constrs hprel_subst=
-  let elim_first_arg (a1,a2,a3)= (a2,a3) in
-  let new_hprel_subst = List.map elim_first_arg hprel_subst in
-  let helper (l_constr, r_constr)=
-    (CF.subst_hrel_f l_constr new_hprel_subst, CF.subst_hrel_f r_constr new_hprel_subst)
+  let elim_two_first_arg (a1,a2,a3,a4)= (a3,a4) in
+  let new_hprel_subst = List.map elim_two_first_arg hprel_subst in
+  let helper cs=
+    {cs with
+        CF.hprel_lhs= CF.subst_hrel_f cs.CF.hprel_lhs new_hprel_subst;
+        CF.hprel_rhs= CF.subst_hrel_f cs.CF.hprel_rhs new_hprel_subst;
+    }
   in
   List.map helper hp_constrs
 
 let subst_constr_with_new_hps hp_constrs hprel_subst=
-  let pr1= pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
+  let pr1= pr_list_ln Cprinter.string_of_hprel in
   let pr2 = Cprinter.string_of_h_formula in
-  let pr3 = fun (a1,a2,a3) -> let pr =pr_pair pr2 pr2 in pr (a2,a3) in
-  let pr4 = pr_list_ln pr3 in
-  Debug.no_2 "subst_constr_with_new_hps" pr1 pr4 pr1
+  let pr3 = pr_list_ln (pr_quad !CP.print_sv !CP.print_svl pr2 pr2) in
+  Debug.no_2 "subst_constr_with_new_hps" pr1 pr3 pr1
       (fun _ _ -> subst_constr_with_new_hps_x hp_constrs hprel_subst) hp_constrs hprel_subst
 
 (*return new contraints and hp split map *)
-let split_hp_x (hp_constrs: (CF.formula * CF.formula) list): ((CF.formula * CF.formula) list *
-          (CP.spec_var*CP.spec_var list) list * (CP.spec_var * CF.h_formula*CF.h_formula) list) =
+let split_hp_x prog (hp_constrs: CF.hprel list): (CF.hprel list *
+          (CP.spec_var*CP.spec_var list * CF.h_formula*CF.h_formula) list) =
   (*get hp candidates*)
-  let split_cands = get_hp_split_cands hp_constrs in
+  let split_cands = get_hp_split_cands prog hp_constrs in
   (*split  and get map*)
-  let split_map,hprel_subst =  hp_split split_cands in
+  let split_map_hprel_subst = check_split_global prog split_cands in
   (*subs old hrel by new hrels*)
-  let new_constrs = subst_constr_with_new_hps hp_constrs hprel_subst in
-  (new_constrs, split_map, hprel_subst)
+  let new_constrs = subst_constr_with_new_hps hp_constrs split_map_hprel_subst in
+  (new_constrs, split_map_hprel_subst)
 
-let split_hp (hp_constrs: (CF.formula * CF.formula) list):((CF.formula * CF.formula) list *
- (CP.spec_var*CP.spec_var list) list * (CP.spec_var *CF.h_formula*CF.h_formula) list) =
-  let pr1 =  pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
+let split_hp prog hp_constrs:(CF.hprel list *
+ (CP.spec_var*CP.spec_var list *CF.h_formula*CF.h_formula) list) =
+  let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2 = !CP.print_sv in
-  let pr3 = !CP.print_svl in
-  let pr4 = fun (a1,a2,_) -> (*ignore a3*)
-      let pr = pr_pair pr1 (pr_list (pr_pair pr2 pr3)) in
+  let pr3 = Cprinter.string_of_h_formula in
+  let pr4 = fun (a1,a2) -> (*ignore a3*)
+      let pr = pr_pair pr1 (pr_list (pr_quad pr2 !CP.print_svl pr3 pr3)) in
       pr (a1, a2)
   in
-  Debug.no_1 "split_hp" pr1 pr4
-      (fun _ -> split_hp_x hp_constrs) hp_constrs
+  Debug.ho_1 "split_hp" pr1 pr4
+      (fun _ -> split_hp_x prog hp_constrs) hp_constrs
 (*===========END SPLIT===========*)
 (*=============UNKOWN================*)
 (*find diff for each hrel*)
@@ -3299,9 +3370,9 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * SA
   let constrs1,unk_hps,hp_defs_split = analize_unk prog constrs in
    (* step 1': split HP *)
   DD.ninfo_pprint ">>>>>> step 2: split arguments: currently omitted <<<<<<" no_pos;
-  (* let constrs1, split_tb,hp_defs_split = split_hp constrs in *)
+  let constrs1a, split_tb_hp_defs_split = split_hp prog constrs1 in
   (*for temporal*)
-  let constrs2 = constrs1 in
+  let constrs2 = constrs1a in
   (* let hp_defs_split = [] in *)
   (*END for temporal*)
   let cs, par_defs = infer_hps_fix prog (List.map fst unk_hps) constrs2 in
