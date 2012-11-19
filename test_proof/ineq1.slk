@@ -24,3 +24,8 @@ Type: Sat:  b=x
 why isn't x!=y picked for UNSAT?
 */
 
+// (5) equality is important
+checkentail x!=y  & x=y |- false.
+
+// (6) equality is important
+checkentail x!=y  & a=b |- false.
