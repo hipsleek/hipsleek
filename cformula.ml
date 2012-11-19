@@ -2805,6 +2805,7 @@ and pop_exists (qvars : CP.spec_var list) (f : formula) = match f with
 
 (* WN : why isn't this in cformula.ml? *)
 (* removing existentail using ex x. (x=y & P(x)) <=> P(y) *)
+
 and elim_exists (f0 : formula) : formula = match f0 with
   | Or ({ formula_or_f1 = f1;
     formula_or_f2 = f2;
@@ -2819,17 +2820,58 @@ and elim_exists (f0 : formula) : formula = match f0 with
     formula_exists_type = t;
     formula_exists_flow = fl;
     formula_exists_and = a;
-    formula_exists_pos = pos}) ->
+    formula_exists_pos = pos}) -> 
         let st, pp1 = MCP.get_subst_equation_memo_formula_vv p qvar in
         let r = if List.length st = 1 then
           let tmp = mkBase h pp1 t fl a pos in (*TO CHECK*)
           let new_baref = subst st tmp in
+	   
           let tmp2 = add_quantifiers rest_qvars new_baref in
+	  
           let tmp3 = elim_exists tmp2 in
           tmp3
         else (* if qvar is not equated to any variables, try the next one *)
           let tmp1 = mkExists rest_qvars h p t fl a pos in (*TO CHECK*)
           let tmp2 = elim_exists tmp1 in
+          let tmp3 = add_quantifiers [qvar] tmp2 in
+          tmp3 in
+        r
+  | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
+
+and elim_exists_preserve (f0 : formula) rvars : formula = match f0 with
+  | Or ({ formula_or_f1 = f1;
+    formula_or_f2 = f2;
+    formula_or_pos = pos}) ->
+        let ef1 = elim_exists f1 in
+        let ef2 = elim_exists f2 in
+	    mkOr ef1 ef2 pos
+  | Base _ ->  f0
+  | Exists ({ formula_exists_qvars = qvar :: rest_qvars;
+    formula_exists_heap = h;
+    formula_exists_pure = p;
+    formula_exists_type = t;
+    formula_exists_flow = fl;
+    formula_exists_and = a;
+    formula_exists_pos = pos}) -> 
+        let st, pp1 = MCP.get_subst_equation_memo_formula_vv p qvar in
+        let r =
+	  let vp = if(List.length st = 1) then (
+	    let (sv1,sv2) = List.hd st in
+	    not (List.exists (fun sv -> CP.eq_spec_var sv sv1 || CP.eq_spec_var sv sv2) rvars) 
+	  )
+	    else false
+	  in
+	  if vp then
+          let tmp = mkBase h pp1 t fl a pos in (*TO CHECK*)
+          let new_baref = subst st tmp in
+	   
+          let tmp2 = add_quantifiers rest_qvars new_baref in
+	  
+          let tmp3 = elim_exists_preserve tmp2 rvars in
+          tmp3
+        else (* if qvar is not equated to any variables, try the next one *)
+          let tmp1 = mkExists rest_qvars h p t fl a pos in (*TO CHECK*)
+          let tmp2 = elim_exists_preserve tmp1 rvars in
           let tmp3 = add_quantifiers [qvar] tmp2 in
           tmp3 in
         r

@@ -46,4 +46,30 @@ hpdefs [H1,G2][]: {
  
 }
 ]
+/*
+ 6 sim f1:  
+ emp&res_697=null & x_696=null
+ or x_696::node<a',res_697>&true
+ or EXISTS(v_int_65_619: x_696::node<v_int_65_656,next_65_644> * 
+    G2(next_65_644,v_node_66_671) * 
+    res_697::node<v_int_65_619,v_node_66_671>&v_int_65_619=v_int_65_656&[]
+ 
+ sim f2:  
+ emp&res_774=null & x_773=null
+ or x_773::node<a',res_774>&true
+ or x_773::node<v_int_65_733,next_65_721> * G2(next_65_721,v_node_66_748) * 
+    res_774::node<v_int_65_733,v_node_66_748>&true
 
+ emp&res_697=null & x_696=null
+ or x_696::node<a',res_697>&true
+ or EXISTS(v_int_65_619: x_696::node<v_int_65_656,next_65_644> * 
+    G2(next_65_644,v_node_66_671) * 
+    res_697::node<v_int_65_619,v_node_66_671>&v_int_65_619=v_int_65_656&[]
+ 
+ f2:  
+ emp&res_774=null & x_773=null
+ or x_773::node<a',res_774>&true
+ or x_773::node<v_int_65_733,next_65_721> * G2(next_65_721,v_node_66_748) * 
+    res_774::node<v_int_65_733,v_node_66_748>&true
+
+*/
