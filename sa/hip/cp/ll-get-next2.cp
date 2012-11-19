@@ -1,14 +1,14 @@
 HeapPred HP_1a(node a).
 HeapPred HP_1(node a).
 
-get_next[
-ass [H,G]:{
+get_next:SUCCESS[
+ass [H,G][]:{
   HP_1a(p1) * x::node<_,p>&p=null --> G(x,p1);
   H(x) --> x::node<_,p> * HP_1a(p)
 
  }
 
-hpdefs [H,G]:{
+hpdefs [H,G][]:{
   H(x) -->  x::node<_, HP_1> ;
   G(x,v) --> x::node<val_44_568,next_45_547'>&next_45_547'=null & v=HP_2
  }

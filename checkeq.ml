@@ -968,7 +968,7 @@ and checkeq_formulas_one_with_diff_x (hvars: ident list) (f1: CF.formula) (f2: C
   let (res,new_mtl) = helper hvars f1 f2 mtl in
   if(not(res) && not(!Globals.dis_sem)) then (
     let (f1,f2) = simplify_2f f1 f2 hvars in
-    (* print_string ("f1: "^(Cprinter.prtt_string_of_formula f1)^"\n"); *)
+     (* print_string ("f1: "^(Cprinter.prtt_string_of_formula f1)^"\n"); *)
     (* print_string ("f2: "^(Cprinter.prtt_string_of_formula f2)^ "\n"); *)
     let (res2,new_mtl2) = helper hvars f1 f2 mtl in
     if(res2) then  (res2,new_mtl2)
@@ -1743,9 +1743,9 @@ let checkeq_defs_with_diff_x hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.
   let  (mtb,spairs)  = checkeq_defs hvars svars defs infile_defs in
   (* let (mtb,smap) = process_svars full_tb svars inf_vars in *)
    let pr3 = pr_list_ln (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) in 
-   print_string ("smap: "^(pr3 spairs)^ "\n"); 
+   (* print_string ("smap: "^(pr3 spairs)^ "\n");  *)
 let pr4 = pr_list_ln (pr_pair Cprinter.string_of_spec_var_list Cprinter.string_of_spec_var) in
-   print_string ("current map: "^(pr4 mtb)^ "\n");
+   (* print_string ("current map: "^(pr4 mtb)^ "\n"); *)
   let exists_helper v1 v2 mtb =
     let exist v1 v2 mt =
       let (ls, key) = mt in

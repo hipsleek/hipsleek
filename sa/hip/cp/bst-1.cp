@@ -2,8 +2,8 @@ HeapPred HP_1c(node a).
 HeapPred HP_1a(node a).
 HeapPred HP_1b(node a).
 
-count[
-ass [H1,G1]:{
+count:SUCCESS[
+ass [H1,G1][]:{
   z::node2<val_28_572,v_node2_28_580,right_28_573> *
      G1(v_node2_28_580) * G1(right_28_573)&true --> G1(z);
   H1(z)&z=null --> G1(z);
@@ -15,7 +15,7 @@ ass [H1,G1]:{
   HP_564(left_28_538',right_28_539');
  }
 
-hpdefs [H1,G1]:{
+hpdefs [H1,G1][]:{
   H1(x) --> x::node<_,p> * HP_1a(p);
   H(x) --> x::node<_,p> * HP_1b(p);
   HP_1a(x) --> x=null or x::node<_,p>*HP_1a(p);
