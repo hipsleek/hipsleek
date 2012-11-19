@@ -65,27 +65,7 @@ let rec checkeq_formulas_x ivars f1 f2 =
       let (res2, mtl2) =  (checkeq_formulas_one ivars f2 f1 imtl) in
       (res1&&res2, mtl1)
     )
-  (* ) *)
-  (* else ( *)
-  (*   let evars fs = List.filter (fun f -> List.exists (fun ivar -> (String.compare (CP.full_name_of_spec_var f) ivar != 0)) ivars ) fs in  *)
-  (*   let fs1,fs2 = evars (CF.fv f1),evars (CF.fv f2) in *)
-  (* (\* print_string ("VARS 1: "^ Cprinter.string_of_spec_var_list (CF.fv f1) ^ "\n"); *\) *)
-  (* (\* print_string ("VARS 2: "^ Cprinter.string_of_spec_var_list (CF.fv f2) ^ "\n"); *\) *)
-  (* (\* print_string ("VARS NEED TO BE ADDED1: "^ Cprinter.string_of_spec_var_list fs1 ^ "\n"); *\) *)
-  (* (\* print_string ("VARS NEED TO BE ADDED2: "^ Cprinter.string_of_spec_var_list fs2 ^ "\n"); *\) *)
-  (*   let f1,f2 = CF.add_quantifiers fs1 f1, CF.add_quantifiers fs2 f2 in *)
-  (* (\*  print_string ("F1 after add quantifiers: "^ Cprinter.prtt_string_of_formula f1 ^ "\n"); *\) *)
-  (* (\* print_string ("F2 after add quantifiers: "^ Cprinter.prtt_string_of_formula f2 ^ "\n"); *\) *)
-  (*   let f1,f2 = CF.elim_exists f1,CF.elim_exists f2 in *)
-  (* (\* print_string ("F1 after elim exists: "^ Cprinter.prtt_string_of_formula f1 ^ "\n"); *\) *)
-  (* (\* print_string ("F2 after elim exists: "^ Cprinter.prtt_string_of_formula f2 ^ "\n"); *\) *)
-  (*   let (res1, mtl1) = (checkeq_formulas_one ivars f1 f2 mtl) in *)
-  (*   let re_order mt = List.map (fun (a,b) -> (b,a)) mt in *)
-  (*   let imtl = List.map (fun c -> re_order c) mtl1 in *)
-  (*   let (res2, mtl2) =  (checkeq_formulas_one ivars f2 f1 imtl) in *)
-  (*   (res1&&res2, mtl1) *)
-  (* ) *)
-
+ 
 and checkeq_formulas ivars f1 f2 = 
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 b = if(b) then "VALID" else "INVALID" in
@@ -1090,9 +1070,6 @@ and checkeq_h_formulas_with_diff_x (hvars: ident list)(hf1: CF.h_formula) (hf2: 
     if(check_false_hf1 || check_false_hf2) 
     then (false,[([],CF.HFalse)])
     else(
-
-
-
       match hf1 with  
 	| CF.Star ({CF.h_formula_star_h1 = h1;
 		    CF.h_formula_star_h2 = h2}) 
