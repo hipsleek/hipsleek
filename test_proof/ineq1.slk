@@ -1,18 +1,8 @@
 // (1) equality is important
 checkentail x!=y  & x=b & b=y |- false.
 /*
-Why isn't x!=y marked as annotated?
- ### ante =  emp&(
-(SLICE[x,y][x,y](sat?):
-   [x!=y(IN)]
-   [true]
-   alias set:[@]
- SLICE[y,x,b][](sat?):
-   []
-   [true]
-   alias set:[@{y, b, x}]))&
+--eps --slc-ann-ineq does not have any proof log at all!
 
- no proof in log file at all?
 */ 
 
 // (2) detecting self contradiction?

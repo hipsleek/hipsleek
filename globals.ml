@@ -679,7 +679,7 @@ let log_filter = ref true
 (* Options for slicing *)
 (* let do_slicing = ref false *)
 let en_slc_ps = ref false
-let dis_ps = ref true
+let dis_ps = ref false
 let dis_slc_ann = ref false
 let slicing_rel_level = ref 2
 

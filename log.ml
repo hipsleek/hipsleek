@@ -113,8 +113,8 @@ let proof_log_to_text_file (src_files) =
     let tstartlog = Gen.Profiling.get_time () in
     let oc = 
       (try Unix.mkdir "logs" 0o750 with _ -> ());
-      (* let with_option = if !Globals.do_slicing then "slicing" else "no_slicing" in *)
-			let with_option = "" in
+      let with_option = if !Globals.en_slc_ps then "eps" else "no_eps" in
+			(* let with_option = "" in *)
       open_out ("logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in
     let string_of_log_type lt =
       match lt with
