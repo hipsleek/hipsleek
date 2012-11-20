@@ -1315,73 +1315,6 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
 (*=****************************************************************=*)
            (*=****************INFER REL HP ASS****************=*)
 (*=*****************************************************************=*)
-let find_undefined_selective_pointers_x_old prog lfb rfb lmix_f rmix_f unmatched rhs_h_matched_set leqs reqs pos=
-  (* DD.info_pprint ">>>>>> find_undefined_selective_pointers <<<<<<" pos; *)
-  let lhds, lhvs, lhrs = CF.get_hp_rel_bformula lfb in
-  let leqNulls = MCP.get_null_ptrs lmix_f in
-  let rhds, rhvs, rhrs = CF.get_hp_rel_bformula rfb in
-  let reqNulls = MCP.get_null_ptrs rmix_f in
-  let hrs = (lhrs @ rhrs) in
-  let hds = (lhds @ rhds) in
-  let hvs = (lhvs @ rhvs) in
-  let eqs = (leqs@reqs) in
-   (*defined vars=  null + data + view + match nodes*)
-  let def_vs = (leqNulls@reqNulls) @ (List.map (fun hd -> hd.CF.h_formula_data_node) hds)
-   @ (List.map (fun hv -> hv.CF.h_formula_view_node) hvs) @ rhs_h_matched_set in
-  (*find closed defined pointers set*)
-  (* let def_vs = CP.remove_dups_svl (List.fold_left SAU.close_def def_vs (eqs)) in *)
-  let def_vs = CP.remove_dups_svl (SAU.find_close def_vs (eqs)) in
-  (* DD.info_pprint ("defined ptr (wo caring its args): " ^ (!CP.print_svl def_vs)) pos; *)
-  let get_undefined_args_hnode prog def_svl hd_nodes hv_nodes dn_name=
-    let arg_svl = SAU.look_up_ptr_args_one_node prog hd_nodes hv_nodes dn_name in
-    DD.ninfo_pprint ("node " ^ (!CP.print_sv dn_name) ^ " has args: " ^(!CP.print_svl arg_svl)) pos;
-    let diff_svl = Gen.BList.difference_eq CP.eq_spec_var arg_svl def_svl in
-    diff_svl
-  in
-  let process_one_hrel_arg def_svl arg_name=
-    let undefs = get_undefined_args_hnode prog def_svl hds hvs arg_name in
-    if undefs = [] then [] else (undefs@[arg_name])
-  in
-  (*selective*)
-  let unmatched_svl = SAU.get_ptrs unmatched in
-  let unmatched_svl = (SAU.find_close  (unmatched_svl) (eqs)) in
-  (* let _ = Debug.info_pprint ("    unmatched:" ^(!CP.print_svl unmatched_svl)) no_pos in *)
-  let closed_unmatched_svl0 = List.concat (List.map (SAU.look_up_ptr_args_one_node prog hds hvs) unmatched_svl) in
-  let closed_unmatched_svl = CP.remove_dups_svl
-    (SAU.find_close  (unmatched_svl@closed_unmatched_svl0) (eqs)) in
-  (*END selective*)
-  (*get all args of hp_rel to check whether they are fully embbed*)
-  let hp_args = (List.map (fun (hp, exps, _) -> (hp, List.concat (List.map CP.afv exps))) hrs) in
-  let selected_hp_args = List.filter (fun (_, args) -> (CP.intersect_svl args closed_unmatched_svl) != []) hp_args in
-  let selected_hps, hrel_args = List.split selected_hp_args in
-  (*========*)
-  let hrel_args1 = List.concat hrel_args in
-  (*should include their closed ptrs*)
-  let hrel_args2 = CP.remove_dups_svl (List.fold_left SAU.close_def hrel_args1 (eqs)) in
-  (*find undefined ptrs of all hrel args*)
-  let undefs = if CF.is_HRel unmatched then [] else
-        CP.remove_dups_svl (List.concat (List.map (process_one_hrel_arg (CP.remove_dups_svl (def_vs@hrel_args2)))
-                                             hrel_args2))
-  in
-  (*remove root, first parameter of lhs and raw defined*)
-  let lroot_args = List.concat (List.map (fun (_, exps, _) -> (CP.afv (List.hd exps))) hrs) in
-  let lraw_defined_root_args = List.filter (fun sv -> CP.mem_svl sv def_vs) lroot_args in
-  let lraw_defined_root_args1 = CP.remove_dups_svl (List.fold_left SAU.close_def lraw_defined_root_args eqs) in
-  let undefs1 = CP.diff_svl undefs lraw_defined_root_args1 in
-  let l_args = List.concat (List.map (fun (_, exps, _) ->
-      let r =List.concat (List.map CP.afv exps) in
-      if (CP.intersect r closed_unmatched_svl) != [] then r else []
-  ) lhrs) in
-  let r_args = List.concat (List.map (fun (_, exps, _) ->  List.concat (List.map CP.afv exps)) rhrs) in
-  let r_args1 = (List.fold_left SAU.close_def r_args (leqs@reqs)) in
-  let def_vsargs = List.concat (List.map (SAU.look_up_ptr_args_one_node prog hds hvs) def_vs) in
-  let used_svl = CP.remove_dups_svl (def_vsargs@def_vs@r_args1) in
-  let lundefs_args = CP.remove_dups_svl (CP.diff_svl l_args used_svl) in
-  (* DD.info_pprint ("undef1 arg: " ^ (!CP.print_svl undefs1)) pos; *)
-  (* DD.info_pprint ("lundefs_args: " ^ (!CP.print_svl lundefs_args)) pos; *)
-  (undefs1@lundefs_args,hds,hvs,lhrs,rhrs,leqNulls@reqNulls,selected_hps)
-
-
 (*
 1.  H(x) --> x::node<_,p>: p is forwarded
 2.  H(x,y) --> x::node<_,p>: p and y are forwarded
@@ -1446,11 +1379,6 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
   let selected_hp_args = List.filter (fun (_, args) -> (CP.intersect_svl args closed_unmatched_svl) != []) hp_args in
   let selected_hps, hrel_args = List.split selected_hp_args in
   (*========*)
-  (*remove root, first parameter of lhs and raw defined*)
-  (* let lroot_args = List.concat (List.map (fun (_, exps, _) -> (CP.afv (List.hd exps))) hrs) in *)
-  (* let lraw_defined_root_args = List.filter (fun sv -> CP.mem_svl sv def_vs) lroot_args in *)
-  (* let lraw_defined_root_args1 = CP.remove_dups_svl (List.fold_left SAU.close_def lraw_defined_root_args eqs) in *)
-  (* let undefs1 = CP.diff_svl undefs lraw_defined_root_args1 in *)
   let l_args = List.concat (List.map (fun (_, exps, _) ->
       let r =List.concat (List.map CP.afv exps) in
       if (CP.intersect_svl r closed_unmatched_svl) != [] then r else []

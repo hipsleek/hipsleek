@@ -240,17 +240,6 @@ and is_not_connect_LHS (v: CP.spec_var)(f: CF.formula)(f2:CF.formula): bool =
 
 (**************************)
 (*===========SPLIT===========*)
-let get_only_hrel f = match f with 
-  |CF.Base {CF.formula_base_heap = hf} -> (match hf with
-      | CF.HRel hr -> hr
-      | _ -> raise Not_found
-  )
-  |CF.Exists {CF.formula_exists_heap = hf} -> (match hf with
-      | CF.HRel hr -> hr
-      | _ -> raise Not_found
-  )
-  | CF.Or f  -> report_error no_pos "not handle yet"
-
 let get_hp_split_cands_one_cs prog unk_hps lhs rhs=
   let do_partition hns hvs eqs args=
     let rec part_helper args0 parts=
@@ -285,41 +274,10 @@ let get_hp_split_cands_x prog constrs=
  List.concat (List.map (fun cs -> get_hp_split_cands_one_cs prog (List.map fst cs.CF.unk_hps)
      cs.CF.hprel_lhs cs.CF.hprel_rhs) constrs)
 
-(*todo: rhs is only hp with more than 1 param*)
-let get_hp_split_cands_x_old constrs =
-  let helper (lhs,rhs)=
-    (*try(
-        let sv,el,l = get_only_hrel rhs in
-        if(List.length el >= 2) then [(CF.HRel (sv,el,l))]
-        else []
-    )
-    with _ -> []*)
-(*split all*)
-    let hn, hv, hr = CF.get_hp_rel_formula lhs in
-    let hn1, hv1, hr1 = CF.get_hp_rel_formula rhs in
-    let cands = hr1 @ hr in
-    let cands =  Gen.BList.remove_dups_eq (fun (hp1,_,_)  (hp2,_,_) ->
-      CP.eq_spec_var hp1 hp2) cands in
-    let cands = List.filter (fun (sv,el,l) ->  (List.length el) >= 2) cands in
-    let cands = List.map (fun (sv,el,l) -> (CF.HRel (sv,el,l))) cands in
-    cands 
-  in
-  (*remove duplicate*)
-  let extract_hp_name_helper hrel=
-    match hrel with
-      | CF.HRel (hp,_,_) -> hp
-      | _ -> report_error no_pos "sa.get_hp_split_cands"
-  in
-  let cands = (List.concat (List.map helper constrs)) in
-  Gen.BList.remove_dups_eq (fun hrel1 hrel2 ->
-      let hp1 = extract_hp_name_helper hrel1 in
-      let hp2 = extract_hp_name_helper hrel2 in
-      CP.eq_spec_var hp1 hp2) cands
-
 let get_hp_split_cands prog constrs =
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2 = pr_list_ln (pr_quad !CP.print_sv !CP.print_svl (pr_list !CP.print_svl) string_of_full_loc) in
-  Debug.ho_1 "get_hp_split_cands" pr1 pr2
+  Debug.no_1 "get_hp_split_cands" pr1 pr2
   (fun _ -> get_hp_split_cands_x prog constrs) constrs
 
 (*split one hp -> mutiple hp and produce corresponding heap formulas for substitution
@@ -355,6 +313,7 @@ let check_split_global_x prog cands =
             if SAU.eq_spec_var_order_list args1 args2 then
               cmp_two_list_args tl1 tl2
             else false
+        | _ -> false
     in
     let (hp,args0,parts0,p0)=
       match grp with
@@ -387,7 +346,7 @@ let check_split_global prog cands =
   let pr1 = pr_list_ln (pr_quad !CP.print_sv !CP.print_svl (pr_list !CP.print_svl) string_of_full_loc) in
   let pr2 = Cprinter.string_of_h_formula in
   let pr3 = pr_list (pr_quad !CP.print_sv !CP.print_svl pr2 pr2) in
-  Debug.ho_1 "check_split_global" pr1 pr3
+  Debug.no_1 "check_split_global" pr1 pr3
        (fun _ -> check_split_global_x prog cands) cands
 
 let subst_constr_with_new_hps_x hp_constrs hprel_subst=
@@ -428,7 +387,7 @@ let split_hp prog hp_constrs:(CF.hprel list *
       let pr = pr_pair pr1 (pr_list (pr_quad pr2 !CP.print_svl pr3 pr3)) in
       pr (a1, a2)
   in
-  Debug.ho_1 "split_hp" pr1 pr4
+  Debug.no_1 "split_hp" pr1 pr4
       (fun _ -> split_hp_x prog hp_constrs) hp_constrs
 (*===========END SPLIT===========*)
 (*=============UNKOWN================*)
@@ -2310,10 +2269,6 @@ let generalize_one_hp_x prog non_ptr_unk_hps unk_hps par_defs=
     let f2 = SAU.mk_expl_root r f1 in
     f2
   in
-  let remove_non_ptr_unk_hp f=
-    let nf,_ = CF.drop_hrel_f f non_ptr_unk_hps in
-    nf
-  in
   DD.ninfo_pprint ">>>>>> generalize_one_hp: <<<<<<" no_pos;
   if par_defs = [] then [] else
     begin
@@ -2394,7 +2349,7 @@ let pardef_subst_fix_x prog unk_hps groups=
     (* DD.ninfo_pprint ("       process_dep_group hp: " ^ (!CP.print_sv hp)) no_pos; *)
     let succ_hp_args = List.concat (List.map get_succ_hps_pardef grp) in
     (*remove dups*)
-    let succ_hp_args = Gen.BList.remove_dups_eq SAU.check_simp_hp_eq succ_hp_args in
+    (* let succ_hp_args = Gen.BList.remove_dups_eq SAU.check_simp_hp_eq succ_hp_args in *)
     (*get succ hp names only*)
     (* let succ_hps = fst (List.split succ_hp_args) in *)
     (* DD.ninfo_pprint ("       process_dep_group succ_hps: " ^ (!CP.print_svl succ_hps)) no_pos; *)
@@ -2665,8 +2620,8 @@ let def_subst_fix_x prog unk_hps hpdefs=
   let rec helper_fix cur rec_indps nrec_indps=
     let r,new_cur,new_rec_indps,new_nrec_indps = helper cur rec_indps nrec_indps in
     if r then
-      (*reaarnge cur for terminating*)
-      let new_cur1 = (List.tl new_cur)@[List.hd new_cur] in
+      (*rearrange cur for terminating*)
+      (* let new_cur1 = (List.tl new_cur)@[List.hd new_cur] in *)
       helper_fix new_cur new_rec_indps new_nrec_indps
     else (new_cur@new_rec_indps@new_nrec_indps)
   in
