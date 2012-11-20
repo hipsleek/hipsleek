@@ -1577,6 +1577,13 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps c
   (* let lhs_b4,rhs_b4 = SAU.rename_hp_args lhs_b3 rhs_b3 in *)
   (lhs_b3,rhs_b3)
 
+(*
+type: Cast.prog_decl ->
+  Cformula.entail_state ->
+  SAU.CF.h_formula ->
+  CP.spec_var list ->
+  CF.formula_base -> CF.formula_base -> Globals.loc -> bool * CF.entail_st
+*)
 let infer_collect_hp_rel_x prog (es:entail_state) rhs (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =
   (*for debugging*)
   (* DD.info_pprint ("  es: " ^ (Cprinter.string_of_formula es.CF.es_formula)) pos; *)
