@@ -82,7 +82,16 @@ x::node<val_70_558',next_70_559'> * HP_582(next_70_559')
  |- H1(v_node_70_560') *-> G2(v_node_70_605,v_node_70_595)
 
 
+ We got below:
+ 
+ HP_643(next_129_556') ::= next_129_556'::node<val_129_555',next_129_652> 
+      * HP_643(next_129_652)&true,
+ G2(v_node_132_658,x_663) ::= G2(v_node_131_605,v_node_131_595) * 
+        v_node_132_658::node<val_131_588,v_node_131_605>&true,
+ H1(x_642) ::= x_642::node<val_129_555',next_129_556'> 
+      * HP_643(next_129_556')&true]
 
+      which is different from:
 For 13c1, you should obtain:
 
   H1(x) = x:node<_,q>*H1(x)

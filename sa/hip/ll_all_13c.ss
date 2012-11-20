@@ -42,11 +42,8 @@ node trav(node x)
   /* requires x::ls2<> */
   /* ensures x::ls2<>; */
 /*
-Procedure trav$node FAIL-2
 
-Exception Failure("hd") Occurred!
-
-// should just be "fail.."
+You obtained below which is good.
 
     bool b = rand();
 	if (b) return x.next;

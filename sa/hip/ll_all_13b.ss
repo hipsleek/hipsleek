@@ -57,6 +57,24 @@ PROBLEM : Simpler than 13a..
  G1(x) ::= x::ls<>
  H1(x) :: x::ls<>
 
+**
+
+//H1(x)
+	if (x == null) 
+// RELASS [H1,G1]H1(x)&x=null --> G1(x)&true,
+		return;
+	else {
+        bool b = rand();
+		if (b) return;
+        //RELASS [H1,G1]H1(x)&x!=null --> G1(x)&true,
+		else trav(x.next);
+ // [H1,HP_575]H1(x)&x!=null --> x::node<val_68_555',next_68_556'> 
+ //   * HP_575(next_68_556')&true]
+// pre : [HP_575,H1]HP_575(v_node_68_557')&true --> H1(v_node_68_557')&true,
+// [G1]x::node<val_68_581,v_node_68_586> * G1(v_node_68_586)&
+// --> G1(x)&true,
+	}
+
 
 */
 {
