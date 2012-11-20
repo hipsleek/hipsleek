@@ -1777,7 +1777,7 @@ let remove_dups_recursive hp args unk_hps defs=
 let simplify_set_of_formulas_x prog hp args unk_hps defs=
   let helper f=
     let f1 = filter_var prog args f in
-    if is_empty_f f1 then [] else [f1]
+    if is_empty_f f1 || (is_trivial f1 (hp,args)) then [] else [f1]
   in
   let base_case_exist,defs1 = remove_dups_recursive hp args unk_hps defs in
   let defs2 = List.concat (List.map helper defs1) in

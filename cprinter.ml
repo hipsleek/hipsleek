@@ -1495,7 +1495,7 @@ let pr_hprel hpa=
 
 let pr_hprel_short hpa=
   fmt_open_box 1;
-  fmt_string (CP.print_rel_cat hpa.hprel_kind);
+  (* fmt_string (CP.print_rel_cat hpa.hprel_kind); *)
   prtt_pr_formula hpa.hprel_lhs;
   fmt_string " --> ";
   prtt_pr_formula hpa.hprel_rhs;
