@@ -750,7 +750,7 @@ let translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option)
     Iast.proc_dynamic_specs = Iformula.mkEFalseF ();
     Iast.proc_exceptions = [];
     Iast.proc_body = Some funbody;
-    Iast.proc_is_main = false;
+    Iast.proc_is_main = true;
     Iast.proc_file = filename;
     Iast.proc_loc = pos;
   } in

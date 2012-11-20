@@ -3,8 +3,8 @@ int n;
 
 int foo ()
 /*@
- requires Term[]
- ensures res >= 0;
+ requires true
+ ensures  res < 0;
  */
 {
   return k*k + n*n;
