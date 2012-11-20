@@ -55,7 +55,7 @@ let parse_file_full file_name (primitive: bool) =
     with
 		End_of_file -> exit 0
     | M.Loc.Exc_located (l,t)->
-      (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error 1: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+      (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
       raise t)
 
 (* Parse all prelude files declared by user.*)
@@ -419,22 +419,21 @@ let main1 () =
 (* let main1 () = *)
 (*   Debug.loop_1_no "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
 
-(* let pre_main =                                                    *)
-(*   process_cmd_line ();                                            *)
-(*   Scriptarguments.check_option_consistency ();                    *)
-(*   if !Globals.print_version_flag then                             *)
-(* 	  let _ = print_version ()                                      *)
-(*     in []                                                         *)
-(*   else                                                            *)
-(*     let _ = Printexc.record_backtrace !Globals.trace_failure in   *)
-(*     if List.length (!Globals.source_files) = 0 then               *)
-(*       print_string "Source file(s) not specified\n";              *)
-(*     List.map process_source_full_parse_only !Globals.source_files *)
+let pre_main =
+  process_cmd_line ();
+  Scriptarguments.check_option_consistency ();
+  if !Globals.print_version_flag then
+	  let _ = print_version ()
+    in []
+  else
+    let _ = Printexc.record_backtrace !Globals.trace_failure in
+    if List.length (!Globals.source_files) = 0 then
+      print_string "Source file(s) not specified\n";
+    List.map process_source_full_parse_only !Globals.source_files
 
-(* let loop_cmd parsed_content =                                                                                 *)
-(*   let _ = print_endline ("== in loop_cmd") in                                                                 *)
-(*   let _ = List.map2 (fun s t -> process_source_full_after_parser s t) !Globals.source_files parsed_content in *)
-(*   ()                                                                                                          *)
+let loop_cmd parsed_content = 
+  let _ = List.map2 (fun s t -> process_source_full_after_parser s t) !Globals.source_files parsed_content in
+  ()
 
 let finalize () =
   Tpdispatcher.stop_prover ()
