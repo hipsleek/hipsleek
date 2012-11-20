@@ -514,9 +514,10 @@ let get_result_spring res_file n=
 
 let main_get_result ()= 
  if (!Globals.tp<>"spring") then	
-  let _=get_result "norm.result" "" in 
-  let _=get_result "ans.result" "efp.ans." in
-  let _=get_result "aus.result" "efp.aus." in ()
+  let _ = get_result "norm.result" "" in 
+  let _ = get_result "ns.result" "efp.ns." in
+  let _ = get_result "ans.result" "efp.ans." in
+  let _ = get_result "aus.result" "efp.aus." in ()
  else
 	let _=get_result_spring "result" !Globals.sp in ()
 	
