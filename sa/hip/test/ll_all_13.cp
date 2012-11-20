@@ -39,7 +39,7 @@ hpdefs [H1,G2][]: {
  or x_694::node<val_65_674,next_65_555'> * H1(next_65_555')&true
  ;
  G2(x_696,res_697)&true -->  
- emp&res_697=null & x_696=null
+ emp&res_697=null
  or x_696::node<a',res_697>&true
  or x_696::node<v_int_65_656,next_65_644> * G2(next_65_644,v_node_66_671) * 
     res_697::node<v_int_65_656,v_node_66_671>&true

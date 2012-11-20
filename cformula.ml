@@ -2842,8 +2842,8 @@ and elim_exists_preserve (f0 : formula) rvars : formula = match f0 with
   | Or ({ formula_or_f1 = f1;
     formula_or_f2 = f2;
     formula_or_pos = pos}) ->
-        let ef1 = elim_exists f1 in
-        let ef2 = elim_exists f2 in
+        let ef1 = elim_exists_preserve f1 rvars in
+        let ef2 = elim_exists_preserve f2 rvars in
 	    mkOr ef1 ef2 pos
   | Base _ ->  f0
   | Exists ({ formula_exists_qvars = qvar :: rest_qvars;
@@ -2857,7 +2857,7 @@ and elim_exists_preserve (f0 : formula) rvars : formula = match f0 with
         let r =
 	  let vp = if(List.length st = 1) then (
 	    let (sv1,sv2) = List.hd st in
-	    not (List.exists (fun sv -> CP.eq_spec_var sv sv1 || CP.eq_spec_var sv sv2) rvars) 
+	    not (List.exists (fun sv -> (String.compare (CP.full_name_of_spec_var sv1) sv == 0) || (String.compare (CP.full_name_of_spec_var sv2) sv == 0)) rvars) 
 	  )
 	    else false
 	  in
