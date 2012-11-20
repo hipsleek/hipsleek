@@ -452,71 +452,6 @@ let meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
   Debug.no_1 "Sleekengine.meta_to_formual" pr_meta pr_f
              (fun mf -> meta_to_formula mf quant fv_idents stab) mf0
 
-(* let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) = *)
-(* 		(\*  let _ = print_string "Call [Sleekengine.run_entail_check] with\n" in *\) *)
-(* 		(\* let _ = print_string ("ANTECEDENCE : " ^ (string_of_meta_formula iante0) ^ "\n") in *\) *)
-(* 		(\* let _ = print_string ("CONSEQUENCE : " ^ (string_of_meta_formula iconseq0) ^ "\n") in *\) *)
-(*   let _ = residues := None in *)
-(*   let stab = H.create 103 in *)
-(*   let ante = meta_to_formula iante0 false [] stab in *)
-(*   (\*let _ = print_endline "1: prune ante in check entailment" in*\) *)
-(*   let ante = Solver.prune_preds !cprog true ante in *)
-(*   let ante = *)
-(*     if (Perm.allow_perm ()) then *)
-(*       (\*add default full permission to ante; *)
-(*         need to add type of full perm to stab *\) *)
-(*       CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante *)
-(*     else ante *)
-(*   in *)
-(*   let vk = AS.fresh_proc_var_kind stab Float in *)
-(*   let _ = H.add stab (full_perm_name ()) vk in *)
-(* (\*  let _ = flush stdout in*\) *)
-(*   let fvs = CF.fv ante in *)
-(*   let fv_idents = List.map CP.name_of_spec_var fvs in *)
-(*   let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in *)
-(*   (\*let _ = print_endline "2: prune conseq in check entailment" in*\) *)
-(*   let conseq = Solver.prune_pred_struc !cprog true conseq in *)
-(*   let _ = Debug.devel_pprint ("\nrun_entail_check:" *)
-(*                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante) *)
-(*                         ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq) *)
-(*                         ^"\n\n") no_pos in *)
-(*   let es = CF.empty_es (CF.mkTrueFlow ()) no_pos in *)
-(*   let ante = Solver.normalize_formula_w_coers !cprog es ante !cprog.C.prog_left_coercions in *)
-(*   let _ = Debug.devel_pprint ("\nrun_entail_check: after normalization" *)
-(*                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante) *)
-(*                         ^ "\n ### conseq = "^(Cprinter.string_of_struc_formula conseq) *)
-(*                         ^"\n\n") no_pos in *)
-(*   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in *)
-(*   let ctx = CF.build_context ectx ante no_pos in *)
-(*   (\*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !norm_flow_int [ctx]) in*\) *)
-(*   (\* (\\*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*\\) *\) *)
-(*   (\* let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in *\) *)
-(*   (\* An Hoa TODO uncomment  *\) *)
-(*   let _ = if !Globals.print_core then print_string ("\nrun_entail_check:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in *)
-(*   let _ = if !Globals.print_input then print_string ("\n"^(string_of_meta_formula iante0)^" |- "^(string_of_meta_formula iconseq0)^"\n") else () in *)
-(*   let ctx = CF.transform_context (Solver.elim_unsat_es !cprog (ref 1)) ctx in *)
-(*   (\* let ante_flow_ff = (CF.flow_formula_of_formula ante) in *\) *)
-(*   let rs1, _ = *)
-(*   if not !Globals.disable_failure_explaining then *)
-(*     Solver.heap_entail_struc_init_bug_inv !cprog false false *)
-(*         (CF.SuccCtx[ctx]) conseq no_pos None *)
-(*   else *)
-(*      Solver.heap_entail_struc_init !cprog false false *)
-(*         (CF.SuccCtx[ctx]) conseq no_pos None *)
-(*   in *)
-(*   (\* let length_ctx ctx = match ctx with *\) *)
-(*   (\*   | CF.FailCtx _ -> 0 *\) *)
-(*   (\*   | CF.SuccCtx ctx0 -> List.length ctx0 in *\) *)
-(*   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in *)
-(*   residues := Some rs; *)
-(*   (\* print_string ( "\n Sleekengine.ml, run_entail_check 2: " ^ (Cprinter.string_of_list_context rs)^"\n"); *\) *)
-(*   flush stdout; *)
-(*   let res = *)
-(*     if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs))) *)
-(*     else ((not (CF.isFailCtx rs))) *)
-(*   in *)
-(*   (res, rs) *)
-
 let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = residues := None in
   let stab = H.create 103 in
@@ -606,13 +541,29 @@ let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
   Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 run_infer_one_pass ivars iante0 iconseq0
 
-let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
-  run_infer_one_pass [] iante0 iconseq0
+(* the value of flag "exact" decides the type of entailment checking              *)
+(*   None       -->  forbid residue in RHS when the option --classic is turned on *)
+(*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
+(*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
+let run_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etype: entail_type) =
+  (* store the current value of do_classic_frame_rule *)
+  let flag = !Globals.do_classic_frame_rule in
+  Globals.do_classic_frame_rule := (match etype with
+                                    | None -> !Globals.opt_classic;
+                                    | Some b -> b);
+  let res = run_infer_one_pass [] iante iconseq in
+  (* restore flag do_classic_frame_rule *)
+  Globals.do_classic_frame_rule := flag;
+  res
 
-let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
+(* the value of flag "exact" decides the type of entailment checking              *)
+(*   None       -->  forbid residue in RHS when the option --classic is turned on *)
+(*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
+(*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
+let run_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype: entail_type) =
   let pr = string_of_meta_formula in
   let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
-  Debug.no_2 "run_entail_check" pr pr pr_2 run_entail_check iante0 iconseq0
+  Debug.no_2 "run_entail_check" pr pr pr_2 run_entail_check_x iante iconseq etype
 
 let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
   DD.ninfo_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
@@ -671,16 +622,28 @@ let print_exc (check_id: string) =
   dummy_exception() ; 
   print_string ("exception caught " ^ check_id ^ " check\n")
 
-let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
+(* the value of flag "exact" decides the type of entailment checking              *)
+(*   None       -->  forbid residue in RHS when the option --classic is turned on *)
+(*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
+(*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
+let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etype : entail_type) =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in
   try 
-    let valid, rs = run_entail_check iante0 iconseq0 in
+    let valid, rs = run_entail_check iante iconseq etype in
     print_entail_result valid rs num_id
   with ex -> 
          let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
          in ()
   (* with e -> print_exc num_id *)
+
+(* the value of flag "exact" decides the type of entailment checking              *)
+(*   None       -->  forbid residue in RHS when the option --classic is turned on *)
+(*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
+(*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
+let process_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype: entail_type) =
+  let pr = string_of_meta_formula in
+  Debug.no_2 "process_entail_check_helper" pr pr (fun _ -> "?") process_entail_check_x iante iconseq etype
 
 let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
@@ -692,10 +655,6 @@ let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_f
       (* print_exc num_id *)
          let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
          in ()
-
-let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
-  let pr = string_of_meta_formula in
-  Debug.no_2 "process_entail_check" pr pr (fun _ -> "?") process_entail_check iante0 iconseq0
 
 let process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 

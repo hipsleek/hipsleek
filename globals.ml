@@ -96,6 +96,7 @@ type typ =
   | Tree_sh
   (* | FuncT (\* function type *\) *)
 
+
 let barrierT = Named "barrier"
 (*
   Data types for code gen
@@ -211,7 +212,12 @@ let string_of_loc_by_char_num (l : loc) =
 (*        | Some l -> (string_of_pos l.start_pos) *)
 (*    end;; *)
 
+(* Option for proof logging *)
+let proof_logging = ref false
+let proof_logging_txt = ref false
+let proof_logging_time = ref 0.000
 
+(*Proof logging facilities*)
 class ['a] store (x_init:'a) (epr:'a->string) =
    object 
      val emp_val = x_init
@@ -225,9 +231,16 @@ class ['a] store (x_init:'a) (epr:'a->string) =
        | Some p -> p
      method reset = lc <- None
      method string_of : string = match lc with
-       | None -> "None"
+       | None -> "Why None?"
        | Some l -> (epr l)
    end;;
+
+(* this will be set to true when we are in error explanation module *)
+class failure_mode =
+object
+  inherit [bool] store false string_of_bool
+end;;
+
 
 class prog_loc =
 object
@@ -237,9 +250,47 @@ object
        | Some l -> (string_of_pos l.start_pos)
 end;;
 
-let proving_loc  = new prog_loc
+class proving_type =
+object
+  inherit [string] store "None" (fun x -> x)
+     (* method string_of_string : string = match lc with *)
+     (*   | None -> "None" *)
+     (*   | Some l -> l *)
+end;;
 
+(*Some global vars for logging*)
+let proving_loc  = new prog_loc
 let post_pos = new prog_loc
+let proving_kind = new proving_type
+let explain_mode = new failure_mode
+let return_exp_pid = ref ([]: control_path_id list)	
+
+let proving_info () = 
+	if(proving_kind # is_avail) then
+		   (
+				  let temp= if(explain_mode # is_avail) then "FAILURE EXPLAINATION" else proving_kind # string_of in
+      		if (post_pos # is_avail) 
+          then ("Proving Infor spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^temp)
+          else if(proving_loc # is_avail)
+      	  then ("Proving Infor spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^temp)
+					else "..."
+       )
+	else "..."(*"who called is_sat,imply,simplify to be displayed later..."*)
+	
+let wrap_proving_kind (str : string) exec_function args =
+	if(!proof_logging_txt) then
+    let b = proving_kind # is_avail in
+    let m = proving_kind # get in
+    let _ = proving_kind # set str in 	
+    let res = exec_function args in
+    let _ = if(!proof_logging_txt) then
+      if b then proving_kind # set m 
+      else proving_kind # reset 
+	  in
+    res
+	else 	
+     let res = exec_function args in res
+ 
 (* let post_pos = ref no_pos *)
 (* let set_post_pos p = post_pos := p *)
 
@@ -606,12 +657,24 @@ let opt_ineq = ref false
 let infer_slicing = ref false
 let multi_provers = ref false
 let is_sat_slicing = ref false
+let delay_case_sat = ref false
+let force_post_sat = ref false
+let delay_if_sat = ref false
 
 (* Options for invariants *)
 let do_infer_inv = ref false
 
-(* Option for using classical reasoning in separation logic *)
-let do_classic_reasoning = ref false
+(** for classic frame rule of separation logic *)
+let opt_classic = ref false                (* option --classic is turned on or not? *)
+let do_classic_frame_rule = ref false      (* use classic frame rule or not? *)
+
+(** for type of frame inference rule that will be used in specs commands *)
+(* type = None       --> option --classic will be used to decides whether using classic rule or not? *)
+(*        Some true  --> always perform classic rule, regardless of --classic option                 *)
+(*        Some false --> always perform intutitive rule, regardless of --classic option              *)
+type ensures_type = bool option
+type assert_type = bool option
+type entail_type = bool option
 
 (* Options for abduction *)
 let do_abd_from_post = ref false
@@ -636,7 +699,6 @@ let parser_name = ref "default"
 
 let set_cil_parser () =
   parser_name := "cil"
-
 (* utility functions *)
 
 let omega_err = ref false
@@ -692,7 +754,6 @@ let locs_of_path_trace (pt: path_trace): loc list =
     loc_of_label plbl label_list
   in
   List.map (fun (pid, plbl) -> find_loc (Some pid) plbl) pt
-
 
 let locs_of_partial_context ctx =
   let failed_branches = fst ctx in
@@ -790,9 +851,8 @@ let formula_cache_no_series = ref 0
 let fresh_formula_cache_no  () = 
   formula_cache_no_series := !formula_cache_no_series +1;
   !formula_cache_no_series
-    
-let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
+let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
 let string_of_loc (p : loc) = p.start_pos.Lexing.pos_fname ^ "_" ^ (string_of_int p.start_pos.Lexing.pos_lnum)^"_"^
 	(string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol))
@@ -899,3 +959,9 @@ let open_log_out s =
 	Unix.mkdir "logs" 0o750
  with _ -> ());
  open_out ("logs/"^s)
+
+let norm_file_name str =
+	for i = 0 to (String.length str) - 1 do
+		if str.[i] = '.' || str.[i] = '/' then str.[i] <- '_'
+	done;
+	str

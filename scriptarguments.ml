@@ -13,7 +13,7 @@ let pred_to_compile = ref ([] : string list)
 let print_version_flag = ref false
 
 
-let inter = ref false
+let inter_hoa = ref false
 
 let enable_gui = ref false
 
@@ -150,7 +150,7 @@ let common_arguments = [
 	("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
 	"Build the image theory in Isabelle - default false");
 	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "zm"; "om";
-	"oi"; "set"; "cm"; "redlog"; "rm"; "prm"; "spass"; "auto" ], Tpdispatcher.set_tp),
+	"oi"; "set"; "cm"; "redlog"; "rm"; "prm"; "spass"; "auto"; "log"], Tpdispatcher.set_tp),
 	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
 	("-perm", Arg.Symbol (["fperm"; "cperm"; "dperm";"none"], Perm.set_perm),
 	"Choose type of permissions for concurrency :\n\t fperm: fractional permissions\n\t cperm: counting permissions");
@@ -267,6 +267,14 @@ let common_arguments = [
   ("--slc-multi-provers", Arg.Set Globals.multi_provers, "Enable multiple provers for proving multiple properties");
   ("--slc-sat-slicing", Arg.Set Globals.is_sat_slicing, "Enable slicing before sending formulas to provers");
   ("--slc-lbl-infer", Arg.Set Globals.infer_slicing, "Enable slicing label inference");
+  ("--delay-case-sat", Arg.Set Globals.delay_case_sat, "Disable unsat checking for case entailment");
+  ("--force-post-sat", Arg.Set Globals.force_post_sat, "Force unsat checking when assuming a postcondition");
+  ("--delay-if-sat", Arg.Set Globals.delay_if_sat, "Disable unsat checking for a conditional");
+  
+	
+	(* Proof Logging *)
+	("--enable-logging", Arg.Set Globals.proof_logging, "Enable proof logging");
+	("--enable-logging-txt", Arg.Set Globals.proof_logging_txt, "Enable proof logging output text file in addition");
 
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
@@ -276,7 +284,7 @@ let common_arguments = [
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
 
   (* use classical reasoning in separation logic *)
-  ("--classic", Arg.Set Globals.do_classic_reasoning, "Use classical reasoning in separation logic");
+  ("--classic", Arg.Set Globals.opt_classic, "Use classical reasoning in separation logic");
   
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
   ("--en-lemma-s", Arg.Set Globals.enable_split_lemma_gen, "Enable automatic generation of splitting lemmas");
@@ -309,7 +317,7 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
 let sleek_specific_arguments = [
    ("-fe", Arg.Symbol (["native"; "xml"], set_frontend),
 	"Choose frontend:\n\tnative: Native (default)\n\txml: XML");
-   ("-int", Arg.Set inter,
+   ("-int", Arg.Set inter_hoa,
     "Run in interactive mode.");
    ("--slk-err", Arg.Set Globals.print_err_sleek,
 	"print sleek errors");
@@ -339,5 +347,6 @@ let check_option_consistency () =
     begin
     Gen.Basic.report_error Globals.no_pos "immutability and permission options cannot be turned on at the same time"
     end
+;; (*Clean warning*)
+Astsimp.inter_hoa := !inter_hoa;;
 
-Astsimp.inter := !inter;;

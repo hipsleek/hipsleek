@@ -10,6 +10,7 @@ open Cformula
 open Mcpure_D
 open Gen.Basic 
 open Label_only
+open Printf
 
 module P = Cpure
 module MP = Mcpure
@@ -833,7 +834,10 @@ let pr_memoise_group_vb m_gr =
   fmt_cut();
   wrap_box ("V",1)
       ( fun m_gr -> fmt_string "(";pr_list_op_none "" 
-          (fun c-> wrap_box ("H",1) (fun _ -> fmt_string "SLICE["; pr_list_of_spec_var c.memo_group_fv; fmt_string "]["; pr_list_of_spec_var c.memo_group_linking_vars; fmt_string "]:") (); 
+          (fun c-> wrap_box ("H",1) (fun _ -> fmt_string 
+						"SLICE["; pr_list_of_spec_var c.memo_group_fv; fmt_string "]["; 
+						pr_list_of_spec_var c.memo_group_linking_vars; fmt_string "]";
+						fmt_string (if c.memo_group_unsat then "(sat?):" else ":")) (); 
               fmt_cut ();fmt_string "  ";
               wrap_box ("B",1) pr_memoise c.memo_group_cons;
               fmt_cut ();fmt_string "  ";
@@ -1080,7 +1084,7 @@ let rec pr_h_formula_for_spec h =
   | HTrue -> fmt_bool true
   | HFalse -> fmt_bool false
   | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
-
+  | HEmp -> ()(*Clean warning*) 
 (** convert formula exp to a string via pr_formula_exp *)
 let string_of_formula_exp (e:P.exp) : string =  poly_string_of_pr  pr_formula_exp e
 
@@ -1431,10 +1435,14 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
 	          wrap_box ("B",0) pr_struc_formula l;
             end);
           fmt_close();
-    | EAssume (x,b,(y1,y2))->
+    | EAssume (x,b,(y1,y2),t)->
           wrap_box ("V",2)
               (fun b ->
-	              fmt_string "EAssume ";
+                let assume_str = match t with
+                                 | None -> "EAssume "
+                                 | Some true -> "EAssume_exact "
+                                 | Some false -> "EAssume_inexact " in
+	              fmt_string assume_str;
 	              pr_formula_label (y1,y2);
 	              if not(Gen.is_empty(x)) then pr_seq_nocut "ref " pr_spec_var x;
 	              fmt_cut();
@@ -1473,8 +1481,12 @@ let rec pr_struc_formula_for_spec (e:struc_formula) =
       | None -> ()
       | Some l -> pr_struc_formula_for_spec l;
     );
-  | EAssume (x,b,(y1,y2))->
-    fmt_string "\n ensures ";
+  | EAssume (x,b,(y1,y2),t)->
+    let ensures_str = match t with
+                     | None -> "\n ensures "
+                     | Some true -> "\n ensures_exact "
+                     | Some false -> "\n ensures_inexact " in
+    fmt_string ensures_str;
     pr_formula_for_spec b;
     fmt_string ";"
   | EInfer _ -> report_error no_pos "Do not expect EInfer at this level"
@@ -1582,6 +1594,7 @@ let pr_estate (es : entail_state) =
   (* pr_wrap_test "es_infer_invs: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_invs;  *)
   pr_wrap_test "es_var_zero_perm: " (fun _ -> false) (pr_seq "" pr_spec_var) es.es_var_zero_perm; (*always print*)
   (* pr_vwrap "es_infer_invs:  " pr_list_pure_formula es.es_infer_invs; *)
+  pr_wrap_test "es_unsat_flag: " (fun _-> false) (fun c-> fmt_string (string_of_bool c)) es.es_unsat_flag;  
   fmt_close ()
 
 
@@ -2038,6 +2051,7 @@ let string_of_barrier_decl (v: Cast.barrier_decl): string = poly_string_of_pr pr
 let printer_of_view_decl (fmt: Format.formatter) (v: Cast.view_decl) : unit =
   poly_printer_of_pr fmt pr_view_decl v 
 
+
 (* function to print a list of strings *) 
 let rec string_of_ident_list l c = match l with 
   | [] -> ""
@@ -2141,24 +2155,23 @@ let rec string_of_exp = function
   | Label l-> "LABEL! "^( (string_of_int_label_opt (fst  l.exp_label_path_id) (","^((string_of_int (snd l.exp_label_path_id))^": "^(string_of_exp l.exp_label_exp)))))
   | Java ({exp_java_code = code}) -> code
   | CheckRef _ -> ""
-  | Assert ({exp_assert_asserted_formula = f1o; exp_assert_assumed_formula = f2o; exp_assert_pos = l; exp_assert_path_id = pid}) -> 
-        let s = 
-	      begin
-	        let str1 = 
-	          match f1o with
-	            | None -> ""
-	            | Some f1 -> "assert " ^(string_of_control_path_id pid (":"^(string_of_struc_formula f1))) in
-	        let str2 =
-	          match f2o with
-	            | None -> ""
-	            | Some f2 -> "assume " ^ (string_of_formula f2) in
-	        str1 ^ " " ^ str2
-	      end in
-	    string_of_formula_label pid s 
-	        (*| ArrayAt ({exp_arrayat_type = _; exp_arrayat_array_base = a; exp_arrayat_index = i; exp_arrayat_pos = l}) -> 
-              a ^ "[" ^ (string_of_exp i) ^ "]" (* An Hoa *) *)
-	        (*| ArrayMod ({exp_arraymod_lhs = a; exp_arraymod_rhs = r; exp_arraymod_pos = l}) -> 
-              (string_of_exp (ArrayAt a)) ^ " = " ^ (string_of_exp r) (* An Hoa *)*)
+  | Assert ({exp_assert_asserted_formula = f1o; exp_assert_assumed_formula = f2o; exp_assert_pos = l; exp_assert_type = t; exp_assert_path_id = pid}) -> 
+      let s = ( 
+        let str1 = match (f1o, t) with
+          | None, _ -> ""
+          | Some f1, None -> "assert " ^(string_of_control_path_id pid (":"^(string_of_struc_formula f1)))
+          | Some f1, Some true -> "assert_exact " ^(string_of_control_path_id pid (":"^(string_of_struc_formula f1)))
+          | Some f1, Some false -> "assert_inexact " ^(string_of_control_path_id pid (":"^(string_of_struc_formula f1))) in
+        let str2 = match f2o with
+          | None -> ""
+          | Some f2 -> "assume " ^ (string_of_formula f2) in
+        str1 ^ " " ^ str2
+      ) in
+      string_of_formula_label pid s 
+(*| ArrayAt ({exp_arrayat_type = _; exp_arrayat_array_base = a; exp_arrayat_index = i; exp_arrayat_pos = l}) -> 
+    a ^ "[" ^ (string_of_exp i) ^ "]" (* An Hoa *) *)
+(*| ArrayMod ({exp_arraymod_lhs = a; exp_arraymod_rhs = r; exp_arraymod_pos = l}) -> 
+    (string_of_exp (ArrayAt a)) ^ " = " ^ (string_of_exp r) (* An Hoa *)*)
   | Assign ({exp_assign_lhs = id; exp_assign_rhs = e; exp_assign_pos = l}) -> 
         id ^ " = " ^ (string_of_exp e)
   | BConst ({exp_bconst_val = b; exp_bconst_pos = l}) -> 
@@ -2703,8 +2716,12 @@ let rec html_of_struc_formula f = match f with
 					formula_struc_continuation = cont;} ->
 		"EBase " ^ (if not (Gen.is_empty(ee@ii@ei)) then "exists " ^ "(Expl)" ^ (html_of_spec_var_list ei) ^ "(Impl)" ^ (html_of_spec_var_list ii) ^ "(ex)" ^ 
 		(html_of_spec_var_list ee)	else "") ^ (html_of_formula fb) ^ (match cont with | None -> "" | Some l -> html_of_struc_formula l)
-	| EAssume (x,b,(y1,y2)) ->
-		"EAssume " ^ (if not (Gen.is_empty(x)) then "ref " ^ (html_of_spec_var_list x) else "") ^ (html_of_formula b)
+	| EAssume (x,b,(y1,y2),t) ->
+    let assume_str = match t with
+                     | None -> "EAssume "
+                     | Some true -> "EAssume_exact "
+                     | Some false -> "EAssume_inexact " in
+		assume_str ^ (if not (Gen.is_empty(x)) then "ref " ^ (html_of_spec_var_list x) else "") ^ (html_of_formula b)
 	| EInfer _ -> ""
 	| EList b -> if b==[] then "[]" else String.concat "|| " (List.map (fun c-> html_of_struc_formula (snd c))b)
     | EOr b -> (html_of_struc_formula b.formula_struc_or_f1)^" eor "^(html_of_struc_formula b.formula_struc_or_f2)

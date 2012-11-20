@@ -78,7 +78,7 @@ let rec smt_of_typ t =
 		| NUM -> "Int" (* Use default Int for NUM *)
     | BagT _ -> "Int"
     | TVar _ -> "Int"
-		| Void | (BagT _) | (*(TVar _) |*) List _ ->
+		| Void |(* (BagT _) |*) (*(TVar _) |*) List _ ->
 			illegal_format ("z3.smt_of_typ: " ^ (string_of_typ t) ^ " not supported for SMT")
 		| Named _ -> "Int" (* objects and records are just pointers *)
 		| Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
@@ -938,7 +938,7 @@ and smt_imply_with_induction (ante : CP.formula) (conseq : CP.formula) (prover: 
 
 and smt_imply  pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
   let pr = !print_pure in
-  Debug.ho_2_loop "smt_imply" (pr_pair pr pr) string_of_float string_of_bool
+  Debug.no_2_loop "smt_imply" (pr_pair pr pr) string_of_float string_of_bool
       (fun _ _-> smt_imply_x  pr_weak pr_strong ante conseq prover timeout) (ante, conseq) timeout
 
 and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
@@ -1001,7 +1001,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
       end
 
 let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
-  Debug.ho_1_loop "smt.imply" string_of_float string_of_bool
+  Debug.no_1_loop "smt.imply" string_of_float string_of_bool
       (fun _ -> imply ante conseq timeout) timeout
 
 (**
@@ -1054,7 +1054,7 @@ let is_sat (pe : CP.formula) sat_no : bool =
         failwith s
       end
 
-let is_sat f sat_no = Debug.ho_2_loop "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no
+let is_sat f sat_no = Debug.no_2_loop "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no
 
 
 (**
