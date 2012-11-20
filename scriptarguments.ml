@@ -280,24 +280,20 @@ let common_arguments = [
   ("--dis-log-filter", Arg.Clear Globals.log_filter, "turn off the log initial filtering");
 
   (* Slicing *)
-  (* ("--en-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing"); *)
-  
-  ("--eps", Arg.Set Globals.en_slc_ps(* ; Arg.Clear Globals.dis_ps *), 
-    "Enable slicing with predicate specialization");
+  ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
   ("--dis-ps", Arg.Set Globals.dis_ps, "Disable predicate specialization");
 	("--dis-ann", Arg.Set Globals.dis_slc_ann, "Disable aggressive slicing with annotation scheme (not default)");
 	("--slc-rel-level", Arg.Set_int Globals.slicing_rel_level, "Set depth for GetCtr function");
-  (*("--dis-slicing", Arg.Set Globals.dis_slicing, "Disable slicing, equivalent to ");*)
-  (* similar to --force-one-slice *)
-
-  (* ("--slc-opt-imply", Arg.Set_int Globals.opt_imply, "Enable optimal implication for forced slicing"); *)
-  (* not used *)
-  ("--slc-ann-ineq", Arg.Set Globals.opt_ineq, "Enable inference of annotated slicing for ineq");
+  ("--slc-ann-ineq", Arg.Set Globals.opt_ineq, "Enable inference of agressive slicing with inequalities");
+  ("--slc-lvar-infer", Arg.Set Globals.infer_lvar_slicing, "Enable linking variable inference of agressive slicing");
+  
+  (* ("--en-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing"); *)
+  (* ("--dis-slicing", Arg.Set Globals.dis_slicing, "Disable slicing, equivalent to "); *) (* similar to --force-one-slice *)
+  (* ("--slc-opt-imply", Arg.Set_int Globals.opt_imply, "Enable optimal implication for forced slicing"); *) (* not used *)
   ("--slc-multi-provers", Arg.Set Globals.multi_provers, "Enable multiple provers for proving multiple properties");
   ("--slc-sat-slicing", Arg.Set Globals.is_sat_slicing, "Enable slicing before sending formulas to provers");
   (* similar to --force-sat-slice when no memo formula used *) 
   ("--slc-ann-infer", Arg.Set Globals.infer_slicing, "Enable slicing label inference");
-  ("--slc-lvar-infer", Arg.Set Globals.infer_lvar_slicing, "Enable linking variable inference");
   ("--delay-case-sat", Arg.Set Globals.delay_case_sat, "Disable unsat checking for case entailment");
   ("--force-post-sat", Arg.Set Globals.force_post_sat, "Force unsat checking when assuming a postcondition");
   ("--delay-if-sat", Arg.Set Globals.delay_if_sat, "Disable unsat checking for a conditional");
@@ -374,12 +370,17 @@ let gui_arguments = common_arguments @ hip_specific_arguments @ gui_specific_arg
 ;;
 
 let check_option_consistency () =
+  (* Slicing and Specilization Consistency *)
+  if not !Globals.en_slc_ps then begin
+    Globals.dis_ps := true;
+    Globals.dis_slc_ann := true;    
+  end;
   if !Globals.perm=Globals.Dperm then Globals.use_split_match:=true else () ;
   if !Globals.perm<>Globals.NoPerm then Globals.allow_imm:=false else () ;
   if !Globals.allow_imm && Perm.allow_perm() then
-    begin
+  begin
     Gen.Basic.report_error Globals.no_pos "immutability and permission options cannot be turned on at the same time"
-    end
-;; (*Clean warning*)
-Astsimp.inter_hoa := !inter_hoa;;
+  end
+  ;; (*Clean warning*)
+  Astsimp.inter_hoa := !inter_hoa;;
 

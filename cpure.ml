@@ -7820,7 +7820,8 @@ let rec get_Neg_RelForm pf = match pf with
   | Exists (_,f,_,_) -> get_Neg_RelForm f
 
 let assumption_filter (ante : formula) (conseq : formula) : (formula * formula) =
-  if !filtering_flag (*&& (not !allow_pred_spec)*) then (filter_ante ante conseq, conseq)
+  if !filtering_flag (* && (not !allow_pred_spec) *) 
+  then (filter_ante ante conseq, conseq)
   else (ante, conseq)
 
 (* need unsat checking for disjunctive LHS *)

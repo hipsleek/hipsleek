@@ -677,12 +677,12 @@ let dis_ass_chk = ref false
 let log_filter = ref true
   
 (* Options for slicing *)
-(* let do_slicing = ref false *)
 let en_slc_ps = ref false
 let dis_ps = ref false
 let dis_slc_ann = ref false
 let slicing_rel_level = ref 2
 
+(* let do_slicing = ref false *)
 let dis_slicing = ref false
 let opt_imply = ref 0
 let opt_ineq = ref false

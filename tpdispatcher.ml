@@ -2240,7 +2240,7 @@ let rec is_sat_memo_sub_no_ineq_slicing (mem : memo_pure) sat_subno with_dupl wi
   Debug.no_1 "is_sat_memo_sub_no_ineq_slicing"
 	Cprinter.string_of_memo_pure_formula
 	string_of_bool
-	(fun mem -> is_sat_memo_sub_no_ineq_slicing_x1 mem sat_subno with_dupl with_inv) mem
+	(fun mem -> is_sat_memo_sub_no_ineq_slicing_x2 mem sat_subno with_dupl with_inv) mem
 
 and is_sat_memo_sub_no_ineq_slicing_x1 (mem : memo_pure) sat_subno with_dupl with_inv : bool =
   let is_sat_one_slice mg =
@@ -2259,6 +2259,21 @@ and is_sat_memo_sub_no_ineq_slicing_x1 (mem : memo_pure) sat_subno with_dupl wit
           (Gen.BList.subset_eq eq_spec_var img.memo_group_fv mg.memo_group_fv)) mem in
   		let f = join_conjunctions (MCP.fold_mem_lst_to_lst (mg::related_ineq) with_dupl with_inv true) in
   		is_sat_sub_no f sat_subno
+  in
+  (* List.fold_left (fun acc mg -> if not acc then acc else is_sat_one_slice mg) true mem *)
+  not (List.exists (fun mg -> not (is_sat_one_slice mg)) mem)
+  
+and is_sat_memo_sub_no_ineq_slicing_x2 (mem : memo_pure) sat_subno with_dupl with_inv : bool =
+  let is_sat_one_slice mg =
+    if (MCP.is_ineq_linking_memo_group mg)
+    then (* mg is a linking inequality *)
+      true
+    else
+      let related_ineq = List.find_all (fun img ->
+        (MCP.is_ineq_linking_memo_group img) && 
+        (Gen.BList.subset_eq eq_spec_var img.memo_group_fv mg.memo_group_fv)) mem in
+      let f = join_conjunctions (MCP.fold_mem_lst_to_lst (mg::related_ineq) with_dupl with_inv true) in
+      is_sat_sub_no f sat_subno
   in
   (* List.fold_left (fun acc mg -> if not acc then acc else is_sat_one_slice mg) true mem *)
   not (List.exists (fun mg -> not (is_sat_one_slice mg)) mem)
@@ -2378,9 +2393,9 @@ let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =
   (* if !do_slicing && !multi_provers then                       *)
   (*   is_sat_memo_sub_no_slicing f sat_subno with_dupl with_inv *)
   (* if !do_slicing && !opt_ineq then  *)
-	if (not !dis_slc_ann) && !opt_ineq then
-    (* is_sat_memo_sub_no_ineq_slicing f sat_subno with_dupl with_inv *)
-    MCP.is_sat_memo_sub_no_ineq_slicing_complete f with_dupl with_inv (fun f -> is_sat_sub_no f sat_subno)
+  if (not !dis_slc_ann) && !opt_ineq then
+    is_sat_memo_sub_no_ineq_slicing f sat_subno with_dupl with_inv
+    (* MCP.is_sat_memo_sub_no_ineq_slicing_complete f with_dupl with_inv (fun f -> is_sat_sub_no f sat_subno) *)
   (* else if !do_slicing && !infer_lvar_slicing then *)
 	else if (not !dis_slc_ann) && !infer_lvar_slicing then
     MCP.is_sat_memo_sub_no_complete f with_dupl with_inv (fun f -> is_sat_sub_no f sat_subno)
@@ -2389,105 +2404,105 @@ let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =
 let is_sat_memo_sub_no (f : memo_pure) sat_subno with_dupl with_inv : bool =
   Debug.no_1 "is_sat_memo_sub_no" Cprinter.string_of_memo_pure_formula string_of_bool
 	(fun f -> is_sat_memo_sub_no f sat_subno with_dupl with_inv) f	  
-	  (*
-let is_sat_memo_sub_no_new (mem : memo_pure) sat_subno with_dupl with_inv : bool =
-  let memo_group_linking_vars_exps (mg : memoised_group) =
-	let cons_lv = List.fold_left (fun acc mc -> acc @ (b_formula_linking_vars_exps mc.memo_formula)) [] mg.memo_group_cons in
-	let slice_lv = List.fold_left (fun acc f -> acc @ (formula_linking_vars_exps f)) [] mg.memo_group_slice in
-	Gen.BList.remove_dups_eq eq_spec_var (cons_lv @ slice_lv)
-  in
 
-  let fv_without_linking_vars_exps mg =
-	let fv_no_lv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv (memo_group_linking_vars_exps mg) in
-	(* If all fv are linking vars then mg should be a linking constraint *)
-	if (fv_no_lv = []) then mg.memo_group_fv else fv_no_lv
-  in
+(* let is_sat_memo_sub_no_new (mem : memo_pure) sat_subno with_dupl with_inv : bool =                                          *)
+(*   let memo_group_linking_vars_exps (mg : memoised_group) =                                                                  *)
+(* 	let cons_lv = List.fold_left (fun acc mc -> acc @ (b_formula_linking_vars_exps mc.memo_formula)) [] mg.memo_group_cons in *)
+(* 	let slice_lv = List.fold_left (fun acc f -> acc @ (formula_linking_vars_exps f)) [] mg.memo_group_slice in                *)
+(* 	Gen.BList.remove_dups_eq eq_spec_var (cons_lv @ slice_lv)                                                                 *)
+(*   in                                                                                                                        *)
 
-  let filter_fold_mg mg =
-	let slice = mg.memo_group_slice in (* with_slice = true; with_disj = true *)
-	let cons = List.filter (fun c -> match c.memo_status with 
-	  | Implied_R -> (*with_R*) with_dupl
-	  | Implied_N -> true 
-	  | Implied_P-> (*with_P*) with_inv) mg.memo_group_cons in
-	let cons  = List.map (fun c -> (BForm (c.memo_formula, None))) cons in
-	let asetf = List.map (fun (c1,c2) -> form_formula_eq_with_const c1 c2) (get_equiv_eq_with_const mg.memo_group_aset) in
-	join_conjunctions (asetf @ slice @ cons)
-  in 
+(*   let fv_without_linking_vars_exps mg =                                                                                     *)
+(* 	let fv_no_lv = Gen.BList.difference_eq eq_spec_var mg.memo_group_fv (memo_group_linking_vars_exps mg) in                  *)
+(* 	(* If all fv are linking vars then mg should be a linking constraint *)                                                   *)
+(* 	if (fv_no_lv = []) then mg.memo_group_fv else fv_no_lv                                                                    *)
+(*   in                                                                                                                        *)
+
+(*   let filter_fold_mg mg =                                                                                                   *)
+(* 	let slice = mg.memo_group_slice in (* with_slice = true; with_disj = true *)                                              *)
+(* 	let cons = List.filter (fun c -> match c.memo_status with                                                                 *)
+(* 	  | Implied_R -> (*with_R*) with_dupl                                                                                     *)
+(* 	  | Implied_N -> true                                                                                                     *)
+(* 	  | Implied_P-> (*with_P*) with_inv) mg.memo_group_cons in                                                                *)
+(* 	let cons  = List.map (fun c -> (BForm (c.memo_formula, None))) cons in                                                    *)
+(* 	let asetf = List.map (fun (c1,c2) -> form_formula_eq_with_const c1 c2) (get_equiv_eq_with_const mg.memo_group_aset) in    *)
+(* 	join_conjunctions (asetf @ slice @ cons)                                                                                  *)
+(*   in                                                                                                                        *)
   
-  let is_sat_slice_memo_pure (mp : memo_pure) : bool * (spec_var list * spec_var list * formula) list =
-	(* OUT: list of (list of fv, list of fv without linking vars, formula folded from SAT memo_groups) *)
-	let repart acc mg =
-	  let (r, acc_fl) = acc in
-	  if not r then (r, [])
-	  else
-		let f_mg = filter_fold_mg mg in
-		let r = is_sat_sub_no f_mg sat_subno in
-		if not r then (r, [])
-		else
-		  let mg_fv_no_lv = fv_without_linking_vars_exps mg in
-		  let (ol, nl) = List.partition (* overlap_list, non_overlap_list with mg *)
-			(fun (_, vl, _) -> (Gen.BList.overlap_eq eq_spec_var vl mg_fv_no_lv)
-			) acc_fl
-		  in
-		  let n_fvl = List.fold_left (fun a (fvl, _, _) -> a@fvl) mg.memo_group_fv ol in
-		  let n_vl = List.fold_left (fun a (_, vl, _) -> a@vl) mg_fv_no_lv ol in
-		  let n_fl = List.fold_left (fun a (_, _, fl) -> a@[fl]) [f_mg] ol in
-		  (r, (Gen.BList.remove_dups_eq eq_spec_var n_fvl,
-			   Gen.BList.remove_dups_eq eq_spec_var n_vl,
-			   join_conjunctions n_fl)::nl)
-	in List.fold_left repart (true, []) mp
-  in
+(*   let is_sat_slice_memo_pure (mp : memo_pure) : bool * (spec_var list * spec_var list * formula) list =                     *)
+(* 	(* OUT: list of (list of fv, list of fv without linking vars, formula folded from SAT memo_groups) *)                     *)
+(* 	let repart acc mg =                                                                                                       *)
+(* 	  let (r, acc_fl) = acc in                                                                                                *)
+(* 	  if not r then (r, [])                                                                                                   *)
+(* 	  else                                                                                                                    *)
+(* 		let f_mg = filter_fold_mg mg in                                                                                         *)
+(* 		let r = is_sat_sub_no f_mg sat_subno in                                                                                 *)
+(* 		if not r then (r, [])                                                                                                   *)
+(* 		else                                                                                                                    *)
+(* 		  let mg_fv_no_lv = fv_without_linking_vars_exps mg in                                                                  *)
+(* 		  let (ol, nl) = List.partition (* overlap_list, non_overlap_list with mg *)                                            *)
+(* 			(fun (_, vl, _) -> (Gen.BList.overlap_eq eq_spec_var vl mg_fv_no_lv)                                                  *)
+(* 			) acc_fl                                                                                                              *)
+(* 		  in                                                                                                                    *)
+(* 		  let n_fvl = List.fold_left (fun a (fvl, _, _) -> a@fvl) mg.memo_group_fv ol in                                        *)
+(* 		  let n_vl = List.fold_left (fun a (_, vl, _) -> a@vl) mg_fv_no_lv ol in                                                *)
+(* 		  let n_fl = List.fold_left (fun a (_, _, fl) -> a@[fl]) [f_mg] ol in                                                   *)
+(* 		  (r, (Gen.BList.remove_dups_eq eq_spec_var n_fvl,                                                                      *)
+(* 			   Gen.BList.remove_dups_eq eq_spec_var n_vl,                                                                         *)
+(* 			   join_conjunctions n_fl)::nl)                                                                                       *)
+(* 	in List.fold_left repart (true, []) mp                                                                                    *)
+(*   in                                                                                                                        *)
 
-  let is_sat_slice_linking_vars_constraints (fl : (spec_var list * spec_var list * formula) list) : bool =
-	(* Separate the above list of formula list into two parts: *)
-	(* - Need to check SAT in combined form *)
-	(* - Unneed to check SAT (constraints of linking vars) *)
-	let rec repart (unchk_l, n_l, un_l) =
-	  (* If we know how to determine the constraints of linking vars,
-		 we do not need n_l *)
-	  match unchk_l with
-		| [] -> true
-		| (fvl, vl, f)::unchk_rest ->
-		  let f_lv = Gen.BList.difference_eq eq_spec_var fvl vl in
-		  if (f_lv = []) then
-			let r = is_sat_sub_no f sat_subno in (* Can reduce the # of SAT checking here *)
-			if not r then r
-			else repart (unchk_rest, (fvl, vl, f)::n_l, un_l)
-		  else
-			let is_related vl1 vl2 = Gen.BList.overlap_eq eq_spec_var vl1 vl2 in
+(*   let is_sat_slice_linking_vars_constraints (fl : (spec_var list * spec_var list * formula) list) : bool =                  *)
+(* 	(* Separate the above list of formula list into two parts: *)                                                             *)
+(* 	(* - Need to check SAT in combined form *)                                                                                *)
+(* 	(* - Unneed to check SAT (constraints of linking vars) *)                                                                 *)
+(* 	let rec repart (unchk_l, n_l, un_l) =                                                                                     *)
+(* 	  (* If we know how to determine the constraints of linking vars,                                                         *)
+(* 		 we do not need n_l *)                                                                                                  *)
+(* 	  match unchk_l with                                                                                                      *)
+(* 		| [] -> true                                                                                                            *)
+(* 		| (fvl, vl, f)::unchk_rest ->                                                                                           *)
+(* 		  let f_lv = Gen.BList.difference_eq eq_spec_var fvl vl in                                                              *)
+(* 		  if (f_lv = []) then                                                                                                   *)
+(* 			let r = is_sat_sub_no f sat_subno in (* Can reduce the # of SAT checking here *)                                      *)
+(* 			if not r then r                                                                                                       *)
+(* 			else repart (unchk_rest, (fvl, vl, f)::n_l, un_l)                                                                     *)
+(* 		  else                                                                                                                  *)
+(* 			let is_related vl1 vl2 = Gen.BList.overlap_eq eq_spec_var vl1 vl2 in                                                  *)
 
-			(* Search relevant constraints in list of unchecked constraints *)
-			(* Move merged constraints into list of unneeded to check SAT constraints *)
-			let (merged_fl1, unmerged_fl1) = List.partition (fun (_, vl1, _) -> is_related vl1 f_lv) unchk_rest in 
+(* 			(* Search relevant constraints in list of unchecked constraints *)                                                    *)
+(* 			(* Move merged constraints into list of unneeded to check SAT constraints *)                                          *)
+(* 			let (merged_fl1, unmerged_fl1) = List.partition (fun (_, vl1, _) -> is_related vl1 f_lv) unchk_rest in                *)
 
-			(* Search relevant constraints in list of needed to check SAT constraints *)
-			(* Move merged constraints into list of unneeded to check SAT constraints *)
-			let (merged_fl2, unmerged_fl2) = List.partition (fun (_, vl2, _) -> is_related vl2 f_lv) n_l in
+(* 			(* Search relevant constraints in list of needed to check SAT constraints *)                                          *)
+(* 			(* Move merged constraints into list of unneeded to check SAT constraints *)                                          *)
+(* 			let (merged_fl2, unmerged_fl2) = List.partition (fun (_, vl2, _) -> is_related vl2 f_lv) n_l in                       *)
 
-			(* Search relevant constraints in list of unneeded to check SAT constraints *)
-			let merged_fl3 = List.find_all (fun (_, vl3, _) -> is_related vl3 f_lv) un_l in
+(* 			(* Search relevant constraints in list of unneeded to check SAT constraints *)                                        *)
+(* 			let merged_fl3 = List.find_all (fun (_, vl3, _) -> is_related vl3 f_lv) un_l in                                       *)
 
-			let n_f = join_conjunctions
-			  (List.fold_left (fun acc (_, _, f) -> acc@[f])
-				 [f] (merged_fl1 @ merged_fl2 @ merged_fl3)) in
+(* 			let n_f = join_conjunctions                                                                                           *)
+(* 			  (List.fold_left (fun acc (_, _, f) -> acc@[f])                                                                      *)
+(* 				 [f] (merged_fl1 @ merged_fl2 @ merged_fl3)) in                                                                     *)
 
-			let r = is_sat_sub_no n_f sat_subno in
-			if not r then r
-			else
-			  let n_unchk_l = unmerged_fl1 in
-			  let n_n_l = (fvl, vl, n_f)::unmerged_fl2 in
-			  let n_un_l = merged_fl1 @ merged_fl2 @ un_l in
-			  repart (n_unchk_l, n_n_l, n_un_l)
-	in 
-	repart (fl, [], [])
-  in
+(* 			let r = is_sat_sub_no n_f sat_subno in                                                                                *)
+(* 			if not r then r                                                                                                       *)
+(* 			else                                                                                                                  *)
+(* 			  let n_unchk_l = unmerged_fl1 in                                                                                     *)
+(* 			  let n_n_l = (fvl, vl, n_f)::unmerged_fl2 in                                                                         *)
+(* 			  let n_un_l = merged_fl1 @ merged_fl2 @ un_l in                                                                      *)
+(* 			  repart (n_unchk_l, n_n_l, n_un_l)                                                                                   *)
+(* 	in                                                                                                                        *)
+(* 	repart (fl, [], [])                                                                                                       *)
+(*   in                                                                                                                        *)
 
-  let (r, fl) = is_sat_slice_memo_pure mem in
-  let res =
-	if not r then r
-	else is_sat_slice_linking_vars_constraints fl
-  in
-  res*)
+(*   let (r, fl) = is_sat_slice_memo_pure mem in                                                                               *)
+(*   let res =                                                                                                                 *)
+(* 	if not r then r                                                                                                           *)
+(* 	else is_sat_slice_linking_vars_constraints fl                                                                             *)
+(*   in                                                                                                                        *)
+(*   res                                                                                                                       *)
   
 let is_sat_mix_sub_no (f : MCP.mix_formula) sat_subno with_dupl with_inv : bool = match f with
   | MCP.MemoF f -> is_sat_memo_sub_no f sat_subno with_dupl with_inv

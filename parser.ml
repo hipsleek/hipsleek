@@ -508,16 +508,16 @@ let set_slicing_utils_pure_double f il =
   (* if !Globals.do_slicing then *)
 	if not !Globals.dis_slc_ann then
 	match f with
-	  | Pure_f pf ->
-		let ls = P.find_lexp_formula pf !Ipure.linking_exp_list in
-		if (ls == [] && not il) then f
-		else Pure_f (P.set_il_formula pf (Some (il, Globals.fresh_int(), ls)))
-	  (*if il then Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), [])))
-	  else
-		let ls = P.find_lexp_formula pf !Ipure.linking_exp_list in
-		if (ls == []) then f
-		else Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), ls)))*)
-	| Pure_c pc -> let _ = Hashtbl.add !Ipure.linking_exp_list pc 0 in f
+  | Pure_f pf ->
+    let ls = P.find_lexp_formula pf !Ipure.linking_exp_list in
+    if (ls == [] && not il) then f
+    else Pure_f (P.set_il_formula pf (Some (il, Globals.fresh_int(), ls)))
+	  (* if il then Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), []))) *)
+	  (* else                                                                       *)
+		(* let ls = P.find_lexp_formula pf !Ipure.linking_exp_list in                 *)
+		(* if (ls == []) then f                                                       *)
+		(* else Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), ls)))       *)
+  | Pure_c pc -> let _ = Hashtbl.add !Ipure.linking_exp_list pc 0 in f
   else f
 
 let rec get_heap_ann annl : F.ann = 

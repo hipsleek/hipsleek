@@ -114,7 +114,6 @@ let proof_log_to_text_file (src_files) =
     let oc = 
       (try Unix.mkdir "logs" 0o750 with _ -> ());
       let with_option = if !Globals.en_slc_ps then "eps" else "no_eps" in
-			(* let with_option = "" in *)
       open_out ("logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt") in
     let string_of_log_type lt =
       match lt with
@@ -144,7 +143,7 @@ let z3_proofs_list_to_file (src_files) =
 		let oc = 
 		(try Unix.mkdir "logs" 0o750 with _ -> ());
 		(* let with_option= if(!Globals.do_slicing) then "slice" else "noslice" in *)
-		let with_option = "" in
+		let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
 		let with_option= with_option^"_"^if(!Globals.split_rhs_flag) then "rhs" else "norhs" in
     let with_option= with_option^"_"^if(not !Globals.elim_exists) then "noee" else "ee" in
 		open_out ("logs/"^with_option^"_"^(Globals.norm_file_name (List.hd src_files)) ^".z3") in
@@ -160,7 +159,7 @@ let proof_greater_5secs_to_file (src_files) =
 		let oc = 
 		(try Unix.mkdir "logs" 0o750 with _ -> ());
 		(* let with_option= if(!Globals.do_slicing) then "slice" else "noslice" in *)
-		let with_option = "" in
+		let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
 		let with_option= with_option^"_"^if(!Globals.split_rhs_flag) then "rhs" else "norhs" in
     let with_option= with_option^"_"^if(not !Globals.elim_exists) then "noee" else "ee" in
 		open_out ("logs/greater_5sec_"^with_option^"_"^(Globals.norm_file_name (List.hd src_files)) ^".log5") in

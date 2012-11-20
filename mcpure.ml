@@ -1603,13 +1603,12 @@ let is_sat_memo_sub_no_complete f with_dupl with_inv t_is_sat =
   let is_sat m = 
     if is_linking_constraint m then true
     else
-      let rel_m = AnnoS.get_rel_mem 2 m f in
+      let rel_m = AnnoS.get_rel_mem !Globals.slicing_rel_level m f in
       (* let _ = print_endline ("REL_M: " ^ (!print_mp_f rel_m)) in *)
       let merged_m = fold_mem_lst_gen (mkTrue no_pos) with_dupl with_inv true true rel_m in
       t_is_sat merged_m
   in (not (List.exists (fun f -> not (is_sat f)) perf))
 
-  
 (* Ineq utils *)
 let is_ineq_linking_memo_group (mg : memoised_group) : bool =
   List.exists (fun mc -> is_ineq_linking_bform mc.memo_formula) mg.memo_group_cons

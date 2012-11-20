@@ -244,8 +244,8 @@ let sleek_proof_log_Z3 src_files =
       begin
 	let _=sleek_src_files := src_files in			
 	let tstartlog = Gen.Profiling.get_time ()in	
-	(* let _= Log.proof_log_to_file () in                                                                                             *)
-  let with_option = "" (* if(!Globals.do_slicing) then "sleek_slice" else "sleek_noslice" *) in
+	(* let _= Log.proof_log_to_file () in *)
+  let with_option = if(!Globals.en_slc_ps) then "sleek_eps" else "sleek_no_eps" in
   let with_option_logtxt = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
   let fname = "logs/"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
 	let fz3name= ("logs/"^with_option^(Globals.norm_file_name (List.hd src_files)) ^".z3")  in
