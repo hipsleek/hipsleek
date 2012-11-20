@@ -958,7 +958,7 @@ and stmtkind =
     * among its labels what cases it implements. The statements that 
     * implement the cases are somewhere within the provided [block]. *)
 
-  | Loop of block * location * (stmt option) * (stmt option)
+  | Loop of block * Iformula.struc_formula * location * (stmt option) * (stmt option)
     (** A [while(1)] loop. The termination test is implemented in the body of 
      * a loop using a [Break] statement. If prepareCFG has been called,
      * the first stmt option will point to the stmt containing the continue
@@ -1737,19 +1737,19 @@ val dummyInstr: instr
 val dummyStmt: stmt
 
 (** Make a while loop. Can contain Break or Continue *)
-val mkWhile: guard:exp -> body:stmt list -> stmt list
+val mkWhile: guard:exp -> body:stmt list -> hspecs: Iformula.struc_formula -> stmt list
 
 (** Make a for loop for(i=start; i<past; i += incr) \{ ... \}. The body 
     can contain Break but not Continue. Can be used with i a pointer 
     or an integer. Start and done must have the same type but incr 
     must be an integer *)
 val mkForIncr:  iter:varinfo -> first:exp -> stopat:exp -> incr:exp 
-                 -> body:stmt list -> stmt list
+                 -> body:stmt list -> hspecs: Iformula.struc_formula -> stmt list
 
 (** Make a for loop for(start; guard; next) \{ ... \}. The body can 
     contain Break but not Continue !!! *) 
 val mkFor: start:stmt list -> guard:exp -> next: stmt list -> 
-                                       body: stmt list -> stmt list
+           body: stmt list -> hspecs: Iformula.struc_formula -> stmt list
  
 
 

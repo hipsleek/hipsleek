@@ -205,9 +205,9 @@ and statement =
  | BLOCK of block * cabsloc
  | SEQUENCE of statement * statement * cabsloc
  | IF of expression * statement * statement * cabsloc
- | WHILE of expression * statement * cabsloc
- | DOWHILE of expression * statement * cabsloc
- | FOR of for_clause * expression * expression * statement * cabsloc
+ | WHILE of expression * statement * hipspecs * cabsloc
+ | DOWHILE of expression * statement * hipspecs * cabsloc
+ | FOR of for_clause * expression * expression * statement * hipspecs * cabsloc
  | BREAK of cabsloc
  | CONTINUE of cabsloc
  | RETURN of expression * cabsloc

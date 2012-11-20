@@ -901,9 +901,9 @@ module BlockChunk =
     let canDrop (c: chunk) =
       List.for_all canDropStatement c.stmts
 
-    let loopChunk (body: chunk) : chunk = 
+    let loopChunk (body: chunk) (hspecs: Iformula.struc_formula) : chunk = 
       (* Make the statement *)
-      let loop = mkStmt (Loop (c2block body, !currentLoc, None, None)) in
+      let loop = mkStmt (Loop (c2block body, hspecs, !currentLoc, None, None)) in
       { stmts = [ loop (* ; n *) ];
         postins = [];
         cases = body.cases;
@@ -6023,7 +6023,7 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
                        * then the switch falls through. *)
                       blockFallsThrough b || blockCanBreak b
                    end
-              | Loop (b, _, _, _) -> 
+              | Loop (b, _, _, _, _) -> 
                   (* A loop falls through if it can break. *)
                   blockCanBreak b
               | Block b -> blockFallsThrough b
@@ -6261,7 +6261,7 @@ and assignInit (lv: lval)
                   let inci = Set(ctrlval, BinOp(PlusA, Lval ctrlval, Const(CInt64(1L, IUInt, None)), uintType), !currentLoc) in
                   (ifc @@ assignc) +++ inci in
                 exitLoop ();
-                let loopc = loopChunk bodyc in
+                let loopc = loopChunk bodyc (Iformula.EList []) in
                 b +++ init @@ loopc
           | _ -> E.s (bug "Array length is not a constant expression")
         end
@@ -6334,7 +6334,7 @@ and doStatement (s : A.statement) : chunk =
         currentLoc := convLoc loc;
         doCondition false e st' sf'
 
-    | A.WHILE(e,s,loc) ->
+    | A.WHILE(e,s,hs,loc) ->
         startLoop true;
         let s' = doStatement s in
         let loc' = convLoc loc in
@@ -6342,9 +6342,9 @@ and doStatement (s : A.statement) : chunk =
         exitLoop ();
         currentLoc := loc';
         loopChunk ((doCondition false e skipChunk break_cond)
-                   @@ s')
+                   @@ s') hs
           
-    | A.DOWHILE(e,s,loc) -> 
+    | A.DOWHILE(e,s,hs,loc) -> 
         startLoop false;
         let s' = doStatement s in
         let loc' = convLoc loc in
@@ -6353,9 +6353,9 @@ and doStatement (s : A.statement) : chunk =
           consLabContinue (doCondition false e skipChunk (breakChunk loc'))
         in
         exitLoop ();
-        loopChunk (s' @@ s'')
+        loopChunk (s' @@ s'') hs
           
-    | A.FOR(fc1,e2,e3,s,loc) -> begin
+    | A.FOR(fc1,e2,e3,s,hs,loc) -> begin
         let loc' = convLoc loc in
         currentLoc := loc';
         enterScope (); (* Just in case we have a declaration *)
@@ -6374,10 +6374,10 @@ and doStatement (s : A.statement) : chunk =
         let res = 
           match e2 with
             A.NOTHING -> (* This means true *)
-              se1 @@ loopChunk (s' @@ s'')
+              se1 @@ (loopChunk (s' @@ s'') hs)
           | _ -> 
-              se1 @@ loopChunk ((doCondition false e2 skipChunk break_cond)
-                                @@ s' @@ s'')
+              se1 @@ (loopChunk ((doCondition false e2 skipChunk break_cond)
+                                @@ s' @@ s'') hs)
         in
         exitScope ();
         res

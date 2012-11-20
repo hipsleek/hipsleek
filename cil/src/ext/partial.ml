@@ -694,7 +694,7 @@ struct
                                 else_block
                           | Switch (_expr, block, _stmt_list, _loc) ->
                               visit_block stmt_fun y block
-                          | Loop (block, _loc, _opt_stmt1, _opt_stmt2) ->
+                          | Loop (block, _, _loc, _opt_stmt1, _opt_stmt2) ->
                               visit_block stmt_fun y block
                           | Block block ->
                               visit_block stmt_fun y block

@@ -74,7 +74,7 @@
 #define TIME_WITH_SYS_TIME 1
 
 /* Real integer type corresponding to size_t. */
-#define TYPE_SIZE_T "unsigned int"
+#define TYPE_SIZE_T "unsigned long"
 
 /* Real integer type corresponding to wchar_t. */
 #define TYPE_WCHAR_T "int"

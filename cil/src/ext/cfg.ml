@@ -228,7 +228,7 @@ and fasStmt (todo) (s : stmt) =
       | Block b -> fasBlock todo b
       | If (_, tb, fb, _) -> (fasBlock todo tb; fasBlock todo fb)
       | Switch (_, b, _, _) -> fasBlock todo b
-      | Loop (b, _, _, _) -> fasBlock todo b
+      | Loop (b, _, _, _, _) -> fasBlock todo b
       | (Return _ | Break _ | Continue _ | Goto _ | Instr _) -> ()
       | TryExcept _ | TryFinally _ -> E.s (E.unimp "try/except/finally")
       | HipStmt _ -> ()

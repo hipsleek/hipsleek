@@ -730,7 +730,7 @@ class absPrinterClass (callgraph: CG.callgraph) : cilPrinter =
           self#dBlock out (ind + 2) b2;
           ignore (p ~ind:ind "%s\n" epilogue)
             
-      | Loop (b, _, Some co, Some br) -> 
+      | Loop (b, _, _, Some co, Some br) -> 
           ignore (p ~ind:ind "%sloop %scont %d%s %sbreak %d%s\n" 
 		    prologue 
 		    prologue co.sid epilogue 

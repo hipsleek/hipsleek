@@ -737,7 +737,7 @@ and checkStmt (s: stmt) =
           | None, _ -> ignore (warn "Invalid return value")
           | Some re', rt' -> checkExpType false re' rt'
         end
-      | Loop (b, l, _, _) -> checkBlock b
+      | Loop (b, _, l, _, _) -> checkBlock b
       | Block b -> checkBlock b
       | If (e, bt, bf, l) -> 
           currentLoc := l;

@@ -67,9 +67,9 @@ begin
   | BLOCK(_,loc) -> loc
   | SEQUENCE(_,_,loc) -> loc
   | IF(_,_,_,loc) -> loc
-  | WHILE(_,_,loc) -> loc
-  | DOWHILE(_,_,loc) -> loc
-  | FOR(_,_,_,_,loc) -> loc
+  | WHILE(_,_,_,loc) -> loc
+  | DOWHILE(_,_,_,loc) -> loc
+  | FOR(_,_,_,_,_,loc) -> loc
   | BREAK(loc) -> loc
   | CONTINUE(loc) -> loc
   | RETURN(_,loc) -> loc

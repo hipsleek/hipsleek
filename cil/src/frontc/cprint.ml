@@ -579,13 +579,13 @@ and print_statement stat =
           print "else";
           print_substatement s2;
         end)
-  | WHILE (exp, stat, loc) ->
+  | WHILE (exp, stat, hs, loc) ->
       setLoc(loc);
       printl ["while";"("];
       print_expression_level 0 exp;
       print ")";
       print_substatement stat
-  | DOWHILE (exp, stat, loc) ->
+  | DOWHILE (exp, stat, hs, loc) ->
       setLoc(loc);
       print "do";
       print_substatement stat;
@@ -593,7 +593,7 @@ and print_statement stat =
       print_expression_level 0 exp;
       print ");";
       new_line ();
-  | FOR (fc1, exp2, exp3, stat, loc) ->
+  | FOR (fc1, exp2, exp3, stat, hs, loc) ->
       setLoc(loc);
       printl ["for";"("];
       (match fc1 with

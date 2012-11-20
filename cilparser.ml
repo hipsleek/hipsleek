@@ -491,7 +491,7 @@ let translate_instr (instr: Cil.instr) : Iast.exp =
                      Iast.exp_assign_rhs = re;
                      Iast.exp_assign_path_id = None;
                      Iast.exp_assign_pos = p}
-    | Cil.Call (lv_opt, exp, exps, l) ->
+    | Cil.Call (lv_opt, exp, exps, l) -> (
         let p = translate_location l in
         let fname = match exp with
           | Cil.Const (Cil.CStr s) -> s
@@ -510,11 +510,22 @@ let translate_instr (instr: Cil.instr) : Iast.exp =
           | Cil.AddrOf _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.AddrOf!" 
           | Cil.StartOf _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.StartOf!" in
         let args = List.map (fun x -> translate_exp x (Some l)) exps in
-        Iast.CallNRecv {Iast.exp_call_nrecv_method = fname;
-                        Iast.exp_call_nrecv_lock = None;
-                        Iast.exp_call_nrecv_arguments = args;
-                        Iast.exp_call_nrecv_path_id = None;
-                        Iast.exp_call_nrecv_pos = p}
+        let call_exp = Iast.CallNRecv {Iast.exp_call_nrecv_method = fname;
+                                       Iast.exp_call_nrecv_lock = None;
+                                       Iast.exp_call_nrecv_arguments = args;
+                                       Iast.exp_call_nrecv_path_id = None;
+                                       Iast.exp_call_nrecv_pos = p} in
+        match lv_opt with
+        | None -> call_exp;
+        | Some lv -> (
+            let lv_exp = translate_lval lv (Some l) in
+            Iast.Assign {Iast.exp_assign_op = Iast.OpAssign;
+                         Iast.exp_assign_lhs = lv_exp;
+                         Iast.exp_assign_rhs = call_exp;
+                         Iast.exp_assign_path_id = None;
+                         Iast.exp_assign_pos = p}
+          )
+      ) 
     | Cil.Asm _ ->
         let _ = print_endline ("== asm = " ^ (string_of_cil_instr instr)) in
         report_error_msg "TRUNG TODO: Handle Cil.Asm later!"
@@ -548,6 +559,7 @@ let rec translate_stmt (s: Cil.stmt) (lopt: Cil.location option) : Iast.exp =
       newexp
   | Cil.Goto (sref, l) ->
       (* detect a infinite loop in Goto statement *)
+      let _ = print_endline ("== goto") in 
       if (!sref.Cil.sid = s.Cil.sid) then (
         let cond = Iast.BoolLit {Iast.exp_bool_lit_val = true;
                                  Iast.exp_bool_lit_pos = pos} in
@@ -586,14 +598,14 @@ let rec translate_stmt (s: Cil.stmt) (lopt: Cil.location option) : Iast.exp =
                               Iast.exp_cond_pos = pos} in
       newexp
   | Cil.Switch _ -> report_error_msg "TRUNG TODO: Handle Cil.Switch later!"
-  | Cil.Loop (blk, l, stmt_opt1, stmt_opt2) ->
+  | Cil.Loop (blk, hspecs, l, stmt_opt1, stmt_opt2) ->
       let p = translate_location l in
       let cond = Iast.BoolLit {Iast.exp_bool_lit_val = true;
                                Iast.exp_bool_lit_pos = p} in
       let body = translate_block blk (Some l) in
       let newexp = Iast.While {Iast.exp_while_condition = cond;
                                Iast.exp_while_body = body;
-                               Iast.exp_while_specs = Iast.mkSpecTrue n_flow pos;
+                               Iast.exp_while_specs = hspecs;
                                Iast.exp_while_jump_label = Iast.NoJumpLabel;
                                Iast.exp_while_path_id = None ;
                                Iast.exp_while_f_name = "";

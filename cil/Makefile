@@ -17,8 +17,7 @@
 ECHO = @
 
 # It is important to build quickbuild first,to generate the proper dependencies
-# all:  quickbuild setup
-all:  ocamlbuild
+all:  quickbuild setup
 
 # Now add the defines for the CIL features
 include Makefile.features
@@ -41,6 +40,12 @@ _GNUCC=1
 ifdef RELEASE
   NATIVECAML := 1
   UNSAFE     := 1
+endif
+
+ifndef CAMLNATTL
+  ifeq (1, 1)
+    CAMLNATTL := 1
+  endif
 endif
 
 ifndef ARCHOS
@@ -121,8 +126,6 @@ include ocamlutil/Makefile.ocaml
 
 OBEXEEXT = $(EXEEXT:asm=native)
 IGNOREDIRS = obj,doc,test
-COMPILE_FLAGS = -annot
-LINK_FLAGS = -annot
 ocamlbuild:
 	ocamlbuild -cflags "$(COMPILE_FLAGS)" -lflags "$(LINK_FLAGS)" \
 	-Xs $(IGNOREDIRS) -no-links src/main$(OBEXEEXT) src/cil.$(CMXA)
@@ -218,10 +221,12 @@ $(OBJDIR)/machdep.ml : src/machdep-ml.c configure.in Makefile.in
 lib/Cilly.pm: lib/Cilly.pm.in src/machdep-ml.c configure.in Makefile.in
 	cp lib/Cilly.pm.in lib/Cilly.pm
 	if $(MACHDEPCC) -m32 src/machdep-ml.c -o $(OBJDIR)/machdep-ml32.exe ;then \
-	  sed -i -e "s|nogcc32model|`$(EMUL) $(OBJDIR)/machdep-ml32.exe --env`|" lib/Cilly.pm; \
+	  sed -e "s|nogcc32model|`$(EMUL) $(OBJDIR)/machdep-ml32.exe --env`|" lib/Cilly.pm > lib/Cilly.pm.tmp; \
+	  mv lib/Cilly.pm.tmp lib/Cilly.pm; \
 	fi
 	if $(MACHDEPCC) -m64 src/machdep-ml.c -o $(OBJDIR)/machdep-ml64.exe ;then \
-	  sed -i -e "s|nogcc64model|`$(EMUL) $(OBJDIR)/machdep-ml64.exe --env`|" lib/Cilly.pm; \
+	  sed -e "s|nogcc64model|`$(EMUL) $(OBJDIR)/machdep-ml64.exe --env`|" lib/Cilly.pm > lib/Cilly.pm.tmp; \
+	  mv lib/Cilly.pm.tmp lib/Cilly.pm; \
 	fi
 
 # Create the version information module
@@ -307,7 +312,7 @@ odoc: $(OBJDIR)/pretty.cmi $(OBJDIR)/cil.cmi
 	-rm -f doc/ocamldoc.sty
 	ocamldoc -d doc/html/cil/api -v -stars \
              -html \
-             -t "CIL API Documentation (version 1.4.0)" \
+             -t "CIL API Documentation (version 1.5.1)" \
 	     -I $(OBJDIR) -hide Pervasives $(ODOC_FILES)
 
 doc/cilpp.tex: doc/cilcode.pl doc/cil.tex lib/Cilly.pm
@@ -320,8 +325,8 @@ doc/cilpp.tex: doc/cilcode.pl doc/cil.tex lib/Cilly.pm
 # Documentation generated from latex files using "hevea"
 texdoc: doc/cilpp.tex
 # Create the version document
-	cd doc/html/cil; echo "\def\cilversion{1.4.0}" >cil.version.tex
-	cd doc/html/cil; echo "\def\ccuredversion{@CCURED_VERSION@}" >>cil.version.tex
+	cd doc/html/cil; echo "\\\\def\\\\cilversion{1.5.1}" >cil.version.tex
+	cd doc/html/cil; echo "\\\\def\\\\ccuredversion{@CCURED_VERSION@}" >>cil.version.tex
 	cd doc/html/cil; hevea -exec xxdate.exe ../../cilpp
 	cd doc/html/cil; hevea -exec xxdate.exe ../../cilpp
 	cd doc/html/cil; mv cilpp.html cil.html
@@ -330,13 +335,13 @@ texdoc: doc/cilpp.tex
 	cp -f doc/header.html doc/html/cil
 
 pdfdoc: doc/cilpp.tex $(OBJDIR)/pretty.cmi $(OBJDIR)/cil.cmi
-	cd doc; echo "\def\cilversion{1.4.0}" >cil.version.tex
-	cd doc; echo "\def\ccuredversion{@CCURED_VERSION@}" >>cil.version.tex
+	cd doc; echo "\\\\def\\\\cilversion{1.5.1}" >cil.version.tex
+	cd doc; echo "\\\\def\\\\ccuredversion{@CCURED_VERSION@}" >>cil.version.tex
 	cd doc; pdflatex cilpp.tex; pdflatex cilpp.tex
 	cd doc; mv cilpp.pdf html/cil/CIL.pdf
 	ocamldoc -o doc/cil-api.tex.tmp -v -stars \
              -latex \
-             -t "CIL API Documentation (version 1.4.0)" \
+             -t "CIL API Documentation (version 1.5.1)" \
 	     -I $(OBJDIR) -hide Pervasives $(ODOC_FILES)
 	sed -e 's/\\usepackage\[T1\]{fontenc}/\\setlength{\\pdfpagewidth}{\\paperwidth} \\setlength{\\pdfpageheight}{\\paperheight}/' doc/cil-api.tex.tmp >doc/cil-api.tex
 	rm doc/cil-api.tex.tmp
@@ -358,7 +363,6 @@ distclean: clean
 	rm -f config.log
 	rm -f config.h
 	rm -f Makefile
-	rm -f README
 
 cleancheck:
 	rm -f test/small1/*.o
@@ -414,7 +418,8 @@ perl_vendorlib = $(libdir)
 install: install-findlib
 	$(INSTALL) -d $(DESTDIR)$(perl_vendorlib)
 	$(INSTALL) -m 0644 lib/*.pm bin/CilConfig.pm $(DESTDIR)$(perl_vendorlib)
-	sed -i "s,^.*cilhome.*$$,\$$::cilhome = \"$(libexecdir)/cil\";," $(DESTDIR)$(perl_vendorlib)/CilConfig.pm
+	sed -e "s,^.*cilhome.*$$,\$$::cilhome = \"$(libexecdir)/cil\";," $(DESTDIR)$(perl_vendorlib)/CilConfig.pm > $(DESTDIR)$(perl_vendorlib)/CilConfig.pm.tmp
+	mv $(DESTDIR)$(perl_vendorlib)/CilConfig.pm.tmp $(DESTDIR)$(perl_vendorlib)/CilConfig.pm
 	$(INSTALL) -d $(DESTDIR)$(bindir)
 	$(INSTALL) -m 0755 bin/cilly $(DESTDIR)$(bindir)
 	$(INSTALL) -d $(DESTDIR)$(pkglibexecdir)/$(OBJDIR)

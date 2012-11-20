@@ -818,7 +818,7 @@ class llvmGeneratorClass : llvmGenerator = object (self)
       | Continue _ -> gContinue slabel 
       | If (e, b1, b2, _) -> gIf slabel e b1 b2
       | Switch (e, b, slist, _) -> gSwitch slabel e b slist
-      | Loop (b, _, _, _) -> gLoop slabel b
+      | Loop (b, _, _, _, _) -> gLoop slabel b
       | Block b -> gBlock slabel b
       | TryFinally (_, _, _) -> raise (Unimplemented "TryFinally")
       | TryExcept (_, _, _, _) -> raise (Unimplemented "TryExcept")

@@ -872,13 +872,13 @@ statement:
 	                {IF (smooth_expression (fst $2), $3, $5, (*handleLoc*) $1)}
 |   SWITCH paren_comma_expression statement
                         {SWITCH (smooth_expression (fst $2), $3, (*handleLoc*) $1)}
-|   WHILE paren_comma_expression statement
-	        	{WHILE (smooth_expression (fst $2), $3, (*handleLoc*) $1)}
-|   DO statement WHILE paren_comma_expression SEMICOLON
-	        	         {DOWHILE (smooth_expression (fst $4), $2, (*handleLoc*) $1)}
+|   WHILE paren_comma_expression hipspecs_opt statement
+	        	{WHILE (smooth_expression (fst $2), $4, $3, (*handleLoc*) $1)}
+|   DO hipspecs_opt statement WHILE paren_comma_expression SEMICOLON
+	        	         {DOWHILE (smooth_expression (fst $5), $3, $2, (*handleLoc*) $1)}
 |   FOR LPAREN for_clause opt_expression
-	        SEMICOLON opt_expression RPAREN statement
-	                         {FOR ($3, $4, $6, $8, (*handleLoc*) $1)}
+	        SEMICOLON opt_expression RPAREN hipspecs_opt statement
+	                         {FOR ($3, $4, $6, $9, $8, (*handleLoc*) $1)}
 |   IDENT COLON attribute_nocv_list statement
 		                 {(* The only attribute that should appear here
                                      is "unused". For now, we drop this on the
