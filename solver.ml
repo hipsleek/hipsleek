@@ -7010,9 +7010,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           let r = do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
                 (* (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap not yet implemented" estate (Base rhs_b) None pos, *)
                 (* CF.mk_failure_bot ("infer_heap .. "))), NoAlias) *)
-          let ( _,mix_lf,_,_,_) = CF.split_components (CF.Base lhs_b) in
-          let ( _,mix_rf,_,_,_) = CF.split_components (CF.Base rhs_b) in
-          let (res,new_estate) = Inf.infer_collect_hp_rel prog estate rhs rhs_rest mix_lf mix_rf rhs_h_matched_set conseq lhs_b rhs_b pos in
+          let (res,new_estate) = Inf.infer_collect_hp_rel prog estate rhs rhs_h_matched_set lhs_b rhs_b pos in
           if (not res) then r else
             let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest} in
             let res_es0, prf0 = do_match prog new_estate rhs rhs n_rhs_b rhs_h_matched_set is_folding pos in
@@ -7060,10 +7058,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                     (r1,prf)
                 end
               | None ->
-                        (* let _ = print_endline ("locle: collect hp_rel here: ") in *)
-                  let ( _,mix_lf,_,_,_) = CF.split_components (CF.Base lhs_b) in
-                  let ( _,mix_rf,_,_,_) = CF.split_components (CF.Base rhs_b) in
-                  let (res,new_estate) = Inf.infer_collect_hp_rel prog estate rhs rhs_rest mix_lf mix_rf rhs_h_matched_set conseq lhs_b rhs_b pos in
+                  let (res,new_estate) = Inf.infer_collect_hp_rel prog estate rhs rhs_h_matched_set lhs_b rhs_b pos in
                   if (not res) then
                     let s = "15.5 no match for rhs data node: " ^
                       (CP.string_of_spec_var (let _ , ptr = CF.get_ptr_from_data_w_hrel rhs in ptr)) ^ " (must-bug)."in

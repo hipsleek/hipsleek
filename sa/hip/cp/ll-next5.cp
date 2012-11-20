@@ -9,8 +9,8 @@ ass [H1,G4][]:{
 
  }
 
-hpdefs [H1,G4][]:{
-  G4(res,x,v_544) --> x::node<val_28_524',next_28_525'> & res=unk_HP_1 & x=v_544;
+hpdefs [H1,G4][unk_HP_1]:{
+  G4(res,x,v_544) --> x::node<val_28_524',res> & res=unk_HP_1 & x=v_544;
   H1(x) --> x::node<val_28_524',unk_HP_1>
  }
 ]

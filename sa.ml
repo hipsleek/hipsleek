@@ -3372,7 +3372,7 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * SA
   DD.ninfo_pprint ">>>>>> step 2: split arguments: currently omitted <<<<<<" no_pos;
   let constrs1a, split_tb_hp_defs_split = split_hp prog constrs1 in
   (*for temporal*)
-  let constrs2 = constrs1a in
+  let constrs2 = constrs1 in
   (* let hp_defs_split = [] in *)
   (*END for temporal*)
   let cs, par_defs = infer_hps_fix prog (List.map fst unk_hps) constrs2 in

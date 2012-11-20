@@ -1649,7 +1649,7 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps c
   (* let lhs_b4,rhs_b4 = SAU.rename_hp_args lhs_b3 rhs_b3 in *)
   (lhs_b3,rhs_b3)
 
-let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rhs_h_matched_set:CP.spec_var list) conseq lhs_b rhs_b pos =
+let infer_collect_hp_rel_x prog (es:entail_state) rhs (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =
   (*for debugging*)
   (* DD.info_pprint ("  es: " ^ (Cprinter.string_of_formula es.CF.es_formula)) pos; *)
   let _ = Debug.ninfo_pprint ("es_infer_vars_hp_rel: " ^ (!CP.print_svl  es.es_infer_vars_hp_rel)) no_pos in
@@ -1671,6 +1671,8 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
       begin
         (* DD.info_pprint "  hp_rel found" pos; *)
         (*which pointers are defined and which arguments of data nodes are pointer*)
+        let ( _,mix_lf,_,_,_) = CF.split_components (CF.Base lhs_b) in
+        let (_,mix_rf,_,_,_) = CF.split_components (CF.Base rhs_b) in
         let leqs = (MCP.ptr_equations_without_null mix_lf) (* @ (MCP.ptr_equations_with_null mix_lf) *) in
         let reqs = es.CF.es_rhs_eqset (* @ (MCP.ptr_equations_with_null mix_rf) *) in
         let _ =
@@ -1680,8 +1682,8 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
           DD.ninfo_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
           DD.ninfo_pprint ("  footprint: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos;
           DD.ninfo_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
-          DD.ninfo_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
-          DD.ninfo_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
+          DD.info_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
+          DD.info_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
           (* DD.info_pprint ("  lhs aliases: " ^  (pr2 leqs)) pos; (\* aliases from LHS *\) *)
           (* DD.info_pprint ("  rhs aliases: " ^  (pr2 reqs)) pos;  (\* aliases from LHS *\) *)
         in
@@ -1773,15 +1775,12 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rh
       end
 
 
-let infer_collect_hp_rel prog (es:entail_state) rhs rhs_rest mix_lf mix_rf (rhs_h_matched_set:CP.spec_var list) conseq lhs_b rhs_b pos =
+let infer_collect_hp_rel prog (es:entail_state) rhs (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =
   let pr1 = Cprinter.string_of_formula_base in
-  (* let pr2 = Cprinter.string_of_formula in *)
-  (* let pr3 = pr_list (pr_triple CP.print_rel_cat pr2 pr2) in *)
-  (* let pr4 = fun es -> (!print_svl es.CF.es_infer_vars_hp_rel) ^ "; " ^ (pr3 es.CF.es_infer_hp_rel) in *)
-   let pr4 = Cprinter.string_of_estate_infer_hp in
+  let pr4 = Cprinter.string_of_estate_infer_hp in
   let pr5 =  pr_pair string_of_bool pr4 in
-  Debug.no_3 "infer_collect_hp_rel" pr1 pr1 Cprinter.string_of_h_formula pr5
-( fun _ _ _ -> infer_collect_hp_rel_x prog es rhs rhs_rest mix_lf mix_rf rhs_h_matched_set conseq lhs_b rhs_b pos) lhs_b rhs_b rhs
+  Debug.no_2 "infer_collect_hp_rel" pr1 pr1 pr5
+( fun _ _ -> infer_collect_hp_rel_x prog es rhs rhs_h_matched_set lhs_b rhs_b pos) lhs_b rhs_b
 
 (*=*****************************************************************=*)
          (*=**************INFER REL HP ASS*****************=*)
