@@ -838,6 +838,7 @@ and instr =
 and location = { 
     line: int;		   (** The line number. -1 means "do not know" *)
     file: string;          (** The name of the source file*)
+    line_begin: int;        (** The begin of line position in the source file *)
     byte: int;             (** The byte position in the source file *)
 }
 
@@ -879,8 +880,9 @@ type featureDescr = {
 }
 
 let locUnknown = { line = -1; 
-		   file = ""; 
-		   byte = -1;}
+                   file = "";
+                   line_begin = -1;
+                   byte = -1;}
 
 (* A reference to the current location *)
 let currentLoc : location ref = ref locUnknown
@@ -3114,7 +3116,8 @@ let initMsvcBuiltins () : unit =
 
 (** This is used as the location of the prototypes of builtin functions. *)
 let builtinLoc: location = { line = 1; 
-                             file = "<compiler builtins>"; 
+                             file = "<compiler builtins>";
+                             line_begin = 0;
                              byte = 0;}
 
 

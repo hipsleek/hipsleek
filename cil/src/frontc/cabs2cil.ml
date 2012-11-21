@@ -114,8 +114,9 @@ let attrsForCombinedArg: ((string, string) H.t ->
 (* ---------- source error message handling ------------- *)
 let lu = locUnknown
 let cabslu = {lineno = -10; 
-	      filename = "cabs lu"; 
-	      byteno = -10;
+              filename = "cabs lu"; 
+              byteno = -10;
+              linestart = -10;
               ident = 0;}
 
 
@@ -184,7 +185,7 @@ let debugLoc = false
 let convLoc (l : cabsloc) =
   if debugLoc then 
     ignore (E.log "convLoc at %s: line %d, btye %d\n" l.filename l.lineno l.byteno);
-  {line = l.lineno; file = l.filename; byte = l.byteno;}
+  {line = l.lineno; file = l.filename; byte = l.byteno; line_begin = l.linestart}
 
 
 let isOldStyleVarArgName n = 

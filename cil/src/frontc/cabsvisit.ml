@@ -94,8 +94,9 @@ class type cabsVisitor = object
 end
     
 let visitorLocation = ref { filename = ""; 
-			    lineno = -1; 
-			    byteno = -1;
+                            lineno = -1; 
+                            byteno = -1;
+                            linestart = -1;
                             ident = 0}
     
         (* a default visitor which does nothing to the tree *)

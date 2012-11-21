@@ -230,7 +230,7 @@ let cleanFileName str =
 
 let readingFromStdin = ref false
 
-let startParsing ?(useBasename=true) (fname: string) = 
+let startParsing ?(useBasename=false) (fname: string) = 
   (* We only support one open file at a time *)
   if !current != dummyinfo then begin
      s (error "Errormsg.startParsing supports only one open file: You want to open %s and %s is still open\n" fname !current.fileName); 
@@ -329,10 +329,10 @@ let parse_error (msg: string) : 'a =
 
 
 
-(* More parsing support functions: line, file, char count *)
-let getPosition () : int * string * int = 
+(* More parsing support functions: line, file, char count, linestart *)
+let getPosition () : int * string * int * int= 
   let i = !current in 
-  i.linenum, i.fileName, Lexing.lexeme_start i.lexbuf
+  i.linenum, i.fileName, Lexing.lexeme_start i.lexbuf, i.linestart
 
 
 let getHPosition () = 
@@ -357,7 +357,7 @@ let locUnknown = { file = ""; hfile = ""; line = -1; hline = -1 }
 
 let getLocation () = 
   let hl, hf = getHPosition () in
-  let l, f, c = getPosition () in
+  let l, f, c, _ = getPosition () in
   { hfile = hf; hline = hl;
     file = f; line = l } 
 

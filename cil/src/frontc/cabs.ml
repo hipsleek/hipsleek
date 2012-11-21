@@ -50,6 +50,7 @@ type cabsloc = {
  lineno : int;
  filename: string;
  byteno: int;
+ linestart: int; (* The position where the current line starts *)
  ident : int;
 }
 

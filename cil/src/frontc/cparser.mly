@@ -62,8 +62,9 @@ let getComments () =
 *)
 
 let cabslu = {lineno = -10; 
-	      filename = "cabs loc unknown"; 
-	      byteno = -10;
+              filename = "cabs loc unknown"; 
+              byteno = -10;
+              linestart = -10;
               ident = 0;}
 
 (* cabsloc -> cabsloc *)
@@ -916,9 +917,12 @@ statement:
                             parse_error "try/finally in GCC code";
                           TRY_FINALLY (b, h, (*handleLoc*) $1) }
 |   error location   SEMICOLON   { (NOP $2)}
-|   HIPSPECS            { let s = String.trim (fst $1) in
-                          let stmt = Parser.parse_statement "hip statement" s in
-                          HIP_STMT (stmt, snd $1) }    /* TRUNG TODO: still need to refine the location of specs in (snd $1) */ 
+|   HIPSPECS            { let s, loc = $1 in
+                          let begin_offset = {Parser.line_num = loc.lineno;
+                                              Parser.line_start = loc.linestart;
+                                              Parser.byte_num = loc.byteno} in
+                          let stmt = Parser.parse_statement loc.filename s begin_offset in
+                          HIP_STMT (stmt, loc) }    /* TRUNG TODO: still need to refine the location of specs in (snd $1) */ 
 ;
 
 
@@ -1557,8 +1561,11 @@ asmcloberlst_ne:
 /** hip specification */
 hipspecs_opt:
   /* empty */         { Iformula.EList [] }
-| HIPSPECS            { let s = String.trim (fst $1) in
-                        let hspecs = Parser.parse_specs_string "hipspecs" s in
+| HIPSPECS            { let s, loc = $1 in
+                        let begin_offset = {Parser.line_num = loc.lineno;
+                                            Parser.line_start = loc.linestart;
+                                            Parser.byte_num = loc.byteno} in
+                        let hspecs = Parser.parse_specs_string loc.filename s begin_offset in
                         hspecs }    /* TRUNG TODO: still need to refine the location of specs in (snd $1) */ 
 
 %%

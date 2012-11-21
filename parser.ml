@@ -49,6 +49,13 @@ open Perm
 	| AnnMode of mode
 	| AnnType of typ
 
+  type file_offset =
+    {
+      line_num: int;
+      line_start: int;
+      byte_num: int;
+    }
+
 let macros = ref (Hashtbl.create 19)
 
 (* An Hoa : Counting of holes "#" *)
@@ -59,6 +66,10 @@ let generic_pointer_type_name = "_GENERIC_POINTER_"
 let func_names = new Gen.stack (* list of names of ranking functions *)
 let rel_names = new Gen.stack (* list of names of relations declared *)
 let view_names = new Gen.stack (* list of names of views declared *)
+
+let modifier_offset = ref {line_num = 1;
+                        line_start = 1;
+                        byte_num = 1;}
 
 let get_pos x =
   try
@@ -74,13 +85,26 @@ let get_pos x =
       mid_pos = Lexing.dummy_pos;
     }
 
-let get_pos_camlp4 l x = 
+(* compute the position by adding the location return by camlp4 with starting_offset *)
+let get_pos_camlp4 l x =
+  let sp = Camlp4.PreCast.Loc.start_pos l in
+  let ep = Camlp4.PreCast.Loc.stop_pos l in
+  let mp = Camlp4.PreCast.Loc.start_pos (Camlp4.PreCast.Loc.shift x l) in
+  let new_sp = {sp with Lexing.pos_lnum = sp.Lexing.pos_lnum + !modifier_offset.line_num - 1;
+                        Lexing.pos_bol = sp.Lexing.pos_bol + !modifier_offset.byte_num - 1;
+                        Lexing.pos_cnum = sp.Lexing.pos_cnum + !modifier_offset.byte_num - 1;} in
+  let new_ep = {ep with Lexing.pos_lnum = ep.Lexing.pos_lnum + !modifier_offset.line_num - 1;
+                        Lexing.pos_bol = ep.Lexing.pos_bol + !modifier_offset.byte_num - 1;
+                        Lexing.pos_cnum = ep.Lexing.pos_cnum + !modifier_offset.byte_num - 1;} in
+  let new_mp = {mp with Lexing.pos_lnum = mp.Lexing.pos_lnum + !modifier_offset.line_num - 1;
+                        Lexing.pos_bol = mp.Lexing.pos_bol + !modifier_offset.byte_num - 1;
+                        Lexing.pos_cnum = mp.Lexing.pos_cnum + !modifier_offset.byte_num - 1;} in
   {
-    start_pos = Camlp4.PreCast.Loc.start_pos l ;
-    end_pos = Camlp4.PreCast.Loc.stop_pos l ;
-    mid_pos = Camlp4.PreCast.Loc.start_pos (Camlp4.PreCast.Loc.shift x l);
+    start_pos = new_sp;
+    end_pos = new_ep;
+    mid_pos = new_mp;
   }
-        
+
 let rec get_mode (anns : ann list) : mode = match anns with
 	| ann :: rest -> begin
 		match ann with
@@ -1018,7 +1042,7 @@ pure_constr:
 
 ann_term: 
   [[
-     `TERM -> Term 
+     `TERM -> Term
    | `LOOP -> Loop
    | `MAYLOOP -> MayLoop
   ]];
@@ -1835,7 +1859,7 @@ unfold_statement: [[ `UNFOLD; t=cid  ->	Unfold { exp_unfold_var = t; exp_unfold_
 barr_statement : [[`BARRIER; `IDENTIFIER t -> I.Barrier {exp_barrier_recv = t ; exp_barrier_pos = get_pos_camlp4 _loc 1}]];
  
 assert_statement:
-  [[ `ASSERT; ol= opt_label; f=formulas -> 
+  [[ `ASSERT; ol= opt_label; f=formulas ->
        mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
    | `ASSERT_EXACT; ol= opt_label; f=formulas -> 
        mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some true) (get_pos_camlp4 _loc 1)
@@ -2278,8 +2302,24 @@ let parse_hip_string n s =
 let parse_specs_list s =
   SHGram.parse_string opt_spec_list_file (PreCast.Loc.mk "spec string") s
 
-let parse_specs_string n s =
-  SHGram.parse_string opt_spec_list (PreCast.Loc.mk n) s
+let parse_specs_string (fname: string) (s: string) (begin_offset: file_offset) : F.struc_formula =
+  (* store the current modifier_offset and assign new value to it *)
+  let store_offset = !modifier_offset in
+  modifier_offset := begin_offset;
+  (* parse *)
+  let res = SHGram.parse_string opt_spec_list (PreCast.Loc.mk fname) s in
+  (* restore the old value of modifier_offset *)
+  modifier_offset := store_offset;
+  (* return *)
+  res
 
-let parse_statement n s =
-  SHGram.parse_string statement (PreCast.Loc.mk n) s
+let parse_statement (fname: string) (s: string) (begin_offset: file_offset) =
+  (* store the current modifier_offset and assign new value to it *)
+  let store_offset = !modifier_offset in
+  modifier_offset := begin_offset;
+  (* parse *)
+  let res = SHGram.parse_string statement (PreCast.Loc.mk fname) s in
+  (* restore the old value of modifier_offset *)
+  modifier_offset := store_offset;
+  (* return *)
+  res

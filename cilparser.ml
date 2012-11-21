@@ -135,7 +135,7 @@ and is_global_cil_lval (lv: Cil.lval) : bool =
 let translate_location (loc: Cil.location) : Globals.loc =
   let pos : Lexing.position = {Lexing.pos_fname = loc.Cil.file;
                                Lexing.pos_lnum = loc.Cil.line;
-                               Lexing.pos_bol = 0; (* TRUNG CODE: this should be computed later *)
+                               Lexing.pos_bol = loc.Cil.line_begin;
                                Lexing.pos_cnum = loc.Cil.byte;} in
   let newloc: Globals.loc = {Globals.start_pos = pos;
                              Globals.mid_pos = pos; (* TRUNG CODE: this should be computed later *)
@@ -525,7 +525,7 @@ let translate_instr (instr: Cil.instr) : Iast.exp =
                          Iast.exp_assign_path_id = None;
                          Iast.exp_assign_pos = p}
           )
-      ) 
+      )
     | Cil.Asm _ ->
         let _ = print_endline ("== asm = " ^ (string_of_cil_instr instr)) in
         report_error_msg "TRUNG TODO: Handle Cil.Asm later!"
