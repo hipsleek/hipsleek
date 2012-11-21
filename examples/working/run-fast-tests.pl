@@ -1165,12 +1165,12 @@ sub hip_process_file {
 				$error_files=$error_files."term error at: $test->[0] $test->[$i]\n";
 				print "term error at: $test->[0] $test->[$i]\n";
 			}
-			if($timings) {
-				log_one_line_of_timings ($test->[0],$output);
+      if($timings) {
+        log_one_line_of_timings ($test->[0],$output);
       }
-			sum_of_timings ($output);
-		}
-	}
+      sum_of_timings ($output);
+    }
+  }
 }
 
 
