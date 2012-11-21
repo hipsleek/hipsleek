@@ -8628,6 +8628,13 @@ let get_inst_int v f =
 		| IConst (i,_) -> Some i
 		| _ -> None in
 	get_inst fct v f
-		
 
-		
+let is_term pf =
+  match pf with
+    | LexVar _ -> true
+    | _ -> false
+  
+let is_term f =
+  match f with
+    | BForm ((bf,_),_) -> is_term bf
+    | _ -> false

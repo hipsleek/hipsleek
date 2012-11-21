@@ -81,10 +81,13 @@ let proof_gt5_log_list = ref [] (*Logging proofs require more than 5 secs to be 
 
 let update_sleek_proving_kind k= let _ = sleek_proving_kind:= k in ()
 
-let add_new_sleek_logging_entry ante conseq pos=
+(* TODO : add result into the log printing *)
+(* wrong order number indicates recursive invocations *)
+let add_new_sleek_logging_entry slk_no ante conseq (result:CF.list_context) pos=
   if !Globals.sleek_logging_txt then
     let sleek_log_entry = {
-        sleek_proving_id = get_sleek_proving_id ();
+        (* sleek_proving_id = get_sleek_proving_id (); *)
+        sleek_proving_id = slk_no;
         sleek_proving_pos = pos;
         sleek_proving_kind = !sleek_proving_kind;
         sleek_proving_ante = ante;

@@ -4617,21 +4617,37 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
 (* snd res is the constraint that causes  *)
 (* the check to fail.                     *)
 
-and heap_entail_conjunct i (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
+(* hec_num denotes particular id of caller *)
+and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
-  Debug.no_3_num i "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
+  let hec  is_folding ctx0 c = heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos in
+  let hec a b c =
+    let ante =
+      match ctx0 with
+      | OCtx _ -> CF.mkTrue (CF.mkTrueFlow ()) pos (* impossible *)
+      | Ctx estate -> estate.es_formula
+    in
+    let avoid = (hec_num=11 or hec_num=4) in
+    let avoid = avoid or (hec_num=2 && CF.is_emp_term conseq) in
+    let slk_no = if avoid then 0 else Log.get_sleek_proving_id () in
+    let r = hec a b c in
+    let (lc,_) = r in
+    let _ = if avoid then () else Log.add_new_sleek_logging_entry slk_no ante conseq lc pos in
+      r
+  in
+  Debug.no_3_num hec_num "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
       (fun (c,_) -> Cprinter.string_of_list_context c)
-      (fun  is_folding ctx0 c -> heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos) is_folding ctx0 conseq
+      hec is_folding ctx0 conseq
 
 and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula) rhs_matched_set pos : (list_context * proof) =
   (* PRE : BOTH LHS and RHS are not disjunctive *)
   Debug.devel_zprint (lazy ("heap_entail_conjunct:\ncontext:\n" ^ (Cprinter.string_of_context ctx0) ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
-    let ante =
-      match ctx0 with
-      | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!")
-      | Ctx estate -> estate.es_formula
-    in
-    let _ = Log.add_new_sleek_logging_entry ante conseq pos in
+    (* let ante = *)
+    (*   match ctx0 with *)
+    (*   | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!") *)
+    (*   | Ctx estate -> estate.es_formula *)
+    (* in *)
+    (* let _ = Log.add_new_sleek_logging_entry ante conseq pos in *)
     (* let _ = DD.info_pprint ("       sleek-logging: Line " ^ (line_number_of_pos pos) ^ "\n" ^ (Cprinter.prtt_string_of_formula ante) ^ " |- " ^ *)
     (*                                  (Cprinter.prtt_string_of_formula conseq)) pos in *)
     heap_entail_conjunct_helper 3 prog is_folding  ctx0 conseq rhs_matched_set pos

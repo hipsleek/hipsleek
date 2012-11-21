@@ -9525,7 +9525,7 @@ let get_bar_conds b_name self (l_f:(formula * formula_label) list): ((int option
 			| Or _ -> report_error no_pos "unexpected or in find barr" 
 			| Base {formula_base_pure = p}
 			| Exists {formula_exists_pure = p} ->
-					let f = MCP.fold_mem_lst (CP.mkTrue no_pos) false false p in
+					let f = MCP.fold_mem_lst (CP. mkTrue no_pos) false false p in
 					let perm = match bd.h_formula_data_perm with
 						| None -> Some Tree_shares.Ts.top
 						| Some v -> CP.get_inst_tree v f in
@@ -9601,3 +9601,28 @@ let mark_estate_sat_slices estate svl =
 					then false
 					else g.Mcpure_D.memo_group_unsat}) g) in
 	{estate with es_formula = transform_formula (fid,(fun c-> None),fid,(tr_g,fid, fid, fid, fid)) estate.es_formula;}
+
+let is_emp_heap h = (match h with
+  | HEmp -> true
+  | HTrue -> true
+  | _ -> false)
+
+let is_term mf = 
+  let f = MCP.pure_of_mix mf in
+  CP.is_term f
+
+let is_emp_term f = match f with
+  | Base {formula_base_pure = mf;
+          formula_base_heap = h} ->
+        if is_emp_heap h then
+          (if is_term mf then true
+          else false)
+        else false
+  | _ -> false
+
+let is_emp_term f = 
+  Debug.no_1 "is_emp_term" !print_formula string_of_bool is_emp_term f
+
+
+
+
