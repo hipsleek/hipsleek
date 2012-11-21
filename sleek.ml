@@ -39,7 +39,7 @@ let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 let source_files = ref ([] : string list)
 
 let set_source_file arg = 
-  source_files := arg :: !source_files
+  source_files := arg :: !source_files 
 
 let print_version () =
   print_endline ("SLEEK: A Separation Logic Entailment Checker");
@@ -92,6 +92,9 @@ let parse_file (parse) (source_file : string) =
       | M.Loc.Exc_located (l,t)-> 
             (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
             raise t) in
+  let parse_first (cmds:command list) : (command list)  =
+    let pr = pr_list string_of_command in
+    Debug.no_1 "parse_first" pr pr parse_first cmds in
   let proc_one_def c = 
     match c with
 	  | DataDef ddef -> process_data_def ddef
@@ -113,6 +116,8 @@ let parse_file (parse) (source_file : string) =
   let proc_one_cmd c = 
     match c with
     | EntailCheck (iante, iconseq, etype) -> process_entail_check iante iconseq etype
+      (* let pr_op () = process_entail_check_common iante iconseq in  *)
+      (* Log.wrap_calculate_time pr_op !source_files ()               *)
     | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
     | CaptureResidue lvar -> process_capture_residue lvar
     | PrintCmd pcmd -> process_print_command pcmd
@@ -166,7 +171,7 @@ let main () =
   let quit = ref false in
   let parse x =
     match !Scriptarguments.fe with
-      | Scriptarguments.NativeFE -> NF.parse x
+      | Scriptarguments.NativeFE -> NF.parse_slk x
       | Scriptarguments.XmlFE -> XF.parse x in
   let parse x = Debug.no_1 "parse" pr_id string_of_command parse x in
   let buffer = Buffer.create 10240 in
@@ -222,18 +227,47 @@ let main () =
         (* let _ = print_endline "Prior to parse_file" in *)
         let _ = List.map (parse_file NF.list_parse) !source_files in ()
     with
-      | End_of_file -> print_string ("\n")
+      | End_of_file -> 
+            begin
+              print_string ("\n")
+            end
       (* | Not_found -> print_string ("Not found exception caught!\n") *)
 
 (* let main () =  *)
 (*   Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
-
+let sleek_proof_log_Z3 src_files =
+ if !Globals.proof_logging || !Globals.proof_logging_txt then 
+      begin
+	let _=sleek_src_files := src_files in			
+	let tstartlog = Gen.Profiling.get_time ()in	
+	(* let _= Log.proof_log_to_file () in *)
+  let with_option = if(!Globals.en_slc_ps) then "sleek_eps" else "sleek_no_eps" in
+  let with_option_logtxt = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
+  let fname = "logs/"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
+	let fz3name= ("logs/"^with_option^(Globals.norm_file_name (List.hd src_files)) ^".z3")  in
+	let fnamegt5 = "logs/greater_5sec_"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
+	let _= if (!Globals.proof_logging_txt) 
+        then 
+          begin
+            Debug.info_pprint ("Logging "^fname^"\n") no_pos;
+						Debug.info_pprint ("Logging "^fz3name^"\n") no_pos;
+						Debug.info_pprint ("Logging "^fnamegt5^"\n") no_pos;
+            Log.proof_log_to_text_file !source_files;
+						Log.z3_proofs_list_to_file !source_files;
+						Log.proof_greater_5secs_to_file !source_files;
+          end
+	in
+			let tstoplog = Gen.Profiling.get_time () in
+			let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
+			(* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in	() *)
+			end
+		
 let _ =
-   wrap_exists_implicit_explicit := false ;
+  wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
   Scriptarguments.check_option_consistency ();
   if !Globals.print_version_flag then begin
-	print_version ()
+    print_version ()
   end else
     let _ = Printexc.record_backtrace !Globals.trace_failure in
     (Tpdispatcher.start_prover ();
@@ -242,8 +276,36 @@ let _ =
     main ();
     (* let _ = print_endline "after main" in *)
     Gen.Profiling.pop_time "Overall";
+    Tpdispatcher.stop_prover ();
+    (* Get the total proof time *)
+    let _ = if not(!Globals.no_cache_formula) then
+      begin
+        let fp a = (string_of_float ((floor(100. *.a))/.100.)) in
+        let calc_hit_percent c m = (100. *. ((float_of_int (c - m)) /. (float_of_int c))) in
+        let string_of_hit_percent c m = (fp (calc_hit_percent c m))^"%" in
+        let s_c = !Tpdispatcher.cache_sat_count in
+        let s_m = !Tpdispatcher.cache_sat_miss in
+        let i_c = !Tpdispatcher.cache_imply_count in
+        let i_m = !Tpdispatcher.cache_imply_miss in
+        print_endline ("\nSAT Count   : "^(string_of_int s_c)); 
+        print_endline ("SAT % Hit   : "^(string_of_hit_percent s_c s_m));
+        print_endline ("IMPLY Count : "^(string_of_int i_c)); 
+        print_endline ("IMPLY % Hit : "^(string_of_hit_percent i_c i_m))
+        ;(Gen.Profiling.print_info_task "cache overhead")
+      end
+          else ()
+    in
+    let ptime4 = Unix.times () in
+    let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime in
+    let _ = print_string ("\nTotal verification time: " 
+    ^ (string_of_float t4) ^ " second(s)\n"
+    ^ "\tTime spent in main process: " 
+    ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
+    ^ "\tTime spent in child processes: " 
+    ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
+    in
+    let _= sleek_proof_log_Z3 !source_files in
     let _ = 
       if (!Globals.profiling && not !inter) then 
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in
-    Tpdispatcher.stop_prover ();
     print_string "\n")

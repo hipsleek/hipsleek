@@ -274,12 +274,17 @@ struct
   let cor_is_rel (l1: t) (l2: t) : bool =
     let (sv1, wv1) = l1 in
     let (sv2, wv2) = l2 in
+    (* if (sv1 = [] && sv2 = []) then                   *)
+    (*   (* Keep the linking constraints separately *)  *)
+    (*   (Gen.BList.list_equiv_eq eq_spec_var wv1 wv2)  *)
+    (* else                                             *)
+    (*   (Gen.BList.overlap_eq eq_spec_var sv1 sv2) &&  *)
+    (*   (Gen.BList.list_equiv_eq eq_spec_var wv1 wv2)  *)
     if (sv1 = [] && sv2 = []) then
       (* Keep the linking constraints separately *)
       (Gen.BList.list_equiv_eq eq_spec_var wv1 wv2)
     else 
-      (Gen.BList.overlap_eq eq_spec_var sv1 sv2) && 
-      (Gen.BList.list_equiv_eq eq_spec_var wv1 wv2)
+      (Gen.BList.overlap_eq eq_spec_var sv1 sv2)
 
   (* For IsRelevant meta-predicate *)
   let rel_is_rel (q: t) (x: t) = 
@@ -575,7 +580,7 @@ struct
 
   let merge_mems_nx (l1: memo_pure) (l2: memo_pure) slice_check_dups filter_merged_cons : memo_pure = 
     let r = 
-      if !f_1_slice  || !dis_slicing then 
+      if !f_1_slice || !dis_slicing then 
 		    (if (List.length l1)>1 || (List.length l2)>1  then (print_string "multi slice problem"; failwith "multi slice problem");      
         let h1, h2 = (List.hd l1, List.hd l2) in
 		    let na = EMapSV.merge_eset h1.memo_group_aset h2.memo_group_aset in
@@ -630,9 +635,12 @@ struct
   let create_memo_group (l1: b_formula list) (l2: formula list) 
     (status: prune_status) filter_merged_cons : memo_pure =
     (* Normalize l1 and l2 to lists of atomic constraints *)
+		(* Slicing: Infer ineq linking constraints *)
+		(* and constant linking variables          *)
+		let l1 = if !infer_lvar_slicing then trans_const_bforms l1 else l1 in
     let l1 = List.map (fun b -> 
-      let n_b = if !opt_ineq then trans_eq_bform b else b in
-      Pure_Constr.atom_of_b_formula n_b) l1 in
+      let b = if !opt_ineq then trans_eq_bform b else b in
+      Pure_Constr.atom_of_b_formula b) l1 in
     let l2 = List.map (fun f -> Pure_Constr.atom_of_formula f) l2 in
     let sl =
       let l = l1 @ l2 in
@@ -659,6 +667,12 @@ struct
   let get_rel_ctr (n: int) (pf: formula) (mp: Memo_Group.t list) : Memo_Group.t list = 
     let ps = MG_Constr_S.constr_of_atom_list mp in
     let f = MG_Slice_S.slice_of_atom (Memo_Group.atom_of_formula pf) in
+    let r = MG_S.get_ctr_n n f ps in
+    MG_Slice_S.atom_of_slice r
+    
+  let get_rel_mem (n: int) (m: Memo_Group.t) (mp: Memo_Group.t list) : Memo_Group.t list = 
+    let ps = MG_Constr_S.constr_of_atom_list mp in
+    let f = MG_Slice_S.slice_of_atom m in
     let r = MG_S.get_ctr_n n f ps in
     MG_Slice_S.atom_of_slice r
 end;;

@@ -696,13 +696,31 @@ let pr_var_measures (t_ann, ls1,ls2) =
     pr_set pr_formula_exp ls2
   else ()
 
+let sort_exp a b =
+  match a with
+    | P.Var (v1,_) ->
+          begin
+            match b with
+              | P.Var (v2,_) -> 
+                    if (String.compare (string_of_spec_var v1) (string_of_spec_var v2))<=0 
+                    then (a,b) 
+                    else (b,a)
+              | _ -> (a,b)
+          end
+    | _ ->
+          begin
+            match b with
+              | P.Var v2 -> (b,a)
+              | _ -> (a,b)
+          end
+
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
   let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
   let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in
   let f_b_no e =  pr_bracket (fun x -> true) pr_formula_exp e in
   let (pf,il) = e in
-  pr_slicing_label il;
+  (* pr_slicing_label il; *)
   match pf with
     | P.LexVar t_info -> 
       fmt_string (string_of_term_ann t_info.CP.lex_ann);
@@ -717,8 +735,12 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.Gt (e1, e2, l) -> f_b e1; fmt_string op_gt ; f_b e2
     | P.Gte (e1, e2, l) -> f_b e1; fmt_string op_gte ; f_b e2
     | P.SubAnn (e1, e2, l) -> f_b e1; fmt_string op_sub_ann ; f_b e2
-    | P.Eq (e1, e2, l) -> f_b_no e1; fmt_string op_eq ; f_b_no e2
-    | P.Neq (e1, e2, l) -> f_b e1; fmt_string op_neq ; f_b e2;(* fmt_string (string_of_pos l.start_pos);*)
+    | P.Eq (e1, e2, l) -> 
+          let (e1,e2) = sort_exp e1 e2 in
+          f_b_no e1; fmt_string op_eq ; f_b_no e2
+    | P.Neq (e1, e2, l) -> 
+          let (e1,e2) = sort_exp e1 e2 in
+          f_b e1; fmt_string op_neq ; f_b e2;(* fmt_string (string_of_pos l.start_pos);*)
     | P.EqMax (e1, e2, e3, l) ->   
           let arg2 = bin_op_to_list op_max_short exp_assoc_op e2 in
           let arg3 = bin_op_to_list op_max_short exp_assoc_op e3 in
@@ -975,6 +997,7 @@ let rec pr_h_formula h =
       h_formula_view_label = pid;
       h_formula_view_remaining_branches = ann;
       h_formula_view_pruning_conditions = pcond;
+	  h_formula_view_unfold_num = ufn;
       h_formula_view_pos =pos}) ->
         let perm_str = string_of_cperm perm in
           fmt_open_hbox ();
@@ -987,7 +1010,8 @@ let rec pr_h_formula h =
 	      pr_derv dr;
           (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
           if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
-	      if original then fmt_string "[Orig]"
+	      fmt_string ("["^(string_of_int ufn)^"]");
+		  if original then fmt_string "[Orig]"
 	      else fmt_string "[Derv]";
  	  if lhs_case then fmt_string "[LHSCase]";
          pr_remaining_branches ann; 
@@ -2008,6 +2032,9 @@ let pr_view_decl v =
   pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
   pr_vwrap  "xform: " pr_mix_formula v.view_x_formula;
   pr_vwrap  "is_recursive?: " fmt_string (string_of_bool v.view_is_rec);
+   
+  pr_vwrap  "same_xpure?: " fmt_string 
+      (if v.view_xpure_flag then "YES" else "NO");
   pr_vwrap  "view_data_name: " fmt_string v.view_data_name;
   pr_vwrap  "self preds: " fmt_string (Gen.Basic.pr_list (fun x -> x) v.view_pt_by_self);
   pr_vwrap  "materialized vars: " pr_mater_prop_list v.view_materialized_vars;

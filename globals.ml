@@ -12,6 +12,7 @@ type constant_flow = string
 exception Illegal_Prover_Format of string
 
 let reverify_flag = ref false
+let ineq_opt_flag = ref false
 
 let illegal_format s = raise (Illegal_Prover_Format s)
 
@@ -216,7 +217,7 @@ let string_of_loc_by_char_num (l : loc) =
 let proof_logging = ref false
 let proof_logging_txt = ref false
 let proof_logging_time = ref 0.000
-
+let sleek_src_files = ref ([]: string list)
 (*Proof logging facilities*)
 class ['a] store (x_init:'a) (epr:'a->string) =
    object 
@@ -262,35 +263,50 @@ end;;
 let proving_loc  = new prog_loc
 let post_pos = new prog_loc
 let proving_kind = new proving_type
+let sleek_kind = new proving_type
 let explain_mode = new failure_mode
 let return_exp_pid = ref ([]: control_path_id list)	
+let z3_proof_log_list = ref ([]: string list)
+let z3_time = ref 0.0
 
+let add_to_z3_proof_log_list (f: string) =
+	z3_proof_log_list := !z3_proof_log_list @ [f]
+	 
 let proving_info () = 
-	if(proving_kind # is_avail) then
-		   (
-				  let temp= if(explain_mode # is_avail) then "FAILURE EXPLAINATION" else proving_kind # string_of in
-      		if (post_pos # is_avail) 
-          then ("Proving Infor spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^temp)
-          else if(proving_loc # is_avail)
-      	  then ("Proving Infor spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^temp)
-					else "..."
-       )
-	else "..."(*"who called is_sat,imply,simplify to be displayed later..."*)
+  if(proving_kind # is_avail) then
+    (
+	let temp= if(explain_mode # is_avail) then "FAILURE EXPLAINATION" else proving_kind # string_of in
+      	if (post_pos # is_avail) 
+        then ("Proving Infor spec:"^(post_pos#string_of_pos) ^" loc:"^(proving_loc#string_of_pos)^" kind::"^temp)
+        else 
+          let loc_info = 
+            if (proving_loc # is_avail) then " loc:"^(proving_loc#string_of_pos)
+            else " loc: NONE" 
+          in ("Proving Infor spec:"^(post_pos#string_of_pos) ^loc_info^" kind::"^temp)
+    )
+  else "..no proving kind.."(*"who called is_sat,imply,simplify to be displayed later..."*)
 	
+
 let wrap_proving_kind (str : string) exec_function args =
-	if(!proof_logging_txt) then
-    let b = proving_kind # is_avail in
-    let m = proving_kind # get in
-    let _ = proving_kind # set str in 	
-    let res = exec_function args in
-    let _ = if(!proof_logging_txt) then
-      if b then proving_kind # set m 
-      else proving_kind # reset 
-	  in
-    res
-	else 	
-     let res = exec_function args in res
+  if (!proof_logging_txt) then
+    begin
+      let b = proving_kind # is_avail in
+      let m = proving_kind # get in
+      let _ = proving_kind # set str in 	
+      let res = exec_function args in
+      let _ =  
+        if b then proving_kind # set m 
+        else proving_kind # reset
+        in res
+    end
+  else 	
+    let res = exec_function args 
+    in res
  
+(* let wrap_proving_kind (str : string) exec_function args = *)
+(*   Debug.no_1 "wrap_proving_kind" pr_id pr_none  *)
+(*       (fun _ -> wrap_proving_kind str exec_function args) str *)
+
 (* let post_pos = ref no_pos *)
 (* let set_post_pos p = post_pos := p *)
 
@@ -437,6 +453,7 @@ let logical_error = "logical bug"
 let fnc_error = "function call"
 let lemma_error = "lemma"
 let undefined_error = "undefined"
+let timeout_error = "timeout"
 
 let eres_name = "eres"
 
@@ -497,6 +514,11 @@ let b_datan = "barrier"
 let verify_callees = ref false
 
 let elim_unsat = ref false
+let smart_xpure = ref true
+let super_smart_xpure = ref false
+  (* this flag is dynamically set depending on
+     smart_xpure and xpure0!=xpure1 *)
+let smart_memo = ref false
 
 (* let lemma_heuristic = ref false *)
 
@@ -547,7 +569,9 @@ let print_version_flag = ref false
 
 let elim_exists_flag = ref true
 
-let filtering_flag = ref true
+let filtering_flag = ref false
+
+let split_rhs_flag = ref true
 
 let n_xpure = ref 1
 
@@ -595,9 +619,9 @@ let print_input = ref false
 
 let pass_global_by_value = ref false
 
-let allow_pred_spec = ref false
+(* let allow_pred_spec = ref false *)
 
-let disable_failure_explaining = ref false
+let disable_failure_explaining = ref true
 
 let simplify_error = ref false
 
@@ -608,8 +632,10 @@ let disable_elim_redundant_ctr = ref false
 
 let enable_strong_invariant = ref false
 let enable_aggressive_prune = ref false
-let disable_aggressive_prune = ref false
-let prune_with_slice = ref false
+let enable_redundant_elim = ref false
+
+(* let disable_aggressive_prune = ref false *)
+(* let prune_with_slice = ref false *)
 
 let enulalias = ref false
 
@@ -622,6 +648,7 @@ let memo_verbosity = ref 2
 let profile_threshold = 0.5 
 
 let no_cache_formula = ref false
+let simplify_imply = ref true
 
 let enable_incremental_proving = ref false
 
@@ -648,18 +675,28 @@ let dis_bnd_chk = ref false
 let dis_term_msg = ref false
 let dis_post_chk = ref false
 let dis_ass_chk = ref false
+let log_filter = ref true
   
 (* Options for slicing *)
-let do_slicing = ref false
+let en_slc_ps = ref false
+let dis_ps = ref false
+let dis_slc_ann = ref false
+let slicing_rel_level = ref 2
+
+(* let do_slicing = ref false *)
 let dis_slicing = ref false
 let opt_imply = ref 0
 let opt_ineq = ref false
 let infer_slicing = ref false
+let infer_lvar_slicing = ref false
 let multi_provers = ref false
 let is_sat_slicing = ref false
 let delay_case_sat = ref false
 let force_post_sat = ref false
 let delay_if_sat = ref false
+let delay_proving_sat = ref false
+let disable_assume_cmd_sat = ref false
+let disable_pre_sat = ref true
 
 (* Options for invariants *)
 let do_infer_inv = ref false
@@ -702,6 +739,9 @@ let seq_number = ref 10
 
 let sat_timeout_limit = ref 2.
 let imply_timeout_limit = ref 3.
+
+let dis_provers_timeout = ref false
+let sleek_timeout_limit = ref 0.
   
 (* let reporter = ref (fun _ -> raise Not_found) *)
 

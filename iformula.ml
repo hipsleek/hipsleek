@@ -848,17 +848,15 @@ and float_out_exps_from_heap_x (f:formula ):formula =
 				  let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 				  let nv = Ipure.Var (nn,b.h_formula_heap_pos) in
 				  let npf = 
-					if !Globals.do_slicing then
-                      try
-                          let lexp = P.find_lexp_exp c !Ipure.linking_exp_list in
-                                (*let _ = Hashtbl.remove !Ipure.linking_exp_list c in*)
-						  Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), (Some (false, fresh_int(), lexp))), None)
-                      with Not_found ->
-						  Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None)
-                    else
-                      Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None) 
-                        (* Slicing: TODO IL for linking exp *)
-                  in
+						(* if !Globals.do_slicing then *)
+						if not !Globals.dis_slc_ann then
+							try
+								let lexp = P.find_lexp_exp c !Ipure.linking_exp_list in
+								(* let _ = Hashtbl.remove !Ipure.linking_exp_list c in *)
+								Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), (Some (false, fresh_int(), lexp))), None)
+							with Not_found -> Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None)
+            else Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None) 
+          in
 				  (nv,[(nn,npf)])) b.h_formula_heap_arguments) in
 	    (HeapNode ({b with h_formula_heap_arguments = na; h_formula_heap_perm = na_perm}),(List.concat (ls_perm ::ls)))
     | HeapNode2 b ->
@@ -873,7 +871,8 @@ and float_out_exps_from_heap_x (f:formula ):formula =
 		          let nv = Ipure.Var (nn,b.h_formula_heap2_pos) in
 
 		          let npf =
-			        if !Globals.do_slicing then
+			        (* if !Globals.do_slicing then *)
+							if not !Globals.dis_slc_ann then
 			          try
 				          let lexp = P.find_lexp_exp (snd c) !Ipure.linking_exp_list in
 				  (*let _ = Hashtbl.remove !Ipure.linking_exp_list (snd c) in*)

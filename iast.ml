@@ -924,21 +924,28 @@ let rec look_up_types_containing_field (defs : data_decl list) (field_name : ide
 				else temp
 (* An Hoa : End *)
 
-let rec look_up_data_def pos (defs : data_decl list) (name : ident) = match defs with
-  | d :: rest -> if d.data_name = name then d else look_up_data_def pos rest name
+let rec look_up_data_def_x pos (defs : data_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.data_name = name then d else look_up_data_def_x pos rest name
   | [] -> Err.report_error {Err.error_loc = pos; Err.error_text = "no type declaration named " ^ name ^ " is found"}
 
+and look_up_data_def i pos (defs : data_decl list) (name : ident) 
+      = Debug.no_1_num i "look_up_data_def" pr_id pr_none (look_up_data_def_x pos defs) name 
+
 and look_up_parent_name pos ddefs name =
-  let ddef = look_up_data_def pos ddefs name in
+  let ddef = look_up_data_def 1 pos ddefs name in
   ddef.data_parent_name
 
 and look_up_data_def_raw (defs : data_decl list) (name : ident) = match defs with
   | d :: rest -> if d.data_name = name then d else look_up_data_def_raw rest name
   | [] -> raise Not_found
 
-and look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs with
-  | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
+and look_up_view_def_raw_x (defs : view_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.view_name = name then d else look_up_view_def_raw_x rest name
   | [] -> raise Not_found
+
+and look_up_view_def_raw i (defs : view_decl list) (name : ident) 
+      = let pr = pr_list !print_view_decl in
+      Debug.no_2_num i "look_up_view_def_raw" pr pr_id pr_none (look_up_view_def_raw_x) defs name 
 
 and look_up_func_def_raw (defs : func_decl list) (name : ident) = match defs with
   | d :: rest -> if d.func_name = name then d else look_up_func_def_raw rest name
@@ -1025,7 +1032,7 @@ and look_up_all_fields_x (prog : prog_decl) (c : data_decl) =
   if (String.compare c.data_name "Object") = 0 then
 	[]
   else
-    let parent = (look_up_data_def no_pos prog.prog_data_decls c.data_parent_name) in 
+    let parent = (look_up_data_def 0 no_pos prog.prog_data_decls c.data_parent_name) in 
 	current_fields @ (look_up_all_fields prog parent)
 
 (*
@@ -1176,7 +1183,7 @@ and data_name_of_view1 (view_decls : view_decl list) (f0 : F.formula) : ident =
 			(* if c is a view, use the view's data name recursively.
 			   Otherwise (c is data) use c *)
 			try
-			  let vdef = look_up_view_def_raw view_decls c in
+			  let vdef = look_up_view_def_raw 1 view_decls c in
 			  if String.length (vdef.view_data_name) > 0 then
 				Some vdef.view_data_name
 			  else

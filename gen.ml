@@ -1439,11 +1439,17 @@ object
   method add_task_instance msg time = 	
     let m = if (time>Globals.profile_threshold) then  [time] else [] in
     try 
+          (* t1 : time, cnt1: count, max1: those that exceeed threshold *)      
 	  let (t1,cnt1,max1) = Hashtbl.find tasks msg in
 	  Hashtbl.replace tasks msg (t1+.time,cnt1+1,m@max1)
     with Not_found -> 
 	    Hashtbl.add tasks msg (time,1,m)
-
+  method print_task_instance msg : unit = 	
+    try 
+ 	  let (t1,cnt1,_) = Hashtbl.find tasks msg in
+	  print_endline ("Time("^msg^") : "^(string_of_float t1)^" (seconds)")
+    with Not_found -> 
+	  print_endline ("Task "^msg^" does not exist in profiling table.")
   method print : unit = 
     let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) tasks [] in
     let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in
@@ -1485,34 +1491,41 @@ struct
       let timer = get_time () in
 	  profiling_stack # push (msg, timer,true) 
     else ()
+  let push_time_always msg = 
+      (* inc_counter ("cnt_"^msg); *)
+      let timer = get_time () in
+	  profiling_stack#push (msg, timer,true) 
+	  (* profiling_stack := (msg, timer,true) :: !profiling_stack) *)
 
   let push_time msg = 
     if (!Globals.profiling) then
-      (
-      (* inc_counter ("cnt_"^msg); *)
-      let timer = get_time () in
-	  profiling_stack#push (msg, timer,true) )
-	  (* profiling_stack := (msg, timer,true) :: !profiling_stack) *)
+      push_time_always msg
     else ()
+
+  let pop_time_always msg = 
+    let m1,t1,_ = profiling_stack # top in
+    if (String.compare m1 msg)==0 then 
+      let t2 = get_time () in
+      if (t2-.t1)< 0. then Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("negative time")}
+      else
+	profiling_stack # pop;
+      if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0) profiling_stack#get_stk) then begin
+	(* if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0&&b1) !profiling_stack) then begin *)
+	(* 	profiling_stack :=List.map (fun (c1,t1,b1)->if (String.compare c1 msg)=0 then (c1,t1,false) else (c1,t1,b1)) !profiling_stack; *)
+	(* 	print_string ("\n double accounting for "^msg^"\n") *)
+        (* print_string ("\n skip double accounting for "^msg^"\n")  *)
+	tasks # add_task_instance m1 0.
+      end	
+      else tasks # add_task_instance m1 (t2-.t1) 
+    else 
+      Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error popping "^msg^"from the stack")}
 
   let pop_time msg = 
     if (!Globals.profiling) then
-	  let m1,t1,_ = profiling_stack # top in
-	  if (String.compare m1 msg)==0 then 
-	    let t2 = get_time () in
-	    if (t2-.t1)< 0. then Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("negative time")}
-	    else
-		  profiling_stack # pop;
-	    if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0) profiling_stack#get_stk) then begin
-		  (* if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0&&b1) !profiling_stack) then begin *)
-		  (* 	profiling_stack :=List.map (fun (c1,t1,b1)->if (String.compare c1 msg)=0 then (c1,t1,false) else (c1,t1,b1)) !profiling_stack; *)
-		  (* 	print_string ("\n double accounting for "^msg^"\n") *)
-          (* print_string ("\n skip double accounting for "^msg^"\n")  *)
-	    end	
-        else tasks # add_task_instance m1 (t2-.t1) 
-	  else 
-	    Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error popping "^msg^"from the stack")}
+      pop_time_always msg
     else ()
+
+ let print_info_task (m:string) : unit =  tasks # print_task_instance m
 
  let print_info () = if (!Globals.profiling) then  tasks # print else ()
 
@@ -1751,6 +1764,12 @@ let amsg s = print_string s; flush_all ()
 
 (** print only if -v *)
 let msg s = if !verbose then amsg s
+
+(* get from option type, if present *)
+let unsome_safe x a =
+  match x with
+    | Some a -> a
+    | None -> a
 
 (** removing 'option' types *)
 let unsome : 'a option -> 'a = 

@@ -39,7 +39,7 @@ let run_entail_check_helper (iante: lem_formula) (iconseq: lem_formula) (cprog: 
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let ctx = CF.build_context ectx ante no_pos in
   let _ = if !Globals.print_core then print_string ("\run_entail_check_helper:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
-  let ctx = CF.transform_context (Solver.elim_unsat_es cprog (ref 1)) ctx in
+  let ctx = CF.transform_context (Solver.elim_unsat_es 10 cprog (ref 1)) ctx in
   let rs1, _ = 
   if not !Globals.disable_failure_explaining then
     Solver.heap_entail_struc_init_bug_inv cprog false false (CF.SuccCtx[ctx]) conseq no_pos None
