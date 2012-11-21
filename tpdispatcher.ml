@@ -2243,7 +2243,7 @@ let rec is_sat_memo_sub_no_ineq_slicing (mem : memo_pure) sat_subno with_dupl wi
   Debug.no_1 "is_sat_memo_sub_no_ineq_slicing"
 	Cprinter.string_of_memo_pure_formula
 	string_of_bool
-	(fun mem -> is_sat_memo_sub_no_ineq_slicing_x2 mem sat_subno with_dupl with_inv) mem
+	(fun mem -> is_sat_memo_sub_no_ineq_slicing_cache mem sat_subno with_dupl with_inv) mem
 
 and is_sat_memo_sub_no_ineq_slicing_x1 (mem : memo_pure) sat_subno with_dupl with_inv : bool =
   let is_sat_one_slice mg =
@@ -2280,6 +2280,34 @@ and is_sat_memo_sub_no_ineq_slicing_x2 (mem : memo_pure) sat_subno with_dupl wit
   in
   (* List.fold_left (fun acc mg -> if not acc then acc else is_sat_one_slice mg) true mem *)
   not (List.exists (fun mg -> not (is_sat_one_slice mg)) mem)
+  
+and is_sat_memo_sub_no_ineq_slicing_cache (mem : memo_pure) sat_subno with_dupl with_inv : bool =
+  let _ = Gen.Profiling.push_time_always "cache overhead" in
+  let res = sat_memo_cache_by_pattern mem in
+  let _ = cache_sat_count := !cache_sat_count+1 in
+  let _ = cache_status := true in
+  let _ = Gen.Profiling.pop_time_always "cache overhead" in
+  res
+  
+and sat_memo_cache_by_pattern (mem : memo_pure) : bool =
+  if (MCP.isConstMFalse (MemoF mem)) then false
+  else
+    (* create a single eset for memo pure *)
+    let m_aset = List.fold_left (fun a mg -> EMapSV.merge_eset a mg.memo_group_aset) [] mem in
+    (* parition the eset *)
+    let m_apart = EMapSV.partition m_aset in   
+    let is_sat_one_slice mg =
+      if (is_ineq_linking_memo_group mg)
+      (* mg is a linking inequality *)
+      then not (List.exists (fun mc ->
+        let bf = mc.memo_formula in
+        match (get_bform_neq_args_with_const bf) with
+        | Some (v1, v2) -> List.exists (fun ls -> 
+            Gen.BList.subset_eq eq_spec_var [v1; v2] ls) m_apart  
+        | None -> false) mg.memo_group_cons) 
+      else true
+    in
+    not (List.exists (fun mg -> not (is_sat_one_slice mg)) mem)
 
 (* and is_sat_memo_sub_no_ineq_slicing_x2 (mem : memo_pure) sat_subno with_dupl with_inv : bool =                                            *)
 (*   (* Aggressive search on inequalities *)                                                                                                 *)
