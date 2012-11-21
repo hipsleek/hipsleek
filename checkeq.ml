@@ -45,10 +45,10 @@ let rec simplify_f f hvars rvars1 =
   match f with
     | CF.Or ({ CF.formula_or_f1 = f1;
 	    CF.formula_or_f2 = f2;
-	    CF.formula_or_pos = pos}) ->
-      let ef1 =  simplify_f f1 hvars rvars1 in
-      let ef2 =  simplify_f f2 hvars rvars1 in
-      CF.mkOr ef1 ef2 pos
+	    CF.formula_or_pos = pos}) -> f
+      (* let ef1 =  simplify_f f1 hvars rvars1 in *)
+      (* let ef2 =  simplify_f f2 hvars rvars1 in *)
+      (* CF.mkOr ef1 ef2 pos *)
     | _ ->(  
       let fs1 = evars (CF.fv f) rvars1_str in
       let f = CF.add_quantifiers fs1 f in
@@ -56,51 +56,47 @@ let rec simplify_f f hvars rvars1 =
       f
     )
 
-let check_no_or f1 f2 hvars rvars =
-  let (rvars1,rvars2) = rvars in
-  let rec count_f_or f rvars = match f with
-    | CF.Or ({CF.formula_or_f1 = f1;
-		CF.formula_or_f2 = f2}) -> (
-      let r1 = count_f_or f1 rvars in
-      let r2 = count_f_or f2 rvars in
-      List.fold_left (fun res f1i -> (List.map (fun f2i -> f1i + f2i) r2)@res ) [] r1
-    )
-    | _ -> (
-      let n0 = CF.no_of_cnts_fml f in
-      let n1 = CF.no_of_cnts_fml (simplify_f f hvars rvars) in
-      if(n0==n1) then [n0] else n0::[n1]
-    )
-  in
-  let c1 = count_f_or f1 rvars1 in
-  let c2 = count_f_or f1 rvars2 in
-  List.exists (fun c1i -> (List.exists (fun c2i -> c1i = c2i) c2) ) c1
+(* let rec simplify_f_or f hvars rvars1 =  *)
+(*   match f with *)
+(*     | CF.Or ({ CF.formula_or_f1 = f1; *)
+(* 	    CF.formula_or_f2 = f2; *)
+(* 	    CF.formula_or_pos = pos}) ->  *)
+(*       let ef1 =  simplify_f f1 hvars rvars1 in *)
+(*       let ef2 =  simplify_f f2 hvars rvars1 in *)
+(*       CF.mkOr ef1 ef2 pos *)
+(*     | CF.Base _ -> f *)
+(*     | _ ->(   *)
+(*       let rvars1_str = List.map (fun v -> CP.full_name_of_spec_var v) rvars1 in *)
+(*       let evars fs rvars= if(List.length hvars == 0) then fs else List.filter (fun f -> not (List.exists (fun hvar -> (String.compare (CP.full_name_of_spec_var f) hvar == 0)) (hvars@rvars))) fs in  *)
+(*       let fs1 = evars (CF.fv f) rvars1_str in *)
+(*       let f = CF.add_quantifiers fs1 f in *)
+(*       let f = CF.elim_exists_preserve f rvars1_str in *)
+(*       f *)
+(*     ) *)
+
+(* let check_no_or f1 f2 hvars rvars = *)
+(*   let (rvars1,rvars2) = rvars in *)
+(*   let rec count_f_or f rvars = match f with *)
+(*     | CF.Or ({CF.formula_or_f1 = f1; *)
+(* 		CF.formula_or_f2 = f2}) -> ( *)
+(*       let r1 = count_f_or f1 rvars in *)
+(*       let r2 = count_f_or f2 rvars in *)
+(*       List.fold_left (fun res f1i -> (List.map (fun f2i -> f1i + f2i) r2)@res ) [] r1 *)
+(*     ) *)
+(*     | _ -> ( *)
+(*       let n0 = CF.no_of_cnts_fml f in *)
+(*       let n1 = CF.no_of_cnts_fml (simplify_f_or f hvars rvars) in *)
+(*       if(n0==n1) then [n0] else n0::[n1] *)
+(*     ) *)
+(*   in *)
+(*   let c1 = count_f_or f1 rvars1 in *)
+(*   let c2 = count_f_or f1 rvars2 in *)
+(*   List.exists (fun c1i -> (List.exists (fun c2i -> c1i = c2i) c2) ) c1 *)
     
 let simplify_2f f1 f2 hvars rvars = 
    let (rvars1, rvars2) = rvars in
    (simplify_f f1 hvars rvars1 , simplify_f f2 hvars rvars2 )
-   (* let evars fs rvars= if(List.length hvars == 0) then fs else List.filter (fun f -> not (List.exists (fun hvar -> (String.compare (CP.full_name_of_spec_var f) hvar == 0)) (hvars@rvars))) fs in *)
-  (* (\* print_string ("rvars1: "^(Cprinter.string_of_spec_var_list  rvars1)^"\n"); *\) *)
-  (* (\* print_string ("rvars2: "^(Cprinter.string_of_spec_var_list  rvars2)^ "\n"); *\) *)
-  (* let rvars1_str = List.map (fun v -> CP.full_name_of_spec_var v) rvars1 in *)
-  (* let rvars2_str = List.map (fun v -> CP.full_name_of_spec_var v) rvars2 in *)
-  (* (\* print_string ("INPUT f1: "^(Cprinter.prtt_string_of_formula f1)^"\n"); *\) *)
-  (* (\* print_string ("INPUT f2: "^(Cprinter.prtt_string_of_formula f2)^ "\n"); *\) *)
-  (* match f1,f2 with *)
-  (*   | CF.Or _, _ *)
-  (*   | _, CF.Or _ -> (f1,f2) *)
-  (*   | _ ->( *)
-     
-  (* let fs1,fs2 = evars (CF.fv f1) rvars1_str ,evars (CF.fv f2) rvars2_str in *)
-  (*     let f1,f2 = CF.add_quantifiers fs1 f1, CF.add_quantifiers fs2 f2 in *)
-
-  (*    (\*  print_string (" OUTPUT f1: "^(Cprinter.prtt_string_of_formula f1)^"\n"); *\) *)
-  (*    (\* print_string ("OUTPUT f2: "^(Cprinter.prtt_string_of_formula f2)^ "\n"); *\) *)
-
-  (*     let f1,f2 = CF.elim_exists_preserve f1 rvars1,CF.elim_exists_preserve f2 rvars2 in *)
-  (*     (\* print_string (" OUTPUT f1: "^(Cprinter.prtt_string_of_formula f1)^"\n");   *\) *)
-  (*     (\* print_string ("OUTPUT f2: "^(Cprinter.prtt_string_of_formula f2)^ "\n");  *\) *)
-  (*     (f1,f2) *)
-  (*   ) *)
+  
   
 let rec checkeq_formulas_x ivars f1 f2 = 
   match f1,f2 with 
@@ -136,8 +132,7 @@ and checkeq_formulas_one ivars rvars f1 f2 mtl =
 
 and checkeq_formulas_one_x (hvars: ident list) rvars  (f1: CF.formula) (f2: CF.formula)(mtl: (map_table list)): (bool*(map_table list))=
   (* print_string (" f1: "^(Cprinter.prtt_string_of_formula f1)^"\n"); *)
-  (* print_string (" f2: "^(Cprinter.prtt_string_of_formula f2)^ "\n"); *)
-  
+  (* print_string (" f2: "^(Cprinter.prtt_string_of_formula f2)^ "\n"); *) 
   let check_no f1 f2 =  match f1,f2 with 
     | CF.Or _, CF.Or _
     | _ -> (CF.no_of_cnts_fml f1 == CF.no_of_cnts_fml f2) 
@@ -1895,6 +1890,7 @@ let checkeq_defs_with_diff_x hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.
   let rs,vars = List.split mixs in
   let _,remain_vars = List.split (List.filter (fun (r,v) -> r == false) mixs) in
   let res = not (List.exists (fun c -> not(c)) rs) in
+  let res = if(List.length remain_vars == 0) then true else res in 
   if(res) then (res,[])
   else (
     let rec check_hps pair_vars checking = ( 
@@ -1909,16 +1905,23 @@ let checkeq_defs_with_diff_x hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.
 	      let check_term = List.exists (fun (a1,b1) -> List.exists (fun (a2,b2) -> (CP.eq_spec_var a1 a2 && CP.eq_spec_var a2 b2)) hps) checking in
 	      let parent_def = (d1,d2,modify_mtl d1 d2 mtl hps) in
 	      if(check_term) then [parent_def] else 
-		let new_diff = check_hps hps (checking@pair_vars) in
+		let (_,new_diff) = check_hps hps (checking@pair_vars) in
 		parent_def::new_diff
 	    )
 	else [(d1,d2,mtl)]
       in 
-      List.concat ( List.map (fun (v1,v2) -> check_one_def v1 v2) pair_vars) 
+      let res_pairs = List.map (fun (v1,v2) -> let res = check_one_def v1 v2 in
+					   if(List.length res == 0) then ([(v1,v2)],res) else ([],res)) pair_vars in
+      let trues, diffs = List.split res_pairs in
+      (List.concat trues, List.concat diffs)
     )
     in
     let pair_vars = List.map (fun v-> (v,v)) remain_vars in
-    (res,check_hps pair_vars []) 
+    let (trues, diffs) = check_hps pair_vars [] in
+    let true_vars = List.map (fun (a,_) -> a) trues in
+    let remain_vars = List.filter (fun c -> not (List.exists (fun b -> CP.eq_spec_var b c) true_vars)) remain_vars in
+    let res = if(List.length remain_vars == 0) then true else res in
+    (res,diffs) 
   (*TODO: here, b can used to decide if it's actually false or just false with HP diff_name (check again here)*)   
   )
     

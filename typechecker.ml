@@ -2154,7 +2154,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			  res
 			)
 			else (
-			  let r,rvars = CEQ.checkeq_defs_bool il sl ls_inferred_hps defs sel_hp_rels in 
+			  let r,_ = CEQ.checkeq_defs_with_diff  il sl ls_inferred_hps defs sel_hp_rels in 
 			  r
 			)
 		      in

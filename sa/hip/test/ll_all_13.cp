@@ -48,7 +48,7 @@ hpdefs [H1,G2][]: {
 ]
 /*
  6 sim f1:  
- emp&res_697=null & x_696=null
+ emp&res_697=null 
  or x_696::node<a',res_697>&true
  or EXISTS(v_int_65_619: x_696::node<v_int_65_656,next_65_644> * 
     G2(next_65_644,v_node_66_671) * 
