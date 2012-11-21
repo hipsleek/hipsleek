@@ -792,7 +792,7 @@ and filter_useless_memo_pure (simp_fct:formula->formula) (simp_b:bool)
       
 and filter_merged_cons aset l =   
   let eq = Cpure.eq_spec_var_aset aset  in
-  let keep c1 c2 = match c1.memo_status ,c2.memo_status with
+  let keep c1 c2 = match c1.memo_status, c2.memo_status with
     | _, Implied_R -> if (equalBFormula_f eq c1.memo_formula c2.memo_formula) then (true,false) else (true,true)
     | Implied_R, _ -> if (equalBFormula_f eq c1.memo_formula c2.memo_formula) then (false,true) else (true,true) 
     | Implied_N, Implied_N | Implied_P, Implied_P | Implied_N, Implied_P
@@ -946,7 +946,7 @@ and anon_partition (l1:(b_formula *(formula_label option)) list) =
 and create_memo_group (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =
   let pr1 = fun bl -> "[" ^ (List.fold_left (fun res (b,_) -> res ^ (!print_bf_f b)) "" bl) ^ "]" in
   let pr2 = fun fl -> "[" ^ (List.fold_left (fun res f -> res ^ (!print_p_f_f f)) "" fl) ^ "]" in
-  Debug.no_3 "create_memo_group" pr1 pr2 (fun s -> "") !print_mp_f create_memo_group_x l1 l2 status
+  Debug.ho_3 "create_memo_group" pr1 pr2 (fun s -> "") !print_mp_f create_memo_group_x l1 l2 status
 
 and create_memo_group_x 
   (l1: (b_formula * (formula_label option)) list) 

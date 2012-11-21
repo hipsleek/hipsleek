@@ -13,6 +13,7 @@ checkentail x!=y & x=b |-false.
 /*
 Type: Sat:  b=x
 why isn't x!=y picked for UNSAT?
+Because x!=y is not directly related to x=b
 */
 
 // (5) keep tgt
