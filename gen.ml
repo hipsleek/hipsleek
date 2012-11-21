@@ -69,6 +69,8 @@ struct
  let pr_list f xs = "["^(pr_lst "," f xs)^"]"
  let pr_list_ln f xs = "["^(pr_lst ",\n" f xs)^"]"
 
+ let pr_list_mln f xs = (pr_lst "\n--------------\n" f xs)
+
  let map_opt f x = match x with 
    | None -> None
    | Some v -> Some (f v)
@@ -435,10 +437,14 @@ class ['a] stack  =
 
 class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
    object 
-     inherit ['a] stack
+     inherit ['a] stack as super
      val elem_pr = epr 
      val elem_eq = eq 
      method string_of = Basic.pr_list_ln elem_pr stk
+     method string_of_reverse = let _ = super#reverse  in
+                                Basic.pr_list_ln elem_pr stk
+     method string_of_reverse_log = let _ = super#reverse  in
+                                Basic.pr_list_mln elem_pr stk
      method mem (i:'a) = List.exists (elem_eq i) stk
      method overlap (ls:'a list) = 
 	   if (ls == []) then false

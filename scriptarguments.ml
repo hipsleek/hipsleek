@@ -317,6 +317,7 @@ let common_arguments = [
 	(* Proof Logging *)
 	("--en-logging", Arg.Set Globals.proof_logging, "Enable proof logging");
 	("--en-logging-txt", Arg.Set Globals.proof_logging_txt, "Enable proof logging output text file in addition");
+    ("--en-sleek-logging-txt", Arg.Set Globals.sleek_logging_txt, "Enable sleek logging output text file in addition");
 
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");

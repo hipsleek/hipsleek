@@ -11,7 +11,7 @@ module CEQ = Checkeq
 module TP = Tpdispatcher
 module SAU = Sautility
 
-let rel_def_stk : CF.hprel_def Gen.stack_pr = new Gen.stack_pr 
+let rel_def_stk : CF.hprel_def Gen.stack_pr = new Gen.stack_pr
   Cprinter.string_of_hprel_def_lib (==)
 
 let rec elim_redundant_paras_lst_constr_x prog constrs =

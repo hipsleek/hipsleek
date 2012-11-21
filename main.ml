@@ -260,31 +260,32 @@ let process_source_full source =
     in
     
     (* Proof Logging *)
-    let _ = if !Globals.proof_logging || !Globals.proof_logging_txt then 
-      begin
-        let tstartlog = Gen.Profiling.get_time () in
-        let _= Log.proof_log_to_file () in
-        let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
-        let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt"  in
-        let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
-        let _= if (!Globals.proof_logging_txt) 
-        then 
-          begin
-            Debug.info_pprint ("Logging "^fname^"\n") no_pos;
-            Debug.info_pprint ("Logging "^fz3name^"\n") no_pos;
-            Log.proof_log_to_text_file !Globals.source_files;
-            Log.z3_proofs_list_to_file !Globals.source_files
-          end
-        else try Sys.remove fname 
-          (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *)
-        with _ -> ()
-        in
-        let tstoplog = Gen.Profiling.get_time () in
-        let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
-        (* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in    () *)
-      end
+    let _ = Log.process_proof_logging ()
+    (*  if !Globals.proof_logging || !Globals.proof_logging_txt then  *)
+      (* begin *)
+      (*   let tstartlog = Gen.Profiling.get_time () in *)
+      (*   let _= Log.proof_log_to_file () in *)
+      (*   let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in *)
+      (*   let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt"  in *)
+      (*   let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in *)
+      (*   let _= if (!Globals.proof_logging_txt)  *)
+      (*   then  *)
+      (*     begin *)
+      (*       Debug.info_pprint ("Logging "^fname^"\n") no_pos; *)
+      (*       Debug.info_pprint ("Logging "^fz3name^"\n") no_pos; *)
+      (*       Log.proof_log_to_text_file !Globals.source_files; *)
+      (*       Log.z3_proofs_list_to_file !Globals.source_files *)
+      (*     end *)
+      (*   else try Sys.remove fname  *)
+      (*     (\* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *\) *)
+      (*   with _ -> () *)
+      (*   in *)
+      (*   let tstoplog = Gen.Profiling.get_time () in *)
+      (*   let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in () *)
+      (*   (\* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in    () *\) *)
+      (* end *)
     in
-    
+    let _ = Log.process_sleek_logging () in
     (* print mapping table control path id and loc *)
     (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
     

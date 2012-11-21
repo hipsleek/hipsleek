@@ -25,14 +25,75 @@ type proof_log = {
 	log_res : proof_res;
 }
 
+type sleek_proving_kind =
+	| POST
+	| PRE
+	| BINDING
+    | ASSERTION
+
+type sleek_log_entry = {
+	sleek_proving_id :int;
+    sleek_proving_pos: loc;
+	sleek_proving_kind : sleek_proving_kind;
+    sleek_proving_ante: CF.formula;
+    sleek_proving_conseq: CF.formula;
+	(* sleek_proving_res : bool; *)
+}
+
+let string_of_sleek_proving_kind t=
+  match t with
+    | POST -> "POST"
+	| PRE -> "PRE"
+	| BINDING -> "BINDING"
+    | ASSERTION -> "ASSERTION"
+
+let pr_sleek_log_entry e=
+  fmt_open_box 1;
+  fmt_string ("id: " ^ (string_of_int e.sleek_proving_id)) ;
+  fmt_string ("; line: " ^ (Globals.line_number_of_pos e.sleek_proving_pos)) ;
+  fmt_string ("; kind: " ^ (string_of_sleek_proving_kind e.sleek_proving_kind)) ;
+  fmt_string "\n";
+  fmt_string (Cprinter.prtt_string_of_formula e.sleek_proving_ante);
+  fmt_string " |- ";
+  fmt_string  (Cprinter.prtt_string_of_formula e.sleek_proving_conseq);
+  fmt_close()
+
+let string_of_sleek_log_entry e= Cprinter.poly_string_of_pr pr_sleek_log_entry e
+
 let sleek_counter= ref 0
 
 let proof_log_tbl : (string, proof_log) Hashtbl.t = Hashtbl.create 700
 
+let sleek_log_stk : sleek_log_entry  Gen.stack_pr = new Gen.stack_pr
+  string_of_sleek_log_entry (==)
+
+let sleek_proving_kind = ref (POST : sleek_proving_kind)
+let sleek_proving_id = ref (0 : int)
+
+let get_sleek_proving_id ()=
+  let r = !sleek_proving_id in
+  let _ = Globals.add_count sleek_proving_id in
+  r
+
 let proof_log_list  = ref [] (*For printing to text file with the original oder of proof execution*)
 
 let proof_gt5_log_list = ref [] (*Logging proofs require more than 5 secs to be proved*)
-		
+
+let update_sleek_proving_kind k= let _ = sleek_proving_kind:= k in ()
+
+let add_new_sleek_logging_entry ante conseq pos=
+  if !Globals.sleek_logging_txt then
+    let sleek_log_entry = {
+        sleek_proving_id = get_sleek_proving_id ();
+        sleek_proving_pos = pos;
+        sleek_proving_kind = !sleek_proving_kind;
+        sleek_proving_ante = ante;
+        sleek_proving_conseq = conseq;
+    }
+    in
+    let _ = sleek_log_stk # push sleek_log_entry in ()
+  else ()
+
 let find_bool_proof_res pno =
 	try 
 		let log = Hashtbl.find proof_log_tbl pno in
@@ -194,4 +255,65 @@ let wrap_calculate_time exec_func src_file args =
 (* 	  let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in *)
 (* 		close_out oc;                                                                                  *)
 (* 	else ()                                                                                          *)
-		
+
+
+let process_proof_logging ()=
+  if !Globals.proof_logging || !Globals.proof_logging_txt then 
+      begin
+        let tstartlog = Gen.Profiling.get_time () in
+        let _= proof_log_to_file () in
+        let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
+        let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt"  in
+        let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
+        let _= if (!Globals.proof_logging_txt) 
+        then 
+          begin
+            Debug.info_pprint ("Logging "^fname^"\n") no_pos;
+            Debug.info_pprint ("Logging "^fz3name^"\n") no_pos;
+            proof_log_to_text_file !Globals.source_files;
+            z3_proofs_list_to_file !Globals.source_files
+          end
+        else try Sys.remove fname 
+          (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *)
+        with _ -> ()
+        in
+        let tstoplog = Gen.Profiling.get_time () in
+        let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
+        (* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in    () *)
+      end
+  else ()
+
+let add_sleek_log_entry e=
+  if !Globals.sleek_logging_txt then
+    sleek_log_stk # push e
+  else ()
+
+
+let sleek_log_to_text_file (src_files) =
+  if !Globals.sleek_logging_txt then
+    (* let tstartlog = Gen.Profiling.get_time () in *)
+    let oc =
+      (try Unix.mkdir "logs" 0o750 with _ -> ());
+      let with_option = if !Globals.en_slc_ps then "eps" else "no_eps" in
+      open_out ("logs/"^with_option^"_sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt")
+    in
+    let str = sleek_log_stk # string_of_reverse_log in
+    let _=fprintf oc "%s" str in
+    (* let tstoplog = Gen.Profiling.get_time () in *)
+    (* let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in  *)
+    close_out oc;
+  else ()
+
+
+let process_sleek_logging ()=
+  if !Globals.sleek_logging_txt then
+    (* let _ = print_endline "" in *)
+    (* let _ = print_endline "*************************************" in *)
+    (* let _ = print_endline "*******sleek logging ********" in *)
+    (* let _ = print_endline "*************************************" in *)
+    (* let _ = print_endline (sleek_log_stk # string_of) in *)
+    (* let _ = print_endline "*************************************" in () *)
+    let _ = sleek_log_to_text_file !Globals.source_files in
+    ()
+  else
+    ()

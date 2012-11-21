@@ -226,6 +226,10 @@ let proof_logging = ref false
 let proof_logging_txt = ref false
 let proof_logging_time = ref 0.000
 let sleek_src_files = ref ([]: string list)
+
+(*sleek logging*)
+let sleek_logging_txt = ref false
+
 (*Proof logging facilities*)
 class ['a] store (x_init:'a) (epr:'a->string) =
    object 

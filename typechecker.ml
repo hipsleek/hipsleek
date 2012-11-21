@@ -1065,6 +1065,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                               let c1 = prune_pred_struc prog true c1 in (* specialise asserted formula *)
                               let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " for spec: \n" ^ !log_spec ^ "\n" in	
                               Debug.devel_pprint(*print_info "assert"*) to_print pos;
+                              let _ = Log.update_sleek_proving_kind Log.ASSERTION in
                               let rs,prf = heap_entail_struc_list_failesc_context_init prog false false ts c1 None pos None in
                               let _ = PTracer.log_proof prf in  
                               Debug.pprint(*print_info "assert"*) ("assert condition:\n" ^ (Cprinter.string_of_struc_formula c1)) pos;
@@ -1099,7 +1100,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                                           | None -> !Globals.opt_classic
                                           | Some b -> b);
               let res = wrap_proving_kind "ASSERT/ASSUME" assert_op () in
-        (* restore flag do_classic_frame_rule  *)
+              (* restore flag do_classic_frame_rule  *)
         Globals.do_classic_frame_rule := flag;
               res
         | Assign ({ exp_assign_lhs = v;
@@ -1353,7 +1354,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	            if (Gen.is_empty unfolded) then unfolded
 	            else
 		      let _ = consume_all := true in
-              let _ = DD.ninfo_pprint ("       sleek-logging (binding):" ^ (to_print)) pos in
+              (* let _ = DD.info_pprint ("       sleek-logging (binding):" ^ (to_print)) pos in *)
+              let _ = Log.update_sleek_proving_kind Log.BINDING in
 	              let rs_prim, prf = heap_entail_struc_list_failesc_context_init prog false  true unfolded struc_vheap None pos pid in
 		      let _ = consume_all := false in
                       let _ = CF.must_consistent_list_failesc_context "bind 3" rs_prim  in
@@ -1678,6 +1680,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (* let _ = Cprinter.string_of_list_failesc_context in *)
                     let pr2 = Cprinter.string_of_list_failesc_context in
                     let pr3 = Cprinter.string_of_struc_formula in
+                    let _ = Log.update_sleek_proving_kind Log.PRE in
                     let f = wrap_proving_kind "PRE-2" (check_pre_post org_spec sctx) in
                     Debug.no_2_loop "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  f should_output_html) org_spec sctx in
 		  
@@ -1892,6 +1895,7 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   let pr = Cprinter.string_of_list_partial_context in
   let pr1 = Cprinter.string_of_formula in
   (*  let pr2 = Cprinter.string_of_list_partial_context in*)
+  let _ = Log.update_sleek_proving_kind Log.POST in
   let f = wrap_proving_kind "POST" (check_post_x prog proc ctx post pos pid) in
   Debug.no_2 "check_post" pr pr1 pr (fun _ _ -> f etype) ctx post
 
@@ -1952,7 +1956,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_
       else ctx
     in
   let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec\n" ^ !log_spec ^ "\n" in
-  let _ = DD.ninfo_pprint ("       sleek-logging (POST): "  ^ "\n" ^ (to_print)) pos in
+  (* let _ = DD.ninfo_pprint ("       sleek-logging (POST): "  ^ "\n" ^ (to_print)) pos in *)
     let f1 = CF.formula_is_eq_flow post !error_flow_int in
     (* let f2 = CF.list_context_is_eq_flow cl !norm_flow_int in *)
     (*  let _ = print_string ("\n WN 4 : "^(Cprinter.string_of_list_partial_context (*ctx*) fn_state)) in*)
@@ -2109,7 +2113,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     let _ = print_endline "*************************************" in
                     let _ = print_endline "*******relational assumption ********" in
                     let _ = print_endline "*************************************" in
-                    let _ = print_endline (Infer.rel_ass_stk # string_of) in
+                    let _ = print_endline (Infer.rel_ass_stk # string_of_reverse) in
                     let _ = print_endline "*************************************" in
 		            let ls_hprel, ls_inferred_hps, dropped_hps = Sa.infer_hps prog hp_lst_assume
                     sel_hp_rels in
@@ -2118,7 +2122,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                     let _ = print_endline "*************************************" in
                     let _ = print_endline "*******relational definition ********" in
                     let _ = print_endline "*************************************" in
-                    let _ = print_endline (Sa.rel_def_stk # string_of) in
+                    let _ = print_endline (Sa.rel_def_stk # string_of_reverse) in
                     let _ = print_endline "*************************************" in
 		    let print_res_list rl def=
 		      let pr1 =  pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula in
