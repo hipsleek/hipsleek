@@ -1127,7 +1127,8 @@ let sat_cache is_sat (f:CP.formula) : bool =
 
 let tp_is_sat (f:CP.formula) (sat_no :string) = 
   (* TODO WN : can below remove duplicate constraints? *)
-  let f = CP.elim_idents f in
+  (* let f = CP.elim_idents f in *)
+  (* this reduces x>=x to true; x>x to false *)
   let fn_sat f = tp_is_sat_perm f sat_no in
   if !Globals.no_cache_formula then
     fn_sat f
