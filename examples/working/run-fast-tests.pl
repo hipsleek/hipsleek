@@ -95,7 +95,7 @@ if($timings){
     if(-e "$timings_logfile") {#check for file existance
         $book = $parser->Parse("$timings_logfile") #open file for appending
             or die "File $timings_logfile was not found";
-        my $count = $book->{SheetCount};#total number of worksheets of teh workbook
+        my $count = $book->{SheetCount};#total number of worksheets of the workbook
         my $provers_sheet_no = 0;
         for(my $i=0; $i < $count ; $i++){#iterate through all the worksheets 
             if ($book->{Worksheet}[$i]->{Name} =~ "$prover") {#check if a profiling worksheet of the selected prover already exists
@@ -990,13 +990,13 @@ $output_file = "log";
 
     );
 
-if($timings){
+# if($timings){
     $mainSum = 0.0;
     $childSum = 0.0;
     $totalSum = 0.0;
-    $prooflogSum =0.0;
+    $prooflogSum = 0.0;
     $falseContextSum = 0;
-}
+# }
 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");
 sleek_process_file();
@@ -1012,6 +1012,12 @@ if($home21){
 	chdir("/home") or die "Can't chdir to $target_dir $!";
 	rmtree(["$target_dir"]) or die ("Could not delete folder: $target_dir $!");
 }
+
+printf "Total verification time: %.2f second\n", $totalSum;
+printf "\tTime spent in main process: %.2f second\n", $mainSum;
+printf "\tTime spent in child processes: %.2f second\n", $childSum;
+printf "\tNumber of false contexts: %d\n", $falseContextSum; 
+ 
 
 if($timings){
     #do the last computations and close the timings log worksheet
@@ -1070,6 +1076,25 @@ sub log_one_line_of_timings{
  if($outp =~ m/\b(\w+) false contexts/){
      $format->set_num_format('0');
      $worksheet->write($row, $falseContextCol, "$1", $format);
+     $falseContextSum = $falseContextSum + $1;
+ }
+}
+
+sub sum_of_timings {
+ my $outp = $_[0];
+ if($outp =~ m/Total verification time: (.*?) second/){
+     $totalSum = $totalSum + $1;
+ }
+ if($outp =~ m/Time spent in main process: (.*?) second/){
+     $mainSum = $mainSum + $1;
+ }
+ if($outp =~ m/Time spent in child processes: (.*?) second/){
+     $childSum = $childSum + $1;
+ }
+ if($outp =~ m/	Time for logging: (.*?) second/){
+     $prooflogSum = $prooflogSum + $1;
+ }
+ if($outp =~ m/\b(\w+) false contexts/){
      $falseContextSum = $falseContextSum + $1;
  }
 }
@@ -1139,12 +1164,13 @@ sub hip_process_file {
 				$error_count++;
 				$error_files=$error_files."term error at: $test->[0] $test->[$i]\n";
 				print "term error at: $test->[0] $test->[$i]\n";
-            }
-            if($timings) {
-                log_one_line_of_timings ($test->[0],$output);
-            }
-        }
+			}
+      if($timings) {
+        log_one_line_of_timings ($test->[0],$output);
+      }
+      sum_of_timings ($output);
     }
+  }
 }
 
 
