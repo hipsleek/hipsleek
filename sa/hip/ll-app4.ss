@@ -57,13 +57,13 @@ void append(ref node x, node y)
  H3(x_605) ::= x_605::node<val_36_560,y> * HP_606(y)&true]
   */
 {
-	if (x.next == null){
+    node t = x.next;
+	if (t == null){
 	      x.next = y;	
 }
 	else {
-	      node r=x.next;
-	      append(r, y);
-              x.next=r;
+	      append(t, y);
+              x.next=t;
 }
 }
 

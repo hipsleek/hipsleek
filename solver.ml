@@ -2850,15 +2850,17 @@ and heap_entail_struc_init_x (prog : prog_decl) (is_folding : bool)  (has_post: 
             let (ans,prf) = heap_entail_agressive_prunning entail_fct (prune_list_ctx prog) (fun (c,_)-> not (isFailCtx c)) cl_new in
             (ans,prf)
 
+(* this is called mainly by sleek, and in hip for barrier entailment *)
 and heap_entail_struc_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) = 
   (*print just length of residue ctx list*)
   let length_ctx ctx = match ctx with
     | CF.FailCtx _ -> 0
     | CF.SuccCtx ctx0 -> List.length ctx0 in
   let pr = Cprinter.string_of_list_context in
+  let pr2 = Cprinter.string_of_struc_formula in
   (* let pr_out (ctx_lst, pf) = string_of_int (length_ctx ctx_lst) in  *)
   let pr_out (ctx_lst, pf) = Cprinter.string_of_list_context ctx_lst in
-  Debug.no_1 "heap_entail_struc_init" pr pr_out (fun _ -> heap_entail_struc_init_x prog is_folding has_post cl conseq pos pid) cl
+  Debug.no_2 "heap_entail_struc_init" pr pr2 pr_out (fun _ _ -> heap_entail_struc_init_x prog is_folding has_post cl conseq pos pid) cl conseq
 
 (* check entailment:                                          *)
 (* each entailment should produce one proof, be it failure or *)
@@ -2882,6 +2884,7 @@ and heap_entail_struc (prog : prog_decl) (is_folding : bool)  (has_post: bool)(c
 and heap_entail_one_context_struc p i1 hp cl cs (tid: CP.spec_var option) pos pid =
   Gen.Profiling.do_3 "heap_entail_one_context_struc" heap_entail_one_context_struc_x(*_debug*) p i1 hp cl cs tid pos pid
 
+(* this is not called by hip? *)
 and heap_entail_one_context_struc_nth n p i1 hp cl cs (tid: CP.spec_var option) pos pid =
   let str="heap_entail_one_context_struc" in
   Gen.Profiling.do_3_num n str (heap_entail_one_context_struc_debug p i1 hp cl) cs tid pos pid
@@ -2985,13 +2988,17 @@ and count_octx x = match x with
   | _ -> 1
 
 and heap_entail_conjunct_lhs_struc p is_folding  has_post ctx conseq (tid:CP.spec_var option) pos pid : (list_context * proof) = 
+  let slk_entail ctx conseq = heap_entail_conjunct_lhs_struc_x p is_folding  has_post ctx conseq tid pos pid in
+  (* WN : to log sleek commands here *)
   let pr x = (match x with Ctx _ -> "Ctx " | OCtx _ -> "OCtx ") 
     ^ (Cprinter.string_of_context_short x) in
-  let pr2 = pr_opt Cprinter.string_of_spec_var in
-  Debug.no_3 "heap_entail_conjunct_lhs_struc"
-      pr (Cprinter.string_of_struc_formula) pr2
+  (* let pr2 = pr_opt Cprinter.string_of_spec_var in *)
+  Debug.no_2 "heap_entail_conjunct_lhs_struc"
+      pr (Cprinter.string_of_struc_formula) 
+      (* pr2 *)
       (fun (a,b) -> Cprinter.string_of_list_context a)
-      (fun ctx conseq tid -> heap_entail_conjunct_lhs_struc_x p is_folding  has_post ctx conseq tid pos pid) ctx conseq tid
+      (* (fun ctx conseq tid -> heap_entail_conjunct_lhs_struc_x p is_folding  has_post ctx conseq tid pos pid) ctx conseq tid *)
+      slk_entail ctx conseq
 
 and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (has_post:bool) (ctx_00 : context) 
       (conseq : struc_formula) (tid: CP.spec_var option) pos pid : (list_context * proof) =
@@ -8638,6 +8645,7 @@ let heap_entail_one_context_new (prog : prog_decl) (is_folding : bool)
     (conseq : formula) (tid: CP.spec_var option) pos (b2:control_path_id): (list_context * proof) =
       heap_entail_one_context 11 prog is_folding  ctx conseq tid pos
 
+
 let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_partial_context)
         (conseq:struc_formula) (tid: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) = 
   let _ = set_entail_pos pos in
@@ -8653,6 +8661,15 @@ let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding :
   Gen.Profiling.pop_time "entail_prune";
   heap_entail_prefix_init prog is_folding  has_post cl conseq tid pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,(heap_entail_one_context_struc_nth "1"))
 
+(* this isn't called by hip at all *)
+let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_partial_context)
+        (conseq:struc_formula) (tid: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) = 
+  let pr1 = Cprinter.string_of_list_partial_context in
+  let pr2 = Cprinter.string_of_struc_formula in
+  let pr3 (l,_)  = pr1 l in
+  Debug.no_2 "heap_entail_struc_list_partial_context_init" pr1 pr2 pr3
+      (fun _ _ -> heap_entail_struc_list_partial_context_init prog is_folding has_post cl conseq tid pos pid) cl conseq
+
 let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)
 	(cl : list_failesc_context) (conseq:struc_formula) (tid: CP.spec_var option)pos (pid:control_path_id) : (list_failesc_context * proof) = 
   let _ = set_entail_pos pos in
@@ -8666,11 +8683,13 @@ let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding :
 
 let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)
 	(cl : list_failesc_context) (conseq:struc_formula) (tid: CP.spec_var option) pos (pid:control_path_id) : (list_failesc_context * proof) =
+  let slk_entail cl conseq = heap_entail_struc_list_failesc_context_init prog is_folding has_post cl conseq tid pos pid
+  in
   Debug.no_2 "heap_entail_struc_list_failesc_context_init"
 	Cprinter.string_of_list_failesc_context
 	Cprinter.string_of_struc_formula
 	(fun (cl, _) -> Cprinter.string_of_list_failesc_context cl)
-	(fun _ _ -> heap_entail_struc_list_failesc_context_init prog is_folding has_post cl conseq tid pos pid) cl conseq
+	slk_entail cl conseq
 
 let heap_entail_list_partial_context_init_x (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
         (conseq:formula) (tid: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) = 
@@ -8696,7 +8715,7 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
         (conseq:formula) (tid: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) = 
   (*let pr x = (string_of_int(List.length x))^"length" in*)
   let pr2 = Cprinter.string_of_list_partial_context in 
-  Debug.no_2_loop "heap_entail_list_partial_context_init" pr2 (Cprinter.string_of_formula) 
+  Debug.no_2 "heap_entail_list_partial_context_init" pr2 (Cprinter.string_of_formula) 
       (fun (x,_) -> pr2 x)
       (fun _ _ -> heap_entail_list_partial_context_init_x prog is_folding  cl conseq tid pos pid) cl conseq
 
