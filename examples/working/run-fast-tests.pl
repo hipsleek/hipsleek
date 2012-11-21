@@ -495,7 +495,11 @@ $output_file = "log";
                                   "main","SUCCESS"],
 		        ["global-mutual-rec.ss",3, "", "decrease1","SUCCESS",
                                           "decrease2","SUCCESS",
-										  "main","SUCCESS"]
+										  "main","SUCCESS"],
+				["classic/classic1.ss",2, "", "foo1", "SUCCESS", "foo2", "SUCCESS"],
+				["classic/classic1.ss",2, "--classic", "foo1", "FAIL", "foo2", "SUCCESS"],
+				["classic/classic2.ss",2, "", "foo1", "FAIL", "foo2", "SUCCESS"],
+				["classic/classic3.ss",2, "", "foo1", "SUCCESS", "foo2", "SUCCESS"],
 				],
 	"hip_vperm" =>[
 				["vperm/alt_threading.ss",2,  "--ann-vp", 
@@ -962,7 +966,11 @@ $output_file = "log";
                       ["imm/imm2.slk", " --imm ", "", "Fail.Valid.Fail.Valid.Fail."],
                       ["imm/imm3.slk", " --imm ", "", "Fail.Fail.Valid.Valid.Valid.Valid."],
                       ["imm/imm4.slk", " --imm ", "", "Valid.Fail."],
-                      ["imm/imm-hard.slk", " --imm --eps", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
+                      ["imm/imm-hard.slk", " --imm --eps", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
+                      ["classic/classic1.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
+                      ["classic/classic1.slk", " --classic", "", "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
+                      ["classic/classic2.slk", "", "", "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
+                      ["classic/classic3.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."]],
     "sleek_vperm" => [
                       ["vperm/vperm.slk"," --ann-vp ", "", "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
                       ["vperm/vperm2.slk"," --ann-vp ", "", "Valid.Valid.Fail."]],
@@ -1211,4 +1219,3 @@ sub sleek_process_file  {
 		}
 	}
 }
-

@@ -315,7 +315,7 @@ let common_arguments = [
   ("--inv", Arg.Set Globals.do_infer_inv, "Enable invariant inference");
 
   (* use classical reasoning in separation logic *)
-  ("--classic", Arg.Set Globals.do_classic_reasoning, "Use classical reasoning in separation logic");
+  ("--classic", Arg.Set Globals.opt_classic, "Use classical reasoning in separation logic");
   
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
   ("--en-lemma-s", Arg.Set Globals.enable_split_lemma_gen, "Enable automatic generation of splitting lemmas");

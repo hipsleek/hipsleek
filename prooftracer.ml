@@ -474,8 +474,13 @@ let push_assert_assume ae = match ae with
 		Cast.exp_assert_asserted_formula = fa;
 		Cast.exp_assert_assumed_formula = fas;
 		Cast.exp_assert_path_id = pid;
+    Cast.exp_assert_type = atype;
 		Cast.exp_assert_pos = pos } -> let line_loc = "<a href=\"#L" ^ (line_number_of_pos pos) ^ "\">" ^ "line " ^ (line_number_of_pos pos) ^ "</a>" in
-		html_output := !html_output ^ "<li class=\"Collapsed assert\">\nAssertion at " ^ line_loc ^ " holds\n<ul>"
+    let assert_str = match atype with
+      | None -> "Assertion"
+      | Some true -> "Assertion_exact"
+      | Some false -> "Assertion_inexact" in
+		html_output := !html_output ^ "<li class=\"Collapsed assert\">\n" ^ assert_str ^ " at " ^ line_loc ^ " holds\n<ul>"
 	| _ -> failwith "push_assert_assume: unexpected expr"
 
 let push_post () = html_output := 
@@ -610,9 +615,14 @@ let add_assert_assume ae = match ae with
 		Cast.exp_assert_asserted_formula = fa;
 		Cast.exp_assert_assumed_formula = fas;
 		Cast.exp_assert_path_id = pid;
+    Cast.exp_assert_type = atype;
 		Cast.exp_assert_pos = pos } -> 
-	let lineloc = line_number_of_pos pos in
-		jsonproof := !jsonproof ^ "], type : \"assert\", line : " ^ (strquote lineloc) ^ "},\n"
+      let lineloc = line_number_of_pos pos in
+      let assert_str = match atype with
+        | None -> "Assertion"
+        | Some true -> "Assertion_exact"
+        | Some false -> "Assertion_inexact" in
+		jsonproof := !jsonproof ^ "], type : \"" ^ assert_str ^ "\", line : " ^ (strquote lineloc) ^ "},\n"
 	| _ -> failwith "push_assert_assume: unexpected expr"
 
 let add_post () = 

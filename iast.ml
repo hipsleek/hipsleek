@@ -225,6 +225,7 @@ and exp_aalloc = { exp_aalloc_etype_name : ident; (* Name of the base element *)
 and exp_assert = { exp_assert_asserted_formula : (F.struc_formula*bool) option;
 		   exp_assert_assumed_formula : F.formula option;
 		   exp_assert_path_id : formula_label;
+       exp_assert_type : assert_type;
 		   exp_assert_pos : loc }
 
 and exp_assign = { exp_assign_op : assign_op;
@@ -671,10 +672,11 @@ let mkProc id n dd c ot ags r ss ds pos bd=
       proc_file = !input_file_name;
 		  proc_body = bd }	
 
-let mkAssert asrtf assmf pid pos =
+let mkAssert asrtf assmf pid atype pos =
       Assert { exp_assert_asserted_formula = asrtf;
                exp_assert_assumed_formula = assmf;
                exp_assert_path_id = pid;
+               exp_assert_type = atype;
                exp_assert_pos = pos }
       
 let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b) (comb_f: exp -> 'a list -> 'a) : (exp * 'a) =
@@ -1039,7 +1041,7 @@ and look_up_all_fields_x (prog : prog_decl) (c : data_decl) =
 *)
 
 and collect_struc (f:F.struc_formula):ident list =  match f with
-  | F.EAssume (b,_) -> collect_formula b
+  | F.EAssume (b,_,_) -> collect_formula b
   | F.ECase b-> Gen.fold_l_snd  collect_struc b.F.formula_case_branches
   | F.EBase b-> (collect_formula b.F.formula_struc_base)@ (Gen.fold_opt collect_struc b.F.formula_struc_continuation)
   | F.EInfer b -> collect_struc b.F.formula_inf_continuation
@@ -1165,7 +1167,7 @@ and data_name_of_view_x (view_decls : view_decl list) (f0 : F.struc_formula) : i
 	  else "" in
   
   let rec data_name_in_struc (f:F.struc_formula):ident = match f with
-	| F.EAssume (b,_) -> data_name_of_view1 view_decls b
+	| F.EAssume (b,_,_) -> data_name_of_view1 view_decls b
 	| F.ECase b-> handle_list_res (Gen.fold_l_snd (fun c->[data_name_in_struc c]) b.F.formula_case_branches)
 	| F.EBase b-> handle_list_res (data_name_of_view1 view_decls b.F.formula_struc_base ::(Gen.fold_opt (fun c-> [data_name_of_view_x view_decls c]) b.F.formula_struc_continuation))
 	| F.EInfer b -> data_name_in_struc b.F.formula_inf_continuation
@@ -1911,7 +1913,7 @@ let add_bar_inits prog =
 			let pre = F.formula_of_heap_with_flow pre_hn n_flow no_pos in 
 			let post_hn = 
 				F.mkHeapNode ("b",Unprimed) b.barrier_name false (F.ConstAnn(Mutable)) false false false None largs None no_pos in
-			let post =  F.EAssume (F.formula_of_heap_with_flow post_hn n_flow no_pos,fresh_formula_label "") in
+			let post =  F.EAssume (F.formula_of_heap_with_flow post_hn n_flow no_pos,fresh_formula_label "",None) in
 			{ proc_name = "init_"^b.barrier_name;
 			  proc_mingled_name = "";
 			  proc_data_decl = None ;
