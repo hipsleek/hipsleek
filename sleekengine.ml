@@ -560,20 +560,12 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: e
   res
   
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: entail_type) =
-  if !sleek_timeout_limit > 0. then
-    begin
-    let entail_check _ = run_entail_check iante0 iconseq0 etype in
-    let fail_with_timeout () =
-      print_endline ("SLEEK Timeout."); flush stdout;
-      let fctx = CF.mkFailCtx_in (CF.Trivial_Reason 
-        (CF.mk_failure_may "timeout" Globals.timeout_error)) in
-      (false, fctx)
-    in
-    let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_silent entail_check ()
-      !sleek_timeout_limit fail_with_timeout in 
-    res 
-    end
-  else run_entail_check iante0 iconseq0 etype
+  let with_timeout = 
+    let fctx = CF.mkFailCtx_in (CF.Trivial_Reason
+      (CF.mk_failure_may "timeout" Globals.timeout_error)) in
+    (false, fctx) in
+  Procutils.PrvComms.maybe_raise_and_catch_timeout_sleek
+    (run_entail_check iante0 iconseq0) etype with_timeout
 
 let run_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype: entail_type) =
   let pr = string_of_meta_formula in
