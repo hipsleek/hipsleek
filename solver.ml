@@ -28,8 +28,6 @@ module Err = Error
 module TP = Tpdispatcher
 
 
-
-
 (** An Hoa : switch to do unfolding on duplicated pointers **)
 let unfold_duplicated_pointers = ref true
 
@@ -3240,19 +3238,14 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
       let ctx =
     	if isStrictConstTrue conseq || isTrivTerm conseq || trivFlowDischarge ctx conseq then ctx
     	else
-    	  let ctx = 
-            if !Globals.delay_proving_sat 
-            then  ctx 
-            else (let ctx = elim_unsat_ctx prog (ref 1) ctx in
-    	    set_unsat_flag ctx true) 
-          in ctx
+          if !Globals.delay_proving_sat 
+          then  ctx 
+          else (let ctx = elim_unsat_ctx prog (ref 1) ctx in set_unsat_flag ctx true) 
       in
       if isAnyFalseCtx ctx then
         (SuccCtx [ctx], UnsatAnte)
       else
         heap_entail_after_sat prog is_folding ctx conseq pos ([])	
-
-
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
       (ss:CF.steps) : (list_context * proof) =
