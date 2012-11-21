@@ -1239,9 +1239,10 @@ sub sleek_process_file  {
 				$error_count++;
 				$error_files = $error_files . " " . $test->[0];
 			}
-            if($timings) {
-               # log_one_line_of_timings ($test->[0],$output);
-            }
+			if($timings) {
+				# log_one_line_of_timings ($test->[0],$output);
+			}
+			sum_of_timings ($output);
 		}
 	}
 }
