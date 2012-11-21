@@ -6,9 +6,9 @@ HeapPred HP_643(node a, node b).
 
 append:SUCCESS[
 ass [H1,G2][]:{
-  H1a(y) --> H1a(y);
+ G2(v_node_43_573,y) * H1a(y)&v_node_43_573!=null --> H1a(y);
  x::node<_,p> * G2(p,y) * H1a(y)& p!=null --> G2(x,y) * H1a(y);
- v_node_43_613=null --> H1a(y);
+ H1a(y) &v_node_43_567=null --> H1a(y);
  H1a(y) * HP_596(p) * x::node<_,y>&p=null --> G2(x,y) * H1a(y);
  H1a(y) --> H1a(y);
  HP_596(p)& p!=null --> H1(p);
