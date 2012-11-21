@@ -1255,7 +1255,7 @@ let simplify (f : CP.formula) : CP.formula =
 						in CP.set_il_formula_with_dept_list r rel_vars_lst
 					else r
 				in 	
-			let _= add_proof_log simpl_no simpl_no (string_of_prover !tp) (SIMPLIFY f) (tstop -. tstart) (FORMULA res) in
+			let _= add_proof_log !cache_status simpl_no simpl_no (string_of_prover !tp) (SIMPLIFY f) (tstop -. tstart) (FORMULA res) in
 			 res
       with | _ -> f)
 
@@ -1648,8 +1648,8 @@ let imply_cache fn_imply ante conseq : bool  =
 
 let tp_imply ante conseq imp_no timeout process =
   (* TODO WN : can below remove duplicate constraints? *)
-  let ante = CP.elim_idents ante in
-  let conseq = CP.elim_idents conseq in
+  (* let ante = CP.elim_idents ante in *)
+  (* let conseq = CP.elim_idents conseq in *)
   let fn_imply a c = tp_imply_perm a c imp_no timeout process in
   if !Globals.no_cache_formula then
     fn_imply ante conseq
@@ -1814,7 +1814,7 @@ let is_sat (f : CP.formula) (old_sat_no : string): bool =
     (* let f = CP.drop_rel_formula f in *)
 	let res= sat_label_filter (fun c-> tp_is_sat c sat_no) f in
 	let tstop = Gen.Profiling.get_time () in
-	let _= add_proof_log old_sat_no sat_no (string_of_prover !tp) (SAT f) (tstop -. tstart) (BOOL res) in
+	let _= add_proof_log !cache_status old_sat_no sat_no (string_of_prover !tp) (SAT f) (tstop -. tstart) (BOOL res) in
 	res
 ;;
 
@@ -1898,7 +1898,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
 	let tstop = Gen.Profiling.get_time () in
     (* let _ = print_string ("length of pairs: "^(string_of_int (List.length !ante_inner))) in *)
     let ante0 = CP.join_conjunctions !ante_inner in
-	let _= add_proof_log old_imp_no imp_no (string_of_prover !tp) (IMPLY (ante0, conseq0)) (tstop -. tstart) (BOOL (match final_res with | r,_,_ -> r)) in
+	let _= add_proof_log !cache_status old_imp_no imp_no (string_of_prover !tp) (IMPLY (ante0, conseq0)) (tstop -. tstart) (BOOL (match final_res with | r,_,_ -> r)) in
 	final_res
 ;;
 
