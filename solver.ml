@@ -3235,36 +3235,22 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
     if isAnyFalseCtx ctx then (* check this first so that false => false is true (with false residual) *)
       (SuccCtx [ctx], UnsatAnte)
     else if (not !Globals.do_classic_frame_rule) && (isStrictConstTrue conseq) then (SuccCtx [ctx], TrueConseq)
-    else if	
-      isStrictConstTrue conseq || isTrivTerm conseq || trivFlowDischarge ctx conseq then (SuccCtx [ctx], TrueConseq)
-    else
+    else 
       (* UNSAT check *)
-      let ctx = if !Globals.delay_proving_sat then  ctx 
-      else
-	let ctx = elim_unsat_ctx prog (ref 1) ctx in
-	let ctx = set_unsat_flag ctx true in 
-	ctx in
+      let ctx =
+    	if isStrictConstTrue conseq || isTrivTerm conseq || trivFlowDischarge ctx conseq then ctx
+    	else
+    	  let ctx = 
+            if !Globals.delay_proving_sat 
+            then  ctx 
+            else (let ctx = elim_unsat_ctx prog (ref 1) ctx in
+    	    set_unsat_flag ctx true) 
+          in ctx
+      in
       if isAnyFalseCtx ctx then
         (SuccCtx [ctx], UnsatAnte)
       else
         heap_entail_after_sat prog is_folding ctx conseq pos ([])	
-
-(* Trung's code in default for reference *)
-(* if isAnyFalseCtx ctx then (\* check this first so that false => false is true (with false residual) *\) *)
-(*   (SuccCtx [ctx], UnsatAnte) *)
-(* else if (not !Globals.do_classic_frame_rule) && (isStrictConstTrue conseq) then (SuccCtx [ctx], TrueConseq) *)
-(* else *)
-(*   (\* UNSAT check *\) *)
-(*       let ctx =  *)
-(*     	if isStrictConstTrue conseq || isTrivTerm conseq || trivFlowDischarge ctx conseq then ctx *)
-(*     	else   *)
-(*     		let ctx = elim_unsat_ctx prog (ref 1) ctx in *)
-(*     		set_unsat_flag ctx true in  *)
-(*   if isAnyFalseCtx ctx then *)
-(*     (SuccCtx [ctx], UnsatAnte) *)
-(*   else *)
-(*     heap_entail_after_sat prog is_folding ctx conseq pos ([])	 *)
-
 
 
 
