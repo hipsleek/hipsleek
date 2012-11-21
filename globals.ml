@@ -514,7 +514,7 @@ let b_datan = "barrier"
 let verify_callees = ref false
 
 let elim_unsat = ref false
-let smart_xpure = ref false
+let smart_xpure = ref true
 let super_smart_xpure = ref false
   (* this flag is dynamically set depending on
      smart_xpure and xpure0!=xpure1 *)
@@ -647,7 +647,8 @@ let memo_verbosity = ref 2
 
 let profile_threshold = 0.5 
 
-let no_cache_formula = ref true
+let no_cache_formula = ref false
+let simplify_imply = ref true
 
 let enable_incremental_proving = ref false
 

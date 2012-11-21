@@ -10,7 +10,7 @@ let set_prover_original_output = ref (fun _ -> ())
 
 let omega_call_count: int ref = ref 0
 let is_omega_running = ref false
-let in_timeout = ref 15.0 (* default timeout is 15 seconds *)
+let in_timeout = ref 5.0 (* default timeout is 15 seconds *)
 
 (***********)
 let test_number = ref 0

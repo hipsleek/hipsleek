@@ -1167,11 +1167,16 @@ and is_object_type (t : typ) = match t with
   | Named _ -> true
   | _ -> false
 
-and should_simplify (f : formula) = match f with
-  | Or (f1,f2,_,_)-> should_simplify f1 || should_simplify f2
-  | AndList b -> exists_l_snd should_simplify b
-  | Exists _ -> true
-  | _ -> false
+(* WN : is this simplify to help other provers? *)
+and should_simplify (f : formula) =
+  if !Globals.simplify_imply 
+  then
+    match f with
+      | Or (f1,f2,_,_)-> should_simplify f1 || should_simplify f2
+      | AndList b -> exists_l_snd should_simplify b
+      | Exists _ -> true
+      | _ -> false
+  else false
         (* | Exists (_, Exists (_, (Exists _),_,_), _,_) -> true *)
 
 and is_ineq_linking_bform (b : b_formula) : bool =

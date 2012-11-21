@@ -1071,7 +1071,7 @@ let is_sat f sat_no = Debug.no_2_loop "is_sat" (!print_pure) (fun x->x) string_o
  *)
 let simplify (f: CP.formula) : CP.formula = 
   (*let _ = print_endline "locle: simplify" in*)
-  (* try (Omega.simplify f) with | _ -> f *)
+  try (Omega.simplify f) with | _ -> 
 	f
 
 
@@ -1080,6 +1080,10 @@ let simplify (pe : CP.formula) : CP.formula =
   with 
     | None -> pe
     | Some f -> f
+
+let simplify (pe : CP.formula) : CP.formula =
+  let pr = !CP.print_formula in
+  Debug.no_1 "simplify" pr pr simplify pe 
 
 let hull (f: CP.formula) : CP.formula = f
 let pairwisecheck (f: CP.formula): CP.formula = f

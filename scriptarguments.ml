@@ -143,7 +143,7 @@ let common_arguments = [
     "Turn on unsatisfiable formulae elimination during type-checking");
 	("-nxpure", Arg.Set_int Globals.n_xpure,
     "Number of unfolding using XPure");
-	("--en-smart-xpure", Arg.Set Globals.smart_xpure,
+	("--dis-smart-xpure", Arg.Clear Globals.smart_xpure,
     "Smart xpure with 0 then 1; otherwise just 1 ; not handled by infer yet");
 	("--en-smart-memo", Arg.Set Globals.smart_memo,
     "Smart memo with no_complex; if fail try complex formula");
@@ -200,8 +200,10 @@ let common_arguments = [
 	"print input representation");
 	(* ("--dis-cache", Arg.Set Globals.no_cache_formula, *)
     (* "Do not cache result of satisfiability and validity checking"); *)
-	("--en-cache", Arg.Clear Globals.no_cache_formula,
+	("--dis-cache", Arg.Set Globals.no_cache_formula,
     "Cache result of satisfiability and validity checking");
+	("--dis-simplify-imply", Arg.Clear Globals.simplify_imply,
+    "Simplification of existential for imply calls");
 	("--web", Arg.String (fun s -> (Tpdispatcher.Netprover.set_use_socket_for_web s); Tpdispatcher.webserver := true; Typechecker.webserver := true; Paralib1v2.webs := true; Paralib1.webs := true) ,  
 	"<host:port>: use external web service via socket");
 	("-para", Arg.Int Typechecker.parallelize, 
