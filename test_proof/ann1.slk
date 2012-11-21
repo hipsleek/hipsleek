@@ -1,0 +1,84 @@
+
+//checkentail x>3 & x!=y & y>3 |- x>2. //works well
+
+//checkentail x>3 & x!=y & y>3 |- x>y. // works well
+
+//checkentail x>3 & x!=y & x=y |- x>y. // no SAT calls
+
+//checkentail x>3 & x!=y & x=r |- x>y. // no SAT calls
+
+//checkentail x!=y |- x>y.  // no SAT call
+
+//checkentail x!=y & x=4 & y=4 |- false.  // no SAT call
+
+checkentail x!=y & x>y |- x>=0.
+
+
+//checkentail x!=y & x>=0 & y=0 |- x>=0.
+
+//checkentail x!=y & x>=0 & y=0 |- x>=y.
+
+//checkentail x>=4 & x!=y & y=4 |- x>4. // incomplete for ann-ineq
+/*
+
+x!=y & x>=y   --> x>y
+x!=y & x>y    --> redundant x!=y
+x!=y & x=0    --> y!=0
+x!=3 & x=0    --> redundant x!=3
+
+// 
+
+ [x!=y]{x,y} & [x=3]{x=} & [y=3]{y=}
+ // unsat chooses 3 groups
+
+ [x!=y]{x,y} & [x=3]{x=} & [y=r,..]{y=3} |-
+ // imply chooses three groups for r>5
+ // add x!=y into those slice with v=.. permanently
+
+x!=y & x>=y |- x>y
+
+x!=y & x>=0 & y=0 |- x>=y
+
+
+--------------
+Proving Infor spec:None loc: NONE kind::SLEEK_ENT(1) ...
+Prover: OMEGA CALCULATOR
+Type: Sat:  4<=x
+Result: true
+
+--------------
+Proving Infor spec:None loc: NONE kind::SLEEK_ENT(1) ...
+Prover: OMEGA CALCULATOR
+Type: Sat:  y=4
+Result: true
+
+--------------
+Proving Infor spec:None loc: NONE kind::SLEEK_ENT(1) 
+Trace::[]
+
+Prover: OMEGA CALCULATOR
+Type: Imply: ante: 4<=x
+	     conseq:  5<=x
+Result: false
+
+*/
+
+/*
+!!!:0: 0: SAT #1
+!!!:0: 0:  x!=x
+is_sat_memo_sub_no_ineq_slicing_complete@4@3@2@1
+is_sat_memo_sub_no_ineq_slicing_complete inp1 : (([x!=x]))
+is_sat_memo_sub_no_ineq_slicing_complete@4 EXIT out :false
+*/
+//checkentail x!=x |- x>y.  // SAT call present!
+
+//checkentail x!=y & y=x |- x>y.  // no SAT call!
+
+/*
+!!!:0: 0: SAT #1
+!!!:0: 0:  r=y
+is_sat_memo_sub_no_ineq_slicing_complete@4@3@2@1
+is_sat_memo_sub_no_ineq_slicing_complete inp1 : (([x!=y][r=y]))
+is_sat_memo_sub_no_ineq_slicing_complete@4 EXIT out :true
+*/
+//checkentail x!=y & y=r |- x>y.  // only SAT r=y. How about x!=y?

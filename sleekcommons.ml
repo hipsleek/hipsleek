@@ -42,7 +42,7 @@ type command =
   | AxiomDef of I.axiom_decl (* [4/10/2011] An Hoa *)
   | LemmaDef of I.coercion_decl
   | LetDef of (ident * meta_formula)
-  | EntailCheck of (meta_formula * meta_formula)
+  | EntailCheck of (meta_formula * meta_formula * entail_type)
   | EqCheck of (ident list * meta_formula * meta_formula)
   | BarrierCheck of I.barrier_decl
   | Infer of (ident list * meta_formula * meta_formula)
@@ -79,7 +79,7 @@ let var_tab : var_table_t = H.create 10240
 
 let string_of_command c = match c with
   | DataDef _ -> "DataDef"
-  | PredDef _ -> "PredDef" 
+  | PredDef i -> "PredDef "^(Iprinter.string_of_view_decl i)
   | FuncDef  _ -> "FuncDef"  
   | RelDef  _ -> "RelDef"  
   | HpDef  _ -> "HpDef"  

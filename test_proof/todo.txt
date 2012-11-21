@@ -1,0 +1,62 @@
+Cristian:
+(i)  investigate performance bottleneck : Cristian
+     why is Hip overhead lower in CS?
+     why is Hip overhead lower in AS?
+     // shouldn't it be higher with increased slicing cost?
+
+Chanh:
+(ii) Why is cache hit rate higher in NS compared
+     to CS? Can check if cache HR between Omega and Z3
+     are consistent?
+
+(iii) Can we have a better proof caching?
+Two caches (i) small constraint?(ii) medium-sized constraints?
+Can we have a better normalization?
+How do we compute size of a constraint?
+
+(iv) 
+regarding procedure below:
+ let is_sat_memo_sub_no_ineq_slicing_complete (mem : memo_pure) 
+    with_dupl with_inv t_is_sat : bool =
+I think we need to first re-group the slices as partitions
+  [s1,..,sn] --> [p1,..,pm]
+(i) use a strategy to convert slices to partition
+(ii) perform unsat only for those partition 
+     that has last changed
+(iii) mark all slices of mcpure as modified
+The main novelty is how to implement (i), so that
+it is as complete and minimal as possible.
+
+
+Investigate annotated slicing properly!
+=======================================
+Assuming all equality known:
+  e.g. x>=y & x<=y --> x=y
+Can we have a complete slicing procedure for inequality annotation?
+
+// (1) equality is important
+checkentail x!=y  & x=b & b=y |- false.
+
+// (2) x!=y is important
+checkentail x!=y & x>=y |-x>y.
+
+// (3) x!=y is important
+checkentail x!=y & x>=y & y<=x |- false.
+
+// (4) equality is important
+checkentail x!=y  & x=3 & y=4 |- false. 
+
+// (5) x!=y is important
+checkentail x!=y & x>=3 & y=3 |-x>3.
+
+// (6) x!=y is redundant
+checkentail x!=y & x<3 & y>=3 |-false.
+
+// (7) equality is important
+checkentail x!=3 & x=3  |-false.
+
+// (8) x!=3 is required
+checkentail x!=3 & x>=3  |- x>3.
+
+// (10) x!=3 is redundant
+checkentail x!=3 & x>3   |- false.

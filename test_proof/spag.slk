@@ -1,0 +1,19 @@
+data node { int val ; node next }.
+
+data cell{
+  int val;
+}.
+
+pred lseg<p> == self = p
+or self::node<_,r> * r::lseg<p> & self!=p inv true.
+
+checkentail x2::lseg<x1> * x2::lseg<x10> * x2::lseg<x5> * x5::lseg<x7> & x2 != x7 & x1 != x10 & x1 != x6 & x4 != x9 |- false .
+
+//checkentail s2::lseg<s1> * s2::lseg<s10> * s2::lseg<s5> * s5::lseg<s7> & s2 != s5 & s1 != s10 & s1 != s6 & s4 != s9 |- false .
+
+//checkentail x2::lseg<x1> & x2!=x1 |- false.
+
+checkentail x=0 & x=y or 0=x & y=x |- false.
+checkentail x=0 & x=y or x=0 & y=x |- false.
+
+
