@@ -43,7 +43,7 @@ else
 if($prover){
 	%provers = ('cvcl' => 'cvcl', 'cvc3' => 'cvc3', 'oc' => 'oc','oc-2.1.6' => 'oc-2.1.6', 
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
-		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm', 'z3' => 'z3', 'z3-2.19' => 'z3-2.19', 'zm' => 'zm');
+		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm', 'z3' => 'z3', 'z3-2.19' => 'z3-2.19', 'zm' => 'zm', 'log' => 'log');
 	if (!exists($provers{$prover})){
         print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|sleek|hip_vperm|sleek_vperm [-flags \"arguments to be transmited to hip/sleek \"]\n";
 		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm', 'prm', 'z3' or 'zm'\n";
@@ -95,7 +95,7 @@ if($timings){
     if(-e "$timings_logfile") {#check for file existance
         $book = $parser->Parse("$timings_logfile") #open file for appending
             or die "File $timings_logfile was not found";
-        my $count = $book->{SheetCount};#total number of worksheets of teh workbook
+        my $count = $book->{SheetCount};#total number of worksheets of the workbook
         my $provers_sheet_no = 0;
         for(my $i=0; $i < $count ; $i++){#iterate through all the worksheets 
             if ($book->{Worksheet}[$i]->{Name} =~ "$prover") {#check if a profiling worksheet of the selected prover already exists
@@ -146,8 +146,13 @@ if($timings){
     $programCol = 1;
     $mainCol = 2;
     $childCol = 3;
-    $totalCol = 4;
-    $falseContextCol = 5;
+    $cl = $childCol;
+    if("$flags" =~ m/--enable-logging-txt\b/ ){
+     $cl=$childCol+1;
+     $prooflogCol = $cl;	
+    }
+    $totalCol = $cl+1;
+    $falseContextCol = $cl+2;
     my $format = $workbook->add_format();
     $format->set_bold();
     $format->set_align('center');
@@ -156,6 +161,9 @@ if($timings){
     $worksheet->set_column($mainCol,$falseContextCol, 10);
     $worksheet->write($row, $mainCol, "Main", $format);
     $worksheet->write($row, $childCol, "Child", $format);
+    if("$flags" =~ m/--enable-logging-txt\b/ ){
+       $worksheet->write($row, $prooflogCol, "Proof log", $format);
+    }
     $worksheet->write($row, $totalCol, "Total time", $format);
     $worksheet->write($row, $falseContextCol, "No. false ctx", $format);
 
@@ -487,7 +495,11 @@ $output_file = "log";
                                   "main","SUCCESS"],
 		        ["global-mutual-rec.ss",3, "", "decrease1","SUCCESS",
                                           "decrease2","SUCCESS",
-										  "main","SUCCESS"]
+										  "main","SUCCESS"],
+				["classic/classic1.ss",2, "", "foo1", "SUCCESS", "foo2", "SUCCESS"],
+				["classic/classic1.ss",2, "--classic", "foo1", "FAIL", "foo2", "SUCCESS"],
+				["classic/classic2.ss",2, "", "foo1", "FAIL", "foo2", "SUCCESS"],
+				["classic/classic3.ss",2, "", "foo1", "SUCCESS", "foo2", "SUCCESS"],
 				],
 	"hip_vperm" =>[
 				["vperm/alt_threading.ss",2,  "--ann-vp", 
@@ -948,13 +960,17 @@ $output_file = "log";
                       ["infer/infer14.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
                       ["infer/infer15.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
 # TODO : why are spaces so important in " --imm "?
-                      ["ann1.slk", " --imm ", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
+                      ["ann1.slk", " --imm ", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail."],
                       ["imm/imm1.slk", " --imm ", "", "Fail.Valid.Valid.Valid.Valid.Valid."],
                       #["imm/imm2.slk", "--imm", "Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
                       ["imm/imm2.slk", " --imm ", "", "Fail.Valid.Fail.Valid.Fail."],
                       ["imm/imm3.slk", " --imm ", "", "Fail.Fail.Valid.Valid.Valid.Valid."],
                       ["imm/imm4.slk", " --imm ", "", "Valid.Fail."],
-                      ["imm/imm-hard.slk", " --imm --eps", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]],
+                      ["imm/imm-hard.slk", " --imm --eps", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
+                      ["classic/classic1.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
+                      ["classic/classic1.slk", " --classic", "", "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
+                      ["classic/classic2.slk", "", "", "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
+                      ["classic/classic3.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."]],
     "sleek_vperm" => [
                       ["vperm/vperm.slk"," --ann-vp ", "", "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
                       ["vperm/vperm2.slk"," --ann-vp ", "", "Valid.Valid.Fail."]],
@@ -974,12 +990,13 @@ $output_file = "log";
 
     );
 
-if($timings){
+# if($timings){
     $mainSum = 0.0;
     $childSum = 0.0;
     $totalSum = 0.0;
+    $prooflogSum = 0.0;
     $falseContextSum = 0;
-}
+# }
 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");
 sleek_process_file();
@@ -996,6 +1013,12 @@ if($home21){
 	rmtree(["$target_dir"]) or die ("Could not delete folder: $target_dir $!");
 }
 
+printf "Total verification time: %.2f second\n", $totalSum;
+printf "\tTime spent in main process: %.2f second\n", $mainSum;
+printf "\tTime spent in child processes: %.2f second\n", $childSum;
+printf "\tNumber of false contexts: %d\n", $falseContextSum; 
+ 
+
 if($timings){
     #do the last computations and close the timings log worksheet
     #compute the total times*
@@ -1007,6 +1030,9 @@ if($timings){
     $worksheet->write($row, $programCol, "Totals:", $format);
     $worksheet->write($row, $mainCol, "$mainSum", $format);
     $worksheet->write($row, $childCol, "$childSum", $format);
+    if("$flags" =~ m/--enable-logging-txt\b/ ){
+      $worksheet->write($row, $prooflogCol, "$prooflogSum", $format);	
+    }
     $worksheet->write($row, $totalCol, $totalSum, $format);
     $worksheet->write($row, $falseContextCol, $falseContextSum, $format);
     $workbook->close();
@@ -1042,9 +1068,33 @@ sub log_one_line_of_timings{
      $worksheet->write($row, $childCol, $formatted_no, $format);
      $childSum = $childSum + $1;
  }
+ if($outp =~ m/	Time for logging: (.*?) second/){
+     my $formatted_no = sprintf "%.2f", "$1";
+     $worksheet->write($row, $prooflogCol, $formatted_no, $format);
+     $prooflogSum = $prooflogSum + $1;
+ }
  if($outp =~ m/\b(\w+) false contexts/){
      $format->set_num_format('0');
      $worksheet->write($row, $falseContextCol, "$1", $format);
+     $falseContextSum = $falseContextSum + $1;
+ }
+}
+
+sub sum_of_timings {
+ my $outp = $_[0];
+ if($outp =~ m/Total verification time: (.*?) second/){
+     $totalSum = $totalSum + $1;
+ }
+ if($outp =~ m/Time spent in main process: (.*?) second/){
+     $mainSum = $mainSum + $1;
+ }
+ if($outp =~ m/Time spent in child processes: (.*?) second/){
+     $childSum = $childSum + $1;
+ }
+ if($outp =~ m/	Time for logging: (.*?) second/){
+     $prooflogSum = $prooflogSum + $1;
+ }
+ if($outp =~ m/\b(\w+) false contexts/){
      $falseContextSum = $falseContextSum + $1;
  }
 }
@@ -1114,12 +1164,13 @@ sub hip_process_file {
 				$error_count++;
 				$error_files=$error_files."term error at: $test->[0] $test->[$i]\n";
 				print "term error at: $test->[0] $test->[$i]\n";
-            }
-            if($timings) {
-                log_one_line_of_timings ($test->[0],$output);
-            }
-        }
+			}
+      if($timings) {
+        log_one_line_of_timings ($test->[0],$output);
+      }
+      sum_of_timings ($output);
     }
+  }
 }
 
 
@@ -1194,4 +1245,3 @@ sub sleek_process_file  {
 		}
 	}
 }
-

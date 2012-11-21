@@ -256,6 +256,7 @@ and exp_aalloc = { exp_aalloc_etype_name : ident; (* Name of the base element *)
 and exp_assert = { exp_assert_asserted_formula : (F.struc_formula*bool) option;
 		   exp_assert_assumed_formula : F.formula option;
 		   exp_assert_path_id : formula_label;
+       exp_assert_type : assert_type;
 		   exp_assert_pos : loc }
 
 and exp_assign = { exp_assign_op : assign_op;
@@ -704,10 +705,11 @@ let mkProc id n dd c ot ags r ss ds pos bd=
 		  proc_body = bd;
     proc_test_comps = None}	
 
-let mkAssert asrtf assmf pid pos =
+let mkAssert asrtf assmf pid atype pos =
       Assert { exp_assert_asserted_formula = asrtf;
                exp_assert_assumed_formula = assmf;
                exp_assert_path_id = pid;
+               exp_assert_type = atype;
                exp_assert_pos = pos }
       
 let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b) (comb_f: exp -> 'a list -> 'a) : (exp * 'a) =
@@ -955,21 +957,28 @@ let rec look_up_types_containing_field (defs : data_decl list) (field_name : ide
 				else temp
 (* An Hoa : End *)
 
-let rec look_up_data_def pos (defs : data_decl list) (name : ident) = match defs with
-  | d :: rest -> if d.data_name = name then d else look_up_data_def pos rest name
+let rec look_up_data_def_x pos (defs : data_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.data_name = name then d else look_up_data_def_x pos rest name
   | [] -> Err.report_error {Err.error_loc = pos; Err.error_text = "no type declaration named " ^ name ^ " is found"}
 
+and look_up_data_def i pos (defs : data_decl list) (name : ident) 
+      = Debug.no_1_num i "look_up_data_def" pr_id pr_none (look_up_data_def_x pos defs) name 
+
 and look_up_parent_name pos ddefs name =
-  let ddef = look_up_data_def pos ddefs name in
+  let ddef = look_up_data_def 1 pos ddefs name in
   ddef.data_parent_name
 
 and look_up_data_def_raw (defs : data_decl list) (name : ident) = match defs with
   | d :: rest -> if d.data_name = name then d else look_up_data_def_raw rest name
   | [] -> raise Not_found
 
-and look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs with
-  | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
+and look_up_view_def_raw_x (defs : view_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.view_name = name then d else look_up_view_def_raw_x rest name
   | [] -> raise Not_found
+
+and look_up_view_def_raw i (defs : view_decl list) (name : ident) 
+      = let pr = pr_list !print_view_decl in
+      Debug.no_2_num i "look_up_view_def_raw" pr pr_id pr_none (look_up_view_def_raw_x) defs name 
 
 and look_up_func_def_raw (defs : func_decl list) (name : ident) = match defs with
   | d :: rest -> if d.func_name = name then d else look_up_func_def_raw rest name
@@ -1060,7 +1069,7 @@ and look_up_all_fields_x (prog : prog_decl) (c : data_decl) =
   if (String.compare c.data_name "Object") = 0 then
 	[]
   else
-    let parent = (look_up_data_def no_pos prog.prog_data_decls c.data_parent_name) in 
+    let parent = (look_up_data_def 0 no_pos prog.prog_data_decls c.data_parent_name) in 
 	current_fields @ (look_up_all_fields prog parent)
 
 (*
@@ -1069,7 +1078,7 @@ and look_up_all_fields_x (prog : prog_decl) (c : data_decl) =
 *)
 
 and collect_struc (f:F.struc_formula):ident list =  match f with
-  | F.EAssume (b,_) -> collect_formula b
+  | F.EAssume (b,_,_) -> collect_formula b
   | F.ECase b-> Gen.fold_l_snd  collect_struc b.F.formula_case_branches
   | F.EBase b-> (collect_formula b.F.formula_struc_base)@ (Gen.fold_opt collect_struc b.F.formula_struc_continuation)
   | F.EInfer b -> collect_struc b.F.formula_inf_continuation
@@ -1211,7 +1220,7 @@ and data_name_of_view_x (view_decls : view_decl list) (f0 : F.struc_formula) : i
 	  else "" in
   
   let rec data_name_in_struc (f:F.struc_formula):ident = match f with
-	| F.EAssume (b,_) -> data_name_of_view1 view_decls b
+	| F.EAssume (b,_,_) -> data_name_of_view1 view_decls b
 	| F.ECase b-> handle_list_res (Gen.fold_l_snd (fun c->[data_name_in_struc c]) b.F.formula_case_branches)
 	| F.EBase b-> handle_list_res (data_name_of_view1 view_decls b.F.formula_struc_base ::(Gen.fold_opt (fun c-> [data_name_of_view_x view_decls c]) b.F.formula_struc_continuation))
 	| F.EInfer b -> data_name_in_struc b.F.formula_inf_continuation
@@ -1227,7 +1236,7 @@ and data_name_of_view1 (view_decls : view_decl list) (f0 : F.formula) : ident =
 			(* if c is a view, use the view's data name recursively.
 			   Otherwise (c is data) use c *)
 			try
-			  let vdef = look_up_view_def_raw view_decls c in
+			  let vdef = look_up_view_def_raw 1 view_decls c in
 			  if String.length (vdef.view_data_name) > 0 then
 				Some vdef.view_data_name
 			  else
@@ -1962,7 +1971,7 @@ let add_bar_inits prog =
 			let pre = F.formula_of_heap_with_flow pre_hn n_flow no_pos in 
 			let post_hn = 
 				F.mkHeapNode ("b",Unprimed) b.barrier_name false (F.ConstAnn(Mutable)) false false false None largs None no_pos in
-			let post =  F.EAssume (F.formula_of_heap_with_flow post_hn n_flow no_pos,fresh_formula_label "") in
+			let post =  F.EAssume (F.formula_of_heap_with_flow post_hn n_flow no_pos,fresh_formula_label "",None) in
 			{ proc_name = "init_"^b.barrier_name;
 			  proc_mingled_name = "";
 			  proc_data_decl = None ;
