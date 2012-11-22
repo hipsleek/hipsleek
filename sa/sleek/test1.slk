@@ -10,7 +10,7 @@ HeapPred G2(node a, node b).
 infer [x] true |- x::node<2,null>.
 
 
-/*
+
 infer [H1,H2] H2(v5,x) * x::node<_,v5> |- H1(v5) .
 print residue.
 compare residue [v5]: x::node<_,v5>.
@@ -20,7 +20,7 @@ infer [G2] x::node<val_77_580,v_node_77_595> * G2(v_node_77_595,y) & flted_65_57
 print residue.
 compare residue [x,y,G2]: x::node<val_77_580,v_node_77_595>&flted_65_571=null & v_node_77_595!=null & v_node_77_595!=null & !(v_bool_77_558') & a_599=a & y!=null.
 
-*/
+
 
 
 

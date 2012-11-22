@@ -1,40 +1,54 @@
-HeapPred HP_628(node next_56_561', node y_627).
-HeapPred HP_621(node y_619_620, node y_619).
-HeapPred HP_609(node y).
-HeapPred HP_579(node next_56_561', node y).
-HeapPred HP1(node a, node b).
-HeapPred H2(node a, node b).
-HeapPred H1(node a).
-HeapPred G3(node b, node c, node d).
-HeapPred G2(node a, node b).
-HeapPred G1(node a).
+HeapPred HP2(node next).
+HeapPred HP5(node y, node y0).
+HeapPred HP7(node y).
+HeapPred HP0(node x).
+HeapPred HP3(node y).
+HeapPred HP6(node v).
+HeapPred HP(node next, node y).
 
 append:SUCCESS[
 ass [H2,G2][]: {
- HP_579(v_node_56_596,y) * x::node<val_56_585,y>&v_node_56_596=null -->  G2(x,y)&true;
- H2(x,y)&true -->  x::node<val_56_560',next_56_561'> * HP_579(next_56_561',y)&true;
- HP_579(v_node_56_602,y)&v_node_56_602!=null -->  H2(v_node_56_602,y)&true;
- x::node<val_56_587,v_node_56_602> * G2(v_node_56_602,y)&v_node_56_602!=null -->  G2(x,y)&true
+ x::node<val,v> * G2(v,y)&v!=null -->  G2(x,y)&true;
+ HP(v,y)&v!=null -->  H2(v,y)&true;
+ H2(x,y)&true -->  x::node<val,next> * HP(next,y)&true;
+ HP(v,y) * x::node<val,y>&v=null -->  G2(x,y)&true
 }
 hpdefs [H2,G2][]: {
- HP_579(v_node_56_633,y_634)&true -->  
- HP_628(next_56_561',y_634)&y_634=HP_609_y_635
- or emp&v_node_56_633=null & y_634=HP_609_y_635
+ H2(x,y)&true -->  x::node<val,next> * HP2(next)&y=HP4;
+ G2(x,y0)&true -->  x::node<val,y> * HP5(y,y0)&y0=HP4;
+ HP(v,y)&true -->  
+ v::node<val,next2> * next2::node<val,next>&next=null & y=HP4
+ or v::node<val,next2> * next2::node<val,next0> * next0::node<val,next1>&
+    next1=null & y=HP4
+ or v::node<val,next2> * next2::node<val,next3> * next3::node<val,next4>&
+    next4=null & y=HP4
+ or v::node<val,next5>&next5=null & y=HP4
+ or v::node<val,next6> * next6::node<val,next7>&next7=null & y=HP4
+ or v::node<val,next8> * next8::node<val,next9>&next9=null & y=HP4
+ or emp&v=null & y=HP4
  ;
- HP_621(y_619_620,y_619)&true -->  
- emp&y_619_620=y_619
- or y_619_620::node<val_56_585,y_619_624> * HP_621(y_619_624,y_619)&true
+ HP7(y)&true -->  emp&y=HP4;
+ HP6(v)&true -->  
+ v::node<val,next2> * next2::node<val,next>&next=null
+ or v::node<val,next2> * next2::node<val,next0> * next0::node<val,next1>&
+    next1=null
+ or v::node<val,next2> * next2::node<val,next3> * next3::node<val,next4>&
+    next4=null
+ or v::node<val,next5>&next5=null
+ or v::node<val,next6> * next6::node<val,next7>&next7=null
+ or v::node<val,next8> * next8::node<val,next9>&next9=null
+ or emp&v=null
  ;
- HP_628(next_56_561',y_627)&true -->  
- emp&next_56_561'=null
- or next_56_561'::node<val_56_560',next_56_631> * HP_628(next_56_631,y_627)&
-    true
+ HP2(next)&true -->  
+ emp&next=null
+ or next::node<val,next0> * HP2(next0)&true
  ;
- HP_609(y)&true -->  htrue&true;
- G2(x_618,y_619)&true -->  x_618::node<val_56_585,y_619_620> * HP_621(y_619_620,y_619)&
-y_619=HP_609_y_635;
- H2(x_626,y_627)&true -->  x_626::node<val_56_560',next_56_561'> * HP_628(next_56_561',y_627)&
-y_627=HP_609_y_635
+ HP5(y,y1)&true -->  
+ emp&y=y1
+ or y::node<val,y0> * HP5(y0,y1)&true
+ ;
+ HP3(y)&true -->  emp&y=HP4;
+ HP0(x)&true -->  x::node<val,next> * HP2(next)&true
 }
 ]
 

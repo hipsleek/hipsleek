@@ -914,16 +914,7 @@ $output_file = "log";
                ["lemma_check04.ss", 3, " --elp ", "L41", "Valid", "L42", "Fail", "L43","Fail"],
                ["lemma_check06.ss", 6, " --elp ",  "L61", "Valid", "L67", "Valid", "L62", "Valid", "L64", "Fail", "L65", "Fail", "L66", "Fail"]
     ],
-    "sa"=>[["ll-append3.ss",1, " -cp-test ","ll-append3.cp", "append", "SUCCESS.SUCCESS"],
-	   ["ll-append4.ss",1, " -cp-test ","ll-append4.cp", "append", "SUCCESS.SUCCESS"],
-	   ["ll-append5.ss",1, " -cp-test ","ll-append5.cp", "append", "SUCCESS.SUCCESS"],
-		["ll-append6.ss",1, " -cp-test ","ll-append6.cp", "append", "SUCCESS.SUCCESS"],
-		["ll-append7.ss",1, " -cp-test ","ll-append7.cp", "append", "SUCCESS.SUCCESS"],
-		["ll-append8.ss",1, " -cp-test ","ll-append8.cp", "append", "SUCCESS.SUCCESS"],
-		["ll-append9.ss",1, " -cp-test ","ll-append9.cp", "append", "SUCCESS.SUCCESS"],
-		["ll-append10.ss",1, " -cp-test ","ll-append10.cp", "append", "SUCCESS.SUCCESS"]],
-
-    "sa2"=>[["ll-append3.ss"],
+    "sa"=>[["ll-append3.ss"],
 	   ["ll-append4.ss"],
 	   ["ll-append5.ss"],
 		["ll-append6.ss"],
