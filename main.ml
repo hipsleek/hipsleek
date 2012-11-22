@@ -285,7 +285,7 @@ let process_source_full source =
       (*   (\* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in    () *\) *)
       (* end *)
     in
-    let _ = Log.process_sleek_logging () in
+    (* let _ = Log.process_sleek_logging () in *)
     (* print mapping table control path id and loc *)
     (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
     

@@ -259,15 +259,31 @@ let wrap_calculate_time exec_func src_file args =
 (* 		close_out oc;                                                                                  *)
 (* 	else ()                                                                                          *)
 
+let sleek_log_to_text_file (src_files) =
+  if !Globals.sleek_logging_txt then
+    (* let tstartlog = Gen.Profiling.get_time () in *)
+    let oc =
+      (try Unix.mkdir "logs" 0o750 with _ -> ());
+      (* let with_option = if !Globals.en_slc_ps then "eps" else "no_eps" in *)
+      open_out ("logs/sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt")
+    in
+    let str = sleek_log_stk # string_of_reverse_log in
+    let _=fprintf oc "%s" str in
+    (* let tstoplog = Gen.Profiling.get_time () in *)
+    (* let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in  *)
+    close_out oc;
+  else ()
+
 
 let process_proof_logging ()=
-  if !Globals.proof_logging || !Globals.proof_logging_txt then 
+  if !Globals.proof_logging || !Globals.proof_logging_txt || !Globals.sleek_logging_txt then 
       begin
         let tstartlog = Gen.Profiling.get_time () in
         let _= proof_log_to_file () in
         let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
         let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt"  in
         let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
+        let slfn = "logs/sleek_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt" in
         let _= if (!Globals.proof_logging_txt) 
         then 
           begin
@@ -277,6 +293,16 @@ let process_proof_logging ()=
             z3_proofs_list_to_file !Globals.source_files
           end
         else try Sys.remove fname 
+          (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *)
+        with _ -> ()
+        in
+        let _= if (!Globals.sleek_logging_txt) 
+        then 
+          begin
+            Debug.info_pprint ("Logging "^slfn^"\n") no_pos;
+            sleek_log_to_text_file !Globals.source_files;
+          end
+        else try Sys.remove slfn 
           (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *)
         with _ -> ()
         in
@@ -292,20 +318,6 @@ let add_sleek_log_entry e=
   else ()
 
 
-let sleek_log_to_text_file (src_files) =
-  if !Globals.sleek_logging_txt then
-    (* let tstartlog = Gen.Profiling.get_time () in *)
-    let oc =
-      (try Unix.mkdir "logs" 0o750 with _ -> ());
-      let with_option = if !Globals.en_slc_ps then "eps" else "no_eps" in
-      open_out ("logs/"^with_option^"_sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt")
-    in
-    let str = sleek_log_stk # string_of_reverse_log in
-    let _=fprintf oc "%s" str in
-    (* let tstoplog = Gen.Profiling.get_time () in *)
-    (* let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in  *)
-    close_out oc;
-  else ()
 
 
 let process_sleek_logging ()=
