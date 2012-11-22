@@ -832,14 +832,18 @@ and instr =
             of input expressions along with constraints, (5) clobbered 
             registers, and (5) location information *)
 
-
-
-(** Describes a location in a source file *)
-and location = { 
-    line: int;		   (** The line number. -1 means "do not know" *)
+(** Describes a position in a source file *)
+and position = {
+    line: int;         (** The line number. -1 means "do not know" *)
     file: string;          (** The name of the source file*)
     line_begin: int;        (** The begin of line position in the source file *)
     byte: int;             (** The byte position in the source file *)
+}
+
+(** Describes a location in a source file *)
+and location = {
+    start_pos: position;
+    end_pos: position; 
 }
 
 (* Type signatures. Two types are identical iff they have identical 
@@ -879,10 +883,13 @@ type featureDescr = {
      * checking is enabled (--check is passed to cilly) *)
 }
 
-let locUnknown = { line = -1; 
+let posUnknown = { line = -1; 
                    file = "";
                    line_begin = -1;
                    byte = -1;}
+
+let locUnknown = { start_pos = posUnknown;
+                   end_pos = posUnknown; }
 
 (* A reference to the current location *)
 let currentLoc : location ref = ref locUnknown
@@ -891,7 +898,7 @@ let currentLoc : location ref = ref locUnknown
 let currentGlobal: global ref = ref (GText "dummy")
 
 
-let compareLoc (a: location) (b: location) : int =
+let comparePos (a: position) (b: position) : int =
   let namecmp = compare a.file b.file in
   if namecmp != 0 
   then namecmp
@@ -900,6 +907,12 @@ let compareLoc (a: location) (b: location) : int =
     if linecmp != 0 
     then linecmp
     else a.byte - b.byte
+
+let compareLoc (a: location) (b: location) : int =
+  let startcmp = comparePos a.start_pos b.start_pos in
+  if startcmp != 0
+  then startcmp
+  else comparePos a.end_pos b.end_pos
 
 let argsToList : (string * typ * attributes) list option 
                   -> (string * typ * attributes) list 
@@ -1126,7 +1139,7 @@ let nextCompinfoKey = ref 1
 
 (* Some error reporting functions *)
 let d_loc (_: unit) (loc: location) : doc =  
-  text loc.file ++ chr ':' ++ num loc.line
+  text loc.start_pos.file ++ chr ':' ++ num loc.start_pos.line
 
 let d_thisloc (_: unit) : doc = d_loc () !currentLoc
 
@@ -3115,10 +3128,13 @@ let initMsvcBuiltins () : unit =
   ()
 
 (** This is used as the location of the prototypes of builtin functions. *)
-let builtinLoc: location = { line = 1; 
+let builtinPos: position = { line = 1; 
                              file = "<compiler builtins>";
                              line_begin = 0;
                              byte = 0;}
+
+let builtinLoc: location = { start_pos = builtinPos;
+                             end_pos = builtinPos;}
 
 
 
@@ -3712,10 +3728,10 @@ class defaultCilPrinterClass : cilPrinter = object (self)
     currentLoc := l;
     match !lineDirectiveStyle with
     | None -> nil
-    | Some _ when l.line <= 0 -> nil
+    | Some _ when l.start_pos.line <= 0 -> nil
 
       (* Do not print lineComment if the same line as above *)
-    | Some LineCommentSparse when l.line = lastLineNumber -> nil
+    | Some LineCommentSparse when l.start_pos.line = lastLineNumber -> nil
 
     | Some style  ->
 	let directive =
@@ -3724,17 +3740,17 @@ class defaultCilPrinterClass : cilPrinter = object (self)
 	  | LinePreprocessorOutput when not !msvcMode -> chr '#'
 	  | LinePreprocessorOutput | LinePreprocessorInput -> text "#line"
 	in
-        lastLineNumber <- l.line; 
+        lastLineNumber <- l.start_pos.line; 
 	let filename =
-          if forcefile || l.file <> lastFileName then
+          if forcefile || l.start_pos.file <> lastFileName then
 	    begin
-	      lastFileName <- l.file;
-	      text " \"" ++ text l.file ++ text "\""
+	      lastFileName <- l.start_pos.file;
+	      text " \"" ++ text l.start_pos.file ++ text "\""
             end
 	  else
 	    nil
 	in
-	leftflush ++ directive ++ chr ' ' ++ num l.line ++ filename ++ line
+	leftflush ++ directive ++ chr ' ' ++ num l.start_pos.line ++ filename ++ line
 
   method private pIfConditionThen loc condition thenBlock =
       self#pLineDirective loc

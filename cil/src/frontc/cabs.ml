@@ -46,12 +46,17 @@
 ** Types
 *)
 
-type cabsloc = {
+type cabspos = {
  lineno : int;
  filename: string;
  byteno: int;
  linestart: int; (* The position where the current line starts *)
  ident : int;
+}
+
+type cabsloc = {
+  start_pos: cabspos;
+  end_pos: cabspos;
 }
 
 type typeSpecifier = (* Merge all specifiers into one type *)

@@ -133,13 +133,21 @@ and is_global_cil_lval (lv: Cil.lval) : bool =
 
 
 let translate_location (loc: Cil.location) : Globals.loc =
-  let pos : Lexing.position = {Lexing.pos_fname = loc.Cil.file;
-                               Lexing.pos_lnum = loc.Cil.line;
-                               Lexing.pos_bol = loc.Cil.line_begin;
-                               Lexing.pos_cnum = loc.Cil.byte;} in
-  let newloc: Globals.loc = {Globals.start_pos = pos;
-                             Globals.mid_pos = pos; (* TRUNG CODE: this should be computed later *)
-                             Globals.end_pos = pos;} in (* TRUNG CODE: this should be computed later *)
+  let cilsp = loc.Cil.start_pos in
+  let cilep = loc.Cil.end_pos in
+  (* let _ = print_endline ("== cilsp byte = " ^ (string_of_int cilsp.Cil.byte)) in *)
+  (* let _ = print_endline ("== cilep byte = " ^ (string_of_int cilep.Cil.byte)) in *)
+  let start_pos = {Lexing.pos_fname = cilsp.Cil.file;
+                   Lexing.pos_lnum = cilsp.Cil.line;
+                   Lexing.pos_bol = cilsp.Cil.line_begin;
+                   Lexing.pos_cnum = cilsp.Cil.byte;} in
+  let end_pos = {Lexing.pos_fname = cilep.Cil.file;
+                 Lexing.pos_lnum = cilep.Cil.line;
+                 Lexing.pos_bol = cilep.Cil.line_begin;
+                 Lexing.pos_cnum = cilep.Cil.byte;} in
+  let newloc = {Globals.start_pos = start_pos;
+                Globals.mid_pos = end_pos; (* TRUNG CODE: this should be computed later *)
+                Globals.end_pos = end_pos;} in (* TRUNG CODE: this should be computed later *)
   (* return *)
   newloc
 
@@ -191,6 +199,13 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
 let translate_var (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let name = vinfo.Cil.vname in
+  (* let _ = print_endline ("== sp pos_cnum = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_cnum)) in *)
+  (* let _ = print_endline ("== sp pos_lnum = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_lnum)) in *)
+  (* let _ = print_endline ("== sp pos_bol = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_bol)) in   *)
+  (* let _ = print_endline ("== ep pos_cnum = " ^ (string_of_int pos.Globals.end_pos.Lexing.pos_cnum)) in   *)
+  (* let _ = print_endline ("== ep pos_lnum = " ^ (string_of_int pos.Globals.end_pos.Lexing.pos_lnum)) in   *)
+  (* let _ = print_endline ("== ep pos_bol = " ^ (string_of_int pos.Globals.end_pos.Lexing.pos_bol)) in     *)
+  (* let _ = print_endline ("-- name = " ^ name) in                                                         *)
   let newexp = Iast.Var {Iast.exp_var_name = name;
                          Iast.exp_var_pos = pos} in
   newexp
@@ -200,6 +215,13 @@ let translate_var_decl (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.e
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let ty = translate_typ vinfo.Cil.vtype in
   let name = vinfo.Cil.vname in
+  (* let _ = print_endline ("== 1 sp pos_cnum = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_cnum)) in *)
+  (* let _ = print_endline ("== 1 sp pos_lnum = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_lnum)) in *)
+  (* let _ = print_endline ("== 1 sp pos_bol = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_bol)) in   *)
+  (* let _ = print_endline ("== 1 ep pos_cnum = " ^ (string_of_int pos.Globals.end_pos.Lexing.pos_cnum)) in   *)
+  (* let _ = print_endline ("== 1 ep pos_lnum = " ^ (string_of_int pos.Globals.end_pos.Lexing.pos_lnum)) in   *)
+  (* let _ = print_endline ("== 1 ep pos_bol = " ^ (string_of_int pos.Globals.end_pos.Lexing.pos_bol)) in     *)
+  (* let _ = print_endline ("-- name = " ^ name) in                                                           *)
   let decl = [(name, None, pos)] in
   let newexp = Iast.VarDecl {Iast.exp_var_decl_type = ty;
                              Iast.exp_var_decl_decls = decl;
@@ -662,6 +684,9 @@ and translate_block (blk: Cil.block) (lopt: Cil.location option): Iast.exp =
 let translate_init (vname: ident) (init: Cil.init) (lopt: Cil.location option)
                    : (ident * Iast.exp option * loc) list =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
+  (* let _ = print_endline ("== init loc start lnum = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_lnum)) in *)
+  (* let _ = print_endline ("== init loc start cnum = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_cnum)) in *)
+  (* let _ = print_endline ("== init loc start bol = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_bol)) in   *)
   match init with
   | Cil.SingleInit exp ->
       let e = translate_exp exp lopt in

@@ -176,9 +176,11 @@ end
 and clexer lexbuf =
     Clexer.clear_white ();
     Clexer.clear_lexeme ();
+    let startPos = Clexer.currentPos () in
     let token = Clexer.initial lexbuf in
     let white = Clexer.get_white () in
-    let cabsloc = Clexer.currentLoc () in
+    let endPos = Clexer.currentPos () in
+    let cabsloc = Clexer.makeLoc startPos endPos in
     let lexeme = Clexer.get_extra_lexeme () ^ Lexing.lexeme lexbuf in
     white,lexeme,token,cabsloc
 
@@ -229,7 +231,7 @@ begin
         | (_, (funcname, Cabs.PROTO(_,_,_), _, _)) -> (
             incr counter;          
             ignore (fprintf chan "\n/* %s from %s:%d */\n"
-                                 funcname loc.Cabs.filename loc.Cabs.lineno);
+                                 funcname loc.Cabs.start_pos.Cabs.filename loc.Cabs.start_pos.Cabs.lineno);
             flush chan;
             Cprint.print_single_name name;
             Cprint.print_unescaped_string ";";

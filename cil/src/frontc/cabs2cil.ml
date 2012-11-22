@@ -112,13 +112,16 @@ let attrsForCombinedArg: ((string, string) H.t ->
   ref (fun _ t -> t)
 
 (* ---------- source error message handling ------------- *)
-let lu = locUnknown
-let cabslu = {lineno = -10; 
-              filename = "cabs lu"; 
+let pu = posUnknown
+let cabspu = {lineno = -10; 
+              filename = "cabs pu"; 
               byteno = -10;
               linestart = -10;
               ident = 0;}
 
+let lu = locUnknown
+let cabslu = {Cabs.start_pos = cabspu; 
+              Cabs.end_pos = cabspu;}
 
 (** Interface to the Cprint printer *)
 let withCprint (f: 'a -> unit) (x: 'a) : unit = 
@@ -182,10 +185,17 @@ let isTransparentUnion (t: typ) : fieldinfo option =
 let transparentUnionArgs : (int * typ) list ref = ref []
 
 let debugLoc = false
+
+let convPos (p : cabspos) =
+  if debugLoc then 
+    ignore (E.log "convPos at %s: line %d, btye %d\n" p.filename p.lineno p.byteno);
+  {line = p.lineno; file = p.filename; byte = p.byteno; line_begin = p.linestart}
+
 let convLoc (l : cabsloc) =
   if debugLoc then 
-    ignore (E.log "convLoc at %s: line %d, btye %d\n" l.filename l.lineno l.byteno);
-  {line = l.lineno; file = l.filename; byte = l.byteno; line_begin = l.linestart}
+    ignore (E.log "convLoc at %s: line %d, btye %d\n" l.Cabs.start_pos.filename l.Cabs.start_pos.lineno l.Cabs.start_pos.byteno);
+  {Cil.start_pos = convPos l.Cabs.start_pos;
+   Cil.end_pos = convPos l.Cabs.end_pos;}
 
 
 let isOldStyleVarArgName n = 

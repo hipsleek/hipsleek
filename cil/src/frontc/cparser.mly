@@ -61,11 +61,17 @@ let getComments () =
       r
 *)
 
-let cabslu = {lineno = -10; 
+let cabspu = {lineno = -10; 
               filename = "cabs loc unknown"; 
               byteno = -10;
               linestart = -10;
               ident = 0;}
+
+let cabslu = {start_pos = cabspu;
+              end_pos = cabspu;}
+
+let makeLoc startPos endPos = { Cabs.start_pos = startPos;
+                                Cabs.end_pos = endPos; }
 
 (* cabsloc -> cabsloc *)
 (*
@@ -389,7 +395,7 @@ let transformOffsetOf (speclist, dtype) member =
 
  /* (* Each element is a "* <type_quals_opt>". *) */
 %type <attribute list list * cabsloc> pointer pointer_opt
-%type <Cabs.cabsloc> location
+%type <Cabs.cabspos> position
 %type <Cabs.spec_elem * cabsloc> cvspec
 %%
 
@@ -404,8 +410,8 @@ globals:
 | SEMICOLON globals                     { $2 }
 ;
 
-location:
-   /* empty */                	{ currentLoc () }  %prec IDENT
+position:
+   /* empty */                	{ currentPos () }  %prec IDENT
 
 
 /*** Global Definition ***/
@@ -448,7 +454,8 @@ global:
     checkConnective(fst $5);
     EXPRTRANSFORMER(fst $3, fst $7, $1)
   }
-| location error SEMICOLON { PRAGMA (VARIABLE "parse_error", $1) }
+| position error position SEMICOLON { let loc = makeLoc $1 $3 in
+                                      PRAGMA (VARIABLE "parse_error", loc) }
 ;
 
 id_or_typename:
@@ -822,12 +829,13 @@ block: /* ISO 6.8.2 */
                                           { blabels = $2;
                                             battrs = $3;
                                             bstmts = $4 },
-					    $1, $5
+                                          $1, $5
                                          } 
-|   error location RBRACE                { { blabels = [];
+|   position error position RBRACE       { { blabels = [];
                                              battrs  = [];
                                              bstmts  = [] },
-					     $2, $3
+                                           (makeLoc $1 $3),
+                                           $4
                                          }
 ;
 block_begin:
@@ -916,12 +924,12 @@ statement:
                           if not !Cprint.msvcMode then 
                             parse_error "try/finally in GCC code";
                           TRY_FINALLY (b, h, (*handleLoc*) $1) }
-|   error location   SEMICOLON   { (NOP $2)}
+|   position error position   SEMICOLON   { (NOP (makeLoc $1 $3))}
 |   HIPSPECS            { let s, loc = $1 in
-                          let begin_offset = {Parser.line_num = loc.lineno;
-                                              Parser.line_start = loc.linestart;
-                                              Parser.byte_num = loc.byteno} in
-                          let stmt = Parser.parse_statement loc.filename s begin_offset in
+                          let begin_offset = {Parser.line_num = loc.start_pos.lineno;
+                                              Parser.line_start = loc.start_pos.linestart;
+                                              Parser.byte_num = loc.start_pos.byteno} in
+                          let stmt = Parser.parse_statement loc.start_pos.filename s begin_offset in
                           HIP_STMT (stmt, loc) }    /* TRUNG TODO: still need to refine the location of specs in (snd $1) */ 
 ;
 
@@ -1562,10 +1570,10 @@ asmcloberlst_ne:
 hipspecs_opt:
   /* empty */         { Iformula.EList [] }
 | HIPSPECS            { let s, loc = $1 in
-                        let begin_offset = {Parser.line_num = loc.lineno;
-                                            Parser.line_start = loc.linestart;
-                                            Parser.byte_num = loc.byteno} in
-                        let hspecs = Parser.parse_specs_string loc.filename s begin_offset in
+                        let begin_offset = {Parser.line_num = loc.start_pos.lineno;
+                                            Parser.line_start = loc.start_pos.linestart;
+                                            Parser.byte_num = loc.start_pos.byteno} in
+                        let hspecs = Parser.parse_specs_string loc.start_pos.filename s begin_offset in
                         hspecs }    /* TRUNG TODO: still need to refine the location of specs in (snd $1) */ 
 
 %%

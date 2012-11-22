@@ -2629,6 +2629,13 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_cond_else_arm = e3;
             I.exp_cond_path_id = pi;
             I.exp_cond_pos = pos } ->
+      let _ = print_endline ("== if loc start lnum = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_lnum)) in
+      let _ = print_endline ("== if loc start cnum = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_cnum)) in
+      let _ = print_endline ("== if loc start bol = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_bol)) in
+      let _ = print_endline ("== if loc end lnum = " ^ (string_of_int pos.Globals.end_pos.Lexing.pos_lnum)) in
+      let _ = print_endline ("== if loc end cnum = " ^ (string_of_int pos.Globals.end_pos.Lexing.pos_cnum)) in
+      let _ = print_endline ("== if loc end bol = " ^ (string_of_int pos.Globals.end_pos.Lexing.pos_bol)) in
+      
 							(* let str_pi=match pi with                                                          *)
 							(* 			| None -> print_endline "none path id of cond"                              *)
 							(* 			| Some (x,y)-> 	print_endline ("Cond id: "^(string_of_int x)^" and "^y) in *)

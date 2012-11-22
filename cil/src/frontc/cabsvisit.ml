@@ -93,13 +93,16 @@ class type cabsVisitor = object
   method vExitScope: unit -> unit
 end
     
-let visitorLocation = ref { filename = ""; 
+let visitorPosition = ref { filename = ""; 
                             lineno = -1; 
                             byteno = -1;
                             linestart = -1;
                             ident = 0}
-    
-        (* a default visitor which does nothing to the tree *)
+
+let visitorLocation = ref { start_pos = !visitorPosition;
+                            end_pos = !visitorPosition;}
+
+(* a default visitor which does nothing to the tree *)
 class nopCabsVisitor : cabsVisitor = object
   method vexpr (e:expression) = DoChildren
   method vinitexpr (e:init_expression) = DoChildren

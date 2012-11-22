@@ -6,7 +6,7 @@ let getident () =
     nextident := !nextident + 1;
     !nextident
 
-let currentLoc () = 
+let currentPos () = 
   let l, f, c, ls = Errormsg.getPosition () in
   { lineno   = l; 
     filename = f; 
@@ -14,11 +14,17 @@ let currentLoc () =
     linestart = ls;
     ident    = getident ();}
 
-let cabslu = {lineno = -10; 
+let cabspu = {lineno = -10; 
               filename = "cabs loc unknown"; 
               byteno = -10;
               linestart = -10;
               ident = 0}
+
+let currentLoc () = {start_pos = currentPos ();
+                     end_pos = currentPos ();}
+
+let cabslu = {start_pos = cabspu;
+              end_pos = cabspu;}
 
 (* clexer puts comments here *)
 let commentsGA = GrowArray.make 100 (GrowArray.Elem(cabslu,"",false))

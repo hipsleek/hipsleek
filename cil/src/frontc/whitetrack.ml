@@ -26,16 +26,16 @@ let gonebad = ref false
 let tokens = GrowArray.make 0 (GrowArray.Elem  ("",""))
 
 let cabsloc_to_str cabsloc =
-    cabsloc.filename ^ ":" ^ string_of_int cabsloc.lineno ^ ":" ^ 
-    string_of_int cabsloc.byteno ^ ":" ^ 
-    string_of_int cabsloc.ident
+    cabsloc.start_pos.filename ^ ":" ^ string_of_int cabsloc.start_pos.lineno ^ ":" ^ 
+    string_of_int cabsloc.start_pos.byteno ^ ":" ^ 
+    string_of_int cabsloc.start_pos.ident
 
 let lastline = ref 0
 
 let wraplexer_enabled lexer lexbuf = 
     let white,lexeme,token,cabsloc = lexer lexbuf in
     GrowArray.setg tokens !nextidx (white,lexeme);
-    Hashtbl.add tokenmap (cabsloc.filename,cabsloc.byteno) !nextidx;
+    Hashtbl.add tokenmap (cabsloc.start_pos.filename, cabsloc.start_pos.byteno) !nextidx;
     nextidx := !nextidx + 1;
     token
 
@@ -58,14 +58,14 @@ let noidx = -1
 let out = ref stdout
     
 let setLoc cabsloc =
-    if cabsloc != cabslu && !enabled then begin
-        try 
-            curidx := Hashtbl.find tokenmap (cabsloc.filename,cabsloc.byteno)
-        with
-            Not_found -> Errormsg.s 
-                (Errormsg.error "setLoc with location for non-lexed token: %s"
-                    (cabsloc_to_str cabsloc)) 
-    end else begin curidx := noidx; () end
+  if cabsloc != cabslu && !enabled then begin
+    try 
+      curidx := Hashtbl.find tokenmap (cabsloc.start_pos.filename, cabsloc.start_pos.byteno)
+    with
+      Not_found -> Errormsg.s 
+        (Errormsg.error "setLoc with location for non-lexed token: %s"
+          (cabsloc_to_str cabsloc)) 
+  end else begin curidx := noidx; () end
     
 let setOutput out_chan = 
     out := out_chan

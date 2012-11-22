@@ -66,12 +66,16 @@ let version = "Cprint 2.1e 9.1.99 Hugues Cassé"
 
 type loc = { line : int; file : string }
 
-let lu = {line = -1; file = "loc unknown";}
-let cabslu = {lineno = -10; 
-              filename = "cabs loc unknown"; 
+let pu = {line = -1; file = "pos unknown";}
+let cabspu = {lineno = -10; 
+              filename = "cabs pos unknown"; 
               byteno = -10;
               linestart = -10;
               ident = 0;}
+
+(* let lu = {line = -1; file = "loc unknown";} *)
+let cabslu = {start_pos = cabspu;
+              end_pos = cabspu;}
 
 let curLoc = ref cabslu
 

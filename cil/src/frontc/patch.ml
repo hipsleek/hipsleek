@@ -271,7 +271,7 @@ begin
 end
 
 let d_loc (_:unit) (loc: cabsloc) : doc =
-  text loc.filename ++ chr ':' ++ num loc.lineno
+  text loc.start_pos.filename ++ chr ':' ++ num loc.start_pos.lineno
 
 
 (* class to describe how to modify the tree when looking for places *)
@@ -353,7 +353,7 @@ begin
         if verbose then
           (trace "patchDebug"
             (dprintf "considering applying defn pattern at line %d to src at %a\n"
-                     loc.lineno d_loc (get_definitionloc d)));
+                     loc.start_pos.lineno d_loc (get_definitionloc d)));
 
         (* see if the source pattern matches the definition 'd' we have *)
         try (
@@ -361,7 +361,7 @@ begin
 
           (* we have a match!  apply the substitutions *)
           (trace "patch" (dprintf "defn match: patch line %d, src %a\n"
-                                  loc.lineno d_loc (get_definitionloc d)));
+                                  loc.start_pos.lineno d_loc (get_definitionloc d)));
 
           (Util.list_map (fun destElt -> (substDefn bindings destElt)) destpattern)
         )
@@ -377,12 +377,12 @@ begin
         if verbose then
           (trace "patchDebug"
             (dprintf "considering applying expr pattern at line %d to src at %a\n"
-                     loc.lineno d_loc (get_definitionloc d)));
+                     loc.start_pos.lineno d_loc (get_definitionloc d)));
 
         (* walk around in 'd' looking for expressions to modify *)
         let dList = (visitCabsDefinition
                       ((new exprTransformer srcpattern destpattern
-                                            loc.lineno (get_definitionloc d))
+                                            loc.start_pos.lineno (get_definitionloc d))
                        :> cabsVisitor)
                       d
                     ) in

@@ -1078,14 +1078,19 @@ an example (from gcc manual):
 
 *)
 
-(** Describes a location in a source file. *)
-and location = { 
-    line: int;		   (** The line number. -1 means "do not know" *)
+(** Describes a position in a source file *)
+and position = {
+    line: int;         (** The line number. -1 means "do not know" *)
     file: string;          (** The name of the source file*)
-    line_begin: int;        (** The begin line position in the source file *)
+    line_begin: int;        (** The begin of line position in the source file *)
     byte: int;             (** The byte position in the source file *)
 }
 
+(** Describes a location in a source file *)
+and location = {
+    start_pos: position;
+    end_pos: position; 
+}
 
 (** Type signatures. Two types are identical iff they have identical 
  * signatures. These contain the same information as types but canonicalized. 
@@ -1136,8 +1141,12 @@ type featureDescr = {
      * your feature makes any changes for the program. *)
 }
 
-(** Comparison function for locations.
+(** Comparison function for position.
  ** Compares first by filename, then line, then byte *)
+val compareLoc: position -> position -> int
+
+(** Comparison function for locations.
+ ** Compares first by start_pos, then end_pos *)
 val compareLoc: location -> location -> int
 
 (** {b Values for manipulating globals} *)
@@ -2579,6 +2588,9 @@ val little_endian: bool ref
     identifier. That is, will function foo() have the label "foo", or "_foo"?
     Set after you call {!Cil.initCIL} *)
 val underscore_name: bool ref
+
+(** Represents a location that cannot be determined *)
+val posUnknown: position
 
 (** Represents a location that cannot be determined *)
 val locUnknown: location

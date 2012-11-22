@@ -17,6 +17,6 @@ int sum2 (int n)
   if (n > 0) {
     tmp = sum2(n-1);
     return tmp;
-  }  else
+  }else
     return 1;
 }
