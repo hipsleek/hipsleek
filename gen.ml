@@ -1555,7 +1555,6 @@ struct
   let do_3 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) : 'z =
     prof_aux s (f e1 e2) e3
 
-
   let do_4 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'a4 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) (e4:'a4) : 'z =
     prof_aux s (f e1 e2 e3) e4
 

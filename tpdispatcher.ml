@@ -1793,7 +1793,10 @@ let simpl_pair rid (ante, conseq) =
   let ante3 = simpl_in_quant ante2 true rid in
   (ante3, conseq)
 
-let simpl_pair rid (ante, conseq) = (ante, conseq)
+let simpl_pair rid (ante, conseq) = 
+  if !Globals.filtering_flag then
+    simpl_pair rid (ante, conseq)
+  else (ante, conseq)
 
 let simpl_pair rid (ante, conseq) =
 	Gen.Profiling.do_1 "simpl_pair" (simpl_pair rid) (ante, conseq)
@@ -2239,6 +2242,8 @@ let is_sat_memo_sub_no_slicing (f : memo_pure) sat_subno with_dupl with_inv : bo
 	string_of_bool
   (fun _ -> is_sat_memo_sub_no_slicing f sat_subno with_dupl with_inv) f
 	  
+(* let pattern_cache = ref [] *)
+    
 let rec is_sat_memo_sub_no_ineq_slicing (mem : memo_pure) sat_subno with_dupl with_inv : bool =
   Debug.no_1 "is_sat_memo_sub_no_ineq_slicing"
 	Cprinter.string_of_memo_pure_formula
@@ -2299,12 +2304,25 @@ and sat_memo_cache_by_pattern (mem : memo_pure) : bool =
     let is_sat_one_slice mg =
       if (is_ineq_linking_memo_group mg)
       (* mg is a linking inequality *)
-      then not (List.exists (fun mc ->
-        let bf = mc.memo_formula in
-        match (get_bform_neq_args_with_const bf) with
-        | Some (v1, v2) -> List.exists (fun ls -> 
-            Gen.BList.subset_eq eq_spec_var [v1; v2] ls) m_apart  
-        | None -> false) mg.memo_group_cons) 
+      then
+        not (List.exists (fun mc ->
+          let bf = mc.memo_formula in
+          match (get_bform_neq_args_with_const bf) with
+          | Some (v1, v2) -> List.exists (fun ls ->
+              Gen.BList.subset_eq eq_spec_var [v1; v2] ls) m_apart
+          | None -> false) mg.memo_group_cons)
+        (* try                                                            *)
+        (*   List.find (fun m -> m == mem) !pattern_cache; false          *)
+        (* with _ ->                                                      *)
+        (*   let res = not (List.exists (fun mc ->                        *)
+        (*     let bf = mc.memo_formula in                                *)
+        (*     match (get_bform_neq_args_with_const bf) with              *)
+        (*     | Some (v1, v2) -> List.exists (fun ls ->                  *)
+        (*         Gen.BList.subset_eq eq_spec_var [v1; v2] ls) m_apart   *)
+        (*     | None -> false) mg.memo_group_cons)                       *)
+        (*   in                                                           *)
+        (*   (if not res then pattern_cache := !pattern_cache @ [mem]);   *)
+        (*   res                                                          *)
       else true
     in
     not (List.exists (fun mg -> not (is_sat_one_slice mg)) mem)
