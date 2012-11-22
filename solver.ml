@@ -4631,9 +4631,9 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     in
     let avoid = (hec_num=11 or hec_num=4) in
     let avoid = avoid or ((hec_num=1 || hec_num=2) && CF.is_emp_term conseq) in
-    let slk_no = (* if avoid then 0 else *) Log.get_sleek_proving_id () in
-    let caller = hec_stack # string_of in
     let avoid = avoid or (not (hec_stack # is_empty)) in
+    let caller = hec_stack # string_of_no_ln in
+    let slk_no = (* if avoid then 0 else *) Log.get_sleek_proving_id () in
     let _ = hec_stack # push slk_no in
     let r = hec a b c in
     let _ = hec_stack # pop in

@@ -441,6 +441,7 @@ class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
      val elem_pr = epr 
      val elem_eq = eq 
      method string_of = Basic.pr_list_ln elem_pr stk
+     method string_of_no_ln = Basic.pr_list elem_pr stk
      method string_of_reverse = let _ = super#reverse  in
                                 Basic.pr_list_ln elem_pr stk
      method string_of_reverse_log = let _ = super#reverse  in
