@@ -37,7 +37,8 @@ type sleek_log_entry = {
 	sleek_proving_kind : sleek_proving_kind;
     sleek_proving_ante: CF.formula;
     sleek_proving_conseq: CF.formula;
-	(* sleek_proving_res : bool; *)
+    sleek_proving_hprel_ass: CF.hprel option;
+	sleek_proving_res : CF.list_context;
 }
 
 let string_of_sleek_proving_kind t=
@@ -53,9 +54,18 @@ let pr_sleek_log_entry e=
   fmt_string ("; line: " ^ (Globals.line_number_of_pos e.sleek_proving_pos)) ;
   fmt_string ("; kind: " ^ (string_of_sleek_proving_kind e.sleek_proving_kind)) ;
   fmt_string "\n";
-  fmt_string (Cprinter.prtt_string_of_formula e.sleek_proving_ante);
+  fmt_string (Cprinter.string_of_formula e.sleek_proving_ante);
   fmt_string " |- ";
-  fmt_string  (Cprinter.prtt_string_of_formula e.sleek_proving_conseq);
+  fmt_string  (Cprinter.string_of_formula e.sleek_proving_conseq);
+  fmt_string "\n";
+  fmt_string  ("ass hprel: " ^ (
+      match e.sleek_proving_hprel_ass with
+        | None -> "None"
+        | Some ass  -> Cprinter.string_of_hprel_short ass
+  )
+  );
+  fmt_string "\n";
+  fmt_string  ("res: " ^ (Cprinter.string_of_list_context_short e.sleek_proving_res));
   fmt_close()
 
 let string_of_sleek_log_entry e= Cprinter.poly_string_of_pr pr_sleek_log_entry e
@@ -69,6 +79,7 @@ let sleek_log_stk : sleek_log_entry  Gen.stack_pr = new Gen.stack_pr
 
 let sleek_proving_kind = ref (POST : sleek_proving_kind)
 let sleek_proving_id = ref (0 : int)
+let sleek_proving_hprel_ass = ref (None : CF.hprel option)
 
 let get_sleek_proving_id ()=
   let r = !sleek_proving_id in
@@ -92,9 +103,13 @@ let add_new_sleek_logging_entry slk_no ante conseq (result:CF.list_context) pos=
         sleek_proving_kind = !sleek_proving_kind;
         sleek_proving_ante = ante;
         sleek_proving_conseq = conseq;
+        sleek_proving_hprel_ass = !sleek_proving_hprel_ass;
+        sleek_proving_res = result;
     }
     in
-    let _ = sleek_log_stk # push sleek_log_entry in ()
+    let _ = sleek_log_stk # push sleek_log_entry in
+    let _ = sleek_proving_hprel_ass := None in
+    ()
   else ()
 
 let find_bool_proof_res pno =
