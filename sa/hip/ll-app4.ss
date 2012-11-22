@@ -38,23 +38,31 @@ void append(ref node x, node y)
  
  x::node<_,y> * HP_554(v) * H2(y) & v=null
    |- H3(x') * H4(y)
+
  # H2(y) * HP_554(v) * x'::node<_,y>& v=null 
    --> H3(x') * H4(y)&true,
  @@ can decompose further, as below:
- @@ H2(y) -> H4(y)
- @@ HP_554(v) & v=null -> emp
- @@ x'::node<_,y> -> H3(x') // where y is logical
+  @@ H2(y) -> H4(y)
+  @@ HP_554(v) & v=null -> emp
+  @@ x'::node<_,y> -> H3(x') // where y is logical
 
 */
   infer [H1,H2,H3,H4]
   requires H1(x)*H2(y)
   ensures H3(x')*H4(y);//'
   /*
-[ HP_606(y) ::= y::node<val_36_560,y_609> * HP_606(y_609)&true,
- H4(y) ::= emp&y=H4_y_617,
- H2(y) ::= emp&y=H4_y_617,
- H1(x_611) ::= x_611::node<val_36_534',next_36_535'> * next_36_535'::ls[LHSCase]&true,
- H3(x_605) ::= x_605::node<val_36_560,y> * HP_606(y)&true]
+
+ H3(x_457) ::= x_457::node<val_60_421,y> * HP_458(y)&true,
+ H1(x_463) ::= x_463::node<val_60_407',next_60_408'> * next_60_408'::ls[LHSCase]&true,
+ H2(y) ::= emp&H4_y_469=y,
+ H4(y) ::= emp&H4_y_469=y,
+ HP_458(y) ::= y::node<val_60_421,y_461> * HP_458(y_461)&true]
+
+ @@ base case for HP_458 missing
+ @@ HP_458(y) ::= 
+      y=null or 
+      y::node<val_60_421,y_461> * HP_458(y_461)&true]
+
   */
 {
     node t = x.next;
