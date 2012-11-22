@@ -11,7 +11,7 @@ module CEQ = Checkeq
 module TP = Tpdispatcher
 module SAU = Sautility
 
-let rel_def_stk : CF.hprel_def Gen.stack_pr = new Gen.stack_pr 
+let rel_def_stk : CF.hprel_def Gen.stack_pr = new Gen.stack_pr
   Cprinter.string_of_hprel_def_lib (==)
 
 let rec elim_redundant_paras_lst_constr_x prog constrs =
@@ -1006,14 +1006,6 @@ and find_defined_pointers_two_formulas prog f1 f2 predef_ptrs=
 (**********************************************************)
      (*********aux functions for pardef collect********)
 (**********************************************************)
-let rec lookup_undef_args args undef_args def_ptrs=
-  match args with
-    | [] -> undef_args
-    | a::ax -> if CP.mem_svl a def_ptrs then (*defined: omit*)
-          lookup_undef_args ax undef_args def_ptrs
-        else (*undefined *)
-          lookup_undef_args ax (undef_args@[a]) def_ptrs
-
 (*if root + next ptr is inside args: ll_all_13a: G***)
 let elim_direct_root_pto_x undef_args args prog hd_nodes hv_nodes=
   let root =
@@ -1046,7 +1038,7 @@ let rec collect_par_defs_one_side_one_hp_aux_x prog f (hrel, args) def_ptrs
       Debug.ninfo_pprint (" hp: "^ (!CP.print_sv hrel)) no_pos;
       let def_ptrs1 = (List.fold_left SAU.close_def def_ptrs eqs) in
       (*find definition in both lhs and rhs*)
-      let undef_args = lookup_undef_args args [] def_ptrs1 in
+      let undef_args = SAU.lookup_undef_args args [] def_ptrs1 in
       (*if root + next ptr is inside args: ll_all_13a: G***)
       let undef_args1 =  elim_direct_root_pto undef_args args prog hd_nodes hv_nodes in
       let test1= (List.length undef_args1) = 0 in
@@ -1087,7 +1079,7 @@ let rec collect_par_defs_one_side_one_hp_rhs_x_old prog lhs rhs (hrel, args) def
       Debug.ninfo_pprint (" rhs hp: "^ (!CP.print_sv hrel)) no_pos;
       let def_ptrs1 = (List.fold_left SAU.close_def def_ptrs eqs) in
       (*find definition in both lhs and rhs*)
-      let undef_args = lookup_undef_args args [] def_ptrs1 in
+      let undef_args = SAU.lookup_undef_args args [] def_ptrs1 in
       (*if root + next ptr is inside args: ll_all_13a: G***)
       let undef_args1 =  elim_direct_root_pto undef_args args prog hd_nodes hv_nodes in
       let test1= (List.length undef_args1) = 0 in
@@ -1134,7 +1126,7 @@ let rec collect_par_defs_one_side_one_hp_x_old prog lhs rhs (hrel, args) ldef_pt
       let _ = Debug.ninfo_pprint (" lhs args: "^ (!CP.print_svl args)) no_pos in
       let lprocess_helper def_ptrs=
       (*find definition in lhs*)
-        let undef_args = lookup_undef_args args [] def_ptrs in
+        let undef_args = SAU.lookup_undef_args args [] def_ptrs in
         (*if root + next ptr is inside args: ll_all_13a: G***)
         let undef_args1 =  elim_direct_root_pto undef_args args prog hd_nodes hv_nodes in
         let test1= (List.length undef_args1) = 0 in
@@ -1161,7 +1153,7 @@ let rec collect_par_defs_one_side_one_hp_x_old prog lhs rhs (hrel, args) ldef_pt
       in
       let rprocess_helper def_ptrs=
       (*find definition in lhs*)
-        let undef_args = lookup_undef_args args [] def_ptrs in
+        let undef_args = SAU.lookup_undef_args args [] def_ptrs in
         (*if root + next ptr is inside args: ll_all_13a: G***)
         let undef_args1 =  elim_direct_root_pto undef_args args prog hd_nodes hv_nodes in
         let test1= (List.length undef_args1) = 0 in
@@ -1248,7 +1240,7 @@ and collect_par_defs_one_side_one_hp_x prog lhs rhs (hrel, args) ldef_ptrs rdef_
       in
       let rprocess_helper def_ptrs=
       (*find definition in lhs*)
-        let undef_args = lookup_undef_args args [] def_ptrs in
+        let undef_args = SAU.lookup_undef_args args [] def_ptrs in
         (*if root + next ptr is inside args: ll_all_13a: G***)
         let undef_args1 =  elim_direct_root_pto undef_args args prog hd_nodes hv_nodes in
         let test1= (List.length undef_args1) = 0 in
@@ -1338,7 +1330,7 @@ and collect_par_defs_two_side_one_hp_x prog lhs rhs (hrel, args)
               let l_def_ptrs, _,_, _,_ = SAU.find_defined_pointers prog lhs n_predef in
               let r_def_ptrs, _, _, _, _ = find_defined_pointers_two_formulas prog lhs rhs n_predef in
               (* let _ =  DD.ninfo_pprint ("    defs:" ^ (!CP.print_svl (l_def_ptrs@r_def_ptrs)) ) no_pos in *)
-              let undef_args = lookup_undef_args args01 [] (l_def_ptrs@r_def_ptrs@n_predef) in
+              let undef_args = SAU.lookup_undef_args args01 [] (l_def_ptrs@r_def_ptrs@n_predef) in
               (* let _ =  DD.info_pprint ("    undef_args:" ^ (!CP.print_svl undef_args) ) no_pos in *)
               if undef_args = [] then
                     [(hps@[hp], CP.remove_dups_svl (keep_args@args1@rem_args1) )],[] (*collect it*)
@@ -1415,7 +1407,7 @@ let collect_par_defs_recursive_hp_x prog lhs rhs (hrel, args) rec_args other_sid
               let l_def_ptrs, _,_, _,_ = SAU.find_defined_pointers prog lhs n_predef in
               let r_def_ptrs, _, _, _, _ = find_defined_pointers_two_formulas prog lhs rhs n_predef in
               (* let _ =  DD.ninfo_pprint ("    defs:" ^ (!CP.print_svl (l_def_ptrs@r_def_ptrs)) ) no_pos in *)
-              let undef_args = lookup_undef_args args01 [] (l_def_ptrs@r_def_ptrs@n_predef) in
+              let undef_args = SAU.lookup_undef_args args01 [] (l_def_ptrs@r_def_ptrs@n_predef) in
               let _ =  DD.ninfo_pprint ("    undef_args:" ^ (!CP.print_svl undef_args) ) no_pos in
               if undef_args = [] then
                     [(hps@[hp], CP.remove_dups_svl (keep_args@args1@rem_args1) )],[] (*collect it*)
@@ -1464,7 +1456,7 @@ let collect_par_defs_recursive_hp_x prog lhs rhs (hrel, args) rec_args other_sid
          (hrel , rec_args, CP.intersect_svl args unk_svl ,plhs, Some plhs, Some prhs)
          (* (hrel , rec_args, CP.intersect_svl rec_args unk_svl ,plhs, Some prhs, Some plhs) *)
   in
-  let undef_args = lookup_undef_args args [] (def_ptrs) in
+  let undef_args = SAU.lookup_undef_args args [] (def_ptrs) in
   let rec_pdefs =
     if undef_args = [] then
       let local_rec_def = (build_partial_def ([hrel],args@rec_args)) in

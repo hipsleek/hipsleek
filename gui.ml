@@ -338,7 +338,7 @@ object (self)
     let name = "POSTCONDITION " in 
     let post_item = {kind = ItemPost; pos = crt_pos; proc=crt_proc; pre = crt_pre; obl = crt_obl; lpath=paths } in
       match crt_pre with
-	| Some {ctx=_;spec=Cformula.EAssume (x,b,y)} -> begin
+	| Some {ctx=_;spec=Cformula.EAssume (x,b,y,t)} -> begin
 	    let counter = fst y in
 	    let post_row = obl_store#append ~parent:crt_row () in
 	      Hashtbl.add infotbl counter post_item;
@@ -363,7 +363,7 @@ object (self)
 	  print_string "spec is invalid\n"; 
 	  exit 1
 	end
-      | Cformula.EAssume (x,b,y)-> begin 
+      | Cformula.EAssume (x,b,y,t)-> begin 
 	  let pos1 = Cformula.pos_of_formula b in
 	  let name = "PRECONDITION at Line " ^ (string_of_int pos1.start_pos.Lexing.pos_lnum) in 
 	  let pre_item = {kind = ItemPrec; pos = pos1; proc=proc1; pre = (Some pre1); obl = None; lpath=[] } in
@@ -437,7 +437,7 @@ end
 	   let nctx = Cformula.normalize_max_renaming_s b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false ctx in
 	     check_specs prog proc nctx b.Cformula.formula_ext_continuation 
 	       
-       | Cformula.EAssume (x,b,y) -> [{ctx=ctx; spec=spec}]
+       | Cformula.EAssume (x,b,y,_) -> [{ctx=ctx; spec=spec}]
 	   
    in	
      List.concat (List.map do_spec_verification spec_list)
@@ -446,18 +446,21 @@ end
  let rec check_exp (w:mainwindow) (spec_iter_list :Gtk.tree_iter list) (prog : prog_decl) (proc : proc_decl) (crt_paths: path_trace list) e0  : path_trace list = 
    match e0 with
      |Assert ({exp_assert_asserted_formula = c1_o;
-   	       exp_assert_assumed_formula = c2;
-	       exp_assert_path_id = (pid,s);
-   	       exp_assert_pos = pos}) -> begin
-	 (* print_string (Cprinter.string_of_formula_label (pidi,s) (("ASSERT at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum))  ^ "\n\n"));flush stdout; *)
-   	 match c1_o with
-   	   | None -> crt_paths
-   	   | Some c1 -> begin
-   	       ignore (List.map (w#add_obl ItemAssert ("ASSERT at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) proc c1 pos (pid,s) crt_paths) spec_iter_list);
-	       crt_paths
-   	     end
-       end
-
+               exp_assert_assumed_formula = c2;
+               exp_assert_path_id = (pid,s);
+               exp_assert_type = t;
+               exp_assert_pos = pos}) -> (
+         match c1_o with
+         | None -> crt_paths
+         | Some c1 -> (
+             let str = match t with
+               | None -> "ASSERT"
+               | Some true -> "ASSERT_EXACT"
+               | Some false -> "ASSERT_INEXACT" in
+             ignore (List.map (w#add_obl ItemAssert (str ^" at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) proc c1 pos (pid,s) crt_paths) spec_iter_list);
+             crt_paths
+           )
+       )
      | Assign ({exp_assign_lhs = v;
    		exp_assign_rhs = rhs;
    		exp_assign_pos = pos}) -> check_exp w spec_iter_list prog proc crt_paths rhs

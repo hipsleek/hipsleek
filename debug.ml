@@ -332,6 +332,14 @@ let ho_4_loop s = ho_4_opt_aux false [] true (fun _ -> true) None s
 let ho_5_loop s = ho_5_opt_aux false [] true (fun _ -> true) None s
 let ho_6_loop s = ho_6_opt_aux false [] true (fun _ -> true) None s
 
+let ho_1_loop_num (i:int) s =  ho_1_opt_aux false [] true (fun _ -> true) None (s^"#"^(string_of_int i))
+let ho_2_loop_num (i:int) s =  ho_2_opt_aux false [] true (fun _ -> true) None (s^"#"^(string_of_int i))
+let ho_3_loop_num (i:int) s =  ho_3_opt_aux false [] true (fun _ -> true) None (s^"#"^(string_of_int i))
+let ho_4_loop_num (i:int) s =  ho_4_opt_aux false [] true (fun _ -> true) None (s^"#"^(string_of_int i))
+let ho_5_loop_num (i:int) s =  ho_5_opt_aux false [] true (fun _ -> true) None (s^"#"^(string_of_int i))
+let ho_6_loop_num (i:int) s =  ho_6_opt_aux false [] true (fun _ -> true) None (s^"#"^(string_of_int i))
+
+
 let ho_1_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_1 str
 let ho_2_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_2 str
 let ho_3_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_3 str
@@ -352,6 +360,20 @@ let no_5_loop _ _ _ _ _ _ _ f e1 e2 e3 e4
 let no_6_loop _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5
       = ho_aux_no (f e1 e2 e3 e4 e5)
 
+let no_1_loop_num _ _ _ _ f 
+      = ho_aux_no f
+let no_2_loop_num _ _ _ _ _ f e1 
+      = ho_aux_no (f e1)
+let no_3_loop_num _ _ _ _ _ _ f e1 e2
+      = ho_aux_no (f e1 e2)
+let no_4_loop_num _ _ _ _ _ _ _ f e1 e2 e3
+      = ho_aux_no (f e1 e2 e3)
+let no_5_loop_num _ _ _ _ _ _ _ _ f e1 e2 e3 e4
+      = ho_aux_no (f e1 e2 e3 e4)
+let no_6_loop_num _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5
+      = ho_aux_no (f e1 e2 e3 e4 e5)
+
+	  
 let no_1_num (i:int) s _ _ f
       = ho_aux_no f
 let no_2_num (i:int) s _ _ _ f e1

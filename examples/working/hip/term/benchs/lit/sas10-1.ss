@@ -4,7 +4,7 @@ William R. Harris et al. (SAS'10)
 *****************************************************/
 
 bool rand_bool ()
-requires Term
+requires Term[0]
 ensures true;
 
 int rand_int ()

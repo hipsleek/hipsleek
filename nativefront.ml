@@ -47,7 +47,7 @@ let parse (input : string) : command =
 	  | _ -> failwith ("Unsupported command: " ^ cmd)
 *)
 
-let parse (input : string) : command =  Parser.parse_sleek_int "sleek string" input
+let parse_slk (input : string) : command =  Parser.parse_sleek_int "sleek string" input
 
 (* let parse (input : string) : command =   *)
 (*   Debug.loop_1_no "parse" (fun x -> x) (fun _ -> "?") parse input *)

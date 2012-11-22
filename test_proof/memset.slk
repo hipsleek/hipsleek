@@ -1,0 +1,11 @@
+data cell{
+  int val;
+}.
+
+//checkentail x::cell<_>*y::cell<_> |- x!=y.
+
+// checkentail   x::cell<_>*y::cell<_> & x=y  |- false .
+
+checkentail y=1 & y>0 & x>1 |- x>0 .
+
+// --enable-slicing --delay-proving-sat --enable-logging-txt 

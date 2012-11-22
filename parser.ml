@@ -292,6 +292,8 @@ let peek_try =
          | [GT,_;CPAREN,_] -> raise Stream.Failure  
          | [GT,_;SEMICOLON,_]-> raise Stream.Failure
          | [GT,_;ENSURES,_]-> raise Stream.Failure
+         | [GT,_;ENSURES_EXACT,_]-> raise Stream.Failure
+         | [GT,_;ENSURES_INEXACT,_]-> raise Stream.Failure
          | [GT,_;IMM,_] -> raise Stream.Failure 
          | [GT,_;AT,_] -> raise Stream.Failure 
          | [GT,_;MUT,_] -> raise Stream.Failure 
@@ -364,13 +366,6 @@ let peek_try =
           | [FLOAT,_;OSQUARE,_] -> ()
           | [BOOL,_;OSQUARE,_] -> ()
           |  _ -> raise Stream.Failure)
-
- (* let peek_ensures =  *)
- (* SHGram.Entry.of_parser "peek_ensures"  *)
- (*     (fun strm -> *)
- (*       match Stream.npeek 3 strm with *)
- (*          | [ENSURES,_;i,_;j,_]-> print_string((Token.to_string i)^(Token.to_string j));() *)
- (*          | _ -> raise Stream.Failure) *)
 
 let peek_print = 
 SHGram.Entry.of_parser "peek_print"
@@ -477,69 +472,56 @@ let peek_array_type =
              |[_;OSQUARE,_] -> (* An Hoa*) (*let _ = print_endline "Array found!" in*) ()
              | _ -> raise Stream.Failure)
 
-(* Slicing Utils *)
-let rec set_il_formula f il =
-  match f with
-	| P.BForm (bf, lbl) -> P.BForm (set_il_b_formula bf il, lbl)
-	| _ -> f
+(* let contain_vars_pure_double f =      *)
+(*   match f with                        *)
+(* 	| Pure_f _ -> false                  *)
+(* 	| Pure_c pc -> P.contain_vars_exp pc *)
 
-(* TOCHECK : not sure why Debug.ml module cannot be called from here *)
-and set_il_b_formula bf il =
- DD.no_1 "set_il_b_formula" Iprinter.string_of_b_formula Iprinter.string_of_b_formula
-	(fun bf -> set_il_b_formula_x bf il) bf
-	  
-and set_il_b_formula_x bf il =
-  let (pf, o_il) = bf in
-  match o_il with
-	| None -> (pf, il)
-	| Some (_, _, l_exp) ->
-	  match il with
-		| None -> bf
-		| Some (b, i, le) -> (pf, Some (b, i, le@l_exp))
-	  
-and set_il_exp exp il =
-  let (pe, _) = exp in (pe, il)
+(* Determine whether an ineq e1!=e2 *)
+(* is a linking constraints         *)
+let is_ineq_linking_constraint e1 e2 = 
+  match e1, e2 with
+  | Pure_c c1, Pure_c c2 ->
+    (List.length (Gen.BList.remove_dups_eq P.eq_var 
+      ((P.afv c1) @ (P.afv c2)))) > 1 
+  | _ -> false
 
-and contain_vars_pure_double f =
-  match f with
-	| Pure_f _ -> false
-	| Pure_c pc -> P.contain_vars_exp pc
-
-(* and set_slicing_utils_pure_double f il = *)
-(*   let pr_pure_double = function *)
+(* let rec set_slicing_utils_pure_double f il =        *)
+(*   let pr_pure_double = function                     *)
 (* 	| Pure_f pf -> Iprinter.string_of_pure_formula pf *)
-(* 	| Pure_c pc -> Iprinter.string_of_formula_exp pc *)
-(*   in  *)
-(*   DD.no_2 "set_slicing_utils_pure_double" *)
-(* 	pr_pure_double  *)
-(* 	string_of_bool *)
-(* 	pr_pure_double *)
-(* 	set_slicing_utils_pure_double_x f il *)
+(* 	| Pure_c pc -> Iprinter.string_of_formula_exp pc  *)
+(*   in                                                *)
+(*   DD.no_2 "set_slicing_utils_pure_double"           *)
+(* 	pr_pure_double                                    *)
+(* 	string_of_bool                                    *)
+(* 	pr_pure_double                                    *)
+(* 	set_slicing_utils_pure_double_x f il              *)
 				   
-and set_slicing_utils_pure_double f il =
+let set_slicing_utils_pure_double f il =
   (*
 	il = true  -> Pure_f pf is a linking constraint
 	il = false -> Pure_f pf is not a linking constraint,
 	              but we need to find its linking variables
-                  or linking expressions in !F.linking_exp_list,
+                or linking expressions in !F.linking_exp_list,
 	              if any. Those linking variables/expressions
 	              were added into the list at Pure_c cases.
   *)
-  if !Globals.do_slicing then
+  (* if !Globals.do_slicing then *)
+	if not !Globals.dis_slc_ann then
 	match f with
-	  | Pure_f pf ->
-		let ls = P.find_lexp_formula pf !Ipure.linking_exp_list in
-		if (ls == [] && not il) then f
-		else Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), ls)))
-	  (*if il then Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), [])))
-	  else
-		let ls = P.find_lexp_formula pf !Ipure.linking_exp_list in
-		if (ls == []) then f
-		else Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), ls)))*)
-	| Pure_c pc -> let _ = Hashtbl.add !Ipure.linking_exp_list pc 0 in f
+  | Pure_f pf ->
+    let ls = P.find_lexp_formula pf !Ipure.linking_exp_list in
+    if (ls == [] && not il) then f
+    else Pure_f (P.set_il_formula pf (Some (il, Globals.fresh_int(), ls)))
+	  (* if il then Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), []))) *)
+	  (* else                                                                       *)
+		(* let ls = P.find_lexp_formula pf !Ipure.linking_exp_list in                 *)
+		(* if (ls == []) then f                                                       *)
+		(* else Pure_f (set_il_formula pf (Some (il, Globals.fresh_int(), ls)))       *)
+  | Pure_c pc -> let _ = Hashtbl.add !Ipure.linking_exp_list pc 0 in f
   else f
 
-and get_heap_ann annl : F.ann = 
+let rec get_heap_ann annl : F.ann = 
   match annl with
     | (Some a) :: r -> a
     | None :: r -> get_heap_ann r
@@ -573,7 +555,7 @@ non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 non_empty_command:
     [[  t=data_decl           -> DataDef t
       | `PRED;t=view_decl     -> PredDef t
-	  | t=barrier_decl        -> BarrierCheck t
+      | t=barrier_decl        -> BarrierCheck t
       | t = func_decl         -> FuncDef t
       | t = rel_decl          -> RelDef t
       | t = hp_decl          -> HpDef t
@@ -929,9 +911,7 @@ opt_heap_constr: [[ t = heap_constr -> t]];
 (*   ]];  *)
 
 heap_constr:
-  [[ `HTRUE; `SEMICOLON; hrw=heap_rw                        -> F.mkPhase F.HTrue hrw (get_pos_camlp4 _loc 2)
-   | `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; `HTRUE      -> F.mkPhase hrd F.HTrue (get_pos_camlp4 _loc 2)
-   | `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; hrw=heap_rw -> F.mkPhase hrd hrw (get_pos_camlp4 _loc 2)
+  [[ `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; hrw=heap_rw -> F.mkPhase hrd hrw (get_pos_camlp4 _loc 2)
    | `OPAREN; hrd=heap_rd; `CPAREN                          -> F.mkPhase hrd F.HEmp (get_pos_camlp4 _loc 2)
    | hrw = heap_rw                                          -> F.mkPhase F.HEmp hrw (get_pos_camlp4 _loc 2)]]; 
 
@@ -973,6 +953,9 @@ simple_heap_constr:
        let frac = if (Perm.allow_perm ())then frac else empty_iperm () in
        (let imm_opt = get_heap_ann annl in
        match hl with
+       (* WN : HeapNode2 is for d<field=v*> *)
+       (*  p<> can be either node or predicate *)
+       | ([],[]) -> F.mkHeapNode c id dr imm_opt false false false frac [] ofl (get_pos_camlp4 _loc 2)
        | ([],t) -> F.mkHeapNode2 c id dr imm_opt false false false frac t ofl (get_pos_camlp4 _loc 2)
        | (t,_)  -> F.mkHeapNode c id dr imm_opt false false false frac t ofl (get_pos_camlp4 _loc 2))
    | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; frac= opt_perm;`LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
@@ -991,7 +974,7 @@ simple_heap_constr:
        match hl with
        | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr imm_opt false false false frac t ofl (get_pos_camlp4 _loc 2)
        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr imm_opt false false false frac t ofl (get_pos_camlp4 _loc 2))
-   | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hal=opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
+   | peek_heap; c=cid; `COLONCOLON; simple2; frac= opt_perm; `LT; hal= opt_general_h_args; `GT; dr=opt_derv; ofl = opt_formula_label -> (* let _ = print_endline (fst c) in let _ = print_endline id in *)
        (match hal with
        | ([],t) -> F.mkHeapNode2 c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2)
        | (t,_)  -> F.mkHeapNode c generic_pointer_type_name dr (F.ConstAnn(Mutable)) false false false frac t ofl (get_pos_camlp4 _loc 2))
@@ -1068,7 +1051,8 @@ cexp_w:
   |"bconstrp" RIGHTA
       [  lc=SELF; `NEQ;  cl=SELF       ->
 	  let f = cexp_to_pure2 (fun c1 c2 -> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
-	  set_slicing_utils_pure_double f (*false*) (if !opt_ineq then (*(contain_vars_pure_double lc) && (contain_vars_pure_double cl)*) true else false)
+	  set_slicing_utils_pure_double f 
+    (if !opt_ineq (* && (is_ineq_linking_constraint lc cl) *) then true else false)
 	  | lc=SELF; `EQ;   cl=SELF  ->
 	  let f = cexp_to_pure2 (fun c1 c2 -> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl in
 	  set_slicing_utils_pure_double f false
@@ -1293,7 +1277,9 @@ checkeq_cmd:
   ]];
 
 checkentail_cmd:
-  [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b)]];
+  [[ `CHECKENTAIL; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, None)
+   | `CHECKENTAIL_EXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some true)
+   | `CHECKENTAIL_INEXACT; t=meta_constr; `DERIVE; b=extended_meta_constr -> (t, b, Some false)]];
 
 infer_cmd:
   [[ `INFER; `OSQUARE; il=OPT id_list; `CSQUARE; t=meta_constr; `DERIVE; b=extended_meta_constr -> 
@@ -1733,7 +1719,11 @@ spec:
 	    	 F.formula_ext_pos = (get_pos_camlp4 _loc 1)}
   *)
 	 | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
-      F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol))
+      F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol), None)
+   | `ENSURES_EXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
+      F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol), (Some true))
+   | `ENSURES_INEXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
+      F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol), (Some false))
 	 | `CASE; `OBRACE; bl= branch_list; `CBRACE ->F.ECase {F.formula_case_branches = bl; F.formula_case_pos = get_pos_camlp4 _loc 1; }
   ]];
 
@@ -1878,11 +1868,19 @@ barr_statement : [[`BARRIER; `IDENTIFIER t -> I.Barrier {exp_barrier_recv = t ; 
  
 assert_statement:
   [[ `ASSERT; ol= opt_label; f=formulas -> 
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (get_pos_camlp4 _loc 1)
+       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
+   | `ASSERT_EXACT; ol= opt_label; f=formulas -> 
+       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some true) (get_pos_camlp4 _loc 1)
+   | `ASSERT_INEXACT; ol= opt_label; f=formulas -> 
+       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some false) (get_pos_camlp4 _loc 1)
    | `ASSUME; ol=opt_label; dc=disjunctive_constr ->
-       mkAssert None (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (get_pos_camlp4 _loc 1)
+       mkAssert None (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
    | `ASSERT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (get_pos_camlp4 _loc 1)]];
+       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
+   | `ASSERT_EXACT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  
+       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (Some true) (get_pos_camlp4 _loc 1)
+   | `ASSERT_INEXACT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  
+       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (Some false) (get_pos_camlp4 _loc 1)]];
 
 debug_statement:
   [[ `DDEBUG; `ON -> Debug { exp_debug_flag = true;	exp_debug_pos = get_pos_camlp4 _loc 2 }

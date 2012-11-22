@@ -428,6 +428,15 @@ let loop_up_closed_ptr_args prog hd_nodes hv_nodes node_names=
   in
   helper node_names node_names
 
+
+let rec lookup_undef_args args undef_args def_ptrs=
+  match args with
+    | [] -> undef_args
+    | a::ax -> if CP.mem_svl a def_ptrs then (*defined: omit*)
+          lookup_undef_args ax undef_args def_ptrs
+        else (*undefined *)
+          lookup_undef_args ax (undef_args@[a]) def_ptrs
+
 (*=======utilities for infer_collect_hp_rel=======*)
 (*defined pointers list *
   for recursive constraint(HP name *
@@ -1768,11 +1777,11 @@ let remove_dups_recursive_x hp args unk_hps defs=
     (true,defs)
 
 (*return: (base_case_exist,defs)*)
-let remove_dups_recursive hp args unk_hps defs=
+let remove_dups_recursive hp args unk_hpargs defs=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
   let pr2 = pr_pair string_of_bool pr1 in
   Debug.no_3 "remove_dups_recursive" !CP.print_sv !CP.print_svl pr1 pr2
-      (fun _ _ _ -> remove_dups_recursive_x hp args unk_hps defs) hp args defs
+      (fun _ _ _ -> remove_dups_recursive_x hp args unk_hpargs defs) hp args defs
 
 let simplify_set_of_formulas_x prog hp args unk_hps defs=
   let helper f=

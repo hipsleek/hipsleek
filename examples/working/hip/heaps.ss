@@ -362,7 +362,7 @@ int deletemax(ref node t)
 	{
 		bind t to (tval, tnleft, tnright, tleft, tright) in {
 			v = deleteone(tnleft, tnright, tleft, tright);
-			dprint;
+			//dprint;
       tmp = tval;
       
 			ripple(tval, v, tnleft, tnright, tleft, tright);

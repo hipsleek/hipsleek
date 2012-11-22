@@ -3,6 +3,7 @@
 (* command line processing                *)
 (******************************************)
 open Gen.Basic
+open Globals
 
 module M = Lexer.Make(Token.Token)
 
@@ -245,6 +246,10 @@ let process_source_full source =
     (* Stopping the prover *)
     let _ = Tpdispatcher.stop_prover () in
     
+    (* Get the total verification time *)
+    let ptime4 = Unix.times () in
+    let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
+    
     (* An Hoa : export the proof to html *)
     let _ = if !Globals.print_proof then
     		begin 
@@ -254,11 +259,36 @@ let process_source_full source =
     		end
     in
     
+    (* Proof Logging *)
+    let _ = Log.process_proof_logging ()
+    (*  if !Globals.proof_logging || !Globals.proof_logging_txt then  *)
+      (* begin *)
+      (*   let tstartlog = Gen.Profiling.get_time () in *)
+      (*   let _= Log.proof_log_to_file () in *)
+      (*   let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in *)
+      (*   let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt"  in *)
+      (*   let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in *)
+      (*   let _= if (!Globals.proof_logging_txt)  *)
+      (*   then  *)
+      (*     begin *)
+      (*       Debug.info_pprint ("Logging "^fname^"\n") no_pos; *)
+      (*       Debug.info_pprint ("Logging "^fz3name^"\n") no_pos; *)
+      (*       Log.proof_log_to_text_file !Globals.source_files; *)
+      (*       Log.z3_proofs_list_to_file !Globals.source_files *)
+      (*     end *)
+      (*   else try Sys.remove fname  *)
+      (*     (\* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *\) *)
+      (*   with _ -> () *)
+      (*   in *)
+      (*   let tstoplog = Gen.Profiling.get_time () in *)
+      (*   let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in () *)
+      (*   (\* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in    () *\) *)
+      (* end *)
+    in
+    (* let _ = Log.process_sleek_logging () in *)
     (* print mapping table control path id and loc *)
     (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
     
-    let ptime4 = Unix.times () in
-    let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
     print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
 		(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
 		    ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
@@ -267,7 +297,14 @@ let process_source_full source =
 	^ "\tTime spent in main process: " 
 	^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
 	^ "\tTime spent in child processes: " 
-	^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
+	^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n"
+	^ if !Globals.proof_logging || !Globals.proof_logging_txt then 
+      "\tTime for logging: "^(string_of_float (!Globals.proof_logging_time))^" second(s)\n"
+    else ""
+	^ if(!Tpdispatcher.tp = Tpdispatcher.Z3) then 
+      "\tZ3 Prover Time: " ^ (string_of_float !Globals.z3_time) ^ " second(s)\n"
+    else "\n"
+	)
 
 let process_source_full_parse_only source =
   (* print_string ("\nProcessing file \"" ^ source ^ "\"\n");  *)
@@ -319,86 +356,86 @@ let process_source_full_after_parser source (prog, prims_list) =
   (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
   let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
 
-	(* Forward axioms and relations declarations to SMT solver module *)
-	let _ = List.map (fun crdef -> 
-        Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
-	let _ = List.map (fun cadef -> Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion) (List.rev cprog.Cast.prog_axiom_decls) in
-    (* let _ = print_string (" done-2\n"); flush stdout in *)
-    let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in
-    let _ = 
-      if !Globals.verify_callees then begin
-	    let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
-	    Globals.procs_verified := tmp
-      end in
-    let _ = Gen.Profiling.pop_time "Translating to Core" in
-    (* let ptime2 = Unix.times () in
-       let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
-       let _ = print_string (" done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n") in *)
-    let _ =
-      if !Scriptarguments.comp_pred then begin
-	    let _ = print_string ("Compiling predicates to Java..."); flush stdout in
-	    let compile_one_view vdef = 
-	      if (!Scriptarguments.pred_to_compile = ["all"] || List.mem vdef.Cast.view_name !Scriptarguments.pred_to_compile) then
-	        let data_def, pbvars = Predcomp.gen_view cprog vdef in
-	        let java_str = Java.java_of_data data_def pbvars in
-	        let jfile = open_out (vdef.Cast.view_name ^ ".java") in
-	        print_string ("\n\tWriting Java file " ^ vdef.Cast.view_name ^ ".java");
-	        output_string jfile java_str;
-	        close_out jfile
-	      else
-	        ()
-	    in
-	    ignore (List.map compile_one_view cprog.Cast.prog_view_decls);
-	    print_string ("\nDone-3.\n"); flush stdout;
-	    exit 0
-      end 
-    in
-    let _ =
-      if !Scriptarguments.rtc then begin
-	    Rtc.compile_prog cprog source;
-	    exit 0
-      end
-    in
-    let _ = Gen.Profiling.pop_time "Preprocessing" in
-    
-    (* An Hoa : initialize html *)
-    let _ = Prooftracer.initialize_html source in
-    
-    if (!Scriptarguments.typecheck_only) 
-    then print_string (Cprinter.string_of_program cprog)
-    else (try
-	    ignore (Typechecker.check_prog cprog);
-    with _ as e -> begin
-      print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
-      print_string ("\nError(s) detected at main "^"\n");
-      raise e
-    end);
-    (* Stopping the prover *)
-    let _ = Tpdispatcher.stop_prover () in
-    
-    (* An Hoa : export the proof to html *)
-    let _ = if !Globals.print_proof then
-    		begin 
-    			print_string "\nExport proof to HTML file ... ";
-    			Prooftracer.write_html_output ();
-    			print_endline "done!" 
-    		end
-    in
-    
-    (* print mapping table control path id and loc *)
-    (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
-    
-    let ptime4 = Unix.times () in
-    let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
-    print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
-		(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
-		    ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
-    print_string ("\nTotal verification time: " 
-	^ (string_of_float t4) ^ " second(s)\n"
-	^ "\tTime spent in main process: " 
-	^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
-	^ "\tTime spent in child processes: " 
-	^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
+  (* Forward axioms and relations declarations to SMT solver module *)
+  let _ = List.map (fun crdef -> 
+      Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
+  let _ = List.map (fun cadef -> Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion) (List.rev cprog.Cast.prog_axiom_decls) in
+  (* let _ = print_string (" done-2\n"); flush stdout in *)
+  let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in
+  let _ = 
+    if !Globals.verify_callees then begin
+      let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
+      Globals.procs_verified := tmp
+    end in
+  let _ = Gen.Profiling.pop_time "Translating to Core" in
+  (* let ptime2 = Unix.times () in
+     let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
+     let _ = print_string (" done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n") in *)
+  let _ =
+    if !Scriptarguments.comp_pred then begin
+      let _ = print_string ("Compiling predicates to Java..."); flush stdout in
+      let compile_one_view vdef = 
+	if (!Scriptarguments.pred_to_compile = ["all"] || List.mem vdef.Cast.view_name !Scriptarguments.pred_to_compile) then
+	  let data_def, pbvars = Predcomp.gen_view cprog vdef in
+	  let java_str = Java.java_of_data data_def pbvars in
+	  let jfile = open_out (vdef.Cast.view_name ^ ".java") in
+	  print_string ("\n\tWriting Java file " ^ vdef.Cast.view_name ^ ".java");
+	  output_string jfile java_str;
+	  close_out jfile
+	else
+	  ()
+      in
+      ignore (List.map compile_one_view cprog.Cast.prog_view_decls);
+      print_string ("\nDone-3.\n"); flush stdout;
+      exit 0
+    end 
+  in
+  let _ =
+    if !Scriptarguments.rtc then begin
+      Rtc.compile_prog cprog source;
+      exit 0
+    end
+  in
+  let _ = Gen.Profiling.pop_time "Preprocessing" in
+  
+  (* An Hoa : initialize html *)
+  let _ = Prooftracer.initialize_html source in
+  
+  if (!Scriptarguments.typecheck_only) 
+  then print_string (Cprinter.string_of_program cprog)
+  else (try
+    ignore (Typechecker.check_prog cprog);
+  with _ as e -> begin
+    print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
+    print_string ("\nError(s) detected at main "^"\n");
+    raise e
+  end);
+  (* Stopping the prover *)
+  let _ = Tpdispatcher.stop_prover () in
+  
+  (* An Hoa : export the proof to html *)
+  let _ = if !Globals.print_proof then
+    begin 
+      print_string "\nExport proof to HTML file ... ";
+      Prooftracer.write_html_output ();
+      print_endline "done!" 
+    end
+  in
+  
+  (* print mapping table control path id and loc *)
+  (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
+  
+  let ptime4 = Unix.times () in
+  let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
+  print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
+      (List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
+	  ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
+  print_string ("\nTotal verification time: " 
+  ^ (string_of_float t4) ^ " second(s)\n"
+  ^ "\tTime spent in main process: " 
+  ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
+  ^ "\tTime spent in child processes: " 
+  ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
 
 let main1 () =
   (* Cprinter.fmt_set_margin 40; *)
@@ -491,21 +528,21 @@ let _ =
         match s with
           | (_,(false, None, None)) -> exit 0;
           | _ ->
-          Iformula.cmd := s;
-          loop_cmd res;
-          (* let _ =  *)
-          (*   if !Global.enable_counters then *)
-          (*     print_string (Gen.Profiling.string_of_counters ()) *)
-          (*   else () in *)
-          let _ = Gen.Profiling.print_counters_info () in
-          let _ = Gen.Profiling.print_info () in
-          ()
-        with _ as e -> begin
-          finalize ();
-          print_string "caught\n"; Printexc.print_backtrace stdout;
-          print_string ("\nException occurred: " ^ (Printexc.to_string e));
-          print_string ("\nError(s) detected at main \n");
-        end
+                Iformula.cmd := s;
+                loop_cmd res;
+                (* let _ =  *)
+                (*   if !Global.enable_counters then *)
+                (*     print_string (Gen.Profiling.string_of_counters ()) *)
+                (*   else () in *)
+                let _ = Gen.Profiling.print_counters_info () in
+                let _ = Gen.Profiling.print_info () in
+                ()
+      with _ as e -> begin
+        finalize ();
+        print_string "caught\n"; Printexc.print_backtrace stdout;
+        print_string ("\nException occurred: " ^ (Printexc.to_string e));
+        print_string ("\nError(s) detected at main \n");
+      end
     done
 
 

@@ -1,0 +1,24 @@
+at_cache@1
+sat_cache inp1 : p=self & self!=p & self!=null
+sat_cache@1 EXIT out :found?:false ans:false
+
+sat_cache@2
+sat_cache inp1 : p=self
+sat_cache@2 EXIT out :found?:false ans:true
+
+sat_cache@3
+sat_cache inp1 : self!=p & self!=null
+sat_cache@3 EXIT out :found?:false ans:true
+
+sat_cache@4
+sat_cache inp1 : p=self & p=self
+sat_cache@4 EXIT out :found?:false ans:true
+
+sat_cache@5
+sat_cache inp1 : p=self & self=null
+sat_cache@5 EXIT out :found?:false ans:true
+
+sat_cache@6
+sat_cache inp1 : self!=null & p=p_12 & self!=p & self!=p
+sat_cache@6 EXIT out :found?:false ans:true
+// why is self!=p being duplicated!!
