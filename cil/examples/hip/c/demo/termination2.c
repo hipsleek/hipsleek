@@ -1,5 +1,5 @@
 int sum2 (int n)
-   
+/*@ 
 
 
    case
@@ -9,19 +9,17 @@ int sum2 (int n)
   }
   
   
-   
+ */
  
  
 {
-  int tmp;
-  if (n > 0) {
-    tmp = sum2(n-1);
-    return tmp+1;
-  }  else {
+  if (n > 0)
+    return sum2(n-1)+1;
+  else {
   
-       
+    /*@
           assert n > 0;
-        
+      */
     return 1;
   }
 }

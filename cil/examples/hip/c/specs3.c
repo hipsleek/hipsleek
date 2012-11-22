@@ -1,10 +1,3 @@
-int foo0()
-{
-  int x = 10;
-  //@ dprint;
-  return 1;
-}
-
 int foo1()
 /*@
   requires true 
