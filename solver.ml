@@ -2853,9 +2853,9 @@ and heap_entail_struc_init_x (prog : prog_decl) (is_folding : bool)  (has_post: 
 (* this is called mainly by sleek, and in hip for barrier entailment *)
 and heap_entail_struc_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_context) (conseq : struc_formula) pos (pid:control_path_id): (list_context * proof) = 
   (*print just length of residue ctx list*)
-  let length_ctx ctx = match ctx with
-    | CF.FailCtx _ -> 0
-    | CF.SuccCtx ctx0 -> List.length ctx0 in
+  (* let length_ctx ctx = match ctx with *)
+  (*   | CF.FailCtx _ -> 0 *)
+  (*   | CF.SuccCtx ctx0 -> List.length ctx0 in *)
   let pr = Cprinter.string_of_list_context in
   let pr2 = Cprinter.string_of_struc_formula in
   (* let pr_out (ctx_lst, pf) = string_of_int (length_ctx ctx_lst) in  *)
