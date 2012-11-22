@@ -20,6 +20,12 @@ infer [H2,HP,H3,H4]
 */
 
 /*
+  @@ H2(y) & y = log_y -> H4(y)
+  @@ HP(v) & v=null -> emp
+  @@ xp::node<_,y> & y = log_y-> H3(xp) // where y is logical
+*/
+
+/*
 ass hprel: [ H2(y) * HP_416(next_62_428) * x'::node<val_60_421,y>&
   next_62_428=null --> H3(x') * H4(y)&true,
  H2(y)&true --> H4(y)&true]

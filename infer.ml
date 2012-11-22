@@ -1656,12 +1656,12 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
         let _ =
           (* let pr_elem = Cpure.SV.string_of in *)
           (* let pr2 = pr_list (pr_pair pr_elem pr_elem) in *)
-          DD.ninfo_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
-          DD.ninfo_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
+          DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
+          DD.info_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
           DD.ninfo_pprint ("  footprint: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos;
-          DD.ninfo_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
-          DD.ninfo_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
-          DD.ninfo_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
+          DD.info_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
+          DD.info_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
+          DD.info_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
           (* DD.info_pprint ("  lhs aliases: " ^  (pr2 leqs)) pos; (\* aliases from LHS *\) *)
           (* DD.info_pprint ("  rhs aliases: " ^  (pr2 reqs)) pos;  (\* aliases from LHS *\) *)
         in
@@ -1739,15 +1739,15 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           (* DD.info_pprint ("  before: " ^ (Cprinter.string_of_formula new_es_formula)) pos; *)
           let root_vars_ls = SAU.get_data_view_hrel_vars_bformula new_lhs_b in
           (*tricky here: since we dont have matching between two unk hps, we keep sth in rhs which not matched*)
-          (* let rest_svl = CF.get_hp_rel_vars_h_formula rhs_rest in *)
-          (* let rest_svl1 = SAU.find_close rest_svl leqs in *)
-          (* let new_hp_args = CF.get_HRels new_lhs_b.CF.formula_base_heap  in *)
-          (* let keep_hps =  List.concat (List.map (SAU.get_intersect_hps rest_svl1) new_hp_args) in *)
-          (* (\* let _ = DD.info_pprint ("  rest_svl1: " ^ (!CP.print_svl rest_svl1)) pos in *\) *)
-          (* (\* let _ = DD.info_pprint ("  keep_hps: " ^ (!CP.print_svl keep_hps)) pos in *\) *)
-          (* let root_vars_ls1 = CP.diff_svl root_vars_ls keep_hps in *)
+          let rest_svl = CF.get_hp_rel_vars_h_formula rhs_rest in
+          let rest_svl1 = SAU.find_close rest_svl leqs in
+          let new_hp_args = CF.get_HRels new_lhs_b.CF.formula_base_heap  in
+          let keep_hps =  List.concat (List.map (SAU.get_intersect_hps rest_svl1) new_hp_args) in
+          (* let _ = DD.info_pprint ("  rest_svl1: " ^ (!CP.print_svl rest_svl1)) pos in *)
+          (* let _ = DD.info_pprint ("  keep_hps: " ^ (!CP.print_svl keep_hps)) pos in *)
+          let root_vars_ls1 = CP.diff_svl root_vars_ls keep_hps in
           let well_defined_svl = List.concat (List.map (fun (hp,args,_) -> hp::args) defined_hps) in
-          let new_es_formula = SAU.drop_data_view_hrel_nodes_from_root prog new_es_formula hds hvs leqs (root_vars_ls@well_defined_svl) in
+          let new_es_formula = SAU.drop_data_view_hrel_nodes_from_root prog new_es_formula hds hvs leqs (root_vars_ls1@well_defined_svl) in
             (*CF.drop_hrel_f new_es_formula lhrs in *)
           (*add mismatched heap into the entail states if @L*)
           let check_consumed_node h f= 
