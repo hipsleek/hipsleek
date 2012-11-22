@@ -35,6 +35,7 @@ type sleek_log_entry = {
     sleek_proving_id :int;
     sleek_proving_pos: loc;
     sleek_proving_avoid: bool;
+    sleek_proving_caller: string;
     sleek_proving_hec: int;
     sleek_proving_kind : sleek_proving_kind;
     sleek_proving_ante: CF.formula;
@@ -56,6 +57,7 @@ let pr_sleek_log_entry e=
    fmt_string ("HIDE! ")
   );
   fmt_string ("id: " ^ (string_of_int e.sleek_proving_id));
+  fmt_string ("; caller: " ^ (e.sleek_proving_caller));
   fmt_string ("; line: " ^ (Globals.line_number_of_pos e.sleek_proving_pos)) ;
   fmt_string ("; kind: " ^ (string_of_sleek_proving_kind e.sleek_proving_kind)) ;
   fmt_string ("; hec_num: " ^ (string_of_int e.sleek_proving_hec)) ;
@@ -99,11 +101,12 @@ let update_sleek_proving_kind k= let _ = sleek_proving_kind:= k in ()
 
 (* TODO : add result into the log printing *)
 (* wrong order number indicates recursive invocations *)
-let add_new_sleek_logging_entry avoid hec slk_no ante conseq (result:CF.list_context) pos=
+let add_new_sleek_logging_entry caller avoid hec slk_no ante conseq (result:CF.list_context) pos=
   if !Globals.sleek_logging_txt then
     let sleek_log_entry = {
         (* sleek_proving_id = get_sleek_proving_id (); *)
         sleek_proving_id = slk_no;
+        sleek_proving_caller = caller;
         sleek_proving_avoid = avoid;
         sleek_proving_hec = hec;
         sleek_proving_pos = pos;

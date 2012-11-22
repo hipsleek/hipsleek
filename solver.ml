@@ -4617,6 +4617,8 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
 (* snd res is the constraint that causes  *)
 (* the check to fail.                     *)
 
+and hec_stack = new Gen.stack_pr (string_of_int) (==)
+
 (* hec_num denotes particular id of caller *)
 and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 : context) (conseq : formula)
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
@@ -4630,9 +4632,13 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let avoid = (hec_num=11 or hec_num=4) in
     let avoid = avoid or ((hec_num=1 || hec_num=2) && CF.is_emp_term conseq) in
     let slk_no = (* if avoid then 0 else *) Log.get_sleek_proving_id () in
+    let caller = hec_stack # string_of in
+    let avoid = avoid or (not (hec_stack # is_empty)) in
+    let _ = hec_stack # push slk_no in
     let r = hec a b c in
+    let _ = hec_stack # pop in
     let (lc,_) = r in
-    let _ = Log.add_new_sleek_logging_entry avoid hec_num slk_no ante conseq lc pos in
+    let _ = Log.add_new_sleek_logging_entry caller avoid hec_num slk_no ante conseq lc pos in
       r
   in
   Debug.no_3_num hec_num "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
