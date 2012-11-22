@@ -558,6 +558,9 @@ let check_all = ref true
   
 let auto_number = ref true
 
+let sleek_log_filter = ref true
+(* flag to filter trivial sleek entailment logs *)
+
 let use_field = ref false
 
 let large_bind = ref false

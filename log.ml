@@ -32,13 +32,15 @@ type sleek_proving_kind =
     | ASSERTION
 
 type sleek_log_entry = {
-	sleek_proving_id :int;
+    sleek_proving_id :int;
     sleek_proving_pos: loc;
-	sleek_proving_kind : sleek_proving_kind;
+    sleek_proving_avoid: bool;
+    sleek_proving_hec: int;
+    sleek_proving_kind : sleek_proving_kind;
     sleek_proving_ante: CF.formula;
     sleek_proving_conseq: CF.formula;
     sleek_proving_hprel_ass: CF.hprel list;
-	sleek_proving_res : CF.list_context;
+    sleek_proving_res : CF.list_context;
 }
 
 let string_of_sleek_proving_kind t=
@@ -50,22 +52,23 @@ let string_of_sleek_proving_kind t=
 
 let pr_sleek_log_entry e=
   fmt_open_box 1;
-  fmt_string ("id: " ^ (string_of_int e.sleek_proving_id)) ;
+  (if (e.sleek_proving_avoid) then
+   fmt_string ("HIDE! ")
+  );
+  fmt_string ("id: " ^ (string_of_int e.sleek_proving_id));
   fmt_string ("; line: " ^ (Globals.line_number_of_pos e.sleek_proving_pos)) ;
   fmt_string ("; kind: " ^ (string_of_sleek_proving_kind e.sleek_proving_kind)) ;
-  fmt_string "\n";
+  fmt_string ("; hec_num: " ^ (string_of_int e.sleek_proving_hec)) ;
+  fmt_string "\n checkentail";
   fmt_string (Cprinter.string_of_formula e.sleek_proving_ante);
-  fmt_string " |- ";
+  fmt_string "\n |- ";
   fmt_string  (Cprinter.string_of_formula e.sleek_proving_conseq);
-  fmt_string "\n";
-  fmt_string  ("ass hprel: " ^ (
-      match e.sleek_proving_hprel_ass with
-        | [] -> "None"
+  fmt_string ". \n";
+  (match e.sleek_proving_hprel_ass with
+        | [] -> ()
         | _  -> let pr = pr_list_ln Cprinter.string_of_hprel_short in
-                pr e.sleek_proving_hprel_ass
-  )
+                fmt_string ("ass hprel: " ^ (pr e.sleek_proving_hprel_ass)^"\n")
   );
-  fmt_string "\n";
   fmt_string  ("res: " ^ (Cprinter.string_of_list_context_short e.sleek_proving_res));
   fmt_close()
 
@@ -75,8 +78,9 @@ let sleek_counter= ref 0
 
 let proof_log_tbl : (string, proof_log) Hashtbl.t = Hashtbl.create 700
 
-let sleek_log_stk : sleek_log_entry  Gen.stack_pr = new Gen.stack_pr
-  string_of_sleek_log_entry (==)
+let sleek_log_stk : sleek_log_entry  Gen.stack_filter 
+      = new Gen.stack_filter
+  string_of_sleek_log_entry (==) (fun e -> not(e.sleek_proving_avoid))
 
 let sleek_proving_kind = ref (POST : sleek_proving_kind)
 let sleek_proving_id = ref (0 : int)
@@ -95,11 +99,13 @@ let update_sleek_proving_kind k= let _ = sleek_proving_kind:= k in ()
 
 (* TODO : add result into the log printing *)
 (* wrong order number indicates recursive invocations *)
-let add_new_sleek_logging_entry slk_no ante conseq (result:CF.list_context) pos=
+let add_new_sleek_logging_entry avoid hec slk_no ante conseq (result:CF.list_context) pos=
   if !Globals.sleek_logging_txt then
     let sleek_log_entry = {
         (* sleek_proving_id = get_sleek_proving_id (); *)
         sleek_proving_id = slk_no;
+        sleek_proving_avoid = avoid;
+        sleek_proving_hec = hec;
         sleek_proving_pos = pos;
         sleek_proving_kind = !sleek_proving_kind;
         sleek_proving_ante = ante;
@@ -276,19 +282,21 @@ let wrap_calculate_time exec_func src_file args =
 (* 	else ()                                                                                          *)
 
 let sleek_log_to_text_file (src_files) =
-  if !Globals.sleek_logging_txt then
     (* let tstartlog = Gen.Profiling.get_time () in *)
     let oc =
       (try Unix.mkdir "logs" 0o750 with _ -> ());
       (* let with_option = if !Globals.en_slc_ps then "eps" else "no_eps" in *)
       open_out ("logs/sleek_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt")
     in
-    let str = sleek_log_stk # string_of_reverse_log in
+    let str = 
+      if (!Globals.sleek_log_filter)
+        then sleek_log_stk # string_of_reverse_log_filter 
+        else sleek_log_stk # string_of_reverse_log
+    in
     let _=fprintf oc "%s" str in
     (* let tstoplog = Gen.Profiling.get_time () in *)
     (* let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in  *)
-    close_out oc;
-  else ()
+    close_out oc
 
 
 let process_proof_logging ()=
@@ -335,16 +343,15 @@ let add_sleek_log_entry e=
 
 
 
-
-let process_sleek_logging ()=
-  if !Globals.sleek_logging_txt then
-    (* let _ = print_endline "" in *)
-    (* let _ = print_endline "*************************************" in *)
-    (* let _ = print_endline "*******sleek logging ********" in *)
-    (* let _ = print_endline "*************************************" in *)
-    (* let _ = print_endline (sleek_log_stk # string_of) in *)
-    (* let _ = print_endline "*************************************" in () *)
-    let _ = sleek_log_to_text_file !Globals.source_files in
-    ()
-  else
-    ()
+(* let process_sleek_logging ()= *)
+(*   if !Globals.sleek_logging_txt then *)
+(*     (\* let _ = print_endline "" in *\) *)
+(*     (\* let _ = print_endline "*************************************" in *\) *)
+(*     (\* let _ = print_endline "*******sleek logging ********" in *\) *)
+(*     (\* let _ = print_endline "*************************************" in *\) *)
+(*     (\* let _ = print_endline (sleek_log_stk # string_of) in *\) *)
+(*     (\* let _ = print_endline "*************************************" in () *\) *)
+(*     let _ = sleek_log_to_text_file !Globals.source_files in *)
+(*     () *)
+(*   else *)
+(*     () *)

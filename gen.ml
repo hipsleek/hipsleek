@@ -451,6 +451,17 @@ class ['a] stack_pr (epr:'a->string) (eq:'a->'a->bool)  =
 	   else List.exists (fun x -> List.exists (elem_eq x) ls) stk
    end;;
 
+
+class ['a] stack_filter (epr:'a->string) (eq:'a->'a->bool) (fil:'a->bool)  =
+   object 
+     inherit ['a] stack_pr epr eq as super
+     val filter_fn = fil
+     method filter = stk <- List.filter fil stk
+     method string_of_reverse_log_filter = 
+       stk <- List.filter fil stk;
+       super#string_of_reverse_log
+   end;;
+
 class ['a] stack_noexc (x_init:'a) (epr:'a->string) (eq:'a->'a->bool)  =
    object 
      inherit ['a] stack_pr epr eq
