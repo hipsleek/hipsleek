@@ -333,10 +333,11 @@ $output_file = "log";
         ["kara-imm-conj.ss",1,  "--imm", "karatsuba_mult","SUCCESS"],
         ["ll_imm.ss", 6,  " --imm ", "length", "SUCCESS",
          "append", "SUCCESS",
-         "get_next", "SUCCESS",
+         "sumN", "SUCCESS",
          "set_next", "SUCCESS",
          "get_next_next", "SUCCESS",
-         "sumN", "SUCCESS"]],
+         "get_next", "SUCCESS"
+        ]],
 	"hip" =>[
 #	["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
 				["append.ss",1,  "", "append","SUCCESS"],
