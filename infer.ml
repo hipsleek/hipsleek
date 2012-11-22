@@ -1680,7 +1680,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
               hprel_rhs = CF.Base new_rhs_b;
           } in
           let _ = rel_ass_stk # push hp_rel in
-          let _ = Log.sleek_proving_hprel_ass := Some hp_rel in
+          let _ = Log.sleek_proving_hprel_ass :=  (!Log.sleek_proving_hprel_ass @ [hp_rel]) in
           DD.ninfo_pprint ("  hp_rel: " ^ (Cprinter.string_of_hprel hp_rel)) pos;
           let update_es_f f new_hp=
             match new_hp with

@@ -37,7 +37,7 @@ type sleek_log_entry = {
 	sleek_proving_kind : sleek_proving_kind;
     sleek_proving_ante: CF.formula;
     sleek_proving_conseq: CF.formula;
-    sleek_proving_hprel_ass: CF.hprel option;
+    sleek_proving_hprel_ass: CF.hprel list;
 	sleek_proving_res : CF.list_context;
 }
 
@@ -60,8 +60,9 @@ let pr_sleek_log_entry e=
   fmt_string "\n";
   fmt_string  ("ass hprel: " ^ (
       match e.sleek_proving_hprel_ass with
-        | None -> "None"
-        | Some ass  -> Cprinter.string_of_hprel_short ass
+        | [] -> "None"
+        | _  -> let pr = pr_list_ln Cprinter.string_of_hprel_short in
+                pr e.sleek_proving_hprel_ass
   )
   );
   fmt_string "\n";
@@ -79,7 +80,7 @@ let sleek_log_stk : sleek_log_entry  Gen.stack_pr = new Gen.stack_pr
 
 let sleek_proving_kind = ref (POST : sleek_proving_kind)
 let sleek_proving_id = ref (0 : int)
-let sleek_proving_hprel_ass = ref (None : CF.hprel option)
+let sleek_proving_hprel_ass = ref ([] : CF.hprel list)
 
 let get_sleek_proving_id ()=
   let r = !sleek_proving_id in
@@ -108,7 +109,7 @@ let add_new_sleek_logging_entry slk_no ante conseq (result:CF.list_context) pos=
     }
     in
     let _ = sleek_log_stk # push sleek_log_entry in
-    let _ = sleek_proving_hprel_ass := None in
+    let _ = sleek_proving_hprel_ass := [] in
     ()
   else ()
 
