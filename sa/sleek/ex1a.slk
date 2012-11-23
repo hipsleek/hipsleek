@@ -1,0 +1,7 @@
+data node { int val ; node next }.
+
+HeapPred H(node a).
+HeapPred H1(node a).
+HeapPred G(node a, node b).
+//1. for x.next
+infer [G] G(x,y)*y::node<a,c> |- x::node<a,b> * y::node<a,b>.

@@ -94,11 +94,19 @@ type typ =
   | Named of ident (* named type, could be enumerated or object *)
   | Array of (typ * int) (* base type and dimension *)
   | RelT (* relation type *)
+  | HpT (* heap predicate relation type *)
   | Tree_sh
   (* | FuncT (\* function type *\) *)
 
+let is_pointer t=
+ match t with
+   | Named _ -> true
+   | _ -> false
 
 let barrierT = Named "barrier"
+
+(*for heap predicate*)
+let hp_default_prefix_name = "HP_"
 (*
   Data types for code gen
 *)
@@ -218,6 +226,10 @@ let proof_logging = ref false
 let proof_logging_txt = ref false
 let proof_logging_time = ref 0.000
 let sleek_src_files = ref ([]: string list)
+
+(*sleek logging*)
+let sleek_logging_txt = ref false
+
 (*Proof logging facilities*)
 class ['a] store (x_init:'a) (epr:'a->string) =
    object 
@@ -334,6 +346,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | List t        -> "list("^(string_of_typ t)^")"
   | Tree_sh		  -> "Tsh"
   | RelT        -> "RelT"
+  | HpT        -> "HpT"
   (* | Prim t -> string_of_prim_type t  *)
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
@@ -356,6 +369,7 @@ let rec string_of_typ_alpha = function
   | TVar t        -> "TVar_"^(string_of_int t)
   | List t        -> "list_"^(string_of_typ t)
   | RelT        -> "RelT"
+  | HpT        -> "HpT"
   (* | Prim t -> string_of_prim_type t  *)
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
@@ -479,6 +493,7 @@ let lock_name = "lock"
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
 let pragma_list = ref ([] : string list)
+let lib_files = ref ([] : string list)
 
 (*in case the option of saving provers temp files to a different directory is enabled, the value of 
   this variable is going to be changed accordingly in method set_tmp_files_path *)
@@ -504,6 +519,12 @@ let use_split_match = ref false
 let consume_all = ref false
 
 let enable_split_lemma_gen = ref false
+
+let show_diff = ref false
+
+let dis_sem = ref false
+
+let show_diff_constrs = ref false
 
 let procs_verified = ref ([] : string list)
 
@@ -536,6 +557,9 @@ let print_proc = ref false
 let check_all = ref true
   
 let auto_number = ref true
+
+let sleek_log_filter = ref true
+(* flag to filter trivial sleek entailment logs *)
 
 let use_field = ref false
 
@@ -655,6 +679,16 @@ let enable_incremental_proving = ref false
 let disable_multiple_specs =ref false
 
 let perm_prof = ref false
+
+let cp_test = ref false 
+
+let cp_prefile = ref false 
+
+let gen_cpfile = ref false 
+
+let file_cp = ref ""
+
+let cpfile = ref ""
 
   (*for cav experiments*)
   let f_1_slice = ref false

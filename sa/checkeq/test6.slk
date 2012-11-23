@@ -1,0 +1,44 @@
+//heap formula
+data node { int val ; node next }.
+data node2 { int val ; node next }.
+
+
+HeapPred ll(node x).
+HeapPred ll2(node x).
+HeapPred ll3(node x, node y, int n).
+
+//1.
+checkeq[] ll(x) -|- ll2(y).
+//FAIL
+
+//2.
+checkeq[] ll(x) -|- t::node<a,null>.
+//FAIL
+
+//3.
+checkeq[ll,ll2] ll(x) -|- ll2(y).
+//FAIL
+
+//4.
+checkeq[] ll(x) -|- ll(x).
+//VALID
+
+//5.
+checkeq[] ll(x) -|- ll(y).
+//VALID
+
+//6.
+checkeq[x] ll(x) -|- ll(y).
+//FAIL
+
+//7.
+checkeq[] ll(x) * y::node<a,x> -|- ll(y).
+//FAIL
+
+//8.
+checkeq[] ll(x) * y::node<a,x> -|- ll(y) * x::node<b,y>.
+//VALID
+
+//9.
+checkeq[y] ll(x) * y::node<a,x> -|- ll(y) * x::node<b,y>.
+//FAIL

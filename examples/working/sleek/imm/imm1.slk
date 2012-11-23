@@ -10,10 +10,11 @@ checkentail (x::ll<n>@L); y::ll<m> * ((t::ll<a>@L); z::ll<m>) & n > 0  |- x::ll<
 //1. Fail
 
 
-checkentail (x::ll<n>@L); y::ll<m> * ((t::ll<a>@L); z::ll<m>) & n > 0  |- (x::ll<n>@L); y::ll<m> * t::ll<a>@L.
+checkentail (x::ll<n>@L); y::ll<m> * ((t::ll<a>@L); z::ll<m>) & n > 0  
+  |- (x::ll<n>@L); y::ll<m> * t::ll<a>@L.
 //print residue.
 // t@I; z
-//2. Valid
+//2. Valid (but fail, why?)
 
 checkentail (x::ll<n>@L * p::ll<m>@L); y::ll<m> * ((z::ll<a>@L); t::ll<m>) & n > 0  |- (x::ll<n1>@L * p::ll<m1>@L); t::ll<a1>@I.
 //print residue.

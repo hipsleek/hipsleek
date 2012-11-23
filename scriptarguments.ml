@@ -28,7 +28,18 @@ let set_pred arg =
 let set_proc_verified arg =
   let procs = Gen.split_by "," arg in
 	Globals.procs_verified := procs @ !Globals.procs_verified
-	
+
+let set_file_cp arg =
+  Globals.file_cp := arg;
+   Globals.cp_test := true
+
+let set_gen_cpfile arg =
+  Globals.cpfile := arg;
+   Globals.gen_cpfile := true
+
+let set_lib_file arg =
+  Globals.lib_files := [arg]
+
 let set_frontend fe_str = match fe_str  with
   | "native" -> fe := NativeFE
   | "xml" -> fe := XmlFE
@@ -82,6 +93,8 @@ let common_arguments = [
 	"Disable Lemma Proving");
 	("--dis-auto-num", Arg.Clear Globals.auto_number,
 	"Disable Auto Numbering");
+	("--dis-sleek-log-filter", Arg.Clear Globals.sleek_log_filter,
+	"Sleek Log Filter Flag");
 	("--elp", Arg.Set Globals.check_coercions,
 	"Enable Lemma Proving");
 	("-dd", Arg.Set Debug.devel_debug_on,
@@ -306,6 +319,7 @@ let common_arguments = [
 	(* Proof Logging *)
 	("--en-logging", Arg.Set Globals.proof_logging, "Enable proof logging");
 	("--en-logging-txt", Arg.Set Globals.proof_logging_txt, "Enable proof logging output text file in addition");
+    ("--en-sleek-logging-txt", Arg.Set Globals.sleek_logging_txt, "Enable sleek logging output text file in addition");
 
   (* abduce pre from post *)
   ("--abdfpost", Arg.Set Globals.do_abd_from_post, "Enable abduction from post-condition");
@@ -319,6 +333,9 @@ let common_arguments = [
   
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
   ("--en-lemma-s", Arg.Set Globals.enable_split_lemma_gen, "Enable automatic generation of splitting lemmas");
+  ("--show-diff", Arg.Set Globals.show_diff, "Show differences between formulae");
+  ("--dis-sem", Arg.Set Globals.dis_sem, "Show differences between formulae");
+  ("--show-diff-constrs", Arg.Set Globals.show_diff_constrs, "Show differences between list of constraint");
   ] 
 
 (* arguments/flags used only by hip *)	
@@ -342,6 +359,14 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
    "pass read global variables by value");
   ("--sqt", Arg.Set Globals.seq_to_try,
    "translate seq to try");
+  ("-cp-test", Arg.String set_file_cp,
+   "compare set of constraints");
+  ("-cp-pre-test", Arg.Set Globals.cp_prefile,
+   "compare set of constraints");
+  ("-gen-cpfile", Arg.String set_gen_cpfile,
+   "compare set of constraints");
+  ("-lib", Arg.String set_lib_file,
+   "lib");
   ] 
 
 (* arguments/flags used only by sleek *)	

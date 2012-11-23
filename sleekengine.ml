@@ -23,6 +23,7 @@ module AS = Astsimp
 module DD = Debug
 module XF = Xmlfront
 module NF = Nativefront
+module CEQ = Checkeq
 
 let sleek_proof_counter = new Gen.counter 0
 
@@ -34,6 +35,7 @@ let iobj_def =  {I.data_name = "Object";
 				 I.data_fields = [];
 				 I.data_parent_name = "";
 				 I.data_invs = []; (* F.mkTrue no_pos; *)
+                 I.data_is_template = false;
 				 I.data_methods = [] }
 
 let iprog = { I.prog_data_decls = [iobj_def];
@@ -44,6 +46,8 @@ let iprog = { I.prog_data_decls = [iobj_def];
 			  I.prog_func_decls = [];
 			  I.prog_rel_decls = [];
 			  I.prog_rel_ids = [];
+              I.prog_hp_decls = [];
+			  I.prog_hp_ids = [];
 			  I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
 			  I.prog_proc_decls = [];
 			  I.prog_coercion_decls = [];
@@ -62,6 +66,7 @@ let cprog = ref { C.prog_data_decls = [];
 			  C.prog_logical_vars = [];
 (*				C.prog_func_decls = [];*)
 				C.prog_rel_decls = []; (* An Hoa *)
+                C.prog_hp_decls = [];
 				C.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
 			  (*C.old_proc_decls = [];*)
 			  C.new_proc_decls = Hashtbl.create 1; (* no need for proc *)
@@ -75,12 +80,14 @@ let clear_iprog () =
   iprog.I.prog_data_decls <- [iobj_def];
   iprog.I.prog_view_decls <- [];
   iprog.I.prog_rel_decls <- [];
+  iprog.I.prog_hp_decls <- [];
   iprog.I.prog_coercion_decls <- []
 
 let clear_cprog () =
   !cprog.C.prog_data_decls <- [];
   !cprog.C.prog_view_decls <- [];
   !cprog.C.prog_rel_decls <- [];
+  !cprog.C.prog_hp_decls <- [];
   !cprog.C.prog_left_coercions <- [];
   !cprog.C.prog_right_coercions <- []
 
@@ -111,15 +118,22 @@ let check_data_pred_name name : bool =
 						false
 					with
 			  		| Not_found -> 
-              begin
-					      try
-			        		let _ = I.look_up_func_def_raw iprog.I.prog_func_decls name in
+                        begin
+					        try
+			        		    let _ = I.look_up_func_def_raw iprog.I.prog_func_decls name in
 						      false
-					      with
-			        		| Not_found -> true
-		        	end
-		  	end
-	  end
+					        with
+			        		  | Not_found ->
+                                begin
+					                try
+			        		            let _ = I.look_up_hp_def_raw iprog.I.prog_hp_decls name in
+						                false
+					                with
+			        		          | Not_found -> true
+		        	            end
+		        	    end
+		  	    end
+	end
 
 let check_data_pred_name name :bool = 
   let pr1 x = x in
@@ -270,6 +284,19 @@ let process_rel_def rdef =
   else
 		print_string (rdef.I.rel_name ^ " is already defined.\n")
 
+let process_hp_def hpdef =
+  let _ = print_string (hpdef.I.hp_name ^ " is defined.\n") in
+  if check_data_pred_name hpdef.I.hp_name then
+	let tmp = iprog.I.prog_hp_decls in
+	  try
+          iprog.I.prog_hp_decls <- ( hpdef :: iprog.I.prog_hp_decls);
+		  let chpdef = AS.trans_hp iprog hpdef in !cprog.C.prog_hp_decls <- (chpdef :: !cprog.C.prog_hp_decls);
+			(* Forward the relation to the smt solver. *)
+		  Smtsolver.add_hp_relation chpdef.C.hp_name chpdef.C.hp_vars chpdef.C.hp_formula;
+	  with
+		| _ ->  dummy_exception() ; iprog.I.prog_hp_decls <- tmp
+  else
+	print_string (hpdef.I.hp_name ^ " is already defined.\n")
 
 (** An Hoa : process axiom
  *)
@@ -453,6 +480,38 @@ let meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
   Debug.no_1 "Sleekengine.meta_to_formual" pr_meta pr_f
              (fun mf -> meta_to_formula mf quant fv_idents stab) mf0
 
+let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents stab : CF.formula = match mf0 with
+  | MetaFormCF mf -> mf
+  | MetaFormLCF mf ->	(List.hd mf)
+  | MetaForm mf ->
+      let h = List.map (fun c-> (c,Unprimed)) fv_idents in
+      let wf = AS.case_normalize_formula_not_rename iprog h mf in
+     
+      let _ = Astsimp.gather_type_info_formula iprog wf stab false in
+      (*let _ = print_endline ("WF: " ^ Iprinter.string_of_formula wf ) in *)
+      let r = AS.trans_formula iprog quant fv_idents false wf stab false in
+      (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
+      (* let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in *)
+      r
+  | MetaVar mvar -> begin
+      try 
+				let mf = get_var mvar in
+	  			meta_to_formula_not_rename mf quant fv_idents stab
+      with
+			| Not_found ->
+	    	dummy_exception() ;
+	    	print_string (mvar ^ " is undefined.\n");
+	    	raise SLEEK_Exception
+    	end
+  | MetaCompose (vs, mf1, mf2) -> begin
+      let cf1 = meta_to_formula_not_rename mf1 quant fv_idents stab in
+      let cf2 = meta_to_formula_not_rename mf2 quant fv_idents stab in
+      let svs = List.map (fun v -> AS.get_spec_var_stab v stab no_pos) vs in
+      let res = Cformula.compose_formula cf1 cf2 svs Cformula.Flow_combine no_pos in
+	res
+    end
+  | MetaEForm _ | MetaEFormCF _ -> report_error no_pos ("cannot have structured formula in antecedent")
+
 let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = residues := None in
   let stab = H.create 103 in
@@ -507,9 +566,12 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* Init context with infer_vars and orig_vars *)
   let (vrel,iv) = List.partition (fun v -> CP.type_of_spec_var v == RelT(*  ||  *)
               (* CP.type_of_spec_var v == FuncT *)) vars in
+  let (v_hp_rel,iv) = List.partition (fun v -> CP.type_of_spec_var v == HpT(*  ||  *)
+              (* CP.type_of_spec_var v == FuncT *)) iv in
   (* let _ = print_endline ("WN: vars rel"^(Cprinter.string_of_spec_var_list vrel)) in *)
+  (* let _ = print_endline ("WN: vars hp rel"^(Cprinter.string_of_spec_var_list v_hp_rel)) in *)
   (* let _ = print_endline ("WN: vars inf"^(Cprinter.string_of_spec_var_list iv)) in *)
-  let ctx = Inf.init_vars ctx iv vrel orig_vars in
+  let ctx = Inf.init_vars ctx iv vrel v_hp_rel orig_vars in
 
   let _ = if !Globals.print_core 
     then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante)
@@ -530,8 +592,8 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   in
   (* let _ = print_endline ("WN# 1:"^(Cprinter.string_of_list_context rs1)) in *)
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
-  (* let _ = print_endline ("WN# 2:"^(Cprinter.string_of_list_context rs)) in *)
-  flush stdout;
+  (*  let _ = print_endline ("WN# 2:"^(Cprinter.string_of_list_context rs)) in  *)
+  (* flush stdout; *)
   let res =
     if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
     else ((not (CF.isFailCtx rs))) in
@@ -661,6 +723,46 @@ let process_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype:
   let pr = string_of_meta_formula in
   Debug.no_2 "process_entail_check_helper" pr pr (fun _ -> "?") process_entail_check_x iante iconseq etype
 
+let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula) =
+  (*let _ = print_endline ("\n Compare Check") in*)
+  let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
+  let num_id = "\nCheckeq "^nn in
+  let stab = H.create 103 in
+  let _ = if (!Globals.print_input) then print_endline ("INPUT: \n ### if1 = " ^ (string_of_meta_formula if1) ^"\n ### if2 = " ^ (string_of_meta_formula if2)) else () in
+  let _ = Debug.devel_pprint ("\nrun_cmp_check:"
+                              ^ "\n ### f1 = "^(string_of_meta_formula if1)
+                              ^ "\n ### f2 = "^(string_of_meta_formula if2)
+                              ^"\n\n") no_pos in
+  
+  let f1 = meta_to_formula_not_rename if1 false [] stab  in
+  let f2 = meta_to_formula_not_rename if2 false [] stab  in
+
+  let _ = if (!Globals.print_core) then print_endline ("INPUT: \n ### formula 1= " ^ (Cprinter.string_of_formula f1) ^"\n ### formula 2= " ^ (Cprinter.string_of_formula f2)) else () in
+
+  (*let f2 = Solver.prune_preds !cprog true f2 in *)
+  if(!Globals.show_diff) then( 
+    let (res, mt_list) = CEQ.checkeq_formulas_with_diff ivars f1 f2 in
+    let _ = if(res) then(
+      print_string (num_id^": Valid.")
+    )
+      else
+        print_string (num_id^": Fail.\n")
+  (* print_endline ("\n VALID") else print_endline ("\n FAIL") *)
+    in
+    ()
+  )
+  else (
+    let (res, mt_list) = CEQ.checkeq_formulas ivars f1 f2 in
+    let _ = if(res) then(
+      print_string (num_id^": Valid.")
+    )
+      else
+        print_string (num_id^": Fail.\n")
+  (* print_endline ("\n VALID") else print_endline ("\n FAIL") *)
+    in
+    let _ = if(res) then Debug.info_pprint (CEQ.string_of_map_table (List.hd mt_list) ^ "\n") no_pos in
+    ()
+   )
 let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in
@@ -701,6 +803,53 @@ let process_print_command pcmd0 = match pcmd0 with
 	  else
 			print_string ("unsupported print command: " ^ pcmd)
 
+let process_cmp_command (input: ident list * ident * meta_formula list) =
+  let iv,var,fl = input in
+  if var = "residue" then
+    match !residues with
+      | None -> print_string ": no residue \n"
+      | Some (ls_ctx, print) ->(
+        if (print) then (
+	  if(List.length fl = 1) then (
+	    let f = List.hd fl in
+	    let cfs = CF.list_formula_of_list_context ls_ctx in
+	    let cf1 = (List.hd cfs) in (*if ls-ctx has exacly 1 ele*)
+	    let stab = H.create 103 in
+	    let cf2 = meta_to_formula_not_rename f false [] stab  in
+	    let _ = Debug.info_pprint ("Compared residue: " ^ (Cprinter.string_of_formula cf2) ^ "\n") no_pos in
+	    let res,mt = CEQ.checkeq_formulas iv cf1 cf2 in
+	    if(res) then  print_string ("EQUAL\n") else  print_string ("NOT EQUAL\n")
+	  )
+	  else  print_string ("ERROR: Input is 1 formula only\n")
+	)
+      )
+  else if (var = "assumption") then(
+    match !residues with
+      | None -> print_string ": no residue \n"
+      | Some (ls_ctx, print) ->(
+        if (print) then (
+	  if(List.length fl = 2) then (
+	    let f1,f2 = (List.hd fl, List.hd (List.tl fl)) in
+	    let stab = H.create 103 in
+	    let cf11 = meta_to_formula_not_rename f1 false [] stab  in
+	    let cf12 = meta_to_formula_not_rename f2 false [] stab  in
+	    let _ = Debug.info_pprint ("Compared assumption: " ^ (Cprinter.string_of_formula cf11) ^ ", " ^ (Cprinter.string_of_formula cf12) ^ "\n") no_pos in
+	    let hprels = match ls_ctx with
+	      | CF.SuccCtx (c::_) ->  CF.collect_hp_rel c
+	      | _ -> [] (*TODO: report error ?*)
+	    in
+	    let hprel1 = List.hd hprels in
+	    let cf21,cf22 = hprel1.CF.hprel_lhs,hprel1.CF.hprel_rhs in
+	    let res,mtl = CEQ.check_equiv_constr iv (cf11,cf12) (cf21, cf22) in
+	    if(res) then  print_string ("EQUAL\n") else  print_string ("NOT EQUAL\n")
+	  )
+	  else  print_string ("ERROR: Input is 1 formula only\n")
+	)
+      )
+  )
+  else
+    print_string ("unsupported compare command: " ^ var)
+
 let get_residue () = !residues
 
 let get_residue () =
@@ -709,4 +858,9 @@ let get_residue () =
     (*| None -> ""*)
     (*| Some s -> Cprinter.string_of_list_formula (CF.list_formula_of_list_context s)*)
 
-
+let meta_constr_to_constr (meta_constr: meta_formula * meta_formula): (CF.formula * CF.formula) = 
+  let if1, if2 = meta_constr in
+  let stab = H.create 103 in
+  let f1 = meta_to_formula_not_rename if1 false [] stab  in
+  let f2 = meta_to_formula_not_rename if2 false [] stab  in
+  (f1,f2)
