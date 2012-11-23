@@ -1,0 +1,50 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+//(1)
+//inferred pure: [-1<=y]
+infer [y] m=y+1 |- m>=0.
+print residue.
+
+//(2)
+// @2! new_p2:  false
+//infer_pure_m@2 EXIT out :(new es,inf pure) :(None,None)
+infer [y] m=y+1 |- m=0 & m!=0.
+print residue.
+
+//(3)
+//inferred pure: [1<=y]
+infer [y] y>=0 |- y>0.
+print residue.
+
+//(4)
+// should it not be(y=0|y=1)?
+// LHS contradict RHS
+// @4! new_p2:  false
+infer [y] (y=0 | y=1) |- y>4.
+print residue.
+
+//(5)
+// should it not be y!=1?
+infer [y] y=1 |- y>4.
+print residue.
+
+//(6)
+// inferring y=5 seems too strong?
+infer [y] (y=0 | y=5) |- y>4.
+print residue.
+
+//(7)
+// I guess it is OK to infer false?
+// or should we infer y!=3
+// If the latter, we need infer_lhs_contra back
+//
+infer [y] y=3 |- y=5.
+print residue.
+

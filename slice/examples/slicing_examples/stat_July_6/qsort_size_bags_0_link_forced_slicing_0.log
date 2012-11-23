@@ -1,0 +1,132 @@
+/usr/local/bin/mona
+/usr/local/bin/oc
+
+Processing file "qsort_size_bags_0_link.ss"
+Parsing...
+Parsing...
+Starting Omega... 
+Translating global variables to procedure parameters...
+Translating to core language...
+
+ warning qsort_size_bags_0_link.ss_65_9 quantifying: S3 n3
+
+ warning qsort_size_bags_0_link.ss_19_12 quantifying: S1 S2 n1 n2
+Checking procedure qsort1$node... 
+Procedure qsort1$node SUCCESS
+Checking procedure append_bll1$node~node... 
+Procedure append_bll1$node~node SUCCESS
+Checking procedure partition1$node~node~node~int... 
+Procedure partition1$node~node~node~int SUCCESS
+Stop Omega... 410 invocations 
+1 false contexts at: ( (91,1) )
+
+Total verification time: 2.33 second(s)
+	Time spent in main process: 0.7 second(s)
+	Time spent in child processes: 1.63 second(s)
+Counters: 
+ cnt_Overall = 1
+cnt_Parsing = 2
+cnt_Preprocessing = 1
+cnt_TP.imply_timeout = 431
+cnt_Translating global var = 1
+cnt_Translating to Core = 1
+cnt_add_pure = 687
+cnt_elim_exists = 65
+cnt_elim_redundant_ctr = 13
+cnt_empty_predicate_testing = 22
+cnt_entail_prune = 16
+cnt_erc_imply = 42
+cnt_fast_imply = 439
+cnt_filter_dupl_memo = 1350
+cnt_heap_entail_one_context_struc#2 = 14
+cnt_heap_entail_one_context_struc#4 = 20
+cnt_heap_entail_one_context_struc#fold = 10
+cnt_imply = 431
+cnt_imply_proc_one_full = 26
+cnt_imply_proc_one_ncplx = 120
+cnt_is_sat = 702
+cnt_memo_imply = 12
+cnt_memo_norm = 723
+cnt_merge_mems_r_dups = 512
+cnt_method append_bll1$node~node = 1
+cnt_method partition1$node~node~node~int = 1
+cnt_method qsort1$node = 1
+cnt_normalize_max_renaming_list_failesc_context = 40
+cnt_pred_inference = 1
+cnt_proof_after_base_case = 2
+cnt_prune_imply = 212
+cnt_prune_preds = 103
+cnt_prune_preds_filter = 103
+cnt_push_exists_slicing = 93
+cnt_simplify = 35
+cnt_slow_imply = 42
+cnt_unfold_unsat = 15
+consumed_nodes_counter = 40
+consumed_specialized_nodes = 13
+dropped_branches = 12
+false_imply_count = 301
+fast_imply_success = 10
+impl_cache_count = 363
+impl_conseq_count = 194
+impl_proof_count = 246
+imply_sem_prun_false = 205
+imply_sem_prun_true = 7
+need_split = 2
+prune_cnt = 12
+sat_cache_count = 702
+sat_proof_count = 295
+stat_count_imply = 431
+stat_count_sat = 702
+stat_disj_count_imply = 1005
+stat_disj_count_sat = 971
+stat_size_count_imply = 2474
+stat_size_count_sat = 2000
+syn_memo_count = 222
+syn_memo_hit = 10
+total_unfold_disjs = 18
+true_imply_count = 130
+with_disj_cnt_0_s = 94
+with_disj_cnt_2_f = 12
+with_disj_cnt_2_s = 14
+z_stat_disj_imply = 487
+z_stat_disj_sat = 897
+
+ profile results: there where 37 keys 
+ 
+(Overall,2.31,1,2.31,[2.31],  100.%) 
+(Parsing,0.01,2,0.,[],  0.86%) 
+(Preprocessing,0.46,1,0.46,[],  19.82%) 
+(TP.imply_timeout,0.,431,0.,[],  0.%) 
+(Translating global var,0.,1,0.,[],  0.%) 
+(Translating to Core,0.44,1,0.44,[],  18.96%) 
+(add_pure,0.01,687,0.,[],  0.86%) 
+(elim_exists,0.,65,0.,[],  0.%) 
+(elim_redundant_ctr,0.09,13,0.,[],  3.87%) 
+(empty_predicate_testing,0.18,22,0.,[],  8.18%) 
+(entail_prune,0.22,16,0.01,[],  9.48%) 
+(erc_imply,0.09,42,0.,[],  3.87%) 
+(fast_imply,0.,439,0.,[],  0.%) 
+(filter_dupl_memo,0.,1350,0.,[],  0.%) 
+(heap_entail_one_context_struc#2,0.84,14,0.06,[],  36.63%) 
+(heap_entail_one_context_struc#4,0.33,20,0.01,[],  14.65%) 
+(heap_entail_one_context_struc#fold,0.29,10,0.02,[],  12.93%) 
+(imply,1.29,431,0.,[],  55.6%) 
+(imply_proc_one_full,0.11,26,0.,[],  4.74%) 
+(imply_proc_one_ncplx,0.31,120,0.,[],  13.79%) 
+(is_sat,0.62,702,0.,[],  27.15%) 
+(memo_imply,0.15,12,0.01,[],  6.89%) 
+(memo_norm,0.,723,0.,[],  0.%) 
+(merge_mems_r_dups,0.,512,0.,[],  0.%) 
+(method append_bll1$node~node,0.21,1,0.21,[],  9.48%) 
+(method partition1$node~node~node~int,0.62,1,0.62,[0.62],  27.15%) 
+(method qsort1$node,0.9,1,0.9,[0.9],  38.79%) 
+(normalize_max_renaming_list_failesc_context,0.,40,0.,[],  0.%) 
+(pred_inference,0.28,1,0.28,[],  12.06%) 
+(proof_after_base_case,0.,2,0.,[],  0.%) 
+(prune_imply,0.,212,0.,[],  0.%) 
+(prune_preds,0.64,103,0.,[],  27.58%) 
+(prune_preds_filter,0.,103,0.,[],  0.%) 
+(push_exists_slicing,0.,93,0.,[],  0.%) 
+(simplify,0.,35,0.,[],  0.%) 
+(slow_imply,0.09,42,0.,[],  3.87%) 
+(unfold_unsat,0.02,15,0.,[],  0.86%)

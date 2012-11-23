@@ -1,0 +1,44 @@
+/*
+ * LDK
+ * implicit normalization of fractional permissions of MUST aliased data nodes
+ * x1::p(f1)<v1*> * x2::p(f2)<v2*> * ... & (x1=x2=..)
+ * -> x1::p(f)<v1*> & f=f1+f2+... * & v1*=v2*=... & 0.0<f1,f2,...<=1.0*)
+*/
+
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+//lemma "splitnode" self::node(f)<v,p> & f=f1+f2 -> self::node(f1)<v,p> * self::node(f2)<v,p>.
+
+//lemma "combinenode" self::node(f)<v,p> & f=f1+f2 <- self::node(f1)<v,p> * self::node(f2)<v,p>.
+
+//(1)
+checkentail x::node(f1)<p1,v1>  * y::node(f2)<p2,v2>  |- x::node(f)<p,v>.
+print residue. //no normalization
+
+//(2)
+checkentail x::node(f1)<p1,v1>  * y::node(f2)<p2,v2> & x=y |- x::node(f)<p,v>.
+print residue. // normalize into x
+
+//(3)
+checkentail x::node(f1)<p1,v1>  * x::node(f2)<p2,v2>  |- x::node(f)<p,v>.
+print residue. //noralize  into x
+
+//(4)
+checkentail x::node(f1)<p1,v1>  * y::node(f2)<p2,v2> * z::node(f3)<p3,v3> * x1::node(f1)<p1,v1>  * y1::node(f2)<p2,v2> & x=y & z=y & x1=y1 |- x::node(f)<p1,v1>.
+print residue. //normalize into x and x1
+
+//(5)
+checkentail x::node(f1)<p1,v1>  * y::ll(f2)<n> & x=y |- x::node(f1)<p,v>.
+print residue. // valid, considered as NO ALIASED
+
+//(6)
+checkentail x::node(f1)<p1,v1>  * y::ll(f2)<n> & x=y |- x::node(f1+f2)<p,v>.
+print residue. // considered as NO ALIASED, CAN NOT HANDLE
+
+//(7)
+checkentail x::node(0.5*f)<p,v>  * x::node(0.5*f)<p,v>  |- x::node(f)<p,v>.
+print residue. //noralize into x

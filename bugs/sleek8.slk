@@ -7,6 +7,7 @@ pred lseg<n, p> == self = p & n = 0
 
 lemma self::lseg<n, p> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
 
+/*
 checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3 & n2 = 4.
 //print residue.
 // valid
@@ -24,10 +25,12 @@ checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = 4 
 
 checkentail x::lseg<n, p> & n = 6 |- x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = n2.
 // valid 
+*/
 
 checkentail x::lseg<n, p> * t1::lseg<x1, y1> & n = 6 |- t1::lseg<x2, y2> * x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = n2.
-// valid ==> goes into a loop??
+// valid
 
+/*
 checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3 & n2 = 4.
 // valid
 //print residue.
@@ -56,3 +59,4 @@ checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3
 // valid
 checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = 3 & n2 = 3.
 // fail
+*/

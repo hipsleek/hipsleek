@@ -29,7 +29,7 @@
 	 ("bool", BOOL);
 	 ("break", BREAK);
 	 ("class", CLASS);
-	 ("coercion", COERCION);
+	 (* ("coercion", COERCION); *)
 	 ("conseq", CONSEQ);
 	 ("const", CONST);
 	 ("continue", CONTINUE);
@@ -39,6 +39,8 @@
 	 ("dynamic", DYNAMIC);
 	 ("else", ELSE);
 	 ("ensures", ENSURES);
+   ("ensures_exact", ENSURES_EXACT);
+   ("ensures_inexact", ENSURES_INEXACT);
 	 ("enum", ENUM);
 	 ("ex", EXISTS);
 	 ("exists", EXISTS);
@@ -54,6 +56,7 @@
 	 ("int", INT);
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
+     ("lemma", LEMMA);
 	 ("max", MAX);
 	 ("min", MIN);
 	 ("bagmax", BAGMAX);

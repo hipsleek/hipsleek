@@ -1,0 +1,6 @@
+// (1)
+checkentail S={} |- true & exists (y: y notin S | y>3) .
+
+// (2)
+checkentail forall(x: x notin S | x>2) & S={} |- true & exists (y: y notin S | y>3) .
+

@@ -1,0 +1,24 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+lemma self::lseg<n, p> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
+
+/*
+ -tp mona --> valid for both
+ -tp mona --eps --> valid for both
+ -tp mona --imm --> fail for both
+ -tp oc --> fail for both
+*/
+
+// 10
+checkentail x::lseg<n, p> & n > 9 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 >= 9 & n2 >= 2.
+// fail
+
+// 15
+//checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3 & n2 = 5.
+// fail
+

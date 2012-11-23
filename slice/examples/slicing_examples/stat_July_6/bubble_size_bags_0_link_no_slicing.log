@@ -1,0 +1,333 @@
+/usr/local/bin/mona
+/usr/local/bin/oc
+
+Processing file "bubble_size_bags_0_link.ss"
+Parsing...
+Parsing...
+Starting Omega... 
+Translating global variables to procedure parameters...
+Translating to core language...
+
+ warning bubble_size_bags_0_link.ss_35_9 quantifying: sm lg
+Checking procedure bsort$node... 
+Procedure bsort$node SUCCESS
+Checking procedure bubble$node... 
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_1293] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1337] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1337] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_1360] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+!!! do_coercion should try directly lemma: lem_11
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1405] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1489] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[q_1509] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1554] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1554] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+!!! do_coercion should try directly lemma: lem_11
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1627] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1712] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[xs] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+WARNING: File "", line 0, col 0: WARNING: FreeVars unused :[r_1109] 
+
+Procedure bubble$node SUCCESS
+Stop Omega... 248 invocations 
+0 false contexts at: ()
+
+Total verification time: 2.91 second(s)
+	Time spent in main process: 0.91 second(s)
+	Time spent in child processes: 2. second(s)
+Counters: 
+ cnt_Overall = 1
+cnt_Parsing = 2
+cnt_Preprocessing = 1
+cnt_TP.imply_timeout = 520
+cnt_Translating global var = 1
+cnt_Translating to Core = 1
+cnt_add_pure = 929
+cnt_elim_exists = 112
+cnt_elim_redundant_ctr = 17
+cnt_empty_predicate_testing = 17
+cnt_entail_prune = 13
+cnt_erc_imply = 57
+cnt_fast_imply = 423
+cnt_filter_dupl_memo = 1743
+cnt_heap_entail_one_context_struc#2 = 7
+cnt_heap_entail_one_context_struc#4 = 8
+cnt_heap_entail_one_context_struc#fold = 29
+cnt_imply = 520
+cnt_imply_proc_one_full = 70
+cnt_imply_proc_one_ncplx = 152
+cnt_is_sat = 338
+cnt_memo_imply = 11
+cnt_memo_norm = 956
+cnt_method bsort$node = 1
+cnt_method bubble$node = 1
+cnt_normalize_max_renaming_list_failesc_context = 32
+cnt_pred_inference = 1
+cnt_proof_after_base_case = 2
+cnt_prune_imply = 198
+cnt_prune_preds = 103
+cnt_prune_preds_filter = 103
+cnt_simplify = 38
+cnt_slow_imply = 57
+cnt_unfold_unsat = 26
+consumed_nodes_counter = 27
+consumed_specialized_nodes = 4
+dropped_branches = 6
+false_imply_count = 398
+fast_imply_success = 18
+impl_cache_count = 487
+impl_conseq_count = 137
+impl_proof_count = 259
+imply_sem_prun_false = 197
+imply_sem_prun_true = 1
+prune_cnt = 6
+sat_cache_count = 338
+sat_proof_count = 168
+stat_count_imply = 520
+stat_count_sat = 338
+stat_disj_count_imply = 1070
+stat_disj_count_sat = 422
+stat_size_count_imply = 9392
+stat_size_count_sat = 2588
+syn_memo_count = 216
+syn_memo_hit = 18
+total_unfold_disjs = 55
+true_imply_count = 122
+with_disj_cnt_0_s = 82
+with_disj_cnt_2_f = 58
+with_disj_cnt_2_s = 12
+z_stat_disj_imply = 528
+z_stat_disj_sat = 422
+
+ profile results: there where 34 keys 
+ 
+(Overall,2.9,1,2.9,[2.9],  100.%) 
+(Parsing,0.01,2,0.,[],  0.34%) 
+(Preprocessing,0.67,1,0.67,[0.67],  23.1%) 
+(TP.imply_timeout,0.,520,0.,[],  0.%) 
+(Translating global var,0.,1,0.,[],  0.%) 
+(Translating to Core,0.65,1,0.65,[0.65],  22.41%) 
+(add_pure,0.01,929,0.,[],  0.34%) 
+(elim_exists,0.,112,0.,[],  0.%) 
+(elim_redundant_ctr,0.1,17,0.,[],  3.79%) 
+(empty_predicate_testing,0.2,17,0.01,[],  6.89%) 
+(entail_prune,0.25,13,0.01,[],  8.96%) 
+(erc_imply,0.1,57,0.,[],  3.79%) 
+(fast_imply,0.,423,0.,[],  0.%) 
+(filter_dupl_memo,0.,1743,0.,[],  0.%) 
+(heap_entail_one_context_struc#2,0.68,7,0.09,[],  23.44%) 
+(heap_entail_one_context_struc#4,0.21,8,0.02,[],  7.24%) 
+(heap_entail_one_context_struc#fold,0.44,14,0.03,[],  15.51%) 
+(imply,1.23,520,0.,[],  42.41%) 
+(imply_proc_one_full,0.02,70,0.,[],  0.68%) 
+(imply_proc_one_ncplx,0.25,152,0.,[],  8.62%) 
+(is_sat,1.34,338,0.,[],  46.55%) 
+(memo_imply,0.18,11,0.01,[],  6.2%) 
+(memo_norm,0.,956,0.,[],  0.%) 
+(method bsort$node,0.12,1,0.12,[],  4.13%) 
+(method bubble$node,2.02,1,2.02,[2.02],  69.65%) 
+(normalize_max_renaming_list_failesc_context,0.,32,0.,[],  0.%) 
+(pred_inference,0.44,1,0.44,[],  15.17%) 
+(proof_after_base_case,0.,2,0.,[],  0.34%) 
+(prune_imply,0.,198,0.,[],  0.%) 
+(prune_preds,0.69,103,0.,[],  23.79%) 
+(prune_preds_filter,0.,103,0.,[],  0.%) 
+(simplify,0.,38,0.,[],  0.%) 
+(slow_imply,0.1,57,0.,[],  3.79%) 
+(unfold_unsat,0.03,26,0.,[],  1.37%)

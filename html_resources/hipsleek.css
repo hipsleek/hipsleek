@@ -1,0 +1,99 @@
+/**
+ New User Interface
+ @author Vu An Hoa
+ */
+
+body {
+	font-family : Arial;
+}
+	
+#header {
+	width:695px;
+	height:40px;
+	border-style:solid;
+	border-width:5px;
+	border-color:silver;
+	border-radius:15px;
+	text-align:center;
+	vertical-align:middle;
+	color : green;
+	font-size:2em;
+	/* background-color:yellow; */
+}
+	
+#nav {
+	width:200px;
+	height:460px;
+	border-style:solid;
+	border-width:5px;
+	border-color:red;
+	border-radius:5px;
+	position:absolute;
+	left:0px;
+}
+
+#nav ul {
+	list-style-type:none;
+	padding:0px 0px 0px 10px;
+}
+			
+#nav li {
+	padding:3px 0px 2px 0px;
+	width:80%;
+}
+
+#nav span:hover {
+	background-color:orange;
+}
+
+span.ok {
+	padding:0px 0px 0px 20px;
+	background: url(tick.svg) no-repeat left top;
+	background-size:15px;
+}
+
+span.notok {
+	padding:0px 0px 0px 20px;
+	background: url(cross.svg) no-repeat left top;
+	background-size:15px;
+}
+
+#nav .selected {
+	font-weight:bold;
+}
+
+#content_src_container {
+	position:absolute;
+	left:210px;
+}
+
+#content {
+	width:500px;
+	height:300px;
+	border-style:solid;
+	border-width:5px;
+	border-color:green;
+	border-radius:5px;
+}
+
+.verification-table td {
+	border:3px solid #98bf21;
+	padding:3px 7px 2px 7px;
+	width:492px;
+}
+
+#srclink {
+	width:500px;
+	height:150px;
+	border-style:solid;
+	border-width:5px;
+	border-color:blue;
+	border-radius:5px;
+}
+
+/* Styles specific to this particular page */
+.scroll-pane
+{
+	width: 100%;
+	overflow: auto;
+}

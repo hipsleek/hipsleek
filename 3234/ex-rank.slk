@@ -1,0 +1,12 @@
+// loop invariant z>=n
+// ranking function z-n
+
+// (1) rank is bounded
+checkentail  z<=n & z!=n |- n-z>=0.
+
+// (2) loop invariant is preserved
+checkentail  z<=n & z!=n & n-z=R0 |- z+1<=n .
+
+// (3) rank decreases per iteration
+checkentail  z<=n & z!=n & n-z=R0 |- R0>n-(z+1).
+

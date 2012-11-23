@@ -9,35 +9,25 @@ module Err = Error
 let coq_file_number = ref 0
 let result_file_name = "res"
 let log_all_flag = ref false
-let log_file = open_out "allinput.v"
+let log_file = open_log_out "allinput.v"
 let max_flag = ref false
 let choice = ref 1
 let bag_flag = ref false
 let coq_running = ref false
 let coq_channels = ref (stdin, stdout)
 
-
-(* pretty printing for primitive types *)
-(* let rec coq_of_prim_type = function *)
-(*   | Bool          -> "int" *)
-(*   | Float         -> "float"	(\* all types will be ints. *\) *)
-(*   | Int           -> "int" *)
-(*   | Void          -> "unit" 	(\* all types will be ints. *\) *)
-(*  | (TVar i)       ->   (\* type var not supported *\) *)
-(*         Error.report_error {Err.error_loc = no_pos;  *)
-(*         Err.error_text = "type var not supported for Coq"} *)
-(*    | BagT t		      -> "("^(coq_of_prim_type t) ^") set" *)
-(*   | List		  -> "list" *)
-(* ;; *)
+let print_p_f_f = ref (fun (c:CP.formula)-> " formula printing not initialized")  
 
 let rec coq_of_typ = function
   | Bool          -> "int"
   | Float         -> "float"	(* all types will be ints. *)
   | Int           -> "int"
+  | AnnT          -> "int"
   | Void          -> "unit" 	(* all types will be ints. *)
   | BagT t		   -> "("^(coq_of_typ t) ^") set"
   | List _		  -> "list"
-  | UNK | NUM | TVar _ | Named _ | Array _ ->
+  | Tree_sh 	  -> "int"
+  | UNK | NUM | TVar _ | Named _ | Array _ |RelT ->
         Error.report_error {Err.error_loc = no_pos; 
         Err.error_text = "type var, array and named type not supported for Coq"}
 ;;
@@ -84,13 +74,19 @@ and coq_of_exp e0 =
   | CP.Null _ -> "0"
   | CP.Var (sv, _) -> coq_of_spec_var sv
   | CP.IConst (i, _) -> string_of_int i
-  | CP.FConst (f, _) -> failwith ("coq.coq_of_exp: float can never appear here")
+  | CP.Tsconst _ -> failwith ("tsconst not supported in coq, should have already been handled")
+  | CP.AConst (i, _) -> string_of_heap_ann i
+  | CP.FConst (f, _) -> 
+			illegal_format "coq_of_exp : float cannot be handled"
+        (* failwith ("coq.coq_of_exp: float can never appear here") *)
   | CP.Add (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " + " ^ (coq_of_exp a2) ^ ")"
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " - " ^ (coq_of_exp a2) ^ ")"
   | CP.Mult (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " * " ^ (coq_of_exp a2) ^ ")"
   | CP.Div (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " / " ^ (coq_of_exp a2) ^ ")"
   | CP.Max _
-  | CP.Min _ -> failwith ("coq.coq_of_exp: min/max can never appear here")
+  | CP.Min _ -> 
+			illegal_format "coq_of_exp : min/max cannot be handled"
+(* failwith ("coq.coq_of_exp: min/max can never appear here") *)
   (* lists *)
   | CP.List (alist, pos) -> 
     begin match alist with
@@ -127,7 +123,11 @@ and coq_of_exp e0 =
 	  | a::t -> "( ZSets.inter " ^ (coq_of_exp a) ^ " " ^ (coq_of_exp (CP.BagIntersect (t, pos))) ^ ")"
 	  end
   | CP.BagDiff (a1, a2, _) -> " ( ZSets.diff " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
-	| CP.ArrayAt _ -> failwith ("Arrays are not supported in Coq") (* An Hoa *)
+	| CP.Func _ -> 
+			illegal_format "coq_of_exp : function cannot be handled"
+	| CP.ArrayAt _ -> 
+			illegal_format "coq_of_exp : array cannot be handled"
+          (* failwith ("Arrays are not supported in Coq") (\* An Hoa *\) *)
 
 (* pretty printing for a list of expressions *)
 and coq_of_formula_exp_list l = match l with
@@ -136,11 +136,13 @@ and coq_of_formula_exp_list l = match l with
   | h::t       -> (coq_of_exp h) ^ ", " ^ (coq_of_formula_exp_list t)
  
 (* pretty printing for boolean vars *)
-and coq_of_b_formula b = 
-  match b with
+and coq_of_b_formula b =
+  let (pf,_) = b in
+  match pf with
   | CP.BConst (c, _) -> if c then "True" else "False"
   | CP.BVar (bv, _) -> " (" ^ (coq_of_spec_var bv) ^ " = 1)"
   | CP.Lt (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " < " ^ (coq_of_exp a2) ^ ")"
+  | CP.SubAnn (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " <= " ^ (coq_of_exp a2) ^ ")"
   | CP.Lte (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " <= " ^ (coq_of_exp a2) ^ ")"
   | CP.Gt (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " > " ^ (coq_of_exp a2) ^ ")"
   | CP.Gte (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " >= " ^ (coq_of_exp a2) ^ ")"
@@ -168,26 +170,43 @@ and coq_of_b_formula b =
   | CP.BagNotIn (sv, a, _) -> " ( ZSets.mem " ^ (coq_of_spec_var sv) ^ " " ^ (coq_of_exp a) ^ " = false)"
   | CP.BagSub (a1, a2, _) -> " ( ZSets.subset " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ " = true)"
   | CP.BagMin _
-  | CP.BagMax _ -> failwith ("No bags in Coq yet")
-	| CP.RelForm _ -> failwith ("No relations in Coq yet") (* An Hoa *)
+  | CP.BagMax _ -> 
+			illegal_format "coq_of_exp : bags cannot be handled"
+(* failwith ("No bags in Coq yet") *)
+	| CP.RelForm _ -> 
+          (* failwith ("No relations in Coq yet") (\* An Hoa *\) *)
+			illegal_format "coq_of_exp : relation cannot be handled"
+    | CP.LexVar _ -> illegal_format "coq_of_exp : lexvar cannot be handled"
+    | CP.VarPerm _ ->
+		illegal_format "coq_of_exp : VarPerm cannot be handled"
 
 (* pretty printing for formulas *)
-and coq_of_formula f =
+and coq_of_formula pr_w pr_s f =
+  let rec helper f = 
     match f with
-    | CP.BForm (b,_) -> "(" ^ (coq_of_b_formula b) ^ ")"
+      | CP.BForm ((b,_) as bf,_) -> 		
+        begin
+          match (pr_w b) with
+            | None -> "(" ^ (coq_of_b_formula bf) ^ ")"
+            | Some f -> helper f
+        end
+    (* | CP.BForm (b,_) ->  *)
+    (*       "(" ^ (coq_of_b_formula b) ^ ")" *)
     | CP.Not (p, _,_) ->
 	    begin match p with
-		| CP.BForm (CP.BVar (bv, _),_) -> (coq_of_spec_var bv) ^ " = 0"
-		| _ -> " (~ (" ^ (coq_of_formula p) ^ ")) "
+		| CP.BForm ((CP.BVar (bv, _),_),_) -> (coq_of_spec_var bv) ^ " = 0"
+		| _ -> " (~ (" ^ (coq_of_formula pr_s pr_w p) ^ ")) "
         end
     | CP.Forall (sv, p, _, _) ->
-	    " (forall " ^ (coq_of_spec_var sv) ^ "," ^ (coq_of_formula p) ^ ") "
+	    " (forall " ^ (coq_of_spec_var sv) ^ "," ^ (helper p) ^ ") "
     | CP.Exists (sv, p,  _,_) ->
-	    " (exists " ^ (coq_of_spec_var sv) ^ ":"^(coq_type_of_spec_var sv) ^"," ^ (coq_of_formula p) ^ ") "
+	    " (exists " ^ (coq_of_spec_var sv) ^ ":"^(coq_type_of_spec_var sv) ^"," ^ (helper p) ^ ") "
     | CP.And (p1, p2, _) ->
-	    "(" ^ (coq_of_formula p1) ^ " /\\ " ^ (coq_of_formula p2) ^ ")"
+	    "(" ^ (helper p1) ^ " /\\ " ^ (helper p2) ^ ")"
+	| CP.AndList _ -> Gen.report_error no_pos "coq.ml: encountered AndList, should have been already handled"
     | CP.Or (p1, p2, _, _) ->
-	    "(" ^ (coq_of_formula p1) ^ " \\/ " ^ (coq_of_formula p2) ^ ")"
+	    "(" ^ (helper p1) ^ " \\/ " ^ (helper p2) ^ ")"
+  in helper f
 
 (* checking the result given by Coq *)
 let rec check fd coq_file_name : bool=
@@ -208,14 +227,16 @@ let rec check fd coq_file_name : bool=
 ;;
 let coq_of_var_list l = String.concat "" (List.map (fun sv -> "forall " ^ (coq_of_spec_var sv) ^ ":" ^ (coq_type_of_spec_var sv) ^ ", ") l)
 
+let decidez_vo_dir = Gen.get_path Sys.executable_name
+
 (* starting Coq in interactive mode *)
 let start () =
-  coq_channels := Unix.open_process "coqtop -require decidez 2> /dev/null";
+  coq_channels := Unix.open_process ("coqtop -require " ^ decidez_vo_dir ^ "decidez 2> /dev/null");
   coq_running := true;
   print_string "Coq started\n"; flush stdout
 
 let start_prover_debug () =
-  Gen.Debug.no_1 "stack coq prover" (fun () -> "") (fun () -> "") start ()
+  Debug.no_1 "stack coq prover" (fun () -> "") (fun () -> "") start ()
 
 (* stopping Coq *)
 let stop () =
@@ -229,7 +250,7 @@ let stop () =
 
 let stop_prover_debug () =
   print_string "stop coq prover"; 
-  Gen.Debug.no_1 "stop coq prover" (fun () -> "") (fun () -> "") stop ()
+  Debug.no_1 "stop coq prover" (fun () -> "") (fun () -> "") stop ()
 
 (* sending Coq a formula; nr = nr. of retries *)
 let rec send_formula (f : string) (nr : int) : bool =
@@ -264,12 +285,12 @@ let rec send_formula (f : string) (nr : int) : bool =
 		if nr > 1 then send_formula f (nr - 1) else false
   
 (* writing the Coq file *)
-let write (ante : CP.formula) (conseq : CP.formula) : bool =
+let write pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
 (*  print_string "*"; flush stdout; *)
 (*  print_endline ("formula " ^ string_of_int !coq_file_number ^ ": " ^ (Cprinter.string_of_pure_formula ante) ^ " -> " ^ (Cprinter.string_of_pure_formula conseq)); *)
   let vstr = coq_of_var_list (Gen.BList.remove_dups_eq (=) ((CP.fv ante) @ (CP.fv conseq))) in
-  let astr = coq_of_formula ante in
-  let cstr = coq_of_formula conseq in
+  let astr = coq_of_formula pr_w pr_s ante in
+  let cstr = coq_of_formula pr_s pr_w conseq in
   
   coq_file_number.contents <- !coq_file_number + 1;
   if !coq_running == false then start ();
@@ -280,20 +301,43 @@ let write (ante : CP.formula) (conseq : CP.formula) : bool =
 	flush log_file;
   end;
 
+  (*let _ = print_string ("[coq.ml] write " ^ ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n")) in*)
   send_formula ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n") 2
-  
-let imply (ante : CP.formula) (conseq : CP.formula) : bool =
+
+let write  pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
+  Debug.no_2 "[coq.ml] write" !print_p_f_f !print_p_f_f
+	string_of_bool (write pr_w pr_s) ante conseq
+	
+let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
   if !log_all_flag == true then
 	output_string log_file "\n[coq.ml]: #imply\n";
   max_flag := false;
   choice := 1;
-    write ante conseq
-    (*write (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos)*)
+  try 
+    write pr_w pr_s ante conseq
+  with Illegal_Prover_Format s -> 
+      begin
+        print_endline ("\nWARNING coq.imply : Illegal_Prover_Format for :"^s);
+        print_endline ("ante:"^(!print_p_f_f ante));
+        print_endline ("conseq:"^(!print_p_f_f conseq));
+        flush stdout;
+        failwith s
+      end
+  (*write (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos)*)
 
-let is_sat (f : CP.formula) (sat_no : string) : bool =
+let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
+  Debug.no_2 "[coq.ml] imply" !print_p_f_f !print_p_f_f
+	string_of_bool (imply_ops pr_w pr_s) ante conseq
+
+let imply (ante : CP.formula) (conseq : CP.formula) : bool =
+  let pr x = None in
+  imply_ops pr pr ante conseq
+
+
+let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no : string) : bool =
   if !log_all_flag == true then
 	output_string log_file ("\n[coq.ml]: #is_sat " ^ sat_no ^ "\n");
-  let tmp_form = (imply f (CP.BForm(CP.BConst(false, no_pos), None))) in
+  let tmp_form = (imply_ops pr_w pr_s f (CP.BForm((CP.BConst(false, no_pos), None), None))) in
   match tmp_form with
   | true ->
 	  if !log_all_flag == true then output_string log_file "[coq.ml]: is_sat --> false\n";
@@ -302,8 +346,12 @@ let is_sat (f : CP.formula) (sat_no : string) : bool =
 	  if !log_all_flag == true then output_string log_file "[coq.ml]: is_sat --> true\n";
 	  true
 
-let building_image _ = ()
+let is_sat (f : CP.formula) (sat_no : string) : bool =
+  let pr x = None in
+  is_sat_ops pr pr f sat_no
 
+let building_image _ = ()
+  
 (* TODO: implement the following procedures; now they are only dummies *)
 let hull (pe : CP.formula) : CP.formula = begin
 	if !log_all_flag == true then

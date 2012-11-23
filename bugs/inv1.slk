@@ -1,0 +1,36 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv true.
+//       inv n >= 0.
+
+checkentail x::lseg<n,p> |- n>=0.
+
+checkentail x::lseg<n,p> & x=null |- n=0.
+
+checkentail x::lseg<n,p> & x!=p |- n>0.
+
+checkentail x::lseg<n,p> & x!=p |- x!=null.
+
+
+pred ls<n, p> == self::node<_,p> & n = 1
+         or self::node<next = r> * r::ls<n - 1, p> & self!=p
+       inv n >= 1
+//       & self!=null
+       .
+
+checkentail x::ls<n,p> |- x!=null.
+
+
+pred ll<n> == self = null & n = 0
+         or self::node<next = r> * r::ll<n - 1>
+   inv n>=0.
+
+
+pred ls2<n,r,p> == self::node<_,r> & r=p & n = 1
+         or self::node<next = r> * r::ls2<n - 1,r1, p>
+       inv n >= 1
+//       & self!=null
+       .

@@ -10,4 +10,4 @@ pred ll<v,n> ==
   inv n>=0 .
 
 
-checkentail x::node<v,q>*q::ll<v,n> |- x::node<_,r>*q::ll<w,a> & a=n+1.
+checkentail x::node<0,q>*q::ll<v,n> |- x::node<_,r>*q::ll<w,a> & a=n+1.

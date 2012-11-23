@@ -1,0 +1,40 @@
+
+//pure
+// 1. --> valid (is safe)
+checkentail n>5 |- n>3.
+
+// 2. --> maybe error (maybe violation)
+checkentail n>1 |- n>3.
+
+// 3. --> must error (definite violation)
+checkentail n<0 |- n>3.
+
+
+
+/*
+
+ mn(x..)
+ case {
+  x=null -> .. flow Error; // must-bug
+  x!=null -> .. flow Norm; // safe ptr access
+ }
+ {
+   x.next;
+ }
+
+
+ x!=null |- x!=null (safety)
+
+ x=null  |- x!=null (must-error)
+
+ true    |- x!=null (maybe-error)
+
+
+ mn(..)
+ requires true;
+ ensures flow Norm;
+ {
+  if x!=null then x.next;
+ }
+
+*/

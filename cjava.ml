@@ -201,7 +201,7 @@ and java_of_exp prog (bmap : bind_map) (null_vars : IdentSet.t) (e0 : exp) java_
 	  let field_names = List.map snd idl in
 		(* add local bind map *)
 	  let _ = List.map2 
-		(fun id -> fun fld -> H.add bmap id (bvar, snd fld))
+		(fun id -> fun fld -> H.add bmap id (bvar, Cast.get_field_name fld))
 		field_names ddef.data_fields 
 	  in
 		(* 
@@ -271,7 +271,7 @@ and java_of_exp prog (bmap : bind_map) (null_vars : IdentSet.t) (e0 : exp) java_
   | Sharp ({exp_sharp_val = eo}) -> begin
 	  Buffer.add_string java_code "return";
 	  match eo with 
-	    |Sharp_prog_var e -> 
+	    |Sharp_var e -> 
 		   Buffer.add_string java_code (" "^(snd e));
 			(*ignore (java_of_exp prog bmap null_vars e java_code);*)
 			Buffer.add_string java_code (";\n");
@@ -364,7 +364,8 @@ and java_of_data_decl prog ddef java_code =
 
 and build_constructor (ddef : data_decl) java_code : unit =
   let n = List.length ddef.data_fields in
-  let typs, fnames = List.split ddef.data_fields in
+  let typs = List.map Cast.get_field_typ ddef.data_fields in
+  let fnames = List.map Cast.get_field_name ddef.data_fields in
   let pnames = fresh_names n in
   let formals = List.map2 (fun t -> fun name -> 
 							 (string_of_typ t) ^ " " ^ name) typs pnames in

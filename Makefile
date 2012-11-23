@@ -1,251 +1,91 @@
-OCAMLC=ocamlc.opt
-OCAMLOPT=ocamlopt.opt
-OCAMLDEP=ocamldep
-OCAMLDOC=ocamldoc
-camlp4l=dynlink.cmxa camlp4lib.cmxa
-camlp4lnorm=dynlink.cma camlp4lib.cma
-DIRS=.
-INCLUDES=-I ./xml -I +ocamlgraph -I +camlp4 
-GUIINCLUDES=-I +lablgtk2
-#OCAMLFLAGS=-dtypes $(INCLUDES)    # add other options for ocamlc here
-#OCAMLOPTFLAGS=-dtypes $(INCLUDES) # add other options for ocamlopt here
-OCAMLFLAGS=  $(INCLUDES) # add other options for ocamlc here
-GUIOCAMLFLAGS= $(OCAMLFLAGS) $(GUIINCLUDES) #
-OCAMLOPTFLAGS= -annot $(INCLUDES) # add other options for ocamlopt here
-# removed -p from above as it seems related to profiling..
-OCAMLYACC=ocamlyacc
-OCAMLYACCFLAGS=-v
-OCAMLLEX=ocamllex -q
-BIN=../bin
-DOC=../doc
-DOC_SRC=*/*.ml */*.mli
-DEP_DOT_FILE=$(DOC)/depend/dependencies.dot
-DEP_PS_FILE=$(DOC)/depend/dependencies.ps
-DEP_PDF_FILE=$(DOC)/depend/dependencies.pdf
-TMP_FILES_PATH = /tmp/$(shell id -un)/prover_tmp_files
+OCAMLBUILD = ocamlbuild
 
-all: hip sleek decidez.vo prover
-#hip sleek prover prdebug decidez.vo
+#  number of parallel jobs, 0 means unlimited.
+JOBS = 0
 
-norm: hip.norm sleek.norm  prover.norm decidez.vo
+# dynlink should precede camlp4lib
+LIBSB = unix,str,graph,xml-light,dynlink,camlp4lib,nums,site-lib/batteries/batteries,site-lib/extlib/extLib
+LIBSN = unix,str,graph,xml-light,dynlink,camlp4lib,nums,site-lib/batteries/batteries,site-lib/extlib/extLib
+#,z3
+LIBS2 = unix,str,graph,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
-rest: hip.norm sleek.norm prover.norm prdebug decidez.vo
+INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,+site-lib/batteries,-I,+site-lib/extlib
 
-opt: hip sleek prover
+FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
+# ,-cclib,-lz3stubs,-cclib,-lz3,/usr/local/lib/ocaml/libcamlidl.a
 
-lexer.ml: lexer.mll token.ml
-	$(OCAMLLEX) lexer.mll
- 
-# dependencies of parser.ml needs to be manually specified
-parser.cmo: lexer.ml iast.ml sleekcommons.ml globals.ml error.ml cast.ml
-	$(OCAMLC) $(OCAMLFLAGS) -pp camlp4of -annot -c -g parser.ml
+# -no-hygiene flag to disable "hygiene" rules
+OBB_FLAGS = -no-links -libs $(LIBSB) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
+OBN_FLAGS = -no-links -libs $(LIBSN) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
 
-parser.cmx : lexer.ml iast.ml sleekcommons.ml globals.ml error.ml cast.ml	
-	$(OCAMLOPT) $(OCAMLFLAGS) -pp camlp4of -annot -c -g parser.ml
+OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) 
 
-parser.cmi: lexer.cmi iast.cmi sleekcommons.cmi globals.cmi error.cmi cast.cmi
+XML = cd $(CURDIR)/xml; make all; make opt; cd ..
 
-ocparser.cmo ocparser.ml: ocparser.mly
-	$(OCAMLYACC) $(OCAMLYACCFLAGS) ocparser.mly
-	rm ocparser.mli
-	$(OCAMLC) $(OCAMLFLAGS) -c -g ocparser.ml
+all: byte decidez.vo 
+#gui
+byte: sleek.byte hip.byte 
+# hsprinter.byte
+native: hip.native sleek.native
+gui: ghip.native gsleek.native
+byte-gui: ghip.byte gsleek.byte
 
-oclexer.cmo oclexer.ml: oclexer.mll ocparser.ml
-	$(OCAMLLEX) oclexer.mll
-	$(OCAMLC) $(OCAMLFLAGS) -c -g oclexer.ml
+hip: hip.native
+sleek: sleek.native
+ghip: ghip.native
+gsleek: gsleek.native
 
-rlparser.cmo rlparser.ml: rlparser.mly
-	$(OCAMLYACC) $(OCAMLYACCFLAGS) rlparser.mly
-	rm rlparser.mli
-	$(OCAMLC) $(OCAMLFLAGS) -c -g rlparser.ml
-
-rllexer.cmo rllexer.ml: rllexer.mll rlparser.ml
-	$(OCAMLLEX) rllexer.mll
-	$(OCAMLC) $(OCAMLFLAGS) -c -g rllexer.ml
-
-MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo \
-	iformula.cmo iast.cmo \
-	iprinter.cmo \
-	iastUtil.cmo \
-	rlparser.cmo rllexer.cmo \
-	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
-  net.cmo \
-	cvclite.cmo cvc3.cmo smtsolver.cmo \
-  cformula.cmo cast.cmo cprinter.cmo mona.cmo\
-  token.cmo lexer.cmo sleekcommons.cmo parser.cmo\
-  tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
-	prooftracer.cmo context.cmo solver.cmo \
-	drawing.cmo \
-	env.cmo checks.cmo \
-	inliner.cmo \
-	astsimp.cmo \
-	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
-	typechecker.cmo \
-	globalvars.cmo \
-	scriptarguments.cmo\
-	slices.cmo main.cmo 
-
-
-MAIN_FILES_OPT := $(MAIN_FILES:.cmo=.cmx)
-
-
-GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo \
-	iformula.cmo iast.cmo iastUtil.cmo \
-	iprinter.cmo \
-	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
-  rlparser.cmo rllexer.cmo \
-  net.cmo \
-	cvclite.cmo cvc3.cmo smtsolver.cmo \
-  cformula.cmo cast.cmo cprinter.cmo mona.cmo \
-  token.cmo lexer.cmo sleekcommons.cmo parser.cmo \
-  tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
-	prooftracer.cmo context.cmo solver.cmo \
-	drawing.cmo \
-	env.cmo checks.cmo \
-	inliner.cmo \
-	astsimp.cmo \
-	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
-	typechecker.cmo \
-	scriptarguments.cmo \
-	globalvars.cmo 	
-
-
-
-SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo \
-	iformula.cmo iast.cmo \
-	iprinter.cmo \
-  iastUtil.cmo \
-	rlparser.cmo rllexer.cmo \
-	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
-    net.cmo \
-	cvclite.cmo cvc3.cmo smtsolver.cmo \
-	cformula.cmo cast.cmo cprinter.cmo mona.cmo \
-  token.cmo lexer.cmo sleekcommons.cmo parser.cmo  \
-  tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
-	prooftracer.cmo context.cmo solver.cmo \
-	drawing.cmo \
-	env.cmo checks.cmo \
-	inliner.cmo \
-	astsimp.cmo \
-	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
-	typechecker.cmo \
-	xmlfront.cmo nativefront.cmo \
-	sleekengine.cmo \
-	scriptarguments.cmo \
-	sleek.cmo
-
-SLEEK_FILES_OPT := $(SLEEK_FILES:.cmo=.cmx)
-
-
-PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo \
-	iformula.cmo iast.cmo \
-	iprinter.cmo \
-  iastUtil.cmo \
-	rlparser.cmo rllexer.cmo \
-  ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
-    net.cmo \
-	cvclite.cmo cvc3.cmo smtsolver.cmo\
-  cformula.cmo cast.cmo cprinter.cmo mona.cmo \
-  token.cmo lexer.cmo sleekcommons.cmo parser.cmo \
-  tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
-	prooftracer.cmo context.cmo solver.cmo \
-	drawing.cmo \
-	env.cmo checks.cmo \
-	inliner.cmo \
-	astsimp.cmo \
-	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
-	typechecker.cmo \
-	prove.cmo
-
-PROVE_FILES_OPT := $(PROVE_FILES:.cmo=.cmx)
-
-WEB_FILES=globals.cmo error.cmo gen.cmo procutils.cmo debug.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo \
-	iformula.cmo iast.cmo \
-	iprinter.cmo \
-  iastUtil.cmo \
-	rlparser.cmo rllexer.cmo \
-	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo \
-  net.cmo \
-	cvclite.cmo cvc3.cmo smtsolver.cmo \
-  cformula.cmo cast.cmo cprinter.cmo mona.cmo \
-  token.cmo lexer.cmo sleekcommons.cmo parser.cmo  \
-  tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
-	prooftracer.cmo context.cmo solver.cmo \
-	drawing.cmo \
-	env.cmo checks.cmo \
-	inliner.cmo \
-	astsimp.cmo \
-	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
-	typechecker.cmo \
-	web.cmo
-
-hipc:
-	make clean; make hip
-
-hip.norm: decidez.vo $(MAIN_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(camlp4lnorm) $(MAIN_FILES)
-#[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
-
-hip: $(MAIN_FILES_OPT) decidez.vo
-	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(camlp4l) $(MAIN_FILES_OPT)
-#	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
-
-mytop: $(MAIN_FILES) decidez.vo
-	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(camlp4lnorm) $(MAIN_FILES)
-
-
-hipgui: $(GUI_FILES) decidez.vo scriptarguments.ml gui.ml maingui.ml
-	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) unix.cma str.cma graph.cma $(camlp4lnorm) lablgtk.cma lablgtksourceview2.cma $(GUI_FILES) scriptarguments.ml gui.ml maingui.ml
-#	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
-
-
-prover.norm: $(PROVE_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(camlp4lnorm) $(PROVE_FILES)
-#	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
-
-prover: $(PROVE_FILES_OPT)
-	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(camlp4l) $(PROVE_FILES_OPT)
-
-
-web: $(WEB_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(camlp4lnorm) $(WEB_FILES)
-
-sleekc:
-	make clean; make sleek 
+xml: xml/xml-light.cma
 
 xml/xml-light.cma:
-	make -C xml
+	$(XML)
+	
+	
+hip.byte: xml
+	@ocamlbuild $(OBB_FLAGS) main.byte
+	cp -u _build/main.byte hip
+	cp -u _build/main.byte b-hip
 
-xml/xml-light.cmxa:
-	make -C xml xml-light.cmxa
+hip.native: xml
+	@ocamlbuild $(OBN_FLAGS) main.native
+	cp -u _build/main.native hip
+	cp -u _build/main.native n-hip
 
-sleek.norm: xml/xml-light.cma decidez.vo $(SLEEK_FILES) 
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma $(camlp4lnorm) $(SLEEK_FILES)
-#	[ ! -d $(TMP_FILES_PATH) ] && mkdir -p $(TMP_FILES_PATH) 
+sleek.byte: xml
+	@ocamlbuild $(OBB_FLAGS) sleek.byte
+	cp -u _build/sleek.byte sleek
+	cp -u _build/sleek.byte b-sleek
 
-sleek: xml/xml-light.cmxa decidez.vo $(SLEEK_FILES_OPT) 
-	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa xml-light.cmxa $(camlp4l) $(SLEEK_FILES_OPT)
+hsprinter.byte: xml
+	@ocamlbuild $(OB_FLAGS) hsprinter.byte
 
-#sleek.opt: xml/xml-light.cmxa $(SLEEK_FILES:*.cmo=*.cmx) 
-#	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa camlp4lib.cmxa $(SLEEK_FILES:*.cmo=*.cmx)
+sleek.native: xml
+	@ocamlbuild $(OBN_FLAGS) sleek.native
+	cp -u _build/sleek.native sleek
+	cp -u _build/sleek.native n-sleek
 
+gsleek.byte: 
+	@ocamlbuild $(OBG_FLAGS) gsleek.byte
+	cp -u _build/gsleek.byte p-gsleek
 
+gsleek.native: 
+	@ocamlbuild $(OBG_FLAGS) gsleek.native
+	cp -u _build/gsleek.native gsleek
 
-JAVA_FILES=debug.cmo globals.cmo error.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo \
-	iformula.cmo iast.cmo iprinter.cmo \
-  token.cmo lexer.cmo sleekcommons.cmo parser.cmo  \
-	iparser.cmo ilexer.cmo \
-	iastUtil.cmo \
-	java.cmo
+ghip.byte:
+	@ocamlbuild $(OBG_FLAGS) ghip.byte
+	cp -u _build/ghip.byte p-ghip
 
-j: $(JAVA_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(camlp4l) $(JAVA_FILES)
+ghip.native:
+	@ocamlbuild $(OBG_FLAGS) ghip.native
+	cp -u _build/ghip.native ghip
+
+# Clean up
+clean:
+	$(OCAMLBUILD) -quiet -clean 
+	rm -f sleek sleek.norm hip hip.norm gsleek ghip sleek.byte hip.byte
+	rm -f *.cmo *.cmi *.cmx *.o *.mli *.output *.annot slexer.ml ilexer.ml lexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml
+#	rm -f iparser.mli iparser.ml iparser.output oc.out
 
 decidez.vo:
 	coqtop -compile decidez
@@ -257,37 +97,6 @@ install:
 	./hip --build-image true
 	cp MyImage /usr/local/lib/MyImage
 
-# ------------------------------------------------------------
-# Common rules
-# ------------------------------------------------------------
-#.SUFFIXES: .ml .mli .cmo .cmi .cmx .mly .mll
-.SUFFIXES: .ml .mli .cmo .cmi .cmx .mll
-
-.ml.annot:
-	$(OCAMLC) $(OCAMLFLAGS) -c -g $<
-
-.ml.cmo:
-	$(OCAMLC) $(OCAMLFLAGS) -c -g $<
-
-.mli.cmi:
-	$(OCAMLC) $(OCAMLFLAGS) -c -g $<
-
-.ml.cmx:
-	$(OCAMLOPT) $(OCAMLOPTFLAGS) -c $<
-
-# Clean up
-clean: 
-	rm -f decidez.glob decidez.vo slexer.ml ilexer.ml lexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot hip.exe hip hip.norm sleek.norm sleek sleek.exe prover prover.norm web *~ oo oo.exe hipgui prdebug ss ss.exe ss.norm
-
-# Dependencies
-#beforedepend: parser.ml iparser.ml ocparser.ml
-beforedepend: ocparser.ml
-
-depend: beforedepend
-	mv parser.ml p_x_x_x
-	(for d in $(DIRS); \
-	do $(OCAMLDEP) $(INCLUDES) $$d/*.mli $$d/*.ml; \
-	done) > .depend
-	mv p_x_x_x parser.ml
--include .depend
-# DO NOT DELETE
+install-native: hip.native sleek.native
+	cp -u _build/main.native /usr/local/bin/hip
+	cp -u _build/sleek.native /usr/local/bin/sleek

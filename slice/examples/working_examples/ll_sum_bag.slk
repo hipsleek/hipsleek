@@ -1,0 +1,35 @@
+data node { int val; node next }.
+
+/* view for singly linked list */
+/*
+pred ll<n, s, S> ==
+	self = null & n = 0 & s = 0 & S = {} or
+	self::node<vvv, r> * r::ll<n1, s1, S1>
+		& ($ vvv) >= 0
+		& n = n1 + 1
+		& s = s1 + ($ vvv)
+		& S = union(S1, {($ vvv)})
+	inv n >= 0 & s >= 0 & forall (xxx : (xxx notin S | xxx >= 0)).
+*/
+
+pred ll<n, S> ==
+	self = null & n = 0 & S = {} or
+	self::node<vvv, r> * r::ll<n1, S1>
+		& vvv >= 0
+		& n = n1 + 1
+		& S = union(S1, {vvv})
+	inv n >= 0 & forall (xxx : (xxx notin S | xxx >= 0)).
+
+checkentail a in S |- S!={}.
+
+checkentail S=union(S1, {a}) |- a in S.
+
+checkentail S=union(S1, {a}) & a notin S & S=S1 |- false.
+
+checkentail x::ll<n, S> & a in S |- a>=0.
+
+//checkentail x::ll<n, S> & x!=null & x.val=a |- a in S.
+
+//checkentail x::ll<n, S> & x.val=a |- a in S.
+
+//checkentail x::ll<n, S> & x.val=a |- a>=0.

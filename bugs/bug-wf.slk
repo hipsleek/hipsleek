@@ -1,0 +1,60 @@
+data node { int val ; node next }.
+
+/*
+pred ls<p> == self = p 
+	or self::node<next = r> * r::ls<p> & self!=p
+	inv true.
+*/
+
+/*
+pred ls2<p> == self::ls2<p> & self = p 
+	or self::node<next = r> * r::ls2<p> & self!=p
+	inv true.
+// not well-founded detected
+*/
+
+pred ls2<p> == p::ls2<p> & self = p 
+	or self::node<next = r> * r::ls2<p> & self!=p
+	inv true.
+// BUG : violation of well-foundedness not being detected
+
+
+/* pred ls3<p> == self::ls4<p>  
+	or self::node<next = r> * r::ls3<p> & self!=p
+	inv true.
+pred ls4<p> == self::ls3<p>  
+	or self::node<next = r> * r::ls4<p> & self!=p
+	inv true.       
+*/
+// BUG : mutual-recursive view should not have self pointing to
+// a recursive view
+
+/*
+pred ls5<p> == self::ls<p>  
+	or self::node<next = r> * r::ls5<p> & self!=p
+	inv true.
+// self pointing non-recursively is OK
+*/
+// violation of well-foundedness not being detected
+
+// checkentail a::ls2<b> * a::node<_,_> |- a::node<_,_>.
+// goes into a loop
+
+// Non wellfounded with arithmetics
+
+/*
+pred loop<n> == r::loop<n> & self = r & n >= 0
+	or self::node<n,_> & n >= 1
+	inv true.
+
+pred loop2<n,m> == r::loop2<m+1,m> & self = r & n=m+1
+	or self::node<n,_> & n>=m
+	inv true.
+
+// It seems to me that the current system does not really check if this
+// is really non-wellfounded! It seems only to make sure that <self> does
+// not point to the same predicate.
+pred loop3<n,m> == self::loop3<m+1,m> & n=m
+	or self::node<n,_> & n>=m
+	inv true.
+*/

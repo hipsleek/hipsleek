@@ -26,7 +26,7 @@ GetOptions( "stop"  => \$stop,
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|hip_imm|sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|sleek|hip_vperm|sleek_vperm [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
 
@@ -41,12 +41,12 @@ else
 	}
 
 if($prover){
-	%provers = ('cvcl' => 'cvcl', 'cvc3' => 'cvc3', 'omega' => 'omega', 
+	%provers = ('cvcl' => 'cvcl', 'cvc3' => 'cvc3', 'oc' => 'oc','oc-2.1.6' => 'oc-2.1.6', 
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
-		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm');
+		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm', 'z3' => 'z3', 'z3-2.19' => 'z3-2.19', 'zm' => 'zm', 'log' => 'log');
 	if (!exists($provers{$prover})){
-        print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
-		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm' or 'prm' \n";
+        print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|sleek|hip_vperm|sleek_vperm [-flags \"arguments to be transmited to hip/sleek \"]\n";
+		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm', 'prm', 'z3' or 'zm'\n";
 		exit(0);
 	}
 }
@@ -55,7 +55,7 @@ else{
         $prover = "$1";
     }
     else{
-	$prover = "omega";
+	$prover = "oc";
     }
 }
 
@@ -95,7 +95,7 @@ if($timings){
     if(-e "$timings_logfile") {#check for file existance
         $book = $parser->Parse("$timings_logfile") #open file for appending
             or die "File $timings_logfile was not found";
-        my $count = $book->{SheetCount};#total number of worksheets of teh workbook
+        my $count = $book->{SheetCount};#total number of worksheets of the workbook
         my $provers_sheet_no = 0;
         for(my $i=0; $i < $count ; $i++){#iterate through all the worksheets 
             if ($book->{Worksheet}[$i]->{Name} =~ "$prover") {#check if a profiling worksheet of the selected prover already exists
@@ -122,7 +122,7 @@ if($timings){
     }
 
     $row = 3;
-    (my $Second,my $Minute, $Hour, $Day, $Month, $Year, $WeekDay, $DayOfYear, $IsDST) = localtime(time);
+    (my $Second, my $Minute, $Hour, $Day, $Month, $Year, $WeekDay, $DayOfYear, $IsDST) = localtime(time);
     $Year += 1900;
     $Month++;
     $date = "$Day/$Month/$Year  $Hour:$Minute";
@@ -146,8 +146,13 @@ if($timings){
     $programCol = 1;
     $mainCol = 2;
     $childCol = 3;
-    $totalCol = 4;
-    $falseContextCol = 5;
+    $cl = $childCol;
+    if("$flags" =~ m/--enable-logging-txt\b/ ){
+     $cl=$childCol+1;
+     $prooflogCol = $cl;	
+    }
+    $totalCol = $cl+1;
+    $falseContextCol = $cl+2;
     my $format = $workbook->add_format();
     $format->set_bold();
     $format->set_align('center');
@@ -156,6 +161,9 @@ if($timings){
     $worksheet->set_column($mainCol,$falseContextCol, 10);
     $worksheet->write($row, $mainCol, "Main", $format);
     $worksheet->write($row, $childCol, "Child", $format);
+    if("$flags" =~ m/--enable-logging-txt\b/ ){
+       $worksheet->write($row, $prooflogCol, "Proof log", $format);
+    }
     $worksheet->write($row, $totalCol, "Total time", $format);
     $worksheet->write($row, $falseContextCol, "No. false ctx", $format);
 
@@ -165,13 +173,41 @@ if($timings){
 $error_count = 0;
 $error_files = "";
 $hip = "$exec_path/hip ";
+# TODO : check if hip is n-hip, as b-hip is too slow
+# please use make native
 $sleek = "$exec_path/sleek ";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
+# files are searched in the subdirectory with the same name as the list name, in examples/working/hip directory (ex. hip/array for "array" list)
 %hip_files=(
+	# AN HOA : ADDED ARRAY TESTING EXAMPLES
+	"array"=>[
+		["arr_at.java",1,"","main","SUCCESS"],
+		["arr_binarysearch.java",1,"","binary_search","SUCCESS"],
+		["arr_search_decrease_less_than_two.java",1,"","searchzero","FAIL"], # induction required
+		["arr_bubblesort.java",2,"","bubblesort","SUCCESS","bubble","SUCCESS"],
+		["arr_bubblesort_perm.java",2,"","bubblesort","SUCCESS","bubble","SUCCESS"],
+		["arr_double.java",1,"","doublearr","SUCCESS"],
+		["arr_extract_nonzeros.java",3,"","copy_nonzeros","SUCCESS","count_nonzeros","SUCCESS","extract_nonzeros","SUCCESS"],
+		["arr_init.java",1,"","zinit","SUCCESS"],
+		["arr_insertsort.java",2,"","insertelm","SUCCESS","insertion_sort","SUCCESS"],
+		["arr_insertsort_perm.java",2,"","insertelm","SUCCESS","insertion_sort","SUCCESS"],
+		["arr_invert.java",2,"","Invert","SUCCESS","InvertHelper","SUCCESS"],
+		["arr_max.java",1,"","max_value_of_array","SUCCESS"],
+		["arr_mergesort.java",3,"","merge_sorted_arrays","SUCCESS","copy_array","SUCCESS","merge_sort","SUCCESS"],
+		["arr_new_exp.java",1,"","main","SUCCESS"],
+		["arr_nqueens.java",3,"","nQueens","SUCCESS","nQueensHelper","SUCCESS","nQueensHelperHelper","SUCCESS"],
+		["arr_qsort.java",2,"","arraypart","SUCCESS","qsort","SUCCESS"],
+		["arr_rev.java",1,"","arrayrev","SUCCESS"],
+		["arr_selectionsort.java",2,"","array_index_of_max","SUCCESS","selection_sort","SUCCESS"],
+		["arr_selectionsort_perm.java",2,"","array_index_of_max","SUCCESS","selection_sort","SUCCESS"],
+		["arr_sparse.java",3,"--imm","create","SUCCESS","get","SUCCESS","setsa","SUCCESS"],
+		["arr_sum.java",2,"","sigmaright","SUCCESS","sigmaleft","SUCCESS"] # there is an axiom that requires induction
+	],
+	# END OF ARRAY TESTING EXAMPLES
 	"hip_tr"=>[["trees.ss",1,"insert"]],
-    "hip_imm" =>[ 
-        ["imm/bigint.ss",17, "",
+    "imm" =>[ 
+        ["bigint.ss",17,  " --imm ",
 		 "clone", "SUCCESS",
 		 "int_value", "SUCCESS",
 		 "bigint_of", "SUCCESS",
@@ -191,7 +227,67 @@ $output_file = "log";
          "compare", "SUCCESS", #loop?
          "compare_int", "SUCCESS",
          "div_with_remainder", "SUCCESS"],
-        ["imm/bigint_imm.ss",18, "",
+        ["bigint_imm.ss",18,  " --imm ",
+         "clone", "SUCCESS",
+         "int_value", "SUCCESS",
+         "bigint_of", "SUCCESS",
+         "add_one_digit", "SUCCESS",
+         "test", "SUCCESS", 
+         "add_c", "SUCCESS",
+         "add", "SUCCESS",
+         "sub_one_digit", "SUCCESS",
+         "sub_c", "SUCCESS",
+         "sub", "SUCCESS",
+         "mult_c", "SUCCESS",
+         "shift_left", "SUCCESS",
+         "mult2", "SUCCESS",
+#		 "karatsuba_mult", "SUCCESS",
+         "is_zero", "SUCCESS",
+         "is_equal", "SUCCESS",
+         "compare", "SUCCESS",
+         "compare_int", "SUCCESS",
+         "div_with_remainder", "SUCCESS"],
+        ["bigint_imm-star.ss",17,  " --imm ",
+         "clone", "SUCCESS",
+         "int_value", "SUCCESS",
+         "bigint_of", "SUCCESS",
+         "add_one_digit", "SUCCESS",
+#		 "test", "SUCCESS", 
+         "add_c", "SUCCESS",
+         "add", "SUCCESS",
+         "sub_one_digit", "SUCCESS",
+         "sub_c", "SUCCESS",
+         "sub", "SUCCESS",
+         "mult_c", "SUCCESS",
+         "shift_left", "SUCCESS",
+         "mult", "SUCCESS",
+#		 "karatsuba_mult", "SUCCESS",
+         "is_zero", "SUCCESS",
+         "is_equal", "SUCCESS",
+         "compare", "SUCCESS",
+         "compare_int", "SUCCESS",
+         "div_with_remainder", "SUCCESS"],
+        ["bigint-tight.ss",17,  " --imm ",
+         "clone", "SUCCESS",
+         "int_value", "SUCCESS",
+         "bigint_of", "SUCCESS",
+         "add_one_digit", "SUCCESS",
+#		 "test", "SUCCESS", 
+         "add_c", "SUCCESS",
+         "add", "SUCCESS",
+         "sub_one_digit", "SUCCESS",
+         "sub_c", "SUCCESS",
+         "sub", "SUCCESS",
+         "mult_c", "SUCCESS",
+         "shift_left", "SUCCESS",
+         "mult", "SUCCESS",
+#		 "karatsuba_mult", "SUCCESS",
+         "is_zero", "SUCCESS",
+         "is_equal", "SUCCESS",
+         "compare", "SUCCESS",
+         "compare_int", "SUCCESS",
+         "div_with_remainder", "SUCCESS"],
+        ["bigint-tight-imm.ss",18,  " --imm ",
          "clone", "SUCCESS",
          "int_value", "SUCCESS",
          "bigint_of", "SUCCESS",
@@ -211,7 +307,7 @@ $output_file = "log";
          "compare", "SUCCESS",
          "compare_int", "SUCCESS",
          "div_with_remainder", "SUCCESS"],
-        ["imm/bigint_imm-star.ss",17, "",
+        ["bigint-tight-imm-star.ss",17,  " --imm ",
          "clone", "SUCCESS",
          "int_value", "SUCCESS",
          "bigint_of", "SUCCESS",
@@ -231,74 +327,11 @@ $output_file = "log";
          "compare", "SUCCESS",
          "compare_int", "SUCCESS",
          "div_with_remainder", "SUCCESS"],
-        ["imm/bigint-tight.ss",17, "",
-         "clone", "SUCCESS",
-         "int_value", "SUCCESS",
-         "bigint_of", "SUCCESS",
-         "add_one_digit", "SUCCESS",
-#		 "test", "SUCCESS", 
-         "add_c", "SUCCESS",
-         "add", "SUCCESS",
-         "sub_one_digit", "SUCCESS",
-         "sub_c", "SUCCESS",
-         "sub", "SUCCESS",
-         "mult_c", "SUCCESS",
-         "shift_left", "SUCCESS",
-         "mult", "SUCCESS",
-#		 "karatsuba_mult", "SUCCESS",
-         "is_zero", "SUCCESS",
-         "is_equal", "SUCCESS",
-         "compare", "SUCCESS",
-         "compare_int", "SUCCESS",
-         "div_with_remainder", "SUCCESS"],
-        ["imm/bigint-tight-imm.ss",18, "",
-         "clone", "SUCCESS",
-         "int_value", "SUCCESS",
-         "bigint_of", "SUCCESS",
-         "add_one_digit", "SUCCESS",
-         "test", "SUCCESS", 
-         "add_c", "SUCCESS",
-         "add", "SUCCESS",
-         "sub_one_digit", "SUCCESS",
-         "sub_c", "SUCCESS",
-         "sub", "SUCCESS",
-         "mult_c", "SUCCESS",
-         "shift_left", "SUCCESS",
-         "mult", "SUCCESS",
-#		 "karatsuba_mult", "SUCCESS",
-         "is_zero", "SUCCESS",
-         "is_equal", "SUCCESS",
-         "compare", "SUCCESS",
-         "compare_int", "SUCCESS",
-         "div_with_remainder", "SUCCESS"],
-        ["imm/bigint-tight-imm-star.ss",17, "",
-         "clone", "SUCCESS",
-         "int_value", "SUCCESS",
-         "bigint_of", "SUCCESS",
-         "add_one_digit", "SUCCESS",
-#		 "test", "SUCCESS", 
-         "add_c", "SUCCESS",
-         "add", "SUCCESS",
-         "sub_one_digit", "SUCCESS",
-         "sub_c", "SUCCESS",
-         "sub", "SUCCESS",
-         "mult_c", "SUCCESS",
-         "shift_left", "SUCCESS",
-         "mult", "SUCCESS",
-#		 "karatsuba_mult", "SUCCESS",
-         "is_zero", "SUCCESS",
-         "is_equal", "SUCCESS",
-         "compare", "SUCCESS",
-         "compare_int", "SUCCESS",
-         "div_with_remainder", "SUCCESS"],
-        ["imm/append_imm.ss", 1, "", "append", "SUCCESS"],
-        ["imm/kara.ss",1, "", "karatsuba_mult","SUCCESS"],
-        ["imm/kara-imm.ss",1,  "", "karatsuba_mult","SUCCESS"],
-        ["imm/kara-imm-star.ss",1,  "", "karatsuba_mult","SUCCESS"],
-        ["imm/kara-tight.ss",1,  "", "karatsuba_mult","SUCCESS"],
-        ["imm/kara-tight-imm.ss",1, "", "karatsuba_mult","SUCCESS"],
-        ["imm/kara-tight-imm-star.ss",1,  "", "karatsuba_mult","SUCCESS"],
-        ["imm/ll_imm.ss", 6, "", "length", "SUCCESS",
+        ["append_imm.ss", 1,  " --imm ", "append", "SUCCESS"],
+        ["kara.ss",1,  " --imm ", "karatsuba_mult","SUCCESS"],
+        ["kara-imm-star.ss",1,  " --imm " , "karatsuba_mult","SUCCESS"],
+        ["kara-imm-conj.ss",1,  "--imm", "karatsuba_mult","SUCCESS"],
+        ["ll_imm.ss", 6,  " --imm ", "length", "SUCCESS",
          "append", "SUCCESS",
          "get_next", "SUCCESS",
          "set_next", "SUCCESS",
@@ -382,7 +415,7 @@ $output_file = "log";
 						  "delete","SUCCESS",
 						  #"delete1","SUCCESS",
 						  "create_list","SUCCESS",
-						  "rev","SUCCESS",
+						  "reverse","SUCCESS",
 						  #"reverse1","SUCCESS",
 						  #"test","SUCCESS"
 						  ],
@@ -462,8 +495,76 @@ $output_file = "log";
                                   "main","SUCCESS"],
 		        ["global-mutual-rec.ss",3, "", "decrease1","SUCCESS",
                                           "decrease2","SUCCESS",
-										  "main","SUCCESS"]
+										  "main","SUCCESS"],
+				["classic/classic1.ss",2, "", "foo1", "SUCCESS", "foo2", "SUCCESS"],
+				["classic/classic1.ss",2, "--classic", "foo1", "FAIL", "foo2", "SUCCESS"],
+				["classic/classic2.ss",2, "", "foo1", "FAIL", "foo2", "SUCCESS"],
+				["classic/classic3.ss",2, "", "foo1", "SUCCESS", "foo2", "SUCCESS"],
 				],
+	"hip_vperm" =>[
+				["vperm/alt_threading.ss",2,  "--ann-vp", 
+                                "increment","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["vperm/fibonacci.ss",2,  "--ann-vp -tp z3 -perm none", 
+                                "seq_fib","SUCCESS",
+                                "para_fib2","SUCCESS"
+								],
+				["vperm/mergesort.ss",5,  "--ann-vp", 
+                                "count","SUCCESS",
+                                "split_func","SUCCESS",
+                                "merge","SUCCESS",
+                                "insert","SUCCESS",
+                                "parallel_merge_sort2","SUCCESS"
+								],
+				["vperm/passive_stack_race.ss",2,  "--ann-vp", 
+                                "assign","SUCCESS",
+                                "stack_race","FAIL"
+								],
+				["vperm/stack_race.ss",2,  "--ann-vp", 
+                                "assign","SUCCESS",
+                                "stack_race","FAIL"
+								],
+				["vperm/quicksort.ss",3,  "--ann-vp", 
+                                "partition","SUCCESS",
+                                "append_bll","SUCCESS",
+                                "para_qsort2","SUCCESS",
+								],
+				["vperm/task_decompose.ss",4,  "--ann-vp", 
+                                "inc","SUCCESS",
+                                "creator","SUCCESS",
+                                "joiner","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["vperm/threads.ss",6,  "--ann-vp", 
+                                "make_tree","SUCCESS",
+                                "tree_compute_sum_facs","SUCCESS",
+                                "summator","SUCCESS",
+                                "start_sum_thread","SUCCESS",
+                                "join_sum_thread","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["vperm/tree_count.ss",1,  "--ann-vp", 
+                                "parallelCount2","SUCCESS"
+								],
+				["vperm/tree_search.ss",1,  "--ann-vp -tp mona", 
+                                "para_search2","SUCCESS"
+								],
+				["vperm/vperm_check.ss",6,  "--ann-vp", 
+                                "inc","SUCCESS",
+                                "incCell","SUCCESS",
+                                "test1","FAIL",
+                                "test2","FAIL",
+                                "test3","FAIL",
+                                "test4","FAIL"
+								],
+				["vperm/vperm_simple.ss",4,  "--ann-vp", 
+                                "foo","SUCCESS",
+                                "f","SUCCESS",
+                                "foo2","SUCCESS",
+                                "f2","SUCCESS"
+								]
+             ],
 	"bags" =>[
         ["avl-all-1.ss", 8, "", "remove_min", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", 
          "get_max", "SUCCESS", "rotate_right", "SUCCESS", "rotate_left", "SUCCESS", "height", "SUCCESS"],
@@ -501,7 +602,7 @@ $output_file = "log";
         ["cll.ss", 4, "", "delete2", "SUCCESS", "delete", "SUCCESS", "count", "SUCCESS", "count_rest", "SUCCESS"],
         ["dll.ss", 2, "", "append", "SUCCESS", "insert", "SUCCESS"],
         ["insertion.ss", 3, "", "insertion_sort", "SUCCESS", "delete", "SUCCESS", "insert", "SUCCESS"],
-        ["ll.ss", 4, "reverse1", "SUCCESS", "delete1", "SUCCESS", "insert", "SUCCESS", "append", "SUCCESS"],
+        ["ll.ss", 4, "", "reverse1", "SUCCESS", "delete1", "SUCCESS", "insert", "SUCCESS", "append", "SUCCESS"],
         ["merge-modular.ss", 5, "", "insert1", "SUCCESS", "merge1", "SUCCESS", "merge_sort1", "SUCCESS", "split1", "SUCCESS", "count1", "SUCCESS"],
         ["merge.ss", 5, "", "insert1", "SUCCESS", "merge1", "SUCCESS", "merge_sort1", "SUCCESS", "split1", "SUCCESS", "count1", "SUCCESS"],
         ["qsort.ss", 3, "", "qsort1", "SUCCESS", "append_bll1", "SUCCESS", "partition1", "SUCCESS"],
@@ -521,13 +622,9 @@ $output_file = "log";
         ["ex1.ss", 2, "", "length", "SUCCESS", "app2", "SUCCESS"],
         ["ex10.ss", 1, "", "loop", "SUCCESS"],
         ["ex11.ss", 1, "", "bsearch", "SUCCESS"],
-        ["ex12.ss", 1, "", "loop", "SUCCESS"],
-        ["ex12a.ss", 1, "", "loop", "SUCCESS"],
-        ["ex12b.ss", 1, "", "loop", "SUCCESS"],
-        ["ex12c.ss", 1, "", "loop", "SUCCESS"],
-        ["ex13.ss", 1, "", "loop", "SUCCESS"],
-        ["ex14.ss", 1, "", "loop", "SUCCESS"],
-        ["ex14a.ss", 1, "", "loop", "SUCCESS"],
+				#["ex12.ss", 1, "-tp redlog", "loop", "SUCCESS"],
+				#["ex13.ss", 1, "", "loop", "SUCCESS"],
+				#["ex14.ss", 1, "", "loop", "SUCCESS"],
         ["ex15.ss", 2, "", "loop", "SUCCESS", "f", "SUCCESS"],
         ["ex16.ss", 1, "", "loop", "SUCCESS"],
         ["ex2.ss", 1, "", "loop", "SUCCESS"],
@@ -536,11 +633,259 @@ $output_file = "log";
         ["ex5.ss", 1, "", "foo", "SUCCESS"],
         ["ex6.ss", 1, "", "Ack", "SUCCESS"],
         ["ex7.ss", 3, "", "loop_aux1", "SUCCESS", "loop_aux", "SUCCESS", "loop", "SUCCESS"],
-        ["ex7a.ss", 1, "", "loop", "SUCCESS"],
         ["ex8.ss", 2, "", "loop2", "SUCCESS", "loop", "SUCCESS"],
         ["ex9.ss", 1, "", "loop", "SUCCESS"],
-        ["ex9a.ss", 1, "", "loop", "SUCCESS"],
-        ["mutual.ss", 2, "", "g", "SUCCESS", "f", "SUCCESS"]
+        ["mutual.ss", 2, "", "g", "SUCCESS", "f", "SUCCESS"],
+				["benchs/lit/cav08-1.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/lit/cav08-2.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/lit/cav08-3.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/lit/cav08-4.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/lit/cav08-5.ss", 2, "", "loop", "SUCCESS", "f", "SUCCESS"],
+				["benchs/lit/cav08-6.ss", 1, "", "gcd", "SUCCESS"],
+				["benchs/lit/dijkstra76-1.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/lit/dijkstra76-2.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/lit/dijkstra76-3.ss", 1, "", "loop", "SUCCESS"],
+        # -tp z3 caused timeouts below
+				#["benchs/lit/leap-year-bug-zune.ss", 2, "-tp z3", "ConvertDays", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/lit/pldi06-1.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/lit/pldi06-2.ss", 3, "", "main", "SUCCESS", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
+				["benchs/lit/pldi06-3.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/lit/pldi06-4.ss", 3, "", "main", "SUCCESS", "loop", "SUCCESS", "loop_aux", "SUCCESS"],
+				["benchs/lit/pldi06-5.ss", 1, "", "Ack", "SUCCESS"],
+				["benchs/lit/popl07-1.ss", 3, "", "loop_1", "SUCCESS", "loop_2", "SUCCESS", "loop_3", "SUCCESS"],
+				["benchs/lit/popl07-2.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/lit/sas05.ss", 2, "", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
+				["benchs/lit/sas10-1.ss", 3, "", "f", "SUCCESS", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
+				["benchs/lit/sas10-2.ss", 2, "", "foo", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/lit/sas10-2a.ss", 2, "", "foo", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/lit/sas10-3.ss", 3, "", "main", "SUCCESS", "foo", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/lit/vcc-1.ss", 2, "", "f", "SUCCESS", "g", "SUCCESS"],
+				["benchs/lit/vmcai05-1a.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/lit/vmcai05-1b.ss", 1, "-tp redlog", "loop", "SUCCESS"],
+				["benchs/key/AlternatingIncr.ss", 1, "", "increase", "SUCCESS"],
+				["benchs/key/AlternDiv-invalid-1.ss", 1, "-tp redlog", "loop", "SUCCESS"],
+				["benchs/key/AlternDiv.ss", 1, "-tp redlog", "loop", "SUCCESS"],
+				["benchs/key/AlternDivWidening.ss", 2, "-tp redlog", "loop", "SUCCESS", "loop_aux", "SUCCESS"],
+				["benchs/key/AlternDivWide.ss", 2, "", "loop", "SUCCESS", "loop_aux", "SUCCESS"],
+				["benchs/key/AlternKonv.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/key/Collatz.ss", 1, "", "collatz", "SUCCESS"],
+				["benchs/key/ComplInterv2.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/key/ComplInterv3.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/key/ComplInterv.ss", 1, "-tp redlog", "loop", "SUCCESS"],
+				["benchs/key/ComplxStruc-may.ss", 1, "", "complxStruc", "SUCCESS"], #MayLoop
+				["benchs/key/ComplxStruc2.ss", 2, "", "loop", "SUCCESS", "complxStruc", "SUCCESS"],
+				["benchs/key/ConvLower.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/key/Cousot.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/key/DoubleNeg.ss", 1, "-tp redlog", "loop", "SUCCESS"],
+				["benchs/key/Even.ss", 2, "", "even", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/key/Ex01.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/key/Ex02.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/key/Ex03.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/key/Ex04.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/key/Ex05.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/key/Ex06.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/key/Ex07.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/key/Ex08.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/key/Ex09.ss", 2, "", "half", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/key/Fibonacci.ss", 2, "", "fib", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/key/Flip2.ss", 1, "", "flip", "SUCCESS"],
+				["benchs/key/Flip3.ss", 1, "", "flip", "SUCCESS"],
+				["benchs/key/Flip.ss", 1, "", "flip", "SUCCESS"],
+				["benchs/key/Gauss.ss", 2, "", "sum", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/key/Gcd-may.ss", 1, "", "gcd", "SUCCESS"], #MayLoop
+				["benchs/key/Lcm.ss", 2, "", "lcm", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/key/Marbie1.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/key/Marbie2.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/key/Middle.ss", 1, "", "middle", "SUCCESS"],
+				["benchs/key/MirrorIntervSim.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/key/MirrorInterv.ss", 2, "", "mirrorInterv", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/key/ModuloLower.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/key/ModuloUp.ss", 2, "-tp redlog", "up", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/key/Narrowing.ss", 2, "", "narrowing", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/key/NarrowKonv.ss", 2, "", "narrowKonv", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/key/NegPos.ss", 1, "-tp redlog", "loop", "SUCCESS"],
+				["benchs/key/Plait-may.ss", 1, "", "plait", "SUCCESS"], #MayLoop
+				["benchs/key/Sunset.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/key/TrueDiv.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/key/TwoFloatInterv.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/key/UpAndDownIneq.ss", 2, "", "upAndDown", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/key/UpAndDown.ss", 2, "", "upAndDown", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/key/WhileBreak.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/key/WhileDecr.ss", 1, "", "decrease", "SUCCESS"],
+				["benchs/key/WhileIncrPart.ss", 1, "", "increase", "SUCCESS"],
+				["benchs/key/WhileIncr.ss", 1, "", "increase", "SUCCESS"],
+				["benchs/key/WhileNestedOffset.ss", 3, "", "increase", "SUCCESS", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
+				["benchs/key/WhileNested.ss", 3, "", "increase", "SUCCESS", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
+				["benchs/key/WhilePart.ss", 1, "", "increase", "SUCCESS"],
+				["benchs/key/WhileSingle.ss", 1, "", "increase", "SUCCESS"],
+				["benchs/key/WhileSum.ss", 1, "", "increase", "SUCCESS"],
+				["benchs/key/WhileTrue.ss", 1, "", "endless", "SUCCESS"],
+				["benchs/aprove/Aprove_09/DivMinus2.ss", 3, "", "main", "SUCCESS", "div", "SUCCESS", "minus", "SUCCESS"],
+				["benchs/aprove/Aprove_09/DivMinus.ss", 2, "", "main", "SUCCESS", "div", "SUCCESS"],
+				["benchs/aprove/Aprove_09/DivWithoutMinus.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Aprove_09/Duplicate.ss", 2, "", "main", "SUCCESS", "round", "SUCCESS"],
+				["benchs/aprove/Aprove_09/GCD2.ss", 2, "-tp redlog", "main", "SUCCESS", "gcd", "SUCCESS"],
+				["benchs/aprove/Aprove_09/GCD3.ss", 3, "", "main", "SUCCESS", "gcd", "SUCCESS", "mod", "SUCCESS"],
+				["benchs/aprove/Aprove_09/GCD4.ss", 3, "", "main", "SUCCESS", "gcd", "SUCCESS", "mod", "SUCCESS"],
+				["benchs/aprove/Aprove_09/GCD5.ss", 2, "-tp redlog", "main", "SUCCESS", "gcd", "SUCCESS"],
+				["benchs/aprove/Aprove_09/GCD.ss", 2, "-tp redlog", "main", "SUCCESS", "gcd", "SUCCESS"],
+				["benchs/aprove/Aprove_09/LogAG.ss", 3, "", "main", "SUCCESS", "half", "SUCCESS", "log", "SUCCESS"],
+				["benchs/aprove/Aprove_09/LogBuiltIn.ss", 2, "", "main", "SUCCESS", "log", "SUCCESS"],
+				["benchs/aprove/Aprove_09/LogIterative.ss", 2, "-tp redlog", "main", "SUCCESS", "log", "SUCCESS"],
+				["benchs/aprove/Aprove_09/LogMult.ss", 2, "-tp redlog", "main", "SUCCESS", "log", "SUCCESS"],
+				["benchs/aprove/Aprove_09/Log.ss", 3, "", "main", "SUCCESS", "half", "SUCCESS", "log", "SUCCESS"],
+				["benchs/aprove/Aprove_09/McCarthyIterative-may.ss", 1, "", "mcCarthy", "SUCCESS"], #MayLoop
+				["benchs/aprove/Aprove_09/McCarthyRec.ss", 1, "", "mcCarthy", "SUCCESS"],
+				["benchs/aprove/Aprove_09/MinusBuiltIn.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Aprove_09/MinusMin.ss", 2, "", "main", "SUCCESS", "mn", "SUCCESS"],
+				["benchs/aprove/Aprove_09/MinusUserDefined.ss", 2, "", "main", "SUCCESS", "gt", "SUCCESS"],
+				["benchs/aprove/Aprove_09/Mod.ss", 3, "", "main", "SUCCESS", "mod", "SUCCESS", "minus", "SUCCESS"],
+				["benchs/aprove/Aprove_09/PlusSwap.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/Aprove_09/Round3.ss", 1, "", "main", "SUCCESS"],
+		###############################################(1)
+				["benchs/aprove/AProVE_10/AG313.ss", 2, "", "main", "SUCCESS", "quot", "SUCCESS"],
+		###############################################(2)
+				["benchs/aprove/AProVE_11_iterative/RetValRec.ss", 3, "", "main", "SUCCESS", "ret", "SUCCESS", "test", "SUCCESS"],
+				["benchs/aprove/AProVE_11_iterative/RetVal.ss", 3, "", "main", "SUCCESS", "ret", "SUCCESS", "test", "SUCCESS"],
+		###############################################(2)
+				["benchs/aprove/AProVE11NO/LoopingNonTerm.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/AProVE11NO/NonPeriodicNonTerm2.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+		###############################################(13)
+				["benchs/aprove/BOG_RTA_11/Avg.ss", 1, "", "avg", "SUCCESS"],
+				["benchs/aprove/BOG_RTA_11/EqUserDefRec.ss", 2, "", "main", "SUCCESS", "eq", "SUCCESS"],
+				["benchs/aprove/BOG_RTA_11/Fibonacci.ss", 2, "", "main", "SUCCESS", "fib", "SUCCESS"],
+				["benchs/aprove/BOG_RTA_11/LeUserDefRec.ss", 2, "", "main", "SUCCESS", "le", "SUCCESS"],
+				["benchs/aprove/BOG_RTA_11/LogRecursive.ss", 2, "-tp redlog", "main", "SUCCESS", "log", "SUCCESS"],
+				["benchs/aprove/BOG_RTA_11/Nest.ss", 2, "", "main", "SUCCESS", "nest", "SUCCESS"],
+				["benchs/aprove/BOG_RTA_11/TerminatiorRec01.ss", 3, "", "main", "SUCCESS", "f", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/BOG_RTA_11/TerminatiorRec02.ss", 1, "-tp redlog", "fact", "SUCCESS"],
+				["benchs/aprove/BOG_RTA_11/TerminatiorRec03.ss", 1, "", "f", "SUCCESS"],
+				["benchs/aprove/BOG_RTA_11/TerminatiorRec04-modified.ss", 3, "", "main", "SUCCESS", "f", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/BOG_RTA_11/TerminatiorRec04.ss", 3, "", "main", "SUCCESS", "f", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/BOG_RTA_11/TimesPlusUserDef.ss", 3, "", "main", "SUCCESS", "times", "SUCCESS", "plus", "SUCCESS"],
+				["benchs/aprove/BOG_RTA_11/TwoWay.ss", 1, "-tp redlog", "twoWay", "SUCCESS"],
+		###############################################(28)
+				["benchs/aprove/Costa_Julia_09/Break.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/Continue1.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/Continue.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/costa09-example_1.ss", 6, "", "incr", "SUCCESS", "add", "SUCCESS", 
+			"incr2", "SUCCESS", "add2", "SUCCESS", "incr3", "SUCCESS", "add3", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/costa09-example_2.ss", 2, "", "main", "SUCCESS", "divBy", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/costa09-example_3.ss", 2, "", "main", "SUCCESS", "m", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/Exc1-exc.ss", 2, "", "main", "SUCCESS", "rec_f", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/Exc2-exc.ss", 2, "", "main", "SUCCESS", "rec_f", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/Exc3-exc.ss", 2, "", "main", "SUCCESS", "rec_f", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/Exc4-exc.ss", 2, "", "main", "SUCCESS", "rec_f", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/Exc5-exc.ss", 2, "", "main", "SUCCESS", "rec_f", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/Exc-exc.ss", 2, "", "main", "SUCCESS", "rec_f", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/Exc1-no.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/Exc2-no.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/Exc3-no.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/Exc4-no.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/Exc5-no.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/Exc-no.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/Loop1.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/Nested.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/Sequence.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/TestJulia4.ss", 1, "-tp redlog", "main", "SUCCESS"],
+		###############################################(11)
+				["benchs/aprove/Costa_Julia_09-recursive/Ackermann.ss", 2, "", "main", "SUCCESS", "ack", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09-recursive/Double-1.ss", 2, "-tp redlog", "test", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09-recursive/Double2-1.ss", 3, "", "main", "SUCCESS", "test", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09-recursive/Double2.ss", 2, "", "main", "SUCCESS", "test", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09-recursive/Double3-1.ss", 3, "", "main", "SUCCESS", "test", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09-recursive/Double3.ss", 2, "", "main", "SUCCESS", "test", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09-recursive/Double.ss", 2, "-tp redlog", "main", "SUCCESS", "test", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09-recursive/Factorial.ss", 2, "-tp redlog", "main", "SUCCESS", "fact", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09-recursive/FactSumList.ss", 2, "-tp redlog", "doSum", "SUCCESS", "fact", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09-recursive/FactSum.ss", 2, "-tp redlog", "doSum", "SUCCESS", "fact", "SUCCESS", "main", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09-recursive/Hanoi.ss", 2, "", "main", "SUCCESS", "sol", "SUCCESS"],
+		###############################################(3)
+				["benchs/aprove/Julia_10_Iterative/NonPeriodic.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Julia_10_Iterative/Test11.ss", 1, "-tp redlog", "main", "SUCCESS"],
+				["benchs/aprove/Julia_10_Iterative/Test2.ss", 3, "", "main", "SUCCESS", "iter", "SUCCESS", "add", "SUCCESS"],
+		###############################################(8)
+				["benchs/aprove/Julia_10_Recursive/AckR.ss", 2, "", "main", "SUCCESS", "ack", "SUCCESS"],
+                # --eps caused problem below
+				["benchs/aprove/Julia_10_Recursive/FibSLR.ss", 4, "-tp redlog", 
+				"main", "SUCCESS", "fib", "SUCCESS", "doSum", "SUCCESS", "create", "SUCCESS"],
+				["benchs/aprove/Julia_10_Recursive/HanR.ss", 2, "", "main", "SUCCESS", "sol", "SUCCESS"],
+				["benchs/aprove/Julia_10_Recursive/Power.ss", 3, "-tp redlog", "power", "SUCCESS", "even", "SUCCESS", "odd", "SUCCESS"],
+				["benchs/aprove/Julia_10_Recursive/Recursions.ss", 6, "", "main", "SUCCESS", "rec0", "SUCCESS", "rec1", "SUCCESS",
+			"rec2", "SUCCESS", "rec3", "SUCCESS", "rec4", "SUCCESS"],
+				["benchs/aprove/Julia_10_Recursive/Test10.ss", 4, "", "main", "SUCCESS", "rec", "SUCCESS", 
+			"test", "SUCCESS", "descend", "SUCCESS"],
+				["benchs/aprove/Julia_10_Recursive/Test12.ss", 2, "-tp redlog", "main", "SUCCESS", "rec", "SUCCESS"],
+				["benchs/aprove/Julia_10_Recursive/Test1.ss", 2, "", "main", "SUCCESS", "rec", "SUCCESS"],
+		###############################################(21)
+				["benchs/aprove/Julia_11_iterative/ChooseLife.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/Choose.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/Continue.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/Loop.ss", 2, "-tp redlog", "main", "SUCCESS", "test", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/NO_00.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/NO_01.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/NO_02.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/NO_03.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/NO_04.ss", 6, "", "main", "SUCCESS", "for_1", "SUCCESS", "for_2", "SUCCESS", 
+				"for_3", "SUCCESS", "for_4", "SUCCESS", "for_5", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/NO_05.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/NO_06.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/NO_10.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/NO_11.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/NO_12.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/NO_20.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/NO_21.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/NO_22.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/NO_23.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/NO_24.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/Parts.ss", 6, "", "parts", "SUCCESS", "main", "SUCCESS", "for_1", "SUCCESS",
+				"loop_1", "SUCCESS", "for_2", "SUCCESS", "loop_2", "SUCCESS"],
+				["benchs/aprove/Julia_11_iterative/Swingers.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+		###############################################(44)
+				["benchs/aprove/pasta/PastaA10.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/pasta/PastaA1.ss", 3, "", "main", "SUCCESS", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
+				["benchs/aprove/pasta/PastaA4.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaA5.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaA6.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaA7.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaA8.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/pasta/PastaA9.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/pasta/PastaB10.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/pasta/PastaB11.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/pasta/PastaB12.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/pasta/PastaB13.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/pasta/PastaB14.ss", 3, "", "main", "SUCCESS", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
+				["benchs/aprove/pasta/PastaB15.ss", 3, "", "main", "SUCCESS", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
+				["benchs/aprove/pasta/PastaB16-loop.ss", 3, "", "main", "SUCCESS", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
+				["benchs/aprove/pasta/PastaB16.ss", 3, "", "main", "SUCCESS", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
+				["benchs/aprove/pasta/PastaB17.ss", 3, "", "main", "SUCCESS", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
+				["benchs/aprove/pasta/PastaB18.ss", 3, "", "main", "SUCCESS", "loop", "SUCCESS", "decrease", "SUCCESS"],
+				["benchs/aprove/pasta/PastaB1.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaB2.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaB3.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaB4.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaB4-loop.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaB5.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaB6.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaB7.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaB8.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaC10-while.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaC11.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/pasta/PastaC11-while.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaC1.ss", 3, "", "main", "SUCCESS", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
+				["benchs/aprove/pasta/PastaC1-while.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaC2-while.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaC3.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/pasta/PastaC3-while.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaC4-while.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaC5-while.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaC7-simpl-1.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/aprove/pasta/PastaC7-simpl-2.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/aprove/pasta/PastaC7-simpl.ss", 1, "", "loop", "SUCCESS"],
+				["benchs/aprove/pasta/PastaC7.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+				["benchs/aprove/pasta/PastaC7-while.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaC8-while.ss", 1, "", "main", "SUCCESS"],
+				["benchs/aprove/pasta/PastaC9-while.ss", 1, "", "main", "SUCCESS"]
     ],
     "lists" => [
         # ["allz1.ss", 0, ""],
@@ -557,10 +902,13 @@ $output_file = "log";
         ["ll_nolists.ss", 11, "", "reverse", "SUCCESS", "create_list", "SUCCESS", "delete_val", "SUCCESS", "delete", "SUCCESS", "insert", "SUCCESS", "get_next_next", "SUCCESS", "set_null", "SUCCESS", "set_next", "SUCCESS", "get_next", "SUCCESS", "ret_first", "SUCCESS", "append", "SUCCESS"],
         ["ll_test1.ss", 1, "", "reverse", "SUCCESS"],
         ["ll_test2.ss", 1, "", "delete", "SUCCESS"],
+        # above fails on postcondition!
         # ["ll_test3.ss", , "", ],
+        # above takes too long
         ["ll_test4.ss", 1, "", "test", "SUCCESS"],
         ["ll_test5.ss", 1, "", "delete_val", "SUCCESS"],
-        ["lr.ss", 2, "", "my_rev", "SUCCESS", "reverse", "SUCCESS"],
+        #["lr.ss", 2, "", "my_rev", "SUCCESS", "reverse", "SUCCESS"],
+        # above takes too long
         ["lrev-bug.ss", 1, "", "lrev", "SUCCESS"],
         ["lrev.ss", 1, "", "lrev", "SUCCESS"],
         # ["lz_bak.ss", 0, ""],
@@ -571,36 +919,84 @@ $output_file = "log";
         ["merge3.ss", 1, "", "merge", "SUCCESS"],
         ["mk_zero.ss", 1, "", "mk_zero", "SUCCESS"],
         ["perm.ss", 1, "", "append", "SUCCESS"]
+    ],
+    "lemmas"=>[["lemma_check01.ss", 3, " --elp ", "V1", "Valid", "V2", "Valid", "F3", "Fail"],
+               ["lemma_check02.ss", 2, " --elp ", "F5", "Fail", "V6", "Valid."],
+               ["lemma_check03.ss", 3, " --elp ", "L1", "Valid", "L2", "Valid", "L4", "Fail"],
+               ["lemma_check04.ss", 3, " --elp ", "L41", "Valid", "L42", "Fail", "L43","Fail"],
+               ["lemma_check06.ss", 6, " --elp ",  "L61", "Valid", "L67", "Valid", "L62", "Valid", "L64", "Fail", "L65", "Fail", "L66", "Fail"]
     ]
     );
 
-# list of file, string with result of each entailment....
+# list of file, string with result of each entailment&lemma....
+# the pattern to add a new program below: ["program_name", "default options", "lemma validity check results", "checkentail results"]
 %sleek_files=(
-		"sleek"=>[["sleek.slk","Valid.Valid.Valid.Fail."],
-					["sleek1.slk","Fail."],
-					["sleek10.slk","Valid.Fail."],
-					["sleek2.slk","Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
-					["sleek3.slk","Valid.Fail.Valid."],
-					["sleek4.slk","Valid.Valid."],
-					["sleek6.slk","Valid.Valid."],
-					["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
-                  # slow in sleek8.slk due to search
-				  ["sleek8.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
-					["sleek9.slk","Valid.Fail.Valid.Valid."],
-                                        ["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid."],
-			                #["imm/imm2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
-			                ["imm/imm2.slk","Fail.Valid.Fail.Valid.Fail."],
-			                ["imm/imm3.slk","Fail.Fail.Valid.Valid.Valid.Valid."],
-			                ["imm/imm4.slk","Valid.Fail."],
-			                ["imm/imm-hard.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]]				
-			);
+    "sleek"=>[["sleek.slk", "","", "Valid.Valid.Valid.Fail."],
+                      ["sleek1.slk", "", "", "Fail."],
+                      ["sleek10.slk", "", "", "Valid.Fail."],
+                      ["sleek2.slk", "", "", "Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
+                      ["sleek3.slk", "", "Valid.", "Valid.Fail.Valid."],
+                      ["sleek4.slk", "", "", "Valid.Valid."],
+                      ["sleek6.slk", "", "", "Valid.Valid."],
+                      ["sleek7.slk", "", "Valid.", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
+                      # slow in sleek8.slk due to search
+                      ["sleek8.slk", "", "Valid.", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+                      ["sleek9.slk", "", "Valid.Valid.","Valid.Fail.Valid.Valid."],
+											["symb-diff.slk", "", "", "Valid.Valid.Valid."],
+                      ["infer/infer1.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
+                      ["infer/infer2.slk", "", "", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid."],
+                      ["infer/infer4.slk", "", "", "Fail."],
+                      ["infer/infer5.slk", "", "", "Valid.Valid.Fail.Valid."],
+                      ["infer/infer6.slk", "", "", "Valid."],
+                      ["infer/infer7.slk", "", "", "Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid."],
+                      ["infer/infer8.slk", "", "", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
+                      ["infer/infer9.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid."],
+#                      ["infer/infer10.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Fail.Fail.Fail."],
+                      ["infer/infer10.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Fail.Fail.Valid."],
+                      ["infer/infer11.slk", "", "", "Fail."],
+#                      ["infer/infer12.slk", "", "", "Valid.Fail.Fail.Fail.Fail.Valid.Fail.Fail.Fail.Fail.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
+                      ["infer/infer12.slk", "", "", "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
+                      ["infer/infer13.slk", "", "", "Valid.Valid.Valid.Valid.Valid."],
+                      ["infer/infer14.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
+                      ["infer/infer15.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
+# TODO : why are spaces so important in " --imm "?
+                      ["ann1.slk", " --imm ", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail."],
+                      ["imm/imm1.slk", " --imm ", "", "Fail.Valid.Valid.Valid.Valid.Valid."],
+                      #["imm/imm2.slk", "--imm", "Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
+                      ["imm/imm2.slk", " --imm ", "", "Fail.Valid.Fail.Valid.Fail."],
+                      ["imm/imm3.slk", " --imm ", "", "Fail.Fail.Valid.Valid.Valid.Valid."],
+                      ["imm/imm4.slk", " --imm ", "", "Valid.Fail."],
+                      ["imm/imm-hard.slk", " --imm --eps", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
+                      ["classic/classic1.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
+                      ["classic/classic1.slk", " --classic", "", "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
+                      ["classic/classic2.slk", "", "", "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
+                      ["classic/classic3.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."]],
+    "sleek_vperm" => [
+                      ["vperm/vperm.slk"," --ann-vp ", "", "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
+                      ["vperm/vperm2.slk"," --ann-vp ", "", "Valid.Valid.Fail."]],
+    "lemmas"=>[["lemma_check01.slk", " --elp ", "Valid.Valid.Fail.", ""],
+              ["lemma_check02.slk", " --elp ", "Fail.Valid.", ""],
+              ["lemma_check03.slk", " --elp ", "Valid.Valid.Fail.", ""],
+              ["lemma_check04.slk", " --elp ", "Valid.Fail.Fail.", ""],
+              ["lemma_check06.slk", " --elp ", "Valid.Valid.Valid.Fail.Fail.Fail.", ""]],
+    "musterr"=>[["err1.slk","","must.may.must.must.may.must.may.must.must.Valid.may.must."],
+               ["err2.slk","","must.may.must.must.must.may.must.must.may.may.may.must.may.must.may.must.may.must.must.must.must.Valid.must.Valid.must.must.must.must.Valid.may.may."],
+			   ["err3.slk","","must.must.must.must.must.must.may.must.must."],
+			   ["err4.slk","","must.Valid.must.may.Valid.Valid.Valid.may.may.must.may.must.Valid.may.may.must.must.Valid."],
+			   ["err5.slk","","may.must.Valid.may.may.may.must.may.Valid.must.must.must.must.may.Valid.may.must.Valid.must.must."], #operators
+			   ["err6.slk","","must.Valid.may.may.must.Valid."],
+			   ["err7.slk","","Valid.must.must.must.must.Valid.may.Valid.must.must.Valid."],
+               ["err9.slk","","bot.Valid.must.may.bot.Valid.must.may."]]
 
-if($timings){
+    );
+
+# if($timings){
     $mainSum = 0.0;
     $childSum = 0.0;
     $totalSum = 0.0;
+    $prooflogSum = 0.0;
     $falseContextSum = 0;
-}
+# }
 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");
 sleek_process_file();
@@ -617,6 +1013,12 @@ if($home21){
 	rmtree(["$target_dir"]) or die ("Could not delete folder: $target_dir $!");
 }
 
+printf "Total verification time: %.2f second\n", $totalSum;
+printf "\tTime spent in main process: %.2f second\n", $mainSum;
+printf "\tTime spent in child processes: %.2f second\n", $childSum;
+printf "\tNumber of false contexts: %d\n", $falseContextSum; 
+ 
+
 if($timings){
     #do the last computations and close the timings log worksheet
     #compute the total times*
@@ -628,6 +1030,9 @@ if($timings){
     $worksheet->write($row, $programCol, "Totals:", $format);
     $worksheet->write($row, $mainCol, "$mainSum", $format);
     $worksheet->write($row, $childCol, "$childSum", $format);
+    if("$flags" =~ m/--enable-logging-txt\b/ ){
+      $worksheet->write($row, $prooflogCol, "$prooflogSum", $format);	
+    }
     $worksheet->write($row, $totalCol, $totalSum, $format);
     $worksheet->write($row, $falseContextCol, $falseContextSum, $format);
     $workbook->close();
@@ -663,6 +1068,11 @@ sub log_one_line_of_timings{
      $worksheet->write($row, $childCol, $formatted_no, $format);
      $childSum = $childSum + $1;
  }
+ if($outp =~ m/	Time for logging: (.*?) second/){
+     my $formatted_no = sprintf "%.2f", "$1";
+     $worksheet->write($row, $prooflogCol, $formatted_no, $format);
+     $prooflogSum = $prooflogSum + $1;
+ }
  if($outp =~ m/\b(\w+) false contexts/){
      $format->set_num_format('0');
      $worksheet->write($row, $falseContextCol, "$1", $format);
@@ -670,21 +1080,39 @@ sub log_one_line_of_timings{
  }
 }
 
+sub sum_of_timings {
+ my $outp = $_[0];
+ if($outp =~ m/Total verification time: (.*?) second/){
+     $totalSum = $totalSum + $1;
+ }
+ if($outp =~ m/Time spent in main process: (.*?) second/){
+     $mainSum = $mainSum + $1;
+ }
+ if($outp =~ m/Time spent in child processes: (.*?) second/){
+     $childSum = $childSum + $1;
+ }
+ if($outp =~ m/	Time for logging: (.*?) second/){
+     $prooflogSum = $prooflogSum + $1;
+ }
+ if($outp =~ m/\b(\w+) false contexts/){
+     $falseContextSum = $falseContextSum + $1;
+ }
+}
+
+# string-pattern for collecting hip answer after the verification of a procedure:
+#   "Procedure proc_name$ignored_string RESULT", where proc_name is the name of the procedure to be 
+#                                                  verified, and RESULT can be either SUCCESS or FAIL
 sub hip_process_file {
     foreach $param (@param_list)
     {
+        my $procedure = "Procedure"; # assume the lemma checking is disabled by default; 
+        if ("$param" =~ "lemmas") { $procedure = "Entailing lemma"; }
         if ("$param" =~ "hip") {
             $exempl_path_full = "$exempl_path/hip";
             print "Starting hip tests:\n";
-        }elsif("$param" =~ "bags") {
-            $exempl_path_full = "$exempl_path/bags";
-            print "Starting bags tests:\n";
-        }elsif ("$param" =~ "term") {
-            $exempl_path_full = "$exempl_path/term";
-            print "Starting term tests:\n";
-        }elsif ("$param" =~ "lists") {
-            $exempl_path_full = "$exempl_path/list_examples";
-            print "Starting term tests:\n";
+        } else {
+            $exempl_path_full = "$exempl_path/hip/$param";
+            print "Starting hip-$param tests:\n";
         }
 		$t_list = $hip_files{$param};
 		foreach $test (@{$t_list})
@@ -701,20 +1129,48 @@ sub hip_process_file {
 			print LOGFILE "$output";
 			$limit = $test->[1]*2+2;
 			#print "\nbegin"."$output"."end\n";
+#            my @lines = split /\n/, $output;
+#            @results = [];
+#            foreach my $line (@lines) {
+#                for($i = 3; $i<$limit;$i+=2)
+#                {
+#                    #print $line . "\n";
+#                    if($line =~ /$procedure $test->[$i]/ && $line =~ m/SUCCESS/){
+#                        @results[$i] = "SUCCESS";
+#                    }
+#                    elsif($line =~ /$procedure $test->[$i]/  && $line =~ m/FAIL/ ){
+#                        @results[$i] = "FAIL";
+#                    }
+#                }
+#            }
+#            for ($i = 3; $i<$limit;$i+=2) {
+#                #print $test->[$i] ."\n";
+#                #print @results[$i] ."\n";
+#                #print $test->[$i+1] ."\n";
+#                if(@results[$i] ne $test->[$i+1])
+
 			for($i = 3; $i<$limit;$i+=2)
 			{
-				if($output !~ /Procedure $test->[$i].* $test->[$i+1]/)
+				if($output !~ /$procedure $test->[$i]\$.* $test->[$i+1]/)
 				{
 			 		$error_count++;
 					$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
 					print "error at: $test->[0] $test->[$i]\n";
 				}
 			}
-            if($timings) {
-                log_one_line_of_timings ($test->[0],$output);
-            }
-        }
+			#Termination checking result
+      if ($output !~ "ERR:") {}
+			else {
+				$error_count++;
+				$error_files=$error_files."term error at: $test->[0] $test->[$i]\n";
+				print "term error at: $test->[0] $test->[$i]\n";
+			}
+      if($timings) {
+        log_one_line_of_timings ($test->[0],$output);
+      }
+      sum_of_timings ($output);
     }
+  }
 }
 
 
@@ -722,50 +1178,71 @@ sub hip_process_file {
 sub sleek_process_file  {
   foreach $param (@param_list)
   {
+      my $lem = 0; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
+      my $err = 0;
+      if ("$param" =~ "musterr") {
+          print "Starting sleek must/may errors tests:\n";
+          $exempl_path_full = "$exec_path/errors";
+          $err = 1;
+      }
+      if (("$param" =~ "lemmas") ||  ($script_arguments=~"--elp")) {  $lem = 1; }
+#      elsif ($script_arguments=~"--dlp"){ $lem = 0; }
+      
       if ("$param" =~ "sleek") {
           print "Starting sleek tests:\n";
           $exempl_path_full = "$exempl_path/sleek";
+      }else {
+          $exempl_path_full = "$exempl_path_full/$param";
+          print "Starting sleek-$param tests:\n";
       }
-      $t_list = $sleek_files{$param};	
+      $t_list = $sleek_files{$param};
       foreach $test (@{$t_list})
 			{
-			print "Checking $test->[0]\n";
-			$output = `$sleek $script_arguments $exempl_path_full/$test->[0] 2>&1`;
+            my $extra_options = $test->[1];
+            if ("$extra_options" eq "") {
+                print "Checking $test->[0]\n";
+            } else {
+                print "Checking $test->[0] (runs with extra options: $extra_options)\n";
+            }
+            $script_args = $script_arguments." ".$extra_options;
+			$output = `$sleek $script_args $exempl_path_full/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 	        print LOGFILE "$output";
-			$pos = 0;
-			$r = "";
-			while($pos >= 0)
-			{
-				$i = index($output, "Valid",$pos);
-				$j = index($output, "Fail",$pos);
-				if ($i==-1 && $j == -1)
-					{$pos = -1;}
-				else
-				{
-					if(($i<$j || $j==-1)&& ($i>=0))
-					{
-						$pos=$i+3;
-						$r = $r ."Valid.";
-					}
-					else
-					{
-						$pos=$j+3;
-						$r = $r ."Fail.";
-					}
-				}
-				if ($pos >=length($output)) 
-				{$pos = -1;}
-			}
-			if($r !~ /^$test->[1]$/)
+            my $lemmas_results = "";
+            my $entail_results = "";
+            my @lines = split /\n/, $output; 
+            foreach my $line (@lines) { 
+                if($line =~ m/Entailing lemma/){
+                    if($line =~ m/Valid/) { $lemmas_results = $lemmas_results ."Valid."; }
+                    elsif($line =~ m/Fail/)  { $lemmas_results = $lemmas_results ."Fail.";}
+                }elsif($line =~ m/Entail/){
+                    if( $err == 1) {
+                        $i = index($line, "Valid. (bot)",0);
+                        $h = index($line, "Valid.",0);
+                        $j = index($line, "Fail.(must)",0);
+                        $k = index($line, "Fail.(may)",0);
+                        #  print "i=".$i ." h=". $h . " j=" .$j . " k=".$k ."\n";
+                        if($i >= 0) { $r = $r ."bot."; }
+                        elsif($h >= 0) { $r = $r ."Valid."; }
+                        elsif($j >= 0)  { $r = $r ."must.";} #$line =~ m/Fail.(must)/
+                        elsif($k >= 0)  { $r = $r ."may.";}
+                    }
+                    else {
+                        if($line =~ m/Valid/) { $entail_results = $entail_results ."Valid."; }
+                        elsif($line =~ m/Fail/)  { $entail_results = $entail_results ."Fail.";}
+                    }
+                }
+            }
+			if (($entail_results !~ /^$test->[3]$/) || ( ($lem == 1)  && ($lemmas_results !~ /^$test->[2]$/)))
 			{
 				print "Unexpected result with : $test->[0]\n";
 				$error_count++;
 				$error_files = $error_files . " " . $test->[0];
-			}  
-            if($timings) {
-               # log_one_line_of_timings ($test->[0],$output);
-            }  
+			}
+			if($timings) {
+				# log_one_line_of_timings ($test->[0],$output);
+			}
+			sum_of_timings ($output);
 		}
 	}
 }

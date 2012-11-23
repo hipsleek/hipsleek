@@ -1,0 +1,31 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred pos_ll<n> == self = null & n = 0
+	or self::node<d,r> * r::pos_ll<n - 1> & d>0
+	inv n >= 0.
+
+pred neg_ll<n> == self = null & n = 0
+	or self::node<d,r> * r::neg_ll<n - 1> & d<0
+	inv n >= 0.
+
+lemma self::pos_ll<n> & n>0 -> self::neg_ll<n> & flow __Error.
+lemma self::neg_ll<n> & n>0 -> self::pos_ll<n> & flow __Error.
+
+//1. err1.slk->17. must bug. cause:15.4 no match for rhs data node: x (may-bug). WRONG, should be Valid
+checkentail x=y & y!=null |- x::node<_,_> .
+
+//2. err4.slk->19 must. inconsistent must failure
+checkentail x::neg_ll<n> & flow __SleekMustErr |- x::neg_ll<n> & n>0.
+
+//3. err4.slk->14 may failure! --eps
+checkentail x::pos_ll<n> |- x::neg_ll<n>.
+
+//4. err4.slk->15 should be a must failure (not may) but needs an unfold of LHS
+checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
+
+//5. err9.slk->7 Fail. (must) --eps FIXED
+checkentail  x::ll<m> & m>3 |- x::node<_, null> .

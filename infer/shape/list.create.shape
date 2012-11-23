@@ -1,0 +1,14 @@
+SUMMARY
+
+SUMMARY
+{
+	label=SLS 0+;
+	11 [label=11];
+	12 [label=tl 12];
+	11 -> 12 [label=[+8]];
+};
+	19 [label=lst];
+	19 -> 11 [label=hasValue];
+	lonely1 [label=NULL];
+	12 -> lonely1 [label=AuxValue];
+

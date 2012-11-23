@@ -1,0 +1,4 @@
+
+checkentail x=0 & x!=y |- y!=0. 
+
+checkentail x=0 & ($ x!=y) |- y!=0. 

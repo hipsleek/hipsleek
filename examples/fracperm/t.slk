@@ -1,0 +1,169 @@
+/*
+ * LDK
+ * Test to understand entailment and residue
+ * VALID EXAMPLES without fractional permission
+*/
+
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+checkentail x::ll(0.5)<n> & n=0 |- x=null.
+print residue. //EMP, valid
+
+/*
+checkentail x::ll(1.0)<n> * x::ll(1.0)<n> & n=0 |- x!=null.
+print residue. //EMP, fail
+
+checkentail x::ll(0.5)<n> & n=0 |- x!=null.
+print residue. //EMP, fail
+
+checkentail x::ll(0.5)<n> & n=0 |- x::ll(1.0)<n>.
+print residue. //EMP, valid
+
+checkentail x::ll(1.0)<n> & n=0 |- x::ll(0.5)<a> * x::ll(1.0)<b>.
+print residue. //EMP, valid
+
+checkentail x::ll(f)<n> & n=0 |- x::ll(f1)<a> * x::ll(f2)<b>.
+print residue. //EMP, valid
+
+checkentail x=null & n=0 |- x::ll(f1)<a> * x::ll(f2)<b>.
+print residue. //EMP, valid
+
+checkentail x::ll<n> & n=0 |- x::ll<a>.
+print residue. //EMP, valid
+
+checkentail x::node<_, r> |- x!=null .
+print residue. //EMP, valid
+
+//(1)
+checkentail x::node(1.0)<_, null> & m = 1 |- x::ll(1.0)<m>.
+print residue. // FOLD
+
+//(2)
+checkentail x::node(1.0)<_, null>         |- x::ll(1.0)<m>.
+print residue. // FOLD
+
+//(3)
+checkentail x::node(1.0)<_, null> & m = 1 |- m=1.
+print residue. //EMP
+
+//(4)
+checkentail x::node(1.0)<_, r> * r::node(1.0)<_, r2> * r2::ll(1.0)<n> |- x::ll(1.0)<n + 2>.
+//FOLD, no residue
+
+//(5)
+checkentail x::node(1.0)<next = r1> * r1::node(1.0)<next = aa> * y::node(1.0)<> & b > 10 & aa=null |- x::ll(1.0)<c>.
+print residue. //FOLD
+
+//(6)
+checkentail x::ll(1.0)<n> & x!=null |- x::ll(1.0)<m> & m>0.
+print residue. //MATCH
+
+//(7)
+checkentail x=null |- x::ll(1.0)<0>.
+print residue. //FOLD
+
+//(8)
+checkentail x=null or x::node(1.0)<_,q>*q::node(1.0)<_,null> & q=null |- x::ll(1.0)<d>.
+print residue. //OR-L, valid because the 2nd disjunc of the antecedent is false
+
+//(9)
+checkentail x=null or x::node(1.0)<_,q>*q::node(1.0)<_,null> |- x::ll(1.0)<d>.
+print residue. //OR-L, residue has a disjunction
+
+//(10)
+checkentail x::ll(1.0)<n> & x!=null |- x::ll(1.0)<n> & n>0 or x::ll(1.0)<0> .
+print residue. //OR-R
+
+//(11)
+checkentail x::node(1.0)<_,q>*q::ll(1.0)<n> & n>=0 |- x::ll(1.0)<d>.
+print residue. //FOLD
+
+//(12)
+checkentail false |- x::ll(1.0)<d>.
+print residue. //False antecedent
+
+//(13)
+checkentail true |- x::ll(1.0)<d>.
+print residue. //true antecedent
+
+//(14)
+checkentail x::ll(1.0)<n> |- true.
+print residue. //true consequent
+
+//(15)
+checkentail x::ll(1.0)<n> |- false.
+print residue. //false consequent
+
+//(16)
+checkentail x::ll(1.0)<n> & n>1 |- x::node(1.0)<_,q> * q::node(1.0)<_,r>.
+print residue. //UNFOLD
+
+//(17)
+checkentail x::ll(1.0)<n> & n<2 |- x=null or x::node(1.0)<_,null>.
+print residue. //OR-R
+
+//(18)
+checkentail x::ll(1.0)<n> & n<2 |- case { x=null -> [] x=null;
+                                    x!=null ->  [] x::node(1.0)<_,null>; }.
+print residue. // CASE 
+
+//(19)
+checkentail x::ll(1.0)<n> & n > 0 |- x::ll(1.0)<m>.
+print residue. // FOLD
+
+//(20)
+checkentail (exists n : x::ll(1.0)<n> & n > 0) |- x!=null.
+print residue. // EX-L
+
+//(21)
+checkentail x=null       |- (exists n: x::ll(1.0)<n> & n=0).
+print residue. //EX-R, n is not in residue
+
+//(22)
+checkentail x::node(1.0)<_, r> & r=null        |-  x::ll(1.0)<m>.
+print residue. // FOLD, then MATCH
+
+//(23)
+checkentail x::node(1.0)<_, r> & r!=null       |-  x::ll(1.0)<m> & m>0.
+print residue. // FOLD ??? why fail
+
+//(24)
+//if..., valid
+checkentail x::node(1.0)<_, r> * r::ll(1.0)<n> & r!=null  |-  x::ll(1.0)<m>.
+print residue. // FOLD, then MATCH
+
+//(25)
+checkentail x=null       |-  x::ll(1.0)<n> & n=0.
+print residue. //FOLD, valid
+
+//(26)
+checkentail x!=null       |-  x::ll(1.0)<m> & m>0.
+print residue. // FOLD ???why fail
+// NOT STRONG ENOUGH antecedent
+
+//(27)
+checkentail x!=null       |-  x::node(1.0)<_, r> * r::ll(1.0)<m>.
+
+//(28)
+checkentail x!=null       |-  x::node(1.0)<_, r>.
+// ??? do not know which rule to apply???
+
+//(29)
+//BUT, ... valid
+checkentail x::node(1.0)<_, r> |- x!=null .
+print residue. //EMP, valid
+
+//(30)
+//if ..., valid
+checkentail x::ll(1.0)<n> &  x!=null       |-  x::ll(1.0)<m> & m>0.
+print residue. // MATCHING
+
+//(31)
+checkentail x::ll(1.0)<n> |- x::ll(1.0)<m>.
+print residue. //MATCH
+*/
+

@@ -1,0 +1,46 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred ll3<n,s,l> == self=null & n=0 & s<=l
+    or self::node<s, q> * q::ll3<n-1,s1,l> & s<=s1
+	inv n>=0 & s<=l.
+
+relation R(int s3, int l3, int s2, int l2, int s1, int l1).
+relation P(int s2, int l2, int s1, int l1).
+ 
+/*
+void append3(node x, node y)
+  infer [R]//,s1,l2
+  requires x::ll3<n,s1,l1>*y::ll3<m,s2,l2>  & x!=null & l1<=s2
+  ensures x::ll3<n+m,s3,l3> & R(s3,l3,s2,l2,s1,l1)   ;
+{
+   if (x.next==null) {
+     x.next=y;
+   } else {
+      append3(x.next,y);
+   }
+}
+*/
+/*
+// seems incorrect here! RELASS..
+
+<1>true&s1<=l1 & n=1 & P(s2,l2,s1,l1) & q_58=y & s1_59=s2 & s1<=s2 & s1<=s1_59 & s3<=s1_59 & s1=s3 & l2=l3&{FLOW,(17,18)=__norm}
+inferred rel: [RELDEFN R: ( l3=l2 & s3=s1 & s1<=s2 & s2<=l2 & s1<=l1 & P(s2,l2,s1,l1)) -->  R(s3,l3,s2,l2,s1,l1); 
+              RELASS R: ( R(s3,l3,s2,l2,s1,l1)) -->  s1<=s2]
+
+*/
+
+/*
+infer [R,P] x::node<s1,y>*y::ll3<m,s2,l2> & s1<=l1 & n=1 & P(s2,l2,s1,l1)
+  |- x::ll3<n+m,s3,l3> & R(s3,l3,s2,l2,s1,l1).
+print residue.
+*/
+  // s1<=l1 & P(s2,l2,s1,l1) -> s1<=s2
+
+
+infer [R,P] x::node<s1,y>*y::ll3<m+n-1,s4,l4> & 
+  R(s4,l4,s2,l2,s1a,l1) & s1<=s1a & P(s2,l2,s1,l1)
+  |- x::ll3<n+m,s3,l3> & R(s3,l3,s2,l2,s1,l1).
+print residue.

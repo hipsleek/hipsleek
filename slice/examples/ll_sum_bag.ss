@@ -1,0 +1,15 @@
+data node {
+	int val; 
+	node next;	
+}
+
+ll<n,s,B> ==
+	self = null & n = 0 & s = 0 & B = {} or
+	self::node<v,p> * p::ll<n1,s1,B1> & n = 1 + n1 & v >= 0 & s = v + s1 & B = union({v}, B1)
+	inv n >= 0 & s >= 0 & forall (x : (x notin B | x >= 0));
+/*
+ll<n,s> ==
+	self = null & n = 0 & s = 0 or
+	self::node<v,p> * p::ll<n1,s1> & n = 1 + n1 & v >= 1 & s = v + s1
+	inv n >= 0 & s >= 0 & s>=n;
+*/

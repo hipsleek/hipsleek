@@ -1,0 +1,18 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred ll<n> == self=null & n=0
+	or self::node<_, q> * q::ll<n-1>
+	inv n>=0.
+
+pred lseg<p, n> == self=p & n=0
+	or self::node<_, q> * q::lseg<p, n-1>
+	inv n>=0.
+
+checkentail x::node<_,q>*q::ll<n-1> &y=x & n>0 & Term[n] & q!=null
+  |- Term[n-1] or Term[n] or Loop.
+print residue.
+
+

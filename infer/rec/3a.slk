@@ -1,0 +1,27 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+// can res be used as an identifier
+
+relation R(int rs, int n).
+relation Q(node x).
+relation P(node x,int rs).
+//  ==> res=0 & n=0 --> R(res,n)
+
+infer [R,Q] x::ll<n>@L & x=null & rs=t & t=0 |- R(rs,n) & Q(x).
+print residue.
+//inferred rel: [( t=0 & n=0 & rs=t) -->  R(rs,n); ( x=null) -->  Q(x)]
+
+
+infer [R,P] x::ll<n>@L & x=null & rs=t & t=0 |- R(rs,n) & P(x,rs).
+print residue.
+//inferred rel: [( t=0 & n=0 & rs=t) -->  R(rs,n); 
+//              ( t=0 & x=null & rs=t) -->  P(x,rs)]
+
+

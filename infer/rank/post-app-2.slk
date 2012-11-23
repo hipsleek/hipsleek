@@ -1,0 +1,26 @@
+relation P(int s1, int s2, int l1, int l2).
+
+// l1<=s2
+infer [l1,l2,s1,s2] s1<=l1 & s2<=l2  |- s1<=s2.
+print residue.
+
+
+// l1<=s2
+infer [l1,s1,s2] s1<=l1   |- s1<=s2.
+print residue.
+
+
+// expecting l1<=s2 but getting s1<=s2
+infer [l1,s1,s2] s1<=l1 & s2a=s2 & s1a=s1 |- s1a<=s2a.
+print residue.
+// substitute away [s2a->s2,s1a->s1] on both LHS & RHS
+
+
+// l1<=s2
+infer [l1,s1,s2] s1<=l1 & s2<=l2  |- s1<=s2.
+print residue.
+
+
+// s1<=? |- s1<=? --> remove s1
+// ?<=s2 |- ?<=s2 --> remove s2
+

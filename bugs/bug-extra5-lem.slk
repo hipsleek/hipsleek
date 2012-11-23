@@ -1,0 +1,24 @@
+data node { int val ; node next }.
+
+pred lseg<p> == self = p 
+         or self::node<next = r> * r::lseg<p> 
+         inv true.
+
+pred ll<p> == self::node<_,null>
+         or self::node<next = r> * r::ll<p> 
+         inv true.
+
+
+pred last<p> == self::node<_,null> & self=p
+         or self::node<next = r> * r::last<p> 
+         inv self!=null.
+
+// bug when xx was named as self
+
+checkentail  self::node<next = r2> * r2::lseg<pp> |- self::lseg<rr> & rr=pp.
+//checkentail  xx::node<next = r2> * r2::lseg<p> |- xx::lseg<rr> & rr=p.
+
+print residue.
+
+
+

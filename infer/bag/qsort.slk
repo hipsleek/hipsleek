@@ -1,0 +1,25 @@
+/* quick sort */
+
+data node {
+	int val; 
+	node next; 
+}.
+
+pred ll1<S> == self =  null & S={} 
+	or self::node<v, r> * r::ll1<S1>  & S = union(S1, {v}).
+
+infer [S] x::ll1<S> |- x!=null.
+print residue.
+
+infer [S] x::ll1<S> & S!={} |- x=null.
+print residue.
+
+infer [S] x::ll1<S> |- x::node<a,b>.
+print residue.
+
+//checkentail x::ll1<S> & S!={} |- x!=null.
+//print residue.
+
+//checkentail x::ll1<S> & S!={} |- x::node<a,b>.
+//print residue.
+

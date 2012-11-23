@@ -1,0 +1,66 @@
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" href="$$RESOURCE_DIR_URL$$hipsleek.css" />
+	<link rel="stylesheet" type="text/css" href="$$RESOURCE_DIR_URL$$jquery.jscrollpane.css" />
+
+	<script type="text/javascript" src="$$RESOURCE_DIR_URL$$jquery-1.7.min.js"></script>
+	<script type="text/javascript" src="$$RESOURCE_DIR_URL$$jquery.jscrollpane.min.js"></script>
+	<script type="text/javascript" src="$$RESOURCE_DIR_URL$$jquery.mousewheel.js"></script>
+	<script type="text/javascript" src="$$RESOURCE_DIR_URL$$hipsleek.js"></script>
+<!--
+	<link rel="stylesheet" type="text/css" href="hipsleek.css" />
+	<script type="text/javascript" src="jquery-1.7.min.js"></script>
+	<script type="text/javascript" src="hipsleek.js"></script>
+-->
+</head>
+<body>
+<div id="header">
+Source.c
+</div>
+	
+<div id="nav" class="scroll-pane">
+	<ul>
+		<li id="nav-sum"><a>Summary</a>
+		</li>
+		<li id="nav-def"><span>Definitions</span>
+			<ul id="nav-def-list">
+				<li><span id="nav-def-data">Data</span></li>
+				<li><span id="nav-def-view">Views</span></li>
+				<li><span id="nav-def-rels">Relations</span></li>
+			</ul>
+		</li>
+		<li id="nav-thm"><span>Theorems</span>
+			<ul id="nav-thm-list">
+			</ul>
+		</li>
+		<li id="nav-proc"><span>Procedures</span>
+			<ul id="nav-proc-list">
+			</ul>
+		</li>
+	</ul>
+</div>
+
+<div id="content_src_container">
+	<div id="content" class="scroll-pane">
+		<!-- dynamically loaded based on user interaction via the navigation -->
+<!--
+		<div id="content-sum"></div>
+		<ul id="content-proc"></ul>
+		<div id="content-defs"></div>
+		<div id="content-lms"></div>
+-->
+	</div>
+
+	<div id="srclink" class="scroll-pane">
+		<!-- Display the source at the correct line number via links, allow user to close -->
+		Testing code
+	</div>
+</div>
+
+<script type="text/javascript">
+//$SETUP_SCRIPT
+$(document).ready(setup);
+//$(function(){ $('.scroll-pane').jScrollPane(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+
+//four point status
+//complete
+//pure
+//1. Valid. (bot)
+checkentail false |- n = 3.
+//print residue.
+
+//2. Valid
+checkentail n>4 |- n > 3.
+
+//3. Fail. (must)
+checkentail n>3 |- n <2.
+
+//4. Fail. (may)
+checkentail n>3 |- n > 4.
+
+//heap
+//5. Valid. (bot)
+checkentail  x::ll<n> & n<0 |- true .
+
+//6. Valid
+checkentail  x::node<_, null>  |- x::ll<n> & n>0.
+
+//7. Fail. (must)
+checkentail  x::ll<m> & m>3 |- x::node<_, null> .
+
+//8. Fail. (may)
+checkentail  x::ll<m> & m>3 |- x::ll<n> & n>5.
+

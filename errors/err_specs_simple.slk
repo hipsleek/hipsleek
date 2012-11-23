@@ -1,0 +1,58 @@
+
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+//1. must failure - WRONG
+//checkentail n = 1 |- n > 5 & flow __Err.
+
+checkentail n = 1 |- n > 5 .
+
+//2. may failure
+checkentail x::ll<n> & n > 1|- x::ll<m> & m > 3.
+print residue.
+
+//3. must failure
+checkentail x=null  |- x::node<_,_>.
+print residue.
+
+//4. must failure
+checkentail x::node<_,_> |- x=null.
+print residue.
+
+//5. may failure
+checkentail x::ll<_> |- x=null.
+print residue.
+
+//6. must failure
+checkentail x::ll<n> & n>0 |- x=null.
+print residue.
+
+//7. may failure
+checkentail x::ll<n> |- x::ll<m> & m>3.
+print residue.
+
+//8. must failure
+checkentail x::ll<n> & n=1 |- x::ll<m> & m>3.
+print residue.
+
+//9. must failure
+checkentail x::ll<n> & n > 1 |- x::ll<m> & m < 2.
+print residue.
+
+//10. valid
+checkentail n > 1 or n > 3 |- n > 1.
+//print residue.
+
+//11. may failure
+
+checkentail n > 1 |- n > 2.
+print residue.
+
+//12. must failure
+checkentail n = 1 |- n < 1.
+print residue.
+
+

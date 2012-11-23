@@ -1,0 +1,121 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred pos_ll<n> == self = null & n = 0
+	or self::node<d,r> * r::pos_ll<n - 1> & d>0
+	inv n >= 0.
+
+pred neg_ll<n> == self = null & n = 0
+	or self::node<d,r> * r::neg_ll<n - 1> & d<0
+	inv n >= 0.
+
+lemma self::pos_ll<n> & n>0 -> self::neg_ll<n> & flow __Error.
+//lemma self::neg_ll<n> & n>0 -> self::pos_ll<n> & flow __Error.
+
+//LOR
+/*
+or{must,valid} --> may
+or{must,must} --> must
+or{valid,valid} --> valid
+or{valid,may} --> may
+*/
+
+//pure
+// 1. or{must,valid} --> may
+checkentail n<0 or n>3 |- n>1.
+
+//2. or{must,must} --> must
+checkentail n<3 or n<0 |- n>5.
+
+// 3. or{valid,valid} --> valid
+checkentail n>2 or n>4 |- n>1.
+
+// 4. or{valid,may} --> may
+checkentail n>2 or n>0 |- n>1.
+
+// 5. or{must,may} --> may
+checkentail n<1 or n>0 |- n>1.
+
+//pointer
+//6. or{must,valid} --> may
+checkentail x::ll<n> & n > 3 or x=null |- x::node<_,_>.
+
+//7. or{must,must} --> must
+checkentail x=null or x::node<_,null> |- x::ll<m> & m > 2.
+
+//8. or{valid,may} --> may
+checkentail x::ll<n> & n > 3 or x::ll<m> |- x::node<_,_>.
+
+//RAND
+/*
+and{valid,valid} --> valid
+and{must,valid} --> must
+and{may,valid} --> may
+*/
+
+//pure
+//9. and{valid,valid} --> valid
+ checkentail n>3 & p>6 |- n>1 & p>2.
+
+//10. and{must,valid} --> must;
+ checkentail n>3 & p>6 |- n<1 & p>2.
+
+//11. and{must,must} --> must
+ checkentail n>3 & p>6 |- n<1 & p<2.
+
+//12. and{may,must} --> must
+ checkentail n>1 & p>6 |- n>3 & p<2.
+
+//13. and{must,may} --> must
+ checkentail n>1 & p>6 |- p<2 & n>3.
+
+//14. and{may,valid} --> may;
+ checkentail n>3 & p>6 |- n>4 & p>2.
+
+//pointer
+
+//ROR
+/*
+union{valid,may} --> valid
+union{may,must} --> may
+*/
+//pure
+
+//15. ror{valid,may} --> valid
+ checkentail n>3 |- n>1 or n>5 .
+
+//16. ror{must,may} --> may
+ checkentail n>3 |- n<1 or n>5 .
+
+//17. ror{must,must} --> must
+ checkentail n>3 |- n<1 or n<2 .
+
+//heap
+//18. ror{valid,must} --> valid
+checkentail  x::node<_,null>  |-  x::ll<n> or x=null.
+
+//proof search for separation entailment
+//19. must fail. cause:213  true |-  n=0 & 0<n (RHS: contradiction).
+//separation entailment must errors are eliminated
+checkentail x::ll<m> & m=0 |- x::ll<n> & n>0.
+
+//20. must fail. cause:213  true |-  n=0 & 0<n (RHS: contradiction).
+//separation entailment must errors are eliminated
+checkentail x::pos_ll<m> & m=0 |- x::neg_ll<n> & n>0.
+
+/*
+//1. must failure - WRONG now may. OR vs.UNION?
+checkentail x::ll<n> & n>0 |- x::ll<n+1> .
+
+//2. must failure - WRONG now may
+checkentail x::ll<n> & n=1 |- x::ll<m> & m>3.
+print residue.
+
+//3. must failure - WRONG now may
+checkentail x::ll<n> & n > 1 |- x::ll<m> & m < 2.
+print residue.
+*/
+

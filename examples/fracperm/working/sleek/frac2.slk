@@ -1,0 +1,74 @@
+/*
+ * LDK
+ * Test for exact FOLDING rules for data nodes and view nodes
+ * "exacts" means fractional permissions in both side should be equal
+
+//FOLDING
+x::node(p1)<_,null> |- x::ll(p2)<n>
+
+When we fold the RHS
+
+ x::ll(p2)<n> = x::node(p2)<_, r> * r::ll[p2]<n-1>
+
+then follow by exact MATCHING (examples in frac1.slk)
+
+*/
+
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+
+//(1)
+checkentail x::node(1.0)<_, null> |- x::ll(1.0)<1>.
+print residue. //valid
+
+//(2)
+checkentail x::node(1.0)<_, null> |- x::ll(0.5)<1>.
+print residue. //fail
+
+//(3)
+checkentail x::node(1.0)<_, null> |- x::ll(f)<1>.
+print residue. //valid
+
+//(4)
+checkentail x::node(1.0)<_, x1> * x1::node(1.0)<_, null> |- x::ll(f)<n>.
+print residue. //valid
+
+//(5)
+checkentail x::node(1.0)<_, x1> * x1::node(1.0)<_, null> |- x::ll(1.0)<n>.
+print residue. //valid
+
+//(6)
+checkentail x::node(1.0)<_, x1> * x1::node(1.0)<_, null> |- x::ll(0.5)<n>.
+print residue. //fail
+
+//(7)
+checkentail x::node(1.0)<_, x1> * x1::node(0.5)<_, null> |- x::ll(0.5)<n>.
+print residue. //fail
+
+//(8)
+checkentail x::node(f)<_, x1> * x1::node(f)<_, x2> * x2::node(f)<_, null> |- x::ll(f1)<n>.
+print residue. //valid
+
+//(9)
+checkentail x::node(f)<_, x1> * x1::node(f)<_, x2> * x2::ll(f)<m>|- x::ll(f1)<n>.
+print residue. //valid
+
+//(10)
+checkentail x::node(1.0)<_, x1> * x1::node(f)<_, null> |- x::ll(f)<n>.
+print residue. //fail
+
+//(11)
+checkentail x::node(f)<_, x1> * x1::node(f)<_, null> |- x::ll(f)<n>.
+print residue. //valid
+
+//(12)
+checkentail x::node(0.5)<_, x1> * x1::node(f)<_, null> |- x::ll(0.5)<n>.
+print residue. //fail
+
+//(13)
+checkentail x::node(f)<_, x1> * x1::node(0.5)<_, null> |- x::ll(0.5)<n>.
+print residue. //fail

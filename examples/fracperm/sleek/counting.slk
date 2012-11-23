@@ -1,0 +1,42 @@
+/*
+ * Counting permissions
+ * split: n => -1 & n+1
+ */
+
+data node { int val ; node next }.
+
+lemma "splitnode" self::node(f)<v,p> & f>=0 -> self::node(-1)<v,p> * self::node(f+1)<v,p>.
+
+// below need to use f>0, I think.
+lemma "normalizenode" self::node(-1)<v,p> * self::node(f)<v,p>  & f>=0 ->  self::node(f-1)<v,p>. // correct
+
+//lemma "normalizenode" self::node(-1)<v,p> * self::node(f)<v,p>  & f>=1 ->  self::node(f-1)<v,p>. // correct
+
+//this lemma failed because we can not instantiate f
+//lemma "normalizenode" self::node(-1)<v,p> * self::node(f-1)<v,p>  & f>=0 ->  self::node(f)<v,p>. // correct
+
+
+//(1)
+checkentail x::node(0)<3,r1>  |- x::node(-1)<3,r2> * x::node(1)<3,r2>.
+// below does not work!
+// checkentail x::node(0)<3,r1>  |- x::node(1)<3,r2> * x::node(-1)<3,r2> .
+print residue. //SPLIT, valid
+// NOTE: ordering is important
+// may be good to make it order independent
+
+//(2)
+checkentail x::node(0)<3,r1>  |- x::node(-1)<3,r2> * x::node(-1)<3,r2> * x::node(2)<3,r2>.
+print residue. //SPLIT, valid
+// NOTE: ordering of heap-nodes is important
+// counting permission is different from fractional permissions
+// (frac) f & f=f1+f2 -> f1 * f2 => f1 and f2 symmetric
+// (count) f & f>=0 -> (-1) * (f+1) => (-1) and (f+1) not symmetric
+// current strategy only match the first node in LHS with the first node in RHS
+// Therefore, to be more complete, we need to generalize by scanning all heap nodes
+
+//(3)
+checkentail x::node(-1)<3,r2> * x::node(1)<3,r2> |- x::node(0)<3,r1>.
+
+checkentail x::node(-1)<3,r2> * x::node(0)<3,r2> |- x::node(0)<3,r1>.
+
+print residue. // NORMALIZE, then MATCH,correct

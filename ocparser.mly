@@ -11,25 +11,27 @@
 				 mid_pos = Parsing.rhs_start_pos x;
 				}	
   let rec trans_null (b:formula):formula = 
-    let rec trans_b_f_null b = match b with
+    let rec trans_p_f_null pf =
+	  match pf with
       | Lt (e1,e2,p) -> (match (e1,e2) with
-            | IConst (i,_), Var(v,l) ->  if (is_object_var v) then if (i>=0) then Neq(e2,Null l,p) else BConst (true,p) else b
-            | Var (v,l), IConst (i,_) -> if (is_object_var v) then if (i<=1) then Eq(e1,Null l,p) else BConst(true,p) else b          
-            | _ -> b)
+            | IConst (i,_), Var(v,l) ->  if (is_object_var v) then if (i>=0) then Neq(e2,Null l,p) else BConst (true,p) else pf
+            | Var (v,l), IConst (i,_) -> if (is_object_var v) then if (i<=1) then Eq(e1,Null l,p) else BConst(true,p) else pf          
+            | _ -> pf)
       | Lte(e1,e2,p) ->(match (e1,e2) with
-            | IConst (i,_), Var(v,l) ->  if (is_object_var v) then if (i>=1) then Neq(e2,Null l,p) else BConst (true,p) else b
-            | Var (v,l), IConst (i,_) -> if (is_object_var v) then if (i<1) then Eq(e1,Null l,p) else BConst(true,p) else b          
-            | _ -> b) 
-      | Gt (e1,e2,p) -> trans_b_f_null (Lt (e2,e1,p))
-      | Gte(e1,e2,p) -> trans_b_f_null (Lte (e2,e1,p))
-      | _ -> b in
+            | IConst (i,_), Var(v,l) ->  if (is_object_var v) then if (i>=1) then Neq(e2,Null l,p) else BConst (true,p) else pf
+            | Var (v,l), IConst (i,_) -> if (is_object_var v) then if (i<1) then Eq(e1,Null l,p) else BConst(true,p) else pf          
+            | _ -> pf) 
+      | Gt (e1,e2,p) -> trans_p_f_null (Lt (e2,e1,p))
+      | Gte(e1,e2,p) -> trans_p_f_null (Lte (e2,e1,p))
+      | _ -> pf in
     match b with
-      | BForm (b,l) -> BForm ((trans_b_f_null b),l)
+      | BForm ((pf,il),l) -> BForm (((trans_p_f_null pf), il),l)
       | And (f1,f2,l) -> mkAnd (trans_null f1) (trans_null f2) l
       | Or (f1,f2,fl,l) -> mkOr (trans_null f1) (trans_null f2) fl l
       | Not (f,fl,l) -> Not ((trans_null f),fl,l)
       | Forall (sv,f,fl,l) -> Forall(sv,(trans_null f),fl,l)
       | Exists (sv,f,fl,l) -> Exists(sv,(trans_null f),fl,l)
+	  | AndList _ -> Gen.report_error no_pos "ocparser: unexpected AndList"
 %}
 
 %token AND
@@ -179,8 +181,8 @@ bconstr: aexp_list LT aexp_list { (build_relation mkLt $1 $3 None (get_pos 2), S
 | aexp_list GTE aexp_list { (build_relation mkGte $1 $3 None (get_pos 2), Some $3) }
 | aexp_list EQ aexp_list { (build_relation mkEq $1 $3 None (get_pos 2), Some $3) }
 | aexp_list NEQ aexp_list { (build_relation mkNeq $1 $3 None (get_pos 2), Some $3) }
-| TRUE { (BForm (BConst (true, get_pos 1) , None), None) }
-| FALSE { (BForm (BConst (false, get_pos 1) , None), None) }
+| TRUE { (BForm ((BConst (true, get_pos 1), None), None), None) }
+| FALSE { (BForm ((BConst (false, get_pos 1), None), None), None) }
 ;
 
 aexp: cid {

@@ -1,5 +1,6 @@
 (* Simple tactic that tried to decide (in)equalities on Z *)
 Require Export ZArith List FSets.
+Require Import Coq.Sorting.Permutation.
 Module ZSets := Make(Z_as_OT).
 
 (* ------------------------------------------------------------------------------------------------------------ *)
@@ -74,6 +75,11 @@ Proof.
   intros; simple apply refl_equal.
 Qed.
 
+Lemma simpl_length_not_nil : forall (A : Type) (L : list A), L <> (@nil A) <-> length (L) > 0.
+Proof.
+  admit.
+Qed.
+  
 Lemma simpl_length_cons : forall (A : Type) (L : list A) (x : A), length (x :: L) = 1 + length L.
 Proof.
   intros; simple apply refl_equal.

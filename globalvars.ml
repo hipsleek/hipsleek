@@ -130,7 +130,9 @@ let addp (p : primed) ((id1,id2) : ident*ident) : (ident*primed)*(ident*primed) 
 let rec find_read_write_global_var 
 	(global_vars : IdentSet.t) (local_vars : IdentSet.t) (block : I.exp) : (IdentSet.t * IdentSet.t) =
   match block with
+    | I.ArrayAlloc _ (*LDK: to eliminate compilation warnings*)
     | I.ArrayAt _ (*to be modified*)
+	(* |I.ArrayAlloc _ (\*TODO WN : correct? *\) *)
 	|I.Assert _ 
   | I.BoolLit _ 
   | I.Break _ 
@@ -185,6 +187,10 @@ let rec find_read_write_global_var
 		(r,w)
 	  end
   | I.Block e -> find_read_write_global_var global_vars local_vars e.I.exp_block_body
+  | I.Barrier e -> 
+		if (IdentSet.mem e.I.exp_barrier_recv global_vars) then
+		  (IdentSet.diff (IdentSet.singleton e.I.exp_barrier_recv) local_vars, IdentSet.empty)
+		else (IdentSet.empty, IdentSet.empty)
   | I.CallRecv e ->
 	  begin
 		ignore (NG.add_edge g (NG.V.create !curr_proc) (NG.V.create e.I.exp_call_recv_method));
@@ -206,6 +212,32 @@ let rec find_read_write_global_var
 			(r,w)
 	  end
   | I.CallNRecv e ->
+      if (e.I.exp_call_nrecv_method=Globals.fork_name) then
+        (*method name is the first arguments*)
+        try
+        let fn_exp = (List.hd e.I.exp_call_nrecv_arguments) in
+        let fn = match fn_exp with
+          | I.Var v ->
+              v.I.exp_var_name
+          | _ -> 
+              Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting a method name as the first parameter of a fork")}
+        in
+        let args = List.tl e.I.exp_call_nrecv_arguments in
+        let new_e = I.CallNRecv {
+            I.exp_call_nrecv_lock = e.I.exp_call_nrecv_lock;
+            I.exp_call_nrecv_method = fn;
+		    I.exp_call_nrecv_arguments = args;
+		    I.exp_call_nrecv_path_id = e.I.exp_call_nrecv_path_id;
+		    I.exp_call_nrecv_pos = e.I.exp_call_nrecv_pos} in
+        find_read_write_global_var global_vars local_vars new_e
+        with _ ->
+                Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting fork has at least 1 argument: method name")}
+      else if (e.I.exp_call_nrecv_method=Globals.join_name) then
+        try
+        find_read_write_global_var global_vars local_vars (List.hd e.I.exp_call_nrecv_arguments)
+        with _ ->
+                Error.report_error {Error.error_loc = no_pos; Error.error_text = ("expecting join has only 1 argument: thread id")}
+      else
 	  begin
 		ignore (NG.add_edge g (NG.V.create !curr_proc) (NG.V.create e.I.exp_call_nrecv_method));
 		let read_write_list =  List.map (find_read_write_global_var global_vars local_vars) e.I.exp_call_nrecv_arguments in
@@ -415,12 +447,22 @@ let set_read_write_set (readSet : IdentSet.t) (writeSet : IdentSet.t) (vertex : 
 	@param scc strongly connected component of a graph
 	@return unit *)
 let merge_scc (scc : NG.V.t list ) : unit =
-  let read_write_list = List.map (Hashtbl.find h) scc in
+  try(
+  let func e = Hashtbl.find h e in
+  let read_write_list = List.map (func) scc in
   let read_list = List.map fst read_write_list in
   let write_list = List.map snd read_write_list in
   let readSet = union_all read_list in
   let writeSet = union_all write_list in
   List.iter (set_read_write_set readSet writeSet) scc
+  )
+  with Not_found ->
+      let func_id = List.hd scc in
+      if ((func_id = Globals.fork_name) || (func_id = Globals.join_name)) then
+        let _ = print_endline ("[Warning] merge_scc: method names " ^ (string_of_ident_list scc) ^ " not found") in
+        ()
+      else
+        Error.report_error {Error.error_loc = no_pos; Error.error_text = ("scc = " ^ (string_of_ident_list scc) ^ "not found")}
 
 (** Check the connection and merge two strongly connected components
 	@param scc1 the first strongly connected component
@@ -521,6 +563,7 @@ and change_args (temp_procs : I.proc_decl list) (params : I.param list) (args : 
 	@return new body of the procedure *)
 and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
   match exp with
+    | I.ArrayAlloc _ (*LDK: to eliminate compilation warnings*)
     |I.ArrayAt _ (*to be modified*)
 	|I.Assert _
   | I.BoolLit _
@@ -536,6 +579,7 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
   | I.This _
   | I.Time _ 
   | I.Unfold _
+  | I.Barrier _
   | I.Var _ -> 
 	  exp
   | I.Label (p,b)-> I.Label (p, extend_body temp_procs b)
@@ -573,6 +617,14 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
 		I.CallRecv new_exp
 	  end
   | I.CallNRecv e ->
+      if (e.I.exp_call_nrecv_method=Globals.fork_name) then
+        (*TO DO: add global variables into fork method*)
+        (*we can reconstruct CallNRecv, transform and reverse back*)
+        exp
+      else if (e.I.exp_call_nrecv_method=Globals.join_name) then
+        (*no need for join*)
+        exp
+      else
 	  begin
 		let new_meth_decl = find_method temp_procs e.I.exp_call_nrecv_method in
 		let new_args = change_args temp_procs new_meth_decl.I.proc_args e.I.exp_call_nrecv_arguments in
@@ -687,6 +739,7 @@ let create_new_params (global_vars : IdentSet.t) (p : I.param) : I.param =
 	@return a new expression *)
 let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
   match exp with
+    | I.ArrayAlloc _ (*LDK: to eliminate compilation warnings*)
     |I.ArrayAt _ (*to be modified*)
 	|I.Assert _
   | I.BoolLit _
@@ -704,6 +757,7 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
   | I.Time _ 
   | I.Unfold _
   | I.Var _
+  | I.Barrier _
   | I.VarDecl _ -> 
 	  exp
   | I.Label (p,b) -> I.Label (p, check_and_change global_vars b)
@@ -946,7 +1000,7 @@ let trans_global_to_param (prog : I.prog_decl) : I.prog_decl =
 	match prog.I.prog_global_var_decls with
 	  [] -> prog
 	| _ ->
-		let _ = find_read_write_global_var_all_procs prog in 
+		let _ = find_read_write_global_var_all_procs prog in
 		let temp_decls1 = List.map resolve_name_conflict prog.I.prog_proc_decls in
 		let temp_decls2 = List.map (extend_args prog.I.prog_global_var_decls) temp_decls1 in
 		let new_proc_decls = List.map (extend_proc temp_decls2) temp_decls2 in

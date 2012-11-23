@@ -1,0 +1,32 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+// TODO : res is a reserved identifier, can overload?
+relation R(int rs, int n).
+//  ==> res=0 & n=0 --> R(res,n)
+infer [n,R] x::ll<n>@L & x=null & rs=0 |- R(rs,n).
+print residue.
+
+relation F(int rs, int n).
+//  ==> res=0 & n=0 --> R(res,n)
+infer [n,F] x::ll<n>@L & x=null & rs=0 |- F(rs,n).
+print residue.
+
+relation A(int n, int m, int z).
+//  ==> A(n,m,z) <- n=1 & z =1+m
+infer [n,A] x::node<_,y> * y::ll<m> & n=1 |- x::ll<z> & A(n,m,z).
+print residue.
+// TODO (i) why false?
+// TODO (ii) why a disjunct?
+/*
+<1>true & n=1 & Anon_48=Anon_12 & q_49=y & m+1=z & {FLOW,(17,18)=__norm}
+inferred rel: [1<=m & n=1 & m+1=z | m=0 & n=1 & m+1=z-->A(n,m,z)]
+<2>false & false & {FLOW,(17,18)=__norm}
+inferred pure: [n!=1]
+*/

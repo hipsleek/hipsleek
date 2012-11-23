@@ -1,0 +1,26 @@
+/*
+
+IMPORTANT ISSUES:
+- Renaming in astsimpl
+- Finding implilit inst variables in RHS
+become AMBIGUOUS because of multiple formulas in main and threads
+*/
+
+data cell {
+  int val;
+}.
+
+checkentail y::cell<j+1> & id=id1
+            and x::cell<i+1> & thread=id1
+            and z::cell<k+1> & thread=id2
+            |- y::cell<v>.
+print residue.
+
+//(1)
+//from ex1.ss
+checkentail  y::cell<j+1> & re=z 
+             and x::cell<i+1> & thread=z
+             |- y::cell<j+1> & re=z
+                and x::cell<i+1> & thread=z.
+print residue.
+//valid

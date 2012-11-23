@@ -1,0 +1,24 @@
+// - partial instantiation
+data node2 {
+	int val; 
+	node2 prev;	
+	node2 next;
+}.
+
+pred dll2<> == self=null
+  or self.node2.prev::null * self::dll_r2<>
+  inv true.
+
+pred dll_r2<> == self.next::n & n=null
+  or  self.next::n * n.prev::self * n::dll_r2<>
+  inv self!=null.
+
+pred node2<v,p,q> == self.node2.val::a * self.node2.prev::b 
+      * self.node2.next::c .
+
+checkentail x::node2<_,p,q> |- x.val::a * x.prev::b * x.next::c .
+
+checkentail x::node2<_,p,q> |- x.prev::b .
+
+checkentail x::node2<_,p,q> |- x::dll2<>.
+

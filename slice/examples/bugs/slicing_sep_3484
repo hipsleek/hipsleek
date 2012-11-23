@@ -1,0 +1,100 @@
+Starting Omega... 
+
+process_action@2@1
+process_action inp1 : (
+ match_res_lhs_node SS 8::x9::lseg<x8_61>@M[Orig][LHSCase]
+ match_res_rhs_node 
+SS 8::x9::lseg<x8_61>@M[Orig][LHSCase])==> Unfold 1
+process_action inp2 : es_formula: 
+  EXISTS(x8_61,x2_62: SS 8::x9::lseg<x8_61>@M[Orig][LHSCase] * 
+  SS 7::x9::lseg<x2_62>@M[Orig][LHSCase] * 
+  SS 6::x8::lseg<x10>@M[Orig][LHSCase] & x6=x8 & x6=x2 & x8!=x10 & x6!=x9 & 
+  x8_61=x8 & x2_62=x2 & {FLOW,(27,27)=__norm})
+ es_pure: true
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+process_action inp3 : false & false & {FLOW,(27,27)=__norm}
+process_action@2 EXIT out : [false & false & {FLOW,(27,27)=__norm}]
+
+process_action@3@1
+process_action inp1 : (
+ match_res_lhs_node SS 6::x8::lseg<x10>@M[Orig][LHSCase]
+ match_res_rhs_node 
+x6::node<Anon_89,r_90>@M)==> Unfold 1
+process_action inp2 : es_formula: 
+  EXISTS(p_88,Anon_89,r_90,x8_61,x2_62: x6::node<Anon_89,r_90>@M * 
+  SS 9::r_90::lseg<p_88>@M[Orig] * SS 8::x9::lseg<x8_61>@M[Orig][LHSCase] * 
+  SS 7::x9::lseg<x2_62>@M[Orig][LHSCase] * 
+  SS 6::x8::lseg<x10>@M[Orig][LHSCase] & x6=x8 & x6!=x2 & p_88=x2 & 
+  x8!=x10 & x6!=x9 & x8_61=x8 & x2_62=x2 & {FLOW,(27,27)=__norm})
+ es_pure: true
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+process_action inp3 : false & false & {FLOW,(27,27)=__norm}
+process_action@3 EXIT out : [false & false & {FLOW,(27,27)=__norm}]
+
+process_action@5@4@1
+process_action inp1 : (
+ match_res_lhs_node SS 6::x8::lseg<x10>@M[Orig][LHSCase]
+ match_res_rhs_node 
+x9::node<Anon_204,r_205>@M)==> Unfold 1
+process_action inp2 : es_formula: 
+  EXISTS(p_203,Anon_204,r_205,p_161,Anon_162,r_163,x8_164,
+  x2_165: x6::node<Anon_162,r_163>@M * SS 10::r_163::lseg<p_161>@M[Orig] * 
+  x9::node<Anon_204,r_205>@M * SS 7::r_205::lseg<p_203>@M[Orig] * 
+  SS 6::x8::lseg<x10>@M[Orig][LHSCase] & x9=x8_164 & x9!=x2_165 & 
+  p_203=x2_165 & x6!=x8 & p_161=x8 & x6=x2 & x8!=x10 & x6!=x9 & x8_164=x8 & 
+  x2_165=x2 & {FLOW,(27,27)=__norm})
+ es_pure: true
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+process_action inp3 : false & false & {FLOW,(27,27)=__norm}
+process_action@5 EXIT out : [false & false & {FLOW,(27,27)=__norm}]
+
+process_action@4@1
+process_action inp1 : (
+ match_res_lhs_node SS 8::x9::lseg<x8_61>@M[Orig][LHSCase]
+ match_res_rhs_node 
+SS 8::x9::lseg<x8_61>@M[Orig][LHSCase])==> Unfold 1
+process_action inp2 : es_formula: 
+  EXISTS(p_91,Anon_92,r_93,x8_61,x2_62: x6::node<Anon_92,r_93>@M * 
+  SS 10::r_93::lseg<p_91>@M[Orig] * SS 8::x9::lseg<x8_61>@M[Orig][LHSCase] * 
+  SS 7::x9::lseg<x2_62>@M[Orig][LHSCase] * 
+  SS 6::x8::lseg<x10>@M[Orig][LHSCase] & x6!=x8 & p_91=x8 & x6=x2 & 
+  x8!=x10 & x6!=x9 & x8_61=x8 & x2_62=x2 & {FLOW,(27,27)=__norm})
+ es_pure: true
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+process_action inp3 : false & false & {FLOW,(27,27)=__norm}
+process_action@4 EXIT out : [false & false & {FLOW,(27,27)=__norm}]
+
+process_action@1
+process_action inp1 : (
+ match_res_lhs_node SS 10::x6::lseg<x8>@M[Orig][LHSCase]
+ match_res_rhs_node 
+SS 10::x6::lseg<x8>@M[Orig][LHSCase])==> Unfold 1
+process_action inp2 : es_formula: 
+  EXISTS(x8_43,x2_44: SS 10::x6::lseg<x8>@M[Orig][LHSCase] * 
+  SS 9::x6::lseg<x2>@M[Orig][LHSCase] * 
+  SS 8::x9::lseg<x8_43>@M[Orig][LHSCase] * 
+  SS 7::x9::lseg<x2_44>@M[Orig][LHSCase] * 
+  SS 6::x8::lseg<x10>@M[Orig][LHSCase] & x8!=x10 & x6!=x9 & x8_43=x8 & 
+  x2_44=x2 & {FLOW,(27,27)=__norm})
+ es_pure: true
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+process_action inp3 : false & false & {FLOW,(27,27)=__norm}
+process_action@1 EXIT out : [false & false & {FLOW,(27,27)=__norm}]
+
+Entail(1)=Valid.
+Stop Omega... 19 invocations 

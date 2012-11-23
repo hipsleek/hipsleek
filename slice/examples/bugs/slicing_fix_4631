@@ -1,0 +1,231 @@
+Starting Reduce... 
+Starting Omega...oc
+
+process_action@2@1
+process_action inp1 :0
+process_action inp2 : 
+  LHS: x9::lseg<x8_34>@M[Orig][LHSCase]
+  RHS: x9::lseg<x8_34>@M[Orig][LHSCase]=>Unfold 1
+process_action inp3 : es_formula: 
+  EXISTS(x8_34,x2_35: x9::lseg<x8_34>@M[Orig][LHSCase] * 
+  x9::lseg<x2_35>@M[Orig][LHSCase] * x8::lseg<x10>@M[Orig][LHSCase]&x6=x8 & 
+  x6=x2 & x8!=x10 & x6!=x9 & x8_34=x8 & x2_35=x2&{FLOW,(17,18)=__norm})
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+process_action inp4 : false&false&{FLOW,(17,18)=__norm}
+process_action@2 EXIT out :
+ctx length:1 
+ Context: [
+  false&false&{FLOW,(17,18)=__norm}
+  ]
+
+process_action@5@4@3@1
+process_action inp1 :0
+process_action inp2 : NothingToDo: No duplicated nodes!
+process_action inp3 : es_formula: 
+  EXISTS(p_218,Anon_219,r_220,p_170,Anon_171,r_172,p_173,Anon_174,r_175,
+  x8_176,x2_177: x6::node<Anon_174,r_175>@M[Orig] * 
+  r_175::lseg<p_173>@M[Orig] * x9::node<Anon_219,r_220>@M[Orig] * 
+  r_220::lseg<p_218>@M[Orig] * x8::node<Anon_171,r_172>@M[Orig] * 
+  r_172::lseg<p_170>@M[Orig]&x9!=x8_176 & p_218=x8_176 & x9=x2_177 & 
+  x8!=x10 & p_170=x10 & x6=x8 & x6!=x2 & p_173=x2 & x8!=x10 & x6!=x9 & 
+  x8_176=x8 & x2_177=x2&{FLOW,(17,18)=__norm})
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+process_action inp4 : false&false&{FLOW,(17,18)=__norm}
+process_action@5 EXIT out :
+ctx length:0 
+ Context: failctx
+         fe_kind: MUST
+         fe_name: separation entailment
+         fe_locs: {
+                   fc_message: No duplicated nodes!
+                   fc_current_lhs_flow: {FLOW,(17,18)=__norm}}
+
+process_action@4@3@1
+process_action inp1 :0
+process_action inp2 : 
+  LHS: x9::lseg<x8_157>@M[Orig][LHSCase]
+  RHS: x9::lseg<x8_157>@M[Orig][LHSCase]=>Unfold 1
+process_action inp3 : es_formula: 
+  EXISTS(p_167,Anon_168,r_169,p_154,Anon_155,r_156,x8_157,
+  x2_158: x6::node<Anon_155,r_156>@M[Orig] * r_156::lseg<p_154>@M[Orig] * 
+  x9::lseg<x8_157>@M[Orig][LHSCase] * x9::lseg<x2_158>@M[Orig][LHSCase] * 
+  x8::node<Anon_168,r_169>@M[Orig] * r_169::lseg<p_167>@M[Orig]&x8!=x10 & 
+  p_167=x10 & x6=x8 & x6!=x2 & p_154=x2 & x8!=x10 & x6!=x9 & x8_157=x8 & 
+  x2_158=x2&{FLOW,(17,18)=__norm})
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+process_action inp4 : false&false&{FLOW,(17,18)=__norm}
+process_action@4 EXIT out :
+ctx length:0 
+ Context: failctx
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  true |-  false. LOCS:[0] (RHS: contradiction)
+                   fc_current_lhs_flow: {FLOW,(1,2)=__Error}}
+
+process_action@3@1
+process_action inp1 :0
+process_action inp2 : 
+  LHS: x8::lseg<x10>@M[Orig][LHSCase]
+  RHS: x6::node<Anon_95,r_96>@M[Orig]=>Unfold 1
+process_action inp3 : es_formula: 
+  EXISTS(p_94,Anon_95,r_96,x8_34,x2_35: x6::node<Anon_95,r_96>@M[Orig] * 
+  r_96::lseg<p_94>@M[Orig] * x9::lseg<x8_34>@M[Orig][LHSCase] * 
+  x9::lseg<x2_35>@M[Orig][LHSCase] * x8::lseg<x10>@M[Orig][LHSCase]&x6=x8 & 
+  x6!=x2 & p_94=x2 & x8!=x10 & x6!=x9 & x8_34=x8 & x2_35=x2&
+  {FLOW,(17,18)=__norm})
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+process_action inp4 : false&false&{FLOW,(17,18)=__norm}
+process_action@3 EXIT out :
+ctx length:0 
+ Context: failctx
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  true |-  false. LOCS:[0] (RHS: contradiction)
+                   fc_current_lhs_flow: {FLOW,(1,2)=__Error}}
+
+process_action@8@7@6@1
+process_action inp1 :0
+process_action inp2 : NothingToDo: No duplicated nodes!
+process_action inp3 : es_formula: 
+  EXISTS(p_319,Anon_320,r_321,p_303,Anon_304,r_305,p_306,Anon_307,r_308,
+  x8_309,x2_310: x6::node<Anon_307,r_308>@M[Orig] * 
+  r_308::lseg<p_306>@M[Orig] * x9::node<Anon_304,r_305>@M[Orig] * 
+  r_305::lseg<p_303>@M[Orig] * x8::node<Anon_320,r_321>@M[Orig] * 
+  r_321::lseg<p_319>@M[Orig]&x8!=x10 & p_319=x10 & x9=x8_309 & x9!=x2_310 & 
+  p_303=x2_310 & x6!=x8 & p_306=x8 & x6=x2 & x8!=x10 & x6!=x9 & x8_309=x8 & 
+  x2_310=x2&{FLOW,(17,18)=__norm})
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+process_action inp4 : false&false&{FLOW,(17,18)=__norm}
+process_action@8 EXIT out :
+ctx length:0 
+ Context: failctx
+         fe_kind: MUST
+         fe_name: separation entailment
+         fe_locs: {
+                   fc_message: No duplicated nodes!
+                   fc_current_lhs_flow: {FLOW,(17,18)=__norm}}
+
+process_action@7@6@1
+process_action inp1 :0
+process_action inp2 : 
+  LHS: x8::lseg<x10>@M[Orig][LHSCase]
+  RHS: x9::node<Anon_292,r_293>@M[Orig]=>Unfold 1
+process_action inp3 : es_formula: 
+  EXISTS(p_291,Anon_292,r_293,p_249,Anon_250,r_251,x8_252,
+  x2_253: x6::node<Anon_250,r_251>@M[Orig] * r_251::lseg<p_249>@M[Orig] * 
+  x9::node<Anon_292,r_293>@M[Orig] * r_293::lseg<p_291>@M[Orig] * 
+  x8::lseg<x10>@M[Orig][LHSCase]&x9=x8_252 & x9!=x2_253 & p_291=x2_253 & 
+  x6!=x8 & p_249=x8 & x6=x2 & x8!=x10 & x6!=x9 & x8_252=x8 & x2_253=x2&
+  {FLOW,(17,18)=__norm})
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+process_action inp4 : false&false&{FLOW,(17,18)=__norm}
+process_action@7 EXIT out :
+ctx length:0 
+ Context: failctx
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  true |-  false. LOCS:[0] (RHS: contradiction)
+                   fc_current_lhs_flow: {FLOW,(1,2)=__Error}}
+
+process_action@6@1
+process_action inp1 :0
+process_action inp2 : 
+  LHS: x9::lseg<x8_34>@M[Orig][LHSCase]
+  RHS: x9::lseg<x8_34>@M[Orig][LHSCase]=>Unfold 1
+process_action inp3 : es_formula: 
+  EXISTS(p_97,Anon_98,r_99,x8_34,x2_35: x6::node<Anon_98,r_99>@M[Orig] * 
+  r_99::lseg<p_97>@M[Orig] * x9::lseg<x8_34>@M[Orig][LHSCase] * 
+  x9::lseg<x2_35>@M[Orig][LHSCase] * x8::lseg<x10>@M[Orig][LHSCase]&x6!=x8 & 
+  p_97=x8 & x6=x2 & x8!=x10 & x6!=x9 & x8_34=x8 & x2_35=x2&
+  {FLOW,(17,18)=__norm})
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+process_action inp4 : false&false&{FLOW,(17,18)=__norm}
+process_action@6 EXIT out :
+ctx length:0 
+ Context: failctx
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message:  true |-  false. LOCS:[0] (RHS: contradiction)
+                   fc_current_lhs_flow: {FLOW,(1,2)=__Error}}
+
+process_action@1
+process_action inp1 :0
+process_action inp2 : 
+  LHS: x6::lseg<x8>@M[Orig][LHSCase]
+  RHS: x6::lseg<x8>@M[Orig][LHSCase]=>Unfold 1
+process_action inp3 : es_formula: 
+  EXISTS(x8_20,x2_21: x6::lseg<x8>@M[Orig][LHSCase] * 
+  x6::lseg<x2>@M[Orig][LHSCase] * x9::lseg<x8_20>@M[Orig][LHSCase] * 
+  x9::lseg<x2_21>@M[Orig][LHSCase] * x8::lseg<x10>@M[Orig][LHSCase]&
+  x8!=x10 & x6!=x9 & x8_20=x8 & x2_21=x2&{FLOW,(17,18)=__norm})
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+process_action inp4 : false&false&{FLOW,(17,18)=__norm}
+process_action@1 EXIT out :
+ctx length:0 
+ Context: failctx
+         
+          fe_kind: Valid
+          fe_name: 
+          fe_locs: Failure_Valid
+        FAIL_OR 
+         
+          fe_kind: MUST
+          fe_name: logical bug
+          fe_locs: {
+                    fc_message:  true |-  false. LOCS:[0] (RHS: contradiction)
+                    fc_current_lhs_flow: {FLOW,(1,2)=__Error}}
+        FAIL_OR 
+         
+          fe_kind: MUST
+          fe_name: logical bug
+          fe_locs: {
+                    fc_message:  true |-  false. LOCS:[0] (RHS: contradiction)
+                    fc_current_lhs_flow: {FLOW,(1,2)=__Error}}
+        
+Entail (1): Fail.(may) cause:OrR[ true |-  false. LOCS:[0] (RHS: contradiction),valid]
+
+Stop Omega... 23 invocations 

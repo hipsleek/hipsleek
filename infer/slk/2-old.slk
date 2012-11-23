@@ -1,0 +1,195 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+// ok
+//infer [y] true |- y::node<a,b> * b::node<c,d>.
+// ok
+//infer [y] true |- y::node<a,b>.
+//print residue.
+
+
+//infer [y] true |- y::node<a,b> * y::ll<m>.
+/*
+Infer  (1): Valid.
+Inferred Heap:[ y::node<inf_27,inf_28>[Orig], y::ll<inf_31>[Orig][LHSCase]]
+*/
+
+//infer [y] y=null |- y::node<a,b>.
+/*
+Inferred Heap:[ y::node<inf_26,inf_27>[Orig]]
+
+TODO : if inferred heap node causes a contradiction, we
+should infer a pure conflicting condition instead, where possible.
+
+y=null    * y::node<..>   ==> y!=null
+y::node<...> * y::node<..> ==> y=null
+
+TODO : introduce a must action step that would force
+ compute action to perform a particular action on the next run
+*/
+
+//infer [y] true |- y::node<a,b> * b::node<c,d>.
+/*
+Inferred Heap:[ y::node<inf_28,inf_29>[Orig], b::node<inf_30,inf_31>[Orig]]
+Inferred Pure:[]
+<1>true & a=inf_28 & b=inf_29 & c=inf_30 & d=inf_31 &
+*/
+
+//infer [y] true |- y::node<a,b> * b::ll<m>.
+
+// ok
+//infer [ia,ib] y::node<ia,ib> |- y::node<a,b>.
+
+// ok
+//infer [y] true |- y::node<a,null>.
+// ok
+//infer [y] true |- (exists a: y::node<a,null> & a>0).
+// ok
+//infer [y] true |- [a] y::node<a,null> & a>0
+
+//checkentail  y::node<1,null> |- y::node<a,null> & a>0.
+//OK
+//infer [aa]  y::node<aa,null> |- (exists a: y::node<a,null> & a>0).
+//infer []  y::node<aa,null> |- [a] y::node<a,null> & a>0.
+//OK
+//infer [aa]  y::node<aa,null> |- y::node<a,null> & a>0.
+
+
+// OK
+//infer [m] y::ll<m> |- y::ll<n>.
+//print residue.
+/*
+WN : only one answer when inference is disabled
+     for base-case-fold
+
+<1>true & n=m &
+{FLOW,(17,18)=__norm}
+
+*/
+
+
+// ok
+//infer [y] true |- y::ll<n>.
+//print residue.
+
+
+
+
+//infer [x] n=0 & x=y  |- y::ll<n>.
+// expected pre: x::ll<n31> & n31=n
+// expected infer_vars
+// expected residue: n31=n & n=0 & x=y & n31>=0
+
+/*
+
+infer_heap_nodes
+infer var: [x]
+new infer var: [inf_n_31]
+root: Some(y)
+rhs node:  y::ll<n_28>[Orig][LHSCase]
+renamed rhs node:  y::ll<inf_n_31>[Orig][LHSCase]
+root in iv: true
+
+Here, root_in_iv indicates that root is
+in the infer set.
+
+New heap node to add to LHS is:
+    y::ll<inf_n_31>
+New infer var is:
+    [inf_n_31]
+
+
+*/
+//Ok
+//infer [x] true & x=y |- x::ll<n> .
+//Ok
+//infer [x] true & x=y |- y::ll<n> .
+infer [n] x=null & n=0 |- x::node<_,_>.
+print residue.
+
+//OK
+//infer [q] q!=null |- q::ll<n> .
+
+// ok
+//infer [n] q!=null |- q::ll<n> .
+/*
+Infer  (2): Fail. (may) cause:15.4 no match for rhs data node: q (may-bug).
+*/
+//Ok
+
+// WN : inferred pre make ante false
+// not sure if this is good idea in principle..
+// Raise failure context instead
+infer [x] x=null |- x::node<_,null>.
+print residue.
+
+// WN : inferred pre make ante false
+// not sure if this is good idea in principle..
+// ==> think we need to allow that.
+infer [x] x=null |- x::node<_,b>.
+print residue.
+// should give: x!=null
+
+// expecting y!=null
+infer [x] x::ll<n> |- x::node<_,b>.
+print residue.
+
+/*
+Infer  (1): Fail. (may) cause: Inferred heap made contradiction
+*/
+
+//infer [q] q=null |- q::ll<n> .
+//infer [n] q=null |- q::ll<n> .
+//infer [q] q!=null |- q::ll<n> .
+//infer [n] q!=null |- q::ll<n> .
+//infer [q] n=0 |- q::ll<n> .
+//infer [n] n=0 |- q::ll<n> .
+//infer [q] n!=0 |- q::ll<n> .
+//infer [n] n!=0 |- q::ll<n> .
+
+//infer [p] x::node<1,p> |- x::ll<n> .
+/*
+- Add alias in inferred pure
+- Problem with success context (which will be made to be fail later)
+
+heap_entail_conjunct@10@2 ENTRY :false
+
+heap_entail_conjunct@10@2
+heap_entail_conjunct inp1 :false
+heap_entail_conjunct inp2 : es_formula: 
+  true & flted_11_30=1 & q_31=p & inf_flted_7_41+1=n & {FLOW,(17,18)=__norm}
+ es_pure: true
+ es_heap: q_31::ll<inf_flted_7_41>[Orig] * x::node<flted_11_30,p>[Orig]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+ es_trace: 
+  search ==> Fold ==> search ==> Match ==> Cond ==> Unmatched RHS data node ==> search ==> Cond ==> Match ==> 
+ es_var_ctx_lhs: true
+ es_var_ctx_rhs: true
+ es_var_loc:  0:0
+ es_infer_vars: [p]
+heap_entail_conjunct inp3 : true & inf_flted_7_41+1=n & {FLOW,(17,18)=__norm}
+heap_entail_conjunct@10 EXIT out : 
+Good Context: [es_formula: 
+                true & flted_11_30=1 & q_31=p & inf_flted_7_41+1=n &
+                {FLOW,(17,18)=__norm}
+               es_pure: true
+               es_heap: q_31::ll<inf_flted_7_41>[Orig] * x::node<flted_11_30,p>[Orig]
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_label: None
+               es_trace: 
+                search ==> Fold ==> search ==> Match ==> Cond ==> Unmatched RHS data node ==> search ==> Cond ==> Match ==> 
+               es_var_ctx_lhs: true
+               es_var_ctx_rhs: true
+               es_var_loc:  0:0
+               es_infer_vars: [p]]
+
+*/

@@ -1,0 +1,148 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<na> == self = null & na = 0 
+	or self::node<_, q> * q::ll<na-1> 
+  inv na >= 0.
+
+
+// (1) OK
+infer [y,n] y::ll<n> |- y::node<_,null>.
+print residue.
+/*
+Inferred Heap:[]
+Inferred Pure:[ n=1, !(n=0 & y=null)]
+<1>EXISTS(q_46,flted_7_45: q_46::ll<flted_7_45>[Orig] & flted_7_45=0 & n=1 &
+{FLOW,(17,18)=__norm})
+*/
+
+//(2)
+infer [n] y::ll<n> |- y::node<_,null>.
+print residue.
+/*
+Inferred Pure:[ n=1, n!=0]
+<1>EXISTS(q_71,flted_7_70: q_71::ll<flted_7_70>[Orig] & flted_7_70=0 & n=1 &
+{FLOW,(17,18)=__norm})
+*/
+
+
+// (3)
+// seems OK
+infer [n] y::ll<n> |- y::node<_,b>.
+print residue.
+/*
+Inferred Heap:[]
+Inferred Pure:[ n!=0]
+<1>EXISTS(flted_7_75: b::ll<flted_7_75>[Orig] & flted_7_75+1=n &
+{FLOW,(17,18)=__norm})
+*/
+
+// (4) Valid & inferred n=0
+infer [n] y=null |- y::ll<n>.  
+print residue.
+/*
+Inferred Heap:[]
+Inferred Pure:[ n=0]
+<1>true & y=null & n=0 &
+*/
+
+// (5) ok
+infer [n] n=1 & y=null |- y::ll<n>.
+print residue.
+/*
+Inferred Heap:[]
+Inferred Pure:[ n!=1]
+<1>false & false &
+{FLOW,(17,18)=__norm}
+*/
+
+// (6)
+infer [n] n=1 & y=null |- n=0.
+print residue.
+/*
+Inferred Heap:[]
+Inferred Pure:[ n!=1]
+<1>false & false &
+*/
+
+// (7) stronger RHS
+infer [n] n>0 & n>m  |- n>3.
+print residue.
+/*
+Inferred Heap:[]
+Inferred Pure:[ 4<=n]
+<1>true & m<n & 4<=n &
+{FLOW,(17,18)=__norm}
+*/
+
+// (8) stronger RHS
+infer [n] n>0 & n>m & m>4  |- n>8.
+print residue.
+/*
+Inferred Heap:[]
+Inferred Pure:[ 9<=n]
+<1>true & 5<=m & m<n & 9<=n &
+{FLOW,(17,18)=__norm}
+*/
+
+// (9) lhs & rhs -> false
+// TODO : should drop m
+// --> (exists m: m<n & 1<=n)
+infer [n] n>0 & n>m  |- false.
+print residue.
+/*
+Inferred Heap:[]
+Inferred Pure:[ !(m<n & 1<=n)]
+<1>false & false &
+*/
+
+// (10) lhs & rhs -> false
+infer [n,m] n>0 & n>m  |- false.
+print residue.
+/*
+Inferred Heap:[]
+Inferred Pure:[ !(m<n & 1<=n)]
+<1>false & false &
+*/
+
+// (11) lhs & rhs -> false but no n
+// TODO Loc : should not be a must failure 
+infer [n] true  |- n=1 & n=2.
+print residue.
+/*
+Infer  (10): Fail. (must) cause:(failure_code=213)  true |-  n=2 & n=1 (RHS: contradiction).
+<1>true & true &
+{FLOW,(1,2)=__Error}
+
+*/
+
+// (12) lhs & rhs -> false
+infer [n,m] n>0 & m=2  |- false.
+print residue.
+/*
+nferred Heap:[]
+Inferred Pure:[ !(m=2 & 1<=n)]
+<1>false & false &
+{FLOW,(17,18)=__norm}
+*/
+
+// LOOPING!
+// (13) 
+infer [p] x::node<p,q> & m>2  |- x::node<a,b> & a>m.
+print residue.
+
+// LOOPING!
+// (14) 
+infer [p] m>2  |- p>m & m>4.
+print residue.
+
+// LOOPING!
+// (15) 
+infer [m] m>2  |- p>m & m>4.
+print residue.
+
+// (16) 
+infer [p,m] m>2  |- p>m & m>4.
+print residue.

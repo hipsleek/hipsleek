@@ -1,0 +1,7 @@
+B:={[n,a,res] -> [] -> []: (((a=1 && 1+res=n) && 2<=n) || ((((((1<=v_int_14_540 || v_int_14_540<=-1) && B(v_int_14_539,v_int_14_540,v_int_14_544)) && -1+res=v_int_14_544) && -1+a=v_int_14_540) && -1+n=v_int_14_539) && 0<=v_int_14_539))
+};
+
+Fix1:=bottomup(B,1,SimHeur);
+Fix1;
+Fix2:=topdown(B,1,SimHeur);
+Fix2;

@@ -19,18 +19,27 @@ lseg<p, n> == self=p & n=0
 	inv n>=0;
 
 int length (node x) 
-requires x::ll<n>@I
-ensures res = n;
+requires x::ll<nn>@L
+ensures res = nn;
+//requires x::ll<n>
+//ensures x::ll<n> & res = n;
 {
  if (x==null) return 0;
-    else return 1+length(x.next);
+    else 
+      {
+        //dprint;
+        x.val = 0;
+        int r = 1+length(x.next);
+        //dprint;
+        return r;
+      }
 }
 
 void append(node x, node y)
 //  requires x::ll<n1> * y::ll<n2>@I & n1>0 
 //  fails for requires x::ll<n1>@I * y::ll<n2>@I & n1>0 
 //  ensures x::ll<n1+n2>@I;
-  requires x::lseg<p,n>@I * p::node<v,null>
+  requires x::lseg<p,n>@L * p::node<v,null>
   ensures p::node<v,y>;
 {
 	if (x.next == null)
@@ -81,7 +90,7 @@ node get_next_next(node x)
 
 /* usage of & */
 int sumN(node x, node y)
-requires (x::node<a, _>@I & y::node<b, _>@I) 
+requires (x::node<a, _>@L & y::node<b, _>@L) 
 ensures res=a+b;
 { return x.val + y.val; dprint;}
 

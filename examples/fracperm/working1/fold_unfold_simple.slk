@@ -1,0 +1,50 @@
+data node { int val ; node next }.
+
+
+data cell { int val}.
+
+pred cellp<v> == self::cell(f)<v>
+     inv true.
+
+
+lemma "splitCell" self::cell(f)<v> & f=f1+f2 & 1.0>=f1>0.0 & 1.0>=f2>0.0  -> self::cell(f1)<v> * self::cell(f2)<v> & 0.0<f<=1.0 .
+
+lemma "split1" self::cellp(f)<v> & f=f1+f2 & 1.0>=f1>0.0 & 1.0>=f2>0.0  -> self::cellp(f1)<v> * self::cellp(f2)<v> & 0.0<f<=1.0 .
+
+
+//(1)
+checkentail x::cellp<v1> |- x::cell(f2)<v2>.
+print residue. //valid, 2 residues
+
+//(2)
+checkentail x::cell<v1> |- x::cellp(f2)<v2>.
+print residue. //valid
+
+//(3)
+checkentail x::cell(1.0)<1> |-  x::cellp(0.4)<1>.
+print residue. //valid, 1 residue
+
+//(4)
+checkentail x::cell(0.6)<1> |-  x::cellp(f)<1>.
+print residue. //valid, 2 residue
+
+//(5)
+checkentail x::cell(1.0)<v1> |-  x::cellp(0.4)<v1> * x::cell(0.5)<v1>.
+print residue. //valid, 1 residue
+
+//(6)
+checkentail x::cell(1.0)<v1> |-  x::cellp(0.4)<v1> * x::cellp(0.5)<v1>.
+print residue. //valid, 1 residue
+
+//(7)
+checkentail x::cell(1.0)<v1> |-  x::cell(0.4)<v1> * x::cellp(0.5)<v1>.
+print residue. //valid, 1 residue
+
+//(8)
+checkentail x::cellp(1.0)<v1> |-  x::cell(0.4)<v1> * x::cellp(0.5)<v1>.
+print residue. //valid, 1 residue
+
+
+
+//checkentail x::cell<v1> |- x::cellp(f2)<v2>.
+//print residue. //valid

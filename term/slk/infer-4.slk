@@ -1,0 +1,21 @@
+//Constraints from infer-3.ss
+
+//(1): p3>p1
+infer[p3,p1] Term[0,p3] |- Term[0,p1,y].
+print residue.
+
+//(2)
+infer[p1] Term[p1,y] |- Term[p1,y-1].
+print residue.
+
+//(3): p1>=p2
+infer[p1,p2] Term[p1,y] |- Term[p2].
+print residue.
+
+//(4): p2>p4
+infer[p2,p4] Term[p2] |- Term[p4,x].
+print residue.
+
+//(5)
+infer[p4] y<0 & Term[p4,x] |- Term[p4,x+y].
+print residue.

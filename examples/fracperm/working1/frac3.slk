@@ -1,0 +1,77 @@
+/*
+ * LDK
+ * Tests for FLOATING POINT OPERATIONs in REDLOG
+ * USing flags "-tp redlog --rl-no-pseudo-ops"
+*/
+
+//(1)
+checkentail f=0.5  |- f=0.5.
+print residue. //MATCH, valid
+
+//(2)
+checkentail f=1.0 & f1=1/2 & f2=1/2 & f=f1+f2  |-  true .
+print residue. //valid
+
+//(3)
+checkentail f=1/2  |-  f=2/4.
+print residue. //valid
+
+//(4)
+checkentail 1/2 * 1/2 = f  |-  f=1/4 .
+print residue. //valid
+
+//(5)
+checkentail f=1/2  |-  f=0.5 .
+print residue. //valid
+
+//(6)
+checkentail f=1 & f1=1/2 & f2=1/2  |-  f=f1+f2 .
+print residue. //valid
+
+//(7)
+checkentail f=1.0 |-(exists f1,f2: f1=0.5 & f2=0.5 & f=f1+f2) .
+print residue. //valid
+
+//(8)
+checkentail f=1/n |-(exists f1,f2: f1=0.5/n & f2=0.5/n & f=f1+f2) .
+print residue. //valid
+
+//(9)
+checkentail f= (1/n + 1/n) |- f = 2/n.
+print residue. //valid
+
+//(10)
+checkentail f= 1.0 & f=f1+f2 & f2=1/2 |- f1=1/2.
+print residue. //valid
+
+//(11)
+checkentail f=1.0 & f1=f-1/2  & f2=f1-1/2 |- f2=0.
+print residue. //valid
+
+//(12)
+checkentail f=1.0 & f1=f-1/n  & f2=f1-1/n |- f2 = 1-2/n .
+print residue. //valid
+
+//(13)
+checkentail f=m/n & f1=f-1/n  & f2=f1-1/n |- f2 = (m-2)/n .
+print residue. //valid
+
+//(14)
+checkentail f=1.0 |-(exists f1,f2: f1=0.5 & f2=0.3 & f=f1+f2) .
+print residue. //fail
+
+//(15)
+checkentail f= (1/n + 1/n) |- f = 1/n.
+print residue. //fail
+
+//(16)
+checkentail f=m/n & f1=f-1/n  & f2=f1-1/n & n1=m-3 |- f2 = n1/n .
+print residue. //fail
+
+//(17)
+checkentail f=1.0 & f=f1+f2  |- f1=0.5 & f2=0.5 .
+print residue. //fail
+
+//(18)
+checkentail f=1.0 & f=f1+f2  |- f1=0.5 & f2=0.5 .
+print residue. //fail

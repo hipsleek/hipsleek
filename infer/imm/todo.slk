@@ -1,0 +1,22 @@
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+// Thai : why is there a fixcalc.inp file always generated? 
+// Is it important to keep it?
+
+
+// TODO : why below fail? correct?
+// (3) expect n>0 & v<:@I
+// Fail.(may) cause:(failure_code=213)
+infer [n,a] x::ll<n> |- x::node<a,b> & a>0.
+print residue.
+/*
+Entail  (1): Fail.(may) cause:(failure_code=213)  true |-  Anon_46=a;  true |-  0<a (may-bug).
+*/

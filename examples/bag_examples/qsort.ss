@@ -135,8 +135,7 @@ void skip() requires true ensures true;
 
 void qsort(ref node xs)
 	requires xs::bnd<n, sm, bg> & n>0 
-	ensures xs'::sll<n, smres, bgres> & smres >= sm & bgres < bg;
-
+	ensures xs'::sll<n, smres, bgres> & smres >= sm & bgres < bg;//'
 {
 	node tmp;
         int v;
@@ -161,9 +160,9 @@ void qsort(ref node xs)
 			xs = tmp;
 		else
 		{
-			bind xs to (xsval, xsnext) in {
-				qsort(xsnext);
-			}
+            node xsnext = xs.next;
+			qsort(xsnext);
+            xs.next = xsnext;
 			xs = append_bll(xs.next, tmp);
 		}
 	}	
@@ -171,7 +170,7 @@ void qsort(ref node xs)
 
 void qsort1(ref node xs)
 	requires xs::ll1<S> & S != {} 
-	ensures xs'::sll1<S>;
+	ensures xs'::sll1<S>; //'
 
 {
 	node tmp, tmp1;
@@ -182,11 +181,10 @@ void qsort1(ref node xs)
 		skip();
 	else
 	{
+        dprint;
         v = xs.val;
-	bind xs to (xsval, xsnext) in {
 		partition1(xs.next, tmp1, tmp, xs.val);
-		xs.next = tmp1;			
-	}
+		xs.next = tmp1;
         b = (xs.next == null);
 		if (tmp == null)
 			skip();
@@ -198,8 +196,8 @@ void qsort1(ref node xs)
 			xs = tmp;
 		else
 		{
-			bind xs to (xsval, xsnext) in {
-				qsort1(xs.next);
+        	bind xs to (xsval, xsnext) in {
+				qsort1(xsnext);
 			}
 			xs = append_bll1(xs.next, tmp);
 		}

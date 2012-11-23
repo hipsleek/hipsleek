@@ -1,0 +1,94 @@
+data node { int val ; node next }.
+
+
+pred lseg2<n, p> == 
+   case { n=0 -> [] self = p & n = 0 ;
+          n!=0 -> [] (exists r2: self::node<next = r2> * r2::lseg2<b, p> & b=n-1) ;
+          }
+         inv n >= 0.
+
+
+pred lseg<n, p> == 
+        self = p & n = 0 
+     or (exists r2,b: self::node<next = r2> * r2::lseg<b, p> & b=n-1) 
+     inv n >= 0.
+
+/*
+checkentail x::node<_,q>*q::node<_,nil> & a>0 & a<=2 
+   |- x::lseg2<a,p> & a=3. //p? impl ex
+
+
+// two residues of c=0 (not critical)
+checkentail x::node<_,q>*q::node<_,null> & a>0 & a<=2 
+   |- x::lseg2<c,p>.
+
+// failure below when it previously succeeded (critical).
+// should succeed with one answer
+checkentail x::node<_,q>*q::node<_,null> & a>0 & a<=2  |- x::lseg2<c,p> & c=0.
+*/
+
+//failure when lseg2 succeeded
+checkentail x::node<_,q>*q::node<_,null>  & c=1 |- x::lseg2<c,p> .
+
+//failure when lseg2 succeeded
+checkentail x::node<_,q>*q::node<_,null>  & c=1 |- x::lseg<c,p> .
+
+//failure despite case analysis!
+//checkentail x::node<_,q>*q::node<_,null>  & 1<=c<=2 |- x::lseg2<c,p> .
+
+// fail due to lack of case analysis
+//checkentail x::node<_,q>*q::node<_,null>  & 1<=c<=2 |- x::lseg<c,p> .
+
+// fail when it should have succeeded
+//checkentail x::node<_,q>*q::node<_,null> |- [c] x::lseg2<c,p> & c=1.
+/*
+Entail (1): Fail. (may) cause:or[213  true |-  exists1(c:x=p & c=0 & c=1) (RHS: contradiction).,valid]
+*/
+
+// good answer
+//checkentail x::node<_,q>*q::node<_,null> |- [c] x::lseg<c,p> & c=1.
+
+// good answers:
+//checkentail x::node<_,q>*q::node<_,null> |- (exists c: x::lseg2<c,p> & c=1).
+/*
+ EXISTS(flted_46_100: x::node<Anon_29,q>@M * 
+ q::node<Anon_30,flted_46_100>@M & flted_46_100=null & x=p & 0=0 &
+ {FLOW,(27,27)=__norm})
+S
+*/
+
+// good answer:
+//checkentail x::node<_,q>*q::node<_,null> |- (exists c: x::lseg<c,p> & c=0).
+/*
+ EXISTS(flted_40_100: x::node<Anon_29,q>@M * 
+ q::node<Anon_30,flted_40_100>@M & flted_40_100=null & x=p &
+ {FLOW,(27,27)=__norm})
+*/
+
+
+// with two disjuncts per branch!
+//checkentail x::node<_,q>*q::node<_,null> |- x::lseg2<c,p>.
+/*
+ true & p=null & c!=0 & 0=0 & (0+1)!=0 & (0+1)!=0 & 0+1+1=c &
+ {FLOW,(27,27)=__norm}
+ or EXISTS(flted_46_95: x::node<Anon_29,q>@M * 
+    q::node<Anon_30,flted_46_95>@M & flted_46_95=null & c=0 & x=p & c=0 &
+    {FLOW,(27,27)=__norm})
+ EXISTS(flted_46_95: q::node<Anon_30,flted_46_95>@M & flted_46_95=null & 
+ c!=0 & 0=0 & 0=0 & 0+1=c & q=p & {FLOW,(27,27)=__norm})
+ or EXISTS(flted_46_95: x::node<Anon_29,q>@M * 
+    q::node<Anon_30,flted_46_95>@M & flted_46_95=null & c=0 & x=p & c=0 &
+    {FLOW,(27,27)=__norm})
+*/
+
+// good answer
+//checkentail x::node<_,q>*q::node<_,null> |- x::lseg<c,p>.
+/*
+ true & p=null & 0+1+1=c & {FLOW,(27,27)=__norm}
+ EXISTS(flted_60_97: q::node<Anon_30,flted_60_97>@M & flted_60_97=null & 0+
+ 1=c & q=p & {FLOW,(27,27)=__norm})
+ EXISTS(flted_60_97: x::node<Anon_29,q>@M * q::node<Anon_30,flted_60_97>@M &
+ flted_60_97=null & x=p & c=0 & {FLOW,(27,27)=__norm})
+*/
+
+print residue.

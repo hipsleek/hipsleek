@@ -1,0 +1,25 @@
+// - mutual recursion not supported
+data node2 {
+	int val; 
+	nodeprev prev;	
+	nodenext next;
+	nodetemp temp;
+}.
+
+data nodeprev {
+     node2 prev;
+// 	nodetemp temp;
+}.
+
+data nodenext {
+     node2 next;
+}.
+
+/*
+data nodetemp {
+	int temp;
+}.
+ */
+
+checkentail x::node2<_,p,_>
+            |- x::node2<_,a,b>.

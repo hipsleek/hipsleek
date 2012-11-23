@@ -1,0 +1,54 @@
+data node { int val ; node next }.
+
+pred ls<p> == self = p 
+	or self::node<next = r> * r::ls<p> & self!=p
+	inv true.
+
+lemma "U0" self::ls<p> -> self::ls<b>*b::ls<p>.
+
+
+checkentail 
+    x = p 
+	or x::node<next = r> * r::ls<p> & x!=p
+|- x::ls<b>*b::ls<p>.
+
+
+
+//lemma "U3" self::ls<z>  <- self::ls<y>*y::ls<z> & z=null . 
+
+//lemma "U4" self::ls<y> * y::ls<z> * z::node<v,w> -> self::ls<z> * z::node<v,w> .
+
+//lemma "U4" self::ls<y> * y::ls<z> * z::node<v,w> -> self::ls<z> * z::node<v,w> .
+
+
+//checkentail x::ls<y> * y::ls<z> |- x::ls<z>.
+
+/*
+checkentail x::ls<z>  |- x::ls<y> * y::ls<z2> .
+print residue.
+//Entail(1)=Valid.
+//true & y=z & {FLOW,(27,27)=__norm} true & true & {FLOW,(27,27)=__norm}
+*/
+
+lemma "U1" self::ls<p> <- self::ls<b>*b::ls<p>.
+
+/*
+checkentail  
+    b::ls<p> & x = b 
+	or x::node<next = r> * r::ls<b> * b::ls<p> & x!=b
+ |- x::ls<p> .
+*/
+/*
+checkentail x::ls<y> * y::ls<z> |- x::ls<z2>.
+print residue.
+// serious duplicated search!
+Entail(1)=Valid.
+ SS 7:y::ls<z>@M[Orig][LHSCase] & z2=y & {FLOW,(27,27)=__norm}
+ SS 7:y::ls<z>@M[Orig][LHSCase] * NN z2::ls<y>@M[Derv] & true &
+ {FLOW,(27,27)=__norm}
+ SS 7:y::ls<z>@M[Orig][LHSCase] & z2=y & {FLOW,(27,27)=__norm}
+ true & z2=z & {FLOW,(27,27)=__norm}
+ NN z2::ls<z>@M[Derv] & true & {FLOW,(27,27)=__norm}
+ true & z2=z & {FLOW,(27,27)=__norm}
+ SS 7:y::ls<z>@M[Orig][LHSCase] & z2=y & {FLOW,(27,27)=__norm}
+*/

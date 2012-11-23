@@ -1,5 +1,6 @@
 {
 open Globals
+open Exc.ETABLE_NFLOW
 
 open Token
 (** A signature for specialized tokens. *)
@@ -107,20 +108,27 @@ module Make (Token : SleekTokenS)
  let comment_level = ref 0
  let _ = List.map (fun ((k,t):(string*sleek_token)) -> Hashtbl.add sleek_keywords k t)
 	[("assert", ASSERT);
+   ("assert_exact", ASSERT_EXACT);
+   ("assert_inexact", ASSERT_INEXACT);
 	 ("assume", ASSUME);
+	 ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
    ("alln", ALLN);
    ("app", APPEND);
    ("bagmax", BAGMAX);
 	 ("bagmin", BAGMIN);
+   ("bag", BAG);
+     ("Barrier", BARRIER);
 	 ("bind", BIND);
 	 ("bool", BOOL);
 	 ("break", BREAK);
 	 ("case",CASE);
    ("catch", CATCH);
 	 ("checkentail", CHECKENTAIL);
+   ("checkentail_exact", CHECKENTAIL_EXACT);
+   ("checkentail_inexact", CHECKENTAIL_INEXACT);
 	 ("capture_residue", CAPTURERESIDUE);
 	 ("class", CLASS);
-	 ("coercion", COERCION);
+	 (* ("coercion", COERCION); *)
 	 ("compose", COMPOSE);
    ("combine", COMBINE);
 	 ("const", CONST);
@@ -130,7 +138,10 @@ module Make (Token : SleekTokenS)
 	 ("diff", DIFF);
 	 ("dynamic", DYNAMIC);
 	 ("else", ELSE_TT);
+   ("emp", EMPTY);
 	 ("ensures", ENSURES);
+   ("ensures_exact", ENSURES_EXACT);
+   ("ensures_inexact", ENSURES_INEXACT);
 	 ("enum", ENUM);
 	 ("ex", EXISTS);
 	 ("exists", EXISTS);
@@ -140,16 +151,22 @@ module Make (Token : SleekTokenS)
    ("finally", FINALLY);
 	 ("float", FLOAT);
 	 ("forall", FORALL);
+   ("ranking", FUNC);
    ("global",GLOBAL);
+   ("logical", LOGICAL);
 	 ("head",HEAD);
    ("ho_pred",HPRED);
+   ("htrue", HTRUE);
    ("if", IF);
 	 ("in", IN_T);
+   ("infer", INFER);
+	("inline", INLINE); (* An Hoa [22/08/2011] : add inline keyword *)
    ("inlist", INLIST);
 	 ("int", INT);
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
-   ("join", JOIN);
+	 ("inv_lock", INVLOCK);
+   ("joinpred", JOIN); (*Changed by 28/12/2011*)
 	 ("lemma", LEMMA);
    ("len", LENGTH);
 	 ("let", LET);
@@ -162,7 +179,9 @@ module Make (Token : SleekTokenS)
 	 ("off", OFF);
 	 ("on", ON);
 	 ("or", ORWORD);
-   ("perm",PERM);
+	 ("and", ANDWORD);
+	 ("macro",PMACRO);
+     ("perm",PERM);
 	 ("pred", PRED);
      ("print", PRINT);
 	 ("dprint", DPRINT);
@@ -177,6 +196,10 @@ module Make (Token : SleekTokenS)
 	 ("self", SELFT "self");
    ("set",SET);
 	 ("split", SPLIT);
+	 ("LexVar", LEXVAR);
+   ("Term", TERM);
+   ("Loop", LOOP);
+   ("MayLoop", MAYLOOP);
 	 ("subset", SUBSET);
 	 ("static", STATIC);
    ("tail",TAIL);
@@ -190,10 +213,10 @@ module Make (Token : SleekTokenS)
 	 ("unfold", UNFOLD);
 	 ("union", UNION);
 	 ("void", VOID);
-   ("variance", VARIANCE);
+   (*("variance", VARIANCE);*)
 	 ("while", WHILE);
    ("with", WITH);
-	 (flow, FLOW Globals.flow);]
+	 (flow, FLOW flow);]
 }
   
   
@@ -201,7 +224,8 @@ module Make (Token : SleekTokenS)
   let blank = [' ' '\009' '\012']
   let alpha = ['a'-'z' 'A'-'Z' '\223'-'\246' '\248'-'\255' '_']
   let identchar = ['A'-'Z' 'a'-'z' '_' '\192'-'\214' '\216'-'\246' '\248'-'\255' '0'-'9']
-  let ident = alpha identchar*
+  let identseq = alpha identchar* (* An Hoa : a single identifier *)
+	let ident = (identseq | identseq ''') ('.' identseq)* (* An Hoa : a {possibly} extended quantifier *)
   let locname = ident
   let not_star_symbolchar = ['$' '!' '%' '&' '+' '-' '.' '/' ':' '<' '=' '>' '?' '@' '^' '|' '~' '\\']
   let symbolchar = '*' | not_star_symbolchar
@@ -255,7 +279,19 @@ rule tokenizer file_name = parse
   | '&' { AND }
   | "&&" { ANDAND }
   | "@" { AT }
+  | "@@" { ATAT }
   | "@I" {IMM}
+  | "@L" {LEND}
+  | "@D" { DERV }
+  | "@M" { MUT }
+  | "@pre" { PRE }
+  | "@xpre" { XPRE }
+  | "@post" { POST }
+  | "@xpost" { XPOST }
+  | "@zero" {PZERO}
+  | "@full" {PFULL}
+  | "@value" {PVALUE}
+  (* | "@p_ref" {PREF} *)
   | '}' { CBRACE }
   | "|]" {CLIST}
   | ':' { COLON }
@@ -300,6 +336,7 @@ rule tokenizer file_name = parse
   | '\'' { PRIME }
   | ';' { SEMICOLON }
   | '*' { STAR }
+  | "<:" { SUBANN }
   | '/' { DIV }
   | ident as idstr 
 	  {

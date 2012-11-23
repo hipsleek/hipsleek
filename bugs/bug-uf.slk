@@ -1,0 +1,17 @@
+/* --ufdp */
+
+data node { int val ; node next }.
+
+pred ls<p> == self = p 
+	or self::node<next = r> * r::ls<p> & self!=p
+	inv true.
+
+//checkentail a::ls<b> * t::node<_,_> & a = z & z = t |- true.
+
+//checkentail a::ls<b> * a::ls<c> * c::node<_,d> * d::ls<e> & c!=e
+//  |- b::ls<c> * c::ls<e>.
+
+checkentail z::ls<b> * a::ls<c> * c::node<_,d> * d::ls<e> & c!=e & a=z
+  |- b::ls<c> * c::ls<e>.
+// BUG - above should succeed as a=z!
+

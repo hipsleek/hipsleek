@@ -1,0 +1,16 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+checkentail x::ll<n> & n=m-1 & m>3 |- x=null.
+//Entail (1): Fail.(must) cause:213  null!=x |-  null=x (must-bug).
+
+checkentail x::ll<n> & n>2 |- x=null.
+//Entail (1): Fail.(must) cause:213  null!=x |-  null=x (must-bug).
+
+checkentail x::ll<n> & n>3 |- x::node<_,null>.
+//Entail (2): Fail.(must) cause:213  null!=r_70 |-  null=r_70 (must-bug). FIXED
+
+

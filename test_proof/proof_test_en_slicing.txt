@@ -1,0 +1,134 @@
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:3,Col:10) kind::CHECK-SPECS...
+id: 111
+Prover: OMEGA CALCULATOR
+Type: Sat:  3<=x
+Time: 0.004001
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:3,Col:10) kind::CHECK-SPECS...
+id: 112
+Prover: OMEGA CALCULATOR
+Type: Sat:  0<=y
+Time: 0.
+Result: true 
+
+>>> ERROR
+>>> added x'=x+1 & y'=y+1 & (x'>3 \/ x'<=3)  
+>>> why aren't the slices for x,y marked UNSAT in below?
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:8,Col:8) kind::IF...
+id: 113
+Prover: OMEGA CALCULATOR
+Type: Sat:  !(b_19') & b_19'
+Time: 0.004
+Result: false
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:8,Col:8) kind::IF...
+id: 114
+Prover: OMEGA CALCULATOR
+Type: Sat:  b_19'
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:8,Col:8) kind::IF...
+id: 115
+Prover: OMEGA CALCULATOR
+Type: Sat:  !(b_19')
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:8,Col:8) kind::IF...
+id: 116
+Prover: OMEGA CALCULATOR
+Type: Sat:  b_19' & !(b_19')
+Time: 0.004
+Result: false
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:15,Col:13) kind::POST
+Trace::[(c_id:153:,p_label: 83),(c_id:151:,p_label: 84),(c_id:148:,p_label: 0),(c_id:147:,p_label: 117),(c_id:146:,p_label: 83),(c_id:144:,p_label: 83),(c_id:72:,p_label: -1)]
+
+id: 117
+Prover: OMEGA CALCULATOR
+Type: Sat:  0<=y & y'=1+1+y
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:15,Col:13) kind::POST
+Trace::[(c_id:153:,p_label: 83),(c_id:151:,p_label: 84),(c_id:148:,p_label: 0),(c_id:147:,p_label: 117),(c_id:146:,p_label: 83),(c_id:144:,p_label: 83),(c_id:72:,p_label: -1)]
+
+id: 118
+Prover: OMEGA CALCULATOR
+Type: Sat:  (1*1)+x'=1+x & 3<=x & (1+3)<=((1*1)+x')
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:15,Col:13) kind::POST
+Trace::[(c_id:153:,p_label: 83),(c_id:151:,p_label: 84),(c_id:148:,p_label: 0),(c_id:147:,p_label: 117),(c_id:146:,p_label: 83),(c_id:144:,p_label: 83),(c_id:72:,p_label: -1)]
+
+>> REDUNDANT ***
+>> this has been invoked previously..
+>> id: 114
+>> Type: Sat:  b_19'
+
+id: 119
+Prover: OMEGA CALCULATOR
+Type: Sat:  b_19'
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:15,Col:13) kind::POST
+Trace::[(c_id:153:,p_label: 83),(c_id:151:,p_label: 84),(c_id:148:,p_label: 0),(c_id:147:,p_label: 117),(c_id:146:,p_label: 83),(c_id:144:,p_label: 83),(c_id:72:,p_label: -1)]
+
+id: 120
+Prover: OMEGA CALCULATOR
+Type: Imply: ante: 0<=y & y'=1+1+y
+	     conseq:  2<=y'
+Time: 0.004
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:15,Col:13) kind::POST
+Trace::[(c_id:153:,p_label: 83),(c_id:151:,p_label: 84),(c_id:148:,p_label: 0),(c_id:147:,p_label: 117),(c_id:146:,p_label: 83),(c_id:144:,p_label: 83),(c_id:72:,p_label: -1)]
+
+id: 121
+Prover: OMEGA CALCULATOR
+Type: Imply: ante: (1*1)+x'=1+x & 3<=x & (1+3)<=((1*1)+x')
+	     conseq:  x=x'
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:15,Col:13) kind::POST
+Trace::[(c_id:148:,p_label: 1),(c_id:147:,p_label: 118),(c_id:146:,p_label: 83),(c_id:144:,p_label: 83),(c_id:72:,p_label: -1)]
+
+>> ERROR ***
+>> wasn't there an FALSE being detected
+
+id: 122
+Prover: OMEGA CALCULATOR
+Type: Imply: ante: y'=2
+	     conseq:  2<=y'
+Time: 0.004
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:15,Col:13) kind::POST
+Trace::[(c_id:148:,p_label: 1),(c_id:147:,p_label: 118),(c_id:146:,p_label: 83),(c_id:144:,p_label: 83),(c_id:72:,p_label: -1)]
+
+id: 123
+Prover: OMEGA CALCULATOR
+Type: Imply: ante: 3<=x & x'<=3 & x'=1+x
+	     conseq:  x=x'
+Time: 0.004001
+Result: true

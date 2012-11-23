@@ -1,0 +1,13 @@
+relation intarray(int[] a) == true.
+checkentail intarray(a) & a[0] = 1 & a[1] = 2 |- a[0] < a[1].
+relation sorted(int[] a, int i, int j) == (i >= j | i < j & a[i] <= a[i+1] & sorted(a,i+1,j)).
+relation sorted2(int[] a, int i, int j) == (i >= j | i < j & a[j-1] <= a[j] & sorted2(a,i,j-1)).
+checkentail intarray(a) & a[0] = 1 & a[1] = 2 & a[2] = 3 |- sorted(a,0,2).
+/* Left extension ==> fine!*/
+checkentail a[0] < a[1] & sorted(a,1,n) |- sorted(a,0,n).
+/* Right extension ==> inf! */
+checkentail sorted(a,0,n) & a[n] < a[n+1] |- sorted(a,0,n+1).
+checkentail sorted2(a,0,n) & a[n] < a[n+1] |- sorted2(a,0,n+1).
+relation ud(int x) == forall( y : y < x).
+// loop below
+// checkentail true |- ud(1).

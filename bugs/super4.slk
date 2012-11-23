@@ -1,0 +1,45 @@
+data node { int val ; node next }.
+
+pred ls<p> == self = p 
+	or self::node<next = r> * r::ls<p> & self!=p
+	inv true.
+
+
+checkentail a::node<_,b> |- 
+        case {
+          a=b -> [] a::node<_,b>;
+          a!=b -> [] a::ls<b>;
+        }.
+
+checkentail a::node<_,b> & a!=b |- a::ls<b>.
+
+checkentail a::node<_,b> & a=b |- a::ls<b>.
+
+checkentail a::node<_,b>  |- case {
+              a=b -> [] a::ls<b>;
+             a!=b -> [] a::ls<b>;
+            }.
+
+
+lemma self::ls<p> -> self::ls<b>*b::ls<p>.
+
+checkentail self=p 
+ or self::node<next = r> * r::ls<p> & self!=p
+    |- self::ls<b>*b::ls<p>.
+//print residue.
+
+// seems a bug handling lemma below!
+//lemma self::ls<nil>  <- self::ls<y>*y::ls<nil> . // incorrect
+
+lemma self::ls<z>  <- self::ls<y>*y::ls<z> & z=nil.
+
+// bug below!
+checkentail x::ls<y>*y::ls<z> |- x::ls<z>.
+
+checkentail x::ls<y>*y::ls<z> & z!=nil |- x::ls<z>.
+
+checkentail x::ls<y>*y::ls<nil> |- x::ls<nil>.
+
+//checkentail y::ls<nil> & x=y
+//   or x::node<_,q>*q::ls<y> * y::ls<nil> & x!=y |- x::ls<nil>.
+

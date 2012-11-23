@@ -1,0 +1,21 @@
+/*
+  Entailment for variable permissions
+*/
+
+//examples with threads
+
+//(1)
+checkentail @zero[x] and @full[x] & x'=x+1 & thread=id |- @full[y].
+print residue.
+// valid --> @zero[x,y] and @full[x] & x'=x+1
+
+//(2)
+checkentail @zero[x] & y'=y+1 & id=z and @full[x] & x'=x+1 & thread=z
+            |- [i] @value[id] and @full[x] & x'=i+1 & thread=id.
+print residue.
+// valid -> @zero[x] & i=x & y'=1+y & id=z
+
+//(3)
+checkentail @zero[x] and @full[x] & x'=x+1 & thread=id |- @full[x].
+print residue.
+// fail --> @zero[x] |/- @full[x]

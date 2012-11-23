@@ -1,0 +1,939 @@
+/usr/local/bin/z3
+
+Processing file "arr_sum.ss"
+Parsing...
+Starting Omega... 
+Translating global variables to procedure parameters...
+Translating to core language...
+
+
+!!!:0: 0: SAT #1
+
+!!!:0: 0:  !((a=null | a!=null))
+
+!!!:0: 0: SAT #2
+
+!!!:0: 0:  a=null & a!=null
+
+!!!:0: 0: SAT #3
+
+!!!:0: 0:  !((a=null | a!=null))
+
+!!!:0: 0: SAT #4
+
+!!!:0: 0:  a=null & a!=null
+
+!!!:0: 0: SAT #5
+
+!!!:0: 0:  !((a=b | a!=b))
+
+!!!:0: 0: SAT #6
+
+!!!:0: 0:  a=b & a!=b
+
+!!!:0: 0: SAT #7
+
+!!!:0: 0:  !((a=b | a!=b))
+
+!!!:0: 0: SAT #8
+
+!!!:0: 0:  a=b & a!=b
+
+!!!:0: 0: SAT #9
+
+!!!:0: 0:  !((a=null | a!=null))
+
+!!!:0: 0: SAT #10
+
+!!!:0: 0:  a=null & a!=null
+
+!!!:0: 0: SAT #11
+
+!!!:0: 0:  !((a=null | a!=null))
+
+!!!:0: 0: SAT #12
+
+!!!:0: 0:  a=null & a!=null
+
+!!!:0: 0: SAT #13
+
+!!!:0: 0:  !((a=b | a!=b))
+
+!!!:0: 0: SAT #14
+
+!!!:0: 0:  a=b & a!=b
+
+!!!:0: 0: SAT #15
+
+!!!:0: 0:  !((a=b | a!=b))
+
+!!!:0: 0: SAT #16
+
+!!!:0: 0:  a=b & a!=b
+
+!!!:0: 0: SAT #17
+
+!!!:0: 0:  !((a=null | a!=null))
+
+!!!:0: 0: SAT #18
+
+!!!:0: 0:  a=null & a!=null
+
+!!!:0: 0: SAT #19
+
+!!!:0: 0:  !((a=null | a!=null))
+
+!!!:0: 0: SAT #20
+
+!!!:0: 0:  a=null & a!=null
+
+!!!:0: 0: SAT #21
+
+!!!:0: 0:  !((a=b | a!=b))
+
+!!!:0: 0: SAT #22
+
+!!!:0: 0:  a=b & a!=b
+
+!!!:0: 0: SAT #23
+
+!!!:0: 0:  !((a=b | a!=b))
+
+!!!:0: 0: SAT #24
+
+!!!:0: 0:  a=b & a!=b
+
+!!!:0: 0: SAT #25
+
+!!!:0: 0:  !((a | !(a)))
+
+!!!:0: 0: SAT #26
+
+!!!:0: 0:  a & !(a)
+
+!!!:0: 0: SAT #27
+
+!!!:0: 0:  !((a | !(a)))
+
+!!!:0: 0: SAT #28
+
+!!!:0: 0:  a & !(a)
+
+!!!:0: 0: SAT #29
+
+!!!:0: 0:  !((b | !(b)))
+
+!!!:0: 0: SAT #30
+
+!!!:0: 0:  b & !(b)
+
+!!!:0: 0: SAT #31
+
+!!!:0: 0:  !((a | !(a)))
+
+!!!:0: 0: SAT #32
+
+!!!:0: 0:  a & !(a)
+
+!!!:0: 0: SAT #33
+
+!!!:0: 0:  !((b | !(b)))
+
+!!!:0: 0: SAT #34
+
+!!!:0: 0:  b & !(b)
+
+!!!:0: 0: SAT #35
+
+!!!:0: 0:  !((b<=a | a<b))
+
+!!!:0: 0: SAT #36
+
+!!!:0: 0:  b<=a & a<b
+
+!!!:0: 0: SAT #37
+
+!!!:0: 0:  !((b<=a | a<b))
+
+!!!:0: 0: SAT #38
+
+!!!:0: 0:  b<=a & a<b
+
+!!!:0: 0: SAT #39
+
+!!!:0: 0:  !((b<a | a<=b))
+
+!!!:0: 0: SAT #40
+
+!!!:0: 0:  b<a & a<=b
+
+!!!:0: 0: SAT #41
+
+!!!:0: 0:  !((b<a | a<=b))
+
+!!!:0: 0: SAT #42
+
+!!!:0: 0:  b<a & a<=b
+
+!!!:0: 0: SAT #43
+
+!!!:0: 0:  !((a<=b | b<a))
+
+!!!:0: 0: SAT #44
+
+!!!:0: 0:  a<=b & b<a
+
+!!!:0: 0: SAT #45
+
+!!!:0: 0:  !((a<=b | b<a))
+
+!!!:0: 0: SAT #46
+
+!!!:0: 0:  a<=b & b<a
+
+!!!:0: 0: SAT #47
+
+!!!:0: 0:  !((a<b | b<=a))
+
+!!!:0: 0: SAT #48
+
+!!!:0: 0:  a<b & b<=a
+
+!!!:0: 0: SAT #49
+
+!!!:0: 0:  !((a<b | b<=a))
+
+!!!:0: 0: SAT #50
+
+!!!:0: 0:  a<b & b<=a
+
+!!!:0: 0: SAT #51
+
+!!!:0: 0:  !((a=b | a!=b))
+
+!!!:0: 0: SAT #52
+
+!!!:0: 0:  a=b & a!=b
+
+!!!:0: 0: SAT #53
+
+!!!:0: 0:  !((a=b | a!=b))
+
+!!!:0: 0: SAT #54
+
+!!!:0: 0:  a=b & a!=b
+
+!!!:0: 0: SAT #55
+
+!!!:0: 0:  !((a=b | a!=b))
+
+!!!:0: 0: SAT #56
+
+!!!:0: 0:  a=b & a!=b
+
+!!!:0: 0: SAT #57
+
+!!!:0: 0:  !((a=b | a!=b))
+
+!!!:0: 0: SAT #58
+
+!!!:0: 0:  a=b & a!=b
+
+!!!:0: 0: SAT #59
+
+!!!:0: 0:  !((a=b | a!=b))
+
+!!!:0: 0: SAT #60
+
+!!!:0: 0:  a=b & a!=b
+
+!!!:0: 0: SAT #61
+
+!!!:0: 0:  !((a=b | a!=b))
+
+!!!:0: 0: SAT #62
+
+!!!:0: 0:  a=b & a!=b
+
+!!!:0: 0: SAT #63
+
+!!!:0: 0:  !((0<=a | a<0))
+
+!!!:0: 0: SAT #64
+
+!!!:0: 0:  0<=a & a<0
+
+!!!:0: 0: SAT #65
+
+!!!:0: 0:  !((1<=b | (b+1)<=0 | 0<(b+1) & b<1))
+
+!!!:0: 0: SAT #66
+
+!!!:0: 0:  1<=b & (b+1)<=0
+
+!!!:0: 0: SAT #67
+
+!!!:0: 0:  1<=b & 0<(b+1) & b<1
+
+!!!:0: 0: SAT #68
+
+!!!:0: 0:  (b+1)<=0 & 0<(b+1) & b<1
+
+!!!:0: 0: SAT #69
+
+!!!:0: 0:  !((1<=b | (b+1)<=0 | 0<(b+1) & b<1))
+
+!!!:0: 0: SAT #70
+
+!!!:0: 0:  1<=b & (b+1)<=0
+
+!!!:0: 0: SAT #71
+
+!!!:0: 0:  1<=b & 0<(b+1) & b<1
+
+!!!:0: 0: SAT #72
+
+!!!:0: 0:  (b+1)<=0 & 0<(b+1) & b<1
+
+!!!:0: 0: SAT #73
+
+!!!:0: 0:  !((0<=a | a<0))
+
+!!!:0: 0: SAT #74
+
+!!!:0: 0:  0<=a & a<0
+
+!!!:0: 0: SAT #75
+
+!!!:0: 0:  !((1<=b | (b+1)<=0 | 0<(b+1) & b<1))
+
+!!!:0: 0: SAT #76
+
+!!!:0: 0:  1<=b & (b+1)<=0
+
+!!!:0: 0: SAT #77
+
+!!!:0: 0:  1<=b & 0<(b+1) & b<1
+
+!!!:0: 0: SAT #78
+
+!!!:0: 0:  (b+1)<=0 & 0<(b+1) & b<1
+
+!!!:0: 0: SAT #79
+
+!!!:0: 0:  !((1<=b | (b+1)<=0 | 0<(b+1) & b<1))
+
+!!!:0: 0: SAT #80
+
+!!!:0: 0:  1<=b & (b+1)<=0
+
+!!!:0: 0: SAT #81
+
+!!!:0: 0:  1<=b & 0<(b+1) & b<1
+
+!!!:0: 0: SAT #82
+
+!!!:0: 0:  (b+1)<=0 & 0<(b+1) & b<1 done
+Checking procedure sigmaright$int[]~int~int... 
+
+!!!arr_sum.ss:14: 0: Checking procedure sigmaright$int[]~int~int... 
+
+!!!arr_sum.ss:14: 0: Specs :
+ EBase true & dom(,a,i,j) & {FLOW,(12,13)=__norm,}
+         EAssume 
+           true & sumarray(,a,i,j,res) & {FLOW,(12,13)=__norm,}
+check_specs@1 ENTRY : es_formula: true & a'=a & i'=i & j'=j & {FLOW,(12,25)=__flow,}
+ es_pure: true
+ es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+ es_heap: true
+ es_var_label: 0
+
+
+!!!:0: 0: SAT #83
+
+!!!:0: 0:  a'=a & i'=i & j'=j & dom(,a,i,j)
+
+!!!arr_sum.ss:18: 5: 
+
+
+!!!arr_sum.ss:18: 5: Proving precondition in method gt___$int~int for spec:
+ ECase case {j'<i' -> EBase true & true & {FLOW,(12,13)=__norm,}
+                              EAssume 
+                                true & res & j'<i' & {FLOW,(12,13)=__norm,}
+             ;
+        i'<=j' -> EBase true & true & {FLOW,(12,13)=__norm,}
+                          EAssume 
+                            true & !(res) & i'<=j' & {FLOW,(12,13)=__norm,}
+        }
+
+
+!!!arr_sum.ss:18: 5: heap_entail_struc_list_failesc_context_init:
+ctx:
+ List of Failesc Context: [(0, 0, 1  [])]
+Failed States:
+[]
+Successful States:
+[Label: []
+ State:es_formula: true & a'=a & i'=i & j'=j & dom(,a,i,j) & {FLOW,(12,13)=__norm,}
+       es_pure: true
+       es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+       es_heap: true
+       es_path_label: [(,-1 )]
+       es_var_label: 0]
+conseq: ECase case {j'<i' -> EBase true & true & {FLOW,(12,13)=__norm,}
+                              EAssume 
+                                true & res & j'<i' & {FLOW,(12,13)=__norm,}
+             ;
+        i'<=j' -> EBase true & true & {FLOW,(12,13)=__norm,}
+                          EAssume 
+                            true & !(res) & i'<=j' & {FLOW,(12,13)=__norm,}
+        }
+
+
+!!!arr_sum.ss:18: 5: heap_entail_struc_failesc_context:
+ctx:
+ Failed States:
+ []
+ Successful States:
+ [Label: []
+  State:es_formula: true & a'=a & i'=i & j'=j & dom(,a,i,j) & {FLOW,(12,13)=__norm,}
+        es_pure: true
+        es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+        es_heap: true
+        es_path_label: [(,-1 )]
+        es_var_label: 0]
+conseq:
+ ECase case {j'<i' -> EBase true & true & {FLOW,(12,13)=__norm,}
+                              EAssume 
+                                true & res & j'<i' & {FLOW,(12,13)=__norm,}
+             ;
+        i'<=j' -> EBase true & true & {FLOW,(12,13)=__norm,}
+                          EAssume 
+                            true & !(res) & i'<=j' & {FLOW,(12,13)=__norm,}
+        }
+
+!!!arr_sum.ss:18: 5: heap_entail_one_context_struc:
+ctx:
+ es_formula: true & a'=a & i'=i & j'=j & dom(,a,i,j) & {FLOW,(12,13)=__norm,}
+ es_pure: true
+ es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+ es_heap: true
+ es_path_label: [(,-1 )]
+ es_var_label: 0
+conseq:
+ ECase case {j'<i' -> EBase true & true & {FLOW,(12,13)=__norm,}
+                              EAssume 
+                                true & res & j'<i' & {FLOW,(12,13)=__norm,}
+             ;
+        i'<=j' -> EBase true & true & {FLOW,(12,13)=__norm,}
+                          EAssume 
+                            true & !(res) & i'<=j' & {FLOW,(12,13)=__norm,}
+        }
+
+!!!arr_sum.ss:18: 5: heap_entail_after_sat_struc: invoking heap_entail_conjunct_lhs_struc
+context:
+ es_formula: true & a'=a & i'=i & j'=j & dom(,a,i,j) & {FLOW,(12,13)=__norm,}
+ es_pure: true
+ es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+ es_heap: true
+ es_path_label: [(,-1 )]
+ es_var_label: 0
+conseq:
+ ECase case {j'<i' -> EBase true & true & {FLOW,(12,13)=__norm,}
+                              EAssume 
+                                true & res & j'<i' & {FLOW,(12,13)=__norm,}
+             ;
+        i'<=j' -> EBase true & true & {FLOW,(12,13)=__norm,}
+                          EAssume 
+                            true & !(res) & i'<=j' & {FLOW,(12,13)=__norm,}
+        }
+
+!!!:0: 0: SAT #84
+
+!!!:0: 0:  a'=a & i'=i & j'=j & dom(,a,i,j) & j'<i'
+
+!!!arr_sum.ss:18: 5: heap_entail_one_context:
+ctx:
+ es_formula: 
+  true & a'=a & i'=i & j'=j & dom(,a,i,j) & j'<i' & {FLOW,(12,13)=__norm,}
+ es_pure: true
+ es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+ es_heap: true
+ es_path_label: [(,-1 )]
+ es_var_label: 0
+conseq:
+ true & true & {FLOW,(12,13)=__norm,}
+
+
+!!!:0: 0: SAT #85
+
+!!!:0: 0:  a'=a & i'=i & j'=j & dom(,a,i,j) & j'<i' & res & j'<i'
+
+!!!:0: 0: SAT #86
+
+!!!:0: 0:  a'=a & i'=i & j'=j & dom(,a,i,j) & i'<=j'
+
+!!!arr_sum.ss:18: 5: heap_entail_one_context:
+ctx:
+ es_formula: 
+  true & a'=a & i'=i & j'=j & dom(,a,i,j) & i'<=j' & {FLOW,(12,13)=__norm,}
+ es_pure: true
+ es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+ es_heap: true
+ es_path_label: [(,-1 )]
+ es_var_label: 0
+conseq:
+ true & true & {FLOW,(12,13)=__norm,}
+
+
+!!!:0: 0: SAT #87
+
+!!!:0: 0:  a'=a & i'=i & j'=j & dom(,a,i,j) & i'<=j' & !(res) & i'<=j'
+
+!!!:0: 0: SAT #88
+
+!!!:0: 0:  a'=a & i'=i & j'=j & dom(,a,i,j) & i'<=j' & !(v_bool_18_183') & i'<=j' & 
+v_bool_18_183'
+
+!!!:0: 0: SAT #89
+
+!!!:0: 0:  a'=a & i'=i & j'=j & dom(,a,i,j) & j'<i' & v_bool_18_183' & j'<i' & 
+v_bool_18_183'
+
+!!!arr_sum.ss:18: 1: conditional: then_delta:
+ List of Failesc Context: [(0, 1, 1  [])]
+Failed States:
+[]
+Successful States:
+[Label: []
+ State:es_formula: 
+        true & a'=a & i'=i & j'=j & dom(,a,i,j) & j'<i' & v_bool_18_183' & 
+        j'<i' & v_bool_18_183' & {FLOW,(12,13)=__norm,}
+       es_pure: true
+       es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+       es_heap: true
+       es_path_label: [(,51 ); (,-1 )]
+       es_var_label: 0
+       CtxORes_formula: 
+             true & a'=a & i'=i & j'=j & dom(,a,i,j) & i'<=j' & 
+             !(v_bool_18_183') & i'<=j' & v_bool_18_183' &
+             {FLOW,(12,13)=__norm,}
+            es_pure: true
+            es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+            es_heap: true
+            es_path_label: [(,52 ); (,-1 )]
+            es_var_label: 0]
+
+!!!:0: 0: SAT #90
+
+!!!:0: 0:  a'=a & i'=i & j'=j & dom(,a,i,j) & i'<=j' & !(v_bool_18_183') & i'<=j' & 
+!(v_bool_18_183')
+
+!!!:0: 0: SAT #91
+
+!!!:0: 0:  a'=a & i'=i & j'=j & dom(,a,i,j) & j'<i' & v_bool_18_183' & j'<i' & 
+!(v_bool_18_183')
+
+!!!arr_sum.ss:18: 1: conditional: else_delta:
+ List of Failesc Context: [(0, 1, 1  [])]
+Failed States:
+[]
+Successful States:
+[Label: []
+ State:es_formula: 
+        true & a'=a & i'=i & j'=j & dom(,a,i,j) & j'<i' & v_bool_18_183' & 
+        j'<i' & !(v_bool_18_183') & {FLOW,(12,13)=__norm,}
+       es_pure: true
+       es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+       es_heap: true
+       es_path_label: [(,51 ); (,-1 )]
+       es_var_label: 0
+       CtxORes_formula: 
+             true & a'=a & i'=i & j'=j & dom(,a,i,j) & i'<=j' & 
+             !(v_bool_18_183') & i'<=j' & !(v_bool_18_183') &
+             {FLOW,(12,13)=__norm,}
+            es_pure: true
+            es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+            es_heap: true
+            es_path_label: [(,52 ); (,-1 )]
+            es_var_label: 0]
+
+!!!arr_sum.ss:21: 9: 
+
+
+!!!arr_sum.ss:21: 9: Proving precondition in method array_get_elm_at___$int[]~int for spec:
+ EBase exists [][](ex)[k; t]true & dom(,a',k,t) & k<=i' & i'<=t &
+       {FLOW,(12,13)=__norm,}
+         EAssume 
+           true & res=a'[i'] & {FLOW,(12,13)=__norm,}
+
+
+!!!arr_sum.ss:21: 9: heap_entail_struc_list_failesc_context_init:
+ctx:
+ List of Failesc Context: [(0, 1, 1  [(,1 ); (,1 )])]
+Failed States:
+[]
+Successful States:
+[Label: [(,1 ); (,1 )]
+ State:es_formula: 
+        true & a'=a & i'=i & j'=j & dom(,a,i,j) & j'<i' & v_bool_18_183' & 
+        j'<i' & !(v_bool_18_183') & {FLOW,(12,13)=__norm,}
+       es_pure: true
+       es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+       es_heap: true
+       es_path_label: [(,1 ); (,51 ); (,-1 )]
+       es_var_label: 0
+       CtxORes_formula: 
+             true & a'=a & i'=i & j'=j & dom(,a,i,j) & i'<=j' & 
+             !(v_bool_18_183') & i'<=j' & !(v_bool_18_183') &
+             {FLOW,(12,13)=__norm,}
+            es_pure: true
+            es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+            es_heap: true
+            es_path_label: [(,1 ); (,52 ); (,-1 )]
+            es_var_label: 0]
+conseq: EBase exists [][](ex)[k; t]true & dom(,a',k,t) & k<=i' & i'<=t &
+       {FLOW,(12,13)=__norm,}
+         EAssume 
+           true & res=a'[i'] & {FLOW,(12,13)=__norm,}
+
+
+!!!arr_sum.ss:21: 9: heap_entail_struc_failesc_context:
+ctx:
+ Failed States:
+ []
+ Successful States:
+ [Label: [(,1 ); (,1 )]
+  State:es_formula: 
+         true & a'=a & i'=i & j'=j & dom(,a,i,j) & j'<i' & v_bool_18_183' & 
+         j'<i' & !(v_bool_18_183') & {FLOW,(12,13)=__norm,}
+        es_pure: true
+        es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+        es_heap: true
+        es_path_label: [(,1 ); (,51 ); (,-1 )]
+        es_var_label: 0
+        CtxORes_formula: 
+              true & a'=a & i'=i & j'=j & dom(,a,i,j) & i'<=j' & 
+              !(v_bool_18_183') & i'<=j' & !(v_bool_18_183') &
+              {FLOW,(12,13)=__norm,}
+             es_pure: true
+             es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+             es_heap: true
+             es_path_label: [(,1 ); (,52 ); (,-1 )]
+             es_var_label: 0]
+conseq:
+ EBase exists [][](ex)[k; t]true & dom(,a',k,t) & k<=i' & i'<=t &
+       {FLOW,(12,13)=__norm,}
+         EAssume 
+           true & res=a'[i'] & {FLOW,(12,13)=__norm,}
+
+!!!arr_sum.ss:21: 9: heap_entail_one_context_struc:
+ctx:
+ es_formula: 
+  true & a'=a & i'=i & j'=j & dom(,a,i,j) & j'<i' & v_bool_18_183' & j'<i' & 
+  !(v_bool_18_183') & {FLOW,(12,13)=__norm,}
+ es_pure: true
+ es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+ es_heap: true
+ es_path_label: [(,1 ); (,51 ); (,-1 )]
+ es_var_label: 0
+ CtxORes_formula: 
+       true & a'=a & i'=i & j'=j & dom(,a,i,j) & i'<=j' & 
+       !(v_bool_18_183') & i'<=j' & !(v_bool_18_183') &
+       {FLOW,(12,13)=__norm,}
+      es_pure: true
+      es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+      es_heap: true
+      es_path_label: [(,1 ); (,52 ); (,-1 )]
+      es_var_label: 0
+conseq:
+ EBase exists [][](ex)[k; t]true & dom(,a',k,t) & k<=i' & i'<=t &
+       {FLOW,(12,13)=__norm,}
+         EAssume 
+           true & res=a'[i'] & {FLOW,(12,13)=__norm,}
+
+!!!arr_sum.ss:21: 9: heap_entail_after_sat_struc:
+ctx:
+ es_formula: 
+  true & a'=a & i'=i & j'=j & dom(,a,i,j) & j'<i' & v_bool_18_183' & j'<i' & 
+  !(v_bool_18_183') & {FLOW,(12,13)=__norm,}
+ es_pure: true
+ es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+ es_heap: true
+ es_path_label: [(,1 ); (,51 ); (,-1 )]
+ es_var_label: 0
+ CtxORes_formula: 
+       true & a'=a & i'=i & j'=j & dom(,a,i,j) & i'<=j' & 
+       !(v_bool_18_183') & i'<=j' & !(v_bool_18_183') &
+       {FLOW,(12,13)=__norm,}
+      es_pure: true
+      es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+      es_heap: true
+      es_path_label: [(,1 ); (,52 ); (,-1 )]
+      es_var_label: 0
+conseq:
+ EBase exists [][](ex)[k; t]true & dom(,a',k,t) & k<=i' & i'<=t &
+       {FLOW,(12,13)=__norm,}
+         EAssume 
+           true & res=a'[i'] & {FLOW,(12,13)=__norm,}
+
+!!!arr_sum.ss:21: 9: heap_entail_after_sat_struc: invoking heap_entail_conjunct_lhs_struc
+context:
+ es_formula: 
+  true & a'=a & i'=i & j'=j & dom(,a,i,j) & j'<i' & v_bool_18_183' & j'<i' & 
+  !(v_bool_18_183') & {FLOW,(12,13)=__norm,}
+ es_pure: true
+ es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+ es_heap: true
+ es_path_label: [(,1 ); (,51 ); (,-1 )]
+ es_var_label: 0
+conseq:
+ EBase exists [][](ex)[k; t]true & dom(,a',k,t) & k<=i' & i'<=t &
+       {FLOW,(12,13)=__norm,}
+         EAssume 
+           true & res=a'[i'] & {FLOW,(12,13)=__norm,}
+
+!!!arr_sum.ss:21: 9: heap_entail_one_context:
+ctx:
+ es_formula: 
+  true & a'=a & i'=i & j'=j & dom(,a,i,j) & j'<i' & v_bool_18_183' & j'<i' & 
+  !(v_bool_18_183') & {FLOW,(12,13)=__norm,}
+ es_pure: true
+ es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+ es_heap: true
+ es_gen_expl_vars: [k; t]
+ es_path_label: [(,1 ); (,51 ); (,-1 )]
+ es_var_label: 0
+conseq:
+ true & dom(,a',k,t) & k<=i' & i'<=t & {FLOW,(12,13)=__norm,}
+
+
+!!!arr_sum.ss:21: 9: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
+context:
+ es_formula: 
+  true & a'=a & i'=i & j'=j & dom(,a,i,j) & j'<i' & v_bool_18_183' & j'<i' & 
+  !(v_bool_18_183') & {FLOW,(12,13)=__norm,}
+ es_pure: true
+ es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+ es_heap: true
+ es_gen_expl_vars: [k; t]
+ es_path_label: [(,1 ); (,51 ); (,-1 )]
+ es_var_label: 0
+conseq:
+ true & dom(,a',k,t) & k<=i' & i'<=t & {FLOW,(12,13)=__norm,}
+
+!!!arr_sum.ss:21: 9: heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases
+
+!!!arr_sum.ss:21: 9: heap_entail_conjunct:
+context:
+ es_formula: 
+  true & a'=a & i'=i & j'=j & dom(,a,i,j) & j'<i' & v_bool_18_183' & j'<i' & 
+  !(v_bool_18_183') & {FLOW,(12,13)=__norm,}
+ es_pure: true
+ es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+ es_heap: true
+ es_gen_expl_vars: [k; t]
+ es_path_label: [(,1 ); (,51 ); (,-1 )]
+ es_var_label: 0
+conseq:
+ true & dom(,a',k,t) & k<=i' & i'<=t & {FLOW,(12,13)=__norm,}
+
+!!!arr_sum.ss:21: 9: heap_entail_conjunct_helper:
+context:
+ es_formula: 
+  true & a'=a & i'=i & j'=j & dom(,a,i,j) & j'<i' & v_bool_18_183' & j'<i' & 
+  !(v_bool_18_183') & {FLOW,(12,13)=__norm,}
+ es_pure: true
+ es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+ es_heap: true
+ es_gen_expl_vars: [k; t]
+ es_path_label: [(,1 ); (,51 ); (,-1 )]
+ es_var_label: 0
+conseq:
+ true & dom(,a',k,t) & k<=i' & i'<=t & {FLOW,(12,13)=__norm,}heap_entail_conjunct_helper :: node 1
+
+
+!!!arr_sum.ss:21: 9: heap_entail_conjunct_helper: conseq has an empty heap component
+context:
+ es_formula: 
+  true & a'=a & i'=i & j'=j & dom(,a,i,j) & j'<i' & v_bool_18_183' & j'<i' & 
+  !(v_bool_18_183') & {FLOW,(12,13)=__norm,}
+ es_pure: true
+ es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+ es_heap: true
+ es_gen_expl_vars: [k; t]
+ es_path_label: [(,1 ); (,51 ); (,-1 )]
+ es_var_label: 0
+conseq:
+ true & dom(,a',k,t) & k<=i' & i'<=t & {FLOW,(12,13)=__norm,}
+
+!!!:0: 0: simplify the consequent with omega
+
+!!!:0: 0: IMP #1
+
+!!!:0: 0: IMP #92
+
+!!!:0: 0: ante:  a'=a & i'=i & j'=j & dom(,a,i,j) & j'<i' & v_bool_18_183' & j'<i' & 
+!(v_bool_18_183')
+
+!!!:0: 0: conseq:  exists1(k:exists1(t:dom(,a',k,t) & k<=i' & i'<=t))
+
+!!!:0: 0: IMP #93
+
+!!!:0: 0: ante:  a'=a & i'=i & j'=j & dom(,a,i,j) & j'<i' & v_bool_18_183' & j'<i' & 
+!(v_bool_18_183')
+
+!!!:0: 0: conseq:  exists1(k:exists1(t:dom(,a',k,t) & k<=i' & i'<=t))
+
+!!!arr_sum.ss:21: 9: heap_entail_empty_rhs_heap: formula is not valid
+
+
+!!!arr_sum.ss:21: 9: heap_entail_after_sat_struc: invoking heap_entail_conjunct_lhs_struc
+context:
+ es_formula: 
+  true & a'=a & i'=i & j'=j & dom(,a,i,j) & i'<=j' & !(v_bool_18_183') & 
+  i'<=j' & !(v_bool_18_183') & {FLOW,(12,13)=__norm,}
+ es_pure: true
+ es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+ es_heap: true
+ es_path_label: [(,1 ); (,52 ); (,-1 )]
+ es_var_label: 0
+conseq:
+ EBase exists [][](ex)[k; t]true & dom(,a',k,t) & k<=i' & i'<=t &
+       {FLOW,(12,13)=__norm,}
+         EAssume 
+           true & res=a'[i'] & {FLOW,(12,13)=__norm,}
+
+!!!arr_sum.ss:21: 9: heap_entail_one_context:
+ctx:
+ es_formula: 
+  true & a'=a & i'=i & j'=j & dom(,a,i,j) & i'<=j' & !(v_bool_18_183') & 
+  i'<=j' & !(v_bool_18_183') & {FLOW,(12,13)=__norm,}
+ es_pure: true
+ es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+ es_heap: true
+ es_gen_expl_vars: [k; t]
+ es_path_label: [(,1 ); (,52 ); (,-1 )]
+ es_var_label: 0
+conseq:
+ true & dom(,a',k,t) & k<=i' & i'<=t & {FLOW,(12,13)=__norm,}
+
+
+!!!arr_sum.ss:21: 9: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
+context:
+ es_formula: 
+  true & a'=a & i'=i & j'=j & dom(,a,i,j) & i'<=j' & !(v_bool_18_183') & 
+  i'<=j' & !(v_bool_18_183') & {FLOW,(12,13)=__norm,}
+ es_pure: true
+ es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+ es_heap: true
+ es_gen_expl_vars: [k; t]
+ es_path_label: [(,1 ); (,52 ); (,-1 )]
+ es_var_label: 0
+conseq:
+ true & dom(,a',k,t) & k<=i' & i'<=t & {FLOW,(12,13)=__norm,}
+
+!!!arr_sum.ss:21: 9: heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases
+
+!!!arr_sum.ss:21: 9: heap_entail_conjunct:
+context:
+ es_formula: 
+  true & a'=a & i'=i & j'=j & dom(,a,i,j) & i'<=j' & !(v_bool_18_183') & 
+  i'<=j' & !(v_bool_18_183') & {FLOW,(12,13)=__norm,}
+ es_pure: true
+ es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+ es_heap: true
+ es_gen_expl_vars: [k; t]
+ es_path_label: [(,1 ); (,52 ); (,-1 )]
+ es_var_label: 0
+conseq:
+ true & dom(,a',k,t) & k<=i' & i'<=t & {FLOW,(12,13)=__norm,}
+
+!!!arr_sum.ss:21: 9: heap_entail_conjunct_helper:
+context:
+ es_formula: 
+  true & a'=a & i'=i & j'=j & dom(,a,i,j) & i'<=j' & !(v_bool_18_183') & 
+  i'<=j' & !(v_bool_18_183') & {FLOW,(12,13)=__norm,}
+ es_pure: true
+ es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+ es_heap: true
+ es_gen_expl_vars: [k; t]
+ es_path_label: [(,1 ); (,52 ); (,-1 )]
+ es_var_label: 0
+conseq:
+ true & dom(,a',k,t) & k<=i' & i'<=t & {FLOW,(12,13)=__norm,}heap_entail_conjunct_helper :: node 1
+
+
+!!!arr_sum.ss:21: 9: heap_entail_conjunct_helper: conseq has an empty heap component
+context:
+ es_formula: 
+  true & a'=a & i'=i & j'=j & dom(,a,i,j) & i'<=j' & !(v_bool_18_183') & 
+  i'<=j' & !(v_bool_18_183') & {FLOW,(12,13)=__norm,}
+ es_pure: true
+ es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+ es_heap: true
+ es_gen_expl_vars: [k; t]
+ es_path_label: [(,1 ); (,52 ); (,-1 )]
+ es_var_label: 0
+conseq:
+ true & dom(,a',k,t) & k<=i' & i'<=t & {FLOW,(12,13)=__norm,}
+
+!!!:0: 0: simplify the consequent with omega
+
+!!!:0: 0: IMP #2
+
+!!!:0: 0: IMP #94
+
+!!!:0: 0: ante:  a'=a & i'=i & j'=j & dom(,a,i,j) & i'<=j' & !(v_bool_18_183') & i'<=j' & 
+!(v_bool_18_183')
+
+!!!:0: 0: conseq:  exists1(k:exists1(t:dom(,a',k,t) & k<=i' & i'<=t))
+
+!!!:0: 0: IMP #95
+
+!!!:0: 0: ante:  a'=a & i'=i & j'=j & dom(,a,i,j) & i'<=j' & !(v_bool_18_183') & i'<=j' & 
+!(v_bool_18_183')
+
+!!!:0: 0: conseq:  exists1(k:exists1(t:dom(,a',k,t) & k<=i' & i'<=t))
+
+!!!arr_sum.ss:21: 9: heap_entail_empty_rhs_heap: formula is not valid
+
+procedure call:arr_sum.ss:21: 9: Proving precondition in method array_get_elm_at___$int[]~int for spec:
+ EBase exists [][](ex)[k; t]true & dom(,a',k,t) & k<=i' & i'<=t &
+       {FLOW,(12,13)=__norm,}
+         EAssume 
+           true & res=a'[i'] & {FLOW,(12,13)=__norm,} has failed 
+
+check_specs@1
+check_specs inp1 : es_formula: true & a'=a & i'=i & j'=j & {FLOW,(12,25)=__flow,}
+ es_pure: true
+ es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+ es_heap: true
+ es_var_label: 0
+check_specs inp2 : EBase true & dom(,a,i,j) & {FLOW,(12,13)=__norm,}
+         EAssume 
+           true & sumarray(,a,i,j,res) & {FLOW,(12,13)=__norm,}
+check_specs@1 EXIT out :false
+
+Procedure sigmaright$int[]~int~int result FAIL-1
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+Total verification time: 0.38 second(s)
+	Time spent in main process: 0.02 second(s)
+	Time spent in child processes: 0.36 second(s)
+Counters: 
+ false_imply_count = 4
+impl_cache_count = 4
+impl_conseq_count = 4
+impl_proof_count = 4
+sat_cache_count = 91
+sat_proof_count = 31
+stat_countimply = 4
+stat_countsat = 91
+stat_disj_countimply = 8
+stat_disj_countsat = 132
+stat_size_countimply = 44
+stat_size_countsat = 240
+z_stat_disj_imply = 4
+z_stat_disj_sat = 132

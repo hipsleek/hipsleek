@@ -1,0 +1,48 @@
+data node { int val ; node next }.
+
+pred ls<p> == self = p 
+	or self::node<next = r> * r::ls<p> & self!=p
+	inv true.
+
+lemma "U0" self::ls<p> -> self::ls<b>*b::ls<p>.
+
+//lemma "U3" self::ls<z>  <- self::ls<y>*y::ls<z> & z=null . 
+
+lemma "U4" self::ls<y> * y::ls<z> * z::node<v,w> -> self::ls<z> * z::node<v,w> .
+
+/*
+// these cases are provable
+checkentail x::ls<y> * y::ls<z> * z::node<_,w> & x=y & y=z |- x::ls<z> * z::node<_,w> . 
+
+checkentail x::ls<y> * y::ls<z> * z::node<_,w> & x!=y & y=z |- x::ls<z> * z::node<_,w> . 
+checkentail x::ls<y> * y::ls<z> * z::node<_,w> & x=y & y!=z |- x::ls<z> * z::node<_,w> . 
+*/
+
+/*
+// fail, complex LHS of a lemma is not supported yet 
+checkentail x::ls<y> * y::ls<z> * z::node<v,w> |- x::ls<z> * z::node<v,w>.
+
+*/
+
+/*
+
+checkentail x::ls<y> * y::ls<z> * z::node<_,w> & x!=y & y=z |- x::ls<z> * z::node<_,w> . //valid
+
+checkentail x::ls<y> * y::ls<z> * z::node<_,w> & x!=y & y!=z |- x::ls<z1> *z1::ls<z> * z::node<_,w> . //valid
+
+*/
+
+/*
+// BUG - why a must failure of y=z (when trying to match x::ls<y> and x::ls<z>
+// not provable at moment
+// BUG: unfolding using U0 -> wrong 
+// it should try folding using U0 instead
+checkentail x::ls<y> * y::ls<z> * z::node<_,w> & x!=y & y!=z |- x::ls<z> * z::node<_,w> . 
+*/
+
+// to clarify the above bug by showing that strengthening the consequent by lemma folding is not supported yet
+checkentail x::ls<y> * y::ls<z> |- x::ls<z>.
+
+
+
+

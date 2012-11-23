@@ -1,0 +1,127 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred pos_ll<n> == self = null & n = 0
+	or self::node<d,r> * r::pos_ll<n - 1> & d>0
+	inv n >= 0.
+
+pred neg_ll<n> == self = null & n = 0
+	or self::node<d,r> * r::neg_ll<n - 1> & d<0
+	inv n >= 0.
+
+
+//1. must failure. cause:22  flted_18_151=2 |-  flted_18_151=3 (must-bug)
+checkentail x::node<2,null> |- x::node<3,null> .
+print residue.
+
+//2. may failure. cause:22  3<=v |-  v=3 (may-bug).
+checkentail x::node<v,null> & v>2 |- x::node<3,null> .
+
+//3. must failure. cause:15.1 flted_25_197=q & q=null |-  q!=null
+checkentail x::node<v,null> & v>2|- x::node<3,q>*q::node<_,null> .
+//Entail(3)=Fail.(must) cause:15 q=null |- q.node
+
+
+//4. must failure. cause:15.1 flted_30_217=q & q=null |-  q!=null
+checkentail x::node<v,null> & v>2 |- x::node<_,q>*q::node<_,null> .
+
+
+//5. must failure. cause:22  q=1 |-  q=null (must-bug)
+checkentail x::node<v,q>*q::node<_,null> |- x::node<_,null> .
+
+//6. may failure. cause:22  true |-  v=2 (may-bug).
+checkentail x::node<v,q>*q::node<_,null> |- x::node<2,q> .
+
+//7. must failure. cause:22  1<=v |-  v<0 (must-bug).
+checkentail x::node<v,null> & v>0 |- x::node<v,q> & v<0.
+
+//8. must failure -cause:or[base case unfold failed,22  true |-  n=n+1 (RHS: contradiction).]
+checkentail x::ll<n> & n>0 |- x::ll<n+1> .
+
+//9. may. cause:(failure_code=15.3 no match for rhs data node: )  true |-  x!=null (may-bug).
+checkentail true |- x::node<_,_> .
+
+//10. may. cause:15.3   x!=y |-  x!=null (may-bug).
+// x!=y ==> y<x | x<y: because CP.simplify_filter_ante call simplify from provers.
+checkentail y::node<_,_> & x!=y |- x::node<_,_> .
+
+//11. may. cause:15.3  true |-  x!=null (may-bug).
+checkentail y=null |- x::node<_,_> .
+
+//12. must. cause:15.1 y=x & x=null |-  x!=null
+checkentail x=y & y=null |- x::node<_,_> .
+
+//13. may. cause:15.3  y=x |-  x!=null (may-bug).
+checkentail x=y |- x::node<_,_> .
+
+//14. must bug - cause:15.3  y=x |-  x!=y (must-bug).
+checkentail x=y |- x::node<_,_> * y::node<_,_>.
+
+
+//15. may. cause:15.3  y<x | x<y |-  x!=null (may-bug).
+checkentail x!=y |- x::node<_,_> * y::node<_,_>.
+/*
+Why \/ on LHS?  because CP.simplify_filter_ante call simplify from provers.
+*/
+
+//16. must bug - cause:15.2 contradiction in RHS: false
+checkentail true |- x::node<_,_> * x::node<_,_>.
+
+// soundness of must bug?
+
+//17. may bug. cause:15.4 no match for rhs data node: x (may-bug).
+checkentail x=y & y!=null |- x::node<_,_> .
+
+//18. must bug. cause:15.1 y=x & x=null |-  x!=null
+checkentail x=y & y=null |- x::node<_,_>*y::node<_,_> .
+
+//19. must bug - cause:15.3  y=x |-  y!=x (must-bug).FIXED
+checkentail x::node<_,null> & x=y |- x::node<_,_>*y::node<_,_> .
+
+//20. must bug - cause:15.2 contradiction in RHS: x=y & y!=x & y!=null (must-bug).
+checkentail x::node<_,null> |- x::node<_,_>*y::node<_,_> & x=y.
+
+//21. must-bug. failure_code=15.3 no match for rhs data node: y=null |-  y!=null].
+checkentail x::node<_,null> & y=null  |- y::ll<n> & n>0.
+
+//22. valid
+checkentail x::node<_,null> & y=null  |- y::ll<n>.
+
+//23. must-bug - cause:22  y!=null |-  y=null (must-bug).
+
+checkentail x::node<_,null> & y!=null  |- y::ll<n> & n=0.
+
+//24 valid
+checkentail x::ll<n> & n>0  |- x!=null.
+
+//25 must-bug. cause:22  x!=null |-  x=null (must-bug).
+checkentail x::ll<n> & n>0  |- x=null.
+
+//26 must-bug. cause:or[22  m=0 |-  0<m (must-bug).,15.1 x=null |-  x!=null]
+checkentail x::pos_ll<n> & n=0 |- x::neg_ll<m> & m>0.
+
+//27. must-bug. cause:or[22  m=0 |-  0<m (must-bug).,15.1 x=null |-  x!=null]
+
+checkentail x::pos_ll<n> & x=null |- x::neg_ll<m> & m>0.
+
+//28 must-bug.  cause:or[22  m=0 |-  0<m (must-bug).,15.1 x=null |-  x!=null]
+
+checkentail x=null |- x::neg_ll<m> & m>0.
+
+//29 valid
+checkentail x=null |- x=null or x::node<_,_>.
+
+
+//30. may bug (|). cause:or[or[22  n=5 |-  6<n (must-bug).,22  1<=n |-  6<n (may-bug).],proven valid here]
+checkentail n=5 or n>0 or n>9 |- n>6.
+
+//31. may bug. cause:15.4 no match for rhs data node x.
+checkentail x != null |- x::node<_,_>.
+
+//32 ERROR: at err2.slk_125_22. Message: gather_type_info_var :
+//checkentail  x = 3 |- x::node<_,_>.
+
+

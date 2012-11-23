@@ -1,0 +1,457 @@
+Starting Omega... 
+
+compute_actions@1
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: SS 15::x::lseg<y,n>[Orig][LHSCase] * SS 14::y::lseg<z,m>[Orig][LHSCase]
+compute_actions inp3 :RHS cand:[ SS 13::x::lseg<a,b>[Orig][LHSCase], SS 12::a::lseg<c,d>[Orig][LHSCase]]
+compute_actions@1 EXIT out : SEARCH:[COND:[(
+ LHS SS 15::x::lseg<y,n>[Orig][LHSCase]
+ RHS SS 13::x::lseg<a,b>[Orig][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS SS 15::x::lseg<y,n>[Orig][LHSCase]
+ RHS SS 13::x::lseg<a,b>[Orig][LHSCase])==> Match(Weigh:1)](Weigh:1); 
+(
+ LHS SS 15::x::lseg<y,n>[Orig][LHSCase]
+ RHS SS 13::x::lseg<a,b>[Orig][LHSCase])==> lemma ==> lseg(Weigh:1); 
+(
+ LHS SS 15::x::lseg<y,n>[Orig][LHSCase]
+ RHS SS 13::x::lseg<a,b>[Orig][LHSCase])==> lemma <=== lseg(Weigh:1); 
+(
+ LHS SS 15::x::lseg<y,n>[Orig][LHSCase]
+ RHS SS 13::x::lseg<a,b>[Orig][LHSCase])==> Base case fold(Weigh:2)]
+
+compute_actions@2
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: SS 14::y::lseg<z,m>[Orig][LHSCase]
+compute_actions inp3 :RHS cand:[ SS 12::a::lseg<c,d>[Orig][LHSCase]]
+compute_actions@2 EXIT out : SEARCH:[COND:[(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Match(Weigh:1)](Weigh:1); 
+(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> lemma ==> lseg(Weigh:1); 
+(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> lemma <=== lseg(Weigh:1); 
+(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Base case fold(Weigh:2)]
+
+compute_actions@3
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: NN y::lseg<q_174,n1_176>@D#O[lseg][Derv] * NN q_174::lseg<z,n2_175>[Derv]
+compute_actions inp3 :RHS cand:[ SS 12::a::lseg<c,d>[Orig][LHSCase]]
+compute_actions@3 EXIT out : SEARCH:[COND:[(
+ LHS NN y::lseg<q_174,n1_176>@D#O[lseg][Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS NN y::lseg<q_174,n1_176>@D#O[lseg][Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Match(Weigh:1)](Weigh:1); 
+(
+ LHS NN y::lseg<q_174,n1_176>@D#O[lseg][Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Base case fold(Weigh:2)]
+
+compute_actions@4
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: SS 14::y::lseg<z,m>[Orig][LHSCase]
+compute_actions inp3 :RHS cand:[ NN a::lseg<q_192,n1_194>@D#O[lseg][Derv][LHSCase], NN q_192::lseg<c,n2_193>[Derv][LHSCase]]
+compute_actions@4 EXIT out : COND:[(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS NN a::lseg<q_192,n1_194>@D#O[lseg][Derv][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS NN a::lseg<q_192,n1_194>@D#O[lseg][Derv][LHSCase])==> Match(Weigh:1)]
+
+compute_actions@5
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: true
+compute_actions inp3 :RHS cand:[ NN z::lseg<c,n2_193>[Derv][LHSCase]]
+compute_actions@5 EXIT out : Unmatched RHS data note:  NN z::lseg<c,n2_193>[Derv][LHSCase]
+
+compute_actions@6
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: NN x::lseg<q_215,n1_217>@D#O[lseg][Derv] * NN q_215::lseg<y,n2_216>[Derv] * 
+SS 14::y::lseg<z,m>[Orig][LHSCase]
+compute_actions inp3 :RHS cand:[ SS 13::x::lseg<a,b>[Orig][LHSCase], SS 12::a::lseg<c,d>[Orig][LHSCase]]
+compute_actions@6 EXIT out : SEARCH:[COND:[(
+ LHS NN x::lseg<q_215,n1_217>@D#O[lseg][Derv]
+ RHS SS 13::x::lseg<a,b>[Orig][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS NN x::lseg<q_215,n1_217>@D#O[lseg][Derv]
+ RHS SS 13::x::lseg<a,b>[Orig][LHSCase])==> Match(Weigh:1)](Weigh:1); 
+(
+ LHS NN x::lseg<q_215,n1_217>@D#O[lseg][Derv]
+ RHS SS 13::x::lseg<a,b>[Orig][LHSCase])==> Base case fold(Weigh:2)]
+
+compute_actions@7
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: NN q_215::lseg<y,n2_216>[Derv] * SS 14::y::lseg<z,m>[Orig][LHSCase]
+compute_actions inp3 :RHS cand:[ SS 12::a::lseg<c,d>[Orig][LHSCase]]
+compute_actions@7 EXIT out : SEARCH:[COND:[(
+ LHS NN q_215::lseg<y,n2_216>[Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS NN q_215::lseg<y,n2_216>[Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Match(Weigh:1)](Weigh:1); 
+(
+ LHS NN q_215::lseg<y,n2_216>[Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> lemma ==> lseg(Weigh:1); 
+(
+ LHS NN q_215::lseg<y,n2_216>[Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> lemma <=== lseg(Weigh:1); 
+(
+ LHS NN q_215::lseg<y,n2_216>[Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Base case fold(Weigh:2)]
+
+compute_actions@8
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: NN q_215::lseg<q_233,n1_235>@D#O[lseg][Derv] * 
+NN q_233::lseg<y,n2_234>[Derv] * SS 14::y::lseg<z,m>[Orig][LHSCase]
+compute_actions inp3 :RHS cand:[ SS 12::a::lseg<c,d>[Orig][LHSCase]]
+compute_actions@8 EXIT out : SEARCH:[COND:[(
+ LHS NN q_215::lseg<q_233,n1_235>@D#O[lseg][Derv]
+ RHS 
+SS 12::a::lseg<c,d>[Orig][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS NN q_215::lseg<q_233,n1_235>@D#O[lseg][Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Match(Weigh:1)](Weigh:1); 
+(
+ LHS NN q_215::lseg<q_233,n1_235>@D#O[lseg][Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Base case fold(Weigh:2)]
+
+compute_actions@9
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: NN q_215::lseg<y,n2_216>[Derv] * SS 14::y::lseg<z,m>[Orig][LHSCase]
+compute_actions inp3 :RHS cand:[ NN a::lseg<q_251,n1_253>@D#O[lseg][Derv][LHSCase], NN q_251::lseg<c,n2_252>[Derv][LHSCase]]
+compute_actions@9 EXIT out : COND:[(
+ LHS NN q_215::lseg<y,n2_216>[Derv]
+ RHS NN a::lseg<q_251,n1_253>@D#O[lseg][Derv][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS NN q_215::lseg<y,n2_216>[Derv]
+ RHS NN a::lseg<q_251,n1_253>@D#O[lseg][Derv][LHSCase])==> Match(Weigh:1)]
+
+compute_actions@10
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: SS 14::y::lseg<z,m>[Orig][LHSCase]
+compute_actions inp3 :RHS cand:[ NN y::lseg<c,n2_252>[Derv][LHSCase]]
+compute_actions@10 EXIT out : SEARCH:[COND:[(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS NN y::lseg<c,n2_252>[Derv][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS NN y::lseg<c,n2_252>[Derv][LHSCase])==> Match(Weigh:1)](Weigh:1); 
+(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS NN y::lseg<c,n2_252>[Derv][LHSCase])==> lemma ==> lseg(Weigh:1); 
+(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS NN y::lseg<c,n2_252>[Derv][LHSCase])==> lemma <=== lseg(Weigh:1)]
+
+compute_actions@11
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: NN y::lseg<q_272,n1_274>@D#O[lseg][Derv] * NN q_272::lseg<z,n2_273>[Derv]
+compute_actions inp3 :RHS cand:[ NN y::lseg<c,n2_252>[Derv][LHSCase]]
+compute_actions@11 EXIT out : COND:[(
+ LHS NN y::lseg<q_272,n1_274>@D#O[lseg][Derv]
+ RHS NN y::lseg<c,n2_252>[Derv][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS NN y::lseg<q_272,n1_274>@D#O[lseg][Derv]
+ RHS NN y::lseg<c,n2_252>[Derv][LHSCase])==> Match(Weigh:1)]
+
+compute_actions@12
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: SS 14::y::lseg<z,m>[Orig][LHSCase]
+compute_actions inp3 :RHS cand:[ NN y::lseg<q_290,n1_292>@D#O[lseg][Derv][LHSCase], NN q_290::lseg<c,n2_291>[Derv][LHSCase]]
+compute_actions@12 EXIT out : COND:[(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS NN y::lseg<q_290,n1_292>@D#O[lseg][Derv][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS NN y::lseg<q_290,n1_292>@D#O[lseg][Derv][LHSCase])==> Match(Weigh:1)]
+
+compute_actions@13
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: true
+compute_actions inp3 :RHS cand:[ NN z::lseg<c,n2_291>[Derv][LHSCase]]
+compute_actions@13 EXIT out : Unmatched RHS data note:  NN z::lseg<c,n2_291>[Derv][LHSCase]
+
+compute_actions@14
+compute_actions inp1 :EQ ptr:[(x,a)]
+compute_actions inp2 :LHS heap: NN x::lseg<q_215,n1_217>@D#O[lseg][Derv] * NN q_215::lseg<y,n2_216>[Derv] * 
+SS 14::y::lseg<z,m>[Orig][LHSCase]
+compute_actions inp3 :RHS cand:[ SS 12::a::lseg<c,d>[Orig][LHSCase]]
+compute_actions@14 EXIT out : SEARCH:[COND:[(
+ LHS NN x::lseg<q_215,n1_217>@D#O[lseg][Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS NN x::lseg<q_215,n1_217>@D#O[lseg][Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Match(Weigh:1)](Weigh:1); 
+(
+ LHS NN x::lseg<q_215,n1_217>@D#O[lseg][Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Base case fold(Weigh:2)]
+
+compute_actions@15
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: SS 15::x::lseg<y,n>[Orig][LHSCase] * SS 14::y::lseg<z,m>[Orig][LHSCase]
+compute_actions inp3 :RHS cand:[ NN x::lseg<q_340,n1_342>@D#O[lseg][Derv][LHSCase], NN q_340::lseg<a,n2_341>[Derv][LHSCase], SS 12::a::lseg<c,d>[Orig][LHSCase]]
+compute_actions@15 EXIT out : COND:[(
+ LHS SS 15::x::lseg<y,n>[Orig][LHSCase]
+ RHS NN x::lseg<q_340,n1_342>@D#O[lseg][Derv][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS SS 15::x::lseg<y,n>[Orig][LHSCase]
+ RHS NN x::lseg<q_340,n1_342>@D#O[lseg][Derv][LHSCase])==> Match(Weigh:1)]
+
+compute_actions@16
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: SS 14::y::lseg<z,m>[Orig][LHSCase]
+compute_actions inp3 :RHS cand:[ NN y::lseg<a,n2_341>[Derv][LHSCase], SS 12::a::lseg<c,d>[Orig][LHSCase]]
+compute_actions@16 EXIT out : SEARCH:[COND:[(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS NN y::lseg<a,n2_341>[Derv][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS NN y::lseg<a,n2_341>[Derv][LHSCase])==> Match(Weigh:1)](Weigh:1); 
+(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS NN y::lseg<a,n2_341>[Derv][LHSCase])==> lemma ==> lseg(Weigh:1); 
+(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS NN y::lseg<a,n2_341>[Derv][LHSCase])==> lemma <=== lseg(Weigh:1)]
+
+compute_actions@17
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: true
+compute_actions inp3 :RHS cand:[ SS 12::a::lseg<c,d>[Orig][LHSCase]]
+compute_actions@17 EXIT out : COND:[(
+ LHS true
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Base case fold(Weigh:2); 
+(
+ LHS true
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Fold(Weigh:2)]
+
+compute_actions@18
+compute_actions inp1 :EQ ptr:[(p_356,c)]
+compute_actions inp2 :LHS heap: true
+compute_actions inp3 :RHS cand:[ a::node<Anon_357,r_349>, SS 12::r_349::lseg<p_356,flted_7_358>[Orig]]
+compute_actions@18 EXIT out : Unmatched RHS data note:  a::node<Anon_357,r_349>
+
+compute_actions@19
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: NN y::lseg<q_374,n1_376>@D#O[lseg][Derv] * NN q_374::lseg<z,n2_375>[Derv]
+compute_actions inp3 :RHS cand:[ NN y::lseg<a,n2_341>[Derv][LHSCase], SS 12::a::lseg<c,d>[Orig][LHSCase]]
+compute_actions@19 EXIT out : COND:[(
+ LHS NN y::lseg<q_374,n1_376>@D#O[lseg][Derv]
+ RHS NN y::lseg<a,n2_341>[Derv][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS NN y::lseg<q_374,n1_376>@D#O[lseg][Derv]
+ RHS NN y::lseg<a,n2_341>[Derv][LHSCase])==> Match(Weigh:1)]
+
+compute_actions@20
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: NN q_374::lseg<z,n2_375>[Derv]
+compute_actions inp3 :RHS cand:[ SS 12::a::lseg<c,d>[Orig][LHSCase]]
+compute_actions@20 EXIT out : SEARCH:[COND:[(
+ LHS NN q_374::lseg<z,n2_375>[Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS NN q_374::lseg<z,n2_375>[Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Match(Weigh:1)](Weigh:1); 
+(
+ LHS NN q_374::lseg<z,n2_375>[Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> lemma ==> lseg(Weigh:1); 
+(
+ LHS NN q_374::lseg<z,n2_375>[Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> lemma <=== lseg(Weigh:1); 
+(
+ LHS NN q_374::lseg<z,n2_375>[Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Base case fold(Weigh:2)]
+
+compute_actions@21
+compute_actions inp1 :EQ ptr:[(a,q_374)]
+compute_actions inp2 :LHS heap: NN q_374::lseg<q_393,n1_395>@D#O[lseg][Derv] * 
+NN q_393::lseg<z,n2_394>[Derv]
+compute_actions inp3 :RHS cand:[ SS 12::a::lseg<c,d>[Orig][LHSCase]]
+compute_actions@21 EXIT out : SEARCH:[COND:[(
+ LHS NN q_374::lseg<q_393,n1_395>@D#O[lseg][Derv]
+ RHS 
+SS 12::a::lseg<c,d>[Orig][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS NN q_374::lseg<q_393,n1_395>@D#O[lseg][Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Match(Weigh:1)](Weigh:1); 
+(
+ LHS NN q_374::lseg<q_393,n1_395>@D#O[lseg][Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Base case fold(Weigh:2)]
+
+compute_actions@22
+compute_actions inp1 :EQ ptr:[(a,q_374)]
+compute_actions inp2 :LHS heap: NN q_374::lseg<z,n2_375>[Derv]
+compute_actions inp3 :RHS cand:[ NN a::lseg<q_411,n1_413>@D#O[lseg][Derv][LHSCase], NN q_411::lseg<c,n2_412>[Derv][LHSCase]]
+compute_actions@22 EXIT out : COND:[(
+ LHS NN q_374::lseg<z,n2_375>[Derv]
+ RHS NN a::lseg<q_411,n1_413>@D#O[lseg][Derv][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS NN q_374::lseg<z,n2_375>[Derv]
+ RHS NN a::lseg<q_411,n1_413>@D#O[lseg][Derv][LHSCase])==> Match(Weigh:1)]
+
+compute_actions@23
+compute_actions inp1 :EQ ptr:[(a,q_374)]
+compute_actions inp2 :LHS heap: true
+compute_actions inp3 :RHS cand:[ NN z::lseg<c,n2_412>[Derv][LHSCase]]
+compute_actions@23 EXIT out : Unmatched RHS data note:  NN z::lseg<c,n2_412>[Derv][LHSCase]
+
+compute_actions@24
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: SS 14::y::lseg<z,m>[Orig][LHSCase]
+compute_actions inp3 :RHS cand:[ NN y::lseg<q_435,n1_437>@D#O[lseg][Derv][LHSCase], NN q_435::lseg<a,n2_436>[Derv][LHSCase], SS 12::a::lseg<c,d>[Orig][LHSCase]]
+compute_actions@24 EXIT out : COND:[(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS NN y::lseg<q_435,n1_437>@D#O[lseg][Derv][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS NN y::lseg<q_435,n1_437>@D#O[lseg][Derv][LHSCase])==> Match(Weigh:1)]
+
+compute_actions@25
+compute_actions inp1 :EQ ptr:[]
+compute_actions inp2 :LHS heap: true
+compute_actions inp3 :RHS cand:[ NN z::lseg<a,n2_436>[Derv][LHSCase], SS 12::a::lseg<c,d>[Orig][LHSCase]]
+compute_actions@25 EXIT out : Unmatched RHS data note:  NN z::lseg<a,n2_436>[Derv][LHSCase]
+
+compute_actions@26
+compute_actions inp1 :EQ ptr:[(x,a)]
+compute_actions inp2 :LHS heap: SS 15::x::lseg<y,n>[Orig][LHSCase] * SS 14::y::lseg<z,m>[Orig][LHSCase]
+compute_actions inp3 :RHS cand:[ SS 12::a::lseg<c,d>[Orig][LHSCase]]
+compute_actions@26 EXIT out : SEARCH:[COND:[(
+ LHS SS 15::x::lseg<y,n>[Orig][LHSCase]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS SS 15::x::lseg<y,n>[Orig][LHSCase]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Match(Weigh:1)](Weigh:1); 
+(
+ LHS SS 15::x::lseg<y,n>[Orig][LHSCase]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> lemma ==> lseg(Weigh:1); 
+(
+ LHS SS 15::x::lseg<y,n>[Orig][LHSCase]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> lemma <=== lseg(Weigh:1); 
+(
+ LHS SS 15::x::lseg<y,n>[Orig][LHSCase]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Base case fold(Weigh:2)]
+
+compute_actions@27
+compute_actions inp1 :EQ ptr:[(x,a)]
+compute_actions inp2 :LHS heap: NN x::lseg<q_470,n1_472>@D#O[lseg][Derv] * NN q_470::lseg<y,n2_471>[Derv] * 
+SS 14::y::lseg<z,m>[Orig][LHSCase]
+compute_actions inp3 :RHS cand:[ SS 12::a::lseg<c,d>[Orig][LHSCase]]
+compute_actions@27 EXIT out : SEARCH:[COND:[(
+ LHS NN x::lseg<q_470,n1_472>@D#O[lseg][Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS NN x::lseg<q_470,n1_472>@D#O[lseg][Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Match(Weigh:1)](Weigh:1); 
+(
+ LHS NN x::lseg<q_470,n1_472>@D#O[lseg][Derv]
+ RHS SS 12::a::lseg<c,d>[Orig][LHSCase])==> Base case fold(Weigh:2)]
+
+compute_actions@28
+compute_actions inp1 :EQ ptr:[(x,a)]
+compute_actions inp2 :LHS heap: SS 15::x::lseg<y,n>[Orig][LHSCase] * SS 14::y::lseg<z,m>[Orig][LHSCase]
+compute_actions inp3 :RHS cand:[ NN a::lseg<q_488,n1_490>@D#O[lseg][Derv][LHSCase], NN q_488::lseg<c,n2_489>[Derv][LHSCase]]
+compute_actions@28 EXIT out : COND:[(
+ LHS SS 15::x::lseg<y,n>[Orig][LHSCase]
+ RHS NN a::lseg<q_488,n1_490>@D#O[lseg][Derv][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS SS 15::x::lseg<y,n>[Orig][LHSCase]
+ RHS NN a::lseg<q_488,n1_490>@D#O[lseg][Derv][LHSCase])==> Match(Weigh:1)]
+
+compute_actions@29
+compute_actions inp1 :EQ ptr:[(x,a)]
+compute_actions inp2 :LHS heap: SS 14::y::lseg<z,m>[Orig][LHSCase]
+compute_actions inp3 :RHS cand:[ NN y::lseg<c,n2_489>[Derv][LHSCase]]
+compute_actions@29 EXIT out : SEARCH:[COND:[(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS NN y::lseg<c,n2_489>[Derv][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS NN y::lseg<c,n2_489>[Derv][LHSCase])==> Match(Weigh:1)](Weigh:1); 
+(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS NN y::lseg<c,n2_489>[Derv][LHSCase])==> lemma ==> lseg(Weigh:1); 
+(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS NN y::lseg<c,n2_489>[Derv][LHSCase])==> lemma <=== lseg(Weigh:1)]
+
+compute_actions@30
+compute_actions inp1 :EQ ptr:[(x,a)]
+compute_actions inp2 :LHS heap: NN y::lseg<q_509,n1_511>@D#O[lseg][Derv] * NN q_509::lseg<z,n2_510>[Derv]
+compute_actions inp3 :RHS cand:[ NN y::lseg<c,n2_489>[Derv][LHSCase]]
+compute_actions@30 EXIT out : COND:[(
+ LHS NN y::lseg<q_509,n1_511>@D#O[lseg][Derv]
+ RHS NN y::lseg<c,n2_489>[Derv][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS NN y::lseg<q_509,n1_511>@D#O[lseg][Derv]
+ RHS NN y::lseg<c,n2_489>[Derv][LHSCase])==> Match(Weigh:1)]
+
+compute_actions@31
+compute_actions inp1 :EQ ptr:[(x,a)]
+compute_actions inp2 :LHS heap: SS 14::y::lseg<z,m>[Orig][LHSCase]
+compute_actions inp3 :RHS cand:[ NN y::lseg<q_527,n1_529>@D#O[lseg][Derv][LHSCase], NN q_527::lseg<c,n2_528>[Derv][LHSCase]]
+compute_actions@31 EXIT out : COND:[(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS NN y::lseg<q_527,n1_529>@D#O[lseg][Derv][LHSCase])==> Base case unfold(Weigh:1); 
+(
+ LHS SS 14::y::lseg<z,m>[Orig][LHSCase]
+ RHS NN y::lseg<q_527,n1_529>@D#O[lseg][Derv][LHSCase])==> Match(Weigh:1)]
+
+compute_actions@32
+compute_actions inp1 :EQ ptr:[(x,a)]
+compute_actions inp2 :LHS heap: true
+compute_actions inp3 :RHS cand:[ NN z::lseg<c,n2_528>[Derv][LHSCase]]
+compute_actions@32 EXIT out : Unmatched RHS data note:  NN z::lseg<c,n2_528>[Derv][LHSCase]
+Entail (1): Valid.
+ true & a=y & b=n & c=z & d=m & {FLOW,(27,27)=__norm}
+ EXISTS(n2_175: NN c::lseg<z,n2_175>[Derv] & m=n2_175+d & a=y & b=n &
+ {FLOW,(27,27)=__norm})
+ EXISTS(n1_176,n2_175,q_174: NN y::lseg<q_174,n1_176>@D#O[lseg][Derv] * 
+ NN q_174::lseg<z,n2_175>[Derv] & m=n2_175+n1_176 & a=y & b=n & a=c & d=0 &
+ {FLOW,(27,27)=__norm})
+ SS 14::y::lseg<z,m>[Orig][LHSCase] & a=y & b=n & a=c & d=0 &
+ {FLOW,(27,27)=__norm}
+ SS 14::y::lseg<z,m>[Orig][LHSCase] & n=d+b & c=y & {FLOW,(27,27)=__norm}
+ EXISTS(n2_216,n2_234: NN c::lseg<y,n2_234>[Derv] * 
+ SS 14::y::lseg<z,m>[Orig][LHSCase] & n2_216=n2_234+d & n=n2_216+b &
+ {FLOW,(27,27)=__norm})
+ EXISTS(n2_216,n1_235,n2_234,
+ q_233: NN a::lseg<q_233,n1_235>@D#O[lseg][Derv] * 
+ NN q_233::lseg<y,n2_234>[Derv] * SS 14::y::lseg<z,m>[Orig][LHSCase] &
+ n2_216=n2_234+n1_235 & n=n2_216+b & a=c & d=0 & {FLOW,(27,27)=__norm})
+ EXISTS(n2_216: true & n=n2_216+b & c=z & d=m+n2_216 & {FLOW,(27,27)=__norm})
+ EXISTS(n2_216,n1_274,n2_273: NN c::lseg<z,n2_273>[Derv] & m=n2_273+n1_274 & 
+ n=n2_216+b & d=n1_274+n2_216 & {FLOW,(27,27)=__norm})
+ EXISTS(n2_216: NN a::lseg<y,n2_216>[Derv] * 
+ SS 14::y::lseg<z,m>[Orig][LHSCase] & n=n2_216+b & a=c & d=0 &
+ {FLOW,(27,27)=__norm})
+ EXISTS(n2_216: NN c::lseg<y,n2_216>[Derv] * 
+ SS 14::y::lseg<z,m>[Orig][LHSCase] & n=n2_216+d & x=a & b=0 &
+ {FLOW,(27,27)=__norm})
+ EXISTS(n1_217,n2_216,q_215: NN x::lseg<q_215,n1_217>@D#O[lseg][Derv] * 
+ NN q_215::lseg<y,n2_216>[Derv] * SS 14::y::lseg<z,m>[Orig][LHSCase] &
+ n=n2_216+n1_217 & x=a & b=0 & a=c & d=0 & {FLOW,(27,27)=__norm})
+ EXISTS(n1_376: true & m=d+n1_376 & c=z & b=n1_376+n & {FLOW,(27,27)=__norm})
+ EXISTS(n1_376,n2_375,n2_394: NN c::lseg<z,n2_394>[Derv] & n2_375=n2_394+d & 
+ m=n2_375+n1_376 & b=n1_376+n & {FLOW,(27,27)=__norm})
+ SS 14::y::lseg<z,m>[Orig][LHSCase] & x=a & b=0 & c=y & d=n &
+ {FLOW,(27,27)=__norm}
+ EXISTS(n2_471: NN c::lseg<y,n2_471>[Derv] * 
+ SS 14::y::lseg<z,m>[Orig][LHSCase] & n=n2_471+d & x=a & b=0 &
+ {FLOW,(27,27)=__norm})
+ EXISTS(n1_472,n2_471,q_470: NN x::lseg<q_470,n1_472>@D#O[lseg][Derv] * 
+ NN q_470::lseg<y,n2_471>[Derv] * SS 14::y::lseg<z,m>[Orig][LHSCase] &
+ n=n2_471+n1_472 & x=a & b=0 & a=c & d=0 & {FLOW,(27,27)=__norm})
+ true & x=a & b=0 & c=z & d=m+n & {FLOW,(27,27)=__norm}
+ EXISTS(n1_511,n2_510: NN c::lseg<z,n2_510>[Derv] & m=n2_510+n1_511 & x=a & 
+ b=0 & d=n1_511+n & {FLOW,(27,27)=__norm})
+ SS 15::x::lseg<y,n>[Orig][LHSCase] * SS 14::y::lseg<z,m>[Orig][LHSCase] &
+ x=a & b=0 & a=c & d=0 & {FLOW,(27,27)=__norm}
+Stop Omega... 63 invocations 

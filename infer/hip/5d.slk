@@ -1,0 +1,26 @@
+data node {
+  int val;
+  node next;
+}.
+
+// Current Problems
+// To be solved by Cristina later.
+
+// TODO : unsound inference as RHS becomes false when we add L<:v
+
+//(8) should fail!
+//infer [] y::node<_,_>@L |- [v] y::node<a,b>@v & v<:@M.
+
+//infer [v] y::node<_,_>@v |- y::node<a,b>@I .
+
+// below consumes the heap
+infer [v] y::node<_,_>@v |- y::node<a,b>@w & w<:@L .
+
+// below consumes the heap
+infer [v] y::node<_,_>@v |- y::node<a,b>@w & w<:@I .
+
+// @L allows heap state to be kept
+//infer [v] y::node<_,_>@v |- y::node<a,b>@L.
+
+
+print residue.

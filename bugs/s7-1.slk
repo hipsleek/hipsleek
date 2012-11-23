@@ -1,0 +1,43 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+//lemma self::lseg<n, p> & n>=a & a>=0  -> self::lseg<a, r> * r::lseg<b, p> & n=a+b.
+//above cannot work!
+
+/*
+valid for -tp mona --eps
+fail for -tp oc
+fail for -tp oc --eps
+fail for -tp mona
+*/
+
+// 9
+checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3 & n2 = 5.
+// invalid-exception
+
+/*
+mona succeeded below! as mona was not called.
+Instead, Omega simplify was called instead.
+
+imply_timeout@59
+imply_timeout inp1 : 7=n
+imply_timeout inp2 : exists1(b_103:exists1(b_118:b_103=b_118+5 & n=b_103+3))
+imply_timeout@59 EXIT out :true
+
+Omega version seems stronger,
+as it had b_99,b_84>=0
+
+imply_timeout inp1 : 7=n
+imply_timeout inp2 : exists1(b_84:exists1(b_99:b_84=b_99+5 & 0<=b_99 & 0<=b_84 & n=b_84+3))
+imply_timeout@69 EXIT out :false
+
+
+*/
+
+checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3 & n2 = 5.

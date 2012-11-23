@@ -1,0 +1,50 @@
+data node { int val ; node next }.
+
+pred ls<p> == /*p::ls<p> &*/ self = p 
+	or self::node<next = r> * r::ls<p> & self!=p
+	inv true.
+
+checkentail a::ls<b> * a::ls<c> * c::node<_,d> * d::ls<e> & c!=e
+  |- true.
+print residue.
+
+checkentail a::ls<b> * a::ls<c> * c::node<_,d> * d::ls<e> & c!=e
+  |- b::ls<c> * c::ls<e>.
+  // |-true.
+
+print residue.
+
+checkentail c::node<_,d> * d::ls<e> & c!=e & a=b & a=c
+  |- b::ls<c> * c::ls<e>.
+
+
+checkentail a::node<_,r>* r::ls<c> * c::node<_,d> * 
+    d::ls<e> & a=b & a!=c & c!=e
+  |- b::ls<c> * c::ls<e>.
+
+//checkentail x::ls<a> * y::ls<b> * z::ls<c> * x::node<_,_> * y::node<_,_> |- true. 
+
+//checkentail a::ls<b> * a::node<_,_> |- a=b .
+
+checkentail a::ls<b> * a::node<_,_> & a=b |- a=b . 
+
+/* checkentail a::node<_,e> * e::ls<b> * a::node<_,_> & a!=b |- a=b. */
+
+
+checkentail a::ls<b> * a::ls<c> * c::node<_,d> |- a!=b .
+
+checkentail a::ls<b> * a::ls<c> * c::node<_,d> |- a=b .
+
+checkentail a::ls<c> * c::node<_,d> & a=b |- a=b .
+
+checkentail a::node<_,q>*q::ls<c> * a::ls<c> * c::node<_,d> & a!=b |- a=b .
+
+
+checkentail a::node<_,q>*q::ls<c> * c::node<_,d> & a!=b & a=c |- a=b .
+
+checkentail a::node<_,q>*q::ls<c> * a::node<_,e>*e::ls<c> * c::node<_,d> 
+   & a!=b & a!=c |- a=b . 
+
+pred foo<n> == n = 0 or self::foo<n-1> & n > 0.
+
+//checkentail x::foo<a> * x::foo<b> |- false.

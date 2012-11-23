@@ -1,4 +1,17 @@
-s/Gen.Debug.ho_\([1-9]\)/Gen.Debug.no_\1/p
-s/Gen.Debug.ho_eff_\([1-9]\)/Gen.Debug.no_eff_\1/p
-s/Gen.Debug.ho_\([1-9]\)_opt/Gen.Debug.no_\1_opt/p
-s/Gen.Debug.loop_\([1-9]\) /Gen.Debug.loop_\1_no /p
+s/Debug.ho_\([1-9]\)/Debug.no_\1/p
+s/Debug.ho_eff_\([1-9]\)/Debug.no_eff_\1/p
+s/Debug.ho_\([1-9]\)_opt/Debug.no_\1_opt/p
+s/Debug.ho_\([1-9]\)_cmp/Debug.no_\1_cmp/p
+s/Debug.ho_\([1-9]\)_num/Debug.no_\1_num/p
+s/Debug.ho_\([1-9]\)_loop/Debug.no_\1_loop/p
+s/Debug.to_\([1-9]\)/Debug.no_\1/p
+s/Debug.to_eff_\([1-9]\)/Debug.no_eff_\1/p
+s/Debug.info_zprint/Debug.ninfo_zprint/p
+s/DD.ho_\([1-9]\)/DD.no_\1/p
+s/DD.ho_eff_\([1-9]\)/DD.no_eff_\1/p
+s/DD.ho_\([1-9]\)_opt/DD.no_\1_opt/p
+s/DD.ho_\([1-9]\)_cmp/DD.no_\1_cmp/p
+s/DD.ho_\([1-9]\)_num/DD.no_\1_num/p
+s/DD.ho_\([1-9]\)_loop/DD.no_\1_loop/p
+s/DD.to_\([1-9]\)/DD.no_\1/p
+s/DD.to_eff_\([1-9]\)/DD.no_eff_\1/p

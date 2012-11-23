@@ -1,0 +1,20 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred lseg<p,n> == self=p & n=0
+  or self::node<_,q>*q::lseg<p,n-1>
+  inv n>=0.
+
+pred clist<n> == self::node<s,q>*q::lseg<self,n-1> 
+  inv n>=1.
+
+//lemma self::lseg<p,n> <- self::lseg<q,a> * q::node<_,p> & n=a+1 .
+
+//lemma self::lseg<p,n> & n=a+b <- self::lseg<q,a> * q::lseg<p,b> .
+lemma self::clist<n> <- self::lseg<q,n-1>*q::node<_,self>.
+
+//checkentail q::node<_,p> & n=a+1 & x=q & a=0 |- x::lseg<p,n>.
+//checkentail x::node<_,p> & n=a+1 & a=0 |- x::lseg<p,n>.
+//checkentail x::lseg<q,a> * q::node<_,p> & n=a+1 |- x::lseg<p,n>.

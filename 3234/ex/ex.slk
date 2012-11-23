@@ -1,0 +1,21 @@
+
+// (1)
+checkentail x>5 |- x>0.
+
+// (2)
+checkentail x>1 & r=2*x |-  r>3.
+
+// (3)
+checkentail x>1 & y>1 & r=y*x |- r>3.
+
+// (4) add a weakest constraint over [x,a] on LHS to allow 
+//     entailment below to succeed
+checkentail x>a  |- false. 
+
+// (5) add a weakest constraint over [b] on LHS to allow 
+//     entailment below to succeed
+checkentail x>3 |- x>b. 
+
+// (6) add a weakest constraint over [b,d] on LHS to allow 
+//     entailment below to succeed
+checkentail x>b |- x>d. 

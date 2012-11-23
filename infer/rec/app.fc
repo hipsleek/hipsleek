@@ -1,0 +1,18 @@
+# initial inferred pre is {[n,m]:n>=1}
+
+A:={[n,m] -> [z] -> []: ((((m=0 && z=1) || (1<=m && -1+z=m)) && n=1) || exists(z_580,m_558,n_557:(((((1<=z_580 && 1+n_557=n) && m_558=m) && -1+z=z_580) && 1<=n) && 0<=m) 
+&& RECn>=1 # missing constraint
+&& A(n_557,m_558,z_580))  )
+};
+
+# place z as output
+# there is a missing constraint RECn>=1 from a nullness check
+# make existential vars z_580,m_558,n_557
+
+Fix1:=bottomup(A,1,SimHeur);
+Fix1;
+Fix2:=topdown(A,1,SimHeur);
+Fix2;
+
+# Fix2 relates first call n,m to arbitrary recursive call RECn,RECm
+# (((RECn >= 1 && n >= 1 + RECn) && RECm >= 0) && RECm = m)

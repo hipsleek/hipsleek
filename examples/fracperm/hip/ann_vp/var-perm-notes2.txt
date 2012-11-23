@@ -1,0 +1,52 @@
+- User-annotation via HIP
+
+v@full denotes var will full access
+v@value denotes var with copy access
+
+pass-by-value -> v@value
+pass-by-ref -> v@full
+
+- Internal presentation:
+
+{v1,..,vn}@zero which MAY have zero permission
+
+- Convention:
+(a) @zero for the main thread
+    @full for the concurrent threads
+
+(b) no two vars can be passed by ref to the same location
+
+(c) when a parameter is given a pass-by-ref,the variable
+     cannot be accessed until the thread has terminated
+
+(d) for pass by value, a copy of the variable is passed to
+     onwards; but the original location still have full access
+
+- Rules
+
+    v@zero  |- v@value --> fail
+    v@zero  |- v@full --> fail
+
+     not(v \in S)
+  --------------------
+  S@zero |- v@value  --> S@Z
+
+
+         not(v \in S)
+  -----------------------
+  S@zero |- v@full  --> S+{v}@Z
+
+
+- Approximation
+
+  S1@zero and S2@full ==> (S1-S2)@zero 
+  //concurrent thread
+
+  S1@zero and S2@zero  ==> (S1 \cap S2)@zero 
+  // this may not happen because concurrent threads
+  // only capture @full
+
+  S1@zero or  S2@zero  ==> (S1 \cup S2)@zero 
+
+
+

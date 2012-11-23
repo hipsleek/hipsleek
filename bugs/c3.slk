@@ -1,0 +1,48 @@
+data node { int val ; node next }.
+
+
+pred lseg2<n, p> == 
+   case { n=0 -> [] self = p & n = 0 ;
+          n!=0 -> [] (exists r2: self::node<next = r2> * r2::lseg2<b, p> & b=n-1) ;
+          }
+         inv n >= 0.
+
+/*
+pred lseg<n, p> == 
+        self = p & n = 0 
+     or (exists r2,b: self::node<next = r2> * r2::lseg<b, p> & b=n-1) 
+     inv n >= 0.
+*/
+
+//failure when lseg2 succeeded
+//checkentail x::node<_,q>*q::node<_,null>  & c=1 |- x::lseg<c,p> .
+
+/*
+existential_eliminator_helper@3@2
+existential_eliminator_helper inp1 :x
+existential_eliminator_helper inp2 :lseg2
+existential_eliminator_helper inp3 :[c_78,p]
+existential_eliminator_helper inp4 : c_78=c
+existential_eliminator_helper@3 EXIT out :([x,c,p],[c_78],true)
+
+inst_before_fold@4@2
+inst_before_fold inp1 : es_formula: 
+  x::node<Anon_29,q>@M * q::node<Anon_30,flted_21_77>@M & flted_21_77=null & 
+  c=1 & {FLOW,(27,27)=__norm}
+ es_pure: true
+ es_heap: true
+ es_evars: [c_78]
+ es_gen_impl_vars: [p]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_label: None
+inst_before_fold inp2 : c_78=c
+inst_before_fold inp3 :[c_78]
+inst_before_fold@4 EXIT out :( es_formula: 
+  x::node<Anon_29,q>@M * q::node<Anon_30,flted_21_77>@M & flted_21_77=null & 
+  c=1 & {FLOW,(27,27)=__norm}
+*/
+//failure when lseg2 succeeded
+checkentail x::node<_,q>*q::node<_,null>  & c=1 |- x::lseg2<c,p> .
+
+print residue.

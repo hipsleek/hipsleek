@@ -1,0 +1,1457 @@
+<html>
+<head>	<link rel="stylesheet" type="text/css" href="hipsleek.css" />	<script type="text/javascript" src="hipsleek.js"></script></head>
+<body>
+<h1>twowaysort.java</h1>
+<ul class="TreeView" id="ProofTree"><li class="Collapsed progsource">Source<ul><table><tr id="L1" class="OddSourceLine"><td>1</td><td><pre>/*</pre></td></tr>
+<tr id="L2" class="EvenSourceLine"><td>2</td><td><pre>Solution:</pre></td></tr>
+<tr id="L3" class="OddSourceLine"><td>3</td><td><pre>1. Safety</pre></td></tr>
+<tr id="L4" class="EvenSourceLine"><td>4</td><td><pre>2. Termination</pre></td></tr>
+<tr id="L5" class="OddSourceLine"><td>5</td><td><pre>	- Use the lexicographical order [j, length(a) - i] to prove the termination</pre></td></tr>
+<tr id="L6" class="EvenSourceLine"><td>6</td><td><pre>	in 3 cases:</pre></td></tr>
+<tr id="L7" class="OddSourceLine"><td>7</td><td><pre>		+ (i, j) -> (i+1, j): [j, length(a) - i] > [j, length(a) - (i+1)]</pre></td></tr>
+<tr id="L8" class="EvenSourceLine"><td>8</td><td><pre>		+ (i, j) -> (i, j-1): [j, _] > [j-1, _]</pre></td></tr>
+<tr id="L9" class="OddSourceLine"><td>9</td><td><pre>		+ (i, j) -> (i+1, j-1): [j, _] > [j-1, _]</pre></td></tr>
+<tr id="L10" class="EvenSourceLine"><td>10</td><td><pre>3. Behavior</pre></td></tr>
+<tr id="L11" class="OddSourceLine"><td>11</td><td><pre>*/</pre></td></tr>
+<tr id="L12" class="EvenSourceLine"><td>12</td><td><pre></pre></td></tr>
+<tr id="L13" class="OddSourceLine"><td>13</td><td><pre>// a <= b if and only if a = b or a = false & b = true</pre></td></tr>
+<tr id="L14" class="EvenSourceLine"><td>14</td><td><pre>relation lessthaneq(bool a, bool b) == !a | b.</pre></td></tr>
+<tr id="L15" class="OddSourceLine"><td>15</td><td><pre></pre></td></tr>
+<tr id="L16" class="EvenSourceLine"><td>16</td><td><pre>// A and B are identical except in the domain [i..j]</pre></td></tr>
+<tr id="L17" class="OddSourceLine"><td>17</td><td><pre>relation idout(bool[] A, bool[] B, int i, int j) ==</pre></td></tr>
+<tr id="L18" class="EvenSourceLine"><td>18</td><td><pre>	forall(k : i <= k <= j | A[k] = B[k]).</pre></td></tr>
+<tr id="L19" class="OddSourceLine"><td>19</td><td><pre></pre></td></tr>
+<tr id="L20" class="EvenSourceLine"><td>20</td><td><pre>// A[i..j] is sorted</pre></td></tr>
+<tr id="L21" class="OddSourceLine"><td>21</td><td><pre>relation sorted(bool[] A, int i, int j) ==</pre></td></tr>
+<tr id="L22" class="EvenSourceLine"><td>22</td><td><pre>	forall(k : k < i | k >= j | lessthaneq(A[k],A[k+1])).</pre></td></tr>
+<tr id="L23" class="OddSourceLine"><td>23</td><td><pre></pre></td></tr>
+<tr id="L24" class="EvenSourceLine"><td>24</td><td><pre>/* relation freq(bool[] A, int i, int j, bool b, int f) ==</pre></td></tr>
+<tr id="L25" class="OddSourceLine"><td>25</td><td><pre>	(i > j & f = 0) | (i <= j & (A[i] = b & freq(A,i+1,j,b,f-1) | A[i] != b & freq(A,i+1,j,b,f))). */</pre></td></tr>
+<tr id="L26" class="EvenSourceLine"><td>26</td><td><pre></pre></td></tr>
+<tr id="L27" class="OddSourceLine"><td>27</td><td><pre>// A[i..j] and B[i..j] are permutations of each other.</pre></td></tr>
+<tr id="L28" class="EvenSourceLine"><td>28</td><td><pre>relation permutation(bool[] A, bool[] B, int i, int j).</pre></td></tr>
+<tr id="L29" class="OddSourceLine"><td>29</td><td><pre></pre></td></tr>
+<tr id="L30" class="EvenSourceLine"><td>30</td><td><pre>// empty arrays</pre></td></tr>
+<tr id="L31" class="OddSourceLine"><td>31</td><td><pre>axiom i > j ==> permutation(A,B,i,j).</pre></td></tr>
+<tr id="L32" class="EvenSourceLine"><td>32</td><td><pre></pre></td></tr>
+<tr id="L33" class="OddSourceLine"><td>33</td><td><pre>// reflexivity</pre></td></tr>
+<tr id="L34" class="EvenSourceLine"><td>34</td><td><pre>axiom forall(k : k < i | k > j | A[k] = B[k]) ==> permutation(A,B,i,j).</pre></td></tr>
+<tr id="L35" class="OddSourceLine"><td>35</td><td><pre></pre></td></tr>
+<tr id="L36" class="EvenSourceLine"><td>36</td><td><pre>// extensionality</pre></td></tr>
+<tr id="L37" class="OddSourceLine"><td>37</td><td><pre>axiom permutation(A,B,i+1,j) & A[i] = B[i] ==> permutation(A,B,i,j).</pre></td></tr>
+<tr id="L38" class="EvenSourceLine"><td>38</td><td><pre>axiom permutation(A,B,i,j-1) & A[j] = B[j] ==> permutation(A,B,i,j).</pre></td></tr>
+<tr id="L39" class="OddSourceLine"><td>39</td><td><pre></pre></td></tr>
+<tr id="L40" class="EvenSourceLine"><td>40</td><td><pre>// transposition</pre></td></tr>
+<tr id="L41" class="OddSourceLine"><td>41</td><td><pre>axiom permutation(A,B,i+1,j-1) & A[i] = B[j] & A[j] = B[i] ==> permutation(A,B,i,j).</pre></td></tr>
+<tr id="L42" class="EvenSourceLine"><td>42</td><td><pre></pre></td></tr>
+<tr id="L43" class="OddSourceLine"><td>43</td><td><pre>// transitivity</pre></td></tr>
+<tr id="L44" class="EvenSourceLine"><td>44</td><td><pre>axiom permutation(A,B,i,j) & permutation(B,C,i,j) ==> permutation(A,C,i,j).</pre></td></tr>
+<tr id="L45" class="OddSourceLine"><td>45</td><td><pre></pre></td></tr>
+<tr id="L46" class="EvenSourceLine"><td>46</td><td><pre>void two_way_sort(ref bool[] a, int n)</pre></td></tr>
+<tr id="L47" class="OddSourceLine"><td>47</td><td><pre>	requires domb(a,0,n-1)</pre></td></tr>
+<tr id="L48" class="EvenSourceLine"><td>48</td><td><pre>	ensures sorted(a',0,n-1) & permutation(a,a',0,n-1);</pre></td></tr>
+<tr id="L49" class="OddSourceLine"><td>49</td><td><pre>{</pre></td></tr>
+<tr id="L50" class="EvenSourceLine"><td>50</td><td><pre>	two_way_sort_helper(a, 0, n-1);</pre></td></tr>
+<tr id="L51" class="OddSourceLine"><td>51</td><td><pre>}</pre></td></tr>
+<tr id="L52" class="EvenSourceLine"><td>52</td><td><pre></pre></td></tr>
+<tr id="L53" class="OddSourceLine"><td>53</td><td><pre>void two_way_sort_helper(ref bool[] a, int i, int j)</pre></td></tr>
+<tr id="L54" class="EvenSourceLine"><td>54</td><td><pre>	variance (1) [j-i]</pre></td></tr>
+<tr id="L55" class="OddSourceLine"><td>55</td><td><pre>	requires domb(a,i,j)</pre></td></tr>
+<tr id="L56" class="EvenSourceLine"><td>56</td><td><pre>	ensures sorted(a',i,j) & idout(a,a',i,j) & permutation(a,a',i,j);</pre></td></tr>
+<tr id="L57" class="OddSourceLine"><td>57</td><td><pre>{</pre></td></tr>
+<tr id="L58" class="EvenSourceLine"><td>58</td><td><pre>	if (i <= j) {</pre></td></tr>
+<tr id="L59" class="OddSourceLine"><td>59</td><td><pre>		bool b = a[i];</pre></td></tr>
+<tr id="L60" class="EvenSourceLine"><td>60</td><td><pre>		if (!b)</pre></td></tr>
+<tr id="L61" class="OddSourceLine"><td>61</td><td><pre>			two_way_sort_helper(a, i + 1, j);</pre></td></tr>
+<tr id="L62" class="EvenSourceLine"><td>62</td><td><pre>		else if (a[j])</pre></td></tr>
+<tr id="L63" class="OddSourceLine"><td>63</td><td><pre>			two_way_sort_helper(a, i, j - 1);</pre></td></tr>
+<tr id="L64" class="EvenSourceLine"><td>64</td><td><pre>		else {</pre></td></tr>
+<tr id="L65" class="OddSourceLine"><td>65</td><td><pre>			bool t = a[i];</pre></td></tr>
+<tr id="L66" class="EvenSourceLine"><td>66</td><td><pre>			a[i] = a[j];</pre></td></tr>
+<tr id="L67" class="OddSourceLine"><td>67</td><td><pre>			a[j] = t;</pre></td></tr>
+<tr id="L68" class="EvenSourceLine"><td>68</td><td><pre>			</pre></td></tr>
+<tr id="L69" class="OddSourceLine"><td>69</td><td><pre>			bool[] a1 = a;</pre></td></tr>
+<tr id="L70" class="EvenSourceLine"><td>70</td><td><pre>			assert permutation(a, a1', i, j);</pre></td></tr>
+<tr id="L71" class="OddSourceLine"><td>71</td><td><pre>			assume permutation(a, a1', i, j);</pre></td></tr>
+<tr id="L72" class="EvenSourceLine"><td>72</td><td><pre>			</pre></td></tr>
+<tr id="L73" class="OddSourceLine"><td>73</td><td><pre>			two_way_sort_helper(a, i + 1, j - 1);</pre></td></tr>
+<tr id="L74" class="EvenSourceLine"><td>74</td><td><pre>			</pre></td></tr>
+<tr id="L75" class="OddSourceLine"><td>75</td><td><pre>			assert permutation(a1', a', i , j);</pre></td></tr>
+<tr id="L76" class="EvenSourceLine"><td>76</td><td><pre>			assume permutation(a1', a', i , j);</pre></td></tr>
+<tr id="L77" class="OddSourceLine"><td>77</td><td><pre>		}</pre></td></tr>
+<tr id="L78" class="EvenSourceLine"><td>78</td><td><pre>	}</pre></td></tr>
+<tr id="L79" class="OddSourceLine"><td>79</td><td><pre>}</pre></td></tr>
+</table></ul></li><li class="Collapsed proc">
+Procedure two_way_sort_helper
+<ul><li class="Collapsed pre">
+Memory safety of array access at line <a href="#L59">line 59</a><ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(domb(a,ahalb,ahaub) &and; ahalb &le; ahaub)  &#8866;   &exist; ahalb_748  &exist; ahaub_749 (domb(a,ahalb_748,ahaub_749) &and; ahalb_748 &le; ahalb &and; ahalb &le; ahaub_749)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun ahaub () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun ahalb () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (domb a ahalb ahaub))<br/>
+(assert (&lt;= ahalb ahaub))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_748 Int)) (exists ((ahaub_749 Int)) (and (domb a ahalb_748 ahaub_749) (and (&lt;= ahalb_748 ahalb) (&lt;= ahalb ahaub_749)))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 94::two_way_sort_helper$boolean[]~int~int(a,v_int_61_683,j) rec at <a href="#L61">line 61</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>( &not; b_43' &and; ahalb &le; ahalb &and; domb(a,ahalb,ahaub) &and; ahalb &le; ahaub &and; b_43' = a[ahalb] &and; v_int_61_683' = 1 + ahalb)  &#8866;  domb(a,v_int_61_683',ahaub)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b_43_primed () Int)<br/>
+(declare-fun ahalb () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun v_int_61_683_primed () Int)<br/>
+(declare-fun ahaub () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (not (&gt; b_43_primed 0)))<br/>
+(assert (&lt;= ahalb ahalb))<br/>
+(assert (domb a ahalb ahaub))<br/>
+(assert (&lt;= ahalb ahaub))<br/>
+(assert (= b_43_primed (select a ahalb)))<br/>
+(assert (= v_int_61_683_primed (+ 1 ahalb)))<br/>
+;Negation of Consequence<br/>
+(assert (not (domb a v_int_61_683_primed ahaub)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Memory safety of array access at line <a href="#L62">line 62</a><ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(b_43' &and; ahalb_768 &le; ahalb_768 &and; domb(a,ahalb_768,ahaub_769) &and; ahalb_768 &le; ahaub_769 &and; b_43' = a[ahalb_768])  &#8866;   &exist; ahalb_774  &exist; ahaub_775 (domb(a,ahalb_774,ahaub_775) &and; ahalb_774 &le; ahaub_769 &and; ahaub_769 &le; ahaub_775)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b_43_primed () Int)<br/>
+(declare-fun ahalb_768 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun ahaub_769 () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (&gt; b_43_primed 0))<br/>
+(assert (&lt;= ahalb_768 ahalb_768))<br/>
+(assert (domb a ahalb_768 ahaub_769))<br/>
+(assert (&lt;= ahalb_768 ahaub_769))<br/>
+(assert (= b_43_primed (select a ahalb_768)))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_774 Int)) (exists ((ahaub_775 Int)) (and (domb a ahalb_774 ahaub_775) (and (&lt;= ahalb_774 ahaub_769) (&lt;= ahaub_769 ahaub_775)))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 92::two_way_sort_helper$boolean[]~int~int(a,i,v_int_63_685) rec at <a href="#L63">line 63</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(v_bool_62_715' &and; ahaub_769 &le; ahaub_769 &and; b_43' &and; ahalb_768 &le; ahalb_768 &and; b_43' = a[ahalb_768] &and; domb(a,ahalb_768,ahaub_769) &and; ahalb_768 &le; ahaub_769 &and; v_bool_62_715' = a[ahaub_769] &and; v_int_63_685' + 1 = ahaub_769)  &#8866;  domb(a,ahalb_768,v_int_63_685')
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b_43_primed () Int)<br/>
+(declare-fun v_bool_62_715_primed () Int)<br/>
+(declare-fun ahaub_769 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun ahalb_768 () Int)<br/>
+(declare-fun v_int_63_685_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (&gt; v_bool_62_715_primed 0))<br/>
+(assert (&lt;= ahaub_769 ahaub_769))<br/>
+(assert (&gt; b_43_primed 0))<br/>
+(assert (&lt;= ahalb_768 ahalb_768))<br/>
+(assert (= b_43_primed (select a ahalb_768)))<br/>
+(assert (domb a ahalb_768 ahaub_769))<br/>
+(assert (&lt;= ahalb_768 ahaub_769))<br/>
+(assert (= v_bool_62_715_primed (select a ahaub_769)))<br/>
+(assert (= (+ v_int_63_685_primed 1) ahaub_769))<br/>
+;Negation of Consequence<br/>
+(assert (not (domb a ahalb_768 v_int_63_685_primed)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Memory safety of array access at line <a href="#L65">line 65</a><ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>( &not; v_bool_62_715' &and; ahaub_791 &le; ahaub_791 &and; b_43' &and; ahalb_790 &le; ahalb_790 &and; b_43' = a[ahalb_790] &and; domb(a,ahalb_790,ahaub_791) &and; ahalb_790 &le; ahaub_791 &and; v_bool_62_715' = a[ahaub_791])  &#8866;   &exist; ahalb_796  &exist; ahaub_797 (domb(a,ahalb_796,ahaub_797) &and; ahalb_796 &le; ahalb_790 &and; ahalb_790 &le; ahaub_797)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b_43_primed () Int)<br/>
+(declare-fun v_bool_62_715_primed () Int)<br/>
+(declare-fun ahaub_791 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun ahalb_790 () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (not (&gt; v_bool_62_715_primed 0)))<br/>
+(assert (&lt;= ahaub_791 ahaub_791))<br/>
+(assert (&gt; b_43_primed 0))<br/>
+(assert (&lt;= ahalb_790 ahalb_790))<br/>
+(assert (= b_43_primed (select a ahalb_790)))<br/>
+(assert (domb a ahalb_790 ahaub_791))<br/>
+(assert (&lt;= ahalb_790 ahaub_791))<br/>
+(assert (= v_bool_62_715_primed (select a ahaub_791)))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_796 Int)) (exists ((ahaub_797 Int)) (and (domb a ahalb_796 ahaub_797) (and (&lt;= ahalb_796 ahalb_790) (&lt;= ahalb_790 ahaub_797)))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Memory safety of array access at line <a href="#L66">line 66</a><ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(ahalb_799 &le; ahalb_799 &and;  &not; v_bool_62_715' &and; b_43' &and; b_43' = a[ahalb_799] &and; ahaub_800 &le; ahaub_800 &and; v_bool_62_715' = a[ahaub_800] &and; domb(a,ahalb_799,ahaub_800) &and; ahalb_799 &le; ahaub_800 &and; t_44' = a[ahalb_799])  &#8866;   &exist; ahalb_805  &exist; ahaub_806 (domb(a,ahalb_805,ahaub_806) &and; ahalb_805 &le; ahaub_800 &and; ahaub_800 &le; ahaub_806)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b_43_primed () Int)<br/>
+(declare-fun v_bool_62_715_primed () Int)<br/>
+(declare-fun t_44_primed () Int)<br/>
+(declare-fun ahalb_799 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun ahaub_800 () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (&lt;= ahalb_799 ahalb_799))<br/>
+(assert (not (&gt; v_bool_62_715_primed 0)))<br/>
+(assert (&gt; b_43_primed 0))<br/>
+(assert (= b_43_primed (select a ahalb_799)))<br/>
+(assert (&lt;= ahaub_800 ahaub_800))<br/>
+(assert (= v_bool_62_715_primed (select a ahaub_800)))<br/>
+(assert (domb a ahalb_799 ahaub_800))<br/>
+(assert (&lt;= ahalb_799 ahaub_800))<br/>
+(assert (= t_44_primed (select a ahalb_799)))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_805 Int)) (exists ((ahaub_806 Int)) (and (domb a ahalb_805 ahaub_806) (and (&lt;= ahalb_805 ahaub_800) (&lt;= ahaub_800 ahaub_806)))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Memory safety of array update at line <a href="#L66">line 66</a><ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(ahaub_809 &le; ahaub_809 &and;  &not; v_bool_62_715' &and; b_43' &and; b_43' = a[ahalb_808] &and; v_bool_62_715' = a[ahaub_809] &and; ahalb_808 &le; ahalb_808 &and; t_44' = a[ahalb_808] &and; domb(a,ahalb_808,ahaub_809) &and; ahalb_808 &le; ahaub_809 &and; v_boolean_66_686' = a[ahaub_809])  &#8866;   &exist; ahalb_816  &exist; ahaub_817 (domb(a,ahalb_816,ahaub_817) &and; ahalb_816 &le; ahalb_808 &and; ahalb_808 &le; ahaub_817)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b_43_primed () Int)<br/>
+(declare-fun v_bool_62_715_primed () Int)<br/>
+(declare-fun t_44_primed () Int)<br/>
+(declare-fun v_boolean_66_686_primed () Int)<br/>
+(declare-fun ahaub_809 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun ahalb_808 () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (&lt;= ahaub_809 ahaub_809))<br/>
+(assert (not (&gt; v_bool_62_715_primed 0)))<br/>
+(assert (&gt; b_43_primed 0))<br/>
+(assert (= b_43_primed (select a ahalb_808)))<br/>
+(assert (= v_bool_62_715_primed (select a ahaub_809)))<br/>
+(assert (&lt;= ahalb_808 ahalb_808))<br/>
+(assert (= t_44_primed (select a ahalb_808)))<br/>
+(assert (domb a ahalb_808 ahaub_809))<br/>
+(assert (&lt;= ahalb_808 ahaub_809))<br/>
+(assert (= v_boolean_66_686_primed (select a ahaub_809)))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_816 Int)) (exists ((ahaub_817 Int)) (and (domb a ahalb_816 ahaub_817) (and (&lt;= ahalb_816 ahalb_808) (&lt;= ahalb_808 ahaub_817)))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Memory safety of array update at line <a href="#L67">line 67</a><ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(ahalb_819 &le; ahalb_819 &and;  &not; v_bool_62_715' &and; b_43' &and; b_43' = a[ahalb_819] &and; v_bool_62_715' = a[ahaub_820] &and; t_44' = a[ahalb_819] &and; ahaub_820 &le; ahaub_820 &and; domb(a,ahalb_819,ahaub_820) &and; ahalb_819 &le; ahaub_820 &and; domb(a',ahalb_819,ahaub_820) &and; update_array_1d_b(a,a',a[ahaub_820],ahalb_819))  &#8866;   &exist; ahalb_827  &exist; ahaub_828 (domb(a',ahalb_827,ahaub_828) &and; ahalb_827 &le; ahaub_820 &and; ahaub_820 &le; ahaub_828)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b_43_primed () Int)<br/>
+(declare-fun v_bool_62_715_primed () Int)<br/>
+(declare-fun t_44_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun ahalb_819 () Int)<br/>
+(declare-fun a_primed () (Array Int Int))<br/>
+(declare-fun ahaub_820 () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (&lt;= ahalb_819 ahalb_819))<br/>
+(assert (not (&gt; v_bool_62_715_primed 0)))<br/>
+(assert (&gt; b_43_primed 0))<br/>
+(assert (= b_43_primed (select a ahalb_819)))<br/>
+(assert (= v_bool_62_715_primed (select a ahaub_820)))<br/>
+(assert (= t_44_primed (select a ahalb_819)))<br/>
+(assert (&lt;= ahaub_820 ahaub_820))<br/>
+(assert (domb a ahalb_819 ahaub_820))<br/>
+(assert (&lt;= ahalb_819 ahaub_820))<br/>
+(assert (domb a_primed ahalb_819 ahaub_820))<br/>
+(assert (= a_primed (store a ahalb_819 (select a ahaub_820))))<br/>
+;Negation of Consequence<br/>
+(assert (not (exists ((ahalb_827 Int)) (exists ((ahaub_828 Int)) (and (domb a_primed ahalb_827 ahaub_828) (and (&lt;= ahalb_827 ahaub_820) (&lt;= ahaub_820 ahaub_828)))))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+</ul></li>
+<li class="Collapsed assert">
+Assertion at <a href="#L70">line 70</a> holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>( &not; v_bool_62_715' &and; b_43' &and; b_43' = a[ahalb_819] &and; v_bool_62_715' = a[ahaub_820] &and; t_44' = a[ahalb_819] &and; domb(a,ahalb_819,ahaub_820) &and; ahalb_819 &le; ahalb_819 &and; update_array_1d_b(a,a_833,a[ahaub_820],ahalb_819) &and; domb(a_833,ahalb_819,ahaub_820) &and; ahalb_819 &le; ahaub_820 &and; ahaub_820 &le; ahaub_820 &and; domb(a',ahalb_819,ahaub_820) &and; update_array_1d_b(a_833,a',t_44',ahaub_820))  &#8866;  permutation(a,a',ahalb_819,ahaub_820)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b_43_primed () Int)<br/>
+(declare-fun v_bool_62_715_primed () Int)<br/>
+(declare-fun a_833 () (Array Int Int))<br/>
+(declare-fun t_44_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun a_primed () (Array Int Int))<br/>
+(declare-fun ahalb_819 () Int)<br/>
+(declare-fun ahaub_820 () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (not (&gt; v_bool_62_715_primed 0)))<br/>
+(assert (&gt; b_43_primed 0))<br/>
+(assert (= b_43_primed (select a ahalb_819)))<br/>
+(assert (= v_bool_62_715_primed (select a ahaub_820)))<br/>
+(assert (= t_44_primed (select a ahalb_819)))<br/>
+(assert (domb a ahalb_819 ahaub_820))<br/>
+(assert (&lt;= ahalb_819 ahalb_819))<br/>
+(assert (= a_833 (store a ahalb_819 (select a ahaub_820))))<br/>
+(assert (domb a_833 ahalb_819 ahaub_820))<br/>
+(assert (&lt;= ahalb_819 ahaub_820))<br/>
+(assert (&lt;= ahaub_820 ahaub_820))<br/>
+(assert (domb a_primed ahalb_819 ahaub_820))<br/>
+(assert (= a_primed (store a_833 ahaub_820 t_44_primed)))<br/>
+;Negation of Consequence<br/>
+(assert (not (permutation a a_primed ahalb_819 ahaub_820)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+</ul></li>
+<li class="Collapsed pre">
+Precondition of procedure call 87::two_way_sort_helper$boolean[]~int~int(a,v_int_73_702,v_int_73_701) rec at <a href="#L73">line 73</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(ahaub_820 &le; ahaub_820 &and; ahalb_819 &le; ahaub_820 &and; domb(a_841,ahalb_819,ahaub_820) &and; ahalb_819 &le; ahalb_819 &and;  &not; v_bool_62_715' &and; b_43' &and; b_43' = a[ahalb_819] &and; v_bool_62_715' = a[ahaub_820] &and; t_44' = a[ahalb_819] &and; domb(a,ahalb_819,ahaub_820) &and; update_array_1d_b(a,a_841,a[ahaub_820],ahalb_819) &and; domb(a',ahalb_819,ahaub_820) &and; update_array_1d_b(a_841,a',t_44',ahaub_820) &and; permutation(a,a',ahalb_819,ahaub_820) &and; v_int_73_702' = 1 + ahalb_819 &and; v_int_73_701' + 1 = ahaub_820)  &#8866;  domb(a',v_int_73_702',v_int_73_701')
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b_43_primed () Int)<br/>
+(declare-fun v_bool_62_715_primed () Int)<br/>
+(declare-fun a_841 () (Array Int Int))<br/>
+(declare-fun t_44_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun ahalb_819 () Int)<br/>
+(declare-fun ahaub_820 () Int)<br/>
+(declare-fun a_primed () (Array Int Int))<br/>
+(declare-fun v_int_73_702_primed () Int)<br/>
+(declare-fun v_int_73_701_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (&lt;= ahaub_820 ahaub_820))<br/>
+(assert (&lt;= ahalb_819 ahaub_820))<br/>
+(assert (domb a_841 ahalb_819 ahaub_820))<br/>
+(assert (&lt;= ahalb_819 ahalb_819))<br/>
+(assert (not (&gt; v_bool_62_715_primed 0)))<br/>
+(assert (&gt; b_43_primed 0))<br/>
+(assert (= b_43_primed (select a ahalb_819)))<br/>
+(assert (= v_bool_62_715_primed (select a ahaub_820)))<br/>
+(assert (= t_44_primed (select a ahalb_819)))<br/>
+(assert (domb a ahalb_819 ahaub_820))<br/>
+(assert (= a_841 (store a ahalb_819 (select a ahaub_820))))<br/>
+(assert (domb a_primed ahalb_819 ahaub_820))<br/>
+(assert (= a_primed (store a_841 ahaub_820 t_44_primed)))<br/>
+(assert (permutation a a_primed ahalb_819 ahaub_820))<br/>
+(assert (= v_int_73_702_primed (+ 1 ahalb_819)))<br/>
+(assert (= (+ v_int_73_701_primed 1) ahaub_820))<br/>
+;Negation of Consequence<br/>
+(assert (not (domb a_primed v_int_73_702_primed v_int_73_701_primed)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+</ul></li>
+<li class="Collapsed assert">
+Assertion at <a href="#L75">line 75</a> holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>( &not; v_bool_62_715' &and; b_43' &and; b_43' = a[ahalb_819] &and; v_bool_62_715' = a[ahaub_820] &and; t_44' = a[ahalb_819] &and; domb(a,ahalb_819,ahaub_820) &and; ahalb_819 &le; ahalb_819 &and; update_array_1d_b(a,a_841,a[ahaub_820],ahalb_819) &and; domb(a_841,ahalb_819,ahaub_820) &and; ahalb_819 &le; ahaub_820 &and; ahaub_820 &le; ahaub_820 &and; domb(a1_45',ahalb_819,ahaub_820) &and; update_array_1d_b(a_841,a1_45',t_44',ahaub_820) &and; permutation(a,a1_45',ahalb_819,ahaub_820) &and; v_int_73_857 + 1 = ahaub_820 &and; sorted(a',1 + ahalb_819,v_int_73_857) &and; idout(a1_45',a',1 + ahalb_819,v_int_73_857) &and; permutation(a1_45',a',1 + ahalb_819,v_int_73_857))  &#8866;  permutation(a1_45',a',ahalb_819,ahaub_820)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b_43_primed () Int)<br/>
+(declare-fun v_bool_62_715_primed () Int)<br/>
+(declare-fun a_841 () (Array Int Int))<br/>
+(declare-fun t_44_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun v_int_73_857 () Int)<br/>
+(declare-fun a1_45_primed () (Array Int Int))<br/>
+(declare-fun a_primed () (Array Int Int))<br/>
+(declare-fun ahalb_819 () Int)<br/>
+(declare-fun ahaub_820 () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (not (&gt; v_bool_62_715_primed 0)))<br/>
+(assert (&gt; b_43_primed 0))<br/>
+(assert (= b_43_primed (select a ahalb_819)))<br/>
+(assert (= v_bool_62_715_primed (select a ahaub_820)))<br/>
+(assert (= t_44_primed (select a ahalb_819)))<br/>
+(assert (domb a ahalb_819 ahaub_820))<br/>
+(assert (&lt;= ahalb_819 ahalb_819))<br/>
+(assert (= a_841 (store a ahalb_819 (select a ahaub_820))))<br/>
+(assert (domb a_841 ahalb_819 ahaub_820))<br/>
+(assert (&lt;= ahalb_819 ahaub_820))<br/>
+(assert (&lt;= ahaub_820 ahaub_820))<br/>
+(assert (domb a1_45_primed ahalb_819 ahaub_820))<br/>
+(assert (= a1_45_primed (store a_841 ahaub_820 t_44_primed)))<br/>
+(assert (permutation a a1_45_primed ahalb_819 ahaub_820))<br/>
+(assert (= (+ v_int_73_857 1) ahaub_820))<br/>
+(assert (sorted a_primed (+ 1 ahalb_819) v_int_73_857))<br/>
+(assert (idout a1_45_primed a_primed (+ 1 ahalb_819) v_int_73_857))<br/>
+(assert (permutation a1_45_primed a_primed (+ 1 ahalb_819) v_int_73_857))<br/>
+;Negation of Consequence<br/>
+(assert (not (permutation a1_45_primed a_primed ahalb_819 ahaub_820)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>( &not; b_43' &and; domb(a,ahalb,ahaub) &and; ahalb &le; ahalb &and; ahalb &le; ahaub &and; b_43' = a[ahalb] &and; sorted(a',1 + ahalb,ahaub) &and; idout(a,a',1 + ahalb,ahaub) &and; permutation(a,a',1 + ahalb,ahaub))  &#8866;  sorted(a',ahalb,ahaub)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b_43_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun a_primed () (Array Int Int))<br/>
+(declare-fun ahalb () Int)<br/>
+(declare-fun ahaub () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (not (&gt; b_43_primed 0)))<br/>
+(assert (domb a ahalb ahaub))<br/>
+(assert (&lt;= ahalb ahalb))<br/>
+(assert (&lt;= ahalb ahaub))<br/>
+(assert (= b_43_primed (select a ahalb)))<br/>
+(assert (sorted a_primed (+ 1 ahalb) ahaub))<br/>
+(assert (idout a a_primed (+ 1 ahalb) ahaub))<br/>
+(assert (permutation a a_primed (+ 1 ahalb) ahaub))<br/>
+;Negation of Consequence<br/>
+(assert (not (sorted a_primed ahalb ahaub)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>( &not; b_43' &and; domb(a,ahalb,ahaub) &and; ahalb &le; ahalb &and; ahalb &le; ahaub &and; b_43' = a[ahalb] &and; sorted(a',1 + ahalb,ahaub) &and; idout(a,a',1 + ahalb,ahaub) &and; permutation(a,a',1 + ahalb,ahaub))  &#8866;  idout(a,a',ahalb,ahaub)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b_43_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun a_primed () (Array Int Int))<br/>
+(declare-fun ahalb () Int)<br/>
+(declare-fun ahaub () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (not (&gt; b_43_primed 0)))<br/>
+(assert (domb a ahalb ahaub))<br/>
+(assert (&lt;= ahalb ahalb))<br/>
+(assert (&lt;= ahalb ahaub))<br/>
+(assert (= b_43_primed (select a ahalb)))<br/>
+(assert (sorted a_primed (+ 1 ahalb) ahaub))<br/>
+(assert (idout a a_primed (+ 1 ahalb) ahaub))<br/>
+(assert (permutation a a_primed (+ 1 ahalb) ahaub))<br/>
+;Negation of Consequence<br/>
+(assert (not (idout a a_primed ahalb ahaub)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>( &not; b_43' &and; domb(a,ahalb,ahaub) &and; ahalb &le; ahalb &and; ahalb &le; ahaub &and; b_43' = a[ahalb] &and; sorted(a',1 + ahalb,ahaub) &and; idout(a,a',1 + ahalb,ahaub) &and; permutation(a,a',1 + ahalb,ahaub))  &#8866;  permutation(a,a',ahalb,ahaub)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b_43_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun a_primed () (Array Int Int))<br/>
+(declare-fun ahalb () Int)<br/>
+(declare-fun ahaub () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (not (&gt; b_43_primed 0)))<br/>
+(assert (domb a ahalb ahaub))<br/>
+(assert (&lt;= ahalb ahalb))<br/>
+(assert (&lt;= ahalb ahaub))<br/>
+(assert (= b_43_primed (select a ahalb)))<br/>
+(assert (sorted a_primed (+ 1 ahalb) ahaub))<br/>
+(assert (idout a a_primed (+ 1 ahalb) ahaub))<br/>
+(assert (permutation a a_primed (+ 1 ahalb) ahaub))<br/>
+;Negation of Consequence<br/>
+(assert (not (permutation a a_primed ahalb ahaub)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(v_bool_62_715' &and; b_43' &and; ahalb_768 &le; ahalb_768 &and; b_43' = a[ahalb_768] &and; domb(a,ahalb_768,ahaub_769) &and; ahalb_768 &le; ahaub_769 &and; ahaub_769 &le; ahaub_769 &and; v_bool_62_715' = a[ahaub_769] &and; v_int_63_859 + 1 = ahaub_769 &and; sorted(a',ahalb_768,v_int_63_859) &and; idout(a,a',ahalb_768,v_int_63_859) &and; permutation(a,a',ahalb_768,v_int_63_859))  &#8866;  sorted(a',ahalb_768,ahaub_769)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b_43_primed () Int)<br/>
+(declare-fun v_bool_62_715_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun v_int_63_859 () Int)<br/>
+(declare-fun a_primed () (Array Int Int))<br/>
+(declare-fun ahalb_768 () Int)<br/>
+(declare-fun ahaub_769 () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (&gt; v_bool_62_715_primed 0))<br/>
+(assert (&gt; b_43_primed 0))<br/>
+(assert (&lt;= ahalb_768 ahalb_768))<br/>
+(assert (= b_43_primed (select a ahalb_768)))<br/>
+(assert (domb a ahalb_768 ahaub_769))<br/>
+(assert (&lt;= ahalb_768 ahaub_769))<br/>
+(assert (&lt;= ahaub_769 ahaub_769))<br/>
+(assert (= v_bool_62_715_primed (select a ahaub_769)))<br/>
+(assert (= (+ v_int_63_859 1) ahaub_769))<br/>
+(assert (sorted a_primed ahalb_768 v_int_63_859))<br/>
+(assert (idout a a_primed ahalb_768 v_int_63_859))<br/>
+(assert (permutation a a_primed ahalb_768 v_int_63_859))<br/>
+;Negation of Consequence<br/>
+(assert (not (sorted a_primed ahalb_768 ahaub_769)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(v_bool_62_715' &and; b_43' &and; ahalb_768 &le; ahalb_768 &and; b_43' = a[ahalb_768] &and; domb(a,ahalb_768,ahaub_769) &and; ahalb_768 &le; ahaub_769 &and; ahaub_769 &le; ahaub_769 &and; v_bool_62_715' = a[ahaub_769] &and; v_int_63_859 + 1 = ahaub_769 &and; sorted(a',ahalb_768,v_int_63_859) &and; idout(a,a',ahalb_768,v_int_63_859) &and; permutation(a,a',ahalb_768,v_int_63_859))  &#8866;  idout(a,a',ahalb_768,ahaub_769)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b_43_primed () Int)<br/>
+(declare-fun v_bool_62_715_primed () Int)<br/>
+(declare-fun v_int_63_859 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun a_primed () (Array Int Int))<br/>
+(declare-fun ahalb_768 () Int)<br/>
+(declare-fun ahaub_769 () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (&gt; v_bool_62_715_primed 0))<br/>
+(assert (&gt; b_43_primed 0))<br/>
+(assert (&lt;= ahalb_768 ahalb_768))<br/>
+(assert (= b_43_primed (select a ahalb_768)))<br/>
+(assert (domb a ahalb_768 ahaub_769))<br/>
+(assert (&lt;= ahalb_768 ahaub_769))<br/>
+(assert (&lt;= ahaub_769 ahaub_769))<br/>
+(assert (= v_bool_62_715_primed (select a ahaub_769)))<br/>
+(assert (= (+ v_int_63_859 1) ahaub_769))<br/>
+(assert (sorted a_primed ahalb_768 v_int_63_859))<br/>
+(assert (idout a a_primed ahalb_768 v_int_63_859))<br/>
+(assert (permutation a a_primed ahalb_768 v_int_63_859))<br/>
+;Negation of Consequence<br/>
+(assert (not (idout a a_primed ahalb_768 ahaub_769)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(v_bool_62_715' &and; b_43' &and; ahalb_768 &le; ahalb_768 &and; b_43' = a[ahalb_768] &and; domb(a,ahalb_768,ahaub_769) &and; ahalb_768 &le; ahaub_769 &and; ahaub_769 &le; ahaub_769 &and; v_bool_62_715' = a[ahaub_769] &and; v_int_63_859 + 1 = ahaub_769 &and; sorted(a',ahalb_768,v_int_63_859) &and; idout(a,a',ahalb_768,v_int_63_859) &and; permutation(a,a',ahalb_768,v_int_63_859))  &#8866;  permutation(a,a',ahalb_768,ahaub_769)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b_43_primed () Int)<br/>
+(declare-fun v_bool_62_715_primed () Int)<br/>
+(declare-fun v_int_63_859 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun a_primed () (Array Int Int))<br/>
+(declare-fun ahalb_768 () Int)<br/>
+(declare-fun ahaub_769 () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (&gt; v_bool_62_715_primed 0))<br/>
+(assert (&gt; b_43_primed 0))<br/>
+(assert (&lt;= ahalb_768 ahalb_768))<br/>
+(assert (= b_43_primed (select a ahalb_768)))<br/>
+(assert (domb a ahalb_768 ahaub_769))<br/>
+(assert (&lt;= ahalb_768 ahaub_769))<br/>
+(assert (&lt;= ahaub_769 ahaub_769))<br/>
+(assert (= v_bool_62_715_primed (select a ahaub_769)))<br/>
+(assert (= (+ v_int_63_859 1) ahaub_769))<br/>
+(assert (sorted a_primed ahalb_768 v_int_63_859))<br/>
+(assert (idout a a_primed ahalb_768 v_int_63_859))<br/>
+(assert (permutation a a_primed ahalb_768 v_int_63_859))<br/>
+;Negation of Consequence<br/>
+(assert (not (permutation a a_primed ahalb_768 ahaub_769)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>( &not; v_bool_62_715' &and; b_43' &and; b_43' = a[ahalb_819] &and; v_bool_62_715' = a[ahaub_820] &and; t_44' = a[ahalb_819] &and; domb(a,ahalb_819,ahaub_820) &and; ahalb_819 &le; ahalb_819 &and; update_array_1d_b(a,a_841,a[ahaub_820],ahalb_819) &and; domb(a_841,ahalb_819,ahaub_820) &and; ahalb_819 &le; ahaub_820 &and; ahaub_820 &le; ahaub_820 &and; domb(a1_45',ahalb_819,ahaub_820) &and; update_array_1d_b(a_841,a1_45',t_44',ahaub_820) &and; permutation(a,a1_45',ahalb_819,ahaub_820) &and; v_int_73_861 + 1 = ahaub_820 &and; sorted(a',1 + ahalb_819,v_int_73_861) &and; idout(a1_45',a',1 + ahalb_819,v_int_73_861) &and; permutation(a1_45',a',1 + ahalb_819,v_int_73_861) &and; permutation(a1_45',a',ahalb_819,ahaub_820))  &#8866;  sorted(a',ahalb_819,ahaub_820)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b_43_primed () Int)<br/>
+(declare-fun v_bool_62_715_primed () Int)<br/>
+(declare-fun a_841 () (Array Int Int))<br/>
+(declare-fun t_44_primed () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun v_int_73_861 () Int)<br/>
+(declare-fun a1_45_primed () (Array Int Int))<br/>
+(declare-fun a_primed () (Array Int Int))<br/>
+(declare-fun ahalb_819 () Int)<br/>
+(declare-fun ahaub_820 () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (not (&gt; v_bool_62_715_primed 0)))<br/>
+(assert (&gt; b_43_primed 0))<br/>
+(assert (= b_43_primed (select a ahalb_819)))<br/>
+(assert (= v_bool_62_715_primed (select a ahaub_820)))<br/>
+(assert (= t_44_primed (select a ahalb_819)))<br/>
+(assert (domb a ahalb_819 ahaub_820))<br/>
+(assert (&lt;= ahalb_819 ahalb_819))<br/>
+(assert (= a_841 (store a ahalb_819 (select a ahaub_820))))<br/>
+(assert (domb a_841 ahalb_819 ahaub_820))<br/>
+(assert (&lt;= ahalb_819 ahaub_820))<br/>
+(assert (&lt;= ahaub_820 ahaub_820))<br/>
+(assert (domb a1_45_primed ahalb_819 ahaub_820))<br/>
+(assert (= a1_45_primed (store a_841 ahaub_820 t_44_primed)))<br/>
+(assert (permutation a a1_45_primed ahalb_819 ahaub_820))<br/>
+(assert (= (+ v_int_73_861 1) ahaub_820))<br/>
+(assert (sorted a_primed (+ 1 ahalb_819) v_int_73_861))<br/>
+(assert (idout a1_45_primed a_primed (+ 1 ahalb_819) v_int_73_861))<br/>
+(assert (permutation a1_45_primed a_primed (+ 1 ahalb_819) v_int_73_861))<br/>
+(assert (permutation a1_45_primed a_primed ahalb_819 ahaub_820))<br/>
+;Negation of Consequence<br/>
+(assert (not (sorted a_primed ahalb_819 ahaub_820)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>( &not; v_bool_62_715' &and; b_43' &and; b_43' = a[ahalb_819] &and; v_bool_62_715' = a[ahaub_820] &and; t_44' = a[ahalb_819] &and; domb(a,ahalb_819,ahaub_820) &and; ahalb_819 &le; ahalb_819 &and; update_array_1d_b(a,a_841,a[ahaub_820],ahalb_819) &and; domb(a_841,ahalb_819,ahaub_820) &and; ahalb_819 &le; ahaub_820 &and; ahaub_820 &le; ahaub_820 &and; domb(a1_45',ahalb_819,ahaub_820) &and; update_array_1d_b(a_841,a1_45',t_44',ahaub_820) &and; permutation(a,a1_45',ahalb_819,ahaub_820) &and; v_int_73_861 + 1 = ahaub_820 &and; sorted(a',1 + ahalb_819,v_int_73_861) &and; idout(a1_45',a',1 + ahalb_819,v_int_73_861) &and; permutation(a1_45',a',1 + ahalb_819,v_int_73_861) &and; permutation(a1_45',a',ahalb_819,ahaub_820))  &#8866;  idout(a,a',ahalb_819,ahaub_820)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b_43_primed () Int)<br/>
+(declare-fun v_bool_62_715_primed () Int)<br/>
+(declare-fun a_841 () (Array Int Int))<br/>
+(declare-fun t_44_primed () Int)<br/>
+(declare-fun v_int_73_861 () Int)<br/>
+(declare-fun a1_45_primed () (Array Int Int))<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun a_primed () (Array Int Int))<br/>
+(declare-fun ahalb_819 () Int)<br/>
+(declare-fun ahaub_820 () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (not (&gt; v_bool_62_715_primed 0)))<br/>
+(assert (&gt; b_43_primed 0))<br/>
+(assert (= b_43_primed (select a ahalb_819)))<br/>
+(assert (= v_bool_62_715_primed (select a ahaub_820)))<br/>
+(assert (= t_44_primed (select a ahalb_819)))<br/>
+(assert (domb a ahalb_819 ahaub_820))<br/>
+(assert (&lt;= ahalb_819 ahalb_819))<br/>
+(assert (= a_841 (store a ahalb_819 (select a ahaub_820))))<br/>
+(assert (domb a_841 ahalb_819 ahaub_820))<br/>
+(assert (&lt;= ahalb_819 ahaub_820))<br/>
+(assert (&lt;= ahaub_820 ahaub_820))<br/>
+(assert (domb a1_45_primed ahalb_819 ahaub_820))<br/>
+(assert (= a1_45_primed (store a_841 ahaub_820 t_44_primed)))<br/>
+(assert (permutation a a1_45_primed ahalb_819 ahaub_820))<br/>
+(assert (= (+ v_int_73_861 1) ahaub_820))<br/>
+(assert (sorted a_primed (+ 1 ahalb_819) v_int_73_861))<br/>
+(assert (idout a1_45_primed a_primed (+ 1 ahalb_819) v_int_73_861))<br/>
+(assert (permutation a1_45_primed a_primed (+ 1 ahalb_819) v_int_73_861))<br/>
+(assert (permutation a1_45_primed a_primed ahalb_819 ahaub_820))<br/>
+;Negation of Consequence<br/>
+(assert (not (idout a a_primed ahalb_819 ahaub_820)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>( &not; v_bool_62_715' &and; b_43' &and; b_43' = a[ahalb_819] &and; v_bool_62_715' = a[ahaub_820] &and; t_44' = a[ahalb_819] &and; domb(a,ahalb_819,ahaub_820) &and; ahalb_819 &le; ahalb_819 &and; update_array_1d_b(a,a_841,a[ahaub_820],ahalb_819) &and; domb(a_841,ahalb_819,ahaub_820) &and; ahalb_819 &le; ahaub_820 &and; ahaub_820 &le; ahaub_820 &and; domb(a1_45',ahalb_819,ahaub_820) &and; update_array_1d_b(a_841,a1_45',t_44',ahaub_820) &and; permutation(a,a1_45',ahalb_819,ahaub_820) &and; v_int_73_861 + 1 = ahaub_820 &and; sorted(a',1 + ahalb_819,v_int_73_861) &and; idout(a1_45',a',1 + ahalb_819,v_int_73_861) &and; permutation(a1_45',a',1 + ahalb_819,v_int_73_861) &and; permutation(a1_45',a',ahalb_819,ahaub_820))  &#8866;  permutation(a,a',ahalb_819,ahaub_820)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun b_43_primed () Int)<br/>
+(declare-fun v_bool_62_715_primed () Int)<br/>
+(declare-fun a_841 () (Array Int Int))<br/>
+(declare-fun t_44_primed () Int)<br/>
+(declare-fun v_int_73_861 () Int)<br/>
+(declare-fun a1_45_primed () (Array Int Int))<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun a_primed () (Array Int Int))<br/>
+(declare-fun ahalb_819 () Int)<br/>
+(declare-fun ahaub_820 () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (not (&gt; v_bool_62_715_primed 0)))<br/>
+(assert (&gt; b_43_primed 0))<br/>
+(assert (= b_43_primed (select a ahalb_819)))<br/>
+(assert (= v_bool_62_715_primed (select a ahaub_820)))<br/>
+(assert (= t_44_primed (select a ahalb_819)))<br/>
+(assert (domb a ahalb_819 ahaub_820))<br/>
+(assert (&lt;= ahalb_819 ahalb_819))<br/>
+(assert (= a_841 (store a ahalb_819 (select a ahaub_820))))<br/>
+(assert (domb a_841 ahalb_819 ahaub_820))<br/>
+(assert (&lt;= ahalb_819 ahaub_820))<br/>
+(assert (&lt;= ahaub_820 ahaub_820))<br/>
+(assert (domb a1_45_primed ahalb_819 ahaub_820))<br/>
+(assert (= a1_45_primed (store a_841 ahaub_820 t_44_primed)))<br/>
+(assert (permutation a a1_45_primed ahalb_819 ahaub_820))<br/>
+(assert (= (+ v_int_73_861 1) ahaub_820))<br/>
+(assert (sorted a_primed (+ 1 ahalb_819) v_int_73_861))<br/>
+(assert (idout a1_45_primed a_primed (+ 1 ahalb_819) v_int_73_861))<br/>
+(assert (permutation a1_45_primed a_primed (+ 1 ahalb_819) v_int_73_861))<br/>
+(assert (permutation a1_45_primed a_primed ahalb_819 ahaub_820))<br/>
+;Negation of Consequence<br/>
+(assert (not (permutation a a_primed ahalb_819 ahaub_820)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(domb(a,i,j) &and; j &lt; i)  &#8866;  sorted(a,i,j)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (domb a i j))<br/>
+(assert (&lt; j i))<br/>
+;Negation of Consequence<br/>
+(assert (not (sorted a i j)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(domb(a,i,j) &and; j &lt; i)  &#8866;  idout(a,a,i,j)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (domb a i j))<br/>
+(assert (&lt; j i))<br/>
+;Negation of Consequence<br/>
+(assert (not (idout a a i j)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(domb(a,i,j) &and; j &lt; i)  &#8866;  permutation(a,a,i,j)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun i () Int)<br/>
+(declare-fun j () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (domb a i j))<br/>
+(assert (&lt; j i))<br/>
+;Negation of Consequence<br/>
+(assert (not (permutation a a i j)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed proc">
+Procedure two_way_sort
+<ul><li class="Collapsed pre">
+Precondition of procedure call 99::two_way_sort_helper$boolean[]~int~int(a,v_int_50_729,v_int_50_728) at <a href="#L50">line 50</a> holds<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(domb(a,0,n - 1) &and; v_int_50_728' + 1 = n)  &#8866;  domb(a,0,v_int_50_728')
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun n () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun v_int_50_728_primed () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (domb a 0 (- n 1)))<br/>
+(assert (= (+ v_int_50_728_primed 1) n))<br/>
+;Negation of Consequence<br/>
+(assert (not (domb a 0 v_int_50_728_primed)))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+</ul></li>
+<li class="Collapsed post">
+Procedure post-condition holds
+<ul><li class="Collapsed pureimplyvalid">Verification condition
+<ul>(domb(a,0,n - 1) &and; v_int_50_877 + 1 = n &and; sorted(a',0,v_int_50_877) &and; idout(a,a',0,v_int_50_877) &and; permutation(a,a',0,v_int_50_877))  &#8866;  sorted(a',0,n - 1)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun v_int_50_877 () Int)<br/>
+(declare-fun a_primed () (Array Int Int))<br/>
+(declare-fun n () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (domb a 0 (- n 1)))<br/>
+(assert (= (+ v_int_50_877 1) n))<br/>
+(assert (sorted a_primed 0 v_int_50_877))<br/>
+(assert (idout a a_primed 0 v_int_50_877))<br/>
+(assert (permutation a a_primed 0 v_int_50_877))<br/>
+;Negation of Consequence<br/>
+(assert (not (sorted a_primed 0 (- n 1))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+<li class="Collapsed pureimplyvalid">Verification condition
+<ul>(domb(a,0,n - 1) &and; v_int_50_877 + 1 = n &and; sorted(a',0,v_int_50_877) &and; idout(a,a',0,v_int_50_877) &and; permutation(a,a',0,v_int_50_877))  &#8866;  permutation(a,a',0,n - 1)
+<li class="Collapsed proverinput">Input to prover Z3
+<ul>(set-logic AUFNIA)<br/>
+;Variables declarations<br/>
+(declare-fun v_int_50_877 () Int)<br/>
+(declare-fun a () (Array Int Int))<br/>
+(declare-fun a_primed () (Array Int Int))<br/>
+(declare-fun n () Int)<br/>
+;Relations declarations<br/>
+(declare-fun lessthaneq (Int Int) Bool)<br/>
+(declare-fun idout ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun sorted ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun permutation ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun induce (Int) Bool)<br/>
+(declare-fun dom ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun domb ((Array Int Int) Int Int) Bool)<br/>
+(declare-fun amodr ((Array Int Int) (Array Int Int) Int Int) Bool)<br/>
+(declare-fun bnd ((Array Int Int) Int Int Int Int) Bool)<br/>
+;Axioms assertions<br/>
+(assert (forall ((a Int) (b Int)) (= (lessthaneq a b) (or (not (&gt; a 0)) (&gt; b 0)))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int)) (B (Array Int Int))) (= (idout A B i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select A k) (select B k)))))))<br/>
+(assert (forall ((i Int) (j Int) (A (Array Int Int))) (= (sorted A i j) (forall ((k Int)) (or (&lt; k i) (or (&gt;= k j) (lessthaneq (select A k) (select A (+ k 1)))))))))<br/>
+(assert (forall ((i Int) (j Int) (a (Array Int Int)) (b (Array Int Int))) (= (amodr a b i j) (forall ((k Int)) (or (and (&lt;= i k) (&lt;= k j)) (= (select a k) (select b k)))))))<br/>
+(assert (forall ((i Int) (j Int) (low Int) (a (Array Int Int)) (high Int)) (= (bnd a i j low high) (or (&gt; i j) (and (&lt;= i j) (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (and (&lt;= low (select a k)) (&lt;= (select a k) high))))))))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (&gt; i j) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (forall ((k Int)) (or (&lt; k i) (or (&gt; k j) (= (select A k) (select B k))))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) j) (= (select A i) (select B i))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i (- j 1)) (= (select A j) (select B j))) (permutation A B i j))))<br/>
+(assert (forall ((A (Array Int Int)) (B (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B (+ i 1) (- j 1)) (and (= (select A i) (select B j)) (= (select A j) (select B i)))) (permutation A B i j))))<br/>
+(assert (forall ((B (Array Int Int)) (A (Array Int Int)) (C (Array Int Int)) (i Int) (j Int)) (=&gt; (and (permutation A B i j) (permutation B C i j)) (permutation A C i j))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (dom a low high) (and (&lt;= low l) (&lt;= h high))) (dom a l h))))<br/>
+(assert (forall ((low Int) (high Int) (a (Array Int Int)) (l Int) (h Int)) (=&gt; (and (domb a low high) (and (&lt;= low l) (&lt;= h high))) (domb a l h))))<br/>
+;Antecedent<br/>
+(assert (domb a 0 (- n 1)))<br/>
+(assert (= (+ v_int_50_877 1) n))<br/>
+(assert (sorted a_primed 0 v_int_50_877))<br/>
+(assert (idout a a_primed 0 v_int_50_877))<br/>
+(assert (permutation a a_primed 0 v_int_50_877))<br/>
+;Negation of Consequence<br/>
+(assert (not (permutation a a_primed 0 (- n 1))))<br/>
+(check-sat)</ul></li><li class="Collapsed proveroutput">Output of prover Z3
+<ul>unsat</ul></li></ul></li>
+</ul></li>
+</ul></li>
+<li class="Collapsed term">Termination of all procedures
+<ul><li class="Collapsed term">Termination checking at <a href="#L61">line 61</a>
+<ul><li class="Collapsed termentail">Well-foundedness checking
+<ul> true &amp; a&apos;=a &amp; i&apos;=i &amp; j&apos;=j &amp; domb(a,i,j) &amp; i&apos;&lt;=j&apos; &amp; v_bool_58_717&apos; &amp; <br/>
+i&apos;&lt;=j&apos; &amp; v_bool_58_717&apos; &amp; a=a&apos; &amp; i=ahalb &amp; j=ahaub &amp; domb(a&apos;,ahalb,ahaub) &amp; <br/>
+ahalb&lt;=i&apos; &amp; i&apos;&lt;=ahaub &amp; b_43&apos;=a&apos;[i&apos;] &amp; 166::!(b_43&apos;) &amp; v_bool_60_716&apos; &amp; <br/>
+165::!(b_43&apos;) &amp; v_bool_60_716&apos; &amp; v_int_61_683&apos;=1+i&apos; &amp; {FLOW,(33,33)=__norm}<br/>
+|- ((j - i) - (j&apos; - v_int_61_683&apos;))&gt;0 &amp; (j - i)&gt;=0 : valid</ul></li><li class="Collapsed termres">Variance checking result 
+<ul>Valid</ul></li></ul></li>
+<li class="Collapsed term">Termination checking at <a href="#L63">line 63</a>
+<ul><li class="Collapsed termentail">Well-foundedness checking
+<ul> true &amp; a&apos;=a &amp; i&apos;=i &amp; j&apos;=j &amp; domb(a,i,j) &amp; i&apos;&lt;=j&apos; &amp; v_bool_58_717&apos; &amp; <br/>
+i&apos;&lt;=j&apos; &amp; v_bool_58_717&apos; &amp; a=a&apos; &amp; i=ahalb &amp; j=ahaub &amp; domb(a&apos;,ahalb,ahaub) &amp; <br/>
+ahalb&lt;=i&apos; &amp; i&apos;&lt;=ahaub &amp; b_43&apos;=a&apos;[i&apos;] &amp; b_43&apos; &amp; 161::!(v_bool_60_716&apos;) &amp; <br/>
+b_43&apos; &amp; !(v_bool_60_716&apos;) &amp; a=a&apos; &amp; i=ahalb_768 &amp; j=ahaub_769 &amp; <br/>
+ahalb=ahalb_768 &amp; ahaub=ahaub_769 &amp; domb(a&apos;,ahalb_768,ahaub_769) &amp; <br/>
+ahalb_768&lt;=j&apos; &amp; j&apos;&lt;=ahaub_769 &amp; v_bool_62_715&apos;=a&apos;[j&apos;] &amp; v_bool_62_715&apos; &amp; <br/>
+v_int_63_685&apos;+1=j&apos; &amp; {FLOW,(33,33)=__norm}<br/>
+|- ((j - i) - (v_int_63_685&apos; - i&apos;))&gt;0 &amp; (j - i)&gt;=0 : valid</ul></li><li class="Collapsed termres">Variance checking result 
+<ul>Valid</ul></li></ul></li>
+<li class="Collapsed term">Termination checking at <a href="#L73">line 73</a>
+<ul><li class="Collapsed termentail">Well-foundedness checking
+<ul> true &amp; i&apos;=i &amp; j&apos;=j &amp; domb(a,i,j) &amp; i&apos;&lt;=j&apos; &amp; v_bool_58_717&apos; &amp; i&apos;&lt;=j&apos; &amp; <br/>
+v_bool_58_717&apos; &amp; a=a &amp; i=ahalb &amp; j=ahaub &amp; domb(a,ahalb,ahaub) &amp; ahalb&lt;=i&apos; &amp; <br/>
+i&apos;&lt;=ahaub &amp; b_43&apos;=a[i&apos;] &amp; b_43&apos; &amp; 161::!(v_bool_60_716&apos;) &amp; b_43&apos; &amp; <br/>
+!(v_bool_60_716&apos;) &amp; a=a &amp; i=ahalb_768 &amp; j=ahaub_769 &amp; ahalb=ahalb_768 &amp; <br/>
+ahaub=ahaub_769 &amp; domb(a,ahalb_768,ahaub_769) &amp; ahalb_768&lt;=j&apos; &amp; <br/>
+j&apos;&lt;=ahaub_769 &amp; v_bool_62_715&apos;=a[j&apos;] &amp; !(v_bool_62_715&apos;) &amp; a=a &amp; <br/>
+i=ahalb_790 &amp; j=ahaub_791 &amp; ahalb=ahalb_790 &amp; ahaub=ahaub_791 &amp; <br/>
+ahalb_768=ahalb_790 &amp; ahaub_769=ahaub_791 &amp; domb(a,ahalb_790,ahaub_791) &amp; <br/>
+ahalb_790&lt;=i&apos; &amp; i&apos;&lt;=ahaub_791 &amp; t_44&apos;=a[i&apos;] &amp; a=a &amp; i=ahalb_799 &amp; <br/>
+j=ahaub_800 &amp; ahalb=ahalb_799 &amp; ahaub=ahaub_800 &amp; ahalb_768=ahalb_799 &amp; <br/>
+ahaub_769=ahaub_800 &amp; ahalb_790=ahalb_799 &amp; ahaub_791=ahaub_800 &amp; <br/>
+domb(a,ahalb_799,ahaub_800) &amp; ahalb_799&lt;=j&apos; &amp; j&apos;&lt;=ahaub_800 &amp; a=a &amp; <br/>
+i=ahalb_808 &amp; j=ahaub_809 &amp; ahalb=ahalb_808 &amp; ahaub=ahaub_809 &amp; <br/>
+ahalb_768=ahalb_808 &amp; ahaub_769=ahaub_809 &amp; ahalb_790=ahalb_808 &amp; <br/>
+ahaub_791=ahaub_809 &amp; ahalb_799=ahalb_808 &amp; ahaub_800=ahaub_809 &amp; <br/>
+domb(a,ahalb_808,ahaub_809) &amp; ahalb_808&lt;=i&apos; &amp; i&apos;&lt;=ahaub_809 &amp; <br/>
+domb(a_841,ahalb_808,ahaub_809) &amp; update_array_1d_b(a,a_841,a[j&apos;],i&apos;) &amp; <br/>
+ahalb_808=ahalb_819 &amp; ahaub_809=ahaub_820 &amp; <br/>
+domb(a_841,ahalb_819,ahaub_820) &amp; ahalb_819&lt;=j&apos; &amp; j&apos;&lt;=ahaub_820 &amp; <br/>
+domb(a&apos;,ahalb_819,ahaub_820) &amp; update_array_1d_b(a_841,a&apos;,t_44&apos;,j&apos;) &amp; <br/>
+a1_45&apos;=a&apos; &amp; permutation(a,a1_45&apos;,i,j) &amp; v_int_73_702&apos;=1+i&apos; &amp; v_int_73_701&apos;+<br/>
+1=j&apos; &amp; {FLOW,(33,33)=__norm}<br/>
+|- ((j - i) - (v_int_73_701&apos; - v_int_73_702&apos;))&gt;0 &amp; (j - i)&gt;=0 : valid</ul></li><li class="Collapsed termres">Variance checking result 
+<ul>Valid</ul></li></ul></li>
+</ul></li>
+</ul>
+<script>
+	SetupTreeView("ProofTree");
+</script>
+</body>
+</html>

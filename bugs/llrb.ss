@@ -28,7 +28,7 @@ rbc<n, cl, bh, c> ==
 	// c = 4:   R
 	//        B   B
 	or self::node<v, 0, l, r> * l::rbc<ln, 1, bh, _> * r::rbc<rn, 1, bh, _> & cl = 0 & n = 1 + ln + rn & c = 4
-	inv n >= 0 & bh >= 1 & 0 <= cl <= 1 & 0 <= c <= 4;
+ 	inv n >= 0 & bh >= 1 & 0 <= cl <= 1 & 0 <= c <= 4;
 
 // Special case         R   
 //                    R   B
@@ -227,14 +227,19 @@ node insert(node h, int v)
 node insert_internal(node h, int v)
 	requires h::rbc<n,_,bh,c>
 	case {
-		c = 0 -> ensures res::node<v,0,null,null>; //res::rbc<1,0,1,4>;// verified in 2s
-		c = 1 -> ensures res::rbc<n+1,1,bh,resc> & 1 <= resc <= 2; // 46s
-		c = 2 -> ensures res::rbc<n+1,1,bh,resc> & 2 <= resc <= 3; //or res::rbc<n+1,1,bh,3>; 70sec
-		c = 3 -> ensures res::rbc<n+1,0,bh,4>; // FOLD FAILED! //4s
-		(c < 0 | c >= 4) -> ensures res::rbc<n+1,0,bh,4> or res::rbs<n+1,bh>; // 68s // CASE ANALYSIS FAILED IN SLEEK 
+		c = 0 -> ensures res::node<v,0,null,null>; //res::rbc<1,0,1,4>;
+          // ^^ verified in 2s
+		c = 1 -> ensures res::rbc<n+1,1,bh,resc> & 1 <= resc <= 2;
+          // FAIL still (fail with foo)
+		c = 2 -> ensures res::rbc<n+1,1,bh,resc> & 2 <= resc <= 3; 
+          // ^^ 35sec or res::rbc<n+1,1,bh,3>; 35sec
+		c = 3 -> ensures res::rbc<n+1,0,bh,4>; 
+          // FOLD FAILED! (succeed with help of foo 3.8s)
+		(c < 0 | c >= 4) -> ensures res::rbc<n+1,0,bh,4> or res::rbs<n+1,bh>; 
+          // FAILS - CASE ANALYSIS FAILED IN SLEEK (fail with foo)
 	}
 {
-   //assume (c < 0 | c >= 4);
+    //assume (c < 0 | c >= 4);
      assume c=1;
 	
 	if (h == null)

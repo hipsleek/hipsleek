@@ -1,0 +1,33 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+//          & self!=p
+         inv n >= 0.
+
+checkentail x::lseg<n, p> & x=null |- n=0.
+// valid
+
+/*
+fail for --eps due to limited prune conditions
+  prune conditions: {
+    [0=n->,[1::]; 0!=n->,[2::]]}
+
+was expecting also:
+    self!=null->[2::] 
+    self=p->[1::] 
+
+pick_pures selected correct conditions:sel_prune_conds@4@2@1
+   pick_pures@3 EXIT out :[(2::,[ self!=null, 0!=n]),(1::,[ p=self, 0=n])]
+
+so did sel_prune_conds:
+  sel_prune_conds@4 EXIT out :[( 0=n,[1::]),( p=self,[1::]),( 0!=n,[2::]),( self!=null,[2::])]
+
+fixed safe_test method! 
+*/
+
+checkentail x::lseg<n, p> & x!=p |- x!=null.
+checkentail x::lseg<n, p> & x!=p |- x=null.
+checkentail x::lseg<n, p> & x!=p |- n=0.
+checkentail x::lseg<n, p> & x!=p |- n>0.

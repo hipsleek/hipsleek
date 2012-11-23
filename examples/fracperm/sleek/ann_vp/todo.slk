@@ -1,0 +1,16 @@
+data node {
+  int val;
+  node next;
+}.
+
+//(3)
+checkentail @zero[v1,v2] |- @full[v1].
+print residue.
+// Fail
+// @full var [v1] cannot have possibly zero permission
+// TODO : can change error message?
+// Entail (3): Fail.(may) cause:Failure_Valid
+
+//checkentail true |- x::node<_,_>.
+
+//checkentail x::node<_,_> |- x::node<_,null>.

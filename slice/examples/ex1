@@ -1,0 +1,29 @@
+x=null & 
+(
+	x=null & m=0 & n=0 & S={} | 
+	x!=null & 
+	exists1(v_4047:
+	exists1(m1_4048:
+	exists1(n1_4049:
+	exists1(S1_4050:
+	exists1(m2_4051:
+	exists1(n2_4052:
+	exists1(S2_4053:
+		m=m2_4051+1+m1_4048 & 
+		n2_4052<=(n1_4049+1) & 
+		n1_4049<=(1+n2_4052) & 
+		exists1(max_4056:
+			n=max_4056+1 & 
+			max_4056=max(n1_4049,n2_4052)) & 
+		S=union(S1_4050,S2_4053,{v_4047}) & 
+		forall(x_4055:x_4055 <notin> S1_4050  |  x_4055<=v_4047) & 
+		forall(y_4054:y_4054 <notin> S2_4053  | v_4047<=y_4054) & 
+		0<=m1_4048 & 
+		0<=n1_4049 & 
+		0<=m2_4051 & 
+		0<=n2_4052)))))))) 
+	|-  x=null | m=0 | n=0 | S={}
+	
+Normalize LHS to DNF -> remove contradiction by slicing
+
+x=null & m=0 & n=0 & S={} |- x=null | m=0 | n=0 | S={}

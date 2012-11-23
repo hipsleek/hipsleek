@@ -1,0 +1,23 @@
+.  mcpure and other files have missing patterns 
+   AConst/SubAnn
+   --eps (mcpure)
+
+.  convert inferred pre from int to v:AnnT for display
+
+harder
+======
+
+.  double check on imply_fast method
+
+DONE
+====
+.  redlog prover seems non-deterministic with insidious.slk
+   ===> done 
+
+.  parser not accepting @M and @v (see todo.slk)
+   ==> done
+
+.  for every v:AnnT, add the constraint 0<=v<=2
+   ==> done at tpdispatcher tp_is_sat_no_cache
+       & tp_imply_no_cache
+

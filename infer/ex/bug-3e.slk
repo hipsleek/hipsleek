@@ -1,0 +1,29 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+infer [y] true |- y::ll<m> & m=-2.
+print residue.
+/*
+// old result
+<1>false & false & {FLOW,(17,18)=__norm}
+inferred heap: [y::ll<inf_m_32>@inf_ann_31[Orig][LHSCase]]
+inferred pure: [1<=inf_ann_31 | y=null | inf_m_32<=0; inf_m_32!=0 | 
+               1<=inf_ann_31 | y!=null; inf_ann_31<=0]
+*/
+
+infer [y] true |- y::ll<m> & m=2.
+print residue.
+/*
+// old result
+<1>true & m=2 & inf_ann_45<=0 & inf_m_46=2 & y!=null & {FLOW,(17,18)=__norm}
+inferred heap: [y::ll<inf_m_46>@inf_ann_45[Orig][LHSCase]]
+inferred pure: [y!=null; inf_m_46=2; inf_ann_45<=0]
+*/
+
+

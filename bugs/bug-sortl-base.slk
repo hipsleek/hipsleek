@@ -1,0 +1,85 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred sortl<n, mi> == self=null & n=0
+	or self::node<mi, r> * r::sortl<n - 1, k> & mi <= k
+	inv n >= 0.
+// bad definition since it works for only self==null
+
+pred sort2<n, mi> == self=null & n=0
+	or self::node<mi, null> & n=1
+	or self::node<mi, r> * r::sort2<n - 1, k> & mi <= k & n>1
+	inv n >= 0.
+// good definition since it works for all sorted list
+
+// Question : How to distinguish bad definitions?
+
+
+//lemma self::sortl<n, mi> -> self::ll<n>.
+
+lemma self::sort2<n, mi> -> self::ll<n>.
+
+
+
+/*
+checkentail
+    x = null & n = 0 |- x::sortl<n, mi>.
+
+checkentail
+	x::node<_,r> * r::ll<n - 1>
+    |- x::sortl<n, mi> .
+*/
+
+checkentail x::node<4,q1>*q1::node<5,null> |- x::sortl<n,m1>.
+print residue.
+
+checkentail x::node<5,null> |- x::sortl<n,m1>.
+print residue.
+
+checkentail x=null |- x::sortl<n,m1>.
+print residue.
+
+checkentail x::node<4,q1>*q1::node<5,null> |- x::sort2<n,m1>.
+print residue.
+
+checkentail x::node<5,null> |- x::sort2<n,m1>.
+print residue.
+
+checkentail x=null |- x::sort2<n,m1>.
+print residue.
+
+/*checkentail 
+    x = null & n = 0
+    or x::node<mi, r> * r::sortl<n - 1, k> & mi <= k
+            |- x::ll<n>.
+*/
+/*
+checkentail
+        true & self_29=null & n=0
+        or (exists mi_82,flted_8_83,r_84,k_85: self_29::node<mi_82,r_84> * 
+        r_84::sortl<flted_8_83,k_85> & flted_8_83+1=n & 
+        mi<=k_85 & mi_82=mi )
+    |- self_29::ll<n> & true. 
+*/
+/*
+checkentail 
+    true & self_lem_29=null & n=0 & {FLOW,(13,28)=__flow}
+    or EXISTS(mi_82,flted_8_83,r_84,k_85: self_lem_29::node<mi_82,r_84>@M * 
+    NN r_84::sortl<flted_8_83,k_85>@M#O[lem_29][Orig] & flted_8_83+1=n & 
+    mi<=k_85 & mi_82=mi & {FLOW,(13,28)=__flow})
+    |- NN self_lem_29::ll<n>@M#O[lem_29][Orig] & true & {FLOW,(13,28)=__flow}
+*/
+
+/*
+checkentail x::sortl<a, b> |- x::ll<a>.
+print residue.
+
+
+checkentail x::sortl<10, _> |- x::ll<n> & n > 11.
+
+checkentail x::node<next = r1> * r1::node<next = aa> * y::node<> & b > 10 & aa=null |- x::ll<c>.
+print residue.
+*/

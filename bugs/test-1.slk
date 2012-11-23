@@ -1,0 +1,78 @@
+
+data node2 {
+	int val;
+    int priority;
+    node2 prev;
+	node2 next;
+}.
+
+/*
+pred dll<p,n> == self = null & n = 0 
+  or self::node2<_ ,_,p , q> * q::dll<self, n-1> // = q1 
+  inv n >= 0.
+*/
+
+pred dll2<p,r,l,n> == self=r & p=l & n=0 
+  or self::node2<_,_,p,q> * q::dll2<self,r,l,n-1> // = q1 
+  inv n >= 0.
+
+  /*
+checkentail
+  x::node2<_,_,p,q>*q::dll2<x,r,l,a>*r::dll2<l,out,l2,b>
+  |- x::dll2<p,r,l,a+1>*r::dll2<l,out,l2,b> .
+  */
+
+  /*
+  res=l
+  |- l::dll2<p,res,z1,0> .
+
+ERROR: File "test-1.slk", line 24, col 5 : res is not allowed in precondition
+exception in entail check
+  */
+
+  /*
+checkentail
+  rs=l
+  |- l::dll2<p,rs,z1,0> .
+print residue.
+  */
+
+//checkentail l::dll2<p,r,z,n> & rs=l |- rs::dll2<z1,r,z,n> * l::dll2<p,rs,z1,0> .
+
+// fail due to incomplete search by do_match for
+// matching predicate.
+
+/*
+ Implicit instantiation below need to be
+ processed in some particular order:
+*/
+
+checkentail l::dll2<p,r,z,n> & rs=l |- (exists z2: 
+            l::dll2<p,rs,z2,0> * rs::dll2<z2,r,z,n>).
+
+checkentail l::dll2<p,r,z,n> & rs=l |- [z2] l::dll2<p,rs,z2,0> * rs::dll2<z2,r,z,n>.
+
+checkentail l::dll2<p,r,z,n> & rs=l |- (exists z2: 
+            l::dll2<p,rs,z1,0> * rs::dll2<z2,r,z,n> & z1=z2).
+
+checkentail l::dll2<p,r,z,n> & rs=l |- (exists z2: 
+            l::dll2<p,rs,z2,0> * rs::dll2<z1,r,z,n> & z1=z2).
+
+checkentail l::dll2<p,r,z,n> & rs=l |- (exists z2: 
+            l::dll2<p,rs,z2,0> * rs::dll2<z2,r,z,n> ).
+
+checkentail l::dll2<p,r,z,n> & rs=l |- (exists z2: 
+             rs::dll2<z2,r,z,n> * l::dll2<p,rs,z2,0>).
+
+/*
+However, explicit and existential instantiation
+can be done in any order:
+*/
+
+/*
+checkentail l::dll2<p,r,z,n> & rs=l |- (exists z1: l::dll2<p,rs,z1,0> * rs::dll2<z1,r,z,n> ).
+
+checkentail l::dll2<p,r,z,n> & rs=l |- [z1] l::dll2<p,rs,z1,0> * rs::dll2<z1,r,z,n>.
+*/
+print residue.
+

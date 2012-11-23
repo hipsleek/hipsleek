@@ -1,0 +1,31 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+// TODO : LOOPING
+
+
+//(3)
+//infer [y] b::node<1,y>   |- b::node<_,y>*y::node<_,null>.
+// loop
+infer [x,y] b::node<1,y>   |- x::node<_,b>*b::node<_,y>.
+print residue.
+
+//loop
+infer [x,y] b::node<1,y>   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.
+
+//print residue.
+// I suppose this is OK?
+
+//(4)
+//infer [x,y,b] b::node<1,y>   |- x::node<_,b>*b::node<_,y>*y::node<_,null>.
+//print residue.
+
+//(5)
+//infer [x] true   |- x::node<a,b> * b::node<d,e>.
+//print residue.

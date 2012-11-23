@@ -1,0 +1,33 @@
+
+//OR
+/*
+maximise may-bug,
+
+or{must,valid} --> may
+or{must,must} --> must
+or{valid,valid} --> valid
+or{valid,may} --> may
+
+*/
+//pure
+// 1. or{must,valid} --> may
+checkentail n<0 or n>3 |- n>1.
+
+// 2. or{valid,must} --> may
+checkentail n>3 or n<0 |- n>1.
+
+// 3. or{must,must} --> must
+checkentail n<3 or n<0 |- n>5.
+
+// 4. or{must,may} --> may
+checkentail n<3 or n>0 |- n>5.
+
+// 5. or{valid,valid} --> valid
+checkentail n>2 or n>4 |- n>1.
+
+// 6. or{valid,may} --> may
+checkentail n>2 or n>0 |- n>1.
+
+//pointer
+
+

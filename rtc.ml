@@ -107,16 +107,21 @@ let rec compile_prog (prog : C.prog_decl) source : unit =
 	(* Compile procedures *)
   let _ = Buffer.clear java_code in
 	(* Compile specs *)
+  (* 
   let _ = List.map 
-	(fun pdef -> compile_proc_spec prog pdef java_code) prog.C.prog_proc_decls in
+	(fun pdef -> compile_proc_spec prog pdef java_code) prog.C.old_proc_decls in
+  *)
+  let _ = C.proc_decls_iter prog (fun pdef -> compile_proc_spec prog pdef java_code) in
 	(* Compile bodies *)
 	(* add class declaration *)
   let tmp = Filename.chop_extension (Filename.basename source) in
   let main_class = Gen.replace_minus_with_uscore tmp in
   let _ = Buffer.add_string java_code ("public class " ^ main_class ^ " {\n") in
-  let _ = List.map 
-	(fun pdef -> compile_proc_body prog pdef java_code) 
-	prog.C.prog_proc_decls in
+  (*
+  let _ = List.map (fun pdef -> 
+    compile_proc_body prog pdef java_code) prog.C.old_proc_decls in
+  *)
+  let _ = C.proc_decls_iter prog (fun pdef -> compile_proc_body prog pdef java_code) in
   let _ = Buffer.add_string java_code ("\n}\n") in
   let tmp2 = Gen.replace_minus_with_uscore (Filename.chop_extension source) in
 	write_to_file java_code (tmp2 ^ ".java")
@@ -221,10 +226,11 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
 					   I.proc_constructor = false;
 					   I.proc_args = [cur_color pos; new_color pos];
 					   I.proc_return = Bool;
-					   I.proc_static_specs = [];
-					   I.proc_dynamic_specs = [];
+					   I.proc_static_specs = Iformula.mkEFalseF ();
+					   I.proc_dynamic_specs = Iformula.mkEFalseF ();
 					   I.proc_body = Some combined_exp;
 					   I.proc_exceptions = [];
+        I.proc_is_main = false;
              I.proc_file = "";
 					   I.proc_loc = no_pos } in
 	let ddef = { I.data_name = (C.unmingle_name proc.C.proc_name) ^ "_PRE";
@@ -290,10 +296,11 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
 					   I.proc_constructor = false;
 					   I.proc_args = [cur_color pos; new_color pos];
 					   I.proc_return = Bool;
-					   I.proc_static_specs = [];
-					   I.proc_dynamic_specs = [];
+					   I.proc_static_specs = Iformula.mkEFalseF ();
+					   I.proc_dynamic_specs = Iformula.mkEFalseF ();
 					   I.proc_body = Some combined_exp;
 					   I.proc_exceptions = [];
+        I.proc_is_main = false;
              I.proc_file = "";
 					   I.proc_loc = no_pos } in
 	let ddef = { I.data_name = (C.unmingle_name proc.C.proc_name) ^ "_POST";
@@ -404,7 +411,8 @@ and compile_call prog proc (e0 : C.exp) : (C.exp * ident) = match e0 with
 		if List.mem mn primitives || List.mem (caller_mn ^ ":" ^ mn) !no_pp then
 		  (e0, "")
 		else
-		  let pdef = C.look_up_proc_def_raw prog.C.prog_proc_decls mn0 in
+		  (*let pdef = C.look_up_proc_def_raw prog.C.old_proc_decls mn0 in*)
+      let pdef = C.look_up_proc_def_raw prog.C.new_proc_decls mn0 in
 		  let pre = 
 			let r = Cformula.split_struc_formula pdef.C.proc_static_specs in 
 			match r with

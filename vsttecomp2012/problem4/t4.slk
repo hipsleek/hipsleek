@@ -1,0 +1,16 @@
+
+data node {
+  int val;
+  node next;
+}.
+
+
+data node2{ int v; node2 next;}.
+
+pred ll<t> == t::node2<1,null> & self = null
+	or self::node<next = r> * r::ll<t>
+	inv true.
+
+  
+checkentail x::node<_, y> * y::ll<t> |- (exists tt: x::ll<tt> & tt=t) .
+print residue.

@@ -1,0 +1,6 @@
+
+A := {[i]:forall(r,ip: not(ip=i-r & 1<=r<=2) or ip>=0)};
+A;
+
+B := {[i]:exists(r,ip: ip=i-r & 1<=r<=2 & ip>=0)};
+B;

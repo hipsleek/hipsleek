@@ -102,21 +102,24 @@ case {
 
 {
    if (m > 0) {
-   if(m == n)
+   if(m == n) {
+	  //assume false;
       return m;
+   }
    else if (m > n) {
       int m1=m-n;
-      assert "term" : (m'+n')-(m1'+n')>0 & (m1'+n')>=0;
+      //assert "term" : (m'+n')-(m1'+n')>0 & (m1'+n')>=0;
       return gcd(m1, n);
    }
    else {
       int n1=n-m;
-      assert "term" : (m'+n')-(m'+n1')>0 & (m'+n1')>=0;
+      //assert "term" : (m'+n')-(m'+n1')>0 & (m'+n1')>=0;
       return gcd(m, n1);
    }
-   } else {
-	 assume false;
-	 return m;
+   }
+   else {
+     //assume false;
+	return m;
    }
 }
 

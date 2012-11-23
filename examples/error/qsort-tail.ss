@@ -25,9 +25,9 @@ bnd_tail<n, t, sm, lg> == self = null & n = 0 & t=null & sm <= lg
 inv n >= 0;
 
 
-coercion "ll_tail2lseg" self::ll_tail<n, t, sm, lg> <-> self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg;
+lemma "ll_tail2lseg" self::ll_tail<n, t, sm, lg> <-> self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg;
 
-coercion "lsegmb" self::lseg<n, p, sm, lg> <-> self::lseg<n1, q, sm, lg1> * q::lseg<n2, p, sm2, lg> & n=n1+n2 & lg1<=sm2;
+lemma "lsegmb" self::lseg<n, p, sm, lg> <-> self::lseg<n1, q, sm, lg1> * q::lseg<n2, p, sm2, lg> & n=n1+n2 & lg1<=sm2;
 
 void qsort(ref node x, ref node tx)
 	requires x::bnd_tail<n, tx, sm, lg> & n>0

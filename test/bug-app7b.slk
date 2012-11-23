@@ -1,0 +1,37 @@
+data node {
+	int val;
+	node next;
+}.
+
+pred ll<n> == self=null & n=0
+	or self::node<_, q> * q::ll<n-1>
+	inv n>=0.
+
+pred lseg<p, n> == self=p & n=0
+	or self::node<_, q> * q::lseg<p, n-1>
+	inv n>=0.
+
+pred clist<n> == self::node<_,p> * p::lseg<self,n-1>
+	inv n>=1.
+
+checkentail x::node<_,q>*q::ll<n-1> &y=x & n>0 & Term[n] & q!=null
+  |- q::ll<m> & Term[m+1 /*m*/] & m>0.
+//print residue.
+
+/*
+Entail (1): Fail. 
+<1>: (0) (ERR)
+
+<1>x::node<Anon_14,q>@M[Orig]&TermErr_May[n] & m+1=n & y=x & 0<n & q!=null&{FLOW,(17,18)=__norm}
+*/
+
+checkentail x::node<_,q>*q::ll<n-1> &y=x & n>0 & Term[n] & q!=null
+  |- Term[n-1].
+print residue.
+
+
+checkentail x::node<_,q>*q::ll<n-1> &y=x & n>0 & Term[n] & q!=null
+  |- Term[n-1] or Term[n].
+//print residue.
+
+

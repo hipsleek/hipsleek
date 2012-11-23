@@ -1,0 +1,14 @@
+data node { int val ; node next }.
+
+pred ls<p> == self = p 
+	or self::node<next = r> * r::ls<p> & self!=p
+	inv true.
+
+
+lemma self::ls<p> -> self::ls<b>*b::ls<p>.
+
+lemma self::ls<z>  <- self::ls<y>*y::ls<z> & z=null . 
+
+lemma "U4" self::ls<y> * y::ls<z> * z::node<_,w> & x=y & y=z -> self::ls<z> * z::node<_,w> .
+
+lemma "U5" self::ls<y> * y::ls<z> * z::ls<w> & z!=w -> self::ls<z> * z::ls<w> . 

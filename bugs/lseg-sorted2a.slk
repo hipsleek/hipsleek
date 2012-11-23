@@ -1,0 +1,69 @@
+data node {
+	int val;
+	node next;
+}.
+
+/*
+pred lseg<n, p, sm, lg> == 
+        self=p & n=0 & sm=lg
+		or self::node<sm, p> & sm=lg & n=1
+		or self::node<sm, r> * r::lseg<nn, p, sm1, lg> & sm<=sm1 & nn=n-1
+	inv n >= 0 & sm<=lg.
+
+pred lseg<n, p, sm, lg> == 
+        self=p & n=0 & sm=lg
+		or self::node<sm, r> * r::lseg<n-1, p, sm1, lg> & sm<=sm1 
+	inv n >= 0 & sm<=lg.
+*/
+
+pred lseg<n, p, sm, lg> == case {
+  n=0 -> [] self=p & sm=lg;
+  n=1 -> [] self::node<sm, p> & sm=lg;
+ (n<0 | n>1) -> [] self::node<sm, r> * r::lseg<nn, p, sm1, lg> 
+               & sm<=sm1 & nn=n-1;
+  }	inv n >= 0 & sm<=lg.
+
+/*
+pred lseg<n, p, sm, lg> == case {
+  n=1 -> [] self::node<sm,p> & lg=sm;
+ (n!=1) ->	[] self::node<sm, r> * r::lseg<nn, p, sm1, lg> & sm<=sm1 & nn=n-1;
+  }
+	inv n >= 1 & sm<=lg.
+*/
+
+lemma "lsegmb" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=0 -> 
+(exists lg1,sm2: self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg> & lg1<=sm2).
+
+lemma "lsegmb2" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=0  <- 
+(exists lg1,sm2: self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg>@D & lg1<=sm2).
+
+
+checkentail self::lseg<n1, q, sm, lg1> 
+  * q::lseg<n2, p, sm2, lg> & lg1<=sm2 & n = n1+n2 & n1,n2 >=0
+ |- self::lseg<n, p, sm, lg>.
+
+
+
+
+/*
+checkentail 
+        self::lseg<n2, p, sm2, lg> & n1=0 & sm=lg1 
+             & lg1<=sm2 & n = n1+n2 & n1,n2 >=0
+   or self::node<sm, r1> * r1::lseg<n1-1, q, sm1, lg1> 
+        *  q::lseg<n2, p, sm2, lg>  
+        & sm<=sm1  & lg1<=sm2 & n = n1+n2 & n1,n2 >=0
+   |- self::lseg<n, p, sm, lg>.
+
+checkentail 
+        self::lseg<n2, p, sm2, lg> & n1=0 & sm=lg1 
+             & lg1=sm2 & n = n1+n2 & n1,n2 >=0
+   |- self::lseg<n, p, sm, lg>.
+
+checkentail 
+    self::node<sm, r1> * r1::lseg<n1-1, q, sm1, lg1> 
+        *  q::lseg<n2, p, sm2, lg>  
+        & sm<=sm1  & lg1<=sm2 & n = n1+n2 & n1,n2 >=0
+   |- self::lseg<n, p, sm, lg>.
+
+*/
+//print residue.

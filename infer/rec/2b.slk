@@ -1,0 +1,19 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+// can res be used as an identifier
+
+relation F(int rs, int n).
+//  ==> res=0 & n=0 --> F(res,n)
+infer [F] x::ll<n>@L & x=null & rs=0 |- F(rs,n).
+print residue.
+
+// ==> res=r & n=1+m & F(r,m) --> F(res,n)
+infer [F] x::node<_,q>@L * q::ll<m>@L & m=n-1 & x!=null & rs=r & F(r,m) |- F(rs,n).
+print residue.

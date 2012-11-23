@@ -1,0 +1,68 @@
+/*
+ * LDK
+ * To understand entailment
+ * From sleek8.slk
+ */
+
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+//lemma self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+
+checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3 & n2 = 4.
+print residue.
+// valid
+
+//checkentail x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = 3 & n2 = 4 |- x::lseg<n, p> & n = 7.
+//print residue.
+
+checkentail x::lseg<n, p> & n = 6 |- x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = n2.
+print residue.
+
+checkentail x::lseg<n, p> & n = 6 |- (exists p1, p2: x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = p1 & n2 = p2 & p1 = p2).
+print residue.//valid
+
+checkentail x::lseg<n, p> & n = 6 |- x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = p1 & n2 = p2 & p1 = p2.
+print residue.//INVALID ???
+
+/* 
+
+BECAUSE
+x::lseg<n, p> & n = 6 
+  |- x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = p1 & n2 = p2 & p1 = p2.
+
+//lemma
+x::lseg<a, r> * r::lseg<b, p> & n=a+b & n=6
+  |- x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = p1 & n2 = p2 & p1 = p2.
+
+//match
+r::lseg<b, p> & n=a+b & a=n1 & r=r1 & n=6
+  |- r1::lseg<n2, p> & n1 = p1 & n2 = p2 & p1 = p2.
+
+//match
+n=a+b & a=n1 & r=r1 & b=n2 & n=6
+  |- n1 = p1 & n2 = p2 & p1 = p2.
+
+n=a+b & n=6
+  |- a = p1 & b = p2 & p1 = p2.
+
+forall n,a,b,p1,p2: n=a+b & n=6 |- a = p1 & b = p2 & p1 = p2.
+FAIL because 2+4=6 but not entails 2=4
+
+but if we say:
+forall n,a,b: n=a+b & n=6 |- exists p1,p2: a = p1 & b = p2 & p1 = p2.
+VALID because when p1=p2=a=b=3, entailment holds
+
+*/
+/*
+checkentail x::lseg<n, p> * t1::lseg<x1, y1> & n = 6 |- t1::lseg<x2, y2> * x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = n2.
+print residue.
+
+checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 >= 1 & n2 >= 2.
+print residue.
+*/

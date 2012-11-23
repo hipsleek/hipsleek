@@ -15,13 +15,14 @@ clist<n> == self::node<_,p> * p::lseg<self,n-1>
 	inv n>=1;
 
 void append(node x, node y)
-/*
   requires x::ll<n> & x!=null //& n>0
   ensures x::lseg<y, n>;
   requires x::ll<n> & y=x & n>0
-  ensures x::clist<n>; */
+  ensures x::clist<n>; 
   requires x::ll<n> * y::ll<m> & n>0
   ensures x::ll<e>& e=n+m;
+  requires x::lseg<r, n> * r::node<b,null>
+  ensures x::lseg<r,n> * r::node<b,y>;
 {
   // dprint;
 	node tmp = x.next;
@@ -35,7 +36,7 @@ void append(node x, node y)
 		return;
 	}
 }
-
+/*
 node app2(node x, node y)
 /*
   requires x::lseg<null,n> 
@@ -64,7 +65,7 @@ requires x::lseg<null,n> & x!=null
   if (x==null) return y;
   //dprint;
   node tmp=x.next;
-  //assume tmp'=null or tmp'!=null;
+  assume tmp'=null or tmp'!=null;
   x.next=app2(tmp,y);
   return x;
 }
@@ -89,4 +90,4 @@ requires true
    else 
      {return 3;}
  }
-}     
+}     */

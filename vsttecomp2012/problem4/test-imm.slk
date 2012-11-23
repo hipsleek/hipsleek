@@ -1,0 +1,31 @@
+//class exception extends __Exc {}.
+
+data node {
+  int val;
+  node next;
+}.
+/*
+data tree {
+  tree left;
+  tree right;
+}.
+
+pred treell<t,p,d> == t::node<d,p> * self::tree<null, null>
+  or self::tree<left,right> * left::treell<t,r,d+1> * right::treell<r,p,d+1> 
+  inv true.
+*/
+pred ll< n> == self=null & n=0 
+  or self::node<v, r> * r::ll<n-1> 
+  inv n>=0.
+
+checkentail x::node<_,null> & flow __norm |- 
+             x::ll<n> & flow __norm .
+
+checkentail x::node<_,null> & flow __norm |- 
+             true & flow __Ex.
+
+checkentail x::node<_,null> & flow __norm or true & flow __norm
+          |-
+             x::ll<n> & flow __norm or true & flow __Exc.
+
+print residue.

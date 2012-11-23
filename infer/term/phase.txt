@@ -1,0 +1,116 @@
+Phase Numbering
+ (i) buggy
+ (ii) contradiction in phases
+ (iii) need to be done before term inference
+
+
+================= t2a.ss ======================================
+
+Consider the outcome below:
+
+!!! Phase Constrs:[ p4>=p7, p4>=p5, p4>=p7, p5>=p4, p5>=p7, p5>=p4, p6>=p7, p6>=p7, p6>p4]
+!!! Inferred phase constraints:[]
+!!! Phase Numbering:[]
+!!! Phase to remove:[pv_495,pv_497,pv_496,pv_494]
+
+There is a p6>p4. However, it suggest for all phases to be removed!
+This seems a bug even for old scheme.
+
+New solution:
+============
+Use similar scheme as call numbering.
+
+Provide a separate phase numbering mechanism that will be
+separated from other kind of inference.
+
+Construct a graph with an arc each for either p1>=p2 or p1>p2.
+For above, we get:
+ 4->7
+ 4->5
+ 5->4
+ 5->7
+ 6->7
+ 6->4
+
+Find strongly connected component, as follows:
+ {p6} {p4,p5} {p7} 
+Generate numbering of phases:
+  p6->2, p4,p5->1, p7->0
+
+Substitute this into the spec immediately.
+
+=====================================================
+Revised Solution : t2a-p.ss
+
+!!! Phase Constrs:[ p1>p4, p1>p2, p2>p1, p2>p4, p2>p1, p3>p4, p3>p4, p3>p1]
+
+1->4
+1->2
+2->1
+2->4
+3->4
+3->1
+
+{p3} -> {p1,p2} -> {p4} 
+
+Consider another example:
+================= mc-iter.ss ======================================
+Old result:
+
+!!! Phase Constrs:[ p4>p3, p5>=p6, p6>=p5, p6>=p4]
+!!! Inferred phase constraints:[]
+!!! Phase Numbering:[(1,[pv_514,pv_515,pv_516]),(0,[pv_513])]
+!!! Mutual Rec Group:[loop$int~int]
+!!! Phase Numbering:[(pv_514,1),(pv_515,1),(pv_516,1),(pv_513,0)]
+
+New solution:
+
+Phase graph built is:
+ 4->3
+ 5->6
+ 6->5
+ 6->4
+
+This gives:
+ {p5,p6} {p4} {p3} 
+and the following numbering:
+ [p5,p6->2; p4->1; p3->0]
+
+
+===========================mc-iter-i=======================================
+
+The phases of this has to be carried out before term inference,
+as contradition in phases detected. The spec derived actually
+have a false precondition which is why phase numbering is important.
+
+!!! Phase Constrs:[ p6>p5, p7>p8, p8>p7, p8>=p6]
+Termination: Contradiction in Phase Constraints.
+Phase Constrs:[ pv_506>pv_505, pv_507>pv_508, pv_508>pv_507, pv_508>=pv_506]
+Termination checking result:
+
+New solution:
+
+Graph built:
+  6->5
+  7->8
+  8->7
+  8->6
+ {p7,p8} {p6} {p5}
+
+This would then give phase numbering:
+ {p7,p8->2; p6->1; p5->0]
+
+
+=====================================================
+Revised Solution : mc-iter-p.ss
+
+!!! Phase Constrs:[ p2>p1, p3>p4, p4>p3, p4>p2]
+Termination: Contradiction in Phase Constraints.
+Phase Constrs:[ p2>p1, p3>p4, p4>p3, p4>p2]
+
+2->1
+3->4
+4->3
+4->2
+
+{3,4} {2} (1}

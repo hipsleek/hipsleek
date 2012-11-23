@@ -1,0 +1,24 @@
+self::node<sm, r> * r::lseg<n-1, p, sm1, lg> & sm<=sm1 & n!=1 & n = n1+n2 & n1,n2 >=1
+ |- [lg1] self::lseg<n1, q, sm, lg1>.
+
+self::node<sm, r> * r::lseg<n-1, p, sm1, lg> & sm<=sm1 & n!=1 & n = n1+n2 & n1,n2 >=1 & n1=1
+ |- [lg1] self::node<sm,q> & sm=lg1
+
+self::node<sm, r> * r::lseg<n-1, p, sm1, lg> & sm<=sm1 & n!=1 & n = n1+n2 & n1,n2 >=1 & n1!=1
+ |- [lg1] self::node<sm,r1>*r1::lseg<n1-1, q, sm3, lg1> & sm<=sm3.
+
+r::lseg<ff, p, sm1, lg> & sm<=sm1 & n!=1 & n = n1+n2 & n1,n2 >=1 & n1!=1 & ff=n-1
+ |- [lg1] r::lseg<n1-1, q, sm3, lg1> & sm<=sm3.
+
+r::lseg<a, p1, sm1, lg3> * p1::lseg<b, p, sm4, lg> & sm<=sm1 & n!=1 & n = n1+n2 & n1,n2 >=1 & n1!=1
+   & lg3<=sm4 & a,b>=1 & a+b=n-1 
+ |- [lg1] r::lseg<n1-1, q, sm3, lg1> & sm<=sm3.
+
+r::lseg<a, p1, sm1, lg3> * p1::lseg<b, p, sm4, lg> & sm<=sm1 & n!=1 & n = n1+n2 & n1,n2 >=1 & n1!=1
+   & lg3<=sm4 & a,b>=1 & a+b=n-1 & a=n1-1 &
+ |- [lg1] r::lseg<n1-1, q, sm3, lg1> & sm<=sm1 & lg1=lg3.
+
+r::lseg<a, p1, sm1, lg3> * p1::lseg<b, p, sm4, lg> & sm<=sm1 & n!=1 & n = n1+n2 & n1,n2 >=1 & n1!=1
+   & lg3<=sm4 & a,b>=1 & a+b=n-1 & a=n1-1 &
+ |- [lg1] r::lseg<n1-1, q, sm3, lg1> & sm<=sm1 & lg1=lg3.
+

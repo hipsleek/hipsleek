@@ -1,0 +1,380 @@
+Automatic and Forced Slicing of Proof Obligations
+=================================================
+
+Consider the constraint:
+ n>=0 & h>=0
+
+Our current system on slicing would break it up by
+disjoint vars, as follows:
+
+ n>=0 & h>=0
+ ==> ("": n>=0) & ("": h>=0)
+
+Benefit of slicing
+==================
+The main benefit is that it allow us to break our constraints
+into smaller proof obligations. For example, with the help
+of slices, we can break our constraints as follows,
+where L and M denotes disjoint var sets.
+
+       UNSAT ("L":P1) \/ UNSAT ("M":Q1)
+       -----------------------------------
+       UNSAT (("L":P1) & ("M":Q1))
+
+          "L":P1 ==> "L":P2
+          "M":Q1 ==> "M":Q2
+  -------------------------------------------------
+     ("L":P1) & ("M":Q1) ==> ("L":P2) & ("M":Q2)
+
+This leads to smaller proof obligations.
+
+Coagulation
+===========
+If we have a stronger constraint that straddles over
+var sets, such as n>=h, they would cause our constraints
+to be grouped together, possibly into a single slice;
+as follows.
+
+ n>=0 & h>=0 & n>=h
+ ==> ("": n>=0 & h>=0 & n>=h)
+
+While these constraints may be occasionally useful, they
+could cause our constraints to be coagulated into large
+slices. To keep these constraints, without affecting our
+analysis, we propose to add a forced slicing feature
+to our logic formulae. Such forced slicing can be used
+to capture constraints that straddle multiple variables.
+These constraints are proven strategically at method or
+predicate boundary, and then subsequently utilised.
+Keeping them separately as forced slices allows us to
+maintain smaller slices for the other constraints without
+losing these connected constraints totally.
+
+For example, if we would like a connecting constrain
+n>=h to be kept separately as a forced slice,
+labelled with $, we can use the following:
+
+ n>=0 & h>=0 & ("$":n>=h)
+ ==> ("":n>=0) & ("":h>=0) & ("$": n>=h)
+
+For UNSAT procedure will allow forced slice to be treated in
+a similar manner to the other automatic slices:
+
+       UNSAT ("$":D) \/ UNSAT ("L1":P) \/ UNSAT ("M":Q)
+       ------------------------------------------------
+         UNSAT (("$":D) & ("L":P) & ("M":Q))
+
+For implication, forced slices on the consequent are treated
+in a special way, since they may not be proven otherwise.
+In particular, we add the entire LHS for proving each
+forced splice on the RHS.
+
+   "$":C1 & "L":P1 & "M":Q1 ==> "$":C2
+          "L":P1 ==> "L":P2
+          "M":Q1 ==> "M":Q2
+ --------------------------------------------------------
+ ("$":C1 & "L":P1 & "M":Q1) ==> ("$":C2,"L":P2 & "M":Q2)
+
+As an example, consider the predicate:
+
+ avl<n, h> ==
+     self = null & h = 0 & n = 0
+  or self::node<_, n, p, q> * p::avl<n1, h1> * q::avl<n2, h2>
+               & n = 1+n1+n2 & h=1+max(h1, h2) & -1 <= h1-h2 <=1
+ inv h>=0 & n >= 0 & n>=h;
+
+While it is good to have information on n>=h, its presence
+can causes the constraints involving n and h to be coalessed
+into a single slice. To avoid this problem, we shall mark it
+explicitly as a forced constraint, as follows:
+
+ avl<n, h> ==
+     self = null & h = 0 & n = 0
+  or self::node<_, n, p, q> * p::avl2<n1, h1> * q::avl2<n2, h2>
+               & n = 1+n1+n2 & h=1+max(h1, h2) & -1 <= h1-h2 <=1
+ inv h>=0 & n >= 0 & ("$":n>=h);
+
+Specifically, specialization on the body causes the
+following to be obtained:
+
+ avl<n, h> ==
+     ("":self = null) & ("":h = 0) & ("":n = 0)
+  or self::node<_, n, p, q> * p::avl2<n1, h1> * q::avl2<n2, h2>
+               & ("":self!=null(P)) &
+       & ("":n = 1+n1+n2 & n1>=0(P) & n2>=0(P))
+       & ("":h=1+max(h1,h2) & -1 <= h1-h2 <=1 & h1>=0(P) & h2>=0(P))
+       & ("$":n1>=h1(P) & n2>=h2(P))
+ inv ("":h>=0) & ("":n>=0) & ("$":n>=h);
+
+where (P) mark constraints that are propagated from
+specializing predicates such as p::avl2<n1, h1> * q::avl2<n2, h2>.
+
+ avl<n, h> ==
+     ("":self = null) & ("":h = 0) & ("":n = 0)
+  or self::node<_, n, p, q> * p::avl2<n1, h1> * q::avl2<n2, h2>
+               & ("":self!=null(P)) &
+       & ("":n = 1+n1+n2 & n1>=0(P) & n2>=0(P) &
+             & h=1+max(h1,h2) & -1 <= h1-h2 <=1 & h1>=0(P) & h2>=0(P)
+             & n1>=h1(P) & n2>=h2(P)
+ inv ("":h>=0 & n>=0 & n>=h);
+
+with constraints involving n,h being coalesed into a single
+big slice whenever bridging constraints, such as n>=h or n1>=h1
+or n2>=h2 are present. Such coalesing of disjoint slices are
+undesirable, as they lead to bigger proof obligations.
+
+As another example, consider the predicate:
+
+ ll<n,s,B> ==
+     self = null & n = 0 & s=0 & B={}
+  or self::node<v, n, p, q> * p::ll<n1,s1,B1>
+               & n = 1+n1 & v>=0 & s=v+s1 & B={v} U B1
+ inv n >= 0 & s >= 0 & forall a in B. a>=0;
+
+The constraints s=v+s1 and B={v} U B1 are actually
+connected by variables v. However, they are
+actually mostly orthogonal. To allow its proofs to be
+made separately, we propose to mark the constraints,
+as follows:
+
+ ll<n,s,B> ==
+     self = null & n = 0 & s=0 & ("B":B={})
+  or self::node<v, n, p, q> * p::ll<n1,s1,B1>
+               & n = 1+n1 & v>=0 & s=v+s1 & ("B":B={v} U B1)
+ inv s >= 0 & n >= 0 & ("B": forall a in B. a>=0);
+
+With this forced slicing, our predicate would be processed,
+as follows:
+
+ ll<n,s,B> ==
+     ("":self = null) & ("":n = 0) & ("":s=0) & ("B":B={})
+  or self::node<v, n, p, q> * p::ll<n1,s1,B1>
+     & ("":self!=null)
+     & ("":n = 1+n1 & n1>=0(P))
+     & ("":v>=0 & s=v+s1 & s1>=0(P)) &
+     & ("B":B={v} U B1 & forall a in B1. a>=0(P))
+ inv ("":s >= 0)
+    & ("":n >= 0)
+    & ("B": forall a in B. a>=0);
+
+It would allow the constraints involving sum (s) to be proved
+separately from those involving bags (B).
+For example, the invariant of the predicate is proven with
+the following proof obligations:
+
+ n=0 \/ n = 1+n1 & n1>=0      ==> n>=0
+ s=0 \/ v>=0 & s=v+s1 & s1>=0 ==> s>=0
+"$": B={} \/ "":(v>=0 & s=v+s1 & s1>=0) & B={v} U B1 & forall a in B1. a>=0 (P)
+   ==> forall a in B. a>=0
+
+The last obligation carries the constraints from size due to
+the overlapping variable v. The only unnecessary constraint
+was actually s=v+s1 & s1>=0. This could have been dropped
+by picking only constraints that are directly related to
+the overlapping variable v, resulting in the following proofs:
+
+ B={} \/ v>=0 & B={v} U B1 & forall a in B1. a>=0(P)
+   ==> forall a in B. a>=0
+
+A similar scenario occurs if we have more constraints involving
+sequences, such as:
+
+ ll<n,s,B,L> ==
+     self = null & n = 0 & s=0 & ("B":B={}) & ("L":L=[])
+  or self::node<v, n, p, q> * p::ll<n1,s1,B1,L1>
+               & n = 1+n1 & v>=0 & s=v+s1 & ("B":B={v} U B1) & ("L":L=v:::L1)
+ inv s >= 0 & n >= 0 & ("B": forall a in B. a>=0)
+     & ("L":forall a in L. a>=0) & ("$":bag(L)=B);
+
+We have forced bag and list predicate to be separated. Moreover,
+we have also captured the relationship between L and B using
+global constraint, marked by the label "$".
+
+This results in the following partitioning
+ ll<n,s,B,L> ==
+     ("":self = null)
+     & ("":n = 0)
+     & ("":s=0)
+     & ("B":B={})
+     & ("L":L=[])
+  or self::node<v, n, p, q> * p::ll<n1,s1,B1,L1>
+         & ("":self!=null)
+     & ("":n = 1+n1 & n1>=0(P))
+     & ("":v>=0 & s=v+s1 & s1>=0(P))
+     & ("B":B={v} U B1 & forall a in B. a>=0 (P))
+     & ("L":L=v:::L1 & :forall a in L. a>=0(P))
+     & ("$":bag(L1)=B1(P))
+ inv s >= 0 & n >= 0 & ("B": forall a in B. a>=0)
+     & ("L":forall a in L. a>=0)
+     & ("$":bag(L)=B);
+
+When proving "$" branch, we initially only have:
+    bag(L1)=B1 |- bag(L)=B
+
+Working backwards from the lemma,
+    L=x:::L1 & B={x} U B1 & bag(L1)=B1   bag(L1)=B1(P)
+
+We search for constraint of the form:
+    ex x. L=x:::L1 & B={x} U B1
+
+Thus, we required constraint of the form
+    "$":L=x:::L1 and B={x} U B1
+This generates the template:
+    C(L,L1) and C(B,B1)
+We can proceed to pick up for proving:
+    B={v} U B1 & L=v:::L1
+
+For the proof:
+    B={v} U B1 & forall a in B1. a>=0
+    ==> forall a in B. a>=0
+
+We relied on the lemma:
+
+    p(b) & B={b} U B1 & forall a in B1. p(a)
+    ==> forall a in B. p(a)
+
+Instantiating, we require p(v) & v>=0 to succeed.
+We place this constraint v>=0, as a proof obligation
+for it to succeed.
+
+Fixed Partitioning
+------------------
+["$":C1 & "L":P1 & "M":Q1] & ["$":C2 & "L":P2 & "M":Q2]
+==> ["$":C1&C2 & "L":P1&Q1 & "M":P2&Q2]
+
+Automatic Partitioning
+======================
+merge L1 [] = L1
+merge L1 (S:P):L2
+ = let (L1a,L1b) = partition (overlap s) in
+   let S1:P1= combine L1a S:P in
+   in merge ((S1:P1):L1b) L2
+
+ flexible_s v r = ([a],r)
+ join :: r -> r -> r
+ split :: r -> r * r
+ is_atomic :: r -> bool
+ vars :: r -> [a]
+ cmp: a -> a -> int
+ overlap :: [a] -> [a] -> bool
+ union ::[a] -> [a] -> [a]
+
+ merge :: [flexp v r] ->  [flexp v r] ->  [flexp v r]
+ collapse :: flexp v r -> r
+ collapse_all :: [flexp v r] -> r
+ build :: r -> [flexp v r]
+
+====================================
+
+ "$
+ $-B
+ fixed_p v r = (a * r)
+
+ cmp :: a -> a -> int
+ subtype :: a -> a -> bool
+
+ join :: r -> r -> r
+ split :: r -> r * r
+ is_atomic :: r -> bool
+
+ merge :: [fixed_p v r] ->  [fixed_p v r] ->  [fixed_p v r]
+ collapse :: fixed_p v r -> r
+ collapse_all :: [fixed_p v r] -> r
+ label :: a -> r -> (fixed_p v r)
+
+merge (L1:disjoint) (
+==> let (L1,L2) = pa[S1:P1 & S2:Q1] & [S3:P2 & S4:Q2]
+==> S1/\S3->S1+S2:P1 & P2
+   S1/\["$":C1&C2 & "L":P1&Q1 & "M":P2&Q2]
+
+===============================================================
+
+"$" is a root common slice.
+
+ avl3<n, h> ==
+     self = null & h = 0 & n = 0
+  or self::node<_, n, p, q> * p::avl3<n1, h1> * q::avl3<n2, h2>
+               & n = 1+n1+n2 & h=1+max(h1, h2) & -1 <= h1-h2 <=1
+ inv h >= 0 & n >= 0 & ("nh":n>=h);
+
+
+Branching
+
+The size and height information largely independent.
+
+view tree<n,h> =
+ inv height
+    "$": n>=h  // common branch
+
+ []: common_branch,..
+ [h] : height
+ [n] : size
+ [b] : balance
+
+view tree<n,h> =
+ inv height
+    "$": n>=h  // common branch
+
+view
+ inv height
+    "$": n>=h  // common branch
+
+inferred inv are placed into common branch
+
+pre:
+ x::avl<n1,m2,b> * y::avl<n2,m2,b2> & ("$" : n1+n2>=m1+m2 & ..)
+
+post:
+ x::avl<n1,m2,b> * y::avl<n2,m2,b2> & n1+n2>=m1+m
+
+(i) automatic or partitioned
+(ii) "$": denotes common branch info..
+
+Memo_Pure:
+
+ [vars] : exp
+
+ ["0_branch_name"] : forced slice
+
+
+"$":C1 & "L":P1 & "M":P2 \/ "$":C2 & "L":Q1 & "M":Q2
+==> "$":C1&C2 & "L":P1\/Q1  & "M":P2\/Q2 (unsafe..)
+
+
+["$":C1 & "L":P1 & "M":Q1] & ["$":C2 & "L":P2 & "M":Q2]
+==> ["$":C1&C2 & "L":P1&Q1 & "M":P2&Q2]
+
+  UNSAT("L":P1) \/  UNSAT("L":P1) \/ UNSAT("M":Q1)
+ ---------------------------------------------------
+       UNSAT("$":C1 & "L":P1 & "M":Q1)
+
+   "$":C1 & "L":P1 & "M":Q1 ==> "$":C2
+          "L":P1 ==> "L":P2
+          "M":Q1 ==> "M":Q2
+ --------------------------------------------------------
+ ("$":C1 & "L":P1 & "M":Q1) ==> ("$":C2,"L":P2 & "M":Q2)
+
+forced constraint are not merged with the original
+constraints. They are meant as bridge between
+variables that are only proved at procedure
+and predicate boundaries.
+
+Automatic slicing:
+
+ n1>=0 & n2>=0 & n=1+n1+n2 & h1>=0 & h2>=0 & h=1+max(h1,h2)
+ ==> ("": n1>=0 & n2>=0 & n=1+n1+n2) &
+     ("": h1>=0 & h2>=0 & h=1+max(h1,h2))
+
+Benefits of slicing
+- Keep formulas smaller
+- Keep formulas well-formed (arithmetic, bag, set ...) -> multiple provers
+- Keep relevant
+
+
+Automatic Partitioning
+======================
+--> can cause performance problem
+
+
+Forced Partitioning
+===================

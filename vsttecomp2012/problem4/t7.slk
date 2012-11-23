@@ -1,0 +1,31 @@
+data node {
+  int val;
+  node next;
+}.
+
+data tree {
+  tree left;
+  tree right;
+}.
+  
+pred tlseg<p,f,d,n> ==
+     self::node<d,p> & n=1 & d=f 
+  or self::tlseg<r,f,d+1,n1> * r::tlseg<p,_,d+1,n2> & n=n1+n2
+  inv self!=null & n>=1 & f>=d .
+
+  
+lemma self::tlseg<p,f,d,n> -> self::node<f,q>.
+
+//checkentail r::tlseg<p,f,d,n> |- r::node<d1,t1> or r::tlseg<p1,f1,d1,n1>.
+		// 2,1 outcomes 
+		
+//checkentail r::node<d,p> & n=1 & d=f or r::tlseg<r1,f,d+1,n1> * r1::tlseg<p,_,d+1,n2> & n=n1+n2 |- r::tlseg<pr,fr,dr,nr>.
+		//2 outcomes
+
+//checkentail r::node<d,p> & n=1 & d=f or r::tlseg<r1,f,d+1,n1> * r1::tlseg<p,_,d+1,n2> & n=n1+n2 |- r::node<dr,tr> or r::tlseg<pr,fr,dr,nr>.
+		// 3,2,3,2 outcomes
+
+checkentail r::node<d,p> & n=1 & d=f or r::tlseg<r1,f,d+1,n1> * r1::tlseg<p,_,d+1,n2> & n=n1+n2 |- r::node<dr,tr>.
+		// 3 outcomes
+
+print residue.

@@ -1,0 +1,46 @@
+/* 
+
+from mc-iter-i2.ss
+
+Entail  (1): Fail. 
+<1>: (0) (ERR)
+
+<1>true & TermErr_May[0,2,r2(x,c)] & 1<c & x<=111 & 0<c & x<=100 & x'=x+11 & c'=c+1 & 1<c' & {FLOW,(17,18)=__norm}
+
+Entail  (2): Fail. 
+<1>: (0) (ERR)
+
+<1>true & TermErr_May[r2(x,c)] & 1<c & x<=111 & 0<c & x<=100 & x'=x+11 & c'=c+1 & 1<c' & {FLOW,(17,18)=__norm}
+
+
+Latest verion from infer2r fails for these
+two examples. How come?
+
+They are valid for 4363, as follows:
+
+Entail  (1): Valid. 
+
+<1>true & Term[0,2,r2(x,c)] & 1<c & x<=111 & 0<c & x<=100 & x'=x+11 & c'=c+1 & 1<c' & {FLOW,(17,18)=__norm}
+inferred rel: [RANKDEC [r2,r2]: ( x=x' - 11 & c'=c+1 & x'<=111 & 2<=c) -->  (r2(x,c))>(r2(x',c'))]
+
+Entail  (2): Valid. 
+
+<1>true & Term[r2(x,c)] & 1<c & x<=111 & 0<c & x<=100 & x'=x+11 & c'=c+1 & 1<c' & {FLOW,(17,18)=__norm}
+inferred rel: [RANKDEC [r2,r2]: ( x=x' - 11 & c'=c+1 & x'<=111 & 2<=c) -->  (r2(x,c))>(r2(x',c'))]
+
+
+
+*/
+
+
+ranking r2(int x, int c).
+
+infer[r2] 1<c & x<=111 & 0<c & x<=100 & 
+     x'=11+x & c'=1+c & 1<c' & Term[0,2,r2(x,c)] |- Term[0,2,r2(x',c')].
+print residue.
+
+infer[r2] 1<c & x<=111 & 0<c & x<=100 & 
+     x'=11+x & c'=1+c & 1<c' & Term[r2(x,c)] |- Term[r2(x',c')].
+print residue.
+
+

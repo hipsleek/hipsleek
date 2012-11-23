@@ -1,0 +1,198 @@
+/usr/local/bin/mona
+/usr/local/bin/oc
+
+Processing file "avl_size_height_0_link.ss"
+Parsing...
+Parsing...
+Starting Omega... 
+Translating global variables to procedure parameters...
+Translating to core language...
+
+ warning avl_size_height_0_link.ss_219_9 quantifying: n1
+
+ warning avl_size_height_0_link.ss_158_9 quantifying: n1
+Checking procedure merge$node~node... 
+Procedure merge$node~node SUCCESS
+Checking procedure insert_inline$node~int... 
+Procedure insert_inline$node~int SUCCESS
+Checking procedure insert$node~int... 
+dprint: avl_size_height_0_link.ss:177: ctx:  List of Failesc Context: [FEC(0, 1, 1)]
+
+Successful States:
+[Label: [(499:,0 ); (499:,0 ); (496:,0 ); (496:,0 ); (439:,0 ); (439:,0 ); 
+          (438:,1 ); (438:,1 )]
+ State:es_formula: 
+        SS 1905:q_3099::avl<n2_3100,h2_3101>@M[Orig]@ rem br[{681,680}] * 
+        SS 1904:p_3201::avl<n1_3202,h1_3203>@M[Orig]@ rem br[{681}] * 
+        x'::node<Anon_3095,n,v_node_171_3130,q_3099>@M[] * 
+        v_node_171_3130::node<Anon_3200,h_3199,p_3201,q_3204>@M[] * 
+        SS 1901:q_3204::avl<n2_3205,h2_3206>@M[Orig]@ rem br[{681,680}] & (
+        ([v_bool_175_1368'][null!=p_3201][v_bool_173_1370'][v_bool_168_1520']
+         [a=a' & a'<=Anon_3095][1788:!(v_bool_164_1521')][null=tmp_101']
+         [x=x' & x'!=null][tmp_100'=p_3096]
+         [n_3220=h2_3206 & n_3209=h1_3203 & n1_3126=n_3133 & 
+           n1_3126=h_3199 & n_3112=h1_3098 & h_3094=n & h2_3101=n_3142 & 
+           (1790:h1_3098+1=n & h2_3101<n | h2_3101+1=n & (h1_3098+2)<=n) & 
+           (1858:h1_3203+1=n1_3126 & h2_3206<n1_3126 | h2_3206+1=n1_3126 & 
+           (h1_3203+2)<=n1_3126) & 0<=n1_3126 & 0!=h1_3203 & (-1+
+           h2_3206)<=h1_3203 & 0<=h1_3203 & 0<=n & 0<=h1_3098 & (-1+
+           h2_3101)<=h1_3098 & 0!=n & 0!=n1_3126 & (1+h2_3206)<=h1_3203 & 
+           0<=h2_3101 & (-1+n1_3126)<=n_3112 & (-1+h1_3203)<=h2_3206 & (-1+
+           h1_3098)<=h2_3101 & h2_3101+2=n1_3126 & 0<=h2_3206 & 
+           n_3112<=n1_3126]
+         [m_3219=n2_3205 & m_3208=n1_3202 & m_3132=flted_158_3125 & 
+           n1_3097=m_3111 & n2_3100=m_3141 & 0!=n1_3202 & m_3132=1+n1_3202+
+           n2_3205 & 0<=flted_158_3125 & 0<=n1_3097 & 0<=n2_3205 & -1+
+           flted_158_3125=m_3111 & m=1+n1_3097+n2_3100 & 0<=n1_3202 & 0!=m & 
+           0<=m & 0<=n2_3100 & 0!=flted_158_3125]
+         [v_node_171_3130!=null])) &
+        {FLOW,(69,69)=__norm,}
+       es_pure: (())
+       es_heap: true
+       es_aux_conseq: true
+       es_must_error: None
+       es_var_label: None]
+
+Procedure insert$node~int SUCCESS
+Checking procedure build_avl2$node~node~node... 
+Procedure build_avl2$node~node~node SUCCESS
+Checking procedure build_avl1$node~node... 
+Procedure build_avl1$node~node SUCCESS
+Checking procedure rotate_double_right$node~node~node~node~int~int~int... 
+Procedure rotate_double_right$node~node~node~node~int~int~int SUCCESS
+Checking procedure rotate_double_left$node~node~node~node~int~int~int... 
+Procedure rotate_double_left$node~node~node~node~int~int~int SUCCESS
+Checking procedure get_max$int~int... 
+Procedure get_max$int~int SUCCESS
+Checking procedure rotate_right$node~node~node... 
+Procedure rotate_right$node~node~node SUCCESS
+Checking procedure rotate_left$node~node~node... 
+Procedure rotate_left$node~node~node SUCCESS
+Checking procedure height$node... 
+Procedure height$node SUCCESS
+Stop Omega... 3378 invocations 
+20 false contexts at: ( (210,4)  (206,6)  (189,11)  (185,6)  (343,4)  (339,6)  (283,4)  (279,6)  (464,17)  (464,24)  (468,3)  (468,22)  (468,10)  (467,15)  (467,27)  (467,8)  (466,14)  (466,25)  (466,8)  (466,3) )
+
+Total verification time: 7.12 second(s)
+	Time spent in main process: 5.09 second(s)
+	Time spent in child processes: 2.03 second(s)
+Counters: 
+ cnt_Overall = 1
+cnt_Parsing = 2
+cnt_Preprocessing = 1
+cnt_TP.imply_timeout = 4237
+cnt_Translating global var = 1
+cnt_Translating to Core = 1
+cnt_add_pure = 3366
+cnt_elim_exists = 92
+cnt_elim_redundant_ctr = 25
+cnt_empty_predicate_testing = 122
+cnt_entail_prune = 141
+cnt_erc_imply = 123
+cnt_fast_imply = 6742
+cnt_filter_dupl_memo = 7313
+cnt_heap_entail_one_context_struc#2 = 142
+cnt_heap_entail_one_context_struc#4 = 129
+cnt_heap_entail_one_context_struc#fold = 32
+cnt_imply = 4237
+cnt_imply_proc_one_full = 140
+cnt_imply_proc_one_ncplx = 522
+cnt_is_sat = 3378
+cnt_memo_imply = 122
+cnt_memo_norm = 3485
+cnt_merge_mems_r_dups = 3028
+cnt_method build_avl1$node~node = 1
+cnt_method build_avl2$node~node~node = 1
+cnt_method get_max$int~int = 1
+cnt_method height$node = 1
+cnt_method insert$node~int = 1
+cnt_method insert_inline$node~int = 1
+cnt_method merge$node~node = 2
+cnt_method rotate_double_left$node~node~node~node~int~int~int = 1
+cnt_method rotate_double_right$node~node~node~node~int~int~int = 1
+cnt_method rotate_left$node~node~node = 1
+cnt_method rotate_right$node~node~node = 1
+cnt_normalize_max_renaming_list_failesc_context = 375
+cnt_pred_inference = 1
+cnt_proof_after_base_case = 1
+cnt_prune_imply = 3319
+cnt_prune_preds = 654
+cnt_prune_preds_filter = 654
+cnt_simplify = 32
+cnt_slow_imply = 123
+cnt_unfold_unsat = 127
+consumed_nodes_counter = 425
+consumed_specialized_nodes = 88
+dropped_branches = 46
+false_imply_count = 3718
+fast_imply_success = 69
+impl_cache_count = 3935
+impl_conseq_count = 1161
+impl_proof_count = 2723
+imply_sem_prun_false = 3283
+imply_sem_prun_true = 36
+prune_cnt = 46
+sat_cache_count = 3370
+sat_proof_count = 630
+stat_count_imply = 4237
+stat_count_sat = 3378
+stat_disj_count_imply = 11897
+stat_disj_count_sat = 4494
+stat_size_count_imply = 78182
+stat_size_count_sat = 15267
+syn_memo_count = 3388
+syn_memo_hit = 69
+total_unfold_disjs = 59
+true_imply_count = 519
+with_disj_cnt_0_s = 382
+with_disj_cnt_2_f = 54
+with_disj_cnt_2_s = 86
+z_stat_disj_imply = 4753
+z_stat_disj_sat = 3853
+
+ profile results: there where 44 keys 
+ 
+(Overall,7.11,1,7.11,[7.11],  100.%) 
+(Parsing,0.03,2,0.01,[],  0.42%) 
+(Preprocessing,0.12,1,0.12,[],  1.68%) 
+(TP.imply_timeout,0.,4237,0.,[],  0.%) 
+(Translating global var,0.01,1,0.01,[],  0.14%) 
+(Translating to Core,0.08,1,0.08,[],  1.12%) 
+(add_pure,0.04,3366,0.,[],  0.56%) 
+(elim_exists,0.,92,0.,[],  0.%) 
+(elim_redundant_ctr,0.01,25,0.,[],  0.28%) 
+(empty_predicate_testing,0.61,122,0.,[],  8.57%) 
+(entail_prune,0.85,141,0.,[],  12.09%) 
+(erc_imply,0.,123,0.,[],  0.14%) 
+(fast_imply,0.,6742,0.,[],  0.%) 
+(filter_dupl_memo,0.,7313,0.,[],  0.%) 
+(heap_entail_one_context_struc#2,2.47,142,0.01,[],  34.88%) 
+(heap_entail_one_context_struc#4,1.01,129,0.,[],  14.34%) 
+(heap_entail_one_context_struc#fold,0.76,22,0.03,[],  10.68%) 
+(imply,2.54,4237,0.,[],  35.86%) 
+(imply_proc_one_full,0.16,140,0.,[],  2.39%) 
+(imply_proc_one_ncplx,0.25,522,0.,[],  3.65%) 
+(is_sat,0.78,3378,0.,[],  10.97%) 
+(memo_imply,0.59,122,0.,[],  8.29%) 
+(memo_norm,0.,3485,0.,[],  0.%) 
+(merge_mems_r_dups,0.,3028,0.,[],  0.%) 
+(method build_avl1$node~node,0.05,1,0.05,[],  0.84%) 
+(method build_avl2$node~node~node,0.07,1,0.07,[],  0.98%) 
+(method get_max$int~int,0.,1,0.,[],  0.14%) 
+(method height$node,0.04,1,0.04,[],  0.7%) 
+(method insert$node~int,1.26,1,1.26,[1.26],  17.72%) 
+(method insert_inline$node~int,2.86,1,2.86,[2.86],  40.22%) 
+(method merge$node~node,0.07,2,0.03,[],  0.98%) 
+(method rotate_double_left$node~node~node~node~int~int~int,0.21,1,0.21,[],  3.09%) 
+(method rotate_double_right$node~node~node~node~int~int~int,0.23,1,0.23,[],  3.23%) 
+(method rotate_left$node~node~node,0.05,1,0.05,[],  0.84%) 
+(method rotate_right$node~node~node,0.06,1,0.06,[],  0.84%) 
+(normalize_max_renaming_list_failesc_context,0.01,375,0.,[],  0.14%) 
+(pred_inference,0.03,1,0.03,[],  0.56%) 
+(proof_after_base_case,0.,1,0.,[],  0.%) 
+(prune_imply,0.,3319,0.,[],  0.%) 
+(prune_preds,1.54,654,0.,[],  21.8%) 
+(prune_preds_filter,0.,654,0.,[],  0.%) 
+(simplify,0.01,32,0.,[],  0.28%) 
+(slow_imply,0.,123,0.,[],  0.14%) 
+(unfold_unsat,0.,127,0.,[],  0.%)

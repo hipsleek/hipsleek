@@ -1,0 +1,53 @@
+relation P(int s1, int s2, int l1, int l2).
+relation P2(int s2, int l1, int l2).
+relation Q(int s1, int s2, int l1, int l2).
+
+
+// expecting: P2(s2,l1,l2) -> l1<=s2
+infer [P2] s1<=l1 & P2(s2,l1,l2) & Q(s1,s2,l1,l2)  |- s1<=s2.
+print residue.
+
+
+infer [P2,l1,s2] s1<=l1 & P2(s2,l1,l2) & Q(s1,s2,l1,l2)  |- s1<=s2.
+print residue.
+
+//infer [Q] s1<=l1 & P(s1,s2,l1,l2)  |- s1<=s2 & Q(s1,s2,l1,l2) .
+//print residue.
+
+//infer [l1,s2,s1] s1<=l1 & s2a=s2 & s1a=s1  |- s1a<=s2a.
+//print residue.
+
+infer [l1,s2,l2] s1<=l1 & s2<=l2  |- s1<=s2.
+print residue.
+
+
+/*
+Given:
+infer [P] s1<=l1 & P(s1,s2,l1,l2)  |- s1<=s2.
+print residue.
+
+where we are to infer P; we can actually find
+some RelAss on P, namely:
+
+   P(s1,s2,l1,l2) --> ?
+
+This can be done by firstly converting to:
+
+ infer [s1,s2,l1,l2] s1<=l1  |- s1<=s2.
+
+which would infer l1<=s2 which means that
+we have an obligation:
+
+   P(s1,s2,l1,l2) --> l1<=s2
+
+Such a property would be collected as an
+relational obligation for P if P was
+present in the post-state.
+
+If P is present in the pre-state, we can use it
+to discover the weakest precondition P(..) 
+that yields the above.
+*/
+
+
+

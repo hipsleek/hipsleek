@@ -1,0 +1,31 @@
+//Valid.Fail.Fail
+data node { int val ; node next }.
+
+/*
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+*/
+
+pred lseg<n, p> == case {
+     n=0 -> [] self = p & n = 0;
+     n!=0 ->  [] self::node<next = r> * r::lseg<n - 1, p>; 
+     }
+     inv n >= 0.
+
+lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+checkentail 
+    self::node<_,r1> * r1::lseg<n-1,p> & 
+    n=b+a & 0<=a & 0<=b |-  self::lseg<a,r> * r::lseg<b,p>.
+// normal folding fail
+
+
+// fold with case-spec succeeds
+checkentail 
+    self::node<_,r1> * r1::lseg<n-1,p> & 
+    n=b+a & 0<=a & 0<=b |-  case 
+          {a=0 -> [] (exists r: self::lseg<b,p> & self=r);
+          a!=0 -> [] self::node<_,r2>*r2::lseg<a-1,r> * r::lseg<b,p>;
+          }. 
+

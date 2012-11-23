@@ -6,5 +6,5 @@ pred ll<n> == self = null & n = 0
 checkentail (exists r1, r2, r3: x::node<r1, null> * z::node<r2, r3> * y::ll<n>) |- x::ll<m> & m = 1.
 print residue.
 
-checkentail x::node<_, null> * z::node<> * y::ll<> |- (exists m : x::ll<m>).
+checkentail x::node<_, null> * z::node<_,_> * y::ll<_> |- (exists m : x::ll<m>).
 print residue.

@@ -1,0 +1,23 @@
+// CHOICE in Transition Invariant paper
+//Termination: Contradiction in Phase Constraints.
+// Termination checking result:
+
+infer [] x>0 & y>0 & x=y-1 & (y1=x & x1=x-1) & x1=y1-1 & Term[0,x] 
+  |- Term[0,x1].
+infer [] x>0 & y>0 & x=y-1 & (y1=x+1 & x1=y-2) & x1=y1-1 & Term[0,x] 
+  |- Term[0,x1].
+infer [] x>0 & y>0 & x=y-1 & (y1=x & x1=x-1) & x1=y1-2 & Term[0,x] 
+  |- Term[0,x1].
+infer [] x>0 & y>0 & x=y-1 & (y1=x+1 & x1=y-2) & x1=y1-2 & Term[0,x] 
+  |- Term[0,x1].
+
+infer [] x>0 & y>0 & x=y-2 & (y1=x & x1=x-1) & x1=y1-1 & Term[0,x] 
+  |- Term[0,x1].
+infer [] x>0 & y>0 & x=y-2 & (y1=x+1 & x1=y-2) & x1=y1-1 & Term[0,x] 
+  |- Term[0,x1].
+infer [] x>0 & y>0 & x=y-2 & (y1=x & x1=x-1) & x1=y1-2 & Term[0,x] 
+  |- Term[0,x1].
+infer [] x>0 & y>0 & x=y-2 & (y1=x+1 & x1=y-2) & x1=y1-2 & Term[0,x] 
+  |- Term[0,x1].
+//infer [] x>0 & y>0 & y1=x & x1=x-1 & Term[0,x] |- Term[0,x].
+

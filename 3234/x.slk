@@ -1,0 +1,21 @@
+
+// (1) invariant preservation 
+checkentail  i<=n & i!=n |- (i+1)<=n.
+
+// (2) rank is bounded
+checkentail  i<=n & i!=n |- n-i>=0.
+
+// (3) rank is decreasing
+checkentail  R0=(n-i) & i<=n & i!=n  |- R0>(n-(i+1)).
+
+// (4)
+checkentail x>5 |- x>0.
+
+// (5)
+checkentail x>5 |- x<0.
+
+// (6)
+checkentail x>5 |- x>6.
+
+// (7)
+checkentail x>1 & r=2*x |-  r>3.

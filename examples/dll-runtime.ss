@@ -35,7 +35,7 @@ sdsegN<sm, lg, size, prev, next, tail> == self = next & prev = tail & size = 0 &
 	inv lg >= sm & size >= 0;
 
 /*
-coercion self::sdsegN<sm, lg, size, prev, next, tail> & size > 0 <->
+lemma self::sdsegN<sm, lg, size, prev, next, tail> & size > 0 <->
 	self::sdsegN<sm, lg1, size1, prev, next1, tail1> * tail::dnode<val = v, prev = tail1, next = next> 
 		& next1 = tail & size = size1 + 1
 		& lg1 <= v;

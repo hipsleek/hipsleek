@@ -24,8 +24,8 @@ ll<n> == self = null & n = 0
 
 /* append two singly linked lists */
 void append2(node x, node y)
-  requires x::ll<n1> * y::ll<n2> & x!=null // & n1>0 //x!=null // & n1>0 & x != null
-  ensures x::ll<n1+n2>;
+  requires x::ll<n1> * y::ll<n2> & n1>0 // & x!=null // & n1>0 //x!=null // & n1>0 & x != null
+  ensures x::ll<m> & m=n1+n2;
 {    
 	if (x.next == null) 
            x.next = y;
@@ -214,6 +214,265 @@ void test(node x)
 	x.next = tmp;
 }
 */
+
+/*********************************************************/
+
+/* function to reverse a singly linked list */
+void reverse2(ref node xs, ref node ys)
+	requires xs::ll<n> * ys::ll<m> 
+	ensures ys'::ll<n+m> & xs' = null;
+{
+	if (xs != null) {
+		node tmp;
+		tmp = xs.next;
+    //dprint;
+		xs.next = ys;
+		ys = xs;
+		xs = tmp;
+    //dprint;
+		reverse(xs, ys);
+	}
+}
+void reverse3(ref node xs, ref node ys)
+	requires xs::ll<n> * ys::ll<m> 
+	ensures ys'::ll<n+m> & xs' = null;
+{
+	if (xs != null) {
+		node tmp;
+		tmp = xs.next;
+    //dprint;
+		xs.next = ys;
+		ys = xs;
+		xs = tmp;
+    //dprint;
+		reverse(xs, ys);
+	}
+}
+void reverse4(ref node xs, ref node ys)
+	requires xs::ll<n> * ys::ll<m> 
+	ensures ys'::ll<n+m> & xs' = null;
+{
+	if (xs != null) {
+		node tmp;
+		tmp = xs.next;
+    //dprint;
+		xs.next = ys;
+		ys = xs;
+		xs = tmp;
+    //dprint;
+		reverse(xs, ys);
+	}
+}
+void reverse5(ref node xs, ref node ys)
+	requires xs::ll<n> * ys::ll<m> 
+	ensures ys'::ll<n+m> & xs' = null;
+{
+	if (xs != null) {
+		node tmp;
+		tmp = xs.next;
+    //dprint;
+		xs.next = ys;
+		ys = xs;
+		xs = tmp;
+    //dprint;
+		reverse(xs, ys);
+	}
+}
+
+void reverse6(ref node xs, ref node ys)
+	requires xs::ll<n> * ys::ll<m> 
+	ensures ys'::ll<n+m> & xs' = null;
+{
+	if (xs != null) {
+		node tmp;
+		tmp = xs.next;
+    //dprint;
+		xs.next = ys;
+		ys = xs;
+		xs = tmp;
+    //dprint;
+		reverse(xs, ys);
+	}
+}
+
+void reverse7(ref node xs, ref node ys)
+	requires xs::ll<n> * ys::ll<m> 
+	ensures ys'::ll<n+m> & xs' = null;
+{
+	if (xs != null) {
+		node tmp;
+		tmp = xs.next;
+    //dprint;
+		xs.next = ys;
+		ys = xs;
+		xs = tmp;
+    //dprint;
+		reverse(xs, ys);
+	}
+}
+
+
+void reverse8(ref node xs, ref node ys)
+	requires xs::ll<n> * ys::ll<m> 
+	ensures ys'::ll<n+m> & xs' = null;
+{
+	if (xs != null) {
+		node tmp;
+		tmp = xs.next;
+    //dprint;
+		xs.next = ys;
+		ys = xs;
+		xs = tmp;
+    //dprint;
+		reverse(xs, ys);
+	}
+}
+
+void reverse9(ref node xs, ref node ys)
+	requires xs::ll<n> * ys::ll<m> 
+	ensures ys'::ll<n+m> & xs' = null;
+{
+	if (xs != null) {
+		node tmp;
+		tmp = xs.next;
+    //dprint;
+		xs.next = ys;
+		ys = xs;
+		xs = tmp;
+    //dprint;
+		reverse(xs, ys);
+	}
+}
+
+void reverse10(ref node xs, ref node ys)
+	requires xs::ll<n> * ys::ll<m> 
+	ensures ys'::ll<n+m> & xs' = null;
+{
+	if (xs != null) {
+		node tmp;
+		tmp = xs.next;
+    //dprint;
+		xs.next = ys;
+		ys = xs;
+		xs = tmp;
+    //dprint;
+		reverse(xs, ys);
+	}
+}
+
+void reverse11(ref node xs, ref node ys)
+	requires xs::ll<n> * ys::ll<m> 
+	ensures ys'::ll<n+m> & xs' = null;
+{
+	if (xs != null) {
+		node tmp;
+		tmp = xs.next;
+    //dprint;
+		xs.next = ys;
+		ys = xs;
+		xs = tmp;
+    //dprint;
+		reverse(xs, ys);
+	}
+}
+
+void reverse12(ref node xs, ref node ys)
+	requires xs::ll<n> * ys::ll<m> 
+	ensures ys'::ll<n+m> & xs' = null;
+{
+	if (xs != null) {
+		node tmp;
+		tmp = xs.next;
+    //dprint;
+		xs.next = ys;
+		ys = xs;
+		xs = tmp;
+    //dprint;
+		reverse(xs, ys);
+	}
+}
+
+void reverse13(ref node xs, ref node ys)
+	requires xs::ll<n> * ys::ll<m> 
+	ensures ys'::ll<n+m> & xs' = null;
+{
+	if (xs != null) {
+		node tmp;
+		tmp = xs.next;
+    //dprint;
+		xs.next = ys;
+		ys = xs;
+		xs = tmp;
+    //dprint;
+		reverse(xs, ys);
+	}
+}
+
+void reverse14(ref node xs, ref node ys)
+	requires xs::ll<n> * ys::ll<m> 
+	ensures ys'::ll<n+m> & xs' = null;
+{
+	if (xs != null) {
+		node tmp;
+		tmp = xs.next;
+    //dprint;
+		xs.next = ys;
+		ys = xs;
+		xs = tmp;
+    //dprint;
+		reverse(xs, ys);
+	}
+}
+
+void reverse15(ref node xs, ref node ys)
+	requires xs::ll<n> * ys::ll<m> 
+	ensures ys'::ll<n+m> & xs' = null;
+{
+	if (xs != null) {
+		node tmp;
+		tmp = xs.next;
+    //dprint;
+		xs.next = ys;
+		ys = xs;
+		xs = tmp;
+    //dprint;
+		reverse(xs, ys);
+	}
+}
+
+
+void reverse16(ref node xs, ref node ys)
+	requires xs::ll<n> * ys::ll<m> 
+	ensures ys'::ll<n+m> & xs' = null;
+{
+	if (xs != null) {
+		node tmp;
+		tmp = xs.next;
+    //dprint;
+		xs.next = ys;
+		ys = xs;
+		xs = tmp;
+    //dprint;
+		reverse(xs, ys);
+	}
+}
+
+void reverse17(ref node xs, ref node ys)
+	requires xs::ll<n> * ys::ll<m> 
+	ensures ys'::ll<n+m> & xs' = null;
+{
+	if (xs != null) {
+		node tmp;
+		tmp = xs.next;
+    //dprint;
+		xs.next = ys;
+		ys = xs;
+		xs = tmp;
+    //dprint;
+		reverse(xs, ys);
+	}
+}
+
 
 
 

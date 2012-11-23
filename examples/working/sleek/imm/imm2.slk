@@ -5,33 +5,30 @@ pred ll<n> == self = null & n = 0
 
 
 
-checkentail (x::ll<n>@I & y::ll<m>@I) & n>0 & m>0  |- (y::ll<m1>@I & x::ll<n1>@I) & y!=x. 
-// Fail
+checkentail (x::ll<n>@L & y::ll<m>@L) & n>0 & m>0  |- (y::ll<m1>@L & x::ll<n1>@L) & y!=x.
+//1. Fail
 
 
-
-
-
-checkentail (x::ll<n>@I * y::ll<m>@I)  |- (y::ll<m1>@I & x::ll<n1>@I).
+checkentail (x::ll<n>@L * y::ll<m>@L)  |- (y::ll<m1>@L & x::ll<n1>@L).
 print residue.
-// x@I * y@I
-// Valid
+// x@L * y@L
+//2. Valid
 
 
-checkentail (x::ll<n>@I & y::ll<m>@I) & x!=null & y!=null  |- (y::ll<m1>@I * x::ll<n1>@I).
-print residue.
-// Fail
+checkentail (x::ll<n>@L & y::ll<m>@L) & x!=null & y!=null  |- (y::ll<m1>@L * x::ll<n1>@L).
+//print residue.
+//3. Fail
 
 
-checkentail (x::ll<n>@I * y::ll<m>@I) ; p::ll<_> * ((t::ll<a>@I); z::ll<m>) & n > 3 |- (y::ll<m1>@I & x::ll<n1>@I).
-print residue.
+checkentail (x::ll<n>@L * y::ll<m>@L) ; p::ll<_> * ((t::ll<a>@L); z::ll<m>) & n > 3 |- (y::ll<m1>@L & x::ll<n1>@L).
+//print residue.
 // x * y; p * (t; z)
-// Valid.
+//4. Valid.
 
 
-checkentail (x::ll<n>@I & y::ll<m>@I & t::ll<a>@I); z::ll<m> & n > 3  |- (y::ll<m1>@I & x::ll<n1>@I) & n1>6.
-print residue.
-// Fail
+checkentail (x::ll<n>@L & y::ll<m>@L & t::ll<a>@L); z::ll<m> & n > 3  |- (y::ll<m1>@L & x::ll<n1>@L) & n1>6.
+//print residue.
+//5. Fail
 
 
 

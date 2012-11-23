@@ -7,7 +7,7 @@ CFLAGS=
 LFLAGS= -a
 LIBS=
 
-all: xml-light.cma test.exe doc
+all: xml-light.cma test.exe doc opt
 
 opt: xml-light.cmxa test_opt.exe
 

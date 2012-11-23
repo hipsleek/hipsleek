@@ -1,0 +1,13 @@
+../../../hip -tp om --epi --eps --enable-slicing --opt-imply 3 avl_size_height_0_link.ss > avl_size_height_0_link_forced_slicing_3.log
+../../../hip -tp om --epi --eps --enable-slicing --opt-imply 3 avl_size_height_1_link.ss > avl_size_height_1_link_forced_slicing_3.log
+../../../hip -tp om --epi --eps --enable-slicing --opt-imply 3 avl_size_height_bags_0_link.ss > avl_size_height_bags_0_link_forced_slicing_3.log
+../../../hip -tp om --epi --eps --enable-slicing --opt-imply 3 avl_size_height_bags_1_link.ss > avl_size_height_bags_1_link_forced_slicing_3.log
+../../../hip -tp om --epi --eps --enable-slicing --opt-imply 3 avl_size_height_bal_1_link.ss > avl_size_height_bal_1_link_forced_slicing_3.log
+../../../hip -tp om --epi --eps --enable-slicing --opt-imply 3 avl_size_height_bal_2_links.ss > avl_size_height_bal_2_links_forced_slicing_3.log
+../../../hip -tp om --epi --eps --enable-slicing --opt-imply 3 avl_size_height_bal_5_links.ss > avl_size_height_bal_5_links_forced_slicing_3.log
+../../../hip -tp om --epi --eps --enable-slicing --opt-imply 3 avl_size_height_bal_6_links.ss > avl_size_height_bal_6_links_forced_slicing_3.log
+../../../hip -tp om --epi --eps --enable-slicing --opt-imply 3 bubble_size_bags_0_link.ss > bubble_size_bags_0_link_forced_slicing_3.log
+../../../hip -tp om --epi --eps --enable-slicing --opt-imply 3 qsort_size_bags_0_link.ss > qsort_size_bags_0_link_forced_slicing_3.log
+../../../hip -tp om --epi --eps --enable-slicing --opt-imply 3 msort_size_bags_0_link.ss > msort_size_bags_0_link_forced_slicing_3.log
+../../../hip -tp om --epi --eps --enable-slicing --opt-imply 3 complete_size_minheight_1_link.ss > complete_size_minheight_1_link_forced_slicing_3.log
+../../../hip -tp om --epi --eps --enable-slicing --opt-imply 3 heaps_size_maxelem_0_link.ss > heaps_size_maxelem_0_link_forced_slicing_3.log

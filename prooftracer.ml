@@ -56,6 +56,8 @@ type proof =
   | PEAssume of assume_step
   | PEEx of eex_step
   | Search of proof list
+  | AllowResidue of allow_residue_step
+  | ForbidResidue of forbid_residue_step
   | Unknown 
 
 and ex_step = { ex_step_ante : CF.context;
@@ -135,6 +137,13 @@ and eex_step = {eex_context: CF.context;
 				eex_proof: proof}
 					 
 					 
+
+and allow_residue_step = { allow_residue_step_ctx : CF.context;
+                           allow_residue_step_conseq : CF.formula; }
+
+and forbid_residue_step = { forbid_residue_step_ctx : CF.context;
+                            forbid_residue_step_conseq : CF.formula; }
+
 let mkCoercionLeft ctx conseq clhs crhs prf name = CoercionLeft { coercion_step_name = name;
 																  coercion_step_ante = ctx;
 																  coercion_step_conseq = conseq;
@@ -220,7 +229,12 @@ let mkBaseStep bc bf bp cp = PEBase{ base_context=bc; base_form=bf; base_proof=b
 let mkAssumeStep ac af = PEAssume{ assume_context=ac; assume_formula=af}
 
 let mkEexStep ec ef ep = PEEx{eex_context=ec; eex_formula=ef; eex_proof=ep}
-												 
+
+let mkAllowResidue ctx conseq = AllowResidue { allow_residue_step_ctx = ctx;
+                                               allow_residue_step_conseq = conseq; }
+
+let mkForbidResidue ctx conseq = ForbidResidue { forbid_residue_step_ctx = ctx;
+                                                 forbid_residue_step_conseq = conseq; }
 
 let rec string_of_proof prf0 : string =
   let rec to_string buffer prf1 = match prf1 with
@@ -358,6 +372,14 @@ let rec string_of_proof prf0 : string =
 	| UnsatConseq -> Buffer.add_string buffer "<UnsatConseq></UnsatConseq>"
 	| TrueConseq -> Buffer.add_string buffer "<TrueConseq></TrueConseq>"
 	| Failure -> Buffer.add_string buffer "<Failure></Failure>" 
+  | AllowResidue ({ allow_residue_step_ctx = ctx;
+                    allow_residue_step_conseq = conseq; }) ->
+      let s = Cprinter.string_of_context ctx in
+      Buffer.add_string buffer ("<AllowResidue>\n<Info>" ^ s ^ "</Info>\n</AllowResidue>")
+  | ForbidResidue ({ forbid_residue_step_ctx = ctx;
+                     forbid_residue_step_conseq = conseq; }) ->
+      let s = Cprinter.string_of_context ctx in
+      Buffer.add_string buffer ("<ForbidResidue>\n<Info>" ^ s ^ "</Info>\n</ForbidResidue>")
 	| _ -> Buffer.add_string buffer "<Failure></Failure>" 
 	in
   let buffer = Buffer.create 1024 in
@@ -384,4 +406,248 @@ let log_proof prf =
 	let prf_str = string_of_proof prf in
 	  output_string chn prf_str;
 	  close_out chn
+	  
+(** An Hoa : Output to HTML **)
+
+(* The resources (i.e. the 4 files hipsleek.css, hipsleek.js, plus.gif, minus.gif) should be put in the same directory as the executable *)
+let resources_dir_url = "file://" ^ Gen.get_path Sys.executable_name
+
+
+let html_output = ref ""
+
+let html_output_file = ref ""
+
+(* Convert a string to HTML: - replace 5 reserved characters <  >  '  ""  &  with entities
+                             - replace newline \n with <br> </br>   *)
+let convert_to_html s =
+	let html_map = [("&","&amp;"); ("<","&lt;"); (">","&gt;"); ("'","&apos;"); ("\"", "&quot;");   ("\n","<br/>\n");] in
+	let res = List.fold_left (fun x (y, z) -> Str.global_replace (Str.regexp_string y) z x) s html_map in
+		res
+
+let push_proc proc = let unmin_name = Cast.unmingle_name proc.Cast.proc_name in 
+	begin
+		html_output := !html_output ^ "<li class=\"Collapsed proc\">\n" ^ "Procedure " ^ unmin_name ^ "\n<ul>"; (* ^ "<li class=\"Collapsed procdef\">Internal representation\n<ul>" ^ (convert_to_html (Cprinter.string_of_proc_decl 3 proc)) ^ "</ul></li>" *)
+	end
+
+let primitive_procs = ["add___"; "minus___"; "mult___"; "div___"; "eq___"; "neq___"; "lt___"; "lte___"; "gt___"; "gte___"; "land___"; "lor___"; "not___"; "pow___"; "aalloc___"; "is_null___"; "is_not_null___"]
+
+let start_with s p = if (String.length s >= String.length p) then
+		String.sub s 0 (String.length p) = p
+	else false
+
+let push_list_failesc_context_struct_entailment lctx sf =
+	html_output := !html_output ^ "<li class=\"Collapsed context\">Context\n<ul>" ^ (Cprinter.html_of_list_failesc_context lctx) ^ Cprinter.html_vdash ^ (Cprinter.html_of_formula (Cformula.struc_to_precond_formula sf)) 
+
+let push_list_partial_context_formula_entailment lctx sf =
+	html_output := !html_output ^ "<li class=\"Collapsed context\">Context\n<ul>" ^ (Cprinter.html_of_list_partial_context lctx) ^ Cprinter.html_vdash ^ (Cprinter.html_of_formula sf) 
+
+(* let push_list_failesc_context ctx =
+	html_output := !html_output ^ "<li class=\"Collapsed context\">Context\n<ul>"
+
+let push_list_partial_context ctx =
+	html_output := !html_output ^ "<li class=\"Collapsed context\">Context<ul>" ^ *)
+
+let push_pre fce = match fce with
+	| Cast.SCall {
+		Cast.exp_scall_type = t;
+		Cast.exp_scall_method_name = mn;
+		Cast.exp_scall_arguments = args;
+		Cast.exp_scall_is_rec = ir;
+		Cast.exp_scall_path_id = pid;
+		Cast.exp_scall_pos = pos } ->
+		let unmin_name = Cast.unmingle_name mn in
+		if List.mem unmin_name primitive_procs then false
+		else begin
+			let line_loc = "<a href=\"#L" ^ (line_number_of_pos pos) ^ "\">" ^ "line " ^ (line_number_of_pos pos) ^ "</a>" in
+			let message = if (start_with unmin_name "array_get_elm_at___") then
+					"Memory safety of array access at line " ^ line_loc
+				else if (start_with unmin_name "update___") then
+					"Memory safety of array update at line " ^ line_loc
+				else "Precondition of procedure call " ^ (convert_to_html (Cprinter.string_of_exp fce)) ^ " at " ^ line_loc ^ " holds" in
+			html_output :=  !html_output ^ "<li class=\"Collapsed pre\">\n" ^ message ^ "<ul>";
+			true
+		end
+	| _ -> failwith "push_pre: unexpected expr"
 		
+let push_assert_assume ae = match ae with
+	| Cast.Assert {
+		Cast.exp_assert_asserted_formula = fa;
+		Cast.exp_assert_assumed_formula = fas;
+		Cast.exp_assert_path_id = pid;
+    Cast.exp_assert_type = atype;
+		Cast.exp_assert_pos = pos } -> let line_loc = "<a href=\"#L" ^ (line_number_of_pos pos) ^ "\">" ^ "line " ^ (line_number_of_pos pos) ^ "</a>" in
+    let assert_str = match atype with
+      | None -> "Assertion"
+      | Some true -> "Assertion_exact"
+      | Some false -> "Assertion_inexact" in
+		html_output := !html_output ^ "<li class=\"Collapsed assert\">\n" ^ assert_str ^ " at " ^ line_loc ^ " holds\n<ul>"
+	| _ -> failwith "push_assert_assume: unexpected expr"
+
+let push_post () = html_output := 
+	!html_output ^ "<li class=\"Collapsed post\">\nProcedure post-condition holds\n<ul>"
+
+let push_term () = html_output := 
+	!html_output ^ "<li class=\"Collapsed term\">Termination of all procedures\n<ul>"
+			
+let push_pure_imply ante conseq r = html_output := 
+	!html_output ^ "<li class=\"Collapsed pureimply" ^ (if r then "valid" else "invalid") ^ "\">Verification condition\n" ^ "<ul>" ^ (Cprinter.html_of_pure_formula ante) ^ Cprinter.html_vdash ^ (Cprinter.html_of_pure_formula conseq) ^ "\n"
+
+(* prover input | output are all leaves of the proof trees, so we push and pop at the same time *)
+
+let push_pop_prover_input prover_inp prover_name = html_output :=
+	!html_output ^ "<li class=\"Collapsed proverinput" ^ "\">Input to prover " ^ prover_name ^ "\n<ul>" ^ (convert_to_html prover_inp) ^ "</ul></li>"
+	
+let push_pop_prover_output prover_out prover_name = html_output := 
+	!html_output ^ "<li class=\"Collapsed proveroutput" ^ "\">Output of prover " ^ prover_name ^ "\n<ul>" ^ (convert_to_html prover_out) ^ "</ul></li>"
+
+let push_term_checking pos reachable =
+    let line_loc = "<a href=\"#L" ^ (line_number_of_pos pos) ^ "\">" ^ "line " ^ (line_number_of_pos pos) ^ "</a>" in
+    html_output := !html_output ^ "<li class=\"Collapsed term\">Termination checking at " ^ line_loc ^ 
+    (if not reachable then "\n<ul>Unreachable recursive call" else "") ^ "\n<ul>"	
+(*	
+let push_pop_entail_variance (es, f, res) = html_output := 
+	!html_output ^ "<li class=\"Collapsed termentail" ^ "\">Well-foundedness checking" ^ "\n<ul>" ^
+  (Cprinter.html_of_formula es) ^ Cprinter.html_vdash ^ (Cprinter.html_of_pure_formula f) ^ " : " ^ (if res then "valid" else "failed") ^ "</ul></li>"
+*)
+let push_entail_variance (es, f) = html_output := 
+	!html_output ^ "<li class=\"Collapsed termentail" ^ "\">Well-foundedness checking" ^ "\n<ul>" ^
+  (Cprinter.html_of_formula es) ^ Cprinter.html_vdash ^
+  (Cprinter.html_of_pure_formula f)
+
+let push_pop_unreachable_variance () = html_output := 
+	!html_output ^ "<li class=\"Collapsed termunreach" ^ "\">Unreachable" ^ "</ul></li>" 
+
+let push_pop_entail_variance_res res = html_output := 
+	!html_output ^ "<li class=\"Collapsed termres" ^ "\">Variance checking result " ^ "\n<ul>" ^
+	(convert_to_html (if res then "Valid" else "Invalid")) ^ "</ul></li>"
+	
+let pop_div () = html_output := !html_output ^ "</ul></li>\n"
+
+let append_html s =
+	let s = convert_to_html s in
+		html_output := !html_output ^ s
+		
+let append_html_no_convert s =	html_output := !html_output ^ s
+
+let html_of_hip_source src =
+	let srclines = Str.split (Str.regexp "\n") src in
+	let _,srclines = List.fold_right (fun x (y, z) -> if (not y && x = "") then (false,[]) else (true,x :: z)) srclines (false,[]) in (* remove trailing \n *)
+	let res, _ = List.fold_left (fun (accumulated,current_line_no) next_line -> 
+			let new_accumulated = accumulated ^ 
+					"<tr id=\"L" ^ (string_of_int current_line_no) ^ "\" class=\"" ^ (if (current_line_no mod 2 = 0) then "EvenSourceLine" else "OddSourceLine") ^ "\">" ^
+						"<td>" ^ (string_of_int current_line_no) ^ "</td>" ^
+						"<td><pre>" ^ next_line ^ "</pre></td>" ^
+					"</tr>\n" in
+			let new_line_no = current_line_no + 1 in
+				(new_accumulated,new_line_no)) ("",1) srclines in
+		"<table>" ^ res ^ "</table>"
+	
+(* An Hoa : experiment with JSON storage of proof *)
+let jsondecls = ref ""
+
+let jsonproof = ref "var jsonproof = ["
+
+let initialize_html source_file_name = let source = (Gen.SysUti.string_of_file source_file_name) in
+	let source_html = html_of_hip_source source in
+	begin
+	jsonproof := "var srcfilename = " ^ (strquote source_file_name) ^ ";" ^ !jsonproof;
+	html_output_file := source_file_name ^ "_proof.html";
+	html_output := 
+"<html>
+<head> 
+	<link rel=\"stylesheet\" type=\"text/css\" href=\"" ^ resources_dir_url ^ "hipsleek.css\" />
+	<script type=\"text/javascript\" src=\"" ^ resources_dir_url ^ "hipsleek.js\"></script> 
+</head>
+<body> 
+<h1>" ^ source_file_name ^ "</h1>
+<ul class=\"TreeView\" id=\"ProofTree\">
+<li class=\"Collapsed progsource\">Source<ul>" ^ source_html ^ "</ul></li>";
+	end
+	
+let post_process_html () = 	html_output := !html_output ^ 
+"</ul>
+<script>
+	SetupTreeView(\"ProofTree\");
+</script>
+</body>
+</html>"
+		
+
+(* An Hoa : experiment with JSON storage of proof *)
+
+(* start a compound JSON object, a compound object must have a field items which is an array consisting of component objects *)
+let start_compound_object () =
+	jsonproof := !jsonproof ^ "{ items : ["
+
+let add_proc proc vres =
+	let unmin_name = Cast.unmingle_name proc.Cast.proc_name in
+		jsonproof := !jsonproof ^ "], type : \"proc\", name : " ^ (strquote unmin_name) ^ ", success : " ^ (strquote (string_of_bool vres)) ^ "},\n"
+
+let primitive_procs = ["add___"; "minus___"; "mult___"; "div___"; "eq___"; "neq___"; "lt___"; "lte___"; "gt___"; "gte___"; "land___"; "lor___"; "not___"; "pow___"; "aalloc___"; "is_null___"; "is_not_null___"]
+
+let start_with s p = if (String.length s >= String.length p) then
+		String.sub s 0 (String.length p) = p
+	else false
+
+let add_list_failesc_context_struct_entailment lctx sf =
+	jsonproof := !jsonproof ^ "], type : \"listfailesc\", context : " ^ (strquote (Cprinter.html_of_list_failesc_context lctx)) ^ ", fml : " ^ (strquote (Cprinter.html_vdash ^ (Cprinter.html_of_formula (Cformula.struc_to_precond_formula sf)))) ^ "},\n"
+
+let add_list_partial_context_formula_entailment lctx sf =
+	jsonproof := !jsonproof ^ "], type : \"listfailesc\", context : " ^ (strquote (Cprinter.html_of_list_partial_context lctx)) ^ ", fml : " ^ (strquote (Cprinter.html_vdash ^ (Cprinter.html_of_formula (Cformula.struc_to_precond_formula sf)))) ^ "},\n"
+
+let add_pre fce = match fce with
+	| Cast.SCall {
+		Cast.exp_scall_type = t;
+		Cast.exp_scall_method_name = mn;
+		Cast.exp_scall_arguments = args;
+		Cast.exp_scall_is_rec = ir;
+		Cast.exp_scall_path_id = pid;
+		Cast.exp_scall_pos = pos } ->
+		let unmin_name = Cast.unmingle_name mn in
+		let is_primitive = List.mem unmin_name primitive_procs in
+		let lineloc = line_number_of_pos pos in
+		let precndtype = if (start_with unmin_name "array_get_elm_at___") then "precnd_arracc" else if (start_with unmin_name "update___") then "precnd_arrupdt" else "precnd" in
+			jsonproof :=  !jsonproof ^ "], type : " ^ (strquote precndtype) ^ ", line : " ^ (strquote lineloc) ^ ", is_primitive : " ^ (strquote (string_of_bool is_primitive)) ^ "},\n"
+	| _ -> failwith "push_pre: unexpected expr"
+		
+let add_assert_assume ae = match ae with
+	| Cast.Assert {
+		Cast.exp_assert_asserted_formula = fa;
+		Cast.exp_assert_assumed_formula = fas;
+		Cast.exp_assert_path_id = pid;
+    Cast.exp_assert_type = atype;
+		Cast.exp_assert_pos = pos } -> 
+      let lineloc = line_number_of_pos pos in
+      let assert_str = match atype with
+        | None -> "Assertion"
+        | Some true -> "Assertion_exact"
+        | Some false -> "Assertion_inexact" in
+		jsonproof := !jsonproof ^ "], type : \"" ^ assert_str ^ "\", line : " ^ (strquote lineloc) ^ "},\n"
+	| _ -> failwith "push_assert_assume: unexpected expr"
+
+let add_post () = 
+	jsonproof := !jsonproof ^ "], type : \"post\"},\n"
+
+(*let push_term () = jsonproof := 
+	!jsonproof ^ "<li class=\"Collapsed term\">Termination of all procedures\n<ul>"*)
+			
+let add_pure_imply ante conseq is_valid prover_name prover_input prover_output = 
+	jsonproof := !jsonproof ^ "{ type : \"pureimply\"," ^ (*	prover_input : " ^ (strquote prover_input) ^ ",*) "	prover_output : " ^ (strquote prover_output) ^ ", prover : " ^ (strquote prover_name) ^ ", is_valid : " ^ (strquote (string_of_bool is_valid)) ^ ",	formula : " ^ (strquote ((Cprinter.html_of_pure_formula ante) ^ Cprinter.html_vdash ^ (Cprinter.html_of_pure_formula conseq))) ^ "},\n"
+
+(* End of JSON proof generator *)
+
+let write_html_output () =
+	let resource_dir = (Gen.get_path Sys.executable_name) ^ "html_resources/" in
+	let template = Gen.SysUti.string_of_file (resource_dir ^ "hipsleek.html") in
+	let setup_script = !jsonproof ^ "\n];\n" in
+	let htmloutres = Str.global_replace (Str.regexp_string "//$SETUP_SCRIPT") setup_script template in
+	let htmloutres = Str.global_replace (Str.regexp_string "$$RESOURCE_DIR_URL$$") ("file://" ^ resource_dir) htmloutres in
+	(* let _ = print_endline !jsonproof in *)
+	let _ = post_process_html () in
+	let chn = open_out !html_output_file in
+	let chntest = open_out "testjason.html" in
+		output_string chn !html_output;
+		output_string chntest htmloutres;
+		close_out chn;
+		close_out chntest;;
+

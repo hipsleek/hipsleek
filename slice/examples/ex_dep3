@@ -1,0 +1,22 @@
+ll3<n1, n2> ==
+	self = null & n1 = 0 & n2 = 0 or
+	self::node<_,p> * p::ll3<n1p, n2p> & n1 = 1 + n1p & n2 = 2 + n2p
+	inv n2 = 2 * n1;
+	[n1 <- {}; n2 <- {}] (default)
+	CHECK IMPLICATION: true
+	 exists1(n1p_516:
+		n1=n1p_516+1 & 
+		self!=null & 
+		n2=n1p_516+n1p_516+2) |-  n2=n1+n1
+		
+ll6<n1, n2> ==
+	self = null & n1 = 0 & n2 = 0 or
+	self::node<_,p> * p::ll6<n1p, n2p> & n1 = 1 + n1p & n2 = 2 + n2p
+	inv n1 >= 0 & n2 = 2 * n1;
+	[n1 <- {}; n2 <- {}] (default)
+	CHECK IMPLICATION: true
+	exists1(n1p_518:
+		n1=n1p_518+1 & 
+		self!=null & 
+		0<=n1p_518 & (-)
+		n2=n1p_518+n1p_518+2) |-  n2=n1+n1

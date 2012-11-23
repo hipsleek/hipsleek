@@ -112,7 +112,7 @@ and gen_nodes prog n h0 buffer = match h0 with
       let tmp = List.map (fun v -> (dot_of_spec_var v, pname)) mvars in
 	Buffer.add_string buffer (pname ^ " [shape=box,style=dashed,label=\"" ^ c ^ "\"];\n");
 	(dot_of_spec_var p, pname) :: tmp
-  | HTrue | HFalse | Hole _ -> []
+  | HTrue | HFalse | HEmp | Hole _ -> []
 
 
 and gen_edges prog n h0 p nodes buffer = 
@@ -144,7 +144,7 @@ and gen_edges prog n h0 p nodes buffer =
 		   h_formula_data_arguments = args}) -> begin
 	  let tmp = List.tl (List.tl args) in
 	  let ddef = Cast.look_up_data_def no_pos prog.Cast.prog_data_decls c in
-	  let field_names = List.map snd ddef.Cast.data_fields in
+	  let field_names = List.map Cast.get_field_name ddef.Cast.data_fields in
 	    ignore (List.map2 (fun a -> fun lbl -> make_edge p a lbl) tmp field_names)
 	end
       | ViewNode ({h_formula_view_node = p;
@@ -154,7 +154,7 @@ and gen_edges prog n h0 p nodes buffer =
 	  let param_names = List.map dot_of_spec_var vdef.Cast.view_vars in
 	    ignore (List.map2 (fun a -> fun lbl -> make_edge p a lbl) args param_names)
 	end
-      | HTrue | HFalse | Hole _ -> ()
+      | HTrue | HFalse | HEmp | Hole _ -> ()
 
 and gen_edges_visib_names n visib_names p nodes buffer =
   let visib_names = List.map (fun v -> SpecVar (Named "", v, Primed)) visib_names in

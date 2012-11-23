@@ -66,7 +66,7 @@ struct
     answ 
 
   let maybe_raise_timeout_num i (fnc: 'a -> 'b) (arg: 'a) (tsec:float) : 'b =
-    Gen.Debug.no_1_num i "maybe_raise_timeout" string_of_float pr_no (fun _ -> maybe_raise_timeout fnc arg tsec) tsec 
+    Debug.no_1_num i "maybe_raise_timeout" string_of_float pr_no (fun _ -> maybe_raise_timeout fnc arg tsec) tsec 
 
   (* same as maybe_raise_timoeut just that it treats the timeout exception with the with_timeout function *)
   let maybe_raise_and_catch_timeout (fnc: 'a -> 'b) (arg: 'a) (tsec: float) (with_timeout: unit -> 'b): 'b =
@@ -84,12 +84,22 @@ struct
           (* with_timeout () *)
               end
 
+  let maybe_raise_and_catch_timeout_sleek (fnc: 'a -> 'b) (arg: 'a) (with_timeout: 'b): 'b =
+    try 
+      if !sleek_timeout_limit > 0. then
+        let res = maybe_raise_timeout fnc arg !sleek_timeout_limit in
+        res 
+      else fnc arg
+    with 
+    | Timeout -> with_timeout
+    | exc -> raise exc
+
   let maybe_raise_and_catch_timeout_bool (fnc: 'a -> bool) (arg: 'a) (tsec: float) (with_timeout: unit -> bool): bool =
-    Gen.Debug.no_1 "maybe_raise_and_catch_timeout" string_of_float string_of_bool 
+    Debug.no_1 "maybe_raise_and_catch_timeout" string_of_float string_of_bool 
         (fun _ -> maybe_raise_and_catch_timeout fnc arg tsec with_timeout) tsec 
 
   let maybe_raise_and_catch_timeout_string_bool (fnc: string -> bool) (arg: string) (tsec: float) (with_timeout: unit -> bool): bool =
-    Gen.Debug.no_2 "maybe_raise_and_catch_timeout"  string_of_float (fun s -> s) string_of_bool 
+    Debug.no_2 "maybe_raise_and_catch_timeout"  string_of_float (fun s -> s) string_of_bool 
         (fun _ _ -> maybe_raise_and_catch_timeout fnc arg tsec with_timeout) tsec arg
 
   (* closes the pipes of the named process *)

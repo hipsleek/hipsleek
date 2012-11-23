@@ -1,0 +1,13 @@
+data node { int val ; node next }.
+ 
+pred lseg<p> == self = p 
+or self::node<_,r> * r::lseg<p> & self!=p inv true.
+
+checkentail x::node<_,r> * r::lseg<p> & r!=p |- x!=r.
+//Entail(4)=Fail.(may) cause:213  x!=null |-  x!=r (may-bug).
+//  bug above should be rectified
+//  baga info not reviewed by r::lseg<p> abstraction.
+//  should we add baga info to xpure1?
+//  --eps contains
+//  prune baga conditions: (self)-2,()-1
+//Entail(4)=Valid. (with --eps)

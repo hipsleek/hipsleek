@@ -14,6 +14,12 @@ sll<n, sm, lg> ==
   or self::node<sm, q> * q::sll<n-1, qs, lg> &  sm <= qs 
       inv n >= 1 & sm <= lg & self!=null ;
 
+ ll<n> == self=null & n=0
+	or self::node<_, r> * r::ll<n-1>
+   inv n>=0;
+
+lemma self::sll<n, sm, lg> -> self::ll<n>;
+
 node partition(ref node xs, int c)
   requires xs::bnd<n, sm, bg> & sm <= c <= bg
   ensures xs'::bnd<a, sm, c> * res::bnd<b, c, bg> & n = a+b;

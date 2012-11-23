@@ -1,0 +1,84 @@
+NEW ISSUES: 
+===========
+
+Can we try a simpler ll-del.ss example
+
+dll-del.ss -> is it ok to infer a<2 in the precondition?
+bst-insert.ss -> fails (can i infer any relation between ma, lg, a?)
+bst-del.ss -> fails
+bsort-1.ss: the inference succeeds but the new rels look very big and some sub-relations seem to be repeating..
+
+
+Why is FIXPOINT calculator not invoked? Has it failed
+for dll-del.ss example. Some message would be good.
+FIXPOINT calc is invoked for the other examples,
+like ll-len, ll-app and ll-const.
+
+current examples:
+  - ll-<fn>.ss (for inference)
+  - v-ll.ss (for verification)
+
+to more examples
+
+integer examples
+ - bubble-sort (provide verify and infer)
+ - dll (double linked-list)
+ - tree (trees)
+
+bag examples:
+ - ll-bag (provide verify and infer)
+ - dll-bag (provide verify and infer)
+ - bubble-sort-bag (provide verify and infer)
+ - tree-bag (provide verify and infer)
+
+loop in bug1c.slk (where is the example now?)
+
+
+FIXED
+=====
+// added in aggressive_safe
+aggressive assumption filter using unsat checking
+(this cannot be used in tpdispatcher, as counter productive)
+
+DONE
+post-process multiple result to remove false state with inferred pre
+
+bug1a.slk
+ - extra false case, why?
+infer [n,A] x::node<_,y> * y::ll<m> & n=1 |- x::ll<z> & A(n,m,z).
+print residue.
+Entail  (1): Valid. 
+<1>true & n=1 & Anon_34=Anon_12 & q_35=y & m+1=z & {FLOW,(17,18)=__norm}
+inferred rel: [( (m=0 | 1<=m) & m+1=z & n=1) -->  A(n,m,z)]
+<2>false & false & {FLOW,(17,18)=__norm}
+inferred pure: [n!=1]
+
+
+added weaken/strengthen pair to go inside negation & forall
+
+
+Implicit z important for inference (see r1c-i.ss)
+             EXISTS(z: x::ll<z>@M[Orig][LHSCase] & A(n,m,z) &
+             {FLOW,(20,21)=__norm})
+
+existential elimination for inferred rel.
+// redlog exist_eliminator left some residue of form 0-0
+ntail  (2): Valid. 
+<1>x::ll<n>@L[Orig][LHSCase] & x=null & rs=t & t=0 & {FLOW,(17,18)=__norm}
+inferred rel: [( n=0 & rs=0 - (0 - 0)) -->  R(rs,n); 
+              ( x=null & rs=0 - (0 - 0)) -->  P(x,rs)]
+further simplified to:
+inferred rel: [( n=0 & rs=0) -->  R(rs,n); ( x=null & rs=0) -->  P(x,rs)]
+
+
+--eps problem solved using stronger_drop_rel_formula for
+  conseq
+
+bug1a.slk
+ - error with --eps
+
+r1a-i.ss (to fix)
+WARNING : converting the following ivs_unk vars from UNK to RelT type
+WARNING (must fix) : ivs_unk = [R]
+
+

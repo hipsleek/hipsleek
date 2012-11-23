@@ -1,0 +1,25 @@
+/*
+relation R(int s3, int l3, int s2, int l2, int s1, int l1).
+relation P(int s2, int l2, int s1, int l1).
+
+
+*/
+
+/*
+// l1<=s2
+infer [l1,s2] s1<=l1 |- s1<=s2.
+print residue.
+
+// l1<=s2
+infer [l1,s1,s2] s1<=l1 |- s1<=s2.
+print residue.
+
+// infer s1<=s2
+infer [l1,s1,s2] 0<=s1 & l1=0 |- s1<=s2.
+print residue.
+*/
+
+// expecting l1<=s2 but getting s1<=s2
+infer [l1,s1,s2] s1<=l1 & s2a=s2 & s1a=s1 |- s1a<=s2a.
+print residue.
+

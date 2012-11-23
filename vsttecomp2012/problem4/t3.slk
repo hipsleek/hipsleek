@@ -1,0 +1,25 @@
+//class exception extends __Exc {}.
+
+data node {
+  int val;
+  node next;
+}.
+
+data node2 {
+  int v;
+  node2 left;
+}.
+
+pred ll<t,s> ==
+     t::node<1,null> & self=null & s=1
+  or self::node2<_,ln> * ln::ll<t, s-1> 
+  inv true.
+
+checkentail 
+  r::node2<_,l> * l:: ll<t,n> |- r::ll<t,t1>.
+
+
+print residue.
+
+
+

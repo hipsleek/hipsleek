@@ -1,0 +1,44 @@
+// below seems unsound as many variations still provable..
+
+data node {
+	int val;
+	node next;
+}.
+
+
+
+pred lseg<n, p, sm, lg> == case {
+ (n=1) -> [] self::node<sm, p> & sm=lg; 
+ (n!=1) -> [nn] self::node<sm, r> * 
+           r::lseg<nn, p, sm1, lg> & sm<=sm1 & nn=n-1;
+  }
+	inv n >= 1 & self!=null & sm<=lg.
+
+
+lemma "lsegmb" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=1 -> 
+(exists lg1,sm2: self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg> & lg1<=sm2).
+
+lemma "lsegmb2" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2>=1 <- 
+(exists lg1,sm2: self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg>@D 
+     & lg1<=sm2).
+
+pred ll_tail<n, t, sm, lg> == 
+   case {
+     n=2 -> [] self::node<sm, r> *r::node<lg,null> & t=r & n=2 & sm<=lg ;
+     n!=2 -> [nn] self::node<sm, r> * r::ll_tail<nn, t, sm1, lg> & r!=null & sm<=sm1 & nn=n-1;
+   }
+	inv n>=2 & self!=null & sm<=lg.
+
+lemma "ll_tail" self::ll_tail<n, t, sm, lg> -> (exists lg1: self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg).
+
+lemma "ll_tail2" self::ll_tail<n, t, sm, lg> <- 
+(exists lg1: self::lseg<n-1, t, sm, lg1> * t::node<lg, null> 
+        //& lg1<=lg 
+        ).
+
+checkentail x::lseg<a,tx,sm1,lg1> * tx::node<lg,y>
+   * y::ll_tail<b,ty,sm2,lg2> & lg1<=lg & lg<=sm2
+   |-  x::ll_tail<a+b+2,ty,sm1,lg2>.
+
+
+

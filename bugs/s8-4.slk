@@ -1,0 +1,33 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0 
+         or self::node<next = r> * r::lseg<n - 1, p>  
+//          & self!=p
+         inv n >= 0.
+
+checkentail x::lseg<n,p> |- n>=0.
+
+checkentail x::lseg<n,p> & x=null |- n=0.
+
+checkentail x::lseg<n,p> & x!=p |- n>0.
+
+/*
+pred db<n,r> == self::node<next = r> & r=null & n=1
+         or self::node<next = r> * r::db<n - 1,r1> 
+//          & self!=p
+         inv self!=null & n >= 1.
+
+
+pred dbn<n> == self::node<next = r> & r=null & n=1
+         or self::node<next = r> * r::dbn<n - 1> 
+//          & self!=p
+         inv self!=null & n >= 1.
+
+
+// the db example shows that extra parameters can be
+// added predicate to allow more aggressive pruning
+
+checkentail x::db<n,null> |- n=1.
+*/
+

@@ -1,0 +1,84 @@
++++++++++++++++++++++++++++++++++++
+Problem 1:
++++++++++++++++++++++++++++++++++++
+
+The solution is provided in the file prob1.ss. 
+----------------------------------
+To run: 
+----------------------------------   
+./hip prob1.ss -tp auto 
+
++++++++++++++++++++++++++++++++++++
+Implementation Task.
++++++++++++++++++++++++++++++++++++
+We have implemented the two-way sort algorithm under the function
+    void two_way_sort(ref bool[] a, int n)
+which receives a boolean array and the length of the array as
+parameters and then sort the array input by the given two-way
+algorithm. To facilitate the task of invariant description, we
+translate the main while-loop of the algorithm to an equivalent
+recursive function, namely
+    void two_way_sort(ref bool[] a, int n).
+The given specification of this auxiliary function is actually
+the invariant of the loop.
+
++++++++++++++++++++++++++++++++++++
+Solution description:   
++++++++++++++++++++++++++++++++++++
+We provide the following specifications for these two functions:
+
+void two_way_sort(ref bool[] a, int n)
+	requires domb(a,0,n-1)
+	ensures sorted(a',0,n-1) & permutation(a,a',0,n-1);
+
+void two_way_sort_helper(ref bool[] a, int i, int j)
+	variance (1) [j-i]
+	requires domb(a,i,j)
+	ensures sorted(a',i,j) & idout(a,a',i,j) & permutation(a,a',i,j);
+
+The statement with 'requires' keyword describes the precondition
+while the 'ensures' statement is for the postcondition of a function.
+The 'variance' statement specifies the variant that is then used to prove
+the termination of the respective function.
+
+We provide relation descriptions at the beginning, which are used
+for the conciseness of specifications. Some axioms which are necessary
+for the verification tasks are also given.
+
+The description of the given verification tasks are briefly describes
+as follows:
+	
+1. Safety
+   In our verification system, the safety of every array access in a
+   method is guaranteed by the relation domb(a, i, j). This relation
+   specifies that all accesses to the boolean array a are made within
+   the bound of [i .. j] and it is used in the precondition of a
+   method to assert this safety. For example, in the
+   verification of the two-way sort algorithm, we use the relation domb
+   to ensure the safety of array accesses in its implementation.   
+   
+2. Termination
+   Our verification system proves the termination of a loop, i.e.,
+   a while-loop or a mutually recursive call by verify the
+   well-foundedness of given variances. Based on an observation that
+   the distance of two indices i and j declines after each execution
+   of the while-loop, we use the difference (j-i) as the given variance
+   for the termination proof of the two-way sort program. The validity
+   of this variance is verified successfully. As a result, the program
+   terminates.
+
+3. Behavior
+(a) Array a is sorted in increasing order
+   The sortedness of an array a is decribed by the relation
+   sorted(a, i, j), which specifies that all elements in the range [i .. j]
+   of the array a are in increasing order. This relation which the
+   range [0 .. n-1] is then used in the postcondition of the two-way
+   order program to assert the sortedness of the result array.
+
+(b) Array a is a permutation of its initial contents
+   The preservation and the permutation of the array's content
+   are specified by the relation idout and permutation, respectively.
+   They are used in the postcondition of the two-way sort program's
+   specification to prove the permutation of the result. In addition,
+   we use pairs of assert/assume and an axiom of the transitivity of
+   the permutation relation as guidances for this proof.

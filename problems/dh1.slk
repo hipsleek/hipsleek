@@ -1,0 +1,20 @@
+data node {
+	int f1;
+	int f2;
+	int f3;
+	node f4;
+	node f5;	
+}.
+
+data node2 {
+	int f1;
+}.
+
+
+// should fail, unsound due to imprecise BAGA
+// TO FIX : baga must be refined to cover partial structures.
+checkentail  x::node<#,#,#,a,a> * y::node<m,n,#,#,#> 
+  |- x!=y.
+print residue.
+
+

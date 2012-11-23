@@ -19,7 +19,7 @@ let resultfilename = "result.mona." ^ (string_of_int (Unix.getpid()))
 *)
 
 let log_all_flag = ref true
-let log_all = open_out ("allinput.set" (* ^ (string_of_int (Unix.getpid ())) *) )
+let log_all = open_log_out ("allinput.set" (* ^ (string_of_int (Unix.getpid ())) *) )
 
 (*************************************************************)
 (*************************************************************)
@@ -70,6 +70,7 @@ let rec compute_fo_formula (f0 : formula) var_map : unit =
 *)
 and b_formulas_list (f0 : formula) : b_formula list = match f0 with
   | BForm (bf,_) -> [bf]
+  | AndList _ -> Gen.report_error no_pos "setmona.ml: encountered AndList, should have been already handled"
   | And (f1, f2, _)
   | Or (f1, f2, _, _) ->
 	  let l1 = b_formulas_list f1 in
@@ -94,7 +95,8 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 		  match !current_bforms with
 			| bf :: rest -> begin
 				current_bforms := rest; (* prepare for next iteration *)
-				match bf with
+			  let (pf,_) = bf in
+				match pf with
 					(* Bag constraints *)
 				  | BagIn (sv, e, _)
 				  | BagNotIn (sv, e, _) ->
@@ -108,6 +110,7 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 						cont := r1 || r2
 				  | BagMin _
 				  | BagMax _ -> failwith ("compute_fo_b_formula: BagMin/BagMax not supported.")
+				  | VarPerm _ -> failwith ("compute_fo_b_formula: VarPerm should not appear here.")
 					(* Booleans *)
 				  | BConst _ -> compute_fo_b_formula rest var_map
 				  | BVar (sv, _) ->
@@ -115,6 +118,7 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 					(* Arithmetic *)
 				  | Lt (e1, e2, _)
 				  | Lte (e1, e2, _)
+				  | SubAnn (e1, e2, _)
 				  | Gt (e1, e2, _)
 				  | Gte (e1, e2, _)
 					(* Equality and disequality *)
@@ -162,6 +166,7 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 				  | ListAllN _
 				  | ListPerm _ -> failwith ("Lists are not supported in Mona")
 					| RelForm _ -> failwith ("Relations are not supported in Mona")
+					| LexVar _ -> failwith ("LexVar are not supported in Mona")
 
 			  end (* end of bf :: rest case *)
 			| [] ->
@@ -231,8 +236,9 @@ and to_fo (svs : spec_var list) var_map : bool =
 *)
 and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
   | Null _ 
-  | IConst _ -> false
+  | IConst _ | AConst _ -> false
   | FConst _ -> failwith ("[setmona.ml]: ERROR in constraints (float should not appear here)")
+  | Tsconst _ -> failwith ("[setmona.ml]: ERROR in constraints (tsconst should not appear here)")
   | Var (sv, _) -> compute_fo_var sv order var_map
   | Add (e1, e2, _)
   | Subtract (e1, e2, _)
@@ -278,6 +284,7 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
   | ListLength _
   | ListAppend _
   | ListReverse _ -> failwith ("Lists are not supported in Mona")
+	| Func _ -> failwith ("Functions are not supported in Mona") 
 	| ArrayAt _ -> failwith ("Arrays are not supported in Mona") 
 
 (* 
@@ -287,6 +294,7 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
 *)
 and normalize (f0 : formula) : formula = match f0 with
   | BForm (bf,lbl) -> normalize_b_formula bf lbl
+  | AndList _ -> Gen.report_error no_pos "setmona.ml: encountered AndList, should have been already handled"
   | And (f1, f2, pos) ->
 	  let nf1 = normalize f1 in
 	  let nf2 = normalize f2 in
@@ -310,81 +318,6 @@ and normalize (f0 : formula) : formula = match f0 with
 	  let nf = Exists (qvar, nqf, lbl, pos) in
 		nf
 
-(*
-and normalize_b_formula (bf0 : b_formula) : formula = 
-  (* 
-	 helper0, helper1: flatten nested Add.
-	 Return value:
-	 first component: new expression
-	 second component: (optional) formula linking new expression and old one
-	 last component: existential variables introduced during the process
-  *)
-  let helper0 e =
-	if is_var_num e then (e, [], [])
-	else 
-	  let fn = fresh_name () in
-	  let pos = pos_of_exp e in
-	  let sv = SpecVar (Prim Int, fn, Unprimed) in
-	  let new_e = Var (sv, pos) in
-	  let additional_e = BForm (Eq (new_e, e, pos)) in
-		(new_e, [additional_e], [sv])
-  in
-  let rec helper1 e = match e with
-	| Add (e1, e2, pos) ->
-		if is_var e1 && is_var e2 then
-		  helper0 e
-		else
-		  let new_e1, a1, v1 = helper1 e1 in
-		  let new_e2, a2, v2 = helper1 e2 in
-		  let tmp1 = Add (new_e1, new_e2, pos) in
-		  let tmp2 = a1 @ a2 in
-		  let tmp3 = v1 @ v2 in
-			(tmp1, tmp2, tmp3)
-	| _ -> helper0 e
-  in
-	(* 
-	   transform Subtract to Add. Does it work with Subtract nested inside Add? No
-	*)
-  let rec helper2 mk e1 e2 pos = match e1, e2 with
-	| Subtract (a, b, p1), Subtract (c, d, p2) ->
-		let new_e1 = Add (a, d, p1) in
-		let new_e2 = Add (c, b, p2) in
-		  helper2 mk new_e1 new_e2 pos
-	| Subtract (a, b, p1), _ ->
-		let new_e1 = a in
-		let new_e2 = Add (b, e2, pos) in
-		  helper2 mk new_e1 new_e2 pos
-	| _, Subtract (c, d, p2) ->
-		let new_e1 = Add (e1, d, pos) in
-		let new_e2 = c in
-		  helper2 mk new_e1 new_e2 pos
-	| _ ->
-		let new_e1, additional_e1, var_e1 = helper1 e1 in
-		let new_e2, additional_e2, var_e2 = helper1 e2 in
-		let tmp1 = BForm (mk new_e1 new_e2 pos) in
-		let tmp2 = tmp1 :: (additional_e1 @ additional_e2) in
-		let tmp3 = List.fold_left (fun a -> fun b -> mkAnd a b pos) (mkTrue pos) tmp2 in
-		let tmp4 = mkExists (var_e1 @ var_e2) tmp3 pos in
-		  tmp4
-  in
-	match bf0 with
-	  | BConst _
-	  | BVar _
-	  | EqMin _
-	  | EqMax _
-	  | BagIn _
-	  | BagNotIn _
-	  | BagSub _
-	  | BagMin _
-	  | BagMax _ -> BForm bf0
-	  | Eq (e1, e2, pos) -> helper2 mkEq e1 e2 pos
-	  | Neq (e1, e2, pos) -> helper2 mkNeq e1 e2 pos
-	  | Lt (e1, e2, pos) -> helper2 mkLt e1 e2 pos
-	  | Lte (e1, e2, pos) -> helper2 mkLte e1 e2 pos
-	  | Gt (e1, e2, pos) -> helper2 mkGt e1 e2 pos
-	  | Gte (e1, e2, pos) -> helper2 mkGte e1 e2 pos
-*)
-
 and is_normalized_term (e : exp) : bool = match e with
   | Null _
   | Var _
@@ -400,13 +333,14 @@ and normalize_b_formula (bf0 : b_formula) lbl: formula =
 	let right = a2 @ s1 in
 	let left_e, left_f, left_v = flatten_list left in
 	let right_e, right_f, right_v = flatten_list right in
-	let tmp = BForm ((mk left_e right_e pos),lbl) in
+	let tmp = BForm (((mk left_e right_e pos), None),lbl) in
 	let tmp1 = mkAnd left_f right_f pos in
 	let tmp2 = mkAnd tmp tmp1 pos in
 	let res_f = mkExists (left_v @ right_v) tmp2 lbl pos in
 	  res_f
   in
-	match bf0 with
+  let (pf,il) = bf0 in
+	match pf with
 	  | BConst _
 	  | BVar _
 	  | EqMin _
@@ -423,13 +357,15 @@ and normalize_b_formula (bf0 : b_formula) lbl: formula =
 		  else helper2 mkEq e1 e2 pos
 	  | Neq (e1, e2, pos) -> mkNot (helper2 mkEq e1 e2 pos) lbl pos
 	  | Lt (e1, e2, pos) -> helper2 mkLt e1 e2 pos
-	  | Lte (e1, e2, pos) -> helper2 mkLte e1 e2 pos
+	  | Lte (e1, e2, pos) | SubAnn (e1, e2, pos) -> helper2 mkLte e1 e2 pos
 	  | Gt (e1, e2, pos) -> helper2 mkGt e1 e2 pos
 	  | Gte (e1, e2, pos) -> helper2 mkGte e1 e2 pos
+	  | VarPerm _ -> failwith ("normalize_b_formula: VarPerm should not appear here")
 	  | ListIn _
 	  | ListNotIn _
 	  | ListAllN _
 	  | ListPerm _ -> failwith ("Lists are not supported in Mona")
+	  | LexVar _ -> failwith ("LexVar are not supported in Mona")
 		| RelForm _ -> failwith ("Lists are not supported in Mona") (* An Hoa *)
 		  
 (*
@@ -495,14 +431,14 @@ and flatten_list (es0 : exp list) : (exp * formula * spec_var list) =
 	| [] -> failwith ("flatten_list: es0 should be nonempty.")
 	| [e] -> (e, mkTrue no_pos, [])
 	| e1 :: e2 :: rest -> begin
-		if is_zero e1 then flatten_list (e2 :: rest)
-		else if is_zero e2 then flatten_list (e1 :: rest)  
+		if is_zero_int e1 then flatten_list (e2 :: rest)
+		else if is_zero_int e2 then flatten_list (e1 :: rest)  
 		else
 		  let pos = pos_of_exp e1 in
 			let fn = fresh_var_name "int" pos.start_pos.Lexing.pos_lnum in
 		  let sv = SpecVar (Int, fn, Unprimed) in
 		  let new_e = Var (sv, pos) in
-		  let additional_e = BForm (Eq (new_e, Add (e1, e2, pos), pos) , None) in
+		  let additional_e = BForm ((Eq (new_e, Add (e1, e2, pos), pos), None), None) in
 			if Gen.is_empty rest then
 			  (new_e, additional_e, [sv])
 			else
@@ -586,7 +522,9 @@ and mona_of_bin_op op1 op2 e1 e2 =
 	let tmp2 = mona_of_exp SO e2 in
 	  op2 ^ "(" ^ tmp1 ^ ", " ^ tmp2 ^ ")"
 
-and mona_of_b_formula bf0 = match bf0 with
+and mona_of_b_formula bf0 =
+  let rec mona_of_p_formula pf =
+	match pf with
   | BConst (b, _) -> if b then "true" else "false"
   | BVar (sv, _) -> "(" ^ (mona_of_spec_var sv) ^ " ~= empty)"
 (*
@@ -596,7 +534,7 @@ and mona_of_b_formula bf0 = match bf0 with
   | Eq (e1, e2, pos) ->
 	  if not (is_var_num e1 || is_var_num e2) then
 		failwith ("mona_of_b_formula: Eq: normalize failed to transform, still left with non vars ")
-	  else if not (is_var_num e1) then mona_of_b_formula (Eq (e2, e1, pos))
+	  else if not (is_var_num e1) then mona_of_p_formula (Eq (e2, e1, pos))
 	  else 
 		begin
 		  if is_fo_exp e1 || is_fo_exp e2 then
@@ -621,7 +559,7 @@ and mona_of_b_formula bf0 = match bf0 with
 				  else ve1str ^ " = " ^ (mona_of_exp SO e2)
 *)
 		end
-  | Neq (e1, e2, pos) -> "~(" ^ (mona_of_b_formula (Eq (e1, e2, pos))) ^ ")"
+  | Neq (e1, e2, pos) -> "~(" ^ (mona_of_p_formula (Eq (e1, e2, pos))) ^ ")"
   | Lt (e1, e2, _) -> mona_of_bin_op " < " "less" e1 e2
   | Lte (e1, e2, _) -> mona_of_bin_op " <= " "lessEq" e1 e2
   | Gt (e1, e2, _) -> mona_of_bin_op " > " "greater" e1 e2
@@ -660,6 +598,7 @@ and mona_of_b_formula bf0 = match bf0 with
 	  let tmp2 = mona_of_spec_var sv2 in
 		"max {" ^ tmp1 ^ ", " ^ tmp2 ^ "}"
   | _ -> failwith ("mona_of_b_formula, lists : not supported in set mode.")
+  in let (pf,_) = bf0 in mona_of_p_formula pf
 
 and ex_quant_of_spec_var (sv : spec_var) : string =
   if is_fo_ref sv then "ex1 "
@@ -680,6 +619,7 @@ and mona_of_formula f0 = mona_of_formula_helper f0
 
 and mona_of_formula_helper f0 = match f0 with
   | BForm (bf,_) -> mona_of_b_formula bf 
+  | AndList _ -> Gen.report_error no_pos "setmona.ml: encountered AndList, should have been already handled"
   | And (f1, f2, _) ->
 	  let tmp1 = mona_of_formula_helper f1 in
 	  let tmp2 = mona_of_formula_helper f2 in
@@ -819,7 +759,7 @@ let is_sat (f : formula) : bool =
   if !log_all_flag == true then
 	output_string log_all "\n\n[mona.ml]: #is_sat\n";
   let f = elim_exists f in
-  let tmp_form = (imply f (BForm(BConst(false, no_pos), None))) in
+  let tmp_form = (imply f (BForm((BConst(false, no_pos), None), None))) in
 	match tmp_form with
 	  | true -> 
 		  begin 

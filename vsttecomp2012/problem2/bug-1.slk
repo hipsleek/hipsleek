@@ -1,0 +1,18 @@
+data anode {
+  int val;  // 0-apply; 1-K; 2-S
+  anode fn;
+  anode arg;
+}.
+
+// type error with zero argument
+pred allowed<> ==
+   self::anode<1,null,null>  // denotes K
+  or self::anode<0,f,a> * f::allowed<> & n=1
+inv self!=null.
+
+  /*
+pred allowed<n> ==
+   self::anode<1,null,null> & n=0 // denotes K
+  or self::anode<0,f,a> * f::allowed<_> & n=1
+inv self!=null & n>=0.
+  */

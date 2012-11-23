@@ -1,0 +1,33 @@
+
+/* build a list with only 1s and finally a 0 (arbitrary length) */
+data node {
+ int val;
+ node next;
+}.
+
+pred ll< n, S> ==  self=null & n=0 & S={}
+ or self::node<v, r> * r::ll<n-1, S1> & S=union(S1, {v})
+ inv n>=0.
+
+pred lseg<p, n, S> == self=p & n=0 & S={}
+ or self::node<v, r> * r::lseg<p, n-1, S1> & S=union(S1, {v})
+ inv n>=0.
+
+// Valid
+//checkentail x::node<1,null> |- x::ll<n,S>. 
+
+// Valid
+//checkentail x::node<17,null> |- x::ll<n,S> & forall (b : (b notin S | b=17)). 
+
+// Valid
+checkentail x::node<2,y>*y::ll<m,S1> & forall (b1 : (b1 notin S1 | b1=2)) |- x::ll<n,S> & forall (b : (b notin S | b=2)). 
+
+// VALID
+// checkentail x::node<7,p> |- x::lseg<p,n,S> & forall (b : (b notin S | b=7)). 
+
+//checkentail true & forall (b : (b in union(S,{v}) | b=7)) |- false. 
+
+//checkentail true & forall (b : (b in union(S,{v}) | b=7)) |- false.
+
+//print residue.
+

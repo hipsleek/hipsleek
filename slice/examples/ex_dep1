@@ -1,0 +1,27 @@
+ll1<n1, n2> ==
+	self = null & n1 = 0 & n2 = 0 or
+	self::node<_,p> * p::ll1<n1p, n2p> & n1 = 1 + n1p & n2p = n2 - n1
+	inv n2 >= n1;
+	[n2 <- {n1++}]
+	CHECK IMPLICATION: false
+	exists1(n1p_515:
+	exists1(n2p_516:
+		n1=n1p_515+1 & 
+		n2p_516+n1=n2 & 
+		self!=null & 
+		n1p_515<=n2p_516)) |-  n1<=n2
+		
+
+ll4<n1, n2> ==
+	self = null & n1 = 0 & n2 = 0 or
+	self::node<_,p> * p::ll4<n1p, n2p> & n1 = 1 + n1p & n2p = n2 - n1
+	inv n1 >= 0 & n2 >= n1;
+	[n2 <- {n1+}]
+	CHECK IMPLICATION: true
+	exists1(n1p_518:
+	exists1(n2p_519:
+		n1=n1p_518+1 & 
+		n2p_519+n1=n2 & 
+		self!=null & 
+		0<=n1p_518 & (--> indirect constraints)
+		n1p_518<=n2p_519)) |-  n1<=n2

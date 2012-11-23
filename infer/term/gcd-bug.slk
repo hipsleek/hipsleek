@@ -1,0 +1,5 @@
+ranking rr(int x, int y).
+
+//infer [] x>y & x1=x-y & y1=y |- y1>=y.
+
+infer [rr] x<y & x1=x & y1=y-x |- rr(x,y)>rr(x1,y1).

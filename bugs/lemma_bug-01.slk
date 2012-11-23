@@ -1,0 +1,118 @@
+//Valid.Fail.Fail
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+//checkentail x::node<1,y> * y::node<1,z> * z::node<2,null> |- x::lseg<3,null> .
+
+//checkentail (exists a,b,r: x::lseg<a, r> * r::lseg<b, p> & n=a+b) |- x::lseg<n, p>.
+
+lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+//lemma "V2" self::lseg<a, r> * r::lseg<b, p> <- self::lseg<n, p> & n = a + b & a,b >=0.
+// Valid
+
+/*
+checkentail self=p & n=0 & n=b+a & 0<=a & 0<=b |-  (exists a_78, b_79, p_80, r: self::lseg<a_78,r> * 
+       r::lseg<b_79,p_80> & a_78=a & b_79=b & p_80=p ).
+// valid
+
+checkentail 
+    self::node<_,r1> * r1::lseg<n-1,p> & 
+    n=b+a & 0<=a & 0<=b |-  self::lseg<a,r> * r::lseg<b,p>.
+// fail
+*/
+
+checkentail 
+    self::node<_,r1> * r1::lseg<n-1,p> & 
+    n=b+a & 0<=a & 0<=b & a=0 |-  (exists r: r::lseg<b,p> & self=r).
+// must bug!
+
+checkentail 
+    self::node<_,r1> * r1::lseg<n-1,p> & 
+    n=b+a & 0<=a & 0<=b & a=0 |-  (exists r: self::lseg<b,p> & self=r).
+// valid
+
+/*
+checkentail 
+    self::node<_,r1> * r1::lseg<n-1,p> & 
+    n=b+a & 0<=a & 0<=b |-  case 
+          {a=0 -> [] (exists r: self::lseg<b,p> & self=r);
+          a!=0 -> [] self::node<_,r2>*r2::lseg<a-1,r> * r::lseg<b,p>;
+          }. 
+
+checkentail 
+    self_V1::node<_,r_106> * r_106::lseg<n-1,p> & 
+    n=b+a & 0<=a & 0<=b & a=0 |-  self_V1::lseg<b,p>.
+
+
+checkentail 
+    self_V1::node<_,r_106> * r_106::lseg<n-1,p> & 
+    n=b+a & 0<=a & 0<=b & a>0 |-  (exists r: 
+     self_V1::node<next = r1> * r1::lseg<a - 1, r> * r::lseg<b,p>  ).
+
+lemma "V1_r2l" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+
+
+checkentail  (exists r_97,a_98,b_99: r_97::lseg<b_99,p> &
+ self_V1=r_97 & a_98=0 & n=b_99+a_98 & 0<=a_98 & 0<=b_99 )
+ |- (exists p_95,n: self_V1::lseg<n,p_95> & n=b+a & 0<=a & 0<=b & p_95=p). 
+
+checkentail (exists p_111,flted_6_113,r_114,r_97,a_98,
+    b_99: self_V1::node<_,r_114> * r_114::lseg<flted_6_113,p_111> *
+    r_97::lseg<b_99,p> & flted_6_113+1=a_98 &
+    p_111=r_97 & n=b_99+a_98 & 0<=a_98 & 0<=b_99 ) |- (exists p_95,n: self_V1::lseg<n,p_95> & n=b+a & 0<=a & 0<=b & p_95=p).
+
+*/
+
+/*
+checkentail
+  self::lseg<n,p> & n=b+a & 0<=a & 0<=b 
+  |- (exists r: self::lseg<a,r> * r::lseg<b,p>) .
+*/
+/*
+
+true & self_V1=p & n=0 & n=b+a & 0<=a & 0<=b & {FLOW,(13,28)=__flow}
+ or EXISTS(p_93,Anon_94,flted_6_95,r_96: self_V1::node<Anon_94,r_96>@M * 
+    NN r_96::lseg<flted_6_95,p_93>@M[Orig] & flted_6_95+1=n & p_93=p & n=b+
+    a & 0<=a & 0<=b & {FLOW,(13,28)=__flow}) |-  EBase EXISTS(p_70,a,r,b: NN self_V1::lseg<a,r>@M[Orig][LHSCase] * 
+       NN r::lseg<b,p_70>@M[Orig][LHSCase] & p_70=p & {FLOW,(13,28)=__flow})
+
+ true & self_V1=p & n=0 & n=b+a & 0<=a & 0<=b & {FLOW,(13,28)=__flow}
+ or EXISTS(p_103,Anon_104,flted_6_105,
+    r_106: self_V1::node<Anon_104,r_106>@M * 
+    NN r_106::lseg<flted_6_105,p_103>@M[Orig] & flted_6_105+1=n & p_103=p & 
+    n=b+a & 0<=a & 0<=b & {FLOW,(13,28)=__flow}) |-  EBase EXISTS(a_78,b_79,p_80,r: NN self_V1::lseg<a_78,r>@M[Orig][LHSCase] * 
+       NN r::lseg<b_79,p_80>@M[Orig][LHSCase] & a_78=a & b_79=b & p_80=p &
+       {FLOW,(13,28)=__flow})
+
+
+run_entail_check:
+ NN self::lseg<n,p>@M[Orig][LHSCase] & n=a+b & 0<=a & 0<=b &
+{FLOW,(27,27)=__norm} |-  EBase EXISTS(a_1201,b_1202,p_1203,
+       r_1200: NN self::lseg<a_1201,r_1200>@M[Orig][LHSCase] * 
+       NN r_1200::lseg<b_1202,p_1203>@M[Orig][LHSCase] & a_1201=a & 
+       b_1202=b & p_1203=p & {FLOW,(27,27)=__norm})
+*/
+
+//lemma "F2" self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+// Fail?
+
+//lemma "F3" self::lseg<n, p> -> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2).
+// Fail
+
+
+//lemma "F2a" self::lseg<n, p>  <- self::lseg<a, r> * r::lseg<b, p> & n=a+b & a>=0 & b>=0.
+// Valid
+
+
+//lemma "F5" self::lseg<n, p> <- (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b+2).
+
+//lemma "V6" self::lseg<n, p> <-> (exists a,b: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
+
+
+
+

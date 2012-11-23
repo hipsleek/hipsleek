@@ -1,0 +1,18 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;
+    float fval;
+}.
+
+
+pred ff<r> == self::node<_,_,r> & 0.0<r<=1.0
+inv 0.0<r<=1.0 .
+
+checkentail x::node<a,_,v> & v=1.0 & 0<a<=1 |- x::node<a,_,w> & a=2 & 0.0<w<=1.0.
+
+
+//checkentail x::ff<r> |- r>0.5 .

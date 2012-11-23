@@ -21,7 +21,7 @@ while (i < N)
   requires true
   ensures i'=N;
   {
-    i = N;
+    i = i+1;
   }
  return i;
 }

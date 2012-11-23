@@ -1,0 +1,169 @@
+// must bug via predicates?
+data node { int val ; node next }.
+
+pred pos_ll<n> == self = null & n = 0
+	or self::node<d,r> * r::pos_ll<n - 1> & d>0
+	inv n >= 0.
+
+pred neg_ll<n> == self = null & n = 0
+	or self::node<d,r> * r::neg_ll<n - 1> & d<0
+	inv n >= 0.
+
+lemma self::pos_ll<n> & n>0 -> self::neg_ll<n> & flow __Error.
+lemma self::neg_ll<n> & n>0 -> self::pos_ll<n> & flow __Error.
+//lemma self::neg_ll<n> & n=0 -> x=null.
+//lemma self::pos_ll<n> & n=0 -> x=null.
+//lemma self::neg_ll<n> & n=0 <- x=null.
+//lemma self::pos_ll<n> & n=0 <- x=null.
+
+// 1. must fail
+ checkentail x>3 |- x<=0 .
+
+// 2. valid
+ checkentail x>3 |- x>0 .
+
+// 3.must  is_valid (R)  --> R1 = true & flow __Error
+// should be must_error..
+checkentail x>3 |- x>0 & flow __Error.
+print residue.
+/*  wrong as detected as valid since es_must_error was None
+Entail(3)=Valid.
+printing here:  
+Good Context: [es_formula: true & 3<x & {FLOW,(13,13)=__Error,}
+               es_pure: true
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_label: None]
+*/
+
+// 4.may is_may_error(R)  --> R1 = R
+checkentail x>3 |- x>5 & flow __Error.
+
+// should be valid ..
+// 5.Valid
+//must is_must_error(R) --> R1 = true & flow norm
+checkentail x>3 |- x<=0 & flow __Error .
+
+// 6. valid
+checkentail true |- true.
+
+// 7. valid
+checkentail x::pos_ll<n> & n=0|- x::neg_ll<n>.
+
+// 8.may. may fail but detected as must fail..
+checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
+
+//9. may fail
+checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
+/* INCONSISTENCY:
+Entail(9)=Fail.(must) cause:12
+printing here:  
+Good Context: [es_formula: SS 33:x::pos_ll<n>@M[Orig] & true & {FLOW,(27,27)=__norm,}
+*/
+
+//10. must fail
+checkentail x::pos_ll<m> & m=0 |- x::neg_ll<n> & n>0.
+/* 
+Entail(10)=Fail.(must) cause:and[and[22  n=0 |-  0<n (must-bug).,15.1 x=null |-  x!=null],12]
+printing here:  
+Good Context: [es_formula: 
+                true & x=null & m=0 & m=0 & (x=null | m=0) & n=0 &
+                {FLOW,(13,13)=__Error,}
+               es_pure: true
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: 
+                Some(and[and[22  n=0 |-  0<n (must-bug).,15.1 x=null |-  x!=null],12])
+               es_var_label: None]
+*/
+
+//11. may failure but detected as must-fail
+checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0 & flow __Error.
+/*
+Good Context: [es_formula: SS 42:x::pos_ll<n>@M[Orig] & true & {FLOW,(27,27)=__norm,}
+               es_pure: true
+               es_heap: true
+               es_evars: [n_172]
+               es_aux_conseq: true
+               es_must_error: Some(12)
+               es_var_label: None]
+
+*/
+
+//12. must failure - R = true, flow = __Error
+checkentail x::pos_ll<m> & m> 0|- x::neg_ll<n> & n>0.
+
+
+//13 valid
+checkentail x::pos_ll<n> & n=0|- x::neg_ll<n> .
+
+//14. may failure!
+checkentail x::pos_ll<n> |- x::neg_ll<n> .
+/* 
+Entail(14)=Fail.(must) cause:12
+printing here:  
+Good Context: [es_formula: SS 54:x::pos_ll<n>@M[Orig] & true & {FLOW,(27,27)=__norm,}
+               es_pure: true
+               es_heap: true
+               es_evars: [n_222]
+               es_aux_conseq: true
+               es_must_error: Some(12)
+
+*/
+
+//15. may lor(valid,must)
+checkentail x::pos_ll<n> |- x::neg_ll<n> & n>0.
+/*
+no unfold it seems:
+Entail(15)=Fail.(must) cause:12
+printing here:  
+Good Context: [es_formula: SS 59:x::pos_ll<n>@M[Orig] & true & {FLOW,(27,27)=__norm,}
+               es_pure: true
+               es_heap: true
+               es_evars: [n_240]
+               es_aux_conseq: true
+               es_must_error: Some(12)
+
+*/
+
+//16. must failure - R = true, flow = __Error
+// TODO requires a lemma, need unfold here
+checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n> & n=0 or x::neg_ll<n> & n>0.
+/* could be a must failure if es_must_error instantiated
+Entail(16)=Valid.
+printing here:
+Good Context: [es_formula: true & 0<n & {FLOW,(13,13)=__Error,}
+               es_pure: true
+               es_heap: SS 69:x::pos_ll<n>@M[Orig]
+               es_evars: [n_308]
+               es_subst (from): [n_308]
+               es_subst (to): [n]
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_label: None]
+*/
+
+//17. must failure - R = true, flow = __Error
+checkentail x::pos_ll<n> & n>0 |- x::neg_ll<n> .
+
+//18.Valid. inconsitent must failure
+checkentail x>3 & flow __Error |- x>0 & flow __Error.
+
+/*
+flow need to be __norm following LHS
+Good Context: [es_formula: true & 3<x & {FLOW,(27,27)=__norm,}
+               es_pure: true
+*/
+
+//19.must. inconsistent must failure
+//checkentail x::neg_ll<n> & flow __SleekMustErr |- x::neg_ll<n> & n>0.
+/*
+__SleekMustErr seems empty. __SleekMustErr has not been supported yet.
+
+Entail(19)=Valid.
+printing here:
+Good Context: [es_formula: false & false & {FLOW,(0,0)=__false,}
+               es_pure: true
+
+*/

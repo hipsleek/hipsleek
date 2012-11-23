@@ -1,0 +1,19 @@
+data node2{
+     int val;
+     node2 left;
+     node2 right;
+}.
+
+lemma "split" self::tree(f)<n> & f=f1+f2 & 1.0>=f1>0.0 & 1.0>=f2>0.0 -> self::tree(f1)<n> * self::tree(f2)<n> & 1.0>=f>0.0.
+
+//lemma "combine" self::tree(f)<n> & f=f1+f2 & 1.0>=f1>0.0 & 1.0>=f2>0.0 <- self::tree(f1)<n> * self::tree(f2)<n> & 1.0>=f>0.0.
+
+pred tree<n> == self=null & n=0
+     or self::node2<_, l, r> * l::tree<n1> * r::tree<n2> & n=1+n1+n2
+     inv n>=0.
+
+checkentail t::tree(f)<n> |- t::tree(0.5*f)<n> * t::tree(0.5*f)<n>.
+print residue.
+
+//checkentail t::tree(0.5*f)<n> * t::tree(0.5*f)<n> & 1.0>=f>0.0 |- t::tree(f)<n>.
+//print residue.

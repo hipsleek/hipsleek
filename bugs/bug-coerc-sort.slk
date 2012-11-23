@@ -1,0 +1,51 @@
+/* bubble sort */
+
+data node {
+	int val;
+	node next;
+}.
+
+pred sll<n, sm, lg> ==
+		self::node<sm, null> & sm=lg & n=1 
+	or	self::node<sm, q> * q::sll<n-1, qs, lg> & q!=null & sm<=qs 
+	inv n>=1 & sm<=lg.
+
+pred bnd<n,sm,bg> ==
+ 		self=null & n=0
+   	or	self::node<d,p> * p::bnd<n-1,sm,bg> & sm <= d < bg 
+	inv n >= 0.
+
+pred ll<n> == 
+    self=null & n=0
+	or self::node<_, r> * r::ll<n-1>
+	inv n>=0.
+
+lemma "left-sorted" self::sll<n, sm, lg> -> self::ll<n> .
+
+//lemma "right-sorted" self::sll<n, sm, lg> <- self::ll<n>.
+
+checkentail self::sll<n, sm, lg> |- self::ll<n> .
+
+checkentail 
+		self::node<sm, null> & sm=lg & n=1 
+	or	self::node<sm, q> * q::sll<n-1, qs, lg> & q!=null & sm<=qs 
+  |- self::ll<n> .
+
+
+checkentail 
+		self::node<sm, null> & sm=lg & n=1 
+	or	self::node<sm, q> * q::sll<n-1, qs, lg> & q!=null & sm<=qs 
+  |-   self=null & n=0
+	or self::node<_, r> * r::ll<n-1>.
+
+
+  //lemma "left-sorted" self::bnd<n, sm, lg> -> self::ll<n> .
+
+/*
+checkentail self::ll<n> |- self::sll<n, sm, lg> .
+
+checkentail 
+    self=null & n=0
+	or self::node<_, r> * r::ll<n-1>
+  |- self::sll<n, sm, lg> .
+*/

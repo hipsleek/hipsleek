@@ -1,0 +1,129 @@
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 5
+Prover: Z3
+Type: Sat:  x4!=x9
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 6
+Prover: Z3
+Type: Sat:  (x1=x2 | x2!=x1 & x2!=null) & (x10=x2 | x2!=x10 & x2!=null) & (x5=x2 | 
+x2!=x5 & x2!=null) & (x7=x5 | x5!=x7 & x5!=null) & x1!=x10 & x2!=x7 & x1!=x6
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 7
+Prover: Z3
+Type: Sat:  x2=x10 & x2=x1 & x2=x5 & (x7=x5 | x5!=x7 & x5!=null) & x1!=x10 & x1!=x6 & 
+x2!=x7
+Time: 0.004
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 8
+Prover: Z3
+Type: Sat:  x5=p_129 & x2=x10 & x2=x1 & (p_129=r_131 | r_131!=p_129 & r_131!=null) & 
+(x7=x5 | x5!=x7 & x5!=null) & x2!=x5 & x2!=null & x2!=x7 & x1!=x6 & x1!=x10
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 9
+Prover: Z3
+Type: Sat:  x10=p_132 & x1=x2 & x1=x5 & (p_132=r_134 | r_134!=p_132 & r_134!=null) & 
+(x7=x5 | x5!=x7 & x5!=null) & x2!=x7 & x2!=null & x1!=x10 & x1!=x6
+Time: 0.004
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 10
+Prover: Z3
+Type: Sat:  x1=p_141 & x2=x10 & x2=x5 & (p_141=r_143 | r_143!=p_141 & r_143!=null) & 
+(x7=x5 | x5!=x7 & x5!=null) & x2!=x7 & x2!=null & x1!=x10 & x1!=x6
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 11
+Prover: Z3
+Type: Sat:  x1=p_141 & x2=x10 & x2=x5 & (p_141=r_143 | r_143!=p_141 & r_143!=null) & 
+(x7=x5 | x5!=x7 & x5!=null) & x2!=x7 & x2!=null & x1!=x10 & x1!=x6
+Time: 0.004
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 12
+Prover: Z3
+Type: Sat:  x10=p_132 & x1=x2 & x1=x5 & (p_132=r_134 | r_134!=p_132 & r_134!=null) & 
+(x7=x5 | x5!=x7 & x5!=null) & x2!=x7 & x2!=null & x1!=x10 & x1!=x6
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 13
+Prover: Z3
+Type: Sat:  x1=x2 & x1=x5 & x1=x7 & x10=p_165 & (p_165=r_167 | r_167!=p_165 & 
+r_167!=null) & x2!=x7 & x2!=null & x1!=x6 & x1!=x10
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 14
+Prover: Z3
+Type: Sat:  p_176=x7 & x10=p_165 & x1=x2 & x1=x5 & (p_165=r_167 | r_167!=p_165 & 
+r_167!=null) & (p_176=r_178 | r_178!=p_176 & r_178!=null) & x1!=x6 & 
+x2!=x7 & x2!=x5 & x1!=x10 & x2!=null
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 15
+Prover: Z3
+Type: Sat:  x2=x10 & x2=x5 & x2=x7 & x1=p_191 & (p_191=r_193 | r_193!=p_191 & 
+r_193!=null) & x2!=x7 & x2!=null & x1!=x6 & x1!=x10
+Time: 0.004
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 16
+Prover: Z3
+Type: Sat:  p_202=x7 & x1=p_191 & x2=x10 & x2=x5 & (p_191=r_193 | r_193!=p_191 & 
+r_193!=null) & (p_202=r_204 | r_204!=p_202 & r_204!=null) & x1!=x6 & 
+x2!=x7 & x2!=x5 & x1!=x10 & x2!=null
+Time: 0.
+Result: false

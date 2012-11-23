@@ -1,0 +1,51 @@
+/*
+Needs for UNSAT check on LHS
+*/
+
+data node { int val ; node next }.
+
+data cell { int val}.
+
+pred cellp<v> == self::cell<v>
+     inv true.
+
+lemma "splitCell" self::cell(f)<v> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::cell(f1)<v> * self::cell(f2)<v> & 0.0<f<=1.0.
+
+lemma "combineCell" self::cell(f)<v> & f=f1+f2 &f1>0.0 & f2>0.0  <- self::cell(f1)<v> * self::cell(f2)<v> &  0.0<f<=1.0.
+
+lemma "normalizeCell" self::cell(f1)<n1> * self::cell(f2)<n2> & n1=n2 -> self::cell(f1+f2)<n1>.
+
+
+//(1)
+checkentail x::cell(0.4)<v1> * x::cell(0.6)<v1>  |- x::cell(1.0)<v2>.
+print residue. //valid, COMBINE
+// succeeds with 2 answers
+
+//(2)
+checkentail x::cell(0.4)<v1> * x::cell(0.2)<v1> * x::cell(0.2)<v1> * x::cell(0.2)<v1>  |- x::cell(1.0)<v2>.
+//print residue. //valid, COMBINE
+// succeeds with 24 answers
+
+//(3)
+checkentail x::cell(0.4)<v1> * x::cell(0.6)<v3> |- x::cell(1.0)<v2>.
+//print residue. // fails as may failure
+
+//(4)
+checkentail x::cell(0.4)<v1> * x::cell(0.6)<v3> & v1=v3 |- x::cell(1.0)<v2>.
+//print residue. //valid, COMBINE,2 answers
+
+//(5)
+checkentail x::cell(0.4)<v1> * x::cell(0.7)<v1>  |- false.
+//print residue. // valid, need "normalizeCell"
+
+//(6)
+checkentail x::cell(0.4)<v1> * x::cell(0.7)<v1>  |- x::cell(f)<v>.
+//print residue. // valid, need "normalizeCell"
+
+//(7)
+checkentail x::cell(0.4)<v1> * x::cell(0.3)<v1>  |- x::cell(f)<v>.
+//print residue. //valid, COMBINE
+// succeeds with 8 answers
+
+
+

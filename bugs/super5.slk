@@ -1,0 +1,108 @@
+data node { int val ; node next }.
+
+pred ls<p> == self = p 
+	or self::node<_,r> * r::ls<p> & self!=p
+	inv true.
+
+
+//(1)
+checkentail a::node<_,b> |- 
+        case {
+          a=b -> [] a::node<_,b>;
+          a!=b -> [] a::ls<b>;
+        }.
+
+//(2)
+checkentail a::node<_,b> & a!=b |- a::ls<b>.
+print residue.
+
+//(3)
+checkentail a::node<_,b> & a=b |- a::ls<b>.
+print residue.
+
+//(4)
+checkentail x::node<_,y> |- x::ls<y>.
+print residue.
+
+
+//(4)
+/*
+checkentail a::node<_,b>  |- case {
+              a=b -> [] a::ls<b>;
+             a!=b -> [] a::ls<b>;
+            }.
+*/
+
+lemma self::ls<p> -> self::ls<b>*b::ls<p>.
+
+//(5)
+checkentail self=p 
+ or self::node<next = r> * r::ls<p> & self!=p
+    |- self::ls<b>*b::ls<p>.
+//print residue.
+
+// seems a bug handling lemma below!
+lemma self::ls<z>  <- self::ls<y>*y::ls<z> & z=null . 
+
+//lemma self::ls<z>  <- self::ls<y>*y::ls<z> & z=null.
+
+//lemma self::ll<z>  <- self::ls<z> & z=nil.
+
+
+
+// bug below!
+//checkentail x::ls<y>*y::ls<z> |- x::ls<z>.
+//checkentail x::ls<y>*y::ls<z> & z!=null |- x::ls<z>.
+
+//(6)
+checkentail x::ls<y>*y::ls<null> |- x::ls<null>.
+
+//(7)
+checkentail y::ls<null> & x=y
+   or x::node<_,q>*q::ls<y> * y::ls<null> & x!=y |- x::ls<null>.
+
+
+
+//checkentail self::node<_,z> |- self = z or self::node<next = r> * r::ls<z> & self !=z.
+
+//(8)
+checkentail x::node<_,z> & x !=z |- x::ls<z>  . //U1
+//(9)
+checkentail x::node<_,y> * y::ls<z> & x!=z |- x::ls<z> .//U2 
+
+//(10)
+checkentail x::ls<y> * y::ls<null> |- x::ls<null> . //U3
+
+//pred ll<> == self::node<_,null> . 
+
+
+
+// Proof : lemma self::ls<p> -> self::ls<b>*b::ls<p>.
+checkentail
+  self = p 
+	or self::node<next = r> * r::ls<p> & self!=p
+   |- self::ls<b>*b::ls<p>.
+
+// seems a bug handling lemma below!
+// Proof : lemma self::ls<z>  <- self::ls<p>*p::ls<z> & z=null . 
+checkentail
+  p::ls<z> & self = p & z=null 
+	or self::node<next = r> * r::ls<p> *p::ls<z> & self!=p & z=null
+   |- self::ls<z>.
+
+
+checkentail x::ls<y> * y::ls<z> * z::node<_,w> & x=y & y=z |- x::ls<z> * z::node<_,w> .
+
+checkentail x::ls<y> * y::ls<z> * z::node<_,w> & x=y & y!=z |- x::ls<z> * z::node<_,w> .
+
+checkentail x::ls<y> * y::ls<z> * z::node<_,w> & x!=y & y=z |- x::ls<z> * z::node<_,w> .
+
+//BUG? - fail; need induction to prove!
+checkentail x::ls<y> * y::ls<z> * z::node<_,w> & x!=y & y!=z |- x::ls<z> * z::node<_,w> .
+
+
+//(13) BUG - fail to prove this..
+checkentail x::ls<y> * y::ls<z> * z::node<_,w> |- x::ls<z> * z::node<_,w> . //U4
+
+//(12) BUG - fail; need induction to prove! (loop?)
+//checkentail x::ls<y> * y::ls<z> * z::ls<w> & z!=w |- x::ls<z> * z::ls<w> . //U5 

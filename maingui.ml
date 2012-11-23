@@ -1,6 +1,9 @@
 (******************************************)
 (* command line processing                *)
 (******************************************)
+open Gen.Basic
+module M = Lexer.Make(Token.Token)
+
 let to_java = ref false
 
 let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
@@ -24,7 +27,8 @@ let parse_file_full file_name =
      *)
 		print_string "Parsing...\n";
         let _ = Gen.Profiling.push_time "Parsing" in
-		let prog = Iparser.program (Ilexer.tokenizer file_name) input in
+      let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) in
+		(* let prog = Iparser.program (Ilexer.tokenizer file_name) input in *)
 		  close_in org_in_chnl;
          let _ = Gen.Profiling.pop_time "Parsing" in
     (*		  let ptime2 = Unix.times () in
@@ -33,6 +37,9 @@ let parse_file_full file_name =
 			prog 
     with
 		End_of_file -> exit 0	  
+    | M.Loc.Exc_located (l,t)->
+      (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+      raise t)
 
 let process_source_full source =
   print_string ("\nProcessing file \"" ^ source ^ "\"\n");
@@ -134,8 +141,9 @@ let main_gui () =
   let _ = Tpdispatcher.prepare () in
     if List.length (!Globals.source_files) = 0 then begin
       (* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
-      Globals.procs_verified := ["f3"];
-      Globals.source_files := ["examples/test5.ss"]
+      (* Globals.procs_verified := ["f3"]; *)
+      (* Globals.source_files := ["examples/test5.ss"] *)
+        print_string "Source file(s) not specified\n"
     end;
     let _ = Gui.set_win (new Gui.mainwindow "HIP VIEWER" (List.hd !Globals.source_files)) in 
       Gen.Profiling.push_time "Overall";
@@ -155,8 +163,9 @@ let main1 () =
   
   if List.length (!Globals.source_files) = 0 then begin
 	(* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
-	Globals.procs_verified := ["f3"];
-	Globals.source_files := ["examples/test5.ss"]
+	(* Globals.procs_verified := ["f3"]; *)
+	(* Globals.source_files := ["examples/test5.ss"] *)
+      print_string "Source file(s) not specified\n"
   end;
   let _ = Gen.Profiling.push_time "Overall" in
   let _ = List.map process_source_full !Globals.source_files in

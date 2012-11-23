@@ -9,14 +9,50 @@ data node {
 }
 
 // sorted lseg
+/*
 lseg<n, p, sm, lg> == self=p & n=0 & sm<=lg
 		or self::node<sm, r> * r::lseg<n-1, p, sm1, lg> & sm<=sm1<=lg
 	inv n >= 0 & sm<=lg;
+*/
+
+lseg<n, p, sm, lg> == case {
+ (n=1) -> [] self::node<sm, p> & sm=lg; 
+ (n!=1) -> [nn] self::node<sm, r> * 
+           r::lseg<nn, p, sm1, lg> & sm<=sm1 & nn=n-1;
+  }
+inv n >= 1 & sm<=lg;
+
+  /*
+lseg<n, p, sm, lg> == case {
+  n=0 -> [] self=p & sm<=lg;
+ (n!=0) -> [nn] self::node<sm, r> * r::lseg<nn, p, sm1, lg> 
+               & sm<=sm1 & nn=n-1; 
+}	inv n >= 0 & sm<=lg;
+  */
 
 // sorted list with tail
+/*
 ll_tail<n, t, sm, lg> == self::node<sm, null> & t=self & n=1 & sm=lg
 		or self::node<sm, r> * r::ll_tail<n-1, t, sm1, lg> & r!=null & sm<=sm1
 	inv n>=0 & self!=null;
+*/
+
+ll_tail<n, t, sm, lg> == 
+   case {
+     n=2 -> [] self::node<sm, r> *r::node<lg,null> & t=r & n=2 & sm<=lg ;
+     n!=2 -> [] self::node<sm, r> * r::ll_tail<nn, t, sm1, lg> & r!=null & sm<=sm1 & nn=n-1;
+   }
+inv n>=2 & self!=null & sm<=lg;
+
+/*
+ll_tail<n, t, sm, lg> == 
+   case {
+     n=1 -> [] self::node<sm, null> & t=self & n=1 & sm=lg;
+     n!=1 -> [] self::node<sm, r> * r::ll_tail<nn, t, sm1, lg> & r!=null & sm<=sm1 & nn=n-1;
+   }
+inv n>=1 & self!=null & sm<=lg;
+*/
+
 
 // bounded list with tail
 bnd_tail<n, t, sm, lg> == self = null & n = 0 & t=null & sm <= lg
@@ -25,22 +61,43 @@ bnd_tail<n, t, sm, lg> == self = null & n = 0 & t=null & sm <= lg
 inv n >= 0;
 
 
-coercion "ll_tail2lseg" self::ll_tail<n, t, sm, lg> <-> self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg;
+//coercion "ll_tail2lseg" self::ll_tail<n, t, sm, lg> -> self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg;
+/* lemma "ll_tail2lseg" self::ll_tail<n, t, sm, lg> <-> (exists lg1: self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg); */
+
+// @D ann below is not critical but makes it verify much quicker
+// lemma "ll_tail2lseg" self::ll_tail<n, t, sm, lg> <-> (exists lg1: self::lseg<n-1, t, sm, lg1>@D * t::node<lg, null> & lg1<=lg);
+
+lemma "ll_tail" self::ll_tail<n, t, sm, lg> -> (exists lg1: self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg);
+
+lemma "ll_tail2" self::ll_tail<n, t, sm, lg> <- (exists lg1: self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg);
+
+
+//coercion "ll_tail2lseg" self::ll_tail<n, t, sm, lg> <- self::lseg<n-1, t, sm, lg1>@D * t::node<lg, null> & lg1<=lg;
 
 /*
-coercion "lsegmb" self::lseg<n, p, sm, lg> <-> self::lseg<n1, q, sm, lg1> * q::lseg<n2, p, sm2, lg> & n=n1+n2 & lg1<=sm2; 
+lemma "lsegmb" self::lseg<n, p, sm, lg> <-> self::lseg<n1, q, sm, lg1> * q::lseg<n2, p, sm2, lg> & n=n1+n2 & lg1<=sm2; 
 */
 
-coercion "lsegmb" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=0  <-> self::lseg<n1, q, sm, lg1> * q::lseg<n2, p, sm2, lg> & lg1<=sm2;
+
+lemma "lsegmb" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=1 -> 
+  (exists lg1,sm2: self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg> & lg1<=sm2);
+
+lemma "lsegmb2" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=1  <- 
+(exists lg1,sm2: self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg>@D 
+ & lg1<=sm2);
 
 
 void qsort(ref node x, ref node tx)
-	requires x::bnd_tail<n, tx, sm, lg> & n>0 & x!=null
-	ensures x'::ll_tail<m, tx', sm1, lg1> & sm <= sm1 & lg1 <= lg & m = n ;
+	requires x::bnd_tail<n, tx, sm, lg> 
+ case 
+{ n=0 -> ensures x'=null;
+  n=1 -> ensures x'::node<v,null> & tx'=x';
+ (n<0|n>1) -> 
+    ensures x'::ll_tail<n, tx', sm1, lg1> 
+    & sm <= sm1 & lg1 <= lg ;
+}
 {
-  if (x == null) { assert false;
-                   return; // not needed
-  }
+	if (x == null) return; // not needed
 	else if (x.next == null) {
       //assume false;
 		return;
@@ -51,7 +108,7 @@ void qsort(ref node x, ref node tx)
 
 		assert x'::bnd_tail<xx, tx', sm, lg> & sm <= temp' <= lg;
 		assert x'::bnd_tail<_, tx', sm, lg> & sm <= temp' <= lg;
-        //dprint;
+                dprint;
 		partition1(x, tx, y, ty, x.val);
 
 		// recursive sorting
@@ -61,29 +118,22 @@ void qsort(ref node x, ref node tx)
 
 		if (y != null)
 			qsort(y, ty);
-        //dprint;
-        assert true & (x'!=null | y'!=null);
+
 		if (x == null) {
-           //assume false;
+          //assume false;
 			x = y;
 			tx = ty;
-            assert x'::ll_tail<_,_, _, _>;
-            dprint;
-            //assume false;
+            assert x'::ll_tail<n,tx', _, _>;
 			return;
 		}
 		else if (y != null) {
 			tx.next = y;
 			tx = ty;
-            // dprint;
+            //dprint;
             assert x'::ll_tail<_, _, _, _>; //'
-              //assume false;
+            assume false;
 			return;
-		} else {
-          // x!=null & y=null
-          dprint;
-          //assume false;
-        }
+		}
 	}
 }
 
@@ -95,7 +145,6 @@ void qsort(ref node x, ref node tx)
 void partition1(ref node x, ref node tx, ref node y, ref node ty, int c)
 	requires x::bnd_tail<n, tx, sm, lg> & sm <= c <= lg 
 	ensures x'::bnd_tail<n1, tx', sm, c> * y'::bnd_tail<n2, ty', c, lg> & n=n1+n2;
-/*
 {
 	if (x == null) {
 		tx = null;
@@ -161,4 +210,4 @@ void partition1(ref node x, ref node tx, ref node y, ref node ty, int c)
 		}
 	}
 }
-*/
+

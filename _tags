@@ -1,0 +1,12 @@
+<{parser,parse_fix,parse_fixbag,parse_shape,parse_cmd}.ml>: pp(camlp4of)
+<xml/*.*>: not_hygienic
+<omega_modified/omega_lib/obj/*.*>: not_hygienic
+<omega_modified/code_gen/obj/*.*>: not_hygienic
+<omega_modified/omega_calc/obj/*.*>: not_hygienic
+<omega_modified/petit/obj/*.*>: not_hygienic
+<z3iw/z3/lib/*.*>: not_hygienic
+<omega_modified/uniform/obj/*.*>: not_hygienic
+<z3/lib/*.*>: not_hygienic
+<mona-1.4/comp/lib/*.*>: not_hygienic
+<sw/*>: not_hygienic
+<lp-ex/*>: not_hygienic

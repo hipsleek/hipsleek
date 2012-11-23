@@ -4,57 +4,58 @@ pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n-1> 
 	inv n >= 0.
 
-checkentail (x::ll<n>@I * y::ll<m>@I) & n>0 & m=0  |-  x!=y. 
+checkentail (x::ll<n>@L * y::ll<m>@L) & n>0 & m=0  |-  x!=y. 
 print residue.
 // x * y
-// Valid
+// (1) Valid
 
 
-checkentail (x::ll<n>@I * y::ll<m>@I) & n>0 & m>0  |- (y::ll<m1>@I & x::ll<n1>@I) . 
+checkentail (x::ll<n>@L * y::ll<m>@L) & n>0 & m>0  |- (y::ll<m1>@L & x::ll<n1>@L) . 
 print residue.
 // x * y
-// Valid
+// (2) Valid
 
-
-checkentail (x::ll<n>@I * y::ll<m>@I) & n>0 & m>0  |- y!=x. 
+checkentail (x::ll<n>@L * y::ll<m>@L) & n>0 & m>0  |- y!=x. 
 print residue.
-// Valid
 // x * y
-
+// (3) Valid
 
 
 checkentail x::ll<n> * y::ll<m> & n>0 & m>0  |- y::ll<m1> * x::ll<n1> & y!=x.
 print residue.
 // true
-// Valid
+// (4) Valid
 
-
-checkentail (x::ll<n>@I * y::ll<m>@I) & x!=null & y!=null  |- (y::ll<m1>@I & x::ll<n1>@I) & y!=x. 
+checkentail (x::ll<n>@L * y::ll<m>@L) & x!=null & y!=null  |- (y::ll<m1>@L & x::ll<n1>@L) & y!=x. 
 print residue.
 // x * y
-// Valid
+// (5) Valid
 
-checkentail (x::ll<n>@I * y::ll<n>@I) & n>0  |-  x!=y. 
+checkentail (x::ll<n>@L * y::ll<n>@L) & n>0  |-  x!=y. 
 print residue.
 // x * y
-// Valid
+// (6) Valid
 
 checkentail x::ll<n> * x::ll<n> & n>0  |-  1=2. 
 print residue.
 // x * y
-// Valid
+// (7) Valid
 
 checkentail x::ll<n> * x::ll<n> & n=0   |-  x=null & n=0.
+// (8) Valid
 
 checkentail x::ll<n> * x::ll<n> & n>0   |-  x=null & n=0.
+// (9) Valid
 
 checkentail x::ll<n> * x::ll<n> & x=null  
          or x::ll<n> * x::ll<n> & x!=null   |-  x=null & n=0.
+// (10) Valid
 
 
 checkentail x::ll<n> * x::ll<n>   |-  
     case {  x=null -> [] x=null & n=0;
             x!=null -> [] x=null & n=0; }. 
+// (11) Valid
 print residue.
 
 /* parse error

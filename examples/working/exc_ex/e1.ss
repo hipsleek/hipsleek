@@ -13,3 +13,10 @@ ensures res=5;
   inc(i);
   return i;
 }
+
+void foo() 
+requires true
+ensures true & flow __Exc;
+{
+  raise new __Exc();
+}

@@ -1,0 +1,201 @@
+/usr/local/bin/mona
+/usr/local/bin/oc
+
+Processing file "avl_size_height_1_link.ss"
+Parsing...
+Parsing...
+Starting Omega... 
+Translating global variables to procedure parameters...
+Translating to core language...
+
+ warning avl_size_height_1_link.ss_223_9 quantifying: n1
+
+ warning avl_size_height_1_link.ss_162_9 quantifying: n1
+Checking procedure merge$node~node... 
+Procedure merge$node~node SUCCESS
+Checking procedure insert_inline$node~int... 
+Procedure insert_inline$node~int SUCCESS
+Checking procedure insert$node~int... 
+dprint: avl_size_height_1_link.ss:181: ctx:  List of Failesc Context: [FEC(0, 1, 1)]
+
+Successful States:
+[Label: [(499:,0 ); (499:,0 ); (496:,0 ); (496:,0 ); (439:,0 ); (439:,0 ); 
+          (438:,1 ); (438:,1 )]
+ State:es_formula: 
+        SS 1910:q_3100::avl<n2_3101,h2_3102>@M[Orig]@ rem br[{681,680}] * 
+        SS 1909:p_3202::avl<n1_3203,h1_3204>@M[Orig]@ rem br[{681}] * 
+        x'::node<Anon_3096,n,v_node_175_3131,q_3100>@M[] * 
+        v_node_175_3131::node<Anon_3201,h_3200,p_3202,q_3205>@M[] * 
+        SS 1906:q_3205::avl<n2_3206,h2_3207>@M[Orig]@ rem br[{681,680}] & (
+        ([v_bool_179_1369'][null!=p_3202][v_node_175_3131!=null]
+         [n_3221=h2_3207 & m_3220=n2_3206 & n_3210=h1_3204 & 
+           m_3209=n1_3203 & n1_3127=n_3134 & n1_3127=h_3200 & 
+           m_3112=n1_3098 & h_3095=n & h1_3099=n_3113 & 
+           flted_162_3126=m_3133 & n2_3101=m_3142 & h2_3102=n_3143 & 
+           (1795:h1_3099+1=n & h2_3102<n | h2_3102+1=n & (h1_3099+2)<=n) & 
+           (1863:h1_3204+1=n1_3127 & h2_3207<n1_3127 | h2_3207+1=n1_3127 & 
+           (h1_3204+2)<=n1_3127) & 0<=h1_3099 & 0!=h1_3204 & 0<=m_3142 & 
+           0!=n & (-1+n1_3127)<=n_3113 & 0!=n1_3203 & 
+           n1_3127<=flted_162_3126 & 0<=m_3209 & 0<=h1_3204 & 0<=n & 
+           h2_3207<=n2_3206 & h2_3102<=n2_3101 & (-1+h1_3204)<=h2_3207 & 
+           0<=m_3112 & h1_3204<=n1_3203 & h1_3099<=n1_3098 & 
+           0!=flted_162_3126 & (-1+h2_3102)<=h1_3099 & flted_162_3126=1+
+           n1_3203+n2_3206 & 0!=m & h2_3102+2=n1_3127 & n_3113<=n1_3127 & 
+           m=1+n1_3098+n2_3101 & 0<=h2_3102 & (1+h2_3207)<=h1_3204 & 
+           0<=h2_3207 & 0<=m_3133 & 0!=n1_3127 & -1+flted_162_3126=m_3112 & 
+           (-1+h1_3099)<=h2_3102 & 0<=n1_3127 & (-1+h2_3207)<=h1_3204 & 
+           n<=m & 0<=m_3220]
+         [tmp_100'=p_3097][x=x' & x'!=null][null=tmp_101']
+         [1793:!(v_bool_168_1522')][a=a' & a'<=Anon_3096][v_bool_172_1521']
+         [v_bool_177_1371'])) &
+        {FLOW,(69,69)=__norm,}
+       es_pure: (())
+       es_heap: true
+       es_aux_conseq: true
+       es_must_error: None
+       es_var_label: None]
+
+Procedure insert$node~int SUCCESS
+Checking procedure build_avl2$node~node~node... 
+Procedure build_avl2$node~node~node SUCCESS
+Checking procedure build_avl1$node~node... 
+Procedure build_avl1$node~node SUCCESS
+Checking procedure rotate_double_right$node~node~node~node~int~int~int... 
+Procedure rotate_double_right$node~node~node~node~int~int~int SUCCESS
+Checking procedure rotate_double_left$node~node~node~node~int~int~int... 
+Procedure rotate_double_left$node~node~node~node~int~int~int SUCCESS
+Checking procedure get_max$int~int... 
+Procedure get_max$int~int SUCCESS
+Checking procedure rotate_right$node~node~node... 
+Procedure rotate_right$node~node~node SUCCESS
+Checking procedure rotate_left$node~node~node... 
+Procedure rotate_left$node~node~node SUCCESS
+Checking procedure height$node... 
+Procedure height$node SUCCESS
+Stop Omega... 4064 invocations 
+20 false contexts at: ( (214,4)  (210,6)  (193,11)  (189,6)  (347,4)  (343,6)  (287,4)  (283,6)  (468,17)  (468,24)  (472,3)  (472,22)  (472,10)  (471,15)  (471,27)  (471,8)  (470,14)  (470,25)  (470,8)  (470,3) )
+
+Total verification time: 29. second(s)
+	Time spent in main process: 12.44 second(s)
+	Time spent in child processes: 16.56 second(s)
+Counters: 
+ cnt_Overall = 1
+cnt_Parsing = 2
+cnt_Preprocessing = 1
+cnt_TP.imply_timeout = 4321
+cnt_Translating global var = 1
+cnt_Translating to Core = 1
+cnt_add_pure = 3366
+cnt_elim_exists = 92
+cnt_elim_redundant_ctr = 25
+cnt_empty_predicate_testing = 122
+cnt_entail_prune = 141
+cnt_erc_imply = 161
+cnt_fast_imply = 7038
+cnt_filter_dupl_memo = 6972
+cnt_heap_entail_one_context_struc#2 = 142
+cnt_heap_entail_one_context_struc#4 = 129
+cnt_heap_entail_one_context_struc#fold = 32
+cnt_imply = 4321
+cnt_imply_proc_one_full = 142
+cnt_imply_proc_one_ncplx = 416
+cnt_is_sat = 3028
+cnt_memo_imply = 122
+cnt_memo_norm = 3494
+cnt_merge_mems_r_dups = 2734
+cnt_method build_avl1$node~node = 1
+cnt_method build_avl2$node~node~node = 1
+cnt_method get_max$int~int = 1
+cnt_method height$node = 1
+cnt_method insert$node~int = 1
+cnt_method insert_inline$node~int = 1
+cnt_method merge$node~node = 2
+cnt_method rotate_double_left$node~node~node~node~int~int~int = 1
+cnt_method rotate_double_right$node~node~node~node~int~int~int = 1
+cnt_method rotate_left$node~node~node = 1
+cnt_method rotate_right$node~node~node = 1
+cnt_normalize_max_renaming_list_failesc_context = 375
+cnt_pred_inference = 1
+cnt_proof_after_base_case = 1
+cnt_prune_imply = 3467
+cnt_prune_preds = 654
+cnt_prune_preds_filter = 654
+cnt_simplify = 31
+cnt_slow_imply = 161
+cnt_unfold_unsat = 127
+consumed_nodes_counter = 425
+consumed_specialized_nodes = 88
+dropped_branches = 46
+false_imply_count = 3854
+fast_imply_success = 69
+impl_cache_count = 4127
+impl_conseq_count = 1204
+impl_proof_count = 3568
+imply_sem_prun_false = 3422
+imply_sem_prun_true = 45
+need_split = 24
+prune_cnt = 46
+sat_cache_count = 3020
+sat_proof_count = 472
+stat_count_imply = 4321
+stat_count_sat = 3028
+stat_disj_count_imply = 12070
+stat_disj_count_sat = 4144
+stat_size_count_imply = 165279
+stat_size_count_sat = 16465
+syn_memo_count = 3536
+syn_memo_hit = 69
+total_unfold_disjs = 59
+true_imply_count = 467
+with_disj_cnt_0_s = 274
+with_disj_cnt_2_f = 54
+with_disj_cnt_2_s = 88
+z_stat_disj_imply = 4842
+z_stat_disj_sat = 3503
+
+ profile results: there where 44 keys 
+ 
+(Overall,28.99,1,28.99,[28.99],  100.%) 
+(Parsing,0.01,2,0.,[],  0.06%) 
+(Preprocessing,0.15,1,0.15,[],  0.51%) 
+(TP.imply_timeout,0.,4321,0.,[],  0.%) 
+(Translating global var,0.01,1,0.01,[],  0.03%) 
+(Translating to Core,0.12,1,0.12,[],  0.41%) 
+(add_pure,0.04,3366,0.,[],  0.13%) 
+(elim_exists,0.,92,0.,[],  0.%) 
+(elim_redundant_ctr,0.06,25,0.,[],  0.2%) 
+(empty_predicate_testing,0.75,122,0.,[],  2.62%) 
+(entail_prune,3.51,141,0.02,[],  12.1%) 
+(erc_imply,0.06,161,0.,[],  0.2%) 
+(fast_imply,0.,7038,0.,[],  0.%) 
+(filter_dupl_memo,0.05,6972,0.,[],  0.17%) 
+(heap_entail_one_context_struc#2,6.12,142,0.04,[],  21.11%) 
+(heap_entail_one_context_struc#4,3.42,129,0.02,[],  11.83%) 
+(heap_entail_one_context_struc#fold,1.12,22,0.05,[],  3.86%) 
+(imply,9.13,4321,0.,[],  31.49%) 
+(imply_proc_one_full,0.48,142,0.,[],  1.65%) 
+(imply_proc_one_ncplx,0.55,416,0.,[],  1.93%) 
+(is_sat,0.93,3028,0.,[],  3.24%) 
+(memo_imply,0.73,122,0.,[],  2.55%) 
+(memo_norm,0.,3494,0.,[],  0.%) 
+(merge_mems_r_dups,0.,2734,0.,[],  0.%) 
+(method build_avl1$node~node,0.07,1,0.07,[],  0.24%) 
+(method build_avl2$node~node~node,0.08,1,0.08,[],  0.27%) 
+(method get_max$int~int,0.,1,0.,[],  0.%) 
+(method height$node,0.05,1,0.05,[],  0.17%) 
+(method insert$node~int,3.32,1,3.32,[3.32],  11.45%) 
+(method insert_inline$node~int,7.76,1,7.76,[7.76],  26.8%) 
+(method merge$node~node,0.1,2,0.05,[],  0.34%) 
+(method rotate_double_left$node~node~node~node~int~int~int,0.38,1,0.38,[],  1.31%) 
+(method rotate_double_right$node~node~node~node~int~int~int,0.35,1,0.35,[],  1.24%) 
+(method rotate_left$node~node~node,0.06,1,0.06,[],  0.2%) 
+(method rotate_right$node~node~node,0.05,1,0.05,[],  0.2%) 
+(normalize_max_renaming_list_failesc_context,0.04,375,0.,[],  0.17%) 
+(pred_inference,0.08,1,0.08,[],  0.27%) 
+(proof_after_base_case,0.01,1,0.01,[],  0.03%) 
+(prune_imply,0.,3467,0.,[],  0.%) 
+(prune_preds,7.37,654,0.01,[],  25.42%) 
+(prune_preds_filter,0.02,654,0.,[],  0.06%) 
+(simplify,0.03,31,0.,[],  0.13%) 
+(slow_imply,0.06,161,0.,[],  0.2%) 
+(unfold_unsat,0.,127,0.,[],  0.%)

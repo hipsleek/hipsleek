@@ -37,11 +37,12 @@ let transform_exp
       | Null _ 
       | This _ 
       | Time _ 
-      | Unfold _ 
+      | Unfold _
+	  | Barrier _ 	  
       | Var _ -> (e,zero)
 			| ArrayAt b -> (* An Hoa *)
-				let e1,r1 = helper n_arg b.exp_arrayat_index  in
-				(ArrayAt { b with exp_arrayat_index = e1;},r1)
+				let il,rl = List.split (List.map (helper n_arg) b.exp_arrayat_index) in
+				(ArrayAt { b with exp_arrayat_index = il;},(comb_f rl))
       | Assign b ->
         let e1,r1 = helper n_arg b.exp_assign_lhs  in
         let e2,r2 = helper n_arg b.exp_assign_rhs  in
@@ -84,13 +85,16 @@ let transform_exp
           exp_cond_else_arm = e3;},r)
       | Finally b ->
 	let e1,r1 = helper n_arg b.exp_finally_body in
+
 	(Finally {b with exp_finally_body=e1},r1)
       | Label (l,b) -> 
         let e1,r1 = helper n_arg b in
         (Label (l,e1),r1)
-      | Member b -> 
-        let e1,r1 = helper n_arg b.exp_member_base in
+      | Member b -> let e1,r1 = helper n_arg b.exp_member_base in
         (Member {b with exp_member_base = e1;},r1)
+			| ArrayAlloc b -> 
+        let el,rl = List.split (List.map (helper n_arg) b.exp_aalloc_dimensions) in
+        (ArrayAlloc {b with exp_aalloc_dimensions = el},(comb_f rl))
       | New b -> 
         let el,rl = List.split (List.map (helper n_arg) b.exp_new_arguments) in
         (New {b with exp_new_arguments = el},(comb_f rl))
@@ -142,9 +146,9 @@ let transform_exp
       | While b -> 
         let wrp,r = match b.exp_while_wrappings with
           | None -> (None,zero)
-          | Some s -> 
+          | Some (s,l) -> 
             let wrp,r = helper n_arg s in
-            ((Some wrp),r) in
+            (Some (wrp,l),r) in
         let ce,cr = helper n_arg b.exp_while_condition in
         let be,br = helper n_arg b.exp_while_body in
         let r = comb_f [r;cr;br] in
@@ -547,7 +551,10 @@ let three3 (a,b,c) = c
 
 let rec check_exp_if_use_before_declare
     (e:exp) ((local,global):IS.t*IS.t) (stk:IS.t ref) : unit =
-  let f_args (local, global) stk e = (match e with
+	(* let _ = print_endline ("[check_exp_if_use_before_declare] input exp = { " ^ (Iprinter.string_of_exp e) ^ " }") in *)
+  let f_args (local, global) stk e =
+	(* let _ = print_endline ("Call f_args on exp { " ^ (Iprinter.string_of_exp e) ^ " }") in *)
+ (match e with
     | Bind b ->
       (IS.empty, union_all [to_IS b.exp_bind_fields; !stk; global]) (* inner blk *)
     | Block b ->
@@ -566,6 +573,7 @@ let rec check_exp_if_use_before_declare
     | _ -> (local, union_all [!stk; global])) (* inner block *) 
   in
   let f_imp stk e = 
+	(* let _ = print_endline ("Call f_imp on exp { " ^ (Iprinter.string_of_exp e) ^ " }") in *)
     match e with
     | Seq b -> stk
     | VarDecl b ->
@@ -576,6 +584,7 @@ let rec check_exp_if_use_before_declare
     | _ -> let ef = ref IS.empty in ef
   in
   let f (local, global) stk e = 
+	(* let _ = print_endline ("Call f on exp { " ^ (Iprinter.string_of_exp e) ^ " }") in *)
     match e with
     | ConstDecl b ->
       let helper (v,e,_) = 
@@ -610,18 +619,18 @@ let rec check_exp_if_use_before_declare
          ^ (string_of_int (pos.start_pos.Lexing.pos_cnum 
                            - pos.start_pos.Lexing.pos_bol))
          ^" is used before declared"}
-        else 
+        else (* let _ = print_endline "REPORT ERROR is_not_declared 1" in *)
           Error.report_error 
             {Err.error_loc = pos;
              Err.error_text = v ^ ", line " 
              ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^", col "
              ^ (string_of_int (pos.start_pos.Lexing.pos_cnum 
                                - pos.start_pos.Lexing.pos_bol))
-             ^" is not declared"}
+             ^" is not declared (Bind)"}
       else Some ()
-      
     | Var x ->
       let v = x.exp_var_name in
+		if (String.contains v '.') then None else
       let pos = x.exp_var_pos in
       let gvs = IS.union global !stk in
       if not (IS.mem v gvs) 
@@ -636,15 +645,14 @@ let rec check_exp_if_use_before_declare
          ^ (string_of_int (pos.start_pos.Lexing.pos_cnum 
                            - pos.start_pos.Lexing.pos_bol))
          ^" is used before declared"}
-        else 
-          (*let _ = print_endline ("local var:"^string_of_IS local) in*)
+        else (* let _ = print_endline "REPORT ERROR is_not_declared 2" in *)
           Error.report_error 
             {Err.error_loc = pos;
              Err.error_text = v ^ ", line " 
              ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^", col "
              ^ (string_of_int (pos.start_pos.Lexing.pos_cnum 
                                - pos.start_pos.Lexing.pos_bol))
-             ^" is not declared"}
+             ^" is not declared (Var)"}
       else Some ()
     | _ -> None
   in iter_exp_args_imp e (local,global) stk f f_args f_imp
@@ -831,9 +839,12 @@ let rec rename_exp (e:exp) ((bvars,subs):(IS.t)*((ident * ident) list)) : exp =
 
 
 let rename_proc gvs proc : proc_decl = 
+	(* let _ = print_endline ("[rename_proc] input = { " ^ (string_of_IS gvs) ^ " }") in *)
+	(* let _ = print_endline ("[rename_proc] input procedure = { " ^ (Iprinter.string_of_proc_decl proc) ^ " }") in *)
   let pv v = v.param_name in
   let pargs = to_IS (List.map pv proc.proc_args) in
   let clash_vars = IS.inter pargs gvs in
+	(* let _ = print_endline ("[rename_proc] clashed vars = { " ^ (string_of_IS clash_vars) ^ " }") in *)
   let clash_subs = new_naming (from_IS clash_vars) in
 
   let nargs = 
@@ -852,7 +863,7 @@ let rename_proc gvs proc : proc_decl =
     | None -> None
     | Some e0 -> 
       let e = rename_exp e0 (bvars,clash_subs) in
-      (*print_endline (Iprinter.string_of_exp e); *)
+      (* print_endline ("[rename_proc] procedure body after rename of clashed variables\n" ^ (Iprinter.string_of_exp e)); *)
       check_exp_if_use_before_declare e (IS.empty, IS.union nas1 gvs) (ref IS.empty); 
       Some ( e )
   in
@@ -864,16 +875,30 @@ let rename_proc gvs proc : proc_decl =
   }
 
 
+(* let rename_prog prog : prog_decl =  *)
+(*   let gvs = to_IS (List.concat ( *)
+(*     let fun0 (a,b,c) = a in (\*find var idents*\) *)
+(*     let fun1 a = List.map fun0 a.exp_var_decl_decls in *)
+(*     List.map fun1 prog.prog_global_var_decls)) *)
+(*   in  *)
+(*   let prog = float_var_decl_prog prog in *)
+(*   map_proc prog (rename_proc gvs)  *)
+
 let rename_prog prog : prog_decl = 
-  let gvs = to_IS (List.concat (
-    let fun0 (a,b,c) = a in
+  (*find var idents*)
+  let var_idents =  (List.concat (
+    let fun0 (a,b,c) = a in 
     let fun1 a = List.map fun0 a.exp_var_decl_decls in
     List.map fun1 prog.prog_global_var_decls))
-  in 
+  in
+  (*find proc idents*)
+  let proc_idents = 
+    let fun0 (proc: proc_decl) : ident = proc.proc_name in
+    List.map fun0 prog.prog_proc_decls
+  in
+  let gvs = to_IS (var_idents@proc_idents) in
   let prog = float_var_decl_prog prog in
   map_proc prog (rename_proc gvs) 
-
-
 
 (********free var************)
 let rec find_free_read_write (e:exp) bound 
@@ -937,9 +962,17 @@ let find_free_vars (e:exp) bound : IS.t =
   IS.union rs ws
 
 
-let find_free_read_write_of_proc proc : (IS.t * IS.t) = 
+let find_free_read_write_of_proc proc prog: (IS.t * IS.t) = 
+  (*find proc idents*)
+  let proc_idents = 
+    let fun0 (proc: proc_decl) : ident = proc.proc_name in
+    List.map fun0 prog.prog_proc_decls
+  in
   let pv v = v.param_name in
-  let pargs = to_IS (List.map pv proc.proc_args) in
+  let args = (List.map pv proc.proc_args) in
+  (*alow passing procedure name as an argument
+    by adding proc idents into the list of arguments*)
+  let pargs = to_IS (args@proc_idents) in
   let (rs,ws) = 
     match proc.proc_body with
     | None -> (IS.empty, IS.empty)
@@ -957,6 +990,7 @@ module IG = Graph.Persistent.Digraph.Concrete(IdentComp)
 module IGO = Graph.Oper.P(IG)
 module IGC = Graph.Components.Make(IG)
 module IGP = Graph.Path.Check(IG)
+module IGN = Graph.Oper.Neighbourhood(IG)
 
 let ngs_union gs = 
   List.fold_left IGO.union IG.empty gs 
@@ -971,8 +1005,7 @@ let addin_callgraph_of_exp (cg:IG.t) exp mnv : IG.t =
     | _ -> None
   in
   fold_exp exp f ngs_union cg
-
-
+	
 let addin_callgraph_of_proc cg proc : IG.t = 
   match proc.proc_body with
   | None -> cg
@@ -1014,7 +1047,7 @@ let ngscc cg = IGC.scc cg
 let create_progfreeht_of_prog prog = 
   let ht = H.create 10 in
   let fun0 proc = 
-    H.add ht proc.proc_name (find_free_read_write_of_proc proc)
+    H.add ht proc.proc_name (find_free_read_write_of_proc proc prog)
   in 
   List.iter fun0 prog.prog_proc_decls;
   ht
@@ -1039,7 +1072,7 @@ let merge1 ht (mss:(string list list)) : (((ident list) * (IS.t * IS.t)) list) =
 let merge1 ht (mss:(string list list)) : (((ident list) * (IS.t * IS.t)) list) = 
   let pr2 = pr_list (pr_list (fun x -> x)) in
   let pr3 = pr_list (pr_pair (pr_list (fun x -> x)) pr_no) in
-  Gen.Debug.no_2 "merge1" pr_no pr2 pr3 merge1 ht mss
+  Debug.no_2 "merge1" pr_no pr2 pr3 merge1 ht mss
  
 
 let cmbn_rw a b = 
@@ -1086,6 +1119,7 @@ let is_
 let merge1 ht mss = 
 *)
 
+(*hash: ident -> typ*)
 let ht_of_gvdef gvdefs =
   let h = H.create 10 in
   let fun0 gv = 
@@ -1115,8 +1149,9 @@ let param_of_v ht md lc nm =
 let add_free_var_to_proc gvdefs ht proc = 
   let ght = ht_of_gvdef gvdefs in
   let (rs,ws) = H.find ht proc.proc_name in
-  (*let _ = print_endline ("proc rs:"^ string_of_IS rs) in
-    let _ = print_endline ("proc ws:"^ string_of_IS ws) in*)
+  (* let _ = print_endline ("proc:"^ proc.proc_name) in *)
+  (* let _ = print_endline ("proc rs:"^ string_of_IS rs) in *)
+  (* let _ = print_endline ("proc ws:"^ string_of_IS ws) in *)
   let fun0 md is = 
     List.map (param_of_v ght md proc.proc_loc) (from_IS is)
   in
@@ -1184,18 +1219,18 @@ let add_globalv_to_mth_prog prog =
   let cg = callgraph_of_prog prog in
   (* let _ = print_string "1\n" in *)
   let ht = create_progfreeht_of_prog prog in
-  (* let _ = print_string "2\n" in *)
+  (* let _ = print_endline "add_globalv_to_mth_prog: after create_progfreeht_of_prog\n" in *)
   let scclist = List.rev (ngscc_list cg) in
   (* let _ = print_string "2a\n" in *)
   let sccfv = merge1 ht scclist in
-  (* let _ = print_string "3\n" in *)
+  (* let _ = print_endline "add_globalv_to_mth_prog: after merge1\n" in *)
   let mscc = push_freev1 cg sccfv in
   let _ = update_ht0 ht mscc in
-  (* let _ = print_string "4\n" in *)
+  (* let _ = print_endline "add_globalv_to_mth_prog: after update_ht0\n" in *)
   let newsig_procs = 
     List.map (add_free_var_to_proc prog.prog_global_var_decls ht) 
       prog.prog_proc_decls in
-  (* let _ = print_string "5\n" in *)
+  (* let _ = print_endline "add_globalv_to_mth_prog: after add_free_var_to_proc\n" in *)
   let new_procs = 
     List.map (map_body_of_proc (addin_callargs_of_exp ht))
       newsig_procs in
@@ -1205,20 +1240,30 @@ let add_globalv_to_mth_prog prog =
   }
 
 let add_globalv_to_mth_prog prog = 
-  Gen.Debug.no_1 "add_globalv_to_mth_prog" pr_no pr_no add_globalv_to_mth_prog prog
+  Debug.no_1 "add_globalv_to_mth_prog" pr_no pr_no add_globalv_to_mth_prog prog
 
-  
-let pre_process_of_iprog prog = 
+(*iprims: primitives in the header files
+prog: current program*)  
+let pre_process_of_iprog iprims prog = 
+  let prog =
+          { prog with prog_data_decls = iprims.prog_data_decls @ prog.prog_data_decls;
+                      prog_proc_decls = iprims.prog_proc_decls @ prog.prog_proc_decls;
+						(* An Hoa : MISSING PRIMITIVE RELATIONS! *)
+					  prog_rel_decls = iprims.prog_rel_decls @ prog.prog_rel_decls;
+					  prog_axiom_decls = iprims.prog_axiom_decls @ prog.prog_axiom_decls;
+          } in
   let prog = float_var_decl_prog prog in
-  (* let _ = print_string "1\n" in *)
+  (* let _ = print_string "[pre_process_of_iprog] 1\n" in *)
   let prog = rename_prog prog in
-  (* let _ = print_string "2\n" in *)
+  (* let _ = print_string "[pre_process_of_iprog] after rename_prog\n" in *)
   let prog = add_globalv_to_mth_prog prog in
-  (* let _ = print_string "3\n" in *)
+  (* let _ = print_string "[pre_process_of_iprog] after pre_process_of_iprog\n" in *)
   prog
 
-let pre_process_of_iprog prog = 
-  Gen.Debug.no_1 "pre_process_of_iprog" pr_no pr_no pre_process_of_iprog prog
+let pre_process_of_iprog iprims prog = 
+  let pr x = (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls in
+  (* let pr x = (pr_list Iprinter.string_of_proc_decl) x.Iast.prog_proc_decls in *)
+  Debug.no_1 "pre_process_of_iprog" pr pr (fun _ -> pre_process_of_iprog iprims prog) iprims
 
 
 

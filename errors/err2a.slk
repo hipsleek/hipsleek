@@ -1,0 +1,29 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred pos_ll<n> == self = null & n = 0
+	or self::node<d,r> * r::pos_ll<n - 1> & d>0
+	inv n >= 0.
+
+pred neg_ll<n> == self = null & n = 0
+	or self::node<d,r> * r::neg_ll<n - 1> & d<0
+	inv n >= 0.
+
+lemma self::pos_ll<n> & n>0 <- self::neg_ll<n> & flow __Error.
+lemma self::neg_ll<n>  & n>0 <- self::pos_ll<n> & flow __Error.
+
+//1 must-bug
+checkentail x=null |- x::node<_,_>.
+
+//2 may-bug
+checkentail true |- x!=null.
+
+//3 may-bug
+checkentail x=null |- x::node<_,_> & flow __Error.
+
+
+//4 may-bug
+checkentail true |- x::node<_,_> & flow __Error.

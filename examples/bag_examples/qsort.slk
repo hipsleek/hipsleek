@@ -1,0 +1,25 @@
+/* quick sort */
+
+data node {
+	int val; 
+	node next; 
+}.
+
+/*
+bnd<n, sm, bg> == self = null & n = 0 or 
+                  self::node<d, p> * p::bnd<n1, sm, bg> & n= n1+1 & sm <= d < bg 
+               inv n >= 0;
+
+sll<n, sm, lg> == self::node<qmin, null> & qmin = sm & qmin = lg & n = 1 or 
+                  self::node<sm, q> * q::sll<n1, qs, lg> & n= n1+1 & q != null & sm <= qs 
+               inv n >= 1 & sm <= lg;
+*/
+
+pred ll1<S> == self =  null & S={} 
+	or self::node<v, r> * r::ll1<S1>  & S = union(S1, {v}).
+
+checkentail x::ll1<S> & S!={} |- x!=null.
+
+checkentail x::ll1<S> & S!={} |- x::node<a,b>.
+print residue.
+

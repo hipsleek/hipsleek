@@ -1,0 +1,58 @@
+Starting Reduce... 
+Starting Omega...oc
+
+// Location not meaningful..
+
+Entail (1): Fail.(must) cause:(failure_code=213) 
+And_Reason[ n=1 |-  5<n locs: [17] (must-bug).]
+
+
+Entail (2): Fail.(may) cause:(failure_code=213) And_Reason[ (x=null & n=0 | x!=null & 1<=n) & 1<n & m=n |-  3<m
+    locs: [4;1;0;20] (may-bug).]
+
+Entail (3): Fail.(must) cause:15.1 x=null |-  x!=null (must-bug).
+<1>true & x=null &
+{FLOW,(1,2)=__Error}
+
+
+Entail (4): Fail.(must) cause:(failure_code=213) And_Reason[ x!=null |-  x=null
+    locs: [28] (must-bug).]
+<1>x::node<Anon_13,Anon_14>@M[Orig] & true &
+{FLOW,(1,2)=__Error}
+
+
+Entail (5): Fail.(may) cause:(failure_code=213) And_Reason[ x=null & Anon_15=0 | x!=null & 1<=Anon_15 |-  x=null
+    locs: [4;1;32] (may-bug).]
+
+Entail (6): Fail.(must) cause:(failure_code=213) And_Reason[ 0<n & (x=null & n=0 | x!=null & 1<=n) |-  x=null
+    locs: [4;1;36] (must-bug).]
+<1>x::ll<n>@M[Orig][LHSCase] & 0<n &
+{FLOW,(1,2)=__Error}
+
+
+Entail (7): Fail.(may) cause:(failure_code=213) And_Reason[ (x=null & n=0 | x!=null & 1<=n) & m=n |-  3<m
+    locs: [4;1;0;40] (may-bug).]
+
+Entail (8): Fail.(must) cause:(failure_code=213) And_Reason[ 0<=n & n=1 & m=n |-  3<m
+    locs: [6;0;44] (must-bug).]
+<1>true & n=1 & m=n &
+{FLOW,(1,2)=__Error}
+
+
+Entail (9): Fail.(must) cause:(failure_code=213) And_Reason[ 0<=n & 1<n & m=n |-  m<2
+    locs: [6;0;48] (must-bug).]
+<1>true & 1<n & m=n &
+{FLOW,(1,2)=__Error}
+
+
+Entail (10): Valid. 
+Entail (11): Fail.(may) cause:(failure_code=213) And_Reason[ 1<n |-  2<n
+    locs: [57] (may-bug).]
+
+Entail (12): Fail.(must) cause:(failure_code=213) And_Reason[ n=1 |-  n<1
+    locs: [61] (must-bug).]
+<1>true & n=1 &
+{FLOW,(1,2)=__Error}
+
+
+Stop Omega... 66 invocations 

@@ -1,0 +1,73 @@
+/home/loris/reduce/bin/redcsl
+
+Processing file "err3.ss"
+Parsing err3.ss ...
+Parsing ../../prelude.ss ...
+Starting Reduce... 
+Starting Omega...oc
+Translating global variables to procedure parameters...
+Checking procedure foo1$int~int... 
+Procedure foo1$int~int SUCCESS
+Checking procedure foo2$int~int... 
+Proving precondition in method div___$int~int Failed.
+  path trace:  
+   (may) cause: lor[32. proving precondtition: error scenarios (__DivByZeroErr)
+    locs: [29;30;33],valid]
+
+====>
+
+(may) cause: 
+ OrR[must_err:(__DivByZeroErr) LOCS:[30;33],valid]
+
+========================================================================
+
+  path trace:  [(60::,0 ); (60::,0 )]
+   (may) cause: (failure_code=213) And_Reason[ 0<=index & index<3 & index<2 & index'=2+index & v_int_37_470'=index' & 
+res=v_int_37_470' |-  res<3
+    locs: [28;31;33;37;29] (may-bug).]
+lor
+  path trace:  [(60::,1 ); (60::,1 )]
+   (must) cause: (failure_code=213) And_Reason[ 0<=index & index<3 & 2<=index & index'=3 & v_int_37_470'=index' & 
+res=v_int_37_470' |-  res<3
+    locs: [28;31;35;37;29] (must-bug).]
+
+====>
+
+// possible to eliminate unnecessary intermediate that
+// are defined by equality.
+
+(may) cause: (failure_code=213) 
+  And_Reason[ 0<=index & index<2 & res=2+index |-  res<3
+    locs: [29;31;33;37;29].]
+lor
+   (must) cause: (failure_code=213) And_Reason[ 0<=index & index<3 & 2<=index & index'=3 & v_int_37_470'=index' & 
+res=v_int_37_470' |-  res<3
+    locs: [28;31;35;37;29] .]
+
+
+=====================================================================
+// different style of error message!! (err2a.ss)
+
+(Cause of Bind Failure):errors/hip/err2a.ss:29: 6:  List of Failesc Context: [FEC(1, 0, 0 )]
+Failed States:
+[
+ Label: 
+ State:
+        
+         fe_kind: MAY
+         fe_name: logical bug
+         fe_locs: {
+                   fc_message: 
+                    (failure_code=15.3 no match for rhs data node: ) And_Reason[ v_node_29_507'=q |-  v_node_29_507'!=null
+    locs: [29;0] (may-bug).]
+                   fc_current_lhs_flow: {FLOW,(1,23)=__flow}}
+       FAIL_OR 
+        
+         fe_kind: MUST
+         fe_name: separation entailment
+         fe_locs: {
+                   fc_message: 15.5 no match for rhs data node: v_node_29_507PRMD (must-bug).
+                   fc_current_lhs_flow: {FLOW,(1,5)=__Error}}
+       
+ ]
+

@@ -4,7 +4,7 @@ pred lseg<n, p> == self = p & n = 0
          or (exists r2: self::node<next = r2> * r2::lseg<n - 1, p>)
          inv n >= 0.
 pred lseg2<n, p> == 
-   case { n=0 -> [] self = p & n = 0 ;
+   hg case { n=0 -> [] self = p & n = 0 ;
           n!=0 -> [] self::node<next = r2> * r2::lseg2<n - 1, p> ;
           }
          inv n >= 0.

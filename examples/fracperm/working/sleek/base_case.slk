@@ -1,0 +1,55 @@
+/*
+ * LDK
+ * Test to understand entailment and residue
+ * for the base case
+*/
+
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+
+
+//(1)
+checkentail x=null |- x::ll(f)<0>.
+print residue.
+
+//(2)
+checkentail x::ll(0.5)<n> & n=0 |- x=null.
+print residue. //EMP, valid
+
+//(3)
+checkentail x::ll(1.0)<n> * x::ll(1.0)<n> & n=0 |- x!=null.
+print residue. //EMP, fail
+
+//(4)
+checkentail x::ll(0.5)<n> & n=0 |- x!=null.
+print residue. //EMP, fail
+
+//(5)
+checkentail x::ll(0.5)<n> & n=0 |- x::ll(1.0)<n>.
+print residue. //EMP, valid
+
+//(6)
+checkentail x::ll(1.0)<n> & n=0 |- x::ll(0.5)<a> * x::ll(1.0)<b>.
+print residue. //EMP, valid
+
+//(7)
+checkentail x::ll(f)<n> & n=0 |- x::ll(f1)<a> * x::ll(f2)<b>.
+print residue. //EMP, valid
+
+//(8)
+checkentail x=null & n=0 |- x::ll(f1)<a> * x::ll(f2)<b>.
+print residue. //EMP, valid
+
+//(9)
+checkentail x::ll<n> & n=0 |- x::ll<a>.
+print residue. //EMP, valid
+
+//(10)
+checkentail x::node<_, r> |- x!=null .
+print residue. //EMP, valid
+
+

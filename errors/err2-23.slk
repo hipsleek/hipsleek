@@ -1,0 +1,10 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+
+//23. must-bug - cause:22  y!=null |-  y=null (must-bug).
+
+checkentail x::node<_,null> & y!=null  |- y::ll<n> & n=0.

@@ -60,7 +60,7 @@ fseg<p> == self = p
 		* fls::flist<>
 		* chd::ftree<> * sb::fseg<p>;
 
-coercion self::ftree<> <- self::fseg<x> * x::ftree<>;
+lemma self::ftree<> <- self::fseg<x> * x::ftree<>;
 
 /*
 	Search for a name in a folder list by following the sib link.

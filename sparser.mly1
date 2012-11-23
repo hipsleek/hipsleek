@@ -92,7 +92,7 @@
 %token CASE
 %token CBRACE
 %token CLASS
-%token COERCION
+(* %token COERCION *)
 %token COLON
 %token COLONCOLON
 %token COMMA
@@ -133,6 +133,7 @@
 %token IN
 %token <string> JAVA
 %token LEFTARROW
+%token LEMMA
 %token <float> LITERAL_FLOAT
 %token <int> LITERAL_INTEGER
 %token NOTIN
@@ -912,7 +913,7 @@ coercion_decl
 	}
   }
 /*
-  | COERCION opt_name constr coercion_direction constr proof_block {
+  | LEMMA opt_name constr coercion_direction constr proof_block {
 	  { coercion_type = $4;
 		coercion_name = $2;
 		coercion_head = $3;

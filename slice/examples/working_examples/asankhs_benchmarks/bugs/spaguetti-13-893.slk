@@ -1,0 +1,6 @@
+data node { int val ; node next }.
+
+pred lseg<p> == self = p
+or self::node<_,r> * r::lseg<p> & self!=p inv true.
+
+checkentail x11::lseg<x13> * x11::lseg<x2> * x3::lseg<x8> * x3::lseg<x6> * x3::lseg<x9> * x7::lseg<x3> * x9::lseg<x10> * x9::lseg<x2> * x2::lseg<x6> * x2::lseg<x1> * x12::lseg<x3> * x8::lseg<x1> * x8::lseg<x13> * x8::lseg<x5> * x4::lseg<x10> * x1::lseg<x5> * x10::lseg<x9> * x10::lseg<x5> * x5::lseg<x4> * x5::lseg<x12> * x5::lseg<x2> & x4 != x6 & x1 != x5 & x1 != x2 & x1 != x7 & x1 != x4 & x8 != x12 & x3 != x4 |- false.

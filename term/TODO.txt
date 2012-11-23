@@ -1,0 +1,23 @@
+5. Prepare benchmarks and evaluation
+	- Change EVariance to Term in current examples
+6. Simplify the context to add useful constraints for
+meaningful printing.
+7. Post-condition with Loop (partialy DONE)
+	- Can MayLoop in a false context be refined to Loop?
+
+===============================================
+1. Clean up EVariance (DONE) and useless code of termination (DONE)
+2. Add call group (from proc_call_order of proc_decl) (DONE)
+3. Infer phase transition by inference mechanism (DONE)
+  - Filter irrelevant phase constraints (DONE)
+	- Make it work with interprocedural constraints (infer-3.ss), 
+	may need logical vars (DONE)
+	- Integrate the result into specification (DONE)
+	- Aggressive inference for each scc group (DONE)
+	- Implicit phase variables (DONE)
+	- Do not add phase variables into a scc group if
+	it only has 0 or 1 Term. (DONE)
+4. Turn off termination checking when there is 
+not any user-defined Term. (DONE)
+
+

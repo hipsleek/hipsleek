@@ -1,0 +1,66 @@
+data node {
+	int val;
+	node next;
+}.
+
+// assumes lseg has at least one element
+// unable to prove one of the ll_tail rule
+
+/*
+pred lseg<n, p, sm, lg> == self=p & n=0 & sm<=lg
+		or self::node<sm, r> * r::lseg<n-1, p, sm1, lg> & sm<=sm1<=lg
+	inv n >= 0 & sm<=lg.
+*/
+
+pred lseg<n, p, sm, lg> == case {
+//  n=0 -> [] self=p & sm<=lg;
+  n=1 -> [] self::node<sm,p> & lg=sm;
+ (n!=1) ->
+		[] (exists sm1: self::node<sm, r> * r::lseg<nn, p, sm1, lg> & sm<=sm1 & nn=n-1);
+  }
+	inv n >= 1 & sm<=lg.
+
+
+/*
+pred ll_tail<n, t, sm, lg> == self::node<sm, null> & t=self & n=1 & sm=lg
+		or self::node<sm, r> * r::ll_tail<nn, t, sm1, lg> & r!=null & sm<=sm1 & nn=n-1
+	inv n>=1 & self!=null.
+*/
+
+pred ll_tail<n, t, sm, lg> == 
+     case {
+     n=1 -> [] self::node<sm, null> & t=self & n=1 & sm=lg;
+   n!=1 -> []  (exists sm1: self::node<sm, r> * r::ll_tail<nn, t, sm1, lg> & r!=null & sm<=sm1 & nn=n-1);
+   }
+	inv n>=1 & self!=null.
+
+lemma "lsegmb" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=1  -> self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg> & lg1<=sm2.
+
+lemma "lsegmb2" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=1  <- self::lseg<n1, q, sm, lg1>@D * q::lseg<n2, p, sm2, lg> & lg1<=sm2.
+
+
+lemma "ll_tail" self::ll_tail<n, t, sm, lg> & n>1 -> self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg.
+
+//lemma "ll_tail2" self::ll_tail<n, t, sm, lg> & n>1 <- self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg.
+
+//checkentail x::ll_tail<tx, n> |- tx::node<a,b>.
+
+//checkentail x::lseg<tx,n-1>*tx::node<_,y>*y::ll_tail<ty,m> 
+// |- x::ll_tail<ty,n+m>.
+
+//checkentail x::lseg<tx,n-1>*tx::node<_,y>*y::lseg<ty,m-1>*ty::node<_,null>
+// |- x::ll_tail<ty,n+m>.
+
+//checkentail x::lseg<tx,n-1>*tx::node<_,y>*y::lseg<ty,m-1>*ty::node<_,null> 
+// |- x::lseg<ty,n+m-1>*ty::node<_,null>.
+
+//checkentail x::lseg<tx,n-1>*tx::node<_,y>*y::lseg<ty,m-1>  |- x::lseg<q,a> * q::lseg<ty,b> & a+b=n+m-1.
+
+
+//checkentail x::lseg<y,n> |- x::lseg<a,b>.
+
+//checkentail x::lseg<y,n> |- x::lseg<a,b>*a::lseg<c,d>.
+
+//checkentail x::lseg<y,n>*y::lseg<z,m> |- x::lseg<a,b>*a::lseg<c,d>.
+
+//print residue.

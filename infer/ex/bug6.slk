@@ -1,0 +1,54 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred lseg<p> == case {
+     self = p -> [] true;
+     self!=p -> [] self::node<q> * q::lseg<p> ;
+     } 
+  inv true.
+
+//infer [] x::node<z>  |- x::lseg<z>.
+//print residue.
+
+infer [x,z] x::node<z>  |- x::lseg<z>.
+print residue.
+
+
+
+/*
+x=z & x!=z & q_27=z
+\/ x!=z & x::node<..>
+
+case {
+  x=z -> 
+  x!=z -> 
+}
+
+requires x=z ...
+ensures
+requires x!=z  ..
+ensures
+
+
+x!=z & ...
+
+
+Currently obtained:
+ Entail  (1): Valid. 
+ <1>
+   true & x!=z & q_27=z & {FLOW,(17,18)=__norm}
+   or x::node<z>@M[Orig] & x=z & {FLOW,(17,18)=__norm}
+
+Since [x,a] to be inferred, I was expecting
+the outcomes from a proof search, namely:
+   Inferred x!=z
+      x!=z  & norm
+/\ Inferred x=z
+     x::node<z>@M[Orig] & x=z
+
+*/
+
+

@@ -1,0 +1,8 @@
+data cell {
+  int val;
+}.
+
+checkentail y::cell<j+1> & res=z and x::cell<i+1> & thread=z |- true.
+
+checkentail false |- y::cell<j+1> & j=1 and x::cell<i+1> & thread=z.
+

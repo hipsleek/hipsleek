@@ -1,0 +1,8 @@
+/*data node { int val ; node next }.
+
+pred ll<L1> == self = null & L1 = [||]
+	or self::node<v, r> * r::ll<L2> & L1 = v:::L2.
+
+lemma self::ll<L1> & L1 != [||] -> self::ll<L1> & len(L1) > 0.
+*/
+checkentail L1 != [||] |- len(L1) > 0.

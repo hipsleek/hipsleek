@@ -33,7 +33,7 @@ dprint aa_ps;
 	}
 }
 
-//coercion self::thole<s1, p, cur, last> * cur::treep<s2, last> & self != cur & cur != null
+//lemma self::thole<s1, p, cur, last> * cur::treep<s2, last> & self != cur & cur != null
 //	<-> self::thole<s3, p, last, last1> * last::treep<s4, last1> & s1 + s2 = s3 + s4;
 
 void lemma1(node root, node cur)
@@ -42,7 +42,7 @@ void lemma1(node root, node cur)
 		& s1 = s3 + s4;
 //	ensures root::thole<s3, p, last, last1> * last::treep<s4, last1> & s1 + s2 = s3 + s4;
 
-//coercion "t2th" self::treep<s, p> <- self::thole<s1, p, h, l> * h::treep<s2, l> & s = s1 + s2;
+//lemma "t2th" self::treep<s, p> <- self::thole<s1, p, h, l> * h::treep<s2, l> & s = s1 + s2;
 
 void lemma2(node root)
 	requires root::thole<s1, p, h, l> * h::treep<s2, l> & root != null

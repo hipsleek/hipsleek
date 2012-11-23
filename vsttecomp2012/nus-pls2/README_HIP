@@ -1,0 +1,122 @@
+--------------------------
+HIP verification system.
+--------------------------
+--------------------------
+Overview:
+--------------------------
+HIP is an automated verification system based on separation logic for a simple imperative 
+language. It is able to modularly verify heap-manipulating programs.  Prior to 
+verification, users are expected to define predicates in separation formulae to describe 
+the shape of data structures together with their derived properties, such as length, 
+height and bag of values. Users must also annotate each method/loop with  one or more 
+pre/post conditions prior to automated verification. HIP verifier eventually translates 
+proof obligations to pure formulae that can be discharged by theorem provers. For the 
+examples in the current competition, we only use Omega Calculator and Z3. 
+
+--------------------------
+Usage:
+--------------------------
+You must have Omega Calculator and Z3 installed.
+For convenience, we have supplied both bundled both
+versions in our system, and you should respect the
+copyrights from the original developers. The Omega prover 
+has been modified by us to run in server mode.
+
+Z3:	
+  http://research.microsoft.com/en-us/downloads/0a7db466-c2d7-4c51-8246-07e25900c7e7/Z
+
+Omega Calculator: 
+	http://www.cs.umd.edu/projects/omega/release-1.0.html
+
+
+All the examples can be run with: 
+       ./hip <source_file> 
+
+To produce a proof for the verification, please use:
+       ./hip <source_file> -wpf
+
+The proof is in a html file with the name:
+       <source_file>_proof.html
+
+
+---------------------------
+Input format description:
+---------------------------
+The input file will be made up of several parts:
+
+- data declarations            
+- predicate definitions 
+- method declarations (with multiple pre/post conditions)
+
+Base types: 
+	int, bool.
+
+Data structures can be declared:
+	For illustration, the next declaration describes a structure called node with an 
+integer field val and a recursive node field next:
+    data node { int val ; node next }
+
+Assertion formulae format: 
+	The assertion formulae use the separation logic notation and are given in 
+disjunctive normal form. Each disjunct can have two parts: a heap formula and a pure 
+arithmetic formula. The basic heap node is described by a v::node_type<list_of_arguments> 
+where v denotes a pointer to the node, while list_of_arguments are the contents of the 
+heap node. It can be viewed as a points-to heap structure which is often specified as 
+v->node_type<list_of_arguments> in separation logic notation. This format can be used to 
+declare predicates for a wide range data structures. An example of a predicate is list 
+which describes a list of specified length n. Its formal definition in HIP is as follows:
+
+    list<n> == self=null & n=0 or self::node<_,r> * r::list<n-1> inv n>=0
+
+	It states that either the list is empty with length n=0, or it is made up of a 
+node linked to a smaller list of length n-1. Each predicate shall also have a formula to 
+describe its pure invariant. For the list predicate, it's pure formulae (without heap) is 
+n>=0. If not specified, the pure invariant is just assumed to be true. A free or an 
+anonymous variable within a separation formula is always assumed to be existentially 
+quantified.
+
+	The pre and postconditions are denoted by the keywords "requires" and "ensures", 
+respectively. For illustration, for a method appending two singly-linked lists pointed by 
+x and y, respectively, the specification looks as follows:
+
+	node append(node x, node y)
+		requires x::list<n> * y::list<m>
+		ensures res::list<n+m>	
+
+	The postcondition ensures the fact that the result is a singly linked list of 
+length n+m, where n and m represent the lengths of the input lists. The user can provide 
+multiple pre/postconditions that capture different scenarious in which the method can be 
+called.
+	
+Coercion lemmas relating heap predicates may also be defined:
+	There are three classes of such lemmas. These lemmas are automatically checked by 
+our system.
+	
+    lemma formula_LHS ->  formula_RHS
+    lemma formula_LHS <-  formula_RHS
+    lemma formula_LHS <-> formula_RHS
+	
+------------------------------
+Special Features:
+------------------------------
+Case structured specifications:
+
+	We allow structuring the specification as a case construct, which triggers a case 
+analysis during the verification process. For illustration, we can assume we are 
+interested in writing a specification for the aforementioned append method that 
+explicitly captures the situation when x is null:
+	case {x=null -> requires y::list<m> -> ensures res::list<m>;
+		  x!=null -> requires x::list<n> * y::list<m> -> ensures res::list<n+m>};	
+
+Immutability:
+
+	Heap predicates can be marked with the "@I" annotation, denoting the fact that 
+the associated data structure can only be read (cannot be mutated). 
+	Ex. x::list<n,p>@I denotes an immutable list.
+	
+Exception handling:
+		
+	Our specifications can explicitly capture the control flow, witch can be normal 
+(no exception has occurred) or abnormal (an exception has occurred). The normal flow is 
+captured as "flow __norm", while the abnormal flow is captured as "flow exception_name".
+

@@ -1,0 +1,23 @@
+
+//LOOP!
+infer [m] m>=0 |- n>m.
+print residue.
+
+//LOOP!
+infer [m] m>=0 |- p1=p2 & n>m.
+print residue.
+
+//LOOP!
+infer [m] n=m+1 & m>=0 |- p1>p2 | (p1=p2 & n>m).
+print residue.
+
+//LOOP!
+infer [p1,m] n=m+1 & m>=0 |- p1>p2 | (p1=p2 & n>m).
+print residue.
+
+
+//infer [p1,p2] n=m+1 & var[0,p1,n] |- var[0,p2,m].
+//print residue.
+
+
+

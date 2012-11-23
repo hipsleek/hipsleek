@@ -1,0 +1,7 @@
+relation product(int x, int y, int z) == z = x * y.
+relation divides(int x, int z) == ex (y : product(x,y,z)).
+checkentail true |- divides(3,144).
+relation isComposite(int x) == ex (y : 1 < y < x & divides(y,x)).
+checkentail true |- isComposite(10).
+// checkentail true |- isComposite(5).
+// Z3 bug : goes into a loop here

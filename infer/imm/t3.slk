@@ -1,0 +1,37 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+
+infer [a] x::node<c,_> & a>0 |- x::node<a,b> & a>0.
+print residue.
+
+infer [a,c] x::node<c,_> |- x::node<a,b> & a>0.
+print residue.
+
+infer [a,c] x::node<c,_> & a>0 |- x::node<a,b> & a>0.
+print residue.
+
+infer [n,a] x::ll<n> |- x::node<a,b> & a>0.
+print residue.
+
+infer [n,a] x::ll<n> & a>0 |- x::node<a,b> & a>0.
+print residue.
+
+
+/*
+Entail  (1): Fail.(may) cause:(failure_code=213)  true |-  Anon_46=a;  true |-  0<a (may-bug).
+*/
+
+
+
+
+
+
+
+

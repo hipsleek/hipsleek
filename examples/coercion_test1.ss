@@ -32,7 +32,7 @@ void test2(node x)
 {
 }
 */
-coercion a(node x)
+lemma a(node x)
 	requires x::ll0<>
 	ensures x::ll1<n>;
 //	requires x::ll1<n>
@@ -143,7 +143,7 @@ void id3c(node x, node p, node r)
 	}
 }
 
-coercion c(node x)
+lemma c(node x)
 	requires x::ll0<>
 	ensures x::ll2<n>;
 {

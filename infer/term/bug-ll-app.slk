@@ -1,0 +1,15 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+ranking term_r(int n).
+
+// TODO : NO type-checking??
+
+infer [term_r] x::ll<n> * y::ll<m> & n>0  |- term_r(n,m)>=0 .
+print residue.

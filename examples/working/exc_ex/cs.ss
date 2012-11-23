@@ -11,21 +11,29 @@ data OutputStream{}
 
 class IOException extends __Exc {}
 
-void println(PrintWriter p, int i) requires true ensures true {}
+void println(PrintWriter p, int i) 
+  requires true 
+  ensures true; 
+  /* {} */
 
 int read(BufferedReader br) throws IOException 
-			requires br::BufferedReader<> ensures br::BufferedReader<>& flow __normal;
-			requires br::BufferedReader<> ensures br::BufferedReader<>& flow IOException;
+  requires br::BufferedReader<> 
+  ensures br::BufferedReader<>& flow __normal;
+  requires br::BufferedReader<> 
+  ensures br::BufferedReader<>& flow IOException;
 			{return 0;}
 			
 OutputStream getOutputStream(socket s) throws IOException
-	requires s::socket<> ensures s::socket<>*res::OutputStream<> & flow __normal;
+	requires s::socket<> 
+    ensures s::socket<>*res::OutputStream<> & flow __normal;
 	requires s::socket<> ensures s::socket<> & flow IOException;
 	{return new OutputStream();}
  
 InputStream getOutputStream(socket s) throws IOException
-	requires s::socket<> ensures s::socket<>*res::InputStream<> & flow __normal;
-	requires s::socket<> ensures s::socket<> & flow IOException;
+	requires s::socket<> 
+    ensures s::socket<>*res::InputStream<> & flow __normal;
+	requires s::socket<> 
+    ensures s::socket<> & flow IOException;
 	{return new InputStream();} 
 
 

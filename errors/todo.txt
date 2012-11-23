@@ -1,0 +1,357 @@
+# FIXED : why is flow of div2 __Error rather __DivByZeroErr?
+
+# FIXED : trans_proc added __flow instead of __norm
+
+Is below correct?
+==================
+
+ -----------------------
+ x=0 |- x>5 * Fail_Must
+
+ -----------------------
+ x>0 |- x>5 * Fail_May
+
+
+ -----------------------
+ true |- x>1 * Fail_May
+
+
+ ----------------------------------
+ x=null |- x::node<_,_> * Fail_Must
+
+
+ ----------------------------------
+ x::node<...> |- x=null * Fail_Must
+
+
+ ----------------------------------
+ x::ll<x> |- x::sll<x>  * Fail_May
+
+ ----------------------------------
+ x::sll<x> |- x::ll<x>  * Valid
+
+
+  (needs a lemma)
+ ---------------------------------------------------------------
+ x::pos_list_nonempty<x> |- x::neg_list_nonempty<x>  * Fail_Must
+
+
+ x::node<5,null> |- x::node<6,null> * Fail_Must
+
+ x::node<_,null> |- x::node<6,null> * Fail_May
+
+
+  pos_ll<> = self=null
+        or self::node<v,q>*q::pos_ll<> & v>0
+
+
+  neg_ll<> = self=null
+        or self::node<v,q>*q::neg_ll<> & v<0
+
+
+  x::pos_ll<> & x!=null |- x::neg_ll<> * Fail_Must
+
+
+  x::pos_ll<> |- x::neg_ll<> * Fail_May
+
+
+  x::ll<n> |- x::ll<n-1> * Fail_Must?
+
+  (Fail lhs --> rhs)
+
+  What is the difference between may and must fail?
+
+  What is the difference between normal and failure?
+
+          ok <: may_fail
+   must_fail <: may_fail
+
+  What is the cause of failure?
+
+           D1 |- D3 * residue
+           D2 |- failure (cause of failure)
+        -------------------------
+         D1 * D2 |- D3 * failure * residue 
+
+ Body hugging entailment..
+
+ It is always safe to fail..
+
+  false |- anything
+
+  anything |- true
+
+==============
+
+// soundness of must bug?
+// must bug via predicates/lemmas?
+// effectiveness of approach? 
+   benchmark?
+
+
+norm_flow |- must_norm * must_flow
+norm_flow |- may_norm  * may_flow
+norm_flow |- ok_norm   * norm_flow
+
+ X |- must_err_flow * ?
+
+
+ false <: norm  <: may_err
+
+ false <: must_err <: may_err
+
+  Valid
+  [x=1]norm   |- [x>=1]norm 
+                    * ([x=1->x=1]norm)
+
+  Must_Error
+  [x=1]norm   |- [x>1]norm  
+                    * ([(x=1&n>1)=false]must)
+
+  May_Error
+  [x>=1]norm  |- [x>1]norm 
+                    * ([not(x>=1->x>1)]may)
+
+
+  x=1 |- x>=1 * (true & norm_flow)
+
+
+  false_flow <: norm <: true_flow
+
+  false[flow] |- any[flow] * false[flow]
+
+  LHS[flow] |- RHS[flow] * (LHS->RHS)[flow]
+  LHS[flow] |- RHS[flow] * (must_err(LHS & RHS=false)[flow]
+  LHS[flow] |- RHS[flow] * (may_err(not(LHS->RHS)))[flow]
+
+           f1<:f2
+       --------------
+        f1 <: may[f2]
+
+             f1<:f2
+        ------------------
+        must[f1] <: may[f2]
+
+                 LHS -> RHS
+  -----------------------------------------
+  LHS[flow] |- RHS[flow] * (LHS->RHS)[flow]
+
+               LHS -> not(RHS) 
+  ---------------------------------------------
+  LHS[flow] |- RHS[flow] * (true)[musterr[flow]]
+
+               not(LHS -> RHS)
+  ---------------------------------------------
+  LHS[flow] |- RHS[flow] * (true)[may_err[flow]]
+
+      norm     <: may_err
+      must_err <: may_err
+
+
+  L1[flow] * L2[flow] <==> (L1*L2)[flow]
+
+              flow1 <: flow2
+  ---------------------------------------
+  L1[flow1] * L2[flow2] ==> (L1*L2)[flow2]
+
+
+
+
+====================================================
+
+  sorted<S> = self=null & S={}
+  \/ self::node<v,q> * q::sort<S1> & S={v}US &
+         forall x in S. v<=x
+
+  err_sorted<S> = 
+     self::node<v,q> * q::ll<S1> & S={v}US & exists x in S. v>x
+  \/ self::node<v,q> * q::err_sorted<S1> & S={v}US
+       & forall x in S. v<=x
+
+     x::err_sorted<S> =!=> not(x::sorted<S>) 
+  ------------------------------------------------------------
+  x::err_sorted<S>[norm] |- x::sorted<S>[norm] * true[must_err]
+
+        x=1 -> not(x>1)
+      -------------------
+         x=1 =!=> x>1
+
+        flow1<:flow2
+  ------------------------
+   D1[flow] ==> D1[flow2]
+
+        D1 --> D2
+  ------------------------
+   D1[flow] ==> D2[flow]
+
+ may_err <: 
+ may_err <: must_err 
+
+ A Calculus for Must and May Bugs
+ --------------------------------
+
+
+ slice :: RHS --> [f1,..,fn]
+  (same as memo grouping)
+
+ Assume LHS is not false
+
+ (i) f_i is false
+
+ (ii) LHS & f_i is false
+       (look for LHS & f_i_j is false)
+
+ (iii) look for not(LHS -> f_i_j)
+
+   D1 |- D2 * D3
+---------------------------------------------
+ D1 & flow=x |- (D2 & flow=x) * (D3 & flow=x)
+
+   D1 |- not(D2) * D3
+ ------------------------------------------------------
+ D1 & flow=x |- (D2 & flow=x) * (D3 & flow=x->must_bug)
+
+// x::pos_ll<n> & n>0 ==> x::neg_ll<n> & flow = must_bug
+// x::neg_ll<n> & n>0 ==> x::pos_ll<n> & flow = must_bug
+
+ x::pos_ll<n> & n>0 ==> x::neg_ll<n> & flow = must_bug
+
+ x::pos_ll<n> & n>0 => x::not_pos<n> & flow = must_bug
+
+ x::not_pos<n> = x::node<v,q>*q::ll<n-1> & v<=0
+             \/ x::node<v,q>*q::not_pos<n-1> 
+  inv n>=1 & x!=null
+
+ x::pos_ll<n> & n>0 => x::not_pos<n> & flow = must_bug
+
+
+ x=1 & norm |- x=2 & norm   * (true & must_bug (x=1->x=2))
+ x=1 & norm |- false & norm * (true & must_bug (true -> false)
+ x>1 & norm |- x=2 & norm   * (true & may_bug (x>1->x=2)
+ x=2 & norm |- x>1 & norm   * (x=2 & norm) (x>1->x=2)
+
+ D |- D1 * R1
+ D |- D2 * R2
+ ------------------------
+ D |- D1 & D2 * (R1 & R2)
+
+
+ D  |- D1 * R1
+ R1 |- D2 * R3
+ ------------------------
+ D  |- D1 * D2 * R3
+
+
+ D |- D1 * R1
+ D |- D2 * R2
+ ------------------------
+ D |- D1 \/ D2 * (R1 U R2)
+
+  D1 |- D * R1
+  D1 |- D * R2
+ ------------------------
+ D1 \/ D2 |- D * (R1\/R2)
+
+
+ false U D    = false
+ must_bug U D = D
+ may_bug U D  = D (if norm in D)
+
+ true   |- x::node<_,_> * may_bug
+ x=null |- x::node<_,_> * must_bug
+
+ x>1 |- x=2 * {maybe}
+ x>1 |- x<1 * {must}
+ -----------------------------------------
+ x>1 |- x=2 \/ x<1 * {maybe,must}==>maybe
+
+ x>1 |- x=2 * maybe
+ x=1 |- x=2 * must
+ -----------------------------------------
+ x>1 \/ x=1  |- x=2 * maybe|must ==> maybe
+
+
+
+ S1 U S2 => maximise successes
+ 
+ maximising successes with + (maximise successful info with search)
+ ---------------------------
+ norm + _    => norm
+ may  + must => may
+ must + must => must
+ S1 | S2 ==> maximise
+
+ maximising may-bug with | (uncertainty)
+ -------------------------
+ may  | _    => may
+ must | norm => may
+ must | must => must
+ norm | norm => norm
+
+ maximising must bug with & (error information)
+ ===========================
+ must & _    => must
+ may  & norm => may
+
+ norm([]) & norm([])  = norm([])
+ _(L1) & must_bug(L2) = must_bug(and(L1@L2))
+ must_bug(L1) & _(L2) = must_bug(and(L1@L2))
+
+ norm([])     \/ norm([])     = norm (ok)
+ must_bug(L1) \/ must_bug(L2) = must_bug (or(L1@L2))
+ _(L1) \/ _(L2)               = may_bug (or(L1@L2))
+
+
+
+ x=1 * norm |- ?
+
+
+//copied from err4.txt
+JUST FOR SLEEK or Proving LEMMA
+===============================
+
+Special case to detect capture must __Error, 
+especially for Lemma and sleek proving.
+
+  D1 & flow norm |- D2 & flow norm * R
+  is_must_error(R) --> R1 = update_flow(extract_must_error_state(R),norm)
+             // succeeds when must fail found
+  is_may_error(R)  --> R1 = R
+  is_valid (R)  --> R1 = update_flow(extract_safe_state(R),__Error)
+             // fails when validity detected
+  -------------------------------------------
+  D1 & flow norm |- D2 & flow __Error *  R1
+
+
+Norming PROVING for HIP
+========================
+
+  D1 & norm  |- D2 & norm * R
+  f1<:f2
+  is_must_error(R) --> R1 = extract_safe_must_state(R)
+  is_may_error(R) --> R1 = R
+  is_valid (R)  --> R1 = update_flow(R, f1)
+   ---------------------------------------------
+  D1 & flow f1 |- D2 & flow f2 * R1
+
+//__Sleek_Error == __Entailment_Error?? __Entailment_Error is one specific error (in literature, it is called logic error)
+  __Sleek_Error <: __Error
+
+   // Below do not occur for hip proving
+   // should be detected as a must-failure.
+   // in typestate system, it is called inconsistent error and should be a must-failure.
+   not(f1<:f2)
+  -------------------------------------------
+  D1 & flow f1 |- D2 & flow f2 * (D1*flow f1)
+
+
+   // Error flow persist
+   // not normally required
+   f1<:__Error
+  -------------------------------------------
+  D1 & flow f1 |- D2 & flow f2 * (D1*flow f1)
+
+  //matching = fail & exist coercion which matches (H,D2) and (f2,f4): LEMMA B & flow f3 <- H flow f4
+  // D1 & flow f1 |- H & flow f3 * (R)
+ -------------------------------------------------
+  D1 & flow f1 |- D2 & flow f2 * (R)

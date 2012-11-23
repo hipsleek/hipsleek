@@ -1,0 +1,28 @@
+data node {
+  int val;
+  node next;
+}.
+
+//infer [y] true |- y::node<a,b>@v & v<:L.
+//infer [y,w] y::node<_,_>@w |- y::node<a,b>@v & v<:L.
+
+//infer [] y::node<_,_>@w |- (exists v: y::node<a,b>@v).
+
+//infer [] y::node<_,_>@w |- [v] y::node<a,b>@v.
+//infer [] y::node<_,_>@w |- y::node<a,b>@v.
+
+//infer [] y::node<_,_>@M |- y::node<a,b>@v & v<:@M.
+
+//infer [] @L<:v & v<:@M |- false.
+
+// TODO : unsound inference as implied false
+
+infer [] y::node<_,_>@L |- [v] y::node<a,b>@v & v<:@M.
+
+
+//infer [] y::node<_,_>@w |- y::node<a,b>@w .
+infer [] y::node<_,_>@w & w<:L |- y::node<a,b>@L .
+
+infer [] y::node<_,_>@w & w<:M |- y::node<a,b>@L .
+
+print residue.

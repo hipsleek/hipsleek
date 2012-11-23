@@ -1,0 +1,19 @@
+// examples from bi-abduction paper
+
+data node {
+	node next;	
+}.
+
+pred lseg<p> == self = p 
+	or self::node<q> * q::lseg<p> & self!=p 
+  inv true.
+
+infer [y] x::node<y>  |- x::node<a> * a::lseg<null> .
+print residue.
+
+/*
+Inferred Heap:[]
+Inferred Pure:[ y=null]
+<1>true & a=y & m=0 & y=null &
+*/
+

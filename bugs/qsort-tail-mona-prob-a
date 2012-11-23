@@ -1,0 +1,520 @@
+/usr/local/bin/mona
+
+Processing file "examples/working/hip/qsort-tail.ss"
+Parsing...
+Parsing...
+Translating global variables to procedure parameters...
+Translating to core language...
+Starting Omega... 
+Checking procedure partition1$node~node~node~node~int... 
+Procedure partition1$node~node~node~node~int SUCCESS
+Checking procedure qsort$node~node... 
+assert:examples/working/hip/qsort-tail.ss:50: 2:  : ok
+
+
+assert:examples/working/hip/qsort-tail.ss:51: 2:  : ok
+
+
+dprint: examples/working/hip/qsort-tail.ss:52: ctx:  List of Failesc Context: [FEC(0, 1, 1)]
+
+Successful States:
+[Label: [(143::,1 ); (143::,1 ); (142::,1 ); (142::,1 )]
+ State:es_formula: 
+        SS 468::p_1865::bnd_tail<flted_24_1863,t_1860,sm_1861,lg_1862>@M[Orig] * 
+        x'::node<d_1864,p_1865>@M & flted_24_1863+1=n & sm<=d_1864 & 
+        d_1864<=lg & p_1865!=null & t_1860=tx_1833 & sm_1861=sm & 
+        lg_1862=lg & x'=x & tx'=tx & 0<n & tx_1833=tx & x'!=null & 
+        439::!(v_bool_41_1048') & x'!=null & !(v_bool_41_1048') & 
+        p_1865!=null & 456::!(v_bool_42_1047') & p_1865!=null & 
+        !(v_bool_42_1047') & y_100'=null & ty_101'=null & tmp1_102'=null & 
+        temp_103'=d_1864 & {FLOW,(55,55)=__norm}
+       es_pure: true
+       es_heap: true
+       es_aux_conseq: true
+       es_must_error: None
+       es_var_label: None]
+
+assert:examples/working/hip/qsort-tail.ss:67: 12:  : ok
+
+
+assert:examples/working/hip/qsort-tail.ss:74: 12:  : ok
+
+
+( [(156::,1 ); (156::,1 ); (155::,1 ); (155::,1 ); (152::,0 ); (152::,0 ); 
+(149::,0 ); (149::,0 ); (143::,1 ); (143::,1 ); (142::,1 ); (142::,1 )]) :examples/working/hip/qsort-tail.ss:39: 9: Postcondition cannot be derived from context
+
+
+(Cause of PostCond Failure):examples/working/hip/qsort-tail.ss:39: 9:  List of Partial Context: [PC(1, 0) PC(1, 0) PC(1, 0) PC(1, 0) PC(1, 0)]
+Failed States:
+[Label: [(156::,1 ); (156::,1 ); (155::,1 ); (155::,1 ); (152::,0 ); (152::,0
+          ); (149::,0 ); (149::,0 ); (143::,1 ); (143::,1 ); (142::,1 ); 
+          (142::,1 )]
+ State: 
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_kind: {
+                   fc_message: 
+                    213  lg_1862=lg & sm_1861=sm & d_1864<=lg & sm<=d_1864 & temp_103'=d_1864 & 
+d_1967=d_1864 & d_1967<=lg_1862 & sm_1861<=d_1967 & sm_1954<=d_1967 & 
+d_1967<=lg_1955 & sm_1861=sm_1954 & lg_1862=lg_1955 & lg_2132=lg_1955 & 
+lg1_2202<=lg_2132 & y_100'!=null & y_100'!=null & (ty_101'=y_100' & 
+n_2130=1 & sm1_2201=lg1_2202 & y_100'!=null | y_100'!=null & 1<=n_2130) & 
+0<=n_2130 & sm_2131<=sm1_2201 & sm_2131=d_1864 & n_2130=n2_2026 & 
+lg_2047=d_1864 & sm_2046=sm_1954 & 0<=n_1953 & t_1860=tx_1833 & 
+lg1_2095<=lg_2047 & sm_2046<=sm1_2094 & tx_1833=tx & x!=null & x!=null & 
+flted_24_1863+1=n_1953 & n_1953=n2_2026+n1_2027 & x'!=null & x'!=null & 
+flted_24_1863+1=n & 0<n & n_2045=n1_2027 & 0<=n_2045 & (tx'=x' & n_2045=1 & 
+sm1_2094=lg1_2095 & x'!=null | x'!=null & 1<=n_2045) |-  n_2045=n (must-bug).
+                   fc_current_lhs_flow: {FLOW,(39,42)=__Error}
+                   fc_current_lhs: 
+                    es_formula: 
+                     SS 633::y_100'::ll_tail<n_2130,ty_101',sm1_2201,lg1_2202>@M[Orig][LHSCase] &
+                     flted_24_1863+1=n & sm<=d_1864 & d_1864<=lg & 
+                     p_1865!=null & t_1860=tx_1833 & sm_1861=sm & 
+                     lg_1862=lg & 0<n & tx_1833=tx & x!=null & 
+                     439::!(v_bool_41_1048') & x!=null & 
+                     !(v_bool_41_1048') & p_1865!=null & 
+                     456::!(v_bool_42_1047') & p_1865!=null & 
+                     !(v_bool_42_1047') & tmp1_102'=null & 
+                     temp_103'=d_1864 & d_1967=d_1864 & p_1968=p_1865 & 
+                     d_1967<=lg_1862 & sm_1861<=d_1967 & flted_24_1863+
+                     1=n_1953 & sm_1954<=d_1967 & d_1967<=lg_1955 & 
+                     sm_1861=sm_1954 & lg_1862=lg_1955 & n_1953=n2_2026+
+                     n1_2027 & 0<=n_1953 & x_2096!=null & v_bool_57_1001' & 
+                     x_2096!=null & v_bool_57_1001' & n_2045=n1_2027 & 
+                     sm_2046=sm_1954 & lg_2047=d_1864 & sm_2046<=sm1_2094 & 
+                     lg1_2095<=lg_2047 & 0<=n_2045 & y_2203!=null & 
+                     v_bool_60_1002' & y_2203!=null & v_bool_60_1002' & 
+                     n_2130=n2_2026 & sm_2131=d_1864 & lg_2132=lg_1955 & 
+                     sm_2131<=sm1_2201 & lg1_2202<=lg_2132 & 0<=n_2130 & 
+                     x'!=null & 566::!(v_bool_63_1046') & x'!=null & 
+                     !(v_bool_63_1046') & y_100'!=null & v_bool_70_1045' & 
+                     y_100'!=null & !(v_bool_70_1045') &
+                     {FLOW,(39,42)=__Error}
+                    es_pure: true
+                    es_heap: SS 634::x'::ll_tail<n_2045,tx',sm1_2094,lg1_2095>@M[Orig][LHSCase]
+                    es_aux_conseq: true
+                    es_must_error: None
+                    es_var_label: None}
+       FAIL_UNION 
+        
+         fe_kind: MUST
+         fe_name: 
+         fe_kind: {
+                   fc_message: No base-case for folding
+                   fc_current_lhs_flow: {FLOW,(55,55)=__norm}
+                   fc_current_lhs: 
+                    es_formula: 
+                     SS 634::x'::ll_tail<n_2045,tx',sm1_2094,lg1_2095>@M[Orig][LHSCase] * 
+                     SS 633::y_100'::ll_tail<n_2130,ty_101',sm1_2201,lg1_2202>@M[Orig][LHSCase] &
+                     flted_24_1863+1=n & sm<=d_1864 & d_1864<=lg & 
+                     p_1865!=null & t_1860=tx_1833 & sm_1861=sm & 
+                     lg_1862=lg & 0<n & tx_1833=tx & x!=null & 
+                     439::!(v_bool_41_1048') & x!=null & 
+                     !(v_bool_41_1048') & p_1865!=null & 
+                     456::!(v_bool_42_1047') & p_1865!=null & 
+                     !(v_bool_42_1047') & tmp1_102'=null & 
+                     temp_103'=d_1864 & d_1967=d_1864 & p_1968=p_1865 & 
+                     d_1967<=lg_1862 & sm_1861<=d_1967 & flted_24_1863+
+                     1=n_1953 & sm_1954<=d_1967 & d_1967<=lg_1955 & 
+                     sm_1861=sm_1954 & lg_1862=lg_1955 & n_1953=n2_2026+
+                     n1_2027 & 0<=n_1953 & x_2096!=null & v_bool_57_1001' & 
+                     x_2096!=null & v_bool_57_1001' & n_2045=n1_2027 & 
+                     sm_2046=sm_1954 & lg_2047=d_1864 & sm_2046<=sm1_2094 & 
+                     lg1_2095<=lg_2047 & 0<=n_2045 & y_2203!=null & 
+                     v_bool_60_1002' & y_2203!=null & v_bool_60_1002' & 
+                     n_2130=n2_2026 & sm_2131=d_1864 & lg_2132=lg_1955 & 
+                     sm_2131<=sm1_2201 & lg1_2202<=lg_2132 & 0<=n_2130 & 
+                     x'!=null & 566::!(v_bool_63_1046') & x'!=null & 
+                     !(v_bool_63_1046') & y_100'!=null & v_bool_70_1045' & 
+                     y_100'!=null & !(v_bool_70_1045') &
+                     {FLOW,(55,55)=__norm}
+                    es_pure: true
+                    es_heap: true
+                    es_aux_conseq: true
+                    es_must_error: None
+                    es_var_label: None}]
+Successful States:
+[],
+Failed States:
+[Label: [(156::,1 ); (156::,1 ); (155::,1 ); (155::,1 ); (152::,0 ); (152::,0
+          ); (149::,0 ); (149::,0 ); (143::,1 ); (143::,1 ); (142::,1 ); 
+          (142::,1 )]
+ State: 
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_kind: {
+                   fc_message: 
+                    213  lg_1862=lg & sm_1861=sm & d_1864<=lg & sm<=d_1864 & temp_103'=d_1864 & 
+d_1967=d_1864 & d_1967<=lg_1862 & sm_1861<=d_1967 & sm_1954<=d_1967 & 
+d_1967<=lg_1955 & sm_1861=sm_1954 & lg_1862=lg_1955 & lg_2132=lg_1955 & 
+lg1_2202<=lg_2132 & y_100'!=null & y_100'!=null & (ty_101'=y_100' & 
+n_2130=1 & sm1_2201=lg1_2202 & y_100'!=null | y_100'!=null & 1<=n_2130) & 
+0<=n_2130 & sm_2131<=sm1_2201 & sm_2131=d_1864 & n_2130=n2_2026 & 
+lg_2047=d_1864 & sm_2046=sm_1954 & 0<=n_1953 & t_1860=tx_1833 & 
+lg1_2095<=lg_2047 & sm_2046<=sm1_2094 & tx_1833=tx & x!=null & x!=null & 
+flted_24_1863+1=n_1953 & n_1953=n2_2026+n1_2027 & x'!=null & x'!=null & 
+flted_24_1863+1=n & 0<n & n_2045=n1_2027 & 0<=n_2045 & (tx'=x' & n_2045=1 & 
+sm1_2094=lg1_2095 & x'!=null | x'!=null & 1<=n_2045) |-  n_2045=n (must-bug).
+                   fc_current_lhs_flow: {FLOW,(39,42)=__Error}
+                   fc_current_lhs: 
+                    es_formula: 
+                     SS 633::y_100'::ll_tail<n_2130,ty_101',sm1_2201,lg1_2202>@M[Orig][LHSCase] &
+                     flted_24_1863+1=n & sm<=d_1864 & d_1864<=lg & 
+                     p_1865!=null & t_1860=tx_1833 & sm_1861=sm & 
+                     lg_1862=lg & 0<n & tx_1833=tx & x!=null & 
+                     439::!(v_bool_41_1048') & x!=null & 
+                     !(v_bool_41_1048') & p_1865!=null & 
+                     456::!(v_bool_42_1047') & p_1865!=null & 
+                     !(v_bool_42_1047') & tmp1_102'=null & 
+                     temp_103'=d_1864 & d_1967=d_1864 & p_1968=p_1865 & 
+                     d_1967<=lg_1862 & sm_1861<=d_1967 & flted_24_1863+
+                     1=n_1953 & sm_1954<=d_1967 & d_1967<=lg_1955 & 
+                     sm_1861=sm_1954 & lg_1862=lg_1955 & n_1953=n2_2026+
+                     n1_2027 & 0<=n_1953 & x_2096!=null & v_bool_57_1001' & 
+                     x_2096!=null & v_bool_57_1001' & n_2045=n1_2027 & 
+                     sm_2046=sm_1954 & lg_2047=d_1864 & sm_2046<=sm1_2094 & 
+                     lg1_2095<=lg_2047 & 0<=n_2045 & y_2203!=null & 
+                     v_bool_60_1002' & y_2203!=null & v_bool_60_1002' & 
+                     n_2130=n2_2026 & sm_2131=d_1864 & lg_2132=lg_1955 & 
+                     sm_2131<=sm1_2201 & lg1_2202<=lg_2132 & 0<=n_2130 & 
+                     x'!=null & 566::!(v_bool_63_1046') & x'!=null & 
+                     !(v_bool_63_1046') & y_100'!=null & v_bool_70_1045' & 
+                     y_100'!=null & !(v_bool_70_1045') &
+                     {FLOW,(39,42)=__Error}
+                    es_pure: true
+                    es_heap: SS 634::x'::ll_tail<n_2045,tx',sm1_2094,lg1_2095>@M[Orig][LHSCase]
+                    es_aux_conseq: true
+                    es_must_error: None
+                    es_var_label: None}
+       FAIL_UNION 
+        
+         fe_kind: MUST
+         fe_name: 
+         fe_kind: {
+                   fc_message: No base-case for folding
+                   fc_current_lhs_flow: {FLOW,(55,55)=__norm}
+                   fc_current_lhs: 
+                    es_formula: 
+                     SS 634::x'::ll_tail<n_2045,tx',sm1_2094,lg1_2095>@M[Orig][LHSCase] * 
+                     SS 633::y_100'::ll_tail<n_2130,ty_101',sm1_2201,lg1_2202>@M[Orig][LHSCase] &
+                     flted_24_1863+1=n & sm<=d_1864 & d_1864<=lg & 
+                     p_1865!=null & t_1860=tx_1833 & sm_1861=sm & 
+                     lg_1862=lg & 0<n & tx_1833=tx & x!=null & 
+                     439::!(v_bool_41_1048') & x!=null & 
+                     !(v_bool_41_1048') & p_1865!=null & 
+                     456::!(v_bool_42_1047') & p_1865!=null & 
+                     !(v_bool_42_1047') & tmp1_102'=null & 
+                     temp_103'=d_1864 & d_1967=d_1864 & p_1968=p_1865 & 
+                     d_1967<=lg_1862 & sm_1861<=d_1967 & flted_24_1863+
+                     1=n_1953 & sm_1954<=d_1967 & d_1967<=lg_1955 & 
+                     sm_1861=sm_1954 & lg_1862=lg_1955 & n_1953=n2_2026+
+                     n1_2027 & 0<=n_1953 & x_2096!=null & v_bool_57_1001' & 
+                     x_2096!=null & v_bool_57_1001' & n_2045=n1_2027 & 
+                     sm_2046=sm_1954 & lg_2047=d_1864 & sm_2046<=sm1_2094 & 
+                     lg1_2095<=lg_2047 & 0<=n_2045 & y_2203!=null & 
+                     v_bool_60_1002' & y_2203!=null & v_bool_60_1002' & 
+                     n_2130=n2_2026 & sm_2131=d_1864 & lg_2132=lg_1955 & 
+                     sm_2131<=sm1_2201 & lg1_2202<=lg_2132 & 0<=n_2130 & 
+                     x'!=null & 566::!(v_bool_63_1046') & x'!=null & 
+                     !(v_bool_63_1046') & y_100'!=null & v_bool_70_1045' & 
+                     y_100'!=null & !(v_bool_70_1045') &
+                     {FLOW,(55,55)=__norm}
+                    es_pure: true
+                    es_heap: true
+                    es_aux_conseq: true
+                    es_must_error: None
+                    es_var_label: None}]
+Successful States:
+[],
+Failed States:
+[Label: [(156::,1 ); (156::,1 ); (155::,1 ); (155::,1 ); (152::,0 ); (152::,0
+          ); (149::,0 ); (149::,0 ); (143::,1 ); (143::,1 ); (142::,1 ); 
+          (142::,1 )]
+ State: 
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_kind: {
+                   fc_message: 
+                    213  lg_1862=lg & sm_1861=sm & d_1864<=lg & sm<=d_1864 & temp_103'=d_1864 & 
+d_1967=d_1864 & d_1967<=lg_1862 & sm_1861<=d_1967 & sm_1954<=d_1967 & 
+d_1967<=lg_1955 & sm_1861=sm_1954 & lg_1862=lg_1955 & lg_2132=lg_1955 & 
+lg1_2202<=lg_2132 & y_100'!=null & y_100'!=null & (ty_101'=y_100' & 
+n_2130=1 & sm1_2201=lg1_2202 & y_100'!=null | y_100'!=null & 1<=n_2130) & 
+0<=n_2130 & sm_2131<=sm1_2201 & sm_2131=d_1864 & n_2130=n2_2026 & 
+lg_2047=d_1864 & sm_2046=sm_1954 & 0<=n_1953 & t_1860=tx_1833 & 
+lg1_2095<=lg_2047 & sm_2046<=sm1_2094 & tx_1833=tx & x!=null & x!=null & 
+flted_24_1863+1=n_1953 & n_1953=n2_2026+n1_2027 & x'!=null & x'!=null & 
+flted_24_1863+1=n & 0<n & n_2045=n1_2027 & 0<=n_2045 & (tx'=x' & n_2045=1 & 
+sm1_2094=lg1_2095 & x'!=null | x'!=null & 1<=n_2045) |-  n_2045=n (must-bug).
+                   fc_current_lhs_flow: {FLOW,(39,42)=__Error}
+                   fc_current_lhs: 
+                    es_formula: 
+                     SS 633::y_100'::ll_tail<n_2130,ty_101',sm1_2201,lg1_2202>@M[Orig][LHSCase] &
+                     flted_24_1863+1=n & sm<=d_1864 & d_1864<=lg & 
+                     p_1865!=null & t_1860=tx_1833 & sm_1861=sm & 
+                     lg_1862=lg & 0<n & tx_1833=tx & x!=null & 
+                     439::!(v_bool_41_1048') & x!=null & 
+                     !(v_bool_41_1048') & p_1865!=null & 
+                     456::!(v_bool_42_1047') & p_1865!=null & 
+                     !(v_bool_42_1047') & tmp1_102'=null & 
+                     temp_103'=d_1864 & d_1967=d_1864 & p_1968=p_1865 & 
+                     d_1967<=lg_1862 & sm_1861<=d_1967 & flted_24_1863+
+                     1=n_1953 & sm_1954<=d_1967 & d_1967<=lg_1955 & 
+                     sm_1861=sm_1954 & lg_1862=lg_1955 & n_1953=n2_2026+
+                     n1_2027 & 0<=n_1953 & x_2096!=null & v_bool_57_1001' & 
+                     x_2096!=null & v_bool_57_1001' & n_2045=n1_2027 & 
+                     sm_2046=sm_1954 & lg_2047=d_1864 & sm_2046<=sm1_2094 & 
+                     lg1_2095<=lg_2047 & 0<=n_2045 & y_2203!=null & 
+                     v_bool_60_1002' & y_2203!=null & v_bool_60_1002' & 
+                     n_2130=n2_2026 & sm_2131=d_1864 & lg_2132=lg_1955 & 
+                     sm_2131<=sm1_2201 & lg1_2202<=lg_2132 & 0<=n_2130 & 
+                     x'!=null & 566::!(v_bool_63_1046') & x'!=null & 
+                     !(v_bool_63_1046') & y_100'!=null & v_bool_70_1045' & 
+                     y_100'!=null & !(v_bool_70_1045') &
+                     {FLOW,(39,42)=__Error}
+                    es_pure: true
+                    es_heap: SS 634::x'::ll_tail<n_2045,tx',sm1_2094,lg1_2095>@M[Orig][LHSCase]
+                    es_aux_conseq: true
+                    es_must_error: None
+                    es_var_label: None}
+       FAIL_UNION 
+        
+         fe_kind: MUST
+         fe_name: 
+         fe_kind: {
+                   fc_message: No base-case for folding
+                   fc_current_lhs_flow: {FLOW,(55,55)=__norm}
+                   fc_current_lhs: 
+                    es_formula: 
+                     SS 634::x'::ll_tail<n_2045,tx',sm1_2094,lg1_2095>@M[Orig][LHSCase] * 
+                     SS 633::y_100'::ll_tail<n_2130,ty_101',sm1_2201,lg1_2202>@M[Orig][LHSCase] &
+                     flted_24_1863+1=n & sm<=d_1864 & d_1864<=lg & 
+                     p_1865!=null & t_1860=tx_1833 & sm_1861=sm & 
+                     lg_1862=lg & 0<n & tx_1833=tx & x!=null & 
+                     439::!(v_bool_41_1048') & x!=null & 
+                     !(v_bool_41_1048') & p_1865!=null & 
+                     456::!(v_bool_42_1047') & p_1865!=null & 
+                     !(v_bool_42_1047') & tmp1_102'=null & 
+                     temp_103'=d_1864 & d_1967=d_1864 & p_1968=p_1865 & 
+                     d_1967<=lg_1862 & sm_1861<=d_1967 & flted_24_1863+
+                     1=n_1953 & sm_1954<=d_1967 & d_1967<=lg_1955 & 
+                     sm_1861=sm_1954 & lg_1862=lg_1955 & n_1953=n2_2026+
+                     n1_2027 & 0<=n_1953 & x_2096!=null & v_bool_57_1001' & 
+                     x_2096!=null & v_bool_57_1001' & n_2045=n1_2027 & 
+                     sm_2046=sm_1954 & lg_2047=d_1864 & sm_2046<=sm1_2094 & 
+                     lg1_2095<=lg_2047 & 0<=n_2045 & y_2203!=null & 
+                     v_bool_60_1002' & y_2203!=null & v_bool_60_1002' & 
+                     n_2130=n2_2026 & sm_2131=d_1864 & lg_2132=lg_1955 & 
+                     sm_2131<=sm1_2201 & lg1_2202<=lg_2132 & 0<=n_2130 & 
+                     x'!=null & 566::!(v_bool_63_1046') & x'!=null & 
+                     !(v_bool_63_1046') & y_100'!=null & v_bool_70_1045' & 
+                     y_100'!=null & !(v_bool_70_1045') &
+                     {FLOW,(55,55)=__norm}
+                    es_pure: true
+                    es_heap: true
+                    es_aux_conseq: true
+                    es_must_error: None
+                    es_var_label: None}]
+Successful States:
+[],
+Failed States:
+[Label: [(156::,1 ); (156::,1 ); (155::,1 ); (155::,1 ); (152::,0 ); (152::,0
+          ); (149::,0 ); (149::,0 ); (143::,1 ); (143::,1 ); (142::,1 ); 
+          (142::,1 )]
+ State: 
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_kind: {
+                   fc_message: 
+                    213  lg_1862=lg & sm_1861=sm & d_1864<=lg & sm<=d_1864 & temp_103'=d_1864 & 
+d_1967=d_1864 & d_1967<=lg_1862 & sm_1861<=d_1967 & sm_1954<=d_1967 & 
+d_1967<=lg_1955 & sm_1861=sm_1954 & lg_1862=lg_1955 & lg_2132=lg_1955 & 
+lg1_2202<=lg_2132 & y_100'!=null & y_100'!=null & (ty_101'=y_100' & 
+n_2130=1 & sm1_2201=lg1_2202 & y_100'!=null | y_100'!=null & 1<=n_2130) & 
+0<=n_2130 & sm_2131<=sm1_2201 & sm_2131=d_1864 & n_2130=n2_2026 & 
+lg_2047=d_1864 & sm_2046=sm_1954 & 0<=n_1953 & t_1860=tx_1833 & 
+lg1_2095<=lg_2047 & sm_2046<=sm1_2094 & tx_1833=tx & x!=null & x!=null & 
+flted_24_1863+1=n_1953 & n_1953=n2_2026+n1_2027 & x'!=null & x'!=null & 
+flted_24_1863+1=n & 0<n & n_2045=n1_2027 & 0<=n_2045 & (tx'=x' & n_2045=1 & 
+sm1_2094=lg1_2095 & x'!=null | x'!=null & 1<=n_2045) |-  n_2045=n (must-bug).
+                   fc_current_lhs_flow: {FLOW,(39,42)=__Error}
+                   fc_current_lhs: 
+                    es_formula: 
+                     SS 648::y_100'::ll_tail<n_2130,ty_101',sm1_2201,lg1_2202>@M[Orig][LHSCase] &
+                     flted_24_1863+1=n & sm<=d_1864 & d_1864<=lg & 
+                     p_1865!=null & t_1860=tx_1833 & sm_1861=sm & 
+                     lg_1862=lg & 0<n & tx_1833=tx & x!=null & 
+                     439::!(v_bool_41_1048') & x!=null & 
+                     !(v_bool_41_1048') & p_1865!=null & 
+                     456::!(v_bool_42_1047') & p_1865!=null & 
+                     !(v_bool_42_1047') & tmp1_102'=null & 
+                     temp_103'=d_1864 & d_1967=d_1864 & p_1968=p_1865 & 
+                     d_1967<=lg_1862 & sm_1861<=d_1967 & flted_24_1863+
+                     1=n_1953 & sm_1954<=d_1967 & d_1967<=lg_1955 & 
+                     sm_1861=sm_1954 & lg_1862=lg_1955 & n_1953=n2_2026+
+                     n1_2027 & 0<=n_1953 & x_2096!=null & v_bool_57_1001' & 
+                     x_2096!=null & v_bool_57_1001' & n_2045=n1_2027 & 
+                     sm_2046=sm_1954 & lg_2047=d_1864 & sm_2046<=sm1_2094 & 
+                     lg1_2095<=lg_2047 & 0<=n_2045 & y_2203!=null & 
+                     v_bool_60_1002' & y_2203!=null & v_bool_60_1002' & 
+                     n_2130=n2_2026 & sm_2131=d_1864 & lg_2132=lg_1955 & 
+                     sm_2131<=sm1_2201 & lg1_2202<=lg_2132 & 0<=n_2130 & 
+                     x'!=null & 566::!(v_bool_63_1046') & x'!=null & 
+                     !(v_bool_63_1046') & y_100'!=null & v_bool_70_1045' & 
+                     y_100'!=null & !(v_bool_70_1045') &
+                     {FLOW,(39,42)=__Error}
+                    es_pure: true
+                    es_heap: SS 649::x'::ll_tail<n_2045,tx',sm1_2094,lg1_2095>@M[Orig][LHSCase]
+                    es_aux_conseq: true
+                    es_must_error: None
+                    es_var_label: None}
+       FAIL_UNION 
+        
+         fe_kind: MUST
+         fe_name: 
+         fe_kind: {
+                   fc_message: No base-case for folding
+                   fc_current_lhs_flow: {FLOW,(55,55)=__norm}
+                   fc_current_lhs: 
+                    es_formula: 
+                     SS 649::x'::ll_tail<n_2045,tx',sm1_2094,lg1_2095>@M[Orig][LHSCase] * 
+                     SS 648::y_100'::ll_tail<n_2130,ty_101',sm1_2201,lg1_2202>@M[Orig][LHSCase] &
+                     flted_24_1863+1=n & sm<=d_1864 & d_1864<=lg & 
+                     p_1865!=null & t_1860=tx_1833 & sm_1861=sm & 
+                     lg_1862=lg & 0<n & tx_1833=tx & x!=null & 
+                     439::!(v_bool_41_1048') & x!=null & 
+                     !(v_bool_41_1048') & p_1865!=null & 
+                     456::!(v_bool_42_1047') & p_1865!=null & 
+                     !(v_bool_42_1047') & tmp1_102'=null & 
+                     temp_103'=d_1864 & d_1967=d_1864 & p_1968=p_1865 & 
+                     d_1967<=lg_1862 & sm_1861<=d_1967 & flted_24_1863+
+                     1=n_1953 & sm_1954<=d_1967 & d_1967<=lg_1955 & 
+                     sm_1861=sm_1954 & lg_1862=lg_1955 & n_1953=n2_2026+
+                     n1_2027 & 0<=n_1953 & x_2096!=null & v_bool_57_1001' & 
+                     x_2096!=null & v_bool_57_1001' & n_2045=n1_2027 & 
+                     sm_2046=sm_1954 & lg_2047=d_1864 & sm_2046<=sm1_2094 & 
+                     lg1_2095<=lg_2047 & 0<=n_2045 & y_2203!=null & 
+                     v_bool_60_1002' & y_2203!=null & v_bool_60_1002' & 
+                     n_2130=n2_2026 & sm_2131=d_1864 & lg_2132=lg_1955 & 
+                     sm_2131<=sm1_2201 & lg1_2202<=lg_2132 & 0<=n_2130 & 
+                     x'!=null & 566::!(v_bool_63_1046') & x'!=null & 
+                     !(v_bool_63_1046') & y_100'!=null & v_bool_70_1045' & 
+                     y_100'!=null & !(v_bool_70_1045') &
+                     {FLOW,(55,55)=__norm}
+                    es_pure: true
+                    es_heap: true
+                    es_aux_conseq: true
+                    es_must_error: None
+                    es_var_label: None}]
+Successful States:
+[],
+Failed States:
+[Label: [(156::,1 ); (156::,1 ); (155::,1 ); (155::,1 ); (152::,0 ); (152::,0
+          ); (149::,0 ); (149::,0 ); (143::,1 ); (143::,1 ); (142::,1 ); 
+          (142::,1 )]
+ State: 
+         fe_kind: MUST
+         fe_name: logical bug
+         fe_kind: {
+                   fc_message: 
+                    213  lg_1862=lg & sm_1861=sm & d_1864<=lg & sm<=d_1864 & temp_103'=d_1864 & 
+d_1967=d_1864 & d_1967<=lg_1862 & sm_1861<=d_1967 & sm_1954<=d_1967 & 
+d_1967<=lg_1955 & sm_1861=sm_1954 & lg_1862=lg_1955 & lg_2132=lg_1955 & 
+lg1_2202<=lg_2132 & y_100'!=null & y_100'!=null & (ty_101'=y_100' & 
+n_2130=1 & sm1_2201=lg1_2202 & y_100'!=null | y_100'!=null & 1<=n_2130) & 
+0<=n_2130 & sm_2131<=sm1_2201 & sm_2131=d_1864 & n_2130=n2_2026 & 
+lg_2047=d_1864 & sm_2046=sm_1954 & 0<=n_1953 & t_1860=tx_1833 & 
+lg1_2095<=lg_2047 & sm_2046<=sm1_2094 & tx_1833=tx & x!=null & x!=null & 
+flted_24_1863+1=n_1953 & n_1953=n2_2026+n1_2027 & x'!=null & x'!=null & 
+flted_24_1863+1=n & 0<n & n_2045=n1_2027 & 0<=n_2045 & (tx'=x' & n_2045=1 & 
+sm1_2094=lg1_2095 & x'!=null | x'!=null & 1<=n_2045) |-  n_2045=n (must-bug).
+                   fc_current_lhs_flow: {FLOW,(39,42)=__Error}
+                   fc_current_lhs: 
+                    es_formula: 
+                     SS 648::y_100'::ll_tail<n_2130,ty_101',sm1_2201,lg1_2202>@M[Orig][LHSCase] &
+                     flted_24_1863+1=n & sm<=d_1864 & d_1864<=lg & 
+                     p_1865!=null & t_1860=tx_1833 & sm_1861=sm & 
+                     lg_1862=lg & 0<n & tx_1833=tx & x!=null & 
+                     439::!(v_bool_41_1048') & x!=null & 
+                     !(v_bool_41_1048') & p_1865!=null & 
+                     456::!(v_bool_42_1047') & p_1865!=null & 
+                     !(v_bool_42_1047') & tmp1_102'=null & 
+                     temp_103'=d_1864 & d_1967=d_1864 & p_1968=p_1865 & 
+                     d_1967<=lg_1862 & sm_1861<=d_1967 & flted_24_1863+
+                     1=n_1953 & sm_1954<=d_1967 & d_1967<=lg_1955 & 
+                     sm_1861=sm_1954 & lg_1862=lg_1955 & n_1953=n2_2026+
+                     n1_2027 & 0<=n_1953 & x_2096!=null & v_bool_57_1001' & 
+                     x_2096!=null & v_bool_57_1001' & n_2045=n1_2027 & 
+                     sm_2046=sm_1954 & lg_2047=d_1864 & sm_2046<=sm1_2094 & 
+                     lg1_2095<=lg_2047 & 0<=n_2045 & y_2203!=null & 
+                     v_bool_60_1002' & y_2203!=null & v_bool_60_1002' & 
+                     n_2130=n2_2026 & sm_2131=d_1864 & lg_2132=lg_1955 & 
+                     sm_2131<=sm1_2201 & lg1_2202<=lg_2132 & 0<=n_2130 & 
+                     x'!=null & 566::!(v_bool_63_1046') & x'!=null & 
+                     !(v_bool_63_1046') & y_100'!=null & v_bool_70_1045' & 
+                     y_100'!=null & !(v_bool_70_1045') &
+                     {FLOW,(39,42)=__Error}
+                    es_pure: true
+                    es_heap: SS 649::x'::ll_tail<n_2045,tx',sm1_2094,lg1_2095>@M[Orig][LHSCase]
+                    es_aux_conseq: true
+                    es_must_error: None
+                    es_var_label: None}
+       FAIL_UNION 
+        
+         fe_kind: MUST
+         fe_name: 
+         fe_kind: {
+                   fc_message: No base-case for folding
+                   fc_current_lhs_flow: {FLOW,(55,55)=__norm}
+                   fc_current_lhs: 
+                    es_formula: 
+                     SS 649::x'::ll_tail<n_2045,tx',sm1_2094,lg1_2095>@M[Orig][LHSCase] * 
+                     SS 648::y_100'::ll_tail<n_2130,ty_101',sm1_2201,lg1_2202>@M[Orig][LHSCase] &
+                     flted_24_1863+1=n & sm<=d_1864 & d_1864<=lg & 
+                     p_1865!=null & t_1860=tx_1833 & sm_1861=sm & 
+                     lg_1862=lg & 0<n & tx_1833=tx & x!=null & 
+                     439::!(v_bool_41_1048') & x!=null & 
+                     !(v_bool_41_1048') & p_1865!=null & 
+                     456::!(v_bool_42_1047') & p_1865!=null & 
+                     !(v_bool_42_1047') & tmp1_102'=null & 
+                     temp_103'=d_1864 & d_1967=d_1864 & p_1968=p_1865 & 
+                     d_1967<=lg_1862 & sm_1861<=d_1967 & flted_24_1863+
+                     1=n_1953 & sm_1954<=d_1967 & d_1967<=lg_1955 & 
+                     sm_1861=sm_1954 & lg_1862=lg_1955 & n_1953=n2_2026+
+                     n1_2027 & 0<=n_1953 & x_2096!=null & v_bool_57_1001' & 
+                     x_2096!=null & v_bool_57_1001' & n_2045=n1_2027 & 
+                     sm_2046=sm_1954 & lg_2047=d_1864 & sm_2046<=sm1_2094 & 
+                     lg1_2095<=lg_2047 & 0<=n_2045 & y_2203!=null & 
+                     v_bool_60_1002' & y_2203!=null & v_bool_60_1002' & 
+                     n_2130=n2_2026 & sm_2131=d_1864 & lg_2132=lg_1955 & 
+                     sm_2131<=sm1_2201 & lg1_2202<=lg_2132 & 0<=n_2130 & 
+                     x'!=null & 566::!(v_bool_63_1046') & x'!=null & 
+                     !(v_bool_63_1046') & y_100'!=null & v_bool_70_1045' & 
+                     y_100'!=null & !(v_bool_70_1045') &
+                     {FLOW,(55,55)=__norm}
+                    es_pure: true
+                    es_heap: true
+                    es_aux_conseq: true
+                    es_must_error: None
+                    es_var_label: None}]
+Successful States:
+[]
+
+Last Proving Location: File "examples/working/hip/qsort-tail.ss", line 71, col 3 
+ERROR: File "examples/working/hip/qsort-tail.ss", line 39, col 9 : Post condition cannot be derived by the system. 
+
+Procedure qsort$node~node FAIL-2
+
+ExceptionFailure("Post condition cannot be derived by the system.")Occurred!
+
+Error(s) detected when checking procedure qsort$node~node
+
+check_prog: call graph:
+
+
+1 false contexts at: ( (41,16) )
+
+Total verification time: 832.45 second(s)
+	Time spent in main process: 7.07 second(s)
+	Time spent in child processes: 825.38 second(s)

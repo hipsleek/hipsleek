@@ -1,0 +1,7 @@
+data cell{
+  int val;
+}.
+
+lemma "splitCell" self::cell(f)<v> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::cell(f1)<v> * self::cell(f2)<v> & 0.0<f<=1.0 .
+
+checkentail x::cell<a> |- x::cell(0.5)<b>.

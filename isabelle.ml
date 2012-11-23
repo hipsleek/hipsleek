@@ -11,7 +11,7 @@ module CP = Cpure
 let isabelle_file_number = ref 0
 let result_file_name = "res"
 let log_all_flag = ref false
-let log_all = open_out "allinput.thy"
+let log_all = open_log_out "allinput.thy"
 let image_path_lst = ["MyImage"; "/usr/local/bin/MyImage"]
 let isabelle_image = ref "MyImage"
 let max_flag = ref false
@@ -26,6 +26,7 @@ let test_number = ref 0
 (* pretty printing for primitive types *)
 let rec isabelle_of_typ = function
   | Bool          -> "int"
+  | Tree_sh 	  -> "int"
   | Float         -> "int"	(* Can I really receive float? What do I do then? I don't have float in Isabelle.*)
   | Int           -> "int"
   | Void          -> "void" 	(* same as for float *)
@@ -38,7 +39,7 @@ let rec isabelle_of_typ = function
   | List _          -> 	(* lists are not supported *)
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "list not supported for Isabelle"}
-  | NUM | TVar _ | Named _ | Array _ ->
+  | NUM | TVar _ | Named _ | Array _ |RelT |AnnT ->
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "type var, array and named type not supported for Isabelle"}
 ;;
@@ -97,6 +98,7 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.Var (sv, _) -> isabelle_of_spec_var sv
   | CP.IConst (i, _) -> "(" ^ string_of_int i ^ "::int)"
   | CP.FConst _ -> failwith ("[isabelle.ml]: ERROR in constraints (float should not appear here)")
+  | CP.Tsconst _ -> failwith ("[isabelle.ml]: ERROR in constraints (tsconst should not appear here)")
   | CP.Add (a1, a2, _) ->  " ( " ^ (isabelle_of_exp a1) ^ " + " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (isabelle_of_exp a1) ^ " - " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Mult (a1, a2, _) -> "(" ^ (isabelle_of_exp a1) ^ " * " ^ (isabelle_of_exp a2) ^ ")"
@@ -122,6 +124,8 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.ListLength _
   | CP.ListAppend _
   | CP.ListReverse _ -> failwith ("Lists are not supported in Isabelle")
+  | CP.Func _ -> failwith ("Func are not supported in Isabelle")
+  | CP.AConst _ -> failwith ("AConst are not supported in Isabelle")
 	| CP.ArrayAt _ ->  failwith ("Arrays are not supported in Isabelle") (* An Hoa *)
   
 (* pretty printing for a list of expressions *)
@@ -134,7 +138,9 @@ and isabelle_of_formula_exp_list l = match l with
 
 
 (* pretty printing for boolean vars *)
-and isabelle_of_b_formula b = match b with
+and isabelle_of_b_formula b =
+  let (pf,_) = b in
+  match pf with
   | CP.BConst (c, _) -> if c then "((0::int) = 0)" else "((0::int) > 0)"
   | CP.BVar (bv, _) -> "(" ^ (isabelle_of_spec_var bv) ^ " > 0)"
   | CP.Lt (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " < " ^ (isabelle_of_exp a2) ^ ")"
@@ -195,6 +201,9 @@ and isabelle_of_b_formula b = match b with
   | CP.ListNotIn _
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in Isabelle")
+  | CP.SubAnn _ -> failwith ("SubAnn are not supported in Isabelle")
+  | CP.VarPerm _ -> failwith ("VarPerm not suported by Isabelle")
+  | CP.LexVar _ -> failwith ("Lexvar are not supported in Isabelle")
 	| CP.RelForm _ -> failwith ("Relations are not supported in Isabelle") (* An Hoa *)
   
 (* pretty printing for formulas *)
@@ -205,13 +214,6 @@ and isabelle_of_formula f =
 	    "(" ^ (isabelle_of_b_formula b) ^ ")"
 	  else ""
     | CP.Not (p, _,_) -> " (~ (" ^ (isabelle_of_formula p) ^ ")) "
-(*	begin
-	  if (is_bag_formula f) then
-	    match p with
-		| CP.BForm (CP.BVar (bv, _)) -> (isabelle_of_spec_var bv) ^ " = 0"
-		| _ -> 
-          else ""
-	end*)
     | CP.Forall (sv, p, _,_) ->
 	  if (is_bag_formula f) then
 	    " (ALL " ^ (isabelle_of_spec_var sv) ^ "." ^ (isabelle_of_formula p) ^ ") "
@@ -220,6 +222,7 @@ and isabelle_of_formula f =
 	  if (is_bag_formula f) then
 	    " (EX " ^ (isabelle_of_spec_var sv) ^ "." ^ (isabelle_of_formula p) ^ ") "
           else ""
+	| CP.AndList _ -> Gen.report_error no_pos "isabelle.ml: encountered AndList, should have been already handled"
     | CP.And (p1, p2, _) ->
 	  if (is_bag_formula p1) & (is_bag_formula p2) then
 	    "(" ^ (isabelle_of_formula p1) ^ " & " ^ (isabelle_of_formula p2) ^ ")"
@@ -385,7 +388,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   max_flag := false;
   choice := 1;
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
-  let res =  write tmp_form !Globals.sat_timeout false in
+  let res =  write tmp_form !Globals.sat_timeout_limit false in
   if !log_all_flag == true then
 	output_string log_all ("[isabelle.ml]: imply --> "^(string_of_bool res)^"\n");
   res
@@ -401,7 +404,7 @@ let imply_sat (ante : CP.formula) (conseq : CP.formula) (timeout : float) (sat_n
 let is_sat (f : CP.formula) (sat_no : string) : bool = begin
 	if !log_all_flag == true then
 				output_string log_all ("\n\n#is_sat " ^ sat_no ^ "\n");
-	let answ = (imply_sat f (CP.BForm(CP.BConst(false, no_pos), None)) !Globals.sat_timeout sat_no) in
+	let answ = (imply_sat f (CP.BForm((CP.BConst(false, no_pos), None), None)) !Globals.sat_timeout_limit sat_no) in
     if !log_all_flag == true then
 	  output_string log_all ("[isabelle.ml]: is_sat --> "^(string_of_bool (not answ)) ^"\n");
     (not answ)

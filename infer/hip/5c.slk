@@ -1,0 +1,47 @@
+data node {
+  int val;
+  node next;
+}.
+
+//(1) remember to use @L (constant annotation) 
+//     rather than L (a variable )
+infer [y] true |- y::node<a,b>@v & v<:@L.
+
+//(2)
+infer [y,w] y::node<_,_>@w |- y::node<a,b>@v & v<:@L.
+
+//(3)
+infer [] y::node<_,_>@w |- (exists v: y::node<a,b>@v).
+
+//(4)
+infer [] y::node<_,_>@w |- [v] y::node<a,b>@v.
+
+//(5)
+infer [] y::node<_,_>@w |- y::node<a,b>@v.
+
+//(6)
+infer [] y::node<_,_>@M |- y::node<a,b>@v & v<:@M.
+
+//(7)
+infer [] @L<:v & v<:@M |- false.
+
+// TODO : unsound inference as implied false
+//(8)
+infer [] y::node<_,_>@L |- [v] y::node<a,b>@v & v<:@M.
+
+//(9)
+infer [] y::node<_,_>@w |- y::node<a,b>@w .
+
+//(10)
+infer [] y::node<_,_>@w & w<:L |- y::node<a,b>@L .
+
+//(11)
+infer [] y::node<_,_>@w & w<:M |- y::node<a,b>@L .
+
+//(12)
+infer [] y::node<_,_>@w |- y::node<a,b>@L .
+
+//(13)
+infer [] y::node<_,_>@w & w<:@M |- y::node<a,b>@v & v=@M.
+
+print residue.

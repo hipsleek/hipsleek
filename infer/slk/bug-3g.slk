@@ -1,0 +1,22 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+infer [n] x::ll<n> |- x::node<_,q>*q::node<_,null>.
+print residue.
+
+infer [n] x::ll<n> |- x=null.
+print residue.
+
+infer [n] x::ll<n> |- x::node<_,q>*q::ll<5>.
+print residue.
+
+//inferred pure: [-1+n=m & 1<=m | n=1 & m=0; n!=0]
+// can improve the disjunction perhaps?
+infer [n,m] x::ll<n> |- x::node<_,q>*q::ll<m>.
+print residue.

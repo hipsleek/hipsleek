@@ -1,0 +1,66 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+//(1)
+infer [a,c] x::node<c,_> |- x::node<a,b> & a>0.
+print residue.
+
+
+//(2)
+/*
+TODO: 1<=c seems redundant
+<1>true&0<a & b=Anon_13 & a=c & 1<=c&{FLOW,(17,18)=__norm}
+inferred pure: [1<=c; a=c]
+*/
+infer [a,c] x::node<c,_> & a>0 |- x::node<a,b> & a>0.
+print residue.
+
+//(3)
+infer [n] x::ll<n> |- x::node<a,b>.
+print residue.
+
+//(4)
+infer [n] x::ll<n> |- x::node<a,b> & a>0.
+print residue.
+
+//(5)
+infer [n] x::ll<n> & a>0 |- x::node<a,b> & a>0.
+print residue.
+
+//(6)
+infer [b] x::node<b,_> & b>0 |- x::node<a,_> & a>0.
+print residue.
+
+//(7)
+infer [b] x::node<b,_>  |- x::node<a,_> & a>0.
+print residue.
+
+//(8)
+infer [b] x::node<b,_> & b>2  |- x::node<a,_> & a>0.
+print residue.
+
+//(9)
+infer [a] x::node<a,_>  |- x::node<a,b> & a>0.
+print residue.
+
+//(10)
+infer [a,c] a>0 |- c=a & a>0.
+print residue.
+
+//(11)
+infer [a,c] true |- c=a & a>0.
+print residue.
+
+
+
+
+
+
+
+
