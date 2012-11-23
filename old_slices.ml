@@ -343,3 +343,4 @@ module MemoFormula =
 			       MP.memo_group_changed = false;
 			       MP.memo_group_aset = MP.empty_var_aset;}
    end;;
+ 
