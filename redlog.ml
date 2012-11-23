@@ -1155,7 +1155,7 @@ let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * floa
   res
 
 let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * float =
-  Debug.ho_2 "[Redlog] imply_no_cache" 
+  Debug.no_2 "[Redlog] imply_no_cache" 
       (add_str "formula" string_of_formula)
       (add_str "imp_no" (fun c -> c)) (fun pair -> Gen.string_of_pair string_of_bool string_of_float pair) 
       (fun _ _ -> imply_no_cache_ops pr_w pr_s f imp_no) f imp_no
