@@ -526,7 +526,8 @@ let is_valid_with_check (pe : formula) timeout : bool option =
 (*let is_valid_with_check_ops pr_w pr_s (pe : formula) timeout : bool option =
   do_with_check "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe*)
 
-let is_valid_with_default_ops pr_w pr_s (pe : formula) timeout : bool = do_with_check_default "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe false
+let is_valid_with_default_ops pr_w pr_s (pe : formula) timeout : bool = 
+  do_with_check_default "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe false
 
 
 (* let is_valid (pe : formula) timeout : bool = *)

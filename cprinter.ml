@@ -854,6 +854,7 @@ let pr_mem_slice_aux slc = fmt_string "[";
 let pr_memoise_group_vb m_gr = 
   (*if !pr_mem then *)
   fmt_cut();
+  fmt_print_newline ();
   wrap_box ("V",1)
       ( fun m_gr -> fmt_string "(";pr_list_op_none "" 
           (fun c-> wrap_box ("H",1) (fun _ -> fmt_string 
@@ -864,6 +865,8 @@ let pr_memoise_group_vb m_gr =
               wrap_box ("B",1) pr_memoise c.memo_group_cons;
               fmt_cut ();fmt_string "  ";
               wrap_box ("B",1) pr_mem_slice c.memo_group_slice;
+              fmt_cut (); fmt_string ("changed flag:"^string_of_bool c.memo_group_changed);
+              fmt_cut (); fmt_string ("unsat   flag:"^string_of_bool c.memo_group_unsat);
               fmt_cut ();fmt_string "  alias set:";
               wrap_box ("B",1) fmt_string (P.EMapSV.string_of c.memo_group_aset);
               (* fmt_cut(); *)
@@ -3066,6 +3069,8 @@ let html_of_partial_context (fs,ss) =
 let html_of_list_partial_context lctx = String.concat "<br /><br /><b>AND</b> " (List.map html_of_partial_context lctx)
 ;;
 
+Mcpure_D.print_mp_f := string_of_memo_pure_formula ;;
+Mcpure_D.print_mg_f := string_of_memoised_group ;;
 Mcpure.print_mp_f := string_of_memo_pure_formula ;;
 Mcpure.print_mg_f := string_of_memoised_group ;;
 Mcpure.print_mc_f := string_of_memoise_constraint ;;

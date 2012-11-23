@@ -988,7 +988,11 @@ and prune_preds_x prog (simp_b:bool) (f:formula):formula =
           let rp = f_p_simp rp in
           mkBase_w_lbl rh rp b.formula_base_type  b.formula_base_flow b.formula_base_and b.formula_base_pos b.formula_base_label in
   (* if not !Globals.allow_pred_spec then f *)
-  if !Globals.dis_ps then f
+  let helper_formulas f = 
+    let p2 = Cprinter.string_of_formula in
+    Debug.no_1 "helper_formulas" p2 p2 helper_formulas f in 
+  if !Globals.dis_ps then 
+    f
   else
     (
         Gen.Profiling.push_time "prune_preds_filter";
@@ -1080,7 +1084,8 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
               | None ->
                     let new_cond = List.map (fun (c1,c2)-> (CP.b_subst zip c1,c2)) v_def.view_prune_conditions in         
                     (v_def.view_prune_branches,new_cond ,true,true) in                   
-          if (not chg) then 
+          if (not chg) then
+            
             (ViewNode{v with h_formula_view_remaining_branches = Some rem_br; h_formula_view_pruning_conditions = [];}, old_mem,false)
           else
             (*decide which prunes can be activated and drop the ones that are implied while keeping the old unknowns*)
@@ -1129,7 +1134,18 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
                 (new_hp, MCP.merge_mems_m new_mem2 gr_ai true, true) in
             (r_hp,r_memo,r_b)
 
-and filter_prun_cond old_mem prun_cond rem_br = List.fold_left (fun (yes_prune, no_prune, new_mem) (p_cond, pr_branches)->            
+(*
+type: Mcpure_D.memo_pure ->
+  (CP.b_formula * Globals.formula_label list) list ->
+  Globals.formula_label list ->
+  Globals.formula_label list *
+  (Cformula.CP.b_formula * Globals.formula_label list) list *
+  Mcpure_D.memo_pure
+*)
+and filter_prun_cond old_mem prun_cond rem_br = 
+  Debug.no_1 "filter_prun_cond" pr_none pr_none (fun _ -> filter_prun_cond_x old_mem prun_cond rem_br) rem_br 
+
+and filter_prun_cond_x old_mem prun_cond rem_br = List.fold_left (fun (yes_prune, no_prune, new_mem) (p_cond, pr_branches)->            
     if (Gen.BList.subset_eq (=) rem_br pr_branches) then (yes_prune, no_prune,new_mem)
     else if ((List.length (Gen.BList.intersect_eq (=) pr_branches rem_br))=0) then (yes_prune, no_prune,new_mem)
     else try

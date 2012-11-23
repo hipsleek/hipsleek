@@ -47,7 +47,6 @@ int div4(int a, int b)
   requires b != 0 
   ensures true;
 
-/*
 int mod___(int a, int b) case {
   a >= 0 -> case {
 	b >= 1 -> case {
@@ -68,7 +67,7 @@ int mod___(int a, int b) case {
     /* -1 < b < 1 -> requires false ensures false; */
   }
 }
-*/
+
 /*
 float add___(float a, float b) 
   requires true 
