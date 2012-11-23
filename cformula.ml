@@ -1221,6 +1221,11 @@ and mkPhase_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
 (* 	  else                                                                      *)
 (*       mkBase h1 (MCP.merge_mems p1 p2 true) t1 fl1 a1 pos                    *)
 
+and mkAnd_base_pure (fb: formula_base) (p2: MCP.mix_formula) (pos: loc): formula_base =
+  if (MCP.isConstMTrue p2) then fb
+  else
+    { fb with formula_base_pure = MCP.merge_mems fb.formula_base_pure  p2 true; }
+
 and mkAnd_pure_x (f1: formula) (p2: MCP.mix_formula) (pos: loc): formula =
   if (isAnyConstFalse f1) then f1
   else if (MCP.isConstMTrue p2) then f1
