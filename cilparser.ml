@@ -673,11 +673,7 @@ and translate_block (blk: Cil.block) (lopt: Cil.location option): Iast.exp =
         List.iter (fun se -> collected_exps := !collected_exps @ [se]) !supplement_exp;
         collected_exps := !collected_exps @ [newe]
       ) stmts;
-      let body = merge_iast_exp !collected_exps (Some pos)in
-      Iast.Block {Iast.exp_block_body = body;
-                  Iast.exp_block_jump_label = Iast.NoJumpLabel;
-                  Iast.exp_block_local_vars = [];
-                  Iast.exp_block_pos = pos}
+      merge_iast_exp !collected_exps (Some pos)
     )
 
 

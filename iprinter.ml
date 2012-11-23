@@ -98,6 +98,12 @@ let rec string_of_typed_var_list l = match l with
 let string_of_id (id,p) = id ^ (string_of_primed p)
 ;;
 
+let string_of_loc p = 
+  (string_of_int p.start_pos.Lexing.pos_lnum) ^ ":"
+  ^ (string_of_int (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol)) ^ "-"
+  ^ (string_of_int p.end_pos.Lexing.pos_lnum) ^ ":"
+  ^ (string_of_int (p.end_pos.Lexing.pos_cnum - p.end_pos.Lexing.pos_bol))
+
 (* pretty printing for an expression for a formula *)
 let rec string_of_formula_exp = function 
   | P.Null l                  -> "null"
@@ -464,12 +470,13 @@ let rec string_of_exp = function
   | Block ({
     exp_block_local_vars = lv;
     exp_block_body = e;
+    exp_block_pos = p;
     })-> 
     "{" ^(match lv with
         | [] -> ""
         | _ -> "local: "^
           (String.concat "," (List.map (fun (c1,c2,c3)->(string_of_typ c2)^" "^c1) lv))^"\n")
-        ^ (string_of_exp e) ^ "}\n"
+        ^ (string_of_exp e) ^ "}" ^ (string_of_loc p) ^ "\n"
   | Break b -> string_of_control_path_id_opt b.exp_break_path_id ("break "^(string_of_label b.exp_break_jump_label))
   | Barrier b -> "barrier "^b.exp_barrier_recv
   | Cast e -> "(" ^ (string_of_typ e.exp_cast_target_type) ^ ")" ^ (string_of_exp e.exp_cast_body)
