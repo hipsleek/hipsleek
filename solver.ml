@@ -4633,11 +4633,13 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   let hec  is_folding ctx0 c = heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos in
   let hec a b c =
-    let ante =
+    let (ante,consumed_heap,evars) =
       match ctx0 with
-      | OCtx _ -> CF.mkTrue (CF.mkTrueFlow ()) pos (* impossible *)
-      | Ctx estate -> estate.es_formula
+      | OCtx _ -> (CF.mkTrue (CF.mkTrueFlow ()) pos (* impossible *),
+                   CF.HEmp, [])
+      | Ctx estate -> (estate.es_formula,estate.es_heap,estate.es_evars)
     in
+    let conseq = CF.push_exists evars conseq in
     let avoid = (hec_num=11) in
     let avoid = avoid or ((hec_num=1 || hec_num=2) && CF.is_emp_term conseq) in
     let avoid = avoid or (not (hec_stack # is_empty)) in
@@ -4647,7 +4649,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let r = hec a b c in
     let _ = hec_stack # pop in
     let (lc,_) = r in
-    let _ = Log.add_new_sleek_logging_entry caller avoid hec_num slk_no ante conseq lc pos in
+    let _ = Log.add_new_sleek_logging_entry caller avoid hec_num slk_no ante conseq consumed_heap evars lc pos in
       r
   in
   Debug.no_3_num hec_num "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
