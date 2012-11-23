@@ -4,7 +4,7 @@ data node {
 }
 
 bigint<v> == self = null & v = 0 or
-     self::node<p, q> * q::bigint<v1> & 0 <= p <= 9 & v = 10*v1 + p 
+     self::node<p, q> * q::bigint<v1> & 0 <= p <= 9 & v = 10*v1 + p & v>0
              inv v >= 0;
 
 bool is_zero(node x)

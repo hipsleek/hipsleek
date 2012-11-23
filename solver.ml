@@ -4629,7 +4629,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
       | OCtx _ -> CF.mkTrue (CF.mkTrueFlow ()) pos (* impossible *)
       | Ctx estate -> estate.es_formula
     in
-    let avoid = (hec_num=11 or hec_num=4) in
+    let avoid = (hec_num=11) in
     let avoid = avoid or ((hec_num=1 || hec_num=2) && CF.is_emp_term conseq) in
     let avoid = avoid or (not (hec_stack # is_empty)) in
     let caller = hec_stack # string_of_no_ln in
