@@ -2247,7 +2247,20 @@ let elim_redundant sf f = match f with
 let fold_mix_lst_to_lst npf with_dupl with_inv with_slice  = match npf with
   | MemoF f -> fold_mem_lst_to_lst f with_dupl with_inv with_slice 
   | OnePF f -> [f]
-  
+
+let get_null_ptrs mf=
+  let eq_null_filter (v1,v2)=
+    let b1 =  (CP.is_null_const v1) in
+    let b2 = (CP.is_null_const v2) in
+    match b1,b2 with
+      | true,true -> []
+      | true,false -> [v2]
+      | false,true -> [v1]
+      | false,false -> []
+  in
+  let eqNulls = ptr_equations_with_null mf in
+  List.concat (List.map eq_null_filter eqNulls)
+
 let get_subst_equation_memo_formula_vv p qvar = match p with
   | MemoF f -> 
     let l,f = get_subst_equation_memo_formula_vv f qvar in

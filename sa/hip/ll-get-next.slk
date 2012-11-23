@@ -1,0 +1,39 @@
+/*
+State:HP_551(tmp_19',x) * x'::node<val_22_560,next_23_539'>&x'=x & next_23_539'=null & v_node_24_540'=tmp_19' & res=v_node_24_540'
+
+      Try HP_551(tmp_19',x) * x'::node<val_22_560,next_23_539'>&x'=x & next_23_539'=null & v_node_24_540'=tmp_19' & res=v_node_24_540' |- 
+
+*/
+
+data node {
+	int val;
+	node next
+}.
+
+
+HeapPred HP(node a, node b).
+HeapPred G(node a, node b).
+
+infer[HP,G] HP(b,x) * x0::node<_,e> & x0=x & e=null & c=b & t=c |- G(x, t).
+print residue.
+
+/*
+ [(RELASS [HP,G], HP(b,x) * x::node<Anon_11,e>, G(x,b)
+find_defined_pointers@2 EXIT out :([e,t,null,x0,x,b,c],[(node,e)])
+
+not simplify
+ es_infer_hp_rel: [(RELASS [HP,G], HP(b,x) * x0::node<Anon_11,e>  &x0=x & e=null & c=b & t=c , G(x,t)
+simplify
+ HP(b,x) * x::node<Anon_11,e>&c=b, G(x,c)
+
+
+*/
+
+/*
+(H(x)&true&{FLOW,(22,23)=__norm}[]) --> H(x')&true&{FLOW,(22,23)=__norm}[]
+*/
+
+HeapPred H(node x).
+
+
+checkeq[] H(x)&true -|- H(x0)&true.

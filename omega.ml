@@ -10,7 +10,7 @@ let set_prover_original_output = ref (fun _ -> ())
 
 let omega_call_count: int ref = ref 0
 let is_omega_running = ref false
-let in_timeout = ref 5.0 (* default timeout is 15 seconds *)
+let in_timeout = ref 10.0 (* default timeout is 15 seconds *)
 
 (***********)
 let test_number = ref 0
@@ -526,7 +526,8 @@ let is_valid_with_check (pe : formula) timeout : bool option =
 (*let is_valid_with_check_ops pr_w pr_s (pe : formula) timeout : bool option =
   do_with_check "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe*)
 
-let is_valid_with_default_ops pr_w pr_s (pe : formula) timeout : bool = do_with_check_default "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe false
+let is_valid_with_default_ops pr_w pr_s (pe : formula) timeout : bool = 
+  do_with_check_default "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe false
 
 
 (* let is_valid (pe : formula) timeout : bool = *)

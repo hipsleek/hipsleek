@@ -34,7 +34,8 @@ void append2(node x, node y)
 }
 
 void append(node x, node y)
-  requires x::ll<n1> * y::ll<n2> & n1>0 // & x!=null // & n1>0 & x != null
+  requires x::ll<n1> * y::ll<n2> & x!=null 
+         // n1>0 // & x!=null // & n1>0 & x != null
   ensures x::ll<n1+n2>;
 {
 	if (x.next == null)

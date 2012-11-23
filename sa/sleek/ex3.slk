@@ -1,0 +1,26 @@
+data node { int val ; node next }.
+
+HeapPred H1(node a).
+HeapPred H2(node a).
+HeapPred G1(node a, node b).
+HeapPred G2(node a, node b).
+HeapPred D(node a).
+HeapPred E(node a, node b).
+
+//1.
+infer [H1,H2,G1,G2] H1(x) * H2(y) & x1=x & y1=y & x1=null |- G1(x,x1) * G2(y,y1).
+
+//2.  G1(y,x) --> x::node<a,b> * HP_49(b,x,y)
+infer [G1] G1(y,x)  |- x::node<a,b>@L * y::node<c,d>@L.
+print residue.
+
+//3. G1(y,x) --> x::node<a,b> * HP_49(b,x,y)
+infer [G1] G1(y,x) * y::node<c,d>  |- x::node<a,b>@L * y::node<c,d>@L.
+print residue.
+
+//4.
+infer [G1] G1(y,x) * y::node<c,d>  |- x::node<a,b>@L * y::node<c,d>.
+print residue.
+
+//5
+infer [E] x::node<a,b> * E(b,b0) & x!=null & x0=null |-  E(x,x0) * x::node<c,d>.

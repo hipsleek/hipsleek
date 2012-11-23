@@ -475,6 +475,7 @@ let rec convert_heap2_heap prog (h0 : IF.h_formula) : IF.h_formula =
             IF.h_formula_phase_rd = tmp1;
             IF.h_formula_phase_rw = tmp2; }
     | IF.HeapNode2 h2 -> IF.HeapNode (node2_to_node 1 prog h2)
+    | IF.HRel _
     | IF.HTrue | IF.HFalse | IF.HEmp | IF.HeapNode _ -> h0
 
 and convert_heap2 prog (f0 : IF.formula) : IF.formula =
@@ -847,8 +848,8 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
   (* let _ = print_endline (exlist # string_of ) in *)
   let prog3 = prog4 in
   let prog2 = { prog3 with I.prog_data_decls =
-          ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
-          ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
+          ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []})
+          ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_is_template = false;I.data_methods = []})
           :: prog3.I.prog_data_decls;} in
   (* let _ = print_endline (exlist # string_of ) in *)
   (* let _ = I.find_empty_static_specs prog2 in *)
@@ -910,6 +911,8 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 		  (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
 		  let crels = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
           let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT,rd.I.rel_name)) prog.I.prog_rel_decls in
+          let chps = List.map (trans_hp prog) prog.I.prog_hp_decls in 
+           let _ = prog.I.prog_hp_ids <- List.map (fun rd -> (HpT,rd.I.hp_name)) prog.I.prog_hp_decls in
 		  let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
 		  (* let _ = print_string "trans_prog :: trans_rel PASSED\n" in *)
 		  let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
@@ -928,6 +931,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 			  C.prog_barrier_decls = bdecls;
 			  C.prog_logical_vars = log_vars;
 			  C.prog_rel_decls = crels; (* An Hoa *)
+              C.prog_hp_decls = chps;
 			  C.prog_axiom_decls = caxms; (* [4/10/2011] An Hoa *)
 			  (*C.old_proc_decls = cprocs;*)
 			  C.new_proc_decls = C.create_proc_decls_hashtbl cprocs;
@@ -1274,6 +1278,18 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
   C.rel_vars = rel_sv_vars;
   C.rel_formula = crf; }
 
+and trans_hp (prog : I.prog_decl) (hpdef : I.hp_decl) : C.hp_decl =
+  let pos = IF.pos_of_formula hpdef.I.hp_formula in
+  let hp_sv_vars = List.map (fun (var_type, var_name) -> CP.SpecVar (trans_type prog var_type pos, var_name, Unprimed)) hpdef.I.hp_typed_vars in
+  let stab = H.create 103 in
+  let _ = List.map (fun (var_type, var_name) -> H.add stab var_name { sv_info_kind = (trans_type prog var_type pos);id = fresh_int () };) hpdef.I.hp_typed_vars in
+  (* Need to collect the type information before translating the formula *)
+  let _ = gather_type_info_formula prog hpdef.I.hp_formula stab false in
+  let crf = trans_formula  prog false [] false hpdef.I.hp_formula stab false in
+  {C.hp_name = hpdef.I.hp_name; 
+   C.hp_vars = hp_sv_vars;
+   C.hp_formula = crf; }
+
 and trans_axiom (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
   let pr1 adef = Iprinter.string_of_axiom_decl_list [adef] in
   let pr2 adef = Cprinter.string_of_axiom_decl_list [adef] in
@@ -1375,6 +1391,7 @@ and find_m_prop_heap_x eq_f h = match h with
   | CF.Hole _ 
   | CF.HTrue 
   | CF.HFalse 
+  | CF.HRel _
   | CF.HEmp -> []
 
 and param_alias_sets p params = 
@@ -1617,10 +1634,12 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let cret_type = trans_type prog proc.I.proc_return proc.I.proc_loc in
       let free_vars = List.map (fun p -> p.I.param_name) all_args in
       let stab = H.create 103 in
+
       let add_param p = H.add stab p.I.param_name {
           sv_info_kind =  (trans_type prog p.I.param_type p.I.param_loc);
           id = fresh_int () } in
       (ignore (List.map add_param all_args);
+
 	  let _ = H.add stab res_name { sv_info_kind = cret_type;id = fresh_int () } in
 	  let _ = H.add stab eres_name { sv_info_kind = UNK ;id = fresh_int () } in
       (* Termination: Add info of logical vars *)
@@ -1632,7 +1651,11 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	  let _ = check_valid_flows proc.I.proc_static_specs in
 	  let _ = check_valid_flows proc.I.proc_dynamic_specs in
       (* let _ = print_endline ("trans_proc: "^ proc.I.proc_name ^": before set_pre_flow: specs = " ^ (Iprinter.string_of_struc_formula (proc.I.proc_static_specs@proc.I.proc_dynamic_specs))) in *)
+(*	let _ = print_endline ("stab: " ^ string_of_stab stab ) in *)
+    (* let _ = Debug.info_pprint ("  transform I2C: " ^  proc.I.proc_name ) no_pos in *)
+    (* let _ = Debug.info_pprint ("   static spec" ^(Iprinter.string_of_struc_formula proc.I.proc_static_specs)) no_pos in *)
 	  let static_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
+    (* let _ = Debug.info_pprint ("   static spec" ^(Cprinter.string_of_struc_formula static_specs_list)) no_pos in *)
 	  (* let _ = print_string "trans_proc :: set_pre_flow PASSED 1\n" in *)
 	  let dynamic_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true) in
       (* Termination: Normalize the specification 
@@ -1732,7 +1755,8 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_is_main = proc.I.proc_is_main;
           C.proc_is_recursive = false;
           C.proc_file = proc.I.proc_file;
-          C.proc_loc = proc.I.proc_loc;} in 
+          C.proc_loc = proc.I.proc_loc;
+	  C.proc_test_comps = trans_test_comps prog proc.I.proc_test_comps} in 
 	  (E.pop_scope (); cproc))))
   in
   wrap_proving_kind ("TRANS_PROC"(*^proc.I.proc_name*)) trans_proc_x_op ()
@@ -1989,7 +2013,7 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
 		                  CF.h_formula_view_arguments = _;
 		                  CF.h_formula_view_pos = _
 		              } -> if (CP.name_of_spec_var p) = v then c else ""
-              | CF.HTrue | CF.HFalse | CF.HEmp | CF.Hole _ -> "")
+              | CF.HTrue | CF.HFalse | CF.HEmp | CF.HRel _ | CF.Hole _ -> "")
 	      in find_view_heap h
     | CF.Or _ ->
 	      Err.report_error
@@ -3091,7 +3115,8 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 I.proc_body = Some w_body;
                 I.proc_is_main = proc.I.proc_is_main;
                 I.proc_file = proc.I.proc_file;
-                I.proc_loc = pos; } in
+                I.proc_loc = pos; 
+		I.proc_test_comps = proc.I.proc_test_comps} in
             let temp_call =  I.CallNRecv {
                 I.exp_call_nrecv_method = w_name;
                 I.exp_call_nrecv_lock = None;
@@ -3331,6 +3356,8 @@ and default_value (t :typ) pos : C.exp =
           failwith "default_value: list can only be used for constraints"
     | RelT ->
           failwith "default_value: RelT can only be used for constraints"
+    | HpT ->
+          failwith "default_value: HpT can only be used for constraints"
     | Named c -> C.Null pos
 	| Tree_sh ->  failwith
           "default_value: tree_sh in variable declaration should have been rejected"
@@ -3851,7 +3878,11 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
                             try
                               let _ = I.look_up_func_def_raw prog.I.prog_func_decls id in
                               CP.SpecVar(RelT,id,pr)
-                            with _ -> v
+                            with _ ->
+                                try
+                                    let _ = I.look_up_hp_def_raw prog.I.prog_hp_decls id in
+                                    CP.SpecVar(HpT,id,pr)
+                                with _ -> v
                       else v
           ) ivs in
           (* TODO : any warning below should be fixed *)
@@ -4169,6 +4200,11 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
               let tmp_h = CF.mkConjH lf1 lf2 pos in
               let tmp_type = CF.mkAndType type1 type2 in 
 	          (tmp_h, tmp_type)
+        | IF.HRel (r, args, pos) ->    
+          let nv = trans_var_safe (r,Unprimed) HpT stab pos in
+    	  (* Match types of arguments with relation signature *)
+		  let cpargs = trans_pure_exp_list args stab in
+		   (CF.HRel (nv, cpargs, pos), CF.TypeTrue)
         | IF.HTrue ->  (CF.HTrue, CF.TypeTrue)
         | IF.HFalse -> (CF.HFalse, CF.TypeFalse) 
         | IF.HEmp -> (CF.HEmp, CF.TypeTrue) in 
@@ -5158,6 +5194,8 @@ and gather_type_info_b_formula_x prog b0 stab =
             | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r)
           )
 
+    
+
 (* An Hoa *)
 
 and guess_type_of_exp_arith a0 stab =
@@ -5645,6 +5683,22 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 			                                Err.error_loc = pos;
 			                                Err.error_text = c ^ " is neither 2 a data nor view name";
 			                            })) in ()
+    | IF.HRel (r, args, pos) ->
+        (try
+             let hpdef = I.look_up_hp_def_raw prog.I.prog_hp_decls r in
+             if (List.length args) == (List.length hpdef.I.hp_typed_vars) then
+              let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) hpdef.I.hp_typed_vars in
+		      let args_exp_types = List.map (fun t -> (t)) args_ctypes in
+              let _ = gather_type_info_var r stab HpT in
+		      let _ = List.map2 (fun x y -> gather_type_info_exp x stab y) args args_exp_types in ()
+             else
+                Err.report_error{ Err.error_loc = pos; Err.error_text = ("number of arguments for heap relation "^r^" does not match"); }
+         with
+		    | Not_found -> failwith ("iast.gather_type_info_heap :gather_type_info_heap: relation "^r^" cannot be found")
+            | Failure s -> failwith s
+            | _ -> print_endline ("gather_type_info_heap: relation " ^ r)
+          )
+
     | IF.HTrue | IF.HFalse | IF.HEmp -> ()
 
 and get_spec_var_stab (v : ident) stab pos =
@@ -5860,6 +5914,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
 	        let tmp_h = IF.mkPhase lf1 lf2 pos in
 	        let tmp_link = IP.mkAnd link1 link2 pos in
 	        (new_used_names2, (qv1 @ qv2), tmp_h, tmp_link)
+      | IF.HRel r -> (used_names, [], IF.HRel r ,  IP.mkTrue no_pos)
       | IF.HTrue ->  (used_names, [], IF.HTrue,  IP.mkTrue no_pos)
       | IF.HFalse -> (used_names, [], IF.HFalse, IP.mkTrue no_pos)
       | IF.HEmp -> (used_names, [], IF.HEmp, IP.mkTrue no_pos) in 
@@ -5939,13 +5994,25 @@ and case_normalize_formula prog (h:(ident*primed) list)(f:IF.formula):IF.formula
 	  
 and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula):IF.formula = 
   (*called for data invariants and assume formulas ... rename bound, convert_struc2 float out exps from heap struc*)
-  let f = convert_heap2 prog f in
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 0 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  let f = convert_heap2 prog f in
   let f = IF.float_out_thread f in
   let f = IF.float_out_exps_from_heap f in
   let f = IF.float_out_min_max f in
   let f = IF.rename_bound_vars f in
   let f,_,_ = case_normalize_renamed_formula prog h [] f in
+  f
+
+and case_normalize_formula_not_rename prog (h:(ident*primed) list)(f:IF.formula):IF.formula = 
+  (*called for data invariants and assume formulas ... rename bound, convert_struc2 float out exps from heap struc*)
+
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 0 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  let f = convert_heap2 prog f in
+  let f = IF.float_out_thread f in
+  let f = IF.float_out_exps_from_heap f in
+  let f = IF.float_out_min_max f in
+  let f = IF.rename_bound_vars f in
+  (* let f,_,_ = case_normalize_renamed_formula prog h [] f in *)
   f
 
 (* TODO : WN : type error with empty predicate errors/list-bug.slk *) 
@@ -7519,6 +7586,37 @@ and trans_bdecl prog bd =
   let pr_out c = Cprinter.string_of_barrier_decl c in
   Debug.no_1 "trans_bdecl " pr_in pr_out (trans_bdecl_x prog) bd
   
+(******trans_test_components**********)
+and trans_test_comps prog tcomps =		  
+		  match tcomps with
+		    | None -> None
+		    | Some t ->
+		      Some  {
+		      C.expected_ass = trans_expected_ass prog t.Iast.expected_ass;
+		      C.expected_hpdefs = trans_expected_ass prog t.Iast.expected_hpdefs;
+		    }
+
+and trans_expected_ass prog ass =
+		  let trans_constr prog constr = 
+		    let stab =  H.create 103 in
+		      let if1, if2 = constr in
+		      let if1 = case_normalize_formula prog [] if1 in
+		      let _ = gather_type_info_formula prog if1 stab false in
+		      (*let _ = print_endline ("typechecker1: stab: " ^ Astsimp.string_of_stab stab ) in *)
+		      let f1 = trans_formula prog false [] false if1 stab false in
+		      let if2 = case_normalize_formula prog [] if2 in
+		      let _ = gather_type_info_formula prog if2 stab false in
+		      (*	let _ = print_endline ("typechecker2: stab: " ^ Astsimp.string_of_stab stab ) in *)
+		      let f2 = trans_formula prog false [] false if2 stab false in
+		      (f1,f2)
+		  in
+   let helper assl = List.map (fun one_ass -> trans_constr prog (one_ass.Iast.ass_lhs,one_ass.Iast.ass_rhs)) assl in		    
+   match ass with
+      | None -> None 
+      | Some (il,sl,assl) -> Some(il,sl,helper assl)
+
+(******end trans_test_components**********)
+	  
 (*
 and normalize_barr_decl cprog p = 
 		let nfs = Solver.normalize_frac_struc cprog in
@@ -7590,3 +7688,4 @@ and normalize_fracs cprog  =
 		C.prog_barrier_decls = List.map (normalize_barr_decl cprog) cprog.C.prog_barrier_decls;
 	}
 *)	
+

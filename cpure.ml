@@ -5,6 +5,7 @@
 *)
 
 
+
 open Globals
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
@@ -15,6 +16,10 @@ open Label
 (* spec var *)
 type spec_var =
   | SpecVar of (typ * ident * primed)
+
+let compare_sv (SpecVar (t1, id1, pr1)) (SpecVar (t2, id2, pr2))=
+  if (t1=t2)&&(pr1=pr2) then compare id1 id2
+  else -1
 
 let is_hole_spec_var sv = match sv with
 	| SpecVar (_,n,_) -> n.[0] = '#'
@@ -40,6 +45,10 @@ let is_rel_typ sv = match sv with
   | SpecVar (RelT,_,_) -> true
   | _ -> false
 
+let is_hprel_typ sv = match sv with
+  | SpecVar (HpT,_,_) -> true
+  | _ -> false
+
 let is_node_typ sv = match sv with
   | SpecVar (Named _,_,_) -> true
   | _ -> false
@@ -54,6 +63,7 @@ let is_int_typ sv = match sv with
 
 type rel_cat = 
   | RelDefn of spec_var
+  | HPRelDefn of spec_var
   | RelAssume of spec_var list
   | RankDecr of spec_var list
   | RankBnd of spec_var
@@ -196,6 +206,7 @@ let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initia
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
 let print_rel_cat rel_cat = match rel_cat with
   | RelDefn v -> "RELDEFN " ^ (!print_sv v)
+  | HPRelDefn v -> "HP_RELDEFN " ^ (!print_sv v)
   | RelAssume v -> "RELASS " ^ (!print_svl v)
   | RankDecr vs -> "RANKDEC " ^ (!print_svl vs)
   | RankBnd v -> "RANKBND " ^ (!print_sv v)
@@ -890,8 +901,7 @@ and is_null (e : exp) : bool =
     | Null _ -> true
     | _ -> false
 
-and is_zero_int (e : exp) : bool = match e with
-  | IConst (0, _) -> true
+and is_zero_int (e : exp) : bool = match e with  | IConst (0, _) -> true
   | _ -> false
 
 and is_zero_float (e : exp) : bool = match e with
@@ -3669,7 +3679,8 @@ let rec eq_pure_formula (f1 : formula) (f2 : formula) : bool = equalFormula f1 f
 
 module SVar = struct
   type t = spec_var
-  let compare = fun sv1 -> fun sv2 -> compare (name_of_spec_var sv1) (name_of_spec_var sv2)
+  let compare = fun sv1 -> fun sv2 -> (* compare_sv sv1 sv2 *)
+      compare (name_of_spec_var sv1) (name_of_spec_var sv2)
 end
 
 module SVarSet = Set.Make(SVar)
@@ -3760,6 +3771,50 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
   in
   let filtered_f = select_relevants relevants0 unknowns0 rele_var_set in
 	filtered_f
+
+(* Assumption: f0 is SAT *)
+(*implemented by L2 to replace the old one (the old one does not distinguish primed and unprimed)
+f is in CNF
+keep subformula which contains keep_slv and their relevant
+*)
+let filter_var_new_x (f : formula) (keep_slv : spec_var list) : formula =
+  let rec get_new_rele_svl unk_fs old_keep_svl res_rele_fs res_unk_fs incr_keep=
+    match unk_fs with
+      | [] -> (res_rele_fs,res_unk_fs,old_keep_svl,incr_keep)
+      | f::fs ->
+          begin
+              (* let _ = Debug.info_pprint ("svl: " ^ (!print_svl old_keep_svl)) no_pos in *)
+              (* let _ = Debug.info_pprint ("f: " ^ (!print_formula f)) no_pos in *)
+              let svl = fv f in
+              (* let _ = Debug.info_pprint ("svl f: " ^ (!print_svl svl)) no_pos in *)
+              let inters = intersect svl old_keep_svl in
+              if inters = [] then
+                get_new_rele_svl fs old_keep_svl res_rele_fs (res_unk_fs@[f]) incr_keep
+              else
+                begin
+                    let diff = Gen.BList.difference_eq eq_spec_var svl old_keep_svl in
+                    get_new_rele_svl fs (old_keep_svl@diff) (res_rele_fs@[f]) res_unk_fs (incr_keep@diff)
+                end
+          end
+  in
+  let rec filter_fix rele_fs unk_fs total_svl=
+    let res_rele_fs,res_unk_fs,new_total_svl,incr_keep_svl = get_new_rele_svl unk_fs total_svl [] [] [] in
+    if res_rele_fs = [] && incr_keep_svl = [] then
+      (*reach fix point*)
+      (rele_fs)
+    else filter_fix (rele_fs@res_rele_fs) res_unk_fs new_total_svl
+  in
+  let conjs = list_of_conjs f in
+  let keep_slv = remove_dups_svl keep_slv in
+  (* let fv_list = List.map fv conjs in *)
+  let rele_fs = filter_fix [] conjs keep_slv in
+  conj_of_list rele_fs no_pos
+
+let filter_var_new (f0 : formula) (keep_slv : spec_var list) : formula =
+  let pr1 = !print_formula in
+  let pr2 = !print_svl in
+  Debug.no_2 "filter_var_new" pr1 pr2 pr1
+      (fun _ _ -> filter_var_new_x f0 keep_slv) f0 keep_slv
 
 (**************************************************************)
 (**************************************************************)
@@ -6957,21 +7012,21 @@ let find_may_failures imply pairs =
   let pairs = List.concat pairs in
   List.filter (fun (a,c) ->  not(imply a c)) pairs
 
+let rec remove_redundant_helper ls rs=
+  match ls with
+    | [] -> rs
+    | f::fs -> if List.exists (equalFormula f) fs then
+          remove_redundant_helper fs rs
+        else (match f with
+          | BForm ((Eq(e1, e2, _), _) ,_) -> if (eq_exp_no_aset e1 e2) then
+                remove_redundant_helper fs rs
+              else remove_redundant_helper fs rs@[f]
+          | _ -> remove_redundant_helper fs rs@[f]
+        )
+
 let remove_redundant (f:formula):formula =
   let l_conj = split_conjunctions f in
-  let rec helper ls rs=
-    match ls with
-      | [] -> rs
-      | f::fs -> if List.exists (equalFormula f) fs then
-            helper fs rs
-          else (match f with
-            | BForm ((Eq(e1, e2, _), _) ,_) -> if (eq_exp_no_aset e1 e2) then
-                  helper fs rs
-                else helper fs rs@[f]
-            | _ -> helper fs rs@[f]
-          )
-  in
-  let prun_l = helper l_conj [] in
+  let prun_l = remove_redundant_helper l_conj [] in
   join_conjunctions prun_l
 
 let find_all_failures is_sat ante cons =
@@ -7613,6 +7668,58 @@ let is_eq_exp (f:formula) = match f with
     | (Eq _,_) -> true
     | _ -> false)
   | _ -> false
+
+let is_neq_null_exp_x (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Neq (sv1,sv2,_),_) ->
+        begin
+            match sv1,sv2 with
+              | Var _, Null _ -> true
+              | Null _, Var _ -> true
+              | _ -> false
+        end
+    | _ -> false)
+  | _ -> false
+
+let is_neq_null_exp (f:formula)=
+  let pr1 = !print_formula in
+  Debug.no_1 "is_neq_null_exp" pr1 string_of_bool
+      (fun _ -> is_neq_null_exp_x f) f
+
+let check_dang_or_null_exp_x root (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+      | (Eq (esv1, esv2 ,_),_) ->
+          begin
+              match esv1,esv2 with
+                | Var (sv1,_), Null _ ->
+                     if eq_spec_var sv1 root then
+                       (false,true)
+                     else (false,false)
+                | Var (sv1,_), Var (sv2, _) ->
+                    (
+                        let b1 = eq_spec_var sv1 root in
+                        let b2 = eq_spec_var sv2 root in
+                        match b1,b2 with
+                          | true,true
+                          | false,false -> (false,false)
+                          | _ -> (true,false)
+                    )
+                | Null _, Var (sv2,_) ->
+                    if eq_spec_var sv2 root then
+                       (false,true)
+                     else (false,false)
+                | _ -> (false,false)
+          end
+      | _ -> (false,false)
+    )
+  | _ -> (false,false)
+
+let check_dang_or_null_exp root (f:formula) =
+  let pr1 = pr_pair string_of_bool string_of_bool in
+  Debug.no_2 "check_dang_or_null_exp" !print_sv !print_formula pr1
+      (fun _ _ -> check_dang_or_null_exp_x root f) root f
 
 let is_beq_exp (f:formula) = match f with
   | BForm (bf,_) ->
@@ -8521,6 +8628,13 @@ let get_inst_int v f =
 		| IConst (i,_) -> Some i
 		| _ -> None in
 	get_inst fct v f
-		
-		
-		
+
+let is_term pf =
+  match pf with
+    | LexVar _ -> true
+    | _ -> false
+  
+let is_term f =
+  match f with
+    | BForm ((bf,_),_) -> is_term bf
+    | _ -> false

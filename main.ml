@@ -29,29 +29,28 @@ let print_version () =
 
 let parse_file_full file_name = 
   let org_in_chnl = open_in file_name in
-    try
-    (*let ptime1 = Unix.times () in
-	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
-     *)
+  try
+      (*let ptime1 = Unix.times () in
+	let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
+      *)
       (* print_string ("Parsing "^file_name^" ...\n"); flush stdout; *)
-      let _ = Gen.Profiling.push_time "Parsing" in
-      Globals.input_file_name:= file_name;
-      let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) in
-		  close_in org_in_chnl;
-         let _ = Gen.Profiling.pop_time "Parsing" in
-    (*		  let ptime2 = Unix.times () in
-		  let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
-			print_string ("done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n"); *)
-		(* An Hoa *)
-		(*let _ = print_endline "Primitive relations : " in
-		let _ = List.map (fun x -> print_endline x.Iast.rel_name) prog.Iast.prog_rel_decls in*)
-
-			prog
-    with
-		End_of_file -> exit 0
+    let _ = Gen.Profiling.push_time "Parsing" in
+    Globals.input_file_name:= file_name;
+    let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) in
+    close_in org_in_chnl;
+    let _ = Gen.Profiling.pop_time "Parsing" in
+	 (*		  let ptime2 = Unix.times () in
+			  let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
+			  print_string ("done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n"); *)
+	 (* An Hoa *)
+	 (*let _ = print_endline "Primitive relations : " in
+	   let _ = List.map (fun x -> print_endline x.Iast.rel_name) prog.Iast.prog_rel_decls in*)
+    prog
+  with
+      End_of_file -> exit 0
     | M.Loc.Exc_located (l,t)->
       (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
-      raise t)
+       raise t)
 
 (* Parse all prelude files declared by user.*)
 let process_primitives (file_list: string list) : Iast.prog_decl list =
@@ -83,11 +82,68 @@ let rec process_header_with_pragma hlist plist =
 
 (***************end process preclude*********************)
 
+(**************vp: process compare file******************)
+let parse_file_cp file_name = 
+  let _ = print_string ("File to compare: " ^ file_name ^ "\n" ) in
+  let org_in_chnl = open_in file_name in 
+  try
+    let a  = Parser.parse_cpfile file_name (Stream.of_channel org_in_chnl) in
+    close_in org_in_chnl;
+    a
+  with
+      End_of_file -> exit 0
+    | M.Loc.Exc_located (l,t)->
+      (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+       raise t)
+
+let process_cp_file prog =
+  let file_to_cp = if(String.compare !Globals.file_cp "" != 0) then !Globals.file_cp else (
+    "sa/hip/test/ll-append3.cp"
+  )
+  in
+  let (hpdefs, proc_tcomps) = parse_file_cp file_to_cp in 
+  let helper procs tcomps =
+    let rec update_tcomp proc tcomps =
+      let proc_name = proc.Iast.proc_name in
+      match tcomps with
+	|[] -> proc
+	|(id, tcs)::y -> if(String.compare id proc_name == 0) then (
+	  {proc with Iast.proc_test_comps = Some tcs}
+	)
+	  else update_tcomp proc y
+    in
+    List.map (fun proc -> update_tcomp proc tcomps) procs 
+    (*procs proc_decl list*)
+  in
+  {prog with Iast.prog_hp_decls = prog.Iast.prog_hp_decls @ hpdefs;
+  Iast.prog_proc_decls = helper prog.Iast.prog_proc_decls proc_tcomps}
+
+let process_lib_file prog =
+  let parse_one_lib (ddecls,vdecls) lib=
+    let lib_prog = parse_file_full lib in
+    (*each template data of lib, find corres. data in progs, generate corres. view*)
+    let tmpl_data_decls = List.filter (fun dd -> dd.Iast.data_is_template) lib_prog.Iast.prog_data_decls in
+    let horm_views = Sa.generate_horm_view tmpl_data_decls lib_prog.Iast.prog_view_decls prog.Iast.prog_data_decls in
+    (ddecls@lib_prog.Iast.prog_data_decls),(vdecls@lib_prog.Iast.prog_view_decls@horm_views)
+  in
+  let ddecls,vdecls = List.fold_left parse_one_lib ([],[]) !Globals.lib_files in
+  {prog with Iast.prog_data_decls = prog.Iast.prog_data_decls @ ddecls;
+      Iast.prog_view_decls = prog.Iast.prog_view_decls @ vdecls;}
+
+(***************end process compare file*****************)
 let process_source_full source =
   (* print_string ("\nProcessing file \"" ^ source ^ "\"\n");  *)
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source in
+  let _ = Gen.Profiling.push_time "Process compare file" in
+  let prog = if(!Globals.cp_test || !Globals.cp_prefile) then (
+    process_cp_file prog 
+  )
+    else prog
+  in
+  let prog = process_lib_file prog in
+  let _ = Gen.Profiling.pop_time "Process compare file" in
   (* Remove all duplicated declared prelude *)
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
@@ -204,31 +260,32 @@ let process_source_full source =
     in
     
     (* Proof Logging *)
-    let _ = if !Globals.proof_logging || !Globals.proof_logging_txt then 
-      begin
-        let tstartlog = Gen.Profiling.get_time () in
-        let _= Log.proof_log_to_file () in
-        let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
-        let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt"  in
-        let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in
-        let _= if (!Globals.proof_logging_txt) 
-        then 
-          begin
-            Debug.info_pprint ("Logging "^fname^"\n") no_pos;
-            Debug.info_pprint ("Logging "^fz3name^"\n") no_pos;
-            Log.proof_log_to_text_file !Globals.source_files;
-            Log.z3_proofs_list_to_file !Globals.source_files
-          end
-        else try Sys.remove fname 
-          (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *)
-        with _ -> ()
-        in
-        let tstoplog = Gen.Profiling.get_time () in
-        let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
-        (* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in    () *)
-      end
+    let _ = Log.process_proof_logging ()
+    (*  if !Globals.proof_logging || !Globals.proof_logging_txt then  *)
+      (* begin *)
+      (*   let tstartlog = Gen.Profiling.get_time () in *)
+      (*   let _= Log.proof_log_to_file () in *)
+      (*   let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in *)
+      (*   let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt"  in *)
+      (*   let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in *)
+      (*   let _= if (!Globals.proof_logging_txt)  *)
+      (*   then  *)
+      (*     begin *)
+      (*       Debug.info_pprint ("Logging "^fname^"\n") no_pos; *)
+      (*       Debug.info_pprint ("Logging "^fz3name^"\n") no_pos; *)
+      (*       Log.proof_log_to_text_file !Globals.source_files; *)
+      (*       Log.z3_proofs_list_to_file !Globals.source_files *)
+      (*     end *)
+      (*   else try Sys.remove fname  *)
+      (*     (\* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *\) *)
+      (*   with _ -> () *)
+      (*   in *)
+      (*   let tstoplog = Gen.Profiling.get_time () in *)
+      (*   let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in () *)
+      (*   (\* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in    () *\) *)
+      (* end *)
     in
-    
+    (* let _ = Log.process_sleek_logging () in *)
     (* print mapping table control path id and loc *)
     (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
     

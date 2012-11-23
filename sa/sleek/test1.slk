@@ -1,0 +1,56 @@
+data node { int val ; node next }.
+
+HeapPred H(node a).
+HeapPred H1(node a).
+HeapPred H2(node a, node b).
+HeapPred G(node a, node b).
+HeapPred G2(node a, node b).
+
+
+infer [x] true |- x::node<2,null>.
+
+
+
+infer [H1,H2] H2(v5,x) * x::node<_,v5> |- H1(v5) .
+print residue.
+compare residue [v5]: x::node<_,v5>.
+
+
+infer [G2] x::node<val_77_580,v_node_77_595> * G2(v_node_77_595,y) & flted_65_571=null & v_node_77_595!=null &  v_node_77_595!=null &  !(v_bool_77_558') & a_599=a & y!=null |- G2(x,y) .
+print residue.
+compare residue [x,y,G2]: x::node<val_77_580,v_node_77_595>&flted_65_571=null & v_node_77_595!=null & v_node_77_595!=null & !(v_bool_77_558') & a_599=a & y!=null.
+
+
+
+
+
+/*
+checkentail true |- x = null | x!=null.
+
+checkentail true |- x = null.
+
+
+checkentail true |- x >3 | x <3.
+
+checkentail true |- x >3 | x <=3.
+
+checkentail  x != null |- x::node<1,null>.
+
+checkentail  x::node<1,null> |- x != null .
+
+checkentail true |- x >3&y=2 | x <=3 &y!=2 | x >3&y!=2 | x <=3 &y=2.
+
+checkentail x > 4 |- x > 3.
+
+checkentail  x::node<1,null>  |- x::node<1,null> & x!= null.
+
+checkentail true |- x = 3.
+
+checkentail x=3 |- true.
+
+infer[T] T(x) |- x= 3.
+print residue.
+
+infer[T] x = 3 |- T(x).
+print residue.
+*/

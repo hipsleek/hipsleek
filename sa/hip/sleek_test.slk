@@ -1,0 +1,48 @@
+data node {
+	int val;
+	node next
+}.
+
+HeapPred H(node x).
+HeapPred HP(node a, node b).
+HeapPred G(node a, node b).
+HeapPred H(node a).
+HeapPred H1(node a).
+HeapPred H1b(node a).
+HeapPred G(node a, node b).
+HeapPred G2(node a, node b).
+HeapPred HP_537(node a, node b).
+
+/*
+infer[HP,G] HP(b,x) * x0::node<_,e> & x0=x & e=null & c=b & t=c |- G(x, t).
+print residue.
+compare residue []: G(x, t) * x0::node<_,e> & x0=x & e=null & c=b & t=c.
+compare assumption [HP,G]: HP(b,x) * x::node<Anon_11,e>&c=b & e=null,G(x,c)&true.
+*/
+
+HeapPred HP_615(node a, node b).
+HeapPred HP_619(node a, node b).
+
+checkeq [] emp&y_614=y
+ or y_614::node<val_57_613,y_618> * HP_615(y_618,y)&y_614!=null -|- emp&y_618=y
+ or  y_618::node<val_57_617,y_622> * HP_619(y_622,y)&y_618!=null.
+
+HeapPred HP_619(node next_42_618).
+HeapPred HP_612(node y_611, node y).
+HeapPred HP_580(node next_42_562', node x').
+HeapPred HP1(node a, node b).
+HeapPred H2(node a, node b).
+HeapPred H1a(node a).
+HeapPred H1(node a).
+HeapPred G3(node b, node c, node d).
+HeapPred G1(node a).
+HeapPred G2(node a, node b).
+checkeq []  H1a(y) * HP_580(v_node_42_597,x) * x::node<val_42_586,y>&v_node_42_597=null -|-  G2(x,y) * x::node<_,null> & true.
+
+checkeq [] exists s: (a = s & s = e) -|- exists s: (s = c & s = f).
+
+checkeq [] a::node<2,d> & true -|- a::node<2,d> &true.
+
+
+checkeq [a] b::node<2,d> * c::node<_,null> -|- a::node<2,d>  * e::node<_,null>.
+
