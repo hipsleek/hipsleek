@@ -301,6 +301,7 @@ let common_arguments = [
 	("--slc-rel-level", Arg.Set_int Globals.slicing_rel_level, "Set depth for GetCtr function");
   ("--slc-ann-ineq", Arg.Set Globals.opt_ineq, "Enable inference of agressive slicing with inequalities");
   ("--slc-lvar-infer", Arg.Set Globals.infer_lvar_slicing, "Enable linking variable inference of agressive slicing");
+  ("--dis-oc", Arg.Set Redlog.dis_omega, "Disable Omega when Redlog is invoked");
   
   (* ("--en-slicing", Arg.Set Globals.do_slicing, "Enable forced slicing"); *)
   (* ("--dis-slicing", Arg.Set Globals.dis_slicing, "Disable slicing, equivalent to "); *) (* similar to --force-one-slice *)

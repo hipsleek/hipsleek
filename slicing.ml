@@ -496,7 +496,12 @@ struct
     ) ([], [], empty_var_aset) (snd s)
     in
 		(* The new slice is changed because of merging *)
-		let is_changed = (List.length (snd s)) > 1 in
+		(* let is_changed = (List.length (snd s)) > 1 in *)
+    let is_changed = match (snd s) with
+    | [] -> false
+    | m::[] -> m.memo_group_changed
+    | _ -> true
+    in
 		let unsat_checked = match (snd s) with
 		| [] -> false
 		| mg::[] -> mg.memo_group_unsat
