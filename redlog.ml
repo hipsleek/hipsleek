@@ -206,7 +206,7 @@ let check_formula f =
     None
 
 let check_formula f =
-  Debug.no_1 "check_formula" (fun s -> s) 
+  Debug.ho_1 "check_formula" (fun s -> s) 
       (pr_option string_of_bool) check_formula f 
 
 (* 
