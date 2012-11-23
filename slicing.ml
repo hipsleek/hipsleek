@@ -57,7 +57,6 @@ struct
 
   let constr_of_atom (a: Atom.t) : t =
     (Some (ALabel.label_of_atom a), a)
-		
 	let atom_of_constr (c: t) : Atom.t = snd c
 
   let constr_of_atom_list (al: Atom.t list) : t list =
