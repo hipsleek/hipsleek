@@ -41,7 +41,7 @@ node get_next(node x)
 /*
 
 changed flag is NOT set properly in
- slicing.merge_mems_mx
+ slicing.ml merge_mems_nx
 
 merge_mems_nx@3@2
 merge_mems_nx inp1 : (
