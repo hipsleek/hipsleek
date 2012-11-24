@@ -643,8 +643,8 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
     if t_valid then ""
     else
       snd (List.fold_left (fun (no,a) (b,m) ->
-        if b then (no+1, a ^ "<" ^ (string_of_int no) ^ ">:" ^ m ^ "\n")
-        else (no+1, a)) (1,"") term_res)
+          if b then (no+1, a ^ "<" ^ (string_of_int no) ^ ">:" ^ m ^ "\n")
+          else (no+1, a)) (1,"") term_res)
   in
   if not valid then
     begin
@@ -656,33 +656,42 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
                 | Some s -> "(may) cause:"^s
                 | None -> "INCONSISTENCY : expected failure but success instead"
               )
-        (*should check bot with is_bot_status*)
+                  (*should check bot with is_bot_status*)
         else ""
       in
       (* Get the timeout message *)
       let timeout = 
         if !Globals.sleek_timeout_limit > 0. then
           match CF.get_may_failure residue with
-          | Some "timeout" -> " (timeout) "
-          | _ -> ""
+            | Some "timeout" -> " (timeout) "
+            | _ -> ""
         else ""
       in
       print_string (num_id^": Fail."^timeout^s^"\n"^term_output^"\n"); flush stdout;
-          (*if !Globals.print_err_sleek then *)
-          (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
+      (*if !Globals.print_err_sleek then *)
+      (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
     end
   else
     begin
-        let s =
+      let s =
         if not !Globals.disable_failure_explaining then
           match CF.list_context_is_eq_flow residue false_flow_int with
             | true -> "(bot)"
             | false -> (*expect normal (OK) here*) ""
         else ""
-        in
-        if t_valid then print_string (num_id^": Valid. "^s^"\n"^term_output^"\n")
-        else print_string (num_id^": Fail. "^s^"\n"^term_output^"\n")
-        (* ;print_string ("printing here: "^(Cprinter.string_of_list_context residue)) *)
+      in
+      if t_valid then print_string (num_id^": Valid. "^s^"\n"^term_output^"\n")
+      else print_string (num_id^": Fail. "^s^"\n"^term_output^"\n");
+      if not(Infer.rel_ass_stk# is_empty) then
+        begin
+          print_endline "*************************************";
+          print_endline "*******relational assumption ********";
+          print_endline "*************************************";
+          print_endline (Infer.rel_ass_stk # string_of_reverse);
+          print_endline "*************************************";
+          Infer.rel_ass_stk # reset
+        end;
+      (* ;print_string ("printing here: "^(Cprinter.string_of_list_context residue)) *)
     end
   (* with e -> *)
   (*     let _ =  Error.process_exct(e)in *)

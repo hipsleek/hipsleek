@@ -1,0 +1,30 @@
+data node {
+	int val;
+	node next
+}.
+
+HeapPred H(node a).
+HeapPred G(node a, node b).
+
+HeapPred HP_526(node a).
+
+/*
+ infer[H,G,HP_526] HP_526(next_21_534) * x'::node<val_20_533,next_21_514'>
+  &x=x' & next_21_514'=null & next_21_534=v_node_22_515' 
+  & res=v_node_22_515'
+ |-  G(x',res). 
+
+ERROR: at get-next.slk_14_5 
+Message: should not have prime vars
+
+*/
+
+ infer[G,HP_526] HP_526(next_21_534) * xp::node<val_20_533,next_21_514>
+  &x=xp & next_21_514=null & next_21_534=v_node_22_515 
+  & res2=v_node_22_515
+  |- G(xp,res2). 
+
+ infer[G,HP_526] HP_526(next_21_534) * xp::node<val_20_533,null>
+  &x=xp & next_21_534=v_node_22_515 
+  & res2=v_node_22_515
+  |- G(xp,res2). 
