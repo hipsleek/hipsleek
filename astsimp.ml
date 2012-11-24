@@ -3067,8 +3067,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             let tvars = Gen.BList.remove_dups_eq (=) tvars in
             let w_args = List.map (fun tv -> I.Var { I.exp_var_name = snd tv; I.exp_var_pos = pos; }) tvars in
             let fn3 = fresh_name () in  
-            let w_name = fn3 ^ ("_" ^ (Gen.replace_path_sep_with_uscore
-                (Gen.replace_dot_with_uscore (string_of_loc pos)))) in
+            (* let w_name = fn3 ^ ("_" ^ (Gen.replace_path_sep_with_uscore *)
+            (*     (Gen.replace_dot_with_uscore (string_of_loc pos)))) in  *)
+            let w_name = fn3 ^ "_tmpss_" ^ (string_of_pos_plain pos.start_pos) in
 			let prepost = match wrap with 
 			  | None -> prepost
 			  | Some _ -> IF.add_post_for_flow (I.get_breaks body) prepost in
@@ -7166,22 +7167,22 @@ and neighbors_of_scc (scc: C.IG.V.t list) (scc_list: C.IG.V.t list list) cg : C.
   scc_neighbors
 
 (* Warning: This method might have problem with OCaml 4.0 *)  
-and scc_sort (scc_list: C.IG.V.t list list) cg : C.IG.V.t list list =
-  let compare_scc scc1 scc2 =
-	if (List.mem scc2 (neighbors_of_scc scc1 scc_list cg)) then 1
-	else if (List.mem scc1 (neighbors_of_scc scc2 scc_list cg)) then -1
-	else 0
-  in List.fast_sort (fun s1 s2 -> compare_scc s1 s2) scc_list
+(* and scc_sort (scc_list: C.IG.V.t list list) cg : C.IG.V.t list list = *)
+(*   let compare_scc scc1 scc2 =                                         *)
+(* 	if (List.mem scc2 (neighbors_of_scc scc1 scc_list cg)) then 1       *)
+(* 	else if (List.mem scc1 (neighbors_of_scc scc2 scc_list cg)) then -1 *)
+(* 	else 0                                                              *)
+(*   in List.fast_sort (fun s1 s2 -> compare_scc s1 s2) scc_list         *)
 
-(* and scc_sort (scc_list: C.IG.V.t list list) cg : C.IG.V.t list list =                             *)
-(*   let topo_order = snd (C.IGT.fold (fun v (index, a) -> (index+1, (v, index)::a)) cg (0, [])) in  *)
-(*   let compare_scc scc1 scc2 =                                                                     *)
-(*     try                                                                                           *)
-(*       let i1 = List.assoc (List.hd scc1) topo_order in                                            *)
-(*       let i2 = List.assoc (List.hd scc2) topo_order in                                            *)
-(*       i2-i1                                                                                       *)
-(*     with _ -> 0                                                                                   *)
-(*   in List.fast_sort (fun s1 s2 -> compare_scc s1 s2) scc_list                                     *)
+and scc_sort (scc_list: C.IG.V.t list list) cg : C.IG.V.t list list =
+  let topo_order = snd (C.IGT.fold (fun v (index, a) -> (index+1, (v, index)::a)) cg (0, [])) in
+  let compare_scc scc1 scc2 =
+    try
+      let i1 = List.assoc (List.hd scc1) topo_order in
+      let i2 = List.assoc (List.hd scc2) topo_order in
+      i2-i1
+    with _ -> 0
+  in List.fast_sort (fun s1 s2 -> compare_scc s1 s2) scc_list
 
 and irf_traverse_prog (cp: C.prog_decl) (scc_list: C.IG.V.t list list) : C.prog_decl = 
   { cp with
