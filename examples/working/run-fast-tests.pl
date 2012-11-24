@@ -340,6 +340,7 @@ $output_file = "log";
         ]],
 	"hip" =>[
 #	["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
+				["eps.ss",2,  "", "get_next","SUCCESS","get_next_next","SUCCESS"],
 				["append.ss",1,  "", "append","SUCCESS"],
 				["append-tail.ss",1,  "","append","SUCCESS"],
 				["avl-bind.ss",9,  "", "height","SUCCESS", "rotate_left","SUCCESS", "rotate_right","SUCCESS", "get_max","SUCCESS", "rotate_double_left","SUCCESS",
