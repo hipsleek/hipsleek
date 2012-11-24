@@ -290,12 +290,21 @@ let ho_4_cmp g = ho_4_opt_aux false [] false (fun _ -> true) (Some g)
 let ho_5_cmp g = ho_5_opt_aux false [] false (fun _ -> true) (Some g) 
 let ho_6_cmp g = ho_6_opt_aux false [] false (fun _ -> true) (Some g) 
 
+let add_num f i s = let str=(s^"#"^(string_of_int i)) in f str
+
 let ho_eff_1 s l = ho_1_opt_aux false l false (fun _ -> true) None s
 let ho_eff_2 s l = ho_2_opt_aux false l false (fun _ -> true) None s
 let ho_eff_3 s l = ho_3_opt_aux false l false (fun _ -> true) None s
 let ho_eff_4 s l = ho_4_opt_aux false l false (fun _ -> true) None s
 let ho_eff_5 s l = ho_5_opt_aux false l false (fun _ -> true) None s
 let ho_eff_6 s l = ho_6_opt_aux false l false (fun _ -> true) None s
+
+let ho_eff_1_num i =  add_num ho_eff_1 i
+let ho_eff_2_num i =  add_num ho_eff_2 i
+let ho_eff_3_num i =  add_num ho_eff_3 i
+let ho_eff_4_num i =  add_num ho_eff_4 i
+let ho_eff_5_num i =  add_num ho_eff_5 i
+let ho_eff_6_num i =  add_num ho_eff_6 i
 
 let to_eff_1 s l = ho_1_opt_aux true l false (fun _ -> true) None s
 let to_eff_2 s l = ho_2_opt_aux true l false (fun _ -> true) None s
@@ -304,12 +313,19 @@ let to_eff_4 s l = ho_4_opt_aux true l false (fun _ -> true) None s
 let to_eff_5 s l = ho_5_opt_aux true l false (fun _ -> true) None s
 let to_eff_6 s l = ho_6_opt_aux true l false (fun _ -> true) None s
 
-let to_1_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_1 str
-let to_2_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_2 str
-let to_3_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_3 str
-let to_4_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_4 str
-let to_5_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_5 str
-let to_6_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in to_6 str
+let to_eff_1_num i =  add_num to_eff_1 i
+let to_eff_2_num i =  add_num to_eff_2 i
+let to_eff_3_num i =  add_num to_eff_3 i
+let to_eff_4_num i =  add_num to_eff_4 i
+let to_eff_5_num i =  add_num to_eff_5 i
+let to_eff_6_num i =  add_num to_eff_6 i
+
+let to_1_num i =  add_num to_1 i
+let to_2_num i =  add_num to_2 i
+let to_3_num i =  add_num to_3 i
+let to_4_num i =  add_num to_4 i
+let to_5_num i =  add_num to_5 i
+let to_6_num i =  add_num to_6 i
 
 let to_1_opt f = ho_1_opt_aux true [] false f None
 let to_2_opt f = ho_2_opt_aux true [] false f None
@@ -332,20 +348,33 @@ let ho_4_loop s = ho_4_opt_aux false [] true (fun _ -> true) None s
 let ho_5_loop s = ho_5_opt_aux false [] true (fun _ -> true) None s
 let ho_6_loop s = ho_6_opt_aux false [] true (fun _ -> true) None s
 
-let ho_1_loop_num (i:int) s =  ho_1_opt_aux false [] true (fun _ -> true) None (s^"#"^(string_of_int i))
-let ho_2_loop_num (i:int) s =  ho_2_opt_aux false [] true (fun _ -> true) None (s^"#"^(string_of_int i))
-let ho_3_loop_num (i:int) s =  ho_3_opt_aux false [] true (fun _ -> true) None (s^"#"^(string_of_int i))
-let ho_4_loop_num (i:int) s =  ho_4_opt_aux false [] true (fun _ -> true) None (s^"#"^(string_of_int i))
-let ho_5_loop_num (i:int) s =  ho_5_opt_aux false [] true (fun _ -> true) None (s^"#"^(string_of_int i))
-let ho_6_loop_num (i:int) s =  ho_6_opt_aux false [] true (fun _ -> true) None (s^"#"^(string_of_int i))
+(* let ho_1_loop_num (i:int) s =  ho_1_opt_aux false [] true (fun _ -> true) None (s^"#"^(string_of_int i)) *)
+(* let ho_2_loop_num (i:int) s =  ho_2_opt_aux false [] true (fun _ -> true) None (s^"#"^(string_of_int i)) *)
+(* let ho_3_loop_num (i:int) s =  ho_3_opt_aux false [] true (fun _ -> true) None (s^"#"^(string_of_int i)) *)
+(* let ho_4_loop_num (i:int) s =  ho_4_opt_aux false [] true (fun _ -> true) None (s^"#"^(string_of_int i)) *)
+(* let ho_5_loop_num (i:int) s =  ho_5_opt_aux false [] true (fun _ -> true) None (s^"#"^(string_of_int i)) *)
+(* let ho_6_loop_num (i:int) s =  ho_6_opt_aux false [] true (fun _ -> true) None (s^"#"^(string_of_int i)) *)
 
+let ho_1_loop_num i =  add_num ho_1_loop i
+let ho_2_loop_num i =  add_num ho_2_loop i
+let ho_3_loop_num i =  add_num ho_3_loop i
+let ho_4_loop_num i =  add_num ho_4_loop i
+let ho_5_loop_num i =  add_num ho_5_loop i
+let ho_6_loop_num i =  add_num ho_6_loop i
 
-let ho_1_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_1 str
-let ho_2_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_2 str
-let ho_3_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_3 str
-let ho_4_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_4 str
-let ho_5_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_5 str
-let ho_6_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_6 str
+(* let ho_1_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_1 str *)
+(* let ho_2_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_2 str *)
+(* let ho_3_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_3 str *)
+(* let ho_4_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_4 str *)
+(* let ho_5_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_5 str *)
+(* let ho_6_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_6 str *)
+
+let ho_1_num i =  add_num ho_1 i
+let ho_2_num i =  add_num ho_2 i
+let ho_3_num i =  add_num ho_3 i
+let ho_4_num i =  add_num ho_4 i
+let ho_5_num i =  add_num ho_5 i
+let ho_6_num i =  add_num ho_6 i
 
 let no_1_loop _ _ _ f 
       = ho_aux_no f
@@ -373,6 +402,7 @@ let no_5_loop_num _ _ _ _ _ _ _ _ f e1 e2 e3 e4
 let no_6_loop_num _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5
       = ho_aux_no (f e1 e2 e3 e4 e5)
 
+let no_eff_5_num _ _ _ _ _ f e1 e2 e3 e4 =  ho_aux_no (f e1 e2 e3 e4)
 	  
 let no_1_num (i:int) s _ _ f
       = ho_aux_no f
