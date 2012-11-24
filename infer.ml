@@ -1729,7 +1729,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
 			| _ -> [hf]
 			) es.CF.es_history) in
           let lhs_b0 = CF.mkAnd_base_pure lhs_b (MCP.mix_of_pure unk_pure) pos in
-          let group_unk_svl = List.concat (List.map (fun ass -> ass.CF.unk_svl) !Log.sleek_proving_hprel_ass) in
+          let group_unk_svl = List.concat (List.map (fun ass -> ass.CF.unk_svl) !Log.current_hprel_ass) in
           let total_unk_svl = CP.remove_dups_svl (group_unk_svl@unk_svl) in
           let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog lhs_b0 new_rhs_b leqs reqs hds hvs lhras (rhras@new_hrels)
             (selected_hps@(List.map (fun (hp,_,_) -> hp) new_hrels)) es.CF.es_crt_holes ((* es.CF.es_heap:: *)(*es.CF.es_history*) sel_his) total_unk_svl in
@@ -1751,7 +1751,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           } in
           let _ = List.iter (fun e -> rel_ass_stk # push e) defined_hprels in
           let _ = rel_ass_stk # push hp_rel in
-          let _ = Log.sleek_proving_hprel_ass :=  (!Log.sleek_proving_hprel_ass @ defined_hprels@ [hp_rel]) in
+          let _ = Log.current_hprel_ass :=  (!Log.current_hprel_ass @ defined_hprels@ [hp_rel]) in
           DD.ninfo_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr (defined_hprels@ [hp_rel]))) pos;
           let update_es_f f new_hp=
             match new_hp with
