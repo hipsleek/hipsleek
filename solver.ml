@@ -2780,7 +2780,9 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
         | br::br_tl ->
              let _ = DD.ninfo_pprint ("\n *****process one branch******\n") pos in
             let res, prf, new_unk_map= heap_entail_one_branch unk_map br in
-            heap_entail_struc_partial_context_helper br_tl (unk_map@new_unk_map) (res_l@[res])
+            heap_entail_struc_partial_context_helper br_tl
+                (unk_map@new_unk_map)
+                (res_l@[res])
                 (prf_l@[prf])
     in
     let fail_branches, succ_branches  = cl in

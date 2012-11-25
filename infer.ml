@@ -219,6 +219,10 @@ let collect_hp_rel_list_partial_context (ctx:list_partial_context) =
   Debug.no_1 "collect_hp_rel_list_partial_context"  pr1 pr2
       collect_hp_rel_list_partial_context ctx
 
+let collect_hp_unk_map_list_partial_context (ctx:list_partial_context) =
+  let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_hp_unk_map c) cl))  ctx in
+  List.concat r
+
 let init_vars ctx infer_vars iv_rel v_hp_rel orig_vars = 
   let rec helper ctx = 
     match ctx with
@@ -1836,7 +1840,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           let new_es_formula = check_consumed_node rhs new_es_formula in
           let new_es = {es with CF. es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@rvhp_rels;
               CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ defined_hprels @ [hp_rel];
-              CF.es_infer_hp_unk_map = es.CF.es_infer_hp_unk_map@unk_map;
+              CF.es_infer_hp_unk_map = (es.CF.es_infer_hp_unk_map@unk_map);
               CF.es_formula = new_es_formula} in
           DD.ninfo_pprint ("  new lhs: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
           (true, new_es)
