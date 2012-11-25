@@ -39,6 +39,8 @@ let simplify_context = ref false
 let parallelize num =
   num_para := num
 
+ 
+  
 (* let rec check_specs prog proc ctx spec_list e0 = *)
 (*   check_specs_a prog proc ctx spec_list e0 *)
 (*       (\*Debug.loop_2_no "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list*\) *)
@@ -2039,7 +2041,7 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
   in helper proc_lst
 
 (* checking procedure: (PROC p61) *)
-and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
+and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
   let unmin_name = unmingle_name proc.proc_name in
   (* get latest procedure from table *)
   let proc = 
@@ -2378,13 +2380,18 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 		        let (hpdecls1,hp_lst_assume1, ls_inferred_hps1) = simplify_varname sel_hp_rels hp_lst_assume ls_inferred_hps hpdecls name_mtb in
 		        let message = string_of_message sel_hp_rels hp_lst_assume1 ls_inferred_hps1 hpdecls1 in
 		        let _ = try
-			  let cout = open_out file_name in
+			(* let cout = open_out file_name in *)
 			  (*let co = Format.formatter_of_out_channel cout in
 			    Format.fprintf co "%s\n" message;*)
-			  Printf.fprintf cout "%s\n" message;   (* write something *)   
-			  close_out cout
-		        with Sys_error _ as e ->
-			    Format.printf "Cannot open file \"%s\": %s\n" file_name (Printexc.to_string e)
+				(
+				  match cout_option with
+				    | Some cout -> Printf.fprintf cout "%s\n" message;   (* write something *)   
+				    | _ -> ()
+				)
+		      (* Printf.fprintf cout "%s\n" "End!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";   (\* write something *\)  *)  
+			(* close_out cout *)
+			with Sys_error _ as e ->
+			  Format.printf "Cannot open file \"%s\": %s\n" file_name (Printexc.to_string e)
 		        in
 		        let _ = Gen.Profiling.pop_time "Gen cp file" in
 		        ()			
@@ -2511,10 +2518,10 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 	      end
     end else true
 
-let check_proc (prog : prog_decl) (proc : proc_decl) : bool =
+let check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
   let pr p = pr_id (name_of_proc p)  in
   Debug.no_1_opt (fun _ -> not(is_primitive_proc proc))
-      "check_proc" pr string_of_bool (check_proc prog) proc
+      "check_proc" pr string_of_bool (check_proc prog) proc cout_option
 
 let check_phase_only prog  proc =
 (* check_proc prog proc *)
@@ -2528,11 +2535,11 @@ let check_phase_only prog  proc =
       ()
 
 (* check entire program *)
-let check_proc_wrapper prog proc =
+let check_proc_wrapper prog proc cout_option =
 (* check_proc prog proc *)
   try
 	(*  let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in *)
-    let res = check_proc prog proc in 
+    let res = check_proc prog proc cout_option in 
     (* Termination: Infer the phase numbers of functions in a scc group *) 
     (* TODO: The list of scc group does not 
      * need to be computed many times *)
@@ -2623,10 +2630,10 @@ let init_files () =
     Setmona.init_files ();
   end
 
-let check_proc_wrapper_map prog (proc,num) =
+let check_proc_wrapper_map prog (proc,num) cout_option =
   if !Tpdispatcher.external_prover then Tpdispatcher.Netprover.set_use_socket_map (List.nth !Tpdispatcher.external_host_ports (num mod (List.length !Tpdispatcher.external_host_ports))); (* make this dynamic according to availability of server machines*)
   try
-    check_proc prog proc
+    check_proc prog proc cout_option
   with _ as e ->
     if !Globals.check_all then begin
       print_string ("\nProcedure "^proc.proc_name^" FAIL-3\n");
@@ -2635,9 +2642,9 @@ let check_proc_wrapper_map prog (proc,num) =
     end else
       raise e 
 
-let check_proc_wrapper_map_net prog  (proc,num) =
+let check_proc_wrapper_map_net prog  (proc,num) cout_option =
   try
-    check_proc prog proc
+    check_proc prog proc cout_option
   with _ as e ->
     if !Globals.check_all then begin
       print_string ("\nProcedure "^proc.proc_name^" FAIL-4\n");
@@ -2668,6 +2675,11 @@ let restore_phase_infer_checks() =
   dis_bnd_chk := stk_tmp_checks # pop_top
 
 let check_prog (prog : prog_decl) =
+  let cout_option = if(!Globals.gen_cpfile) then (
+    Some (open_out (!Globals.cpfile))
+  )
+    else  None
+  in
   let _ = if (Printexc.backtrace_status ()) then print_endline "backtrace active" in 
    (* let _ = Debug.info_pprint ("  check_prog: " ^ (Cprinter.string_of_program prog) ) no_pos in *)
   if !Globals.check_coercions then 
@@ -2707,19 +2719,24 @@ let check_prog (prog : prog_decl) =
             Debug.dinfo_pprint ">>>>>> Perform Phase Inference for a Mutual Recursive Group  <<<<<<" no_pos;
             Debug.dinfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
             drop_phase_infer_checks();
-            proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc prog proc));
+            proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc prog proc cout_option));
             restore_phase_infer_checks();
             (* the message here should be empty *)
             (* Term.term_check_output Term.term_res_stk; *)
             Term.phase_num_infer_whole_scc prog scc 
           end
         else prog in
-      let _ = proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc_wrapper prog proc)) in
+      let _ = proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc_wrapper prog proc cout_option)) in
       prog
   ) prog proc_scc 
   in 
-  ignore (List.map (check_proc_wrapper prog) ((* sorted_proc_main @ *) proc_prim));
+
+  ignore (List.map (fun proc -> check_proc_wrapper prog proc cout_option) ((* sorted_proc_main @ *) proc_prim));
   (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)
+  let _ =  match cout_option with
+    | Some cout -> close_out cout
+    | _ -> ()
+  in 
   Term.term_check_output ()
 	    
 let check_prog (prog : prog_decl) =
