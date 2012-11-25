@@ -64,6 +64,7 @@ let close_def defs (v1,v2)=
   (*     | true,false -> (defs@[v2]) *)
 
 (*close_def is not precise if eqs= x=y & y=z and x=t, svl0=[t], and first examine x=y*)
+
 let find_close svl0 eqs0=
   let rec find_match svl ls_eqs rem_eqs=
     match ls_eqs with
@@ -163,6 +164,38 @@ let check_hp_locs_eq (hp1, locs1) (hp2, locs2)=
 
 let check_simp_hp_eq (hp1, _) (hp2, _)=
    (CP.eq_spec_var hp1 hp2)
+
+let find_close_hpargs_x hpargs eqs0=
+  let rec assoc_l ls hp=
+    match ls with
+      | [] -> []
+      | (hp1,args1)::tl -> if CP.eq_spec_var hp hp1 then args1
+          else assoc_l tl hp
+  in
+  let rec helper rem_eqs hpargs0=
+    match rem_eqs with
+      | [] -> hpargs0
+      | (hp1,hp2)::tl -> begin
+          let args1 = assoc_l hpargs0 hp1 in
+          let args2 = assoc_l hpargs0 hp2 in
+          let new_hpargs=
+            match args1, args2 with
+              | [],[] -> []
+              | [],_ -> [(hp1,args2)]
+              | _,[] -> [(hp2,args1)]
+              | _ -> []
+          in
+          helper tl (hpargs0@new_hpargs)
+      end
+  in
+  let close_hpargs = helper eqs0 hpargs in
+  (Gen.BList.remove_dups_eq check_simp_hp_eq close_hpargs)
+
+let find_close_hpargs hpargs eqs0=
+  let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_2 "find_close_hpargs" pr1 pr2 pr1
+      (fun _ _ -> find_close_hpargs_x hpargs eqs0) hpargs eqs0
 
 let check_hp_args_imply (hp1, args1) (hp2, args2)=
   ((CP.eq_spec_var hp1 hp2) && (CP.diff_svl args1 args2 = []))
@@ -1983,7 +2016,7 @@ let get_longest_common_hnodes_list prog unk_hps hp args fs=
   let pr2 = fun (_, def) -> Cprinter.string_of_hp_rel_def def in
   let pr3 = !CP.print_sv in
   let pr4 = !CP.print_svl in
-  Debug.no_3 "get_longest_common_hnodes_list" pr3 pr4 pr1 (pr_list_ln pr2)
+  Debug.ho_3 "get_longest_common_hnodes_list" pr3 pr4 pr1 (pr_list_ln pr2)
       (fun _ _ _ -> get_longest_common_hnodes_list_x prog unk_hps hp args fs) hp args fs
 
 (************************************************************)

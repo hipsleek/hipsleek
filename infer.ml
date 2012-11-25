@@ -1797,7 +1797,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
               CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhrs@rhrs@rvhp_rels));
               unk_svl = total_unk_svl;(*inferred from norm*)
               unk_hps = [];
-              predef_svl = (closed_hprel_args_def(* @total_unk_svl *));
+              predef_svl = (closed_hprel_args_def@total_unk_svl);
               hprel_lhs = CF.Base new_lhs_b;
               hprel_rhs = CF.Base new_rhs_b;
           } in

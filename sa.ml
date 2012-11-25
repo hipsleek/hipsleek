@@ -3203,7 +3203,8 @@ let generate_hp_def_from_unk_hps_x unk_hps unkmap_from_infer_collect unk_rels=
     (hpdefs@[new_hpdef], unk_map@[new_unkmap])
   in
   DD.ninfo_pprint ">>>>>> unknown hps: <<<<<<" no_pos;
-  List.fold_left helper ([],[]) unk_hps
+  let unk_hps1 = SAU.find_close_hpargs unk_hps unk_rels in
+  List.fold_left helper ([],[]) unk_hps1
 
 let generate_hp_def_from_unk_hps unk_hps unkmap_from_infer_collect unk_rels=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
