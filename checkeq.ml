@@ -1388,29 +1388,33 @@ let check_equiv_constr  hvars (constr1: CF.formula * CF.formula) (constr2: CF.fo
 let rec checkeq_constrs_x hvars (constrs: (CF.formula * CF.formula) list) ( infile_constrs: (CF.formula * CF.formula) list): bool =
   let res = if(List.length constrs == 0 && (List.length infile_constrs == 0)) then true
   else (
-    let rec check_head head constrs =
-      match constrs with
-	| [] -> (false, [])
-	| x::y -> (
-	  let r1,tmp = check_equiv_constr hvars head x in
-	  if(r1) then (
-	    let _ =  Debug.ninfo_pprint ("CONSTR MATCH") no_pos in
-	    (r1,y)
-	  )
-	  else (
-	    let r2,ncs = check_head head y in
-	    (r2,x::ncs)
-	  )
-	)
-    in
-    let res1,new_constrs = check_head (List.hd constrs) infile_constrs in
-    if(res1) then (
-      let _ = Debug.ninfo_hprint (add_str "Success eq constr: " Cprinter.string_of_hprel_lhs_rhs) (List.hd constrs) no_pos in
-      checkeq_constrs_x hvars (List.tl constrs) new_constrs 
-    )
+    if (List.length constrs != List.length infile_constrs) 
+    then false
     else (
-      let _ = Debug.ninfo_hprint (add_str "FAIL constr: " Cprinter.string_of_hprel_lhs_rhs) (List.hd constrs) no_pos in
-      res1
+      let rec check_head head constrs =
+	match constrs with
+	  | [] -> (false, [])
+	  | x::y -> (
+	    let r1,tmp = check_equiv_constr hvars head x in
+	    if(r1) then (
+	      let _ =  Debug.ninfo_pprint ("CONSTR MATCH") no_pos in
+	      (r1,y)
+	    )
+	    else (
+	      let r2,ncs = check_head head y in
+	      (r2,x::ncs)
+	    )
+	  )
+      in
+      let res1,new_constrs = check_head (List.hd constrs) infile_constrs in
+      if(res1) then (
+	let _ = Debug.ninfo_hprint (add_str "Success eq constr: " Cprinter.string_of_hprel_lhs_rhs) (List.hd constrs) no_pos in
+	checkeq_constrs_x hvars (List.tl constrs) new_constrs 
+      )
+      else (
+	let _ = Debug.ninfo_hprint (add_str "FAIL constr: " Cprinter.string_of_hprel_lhs_rhs) (List.hd constrs) no_pos in
+	res1
+      )
     )
   )
   in
@@ -1515,6 +1519,7 @@ let rec checkeq_constrs_with_diff_step1_x hvars (constrs: (CF.formula * CF.formu
     )
   in
   res
+
 (*STEP1: find all constrs that are not match*)
 let rec checkeq_constrs_with_diff_step1 hvars (constrs: (CF.formula * CF.formula) list) ( infile_constrs: (CF.formula * CF.formula) list):  (bool * ((CF.formula * CF.formula) list)* ((CF.formula * CF.formula) list)) =
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
@@ -1532,7 +1537,10 @@ let rec checkeq_constrs_with_diff_x hvars (constrs: (CF.formula * CF.formula) li
   let (res,diff_constrs1,diff_constrs2) = checkeq_constrs_with_diff_step1 hvars constrs infile_constrs in
   let rec check_diff_one_constr constr diff_constrs =
       match diff_constrs with
-      | [] -> report_error no_pos " checkeq_constrs_with_diff_x.check_diff_one_constr: should not be empty here"
+      | [] -> let e = (CF.formula_of_heap CF.HEmp no_pos,CF.formula_of_heap CF.HEmp no_pos) in
+	let (b,mix_mtls) = check_equiv_constr_with_diff hvars constr e [] in
+	let count_hd =  count_constr mix_mtls in
+	(count_hd,e,mix_mtls,[])
       | [x] -> (
 	let (b,mix_mtls) = check_equiv_constr_with_diff hvars constr x [] in
 	let count_hd =  count_constr mix_mtls in
