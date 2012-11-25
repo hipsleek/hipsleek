@@ -539,7 +539,7 @@ let keep_data_view_hrel_nodes_two_f prog f1 f2 hd_nodes hv_nodes keep_rootvars k
   (nf1,nf2)
 
 let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs reqs his_ss keep_rootvars lrootvars keep_hrels
-      unk_svl =
+      unk_svl prog_vars =
   let filter_eqs keep_svl eqs0=
     let rec helper eqs res=
       match eqs with
@@ -550,7 +550,13 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs r
             let new_eq=
               match b1,b2 with
                 | true,false -> [((* CP.subs_one res *) sv2, (* CP.subs_one res *) sv1)] (*m_apply_par*)
-                | true,true
+                | true,true -> begin
+                    let c1 = CP.mem_svl sv1 prog_vars in
+                    let c2 = CP.mem_svl sv2 prog_vars in
+                    match c1,c2 with
+                      | true,false -> [((* CP.subs_one res *) sv2, (* CP.subs_one res *) sv1)]
+                      | _ -> [((* CP.subs_one res *) sv1, (* CP.subs_one res *) sv2)]
+                end
                 | false,true -> [((* CP.subs_one res *) sv1, (* CP.subs_one res *) sv2)]
                 | _ -> []
             in
@@ -571,12 +577,25 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs r
     in
     List.fold_left helper eqs hpargs
   in
-   let filter_eq_in_one_hp eqs hpargs=
-     let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
-     let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-     Debug.no_2 "filter_eq_in_one_hp" pr1 pr2 pr1
-         (fun _ _ -> filter_eq_in_one_hp_x eqs hpargs) eqs hpargs
-   in
+  let filter_eq_in_one_hp eqs hpargs=
+    let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+    let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
+    Debug.no_2 "filter_eq_in_one_hp" pr1 pr2 pr1
+        (fun _ _ -> filter_eq_in_one_hp_x eqs hpargs) eqs hpargs
+  in
+   let rec keep_prog_vars_helper eqs res=
+    match eqs with
+      | [] -> res
+      | (sv1,sv2)::tl ->
+          let new_eq=
+            let c1 = CP.mem_svl sv1 prog_vars in
+            let c2 = CP.mem_svl sv2 prog_vars in
+            match c1,c2 with
+              | true,false -> [(sv2, sv1)]
+              | _ -> [(sv1, sv2)]
+          in
+          keep_prog_vars_helper tl (res@new_eq)
+  in
   let eqs = (leqs@reqs@his_ss) in
   let _ = Debug.ninfo_pprint ("keep_vars root: " ^ (!CP.print_svl keep_rootvars)) no_pos in
   let keep_closed_rootvars = CP.remove_dups_svl (List.fold_left close_def keep_rootvars eqs) in
@@ -626,8 +645,9 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs r
   let nleqs2 = filter_eq_in_one_hp nleqs1 hpargs in
   let nreqs1 = List.filter (fun (sv1,sv2) -> not (CP.mem_svl sv1 eqNulls2 && CP.mem_svl sv2 eqNulls2)) nreqs in
   let nreqs2 = filter_eq_in_one_hp nreqs1 hpargs in
-  let lhs_b2 = CF.subst_b (nleqs2) nf11 in (*m_apply_par*)
-  let rhs_b2 = CF.subst_b (nleqs2@nreqs2) new_nf2 in
+  let nleqs3 =  keep_prog_vars_helper nleqs2 [] in
+  let lhs_b2 = CF.subst_b (nleqs3) nf11 in (*m_apply_par*)
+  let rhs_b2 = CF.subst_b (nleqs3@nreqs2) new_nf2 in
   (lhs_b2,rhs_b2)
 
 let rec drop_data_view_hrel_nodes_from_root prog f hd_nodes hv_nodes eqs drop_rootvars well_defined_svl=

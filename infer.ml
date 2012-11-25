@@ -1515,6 +1515,25 @@ let find_undefined_selective_pointers prog lfb rfb lmix_f rmix_f unmatched rhs_r
 ( fun _ _ _-> find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs_rest
     rhs_h_matched_set leqs reqs pos total_unk_map) unmatched lfb rfb
 
+
+(*
+out: list of program variables of mismatching node
+*)
+let get_prog_vars_x prog_hps rhs_unmatch proving_kind=
+  match rhs_unmatch with
+    | CF.HRel (hp, eargs,_) ->
+        if proving_kind = Log.POST && CP.mem_svl hp prog_hps then
+          (List.fold_left List.append [] (List.map CP.afv eargs))
+        else []
+    | _ -> []
+
+let get_prog_vars prog_hps rhs_unmatch proving_kind=
+  let pr1 = !CP.print_svl in
+  let pr2 = Cprinter.string_of_h_formula in
+  let pr3 = Log.string_of_sleek_proving_kind in
+  Debug.no_3 "get_prog_vars" pr1 pr2 pr3 pr1
+      (fun _ _ _ -> get_prog_vars_x prog_hps rhs_unmatch proving_kind) prog_hps rhs_unmatch proving_kind
+
 let get_history_nodes_x root_svl hds history lfb done_args eqs=
   let hd_names = List.map (fun hd -> hd.CF.h_formula_data_node) hds in
   let hd_closed_names = (List.fold_left SAU.close_def hd_names eqs) in
@@ -1564,7 +1583,7 @@ let get_h_formula_data_fr_hnode hn=
 
 
 (*history from func calls*)
-let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps crt_holes history unk_svl=
+let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps crt_holes history unk_svl prog_vars=
   let look_up_lhs_root_first_var (_,args)=
     (* let _ = Debug.info_pprint ("    args:" ^ (!CP.print_svl hd) ^ ": "^(!CP.print_svl args)) no_pos in *)
     List.hd args
@@ -1613,7 +1632,7 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps c
   let lhs_b1,rhs_b1 = SAU.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b
     (hds@filter_his) hvs (lhp_args@rhp_args) leqs reqs (* his_ss *) []
     (* (rhs_keep_rootvars@lhs_keep_first_rootvars) *)(svl@keep_root_hrels) (lhs_keep_rootvars@keep_root_hrels)
-    keep_hrels1 unk_svl in
+    keep_hrels1 unk_svl prog_vars in
   (*wo history*)
   (* let lhs_b1,rhs_b1 = SAU.keep_data_view_hrel_nodes_two_fbs prog lhs_b rhs_b *)
   (*   hds hvs (leqs@reqs) *)
@@ -1744,8 +1763,9 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           let lhs_b0 = CF.mkAnd_base_pure lhs_b (MCP.mix_of_pure unk_pure) pos in
           let group_unk_svl = List.concat (List.map (fun ass -> ass.CF.unk_svl) Log.current_hprel_ass_stk # get_stk) in
           let total_unk_svl = CP.remove_dups_svl (group_unk_svl@unk_svl) in
+          let prog_vars = get_prog_vars es.CF.es_infer_vars_sel_hp_rel rhs !Log.sleek_proving_kind in
           let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog lhs_b0 new_rhs_b leqs reqs hds hvs lhras (rhras@new_hrels)
-            (selected_hps@(List.map (fun (hp,_,_) -> hp) new_hrels)) es.CF.es_crt_holes ((* es.CF.es_heap:: *)(*es.CF.es_history*) sel_his) total_unk_svl in
+            (selected_hps@(List.map (fun (hp,_,_) -> hp) new_hrels)) es.CF.es_crt_holes ((* es.CF.es_heap:: *)(*es.CF.es_history*) sel_his) total_unk_svl prog_vars in
           (*simply add constraints: *)
           let hprel_def = List.concat (List.map CF.get_ptrs (es.CF.es_history@(CF.get_hnodes es.CF.es_heap))) in
           let closed_hprel_def = CP.subst_var_list (leqs@reqs) hprel_def in
