@@ -3792,7 +3792,7 @@ let remove_neqNull_redundant_hnodes_f f0=
   in
   helper f0
 
-let remove_eqNulls f0 nullPtrs=
+let remove_com_pures f0 nullPtrs com_eqPures=
   let remove p elim_svl=
     if elim_svl = [] then p else
 	begin
@@ -3801,22 +3801,29 @@ let remove_eqNulls f0 nullPtrs=
 	 CP.filter_var_new p keep_svl
 	end
   in
+  let remove_com_pures p com_ps=
+    let ps0 = CP.split_conjunctions p in
+    let rem_ps = Gen.BList.difference_eq CP.equalFormula ps0 com_ps in
+    (CP.conj_of_list rem_ps no_pos)
+  in
   let rec helper f=
     match f with
     | Base fb ->
         (*assume keep vars = dnodes*)
         let new_p = remove (MCP.pure_of_mix fb.formula_base_pure) nullPtrs in
-		Base {fb with formula_base_pure = MCP.mix_of_pure new_p;
+        let new_p1 = remove_com_pures new_p com_eqPures in
+		Base {fb with formula_base_pure = MCP.mix_of_pure new_p1;
                 }
     | Or orf -> let nf1 = helper orf.formula_or_f1 in
                   let nf2 = helper orf.formula_or_f2 in
                   ( Or {orf with formula_or_f1 = nf1;
                       formula_or_f2 = nf2;})
-      | Exists fe -> let np = remove (MCP.pure_of_mix fe.formula_exists_pure) nullPtrs in
-                     (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
+      | Exists fe -> let new_p = remove (MCP.pure_of_mix fe.formula_exists_pure) nullPtrs in
+                     let new_p1 = remove_com_pures new_p com_eqPures in
+                     (Exists {fe with formula_exists_pure = MCP.mix_of_pure new_p1;})
   in
   helper f0
-  
+
 (*drop HRel in the set hp_names and return corresponding subst of their args*)
 let rec drop_hrel_f f hp_names=
   match f with

@@ -1401,6 +1401,21 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
     Debug.no_2 "find_well_defined_hp" pr4 pr2 (pr_pair (pr_list_ln pr3) (pr_list pr4))
         (fun _ _ -> find_well_defined_hp_x hds hvs (hp,args) def_ptrs lhsb) (hp,args) def_ptrs
   in
+  let lookup_eq_linking_svl (hp0,args0) total_unk_map lhs_hpargs=
+    let rec snd_assoc ls=
+      match ls with
+        | [] -> raise Not_found
+        | (hp1,args1)::tl -> if SAU.eq_spec_var_order_list args1 args0 then
+              hp1
+            else snd_assoc tl
+    in
+    try
+        let eq_hp = snd_assoc lhs_hpargs in
+        let fr_args = List.assoc eq_hp total_unk_map in
+        [(hp0,fr_args)]
+    with Not_found ->
+        []
+  in
   (* DD.info_pprint ">>>>>> find_undefined_selective_pointers <<<<<<" pos; *)
   let lfb = CF.subst_b leqs lfb in
   let rfb = CF.subst_b leqs rfb in
@@ -1470,7 +1485,7 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
   (* DD.ninfo_pprint ("lundefs_args: " ^ (!CP.print_svl lundefs_args)) pos; *)
   (*find undefined ptrs of all hrel args*)
   (*two cases: rhs unfold (mis-match is a node) and lhs fold (mis-match is a unk hp)*)
-  let fwd_svl,rhs_sel_hps =
+  let fwd_svl,rhs_sel_hps,rhs_unk_map =
     if CF.is_HRel n_unmatched then
       let rhs_hpargs = CF.extract_HRel n_unmatched in
       (*since h_subst is not as expected we use closed set*)
@@ -1478,7 +1493,8 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
       let svl = get_lhs_fold_fwd_svl selected_hps def_vs closed_rhs_hpargs lhds ls_lhp_args in
        (* let closed_svl = SAU.find_close svl leqs in *)
        DD.ninfo_pprint ("svl: " ^ (!CP.print_svl svl)) pos;
-      (svl,[fst rhs_hpargs])
+      let runk_map =lookup_eq_linking_svl rhs_hpargs total_unk_map selected_hp_args in
+      (svl,[fst rhs_hpargs],runk_map)
     else
       let hds = SAU.get_hdnodes_hf n_unmatched in
       let hd =
@@ -1500,12 +1516,12 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
       let def_vsargs = List.concat (List.map (SAU.look_up_ptr_args_one_node prog hds hvs) def_vs) in
       let used_svl = CP.remove_dups_svl (def_vsargs@def_vs@r_args1) in
       let lundefs_args = CP.remove_dups_svl (CP.diff_svl l_args used_svl) in
-      (unfold_fwd_svl@lundefs_args,[])
+      (unfold_fwd_svl@lundefs_args,[],[])
   in
   let undef =  CP.remove_dups_svl (fwd_svl) in
   DD.ninfo_pprint ("selected_hps: " ^ (!CP.print_svl (selected_hps@rhs_sel_hps))) pos;
   ((* undefs1@lundefs_args *) undef,hds,hvs,lhrs,rhrs,leqNulls@reqNulls,selected_hps@rhs_sel_hps,defined_hps,
-  unk_svl,ps,unk_map)
+  unk_svl,ps,unk_map@rhs_unk_map)
 
 let find_undefined_selective_pointers prog lfb rfb lmix_f rmix_f unmatched rhs_rest rhs_h_matched_set leqs reqs pos total_unk_map=
   let pr1 = Cprinter.string_of_formula_base in
@@ -1513,7 +1529,7 @@ let find_undefined_selective_pointers prog lfb rfb lmix_f rmix_f unmatched rhs_r
   (* let pr2 = !print_svl in *)
   (* let pr3 =  pr_pair string_of_typ !print_sv in *)
   let pr4 = pr_list !print_sv in
-  let pr6 = pr_triple !CP.print_sv !CP.print_svl Cprinter.string_of_formula_base in
+  let pr6 = pr_list_ln (pr_triple !CP.print_sv !CP.print_svl Cprinter.string_of_formula_base) in
   let pr5 = fun (undefs,_,_,_,_,_,_,defined_hps,_,_,_) -> let pr = pr_pair pr4 pr6 in pr (undefs,defined_hps) in
   Debug.no_3 "find_undefined_selective_pointers" pr2 pr1 pr1 pr5
 ( fun _ _ _-> find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs_rest
