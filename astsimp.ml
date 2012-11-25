@@ -3837,14 +3837,15 @@ and add_pre prog f =
 and trans_I2C_struc_formula i (prog : I.prog_decl) (quantify : bool) (fvars : ident list) (f0 : IF.struc_formula) 
       stab (check_self_sp:bool) (*disallow self in sp*) (check_pre:bool) : CF.struc_formula = 
   let prb = string_of_bool in
-  Debug.no_eff_5 "trans_I2C_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list 
+  (* Debug.no_5_loop    *)
+  Debug.no_eff_5_num  i
+      "trans_I2C_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list 
       (add_str "Input Struc:" Iprinter.string_of_struc_formula) 
       (add_str "Output Struc:" Cprinter.string_of_struc_formula)
       (fun _ _ _ _ _ -> trans_I2C_struc_formula_x prog quantify fvars f0 stab check_self_sp (check_pre:bool)) 
       stab (* type table *) quantify (* quantified flag *) check_self_sp
       fvars (* free vars *) f0 (*struc formula *)
 
-      
 and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : IF.struc_formula) stab (check_self_sp:bool) (check_pre:bool): CF.struc_formula = 
   let rec trans_struc_formula (fvars : ident list) stab (f0 : IF.struc_formula) :CF.struc_formula = match f0 with
@@ -6414,7 +6415,7 @@ and check_eprim_in_formula s f = match f with
 and check_eprim_in_struc_formula s f =
   let pr2 = Iprinter.string_of_struc_formula in
   Debug.no_2 "check_eprim_in_struc_formula" 
-      pr_id pr2 pr_none check_eprim_in_struc_formula s f
+      pr_id pr2 pr_none check_eprim_in_struc_formula_x s f
 
 and check_eprim_in_struc_formula_x s f = match f with
   | IF.ECase b-> List.iter (fun (_,c2)-> check_eprim_in_struc_formula_x s c2) b.IF.formula_case_branches
@@ -6425,7 +6426,7 @@ and check_eprim_in_struc_formula_x s f = match f with
   | IF.EAssume (b,_,_) -> check_eprim_in_formula " is not a ref param " b
   | IF.EInfer b -> check_eprim_in_struc_formula_x s b.IF.formula_inf_continuation
   | IF.EList b -> List.iter (fun (_,c)-> check_eprim_in_struc_formula_x s c) b
-  | IF.EOr b -> check_eprim_in_struc_formula_x s b.IF.formula_struc_or_f1; check_eprim_in_struc_formula s b.IF.formula_struc_or_f2
+  | IF.EOr b -> check_eprim_in_struc_formula_x s b.IF.formula_struc_or_f1; check_eprim_in_struc_formula_x s b.IF.formula_struc_or_f2
 
 and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:Iast.exp) :
       Iast.exp*((ident*primed) list)*((ident*primed) list) =  match f with

@@ -1,4 +1,4 @@
-data node {
+in sleekdata node {
 	int val;
 	node next
 }.
