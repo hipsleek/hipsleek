@@ -15,7 +15,7 @@ let no_elim_exists = ref false
 let no_simplify = ref false
 let no_cache = ref true
 let timeout = ref 10.0 (* default timeout is 15 seconds *)
-let dis_omega = ref true
+let dis_omega = ref false
 let pasf = ref false
 
 (* logging *)

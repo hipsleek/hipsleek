@@ -28,8 +28,6 @@ module Err = Error
 module TP = Tpdispatcher
 
 
-
-
 (** An Hoa : switch to do unfolding on duplicated pointers **)
 let unfold_duplicated_pointers = ref true
 
@@ -249,6 +247,7 @@ let clear_entailment_history_es (es :entail_state) :context =
     es_infer_rel = es.es_infer_rel;
     es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
     es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
+    es_infer_hp_unk_map = es.es_infer_hp_unk_map;
     es_infer_hp_rel = es.es_infer_hp_rel;
     es_var_zero_perm = es.es_var_zero_perm;
   }
@@ -990,7 +989,11 @@ and prune_preds_x prog (simp_b:bool) (f:formula):formula =
           let rp = f_p_simp rp in
           mkBase_w_lbl rh rp b.formula_base_type  b.formula_base_flow b.formula_base_and b.formula_base_pos b.formula_base_label in
   (* if not !Globals.allow_pred_spec then f *)
-  if !Globals.dis_ps then f
+  let helper_formulas f = 
+    let p2 = Cprinter.string_of_formula in
+    Debug.no_1 "helper_formulas" p2 p2 helper_formulas f in 
+  if !Globals.dis_ps then 
+    f
   else
     (
         Gen.Profiling.push_time "prune_preds_filter";
@@ -1082,7 +1085,8 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
               | None ->
                     let new_cond = List.map (fun (c1,c2)-> (CP.b_subst zip c1,c2)) v_def.view_prune_conditions in         
                     (v_def.view_prune_branches,new_cond ,true,true) in                   
-          if (not chg) then 
+          if (not chg) then
+            
             (ViewNode{v with h_formula_view_remaining_branches = Some rem_br; h_formula_view_pruning_conditions = [];}, old_mem,false)
           else
             (*decide which prunes can be activated and drop the ones that are implied while keeping the old unknowns*)
@@ -1131,7 +1135,18 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
                 (new_hp, MCP.merge_mems_m new_mem2 gr_ai true, true) in
             (r_hp,r_memo,r_b)
 
-and filter_prun_cond old_mem prun_cond rem_br = List.fold_left (fun (yes_prune, no_prune, new_mem) (p_cond, pr_branches)->            
+(*
+type: Mcpure_D.memo_pure ->
+  (CP.b_formula * Globals.formula_label list) list ->
+  Globals.formula_label list ->
+  Globals.formula_label list *
+  (Cformula.CP.b_formula * Globals.formula_label list) list *
+  Mcpure_D.memo_pure
+*)
+and filter_prun_cond old_mem prun_cond rem_br = 
+  Debug.no_1 "filter_prun_cond" pr_none pr_none (fun _ -> filter_prun_cond_x old_mem prun_cond rem_br) rem_br 
+
+and filter_prun_cond_x old_mem prun_cond rem_br = List.fold_left (fun (yes_prune, no_prune, new_mem) (p_cond, pr_branches)->            
     if (Gen.BList.subset_eq (=) rem_br pr_branches) then (yes_prune, no_prune,new_mem)
     else if ((List.length (Gen.BList.intersect_eq (=) pr_branches rem_br))=0) then (yes_prune, no_prune,new_mem)
     else try
@@ -2179,6 +2194,7 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate (fold_rs0:lis
               es_infer_vars_rel = fold_es.es_infer_vars_rel;
               es_infer_vars_hp_rel = fold_es.es_infer_vars_hp_rel;
               es_infer_vars_sel_hp_rel = fold_es.es_infer_vars_sel_hp_rel;
+              es_infer_hp_unk_map = fold_es.es_infer_hp_unk_map;
               es_infer_vars_dead = fold_es.es_infer_vars_dead;
               es_infer_heap = fold_es.es_infer_heap;
               es_infer_pure = fold_es.es_infer_pure;
@@ -2744,18 +2760,44 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
   Debug.devel_zprint (lazy ("heap_entail_struc_partial_context:"
   ^ "\ntid:" ^ (pr_opt Cprinter.string_of_spec_var tid)
   ^ "\nctx:\n" ^ (Cprinter.string_of_partial_context cl)
-  ^ "\nconseq:\n" ^ (to_string conseq))) pos; 
+  ^ "\nconseq:\n" ^ (to_string conseq))) pos;
+    let heap_entail_one_branch unk_map (lbl,c2)=
+      (* print_string ("\nInput ==> :"^(Cprinter.string_of_context c2)); *)
+	  (* print_string ("\nConseq ==> :"^(to_string conseq)); *)
+      let c20 = CF.update_hp_unk_map c2 unk_map in
+	  let list_context_res,prf = f (*heap_entail_one_context_struc*) prog is_folding has_post c20 conseq tid pos pid in
+	   (* print_string ("\nOutcome ==> "^(Cprinter.string_of_list_context list_context_res)) ; *)
+      let res,new_unk_map = match list_context_res with
+	    | FailCtx t -> ([([(lbl,t)],[])],[])
+	    | SuccCtx ls -> (List.map ( fun c-> ([],[(lbl,c)])) ls,
+        List.concat (List.map CF.collect_hp_unk_map ls) )
+      in
+	  (res, prf, new_unk_map)
+    in
+    let rec heap_entail_struc_partial_context_helper rem_branches unk_map res_l prf_l=
+      match rem_branches with
+        | [] -> res_l,prf_l
+        | br::br_tl ->
+             let _ = DD.ninfo_pprint ("\n *****process one branch******\n") pos in
+            let res, prf, new_unk_map= heap_entail_one_branch unk_map br in
+            heap_entail_struc_partial_context_helper br_tl (unk_map@new_unk_map) (res_l@[res])
+                (prf_l@[prf])
+    in
     let fail_branches, succ_branches  = cl in
-    let res = List.map (fun (lbl,c2)-> 
-	(* print_string ("\nInput ==> :"^(Cprinter.string_of_context c2)); *)
-	(* print_string ("\nConseq ==> :"^(to_string conseq)); *)
-	let list_context_res,prf = f (*heap_entail_one_context_struc*) prog is_folding has_post c2 conseq tid pos pid in
-	(* print_string ("\nOutcome ==> "^(Cprinter.string_of_list_context list_context_res)) ; *)
-	let res = match list_context_res with
-	  | FailCtx t -> [([(lbl,t)],[])]
-	  | SuccCtx ls -> List.map ( fun c-> ([],[(lbl,c)])) ls in
-	(res, prf)) succ_branches in
-    let res_l,prf_l =List.split res in
+    (***************START******************)
+    (* let res = List.map (fun (lbl,c2)-> *)
+    (*     let _ = DD.info_pprint ("       ************LLL: ") pos in *)
+	(* (\* print_string ("\nInput ==> :"^(Cprinter.string_of_context c2)); *\) *)
+	(* (\* print_string ("\nConseq ==> :"^(to_string conseq)); *\) *)
+	(* let list_context_res,prf = f (\*heap_entail_one_context_struc*\) prog is_folding has_post c2 conseq tid pos pid in *)
+	(* (\* print_string ("\nOutcome ==> "^(Cprinter.string_of_list_context list_context_res)) ; *\) *)
+	(* let res = match list_context_res with *)
+	(*   | FailCtx t -> [([(lbl,t)],[])] *)
+	(*   | SuccCtx ls -> List.map ( fun c-> ([],[(lbl,c)])) ls in *)
+	(* (res, prf)) succ_branches in *)
+    (* let res_l,prf_l =List.split res in *)
+    (***************END******************)
+    let res_l,prf_l = heap_entail_struc_partial_context_helper succ_branches [] [] [] in
     (* let n = string_of_int (List.length res) in *)
     (* print_string ("\nCombining ==> :"^n^" "^(Cprinter.string_of_list_list_partial_context res_l)); *)
     let res = List.fold_left list_partial_context_or [(fail_branches,[])] res_l in
@@ -3311,19 +3353,14 @@ and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : con
       let ctx =
     	if isStrictConstTrue conseq || isTrivTerm conseq || trivFlowDischarge ctx conseq then ctx
     	else
-    	  let ctx = 
-            if !Globals.delay_proving_sat 
-            then  ctx 
-            else (let ctx = elim_unsat_ctx prog (ref 1) ctx in
-    	    set_unsat_flag ctx true) 
-          in ctx
+          if !Globals.delay_proving_sat 
+          then  ctx 
+          else (let ctx = elim_unsat_ctx prog (ref 1) ctx in set_unsat_flag ctx true) 
       in
       if isAnyFalseCtx ctx then
         (SuccCtx [ctx], UnsatAnte)
       else
         heap_entail_after_sat prog is_folding ctx conseq pos ([])	
-
-
 
 and heap_entail_after_sat prog is_folding  (ctx:CF.context) (conseq:CF.formula) pos
       (ss:CF.steps) : (list_context * proof) =
@@ -3338,7 +3375,7 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
   match ctx with
     | OCtx (c1, c2) ->
           Debug.devel_zprint (lazy ("heap_entail_after_sat:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq))) pos;
-          let rs1, prf1 = heap_entail_after_sat prog is_folding c1 conseq pos (CF.add_to_steps ss "left OR 1 on ante") in  
+          let rs1, prf1 = heap_entail_after_sat prog is_folding c1 conseq pos (CF.add_to_steps ss "left OR 1 on ante") in
           let rs2, prf2 = heap_entail_after_sat prog is_folding c2 conseq pos (CF.add_to_steps ss "right OR 1 on ante") in
 	  ((or_list_context rs1 rs2),(mkOrLeft ctx conseq [prf1;prf2]))
     | Ctx es -> 
@@ -4624,12 +4661,15 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
       (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   let hec  is_folding ctx0 c = heap_entail_conjunct_x prog is_folding ctx0 c rhs_h_matched_set pos in
   let hec a b c =
-    let ante =
+    let (ante,consumed_heap,evars) =
       match ctx0 with
-      | OCtx _ -> CF.mkTrue (CF.mkTrueFlow ()) pos (* impossible *)
-      | Ctx estate -> estate.es_formula
+      | OCtx _ -> (CF.mkTrue (CF.mkTrueFlow ()) pos (* impossible *),
+                   CF.HEmp, [])
+      | Ctx estate -> (estate.es_formula,estate.es_heap,estate.es_evars)
     in
-    let avoid = (hec_num=11 or hec_num=4) in
+    (* WN : what if evars not used in the conseq? *)
+    let conseq = CF.push_exists evars conseq in
+    let avoid = (hec_num=11) in
     let avoid = avoid or ((hec_num=1 || hec_num=2) && CF.is_emp_term conseq) in
     let avoid = avoid or (not (hec_stack # is_empty)) in
     let caller = hec_stack # string_of_no_ln in
@@ -4638,7 +4678,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let r = hec a b c in
     let _ = hec_stack # pop in
     let (lc,_) = r in
-    let _ = Log.add_new_sleek_logging_entry caller avoid hec_num slk_no ante conseq lc pos in
+    let _ = Log.add_new_sleek_logging_entry caller avoid hec_num slk_no ante conseq consumed_heap evars lc pos in
       r
   in
   Debug.no_3_num hec_num "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
@@ -5940,6 +5980,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
         es_infer_vars_rel = estate.es_infer_vars_rel;
         es_infer_vars_hp_rel = estate.es_infer_vars_hp_rel;
         es_infer_vars_sel_hp_rel = estate.es_infer_vars_sel_hp_rel;
+        es_infer_hp_unk_map = estate.es_infer_hp_unk_map;
         es_infer_heap = estate.es_infer_heap;
         es_infer_pure = estate.es_infer_pure;
         es_infer_pure_thus = estate.es_infer_pure_thus;

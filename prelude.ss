@@ -13,7 +13,6 @@ int mult___(int a, int b)
   requires true 
   ensures res = a * b;
 
-/*
 int div___(int a, int b) 
  case {
   a >= 0 -> case {
@@ -29,7 +28,6 @@ int div___(int a, int b)
     -1 < b < 1 -> ensures true & flow __DivByZeroErr;
     }
 }
-*/
 
 // why is flow of div2 __Error rather __DivByZeroErr?
 int div2(int a, int b)
@@ -49,7 +47,6 @@ int div4(int a, int b)
   requires b != 0 
   ensures true;
 
-/*
 int mod___(int a, int b) case {
   a >= 0 -> case {
 	b >= 1 -> case {
@@ -70,7 +67,7 @@ int mod___(int a, int b) case {
     /* -1 < b < 1 -> requires false ensures false; */
   }
 }
-*/
+
 /*
 float add___(float a, float b) 
   requires true 

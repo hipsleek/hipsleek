@@ -189,6 +189,12 @@ let string_of_pos (p : Lexing.position) =
 	(p.Lexing.pos_cnum-p.Lexing.pos_bol)
 ;;
 
+let string_of_pos_plain (p : Lexing.position) = 
+    Printf.sprintf "%d_%d"
+    p.Lexing.pos_lnum
+    (p.Lexing.pos_cnum-p.Lexing.pos_bol)
+;;
+
 (* let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")" *)
 (* ;; *)
 

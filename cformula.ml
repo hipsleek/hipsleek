@@ -1221,6 +1221,11 @@ and mkPhase_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
 (* 	  else                                                                      *)
 (*       mkBase h1 (MCP.merge_mems p1 p2 true) t1 fl1 a1 pos                    *)
 
+and mkAnd_base_pure (fb: formula_base) (p2: MCP.mix_formula) (pos: loc): formula_base =
+  if (MCP.isConstMTrue p2) then fb
+  else
+    { fb with formula_base_pure = MCP.merge_mems fb.formula_base_pure  p2 true; }
+
 and mkAnd_pure_x (f1: formula) (p2: MCP.mix_formula) (pos: loc): formula =
   if (isAnyConstFalse f1) then f1
   else if (MCP.isConstMTrue p2) then f1
@@ -4317,6 +4322,7 @@ think it is used to instantiate when folding.
   es_infer_vars : CP.spec_var list; 
   es_infer_vars_rel : CP.spec_var list;
   es_infer_vars_sel_hp_rel: CP.spec_var list;
+  es_infer_hp_unk_map: (CP.spec_var * CP.spec_var list) list;
   es_infer_vars_hp_rel : CP.spec_var list;
   (* input vars to denote vars already instantiated *)
   es_infer_vars_dead : CP.spec_var list; 
@@ -4536,6 +4542,7 @@ let empty_es flowt grp_lbl pos =
   es_infer_vars_dead = [];
   es_infer_vars_rel = [];
   es_infer_vars_sel_hp_rel = [];
+  es_infer_hp_unk_map = [];
   es_infer_vars_hp_rel = [];
   es_infer_heap = []; (* HTrue; *)
   es_infer_pure = []; (* (CP.mkTrue no_pos); *)
@@ -5246,7 +5253,22 @@ let rec collect_rel ctx =
 let rec collect_hp_rel ctx = 
   match ctx with
   | Ctx estate -> estate.es_infer_hp_rel 
-  | OCtx (ctx1, ctx2) -> (collect_hp_rel ctx1) @ (collect_hp_rel ctx2) 
+  | OCtx (ctx1, ctx2) -> (collect_hp_rel ctx1) @ (collect_hp_rel ctx2)
+
+let rec collect_hp_unk_map ctx =
+  match ctx with
+  | Ctx estate -> estate.es_infer_hp_unk_map
+  | OCtx (ctx1, ctx2) -> (collect_hp_unk_map ctx1) @ (collect_hp_unk_map ctx2)
+
+let rec update_hp_unk_map ctx0 unk_map =
+  let rec helper ctx=
+    match ctx with
+      | Ctx estate -> Ctx {estate with
+          es_infer_hp_unk_map = estate.es_infer_hp_unk_map@ unk_map;
+      }
+      | OCtx (ctx1, ctx2) -> OCtx ((helper ctx1),(helper ctx2))
+  in
+  helper ctx0
 
 let rec collect_infer_vars ctx = 
   match ctx with
@@ -5540,6 +5562,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_infer_vars_rel = es.es_infer_vars_rel;
         es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
         es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
+        es_infer_hp_unk_map = es.es_infer_hp_unk_map;
         es_infer_vars_dead = es.es_infer_vars_dead;
         es_infer_heap = es.es_infer_heap;
         es_infer_pure = es.es_infer_pure;
@@ -7584,6 +7607,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
           es_infer_vars_rel = es.es_infer_vars_rel;
           es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
           es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
+          es_infer_hp_unk_map = es.es_infer_hp_unk_map;
           es_infer_heap = es.es_infer_heap;
           es_infer_pure = es.es_infer_pure;
           es_infer_rel = es.es_infer_rel;
