@@ -219,6 +219,10 @@ let collect_hp_rel_list_partial_context (ctx:list_partial_context) =
   Debug.no_1 "collect_hp_rel_list_partial_context"  pr1 pr2
       collect_hp_rel_list_partial_context ctx
 
+let collect_hp_unk_map_list_partial_context (ctx:list_partial_context) =
+  let r = List.map (fun (_,cl) -> List.concat (List.map (fun (_,c) -> collect_hp_unk_map c) cl))  ctx in
+  List.concat r
+
 let init_vars ctx infer_vars iv_rel v_hp_rel orig_vars = 
   let rec helper ctx = 
     match ctx with
@@ -1534,7 +1538,7 @@ let get_prog_vars prog_hps rhs_unmatch proving_kind=
   Debug.no_3 "get_prog_vars" pr1 pr2 pr3 pr1
       (fun _ _ _ -> get_prog_vars_x prog_hps rhs_unmatch proving_kind) prog_hps rhs_unmatch proving_kind
 
-let get_history_nodes_x root_svl hds history lfb done_args eqs=
+let get_history_nodes_x root_svl hds history lfb done_args eqs lhs_hpargs=
   let hd_names = List.map (fun hd -> hd.CF.h_formula_data_node) hds in
   let hd_closed_names = (List.fold_left SAU.close_def hd_names eqs) in
   let undefined_ptrs = Gen.BList.difference_eq CP.eq_spec_var root_svl hd_closed_names in
@@ -1547,6 +1551,17 @@ let get_history_nodes_x root_svl hds history lfb done_args eqs=
             List.combine dn0.CF.h_formula_data_arguments dn1.CF.h_formula_data_arguments
           else look_up hdss dn0
   in
+  let rec lookup_hrel ls_hpargs (hp0,args0)=
+    match ls_hpargs with
+      | [] -> false
+      | (hp,args)::tl ->
+          if CP.eq_spec_var hp0 hp then
+            let args1 = List.map ((CP.subs_one eqs)) args in
+            let args01 = List.map ((CP.subs_one eqs)) args0 in
+            if SAU.eq_spec_var_order_list args1 args01 then true else
+              lookup_hrel tl (hp0,args0)
+          else lookup_hrel tl (hp0,args0)
+  in
   let helper (fb,hps,keep_svl,r_ss) hf=
     match hf with
       | CF.DataNode dn ->
@@ -1558,20 +1573,24 @@ let get_history_nodes_x root_svl hds history lfb done_args eqs=
       | CF.HRel (hp,eargs,p) ->
           let args = List.concat (List.map CP.afv eargs) in
           if (Gen.BList.intersect_eq CP.eq_spec_var args undefined_ptrs) = [] ||
-            (Gen.BList.difference_eq CP.eq_spec_var args done_args) = [] then
+            (Gen.BList.difference_eq CP.eq_spec_var args done_args) = [] ||
+             lookup_hrel lhs_hpargs (hp,args)
+          then
             (fb,hps,keep_svl,r_ss)
-          else (mkAnd_fb_hf fb hf p,hps@[hp], keep_svl@(Gen.BList.difference_eq CP.eq_spec_var args undefined_ptrs),r_ss)
+          else
+            (mkAnd_fb_hf fb hf p,hps@[hp], keep_svl@(Gen.BList.difference_eq CP.eq_spec_var args undefined_ptrs),r_ss)
       | HEmp -> (fb,hps,keep_svl,r_ss)
       | _ -> report_error pos "infer.get_history_nodes"
   in
   List.fold_left helper (lfb,[],[],[]) history
 
-let get_history_nodes root_svl hds history lfb done_args eqs=
+let get_history_nodes root_svl hds history lfb done_args eqs lhs_hpargs=
   let pr1 = pr_list_ln Cprinter.string_of_h_formula in
   let pr2 = Cprinter.string_of_formula_base in
   let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
-  Debug.no_3 "get_history_nodes" !CP.print_svl pr1 pr2 (fun (f,_,_,ss) ->(pr2 f) ^ " ;ss: " ^ (pr3 ss))
-      (fun _ _ _ -> get_history_nodes_x root_svl hds history lfb done_args eqs) root_svl history lfb
+  let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
+  Debug.no_4 "get_history_nodes" !CP.print_svl pr1 pr2 pr4 (fun (f,_,_,ss) ->(pr2 f) ^ " ;ss: " ^ (pr3 ss))
+      (fun _ _ _ _ -> get_history_nodes_x root_svl hds history lfb done_args eqs lhs_hpargs) root_svl history lfb lhs_hpargs
 
 let get_h_formula_data_fr_hnode hn=
   match hn with
@@ -1609,7 +1628,7 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs selected_hps c
   (* let history = [] in *)
   (*get args which already captures by other hprel*)
   let done_args = CP.remove_dups_svl (List.concat (List.map (fun (_,args) -> args) (lhp_args))) in
-  let lhs_b,history_hrel,keep_root_hrels,his_ss = get_history_nodes svl hds history lhs_b done_args (leqs@reqs) in
+  let lhs_b,history_hrel,keep_root_hrels,his_ss = get_history_nodes svl hds history lhs_b done_args (leqs@reqs) lhp_args in
   (*from history, we can keep more svl, hprels*)
   let keep_his_svl = CP.remove_dups_svl (List.fold_left SAU.close_def (svl@keep_root_hrels) his_ss) in
   (* let _ = Debug.info_pprint ("    keep_his_svl:" ^(!CP.print_svl keep_his_svl)) no_pos in *)
@@ -1821,7 +1840,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           let new_es_formula = check_consumed_node rhs new_es_formula in
           let new_es = {es with CF. es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@rvhp_rels;
               CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ defined_hprels @ [hp_rel];
-              CF.es_infer_hp_unk_map = es.CF.es_infer_hp_unk_map@unk_map;
+              CF.es_infer_hp_unk_map = (es.CF.es_infer_hp_unk_map@unk_map);
               CF.es_formula = new_es_formula} in
           DD.ninfo_pprint ("  new lhs: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
           (true, new_es)
