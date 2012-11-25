@@ -91,7 +91,10 @@ let sleek_log_stk : sleek_log_entry  Gen.stack_filter
 
 let sleek_proving_kind = ref (POST : sleek_proving_kind)
 let sleek_proving_id = ref (0 : int)
-let sleek_proving_hprel_ass = ref ([] : CF.hprel list)
+(* let current_hprel_ass = ref ([] : CF.hprel list) *)
+let current_hprel_ass_stk : CF.hprel  Gen.stack_pr 
+      = new Gen.stack_pr Cprinter.string_of_hprel_short (==) 
+
 
 let get_sleek_proving_id ()=
   let r = !sleek_proving_id in
@@ -119,15 +122,15 @@ let add_new_sleek_logging_entry caller avoid hec slk_no ante conseq
         sleek_proving_kind = !sleek_proving_kind;
         sleek_proving_ante = ante;
         sleek_proving_conseq = conseq;
-        sleek_proving_hprel_ass = !sleek_proving_hprel_ass;
+        sleek_proving_hprel_ass = current_hprel_ass_stk # get_stk;
         sleek_proving_c_heap = consumed_heap;
         sleek_proving_evars = evars;
         sleek_proving_res = result;
     }
     in
     let _ = sleek_log_stk # push sleek_log_entry in
-    let _ = sleek_proving_hprel_ass := [] in
-    ()
+    (if not(avoid) then current_hprel_ass_stk # reset)
+        ; ()
   else ()
 
 let find_bool_proof_res pno =

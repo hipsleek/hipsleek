@@ -4667,6 +4667,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
                    CF.HEmp, [])
       | Ctx estate -> (estate.es_formula,estate.es_heap,estate.es_evars)
     in
+    (* WN : what if evars not used in the conseq? *)
     let conseq = CF.push_exists evars conseq in
     let avoid = (hec_num=11) in
     let avoid = avoid or ((hec_num=1 || hec_num=2) && CF.is_emp_term conseq) in

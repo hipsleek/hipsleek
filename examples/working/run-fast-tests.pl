@@ -673,7 +673,7 @@ $output_file = "log";
 				["benchs/key/Collatz.ss", 1, "", "collatz", "SUCCESS"],
 				["benchs/key/ComplInterv2.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/key/ComplInterv3.ss", 1, "", "loop", "SUCCESS"],
-				["benchs/key/ComplInterv.ss", 1, "-tp redlog", "loop", "SUCCESS"],
+				["benchs/key/ComplInterv.ss", 1, "-tp z3", "loop", "SUCCESS"],
 				["benchs/key/ComplxStruc-may.ss", 1, "", "complxStruc", "SUCCESS"], #MayLoop
 				["benchs/key/ComplxStruc2.ss", 2, "", "loop", "SUCCESS", "complxStruc", "SUCCESS"],
 				["benchs/key/ConvLower.ss", 1, "", "loop", "SUCCESS"],
