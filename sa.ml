@@ -2935,10 +2935,12 @@ let get_unk_hps_relation_x prog hpdefs cs=
     if lunk_hps = [] || runk_hps = [] then ([],[cs])
     else
       let rels = List.concat (List.map
-                       (fun a -> List.map (fun b -> (a,b)) runk_hps)
+                       (fun (hp1,args1) -> List.map (fun (hp2,args2) ->
+                           if CP.intersect_svl args1 args2 = [] then []
+                           else [((hp1,args1),(hp2,args2))]) runk_hps)
                        lunk_hps)
       in
-      (rels,[cs])
+      (List.concat rels,[cs])
   in
   let cs3=
     if (rem_cs1@rem_cs2) = [] then []
@@ -3038,8 +3040,11 @@ let generalize_hps_x prog unk_hps cs par_defs=
   let unk_rels = (List.concat ls_unk_rels) in
   let hpdefs3 = generate_defs_from_unk_rels prog unk_rels in
   let hpdef22 = SAU.combine_hpdefs (hpdef21@hpdefs3) in
+  let get_unk_rel r ((hp1,args1),(hp2,args2))=
+    if List.length args1 = List.length args2 then r@[(hp1,hp2)] else r
+  in
   (List.concat remain_constr0, (hp_defs@hp_def1)@hpdef22,unk_hps,
-   List.map (fun ((hp1,_),(hp2,_)) -> (hp1,hp2)) unk_rels)
+   List.fold_left get_unk_rel [] unk_rels)
 
 let generalize_hps prog unk_hps cs par_defs=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
