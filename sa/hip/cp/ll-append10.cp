@@ -4,14 +4,15 @@ HeapPred HP_2(node a, node b).
 
 append:SUCCESS[
 ass [][]:{
-   H1a(y) --> H1b(y);
-   x::node<_,p> * G2(p,y) * H1b(y)&p!=null --> G2(x,y) * H1b(y);
-   v_node_54_616=null --> H1b(y);
-   H1a(y) * HP_599(p) * x::node<_,y>&p=null --> G2(x,y) * H1b(y);
-   H1a(y) --> H1a(y);
-   HP_599(p)& p!=null --> H1(p);
-   H1(x) --> x::node<_,p> * HP_599(p)
- }
+  H1(x) --> x::node<_,p> * HP_599(p);
+  HP_599(p)& p!=null --> H1(p);
+  H1a(y)&true --> H1a(y)&true;
+  HP_599(p) & p=null --> emp & true;
+  x::node<_,y> & H1a_y_618=y --> G2(x,y);
+  H1a(y) & H1a_y_618=y --> H1b(y);
+  x::node<_,p> * G2(p,y) & H1a_y_619=y & p!=null --> G2(x,y);
+  H1b(y)&H1b_y_619=y --> H1b(y)&true
+}
 
 hpdefs [H1,H2,H1a,H1b,G1,G2][H1b_y_659]:{ 
  G2(x,y) --> x::node<_,p> * HP_2(p,y) & y = H1b_y_659;

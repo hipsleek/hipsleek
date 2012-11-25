@@ -342,22 +342,23 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
     log_spec := (Cprinter.string_of_struc_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);	 
     match spec with
       | CF.ECase b ->
-            let r =
-	      List.map (fun (c1, c2) -> 
-		  let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) ctx in
-		  let (new_c2,pre,rel,hprel, sel_hps,f) = helper nctx c2 in
-                  (* Thai: Need to generate EBase from pre if necessary *)
-                  let new_c2 =  if pre!=[] then (pre_ctr # inc ; CF.merge_struc_pre new_c2 pre) else new_c2 in
-		  ((c1,new_c2),(rel,f),(hprel, sel_hps))) b.CF.formula_case_branches in
-            let (cbl,fl,hprel_ls) = split3 r in
-            let (rel_ls,fl) = List.split fl in
-            let rel = List.concat rel_ls in
-            let hprels,sel_hps = List.split hprel_ls in
-            let hprel = List.concat hprels in
-            let sel_hps = List.hd sel_hps in
-            let br = List.for_all pr_id fl in
-            let new_spec = CF.ECase {b with CF.formula_case_branches=cbl} in
-            (new_spec,[],rel,hprel, sel_hps,br)
+          let r =
+	        List.map (fun (c1, c2) -> 
+		        let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) ctx in
+		        let (new_c2,pre,rel,hprel, sel_hps, f) = helper nctx c2 in
+          (* Thai: Need to generate EBase from pre if necessary *)
+                let new_c2 =  if pre!=[] then (pre_ctr # inc ; CF.merge_struc_pre new_c2 pre) else new_c2 in
+		        ((c1,new_c2),(rel,f),(hprel, sel_hps))) b.CF.formula_case_branches
+          in
+          let (cbl,fl,hprel_ls) = split3 r in
+          let (rel_ls,fl) = List.split fl in
+          let rel = List.concat rel_ls in
+          let hprels,sel_hps = List.split hprel_ls in
+          let hprel = List.concat hprels in
+          let sel_hps = List.hd sel_hps in
+          let br = List.for_all pr_id fl in
+          let new_spec = CF.ECase {b with CF.formula_case_branches=cbl} in
+          (new_spec,[],rel,hprel, sel_hps,br)
                 (* (new_spec,[],true) *)
       | CF.EBase b ->
             let vs = b.CF.formula_struc_explicit_inst @ b.CF.formula_struc_implicit_inst in
@@ -380,7 +381,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	      else (CF.transform_context (CF.normalize_clash_es ext_base b.CF.formula_struc_pos false) ctx) in
 	    (* Termination: Move lexvar to es_var_measures *)
 	    let nctx = if (not has_lexvar) then nctx else Term.strip_lexvar_lhs nctx in
-            let (c,pre,rels,hprels, sel_hps,r) = match b.CF.formula_struc_continuation with | None -> (None,[],[],[], [],true) | Some l -> let r1,r2,r3,r4,r5,r6 = helper nctx l in (Some r1,r2,r3,r4,r5,r6) in            stk_vars # pop_list vs;
+            let (c,pre,rels,hprels, sel_hps, r) = match b.CF.formula_struc_continuation with | None -> (None,[],[],[], [],true) | Some l -> let r1,r2,r3,r4,r5,r6 = helper nctx l in (Some r1,r2,r3,r4,r5,r6) in            stk_vars # pop_list vs;
 	    let _ = Debug.devel_zprint (lazy ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n")) pos_spec in
             let new_base = match pre with
               | [] -> b.CF.formula_struc_base
@@ -484,8 +485,9 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	    (CF.norm_specs (CF.EList sl), pl, rl, hprl,selhp, List.for_all pr_id bl) 
       | CF.EOr b -> 
 	    let s1,p1,r1,hpr1,selhp1,b1 = helper ctx b.CF.formula_struc_or_f1 in
-	    let s2,p2,r2,hpr2,selhp2,b2 = helper ctx b.CF.formula_struc_or_f2 in
-	    (CF.norm_specs (CF.EOr {b with CF.formula_struc_or_f1 = s1;CF.formula_struc_or_f2 = s2;}), p1@p2, r1@r2,hpr1@hpr2, selhp1@selhp2, pr_id b1 && pr_id b2)
+        let s2,p2,r2,hpr2,selhp2,b2 = helper ctx b.CF.formula_struc_or_f2 in
+	    (CF.norm_specs (CF.EOr {b with CF.formula_struc_or_f1 = s1;CF.formula_struc_or_f2 = s2;}), p1@p2, r1@r2,
+         hpr1@hpr2, selhp1@selhp2, pr_id b1 && pr_id b2)
       | CF.EAssume (var_ref,post_cond,post_label,etype) ->
             let curr_vars = stk_vars # get_stk in
             (* let ovars = CF.fv post_cond in *)
@@ -504,7 +506,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	      if (CF.isAnyFalseCtx ctx1) then
 	        let _ = Debug.devel_zprint (lazy ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
 	    	    (Cprinter.string_of_context_short ctx))) no_pos in
-	        (spec,[],[],[], [],true)
+	        (spec,[],[],[], [], true)
 	      else
 	        let _ = Gen.Profiling.push_time ("method "^proc.proc_name) in
 	        try
@@ -527,7 +529,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	            (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in*)
                     let pos = CF.pos_of_formula post_cond in
 	    	    if (CF.isFailListPartialCtx_new res_ctx)
-                    then (spec, [], [],[], [], false)
+                    then (spec, [],[], [],[], false)
 	    	    else
                       let lh = Inf.collect_pre_heap_list_partial_context res_ctx in
                       let lp = Inf.collect_pre_pure_list_partial_context res_ctx in
@@ -660,7 +662,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                                       (List.hd flist) (List.tl flist) in
                                     CF.normalize 1 tmp post_cond no_pos
                                   else post_cond in
-                                  (* TODO : What if we have multiple ensures in a spec? *)                                
+                                  (* TODO : What if we have multiple ensures in a spec? *)
                                   (* It may be too early to compute a fix-point. *)
                                   let post_fml,_ = (*if rels = [] then *)Solver.simplify_post post_fml post_vars prog None [] true [] [] in
                                   DD.devel_pprint ">>>>>> HIP gather inferred post <<<<<<" pos;
@@ -673,7 +675,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                                 end in
                           (i_post, i_pre)
                         else (spec,[])
-                      in (new_spec_post, pre, rankbnds@rels, hp_rels,sel_hps, res)
+                      in (new_spec_post, pre, rankbnds@rels, hp_rels,sel_hps,res)
 	          in
 	          let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
 	          (spec_and_inferred_post,inferred_pre,inferred_rel,inferred_hp_rel, sel_hps, r)
