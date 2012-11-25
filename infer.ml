@@ -1716,8 +1716,8 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
         else
           (*generate new heap pred with undefined pointers only*)
           (* let _ = DD.info_pprint ">>>>>> generate new hp_rel with undefined selective pointers only <<<<<<" pos in *)
-          let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-          let _ = DD.info_pprint ("  es_infer_hp_unk_map: " ^ (pr es.CF.es_infer_hp_unk_map) ) pos in
+          (* let pr = pr_list (pr_pair !CP.print_sv !CP.print_svl) in *)
+          (* let _ = DD.info_pprint ("  es_infer_hp_unk_map: " ^ (pr es.CF.es_infer_hp_unk_map) ) pos in *)
           let his_ptrs = List.concat (List.map SAU.get_ptrs es.CF.es_history) in
           let unknown_ptrs,hds,hvs,lhras,rhras,eqNull,selected_hps,defined_hps,unk_svl,unk_pure,unk_map =
             find_undefined_selective_pointers prog lhs_b rhs_b  mix_lf mix_rf rhs rhs_rest
