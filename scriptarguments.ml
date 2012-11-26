@@ -337,6 +337,7 @@ let common_arguments = [
   ("--show-diff", Arg.Set Globals.show_diff, "Show differences between formulae");
   ("--dis-sem", Arg.Set Globals.dis_sem, "Show differences between formulae");
   ("--show-diff-constrs", Arg.Set Globals.show_diff_constrs, "Show differences between list of constraint");
+  ("--sa-print-inter", Arg.Set Globals.sa_print_inter, "Print intermediate results of normalization");
   ] 
 
 (* arguments/flags used only by hip *)	

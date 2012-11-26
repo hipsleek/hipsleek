@@ -3379,6 +3379,46 @@ let collect_sel_hp_def defs sel_hps unk_hps m=
   let pr4 = (pr_list_ln Cprinter.string_of_hprel_def) in
   Debug.no_3 "collect_sel_hp_def" pr1 pr2 pr3 pr4
       (fun _ _ _ -> collect_sel_hp_def_x defs sel_hps unk_hps m) defs sel_hps m
+
+let get_def_body (a1,args,unk_args,a3,olf,orf)=
+  match olf,orf with
+    | Some f, None -> (a1,args,f)
+    | None, Some f -> (a1,args,f)
+    | Some f1, Some f2 ->
+        let f_body=
+          let hps1 = CF.get_hp_rel_name_formula f1 in
+          let hps2 = CF.get_hp_rel_name_formula f2 in
+          if CP.intersect_svl hps1 hps2 <> [] then
+            (*recurive case*)
+            if CF.is_HRel_f f1 then f2 else f1
+          else SAU.compose_subs f2 f1 (CF.pos_of_formula f2)
+        in
+        (a1,args,f_body)
+    | None, None -> report_error no_pos "sa.obtain_def: can't happen 2"
+
+
+let prtt_string_of_par_def_w_name (a1,args,unk_args,a3,olf,orf)=
+  let str_hrel= (!CP.print_sv a1) ^ "(" ^ (String.concat "," (List.map !CP.print_sv args)) ^ ")" in
+  match olf,orf with
+    | Some f, None ->
+        let str_f = Cprinter.prtt_string_of_formula f in
+        (str_f ^ " --> " ^ str_hrel)
+    | None, Some f ->
+         let str_f = Cprinter.prtt_string_of_formula f in
+         ( str_hrel ^ " --> " ^ str_f )
+    | Some f1, Some f2 ->
+        let f_body=
+          let hps1 = CF.get_hp_rel_name_formula f1 in
+          let hps2 = CF.get_hp_rel_name_formula f2 in
+          if CP.intersect_svl hps1 hps2 <> [] then
+            (*recurive case*)
+            if CF.is_HRel_f f1 then f2 else f1
+          else SAU.compose_subs f2 f1 (CF.pos_of_formula f2)
+        in
+        let str_f = Cprinter.prtt_string_of_formula f_body in
+         ( str_hrel ^ " --> " ^ str_f )
+    | None, None -> report_error no_pos "sa.obtain_def: can't happen 2"
+
 (*
   input: constrs: (formula * formula) list
   output: definitions: (formula * formula) list
@@ -3386,6 +3426,15 @@ let collect_sel_hp_def defs sel_hps unk_hps m=
 let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels hp_rel_unkmap :(CF.hprel list * SAU.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list) =
   DD.ninfo_pprint "\n\n>>>>>> norm_hp_rel <<<<<<" no_pos;
   DD.ninfo_pprint ">>>>>> step 1a: drop arguments<<<<<<" no_pos;
+  let _ =
+    if !Globals.sa_print_inter then
+      let _ =  print_endline "" in
+      let _ = print_endline "*********************************************************************" in
+      let _ = print_endline "*******pre-process (split/unknown analyze) hprel assumptions ********" in
+      let _ = print_endline "**********************************************************************" in
+      ()
+    else ()
+  in
   (* step 1: drop irr parameters *)
   let drop_hp_args,constrs = elim_redundant_paras_lst_constr prog hp_constrs in
   Debug.ninfo_hprint (add_str "   AFTER DROP: " (pr_list_ln Cprinter.string_of_hprel)) constrs no_pos;
@@ -3393,13 +3442,50 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels hp_rel_unkmap :(CF.
   let constrs1b, split_tb_hp_defs_split = split_hp prog constrs in
   DD.ninfo_pprint ">>>>>> step 1c: find unknown ptrs<<<<<<" no_pos;
   let constrs1c,unk_hps,hp_defs_split = analize_unk prog hp_rel_unkmap constrs1b in
-   (* step 1': split HP *)
+  (* step 1': split HP *)
   (*for temporal*)
   let constrs2 = constrs1c in
+  let _ =
+    if !Globals.sa_print_inter then
+      let _ = print_string "\n\n*******relational assumptions ********" in
+      let _ = DD.info_pprint
+        ((let pr = pr_list_ln Cprinter.string_of_hprel_short in pr constrs2) ) no_pos in
+      ()
+    else ()
+  in
   (* let split_tb_hp_defs_split = [] in *)
   (*END for temporal*)
+   let _ =
+    if !Globals.sa_print_inter then
+      let _ =  print_endline "" in
+      let _ = print_endline "**************************************************************************" in
+      let _ = print_endline "*******loop: collect partial defs, substition, simplification ********" in
+      let _ = print_endline "**************************************************************************" in
+      ()
+    else ()
+  in
   let cs, par_defs = infer_hps_fix prog (List.map fst unk_hps) constrs2 in
+  let _ =
+    if !Globals.sa_print_inter then
+      let _ = print_string "\n\n*******relational assumptions ********\n" in
+      let _ = DD.info_pprint
+        ((let pr = pr_list_ln Cprinter.string_of_hprel_short in pr cs) ) no_pos in
+      let _ = print_endline "\n\n*******partial definitions ********" in
+      let _ = print_endline
+        ((let pr = pr_list_ln prtt_string_of_par_def_w_name in pr par_defs) )  in
+      ()
+    else ()
+  in
   (*step 6: over-approximate to generate hp def*)
+  let _ =
+    if !Globals.sa_print_inter then
+      let _ =  print_endline "" in
+      let _ = print_endline "*********************************************************************" in
+      let _ = print_endline "*******subst, join, combine split, transfrom unknown ********" in
+      let _ = print_endline "**********************************************************************" in
+      ()
+    else ()
+  in
   let constr3, hp_defs, new_unk_hps,unk_rels = generalize_hps prog unk_hps cs par_defs in
   let hp_def_names =  List.map (fun (a1,_,_) -> SAU.get_hpdef_name a1) hp_defs in
   let unk_hps1 = (* List.filter (fun (hp,_) -> not (CP.mem_svl hp hp_def_names)) *) new_unk_hps in
@@ -3427,10 +3513,27 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels hp_rel_unkmap :(CF.
   let hp_defs21 = SAU.transform_unk_hps_to_pure (hp_defs2) unk_hp_frargs in
   let hp_defs22 = SAU.combine_hpdefs (hp_defs21@unk_hp_def@unk_hp_pure_def) in
   let hp_def_from_split = generate_hp_def_from_split prog hp_defs22 split_tb_hp_defs_split unk_hps in
-  (****************************************************)
-  DD.ninfo_pprint ">>>>>> step 7: mathching with predefined predicates <<<<<<" no_pos;
   let hp_defs3 = hp_defs22@hp_def_from_split in
-  let m = match_hps_views hp_defs3 prog.CA.prog_view_decls in
+  (****************************************************)
+   let _ =
+    if !Globals.sa_print_inter then
+      let _ = print_endline "\n\n*******relational definitions ********" in
+      let _ = print_endline
+        ((let pr = pr_list_ln  Cprinter.string_of_hp_rel_def_short in pr hp_defs3) )  in
+      ()
+    else ()
+  in
+  DD.ninfo_pprint ">>>>>> step 7: mathching with predefined predicates <<<<<<" no_pos;
+  let _ =
+    if !Globals.sa_print_inter then
+      let _ =  print_endline "" in
+      let _ = print_endline "*********************************************************************" in
+      let _ = print_endline "*******post-process: predefined predicates matching  ********" in
+      let _ = print_endline "**********************************************************************" in
+      ()
+    else ()
+  in
+   let m = match_hps_views hp_defs3 prog.CA.prog_view_decls in
   let _ = DD.ninfo_pprint ("        sel_hp_rel:" ^ (!CP.print_svl sel_hp_rels)) no_pos in
   (* let _ =  DD.info_pprint (" matching: " ^ *)
   (*   (let pr = pr_list_ln (fun (hp,view_names) -> (!CP.print_sv hp) ^ " === " ^ *)

@@ -528,6 +528,8 @@ let enable_split_lemma_gen = ref false
 
 let show_diff = ref false
 
+let sa_print_inter = ref false
+
 let dis_sem = ref false
 
 let show_diff_constrs = ref false
