@@ -1,0 +1,144 @@
+Starting Omega...oc
+Translating global variables to procedure parameters...
+
+Checking procedure append$node~node... 
+*************************************
+*******relational assumption ********
+*************************************
+[ H2(x,y)&true --> x::node<val_56_548',next_56_549'> * HP_567(next_56_549',y)&
+  true,
+ HP_567(v_node_56_587,y)&v_node_56_587!=null --> H2(v_node_56_587,y)&true,
+ HP_567(v_node_56_581,y) * x::node<val_56_572,y>&
+  v_node_56_581=null --> G2(x,y)&true,
+ x::node<val_56_574,v_node_56_587> * G2(v_node_56_587,y)&
+  v_node_56_587!=null --> G2(x,y)&true]
+*************************************
+
+*********************************************************************
+*******pre-process (split/unknown analyze) hprel assumptions ********
+**********************************************************************
+
+
+*******relational assumptions ********
+!!! [ RELASS [HP_567,G2] unknown svl: [y];  unknown hps: [HP_595];  predefined: ; HP_594(v_node_56_581) * 
+  HP_595(y) * x::node<val_56_572,y>&v_node_56_581=null --> G2(x,y)&true,
+ RELASS [H2,HP_567] unknown svl: [y];  unknown hps: [HP_597; 
+  HP_595];  predefined: ; HP_596(x) * HP_597(y)&
+  true --> x::node<val_56_548',next_56_549'> * HP_594(next_56_549') * 
+  HP_595(y)&true,
+ RELASS [HP_567,H2] unknown svl: [y];  unknown hps: [HP_595; 
+  HP_597];  predefined: ; HP_594(v_node_56_587) * HP_595(y)&
+  v_node_56_587!=null --> HP_596(v_node_56_587) * HP_597(y)&true,
+ RELASS [G2] unknown svl: [y];  unknown hps: [HP_595];  predefined: ; 
+  x::node<val_56_574,v_node_56_587> * G2(v_node_56_587,y) * HP_595(y)&
+  v_node_56_587!=null --> G2(x,y)&true]
+**************************************************************************
+*******loop: collect partial defs, substition, simplification ********
+**************************************************************************
+
+
+*******relational assumptions ********
+
+!!! [ HP_594(v_node_56_581) * HP_595(y) * x::node<val_56_572,y>&
+  v_node_56_581=null --> G2(x,y)&true,
+ HP_596(x) * HP_597(y)&true --> x::node<val_56_548',next_56_549'> * 
+  HP_595(y) * HP_596(next_56_549')&true,
+ HP_594(v_node_56_587) * HP_595(y)&v_node_56_587!=null --> HP_597(y) * 
+  v_node_56_587::node<val_56_548',next_56_549'> * HP_596(next_56_549')&true,
+ x::node<val_56_574,v_node_56_587> * HP_595(y)&
+  v_node_56_587!=null --> G2(x,y)&true,
+ HP_594(v_node_56_587)&
+  v_node_56_587!=null --> v_node_56_587::node<val_56_548',next_56_549'> * 
+  HP_596(next_56_549')&true]
+
+*******partial definitions ********
+[ HP_595(y) * x::node<val_56_572,y>&true --> G2(x,y),
+G2(x,y) -->  x::node<val_56_574,v_node_56_587> * G2(v_node_56_587,y) * HP_595(y)&
+v_node_56_587!=null,
+ emp&v_node_56_581=null --> HP_594(v_node_56_581),
+HP_594(v_node_56_587) -->  HP_596(v_node_56_587)&true,
+HP_594(v_node_56_587) -->  v_node_56_587::node<val_56_548',next_56_549'> * HP_596(next_56_549')&true,
+HP_596(x) -->  x::node<val_56_548',next_56_549'> * HP_594(next_56_549')&true,
+HP_596(x) -->  x::node<val_56_548',next_56_549'> * HP_596(next_56_549')&true]
+
+*********************************************************************
+*******subst, join, combine split, transfrom unknown ********
+**********************************************************************
+
+*******relational definitions ********
+[ G2(x_611,y_612)::  x_611::node<val_56_572,y_612_613> * HP_614(y_612_613,y_612)&
+HP_595_y_626=y_612,
+ HP_596(x_620)::  x_620::node<val_56_548',next_56_549'> * HP_621(next_56_549')&true,
+ HP_595(y)::  emp&HP_595_y_626=y,
+ HP_614(y_612_613,y_612)::  
+ emp&y_612=y_612_613
+ or y_612_613::node<val_56_572,y_612_617> * HP_614(y_612_617,y_612)&true
+ ,
+ HP_621(next_56_549')::  
+ emp&next_56_549'=null
+ or next_56_549'::node<val_56_548',next_56_624> * HP_621(next_56_624)&true
+ ,
+ HP_594(v_node_56_619)::  
+ v_node_56_619::node<val_56_548',next_56_549'> * 
+ next_56_549'::node<val_56_548',next_56_601>&next_56_601=null
+ or v_node_56_619::node<val_56_548',next_56_549'> * 
+    next_56_549'::node<val_56_548',next_56_602> * 
+    next_56_602::node<val_56_548',next_56_603>&next_56_603=null
+ or v_node_56_619::node<val_56_548',next_56_549'> * 
+    next_56_549'::node<val_56_548',next_56_604> * 
+    next_56_604::node<val_56_548',next_56_605>&next_56_605=null
+ or v_node_56_619::node<val_56_548',next_56_606>&next_56_606=null
+ or v_node_56_619::node<val_56_548',next_56_607> * 
+    next_56_607::node<val_56_548',next_56_608>&next_56_608=null
+ or v_node_56_619::node<val_56_548',next_56_609> * 
+    next_56_609::node<val_56_548',next_56_610>&next_56_610=null
+ or emp&v_node_56_619=null
+ ,
+ HP_597(y)::  emp&HP_595_y_626=y,
+ HP_567(v_node_56_581,y)::  
+ v_node_56_581::node<val_56_548',next_56_549'> * 
+ next_56_549'::node<val_56_548',next_56_601>&next_56_601=null & 
+ HP_595_y_626=y
+ or v_node_56_581::node<val_56_548',next_56_549'> * 
+    next_56_549'::node<val_56_548',next_56_602> * 
+    next_56_602::node<val_56_548',next_56_603>&next_56_603=null & 
+    HP_595_y_626=y
+ or v_node_56_581::node<val_56_548',next_56_549'> * 
+    next_56_549'::node<val_56_548',next_56_604> * 
+    next_56_604::node<val_56_548',next_56_605>&next_56_605=null & 
+    HP_595_y_626=y
+ or v_node_56_581::node<val_56_548',next_56_606>&next_56_606=null & 
+    HP_595_y_626=y
+ or v_node_56_581::node<val_56_548',next_56_607> * 
+    next_56_607::node<val_56_548',next_56_608>&next_56_608=null & 
+    HP_595_y_626=y
+ or v_node_56_581::node<val_56_548',next_56_609> * 
+    next_56_609::node<val_56_548',next_56_610>&next_56_610=null & 
+    HP_595_y_626=y
+ or emp&v_node_56_581=null & HP_595_y_626=y
+ ,
+ H2(x,y)::  x::node<val_56_548',next_56_549'> * HP_621(next_56_549')&HP_595_y_626=y]
+
+*********************************************************************
+*******post-process: predefined predicates matching  ********
+**********************************************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ G2(x_611,y_612) ::= x_611::node<val_56_572,y_612_613> * y_612_613::lseg<y_612>[LHSCase]&
+HP_595_y_626=y_612,
+ H2(x,y) ::= x::node<val_56_548',next_56_549'> * next_56_549'::ll[LHSCase]&HP_595_y_626=y]
+*************************************
+
+Procedure append$node~node SUCCESS
+
+Termination checking result:
+
+Stop Omega... 57 invocations 
+0 false contexts at: ()
+
+Total verification time: 0.716043 second(s)
+	Time spent in main process: 0.680041 second(s)
+	Time spent in child processes: 0.036002 second(s)
+
