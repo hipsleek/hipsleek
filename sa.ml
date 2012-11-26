@@ -3380,23 +3380,6 @@ let collect_sel_hp_def defs sel_hps unk_hps m=
   Debug.no_3 "collect_sel_hp_def" pr1 pr2 pr3 pr4
       (fun _ _ _ -> collect_sel_hp_def_x defs sel_hps unk_hps m) defs sel_hps m
 
-let get_def_body (a1,args,unk_args,a3,olf,orf)=
-  match olf,orf with
-    | Some f, None -> (a1,args,f)
-    | None, Some f -> (a1,args,f)
-    | Some f1, Some f2 ->
-        let f_body=
-          let hps1 = CF.get_hp_rel_name_formula f1 in
-          let hps2 = CF.get_hp_rel_name_formula f2 in
-          if CP.intersect_svl hps1 hps2 <> [] then
-            (*recurive case*)
-            if CF.is_HRel_f f1 then f2 else f1
-          else SAU.compose_subs f2 f1 (CF.pos_of_formula f2)
-        in
-        (a1,args,f_body)
-    | None, None -> report_error no_pos "sa.obtain_def: can't happen 2"
-
-
 let prtt_string_of_par_def_w_name (a1,args,unk_args,a3,olf,orf)=
   let str_hrel= (!CP.print_sv a1) ^ "(" ^ (String.concat "," (List.map !CP.print_sv args)) ^ ")" in
   match olf,orf with
@@ -3471,8 +3454,14 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels hp_rel_unkmap :(CF.
       let _ = DD.info_pprint
         ((let pr = pr_list_ln Cprinter.string_of_hprel_short in pr cs) ) no_pos in
       let _ = print_endline "\n\n*******partial definitions ********" in
+      let pdef_sort_fn (hp1,_,_,_,_,_) (hp2,_,_,_,_,_)=
+        let n1 = CP.name_of_spec_var hp1 in
+        let n2 = CP.name_of_spec_var hp2 in
+        String.compare n1 n2
+      in
+      let par_defs1 = List.sort pdef_sort_fn par_defs in
       let _ = print_endline
-        ((let pr = pr_list_ln prtt_string_of_par_def_w_name in pr par_defs) )  in
+        ((let pr = pr_list_ln prtt_string_of_par_def_w_name in pr par_defs1) )  in
       ()
     else ()
   in
@@ -3517,7 +3506,7 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels hp_rel_unkmap :(CF.
   (****************************************************)
    let _ =
     if !Globals.sa_print_inter then
-      let _ = print_endline "\n\n*******relational definitions ********" in
+      let _ = print_endline "\n*******relational definitions ********" in
       let _ = print_endline
         ((let pr = pr_list_ln  Cprinter.string_of_hp_rel_def_short in pr hp_defs3) )  in
       ()
