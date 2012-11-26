@@ -3437,7 +3437,7 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels hp_rel_unkmap :(CF.
     if !Globals.sa_print_inter then
       let _ = print_string "\n\n*******relational assumptions ********" in
       let _ = DD.info_pprint
-        ((let pr = pr_list_ln Cprinter.string_of_hprel_short in pr constrs2) ) no_pos in
+        ((let pr = pr_list_ln Cprinter.string_of_hprel in pr constrs2) ) no_pos in
       ()
     else ()
   in

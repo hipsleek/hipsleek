@@ -1,15 +1,17 @@
-HeapPred HP_579(node2 b).
-HeapPred HP_567(node2 a).
-HeapPred HP_557(node2 a,node2 b).
+HeapPred HP_583(node2 b).
+HeapPred HP_575(node2 a,node2 b).
 
 count:SUCCESS[
 ass [H1,G1][]:{
-  z::node2<val_27_565,v_node2_27_574,right_27_566>* G1(v_node2_27_574) * G1(right_27_566)&true --> G1(z)&true;
-  H1(z)&z=null --> G1(z);
-  HP_567(right_27_566) & true --> H1(right_27_566) &true;
-  HP_557(v_node2_27_533',right_27_566)& true --> H1(v_node2_27_533') * HP_567(right_27_566)&true;
-  H1(z)&  z!=null --> z::node2<val_27_530',left_27_531',right_27_532'> * HP_557(left_27_531',right_27_532')
-
+ H1(z)&z!=null --> z::node2<val_27_524',left_27_525',right_27_526'> *
+   HP_575(left_27_525',right_27_526')&true;
+ HP_575(v_node2_27_527',right_27_582)&true --> H1(v_node2_27_527') *
+   HP_583(right_27_582)&true;
+ HP_583(right_27_582)&true --> H1(right_27_582)&true;
+ H1(z)&z=null --> emp&true;
+ emp&z=null --> G1(z)&true;
+ z::node2<val_27_581,v_node2_27_589,right_27_582> * G1(v_node2_27_589) *
+  G1(right_27_582)&true --> G1(z)&true
  }
 
 hpdefs [H1,G1][]:{
