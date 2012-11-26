@@ -52,9 +52,6 @@ let matchingParsOpen = ref 0
 
 let currentPos () = Cabshelper.currentPos ()
 
-let makeLoc startPos endPos = { Cabs.start_pos = startPos;
-                                Cabs.end_pos = endPos; }
-
 (* string -> unit *)
 let addComment c l =
   let i = GrowArray.max_init_index Cabshelper.commentsGA in
@@ -194,36 +191,36 @@ let init_lexicon _ =
       (**** MS VC ***)
       ("__int64", fun _ -> let startPos = currentPos () in
                            let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + 7} in
-                           let loc = makeLoc startPos endPos in
+                           let loc = Cabs.makeLoc startPos endPos in
                            INT64 (loc));
       ("__int32", fun loc -> INT loc);
       ("_cdecl",  fun _ -> let startPos = currentPos () in
                            let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + 6} in
-                           let loc = makeLoc startPos endPos in
+                           let loc = Cabs.makeLoc startPos endPos in
                            MSATTR ("_cdecl", loc)); 
       ("__cdecl", fun _ -> let startPos = currentPos () in
                            let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + 7} in
-                           let loc = makeLoc startPos endPos in
+                           let loc = Cabs.makeLoc startPos endPos in
                            MSATTR ("__cdecl", loc));
       ("_stdcall", fun _ -> let startPos = currentPos () in
                             let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + 8} in
-                            let loc = makeLoc startPos endPos in
+                            let loc = Cabs.makeLoc startPos endPos in
                             MSATTR ("_stdcall", loc)); 
       ("__stdcall", fun _ -> let startPos = currentPos () in
                              let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + 9} in
-                             let loc = makeLoc startPos endPos in
+                             let loc = Cabs.makeLoc startPos endPos in
                              MSATTR ("__stdcall", loc));
       ("_fastcall", fun _ -> let startPos = currentPos () in
                              let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + 9} in
-                             let loc = makeLoc startPos endPos in
+                             let loc = Cabs.makeLoc startPos endPos in
                              MSATTR ("_fastcall", loc)); 
       ("__fastcall", fun _ -> let startPos = currentPos () in
                               let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + 10} in
-                              let loc = makeLoc startPos endPos in
+                              let loc = Cabs.makeLoc startPos endPos in
                               MSATTR ("__fastcall", loc));
       ("__w64", fun _ -> let startPos = currentPos () in
                          let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + 5} in
-                         let loc = makeLoc startPos endPos in
+                         let loc = Cabs.makeLoc startPos endPos in
                          MSATTR("__w64", loc));
       ("__declspec", fun loc -> DECLSPEC loc);
       ("__forceinline", fun loc -> INLINE loc); (* !! we turn forceinline 
@@ -235,7 +232,7 @@ let init_lexicon _ =
        * defined *)
       ("__builtin_va_list", fun _ -> let startPos = currentPos () in
                                      let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + 17} in
-                                     let loc = makeLoc startPos endPos in
+                                     let loc = Cabs.makeLoc startPos endPos in
                                      NAMED_TYPE ("__builtin_va_list", loc));
       ("__builtin_va_arg", fun loc -> BUILTIN_VA_ARG loc);
       ("__builtin_types_compatible_p", fun loc -> BUILTIN_TYPES_COMPAT loc);
@@ -285,7 +282,7 @@ let add_identifier name =
 let scan_ident id =
   let startPos = currentPos () in
   let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + (String.length id)} in
-  let loc = makeLoc startPos endPos in
+  let loc = Cabs.makeLoc startPos endPos in
   try (H.find lexicon id) loc
   (* default to variable name, as opposed to type *)
   with Not_found ->
@@ -480,7 +477,7 @@ rule initial = parse
 | "/*@"       { let startPos = currentPos () in
                 let il = comment lexbuf in
                 let endPos = currentPos () in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 let hspecs = intlist_to_string il in
                 addComment hspecs loc;
                 addWhite lexbuf;
@@ -489,14 +486,14 @@ rule initial = parse
                 let il = comment lexbuf in
                 let endPos = currentPos () in
                 let sl = intlist_to_string il in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 addComment sl loc;
                 addWhite lexbuf;
                 initial lexbuf}
 | "//@"       { let startPos = currentPos () in
                 let il = onelinecomment lexbuf in
                 let endPos = currentPos () in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 let hspecs = intlist_to_string il in
                 addComment hspecs loc;
                 E.newline();
@@ -505,18 +502,21 @@ rule initial = parse
 | "//"        { let startPos = currentPos () in
                 let il = onelinecomment lexbuf in
                 let endPos = currentPos () in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 let sl = intlist_to_string il in
                 addComment sl loc;
                 E.newline();
                 addWhite lexbuf;
                 initial lexbuf}
 | blank       { addWhite lexbuf; initial lexbuf }
-| '\n'        { E.newline ();
+| '\n'        { let startPos = currentPos () in
+                E.newline ();
                 if !pragmaLine then
                   begin
                     pragmaLine := false;
-                    PRAGMA_EOL
+                    let endPos = currentPos () in
+                    let loc = Cabs.makeLoc startPos endPos in
+                    PRAGMA_EOL loc
                   end
                 else begin
                   addWhite lexbuf;
@@ -528,15 +528,15 @@ rule initial = parse
 | '#'         { addWhite lexbuf; hash lexbuf}
 | "_Pragma"   { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 7} in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 PRAGMA (loc) }
 | '\''        { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 CST_CHAR (chr lexbuf, loc)}
 | "L'"        { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 CST_WCHAR (chr lexbuf, loc) }
 | '"'         { addLexeme lexbuf; (* '"' *)
 (* matth: BUG:  this could be either a regular string or a wide string.
@@ -548,7 +548,7 @@ rule initial = parse
                   let startPos = currentPos () in
                   let s = str lexbuf in
                   let endPos = currentPos () in
-                  let loc = makeLoc startPos endPos in
+                  let loc = Cabs.makeLoc startPos endPos in
                   CST_STRING (s, loc)
                 with e -> 
                    raise (InternalError 
@@ -559,7 +559,7 @@ rule initial = parse
                   let startPos = currentPos () in
                   let s = str lexbuf in
                   let endPos = currentPos () in
-                  let loc = makeLoc startPos endPos in
+                  let loc = Cabs.makeLoc startPos endPos in
                   CST_WSTRING(s, loc)
                 with e -> 
                    raise (InternalError 
@@ -568,22 +568,22 @@ rule initial = parse
 | floatnum    { let startPos = currentPos () in
                 let s = Lexing.lexeme lexbuf in
                 let endPos = currentPos () in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 CST_FLOAT (s, loc)}
 | hexnum      { let startPos = currentPos () in
                 let s = Lexing.lexeme lexbuf in
                 let endPos = currentPos () in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 CST_INT (s, loc)}
 | octnum      { let startPos = currentPos () in
                 let s = Lexing.lexeme lexbuf in
                 let endPos = currentPos () in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 CST_INT (s, loc)}
 | intnum      { let startPos = currentPos () in
                 let s = Lexing.lexeme lexbuf in
                 let endPos = currentPos () in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 CST_INT (s, loc)}
 | "!quit!"    { EOF}
 | "..."       { ELLIPSIS}
@@ -608,39 +608,39 @@ rule initial = parse
 | ">"         { SUP}
 | "++"        { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 PLUS_PLUS (loc)}
 | "--"        { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 MINUS_MINUS (loc)}
 | "->"        {ARROW}
 | '+'         { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 PLUS (loc)}
 | '-'         { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 MINUS (loc)}
 | '*'         { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 STAR (loc)}
 | '/'         { SLASH}
 | '%'         { PERCENT}
 | '!'         { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 EXCLAM (loc)}
 | "&&"        { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 AND_AND (loc)}
 | "||"        { PIPE_PIPE}
 | '&'         { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 AND (loc)}
 | '|'         { PIPE}
 | '^'         { CIRC}
@@ -648,43 +648,43 @@ rule initial = parse
 | ':'         { COLON}
 | '~'         { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 TILDE (loc)}
 | '{'         { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 dbgToken (LBRACE (loc))}
 | '}'         { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 dbgToken (RBRACE (loc))}
 | '['         { LBRACKET}
 | ']'         { RBRACKET}
 | '('         { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 dbgToken (LPAREN (loc)) }
 | ')'         { RPAREN}
 | ';'         { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 dbgToken (SEMICOLON (loc)) }
 | ','         { COMMA}
 | '.'         { DOT}
 | "sizeof"    { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 6} in
-                let loc = makeLoc startPos endPos in
+                let loc = Cabs.makeLoc startPos endPos in
                 SIZEOF (loc)}
 | "__asm"     { if !Cprint.msvcMode then
                   let startPos = currentPos () in
                   let s = msasm lexbuf in
                   let endPos = currentPos () in
-                  let loc = makeLoc startPos endPos in
+                  let loc = Cabs.makeLoc startPos endPos in
                   MSASM (s, loc) 
                 else
                   let startPos = currentPos () in
                   let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 5} in
-                  let loc = makeLoc startPos endPos in
+                  let loc = Cabs.makeLoc startPos endPos in
                   (ASM (loc)) }
 (* If we see __pragma we eat it and the matching parentheses as well *)
 | "__pragma"  { matchingParsOpen := 0;
@@ -694,19 +694,19 @@ rule initial = parse
 (* sm: tree transformation keywords *)
 | "@transform"     { let startPos = currentPos () in
                      let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 10} in
-                     let loc = makeLoc startPos endPos in
+                     let loc = Cabs.makeLoc startPos endPos in
                      AT_TRANSFORM (loc)}
 | "@transformExpr" { let startPos = currentPos () in
                      let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 14} in
-                     let loc = makeLoc startPos endPos in
+                     let loc = Cabs.makeLoc startPos endPos in
                      AT_TRANSFORMEXPR (loc)}
 | "@specifier"     { let startPos = currentPos () in
                      let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 10} in
-                     let loc = makeLoc startPos endPos in
+                     let loc = Cabs.makeLoc startPos endPos in
                      AT_SPECIFIER (loc)}
 | "@expr"          { let startPos = currentPos () in
                      let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 5} in
-                     let loc = makeLoc startPos endPos in
+                     let loc = Cabs.makeLoc startPos endPos in
                      AT_EXPR (loc)}
 | "@name"          { AT_NAME}
 
@@ -771,12 +771,12 @@ and hash = parse
                 { let startPos = currentPos () in
                   let s = pragmaName ^ pragma lexbuf in
                   let endPos = currentPos () in
-                  let loc = makeLoc startPos endPos in
+                  let loc = Cabs.makeLoc startPos endPos in
                   PRAGMA_LINE (s, loc)
                 }
 | "pragma"      { let startPos = currentPos () in
                   let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + 6} in
-                  let loc = makeLoc startPos endPos in 
+                  let loc = Cabs.makeLoc startPos endPos in 
                   pragmaLine := true; PRAGMA (loc) }
 | _             { addWhite lexbuf; endline lexbuf}
 

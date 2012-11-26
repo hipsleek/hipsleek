@@ -810,6 +810,7 @@ module BlockChunk =
         cases: stmt list;                 (* A list of case statements 
                                            * (statements with Case labels) 
                                            * visible at the outer level *)
+        cloc: location;
       } 
 
     let d_chunk () (c: chunk) = 
@@ -818,7 +819,7 @@ module BlockChunk =
            (docList ~sep:(chr ';') (d_instr ())) (List.rev c.postins)
  
     let empty = 
-      { stmts = []; postins = []; cases = []; }
+      { stmts = []; postins = []; cases = []; cloc = locUnknown}
 
     let isEmpty (c: chunk) = 
       c.postins == [] && c.stmts == []
@@ -847,6 +848,7 @@ module BlockChunk =
     let c2block (c: chunk) : block = 
       { battrs = [];
         bstmts = pushPostIns c;
+        bloc = c.cloc;
       } 
 
     (* Add an instruction at the end. Never refer to this instruction again 
@@ -860,6 +862,7 @@ module BlockChunk =
       { stmts = compactStmts (pushPostIns c1 @ c2.stmts);
         postins = c2.postins;
         cases = c1.cases @ c2.cases;
+        cloc = makeLoc (startPos c1.cloc) (endPos c2.cloc);
       } 
 
     let skipChunk = empty
@@ -867,7 +870,8 @@ module BlockChunk =
     let returnChunk (e: exp option) (l: location) : chunk = 
       { stmts = [ mkStmt (Return(e, l)) ];
         postins = [];
-        cases = []
+        cases = [];
+        cloc = l;
       }
 
     let ifChunk (be: exp) (l: location) (t: chunk) (e: chunk) : chunk = 
@@ -875,6 +879,7 @@ module BlockChunk =
       { stmts = [ mkStmt(If(be, c2block t, c2block e, l))];
         postins = [];
         cases = t.cases @ e.cases;
+        cloc = l;
       } 
 
         (* We can duplicate a chunk if it has a few simple statements, and if 
@@ -902,7 +907,8 @@ module BlockChunk =
              * that, I think *)
             { s with sid = s.sid}) c.stmts;
         postins = c.postins; (* There is no shared stuff in instructions *)
-        cases = []
+        cases = [];
+        cloc = c.cloc;
       } 
 (*
     let duplicateChunk (c: chunk) = 
@@ -918,18 +924,21 @@ module BlockChunk =
       { stmts = [ loop (* ; n *) ];
         postins = [];
         cases = body.cases;
+        cloc = makeLoc (startPos !currentLoc) (endPos body.cloc);
       } 
       
     let breakChunk (l: location) : chunk = 
       { stmts = [ mkStmt (Break l) ];
         postins = [];
         cases = [];
+        cloc = l;
       } 
       
     let continueChunk (l: location) : chunk = 
       { stmts = [ mkStmt (Continue l) ];
         postins = [];
-        cases = []
+        cases = [];
+        cloc = l;
       } 
 
         (* Keep track of the gotos *)
@@ -983,10 +992,11 @@ module BlockChunk =
       H.add labelStmt l labstmt;
       if c.stmts == stmts' then c else {c with stmts = stmts'}
 
-    let s2c (s:stmt) : chunk = 
+    let s2c (s:stmt) (l: location) : chunk = 
       { stmts = [ s ];
         postins = [];
         cases = [];
+        cloc = l;
       } 
 
     let gotoChunk (ln: string) (l: location) : chunk = 
@@ -995,6 +1005,7 @@ module BlockChunk =
       { stmts = [ mkStmt (Goto (gref, l)) ];
         postins = [];
         cases = [];
+        cloc = l;
       }
 
     let caseRangeChunk (el: exp list) (l: location) (next: chunk) = 
@@ -1002,13 +1013,13 @@ module BlockChunk =
       (* Reverse el twice, so that map and append are tail-recursive *)
       let labels = List.rev_map (fun e -> Case (e, l)) el in
       fst.labels <- List.rev_append labels fst.labels;
-      { next with stmts = stmts'; cases = fst :: next.cases}
+      { next with stmts = stmts'; cases = fst :: next.cases; cloc = l;}
         
     let defaultChunk (l: location) (next: chunk) = 
       let fst, stmts' = getFirstInChunk next in
       let lb = Default l in
       fst.labels <- lb :: fst.labels;
-      { next with stmts = stmts'; cases = fst :: next.cases}
+      { next with stmts = stmts'; cases = fst :: next.cases; cloc = l;}
 
         
     let switchChunk (e: exp) (body: chunk) (l: location) =
@@ -1056,6 +1067,7 @@ module BlockChunk =
       { stmts = [ switch (* ; n *) ];
         postins = [];
         cases = [];
+        cloc = l;
       } 
 
     let mkFunctionBody (c: chunk) : block = 
@@ -5571,9 +5583,9 @@ and doAliasFun vtype (thisname:string) (othername:string)
   let stmt = if isVoidType rt then A.COMPUTATION(call, loc)
                               else A.RETURN(call, loc)
   in
-  let body = { A.blabels = []; A.battrs = []; A.bstmts = [stmt] } in
+  let body = { A.blabels = []; A.battrs = []; A.bstmts = [stmt]; A.bloc = loc } in
   let specs = Iformula.EList [] in
-  let fdef = A.FUNDEF (sname, specs, body, loc, loc) in
+  let fdef = A.FUNDEF (sname, specs, body, loc) in
   ignore (doDecl true fdef);
   (* get the new function *)
   let v,_ = try lookupGlobalVar thisname
@@ -5659,7 +5671,7 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
   (* If there are multiple definitions of extern inline, turn all but the 
    * first into a prototype *)
   | A.FUNDEF (((specs,(n,dt,a,loc')) : A.single_name), hspecs,
-              (body : A.block), loc, _) 
+              (body : A.block), loc) 
       when isglobal && isExtern specs && isInline specs 
            && (H.mem genv (n ^ "__extinline")) -> 
        currentLoc := convLoc(loc);
@@ -5680,10 +5692,10 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
        doDecl isglobal (A.DECDEF ((specs, [((n,dt,a,loc'), A.NO_INIT)]), loc))
 
   | A.FUNDEF (((specs,(n,dt,a, _)) : A.single_name), hspecs,
-              (body : A.block), loc1, loc2) when isglobal ->
+              (body : A.block), loc) when isglobal ->
     begin
-      let funloc = convLoc loc1 in
-      let endloc = convLoc loc2 in
+      let funloc = convLoc loc in
+      let _ = print_endline ("== funloc = " ^ (Cil.string_of_loc funloc)) in
 (*      ignore (E.log "Definition of %s at %a\n" n d_loc funloc); *)
       currentLoc := funloc;
       E.withContext
@@ -6107,7 +6119,7 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
                         !currentFunctionFDEC.svar.vattr) then 
                 !currentFunctionFDEC.sbody.bstmts <- 
                   !currentFunctionFDEC.sbody.bstmts 
-                  @ [mkStmt (Return(retval, endloc))]
+                  @ [mkStmt (Return(retval, funloc))] (* TRUNG TODO: the current location of RETURN maybe isn't correct *)
             end;
             
             (* ignore (E.log "The env after finishing the body of %s:\n%t\n"
@@ -6312,7 +6324,7 @@ and doBody (blk: A.block) : chunk =
   else begin
     let b = c2block bodychunk in
     b.battrs <- battrs;
-    s2c (mkStmt (Block b))
+    s2c (mkStmt (Block b)) b.bloc
   end
       
 and doStatement (s : A.statement) : chunk = 
@@ -6332,8 +6344,9 @@ and doStatement (s : A.statement) : chunk =
             (* And now do some peep-hole optimizations *)
           s'
 
-    | A.BLOCK (b, loc) -> 
+    | A.BLOCK (b, loc) ->
         currentLoc := convLoc loc;
+        let _ = print_endline ("== currentLoc = " ^ (Cil.string_of_loc !currentLoc)) in
         doBody b
 
     | A.SEQUENCE (s1, s2, loc) ->
@@ -6498,7 +6511,7 @@ and doStatement (s : A.statement) : chunk =
           Some (switchv, switch) -> (* We have already generated this one  *)
             se 
             @@ i2c(Set (var switchv, makeCast e' intType, loc'))
-            @@ s2c(mkStmt(Goto (ref switch, loc')))
+            @@ (s2c(mkStmt(Goto (ref switch, loc'))) loc')
 
         | None -> begin
             (* Make a temporary variable *)
@@ -6520,7 +6533,7 @@ and doStatement (s : A.statement) : chunk =
             switch.labels <- [Label ("__docompgoto", loc', false)];
             gotoTargetData := Some (switchv, switch);
             se @@ i2c (Set(var switchv, makeCast e' intType, loc')) @@
-            s2c switch
+            s2c switch loc'
         end
       end
 
@@ -6587,7 +6600,7 @@ and doStatement (s : A.statement) : chunk =
         if b'.cases <> [] || h'.cases <> [] then 
           E.s (error "Try statements cannot contain switch cases");
         
-        s2c (mkStmt (TryFinally (c2block b', c2block h', loc')))
+        s2c (mkStmt (TryFinally (c2block b', c2block h', loc'))) loc'
 
     | TRY_EXCEPT (b, e, h, loc) -> 
         let loc' = convLoc loc in
@@ -6610,12 +6623,12 @@ and doStatement (s : A.statement) : chunk =
             end
           | _ -> E.s (error "Except expression contains too many statements")
         in
-        s2c (mkStmt (TryExcept (c2block b', (il', e'), c2block h', loc')))
+        s2c (mkStmt (TryExcept (c2block b', (il', e'), c2block h', loc'))) loc'
 
     | HIP_STMT (iast_exp, loc) ->
         let loc' = convLoc loc in
         currentLoc := loc';
-        s2c (mkStmt (HipStmt (iast_exp, loc')))
+        s2c (mkStmt (HipStmt (iast_exp, loc'))) loc'
 
   with e when continueOnError -> begin
     (ignore (E.log "Error in doStatement (%s)\n" (Printexc.to_string e)));

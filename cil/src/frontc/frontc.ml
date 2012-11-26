@@ -226,7 +226,7 @@ begin
 
   let rec loop (d : Cabs.definition) = begin
     match d with
-    | Cabs.FUNDEF(name, _, _, loc, _) -> (
+    | Cabs.FUNDEF(name, _, _, loc) -> (
         match name with
         | (_, (funcname, Cabs.PROTO(_,_,_), _, _)) -> (
             incr counter;          

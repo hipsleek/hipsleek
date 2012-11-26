@@ -78,17 +78,64 @@ let string_of_cil_global (g: Cil.global) : string =
 (* supporting function                      *)
 (* ---------------------------------------- *)
 
+let rec loc_of_iast_exp (e: Iast.exp) : Globals.loc =
+  match e with
+  | Iast.ArrayAt e -> e.Iast.exp_arrayat_pos
+  | Iast.ArrayAlloc e -> e.Iast.exp_aalloc_pos
+  | Iast.Assert e -> e.Iast.exp_assert_pos
+  | Iast.Assign e -> e.Iast.exp_assign_pos
+  | Iast.Binary e -> e.Iast.exp_binary_pos
+  | Iast.Bind e -> e.Iast.exp_bind_pos
+  | Iast.Block e -> e.Iast.exp_block_pos
+  | Iast.BoolLit e -> e.Iast.exp_bool_lit_pos
+  | Iast.Break e -> e.Iast.exp_break_pos
+  | Iast.Barrier e -> e.Iast.exp_barrier_pos
+  | Iast.CallRecv e -> e.Iast.exp_call_recv_pos
+  | Iast.CallNRecv e -> e.Iast.exp_call_nrecv_pos
+  | Iast.Cast e -> e.Iast.exp_cast_pos
+  | Iast.Cond e -> e.Iast.exp_cond_pos
+  | Iast.ConstDecl e -> e.Iast.exp_const_decl_pos
+  | Iast.Continue e -> e.Iast.exp_continue_pos
+  | Iast.Catch e -> e.Iast.exp_catch_pos
+  | Iast.Debug e -> e.Iast.exp_debug_pos
+  | Iast.Dprint e -> e.Iast.exp_dprint_pos
+  | Iast.Empty l -> l
+  | Iast.FloatLit e -> e.Iast.exp_float_lit_pos
+  | Iast.Finally e -> e.Iast.exp_finally_pos
+  | Iast.IntLit e -> e.Iast.exp_int_lit_pos
+  | Iast.Java e -> e.Iast.exp_java_pos
+  | Iast.Label (_, e1) -> loc_of_iast_exp e1
+  | Iast.Member e -> e.Iast.exp_member_pos
+  | Iast.New  e -> e.Iast.exp_new_pos
+  | Iast.Null l -> l
+  | Iast.Raise e -> e.Iast.exp_raise_pos 
+  | Iast.Return e -> e.Iast.exp_return_pos
+  | Iast.Seq e -> e.Iast.exp_seq_pos
+  | Iast.This e -> e.Iast.exp_this_pos
+  | Iast.Time (_, _, l) -> l
+  | Iast.Try e -> e.Iast.exp_try_pos
+  | Iast.Unary e -> e.Iast.exp_unary_pos
+  | Iast.Unfold e -> e.Iast.exp_unfold_pos
+  | Iast.Var e -> e.Iast.exp_var_pos
+  | Iast.VarDecl e -> e.Iast.exp_var_decl_pos
+  | Iast.While e -> e.Iast.exp_while_pos
+
 
 (* create an Iast.exp from a list of Iast.exp *)
-let merge_iast_exp (es: Iast.exp list) (lopt : loc option): Iast.exp =
-  let pos = match lopt with None -> no_pos | Some l -> l in
+let merge_iast_exp (es: Iast.exp list) : Iast.exp =
   match es with
-  | [] -> Iast.Empty pos
+  | [] -> (Iast.Empty no_pos)
   | [e] -> e
-  | hd::tl -> 
-      List.fold_left (fun x y -> Iast.Seq {Iast.exp_seq_exp1 = x;
-                                           Iast.exp_seq_exp2 = y;
-                                           Iast.exp_seq_pos = pos;}
+  | hd::tl ->
+      List.fold_left (fun x y ->
+        let posx = loc_of_iast_exp x in
+        let posy = loc_of_iast_exp y in
+        let newpos = {Globals.start_pos = posx.Globals.start_pos;
+                      Globals.mid_pos = posy.Globals.mid_pos;
+                      Globals.end_pos = posy.Globals.end_pos;} in
+        Iast.Seq {Iast.exp_seq_exp1 = x;
+                  Iast.exp_seq_exp2 = y;
+                  Iast.exp_seq_pos = newpos;}
       ) hd tl
 
 
@@ -553,21 +600,19 @@ let translate_instr (instr: Cil.instr) : Iast.exp =
         report_error_msg "TRUNG TODO: Handle Cil.Asm later!"
   ) in
   let collected_exps = !supplement_exp @ [translated_instr] in
-  let newexp = merge_iast_exp collected_exps None in
-  newexp
+  merge_iast_exp collected_exps
 
 
-let rec translate_stmt (s: Cil.stmt) (lopt: Cil.location option) : Iast.exp =
-  let pos = match lopt with None -> no_pos | Some l -> translate_location l in 
+let rec translate_stmt (s: Cil.stmt) : Iast.exp =
   let skind = s.Cil.skind in
   match skind with
   | Cil.Instr instrs ->
       let newexp = (match instrs with
-        | [] -> Iast.Empty pos
+        | [] -> Iast.Empty no_pos
         | [i] -> translate_instr i
         | _ ->
             let es = List.map translate_instr instrs in
-            merge_iast_exp es (Some pos)
+            merge_iast_exp es
       ) in
       newexp
   | Cil.Return (eopt, l) ->
@@ -583,6 +628,7 @@ let rec translate_stmt (s: Cil.stmt) (lopt: Cil.location option) : Iast.exp =
       (* detect a infinite loop in Goto statement *)
       let _ = print_endline ("== goto") in 
       if (!sref.Cil.sid = s.Cil.sid) then (
+        let pos = translate_location l in
         let cond = Iast.BoolLit {Iast.exp_bool_lit_val = true;
                                  Iast.exp_bool_lit_pos = pos} in
         let infinite_loop = Iast.While {Iast.exp_while_condition = cond;
@@ -595,7 +641,7 @@ let rec translate_stmt (s: Cil.stmt) (lopt: Cil.location option) : Iast.exp =
                                         Iast.exp_while_pos = pos} in
         infinite_loop
       )
-      else translate_stmt !sref (Some l)
+      else translate_stmt !sref
   | Cil.Break l ->
       let pos = translate_location l in
       let newexp = Iast.Break {Iast.exp_break_jump_label = Iast.NoJumpLabel;
@@ -611,8 +657,8 @@ let rec translate_stmt (s: Cil.stmt) (lopt: Cil.location option) : Iast.exp =
   | Cil.If (exp, blk1, blk2, l) ->
       let pos = translate_location l in
       let econd = translate_exp exp (Some l) in
-      let e1 = translate_block blk1 (Some l) in
-      let e2 = translate_block blk2 (Some l) in
+      let e1 = translate_block blk1 in
+      let e2 = translate_block blk2 in
       let newexp = Iast.Cond {Iast.exp_cond_condition = econd;
                               Iast.exp_cond_then_arm = e1;
                               Iast.exp_cond_else_arm = e2;
@@ -624,7 +670,7 @@ let rec translate_stmt (s: Cil.stmt) (lopt: Cil.location option) : Iast.exp =
       let p = translate_location l in
       let cond = Iast.BoolLit {Iast.exp_bool_lit_val = true;
                                Iast.exp_bool_lit_pos = p} in
-      let body = translate_block blk (Some l) in
+      let body = translate_block blk in
       let newexp = Iast.While {Iast.exp_while_condition = cond;
                                Iast.exp_while_body = body;
                                Iast.exp_while_specs = hspecs;
@@ -634,11 +680,11 @@ let rec translate_stmt (s: Cil.stmt) (lopt: Cil.location option) : Iast.exp =
                                Iast.exp_while_wrappings = None;
                                Iast.exp_while_pos = p} in
       newexp
-  | Cil.Block blk -> translate_block blk None
+  | Cil.Block blk -> translate_block blk
   | Cil.TryFinally (blk1, blk2, l) ->
       let p = translate_location l in
-      let e1 = translate_block blk1 (Some l) in
-      let e2 = translate_block blk2 (Some l) in
+      let e1 = translate_block blk1 in
+      let e2 = translate_block blk2 in
       let newexp = Iast.Try {Iast.exp_try_block = e1;
                              Iast.exp_catch_clauses = [];
                              Iast.exp_finally_clause = [e2];
@@ -647,8 +693,8 @@ let rec translate_stmt (s: Cil.stmt) (lopt: Cil.location option) : Iast.exp =
       newexp
   | Cil.TryExcept (blk1, (instrs, exp), blk2, l) ->
       let p = translate_location l in
-      let e1 = translate_block blk1 (Some l) in
-      let e2 = translate_block blk2 (Some l) in
+      let e1 = translate_block blk1 in
+      let e2 = translate_block blk2 in
       let newexp = Iast.Try {Iast.exp_try_block = e1;
                              (* TRUNG TODO: need to handle the catch_clause with parameter (instrs, exp) *)
                              Iast.exp_catch_clauses = [];
@@ -659,21 +705,25 @@ let rec translate_stmt (s: Cil.stmt) (lopt: Cil.location option) : Iast.exp =
   | Cil.HipStmt (iast_exp, l) -> iast_exp
 
 
-and translate_block (blk: Cil.block) (lopt: Cil.location option): Iast.exp =
-  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
+and translate_block (blk: Cil.block): Iast.exp =
   let stmts = blk.Cil.bstmts in
   match stmts with
-  | [] -> Iast.Empty pos
-  | [s] -> translate_stmt s lopt
+  | [] -> Iast.Empty no_pos
+  | [s] -> translate_stmt s
   | _ -> (
       let collected_exps = ref [] in
       List.iter (fun s ->
         supplement_exp := []; (* reset supplement_exp before each times translate_stmt*)
-        let newe = translate_stmt s lopt in
+        let newe = translate_stmt s in
         List.iter (fun se -> collected_exps := !collected_exps @ [se]) !supplement_exp;
         collected_exps := !collected_exps @ [newe]
       ) stmts;
-      merge_iast_exp !collected_exps (Some pos)
+      let blkbody = merge_iast_exp !collected_exps in
+      let blkpos = translate_location (blk.Cil.bloc) in
+      Iast.Block {Iast.exp_block_body = blkbody;
+                  Iast.exp_block_jump_label = Iast.NoJumpLabel;
+                  Iast.exp_block_local_vars = [];
+                  Iast.exp_block_pos = blkpos}
     )
 
 
@@ -762,18 +812,19 @@ let translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option)
   let return = translate_funtyp (fheader.Cil.vtype) in
   let args = collect_params fheader in
   let slocals = List.map (fun x -> translate_var_decl x lopt) fundec.Cil.slocals in
-  let sbody = translate_block fundec.Cil.sbody lopt in
+  let sbody = translate_block fundec.Cil.sbody in
   (* collect intermediate information after translating body *) 
   let supplement_local_vars = (
     let vars = ref [] in
     Hashtbl.iter (fun _ e -> vars := !vars @ [e]) lc_addressof_data;
     !vars;
   ) in
-  let newsbody = merge_iast_exp (slocals @ supplement_local_vars @ [sbody]) (Some pos) in
-  let funbody = Iast.Block {Iast.exp_block_body = newsbody;
+  let blkbody = merge_iast_exp (slocals @ supplement_local_vars @ [sbody]) in
+  let blkpos = translate_location fundec.Cil.sbody.Cil.bloc in
+  let funbody = Iast.Block {Iast.exp_block_body = blkbody;
                             Iast.exp_block_jump_label = Iast.NoJumpLabel;
                             Iast.exp_block_local_vars = [];
-                            Iast.exp_block_pos = pos} in
+                            Iast.exp_block_pos = blkpos} in
   let filename = pos.start_pos.Lexing.pos_fname in
   let newproc : Iast.proc_decl = {
     Iast.proc_name = name;

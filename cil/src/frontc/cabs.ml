@@ -166,7 +166,7 @@ and enum_item = string * expression * cabsloc
 ** Declaration definition (at toplevel)
 *)
 and definition =
-   FUNDEF of single_name * hipspecs * block * cabsloc * cabsloc
+   FUNDEF of single_name * hipspecs * block * cabsloc
  | DECDEF of init_name_group * cabsloc        (* global variable(s), or function prototype *)
  | TYPEDEF of name_group * cabsloc
  | ONLYTYPEDEF of specifier * cabsloc
@@ -195,7 +195,8 @@ and file = string * definition list
 and block = 
     { blabels: string list;
       battrs: attribute list;
-      bstmts: statement list
+      bstmts: statement list;
+      bloc: cabsloc;
     } 
 
 (* GCC asm directives have lots of extra information to guide the optimizer *)
@@ -315,3 +316,25 @@ and initwhat =
 and attribute = string * expression list
                                               
 
+(** location functions and constant *)
+let cabspu = {lineno = -10; 
+              filename = "cabs loc unknown"; 
+              byteno = -10;
+              linestart = -10;
+              ident = 0;}
+
+let cabslu = {start_pos = cabspu;
+              end_pos = cabspu;}
+
+let startPos loc = loc.start_pos
+
+let endPos loc = loc.end_pos
+
+let makeLoc startPos endPos = { start_pos = startPos;
+                                end_pos = endPos; }
+
+let string_of_loc loc =
+    (string_of_int loc.start_pos.lineno) ^ ":"
+  ^ (string_of_int (loc.start_pos.byteno - loc.start_pos.linestart)) ^ "-"
+  ^ (string_of_int loc.end_pos.lineno) ^ ":"
+  ^ (string_of_int (loc.start_pos.byteno - loc.start_pos.linestart))

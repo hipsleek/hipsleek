@@ -873,6 +873,7 @@ and fundec =
 and block = 
    { mutable battrs: attributes;      (** Attributes for the block *)
      mutable bstmts: stmt list;       (** The statements comprising the block*)
+     mutable bloc: location;
    } 
 
 
@@ -2594,6 +2595,18 @@ val posUnknown: position
 
 (** Represents a location that cannot be determined *)
 val locUnknown: location
+
+(** Return the starting position of a location *)
+val startPos: location -> position
+
+(** Return the ending position of a location *)
+val endPos: location -> position
+
+(** Create a location from 2 position *)
+val makeLoc: position -> position -> location
+
+(** Return a string representation of a location *)
+val string_of_loc: location -> string
 
 (** Return the location of an instruction *)
 val get_instrLoc: instr -> location 

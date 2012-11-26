@@ -685,6 +685,7 @@ and fundec =
 and block = 
    { mutable battrs: attributes;      (** Attributes for the block *)
      mutable bstmts: stmt list;       (** The statements comprising the block*)
+     mutable bloc: location;
    } 
 
 
@@ -890,6 +891,19 @@ let posUnknown = { line = -1;
 
 let locUnknown = { start_pos = posUnknown;
                    end_pos = posUnknown; }
+
+let startPos loc = loc.start_pos
+
+let endPos loc = loc.end_pos
+
+let makeLoc startPos endPos = { start_pos = startPos;
+                                end_pos = endPos; }
+
+let string_of_loc loc =
+    (string_of_int loc.start_pos.line) ^ ":"
+  ^ (string_of_int (loc.start_pos.byte - loc.start_pos.line_begin)) ^ "-"
+  ^ (string_of_int loc.end_pos.line) ^ ":"
+  ^ (string_of_int (loc.start_pos.byte - loc.start_pos.line_begin))
 
 (* A reference to the current location *)
 let currentLoc : location ref = ref locUnknown
@@ -1315,7 +1329,7 @@ let mkStmt (sk: stmtkind) : stmt =
     sid = -1; succs = []; preds = [] }
 
 let mkBlock (slst: stmt list) : block = 
-  { battrs = []; bstmts = slst; }
+  { battrs = []; bstmts = slst; bloc = locUnknown}
 
 let mkEmptyStmt () = mkStmt (Instr [])
 let mkStmtOneInstr (i: instr) = mkStmt (Instr [i])
@@ -3862,7 +3876,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
                   ++ text "ile ("
                   ++ self#pExp () term
                   ++ text ") "
-                  ++ self#pBlock () {bstmts=bodystmts; battrs=b.battrs})
+                  ++ self#pBlock () {bstmts=bodystmts; battrs=b.battrs; bloc = b.bloc})
 
         with Not_found ->
           self#pLineDirective l
@@ -5267,8 +5281,9 @@ and visitCilStmt (vis: cilVisitor) (s: stmt) : stmt =
     [] -> () (* Return the same statement *)
   | _ -> 
       (* Make our statement contain the instructions to prepend *)
-      res.skind <- Block { battrs = []; bstmts = [ mkStmt (Instr !toPrepend);
-                                                   mkStmt res.skind ] });
+      res.skind <- Block { battrs = [];
+                           bstmts = [ mkStmt (Instr !toPrepend); mkStmt res.skind ];
+                           bloc = (get_stmtLoc s.skind)});
   currentLoc := oldloc;
   res
   
@@ -5358,7 +5373,7 @@ and visitCilBlock (vis: cilVisitor) (b: block) : block =
 and childrenBlock (vis: cilVisitor) (b: block) : block = 
   let fStmt s = visitCilStmt vis s in
   let stmts' = mapNoCopy fStmt b.bstmts in
-  if stmts' != b.bstmts then { battrs = b.battrs; bstmts = stmts'} else b
+  if stmts' != b.bstmts then { battrs = b.battrs; bstmts = stmts'; bloc = b.bloc} else b
 
 
 and visitCilType (vis : cilVisitor) (t : typ) : typ =

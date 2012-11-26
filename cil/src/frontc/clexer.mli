@@ -59,5 +59,4 @@ val get_extra_lexeme: unit -> string
 val clear_white: unit -> unit
 val clear_lexeme: unit -> unit
 val currentPos : unit -> Cabs.cabspos
-val makeLoc : Cabs.cabspos -> Cabs.cabspos -> Cabs.cabsloc
 

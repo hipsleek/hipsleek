@@ -310,12 +310,12 @@ and visitCabsDefinition vis (d: definition) : definition list =
   doVisitList vis vis#vdef childrenDefinition d
 and childrenDefinition vis d = 
   match d with 
-    FUNDEF (sn, sp, b, l, lend) -> 
+    FUNDEF (sn, sp, b, l) -> 
       let sn' = childrenSingleName vis NFun sn in
       let b' = visitCabsBlock vis b in
       (* End the scope that was started by childrenFunctionName *)
       vis#vExitScope ();
-      if sn' != sn || b' != b then FUNDEF (sn', sp, b', l, lend) else d
+      if sn' != sn || b' != b then FUNDEF (sn', sp, b', l) else d
         
   | DECDEF ((s, inl), l) -> 
       let s' = visitCabsSpecifier vis s in
@@ -347,7 +347,7 @@ and childrenBlock vis (b: block) : block =
   let bstmts' = mapNoCopyList (visitCabsStatement vis) b.bstmts in
   let _ = vis#vExitScope () in
   if battrs' != b.battrs || bstmts' != b.bstmts then 
-    { blabels = b.blabels; battrs = battrs'; bstmts = bstmts' }
+    { blabels = b.blabels; battrs = battrs'; bstmts = bstmts'; bloc = b.bloc }
   else
     b
     
@@ -358,7 +358,7 @@ and childrenStatement vis s =
   let vs l s = 
     match visitCabsStatement vis s with
       [s'] -> s'
-    | sl -> BLOCK ({blabels = []; battrs = []; bstmts = sl }, l)
+    | sl -> BLOCK ({blabels = []; battrs = []; bstmts = sl; bloc = l}, l)
   in
   match s with
     NOP _ -> s
@@ -439,7 +439,7 @@ and childrenStatement vis s =
         | [d'] -> DEFINITION d'
         | dl -> let l = get_definitionloc d in
           let dl' = Util.list_map (fun d' -> DEFINITION d') dl in
-          BLOCK ({blabels = []; battrs = []; bstmts = dl' }, l)
+          BLOCK ({blabels = []; battrs = []; bstmts = dl'; bloc = l}, l)
     end
   | ASM (sl, b, details, l) -> 
       let childrenIdentStringExp ((i,s, e) as input) = 

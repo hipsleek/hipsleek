@@ -57,7 +57,7 @@ let rec isTypedef = function
 
 let get_definitionloc (d : definition) : cabsloc =
   match d with
-  | FUNDEF(_, _, _, l, _) -> l
+  | FUNDEF(_, _, _, l) -> l
   | DECDEF(_, l) -> l
   | TYPEDEF(_, l) -> l
   | ONLYTYPEDEF(_, l) -> l

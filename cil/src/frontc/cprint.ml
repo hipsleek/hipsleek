@@ -799,7 +799,7 @@ and print_defs defs =
 
 and print_def def =
   match def with
-    FUNDEF (proto, spec, body, loc, _) ->
+    FUNDEF (proto, spec, body, loc) ->
       comprint "fundef";
       if !printCounters then begin
         try

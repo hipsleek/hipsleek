@@ -61,28 +61,6 @@ let getComments () =
       r
 *)
 
-let cabspu = {lineno = -10; 
-              filename = "cabs loc unknown"; 
-              byteno = -10;
-              linestart = -10;
-              ident = 0;}
-
-let cabslu = {start_pos = cabspu;
-              end_pos = cabspu;}
-
-let startPos loc = loc.Cabs.start_pos
-
-let endPos loc = loc.Cabs.end_pos
-
-let makeLoc startPos endPos = { Cabs.start_pos = startPos;
-                                Cabs.end_pos = endPos; }
-
-let string_of_loc loc =
-    (string_of_int loc.start_pos.lineno) ^ ":"
-  ^ (string_of_int (loc.start_pos.byteno - loc.start_pos.linestart)) ^ "-"
-  ^ (string_of_int loc.end_pos.lineno) ^ ":"
-  ^ (string_of_int (loc.start_pos.byteno - loc.start_pos.linestart))
-
 (* cabsloc -> cabsloc *)
 (*
 let handleLoc l =
@@ -154,13 +132,12 @@ let doDeclaration (loc: cabsloc) (specs: spec_elem list) (nl: init_name list) : 
 
 
 let doFunctionDef (loc: cabsloc)
-                  (lend: cabsloc)
                   (specs: spec_elem list) 
                   (n: name)
                   (hspecs: hipspecs)
                   (b: block) : definition = 
   let fname = (specs, n) in
-  FUNDEF (fname, hspecs, b, loc, lend)
+  FUNDEF (fname, hspecs, b, loc)
 
 
 let doOldParDecl (names: string list)
@@ -320,7 +297,7 @@ let transformOffsetOf (speclist, dtype) member =
 %token<string * Cabs.cabsloc> MSASM MSATTR
 %token<string * Cabs.cabsloc> PRAGMA_LINE
 %token<Cabs.cabsloc> PRAGMA
-%token PRAGMA_EOL
+%token<Cabs.cabsloc> PRAGMA_EOL
 
 /* sm: cabs tree transformation specification keywords */
 %token<Cabs.cabsloc> AT_TRANSFORM AT_TRANSFORMEXPR AT_SPECIFIER AT_EXPR
@@ -356,7 +333,7 @@ let transformOffsetOf (speclist, dtype) member =
 %start interpret file
 %type <Cabs.definition list> file interpret globals
 
-%type <Cabs.definition> global
+%type <Cabs.definition * cabsloc> global
 
 
 %type <Cabs.attribute list> attributes attributes_with_asm asmattr
@@ -386,7 +363,7 @@ let transformOffsetOf (speclist, dtype) member =
 %type <Cabs.single_name> parameter_decl
 %type <Cabs.enum_item> enumerator
 %type <Cabs.enum_item list> enum_list
-%type <Cabs.definition> declaration function_def
+%type <Cabs.definition * cabsloc> declaration function_def
 %type <cabsloc * spec_elem list * name> function_def_start
 %type <Cabs.spec_elem list * Cabs.decl_type> type_name
 %type <Cabs.block * cabsloc> block
@@ -418,7 +395,7 @@ file: globals                           { $1 }
 
 globals:
   /* empty */                           { [] }
-| global globals                        { $1 :: $2 }
+| global globals                        { (fst $1) :: $2 }
 | SEMICOLON globals                     { $2 }
 ;
 
@@ -431,38 +408,45 @@ global:
 | function_def                          { $1 } 
 /*(* Some C header files ar shared with the C++ compiler and have linkage 
    * specification *)*/
-| EXTERN string_constant declaration    { LINKAGE (fst $2, (*handleLoc*) (snd $2), [ $3 ]) }
+| EXTERN string_constant declaration    { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          (LINKAGE (fst $2, loc, [fst $3]), loc) }
 | EXTERN string_constant LBRACE globals RBRACE 
-                                        { LINKAGE (fst $2, (*handleLoc*) (snd $2), $4)  }
+                                        { let loc = makeLoc (startPos $1) (endPos $5) in
+                                          (LINKAGE (fst $2, loc, $4), loc) }
 | ASM LPAREN string_constant RPAREN SEMICOLON
-                                        { GLOBASM (fst $3, (*handleLoc*) $1) }
+                                        { let loc = makeLoc (startPos $1) (endPos $5) in
+                                          (GLOBASM (fst $3, loc), loc) }
 | pragma                                { $1 }
 /* (* Old-style function prototype. This should be somewhere else, like in
     * "declaration". For now we keep it at global scope only because in local
     * scope it looks too much like a function call  *) */
 | IDENT LPAREN old_parameter_list_ne RPAREN old_pardef_list SEMICOLON
-                                        { (* Convert pardecl to new style *)
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos $6) in
+                                          (* Convert pardecl to new style *)
                                           let pardecl, isva = doOldParDecl $3 $5 in 
                                           (* Make the function declarator *)
-                                          doDeclaration ((*handleLoc*) (snd $1)) []
+                                          (doDeclaration loc []
                                             [((fst $1, PROTO(JUSTBASE, pardecl,isva), [], cabslu),
-                                              NO_INIT)] }
+                                              NO_INIT)], loc) }
 /* (* Old style function prototype, but without any arguments *) */
 | IDENT LPAREN RPAREN  SEMICOLON
-                                        { (* Make the function declarator *)
-                                          doDeclaration ((*handleLoc*)(snd $1)) []
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos $4) in
+                                          (* Make the function declarator *)
+                                          (doDeclaration loc []
                                             [((fst $1, PROTO(JUSTBASE,[],false), [], cabslu),
-                                              NO_INIT)] }
+                                              NO_INIT)], loc) }
 /* transformer for a toplevel construct */
 | AT_TRANSFORM LBRACE global RBRACE  IDENT/*to*/  LBRACE globals RBRACE
-                                        { checkConnective(fst $5);
-                                          TRANSFORMER($3, $7, $1) }
+                                        { let loc = makeLoc (startPos $1) (endPos $8) in
+                                          checkConnective(fst $5);
+                                          (TRANSFORMER(fst $3, $7, $1), loc) }
 /* transformer for an expression */
 | AT_TRANSFORMEXPR LBRACE expression RBRACE  IDENT/*to*/  LBRACE expression RBRACE
-                                        { checkConnective(fst $5);
-                                          EXPRTRANSFORMER(fst $3, fst $7, $1) }
-| position error position SEMICOLON     { let loc = makeLoc $1 $3 in
-                                          PRAGMA (VARIABLE "parse_error", loc) }
+                                        { let loc = makeLoc (startPos $1) (endPos $8) in
+                                          checkConnective(fst $5);
+                                          (EXPRTRANSFORMER(fst $3, fst $7, $1), loc) }
+| position error position SEMICOLON     { let loc = makeLoc $1 (endPos $4) in
+                                          (PRAGMA (VARIABLE "parse_error", loc), loc) }
 ;
 
 id_or_typename:
@@ -795,10 +779,11 @@ block: /* ISO 6.8.2 */
   block_begin local_labels block_attrs block_element_list RBRACE
                                         { !Lexerhack.pop_context();
                                           let loc = makeLoc (startPos $1) (endPos $5) in
-                                          ({blabels = $2; battrs = $3; bstmts = $4}, loc) }
+                                          let _ = print_endline ("== block 1: " ^ (string_of_loc loc)) in
+                                          ({blabels = $2; battrs = $3; bstmts = $4; bloc = loc}, loc) }
 | position error position RBRACE
                                         { let loc = makeLoc $1 (endPos $4) in
-                                          ({blabels = []; battrs  = []; bstmts  = []}, loc) }
+                                          ({blabels = []; battrs  = []; bstmts  = []; bloc = loc}, loc) }
 ;
 
 block_begin:
@@ -813,7 +798,7 @@ block_attrs:
 /* statements and declarations in a block, in any order (for C99 support) */
 block_element_list:
   /* empty */                           { [] }
-| declaration block_element_list        { DEFINITION($1) :: $2 }
+| declaration block_element_list        { DEFINITION(fst $1) :: $2 }
 | statement block_element_list          { (fst $1) :: $2 }
 /*(* GCC accepts a label at the end of a block *)*/
 | IDENT COLON	                          { [ LABEL (fst $1, NOP (snd $1), snd $1)] }
@@ -912,14 +897,16 @@ statement:
 
 for_clause: 
   opt_expression SEMICOLON              { FC_EXP $1 }
-| declaration                           { FC_DECL $1 }
+| declaration                           { FC_DECL (fst $1) }
 ;
 
 declaration:                                /* ISO 6.7.*/
   decl_spec_list init_declarator_list SEMICOLON
-                                        { doDeclaration ((*handleLoc*)(snd $1)) (fst $1) $2 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos $3) in
+                                          (doDeclaration loc (fst $1) $2, loc) }
 | decl_spec_list SEMICOLON
-                                        { doDeclaration ((*handleLoc*)(snd $1)) (fst $1) [] }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos $2) in
+                                          (doDeclaration loc (fst $1) [], loc) }
 ;
 init_declarator_list:                       /* ISO 6.7 */
   init_declarator                       { [$1] }
@@ -1194,10 +1181,11 @@ abs_direct_decl_opt:
 ;
 
 function_def:  /* (* ISO 6.9.1 *) */
-  function_def_start hipspecs_opt block { let (loc, specs, decl) = $1 in
+  function_def_start hipspecs_opt block { let (_, specs, decl) = $1 in
+                                          let loc = makeLoc (startPos (fst3 $1)) (endPos (snd $3)) in
                                           currentFunctionName := "<__FUNCTION__ used outside any functions>";
                                           !Lexerhack.pop_context (); (* The context pushed by announceFunctionName *)
-                                           doFunctionDef loc (snd $3) specs decl $2 (fst $3) }
+                                           (doFunctionDef loc specs decl $2 (fst $3), loc) }
 
 function_def_start:  /* (* ISO 6.9.1 *) */
    decl_spec_list declarator            { announceFunctionName $2;
@@ -1302,9 +1290,11 @@ just_attributes:
 
 /** (* PRAGMAS and ATTRIBUTES *) ***/
 pragma: 
-| PRAGMA attr PRAGMA_EOL                { PRAGMA ($2, $1) }
-| PRAGMA attr SEMICOLON PRAGMA_EOL      { PRAGMA ($2, $1) }
-| PRAGMA_LINE                           { PRAGMA (VARIABLE (fst $1), snd $1) }
+| PRAGMA attr PRAGMA_EOL                { let loc = makeLoc (startPos $1) (endPos $3) in
+                                          (PRAGMA ($2, loc), loc) }
+| PRAGMA attr SEMICOLON PRAGMA_EOL      { let loc = makeLoc (startPos $1) (endPos  $4) in
+                                          (PRAGMA ($2, loc), loc) }
+| PRAGMA_LINE                           { (PRAGMA (VARIABLE (fst $1), snd $1), snd $1) }
 ;
 
 /* (* We want to allow certain strange things that occur in pragmas, so we 
