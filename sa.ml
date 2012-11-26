@@ -287,7 +287,7 @@ let get_hp_split_cands_x prog constrs=
 let get_hp_split_cands prog constrs =
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2 = pr_list_ln (pr_quad !CP.print_sv !CP.print_svl (pr_list !CP.print_svl) string_of_full_loc) in
-  Debug.no_1 "get_hp_split_cands" pr1 pr2
+  Debug.ho_1 "get_hp_split_cands" pr1 pr2
   (fun _ -> get_hp_split_cands_x prog constrs) constrs
 
 (*split one hp -> mutiple hp and produce corresponding heap formulas for substitution
