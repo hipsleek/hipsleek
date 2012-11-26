@@ -1382,13 +1382,16 @@ and collect_par_defs_two_side_one_hp_x prog lhs rhs (hrel, args)
           let lhf = List.fold_left (fun hf1 hf2 -> CF.mkStarH hf1 hf2 no_pos) (List.hd lhfs) (List.tl lhfs) in
           CF.mkAnd_f_hf pdef_rhs lhf (CF.pos_of_formula pdef_rhs)
       in
-      (hrel, args, [], pdef_cond ,None, Some bf),lhs
+      let pdefs = if SAU.is_trivial bf (hrel, args) then [] else
+        [(hrel, args, [], pdef_cond ,None, Some bf)]
+      in
+      (pdefs,lhs)
   in
   let rec loop_helper lhs1 ls res=
     match ls with
       | [] -> res,lhs1
       | r_sel_hp::ss -> let r,nlhs =  build_par_def lhs1 r_sel_hp in
-                        loop_helper nlhs ss (res@[r])
+                        loop_helper nlhs ss (res@r)
   in
   let rs,lhs_n = loop_helper lhs r_selected_hrels [] in
   let _ =  DD.ninfo_pprint ("  partial defs - two side: \n" ^
@@ -1475,18 +1478,20 @@ let collect_par_defs_recursive_hp_x prog lhs rhs (hrel, args) rec_args other_sid
          (hrel , rec_args, CP.intersect_svl args unk_svl ,plhs, Some plhs, Some prhs)
          (* (hrel , rec_args, CP.intersect_svl rec_args unk_svl ,plhs, Some prhs, Some plhs) *)
   in
-  let undef_args = SAU.lookup_undef_args args [] (def_ptrs) in
   let rec_pdefs =
-    if undef_args = [] then
-      let local_rec_def = (build_partial_def ([hrel],args@rec_args)) in
-      [local_rec_def]
-  else
-      let keep_args_in_rem = CP.diff_svl (args@rec_args) undef_args in
-      let ls_par_match =  [([hrel], CP.remove_dups_svl (keep_args_in_rem), undef_args)] in
-  (*find all hrel in rhs such that cover the same set of args*)
-      let r_selected_hrels = find_hrels_w_same_set_args other_side_hrels ls_par_match [] in
-      let local_rec_pdefs = List.map build_partial_def r_selected_hrels in
-      local_rec_pdefs
+    (*check trivial cases*)
+    (* if List.exists (fun hpargs1 -> SAU.check_hp_arg_eq (hrel, args) hpargs1) other_side_hrels then [] else *)
+      let undef_args = SAU.lookup_undef_args args [] (def_ptrs) in
+      if undef_args = [] then
+        let local_rec_def = (build_partial_def ([hrel],args@rec_args)) in
+        [local_rec_def]
+      else
+        let keep_args_in_rem = CP.diff_svl (args@rec_args) undef_args in
+        let ls_par_match =  [([hrel], CP.remove_dups_svl (keep_args_in_rem), undef_args)] in
+      (*find all hrel in rhs such that cover the same set of args*)
+        let r_selected_hrels = find_hrels_w_same_set_args other_side_hrels ls_par_match [] in
+        let local_rec_pdefs = List.map build_partial_def r_selected_hrels in
+        local_rec_pdefs
   in
   let _ = DD.ninfo_pprint ("  rec partial defs: \n" ^
               (let pr = pr_list_ln SAU.string_of_par_def_w_name in pr (rec_pdefs)) ) no_pos in
