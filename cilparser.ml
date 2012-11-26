@@ -182,16 +182,14 @@ and is_global_cil_lval (lv: Cil.lval) : bool =
 let translate_location (loc: Cil.location) : Globals.loc =
   let cilsp = loc.Cil.start_pos in
   let cilep = loc.Cil.end_pos in
-  (* let _ = print_endline ("== cilsp byte = " ^ (string_of_int cilsp.Cil.byte)) in *)
-  (* let _ = print_endline ("== cilep byte = " ^ (string_of_int cilep.Cil.byte)) in *)
   let start_pos = {Lexing.pos_fname = cilsp.Cil.file;
                    Lexing.pos_lnum = cilsp.Cil.line;
                    Lexing.pos_bol = cilsp.Cil.line_begin;
-                   Lexing.pos_cnum = cilsp.Cil.byte;} in
+                   Lexing.pos_cnum = cilsp.Cil.byte - 1;} in
   let end_pos = {Lexing.pos_fname = cilep.Cil.file;
                  Lexing.pos_lnum = cilep.Cil.line;
                  Lexing.pos_bol = cilep.Cil.line_begin;
-                 Lexing.pos_cnum = cilep.Cil.byte;} in
+                 Lexing.pos_cnum = cilep.Cil.byte - 1;} in
   let newloc = {Globals.start_pos = start_pos;
                 Globals.mid_pos = end_pos; (* TRUNG CODE: this should be computed later *)
                 Globals.end_pos = end_pos;} in (* TRUNG CODE: this should be computed later *)

@@ -454,7 +454,7 @@ let need_parenthesis2 = function
 
 
 (* pretty printing for expressions *)
-let rec string_of_exp = function 
+let rec string_of_exp_x = function 
 	| ArrayAt ({exp_arrayat_array_base = a;
 	     exp_arrayat_index = e}) ->
 				(string_of_exp a) ^ "[" ^ (string_of_exp_list e ",") ^ "]" (* An Hoa *)
@@ -476,7 +476,7 @@ let rec string_of_exp = function
         | [] -> ""
         | _ -> "local: "^
           (String.concat "," (List.map (fun (c1,c2,c3)->(string_of_typ c2)^" "^c1) lv))^"\n")
-        ^ (string_of_exp e) ^ "}" ^ (string_of_loc p) ^ "\n"
+        ^ (string_of_exp e) ^ "}\n"
   | Break b -> string_of_control_path_id_opt b.exp_break_path_id ("break "^(string_of_label b.exp_break_jump_label))
   | Barrier b -> "barrier "^b.exp_barrier_recv
   | Cast e -> "(" ^ (string_of_typ e.exp_cast_target_type) ^ ")" ^ (string_of_exp e.exp_cast_body)
@@ -588,7 +588,49 @@ let rec string_of_exp = function
 			exp_finally_clause = fl;})
 				-> "try {"^(string_of_exp bl)^"\n}"^(List.fold_left (fun a b -> a^"\n"^(string_of_exp b)) "" cl)^
 									(List.fold_left (fun a b -> a^"\n"^(string_of_exp b)) "" fl)
-							
+
+(* pretty printing for expressions *)
+and string_of_exp e = match e with 
+  | ArrayAt ({exp_arrayat_pos = p})
+  | Unfold ({exp_unfold_pos = p})
+  | Java ({exp_java_pos = p}) -> (string_of_exp_x e) ^ "<loc:" ^ (string_of_loc p)^">"
+  | Label (_, e) -> string_of_exp e
+  | Bind ({exp_bind_pos = p})
+  | Block ({exp_block_pos = p})
+  | Break ({exp_break_pos = p})
+  | Barrier ({exp_barrier_pos = p})
+  | Cast ({exp_cast_pos = p})
+  | Continue ({exp_continue_pos = p})
+  | Catch ({exp_catch_pos = p})
+  | Empty p
+  | Finally ({exp_finally_pos = p})
+  | Unary ({exp_unary_pos = p})
+  | Binary ({exp_binary_pos = p})
+  | CallNRecv ({exp_call_nrecv_pos = p})
+  | CallRecv ({exp_call_recv_pos = p})
+  | ArrayAlloc ({exp_aalloc_pos = p})
+  | New ({exp_new_pos = p})
+  | Var ({exp_var_pos = p})
+  | Member ({exp_member_pos = p})
+  | Assign ({exp_assign_pos = p})
+  | Cond ({exp_cond_pos = p})
+  | While ({exp_while_pos = p})
+  | Return ({exp_return_pos = p})
+  | Seq ({exp_seq_pos = p})
+  | VarDecl ({exp_var_decl_pos = p})
+  | ConstDecl ({exp_const_decl_pos = p})
+  | BoolLit ({exp_bool_lit_pos = p}) 
+  | IntLit ({exp_int_lit_pos = p})
+  | FloatLit ({exp_float_lit_pos = p})
+  | Null p
+  | Assert ({exp_assert_pos = p})
+  | Dprint ({exp_dprint_pos = p}) 
+  | Debug ({exp_debug_pos = p})
+  | This ({exp_this_pos = p})
+  | Time (_,_,p)
+  | Raise ({exp_raise_pos = p})
+  | Try ({exp_try_pos = p}) -> (string_of_exp_x e) ^ "<loc:" ^ (string_of_loc p)^">"
+
 and 
    (* function to transform a list of expression in a string *)
    string_of_exp_list l c = match l with  

@@ -779,7 +779,6 @@ block: /* ISO 6.8.2 */
   block_begin local_labels block_attrs block_element_list RBRACE
                                         { !Lexerhack.pop_context();
                                           let loc = makeLoc (startPos $1) (endPos $5) in
-                                          let _ = print_endline ("== block 1: " ^ (string_of_loc loc)) in
                                           ({blabels = $2; battrs = $3; bstmts = $4; bloc = loc}, loc) }
 | position error position RBRACE
                                         { let loc = makeLoc $1 (endPos $4) in
@@ -828,7 +827,6 @@ statement:
                                           (IF (smooth_expression (fst $2), fst $3, NOP loc, loc), loc) }
 | IF paren_comma_expression statement ELSE statement
                                         { let loc = makeLoc (startPos $1) (endPos (snd $5)) in
-                                          let _ = print_endline ("== if else : " ^ (string_of_loc loc)) in
                                           (IF (smooth_expression (fst $2), fst $3, fst $5, loc), loc) }
 | SWITCH paren_comma_expression statement
                                         { let loc = makeLoc (startPos $1) (endPos (snd $3)) in

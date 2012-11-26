@@ -5695,7 +5695,6 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
               (body : A.block), loc) when isglobal ->
     begin
       let funloc = convLoc loc in
-      let _ = print_endline ("== funloc = " ^ (Cil.string_of_loc funloc)) in
 (*      ignore (E.log "Definition of %s at %a\n" n d_loc funloc); *)
       currentLoc := funloc;
       E.withContext
