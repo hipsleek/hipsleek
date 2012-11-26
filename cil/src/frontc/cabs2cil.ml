@@ -6317,8 +6317,8 @@ and doBody (blk: A.block) : chunk =
          blk.A.bstmts)
   in
   exitScope ();
-
-
+  (* update the location of body block *)
+  let bodychunk = { bodychunk with cloc = convLoc blk.A.bloc} in
   if battrs == [] then
     bodychunk
   else begin
@@ -6346,7 +6346,6 @@ and doStatement (s : A.statement) : chunk =
 
     | A.BLOCK (b, loc) ->
         currentLoc := convLoc loc;
-        let _ = print_endline ("== currentLoc = " ^ (Cil.string_of_loc !currentLoc)) in
         doBody b
 
     | A.SEQUENCE (s1, s2, loc) ->
