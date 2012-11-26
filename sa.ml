@@ -262,7 +262,12 @@ let get_hp_split_cands_one_cs prog unk_hps lhs rhs=
             let part3 = CP.remove_dups_svl (a::(CP.intersect_svl part2a tl)) in
             part_helper (CP.diff_svl tl part3) (new_parts@[part2b@part3])
     in
-    part_helper args []
+    let parts = part_helper args [] in
+    (*if all args is partitioned in one group, do not split*)
+    match parts with
+      | [args0] -> if List.length args0 = List.length args then []
+          else parts
+      | _ -> parts
   in
   let lhns, lhvs, lhrs = CF.get_hp_rel_formula lhs in
   let rhns, rhvs, rhrs = CF.get_hp_rel_formula rhs in
@@ -275,10 +280,10 @@ let get_hp_split_cands_one_cs prog unk_hps lhs rhs=
   let cands2 = List.map (fun (hp,el,l) ->
       let args = List.concat (List.map CP.afv el) in
       let parts = do_partition (lhns@rhns) (lhvs@rhvs) (leqs@reqs) args in
-      (hp,args, parts,l)
+     (hp,args, parts,l)
   ) cands1
   in
-  cands2
+  (cands2)
 
 let get_hp_split_cands_x prog constrs=
  List.concat (List.map (fun cs -> get_hp_split_cands_one_cs prog (List.map fst cs.CF.unk_hps)
@@ -287,7 +292,7 @@ let get_hp_split_cands_x prog constrs=
 let get_hp_split_cands prog constrs =
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2 = pr_list_ln (pr_quad !CP.print_sv !CP.print_svl (pr_list !CP.print_svl) string_of_full_loc) in
-  Debug.ho_1 "get_hp_split_cands" pr1 pr2
+  Debug.no_1 "get_hp_split_cands" pr1 pr2
   (fun _ -> get_hp_split_cands_x prog constrs) constrs
 
 (*split one hp -> mutiple hp and produce corresponding heap formulas for substitution
@@ -331,7 +336,7 @@ let check_split_global_x prog cands =
         | hd::_ -> hd
     in
     let size = List.length parts0 in
-    if List.exists (fun (_,args1,parts1,_) -> (List.length parts1)!=size) (List.tl grp) then
+    if size = 0 || List.exists (fun (_,args1,parts1,_) -> (List.length parts1)!=size) (List.tl grp) then
       []
     else
       let tl_parts = parts_norm args0 (List.tl grp) [] in

@@ -1528,6 +1528,7 @@ let rec checkeq_constrs_with_diff_step1 hvars (constrs: (CF.formula * CF.formula
       (fun _ _ -> checkeq_constrs_with_diff_step1_x hvars constrs infile_constrs) constrs infile_constrs
 
 let rec checkeq_constrs_with_diff_x hvars (constrs: (CF.formula * CF.formula) list) ( infile_constrs: (CF.formula * CF.formula) list): (bool*(((CF.formula * CF.formula) *  (CF.formula * CF.formula) * ((map_table * (CF.formula * CF.formula)*(CF.formula * CF.formula)) list)) list)) =
+ 
   let count_constr mix_mtls = 
     match mix_mtls with
       | [] -> 0 
@@ -1535,26 +1536,33 @@ let rec checkeq_constrs_with_diff_x hvars (constrs: (CF.formula * CF.formula) li
 		CF.no_of_cnts_fml d11+ CF.no_of_cnts_fml d12 + CF.no_of_cnts_fml d21 + CF.no_of_cnts_fml d22		
   in
   let (res,diff_constrs1,diff_constrs2) = checkeq_constrs_with_diff_step1 hvars constrs infile_constrs in
-  let rec check_diff_one_constr constr diff_constrs =
+    let rec check_diff_one_constr constr diff_constrs =
       match diff_constrs with
-      | [] -> let e = (CF.formula_of_heap CF.HEmp no_pos,CF.formula_of_heap CF.HEmp no_pos) in
-	let (b,mix_mtls) = check_equiv_constr_with_diff hvars constr e [] in
-	let count_hd =  count_constr mix_mtls in
-	(count_hd,e,mix_mtls,[])
-      | [x] -> (
-	let (b,mix_mtls) = check_equiv_constr_with_diff hvars constr x [] in
-	let count_hd =  count_constr mix_mtls in
-	(count_hd,x,mix_mtls,[])
-      )
-      | x::y ->  (
-	let (mt,xt,mtls_t,rt) = check_diff_one_constr constr y in
-	let (mh,xh,mtls_h,rh) = check_diff_one_constr constr [x] in
-	if(mh <= mt) then (mh,xh,mtls_h,y)
-	else (mt,xt,mtls_t,x::rt)
-      )
-  in
-  let (res_list,_) = List.fold_left (fun (tmp_res,constrs) c  ->  let (m,x,mtls,r) = check_diff_one_constr c constrs in ((c,x,mtls)::tmp_res,r) ) ([],diff_constrs2)  diff_constrs1 in
-  (res,res_list)
+	| [] -> let e = (CF.formula_of_heap CF.HEmp no_pos,CF.formula_of_heap CF.HEmp no_pos) in
+		let (b,mix_mtls) = check_equiv_constr_with_diff hvars constr e [] in
+		let count_hd =  count_constr mix_mtls in
+		(count_hd,e,mix_mtls,[])
+	| [x] -> (
+	  let (b,mix_mtls) = check_equiv_constr_with_diff hvars constr x [] in
+	  let count_hd =  count_constr mix_mtls in
+	  (count_hd,x,mix_mtls,[])
+	)
+	| x::y ->  (
+	  let (mt,xt,mtls_t,rt) = check_diff_one_constr constr y in
+	  let (mh,xh,mtls_h,rh) = check_diff_one_constr constr [x] in
+	  if(mh <= mt) then (mh,xh,mtls_h,y)
+	  else (mt,xt,mtls_t,x::rt)
+	)
+    in
+    if(List.length diff_constrs1 != 0) then  (
+      let (res_list,_) = List.fold_left (fun (tmp_res,constrs) c  ->  let (m,x,mtls,r) = check_diff_one_constr c constrs in ((c,x,mtls)::tmp_res,r) ) ([],diff_constrs2)  diff_constrs1 in
+      (res,res_list)
+    )
+    else (
+      let e = (CF.formula_of_heap CF.HEmp no_pos,CF.formula_of_heap CF.HEmp no_pos) in
+      let (res_list,_) = List.fold_left (fun (tmp_res,constrs) c  ->  let (m,x,mtls,r) = check_diff_one_constr e constrs in ((e,x,mtls)::tmp_res,r) ) ([],diff_constrs2)  diff_constrs2 in
+      (res,res_list)
+    )
 
 let rec checkeq_constrs_with_diff hvars (constrs: (CF.formula * CF.formula) list) ( infile_constrs: (CF.formula * CF.formula) list)=
   let pr1 = pr_list_ln (pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula) in
