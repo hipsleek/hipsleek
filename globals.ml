@@ -125,15 +125,6 @@ type perm_type =
   
 let perm = ref NoPerm
 
-(* let rec string_of_prim_type = function  *)
-(*   | Bool          -> "boolean" *)
-(*   | Float         -> "float" *)
-(*   | Int           -> "int" *)
-(*   | Void          -> "void" *)
-(*   | TVar i       -> "TVar["^(string_of_int i)^"]" *)
-(*   | BagT t        -> "bag("^(string_of_prim_type t)^")" *)
-(*   | List          -> "list" *)
-
 let no_pos = 
 	let no_pos1 = { Lexing.pos_fname = "";
 				   Lexing.pos_lnum = 0;
@@ -306,16 +297,23 @@ let proving_info () =
 	
 
 let wrap_proving_kind (str : string) exec_function args =
-  if (!proof_logging_txt) then
+  if (!sleek_logging_txt || !proof_logging_txt) then
     begin
       let b = proving_kind # is_avail in
       let m = proving_kind # get in
-      let _ = proving_kind # set str in 	
-      let res = exec_function args in
-      let _ =  
-        if b then proving_kind # set m 
-        else proving_kind # reset
+      let _ = proving_kind # set str in
+ 	  try 
+        let res = exec_function args in
+        let _ =  
+          if b then proving_kind # set m 
+          else proving_kind # reset
         in res
+      with _ as e ->
+          begin
+            (if b then proving_kind # set m 
+            else proving_kind # reset);
+            raise e
+          end
     end
   else 	
     let res = exec_function args 
@@ -353,7 +351,6 @@ let rec string_of_typ (x:typ) : string = match x with
   | Tree_sh		  -> "Tsh"
   | RelT        -> "RelT"
   | HpT        -> "HpT"
-  (* | Prim t -> string_of_prim_type t  *)
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k == 0) then "" else "[]" ^ (repeat (k-1)) in
@@ -376,7 +373,6 @@ let rec string_of_typ_alpha = function
   | List t        -> "list_"^(string_of_typ t)
   | RelT        -> "RelT"
   | HpT        -> "HpT"
-  (* | Prim t -> string_of_prim_type t  *)
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in
@@ -993,3 +989,18 @@ let norm_file_name str =
 		if str.[i] = '.' || str.[i] = '/' then str.[i] <- '_'
 	done;
 	str
+
+let wrap_classic et f a =
+  let flag = !do_classic_frame_rule in
+  do_classic_frame_rule := (match et with
+    | None -> !opt_classic
+    | Some b -> b);
+  try 
+    let res = f a in
+    (* restore flag do_classic_frame_rule  *)
+    do_classic_frame_rule := flag;
+    res
+  with _ as e ->
+      (do_classic_frame_rule := flag;
+      raise e)
+

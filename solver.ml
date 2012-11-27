@@ -4680,7 +4680,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let r = hec a b c in
     let _ = hec_stack # pop in
     let (lc,_) = r in
-    let _ = Log.add_new_sleek_logging_entry caller avoid hec_num slk_no ante conseq consumed_heap evars lc pos in
+    let _ = Log.add_new_sleek_logging_entry !Globals.do_classic_frame_rule caller avoid hec_num slk_no ante conseq consumed_heap evars lc pos in
       r
   in
   Debug.no_3_num hec_num "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula

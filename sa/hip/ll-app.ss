@@ -1,4 +1,4 @@
-hdata node {
+data node {
 	int val; 
 	node next;	
 }
@@ -10,9 +10,11 @@ HeapPred H4(node a).
 HeapPred G1(node a, node b).
 HeapPred G2(node a, node b).
 
+/*
 ls<> == self=null 
   or self::node<_,q>*q::ls<>
  inv true;
+*/
 
 void append(ref node x, node y)
 /*
