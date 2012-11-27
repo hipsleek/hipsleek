@@ -4,7 +4,7 @@ data node {
 }
 
 HeapPred H(node a).
-HeapPred G(node a, node b).
+HeapPred G(node a, node c, node b).
 
 /*
   requires x::node<_,q>
@@ -15,15 +15,14 @@ HeapPred G(node a, node b).
 node get_next(ref node x)
   infer[H,G]
   requires H(x)
-  ensures G(x',res);//'
-/*
-[ H(x)&true --> x::node<val_36_510',next_36_511'> * HP_526(next_36_511')&true,
- HP_526(res) * x'::node<val_36_533,next_37_514'>&
-  next_37_514'=null --> G(x',res)&true]
+  ensures G(x',x,res);//'
+            /*
+Got:
+ass hprel: [ HP_527(res) * x'::node<val_22_534,next_23_515'>&x=x' & 
+  next_23_515'=null --> G(x',x,res)&true]
+which differs from:
 
- H(x_542) ::= x_542::node<val_36_510',HP_526_res_549>&true,
- G(x',res) ::= x'::node<val_36_533,next_37_514'>&next_37_514'=null & HP_526_r es_549=res
-*/
+             */
 {
   node tmp = x.next;
   x.next = null;

@@ -17,16 +17,18 @@ node get_next(ref node x)
   requires H(x)
   ensures G(x',res);//'
 /*
-[ H(x)&true --> x::node<val_36_510',next_36_511'> * HP_526(next_36_511')&true,
- HP_526(res) * x'::node<val_36_533,next_37_514'>&
-  next_37_514'=null --> G(x',res)&true]
+[ H(x)&true --> x::node<val_28_510',next_28_511'> * HP_523(next_28_511')&true,
+ HP_523(res) * x'::node<val_28_527,res>&true --> G(x',res)&true]
+*************************************
 
- H(x_542) ::= x_542::node<val_36_510',HP_526_res_549>&true,
- G(x',res) ::= x'::node<val_36_533,next_37_514'>&next_37_514'=null & HP_526_r es_549=res
+*************************************
+*******relational definition ********
+*************************************
+[ H(x_530) ::= x_530::node<val_28_510',HP_523_res_533>&true,
+ G(x_531,res_532) ::= x_531::node<val_28_527,res_532>&HP_523_res_533=res_532]
 */
 {
   node tmp = x.next;
-  x.next = null;
   return tmp;
 }
 

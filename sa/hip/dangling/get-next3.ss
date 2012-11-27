@@ -27,7 +27,7 @@ node get_next(ref node x)
 {
   node tmp = x.next;
   x.next = null;
-  return tmp;
+  return x;
 }
 
 /*
