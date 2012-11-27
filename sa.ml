@@ -3436,10 +3436,10 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels hp_rel_unkmap :(CF.
     else ()
   in
   (* step 1: drop irr parameters *)
-  let drop_hp_args,constrs = elim_redundant_paras_lst_constr prog hp_constrs in
-  Debug.ninfo_hprint (add_str "   AFTER DROP: " (pr_list_ln Cprinter.string_of_hprel)) constrs no_pos;
+  (* let drop_hp_args,constrs = elim_redundant_paras_lst_constr prog hp_constrs in *)
+  (* Debug.ninfo_hprint (add_str "   AFTER DROP: " (pr_list_ln Cprinter.string_of_hprel)) constrs no_pos; *)
   DD.ninfo_pprint ">>>>>> step 1b: split arguments: currently omitted <<<<<<" no_pos;
-  let constrs1b, split_tb_hp_defs_split = split_hp prog constrs in
+  let constrs1b, split_tb_hp_defs_split = split_hp prog hp_constrs in
   DD.ninfo_pprint ">>>>>> step 1c: find unknown ptrs<<<<<<" no_pos;
   let constrs1c,unk_hps,hp_defs_split = analize_unk prog hp_rel_unkmap constrs1b in
   (* step 1': split HP *)
@@ -3549,12 +3549,12 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels hp_rel_unkmap :(CF.
         let hp = SAU.get_hpdef_name hprc in
         CP.mem_svl hp sel_hp_rels
     ) hp_defs3 in
-  let sel_hpdefs1 = SAU.recover_dropped_args drop_hp_args sel_hpdefs in
+  let sel_hpdefs1 = (* SAU.recover_dropped_args drop_hp_args *) sel_hpdefs in
   let hp_defs4 = rems@sel_hpdefs1 in
   let sel_hp_defs = collect_sel_hp_def hp_defs4 sel_hp_rels unk_hp_svl1 m in
   let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) sel_hp_defs in
   (*for cp*)
-  let dropped_hps = List.filter (fun (hp,_,_) -> not(CP.mem_svl hp sel_hp_rels)) drop_hp_args in
+  let dropped_hps = (* List.filter (fun (hp,_,_) -> not(CP.mem_svl hp sel_hp_rels)) drop_hp_args *)[] in
   (constr3, hp_defs4, dropped_hps) (*return for cp*)
 
 (*(pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula)*)

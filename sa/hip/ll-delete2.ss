@@ -5,7 +5,7 @@ data node {
 
 node dispose(ref node x)
   requires x::node<_,_>
-  ensures res=null;//'
+  ensures res=null & x'=null;//'
 
 HeapPred D(node a).
 HeapPred E(node a, node b).
