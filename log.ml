@@ -57,7 +57,7 @@ type sleek_log_entry = {
   (*   | BINDING -> "BINDING" *)
   (*   | ASSERTION -> "ASSERTION" *)
 
-let string_of_sleek_proving_kind () = Globals.proving_kind#get
+let string_of_sleek_proving_kind () = Globals.proving_kind#string_of
 
 let pr_sleek_log_entry e=
   fmt_open_box 1;
