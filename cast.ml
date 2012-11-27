@@ -1717,10 +1717,10 @@ let addin_callgraph_of_exp (cg:IG.t) exp mnv : IG.t =
   let f e = 
     match e with
     | ICall e ->
-      let _ = print_endline (mnv ^ " -> " ^ e.exp_icall_method_name) in
+      (* let _ = print_endline (mnv ^ " -> " ^ e.exp_icall_method_name) in *)
       Some (IG.add_edge cg mnv e.exp_icall_method_name)
     | SCall e ->
-      let _ = print_endline (mnv ^ " -> " ^ e.exp_scall_method_name) in
+      (* let _ = print_endline (mnv ^ " -> " ^ e.exp_scall_method_name) in *)
       Some (IG.add_edge cg mnv e.exp_scall_method_name)
     | _ -> None
   in
