@@ -1025,7 +1025,7 @@ and check_scall_release prog ctx e0 (post_start_label:formula_label) ret_t mn lo
       
 and check_exp prog proc ctx (e0:exp) label =
   let pr = Cprinter.string_of_list_failesc_context in
-  Debug.ho_2 "check_exp" pr (Cprinter.string_of_exp) pr (fun _ _ ->
+  Debug.no_2 "check_exp" pr (Cprinter.string_of_exp) pr (fun _ _ ->
       Gen.Profiling.push_time "check_exp_a"; 
       let res = check_exp_a prog proc ctx e0 label in
       Gen.Profiling.pop_time "check_exp_a"; res) ctx e0
@@ -1902,11 +1902,11 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   let pr = Cprinter.string_of_list_partial_context in
   let pr1 = Cprinter.string_of_formula in
   (*  let pr2 = Cprinter.string_of_list_partial_context in*)
-  let _ = Debug.info_pprint "CG dont trust 0" pos; flush(stdout) in
+  (* let _ = Debug.info_pprint "CG dont trust 0" pos; flush(stdout) in *)
   (* let _ = Log.update_sleek_proving_kind Log.POST in *)
-  let _ = Debug.info_pprint "CG dont trust" pos; flush(stdout) in
-  let f = wrap_proving_kind "POST1" (check_post_x prog proc ctx post pos pid) in
-  Debug.ho_2_loop "check_post" pr pr1 pr (fun _ _ -> f etype) ctx post
+  (* let _ = Debug.info_pprint "CG dont trust" pos; flush(stdout) in *)
+  let f = wrap_proving_kind "POST" (check_post_x prog proc ctx post pos pid) in
+  Debug.no_2_loop "check_post" pr pr1 pr (fun _ _ -> f etype) ctx post
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
   wrap_classic etype (check_post_x_x prog proc ctx post pos) pid

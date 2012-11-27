@@ -1003,3 +1003,4 @@ let wrap_classic et f a =
   with _ as e ->
       (do_classic_frame_rule := flag;
       raise e)
+

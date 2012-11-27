@@ -1721,3 +1721,11 @@ end;;
 
 include Basic
 include SysUti
+
+let try_finally e f a g =
+  let flag = e () in
+  try
+    let r = f a in
+    (g flag; r)
+  with _ as e -> 
+    (g flag; raise e)
