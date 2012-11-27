@@ -17,11 +17,11 @@ node get_next(ref node x)
   requires H(x)
   ensures G(x',res);//'
             /*
-[ H(x)&true --> x::node<val_20_510',next_20_511'> * HP_526(next_20_511')&true,
- HP_526(next_21_534) * x'::node<val_20_533,next_21_514'>&
-  next_21_514'=null --> G(x',next_21_534)&true]
+[ H(x)&true --> x::node<val_36_510',next_36_511'> * HP_526(next_36_511')&true,
+ HP_526(res) * x'::node<val_36_533,next_37_514'>&
+  next_37_514'=null --> G(x',res)&true]
 
-  // WHY didn't we preserve "res", as captured below:
+  // which tallies with below:
 
  checkentail HP_526(next_28_534) * x'::node<val_27_533,next_28_514'>@M[Orig]&x=x' & 
 next_28_514'=null & next_28_534=v_node_29_515' & res=v_node_29_515'&
