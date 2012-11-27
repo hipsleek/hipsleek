@@ -258,7 +258,9 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
   let pr2 = add_str "inferred rels" (fun l -> string_of_int (List.length l)) in
   let pr2a = add_str "formulae" (pr_list Cprinter.string_of_formula) in
   let pr2b = add_str "inferred hp rels" (fun l -> string_of_int (List.length l)) in
-  let pr3 = pr_penta pr1 pr2a  pr2 pr2b string_of_bool in
+  let pr4 = Cprinter.string_of_spec_var_list in
+  let pr5 = pr_list (pr_pair Cprinter.string_of_spec_var pr4) in
+  let pr3 = pr_hepta pr1 pr2a  pr2 pr2b pr4 pr5 string_of_bool in
   let f = wrap_proving_kind "CHECK-SPECS" (check_specs_infer_a prog proc ctx e0 do_infer) in
   Debug.no_1 "check_specs_infer" pr1 pr3
       (fun _ -> f spec_list) spec_list

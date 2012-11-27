@@ -1,5 +1,6 @@
 HeapPred HP_2(node a, node b).
 HeapPred HP_1(node a).
+HeapPred HP_1a(node a).
 HeapPred HP_621(node a).
 HeapPred HP_606(node a).
 
@@ -14,9 +15,9 @@ ass [D,E][]:{
  }
 
 hpdefs [D,E][]:{
-  E(x,v) -->
-     x=null & x=v
-   or x::node<_,p> * E(p,_)& v=null;
+  E(x,v) -->  HP_1(x) * HP_1a(v);
+  HP_1(x) --> x=null or x::node<_,p>*HP_1(p);
+  HP_1a(x) --> x=null;
   D(x) --> x=null or x::node<_,p>*D(p)
 
  }

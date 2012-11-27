@@ -246,13 +246,9 @@ AST translation
 module Name =
   struct
     type t = ident
-    
     let compare = compare
-      
     let hash = Hashtbl.hash
-      
     let equal = ( = )
-      
   end
   
 module NG = Graph.Imperative.Digraph.Concrete(Name)

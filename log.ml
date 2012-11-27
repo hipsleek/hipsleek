@@ -8,7 +8,7 @@ open Cprinter
 module CP = Cpure
 module CF = Cformula
 
-type proof_type = 
+type proof_type =
 	| IMPLY of (CP.formula * CP.formula)
 	| SAT of CP.formula
 	| SIMPLIFY of CP.formula
@@ -27,11 +27,11 @@ type proof_log = {
 	log_res : proof_res;
 }
 
-type sleek_proving_kind =
-	| POST
-	| PRE
-	| BINDING
-    | ASSERTION
+(* type sleek_proving_kind = *)
+(* 	| POST *)
+(* 	| PRE *)
+(* 	| BINDING *)
+(*     | ASSERTION *)
 
 type sleek_log_entry = {
     sleek_proving_id :int;
@@ -50,12 +50,14 @@ type sleek_log_entry = {
     sleek_proving_res : CF.list_context;
 }
 
-let string_of_sleek_proving_kind t=
-  match t with
-    | POST -> "POST"
-	| PRE -> "PRE"
-	| BINDING -> "BINDING"
-    | ASSERTION -> "ASSERTION"
+(* let string_of_sleek_proving_kind t= *)
+  (* match t with *)
+  (*   | POST -> "POST" *)
+  (*   | PRE -> "PRE" *)
+  (*   | BINDING -> "BINDING" *)
+  (*   | ASSERTION -> "ASSERTION" *)
+
+let string_of_sleek_proving_kind () = Globals.proving_kind#string_of
 
 let pr_sleek_log_entry e=
   fmt_open_box 1;

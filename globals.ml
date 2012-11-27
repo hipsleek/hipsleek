@@ -297,7 +297,7 @@ let proving_info () =
 	
 
 let wrap_proving_kind (str : string) exec_function args =
-  if (!sleek_logging_txt || !proof_logging_txt) then
+  (* if (!sleek_logging_txt || !proof_logging_txt) then *)
     begin
       let b = proving_kind # is_avail in
       let m = proving_kind # get in
@@ -315,9 +315,9 @@ let wrap_proving_kind (str : string) exec_function args =
             raise e
           end
     end
-  else 	
-    let res = exec_function args 
-    in res
+  (* else 	 *)
+  (*   let res = exec_function args  *)
+  (*   in res *)
  
 (* let wrap_proving_kind (str : string) exec_function args = *)
 (*   Debug.no_1 "wrap_proving_kind" pr_id pr_none  *)
