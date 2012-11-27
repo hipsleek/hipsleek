@@ -1,4 +1,5 @@
 open Globals
+open GlobProver
 open Gen.Basic
 open Cpure
 (* open Rtc_new_stable *)
@@ -469,7 +470,7 @@ let remove_file filename =
   try Sys.remove filename;
   with e -> ignore e
 
-let set_process (proc: Globals.prover_process_t) =
+let set_process (proc: prover_process_t) =
   minisat_process := proc
 
 let start () =

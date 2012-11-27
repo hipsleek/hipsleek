@@ -295,12 +295,19 @@ let _ =
         let s_m = !Tpdispatcher.cache_sat_miss in
         let i_c = !Tpdispatcher.cache_imply_count in
         let i_m = !Tpdispatcher.cache_imply_miss in
-        print_endline ("\nSAT Count   : "^(string_of_int s_c)); 
-        print_endline ("SAT % Hit   : "^(string_of_hit_percent s_c s_m));
-        print_endline ("IMPLY Count : "^(string_of_int i_c)); 
-        print_endline ("IMPLY % Hit : "^(string_of_hit_percent i_c i_m))
-        ;(Gen.Profiling.print_info_task "cache overhead")
-      end
+        if s_c>0 then
+          begin
+            print_endline ("\nSAT Count   : "^(string_of_int s_c)); 
+            print_endline ("SAT % Hit   : "^(string_of_hit_percent s_c s_m))
+          end;
+        if i_c>0 then
+          begin
+            print_endline ("IMPLY Count : "^(string_of_int i_c)); 
+            print_endline ("IMPLY % Hit : "^(string_of_hit_percent i_c i_m))
+           end;
+        if i_c+s_c>0 then (Gen.Profiling.print_info_task "cache overhead")
+        else ()
+     end
           else ()
     in
     let ptime4 = Unix.times () in

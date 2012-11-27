@@ -1,4 +1,5 @@
 open Globals
+open GlobProver
 open Gen.Basic
 module CP = Cpure
 
@@ -549,7 +550,7 @@ let path_to_z3 = "z3" (*"z3"*)
 let smtsolver_name = ref ("z3": string)
 (*let command_for prover ("z3", path_to_z3, [|"z3"; "-smt2"; infile; ("> "^ outfile)|] )*)
 
-let set_process (proc: Globals.prover_process_t) = 
+let set_process (proc: prover_process_t) = 
   prover_process := proc
 
 (*for z3-2.19*)

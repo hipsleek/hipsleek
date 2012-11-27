@@ -1,4 +1,5 @@
 open Globals 
+open GlobProver
 open Stat_global
 open Gen.Basic
 open Printf
@@ -41,6 +42,8 @@ type sleek_log_entry = {
     sleek_proving_kind : sleek_proving_kind;
     sleek_proving_ante: CF.formula;
     sleek_proving_conseq: CF.formula;
+    sleek_proving_c_heap: CF.h_formula;
+    sleek_proving_evars: CP.spec_var list;
     sleek_proving_hprel_ass: CF.hprel list;
     sleek_proving_res : CF.list_context;
 }
@@ -62,6 +65,8 @@ let pr_sleek_log_entry e=
   fmt_string ("; line: " ^ (Globals.line_number_of_pos e.sleek_proving_pos)) ;
   fmt_string ("; kind: " ^ (string_of_sleek_proving_kind e.sleek_proving_kind)) ;
   fmt_string ("; hec_num: " ^ (string_of_int e.sleek_proving_hec)) ;
+  fmt_string ("; evars: " ^ (Cprinter.string_of_spec_var_list e.sleek_proving_evars)) ;
+  fmt_string ("; c_heap:" ^ (Cprinter.string_of_h_formula e.sleek_proving_c_heap)) ;
   fmt_string "\n checkentail";
   fmt_string (Cprinter.string_of_formula e.sleek_proving_ante);
   fmt_string "\n |- ";
@@ -87,7 +92,10 @@ let sleek_log_stk : sleek_log_entry  Gen.stack_filter
 
 let sleek_proving_kind = ref (POST : sleek_proving_kind)
 let sleek_proving_id = ref (0 : int)
-let sleek_proving_hprel_ass = ref ([] : CF.hprel list)
+(* let current_hprel_ass = ref ([] : CF.hprel list) *)
+let current_hprel_ass_stk : CF.hprel  Gen.stack_pr 
+      = new Gen.stack_pr Cprinter.string_of_hprel_short (==) 
+
 
 let get_sleek_proving_id ()=
   let r = !sleek_proving_id in
@@ -102,7 +110,8 @@ let update_sleek_proving_kind k= let _ = sleek_proving_kind:= k in ()
 
 (* TODO : add result into the log printing *)
 (* wrong order number indicates recursive invocations *)
-let add_new_sleek_logging_entry caller avoid hec slk_no ante conseq (result:CF.list_context) pos=
+let add_new_sleek_logging_entry caller avoid hec slk_no ante conseq 
+      consumed_heap evars (result:CF.list_context) pos=
   if !Globals.sleek_logging_txt then
     let sleek_log_entry = {
         (* sleek_proving_id = get_sleek_proving_id (); *)
@@ -114,13 +123,15 @@ let add_new_sleek_logging_entry caller avoid hec slk_no ante conseq (result:CF.l
         sleek_proving_kind = !sleek_proving_kind;
         sleek_proving_ante = ante;
         sleek_proving_conseq = conseq;
-        sleek_proving_hprel_ass = !sleek_proving_hprel_ass;
+        sleek_proving_hprel_ass = current_hprel_ass_stk # get_stk;
+        sleek_proving_c_heap = consumed_heap;
+        sleek_proving_evars = evars;
         sleek_proving_res = result;
     }
     in
     let _ = sleek_log_stk # push sleek_log_entry in
-    let _ = sleek_proving_hprel_ass := [] in
-    ()
+    (if not(avoid) then current_hprel_ass_stk # reset)
+        ; ()
   else ()
 
 let find_bool_proof_res pno =
@@ -343,10 +354,10 @@ let process_proof_logging ()=
       end
   else ()
 
-let add_sleek_log_entry e=
-  if !Globals.sleek_logging_txt then
-    sleek_log_stk # push e
-  else ()
+(* let add_sleek_log_entry e= *)
+(*   if !Globals.sleek_logging_txt then *)
+(*     sleek_log_stk # push e *)
+(*   else () *)
 
 
 

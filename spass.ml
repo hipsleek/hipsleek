@@ -1,4 +1,5 @@
 open Globals
+open GlobProver
 open Gen.Basic
 open Cpure
 
@@ -395,7 +396,7 @@ let remove_file filename =
   try Sys.remove filename;
   with e -> ignore e
 
-let set_process (proc: Globals.prover_process_t) =
+let set_process (proc: prover_process_t) =
   spass_process := proc
 
 let start () =

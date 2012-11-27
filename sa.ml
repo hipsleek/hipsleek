@@ -262,7 +262,12 @@ let get_hp_split_cands_one_cs prog unk_hps lhs rhs=
             let part3 = CP.remove_dups_svl (a::(CP.intersect_svl part2a tl)) in
             part_helper (CP.diff_svl tl part3) (new_parts@[part2b@part3])
     in
-    part_helper args []
+    let parts = part_helper args [] in
+    (*if all args is partitioned in one group, do not split*)
+    match parts with
+      | [args0] -> if List.length args0 = List.length args then []
+          else parts
+      | _ -> parts
   in
   let lhns, lhvs, lhrs = CF.get_hp_rel_formula lhs in
   let rhns, rhvs, rhrs = CF.get_hp_rel_formula rhs in
@@ -275,10 +280,10 @@ let get_hp_split_cands_one_cs prog unk_hps lhs rhs=
   let cands2 = List.map (fun (hp,el,l) ->
       let args = List.concat (List.map CP.afv el) in
       let parts = do_partition (lhns@rhns) (lhvs@rhvs) (leqs@reqs) args in
-      (hp,args, parts,l)
+     (hp,args, parts,l)
   ) cands1
   in
-  cands2
+  (cands2)
 
 let get_hp_split_cands_x prog constrs=
  List.concat (List.map (fun cs -> get_hp_split_cands_one_cs prog (List.map fst cs.CF.unk_hps)
@@ -331,7 +336,7 @@ let check_split_global_x prog cands =
         | hd::_ -> hd
     in
     let size = List.length parts0 in
-    if List.exists (fun (_,args1,parts1,_) -> (List.length parts1)!=size) (List.tl grp) then
+    if size = 0 || List.exists (fun (_,args1,parts1,_) -> (List.length parts1)!=size) (List.tl grp) then
       []
     else
       let tl_parts = parts_norm args0 (List.tl grp) [] in
@@ -408,19 +413,29 @@ let split_hp prog hp_constrs:(CF.hprel list *
 (*=============UNKOWN================*)
 (*find diff for each hrel*)
 (*return unk_hp_locs * full_unk_args_locs*)
-let build_hp_unk_locs known_svl fn_cmp (hp_name, args)=
+let build_hp_unk_locs known_svl unk_hps fn_cmp (hp_name, args)=
    let rec helper args res index all=
     match args with
       | [] -> res
       | a::ass -> if (fn_cmp a all) (* || not(CP.is_node_typ a) *) then
             helper ass res (index+1) all
           else helper ass (res@[index]) (index+1) all
+   in
+   let rec helper1 args res index=
+    match args with
+      | [] -> res
+      | a::ass -> helper1 ass (res@[index]) (index+1)
   in
   let get_unk_ptr all_ptrs (hp_name, largs)=
     (* if all_ptrs = [] then [(hp_name,[-1])] (\*[] mean dont have any information*\) *)
     (* else *)
       begin
-          let res = helper largs [] 0 all_ptrs in
+          let res =
+            if CP.mem_svl hp_name unk_hps then
+              helper1 largs [] 0 (*this is a dangling predicate*)
+            else
+              helper largs [] 0 all_ptrs
+          in
           if res = [] then ([(hp_name,[-1])],[]) (*renturn -1 to indicate that none is allowed to drop*)
           else
             (*check full unk hp*)
@@ -436,7 +451,7 @@ let build_hp_unk_locs known_svl fn_cmp (hp_name, args)=
   get_unk_ptr known_svl (hp_name, args)
 
 (*analysis unknown information*)
-let rec analize_unk_one prog constr =
+let rec analize_unk_one prog unk_hps constr =
   let _ = Debug.ninfo_pprint ("   hrel: " ^ (Cprinter.string_of_hprel constr)) no_pos in
  (*remove hrel and returns hprel_args*)
   (*lhs*)
@@ -446,13 +461,13 @@ let rec analize_unk_one prog constr =
 (*find fv of lhs + rhs wo hrels*)
   (* let lsvl = SAU.get_raw_defined_w_pure prog lhs1 in *)
   (* let rsvl = SAU.get_raw_defined_w_pure prog rhs1 in *)
-  let svl = SAU.get_raw_defined_w_pure prog lhs1 rhs1 in
+  let svl = SAU.get_raw_defined_w_pure prog constr.CF.predef_svl lhs1 rhs1 in
   (*return*)
-  let unk_hp_locs,unk_hp_args_locs = List.split (List.map (build_hp_unk_locs (svl@constr.CF.predef_svl) CP.mem_svl) (lhrels@rhrels)) in
+  let unk_hp_locs,unk_hp_args_locs = List.split (List.map (build_hp_unk_locs (svl) unk_hps CP.mem_svl) (lhrels@rhrels)) in
   (List.concat  unk_hp_locs, List.concat unk_hp_args_locs)
 
 
-and double_check_unk unk_hp_locs cs_hprels=
+and double_check_unk unk_hp_locs unk_hps cs_hprels=
   (*return: unk_args*)
   let rec retrieve_args_one_hp ls (hp,args)=
     match ls with
@@ -481,7 +496,7 @@ and double_check_unk unk_hp_locs cs_hprels=
       (*actually unk = poss unk - non-unk*)
     let real_unk_svl_hps = Gen.BList.difference_eq CP.eq_spec_var poss_unk_svl_hps
       cs_non_unk_svl in
-    let ls_unk_hps_locs, ls_unk_hps_args_locs = List.split (List.map (build_hp_unk_locs real_unk_svl_hps
+    let ls_unk_hps_locs, ls_unk_hps_args_locs = List.split (List.map (build_hp_unk_locs real_unk_svl_hps unk_hps
                                                                           (fun a ls -> not( CP.mem_svl a ls))) (cs_unk_hps))
     in
     (List.concat ls_unk_hps_locs, List.concat ls_unk_hps_args_locs)
@@ -490,7 +505,7 @@ and double_check_unk unk_hp_locs cs_hprels=
 
 (*this method has the same structure with elim_redundant_paras_lst_constr_x,
 should use higher-order when stab.*)
-and analize_unk prog constrs =
+and analize_unk prog hp_rel_unkmap constrs =
   let rec partition_cands_by_hp_name unks parts=
     match unks with
       | [] -> parts
@@ -526,7 +541,8 @@ and analize_unk prog constrs =
     (Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) unk_hp_locs2,
      Gen.BList.remove_dups_eq (fun (hp1,_,_) (hp2,_,_) -> CP.eq_spec_var hp1 hp2) full_unk_hp_args2_locs)
   in
-  let ls_unk_cands,ls_full_unk_cands_w_args = List.split (List.map (analize_unk_one prog) constrs) in
+  let unk_hps = List.map fst hp_rel_unkmap in
+  let ls_unk_cands,ls_full_unk_cands_w_args = List.split (List.map (analize_unk_one prog  unk_hps) constrs) in
   let unk_hp_args01,_ = helper (ls_unk_cands,ls_full_unk_cands_w_args) in
   (*for debugging*)
   let _ = Debug.ninfo_pprint ("  unks 1: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
@@ -536,7 +552,7 @@ and analize_unk prog constrs =
   (*double check across one cs*)
   let ls_cs_hprels = List.map (fun cs -> (CF.get_HRels_f cs.CF.hprel_lhs)@(CF.get_HRels_f cs.CF.hprel_rhs)) constrs in
   let rec loop_helper unk_hp_locs0=
-    let ls_unk_cands,ls_full_unk_cands_w_args = List.split (List.map (double_check_unk unk_hp_locs0) ls_cs_hprels) in
+    let ls_unk_cands,ls_full_unk_cands_w_args = List.split (List.map (double_check_unk unk_hp_locs0 unk_hps) ls_cs_hprels) in
     let unk_hp_args02,full_unk_hp_args2_locs = helper (ls_unk_cands,ls_full_unk_cands_w_args) in
     let ls_unk_cands1 = Gen.BList.remove_dups_eq SAU.check_hp_locs_eq unk_hp_args02 in
     let _ = Debug.ninfo_pprint ("  ls_unk_cands1: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
@@ -1036,7 +1052,9 @@ let rec collect_par_defs_one_side_one_hp_aux_x prog f (hrel, args) def_ptrs
       eqs hd_nodes hv_nodes unk_hps unk_svl predef=
   begin
       Debug.ninfo_pprint (" hp: "^ (!CP.print_sv hrel)) no_pos;
-      let def_ptrs1 = (List.fold_left SAU.close_def def_ptrs eqs) in
+      let _ = DD.ninfo_pprint ("   def " ^(!CP.print_svl (def_ptrs@predef))) no_pos in
+      let def_ptrs1 = (List.fold_left SAU.close_def (def_ptrs@predef) eqs) in
+      let _ = DD.ninfo_pprint ("   def1 " ^(!CP.print_svl def_ptrs1)) no_pos in
       (*find definition in both lhs and rhs*)
       let undef_args = SAU.lookup_undef_args args [] def_ptrs1 in
       (*if root + next ptr is inside args: ll_all_13a: G***)
@@ -1153,7 +1171,8 @@ let rec collect_par_defs_one_side_one_hp_x_old prog lhs rhs (hrel, args) ldef_pt
       in
       let rprocess_helper def_ptrs=
       (*find definition in lhs*)
-        let undef_args = SAU.lookup_undef_args args [] def_ptrs in
+        let def_ptrs1 = (List.fold_left SAU.close_def (def_ptrs@predef) eqs) in
+        let undef_args = SAU.lookup_undef_args args [] def_ptrs1 in
         (*if root + next ptr is inside args: ll_all_13a: G***)
         let undef_args1 =  elim_direct_root_pto undef_args args prog hd_nodes hv_nodes in
         let test1= (List.length undef_args1) = 0 in
@@ -1363,13 +1382,16 @@ and collect_par_defs_two_side_one_hp_x prog lhs rhs (hrel, args)
           let lhf = List.fold_left (fun hf1 hf2 -> CF.mkStarH hf1 hf2 no_pos) (List.hd lhfs) (List.tl lhfs) in
           CF.mkAnd_f_hf pdef_rhs lhf (CF.pos_of_formula pdef_rhs)
       in
-      (hrel, args, [], pdef_cond ,None, Some bf),lhs
+      let pdefs = if SAU.is_trivial bf (hrel, args) then [] else
+        [(hrel, args, [], pdef_cond ,None, Some bf)]
+      in
+      (pdefs,lhs)
   in
   let rec loop_helper lhs1 ls res=
     match ls with
       | [] -> res,lhs1
       | r_sel_hp::ss -> let r,nlhs =  build_par_def lhs1 r_sel_hp in
-                        loop_helper nlhs ss (res@[r])
+                        loop_helper nlhs ss (res@r)
   in
   let rs,lhs_n = loop_helper lhs r_selected_hrels [] in
   let _ =  DD.ninfo_pprint ("  partial defs - two side: \n" ^
@@ -1456,18 +1478,20 @@ let collect_par_defs_recursive_hp_x prog lhs rhs (hrel, args) rec_args other_sid
          (hrel , rec_args, CP.intersect_svl args unk_svl ,plhs, Some plhs, Some prhs)
          (* (hrel , rec_args, CP.intersect_svl rec_args unk_svl ,plhs, Some prhs, Some plhs) *)
   in
-  let undef_args = SAU.lookup_undef_args args [] (def_ptrs) in
   let rec_pdefs =
-    if undef_args = [] then
-      let local_rec_def = (build_partial_def ([hrel],args@rec_args)) in
-      [local_rec_def]
-  else
-      let keep_args_in_rem = CP.diff_svl (args@rec_args) undef_args in
-      let ls_par_match =  [([hrel], CP.remove_dups_svl (keep_args_in_rem), undef_args)] in
-  (*find all hrel in rhs such that cover the same set of args*)
-      let r_selected_hrels = find_hrels_w_same_set_args other_side_hrels ls_par_match [] in
-      let local_rec_pdefs = List.map build_partial_def r_selected_hrels in
-      local_rec_pdefs
+    (*check trivial cases*)
+    (* if List.exists (fun hpargs1 -> SAU.check_hp_arg_eq (hrel, args) hpargs1) other_side_hrels then [] else *)
+      let undef_args = SAU.lookup_undef_args args [] (def_ptrs) in
+      if undef_args = [] then
+        let local_rec_def = (build_partial_def ([hrel],args@rec_args)) in
+        [local_rec_def]
+      else
+        let keep_args_in_rem = CP.diff_svl (args@rec_args) undef_args in
+        let ls_par_match =  [([hrel], CP.remove_dups_svl (keep_args_in_rem), undef_args)] in
+      (*find all hrel in rhs such that cover the same set of args*)
+        let r_selected_hrels = find_hrels_w_same_set_args other_side_hrels ls_par_match [] in
+        let local_rec_pdefs = List.map build_partial_def r_selected_hrels in
+        local_rec_pdefs
   in
   let _ = DD.ninfo_pprint ("  rec partial defs: \n" ^
               (let pr = pr_list_ln SAU.string_of_par_def_w_name in pr (rec_pdefs)) ) no_pos in
@@ -1561,11 +1585,12 @@ let rec collect_par_defs_one_constr_new_x prog constr =
   let runk_hps = Gen.BList.intersect_eq SAU.check_hp_arg_eq rhps constr.CF.unk_hps in
   let unk_pdefs,nlhs,nrhs = collect_par_defs_unk_hps lhs rhs lunk_hps runk_hps in
   (*CASE 1: formula --> hp*)
+  let lpredef = SAU.find_close (l_def_ptrs@cs_predef_ptrs) leqs in
+  let rpredef = SAU.find_close (r_def_ptrs) (leqs@reqs) in
   let lpdefs = List.concat (List.map (fun hrel ->
-     collect_par_defs_one_side_one_hp prog nlhs nrhs hrel (l_def_ptrs@cs_predef_ptrs) (r_def_ptrs) rnon_unk_hps leqs (l_dnodes@r_dnodes) (l_vnodes@r_vnodes) constr.CF.unk_hps constr.CF.unk_svl constr.CF.predef_svl) lnon_unk_hps) in
+     collect_par_defs_one_side_one_hp prog nlhs nrhs hrel lpredef rpredef rnon_unk_hps leqs (l_dnodes@r_dnodes) (l_vnodes@r_vnodes) constr.CF.unk_hps constr.CF.unk_svl constr.CF.predef_svl) lnon_unk_hps) in
   let rpdefs = List.concat (List.map (fun hrel ->
-      collect_par_defs_one_side_one_hp_rhs prog nlhs nrhs hrel
-          (l_def_ptrs@cs_predef_ptrs) lnon_unk_hps
+      collect_par_defs_one_side_one_hp_rhs prog nlhs nrhs hrel lpredef lnon_unk_hps
           (leqs@reqs) (l_dnodes@r_dnodes) (l_vnodes@r_vnodes) constr.CF.unk_hps constr.CF.unk_svl constr.CF.predef_svl)
                                rnon_unk_hps) in
   (*CASE2: hp1(x1,x2,x3) --> h2(x1,x2,x3)* formula: hp such that have the same set of args in both sides - call in side lhs*)
@@ -2920,10 +2945,12 @@ let get_unk_hps_relation_x prog hpdefs cs=
     if lunk_hps = [] || runk_hps = [] then ([],[cs])
     else
       let rels = List.concat (List.map
-                       (fun a -> List.map (fun b -> (a,b)) runk_hps)
+                       (fun (hp1,args1) -> List.map (fun (hp2,args2) ->
+                           if CP.intersect_svl args1 args2 = [] then []
+                           else [((hp1,args1),(hp2,args2))]) runk_hps)
                        lunk_hps)
       in
-      (rels,[cs])
+      (List.concat rels,[cs])
   in
   let cs3=
     if (rem_cs1@rem_cs2) = [] then []
@@ -3018,18 +3045,24 @@ let generalize_hps_x prog unk_hps cs par_defs=
 (*for each constraints, we may pick more definitions*)
   (* let cs1 = List.map (drop_unk_hps unk_hps) cs in *)
   let remain_constr, hp_def1 = generalize_hps_cs prog hp_names (List.map (fun (hp,_) -> hp) unk_hps) cs in
-  let remain_constr0,hp_def2,unk_rels = split3 (List.map (get_unk_hps_relation prog (hp_defs@hp_def1)) remain_constr) in
+  let remain_constr0,hp_def2,ls_unk_rels = split3 (List.map (get_unk_hps_relation prog (hp_defs@hp_def1)) remain_constr) in
   let hpdef21 = (List.concat hp_def2) in
-  let hpdefs3 = generate_defs_from_unk_rels prog (List.concat unk_rels) in
+  let unk_rels = (List.concat ls_unk_rels) in
+  let hpdefs3 = generate_defs_from_unk_rels prog unk_rels in
   let hpdef22 = SAU.combine_hpdefs (hpdef21@hpdefs3) in
-  (List.concat remain_constr0, (hp_defs@hp_def1)@hpdef22,unk_hps)
+  let get_unk_rel r ((hp1,args1),(hp2,args2))=
+    if List.length args1 = List.length args2 then r@[(hp1,hp2)] else r
+  in
+  (List.concat remain_constr0, (hp_defs@hp_def1)@hpdef22,unk_hps,
+   List.fold_left get_unk_rel [] unk_rels)
 
 let generalize_hps prog unk_hps cs par_defs=
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2 = pr_list_ln SAU.string_of_par_def_w_name in
   let pr3 = pr_list Cprinter.string_of_hp_rel_def in
   let pr4 = pr_list(pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var_list) in
-  Debug.no_2 "generalize_hp" pr1 pr2 (pr_triple pr1 pr3 pr4)
+  let pr5 = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) in
+  Debug.no_2 "generalize_hp" pr1 pr2 (pr_quad pr1 pr3 pr4 pr5)
       (fun _ _ -> generalize_hps_x prog unk_hps cs par_defs) cs par_defs
 
 (*========END generalization==========*)
@@ -3127,31 +3160,74 @@ let generate_hp_def_from_split prog hpdefs hp_defs_split unk_hpargs=
   Debug.no_2 "generate_hp_def_from_split" pr1 pr2 pr1
       (fun _ _ -> generate_hp_def_from_split_x prog hpdefs hp_defs_split unk_hpargs) hpdefs hp_defs_split
 
-let generate_hp_def_from_unk_hps unk_hps=
-  let transform_hp_unk pos (hp,args)=
-    let hp_name = CP.name_of_spec_var hp in
-    let ps,fr_svl = List.split (List.map (fun sv ->
-        let fr_sv = CP.fresh_spec_var_prefix hp_name sv in
-        (CP.mkPtrEqn sv fr_sv pos, fr_sv)
-    ) args)
+let generate_hp_def_from_unk_hps_x unk_hps unkmap_from_infer_collect unk_rels=
+  let rec lookup_eqv_all rem_unk_rels hp res=
+    match rem_unk_rels with
+      | [] -> res
+      | (hp1,hp2)::tl ->
+          let eqs=
+            if CP.eq_spec_var hp1 hp then
+            [hp2]
+            else if CP.eq_spec_var hp2 hp then
+              [hp1] else []
+          in
+          lookup_eqv_all tl hp (res@eqs)
+  in
+  let rec assoc_list hps unk_map=
+    match unk_map with
+      | [] -> raise Not_found
+      | (hp,fr_args)::tl -> if CP.mem_svl hp hps then fr_args
+          else assoc_list hps tl
+  in
+  let transform_hp_unk unk_map pos (hp,args)=
+    let ps,fr_svl =
+      try
+          let fr_args =
+            if unk_rels = [] then
+              List.assoc hp (unkmap_from_infer_collect@unk_map)
+            else
+              let eq_hps = lookup_eqv_all unk_rels hp [hp] in
+              assoc_list eq_hps (unkmap_from_infer_collect@unk_map)
+          in
+          let ss = List.combine args fr_args in
+          let ps = List.map (fun (sv,fr_sv) -> CP.mkPtrEqn sv fr_sv pos) ss in
+          (ps, fr_args)
+      with Not_found ->
+          let hp_name = CP.name_of_spec_var hp in
+          List.split (List.map (fun sv ->
+              let fr_sv = CP.fresh_spec_var_prefix hp_name sv in
+              (CP.mkPtrEqn sv fr_sv pos, fr_sv)
+          ) args)
     in
     let p = CP.conj_of_list ps pos in
     (CF.formula_of_pure_formula p pos,fr_svl)
   in
-  let helper (hp_name, args)=
+  let helper (hpdefs,unk_map) (hp_name, args)=
     (* let h_def = CF.HTrue in *)
-    let def,fr_args =  transform_hp_unk no_pos (hp_name, args) in
-    DD.ninfo_pprint ((!CP.print_sv hp_name)^"(" ^
+    let def,fr_args =  transform_hp_unk unk_map no_pos (hp_name, args) in
+    let _ = DD.ninfo_pprint ((!CP.print_sv hp_name)^"(" ^
         (!CP.print_svl args) ^ ")=" ^
-        (Cprinter.prtt_string_of_formula (* (CF.formula_of_heap h_def no_pos) *) def)) no_pos;
-    ((CP.HPRelDefn hp_name,
+        (Cprinter.prtt_string_of_formula (* (CF.formula_of_heap h_def no_pos) *) def)) no_pos
+    in
+    let new_hpdef, new_unkmap = ((CP.HPRelDefn hp_name,
      (CF.HRel (hp_name, List.map (fun x -> CP.mkVar x no_pos) args,no_pos)),
      (* CF.formula_of_heap h_def no_pos *) def),
      (hp_name,fr_args)
     )
+    in
+    (hpdefs@[new_hpdef], unk_map@[new_unkmap])
   in
-   DD.ninfo_pprint ">>>>>> unknown hps: <<<<<<" no_pos;
-  List.split (List.map helper unk_hps)
+  DD.ninfo_pprint ">>>>>> unknown hps: <<<<<<" no_pos;
+  let unk_hps1 = SAU.find_close_hpargs unk_hps unk_rels in
+  List.fold_left helper ([],[]) unk_hps1
+
+let generate_hp_def_from_unk_hps unk_hps unkmap_from_infer_collect unk_rels=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
+  let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  let pr3 = pr_pair pr1 pr2 in
+  Debug.no_3 "generate_hp_def_from_unk_hps" pr2 pr2 pr4 pr3
+      (fun _ _ _ -> generate_hp_def_from_unk_hps_x unk_hps unkmap_from_infer_collect unk_rels) unk_hps unkmap_from_infer_collect unk_rels
 
 (*========= matching=========*)
 let match_one_hp_one_view_x hp hp_name args def_fs (vdcl: CA.view_decl): bool=
@@ -3308,37 +3384,112 @@ let collect_sel_hp_def defs sel_hps unk_hps m=
   let pr4 = (pr_list_ln Cprinter.string_of_hprel_def) in
   Debug.no_3 "collect_sel_hp_def" pr1 pr2 pr3 pr4
       (fun _ _ _ -> collect_sel_hp_def_x defs sel_hps unk_hps m) defs sel_hps m
+
+let prtt_string_of_par_def_w_name (a1,args,unk_args,a3,olf,orf)=
+  let str_hrel= (!CP.print_sv a1) ^ "(" ^ (String.concat "," (List.map !CP.print_sv args)) ^ ")" in
+  match olf,orf with
+    | Some f, None ->
+        let str_f = Cprinter.prtt_string_of_formula f in
+        (str_f ^ " --> " ^ str_hrel)
+    | None, Some f ->
+         let str_f = Cprinter.prtt_string_of_formula f in
+         ( str_hrel ^ " --> " ^ str_f )
+    | Some f1, Some f2 ->
+        let f_body=
+          let hps1 = CF.get_hp_rel_name_formula f1 in
+          let hps2 = CF.get_hp_rel_name_formula f2 in
+          if CP.intersect_svl hps1 hps2 <> [] then
+            (*recurive case*)
+            if CF.is_HRel_f f1 then f2 else f1
+          else SAU.compose_subs f2 f1 (CF.pos_of_formula f2)
+        in
+        let str_f = Cprinter.prtt_string_of_formula f_body in
+         ( str_hrel ^ " --> " ^ str_f )
+    | None, None -> report_error no_pos "sa.obtain_def: can't happen 2"
+
 (*
   input: constrs: (formula * formula) list
   output: definitions: (formula * formula) list
 *)
-let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * SAU.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list) =
+let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels hp_rel_unkmap :(CF.hprel list * SAU.hp_rel_def list* (CP.spec_var*CP.exp list * CP.exp list) list) =
   DD.ninfo_pprint "\n\n>>>>>> norm_hp_rel <<<<<<" no_pos;
   DD.ninfo_pprint ">>>>>> step 1a: drop arguments<<<<<<" no_pos;
+  let _ =
+    if !Globals.sa_print_inter then
+      let _ =  print_endline "" in
+      let _ = print_endline "*********************************************************************" in
+      let _ = print_endline "*******pre-process (split/unknown analyze) hprel assumptions ********" in
+      let _ = print_endline "**********************************************************************" in
+      ()
+    else ()
+  in
   (* step 1: drop irr parameters *)
   let drop_hp_args,constrs = elim_redundant_paras_lst_constr prog hp_constrs in
   Debug.ninfo_hprint (add_str "   AFTER DROP: " (pr_list_ln Cprinter.string_of_hprel)) constrs no_pos;
   DD.ninfo_pprint ">>>>>> step 1b: split arguments: currently omitted <<<<<<" no_pos;
   let constrs1b, split_tb_hp_defs_split = split_hp prog constrs in
   DD.ninfo_pprint ">>>>>> step 1c: find unknown ptrs<<<<<<" no_pos;
-  let constrs1c,unk_hps,hp_defs_split = analize_unk prog constrs1b in
-   (* step 1': split HP *)
+  let constrs1c,unk_hps,hp_defs_split = analize_unk prog hp_rel_unkmap constrs1b in
+  (* step 1': split HP *)
   (*for temporal*)
   let constrs2 = constrs1c in
+  let _ =
+    if !Globals.sa_print_inter then
+      let _ = print_string "\n\n*******relational assumptions ********" in
+      let _ = DD.info_pprint
+        ((let pr = pr_list_ln Cprinter.string_of_hprel in pr constrs2) ) no_pos in
+      ()
+    else ()
+  in
   (* let split_tb_hp_defs_split = [] in *)
   (*END for temporal*)
+   let _ =
+    if !Globals.sa_print_inter then
+      let _ =  print_endline "" in
+      let _ = print_endline "**************************************************************************" in
+      let _ = print_endline "*******loop: collect partial defs, substition, simplification ********" in
+      let _ = print_endline "**************************************************************************" in
+      ()
+    else ()
+  in
   let cs, par_defs = infer_hps_fix prog (List.map fst unk_hps) constrs2 in
+  let _ =
+    if !Globals.sa_print_inter then
+      let _ = print_string "\n\n*******relational assumptions ********\n" in
+      let _ = DD.info_pprint
+        ((let pr = pr_list_ln Cprinter.string_of_hprel_short in pr cs) ) no_pos in
+      let _ = print_endline "\n\n*******partial definitions ********" in
+      let pdef_sort_fn (hp1,_,_,_,_,_) (hp2,_,_,_,_,_)=
+        let n1 = CP.name_of_spec_var hp1 in
+        let n2 = CP.name_of_spec_var hp2 in
+        String.compare n1 n2
+      in
+      let par_defs1 = List.sort pdef_sort_fn par_defs in
+      let _ = print_endline
+        ((let pr = pr_list_ln prtt_string_of_par_def_w_name in pr par_defs1) )  in
+      ()
+    else ()
+  in
   (*step 6: over-approximate to generate hp def*)
-  let constr3, hp_defs, new_unk_hps = generalize_hps prog unk_hps cs par_defs in
+  let _ =
+    if !Globals.sa_print_inter then
+      let _ =  print_endline "" in
+      let _ = print_endline "*********************************************************************" in
+      let _ = print_endline "*******subst, join, combine split, transfrom unknown ********" in
+      let _ = print_endline "**********************************************************************" in
+      ()
+    else ()
+  in
+  let constr3, hp_defs, new_unk_hps,unk_rels = generalize_hps prog unk_hps cs par_defs in
   let hp_def_names =  List.map (fun (a1,_,_) -> SAU.get_hpdef_name a1) hp_defs in
-  let unk_hps1 = List.filter (fun (hp,_) -> not (CP.mem_svl hp hp_def_names)) new_unk_hps in
+  let unk_hps1 = (* List.filter (fun (hp,_) -> not (CP.mem_svl hp hp_def_names)) *) new_unk_hps in
   let unk_hp_svl = (List.map (fun (hp,_) -> hp) unk_hps1) in
   let unk_hp_pures, unk_hp_pure_def = List.split (List.concat
     (List.map (generalize_pure_def_from_hpunk prog hp_def_names) constr3))
   in
   let unk_hps2 = List.filter (fun (hp,_) -> not(CP.mem_svl hp unk_hp_pures)) unk_hps1 in
   let unk_hp_svl1 = List.filter (fun hp -> not(CP.mem_svl hp unk_hp_pures)) unk_hp_svl in
-  let unk_hp_def,unk_hp_frargs = generate_hp_def_from_unk_hps unk_hps2 in
+  let unk_hp_def,unk_hp_frargs = generate_hp_def_from_unk_hps unk_hps2 hp_rel_unkmap unk_rels in
   DD.ninfo_pprint (" remains: " ^
      (let pr1 = pr_list_ln Cprinter.string_of_hprel in pr1 constr3) ) no_pos;
   let hp_defs1 =  (Gen.BList.remove_dups_eq (fun (a1,_,_) (b1,_,_) ->
@@ -3354,11 +3505,29 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * SA
   (* in *)
   (* let hp_defs21 = SAU.drop_non_node_unk_hps hp_defs2 non_node_unk_hps in *)
   let hp_defs21 = SAU.transform_unk_hps_to_pure (hp_defs2) unk_hp_frargs in
-  let hp_def_from_split = generate_hp_def_from_split prog (hp_defs21@unk_hp_def @unk_hp_pure_def) split_tb_hp_defs_split unk_hps in
+  let hp_defs22 = SAU.combine_hpdefs (hp_defs21@unk_hp_def@unk_hp_pure_def) in
+  let hp_def_from_split = generate_hp_def_from_split prog hp_defs22 split_tb_hp_defs_split unk_hps in
+  let hp_defs3 = hp_defs22@hp_def_from_split in
   (****************************************************)
+   let _ =
+    if !Globals.sa_print_inter then
+      let _ = print_endline "\n*******relational definitions ********" in
+      let _ = print_endline
+        ((let pr = pr_list_ln  Cprinter.string_of_hp_rel_def_short in pr hp_defs3) )  in
+      ()
+    else ()
+  in
   DD.ninfo_pprint ">>>>>> step 7: mathching with predefined predicates <<<<<<" no_pos;
-  let hp_defs3 = hp_defs21@unk_hp_def @unk_hp_pure_def@hp_def_from_split in
-  let m = match_hps_views hp_defs3 prog.CA.prog_view_decls in
+  let _ =
+    if !Globals.sa_print_inter then
+      let _ =  print_endline "" in
+      let _ = print_endline "*********************************************************************" in
+      let _ = print_endline "*******post-process: predefined predicates matching  ********" in
+      let _ = print_endline "**********************************************************************" in
+      ()
+    else ()
+  in
+   let m = match_hps_views hp_defs3 prog.CA.prog_view_decls in
   let _ = DD.ninfo_pprint ("        sel_hp_rel:" ^ (!CP.print_svl sel_hp_rels)) no_pos in
   (* let _ =  DD.info_pprint (" matching: " ^ *)
   (*   (let pr = pr_list_ln (fun (hp,view_names) -> (!CP.print_sv hp) ^ " === " ^ *)
@@ -3377,14 +3546,15 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels:(CF.hprel list * SA
   (constr3, hp_defs4, dropped_hps) (*return for cp*)
 
 (*(pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula)*)
-let infer_hps prog (hp_constrs: CF.hprel list) sel_hp_rels:
+let infer_hps prog (hp_constrs: CF.hprel list) sel_hp_rels hp_rel_unkmap:
  (CF.hprel list * SAU.hp_rel_def list*(CP.spec_var*CP.exp list * CP.exp list) list) =
   let pr0 = pr_list !CP.print_exp in
   let pr1 = pr_list_ln Cprinter.string_of_hprel in
   let pr2 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr3 = pr_list (pr_triple !CP.print_sv pr0 pr0) in
-  Debug.no_1 "infer_hps" pr1 (pr_triple pr1 pr2 pr3)
-      (fun _ -> infer_hps_x prog hp_constrs sel_hp_rels) hp_constrs
+  let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
+  Debug.no_2 "infer_hps" pr1 pr4 (pr_triple pr1 pr2 pr3)
+      (fun _ _ -> infer_hps_x prog hp_constrs sel_hp_rels hp_rel_unkmap) hp_constrs hp_rel_unkmap
 
 (**===============**********************==============**)
  (******************END of NORMALIZATION**************)

@@ -1,3 +1,5 @@
+open GlobProver
+
 let parse_only = ref false
 
 let typecheck_only = ref false
@@ -239,7 +241,7 @@ let common_arguments = [
 	"Turn on failure analysis");
 	("--exhaust-match",Arg.Set Globals.exhaust_match, 
 	"Turn on exhaustive matching for base case of predicates"); 
-	("--use-tmp",Arg.Unit Globals.set_tmp_files_path, 
+	("--use-tmp",Arg.Unit set_tmp_files_path, 
 	"Use a local folder located in /tmp/your_username for the prover's temporary files");  
     ("--esn", Arg.Set Globals.enable_norm_simp, "enable simplifier in fast imply");
     (* ("--eps", Arg.Set Globals.allow_pred_spec, "enable predicate specialization together with memoized formulas"); *)
@@ -337,6 +339,7 @@ let common_arguments = [
   ("--show-diff", Arg.Set Globals.show_diff, "Show differences between formulae");
   ("--dis-sem", Arg.Set Globals.dis_sem, "Show differences between formulae");
   ("--show-diff-constrs", Arg.Set Globals.show_diff_constrs, "Show differences between list of constraint");
+  ("--sa-print-inter", Arg.Set Globals.sa_print_inter, "Print intermediate results of normalization");
   ] 
 
 (* arguments/flags used only by hip *)	
