@@ -14,7 +14,8 @@ Checking procedure append$node~node...
 *********************************************************************
 *******PHASE I: pre-process (split/unknown analyze) hprel assumptions ********
 **********************************************************************
-step1: split [H2(x,y)-->HP_596(x) * HP_597(y); HP_567(x,y) --> HP_594(x) * HP_595(y)]
+step1: split [H2(x,y)-->HP_596(x) * HP_597(y); 
+       HP_567(x,y) --> HP_594(x) * HP_595(y)]
 *************************************
 *******OUT: relational assumption ********
 *************************************
@@ -29,7 +30,8 @@ step2: unknown analyze
 1. dangling ptrs: [y], dangling HPs: [HP_597; HP_595], inferred dangling HPs: []
 2. dangling ptrs: [y], dangling HPs: [HP_597; HP_595], inferred dangling HPs: []
 3. dangling ptrs: [y], dangling HPs: [HP_595]        , inferred dangling HPs: []
-4. dangling ptrs: [y], dangling HPs: []              , inferred dangling HPs: [HP_595] // note:add HP_595(y) into lhs
+4. dangling ptrs: [y], dangling HPs: []              , inferred dangling HPs: [HP_595] 
+   // note:add HP_595(y) into lhs
 *************************************
 *******OUT: relational assumption ********
 *************************************
@@ -150,13 +152,13 @@ step8: transform unknown (dangling) ptrs/predicates:
 *************************************
 *******OUT: hp relational definitions ********
 *************************************
-H2(x,y) === x::node<_,p> * HP_596_aux(p) & logical_var_595 = y  //subst HERE
+H2(x,y)     === x::node<_,p> * HP_596_aux(p) & logical_var_595 = y  //subst HERE
 HP_567(x,y) === logical_var_595 = y & p=null or p::node<_,p1> * HP_594_aux(p1) & logical_var_595 = y //subst HERE
 G2(x,y)     === x::node<_,p> * G2_aux(p,y) & logical_var_595 = y //subst HERE
 G2_aux(p,y) === p=y or  p::node<_,p1> * G2_aux(p1,y)
-HP_596(x)     === x::node<_,p> * HP_596_aux(p)
+HP_596(x)   === x::node<_,p> * HP_596_aux(p)
 HP_596_aux(p) === p=null or p::node<_,p1> * HP_596_aux(p1)
-HP_594(p) === p=null or p::node<_,p1> * HP_594_aux(p1) // not work now
+HP_594(p)   === p=null or p::node<_,p1> * HP_594_aux(p1) // not work now
 
 *********************************************************************
 *******PHASE III: post-process: predefined predicates matching  ********

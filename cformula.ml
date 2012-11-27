@@ -569,7 +569,7 @@ and isConstETrueSpecs f = match f with
 	| _ -> false
 
 (* TRUNG TODO: should change name to isStrictConstEmp_x ? *)
-and isStrictConstTrue_x f = match f with
+and isStrictConstEmp f = match f with
   | Exists ({ formula_exists_heap = HEmp;
     formula_exists_pure = p;
     formula_exists_flow = fl; })
@@ -580,6 +580,27 @@ and isStrictConstTrue_x f = match f with
 	        (* don't need to care about formula_base_type  *)
   | _ -> false
 
+and isStrictConstHTrue f = match f with
+  | Exists ({ formula_exists_heap = HTrue;
+    formula_exists_pure = p;
+    formula_exists_flow = fl; })
+  | Base ({formula_base_heap = HTrue;
+    formula_base_pure = p;
+    formula_base_flow = fl;}) -> 
+        MCP.isConstMTrue p && is_top_flow fl.formula_flow_interval
+	        (* don't need to care about formula_base_type  *)
+  | _ -> false
+
+and isStrictConstTrue_x f = match f with
+  | Exists ({ formula_exists_heap = h;
+    formula_exists_pure = p;
+    formula_exists_flow = fl; })
+  | Base ({formula_base_heap = h;
+    formula_base_pure = p;
+    formula_base_flow = fl;}) -> 
+        (h==HEmp or h==HTrue) && MCP.isConstMTrue p && is_top_flow fl.formula_flow_interval
+	        (* don't need to care about formula_base_type  *)
+  | _ -> false
 and isStrictConstTrue (f:formula) = 
   Debug.no_1 "isStrictConstTrue" !print_formula string_of_bool isStrictConstTrue_x f
 

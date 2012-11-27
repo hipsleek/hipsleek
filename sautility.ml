@@ -2021,7 +2021,7 @@ let get_longest_common_hnodes_list prog unk_hps hp args fs=
   let pr2 = fun (_, def) -> Cprinter.string_of_hp_rel_def def in
   let pr3 = !CP.print_sv in
   let pr4 = !CP.print_svl in
-  Debug.ho_3 "get_longest_common_hnodes_list" pr3 pr4 pr1 (pr_list_ln pr2)
+  Debug.no_3 "get_longest_common_hnodes_list" pr3 pr4 pr1 (pr_list_ln pr2)
       (fun _ _ _ -> get_longest_common_hnodes_list_x prog unk_hps hp args fs) hp args fs
 
 (************************************************************)
