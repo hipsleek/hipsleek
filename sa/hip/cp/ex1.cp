@@ -4,10 +4,11 @@ HeapPred HP_1b(node a).
 
 foo:SUCCESS[
 ass [H,H1][]:{
-    HP_1c(x') * x::node<_,x'>&x'=null --> H1(x);
-    x::node<_,x'> * H1(x')&x'!=null --> H1(x);
-    HP_1c(x')&x'!=null --> H(x');
-    H(x) --> x::node<_,p> * HP_1c(p)
+   H(x) --> x::node<_,p> * HP_1c(p);
+   HP_1c(x')&x'!=null --> H(x');
+   HP_1c(x') & x'=null --> emp&true;
+   x::node<_,x'>&x'=null --> H1(x);
+   x::node<_,x'> * H1(x')&x'!=null --> H1(x)
  }
 
 hpdefs [H,H1][]:{

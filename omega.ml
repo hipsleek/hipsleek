@@ -2,6 +2,7 @@
   Call Omega Calculator, send input to it
 *)
 open Globals
+open GlobProver
 open Gen.Basic
 open Cpure
 
@@ -175,7 +176,7 @@ let start_with str prefix =
 let send_cmd cmd =
   if !is_omega_running then output_string (!process.outchannel) (cmd ^ "\n")
 
-let set_process (proc: Globals.prover_process_t) = 
+let set_process (proc: GlobProver.prover_process_t) = 
   process := proc
 
 let prelude () =

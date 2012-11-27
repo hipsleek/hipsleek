@@ -569,7 +569,7 @@ and isConstETrueSpecs f = match f with
 	| _ -> false
 
 (* TRUNG TODO: should change name to isStrictConstEmp_x ? *)
-and isStrictConstTrue_x f = match f with
+and isStrictConstEmp f = match f with
   | Exists ({ formula_exists_heap = HEmp;
     formula_exists_pure = p;
     formula_exists_flow = fl; })
@@ -580,6 +580,27 @@ and isStrictConstTrue_x f = match f with
 	        (* don't need to care about formula_base_type  *)
   | _ -> false
 
+and isStrictConstHTrue f = match f with
+  | Exists ({ formula_exists_heap = HTrue;
+    formula_exists_pure = p;
+    formula_exists_flow = fl; })
+  | Base ({formula_base_heap = HTrue;
+    formula_base_pure = p;
+    formula_base_flow = fl;}) -> 
+        MCP.isConstMTrue p && is_top_flow fl.formula_flow_interval
+	        (* don't need to care about formula_base_type  *)
+  | _ -> false
+
+and isStrictConstTrue_x f = match f with
+  | Exists ({ formula_exists_heap = h;
+    formula_exists_pure = p;
+    formula_exists_flow = fl; })
+  | Base ({formula_base_heap = h;
+    formula_base_pure = p;
+    formula_base_flow = fl;}) -> 
+        (h==HEmp or h==HTrue) && MCP.isConstMTrue p && is_top_flow fl.formula_flow_interval
+	        (* don't need to care about formula_base_type  *)
+  | _ -> false
 and isStrictConstTrue (f:formula) = 
   Debug.no_1 "isStrictConstTrue" !print_formula string_of_bool isStrictConstTrue_x f
 
@@ -1220,6 +1241,11 @@ and mkPhase_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
 (*     if (MCP.isConstMTrue p1) then mkBase h1 p2 t1 fl1 a1 pos                 *)
 (* 	  else                                                                      *)
 (*       mkBase h1 (MCP.merge_mems p1 p2 true) t1 fl1 a1 pos                    *)
+
+and mkAnd_base_pure (fb: formula_base) (p2: MCP.mix_formula) (pos: loc): formula_base =
+  if (MCP.isConstMTrue p2) then fb
+  else
+    { fb with formula_base_pure = MCP.merge_mems fb.formula_base_pure  p2 true; }
 
 and mkAnd_pure_x (f1: formula) (p2: MCP.mix_formula) (pos: loc): formula =
   if (isAnyConstFalse f1) then f1
@@ -3787,7 +3813,7 @@ let remove_neqNull_redundant_hnodes_f f0=
   in
   helper f0
 
-let remove_eqNulls f0 nullPtrs=
+let remove_com_pures f0 nullPtrs com_eqPures=
   let remove p elim_svl=
     if elim_svl = [] then p else
 	begin
@@ -3796,22 +3822,29 @@ let remove_eqNulls f0 nullPtrs=
 	 CP.filter_var_new p keep_svl
 	end
   in
+  let remove_com_pures p com_ps=
+    let ps0 = CP.split_conjunctions p in
+    let rem_ps = Gen.BList.difference_eq CP.equalFormula ps0 com_ps in
+    (CP.conj_of_list rem_ps no_pos)
+  in
   let rec helper f=
     match f with
     | Base fb ->
         (*assume keep vars = dnodes*)
         let new_p = remove (MCP.pure_of_mix fb.formula_base_pure) nullPtrs in
-		Base {fb with formula_base_pure = MCP.mix_of_pure new_p;
+        let new_p1 = remove_com_pures new_p com_eqPures in
+		Base {fb with formula_base_pure = MCP.mix_of_pure new_p1;
                 }
     | Or orf -> let nf1 = helper orf.formula_or_f1 in
                   let nf2 = helper orf.formula_or_f2 in
                   ( Or {orf with formula_or_f1 = nf1;
                       formula_or_f2 = nf2;})
-      | Exists fe -> let np = remove (MCP.pure_of_mix fe.formula_exists_pure) nullPtrs in
-                     (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
+      | Exists fe -> let new_p = remove (MCP.pure_of_mix fe.formula_exists_pure) nullPtrs in
+                     let new_p1 = remove_com_pures new_p com_eqPures in
+                     (Exists {fe with formula_exists_pure = MCP.mix_of_pure new_p1;})
   in
   helper f0
-  
+
 (*drop HRel in the set hp_names and return corresponding subst of their args*)
 let rec drop_hrel_f f hp_names=
   match f with
@@ -4317,6 +4350,7 @@ think it is used to instantiate when folding.
   es_infer_vars : CP.spec_var list; 
   es_infer_vars_rel : CP.spec_var list;
   es_infer_vars_sel_hp_rel: CP.spec_var list;
+  es_infer_hp_unk_map: (CP.spec_var * CP.spec_var list) list;
   es_infer_vars_hp_rel : CP.spec_var list;
   (* input vars to denote vars already instantiated *)
   es_infer_vars_dead : CP.spec_var list; 
@@ -4536,6 +4570,7 @@ let empty_es flowt grp_lbl pos =
   es_infer_vars_dead = [];
   es_infer_vars_rel = [];
   es_infer_vars_sel_hp_rel = [];
+  es_infer_hp_unk_map = [];
   es_infer_vars_hp_rel = [];
   es_infer_heap = []; (* HTrue; *)
   es_infer_pure = []; (* (CP.mkTrue no_pos); *)
@@ -5246,7 +5281,22 @@ let rec collect_rel ctx =
 let rec collect_hp_rel ctx = 
   match ctx with
   | Ctx estate -> estate.es_infer_hp_rel 
-  | OCtx (ctx1, ctx2) -> (collect_hp_rel ctx1) @ (collect_hp_rel ctx2) 
+  | OCtx (ctx1, ctx2) -> (collect_hp_rel ctx1) @ (collect_hp_rel ctx2)
+
+let rec collect_hp_unk_map ctx =
+  match ctx with
+  | Ctx estate -> estate.es_infer_hp_unk_map
+  | OCtx (ctx1, ctx2) -> (collect_hp_unk_map ctx1) @ (collect_hp_unk_map ctx2)
+
+let rec update_hp_unk_map ctx0 unk_map =
+  let rec helper ctx=
+    match ctx with
+      | Ctx estate -> Ctx {estate with
+          es_infer_hp_unk_map = estate.es_infer_hp_unk_map@ unk_map;
+      }
+      | OCtx (ctx1, ctx2) -> OCtx ((helper ctx1),(helper ctx2))
+  in
+  helper ctx0
 
 let rec collect_infer_vars ctx = 
   match ctx with
@@ -5540,6 +5590,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_infer_vars_rel = es.es_infer_vars_rel;
         es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
         es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
+        es_infer_hp_unk_map = es.es_infer_hp_unk_map;
         es_infer_vars_dead = es.es_infer_vars_dead;
         es_infer_heap = es.es_infer_heap;
         es_infer_pure = es.es_infer_pure;
@@ -7584,6 +7635,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
           es_infer_vars_rel = es.es_infer_vars_rel;
           es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
           es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
+          es_infer_hp_unk_map = es.es_infer_hp_unk_map;
           es_infer_heap = es.es_infer_heap;
           es_infer_pure = es.es_infer_pure;
           es_infer_rel = es.es_infer_rel;

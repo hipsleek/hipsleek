@@ -6,6 +6,7 @@
 *)
 
 open Globals
+open GlobProver
 module CP = Cpure
 
 let isabelle_file_number = ref 0

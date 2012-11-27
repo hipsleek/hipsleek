@@ -1495,6 +1495,10 @@ let string_of_hp_rel_def hp_rel =
  let str_of_hp_rel (r,f1, f2) = ( (CP.print_rel_cat r)^ ": " ^(string_of_h_formula f1) ^ ":: "  ^(prtt_string_of_formula f2)) in
   (str_of_hp_rel hp_rel)
 
+let string_of_hp_rel_def_short hp_rel =
+ let str_of_hp_rel (_,f1, f2) = ((string_of_h_formula f1) ^ ":: "  ^(prtt_string_of_formula f2)) in
+  (str_of_hp_rel hp_rel)
+
 let string_of_hp_rels (e) : string =
   (* CP.print_only_lhs_rhs e *)
   poly_string_of_pr pr_hp_rel e

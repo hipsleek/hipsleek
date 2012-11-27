@@ -125,15 +125,6 @@ type perm_type =
   
 let perm = ref NoPerm
 
-(* let rec string_of_prim_type = function  *)
-(*   | Bool          -> "boolean" *)
-(*   | Float         -> "float" *)
-(*   | Int           -> "int" *)
-(*   | Void          -> "void" *)
-(*   | TVar i       -> "TVar["^(string_of_int i)^"]" *)
-(*   | BagT t        -> "bag("^(string_of_prim_type t)^")" *)
-(*   | List          -> "list" *)
-
 let no_pos = 
 	let no_pos1 = { Lexing.pos_fname = "";
 				   Lexing.pos_lnum = 0;
@@ -306,16 +297,23 @@ let proving_info () =
 	
 
 let wrap_proving_kind (str : string) exec_function args =
-  if (!proof_logging_txt) then
+  if (!sleek_logging_txt || !proof_logging_txt) then
     begin
       let b = proving_kind # is_avail in
       let m = proving_kind # get in
-      let _ = proving_kind # set str in 	
-      let res = exec_function args in
-      let _ =  
-        if b then proving_kind # set m 
-        else proving_kind # reset
+      let _ = proving_kind # set str in
+ 	  try 
+        let res = exec_function args in
+        let _ =  
+          if b then proving_kind # set m 
+          else proving_kind # reset
         in res
+      with _ as e ->
+          begin
+            (if b then proving_kind # set m 
+            else proving_kind # reset);
+            raise e
+          end
     end
   else 	
     let res = exec_function args 
@@ -353,7 +351,6 @@ let rec string_of_typ (x:typ) : string = match x with
   | Tree_sh		  -> "Tsh"
   | RelT        -> "RelT"
   | HpT        -> "HpT"
-  (* | Prim t -> string_of_prim_type t  *)
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k == 0) then "" else "[]" ^ (repeat (k-1)) in
@@ -376,7 +373,6 @@ let rec string_of_typ_alpha = function
   | List t        -> "list_"^(string_of_typ t)
   | RelT        -> "RelT"
   | HpT        -> "HpT"
-  (* | Prim t -> string_of_prim_type t  *)
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k == 0) then "" else "_arr" ^ (repeat (k-1)) in
@@ -527,6 +523,8 @@ let consume_all = ref false
 let enable_split_lemma_gen = ref false
 
 let show_diff = ref false
+
+let sa_print_inter = ref false
 
 let dis_sem = ref false
 
@@ -846,32 +844,6 @@ let fresh_strict_branch_point_id (s:string) : control_path_id_strict = (fresh_fo
 
 let eq_formula_label (l1:formula_label) (l2:formula_label) : bool = fst(l1)=fst(l2)
 
-let tmp_files_path = ref ""
-
-(*path for the temporary files used by the prover. If you change this path here it is 
-  mandatory to also change the value of TMP_FILES_PATH in Makefile accordingly to the changes made here*)
-let set_tmp_files_path () = 	
-	begin
-      (try
-		ignore (Unix.mkdir ("/tmp/" ^ Unix.getlogin()) 0o766;)		 
-      with
-		Unix.Unix_error (_, _, _) -> (); );
-	  (try
-		ignore (Unix.chmod ("/tmp/" ^ Unix.getlogin()) 0o766;)		 
-      with
-		Unix.Unix_error (_, _, _) -> (); );
-      (try
-		ignore (Unix.mkdir ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/") 0o766) 
-      with
-		Unix.Unix_error (_, _, _) -> (););
-	  (try
-		ignore (Unix.chmod ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/") 0o766;)		 
-      with
-		Unix.Unix_error (_, _, _) -> (););
-	tmp_files_path := ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/")
-	end
-
-
 let fresh_int () =
   seq_number := !seq_number + 1;
   !seq_number
@@ -1005,22 +977,6 @@ let bin_to_list (fn : 'a -> (string * ('a list)) option)
     | None -> "", [t]
     | Some (op, _) -> op,(bin_op_to_list op fn t)
 
-(*type of process used for communicating with the prover*)
-type prover_process_t = {name:string; pid: int; inchannel: in_channel; outchannel: out_channel; errchannel: in_channel }
-
-(*methods that need to be defined in order to use a prover incrementally - if the prover provides this functionality*)
-class type ['a] incremMethodsType = object
-  val process: prover_process_t option ref
-  method start_p: unit -> prover_process_t
-  method stop_p:  prover_process_t -> unit
-  method push: prover_process_t -> unit
-  method pop: prover_process_t -> unit
-  method popto: prover_process_t -> int -> unit
-  method imply: (prover_process_t option * bool) option -> 'a -> 'a -> string -> bool
-  method set_process: prover_process_t -> unit
-  method get_process: unit -> prover_process_t option
-  (* method add_to_context: 'a -> unit *)
-end
 
 (* An Hoa : option to print proof *)
 let print_proof = ref false
@@ -1028,15 +984,23 @@ let print_proof = ref false
 (* Create a quoted version of a string, for example, hello --> "hello" *)
 let strquote s = "\"" ^ s ^ "\""
 
-
-let open_log_out s = 
- (try
-	Unix.mkdir "logs" 0o750
- with _ -> ());
- open_out ("logs/"^s)
-
 let norm_file_name str =
 	for i = 0 to (String.length str) - 1 do
 		if str.[i] = '.' || str.[i] = '/' then str.[i] <- '_'
 	done;
 	str
+
+let wrap_classic et f a =
+  let flag = !do_classic_frame_rule in
+  do_classic_frame_rule := (match et with
+    | None -> !opt_classic
+    | Some b -> b);
+  try 
+    let res = f a in
+    (* restore flag do_classic_frame_rule  *)
+    do_classic_frame_rule := flag;
+    res
+  with _ as e ->
+      (do_classic_frame_rule := flag;
+      raise e)
+

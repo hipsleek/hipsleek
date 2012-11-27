@@ -3,6 +3,7 @@
 *)
 
 open Globals
+open GlobProver
 module CP = Cpure
 module Err = Error
 

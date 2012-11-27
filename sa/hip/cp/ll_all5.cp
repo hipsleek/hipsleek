@@ -8,7 +8,7 @@ ass [H2,G2][]:{
 
 	}
 
-hpdefs [G2,H2][]:{
+hpdefs [G2,H2][q1]:{
  H2(x,y) --> x::node<_,q> & y=q1;
  G2(x,y) --> x::node<_,y> & y=q1
  }

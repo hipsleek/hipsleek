@@ -150,7 +150,8 @@ let process_pred_def pdef =
 	  try
 		let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
 		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
-		let wf,_ = AS.case_normalize_struc_formula 10 iprog h p pdef.Iast.view_formula false false [] in
+		let wf,_ = AS.case_normalize_struc_formula 10 iprog h p pdef.Iast.view_formula false 
+          false (*allow_post_vars*) false [] in
 		let new_pdef = {pdef with Iast.view_formula = wf} in
 		let tmp_views = AS.order_views (new_pdef :: iprog.I.prog_view_decls) in
 		iprog.I.prog_view_decls <- List.rev tmp_views;
@@ -196,7 +197,8 @@ let process_pred_def_4_iast pdef =
 	  try
 		let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
 		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
-		let wf,_ = AS.case_normalize_struc_formula 11 iprog h p pdef.Iast.view_formula false false [] in
+		let wf,_ = AS.case_normalize_struc_formula 11 iprog h p pdef.Iast.view_formula false 
+          false (*allow_post_vars*) false [] in
         let inv_lock = pdef.I.view_inv_lock in
         let inv_lock =
           (match inv_lock with
@@ -395,8 +397,9 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.str
   | MetaForm mf -> 
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
-      let wf,_ = AS.case_normalize_struc_formula 12 iprog h p (Iformula.formula_to_struc_formula mf) false true [] in
-      AS.trans_I2C_struc_formula iprog quant fv_idents wf stab false (*(Cpure.Prim Void) []*)
+      let wf,_ = AS.case_normalize_struc_formula 12 iprog h p (Iformula.formula_to_struc_formula mf) true 
+        true (*allow_post_vars*) true [] in
+      AS.trans_I2C_struc_formula 8 iprog quant fv_idents wf stab false (*(Cpure.Prim Void) []*) false (*check_pre*) 
   | MetaVar mvar -> 
       begin
       try 
@@ -419,8 +422,10 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.str
   | MetaEForm b -> 
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
-      let wf,_ = AS.case_normalize_struc_formula 13 iprog h p b false true [] in
-      let res = AS.trans_I2C_struc_formula iprog quant fv_idents wf stab false (*(Cpure.Prim Void) [] *) in
+      let wf,_ = AS.case_normalize_struc_formula 13 iprog h p b true (* allow_primes *) 
+        true (*allow_post_vars*) true [] in
+      let res = AS.trans_I2C_struc_formula 9 iprog quant fv_idents wf stab false 
+        false (*check_pre*) (*(Cpure.Prim Void) [] *) in
       (* let _ = print_string ("\n1 before meta: " ^(Iprinter.string_of_struc_formula b)^"\n") in *)
       (* let _ = print_string ("\n2 before meta: " ^(Iprinter.string_of_struc_formula wf)^"\n") in *)
       (*let _ = print_string ("\n after meta: " ^ (Cprinter.string_of_struc_formula res)) in*)
@@ -643,8 +648,8 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
     if t_valid then ""
     else
       snd (List.fold_left (fun (no,a) (b,m) ->
-        if b then (no+1, a ^ "<" ^ (string_of_int no) ^ ">:" ^ m ^ "\n")
-        else (no+1, a)) (1,"") term_res)
+          if b then (no+1, a ^ "<" ^ (string_of_int no) ^ ">:" ^ m ^ "\n")
+          else (no+1, a)) (1,"") term_res)
   in
   if not valid then
     begin
@@ -656,33 +661,42 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
                 | Some s -> "(may) cause:"^s
                 | None -> "INCONSISTENCY : expected failure but success instead"
               )
-        (*should check bot with is_bot_status*)
+                  (*should check bot with is_bot_status*)
         else ""
       in
       (* Get the timeout message *)
       let timeout = 
         if !Globals.sleek_timeout_limit > 0. then
           match CF.get_may_failure residue with
-          | Some "timeout" -> " (timeout) "
-          | _ -> ""
+            | Some "timeout" -> " (timeout) "
+            | _ -> ""
         else ""
       in
       print_string (num_id^": Fail."^timeout^s^"\n"^term_output^"\n"); flush stdout;
-          (*if !Globals.print_err_sleek then *)
-          (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
+      (*if !Globals.print_err_sleek then *)
+      (* ;print_string ("printing here: "^(Cprinter.string_of_list_context rs)) *)
     end
   else
     begin
-        let s =
+      let s =
         if not !Globals.disable_failure_explaining then
           match CF.list_context_is_eq_flow residue false_flow_int with
             | true -> "(bot)"
             | false -> (*expect normal (OK) here*) ""
         else ""
-        in
-        if t_valid then print_string (num_id^": Valid. "^s^"\n"^term_output^"\n")
-        else print_string (num_id^": Fail. "^s^"\n"^term_output^"\n")
-        (* ;print_string ("printing here: "^(Cprinter.string_of_list_context residue)) *)
+      in
+      if t_valid then print_string (num_id^": Valid. "^s^"\n"^term_output^"\n")
+      else print_string (num_id^": Fail. "^s^"\n"^term_output^"\n");
+      if not(Infer.rel_ass_stk# is_empty) then
+        begin
+          print_endline "*************************************";
+          print_endline "*******relational assumption ********";
+          print_endline "*************************************";
+          print_endline (Infer.rel_ass_stk # string_of_reverse);
+          print_endline "*************************************";
+          Infer.rel_ass_stk # reset
+        end;
+      (* ;print_string ("printing here: "^(Cprinter.string_of_list_context residue)) *)
     end
   (* with e -> *)
   (*     let _ =  Error.process_exct(e)in *)

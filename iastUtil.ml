@@ -1241,7 +1241,7 @@ let add_globalv_to_mth_prog prog =
 
 let add_globalv_to_mth_prog prog = 
   let pr = Iprinter.string_of_program in
-  Debug.ho_1 "add_globalv_to_mth_prog" pr pr add_globalv_to_mth_prog prog
+  Debug.no_1 "add_globalv_to_mth_prog" pr pr add_globalv_to_mth_prog prog
 
 (*iprims: primitives in the header files
 prog: current program*)  
