@@ -1,4 +1,5 @@
 open Globals 
+open GlobProver
 open Stat_global
 open Gen.Basic
 open Printf

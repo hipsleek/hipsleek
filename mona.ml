@@ -3,6 +3,7 @@
 *)
 
 open Globals
+open GlobProver
 module CP = Cpure
 
 let is_mona_running = ref false
@@ -838,7 +839,7 @@ let prelude () =
    let mona_pred_file_x = get_mona_predicates_file () in
    send_cmd_no_answer ("include \"" ^ mona_pred_file_x ^ "\";\n")
 
-let set_process (proc: Globals.prover_process_t) = 
+let set_process (proc: prover_process_t) = 
   process := proc
 
 let rec check_prover_existence prover_cmd_str: bool =

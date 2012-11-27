@@ -47,7 +47,8 @@ module PrvComms =
 struct
 
   open Globals
-  type proc = Globals.prover_process_t
+  open GlobProver
+  type proc = GlobProver.prover_process_t
   exception Timeout
 
   let sigalrm_handler = Sys.Signal_handle (fun _ -> raise Timeout)

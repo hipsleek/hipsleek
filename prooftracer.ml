@@ -22,6 +22,7 @@
   selective reporting can be done separately.
 *)
 open Globals
+open GlobProver
 
 module CP = Cpure
 module CF = Cformula
