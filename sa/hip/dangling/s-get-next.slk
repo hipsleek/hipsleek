@@ -33,6 +33,6 @@ print residue.
 
 /*
 why isn't @I annotation printed?
-[ H1(res) * x'::node<val_36_533,next_37_514'>&next_37_514'=null --> G(x',res)&
-  true]
+[ H1(res) * x'::node<val_36_533,next_37_514'>&next_37_514'=null 
+  --> G(x',res)&true]
 */

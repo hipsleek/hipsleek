@@ -40,7 +40,6 @@ class type ['a] incremMethodsType = object
   (* method add_to_context: 'a -> unit *)
 end
 
-
 let open_log_out s = 
  (try
 	Unix.mkdir "logs" 0o750

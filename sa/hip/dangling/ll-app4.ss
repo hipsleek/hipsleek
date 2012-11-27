@@ -23,14 +23,17 @@ void append(ref node x, node y)
 [ H1(x)&true --> x::node<val_31_522',next_31_523'> * HP_539(next_31_523')&true,
  HP_539(t_21')&t_21'!=null --> H1(t_21')&true,
  H2(y)&true --> H2(y)&true,
- HP_539(next_33_551)&next_33_551=null --> emp&true,
- x'::node<val_31_544,y>&H2_y_563=y --> H3(x')&true,
- H2(y)&H2_y_563=y --> H4(y)&true,
  H3(t_565) * x'::node<val_31_546,t_565>&true --> H3(x')&true,
  H4(y)&true --> H4(y)&true]
 
-..
+ Rel ass:
+  HP_539(next_33_551)&next_33_551=null --> emp&true,
+   x'::node<val_31_544,y>&H2_y_563=y --> H3(x')&true,
+   H2(y)&H2_y_563=y --> H4(y)&true,
 
+ We should have instead:
+  x'::node<val_31_544,y> & PURE(H2(y)) --> H3(x')&true,
+  H2(y) --> H4(y)&true,
 
 [ H3(x_581) ::= x_581::node<val_31_544,y> * HP_582(y)&true,
  H1(x_587) ::= x_587::node<val_31_522',next_31_523'> * next_31_523'::ls[LHSCase]&true,
