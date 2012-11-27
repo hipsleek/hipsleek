@@ -1010,5 +1010,5 @@ let trans_global_to_param (prog : I.prog_decl) : I.prog_decl =
   
 let trans_global_to_param (prog : I.prog_decl) : I.prog_decl =
   let pr = Iprinter.string_of_program in
-  Debug.ho_1 "trans_global_to_param" pr pr 
+  Debug.no_1 "trans_global_to_param" pr pr 
   trans_global_to_param prog

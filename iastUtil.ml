@@ -1240,7 +1240,8 @@ let add_globalv_to_mth_prog prog =
   }
 
 let add_globalv_to_mth_prog prog = 
-  Debug.no_1 "add_globalv_to_mth_prog" pr_no pr_no add_globalv_to_mth_prog prog
+  let pr = Iprinter.string_of_program in
+  Debug.ho_1 "add_globalv_to_mth_prog" pr pr add_globalv_to_mth_prog prog
 
 (*iprims: primitives in the header files
 prog: current program*)  
@@ -1261,9 +1262,9 @@ let pre_process_of_iprog iprims prog =
   prog
 
 let pre_process_of_iprog iprims prog = 
-  let pr x = (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls in
-  (* let pr x = (pr_list Iprinter.string_of_proc_decl) x.Iast.prog_proc_decls in *)
-  Debug.no_1 "pre_process_of_iprog" pr pr (fun _ -> pre_process_of_iprog iprims prog) iprims
+  let pr1 x = (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls in
+  let pr2 x = (pr_list Iprinter.string_of_proc_decl) x.Iast.prog_proc_decls in
+  Debug.no_1 "pre_process_of_iprog" pr2 pr2 (fun _ -> pre_process_of_iprog iprims prog) prog
 
 
 
