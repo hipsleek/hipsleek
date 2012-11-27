@@ -1380,7 +1380,9 @@ and collect_par_defs_two_side_one_hp_x prog lhs rhs (hrel, args)
         if lhprel = [] then pdef_rhs else
           let lhfs = List.map (fun hprel -> CF.HRel hprel) lhprel in
           let lhf = List.fold_left (fun hf1 hf2 -> CF.mkStarH hf1 hf2 no_pos) (List.hd lhfs) (List.tl lhfs) in
-          CF.mkAnd_f_hf pdef_rhs lhf (CF.pos_of_formula pdef_rhs)
+          let pos = (CF.pos_of_formula pdef_rhs) in
+          (* SAU.compose_subs pdef_rhs (CF.formula_of_heap lhf pos) pos *)
+          CF.mkAnd_f_hf pdef_rhs lhf pos
       in
       let pdefs = if SAU.is_trivial bf (hrel, args) then [] else
         [(hrel, args, [], pdef_cond ,None, Some bf)]
@@ -1782,13 +1784,16 @@ let simplify_constrs prog unk_hps constrs=
 
 (*========subst==============*)
 (*****************)
-let rec check_unsat_x f=
-  match f with
-    | CF.Base fb -> check_inconsistency fb.CF.formula_base_heap fb.CF.formula_base_pure
-    | CF.Or orf -> (check_unsat orf.CF.formula_or_f1) || (check_unsat orf.CF.formula_or_f2)
-    | CF.Exists fe ->
+let rec check_unsat_x f0=
+  let rec helper f=
+    match f with
+      | CF.Base fb -> check_inconsistency fb.CF.formula_base_heap fb.CF.formula_base_pure
+      | CF.Or orf -> (helper orf.CF.formula_or_f1) || (helper orf.CF.formula_or_f2)
+      | CF.Exists fe ->
         (*may not correct*)
-        check_inconsistency fe.CF.formula_exists_heap fe.CF.formula_exists_pure
+          check_inconsistency fe.CF.formula_exists_heap fe.CF.formula_exists_pure
+  in
+  helper f0
 
 and check_unsat f=
   let pr1 = Cprinter.prtt_string_of_formula in
@@ -1801,9 +1806,40 @@ and check_inconsistency hf mixf=
   let cmb_mf = MCP.merge_mems mixf new_mf true in
   not (TP.is_sat_raw cmb_mf)
 
+(* let check_heap_inconsistency unk_hpargs f0= *)
+(*   let do_check hf= *)
+(*     let hpargs = CF.get_HRels hf in *)
+(*     (\*remove dangling*\) *)
+(*     let hpargs1 = List.filter *)
+(*       (fun (hp0,args0) -> *)
+(*           not(Gen.BList.mem_eq SAU.check_hp_arg_eq (hp0,args0) unk_hpargs)) *)
+(*       hpargs *)
+(*     in *)
+(*     Gen.BList.check_dups_eq SAU.eq_spec_var_order_list (List.map snd hpargs1) *)
+(*   in *)
+(*   let rec helper f= *)
+(*     match f with *)
+(*       | CF.Base fb -> do_check fb.CF.formula_base_heap *)
+(*       | CF.Or orf -> (helper orf.CF.formula_or_f1) || (helper orf.CF.formula_or_f2) *)
+(*       | CF.Exists fe -> *)
+(*         (\*may not correct*\) *)
+(*           do_check fe.CF.formula_exists_heap *)
+(*   in *)
+(*   helper f0 *)
+
+let get_dups_hprel f0 f1=
+  let hpargs0 =CF.get_HRels_f f0 in
+  let hpargs1 =CF.get_HRels_f f1 in
+  let ls_args0 = List.map snd hpargs0 in
+  let dups_hps = List.concat (List.map (fun (hp,args) ->
+      if Gen.BList.mem_eq SAU.eq_spec_var_order_list  args ls_args0 then [hp] else [])
+                                  hpargs1)
+  in
+  dups_hps
+
 (*****************)
 
-let subst_one_cs_w_one_partial_def f (hp_name, args, def_f)=
+let subst_one_cs_w_one_partial_def cs_unk_hps f (hp_name, args, def_f)=
 (*drop hrel and get current args*)
   let new_f, argsl = CF.drop_hrel_f f [hp_name] in
   let do_subst newf eargs=
@@ -1816,8 +1852,8 @@ let subst_one_cs_w_one_partial_def f (hp_name, args, def_f)=
     let def_f_subst = CF.subst subst def_f in
         (* DD.ninfo_pprint ("   body after subst " ^ (Cprinter.prtt_string_of_formula def_f_subst)) no_pos; *)
         (*should remove duplicate*)
-    let svl1 = CF.fv newf in
-    let svl2 = CF.fv def_f_subst in
+    let svl1 = CF.get_all_sv_f newf in
+    let svl2 = CF.get_all_sv_f def_f_subst in
     let intersect = CP.intersect svl1 svl2 in
         (* DD.ninfo_pprint ("   intersect: " ^ (!CP.print_svl intersect)) no_pos; *)
     let def_f1 =
@@ -1827,14 +1863,14 @@ let subst_one_cs_w_one_partial_def f (hp_name, args, def_f)=
           | CF.Base fb ->
               CF.Base {fb with CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf fb.CF.formula_base_heap
                       SAU.select_dnode SAU.select_vnode
-                      SAU.select_hrel intersect intersect intersect}
+                      SAU.select_hrel intersect intersect (intersect@(get_dups_hprel newf def_f_subst) )}
           | _ -> report_error no_pos "sa.subst_one_cs_w_one_partial_def"
     in
         (*combi def_f_subst into newf*)
     let newf1 = CF.mkStar newf def_f1 CF.Flow_combine (CF.pos_of_formula newf) in
-        (*check contradiction*)
+    (*check contradiction*)
     let susbt_f=
-      if check_unsat newf1 then
+      if check_unsat newf1 (* || check_heap_inconsistency cs_unk_hps newf1 *) then
         let _ = DD.ninfo_pprint ("     contradiction found after subst.") no_pos in
         f
       else newf1
@@ -1895,10 +1931,10 @@ let subst_one_cs_w_partial_defs ldefs rdefs constr=
   DD.ninfo_pprint ("    input: " ^ (Cprinter.string_of_hprel constr)) no_pos;
   (*subst lhs*)
   DD.ninfo_pprint "  subst lhs" no_pos;
-  let lhs1 = List.fold_left subst_one_cs_w_one_partial_def lhs ldefs in
+  let lhs1 = List.fold_left (subst_one_cs_w_one_partial_def constr.CF.unk_hps) lhs ldefs in
   (*subst rhs*)
   DD.ninfo_pprint "  subst rhs" no_pos;
-  let rhs1 = List.fold_left subst_one_cs_w_one_partial_def rhs rdefs in
+  let rhs1 = List.fold_left (subst_one_cs_w_one_partial_def constr.CF.unk_hps) rhs rdefs in
   (*rhs contradict with lhs?*)
   let cmbf = CF.mkStar lhs1 rhs1 CF.Flow_combine no_pos in
   let lhs2,rhs2 =
