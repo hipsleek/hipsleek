@@ -165,7 +165,7 @@ let process_source_full source =
     let _ = Gen.Profiling.pop_time "Preprocessing" in
     print_string (Iprinter.string_of_program prog)
   else
-    let _ = Tpdispatcher.start_prover () in
+    if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
     (* Global variables translating *)
     let _ = Gen.Profiling.push_time "Translating global var" in
     let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
@@ -244,8 +244,7 @@ let process_source_full source =
       raise e
     end);
     (* Stopping the prover *)
-    let _ = Tpdispatcher.stop_prover () in
-    
+    if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
     (* Get the total verification time *)
     let ptime4 = Unix.times () in
     let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
@@ -332,7 +331,7 @@ let process_source_full_parse_only source =
   (prog, prims_list)
 
 let process_source_full_after_parser source (prog, prims_list) =
-  let _ = Tpdispatcher.start_prover () in
+  if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
   (* Global variables translating *)
   let _ = Gen.Profiling.push_time "Translating global var" in
   let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
@@ -411,7 +410,7 @@ let process_source_full_after_parser source (prog, prims_list) =
     raise e
   end);
   (* Stopping the prover *)
-  let _ = Tpdispatcher.stop_prover () in
+  if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
   
   (* An Hoa : export the proof to html *)
   let _ = if !Globals.print_proof then
@@ -498,7 +497,7 @@ let loop_cmd parsed_content =
   ()
 
 let finalize () =
-  Tpdispatcher.stop_prover ()
+  if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
 let old_main = 
   try

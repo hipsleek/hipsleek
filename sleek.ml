@@ -276,15 +276,15 @@ let _ =
   Scriptarguments.check_option_consistency ();
   if !Globals.print_version_flag then begin
     print_version ()
-  end else
+  end else (
     let _ = Printexc.record_backtrace !Globals.trace_failure in
-    (Tpdispatcher.start_prover ();
+    if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
     Gen.Profiling.push_time "Overall";
     (* let _ = print_endline "before main" in *)
     main ();
     (* let _ = print_endline "after main" in *)
     Gen.Profiling.pop_time "Overall";
-    Tpdispatcher.stop_prover ();
+    if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
     (* Get the total proof time *)
     let _ = if not(!Globals.no_cache_formula) then
       begin
@@ -323,4 +323,5 @@ let _ =
     let _ = 
       if (!Globals.profiling && not !inter) then 
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in
-    print_string "\n")
+    print_string "\n"
+  )

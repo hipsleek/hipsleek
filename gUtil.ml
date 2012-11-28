@@ -224,7 +224,7 @@ let initialize () =
   TP.start_prover ()
 
 let finalize () =
-  TP.stop_prover ()
+  if (!Tpdispatcher.tp_batch_mode) then TP.stop_prover ()
 
 
 (**
