@@ -1211,21 +1211,28 @@ let map_body_of_proc f proc =
 let add_globalv_to_mth_prog prog = 
   let cg = callgraph_of_prog prog in
   let ht = create_progfreeht_of_prog prog in
-  let _, fscc = IGC.scc cg in
   (* let scclist = List.rev (ngscc_list cg) in *)
-  let scclist = IGC.scc_list cg in
-  let scclist = List.map (fun scc ->
-    (match scc with x::_ -> fscc x | _ -> 0), scc) scclist in
-  let scclist = List.sort (fun (i1, _) (i2, _) -> i1-i2) scclist in
-  let scclist = snd (List.split scclist) in
+  
+  (* let _, fscc = IGC.scc cg in                                       *)
+  (* let scclist = IGC.scc_list cg in                                  *)
+  (* let scclist = List.map (fun scc ->                                *)
+  (*   (match scc with x::_ -> fscc x | _ -> 0), scc) scclist in       *)
+  (* let scclist = List.sort (fun (i1, _) (i2, _) -> i1-i2) scclist in *)
+  (* let scclist = snd (List.split scclist) in                         *)
+  
   (* let scclist = List.sort (fun s1 s2 ->     *)
   (*   match s1, s2 with                       *)
   (*   | x1::_, x2::_ -> (fscc x1) - (fscc x2) *)
   (*   | x1::_, [] -> 1                        *)
   (*   | [], x2::_ -> -1                       *)
   (*   | _ -> 0) (IGC.scc_list cg) in          *)
+  
+  let sccarr = IGC.scc_array cg in
+  let scclist = Array.to_list sccarr in
+  
   (* let _ = print_endline ("scc: " ^ (pr_list (pr_list                        *)
   (*   (fun id -> (pr_id id) ^ ": " ^ (string_of_int (fscc id)))) scclist)) in *)
+  
   let sccfv = merge1 ht scclist in
   let mscc = push_freev1 cg sccfv in
   let _ = update_ht0 ht mscc in

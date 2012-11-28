@@ -7155,7 +7155,9 @@ and pr_proc_call_order p =
 (* irf = is_rec_field *)
 and mark_rec_and_call_order_x (cp: C.prog_decl) : C.prog_decl =
   let cg = C.callgraph_of_prog cp in
-  let scc_list = List.rev (C.IGC.scc_list cg) in
+  (* let scc_list = List.rev (C.IGC.scc_list cg) in *)
+  let scc_arr = C.IGC.scc_array cg in
+  let scc_list = Array.to_list scc_arr in
   let cp = mark_recursive_call cp scc_list cg in
   let cp = mark_call_order cp scc_list cg in
   let (prims, mutual_grps) = C.re_proc_mutual (C.sort_proc_decls (C.list_of_procs cp)) in
@@ -7174,7 +7176,7 @@ and mark_call_order_x (cp: C.prog_decl) scc_list cg : C.prog_decl =
   (* let proc_top, proc_base = List.partition (fun proc -> proc.C.proc_is_main) (C.list_of_procs cp) in      *)
   (* let proc_top_names = List.map (fun p -> p.C.proc_name) proc_top in                                      *)
   (* let scc_list = List.filter (fun scc -> Gen.BList.overlap_eq (=) scc proc_top_names) scc_list in         *)
-  (* let scc_list = scc_sort scc_list cg in                                                                  *)
+  (* (* let scc_list = scc_sort scc_list cg in *)                                                            *)
   (* let _, scc_list = List.fold_left (fun (index, acc) scc ->                                               *)
 	(*   (index+1, acc @ [(index, scc)])) (0, []) scc_list in                                                  *)
   (* let call_hierarchy = List.concat (List.map (fun (i, scc) -> List.map (fun m -> (m,i)) scc) scc_list) in *)
@@ -7183,6 +7185,8 @@ and mark_call_order_x (cp: C.prog_decl) scc_list cg : C.prog_decl =
   (*     { p with C.proc_call_order = cal_index p.C.proc_name call_hierarchy }                               *)
   (* ) cp.C.new_proc_decls in                                                                                *)
   (* { cp with C.new_proc_decls = tbl }                                                                      *)
+  
+  (* The following code stuff runs faster than above *)
   let _, fscc = C.IGC.scc cg in
   let tbl = C.proc_decls_map (fun p ->
     { p with C.proc_call_order = fscc p.C.proc_name }
@@ -7205,10 +7209,10 @@ and find_scc_group (cp: C.prog_decl) (pname: Globals.ident) (scc_list: C.IG.V.t 
   try List.find (fun scc -> is_found cp pname scc) scc_list
   with _ -> []
 	  
-and neighbors_of_scc (scc: C.IG.V.t list) (scc_list: C.IG.V.t list list) cg : C.IG.V.t list list =
-  let neighbors = List.filter (fun m -> not (List.mem m scc)) (C.IGN.list_from_vertices cg scc) in
-  let scc_neighbors = List.find_all (fun s -> List.exists (fun m -> List.mem m neighbors) s) scc_list in 
-  scc_neighbors
+(* and neighbors_of_scc (scc: C.IG.V.t list) (scc_list: C.IG.V.t list list) cg : C.IG.V.t list list =        *)
+(*   let neighbors = List.filter (fun m -> not (List.mem m scc)) (C.IGN.list_from_vertices cg scc) in        *)
+(*   let scc_neighbors = List.find_all (fun s -> List.exists (fun m -> List.mem m neighbors) s) scc_list in  *)
+(*   scc_neighbors                                                                                           *)
 
 (* Warning: This method might have problem with OCaml 4.0 *)  
 (* and scc_sort (scc_list: C.IG.V.t list list) cg : C.IG.V.t list list = *)
