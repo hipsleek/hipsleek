@@ -1042,6 +1042,7 @@ let from_H h =
   !r
 
 let ngscc_list cg = IGC.scc_list cg 
+
 let ngscc cg = IGC.scc cg
 
 let create_progfreeht_of_prog prog = 
@@ -1056,7 +1057,7 @@ let create_progfreeht_of_prog prog =
   let pr_set s = IdentSet.fold (fun e a -> a ^ ", " ^ e) s "" in
   let pr_hashtbl h = Hashtbl.fold (fun k (d1, d2) a ->
     k ^ ", (" ^ (pr_set d1) ^ "; " ^ (pr_set d2) ^ ")\n") h "" in
-  Debug.ho_1 "create_progfreeht_of_prog" (fun _ -> "") pr_hashtbl
+  Debug.no_1 "create_progfreeht_of_prog" (fun _ -> "") pr_hashtbl
   create_progfreeht_of_prog prog
 
 let merge0 ht ms : ((ident list) * (IS.t * IS.t)) = 
@@ -1210,8 +1211,21 @@ let map_body_of_proc f proc =
 let add_globalv_to_mth_prog prog = 
   let cg = callgraph_of_prog prog in
   let ht = create_progfreeht_of_prog prog in
-  let scclist = List.rev (ngscc_list cg) in
-  let _ = print_endline ("scc: " ^ (pr_list (pr_list pr_id) scclist)) in
+  let _, fscc = IGC.scc cg in
+  (* let scclist = List.rev (ngscc_list cg) in *)
+  let scclist = IGC.scc_list cg in
+  let scclist = List.map (fun scc ->
+    (match scc with x::_ -> fscc x | _ -> 0), scc) scclist in
+  let scclist = List.sort (fun (i1, _) (i2, _) -> i1-i2) scclist in
+  let scclist = snd (List.split scclist) in
+  (* let scclist = List.sort (fun s1 s2 ->     *)
+  (*   match s1, s2 with                       *)
+  (*   | x1::_, x2::_ -> (fscc x1) - (fscc x2) *)
+  (*   | x1::_, [] -> 1                        *)
+  (*   | [], x2::_ -> -1                       *)
+  (*   | _ -> 0) (IGC.scc_list cg) in          *)
+  (* let _ = print_endline ("scc: " ^ (pr_list (pr_list                        *)
+  (*   (fun id -> (pr_id id) ^ ": " ^ (string_of_int (fscc id)))) scclist)) in *)
   let sccfv = merge1 ht scclist in
   let mscc = push_freev1 cg sccfv in
   let _ = update_ht0 ht mscc in
@@ -1238,11 +1252,8 @@ let pre_process_of_iprog iprims prog =
 					  prog_axiom_decls = iprims.prog_axiom_decls @ prog.prog_axiom_decls;
           } in
   let prog = float_var_decl_prog prog in
-  (* let _ = print_string "[pre_process_of_iprog] 1\n" in *)
   let prog = rename_prog prog in
-  (* let _ = print_string "[pre_process_of_iprog] after rename_prog\n" in *)
   let prog = add_globalv_to_mth_prog prog in
-  (* let _ = print_string "[pre_process_of_iprog] after pre_process_of_iprog\n" in *)
   prog
 
 let pre_process_of_iprog iprims prog = 
