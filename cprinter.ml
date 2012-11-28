@@ -729,6 +729,7 @@ let rec pr_b_formula (e:P.b_formula) =
       (*   pr_set pr_formula_exp ls2 *)
       (* else () *)
     | P.BConst (b,l) -> fmt_bool b 
+    | P.XPure v ->  fmt_string "XPURE?"
     | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
     | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2
     | P.Lte (e1, e2, l) -> f_b e1; fmt_string op_lte ; f_b e2
@@ -2890,6 +2891,7 @@ let rec html_of_formula_exp e =
 	| P.ArrayAt (a, i, l) -> (html_of_spec_var a) ^ "[" ^ (String.concat "," (List.map html_of_formula_exp i)) ^ "]"
 
 let rec html_of_pure_b_formula f = match f with
+    | P.XPure _ -> "<b> XPURE </b>"
     | P.BConst (b,l) -> "<b>" ^ (string_of_bool b) ^ "</b>"
     | P.BVar (x, l) -> html_of_spec_var x
     | P.Lt (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_lt ^ (html_of_formula_exp e2)

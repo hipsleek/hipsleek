@@ -141,6 +141,7 @@ and coq_of_b_formula b =
   let (pf,_) = b in
   match pf with
   | CP.BConst (c, _) -> if c then "True" else "False"
+  | CP.XPure _ -> "True" (* WN : weakening - need to translate> *)
   | CP.BVar (bv, _) -> " (" ^ (coq_of_spec_var bv) ^ " = 1)"
   | CP.Lt (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " < " ^ (coq_of_exp a2) ^ ")"
   | CP.SubAnn (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " <= " ^ (coq_of_exp a2) ^ ")"
