@@ -3328,6 +3328,19 @@ let rec get_HRels_f f=
         let a2 = get_HRels_f orf.formula_or_f2 in
         (a1@a2)
 
+let check_and_get_one_hpargs f=
+  let helper mf hf=
+    if CP.isConstTrue (MCP.pure_of_mix mf) then
+      match hf with
+        | HRel (hp, eargs, p ) -> [(hp, List.concat (List.map CP.afv eargs),p)]
+        | _ -> []
+    else []
+  in
+  match f with
+    | Base fb -> helper fb.formula_base_pure fb.formula_base_heap
+    | Exists fe -> helper fe.formula_exists_pure fe.formula_exists_heap
+    | Or _  -> []
+
 let rec check_eq_hrel_node  (rl1, args1 ,_)  (rl2, args2,_)=
     let rec helper l1 l2=
       match l1,l2 with

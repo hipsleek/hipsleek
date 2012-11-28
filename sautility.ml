@@ -241,6 +241,10 @@ let mkHRel hp args pos=
   let eargs = List.map (fun x -> CP.mkVar x pos) args in
    ( CF.HRel (hp, eargs, pos))
 
+let mkHRel_f hp args pos=
+  let hf = mkHRel hp args pos in
+  CF.formula_of_heap hf pos
+
 let rec get_hdnodes (f: CF.formula)=
   match f with
     | CF.Base fb ->
@@ -1412,6 +1416,75 @@ let norm_hnodes args fs=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
   Debug.no_2 "norm_hnodes" !CP.print_svl pr1 pr1
       (fun _ _ -> norm_hnodes_x args fs) args fs
+
+
+let generate_equiv_pdefs_x unk_hps pdef_grps=
+  let get_succ_hps_pardef (_,_,f)=
+    (CF.get_HRels_f f)
+  in
+  let rec lookup_succ_hps_grp rem_grps hp done_grps=
+    match rem_grps with
+      | [] -> ([],done_grps,[])
+      | grp::tl -> begin
+          match grp with
+            | [] -> lookup_succ_hps_grp tl hp done_grps
+            | (hp1,_,_)::_ ->
+                if CP.eq_spec_var hp1 hp then
+                  let succ_hpargs = List.concat (List.map get_succ_hps_pardef grp) in
+                  let hps = CP.remove_dups_svl (List.map fst succ_hpargs) in
+                   (hps, done_grps@tl,grp)
+                else
+                  lookup_succ_hps_grp tl hp (done_grps@[grp])
+      end
+  in
+  (*hp0 --> hp_equiv*)
+  let gen_equiv_hps_one_hp equiv_hps pdef_grps0 (hp0,args0,p0)=
+    let size0 =  List.length args0 in
+    let equivs_hps = List.concat (List.map (fun (hp1,args1,_) ->
+        if CP.eq_spec_var hp0 hp1 || List.length args1 <> size0 then []
+        else [hp1])  equiv_hps)
+    in
+    if equivs_hps = [] then pdef_grps0 else
+      let succ_hps,other_grps,cur_grp = lookup_succ_hps_grp pdef_grps0 hp0 [] in
+      let not_process = succ_hps@unk_hps in
+      let real_equivs_hps = List.filter (fun hp1 -> not (CP.mem_svl hp1 not_process)) equivs_hps in
+      let new_pdef_grps0=
+        if real_equivs_hps = [] then pdef_grps0 else
+      (*build new pdefs*)
+          let new_pdefs = List.map (fun hp2 -> (hp0,args0, mkHRel_f hp2 args0 p0)) real_equivs_hps in
+          other_grps@[(cur_grp@new_pdefs)]
+      in
+      new_pdef_grps0
+  in
+  let gen_equiv_hps_one pdef_grps1 grp=
+    let equiv_hps = List.concat (List.map (fun (_,_,f) ->
+        CF.check_and_get_one_hpargs f) grp) in
+    List.fold_left (gen_equiv_hps_one_hp equiv_hps) pdef_grps1 equiv_hps
+  in
+  let rec loop_helper pdef_grps2 done_hps=
+    let rec helper ls=
+      match ls with
+        | [] -> pdef_grps2
+        | grp::tl -> begin
+            match grp with
+              | (hp1,_,_)::_ ->
+                  if CP.mem_svl hp1 done_hps then
+                    helper tl
+                  else
+                    let new_grps = gen_equiv_hps_one pdef_grps2 grp in
+                    loop_helper new_grps (done_hps@[hp1])
+              | [] -> helper tl
+        end
+    in
+    helper pdef_grps2
+  in
+  loop_helper pdef_grps []
+
+let generate_equiv_pdefs unk_hps pdef_grps=
+  let pr1 =  Cprinter.prtt_string_of_formula in
+  let pr2 = pr_list_ln (pr_list_ln (pr_triple !CP.print_sv !CP.print_svl pr1)) in
+  Debug.ho_2 "generate_equiv_pdefs" !CP.print_svl pr2 pr2
+      (fun _ _ -> generate_equiv_pdefs_x unk_hps pdef_grps) unk_hps pdef_grps
 
 
 (************************************************************)

@@ -2398,6 +2398,11 @@ let get_pdef_body (a1,args,unk_args,a3,olf,orf)=
       - depend on recusive groups: wait
 *)
 let pardef_subst_fix_x prog unk_hps groups=
+  let hp_fromgrp grp=
+    match grp with
+      | (hp,_,_)::_ -> hp
+      | [] -> report_error no_pos "sa.pardef_subst_fix_x: 1"
+  in
   let is_rec_pardef (hp,_,f)=
     let hps = CF.get_hp_rel_name_formula f in
     (CP.mem_svl hp hps)
@@ -2416,8 +2421,18 @@ let pardef_subst_fix_x prog unk_hps groups=
   let is_independ_group grp =
     List.for_all is_independ_pardef grp
   in
-  (* let get_succ_hps_pardef (_,_,f)= *)
-  (*   (CF.get_HRels_f f) *)
+  let get_succ_hps_pardef (_,_,f)=
+    (CF.get_HRels_f f)
+  in
+  (* let comp_rec_grps_fix rec_ind_grps grps= *)
+  (*   let g_rec_hps = List.map hp_fromgrp rec_ind_grps in *)
+  (*   let check *)
+  (*   let fix_helper rem_grps l_rec_grps l_rec_hps= *)
+  (*     match rem_grps with *)
+  (*       | [] -> (l_rec_grps,rem_grps) *)
+  (*       | _ ->  *)
+  (*   in *)
+  (*   [] *)
   (* in *)
   let process_dep_group grp rec_hps nrec_grps=
     (* let (hp,args,_) = List.hd grp in *)
@@ -2826,7 +2841,9 @@ let generalize_hps_par_def_x prog non_ptr_unk_hps unk_hps par_defs=
     search_largest_matching between two formulas
   *)
   let unk_hps = (List.map (fun (hp,_) -> hp) unk_hps) in
-  let groups2 = pardef_subst_fix prog unk_hps groups1 in
+  let groups1a = SAU. generate_equiv_pdefs unk_hps groups1 in
+  let groups2 = pardef_subst_fix prog unk_hps groups1a in
+  (* let _ = Debug.info_pprint ("     END: " ) no_pos in *)
   (*remove empty*)
   let groups3 = List.filter (fun grp -> grp <> []) groups2 in
   (*each group, do union partial definition*)
