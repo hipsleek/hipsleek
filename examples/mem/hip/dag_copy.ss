@@ -3,11 +3,6 @@ data node {
 	node left;
 	node right;	
 }
-
-dag<M> == self = null & M = {}
-	or self::node<v,l@I,r@I> * l::dag<Ml> & r::dag<Mr> & M = union({self},Ml,Mr)
-	inv true
-	mem M->(node<@M,@I,@I>);
 	
 ddag<y,M> ==  self = null & self = y & M = {}
 	or self::node<y,l@I,r@I> * y::node<_,yl@I,yr@I> * l::ddag<yl,Ml> & r::ddag<yr,Mr> 
