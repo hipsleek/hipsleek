@@ -19,6 +19,26 @@ void swap(ref node x, node y, node z)
   requires H1(x)*H2(y)*H3(z)
   ensures G1(x')*G2(y)*G3(z);//'
   /*
+
+
+ H1(x_591) ::= x_591::node<val_41_521',next_41_522'> * next_41_522'::ls
+ G1(x') ::= x'::node<val_41_543,yy> * HP_586(yy)&true,
+ HP_586(yy) ::= emp & PURE(H2(yy))
+     or yy::node<val_41_543,y_589> * HP_586(y_589)&true
+ H2(x) --> G2(x)&true,
+ G3(x)&true <--> G2(x)&true
+ H3(x)&true <--> H2(x)&true
+
+ G2(x)=G3(x)  =  H2(x)=H3(x)  = x=y#orig or x=z#orig
+
+
+ H2(y) --> G2(y)&true,
+ G3(y)&true --> G2(y)&true
+ G2(z)&true --> G3(z)&true]
+ H3(z)&true --> H2(z)&true
+ H2(y)&true --> H3(y)&true
+
+
  H1(x)&true --> x::node<val_41_521',next_41_522'> * HP_538(next_41_522')&true,
  HP_538(t_21')&t_21'!=null --> H1(t_21')&true,
  H3(z)&true --> H2(z)&true,
@@ -31,11 +51,6 @@ void swap(ref node x, node y, node z)
  G3(y)&true --> G2(y)&true,
  G2(z)&true --> G3(z)&true]
 
- H2(y)&H2_y_564=y --> G2(y)&true,
- G3(y)&true --> G2(y)&true
- G2(z)&true --> G3(z)&true]
- H3(z)&true --> H2(z)&true
- H2(y)&true --> H3(y)&true
  
  should derive:
  H2(x)  -> G2(x)
@@ -50,8 +65,7 @@ we should have:
  HP_538(next_43_550)&next_43_550=null --> emp&true,
  x'::node<val_41_543,y> & PURE(H2(y)) --> G1(x')&true,
 
- G1(x_585) ::= x_585::node<val_41_543,y> * HP_586(y)&true,
- H1(x_591) ::= x_591::node<val_41_521',next_41_522'> * next_41_522'::ls[LHSCase]&true,
+se]&true,
  H3(z) ::= emp&H2_y_564=z,
  H2(y) ::= emp&H2_y_564=y,
  G3(y) ::= emp&H2_y_564=y,
@@ -62,9 +76,6 @@ we should have:
 
  G1(x_585) ::= x_585::node<val_41_543,y> * HP_586(y)&true,
  H1(x_591) ::= x_591::node<val_41_521',next_41_522'> * next_41_522'::ls[LHSCase]&true,
- HP_586(y) ::= 
- emp & PURE(H2(y))
- or y::node<val_41_543,y_589> * HP_586(y_589)&true
 
   */
 {

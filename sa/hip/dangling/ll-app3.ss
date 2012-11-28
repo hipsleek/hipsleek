@@ -37,7 +37,7 @@ It may be more accurate to have
  H3(x_587) ::= x_587::node<val_52_546,y> * HP_588(y)&true,
  H1(x_594) ::= x_594::node<val_52_521',next_52_522'> * next_52_522'::ls[LHSCase]&true,
  HP_588(y) ::= 
-  emp&H2(y)
+  emp & H2(y)
   or y::node<val_52_546,y_591> * HP_588(y_591)&true
 
 */

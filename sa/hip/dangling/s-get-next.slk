@@ -32,7 +32,35 @@ infer [H1,G]
 print residue.
 
 /*
-why isn't @I annotation printed?
-[ H1(res) * x'::node<val_36_533,next_37_514'>&next_37_514'=null 
-  --> G(x',res)&true]
+[ H1(res) * x'::node<val_36_533,next_37_514'>@I&
+  next_37_514'=null --> G(x',res)&true]
 */
+
+
+infer [ia] 
+  x'::node<val_36_533,next_37_514'>@ia 
+ |-  x'::node<_,_>@I.
+
+print residue.
+
+infer [ia] 
+  x'::node<val_36_533,next_37_514'>@ia 
+ |-  x'::node<_,_>@M.
+
+infer [ia] 
+  x'::node<val_36_533,next_37_514'>@ia 
+ |-  x'::node<_,_>@L.
+
+print residue.
+
+infer [ia] 
+  x'::node<val_36_533,next_37_514'>@ia 
+ |-  x'::node<_,_>@A.
+
+print residue.
+
+infer [] 
+  emp
+ |-  x'::node<_,_>@A.
+
+print residue.
