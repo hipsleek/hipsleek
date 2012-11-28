@@ -12,8 +12,7 @@ int foo2(node x)
 
 int foo1(node x)
   requires x::node<_,_>
-  ensures_exact htrue;
+  ensures htrue;
 {
-	dprint;
   return x.val;
 }

@@ -274,33 +274,36 @@ and check_bounded_term_x prog ctx post_pos =
      * (their value non-negative numbers in default) *)
     let m = List.filter (fun e -> 
         not (Gen.BList.overlap_eq CP.eq_spec_var (CP.afv e) prog.prog_logical_vars)) m in
-    let m_pos = match m with
-      | [] -> no_pos
-      | e::_ -> CP.pos_of_exp e 
-    in
-    let ctx = CF.Ctx es in
-    let bnd_formula_l = List.map (fun e ->
-        CP.mkPure (CP.mkGte e (CP.mkIConst 0 m_pos) m_pos)) m in
-    let bnd_formula = CF.formula_of_pure_formula
-      (CP.join_conjunctions bnd_formula_l) m_pos in
-    let rs, _ = heap_entail_one_context 12 prog false ctx bnd_formula None post_pos in
-    let _ = Debug.trace_hprint (add_str "Result context" 
-        !CF.print_list_context) rs no_pos in
-    let term_pos = (m_pos, no_pos) in
-    let term_res, n_es =
-      let f_ctx = CF.formula_of_context ctx in
-      if (CF.isFailCtx rs) then 
-        let tr = (term_pos, None, Some f_ctx, Term.MayTerm_S (Term.Not_Bounded_Measure m)) in
-        let err_msg = Term.string_of_term_res tr in
-        let _ = Term.add_term_err_stk err_msg in
-        tr, { es with CF.es_term_err = Some err_msg }
-      else 
-        (term_pos, None, Some f_ctx, Term.Term_S Term.Bounded_Measure),
-      es
-    in
-    let _ = Debug.trace_hprint (add_str "New es" !CF.print_entail_state) n_es no_pos in
-    let _ = Term.add_term_res_stk term_res in 
-    n_es, rs
+    if m == [] then (es, CF.SuccCtx [(CF.Ctx es)])
+    else begin
+      let m_pos = match m with
+        | [] -> no_pos
+        | e::_ -> CP.pos_of_exp e 
+      in
+      let ctx = CF.Ctx es in
+      let bnd_formula_l = List.map (fun e ->
+          CP.mkPure (CP.mkGte e (CP.mkIConst 0 m_pos) m_pos)) m in
+      let bnd_formula = CF.formula_of_pure_formula
+        (CP.join_conjunctions bnd_formula_l) m_pos in
+      let rs, _ = heap_entail_one_context 12 prog false ctx bnd_formula None post_pos in
+      let _ = Debug.trace_hprint (add_str "Result context" 
+          !CF.print_list_context) rs no_pos in
+      let term_pos = (m_pos, no_pos) in
+      let term_res, n_es =
+        let f_ctx = CF.formula_of_context ctx in
+        if (CF.isFailCtx rs) then 
+          let tr = (term_pos, None, Some f_ctx, Term.MayTerm_S (Term.Not_Bounded_Measure m)) in
+          let err_msg = Term.string_of_term_res tr in
+          let _ = Term.add_term_err_stk err_msg in
+          tr, { es with CF.es_term_err = Some err_msg }
+        else 
+          (term_pos, None, Some f_ctx, Term.Term_S Term.Bounded_Measure),
+          es
+      in
+      let _ = Debug.trace_hprint (add_str "New es" !CF.print_entail_state) n_es no_pos in
+      let _ = Term.add_term_res_stk term_res in 
+      n_es, rs
+    end
   in
   let check_bounded_one_measures m es =
     Debug.no_1 "check_bounded_one_measures"
@@ -331,8 +334,8 @@ and check_bounded_term_x prog ctx post_pos =
 and check_bounded_term prog ctx post_pos =
   let pr = !CF.print_context in
   let pr1 = pr_pair !CF.print_context (pr_list Cprinter.string_of_lhs_rhs) in
-  Debug.no_1 "check_bounded_term" pr pr1
-      (fun _ -> check_bounded_term_x prog ctx post_pos) ctx
+  let f = wrap_proving_kind "TERM-BND" (check_bounded_term_x prog ctx) in
+  Debug.no_1 "check_bounded_term" pr pr1 (fun _ -> f post_pos) ctx
 
 (*and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (sp:CF.struc_formula) e0 do_infer: 
   CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * bool = do_spec_verify_infer prog proc ctx sp e0 do_infer*)
