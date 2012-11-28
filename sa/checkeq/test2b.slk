@@ -1,0 +1,49 @@
+data node { int val ; node next }.
+data node2 { node left ; node right }.
+
+HeapPred ll(node x, int n).
+HeapPred rr(node x, int n).
+
+//(1)
+checkeq [x] x::node<a,null> -|- y::node<c,null> & x=y.
+//!!! DIFF PART: [ x::node<a,flted_12_53>]
+//!!! DIFF PART: [ y::node<c,flted_12_59>&x=y]
+// FAIL
+// ERROR : I think we should make use of existential equality
+// that can be substituted away
+
+//(2)
+checkeq [x] x::node<a,null> -|- (exists y: y::node<c,null> & x=y).
+//!!! DIFF PART: [ x::node<a,flted_12_53>]
+//!!! DIFF PART: [ y::node<c,flted_12_59>&x=y]
+// FAIL
+// ERROR : I think we should make use of existential equality..
+// that can be substituted away
+
+// (3)
+checkeq [x] x::node<a,null> -|- x::node<c,null> & x=y .
+//!!! EQ. FMT: [[(flted_16_66, flted_16_72), (a, c)]]
+//!!! DIFF PART: [ emp&x=y]
+// FAIL
+// ERROR : I think (2) and (3) should have similar outcome
+// thru variable renaming and = substitution
+
+//(4)
+checkeq [x] x::node2<a,a> -|- x::node2<c,d> .
+
+//(5)
+checkeq [x] x::node2<a,b> & a=b -|- x::node2<c,d> .
+// this equality cannot be susbtituted away
+// thus it rightly fails
+
+//(6)
+checkeq [x] (exists f: x::node2<a,e> & e=f) -|- x::node2<c,d> .
+// !!! DIFF: Exists formula
+// WHY this error?
+
+//(7)
+checkeq [x] x::node2<a,e> & e=f -|- x::node2<c,d> .
+//!!! DIFF PART: [ emp&e=f]
+//!!! EQ. FMT: [[(e, d), (a, c)]]
+// ERROR : We should substitute existential equality
+

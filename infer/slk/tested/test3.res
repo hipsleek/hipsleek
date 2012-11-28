@@ -1,3 +1,2 @@
-Starting Reduce... 
 Starting Omega...oc
-Stop Omega... 10 invocations 
+Stop Omega... 11 invocations 

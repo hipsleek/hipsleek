@@ -203,7 +203,7 @@ let action_get_holes a = match a with
  
 let action_get_holes (a:action):(h_formula*int) list option = 
   let pr1 = string_of_action_res in
-  let pr2 = pr_option pr_no in
+  let pr2 = pr_option (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int)) in
   Debug.no_1 "action_get_holes" pr1 pr2 action_get_holes a
 
 let action_wt_get_holes (_,a) = action_get_holes a
@@ -319,6 +319,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
        )
        else []
    )
+  | HRel _ -> []
    | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
 
 and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
@@ -471,7 +472,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
     | HTrue -> []
     | HFalse -> []
     | HEmp -> []
-    (*| StarMinus _ *)
+    | HRel _ -> []
     | Hole _ -> []
     | DataNode ({h_formula_data_node = p1; 
 		         h_formula_data_imm = imm1;
@@ -521,9 +522,9 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 	  h_formula_star_h2 = f2;
 	  h_formula_star_pos = pos}) ->
           let l1 = helper f1 in
-          let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkStarH lhs1 f2 pos 12 , node1, hole1, match1)) l1 in  
+          let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkStarH lhs1 f2 pos, node1, hole1, match1)) l1 in  
           let l2 = helper f2 in
-          let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkStarH f1 lhs2 pos 13, node2, hole2, match2)) l2 in
+          let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkStarH f1 lhs2 pos, node2, hole2, match2)) l2 in
 	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x f:"  ^ (Cprinter.string_of_h_formula f)) in *)
 	  (* let helper0 lst = List.fold_left (fun res (a,_,_,_) -> res ^ (Cprinter.string_of_h_formula a) ) "" lst in *)
 	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res1:"  ^ helper0 res1) in *)
@@ -1214,6 +1215,7 @@ and input_h_formula_in2_frame (frame, id_hole) (to_input : h_formula) : h_formul
     | DataNode _ 
     | ViewNode _
     | HEmp
+    | HRel _
     | HTrue | HFalse | StarMinus _ -> frame
           
 and update_ctx_es_formula ctx0 f = 

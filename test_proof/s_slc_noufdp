@@ -1,0 +1,125 @@
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 15
+Prover: Z3
+Type: Imply: ante: x2!=x7
+	     conseq:  x2=null
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 16
+Prover: Z3
+Type: Imply: ante: x2!=x7
+	     conseq:  x2=null
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 17
+Prover: Z3
+Type: Imply: ante: x2!=x7
+	     conseq:  x2=null
+Time: 0.004001
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 18
+Prover: Z3
+Type: Imply: ante: x2!=x7
+	     conseq:  x2=null
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 19
+Prover: Z3
+Type: Imply: ante: x2!=x7
+	     conseq:  x2=null
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 20
+Prover: Z3
+Type: Imply: ante: x2!=x7
+	     conseq:  x2=null
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 21
+Prover: Z3
+Type: Imply: ante: true
+	     conseq:  x2!=x7
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 22
+Prover: Z3
+Type: Imply: ante: x1!=x6
+	     conseq:  x1!=x10
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 23
+Prover: Z3
+Type: Imply: ante: x1!=x10
+	     conseq:  x1!=x6
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 24
+Prover: Z3
+Type: Imply: ante: true
+	     conseq:  x4!=x9
+Time: 0.004001
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 25
+Prover: Z3
+Type: Sat:  x2!=x7
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 26
+Prover: Z3
+Type: Sat:  x1!=x6 & x1!=x10
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 27
+Prover: Z3
+Type: Sat:  x4!=x9
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 28
+Prover: Z3
+Type: Imply: ante: true
+	     conseq:  false
+Time: 0.
+Result: false

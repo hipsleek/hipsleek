@@ -1,0 +1,44 @@
+// (1) equality is important
+checkentail x!=y  & x=b & b=y |- false.
+
+// (2) detecting self contradiction?
+checkentail x!=x & x=b |-false.
+
+// (3) detecting self contradiction?
+checkentail x!=x |-false.
+
+
+// (4) slicing properly done?
+checkentail x!=y & x=b |-false.
+/*
+Type: Sat:  b=x
+why isn't x!=y picked for UNSAT?
+Because x!=y is not directly related to x=b
+*/
+
+// (5) keep tgt
+checkentail x!=y  & x=y |- false.
+
+// (6) auto slicing 
+checkentail x!=y  & a=b |- false.
+
+// (7) keep tgt
+checkentail x!=y  & x=y & x=a |- false.
+/*
+--eps --slc-ann-ineq
+Type: Sat:  a=x & a=y & x!=y
+could interpolant detect earlier contradiction?
+
+--eps
+Type: Sat:  a=x & a=y & x!=y
+*/
+
+// (8) keep tgt
+checkentail x!=y & x!=a  & x=y & x=a |- false.
+/*
+--eps --slc-ann-ineq
+Type: Sat:  a=x & a=y & x!=y & a!=x
+
+--eps
+Type: Sat:  a=x & a=y & a!=x
+*/

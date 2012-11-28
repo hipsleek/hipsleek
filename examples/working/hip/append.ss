@@ -36,7 +36,7 @@ void append(node x, node y)
 		return;
 	}
 }
-
+/*
 node app2(node x, node y)
 /*
   requires x::lseg<null,n> 
@@ -65,7 +65,7 @@ requires x::lseg<null,n> & x!=null
   if (x==null) return y;
   //dprint;
   node tmp=x.next;
-  //assume tmp'=null or tmp'!=null;
+  assume tmp'=null or tmp'!=null;
   x.next=app2(tmp,y);
   return x;
 }
@@ -90,4 +90,4 @@ requires true
    else 
      {return 3;}
  }
-}     
+}     */

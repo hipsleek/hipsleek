@@ -505,10 +505,10 @@ let rec split_heap (h:CF.h_formula) : (CF.h_formula * CF.h_formula) =
 		   if contains_conj h1 then
 		   (*let _ = print_string ("H1 = "^ (string_of_h_formula h1)^ "\nH2 = "^ (string_of_h_formula h2) ^ "\n") in*)
 		   let left_h_split = split_heap h1
-		   in (fst left_h_split),(CF.mkStarH (snd left_h_split) h2 pos 27)
+		   in (fst left_h_split),(CF.mkStarH (snd left_h_split) h2 pos)
 		   else if contains_conj h2 then
 		   let right_h_split = split_heap h2
-		   in (CF.mkStarH (fst right_h_split) h1 pos 28), (snd right_h_split)
+		   in (CF.mkStarH (fst right_h_split) h1 pos), (snd right_h_split)
 		   else (h,CF.HEmp)
 	| _ -> (h, CF.HEmp)
 
@@ -535,7 +535,7 @@ match h with
 	| CF.Star({CF.h_formula_star_h1 = h1;
 		   CF.h_formula_star_h2 = h2;
 		   CF.h_formula_star_pos = pos}) ->
- 		   CF.mkStarH (drop_node_h_formula h1 sv) (drop_node_h_formula h2 sv) pos 53
+ 		   CF.mkStarH (drop_node_h_formula h1 sv) (drop_node_h_formula h2 sv) pos
 	| _ -> h
 
 let rec find_node_starminus (h:CF.h_formula) (sv:CP.spec_var) : CF.h_formula option = 
@@ -870,7 +870,7 @@ which will be checked against the right side of h2 star-formula. This will resul
 Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on the updated h2 to check for other groups of aliases. *)
 		          	  let h31, h32,p3 = compact_nodes_op h1 h21 aset func in
 		                  let h41, h42,p4 = compact_nodes_op h31 h22 aset func in
-		                  let new_h2 = CF.mkStarH h32 h42 pos2 10 in
+		                  let new_h2 = CF.mkStarH h32 h42 pos2 in
 		                  let new_p2 = CP.mkAnd p3 p4 pos2 in
                                   let new_h2, new_p = compact_nodes_with_same_name_in_h_formula new_h2 aset in 
 		                  h41, new_h2 , (CP.mkAnd new_p new_p2 pos2)
@@ -908,7 +908,7 @@ Rejoin h2 star fomula, and apply compact_nodes_with_same_name_in_h_formula_x on 
 		                 CF.h_formula_star_pos = pos1 } ->
 		      let h31,h32,p3 = compact_nodes_op h11 h2 aset func in
 		      let h41,h42,p4 = compact_nodes_op h12 h32 aset func in
-		      let new_h2 = CF.mkStarH h31 h41 pos1 11 in
+		      let new_h2 = CF.mkStarH h31 h41 pos1 in
 		      let new_p2 = CP.mkAnd p3 p4 pos1 in
                       let new_h2, new_p = compact_nodes_with_same_name_in_h_formula new_h2 aset in 
 		      new_h2, h42 , (CP.mkAnd new_p new_p2 pos1)
@@ -953,7 +953,7 @@ and compact_nodes_with_same_name_in_h_formula (f: CF.h_formula) (aset: CP.spec_v
                  CF.h_formula_star_h2 = h2;
                  CF.h_formula_star_pos = pos } ->             
 	let h1,h2,_ = compact_nodes_op h1 h2 aset join_ann in
-	let res = CF.mkStarH h1 h2 pos 12 in
+	let res = CF.mkStarH h1 h2 pos in
 	res,(CP.mkTrue no_pos)
       | CF.Conj{CF.h_formula_conj_h1 = h1;
 		CF.h_formula_conj_h2 = h2;
@@ -1032,7 +1032,7 @@ let rec compact_nodes_with_same_name_in_struc (f: CF.struc_formula): CF.struc_fo
       | CF.EBase sf          -> CF.EBase {sf with
           CF.formula_struc_base =  compact_nodes_with_same_name_in_formula sf.CF.formula_struc_base;
           CF.formula_struc_continuation = map_opt compact_nodes_with_same_name_in_struc sf.CF.formula_struc_continuation; }
-      | CF.EAssume (x, f, y)-> CF.EAssume (x,(compact_nodes_with_same_name_in_formula f),y)
+      | CF.EAssume (x, f, y,z)-> CF.EAssume (x,(compact_nodes_with_same_name_in_formula f),y,z)
       | CF.EInfer sf         -> CF.EInfer {sf with CF.formula_inf_continuation = compact_nodes_with_same_name_in_struc sf.CF.formula_inf_continuation}
         
 let rec is_lend_h_formula (f : CF.h_formula) : bool =  match f with
@@ -1409,7 +1409,7 @@ func (mcp: MCP.mix_formula ) : CF.h_formula * CP.formula =
                  CF.h_formula_star_pos = pos } ->  
         let res_h1,res_p1 = ramify_starminus_in_h_formula h1 vl aset fl ramify_star mcp in
         let res_h2,res_p2 = ramify_starminus_in_h_formula h2 vl aset fl ramify_star mcp in           
-	let res_h = CF.mkStarH res_h1 res_h2 pos 12 in
+	let res_h = CF.mkStarH res_h1 res_h2 pos in
 	let res_p = CP.mkAnd res_p1 res_p2 pos in
 	res_h,res_p
       | CF.Conj{CF.h_formula_conj_h1 = h1;
@@ -1552,7 +1552,7 @@ match h with
         let res_lst1 = ramify_complex_heap h1 r lp vl in
         let res_lst2 = ramify_complex_heap h2 r rp vl in
         let res_lst = List.map (fun (h2,p2) -> 
-	        List.map (fun (h1,p1) -> let res_h = CF.mkStarH h1 h2 pos 11 in
+	        List.map (fun (h1,p1) -> let res_h = CF.mkStarH h1 h2 pos in
 	        	let res_p = CP.mkAnd p1 p2 pos in (res_h,res_p)
 	         ) res_lst1 ) res_lst2 in 
         let res_lst = List.flatten res_lst in      
@@ -1669,7 +1669,7 @@ let rec ramify_unfolded_heap (h: CF.h_formula) (p: CP.formula) vl : (CF.h_formul
         let res_lst1 = ramify_unfolded_heap h1 p vl in
         let res_lst2 = ramify_unfolded_heap h2 p vl in
         let res_lst = List.map (fun (h2,p2) -> 
-	        List.map (fun (h1,p1) -> let res_h = CF.mkStarH h1 h2 pos 11 in
+	        List.map (fun (h1,p1) -> let res_h = CF.mkStarH h1 h2 pos in
 	        	let res_p = CP.mkAnd p1 p2 pos in (res_h,res_p)
 	         ) res_lst1 ) res_lst2 in 
         let res_lst = List.flatten res_lst in      

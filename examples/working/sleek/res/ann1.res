@@ -7,12 +7,12 @@ Entail (1) : Valid.
 
 Entail (2) : Valid. 
 
- <1>true&a=Anon_13 & b=Anon_14 & w<:v&{FLOW,(17,18)=__norm}[]
+ <1>EXISTS(v: true&a=Anon_13 & b=Anon_14 & w<:v&{FLOW,(17,18)=__norm})[]
 
 
 Entail (3) : Valid. 
 
- <1>true&w=v & a=Anon_15 & b=Anon_16&{FLOW,(17,18)=__norm}[]
+ <1>true&w<:v & a=Anon_15 & b=Anon_16&{FLOW,(17,18)=__norm}[]
 
 
 Entail (4) : Valid. 
@@ -33,7 +33,7 @@ Entail (8) : Fail.(must) cause: true |-  @I<:@M. LOCS:[0;31] (RHS: contradiction
 Entail (9) : Fail.(must) cause: true |-  @L<:@I. LOCS:[0;34] (RHS: contradiction)
 
 
-Entail (10) : Valid. 
+Entail (10) : Fail.(may) cause: @M<:v |-  v<:@M. LOCS:[0;37] (may-bug)
 
 
 Entail (11) : Valid. 
@@ -45,7 +45,7 @@ Entail (12) : Valid.
 Entail (13) : Valid. 
 
 
-Entail (14) : Valid. 
+Entail (14) : Fail.(may) cause: @I<:v |-  v<:@I. LOCS:[0;49] (may-bug)
 
 
 Entail (15) : Valid. 
@@ -80,4 +80,4 @@ Entail (24) : Valid.
 
 Entail (25) : Valid. 
 
-Stop Omega... 51 invocations 
+Stop Omega... 55 invocations 

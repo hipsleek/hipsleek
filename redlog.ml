@@ -4,6 +4,7 @@
  *)
 
 open Globals
+open GlobProver
 open Gen.Basic
 module CP = Cpure
 
@@ -15,6 +16,8 @@ let no_elim_exists = ref false
 let no_simplify = ref false
 let no_cache = ref true
 let timeout = ref 10.0 (* default timeout is 15 seconds *)
+let dis_omega = ref false
+let pasf = ref false
 
 (* logging *)
 let is_log_all = ref false
@@ -40,7 +43,7 @@ let cached_count = ref 0
 
 let prompt_regexp = Str.regexp "^[0-9]+:$"
 
-let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
+let process = ref {name = "rl"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
 let print_b_formula = ref (fun (c:CP.b_formula) -> "cpure printer has not been initialized")
 let print_p_formula = ref (fun (c:CP.p_formula) -> "cpure printer has not been initialized")
@@ -49,6 +52,11 @@ let print_formula = ref (fun (c:CP.formula) -> "cpure printer has not been initi
 let print_svl = ref (fun (c:CP.spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:CP.spec_var) -> "cpure printer has not been initialized")
 
+type rl_mode = 
+  | OFSF 
+  | PASF
+
+let rl_current_mode = ref OFSF
 
 (**********************
  * auxiliari function *
@@ -92,6 +100,14 @@ let send_cmd cmd =
     let _ = read_till_prompt !process.inchannel in
     ()
 
+let set_rl_mode mode =
+  if (!rl_current_mode == mode) then ()
+  else
+    rl_current_mode := mode;
+    match mode with
+    | PASF -> send_cmd "rlset pasf"
+    | OFSF -> send_cmd "rlset ofsf"
+
 (* start Reduce system in a separated process and load redlog package *)
 let start () =
   if not !is_reduce_running then begin
@@ -105,6 +121,7 @@ let start () =
 		send_cmd "off varopt"; (* An Hoa : turn off variable rearrangement *)
 		send_cmd "off arbvars"; (* An Hoa : do not introduce arbcomplex(_) *)
       in
+      rl_current_mode := OFSF;
       let set_process proc = process := proc in
       let _ = Procutils.PrvComms.start !is_log_all log_file ("redlog", "redcsl",  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in
       print_endline "Starting Reduce... "; flush stdout
@@ -153,9 +170,17 @@ let send_and_receive f =
         let fail_with_timeout () =
           restart "Timeout!";
           "" in
-        let answ = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc () !timeout fail_with_timeout in
+        let answ =
+          if not (!dis_provers_timeout) then
+            Procutils.PrvComms.maybe_raise_and_catch_timeout fnc () !timeout fail_with_timeout
+          else fnc ()
+        in
         answ
     with
+        (* Timeout exception is not expected here except for dis_provers_timeout *)
+      | Procutils.PrvComms.Timeout as exc ->
+          restart "Restarting Reduce because of timeout.";
+          raise exc
       | ex ->
         print_endline (Printexc.to_string ex);
         restart "Reduce crashed or something really bad happenned!";
@@ -224,7 +249,11 @@ let run_with_timeout func err_msg =
     restart ("After timeout"^err_msg);
     None
   in
-  let res = Procutils.PrvComms.maybe_raise_and_catch_timeout func () !timeout fail_with_timeout in
+  let res =
+    if not (!dis_provers_timeout) then
+      Procutils.PrvComms.maybe_raise_and_catch_timeout func () !timeout fail_with_timeout
+    else func ()
+  in
   res
 
 (**************************
@@ -507,7 +536,7 @@ let has_exists2 f0 =
 (* e1 > e2 ~> e1 >= e2 + 1 *)
 (* e1 != e2 ~> e1 >= e2 + 1 or e1 <= e2 - 1  *)
  
- let rec strengthen_formula f0 =
+let rec strengthen_formula f0 =
   match f0 with
   | CP.BForm ((pf,il),lbl) -> 
       let r = match pf with
@@ -519,7 +548,7 @@ let has_exists2 f0 =
             CP.Or (CP.BForm ((lp,il), lbl), CP.BForm ((rp,il), lbl), lbl, l)
         | _ -> f0
       in r
-  | CP.Not (f, lbl, l) -> CP.Not (strengthen_formula f, lbl, l)
+  | CP.Not (f, lbl, l) -> CP.Not (weaken_formula (* strengthen_formula *) f, lbl, l)
   | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, strengthen_formula f, lbl, l)
   | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, strengthen_formula f, lbl, l)
   | CP.And (f1, f2, l) -> CP.And (strengthen_formula f1, strengthen_formula f2, l)
@@ -527,13 +556,13 @@ let has_exists2 f0 =
   | CP.Or (f1, f2, lbl, l) -> CP.Or (strengthen_formula f1, strengthen_formula f2, lbl, l)
 
 
- let strengthen_formula f =
-   let pr = string_of_formula in
-   Debug.no_1 "strengthen_formula"
-       pr pr
-       strengthen_formula f
+(* let strengthen_formula f =         *)
+(*    let pr = string_of_formula in   *)
+(*    Debug.no_1 "strengthen_formula" *)
+(*        pr pr                       *)
+(*        strengthen_formula f        *)
 
-let strengthen2 f0 =
+and strengthen2 f0 =
   let f_f f =
 	match f with
 	| CP.BForm ((CP.Neq (e1, e2, l), il), lbl) ->
@@ -554,7 +583,7 @@ let strengthen2 f0 =
 (* e1 <= e2 ~> e1 < e2 + 1 *)
 (* e1 >= e2 ~> e1 > e2 - 1 *)
 (* e1 = e2 ~> e2 - 1 < e1 < e2 + 1 *)
-let rec weaken_formula f0 =
+and weaken_formula f0 =
   match f0 with
   | CP.BForm ((pf,il),lbl) ->
       let r = match pf with
@@ -566,14 +595,14 @@ let rec weaken_formula f0 =
             CP.And (CP.BForm ((lp,il),lbl), CP.BForm ((rp,il),lbl), l)
         | _ -> f0
       in r
-  | CP.Not (f,lbl,l) -> CP.Not (weaken_formula f, lbl, l)
+  | CP.Not (f,lbl,l) -> CP.Not (strengthen_formula (* weaken_formula *) f, lbl, l)
   | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, weaken_formula f, lbl, l)
   | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, weaken_formula f, lbl, l)
   | CP.And (f1, f2, l) -> CP.And (weaken_formula f1, weaken_formula f2, l)
   | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
   | CP.Or (f1, f2, lbl, l) -> CP.Or (weaken_formula f1, weaken_formula f2, lbl, l)
 
-let weaken2 f0 =
+and weaken2 f0 =
   let f_f f = match f with
     | CP.BForm ((CP.Eq (e1, e2, l),il), lbl) ->
         let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
@@ -1034,7 +1063,8 @@ let options_to_bool opts default =
   | None -> default
 
 let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * float =
-  if is_linear_formula f then
+  let is_linear = is_linear_formula f in
+  if (not !dis_omega) && is_linear then
     call_omega (lazy (Omega.is_sat f sat_no))
   else
     let sf = if (!no_pseudo_ops || CP.is_float_formula f) 
@@ -1042,6 +1072,10 @@ let is_sat_no_cache_ops pr_w pr_s (f: CP.formula) (sat_no: string) : bool * floa
     else strengthen_formula f in
     let frl = rl_of_formula pr_w pr_s sf in
     let rl_input = "rlex(" ^ frl ^ ")" in
+    let _ = if !pasf then begin 
+      if is_linear then set_rl_mode PASF
+      else set_rl_mode OFSF end
+    in 
     let runner () = check_formula rl_input in
     let err_msg = "Timeout when checking #is_sat " ^ sat_no ^ "!" in
     let proc =  lazy (run_with_timeout runner err_msg) in
@@ -1090,11 +1124,17 @@ let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * floa
     if !no_elim_exists then f else elim_exist_quantifier f
   in
   let valid f = 
-    let wf = if (!no_pseudo_ops || CP.is_float_formula f) then f else weaken_formula f in
+    let wf = if (!no_pseudo_ops || CP.is_float_formula f) 
+      then f 
+      else weaken_formula f in
+    let _ = if !pasf then begin 
+      if (is_linear_formula f) then set_rl_mode PASF
+      else set_rl_mode OFSF end
+    in 
     is_valid_ops pr_w pr_s wf imp_no
   in
   let res = 
-    if is_linear_formula f then
+    if (not !dis_omega) && (is_linear_formula f) then
       call_omega (lazy (Omega.is_valid_with_default_ops pr_w pr_s f !timeout))
     (* (is_valid f imp_no) *)
     else
@@ -1198,7 +1238,7 @@ Omega may perform unsound approximation with real numbers
 such as f=f1+f2&f1>0&f2>0 => f>=2
 *)
 let simplify (f: CP.formula) : CP.formula =
-  if (is_linear_formula f  && not (CP.is_float_formula f)) then
+  if (is_linear_formula f && not (CP.is_float_formula f)) then
     Omega.simplify f
   else
     if (!no_simplify) then

@@ -29,10 +29,10 @@ and split_phase_debug_rhs h = Debug.no_1 "split_phase(rhs)"
   (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n") 
   split_phase h
 
-and split_phase (h : h_formula) : (h_formula * h_formula * h_formula )= 
+and split_phase i (h : h_formula) : (h_formula * h_formula * h_formula )= 
   let pr = Cprinter.string_of_h_formula in
   let pr2 = pr_triple pr pr pr in
-  Debug.no_1 "split_phase" pr pr2 split_phase_x h
+  Debug.no_1_num i "split_phase" pr pr2 split_phase_x h
 
 and split_phase_x (h : h_formula) : (h_formula * h_formula * h_formula ) = 
   let h = remove_true_rd_phase h in
@@ -62,7 +62,7 @@ and split_wr_phase (h : h_formula) : (h_formula * h_formula) =
 	        | Star ({h_formula_star_h1 = sh1;
 		      h_formula_star_h2 = sh2;
 		      h_formula_star_pos = spos}) ->
-		          split_wr_phase (CF.mkStarH (CF.mkStarH h1 sh1 pos 14 ) sh2 pos 15 )
+		          split_wr_phase (CF.mkStarH (CF.mkStarH h1 sh1 pos ) sh2 pos )
 	        | _ -> 
 		  (* if ((is_lend_h_formula h1) && is_lend_h_formula h2) then *)
 		  (*   (, h2) *)
@@ -93,7 +93,7 @@ and remove_true_rd_phase (h : CF.h_formula) : CF.h_formula =
 	 }) -> 
       let h1r = remove_true_rd_phase h1 in
       let h2r = remove_true_rd_phase h2 in
-      CF.mkStarH h1r h2r pos 16 
+      CF.mkStarH h1r h2r pos
     | _ -> h
 
 
@@ -520,7 +520,7 @@ and propagate_imm_h_formula_x (f : h_formula) (imm : ann) : h_formula =
     | Star f1 ->
 	      let h1 = propagate_imm_h_formula f1.h_formula_star_h1 imm in
 	      let h2 = propagate_imm_h_formula f1.h_formula_star_h2 imm in
-	      mkStarH h1 h2 f1.h_formula_star_pos 17 
+	      mkStarH h1 h2 f1.h_formula_star_pos 
     | Conj f1 ->
 	      let h1 = propagate_imm_h_formula f1.h_formula_conj_h1 imm in
 	      let h2 = propagate_imm_h_formula f1.h_formula_conj_h2 imm in

@@ -22,14 +22,17 @@ int testExc2()
 	{
         
         int x = 0;
-        try {
+        try{
+		try {
             if (x == 0) x = 1; else x = -1;
             if (x != 47) raise(new runtime_exc());
             return -2;
         } catch (arith_exc exc) {
             x = -3;
 			return -3;
-        } catch (runtime_exc exc) {
+        };
+		}
+		catch (runtime_exc exc) {
             if (x == 1) x = 2; else x = -1;
         };
 		if (x==-3) return -4;
@@ -170,7 +173,7 @@ int loopExitContinueInExceptionHandler()
         
 		tr:while
 			(i < 10000)
-			case {i<9990 -> requires true ensures i'=9990& flow __Brk_top;
+			case {i<9990 -> requires true ensures i'=9990& flow brk_tr;
 				  i>=9990 &	i<10000 -> requires true ensures i' = 10000;
 				  i>=10000 -> requires true ensures i'=i;}
 			{

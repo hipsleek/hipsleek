@@ -48,6 +48,7 @@ and p_formula =
   | ListNotIn of (exp * exp * loc)
   | ListAllN of (exp * exp * loc)  (* allN 0 list *)
   | ListPerm of (exp * exp * loc)  (* perm L2 L2 *)
+  (* | HRelForm of (ident * (exp list) * loc) *)
   | RelForm of (ident * (exp list) * loc)           (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
 
 (* Expression *)
@@ -523,7 +524,8 @@ and fresh_var (sv : (ident*primed)):(ident*primed) =
 and fresh_vars (svs : (ident*primed) list):(ident*primed) list = List.map fresh_var svs
 
 
-and eq_var (f: (ident*primed))(t:(ident*primed)):bool = ((String.compare (fst f) (fst t))==0) &&(snd f)==(snd t) 
+and eq_var (f: (ident*primed))(t:(ident*primed)):bool = 
+  ((String.compare (fst f) (fst t))==0) &&(snd f)==(snd t) 
 
 and subst sst (f : formula) = match sst with
   | s :: rest -> subst rest (apply_one s f)
@@ -780,7 +782,7 @@ and find_lexp_exp (e: exp) ls =
 	| AConst _
 	| Tsconst _
 	| FConst _ -> []
-    | Ann_Exp(e,_) -> find_lexp_exp e ls
+  | Ann_Exp(e,_) -> find_lexp_exp e ls
 	| Add (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| Subtract (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
 	| Mult (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -850,6 +852,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   | ListReverse (exp, _) -> contain_vars_exp exp
   | Func _ -> true
   | ArrayAt _ -> true 
+
 and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = match e with 
   | Null _ 
   | Var _ 
@@ -1177,7 +1180,7 @@ and float_out_pure_min_max (p : formula) : formula =
 			add_exists t np1 np2 l
 			    (* An Hoa : handle relation *)
 			    (* TODO Have to add the existential before the formula! Add a add_exists with a list instead *)
-	  | RelForm (r, args, l) ->
+      | RelForm (r, args, l) ->
 			let nargs = List.map float_out_exp_min_max args in
 			let nargse = List.map fst nargs in
 			let t = BForm ((RelForm (r, nargse, l), il), lbl) in
@@ -1207,6 +1210,20 @@ let rec find_p_val x v p = match p with
 (* get type of an expression *)
 let rec typ_of_exp (e: exp) : typ =
   let pos = pos_of_exp e in
+  let arr_typ_check typ1 typ2 =
+    ( match typ1 with
+      | Array (t1,_) -> if t1== UNK || t1 == typ2 then typ2 else
+            ( match typ2 with
+              | Array (t2,_) -> if t2== UNK || t1==t2 then typ1 else
+                    Gen.Basic.report_error pos "Ununified type in 2 expressions 1"
+              | _ -> Gen.Basic.report_error pos "Ununified type in 2 expressions 2"
+            )
+      | _ -> ( match typ2 with
+            | Array (t,_) -> if t== UNK then typ1 else Gen.Basic.report_error pos "Ununified type in 2 expressions 3"
+            | _ -> Gen.Basic.report_error pos "Ununified type in 2 expressions 4"
+      )
+    )
+  in
   let merge_types typ1 typ2 =
     (* let _ = print_endline ("typ1:" ^ (string_of_typ typ1 )) in *)
     (* let _ = print_endline ("typ2:" ^ (string_of_typ typ2 )) in *)
@@ -1215,7 +1232,8 @@ let rec typ_of_exp (e: exp) : typ =
     else match typ2  with
       | UNK
       | Array (UNK,_) -> typ1
-      | _ -> Gen.Basic.report_error pos "Ununified type in 2 expressions"
+      | _ -> arr_typ_check typ1 typ2
+          (* Gen.Basic.report_error pos "Ununified type in 2 expressions" *)
   in
   match e with
   | Ann_Exp (ex, ty)          -> let ty2 = typ_of_exp ex in
@@ -1270,4 +1288,24 @@ let rec typ_of_exp (e: exp) : typ =
       let len = List.length ex_list in
       Globals.Array (ty, len)
   (* Func expressions *)
-  | Func _                    -> Gen.Basic.report_error pos "typ_of_exp doesn't support Func";
+  | Func _                    -> Gen.Basic.report_error pos "typ_of_exp doesn't support Func"
+    
+(* Slicing Utils *)
+let rec set_il_formula f il =
+  match f with
+    | BForm (bf, lbl) -> BForm (set_il_b_formula bf il, lbl)
+    | _ -> f
+      
+and set_il_b_formula bf il =
+  let (pf, o_il) = bf in
+  match o_il with
+    | None -> (pf, il)
+    | Some (_, _, l_exp) ->
+      match il with
+        | None -> bf
+        | Some (b, i, le) -> (pf, Some (b, i, le@l_exp))
+      
+and set_il_exp exp il =
+  let (pe, _) = exp in (pe, il)
+  
+  

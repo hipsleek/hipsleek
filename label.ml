@@ -92,7 +92,7 @@ struct
   let filter_aux  f (fid:lab_type) (xs:label_list) :  (label_list) = 
     let pr_len xs= string_of_int (List.length xs) in
     let rs = List.filter (fun (l,_) -> f fid l) xs in
-    Debug.info_zprint (lazy (("Filter Label ==> Orig:"^(pr_len xs))^(" Filtered:"^(pr_len rs)))) no_pos;
+    Debug.ninfo_zprint (lazy (("Filter Label ==> Orig:"^(pr_len xs))^(" Filtered:"^(pr_len rs)))) no_pos;
     rs
 
   (* return a list of formula that are compatible with label *)
