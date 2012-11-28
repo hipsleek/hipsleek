@@ -1091,7 +1091,7 @@ let rec prtt_pr_h_formula h =
 			(* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
           pr_spec_var sv; fmt_string "::";
           pr_angle (c^perm_str) pr_spec_var svs ;
-	      (* pr_imm imm; *)
+	      pr_imm imm;
 	      pr_derv dr;
           if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
           (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
@@ -1120,7 +1120,7 @@ let rec prtt_pr_h_formula h =
           pr_spec_var sv; 
           fmt_string "::"; 
           pr_angle (c^perm_str) pr_spec_var svs;
-	      (* pr_imm imm; *)
+	      pr_imm imm;
 	      pr_derv dr;
           (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
           if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
@@ -1216,8 +1216,9 @@ let rec pr_h_formula_for_spec h =
     (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
     (* pr_formula_label_opt pid;  *)
     pr_spec_var sv; 
-    fmt_string "::"; 
+    fmt_string ":6:"; 
     if svs = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_spec_var svs;
+    pr_imm imm;
     pr_derv dr;
     (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
     if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
