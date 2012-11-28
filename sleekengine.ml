@@ -616,15 +616,7 @@ let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
 (*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
 (*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: entail_type) =
-  (* store the current value of do_classic_frame_rule *)
-  let flag = !Globals.do_classic_frame_rule in
-  Globals.do_classic_frame_rule := (match etype with
-                                    | None -> !Globals.opt_classic;
-                                    | Some b -> b);
-  let res = run_infer_one_pass [] iante0 iconseq0 in
-  (* restore flag do_classic_frame_rule *)
-  Globals.do_classic_frame_rule := flag;
-  res
+  wrap_classic etype (run_infer_one_pass [] iante0) iconseq0
   
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: entail_type) =
   let with_timeout = 

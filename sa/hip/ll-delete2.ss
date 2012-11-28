@@ -3,9 +3,9 @@ data node {
 	node next;
 }
 
-void dispose(ref node x)
+node dispose(ref node x)
   requires x::node<_,_>
-  ensures x'=null;//'
+  ensures res=null & x'=null;//'
 
 HeapPred D(node a).
 HeapPred E(node a, node b).
@@ -17,6 +17,6 @@ void delete_list(ref node x)
 {
   if (x!=null) {
     delete_list(x.next);
-    dispose(x);
+    x= dispose(x);
   }
 }

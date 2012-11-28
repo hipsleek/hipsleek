@@ -18,7 +18,7 @@ let log_all_flag = ref false
 let is_minisat_running = ref false
 let in_timeout = ref 15.0 (* default timeout is 15 seconds *)
 let minisat_call_count: int ref = ref 0
-let log_file = open_out ("allinput.minisat")
+let log_file = open_log_out ("allinput.minisat")
 let minisat_input_mode = "file"    (* valid value is: "file" or "stdin" *) 
 
 (*minisat*)
@@ -551,6 +551,11 @@ let check_problem_through_file (input: string) (timeout: float) : bool =
   res
 	
 
+let check_problem_through_file (input: string) (timeout: float) : bool =
+  Debug.no_1 "check_problem_through_file (minisat)"
+    (fun s -> s) string_of_bool
+    (fun f -> check_problem_through_file f timeout) input
+
 (***************************************************************
 GENERATE CNF INPUT FOR IMPLICATION / SATISFIABILITY CHECKING
 **************************************************************)
@@ -651,7 +656,7 @@ let minisat_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
 				let all_input=if(cnf_T <> "") then cnf_T^minisat_input else minisat_input in
 				(* let _=print_endline ("All input: \n"^all_input) in *)
 				(* let tstartlog = Gen.Profiling.get_time () in *)
-				let res=check_problem_through_file (all_input) timeout in 
+				let res= check_problem_through_file (all_input) timeout in 
 				(* let tstoplog = Gen.Profiling.get_time () in *)
 			(* let _= Globals.minisat_time_T := !Globals.minisat_time_T +. (tstoplog -. tstartlog) in *)
 			  res
@@ -728,7 +733,7 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : boo
   )
 
 let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : bool =
-  (* let _ = print_endline "** In function minisat.imply:" in *)
+  (* let _ = pint_endline "** In function minisat.imply:" in *)
   Debug.no_1_loop "smt.imply" string_of_float string_of_bool
     (fun _ -> imply ante conseq timeout) timeout
 

@@ -1535,10 +1535,10 @@ let find_undefined_selective_pointers prog lfb rfb lmix_f rmix_f unmatched rhs_r
 (*
 out: list of program variables of mismatching node
 *)
-let get_prog_vars_x prog_hps rhs_unmatch proving_kind=
+let get_prog_vars_x prog_hps rhs_unmatch proving_kind =
   match rhs_unmatch with
     | CF.HRel (hp, eargs,_) ->
-        if proving_kind = Log.POST && CP.mem_svl hp prog_hps then
+        if proving_kind = "POST" && CP.mem_svl hp prog_hps then
           (List.fold_left List.append [] (List.map CP.afv eargs))
         else []
     | _ -> []
@@ -1546,7 +1546,7 @@ let get_prog_vars_x prog_hps rhs_unmatch proving_kind=
 let get_prog_vars prog_hps rhs_unmatch proving_kind =
   let pr1 = !CP.print_svl in
   let pr2 = Cprinter.string_of_h_formula in
-  let pr3 = Log.string_of_sleek_proving_kind in
+  let pr3 s= s (* Log.string_of_sleek_proving_kind *) in
   Debug.no_3 "get_prog_vars" pr1 pr2 pr3 pr1
       (fun _ _ _ -> get_prog_vars_x prog_hps rhs_unmatch proving_kind) prog_hps rhs_unmatch proving_kind
 
@@ -1644,10 +1644,11 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_h
   (*from history, we can keep more svl, hprels*)
   let keep_his_svl = CP.remove_dups_svl (List.fold_left SAU.close_def (svl@keep_root_hrels) his_ss) in
   (* let _ = Debug.info_pprint ("    keep_his_svl:" ^(!CP.print_svl keep_his_svl)) no_pos in *)
-  let keep_his_hps = List.concat (List.map (fun (hp,args) -> if CP.diff_svl args keep_his_svl = [] then [hp] else [])
-                                     (l_rem_hp_args@r_rem_hp_args)) in
+  (* let keep_his_hps = List.concat (List.map (fun (hp,args) -> if CP.diff_svl args keep_his_svl = [] then [hp] else []) *)
+  (*                                    (l_rem_hp_args@r_rem_hp_args)) in *)
  (*end*)
   let keep_hrels1 = (CP.remove_dups_svl (keep_hrels(* @history_hrel@keep_his_hps *))) in
+  (* let lkeep_hrels = CP.remove_dups_svl (lkeep_hrels@history_hrel@keep_his_hps) in *)
   (*END*)
   let rec elim_redun_his his res=
     match his with
@@ -1795,7 +1796,8 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           let lhs_b0 = CF.mkAnd_base_pure lhs_b (MCP.mix_of_pure unk_pure) pos in
           let group_unk_svl = List.concat (List.map (fun ass -> ass.CF.unk_svl) Log.current_hprel_ass_stk # get_stk) in
           let total_unk_svl = CP.remove_dups_svl (group_unk_svl@unk_svl) in
-          let prog_vars = get_prog_vars es.CF.es_infer_vars_sel_hp_rel rhs Log.POST (* !Log.sleek_proving_kind *) in
+          let prog_vars = get_prog_vars es.CF.es_infer_vars_sel_hp_rel rhs Globals.proving_kind#string_of
+(* !Log.sleek_proving_kind *) in
           let (new_lhs_b,new_rhs_b) = simplify_lhs_rhs prog lhs_b0 new_rhs_b leqs reqs hds hvs lhras (rhras@new_hrels)
             (lselected_hps) (rselected_hps@(List.map (fun (hp,_,_) -> hp) new_hrels)) es.CF.es_crt_holes ((* es.CF.es_heap:: *)(*es.CF.es_history*) sel_his) total_unk_svl prog_vars in
           (*simply add constraints: *)
@@ -1859,11 +1861,11 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           (true, new_es)
       end
 
-let infer_collect_hp_rel prog (es:entail_state) rhs rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =
+let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =
   let pr1 = Cprinter.string_of_formula_base in
   let pr4 = Cprinter.string_of_estate_infer_hp in
   let pr5 =  pr_pair string_of_bool pr4 in
-  Debug.no_2 "infer_collect_hp_rel" pr1 pr1 pr5
+  Debug.no_2_num i "infer_collect_hp_rel" pr1 pr1 pr5
 ( fun _ _ -> infer_collect_hp_rel_x prog es rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos) lhs_b rhs_b
 
 (*=*****************************************************************=*)
