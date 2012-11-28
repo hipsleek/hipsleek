@@ -1051,7 +1051,13 @@ let create_progfreeht_of_prog prog =
   in 
   List.iter fun0 prog.prog_proc_decls;
   ht
-
+  
+let create_progfreeht_of_prog prog = 
+  let pr_set s = IdentSet.fold (fun e a -> a ^ ", " ^ e) s "" in
+  let pr_hashtbl h = Hashtbl.fold (fun k (d1, d2) a ->
+    k ^ ", (" ^ (pr_set d1) ^ "; " ^ (pr_set d2) ^ ")\n") h "" in
+  Debug.ho_1 "create_progfreeht_of_prog" (fun _ -> "") pr_hashtbl
+  create_progfreeht_of_prog prog
 
 let merge0 ht ms : ((ident list) * (IS.t * IS.t)) = 
   let find ht x = 
@@ -1106,18 +1112,6 @@ let update_ht0 ht mss0 =
     List.iter fun1 (fst ms0)
   in
   List.iter fun0 mss0
-
-
-
-
-(*
-
-*)
-(*
-let is_
-
-let merge1 ht mss = 
-*)
 
 (*hash: ident -> typ*)
 let ht_of_gvdef gvdefs =
@@ -1211,33 +1205,23 @@ let map_body_of_proc f proc =
       proc_body = match proc.proc_body with
       | None -> None
       | Some e -> Some (f e)
-          ;
   }
-
 
 let add_globalv_to_mth_prog prog = 
   let cg = callgraph_of_prog prog in
-  (* let _ = print_string "1\n" in *)
   let ht = create_progfreeht_of_prog prog in
-  (* let _ = print_endline "add_globalv_to_mth_prog: after create_progfreeht_of_prog\n" in *)
   let scclist = List.rev (ngscc_list cg) in
-  (* let _ = print_string "2a\n" in *)
+  let _ = print_endline ("scc: " ^ (pr_list (pr_list pr_id) scclist)) in
   let sccfv = merge1 ht scclist in
-  (* let _ = print_endline "add_globalv_to_mth_prog: after merge1\n" in *)
   let mscc = push_freev1 cg sccfv in
   let _ = update_ht0 ht mscc in
-  (* let _ = print_endline "add_globalv_to_mth_prog: after update_ht0\n" in *)
   let newsig_procs = 
     List.map (add_free_var_to_proc prog.prog_global_var_decls ht) 
       prog.prog_proc_decls in
-  (* let _ = print_endline "add_globalv_to_mth_prog: after add_free_var_to_proc\n" in *)
   let new_procs = 
     List.map (map_body_of_proc (addin_callargs_of_exp ht))
       newsig_procs in
-  (* let _ = print_string "1\n" in *)
-  { prog with
-      prog_proc_decls = new_procs;
-  }
+  { prog with prog_proc_decls = new_procs; }
 
 let add_globalv_to_mth_prog prog = 
   let pr = Iprinter.string_of_program in
@@ -1265,13 +1249,3 @@ let pre_process_of_iprog iprims prog =
   let pr1 x = (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls in
   let pr2 x = (pr_list Iprinter.string_of_proc_decl) x.Iast.prog_proc_decls in
   Debug.no_1 "pre_process_of_iprog" pr2 pr2 (fun _ -> pre_process_of_iprog iprims prog) prog
-
-
-
-
-
-(*
-
-(e:exp) ((local,global):IS.t*IS.t) (stk:IS.t ref) : unit =
-
-*)
