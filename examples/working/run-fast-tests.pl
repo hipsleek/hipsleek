@@ -500,8 +500,12 @@ $output_file = "log";
 										  "main","SUCCESS"],
 				["classic/classic1.ss",2, "", "foo1", "SUCCESS", "foo2", "SUCCESS"],
 				["classic/classic1.ss",2, "--classic", "foo1", "FAIL", "foo2", "SUCCESS"],
+				["classic/classic1a.ss",2, "", "foo1", "SUCCESS", "foo2", "SUCCESS"],
+				["classic/classic1a.ss",2, "--classic", "foo1", "SUCCESS", "foo2", "FAIL"],
 				["classic/classic2.ss",2, "", "foo1", "FAIL", "foo2", "SUCCESS"],
+				["classic/classic2a.ss",2, "", "foo1", "SUCESS", "foo2", "FAIL"],
 				["classic/classic3.ss",2, "", "foo1", "SUCCESS", "foo2", "SUCCESS"],
+				["classic/classic3a.ss",2, "", "foo1", "SUCCESS", "foo2", "SUCCESS"],
 				],
 	"hip_vperm" =>[
 				["vperm/alt_threading.ss",2,  "--ann-vp", 

@@ -312,7 +312,6 @@ module SleekHelper = struct
         SE.process_pred_def pdef; None
     | SC.EntailCheck (iante, iconseq, etype) -> 
         log "processing entail check";
-        Globals.do_classic_frame_rule := !Globals.opt_classic; 
         Some (SE.run_entail_check iante iconseq etype)
     | SC.CaptureResidue lvar -> 
         log "processing capture residue";

@@ -1102,16 +1102,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       (ps@res)
 	            end
 	          in
-              (* store flag do_classic_frame_rule  *)
               wrap_classic atype (wrap_proving_kind "ASSERT/ASSUME" assert_op) ()
-              (* let flag = !Globals.do_classic_frame_rule in *)
-              (* Globals.do_classic_frame_rule := (match atype with *)
-              (*   | None -> !Globals.opt_classic *)
-              (*   | Some b -> b); *)
-              (* let res = wrap_proving_kind "ASSERT/ASSUME" assert_op () in *)
-              (* (\* restore flag do_classic_frame_rule  *\) *)
-              (* Globals.do_classic_frame_rule := flag; *)
-              (* res *)
         | Assign ({ exp_assign_lhs = v;
           exp_assign_rhs = rhs;
           exp_assign_pos = pos}) ->
