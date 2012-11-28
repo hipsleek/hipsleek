@@ -143,6 +143,7 @@ and isabelle_of_b_formula b =
   let (pf,_) = b in
   match pf with
   | CP.BConst (c, _) -> if c then "((0::int) = 0)" else "((0::int) > 0)"
+  | CP.XPure _ -> "((0::int) = 0)" (* WN : weakening *)
   | CP.BVar (bv, _) -> "(" ^ (isabelle_of_spec_var bv) ^ " > 0)"
   | CP.Lt (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " < " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Lte (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " <= " ^ (isabelle_of_exp a2) ^ ")"

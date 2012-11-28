@@ -70,7 +70,7 @@ type rel_cat =
 
 
 type xpure_view = {
-    xpure_view_node : spec_var;
+    xpure_view_node : spec_var option;
     xpure_view_name : ident;
     xpure_view_arguments : spec_var list;
     xpure_view_remaining_branches :  (formula_label list) option;
@@ -309,6 +309,38 @@ let is_int_str_aux (n:int) (s:string) : bool =
     let p = String.sub s 0 const_prefix_len in
     if (p=const_prefix) then true
     else false
+
+
+let string_of_spec_var (sv: spec_var) = match sv with
+    | SpecVar (t, v, _) -> v ^ (if is_primed sv then "PRMD" else "")
+ 
+let string_of_spec_var_type (sv: spec_var) = match sv with
+    | SpecVar (t, v, _) -> v ^ (if is_primed sv then "PRMD" else "")^":"^(string_of_typ t)
+
+
+(* pretty printing for a spec_var list *)
+let rec string_of_spec_var_list_noparen l = match l with 
+  | [] -> ""
+  | h::[] -> string_of_spec_var h 
+  | h::t -> (string_of_spec_var h) ^ "," ^ (string_of_spec_var_list_noparen t)
+;;
+
+let string_of_spec_var_list l = "["^(string_of_spec_var_list_noparen l)^"]" ;;
+
+let string_of_spec_var_arg l = "<"^(string_of_spec_var_list_noparen l)^">" ;;
+
+let string_of_xpure_view xp = match xp with
+    { 
+        xpure_view_node = root ;
+        xpure_view_name = vname;
+        xpure_view_arguments = args;
+    } ->
+        let pr = string_of_spec_var in
+        let rn,args_s = match root with
+          | None -> ("", pr_list_round pr args)
+          | Some v -> ((pr v)^"::", pr_list_angle pr args)
+        in
+        "XPURE("^rn^vname^args_s^")"
 
 (* get int value if it is an int_const *)
 let get_int_const (s:string) : int option =
@@ -2542,7 +2574,7 @@ and b_apply_subs_x sst bf =
     | BConst _ -> pf
     | BVar (bv, pos) -> BVar (subs_one sst bv, pos)
     | XPure x -> XPure {x with 
-          xpure_view_node=subs_one sst x.xpure_view_node;
+          xpure_view_node=map_opt (subs_one sst) x.xpure_view_node;
           xpure_view_arguments=List.map (subs_one sst) x.xpure_view_arguments;
       } 
     | Lt (a1, a2, pos) -> Lt (e_apply_subs sst a1, e_apply_subs sst a2, pos)
@@ -3580,12 +3612,7 @@ let add_gte0_for_mona (f0 : formula): (formula)=
 (*   | Named ot -> if ((String.compare ot "") ==0) then "ptr" else ("Object:"^ot) *)
 (*   | Array (et, _) -> (string_of_typ et) ^ "[]" (\* An Hoa *\) *)
 
-let string_of_spec_var (sv: spec_var) = match sv with
-    | SpecVar (t, v, _) -> v ^ (if is_primed sv then "PRMD" else "")
- 
-let string_of_spec_var_type (sv: spec_var) = match sv with
-    | SpecVar (t, v, _) -> v ^ (if is_primed sv then "PRMD" else "")^":"^(string_of_typ t)
- 
+
 module SV =
 struct 
   type t = spec_var

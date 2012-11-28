@@ -615,7 +615,7 @@ let rec is_list_exp e = match e with
 
 (* TODO : where are the array components *)
 let is_array_b_formula (pf,_) = match pf with
-    | CP.BConst _ 
+    | CP.BConst _ | CP.XPure _ 
     | CP.BVar _
 	| CP.BagMin _ 
     | CP.BagMax _
