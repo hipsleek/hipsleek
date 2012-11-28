@@ -333,8 +333,8 @@ and check_bounded_term_x prog ctx post_pos =
 and check_bounded_term prog ctx post_pos =
   let pr = !CF.print_context in
   let pr1 = pr_pair !CF.print_context (pr_list Cprinter.string_of_lhs_rhs) in
-  Debug.no_1 "check_bounded_term" pr pr1
-      (fun _ -> check_bounded_term_x prog ctx post_pos) ctx
+  let f = wrap_proving_kind "TERM-BND" (check_bounded_term_x prog ctx) in
+  Debug.no_1 "check_bounded_term" pr pr1 (fun _ -> f post_pos) ctx
 
 (*and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (sp:CF.struc_formula) e0 do_infer: 
   CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * bool = do_spec_verify_infer prog proc ctx sp e0 do_infer*)
