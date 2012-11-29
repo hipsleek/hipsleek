@@ -95,7 +95,8 @@ let common_arguments = [
 	"Disable Lemma Proving");
 	("--dis-auto-num", Arg.Clear Globals.auto_number,
 	"Disable Auto Numbering");
-	("--dis-sleek-log-filter", Arg.Clear Globals.sleek_log_filter,
+	("--dis-sleek-log-filter
+", Arg.Clear Globals.sleek_log_filter,
 	"Sleek Log Filter Flag");
 	("--elp", Arg.Set Globals.check_coercions,
 	"Enable Lemma Proving");

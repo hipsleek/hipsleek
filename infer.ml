@@ -1802,12 +1802,12 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
         let _ =
           (* let pr_elem = Cpure.SV.string_of in *)
           (* let pr2 = pr_list (pr_pair pr_elem pr_elem) in *)
-          DD.ninfo_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
-          DD.ninfo_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
-          DD.ninfo_pprint ("  footprint: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos;
-          DD.ninfo_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
-          DD.ninfo_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
-          DD.ninfo_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
+          DD.tinfo_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
+          DD.tinfo_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
+          DD.tinfo_pprint ("  footprint: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos;
+          DD.tinfo_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
+          DD.tinfo_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
+          DD.tinfo_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
           (* DD.info_pprint ("  lhs aliases: " ^  (pr2 leqs)) pos; (\* aliases from LHS *\) *)
           (* DD.info_pprint ("  rhs aliases: " ^  (pr2 reqs)) pos;  (\* aliases from LHS *\) *)
         in
@@ -1824,7 +1824,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
          let lhs_sel_vars = (CF.fv (CF.Base lhs_b)) in
         if (CP.intersect mis_nodes (List.fold_left SAU.close_def lhs_sel_vars leqs)) = [] then
           (
-              Debug.info_pprint ">>>>>> mismatch ptr is not a selective variable <<<<<<" pos;
+              Debug.tinfo_pprint ">>>>>> mismatch ptr is not a selective variable <<<<<<" pos;
               (false,es))
         else
           (*generate new heap pred with undefined pointers only*)
@@ -1879,7 +1879,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           } in
           let _ = rel_ass_stk # push_list ([hp_rel]@defined_hprels) in
           let _ = Log.current_hprel_ass_stk # push_list ([hp_rel]@defined_hprels) in
-          DD.ninfo_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr (defined_hprels@ [hp_rel]))) pos;
+          DD.tinfo_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr (defined_hprels@ [hp_rel]))) pos;
           let update_es_f f new_hp=
             match new_hp with
               | None -> f
