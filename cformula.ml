@@ -9074,7 +9074,9 @@ let compute_holes_list svs =
 (**
  * An Hoa : Check if svs contain a non-hole variable.
  **)
-let is_empty svs = List.for_all CP.is_hole_spec_var svs
+(* let is_empty svs = List.for_all CP.is_hole_spec_var svs *)
+
+let all_hole_vars svs = List.for_all CP.is_hole_spec_var svs
 
 
 let mark_derv_self name f = 

@@ -1,0 +1,26 @@
+data cell {
+  int val;
+}.
+
+//#16 ERROR : should have failed
+/*
+ <1>y::cell<Anon_33@I,Anon_34@I>@I[Orig]&1<=1 & v=@I & v=@I & Anon_33=a & Anon_34=b&{FLOW,(19,20)=__norm}[]
+*/
+/*
+infer [] y::cell<_>@I |- y::cell<b>@v & @M<:v.
+print residue.
+
+infer [] y::cell<1>@M |- y::cell<b>@M.
+print residue.
+
+infer [] y::cell<1>@M |- y::cell<b>@v & v=@M.
+print residue.
+
+infer [] y::cell<1>@M |- (exists v: y::cell<b>@v).
+print residue.
+*/
+
+infer [] y::cell<a>@M |- y::cell<b>@v & v=@I.
+print residue.
+
+

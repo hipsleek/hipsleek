@@ -9,3 +9,18 @@ print residue.
 /*
  <1>y::node<Anon_33@I,Anon_34@I>@I[Orig]&1<=1 & v=@I & v=@I & Anon_33=a & Anon_34=b&{FLOW,(19,20)=__norm}[]
 */
+
+
+infer [] y::node<1,_>@M |- y::node<a,b>@M.
+print residue.
+
+infer [] y::node<1,_>@M |- y::node<a,b>@v & v=@M.
+print residue.
+
+infer [] y::node<1,_>@M |- (exists v: y::node<a,b>@v).
+print residue.
+
+infer [] y::node<1,_>@M |- y::node<a,b>@L.
+print residue.
+
+
