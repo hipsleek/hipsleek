@@ -17,7 +17,7 @@ ass [H1,G2][]:{
 hpdefs [H1,G2][]:{
     HP_700(p,_) --> p::node<_,next_129_652> * HP_700(next_129_652,_);
     HP_643(p) --> p::node<_,next_129_652> * HP_643(next_129_652);
-    G2(res,x_663) --> HP_700(p,x_663) * res::node<_,p>;
+    G2(res,x_663) --> HP_700(p,x_663) * res::node<_,p> & res=x_663;
     H1(x) --> x::node<_,next_129_556'> * HP_643(next_129_556')
  }
 ]

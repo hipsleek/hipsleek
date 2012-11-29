@@ -2,6 +2,7 @@
 *)
 
 open Globals
+open GlobProver
 open Cpure
 
 let infilename = ref (!tmp_files_path ^ "input.mona." ^ (string_of_int (Unix.getpid ())))

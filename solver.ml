@@ -4680,7 +4680,7 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
     let r = hec a b c in
     let _ = hec_stack # pop in
     let (lc,_) = r in
-    let _ = Log.add_new_sleek_logging_entry caller avoid hec_num slk_no ante conseq consumed_heap evars lc pos in
+    let _ = Log.add_new_sleek_logging_entry !Globals.do_classic_frame_rule caller avoid hec_num slk_no ante conseq consumed_heap evars lc pos in
       r
   in
   Debug.no_3_num hec_num "heap_entail_conjunct" string_of_bool Cprinter.string_of_context Cprinter.string_of_formula
@@ -7268,7 +7268,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
           let r = do_infer_heap rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
                 (* (CF.mkFailCtx_in (Basic_Reason (mkFailContext "infer_heap not yet implemented" estate (Base rhs_b) None pos, *)
                 (* CF.mk_failure_bot ("infer_heap .. "))), NoAlias) *)
-          let (res,new_estate) = Inf.infer_collect_hp_rel prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
+          let (res,new_estate) = Inf.infer_collect_hp_rel 1 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
           if (not res) then r else
             let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest} in
             let res_es0, prf0 = do_match prog new_estate rhs rhs n_rhs_b rhs_h_matched_set is_folding pos in
@@ -7316,7 +7316,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                   (r1,prf)
                         end
                   | None ->
-                  let (res,new_estate) = Inf.infer_collect_hp_rel prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
+                  let (res,new_estate) = Inf.infer_collect_hp_rel 2 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
                   if (not res) then
                     let s = "15.5 no match for rhs data node: " ^
                       (CP.string_of_spec_var (let _ , ptr = CF.get_ptr_from_data_w_hrel rhs in ptr)) ^ " (must-bug)."in

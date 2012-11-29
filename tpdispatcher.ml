@@ -3,6 +3,7 @@
 *)
 
 open Globals
+open GlobProver
 open Gen.Basic
 open Mcpure
 open Cpure
@@ -281,14 +282,14 @@ end
 (* ##################################################################### *)
 
 (* class used for keeping prover's functions needed for the incremental proving*)
-class incremMethods : [CP.formula] Globals.incremMethodsType = object
+class incremMethods : [CP.formula] incremMethodsType = object
   val push_no = ref 0 (*keeps track of the number of saved states of the current process*) 
   val process_context = ref [] (*variable used to archives all the assumptions send to the current process *)
   val declarations = ref [] (*variable used to archive all the declared variables in the current process context *) (* (stack_no * var_name * var_type) list*)
   val process = ref None (* prover process *)
 
   (*creates a new proving process *)
-  method start_p () : Globals.prover_process_t =
+  method start_p () : prover_process_t =
     let proc = 
       match !tp with
       | Cvc3 -> Cvc3.start()
@@ -298,26 +299,26 @@ class incremMethods : [CP.formula] Globals.incremMethodsType = object
     proc
 
   (*stops the proving process*)
-  method stop_p (process: Globals.prover_process_t): unit =
+  method stop_p (process: prover_process_t): unit =
     match !tp with
       | Cvc3 -> Cvc3.stop process
       | _ -> () (* to be completed for the rest of provers that support incremental proving *)
 
   (*saves the state of the process and its context *)
-  method push (process: Globals.prover_process_t): unit = 
+  method push (process: prover_process_t): unit = 
     push_no := !push_no + 1;
       match !tp with
         | Cvc3 -> Cvc3.cvc3_push process
         | _ -> () (* to be completed for the rest of provers that support incremental proving *)
 
   (*returns the process to the state it was before the push call *)
-  method pop (process: Globals.prover_process_t): unit = 
+  method pop (process: prover_process_t): unit = 
     match !tp with
       | Cvc3 -> Cvc3.cvc3_pop process
       | _ -> () (* to be completed for the rest of provers that support incremental proving *)
 
   (*returns the process to the state it was before the push call on stack n *)
-  method popto (process: Globals.prover_process_t) (n: int): unit = 
+  method popto (process: prover_process_t) (n: int): unit = 
     let n = 
       if ( n > !push_no) then begin
         Debug.devel_zprint (lazy ("\nCannot pop to " ^ (string_of_int n) ^ ": no such stack. Will pop to stack no. " ^ (string_of_int !push_no))) no_pos;
@@ -328,7 +329,7 @@ class incremMethods : [CP.formula] Globals.incremMethodsType = object
       | Cvc3 -> Cvc3.cvc3_popto process n
       | _ -> () (* to be completed for the rest of provers that support incremental proving *)
 
-  method imply (process: (Globals.prover_process_t option * bool) option) (ante: CP.formula) (conseq: CP.formula) (imp_no: string): bool = true
+  method imply (process: (prover_process_t option * bool) option) (ante: CP.formula) (conseq: CP.formula) (imp_no: string): bool = true
     (* let _ = match proceess with  *)
     (*   | Some (Some proc, send_ante) -> if (send_ante) then  *)
     (*       else *)
@@ -338,10 +339,10 @@ class incremMethods : [CP.formula] Globals.incremMethodsType = object
     (* method private add_to_context assertion: unit = *)
     (*     process_context := [assertion]@(!process_context) *)
 
-  method set_process (proc: Globals.prover_process_t) =
+  method set_process (proc: prover_process_t) =
     process := Some proc
 
-  method get_process () : Globals.prover_process_t option =
+  method get_process () : prover_process_t option =
     !process 
 
 end
@@ -614,7 +615,7 @@ let rec is_list_exp e = match e with
 
 (* TODO : where are the array components *)
 let is_array_b_formula (pf,_) = match pf with
-    | CP.BConst _ 
+    | CP.BConst _ | CP.XPure _ 
     | CP.BVar _
 	| CP.BagMin _ 
     | CP.BagMax _

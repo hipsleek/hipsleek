@@ -1,4 +1,5 @@
 open Globals 
+open GlobProver
 open Stat_global
 open Gen.Basic
 open Printf
@@ -7,7 +8,7 @@ open Cprinter
 module CP = Cpure
 module CF = Cformula
 
-type proof_type = 
+type proof_type =
 	| IMPLY of (CP.formula * CP.formula)
 	| SAT of CP.formula
 	| SIMPLIFY of CP.formula
@@ -26,19 +27,21 @@ type proof_log = {
 	log_res : proof_res;
 }
 
-type sleek_proving_kind =
-	| POST
-	| PRE
-	| BINDING
-    | ASSERTION
+(* type sleek_proving_kind = *)
+(* 	| POST *)
+(* 	| PRE *)
+(* 	| BINDING *)
+(*     | ASSERTION *)
 
 type sleek_log_entry = {
     sleek_proving_id :int;
     sleek_proving_pos: loc;
+    sleek_proving_classic_flag: bool;
     sleek_proving_avoid: bool;
     sleek_proving_caller: string;
     sleek_proving_hec: int;
-    sleek_proving_kind : sleek_proving_kind;
+    sleek_proving_kind : string;
+(* sleek_proving_kind; *)
     sleek_proving_ante: CF.formula;
     sleek_proving_conseq: CF.formula;
     sleek_proving_c_heap: CF.h_formula;
@@ -47,12 +50,14 @@ type sleek_log_entry = {
     sleek_proving_res : CF.list_context;
 }
 
-let string_of_sleek_proving_kind t=
-  match t with
-    | POST -> "POST"
-	| PRE -> "PRE"
-	| BINDING -> "BINDING"
-    | ASSERTION -> "ASSERTION"
+(* let string_of_sleek_proving_kind t= *)
+  (* match t with *)
+  (*   | POST -> "POST" *)
+  (*   | PRE -> "PRE" *)
+  (*   | BINDING -> "BINDING" *)
+  (*   | ASSERTION -> "ASSERTION" *)
+
+let string_of_sleek_proving_kind () = Globals.proving_kind#string_of
 
 let pr_sleek_log_entry e=
   fmt_open_box 1;
@@ -62,7 +67,8 @@ let pr_sleek_log_entry e=
   fmt_string ("id: " ^ (string_of_int e.sleek_proving_id));
   fmt_string ("; caller: " ^ (e.sleek_proving_caller));
   fmt_string ("; line: " ^ (Globals.line_number_of_pos e.sleek_proving_pos)) ;
-  fmt_string ("; kind: " ^ (string_of_sleek_proving_kind e.sleek_proving_kind)) ;
+  fmt_string ("; classic: " ^ (string_of_bool e.sleek_proving_classic_flag)) ;
+  fmt_string ("; kind: " ^ (e.sleek_proving_kind)) ;
   fmt_string ("; hec_num: " ^ (string_of_int e.sleek_proving_hec)) ;
   fmt_string ("; evars: " ^ (Cprinter.string_of_spec_var_list e.sleek_proving_evars)) ;
   fmt_string ("; c_heap:" ^ (Cprinter.string_of_h_formula e.sleek_proving_c_heap)) ;
@@ -89,7 +95,7 @@ let sleek_log_stk : sleek_log_entry  Gen.stack_filter
       = new Gen.stack_filter
   string_of_sleek_log_entry (==) (fun e -> not(e.sleek_proving_avoid))
 
-let sleek_proving_kind = ref (POST : sleek_proving_kind)
+(* let sleek_proving_kind = ref (POST : sleek_proving_kind) *)
 let sleek_proving_id = ref (0 : int)
 (* let current_hprel_ass = ref ([] : CF.hprel list) *)
 let current_hprel_ass_stk : CF.hprel  Gen.stack_pr 
@@ -105,11 +111,11 @@ let proof_log_list  = ref [] (*For printing to text file with the original oder 
 
 let proof_gt5_log_list = ref [] (*Logging proofs require more than 5 secs to be proved*)
 
-let update_sleek_proving_kind k= let _ = sleek_proving_kind:= k in ()
+(* let update_sleek_proving_kind k= let _ = sleek_proving_kind:= k in () *)
 
 (* TODO : add result into the log printing *)
 (* wrong order number indicates recursive invocations *)
-let add_new_sleek_logging_entry caller avoid hec slk_no ante conseq 
+let add_new_sleek_logging_entry classic_flag caller avoid hec slk_no ante conseq 
       consumed_heap evars (result:CF.list_context) pos=
   if !Globals.sleek_logging_txt then
     let sleek_log_entry = {
@@ -117,9 +123,11 @@ let add_new_sleek_logging_entry caller avoid hec slk_no ante conseq
         sleek_proving_id = slk_no;
         sleek_proving_caller = caller;
         sleek_proving_avoid = avoid;
+        sleek_proving_classic_flag = classic_flag;
         sleek_proving_hec = hec;
         sleek_proving_pos = pos;
-        sleek_proving_kind = !sleek_proving_kind;
+        sleek_proving_kind = proving_kind # string_of;
+(* !sleek_proving_kind; *)
         sleek_proving_ante = ante;
         sleek_proving_conseq = conseq;
         sleek_proving_hprel_ass = current_hprel_ass_stk # get_stk;

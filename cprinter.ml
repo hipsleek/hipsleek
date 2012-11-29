@@ -714,6 +714,21 @@ let sort_exp a b =
               | _ -> (a,b)
           end
 
+let pr_xpure_view xp = match xp with
+    { 
+        CP.xpure_view_node = root ;
+        CP.xpure_view_name = vname;
+        CP.xpure_view_arguments = args;
+    } ->
+        let pr = string_of_spec_var in
+        let rn,args_s = match root with
+          | None -> ("", pr_list_round pr args)
+          | Some v -> ((pr v)^"::", pr_list_angle pr args)
+        in
+        fmt_string ("XPURE("^rn^vname^args_s^")")
+
+let string_of_xpure_view xpv = poly_string_of_pr pr_xpure_view xpv
+
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
   let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
@@ -729,6 +744,7 @@ let rec pr_b_formula (e:P.b_formula) =
       (*   pr_set pr_formula_exp ls2 *)
       (* else () *)
     | P.BConst (b,l) -> fmt_bool b 
+    | P.XPure v ->  fmt_string (string_of_xpure_view v)
     | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
     | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2
     | P.Lte (e1, e2, l) -> f_b e1; fmt_string op_lte ; f_b e2
@@ -1091,7 +1107,7 @@ let rec prtt_pr_h_formula h =
 			(* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
           pr_spec_var sv; fmt_string "::";
           pr_angle (c^perm_str) pr_spec_var svs ;
-	      (* pr_imm imm; *)
+	      pr_imm imm;
 	      pr_derv dr;
           if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
           (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
@@ -1493,6 +1509,10 @@ let pr_hp_rel hp_rel =
 
 let string_of_hp_rel_def hp_rel =
  let str_of_hp_rel (r,f1, f2) = ( (CP.print_rel_cat r)^ ": " ^(string_of_h_formula f1) ^ ":: "  ^(prtt_string_of_formula f2)) in
+  (str_of_hp_rel hp_rel)
+
+let string_of_hp_rel_def_short hp_rel =
+ let str_of_hp_rel (_,f1, f2) = ((string_of_h_formula f1) ^ ":: "  ^(prtt_string_of_formula f2)) in
   (str_of_hp_rel hp_rel)
 
 let string_of_hp_rels (e) : string =
@@ -2886,6 +2906,7 @@ let rec html_of_formula_exp e =
 	| P.ArrayAt (a, i, l) -> (html_of_spec_var a) ^ "[" ^ (String.concat "," (List.map html_of_formula_exp i)) ^ "]"
 
 let rec html_of_pure_b_formula f = match f with
+    | P.XPure _ -> "<b> XPURE </b>"
     | P.BConst (b,l) -> "<b>" ^ (string_of_bool b) ^ "</b>"
     | P.BVar (x, l) -> html_of_spec_var x
     | P.Lt (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_lt ^ (html_of_formula_exp e2)

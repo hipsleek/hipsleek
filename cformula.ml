@@ -569,7 +569,7 @@ and isConstETrueSpecs f = match f with
 	| _ -> false
 
 (* TRUNG TODO: should change name to isStrictConstEmp_x ? *)
-and isStrictConstTrue_x f = match f with
+and isStrictConstEmp f = match f with
   | Exists ({ formula_exists_heap = HEmp;
     formula_exists_pure = p;
     formula_exists_flow = fl; })
@@ -580,6 +580,27 @@ and isStrictConstTrue_x f = match f with
 	        (* don't need to care about formula_base_type  *)
   | _ -> false
 
+and isStrictConstHTrue f = match f with
+  | Exists ({ formula_exists_heap = HTrue;
+    formula_exists_pure = p;
+    formula_exists_flow = fl; })
+  | Base ({formula_base_heap = HTrue;
+    formula_base_pure = p;
+    formula_base_flow = fl;}) -> 
+        MCP.isConstMTrue p && is_top_flow fl.formula_flow_interval
+	        (* don't need to care about formula_base_type  *)
+  | _ -> false
+
+and isStrictConstTrue_x f = match f with
+  | Exists ({ formula_exists_heap = h;
+    formula_exists_pure = p;
+    formula_exists_flow = fl; })
+  | Base ({formula_base_heap = h;
+    formula_base_pure = p;
+    formula_base_flow = fl;}) -> 
+        (h==HEmp or h==HTrue) && MCP.isConstMTrue p && is_top_flow fl.formula_flow_interval
+	        (* don't need to care about formula_base_type  *)
+  | _ -> false
 and isStrictConstTrue (f:formula) = 
   Debug.no_1 "isStrictConstTrue" !print_formula string_of_bool isStrictConstTrue_x f
 
@@ -3307,6 +3328,19 @@ let rec get_HRels_f f=
         let a2 = get_HRels_f orf.formula_or_f2 in
         (a1@a2)
 
+let check_and_get_one_hpargs f=
+  let helper mf hf=
+    if CP.isConstTrue (MCP.pure_of_mix mf) then
+      match hf with
+        | HRel (hp, eargs, p ) -> [(hp, List.concat (List.map CP.afv eargs),p)]
+        | _ -> []
+    else []
+  in
+  match f with
+    | Base fb -> helper fb.formula_base_pure fb.formula_base_heap
+    | Exists fe -> helper fe.formula_exists_pure fe.formula_exists_heap
+    | Or _  -> []
+
 let rec check_eq_hrel_node  (rl1, args1 ,_)  (rl2, args2,_)=
     let rec helper l1 l2=
       match l1,l2 with
@@ -3354,6 +3388,23 @@ and get_ptrs_w_args (f: h_formula): CP.spec_var list = match f with
   | HRel (_,eargs,_) -> (List.fold_left List.append [] (List.map CP.afv eargs))
   | _ -> []
 
+and get_all_sv_f (f: formula)=
+  match f with
+    | Base fb ->
+        CP.remove_dups_svl (get_all_sv fb.formula_base_heap)
+    | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
+and get_all_sv (f: h_formula): CP.spec_var list = match f with
+  | DataNode {h_formula_data_node = c;
+             h_formula_data_arguments = args}
+  | ViewNode {h_formula_view_node = c;
+             h_formula_view_arguments = args} -> [c]@(List.filter CP.is_node_typ args)
+  | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
+  | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2}
+  | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2}
+      -> (get_all_sv h1)@(get_all_sv h2)
+  | HRel (hp,eargs,_) -> hp::(List.fold_left List.append [] (List.map CP.afv eargs))
+  | _ -> []
+
 and get_hnodes (f: h_formula) = match f with
   | DataNode _ -> [f]
   | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
@@ -3392,6 +3443,41 @@ let get_hdnodes_hrel_hf (hf0: h_formula) =
       | _ -> []
   in
   helper hf0
+
+let check_imm_mis rhs_mis rhs0=
+  match rhs_mis with
+    | DataNode hd1 ->
+        if not(isLend (hd1.h_formula_data_imm)) then rhs0
+        else
+          let mis_sv = hd1.h_formula_data_node in
+          let rec helper rhs=
+            match rhs with
+              | Star { h_formula_star_h1 = hf1;
+                         h_formula_star_h2 = hf2;
+                         h_formula_star_pos = pos} ->
+                  Star {h_formula_star_h1 = helper hf1;
+                        h_formula_star_h2 = helper hf2;
+                        h_formula_star_pos = pos}
+              |  Conj { h_formula_conj_h1 = hf1;
+                       h_formula_conj_h2 = hf2;
+                       h_formula_conj_pos = pos} ->
+                  Conj { h_formula_conj_h1 = helper hf1;
+                         h_formula_conj_h2 = helper hf2;
+                         h_formula_conj_pos = pos}
+              | Phase { h_formula_phase_rd = hf1;
+                        h_formula_phase_rw = hf2;
+                        h_formula_phase_pos = pos} ->
+                  Phase { h_formula_phase_rd = helper hf1;
+                          h_formula_phase_rw = helper hf2;
+                          h_formula_phase_pos = pos}
+              | DataNode hd -> if CP.eq_spec_var mis_sv hd.h_formula_data_node then
+                    if not(isLend (hd.h_formula_data_imm)) then rhs else
+                      DataNode {hd with h_formula_data_imm = (ConstAnn(Mutable));}
+                  else rhs
+              | _ -> rhs
+          in
+          helper rhs0
+    | _ -> rhs0
 
 let rec get_hp_rel_formula (f:formula) =
   match f with
@@ -4329,7 +4415,7 @@ think it is used to instantiate when folding.
   es_infer_vars : CP.spec_var list; 
   es_infer_vars_rel : CP.spec_var list;
   es_infer_vars_sel_hp_rel: CP.spec_var list;
-  es_infer_hp_unk_map: (CP.spec_var * CP.spec_var list) list;
+  es_infer_hp_unk_map: (CP.spec_var*CP.xpure_view) list ;(*(CP.spec_var * CP.spec_var list) list;*)
   es_infer_vars_hp_rel : CP.spec_var list;
   (* input vars to denote vars already instantiated *)
   es_infer_vars_dead : CP.spec_var list; 

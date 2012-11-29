@@ -1,4 +1,5 @@
 open Globals
+open GlobProver
 open Gen.Basic
 open Cpure
 (* open Rtc_new_stable *)
@@ -17,7 +18,7 @@ let log_all_flag = ref false
 let is_minisat_running = ref false
 let in_timeout = ref 15.0 (* default timeout is 15 seconds *)
 let minisat_call_count: int ref = ref 0
-let log_file = open_out ("allinput.minisat")
+let log_file = open_log_out ("allinput.minisat")
 let minisat_input_mode = "file"    (* valid value is: "file" or "stdin" *) 
 
 (*minisat*)
@@ -97,6 +98,7 @@ let  minisat_cnf_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t)
   match pf with
   | LexVar _        -> ""
   | BConst (c, _)   -> (*let _=print_endline ("minisat_cnf_of_p_formula_for_helper BConst EXIT!")  in*) ""
+  | XPure _ -> "" (* WN : weakening *)
   | BVar (sv, _)    -> let _=print_endline ("minisat_cnf_of_p_formula_for_helper Bvar EXIT!..."^minisat_cnf_of_spec_var sv) in ""
   | Lt _            -> ""
   | Lte _           -> ""
@@ -227,10 +229,10 @@ let minisat_cnf_of_not_of_b_formula (bf : Cpure.b_formula) (allvars:Glabel.t) (g
 (*---------------------------------------CNF conversion here-----------------------------------*)
 let return_pure bf f= match bf with
   | (pf,_)-> match pf with 
-						 | Eq _ -> f
-						 | Neq _ -> f  
-						 | BConst(a,_)->f (*let _=if(a) then print_endline ("TRUE") else print_endline ("FALSE")  in*)
-	           | BVar(_,_)->f
+      | Eq _ -> f
+      | Neq _ -> f  
+      | BConst(a,_)->f (*let _=if(a) then print_endline ("TRUE") else print_endline ("FALSE")  in*)
+      | BVar(_,_)->f
 
 (*For converting to NNF--no need??--*)
 let rec minisat_cnf_of_formula f =
@@ -469,7 +471,7 @@ let remove_file filename =
   try Sys.remove filename;
   with e -> ignore e
 
-let set_process (proc: Globals.prover_process_t) =
+let set_process (proc: prover_process_t) =
   minisat_process := proc
 
 let start () =
@@ -549,6 +551,11 @@ let check_problem_through_file (input: string) (timeout: float) : bool =
   remove_file infile;
   res
 	
+
+let check_problem_through_file (input: string) (timeout: float) : bool =
+  Debug.no_1 "check_problem_through_file (minisat)"
+    (fun s -> s) string_of_bool
+    (fun f -> check_problem_through_file f timeout) input
 
 (***************************************************************
 GENERATE CNF INPUT FOR IMPLICATION / SATISFIABILITY CHECKING
@@ -650,7 +657,7 @@ let minisat_is_sat (f : Cpure.formula) (sat_no : string) timeout : bool =
 				let all_input=if(cnf_T <> "") then cnf_T^minisat_input else minisat_input in
 				(* let _=print_endline ("All input: \n"^all_input) in *)
 				(* let tstartlog = Gen.Profiling.get_time () in *)
-				let res=check_problem_through_file (all_input) timeout in 
+				let res= check_problem_through_file (all_input) timeout in 
 				(* let tstoplog = Gen.Profiling.get_time () in *)
 			(* let _= Globals.minisat_time_T := !Globals.minisat_time_T +. (tstoplog -. tstartlog) in *)
 			  res
@@ -727,7 +734,7 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : boo
   )
 
 let imply (ante : Cpure.formula) (conseq : Cpure.formula) (timeout: float) : bool =
-  (* let _ = print_endline "** In function minisat.imply:" in *)
+  (* let _ = pint_endline "** In function minisat.imply:" in *)
   Debug.no_1_loop "smt.imply" string_of_float string_of_bool
     (fun _ -> imply ante conseq timeout) timeout
 

@@ -1,4 +1,5 @@
 open Globals
+open GlobProver
 open Gen.Basic
 open Cpure
 
@@ -20,7 +21,7 @@ let log_all_flag = ref false
 let is_spass_running = ref false
 let in_timeout = ref 15.0 (* default timeout is 15 seconds *)
 let spass_call_count: int ref = ref 0
-let log_file = open_out ("allinput.spass")
+let log_file = open_log_out ("allinput.spass")
 let spass_path = "SPASS-MOD"
 let spass_name = "SPASS-MOD"
 let spass_input_format = "dfg"   (* valid value is: "dfg" or "tptp" *)
@@ -395,7 +396,7 @@ let remove_file filename =
   try Sys.remove filename;
   with e -> ignore e
 
-let set_process (proc: Globals.prover_process_t) =
+let set_process (proc: prover_process_t) =
   spass_process := proc
 
 let start () =

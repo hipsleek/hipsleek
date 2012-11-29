@@ -5,8 +5,7 @@ HeapPred HP_1c(node a).
 
 get_next:SUCCESS[
 ass [H1,G4][]:{
-    HP_541(v_node_31_529',q) *  x'::node<_,v_node_31_529'>&x=x'
-          --> G4(v_node_31_529',x',x,p) * HP_1a(q);
+    HP_541(res,q) *  x'::node<_,res>&x=x' --> G4(res,x',x,p) * HP_1a(q);
     H1(x,q)&true --> x::node<val_30_527',next_30_528'> *  HP_541(next_30_528',q)
  }
 

@@ -3,6 +3,7 @@
 *)
 
 open Globals
+open GlobProver
 module CP = Cpure
 
 let is_mona_running = ref false
@@ -548,6 +549,7 @@ and mona_of_b_formula_x b f vs =
   let ret =
 	let (pf, _) = b in
     match pf with
+      | CP.XPure _ -> "(0=0)" (* WN : weakening *)
       | CP.BConst (c, _) -> if c then "(0 = 0)" else "(~ (0 <= 0))"
       | CP.BVar (bv, _) -> "greater(" ^ (mona_of_spec_var bv) ^ ", pconst(0))"
             (* CP.Lt *)   
@@ -838,7 +840,7 @@ let prelude () =
    let mona_pred_file_x = get_mona_predicates_file () in
    send_cmd_no_answer ("include \"" ^ mona_pred_file_x ^ "\";\n")
 
-let set_process (proc: Globals.prover_process_t) = 
+let set_process (proc: prover_process_t) = 
   process := proc
 
 let rec check_prover_existence prover_cmd_str: bool =

@@ -698,9 +698,28 @@ and check_equiv_bform  hvars b1 b2 mtl =
     (fun _ _ ->  check_equiv_bform_x hvars b1 b2 mtl) b1 b2
 
 and check_equiv_bform_x (hvars: ident list)(b1: CP.b_formula) (b2: CP.b_formula)(mt: map_table): (bool * (map_table list)) =
+  let rec check_eq_order_spec_var_list svl1 svl2 mt0=
+    match svl1,svl2 with
+      | [],[] -> (true,mt0)
+      | sv1::tl1,sv2::tl2 ->
+          let res, r_mt = check_spec_var_equiv hvars sv1 sv2 mt0 in
+          if res then
+            check_eq_order_spec_var_list tl1 tl2 r_mt
+          else (false,mt0)
+      | _ -> (false,mt0)
+  in
   match b1,b2 with
     | (BConst (true,_),_),  (BConst (true,_),_) -> (true,[mt])
     | (BConst (false,_),_),  (BConst (false,_),_) -> (true,[mt])
+    | (XPure xp1,_),  (XPure xp2,_) ->
+        if xp1.xpure_view_name = xp1.xpure_view_name then
+          match xp1.xpure_view_node,xp1.xpure_view_node with
+            | None,None -> let r,r_mt = check_eq_order_spec_var_list xp1.xpure_view_arguments xp2.xpure_view_arguments mt in
+                           (r,[r_mt])
+            | Some r1,Some r2 -> let r,r_mt = check_eq_order_spec_var_list (r1::xp1.xpure_view_arguments) (r2::xp2.xpure_view_arguments) mt in
+                                 (r,[r_mt])
+            | _ -> (false,[mt])
+        else (false,[mt])
     | (Eq (e11,e12,_), _) , (Eq (e21,e22,_) , _) 
     | (Neq (e11,e12,_), _) , (Neq (e21,e22,_) , _)  ->
       (
