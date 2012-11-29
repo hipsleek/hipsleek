@@ -1751,3 +1751,73 @@ let rec ramify_unfolded_formula (cf:CF.formula) vl : CF.formula =
     		let or_list = List.map (fun (h,rp) -> let p = CP.mkAnd p rp pos in
     			CF.mkExists qvars h (MCP.mix_of_pure p) t fl a pos) ramify_cases in
     		CF.disj_of_list or_list pos
+    		
+let rec remove_accs_from_heap (h: CF.h_formula) : CF.h_formula * CP.formula = 
+match h with
+  | CF.Phase({CF.h_formula_phase_rd = h1;
+	CF.h_formula_phase_rw = h2;
+	CF.h_formula_phase_pos = pos}) ->
+	let h1,p1 = (remove_accs_from_heap h1) in
+	let h2,p2 = (remove_accs_from_heap h2) in
+	let p = CP.mkAnd p1 p2 pos in
+	CF.mkPhaseH h1 h2 pos,p	
+  | CF.Star({CF.h_formula_star_h1 = h1;
+	CF.h_formula_star_h2 = h2;
+	CF.h_formula_star_pos = pos}) ->
+	let h1,p1 = (remove_accs_from_heap h1) in
+	let h2,p2 = (remove_accs_from_heap h2) in
+	let p = CP.mkAnd p1 p2 pos in
+	CF.mkStarH h1 h2 pos,p	
+  | CF.Conj({CF.h_formula_conj_h1 = h1;
+	CF.h_formula_conj_h2 = h2;
+	CF.h_formula_conj_pos = pos}) ->
+	let h1,p1 = (remove_accs_from_heap h1) in
+	let h2,p2 = (remove_accs_from_heap h2) in
+	let p = CP.mkAnd p1 p2 pos in
+	CF.mkConjH h1 h2 pos,p	
+  | CF.ConjStar({CF.h_formula_conjstar_h1 = h1;
+	CF.h_formula_conjstar_h2 = h2;
+	CF.h_formula_conjstar_pos = pos}) ->
+	let h1,p1 = (remove_accs_from_heap h1) in
+	let h2,p2 = (remove_accs_from_heap h2) in
+	let p = CP.mkAnd p1 p2 pos in
+	CF.mkConjStarH h1 h2 pos,p	
+  | CF.ConjConj({CF.h_formula_conjconj_h1 = h1;
+	CF.h_formula_conjconj_h2 = h2;
+	CF.h_formula_conjconj_pos = pos}) -> 
+	let h1,p1 = (remove_accs_from_heap h1) in
+	let h2,p2 = (remove_accs_from_heap h2) in
+	let p = CP.mkAnd p1 p2 pos in
+	CF.mkConjConjH h1 h2 pos,p
+  | CF.DataNode _
+  | CF.ViewNode _ -> let imm = CF.get_node_imm h in
+  			if CF.isAccs imm 
+  			then let p = (CP.mkNeqNull (CF.get_node_var h) no_pos) in
+  				CF.HEmp,p
+  			else h,(CP.mkTrue no_pos)
+  | _ -> h,(CP.mkTrue no_pos)
+
+let rec remove_accs_from_formula (cf:CF.formula)  : CF.formula = 
+  match cf with
+    | CF.Or f -> 
+             let f1 = f.CF.formula_or_f1 in
+             let f2 = f.CF.formula_or_f2 in
+    	     CF.Or {f with 
+	     CF.formula_or_f1 = (remove_accs_from_formula f1);
+	     CF.formula_or_f2 = (remove_accs_from_formula f2)}
+    | CF.Base f ->
+    		let pos = f.CF.formula_base_pos in
+    		let h,mcp,fl,t,a = CF.split_components cf in
+    		let p = MCP.pure_of_mix mcp in
+    		let h,new_p = remove_accs_from_heap h in
+    		let p = CP.mkAnd new_p p pos in
+    		CF.mkBase h (MCP.mix_of_pure p) t fl a pos
+    | CF.Exists f ->
+		let pos = f.CF.formula_exists_pos in
+    		let h,mcp,fl,t,a = CF.split_components cf in
+    		let qvars = f.CF.formula_exists_qvars in
+    		let p = MCP.pure_of_mix mcp in
+    		let h,new_p = remove_accs_from_heap h in
+    		let p = CP.mkAnd new_p p pos in
+ 		CF.mkExists qvars h (MCP.mix_of_pure p) t fl a pos	
+

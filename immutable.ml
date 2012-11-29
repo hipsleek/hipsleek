@@ -27,7 +27,7 @@ let rec split_phase_debug_lhs h = Debug.no_1 "split_phase(lhs)"
 and split_phase_debug_rhs h = Debug.no_1 "split_phase(rhs)"
   Cprinter.string_of_h_formula 
   (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n") 
-  split_phase h
+  split_phase 0 h
 
 and split_phase i (h : h_formula) : (h_formula * h_formula * h_formula )= 
   let pr = Cprinter.string_of_h_formula in
