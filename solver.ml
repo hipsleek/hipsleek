@@ -4181,7 +4181,7 @@ and get_expl_inst es (f : MCP.mix_formula) =
   if (to_elim_vars = []) then f 
   else (elim_exists_mix_formula to_elim_vars f no_pos) 
 
-and move_expl_inst_estate es (f : MCP.mix_formula) = 
+and move_expl_inst_estate_x es (f : MCP.mix_formula) = 
   let nf,nflg= 
     let f2 = get_expl_inst es f in
     CF.mkStar es.es_formula (formula_of_mix_formula f2 no_pos) Flow_combine no_pos,MCP.isConstMTrue f2 in
@@ -4192,7 +4192,17 @@ and move_expl_inst_estate es (f : MCP.mix_formula) =
       es_formula = nf;
       es_unsat_flag = es.es_unsat_flag && nflg; } 
 
-and move_impl_inst_estate es (f:MCP.mix_formula) = 
+and move_expl_inst_estate es (f:MCP.mix_formula) =
+  let pr1 = Cprinter.string_of_entail_state in
+  let pr2 = Cprinter.string_of_mix_formula in
+  Debug.no_2 "move_expl_inst_estate" pr1 pr2 pr1 move_expl_inst_estate_x es f
+
+and move_impl_inst_estate es (f:MCP.mix_formula) =
+  let pr1 = Cprinter.string_of_entail_state in
+  let pr2 = Cprinter.string_of_mix_formula in
+  Debug.no_2 "move_impl_inst_estate" pr1 pr2 pr1 move_impl_inst_estate_x es f
+
+and move_impl_inst_estate_x es (f:MCP.mix_formula) =  
   let l_inst = es.es_gen_impl_vars@es.es_ivars in
   let f = MCP.find_rel_constraints f l_inst in
   let to_elim_vars = es.es_gen_expl_vars@es.es_evars in  
@@ -4205,7 +4215,7 @@ and move_impl_inst_estate es (f:MCP.mix_formula) =
   {es with
       (* why isn't es_gen_expl_vars updated? *)
       es_gen_impl_vars = Gen.BList.intersect_eq CP.eq_spec_var es.es_gen_impl_vars to_elim_vars (*es.es_evars*);
-      es_ante_evars = es.es_ante_evars @ to_elim_vars;
+      (*es_ante_evars = es.es_ante_evars @ to_elim_vars;*)
       es_formula = nf;
       es_unsat_flag = es.es_unsat_flag && nflg; } 
   
