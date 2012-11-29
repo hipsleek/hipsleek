@@ -392,7 +392,10 @@ let conv_var_to_exp (v:spec_var) :exp =
 (* is exp a var  *)
 let is_var (f:exp) = match f with
   | Var _ -> true
-  | _ -> false  
+  | _ -> false
+
+let is_xpure_view_eq xp1 xp2=
+  xp1.xpure_view_name = xp2.xpure_view_name
 
 let rec contains_exists (f:formula) : bool =  match f with
     | BForm _ -> false
@@ -803,6 +806,11 @@ and bfv (bf : b_formula) =
   let (pf,_) = bf in
   match pf with
     | BConst _ -> []
+    | XPure xp -> begin
+        match xp.xpure_view_node with
+          | None -> xp.xpure_view_arguments
+          | Some r -> r::xp.xpure_view_arguments
+    end
     | BVar (bv, _) -> [bv]
     | Lt (a1, a2, _) 
     | Lte (a1, a2, _) 
@@ -1497,6 +1505,9 @@ and mkGt a1 a2 pos =
     failwith ("max/min can only be used in equality")
   else
     Gt (a1, a2, pos)
+
+and mkFormulaFromXP xp=
+ BForm ((XPure xp,None),None)
 
 and mkGte a1 a2 pos =
   if is_max_min a1 || is_max_min a2 then

@@ -1319,12 +1319,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p (* lhs_b *) r
 (*=****************************************************************=*)
            (*=****************INFER REL HP ASS****************=*)
 (*=*****************************************************************=*)
-(*
-1.  H(x) --> x::node<_,p>: p is forwarded
-2.  H(x,y) --> x::node<_,p>: p and y are forwarded
-3.  x::<_,p> * H (p) --> G(x): p is NOT forwarded
-3a. z::node2<_,l,r> * HP_577(l) * G1(r) --> G1(z) : l,r are NOT forwarded
-*)
+
 let generate_linking_svl_x drop_hpargs total_unk_map=
   let generate_linking_svl_one_hp pos (hp,args)=
     let hp_name = CP.name_of_spec_var hp in
@@ -1354,6 +1349,60 @@ let generate_linking_svl drop_hpargs total_unk_map=
   Debug.no_1 "generate_linking_svl" pr1 pr2
       (fun _ -> generate_linking_svl_x drop_hpargs total_unk_map) drop_hpargs
 
+let generate_xpure_view_x drop_hpargs total_unk_map=
+  let rec lookup_xpure_view hp_name rem_map=
+    match rem_map with
+      | [] -> []
+      | xpv::tl ->
+          if xpv.CP.xpure_view_name = hp_name then
+            [xpv]
+          else lookup_xpure_view hp_name tl
+  in
+  let generate_xpure_view_one_hp pos (hp,args)=
+    let hp_name = CP.name_of_spec_var hp in
+    let p,unk_svl,unk_map =
+      let xpvs = lookup_xpure_view hp_name total_unk_map in
+      match xpvs with
+        | [xp] ->
+            let xp_r, xp_args = match xp.CP.xpure_view_node with
+              | None -> None, xp.CP.xpure_view_arguments
+              |Some _ -> Some (List.hd args), (List.tl args)
+            in
+          let new_xpv = {xp with CP.xpure_view_node =  xp_r;
+              xpure_view_arguments =  xp_args
+                        }
+          in
+          let p = CP.mkFormulaFromXP new_xpv in
+          (p,args,[])
+        | [] ->
+            let xpv = { CP.xpure_view_node = None;
+                       CP.xpure_view_name = hp_name;
+                       CP.xpure_view_arguments = args;
+                       CP.xpure_view_remaining_branches= None;
+                       CP.xpure_view_pos = no_pos;
+            }
+            in
+            let p = CP.mkFormulaFromXP xpv in
+          (p,args,[xpv])
+        | _ -> report_error no_pos "infer.generate_xpure_view: not possible"
+    in
+    (p,unk_svl,unk_map)
+  in
+  let ps,ls_fr_svl,ls_unk_map = split3 (List.map (generate_xpure_view_one_hp no_pos) drop_hpargs) in
+  (List.concat ls_fr_svl,CP.conj_of_list ps no_pos,List.concat ls_unk_map)
+
+let generate_xpure_view drop_hpargs total_unk_map=
+  let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
+  let pr2 = pr_triple !CP.print_svl !CP.print_formula
+    (pr_list CP.string_of_xpure_view) in
+  Debug.no_1 "generate_xpure_view" pr1 pr2
+      (fun _ -> generate_xpure_view_x drop_hpargs total_unk_map) drop_hpargs
+(*
+1.  H(x) --> x::node<_,p>: p is forwarded
+2.  H(x,y) --> x::node<_,p>: p and y are forwarded
+3.  x::<_,p> * H (p) --> G(x): p is NOT forwarded
+3a. z::node2<_,l,r> * HP_577(l) * G1(r) --> G1(z) : l,r are NOT forwarded
+*)
 let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs_rest rhs_h_matched_set leqs reqs pos total_unk_map=
   let get_rhs_unfold_fwd_svl hd def_svl lhs_hpargs=
     if List.exists (fun (_,args) -> CP.mem_svl hd.CF.h_formula_data_node args) lhs_hpargs then
@@ -1402,19 +1451,30 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
         (fun _ _ -> find_well_defined_hp_x hds hvs (hp,args) def_ptrs lhsb) (hp,args) def_ptrs
   in
   let lookup_eq_linking_svl (hp0,args0) total_unk_map lhs_hpargs=
+    let rec lookup_xpure_view hp_name rem_map=
+      match rem_map with
+        | [] -> None
+        | xpv::tl ->
+            if xpv.CP.xpure_view_name = hp_name then
+              Some xpv
+            else lookup_xpure_view hp_name tl
+    in
     let rec snd_assoc ls=
       match ls with
-        | [] -> raise Not_found
+        | [] -> None
         | (hp1,args1)::tl -> if SAU.eq_spec_var_order_list args1 args0 then
-              hp1
+              Some hp1
             else snd_assoc tl
     in
-    try
-        let eq_hp = snd_assoc lhs_hpargs in
-        let fr_args = List.assoc eq_hp total_unk_map in
-        [(hp0,fr_args)]
-    with Not_found ->
-        []
+    let o_eq_hp = snd_assoc lhs_hpargs in
+    match o_eq_hp with
+      | None -> []
+      | Some eq_hp -> begin
+          let o_xpv = lookup_xpure_view (CP.name_of_spec_var eq_hp) total_unk_map in
+          match o_xpv with
+            | None -> []
+            | Some xpv -> [{xpv with CP.xpure_view_name = CP.name_of_spec_var hp0}]
+      end
   in
   (* DD.info_pprint ">>>>>> find_undefined_selective_pointers <<<<<<" pos; *)
   let lfb = CF.subst_b leqs lfb in
@@ -1474,7 +1534,8 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
   let drop_hps = fst (List.split drop_hpargs) in
   let selected_hps = CP.diff_svl selected_hps0 drop_hps in
   (*unknown svl*)
-  let unk_svl,ps,unk_map = generate_linking_svl (List.filter (fun (hp0,_) -> CP.mem_svl hp0 selected_hps0) drop_hpargs) total_unk_map in
+  let unk_svl,ps,unk_map = (*generate_linking_svl*)
+    generate_xpure_view (List.filter (fun (hp0,_) -> CP.mem_svl hp0 selected_hps0) drop_hpargs) total_unk_map in
   (*========*)
   (*find undefined ptrs of all hrel args*)
   (*two cases: rhs unfold (mis-match is a node) and lhs fold (mis-match is a unk hp)*)
@@ -1741,12 +1802,12 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
         let _ =
           (* let pr_elem = Cpure.SV.string_of in *)
           (* let pr2 = pr_list (pr_pair pr_elem pr_elem) in *)
-          DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
-          DD.info_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
-          DD.info_pprint ("  footprint: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos;
-          DD.info_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
-          DD.info_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
-          DD.info_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
+          DD.ninfo_pprint ">>>>>> infer_hp_rel <<<<<<" pos;
+          DD.ninfo_pprint ("  es_heap: " ^ (Cprinter.string_of_h_formula es.CF.es_heap)) pos;
+          DD.ninfo_pprint ("  footprint: " ^ (let pr=pr_list_ln Cprinter.string_of_h_formula in pr es.CF.es_history)) pos;
+          DD.ninfo_pprint ("  lhs: " ^ (Cprinter.string_of_formula_base lhs_b)) pos;
+          DD.ninfo_pprint ("  rhs: " ^ (Cprinter.string_of_formula_base rhs_b)) pos;
+          DD.ninfo_pprint ("  unmatch: " ^ (Cprinter.string_of_h_formula rhs)) pos;
           (* DD.info_pprint ("  lhs aliases: " ^  (pr2 leqs)) pos; (\* aliases from LHS *\) *)
           (* DD.info_pprint ("  rhs aliases: " ^  (pr2 reqs)) pos;  (\* aliases from LHS *\) *)
         in
@@ -1818,7 +1879,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           } in
           let _ = rel_ass_stk # push_list ([hp_rel]@defined_hprels) in
           let _ = Log.current_hprel_ass_stk # push_list ([hp_rel]@defined_hprels) in
-          DD.info_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr (defined_hprels@ [hp_rel]))) pos;
+          DD.ninfo_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr (defined_hprels@ [hp_rel]))) pos;
           let update_es_f f new_hp=
             match new_hp with
               | None -> f
@@ -1826,7 +1887,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           in
           (*update the residue*)
           let new_es_formula =  update_es_f es.CF.es_formula r_new_hp in
-          let new_es_formula = CF.mkAnd_pure new_es_formula (MCP.mix_of_pure unk_pure) (CF.pos_of_formula new_es_formula) in
+          (* let new_es_formula = CF.mkAnd_pure new_es_formula (MCP.mix_of_pure unk_pure) (CF.pos_of_formula new_es_formula) in *)
           (*drop hp rel + nodes consumed in lhs of hp_rel in es_formula*)
           (* DD.info_pprint ("  before: " ^ (Cprinter.string_of_formula new_es_formula)) pos; *)
           let root_vars_ls = SAU.get_data_view_hrel_vars_bformula new_lhs_b in

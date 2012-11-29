@@ -89,6 +89,7 @@ and omega_of_b_formula b =
   let (pf, _) = b in
   match pf with
   | BConst (c, _) -> if c then "(0=0)" else "(0>0)"
+  | XPure _ -> "(0=0)"
   | BVar (bv, _) ->  (omega_of_spec_var bv) ^ " > 0" (* easy to track boolean var *)
   | Lt (a1, a2, _) ->(omega_of_exp a1) ^ " < " ^ (omega_of_exp a2)
   | Lte (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)

@@ -250,7 +250,7 @@ let normalize_list_failesc_context_w_lemma prog lctx =
 	
   
 let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 do_infer: 
-      CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * (CF.hprel list) * (CP.spec_var list) * ((CP.spec_var * CP.spec_var list) list) * bool =
+      CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * (CF.hprel list) * (CP.spec_var list) * (CP.xpure_view list) * bool =
   let _ = pre_ctr # reset in
   let _ = post_ctr # reset in
   let pr1 = Cprinter.string_of_struc_formula in
@@ -339,8 +339,8 @@ and check_bounded_term prog ctx post_pos =
   CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * bool = do_spec_verify_infer prog proc ctx sp e0 do_infer*)
       
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (e0:exp) (do_infer:bool) (spec: CF.struc_formula)  
-      : CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list) * ((CP.spec_var * CP.spec_var list) list) * bool =
-  let rec helper (ctx : CF.context) (spec: CF.struc_formula) :  CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list) * ((CP.spec_var * CP.spec_var list) list) * bool =
+      : CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list) * (CP.xpure_view list) * bool =
+  let rec helper (ctx : CF.context) (spec: CF.struc_formula) :  CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list) * (CP.xpure_view list) * bool =
     let pos_spec = CF.pos_of_struc_formula spec in
     let _= proving_loc # set pos_spec in
     log_spec := (Cprinter.string_of_struc_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);	 
@@ -2124,8 +2124,11 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
                         print_endline (Infer.rel_ass_stk # string_of_reverse);
                         print_endline "*************************************" 
                       end;
-		            let ls_hprel, ls_inferred_hps, dropped_hps = Sa.infer_hps prog hp_lst_assume
-                      sel_hp_rels (Gen.BList.remove_dups_eq Sautility.check_hp_arg_eq hp_rel_unkmap) in
+		            let ls_hprel, ls_inferred_hps, dropped_hps =
+                      if !Globals.sa_en_norm then Sa.infer_hps prog hp_lst_assume
+                      sel_hp_rels (Gen.BList.remove_dups_eq CP.is_xpure_view_eq hp_rel_unkmap)
+                      else [],[],[]
+                    in
                     if not(Sa.rel_def_stk# is_empty) then
                       begin
 		                print_endline ""; 

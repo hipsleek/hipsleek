@@ -1483,7 +1483,7 @@ let generate_equiv_pdefs_x unk_hps pdef_grps=
 let generate_equiv_pdefs unk_hps pdef_grps=
   let pr1 =  Cprinter.prtt_string_of_formula in
   let pr2 = pr_list_ln (pr_list_ln (pr_triple !CP.print_sv !CP.print_svl pr1)) in
-  Debug.ho_2 "generate_equiv_pdefs" !CP.print_svl pr2 pr2
+  Debug.no_2 "generate_equiv_pdefs" !CP.print_svl pr2 pr2
       (fun _ _ -> generate_equiv_pdefs_x unk_hps pdef_grps) unk_hps pdef_grps
 
 
