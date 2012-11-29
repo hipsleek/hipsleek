@@ -250,7 +250,7 @@ let normalize_list_failesc_context_w_lemma prog lctx =
 	
   
 let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 do_infer: 
-      CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * (CF.hprel list) * (CP.spec_var list) * (CP.xpure_view list) * bool =
+      CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * (CF.hprel list) * (CP.spec_var list) * ( CP.spec_var* CP.xpure_view) list * bool =
   let _ = pre_ctr # reset in
   let _ = post_ctr # reset in
   let pr1 = Cprinter.string_of_struc_formula in
@@ -259,7 +259,7 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
   let pr2a = add_str "formulae" (pr_list Cprinter.string_of_formula) in
   let pr2b = add_str "inferred hp rels" (fun l -> string_of_int (List.length l)) in
   let pr4 = Cprinter.string_of_spec_var_list in
-  let pr5 = pr_list (pr_pair Cprinter.string_of_spec_var pr4) in
+  let pr5 = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_xpure_view) in
   let pr3 = pr_hepta pr1 pr2a  pr2 pr2b pr4 pr5 string_of_bool in
   let f = wrap_proving_kind "CHECK-SPECS" (check_specs_infer_a prog proc ctx e0 do_infer) in
   Debug.no_1 "check_specs_infer" pr1 pr3
@@ -339,8 +339,8 @@ and check_bounded_term prog ctx post_pos =
   CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * bool = do_spec_verify_infer prog proc ctx sp e0 do_infer*)
       
 and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (e0:exp) (do_infer:bool) (spec: CF.struc_formula)  
-      : CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list) * (CP.xpure_view list) * bool =
-  let rec helper (ctx : CF.context) (spec: CF.struc_formula) :  CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list) * (CP.xpure_view list) * bool =
+      : CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list) * (CP.spec_var*CP.xpure_view ) list * bool =
+  let rec helper (ctx : CF.context) (spec: CF.struc_formula) :  CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) *(CF.hprel list) * (CP.spec_var list) * (CP.spec_var*CP.xpure_view) list * bool =
     let pos_spec = CF.pos_of_struc_formula spec in
     let _= proving_loc # set pos_spec in
     log_spec := (Cprinter.string_of_struc_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);	 
@@ -2126,7 +2126,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
                       end;
 		            let ls_hprel, ls_inferred_hps, dropped_hps =
                       if !Globals.sa_en_norm then Sa.infer_hps prog hp_lst_assume
-                      sel_hp_rels (Gen.BList.remove_dups_eq CP.is_xpure_view_eq hp_rel_unkmap)
+                      sel_hp_rels (Gen.BList.remove_dups_eq
+                                       (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) hp_rel_unkmap)
                       else [],[],[]
                     in
                     if not(Sa.rel_def_stk# is_empty) then

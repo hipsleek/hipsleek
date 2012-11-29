@@ -1350,18 +1350,18 @@ let generate_linking_svl drop_hpargs total_unk_map=
       (fun _ -> generate_linking_svl_x drop_hpargs total_unk_map) drop_hpargs
 
 let generate_xpure_view_x drop_hpargs total_unk_map=
-  let rec lookup_xpure_view hp_name rem_map=
+  let rec lookup_xpure_view hp rem_map=
     match rem_map with
       | [] -> []
-      | xpv::tl ->
-          if xpv.CP.xpure_view_name = hp_name then
+      | (hp0,xpv)::tl ->
+          if CP.eq_spec_var hp0 hp then
             [xpv]
-          else lookup_xpure_view hp_name tl
+          else lookup_xpure_view hp tl
   in
   let generate_xpure_view_one_hp pos (hp,args)=
     let hp_name = CP.name_of_spec_var hp in
     let p,unk_svl,unk_map =
-      let xpvs = lookup_xpure_view hp_name total_unk_map in
+      let xpvs = lookup_xpure_view hp total_unk_map in
       match xpvs with
         | [xp] ->
             let xp_r, xp_args = match xp.CP.xpure_view_node with
@@ -1383,7 +1383,7 @@ let generate_xpure_view_x drop_hpargs total_unk_map=
             }
             in
             let p = CP.mkFormulaFromXP xpv in
-          (p,args,[xpv])
+          (p,args,[(hp,xpv)])
         | _ -> report_error no_pos "infer.generate_xpure_view: not possible"
     in
     (p,unk_svl,unk_map)
@@ -1394,7 +1394,7 @@ let generate_xpure_view_x drop_hpargs total_unk_map=
 let generate_xpure_view drop_hpargs total_unk_map=
   let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   let pr2 = pr_triple !CP.print_svl !CP.print_formula
-    (pr_list CP.string_of_xpure_view) in
+    (pr_list (pr_pair !CP.print_sv CP.string_of_xpure_view)) in
   Debug.no_1 "generate_xpure_view" pr1 pr2
       (fun _ -> generate_xpure_view_x drop_hpargs total_unk_map) drop_hpargs
 (*
@@ -1451,13 +1451,13 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
         (fun _ _ -> find_well_defined_hp_x hds hvs (hp,args) def_ptrs lhsb) (hp,args) def_ptrs
   in
   let lookup_eq_linking_svl (hp0,args0) total_unk_map lhs_hpargs=
-    let rec lookup_xpure_view hp_name rem_map=
+    let rec lookup_xpure_view hp rem_map=
       match rem_map with
         | [] -> None
-        | xpv::tl ->
-            if xpv.CP.xpure_view_name = hp_name then
+        | (hp1,xpv)::tl ->
+            if CP.eq_spec_var hp1 hp then
               Some xpv
-            else lookup_xpure_view hp_name tl
+            else lookup_xpure_view hp tl
     in
     let rec snd_assoc ls=
       match ls with
@@ -1470,10 +1470,10 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
     match o_eq_hp with
       | None -> []
       | Some eq_hp -> begin
-          let o_xpv = lookup_xpure_view (CP.name_of_spec_var eq_hp) total_unk_map in
+          let o_xpv = lookup_xpure_view eq_hp total_unk_map in
           match o_xpv with
             | None -> []
-            | Some xpv -> [{xpv with CP.xpure_view_name = CP.name_of_spec_var hp0}]
+            | Some xpv -> [(hp0,{xpv with CP.xpure_view_name = CP.name_of_spec_var hp0})]
       end
   in
   (* DD.info_pprint ">>>>>> find_undefined_selective_pointers <<<<<<" pos; *)

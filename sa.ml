@@ -958,7 +958,7 @@ and update_unk_one_constr_x prog unk_hp_locs cur_full_unk_hps equivs0 constr=
       CF.hprel_rhs = rhs;
   }
   in
-  let _ = Debug.ninfo_pprint ("   new hrel: " ^
+  let _ = Debug.info_pprint ("   new hrel: " ^
               (Cprinter.string_of_hprel new_constr)) no_pos in
   (new_constr,new_unk_hps, new_full_unk_hps, new_equv)
 
@@ -3524,7 +3524,7 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels hp_rel_unkmap :(CF.
   DD.ninfo_pprint ">>>>>> step 1b: split arguments: currently omitted <<<<<<" no_pos;
   let constrs1b, split_tb_hp_defs_split = split_hp prog hp_constrs in
   DD.ninfo_pprint ">>>>>> step 1c: find unknown ptrs<<<<<<" no_pos;
-  let constrs1c,unk_hps,hp_defs_split = analize_unk prog (* hp_rel_unkmap *)[] constrs1b in
+  let constrs1c,unk_hps,hp_defs_split = analize_unk prog hp_rel_unkmap constrs1b in
   (* step 1': split HP *)
   (*for temporal*)
   let constrs2 = constrs1c in

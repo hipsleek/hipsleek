@@ -4415,7 +4415,7 @@ think it is used to instantiate when folding.
   es_infer_vars : CP.spec_var list; 
   es_infer_vars_rel : CP.spec_var list;
   es_infer_vars_sel_hp_rel: CP.spec_var list;
-  es_infer_hp_unk_map: CP.xpure_view list ;(*(CP.spec_var * CP.spec_var list) list;*)
+  es_infer_hp_unk_map: (CP.spec_var*CP.xpure_view) list ;(*(CP.spec_var * CP.spec_var list) list;*)
   es_infer_vars_hp_rel : CP.spec_var list;
   (* input vars to denote vars already instantiated *)
   es_infer_vars_dead : CP.spec_var list; 

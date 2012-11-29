@@ -394,9 +394,6 @@ let is_var (f:exp) = match f with
   | Var _ -> true
   | _ -> false
 
-let is_xpure_view_eq xp1 xp2=
-  xp1.xpure_view_name = xp2.xpure_view_name
-
 let rec contains_exists (f:formula) : bool =  match f with
     | BForm _ -> false
     | Or (f1,f2,_,_)  
@@ -456,6 +453,23 @@ let eq_spec_var_ident (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
 	    (* We need only to compare names  of permission variables*)
 	    v1 = v2
+
+let eq_xpure_view xp1 xp2=
+  let rec check_eq_order_spec_var_list svl1 svl2=
+    match svl1,svl2 with
+      | [],[] -> true
+      | sv1::tl1,sv2::tl2 ->
+          if eq_spec_var sv1 sv2 then
+            check_eq_order_spec_var_list tl1 tl2
+          else false
+      | _ -> false
+  in
+  if xp1.xpure_view_name = xp1.xpure_view_name then
+    match xp1.xpure_view_node,xp1.xpure_view_node with
+      | None,None -> check_eq_order_spec_var_list xp1.xpure_view_arguments xp2.xpure_view_arguments
+      | Some r1,Some r2 -> check_eq_order_spec_var_list (r1::xp1.xpure_view_arguments) (r2::xp2.xpure_view_arguments)
+      | _ -> false
+  else false
 
 let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
 
@@ -1864,6 +1878,7 @@ and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formul
   let (pf2,_) = f2 in
   match (pf1,pf2) with
     | (BConst(c1, _), BConst(c2, _)) -> c1 = c2
+    | (XPure xp1, XPure xp2) -> eq_xpure_view xp1 xp2
     | (BVar(sv1, _), BVar(sv2, _)) -> (eq sv1 sv2)
     | (Lte(IConst(i1, _), e2, _), Lt(IConst(i3, _), e4, _)) -> i1=i3+1 && eqExp_f eq e2 e4
     | (Lte(e1, IConst(i2, _), _), Lt(e3, IConst(i4, _), _)) -> i2=i4-1 && eqExp_f eq e1 e3
