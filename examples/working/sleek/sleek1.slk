@@ -6,7 +6,7 @@ pred ll<n> == self = null & n = 0
 
 
 
-infer[n] x::ll<n> |- x::node<_,q>* q::node<_,r>.
+checkentail x::node<_,q> * q::ll<n> & n > 1 |- x::ll<m> & m > 3.
 
 
 print residue.

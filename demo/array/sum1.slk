@@ -1,0 +1,38 @@
+/**
+ * Find the sum of the elements of an array. This examples
+ * show two ways of computing the sum and illustrates the use
+ * of induction.
+ * 
+ * @author Vu An Hoa
+ */
+
+//relation dom(int[] a, int low, int high) == true.
+relation dom(int[] a, int low, int high) == (dom(a,low-1,high) | dom(a,low,high+1)).
+
+//
+
+lemma (forall int[] a, int low, int high, int l, int h : 
+     dom(a,low,high) & low<=l & h<=high => dom(a,l,h)) .
+
+
+    //checkentail dom(a,l1,h1) & l1<=b & h1<=h |- dom(a,l,h).
+
+
+    //checkentail dom(a,l,h) & l1<=b  |- dom(a,l,h).
+    /*
+ERROR: File "", line 0, col 0 : spec not supported for SMT 
+
+[smtsolver.ml]:Unexpected exception => sat
+Killed
+     */
+
+
+        //checkentail dom(a,l,h) |- dom(a,l,h).
+
+
+
+        // checkentail dom(a,l1,h) & l1<=b |- dom(a,l,h).
+
+        //checkentail dom(a,l,h) |- dom(a,l+1,h).
+
+checkentail dom(a,l,h) |- (exists b: dom(a,b,h) & b>=l).
