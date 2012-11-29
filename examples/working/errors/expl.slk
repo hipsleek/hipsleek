@@ -21,12 +21,34 @@ may not be what we should do for explicit instantiation?
 
 */
 
-//checkentail x=3 & v=5 |- [v] v<x.
-//print residue.
 
 /*
 Entail (1) : Valid. 
 
- <1>EXISTS(v: emp&x=3 & v<x&{FLOW,(19,20)=__norm})[]
+ <1> emp&x=3 & v<x&{FLOW,(19,20)=__norm}[]
 */
+
+//checkentail x=3 & v=5 |- [v] v<x.
+//print residue.
+
+
+checkentail x=3 & v=5 |- (exists v: v<x).
+print residue.
+
+checkentail x=3  |- (exists v: v<x).
+print residue.
+
+data cell {
+ int val;
+}.
+
+checkentail x::cell<2> |- x::cell<b>.
+print residue.
+
+checkentail x::cell<2> |- [b] x::cell<b>.
+print residue.
+
+
+//checkentail x::cell<2> |- (exists b:  x::cell<b>).
+//print residue.
 
