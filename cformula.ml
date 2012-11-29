@@ -3444,6 +3444,41 @@ let get_hdnodes_hrel_hf (hf0: h_formula) =
   in
   helper hf0
 
+let check_imm_mis rhs_mis rhs0=
+  match rhs_mis with
+    | DataNode hd1 ->
+        if not(isLend (hd1.h_formula_data_imm)) then rhs0
+        else
+          let mis_sv = hd1.h_formula_data_node in
+          let rec helper rhs=
+            match rhs with
+              | Star { h_formula_star_h1 = hf1;
+                         h_formula_star_h2 = hf2;
+                         h_formula_star_pos = pos} ->
+                  Star {h_formula_star_h1 = helper hf1;
+                        h_formula_star_h2 = helper hf2;
+                        h_formula_star_pos = pos}
+              |  Conj { h_formula_conj_h1 = hf1;
+                       h_formula_conj_h2 = hf2;
+                       h_formula_conj_pos = pos} ->
+                  Conj { h_formula_conj_h1 = helper hf1;
+                         h_formula_conj_h2 = helper hf2;
+                         h_formula_conj_pos = pos}
+              | Phase { h_formula_phase_rd = hf1;
+                        h_formula_phase_rw = hf2;
+                        h_formula_phase_pos = pos} ->
+                  Phase { h_formula_phase_rd = helper hf1;
+                          h_formula_phase_rw = helper hf2;
+                          h_formula_phase_pos = pos}
+              | DataNode hd -> if CP.eq_spec_var mis_sv hd.h_formula_data_node then
+                    if not(isLend (hd.h_formula_data_imm)) then rhs else
+                      DataNode {hd with h_formula_data_imm = (ConstAnn(Mutable));}
+                  else rhs
+              | _ -> rhs
+          in
+          helper rhs0
+    | _ -> rhs0
+
 let rec get_hp_rel_formula (f:formula) =
   match f with
     | Base  ({formula_base_heap = h1;
