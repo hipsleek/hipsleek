@@ -1160,7 +1160,7 @@ sub hip_process_file {
 	    if ("$param" =~ "gen_cpfile") {
 		print "Generating $cpfile\n";
 		$options = "-gen-cpfile";
-		$output = `$hip $script_arguments $test->[0]  $options $genfile  2>&1`;
+		$output = `$hip $script_arguments $test->[0]  $options $genfile --sa-en-norm 2>&1`;
 	    }
 	    else 
 	    {
@@ -1174,7 +1174,7 @@ sub hip_process_file {
 		if ("$param" =~ "sa") {
 		    $options = "-cp-test" ;		    
 		    #print "$hip $exempl_path/$test->[0]  $options   $cpfile $script_arguments 2>&1 \n";	
-		    $output = `$hip $exempl_path/$test->[0]  $options  $cpfile  $script_arguments 2>&1`;
+		    $output = `$hip $exempl_path/$test->[0]  $options  $cpfile  $script_arguments --sa-en-norm 2>&1`;
 		    print LOGFILE "\n======================================\n";
 		    print LOGFILE "$output";
 		    $expected_res = "Expected res";	
