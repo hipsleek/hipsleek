@@ -1926,6 +1926,18 @@ each constraints, apply lhs and rhs. each partial def in one side ==> generate n
  ldef --> hp: subst all hp in lhs with ldef
  hp --> rdef: subst all hp in rhs with rdef
 *)
+
+let elim_irr_rhs_hps lhs rhs=
+  let l_svl = CF.fv lhs in
+  let r_hpargs = CF.get_HRels_f rhs in
+  let r_hps = List.map fst r_hpargs in
+  let rhs1,_ =  CF.drop_hrel_f rhs r_hps in
+  let r_svl = CF.fv rhs1 in
+  let used_svl = (l_svl@r_svl) in
+  let keep_hps = List.concat (List.map (SAU.get_intersect_hps used_svl) r_hpargs) in
+  let rhs2,_ =  CF.drop_hrel_f rhs (CP.diff_svl (CP.remove_dups_svl r_hps) (CP.remove_dups_svl keep_hps)) in
+  rhs2
+
 let subst_one_cs_w_partial_defs ldefs rdefs constr=
   let lhs,rhs = constr.CF.hprel_lhs,constr.CF.hprel_rhs in
   DD.ninfo_pprint ("    input: " ^ (Cprinter.string_of_hprel constr)) no_pos;
@@ -1946,7 +1958,9 @@ let subst_one_cs_w_partial_defs ldefs rdefs constr=
           if check_unsat cmbf then
             let _ = DD.ninfo_pprint ("      contradiction found between lhs and rhs") no_pos in
             (lhs,rhs)
-          else (lhs1,rhs1)
+          else
+            (*remove redudant*)
+            (lhs1,elim_irr_rhs_hps lhs1 rhs1)
         in
   (* let _ = DD.info_pprint ("    out: " ^(Cprinter.prtt_string_of_formula lhs2) ^ " ==> " ^ *)
   (*                                (Cprinter.prtt_string_of_formula rhs2)) no_pos in *)
@@ -3530,7 +3544,11 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels hp_rel_unkmap :(CF.
   (* Debug.ninfo_hprint (add_str "   AFTER DROP: " (pr_list_ln Cprinter.string_of_hprel)) constrs no_pos; *)
   DD.ninfo_pprint ">>>>>> step 1b: split arguments: currently omitted <<<<<<" no_pos;
    (* step 1': split HP *)
-  let constrs1b, split_tb_hp_defs_split = split_hp prog hp_constrs in
+  let constrs1b, split_tb_hp_defs_split =
+    if !Globals.sa_en_split then
+      split_hp prog hp_constrs
+    else (hp_constrs,[])
+  in
   DD.ninfo_pprint ">>>>>> step 1c: find unknown ptrs<<<<<<" no_pos;
   let constrs1c,unk_hps,hp_defs_split = analize_unk prog hp_rel_unkmap constrs1b in
   (*rhs should be <= 1 hp*)

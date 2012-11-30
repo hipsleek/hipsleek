@@ -1426,7 +1426,7 @@ let generate_equiv_pdefs_x unk_hps pdef_grps=
   in
   let rec lookup_succ_hps_grp rem_grps hp done_grps=
     match rem_grps with
-      | [] -> ([],done_grps,[])
+      | [] -> (false,[],done_grps,[])
       | grp::tl -> begin
           match grp with
             | [] -> lookup_succ_hps_grp tl hp done_grps
@@ -1434,27 +1434,44 @@ let generate_equiv_pdefs_x unk_hps pdef_grps=
                 if CP.eq_spec_var hp1 hp then
                   let succ_hpargs = List.concat (List.map get_succ_hps_pardef grp) in
                   let hps = CP.remove_dups_svl (List.map fst succ_hpargs) in
-                   (hps, done_grps@tl,grp)
+                   (true,hps, done_grps@tl,grp)
                 else
                   lookup_succ_hps_grp tl hp (done_grps@[grp])
       end
   in
+  let subst_equiv_hp_one_pdef from_hp to_hp (hp,args,f)=
+    let new_f = CF.subst_hprel f [from_hp] to_hp in
+    (hp,args,new_f)
+  in
+  let subst_equiv_hp_one_grp from_hp to_hp grp=
+    match grp with
+      | [] -> []
+      | (hp,_,_)::tl ->
+          if CP.eq_spec_var from_hp hp then grp
+          else
+            List.map (subst_equiv_hp_one_pdef from_hp to_hp) grp
+  in
   (*hp0 --> hp_equiv*)
   let gen_equiv_hps_one_hp equiv_hps pdef_grps0 (hp0,args0,p0)=
     let size0 =  List.length args0 in
+    (*remove invalid equivs*)
     let equivs_hps = List.concat (List.map (fun (hp1,args1,_) ->
         if CP.eq_spec_var hp0 hp1 || List.length args1 <> size0 then []
         else [hp1])  equiv_hps)
     in
     if equivs_hps = [] then pdef_grps0 else
-      let succ_hps,other_grps,cur_grp = lookup_succ_hps_grp pdef_grps0 hp0 [] in
+      let is_pdefined,succ_hps,other_grps,cur_grp = lookup_succ_hps_grp pdef_grps0 hp0 [] in
       let not_process = succ_hps@unk_hps in
       let real_equivs_hps = List.filter (fun hp1 -> not (CP.mem_svl hp1 not_process)) equivs_hps in
       let new_pdef_grps0=
-        if real_equivs_hps = [] then pdef_grps0 else
+        (* if real_equivs_hps = [] then pdef_grps0 else *)
+        if is_pdefined  then pdef_grps0 else
       (*build new pdefs*)
-          let new_pdefs = List.map (fun hp2 -> (hp0,args0, mkHRel_f hp2 args0 p0)) real_equivs_hps in
-          other_grps@[(cur_grp@new_pdefs)]
+          (* let new_pdefs = List.map (fun hp2 -> (hp0,args0, mkHRel_f hp2 args0 p0)) real_equivs_hps in *)
+          (* other_grps@[(cur_grp@new_pdefs)] *)
+          match real_equivs_hps with
+            | [hp2] -> List.map (subst_equiv_hp_one_grp hp0 hp2) pdef_grps0
+            | _ -> pdef_grps0
       in
       new_pdef_grps0
   in
