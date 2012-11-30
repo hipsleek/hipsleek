@@ -570,10 +570,12 @@ let keep_data_view_hrel_nodes_fb prog fb hd_nodes hv_nodes keep_rootvars keep_hr
   CF.drop_data_view_hrel_nodes_fb fb check_nbelongsto_dnode check_nbelongsto_vnode
     check_neq_hrelnode keep_ptrs keep_ptrs keep_hrels keep_ptrs
 
-let keep_data_view_hrel_nodes_two_f prog f1 f2 hd_nodes hv_nodes keep_rootvars keep_hrels=
-  let keep_ptrs = loop_up_closed_ptr_args prog hd_nodes hv_nodes keep_rootvars in
-  let nf1 = CF.drop_data_view_hrel_nodes f2 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode keep_ptrs keep_ptrs keep_hrels in
-  let nf2 = CF.drop_data_view_hrel_nodes f2 check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode keep_ptrs keep_ptrs keep_hrels in
+let keep_data_view_hrel_nodes_two_f prog lhs rhs hd_nodes hv_nodes eqs lhs_hpargs rhs_keep_rootvars rhs_keep_hrels=
+  let keep_ptrs = loop_up_closed_ptr_args prog hd_nodes hv_nodes rhs_keep_rootvars in
+  let closed_keep_ptrs = find_close keep_ptrs eqs in
+  let lhs_keep_hrels = List.concat (List.map (get_intersect_hps closed_keep_ptrs) lhs_hpargs) in
+  let nf1 = CF.drop_data_view_hrel_nodes lhs check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode keep_ptrs closed_keep_ptrs lhs_keep_hrels in
+  let nf2 = CF.drop_data_view_hrel_nodes rhs check_nbelongsto_dnode check_nbelongsto_vnode check_neq_hrelnode keep_ptrs closed_keep_ptrs rhs_keep_hrels in
   (nf1,nf2)
 
 let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs reqs his_ss keep_rootvars lrootvars lkeep_hrels rkeep_hrels
@@ -2661,6 +2663,55 @@ let transform_unk_hps_to_pure hp_defs unk_hpargs =
 (************************************************************)
     (****************(*END UNK HPS*)*****************)
 (************************************************************)
+
+let split_rhs_x prog cs=
+  let simpily_lhs_rhs cs rhs_grp_hpargs hd_nodes hv_nodes eqs lhs_hpargs lhs rhs=
+    let rhs_hps,rhs_keep_svl = List.split rhs_grp_hpargs in
+    let n_lhs,n_rhs= keep_data_view_hrel_nodes_two_f prog lhs rhs hd_nodes hv_nodes eqs lhs_hpargs (List.concat rhs_keep_svl) rhs_hps in
+    {cs with CF.hprel_lhs = n_lhs;
+        CF.hprel_rhs = n_rhs
+    }
+  in
+  let belong_one_node lsargs args0 args1=
+    let args1 = CP.remove_dups_svl (args0@args1) in
+    List.exists (fun args -> CP.diff_svl args1 args = []) lsargs
+  in
+  let rec partition_intersect_hpargs ls_node_args hpargs parts=
+    match hpargs with
+      | [] -> parts
+      | (hp,args0)::tl->
+           let part,remains= List.partition (fun (_,args1) ->
+               CP.intersect_svl args0 args1 <> [] ||
+           belong_one_node ls_node_args args0 args1) tl in
+          partition_intersect_hpargs ls_node_args remains (parts@[[(hp,args0)]@part])
+  in
+  if List.length cs.CF.unk_hps > 0 then [cs]
+  else
+    let rhs_hpargs = CF.get_HRels_f cs.CF.hprel_rhs in
+    match rhs_hpargs with
+      | [] -> [cs]
+      | [a] -> [cs]
+      | _ ->
+           let lhs = cs.CF.hprel_lhs in
+           let rhs = cs.CF.hprel_rhs in
+           let ldns,lvns,lhrels = CF.get_hp_rel_formula lhs in
+           let rdns,rvns,_ = CF.get_hp_rel_formula rhs in
+           let hns = ldns@rdns in
+           let hvs = lvns@rvns in
+          let grps = partition_intersect_hpargs (List.map (fun hd -> hd.CF.h_formula_data_arguments) hns) rhs_hpargs [] in
+          if List.length grps <= 1 then [cs] else
+            let lhs_hpargs = List.map (fun (hp, eargs,_) -> (hp,(List.fold_left List.append [] (List.map CP.afv eargs)))) lhrels in
+            let ( _,mix_lf,_,_,_) = CF.split_components cs.CF.hprel_lhs in
+            let (_,mix_rf,_,_,_) = CF.split_components cs.CF.hprel_rhs in
+            let leqs = MCP.ptr_equations_without_null mix_lf in
+            let reqs = MCP.ptr_equations_without_null mix_rf  in
+            let eqs = leqs@reqs in
+            List.map (fun rhs_hpargs -> simpily_lhs_rhs cs rhs_hpargs hns hvs eqs lhs_hpargs lhs rhs) grps
+
+let split_rhs prog cs=
+  let pr1 = Cprinter.string_of_hprel in
+  Debug.no_1 "split_rhs" pr1 (pr_list_ln pr1)
+      (fun _ -> split_rhs_x prog cs) cs
 
 (************************************************************)
     (****************(*currently we dont use*)*****************)
