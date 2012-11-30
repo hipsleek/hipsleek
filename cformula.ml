@@ -4402,11 +4402,6 @@ think it is used to instantiate when folding.
   *)
      es_infer_pure_thus : CP.formula; 
      es_group_lbl: spec_label_def;
-
-     
-
-  (* allow residue in lhs formula *)
-  es_allow_residue: bool;
 }
 
 and context = 
@@ -4598,7 +4593,6 @@ let empty_es flowt grp_lbl pos =
   es_group_lbl = grp_lbl;
   es_term_err = None;
   (*es_infer_invs = [];*)
-  es_allow_residue = false;
 }
 
 let is_one_context (c:context) =

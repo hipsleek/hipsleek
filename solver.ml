@@ -3414,13 +3414,6 @@ and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_c
 
 (* check entailment when lhs is normal-form, rhs is a conjunct *)
 and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula) pos : (list_context * proof) =
-  (* calculate the context when allowing residue in LHS *)
-  let ctx = match (is_formula_contain_htrue conseq) with
-    | false -> ctx
-    | true -> (match ctx with
-        | OCtx _ -> report_error pos ("heap_entail_conjunct_helper: context is disjunctive or fail!!!")
-        | Ctx estate -> Ctx {estate with es_allow_residue = true}
-      ) in 
   (** [Internal] Collect the data and view nodes in a h_formula. 
       @return The list of all DataNode and ViewNode **)
   let rec collect_data_view (f : h_formula) = match f with
@@ -3960,13 +3953,11 @@ and heap_n_pure_entail_x (prog : prog_decl) (is_folding : bool) (ctx0 : context)
   match entail_h_ctx with
     | FailCtx _ -> (entail_h_ctx, entail_h_prf)
     | SuccCtx(cl) ->
-          let entail_p = List.map 
-	    (fun c -> one_ctx_entail prog is_folding  c conseq func p pos) cl  
-          in
-          let entail_p_ctx, entail_p_prf = List.split entail_p in
-          let entail_p_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) entail_p_prf in
-          let entail_p_ctx = fold_context_left entail_p_ctx in 
-          (entail_p_ctx, entail_p_prf)
+        let entail_p = List.map (fun c -> one_ctx_entail prog is_folding  c conseq func p pos) cl in
+        let entail_p_ctx, entail_p_prf = List.split entail_p in
+        let entail_p_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) entail_p_prf in
+        let entail_p_ctx = fold_context_left entail_p_ctx in 
+        (entail_p_ctx, entail_p_prf)
 
 and one_ctx_entail prog is_folding  c conseq func p pos : (list_context * proof) =
   Debug.no_3 "one_ctx_entail" (Cprinter.string_of_context_short) Cprinter.string_of_formula Cprinter.string_of_mix_formula
@@ -3978,20 +3969,22 @@ and one_ctx_entail_x prog is_folding  c conseq func p pos : (list_context * proo
   (match c with 
     | Ctx(estate) -> 
           (* TODO : es_aux_conseq is an input here *)
-          let new_conseq = subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HEmp p) in
+          let h = match CF.split_components conseq with
+            | HTrue, _, _, _, _ -> HTrue
+            | _ -> HEmp in
+          let new_conseq = subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func h p) in
           let aux_c = estate.es_aux_conseq in
-          let aux_conseq_from_fold = subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HEmp (MCP.mix_of_pure aux_c)) in
+          let aux_conseq_from_fold = subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func h (MCP.mix_of_pure aux_c)) in
           let new_conseq = CF.mkStar new_conseq aux_conseq_from_fold Flow_combine pos in
           heap_entail_conjunct 4 prog is_folding  c new_conseq []  pos
     | OCtx (c1, c2) -> 
           let cl1, prf1 = one_ctx_entail prog is_folding  c1 conseq func p pos in
           let cl2, prf2 = one_ctx_entail prog is_folding  c2 conseq func p pos in
           let entail_p_ctx = Cformula.or_list_context cl1 cl2  in 
-          let entail_p_prf = 
-	    match entail_p_ctx with
-	      | FailCtx _ -> mkContextList [] (Cformula.struc_formula_of_formula conseq pos) ([prf1]@[prf2]) 
-	      | SuccCtx cl -> mkContextList cl (Cformula.struc_formula_of_formula conseq pos) ([prf1]@[prf2]) 
-          in
+          let entail_p_prf = (match entail_p_ctx with
+            | FailCtx _ -> mkContextList [] (Cformula.struc_formula_of_formula conseq pos) ([prf1]@[prf2]) 
+            | SuccCtx cl -> mkContextList cl (Cformula.struc_formula_of_formula conseq pos) ([prf1]@[prf2]) 
+          ) in
           (entail_p_ctx, entail_p_prf))
 
 and heap_entail_rhs_read_phase prog is_folding  ctx0 h1 h2 h3 func pos =
@@ -4866,10 +4859,10 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                           Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: conseq has an empty heap component"
                           ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
                           ^ "\nconseq:\n"  ^ (Cprinter.string_of_formula conseq))) pos;
-                          if (!Globals.do_classic_frame_rule && not(estate.es_allow_residue) && (h1 != HEmp) && (h1 != HFalse) && (h2 = HEmp)) then (
+                          if (!Globals.do_classic_frame_rule && (h1 != HEmp) && (h1 != HFalse) && (h2 = HEmp)) then (
                             let fail_ctx = mkFailContext "classical separation logic" estate conseq None pos in
                             let ls_ctx = CF.mkFailCtx_in (Basic_Reason (fail_ctx, CF.mk_failure_must "residue is forbidden." "" )) in
-                            let proof = mkForbidResidue ctx0 conseq in
+                            let proof = mkClassicSepLogic ctx0 conseq in
                             (ls_ctx, proof)
                           )
                           else (
@@ -7056,12 +7049,6 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
     let action_name:string = Context.string_of_action_name a in
     let estate = {estate with es_trace = action_name::estate.es_trace} in
     let r1, r2 = match a with  (* r1: list_context, r2: proof *)
-      | Context.M_allow_residue residue ->
-            let new_estate = {estate with es_heap = HEmp;} in
-            let ctx = Ctx new_estate in
-            let ls_ctx = SuccCtx [ ctx ] in
-            let prf = mkAllowResidue ctx conseq in
-            (ls_ctx, prf)
       | Context.M_match {
             Context.match_res_lhs_node = lhs_node;
             Context.match_res_lhs_rest = lhs_rest;
