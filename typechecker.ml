@@ -1861,8 +1861,11 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
                   if (!allow_ls) then
                     let lsmu_var = (lsmu_typ,lsmu_name) in
                     let ls_var = (ls_typ,ls_name) in
-                    (*LS and LSMU are ghost variables*)
-                     lsmu_var::ls_var::proc.proc_args
+                    if (!Globals.allow_locklevel) then
+                      (*LS and LSMU are ghost variables*)
+                      lsmu_var::ls_var::proc.proc_args
+                    else
+                      ls_var::proc.proc_args
                   else
                     proc.proc_args
                 in
