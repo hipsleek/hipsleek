@@ -173,13 +173,15 @@ let ho_aux df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) 
     pop_aft_apply_with_exc f e
   with ex -> 
       (let _ = print_string ("\n"^h^"\n") in
-      if not df then (pr_args args; pr_lazy_res lz);
+      (* if not df then  *)
+        (pr_args args; pr_lazy_res lz);
       let _ = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       flush stdout;
       raise ex)) in
   (if not(test r) then r else
     let _ = print_string ("\n"^h^"\n") in
-    if not df then (pr_args args; pr_lazy_res lz);
+    (* if not df then  *)
+      (pr_args args; pr_lazy_res lz);
     let _ = print_string (s^" EXIT out :"^(pr_o r)^"\n") in
     flush stdout;
     r)
