@@ -2089,7 +2089,7 @@ let mk_orig_hprel_def prog unk_hps hp args sh_ldns eqNulls eqPures hprels unk_sv
   in
   let pr7a hrel = Cprinter.string_of_hrel_formula (CF.HRel hrel) in
   let pr7 = pr_list pr7a in
-  Debug.ho_7 "mk_orig_hprel_def" pr2 pr1 pr2 (pr_list pr3) pr2 pr4 pr7 pr6
+  Debug.no_7 "mk_orig_hprel_def" pr2 pr1 pr2 (pr_list pr3) pr2 pr4 pr7 pr6
       (fun _ _ _ _ _ _ _ -> mk_orig_hprel_def_x prog unk_hps hp args sh_ldns eqNulls eqPures hprels unk_svl)
       unk_hps hp args sh_ldns eqNulls eqPures hprels
 
@@ -2134,7 +2134,7 @@ let get_longest_common_hnodes_list prog unk_hps unk_svl hp args fs=
   let pr2 = fun (_, def) -> Cprinter.string_of_hp_rel_def def in
   let pr3 = !CP.print_sv in
   let pr4 = !CP.print_svl in
-  Debug.ho_5 "get_longest_common_hnodes_list" pr3 pr4 pr4 pr4 pr1 (pr_list_ln pr2)
+  Debug.no_5 "get_longest_common_hnodes_list" pr3 pr4 pr4 pr4 pr1 (pr_list_ln pr2)
       (fun _ _ _ _ _-> get_longest_common_hnodes_list_x prog unk_hps unk_svl hp args fs) hp args unk_hps unk_svl fs
 
 (************************************************************)

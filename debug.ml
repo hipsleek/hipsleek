@@ -315,6 +315,9 @@ let no_5 _ _ _ _ _ _ _ f e1 e2 e3 e4
 let no_6 _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5 
       = ho_aux_no (f e1 e2 e3 e4 e5)
 
+let no_7 _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5 e6
+      = ho_aux_no (f e1 e2 e3 e4 e5 e6)
+
 let ho_1_opt f = ho_1_opt_aux false [] false f None
 let ho_2_opt f = ho_2_opt_aux false [] false f None
 let ho_3_opt f = ho_3_opt_aux false [] false f None
