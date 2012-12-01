@@ -1217,6 +1217,11 @@ let simplify (f : CP.formula) : CP.formula =
                   Mona.simplify f
                 else
                   Redlog.simplify f
+          | PARAHIP ->
+                if is_bag_constraint f then
+                  Mona.simplify f
+                else
+                  Redlog.simplify f
 		  | ZM -> 
                 if is_bag_constraint f then
                   Mona.simplify f

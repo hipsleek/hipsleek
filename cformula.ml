@@ -7719,7 +7719,7 @@ let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:f
   let unionmu_exp = CP.mkBagUnion [lsmu_uvar_exp;bagmu_exp] pos in (* union(LSMU,{l.mu})*)
   let lsmu_f = CP.mkEqExp lsmu_pvar_exp unionmu_exp pos in (*lsmu' = union(lsmu,{l.mu})*) 
   (**************)
-  let lock_f = if (!Globals.allow_locklevel) then
+  let lock_f = if (!Globals.has_locklevel) then
         CP.And (ls_f, lsmu_f,pos)
       else
         ls_f
@@ -7805,7 +7805,7 @@ let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:fo
   let diffmu_exp = CP.mkBagDiff lsmu_uvar_exp bagmu_exp pos in (* diff(lsmu,{l.mu})*)
   let lsmu_post_f = CP.mkEqExp lsmu_pvar_exp diffmu_exp pos in (*ls' = diff(lsmu,{l.mu})*)
   (**************)
-  let lock_post_f = if (!Globals.allow_locklevel) then
+  let lock_post_f = if (!Globals.has_locklevel) then
         CP.And (ls_post_f,lsmu_post_f,pos)
       else
         ls_post_f
@@ -7879,7 +7879,7 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   let unionmu_exp = CP.mkBagUnion [lsmu_uvar_exp;bagmu_exp] pos in (* union(lsmu,{l.mu})*)
   let lsmu_post_f = CP.mkEqExp lsmu_pvar_exp unionmu_exp pos in (*lsmu' = union(lsmu,{l.mu})*)
   (**************)
-  let lock_post_f = if (!Globals.allow_locklevel) then
+  let lock_post_f = if (!Globals.has_locklevel) then
         CP.And (ls_post_f,lsmu_post_f,pos)
       else
         ls_post_f
@@ -7893,7 +7893,7 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   let post = EAssume ([ls_uvar;lsmu_uvar],post,lbl) in
   (*PRE-CONDITION*)
   let pre_mf =
-    if (!Globals.allow_locklevel) then
+    if (!Globals.has_locklevel) then
       let pre_mf = (MCP.memoise_add_pure_N (MCP.mix_of_pure not_in_f) waitlevel_gt_f) in
       let pre_mf = (MCP.memoise_add_pure_N pre_mf read_f) in
       pre_mf
@@ -7959,7 +7959,7 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   let diffmu_exp = CP.mkBagDiff lsmu_uvar_exp bagmu_exp pos in (* diff(lsmu,{l.mu})*)
   let lsmu_post_f = CP.mkEqExp lsmu_pvar_exp diffmu_exp pos in (*lsmu' = diff(lsmu,{l.mu})*)
   (**************)
-  let lock_post_f = if (!Globals.allow_locklevel) then
+  let lock_post_f = if (!Globals.has_locklevel) then
         CP.And (ls_post_f,lsmu_post_f,pos)
       else
         ls_post_f

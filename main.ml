@@ -175,7 +175,10 @@ let process_source_full source =
       end
     in
     let _ = Gen.Profiling.pop_time "Preprocessing" in
-    
+    (*Simple heuristic for ParaHIP website*)
+    (* let _ =  *)
+      let _ = print_endline ("has_locklevel = " ^ (string_of_bool !Globals.has_locklevel)) in
+    (*   if (!Globals.has_locklevel) then Globals.allow_locklevel:=true else Globals.allow_locklevel:=false in *)
     (* An Hoa : initialize html *)
     let _ = Prooftracer.initialize_html source in
     

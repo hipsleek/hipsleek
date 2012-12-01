@@ -8525,7 +8525,7 @@ let infer_lsmu_pure_x (f:formula) : formula =
               let nsv = SpecVar (lsmu_typ,lsmu_name,p) in
               Var (nsv,pos)
             else
-              let _ = print_endline ("[convert_ls_to_lsmu_exp] Warning: unexpected") in
+              let _ = print_endline ("[convert_ls_to_lsmu_exp] Warning: unexpected 2") in
               e
         | Bag (exps,pos) ->
             let nexps = List.map helper exps in
@@ -8541,7 +8541,7 @@ let infer_lsmu_pure_x (f:formula) : formula =
             let ne2 = helper e2 in
             BagDiff (ne1,ne2,pos)
         | _ ->
-            let _ = print_endline ("[convert_ls_to_lsmu_exp] Warning: unexpected") in
+            let _ = print_endline ("[convert_ls_to_lsmu_exp] Warning: unexpected 1") in
             e
     in helper e
   in
@@ -8611,6 +8611,7 @@ let infer_lsmu_pure_x (f:formula) : formula =
   nf
 
 let infer_lsmu_pure (f:formula) : formula =
+  (* if (not !has_locklevel) then f else *)
   Debug.no_1 "infer_lsmu_pure"
       !print_formula !print_formula
       infer_lsmu_pure_x f
