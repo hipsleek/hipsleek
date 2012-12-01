@@ -686,14 +686,13 @@ let is_relation_b_formula (pf,_) = match pf with
     | _ -> Some false
 
 let is_relation_constraint (e: CP.formula) : bool =
- 
   let or_list = List.fold_left (||) false in
-  CP.fold_formula e (nonef, is_array_b_formula, is_array_exp) or_list
+  CP.fold_formula e (nonef, is_relation_b_formula, nonef) or_list
 
 let is_list_constraint (e: CP.formula) : bool =
  
   let or_list = List.fold_left (||) false in
-  CP.fold_formula e (nonef, is_relation_b_formula, nonef) or_list
+  CP.fold_formula e (nonef, is_list_b_formula, is_list_exp) or_list
 
 let is_list_constraint_a (e: CP.formula) : bool =
   (*Debug.no_1_opt "is_list_constraint" Cprinter.string_of_pure_formula string_of_bool (fun r -> not(r)) is_list_constraint e*)
@@ -1092,7 +1091,6 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
             let b1 = mona_is_sat f_no_float_rel in
             let b2 = redlog_is_sat f_no_bag_rel in
             let b3 = z3_is_sat f_no_float_bag in
-            (* let _ = print_endline ("\n### b1 = " ^ (string_of_bool b1) ^ "\n ### b2 = "^ (string_of_bool b2)) in *)
             (b1 && b2 &&b3)
           else
           (*UNSOUND - for experimental purpose only*)
@@ -1105,7 +1103,6 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
             in
             let b1 = mona_is_sat f_no_float in
             let b2 = redlog_is_sat f_no_bag in
-            (* let _ = print_endline ("\n### b1 = " ^ (string_of_bool b1) ^ "\n ### b2 = "^ (string_of_bool b2)) in *)
             (b1 && b2)
           else
           if (is_relation_constraint wf) then
