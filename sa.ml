@@ -1648,7 +1648,7 @@ let rec collect_par_defs_one_constr_new_x prog constr =
       in
       (new_constrs, rec_pdefs)
   in
-  let hppdefs = lpdefs @ rpdefs @ rec_pdefs in
+  let hppdefs = lpdefs @ rpdefs @ rec_pdefs @ unk_pdefs in
   (* let unk_hps = List.map (fun (hp,_) -> hp) constr.CF.unk_hps in *)
   (* let hppdefs1 = List.filter (fun (_,_,_,l,r)-> (SAU.is_empty_wop l) || (SAU.is_empty_wop r)) hppdefs in *)
   (new_constrs,hppdefs)

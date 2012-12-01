@@ -1450,7 +1450,8 @@ let generate_equiv_pdefs_x unk_hps pdef_grps=
   in
   let subst_equiv_hp_one_pdef from_hp to_hp (hp,args,f,unk_svl)=
     let new_f = CF.subst_hprel f [from_hp] to_hp in
-    (hp,args,new_f,unk_svl)
+    if is_trivial new_f (hp,args) then [] else
+      [(hp,args,new_f,unk_svl)]
   in
   let subst_equiv_hp_one_grp from_hp to_hp grp=
     match grp with
@@ -1458,7 +1459,7 @@ let generate_equiv_pdefs_x unk_hps pdef_grps=
       | (hp,_,_,_)::tl ->
           if CP.eq_spec_var from_hp hp then grp
           else
-            List.map (subst_equiv_hp_one_pdef from_hp to_hp) grp
+            List.concat (List.map (subst_equiv_hp_one_pdef from_hp to_hp) grp)
   in
   (*hp0 --> hp_equiv*)
   let gen_equiv_hps_one_hp equiv_hps pdef_grps0 (hp0,args0,p0)=
@@ -2049,12 +2050,14 @@ let mk_orig_hprel_def_x prog unk_hps hp args sh_ldns eqNulls eqPures hprels unk_
   let _ = DD.ninfo_pprint ("      next_roots:" ^ (!CP.print_svl next_roots)) no_pos in
   (* let _ = DD.info_pprint ("      unk_svl:" ^ (!CP.print_svl unk_svl)) no_pos in *)
   (* let next_roots1 = CP.diff_svl next_roots unk_svl in *)
+  (* let next_roots1 = CP.diff_svl next_roots unk_svl in *)
   (* let _ = DD.info_pprint ("      next_roots1:" ^ (!CP.print_svl next_roots1)) no_pos in *)
   match next_roots with
      | [] -> report_error no_pos "sau.generalize_one_hp: sth wrong"
      | _ ->  let _ = DD.ninfo_pprint ("      last root:" ^ (Cprinter.string_of_spec_var_list  next_roots)) no_pos in
          (*generate new hp*)
-         let n_hprel,n_hp =  add_raw_hp_rel prog (next_roots@(List.tl args)) no_pos in
+             let n_args = (next_roots@((List.tl args))) in
+         let n_hprel,n_hp =  add_raw_hp_rel prog n_args no_pos in
               (*first rel def for the orig*)
          let rest =  (hdss@[n_hprel]@(List.map (fun hprel -> CF.HRel hprel) hprels)) in
          let orig_defs_h = List.fold_left (fun hf1 hf2 -> CF.mkStarH hf1 hf2 no_pos) (List.hd rest) (List.tl rest) in
@@ -2075,7 +2078,7 @@ let mk_orig_hprel_def_x prog unk_hps hp args sh_ldns eqNulls eqPures hprels unk_
          let hprel = CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, no_pos) in
 		 (*elim all except root*)
 		 let n_orig_defs_h = CF.drop_hnodes_hf orig_defs_h (List.tl args) in
-         (defs, (hprel, n_orig_defs_h), n_hp, ( next_roots@(List.tl args)), dnss)
+         (defs, (hprel, n_orig_defs_h), n_hp, n_args, dnss)
      (* | _ -> report_error no_pos "sau.generalize_one_hp: now we does not handle more than two ptr fields" *)
 
 let mk_orig_hprel_def prog unk_hps hp args sh_ldns eqNulls eqPures hprels unk_svl=
@@ -2134,7 +2137,7 @@ let get_longest_common_hnodes_list prog unk_hps unk_svl hp args fs=
   let pr2 = fun (_, def) -> Cprinter.string_of_hp_rel_def def in
   let pr3 = !CP.print_sv in
   let pr4 = !CP.print_svl in
-  Debug.no_5 "get_longest_common_hnodes_list" pr3 pr4 pr4 pr4 pr1 (pr_list_ln pr2)
+  Debug.ho_5 "get_longest_common_hnodes_list" pr3 pr4 pr4 pr4 pr1 (pr_list_ln pr2)
       (fun _ _ _ _ _-> get_longest_common_hnodes_list_x prog unk_hps unk_svl hp args fs) hp args unk_hps unk_svl fs
 
 (************************************************************)
