@@ -27,6 +27,7 @@ type tp_type =
   | Z3
   | Redlog
   | RM (* Redlog and Mona *)
+  | PARAHIP (* Redlog, Z3 and Mona *) (*This option is used on ParaHIP website*)
   | ZM (* Z3 and Mona *)
   | OZ (* Omega and Z3 *)
   | AUTO (* Omega, Z3, Mona, Coq *)
@@ -39,7 +40,7 @@ let test_db = false
 (* let tp = ref OZ *)
 (* let tp = ref Redlog *)
 (* let tp = ref AUTO *)
-let tp = ref RM
+let tp = ref PARAHIP
 
 let proof_no = ref 0
 let provers_process = ref None
@@ -74,6 +75,7 @@ let string_of_prover prover = match prover with
 	| Z3 -> "Z3"
 	| Redlog -> "REDLOG (REDUCE LOGIC)"
 	| RM -> "Redlog, Mona"
+	| PARAHIP -> "Redlog, Mona, z3" (*This option is used on ParaHIP website*)
 	| ZM -> "Omega, z3"
 	| OZ -> "Omega, z3"
 	| AUTO -> "AUTO - omega, z3, mona, coq"
@@ -400,6 +402,8 @@ let set_tp tp_str =
     (tp := Redlog; prover_str := "redcsl"::!prover_str;)
   else if tp_str = "rm" then
     tp := RM
+  else if tp_str = "parahip" then
+    tp := PARAHIP
   else if tp_str = "zm" then
     (tp := ZM; 
     prover_str := "z3"::!prover_str;
@@ -438,6 +442,7 @@ let string_of_tp tp = match tp with
   | Z3 -> "z3"
   | Redlog -> "redlog"
   | RM -> "rm"
+  | PARAHIP -> "parahip"
   | ZM -> "zm"
   | OZ -> "oz"
    | AUTO -> "auto"
@@ -460,6 +465,7 @@ let name_of_tp tp = match tp with
   | Z3 -> "Z3"
   | Redlog -> "Redlog"
   | RM -> "Redlog and Mona"
+  | PARAHIP -> "Redlog, Z3, and Mona"
   | ZM -> "Z3 and Mona"
   | OZ -> "Omega, Z3"
   | AUTO -> "Omega, Z3, Mona, Coq"
@@ -675,10 +681,19 @@ let is_array_constraint (e: CP.formula) : bool =
   let or_list = List.fold_left (||) false in
   CP.fold_formula e (nonef, is_array_b_formula, is_array_exp) or_list
 
+let is_relation_b_formula (pf,_) = match pf with
+    | CP.RelForm _ -> Some true
+    | _ -> Some false
+
+let is_relation_constraint (e: CP.formula) : bool =
+ 
+  let or_list = List.fold_left (||) false in
+  CP.fold_formula e (nonef, is_array_b_formula, is_array_exp) or_list
+
 let is_list_constraint (e: CP.formula) : bool =
  
   let or_list = List.fold_left (||) false in
-  CP.fold_formula e (nonef, is_list_b_formula, is_list_exp) or_list
+  CP.fold_formula e (nonef, is_relation_b_formula, nonef) or_list
 
 let is_list_constraint_a (e: CP.formula) : bool =
   (*Debug.no_1_opt "is_list_constraint" Cprinter.string_of_pure_formula string_of_bool (fun r -> not(r)) is_list_constraint e*)
@@ -1065,6 +1080,44 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
             mona_is_sat wf
           else
             redlog_is_sat wf
+    | PARAHIP ->
+          if (is_relation_constraint wf) && (is_bag_constraint wf) && (CP.is_float_formula wf) then
+            (* Mixed bag constraints, relations and float constraints *)
+            (*TO CHECK: soundness. issat(f) = issat(f1) & is(satf2)*)
+            let f_no_float_rel = CP.drop_rel_formula (CP.drop_float_formula wf) in
+            let f_no_bag_rel = CP.drop_rel_formula (CP.drop_bag_formula wf) in
+            let f_no_float_bag = CP.drop_float_formula (CP.drop_bag_formula wf) in
+            let _ = Debug.devel_zprint (lazy ("SAT #" ^ sat_no ^ " : mixed float + relation + bag constraints ===> partitioning: \n ### " ^ (!print_pure wf) ^ "\n INTO : " ^ (!print_pure f_no_float_rel) ^ "\n AND : " ^ (!print_pure f_no_bag_rel) ^ "\n AND : " ^ (!print_pure f_no_float_bag) )) no_pos
+            in
+            let b1 = mona_is_sat f_no_float_rel in
+            let b2 = redlog_is_sat f_no_bag_rel in
+            let b3 = z3_is_sat f_no_float_bag in
+            (* let _ = print_endline ("\n### b1 = " ^ (string_of_bool b1) ^ "\n ### b2 = "^ (string_of_bool b2)) in *)
+            (b1 && b2 &&b3)
+          else
+          (*UNSOUND - for experimental purpose only*)
+          if (is_bag_constraint wf) && (CP.is_float_formula wf) then
+            (* Mixed bag constraints and float constraints *)
+            (*TO CHECK: soundness. issat(f) = issat(f1) & is(satf2)*)
+            let f_no_float = CP.drop_float_formula wf in
+            let f_no_bag = CP.drop_bag_formula wf in
+            let _ = Debug.devel_zprint (lazy ("SAT #" ^ sat_no ^ " : mixed float + bag constraints ===> partitioning: \n ### " ^ (!print_pure wf) ^ "\n INTO : " ^ (!print_pure f_no_float) ^ "\n AND : " ^ (!print_pure f_no_bag) )) no_pos
+            in
+            let b1 = mona_is_sat f_no_float in
+            let b2 = redlog_is_sat f_no_bag in
+            (* let _ = print_endline ("\n### b1 = " ^ (string_of_bool b1) ^ "\n ### b2 = "^ (string_of_bool b2)) in *)
+            (b1 && b2)
+          else
+          if (is_relation_constraint wf) then
+            let f = CP.drop_bag_formula (CP.drop_float_formula wf) in
+            z3_is_sat f
+          else
+          if (is_bag_constraint wf ) then
+            let f = CP.drop_rel_formula (CP.drop_float_formula wf) in
+            mona_is_sat f
+          else
+            let f = CP.drop_rel_formula (CP.drop_bag_formula wf) in
+            redlog_is_sat f
   | ZM ->
 	  if (is_bag_constraint wf) then
       mona_is_sat wf
@@ -1556,7 +1609,41 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
             let conseq_no_bag = CP.drop_bag_formula conseq in
             let b_no_float = mona_imply ante_no_float conseq_no_float in
             let b_no_bag = mona_imply ante_no_bag conseq_no_bag in
-            (b_no_float && b_no_float)
+            (b_no_float && b_no_bag)
+          else
+          if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+            mona_imply ante_w conseq_s
+          else
+            redlog_imply ante_w conseq_s
+    | PARAHIP ->
+          (*use UNSOUND approximation
+          a & b -> c&d ~~~ (a->c) & (b->d)*)
+          (*TO CHECK*)
+          if (is_relation_constraint ante) && (is_bag_constraint ante) && (is_float_formula ante) then
+            let ante_no_float_rel = CP.drop_rel_formula (CP.drop_float_formula ante) in
+            let ante_no_bag_rel = CP.drop_rel_formula (CP.drop_bag_formula ante) in
+            let ante_no_bag_float = CP.drop_float_formula (CP.drop_bag_formula ante) in
+            let conseq_no_float_rel = CP.drop_rel_formula (CP.drop_float_formula conseq) in
+            let conseq_no_bag_rel = CP.drop_rel_formula (CP.drop_bag_formula conseq) in
+            let conseq_no_bag_float = CP.drop_float_formula (CP.drop_bag_formula conseq) in
+            let b_no_float_rel = mona_imply ante_no_float_rel conseq_no_float_rel in
+            let b_no_bag_rel = mona_imply ante_no_bag_rel conseq_no_bag_rel in
+            let b_no_bag_float = z3_imply ante_no_bag_float conseq_no_bag_float in
+            (b_no_float_rel && b_no_bag_rel & b_no_bag_float)
+          else
+          if (is_bag_constraint ante) && (is_float_formula ante) then
+            let ante_no_float = CP.drop_float_formula ante in
+            let ante_no_bag = CP.drop_bag_formula ante in
+            let conseq_no_float = CP.drop_float_formula conseq in
+            let conseq_no_bag = CP.drop_bag_formula conseq in
+            let b_no_float = mona_imply ante_no_float conseq_no_float in
+            let b_no_bag = mona_imply ante_no_bag conseq_no_bag in
+            (b_no_float && b_no_bag)
+          else
+          if (is_relation_constraint ante) || (is_relation_constraint conseq) then
+            let ante = CP.drop_bag_formula (CP.drop_float_formula ante) in
+            let conseq = CP.drop_bag_formula (CP.drop_float_formula conseq) in
+            z3_imply ante conseq
           else
           if (is_bag_constraint ante) || (is_bag_constraint conseq) then
             mona_imply ante_w conseq_s
