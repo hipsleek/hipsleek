@@ -685,21 +685,24 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
   let spec, ip, ir, r, tctx = helper ctx spec in
 	let _ = if not (!Globals.enable_term_infer) then () else
   	(* Termination Inference: Preprocessing the collected termination context *)
-  	let tctx = TInfer.remove_unsat_ctx_list_term_ctx tctx in
-  	let tctx = TInfer.remove_incorrect_base_list_term_ctx tctx in
-  	let tctx = TInfer.remove_duplicate_ctx_list_term_ctx tctx in
-  	let tctx = TInfer.update_cond_pure_list_term_ctx tctx in
-  	let tctx = TInfer.simplify_cond_pure_list_term_ctx proc tctx in
-  	(* Termination Context (collected by Symbolic Execution) *)
-  	let t_ctx = TInfer.remove_empty_ctx_list_term_ctx tctx in
-  	(* let _ = print_endline (pr_list Pr.string_of_term_ctx t_ctx) in *)
-  	(* Initial Termination Spec *)
-  	let utils = {
+		let utils = {
+			TInfer.xpure = (fun f -> 
+				let pf, _, _ = Solver.xpure prog f in
+				MCP.pure_of_mix pf);
   		TInfer.fixcalc = Fixcalc.compute_fixpoint_simpl;
   		TInfer.simplify = Omega.simplify;
   		TInfer.imply = TP.imply_raw;
   		TInfer.is_sat = fun f -> TP.is_sat f "" true;
   	} in
+  	let tctx = TInfer.remove_unsat_ctx_list_term_ctx tctx in
+  	let tctx = TInfer.remove_incorrect_base_list_term_ctx tctx in
+  	let tctx = TInfer.remove_duplicate_ctx_list_term_ctx tctx in
+  	let tctx = TInfer.update_cond_pure_list_term_ctx utils tctx in
+  	let tctx = TInfer.simplify_cond_pure_list_term_ctx proc tctx in
+  	(* Termination Context (collected by Symbolic Execution) *)
+  	let t_ctx = TInfer.remove_empty_ctx_list_term_ctx tctx in
+  	(* let _ = print_endline (pr_list Pr.string_of_term_ctx t_ctx) in *)
+  	(* Initial Termination Spec *)
   	let t_spec = TInfer.term_spec_of_list_term_ctx utils t_ctx in
   	Hashtbl.add TInfer.term_spec_tbl proc.proc_name t_spec 
 	in (spec, ip, ir, r) 
@@ -2286,6 +2289,9 @@ let check_prog (prog : prog_decl) =
 	if (!enable_term_infer) then
 	begin (* Termination Inference *)
 		let utils = {
+			TInfer.xpure = (fun f -> 
+				let pf, _, _ = Solver.xpure prog f in
+				MCP.pure_of_mix pf);
 			TInfer.fixcalc = Fixcalc.compute_fixpoint_simpl;
 			TInfer.simplify = Omega.simplify;
 			TInfer.imply = TP.imply_raw;

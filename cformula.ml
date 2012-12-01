@@ -4102,7 +4102,7 @@ let collect_formula_with_path_failesc_context ctx =
 let collect_formula_with_path_list_failesc_context ctx =
 	List.concat (List.map collect_formula_with_path_failesc_context ctx)
 	
-let rec pure_of_formula f = 
+let rec pure_of_formula f =
 	match f with
 	| Base { formula_base_pure = pf } -> [MCP.pure_of_mix pf]
 	| Or { formula_or_f1 = f1; formula_or_f2 = f2; } ->

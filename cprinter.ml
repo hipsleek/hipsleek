@@ -2882,3 +2882,4 @@ TInfer.print_term_res := string_of_term_res;;
 TInfer.print_term_trans_constraint := string_of_term_trans_constraint;;
 TInfer.print_term_cond_pure := string_of_term_cond_pure;
 TInfer.print_term_subst_cmd := string_of_term_subst_cmd;;
+TInfer.print_formula := string_of_formula;;
