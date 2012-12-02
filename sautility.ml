@@ -2664,16 +2664,29 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
             CF.extract_pure f
           else lookup_hpdefs tl (hp0,args0)
   in
-  let subst_xpure f=
-    match f with
-      | CF.Base fb ->
-          let ps = CP.list_of_conjs (MCP.pure_of_mix fb.CF.formula_base_pure) in
-          let xp_ps,rem_ps = List.partition CP.is_xpure ps in
-          let xp_hpargs = List.map CP.extract_xpure xp_ps in
-          let xp_ps = List.concat (List.map (lookup_hpdefs hp_defs) xp_hpargs) in
-          let new_p =  CP.conj_of_list (rem_ps@xp_ps) no_pos in
-          CF.Base{fb with CF.formula_base_pure = (MCP.mix_of_pure new_p)}
-      | _ -> report_error no_pos "sau.subst_xpure"
+  let subst_xpure lhpdefs f0=
+    let process_p_helper p=
+      let ps = CP.list_of_conjs p in
+      let xp_ps,rem_ps = List.partition CP.is_xpure ps in
+      let xp_hpargs = List.map CP.extract_xpure xp_ps in
+      let xp_ps = (List.map (lookup_hpdefs lhpdefs) xp_hpargs) in
+      let new_p =  CP.conj_of_list (rem_ps@xp_ps) no_pos in
+      new_p
+    in
+    let rec helper f=
+      match f with
+        | CF.Base fb ->
+            let new_p =  process_p_helper (MCP.pure_of_mix fb.CF.formula_base_pure) in
+            CF.Base{fb with CF.formula_base_pure = (MCP.mix_of_pure new_p)}
+        | CF.Exists fe ->
+            let new_p =  process_p_helper (MCP.pure_of_mix fe.CF.formula_exists_pure) in
+            CF.Exists{fe with CF.formula_exists_pure = (MCP.mix_of_pure new_p)}
+        | CF.Or orf -> CF.Or {orf with
+            CF.formula_or_f1 = helper orf.CF.formula_or_f1;
+            CF.formula_or_f2 = helper orf.CF.formula_or_f2;
+        }
+    in
+    helper f0
   in
   (*returns eqs/ss: mkEqexp/subst ss*)
   let look_up_get_eqs_ss args0 ls_unk_hpargs_fr (used_hp,used_args)=
@@ -2701,9 +2714,7 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
     let pos = CF.pos_of_formula f2 in
     let p_eqs = List.map (fun (sv1,sv2) -> CP.mkPtrEqn sv1 sv2 pos) eqs in
     let p = CP.conj_of_list p_eqs pos in
-    (*subst XPURE*)
-    let f2a = subst_xpure f2 in
-    let f3 = CF.mkAnd_pure f2a (MCP.mix_of_pure p) pos in
+    let f3 = CF.mkAnd_pure f2 (MCP.mix_of_pure p) pos in
     f3
   in
   let subst_pure_hp_unk_hpdef ls_unk_hpargs_fr (rc, hf, def)=
@@ -2715,12 +2726,14 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
   in
   let ls_unk_hpargs_fr = unk_hp_frargs in
   (* let ls_unk_hpargs_fr = List.map transform_hp_unk unk_hpargs in *)
-  List.map (subst_pure_hp_unk_hpdef ls_unk_hpargs_fr) hp_defs
+  let new_hpdefs = List.map (subst_pure_hp_unk_hpdef ls_unk_hpargs_fr) hp_defs in
+  (*subst XPURE*)
+  List.map (fun (a,b,f) -> (a,b, subst_xpure new_hpdefs f)) new_hpdefs
 
 let transform_unk_hps_to_pure hp_defs unk_hpargs =
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in
-  Debug.ho_2 "transform_unk_hps_to_pure" pr1 pr2 pr1
+  Debug.no_2 "transform_unk_hps_to_pure" pr1 pr2 pr1
       (fun _ _ -> transform_unk_hps_to_pure_x hp_defs unk_hpargs) hp_defs unk_hpargs
 
 (************************************************************)
