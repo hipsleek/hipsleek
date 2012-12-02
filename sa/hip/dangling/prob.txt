@@ -76,6 +76,12 @@ As H2(y) is an input, should provide instead:
  or emp& y=DLING_H2
  ]
 
+ requires H1(x) * H2(y)
+ ensures  H3(x') * H4(y);
+
+ requires H1(x) & y = DLING_H2
+ ensures  H3(x') & y = DLING_H2;
+
 =======================================================================================
 
 --sa-split 

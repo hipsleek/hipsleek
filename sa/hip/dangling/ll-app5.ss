@@ -9,9 +9,10 @@ HeapPred H3(node a).
 HeapPred H4(node a).
 HeapPred G1(node a, node b).
 HeapPred G2(node a, node b).
+HeapPred G3(node a, node b,node c).
 
-ls<> == self=null 
-  or self::node<_,q>*q::ls<>
+lseg<p> == self=p 
+  or self::node<_,q>*q::lseg<p>
  inv true;
 
 void append(ref node x, node y)
@@ -19,38 +20,46 @@ void append(ref node x, node y)
   requires x::ls<> * y::ls<> & x!=null
   ensures x'::ls<>;
 
-  G1(x,y)&true --> x::node<val_27_522',next_27_523'>@M * HP_539(next_27_523',y)&true,
-  HP_539(t_21',y)&t_21'!=null --> G1(t_21',y)&true,
-  HP_539(next_29_551,y) * x'::node<val_27_544,y>@M&
-       next_29_551=null --> G2(x',y)&true,
-  G2(t_564,y) * x'::node<val_27_546,t_564>@M&true --> G2(x',y)&true]
+*************************************
+*******relational assumption ********
+*************************************
+[ G1(x,y)&true --> x::node<val_57_528',next_57_529'>@M * 
+  HP_545(next_57_529',y)&true,
+ HP_545(t_22',y)&t_22'!=null --> G1(t_22',y)&true,
+ HP_545(next_59_557,y) * x'::node<val_57_550,y>@M&x=x' & 
+  next_59_557=null --> G3(x',x,y)&true,
+ G3(t_570,t_567,y) * x'::node<val_57_552,t_570>@M&t_567!=null & 
+  x=x' --> G3(x',x,y) * HP_571(t_567)&true]
+*************************************
 
-G2(x_574,y_575) ::= x_574::node<val_27_544,y_575_576>@M * HP_577(y_575_576,y_575) * HP_565(y_575)&true,
-G1(x_582,y_583) ::= x_582::node<val_27_522',next_27_523'>@M * HP_584(next_27_523',y_583) * HP_565(y_583)&true,
-HP_577(y_575_576,y_575) ::= 
- y_575_576::node<val_27_544,y_575_580>@M * HP_577(y_575_580,y_575)&true
- or emp&y_575=y_575_576
- ,
-HP_584(next_27_523',y_583) ::= 
- next_27_523'::node<val_27_522',next_27_587>@M * HP_584(next_27_587,y_583)&
- true 
-
-
-G2(x,y_583) ::= x::node<val_48_544,y_583_584>@M * HP_585(y_583_584,y_583) * HP_566(y_583)&true,
-G1(x,y) ::= HP_568(y) * x::node<val_48_522',next_48_523'>@M * next_48_523'::ls[LHSCase]& true,
-HP_566(y) ::= HP_568(y)&true,
-HP_585(y_583_584,y_583) ::= 
- y_583_584::node<val_48_544,y_583_588>@M * HP_585(y_583_588,y_583)&true
+*************************************
+*******relational definition ********
+*************************************
+[ G3(x_581,x_582,y_583) ::= x_581::node<val_57_550,y_583_584>@M * HP_585(y_583_584,x_582,y_583) * 
+HP_572(y_583)&x_581=x_582,
+ G1(x_595,y_596) ::= x_595::node<val_57_528',next_57_529'>@M * HP_597(next_57_529',y_596) * 
+HP_572(y_596)&true,
+ HP_585(y_583_584,x_594,y_583) ::= 
+ y_583_584::node<val_57_550,y_583_592>@M * HP_585(y_583_592,t_567,y_583)&true
  or emp&y_583=y_583_584
+ or HP_571(y_583_584)&true
+ ,
+ HP_597(next_57_529',y_596) ::= 
+ next_57_529'::node<val_57_528',next_57_600>@M * HP_597(next_57_600,y_596)&
+ true
+ or emp&next_57_529'=null
+ ,
+ HP_571(t_567) ::= emp&t_567!=null]
+*************************************
 
 
 
 */
 
 
-  infer [G1,G2]
+  infer [G1,G3]
   requires G1(x,y)
-  ensures G2(x',y);//'
+  ensures G3(x',x,y);//'
 
 {
     node t = x.next;
