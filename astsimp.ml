@@ -1833,19 +1833,6 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
     let _ = List.map (fun v -> E.add v.E.var_name (E.VarInfo v)) vinfos in
     let cret_type = trans_type prog proc.I.proc_return proc.I.proc_loc in
     let free_vars = List.map (fun p -> p.I.param_name) all_args in
-    (*Heuristic: check if waitlevel and locklevels have been used for verification
-      If not detect waitlevel or locklevel -> set allow_locklevel==faslse
-      Note: this is used in ParaHIP website for demonstration only.
-      We could use the run-time flag "--dis-locklevel" to disable the use of locklevels
-      and waitlevel.
-    *)
-    let _ =
-      let struc_fv = Iformula.struc_free_vars false proc.I.proc_static_specs in
-      let b = List.exists (fun (id,_) -> (id = Globals.waitlevel_name)) struc_fv in
-      if b then
-        has_locklevel := true
-    in
-    (**********************************)
     let stab = H.create 103 in
     let add_param p = H.add stab p.I.param_name {
         sv_info_kind =  (trans_type prog p.I.param_type p.I.param_loc);

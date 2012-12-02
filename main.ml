@@ -132,6 +132,25 @@ let process_source_full source =
        let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
     let _ = Gen.Profiling.push_time "Translating to Core" in
     (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
+
+    (**************************************)
+    (*Simple heuristic for ParaHIP website*)
+    (*Heuristic: check if waitlevel and locklevels have been used for verification
+      If not detect waitlevel or locklevel -> set allow_locklevel==faslse
+      Note: this is used in ParaHIP website for demonstration only.
+      We could use the run-time flag "--dis-locklevel" to disable the use of locklevels
+      and waitlevel.
+    *)
+    let search_for_locklevel proc =
+      if (not !Globals.allow_locklevel) then
+      let struc_fv = Iformula.struc_free_vars false proc.Iast.proc_static_specs in
+      let b = List.exists (fun (id,_) -> (id = Globals.waitlevel_name)) struc_fv in
+      if b then
+        Globals.allow_locklevel := true
+    in
+	let _ = List.map search_for_locklevel prog.Iast.prog_proc_decls in
+    (* let _ = print_endline ("allow_locklevel = " ^ (string_of_bool !Globals.allow_locklevel)) in *)
+    (**************************************)
     let cprog = Astsimp.trans_prog intermediate_prog iprims in
 
 	(* Forward axioms and relations declarations to SMT solver module *)
@@ -175,10 +194,6 @@ let process_source_full source =
       end
     in
     let _ = Gen.Profiling.pop_time "Preprocessing" in
-    (*Simple heuristic for ParaHIP website*)
-    (* let _ =  *)
-      let _ = print_endline ("has_locklevel = " ^ (string_of_bool !Globals.has_locklevel)) in
-    (*   if (!Globals.has_locklevel) then Globals.allow_locklevel:=true else Globals.allow_locklevel:=false in *)
     (* An Hoa : initialize html *)
     let _ = Prooftracer.initialize_html source in
     

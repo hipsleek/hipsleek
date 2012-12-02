@@ -8515,6 +8515,7 @@ For example:
 LS'=LS --infer--> LSMU'=LSMU
 *)
 let infer_lsmu_pure_x (f:formula) : formula =
+  if (not !allow_locklevel) then f else
   let convert_ls_to_lsmu_exp (e:exp) : exp =
     let rec helper e =
       match e with
@@ -8611,7 +8612,6 @@ let infer_lsmu_pure_x (f:formula) : formula =
   nf
 
 let infer_lsmu_pure (f:formula) : formula =
-  (* if (not !has_locklevel) then f else *)
   Debug.no_1 "infer_lsmu_pure"
       !print_formula !print_formula
       infer_lsmu_pure_x f

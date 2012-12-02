@@ -521,9 +521,9 @@ let is_deployed = ref true
 
 let allow_ls = ref true (*enable lockset during verification*)
 
-let allow_locklevel = ref true (*enable locklevel during verification*)
+let allow_locklevel = ref false (*enable locklevel during verification*)
 
-let has_locklevel = ref false
+(* let has_locklevel = ref false *)
 
 let ann_vp = ref true (* Disable variable permissions in default, turn on in para5*)
 

@@ -17,3 +17,5 @@ cp unordered-locking.ss website/15.ss
 cp multicast.ss website/16.ss
 cp oracle.ss website/17.ss
 cp owicki-gries.ss website/18.ss
+cp fibonacci.ss website/19.ss
+cp create_and_acquire.ss website/20.ss
