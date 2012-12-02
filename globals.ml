@@ -533,6 +533,8 @@ let sa_en_split = ref false
 
 let sa_elim_dangling = ref false
 
+let sa_inlining = ref false
+
 let dis_sem = ref false
 
 let show_diff_constrs = ref false

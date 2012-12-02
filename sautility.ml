@@ -2681,6 +2681,7 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
     let pos = CF.pos_of_formula f2 in
     let p_eqs = List.map (fun (sv1,sv2) -> CP.mkPtrEqn sv1 sv2 pos) eqs in
     let p = CP.conj_of_list p_eqs pos in
+    (*subst XPURE*)
     let f3 = CF.mkAnd_pure f2 (MCP.mix_of_pure p) pos in
     f3
   in

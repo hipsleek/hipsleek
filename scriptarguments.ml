@@ -343,6 +343,7 @@ let common_arguments = [
   ("--sa-print-inter", Arg.Set Globals.sa_print_inter, "Print intermediate results of normalization");
   ("--sa-dis-norm", Arg.Clear Globals.sa_en_norm, "do normalization");
   ("--sa-dangling", Arg.Set Globals.sa_elim_dangling, "elim dangling HP/pointers");
+   ("--sa-inlining", Arg.Set Globals.sa_inlining, "inline dangling HP/pointers");
   ("--sa-split", Arg.Set Globals.sa_en_split, "splitting hp args into multiple hp if possible");
   ] 
 

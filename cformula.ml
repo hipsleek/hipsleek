@@ -4442,6 +4442,7 @@ think it is used to instantiate when folding.
   es_infer_vars : CP.spec_var list; 
   es_infer_vars_rel : CP.spec_var list;
   es_infer_vars_sel_hp_rel: CP.spec_var list;
+  es_infer_vars_sel_post_hp_rel: CP.spec_var list;
   es_infer_hp_unk_map: (CP.spec_var*CP.xpure_view) list ;(*(CP.spec_var * CP.spec_var list) list;*)
   es_infer_vars_hp_rel : CP.spec_var list;
   (* input vars to denote vars already instantiated *)
@@ -4581,14 +4582,31 @@ let get_infer_vars_sel_hp_ctx ctx0=
   in
   helper ctx0
 
+let get_infer_vars_sel_post_hp_ctx ctx0=
+  let rec helper ctx=
+    match ctx with
+      | Ctx es -> es.es_infer_vars_sel_post_hp_rel
+      | OCtx (ctx1,ctx2) -> (helper ctx1)@(helper ctx2)
+  in
+  helper ctx0
+
 let get_infer_vars_sel_hp_branch_ctx (_,ctx)=
   get_infer_vars_sel_hp_ctx ctx
+
+let get_infer_vars_sel_post_hp_branch_ctx (_,ctx)=
+  get_infer_vars_sel_post_hp_ctx ctx
 
 let get_infer_vars_sel_hp_partial_ctx (_, br_list)=
   get_infer_vars_sel_hp_branch_ctx (List.hd  br_list)
 
+let get_infer_vars_sel_post_hp_partial_ctx (_, br_list)=
+  get_infer_vars_sel_post_hp_branch_ctx (List.hd  br_list)
+
 let get_infer_vars_sel_hp_partial_ctx_list ls=
   get_infer_vars_sel_hp_partial_ctx (List.hd ls)
+
+let get_infer_vars_sel_post_hp_partial_ctx_list ls=
+  get_infer_vars_sel_post_hp_partial_ctx (List.hd ls)
 
 let context_of_branch_ctx_list ls = 
   let rec helper ls = match ls with
@@ -4662,6 +4680,7 @@ let empty_es flowt grp_lbl pos =
   es_infer_vars_dead = [];
   es_infer_vars_rel = [];
   es_infer_vars_sel_hp_rel = [];
+  es_infer_vars_sel_post_hp_rel = [];
   es_infer_hp_unk_map = [];
   es_infer_vars_hp_rel = [];
   es_infer_heap = []; (* HTrue; *)
@@ -5682,6 +5701,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_infer_vars_rel = es.es_infer_vars_rel;
         es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
         es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
+        es_infer_vars_sel_post_hp_rel = es.es_infer_vars_sel_post_hp_rel;
         es_infer_hp_unk_map = es.es_infer_hp_unk_map;
         es_infer_vars_dead = es.es_infer_vars_dead;
         es_infer_heap = es.es_infer_heap;
@@ -7727,6 +7747,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
           es_infer_vars_rel = es.es_infer_vars_rel;
           es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
           es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
+          es_infer_vars_sel_post_hp_rel = es.es_infer_vars_sel_post_hp_rel;
           es_infer_hp_unk_map = es.es_infer_hp_unk_map;
           es_infer_heap = es.es_infer_heap;
           es_infer_pure = es.es_infer_pure;
