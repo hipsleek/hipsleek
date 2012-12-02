@@ -2655,6 +2655,26 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
   (*   let fr_args = List.map (fun sv -> CP.fresh_spec_var_prefix hp_name sv) args in *)
   (*   (hp,fr_args) *)
   (* in *)
+  let rec lookup_hpdefs rem_hpdefs (hp0,args0)=
+    match rem_hpdefs with
+      | [] -> report_error no_pos "sau.lookup_hpdefs"
+      | (_,hrel,f)::tl->
+          let hp,args = CF.extract_HRel hrel in
+          if CP.eq_spec_var hp hp0 then
+            CF.extract_pure f
+          else lookup_hpdefs tl (hp0,args0)
+  in
+  let subst_xpure f=
+    match f with
+      | CF.Base fb ->
+          let ps = CP.list_of_conjs (MCP.pure_of_mix fb.CF.formula_base_pure) in
+          let xp_ps,rem_ps = List.partition CP.is_xpure ps in
+          let xp_hpargs = List.map CP.extract_xpure xp_ps in
+          let xp_ps = List.concat (List.map (lookup_hpdefs hp_defs) xp_hpargs) in
+          let new_p =  CP.conj_of_list (rem_ps@xp_ps) no_pos in
+          CF.Base{fb with CF.formula_base_pure = (MCP.mix_of_pure new_p)}
+      | _ -> report_error no_pos "sau.subst_xpure"
+  in
   (*returns eqs/ss: mkEqexp/subst ss*)
   let look_up_get_eqs_ss args0 ls_unk_hpargs_fr (used_hp,used_args)=
     try
@@ -2682,7 +2702,8 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
     let p_eqs = List.map (fun (sv1,sv2) -> CP.mkPtrEqn sv1 sv2 pos) eqs in
     let p = CP.conj_of_list p_eqs pos in
     (*subst XPURE*)
-    let f3 = CF.mkAnd_pure f2 (MCP.mix_of_pure p) pos in
+    let f2a = subst_xpure f2 in
+    let f3 = CF.mkAnd_pure f2a (MCP.mix_of_pure p) pos in
     f3
   in
   let subst_pure_hp_unk_hpdef ls_unk_hpargs_fr (rc, hf, def)=

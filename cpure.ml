@@ -1408,6 +1408,16 @@ match pf with
   | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _
   | RelForm _ -> false (* An Hoa *)
 
+and is_xpure p=
+match p with
+  | BForm (b,_) ->  is_b_form_xpure b
+  | _ -> false
+
+and is_b_form_xpure (b: b_formula) :bool = let (pf,_) = b in
+match pf with
+  | XPure _ -> true
+  | _ -> false
+
 (* Expression *)
 and is_exp_arith (e:exp) : bool=
   match e with
@@ -6591,6 +6601,22 @@ let norm_bform_b (bf:b_formula) : b_formula =
     | EqMin _ |  BagSub _ | BagMin _ 
     | BagMax _ | ListAllN _ | ListPerm _ -> pf
   in (npf, il)
+
+
+let rec extract_xpure p=
+match p with
+  | BForm (b,_) ->  extract_xpure_b_form_xpure b
+  | _ -> report_error no_pos "cpure.extract_xpure"
+
+and extract_xpure_b_form_xpure (b: b_formula) = let (pf,_) = b in
+match pf with
+  | XPure xp -> let hp = SpecVar (HpT, xp.xpure_view_name,Unprimed) in
+                let args= match xp.xpure_view_node with
+                  | None -> xp.xpure_view_arguments
+                  | Some r -> r::xp.xpure_view_arguments
+                in
+                (hp,args)
+  | _ -> report_error no_pos "cpure.extract_xpure"
 
 (***********************************
  * aggressive simplify and normalize

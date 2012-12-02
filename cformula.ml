@@ -3748,6 +3748,16 @@ and filter_vars_hf hf rvs=
     | HFalse
     | HEmp -> hf
 
+let rec extract_pure (f0: formula)=
+  let rec helper f=
+   match f with
+      | Base fb -> [(MCP.pure_of_mix fb.formula_base_pure)]
+      | Or orf ->(helper orf.formula_or_f1)@ (helper orf.formula_or_f2)
+      | Exists fe -> [(MCP.pure_of_mix fe.formula_exists_pure)]
+  in
+  helper f0
+
+
 let rec subst_hprel (f0: formula) from_hps to_hp=
   let rec helper f=
    match f with
