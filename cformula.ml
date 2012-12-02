@@ -3289,6 +3289,33 @@ let extract_HRel_f (f0:formula) =
   in
   helper f0
 
+let extract_unk_hprel_x (f0:formula) =
+  let rec helper f=
+  match f with
+    | Base ({ formula_base_pure = p1;
+        formula_base_heap = h1;})
+    | Exists ({ formula_exists_pure = p1;
+        formula_exists_heap = h1;}) ->
+        (
+            if (CP.isConstTrue (MCP.pure_of_mix p1)) then
+              match h1 with
+                | HRel (hp, _, _ ) -> [hp]
+                | _ -> report_error no_pos "CF.extract_HRel"
+            else
+              report_error no_pos "extract_unk_hprel_f"
+        )
+    | Or {formula_or_f1 = f1;
+          formula_or_f2 = f2} ->
+        (helper f1) @ (helper f2)
+  in
+  helper f0
+
+let extract_unk_hprel (f0:formula) =
+  let pr1 = !print_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_1 "extract_unk_hprel" pr1 pr2
+      (fun _ ->  extract_unk_hprel_x f0) f0
+
 let extract_HRel_orig hf=
   match hf with
     | HRel (hp, eargs, p ) -> (hp, eargs,p)

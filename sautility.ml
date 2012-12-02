@@ -2137,7 +2137,7 @@ let get_longest_common_hnodes_list prog unk_hps unk_svl hp args fs=
   let pr2 = fun (_, def) -> Cprinter.string_of_hp_rel_def def in
   let pr3 = !CP.print_sv in
   let pr4 = !CP.print_svl in
-  Debug.ho_5 "get_longest_common_hnodes_list" pr3 pr4 pr4 pr4 pr1 (pr_list_ln pr2)
+  Debug.no_5 "get_longest_common_hnodes_list" pr3 pr4 pr4 pr4 pr1 (pr_list_ln pr2)
       (fun _ _ _ _ _-> get_longest_common_hnodes_list_x prog unk_hps unk_svl hp args fs) hp args unk_hps unk_svl fs
 
 (************************************************************)
@@ -2698,7 +2698,7 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
 let transform_unk_hps_to_pure hp_defs unk_hpargs =
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in
-  Debug.no_2 "transform_unk_hps_to_pure" pr1 pr2 pr1
+  Debug.ho_2 "transform_unk_hps_to_pure" pr1 pr2 pr1
       (fun _ _ -> transform_unk_hps_to_pure_x hp_defs unk_hpargs) hp_defs unk_hpargs
 
 (************************************************************)

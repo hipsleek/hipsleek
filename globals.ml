@@ -107,6 +107,7 @@ let barrierT = Named "barrier"
 
 (*for heap predicate*)
 let hp_default_prefix_name = "HP_"
+let dang_hp_default_prefix_name = "DLING_"
 (*
   Data types for code gen
 *)

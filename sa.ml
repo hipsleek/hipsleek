@@ -2561,6 +2561,7 @@ let pardef_subst_fix_x prog unk_hps groups=
       List.map (update_order_from_grp succ_hps2 1) topo
     in
     let topo0 = List.map ini_order_from_grp nrec_grps in
+    let dep_grps = List.filter (fun grp -> List.length grp > 0) dep_grps in
     let topo1 = List.fold_left process_one_dep_grp topo0 dep_grps in
     (*sort decreasing and return the topo list*)
     let topo2 = List.sort (fun (_,_,n1) (_,_,n2) -> n2-n1) topo1 in
@@ -3279,7 +3280,7 @@ let generate_hp_def_from_split prog hpdefs hp_defs_split unk_hpargs=
   Debug.no_2 "generate_hp_def_from_split" pr1 pr2 pr1
       (fun _ _ -> generate_hp_def_from_split_x prog hpdefs hp_defs_split unk_hpargs) hpdefs hp_defs_split
 
-let generate_hp_def_from_unk_hps_x unk_hps unkmap_from_infer_collect unk_rels=
+let generate_hp_def_from_unk_hps_x unk_hpargs hp_defs post_hps unk_rels=
   let rec lookup_eqv_all rem_unk_rels hp res=
     match rem_unk_rels with
       | [] -> res
@@ -3302,17 +3303,19 @@ let generate_hp_def_from_unk_hps_x unk_hps unkmap_from_infer_collect unk_rels=
     let ps,fr_svl =
       try
           let fr_args =
-            if unk_rels = [] then
-              List.assoc hp (unkmap_from_infer_collect@unk_map)
+            (*precond: HP(x) = x = DLING*)
+            if not (CP.mem_svl hp post_hps) then
+              List.assoc hp unk_map
             else
+              (*post: find eq pre hps*)
               let eq_hps = lookup_eqv_all unk_rels hp [hp] in
-              assoc_list eq_hps (unkmap_from_infer_collect@unk_map)
+              assoc_list eq_hps unk_map
           in
           let ss = List.combine args fr_args in
           let ps = List.map (fun (sv,fr_sv) -> CP.mkPtrEqn sv fr_sv pos) ss in
           (ps, fr_args)
       with Not_found ->
-          let hp_name = CP.name_of_spec_var hp in
+          let hp_name = dang_hp_default_prefix_name ^ CP.name_of_spec_var hp in
           List.split (List.map (fun sv ->
               let fr_sv = CP.fresh_spec_var_prefix hp_name sv in
               (CP.mkPtrEqn sv fr_sv pos, fr_sv)
@@ -3337,17 +3340,26 @@ let generate_hp_def_from_unk_hps_x unk_hps unkmap_from_infer_collect unk_rels=
     (hpdefs@[new_hpdef], unk_map@[new_unkmap])
   in
   DD.ninfo_pprint ">>>>>> unknown hps: <<<<<<" no_pos;
-  let unk_hps1 = SAU.find_close_hpargs unk_hps unk_rels in
+  let unk_hps = List.map fst unk_hpargs in
+  let unk_rels = List.concat (List.map (fun (_, hrel, f) ->
+      let (hp,_,_) = CF.extract_HRel_orig hrel in
+      if CP.mem_svl hp unk_hps then
+        let eq_hps = CF.extract_unk_hprel f in
+        List.map (fun hp1 -> (hp,hp1)) eq_hps
+      else []
+  ) hp_defs)
+  in
+  let unk_hps1 = SAU.find_close_hpargs unk_hpargs unk_rels in
   List.fold_left helper ([],[]) unk_hps1
 
-let generate_hp_def_from_unk_hps unk_hps unkmap_from_infer_collect unk_rels=
+let generate_hp_def_from_unk_hps unk_hps hp_defs post_hps unk_rels=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr3 = pr_pair pr1 pr2 in
   let pr5 = pr_list CP.string_of_xpure_view in
-  Debug.no_3 "generate_hp_def_from_unk_hps" pr2 pr2 pr4 pr3
-      (fun _ _ _ -> generate_hp_def_from_unk_hps_x unk_hps unkmap_from_infer_collect unk_rels) unk_hps unkmap_from_infer_collect unk_rels
+  Debug.no_3 "generate_hp_def_from_unk_hps" pr2 pr1 pr4 pr3
+      (fun _ _ _ -> generate_hp_def_from_unk_hps_x unk_hps hp_defs post_hps unk_rels) unk_hps hp_defs unk_rels
 
 (*========= matching=========*)
 let match_one_hp_one_view_x hp hp_name args def_fs (vdcl: CA.view_decl): bool=
@@ -3615,11 +3627,6 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels hp_rel_unkmap :(CF.
   in
   let unk_hps2 = List.filter (fun (hp,_) -> not(CP.mem_svl hp unk_hp_pures)) unk_hps1 in
   let unk_hp_svl1 = List.filter (fun hp -> not(CP.mem_svl hp unk_hp_pures)) unk_hp_svl in
-  let unk_hp_def,unk_hp_frargs =
-    if !Globals.sa_elim_dangling then
-      generate_hp_def_from_unk_hps unk_hps2 (* hp_rel_unkmap *)[] unk_rels
-    else [],[]
-  in
   DD.ninfo_pprint (" remains: " ^
      (let pr1 = pr_list_ln Cprinter.string_of_hprel in pr1 constr3) ) no_pos;
   let hp_defs1 =  (Gen.BList.remove_dups_eq (fun (a1,_,_) (b1,_,_) ->
@@ -3628,20 +3635,23 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels hp_rel_unkmap :(CF.
       CP.eq_spec_var hp1 hp2) (hp_defs))
   in
   let hp_defs2 = (def_subst_fix prog unk_hp_svl (hp_defs1)) in
-  (*currently, we discard all non-node unk hp*)
+  let hp_defs22 = SAU.combine_hpdefs (hp_defs2@unk_hp_pure_def) in
+  let hp_def_from_split = generate_hp_def_from_split prog hp_defs22 split_tb_hp_defs_split unk_hps in
+  let hp_defs3 = hp_defs22@hp_def_from_split in
+   (*currently, we discard all non-node unk hp*)
   (* unk_hps3: all non-node unk hps *)
   (* let non_node_unk_hps = List.filter (fun (_,args) -> *)
   (*     List.for_all (fun a -> not (CP.is_node_typ a)) args) unk_hps2 *)
   (* in *)
   (* let hp_defs21 = SAU.drop_non_node_unk_hps hp_defs2 non_node_unk_hps in *)
-  let hp_defs21 =
+  let post_hps = [] in
+  let unk_hp_def,unk_hp_frargs = generate_hp_def_from_unk_hps unk_hps2 hp_defs3 post_hps [](* unk_rels *) in
+  let hp_defs3a = hp_defs3@unk_hp_def in
+  let hp_defs4 =
     if !Globals.sa_elim_dangling then
-    SAU.transform_unk_hps_to_pure (hp_defs2) unk_hp_frargs
-    else hp_defs2
+      SAU.transform_unk_hps_to_pure (hp_defs3a) unk_hp_frargs
+    else hp_defs3a
   in
-  let hp_defs22 = SAU.combine_hpdefs (hp_defs21@unk_hp_def@unk_hp_pure_def) in
-  let hp_def_from_split = generate_hp_def_from_split prog hp_defs22 split_tb_hp_defs_split unk_hps in
-  let hp_defs3 = hp_defs22@hp_def_from_split in
   (****************************************************)
    let _ =
     if !Globals.sa_print_inter then
@@ -3661,7 +3671,7 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels hp_rel_unkmap :(CF.
       ()
     else ()
   in
-   let m = match_hps_views hp_defs3 prog.CA.prog_view_decls in
+   let m = match_hps_views hp_defs4 prog.CA.prog_view_decls in
   let _ = DD.ninfo_pprint ("        sel_hp_rel:" ^ (!CP.print_svl sel_hp_rels)) no_pos in
   (* let _ =  DD.info_pprint (" matching: " ^ *)
   (*   (let pr = pr_list_ln (fun (hp,view_names) -> (!CP.print_sv hp) ^ " === " ^ *)
@@ -3670,14 +3680,14 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels hp_rel_unkmap :(CF.
     (fun (hprc, _, _) ->
         let hp = SAU.get_hpdef_name hprc in
         CP.mem_svl hp sel_hp_rels
-    ) hp_defs3 in
+    ) hp_defs4 in
   let sel_hpdefs1 = (* SAU.recover_dropped_args drop_hp_args *) sel_hpdefs in
-  let hp_defs4 = rems@sel_hpdefs1 in
-  let sel_hp_defs = collect_sel_hp_def hp_defs4 sel_hp_rels unk_hp_svl1 m in
+  let hp_defs5 = rems@sel_hpdefs1 in
+  let sel_hp_defs = collect_sel_hp_def hp_defs5 sel_hp_rels unk_hp_svl1 m in
   let _ = List.iter (fun hp_def -> rel_def_stk # push hp_def) sel_hp_defs in
   (*for cp*)
   let dropped_hps = (* List.filter (fun (hp,_,_) -> not(CP.mem_svl hp sel_hp_rels)) drop_hp_args *)[] in
-  (constr3, hp_defs4, dropped_hps) (*return for cp*)
+  (constr3, hp_defs5, dropped_hps) (*return for cp*)
 
 (*(pr_pair Cprinter.prtt_string_of_formula Cprinter.prtt_string_of_formula)*)
 let infer_hps prog (hp_constrs: CF.hprel list) sel_hp_rels hp_rel_unkmap:
