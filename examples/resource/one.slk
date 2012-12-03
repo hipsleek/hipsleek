@@ -1,0 +1,14 @@
+
+pred_prim R<high:int> 
+ inv high>=0.
+
+lemma "R split" self::R<b> & q>=0 & b-q>0 -> self::R<q> * self::R<b-q> .
+
+checkentail x::R<10> |- x::R<5>.
+print residue.
+
+/*
+
+ lemma proving not working properly here!
+
+*/
