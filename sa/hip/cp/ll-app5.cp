@@ -1,7 +1,7 @@
 HeapPred HP_1(node a).
 HeapPred HP_545(node a, node b).
-HeapPred HP_584(node a,node b,node c).
-HeapPred HP_594(node a,node b).
+HeapPred HP_584(node a,node b).
+HeapPred HP_594(node a).
 
 append:SUCCESS[
 ass [G1,G3][]:{
@@ -12,13 +12,13 @@ ass [G1,G3][]:{
 }
 
 hpdefs [G1,G3][DLING_HP_571_y_601]:{
-  G3(x_580,x_581,y_582) -->  x_580::node<val_65_550,y_582_583> * HP_584(y_582_583,x_581,y_582)&
+  G3(x_580,x_581,y_582) -->  x_580::node<val_65_550,y_582_583> * HP_584(y_582_583,y_582)&
      x_580=x_581 & DLING_HP_571_y_601=y_582;
-  G1(x_592,y_593) --> x_592::node<val_65_528',next_65_529'> * HP_594(next_65_529',y_593)& DLING_HP_571_y_601=y_593;
-  HP_584(y_582_583,x_591,y_582) --> emp&y_582=y_582_583
-    or y_582_583::node<val_65_550,y_582_589> * HP_584(y_582_589,t_567,y_582);
-  HP_594(next_65_529',y_593) --> emp&next_65_529'=null
-    or next_65_529'::node<val_65_528',next_65_597> * HP_594(next_65_597,y_593)&true
+  G1(x_592,y_593) --> x_592::node<val_65_528',next_65_529'> * HP_594(next_65_529')& DLING_HP_571_y_601=y_593;
+  HP_584(y_582_583,y_582) --> emp&y_582=y_582_583
+    or y_582_583::node<val_65_550,y_582_589> * HP_584(y_582_589,y_582);
+  HP_594(next_65_529') --> emp&next_65_529'=null
+    or next_65_529'::node<val_65_528',next_65_597> * HP_594(next_65_597)&true
 
  }
 ]

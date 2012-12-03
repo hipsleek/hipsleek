@@ -3479,7 +3479,7 @@ let generate_hp_def_from_unk_hps unk_hps hp_defs post_hps unk_rels=
   let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr3 = pr_triple pr1 pr1 pr2 in
   let pr5 = pr_list CP.string_of_xpure_view in
-  Debug.ho_3 "generate_hp_def_from_unk_hps" pr2 pr1 pr4 pr3
+  Debug.no_3 "generate_hp_def_from_unk_hps" pr2 pr1 pr4 pr3
       (fun _ _ _ -> generate_hp_def_from_unk_hps_new_x unk_hps hp_defs post_hps unk_rels) unk_hps hp_defs unk_rels
 
 (*========= matching=========*)
