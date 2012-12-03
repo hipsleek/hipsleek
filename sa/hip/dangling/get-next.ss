@@ -59,4 +59,13 @@ G(x',res) == x'::node<_,null> & res=n#
 where n# is a logical variable that links
 between pre and post-condition
 
+==================
+ERROR with --sa-dangling
+ HP_526 not properly eliminated..
+ please print before and after such options.
+
+[ H(x_540) ::= x_540::node<val_31_510',next_31_511'>@M * HP_526(next_31_511')&true,
+ G(x_541,res_542) ::= HP_526(res_542) * x_541::node<val_31_533,next_32_514'>@M&next_32_514'=null,
+ HP_526(res) ::= emp&DLING_HP_526_res_
 */
+
