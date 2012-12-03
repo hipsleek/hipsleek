@@ -1,0 +1,20 @@
+data node {
+  node next;
+}.
+
+pred lseg<p,n> ==
+    self=p & n=0
+ or self::node<_,q>*q::lseg<p,n-1>
+inv n>=0.
+
+lemma "R split" self::R<b> & q>=0 & b>q -> self::R<q> * self::R<b-q> .
+
+//checkentail x::R<10> |- x::R<10>.
+//checkentail x::R<10> |- x::R<p> & p=5.
+print residue.
+
+/*
+
+ lemma proving not working properly here!
+
+*/
