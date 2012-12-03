@@ -3573,7 +3573,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
         in
         finishExp empty (AlignOfE(e'', p)) !typeOfSizeOf
 
-    | A.CAST ((specs, dt), ie, l) ->
+    | A.CAST ((specs, dt, _), ie, l) ->
         let p = convLoc l in
         let s', dt', ie' = preprocessCast specs dt ie in
         (* We know now that we can do s' and dt' many times *)
@@ -4948,9 +4948,9 @@ and doInit
   let initl1 = 
     match initl with
     | (A.NEXT_INIT, 
-       A.SINGLE_INIT (A.CAST ((s, dt), ie, l))) :: rest -> 
+       A.SINGLE_INIT (A.CAST ((s, dt, tl), ie, l))) :: rest -> 
          let s', dt', ie' = preprocessCast s dt ie in
-         (A.NEXT_INIT, A.SINGLE_INIT (A.CAST ((s', dt'), ie', l))) :: rest
+         (A.NEXT_INIT, A.SINGLE_INIT (A.CAST ((s', dt', tl), ie', l))) :: rest
     | _ -> initl
   in
       (* Sometimes we have a cast in front of a compound (in GCC). This 
@@ -4958,7 +4958,7 @@ and doInit
   let initl2 = 
     match initl1 with
       (what,
-       A.SINGLE_INIT (A.CAST ((specs, dt), A.COMPOUND_INIT ci, _))) :: rest ->
+       A.SINGLE_INIT (A.CAST ((specs, dt, _), A.COMPOUND_INIT ci, _))) :: rest ->
         let s', dt', ie' = preprocessCast specs dt (A.COMPOUND_INIT ci) in
         let typ = doOnlyType s' dt' in
         if (typeSigNoAttrs typ) = (typeSigNoAttrs so.soTyp) then

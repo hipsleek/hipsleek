@@ -193,13 +193,18 @@ let fst3 (result, _, _) = result
 let snd3 (_, result, _) = result
 let trd3 (_, _, result) = result
 
+let fst4 (result, _, _, _) = result
+let snd4 (_, result, _, _) = result
+let trd4 (_, _, result, _) = result
+let fth4 (_, _, _, result) = result
+
 
 (*
    transform:  __builtin_offsetof(type, member)
    into     :  (size_t) (&(type * ) 0)->member
  *)
 
-let transformOffsetOf (speclist, dtype) member loc =
+let transformOffsetOf (speclist, dtype, tloc) member loc =
   let rec addPointer = function
     | JUSTBASE -> PTR([], JUSTBASE)
     | PARENTYPE (attrs1, dtype, attrs2) -> PARENTYPE (attrs1, addPointer dtype, attrs2)
@@ -207,9 +212,9 @@ let transformOffsetOf (speclist, dtype) member loc =
     | PTR (attrs, dtype) -> PTR (attrs, addPointer dtype)
     | PROTO (dtype, names, variadic) -> PROTO (addPointer dtype, names, variadic)
   in
-  let nullType = (speclist, addPointer dtype) in
-  let nullExpr = CONSTANT (CONST_INT "0", cabslu) in
-  let castExpr = CAST (nullType, SINGLE_INIT nullExpr, cabslu) in
+  let nullType = (speclist, addPointer dtype, tloc) in
+  let nullExpr = CONSTANT (CONST_INT "0", tloc) in
+  let castExpr = CAST (nullType, SINGLE_INIT nullExpr, tloc) in
 
   let rec replaceBase = function
     | VARIABLE (field, l) -> MEMBEROFPTR (castExpr, field, l)
@@ -222,7 +227,7 @@ let transformOffsetOf (speclist, dtype) member loc =
   let memberExpr = replaceBase member in
   let addrExpr = UNARY (ADDROF, memberExpr, loc) in
   (* slight cheat: hard-coded assumption that size_t == unsigned int *)
-  let sizeofType = [SpecType Tunsigned], JUSTBASE in
+  let sizeofType = ([SpecType Tunsigned], JUSTBASE, loc) in
   let resultExpr = CAST (sizeofType, SINGLE_INIT addrExpr, loc) in
   resultExpr
 
@@ -277,13 +282,13 @@ let transformOffsetOf (speclist, dtype) member loc =
 %token<Cabs.cabsloc> SWITCH CASE DEFAULT
 %token<Cabs.cabsloc> WHILE DO FOR
 %token<Cabs.cabsloc> IF TRY EXCEPT FINALLY
-%token ELSE 
+%token<Cabs.cabsloc> ELSE 
 
 %token<Cabs.cabsloc> ATTRIBUTE INLINE ASM TYPEOF FUNCTION__ PRETTY_FUNCTION__
-%token LABEL__
+%token<Cabs.cabsloc> LABEL__
 %token<Cabs.cabsloc> BUILTIN_VA_ARG ATTRIBUTE_USED
-%token BUILTIN_VA_LIST
-%token BLOCKATTRIBUTE 
+%token<Cabs.cabsloc> BUILTIN_VA_LIST
+%token<Cabs.cabsloc> BLOCKATTRIBUTE 
 %token<Cabs.cabsloc> BUILTIN_TYPES_COMPAT BUILTIN_OFFSETOF
 %token<Cabs.cabsloc> DECLSPEC
 %token<string * Cabs.cabsloc> MSASM MSATTR
@@ -293,30 +298,30 @@ let transformOffsetOf (speclist, dtype) member loc =
 
 /* sm: cabs tree transformation specification keywords */
 %token<Cabs.cabsloc> AT_TRANSFORM AT_TRANSFORMEXPR AT_SPECIFIER AT_EXPR
-%token AT_NAME
+%token<Cabs.cabsloc> AT_NAME
 
 /* operator precedence */
 %nonassoc 	IF
 %nonassoc 	ELSE
 
 
-%left	COMMA
-%right	EQ PLUS_EQ MINUS_EQ STAR_EQ SLASH_EQ PERCENT_EQ
-                AND_EQ PIPE_EQ CIRC_EQ INF_INF_EQ SUP_SUP_EQ
-%right	QUEST COLON
-%left	PIPE_PIPE
-%left	AND_AND
-%left	PIPE
-%left 	CIRC
-%left	AND
-%left	EQ_EQ EXCLAM_EQ
-%left	INF SUP INF_EQ SUP_EQ
-%left	INF_INF SUP_SUP
-%left	PLUS MINUS
-%left	STAR SLASH PERCENT CONST RESTRICT VOLATILE
-%right	EXCLAM TILDE PLUS_PLUS MINUS_MINUS CAST RPAREN ADDROF SIZEOF ALIGNOF
-%left 	LBRACKET
-%left	DOT ARROW LPAREN LBRACE
+%left   COMMA
+%right  EQ PLUS_EQ MINUS_EQ STAR_EQ SLASH_EQ PERCENT_EQ
+        AND_EQ PIPE_EQ CIRC_EQ INF_INF_EQ SUP_SUP_EQ
+%right  QUEST COLON
+%left   PIPE_PIPE
+%left   AND_AND
+%left   PIPE
+%left   CIRC
+%left   AND
+%left   EQ_EQ EXCLAM_EQ
+%left   INF SUP INF_EQ SUP_EQ
+%left   INF_INF SUP_SUP
+%left   PLUS MINUS
+%left   STAR SLASH PERCENT CONST RESTRICT VOLATILE
+%right  EXCLAM TILDE PLUS_PLUS MINUS_MINUS CAST RPAREN ADDROF SIZEOF ALIGNOF
+%left   LBRACKET
+%left   DOT ARROW LPAREN LBRACE
 %right  NAMED_TYPE     /* We'll use this to handle redefinitions of
                         * NAMED_TYPE as variables */
 %left   IDENT
@@ -327,50 +332,49 @@ let transformOffsetOf (speclist, dtype) member loc =
 
 %type <Cabs.definition * cabsloc> global
 
-
-%type <Cabs.attribute list> attributes attributes_with_asm asmattr
+%type <Cabs.attribute list * cabsloc> attributes attributes_with_asm asmattr
 %type <Cabs.statement * cabsloc> statement
 %type <Cabs.constant * cabsloc> constant
 %type <string * cabsloc> string_constant
 %type <Cabs.expression * cabsloc> expression
-%type <Cabs.expression> opt_expression
-%type <Cabs.init_expression> init_expression
+%type <Cabs.expression * cabsloc> opt_expression
+%type <Cabs.init_expression * cabsloc> init_expression
 %type <Cabs.expression list * cabsloc> comma_expression
 %type <Cabs.expression list * cabsloc> paren_comma_expression
-%type <Cabs.expression list> arguments
+%type <Cabs.expression list * cabsloc> arguments
 %type <Cabs.expression list * cabsloc> bracket_comma_expression
 %type <int64 list Queue.t * cabsloc> string_list 
 %type <int64 list * cabsloc> wstring_list
 
-%type <Cabs.initwhat * Cabs.init_expression> initializer
-%type <(Cabs.initwhat * Cabs.init_expression) list> initializer_list
-%type <Cabs.initwhat> init_designators init_designators_opt
+%type <(Cabs.initwhat * Cabs.init_expression) * cabsloc> initializer
+%type <(Cabs.initwhat * Cabs.init_expression) list * cabsloc> initializer_list
+%type <Cabs.initwhat * cabsloc> init_designators init_designators_opt
 
 %type <spec_elem list * cabsloc> decl_spec_list
 %type <typeSpecifier * cabsloc> type_spec
-%type <Cabs.field_group list> struct_decl_list
+%type <Cabs.field_group list * cabsloc> struct_decl_list
 
 
-%type <Cabs.name> old_proto_decl
-%type <Cabs.single_name> parameter_decl
-%type <Cabs.enum_item> enumerator
-%type <Cabs.enum_item list> enum_list
+%type <Cabs.name * cabsloc> old_proto_decl
+%type <Cabs.single_name * cabsloc> parameter_decl
+%type <Cabs.enum_item * cabsloc> enumerator
+%type <Cabs.enum_item list * cabsloc> enum_list
 %type <Cabs.definition * cabsloc> declaration function_def
-%type <cabsloc * spec_elem list * name> function_def_start
-%type <Cabs.spec_elem list * Cabs.decl_type> type_name
+%type <spec_elem list * name * cabsloc> function_def_start
+%type <Cabs.spec_elem list * Cabs.decl_type * cabsloc> type_name
 %type <Cabs.block * cabsloc> block
-%type <Cabs.statement list> block_element_list
-%type <string list> local_labels local_label_names
-%type <string list> old_parameter_list_ne
+%type <Cabs.statement list * cabsloc> block_element_list
+%type <string list * cabsloc> local_labels local_label_names
+%type <string list * cabsloc> old_parameter_list_ne
 
-%type <Cabs.init_name> init_declarator
-%type <Cabs.init_name list> init_declarator_list
-%type <Cabs.name> declarator
-%type <Cabs.name * expression option> field_decl
-%type <(Cabs.name * expression option) list> field_decl_list
-%type <string * Cabs.decl_type> direct_decl
-%type <Cabs.decl_type> abs_direct_decl abs_direct_decl_opt
-%type <Cabs.decl_type * Cabs.attribute list> abstract_decl
+%type <Cabs.init_name * cabsloc> init_declarator
+%type <Cabs.init_name list * cabsloc> init_declarator_list
+%type <Cabs.name * cabsloc> declarator
+%type <(Cabs.name * expression option) * cabsloc> field_decl
+%type <(Cabs.name * expression option) list * cabsloc> field_decl_list
+%type <string * Cabs.decl_type * cabsloc> direct_decl
+%type <Cabs.decl_type * cabsloc> abs_direct_decl abs_direct_decl_opt
+%type <Cabs.decl_type * Cabs.attribute list * cabsloc> abstract_decl
 
  /* (* Each element is a "* <type_quals_opt>". *) */
 %type <attribute list list * cabsloc> pointer pointer_opt
@@ -415,7 +419,7 @@ global:
 | IDENT LPAREN old_parameter_list_ne RPAREN old_pardef_list SEMICOLON
                                         { let loc = makeLoc (startPos (snd $1)) (endPos $6) in
                                           (* Convert pardecl to new style *)
-                                          let pardecl, isva = doOldParDecl $3 $5 in 
+                                          let pardecl, isva = doOldParDecl (fst $3) (fst $5) in 
                                           (* Make the function declarator *)
                                           (doDeclaration loc []
                                             [((fst $1, PROTO(JUSTBASE, pardecl,isva), [], cabslu),
@@ -458,7 +462,8 @@ maybecomma:
 primary_expression:                     /*(* 6.5.1. *)*/
 | IDENT                                 { VARIABLE (fst $1, snd $1), snd $1 }
 | constant                              { CONSTANT (fst $1, snd $1), snd $1 }
-| paren_comma_expression                { PAREN (smooth_expression (fst $1) (snd $1), snd $1), snd $1 }
+| paren_comma_expression                { let es, loc = $1 in
+                                          PAREN (smooth_expression es loc, loc), loc }
 | LPAREN block RPAREN                   { let loc = makeLoc (startPos $1) (endPos $3) in
                                           GNU_BODY (fst $2, loc), loc }
      /*(* Next is Scott's transformer *)*/
@@ -471,143 +476,145 @@ postfix_expression:                     /*(* 6.5.2 *)*/
 | primary_expression                    { $1 }
 | postfix_expression bracket_comma_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
-                                          INDEX (fst $1, smooth_expression (fst $2) (snd $2)), loc }
+                                          INDEX (fst $1, smooth_expression (fst $2) (snd $2), loc), loc }
 | postfix_expression LPAREN arguments RPAREN
                                         { let loc = makeLoc (startPos (snd $1)) (endPos $4) in
-                                          CALL (fst $1, $3), loc }
+                                          CALL (fst $1, fst $3, loc), loc }
 | BUILTIN_VA_ARG LPAREN expression COMMA type_name RPAREN
                                         { let loc = makeLoc (startPos $1) (endPos $6) in
-                                          let b, d = $5 in
-                                          CALL (VARIABLE "__builtin_va_arg", 
-                                                [fst $3; TYPE_SIZEOF (b, d)]), loc }
+                                          let b, d, tloc = $5 in
+                                          CALL (VARIABLE ("__builtin_va_arg", $1), 
+                                                [fst $3; TYPE_SIZEOF (b, d, tloc)], loc), loc }
 | BUILTIN_TYPES_COMPAT LPAREN type_name COMMA type_name RPAREN
                                         { let loc = makeLoc (startPos $1) (endPos $6) in
-                                          let b1,d1 = $3 in
-                                          let b2,d2 = $5 in
-                                          CALL (VARIABLE "__builtin_types_compatible_p", 
-                                                [TYPE_SIZEOF(b1,d1); TYPE_SIZEOF(b2,d2)]), loc }
+                                          let b1,d1,tloc1 = $3 in
+                                          let b2,d2,tloc2 = $5 in
+                                          CALL (VARIABLE ("__builtin_types_compatible_p", $1), 
+                                                [TYPE_SIZEOF(b1,d1,tloc1); TYPE_SIZEOF(b2,d2,tloc2)], loc), loc }
 | BUILTIN_OFFSETOF LPAREN type_name COMMA offsetof_member_designator RPAREN
                                         { let loc = makeLoc (startPos $1) (endPos $6) in
-                                          transformOffsetOf $3 $5 loc, loc }
+                                          transformOffsetOf $3 (fst $5) loc, loc }
 | postfix_expression DOT id_or_typename
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          MEMBEROF (fst $1, $3), loc}
+                                          MEMBEROF (fst $1, fst $3, loc), loc}
 | postfix_expression ARROW id_or_typename   
-                                        { let loc = makeLoc (startPos (smd $1)) (endPos (snd $3)) in
-                                          MEMBEROFPTR (fst $1, $3), loc}
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          MEMBEROFPTR (fst $1, fst $3, loc), loc}
 | postfix_expression PLUS_PLUS
                                         { let loc = makeLoc (startPos (snd $1)) (endPos $2) in
-                                          UNARY (POSINCR, fst $1), loc}
+                                          UNARY (POSINCR, fst $1, loc), loc}
 | postfix_expression MINUS_MINUS
                                         { let loc = makeLoc (startPos (snd $1)) (endPos $2) in
-                                          UNARY (POSDECR, fst $1), loc}
+                                          UNARY (POSDECR, fst $1, loc), loc}
 /* (* We handle GCC constructor expressions *) */
 | LPAREN type_name RPAREN LBRACE initializer_list_opt RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $6) in
-                                          CAST($2, COMPOUND_INIT $5), loc }
+                                          CAST($2, COMPOUND_INIT (fst $5), loc), loc }
 ;
 
 offsetof_member_designator:  /* GCC extension for __builtin_offsetof */
-| id_or_typename                        { VARIABLE ($1) }
-| offsetof_member_designator DOT IDENT  { MEMBEROF ($1, fst $3) }
+| id_or_typename                        { VARIABLE (fst $1, snd $1), snd $1 }
+| offsetof_member_designator DOT IDENT  { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          MEMBEROF (fst $1, fst $3, loc), loc }
 | offsetof_member_designator bracket_comma_expression
-                                        { INDEX ($1, smooth_expression (fst $2) (snd $2)) }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          INDEX (fst $1, smooth_expression (fst $2) (snd $2), loc), loc }
 ;
 
 unary_expression:   /*(* 6.5.3 *)*/
 | postfix_expression                    { $1 }
 | PLUS_PLUS unary_expression            { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
-                                          UNARY (PREINCR, fst $2), loc }
+                                          UNARY (PREINCR, fst $2, loc), loc }
 | MINUS_MINUS unary_expression          { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
-                                          UNARY (PREDECR, fst $2), loc }
+                                          UNARY (PREDECR, fst $2, loc), loc }
 | SIZEOF unary_expression               { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
-                                          EXPR_SIZEOF (fst $2), loc }
+                                          EXPR_SIZEOF (fst $2, loc), loc }
 | SIZEOF LPAREN type_name RPAREN        { let loc = makeLoc (startPos $1) (endPos $4) in
-                                          let b, d = $3 in TYPE_SIZEOF (b, d), loc }
+                                          let b, d, tl = $3 in TYPE_SIZEOF (b, d, tl), loc }
 | ALIGNOF unary_expression              { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
-                                          EXPR_ALIGNOF (fst $2), $1 }
+                                          EXPR_ALIGNOF (fst $2, loc), $1 }
 | ALIGNOF LPAREN type_name RPAREN       { let loc = makeLoc (startPos $1) (endPos $4) in
-                                          let b, d = $3 in TYPE_ALIGNOF (b, d), loc }
+                                          let b, d, tl = $3 in TYPE_ALIGNOF (b, d, tl), loc }
 | PLUS cast_expression                  { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
-                                          UNARY (PLUS, fst $2), loc }
+                                          UNARY (PLUS, fst $2, loc), loc }
 | MINUS cast_expression                 { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
-                                          UNARY (MINUS, fst $2), loc }
+                                          UNARY (MINUS, fst $2, loc), loc }
 | STAR cast_expression                  { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
-                                          UNARY (MEMOF, fst $2), loc }
+                                          UNARY (MEMOF, fst $2, loc), loc }
 | AND cast_expression                   { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
-                                          UNARY (ADDROF, fst $2), loc }
+                                          UNARY (ADDROF, fst $2, loc), loc }
 | EXCLAM cast_expression                { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
-                                          UNARY (NOT, fst $2), loc }
+                                          UNARY (NOT, fst $2, loc), loc }
 | TILDE cast_expression                 { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
-                                          UNARY (BNOT, fst $2), loc }
-| AND_AND IDENT                         { let loc = makeLoc (startPos $1) (endPos $2) in
-                                          LABELADDR (fst $2), loc }
+                                          UNARY (BNOT, fst $2, loc), loc }
+| AND_AND IDENT                         { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          LABELADDR (fst $2, loc), loc }
 ;
 
 cast_expression:   /*(* 6.5.4 *)*/
 | unary_expression                      { $1 }
 | LPAREN type_name RPAREN cast_expression
                                         { let loc = makeLoc (startPos $1) (endPos (snd $4)) in
-                                          CAST($2, SINGLE_INIT (fst $4)), loc }
+                                          CAST($2, SINGLE_INIT (fst $4), loc), loc }
 ;
 
 multiplicative_expression:  /*(* 6.5.5 *)*/
 | cast_expression                       { $1 }
 | multiplicative_expression STAR cast_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(MUL, fst $1, fst $3), loc }
+                                          BINARY(MUL, fst $1, fst $3, loc), loc }
 | multiplicative_expression SLASH cast_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(DIV, fst $1, fst $3), loc }
+                                          BINARY(DIV, fst $1, fst $3, loc), loc }
 | multiplicative_expression PERCENT cast_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(MOD, fst $1, fst $3), loc }
+                                          BINARY(MOD, fst $1, fst $3, loc), loc }
 ;
 
 additive_expression:  /*(* 6.5.6 *)*/
 | multiplicative_expression             { $1 }
 | additive_expression PLUS multiplicative_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(ADD, fst $1, fst $3), loc }
+                                          BINARY(ADD, fst $1, fst $3, loc), loc }
 | additive_expression MINUS multiplicative_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(SUB, fst $1, fst $3), loc }
+                                          BINARY(SUB, fst $1, fst $3, loc), loc }
 ;
 
 shift_expression:      /*(* 6.5.7 *)*/
 | additive_expression                   { $1 }
 | shift_expression  INF_INF additive_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(SHL, fst $1, fst $3), loc }
+                                          BINARY(SHL, fst $1, fst $3, loc), loc }
 | shift_expression  SUP_SUP additive_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(SHR, fst $1, fst $3), loc }
+                                          BINARY(SHR, fst $1, fst $3, loc), loc }
 ;
 
 relational_expression:   /*(* 6.5.8 *)*/
 | shift_expression                      { $1 }
 | relational_expression INF shift_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(LT, fst $1, fst $3), loc }
+                                          BINARY(LT, fst $1, fst $3, loc), loc }
 | relational_expression SUP shift_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(GT, fst $1, fst $3), loc }
+                                          BINARY(GT, fst $1, fst $3, loc), loc }
 | relational_expression INF_EQ shift_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(LE, fst $1, fst $3), loc }
+                                          BINARY(LE, fst $1, fst $3, loc), loc }
 | relational_expression SUP_EQ shift_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(GE, fst $1, fst $3), loc }
+                                          BINARY(GE, fst $1, fst $3, loc), loc }
 ;
 
 equality_expression:   /*(* 6.5.9 *)*/
 | relational_expression                 { $1 }
 | equality_expression EQ_EQ relational_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(EQ, fst $1, fst $3), loc }
+                                          BINARY(EQ, fst $1, fst $3, loc), loc }
 | equality_expression EXCLAM_EQ relational_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(NE, fst $1, fst $3), loc }
+                                          BINARY(NE, fst $1, fst $3, loc), loc }
 ;
 
 
@@ -615,42 +622,42 @@ bitwise_and_expression:   /*(* 6.5.10 *)*/
 | equality_expression                   { $1 }
 | bitwise_and_expression AND equality_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(BAND, fst $1, fst $3), loc }
+                                          BINARY(BAND, fst $1, fst $3, loc), loc }
 ;
 
 bitwise_xor_expression:   /*(* 6.5.11 *)*/
 | bitwise_and_expression                { $1 }
 | bitwise_xor_expression CIRC bitwise_and_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(XOR, fst $1, fst $3), loc }
+                                          BINARY(XOR, fst $1, fst $3, loc), loc }
 ;
 
 bitwise_or_expression:   /*(* 6.5.12 *)*/
 | bitwise_xor_expression                { $1 } 
 | bitwise_or_expression PIPE bitwise_xor_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(BOR, fst $1, fst $3), loc }
+                                          BINARY(BOR, fst $1, fst $3, loc), loc }
 ;
 
 logical_and_expression:   /*(* 6.5.13 *)*/
 | bitwise_or_expression                 { $1 }
 | logical_and_expression AND_AND bitwise_or_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(AND, fst $1, fst $3), loc }
+                                          BINARY(AND, fst $1, fst $3, loc), loc }
 ;
 
 logical_or_expression:   /*(* 6.5.14 *)*/
 | logical_and_expression                { $1 }
 | logical_or_expression PIPE_PIPE logical_and_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(OR, fst $1, fst $3), loc }
+                                          BINARY(OR, fst $1, fst $3, loc), loc }
 ;
 
 conditional_expression:    /*(* 6.5.15 *)*/
 | logical_or_expression                 { $1 }
 | logical_or_expression QUEST opt_expression COLON conditional_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $5)) in
-                                          QUESTION (fst $1, $3, fst $5), loc }
+                                          QUESTION (fst $1, fst $3, fst $5, loc), loc }
 ;
 
 /*(* The C spec says that left-hand sides of assignment expressions are unary 
@@ -660,37 +667,37 @@ assignment_expression:     /*(* 6.5.16 *)*/
 | conditional_expression                { $1 }
 | cast_expression EQ assignment_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(ASSIGN, fst $1, fst $3), loc }
+                                          BINARY(ASSIGN, fst $1, fst $3, loc), loc }
 | cast_expression PLUS_EQ assignment_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(ADD_ASSIGN, fst $1, fst $3), loc }
+                                          BINARY(ADD_ASSIGN, fst $1, fst $3, loc), loc }
 | cast_expression MINUS_EQ assignment_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(SUB_ASSIGN, fst $1, fst $3), loc }
+                                          BINARY(SUB_ASSIGN, fst $1, fst $3, loc), loc }
 | cast_expression STAR_EQ assignment_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(MUL_ASSIGN, fst $1, fst $3), loc }
+                                          BINARY(MUL_ASSIGN, fst $1, fst $3, loc), loc }
 | cast_expression SLASH_EQ assignment_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(DIV_ASSIGN, fst $1, fst $3), loc }
+                                          BINARY(DIV_ASSIGN, fst $1, fst $3, loc), loc }
 | cast_expression PERCENT_EQ assignment_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(MOD_ASSIGN, fst $1, fst $3), loc }
+                                          BINARY(MOD_ASSIGN, fst $1, fst $3, loc), loc }
 | cast_expression AND_EQ assignment_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(BAND_ASSIGN, fst $1, fst $3), loc }
+                                          BINARY(BAND_ASSIGN, fst $1, fst $3, loc), loc }
 | cast_expression PIPE_EQ assignment_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(BOR_ASSIGN, fst $1, fst $3), loc }
+                                          BINARY(BOR_ASSIGN, fst $1, fst $3, loc), loc }
 | cast_expression CIRC_EQ assignment_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(XOR_ASSIGN, fst $1, fst $3), loc }
+                                          BINARY(XOR_ASSIGN, fst $1, fst $3, loc), loc }
 | cast_expression INF_INF_EQ assignment_expression  
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(SHL_ASSIGN, fst $1, fst $3), loc }
+                                          BINARY(SHL_ASSIGN, fst $1, fst $3, loc), loc }
 | cast_expression SUP_SUP_EQ assignment_expression
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          BINARY(SHR_ASSIGN, fst $1, fst $3), loc }
+                                          BINARY(SHR_ASSIGN, fst $1, fst $3, loc), loc }
 ;
 
 expression:           /*(* 6.5.17 *)*/
@@ -721,7 +728,7 @@ string_constant:
 
 one_string_constant:
   /* Don't concat multiple strings.  For asm templates. */
-  CST_STRING                            { intlist_to_string (fst $1) }
+  CST_STRING                            { intlist_to_string (fst $1), snd $1 }
 ;
 
 string_list:
@@ -751,26 +758,30 @@ one_string:
 ;
 
 init_expression:
-  expression                            { SINGLE_INIT (fst $1) }
-| LBRACE initializer_list_opt RBRACE    { COMPOUND_INIT $2 }
+  expression                            { SINGLE_INIT (fst $1), snd $1 }
+| LBRACE initializer_list_opt RBRACE    { let loc = makeLoc (startPos $1) (endPos $3) in
+                                          COMPOUND_INIT (fst $2), loc }
 
 initializer_list:    /* ISO 6.7.8. Allow a trailing COMMA */
-  initializer                           { [$1] }
+  initializer                           { [fst $1], snd $1 }
 | initializer COMMA initializer_list_opt
-                                        { $1 :: $3 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          (fst $1) :: (fst $3), loc }
 ;
 
 initializer_list_opt:
-  /* empty */                           { [] }
+  /* empty */                           { [], currentLoc () }
 | initializer_list                      { $1 }
 ;
 
 initializer: 
   init_designators eq_opt init_expression
-                                        { ($1, $3) }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          (fst $1, fst $3), loc }
 | gcc_init_designators init_expression
-                                        { ($1, $2) }
-| init_expression                       { (NEXT_INIT, $1) }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          (fst $1, fst $2), loc }
+| init_expression                       { (NEXT_INIT, fst $1), snd $1 }
 ;
 
 eq_opt: 
@@ -778,31 +789,38 @@ eq_opt:
   /*(* GCC allows missing = *)*/
 | /*(* empty *)*/                       { () }
 ;
+
 init_designators: 
   DOT id_or_typename init_designators_opt
-                                        { INFIELD_INIT($2, $3) }
+                                        { let loc = makeLoc (startPos $1) (endPos (snd $3)) in
+                                          INFIELD_INIT(fst $2, fst $3), loc }
 | LBRACKET  expression RBRACKET init_designators_opt
-                                        { ATINDEX_INIT(fst $2, $4) }
+                                        { let loc = makeLoc (startPos $1) (endPos (snd $4)) in
+                                          ATINDEX_INIT(fst $2, fst $4), loc }
 | LBRACKET  expression ELLIPSIS expression RBRACKET
-                                        { ATINDEXRANGE_INIT(fst $2, fst $4) }
-;         
+                                        { let loc = makeLoc (startPos $1) (endPos $5) in
+                                          ATINDEXRANGE_INIT(fst $2, fst $4), loc }
+;
+
 init_designators_opt:
-  /* empty */                           { NEXT_INIT }
+  /* empty */                           { NEXT_INIT, currentLoc () }
 | init_designators                      { $1 }
 ;
 
 gcc_init_designators:  /*(* GCC supports these strange things *)*/
-  id_or_typename COLON                  { INFIELD_INIT($1, NEXT_INIT) }
+  id_or_typename COLON                  { let loc = makeLoc (startPos (snd $1)) (endPos $2) in
+                                          INFIELD_INIT(fst $1, NEXT_INIT), loc }
 ;
 
 arguments: 
-  /* empty */                           { [] }
-| comma_expression                      { fst $1 }
+  /* empty */                           { [], currentLoc () }
+| comma_expression                      { $1 }
 ;
 
 opt_expression:
-  /* empty */                           { NOTHING }
-| comma_expression                      { smooth_expression (fst $1) }
+  /* empty */                           { NOTHING, currentLoc () }
+| comma_expression                      { let es, loc = $1 in
+                                          smooth_expression es loc, loc }
 ;
 
 comma_expression:
@@ -814,8 +832,9 @@ comma_expression:
 ;
 
 comma_expression_opt:
-  /* empty */                           { NOTHING }
-| comma_expression                      { smooth_expression (fst $1) }
+  /* empty */                           { NOTHING, currentLoc () }
+| comma_expression                      { let es, loc = $1 in
+                                          smooth_expression es loc, loc }
 ;
 
 paren_comma_expression:
@@ -836,7 +855,10 @@ block: /* ISO 6.8.2 */
   block_begin local_labels block_attrs block_element_list RBRACE
                                         { !Lexerhack.pop_context();
                                           let loc = makeLoc (startPos $1) (endPos $5) in
-                                          ({blabels = $2; battrs = $3; bstmts = $4; bloc = loc}, loc) }
+                                          ({blabels = fst $2;
+                                            battrs = fst $3;
+                                            bstmts = fst $4;
+                                            bloc = loc}, loc) }
 | position error position RBRACE
                                         { let loc = makeLoc $1 (endPos $4) in
                                           ({blabels = []; battrs  = []; bstmts  = []; bloc = loc}, loc) }
@@ -847,56 +869,64 @@ block_begin:
 ;
 
 block_attrs:
-  /* empty */                           { [] }
-| BLOCKATTRIBUTE paren_attr_list_ne     { [("__blockattribute__", $2)] }
+  /* empty */                           { [], currentLoc () }
+| BLOCKATTRIBUTE paren_attr_list_ne     { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          [("__blockattribute__", fst $2)], loc }
 ;
 
 /* statements and declarations in a block, in any order (for C99 support) */
 block_element_list:
-  /* empty */                           { [] }
-| declaration block_element_list        { DEFINITION(fst $1) :: $2 }
-| statement block_element_list          { (fst $1) :: $2 }
+  /* empty */                           { [], currentLoc () }
+| declaration block_element_list        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          DEFINITION(fst $1) :: (fst $2), loc }
+| statement block_element_list          { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          (fst $1) :: (fst $2), loc }
 /*(* GCC accepts a label at the end of a block *)*/
-| IDENT COLON	                          { [ LABEL (fst $1, NOP (snd $1), snd $1)] }
-| pragma block_element_list             { $2 }
+| IDENT COLON                           { let l1 = snd $1 in
+                                          let loc = makeLoc (startPos l1) (endPos $2) in
+                                          [ LABEL (fst $1, NOP l1, loc)], loc }
+| pragma block_element_list             { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          fst $2, loc }
 ;
 
 local_labels:
-  /* empty */                           { [] }
-| LABEL__ local_label_names SEMICOLON local_labels  { $2 @ $4 }
+  /* empty */                           { [], currentLoc () }
+| LABEL__ local_label_names SEMICOLON local_labels 
+                                        { let loc = makeLoc (startPos $1) (endPos (snd $4)) in
+                                          (fst $2) @ (fst $4), loc }
 ;
 
 local_label_names: 
-  IDENT                                 { [ fst $1 ] }
-| IDENT COMMA local_label_names         { fst $1 :: $3 }
+  IDENT                                 { [ fst $1 ], snd $1 }
+| IDENT COMMA local_label_names         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          (fst $1) :: (fst $3), loc }
 ;
 
 statement:
   SEMICOLON                             { NOP ((*handleLoc*) $1), $1}
-| comma_expression SEMICOLON
-                                        { let loc1 = makeLoc (startPos (snd $1)) (startPos $2) in
-                                          let loc2 = makeLoc (startPos (snd $1)) (endPos $2) in
-                                          (COMPUTATION (smooth_expression (fst $1), loc1), loc2) }
+| comma_expression SEMICOLON            { let es, l1 = $1 in
+                                          let loc = makeLoc (startPos l1) (endPos $2) in
+                                          (COMPUTATION (smooth_expression es l1, loc), loc) }
 | block                                 { (BLOCK (fst $1, snd $1), snd $1) }
 | IF paren_comma_expression statement                    %prec IF
                                         { let loc = makeLoc (startPos $1) (endPos (snd $3)) in
-                                          let _ = print_endline ("== if : " ^ (string_of_loc loc)) in
-                                          (IF (smooth_expression (fst $2), fst $3, NOP loc, loc), loc) }
+                                          let es, l = $2 in
+                                          (IF (smooth_expression es l, fst $3, NOP loc, loc), loc) }
 | IF paren_comma_expression statement ELSE statement
                                         { let loc = makeLoc (startPos $1) (endPos (snd $5)) in
-                                          (IF (smooth_expression (fst $2), fst $3, fst $5, loc), loc) }
+                                          (IF (smooth_expression (fst $2) (snd $2), fst $3, fst $5, loc), loc) }
 | SWITCH paren_comma_expression statement
                                         { let loc = makeLoc (startPos $1) (endPos (snd $3)) in
-                                          (SWITCH (smooth_expression (fst $2), fst $3, loc), loc) }
+                                          (SWITCH (smooth_expression (fst $2) (snd $2), fst $3, loc), loc) }
 | WHILE paren_comma_expression hipspecs_opt statement
                                         { let loc = makeLoc (startPos $1) (endPos (snd $4)) in
-                                          (WHILE (smooth_expression (fst $2), fst $4, $3, loc), loc) }
+                                          (WHILE (smooth_expression (fst $2) (snd $2), fst $4, fst $3, loc), loc) }
 | DO hipspecs_opt statement WHILE paren_comma_expression SEMICOLON
                                         { let loc = makeLoc (startPos $1) (endPos $6) in
-                                          (DOWHILE (smooth_expression (fst $5), (fst $3), $2, loc), loc) }
+                                          (DOWHILE (smooth_expression (fst $5) (snd $5), fst $3, fst $2, loc), loc) }
 | FOR LPAREN for_clause opt_expression SEMICOLON opt_expression RPAREN hipspecs_opt statement
                                         { let loc = makeLoc (startPos $1) (endPos (snd $9)) in
-                                          (FOR ($3, $4, $6, fst $9, $8, loc), loc) }
+                                          (FOR (fst $3, fst $4, fst $6, fst $9, fst $8, loc), loc) }
 | IDENT COLON attribute_nocv_list statement
                                         { (* The only attribute that should appear here
                                           is "unused". For now, we drop this on the
@@ -914,7 +944,7 @@ statement:
 | RETURN SEMICOLON                      { let loc = makeLoc (startPos $1) (endPos $2) in
                                           (RETURN (NOTHING, loc), loc) }
 | RETURN comma_expression SEMICOLON     { let loc = makeLoc (startPos $1) (endPos $3) in
-                                          (RETURN (smooth_expression (fst $2), loc), loc) }
+                                          (RETURN (smooth_expression (fst $2) (snd $2), loc), loc) }
 | BREAK SEMICOLON                       { let loc = makeLoc (startPos $1) (endPos $2) in
                                           (BREAK loc, loc) }
 | CONTINUE SEMICOLON                    { let loc = makeLoc (startPos $1) (endPos $2) in
@@ -922,10 +952,10 @@ statement:
 | GOTO IDENT SEMICOLON                  { let loc = makeLoc (startPos $1) (endPos $3) in
                                           (GOTO (fst $2, loc), loc) }
 | GOTO STAR comma_expression SEMICOLON  { let loc = makeLoc (startPos $1) (endPos $4) in
-                                          (COMPGOTO (smooth_expression (fst $3), loc), loc) }
+                                          (COMPGOTO (smooth_expression (fst $3) (snd $3), loc), loc) }
 | ASM asmattr LPAREN asmtemplate asmoutputs RPAREN SEMICOLON
                                         { let loc = makeLoc (startPos $1) (endPos $7) in
-                                          (ASM ($2, $4, $5, loc), loc) }
+                                          (ASM ((fst $2), fst $4, fst $5, loc), loc) }
 | MSASM                                 { (ASM ([], [fst $1], None, (snd $1)), snd $1) }
 | TRY block EXCEPT paren_comma_expression block
                                         { let loc = makeLoc (startPos $1) (endPos (snd $5)) in
@@ -933,7 +963,7 @@ statement:
                                           let h, _ = $5 in
                                           if not !Cprint.msvcMode then 
                                             parse_error "try/except in GCC code";
-                                          (TRY_EXCEPT (b, COMMA (fst $4), h, loc), loc) }
+                                          (TRY_EXCEPT (b, COMMA (fst $4, snd $4), h, loc), loc) }
 | TRY block FINALLY block               { let loc = makeLoc (startPos $1) (endPos (snd $4)) in
                                           let b, _ = $2 in
                                           let h, _ = $4 in
@@ -951,51 +981,64 @@ statement:
 ;
 
 for_clause: 
-  opt_expression SEMICOLON              { FC_EXP $1 }
-| declaration                           { FC_DECL (fst $1) }
+  opt_expression SEMICOLON              { let loc = makeLoc (startPos (snd $1)) (endPos $2) in
+                                          FC_EXP (fst $1), loc }
+| declaration                           { FC_DECL (fst $1), snd $1 }
 ;
 
 declaration:                                /* ISO 6.7.*/
   decl_spec_list init_declarator_list SEMICOLON
                                         { let loc = makeLoc (startPos (snd $1)) (endPos $3) in
-                                          (doDeclaration loc (fst $1) $2, loc) }
+                                          (doDeclaration loc (fst $1) (fst $2), loc) }
 | decl_spec_list SEMICOLON
                                         { let loc = makeLoc (startPos (snd $1)) (endPos $2) in
                                           (doDeclaration loc (fst $1) [], loc) }
 ;
 init_declarator_list:                       /* ISO 6.7 */
-  init_declarator                       { [$1] }
+  init_declarator                       { [fst $1], snd $1 }
 | init_declarator COMMA init_declarator_list
-                                        { $1 :: $3 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          (fst $1) :: (fst $3), loc }
 
 ;
 init_declarator:                             /* ISO 6.7 */
-  declarator                            { ($1, NO_INIT) }
-| declarator EQ init_expression         { ($1, $3) }
+  declarator                            { (fst $1, NO_INIT), snd $1 }
+| declarator EQ init_expression         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          (fst $1, fst $3), loc }
 ;
 
 decl_spec_list:                         /* ISO 6.7 */
                                         /* ISO 6.7.1 */
-| TYPEDEF decl_spec_list_opt            { SpecTypedef :: $2, $1 }
-| EXTERN decl_spec_list_opt             { SpecStorage EXTERN :: $2, $1 }
-| STATIC  decl_spec_list_opt            { SpecStorage STATIC :: $2, $1 }
-| AUTO   decl_spec_list_opt             { SpecStorage AUTO :: $2, $1 }
-| REGISTER decl_spec_list_opt           { SpecStorage REGISTER :: $2, $1 }
+| TYPEDEF decl_spec_list_opt            { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          SpecTypedef :: (fst $2), loc }
+| EXTERN decl_spec_list_opt             { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          SpecStorage EXTERN :: (fst $2), loc }
+| STATIC  decl_spec_list_opt            { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          SpecStorage STATIC :: (fst $2), loc }
+| AUTO   decl_spec_list_opt             { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          SpecStorage AUTO :: (fst $2), loc }
+| REGISTER decl_spec_list_opt           { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          SpecStorage REGISTER :: (fst $2), loc }
                                         /* ISO 6.7.2 */
-| type_spec decl_spec_list_opt_no_named { SpecType (fst $1) :: $2, snd $1 }
+| type_spec decl_spec_list_opt_no_named { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          SpecType (fst $1) :: (fst $2), loc }
                                         /* ISO 6.7.4 */
-| INLINE decl_spec_list_opt             { SpecInline :: $2, $1 }
-| cvspec decl_spec_list_opt             { (fst $1) :: $2, snd $1 }
-| attribute_nocv decl_spec_list_opt     { SpecAttr (fst $1) :: $2, snd $1 }
+| INLINE decl_spec_list_opt             { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          SpecInline :: (fst $2), loc }
+| cvspec decl_spec_list_opt             { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          (fst $1) :: (fst $2), loc }
+| attribute_nocv decl_spec_list_opt     { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          SpecAttr (fst $1) :: (fst $2), loc }
 /* specifier pattern variable (must be last in spec list) */
-| AT_SPECIFIER LPAREN IDENT RPAREN      { [ SpecPattern(fst $3) ], $1 }
+| AT_SPECIFIER LPAREN IDENT RPAREN      { let loc = makeLoc (startPos $1) (endPos $4) in
+                                          [ SpecPattern(fst $3) ], loc }
 ;
 
 /* (* In most cases if we see a NAMED_TYPE we must shift it. Thus we declare 
     * NAMED_TYPE to have right associativity  *) */
 decl_spec_list_opt: 
-  /* empty */                           { [] } %prec NAMED_TYPE
-| decl_spec_list                        { fst $1 }
+  /* empty */                           { [], currentLoc () } %prec NAMED_TYPE
+| decl_spec_list                        { $1 }
 ;
 
 /* (* We add this separate rule to handle the special case when an appearance 
@@ -1003,8 +1046,8 @@ decl_spec_list_opt:
     * part of the declarator. IDENT has higher precedence than NAMED_TYPE  *)
  */
 decl_spec_list_opt_no_named: 
-  /* empty */                           { [] } %prec IDENT
-| decl_spec_list                        { fst $1 }
+  /* empty */                           { [], currentLoc () } %prec IDENT
+| decl_spec_list                        { $1 }
 ;
 
 type_spec:   /* ISO 6.7.2 */
@@ -1020,121 +1063,134 @@ type_spec:   /* ISO 6.7.2 */
 | SIGNED                                { Tsigned, $1 }
 | UNSIGNED                              { Tunsigned, $1 }
 | STRUCT id_or_typename                 { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
-                                          Tstruct ($2, None,    []), loc }
+                                          Tstruct (fst $2, None, []), loc }
 | STRUCT just_attributes id_or_typename { let loc = makeLoc (startPos $1) (endPos (snd $3)) in
-                                          Tstruct ($3, None,    $2), loc }
+                                          Tstruct (fst $3, None, fst $2), loc }
 | STRUCT id_or_typename LBRACE struct_decl_list RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $5) in
-                                          Tstruct ($2, Some $4, []), loc }
+                                          Tstruct (fst $2, Some (fst $4), []), loc }
 | STRUCT LBRACE struct_decl_list RBRACE { let loc = makeLoc (startPos $1) (endPos $4) in
-                                          Tstruct ("", Some $3, []), loc }
+                                          Tstruct ("", Some (fst $3), []), loc }
 | STRUCT just_attributes id_or_typename LBRACE struct_decl_list RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $6) in
-                                          Tstruct ($3, Some $5, $2), loc }
+                                          Tstruct (fst $3, Some (fst $5), fst $2), loc }
 | STRUCT just_attributes LBRACE struct_decl_list RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $5) in
-                                          Tstruct ("", Some $4, $2), loc }
+                                          Tstruct ("", Some (fst $4), fst $2), loc }
 | UNION id_or_typename                  { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
-                                          Tunion  ($2, None,    []), loc }
+                                          Tunion  (fst $2, None, []), loc }
 | UNION id_or_typename LBRACE struct_decl_list RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $5) in
-                                          Tunion  ($2, Some $4, []), loc }
+                                          Tunion  (fst $2, Some (fst $4), []), loc }
 | UNION LBRACE struct_decl_list RBRACE  { let loc = makeLoc (startPos $1) (endPos $4) in
-                                          Tunion  ("", Some $3, []), loc }
+                                          Tunion  ("", Some (fst $3), []), loc }
 | UNION  just_attributes id_or_typename LBRACE struct_decl_list RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $6) in
-                                          Tunion  ($3, Some $5, $2), loc }
+                                          Tunion  (fst $3, Some (fst $5), fst $2), loc }
 | UNION  just_attributes LBRACE struct_decl_list RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $5) in
-                                          Tunion  ("", Some $4, $2), loc }
+                                          Tunion  ("", Some (fst $4), fst $2), loc }
 | ENUM id_or_typename                   { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
-                                          Tenum   ($2, None,    []), loc }
+                                          Tenum   (fst $2, None, []), loc }
 | ENUM id_or_typename LBRACE enum_list maybecomma RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $6) in
-                                          Tenum   ($2, Some $4, []), loc }
+                                          Tenum   (fst $2, Some (fst $4), []), loc }
 | ENUM LBRACE enum_list maybecomma RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $5) in
-                                          Tenum   ("", Some $3, []), loc }
+                                          Tenum   ("", Some (fst $3), []), loc }
 | ENUM just_attributes id_or_typename LBRACE enum_list maybecomma RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $7) in
-                                          Tenum   ($3, Some $5, $2), loc }
+                                          Tenum   (fst $3, Some (fst $5), fst $2), loc }
 | ENUM just_attributes LBRACE enum_list maybecomma RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $6) in
-                                          Tenum   ("", Some $4, $2), loc }
+                                          Tenum   ("", Some (fst $4), fst $2), loc }
 | NAMED_TYPE                            { Tnamed (fst $1), snd $1 }
 | TYPEOF LPAREN expression RPAREN       { let loc = makeLoc (startPos $1) (endPos $4) in
                                           TtypeofE (fst $3), loc }
 | TYPEOF LPAREN type_name RPAREN        { let loc = makeLoc (startPos $1) (endPos $4) in
-                                          let s, d = $3 in
+                                          let s, d, _ = $3 in
                                           TtypeofT (s, d), loc }
 ;
 
 struct_decl_list: /* (* ISO 6.7.2. Except that we allow empty structs. We 
                       * also allow missing field names. *)
                    */
- /* empty */                            { [] }
+ /* empty */                            { [], currentLoc () }
 | decl_spec_list SEMICOLON struct_decl_list
-                                        { (fst $1, [(missingFieldDecl, None)]) :: $3 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          (fst $1, [(missingFieldDecl, None)]) :: (fst $3), loc }
 /*(* GCC allows extra semicolons *)*/
-| SEMICOLON struct_decl_list            { $2 }
+| SEMICOLON struct_decl_list            { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          fst $2, loc }
 | decl_spec_list field_decl_list SEMICOLON struct_decl_list
-                                        { (fst $1, $2) :: $4 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $4)) in
+                                          (fst $1, fst $2) :: (fst $4), loc }
 /*(* MSVC allows pragmas in strange places *)*/
-| pragma struct_decl_list               { $2 }
-
-| error SEMICOLON struct_decl_list      { $3 } 
+| pragma struct_decl_list               { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          fst $2, loc }
+| error SEMICOLON struct_decl_list      { let loc = makeLoc (startPos $2) (endPos (snd $3)) in
+                                          fst $3, loc }
 ;
 
 field_decl_list: /* (* ISO 6.7.2 *) */
-  field_decl                            { [$1] }
-| field_decl COMMA field_decl_list      { $1 :: $3 }
+  field_decl                            { [fst $1], snd $1 }
+| field_decl COMMA field_decl_list      { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          (fst $1) :: (fst $3), loc }
 ;
 
 field_decl: /* (* ISO 6.7.2. Except that we allow unnamed fields. *) */
-| declarator                            { ($1, None) }
+| declarator                            { (fst $1, None), snd $1 }
 | declarator COLON expression attributes
-                                        { let (n,decl,al,loc) = $1 in
-                                          let al' = al @ $4 in
-                                          ((n,decl,al',loc), Some (fst $3)) }
-| COLON expression                      { (missingFieldDecl, Some (fst $2)) }
+                                        { let (n,decl,al,l) = fst $1 in
+                                          let al' = al @ (fst $4) in
+                                          let loc = makeLoc (startPos (snd $1)) (endPos (snd $4)) in
+                                          ((n,decl,al',l), Some (fst $3)), loc }
+| COLON expression                      { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          (missingFieldDecl, Some (fst $2)), loc }
 ;
 
 enum_list: /* (* ISO 6.7.2.2 *) */
-  enumerator                            { [$1] }
-| enum_list COMMA enumerator            { $1 @ [$3] }
-| enum_list COMMA error                 { $1 } 
+  enumerator                            { [fst $1], snd $1 }
+| enum_list COMMA enumerator            { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          (fst $1) @ [fst $3], loc }
+| enum_list COMMA error                 { let loc = makeLoc (startPos (snd $1)) (endPos $2) in
+                                          fst $1, loc } 
 ;
 
 enumerator:  
-  IDENT                                 { (fst $1, NOTHING, snd $1) }
-| IDENT EQ expression                   { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
-                                          (fst $1, fst $3, loc) }
+  IDENT                                 { (fst $1, NOTHING, snd $1), snd $1 }
+| IDENT EQ expression                   { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          (fst $1, fst $3, loc), loc }
 ;
 
 declarator:  /* (* ISO 6.7.5. Plus Microsoft declarators.*) */
   pointer_opt direct_decl attributes_with_asm
-                                        { let (n, decl) = $2 in
+                                        { let (n, decl) = fst3 $2, snd3 $2 in
                                           let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
-                                          (n, applyPointer (fst $1) decl, $3, loc) }
+                                          (n, applyPointer (fst $1) decl, fst $3, loc), loc }
 ;
 
 direct_decl: /* (* ISO 6.7.5 *) */
                                    /* (* We want to be able to redefine named
                                     * types as variable names *) */
-| id_or_typename                        { ($1, JUSTBASE) }
-| LPAREN attributes declarator RPAREN   { let (n,decl,al,loc) = $3 in
-                                          (n, PARENTYPE($2,decl,al)) }
+| id_or_typename                        { (fst $1, JUSTBASE, snd $1) }
+| LPAREN attributes declarator RPAREN   { let (n,decl,al, _) = fst $3 in
+                                          let loc = makeLoc (startPos $1) (endPos $4) in
+                                          (n, PARENTYPE((fst $2),decl,al), loc) }
 | direct_decl LBRACKET attributes comma_expression_opt RBRACKET
-                                        { let (n, decl) = $1 in
-                                          (n, ARRAY(decl, $3, $4)) }
+                                        { let (n, decl, l1) = $1 in
+                                          let loc = makeLoc (startPos l1) (endPos $5) in
+                                          (n, ARRAY(decl, fst $3, fst $4), loc) }
 | direct_decl LBRACKET attributes error RBRACKET
-                                        { let (n, decl) = $1 in
-                                          (n, ARRAY(decl, $3, NOTHING)) }
+                                        { let (n, decl, l1) = $1 in
+                                          let loc = makeLoc (startPos l1) (endPos $5) in
+                                          (n, ARRAY(decl, fst $3, NOTHING), loc) }
 | direct_decl parameter_list_startscope rest_par_list RPAREN
-                                        { let (n, decl) = $1 in
+                                        { let (n, decl, l1) = $1 in
                                           let (params, isva) = $3 in
                                           !Lexerhack.pop_context ();
-                                          (n, PROTO(decl, params, isva)) }
+                                          let loc = makeLoc (startPos l1) (endPos $4) in
+                                          (n, PROTO(decl, params, isva), loc) }
 ;
 
 parameter_list_startscope: 
@@ -1144,38 +1200,43 @@ parameter_list_startscope:
 rest_par_list:
 | /* empty */                           { ([], false) }
 | parameter_decl rest_par_list1         { let (params, isva) = $2 in 
-                                          ($1 :: params, isva) }
+                                          ((fst $1) :: params, isva) }
 ;
 
 rest_par_list1: 
   /* empty */                           { ([], false) }
 | COMMA ELLIPSIS                        { ([], true) }
 | COMMA parameter_decl rest_par_list1   { let (params, isva) = $3 in 
-                                          ($2 :: params, isva) }
+                                          ((fst $2) :: params, isva) }
 ;
 
 parameter_decl: /* (* ISO 6.7.5 *) */
-  decl_spec_list declarator             { (fst $1, $2) }
-| decl_spec_list abstract_decl          { let d, a = $2 in
-                                          (fst $1, ("", d, a, cabslu)) }
-| decl_spec_list                        { (fst $1, ("", JUSTBASE, [], cabslu)) }
-| LPAREN parameter_decl RPAREN          { $2 } 
+  decl_spec_list declarator             { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          (fst $1, fst $2), loc }
+| decl_spec_list abstract_decl          { let d, a, l2 = $2 in
+                                          let loc = makeLoc (startPos (snd $1)) (endPos l2) in
+                                          (fst $1, ("", d, a, l2)), loc }
+| decl_spec_list                        { (fst $1, ("", JUSTBASE, [], cabslu)), snd $1 }
+| LPAREN parameter_decl RPAREN          { let loc = makeLoc (startPos $1) (endPos $3) in
+                                          (fst $2), loc } 
 ;
 
 /* (* Old style prototypes. Like a declarator *) */
 old_proto_decl:
-  pointer_opt direct_old_proto_decl     { let (n, decl, a) = $2 in
-                                          let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
-                                          (n, applyPointer (fst $1) decl, a, loc) }
+  pointer_opt direct_old_proto_decl     { let (n, decl, a, l2) = $2 in
+                                          let loc = makeLoc (startPos (snd $1)) (endPos l2) in
+                                          (n, applyPointer (fst $1) decl, a, l2), loc }
 ;
 
 direct_old_proto_decl:
   direct_decl LPAREN old_parameter_list_ne RPAREN old_pardef_list
-                                        { let par_decl, isva = doOldParDecl $3 $5 in
-                                          let n, decl = $1 in
-                                          (n, PROTO(decl, par_decl, isva), []) }
-| direct_decl LPAREN RPAREN             { let n, decl = $1 in
-                                          (n, PROTO(decl, [], false), []) }
+                                        { let par_decl, isva = doOldParDecl (fst $3) (fst $5) in
+                                          let n, decl, l1 = $1 in
+                                          let loc = makeLoc (startPos l1) (endPos (snd $5)) in
+                                          (n, PROTO(decl, par_decl, isva), [], loc) }
+| direct_decl LPAREN RPAREN             { let n, decl, l1 = $1 in
+                                          let loc = makeLoc (startPos l1) (endPos $3) in
+                                          (n, PROTO(decl, [], false), [], loc) }
 /* (* appears sometimesm but generates a shift-reduce conflict. *)
 | LPAREN STAR direct_decl LPAREN old_parameter_list_ne RPAREN RPAREN LPAREN RPAREN old_pardef_list
                                    { let par_decl, isva 
@@ -1187,88 +1248,100 @@ direct_old_proto_decl:
 ;
 
 old_parameter_list_ne:
-| IDENT                                 { [fst $1] }
-| IDENT COMMA old_parameter_list_ne     { let rest = $3 in
-                                          (fst $1 :: rest) }
+| IDENT                                 { [fst $1], snd $1 }
+| IDENT COMMA old_parameter_list_ne     { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          let rest = fst $3 in
+                                          (fst $1 :: rest), loc }
 ;
 
 old_pardef_list: 
-  /* empty */                           { ([], false) }
+  /* empty */                           { ([], false), currentLoc () }
 | decl_spec_list old_pardef SEMICOLON ELLIPSIS
-                                        { ([(fst $1, $2)], true) }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos $4) in
+                                          ([(fst $1, fst $2)], true), loc }
 | decl_spec_list old_pardef SEMICOLON old_pardef_list
-                                        { let rest, isva = $4 in
-                                          ((fst $1, $2) :: rest, isva) }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $4)) in
+                                          let rest, isva = fst $4 in
+                                          ((fst $1, fst $2) :: rest, isva), loc }
 ;
 
 old_pardef: 
-  declarator                            { [$1] }
-| declarator COMMA old_pardef           { $1 :: $3 }
-| error                                 { [] }
+  declarator                            { [fst $1], currentLoc () }
+| declarator COMMA old_pardef           { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          (fst $1) :: (fst $3), loc }
+| error                                 { [], currentLoc () }
 ;
 
 pointer: /* (* ISO 6.7.5 *) */ 
-  STAR attributes pointer_opt           { $2 :: fst $3, $1 }
+  STAR attributes pointer_opt           { let loc = makeLoc (startPos $1) (endPos (snd $3)) in
+                                          (fst $2) :: (fst $3), loc }
 ;
 
 pointer_opt:
-  /**/                                  { let l = currentLoc () in
-                                          ([], l) }
+  /**/                                  { [], currentLoc () }
 | pointer                               { $1 }
 ;
 
 type_name: /* (* ISO 6.7.6 *) */
-  decl_spec_list abstract_decl          { let d, a = $2 in
+  decl_spec_list abstract_decl          { let d, a, l2 = $2 in
                                           if a <> [] then begin
                                             parse_error "attributes in type name";
                                             raise Parsing.Parse_error
                                           end;
-                                          (fst $1, d) }
-| decl_spec_list                        { (fst $1, JUSTBASE) }
+                                          let loc = makeLoc (startPos (snd $1)) (endPos l2) in
+                                          (fst $1, d, loc) }
+| decl_spec_list                        { (fst $1, JUSTBASE, snd $1) }
 ;
 
 abstract_decl: /* (* ISO 6.7.6. *) */
   pointer_opt abs_direct_decl attributes
-                                        { applyPointer (fst $1) $2, $3 }
-| pointer                               { applyPointer (fst $1) JUSTBASE, [] }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          (applyPointer (fst $1) (fst $2), fst $3, loc) }
+| pointer                               { (applyPointer (fst $1) JUSTBASE, [], snd $1) }
 ;
 
 abs_direct_decl: /* (* ISO 6.7.6. We do not support optional declarator for 
                      * functions. Plus Microsoft attributes. See the 
                      * discussion for declarator. *) */
 | LPAREN attributes abstract_decl RPAREN
-                                        { let d, a = $3 in
-                                          PARENTYPE ($2, d, a) }
+                                        { let d, a, _ = $3 in
+                                          let loc = makeLoc (startPos $1) (endPos $4) in
+                                          PARENTYPE (fst $2, d, a), loc }
             
-| LPAREN error RPAREN                   { JUSTBASE } 
+| LPAREN error RPAREN                   { let loc = makeLoc (startPos $1) (endPos $3) in
+                                          JUSTBASE, loc } 
             
 | abs_direct_decl_opt LBRACKET comma_expression_opt RBRACKET
-                                        { ARRAY($1, [], $3) }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos $4) in
+                                          ARRAY(fst $1, [], fst $3), loc }
 /*(* The next should be abs_direct_decl_opt but we get conflicts *)*/
-| abs_direct_decl  parameter_list_startscope rest_par_list RPAREN
+| abs_direct_decl parameter_list_startscope rest_par_list RPAREN
                                         { let (params, isva) = $3 in
                                           !Lexerhack.pop_context ();
-                                          PROTO ($1, params, isva) } 
+                                          let loc = makeLoc (startPos (snd $1)) (endPos $4) in
+                                          PROTO (fst $1, params, isva), loc } 
 ;
 
 abs_direct_decl_opt:
   abs_direct_decl                       { $1 }
-| /* empty */                           { JUSTBASE }
+| /* empty */                           { JUSTBASE, currentLoc () }
 ;
 
 function_def:  /* (* ISO 6.9.1 *) */
-  function_def_start hipspecs_opt block { let (_, specs, decl) = $1 in
-                                          let loc = makeLoc (startPos (fst3 $1)) (endPos (snd $3)) in
+  function_def_start hipspecs_opt block { let (specs, decl, l1) = $1 in
+                                          let loc = makeLoc (startPos l1) (endPos (snd $3)) in
                                           currentFunctionName := "<__FUNCTION__ used outside any functions>";
                                           !Lexerhack.pop_context (); (* The context pushed by announceFunctionName *)
-                                           (doFunctionDef loc specs decl $2 (fst $3), loc) }
+                                           (doFunctionDef loc specs decl (fst $2) (fst $3), loc) }
 
 function_def_start:  /* (* ISO 6.9.1 *) */
-   decl_spec_list declarator            { announceFunctionName $2;
-                                          (snd $1, fst $1, $2) }
+   decl_spec_list declarator            { announceFunctionName (fst $2);
+                                          let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          (fst $1, fst $2, loc) }
 /* (* Old-style function prototype *) */
-| decl_spec_list old_proto_decl         { announceFunctionName $2;
-                                          (snd $1, fst $1, $2) }
+| decl_spec_list old_proto_decl         { announceFunctionName (fst $2);
+                                          let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          (fst $1, fst $2, loc) }
 /* (* New-style function that does not have a return type *) */
 | IDENT parameter_list_startscope rest_par_list RPAREN 
                                         { let (params, isva) = $3 in
@@ -1276,11 +1349,12 @@ function_def_start:  /* (* ISO 6.9.1 *) */
                                           announceFunctionName fdec;
                                           (* Default is int type *)
                                           let defSpec = [SpecType Tint] in
-                                          (snd $1, defSpec, fdec) }
+                                          let loc = makeLoc (startPos (snd $1)) (endPos $4) in
+                                          (defSpec, fdec, loc) }
 /* (* No return type and old-style parameter list *) */
 | IDENT LPAREN old_parameter_list_ne RPAREN old_pardef_list
                                         { (* Convert pardecl to new style *)
-                                          let pardecl, isva = doOldParDecl $3 $5 in
+                                          let pardecl, isva = doOldParDecl (fst $3) (fst $5) in
                                           (* Make the function declarator *)
                                           let fdec = (fst $1,
                                                       PROTO(JUSTBASE, pardecl,isva), 
@@ -1288,14 +1362,16 @@ function_def_start:  /* (* ISO 6.9.1 *) */
                                           announceFunctionName fdec;
                                           (* Default is int type *)
                                           let defSpec = [SpecType Tint] in
-                                          (snd $1, defSpec, fdec) }
+                                          let loc = makeLoc (startPos (snd $1)) (endPos (snd $5)) in
+                                          (defSpec, fdec, loc) }
 /* (* No return type and no parameters *) */
 | IDENT LPAREN RPAREN                   { (* Make the function declarator *)
                                           let fdec = (fst $1, PROTO(JUSTBASE, [], false), [], snd $1) in
                                           announceFunctionName fdec;
                                           (* Default is int type *)
                                           let defSpec = [SpecType Tint] in
-                                          (snd $1, defSpec, fdec) }
+                                          let loc = makeLoc (startPos (snd $1)) (endPos $3) in
+                                          (defSpec, fdec, loc) }
 ;
 
 /* const/volatile as type specifier elements */
@@ -1307,32 +1383,37 @@ cvspec:
 
 /*** GCC attributes ***/
 attributes:
-  /* empty */                           { [] }
-| attribute attributes                  { fst $1 :: $2 }
+  /* empty */                           { [], currentLoc () }
+| attribute attributes                  { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          (fst $1) :: (fst $2), loc }
 ;
 
 /* (* In some contexts we can have an inline assembly to specify the name to 
     * be used for a global. We treat this as a name attribute *) */
 attributes_with_asm:
-  /* empty */                           { [] }
-| attribute attributes_with_asm         { fst $1 :: $2 }
+  /* empty */                           { [], currentLoc () }
+| attribute attributes_with_asm         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          (fst $1) :: (fst $2), loc }
 | ASM LPAREN string_constant RPAREN attributes
-                                        { ("__asm__", [CONSTANT(CONST_STRING (fst $3))]) :: $5 }
+                                        { let loc = makeLoc (startPos $1) (endPos (snd $5)) in
+                                          ("__asm__", [CONSTANT(CONST_STRING (fst $3), snd $3)]) :: (fst $5), loc }
 ;
 
 /* things like __attribute__, but no const/volatile */
 attribute_nocv:
   ATTRIBUTE LPAREN paren_attr_list RPAREN
-                                        { ("__attribute__", $3), $1 }
+                                        { let loc = makeLoc (startPos $1) (endPos $4) in
+                                          ("__attribute__", fst $3), loc }
 /*(*
 | ATTRIBUTE_USED                      { ("__attribute__", 
                                              [ VARIABLE "used" ]), $1 }
 *)*/
-| DECLSPEC paren_attr_list_ne           { ("__declspec", $2), $1 }
+| DECLSPEC paren_attr_list_ne           { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          ("__declspec", fst $2), loc }
 | MSATTR                                { (fst $1, []), snd $1 }
                                         /* ISO 6.7.3 */
 | THREAD                                { ("__thread",[]), $1 }
-| QUALIFIER                             { ("__attribute__",[VARIABLE(fst $1)]),snd $1 }
+| QUALIFIER                             { ("__attribute__",[VARIABLE(fst $1, snd $1)]),snd $1 }
 ;
 
 attribute_nocv_list:
@@ -1353,61 +1434,74 @@ attribute:
  * Actually, a declspec can appear there as well (on MSVC) *)  */
 just_attribute:
   ATTRIBUTE LPAREN paren_attr_list RPAREN
-                                        { ("__attribute__", $3) }
-| DECLSPEC paren_attr_list_ne           { ("__declspec", $2) }
+                                        { let loc = makeLoc (startPos $1) (endPos $4) in
+                                          ("__attribute__", fst $3), loc }
+| DECLSPEC paren_attr_list_ne           { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          ("__declspec", fst $2), loc }
 ;
 
 /* this can't be empty, b/c I folded that possibility into the calling
  * productions to avoid some S/R conflicts */
 just_attributes:
-  just_attribute                        { [$1] }
-| just_attribute just_attributes        { $1 :: $2 }
+  just_attribute                        { [fst $1], snd $1 }
+| just_attribute just_attributes        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          (fst $1) :: (fst $2), loc }
 ;
 
 /** (* PRAGMAS and ATTRIBUTES *) ***/
 pragma: 
 | PRAGMA attr PRAGMA_EOL                { let loc = makeLoc (startPos $1) (endPos $3) in
-                                          (PRAGMA ($2, loc), loc) }
+                                          (PRAGMA (fst $2, loc), loc) }
 | PRAGMA attr SEMICOLON PRAGMA_EOL      { let loc = makeLoc (startPos $1) (endPos  $4) in
-                                          (PRAGMA ($2, loc), loc) }
-| PRAGMA_LINE                           { (PRAGMA (VARIABLE (fst $1), snd $1), snd $1) }
+                                          (PRAGMA (fst $2, loc), loc) }
+| PRAGMA_LINE                           { (PRAGMA (VARIABLE (fst $1, snd $1), snd $1), snd $1) }
 ;
 
 /* (* We want to allow certain strange things that occur in pragmas, so we 
     * cannot use directly the language of expressions *) */ 
 primary_attr: 
-  IDENT                                 { VARIABLE (fst $1) }
+  IDENT                                 { VARIABLE (fst $1, snd $1), snd $1 }
   /*(* The NAMED_TYPE here creates conflicts with IDENT *)*/
-| NAMED_TYPE                            { VARIABLE (fst $1) } 
-| LPAREN attr RPAREN                    { $2 } 
-| IDENT IDENT                           { CALL(VARIABLE (fst $1), [VARIABLE (fst $2)]) }
-| CST_INT                               { CONSTANT(CONST_INT (fst $1)) }
-| string_constant                       { CONSTANT(CONST_STRING (fst $1)) }
+| NAMED_TYPE                            { VARIABLE (fst $1, snd $1), snd $1 } 
+| LPAREN attr RPAREN                    { let loc = makeLoc (startPos $1) (endPos $3) in
+                                          fst $2, loc } 
+| IDENT IDENT                           { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          CALL(VARIABLE (fst $1, snd $1), [VARIABLE (fst $2, snd $1)], loc), loc }
+| CST_INT                               { CONSTANT(CONST_INT (fst $1), snd $1), snd $1 }
+| string_constant                       { CONSTANT(CONST_STRING (fst $1), snd $1), snd $1 }
                                            /*(* Const when it appears in 
                                             * attribute lists, is translated 
                                             * to aconst *)*/
-| CONST                                 { VARIABLE "aconst" }
-| IDENT COLON CST_INT                   { VARIABLE (fst $1 ^ ":" ^ fst $3) }
+| CONST                                 { VARIABLE ("aconst", $1), $1 }
+| IDENT COLON CST_INT                   { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          VARIABLE ((fst $1) ^ ":" ^ (fst $3), loc), loc }
 /*(* The following rule conflicts with the ? : attributes. We give it a very 
    * low priority *)*/
-| CST_INT COLON CST_INT                 { VARIABLE (fst $1 ^ ":" ^ fst $3) } 
-| DEFAULT COLON CST_INT                 { VARIABLE ("default:" ^ fst $3) }
+| CST_INT COLON CST_INT                 { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          VARIABLE ((fst $1) ^ ":" ^ (fst $3), loc), loc } 
+| DEFAULT COLON CST_INT                 { let loc = makeLoc (startPos $1) (endPos (snd $3)) in
+                                          VARIABLE ("default:" ^ (fst $3), loc), loc }
                                             /*(** GCC allows this as an 
                                              * attribute for functions, 
                                              * synonim for noreturn **)*/
-| VOLATILE                              { VARIABLE ("__noreturn__") }
+| VOLATILE                              { VARIABLE ("__noreturn__", $1), $1 }
 ;
 
 postfix_attr:
- primary_attr                           { $1 }
+  primary_attr                          { $1 }
                                          /* (* use a VARIABLE "" so that the 
                                              * parentheses are printed *) */
-| IDENT LPAREN  RPAREN                  { CALL(VARIABLE (fst $1), [VARIABLE ""]) }
-| IDENT paren_attr_list_ne              { CALL(VARIABLE (fst $1), $2) }
-
-| postfix_attr ARROW id_or_typename     { MEMBEROFPTR ($1, $3) } 
-| postfix_attr DOT id_or_typename       { MEMBEROF ($1, $3) }  
-| postfix_attr LBRACKET attr RBRACKET   { INDEX ($1, $3) }
+| IDENT LPAREN RPAREN                   { let loc = makeLoc (startPos (snd $1)) (endPos $3) in
+                                          let l1 = makeLoc (startPos $2) (endPos $3) in
+                                          CALL(VARIABLE (fst $1, snd $1), [VARIABLE ("", l1)], loc), loc }
+| IDENT paren_attr_list_ne              { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          CALL(VARIABLE (fst $1, snd $1), fst $2, loc), loc }
+| postfix_attr ARROW id_or_typename     { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          MEMBEROFPTR (fst $1, fst $3, loc), loc } 
+| postfix_attr DOT id_or_typename       { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          MEMBEROF (fst $1, fst $3, loc), loc }  
+| postfix_attr LBRACKET attr RBRACKET   { let loc = makeLoc (startPos (snd $1)) (endPos $4) in
+                                          INDEX (fst $1, fst $3, loc), loc }
 ;
 
 /*(* Since in attributes we use both IDENT and NAMED_TYPE as indentifiers, 
@@ -1415,16 +1509,28 @@ postfix_attr:
  * that their arguments be expressions, not attributes *)*/
 unary_attr:
   postfix_attr                          { $1 }
-| SIZEOF unary_expression               { EXPR_SIZEOF (fst $2) }
-| SIZEOF LPAREN type_name RPAREN        { let b, d = $3 in TYPE_SIZEOF (b, d) }
-| ALIGNOF unary_expression              { EXPR_ALIGNOF (fst $2) }
-| ALIGNOF LPAREN type_name RPAREN       { let b, d = $3 in TYPE_ALIGNOF (b, d) }
-| PLUS cast_attr                        { UNARY (PLUS, $2) }
-| MINUS cast_attr                       { UNARY (MINUS, $2) }
-| STAR cast_attr                        { UNARY (MEMOF, $2) }
-| AND cast_attr                         { UNARY (ADDROF, $2) }
-| EXCLAM cast_attr                      { UNARY (NOT, $2) }
-| TILDE cast_attr                       { UNARY (BNOT, $2) }
+| SIZEOF unary_expression               { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          EXPR_SIZEOF (fst $2, loc), loc }
+| SIZEOF LPAREN type_name RPAREN        { let b, d, _ = $3 in
+                                          let loc = makeLoc (startPos $1) (endPos $4) in
+                                          TYPE_SIZEOF (b, d, loc), loc }
+| ALIGNOF unary_expression              { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          EXPR_ALIGNOF (fst $2, loc), loc }
+| ALIGNOF LPAREN type_name RPAREN       { let b, d, _ = $3 in
+                                          let loc = makeLoc (startPos $1) (endPos $4) in
+                                          TYPE_ALIGNOF (b, d, loc), loc }
+| PLUS cast_attr                        { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          UNARY (PLUS, fst $2, loc), loc }
+| MINUS cast_attr                       { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          UNARY (MINUS, fst $2, loc), loc }
+| STAR cast_attr                        { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          UNARY (MEMOF, fst $2, loc), loc }
+| AND cast_attr                         { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          UNARY (ADDROF, fst $2, loc), loc }
+| EXCLAM cast_attr                      { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          UNARY (NOT, fst $2, loc), loc }
+| TILDE cast_attr                       { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          UNARY (BNOT, fst $2, loc), loc }
 ;
 
 cast_attr:
@@ -1433,75 +1539,94 @@ cast_attr:
 
 multiplicative_attr:
   cast_attr                             { $1 }
-| multiplicative_attr STAR cast_attr    { BINARY(MUL ,$1 , $3) }
-| multiplicative_attr SLASH cast_attr   { BINARY(DIV ,$1 , $3) }
-| multiplicative_attr PERCENT cast_attr { BINARY(MOD ,$1 , $3) }
+| multiplicative_attr STAR cast_attr    { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(MUL, fst $1 , fst $3, loc), loc }
+| multiplicative_attr SLASH cast_attr   { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(DIV, fst $1 , fst $3, loc), loc }
+| multiplicative_attr PERCENT cast_attr { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(MOD, fst $1 , fst $3, loc), loc }
 ;
 
 
 additive_attr:
   multiplicative_attr                   { $1 }
 | additive_attr PLUS multiplicative_attr
-                                        { BINARY(ADD ,$1 , $3) } 
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(ADD, fst $1 , fst $3, loc), loc } 
 | additive_attr MINUS multiplicative_attr
-                                        { BINARY(SUB ,$1 , $3) }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(SUB, fst $1 , fst $3, loc), loc }
 ;
 
 shift_attr:
   additive_attr                         { $1 }
-| shift_attr INF_INF additive_attr      { BINARY(SHL ,$1 , $3) }
-| shift_attr SUP_SUP additive_attr      { BINARY(SHR ,$1 , $3) }
+| shift_attr INF_INF additive_attr      { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(SHL, fst $1 , fst $3, loc), loc }
+| shift_attr SUP_SUP additive_attr      { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(SHR, fst $1 , fst $3, loc), loc }
 ;
 
 relational_attr:
   shift_attr                            { $1 }
-| relational_attr INF shift_attr        { BINARY(LT ,$1 , $3) }
-| relational_attr SUP shift_attr        { BINARY(GT ,$1 , $3) }
-| relational_attr INF_EQ shift_attr     { BINARY(LE ,$1 , $3) }
-| relational_attr SUP_EQ shift_attr     { BINARY(GE ,$1 , $3) }
+| relational_attr INF shift_attr        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(LT, fst $1 , fst $3, loc), loc }
+| relational_attr SUP shift_attr        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(GT, fst $1 , fst $3, loc), loc }
+| relational_attr INF_EQ shift_attr     { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(LE, fst $1 , fst $3, loc), loc }
+| relational_attr SUP_EQ shift_attr     { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(GE, fst $1 , fst $3, loc), loc }
 ;
 
 equality_attr:
   relational_attr                       { $1 }
-| equality_attr EQ_EQ relational_attr   { BINARY(EQ ,$1 , $3) }
+| equality_attr EQ_EQ relational_attr   { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(EQ, fst $1 , fst $3, loc), loc }
 | equality_attr EXCLAM_EQ relational_attr
-                                        { BINARY(NE ,$1 , $3) }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(NE, fst $1 , fst $3, loc), loc }
 ;
 
 
 bitwise_and_attr:
   equality_attr                         { $1 }
-| bitwise_and_attr AND equality_attr    { BINARY(BAND ,$1 , $3) }
+| bitwise_and_attr AND equality_attr    { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(BAND, fst $1 , fst $3, loc), loc }
 ;
 
 bitwise_xor_attr:
   bitwise_and_attr                      { $1 }
 | bitwise_xor_attr CIRC bitwise_and_attr
-                                        { BINARY(XOR ,$1 , $3) }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(XOR, fst $1, fst $3, loc), loc }
 ;
 
 bitwise_or_attr: 
   bitwise_xor_attr                      { $1 }
-| bitwise_or_attr PIPE bitwise_xor_attr { BINARY(BOR ,$1 , $3) }
+| bitwise_or_attr PIPE bitwise_xor_attr { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(BOR, fst $1, fst $3, loc), loc }
 ;
 
 logical_and_attr:
   bitwise_or_attr                       { $1 }
 | logical_and_attr AND_AND bitwise_or_attr
-                                        { BINARY(AND ,$1 , $3) }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(AND, fst $1, fst $3, loc), loc }
 ;
 
 logical_or_attr:
   logical_and_attr                      { $1 }
 | logical_or_attr PIPE_PIPE logical_and_attr
-                                        { BINARY(OR ,$1 , $3) }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(OR,fst $1 , fst $3, loc), loc }
 ;
 
 conditional_attr: 
   logical_or_attr                       { $1 }
 /* This is in conflict for now */
 | logical_or_attr QUEST conditional_attr COLON conditional_attr 
-                                        { QUESTION($1, $3, $5) }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $5)) in
+                                          QUESTION(fst $1, fst $3, fst $5, loc), loc }
 
 
 attr:
@@ -1509,89 +1634,106 @@ attr:
 ;
 
 attr_list_ne:
-| attr                                  { [$1] }
-| attr COMMA attr_list_ne               { $1 :: $3 }
-| error COMMA attr_list_ne              { $3 }
+| attr                                  { [fst $1], snd $1 }
+| attr COMMA attr_list_ne               { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          (fst $1) :: (fst $3), loc }
+| error COMMA attr_list_ne              { let loc = makeLoc (startPos $2) (endPos (snd $3)) in
+                                          fst $3, loc }
 ;
 
 attr_list:
-  /* empty */                           { [] }
+  /* empty */                           { [], currentLoc () }
 | attr_list_ne                          { $1 }
 ;
 
 paren_attr_list_ne: 
-  LPAREN attr_list_ne RPAREN            { $2 }
-| LPAREN error RPAREN                   { [] }
+  LPAREN attr_list_ne RPAREN            { let loc = makeLoc (startPos $1) (endPos $3) in
+                                          fst $2, loc }
+| LPAREN error RPAREN                   { let loc = makeLoc (startPos $1) (endPos $3) in
+                                          [], loc }
 ;
 
 paren_attr_list: 
-  LPAREN attr_list RPAREN               { $2 }
-| LPAREN error RPAREN                   { [] }
+  LPAREN attr_list RPAREN               { let loc = makeLoc (startPos $1) (endPos $3) in
+                                          fst $2, loc }
+| LPAREN error RPAREN                   { let loc = makeLoc (startPos $1) (endPos $3) in
+                                          [], loc }
 ;
 
 /*** GCC ASM instructions ***/
 asmattr:
-  /* empty */                           { [] }
-| VOLATILE  asmattr                     { ("volatile", []) :: $2 }
-| CONST asmattr                         { ("const", []) :: $2 } 
+  /* empty */                           { [], currentLoc () }
+| VOLATILE asmattr                      { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          ("volatile", []) :: (fst $2), loc }
+| CONST asmattr                         { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          ("const", []) :: (fst $2), loc } 
 ;
 
 asmtemplate: 
-  one_string_constant                   { [$1] }
-| one_string_constant asmtemplate       { $1 :: $2 }
+  one_string_constant                   { [fst $1], snd $1 }
+| one_string_constant asmtemplate       { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          (fst $1) :: (fst $2), loc }
 ;
 
 asmoutputs: 
-  /* empty */                           { None }
-| COLON asmoperands asminputs           { let (ins, clobs) = $3 in
-                                          Some {aoutputs = $2; ainputs = ins; aclobbers = clobs} }
+  /* empty */                           { None, currentLoc () }
+| COLON asmoperands asminputs           { let loc = makeLoc (startPos $1) (endPos (snd $3)) in
+                                          let (ins, clobs) = fst $3 in
+                                          Some {aoutputs = fst $2; ainputs = ins; aclobbers = clobs}, loc }
 ;
 
 asmoperands:
-     /* empty */                        { [] }
-| asmoperandsne                         { List.rev $1 }
+  /* empty */                           { [], currentLoc () }
+| asmoperandsne                         { List.rev (fst $1), snd $1 }
 ;
 
 asmoperandsne:
-  asmoperand                            { [$1] }
-| asmoperandsne COMMA asmoperand        { $3 :: $1 }
+  asmoperand                            { [fst $1], snd $1 }
+| asmoperandsne COMMA asmoperand        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          (fst $3) :: (fst $1), loc }
 ;
 
 asmoperand:
-     asmopname string_constant LPAREN expression RPAREN    { ($1, fst $2, fst $4) }
-| asmopname string_constant LPAREN error RPAREN         { ($1, fst $2, NOTHING ) } 
+  asmopname string_constant LPAREN expression RPAREN    { let loc = makeLoc (startPos (snd $1)) (endPos $5) in
+                                                          (fst $1, fst $2, fst $4), loc }
+| asmopname string_constant LPAREN error RPAREN         { let loc = makeLoc (startPos (snd $1)) (endPos $5) in
+                                                          (fst $1, fst $2, NOTHING), loc } 
 ;
 
 asminputs: 
-  /* empty */                           { ([], []) }
-| COLON asmoperands asmclobber          { ($2, $3) }
+  /* empty */                           { ([], []), currentLoc () }
+| COLON asmoperands asmclobber          { let loc = makeLoc (startPos $1) (endPos (snd $3)) in
+                                          (fst $2, fst $3), loc }
 ;
 
 asmopname:
-  /* empty */                           { None }
-| LBRACKET IDENT RBRACKET               { Some (fst $2) }
+  /* empty */                           { None, currentLoc () }
+| LBRACKET IDENT RBRACKET               { let loc = makeLoc (startPos $1) (endPos $3) in
+                                          Some (fst $2), loc }
 ;
 
 asmclobber:
-  /* empty */                           { [] }
-| COLON asmcloberlst_ne                 { $2 }
+  /* empty */                           { [], currentLoc () }
+| COLON asmcloberlst_ne                 { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          fst $2, loc }
 ;
 
 asmcloberlst_ne:
-  one_string_constant                   { [$1] }
+  one_string_constant                   { [fst $1], snd $1 }
 | one_string_constant COMMA asmcloberlst_ne
-                                        { $1 :: $3 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          (fst $1) :: (fst $3), loc }
 ;
 
 /** hip specification */
 hipspecs_opt:
-  /* empty */                           { Iformula.EList [] }
+  /* empty */                           { Iformula.EList [] , currentLoc ()}
 | HIPSPECS                              { let s, loc = $1 in
                                           let begin_offset = {Parser.line_num = loc.start_pos.lineno;
                                                               Parser.line_start = loc.start_pos.linestart;
                                                               Parser.byte_num = loc.start_pos.byteno} in
                                           let hspecs = Parser.parse_specs_string loc.start_pos.filename s begin_offset in
-                                          hspecs } 
+                                          hspecs, loc } 
 
 %%
 

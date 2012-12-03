@@ -37,7 +37,7 @@
  *)
 (* FrontC -- lexical analyzer
 **
-** 1.0	3.22.99	Hugues Cassé	First version.
+** 1.0	3.22.99	Hugues Cassï¿½	First version.
 ** 2.0  George Necula 12/12/00: Many extensions
 *)
 {
@@ -151,7 +151,7 @@ let init_lexicon _ =
       ("do", fun loc -> DO loc);  
       ("for", fun loc -> FOR loc);
       ("if", fun loc -> dbgToken (IF loc));
-      ("else", fun _ -> ELSE);
+      ("else", fun loc -> ELSE loc);
       (*** Implementation specific keywords ***)
       ("__signed__", fun loc -> SIGNED loc);
       ("__inline__", fun loc -> INLINE loc);
@@ -167,8 +167,8 @@ let init_lexicon _ =
 (*
       ("__attribute_used__", fun loc -> ATTRIBUTE_USED loc);
 *)
-      ("__blockattribute__", fun _ -> BLOCKATTRIBUTE);
-      ("__blockattribute", fun _ -> BLOCKATTRIBUTE);
+      ("__blockattribute__", fun loc -> BLOCKATTRIBUTE loc);
+      ("__blockattribute", fun loc -> BLOCKATTRIBUTE loc);
       ("__asm__", fun loc -> ASM loc);
       ("asm", fun loc -> ASM loc);
       ("__typeof__", fun loc -> TYPEOF loc);
@@ -182,46 +182,22 @@ let init_lexicon _ =
       ("__FUNCTION__", fun loc -> FUNCTION__ loc);
       ("__func__", fun loc -> FUNCTION__ loc); (* ISO 6.4.2.2 *)
       ("__PRETTY_FUNCTION__", fun loc -> PRETTY_FUNCTION__ loc);
-      ("__label__", fun _ -> LABEL__);
+      ("__label__", fun loc -> LABEL__ loc);
       (*** weimer: GCC arcana ***)
       ("__restrict", fun loc -> RESTRICT loc);
       ("__restrict__", fun loc -> RESTRICT loc);
       ("restrict", fun loc -> RESTRICT loc);
 (*      ("__extension__", EXTENSION); *)
       (**** MS VC ***)
-      ("__int64", fun _ -> let startPos = currentPos () in
-                           let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + 7} in
-                           let loc = Cabs.makeLoc startPos endPos in
-                           INT64 (loc));
+      ("__int64", fun loc -> INT64 loc);
       ("__int32", fun loc -> INT loc);
-      ("_cdecl",  fun _ -> let startPos = currentPos () in
-                           let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + 6} in
-                           let loc = Cabs.makeLoc startPos endPos in
-                           MSATTR ("_cdecl", loc)); 
-      ("__cdecl", fun _ -> let startPos = currentPos () in
-                           let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + 7} in
-                           let loc = Cabs.makeLoc startPos endPos in
-                           MSATTR ("__cdecl", loc));
-      ("_stdcall", fun _ -> let startPos = currentPos () in
-                            let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + 8} in
-                            let loc = Cabs.makeLoc startPos endPos in
-                            MSATTR ("_stdcall", loc)); 
-      ("__stdcall", fun _ -> let startPos = currentPos () in
-                             let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + 9} in
-                             let loc = Cabs.makeLoc startPos endPos in
-                             MSATTR ("__stdcall", loc));
-      ("_fastcall", fun _ -> let startPos = currentPos () in
-                             let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + 9} in
-                             let loc = Cabs.makeLoc startPos endPos in
-                             MSATTR ("_fastcall", loc)); 
-      ("__fastcall", fun _ -> let startPos = currentPos () in
-                              let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + 10} in
-                              let loc = Cabs.makeLoc startPos endPos in
-                              MSATTR ("__fastcall", loc));
-      ("__w64", fun _ -> let startPos = currentPos () in
-                         let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + 5} in
-                         let loc = Cabs.makeLoc startPos endPos in
-                         MSATTR("__w64", loc));
+      ("_cdecl",  fun loc -> MSATTR ("_cdecl", loc)); 
+      ("__cdecl", fun loc -> MSATTR ("__cdecl", loc));
+      ("_stdcall", fun loc -> MSATTR ("_stdcall", loc)); 
+      ("__stdcall", fun loc -> MSATTR ("__stdcall", loc));
+      ("_fastcall", fun loc -> MSATTR ("_fastcall", loc)); 
+      ("__fastcall", fun loc -> MSATTR ("__fastcall", loc));
+      ("__w64", fun loc -> MSATTR("__w64", loc));
       ("__declspec", fun loc -> DECLSPEC loc);
       ("__forceinline", fun loc -> INLINE loc); (* !! we turn forceinline 
                                                  * into inline *)
@@ -230,10 +206,7 @@ let init_lexicon _ =
       ("__finally", fun loc -> FINALLY loc);
       (* weimer: some files produced by 'GCC -E' expect this type to be
        * defined *)
-      ("__builtin_va_list", fun _ -> let startPos = currentPos () in
-                                     let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + 17} in
-                                     let loc = Cabs.makeLoc startPos endPos in
-                                     NAMED_TYPE ("__builtin_va_list", loc));
+      ("__builtin_va_list", fun loc -> NAMED_TYPE ("__builtin_va_list", loc));
       ("__builtin_va_arg", fun loc -> BUILTIN_VA_ARG loc);
       ("__builtin_types_compatible_p", fun loc -> BUILTIN_TYPES_COMPAT loc);
       ("__builtin_offsetof", fun loc -> BUILTIN_OFFSETOF loc);
@@ -585,96 +558,195 @@ rule initial = parse
                 let endPos = currentPos () in
                 let loc = Cabs.makeLoc startPos endPos in
                 CST_INT (s, loc)}
-| "!quit!"    { EOF}
-| "..."       { ELLIPSIS}
-| "+="        { PLUS_EQ}
-| "-="        { MINUS_EQ}
-| "*="        { STAR_EQ}
-| "/="        { SLASH_EQ}
-| "%="        { PERCENT_EQ}
-| "|="        { PIPE_EQ}
-| "&="        { AND_EQ}
-| "^="        { CIRC_EQ}
-| "<<="       { INF_INF_EQ}
-| ">>="       { SUP_SUP_EQ}
-| "<<"        { INF_INF}
-| ">>"        { SUP_SUP}
-| "=="        { EQ_EQ}
-| "!="        { EXCLAM_EQ}
-| "<="        { INF_EQ}
-| ">="        { SUP_EQ}
-| "="         { EQ}
-| "<"         { INF}
-| ">"         { SUP}
+| "!quit!"    { EOF  }
+| "..."       { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 3} in
+                let loc = Cabs.makeLoc startPos endPos in
+                ELLIPSIS loc }
+| "+="        { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
+                let loc = Cabs.makeLoc startPos endPos in
+                PLUS_EQ loc }
+| "-="        { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
+                let loc = Cabs.makeLoc startPos endPos in
+                MINUS_EQ loc }
+| "*="        { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
+                let loc = Cabs.makeLoc startPos endPos in
+                STAR_EQ loc }
+| "/="        { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
+                let loc = Cabs.makeLoc startPos endPos in
+                SLASH_EQ loc }
+| "%="        { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
+                let loc = Cabs.makeLoc startPos endPos in
+                PERCENT_EQ loc }
+| "|="        { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
+                let loc = Cabs.makeLoc startPos endPos in
+                PIPE_EQ loc }
+| "&="        { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
+                let loc = Cabs.makeLoc startPos endPos in
+                AND_EQ loc }
+| "^="        { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
+                let loc = Cabs.makeLoc startPos endPos in
+                CIRC_EQ loc }
+| "<<="       { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 3} in
+                let loc = Cabs.makeLoc startPos endPos in
+                INF_INF_EQ loc }
+| ">>="       { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 3} in
+                let loc = Cabs.makeLoc startPos endPos in
+                SUP_SUP_EQ loc }
+| "<<"        { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
+                let loc = Cabs.makeLoc startPos endPos in
+                INF_INF loc }
+| ">>"        { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
+                let loc = Cabs.makeLoc startPos endPos in
+                SUP_SUP loc }
+| "=="        { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
+                let loc = Cabs.makeLoc startPos endPos in
+                EQ_EQ loc }
+| "!="        { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
+                let loc = Cabs.makeLoc startPos endPos in
+                EXCLAM_EQ loc }
+| "<="        { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
+                let loc = Cabs.makeLoc startPos endPos in
+                INF_EQ loc }
+| ">="        { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
+                let loc = Cabs.makeLoc startPos endPos in
+                SUP_EQ loc }
+| "="         { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
+                let loc = Cabs.makeLoc startPos endPos in
+                EQ loc }
+| "<"         { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
+                let loc = Cabs.makeLoc startPos endPos in
+                INF loc }
+| ">"         { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
+                let loc = Cabs.makeLoc startPos endPos in
+                SUP loc }
 | "++"        { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
                 let loc = Cabs.makeLoc startPos endPos in
-                PLUS_PLUS (loc)}
+                PLUS_PLUS loc }
 | "--"        { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
                 let loc = Cabs.makeLoc startPos endPos in
-                MINUS_MINUS (loc)}
-| "->"        {ARROW}
+                MINUS_MINUS loc }
+| "->"        { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
+                let loc = Cabs.makeLoc startPos endPos in
+                ARROW loc }
 | '+'         { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
                 let loc = Cabs.makeLoc startPos endPos in
-                PLUS (loc)}
+                PLUS loc }
 | '-'         { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
                 let loc = Cabs.makeLoc startPos endPos in
-                MINUS (loc)}
+                MINUS loc }
 | '*'         { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
                 let loc = Cabs.makeLoc startPos endPos in
-                STAR (loc)}
-| '/'         { SLASH}
-| '%'         { PERCENT}
+                STAR loc }
+| '/'         { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
+                let loc = Cabs.makeLoc startPos endPos in
+                SLASH loc }
+| '%'         { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
+                let loc = Cabs.makeLoc startPos endPos in
+                PERCENT loc }
 | '!'         { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
                 let loc = Cabs.makeLoc startPos endPos in
-                EXCLAM (loc)}
+                EXCLAM loc }
 | "&&"        { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
                 let loc = Cabs.makeLoc startPos endPos in
-                AND_AND (loc)}
-| "||"        { PIPE_PIPE}
+                AND_AND loc }
+| "||"        { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 2} in
+                let loc = Cabs.makeLoc startPos endPos in
+                PIPE_PIPE loc }
 | '&'         { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
                 let loc = Cabs.makeLoc startPos endPos in
-                AND (loc)}
-| '|'         { PIPE}
-| '^'         { CIRC}
-| '?'         { QUEST}
-| ':'         { COLON}
+                AND loc }
+| '|'         { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
+                let loc = Cabs.makeLoc startPos endPos in
+                PIPE loc }
+| '^'         { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
+                let loc = Cabs.makeLoc startPos endPos in
+                CIRC loc }
+| '?'         { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
+                let loc = Cabs.makeLoc startPos endPos in
+                QUEST loc }
+| ':'         { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
+                let loc = Cabs.makeLoc startPos endPos in
+                COLON loc }
 | '~'         { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
                 let loc = Cabs.makeLoc startPos endPos in
-                TILDE (loc)}
+                TILDE loc }
 | '{'         { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
                 let loc = Cabs.makeLoc startPos endPos in
-                dbgToken (LBRACE (loc))}
+                dbgToken (LBRACE loc)}
 | '}'         { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
                 let loc = Cabs.makeLoc startPos endPos in
-                dbgToken (RBRACE (loc))}
-| '['         { LBRACKET}
-| ']'         { RBRACKET}
+                dbgToken (RBRACE loc)}
+| '['         { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
+                let loc = Cabs.makeLoc startPos endPos in
+                LBRACKET loc }
+| ']'         { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
+                let loc = Cabs.makeLoc startPos endPos in
+                RBRACKET loc }
 | '('         { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
                 let loc = Cabs.makeLoc startPos endPos in
                 dbgToken (LPAREN (loc)) }
-| ')'         { RPAREN}
+| ')'         { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
+                let loc = Cabs.makeLoc startPos endPos in
+                RPAREN loc }
 | ';'         { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
                 let loc = Cabs.makeLoc startPos endPos in
                 dbgToken (SEMICOLON (loc)) }
-| ','         { COMMA}
-| '.'         { DOT}
+| ','         { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
+                let loc = Cabs.makeLoc startPos endPos in
+                COMMA loc }
+| '.'         { let startPos = currentPos () in
+                let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 1} in
+                let loc = Cabs.makeLoc startPos endPos in
+                DOT loc }
 | "sizeof"    { let startPos = currentPos () in
                 let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 6} in
                 let loc = Cabs.makeLoc startPos endPos in
-                SIZEOF (loc)}
+                SIZEOF loc }
 | "__asm"     { if !Cprint.msvcMode then
                   let startPos = currentPos () in
                   let s = msasm lexbuf in
@@ -708,62 +780,59 @@ rule initial = parse
                      let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 5} in
                      let loc = Cabs.makeLoc startPos endPos in
                      AT_EXPR (loc)}
-| "@name"          { AT_NAME}
+| "@name"          { let startPos = currentPos () in
+                     let endPos = { startPos with Cabs.byteno = startPos.Cabs.byteno + 5} in
+                     let loc = Cabs.makeLoc startPos endPos in
+                     AT_NAME loc }
 
 (* __extension__ is a black. The parser runs into some conflicts if we let it
  * pass *)
-|               "__extension__"         {addWhite lexbuf; initial lexbuf }
-|		ident			{scan_ident (Lexing.lexeme lexbuf)}
-|		eof			{EOF}
-|		_			{E.parse_error "Invalid symbol"}
-and comment =
-    parse 	
-      "*/"			        { addWhite lexbuf; [] }
-(*|     '\n'                              { E.newline (); lex_unescaped comment lexbuf }*)
-| 		_ 			{ addWhite lexbuf; lex_comment comment lexbuf }
+| "__extension__"  { addWhite lexbuf; initial lexbuf }
+| ident            { scan_ident (Lexing.lexeme lexbuf) }
+| eof              { EOF }
+| _                { E.parse_error "Invalid symbol" }
 
+and comment = parse
+  "*/"          { addWhite lexbuf; [] }
+| _             { addWhite lexbuf; lex_comment comment lexbuf }
 
 and onelinecomment = parse
-    '\n'|eof    {addWhite lexbuf; []}
-|   _           {addWhite lexbuf; lex_comment onelinecomment lexbuf }
+  '\n'|eof      {addWhite lexbuf; []}
+| _             {addWhite lexbuf; lex_comment onelinecomment lexbuf }
 
 and matchingpars = parse
   '\n'          { addWhite lexbuf; E.newline (); matchingpars lexbuf }
 | blank         { addWhite lexbuf; matchingpars lexbuf }
 | '('           { addWhite lexbuf; incr matchingParsOpen; matchingpars lexbuf }
 | ')'           { addWhite lexbuf; decr matchingParsOpen;
-                  if !matchingParsOpen = 0 then 
-                     ()
-                  else 
-                     matchingpars lexbuf
-                }
-|  "/*"		{ addWhite lexbuf; let il = comment lexbuf in
+                  if !matchingParsOpen = 0 then ()
+                  else matchingpars lexbuf }
+| "/*"          { addWhite lexbuf; let il = comment lexbuf in
                   let sl = intlist_to_string il in
-		  addComment sl;
-                  matchingpars lexbuf}
-|  '"'		{ addWhite lexbuf; (* '"' *)
+                  addComment sl;
+                  matchingpars lexbuf }
+| '"'           { addWhite lexbuf; (* '"' *)
                   let _ = str lexbuf in 
-                  matchingpars lexbuf
-                 }
-| _              { addWhite lexbuf; matchingpars lexbuf }
+                  matchingpars lexbuf }
+| _             { addWhite lexbuf; matchingpars lexbuf }
 
 (* # <line number> <file name> ... *)
 and hash = parse
-  '\n'		{ addWhite lexbuf; E.newline (); initial lexbuf}
-| blank		{ addWhite lexbuf; hash lexbuf}
-| intnum	{ addWhite lexbuf; (* We are seeing a line number. This is the number for the 
+  '\n'          { addWhite lexbuf; E.newline (); initial lexbuf}
+| blank         { addWhite lexbuf; hash lexbuf}
+| intnum        { addWhite lexbuf; (* We are seeing a line number. This is the number for the 
                    * next line *)
-                 let s = Lexing.lexeme lexbuf in
-                 let lineno = try
-                   int_of_string s
-                 with Failure ("int_of_string") ->
-                   (* the int is too big. *)
-                   E.warn "Bad line number in preprocessed file: %s" s;
-                   (-1)
-                 in
+                  let s = Lexing.lexeme lexbuf in
+                  let lineno = try
+                    int_of_string s
+                  with Failure ("int_of_string") ->
+                    (* the int is too big. *)
+                    E.warn "Bad line number in preprocessed file: %s" s;
+                    (-1)
+                  in
                   E.setCurrentLine (lineno - 1);
                   (* A file name may follow *)
-		  file lexbuf }
+                  file lexbuf }
 | "line"        { addWhite lexbuf; hash lexbuf } (* MSVC line number info *)
                 (* For pragmas with irregular syntax, like #pragma warning, 
                  * we parse them as a whole line. *)
@@ -772,8 +841,7 @@ and hash = parse
                   let s = pragmaName ^ pragma lexbuf in
                   let endPos = currentPos () in
                   let loc = Cabs.makeLoc startPos endPos in
-                  PRAGMA_LINE (s, loc)
-                }
+                  PRAGMA_LINE (s, loc) }
 | "pragma"      { let startPos = currentPos () in
                   let endPos = {startPos with Cabs.byteno = startPos.Cabs.byteno + 6} in
                   let loc = Cabs.makeLoc startPos endPos in 
@@ -781,61 +849,61 @@ and hash = parse
 | _             { addWhite lexbuf; endline lexbuf}
 
 and file =  parse 
-        '\n'		        {addWhite lexbuf; E.newline (); initial lexbuf}
-|	blank			{addWhite lexbuf; file lexbuf}
-|	'"' [^ '\012' '\t' '"']* '"' 	{ addWhite lexbuf;  (* '"' *)
-                                   let n = Lexing.lexeme lexbuf in
-                                   let n1 = String.sub n 1 
-                                       ((String.length n) - 2) in
-                                   E.setCurrentFile n1;
-				 endline lexbuf}
+  '\n'          { addWhite lexbuf; E.newline (); initial lexbuf}
+| blank         { addWhite lexbuf; file lexbuf}
+| '"' [^ '\012' '\t' '"']* '"'
+                { addWhite lexbuf;  (* '"' *)
+                  let n = Lexing.lexeme lexbuf in
+                  let n1 = String.sub n 1 ((String.length n) - 2) in
+                  E.setCurrentFile n1;
+                  endline lexbuf }
 
-|	_			{addWhite lexbuf; endline lexbuf}
+| _             { addWhite lexbuf; endline lexbuf }
 
 and endline = parse 
-        '\n' 			{ addWhite lexbuf; E.newline (); initial lexbuf}
-|   eof                         { EOF }
-|	_			{ addWhite lexbuf; endline lexbuf}
+  '\n'          { addWhite lexbuf; E.newline (); initial lexbuf }
+| eof           { EOF }
+| _             { addWhite lexbuf; endline lexbuf }
 
 and pragma = parse
-   '\n'                 { E.newline (); "" }
-|   _                   { let cur = Lexing.lexeme lexbuf in 
-                          cur ^ (pragma lexbuf) }  
+  '\n'          { E.newline (); "" }
+| _             { let cur = Lexing.lexeme lexbuf in 
+                  cur ^ (pragma lexbuf) }  
 
 and str = parse
-        '"'             {[]} (* no nul terminiation in CST_STRING '"' *)
-|	hex_escape	{addLexeme lexbuf; lex_hex_escape str lexbuf}
-|	oct_escape	{addLexeme lexbuf; lex_oct_escape str lexbuf}
-|	escape		{addLexeme lexbuf; lex_simple_escape str lexbuf}
-|	_		{addLexeme lexbuf; lex_unescaped str lexbuf}
+  '"'           { [] } (* no nul terminiation in CST_STRING '"' *)
+| hex_escape    { addLexeme lexbuf; lex_hex_escape str lexbuf }
+| oct_escape    { addLexeme lexbuf; lex_oct_escape str lexbuf }
+| escape        { addLexeme lexbuf; lex_simple_escape str lexbuf }
+| _             { addLexeme lexbuf; lex_unescaped str lexbuf }
 
 and chr =  parse
-	'\''	        {[]}
-|	hex_escape	{lex_hex_escape chr lexbuf}
-|	oct_escape	{lex_oct_escape chr lexbuf}
-|	escape		{lex_simple_escape chr lexbuf}
-|	_		{lex_unescaped chr lexbuf}
-	
+  '\''          { [] }
+| hex_escape    { lex_hex_escape chr lexbuf }
+| oct_escape    { lex_oct_escape chr lexbuf }
+| escape        { lex_simple_escape chr lexbuf }
+|  _            { lex_unescaped chr lexbuf }
+  
 and msasm = parse
-    blank               { msasm lexbuf }
-|   '{'                 { msasminbrace lexbuf }
-|   _                   { let cur = Lexing.lexeme lexbuf in 
-                          cur ^ (msasmnobrace lexbuf) }
+  blank         { msasm lexbuf }
+| '{'           { msasminbrace lexbuf }
+| _             { let cur = Lexing.lexeme lexbuf in 
+                  cur ^ (msasmnobrace lexbuf) }
 
 and msasminbrace = parse
-    '}'                 { "" }
-|   _                   { let cur = Lexing.lexeme lexbuf in 
-                          cur ^ (msasminbrace lexbuf) }  
-and msasmnobrace = parse
-   ['}' ';' '\n']       { lexbuf.Lexing.lex_curr_pos <- 
-                               lexbuf.Lexing.lex_curr_pos - 1;
-                          "" }
-|  "__asm"              { lexbuf.Lexing.lex_curr_pos <- 
-                               lexbuf.Lexing.lex_curr_pos - 5;
-                          "" }
-|  _                    { let cur = Lexing.lexeme lexbuf in 
+  '}'           { "" }
+| _             { let cur = Lexing.lexeme lexbuf in 
+                  cur ^ (msasminbrace lexbuf) }
 
-                          cur ^ (msasmnobrace lexbuf) }
+and msasmnobrace = parse
+ ['}' ';' '\n'] { lexbuf.Lexing.lex_curr_pos <- 
+                  lexbuf.Lexing.lex_curr_pos - 1;
+                  "" }
+| "__asm"       { lexbuf.Lexing.lex_curr_pos <- 
+                  lexbuf.Lexing.lex_curr_pos - 5;
+                  "" }
+| _             { let cur = Lexing.lexeme lexbuf in 
+                  cur ^ (msasmnobrace lexbuf) }
 
 {
 

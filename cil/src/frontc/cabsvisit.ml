@@ -488,11 +488,11 @@ and childrenExpression vis e =
       let e3' = ve e3 in
       if e1' != e1 || e2' != e2 || e3' != e3 then 
         QUESTION (e1', e2', e3', l) else e
-  | CAST ((s, dt), ie, l) -> 
+  | CAST ((s, dt, tl), ie, l) -> 
       let s' = visitCabsSpecifier vis s in
       let dt' = visitCabsDeclType vis false dt in
       let ie' = visitCabsInitExpression vis ie in
-      if s' != s || dt' != dt || ie' != ie then CAST ((s', dt'), ie', l) else e
+      if s' != s || dt' != dt || ie' != ie then CAST ((s', dt', tl), ie', l) else e
   | CALL (f, el, l) -> 
       let f' = ve f in
       let el' = mapNoCopy ve el in

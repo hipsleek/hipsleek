@@ -724,8 +724,8 @@ begin
       (ue p1 t1) @
       (ue p2 t2) @
       (ue p3 t3)
-  | CAST((pspec, ptype), piexpr, _),
-    CAST((tspec, ttype), tiexpr, _) ->
+  | CAST((pspec, ptype, _), piexpr, _),
+    CAST((tspec, ttype, _), tiexpr, _) ->
       (mustEq ptype ttype);
       (unifySpecifiers pspec tspec) @
       (unifyInitExpr piexpr tiexpr)

@@ -38,7 +38,7 @@
 (** This file was originally part of Hugues Casee's frontc 2.0, and has been 
  * extensively changed since. 
 **
-** 1.0	3.22.99	Hugues Cassé	First version.
+** 1.0	3.22.99	Hugues Cassï¿½	First version.
 ** 2.0  George Necula 12/12/00: Many extensions
  **)
 
@@ -266,7 +266,7 @@ and expression =
   | QUESTION of expression * expression * expression * cabsloc
 
    (* A CAST can actually be a constructor expression *)
-  | CAST of (specifier * decl_type) * init_expression * cabsloc
+  | CAST of (specifier * decl_type * cabsloc) * init_expression * cabsloc
 
     (* There is a special form of CALL in which the function called is
        __builtin_va_arg and the second argument is sizeof(T). This 
