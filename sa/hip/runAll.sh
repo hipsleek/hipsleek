@@ -14,9 +14,9 @@ echo "ll-append9.ss"
 ../../hip ll-append9.ss --sa-dangling --sa-inlining -cp-test cp/ll-append9.cp | grep Compare
 echo "ll-append10.ss"
 ../../hip ll-append10.ss --sa-dangling --sa-inlining -cp-test cp/ll-append10.cp | grep Compare
-echo "ll-app3.ss"
+echo "dangling/ll-app3.ss"
 ../../hip dangling/ll-app3.ss --sa-dangling --sa-inlining -cp-test cp/ll-app3.cp | grep Compare
-echo "ll-app4.ss"
+echo "dangling/ll-app4.ss"
 ../../hip dangling/ll-app4.ss --sa-dangling --sa-inlining -cp-test cp/ll-app4.cp | grep Compare
 echo "ex1.ss"
 ../../hip ex1.ss --sa-dangling -cp-test cp/ex1.cp | grep Compare
@@ -24,6 +24,14 @@ echo "ex1a.ss"
 ../../hip ex1a.ss --sa-dangling -cp-test cp/ex1a.cp | grep Compare
 echo "ll-get-next"
 ../../hip ll-get-next.ss --sa-dangling --sa-inlining -cp-test cp/ll-get-next.cp | grep Compare
+echo "dangling/get-next"
+../../hip dangling/get-next.ss --sa-dangling --sa-inlining -cp-test cp/get-next.cp | grep Compare
+echo "dangling/get-next2"
+../../hip dangling/get-next2.ss --sa-dangling --sa-inlining -cp-test cp/get-next2.cp | grep Compare
+echo "dangling/get-next3"
+../../hip dangling/get-next3.ss --sa-dangling --sa-inlining -cp-test cp/get-next3.cp | grep Compare
+echo "dangling/get-next4"
+../../hip dangling/get-next4.ss --sa-dangling --sa-inlining -cp-test cp/get-next4.cp | grep Compare
 echo "ll-get-next-next"
 ../../hip ll-get-next-next.ss --sa-dangling --sa-inlining -cp-test cp/ll-get-next-next.cp | grep Compare
 echo "ll-next2"
