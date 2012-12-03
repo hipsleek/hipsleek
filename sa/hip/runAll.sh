@@ -18,6 +18,12 @@ echo "dangling/ll-app3.ss"
 ../../hip dangling/ll-app3.ss --sa-dangling --sa-inlining -cp-test cp/ll-app3.cp | grep Compare
 echo "dangling/ll-app4.ss"
 ../../hip dangling/ll-app4.ss --sa-dangling --sa-inlining -cp-test cp/ll-app4.cp | grep Compare
+echo "dangling/ll-app5.ss"
+../../hip dangling/ll-app5.ss --sa-dangling --sa-inlining -cp-test cp/ll-app5.cp | grep Compare
+echo "dangling/ll-app6.ss"
+../../hip dangling/ll-app6.ss --sa-dangling --sa-inlining -cp-test cp/ll-app6.cp | grep Compare
+echo "dangling/ll-swap.ss"
+../../hip dangling/ll-swap.ss --sa-dangling --sa-inlining -cp-test cp/ll-swap.cp | grep Compare
 echo "ex1.ss"
 ../../hip ex1.ss --sa-dangling -cp-test cp/ex1.cp | grep Compare
 echo "ex1a.ss"
