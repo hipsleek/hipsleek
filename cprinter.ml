@@ -1056,6 +1056,7 @@ let pr_hrel_formula hf=
 		                           let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")")
     | _ -> report_error no_pos "Cprinter.pr_hrel_formula: can not happen"
 
+
 let rec prtt_pr_h_formula h = 
   let f_b e =  pr_bracket h_formula_wo_paren prtt_pr_h_formula e 
   in

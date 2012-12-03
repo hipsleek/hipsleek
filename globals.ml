@@ -107,6 +107,7 @@ let barrierT = Named "barrier"
 
 (*for heap predicate*)
 let hp_default_prefix_name = "HP_"
+let dang_hp_default_prefix_name = "DLING_"
 (*
   Data types for code gen
 *)
@@ -526,7 +527,13 @@ let show_diff = ref false
 
 let sa_print_inter = ref false
 
-let sa_en_norm = ref false
+let sa_en_norm = ref true
+
+let sa_en_split = ref false
+
+let sa_elim_dangling = ref false
+
+let sa_inlining = ref false
 
 let dis_sem = ref false
 

@@ -21,8 +21,11 @@ node get_next(ref node x)
  HP_526(res) * x'::node<val_36_533,next_37_514'>&
   next_37_514'=null --> G(x',res)&true]
 
- H(x_542) ::= x_542::node<val_36_510',HP_526_res_549>&true,
- G(x',res) ::= x'::node<val_36_533,next_37_514'>&next_37_514'=null & HP_526_r es_549=res
+[ H(x_542) ::= x_542::node<val_28_510',next_28_511'>@M * HP_526(next_28_511')&true,
+ G(x',res) ::= HP_537(res) * x'::node<val_28_533,next_29_514'>@M&next_29_514'=null,
+ HP_526(res) ::= HP_537(res)&true]
+
+ERROR : Why an extra HP_537?
 */
 {
   node tmp = x.next;

@@ -3289,6 +3289,33 @@ let extract_HRel_f (f0:formula) =
   in
   helper f0
 
+let extract_unk_hprel_x (f0:formula) =
+  let rec helper f=
+  match f with
+    | Base ({ formula_base_pure = p1;
+        formula_base_heap = h1;})
+    | Exists ({ formula_exists_pure = p1;
+        formula_exists_heap = h1;}) ->
+        (
+            if (CP.isConstTrue (MCP.pure_of_mix p1)) then
+              match h1 with
+                | HRel (hp, _, _ ) -> [hp]
+                | _ -> report_error no_pos "CF.extract_HRel"
+            else
+              report_error no_pos "extract_unk_hprel_f"
+        )
+    | Or {formula_or_f1 = f1;
+          formula_or_f2 = f2} ->
+        (helper f1) @ (helper f2)
+  in
+  helper f0
+
+let extract_unk_hprel (f0:formula) =
+  let pr1 = !print_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_1 "extract_unk_hprel" pr1 pr2
+      (fun _ ->  extract_unk_hprel_x f0) f0
+
 let extract_HRel_orig hf=
   match hf with
     | HRel (hp, eargs, p ) -> (hp, eargs,p)
@@ -3720,6 +3747,16 @@ and filter_vars_hf hf rvs=
     | HTrue
     | HFalse
     | HEmp -> hf
+
+let rec extract_pure (f0: formula)=
+  let rec helper f=
+   match f with
+      | Base fb -> (MCP.pure_of_mix fb.formula_base_pure)
+      | Or orf ->CP.disj_of_list [(helper orf.formula_or_f1); (helper orf.formula_or_f2)] no_pos
+      | Exists fe -> (MCP.pure_of_mix fe.formula_exists_pure)
+  in
+  helper f0
+
 
 let rec subst_hprel (f0: formula) from_hps to_hp=
   let rec helper f=
@@ -4415,6 +4452,7 @@ think it is used to instantiate when folding.
   es_infer_vars : CP.spec_var list; 
   es_infer_vars_rel : CP.spec_var list;
   es_infer_vars_sel_hp_rel: CP.spec_var list;
+  es_infer_vars_sel_post_hp_rel: CP.spec_var list;
   es_infer_hp_unk_map: (CP.spec_var*CP.xpure_view) list ;(*(CP.spec_var * CP.spec_var list) list;*)
   es_infer_vars_hp_rel : CP.spec_var list;
   (* input vars to denote vars already instantiated *)
@@ -4554,14 +4592,31 @@ let get_infer_vars_sel_hp_ctx ctx0=
   in
   helper ctx0
 
+let get_infer_vars_sel_post_hp_ctx ctx0=
+  let rec helper ctx=
+    match ctx with
+      | Ctx es -> es.es_infer_vars_sel_post_hp_rel
+      | OCtx (ctx1,ctx2) -> (helper ctx1)@(helper ctx2)
+  in
+  helper ctx0
+
 let get_infer_vars_sel_hp_branch_ctx (_,ctx)=
   get_infer_vars_sel_hp_ctx ctx
+
+let get_infer_vars_sel_post_hp_branch_ctx (_,ctx)=
+  get_infer_vars_sel_post_hp_ctx ctx
 
 let get_infer_vars_sel_hp_partial_ctx (_, br_list)=
   get_infer_vars_sel_hp_branch_ctx (List.hd  br_list)
 
+let get_infer_vars_sel_post_hp_partial_ctx (_, br_list)=
+  get_infer_vars_sel_post_hp_branch_ctx (List.hd  br_list)
+
 let get_infer_vars_sel_hp_partial_ctx_list ls=
   get_infer_vars_sel_hp_partial_ctx (List.hd ls)
+
+let get_infer_vars_sel_post_hp_partial_ctx_list ls=
+  get_infer_vars_sel_post_hp_partial_ctx (List.hd ls)
 
 let context_of_branch_ctx_list ls = 
   let rec helper ls = match ls with
@@ -4635,6 +4690,7 @@ let empty_es flowt grp_lbl pos =
   es_infer_vars_dead = [];
   es_infer_vars_rel = [];
   es_infer_vars_sel_hp_rel = [];
+  es_infer_vars_sel_post_hp_rel = [];
   es_infer_hp_unk_map = [];
   es_infer_vars_hp_rel = [];
   es_infer_heap = []; (* HTrue; *)
@@ -5655,6 +5711,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_infer_vars_rel = es.es_infer_vars_rel;
         es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
         es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
+        es_infer_vars_sel_post_hp_rel = es.es_infer_vars_sel_post_hp_rel;
         es_infer_hp_unk_map = es.es_infer_hp_unk_map;
         es_infer_vars_dead = es.es_infer_vars_dead;
         es_infer_heap = es.es_infer_heap;
@@ -7700,6 +7757,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
           es_infer_vars_rel = es.es_infer_vars_rel;
           es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
           es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
+          es_infer_vars_sel_post_hp_rel = es.es_infer_vars_sel_post_hp_rel;
           es_infer_hp_unk_map = es.es_infer_hp_unk_map;
           es_infer_heap = es.es_infer_heap;
           es_infer_pure = es.es_infer_pure;
