@@ -3,14 +3,22 @@ pred_prim lseg<high:int>
  inv high>=0.
 
 //lemma "R split" self::lseg<b> & q>=0 & b>q -> self::R<q> * self::R<b-q> .
+// b-q is not universal..
 
 lemma "R split" self::lseg<b> & q,r>=0 & b=q+r -> self::lseg<q> * self::lseg<r> .
 
 checkentail x::lseg<3> |- x::lseg<1>.
 print residue.
 
+checkentail x::lseg<3> |- x::lseg<3>.
+print residue.
+
+checkentail x::lseg<3> |- x::lseg<4>.
+print residue.
+
+
 /*
 
- lemma proving not working properly here!
+ PROBLEM --ufdp must not unfold primitive predicate
 
 */
