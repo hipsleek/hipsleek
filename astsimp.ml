@@ -3337,7 +3337,7 @@ and sub_type_x (t1 : typ) (t2 : typ) =
 
 and sub_type (t1 : typ) (t2 : typ) =
   let pr = string_of_typ in
-  Debug.ho_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2 
+  Debug.no_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2 
 
 (* TODO WN : NEED to re-check this function *)
 and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
@@ -4471,7 +4471,7 @@ and unify_type (k1 : spec_var_kind) (k2 : spec_var_kind) stab :
       spec_var_kind option =
   let pr = string_of_spec_var_kind in
   let pr2 = pr_option pr in
-  Debug.ho_2 "unify_type" pr pr pr2 (fun _ _ -> unify_type_x k1 k2 stab) k1 k2
+  Debug.no_2 "unify_type" pr pr pr2 (fun _ _ -> unify_type_x k1 k2 stab) k1 k2
 
 and unify_type_x (k1 : spec_var_kind) (k2 : spec_var_kind) stab : spec_var_kind option =
   unify_type_modify true k1 k2 stab

@@ -7,6 +7,6 @@ data cell2 {
 }.
 
 
-checkentail x::cell<_> * y::cell2<_> & x=y |- false.
+checkentail x::cell<_> * y::cell<_> & x=y |- false.
 
 

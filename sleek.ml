@@ -108,7 +108,7 @@ let parse_file (parse) (source_file : string) =
 	  | LemmaDef _ | Infer _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | PrintCmd _ | CmpCmd _ 
       | Time _ | EmptyCmd -> () in
   let proc_one_def c =
-    Debug.ho_1 "proc_one_def" string_of_command pr_none proc_one_def c in
+    Debug.no_1 "proc_one_def" string_of_command pr_none proc_one_def c in
   let proc_one_lemma c = 
     match c with
 	  | LemmaDef ldef -> process_lemma ldef
@@ -183,7 +183,7 @@ let main () =
     match !Scriptarguments.fe with
       | Scriptarguments.NativeFE -> NF.parse_slk x
       | Scriptarguments.XmlFE -> XF.parse x in
-  let parse x = Debug.ho_1 "parse" pr_id string_of_command parse x in
+  let parse x = Debug.no_1 "parse" pr_id string_of_command parse x in
   let buffer = Buffer.create 10240 in
   try
       if (!inter) then

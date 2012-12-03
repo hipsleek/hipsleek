@@ -1128,7 +1128,7 @@ and find_data_view_x (dl:ident list) (f:Iformula.struc_formula) pos :  (ident li
 and find_data_view (dl:ident list) (f:Iformula.struc_formula) pos :  (ident list) * (ident list) =
   let pr1 a= String.concat  "," a in
   let pr2 = !print_struc_formula in
-  Debug.ho_2 "find_data_view" pr1 pr2 (pr_pair pr1 pr1)
+  Debug.no_2 "find_data_view" pr1 pr2 (pr_pair pr1 pr1)
       (fun _ _ -> find_data_view_x dl f pos) dl f
 
 and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
@@ -1198,12 +1198,12 @@ and update_fixpt_x (vl:(view_decl * ident list *ident list) list)  =
 and update_fixpt (vl:(view_decl * ident list *ident list) list)  =
   let pr_idl = pr_list pr_id in
   let pr = pr_list (pr_triple !print_view_decl pr_idl pr_idl) in
-  Debug.ho_1 "update_fixpt" pr pr_none update_fixpt_x vl
+  Debug.no_1 "update_fixpt" pr pr_none update_fixpt_x vl
 
 and set_check_fixpt (data_decls : data_decl list) (view_decls: view_decl list)  =
   let pr = pr_list !print_data_decl in 
   let pr2 = pr_list !print_view_decl in 
-  Debug.ho_2 "set_check_fixpt" pr pr2 pr_none (fun _ _ -> set_check_fixpt_x data_decls view_decls )  data_decls view_decls
+  Debug.no_2 "set_check_fixpt" pr pr2 pr_none (fun _ _ -> set_check_fixpt_x data_decls view_decls )  data_decls view_decls
 
 and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl list)  =
   let vl = syn_data_name data_decls view_decls in

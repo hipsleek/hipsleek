@@ -243,7 +243,7 @@ let convert_pred_to_cast () =
   cprog := cprog5
 
 let convert_pred_to_cast () = 
-  Debug.to_1 "convert_pred_to_cast" pr_no pr_no convert_pred_to_cast ()
+  Debug.no_1 "convert_pred_to_cast" pr_no pr_no convert_pred_to_cast ()
 
 (* TODO: *)
 let process_func_def fdef =
