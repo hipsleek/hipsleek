@@ -754,7 +754,7 @@ struct
   let rec sub_type (t1 : typ) (t2 : typ) = 
     match t1,t2 with
       | UNK, _ -> true
-      | Named c1, Named c2 ->
+      | Named c1, Named c2 -> 
             if c1=c2 then true
             else if c1="" then true
             else exlist # sub_type_obj c1 c2

@@ -1068,47 +1068,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
   let compute_view_x_formula_x_op ()=
 	let pos = CF.pos_of_struc_formula vdef.C.view_formula in
 	let _=proving_loc # set pos in
-    (if n > 0 then
+    (if (n > 0 && not(vdef.C.view_is_prim)) then
       (		
-	      (* if !do_slicing && !multi_provers then                                                                           *)
-		  (* let rec trans_formula_to_memo = function                                                                        *)
-		  (*   | CF.Or ({ CF.formula_or_f1 = f1; CF.formula_or_f2 = f2 }) ->                                                 *)
-		  (*       let mpf1 = trans_formula_to_memo f1 in                                                                    *)
-		  (*       let mpf2 = trans_formula_to_memo f2 in                                                                    *)
-		  (*       mkOr_mems mpf1 mpf2                                                                                       *)
-		  (*   | CF.Base ({ CF.formula_base_pure = p }) -> p                                                                 *)
-		  (*   | CF.Exists ({ CF.formula_exists_pure = p }) -> p                                                             *)
-		  (* in                                                                                                              *)
-
-		  (* let rec trans_exists_to_base f = match f with                                                                   *)
-		  (*   | CF.Or o ->                                                                                                  *)
-		  (*       let ({ CF.formula_or_f1 = f1; CF.formula_or_f2 = f2 }) = o in                                             *)
-		  (*       let nf1 = trans_exists_to_base f1 in                                                                      *)
-		  (*       let nf2 = trans_exists_to_base f2 in                                                                      *)
-		  (*       CF.Or { o with CF.formula_or_f1 = nf1; CF.formula_or_f2 = nf2 }                                           *)
-		  (*   | CF.Base _ -> f                                                                                              *)
-		  (*   | CF.Exists ({ CF.formula_exists_qvars = qvars; CF.formula_exists_pure = p; CF.formula_exists_pos = pos }) -> *)
-		  (*       let np = memo_pure_push_exists_lhs qvars p in (* Not push Exists on linking vars at LHS *)                *)
-		  (*       CF.formula_of_mix_formula np pos                                                                          *)
-		  (* in                                                                                                              *)
-
-		  (* let (sxform', saddr_vars', sms) = Solver.xpure_symbolic_slicing prog (C.formula_of_unstruc_view_f vdef) in      *)
-		  (* let sxform = trans_exists_to_base sxform' in                                                                    *)
-		  
-		  (* let addr_vars = CP.remove_dups_svl saddr_vars' in                                                               *)
-		  (* let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in                                             *)
-		  (* let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) sxform pos in             *)
-		  (* let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in                            *)
-		  (* let _ = if not(CF.isFailCtx rs)                                                                                 *)
-          (*     then                                                                                                        *)
-		  (* let pxform = trans_formula_to_memo sxform in                                                                    *)
-		  (* (vdef.C.view_x_formula <- pxform;                                                                               *)
-          (*       vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv pxform;                                      *)
-          (*       vdef.C.view_addr_vars <- addr_vars;                                                                       *)
-          (*       vdef.C.view_baga <- (match sms.CF.mem_formula_mset with | [] -> [] | h::_ -> h) ;                         *)
-          (*       compute_view_x_formula prog vdef (n - 1))                                                                 *)
-          (*     else report_error pos "view formula does not entail supplied invariant\n" in ()                             *)
-	      (* else                                                                                                            *)
 		  let (xform', addr_vars', ms) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in	
 		  let addr_vars = CP.remove_dups_svl addr_vars' in
 		  let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
@@ -1226,6 +1187,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       let xpure_flag = TP.check_diff memo_pf_N memo_pf_P in
       let cvdef ={
           C.view_name = vdef.I.view_name;
+          C.view_is_prim = vdef.I.view_is_prim;
           C.view_vars = view_sv_vars;
           C.view_uni_vars = [];
           C.view_labels = vdef.I.view_labels;
@@ -3375,7 +3337,7 @@ and sub_type_x (t1 : typ) (t2 : typ) =
 
 and sub_type (t1 : typ) (t2 : typ) =
   let pr = string_of_typ in
-  Debug.no_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2 
+  Debug.ho_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2 
 
 (* TODO WN : NEED to re-check this function *)
 and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
@@ -4509,7 +4471,7 @@ and unify_type (k1 : spec_var_kind) (k2 : spec_var_kind) stab :
       spec_var_kind option =
   let pr = string_of_spec_var_kind in
   let pr2 = pr_option pr in
-  Debug.no_2 "unify_type" pr pr pr2 (fun _ _ -> unify_type_x k1 k2 stab) k1 k2
+  Debug.ho_2 "unify_type" pr pr pr2 (fun _ _ -> unify_type_x k1 k2 stab) k1 k2
 
 and unify_type_x (k1 : spec_var_kind) (k2 : spec_var_kind) stab : spec_var_kind option =
   unify_type_modify true k1 k2 stab

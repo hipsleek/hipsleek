@@ -56,6 +56,7 @@ and view_decl = { view_name : ident;
 		  view_labels : Label_only.spec_label list;
 		  view_modes : mode list;
 		  mutable view_typed_vars : (typ * ident) list;
+		  view_is_prim : bool;
 		  view_invariant : P.formula;
 		  view_formula : Iformula.struc_formula;
           view_inv_lock : F.formula option;
@@ -467,6 +468,7 @@ let bag_type = BagT Int
 let print_struc_formula = ref (fun (x:F.struc_formula) -> "Uninitialised printer")
 let print_h_formula = ref (fun (x:F.h_formula) -> "Uninitialised printer")
 let print_view_decl = ref (fun (x:view_decl) -> "Uninitialised printer")
+let print_data_decl = ref (fun (x:data_decl) -> "Uninitialised printer")
 
 
 let find_empty_static_specs iprog = 
@@ -1126,7 +1128,7 @@ and find_data_view_x (dl:ident list) (f:Iformula.struc_formula) pos :  (ident li
 and find_data_view (dl:ident list) (f:Iformula.struc_formula) pos :  (ident list) * (ident list) =
   let pr1 a= String.concat  "," a in
   let pr2 = !print_struc_formula in
-  Debug.no_2 "find_data_view" pr1 pr2 (pr_pair pr1 pr1)
+  Debug.ho_2 "find_data_view" pr1 pr2 (pr_pair pr1 pr1)
       (fun _ _ -> find_data_view_x dl f pos) dl f
 
 and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
@@ -1183,17 +1185,25 @@ and incr_fixpt_view (dl:data_decl list) (view_decls: view_decl list)  =
       let _ = update_fixpt vl in
       (List.hd view_decls).view_data_name
 
-and update_fixpt (vl:(view_decl * ident list *ident list) list)  = 
+and update_fixpt_x (vl:(view_decl * ident list *ident list) list)  = 
   List.iter (fun (v,a,tl) ->
 	  (* print_endline ("update_fixpt for " ^ v.view_name);
 		 print_endline ("Feasible self type: " ^ (String.concat "," a)); *)
       v.view_pt_by_self<-tl;
-      if (List.length a==0) then report_error no_pos ("self of "^(v.view_name)^" cannot have its type determined")
-      else v.view_data_name <- List.hd a) vl 
+      if (List.length a==0) then 
+        if v.view_is_prim then v.view_data_name <- ("_prim_pred_"^v.view_name) (* TODO WN : to add pred name *)
+        else report_error no_pos ("self of "^(v.view_name)^" cannot have its type determined")
+      else v.view_data_name <- List.hd a) vl
+
+and update_fixpt (vl:(view_decl * ident list *ident list) list)  =
+  let pr_idl = pr_list pr_id in
+  let pr = pr_list (pr_triple !print_view_decl pr_idl pr_idl) in
+  Debug.ho_1 "update_fixpt" pr pr_none update_fixpt_x vl
 
 and set_check_fixpt (data_decls : data_decl list) (view_decls: view_decl list)  =
-  let pr x = "?" in 
-  Debug.no_1 "set_check_fixpt" pr pr (fun _-> set_check_fixpt_x data_decls view_decls )  view_decls
+  let pr = pr_list !print_data_decl in 
+  let pr2 = pr_list !print_view_decl in 
+  Debug.ho_2 "set_check_fixpt" pr pr2 pr_none (fun _ _ -> set_check_fixpt_x data_decls view_decls )  data_decls view_decls
 
 and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl list)  =
   let vl = syn_data_name data_decls view_decls in

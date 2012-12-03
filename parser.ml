@@ -554,7 +554,8 @@ non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 
 non_empty_command:
     [[  t=data_decl           -> DataDef t
-      | `PRED;t=view_decl     -> PredDef t
+      | `PRED;t= view_decl     -> PredDef t
+	  | `PRED_PRIM;t=prim_view_decl     -> PredDef t
       | t=barrier_decl        -> BarrierCheck t
       | t = func_decl         -> FuncDef t
       | t = rel_decl          -> RelDef t
@@ -656,9 +657,18 @@ view_decl:
   [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock
       -> { vh with view_formula = (fst vb);
           view_invariant = oi; 
+          view_is_prim = false; 
           view_inv_lock = li;
           try_case_inference = (snd vb) } ]];
 
+prim_view_decl: 
+  [[ vh= view_header; oi= opt_inv; li= opt_inv_lock
+      -> { vh with 
+          (* view_formula = None; *)
+          view_invariant = oi; 
+          view_is_prim = true; 
+          view_inv_lock = li} ]];
+					
 opt_inv_lock: [[t=OPT inv_lock -> t]];
 
 inv_lock:
@@ -744,6 +754,7 @@ view_header:
           view_pt_by_self  = [];
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
           view_inv_lock = None;
+          view_is_prim = false;
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           try_case_inference = false;
 			}]];
@@ -2338,7 +2349,7 @@ END;;
 
 let parse_sleek n s = SHGram.parse sprog (PreCast.Loc.mk n) s
 let parse_sleek n s =
-  DD.no_1_loop "parse_sleek" (fun x -> x) (fun _ -> "?") (fun n -> parse_sleek n s) n
+  DD.ho_1_loop "parse_sleek" (fun x -> x) (pr_list string_of_command) (fun n -> parse_sleek n s) n
 let parse_hip n s =  SHGram.parse hprog (PreCast.Loc.mk n) s
 let parse_hip n s =
   DD.no_1_loop "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n

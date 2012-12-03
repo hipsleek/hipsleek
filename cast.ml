@@ -71,6 +71,7 @@ and view_decl = {
     view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
     view_labels : Label_only.spec_label list;
     view_modes : mode list;
+    view_is_prim : bool;
     mutable view_partially_bound_vars : bool list;
     mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
     view_data_name : ident;

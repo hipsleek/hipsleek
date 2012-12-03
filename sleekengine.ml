@@ -221,12 +221,17 @@ let process_pred_def_4_iast pdef =
 
 let convert_pred_to_cast () = 
   let tmp_views = (AS.order_views (iprog.I.prog_view_decls)) in
+  Debug.tinfo_pprint "after order_views" no_pos;
   let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in
+  Debug.tinfo_pprint "after check_fixpt" no_pos;
   iprog.I.prog_view_decls <- tmp_views;
   let cviews = List.map (AS.trans_view iprog) tmp_views in
+  Debug.tinfo_pprint "after trans_view" no_pos;
   let _ = !cprog.C.prog_view_decls <- cviews in
   let _ =  (List.map (fun vdef -> AS.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews) in
+  Debug.tinfo_pprint "after compute_view" no_pos;
   let _ = (List.map (fun vdef -> AS.set_materialized_prop vdef) cviews) in
+  Debug.tinfo_pprint "after materialzed_prop" no_pos;
   let cprog1 = AS.fill_base_case !cprog in
   let cprog2 = AS.sat_warnings cprog1 in        
   let cprog3 = if (!Globals.enable_case_inference or (not !Globals.dis_ps)(* !Globals.allow_pred_spec *)) 
@@ -238,7 +243,7 @@ let convert_pred_to_cast () =
   cprog := cprog5
 
 let convert_pred_to_cast () = 
-  Debug.no_1 "convert_pred_to_cast" pr_no pr_no convert_pred_to_cast ()
+  Debug.to_1 "convert_pred_to_cast" pr_no pr_no convert_pred_to_cast ()
 
 (* TODO: *)
 let process_func_def fdef =

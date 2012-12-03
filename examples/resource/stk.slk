@@ -1,4 +1,17 @@
+data cell{
+ int x;
+}.
+
+pred P<h:int> == self::cell<h> & h>=0
+ inv h>=0.
+
+// x::R<..>  "_prim_pred_R"
+// x::R<..> * y::G<..> & x=y
 pred_prim R<low:int, high:int> 
+ inv low<=high & high>=0.
+
+
+pred_prim Q<low:int, high:int> 
  inv low<=high & high>=0.
 
 lemma "R split" self::R<a,b> & b>=q & a-p<=b-q & q>=0 <-> self::R<p,q> * self::R<a-p,b-q> .
@@ -12,5 +25,8 @@ print residue.
 
 
 checkentail x::R<2,10> |- x::R<a,b>.
+print residue.
+
+checkentail x::R<2,10> * q::Q<3,5> & x=q |- x::R<3,5>.
 print residue.
 
