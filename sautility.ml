@@ -2661,7 +2661,8 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
       | (_,hrel,f)::tl->
           let hp,args = CF.extract_HRel hrel in
           if CP.eq_spec_var hp hp0 then
-            CF.extract_pure f
+            let ss = List.combine args args0 in
+            CP.subst ss (CF.extract_pure f)
           else lookup_hpdefs tl (hp0,args0)
   in
   let subst_xpure lhpdefs f0=

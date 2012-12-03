@@ -3,10 +3,8 @@ HeapPred HP_575(node2 a,node2 b).
 
 count:SUCCESS[
 ass [H1,G1][]:{
- H1(z)&z!=null --> z::node2<val_27_524',left_27_525',right_27_526'> *
-   HP_575(left_27_525',right_27_526')&true;
- HP_575(v_node2_27_527',right_27_582)&true --> H1(v_node2_27_527') *
-   HP_583(right_27_582)&true;
+ H1(z)&z!=null --> z::node2<val_27_524',left_27_525',right_27_526'> *  HP_575(left_27_525',right_27_526')&true;
+ HP_575(v_node2_27_527',right_27_582)&true --> H1(v_node2_27_527') *   HP_583(right_27_582)&true;
  HP_583(right_27_582)&true --> H1(right_27_582)&true;
  H1(z)&z=null --> emp&true;
  emp&z=null --> G1(z)&true;

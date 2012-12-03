@@ -12,7 +12,7 @@ ass [H1,G2,H1a][]:{
   x::node<_,b> * G2(b,y)&b!=null --> G2(x,y)
 }
 
-hpdefs [G2,H1,H1a][]:{
+hpdefs [G2,H1,H1a][H1a_y_654]:{
  H1a(y) --> emp&y=H1a_y_654;
  G2(x,y) --> x::node<_,p> * HP_2(p,y) & y= H1a_y_654;
  H1(x) --> x::node<_,p>*HP_1(p);

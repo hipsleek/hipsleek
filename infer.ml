@@ -1400,7 +1400,7 @@ let generate_xpure_view drop_hpargs total_unk_map=
 (*
 1.  H(x) --> x::node<_,p>: p is forwarded
 2.  H(x,y) --> x::node<_,p>: p and y are forwarded
-3.  x::<_,p> * H (p) --> G(x): p is NOT forwarded
+3.  x::<_,p> * H (p,p1) --> G(x): p and p1 are NOT forwarded
 3a. z::node2<_,l,r> * HP_577(l) * G1(r) --> G1(z) : l,r are NOT forwarded
 *)
 let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs_rest rhs_h_matched_set leqs reqs pos total_unk_map=
@@ -1419,17 +1419,37 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
                     if CP.mem_svl sv ptr_args then [hd.CF.h_formula_data_node]
                     else find_pto tl sv
     in
+    let rec find_pt_new cur_hds svl=
+      match cur_hds with
+        | [] -> None
+        | hd::tl -> let ptr_args = List.filter CP.is_node_typ hd.CF.h_formula_data_arguments in
+                    if (List.length svl = List.length ptr_args) && CP.diff_svl svl ptr_args = [] then
+                      Some hd.CF.h_formula_data_node
+                    else find_pt_new tl svl
+    in
     let process_one (hp,args)=
       if CP.mem_svl hp selected_hps then
         let not_fwd_slv = CP.remove_dups_svl (CP.diff_svl args (def_vs@rhs_args)) in
       (*check whether it is in form of lhs unfold*)
         let should_be_lhs_folded = List.map (fun sv -> sv,find_pto lhs_hds sv) not_fwd_slv in
-        let ls_fwd_svl = List.map (fun (sv,ptos) -> if ptos <> [] && CP.diff_svl ptos rhs_args = [] then [] else [sv])
-          should_be_lhs_folded in
-        (List.concat ls_fwd_svl)
+        let ls_fwd_svl = List.map (fun (sv,ptos) -> if ptos <> [] && CP.diff_svl ptos rhs_args = [] then [] else [sv]
+        )
+            should_be_lhs_folded in
+          (List.concat ls_fwd_svl)
       else []
     in
-    let ls_not_fwd_svl = List.map process_one ls_lhs_hpargs in
+    let process_one_new (hp,args)=
+      if CP.mem_svl hp selected_hps then
+        let opto = find_pt_new lhs_hds args in
+        match opto with
+          | Some pto ->
+           if CP.mem_svl pto rhs_args then [] else
+             let not_fwd_slv = CP.remove_dups_svl (CP.diff_svl args (def_vs@rhs_args)) in
+             not_fwd_slv
+          | None -> []
+      else []
+    in
+    let ls_not_fwd_svl = List.map process_one_new ls_lhs_hpargs in
     (*should separate list of list *)
     CP.remove_dups_svl (List.concat ls_not_fwd_svl)
   in
@@ -1543,13 +1563,14 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
     if CF.is_HRel n_unmatched then
       let rhs_hpargs = CF.extract_HRel n_unmatched in
       (*depend we want to get framing spec*)
-      let svl = (* if !Log.sleek_proving_kind = Log.POST then [] else *)
+      (*svl: framing heap*)
+      let svl = (* if proving_kind#string_of = "POST" then [] else *)
       (*since h_subst is not as expected we use closed set*)
             let closed_rhs_hpargs = SAU.find_close (snd rhs_hpargs) leqs in
             get_lhs_fold_fwd_svl selected_hps def_vs closed_rhs_hpargs lhds ls_lhp_args
       in
        (* let closed_svl = SAU.find_close svl leqs in *)
-       DD.ninfo_pprint ("svl: " ^ (!CP.print_svl svl)) pos;
+       DD.tinfo_pprint ("svl: " ^ (!CP.print_svl svl)) pos;
       let runk_map =lookup_eq_linking_svl rhs_hpargs total_unk_map selected_hp_args in
       (svl,[fst rhs_hpargs], runk_map)
     else

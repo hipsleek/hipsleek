@@ -3295,38 +3295,49 @@ let generate_hp_def_from_unk_hps_new_x unk_hpargs hp_defs post_hps gunk_rels=
             end
     in
     let mk_def (hp1,hp2,args)=
-      (CP.HPRelDefn hp1, (CF.HRel (hp1, List.map (fun x -> CP.mkVar x no_pos) args,no_pos)), SAU.mkHRel_f hp2 args no_pos)
+      (hp1,(CP.HPRelDefn hp1, (CF.HRel (hp1, List.map (fun x -> CP.mkVar x no_pos) args,no_pos)), SAU.mkHRel_f hp2 args no_pos))
     in
     let new_unk_rels = ex_post_hps unk_rels [] in
-    List.map mk_def new_unk_rels
+    List.split (List.map mk_def new_unk_rels)
+  in
+  let mk_unkdef pos (hp,args)=
+    let hp_name = dang_hp_default_prefix_name ^ CP.name_of_spec_var hp in
+    let ps,fr_args =
+      List.split (List.map (fun sv ->
+          let fr_sv = CP.fresh_spec_var_prefix hp_name sv in
+          (CP.mkPtrEqn sv fr_sv pos, fr_sv)
+      ) args)
+    in
+    let p = CP.conj_of_list ps pos in
+    let def = CF.formula_of_pure_formula p pos in
+    let _ = DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^
+                                    (!CP.print_svl args) ^ ")=" ^
+                                    (Cprinter.prtt_string_of_formula (* (CF.formula_of_heap h_def no_pos) *) def)) pos
+    in
+    let new_hpdef,new_unkmap = ((CP.HPRelDefn hp,
+                                 (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args,pos)),
+     (* CF.formula_of_heap h_def no_pos *) def),(hp,fr_args))
+    in
+    (new_hpdef,new_unkmap)
+  in
+  let generate_unk_hps_pre_post unk_hps_done unk_hpargs_all=
+    let hps_done = (CP.remove_dups_svl unk_hps_done) in
+    let rem = List.filter (fun (hp1,_) -> not (CP.mem_svl hp1 hps_done)) unk_hpargs_all  in
+    List.split (List.map (mk_unkdef no_pos) rem)
   in
   let helper (hpdefs,unk_map) (hp, args)=
     let new_hpdefs,ls_new_unkmap =
       if (CP.mem_svl hp post_hps)then
         [],[]
       else
-        let hp_name = dang_hp_default_prefix_name ^ CP.name_of_spec_var hp in
-        let ps,fr_args =
-          List.split (List.map (fun sv ->
-              let fr_sv = CP.fresh_spec_var_prefix hp_name sv in
-              (CP.mkPtrEqn sv fr_sv no_pos, fr_sv)
-          ) args)
-        in
-        let p = CP.conj_of_list ps no_pos in
-        let def = CF.formula_of_pure_formula p no_pos in
-        let _ = DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^
-                                       (!CP.print_svl args) ^ ")=" ^
-          (Cprinter.prtt_string_of_formula (* (CF.formula_of_heap h_def no_pos) *) def)) no_pos
-        in
-        let new_hpdef,new_unkmap = ((CP.HPRelDefn hp,
-                                      (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args,no_pos)),
-     (* CF.formula_of_heap h_def no_pos *) def),(hp,fr_args))
-        in [new_hpdef],[new_unkmap]
+        let new_hpdef,new_unkmap = mk_unkdef no_pos (hp, args) in
+        [new_hpdef],[new_unkmap]
     in
     (hpdefs@new_hpdefs,unk_map@ls_new_unkmap)
   in
   DD.ninfo_pprint ">>>>>> unknown hps: <<<<<<" no_pos;
   let unk_hps = List.map fst unk_hpargs in
+  (*classify unk_hpdefs and non-unk ones*)
   let ls_unk_rels,ls_rem_hpdefs = List.split (List.map (fun (a, hrel, f) ->
       let (hp,args) = CF.extract_HRel hrel in
       if CP.mem_svl hp unk_hps then
@@ -3339,10 +3350,13 @@ let generate_hp_def_from_unk_hps_new_x unk_hpargs hp_defs post_hps gunk_rels=
   let unk_rels2 = List.map (fun (a,b,c) -> (a,b)) unk_rels3 in
   let rem_hpdefs = List.concat ls_rem_hpdefs in
   let unk_hps1 = SAU.find_close_hpargs unk_hpargs unk_rels2 in
-  let unk_hpdefs_from_rel = rel_helper unk_rels3 in
+  (*generate def for unk in precondition*)
+  let unk_hps_done1,unk_hpdefs_from_rel = rel_helper unk_rels3 in
   let unk_hpdefs, unk_map = List.fold_left helper ([],[]) unk_hps1 in
-  let all_unk_hpdefs = SAU.combine_hpdefs (unk_hpdefs_from_rel@unk_hpdefs) in
-  (rem_hpdefs,all_unk_hpdefs,unk_map)
+  let unk_hps_done2 = List.map fst unk_map in
+  let rem_unkdefs,rem_map = generate_unk_hps_pre_post (unk_hps_done1@unk_hps_done2) unk_hpargs in
+  let all_unk_hpdefs = SAU.combine_hpdefs (unk_hpdefs_from_rel@unk_hpdefs@rem_unkdefs) in
+  (rem_hpdefs,all_unk_hpdefs,unk_map@rem_map)
 
 let generate_hp_def_from_unk_hps_x unk_hpargs hp_defs post_hps gunk_rels=
   let rec lookup_eqv_all rem_unk_rels hp res=
@@ -3700,7 +3714,11 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hps hp_rel
   in
   let hp_defs2 = (def_subst_fix prog unk_hp_svl (hp_defs1)) in
   let hp_defs22 = SAU.combine_hpdefs (hp_defs2@unk_hp_pure_def) in
-  let hp_def_from_split = generate_hp_def_from_split prog hp_defs22 split_tb_hp_defs_split unk_hps in
+  let hp_def_from_split =
+    if !Globals.sa_en_split then
+      generate_hp_def_from_split prog hp_defs22 split_tb_hp_defs_split unk_hps
+    else []
+  in
   let hp_defs3 = hp_defs22@hp_def_from_split in
    (*currently, we discard all non-node unk hp*)
   (* unk_hps3: all non-node unk hps *)
