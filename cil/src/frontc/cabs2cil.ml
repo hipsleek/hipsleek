@@ -686,20 +686,20 @@ let newTempVar (descr:doc) (descrpure:bool) typ =
     } 
 *)
 
-let mkAddrOfAndMark ((b, off) as lval) : exp = 
+let mkAddrOfAndMark ((b, off) as lval) loc : exp = 
   (* Mark the vaddrof flag if b is a variable *)
   (match b with 
     Var vi -> vi.vaddrof <- true
   | _ -> ());
-  mkAddrOf lval
+  mkAddrOf lval loc
   
 (* Call only on arrays *)
-let mkStartOfAndMark ((b, off) as lval) : exp = 
+let mkStartOfAndMark ((b, off) as lval) (l: location) : exp = 
   (* Mark the vaddrof flag if b is a variable *)
   (match b with 
     Var vi -> vi.vaddrof <- true
   | _ -> ());
-  let res = StartOf lval in
+  let res = StartOf (lval, l) in
   res
   
 
@@ -1042,7 +1042,7 @@ module BlockChunk =
           let constFold = constFold false in
           let e'' = if !lowerConstants then constFold e' else e' in
           (match (constFold e), (constFold e'') with
-            | Const(CInt64(i1, _, _)), Const(CInt64(i2, _, _))
+            | Const(CInt64(i1, _, _), _), Const(CInt64(i2, _, _), _)
                 when i1 != i2 ->
                 ignore (warnOpt
 	          "Case label %a exceeds range for switch expression" d_exp e);
@@ -1371,8 +1371,8 @@ let rec castTo ?(fromsource=false)
             (* We do it now only if the expression is an lval *)
             let e' = 
               match e with 
-                Lval lv -> 
-                  Lval (addOffsetLval (Field(fstfield, NoOffset)) lv)
+                Lval (lv, l) -> 
+                  Lval (addOffsetLval (Field(fstfield, NoOffset)) lv, l)
               | _ -> E.s (unimp "castTo: transparent union expression is not an lval: %a\n" d_exp e)
             in
             (* Continue casting *)
@@ -1400,11 +1400,12 @@ let checkBool (ot : typ) (e : exp) : bool =
    is it a nonzero constant? *)
 let rec isConstTrue (e:exp): bool =
   match e with
-  | Const(CInt64 (n,_,_)) -> n <> Int64.zero
-  | Const(CChr c) -> 0 <> Char.code c
-  | Const(CStr _ | CWStr _) -> true
-  | Const(CReal(f, _, _)) -> f <> 0.0;
-  | CastE(_, e) -> isConstTrue e
+  | Const(CInt64 (n,_,_), _) -> n <> Int64.zero
+  | Const(CChr c, _) -> 0 <> Char.code c
+  | Const(CStr _, _) -> true
+  | Const(CWStr _, _) -> true
+  | Const(CReal(f, _, _), _) -> f <> 0.0;
+  | CastE(_, e, _) -> isConstTrue e
   | _ -> false
 
 (* Given an expression that is being coerced to bool, is it zero? 
@@ -1412,10 +1413,10 @@ let rec isConstTrue (e:exp): bool =
    On constant expressions, either isConstTrue or isConstFalse will hold. *)
 let rec isConstFalse (e:exp): bool =
   match e with
-  | Const(CInt64 (n,_,_)) -> n = Int64.zero
-  | Const(CChr c) -> 0 = Char.code c
-  | Const(CReal(f, _, _)) -> f = 0.0;
-  | CastE(_, e) -> isConstFalse e
+  | Const(CInt64 (n,_,_),_) -> n = Int64.zero
+  | Const(CChr c, _) -> 0 = Char.code c
+  | Const(CReal(f, _, _), _) -> f = 0.0;
+  | CastE(_, e, _) -> isConstFalse e
   | _ -> false
 
 
@@ -1883,7 +1884,7 @@ let rec setOneInit (this: preInit)
       let idx, (* Index in the current comp *)
           restoff (* Rest offset *) =
         match o with 
-        | Index(Const(CInt64(i,_,_)), off) -> i64_to_int i, off
+        | Index(Const(CInt64(i,_,_), _), off) -> i64_to_int i, off
         | Field (f, off) -> 
             (* Find the index of the field *)
             let rec loop (idx: int) = function
@@ -1938,7 +1939,7 @@ let rec collectInitializer
           match leno with 
             Some len -> begin
               match constFold true len with 
-                Const(CInt64(ni, _, _)) when ni >= 0L -> 
+                Const(CInt64(ni, _, _), _) when ni >= 0L -> 
                   (i64_to_int ni), TArray(bt,leno,at)
 
               | _ -> E.s (error "Array length is not a constant expression %a"
@@ -2189,7 +2190,7 @@ let afterConversion (c: chunk) : chunk =
    * is important to have the cast at the same place as the call *)
   let collapseCallCast = function
       Call(Some(Var vi, NoOffset), f, args, l),
-      Set(destlv, CastE (newt, Lval(Var vi', NoOffset)), _) 
+      Set(destlv, CastE (newt, Lval((Var vi', NoOffset), _), _), _) 
       when (not vi.vglob && 
             String.length vi.vname >= 3 &&
             (* Watch out for the possibility that we have an implied cast in 
@@ -2221,11 +2222,11 @@ let suggestAnonName (nl: A.name list) =
 
 (** Optional constant folding of binary operations *)
 let optConstFoldBinOp (machdep: bool) (bop: binop) 
-                      (e1: exp) (e2:exp) (t: typ) = 
+                      (e1: exp) (e2:exp) (t: typ) (loc: location) = 
   if !lowerConstants then 
-    constFoldBinOp machdep bop e1 e2 t
+    constFoldBinOp machdep bop e1 e2 t loc
   else
-    BinOp(bop, e1, e2, t)
+    BinOp(bop, e1, e2, t, loc)
   
 (****** TYPE SPECIFIERS *******)
 let rec doSpecList (suggestedAnonName: string) (* This string will be part of 
@@ -2527,12 +2528,12 @@ let rec doSpecList (suggestedAnonName: string) (* This string will be part of
         let (c, e', t) = doExp false e AType in
         let t' = 
           match e' with 
-            StartOf(lv) -> typeOfLval lv
+            StartOf(lv, _) -> typeOfLval lv
                 (* If this is a string literal, then we treat it as in sizeof*)
-          | Const (CStr s) -> begin
+          | Const (CStr s, l) -> begin
               match typeOf e' with 
                 TPtr(bt, _) -> (* This is the type of array elements *)
-                  TArray(bt, Some (SizeOfStr s), [])
+                  TArray(bt, Some (SizeOfStr (s, l)), [])
               | _ -> E.s (bug "The typeOf a string is not a pointer type")
           end
           | _ -> t
@@ -2643,7 +2644,7 @@ and doAttr (a: A.attribute) : attribute list =
                         ?(foldenum=true) 
                         (a: A.expression) : attrparam =
         match a with
-          A.VARIABLE n -> begin
+          A.VARIABLE (n, _) -> begin
             let n' = if strip then stripUnderscore n else n in
             (** See if this is an enumeration *)
             try
@@ -2658,40 +2659,40 @@ and doAttr (a: A.attribute) : attribute list =
               | _ -> ACons (n', [])
             with Not_found -> ACons(n', [])
           end
-        | A.CONSTANT (A.CONST_STRING s) -> AStr s
-        | A.CONSTANT (A.CONST_INT str) -> begin
+        | A.CONSTANT (A.CONST_STRING s, _) -> AStr s
+        | A.CONSTANT (A.CONST_INT str, _) -> begin
             match parseInt str with
-              Const (CInt64 (v64,_,_)) -> 
+              Const (CInt64 (v64,_,_), _) -> 
                 AInt (i64_to_int v64)
             | _ -> 
                 E.s (error "Invalid attribute constant: %s")
           end
-        | A.CALL(A.VARIABLE n, args) -> begin
+        | A.CALL(A.VARIABLE (n, _), args, _) -> begin
             let n' = if strip then stripUnderscore n else n in
             let ae' = Util.list_map ae args in
             ACons(n', ae')
         end
-        | A.EXPR_SIZEOF e -> ASizeOfE (ae e)
-        | A.TYPE_SIZEOF (bt, dt) -> ASizeOf (doOnlyType bt dt)
-        | A.EXPR_ALIGNOF e -> AAlignOfE (ae e)
-        | A.TYPE_ALIGNOF (bt, dt) -> AAlignOf (doOnlyType bt dt)
-        | A.BINARY(A.AND, aa1, aa2) -> 
+        | A.EXPR_SIZEOF (e, _) -> ASizeOfE (ae e)
+        | A.TYPE_SIZEOF (bt, dt, _) -> ASizeOf (doOnlyType bt dt)
+        | A.EXPR_ALIGNOF (e, _) -> AAlignOfE (ae e)
+        | A.TYPE_ALIGNOF (bt, dt, _) -> AAlignOf (doOnlyType bt dt)
+        | A.BINARY(A.AND, aa1, aa2, _) -> 
             ABinOp(LAnd, ae aa1, ae aa2)
-        | A.BINARY(A.OR, aa1, aa2) -> 
+        | A.BINARY(A.OR, aa1, aa2, _) -> 
             ABinOp(LOr, ae aa1, ae aa2)
-        | A.BINARY(abop, aa1, aa2) -> 
+        | A.BINARY(abop, aa1, aa2, _) -> 
             ABinOp (convBinOp abop, ae aa1, ae aa2)
-        | A.UNARY(A.PLUS, aa) -> ae aa
-        | A.UNARY(A.MINUS, aa) -> AUnOp (Neg, ae aa)
-        | A.UNARY(A.BNOT, aa) -> AUnOp(BNot, ae aa)
-        | A.UNARY(A.NOT, aa) -> AUnOp(LNot, ae aa)
-        | A.MEMBEROF (e, s) -> ADot (ae e, s)
-        | A.PAREN(e) -> attrOfExp strip ~foldenum:foldenum e 
-        | A.UNARY(A.MEMOF, aa) -> AStar (ae aa)
-        | A.UNARY(A.ADDROF, aa) -> AAddrOf (ae aa)
-        | A.MEMBEROFPTR (aa1, s) -> ADot(AStar(ae aa1), s)
-        | A.INDEX(aa1, aa2) -> AIndex(ae aa1, ae aa2)
-        | A.QUESTION(aa1, aa2, aa3) -> AQuestion(ae aa1, ae aa2, ae aa3)
+        | A.UNARY(A.PLUS, aa, _) -> ae aa
+        | A.UNARY(A.MINUS, aa, _) -> AUnOp (Neg, ae aa)
+        | A.UNARY(A.BNOT, aa, _) -> AUnOp(BNot, ae aa)
+        | A.UNARY(A.NOT, aa, _) -> AUnOp(LNot, ae aa)
+        | A.MEMBEROF (e, s, _) -> ADot (ae e, s)
+        | A.PAREN(e, _) -> attrOfExp strip ~foldenum:foldenum e 
+        | A.UNARY(A.MEMOF, aa, _) -> AStar (ae aa)
+        | A.UNARY(A.ADDROF, aa, _) -> AAddrOf (ae aa)
+        | A.MEMBEROFPTR (aa1, s, _) -> ADot(AStar(ae aa1), s)
+        | A.INDEX(aa1, aa2, _) -> AIndex(ae aa1, ae aa2)
+        | A.QUESTION(aa1, aa2, aa3, _) -> AQuestion(ae aa1, ae aa2, ae aa3)
         | _ -> 
             ignore (E.log "Invalid expression in attribute: ");
             withCprint Cprint.print_expression a;
@@ -2851,17 +2852,17 @@ and doType (nameortype: attributeClass) (* This is AttrName if we are doing
                                 * an extern, for example. We use 1 for now *)
                 in 
                 (match constFold true len' with 
-                   Const(CInt64(i, ik, _)) ->
-		     (* We want array sizes to be positive, and the byte size
-			to fit in an OCaml int *)
-		     let elems = mkCilint ik i in
-                     if compare_cilint elems zero_cilint < 0 then 
-                       E.s (error "Length of array is negative");
-		     let size = mul_cilint elems (cilint_of_int elsz) in
-		     begin
-		       try ignore(int_of_cilint size)
-		       with _ -> E.s (error "Length of array is too large")
-		     end
+                   Const(CInt64(i, ik, _), _) ->
+                     (* We want array sizes to be positive, and the byte size
+                        to fit in an OCaml int *)
+                     let elems = mkCilint ik i in
+                                 if compare_cilint elems zero_cilint < 0 then 
+                                   E.s (error "Length of array is negative");
+                     let size = mul_cilint elems (cilint_of_int elsz) in
+                     begin
+                       try ignore(int_of_cilint size)
+                       with _ -> E.s (error "Length of array is too large")
+                     end
                  | l -> 
                      if isConstant l then 
                        (* e.g., there may be a float constant involved. 
@@ -3160,9 +3161,9 @@ and getIntConstExp (aexp) : exp =
     E.s (error "Constant expression %a has effects" d_exp e);
   match e with 
     (* first, filter for those Const exps that are integers *)
-  | Const (CInt64 _ ) -> e
-  | Const (CEnum _) -> e
-  | Const (CChr i) -> Const(charConstToInt i)
+  | Const ((CInt64 _), _) -> e
+  | Const ((CEnum _), _) -> e
+  | Const ((CChr i), l) -> Const((charConstToInt i), l)
 
         (* other Const expressions are not ok *)
   | Const _ -> E.s (error "Expected integer constant and got %a" d_exp e)
@@ -3191,10 +3192,10 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
    * essentially doExp should never return things of type TFun or TArray *)
   let processArrayFun e t = 
     match e, unrollType t with
-      (Lval(lv) | CastE(_, Lval lv)), TArray(tbase, _, a) -> 
-        mkStartOfAndMark lv, TPtr(tbase, a)
-    | (Lval(lv) | CastE(_, Lval lv)), TFun _  -> 
-        mkAddrOfAndMark lv, TPtr(t, [])
+      (Lval(lv, l) | CastE(_, Lval (lv, _), l)), TArray(tbase, _, a) -> 
+        mkStartOfAndMark lv l, TPtr(tbase, a)
+    | (Lval(lv, l) | CastE(_, Lval (lv, _), l)), TFun _  ->
+        mkAddrOfAndMark lv l, TPtr(t, [])
     | _, (TArray _ | TFun _) -> 
         E.s (error "Array or function expression is not lval: %a@!"
                d_plainexp e)
@@ -3221,7 +3222,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
     | ASet (lv, lvt) -> begin
         (* See if the set was done already *)
         match e with 
-          Lval(lv') when lv == lv' -> 
+          Lval(lv', _) when lv == lv' -> 
             (se, e, t)
         | _ -> 
             let (e', t') = processArrayFun e t in
@@ -3258,16 +3259,17 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
   in
   try
     match e with
-    | A.PAREN e -> E.s (bug "stripParen")
+    | A.PAREN (e, _) -> E.s (bug "stripParen")
     | A.NOTHING when what = ADrop -> finishExp empty (integer 0) intType
     | A.NOTHING ->
-        let res = Const(CStr "exp_nothing") in
+        let res = Const(CStr "exp_nothing", lu) in
         finishExp empty res (typeOf res)
 
     (* Do the potential lvalues first *)
-    | A.VARIABLE n -> begin
+    | A.VARIABLE (n, l) -> begin
         (* Look up in the environment *)
         try
+          let p = convLoc l in
           let envdata = H.find env n in
           match envdata with
             EnvVar vi, _ ->
@@ -3275,7 +3277,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                  not (isFunctionType vi.vtype) && 
                  not (isArrayType vi.vtype)then
                 E.s (error "variable appears in constant"); *)
-              finishExp empty (Lval(var vi)) vi.vtype
+              finishExp empty (Lval(var vi, p)) vi.vtype
           | EnvEnum (tag, typ), _ ->
               if !Cil.lowerConstants then 
                 finishExp empty tag (typeOf tag)
@@ -3285,7 +3287,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                     TEnum(ei, _) -> ei
                   | _ -> assert false
                 in
-                finishExp empty (Const (CEnum(tag, n, ei))) (typeOf tag)
+                finishExp empty (Const (CEnum(tag, n, ei), p)) (typeOf tag)
               end
 
           | _ -> raise Not_found
@@ -3296,8 +3298,9 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
             E.s (error "Cannot resolve variable %s." n)
         end
     end
-    | A.INDEX (e1, e2) -> begin
+    | A.INDEX (e1, e2, l) -> begin
         (* Recall that doExp turns arrays into StartOf pointers *)
+        let p = convLoc l in
         let (se1, e1', t1) = doExp false e1 (AExp None) in
         let (se2, e2', t2) = doExp false e2 (AExp None) in
         let se = se1 @@ se2 in
@@ -3314,18 +3317,19 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
         (* We have to distinguish the construction based on the type of e1'' *)
         let res = 
           match e1'' with 
-            StartOf array -> (* A real array indexing operation *)
+            StartOf (array, p1) -> (* A real array indexing operation *)
               addOffsetLval (Index(e2'', NoOffset)) array
           | _ -> (* Turn into *(e1 + e2) *)
-              mkMem (BinOp(IndexPI, e1'', e2'', t1)) NoOffset
+              mkMem (BinOp(IndexPI, e1'', e2'', t1, p)) NoOffset
         in
         (* Do some optimization of StartOf *)
-        finishExp se (Lval res) tresult
+        finishExp se (Lval (res, p)) tresult
 
     end      
-    | A.UNARY (A.MEMOF, e) -> 
+    | A.UNARY (A.MEMOF, e, l) -> 
         if asconst then
           ignore (warn "MEMOF in constant");
+        let p = convLoc l in
         let (se, e', t) = doExp false e (AExp None) in
         let tresult = 
           match unrollType t with
@@ -3334,20 +3338,21 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                         d_plaintype t)
         in
         finishExp se 
-                  (Lval (mkMem e' NoOffset))
+                  (Lval ((mkMem e' NoOffset), p))
                   tresult
 
            (* e.str = (& e + off(str)). If e = (be + beoff) then e.str = (be 
             * + beoff + off(str))  *)
-    | A.MEMBEROF (e, str) -> 
+    | A.MEMBEROF (e, str, l) -> 
         (* member of is actually allowed if we only take the address *)
         (* if isconst then
           E.s (error "MEMBEROF in constant");  *)
+        let p = convLoc l in
         let (se, e', t') = doExp false e (AExp None) in
         let lv = 
           match e' with 
-            Lval x -> x 
-          | CastE(_, Lval x) -> x
+            Lval (x, _) -> x 
+          | CastE(_, Lval (x, _), _) -> x
           | _ -> E.s (error "Expected an lval in MEMBEROF (field %s)" str)
         in
         let field_offset = 
@@ -3355,14 +3360,15 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
             TComp (comp, _) -> findField str comp.cfields
           | _ -> E.s (error "expecting a struct with field %s" str)
         in
-        let lv' = Lval(addOffsetLval field_offset lv) in
-	let field_type = typeOf lv' in
+        let lv' = Lval(addOffsetLval field_offset lv, p) in
+        let field_type = typeOf lv' in
         finishExp se lv' field_type
           
        (* e->str = * (e + off(str)) *)
-    | A.MEMBEROFPTR (e, str) -> 
+    | A.MEMBEROFPTR (e, str, l) -> 
         if asconst then
           ignore (warn "MEMBEROFPTR in constant");
+        let p = convLoc l in
         let (se, e', t') = doExp false e (AExp None) in
         let pointedt = 
           match unrollType t' with
@@ -3378,17 +3384,18 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                      "expecting a struct with field %s. Found %a. t1 is %a" 
                      str d_type x d_type t')
         in
-	let lv' = Lval (mkMem e' field_offset) in
-	let field_type = typeOf lv' in
+        let lv' = Lval (mkMem e' field_offset, p) in
+        let field_type = typeOf lv' in
         finishExp se lv' field_type
           
-    | A.CONSTANT ct -> begin
+    | A.CONSTANT (ct, loc) -> begin
         let hasSuffix str = 
           let l = String.length str in
           fun s -> 
             let ls = String.length s in
             l >= ls && s = String.uppercase (String.sub str (l - ls) ls)
         in
+        let p = convLoc loc in
         match ct with 
           A.CONST_INT str -> begin
             let res = parseInt str in
@@ -3428,7 +3435,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
               *)
 
         | A.CONST_WSTRING (ws: int64 list) -> 
-            let res = Const(CWStr ((* intlist_to_wstring *) ws)) in
+            let res = Const(CWStr ((* intlist_to_wstring *) ws), p) in
             finishExp empty res (typeOf res)
 
         | A.CONST_STRING s -> 
@@ -3448,12 +3455,12 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                   s
               with Not_found -> s
             in
-            let res = Const(CStr s') in
+            let res = Const(CStr s', p) in
             finishExp empty res (typeOf res)
               
         | A.CONST_CHAR char_list ->
             let a, b = (interpret_character_constant char_list) in 
-            finishExp empty (Const a) b 
+            finishExp empty (Const (a, p)) b 
               
         | A.CONST_WCHAR char_list ->
             (* matth: I can't see a reason for a list of more than one char
@@ -3463,8 +3470,8 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
              * the value.  But L'abc' has type wchar, and so is equivalent to 
              * L'c').  But gcc allows L'abc', so I'll leave this here in case
              * I'm missing some architecture dependent behavior. *)
-	    let value = reduce_multichar !wcharType char_list in
-	    let result = kinteger64 !wcharKind value in
+            let value = reduce_multichar !wcharType char_list in
+            let result = kinteger64 !wcharKind value in
             finishExp empty result (typeOf result)
               
         | A.CONST_FLOAT str -> begin
@@ -3488,68 +3495,69 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
             try
               finishExp empty 
                 (Const(CReal(float_of_string baseint, kind,
-                             Some str)))
+                             Some str), p))
                 (TFloat(kind,[]))
             with e -> begin
               ignore (E.log "float_of_string %s (%s)\n" str 
                         (Printexc.to_string e));
               E.hadErrors := true;
-              let res = Const(CStr "booo CONS_FLOAT") in
+              let res = Const(CStr "booo CONS_FLOAT", p) in
               finishExp empty res (typeOf res)
             end
         end
     end          
 
-    | A.TYPE_SIZEOF (bt, dt) ->
+    | A.TYPE_SIZEOF (bt, dt, l) ->
         let typ = doOnlyType bt dt in
-        finishExp empty (SizeOf(typ)) !typeOfSizeOf
+        let p = convLoc l in
+        finishExp empty (SizeOf(typ, p)) !typeOfSizeOf
 
       (* Intercept the sizeof("string") *)
-    | A.EXPR_SIZEOF (A.CONSTANT (A.CONST_STRING s)) -> begin
+    | A.EXPR_SIZEOF (A.CONSTANT (A.CONST_STRING s, l1), l2) -> begin
         (* Process the string first *)
-        match doExp asconst (A.CONSTANT (A.CONST_STRING s)) (AExp None) with 
-          _, Const(CStr s), _ -> 
-            finishExp empty (SizeOfStr s) !typeOfSizeOf
+        match doExp asconst (A.CONSTANT (A.CONST_STRING s, l1)) (AExp None) with 
+          _, Const(CStr s, p), _ -> 
+            finishExp empty (SizeOfStr (s, p)) !typeOfSizeOf
         | _ -> E.s (bug "cabs2cil: sizeOfStr")
     end
 
-    | A.EXPR_SIZEOF e ->
+    | A.EXPR_SIZEOF (e, l) ->
         (* Allow non-constants in sizeof *)
         (* Do not convert arrays and functions into pointers. *)
         let (se, e', t) = doExp false e AExpLeaveArrayFun in
-(*
-        ignore (E.log "sizeof: %a e'=%a, t=%a\n"
-                  d_loc !currentLoc d_plainexp e' d_type t);
-*)
+        (* ignore (E.log "sizeof: %a e'=%a, t=%a\n"
+                  d_loc !currentLoc d_plainexp e' d_type t); *)
         (* !!!! The book says that the expression is not evaluated, so we
            * drop the potential side-effects 
         if isNotEmpty se then
-          ignore (warn "Warning: Dropping side-effect in EXPR_SIZEOF");
-*)
+          ignore (warn "Warning: Dropping side-effect in EXPR_SIZEOF"); *)
+        let p = convLoc l in
         let size =
           match e' with                 (* If we are taking the sizeof an
                                          * array we must drop the StartOf  *)
-            StartOf(lv) -> SizeOfE (Lval(lv))
+            StartOf(lv, p1) -> SizeOfE (Lval(lv, p1), p)
 
                 (* Maybe we are taking the sizeof for a CStr. In that case we 
                  * mean the pointer to the start of the string *)
-          | Const(CStr _) -> SizeOf (charPtrType)
+          | Const(CStr _, _) -> SizeOf (charPtrType, p)
 
                 (* Maybe we are taking the sizeof a variable-sized array *)
-          | Lval (Var vi, NoOffset) -> begin
+          | Lval ((Var vi, NoOffset), _) -> begin
               try 
                 IH.find varSizeArrays vi.vid 
-              with Not_found -> SizeOfE e' 
+              with Not_found -> SizeOfE (e', p) 
           end
-          | _ -> SizeOfE e'
+          | _ -> SizeOfE (e', p)
         in
         finishExp empty size !typeOfSizeOf
 
-    | A.TYPE_ALIGNOF (bt, dt) ->
+    | A.TYPE_ALIGNOF (bt, dt, l) ->
         let typ = doOnlyType bt dt in
-        finishExp empty (AlignOf(typ)) !typeOfSizeOf
+        let p = convLoc l in
+        finishExp empty (AlignOf(typ, p)) !typeOfSizeOf
 
-    | A.EXPR_ALIGNOF e ->
+    | A.EXPR_ALIGNOF (e, l) ->
+        let p = convLoc l in
         let (se, e', t) = doExp false e AExpLeaveArrayFun in
         (* !!!! The book says that the expression is not evaluated, so we
            * drop the potential side-effects 
@@ -3559,13 +3567,14 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
         let e'' =
           match e' with                 (* If we are taking the alignof an
                                          * array we must drop the StartOf  *)
-            StartOf(lv) -> Lval(lv)
+            StartOf(lv, p1) -> Lval(lv, p1)
 
           | _ -> e'
         in
-        finishExp empty (AlignOfE(e'')) !typeOfSizeOf
+        finishExp empty (AlignOfE(e'', p)) !typeOfSizeOf
 
-    | A.CAST ((specs, dt), ie) ->
+    | A.CAST ((specs, dt), ie, l) ->
+        let p = convLoc l in
         let s', dt', ie' = preprocessCast specs dt ie in
         (* We know now that we can do s' and dt' many times *)
         let typ = doOnlyType s' dt' in
@@ -3610,13 +3619,13 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
               in
               (* Now pretend that e is just a reference to the newly created 
                * variable *)
-              let se, e', t' = doExp asconst (A.VARIABLE newvar) what' in
+              let se, e', t' = doExp asconst (A.VARIABLE (newvar, l)) what' in
               (* If typ is an array then the doExp above has already added a 
                * StartOf. We must undo that now so that it is done once by 
                * the finishExp at the end of this case *)
               let e2, t2 = 
                 match unrollType typ, e' with
-                  TArray _, StartOf lv -> Lval lv, typ
+                  TArray _, StartOf (lv, p1) -> Lval (lv, p1), typ
                 | _, _ -> e', t'
               in
               (* If we are here, then the type t2 is guaranteed to match the 
@@ -3642,47 +3651,49 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
         in
         finishExp se e'' t''
           
-    | A.UNARY(A.MINUS, e) -> 
+    | A.UNARY(A.MINUS, e, l) ->
+        let p = convLoc l in
         let (se, e', t) = doExp asconst e (AExp None) in
         if isIntegralType t then
           let tres = integralPromotion t in
           let e'' = 
             match e', tres with
-            | Const(CInt64(i, _, _)), TInt(ik, _) -> kinteger64 ik (Int64.neg i)
-            | _ -> UnOp(Neg, makeCastT e' t tres, tres)
+            | Const(CInt64(i, _, _), _), TInt(ik, _) -> kinteger64 ik (Int64.neg i)
+            | _ -> UnOp(Neg, makeCastT e' t tres, tres, p)
           in
           finishExp se e'' tres
         else
           if isArithmeticType t then
-            finishExp se (UnOp(Neg,e',t)) t
+            finishExp se (UnOp(Neg,e',t, p)) t
           else
             E.s (error "Unary - on a non-arithmetic type")
         
-    | A.UNARY(A.BNOT, e) -> 
+    | A.UNARY(A.BNOT, e, l) ->
+        let p = convLoc l in
         let (se, e', t) = doExp asconst e (AExp None) in
         if isIntegralType t then
           let tres = integralPromotion t in
-          let e'' = UnOp(BNot, makeCastT e' t tres, tres) in
+          let e'' = UnOp(BNot, makeCastT e' t tres, tres, p) in
           finishExp se e'' tres
         else
           E.s (error "Unary ~ on a non-integral type")
           
-    | A.UNARY(A.PLUS, e) -> doExp asconst e what 
+    | A.UNARY(A.PLUS, e, _) -> doExp asconst e what 
           
           
-    | A.UNARY(A.ADDROF, e) -> begin
+    | A.UNARY(A.ADDROF, e, l) -> begin
         match e with 
-          A.COMMA el -> (* GCC extension *)
+          A.COMMA (el, l1) -> (* GCC extension *)
             doExp false 
-              (A.COMMA (replaceLastInList el (fun e -> A.UNARY(A.ADDROF, e))))
+              (A.COMMA (replaceLastInList el (fun e -> A.UNARY(A.ADDROF, e, l)), l1))
               what
-        | A.QUESTION (e1, e2, e3) -> (* GCC extension *)
+        | A.QUESTION (e1, e2, e3, l1) -> (* GCC extension *)
             doExp false 
-              (A.QUESTION (e1, A.UNARY(A.ADDROF, e2), A.UNARY(A.ADDROF, e3)))
+              (A.QUESTION (e1, A.UNARY(A.ADDROF, e2, l), A.UNARY(A.ADDROF, e3, l), l1))
               what
-        | A.PAREN e1 ->
-            doExp false (A.UNARY(A.ADDROF, e1)) what
-        | A.VARIABLE s when 
+        | A.PAREN (e1, l1) ->
+            doExp false (A.UNARY(A.ADDROF, e1, l)) what
+        | A.VARIABLE (s, l1) when 
             isOldStyleVarArgName s 
             && (match !currentFunctionFDEC.svar.vtype with 
                    TFun(_, _, true, _) -> true | _ -> false) ->
@@ -3697,7 +3708,8 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                 | _ :: rest -> getLast rest 
               in
               let last = getLast !currentFunctionFDEC.sformals in
-              let res = mkAddrOfAndMark (var last) in
+              let p1 = convLoc l1 in
+              let res = mkAddrOfAndMark (var last) p1 in
               let tres = typeOf res in
               let tres', res' = castTo tres (TInt(IULong, [])) res in
               (* Now we must add to this address to point to the next 
@@ -3705,8 +3717,9 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
               let sizeOfLast = 
                 (((bitsSizeOf last.vtype) + 31) / 32) * 4
               in
+              let p = convLoc l in
               let res'' = 
-                BinOp(PlusA, res', kinteger IULong sizeOfLast, tres')
+                BinOp(PlusA, res', kinteger IULong sizeOfLast, tres', p)
               in
               finishExp empty res'' tres'
             end else begin (* On GCC the only reliable way to do this is to 
@@ -3715,33 +3728,33 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                           * of the local ! *)
                 
               doExp asconst
-                (A.CALL (A.VARIABLE "__builtin_next_arg", 
-                         [A.CONSTANT (A.CONST_INT "0")]))
+                (A.CALL (A.VARIABLE ("__builtin_next_arg", l1), 
+                         [A.CONSTANT (A.CONST_INT "0", cabslu)], l))
                 what
             end
 
-        | (A.VARIABLE _ | A.UNARY (A.MEMOF, _) | (* Regular lvalues *)
+        | (A.VARIABLE _ | A.UNARY (A.MEMOF, _, _) | (* Regular lvalues *)
            A.INDEX _ | A.MEMBEROF _ | A.MEMBEROFPTR _ | 
-           A.CONSTANT (A.CONST_STRING _) | A.CONSTANT (A.CONST_WSTRING _) |
-           A.CAST (_, A.COMPOUND_INIT _)) -> begin
+           A.CONSTANT (A.CONST_STRING _, _) | A.CONSTANT (A.CONST_WSTRING _, _) |
+           A.CAST (_, A.COMPOUND_INIT _, _)) -> begin
             let (se, e', t) = doExp false e (AExp None) in
             (* ignore (E.log "ADDROF on %a : %a\n" d_plainexp e'
                       d_plaintype t); *)
             match e' with 
-             ( Lval x | CastE(_, Lval x)) -> 
-               finishExp se (mkAddrOfAndMark x) (TPtr(t, []))
+             ( Lval (x, p) | CastE(_, Lval (x, _), p)) -> 
+               finishExp se (mkAddrOfAndMark x p) (TPtr(t, []))
 
-            | StartOf (lv) ->
+            | StartOf (lv, p) ->
                 let tres = TPtr(typeOfLval lv, []) in (* pointer to array *)
-                finishExp se (mkAddrOfAndMark lv) tres
+                finishExp se (mkAddrOfAndMark lv p) tres
 
-            | Const (CStr _ | CWStr _) as x ->
+            | Const ((CStr _ | CWStr _), _) as x ->
                (* string to array *)
                finishExp se x (TPtr(t, []))
 
               (* Function names are converted into pointers to the function. 
                * Taking the address-of again does not change things *)
-            | AddrOf (Var v, NoOffset) when isFunctionType v.vtype ->
+            | AddrOf ((Var v, NoOffset), _) when isFunctionType v.vtype ->
                 finishExp se e' t
 
             | _ -> E.s (error "Expected lval for ADDROF. Got %a@!"
@@ -3749,21 +3762,22 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
         end
         | _ -> E.s (error "Unexpected operand for addrof")
     end
-    | A.UNARY((A.PREINCR|A.PREDECR) as uop, e) -> begin
+    | A.UNARY((A.PREINCR|A.PREDECR) as uop, e, l) -> begin
+        let p = convLoc l in
         match e with 
-          A.COMMA el -> (* GCC extension *)
+          A.COMMA (el, l1) -> (* GCC extension *)
             doExp asconst 
               (A.COMMA (replaceLastInList el 
-                          (fun e -> A.UNARY(uop, e))))
+                          (fun e -> A.UNARY(uop, e, l)), l1))
               what
-        | A.QUESTION (e1, e2q, e3q) -> (* GCC extension *)
+        | A.QUESTION (e1, e2q, e3q, l1) -> (* GCC extension *)
             doExp asconst 
-              (A.QUESTION (e1, A.UNARY(uop, e2q), 
-                           A.UNARY(uop, e3q)))
+              (A.QUESTION (e1, A.UNARY(uop, e2q, l), 
+                           A.UNARY(uop, e3q, l), l1))
               what
-        | A.PAREN e1 ->
-            doExp asconst (A.UNARY(uop, e1)) what
-        | (A.VARIABLE _ | A.UNARY (A.MEMOF, _) | (* Regular lvalues *)
+        | A.PAREN (e1, _) ->
+            doExp asconst (A.UNARY(uop, e1, l)) what
+        | (A.VARIABLE _ | A.UNARY (A.MEMOF, _, _) | (* Regular lvalues *)
            A.INDEX _ | A.MEMBEROF _ | A.MEMBEROFPTR _ |
            A.CAST _ (* A GCC extension *)) -> begin
              let uop' = if uop = A.PREINCR then PlusA else MinusA in
@@ -3772,13 +3786,13 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
              let (se, e', t) = doExp false e (AExp None) in
              let lv = 
                match e' with 
-                 Lval x -> x
-               | CastE (_, Lval x) -> x (* A GCC extension. The operation is 
+                 Lval (x, _) -> x
+               | CastE (_, Lval (x, _), _) -> x (* A GCC extension. The operation is 
                                          * done at the cast type. The result 
                                          * is also of the cast type *)
                | _ -> E.s (error "Expected lval for ++ or --")
              in
-             let tresult, result = doBinOp uop' e' t one intType in
+             let tresult, result = doBinOp uop' e' t one intType p in
              finishExp (se +++ (Set(lv, makeCastT result tresult t, 
                                     !currentLoc)))
                e'
@@ -3787,19 +3801,20 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
         | _ -> E.s (error "Unexpected operand for prefix -- or ++")
     end
           
-    | A.UNARY((A.POSINCR|A.POSDECR) as uop, e) -> begin
+    | A.UNARY((A.POSINCR|A.POSDECR) as uop, e, l) -> begin
+        let p = convLoc l in
         match e with 
-          A.COMMA el -> (* GCC extension *)
+          A.COMMA (el, l1) -> (* GCC extension *)
             doExp asconst 
               (A.COMMA (replaceLastInList el 
-                          (fun e -> A.UNARY(uop, e))))
+                          (fun e -> A.UNARY(uop, e, l)), l1))
               what
-        | A.QUESTION (e1, e2q, e3q) -> (* GCC extension *)
+        | A.QUESTION (e1, e2q, e3q, l1) -> (* GCC extension *)
             doExp asconst 
-              (A.QUESTION (e1, A.UNARY(uop, e2q), A.UNARY(uop, e3q)))
+              (A.QUESTION (e1, A.UNARY(uop, e2q, l), A.UNARY(uop, e3q, l), l1))
               what
-        | A.PAREN e1 -> doExp asconst (A.UNARY(uop,e1)) what
-        | (A.VARIABLE _ | A.UNARY (A.MEMOF, _) | (* Regular lvalues *)
+        | A.PAREN (e1, _) -> doExp asconst (A.UNARY(uop,e1,l)) what
+        | (A.VARIABLE _ | A.UNARY (A.MEMOF, _, _) | (* Regular lvalues *)
            A.INDEX _ | A.MEMBEROF _ | A.MEMBEROFPTR _ | 
            A.CAST _ (* A GCC extension *) ) -> begin
              if asconst then
@@ -3809,20 +3824,21 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
              let (se, e', t) = doExp false e (AExp None) in
              let lv = 
                match e' with 
-                 Lval x -> x
-               | CastE (_, Lval x) -> x (* GCC extension. The addition must 
+                 Lval (x, p) -> x
+               | CastE (_, Lval (x, _), p) -> x (* GCC extension. The addition must 
                                          * be be done at the cast type. The 
                                          * result of this is also of the cast 
                                          * type *)
                | _ -> E.s (error "Expected lval for ++ or --")
              in
-             let tresult, opresult = doBinOp uop' e' t one intType in
+             let tresult, opresult = doBinOp uop' e' t one intType p in
              let se', result = 
                if what <> ADrop && what <> AType then 
                  let descr = (dd_exp () e') 
                              ++ (if uop = A.POSINCR then text "++" else text "--") in
                  let tmp = newTempVar descr true t in
-                 se +++ (Set(var tmp, e', !currentLoc)), Lval(var tmp)
+                 let p = convLoc l in
+                 se +++ (Set(var tmp, e', !currentLoc)), Lval(var tmp, p)
                else
                  se, e'
              in
@@ -3835,32 +3851,32 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
         | _ -> E.s (error "Unexpected operand for suffix ++ or --")
     end
           
-    | A.BINARY(A.ASSIGN, e1, e2) -> begin
+    | A.BINARY(A.ASSIGN, e1, e2, l) -> begin
         match e1 with 
-          A.COMMA el -> (* GCC extension *)
+          A.COMMA (el, l1) -> (* GCC extension *)
             doExp asconst 
               (A.COMMA (replaceLastInList el 
-                          (fun e -> A.BINARY(A.ASSIGN, e, e2))))
+                          (fun e -> A.BINARY(A.ASSIGN, e, e2, l)), l1))
               what
-        | A.QUESTION (e1, e2q, e3q) -> (* GCC extension *)
+        | A.QUESTION (e1, e2q, e3q, l1) -> (* GCC extension *)
             doExp asconst 
-              (A.QUESTION (e1, A.BINARY(A.ASSIGN, e2q, e2), 
-                           A.BINARY(A.ASSIGN, e3q, e2)))
+              (A.QUESTION (e1, A.BINARY(A.ASSIGN, e2q, e2, l), 
+                           A.BINARY(A.ASSIGN, e3q, e2, l), l1))
               what
-        | A.CAST (t, A.SINGLE_INIT e) -> (* GCC extension *)
+        | A.CAST (t, A.SINGLE_INIT e, l1) -> (* GCC extension *)
             doExp asconst
               (A.CAST (t, 
                        A.SINGLE_INIT (A.BINARY(A.ASSIGN, e, 
-                                               A.CAST (t, A.SINGLE_INIT e2)))))
+                                               A.CAST (t, A.SINGLE_INIT e2, l), l)), l1))
               what
-        | A.PAREN e1 -> doExp asconst (A.BINARY(A.ASSIGN,e1,e2)) what 
-        | (A.VARIABLE _ | A.UNARY (A.MEMOF, _) | (* Regular lvalues *)
+        | A.PAREN (e1, l1) -> doExp asconst (A.BINARY(A.ASSIGN,e1,e2,l)) what 
+        | (A.VARIABLE _ | A.UNARY (A.MEMOF, _, _) | (* Regular lvalues *)
            A.INDEX _ | A.MEMBEROF _ | A.MEMBEROFPTR _ ) -> begin
              if asconst then ignore (warn "ASSIGN in constant");
              let (se1, e1', lvt) = doExp false e1 (AExp None) in
              let lv = 
                match e1' with 
-                 Lval x -> x
+                 Lval (x, _) -> x
                | _ -> E.s (error "Expected lval for assignment. Got %a"
                              d_plainexp e1')
              in
@@ -3879,41 +3895,43 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                if needsTemp then
                  let descr = (dd_lval () lv) in
                  let tmp = newTempVar descr true lvt in
-                 var tmp, i2c (Set(lv, Lval(var tmp), !currentLoc))
+                 var tmp, i2c (Set(lv, Lval(var tmp, lu), !currentLoc))
                else
                  lv, empty
              in
              let (se2, e'', t'') = doExp false e2 (ASet(tmplv, lvt)) in
-             finishExp (se1 @@ se2 @@ se3) (Lval tmplv) lvt
+             finishExp (se1 @@ se2 @@ se3) (Lval (tmplv, lu)) lvt
            end
         | _ -> E.s (error "Invalid left operand for ASSIGN")
     end
           
     | A.BINARY((A.ADD|A.SUB|A.MUL|A.DIV|A.MOD|A.BAND|A.BOR|A.XOR|
-      A.SHL|A.SHR|A.EQ|A.NE|A.LT|A.GT|A.GE|A.LE) as bop, e1, e2) -> 
+      A.SHL|A.SHR|A.EQ|A.NE|A.LT|A.GT|A.GE|A.LE) as bop, e1, e2, l) -> 
         let bop' = convBinOp bop in
         let (se1, e1', t1) = doExp asconst e1 (AExp None) in
         let (se2, e2', t2) = doExp asconst e2 (AExp None) in
-        let tresult, result = doBinOp bop' e1' t1 e2' t2 in
+        let p = convLoc l in
+        let tresult, result = doBinOp bop' e1' t1 e2' t2 p in
         finishExp (se1 @@ se2) result tresult
           
           (* assignment operators *)
     | A.BINARY((A.ADD_ASSIGN|A.SUB_ASSIGN|A.MUL_ASSIGN|A.DIV_ASSIGN|
       A.MOD_ASSIGN|A.BAND_ASSIGN|A.BOR_ASSIGN|A.SHL_ASSIGN|
-      A.SHR_ASSIGN|A.XOR_ASSIGN) as bop, e1, e2) -> begin
+      A.SHR_ASSIGN|A.XOR_ASSIGN) as bop, e1, e2, l) -> begin
+        let p = convLoc l in
         match e1 with 
-          A.COMMA el -> (* GCC extension *)
+          A.COMMA (el, l1) -> (* GCC extension *)
             doExp asconst 
               (A.COMMA (replaceLastInList el 
-                          (fun e -> A.BINARY(bop, e, e2))))
+                          (fun e -> A.BINARY(bop, e, e2, l)), l1))
               what
-        | A.QUESTION (e1, e2q, e3q) -> (* GCC extension *)
+        | A.QUESTION (e1, e2q, e3q, l1) -> (* GCC extension *)
             doExp asconst 
-              (A.QUESTION (e1, A.BINARY(bop, e2q, e2), 
-                           A.BINARY(bop, e3q, e2)))
+              (A.QUESTION (e1, A.BINARY(bop, e2q, e2, l), 
+                           A.BINARY(bop, e3q, e2, l), l1))
               what
-        | A.PAREN e1 -> doExp asconst (A.BINARY(bop,e1,e2)) what
-        | (A.VARIABLE _ | A.UNARY (A.MEMOF, _) | (* Regular lvalues *)
+        | A.PAREN (e1, _) -> doExp asconst (A.BINARY(bop,e1,e2, l)) what
+        | (A.VARIABLE _ | A.UNARY (A.MEMOF, _, _) | (* Regular lvalues *)
            A.INDEX _ | A.MEMBEROF _ | A.MEMBEROFPTR _ |
            A.CAST _ (* GCC extension *) ) -> begin
              if asconst then
@@ -3934,13 +3952,13 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
              let (se1, e1', t1) = doExp false e1 (AExp None) in
              let lv1 = 
                match e1' with 
-                 Lval x -> x
-               | CastE (_, Lval x) -> x (* GCC extension. The operation and 
+                 Lval (x, _) -> x
+               | CastE (_, Lval (x, _), _) -> x (* GCC extension. The operation and 
                                          * the result are at the cast type  *)
                | _ -> E.s (error "Expected lval for assignment with arith")
              in
              let (se2, e2', t2) = doExp false e2 (AExp None) in
-             let tresult, result = doBinOp bop' e1' t1 e2' t2 in
+             let tresult, result = doBinOp bop' e1' t1 e2' t2 p in
              (* We must cast the result to the type of the lv1, which may be 
               * different than t1 if lv1 was a Cast *)
              let tresult', result' = castTo tresult (typeOfLval lv1) result in
@@ -3961,8 +3979,8 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                let tmp = var (newTempVar descr true tresult') in
                finishExp (se1 @@ se2 +++
                (Set(tmp, result', !currentLoc)) +++
-               (Set(lv1, Lval tmp, !currentLoc)))
-               (Lval tmp)
+               (Set(lv1, Lval (tmp, !currentLoc), !currentLoc)))
+               (Lval (tmp, !currentLoc))
                t1
              else
              finishExp (se1 @@ se2 +++ 
@@ -3974,20 +3992,21 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
       end
                
           
-    | A.BINARY((A.AND|A.OR), _, _) | A.UNARY(A.NOT, _) -> begin
+    | A.BINARY((A.AND|A.OR), _, _, l) | A.UNARY(A.NOT, _, l) -> begin
+        let p = convLoc l in
         let ce = doCondExp asconst e in
         (* We must normalize the result to 0 or 1 *)
         match ce with
           CEExp (se, ((Const _) as c)) -> 
             finishExp se (if isConstTrue c then one else zero) intType
-	| CEExp (se, ((UnOp(LNot, _, _)|BinOp((Lt|Gt|Le|Ge|Eq|Ne|LAnd|LOr), _, _, _)) as e)) ->
-	    (* already normalized to 0 or 1 *)
-	    finishExp se e intType
+        | CEExp (se, ((UnOp(LNot, _, _, _)|BinOp((Lt|Gt|Le|Ge|Eq|Ne|LAnd|LOr), _, _, _, _)) as e)) ->
+            (* already normalized to 0 or 1 *)
+            finishExp se e intType
         | CEExp (se, e) ->
             let e' = 
               let te = typeOf e in
               let _, zte = castTo intType te zero in
-              BinOp(Ne, e, zte, te)
+              BinOp(Ne, e, zte, te, p)
             in
             finishExp se e' intType
         | _ -> 
@@ -3999,11 +4018,11 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                                          !currentLoc)))
                          (empty +++ (Set(tmp, integer 0, 
                                          !currentLoc))))     
-              (Lval tmp)
+              (Lval (tmp, !currentLoc))
               intType
     end
 
-    | A.CALL(f, args) -> 
+    | A.CALL(f, args, l) -> 
         if asconst then
           ignore (warn "CALL in constant");
         let (sf, f', ft') = 
@@ -4012,10 +4031,11 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                                          * function that does not have a 
                                          * prototype. In that case assume it 
                                          * takes INTs as arguments  *)
-            A.VARIABLE n -> begin
+            A.VARIABLE (n, l1) -> begin
               try
                 let vi, _ = lookupVar n in
-                (empty, Lval(var vi), vi.vtype) (* Found. Do not use 
+                let p1 = convLoc l1 in
+                (empty, Lval(var vi, p1), vi.vtype) (* Found. Do not use 
                                                  * finishExp. Simulate what = 
                                                  * AExp None  *)
               with Not_found -> begin
@@ -4030,7 +4050,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                 IH.add noProtoFunctions proto.vid true;
                 (* Add it to the file as well *)
                 cabsPushGlobal (GVarDecl (proto, !currentLoc));
-                (empty, Lval(var proto), ftype)
+                (empty, Lval(var proto, lu), ftype)
               end
             end
           | _ -> doExp false f (AExp None) 
@@ -4045,8 +4065,8 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                                             * explicit  *)
                   let f'' = 
                     match f' with
-                      AddrOf lv -> Lval(lv)
-                    | _ -> Lval(mkMem f' NoOffset)
+                      AddrOf (lv, p) -> Lval(lv, p)
+                    | _ -> Lval(mkMem f' NoOffset, lu)
                   in
                   (rt,at,isvar, f'')
               | x -> 
@@ -4066,7 +4086,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
          * functions alone*)
         let isSpecialBuiltin =  
           match f'' with 
-            Lval (Var fv, NoOffset) ->
+            Lval ((Var fv, NoOffset), _) ->
               fv.vname = "__builtin_stdarg_start" ||
               fv.vname = "__builtin_va_arg" ||
               fv.vname = "__builtin_va_start" ||
@@ -4076,7 +4096,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
         in
         let isBuiltinChooseExpr = 
           match f'' with 
-            Lval (Var fv, NoOffset) ->
+            Lval ((Var fv, NoOffset), _) ->
               fv.vname = "__builtin_choose_expr"
             | _ -> false
         in
@@ -4095,7 +4115,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
 	    let i = Set(var tmp, e, !currentLoc) in 
 	    (* add the instruction to the chunk *)
 	    (* change the expression to be the temporary *)
-	    (c +++ i, (Lval(var tmp)), t) 
+	    (c +++ i, (Lval(var tmp, lu)), t) 
           else
 	    (c, e, t)
         in
@@ -4164,7 +4184,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                                         * the result *)
         let prestype: typ ref = ref intType in
 
-        let rec dropCasts = function CastE (_, e) -> dropCasts e | e -> e in
+        let rec dropCasts = function CastE (_, e, _) -> dropCasts e | e -> e in
         (* Get the name of the last formal *)
         let getNameLastFormal () : string = 
           match !currentFunctionFDEC.svar.vtype with
@@ -4178,7 +4198,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
 
         (* Try to intercept some builtins *)
         (match !pf with 
-          Lval(Var fv, NoOffset) -> begin
+          Lval((Var fv, NoOffset), _) -> begin
             (* Atomic builtins are overloaded: check the type of the
                arguments and fix the return type accordingly.
                No trick needed for __sync_synchronize,
@@ -4221,7 +4241,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                   ignore (warn "Invalid call to %s" fv.vname)
             end else if fv.vname = "__builtin_va_arg" then begin
               match !pargs with 
-                [ marker ; SizeOf resTyp ] -> begin
+                [ marker ; SizeOf (resTyp, _) ] -> begin
                   (* Make a variable of the desired type *)
                   let destlv, destlvtyp = 
                     match !pwhat with 
@@ -4239,7 +4259,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                 marker :: last :: [] -> begin
                   let isOk = 
                     match dropCasts last with 
-                      Lval (Var lastv, NoOffset) -> 
+                      Lval ((Var lastv, NoOffset), _) -> 
                         lastv.vname = getNameLastFormal ()
                     | _ -> false
                   in
@@ -4263,13 +4283,13 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                 try lookupGlobalVar "__builtin_stdarg_start" 
                 with Not_found -> E.s (bug "Cannot find __builtin_stdarg_start to replace %s\n" fv.vname)
               in
-              pf := Lval (var v)
+              pf := Lval (var v, lu)
             end else if fv.vname = "__builtin_next_arg" then begin
               match !pargs with 
                 last :: [] -> begin
                   let isOk = 
                     match dropCasts last with 
-                      Lval (Var lastv, NoOffset) -> 
+                      Lval ((Var lastv, NoOffset), _) -> 
                         lastv.vname = getNameLastFormal ()
                     | _ -> false
                   in
@@ -4286,11 +4306,11 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
               (match !pargs with
                 [ ptr; typ ] -> begin
                   match constFold true typ with
-                  | Const (CInt64 (0L,_,_)) | Const (CInt64 (1L,_,_))  ->
+                  | Const (CInt64 (0L,_,_), _) | Const (CInt64 (1L,_,_), _)  ->
                           piscall := false;
                           pres := kinteger !kindOfSizeOf (-1);
                           prestype := !typeOfSizeOf
-                  | Const (CInt64 (2L,_,_)) | Const (CInt64 (3L,_,_))  ->
+                  | Const (CInt64 (2L,_,_), _) | Const (CInt64 (3L,_,_), _)  ->
                           piscall := false;
                           pres := kinteger !kindOfSizeOf 0;
                           prestype := !typeOfSizeOf
@@ -4324,8 +4344,8 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
               (match !pargs with 
                 [  ] -> begin 
                   piscall := false; 
-		  pres := SizeOfE !pf;
-		  prestype := !typeOfSizeOf
+                  pres := SizeOfE (!pf, lu);
+                  prestype := !typeOfSizeOf
                 end
               | _ -> 
                   ignore (warn "Invalid call to builtin_va_arg_pack"));
@@ -4355,7 +4375,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
             end else if fv.vname = "__builtin_types_compatible_p" then begin
               (* Constant-fold the argument and see if it is a constant *)
               (match !pargs with 
-                [ SizeOf t1; SizeOf t2 ] -> begin
+                [ SizeOf (t1, _); SizeOf (t2, _) ] -> begin
                   (* Drop the side-effects *)
                   prechunk := (fun _ -> empty);
 	          piscall := false; 
@@ -4380,7 +4400,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
             (* Make an exception here for __builtin_va_arg:
                hide calldest as a third parameter.  *)
             match calldest with
-            | Some destlv -> None, !pargs @ [CastE(voidPtrType, AddrOf destlv)]
+            | Some destlv -> None, !pargs @ [CastE(voidPtrType, AddrOf (destlv, lu), lu)]
             | None -> E.s (E.bug "__builtin_va_arg should have calldest always set")
             end
             else calldest, !pargs in
@@ -4397,7 +4417,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
               (Util.equals (typeSig vtype) (typeSig !resType'))
               ->
               (* We can assign the result directly to lv *)
-              addCall (Some lv) (Lval(lv)) vtype
+              addCall (Some lv) (Lval(lv, lu)) vtype
                   
           | _ -> begin
               let restype'' = 
@@ -4412,14 +4432,14 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
               (* Remember that this variable has been created for this 
                * specific call. We will use this in collapseCallCast. *)
               IH.add callTempVars tmp.vid ();
-              addCall (Some (var tmp)) (Lval(var tmp)) restype''
+              addCall (Some (var tmp)) (Lval(var tmp, lu)) restype''
           end
         end;
               
         finishExp (!prechunk ()) !pres !prestype
 
           
-    | A.COMMA el -> 
+    | A.COMMA (el, _) -> 
         if asconst then 
           ignore (warn "COMMA in constant");
         let rec loop sofar = function
@@ -4437,7 +4457,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
         in
         loop empty el
           
-    | A.QUESTION (e1,e2,e3) when what = ADrop -> 
+    | A.QUESTION (e1,e2,e3, _) when what = ADrop -> 
         if asconst then
           ignore (warn "QUESTION with ADrop in constant");
         let (se3,_,_) = doExp false e3 ADrop in
@@ -4448,7 +4468,8 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
         in
         finishExp (doCondition asconst e1 se2 se3) zero intType
           
-    | A.QUESTION (e1, e2, e3) -> begin (* what is not ADrop *)
+    | A.QUESTION (e1, e2, e3, l) -> begin (* what is not ADrop *)
+        let p = convLoc l in
         (* Compile the conditional expression *)
         let ce1 = doCondExp asconst e1 in
         (* Now we must find the type of both branches, in order to compute 
@@ -4488,7 +4509,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                  snd (castTo t2 tresult e2')
            in
            let e3' = snd (castTo t3 tresult e3') in
-           finishExp se1 (Question (e1', e2', e3', tresult)) tresult
+           finishExp se1 (Question (e1', e2', e3', tresult, p)) tresult
         | _ -> (* Use a conditional *) begin
             match e2'o with 
               None -> (* has form "e1 ? : e3"  *)
@@ -4496,9 +4517,9 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                 let (se1, _, _) = doExp asconst e1 (ASet(tmp, tresult)) in
                 let (se3, _, _) = finishExp ~newWhat:(ASet(tmp, tresult)) 
                                     se3 e3' t3 in
-                finishExp (se1 @@ ifChunk (Lval(tmp)) !currentLoc
+                finishExp (se1 @@ ifChunk (Lval(tmp, p)) !currentLoc
                                     skipChunk se3)
-                  (Lval(tmp))
+                  (Lval(tmp, p))
                   tresult
             | Some e2' -> 
                 let lv, lvt = 
@@ -4513,7 +4534,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                                     se2 e2' t2 in
                 let (se3, _, _) = finishExp ~newWhat:(ASet(lv,lvt)) 
                                     se3 e3' t3 in
-                finishExp (doCondition asconst e1 se2 se3) (Lval(lv)) tresult
+                finishExp (doCondition asconst e1 se2 se3) (Lval(lv, p)) tresult
         end
 
 (*
@@ -4572,7 +4593,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
 *)
     end
 
-    | A.GNU_BODY b -> begin
+    | A.GNU_BODY (b, _) -> begin
         (* Find the last A.COMPUTATION and remember it. This one is invoked 
          * on the reversed list of statements. *)
         let rec findLastComputation = function
@@ -4613,7 +4634,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
         | Some (e, t) -> finishExp se e t
     end
 
-    | A.LABELADDR l -> begin (* GCC's taking the address of a label *)
+    | A.LABELADDR (l, _) -> begin (* GCC's taking the address of a label *)
         let l = lookupLabel l in (* To support locallly declared labels *)
         let addrval =
           try H.find gotoTargetHash l
@@ -4638,19 +4659,19 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
 
 (* bop is always the arithmetic version. Change it to the appropriate pointer 
  * version if necessary *)
-and doBinOp (bop: binop) (e1: exp) (t1: typ) (e2: exp) (t2: typ) : typ * exp =
+and doBinOp (bop: binop) (e1: exp) (t1: typ) (e2: exp) (t2: typ) (loc: location) : typ * exp =
   let doArithmetic () = 
     let tres = arithmeticConversion t1 t2 in
     (* Keep the operator since it is arithmetic *)
     tres, 
-    optConstFoldBinOp false bop (makeCastT e1 t1 tres) (makeCastT e2 t2 tres) tres
+    optConstFoldBinOp false bop (makeCastT e1 t1 tres) (makeCastT e2 t2 tres) tres loc
   in
   let doArithmeticComp () = 
     let tres = arithmeticConversion t1 t2 in
     (* Keep the operator since it is arithemtic *)
     intType, 
     optConstFoldBinOp false bop 
-      (makeCastT e1 t1 tres) (makeCastT e2 t2 tres) intType
+      (makeCastT e1 t1 tres) (makeCastT e2 t2 tres) intType loc
   in
   let doIntegralArithmetic () = 
     let tres = unrollType (arithmeticConversion t1 t2) in
@@ -4658,7 +4679,7 @@ and doBinOp (bop: binop) (e1: exp) (t1: typ) (e2: exp) (t2: typ) : typ * exp =
       TInt _ -> 
         tres,
         optConstFoldBinOp false bop 
-          (makeCastT e1 t1 tres) (makeCastT e2 t2 tres) tres
+          (makeCastT e1 t1 tres) (makeCastT e2 t2 tres) tres loc
     | _ -> E.s (error "%a operator on a non-integer type" d_binop bop)
   in
   let pointerComparison e1 t1 e2 t2 = 
@@ -4666,7 +4687,7 @@ and doBinOp (bop: binop) (e1: exp) (t1: typ) (e2: exp) (t2: typ) : typ * exp =
     let commontype = !upointType in
     intType,
     optConstFoldBinOp false bop (makeCastT e1 t1 commontype) 
-      (makeCastT e2 t2 commontype) intType
+      (makeCastT e2 t2 commontype) intType loc
   in
 
   match bop with
@@ -4681,7 +4702,7 @@ and doBinOp (bop: binop) (e1: exp) (t1: typ) (e2: exp) (t2: typ) : typ * exp =
         let t1' = integralPromotion t1 in
         let t2' = integralPromotion t2 in
         t1', 
-        optConstFoldBinOp false bop (makeCastT e1 t1 t1') (makeCastT e2 t2 t2') t1'
+        optConstFoldBinOp false bop (makeCastT e1 t1 t1') (makeCastT e2 t2 t2') t1' loc
 
   | (PlusA|MinusA) 
       when isArithmeticType t1 && isArithmeticType t2 -> doArithmetic ()
@@ -4691,20 +4712,20 @@ and doBinOp (bop: binop) (e1: exp) (t1: typ) (e2: exp) (t2: typ) : typ * exp =
   | PlusA when isPointerType t1 && isIntegralType t2 -> 
       t1, 
       optConstFoldBinOp false PlusPI e1 
-        (makeCastT e2 t2 (integralPromotion t2)) t1
+        (makeCastT e2 t2 (integralPromotion t2)) t1 loc
   | PlusA when isIntegralType t1 && isPointerType t2 -> 
       t2, 
       optConstFoldBinOp false PlusPI e2 
-        (makeCastT e1 t1 (integralPromotion t1)) t2
+        (makeCastT e1 t1 (integralPromotion t1)) t2 loc
   | MinusA when isPointerType t1 && isIntegralType t2 -> 
       t1, 
       optConstFoldBinOp false MinusPI e1 
-        (makeCastT e2 t2 (integralPromotion t2)) t1
+        (makeCastT e2 t2 (integralPromotion t2)) t1 loc
   | MinusA when isPointerType t1 && isPointerType t2 ->
       let commontype = t1 in
       !ptrdiffType,
       optConstFoldBinOp false MinusPP (makeCastT e1 t1 commontype) 
-                                      (makeCastT e2 t2 commontype) !ptrdiffType
+                                      (makeCastT e2 t2 commontype) !ptrdiffType loc
   | (Le|Lt|Ge|Gt|Eq|Ne) when isPointerType t1 && isPointerType t2 ->
       pointerComparison e1 t1 e2 t2
   | (Eq|Ne) when isPointerType t1 && isZero e2 -> 
@@ -4723,14 +4744,14 @@ and doBinOp (bop: binop) (e1: exp) (t1: typ) (e2: exp) (t2: typ) : typ * exp =
       ignore (warnOpt "Comparison of pointer and non-pointer");
       (* Cast both values to upointType *)
       doBinOp bop (makeCastT e1 t1 !upointType) !upointType 
-                  (makeCastT e2 t2 !upointType) !upointType
+                  (makeCastT e2 t2 !upointType) !upointType loc
   | (Eq|Ne|Le|Lt|Ge|Gt) when isArithmeticType t1 && isPointerType t2 ->
       ignore (warnOpt "Comparison of pointer and non-pointer");
       (* Cast both values to upointType *)
       doBinOp bop (makeCastT e1 t1 !upointType) !upointType 
-                  (makeCastT e2 t2 !upointType) !upointType
+                  (makeCastT e2 t2 !upointType) !upointType loc
 
-  | _ -> E.s (error "Invalid operands to binary operator: %a" d_plainexp (BinOp(bop,e1,e2,intType)))
+  | _ -> E.s (error "Invalid operands to binary operator: %a" d_plainexp (BinOp(bop,e1,e2,intType,loc)))
 
 (* Constant fold a conditional. This is because we want to avoid having 
  * conditionals in the initializers. So, we try very hard to avoid creating 
@@ -4751,9 +4772,10 @@ and doCondExp (asconst: bool) (** Try to evaluate the conditional expression
     | CENot (ce1) -> canDropCE ce1
   in
   match e with 
-    A.BINARY (A.AND, e1, e2) -> begin
+    A.BINARY (A.AND, e1, e2, l) -> begin
       let ce1 = doCondExp asconst e1 in
       let ce2 = doCondExp asconst e2 in
+      let p = convLoc l in
       match ce1, ce2 with
         CEExp (se1, ((Const _) as ci1)), _ -> 
           if isConstTrue ci1 then 
@@ -4766,15 +4788,16 @@ and doCondExp (asconst: bool) (** Try to evaluate the conditional expression
               CEAnd (ce1, ce2)
       | CEExp(se1, e1'), CEExp (se2, e2') when 
               !useLogicalOperators && isEmpty se2 -> 
-          CEExp (se1, BinOp(LAnd, e1', e2', intType))
+          CEExp (se1, BinOp(LAnd, e1', e2', intType, p))
       | _ -> CEAnd (ce1, ce2)
     end
 
-  | A.BINARY (A.OR, e1, e2) -> begin
+  | A.BINARY (A.OR, e1, e2, l) -> begin
       let ce1 = doCondExp asconst e1 in
       let ce2 = doCondExp asconst e2 in
+      let p = convLoc l in
       match ce1, ce2 with
-        CEExp (se1, (Const(CInt64 _) as ci1)), _ -> 
+        CEExp (se1, (Const(CInt64 _, _) as ci1)), _ -> 
           if isConstFalse ci1 then 
             addChunkBeforeCE se1 ce2
           else 
@@ -4783,14 +4806,14 @@ and doCondExp (asconst: bool) (** Try to evaluate the conditional expression
               ce1 
             else 
               CEOr (ce1, ce2)
-
       | CEExp (se1, e1'), CEExp (se2, e2') when 
               !useLogicalOperators && isEmpty se2 ->
-          CEExp (se1, BinOp(LOr, e1', e2', intType))
+          CEExp (se1, BinOp(LOr, e1', e2', intType, p))
       | _ -> CEOr (ce1, ce2)
     end
 
-  | A.UNARY(A.NOT, e1) -> begin
+  | A.UNARY(A.NOT, e1, l) -> begin
+      let p = convLoc l in
       match doCondExp asconst e1 with 
         CEExp (se1, (Const _ as ci1)) -> 
           if isConstFalse ci1 then 
@@ -4801,8 +4824,7 @@ and doCondExp (asconst: bool) (** Try to evaluate the conditional expression
           let t = typeOf e in
           if not ((isPointerType t) || (isArithmeticType t))then
             E.s (error "Bad operand to !");
-          CEExp (empty, UnOp(LNot, e, intType))
-
+          CEExp (empty, UnOp(LNot, e, intType, p))
       | ce1 -> CENot ce1
   end
 
@@ -4841,8 +4863,8 @@ and compileCondExp (ce: condExpRes) (st: chunk) (sf: chunk) : chunk =
         
   | CEExp (se, e) -> begin
       match e with 
-        Const(CInt64(i,_,_)) when i <> Int64.zero && canDrop sf -> se @@ st
-      | Const(CInt64(z,_,_)) when z = Int64.zero && canDrop st -> se @@ sf
+        Const(CInt64(i,_,_),_) when i <> Int64.zero && canDrop sf -> se @@ st
+      | Const(CInt64(z,_,_),_) when z = Int64.zero && canDrop st -> se @@ sf
       | _ -> se @@ ifChunk e !currentLoc st sf
   end
  
@@ -4926,9 +4948,9 @@ and doInit
   let initl1 = 
     match initl with
     | (A.NEXT_INIT, 
-       A.SINGLE_INIT (A.CAST ((s, dt), ie))) :: rest -> 
+       A.SINGLE_INIT (A.CAST ((s, dt), ie, l))) :: rest -> 
          let s', dt', ie' = preprocessCast s dt ie in
-         (A.NEXT_INIT, A.SINGLE_INIT (A.CAST ((s', dt'), ie'))) :: rest
+         (A.NEXT_INIT, A.SINGLE_INIT (A.CAST ((s', dt'), ie', l))) :: rest
     | _ -> initl
   in
       (* Sometimes we have a cast in front of a compound (in GCC). This 
@@ -4936,7 +4958,7 @@ and doInit
   let initl2 = 
     match initl1 with
       (what,
-       A.SINGLE_INIT (A.CAST ((specs, dt), A.COMPOUND_INIT ci))) :: rest ->
+       A.SINGLE_INIT (A.CAST ((specs, dt), A.COMPOUND_INIT ci, _))) :: rest ->
         let s', dt', ie' = preprocessCast specs dt (A.COMPOUND_INIT ci) in
         let typ = doOnlyType s' dt' in
         if (typeSigNoAttrs typ) = (typeSigNoAttrs so.soTyp) then
@@ -4973,11 +4995,11 @@ and doInit
          * string into characters *)
   | TArray(bt, leno, _), 
       (A.NEXT_INIT, 
-       (A.SINGLE_INIT(A.CONSTANT (A.CONST_STRING s))|
+       (A.SINGLE_INIT(A.CONSTANT (A.CONST_STRING s, l))|
        A.COMPOUND_INIT 
          [(A.NEXT_INIT, 
            A.SINGLE_INIT(A.CONSTANT 
-                           (A.CONST_STRING s)))])) :: restil
+                           (A.CONST_STRING s, l)))])) :: restil
     when (match unrollType bt with
             TInt((IChar|IUChar|ISChar), _) -> true
           | TInt _ ->
@@ -4987,7 +5009,7 @@ and doInit
          )              (* it with the other arrays below.*)
     ->
       let charinits =
-	let init c = A.NEXT_INIT, A.SINGLE_INIT(A.CONSTANT (A.CONST_CHAR [c]))
+	let init c = A.NEXT_INIT, A.SINGLE_INIT(A.CONSTANT (A.CONST_CHAR [c], l))
 	in
 	let collector =
 	  (* ISO 6.7.8 para 14: final NUL added only if no size specified, or
@@ -5025,11 +5047,10 @@ and doInit
    * important. *)
   | TArray(bt, leno, _), 
       (A.NEXT_INIT, 
-       (A.SINGLE_INIT(A.CONSTANT (A.CONST_WSTRING s)) |
+       (A.SINGLE_INIT(A.CONSTANT (A.CONST_WSTRING s, l)) |
        A.COMPOUND_INIT 
          [(A.NEXT_INIT, 
-           A.SINGLE_INIT(A.CONSTANT 
-                           (A.CONST_WSTRING s)))])) :: restil
+           A.SINGLE_INIT(A.CONSTANT (A.CONST_WSTRING s, l)))])) :: restil
     when(let bt' = unrollType bt in
          match bt' with 
            (* compare bt to wchar_t, ignoring signed vs. unsigned *)
@@ -5048,7 +5069,7 @@ and doInit
 	  if (compare c maxWChar > 0) then (* if c > maxWChar *)
 	    E.s (error "cab2cil:doInit:character 0x%Lx too big." c);
           A.NEXT_INIT, 
-          A.SINGLE_INIT(A.CONSTANT (A.CONST_INT (Int64.to_string c)))
+          A.SINGLE_INIT(A.CONSTANT (A.CONST_INT (Int64.to_string c), l))
 	in
         (Util.list_map init s) @
         (
@@ -5239,7 +5260,7 @@ and doInit
                     let (doidx, idxe', _) = 
                       doExp true idx (AExp(Some intType)) in
                     match constFold true idxe', isNotEmpty doidx with
-                      Const(CInt64(x, _, _)), false -> i64_to_int x, doidx
+                      Const(CInt64(x, _, _), _), false -> i64_to_int x, doidx
                     | _ -> E.s (error 
                       "INDEX initialization designator is not a constant")
                   in
@@ -5274,8 +5295,8 @@ and doInit
               E.s (error "Range designators are not constants");
             let first, last = 
               match constFold true idxs', constFold true idxe' with
-                Const(CInt64(s, _, _)), 
-                Const(CInt64(e, _, _)) -> 
+                Const(CInt64(s, _, _), _), 
+                Const(CInt64(e, _, _), _) -> 
                   i64_to_int s, i64_to_int e
               | _ -> E.s (error 
                  "INDEX_RANGE initialization designator is not a constant")
@@ -5286,7 +5307,7 @@ and doInit
             let rec loop (i: int) = 
               if i > last then restil
               else 
-                (top (A.ATINDEX_INIT(A.CONSTANT(A.CONST_INT(string_of_int i)),
+                (top (A.ATINDEX_INIT(A.CONSTANT(A.CONST_INT(string_of_int i), cabslu),
                                      A.NEXT_INIT)), ie) 
                 :: loop (i + 1) 
             in
@@ -5520,8 +5541,8 @@ and createLocal ((_, sto, _, _) as specs)
           (* Compute the sizeof *)
           let sizeof = 
             BinOp(Mult, 
-                  SizeOfE (Lval(Mem(Lval(var vi)), NoOffset)),
-                  Lval (var savelen), !typeOfSizeOf) in
+                  SizeOfE (Lval((Mem(Lval(var vi, lu)), NoOffset), lu), lu),
+                  Lval (var savelen, lu), !typeOfSizeOf, lu) in
           (* Register the length *)
           IH.add varSizeArrays vi.vid sizeof;
           (* There can be no initializer for this *)
@@ -5533,17 +5554,17 @@ and createLocal ((_, sto, _, _) as specs)
           let alloca: varinfo = allocaFun () in
           if !doCollapseCallCast then
             (* do it in one step *)
-            setlen +++ (Call(Some(var vi), Lval(var alloca), 
+            setlen +++ (Call(Some(var vi), Lval(var alloca, lu), 
                              [ sizeof  ], !currentLoc))
           else begin
             (* do it in two *)
             let rt, _, _, _ = splitFunctionType alloca.vtype in
             let tmp = newTempVar (dprintf "alloca(%a)" d_exp sizeof) false rt in
             setlen
-            +++ (Call(Some(var tmp), Lval(var alloca), 
+            +++ (Call(Some(var tmp), Lval(var alloca, lu), 
                       [ sizeof  ], !currentLoc))
             +++ (Set((var vi), 
-                     makeCast (Lval(var tmp)) vi.vtype, !currentLoc))
+                     makeCast (Lval(var tmp, lu)) vi.vtype, !currentLoc))
            end
         end else empty
       in
@@ -5557,7 +5578,7 @@ and createLocal ((_, sto, _, _) as specs)
           TArray(_,None, _), _, TArray(_, Some _, _) -> vi.vtype <- et
             (* Initializing a local array *)
         | TArray(TInt((IChar|IUChar|ISChar), _) as bt, None, a),
-             SingleInit(Const(CStr s)), _ -> 
+             SingleInit(Const(CStr s, _)), _ -> 
                vi.vtype <- TArray(bt, 
                                   Some (integer (String.length s + 1)),
                                   a)
@@ -5577,9 +5598,9 @@ and doAliasFun vtype (thisname:string) (othername:string)
   if isva then E.s (error "%a: alias unsupported with varargs."
                       d_loc !currentLoc);
   let args = Util.list_map 
-               (fun (n,_,_) -> A.VARIABLE n)
+               (fun (n,_,_) -> A.VARIABLE (n, cabslu))
                (argsToList formals) in
-  let call = A.CALL (A.VARIABLE othername, args) in
+  let call = A.CALL (A.VARIABLE (othername, cabslu), args, loc) in
   let stmt = if isVoidType rt then A.COMPUTATION(call, loc)
                               else A.RETURN(call, loc)
   in
@@ -5989,7 +6010,7 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
                         (shadow :: accform,
                          mkStmt (Instr [Set ((Var f, Field(fstfield,
                                                            NoOffset)),
-                                             Lval (var shadow),
+                                             Lval (var shadow, lu),
                                              !currentLoc)]) :: accbody))
                   !currentFunctionFDEC.sformals
                   ([], !currentFunctionFDEC.sbody.bstmts)
@@ -6012,7 +6033,7 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
              * return statements are inserted properly.  *)
             let instrFallsThrough (i : instr) = match i with
               Set _ -> true
-            | Call (None, Lval (Var e, NoOffset), _, _) -> 
+            | Call (None, Lval ((Var e, NoOffset), _), _, _) -> 
                 (* See if this is exit, or if it has the noreturn attribute *)
                 if e.vname = "exit" then false 
                 else if hasAttribute "noreturn" e.vattr then false
@@ -6252,7 +6273,7 @@ and assignInit (lv: lval)
       match leno with
         Some len -> begin
           match constFold true len with
-            Const(CInt64(ni, _, _)) when ni >= 0L ->
+            Const(CInt64(ni, _, _), l) when ni >= 0L ->
               (* Write any initializations in initl using one
                  instruction per element. *)
               let b = foldLeftCompound
@@ -6270,17 +6291,17 @@ and assignInit (lv: lval)
                 (* Use a loop for any remaining initializations *)
                 let ctrv = newTempVar (text "init counter") true uintType in
                 let ctrlval = Var ctrv, NoOffset in
-                let init = Set(ctrlval, Const(CInt64(Int64.of_int ilen, IUInt, None)), !currentLoc) in
+                let init = Set(ctrlval, Const(CInt64(Int64.of_int ilen, IUInt, None), l), !currentLoc) in
                 startLoop false;
                 let bodyc =
                   let ifc =
                     let ife =
-                      BinOp(Ge, Lval ctrlval, Const(CInt64(ni, IUInt, None)), intType) in
+                      BinOp(Ge, Lval (ctrlval, l), Const(CInt64(ni, IUInt, None), l), intType, l) in
                     ifChunk ife !currentLoc (breakChunk !currentLoc) skipChunk
                   in
-                  let dest = addOffsetLval (Index(Lval ctrlval, NoOffset)) lv in
+                  let dest = addOffsetLval (Index(Lval (ctrlval, l), NoOffset)) lv in
                   let assignc = assignInit dest (makeZeroInit bt) bt empty in
-                  let inci = Set(ctrlval, BinOp(PlusA, Lval ctrlval, Const(CInt64(1L, IUInt, None)), uintType), !currentLoc) in
+                  let inci = Set(ctrlval, BinOp(PlusA, Lval (ctrlval, l), Const(CInt64(1L, IUInt, None), l), uintType, l), !currentLoc) in
                   (ifc @@ assignc) +++ inci in
                 exitLoop ();
                 let loopc = loopChunk bodyc (Iformula.EList []) in
@@ -6469,7 +6490,7 @@ and doStatement (s : A.statement) : chunk =
           E.s (error "Case statement with a non-constant");
         let il, ih, ik = 
           match constFold true el', constFold true eh' with
-            Const(CInt64(il, ilk, _)), Const(CInt64(ih, ihk, _)) -> 
+            Const(CInt64(il, ilk, _), _), Const(CInt64(ih, ihk, _), _) -> 
               mkCilint ilk il, mkCilint ihk ih, commonIntKind ilk ihk
           | _ -> E.s (unimp "Cannot understand the constants in case range")
         in
@@ -6525,7 +6546,7 @@ and doStatement (s : A.statement) : chunk =
             in
             (* Make a switch statement. We'll fill in the statements at the 
             * end of the function *)
-            let switch = mkStmt (Switch (Lval(var switchv), 
+            let switch = mkStmt (Switch (Lval(var switchv, lu), 
                                          mkBlock [], [], loc')) in
             (* And make a label for it since we'll goto it *)
             switch.labels <- [Label ("__docompgoto", loc', false)];
@@ -6550,45 +6571,45 @@ and doStatement (s : A.statement) : chunk =
         let attr' = doAttributes asmattr in
         currentLoc := loc';
         let stmts : chunk ref = ref empty in
-	let (tmpls', outs', ins', clobs') =
-	  match details with
-	  | None ->
-	      let tmpls' =
-		if !msvcMode then
-		  tmpls
-		else
-		  let pattern = Str.regexp "%" in
-		  let escape = Str.global_replace pattern "%%" in
-		  Util.list_map escape tmpls
-	      in
-	      (tmpls', [], [], [])
-	  | Some { aoutputs = outs; ainputs = ins; aclobbers = clobs } ->
-              let outs' =
-		Util.list_map
-		  (fun (id, c, e) ->
-		    let (se, e', t) = doExp false e (AExp None) in
-		    let lv =
-                      match e' with
-		      | Lval lval
-		      | StartOf lval -> lval
-                      | _ -> E.s (error "Expected lval for ASM outputs")
-		    in
-		    stmts := !stmts @@ se;
-		    (id, c, lv)) outs
+        let (tmpls', outs', ins', clobs') =
+          match details with
+          | None ->
+              let tmpls' =
+                if !msvcMode then
+                  tmpls
+                else
+                  let pattern = Str.regexp "%" in
+                  let escape = Str.global_replace pattern "%%" in
+                  Util.list_map escape tmpls
               in
-	      (* Get the side-effects out of expressions *)
-              let ins' =
-		Util.list_map
-		  (fun (id, c, e) ->
-		    let (se, e', et) = doExp false e (AExp None) in
-		    stmts := !stmts @@ se;
-		    (id, c, e'))
-		  ins
-              in
-	      (tmpls, outs', ins', clobs)
-	in
-        !stmts @@
-        (i2c (Asm(attr', tmpls', outs', ins', clobs', loc')))
+              (tmpls', [], [], [])
+          | Some { aoutputs = outs; ainputs = ins; aclobbers = clobs } ->
+                    let outs' =
+                      Util.list_map
+                        (fun (id, c, e) ->
+                          let (se, e', t) = doExp false e (AExp None) in
+                          let lv =
+                            match e' with
+                            | Lval (lval, _)
+                            | StartOf (lval, _) -> lval
+                            | _ -> E.s (error "Expected lval for ASM outputs")
+                          in
+                          stmts := !stmts @@ se;
+                          (id, c, lv)) outs
+                    in
+                    (* Get the side-effects out of expressions *)
+                    let ins' =
+                      Util.list_map
+                        (fun (id, c, e) ->
+                          let (se, e', et) = doExp false e (AExp None) in
+                          stmts := !stmts @@ se;
+                          (id, c, e'))
+                        ins
+                              in
+                          (tmpls, outs', ins', clobs)
+                    in
+                      !stmts @@
+                      (i2c (Asm(attr', tmpls', outs', ins', clobs', loc')))
 
     | TRY_FINALLY (b, h, loc) -> 
         let loc' = convLoc loc in
@@ -6597,7 +6618,6 @@ and doStatement (s : A.statement) : chunk =
         let h': chunk = doBody h in
         if b'.cases <> [] || h'.cases <> [] then 
           E.s (error "Try statements cannot contain switch cases");
-        
         s2c (mkStmt (TryFinally (c2block b', c2block h', loc'))) loc'
 
     | TRY_EXCEPT (b, e, h, loc) -> 
@@ -6636,14 +6656,14 @@ and doStatement (s : A.statement) : chunk =
 
 
 let rec stripParenLocal e = match e with
-  | A.PAREN e2 -> stripParenLocal e2
+  | A.PAREN (e2, _) -> stripParenLocal e2
   | _ -> e
 
 class stripParenClass : V.cabsVisitor = object (self)
   inherit V.nopCabsVisitor as super
   
   method vexpr e = match e with
-  | A.PAREN e2 ->
+  | A.PAREN (e2, _) ->
         V.ChangeDoChildrenPost (stripParenLocal e2,stripParenLocal)
   | _ -> V.DoChildren
 end

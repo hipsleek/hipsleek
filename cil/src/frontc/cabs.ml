@@ -260,31 +260,31 @@ and unary_operator =
 
 and expression =
     NOTHING
-  | UNARY of unary_operator * expression
-  | LABELADDR of string  (* GCC's && Label *)
-  | BINARY of binary_operator * expression * expression
-  | QUESTION of expression * expression * expression
+  | UNARY of unary_operator * expression * cabsloc
+  | LABELADDR of string * cabsloc (* GCC's && Label *)
+  | BINARY of binary_operator * expression * expression * cabsloc
+  | QUESTION of expression * expression * expression * cabsloc
 
    (* A CAST can actually be a constructor expression *)
-  | CAST of (specifier * decl_type) * init_expression
+  | CAST of (specifier * decl_type) * init_expression * cabsloc
 
     (* There is a special form of CALL in which the function called is
        __builtin_va_arg and the second argument is sizeof(T). This 
        should be printed as just T *)
-  | CALL of expression * expression list
-  | COMMA of expression list
-  | CONSTANT of constant
-  | PAREN of expression
-  | VARIABLE of string
-  | EXPR_SIZEOF of expression
-  | TYPE_SIZEOF of specifier * decl_type
-  | EXPR_ALIGNOF of expression
-  | TYPE_ALIGNOF of specifier * decl_type
-  | INDEX of expression * expression
-  | MEMBEROF of expression * string
-  | MEMBEROFPTR of expression * string
-  | GNU_BODY of block
-  | EXPR_PATTERN of string     (* pattern variable, and name *)
+  | CALL of expression * expression list * cabsloc
+  | COMMA of expression list * cabsloc
+  | CONSTANT of constant * cabsloc
+  | PAREN of expression * cabsloc
+  | VARIABLE of string * cabsloc
+  | EXPR_SIZEOF of expression * cabsloc
+  | TYPE_SIZEOF of specifier * decl_type * cabsloc
+  | EXPR_ALIGNOF of expression * cabsloc
+  | TYPE_ALIGNOF of specifier * decl_type * cabsloc
+  | INDEX of expression * expression * cabsloc
+  | MEMBEROF of expression * string * cabsloc
+  | MEMBEROFPTR of expression * string * cabsloc
+  | GNU_BODY of block * cabsloc
+  | EXPR_PATTERN of string * cabsloc     (* pattern variable, and name *)
 
 and constant =
   | CONST_INT of string   (* the textual representation *)

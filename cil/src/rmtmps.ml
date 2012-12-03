@@ -471,8 +471,8 @@ class markReachableVisitor
 
   method vexpr (e: exp) = 
     match e with 
-      Const (CEnum (_, _, ei)) -> ei.ereferenced <- true;
-                                  DoChildren
+      Const (CEnum (_, _, ei), _) -> ei.ereferenced <- true;
+                                     DoChildren
     | _ -> DoChildren
 
   method vtype typ =

@@ -462,50 +462,46 @@ and storage =
 
 (** Expressions (Side-effect free)*)
 and exp =
-    Const      of constant              (** Constant *)
-  | Lval       of lval                  (** Lvalue *)
-  | SizeOf     of typ                   (** sizeof(<type>). Has [unsigned 
+    Const      of constant * location   (** Constant *)
+  | Lval       of lval * location       (** Lvalue *)
+  | SizeOf     of typ * location        (** sizeof(<type>). Has [unsigned 
                                          * int] type (ISO 6.5.3.4). This is 
                                          * not turned into a constant because 
                                          * some transformations might want to 
                                          * change types *)
 
-  | SizeOfE    of exp                   (** sizeof(<expression>) *)
-  | SizeOfStr  of string
+  | SizeOfE    of exp * location        (** sizeof(<expression>) *)
+  | SizeOfStr  of string * location
     (** sizeof(string_literal). We separate this case out because this is the 
       * only instance in which a string literal should not be treated as 
       * having type pointer to character. *)
-
-  | AlignOf    of typ                   (** Has [unsigned int] type *)
-  | AlignOfE   of exp 
-
+  | AlignOf    of typ * location        (** Has [unsigned int] type *)
+  | AlignOfE   of exp * location
                                         
-  | UnOp       of unop * exp * typ      (** Unary operation. Includes 
+  | UnOp       of unop * exp * typ * location
+                                        (** Unary operation. Includes 
                                             the type of the result *)
-
-  | BinOp      of binop * exp * exp * typ
+  | BinOp      of binop * exp * exp * typ * location
                                         (** Binary operation. Includes the 
                                             type of the result. The arithemtic
                                             conversions are made  explicit
                                             for the arguments *)
-  | Question   of exp * exp * exp * typ
+  | Question   of exp * exp * exp * typ * location
                                         (** (a ? b : c) operation. Includes
                                             the type of the result *)
-  | CastE      of typ * exp            (** Use {!Cil.mkCast} to make casts *)
-
-  | AddrOf     of lval                 (** Always use {!Cil.mkAddrOf} to 
-                                        * construct one of these. Apply to an 
-                                        * lvalue of type [T] yields an 
-                                        * expression of type [TPtr(T)] *)
-
-  | StartOf    of lval   (** There is no C correspondent for this. C has 
-                          * implicit coercions from an array to the address 
-                          * of the first element. [StartOf] is used in CIL to 
-                          * simplify type checking and is just an explicit 
-                          * form of the above mentioned implicit conversion. 
-                          * It is not printed. Given an lval of type 
-                          * [TArray(T)] produces an expression of type 
-                          * [TPtr(T)]. *)
+  | CastE      of typ * exp * location  (** Use {!Cil.mkCast} to make casts *)
+  | AddrOf     of lval * location       (** Always use {!Cil.mkAddrOf} to 
+                                         * construct one of these. Apply to an 
+                                         * lvalue of type [T] yields an 
+                                         * expression of type [TPtr(T)] *)
+  | StartOf    of lval * location       (** There is no C correspondent for this. C has 
+                                         * implicit coercions from an array to the address 
+                                         * of the first element. [StartOf] is used in CIL to 
+                                         * simplify type checking and is just an explicit 
+                                         * form of the above mentioned implicit conversion. 
+                                         * It is not printed. Given an lval of type 
+                                         * [TArray(T)] produces an expression of type 
+                                         * [TPtr(T)]. *)
 
 
 (** Literal constants *)
@@ -1241,7 +1237,7 @@ let warnLoc (loc: location) (fmt : ('a,unit,doc) format) : 'a =
   in
   Pretty.gprintf f fmt
 
-let zero      = Const(CInt64(Int64.zero, IInt, None))
+let zero      = Const(CInt64(Int64.zero, IInt, None), lu)
 
 (** Given the character c in a (CChr c), sign-extend it to 32 bits.
   (This is the official way of interpreting character constants, according to
@@ -1619,7 +1615,7 @@ let isVoidPtrType t =
 let var vi : lval = (Var vi, NoOffset)
 (* let assign vi e = Instrs(Set (var vi, e), lu) *)
 
-let mkString s = Const(CStr s)
+let mkString s = Const(CStr s, lu)
 
 
 let mkWhile ~(guard:exp) ~(body: stmt list) ~(hspecs: Iformula.struc_formula): stmt list = 
@@ -1647,16 +1643,16 @@ let mkForIncr ~(iter : varinfo) ~(first: exp) ~stopat:(past: exp) ~(incr: exp)
   in
   mkFor 
     [ mkStmt (Instr [(Set (var iter, first, lu))]) ]
-    (BinOp(compop, Lval(var iter), past, intType))
+    (BinOp(compop, Lval(var iter, lu), past, intType, lu))
     [ mkStmt (Instr [(Set (var iter, 
-                           (BinOp(nextop, Lval(var iter), incr, iter.vtype)),
+                           (BinOp(nextop, Lval(var iter, lu), incr, iter.vtype, lu)),
                            lu))])]
     body
     hspecs
   
 
 let rec stripCasts (e: exp) = 
-  match e with CastE(_, e') -> stripCasts e' | _ -> e
+  match e with CastE(_, e', _) -> stripCasts e' | _ -> e
 
 
 
@@ -1795,36 +1791,32 @@ let questionLevel = 100
 let getParenthLevel (e: exp) = 
   match e with 
   | Question _ -> questionLevel
-  | BinOp((LAnd | LOr), _,_,_) -> 80
+  | BinOp((LAnd | LOr), _,_,_,_) -> 80
                                         (* Bit operations. *)
-  | BinOp((BOr|BXor|BAnd),_,_,_) -> bitwiseLevel (* 75 *)
-
+  | BinOp((BOr|BXor|BAnd),_,_,_,_) -> bitwiseLevel (* 75 *)
                                         (* Comparisons *)
-  | BinOp((Eq|Ne|Gt|Lt|Ge|Le),_,_,_) ->
+  | BinOp((Eq|Ne|Gt|Lt|Ge|Le),_,_,_,_) ->
       comparativeLevel (* 70 *)
                                         (* Additive. Shifts can have higher 
                                          * level than + or - but I want 
                                          * parentheses around them *)
   | BinOp((MinusA|MinusPP|MinusPI|PlusA|
-           PlusPI|IndexPI|Shiftlt|Shiftrt),_,_,_)  
-    -> additiveLevel (* 60 *)
-
+           PlusPI|IndexPI|Shiftlt|Shiftrt),_,_,_,_) ->
+      additiveLevel (* 60 *)
                                         (* Multiplicative *)
-  | BinOp((Div|Mod|Mult),_,_,_) -> 40
-
+  | BinOp((Div|Mod|Mult),_,_,_,_) -> 40
                                         (* Unary *)
-  | CastE(_,_) -> 30
+  | CastE(_,_,_) -> 30
   | AddrOf(_) -> 30
   | StartOf(_) -> 30
-  | UnOp((Neg|BNot|LNot),_,_) -> 30
+  | UnOp((Neg|BNot|LNot),_,_,_) -> 30
 
                                         (* Lvals *)
-  | Lval(Mem _ , _) -> derefStarLevel (* 20 *)                   
-  | Lval(Var _, (Field _|Index _)) -> indexLevel (* 20 *)
+  | Lval((Mem _ , _), _) -> derefStarLevel (* 20 *)                   
+  | Lval((Var _, (Field _|Index _)), _) -> indexLevel (* 20 *)
   | SizeOf _ | SizeOfE _ | SizeOfStr _ -> 20
   | AlignOf _ | AlignOfE _ -> 20
-
-  | Lval(Var _, NoOffset) -> 0        (* Plain variables *)
+  | Lval((Var _, NoOffset), _) -> 0       (* Plain variables *)
   | Const _ -> 0                        (* Constants *)
 
 
@@ -1834,8 +1826,8 @@ let getParenthLevelAttrParam (a: attrparam) =
     AInt _ | AStr _ | ACons _ -> 0
   | ASizeOf _ | ASizeOfE _ | ASizeOfS _ -> 20
   | AAlignOf _ | AAlignOfE _ | AAlignOfS _ -> 20
-  | AUnOp (uo, _) -> getParenthLevel (UnOp(uo, zero, intType))
-  | ABinOp (bo, _, _) -> getParenthLevel (BinOp(bo, zero, zero, intType))
+  | AUnOp (uo, _) -> getParenthLevel (UnOp(uo, zero, intType, lu))
+  | ABinOp (bo, _, _) -> getParenthLevel (BinOp(bo, zero, zero, intType, lu))
   | AAddrOf _ -> 30
   | ADot _ | AIndex _ | AStar _ -> 20
   | AQuestion _ -> questionLevel
@@ -1889,33 +1881,29 @@ let isFunctionType t =
 (**** Compute the type of an expression ****)
 let rec typeOf (e: exp) : typ = 
   match e with
-  | Const(CInt64 (_, ik, _)) -> TInt(ik, [])
+  | Const(CInt64 (_, ik, _), _) -> TInt(ik, [])
 
     (* Character constants have type int.  ISO/IEC 9899:1999 (E),
      * section 6.4.4.4 [Character constants], paragraph 10, if you
      * don't believe me. *)
-  | Const(CChr _) -> intType
+  | Const((CChr _), _) -> intType
 
     (* The type of a string is a pointer to characters ! The only case when 
      * you would want it to be an array is as an argument to sizeof, but we 
      * have SizeOfStr for that *)
-  | Const(CStr s) -> !stringLiteralType
-
-  | Const(CWStr s) -> TPtr(!wcharType,[])
-
-  | Const(CReal (_, fk, _)) -> TFloat(fk, [])
-
-  | Const(CEnum(tag, _, ei)) -> typeOf tag
-
-  | Lval(lv) -> typeOfLval lv
+  | Const(CStr s, _) -> !stringLiteralType
+  | Const(CWStr s, _) -> TPtr(!wcharType,[])
+  | Const(CReal (_, fk, _), _) -> TFloat(fk, [])
+  | Const(CEnum(tag, _, ei), _) -> typeOf tag
+  | Lval(lv, _) -> typeOfLval lv
   | SizeOf _ | SizeOfE _ | SizeOfStr _ -> !typeOfSizeOf
   | AlignOf _ | AlignOfE _ -> !typeOfSizeOf
-  | UnOp (_, _, t)
-  | BinOp (_, _, _, t)
-  | Question (_, _, _, t)
-  | CastE (t, _) -> t
-  | AddrOf (lv) -> TPtr(typeOfLval lv, [])
-  | StartOf (lv) -> begin
+  | UnOp (_, _, t, _)
+  | BinOp (_, _, _, t, _)
+  | Question (_, _, _, t, _)
+  | CastE (t, _, _) -> t
+  | AddrOf (lv, _) -> TPtr(typeOfLval lv, [])
+  | StartOf (lv, _) -> begin
       match unrollType (typeOfLval lv) with
         TArray (t,_, a) -> TPtr(t, a)
      | _ -> E.s (E.bug "typeOf: StartOf on a non-array")
@@ -2067,7 +2055,7 @@ let kintegerCilint (k: ikind) (i: cilint) : exp =
   if truncated = BitTruncation && !warnTruncate then 
     ignore (warnOpt "Truncating integer %s to %s" 
               (string_of_cilint i) (string_of_cilint i'));
-  Const (CInt64(int64_of_cilint i', k,  None))
+  Const (CInt64(int64_of_cilint i', k,  None), lu)
 
 (* Construct an integer constant with possible truncation *)
 let kinteger64 (k: ikind) (i: int64) : exp = 
@@ -2113,10 +2101,10 @@ let intKindForValue (i: cilint) (unsigned: bool) =
     Otherwise return None. *)
 let rec getInteger (e:exp) : cilint option = 
   match e with
-  | Const(CInt64 (n, ik, _)) -> Some (mkCilint ik n)
-  | Const(CChr c) -> getInteger (Const (charConstToInt c))
-  | Const(CEnum(v, _, _)) -> getInteger v
-  | CastE(t, e) -> begin
+  | Const(CInt64 (n, ik, _), _) -> Some (mkCilint ik n)
+  | Const(CChr c, l) -> getInteger (Const (charConstToInt c, l))
+  | Const(CEnum(v, _, _), _) -> getInteger v
+  | CastE(t, e, _) -> begin
       (* Handle any truncation due to cast. We optimistically ignore 
 	 loss-of-precision due to floating-point casts. *)
       let mkInt ik n = Some (fst (truncateCilint ik n)) in
@@ -2483,7 +2471,7 @@ and bitsSizeOf t =
 
   | TArray(bt, Some len, _) -> begin
       match constFold true len with 
-        Const(CInt64(l,lk,_)) -> 
+        Const(CInt64(l,lk,_), _) -> 
 	  let sz = mul_cilint (mkCilint lk l) (cilint_of_int  (bitsSizeOf bt)) in
           (* Check for overflow.
              There are other places in these cil.ml that overflow can occur,
@@ -2511,10 +2499,10 @@ and bitsSizeOf t =
 and addTrailing nrbits roundto = 
     (nrbits + roundto - 1) land (lnot (roundto - 1))
 
-and sizeOf t = 
+and sizeOf (t, l) = 
   try
     integer ((bitsSizeOf t) lsr 3)
-  with SizeOfError _ -> SizeOf(t)
+  with SizeOfError _ -> SizeOf(t, l)
 
  
 and bitsOffset (baset: typ) (off: offset) : int * int = 
@@ -2573,8 +2561,8 @@ and bitsOffset (baset: typ) (off: offset) : int * int =
     expressions in a given AST node.*)    
 and constFold (machdep: bool) (e: exp) : exp = 
   match e with
-    BinOp(bop, e1, e2, tres) -> constFoldBinOp machdep bop e1 e2 tres
-  | UnOp(unop, e1, tres) -> begin
+  | BinOp(bop, e1, e2, tres, l) -> constFoldBinOp machdep bop e1 e2 tres l
+  | UnOp(unop, e1, tres, l) -> begin
       try
         let tk = 
           match unrollType tres with
@@ -2583,64 +2571,60 @@ and constFold (machdep: bool) (e: exp) : exp =
           | _ -> raise Not_found (* probably a float *)
         in
         match constFold machdep e1 with
-          Const(CInt64(i,ik,_)) -> begin
-	    let ic = mkCilint ik i in
+          Const(CInt64(i,ik,_), _) -> begin
+            let ic = mkCilint ik i in
             match unop with 
               Neg -> kintegerCilint tk (neg_cilint ic)
             | BNot -> kintegerCilint tk (lognot_cilint ic)
             | LNot -> if is_zero_cilint ic then one else zero
             end
-        | e1c -> UnOp(unop, e1c, tres)
+        | e1c -> UnOp(unop, e1c, tres, l)
       with Not_found -> e
   end
         (* Characters are integers *)
-  | Const(CChr c) -> Const(charConstToInt c)
-  | Const(CEnum (v, _, _)) -> constFold machdep v
-  | SizeOf t when machdep -> begin
+  | Const(CChr c, l) -> Const(charConstToInt c, l)
+  | Const(CEnum (v, _, _), _) -> constFold machdep v
+  | SizeOf (t, _) when machdep -> begin
       try
         let bs = bitsSizeOf t in
         kinteger !kindOfSizeOf (bs / 8)
       with SizeOfError _ -> e
   end
-  | SizeOfE e when machdep -> constFold machdep (SizeOf (typeOf e))
-  | SizeOfStr s when machdep -> kinteger !kindOfSizeOf (1 + String.length s)
-  | AlignOf t when machdep -> kinteger !kindOfSizeOf (alignOf_int t)
-  | AlignOfE e when machdep -> begin
+  | SizeOfE (e, l) when machdep -> constFold machdep (SizeOf (typeOf e, l))
+  | SizeOfStr (s, _) when machdep -> kinteger !kindOfSizeOf (1 + String.length s)
+  | AlignOf (t, _) when machdep -> kinteger !kindOfSizeOf (alignOf_int t)
+  | AlignOfE (e, l) when machdep -> (
       (* The alignment of an expression is not always the alignment of its 
        * type. I know that for strings this is not true *)
       match e with 
-        Const (CStr _) when not !msvcMode -> 
+        Const (CStr _, _) when not !msvcMode -> 
           kinteger !kindOfSizeOf !M.theMachine.M.alignof_str
             (* For an array, it is the alignment of the array ! *)
-      | _ -> constFold machdep (AlignOf (typeOf e))
-  end
-
-  | CastE(it, 
-          AddrOf (Mem (CastE(TPtr(bt, _), z)), off)) 
+      | _ -> constFold machdep (AlignOf (typeOf e, l))
+    )
+  | CastE(it, AddrOf ((Mem (CastE(TPtr(bt, _), z, _)), off), _), l) 
     when machdep && isZero z -> begin
       try 
         let start, width = bitsOffset bt off in
         if start mod 8 <> 0 then 
           E.s (error "Using offset of bitfield");
-        constFold machdep (CastE(it, (kinteger !kindOfSizeOf (start / 8))))
+        constFold machdep (CastE(it, (kinteger !kindOfSizeOf (start / 8)), l))
       with SizeOfError _ -> e
   end
-
- 
-  | CastE (t, e) -> begin
+  | CastE (t, e, l) -> begin
       match constFold machdep e, unrollType t with 
         (* Might truncate silently *)
-      | Const(CInt64(i,k,_)), TInt(nk,a)
+      | Const(CInt64(i,k,_), l2), TInt(nk,a)
           (* It's okay to drop a cast to const.
              If the cast has any other attributes, leave the cast alone. *)
           when (dropAttributes ["const"] a) = [] -> 
           let i', _ = truncateCilint nk (mkCilint k i) in
-          Const(CInt64(int64_of_cilint i', nk, None))
-      | e', _ -> CastE (t, e')
+          Const(CInt64(int64_of_cilint i', nk, None), l2)
+      | e', _ -> CastE (t, e', l)
   end
-  | Lval lv -> Lval (constFoldLval machdep lv)
-  | AddrOf lv -> AddrOf (constFoldLval machdep lv)
-  | StartOf lv -> StartOf (constFoldLval machdep lv)
+  | Lval (lv, l) -> Lval (constFoldLval machdep lv, l)
+  | AddrOf (lv, l) -> AddrOf (constFoldLval machdep lv, l)
+  | StartOf (lv, l) -> StartOf (constFoldLval machdep lv, l)
   | _ -> e
 
 and constFoldLval machdep (host,offset) =
@@ -2657,7 +2641,7 @@ and constFoldLval machdep (host,offset) =
   in
   (newhost, constFoldOffset machdep offset)
 
-and constFoldBinOp (machdep: bool) bop e1 e2 tres = 
+and constFoldBinOp (machdep: bool) bop e1 e2 tres loc = 
   let e1' = constFold machdep e1 in
   let e2' = constFold machdep e2 in
   if isIntegralType tres then begin
@@ -2678,7 +2662,7 @@ and constFoldBinOp (machdep: bool) bop e1 e2 tres =
         if machdep then
           try
             compare_cilint i2 zero_cilint >= 0 && 
-	    compare_cilint i2 (cilint_of_int (bitsSizeOf (typeOf e1'))) < 0
+            compare_cilint i2 (cilint_of_int (bitsSizeOf (typeOf e1'))) < 0
           with SizeOfError _ -> false
         else false
       in
@@ -2696,15 +2680,14 @@ and constFoldBinOp (machdep: bool) bop e1 e2 tres =
       | Mult, _, Some o when compare_cilint o one_cilint = 0 -> collapse e1'
       | Div, Some i1, Some i2 -> begin
           try kintegerCilint tk (div0_cilint i1 i2)
-          with Division_by_zero -> BinOp(bop, e1', e2', tres)
-	end
+          with Division_by_zero -> BinOp(bop, e1', e2', tres, loc)
+        end
       | Div, _, Some o when compare_cilint o one_cilint = 0 -> collapse e1'
       | Mod, Some i1, Some i2 -> begin
           try kintegerCilint tk (rem_cilint i1 i2)
-          with Division_by_zero -> BinOp(bop, e1', e2', tres) 
-	end
+          with Division_by_zero -> BinOp(bop, e1', e2', tres, loc) 
+        end
       | Mod, _, Some o when compare_cilint o one_cilint = 0 -> collapse0 ()
-
       | BAnd, Some i1, Some i2 -> kintegerCilint tk (logand_cilint i1 i2)
       | BAnd, Some z, _ when is_zero_cilint z -> collapse0 ()
       | BAnd, _, Some z when is_zero_cilint z -> collapse0 ()
@@ -2714,7 +2697,6 @@ and constFoldBinOp (machdep: bool) bop e1 e2 tres =
       | BXor, Some i1, Some i2 -> kintegerCilint tk (logxor_cilint i1 i2)
       | BXor, Some z, _ when is_zero_cilint z -> collapse e2' 
       | BXor, _, Some z when is_zero_cilint z -> collapse e1'
-
       | Shiftlt, Some i1, Some i2 when shiftInBounds i2 -> 
           kintegerCilint tk (shift_left_cilint i1 (int_of_cilint i2))
       | Shiftlt, Some z, _ when is_zero_cilint z -> collapse0 ()
@@ -2723,7 +2705,6 @@ and constFoldBinOp (machdep: bool) bop e1 e2 tres =
           kintegerCilint tk (shift_right_cilint i1 (int_of_cilint i2))
       | Shiftrt, Some z, _ when is_zero_cilint z -> collapse0 ()
       | Shiftrt, _, Some z when is_zero_cilint z -> collapse e1'
-
       | Eq, Some i1, Some i2 -> if compare_cilint i1 i2 = 0 then one else zero
       | Ne, Some i1, Some i2 -> if compare_cilint i1 i2 <> 0 then one else zero
       | Le, Some i1, Some i2 -> if compare_cilint i1 i2 <= 0 then one else zero
@@ -2735,15 +2716,14 @@ and constFoldBinOp (machdep: bool) bop e1 e2 tres =
       | LAnd, _, Some i2 -> if is_zero_cilint i2 then collapse0 () else collapse e1'
       | LOr, Some i1, _ -> if is_zero_cilint i1 then collapse e2' else one
       | LOr, _, Some i2 -> if is_zero_cilint i2 then collapse e1' else one
-
-      | _ -> BinOp(bop, e1', e2', tres)
+      | _ -> BinOp(bop, e1', e2', tres, loc)
     in
     if debugConstFold then 
       ignore (E.log "Folded %a to %a\n" 
-                (!pd_exp) (BinOp(bop, e1', e2', tres)) (!pd_exp) newe);
+                (!pd_exp) (BinOp(bop, e1', e2', tres, loc)) (!pd_exp) newe);
     newe
   end else
-    BinOp(bop, e1', e2', tres)
+    BinOp(bop, e1', e2', tres, loc)
 
 
 
@@ -3260,7 +3240,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
   val mutable currentFormals : varinfo list = []
   method private getLastNamedArgument (s:string) : exp =
     match List.rev currentFormals with 
-      f :: _ -> Lval (var f)
+      f :: _ -> Lval (var f, lu)
     | [] -> 
         E.s (bug "Cannot find the last named argument when printing call to %s\n" s)
 
@@ -3304,7 +3284,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
         self#pOffset (base ++ text "[" ++ self#pExp () e ++ text "]") o
 
   method private pLvalPrec (contextprec: int) () lv = 
-    if getParenthLevel (Lval(lv)) >= contextprec then
+    if getParenthLevel (Lval(lv, lu)) >= contextprec then
       text "(" ++ self#pLval () lv ++ text ")"
     else
       self#pLval () lv
@@ -3313,12 +3293,11 @@ class defaultCilPrinterClass : cilPrinter = object (self)
   method pExp () (e: exp) : doc = 
     let level = getParenthLevel e in
     match e with
-      Const(c) -> d_const () c
-    | Lval(l) -> self#pLval () l
-    | UnOp(u,e1,_) -> 
+      Const(c,_) -> d_const () c
+    | Lval(l,_) -> self#pLval () l
+    | UnOp(u,e1,_,_) -> 
         (d_unop () u) ++ chr ' ' ++ (self#pExpPrec level () e1)
-          
-    | BinOp(b,e1,e2,_) -> 
+    | BinOp(b,e1,e2,_,_) -> 
         align 
           ++ (self#pExpPrec level () e1)
           ++ chr ' ' 
@@ -3326,38 +3305,32 @@ class defaultCilPrinterClass : cilPrinter = object (self)
           ++ chr ' '
           ++ (self#pExpPrec level () e2)
           ++ unalign
-
-    | Question(e1,e2,e3,_) ->
+    | Question(e1,e2,e3,_,_) ->
         (self#pExpPrec level () e1)
           ++ text " ? "
           ++ (self#pExpPrec level () e2)
           ++ text " : "
           ++ (self#pExpPrec level () e3)
-
-    | CastE(t,e) -> 
+    | CastE(t,e,_) -> 
         text "(" 
           ++ self#pType None () t
           ++ text ")"
           ++ self#pExpPrec level () e
-
-    | SizeOf (t) -> 
+    | SizeOf (t,_) -> 
         text "sizeof(" ++ self#pType None () t ++ chr ')'
-    | SizeOfE (Lval (Var fv, NoOffset)) when fv.vname = "__builtin_va_arg_pack" && (not !printCilAsIs) -> 
+    | SizeOfE (Lval ((Var fv, NoOffset),_),_) when fv.vname = "__builtin_va_arg_pack" && (not !printCilAsIs) -> 
         text "__builtin_va_arg_pack()"
-    | SizeOfE (e) ->  
+    | SizeOfE (e,_) ->  
         text "sizeof(" ++ self#pExp () e ++ chr ')'
-
-    | SizeOfStr s -> 
+    | SizeOfStr (s,_) -> 
         text "sizeof(" ++ d_const () (CStr s) ++ chr ')'
-
-    | AlignOf (t) -> 
+    | AlignOf (t,_) -> 
         text "__alignof__(" ++ self#pType None () t ++ chr ')'
-    | AlignOfE (e) -> 
+    | AlignOfE (e,_) -> 
         text "__alignof__(" ++ self#pExp () e ++ chr ')'
-    | AddrOf(lv) -> 
+    | AddrOf(lv,_) -> 
         text "& " ++ (self#pLvalPrec addrOfLevel () lv)
-          
-    | StartOf(lv) -> self#pLval () lv
+    | StartOf(lv,_) -> self#pLval () lv
 
   (* Print an expression, given the precedence of the context in which it 
    * appears. *)
@@ -3483,29 +3456,26 @@ class defaultCilPrinterClass : cilPrinter = object (self)
     | Set(lv,e,l) -> begin
         (* Be nice to some special cases *)
         match e with
-          BinOp((PlusA|PlusPI|IndexPI),Lval(lv'),Const(CInt64(one,_,_)),_)
+          BinOp((PlusA|PlusPI|IndexPI),Lval(lv',_),Const(CInt64(one,_,_),_),_,_)
             when Util.equals lv lv' && one = Int64.one && not !printCilAsIs ->
               self#pLineDirective l
                 ++ self#pLvalPrec indexLevel () lv
                 ++ text (" ++" ^ printInstrTerminator)
-
-        | BinOp((MinusA|MinusPI),Lval(lv'),
-                Const(CInt64(one,_,_)), _) 
+        | BinOp((MinusA|MinusPI),Lval(lv',_),
+                Const(CInt64(one,_,_),_),_,_) 
             when Util.equals lv lv' && one = Int64.one && not !printCilAsIs ->
                   self#pLineDirective l
                     ++ self#pLvalPrec indexLevel () lv
                     ++ text (" --" ^ printInstrTerminator) 
-
-        | BinOp((PlusA|PlusPI|IndexPI),Lval(lv'),Const(CInt64(mone,_,_)),_)
+        | BinOp((PlusA|PlusPI|IndexPI),Lval(lv',_),Const(CInt64(mone,_,_),_),_,_)
             when Util.equals lv lv' && mone = Int64.minus_one 
                 && not !printCilAsIs ->
               self#pLineDirective l
                 ++ self#pLvalPrec indexLevel () lv
                 ++ text (" --" ^ printInstrTerminator)
-
         | BinOp((PlusA|PlusPI|IndexPI|MinusA|MinusPP|MinusPI|BAnd|BOr|BXor|
           Mult|Div|Mod|Shiftlt|Shiftrt) as bop,
-                Lval(lv'),e,_) when Util.equals lv lv' 
+                Lval(lv',_),e,_,_) when Util.equals lv lv' 
                 && not !printCilAsIs ->
                   self#pLineDirective l
                     ++ self#pLval () lv
@@ -3513,7 +3483,6 @@ class defaultCilPrinterClass : cilPrinter = object (self)
                     ++ text "= "
                     ++ self#pExp () e
                     ++ text printInstrTerminator
-                    
         | _ ->
             self#pLineDirective l
               ++ self#pLval () lv
@@ -3525,10 +3494,10 @@ class defaultCilPrinterClass : cilPrinter = object (self)
       (* In cabs2cil we have turned the call to builtin_va_arg into a 
        * three-argument call: the last argument is the address of the 
        * destination *)
-    | Call(None, Lval(Var vi, NoOffset), [dest; SizeOf t; adest], l) 
+    | Call(None, Lval((Var vi, NoOffset),_), [dest; SizeOf (t,_); adest], l) 
         when vi.vname = "__builtin_va_arg" && not !printCilAsIs -> 
           let destlv = match stripCasts adest with 
-            AddrOf destlv -> destlv
+            AddrOf (destlv,_) -> destlv
               (* If this fails, it's likely that an extension interfered
                  with the AddrOf *)
           | _ -> E.s (E.bug 
@@ -3550,12 +3519,12 @@ class defaultCilPrinterClass : cilPrinter = object (self)
 
       (* In cabs2cil we have dropped the last argument in the call to 
        * __builtin_va_start and __builtin_stdarg_start. *)
-    | Call(None, Lval(Var vi, NoOffset), [marker], l) 
+    | Call(None, Lval((Var vi, NoOffset), l0), [marker], l) 
         when ((vi.vname = "__builtin_stdarg_start" ||
                vi.vname = "__builtin_va_start") && not !printCilAsIs) -> 
         if currentFormals <> [] then begin
           let last = self#getLastNamedArgument vi.vname in
-          self#pInstr () (Call(None,Lval(Var vi,NoOffset),[marker; last],l))
+          self#pInstr () (Call(None,Lval((Var vi,NoOffset),l0),[marker; last],l))
         end
         else begin
           (* We can't print this call because someone called pInstr outside 
@@ -3570,10 +3539,10 @@ class defaultCilPrinterClass : cilPrinter = object (self)
         end
       (* In cabs2cil we have dropped the last argument in the call to 
        * __builtin_next_arg. *)
-    | Call(res, Lval(Var vi, NoOffset), [ ], l) 
+    | Call(res, Lval((Var vi, NoOffset), l0), [ ], l) 
         when vi.vname = "__builtin_next_arg" && not !printCilAsIs -> begin
           let last = self#getLastNamedArgument vi.vname in
-          self#pInstr () (Call(res,Lval(Var vi,NoOffset),[last],l))
+          self#pInstr () (Call(res,Lval((Var vi,NoOffset),l0),[last],l))
         end
 
       (* In cparser we have turned the call to 
@@ -3581,7 +3550,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
        * __builtin_types_compatible_p(sizeof t1, sizeof t2), so that we can
        * represent the types as expressions. 
        * Remove the sizeofs when printing. *)
-    | Call(dest, Lval(Var vi, NoOffset), [SizeOf t1; SizeOf t2], l) 
+    | Call(dest, Lval((Var vi, NoOffset), _), [SizeOf (t1, _); SizeOf (t2, _)], l) 
         when vi.vname = "__builtin_types_compatible_p" && not !printCilAsIs -> 
         self#pLineDirective l
           (* Print the destination *)
@@ -3592,10 +3561,9 @@ class defaultCilPrinterClass : cilPrinter = object (self)
         ++ dprintf "%s(%a, %a)" vi.vname
              (self#pType None) t1  (self#pType None) t2
         ++ text printInstrTerminator
-    | Call(_, Lval(Var vi, NoOffset), _, l) 
+    | Call(_, Lval((Var vi, NoOffset), _), _, l) 
         when vi.vname = "__builtin_types_compatible_p" && not !printCilAsIs -> 
         E.s (bug "__builtin_types_compatible_p: cabs2cil should have added sizeof to the arguments.")
-          
     | Call(dest,e,args,l) ->
         self#pLineDirective l
           ++ (match dest with
@@ -3613,7 +3581,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
           (* Now the function name *)
           ++ (let ed = self#pExp () e in
               match e with 
-                Lval(Var _, _) -> ed
+                Lval((Var _, _), _) -> ed
               | _ -> text "(" ++ ed ++ text ")")
           ++ text "(" ++ 
           (align
@@ -3622,7 +3590,6 @@ class defaultCilPrinterClass : cilPrinter = object (self)
                    (self#pExp ()) () args)
              ++ unalign)
         ++ text (")" ^ printInstrTerminator)
-
     | Asm(attrs, tmpls, outs, ins, clobs, l) ->
         if !msvcMode then
           self#pLineDirective l
@@ -3822,12 +3789,12 @@ class defaultCilPrinterClass : cilPrinter = object (self)
         self#pIfConditionThen l be t
 
     | If(be,{bstmts=[];battrs=[]},e,l) when not !printCilAsIs ->
-          self#pIfConditionThen l (UnOp(LNot,be,intType)) e
+          self#pIfConditionThen l (UnOp(LNot,be,intType,lu)) e
 
     | If(be,{bstmts=[{skind=Goto(gref,_);labels=[]}];
            battrs=[]},e,l)
       when !gref == next && not !printCilAsIs ->
-        self#pIfConditionThen l (UnOp(LNot,be,intType)) e
+        self#pIfConditionThen l (UnOp(LNot,be,intType,lu)) e
           
     | If(be,t,e,l) ->
         self#pIfConditionThen l be t
@@ -3865,7 +3832,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
                 match skipEmpty tb.bstmts, skipEmpty fb.bstmts with
                   [], {skind=Break _; labels=[]} :: _  -> e, rest
                 | {skind=Break _; labels=[]} :: _, [] 
-                                     -> UnOp(LNot, e, intType), rest
+                                     -> UnOp(LNot, e, intType, lu), rest
                 | _ -> raise Not_found
               end
             | _ -> raise Not_found
@@ -4595,11 +4562,11 @@ class plainCilPrinterClass =
   (* Some plain pretty-printers. Unlike the above these expose all the 
    * details of the internal representation *)
   method pExp () = function
-    Const(c) -> 
+    Const(c, _) -> 
       let d_plainconst () c = 
         match c with
           CInt64(i, ik, so) -> 
-	    let fmt = if isSigned ik then "%d" else "%x" in
+            let fmt = if isSigned ik then "%d" else "%x" in
             dprintf "Int64(%s,%a,%s)" 
               (Int64.format fmt i)
               d_ikind ik
@@ -4620,20 +4587,20 @@ class plainCilPrinterClass =
       text "Const(" ++ d_plainconst () c ++ text ")"
 
 
-  | Lval(lv) -> 
+  | Lval(lv, _) -> 
       text "Lval(" 
         ++ (align
               ++ self#pLval () lv
               ++ unalign)
         ++ text ")"
         
-  | CastE(t,e) -> dprintf "CastE(@[%a,@?%a@])" self#pOnlyType t self#pExp e
+  | CastE(t,e, _) -> dprintf "CastE(@[%a,@?%a@])" self#pOnlyType t self#pExp e
 
-  | UnOp(u,e1,_) -> 
+  | UnOp(u,e1,_,_) -> 
       dprintf "UnOp(@[%a,@?%a@])"
         d_unop u self#pExp e1
           
-  | BinOp(b,e1,e2,_) -> 
+  | BinOp(b,e1,e2,_,_) -> 
       let d_plainbinop () b =
         match b with
           PlusA -> text "PlusA"
@@ -4647,23 +4614,23 @@ class plainCilPrinterClass =
       dprintf "%a(@[%a,@?%a@])" d_plainbinop b
         self#pExp e1 self#pExp e2
 
-  | Question(e1,e2,e3,_) ->
+  | Question(e1,e2,e3,_,_) ->
       dprintf "Question(@[%a,@?%a,@?%a@])"
         self#pExp e1 self#pExp e2 self#pExp e3
 
-  | SizeOf (t) -> 
+  | SizeOf (t,_) -> 
       text "sizeof(" ++ self#pType None () t ++ chr ')'
-  | SizeOfE (e) -> 
+  | SizeOfE (e,_) -> 
       text "sizeofE(" ++ self#pExp () e ++ chr ')'
-  | SizeOfStr (s) -> 
+  | SizeOfStr (s,_) -> 
       text "sizeofStr(" ++ d_const () (CStr s) ++ chr ')'
-  | AlignOf (t) -> 
+  | AlignOf (t,_) -> 
       text "__alignof__(" ++ self#pType None () t ++ chr ')'
-  | AlignOfE (e) -> 
+  | AlignOfE (e,_) -> 
       text "__alignof__(" ++ self#pExp () e ++ chr ')'
 
-  | StartOf lv -> dprintf "StartOf(%a)" self#pLval lv
-  | AddrOf (lv) -> dprintf "AddrOf(%a)" self#pLval lv
+  | StartOf (lv,_) -> dprintf "StartOf(%a)" self#pLval lv
+  | AddrOf (lv,_) -> dprintf "AddrOf(%a)" self#pLval lv
 
 
 
@@ -4772,10 +4739,10 @@ object (self)
   method pExp () (e:exp) : doc =
     if enable then
       match e with
-        Lval (Var vi, o)
-      | StartOf (Var vi, o) -> 
+        Lval ((Var vi, o), _)
+      | StartOf ((Var vi, o), _) -> 
           self#pOffset (self#pVarDescriptive vi) o
-      | AddrOf (Var vi, o) -> 
+      | AddrOf ((Var vi, o), _) -> 
           (* No parens needed, since offsets have higher precedence than & *)
           text "& " ++ self#pOffset (self#pVarDescriptive vi) o
       | _ -> super#pExp () e
@@ -5121,46 +5088,44 @@ and childrenExp (vis: cilVisitor) (e: exp) : exp =
   let vTyp t = visitCilType vis t in
   let vLval lv = visitCilLval vis lv in
   match e with
-  | Const (CEnum(v, s, ei)) -> 
+  | Const (CEnum(v, s, ei), l) -> 
       let v' = vExp v in 
-      if v' != v then Const (CEnum(v', s, ei)) else e
-
+      if v' != v then Const (CEnum(v', s, ei), l) else e
   | Const _ -> e
-  | SizeOf t -> 
+  | SizeOf (t, l) -> 
       let t'= vTyp t in 
-      if t' != t then SizeOf t' else e
-  | SizeOfE e1 -> 
+      if t' != t then SizeOf (t', l) else e
+  | SizeOfE (e1, l) -> 
       let e1' = vExp e1 in
-      if e1' != e1 then SizeOfE e1' else e
-  | SizeOfStr s -> e
-
-  | AlignOf t -> 
+      if e1' != e1 then SizeOfE (e1', l) else e
+  | SizeOfStr (s, l) -> e
+  | AlignOf (t, l) -> 
       let t' = vTyp t in
-      if t' != t then AlignOf t' else e
-  | AlignOfE e1 -> 
+      if t' != t then AlignOf (t', l) else e
+  | AlignOfE (e1, l) -> 
       let e1' = vExp e1 in
-      if e1' != e1 then AlignOfE e1' else e
-  | Lval lv -> 
+      if e1' != e1 then AlignOfE (e1', l) else e
+  | Lval (lv, l) -> 
       let lv' = vLval lv in
-      if lv' != lv then Lval lv' else e
-  | UnOp (uo, e1, t) -> 
+      if lv' != lv then Lval (lv', l) else e
+  | UnOp (uo, e1, t, l) -> 
       let e1' = vExp e1 in let t' = vTyp t in
-      if e1' != e1 || t' != t then UnOp(uo, e1', t') else e
-  | BinOp (bo, e1, e2, t) -> 
+      if e1' != e1 || t' != t then UnOp(uo, e1', t', l) else e
+  | BinOp (bo, e1, e2, t, l) -> 
       let e1' = vExp e1 in let e2' = vExp e2 in let t' = vTyp t in
-      if e1' != e1 || e2' != e2 || t' != t then BinOp(bo, e1',e2',t') else e
-  | Question (e1, e2, e3, t) ->
+      if e1' != e1 || e2' != e2 || t' != t then BinOp(bo, e1',e2',t',l) else e
+  | Question (e1, e2, e3, t, l) ->
       let e1' = vExp e1 in let e2' = vExp e2 in let e3' = vExp e3 in let t' = vTyp t in
-      if e1' != e1 || e2' != e2 || e3' != e3 || t' != t then Question(e1',e2',e3',t') else e
-  | CastE (t, e1) ->           
+      if e1' != e1 || e2' != e2 || e3' != e3 || t' != t then Question(e1',e2',e3',t',l) else e
+  | CastE (t, e1, l) ->
       let t' = vTyp t in let e1' = vExp e1 in
-      if t' != t || e1' != e1 then CastE(t', e1') else e
-  | AddrOf lv -> 
+      if t' != t || e1' != e1 then CastE(t', e1',l) else e
+  | AddrOf (lv, l) -> 
       let lv' = vLval lv in
-      if lv' != lv then AddrOf lv' else e
-  | StartOf lv -> 
+      if lv' != lv then AddrOf (lv', l) else e
+  | StartOf (lv, l) -> 
       let lv' = vLval lv in
-      if lv' != lv then StartOf lv' else e
+      if lv' != lv then StartOf (lv', l) else e
 
 and visitCilInit (vis: cilVisitor) (forglob: varinfo) 
                  (atoff: offset) (i: init) : init = 
@@ -5602,7 +5567,7 @@ class constFoldVisitorClass (machdep: bool) : cilVisitor = object
     match i with 
       (* Skip two functions to which we add Sizeof to the type arguments. 
          See the comments for these above. *)
-      Call(_,(Lval (Var vi,NoOffset)),_,_) 
+      Call(_,(Lval ((Var vi,NoOffset),_)),_,_) 
         when ((vi.vname = "__builtin_va_arg") 
               || (vi.vname = "__builtin_types_compatible_p")) ->
           SkipChildren
@@ -5733,7 +5698,7 @@ let getGlobInit ?(main_name="main") (fl: file) =
               fl.globals <- GVarDecl (f.svar, lm) :: fl.globals;
               m.sbody.bstmts <- 
                  compactStmts (mkStmt (Instr [Call(None, 
-                                                   Lval(var f.svar), 
+                                                   Lval((var f.svar), locUnknown), 
                                                    [], locUnknown)]) 
                                :: m.sbody.bstmts);
               inserted := true;
@@ -5797,18 +5762,17 @@ let dumpFile (pp: cilPrinter) (out : out_channel) (outfile: string) file =
 exception NotAnAttrParam of exp
 let rec expToAttrParam (e: exp) : attrparam = 
   match e with 
-    Const(CInt64(i,k,_)) ->
+    Const(CInt64(i,k,_),_) ->
       let i' = mkCilint k i in
       if not (is_int_cilint i') then
         raise (NotAnAttrParam e);
       AInt (int_of_cilint i')
-  | Lval (Var v, NoOffset) -> ACons(v.vname, [])
-  | SizeOf t -> ASizeOf t
-  | SizeOfE e' -> ASizeOfE (expToAttrParam e')
+  | Lval ((Var v, NoOffset),_) -> ACons(v.vname, [])
+  | SizeOf (t,_) -> ASizeOf t
+  | SizeOfE (e',_) -> ASizeOfE (expToAttrParam e')
   
-  | UnOp(uo, e', _)  -> AUnOp (uo, expToAttrParam e')
-  | BinOp(bo, e1',e2', _)  -> ABinOp (bo, expToAttrParam e1', 
-                                      expToAttrParam e2')
+  | UnOp(uo, e', _, _)  -> AUnOp (uo, expToAttrParam e')
+  | BinOp(bo, e1',e2', _, _)  -> ABinOp (bo, expToAttrParam e1', expToAttrParam e2')
   | _ -> raise (NotAnAttrParam e)
 
 (******************** OPTIMIZATIONS *****)
@@ -5930,7 +5894,7 @@ let rec typeSigWithAttrs ?(ignoreSign=false) doattr t =
         match l with 
           Some l -> begin 
             match constFold true l with 
-              Const(CInt64(i, _, _)) -> Some i
+              Const(CInt64(i, _, _),_) -> Some i
             | e -> E.s (E.bug "Invalid length in array type: %a\n" 
                           (!pd_exp) e)
           end 
@@ -5973,7 +5937,7 @@ let typeSigAttrs = function
 
 
 let dExp: doc -> exp = 
-  fun d -> Const(CStr(sprint !lineLength d))
+  fun d -> Const(CStr(sprint !lineLength d), lu)
 
 let dInstr: doc -> location -> instr = 
   fun d l -> Asm([], [sprint !lineLength d], [], [], [], l)
@@ -5983,7 +5947,7 @@ let dGlobal: doc -> location -> global =
 
   (* Make an AddrOf. Given an lval of type T will give back an expression of 
    * type ptr(T)  *)
-let mkAddrOf ((b, off) as lval) : exp = 
+let mkAddrOf ((b, off) as lval) loc : exp = 
   (* Never take the address of a register variable *)
   (match lval with
     Var vi, off when vi.vstorage = Register -> vi.vstorage <- NoStorage
@@ -5994,13 +5958,13 @@ let mkAddrOf ((b, off) as lval) : exp =
     | b, Index(z, NoOffset) when isZero z -> StartOf (b, NoOffset)
     &a[0] is not the same as a, e.g. within typeof and sizeof.
     Code must be able to handle the results without this anyway... *)
-  | _ -> AddrOf lval
+  | _ -> AddrOf (lval, loc)
 
 
-let mkAddrOrStartOf (lv: lval) : exp = 
+let mkAddrOrStartOf (lv: lval) loc : exp = 
   match unrollType (typeOfLval lv) with 
-    TArray _ -> StartOf lv
-  | _ -> mkAddrOf lv
+    TArray _ -> StartOf (lv, loc)
+  | _ -> mkAddrOf lv loc
 
 
   (* Make a Mem, while optimizing AddrOf. The type of the addr must be 
@@ -6010,8 +5974,8 @@ let mkAddrOrStartOf (lv: lval) : exp =
 let mkMem ~(addr: exp) ~(off: offset) : lval =  
   let res = 
     match addr, off with
-      AddrOf lv, _ -> addOffsetLval off lv
-    | StartOf lv, _ -> (* Must be an array *)
+      AddrOf (lv,_), _ -> addOffsetLval off lv
+    | StartOf (lv,_), _ -> (* Must be an array *)
         addOffsetLval (Index(zero, off)) lv 
     | _, _ -> Mem addr, off
   in
@@ -6042,17 +6006,17 @@ let isArrayType t =
 
 let rec isConstant = function
   | Const _ -> true
-  | UnOp (_, e, _) -> isConstant e
-  | BinOp (_, e1, e2, _) -> isConstant e1 && isConstant e2
-  | Question (e1, e2, e3, _) -> isConstant e1 && isConstant e2 && isConstant e3
-  | Lval (Var vi, NoOffset) -> 
+  | UnOp (_, e, _, _) -> isConstant e
+  | BinOp (_, e1, e2, _, _) -> isConstant e1 && isConstant e2
+  | Question (e1, e2, e3, _, _) -> isConstant e1 && isConstant e2 && isConstant e3
+  | Lval ((Var vi, NoOffset), _) -> 
       (vi.vglob && isArrayType vi.vtype || isFunctionType vi.vtype)
   | Lval _ -> false
   | SizeOf _ | SizeOfE _ | SizeOfStr _ | AlignOf _ | AlignOfE _ -> true
-  | CastE (_, e) -> isConstant e
-  | AddrOf (Var vi, off) | StartOf (Var vi, off)
+  | CastE (_, e, _) -> isConstant e
+  | AddrOf ((Var vi, off), _) | StartOf ((Var vi, off), _)
         -> vi.vglob && isConstantOffset off
-  | AddrOf (Mem e, off) | StartOf(Mem e, off) 
+  | AddrOf ((Mem e, off), _) | StartOf((Mem e, off), _) 
         -> isConstant e && isConstantOffset off
 
 and isConstantOffset = function
@@ -6073,11 +6037,11 @@ let rec mkCastT ~(e: exp) ~(oldt: typ) ~(newt: typ) =
     (* Watch out for constants *)
     match newt, e with 
       (* Casts to _Bool are special: they behave like "!= 0" ISO C99 6.3.1.2 *)
-      TInt(IBool, []), Const(CInt64(i, _, _)) -> 
-	let v = if i = Int64.zero then Int64.zero else Int64.one in
-	Const (CInt64(v, IBool,  None))
-    | TInt(newik, []), Const(CInt64(i, _, _)) -> kinteger64 newik i
-    | _ -> CastE(newt,e)
+      TInt(IBool, []), Const(CInt64(i, _, _), l) -> 
+        let v = if i = Int64.zero then Int64.zero else Int64.one in
+        Const (CInt64(v, IBool,  None), l)
+    | TInt(newik, []), Const(CInt64(i, _, _), _) -> kinteger64 newik i
+    | _ -> CastE(newt, e, lu)
   end
 
 let mkCast ~(e: exp) ~(newt: typ) = 
@@ -6121,7 +6085,7 @@ let existsType (f: typ -> existsAction) (t: typ) : bool =
 let increm (e: exp) (i: int) =
   let et = typeOf e in
   let bop = if isPointerType et then PlusPI else PlusA in
-  constFold false (BinOp(bop, e, integer i, et))
+  constFold false (BinOp(bop, e, integer i, et, lu))
       
 exception LenOfArray
 let lenOfArray (eo: exp option) : int = 
@@ -6129,7 +6093,7 @@ let lenOfArray (eo: exp option) : int =
     None -> raise LenOfArray
   | Some e -> begin
       match constFold true e with
-      | Const(CInt64(ni, _, _)) when ni >= Int64.zero -> 
+      | Const(CInt64(ni, _, _), _) when ni >= Int64.zero -> 
           i64_to_int ni
       | e -> raise LenOfArray
   end
@@ -6138,8 +6102,8 @@ let lenOfArray (eo: exp option) : int =
 (*** Make an initializer for zeroe-ing a data type ***)
 let rec makeZeroInit (t: typ) : init = 
   match unrollType t with
-    TInt (ik, _) -> SingleInit (Const(CInt64(Int64.zero, ik, None)))
-  | TFloat(fk, _) -> SingleInit(Const(CReal(0.0, fk, None)))
+    TInt (ik, _) -> SingleInit (Const(CInt64(Int64.zero, ik, None), lu))
+  | TFloat(fk, _) -> SingleInit(Const(CReal(0.0, fk, None), lu))
   | TEnum _ -> SingleInit zero
   | TComp (comp, _) as t' when comp.cstruct -> 
       let inits = 
@@ -6191,7 +6155,7 @@ let rec makeZeroInit (t: typ) : init =
   | TArray(bt, Some len, _) as t' -> 
       let n =  
         match constFold true len with
-          Const(CInt64(n, _, _)) -> i64_to_int n
+          Const(CInt64(n, _, _), _) -> i64_to_int n
         | _ -> E.s (E.unimp "Cannot understand length of array")
       in
       let initbt = makeZeroInit bt in
@@ -6234,7 +6198,7 @@ let foldLeftCompound
       match leno with 
         Some lene when implicit -> begin
           match constFold true lene with 
-            Const(CInt64(i, _, _)) -> 
+            Const(CInt64(i, _, _), _) -> 
               let len_array = i64_to_int i in
               let len_init = List.length initl in
               if len_array > len_init then 
@@ -6600,7 +6564,7 @@ let rec xform_switch_stmt s break_dest cont_dest = begin
        * label_break: ; // break_stmt
        *
        * The default case, if present, must be used only if *all*
-       * non-default cases fail [ISO/IEC 9899:1999, §6.8.4.2, ¶5]. As
+       * non-default cases fail [ISO/IEC 9899:1999, ï¿½6.8.4.2, ï¿½5]. As
        * a result, we test all cases first, and hit 'default' only if
        * no case matches. However, we do not reorder the switch's
        * body, so fall-through still works as expected.
@@ -6633,11 +6597,11 @@ let rec xform_switch_stmt s break_dest cont_dest = begin
           | Case (ce,cl) :: lab_tl ->
               (* assume that integer promotion and type conversion of cases is
                * performed by cabs2cil. *)
-              let make_eq exp =  BinOp(Eq, e, exp, typeOf e) in
+              let make_eq exp =  BinOp(Eq, e, exp, typeOf e, lu) in
               let make_or_from_cases =
                 List.fold_left
                     (fun pred label -> match label with
-                           Case (exp, _) -> BinOp(LOr, pred, make_eq exp, intType)
+                           Case (exp, _) -> BinOp(LOr, pred, make_eq exp, intType, lu)
                          | _ -> E.s (bug "Unexpected pattern-matching failure"))
                     (make_eq ce)
             in
@@ -6934,10 +6898,10 @@ let d_formatarg () = function
     is a (possibly cast'ed) character or an integer constant, return
     that integer.  Otherwise, return None. *)
 let rec isInteger : exp -> int64 option = function
-  | Const(CInt64 (n,_,_)) -> Some n
-  | Const(CChr c) -> isInteger (Const (charConstToInt c))  (* sign-extend *) 
-  | Const(CEnum(v, s, ei)) -> isInteger v
-  | CastE(_, e) -> isInteger e
+  | Const(CInt64 (n,_,_), _) -> Some n
+  | Const(CChr c, l) -> isInteger (Const (charConstToInt c, l))  (* sign-extend *) 
+  | Const(CEnum(v, s, ei), _) -> isInteger v
+  | CastE(_, e, _) -> isInteger e
   | _ -> None
         
 (** Deprecated.  For compatibility with older programs, these are

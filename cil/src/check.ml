@@ -466,12 +466,12 @@ and checkExp (isconst: bool) (e: exp) : typ =
     (fun _ ->
       match e with
       | Const(_) -> typeOf e
-      | Lval(lv) -> 
+      | Lval(lv, _) -> 
           if isconst then
             ignore (warn "Lval in constant");
           checkLval isconst false lv
 
-      | SizeOf(t) -> begin
+      | SizeOf(t, _) -> begin
           (* Sizeof cannot be applied to certain types *)
           checkType t CTSizeof;
           (match unrollType t with
@@ -480,39 +480,39 @@ and checkExp (isconst: bool) (e: exp) : typ =
           | _ ->());
           typeOf e
       end
-      | SizeOfE(e') ->
+      | SizeOfE(e', _) ->
           (* The expression in a sizeof can be anything *)
           let te = checkExp false e' in
           checkType te CTSizeof;
           typeOf e
 
-      | SizeOfStr s ->  typeOf e
+      | SizeOfStr (s, _) ->  typeOf e
 
-      | AlignOf(t) -> begin
+      | AlignOf(t, _) -> begin
           (* Sizeof cannot be applied to certain types *)
           checkType t CTSizeof;
           typeOf e
       end
-      | AlignOfE(e') ->
+      | AlignOfE(e', _) ->
           (* The expression in an AlignOfE can be anything *)
           let te = checkExp false e' in
           checkType te CTSizeof;
           typeOf e
 
-      | UnOp (Neg, e, tres) -> 
+      | UnOp (Neg, e, tres, _) -> 
           checkArithmeticType tres; checkExpType isconst e tres; tres
 
-      | UnOp (BNot, e, tres) -> 
+      | UnOp (BNot, e, tres, _) -> 
           checkIntegralType tres; checkExpType isconst e tres; tres
 
-      | UnOp (LNot, e, tres) -> 
+      | UnOp (LNot, e, tres, _) -> 
           let te = checkExp isconst e in
           checkScalarType te;
           checkIntegralType tres; (* Must check that t is well-formed *)
           typeMatch tres intType;
           tres
 
-      | BinOp (bop, e1, e2, tres) -> begin
+      | BinOp (bop, e1, e2, tres, _) -> begin
           let t1 = checkExp isconst e1 in
           let t2 = checkExp isconst e2 in
           match bop with
@@ -546,7 +546,7 @@ and checkExp (isconst: bool) (e: exp) : typ =
               tres
       end
 
-      | Question (e1, e2, e3, tres) -> begin
+      | Question (e1, e2, e3, tres, _) -> begin
           let t1 = checkExp isconst e1 in
           let t2 = checkExp isconst e2 in
           let t3 = checkExp isconst e3 in
@@ -556,7 +556,7 @@ and checkExp (isconst: bool) (e: exp) : typ =
           tres
       end
 
-      | AddrOf (lv) -> begin
+      | AddrOf (lv, _) -> begin
           let tlv = checkLval isconst true lv in
           (* Only certain types can be in AddrOf *)
           match unrollType tlv with
@@ -570,14 +570,14 @@ and checkExp (isconst: bool) (e: exp) : typ =
           | _ -> E.s (bug "AddrOf on unknown type")
       end
 
-      | StartOf lv -> begin
+      | StartOf (lv, _) -> begin
           let tlv = checkLval isconst true lv in
           match unrollType tlv with
             TArray (t,_, _) -> TPtr(t, [])
           | _ -> E.s (bug "StartOf on a non-array")
       end
             
-      | CastE (tres, e) -> begin
+      | CastE (tres, e, _) -> begin
           let et = checkExp isconst e in
           checkType tres CTExp;
           (* Not all types can be cast *)
@@ -623,7 +623,7 @@ and checkInit  (i: init) : typ =
                     if i > len then 
                       ignore (warn "Wrong number of initializers in array")
 
-                | (Index(Const(CInt64(i', _, _)), NoOffset), ei) :: rest -> 
+                | (Index(Const(CInt64(i', _, _), _), NoOffset), ei) :: rest -> 
                     if i' <> i then 
                       ignore (warn "Initializer for index %s when %s was expected"
                                 (Int64.format "%d" i') (Int64.format "%d" i));

@@ -88,7 +88,7 @@ let markFunctionAddrTaken (cg: callgraph) (f: varinfo) : unit =
   (*
   ignore (E.log "markFunctionAddrTaken %s\n" f.vname);
    *)
-  let n = getNodeForIndirect cg (AddrOf (Var f, NoOffset)) in 
+  let n = getNodeForIndirect cg (AddrOf ((Var f, NoOffset), locUnknown)) in 
   match n.cnInfo with 
     NIIndirect (_, r) -> r := f :: !r
   | _ -> assert false
@@ -127,7 +127,7 @@ class cgComputer (graph: callgraph) = object(self)
       Call(_,f,_,_) -> (
         let callee: callnode = 
           match f with 
-          | Lval(Var(vi),NoOffset) -> 
+          | Lval((Var(vi),NoOffset), _) -> 
               (trace "callgraph" (P.dprintf "I see a call by %s to %s\n"
                                     callerName vi.vname));
               getNodeForVar graph vi
@@ -150,7 +150,7 @@ class cgComputer (graph: callgraph) = object(self)
       
   method vexpr (e: exp) = 
     (match e with 
-      AddrOf (Var fv, NoOffset) when isFunctionType fv.vtype -> 
+      AddrOf ((Var fv, NoOffset), _) when isFunctionType fv.vtype -> 
         markFunctionAddrTaken graph fv
     | _ -> ());
     

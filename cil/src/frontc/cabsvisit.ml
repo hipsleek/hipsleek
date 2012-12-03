@@ -475,67 +475,67 @@ and childrenExpression vis e =
   let ve e = visitCabsExpression vis e in
   match e with 
     NOTHING | LABELADDR _ -> e
-  | UNARY (uo, e1) -> 
+  | UNARY (uo, e1, l) -> 
       let e1' = ve e1 in
-      if e1' != e1 then UNARY (uo, e1') else e
-  | BINARY (bo, e1, e2) -> 
+      if e1' != e1 then UNARY (uo, e1', l) else e
+  | BINARY (bo, e1, e2, l) -> 
       let e1' = ve e1 in
       let e2' = ve e2 in
-      if e1' != e1 || e2' != e2 then BINARY (bo, e1', e2') else e
-  | QUESTION (e1, e2, e3) -> 
+      if e1' != e1 || e2' != e2 then BINARY (bo, e1', e2', l) else e
+  | QUESTION (e1, e2, e3, l) -> 
       let e1' = ve e1 in
       let e2' = ve e2 in
       let e3' = ve e3 in
       if e1' != e1 || e2' != e2 || e3' != e3 then 
-        QUESTION (e1', e2', e3') else e
-  | CAST ((s, dt), ie) -> 
+        QUESTION (e1', e2', e3', l) else e
+  | CAST ((s, dt), ie, l) -> 
       let s' = visitCabsSpecifier vis s in
       let dt' = visitCabsDeclType vis false dt in
       let ie' = visitCabsInitExpression vis ie in
-      if s' != s || dt' != dt || ie' != ie then CAST ((s', dt'), ie') else e
-  | CALL (f, el) -> 
+      if s' != s || dt' != dt || ie' != ie then CAST ((s', dt'), ie', l) else e
+  | CALL (f, el, l) -> 
       let f' = ve f in
       let el' = mapNoCopy ve el in
-      if f' != f || el' != el then CALL (f', el') else e
-  | COMMA el -> 
+      if f' != f || el' != el then CALL (f', el', l) else e
+  | COMMA (el, l) -> 
       let el' = mapNoCopy ve el in
-      if el' != el then COMMA (el') else e
+      if el' != el then COMMA (el', l) else e
   | CONSTANT _ -> e
-  | PAREN e1 -> 
+  | PAREN (e1, l) -> 
       let e1' = ve e1 in
-      if e1' != e1 then PAREN (e1') else e 
-  | VARIABLE s -> 
+      if e1' != e1 then PAREN (e1', l) else e 
+  | VARIABLE (s, l) -> 
       let s' = vis#vvar s in
-      if s' != s then VARIABLE s' else e
-  | EXPR_SIZEOF (e1) -> 
+      if s' != s then VARIABLE (s', l) else e
+  | EXPR_SIZEOF (e1, l) -> 
       let e1' = ve e1 in
-      if e1' != e1 then EXPR_SIZEOF (e1') else e
-  | TYPE_SIZEOF (s, dt) -> 
+      if e1' != e1 then EXPR_SIZEOF (e1', l) else e
+  | TYPE_SIZEOF (s, dt, l) -> 
       let s' = visitCabsSpecifier vis s in
       let dt' = visitCabsDeclType vis false dt in
-      if s' != s || dt' != dt then TYPE_SIZEOF (s' ,dt') else e
-  | EXPR_ALIGNOF (e1) -> 
+      if s' != s || dt' != dt then TYPE_SIZEOF (s' ,dt', l) else e
+  | EXPR_ALIGNOF (e1, l) -> 
       let e1' = ve e1 in
-      if e1' != e1 then EXPR_ALIGNOF (e1') else e
-  | TYPE_ALIGNOF (s, dt) -> 
+      if e1' != e1 then EXPR_ALIGNOF (e1', l) else e
+  | TYPE_ALIGNOF (s, dt, l) -> 
       let s' = visitCabsSpecifier vis s in
       let dt' = visitCabsDeclType vis false dt in
-      if s' != s || dt' != dt then TYPE_ALIGNOF (s' ,dt') else e
-  | INDEX (e1, e2) -> 
+      if s' != s || dt' != dt then TYPE_ALIGNOF (s' ,dt', l) else e
+  | INDEX (e1, e2, l) -> 
       let e1' = ve e1 in
       let e2' = ve e2 in
-      if e1' != e1 || e2' != e2 then INDEX (e1', e2') else e
-  | MEMBEROF (e1, n) -> 
+      if e1' != e1 || e2' != e2 then INDEX (e1', e2', l) else e
+  | MEMBEROF (e1, n, l) -> 
       let e1' = ve e1 in
-      if e1' != e1 then MEMBEROF (e1', n) else e
-  | MEMBEROFPTR (e1, n) -> 
+      if e1' != e1 then MEMBEROF (e1', n, l) else e
+  | MEMBEROFPTR (e1, n, l) -> 
       let e1' = ve e1 in
-      if e1' != e1 then MEMBEROFPTR (e1', n) else e
-  | GNU_BODY b -> 
+      if e1' != e1 then MEMBEROFPTR (e1', n, l) else e
+  | GNU_BODY (b, l) -> 
       let b' = visitCabsBlock vis b in
-      if b' != b then GNU_BODY b' else e
+      if b' != b then GNU_BODY (b', l) else e
   | EXPR_PATTERN _ -> e
-        
+
 and visitCabsInitExpression vis (ie: init_expression) : init_expression = 
   doVisit vis vis#vinitexpr childrenInitExpression ie
 and childrenInitExpression vis ie = 

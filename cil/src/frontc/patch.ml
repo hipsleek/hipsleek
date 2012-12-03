@@ -159,7 +159,7 @@ class substitutor (bindings : binding list) = object(self)
   method vexpr (e:expression) : expression visitAction =
   begin
     match e with
-    | EXPR_PATTERN(name) -> (
+    | EXPR_PATTERN(name, _) -> (
         match (self#findBinding name) with
         | BExpr(_, expr) -> ChangeTo(expr)    (* substitute bound expression *)
         | _ -> raise (BadBind ("wrong type: " ^ name))
@@ -710,63 +710,63 @@ begin
 
   (* because of the equality check above, I can omit some cases *)
   match pat, tgt with
-  | UNARY(pop, pexpr),
-    UNARY(top, texpr) ->
+  | UNARY(pop, pexpr, _),
+    UNARY(top, texpr, _) ->
       (mustEq pop top);
       (ue pexpr texpr)
-  | BINARY(pop, pexp1, pexp2),
-    BINARY(top, texp1, texp2) ->
+  | BINARY(pop, pexp1, pexp2, _),
+    BINARY(top, texp1, texp2, _) ->
       (mustEq pop top);
       (ue pexp1 texp1) @
       (ue pexp2 texp2)
-  | QUESTION(p1, p2, p3),
-    QUESTION(t1, t2, t3) ->
+  | QUESTION(p1, p2, p3, _),
+    QUESTION(t1, t2, t3, _) ->
       (ue p1 t1) @
       (ue p2 t2) @
       (ue p3 t3)
-  | CAST((pspec, ptype), piexpr),
-    CAST((tspec, ttype), tiexpr) ->
+  | CAST((pspec, ptype), piexpr, _),
+    CAST((tspec, ttype), tiexpr, _) ->
       (mustEq ptype ttype);
       (unifySpecifiers pspec tspec) @
       (unifyInitExpr piexpr tiexpr)
-  | CALL(pfunc, pargs),
-    CALL(tfunc, targs) ->
+  | CALL(pfunc, pargs, _),
+    CALL(tfunc, targs, _) ->
       (ue pfunc tfunc) @
       (unifyExprs pargs targs)
-  | COMMA(pexprs),
-    COMMA(texprs) ->
+  | COMMA(pexprs, _),
+    COMMA(texprs, _) ->
       (unifyExprs pexprs texprs)
-  | EXPR_SIZEOF(pexpr),
-    EXPR_SIZEOF(texpr) ->
+  | EXPR_SIZEOF(pexpr, _),
+    EXPR_SIZEOF(texpr, _) ->
       (ue pexpr texpr)
-  | TYPE_SIZEOF(pspec, ptype),
-    TYPE_SIZEOF(tspec, ttype) ->
+  | TYPE_SIZEOF(pspec, ptype, _),
+    TYPE_SIZEOF(tspec, ttype, _) ->
       (mustEq ptype ttype);
       (unifySpecifiers pspec tspec)
-  | EXPR_ALIGNOF(pexpr),
-    EXPR_ALIGNOF(texpr) ->
+  | EXPR_ALIGNOF(pexpr, _),
+    EXPR_ALIGNOF(texpr, _) ->
       (ue pexpr texpr)
-  | TYPE_ALIGNOF(pspec, ptype),
-    TYPE_ALIGNOF(tspec, ttype) ->
+  | TYPE_ALIGNOF(pspec, ptype, _),
+    TYPE_ALIGNOF(tspec, ttype, _) ->
       (mustEq ptype ttype);
       (unifySpecifiers pspec tspec)
-  | INDEX(parr, pindex),
-    INDEX(tarr, tindex) ->
+  | INDEX(parr, pindex, _),
+    INDEX(tarr, tindex, _) ->
       (ue parr tarr) @
       (ue pindex tindex)
-  | MEMBEROF(pexpr, pfield),
-    MEMBEROF(texpr, tfield) ->
+  | MEMBEROF(pexpr, pfield, _),
+    MEMBEROF(texpr, tfield, _) ->
       (mustEq pfield tfield);
       (ue pexpr texpr)
-  | MEMBEROFPTR(pexpr, pfield),
-    MEMBEROFPTR(texpr, tfield) ->
+  | MEMBEROFPTR(pexpr, pfield, _),
+    MEMBEROFPTR(texpr, tfield, _) ->
       (mustEq pfield tfield);
       (ue pexpr texpr)
-  | GNU_BODY(pblock),
-    GNU_BODY(tblock) ->
+  | GNU_BODY(pblock, _),
+    GNU_BODY(tblock, _) ->
       (mustEq pblock tblock);
       []
-  | EXPR_PATTERN(name), _ ->
+  | EXPR_PATTERN(name, _), _ ->
       (* match, and contribute binding *)
       if verbose then
         (trace "patchDebug" (dprintf "found expr match for %s\n" name));

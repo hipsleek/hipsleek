@@ -349,11 +349,11 @@ and print_old_params pars ell =
 *)
 and get_operator exp =
   match exp with
-    NOTHING -> ("", 16)
-  | PAREN exp -> ("", 16)
-  | UNARY (op, _) ->
-      (match op with
-	MINUS -> ("-", 13)
+  | NOTHING -> ("", 16)
+  | PAREN _ -> ("", 16)
+  | UNARY (op, _, _) -> (
+      match op with
+      | MINUS -> ("-", 13)
       | PLUS -> ("+", 13)
       | NOT -> ("!", 13)
       | BNOT -> ("~", 13)
@@ -362,11 +362,12 @@ and get_operator exp =
       | PREINCR -> ("++", 13)
       | PREDECR -> ("--", 13)
       | POSINCR -> ("++", 14)
-      | POSDECR -> ("--", 14))
-  | LABELADDR s -> ("", 16)  (* Like a constant *)
-  | BINARY (op, _, _) ->
-      (match op with
-	MUL -> ("*", 12)
+      | POSDECR -> ("--", 14)
+    )
+  | LABELADDR _ -> ("", 16)  (* Like a constant *)
+  | BINARY (op, _, _, _) -> (
+      match op with
+      | MUL -> ("*", 12)
       | DIV -> ("/", 12)
       | MOD -> ("%", 12)
       | ADD -> ("+", 11)
@@ -394,20 +395,21 @@ and get_operator exp =
       | BOR_ASSIGN -> ("|=", 1)
       | XOR_ASSIGN -> ("^=", 1)
       | SHL_ASSIGN -> ("<<=", 1)
-      | SHR_ASSIGN -> (">>=", 1))
+      | SHR_ASSIGN -> (">>=", 1)
+    )
   | QUESTION _ -> ("", 2)
   | CAST _ -> ("", 13)
   | CALL _ -> ("", 15)
   | COMMA _ -> ("", 0)
   | CONSTANT _ -> ("", 16)
-  | VARIABLE name -> ("", 16)
-  | EXPR_SIZEOF exp -> ("", 16)
+  | VARIABLE _ -> ("", 16)
+  | EXPR_SIZEOF _ -> ("", 16)
   | TYPE_SIZEOF _ -> ("", 16)
-  | EXPR_ALIGNOF exp -> ("", 16)
+  | EXPR_ALIGNOF _ -> ("", 16)
   | TYPE_ALIGNOF _ -> ("", 16)
-  | INDEX (exp, idx) -> ("", 15)
-  | MEMBEROF (exp, fld) -> ("", 15)
-  | MEMBEROFPTR (exp, fld) -> ("", 15)
+  | INDEX _ -> ("", 15)
+  | MEMBEROF _ -> ("", 15)
+  | MEMBEROFPTR _ -> ("", 15)
   | GNU_BODY _ -> ("", 17)
   | EXPR_PATTERN _ -> ("", 16)     (* sm: not sure about this *)
 
@@ -449,27 +451,28 @@ and print_expression (exp: expression) = print_expression_level 1 exp
 and print_expression_level (lvl: int) (exp : expression) =
   let (txt, lvl') = get_operator exp in
   let _ = match exp with
-    NOTHING -> ()
-  | PAREN exp -> print "("; print_expression exp; print ")"
-  | UNARY (op, exp') ->
-      (match op with
-	POSINCR | POSDECR ->
-	  print_expression_level lvl' exp';
-	  print txt
+  | NOTHING -> ()
+  | PAREN (exp, _) -> print "("; print_expression exp; print ")"
+  | UNARY (op, exp', _) -> (
+      match op with
+      | POSINCR | POSDECR ->
+          print_expression_level lvl' exp';
+          print txt
       | _ ->
-	  print txt; space (); (* Print the space to avoid --5 *)
-	  print_expression_level lvl' exp')
-  | LABELADDR l -> printl ["&&";l]
-  | BINARY (op, exp1, exp2) ->
-			(*if (op = SUB) && (lvl <= lvl') then print "(";*)
+          print txt; space (); (* Print the space to avoid --5 *)
+          print_expression_level lvl' exp'
+    )
+  | LABELADDR (l, _) -> printl ["&&";l]
+  | BINARY (op, exp1, exp2, _) ->
+      (*if (op = SUB) && (lvl <= lvl') then print "(";*)
       print_expression_level lvl' exp1;
       space ();
       print txt;
       space ();
-			(*print_expression exp2 (if op = SUB then (lvl' + 1) else lvl');*)
+      (*print_expression exp2 (if op = SUB then (lvl' + 1) else lvl');*)
       print_expression_level (lvl' + 1) exp2 
-			(*if (op = SUB) && (lvl <= lvl') then print ")"*)
-  | QUESTION (exp1, exp2, exp3) ->
+      (*if (op = SUB) && (lvl <= lvl') then print ")"*)
+  | QUESTION (exp1, exp2, exp3, _) ->
       print_expression_level 2 exp1;
       space ();
       print "? ";
@@ -477,20 +480,19 @@ and print_expression_level (lvl: int) (exp : expression) =
       space ();
       print ": ";
       print_expression_level 2 exp3;
-  | CAST (typ, iexp) ->
+  | CAST (typ, iexp, _) ->
       print "(";
       print_onlytype typ;
       print ")"; 
      (* Always print parentheses. In a small number of cases when we print 
       * constants we don't need them  *)
       (match iexp with
-        SINGLE_INIT e -> print_expression_level 15 e
+      | SINGLE_INIT e -> print_expression_level 15 e
       | COMPOUND_INIT _ -> (* print "("; *) 
           print_init_expression iexp 
           (* ; print ")" *)
       | NO_INIT -> print "<NO_INIT in cast. Should never arise>")
-
-  | CALL (VARIABLE "__builtin_va_arg", [arg; TYPE_SIZEOF (bt, dt)]) -> 
+  | CALL (VARIABLE ("__builtin_va_arg", _), [arg; TYPE_SIZEOF (bt, dt, _)], _) -> 
       comprint "variable";
       print "__builtin_va_arg";
       print "(";
@@ -498,55 +500,56 @@ and print_expression_level (lvl: int) (exp : expression) =
       print ",";
       print_onlytype (bt, dt);
       print ")"
-  | CALL (exp, args) ->
+  | CALL (exp, args, _) ->
       print_expression_level 16 exp;
       print "(";
       print_comma_exps args;
       print ")"
-  | COMMA exps ->
+  | COMMA (exps, _) ->
       print_comma_exps exps
-  | CONSTANT cst ->
-      (match cst with
-	CONST_INT i -> print i
+  | CONSTANT (cst, _) -> (
+      match cst with
+      | CONST_INT i -> print i
       | CONST_FLOAT r -> print r
       | CONST_CHAR c -> print ("'" ^ escape_wstring c ^ "'")
       | CONST_WCHAR c -> print ("L'" ^ escape_wstring c ^ "'")
       | CONST_STRING s -> print_string s
-      | CONST_WSTRING ws -> print_wstring ws)
-  | VARIABLE name ->
+      | CONST_WSTRING ws -> print_wstring ws
+    )
+  | VARIABLE (name, _) ->
       comprint "variable";
       print name
-  | EXPR_SIZEOF exp ->
+  | EXPR_SIZEOF (exp, _) ->
       print "sizeof";
       print_expression_level 0 exp
-  | TYPE_SIZEOF (bt,dt) ->
+  | TYPE_SIZEOF (bt, dt, _) ->
       printl ["sizeof";"("];
       print_onlytype (bt, dt);
       print ")"
-  | EXPR_ALIGNOF exp ->
+  | EXPR_ALIGNOF (exp, _) ->
       printl ["__alignof__";"("];
       print_expression_level 0 exp;
       print ")"
-  | TYPE_ALIGNOF (bt,dt) ->
+  | TYPE_ALIGNOF (bt, dt, _) ->
       printl ["__alignof__";"("];
       print_onlytype (bt, dt);
       print ")"
-  | INDEX (exp, idx) ->
+  | INDEX (exp, idx, _) ->
       print_expression_level 16 exp;
       print "[";
       print_expression_level 0 idx;
       print "]"
-  | MEMBEROF (exp, fld) ->
+  | MEMBEROF (exp, fld, _) ->
       print_expression_level 16 exp;
       printl [".";fld]
-  | MEMBEROFPTR (exp, fld) ->
+  | MEMBEROFPTR (exp, fld, _) ->
       print_expression_level 16 exp;
       printl ["->";fld]
-  | GNU_BODY (blk) ->
+  | GNU_BODY (blk, _) ->
       print "(";
       print_block blk;
       print ")"
-  | EXPR_PATTERN (name) ->
+  | EXPR_PATTERN (name, _) ->
       printl ["@expr";"(";name;")"]
   in
   ()
@@ -772,8 +775,8 @@ and print_attribute (name,args) =
     print name;
     print "("; if name = "__attribute__" then print "(";
     (match args with
-      [VARIABLE "aconst"] -> printu "const"
-    | [VARIABLE "restrict"] -> printu "restrict"
+      [VARIABLE ("aconst", _)] -> printu "const"
+    | [VARIABLE ("restrict", _)] -> printu "restrict"
     | _ -> print_commas false (fun e -> print_expression e) args);
     print ")"; if name = "__attribute__" then print ")"
   end

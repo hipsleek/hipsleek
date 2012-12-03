@@ -567,46 +567,46 @@ expression of type [TPtr(T)].
 
 (** Expressions (Side-effect free)*)
 and exp =
-    Const      of constant              (** Constant *)
-  | Lval       of lval                  (** Lvalue *)
-  | SizeOf     of typ                   
+    Const      of constant * location   (** Constant *)
+  | Lval       of lval * location       (** Lvalue *)
+  | SizeOf     of typ * location
     (** sizeof(<type>). Has [unsigned int] type (ISO 6.5.3.4). This is not 
      * turned into a constant because some transformations might want to 
      * change types *)
 
-  | SizeOfE    of exp                   
+  | SizeOfE    of exp * location
     (** sizeof(<expression>) *)
 
-  | SizeOfStr  of string
+  | SizeOfStr  of string * location
     (** sizeof(string_literal). We separate this case out because this is the 
       * only instance in which a string literal should not be treated as 
       * having type pointer to character. *)
 
-  | AlignOf    of typ                   
+  | AlignOf    of typ * location
     (** This corresponds to the GCC __alignof_. Has [unsigned int] type *)
-  | AlignOfE   of exp  
+  | AlignOfE   of exp * location
 
                                         
-  | UnOp       of unop * exp * typ     
+  | UnOp       of unop * exp * typ * location
     (** Unary operation. Includes the type of the result. *)
 
-  | BinOp      of binop * exp * exp * typ
+  | BinOp      of binop * exp * exp * typ * location
     (** Binary operation. Includes the type of the result. The arithmetic 
      * conversions are made explicit for the arguments. *)
 
-  | Question   of exp * exp * exp * typ
+  | Question   of exp * exp * exp * typ * location
     (** (a ? b : c) operation. Includes the type of the result *)
 
-  | CastE      of typ * exp            
+  | CastE      of typ * exp * location
     (** Use {!Cil.mkCast} to make casts.  *)
 
-  | AddrOf     of lval                 
+  | AddrOf     of lval * location
     (** Always use {!Cil.mkAddrOf} to construct one of these. Apply to an 
      * lvalue of type [T] yields an expression of type [TPtr(T)]. Use 
      * {!Cil.mkAddrOrStartOf} to make one of these if you are not sure which 
      * one to use. *)
 
-  | StartOf    of lval   
+  | StartOf    of lval * location
     (** Conversion from an array to a pointer to the beginning of the array. 
      * Given an lval of type [TArray(T)] produces an expression of type 
      * [TPtr(T)]. Use {!Cil.mkAddrOrStartOf} to make one of these if you are 
@@ -1672,7 +1672,7 @@ val constFold: bool -> exp -> exp
 (** Do constant folding on a binary operation. The bulk of the work done by 
     [constFold] is done here. If the first argument is true then 
     will also compute compiler-dependent expressions such as sizeof *)
-val constFoldBinOp: bool -> binop -> exp -> exp -> typ -> exp
+val constFoldBinOp: bool -> binop -> exp -> exp -> typ -> location -> exp
 
 (** Increment an expression. Can be arithmetic or pointer type *) 
 val increm: exp -> int -> exp
@@ -1683,13 +1683,13 @@ val var: varinfo -> lval
 
 (** Make an AddrOf. Given an lvalue of type T will give back an expression of 
     type ptr(T). It optimizes somewhat expressions like "& v" and "& v[0]"  *)
-val mkAddrOf: lval -> exp               
+val mkAddrOf: lval -> location -> exp               
 
 
 (** Like mkAddrOf except if the type of lval is an array then it uses 
     StartOf. This is the right operation for getting a pointer to the start 
     of the storage denoted by lval. *)
-val mkAddrOrStartOf: lval -> exp
+val mkAddrOrStartOf: lval -> location -> exp
 
 (** Make a Mem, while optimizing AddrOf. The type of the addr must be 
     TPtr(t) and the type of the resulting lval is t. Note that in CIL the 
@@ -2564,7 +2564,7 @@ val mkCilint : ikind -> int64 -> cilint
  * "sizeof" expression if it cannot compute the size. This function
  * is architecture dependent, so you should only call this after you
  * call {!Cil.initCIL}.  *)
-val sizeOf: typ -> exp
+val sizeOf: typ * location -> exp
 
 (** The minimum alignment (in bytes) for a type. This function is 
  * architecture dependent, so you should only call this after you call 

@@ -36,7 +36,7 @@
  *
  **)
 (**
-** 1.0	3.22.99	Hugues Cassé	First version.
+** 1.0	3.22.99	Hugues Cassï¿½	First version.
 ** 2.0  George Necula 12/12/00: Practically complete rewrite.
 *)
 */
@@ -71,11 +71,11 @@ let handleLoc l =
 (*
 ** Expression building
 *)
-let smooth_expression lst =
+let smooth_expression lst loc =
   match lst with
     [] -> NOTHING
   | [expr] -> expr
-  | _ -> COMMA (lst)
+  | _ -> COMMA (lst, loc)
 
 
 let currentFunctionName = ref "<outside any function>"
@@ -199,39 +199,31 @@ let trd3 (_, _, result) = result
    into     :  (size_t) (&(type * ) 0)->member
  *)
 
-let transformOffsetOf (speclist, dtype) member =
+let transformOffsetOf (speclist, dtype) member loc =
   let rec addPointer = function
-    | JUSTBASE ->
-	PTR([], JUSTBASE)
-    | PARENTYPE (attrs1, dtype, attrs2) ->
-	PARENTYPE (attrs1, addPointer dtype, attrs2)
-    | ARRAY (dtype, attrs, expr) ->
-	ARRAY (addPointer dtype, attrs, expr)
-    | PTR (attrs, dtype) ->
-	PTR (attrs, addPointer dtype)
-    | PROTO (dtype, names, variadic) ->
-	PROTO (addPointer dtype, names, variadic)
+    | JUSTBASE -> PTR([], JUSTBASE)
+    | PARENTYPE (attrs1, dtype, attrs2) -> PARENTYPE (attrs1, addPointer dtype, attrs2)
+    | ARRAY (dtype, attrs, expr) -> ARRAY (addPointer dtype, attrs, expr)
+    | PTR (attrs, dtype) -> PTR (attrs, addPointer dtype)
+    | PROTO (dtype, names, variadic) -> PROTO (addPointer dtype, names, variadic)
   in
   let nullType = (speclist, addPointer dtype) in
-  let nullExpr = CONSTANT (CONST_INT "0") in
-  let castExpr = CAST (nullType, SINGLE_INIT nullExpr) in
+  let nullExpr = CONSTANT (CONST_INT "0", cabslu) in
+  let castExpr = CAST (nullType, SINGLE_INIT nullExpr, cabslu) in
 
   let rec replaceBase = function
-    | VARIABLE field ->
-	MEMBEROFPTR (castExpr, field)
-    | MEMBEROF (base, field) ->
-	MEMBEROF (replaceBase base, field)
-    | INDEX (base, index) ->
-	INDEX (replaceBase base, index)
+    | VARIABLE (field, l) -> MEMBEROFPTR (castExpr, field, l)
+    | MEMBEROF (base, field, l) -> MEMBEROF (replaceBase base, field, l)
+    | INDEX (base, index, l) -> INDEX (replaceBase base, index, l)
     | _ ->
-	parse_error "malformed offset expression in __builtin_offsetof";
+        parse_error "malformed offset expression in __builtin_offsetof";
         raise Parsing.Parse_error 
   in
   let memberExpr = replaceBase member in
-  let addrExpr = UNARY (ADDROF, memberExpr) in
+  let addrExpr = UNARY (ADDROF, memberExpr, loc) in
   (* slight cheat: hard-coded assumption that size_t == unsigned int *)
   let sizeofType = [SpecType Tunsigned], JUSTBASE in
-  let resultExpr = CAST (sizeofType, SINGLE_INIT addrExpr) in
+  let resultExpr = CAST (sizeofType, SINGLE_INIT addrExpr, loc) in
   resultExpr
 
 %}
@@ -259,27 +251,27 @@ let transformOffsetOf (speclist, dtype) member =
 
 %token<Cabs.cabsloc> SIZEOF ALIGNOF
 
-%token EQ PLUS_EQ MINUS_EQ STAR_EQ SLASH_EQ PERCENT_EQ
-%token AND_EQ PIPE_EQ CIRC_EQ INF_INF_EQ SUP_SUP_EQ
-%token ARROW DOT
+%token<Cabs.cabsloc> EQ PLUS_EQ MINUS_EQ STAR_EQ SLASH_EQ PERCENT_EQ
+%token<Cabs.cabsloc> AND_EQ PIPE_EQ CIRC_EQ INF_INF_EQ SUP_SUP_EQ
+%token<Cabs.cabsloc> ARROW DOT
 
-%token EQ_EQ EXCLAM_EQ INF SUP INF_EQ SUP_EQ
+%token<Cabs.cabsloc> EQ_EQ EXCLAM_EQ INF SUP INF_EQ SUP_EQ
 %token<Cabs.cabsloc> PLUS MINUS STAR
-%token SLASH PERCENT
+%token<Cabs.cabsloc> SLASH PERCENT
 %token<Cabs.cabsloc> TILDE AND
-%token PIPE CIRC
+%token<Cabs.cabsloc> PIPE CIRC
 %token<Cabs.cabsloc> EXCLAM AND_AND
-%token PIPE_PIPE
-%token INF_INF SUP_SUP
+%token<Cabs.cabsloc> PIPE_PIPE
+%token<Cabs.cabsloc> INF_INF SUP_SUP
 %token<Cabs.cabsloc> PLUS_PLUS MINUS_MINUS
 
-%token RPAREN 
+%token<Cabs.cabsloc> RPAREN 
 %token<Cabs.cabsloc> LPAREN RBRACE
 %token<Cabs.cabsloc> LBRACE
-%token LBRACKET RBRACKET
-%token COLON
+%token<Cabs.cabsloc> LBRACKET RBRACKET
+%token<Cabs.cabsloc> COLON
 %token<Cabs.cabsloc> SEMICOLON
-%token COMMA ELLIPSIS QUEST
+%token<Cabs.cabsloc> COMMA ELLIPSIS QUEST
 
 %token<Cabs.cabsloc> BREAK CONTINUE GOTO RETURN
 %token<Cabs.cabsloc> SWITCH CASE DEFAULT
@@ -346,7 +338,7 @@ let transformOffsetOf (speclist, dtype) member =
 %type <Cabs.expression list * cabsloc> comma_expression
 %type <Cabs.expression list * cabsloc> paren_comma_expression
 %type <Cabs.expression list> arguments
-%type <Cabs.expression list> bracket_comma_expression
+%type <Cabs.expression list * cabsloc> bracket_comma_expression
 %type <int64 list Queue.t * cabsloc> string_list 
 %type <int64 list * cabsloc> wstring_list
 
@@ -446,13 +438,14 @@ global:
                                           checkConnective(fst $5);
                                           (EXPRTRANSFORMER(fst $3, fst $7, $1), loc) }
 | position error position SEMICOLON     { let loc = makeLoc $1 (endPos $4) in
-                                          (PRAGMA (VARIABLE "parse_error", loc), loc) }
+                                          (PRAGMA (VARIABLE ("parse_error", loc), loc), loc) }
 ;
 
 id_or_typename:
-  IDENT                                 { fst $1 }
-| NAMED_TYPE                            { fst $1 }
-| AT_NAME LPAREN IDENT RPAREN           { "@name(" ^ fst $3 ^ ")" }     /* pattern variable name */
+  IDENT                                 { $1 }
+| NAMED_TYPE                            { $1 }
+| AT_NAME LPAREN IDENT RPAREN           { let loc = makeLoc (startPos $2) (endPos $4) in
+                                          ("@name(" ^ fst $3 ^ ")", loc) }     /* pattern variable name */
 ;
 
 maybecomma:
@@ -463,156 +456,201 @@ maybecomma:
 /* *** Expressions *** */
 
 primary_expression:                     /*(* 6.5.1. *)*/
-| IDENT                                 {VARIABLE (fst $1), snd $1}
-| constant                              {CONSTANT (fst $1), snd $1}
-| paren_comma_expression                {PAREN (smooth_expression (fst $1)), snd $1}
-| LPAREN block RPAREN                   { GNU_BODY (fst $2), $1 }
+| IDENT                                 { VARIABLE (fst $1, snd $1), snd $1 }
+| constant                              { CONSTANT (fst $1, snd $1), snd $1 }
+| paren_comma_expression                { PAREN (smooth_expression (fst $1) (snd $1), snd $1), snd $1 }
+| LPAREN block RPAREN                   { let loc = makeLoc (startPos $1) (endPos $3) in
+                                          GNU_BODY (fst $2, loc), loc }
      /*(* Next is Scott's transformer *)*/
 | AT_EXPR LPAREN IDENT RPAREN         /* expression pattern variable */
-                                        { EXPR_PATTERN(fst $3), $1 }
+                                        { let loc = makeLoc (startPos $1) (endPos $4) in
+                                          EXPR_PATTERN(fst $3, loc), loc }
 ;
 
 postfix_expression:                     /*(* 6.5.2 *)*/
 | primary_expression                    { $1 }
 | postfix_expression bracket_comma_expression
-                                        { INDEX (fst $1, smooth_expression $2), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          INDEX (fst $1, smooth_expression (fst $2) (snd $2)), loc }
 | postfix_expression LPAREN arguments RPAREN
-                                        { CALL (fst $1, $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos $4) in
+                                          CALL (fst $1, $3), loc }
 | BUILTIN_VA_ARG LPAREN expression COMMA type_name RPAREN
-                                        { let b, d = $5 in
+                                        { let loc = makeLoc (startPos $1) (endPos $6) in
+                                          let b, d = $5 in
                                           CALL (VARIABLE "__builtin_va_arg", 
-                                                [fst $3; TYPE_SIZEOF (b, d)]), $1 }
+                                                [fst $3; TYPE_SIZEOF (b, d)]), loc }
 | BUILTIN_TYPES_COMPAT LPAREN type_name COMMA type_name RPAREN
-                                        { let b1,d1 = $3 in
+                                        { let loc = makeLoc (startPos $1) (endPos $6) in
+                                          let b1,d1 = $3 in
                                           let b2,d2 = $5 in
                                           CALL (VARIABLE "__builtin_types_compatible_p", 
-                                                [TYPE_SIZEOF(b1,d1); TYPE_SIZEOF(b2,d2)]), $1 }
+                                                [TYPE_SIZEOF(b1,d1); TYPE_SIZEOF(b2,d2)]), loc }
 | BUILTIN_OFFSETOF LPAREN type_name COMMA offsetof_member_designator RPAREN
-                                        { transformOffsetOf $3 $5, $1 }
+                                        { let loc = makeLoc (startPos $1) (endPos $6) in
+                                          transformOffsetOf $3 $5 loc, loc }
 | postfix_expression DOT id_or_typename
-                                        { MEMBEROF (fst $1, $3), snd $1}
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          MEMBEROF (fst $1, $3), loc}
 | postfix_expression ARROW id_or_typename   
-                                        { MEMBEROFPTR (fst $1, $3), snd $1}
+                                        { let loc = makeLoc (startPos (smd $1)) (endPos (snd $3)) in
+                                          MEMBEROFPTR (fst $1, $3), loc}
 | postfix_expression PLUS_PLUS
-                                        { UNARY (POSINCR, fst $1), snd $1}
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos $2) in
+                                          UNARY (POSINCR, fst $1), loc}
 | postfix_expression MINUS_MINUS
-                                        { UNARY (POSDECR, fst $1), snd $1}
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos $2) in
+                                          UNARY (POSDECR, fst $1), loc}
 /* (* We handle GCC constructor expressions *) */
 | LPAREN type_name RPAREN LBRACE initializer_list_opt RBRACE
-                                        { CAST($2, COMPOUND_INIT $5), $1 }
+                                        { let loc = makeLoc (startPos $1) (endPos $6) in
+                                          CAST($2, COMPOUND_INIT $5), loc }
 ;
 
 offsetof_member_designator:  /* GCC extension for __builtin_offsetof */
 | id_or_typename                        { VARIABLE ($1) }
 | offsetof_member_designator DOT IDENT  { MEMBEROF ($1, fst $3) }
 | offsetof_member_designator bracket_comma_expression
-                                        { INDEX ($1, smooth_expression $2) }
+                                        { INDEX ($1, smooth_expression (fst $2) (snd $2)) }
 ;
 
 unary_expression:   /*(* 6.5.3 *)*/
 | postfix_expression                    { $1 }
-| PLUS_PLUS unary_expression            { UNARY (PREINCR, fst $2), $1 }
-| MINUS_MINUS unary_expression          { UNARY (PREDECR, fst $2), $1 }
-| SIZEOF unary_expression               { EXPR_SIZEOF (fst $2), $1 }
-| SIZEOF LPAREN type_name RPAREN        { let b, d = $3 in TYPE_SIZEOF (b, d), $1 }
-| ALIGNOF unary_expression              { EXPR_ALIGNOF (fst $2), $1 }
-| ALIGNOF LPAREN type_name RPAREN       { let b, d = $3 in TYPE_ALIGNOF (b, d), $1 }
-| PLUS cast_expression                  { UNARY (PLUS, fst $2), $1 }
-| MINUS cast_expression                 { UNARY (MINUS, fst $2), $1 }
-| STAR cast_expression                  { UNARY (MEMOF, fst $2), $1 }
-| AND cast_expression                   { UNARY (ADDROF, fst $2), $1 }
-| EXCLAM cast_expression                { UNARY (NOT, fst $2), $1 }
-| TILDE cast_expression                 { UNARY (BNOT, fst $2), $1 }
-| AND_AND IDENT                         { LABELADDR (fst $2), $1 }
+| PLUS_PLUS unary_expression            { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          UNARY (PREINCR, fst $2), loc }
+| MINUS_MINUS unary_expression          { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          UNARY (PREDECR, fst $2), loc }
+| SIZEOF unary_expression               { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          EXPR_SIZEOF (fst $2), loc }
+| SIZEOF LPAREN type_name RPAREN        { let loc = makeLoc (startPos $1) (endPos $4) in
+                                          let b, d = $3 in TYPE_SIZEOF (b, d), loc }
+| ALIGNOF unary_expression              { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          EXPR_ALIGNOF (fst $2), $1 }
+| ALIGNOF LPAREN type_name RPAREN       { let loc = makeLoc (startPos $1) (endPos $4) in
+                                          let b, d = $3 in TYPE_ALIGNOF (b, d), loc }
+| PLUS cast_expression                  { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          UNARY (PLUS, fst $2), loc }
+| MINUS cast_expression                 { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          UNARY (MINUS, fst $2), loc }
+| STAR cast_expression                  { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          UNARY (MEMOF, fst $2), loc }
+| AND cast_expression                   { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          UNARY (ADDROF, fst $2), loc }
+| EXCLAM cast_expression                { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          UNARY (NOT, fst $2), loc }
+| TILDE cast_expression                 { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          UNARY (BNOT, fst $2), loc }
+| AND_AND IDENT                         { let loc = makeLoc (startPos $1) (endPos $2) in
+                                          LABELADDR (fst $2), loc }
 ;
 
 cast_expression:   /*(* 6.5.4 *)*/
 | unary_expression                      { $1 }
 | LPAREN type_name RPAREN cast_expression
-                                        { CAST($2, SINGLE_INIT (fst $4)), $1 }
+                                        { let loc = makeLoc (startPos $1) (endPos (snd $4)) in
+                                          CAST($2, SINGLE_INIT (fst $4)), loc }
 ;
 
 multiplicative_expression:  /*(* 6.5.5 *)*/
 | cast_expression                       { $1 }
 | multiplicative_expression STAR cast_expression
-                                        { BINARY(MUL, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(MUL, fst $1, fst $3), loc }
 | multiplicative_expression SLASH cast_expression
-                                        { BINARY(DIV, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(DIV, fst $1, fst $3), loc }
 | multiplicative_expression PERCENT cast_expression
-                                        { BINARY(MOD, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(MOD, fst $1, fst $3), loc }
 ;
 
 additive_expression:  /*(* 6.5.6 *)*/
 | multiplicative_expression             { $1 }
 | additive_expression PLUS multiplicative_expression
-                                        { BINARY(ADD, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(ADD, fst $1, fst $3), loc }
 | additive_expression MINUS multiplicative_expression
-                                        { BINARY(SUB, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(SUB, fst $1, fst $3), loc }
 ;
 
 shift_expression:      /*(* 6.5.7 *)*/
 | additive_expression                   { $1 }
 | shift_expression  INF_INF additive_expression
-                                        { BINARY(SHL, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(SHL, fst $1, fst $3), loc }
 | shift_expression  SUP_SUP additive_expression
-                                        { BINARY(SHR, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(SHR, fst $1, fst $3), loc }
 ;
 
 relational_expression:   /*(* 6.5.8 *)*/
 | shift_expression                      { $1 }
 | relational_expression INF shift_expression
-                                        { BINARY(LT, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(LT, fst $1, fst $3), loc }
 | relational_expression SUP shift_expression
-                                        { BINARY(GT, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(GT, fst $1, fst $3), loc }
 | relational_expression INF_EQ shift_expression
-                                        { BINARY(LE, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(LE, fst $1, fst $3), loc }
 | relational_expression SUP_EQ shift_expression
-                                        { BINARY(GE, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(GE, fst $1, fst $3), loc }
 ;
 
 equality_expression:   /*(* 6.5.9 *)*/
 | relational_expression                 { $1 }
 | equality_expression EQ_EQ relational_expression
-                                        { BINARY(EQ, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(EQ, fst $1, fst $3), loc }
 | equality_expression EXCLAM_EQ relational_expression
-                                        { BINARY(NE, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(NE, fst $1, fst $3), loc }
 ;
 
 
 bitwise_and_expression:   /*(* 6.5.10 *)*/
 | equality_expression                   { $1 }
 | bitwise_and_expression AND equality_expression
-                                        { BINARY(BAND, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(BAND, fst $1, fst $3), loc }
 ;
 
 bitwise_xor_expression:   /*(* 6.5.11 *)*/
 | bitwise_and_expression                { $1 }
 | bitwise_xor_expression CIRC bitwise_and_expression
-                                        { BINARY(XOR, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(XOR, fst $1, fst $3), loc }
 ;
 
 bitwise_or_expression:   /*(* 6.5.12 *)*/
 | bitwise_xor_expression                { $1 } 
 | bitwise_or_expression PIPE bitwise_xor_expression
-                                        { BINARY(BOR, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(BOR, fst $1, fst $3), loc }
 ;
 
 logical_and_expression:   /*(* 6.5.13 *)*/
 | bitwise_or_expression                 { $1 }
 | logical_and_expression AND_AND bitwise_or_expression
-                                        { BINARY(AND, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(AND, fst $1, fst $3), loc }
 ;
 
 logical_or_expression:   /*(* 6.5.14 *)*/
 | logical_and_expression                { $1 }
 | logical_or_expression PIPE_PIPE logical_and_expression
-                                        { BINARY(OR, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(OR, fst $1, fst $3), loc }
 ;
 
 conditional_expression:    /*(* 6.5.15 *)*/
 | logical_or_expression                 { $1 }
 | logical_or_expression QUEST opt_expression COLON conditional_expression
-                                        { QUESTION (fst $1, $3, fst $5), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $5)) in
+                                          QUESTION (fst $1, $3, fst $5), loc }
 ;
 
 /*(* The C spec says that left-hand sides of assignment expressions are unary 
@@ -621,27 +659,38 @@ conditional_expression:    /*(* 6.5.15 *)*/
 assignment_expression:     /*(* 6.5.16 *)*/
 | conditional_expression                { $1 }
 | cast_expression EQ assignment_expression
-                                        { BINARY(ASSIGN, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(ASSIGN, fst $1, fst $3), loc }
 | cast_expression PLUS_EQ assignment_expression
-                                        { BINARY(ADD_ASSIGN, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(ADD_ASSIGN, fst $1, fst $3), loc }
 | cast_expression MINUS_EQ assignment_expression
-                                        { BINARY(SUB_ASSIGN, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(SUB_ASSIGN, fst $1, fst $3), loc }
 | cast_expression STAR_EQ assignment_expression
-                                        { BINARY(MUL_ASSIGN, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(MUL_ASSIGN, fst $1, fst $3), loc }
 | cast_expression SLASH_EQ assignment_expression
-                                        { BINARY(DIV_ASSIGN, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(DIV_ASSIGN, fst $1, fst $3), loc }
 | cast_expression PERCENT_EQ assignment_expression
-                                        { BINARY(MOD_ASSIGN, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(MOD_ASSIGN, fst $1, fst $3), loc }
 | cast_expression AND_EQ assignment_expression
-                                        { BINARY(BAND_ASSIGN, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(BAND_ASSIGN, fst $1, fst $3), loc }
 | cast_expression PIPE_EQ assignment_expression
-                                        { BINARY(BOR_ASSIGN, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(BOR_ASSIGN, fst $1, fst $3), loc }
 | cast_expression CIRC_EQ assignment_expression
-                                        { BINARY(XOR_ASSIGN, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(XOR_ASSIGN, fst $1, fst $3), loc }
 | cast_expression INF_INF_EQ assignment_expression  
-                                        { BINARY(SHL_ASSIGN, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(SHL_ASSIGN, fst $1, fst $3), loc }
 | cast_expression SUP_SUP_EQ assignment_expression
-                                        { BINARY(SHR_ASSIGN, fst $1, fst $3), snd $1 }
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          BINARY(SHR_ASSIGN, fst $1, fst $3), loc }
 ;
 
 expression:           /*(* 6.5.17 *)*/
@@ -679,14 +728,17 @@ string_list:
   one_string                            { let queue = Queue.create () in
                                           Queue.add (fst $1) queue;
                                           queue, snd $1 }
-| string_list one_string                { Queue.add (fst $2) (fst $1);
-                                          $1 }
+| string_list one_string                { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          Queue.add (fst $2) (fst $1);
+                                          (fst $1), loc }
 ;
 
 wstring_list:
   CST_WSTRING                           { $1 }
-| wstring_list one_string               { (fst $1) @ (fst $2), snd $1 }
-| wstring_list CST_WSTRING              { (fst $1) @ (fst $2), snd $1 }
+| wstring_list one_string               { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          (fst $1) @ (fst $2), loc }
+| wstring_list CST_WSTRING              { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          (fst $1) @ (fst $2), loc }
 /* Only the first string in the list needs an L, so L"a" "b" is the same
  * as L"ab" or L"a" L"b". */
 
@@ -755,8 +807,10 @@ opt_expression:
 
 comma_expression:
   expression                            { [fst $1], snd $1 }
-| expression COMMA comma_expression     { fst $1 :: fst $3, snd $1 }
-| error COMMA comma_expression          { $3 }
+| expression COMMA comma_expression     { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          fst $1 :: fst $3, loc }
+| error COMMA comma_expression          { let loc = makeLoc (startPos $2) (endPos (snd $3)) in
+                                          (fst $3), loc }
 ;
 
 comma_expression_opt:
@@ -765,13 +819,16 @@ comma_expression_opt:
 ;
 
 paren_comma_expression:
-  LPAREN comma_expression RPAREN        { $2 }
+  LPAREN comma_expression RPAREN        { let loc = makeLoc (startPos $1) (endPos $3) in
+                                          (fst $2, loc) }
 | LPAREN error RPAREN                   { [], $1 }
 ;
 
 bracket_comma_expression:
-  LBRACKET comma_expression RBRACKET    { fst $2 }
-| LBRACKET error RBRACKET               { [] }
+  LBRACKET comma_expression RBRACKET    { let loc = makeLoc (startPos $1) (endPos $3) in
+                                          (fst $2, loc) }
+| LBRACKET error RBRACKET               { let loc = makeLoc (startPos $1) (endPos $3) in
+                                          ([], loc) }
 ;
 
 /*** statements ***/
@@ -962,36 +1019,54 @@ type_spec:   /* ISO 6.7.2 */
 | DOUBLE                                { Tdouble, $1 }
 | SIGNED                                { Tsigned, $1 }
 | UNSIGNED                              { Tunsigned, $1 }
-| STRUCT id_or_typename                 { Tstruct ($2, None,    []), $1 }
-| STRUCT just_attributes id_or_typename { Tstruct ($3, None,    $2), $1 }
+| STRUCT id_or_typename                 { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          Tstruct ($2, None,    []), loc }
+| STRUCT just_attributes id_or_typename { let loc = makeLoc (startPos $1) (endPos (snd $3)) in
+                                          Tstruct ($3, None,    $2), loc }
 | STRUCT id_or_typename LBRACE struct_decl_list RBRACE
-                                        { Tstruct ($2, Some $4, []), $1 }
-| STRUCT LBRACE struct_decl_list RBRACE { Tstruct ("", Some $3, []), $1 }
+                                        { let loc = makeLoc (startPos $1) (endPos $5) in
+                                          Tstruct ($2, Some $4, []), loc }
+| STRUCT LBRACE struct_decl_list RBRACE { let loc = makeLoc (startPos $1) (endPos $4) in
+                                          Tstruct ("", Some $3, []), loc }
 | STRUCT just_attributes id_or_typename LBRACE struct_decl_list RBRACE
-                                        { Tstruct ($3, Some $5, $2), $1 }
+                                        { let loc = makeLoc (startPos $1) (endPos $6) in
+                                          Tstruct ($3, Some $5, $2), loc }
 | STRUCT just_attributes LBRACE struct_decl_list RBRACE
-                                        { Tstruct ("", Some $4, $2), $1 }
-| UNION id_or_typename                  { Tunion  ($2, None,    []), $1 }
+                                        { let loc = makeLoc (startPos $1) (endPos $5) in
+                                          Tstruct ("", Some $4, $2), loc }
+| UNION id_or_typename                  { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          Tunion  ($2, None,    []), loc }
 | UNION id_or_typename LBRACE struct_decl_list RBRACE
-                                        { Tunion  ($2, Some $4, []), $1 }
-| UNION LBRACE struct_decl_list RBRACE  { Tunion  ("", Some $3, []), $1 }
+                                        { let loc = makeLoc (startPos $1) (endPos $5) in
+                                          Tunion  ($2, Some $4, []), loc }
+| UNION LBRACE struct_decl_list RBRACE  { let loc = makeLoc (startPos $1) (endPos $4) in
+                                          Tunion  ("", Some $3, []), loc }
 | UNION  just_attributes id_or_typename LBRACE struct_decl_list RBRACE
-                                        { Tunion  ($3, Some $5, $2), $1 }
+                                        { let loc = makeLoc (startPos $1) (endPos $6) in
+                                          Tunion  ($3, Some $5, $2), loc }
 | UNION  just_attributes LBRACE struct_decl_list RBRACE
-                                        { Tunion  ("", Some $4, $2), $1 }
-| ENUM id_or_typename                   { Tenum   ($2, None,    []), $1 }
+                                        { let loc = makeLoc (startPos $1) (endPos $5) in
+                                          Tunion  ("", Some $4, $2), loc }
+| ENUM id_or_typename                   { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          Tenum   ($2, None,    []), loc }
 | ENUM id_or_typename LBRACE enum_list maybecomma RBRACE
-                                        { Tenum   ($2, Some $4, []), $1 }
+                                        { let loc = makeLoc (startPos $1) (endPos $6) in
+                                          Tenum   ($2, Some $4, []), loc }
 | ENUM LBRACE enum_list maybecomma RBRACE
-                                        { Tenum   ("", Some $3, []), $1 }
+                                        { let loc = makeLoc (startPos $1) (endPos $5) in
+                                          Tenum   ("", Some $3, []), loc }
 | ENUM just_attributes id_or_typename LBRACE enum_list maybecomma RBRACE
-                                        { Tenum   ($3, Some $5, $2), $1 }
+                                        { let loc = makeLoc (startPos $1) (endPos $7) in
+                                          Tenum   ($3, Some $5, $2), loc }
 | ENUM just_attributes LBRACE enum_list maybecomma RBRACE
-                                        { Tenum   ("", Some $4, $2), $1 }
+                                        { let loc = makeLoc (startPos $1) (endPos $6) in
+                                          Tenum   ("", Some $4, $2), loc }
 | NAMED_TYPE                            { Tnamed (fst $1), snd $1 }
-| TYPEOF LPAREN expression RPAREN       { TtypeofE (fst $3), $1 }
-| TYPEOF LPAREN type_name RPAREN        { let s, d = $3 in
-                                          TtypeofT (s, d), $1 }
+| TYPEOF LPAREN expression RPAREN       { let loc = makeLoc (startPos $1) (endPos $4) in
+                                          TtypeofE (fst $3), loc }
+| TYPEOF LPAREN type_name RPAREN        { let loc = makeLoc (startPos $1) (endPos $4) in
+                                          let s, d = $3 in
+                                          TtypeofT (s, d), loc }
 ;
 
 struct_decl_list: /* (* ISO 6.7.2. Except that we allow empty structs. We 
@@ -1032,13 +1107,15 @@ enum_list: /* (* ISO 6.7.2.2 *) */
 
 enumerator:  
   IDENT                                 { (fst $1, NOTHING, snd $1) }
-| IDENT EQ expression                   { (fst $1, fst $3, snd $1) }
+| IDENT EQ expression                   { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          (fst $1, fst $3, loc) }
 ;
 
 declarator:  /* (* ISO 6.7.5. Plus Microsoft declarators.*) */
   pointer_opt direct_decl attributes_with_asm
                                         { let (n, decl) = $2 in
-                                          (n, applyPointer (fst $1) decl, $3, (snd $1)) }
+                                          let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+                                          (n, applyPointer (fst $1) decl, $3, loc) }
 ;
 
 direct_decl: /* (* ISO 6.7.5 *) */
@@ -1088,7 +1165,8 @@ parameter_decl: /* (* ISO 6.7.5 *) */
 /* (* Old style prototypes. Like a declarator *) */
 old_proto_decl:
   pointer_opt direct_old_proto_decl     { let (n, decl, a) = $2 in
-                                          (n, applyPointer (fst $1) decl, a, snd $1) }
+                                          let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          (n, applyPointer (fst $1) decl, a, loc) }
 ;
 
 direct_old_proto_decl:
