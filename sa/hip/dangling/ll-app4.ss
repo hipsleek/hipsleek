@@ -23,25 +23,29 @@ void append(ref node x, node y)
 
 We got:
 
-[ H3(x_581) ::= x_581::node<val_54_544,y>@M * HP_582(y)&true,
- H1(x_587) ::= x_587::node<val_54_522',next_54_523'>@M * next_54_523'::ls[LHSCase]&true,
- H2(y) ::= H4(y)&true,
+*************************************
+*******relational definition ********
+*************************************
+[ H4(y_580) ::= H2(y_580)&true,
+ H3(x_581) ::= x_581::node<val_52_544,y>@M * HP_582(y)&true,
+ H1(x_587) ::= x_587::node<val_52_522',next_52_523'>@M * next_52_523'::ls[LHSCase]&true,
  HP_582(y) ::= 
- y::node<val_54_544,y_585>@M * HP_582(y_585)&true
+ y::node<val_52_544,y_585>@M * HP_582(y_585)&true
  or emp& XPURE(H2(y))
  ]
 
-However, H2(y) is an input predicate (in precondition), while
-H4(y) is an output predicate. Hence, we should have the
-following instead:
-
- H4(y) ::= H2(y)&true,
-
 Once you have this, then --sa-dangling should simply introduce:
 
+ H4(y_580) ::= emp&DLING_H2_y_593=y_580,
+ H2(y) ::= emp&DLING_H2_y_593=y,
+
+I think we should have instead:
+ H4(y_580) ::= H2(y_580)&true,
  H2(y) ::= emp & DLING_H2 = y
 
-With this --sa-inlining would produce the desired result
+After that --sa-inlining would replace all occurrences of
+H2(..).
+
 
 */
   infer [H1,H2,H3,H4]
