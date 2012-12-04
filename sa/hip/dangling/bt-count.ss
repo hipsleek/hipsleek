@@ -4,10 +4,11 @@ data node2 {
   node2 right;
 }
 
+/*
 bst0<> == self = null
 	or self::node2<_, p, q> * p::bst0<> * q::bst0<>
 	inv true;
-
+*/
 HeapPred G1(node2 a).
 HeapPred H1(node2 a).
 

@@ -41,6 +41,14 @@ int count(node2 z)
 /*
 UNIFICATION of dangling important here!
 
+(i) Can I first identify G1(z) ::= H1(z)
+
+(ii) Identify dangling predicates:
+        HP_548, HP_552
+     Unify with branches
+     HP_552 = H1 = HP_548
+
+
 [ H1(z_589) ::= 
  z_589::node2<val_32_517',left_32_518',right_32_519'>@M * 
  HP_548(right_32_519') * H1(left_32_518')&true
