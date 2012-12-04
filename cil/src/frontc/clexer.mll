@@ -494,13 +494,15 @@ rule initial = parse
                 let loc = Cabs.makeLoc startPos endPos in
                 PRAGMA (loc) }
 | '\''        { let startPos = currentPos () in
-                let endPos = { startPos with Cabs.byteno = Lexing.lexeme_end lexbuf } in
+                let ch = chr lexbuf in
+                let endPos = currentPos () in
                 let loc = Cabs.makeLoc startPos endPos in
-                CST_CHAR (chr lexbuf, loc)}
+                CST_CHAR (ch, loc)}
 | "L'"        { let startPos = currentPos () in
-                let endPos = { startPos with Cabs.byteno = Lexing.lexeme_end lexbuf } in
+                let ch = chr lexbuf in
+                let endPos = currentPos () in
                 let loc = Cabs.makeLoc startPos endPos in
-                CST_WCHAR (chr lexbuf, loc) }
+                CST_WCHAR (ch, loc) }
 | '"'         { addLexeme lexbuf; (* '"' *)
 (* matth: BUG:  this could be either a regular string or a wide string.
  *  e.g. if it's the "world" in 
@@ -510,7 +512,7 @@ rule initial = parse
                 try
                   let startPos = currentPos () in
                   let s = str lexbuf in
-                  let endPos = { startPos with Cabs.byteno = Lexing.lexeme_end lexbuf } in
+                  let endPos = currentPos () in
                   let loc = Cabs.makeLoc startPos endPos in
                   CST_STRING (s, loc)
                 with e -> 
@@ -546,9 +548,6 @@ rule initial = parse
 | intnum      { let startPos = currentPos () in
                 let s = Lexing.lexeme lexbuf in
                 let endPos = { startPos with Cabs.byteno = Lexing.lexeme_end lexbuf } in
-                let _ = print_endline ("== intnum s = " ^ s) in
-                let _ = print_endline ("   -- start pos = " ^ (Cabs.string_of_pos startPos)) in
-                let _ = print_endline ("   -- end pos   = " ^ (Cabs.string_of_pos endPos)) in
                 let loc = Cabs.makeLoc startPos endPos in
                 CST_INT (s, loc)}
 | "!quit!"    { EOF  }
@@ -743,7 +742,7 @@ rule initial = parse
 | "__asm"     { if !Cprint.msvcMode then
                   let startPos = currentPos () in
                   let s = msasm lexbuf in
-                  let endPos = { startPos with Cabs.byteno = Lexing.lexeme_end lexbuf } in
+                  let endPos = currentPos () in
                   let loc = Cabs.makeLoc startPos endPos in
                   MSASM (s, loc) 
                 else

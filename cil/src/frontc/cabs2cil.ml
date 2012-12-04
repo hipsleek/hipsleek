@@ -3203,7 +3203,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
   in
   (* Before we return we call finishExp *)
   let finishExp ?(newWhat=what) 
-                (se: chunk) (e: exp) (t: typ) : chunk * exp * typ = 
+                (se: chunk) (e: exp) (t: typ) : chunk * exp * typ = (
     match newWhat with 
       ADrop 
     | AType -> (se, e, t)
@@ -3232,7 +3232,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
 *)
             (se +++ (Set(lv, e'', !currentLoc)), e'', t'')
     end
-  in
+  ) in
   let rec findField (n: string) (fidlist: fieldinfo list) : offset =
     (* Depth first search for the field. This appears to be what GCC does. 
      * MSVC checks that there are no ambiguous field names, so it does not 
@@ -3397,8 +3397,11 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
         in
         let p = convLoc loc in
         match ct with 
-          A.CONST_INT str -> begin
+        | A.CONST_INT str -> begin
             let res = parseInt str in
+            let res = match res with
+              | Const (c, _) -> Const (c, p)
+              | _ -> res in
             finishExp empty res (typeOf res)
           end
 
@@ -3457,7 +3460,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
             in
             let res = Const(CStr s', p) in
             finishExp empty res (typeOf res)
-              
+
         | A.CONST_CHAR char_list ->
             let a, b = (interpret_character_constant char_list) in 
             finishExp empty (Const (a, p)) b 
