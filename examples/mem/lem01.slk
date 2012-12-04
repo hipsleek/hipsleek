@@ -17,6 +17,11 @@ pred lseg<n, p> == case {
 
 lemma "V2" self::lseg<n, p> & a>=0 & n-a >=0 -> self::lseg<a, r> * r::lseg<n-a, p>.
 
+/*
+
+lemma "V2" self::lseg<n, p> & a>=0 & n-a >=0 & b=n-a-> self::lseg<a, r> * r::lseg<b, p>.
+*/
+
 // Valid 
 
 //checkentail x::lseg<3,p> |- x::lseg<1,q>.
