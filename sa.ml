@@ -3787,7 +3787,7 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hps hp_rel
     if !Globals.sa_print_inter then
       let _ = print_endline "\n*******relational definitions ********" in
       let _ = print_endline
-        ((let pr = pr_list_ln  Cprinter.string_of_hp_rel_def_short in pr hp_defs4) )  in
+        ((let pr = pr_list_ln Cprinter.string_of_hp_rel_def_short in pr hp_defs4) )  in
       ()
     else ()
   in
