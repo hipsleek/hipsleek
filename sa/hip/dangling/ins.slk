@@ -9,7 +9,7 @@ HeapPred G(node a,node b).
 infer [G,HP] HP(next_23_547) * x::node<r_582,next_23_547> * 
 v_node_25_514'::node<v,x> &v_bool_24_531' & v_bool_24_531' & 
 res=v_node_25_514'
- |-  G(x,res).
+ |-  G(x,res) & true.
 print residue.
 /*
 
