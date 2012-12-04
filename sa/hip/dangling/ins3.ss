@@ -26,45 +26,39 @@ node insert(node x, int v)
 		return new node(v, x);
 	else
 	{
+       node t = x.next;
        // H(x) & x!=null * res::node(v,x) --> G(x,res)
        // H(x) * res::node<v,x>@M&x!=null --> G(x,res)&true,
        if (rand()) return new node(v,x);
        else
 		{
-			x.next = insert(x.next, v);
+			x.next = insert(t, v);
             return x;
 		}
 	}
 }
 
 /*
-[ 
- H(x)&x!=null --> x::node<val_28_512',next_28_513'>@M * HP_541(next_28_513')&
+
+[ H(x)&x!=null --> x::node<val_29_512',next_29_513'>@M * HP_538(next_29_513')&
   true,
- HP_541(v_node_28_514')&true --> H(v_node_28_514')&true,
-
- H(x) * res::node<v,x>@M&x!=null --> G(x,res)&true,
- G(v_node_28_554,v_node_28_558) * x::node<val_28_548,v_node_28_558>@M&
-  res=x --> G(x,res)&true]
-*************************************
-
-
- H(x)&x!=null --> x::node<val_28_512',next_28_513'>@M * HP_541(next_28_513')& true, (A)
- H(x) * res::node<v,x>@M&x!=null --> G(x,res)&true, (B)
-
- (A) should be used to refine (B), as the LHS can be expanded.
-
-
+ HP_538(t_19')&true --> H(t_19')&true,
+ H(x)&x=null --> emp&true,
+ res::node<v,x>@M&x=null --> G(x,res)&true,
+ HP_538(t_555) * x::node<val_29_541,t_555>@M * res::node<v,x>@M&
+  true --> G(x,res)&true,
+ G(next_35_552,v_node_35_557) * x::node<val_29_541,v_node_35_557>@M&
+  res
 
 [ G(x_563,res_564) ::= res_564::node<v,x_563>@M * HP_565(x_563,res_564)&true,
  H(x_568) ::= 
- x_568::node<val_28_560,next_28_513'>@M * H(next_28_513')&true
+ x_568::node<val_29_560,next_29_513'>@M * H(next_29_513')&true
  or emp&x_568=null
  ,
  HP_565(x_566,res_564) ::= 
- HP_565(next_28_561,res_564)&true
- or HP_565(v_node_28_554,v_node_28_558) * 
-    res_564::node<val_28_548,v_node_28_558>@M&true
+ HP_565(next_29_561,res_564)&true
+ or HP_565(next_35_552,v_node_35_557) * 
+    res_564::node<val_29_541,v_node_35_557>@M&true
  ]
 
 PROBLEM : H seems a bit aggressive; while HP_565 has a LOOP
@@ -74,13 +68,6 @@ For H, I was expecting:
  x_568::node<val_28_560,next_28_513'>@M * H(next_28_513')&true
  x_568::node<val_28_560,next_28_513'>@M * HP(next_28_513')
  or emp&x_568=null
-
- I think  this may be because you derived:
-   HP(n) & n=null --> emp
- which you turned into:
-   HP(n) ::= n=null
- that is then inlined. This may be unsound in
- my opinion.
 
 
 */
