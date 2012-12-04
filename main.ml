@@ -142,14 +142,13 @@ let process_source_full source =
       and waitlevel.
     *)
     let search_for_locklevel proc =
-      if (not !Globals.allow_locklevel) then
-      let struc_fv = Iformula.struc_free_vars false proc.Iast.proc_static_specs in
-      let b = List.exists (fun (id,_) -> (id = Globals.waitlevel_name)) struc_fv in
-      if b then
-        Globals.allow_locklevel := true
+      if !Globals.web_compile_flag && (not !Globals.allow_locklevel) then
+        let struc_fv = Iformula.struc_free_vars false proc.Iast.proc_static_specs in
+        let b = List.exists (fun (id,_) -> (id = Globals.waitlevel_name)) struc_fv in
+        if b then
+          Globals.allow_locklevel := true
     in
 	let _ = List.map search_for_locklevel prog.Iast.prog_proc_decls in
-    (* let _ = print_endline ("allow_locklevel = " ^ (string_of_bool !Globals.allow_locklevel)) in *)
     (**************************************)
     let cprog = Astsimp.trans_prog intermediate_prog iprims in
 

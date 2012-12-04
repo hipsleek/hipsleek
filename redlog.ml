@@ -106,7 +106,7 @@ let start () =
 		send_cmd "off arbvars"; (* An Hoa : do not introduce arbcomplex(_) *)
       in
       let set_process proc = process := proc in
-      let rl_bin = if !Globals.web_compile_flag then "redcsl" else "redcsl" in
+      let rl_bin = if !Globals.web_compile_flag then "/usr/local/etc/reduce/bin/redcsl" else "redcsl" in
       let _ = Procutils.PrvComms.start !is_log_all log_file ("redlog", rl_bin,  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in
       (* print_endline "Starting Reduce... "; *)
       flush stdout

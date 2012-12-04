@@ -159,7 +159,7 @@ and preprocess_b_formula b : (CP.b_formula * CP.formula * CP.spec_var list) =
 (* 
    Preprocessing formulae 
 *)
-and preprocess_formula pr_w pr_s (f : CP.formula) : CP.formula =
+and preprocess_formula_x pr_w pr_s (f : CP.formula) : CP.formula =
   let rec helper f = 
     match f with
       | CP.Or (p1, p2,lbl, l1) -> (CP.mkOr (helper p1) (helper p2) lbl l1)
@@ -177,6 +177,12 @@ and preprocess_formula pr_w pr_s (f : CP.formula) : CP.formula =
                 | Some f -> helper f
             end
   in helper f
+
+and preprocess_formula pr_w pr_s (f : CP.formula) : CP.formula =
+  Debug.no_1 "preprocess_formula"
+      Cprinter.string_of_pure_formula 
+      Cprinter.string_of_pure_formula
+      (fun f -> preprocess_formula_x pr_w pr_s f) f
 
 (* 
 
@@ -266,7 +272,7 @@ and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
 	        try
 	          let r = Hashtbl.find vs sv1 in
 	          if (r == 2) then 
-	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
+	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ " in BagMin 1\n")}
 	          else 
 	            if (r == 0) then ((Hashtbl.replace vs sv1 1); true)
 	            else false
@@ -277,7 +283,7 @@ and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
             try
 	          let r = Hashtbl.find vs sv2 in
 	          if (r == 1) then 
-	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv2) ^ "\n")}
+	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv2) ^ "in BagMin 2\n")}
 	          else 
 	            if(r == 0) then ((Hashtbl.replace vs sv1 2); true)
 	            else
@@ -295,7 +301,7 @@ and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
     | CP.Lte(e1, e2, _) 
     | CP.Gt(e1, e2, _)
     | CP.Gte(e1, e2, _) -> 
-          (* let _ = print_string("find_order_exp for " ^ (Cprinter.string_of_formula_exp e1) ^ " and "  ^ (Cprinter.string_of_formula_exp e2) ^ "\n") in *)
+          (* let _ = print_string("find_order_exp for e1=" ^ (Cprinter.string_of_formula_exp e1) ^ " and e2="  ^ (Cprinter.string_of_formula_exp e2) ^ "\n") in *)
       	  let r1 = exp_order e1 vs in 
 	      let r2 = exp_order e2 vs in
 	      if (r1 == 1 || r2 == 1) then
@@ -316,7 +322,7 @@ and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
             try 
 	          let r = Hashtbl.find vs sv1 in
 	          if(r == 1) then
-	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
+	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ " in BVar \n")}
 	          else
 	            if(r == 0) then
 	              (Hashtbl.replace vs sv1 2; true)
@@ -357,7 +363,7 @@ and find_order_exp_x (e : CP.exp) order vs = match e with
               ((Hashtbl.replace vs sv1 order); true) 
 	        else
 	          if ((r == 1 && order == 2) || (r == 2 && order == 1)) then
-	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
+	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ " in Var \n")}
 	          else false
           with
 	        | Not_found -> ((Hashtbl.add vs sv1 order); true)
@@ -407,7 +413,7 @@ and is_firstorder_mem_a e vs =
           begin
             try 
 	          let r = Hashtbl.find vs sv1 in 
-	          if (r == 1 || r == 0) then true
+	          if (r == 1 (*|| r == 0*)) then true
 	          else false
             with 
 	          | Not_found -> Error.report_error { Error.error_loc = l1; Error.error_text = (" Error during Mona translation for var " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
@@ -422,7 +428,7 @@ and part_firstorder_mem e vs =
           begin
             try 
 	          let r = Hashtbl.find vs sv1 in 
-	          if (r == 1 || r == 0) then true
+	          if (r == 1 (*|| r == 0*)) then true
 	          else false
             with 
 	          | Not_found -> false

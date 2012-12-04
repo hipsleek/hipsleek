@@ -297,7 +297,7 @@ let rec formula_2_mem_x (f : CF.formula) prog : CF.mem_formula =
   in helper f
 
 and formula_2_mem (f : formula) prog : CF.mem_formula = 
-  Debug.ho_1 "formula_2_mem" Cprinter.string_of_formula Cprinter.string_of_mem_formula
+  Debug.no_1 "formula_2_mem" Cprinter.string_of_formula Cprinter.string_of_mem_formula
       (fun _ -> formula_2_mem_x f prog) f
 
 and formula_2_mem_perm_x (f : CF.formula) prog : CF.mem_formula =
@@ -3292,19 +3292,25 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	                  let n_ctx_list, prf = heap_entail_one_context prog (if formula_cont!=None then true else is_folding) n_ctx formula_base None None None pos in
                       (n_ctx_list, prf, None)
                   | Some id ->
-                      (match delayed_f with
-                        | Some mf ->
-                        (* TO CHECK : if already has a delayed formula. propagate*)
-                            let n_ctx_list, prf = heap_entail_one_context prog (if formula_cont!=None then true else is_folding) n_ctx formula_base tid delayed_f join_id pos in
-                            (n_ctx_list, prf,delayed_f)
-                        | None ->
-                      (*Identify delayed constraints and propagate*)
-                            let df,new_formula_base = partLS formula_base in
-                            (* let _ = print_endline ("delayed formula df = " ^ (Cprinter.string_of_mix_formula df)) in *)
-                            let n_ctx_list, prf = heap_entail_one_context prog (if formula_cont!=None then true else is_folding) n_ctx new_formula_base tid (Some df) join_id pos in
-                            (n_ctx_list, prf ,Some df)
-
-                      )
+                      if (not !Globals.allow_ls) then
+                        (*If not using lockset ==> do not care about delayed lockset constraitns -> return None*)
+                        let n_ctx_list, prf = heap_entail_one_context prog (if formula_cont!=None then true else is_folding) n_ctx formula_base None None None pos in
+                        (n_ctx_list, prf ,None)
+                      else
+                        (match delayed_f with
+                          | Some mf ->
+                              (* TO CHECK : if already has a delayed formula. propagate*)
+                              let n_ctx_list, prf = heap_entail_one_context prog (if formula_cont!=None then true else is_folding) n_ctx formula_base tid delayed_f join_id pos in
+                              (n_ctx_list, prf,delayed_f)
+                          | None ->
+                              (*Identify delayed constraints and propagate*)
+                              let evars = CF.get_exists_context n_ctx in (*get exists vars from context*)
+                              (*partion the post-condition based on LS*)
+                              let df,new_formula_base = partLS (evars@impl_inst@expl_inst) formula_base in
+                              (* let _ = print_endline ("delayed formula df = " ^ (Cprinter.string_of_mix_formula df)) in *)
+                              let n_ctx_list, prf = heap_entail_one_context prog (if formula_cont!=None then true else is_folding) n_ctx new_formula_base tid (Some df) join_id pos in
+                              (n_ctx_list, prf ,Some df)
+                        )
                 in
 
 			    (*let n_ctx_list = List.filter  (fun c -> not (isFalseCtx c)) n_ctx_list in*)

@@ -2806,6 +2806,17 @@ and pop_exists (qvars : CP.spec_var list) (f : formula) = match f with
   | _ -> remove_quantifiers qvars f
         (* 19.05.2008 *)
 
+and get_exists (f : formula) : CP.spec_var list =
+  let rec helper f = 
+    match f with
+      | Or ({formula_or_f1 = f1; formula_or_f2 = f2;}) ->
+	      let evars1 = helper f1 in
+	      let evars2 = helper f2 in
+          (evars1@evars2)
+      | Exists e -> e.formula_exists_qvars
+      | Base b -> []
+  in helper f
+
 and formula_of_disjuncts (f:formula list) : formula=
   match f with
     | [] -> (mkTrue (mkTrueFlow()) no_pos)
@@ -6241,7 +6252,18 @@ and push_exists_list_failesc_context (qvars : CP.spec_var list) (ctx : list_fail
   
 and push_exists_context (qvars : CP.spec_var list) (ctx : context) : context = 
   transform_context (fun es -> Ctx{es with es_formula = push_exists qvars es.es_formula}) ctx
-        
+
+and get_exists_context (ctx : context) : CP.spec_var list =
+  let rec helper ctx =
+	match ctx with
+	  | Ctx e -> 
+         get_exists e.es_formula
+	  | OCtx (c1,c2) ->
+          let evars1 = helper c1 in
+          let evars2 = helper c2 in
+          (evars1@evars2)
+  in helper ctx
+
 and push_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : context)  : context = 
  transform_context (fun es -> Ctx{es with 
 				es_gen_expl_vars = es.es_gen_expl_vars @ expvars; 
@@ -8274,22 +8296,22 @@ and norm_struc_vperm_x struc_f ref_vars val_vars = match struc_f with
 (*partion a formula into delayed formula and the rest
   Indeed, donot partition: extract + rename instead
 *)
-and partLS (f : formula) : MCP.mix_formula * formula =
+and partLS (evars : CP.spec_var list) (f : formula) : MCP.mix_formula * formula =
   let pr_o = pr_pair !print_mix_formula !print_formula in
-  Debug.no_1 "partLS" !print_formula pr_o
-      partLS_x f
+  Debug.no_2 "partLS" !print_svl !print_formula pr_o
+      partLS_x evars f
 
-and partLS_x (f : formula) : MCP.mix_formula * formula =
-  let delayed = extractLS f in
+and partLS_x (evars : CP.spec_var list) (f : formula) : MCP.mix_formula * formula =
+  let delayed = extractLS evars f in
   let nf = removeLS f in
   (delayed,nf)
 
 (*extract lockset constraints from a formula*)
-and extractLS (f : formula) : MCP.mix_formula =
-  Debug.no_1 "extractLS" !print_formula !print_mix_formula
-      extractLS_x f
+and extractLS (evars : CP.spec_var list) (f : formula) : MCP.mix_formula =
+  Debug.no_2 "extractLS" !print_svl !print_formula !print_mix_formula
+      extractLS_x evars f
 
-and extractLS_x (f : formula): MCP.mix_formula  =
+and extractLS_x (evars : CP.spec_var list) (f : formula): MCP.mix_formula  =
   let rec helper f =
     match f with
       | Base{formula_base_pure = p} ->
@@ -8302,9 +8324,10 @@ and extractLS_x (f : formula): MCP.mix_formula  =
           let p_pure = MCP.drop_varperm_mix_formula p_pure in
           (* remove formulae related to floating point: may be unsound *)
           let p_pure = MCP.drop_float_formula_mix_formula p_pure in
+          let p_pure = MCP.drop_svl_mix_formula p_pure evars in
           MCP.merge_mems p_delayed p_pure true
       | Exists{formula_exists_pure = p;
-               formula_exists_qvars =evars} ->
+               formula_exists_qvars =qvars} ->
           let p_delayed = MCP.extractLS_mix_formula p in
           (* remove formulae related to LS *)
           let p_pure = MCP.removeLS_mix_formula p in
@@ -8315,7 +8338,7 @@ and extractLS_x (f : formula): MCP.mix_formula  =
           (* remove formulae related to floating point: may be unsound TOCHECK*)
           let p_pure = MCP.drop_float_formula_mix_formula p_pure in
           (* conservatively drop formula related to exist vars: may be unsound TOCHECK *)
-          let p_pure = MCP.drop_svl_mix_formula p_pure evars in
+          let p_pure = MCP.drop_svl_mix_formula p_pure (qvars@evars) in
           MCP.merge_mems p_delayed p_pure true
       | Or {formula_or_f1 = f1; formula_or_f2 =f2} ->
           let pf1 = helper f1 in
