@@ -346,6 +346,7 @@ let common_arguments = [
   ("--sa-useless", Arg.Set Globals.sa_elim_useless, "elim useless parameter from HP predicate");
   ("--sa-inlining", Arg.Set Globals.sa_inlining, "inline dangling HP/pointers");
   ("--sa-split", Arg.Set Globals.sa_en_split, "splitting hp args into multiple hp if possible");
+  ("--sa-unify-dangling", Arg.Set Globals.sa_unify_dangling, "unify branches of definition to instantiate dangling predicate");
   ] 
 
 (* arguments/flags used only by hip *)	

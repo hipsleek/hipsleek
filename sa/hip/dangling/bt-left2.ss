@@ -43,7 +43,8 @@ UNIFICATION of dangling important here!
 
 (i) Can I first identify G1(z) ::= H1(z)
 
-(ii) Identify dangling predicates:
+(ii) --sa-unify-dangling
+     Identify dangling predicates:
         HP_548, HP_552
      Unify with branches
      HP_552 = H1 = HP_548
