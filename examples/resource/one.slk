@@ -1,5 +1,5 @@
 
-pred_prim R<high:int> 
+pred_prim stack<high:int> 
  inv high>=0.
 
 //lemma "R split" self::R<b> & q>=0 & b>q -> self::R<q> * self::R<b-q> .

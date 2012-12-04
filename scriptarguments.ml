@@ -214,6 +214,10 @@ let common_arguments = [
 	"print core representation");
 	("--pip", Arg.Set Globals.print_input,
 	"print input representation");
+	("--pcp-all", Arg.Set Globals.print_core_all,
+	"print core representation (including primitive library)");
+	("--pip-all", Arg.Set Globals.print_input_all,
+	"print input representation (including primitive library)");
 	(* ("--dis-cache", Arg.Set Globals.no_cache_formula, *)
     (* "Do not cache result of satisfiability and validity checking"); *)
 	("--dis-cache", Arg.Set Globals.no_cache_formula,
@@ -360,8 +364,8 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
    "Procedure to be verified. If none specified, all are verified.");
   ("-print", Arg.Set Globals.print_proc,
    "Print procedures being checked");
-  ("--pgbv", Arg.Set Globals.pass_global_by_value, 
-   "pass read global variables by value");
+  ("--dis-pgbv", Arg.Clear Globals.pass_global_by_value, 
+   "disable pass read global variables by value");
   ("--sqt", Arg.Set Globals.seq_to_try,
    "translate seq to try");
   ("-cp-test", Arg.String set_file_cp,

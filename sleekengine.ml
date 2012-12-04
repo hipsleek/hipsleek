@@ -280,7 +280,7 @@ let process_rel_def rdef =
     let n_crdef = {n_crdef with 
         C.view_formula =  Solver.prune_pred_struc cprog true n_crdef.C.view_formula ;
         C.view_un_struc_formula = List.map (fun (c1,c2) -> (Solver.prune_preds cprog true c1,c2)) n_crdef.C.view_un_struc_formula;}in
-		let _ = if !Globals.print_core then print_string (Cprinter.string_of_view_decl n_crdef ^"\n") else () in
+		let _ = if !Globals.print_core || !Globals.print_core_all then print_string (Cprinter.string_of_view_decl n_crdef ^"\n") else () in
 		cprog.C.prog_view_decls <- (n_crdef :: old_vdec) *)
 			iprog.I.prog_rel_decls <- ( rdef :: iprog.I.prog_rel_decls);
 			let crdef = AS.trans_rel iprog rdef in !cprog.C.prog_rel_decls <- (crdef :: !cprog.C.prog_rel_decls);
@@ -354,7 +354,7 @@ let process_data_def ddef =
 	(* let _ = Exc.compute_hierarchy 2 () in *)
 	let cddef = AS.trans_data iprog ddef in
 	let _ = if !Globals.print_input then print_string (Iprinter.string_of_data_decl ddef ^"\n") else () in
-	let _ = if !Globals.print_core then print_string (Cprinter.string_of_data_decl cddef ^"\n") else () in
+	let _ = if !Globals.print_core || !Globals.print_core_all then print_string (Cprinter.string_of_data_decl cddef ^"\n") else () in
 	!cprog.C.prog_data_decls <- cddef :: !cprog.C.prog_data_decls;
 	if !perm=NoPerm || not !enable_split_lemma_gen then () 
 	else (process_lemma (Iast.gen_normalize_lemma_split ddef);process_lemma (Iast.gen_normalize_lemma_comb ddef))
@@ -366,7 +366,7 @@ let process_data_def ddef =
       end
 
 let process_barrier_def bd = 
-    if !Globals.print_core then print_string (Iprinter.string_of_barrier_decl bd) else () ;
+    if !Globals.print_core || !Globals.print_core_all then print_string (Iprinter.string_of_barrier_decl bd) else () ;
 	 try
 	    let bd = AS.case_normalize_barrier iprog bd in
 		let cbd = AS.trans_bdecl iprog bd in
@@ -583,7 +583,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let _ = print_endline ("WN: vars inf"^(Cprinter.string_of_spec_var_list iv)) in *)
   let ctx = Inf.init_vars ctx iv vrel v_hp_rel orig_vars in
 
-  let _ = if !Globals.print_core 
+  let _ = if !Globals.print_core || !Globals.print_core_all
     then print_string ("\nrun_infer:\n"^(Cprinter.string_of_formula ante)
         ^" "^(pr_list pr_id ivars)
       ^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") 
@@ -748,7 +748,7 @@ let process_eq_check (ivars: ident list)(if1 : meta_formula) (if2 : meta_formula
   let f1 = meta_to_formula_not_rename if1 false [] stab  in
   let f2 = meta_to_formula_not_rename if2 false [] stab  in
 
-  let _ = if (!Globals.print_core) then print_endline ("INPUT: \n ### formula 1= " ^ (Cprinter.string_of_formula f1) ^"\n ### formula 2= " ^ (Cprinter.string_of_formula f2)) else () in
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_endline ("INPUT: \n ### formula 1= " ^ (Cprinter.string_of_formula f1) ^"\n ### formula 2= " ^ (Cprinter.string_of_formula f2)) else () in
 
   (*let f2 = Solver.prune_preds !cprog true f2 in *)
   if(!Globals.show_diff) then( 

@@ -1703,6 +1703,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
               Err.error_text = "error 3: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in proc "^proc.I.proc_name^" "} in
       let cproc ={
           C.proc_name = proc.I.proc_mingled_name;
+          C.proc_source = proc.I.proc_source;
           C.proc_args = args;
           C.proc_return = trans_type prog proc.I.proc_return proc.I.proc_loc;
 	  C.proc_important_vars =  imp_vars(*(Gen.Basic.remove_dups (proc.I.proc_important_vars @imp_vars))*); (* An Hoa *)
@@ -3071,6 +3072,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 I.param_loc = pos; }) tvars in
             let w_proc ={
                 I.proc_name = w_name;
+                I.proc_source = "source_file";
                 I.proc_mingled_name = mingle_name_enum prog w_name (List.map fst tvars);
                 I.proc_data_decl = proc.I.proc_data_decl;
                 I.proc_constructor = false;
