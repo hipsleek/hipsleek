@@ -1990,6 +1990,13 @@ let mk_hprel_def prog unk_hps unk_svl hp args defs pos=
       [def]
  end
 
+let mk_unk_hprel_def hp args defs pos=
+  let def = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 (CF.pos_of_formula f1))
+    (List.hd defs) (List.tl defs) in
+  DD.ninfo_pprint (" ==: " ^ (Cprinter.prtt_string_of_formula def) ) pos;
+  let def = (hp, (CP.HPRelDefn hp, (CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, pos)), def)) in
+  [def]
+
 (*because root is moved to top*)
 let mk_orig_hprel_def_x prog unk_hps hp args sh_ldns eqNulls eqPures hprels unk_svl=
   let other_args = List.tl args in

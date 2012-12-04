@@ -3271,7 +3271,6 @@ let get_HRel hf=
     | HRel (hp, eargs, _ ) -> Some (hp, List.concat (List.map CP.afv eargs))
     | _ -> None
 
-
 let extract_HRel hf=
   match hf with
     | HRel (hp, eargs, _ ) -> (hp, List.concat (List.map CP.afv eargs))
