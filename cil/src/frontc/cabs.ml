@@ -333,8 +333,11 @@ let endPos loc = loc.end_pos
 let makeLoc startPos endPos = { start_pos = startPos;
                                 end_pos = endPos; }
 
+let string_of_pos pos = 
+  (string_of_int pos.lineno) ^ ":" ^ (string_of_int (pos.byteno - pos.linestart))
+
 let string_of_loc loc =
-    (string_of_int loc.start_pos.lineno) ^ ":"
+  (string_of_int loc.start_pos.lineno) ^ ":"
   ^ (string_of_int (loc.start_pos.byteno - loc.start_pos.linestart)) ^ "-"
   ^ (string_of_int loc.end_pos.lineno) ^ ":"
   ^ (string_of_int (loc.start_pos.byteno - loc.start_pos.linestart))
