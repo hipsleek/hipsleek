@@ -1905,7 +1905,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           let closed_hprel_def = CP.subst_var_list (leqs@reqs) hprel_def in
           let closed_hprel_args_def,_,_,_,_ = SAU.find_defined_pointers_after_preprocess prog closed_hprel_def
             (hds@(List.concat (List.map get_h_formula_data_fr_hnode es.CF.es_history)))
-            hvs (lhras@rhras@new_hrels) (leqs@reqs) [] in
+            hvs (lhras@rhras@new_hrels) (leqs@reqs) eqNull [] in
           let rf = CF.mkTrue (CF.mkTrueFlow()) pos in
           let defined_hprels = List.map (generate_hp_ass (closed_hprel_args_def@total_unk_svl) rf) defined_hps in
           let hp_rel = {

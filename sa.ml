@@ -68,7 +68,8 @@ and check_dropable_paras_constr prog constr:((CP.spec_var*int list) list) =
 (*each hprel: check which arg is raw defined*)
 and check_dropable_paras_RHS prog f:((CP.spec_var*int list) list)=
   (*RHS: dropable if para have just partial defined or more*)
-  let def_vs_wo_args, _, _, hrs, _ = SAU.find_defined_pointers_raw prog f in
+  let def_vs_wo_args, _, _, hrs, _,eqNulls = SAU.find_defined_pointers_raw prog f in
+  let def_vsl_wo_args = def_vs_wo_args@eqNulls in
   let rec helper args res index=
     match args with
       | [] -> res
@@ -911,6 +912,9 @@ and update_unk_one_constr_x prog unk_hp_locs cur_full_unk_hps equivs0 constr=
      in
      let unks = (List.map (fun (a,b,c) -> (a,b)) (l_full_unks@r_full_unks))@
        l_unks@r_unks in
+     (******************************START******************************)
+      (*currently, we do not add extract dangling hps into ass*)
+     (*
      let n_lhs =
         match l_hfs with
           | [] -> lhs
@@ -944,6 +948,10 @@ and update_unk_one_constr_x prog unk_hp_locs cur_full_unk_hps equivs0 constr=
           let f2 = CF.mkAnd_f_hf f1 new_hfs_comb (CF.pos_of_formula f1) in
           f2
      in
+     *)
+      (*************************END***********************************)
+     let n_lhs = lhs in
+     let n_rhs = rhs in
      (n_lhs, n_rhs, unks, new_total_full_unks, unk_svl, new_equivs)
   in
   (*============BODY===============*)
@@ -1004,10 +1012,10 @@ let check_partial_def_eq par_def1 par_def2=
 
 (*should we mkAnd f1 f2*)
 let rec find_defined_pointers_two_formulas_x prog f1 f2 predef_ptrs=
-  let (def_vs1, hds1, hvs1, hrs1, eqs1) = SAU.find_defined_pointers_raw prog f1 in
-  let (def_vs2, hds2, hvs2, hrs2, eqs2) = SAU.find_defined_pointers_raw prog f2 in
+  let (def_vs1, hds1, hvs1, hrs1, eqs1,eqNulls1) = SAU.find_defined_pointers_raw prog f1 in
+  let (def_vs2, hds2, hvs2, hrs2, eqs2,eqNulls2) = SAU.find_defined_pointers_raw prog f2 in
   SAU.find_defined_pointers_after_preprocess prog (def_vs1@def_vs2) (hds1@hds2) (hvs1@hvs2)
-      (hrs2) (eqs1@eqs2) predef_ptrs
+      (hrs2) (eqs1@eqs2) (eqNulls1@eqNulls2) predef_ptrs
 
 and find_defined_pointers_two_formulas prog f1 f2 predef_ptrs=
   let pr1 = !CP.print_svl in
@@ -1052,13 +1060,15 @@ let rec collect_par_defs_one_side_one_hp_aux_x prog f (hrel, args) def_ptrs
       eqs hd_nodes hv_nodes unk_hps unk_svl predef=
   begin
       Debug.ninfo_pprint (" hp: "^ (!CP.print_sv hrel)) no_pos;
-      let _ = DD.ninfo_pprint ("   def " ^(!CP.print_svl (def_ptrs@predef))) no_pos in
-      let def_ptrs1 = (List.fold_left SAU.close_def (def_ptrs@predef) eqs) in
+      let _ = DD.ninfo_pprint ("   def " ^(!CP.print_svl (def_ptrs@predef@unk_svl))) no_pos in
+      let def_ptrs1 = (List.fold_left SAU.close_def (def_ptrs@predef@unk_svl) eqs) in
       let _ = DD.ninfo_pprint ("   def1 " ^(!CP.print_svl def_ptrs1)) no_pos in
       (*find definition in both lhs and rhs*)
       let undef_args = SAU.lookup_undef_args args [] def_ptrs1 in
+      (* let _ = DD.ninfo_pprint ("   undef_args " ^(!CP.print_svl undef_args)) no_pos in *)
       (*if root + next ptr is inside args: ll_all_13a: G***)
       let undef_args1 =  elim_direct_root_pto undef_args args prog hd_nodes hv_nodes in
+      (* let _ = DD.ninfo_pprint ("   undef_args1 " ^(!CP.print_svl undef_args1)) no_pos in *)
       let test1= (List.length undef_args1) = 0 in
         (*case 1*)
         (*this hp is well defined, synthesize partial def*)
@@ -1413,6 +1423,9 @@ and collect_par_defs_two_side_one_hp prog lhs rhs (hrel, args) predef rhs_hrels 
 
 let collect_par_defs_recursive_hp_x prog lhs rhs (hrel, args) rec_args other_side_hrels def_ptrs hrel_vars eqs hd_nodes hv_nodes dir unk_hps unk_svl predef=
   let _ =  DD.ninfo_pprint ("    rec hrel:" ^ (!CP.print_sv hrel) ) no_pos in
+  (* let _ =  DD.info_pprint ("    args:" ^ (!CP.print_svl args) ) no_pos in *)
+  (* let _ =  DD.info_pprint ("    rec args:" ^ (!CP.print_svl rec_args) ) no_pos in *)
+  let def_ptrs = CP.remove_dups_svl (List.fold_left SAU.close_def (def_ptrs@predef@unk_svl) eqs) in
   let rec find_hrel_w_same_set_args_one_hpargs (hp, args1) r res=
     match r with
       | [] -> [],res
@@ -1484,6 +1497,7 @@ let collect_par_defs_recursive_hp_x prog lhs rhs (hrel, args) rec_args other_sid
          (* (hrel , rec_args, CP.intersect_svl rec_args unk_svl ,plhs, Some prhs, Some plhs) *)
        else []
   in
+  (* let _ = Debug.info_pprint ("def_ptrs: " ^ (!CP.print_svl def_ptrs)) no_pos in *)
   let rec_pdefs =
     let undef_args = SAU.lookup_undef_args args [] (def_ptrs) in
     if undef_args = [] then
@@ -1561,6 +1575,7 @@ let rec collect_par_defs_one_constr_new_x prog constr =
   let cs_predef_ptrs = constr.CF.predef_svl@constr.CF.unk_svl in
   (*find all defined pointer (null, nodes) and recursive defined parameters (HP, arg)*)
   let l_def_ptrs, l_hp_args_name,l_dnodes, l_vnodes,leqs = SAU.find_defined_pointers prog lhs cs_predef_ptrs in
+  (* let _ = DD.info_pprint ("   l_def_ptrs " ^(!CP.print_svl l_def_ptrs)) no_pos in *)
   (*should mkAnd lhs*rhs?*)
   let r_def_ptrs, r_hp_args_name, r_dnodes, r_vnodes, reqs = find_defined_pointers_two_formulas prog lhs rhs cs_predef_ptrs in
   (*remove dup hp needs to be processed*)

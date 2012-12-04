@@ -495,22 +495,24 @@ let rec find_defined_pointers_raw prog f=
   let eqs = (MCP.ptr_equations_without_null mix_f) in
   let eqNulls = CP.remove_dups_svl ( MCP.get_null_ptrs mix_f) in
   (*defined vars=  + null + data + view*)
-  let def_vs = (eqNulls) @ (List.map (fun hd -> hd.CF.h_formula_data_node) hds)
+  let def_vs = (* (eqNulls) @ *) (List.map (fun hd -> hd.CF.h_formula_data_node) hds)
    @ (List.map (fun hv -> hv.CF.h_formula_view_node) hvs) in
   (*find closed defined pointers set*)
   (* let def_vs0 = CP.remove_dups_svl def_vs in *)
   let def_vs_wo_args = CP.remove_dups_svl ((List.fold_left close_def def_vs eqs)) in
-  (def_vs_wo_args, hds, hvs, hrs, eqs)
+  (def_vs_wo_args, hds, hvs, hrs, eqs,eqNulls)
 
 and check_node_args_defined prog def_svl hd_nodes hv_nodes dn_name=
   let arg_svl = look_up_ptr_args_one_node prog hd_nodes hv_nodes dn_name in
   (* DD.info_pprint ("  arg_svl" ^ (!CP.print_svl arg_svl)) no_pos; *)
-  let diff_svl = Gen.BList.difference_eq CP.eq_spec_var arg_svl def_svl in
+  (* DD.info_pprint ("  def_svl" ^ (!CP.print_svl def_svl)) no_pos; *)
+  if arg_svl = [] then false else
+    let diff_svl = Gen.BList.difference_eq CP.eq_spec_var arg_svl def_svl in
   (* DD.info_pprint ("  diff_svl" ^ (!CP.print_svl diff_svl)) no_pos; *)
-  if diff_svl = [] then true
-  else false
+    if diff_svl = [] then true
+    else false
 
-and find_defined_pointers_after_preprocess prog def_vs_wo_args hds hvs hrs eqs predef_ptrs=
+and find_defined_pointers_after_preprocess prog def_vs_wo_args hds hvs hrs eqs eqNulls predef_ptrs=
   let tmp = def_vs_wo_args in
   let predef = find_close (def_vs_wo_args@predef_ptrs) eqs in
   (* DD.info_pprint ("   defined raw " ^(!CP.print_svl tmp)) no_pos; *)
@@ -519,11 +521,11 @@ and find_defined_pointers_after_preprocess prog def_vs_wo_args hds hvs hrs eqs p
   let hp_paras = List.map
                 (fun (id, exps, _) -> (id, List.concat (List.map CP.afv exps)))
                 hrs in
-  (def_vs, hp_paras, hds, hvs, eqs)
+  (def_vs@eqNulls, hp_paras, hds, hvs, eqs)
 
 and find_defined_pointers_x prog f predef_ptrs=
-  let (def_vs, hds, hvs, hrs, eqs) = find_defined_pointers_raw prog f in
-  find_defined_pointers_after_preprocess prog def_vs hds hvs hrs eqs predef_ptrs
+  let (def_vs, hds, hvs, hrs, eqs,eqNulls) = find_defined_pointers_raw prog f in
+  find_defined_pointers_after_preprocess prog def_vs hds hvs hrs eqs eqNulls predef_ptrs
 
 and find_defined_pointers prog f predef_ptrs=
   let pr1 = !CP.print_svl in
@@ -539,8 +541,8 @@ let get_raw_defined_w_pure_x prog predef lhs rhs=
   let helper f eqs=
     match f with
       | CF.Base fb ->
-          let def_raw,_,_,_,leqs = find_defined_pointers_raw prog f in
-          let def_raw1 = CP.remove_dups_svl def_raw in
+          let def_raw,_,_,_,leqs,eqNulls = find_defined_pointers_raw prog f in
+          let def_raw1 = CP.remove_dups_svl (def_raw@eqNulls) in
           (def_raw1,leqs)
       | _ -> report_error no_pos "sau.get_raw_defined_w_pure: not handle yet"
   in
@@ -1549,8 +1551,8 @@ let drop_hp_arguments_x prog hp args0 fs=
     loop_helper args1 0 []
   in
   let process_one_f f=
-    let def_vs_wo_args, hd_nodes, hv_nodes, hrs, eqs = find_defined_pointers_raw prog f in
-    let used_svl = loop_up_closed_ptr_args prog hd_nodes hv_nodes (def_vs_wo_args@args0) in
+    let def_vs_wo_args, hd_nodes, hv_nodes, hrs, eqs,eqNulls = find_defined_pointers_raw prog f in
+    let used_svl = loop_up_closed_ptr_args prog hd_nodes hv_nodes (def_vs_wo_args@eqNulls@args0) in
     let hpargs = (List.map (fun (hp1,eargs,_)-> hp1,(List.concat (List.map CP.afv eargs))) hrs) in
     let rec_hpargs, rem_hpargs = List.partition (fun (hp1, _) -> CP.eq_spec_var hp1 hp) hpargs in
     let rec_args = CP.remove_dups_svl (List.concat (List.map snd rec_hpargs)) in
