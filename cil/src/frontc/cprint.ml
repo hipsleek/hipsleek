@@ -480,7 +480,7 @@ and print_expression_level (lvl: int) (exp : expression) =
       space ();
       print ": ";
       print_expression_level 2 exp3;
-  | CAST ((sp, dt, _), iexp, _) ->
+  | CAST ((sp, dt), iexp, _) ->
       print "(";
       print_onlytype (sp, dt);
       print ")"; 

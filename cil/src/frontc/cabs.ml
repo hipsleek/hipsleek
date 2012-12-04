@@ -266,7 +266,7 @@ and expression =
   | QUESTION of expression * expression * expression * cabsloc
 
    (* A CAST can actually be a constructor expression *)
-  | CAST of (specifier * decl_type * cabsloc) * init_expression * cabsloc
+  | CAST of (specifier * decl_type) * init_expression * cabsloc
 
     (* There is a special form of CALL in which the function called is
        __builtin_va_arg and the second argument is sizeof(T). This 

@@ -204,7 +204,7 @@ let fth4 (_, _, _, result) = result
    transform:  __builtin_offsetof(type, member)
    into     :  (size_t) (&(type * ) 0)->member
  *)
-let transformOffsetOf (speclist, dtype, tloc) member loc =
+let transformOffsetOf (speclist, dtype) member loc =
   let rec addPointer = function
     | JUSTBASE -> PTR([], JUSTBASE)
     | PARENTYPE (attrs1, dtype, attrs2) -> PARENTYPE (attrs1, addPointer dtype, attrs2)
@@ -212,9 +212,9 @@ let transformOffsetOf (speclist, dtype, tloc) member loc =
     | PTR (attrs, dtype) -> PTR (attrs, addPointer dtype)
     | PROTO (dtype, names, variadic) -> PROTO (addPointer dtype, names, variadic)
   in
-  let nullType = (speclist, addPointer dtype, tloc) in
-  let nullExpr = CONSTANT (CONST_INT "0", tloc) in
-  let castExpr = CAST (nullType, SINGLE_INIT nullExpr, tloc) in
+  let nullType = (speclist, addPointer dtype) in
+  let nullExpr = CONSTANT (CONST_INT "0", cabslu) in
+  let castExpr = CAST (nullType, SINGLE_INIT nullExpr, cabslu) in
 
   let rec replaceBase = function
     | VARIABLE (field, l) -> MEMBEROFPTR (castExpr, field, l)
@@ -227,7 +227,7 @@ let transformOffsetOf (speclist, dtype, tloc) member loc =
   let memberExpr = replaceBase member in
   let addrExpr = UNARY (ADDROF, memberExpr, loc) in
   (* slight cheat: hard-coded assumption that size_t == unsigned int *)
-  let sizeofType = ([SpecType Tunsigned], JUSTBASE, loc) in
+  let sizeofType = ([SpecType Tunsigned], JUSTBASE) in
   let resultExpr = CAST (sizeofType, SINGLE_INIT addrExpr, loc) in
   resultExpr
 
@@ -499,7 +499,7 @@ postfix_expression:                     /*(* 6.5.2 *)*/
                                                 [TYPE_SIZEOF(b1,d1,loc1); TYPE_SIZEOF(b2,d2,loc2)], loc), loc }
 | BUILTIN_OFFSETOF LPAREN type_name COMMA offsetof_member_designator RPAREN
                                         { let loc = makeLoc (startPos $1) (endPos $6) in
-                                          transformOffsetOf $3 (fst $5) loc, loc }
+                                          transformOffsetOf (fst3 $3, snd3 $3) (fst $5) loc, loc }
 | postfix_expression DOT id_or_typename { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
                                           MEMBEROF (fst $1, fst $3, loc), loc}
 | postfix_expression ARROW id_or_typename
@@ -512,7 +512,7 @@ postfix_expression:                     /*(* 6.5.2 *)*/
 /* (* We handle GCC constructor expressions *) */
 | LPAREN type_name RPAREN LBRACE initializer_list_opt RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $6) in
-                                          CAST($2, COMPOUND_INIT (fst $5), loc), loc }
+                                          CAST((fst3 $2, snd3 $2), COMPOUND_INIT (fst $5), loc), loc }
 ;
 
 offsetof_member_designator:  /* GCC extension for __builtin_offsetof */
@@ -560,7 +560,7 @@ cast_expression:   /*(* 6.5.4 *)*/
 | unary_expression                      { $1 }
 | LPAREN type_name RPAREN cast_expression
                                         { let loc = makeLoc (startPos $1) (endPos (snd $4)) in
-                                          CAST($2, SINGLE_INIT (fst $4), loc), loc }
+                                          CAST((fst3 $2, snd3 $2), SINGLE_INIT (fst $4), loc), loc }
 ;
 
 multiplicative_expression:  /*(* 6.5.5 *)*/
@@ -756,10 +756,8 @@ wstring_list:
 
 one_string: 
   CST_STRING                            { $1 }
-| FUNCTION__                            { (Cabshelper.explodeStringToInts 
-                                            !currentFunctionName), $1 }
-| PRETTY_FUNCTION__                     { (Cabshelper.explodeStringToInts 
-                                            !currentFunctionName), $1 }
+| FUNCTION__                            { (Cabshelper.explodeStringToInts !currentFunctionName), $1 }
+| PRETTY_FUNCTION__                     { (Cabshelper.explodeStringToInts !currentFunctionName), $1 }
 ;
 
 init_expression:
@@ -790,9 +788,9 @@ initializer:
 ;
 
 eq_opt: 
-  EQ                                    { () }
+  EQ                                    { (), $1 }
   /*(* GCC allows missing = *)*/
-| /*(* empty *)*/                       { () }
+| /*(* empty *)*/                       { (), currentLoc () }
 ;
 
 init_designators: 
@@ -845,7 +843,8 @@ comma_expression_opt:
 paren_comma_expression:
   LPAREN comma_expression RPAREN        { let loc = makeLoc (startPos $1) (endPos $3) in
                                           (fst $2, loc) }
-| LPAREN error RPAREN                   { [], $1 }
+| LPAREN error RPAREN                   { let loc = makeLoc (startPos $1) (endPos $3) in
+                                          [], loc }
 ;
 
 bracket_comma_expression:
@@ -864,9 +863,11 @@ block: /* ISO 6.8.2 */
                                             battrs = fst $3;
                                             bstmts = fst $4;
                                             bloc = loc}, loc) }
-| position error position RBRACE
-                                        { let loc = makeLoc $1 (endPos $4) in
-                                          ({blabels = []; battrs  = []; bstmts  = []; bloc = loc}, loc) }
+| position error position RBRACE        { let loc = makeLoc $1 (endPos $4) in
+                                          ({blabels = [];
+                                            battrs  = [];
+                                            bstmts  = [];
+                                            bloc = loc}, loc) }
 ;
 
 block_begin:
@@ -883,13 +884,12 @@ block_attrs:
 block_element_list:
   /* empty */                           { [], currentLoc () }
 | declaration block_element_list        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
-                                          DEFINITION(fst $1) :: (fst $2), loc }
+                                          DEFINITION (fst $1) :: (fst $2), loc }
 | statement block_element_list          { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
                                           (fst $1) :: (fst $2), loc }
 /*(* GCC accepts a label at the end of a block *)*/
-| IDENT COLON                           { let l1 = snd $1 in
-                                          let loc = makeLoc (startPos l1) (endPos $2) in
-                                          [ LABEL (fst $1, NOP l1, loc)], loc }
+| IDENT COLON                           { let loc = makeLoc (startPos (snd $1)) (endPos $2) in
+                                          [ LABEL (fst $1, NOP cabslu, loc)], loc }
 | pragma block_element_list             { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
                                           fst $2, loc }
 ;
@@ -908,15 +908,15 @@ local_label_names:
 ;
 
 statement:
-  SEMICOLON                             { NOP ((*handleLoc*) $1), $1}
+  SEMICOLON                             { NOP $1, $1}
 | comma_expression SEMICOLON            { let es, l1 = $1 in
                                           let loc = makeLoc (startPos l1) (endPos $2) in
                                           (COMPUTATION (smooth_expression es l1, loc), loc) }
 | block                                 { (BLOCK (fst $1, snd $1), snd $1) }
 | IF paren_comma_expression statement                    %prec IF
                                         { let loc = makeLoc (startPos $1) (endPos (snd $3)) in
-                                          let es, l = $2 in
-                                          (IF (smooth_expression es l, fst $3, NOP loc, loc), loc) }
+                                          let es, l2 = $2 in
+                                          (IF (smooth_expression es l2, fst $3, NOP cabslu, loc), loc) }
 | IF paren_comma_expression statement ELSE statement
                                         { let loc = makeLoc (startPos $1) (endPos (snd $5)) in
                                           (IF (smooth_expression (fst $2) (snd $2), fst $3, fst $5, loc), loc) }
@@ -960,7 +960,7 @@ statement:
                                           (COMPGOTO (smooth_expression (fst $3) (snd $3), loc), loc) }
 | ASM asmattr LPAREN asmtemplate asmoutputs RPAREN SEMICOLON
                                         { let loc = makeLoc (startPos $1) (endPos $7) in
-                                          (ASM ((fst $2), fst $4, fst $5, loc), loc) }
+                                          (ASM (fst $2, fst $4, fst $5, loc), loc) }
 | MSASM                                 { (ASM ([], [fst $1], None, (snd $1)), snd $1) }
 | TRY block EXCEPT paren_comma_expression block
                                         { let loc = makeLoc (startPos $1) (endPos (snd $5)) in
@@ -975,7 +975,7 @@ statement:
                                           if not !Cprint.msvcMode then 
                                             parse_error "try/finally in GCC code";
                                           (TRY_FINALLY (b, h, loc), loc) }
-| position error position   SEMICOLON   { let loc = makeLoc $1 $3 in
+| position error position SEMICOLON     { let loc = makeLoc $1 (endPos $4) in
                                           (NOP loc, loc) }
 | HIPSPECS                              { let s, loc = $1 in
                                           let begin_offset = {Parser.line_num = loc.start_pos.lineno;
@@ -1083,32 +1083,32 @@ type_spec:   /* ISO 6.7.2 */
                                         { let loc = makeLoc (startPos $1) (endPos $5) in
                                           Tstruct ("", Some (fst $4), fst $2), loc }
 | UNION id_or_typename                  { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
-                                          Tunion  (fst $2, None, []), loc }
+                                          Tunion (fst $2, None, []), loc }
 | UNION id_or_typename LBRACE struct_decl_list RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $5) in
                                           Tunion  (fst $2, Some (fst $4), []), loc }
 | UNION LBRACE struct_decl_list RBRACE  { let loc = makeLoc (startPos $1) (endPos $4) in
-                                          Tunion  ("", Some (fst $3), []), loc }
+                                          Tunion ("", Some (fst $3), []), loc }
 | UNION  just_attributes id_or_typename LBRACE struct_decl_list RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $6) in
-                                          Tunion  (fst $3, Some (fst $5), fst $2), loc }
+                                          Tunion (fst $3, Some (fst $5), fst $2), loc }
 | UNION  just_attributes LBRACE struct_decl_list RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $5) in
-                                          Tunion  ("", Some (fst $4), fst $2), loc }
+                                          Tunion ("", Some (fst $4), fst $2), loc }
 | ENUM id_or_typename                   { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
-                                          Tenum   (fst $2, None, []), loc }
+                                          Tenum (fst $2, None, []), loc }
 | ENUM id_or_typename LBRACE enum_list maybecomma RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $6) in
-                                          Tenum   (fst $2, Some (fst $4), []), loc }
+                                          Tenum (fst $2, Some (fst $4), []), loc }
 | ENUM LBRACE enum_list maybecomma RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $5) in
-                                          Tenum   ("", Some (fst $3), []), loc }
+                                          Tenum ("", Some (fst $3), []), loc }
 | ENUM just_attributes id_or_typename LBRACE enum_list maybecomma RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $7) in
-                                          Tenum   (fst $3, Some (fst $5), fst $2), loc }
+                                          Tenum (fst $3, Some (fst $5), fst $2), loc }
 | ENUM just_attributes LBRACE enum_list maybecomma RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $6) in
-                                          Tenum   ("", Some (fst $4), fst $2), loc }
+                                          Tenum ("", Some (fst $4), fst $2), loc }
 | NAMED_TYPE                            { Tnamed (fst $1), snd $1 }
 | TYPEOF LPAREN expression RPAREN       { let loc = makeLoc (startPos $1) (endPos $4) in
                                           TtypeofE (fst $3), loc }
@@ -1230,7 +1230,7 @@ parameter_decl: /* (* ISO 6.7.5 *) */
 old_proto_decl:
   pointer_opt direct_old_proto_decl     { let (n, decl, a, l2) = $2 in
                                           let loc = makeLoc (startPos (snd $1)) (endPos l2) in
-                                          (n, applyPointer (fst $1) decl, a, l2), loc }
+                                          (n, applyPointer (fst $1) decl, a, loc), loc }
 ;
 
 direct_old_proto_decl:
@@ -1271,7 +1271,7 @@ old_pardef_list:
 ;
 
 old_pardef: 
-  declarator                            { [fst $1], currentLoc () }
+  declarator                            { [fst $1], snd $1 }
 | declarator COMMA old_pardef           { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
                                           (fst $1) :: (fst $3), loc }
 | error                                 { [], currentLoc () }
@@ -1349,33 +1349,31 @@ function_def_start:  /* (* ISO 6.9.1 *) */
                                           (fst $1, fst $2, loc) }
 /* (* New-style function that does not have a return type *) */
 | IDENT parameter_list_startscope rest_par_list RPAREN 
-                                        { let (params, isva) = $3 in
-                                          let fdec = (fst $1, PROTO(JUSTBASE, params, isva), [], snd $1) in
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos $4) in
+                                          let (params, isva) = $3 in
+                                          let fdec = (fst $1, PROTO(JUSTBASE, params, isva), [], loc) in
                                           announceFunctionName fdec;
                                           (* Default is int type *)
                                           let defSpec = [SpecType Tint] in
-                                          let loc = makeLoc (startPos (snd $1)) (endPos $4) in
                                           (defSpec, fdec, loc) }
 /* (* No return type and old-style parameter list *) */
 | IDENT LPAREN old_parameter_list_ne RPAREN old_pardef_list
-                                        { (* Convert pardecl to new style *)
+                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $5)) in
+                                          (* Convert pardecl to new style *)
                                           let pardecl, isva = doOldParDecl (fst $3) (fst $5) in
                                           (* Make the function declarator *)
-                                          let fdec = (fst $1,
-                                                      PROTO(JUSTBASE, pardecl,isva), 
-                                                      [], snd $1) in
+                                          let fdec = (fst $1, PROTO(JUSTBASE, pardecl,isva), [], loc) in
                                           announceFunctionName fdec;
                                           (* Default is int type *)
                                           let defSpec = [SpecType Tint] in
-                                          let loc = makeLoc (startPos (snd $1)) (endPos (snd $5)) in
                                           (defSpec, fdec, loc) }
 /* (* No return type and no parameters *) */
-| IDENT LPAREN RPAREN                   { (* Make the function declarator *)
-                                          let fdec = (fst $1, PROTO(JUSTBASE, [], false), [], snd $1) in
+| IDENT LPAREN RPAREN                   { let loc = makeLoc (startPos (snd $1)) (endPos $3) in
+                                          (* Make the function declarator *)
+                                          let fdec = (fst $1, PROTO(JUSTBASE, [], false), [], loc) in
                                           announceFunctionName fdec;
                                           (* Default is int type *)
                                           let defSpec = [SpecType Tint] in
-                                          let loc = makeLoc (startPos (snd $1)) (endPos $3) in
                                           (defSpec, fdec, loc) }
 ;
 
@@ -1471,7 +1469,7 @@ primary_attr:
 | LPAREN attr RPAREN                    { let loc = makeLoc (startPos $1) (endPos $3) in
                                           fst $2, loc } 
 | IDENT IDENT                           { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
-                                          CALL(VARIABLE (fst $1, snd $1), [VARIABLE (fst $2, snd $1)], loc), loc }
+                                          CALL(VARIABLE (fst $1, snd $1), [VARIABLE (fst $2, snd $2)], loc), loc }
 | CST_INT                               { CONSTANT(CONST_INT (fst $1), snd $1), snd $1 }
 | string_constant                       { CONSTANT(CONST_STRING (fst $1), snd $1), snd $1 }
                                            /*(* Const when it appears in 
@@ -1738,7 +1736,7 @@ hipspecs_opt:
                                                               Parser.line_start = loc.start_pos.linestart;
                                                               Parser.byte_num = loc.start_pos.byteno} in
                                           let hspecs = Parser.parse_specs_string loc.start_pos.filename s begin_offset in
-                                          hspecs, loc } 
+                                          hspecs, loc }
 
 %%
 

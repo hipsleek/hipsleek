@@ -157,16 +157,11 @@ let init_lexicon _ =
       ("__inline__", fun loc -> INLINE loc);
       ("inline", fun loc -> INLINE loc); 
       ("__inline", fun loc -> INLINE loc);
-      ("_inline", fun loc ->
-                      if !Cprint.msvcMode then 
-                        INLINE loc
-                      else 
-                        IDENT ("_inline", loc));
+      ("_inline", fun loc -> if !Cprint.msvcMode then INLINE loc
+                             else IDENT ("_inline", loc));
       ("__attribute__", fun loc -> ATTRIBUTE loc);
       ("__attribute", fun loc -> ATTRIBUTE loc);
-(*
-      ("__attribute_used__", fun loc -> ATTRIBUTE_USED loc);
-*)
+      (* ("__attribute_used__", fun loc -> ATTRIBUTE_USED loc); *)
       ("__blockattribute__", fun loc -> BLOCKATTRIBUTE loc);
       ("__blockattribute", fun loc -> BLOCKATTRIBUTE loc);
       ("__asm__", fun loc -> ASM loc);
@@ -178,7 +173,6 @@ let init_lexicon _ =
       ("__alignof__", fun loc -> ALIGNOF loc);
       ("__volatile__", fun loc -> VOLATILE loc);
       ("__volatile", fun loc -> VOLATILE loc);
-
       ("__FUNCTION__", fun loc -> FUNCTION__ loc);
       ("__func__", fun loc -> FUNCTION__ loc); (* ISO 6.4.2.2 *)
       ("__PRETTY_FUNCTION__", fun loc -> PRETTY_FUNCTION__ loc);
@@ -187,7 +181,7 @@ let init_lexicon _ =
       ("__restrict", fun loc -> RESTRICT loc);
       ("__restrict__", fun loc -> RESTRICT loc);
       ("restrict", fun loc -> RESTRICT loc);
-(*      ("__extension__", EXTENSION); *)
+      (* ("__extension__", EXTENSION); *)
       (**** MS VC ***)
       ("__int64", fun loc -> INT64 loc);
       ("__int32", fun loc -> INT loc);
@@ -199,8 +193,7 @@ let init_lexicon _ =
       ("__fastcall", fun loc -> MSATTR ("__fastcall", loc));
       ("__w64", fun loc -> MSATTR("__w64", loc));
       ("__declspec", fun loc -> DECLSPEC loc);
-      ("__forceinline", fun loc -> INLINE loc); (* !! we turn forceinline 
-                                                 * into inline *)
+      ("__forceinline", fun loc -> INLINE loc); (* !! we turn forceinline into inline *)
       ("__try", fun loc -> TRY loc);
       ("__except", fun loc -> EXCEPT loc);
       ("__finally", fun loc -> FINALLY loc);
@@ -211,11 +204,8 @@ let init_lexicon _ =
       ("__builtin_types_compatible_p", fun loc -> BUILTIN_TYPES_COMPAT loc);
       ("__builtin_offsetof", fun loc -> BUILTIN_OFFSETOF loc);
       (* On some versions of GCC __thread is a regular identifier *)
-      ("__thread", fun loc -> 
-                      if !Machdep.theMachine.Machdep.__thread_is_keyword then 
-                         THREAD loc
-                       else 
-                         IDENT ("__thread", loc));
+      ("__thread", fun loc -> if !Machdep.theMachine.Machdep.__thread_is_keyword then THREAD loc
+                              else IDENT ("__thread", loc));
     ]
 
 (* Mark an identifier as a type name. The old mapping is preserved and will 
@@ -417,10 +407,10 @@ let hexnum = hexprefix hexdigit+ intsuffix?
 let exponent = ['e' 'E']['+' '-']? decdigit+
 let fraction  = '.' decdigit+
 let decfloat = (intnum? fraction)
-	      |(intnum exponent)
-	      |(intnum? fraction exponent)
-	      | (intnum '.') 
-              | (intnum '.' exponent) 
+             | (intnum exponent)
+             | (intnum? fraction exponent)
+             | (intnum '.') 
+             | (intnum '.' exponent) 
 
 let hexfraction = hexdigit* '.' hexdigit+ | hexdigit+ '.'
 let binexponent = ['p' 'P'] ['+' '-']? decdigit+
@@ -443,10 +433,10 @@ let no_parse_pragma =
              | "ident" | "section" | "option" | "asm" | "use_section" | "weak"
              | "redefine_extname"
              | "TCS_align"
-	     | "mark"
+             | "mark"
 
 
-rule initial = parse 	
+rule initial = parse
 | "/*@"       { let startPos = currentPos () in
                 let il = comment lexbuf in
                 let endPos = currentPos () in
