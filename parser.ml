@@ -23,7 +23,6 @@ open Perm
 	| Data of data_decl
 	| Enum of enum_decl
 	| View of view_decl
-	| Prim_View of view_decl
 	| Hopred of hopred_decl
 	| Barrier of barrier_decl
 	
@@ -1527,7 +1526,6 @@ hprogn:
           | Data ddef -> data_defs := ddef :: !data_defs
           | Enum edef -> enum_defs := edef :: !enum_defs
           | View vdef -> view_defs := vdef :: !view_defs
-					| Prim_View vdef -> view_defs := vdef :: !view_defs
           | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
 		  | Barrier bdef -> barrier_defs := bdef :: !barrier_defs
           end
@@ -1594,7 +1592,7 @@ type_decl:
    | c=class_decl -> Data c
    | e=enum_decl  -> Enum e
    | v=view_decl; `SEMICOLON -> View v
-	 | `PRED_PRIM; v = prim_view_decl; `SEMICOLON    -> Prim_View v
+	 | `PRED_PRIM; v = prim_view_decl; `SEMICOLON    -> View v
    | b=barrier_decl ; `SEMICOLON   -> Barrier b
    | h=hopred_decl-> Hopred h ]];
 
