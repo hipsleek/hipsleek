@@ -5,7 +5,10 @@ data cell {
 stk<high:int> == self::cell<high> & high>=0 
   inv high>=0;
 
-pred_prim stk<high:int>
+pred_prim stk2<high:int>
+  inv high>=0;
+
+pred_prim stk3<high:int>
   inv high>=0;
 
 int foo(int n) 

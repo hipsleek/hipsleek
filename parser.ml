@@ -23,8 +23,10 @@ open Perm
 	| Data of data_decl
 	| Enum of enum_decl
 	| View of view_decl
+	| Prim_View of view_decl
 	| Hopred of hopred_decl
 	| Barrier of barrier_decl
+	
 		
   type decl = 
     | Type of type_decl
@@ -36,6 +38,7 @@ open Perm
     | Logical_var of exp_var_decl (* Globally logical vars *)
     | Proc of proc_decl
     | Coercion of coercion_decl
+		
 				
   type member = 
 	| Field of (typed_ident * loc)
@@ -1524,6 +1527,7 @@ hprogn:
           | Data ddef -> data_defs := ddef :: !data_defs
           | Enum edef -> enum_defs := edef :: !enum_defs
           | View vdef -> view_defs := vdef :: !view_defs
+					| Prim_View vdef -> view_defs := vdef :: !view_defs
           | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
 		  | Barrier bdef -> barrier_defs := bdef :: !barrier_defs
           end
@@ -1582,7 +1586,7 @@ decl:
   |  g=global_var_decl            -> Global_var g
   |  l=logical_var_decl -> Logical_var l
   |  p=proc_decl                  -> Proc p
-  | `LEMMA; c= coercion_decl; `SEMICOLON    -> Coercion c ]];
+  | `LEMMA; c= coercion_decl; `SEMICOLON    -> Coercion c]];
 
 type_decl: 
   [[ t= data_decl  -> Data t
@@ -1590,6 +1594,7 @@ type_decl:
    | c=class_decl -> Data c
    | e=enum_decl  -> Enum e
    | v=view_decl; `SEMICOLON -> View v
+	 | `PRED_PRIM; v = prim_view_decl; `SEMICOLON    -> Prim_View v
    | b=barrier_decl ; `SEMICOLON   -> Barrier b
    | h=hopred_decl-> Hopred h ]];
 

@@ -1,28 +1,13 @@
-data resource{
-  int low;  // min amound used
-  int high; // max amount used
-}.
-
-pred R<low:int, high:int> ==
- self::resource<low,high> & low<=high & high>=0
+pred_prim R<low:int, high:int>
  inv low<=high & high>=0 .
 
-pred_prim R1<low:int, high:int> ==
- self::resource<low,high> & low<=high & high>=0
- inv low<=high & high>=0 .
+pred_prim R2<low:int>
+ inv low>=0 .
 
-/*
 lemma "R split" self::R<a,b> & b>=q & a-p<=b-q & q>=0 <-> self::R<p,q> * self::R<a-p,b-q> .
-*/
 
-checkentail x::R<2,10> |- x::R<3,5>.
-print residue.
+//1
+checkentail x::R<_,_> * y::R2<_> & x!=y |- false .
 
-
-checkentail x::R<2,10> * x::R<3,5> |- x::R<a,b>.
-print residue.
-
-
-checkentail x::R<2,10> |- x::R<a,b>.
-print residue.
-
+//2 this should be Valid
+checkentail x::R<_,_> * y::R2<_> & x=y |- false .
