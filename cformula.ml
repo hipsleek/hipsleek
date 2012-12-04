@@ -4840,12 +4840,14 @@ let remove_dupl_conj_eq_pure (p:CP.formula) =
   let ps2 = CP.join_conjunctions ps1 in 
   ps2
 
+(*TODO: considered --eps *)
 (*remove v=v from formula*)
 let remove_dupl_conj_eq_mix_formula_x (f:MCP.mix_formula):MCP.mix_formula =
   let nf= MCP.pure_of_mix f in
   let nf = remove_dupl_conj_eq_pure nf in
   MCP.mix_of_pure nf
 
+(*TODO: considered --eps *)
 (*remove v=v from formula*)
 let remove_dupl_conj_eq_mix_formula (f:MCP.mix_formula):MCP.mix_formula = 
   Debug.no_1 "remove_dupl_conj_eq_mix_formula" !print_mix_formula !print_mix_formula 

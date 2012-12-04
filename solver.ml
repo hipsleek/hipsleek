@@ -4945,9 +4945,14 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                           For example: x::node(0.6)<> * y::node(0.6)<>
                           then we have a constraint x!=y
                         *)
-                        let nodes_f = xpure_perm prog h1 p1 in
-                        let p1 = MCP.merge_mems p1 nodes_f true in
-                        let p1 = MCP.remove_dupl_conj_mix_formula p1 in
+                        let p1 =
+                          if (Perm.allow_perm ()) then
+                            let nodes_f = xpure_perm prog h1 p1 in
+                            let p1 = MCP.merge_mems p1 nodes_f true in
+                            let p1 = MCP.remove_dupl_conj_mix_formula p1 in
+                            p1
+                          else p1
+                        in
                         (*******************)
 			            if (isAnyConstFalse ante)&&(CF.subsume_flow_ff fl2 fl1) then 
 			              (SuccCtx [false_ctx_with_flow_and_orig_ante estate fl1 ante pos], UnsatAnte)
@@ -5039,7 +5044,8 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
 				                  (* Remark: for universal lemmas we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
 				                  (*+++++++++++++++++++++++++++++++++*)
                                   (*LDK: remove duplicated conj from the p2*)
-                                  let p2 = remove_dupl_conj_eq_mix_formula p2 in
+                                  (*TODO: this does not work with --eps *)
+                                  (* let p2 = remove_dupl_conj_eq_mix_formula p2 in *)
 				                  let ctx, proof = heap_entail_empty_rhs_heap prog is_folding  estate b1 p2 pos in
                                   (* let p2 = MCP.drop_varperm_mix_formula p2 in *)
                                   (* explicit instantiation this will move some constraint to the LHS*)
