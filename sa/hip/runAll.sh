@@ -10,16 +10,16 @@ echo "ll-append7.ss"
 ../../hip ll-append7.ss --sa-dangling -cp-test cp/ll-append7.cp | grep Compare
 echo "ll-append8.ss"
 ../../hip ll-append8.ss --sa-dangling --sa-inlining -cp-test cp/ll-append8.cp | grep Compare
-echo "ll-append9.ss"
+echo "ll-append9.ss --XPURE"
 ../../hip ll-append9.ss --sa-dangling --sa-inlining -cp-test cp/ll-append9.cp | grep Compare
-echo "ll-append10.ss"
+echo "ll-append10.ss --XPURE"
 ../../hip ll-append10.ss --sa-dangling --sa-inlining -cp-test cp/ll-append10.cp | grep Compare
 echo "dangling/ll-app3.ss"
 ../../hip dangling/ll-app3.ss --sa-dangling --sa-inlining -cp-test cp/ll-app3.cp | grep Compare
-echo "dangling/ll-app4.ss"
+echo "dangling/ll-app4.ss --XPURE"
 ../../hip dangling/ll-app4.ss --sa-dangling --sa-inlining -cp-test cp/ll-app4.cp | grep Compare
-echo "dangling/ll-app5.ss"
-../../hip dangling/ll-app5.ss --sa-dangling --sa-inlining -cp-test cp/ll-app5.cp | grep Compare
+echo "dangling/ll-app5b.ss"
+../../hip dangling/ll-app5b.ss --sa-useless --sa-dangling --sa-inlining -cp-test cp/ll-app5b.cp | grep Compare
 echo "dangling/ll-app6.ss"
 ../../hip dangling/ll-app6.ss --sa-dangling --sa-inlining -cp-test cp/ll-app6.cp | grep Compare
 echo "dangling/ll-swap.ss"

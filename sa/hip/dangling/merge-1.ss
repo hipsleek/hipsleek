@@ -32,3 +32,15 @@ node insert(node x, int v)
     }
 	}
 }
+
+/*
+ H(x) ::= x::node<_,n> * HP(n)
+   HP(x) ::= x=null
+    or HP2(x)
+    or x::node<_,nn>*HP(x)
+
+   G(x) ::= x::node<_,n> * n::node<_,q> * HP3(q)
+   HP3(x) ::= x=null
+    or HP2(x)
+    or x::node<_,nn>*HP3(x)
+ */

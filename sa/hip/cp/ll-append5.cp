@@ -14,19 +14,18 @@ ass [H2,G2][]:{
 	}
 
 hpdefs [G2,H2][H1a_y]:{
- G2(x,y) --> x::node<_,p> * HP_2(p,y) & y = H1a_y;
- H2(x,y) --> x::node<_,p>* HP_2c(p,y) & y = H1a_y;
+ G2(x,y) --> x::node<_,p> * HP_2(p,y);
+ H2(x,y) --> x::node<_,p>* HP_2c(p,y);
  HP_2c(x,y) --> x=null or x::node<_,p1> * HP_2c(p1,y);
  HP_2(x,p) --> x=p or x::node<_,p1> * HP_2(p1,p)
  }
 ]
 
 /*
-hpdefs [G2,H2]:{
- H1a(x) --> htrue&true;
- G2(x,y) --> x::node<_,p> * HP_2(p,y) * H1a(y);
- H2(x,y) --> x::node<_,p>* HP_2a(p,y) * H1a(y);
- HP_2a(x,y) --> x=null or x::node<_,p1> * HP_2a(p1,y);
+hpdefs [G2,H2][H1a_y]:{
+ G2(x,y) --> x::node<_,p> * HP_2(p,y) & y = H1a_y;
+ H2(x,y) --> x::node<_,p>* HP_2c(p,y) & y = H1a_y;
+ HP_2c(x,y) --> x=null or x::node<_,p1> * HP_2c(p1,y);
  HP_2(x,p) --> x=p or x::node<_,p1> * HP_2(p1,p)
  }
 */

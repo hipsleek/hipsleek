@@ -94,7 +94,7 @@ let find_close svl0 eqs0=
 let rec combine_length_neq ls1 ls2 res=
   match ls1,ls2 with
     | [],[] -> res
-    | sv1::_,[] -> res
+    | [],sv2::_ -> res
     | sv1::tl1,sv2::tl2 -> combine_length_neq tl1 tl2 (res@[sv1,sv2])
     | _ -> report_error no_pos "sau.combine_first"
 
@@ -1035,15 +1035,17 @@ let rec checkeq_formula_list_x fs1 fs2=
             (true,fs1@fss)
           else look_up_f f fss (fs1@[f1])
   in
-  match fs1 with
-    | [] -> true
-    | f1::fss1 ->
-        begin
-            let r,fss2 = look_up_f f1 fs2 [] in
-            if r then
-              checkeq_formula_list fss1 fss2
-            else false
-        end
+  if List.length fs1 = List.length fs2 then
+    match fs1 with
+      | [] -> true
+      | f1::fss1 ->
+          begin
+              let r,fss2 = look_up_f f1 fs2 [] in
+              if r then
+                checkeq_formula_list fss1 fss2
+              else false
+          end
+  else false
 
 and checkeq_formula_list fs1 fs2=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
@@ -2393,7 +2395,7 @@ let succ_subst_with_mutrec prog deps unk_hps=
   Debug.no_1 " succ_subst_with_mutrec" pr1 (pr_quad pr1 pr1 pr1 !CP.print_svl)
       (fun _ -> succ_subst_with_mutrec_x prog deps unk_hps) deps
 
-let succ_susbt_with_rec_indp_x prog rec_indp_grps unk_hps depend_grps=
+let succ_subst_with_rec_indp_x prog rec_indp_grps unk_hps depend_grps=
   let get_hp_name_from_grp grp=
     match grp with
       | [] -> report_error no_pos "sau.succ_susbt_with_rec_indp: should not empty"
@@ -2460,12 +2462,12 @@ let succ_susbt_with_rec_indp_x prog rec_indp_grps unk_hps depend_grps=
       then
         [(hp,args,f,unk_svl)]
       else
-        let _, fss = succ_susbt prog rec_indp_grps1 unk_hps false (hp,args,f,unk_svl) in
-        (* let hprel = mkHRel hp args no_pos in *)
-        (* let ss = List.map (fun hprel1 -> ((CF.HRel hprel1), hprel)) succ_hprels in *)
-        (* let fss1 = List.map (fun (_,_,f) -> (CF.subst_hrel_f f ss)) fss in *)
-        let fss1 = refine_grp_helper hp args (List.map (fun (_,_,f,_) -> f) fss) in
-        let fss3 = List.map (fun f1 -> (hp,args,f1,unk_svl)) fss1 in
+        let _, fss = succ_susbt prog rec_indp_grps unk_hps false (hp,args,f,unk_svl) in
+        let hprel = mkHRel hp args no_pos in
+        let ss = List.map (fun hprel1 -> ((CF.HRel hprel1), hprel)) succ_hprels in
+        let fss1 = List.map (fun (_,_,f,_) -> (CF.subst_hrel_f f ss)) fss in
+        let fss2 = refine_grp_helper hp args (fss1) in
+        let fss3 = List.map (fun f1 -> (hp,args,f1,unk_svl)) fss2 in
         fss3
     in
     new_pardefs
@@ -2482,10 +2484,10 @@ let succ_susbt_with_rec_indp_x prog rec_indp_grps unk_hps depend_grps=
   let rec_indp_hps = List.map get_hp_name_from_grp rec_indp_grps in
   List.map (succ_subst_one_grp rec_indp_hps) depend_grps
 
-let succ_susbt_with_rec_indp prog rec_indp_grps unk_hps depend_grps=
+let succ_subst_with_rec_indp prog rec_indp_grps unk_hps depend_grps=
   let pr1 = pr_list_ln (pr_list_ln string_of_par_def_w_name_short) in
-  Debug.no_3 "succ_susbt_with_rec_indp" pr1 !CP.print_svl pr1 pr1
-      (fun _ _ _ -> succ_susbt_with_rec_indp_x prog rec_indp_grps unk_hps depend_grps)
+  Debug.no_3 "succ_subst_with_rec_indp" pr1 !CP.print_svl pr1 pr1
+      (fun _ _ _ -> succ_subst_with_rec_indp_x prog rec_indp_grps unk_hps depend_grps)
       rec_indp_grps unk_hps depend_grps
 
 (************************************************************)

@@ -1396,7 +1396,12 @@ and collect_par_defs_two_side_one_hp_x prog lhs rhs (hrel, args)
           CF.mkAnd_f_hf pdef_rhs lhf pos
       in
       let pdefs = if SAU.is_trivial bf (hrel, args) then [] else
-        [(hrel, args, unk_svl, pdef_cond ,None, Some bf)]
+            if not (SAU.is_empty_f pdef_cond || CF.is_only_neqNull args keep_unk_hps pdef_cond) && CF.is_HRel_f bf then
+              let r_hp,r_args = CF.extract_HRel_f bf in
+              let pdef = CF.drop_data_view_hrel_nodes lhs0 SAU.check_nbelongsto_dnode SAU.check_nbelongsto_vnode SAU.check_neq_hrelnode keep_ptrs keep_ptrs (keep_unk_hps@[hrel]) in
+              [(r_hp, r_args, unk_svl,  pdef_cond , Some pdef, None)]
+            else
+              [(hrel, args, unk_svl, pdef_cond , None, Some bf)]
       in
       (pdefs,lhs)
   in
@@ -2679,9 +2684,9 @@ let pardef_subst_fix_x prog unk_hps groups=
     if r then helper_fix new_cur new_rec_indps new_nrec_indps
     else
       (*subs new_cur with new_rec_indps (new_nrec_indps is substed already)*)
-      (* let new_rec_indps1 = List.map SAU.remove_dups_pardefs new_rec_indps in *)
-      let new_cur1 = SAU.succ_susbt_with_rec_indp prog new_rec_indps unk_hps new_cur in
-      (new_cur1@new_rec_indps@new_nrec_indps)
+      let new_cur1 = List.map SAU.remove_dups_pardefs new_cur in
+      let new_cur2 = SAU.succ_subst_with_rec_indp prog new_rec_indps unk_hps new_cur1 in
+      (new_cur2@new_rec_indps@new_nrec_indps)
   in
   helper_fix groups [] []
 
@@ -3523,14 +3528,16 @@ let generate_hp_def_from_unk_hps unk_hps hp_defs post_hps unk_rels=
   Debug.no_3 "generate_hp_def_from_unk_hps" pr2 pr1 pr4 pr3
       (fun _ _ _ -> generate_hp_def_from_unk_hps_new_x unk_hps hp_defs post_hps unk_rels) unk_hps hp_defs unk_rels
 
-let check_eq_hpdef_x unk_hps post_hps hp_defs =
+let check_eq_hpdef_x unk_hpargs post_hps hp_defs =
+  let unk_hps = List.map fst unk_hpargs in
   let rec lookup_equiv_hpdef hpdefs hp args f=
     match hpdefs with
       | [] -> f
       | (a1,hrel1,f1)::tl ->
           let hp1,eargs1,p1 = CF.extract_HRel_orig hrel1 in
           let args1 = List.concat (List.map CP.afv eargs1) in
-          if CP.eq_spec_var hp hp1 || (List.length args <> List.length args1) then
+          if CP.eq_spec_var hp hp1 || CP.mem_svl hp1 unk_hps ||
+            (List.length args <> List.length args1) then
             lookup_equiv_hpdef tl hp args f
           else
             let ss = List.combine args1 args in
@@ -3543,16 +3550,18 @@ let check_eq_hpdef_x unk_hps post_hps hp_defs =
   in
   let process_one_hpdef all_hpdefs (a,hrel,f)=
     let hp,args = CF.extract_HRel hrel in
-    if not (CP.mem_svl hp post_hps) then (a,hrel,f) else
+    if not (CP.mem_svl hp post_hps) || CP.mem_svl hp unk_hps then
+      (a,hrel,f)
+    else
       let new_f = lookup_equiv_hpdef all_hpdefs hp args f in
       (a,hrel,new_f)
   in
   List.map (process_one_hpdef hp_defs) hp_defs
 
-let check_eq_hpdef unk_hps post_hps hp_defs =
+let check_eq_hpdef unk_hpargs post_hps hp_defs =
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   Debug.no_2 "check_eq_hpdef" !CP.print_svl pr1 pr1
-      (fun _ _ -> check_eq_hpdef_x unk_hps post_hps hp_defs) post_hps hp_defs
+      (fun _ _ -> check_eq_hpdef_x unk_hpargs post_hps hp_defs) post_hps hp_defs
 
 (*========= matching=========*)
 let match_one_hp_one_view_x hp hp_name args def_fs (vdcl: CA.view_decl): bool=
