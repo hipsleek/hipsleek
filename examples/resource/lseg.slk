@@ -4,10 +4,17 @@ data node {
 
 pred lseg<p,n> ==
     self=p & n=0
- or self::node<_,q>*q::lseg<p,n-1>
+ or self::node<q>*q::lseg<p,n-1>
 inv n>=0.
 
-lemma "R split" self::R<b> & q>=0 & b>q -> self::R<q> * self::R<b-q> .
+
+//checkentail x::lseg<p,n> * x::lseg<r,m> |- false.
+
+checkentail x::node<_> * y::lseg<a,b> * x::lseg<r,m> & x=y |- false.
+
+//checkentail x::lseg<p,n> * x::node<_> |- false.
+
+//checkentail x::node<_> * x::node<_> |- false.
 
 //checkentail x::R<10> |- x::R<10>.
 //checkentail x::R<10> |- x::R<p> & p=5.

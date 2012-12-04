@@ -18,6 +18,8 @@ module MCP = Mcpure
 
 type ann = ConstAnn of heap_ann | PolyAnn of CP.spec_var
 
+let view_prim_lst = new Gen.stack_pr pr_id (=) 
+
 type typed_ident = (typ * ident)
 
 and formula_type =
@@ -207,6 +209,7 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_name : ident;
                         h_formula_view_derv : bool;
                         h_formula_view_imm : ann;
+                        (* h_formula_view_primitive : bool; (\* indicates if it is primitive view? *\) *)
                         h_formula_view_perm : cperm; (*LDK: permission*)
                         h_formula_view_arguments : CP.spec_var list;
                         h_formula_view_modes : mode list;
@@ -1300,6 +1303,14 @@ and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t :
 
 and is_view (h : h_formula) = match h with
   | ViewNode _ -> true
+  | _ -> false
+
+and is_view_primitive (h : h_formula) = match h with
+  | ViewNode v -> view_prim_lst # mem (v.h_formula_view_name)
+  | _ -> false
+
+and is_view_user (h : h_formula) = match h with
+  | ViewNode v -> not(view_prim_lst # mem (v.h_formula_view_name))
   | _ -> false
 
 and is_data (h : h_formula) = match h with

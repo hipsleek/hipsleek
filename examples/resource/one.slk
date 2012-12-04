@@ -1,21 +1,27 @@
 
-pred_prim lseg<high:int> 
+pred_prim R<high:int> 
  inv high>=0.
 
-//lemma "R split" self::lseg<b> & q>=0 & b>q -> self::R<q> * self::R<b-q> .
+//lemma "R split" self::R<b> & q>=0 & b>q -> self::R<q> * self::R<b-q> .
 // b-q is not universal..
 
-lemma "R split" self::lseg<b> & q,r>=0 & b=q+r -> self::lseg<q> * self::lseg<r> .
+lemma "R split" self::R<b> & q,r>=0 & b=q+r -> self::R<q> * self::R<r> .
 
-checkentail x::lseg<3> |- x::lseg<1>.
+checkentail x::R<3> |- x::R<1>.
 print residue.
 
-checkentail x::lseg<3> |- x::lseg<3>.
+checkentail x::R<3> |- x::R<3>.
 print residue.
 
-checkentail x::lseg<3> |- x::lseg<4>.
+checkentail x::R<3> |- x::R<4>.
 print residue.
 
+checkentail x::R<3> |- x::R<n> & n<3.
+checkentail x::R<3> |- x::R<n> & n<4.
+checkentail x::R<3> |- x::R<n> & n<5.
+checkentail x::R<3> |- x::R<n> & n>3. //FAIL
+checkentail x::R<3> |- x::R<n> & n>=3.
+print residue.
 
 /*
 
