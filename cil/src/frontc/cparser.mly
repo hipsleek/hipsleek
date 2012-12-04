@@ -199,11 +199,11 @@ let trd4 (_, _, result, _) = result
 let fth4 (_, _, _, result) = result
 
 
+(* TRUNG TODO: check location in this function *)
 (*
    transform:  __builtin_offsetof(type, member)
    into     :  (size_t) (&(type * ) 0)->member
  *)
-
 let transformOffsetOf (speclist, dtype, tloc) member loc =
   let rec addPointer = function
     | JUSTBASE -> PTR([], JUSTBASE)
@@ -328,8 +328,9 @@ let transformOffsetOf (speclist, dtype, tloc) member loc =
 
 /* Non-terminals informations */
 %start interpret file
-%type <Cabs.definition list> file interpret globals
+%type <Cabs.definition list> file interpret
 
+%type <Cabs.definition list * cabsloc> globals
 %type <Cabs.definition * cabsloc> global
 
 %type <Cabs.attribute list * cabsloc> attributes attributes_with_asm asmattr
@@ -386,13 +387,16 @@ interpret:
   file EOF                              { $1 }
 ;
 
-file: globals                           { $1 }
+file:
+  globals                               { fst $1 }
 ;
 
 globals:
-  /* empty */                           { [] }
-| global globals                        { (fst $1) :: $2 }
-| SEMICOLON globals                     { $2 }
+  /* empty */                           { [], currentLoc () }
+| global globals                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $2)) in
+                                          (fst $1) :: (fst $2), loc }
+| SEMICOLON globals                     { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+                                          fst $2, loc }
 ;
 
 position:
@@ -404,11 +408,11 @@ global:
 | function_def                          { $1 } 
 /*(* Some C header files ar shared with the C++ compiler and have linkage 
    * specification *)*/
-| EXTERN string_constant declaration    { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
+| EXTERN string_constant declaration    { let loc = makeLoc (startPos $1) (endPos (snd $3)) in
                                           (LINKAGE (fst $2, loc, [fst $3]), loc) }
 | EXTERN string_constant LBRACE globals RBRACE 
                                         { let loc = makeLoc (startPos $1) (endPos $5) in
-                                          (LINKAGE (fst $2, loc, $4), loc) }
+                                          (LINKAGE (fst $2, loc, fst $4), loc) }
 | ASM LPAREN string_constant RPAREN SEMICOLON
                                         { let loc = makeLoc (startPos $1) (endPos $5) in
                                           (GLOBASM (fst $3, loc), loc) }
@@ -419,42 +423,44 @@ global:
 | IDENT LPAREN old_parameter_list_ne RPAREN old_pardef_list SEMICOLON
                                         { let loc = makeLoc (startPos (snd $1)) (endPos $6) in
                                           (* Convert pardecl to new style *)
-                                          let pardecl, isva = doOldParDecl (fst $3) (fst $5) in 
+                                          let pardecl, isva = doOldParDecl (fst $3) (fst $5) in
+                                          let loc1 = makeLoc (startPos $2) (endPos (snd $5)) in
                                           (* Make the function declarator *)
                                           (doDeclaration loc []
-                                            [((fst $1, PROTO(JUSTBASE, pardecl,isva), [], cabslu),
+                                            [((fst $1, PROTO(JUSTBASE, pardecl,isva), [], loc1),
                                               NO_INIT)], loc) }
 /* (* Old style function prototype, but without any arguments *) */
-| IDENT LPAREN RPAREN  SEMICOLON
-                                        { let loc = makeLoc (startPos (snd $1)) (endPos $4) in
+| IDENT LPAREN RPAREN  SEMICOLON        { let loc = makeLoc (startPos (snd $1)) (endPos $4) in
                                           (* Make the function declarator *)
+                                          let loc1 = makeLoc (startPos $2) (endPos $3) in
                                           (doDeclaration loc []
-                                            [((fst $1, PROTO(JUSTBASE,[],false), [], cabslu),
+                                            [((fst $1, PROTO(JUSTBASE,[],false), [], loc1),
                                               NO_INIT)], loc) }
 /* transformer for a toplevel construct */
 | AT_TRANSFORM LBRACE global RBRACE  IDENT/*to*/  LBRACE globals RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $8) in
                                           checkConnective(fst $5);
-                                          (TRANSFORMER(fst $3, $7, $1), loc) }
+                                          (TRANSFORMER(fst $3, fst $7, $1), loc) }
 /* transformer for an expression */
 | AT_TRANSFORMEXPR LBRACE expression RBRACE  IDENT/*to*/  LBRACE expression RBRACE
                                         { let loc = makeLoc (startPos $1) (endPos $8) in
                                           checkConnective(fst $5);
                                           (EXPRTRANSFORMER(fst $3, fst $7, $1), loc) }
 | position error position SEMICOLON     { let loc = makeLoc $1 (endPos $4) in
-                                          (PRAGMA (VARIABLE ("parse_error", loc), loc), loc) }
+                                          let loc1 = makeLoc $1 $3 in
+                                          (PRAGMA (VARIABLE ("parse_error", loc1), loc), loc) }
 ;
 
 id_or_typename:
   IDENT                                 { $1 }
 | NAMED_TYPE                            { $1 }
-| AT_NAME LPAREN IDENT RPAREN           { let loc = makeLoc (startPos $2) (endPos $4) in
+| AT_NAME LPAREN IDENT RPAREN           { let loc = makeLoc (startPos $1) (endPos $4) in
                                           ("@name(" ^ fst $3 ^ ")", loc) }     /* pattern variable name */
 ;
 
 maybecomma:
-  /* empty */                           { () }
-| COMMA                                 { () }
+  /* empty */                           { (), currentLoc () }
+| COMMA                                 { (), $1 }
 ;
 
 /* *** Expressions *** */
@@ -482,29 +488,26 @@ postfix_expression:                     /*(* 6.5.2 *)*/
                                           CALL (fst $1, fst $3, loc), loc }
 | BUILTIN_VA_ARG LPAREN expression COMMA type_name RPAREN
                                         { let loc = makeLoc (startPos $1) (endPos $6) in
-                                          let b, d, tloc = $5 in
+                                          let b, d, loc1 = $5 in
                                           CALL (VARIABLE ("__builtin_va_arg", $1), 
-                                                [fst $3; TYPE_SIZEOF (b, d, tloc)], loc), loc }
+                                                [fst $3; TYPE_SIZEOF (b, d, loc1)], loc), loc }
 | BUILTIN_TYPES_COMPAT LPAREN type_name COMMA type_name RPAREN
                                         { let loc = makeLoc (startPos $1) (endPos $6) in
-                                          let b1,d1,tloc1 = $3 in
-                                          let b2,d2,tloc2 = $5 in
+                                          let b1,d1,loc1 = $3 in
+                                          let b2,d2,loc2 = $5 in
                                           CALL (VARIABLE ("__builtin_types_compatible_p", $1), 
-                                                [TYPE_SIZEOF(b1,d1,tloc1); TYPE_SIZEOF(b2,d2,tloc2)], loc), loc }
+                                                [TYPE_SIZEOF(b1,d1,loc1); TYPE_SIZEOF(b2,d2,loc2)], loc), loc }
 | BUILTIN_OFFSETOF LPAREN type_name COMMA offsetof_member_designator RPAREN
                                         { let loc = makeLoc (startPos $1) (endPos $6) in
                                           transformOffsetOf $3 (fst $5) loc, loc }
-| postfix_expression DOT id_or_typename
-                                        { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
+| postfix_expression DOT id_or_typename { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
                                           MEMBEROF (fst $1, fst $3, loc), loc}
-| postfix_expression ARROW id_or_typename   
+| postfix_expression ARROW id_or_typename
                                         { let loc = makeLoc (startPos (snd $1)) (endPos (snd $3)) in
                                           MEMBEROFPTR (fst $1, fst $3, loc), loc}
-| postfix_expression PLUS_PLUS
-                                        { let loc = makeLoc (startPos (snd $1)) (endPos $2) in
+| postfix_expression PLUS_PLUS          { let loc = makeLoc (startPos (snd $1)) (endPos $2) in
                                           UNARY (POSINCR, fst $1, loc), loc}
-| postfix_expression MINUS_MINUS
-                                        { let loc = makeLoc (startPos (snd $1)) (endPos $2) in
+| postfix_expression MINUS_MINUS        { let loc = makeLoc (startPos (snd $1)) (endPos $2) in
                                           UNARY (POSDECR, fst $1, loc), loc}
 /* (* We handle GCC constructor expressions *) */
 | LPAREN type_name RPAREN LBRACE initializer_list_opt RBRACE
@@ -530,11 +533,13 @@ unary_expression:   /*(* 6.5.3 *)*/
 | SIZEOF unary_expression               { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
                                           EXPR_SIZEOF (fst $2, loc), loc }
 | SIZEOF LPAREN type_name RPAREN        { let loc = makeLoc (startPos $1) (endPos $4) in
-                                          let b, d, tl = $3 in TYPE_SIZEOF (b, d, tl), loc }
+                                          let b, d, _ = $3 in
+                                          TYPE_SIZEOF (b, d, loc), loc }
 | ALIGNOF unary_expression              { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
-                                          EXPR_ALIGNOF (fst $2, loc), $1 }
+                                          EXPR_ALIGNOF (fst $2, loc), loc }
 | ALIGNOF LPAREN type_name RPAREN       { let loc = makeLoc (startPos $1) (endPos $4) in
-                                          let b, d, tl = $3 in TYPE_ALIGNOF (b, d, tl), loc }
+                                          let b, d, _ = $3 in
+                                          TYPE_ALIGNOF (b, d, loc), loc }
 | PLUS cast_expression                  { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
                                           UNARY (PLUS, fst $2, loc), loc }
 | MINUS cast_expression                 { let loc = makeLoc (startPos $1) (endPos (snd $2)) in
