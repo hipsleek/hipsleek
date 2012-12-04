@@ -1,0 +1,43 @@
+//Valid.Valid.Fail
+data node { int val ; node next }.
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+/*
+pred lseg<n, p> == case {
+     n=0 -> [] self = p & n = 0;
+     n!=0 ->  [] self::node<next = r> * r::lseg<b,p> & b=n-1; 
+     }
+     inv n >= 0.
+*/
+
+//lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+lemma "V2" self::lseg<n, p> & a>=0 & n-a >=0 -> self::lseg<a, r> * r::lseg<n-a, p>.
+
+// Valid 
+
+//checkentail x::lseg<3,p> |- x::lseg<1,q>.
+
+// Fail with V2
+checkentail x::lseg<3,p> |- x::lseg<1,q>*q::lseg<1,r>.
+print residue.
+/* 
+V2
+<1>EXISTS(flted_22_67,flted_18_84: q::lseg<flted_18_84,p>@M[0][Derv]&flted_22_67=flted_18_84+a_70 & flted_22_67=3&{FLOW,(19,20)=__norm})[]
+
+V1
+<1>EXISTS(flted_22_62: q::lseg<b_66,p>@M[0][Derv]&flted_22_62=3 & 0<=b_66 & flted_22_62=b_66+1 & 0<=1&{FLOW,(19,20)=__norm})[]
+
+*/
+
+
+/*
+checkentail x::lseg<3,p> |- x::lseg<3,q>.
+print residue.
+
+checkentail x::lseg<3,p> |- x::lseg<4,q>.
+print residue.
+*/
