@@ -144,11 +144,11 @@ let parse_file (parse) (source_file : string) =
 		   Error.report_error { Error.error_loc  = udp;
 								Error.error_text = "Data type " ^ udn ^ " is undefined!" }
   in ();
-  Debug.info_pprint "sleek : after 2nd parsing" no_pos;
+  Debug.tinfo_pprint "sleek : after 2nd parsing" no_pos;
   convert_pred_to_cast ();
-  Debug.info_pprint "sleek : after convert_pred_to_cast" no_pos;
+  Debug.tinfo_pprint "sleek : after convert_pred_to_cast" no_pos;
   List.iter proc_one_lemma cmds;
-  Debug.info_pprint "sleek : after proc one lemma" no_pos;
+  Debug.tinfo_pprint "sleek : after proc one lemma" no_pos;
   (*identify universal variables*)
   let cviews = !cprog.C.prog_view_decls in
   let cviews = List.map (Cast.add_uni_vars_to_view !cprog !cprog.C.prog_left_coercions) cviews in
@@ -242,7 +242,7 @@ let main () =
       else
         begin
       (* let _ = print_endline "Prior to parse_file" in *)
-            Debug.info_pprint "sleek : batch processing" no_pos;
+            Debug.tinfo_pprint "sleek : batch processing" no_pos;
             let _ = List.map (parse_file NF.list_parse) !source_files in ()
         end
   with

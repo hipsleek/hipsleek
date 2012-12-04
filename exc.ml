@@ -747,8 +747,8 @@ struct
       begin
         let n1 = self#get_hash t1 in
         let n2 = self#get_hash t2 in
-        Debug.info_pprint t1 no_pos;
-        Debug.info_pprint t2 no_pos;
+        Debug.ninfo_pprint t1 no_pos;
+        Debug.ninfo_pprint t2 no_pos;
         if (is_false_flow n2) 
         then t1=t2
         else is_subset_flow n1 n2
@@ -767,7 +767,7 @@ struct
             else if c1="" then true
             else 
               begin
-                Debug.info_pprint (exlist#string_of) no_pos ;
+                Debug.ninfo_pprint (exlist#string_of) no_pos ;
                 exlist # sub_type_obj c1 c2
               end
       | Array (et1,d1), Array (et2,d2) ->
