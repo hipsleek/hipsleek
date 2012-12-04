@@ -2144,7 +2144,11 @@ let get_longest_common_hnodes_list_x prog unk_hps unk_svl hp args fs=
        (* let _ = Debug.info_pprint ("  n_fs1: "^ (pr1 n_fs1)) no_pos in *)
        (*END for debugging*)
        let n_fs2 = Gen.BList.remove_dups_eq (fun f1 f2 -> check_relaxeq_formula f1 f2) n_fs1 in
-       let n_orig_hpdef,n_args1,n_fs3 = elim_not_in_used_args orig_hpdef n_fs2 new_hp n_args in
+       let n_orig_hpdef,n_args1,n_fs3 =
+         if !Globals.sa_elim_useless then
+         elim_not_in_used_args orig_hpdef n_fs2 new_hp n_args
+         else (orig_hpdef, n_args, n_fs2)
+       in
        let new_hpdef = mk_hprel_def prog unk_hps unk_svl new_hp n_args1 n_fs3 no_pos in
        if new_hpdef = [] then
          let hpdef = mk_hprel_def prog unk_hps unk_svl hp args fs no_pos in
