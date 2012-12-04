@@ -5,9 +5,9 @@ macro R == (,#)
 
 Barrier bn[2]<int state, cl x1, cl x2, cl y1, cl y2, cl i> == [(0,1,[
  requires x1::cl(@@L)<A1>*x2::cl(@@L)<B1>*y1::cl(@@L)<C1>*y2::cl(@@L)<D1>*i::cl(@@L)<T1>*self::bn(@@L)<0,x1,x2,y1,y2,i> 
-        ensures x1::cl(@@L)<A1>*x2::cl(@@L)<B1>*y1::cl<C1>*i::cl(@@L)<T1>*self::bn(@@L)<1,x1,x2,y1,y2,i> ;,
- requires x1::cl(@@R)<A2>*x2::cl(@@R)<B2>*y1::cl(@@R)<C2>*y2::cl(@@R)<D2>*i::cl(@@R)<T2>*self::bn(@@R)<0,x1,x2,y1,y2,i> 
-        ensures x1::cl(@@R)<A2>*x2::cl(@@R)<B2>*y2::cl<D2>*i::cl(@@R)<T2>*self::bn(@@R)<1,x1,x2,y1,y2,i>;]),	
+        ensures x1::cl(@@L)<A1>*x2::cl(@@L)<B1>*y1::cl<C1> *i::cl(@@L)<T1>*self::bn(@@L)<1,x1,x2,y1,y2,i> ;,
+ requires x1::cl(@@R)<A1>*x2::cl(@@R)<B2>*y1::cl(@@R)<C2>*y2::cl(@@R)<D2>*i::cl(@@R)<T2>*self::bn(@@R)<0,x1,x2,y1,y2,i> 
+        ensures x1::cl(@@R)<A1>*x2::cl(@@R)<B2>*y2::cl<D2>*i::cl(@@R)<T2>*self::bn(@@R)<1,x1,x2,y1,y2,i>;]),	
  (1,2,[
  requires x1::cl(@@L)<A> * x2::cl(@@L)<B>*y1::cl<C> * i::cl(@@L)<T> * self::bn(@@L)<1,x1,x2,y1,y2,i> & T<30
     
@@ -62,12 +62,14 @@ requires x1::cl(@@L)<1>*x2::cl(@@L)<1>*y1::cl(@@L)<_>*y2::cl(@@L)<_>*i::cl(@@L)<
 }
  
 void th1_loop(cl x1, cl x2, cl y1, cl y2, cl i, barrier b)
-requires x1::cl(@@L)<_>*x2::cl(@@L)<_>*y1::cl<_>*i::cl(@@L)<a>*b::bn(@@L)<1,x1,x2,y1,y2,i> 
+requires x1::cl(@@L)<_>*x2::cl(@@L)<_>*y1::cl(@@R)<_>*i::cl(@@L)<a>*b::bn(@@L)<1,x1,x2,y1,y2,i> 
   ensures true;
 {
   if (i.val<30)
   {                               // stage 1
-    y1.val = x1.val + 2*x2.val+2;
+    y1.val 
+= 
+x1.val + 2*x2.val+2;
     Barrier b;                    // stage 1->2
     x1.val = y1.val - y2.val;
     i.val= i.val+1;
