@@ -521,6 +521,8 @@ let is_deployed = ref true
 
 let allow_ls = ref true (*enable lockset during verification*)
 
+let web_compile_flag = ref false (*enable lockset during verification*)
+
 let allow_locklevel = ref false (*enable locklevel during verification*)
 
 (* let has_locklevel = ref false *)

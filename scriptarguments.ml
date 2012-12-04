@@ -118,6 +118,7 @@ let common_arguments = [
 	("--ann-vp", Arg.Set Globals.ann_vp,"manual annotation of variable permissions");
 	("--dis-ann-vp", Arg.Clear Globals.ann_vp,"manual annotation of variable permissions");
 	("--ls", Arg.Set Globals.allow_ls,"enable locksets during verification");
+	("--en-web-compile", Arg.Set Globals.web_compile_flag,"enable web compilation setting");
 	("--dis-ls", Arg.Clear Globals.allow_ls,"disable locksets during verification");
 	("--locklevel", Arg.Set Globals.allow_locklevel,"enable locklevels during verification");
 	("--dis-locklevel", Arg.Clear Globals.allow_locklevel,"disable locklevels during verification");

@@ -297,7 +297,7 @@ let rec formula_2_mem_x (f : CF.formula) prog : CF.mem_formula =
   in helper f
 
 and formula_2_mem (f : formula) prog : CF.mem_formula = 
-  Debug.no_1 "formula_2_mem" Cprinter.string_of_formula Cprinter.string_of_mem_formula
+  Debug.ho_1 "formula_2_mem" Cprinter.string_of_formula Cprinter.string_of_mem_formula
       (fun _ -> formula_2_mem_x f prog) f
 
 and formula_2_mem_perm_x (f : CF.formula) prog : CF.mem_formula =
