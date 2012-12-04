@@ -20,14 +20,15 @@ infer [] y::cell<1>@M |- (exists v: y::cell<b>@v).
 print residue.
 */
 
-//infer [] y::cell<a>@M |- y::cell<b>@v & v=@M.
-//print residue.
-
-infer [] y::cell<a>@L |- y::cell<b>@v & v=@L.
+infer [] y::cell<a>@M |- (exists v: y::cell<b>@v & @M<:v).
 print residue.
 
-infer [] y::cell<a>@L |- y::cell<b>@L.
-print residue.
+/* Valid but should have a residue.
+
+Entail (1) : Valid. 
+ <1>emp&a=b&{FLOW,(19,20)=__norm}[]
+*/
+
 /*
 
 Entail (1) : Valid. 

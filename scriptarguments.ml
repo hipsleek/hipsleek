@@ -145,7 +145,7 @@ let common_arguments = [
 	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
 	("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
 	("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
-	("--dis-field-ann", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
+	(* ("--dis-field-ann", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields"); *)
 	("--mem", Arg.Set Globals.allow_mem,"Enable the use of Memory Specifications");
 	("--dis-mem", Arg.Clear Globals.allow_mem,"Disable the use of Memory Specifications");
 	("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");

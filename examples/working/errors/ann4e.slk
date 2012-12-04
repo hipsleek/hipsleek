@@ -1,0 +1,10 @@
+data cell {
+  int val;
+}.
+
+
+infer [] y::cell<a>@M |- y::cell<b>@v.
+print residue.
+
+
+

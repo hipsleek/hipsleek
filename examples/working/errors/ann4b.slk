@@ -1,0 +1,17 @@
+data cell {
+  int val;
+}.
+
+
+
+infer [] y::cell<a>@L |- y::cell<b>@v & v=@L.
+print residue.
+
+/* Valid but should have a residue.
+
+Entail (1) : Valid. 
+ <1>emp&a=b&{FLOW,(19,20)=__norm}[]
+*/
+
+
+
