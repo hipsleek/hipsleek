@@ -784,6 +784,27 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
 ;;
 
+(* (* pretty printing for program separating prelude.ss program *)                                                            *)
+let string_of_program_separate_prelude p iprims= (* "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^  *)
+  let helper_chop l start_pos=
+		let index = ref (-1) in
+	  let chop_p= List.fold_left ( fun a b-> let _= index:= !index+1 in if (!index>=start_pos) then a@[b] else a  )  [] l in
+		chop_p
+	in	
+	(* string_of_program iprims *)
+  (String.concat "\n\n" (List.map string_of_data (helper_chop p.prog_data_decls (List.length iprims.prog_data_decls )))) ^ "\n\n" ^
+  (string_of_global_var_decl_list (helper_chop  p.prog_global_var_decls (List.length iprims.prog_global_var_decls ) )) ^ "\n" ^
+  (string_of_enum_decl_list (helper_chop p.prog_enum_decls (List.length iprims.prog_enum_decls ))) ^"\n" ^
+  (string_of_view_decl_list (helper_chop p.prog_view_decls (List.length iprims.prog_view_decls ))) ^"\n" ^
+  (string_of_barrier_decl_list (helper_chop p.prog_barrier_decls (List.length iprims.prog_barrier_decls))) ^ "\n" ^
+  (string_of_rel_decl_list (helper_chop p.prog_rel_decls (List.length iprims.prog_rel_decls))) ^"\n" ^
+  (string_of_axiom_decl_list (helper_chop p.prog_axiom_decls (List.length iprims.prog_axiom_decls))) ^"\n" ^
+  (string_of_coerc_decl_list (helper_chop p.prog_coercion_decls (List.length iprims.prog_coercion_decls))) ^ "\n\n" ^
+  (string_of_proc_decl_list (helper_chop p.prog_proc_decls (List.length iprims.prog_proc_decls))) ^ "\n"
+	^"******End reparated printing\n"
+;;                                                                                                                         
+
+
 Iformula.print_one_formula := string_of_one_formula;;
 Iformula.print_h_formula :=string_of_h_formula;;
 Iformula.print_formula :=string_of_formula;;

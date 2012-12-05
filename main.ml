@@ -150,7 +150,6 @@ let process_source_full source =
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
   let prims_list = process_primitives new_h_files in (*list of primitives in header files*)
-
   if !to_java then begin
     print_string ("Converting to Java..."); flush stdout;
     let tmp = Filename.chop_extension (Filename.basename source) in
@@ -171,7 +170,7 @@ let process_source_full source =
     (* Global variables translating *)
     let _ = Gen.Profiling.push_time "Translating global var" in
     let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
-
+      
     (* Append all primitives in list into one only *)
     let iprims_list = process_intermediate_prims prims_list in
     let iprims = Iast.append_iprims_list_head iprims_list in
@@ -179,10 +178,14 @@ let process_source_full source =
 		(* let _=print_endline ("PROG: "^Iprinter.string_of_program prog) in *)
     let intermediate_prog = Globalvars.trans_global_to_param prog in
     (* let _ = print_endline ("process_source_full: before pre_process_of_iprog") in *)
-    let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
+    let intermediate_prog=IastUtil.pre_process_of_iprog iprims intermediate_prog in
+		(* let _= print_string ("\n*After pre process iprog* "^Iprinter.string_of_program intermediate_prog) in *)
     let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
     (* let _ = print_endline ("process_source_full: before --pip") in *)
-    let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
+    let _ = if (!Globals.print_input_all) then print_string (Iprinter.string_of_program intermediate_prog) 
+		        else if(!Globals.print_input) then
+							print_string (Iprinter.string_of_program_separate_prelude intermediate_prog iprims)
+						else () in
     (* let _ = print_endline ("process_source_full: after --pip") in *)
     let _ = Gen.Profiling.pop_time "Translating global var" in
     (* Global variables translated *)
@@ -197,7 +200,11 @@ let process_source_full source =
         Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
 	let _ = List.map (fun cadef -> Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion) (List.rev cprog.Cast.prog_axiom_decls) in
     (* let _ = print_string (" done-2\n"); flush stdout in *)
-    let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog) else () in
+    let _ = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)  
+		        else if(!Globals.print_core) then
+							print_string (Cprinter.string_of_program_separate_prelude cprog iprims)
+						else ()
+		in
     let _ = 
       if !Globals.verify_callees then begin
 	    let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
@@ -349,7 +356,10 @@ let process_source_full_after_parser source (prog, prims_list) =
   let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
   let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
   (* let _ = print_endline ("process_source_full: before --pip") in *)
-  let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
+  let _ = if (!Globals.print_input_all) then print_string (Iprinter.string_of_program intermediate_prog) 
+	         else if(!Globals.print_input) then
+							print_string (Iprinter.string_of_program_separate_prelude intermediate_prog iprims)
+						else () in
   (* let _ = print_endline ("process_source_full: after --pip") in *)
   let _ = Gen.Profiling.pop_time "Translating global var" in
   (* Global variables translated *)
@@ -364,7 +374,11 @@ let process_source_full_after_parser source (prog, prims_list) =
       Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
   let _ = List.map (fun cadef -> Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion) (List.rev cprog.Cast.prog_axiom_decls) in
   (* let _ = print_string (" done-2\n"); flush stdout in *)
-  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog) else () in
+  let _ = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)  
+		        else if(!Globals.print_core) then
+							print_string (Cprinter.string_of_program_separate_prelude cprog iprims)
+						else ()
+	in
   let _ = 
     if !Globals.verify_callees then begin
       let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
@@ -494,7 +508,7 @@ let pre_main =
     let _ = Printexc.record_backtrace !Globals.trace_failure in
     if List.length (!Globals.source_files) = 0 then
       print_string "Source file(s) not specified\n";
-    List.map process_source_full_parse_only !Globals.source_files
+		List.map process_source_full_parse_only !Globals.source_files
 
 let loop_cmd parsed_content = 
   let _ = List.map2 (fun s t -> process_source_full_after_parser s t) !Globals.source_files parsed_content in

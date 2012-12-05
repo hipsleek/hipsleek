@@ -2754,7 +2754,32 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
   (string_of_proc_decl_list (Cast.list_of_procs p)) ^ "\n"
 ;;
 
-
+(* (* pretty printing for program separating prelude.ss program *)                                                            *)
+let string_of_program_separate_prelude p (iprims:Iast.prog_decl)= 
+   let remove_prim_procs procs=
+		List.fold_left (fun a b->
+			try 
+			let _=List.find (fun c-> (BatString.starts_with b.Cast.proc_name (c.Iast.proc_name^"$")) 
+			                          || (BatString.starts_with b.Cast.proc_name ("is_not_null___"^"$")) 
+																|| (BatString.starts_with b.Cast.proc_name ("is_null___"^"$")) 
+																) iprims.Iast.prog_proc_decls in 
+			a
+			with Not_found ->
+				a@[b]  
+		) [] procs
+	 in
+  "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^ 
+  (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^ 
+  (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^ 
+  (string_of_rel_decl_list p.prog_rel_decls) ^ "\n\n" ^ 
+  (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^ 
+  (string_of_coerc_decl_list p.prog_left_coercions)^"\n\n"^
+  (string_of_coerc_decl_list p.prog_right_coercions)^"\n\n"^
+  (* TODO: PD *)
+  (*(string_of_proc_decl_list p.old_proc_decls) ^ "\n"*)
+  (string_of_proc_decl_list (remove_prim_procs (Cast.list_of_procs p))) ^ "\n"
+;;
+                                         
 (*
   Created 22-Feb-2006
   Pretty printing fo the AST for the core language

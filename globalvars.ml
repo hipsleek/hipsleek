@@ -445,10 +445,12 @@ let find_read_write_global_var_proc (global_id_set : IdentSet.t) (proc : I.proc_
 	 in
 	 let (r1,w1)= find_in_body ()	in
 	 let (r2,w2)= find_in_specs () in
-	 let readSet=IdentSet.union r1 r2 in
-	 let writeSet=IdentSet.union w1 w2 in
-	 (* let _= IdentSet.iter (fun x-> print_endline ("R: "^x)) readSet in *)
-	 (* let _= IdentSet.iter (fun x-> print_endline ("W: "^x)) writeSet in *)
+	 let reads=IdentSet.union r1 r2 in
+	 let writes=IdentSet.union w1 w2 in
+	 let readSet = IdentSet.diff reads writes in
+	 let writeSet= writes in
+	 (* let _= IdentSet.iter (fun x-> print_endline ("R: "^x)) reads in *)
+	 (* let _= IdentSet.iter (fun x-> print_endline ("W: "^x)) writes in *)
 	 Hashtbl.replace h proc.I.proc_name (readSet,writeSet)
 			
 (** Get the read/write global variables of a procedure from the hash table 

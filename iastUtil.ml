@@ -1260,7 +1260,7 @@ let pre_process_of_iprog iprims prog =
           } in
   let prog = float_var_decl_prog prog in
   let prog = rename_prog prog in
-  let prog = add_globalv_to_mth_prog prog in
+  let prog = add_globalv_to_mth_prog prog in 
   prog
 
 let pre_process_of_iprog iprims prog = 
