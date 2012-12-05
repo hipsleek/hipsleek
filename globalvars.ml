@@ -413,44 +413,52 @@ let find_read_write_global_var_proc (global_id_set : IdentSet.t) (proc : I.proc_
 	 (curr_proc := proc.I.proc_name;
 	 NG.add_vertex g (NG.V.create !curr_proc))
   );
-	let find_in_body ()= (*Find read/write global vars in procedure body*)
+    let local_vars = to_IdentSet (List.map get_local_id proc.I.proc_args) in
+    let global_vars = IdentSet.diff global_id_set local_vars in
+	let find_in_body global_vars local_vars= (*Find read/write global vars in procedure body*)
     match proc.I.proc_body with
 	  None -> (IdentSet.empty,IdentSet.empty)
     | Some e ->
 	  begin
-	    	let local_vars = to_IdentSet (List.map get_local_id proc.I.proc_args) in
-	    	let global_vars = IdentSet.diff global_id_set local_vars in
 	    	let (reads, writes) = find_read_write_global_var global_vars local_vars e in
 	    	let readSet = IdentSet.diff reads writes in
 	    	let writeSet = writes in
+            (*let _= print_endline ("BachLe: Find Global vars Debugging...")in 
+            let _= IdentSet.iter (fun x-> print_endline ("global_vars body: "^x)) global_vars in 
+            let _= IdentSet.iter (fun x-> print_endline ("R body: "^x)) reads in 
+	        let _= IdentSet.iter (fun x-> print_endline ("W body: "^x)) writes in *)
 		    (readSet,writeSet)
 	  end
    in 
-	 let find_in_specs ()= (*Find read/write global vars in specification*)
+	 let find_in_specs global_vars= (*Find read/write global vars in specification*)
 			let st=proc.I.proc_static_specs in 
 			 let list_fv=
 			  let pr,pst = Iformula.struc_split_fv st false in  
 				 (* Gen.BList.remove_dups_eq (=) pr@pst  *)
 				 pr@pst 
 			 in
-			 let (rl,wl)= List.fold_left (fun (readl,writel) (id,pr) -> match pr with
-				|Primed -> (readl,writel@[id])
-				| Unprimed -> (readl@[id],writel)
+			 let (rl,wl)= List.fold_left (fun (readl,writel) (id,pr) -> 
+                if(IdentSet.mem id global_vars) then match pr with
+				  |Primed -> (readl,writel@[id])
+				  | Unprimed -> (readl@[id],writel)
+                else
+                (readl,writel)
 				 ) ([],[]) (list_fv) 
 			in 
 			let readSet=to_IdentSet rl in
 			let writeSet= to_IdentSet wl in
-			(* (IdentSet.empty,IdentSet.empty) *)
+			(*(IdentSet.empty,IdentSet.empty) *)
 			(readSet,writeSet)
 	 in
-	 let (r1,w1)= find_in_body ()	in
-	 let (r2,w2)= find_in_specs () in
+	 let (r1,w1)= find_in_body global_vars local_vars	in
+	 let (r2,w2)= find_in_specs global_vars in
 	 let reads=IdentSet.union r1 r2 in
 	 let writes=IdentSet.union w1 w2 in
 	 let readSet = IdentSet.diff reads writes in
 	 let writeSet= writes in
-	 (* let _= IdentSet.iter (fun x-> print_endline ("R: "^x)) reads in *)
-	 (* let _= IdentSet.iter (fun x-> print_endline ("W: "^x)) writes in *)
+	 (*let _= IdentSet.iter (fun x-> print_endline ("R all: "^x)) reads in 
+	 let _= IdentSet.iter (fun x-> print_endline ("W all: "^x)) writes in 
+     let _= print_endline ("BachLe: End of Find Global vars Debugging...")in *)
 	 Hashtbl.replace h proc.I.proc_name (readSet,writeSet)
 			
 (** Get the read/write global variables of a procedure from the hash table 

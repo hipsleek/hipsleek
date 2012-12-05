@@ -2754,7 +2754,7 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
   (string_of_proc_decl_list (Cast.list_of_procs p)) ^ "\n"
 ;;
 
-(* (* pretty printing for program separating prelude.ss program *)                                                            *)
+(* pretty printing for program written in core language separating prelude.ss program *)                                                            
 let string_of_program_separate_prelude p (iprims:Iast.prog_decl)= 
    let remove_prim_procs procs=
 		List.fold_left (fun a b->
