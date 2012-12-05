@@ -178,6 +178,7 @@ and h_formula = (* heap formula *)
   | DataNode of h_formula_data
   | ViewNode of h_formula_view
   | Hole of int
+  | TempHole of int * h_formula
   | HRel of (CP.spec_var * (CP.exp list) * loc)
   | HTrue
   | HFalse
@@ -329,6 +330,12 @@ and isImm(a : ann) : bool =
   match a with
     | ConstAnn(Imm) -> true
     | _ -> false
+
+and isPoly(a : ann) : bool = 
+  match a with
+    | PolyAnn v -> true
+    | _ -> false
+
 
 let fv_ann (a:ann) = match a with
   | ConstAnn _

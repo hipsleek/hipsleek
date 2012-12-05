@@ -1,0 +1,925 @@
+Starting Omega...oc
+
+heap_entail_init@1
+heap_entail_init inp1 : 
+Good Context: [es_formula: 
+                true&self=null & n=0 | 0<=v2 & 1<=n & self!=null&
+                {FLOW,(1,20)=__flow}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+heap_entail_init inp2 : true&0<=n&{FLOW,(1,20)=__flow}[]
+heap_entail_init@1 EXIT out : 
+Good Context: [es_formula: 
+                true&self=null & n=0 | 0<=v2 & 1<=n & self!=null&
+                {FLOW,(1,20)=__flow}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+
+
+(andreeac)[do_match] input LHS =  es_formula: true&flted_21_61=@A & flted_21_60=@L&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_evars: [n_62; flted_21_63; flted_21_64]
+ es_rhs_eqset: [(n_62,n)]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+[do_match] RHS =  true&true&{FLOW,(17,18)=__norm}[]
+[do_match] matching  x::ll<n,flted_21_61,flted_21_60>@M[Orig][LHSCase] |-  x::ll<n_62,flted_21_64,flted_21_63>@M[Orig][LHSCase]
+--C: r_node = ll  spec var:x
+--C: l_node = ll
+--C: r_ann = @M
+--C: l_ann = @M
+cris: ann_lhs = None
+cris: ann_rhs = None
+
+do_match@7@6@5@4@3@2
+do_match inp1 : x::ll<n,flted_21_61,flted_21_60>@M[Orig][LHSCase]
+do_match inp2 : x::ll<n_62,flted_21_64,flted_21_63>@M[Orig][LHSCase]
+do_match inp3 : es_formula: true&flted_21_61=@A & flted_21_60=@L&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_evars: [n_62; flted_21_63; flted_21_64]
+ es_rhs_eqset: [(n_62,n)]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+do_match inp4 : true&true&{FLOW,(17,18)=__norm}[]
+do_match inp5 :[]
+do_match@7 EXIT out : 
+Good Context: [es_formula: true&flted_21_61=@A & flted_21_60=@L&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_evars: [n_62; flted_21_63; flted_21_64]
+               es_rhs_eqset: [(n_62,n)]
+               es_subst (from): [n_62; flted_21_64; flted_21_63]
+               es_subst (to): [n; flted_21_61; flted_21_60]
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+
+heap_entail_struc@6@5@4@3@2
+heap_entail_struc inp1 : 
+Good Context: [es_formula: 
+                EXISTS(flted_21_40,
+                flted_21_41: x::ll<n,flted_21_41,flted_21_40>@M[Orig][LHSCase]&
+                flted_21_41=@A & flted_21_40=@L&{FLOW,(17,18)=__norm})[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+heap_entail_struc inp2 : EBase EXISTS(n_53,flted_21_51,
+       flted_21_52: x::ll<n_53,flted_21_52,flted_21_51>@M[Orig][LHSCase]&
+       flted_21_52<:@A & flted_21_51<:@M & n_53=n&{FLOW,(17,18)=__norm})[]
+heap_entail_struc@6 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: MUST
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  flted_21_60=@L |-  flted_21_60<:@M. LOCS:[21] (must-bug)
+                             fc_current_lhs_flow: {FLOW,(1,2)=__Error}}
+
+
+heap_entail_struc_init@5@4@3@2
+heap_entail_struc_init inp1 :?
+heap_entail_struc_init@5 EXIT out :0
+
+heap_entail_struc_init_bug_inv@4@3@2
+heap_entail_struc_init_bug_inv inp1 : 
+Good Context: [es_formula: 
+                EXISTS(flted_21_40,
+                flted_21_41: x::ll<n,flted_21_41,flted_21_40>@M[Orig][LHSCase]&
+                flted_21_41=@A & flted_21_40=@L&{FLOW,(17,18)=__norm})[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+heap_entail_struc_init_bug_inv inp2 : EBase EXISTS(n_53,flted_21_51,
+       flted_21_52: x::ll<n_53,flted_21_52,flted_21_51>@M[Orig][LHSCase]&
+       flted_21_52<:@A & flted_21_51<:@M & n_53=n&{FLOW,(17,18)=__norm})[]
+heap_entail_struc_init_bug_inv@4 EXIT out : 
+Error Context: [es_formula: true&flted_21_61=@A & flted_21_60=@L&{FLOW,(1,2)=__Error}[]
+                es_pure: true
+                es_orig_ante: None
+                es_heap: true
+                es_evars: [n_62; flted_21_63; flted_21_64]
+                es_rhs_eqset: [(n_62,n)]
+                es_subst (from): [n_62; flted_21_64; flted_21_63]
+                es_subst (to): [n; flted_21_61; flted_21_60]
+                es_aux_conseq: true
+                es_must_error: Some( flted_21_60=@L |-  flted_21_60<:@M. LOCS:[21] (must-bug))
+                es_var_measures: None
+                es_term_err: None
+                es_var_zero_perm: ]
+
+
+run_infer_one_pass@3@2
+run_infer_one_pass inp1 :[]
+run_infer_one_pass inp2 :IFORM:(true ; (true ; (x::ll<n, @A, @L>@M[1])))*(true)( FLOW __norm)
+run_infer_one_pass inp3 :IFORMStruc:EBase: [][](true ; (true ; (x::ll<n, @A, @M>@M[1])))*(true)( FLOW __norm) 
+run_infer_one_pass@3 EXIT out :(false, 
+Error Context: [es_formula: 
+                 EXISTS(flted_21_61,flted_21_60: true&flted_21_61=@A & 
+                 flted_21_60=@L&{FLOW,(1,2)=__Error})[]
+                es_pure: true
+                es_orig_ante: None
+                es_heap: true
+                es_evars: [n_62; flted_21_63; flted_21_64]
+                es_rhs_eqset: [(n_62,n)]
+                es_subst (from): [n_62; flted_21_64; flted_21_63]
+                es_subst (to): [n; flted_21_61; flted_21_60]
+                es_aux_conseq: true
+                es_must_error: Some( flted_21_60=@L |-  flted_21_60<:@M. LOCS:[21] (must-bug))
+                es_var_measures: None
+                es_term_err: None
+                es_var_zero_perm: ]
+)
+
+run_entail_check@2
+run_entail_check inp1 :IFORM:(true ; (true ; (x::ll<n, @A, @L>@M[1])))*(true)( FLOW __norm)
+run_entail_check inp2 :IFORMStruc:EBase: [][](true ; (true ; (x::ll<n, @A, @M>@M[1])))*(true)( FLOW __norm) 
+run_entail_check@2 EXIT out :(false, 
+Error Context: [es_formula: 
+                 EXISTS(flted_21_61,flted_21_60: true&flted_21_61=@A & 
+                 flted_21_60=@L&{FLOW,(1,2)=__Error})[]
+                es_pure: true
+                es_orig_ante: None
+                es_heap: true
+                es_evars: [n_62; flted_21_63; flted_21_64]
+                es_rhs_eqset: [(n_62,n)]
+                es_subst (from): [n_62; flted_21_64; flted_21_63]
+                es_subst (to): [n; flted_21_61; flted_21_60]
+                es_aux_conseq: true
+                es_must_error: Some( flted_21_60=@L |-  flted_21_60<:@M. LOCS:[21] (must-bug))
+                es_var_measures: None
+                es_term_err: None
+                es_var_zero_perm: ]
+)
+
+Entail (1) : Fail.(must) cause: flted_21_60=@L |-  flted_21_60<:@M. LOCS:[21] (must-bug)
+
+ <1>EXISTS(flted_21_61,flted_21_60: true&flted_21_61=@A & flted_21_60=@L&{FLOW,(1,2)=__Error})[]
+
+
+
+(andreeac)[do_match] input LHS =  es_formula: true&flted_24_97=@A & flted_24_96=@M&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_evars: [n_98; flted_24_99; flted_24_100]
+ es_rhs_eqset: [(n_98,n)]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+[do_match] RHS =  true&true&{FLOW,(17,18)=__norm}[]
+[do_match] matching  x::ll<n,flted_24_97,flted_24_96>@M[Orig][LHSCase] |-  x::ll<n_98,flted_24_100,flted_24_99>@M[Orig][LHSCase]
+--C: r_node = ll  spec var:x
+--C: l_node = ll
+--C: r_ann = @M
+--C: l_ann = @M
+cris: ann_lhs = None
+cris: ann_rhs = None
+
+do_match@13@12@11@10@9@8
+do_match inp1 : x::ll<n,flted_24_97,flted_24_96>@M[Orig][LHSCase]
+do_match inp2 : x::ll<n_98,flted_24_100,flted_24_99>@M[Orig][LHSCase]
+do_match inp3 : es_formula: true&flted_24_97=@A & flted_24_96=@M&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_evars: [n_98; flted_24_99; flted_24_100]
+ es_rhs_eqset: [(n_98,n)]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+do_match inp4 : true&true&{FLOW,(17,18)=__norm}[]
+do_match inp5 :[]
+do_match@13 EXIT out : 
+Good Context: [es_formula: true&flted_24_97=@A & flted_24_96=@M&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_evars: [n_98; flted_24_99; flted_24_100]
+               es_rhs_eqset: [(n_98,n)]
+               es_subst (from): [n_98; flted_24_100; flted_24_99]
+               es_subst (to): [n; flted_24_97; flted_24_96]
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+
+heap_entail_struc@12@11@10@9@8
+heap_entail_struc inp1 : 
+Good Context: [es_formula: 
+                EXISTS(flted_24_76,
+                flted_24_77: x::ll<n,flted_24_77,flted_24_76>@M[Orig][LHSCase]&
+                flted_24_77=@A & flted_24_76=@M&{FLOW,(17,18)=__norm})[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+heap_entail_struc inp2 : EBase EXISTS(n_89,flted_24_87,
+       flted_24_88: x::ll<n_89,flted_24_88,flted_24_87>@M[Orig][LHSCase]&
+       flted_24_88<:@A & flted_24_87<:@L & n_89=n&{FLOW,(17,18)=__norm})[]
+heap_entail_struc@12 EXIT out : 
+Good Context: [es_formula: true&flted_24_97=@A & flted_24_96=@M&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_evars: [n_98; flted_24_99; flted_24_100]
+               es_rhs_eqset: [(n_98,n)]
+               es_subst (from): [n_98; flted_24_100; flted_24_99]
+               es_subst (to): [n; flted_24_97; flted_24_96]
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+
+heap_entail_struc_init@11@10@9@8
+heap_entail_struc_init inp1 :?
+heap_entail_struc_init@11 EXIT out :1
+
+heap_entail_struc_init_bug_inv@10@9@8
+heap_entail_struc_init_bug_inv inp1 : 
+Good Context: [es_formula: 
+                EXISTS(flted_24_76,
+                flted_24_77: x::ll<n,flted_24_77,flted_24_76>@M[Orig][LHSCase]&
+                flted_24_77=@A & flted_24_76=@M&{FLOW,(17,18)=__norm})[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+heap_entail_struc_init_bug_inv inp2 : EBase EXISTS(n_89,flted_24_87,
+       flted_24_88: x::ll<n_89,flted_24_88,flted_24_87>@M[Orig][LHSCase]&
+       flted_24_88<:@A & flted_24_87<:@L & n_89=n&{FLOW,(17,18)=__norm})[]
+heap_entail_struc_init_bug_inv@10 EXIT out : 
+Good Context: [es_formula: true&flted_24_97=@A & flted_24_96=@M&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_evars: [n_98; flted_24_99; flted_24_100]
+               es_rhs_eqset: [(n_98,n)]
+               es_subst (from): [n_98; flted_24_100; flted_24_99]
+               es_subst (to): [n; flted_24_97; flted_24_96]
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+
+run_infer_one_pass@9@8
+run_infer_one_pass inp1 :[]
+run_infer_one_pass inp2 :IFORM:(true ; (true ; (x::ll<n, @A, @M>@M[1])))*(true)( FLOW __norm)
+run_infer_one_pass inp3 :IFORMStruc:EBase: [][](true ; (true ; (x::ll<n, @A, @L>@M[1])))*(true)( FLOW __norm) 
+run_infer_one_pass@9 EXIT out :(true, 
+Good Context: [es_formula: 
+                EXISTS(flted_24_97,flted_24_96: true&flted_24_97=@A & 
+                flted_24_96=@M&{FLOW,(17,18)=__norm})[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_evars: [n_98; flted_24_99; flted_24_100]
+               es_rhs_eqset: [(n_98,n)]
+               es_subst (from): [n_98; flted_24_100; flted_24_99]
+               es_subst (to): [n; flted_24_97; flted_24_96]
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+)
+
+run_entail_check@8
+run_entail_check inp1 :IFORM:(true ; (true ; (x::ll<n, @A, @M>@M[1])))*(true)( FLOW __norm)
+run_entail_check inp2 :IFORMStruc:EBase: [][](true ; (true ; (x::ll<n, @A, @L>@M[1])))*(true)( FLOW __norm) 
+run_entail_check@8 EXIT out :(true, 
+Good Context: [es_formula: 
+                EXISTS(flted_24_97,flted_24_96: true&flted_24_97=@A & 
+                flted_24_96=@M&{FLOW,(17,18)=__norm})[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_evars: [n_98; flted_24_99; flted_24_100]
+               es_rhs_eqset: [(n_98,n)]
+               es_subst (from): [n_98; flted_24_100; flted_24_99]
+               es_subst (to): [n; flted_24_97; flted_24_96]
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+)
+
+Entail (2) : Valid. 
+
+ <1>EXISTS(flted_24_97,flted_24_96: true&flted_24_97=@A & flted_24_96=@M&{FLOW,(17,18)=__norm})[]
+
+
+heap_entail_struc@18@17@16@15@14
+heap_entail_struc inp1 : 
+Good Context: [es_formula: true&@M<:f & f<:@A&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+heap_entail_struc inp2 : EBase true&f=@L&{FLOW,(17,18)=__norm}[]
+heap_entail_struc@18 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  f<:@A & @M<:f |-  f=@L. LOCS:[27] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(1,20)=__flow}}
+
+
+heap_entail_struc_init@17@16@15@14
+heap_entail_struc_init inp1 :?
+heap_entail_struc_init@17 EXIT out :0
+
+heap_entail_struc_init_bug_inv@16@15@14
+heap_entail_struc_init_bug_inv inp1 : 
+Good Context: [es_formula: true&@M<:f & f<:@A&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+heap_entail_struc_init_bug_inv inp2 : EBase true&f=@L&{FLOW,(17,18)=__norm}[]
+heap_entail_struc_init_bug_inv@16 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  f<:@A & @M<:f |-  f=@L. LOCS:[27] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(1,20)=__flow}}
+
+
+run_infer_one_pass@15@14
+run_infer_one_pass inp1 :[]
+run_infer_one_pass inp2 :IFORM:(@M<:f) & (f<:@A) FLOW __norm
+run_infer_one_pass inp3 :IFORMStruc:EBase: [][]f = @L FLOW __norm 
+run_infer_one_pass@15 EXIT out :(false, 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  f<:@A & @M<:f |-  f=@L. LOCS:[27] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(1,20)=__flow}}
+)
+
+run_entail_check@14
+run_entail_check inp1 :IFORM:(@M<:f) & (f<:@A) FLOW __norm
+run_entail_check inp2 :IFORMStruc:EBase: [][]f = @L FLOW __norm 
+run_entail_check@14 EXIT out :(false, 
+MaybeErr Context: 
+                   fe_kind: MAY
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  f<:@A & @M<:f |-  f=@L. LOCS:[27] (may-bug)
+                             fc_current_lhs_flow: {FLOW,(1,20)=__flow}}
+)
+
+Entail (3) : Fail.(may) cause: f<:@A & @M<:f |-  f=@L. LOCS:[27] (may-bug)
+
+
+
+(andreeac)[do_match] input LHS =  es_formula: 
+  x::node<Anon_11@[@M],Anon_12@[@M]>@M[Orig]&0<=0&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_gen_impl_vars: [Anon_13; Anon_14]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+[do_match] RHS =  true&true&{FLOW,(17,18)=__norm}[]
+[do_match] matching  x::node<Anon_11@M,Anon_12@M>@M[Orig] |-  x::node<Anon_13@L,Anon_14@L>@L[Orig]
+--C: r_node = node  spec var:x
+--C: l_node = node
+--C: r_ann = @L
+--C: l_ann = @M
+cris: ann_lhs = None
+cris: ann_rhs = None
+
+do_match@24@23@22@21@20@19
+do_match inp1 : x::node<Anon_11@M,Anon_12@M>@M[Orig]
+do_match inp2 : x::node<Anon_13@L,Anon_14@L>@L[Orig]
+do_match inp3 : es_formula: 
+  x::node<Anon_11@[@M],Anon_12@[@M]>@M[Orig]&0<=0&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_gen_impl_vars: [Anon_13; Anon_14]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+do_match inp4 : true&true&{FLOW,(17,18)=__norm}[]
+do_match inp5 :[]
+do_match@24 EXIT out : 
+Good Context: [es_formula: 
+                x::node<Anon_11@[@M],Anon_12@[@M]>@M[Orig]&0<=0 & 
+                Anon_13=Anon_11 & Anon_14=Anon_12&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+
+heap_entail_struc@23@22@21@20@19
+heap_entail_struc inp1 : 
+Good Context: [es_formula: x::node<Anon_11@M,Anon_12@M>@M[Orig]&0<=0&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+heap_entail_struc inp2 : EBase exists (Expl)(Impl)[Anon_13; 
+       Anon_14](ex)x::node<Anon_13@L,Anon_14@L>@L[Orig]&2<=2&
+       {FLOW,(17,18)=__norm}[]
+heap_entail_struc@23 EXIT out : 
+Good Context: [es_formula: 
+                x::node<Anon_11@M,Anon_12@M>@M[Orig]&0<=0 & 
+                Anon_13=Anon_11 & Anon_14=Anon_12&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+
+heap_entail_struc_init@22@21@20@19
+heap_entail_struc_init inp1 :?
+heap_entail_struc_init@22 EXIT out :1
+
+heap_entail_struc_init_bug_inv@21@20@19
+heap_entail_struc_init_bug_inv inp1 : 
+Good Context: [es_formula: x::node<Anon_11@M,Anon_12@M>@M[Orig]&0<=0&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+heap_entail_struc_init_bug_inv inp2 : EBase exists (Expl)(Impl)[Anon_13; 
+       Anon_14](ex)x::node<Anon_13@L,Anon_14@L>@L[Orig]&2<=2&
+       {FLOW,(17,18)=__norm}[]
+heap_entail_struc_init_bug_inv@21 EXIT out : 
+Good Context: [es_formula: 
+                x::node<Anon_11@M,Anon_12@M>@M[Orig]&0<=0 & 
+                Anon_13=Anon_11 & Anon_14=Anon_12&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+
+run_infer_one_pass@20@19
+run_infer_one_pass inp1 :[]
+run_infer_one_pass inp2 :IFORM:(true ; (true ; (x::node<Anon_11, Anon_12>@M[1])))*(true)( FLOW __norm)
+run_infer_one_pass inp3 :IFORMStruc:EBase: [][](true ; (true ; (x::node<Anon_13, Anon_14>@L[1])))*(true)( FLOW __norm) 
+run_infer_one_pass@20 EXIT out :(true, 
+Good Context: [es_formula: 
+                x::node<Anon_11@M,Anon_12@M>@M[Orig]&0<=0 & 
+                Anon_13=Anon_11 & Anon_14=Anon_12&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+)
+
+run_entail_check@19
+run_entail_check inp1 :IFORM:(true ; (true ; (x::node<Anon_11, Anon_12>@M[1])))*(true)( FLOW __norm)
+run_entail_check inp2 :IFORMStruc:EBase: [][](true ; (true ; (x::node<Anon_13, Anon_14>@L[1])))*(true)( FLOW __norm) 
+run_entail_check@19 EXIT out :(true, 
+Good Context: [es_formula: 
+                x::node<Anon_11@M,Anon_12@M>@M[Orig]&0<=0 & 
+                Anon_13=Anon_11 & Anon_14=Anon_12&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+)
+
+Entail (4) : Valid. 
+
+
+
+(andreeac)[do_match] input LHS =  es_formula: x::node<Anon_15@A,Anon_16@A>@v[Orig]&v<=v&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_gen_impl_vars: [Anon_17; Anon_18]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_infer_vars: [v]
+ es_var_zero_perm: 
+[do_match] RHS =  true&true&{FLOW,(17,18)=__norm}[]
+[do_match] matching  x::node<Anon_15@v,Anon_16@v>@v[Orig] |-  x::node<Anon_17@I,Anon_18@I>@I[Orig]
+--C: r_node = node  spec var:x
+--C: l_node = node
+--C: r_ann = @I
+--C: l_ann = @v
+cris: ann_lhs = None
+cris: ann_rhs = Some( v<:@I & v<:@I)
+
+do_match@29@28@27@26@25
+do_match inp1 : x::node<Anon_15@v,Anon_16@v>@v[Orig]
+do_match inp2 : x::node<Anon_17@I,Anon_18@I>@I[Orig]
+do_match inp3 : es_formula: x::node<Anon_15@A,Anon_16@A>@v[Orig]&v<=v&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_gen_impl_vars: [Anon_17; Anon_18]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_infer_vars: [v]
+ es_var_zero_perm: 
+do_match inp4 : true&true&{FLOW,(17,18)=__norm}[]
+do_match inp5 :[]
+do_match@29 EXIT out : 
+Good Context: [es_formula: 
+                x::node<Anon_15@A,Anon_16@A>@v[Orig]&v<=v & 
+                Anon_17=Anon_15 & Anon_18=Anon_16 & v<=1&
+                {FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_infer_vars: [v]
+               es_infer_pure: [v<=1]
+               es_var_zero_perm: ]
+
+
+heap_entail_struc@28@27@26@25
+heap_entail_struc inp1 : 
+Good Context: [es_formula: x::node<Anon_15@v,Anon_16@v>@v[Orig]&v<=v&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_infer_vars: [v]
+               es_var_zero_perm: ]
+
+heap_entail_struc inp2 : EBase exists (Expl)(Impl)[Anon_17; 
+       Anon_18](ex)x::node<Anon_17@I,Anon_18@I>@I[Orig]&1<=1&
+       {FLOW,(17,18)=__norm}[]
+heap_entail_struc@28 EXIT out : 
+Good Context: [es_formula: 
+                x::node<Anon_15@A,Anon_16@A>@v[Orig]&v<=v & 
+                Anon_17=Anon_15 & Anon_18=Anon_16 & v<=1&
+                {FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_infer_vars: [v]
+               es_infer_pure: [v<=1]
+               es_var_zero_perm: ]
+
+
+heap_entail_struc_init@27@26@25
+heap_entail_struc_init inp1 :?
+heap_entail_struc_init@27 EXIT out :1
+
+heap_entail_struc_init_bug_inv@26@25
+heap_entail_struc_init_bug_inv inp1 : 
+Good Context: [es_formula: x::node<Anon_15@v,Anon_16@v>@v[Orig]&v<=v&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_infer_vars: [v]
+               es_var_zero_perm: ]
+
+heap_entail_struc_init_bug_inv inp2 : EBase exists (Expl)(Impl)[Anon_17; 
+       Anon_18](ex)x::node<Anon_17@I,Anon_18@I>@I[Orig]&1<=1&
+       {FLOW,(17,18)=__norm}[]
+heap_entail_struc_init_bug_inv@26 EXIT out : 
+Good Context: [es_formula: 
+                x::node<Anon_15@A,Anon_16@A>@v[Orig]&v<=v & 
+                Anon_17=Anon_15 & Anon_18=Anon_16 & v<=1&
+                {FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_infer_vars: [v]
+               es_infer_pure: [v<=1]
+               es_var_zero_perm: ]
+
+
+run_infer_one_pass@25
+run_infer_one_pass inp1 :[v]
+run_infer_one_pass inp2 :IFORM:(true ; (true ; (x::node<Anon_15, Anon_16>@v[1])))*(true)( FLOW __norm)
+run_infer_one_pass inp3 :IFORMStruc:EBase: [][](true ; (true ; (x::node<Anon_17, Anon_18>@I[1])))*(true)( FLOW __norm) 
+run_infer_one_pass@25 EXIT out :(true, 
+Good Context: [es_formula: 
+                x::node<Anon_15@A,Anon_16@A>@v[Orig]&v<=v & 
+                Anon_17=Anon_15 & Anon_18=Anon_16 & v<=1&
+                {FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_infer_vars: [v]
+               es_infer_pure: [v<=1]
+               es_var_zero_perm: ]
+)
+
+Entail (5) : Valid. 
+
+ <1>x::node<Anon_15@A,Anon_16@A>@v[Orig]&v<=v & Anon_17=Anon_15 & Anon_18=Anon_16 & v<=1&{FLOW,(17,18)=__norm}[]
+ inferred pure: [v<=1]
+
+
+heap_entail_struc@34@33@32@31@30
+heap_entail_struc inp1 : 
+Good Context: [es_formula: true&f=@L&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+heap_entail_struc inp2 : EBase true&f<:@M&{FLOW,(17,18)=__norm}[]
+heap_entail_struc@34 EXIT out : 
+MaybeErr Context: 
+                   fe_kind: MUST
+                   fe_name: logical bug
+                   fe_locs: {
+                             fc_message:  f=@L |-  f<:@M. LOCS:[34] (must-bug)
+                             fc_current_lhs_flow: {FLOW,(1,2)=__Error}}
+
+
+heap_entail_struc_init@33@32@31@30
+heap_entail_struc_init inp1 :?
+heap_entail_struc_init@33 EXIT out :0
+
+heap_entail_struc_init_bug_inv@32@31@30
+heap_entail_struc_init_bug_inv inp1 : 
+Good Context: [es_formula: true&f=@L&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+heap_entail_struc_init_bug_inv inp2 : EBase true&f<:@M&{FLOW,(17,18)=__norm}[]
+heap_entail_struc_init_bug_inv@32 EXIT out : 
+Error Context: [es_formula: true&f=@L&{FLOW,(1,2)=__Error}[]
+                es_pure: true
+                es_orig_ante: None
+                es_heap: true
+                es_aux_conseq: true
+                es_must_error: Some( f=@L |-  f<:@M. LOCS:[34] (must-bug))
+                es_var_measures: None
+                es_term_err: None
+                es_var_zero_perm: ]
+
+
+run_infer_one_pass@31@30
+run_infer_one_pass inp1 :[]
+run_infer_one_pass inp2 :IFORM:f = @L FLOW __norm
+run_infer_one_pass inp3 :IFORMStruc:EBase: [][]f<:@M FLOW __norm 
+run_infer_one_pass@31 EXIT out :(false, 
+Error Context: [es_formula: true&f=@L&{FLOW,(1,2)=__Error}[]
+                es_pure: true
+                es_orig_ante: None
+                es_heap: true
+                es_aux_conseq: true
+                es_must_error: Some( f=@L |-  f<:@M. LOCS:[34] (must-bug))
+                es_var_measures: None
+                es_term_err: None
+                es_var_zero_perm: ]
+)
+
+run_entail_check@30
+run_entail_check inp1 :IFORM:f = @L FLOW __norm
+run_entail_check inp2 :IFORMStruc:EBase: [][]f<:@M FLOW __norm 
+run_entail_check@30 EXIT out :(false, 
+Error Context: [es_formula: true&f=@L&{FLOW,(1,2)=__Error}[]
+                es_pure: true
+                es_orig_ante: None
+                es_heap: true
+                es_aux_conseq: true
+                es_must_error: Some( f=@L |-  f<:@M. LOCS:[34] (must-bug))
+                es_var_measures: None
+                es_term_err: None
+                es_var_zero_perm: ]
+)
+
+Entail (6) : Fail.(must) cause: f=@L |-  f<:@M. LOCS:[34] (must-bug)
+
+ <1>true&f=@L&{FLOW,(1,2)=__Error}[]
+
+
+heap_entail_struc@39@38@37@36@35
+heap_entail_struc inp1 : 
+Good Context: [es_formula: true&f=@M&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+heap_entail_struc inp2 : EBase true&f<:@L&{FLOW,(17,18)=__norm}[]
+heap_entail_struc@39 EXIT out : 
+Good Context: [es_formula: true&f=@M&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+
+heap_entail_struc_init@38@37@36@35
+heap_entail_struc_init inp1 :?
+heap_entail_struc_init@38 EXIT out :1
+
+heap_entail_struc_init_bug_inv@37@36@35
+heap_entail_struc_init_bug_inv inp1 : 
+Good Context: [es_formula: true&f=@M&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+heap_entail_struc_init_bug_inv inp2 : EBase true&f<:@L&{FLOW,(17,18)=__norm}[]
+heap_entail_struc_init_bug_inv@37 EXIT out : 
+Good Context: [es_formula: true&f=@M&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+
+run_infer_one_pass@36@35
+run_infer_one_pass inp1 :[]
+run_infer_one_pass inp2 :IFORM:f = @M FLOW __norm
+run_infer_one_pass inp3 :IFORMStruc:EBase: [][]f<:@L FLOW __norm 
+run_infer_one_pass@36 EXIT out :(true, 
+Good Context: [es_formula: true&f=@M&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+)
+
+run_entail_check@35
+run_entail_check inp1 :IFORM:f = @M FLOW __norm
+run_entail_check inp2 :IFORMStruc:EBase: [][]f<:@L FLOW __norm 
+run_entail_check@35 EXIT out :(true, 
+Good Context: [es_formula: true&f=@M&{FLOW,(17,18)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+)
+
+Entail (7) : Valid. 
+
+ <1>true&f=@M&{FLOW,(17,18)=__norm}[]
+
+Stop Omega... 59 invocations 

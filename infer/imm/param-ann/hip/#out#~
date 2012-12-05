@@ -1,0 +1,364 @@
+Starting Omega...oc
+Translating global variables to procedure parameters...
+
+heap_entail_init@1
+heap_entail_init inp1 : 
+Good Context: [es_formula: 
+                true&self=null & n=0 | 0<=v1 & 0<=v2 & self!=null & 1<=n&
+                {FLOW,(1,23)=__flow}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+heap_entail_init inp2 : true&0<=n&{FLOW,(1,23)=__flow}[]
+heap_entail_init@1 EXIT out : 
+Good Context: [es_formula: 
+                true&self=null & n=0 | 0<=v1 & 0<=v2 & self!=null & 1<=n&
+                {FLOW,(1,23)=__flow}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: None
+               es_term_err: None
+               es_var_zero_perm: ]
+
+
+Checking procedure length$node... 
+
+(andreeac)[do_match] input LHS =  es_formula: 
+  x'::node<a_760@flted_14_732,q_761@[@flted_14_731]>@M[Orig] * 
+  q_761::ll<flted_10_759,v1_757,v2_758>@M[Orig]&0<=flted_14_732 & 
+  0<=flted_14_731 & flted_10_759+1=n & v1_757=flted_14_732 & 
+  v2_758=flted_14_731 & x'=x & flted_14_732=@A & flted_14_731=@L & 
+  x'!=null & !(v_bool_17_702') & x'!=null & !(v_bool_17_702')&
+  {FLOW,(20,21)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: Some(MayLoop)
+ es_term_err: None
+ es_var_zero_perm: 
+[do_match] RHS =  true&true&{FLOW,(1,23)=__flow}[]
+[do_match] matching  x'::node<a_760@flted_14_732,q_761@flted_14_731>@M[Orig] |-  x'::node<val_19_697'@A,next_19_698'@L>@L[Orig]
+
+do_match@3@2
+do_match inp1 : x'::node<a_760@flted_14_732,q_761@flted_14_731>@M[Orig]
+do_match inp2 : x'::node<val_19_697'@A,next_19_698'@L>@L[Orig]
+do_match inp3 : es_formula: 
+  x'::node<a_760@flted_14_732,q_761@[@flted_14_731]>@M[Orig] * 
+  q_761::ll<flted_10_759,v1_757,v2_758>@M[Orig]&0<=flted_14_732 & 
+  0<=flted_14_731 & flted_10_759+1=n & v1_757=flted_14_732 & 
+  v2_758=flted_14_731 & x'=x & flted_14_732=@A & flted_14_731=@L & 
+  x'!=null & !(v_bool_17_702') & x'!=null & !(v_bool_17_702')&
+  {FLOW,(20,21)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: Some(MayLoop)
+ es_term_err: None
+ es_var_zero_perm: 
+do_match inp4 : true&true&{FLOW,(1,23)=__flow}[]
+do_match inp5 :[]
+do_match@3 EXIT out : 
+Good Context: [es_formula: 
+                x'::node<a_760@flted_14_732,q_761@[@flted_14_731]>@M[Orig] * 
+                q_761::ll<flted_10_759,v1_757,v2_758>@M[Orig]&
+                0<=flted_14_732 & 0<=flted_14_731 & flted_10_759+1=n & 
+                v1_757=flted_14_732 & v2_758=flted_14_731 & x'=x & 
+                flted_14_732=@A & flted_14_731=@L & x'!=null & 
+                !(v_bool_17_702') & x'!=null & !(v_bool_17_702') & 
+                val_19_697'=a_760 & next_19_698'=q_761&
+                {FLOW,(20,21)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: Some(MayLoop)
+               es_term_err: None
+               es_var_zero_perm: ]
+
+
+
+(andreeac)[do_match] input LHS =  es_formula: 
+  x'::node<a_760@flted_14_732,q_761@flted_14_731>@M[Orig]&0<=flted_14_732 & 
+  0<=flted_14_731 & flted_10_759+1=n & v1_757=flted_14_732 & 
+  v2_758=flted_14_731 & x'=x & flted_14_732=@A & flted_14_731=@L & 
+  x'!=null & !(v_bool_17_702') & x'!=null & !(v_bool_17_702') & 
+  v_node_19_699'=q_761&{FLOW,(20,21)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_evars: [flted_14_766; flted_14_767]
+ es_gen_impl_vars: [n_763]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: Some(MayLoop)
+ es_term_err: None
+ es_var_zero_perm: 
+[do_match] RHS =  true&true&{FLOW,(20,21)=__norm}[]
+[do_match] matching  q_761::ll<flted_10_759,v1_757,v2_758>@M[Orig] |-  v_node_19_699'::ll<n_763,flted_14_767,flted_14_766>@M[Orig][LHSCase]
+
+do_match@4@2
+do_match inp1 : q_761::ll<flted_10_759,v1_757,v2_758>@M[Orig]
+do_match inp2 : v_node_19_699'::ll<n_763,flted_14_767,flted_14_766>@M[Orig][LHSCase]
+do_match inp3 : es_formula: 
+  x'::node<a_760@flted_14_732,q_761@flted_14_731>@M[Orig]&0<=flted_14_732 & 
+  0<=flted_14_731 & flted_10_759+1=n & v1_757=flted_14_732 & 
+  v2_758=flted_14_731 & x'=x & flted_14_732=@A & flted_14_731=@L & 
+  x'!=null & !(v_bool_17_702') & x'!=null & !(v_bool_17_702') & 
+  v_node_19_699'=q_761&{FLOW,(20,21)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_evars: [flted_14_766; flted_14_767]
+ es_gen_impl_vars: [n_763]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: Some(MayLoop)
+ es_term_err: None
+ es_var_zero_perm: 
+do_match inp4 : true&true&{FLOW,(20,21)=__norm}[]
+do_match inp5 :[]
+do_match@4 EXIT out : 
+Good Context: [es_formula: 
+                x'::node<a_760@flted_14_732,q_761@flted_14_731>@M[Orig]&
+                0<=flted_14_732 & 0<=flted_14_731 & flted_10_759+1=n & 
+                v1_757=flted_14_732 & v2_758=flted_14_731 & x'=x & 
+                flted_14_732=@A & flted_14_731=@L & x'!=null & 
+                !(v_bool_17_702') & x'!=null & !(v_bool_17_702') & 
+                v_node_19_699'=q_761 & n_763=flted_10_759&
+                {FLOW,(20,21)=__norm}[]
+               es_pure: true
+               es_orig_ante: None
+               es_heap: true
+               es_evars: [flted_14_766; flted_14_767]
+               es_subst (from): [flted_14_767; flted_14_766]
+               es_subst (to): [v1_757; v2_758]
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: Some(MayLoop)
+               es_term_err: None
+               es_var_zero_perm: ]
+
+
+
+(andreeac)[do_match] input LHS =  es_formula: 
+  x'::node<a_760@flted_14_732,q_761@flted_14_731>@M[Orig] * 
+  q_761::ll<n_763,flted_15_790,flted_15_789>@M[Orig][LHSCase]&
+  0<=flted_14_732 & 0<=flted_14_731 & flted_10_759+1=n & 
+  v1_757=flted_14_732 & v2_758=flted_14_731 & x'=x & flted_14_732=@A & 
+  flted_14_731=@L & x'!=null & !(v_bool_17_702') & x'!=null & 
+  !(v_bool_17_702') & n_763=flted_10_759 & flted_15_790=@A & 
+  flted_15_789=@M & 0<=n_763 & r_70'=n_763 & v_int_20_701'=r_70'+1 & 
+  res=v_int_20_701'&{FLOW,(20,21)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_evars: [v1_811; v2_812; flted_10_813; n_799; flted_15_800; flted_15_801]
+ es_gen_impl_vars: [a_802; q_803]
+ es_rhs_eqset: [(res,n); (n_799,n); (v1_811,flted_15_801); 
+               (v2_812,flted_15_800)]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: Some(MayLoop)
+ es_term_err: None
+ es_var_zero_perm: 
+[do_match] RHS =  q_803::ll<flted_10_813,v1_811,v2_812>@M[Orig]&true&{FLOW,(1,23)=__flow}[]
+[do_match] matching  x'::node<a_760@flted_14_732,q_761@flted_14_731>@M[Orig] |-  x::node<a_802@flted_15_801,q_803@flted_15_800>@M[Orig]
+
+
+(andreeac)[do_match] input LHS =  es_formula: 
+  x'::node<a_760@flted_14_732,q_761@flted_14_731>@M[Orig]&0<=flted_14_732 & 
+  0<=flted_14_731 & flted_10_759+1=n & v1_757=flted_14_732 & 
+  v2_758=flted_14_731 & x'=x & flted_14_732=@A & flted_14_731=@L & 
+  x'!=null & !(v_bool_17_702') & x'!=null & !(v_bool_17_702') & 
+  n_763=flted_10_759 & flted_15_790=@A & flted_15_789=@M & 0<=n_763 & 
+  r_70'=n_763 & v_int_20_701'=r_70'+1 & res=v_int_20_701' & a_802=a_760 & 
+  q_803=q_761&{FLOW,(20,21)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_evars: [v1_811; v2_812; flted_10_813; n_799; flted_15_800; flted_15_801]
+ es_rhs_eqset: [(res,n); (n_799,n); (v1_811,flted_15_801); 
+               (v2_812,flted_15_800)]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: Some(MayLoop)
+ es_term_err: None
+ es_var_zero_perm: 
+[do_match] RHS =  true&flted_14_732<:flted_15_801 & flted_14_731<:flted_15_800&
+{FLOW,(1,23)=__flow}[]
+[do_match] matching  q_761::ll<n_763,flted_15_790,flted_15_789>@M[Orig][LHSCase] |-  q_803::ll<flted_10_813,v1_811,v2_812>@M[Orig]
+
+flted_14_732<:flted_15_801 & flted_14_731<:flted_15_800
+[(res,n); (n_799,n); (v1_811,flted_15_801); (v2_812,flted_15_800)]
+es_subst (from): [flted_10_813; v1_811; v2_812]
+es_subst (to): [n_763; flted_15_790; flted_15_789]
+flted_14_732=@A & flted_14_731=@L & flted_15_790=@A & flted_15_789=@M
+
+do_match@6@5@2
+do_match inp1 : q_761::ll<n_763,flted_15_790,flted_15_789>@M[Orig][LHSCase]
+do_match inp2 : q_803::ll<flted_10_813,v1_811,v2_812>@M[Orig]
+do_match inp3 : es_formula: 
+  x'::node<a_760@flted_14_732,q_761@flted_14_731>@M[Orig]&0<=flted_14_732 & 
+  0<=flted_14_731 & flted_10_759+1=n & v1_757=flted_14_732 & 
+  v2_758=flted_14_731 & x'=x & flted_14_732=@A & flted_14_731=@L & 
+  x'!=null & !(v_bool_17_702') & x'!=null & !(v_bool_17_702') & 
+  n_763=flted_10_759 & flted_15_790=@A & flted_15_789=@M & 0<=n_763 & 
+  r_70'=n_763 & v_int_20_701'=r_70'+1 & res=v_int_20_701' & a_802=a_760 & 
+  q_803=q_761&{FLOW,(20,21)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_evars: [v1_811; v2_812; flted_10_813; n_799; flted_15_800; flted_15_801]
+ es_rhs_eqset: [(res,n); (n_799,n); (v1_811,flted_15_801); 
+               (v2_812,flted_15_800)]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: Some(MayLoop)
+ es_term_err: None
+ es_var_zero_perm: 
+do_match inp4 : true&flted_14_732<:flted_15_801 & flted_14_731<:flted_15_800&
+{FLOW,(1,23)=__flow}[]
+do_match inp5 :[x]
+do_match@6 EXIT out : 
+Good Context: [es_formula: 
+                x'::node<a_760@flted_14_732,q_761@flted_14_731>@M[Orig]&
+                0<=flted_14_732 & 0<=flted_14_731 & flted_10_759+1=n & 
+                v1_757=flted_14_732 & v2_758=flted_14_731 & x'=x & 
+                flted_14_732=@A & flted_14_731=@L & x'!=null & 
+                !(v_bool_17_702') & x'!=null & !(v_bool_17_702') & 
+                n_763=flted_10_759 & flted_15_790=@A & flted_15_789=@M & 
+                0<=n_763 & r_70'=n_763 & v_int_20_701'=r_70'+1 & 
+                res=v_int_20_701' & a_802=a_760 & q_803=q_761&
+                {FLOW,(20,21)=__norm}[]
+               es_pure: flted_14_732<:flted_15_801 & flted_14_731<:flted_15_800
+               es_orig_ante: None
+               es_heap: true
+               es_evars: [v1_811; v2_812; flted_10_813; n_799; flted_15_800; 
+                         flted_15_801]
+               es_rhs_eqset: [(res,n); (n_799,n); (v1_811,flted_15_801); 
+                             (v2_812,flted_15_800)]
+               es_subst (from): [flted_10_813; v1_811; v2_812]
+               es_subst (to): [n_763; flted_15_790; flted_15_789]
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: Some(MayLoop)
+               es_term_err: None
+               es_var_zero_perm: ]
+
+do_match@5@2
+do_match inp1 : x'::node<a_760@flted_14_732,q_761@flted_14_731>@M[Orig]
+do_match inp2 : x::node<a_802@flted_15_801,q_803@flted_15_800>@M[Orig]
+do_match inp3 : es_formula: 
+  x'::node<a_760@flted_14_732,q_761@flted_14_731>@M[Orig] * 
+  q_761::ll<n_763,flted_15_790,flted_15_789>@M[Orig][LHSCase]&
+  0<=flted_14_732 & 0<=flted_14_731 & flted_10_759+1=n & 
+  v1_757=flted_14_732 & v2_758=flted_14_731 & x'=x & flted_14_732=@A & 
+  flted_14_731=@L & x'!=null & !(v_bool_17_702') & x'!=null & 
+  !(v_bool_17_702') & n_763=flted_10_759 & flted_15_790=@A & 
+  flted_15_789=@M & 0<=n_763 & r_70'=n_763 & v_int_20_701'=r_70'+1 & 
+  res=v_int_20_701'&{FLOW,(20,21)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_evars: [v1_811; v2_812; flted_10_813; n_799; flted_15_800; flted_15_801]
+ es_gen_impl_vars: [a_802; q_803]
+ es_rhs_eqset: [(res,n); (n_799,n); (v1_811,flted_15_801); 
+               (v2_812,flted_15_800)]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: Some(MayLoop)
+ es_term_err: None
+ es_var_zero_perm: 
+do_match inp4 : q_803::ll<flted_10_813,v1_811,v2_812>@M[Orig]&true&{FLOW,(1,23)=__flow}[]
+do_match inp5 :[]
+do_match@5 EXIT out : 
+Good Context: [es_formula: 
+                x'::node<a_760@flted_14_732,q_761@flted_14_731>@M[Orig]&
+                0<=flted_14_732 & 0<=flted_14_731 & flted_10_759+1=n & 
+                v1_757=flted_14_732 & v2_758=flted_14_731 & x'=x & 
+                flted_14_732=@A & flted_14_731=@L & x'!=null & 
+                !(v_bool_17_702') & x'!=null & !(v_bool_17_702') & 
+                n_763=flted_10_759 & flted_15_790=@A & flted_15_789=@M & 
+                0<=n_763 & r_70'=n_763 & v_int_20_701'=r_70'+1 & 
+                res=v_int_20_701' & a_802=a_760 & q_803=q_761&
+                {FLOW,(20,21)=__norm}[]
+               es_pure: flted_14_732<:flted_15_801 & flted_14_731<:flted_15_800
+               es_orig_ante: None
+               es_heap: true
+               es_evars: [v1_811; v2_812; flted_10_813; n_799; flted_15_800; 
+                         flted_15_801]
+               es_rhs_eqset: [(res,n); (n_799,n); (v1_811,flted_15_801); 
+                             (v2_812,flted_15_800)]
+               es_subst (from): [flted_10_813; v1_811; v2_812]
+               es_subst (to): [n_763; flted_15_790; flted_15_789]
+               es_aux_conseq: true
+               es_must_error: None
+               es_var_measures: Some(MayLoop)
+               es_term_err: None
+               es_var_zero_perm: ]
+
+
+check_specs_infer@2
+check_specs_infer inp1 : ((None,[]),EBase exists (Expl)(Impl)[n](ex)EXISTS(flted_14_67,
+                  flted_14_68: x::ll<n,flted_14_68,flted_14_67>@M[Orig][LHSCase]&
+                  flted_14_68=@A & flted_14_67=@L&{FLOW,(20,21)=__norm})[]
+                    EBase true&MayLoop&{FLOW,(1,23)=__flow}[]
+                            EAssume 1::
+                              EXISTS(n_69,flted_15_65,
+                              flted_15_66: x::ll<n_69,flted_15_66,flted_15_65>@M[Orig][LHSCase]&
+                              flted_15_66=@A & flted_15_65=@M & res=n & 
+                              n_69=n&{FLOW,(20,21)=__norm})[])
+check_specs_infer@2 EXIT out :( ((None,[]),EBase exists (Expl)(Impl)[n](ex)EXISTS(flted_14_67,
+                  flted_14_68: x::ll<n,flted_14_68,flted_14_67>@M[Orig][LHSCase]&
+                  flted_14_68=@A & flted_14_67=@L&{FLOW,(20,21)=__norm})[]
+                    EBase true&MayLoop&{FLOW,(1,23)=__flow}[]
+                            EAssume 1::
+                              EXISTS(n_69,flted_15_65,
+                              flted_15_66: x::ll<n_69,flted_15_66,flted_15_65>@M[Orig][LHSCase]&
+                              flted_15_66=@A & flted_15_65=@M & res=n & 
+                              n_69=n&{FLOW,(20,21)=__norm})[]),formulae:[],inferred rels:0,true)
+
+(andreeac)!!!! SPECS (after specs_infer) 0  ((None,[]),EBase exists (Expl)(Impl)[n](ex)EXISTS(flted_14_67,
+                  flted_14_68: x::ll<n,flted_14_68,flted_14_67>@M[Orig][LHSCase]&
+                  flted_14_68=@A & flted_14_67=@L&{FLOW,(20,21)=__norm})[]
+                    EBase true&MayLoop&{FLOW,(1,23)=__flow}[]
+                            EAssume 1::
+                              EXISTS(n_69,flted_15_65,
+                              flted_15_66: x::ll<n_69,flted_15_66,flted_15_65>@M[Orig][LHSCase]&
+                              flted_15_66=@A & flted_15_65=@M & res=n & 
+                              n_69=n&{FLOW,(20,21)=__norm})[])
+
+(andreeac)!!!! SPECS (after specs_infer) 1  ((None,[]),EBase exists (Expl)(Impl)[n](ex)EXISTS(flted_14_67,
+                  flted_14_68: x::ll<n,flted_14_68,flted_14_67>@M[Orig][LHSCase]&
+                  flted_14_68=@A & flted_14_67=@L&{FLOW,(20,21)=__norm})[]
+                    EBase true&MayLoop&{FLOW,(1,23)=__flow}[]
+                            EAssume 1::
+                              EXISTS(n_69,flted_15_65,
+                              flted_15_66: x::ll<n_69,flted_15_66,flted_15_65>@M[Orig][LHSCase]&
+                              flted_15_66=@A & flted_15_65=@M & res=n & 
+                              n_69=n&{FLOW,(20,21)=__norm})[])
+
+Procedure length$node SUCCESS
+
+Termination checking result:
+
+Stop Omega... 66 invocations 
+0 false contexts at: ()
+
+Total verification time: 0.29 second(s)
+	Time spent in main process: 0.26 second(s)
+	Time spent in child processes: 0.03 second(s)

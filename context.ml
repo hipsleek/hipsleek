@@ -359,7 +359,7 @@ and view_mater_match_x prog c vs1 aset imm f =
   (* let _ = print_string ("\n\nview_mater_match: vars = " ^ (Cprinter.string_of_spec_var_list vars)^ " \n\n") in  *)
   try
       let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) aset) mvs in
-      if  ((isLend imm) || (isAccs imm)) && not(!Globals.allow_field_ann) then
+      if  ((isLend imm) || (isAccs imm) || (isPoly imm)) && not(!Globals.allow_field_ann) then
 	    let hole_no = Globals.fresh_int() in
 	    [(Hole hole_no, f, [(f, hole_no)], MaterializedArg (mv,View_mater))]
       else [(HTrue, f, [], MaterializedArg (mv,View_mater))]
@@ -368,7 +368,7 @@ and view_mater_match_x prog c vs1 aset imm f =
               if List.exists (CP.eq_spec_var CP.null_var) aset then [] 
               else
                 if List.exists (fun v -> CP.mem v aset) vs1 then
-                  if ((isLend imm) || (isAccs imm)) && not(!Globals.allow_field_ann) then
+                  if ((isLend imm) || (isAccs imm)|| (isPoly imm)) && not(!Globals.allow_field_ann) then
                     let hole_no = Globals.fresh_int() in 
                     [(Hole hole_no, f, [(f, hole_no)], WArg)]
               else [(HEmp, f, [], WArg)]
@@ -424,7 +424,7 @@ and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset (imm : ann
   (*         let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) r_aset) lmv in *)
   (*         (HTrue, lhs_f, [], MaterializedArg (mv,Coerc_mater c.coercion_name))::a *)
   (*       with  _ ->  a) [] pos_coercs in *)
-  if (isLend imm) || (isAccs imm) then [] else res
+  if (isLend imm) || (isAccs imm) || (isPoly imm) then [] else res
 
 and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula) =
   let pr = Cprinter.string_of_h_formula in
@@ -455,7 +455,7 @@ and spatial_ctx_extract p f a i pi rn rr =
 
 and update_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
-  Debug.no_3 "update_ann" (Cprinter.string_of_h_formula) pr pr  (Cprinter.string_of_h_formula) (fun _ _ _-> update_ann_x f pimm1 pimm) f pimm1 pimm
+  Debug.to_3 "update_ann" (Cprinter.string_of_h_formula) pr pr  (Cprinter.string_of_h_formula) (fun _ _ _-> update_ann_x f pimm1 pimm) f pimm1 pimm
 
 and update_ann_x (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
   let new_field_ann_lnode = Immutable.replace_list_ann pimm1 pimm in
@@ -483,7 +483,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
         if ((CP.mem p1 aset) (* && (subtyp) *)) then 
 	(* let field_ann = false in *)
 	      
-            if (isLend imm) || (isAccs imm) then (* not consuming the node *)
+            if (isLend imm) || (isAccs imm) || (isPoly imm) then (* not consuming the node *)
 	          let hole_no = Globals.fresh_int() in 
 	          [((Hole hole_no), f, [(f, hole_no)], Root)]
             else
@@ -503,7 +503,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
             (* if (subtype_ann imm1 imm) then *)
         (if (CP.mem p1 aset) then
               (* let _ = print_string("found match for LHS = " ^ (Cprinter.string_of_h_formula f) ^ "\n") in *)
-              if  ((isLend imm) || (isAccs imm)) (*&& not(!Globals.allow_field_ann)*) then
+              if  ((isLend imm) || (isAccs imm) || (isPoly imm)) (*&& not(!Globals.allow_field_ann)*) then
 		        (* let _ = print_string("imm = Lend " ^ "\n") in *)
                 let hole_no = Globals.fresh_int() in
                 (*[(Hole hole_no, matched_node, hole_no, f, Root, HTrue, [])]*)

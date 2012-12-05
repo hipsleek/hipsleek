@@ -1,0 +1,10 @@
+/* sorted lists */
+
+/* representation of a node */
+data node {
+	int val; 
+	node next;	
+}
+
+ll_b<S> == self = null & S = {}
+	or self::node<v, q> * q::ll_b<S1> & S = union(S1, {self});

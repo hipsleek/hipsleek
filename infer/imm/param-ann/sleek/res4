@@ -1,0 +1,597 @@
+Starting Omega...oc
+
+(andreeac)solver.ml  rhs_p:  0<=n
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: true&self=null & n=0 | 1<=n & self!=null&{FLOW,(1,20)=__flow}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+Entail (1) : Valid. 
+
+ <1>false&false&{FLOW,(17,18)=__norm}[]
+
+
+Entail (2) : Valid. 
+
+ <1>false&false&{FLOW,(17,18)=__norm}[]
+
+
+(andreeac) context.ml l_h: x::node<p@L,q@A>@A[Orig]cris: ann_lhs = None
+cris: ann_rhs = None
+
+Entail (3) : Fail.(must) cause:911 : mismatched annotation
+
+ <1>x::node<p@[@L],q@A>@A[Orig]&true&{FLOW,(17,18)=__norm}[]
+
+
+(andreeac) context.ml l_h: x::node<p@L,q@A>@A[Orig]cris: ann_lhs = None
+cris: ann_rhs = None
+
+Entail (4) : Fail.(must) cause:911 : mismatched annotation
+
+ <1>x::node<p@[@L],q@A>@A[Orig]&true&{FLOW,(17,18)=__norm}[]
+
+
+(andreeac)solver.ml  rhs_p:  false
+Entail (5) : Fail.(must) cause: true |-  false. LOCS:[0] (RHS: contradiction)
+
+ <1>x::node<p@L,q@A>@M[Orig]&true&{FLOW,(1,2)=__Error}[]
+
+
+(andreeac) context.ml l_h: x::node<p@M,q@I>@M[Orig]cris: ann_lhs = None
+cris: ann_rhs = None
+
+(andreeac) solver.ml r_h:  true
+(andreeac) solver.ml l_h: x::node<p@M,q@[@I]>@M[Orig]
+(andreeac) solver.ml rem_l_node:  true
+(andreeac) solver.ml rem_r_node:  truecris: to_rhs =  true
+cris: new_ante_pure =  Anon_16=p & b=q
+cris: new_conseq_pure =  true
+cris: new_consumed =  true
+cris: new_ante =  x::node<p@M,q@[@I]>@M[Orig]&Anon_16=p & b=q&{FLOW,(17,18)=__norm}[]
+cris: new_conseq =  true&true&{FLOW,(17,18)=__norm}[]
+
+(andreeac)solver.ml  rhs_p:  true
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: x::node<p@M,q@[@I]>@M[Orig]&Anon_16=p & b=q&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+(andreeac)solver.ml  rhs_p:  0<=2 & 0<=3
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: x::node<p@M,q@I>@M[Orig]&Anon_16=p & b=q&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+Entail (6) : Valid. 
+
+ <1>x::node<p@M,q@I>@M[Orig]&Anon_16=p & b=q&{FLOW,(17,18)=__norm}[]
+
+
+(andreeac) context.ml l_h: x::node<p@M,q@L>@M[Orig]cris: ann_lhs = None
+cris: ann_rhs = None
+
+(andreeac) solver.ml r_h:  true
+(andreeac) solver.ml l_h: x::node<p@M,q@[@L]>@M[Orig]
+(andreeac) solver.ml rem_l_node:  true
+(andreeac) solver.ml rem_r_node:  truecris: to_rhs =  true
+cris: new_ante_pure =  Anon_17=p & b=q
+cris: new_conseq_pure =  true
+cris: new_consumed =  true
+cris: new_ante =  x::node<p@M,q@[@L]>@M[Orig]&Anon_17=p & b=q&{FLOW,(17,18)=__norm}[]
+cris: new_conseq =  true&true&{FLOW,(17,18)=__norm}[]
+
+(andreeac)solver.ml  rhs_p:  true
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: x::node<p@M,q@[@L]>@M[Orig]&Anon_17=p & b=q&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+(andreeac)solver.ml  rhs_p:  0<=2 & 0<=3
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: x::node<p@M,q@L>@M[Orig]&Anon_17=p & b=q&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+Entail (7) : Valid. 
+
+ <1>x::node<p@M,q@L>@M[Orig]&Anon_17=p & b=q&{FLOW,(17,18)=__norm}[]
+
+
+(andreeac) context.ml l_h: x::node<p@M,q@M>@M[Orig]cris: ann_lhs = None
+cris: ann_rhs = None
+
+(andreeac) solver.ml r_h:  true
+(andreeac) solver.ml l_h: x::node<p@M,q@A>@M[Orig]
+(andreeac) solver.ml rem_l_node:  true
+(andreeac) solver.ml rem_r_node:  truecris: to_rhs =  true
+cris: new_ante_pure =  Anon_18=p & b=q
+cris: new_conseq_pure =  true
+cris: new_consumed =  true
+cris: new_ante =  x::node<p@M,q@A>@M[Orig]&Anon_18=p & b=q&{FLOW,(17,18)=__norm}[]
+cris: new_conseq =  true&true&{FLOW,(17,18)=__norm}[]
+
+(andreeac)solver.ml  rhs_p:  true
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: x::node<p@M,q@A>@M[Orig]&Anon_18=p & b=q&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+(andreeac)solver.ml  rhs_p:  0<=1 & 0<=3
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: x::node<p@M,q@A>@M[Orig]&Anon_18=p & b=q&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+Entail (8) : Valid. 
+
+ <1>x::node<p@M,q@A>@M[Orig]&Anon_18=p & b=q&{FLOW,(17,18)=__norm}[]
+
+
+(andreeac) context.ml l_h: x::node<p@M,q@M>@M[Orig]cris: ann_lhs = None
+cris: ann_rhs = None
+
+(andreeac) solver.ml r_h:  true
+(andreeac) solver.ml l_h: x::node<p@M,q@[@M]>@M[Orig]
+(andreeac) solver.ml rem_l_node:  true
+(andreeac) solver.ml rem_r_node:  truecris: to_rhs =  true
+cris: new_ante_pure =  Anon_19=p & b=q
+cris: new_conseq_pure =  true
+cris: new_consumed =  true
+cris: new_ante =  x::node<p@M,q@[@M]>@M[Orig]&Anon_19=p & b=q&{FLOW,(17,18)=__norm}[]
+cris: new_conseq =  true&true&{FLOW,(17,18)=__norm}[]
+
+(andreeac)solver.ml  rhs_p:  true
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: x::node<p@M,q@[@M]>@M[Orig]&Anon_19=p & b=q&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+(andreeac)solver.ml  rhs_p:  0<=2 & 0<=3
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: x::node<p@M,q@M>@M[Orig]&Anon_19=p & b=q&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+Entail (9) : Valid. 
+
+ <1>x::node<p@M,q@M>@M[Orig]&Anon_19=p & b=q&{FLOW,(17,18)=__norm}[]
+
+
+(andreeac) context.ml l_h: x::node<p@I,q@I>@M[Orig] * y::node<c@M,d@M>@M[Orig]
+(andreeac) context.ml spatial_ctx_extract_x f: x::node<p@I,q@I>@M[Orig] * y::node<c@M,d@M>@M[Orig]
+(andreeac) context.ml spatial_ctx_extract_x res1: x::node<p@A,q@A>@M[Orig] * y::node<c@M,d@M>@M[Orig]
+(andreeac) context.ml spatial_ctx_extract_x res2:cris: ann_lhs = None
+cris: ann_rhs = None
+
+(andreeac) solver.ml r_h:  true
+(andreeac) solver.ml l_h: x::node<p@A,q@A>@M[Orig] * y::node<c@M,d@M>@M[Orig]
+(andreeac) solver.ml rem_l_node:  true
+(andreeac) solver.ml rem_r_node:  truecris: to_rhs =  true
+cris: new_ante_pure =  a=p & b=q
+cris: new_conseq_pure =  true
+cris: new_consumed =  true
+cris: new_ante =  x::node<p@A,q@A>@M[Orig] * y::node<c@M,d@M>@M[Orig]&a=p & b=q&
+{FLOW,(17,18)=__norm}[]
+cris: new_conseq =  true&true&{FLOW,(17,18)=__norm}[]
+
+(andreeac)solver.ml  rhs_p:  true
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: 
+  x::node<p@A,q@A>@M[Orig] * y::node<c@M,d@M>@M[Orig]&a=p & b=q&
+  {FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+(andreeac)solver.ml  rhs_p:  1<=1
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: 
+  x::node<p@A,q@A>@M[Orig] * y::node<c@M,d@M>@M[Orig]&a=p & b=q&
+  {FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+Entail (10) : Valid. 
+
+ <1>x::node<p@A,q@A>@M[Orig] * y::node<c@M,d@M>@M[Orig]&a=p & b=q&{FLOW,(17,18)=__norm}[]
+
+
+(andreeac) context.ml l_h: x::node<p@I,q@L>@M[Orig]cris: ann_lhs = None
+cris: ann_rhs = None
+
+(andreeac) solver.ml r_h:  true
+(andreeac) solver.ml l_h: x::node<p@A,q@[@L]>@M[Orig]
+(andreeac) solver.ml rem_l_node:  true
+(andreeac) solver.ml rem_r_node:  truecris: to_rhs =  true
+cris: new_ante_pure =  a=p & b=q
+cris: new_conseq_pure =  true
+cris: new_consumed =  true
+cris: new_ante =  x::node<p@A,q@[@L]>@M[Orig]&a=p & b=q&{FLOW,(17,18)=__norm}[]
+cris: new_conseq =  true&true&{FLOW,(17,18)=__norm}[]
+
+(andreeac)solver.ml  rhs_p:  true
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: x::node<p@A,q@[@L]>@M[Orig]&a=p & b=q&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+(andreeac)solver.ml  rhs_p:  0<=2 & 0<=1
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: x::node<p@A,q@L>@M[Orig]&a=p & b=q&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+Entail (11) : Valid. 
+
+ <1>x::node<p@A,q@L>@M[Orig]&a=p & b=q&{FLOW,(17,18)=__norm}[]
+
+
+(andreeac) context.ml l_h: x::node<p@M,q@M>@M[Orig]cris: ann_lhs = None
+cris: ann_rhs = None
+
+(andreeac) solver.ml r_h:  x::node<a@M,Anon_21@A>@M[Orig]
+(andreeac) solver.ml l_h: x::node<p@M,q@A>@M[Orig]
+(andreeac) solver.ml rem_l_node:  true
+(andreeac) solver.ml rem_r_node:  truecris: to_rhs =  true
+cris: new_ante_pure =  Anon_20=p & b=q
+cris: new_conseq_pure =  true
+cris: new_consumed =  true
+cris: new_ante =  x::node<p@M,q@A>@M[Orig]&Anon_20=p & b=q&{FLOW,(17,18)=__norm}[]
+cris: new_conseq =  x::node<a@M,Anon_21@A>@M[Orig]&true&{FLOW,(17,18)=__norm}[]
+
+(andreeac) context.ml l_h: x::node<p@M,q@A>@M[Orig]cris: ann_lhs = None
+cris: ann_rhs = None
+
+(andreeac) solver.ml r_h:  true
+(andreeac) solver.ml l_h: x::node<p@A,q@A>@M[Orig]
+(andreeac) solver.ml rem_l_node:  true
+(andreeac) solver.ml rem_r_node:  truecris: to_rhs =  true
+cris: new_ante_pure =  Anon_20=p & b=q & a=p & Anon_21=q
+cris: new_conseq_pure =  true
+cris: new_consumed =  true
+cris: new_ante =  x::node<p@A,q@A>@M[Orig]&Anon_20=p & b=q & a=p & Anon_21=q&
+{FLOW,(17,18)=__norm}[]
+cris: new_conseq =  true&true&{FLOW,(17,18)=__norm}[]
+
+(andreeac)solver.ml  rhs_p:  true
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: 
+  x::node<p@A,q@A>@M[Orig]&Anon_20=p & b=q & a=p & Anon_21=q&
+  {FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+(andreeac)solver.ml  rhs_p:  0<=0 & 0<=3
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: 
+  x::node<p@A,q@A>@M[Orig]&Anon_20=p & b=q & a=p & Anon_21=q&
+  {FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+Entail (12) : Valid. 
+
+ <1>x::node<p@A,q@A>@M[Orig]&Anon_20=p & b=q & a=p & Anon_21=q&{FLOW,(17,18)=__norm}[]
+
+
+(andreeac) context.ml l_h: x::node<p@M,q@M>@M[Orig]cris: ann_lhs = None
+cris: ann_rhs = None
+
+(andreeac) solver.ml r_h:  true
+(andreeac) solver.ml l_h: x::node<p@M,q@A>@M[Orig]
+(andreeac) solver.ml rem_l_node:  true
+(andreeac) solver.ml rem_r_node:  truecris: to_rhs =  true
+cris: new_ante_pure =  Anon_22=p & b=q
+cris: new_conseq_pure =  true
+cris: new_consumed =  true
+cris: new_ante =  x::node<p@M,q@A>@M[Orig]&Anon_22=p & b=q&{FLOW,(17,18)=__norm}[]
+cris: new_conseq =  true&true&{FLOW,(17,18)=__norm}[]
+
+(andreeac)solver.ml  rhs_p:  true
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: x::node<p@M,q@A>@M[Orig]&Anon_22=p & b=q&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+(andreeac)solver.ml  rhs_p:  0<=0 & 0<=3
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: x::node<p@M,q@A>@M[Orig]&Anon_22=p & b=q&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+Entail (13) : Valid. 
+
+ <1>x::node<p@M,q@A>@M[Orig]&Anon_22=p & b=q&{FLOW,(17,18)=__norm}[]
+
+
+(andreeac) context.ml l_h: x::node<p@M,q@M>@M[Orig]cris: ann_lhs = None
+cris: ann_rhs = None
+
+(andreeac) solver.ml r_h:  x::node<a@M,Anon_24@A>@M[Orig]
+(andreeac) solver.ml l_h: x::node<p@A,q@A>@M[Orig]
+(andreeac) solver.ml rem_l_node:  true
+(andreeac) solver.ml rem_r_node:  truecris: to_rhs =  true
+cris: new_ante_pure =  Anon_23=p & b=q
+cris: new_conseq_pure =  true
+cris: new_consumed =  true
+cris: new_ante =  x::node<p@A,q@A>@M[Orig]&Anon_23=p & b=q&{FLOW,(17,18)=__norm}[]
+cris: new_conseq =  x::node<a@M,Anon_24@A>@M[Orig]&true&{FLOW,(17,18)=__norm}[]
+
+(andreeac) context.ml l_h: x::node<p@A,q@A>@M[Orig]cris: ann_lhs = None
+cris: ann_rhs = None
+
+Entail (14) : Fail.(must) cause:911 : mismatched annotation
+
+ <1>x::node<p@A,q@A>@M[Orig]&Anon_23=p & b=q&{FLOW,(17,18)=__norm}[]
+
+
+(andreeac) context.ml l_h: x::node<p@L,q@L>@M[Orig]cris: ann_lhs = None
+cris: ann_rhs = None
+
+(andreeac) solver.ml r_h:  true
+(andreeac) solver.ml l_h: x::node<p@[@L],q@[@L]>@M[Orig]
+(andreeac) solver.ml rem_l_node:  true
+(andreeac) solver.ml rem_r_node:  truecris: to_rhs =  true
+cris: new_ante_pure =  a=p & b=q
+cris: new_conseq_pure =  true
+cris: new_consumed =  true
+cris: new_ante =  x::node<p@[@L],q@[@L]>@M[Orig]&a=p & b=q&{FLOW,(17,18)=__norm}[]
+cris: new_conseq =  true&true&{FLOW,(17,18)=__norm}[]
+
+(andreeac)solver.ml  rhs_p:  true
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: x::node<p@[@L],q@[@L]>@M[Orig]&a=p & b=q&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_evars: [a_154; b_155]
+ es_rhs_eqset: [(a_154,a); (b_155,b)]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+(andreeac) context.ml l_h: x::node<p@L,q@L>@M[Orig]cris: ann_lhs = None
+cris: ann_rhs = None
+
+(andreeac) solver.ml r_h:  true
+(andreeac) solver.ml l_h: x::node<p@[@L],q@[@L]>@M[Orig]
+(andreeac) solver.ml rem_l_node:  true
+(andreeac) solver.ml rem_r_node:  truecris: to_rhs =  true
+cris: new_ante_pure =  a=p & b=q
+cris: new_conseq_pure =  true
+cris: new_consumed =  true
+cris: new_ante =  x::node<p@[@L],q@[@L]>@M[Orig]&a=p & b=q&{FLOW,(17,18)=__norm}[]
+cris: new_conseq =  true&true&{FLOW,(17,18)=__norm}[]
+
+(andreeac)solver.ml  rhs_p:  true
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: x::node<p@[@L],q@[@L]>@M[Orig]&a=p & b=q&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_evars: [a_154; b_155]
+ es_rhs_eqset: [(a_154,a); (b_155,b)]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+(andreeac)solver.ml  rhs_p:  true
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: x::node<p@L,q@L>@M[Orig]&a=p & b=q&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_evars: [a_154; b_155]
+ es_rhs_eqset: [(a_154,a); (b_155,b)]
+ es_subst (from): [a_154; b_155]
+ es_subst (to): [p; q]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+(andreeac)solver.ml  rhs_p:  2<=2 & p=a & q=b
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: x::node<p@L,q@L>@M[Orig]&a=p & b=q&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_evars: [a_154; b_155]
+ es_rhs_eqset: [(a_154,a); (b_155,b)]
+ es_subst (from): [a_154; b_155]
+ es_subst (to): [p; q]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+Entail (15) : Valid. 
+
+ <1>x::node<p@L,q@L>@M[Orig]&a=p & b=q&{FLOW,(17,18)=__norm}[]
+
+
+(andreeac) context.ml l_h: x::node<p@L,q@L>@M[Orig] * y::node<a1@I,b1@I>@M[Orig]
+(andreeac) context.ml spatial_ctx_extract_x f: x::node<p@L,q@L>@M[Orig] * y::node<a1@I,b1@I>@M[Orig]
+(andreeac) context.ml spatial_ctx_extract_x res1: x::node<p@[@L],q@[@L]>@M[Orig] * y::node<a1@I,b1@I>@M[Orig]
+(andreeac) context.ml spatial_ctx_extract_x res2:
+(andreeac) context.ml spatial_ctx_extract_x f: x::node<p@L,q@L>@M[Orig] * y::node<a1@I,b1@I>@M[Orig]
+(andreeac) context.ml spatial_ctx_extract_x res1:
+(andreeac) context.ml spatial_ctx_extract_x res2: x::node<p@L,q@L>@M[Orig] * y::node<a1@A,b1@A>@M[Orig]cris: ann_lhs = None
+cris: ann_rhs = None
+
+(andreeac) solver.ml r_h:  y::node<a2@I,b2@I>@I[Orig]
+(andreeac) solver.ml l_h: x::node<p@[@L],q@[@L]>@M[Orig] * y::node<a1@I,b1@I>@M[Orig]
+(andreeac) solver.ml rem_l_node:  true
+(andreeac) solver.ml rem_r_node:  truecris: to_rhs =  true
+cris: new_ante_pure =  a=p & b=q
+cris: new_conseq_pure =  true
+cris: new_consumed =  true
+cris: new_ante =  x::node<p@[@L],q@[@L]>@M[Orig] * y::node<a1@I,b1@I>@M[Orig]&a=p & b=q&
+{FLOW,(17,18)=__norm}[]
+cris: new_conseq =  y::node<a2@I,b2@I>@I[Orig]&true&{FLOW,(17,18)=__norm}[]
+
+(andreeac) context.ml l_h: x::node<p@[@L],q@[@L]>@M[Orig] * y::node<a1@I,b1@I>@M[Orig]
+(andreeac) context.ml spatial_ctx_extract_x f: x::node<p@[@L],q@[@L]>@M[Orig] * y::node<a1@I,b1@I>@M[Orig]
+(andreeac) context.ml spatial_ctx_extract_x res1:
+(andreeac) context.ml spatial_ctx_extract_x res2: x::node<p@[@L],q@[@L]>@M[Orig] * y::node<a1@A,b1@A>@M[Orig]cris: ann_lhs = None
+cris: ann_rhs = None
+
+(andreeac) solver.ml r_h:  true
+(andreeac) solver.ml l_h: x::node<p@[@L],q@[@L]>@M[Orig] * y::node<a1@A,b1@A>@M[Orig]
+(andreeac) solver.ml rem_l_node:  true
+(andreeac) solver.ml rem_r_node:  truecris: to_rhs =  true
+cris: new_ante_pure =  a=p & b=q & a2=a1 & b2=b1
+cris: new_conseq_pure =  true
+cris: new_consumed =  true
+cris: new_ante =  x::node<p@[@L],q@[@L]>@M[Orig] * y::node<a1@A,b1@A>@M[Orig]&a=p & b=q & 
+a2=a1 & b2=b1&{FLOW,(17,18)=__norm}[]
+cris: new_conseq =  true&true&{FLOW,(17,18)=__norm}[]
+
+(andreeac)solver.ml  rhs_p:  true
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: 
+  x::node<p@[@L],q@[@L]>@M[Orig] * y::node<a1@A,b1@A>@M[Orig]&a=p & b=q & 
+  a2=a1 & b2=b1&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+(andreeac)solver.ml  rhs_p:  0<=2 & 1<=1
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: 
+  x::node<p@L,q@L>@M[Orig] * y::node<a1@A,b1@A>@M[Orig]&a=p & b=q & a2=a1 & 
+  b2=b1&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+Entail (16) : Valid. 
+
+ <1>x::node<p@L,q@L>@M[Orig] * y::node<a1@A,b1@A>@M[Orig]&a=p & b=q & a2=a1 & b2=b1&{FLOW,(17,18)=__norm}[]
+
+
+(andreeac) context.ml l_h: x::ll<n,flted_80_202,flted_80_201>@M[Orig][LHSCase]cris: ann_lhs = None
+cris: ann_rhs = None
+
+(andreeac) solver.ml r_h:  true
+(andreeac) solver.ml l_h: truecris: to_rhs =  true
+cris: new_ante_pure =  flted_80_202=@A & flted_80_201=@L
+cris: new_conseq_pure =  true
+cris: new_consumed =  true
+cris: new_ante =  true&flted_80_202=@A & flted_80_201=@L&{FLOW,(17,18)=__norm}[]
+cris: new_conseq =  true&true&{FLOW,(17,18)=__norm}[]
+
+(andreeac)solver.ml  rhs_p:  true
+(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :
+ es_formula: true&flted_80_202=@A & flted_80_201=@L&{FLOW,(17,18)=__norm}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: true
+ es_evars: [n_203; flted_80_204; flted_80_205]
+ es_rhs_eqset: [(n_203,n)]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+(andreeac)solver.ml  rhs_p:  flted_80_202=@A & flted_80_201=@M & n=n
+Entail (17) : Fail.(must) cause: flted_80_201=@L |-  flted_80_201=@M. LOCS:[80] (must-bug)
+
+ <1>EXISTS(flted_80_202,flted_80_201: true&flted_80_202=@A & flted_80_201=@L&{FLOW,(1,2)=__Error})[]
+
+Stop Omega... 32 invocations 
