@@ -791,7 +791,7 @@ and instr =
                                              if the exp has different type 
                                              from lval *)
   | Call       of lval option * exp * exp list * location
- 			 (** optional: result is an lval. A cast might be 
+                         (** optional: result is an lval. A cast might be 
                              necessary if the declared result type of the 
                              function is not the same as that of the 
                              destination. If the function is declared then 
@@ -894,12 +894,6 @@ let endPos loc = loc.end_pos
 
 let makeLoc startPos endPos = { start_pos = startPos;
                                 end_pos = endPos; }
-
-let string_of_loc loc =
-    (string_of_int loc.start_pos.line) ^ ":"
-  ^ (string_of_int (loc.start_pos.byte - loc.start_pos.line_begin)) ^ "-"
-  ^ (string_of_int loc.end_pos.line) ^ ":"
-  ^ (string_of_int (loc.start_pos.byte - loc.start_pos.line_begin))
 
 (* A reference to the current location *)
 let currentLoc : location ref = ref locUnknown
@@ -1149,7 +1143,10 @@ let nextCompinfoKey = ref 1
 
 (* Some error reporting functions *)
 let d_loc (_: unit) (loc: location) : doc =  
-  text loc.start_pos.file ++ chr ':' ++ num loc.start_pos.line
+    text (string_of_int loc.start_pos.line) ++ text ":"
+    ++ text (string_of_int (loc.start_pos.byte - loc.start_pos.line_begin)) ++ text "-"
+    ++ text (string_of_int loc.end_pos.line) ++ text ":"
+    ++ text (string_of_int (loc.end_pos.byte - loc.end_pos.line_begin)) 
 
 let d_thisloc (_: unit) : doc = d_loc () !currentLoc
 
@@ -1237,7 +1234,7 @@ let warnLoc (loc: location) (fmt : ('a,unit,doc) format) : 'a =
   in
   Pretty.gprintf f fmt
 
-let zero      = Const(CInt64(Int64.zero, IInt, None), lu)
+let zero loc     = Const(CInt64(Int64.zero, IInt, None), loc)
 
 (** Given the character c in a (CChr c), sign-extend it to 32 bits.
   (This is the official way of interpreting character constants, according to
@@ -1826,8 +1823,8 @@ let getParenthLevelAttrParam (a: attrparam) =
     AInt _ | AStr _ | ACons _ -> 0
   | ASizeOf _ | ASizeOfE _ | ASizeOfS _ -> 20
   | AAlignOf _ | AAlignOfE _ | AAlignOfS _ -> 20
-  | AUnOp (uo, _) -> getParenthLevel (UnOp(uo, zero, intType, lu))
-  | ABinOp (bo, _, _) -> getParenthLevel (BinOp(bo, zero, zero, intType, lu))
+  | AUnOp (uo, _) -> getParenthLevel (UnOp(uo, zero lu, intType, lu))
+  | ABinOp (bo, _, _) -> getParenthLevel (BinOp(bo, zero lu, zero lu, intType, lu))
   | AAddrOf _ -> 30
   | ADot _ | AIndex _ | AStar _ -> 20
   | AQuestion _ -> questionLevel
@@ -2050,27 +2047,27 @@ let mkCilint (ik:ikind) (i:int64) : cilint =
   fst (truncateCilint ik (cilint_of_int64 i))
 
 (* Construct an integer constant with possible truncation *)
-let kintegerCilint (k: ikind) (i: cilint) : exp = 
+let kintegerCilint (k: ikind) (i: cilint) (loc: location) : exp = 
   let i', truncated = truncateCilint k i in
   if truncated = BitTruncation && !warnTruncate then 
     ignore (warnOpt "Truncating integer %s to %s" 
               (string_of_cilint i) (string_of_cilint i'));
-  Const (CInt64(int64_of_cilint i', k,  None), lu)
+  Const (CInt64(int64_of_cilint i', k,  None), loc)
 
 (* Construct an integer constant with possible truncation *)
-let kinteger64 (k: ikind) (i: int64) : exp = 
-  kintegerCilint k (cilint_of_int64 i)
+let kinteger64 (k: ikind) (i: int64) (loc: location) : exp = 
+  kintegerCilint k (cilint_of_int64 i) loc
 
 (* Construct an integer of a given kind. *)
-let kinteger (k: ikind) (i: int) = 
-  kintegerCilint k (cilint_of_int i)
+let kinteger (k: ikind) (i: int) (loc: location) = 
+  kintegerCilint k (cilint_of_int i) loc
 
 (** Construct an integer of kind IInt. On targets where C's 'int' is 16-bits,
     the integer may get truncated. *)
-let integer (i: int) = kinteger IInt i
+let integer (i: int) (loc: location) = kinteger IInt i loc
             
-let one       = integer 1
-let mone      = integer (-1)
+let one loc      = integer 1 loc
+let mone loc     = integer (-1) loc
      
 (* True if the integer fits within the kind's range *)
 let fitsInInt (k: ikind) (i: cilint) : bool = 
@@ -2501,7 +2498,7 @@ and addTrailing nrbits roundto =
 
 and sizeOf (t, l) = 
   try
-    integer ((bitsSizeOf t) lsr 3)
+    integer ((bitsSizeOf t) lsr 3) l
   with SizeOfError _ -> SizeOf(t, l)
 
  
@@ -2571,44 +2568,44 @@ and constFold (machdep: bool) (e: exp) : exp =
           | _ -> raise Not_found (* probably a float *)
         in
         match constFold machdep e1 with
-          Const(CInt64(i,ik,_), _) -> begin
+        | Const(CInt64(i,ik,_), _) -> begin
             let ic = mkCilint ik i in
-            match unop with 
-              Neg -> kintegerCilint tk (neg_cilint ic)
-            | BNot -> kintegerCilint tk (lognot_cilint ic)
-            | LNot -> if is_zero_cilint ic then one else zero
-            end
+            match unop with
+              Neg -> kintegerCilint tk (neg_cilint ic) l
+            | BNot -> kintegerCilint tk (lognot_cilint ic) l
+            | LNot -> if is_zero_cilint ic then one l else zero l
+          end
         | e1c -> UnOp(unop, e1c, tres, l)
       with Not_found -> e
-  end
-        (* Characters are integers *)
+    end
+  (* Characters are integers *)
   | Const(CChr c, l) -> Const(charConstToInt c, l)
   | Const(CEnum (v, _, _), _) -> constFold machdep v
-  | SizeOf (t, _) when machdep -> begin
+  | SizeOf (t, l) when machdep -> begin
       try
         let bs = bitsSizeOf t in
-        kinteger !kindOfSizeOf (bs / 8)
+        kinteger !kindOfSizeOf (bs / 8) l
       with SizeOfError _ -> e
   end
   | SizeOfE (e, l) when machdep -> constFold machdep (SizeOf (typeOf e, l))
-  | SizeOfStr (s, _) when machdep -> kinteger !kindOfSizeOf (1 + String.length s)
-  | AlignOf (t, _) when machdep -> kinteger !kindOfSizeOf (alignOf_int t)
+  | SizeOfStr (s, l) when machdep -> kinteger !kindOfSizeOf (1 + String.length s) l
+  | AlignOf (t, l) when machdep -> kinteger !kindOfSizeOf (alignOf_int t) l
   | AlignOfE (e, l) when machdep -> (
       (* The alignment of an expression is not always the alignment of its 
        * type. I know that for strings this is not true *)
       match e with 
-        Const (CStr _, _) when not !msvcMode -> 
-          kinteger !kindOfSizeOf !M.theMachine.M.alignof_str
+        Const (CStr _, l) when not !msvcMode -> 
+          kinteger !kindOfSizeOf !M.theMachine.M.alignof_str l
             (* For an array, it is the alignment of the array ! *)
       | _ -> constFold machdep (AlignOf (typeOf e, l))
     )
-  | CastE(it, AddrOf ((Mem (CastE(TPtr(bt, _), z, _)), off), _), l) 
+  | CastE(it, AddrOf ((Mem (CastE(TPtr(bt, _), z, _)), off), l1), l) 
     when machdep && isZero z -> begin
       try 
         let start, width = bitsOffset bt off in
         if start mod 8 <> 0 then 
           E.s (error "Using offset of bitfield");
-        constFold machdep (CastE(it, (kinteger !kindOfSizeOf (start / 8)), l))
+        constFold machdep (CastE(it, (kinteger !kindOfSizeOf (start / 8) l1), l))
       with SizeOfError _ -> e
   end
   | CastE (t, e, l) -> begin
@@ -2652,7 +2649,7 @@ and constFoldBinOp (machdep: bool) bop e1 e2 tres loc =
         | TEnum (ei, _) -> ei.ekind
         | _ -> E.s (bug "constFoldBinOp")
       in
-      let collapse0 () = kinteger tk 0 in
+      let collapse0 loc = kinteger tk 0 loc in
       let collapse e = e (*mkCast e tres*) in
       let shiftInBounds i2 =
          (* We only try to fold shifts if the second arg is positive and
@@ -2668,54 +2665,53 @@ and constFoldBinOp (machdep: bool) bop e1 e2 tres loc =
       in
       (* Assume that the necessary promotions have been done *)
       match bop, getInteger e1', getInteger e2' with
-      | PlusA, Some i1, Some i2 -> kintegerCilint tk (add_cilint i1 i2)
+      | PlusA, Some i1, Some i2 -> kintegerCilint tk (add_cilint i1 i2) loc
       | PlusA, Some z, _ when is_zero_cilint z -> collapse e2'
       | PlusA, _, Some z when is_zero_cilint z -> collapse e1'
-      | MinusA, Some i1, Some i2 -> kintegerCilint tk (sub_cilint i1 i2)
+      | MinusA, Some i1, Some i2 -> kintegerCilint tk (sub_cilint i1 i2) loc
       | MinusA, _, Some z when is_zero_cilint z -> collapse e1'
-      | Mult, Some i1, Some i2 -> kintegerCilint tk (mul_cilint i1 i2)
-      | Mult, Some z, _ when is_zero_cilint z -> collapse0 ()
-      | Mult, _, Some z when is_zero_cilint z -> collapse0 ()
+      | Mult, Some i1, Some i2 -> kintegerCilint tk (mul_cilint i1 i2) loc
+      | Mult, Some z, _ when is_zero_cilint z -> collapse0 loc
+      | Mult, _, Some z when is_zero_cilint z -> collapse0 loc
       | Mult, Some o, _ when compare_cilint o one_cilint = 0 -> collapse e2' 
       | Mult, _, Some o when compare_cilint o one_cilint = 0 -> collapse e1'
       | Div, Some i1, Some i2 -> begin
-          try kintegerCilint tk (div0_cilint i1 i2)
+          try kintegerCilint tk (div0_cilint i1 i2) loc
           with Division_by_zero -> BinOp(bop, e1', e2', tres, loc)
         end
       | Div, _, Some o when compare_cilint o one_cilint = 0 -> collapse e1'
       | Mod, Some i1, Some i2 -> begin
-          try kintegerCilint tk (rem_cilint i1 i2)
+          try kintegerCilint tk (rem_cilint i1 i2) loc
           with Division_by_zero -> BinOp(bop, e1', e2', tres, loc) 
         end
-      | Mod, _, Some o when compare_cilint o one_cilint = 0 -> collapse0 ()
-      | BAnd, Some i1, Some i2 -> kintegerCilint tk (logand_cilint i1 i2)
-      | BAnd, Some z, _ when is_zero_cilint z -> collapse0 ()
-      | BAnd, _, Some z when is_zero_cilint z -> collapse0 ()
-      | BOr, Some i1, Some i2 -> kintegerCilint tk (logor_cilint i1 i2)
+      | Mod, _, Some o when compare_cilint o one_cilint = 0 -> collapse0 loc
+      | BAnd, Some i1, Some i2 -> kintegerCilint tk (logand_cilint i1 i2) loc
+      | BAnd, Some z, _ when is_zero_cilint z -> collapse0 loc
+      | BAnd, _, Some z when is_zero_cilint z -> collapse0 loc
+      | BOr, Some i1, Some i2 -> kintegerCilint tk (logor_cilint i1 i2) loc
       | BOr, Some z, _ when is_zero_cilint z -> collapse e2' 
       | BOr, _, Some z when is_zero_cilint z -> collapse e1'
-      | BXor, Some i1, Some i2 -> kintegerCilint tk (logxor_cilint i1 i2)
+      | BXor, Some i1, Some i2 -> kintegerCilint tk (logxor_cilint i1 i2) loc
       | BXor, Some z, _ when is_zero_cilint z -> collapse e2' 
       | BXor, _, Some z when is_zero_cilint z -> collapse e1'
       | Shiftlt, Some i1, Some i2 when shiftInBounds i2 -> 
-          kintegerCilint tk (shift_left_cilint i1 (int_of_cilint i2))
-      | Shiftlt, Some z, _ when is_zero_cilint z -> collapse0 ()
+          kintegerCilint tk (shift_left_cilint i1 (int_of_cilint i2)) loc
+      | Shiftlt, Some z, _ when is_zero_cilint z -> collapse0 loc
       | Shiftlt, _, Some z when is_zero_cilint z -> collapse e1'
       | Shiftrt, Some i1, Some i2 when shiftInBounds i2 -> 
-          kintegerCilint tk (shift_right_cilint i1 (int_of_cilint i2))
-      | Shiftrt, Some z, _ when is_zero_cilint z -> collapse0 ()
+          kintegerCilint tk (shift_right_cilint i1 (int_of_cilint i2)) loc
+      | Shiftrt, Some z, _ when is_zero_cilint z -> collapse0 loc
       | Shiftrt, _, Some z when is_zero_cilint z -> collapse e1'
-      | Eq, Some i1, Some i2 -> if compare_cilint i1 i2 = 0 then one else zero
-      | Ne, Some i1, Some i2 -> if compare_cilint i1 i2 <> 0 then one else zero
-      | Le, Some i1, Some i2 -> if compare_cilint i1 i2 <= 0 then one else zero
-      | Ge, Some i1, Some i2 -> if compare_cilint i1 i2 >= 0 then one else zero
-      | Lt, Some i1, Some i2 -> if compare_cilint i1 i2 < 0 then one else zero
-      | Gt, Some i1, Some i2 -> if compare_cilint i1 i2 > 0 then one else zero
-
-      | LAnd, Some i1, _ -> if is_zero_cilint i1 then collapse0 () else collapse e2'
-      | LAnd, _, Some i2 -> if is_zero_cilint i2 then collapse0 () else collapse e1'
-      | LOr, Some i1, _ -> if is_zero_cilint i1 then collapse e2' else one
-      | LOr, _, Some i2 -> if is_zero_cilint i2 then collapse e1' else one
+      | Eq, Some i1, Some i2 -> if compare_cilint i1 i2 = 0 then one loc else zero loc
+      | Ne, Some i1, Some i2 -> if compare_cilint i1 i2 <> 0 then one loc else zero loc
+      | Le, Some i1, Some i2 -> if compare_cilint i1 i2 <= 0 then one loc else zero loc
+      | Ge, Some i1, Some i2 -> if compare_cilint i1 i2 >= 0 then one loc else zero loc
+      | Lt, Some i1, Some i2 -> if compare_cilint i1 i2 < 0 then one loc else zero loc
+      | Gt, Some i1, Some i2 -> if compare_cilint i1 i2 > 0 then one loc else zero loc
+      | LAnd, Some i1, _ -> if is_zero_cilint i1 then collapse0 loc else collapse e2'
+      | LAnd, _, Some i2 -> if is_zero_cilint i2 then collapse0 loc else collapse e1'
+      | LOr, Some i1, _ -> if is_zero_cilint i1 then collapse e2' else one loc
+      | LOr, _, Some i2 -> if is_zero_cilint i2 then collapse e1' else one loc
       | _ -> BinOp(bop, e1', e2', tres, loc)
     in
     if debugConstFold then 
@@ -2727,7 +2723,7 @@ and constFoldBinOp (machdep: bool) bop e1 e2 tres loc =
 
 
 
-let parseInt (str: string) : exp = 
+let parseInt (str: string) (loc: location) : exp = 
   let hasSuffix str = 
     let l = String.length str in
     fun s -> 
@@ -2797,11 +2793,10 @@ let parseInt (str: string) : exp =
    * POSITIVE  *)
   let res = 
     let rec loop = function
-        k::rest -> 
-	  if fitsInInt k i then kintegerCilint k i
-	  else loop rest
-        | [] -> E.s (E.unimp "Cannot represent the integer %s\n" 
-                       (string_of_cilint i))
+      | k::rest -> 
+          if fitsInInt k i then kintegerCilint k i loc
+          else loop rest
+      | [] -> E.s (E.unimp "Cannot represent the integer %s\n" (string_of_cilint i))
     in
     loop kinds 
     in
@@ -3224,7 +3219,10 @@ class type cilPrinter = object
      * statement printing in certain special cases. *)
 
   method pExp: unit -> exp -> doc
-    (** Print expressions *) 
+    (** Print expressions *)
+
+  method pLoc: unit -> location -> doc
+    (** Print location *)
 
   method pInit: unit -> init -> doc
     (** Print initializers. This can be slow and is used by 
@@ -3332,18 +3330,25 @@ class defaultCilPrinterClass : cilPrinter = object (self)
         text "& " ++ (self#pLvalPrec addrOfLevel () lv)
     | StartOf(lv,_) -> self#pLval () lv
 
+  (** location **)
+  method private pLoc () loc =
+    text (string_of_int loc.start_pos.line) ++ text ":"
+    ++ text (string_of_int (loc.start_pos.byte - loc.start_pos.line_begin)) ++ text "-"
+    ++ text (string_of_int loc.end_pos.line) ++ text ":"
+    ++ text (string_of_int (loc.end_pos.byte - loc.end_pos.line_begin)) 
+      
   (* Print an expression, given the precedence of the context in which it 
    * appears. *)
   method private pExpPrec (contextprec: int) () (e: exp) = 
     let thisLevel = getParenthLevel e in
     let needParens =
       if thisLevel >= contextprec then
-	true
+        true
       else if contextprec == bitwiseLevel then
         (* quiet down some GCC warnings *)
-	thisLevel == additiveLevel || thisLevel == comparativeLevel
+        thisLevel == additiveLevel || thisLevel == comparativeLevel
       else
-	false
+        false
     in
     if needParens then
       chr '(' ++ self#pExp () e ++ chr ')'
@@ -4396,6 +4401,9 @@ let printType (pp: cilPrinter) () (t: typ) : doc =
   
 let printExp (pp: cilPrinter) () (e: exp) : doc = 
   pp#pExp () e
+
+let printLoc (pp: cilPrinter) () (l: location) : doc = 
+  pp#pLoc () l
 
 let printLval (pp: cilPrinter) () (lv: lval) : doc = 
   pp#pLval () lv
@@ -5975,8 +5983,8 @@ let mkMem ~(addr: exp) ~(off: offset) : lval =
   let res = 
     match addr, off with
       AddrOf (lv,_), _ -> addOffsetLval off lv
-    | StartOf (lv,_), _ -> (* Must be an array *)
-        addOffsetLval (Index(zero, off)) lv 
+    | StartOf (lv,l), _ -> (* Must be an array *)
+        addOffsetLval (Index(zero l, off)) lv 
     | _, _ -> Mem addr, off
   in
 (*  ignore (E.log "memof : %a:%a\nresult = %a\n" 
@@ -6040,7 +6048,7 @@ let rec mkCastT ~(e: exp) ~(oldt: typ) ~(newt: typ) =
       TInt(IBool, []), Const(CInt64(i, _, _), l) -> 
         let v = if i = Int64.zero then Int64.zero else Int64.one in
         Const (CInt64(v, IBool,  None), l)
-    | TInt(newik, []), Const(CInt64(i, _, _), _) -> kinteger64 newik i
+    | TInt(newik, []), Const(CInt64(i, _, _), l) -> kinteger64 newik i l
     | _ -> CastE(newt, e, lu)
   end
 
@@ -6085,7 +6093,7 @@ let existsType (f: typ -> existsAction) (t: typ) : bool =
 let increm (e: exp) (i: int) =
   let et = typeOf e in
   let bop = if isPointerType et then PlusPI else PlusA in
-  constFold false (BinOp(bop, e, integer i, et, lu))
+  constFold false (BinOp(bop, e, integer i lu, et, lu))
       
 exception LenOfArray
 let lenOfArray (eo: exp option) : int = 
@@ -6104,7 +6112,7 @@ let rec makeZeroInit (t: typ) : init =
   match unrollType t with
     TInt (ik, _) -> SingleInit (Const(CInt64(Int64.zero, ik, None), lu))
   | TFloat(fk, _) -> SingleInit(Const(CReal(0.0, fk, None), lu))
-  | TEnum _ -> SingleInit zero
+  | TEnum _ -> SingleInit (zero lu)
   | TComp (comp, _) as t' when comp.cstruct -> 
       let inits = 
         List.fold_right
@@ -6161,7 +6169,7 @@ let rec makeZeroInit (t: typ) : init =
       let initbt = makeZeroInit bt in
       let rec loopElems acc i = 
         if i < 0 then acc
-        else loopElems ((Index(integer i, NoOffset), initbt) :: acc) (i - 1) 
+        else loopElems ((Index(integer i lu, NoOffset), initbt) :: acc) (i - 1) 
       in
       CompoundInit(t', loopElems [] (n - 1))
 
@@ -6171,7 +6179,7 @@ let rec makeZeroInit (t: typ) : init =
       CompoundInit (t', [])
 
   | TPtr _ as t -> 
-      SingleInit(if !insertImplicitCasts then mkCast zero t else zero)
+      SingleInit(if !insertImplicitCasts then mkCast (zero lu) t else zero lu)
   | x -> E.s (unimp "Cannot initialize type: %a" d_type x)
 
 
@@ -6198,7 +6206,7 @@ let foldLeftCompound
       match leno with 
         Some lene when implicit -> begin
           match constFold true lene with 
-            Const(CInt64(i, _, _), _) -> 
+            Const(CInt64(i, _, _), l) -> 
               let len_array = i64_to_int i in
               let len_init = List.length initl in
               if len_array > len_init then 
@@ -6206,7 +6214,7 @@ let foldLeftCompound
                 let rec loop acc i = 
                   if i >= len_array then acc
                   else 
-                    loop (doinit (Index(integer i, NoOffset)) zi bt acc) 
+                    loop (doinit (Index(integer i l, NoOffset)) zi bt acc) 
                          (i + 1)
                 in
                 loop part (len_init + 1)
@@ -6985,3 +6993,5 @@ let convertInts (i1:int64) (ik1:ikind) (i2:int64) (ik2:ikind)
     i1', i2', ik'      
   end
 
+let string_of_loc loc =
+  Pretty.sprint 10 (d_loc () loc)

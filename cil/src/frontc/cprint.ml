@@ -932,3 +932,11 @@ let printFile (result : out_channel) ((fname, defs) : file) =
 let set_tab t = tab := t
 let set_width w = width := w
 
+let string_of_pos pos = 
+  (string_of_int pos.lineno) ^ ":" ^ (string_of_int (pos.byteno - pos.linestart))
+
+let string_of_loc loc =
+  (string_of_int loc.start_pos.lineno) ^ ":"
+  ^ (string_of_int (loc.start_pos.byteno - loc.start_pos.linestart)) ^ "-"
+  ^ (string_of_int loc.end_pos.lineno) ^ ":"
+  ^ (string_of_int (loc.end_pos.byteno - loc.end_pos.linestart))

@@ -36,6 +36,9 @@ let reset_global_vars () =
 let string_of_cil_exp (e: Cil.exp) : string =
   Pretty.sprint 10 (Cil.d_exp () e)
 
+let string_of_cil_loc (l: Cil.location) : string =
+  Pretty.sprint 10 (Cil.d_loc () l)
+
 let string_of_cil_lval (lv: Cil.lval) : string =
   Pretty.sprint 10 (Cil.d_lval () lv)
 
@@ -256,8 +259,8 @@ let translate_var (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
   newexp
 
 
-let translate_var_decl (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
-  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
+let translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
+  let pos = translate_location vinfo.Cil.vdecl in
   let ty = translate_typ vinfo.Cil.vtype in
   let name = vinfo.Cil.vname in
   (* let _ = print_endline ("== 1 sp pos_cnum = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_cnum)) in *)
@@ -272,7 +275,6 @@ let translate_var_decl (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.e
                              Iast.exp_var_decl_decls = decl;
                              Iast.exp_var_decl_pos = pos} in
   newexp
-
 
 let translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
@@ -813,7 +815,7 @@ let translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option)
   let static_specs = fundec.Cil.sspecs in
   let return = translate_funtyp (fheader.Cil.vtype) in
   let args = collect_params fheader in
-  let slocals = List.map (fun x -> translate_var_decl x lopt) fundec.Cil.slocals in
+  let slocals = List.map translate_var_decl fundec.Cil.slocals in
   let sbody = translate_block fundec.Cil.sbody in
   (* collect intermediate information after translating body *) 
   let supplement_local_vars = (

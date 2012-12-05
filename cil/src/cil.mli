@@ -1604,34 +1604,34 @@ val typeOffset: typ -> offset -> typ
 (* Construct integer constants *)
 
 (** 0 *)
-val zero: exp
+val zero: location -> exp
 
 (** 1 *)
-val one: exp
+val one: location -> exp
 
 (** -1 *)
-val mone: exp
+val mone: location -> exp
 
 
 (** Construct an integer of a given kind, from a cilint. If needed it
  * will truncate the integer to be within the representable range for
  * the given kind. *)
-val kintegerCilint: ikind -> cilint -> exp
+val kintegerCilint: ikind -> cilint -> location -> exp
 
 (** Construct an integer of a given kind, using OCaml's int64 type. If needed 
  * it will truncate the integer to be within the representable range for the 
  * given kind. *)
-val kinteger64: ikind -> int64 -> exp
+val kinteger64: ikind -> int64 -> location -> exp
 
 (** Construct an integer of a given kind. Converts the integer to int64 and 
   * then uses kinteger64. This might truncate the value if you use a kind 
   * that cannot represent the given integer. This can only happen for one of 
   * the Char or Short kinds *)
-val kinteger: ikind -> int -> exp
+val kinteger: ikind -> int -> location -> exp
 
 (** Construct an integer of kind IInt. On targets where C's 'int' is 16-bits,
     the integer may get truncated. *)
-val integer: int -> exp
+val integer: int -> location -> exp
 
 
 (** If the given expression is an integer constant or a CastE'd
@@ -1718,7 +1718,7 @@ val typeOf: exp -> typ
 
 (** Convert a string representing a C integer literal to an expression. 
  * Handles the prefixes 0x and 0 and the suffixes L, U, UL, LL, ULL *)
-val parseInt: string -> exp
+val parseInt: string -> location -> exp
 
 
 (**********************************************)
@@ -2228,6 +2228,9 @@ class type cilPrinter = object
   method pExp: unit -> exp -> Pretty.doc
     (** Print expressions *) 
 
+  method pLoc: unit -> location -> Pretty.doc
+    (** Print location *)
+
   method pInit: unit -> init -> Pretty.doc
     (** Print initializers. This can be slow and is used by 
      * {!Cil.printGlobal} but not by {!Cil.dumpGlobal}. *)
@@ -2324,6 +2327,9 @@ val d_type: unit -> typ -> Pretty.doc
 
 (** Pretty-print an expression using {!Cil.defaultCilPrinter}  *)
 val d_exp: unit -> exp -> Pretty.doc
+
+(** Pretty-print an location using {!Cil.defaultCilPrinter}  *)
+val d_loc: unit -> location -> Pretty.doc
 
 (** Pretty-print an lvalue using {!Cil.defaultCilPrinter}   *)
 val d_lval: unit -> lval -> Pretty.doc
@@ -2605,9 +2611,6 @@ val endPos: location -> position
 (** Create a location from 2 position *)
 val makeLoc: position -> position -> location
 
-(** Return a string representation of a location *)
-val string_of_loc: location -> string
-
 (** Return the location of an instruction *)
 val get_instrLoc: instr -> location 
 
@@ -2715,3 +2718,4 @@ val gccBuiltins: (string, typ * typ list * bool) Hashtbl.t
   aliases for {!Cil.builtinFunctions} *)
 val msvcBuiltins: (string, typ * typ list * bool) Hashtbl.t
   
+val string_of_loc: location -> string
