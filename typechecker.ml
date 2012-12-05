@@ -2782,7 +2782,7 @@ let check_prog (prog : prog_decl) =
 			TInfer.imply = TP.imply_raw;
 			TInfer.is_sat = fun f -> TP.is_sat f "" true;
 		} in
-		TInfer.main utils prog proc_scc
+		ignore (TInfer.main utils prog proc_scc)
 	end
 	else ()
 	    

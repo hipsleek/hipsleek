@@ -2828,7 +2828,7 @@ let string_of_term_cond_pure (pt, cond, tr) =
 let string_of_term_ctx tctx = 
 	"\nTERMINATION CTX:\n" 
 	^ "CTX: " ^ (string_of_list_failesc_context tctx.TInfer.t_ctx) ^ "\n" 
-	(* ^	"PURE CTX: " ^ (pr_list (pr_pair string_of_path_trace string_of_pure_formula) tctx.TInfer.t_pure_ctx) ^ "\n"                 *)
+	(* ^ "PURE CTX: " ^ (pr_list (pr_pair string_of_path_trace string_of_pure_formula) tctx.TInfer.t_pure_ctx) ^ "\n"                 *)
 	(* ^ "PARAMS: " ^ (pr_pair string_of_spec_var_list string_of_spec_var_list tctx.TInfer.t_params) ^ "\n"                            *)
 	(* ^ "COND: " ^ (pr_list (fun (f, r) -> (string_of_pure_formula f) ^ "[" ^ (string_of_term_res r) ^ "]") tctx.TInfer.t_cond_pure)  *)
 	(* ^ "@" ^ (string_of_term_type tctx.TInfer.t_type)                                                                                *)

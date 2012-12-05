@@ -4,6 +4,7 @@ open Gen.Basic
 open Globals
 open Cast
 
+module G = Globals
 module CF = Cformula
 module CP = Cpure
 module DD = Debug
@@ -256,7 +257,7 @@ let remove_duplicate_path_trace pt =
 let update_cond_pure_term_ctx  utils tctx =
   let lf = collect_formula_with_path_list_failesc_context tctx.t_ctx in
   let lpf = List.concat (List.map (fun (lbl, f) -> 
-    let _ = print_endline ("\nCTX: " ^ (!print_formula f)) in
+    (* let _ = print_endline ("\nCTX: " ^ (!print_formula f)) in *)
     let lbl = remove_duplicate_path_trace lbl in
     List.map (fun pf -> (lbl, pf)) (split_disjunctions (utils.xpure f))) lf) in
   {tctx with 
@@ -329,7 +330,8 @@ let sort_path_trace_by_order cl =
       end
   in List.sort (fun (pt1, _, _) (pt2, _, _) -> comp pt1 pt2) cl
   
-(* BUGS [ps-1d.ss]: exists(x':x'=x & MayLoop) |- exists(x':x'=x & MayLoop) --> false *)  
+(* FIXED: BUGS [ps-1d.ss]:                                          *)
+(* exists(x':x'=x & MayLoop) |- exists(x':x'=x & MayLoop) --> false *)
 let rec partition_path_trace utils cl =
   let sml_pt, sml_c, _ = List.hd cl in
   (* A; B is a sequence if pathA subseteq pathB and condB |- condA, *)
@@ -554,7 +556,27 @@ let update_term_spec_one_method utils subst tg mn =
   
 let update_term_spec_one_scc utils subst tg mn_scc =
   List.map (update_term_spec_one_method utils subst tg) mn_scc
-
+  
+let rec struc_of_term_spec tspec = 
+  match tspec with
+  | TBase b -> 
+    let tconstr = b.term_base_res in
+    let lexvar = match tconstr with
+      | Loop _ -> CP.mkLexVar G.Loop [] [] no_pos
+      | Term { term_rank = r; term_def = d } as info -> 
+        if d then
+          match r with
+          | None -> CP.mkLexVar G.Term [] [] no_pos
+          | Some e -> CP.mkLexVar G.Term [e] [] no_pos
+        else CP.mkLexVar G.MayLoop [] [] no_pos
+      | _ -> CP.mkLexVar G.MayLoop [] [] no_pos
+    in mkEBase_with_cont (CP.mkPure lexvar) None no_pos 
+  | TCase c -> mkECase (List.map (fun (f, tspec) -> 
+    (f, struc_of_term_spec tspec)) c) no_pos
+  | TSeq _ ->
+    let lexvar = CP.mkLexVar G.MayLoop [] [] no_pos in 
+    mkEBase_with_cont (CP.mkPure lexvar) None no_pos
+    
 (*****************************************************)
 (* Collect set of termination transition constraints *)
 (* based on the termination context of a function    *)
@@ -1273,12 +1295,12 @@ let solve_constrs_with_rank_synthesis utils prog constrs proc_scc =
   (subst, tg)
 
 let rec infer_term_spec_one_scc utils prog proc_scc round pre_trans_constrs =
-  if round > !term_run_bound then ()
+  let name_procs = List.map (fun proc -> proc.proc_name) proc_scc in
+  let old_specs = List.map (fun mn -> (mn, look_up_term_spec mn)) name_procs in
+  if round > !term_run_bound then old_specs
   else begin
-    let name_procs = List.map (fun proc -> proc.proc_name) proc_scc in
-    let old_specs = List.map (fun mn -> (mn, look_up_term_spec mn)) name_procs in
     let trans_constrs = collect_term_trans_constrs_one_scc utils name_procs in
-    if trans_constrs = [] then ()
+    if trans_constrs == [] then old_specs
     else
       (* let _ = info_pprint ("ROUND " ^ (string_of_int round)) in *)
       let subst, tg =
@@ -1307,6 +1329,12 @@ let rec infer_term_spec_one_scc utils prog proc_scc round pre_trans_constrs =
       
       infer_term_spec_one_scc utils prog proc_scc (round+1) trans_constrs
   end
+  
+let pr_inf_result (mn, spec) = 
+  mn ^ ":\n" ^ (!print_struc_formula (struc_of_term_spec spec))
+  
+let pr_inf_results specs = 
+  List.fold_left (fun s spec -> s ^ "\n" ^ (pr_inf_result spec)) "" specs
 
 (***************** MAIN *****************)                  
 let main utils prog proc_sccs =
@@ -1315,8 +1343,10 @@ let main utils prog proc_sccs =
   (*   let _ = print_endline ("Termination Inference for " ^ mn) in *)
   (*   infer_term_spec_one_proc utils proc 1 []                     *)
   (* ) procs                                                        *)
+  info_pprint "Termination Inference Result:\n";
   List.iter (fun proc_scc ->
     (* let _ = print_endline ("Termination Inference for SCC group: " ^ (pr_list (fun proc -> proc.proc_name) proc_scc)) in *)
-    infer_term_spec_one_scc utils prog proc_scc 1 []
+    let specs = infer_term_spec_one_scc utils prog proc_scc 1 [] in
+    info_pprint (pr_inf_results specs)
   ) proc_sccs
 

@@ -467,16 +467,21 @@ and formula_of_pure_formula (p:CP.formula) (pos:loc) :formula =
   let mix_f = (*MCP.OnePF*) MCP.mix_of_pure p in
   formula_of_mix_formula mix_f pos 
 
-and mkBase_simp (h : h_formula) (p : MCP.mix_formula) : formula=  mkBase_w_lbl h p TypeTrue (mkNormalFlow()) [] no_pos None
+and mkBase_simp (h : h_formula) (p : MCP.mix_formula) : formula = 
+  mkBase_w_lbl h p TypeTrue (mkNormalFlow()) [] no_pos None
 
 and mkEBase f ct pos = EBase {
-      formula_struc_explicit_inst =[];
-      formula_struc_implicit_inst =[];
-      formula_struc_exists =[];
+      formula_struc_explicit_inst = [];
+      formula_struc_implicit_inst = [];
+      formula_struc_exists = [];
       formula_struc_base = f;
       formula_struc_continuation = ct;
-      formula_struc_pos = pos;
-  }
+      formula_struc_pos = pos; }
+
+and mkECase br pos = ECase {
+    formula_case_branches = br;
+    formula_case_exists = [];
+    formula_case_pos = pos  }
 
 and mk_ebase_inferred_pre (h:h_formula) (p:CP.formula) ct = mkEBase (mkBase_simp h (MCP.mix_of_pure p)) ct no_pos 
 
@@ -8060,11 +8065,11 @@ let mkEBase_with_cont (pf:CP.formula) cont loc : struc_formula =
 	formula_struc_explicit_inst = [];
 	formula_struc_implicit_inst = [];
 	formula_struc_exists = [];
-	(*formula_struc_base = mkBase HTrue (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [("",pf)] loc;*)
+	(* formula_struc_base = mkBase HTrue (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [("",pf)] loc; *)
 	formula_struc_base = mkBase HEmp (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [] loc;
 	formula_struc_continuation = cont;
 	formula_struc_pos = loc;
-    (*formula_ext_complete = true;*)
+  (*formula_ext_complete = true;*)
   }	
 
 let propagate_perm_struc_formula_x e (permvar:cperm_var)=
@@ -9044,7 +9049,7 @@ let rec norm_struc_with_lexvar is_primitive struc_f  = match struc_f with
       if (has_lexvar_formula ef.formula_struc_base) then struc_f
       else EBase { ef with formula_struc_continuation = map_opt (norm_struc_with_lexvar is_primitive) ef.formula_struc_continuation }
   | EAssume _ ->
-	  (* Do not add MAYLOOP when doing Termination Inference *)
+	    (* Do not add MAYLOOP when doing Termination Inference *)
       let lexvar =
         if is_primitive then CP.mkLexVar Term [] [] no_pos
         else CP.mkLexVar MayLoop [] [] no_pos in
