@@ -5185,17 +5185,16 @@ let must_consistent_list_failesc_context (s:string) l : unit =
     if b then  print_endline ("\nSuccessfully Tested Consistency at "^s)
     else report_error no_pos ("ERROR: "^s^" list_failesc context inconsistent")
 
-(*let isStrictFalseCtx ctx = match ctx with
-  | Ctx es -> isStrictConstFalse es.es_formula
-  | _ -> false*)
+(* let isStrictFalseCtx ctx = match ctx with      *)
+(*   | Ctx es -> isStrictConstFalse es.es_formula *)
+(*   | _ -> false                                 *)
 
 let isAnyFalseCtx (ctx:context) : bool = match ctx with
   | Ctx es -> isAnyConstFalse es.es_formula
   | _ -> false  
 
-(* let isAnyFalseBranchCtx (ctx:branch_ctx) : bool = match ctx with *)
-(*   | _,Ctx es -> isAnyConstFalse es.es_formula *)
-(*   | _ -> false *)
+let isAnyFalseBranchCtx (ctx:branch_ctx) : bool = 
+	let _, c = ctx in isAnyFalseCtx c
 
 let isAnyFalsePartialCtx (fc,sc) = (fc=[]) &&
   List.for_all (fun (_,s) -> isAnyFalseCtx s) sc
@@ -5254,6 +5253,14 @@ let remove_dupl_false_fe_list (fs_list:list_failesc_context) =
   let ns = List.filter (fun (fl,_,sl) -> not(fl==[] && isFalseBranchCtxL sl)) fs_list in
   if ns==[] then [List.hd fs_list]
   else ns
+	
+let remove_empty_succ_ctx_list_failesc_context ctx =
+	List.filter (fun (_, _, b_ctx) -> not (b_ctx == [])) ctx 
+	
+let remove_unsat_succ_ctx_list_failesc_context ctx =
+	List.map (fun (fail_c, esc_c, succ_c) ->
+		(fail_c, esc_c, List.filter (fun b -> not (isAnyFalseBranchCtx b)) succ_c) 
+	) ctx
 
 let rec collect_term_err ctx =
   match ctx with
