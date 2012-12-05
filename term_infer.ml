@@ -196,12 +196,12 @@ let eq_term_res r1 r2 =
 let compare_trans_constr a b =
   let asrc_id, adst_id = (id_of_term_res a.term_trans_src), (id_of_term_res a.term_trans_dst) in
   let bsrc_id, bdst_id = (id_of_term_res b.term_trans_src), (id_of_term_res b.term_trans_dst) in
-  (* if asrc_id > bsrc_id then 1        *)
-  (* else if asrc_id == bsrc_id then    *)
+  (* if asrc_id > bsrc_id then 1         *)
+  (* else if asrc_id == bsrc_id then     *)
   (*   if adst_id > bdst_id then 1       *)
   (*   else if adst_id == bdst_id then 0 *)
   (*   else -1                           *)
-  (* else -1                            *)
+  (* else -1                             *)
   if asrc_id == bsrc_id then adst_id - bdst_id
   else asrc_id - bsrc_id
   
@@ -605,11 +605,11 @@ let collect_term_trans_constrs_one_scc utils proc_scc =
 let norm_src_cond sc =
   match sc with
   | BForm ((bf, _), _) -> (match bf with
-    | Lt (e1, e2, pos)  -> mkSub e2 e1                       (* e1<e2  --> e2-e1>0   *)
-    | Lte (e1, e2, pos)  -> mkAdd (mkSub e2 e1) (mkIConst 1) (* e1<=e2 --> e2-e1+1>0 *)
-    | Gt (e1, e2, pos)  -> mkSub e1 e2                       (* e1>e2  --> e1-e2>0   *)
-    | Gte (e1, e2, pos)  -> mkAdd (mkSub e1 e2) (mkIConst 1) (* e1>=e2 --> e1-e2+1>0 *)
-    | Eq (e1, e2, pos)  -> mkAdd (mkSub e1 e2) (mkIConst 1)  (* e1=e2  --> e1-e2+1>0 or e2-e1+1>0*)
+    | Lt (e1, e2, pos)  -> mkSub e2 e1                      (* e1<e2  --> e2-e1>0   *)
+    | Lte (e1, e2, pos) -> mkAdd (mkSub e2 e1) (mkIConst 1) (* e1<=e2 --> e2-e1+1>0 *)
+    | Gt (e1, e2, pos)  -> mkSub e1 e2                      (* e1>e2  --> e1-e2>0   *)
+    | Gte (e1, e2, pos) -> mkAdd (mkSub e1 e2) (mkIConst 1) (* e1>=e2 --> e1-e2+1>0 *)
+    | Eq (e1, e2, pos)  -> mkAdd (mkSub e1 e2) (mkIConst 1) (* e1=e2  --> e1-e2+1>0 or e2-e1+1>0*)
     | _ -> report_error no_pos "Termination Inference: Unexpected case condition"
     )
   | _ -> report_error no_pos "Termination Inference: Unexpected case condition"
@@ -620,9 +620,9 @@ let norm_dst_cond dc =
   match dc with
   | BForm ((bf, _), _) -> (match bf with
     | Lt (e1, e2, _)  -> mkAdd (mkSub e1 e2) (mkIConst 1) (* e1<e2  --> e1-e2+1<=0 *)
-    | Lte (e1, e2, _)  -> mkSub e1 e2                     (* e1<=e2 --> e1-e2<=0   *)
+    | Lte (e1, e2, _) -> mkSub e1 e2                      (* e1<=e2 --> e1-e2<=0   *)
     | Gt (e1, e2, _)  -> mkAdd (mkSub e2 e1) (mkIConst 1) (* e1>e2  --> e2-e1+1<=0 *)
-    | Gte (e1, e2, _)  -> mkSub e2 e1                     (* e1>=e2 --> e2-e1<=0   *)
+    | Gte (e1, e2, _) -> mkSub e2 e1                      (* e1>=e2 --> e2-e1<=0   *)
     | Eq (e1, e2, _)  -> mkSub e1 e2                      (* e1=e2  --> e1-e2=0    *)
     | _ -> report_error no_pos "Termination Inference: Unexpected case condition."
     )
@@ -875,9 +875,9 @@ let check_monotone_decreasing_sequence utils trans_constr proc_scc =
   let fx = unk_info.unk_trans_ctx in
   let ctx = mkAnd rec_cond fx in
   
-  let _ = print_endline ("\nCTX: " ^ (!print_pure_formula ctx)) in
-  let _ = print_endline ("\nREC: " ^ (!print_pure_formula rec_cond)) in
-  let _ = print_endline ("\nBASE: " ^ (!print_pure_formula base_cond)) in
+  (* let _ = print_endline ("\nCTX: " ^ (!print_pure_formula ctx)) in        *)
+  (* let _ = print_endline ("\nREC: " ^ (!print_pure_formula rec_cond)) in   *)
+  (* let _ = print_endline ("\nBASE: " ^ (!print_pure_formula base_cond)) in *)
   
   let def_loop_cond, unk_loop_cond, term_cond_with_rank = 
   begin
@@ -1280,7 +1280,7 @@ let rec infer_term_spec_one_scc utils prog proc_scc round pre_trans_constrs =
     let trans_constrs = collect_term_trans_constrs_one_scc utils name_procs in
     if trans_constrs = [] then ()
     else
-      let _ = info_pprint ("ROUND " ^ (string_of_int round)) in
+      (* let _ = info_pprint ("ROUND " ^ (string_of_int round)) in *)
       let subst, tg =
         if (eq_trans_constr_list trans_constrs pre_trans_constrs) then
           solve_constrs_with_rank_synthesis utils prog trans_constrs proc_scc
@@ -1288,19 +1288,19 @@ let rec infer_term_spec_one_scc utils prog proc_scc round pre_trans_constrs =
       in
       let new_specs = update_term_spec_one_scc utils subst tg name_procs in
         
-      info_hprint "Termination Constraints"
-        (pr_list (fun c -> "\n" ^ (!print_term_trans_constraint c))) trans_constrs;
-      info_pprint "\n";
+      (* info_hprint "Termination Constraints"                                          *)
+      (*   (pr_list (fun c -> "\n" ^ (!print_term_trans_constraint c))) trans_constrs;  *)
+      (* info_pprint "\n";                                                              *)
       
-      info_hprint "SUBST" (pr_list (fun (unk, cmd) ->
-        "\n" ^ (!print_term_res unk) ^ " -> " ^ (!print_term_subst_cmd cmd))) subst;
+      (* info_hprint "SUBST" (pr_list (fun (unk, cmd) ->                                *)
+      (*   "\n" ^ (!print_term_res unk) ^ " -> " ^ (!print_term_subst_cmd cmd))) subst; *)
         
-      info_hprint "Termination Spec" (pr_list
-        ((fun (mn, spec) -> mn ^ "\n" ^ (!print_term_spec spec) ^ "\n"))) old_specs;
-      info_pprint "\n";
+      (* info_hprint "Termination Spec" (pr_list                                        *)
+      (*   ((fun (mn, spec) -> mn ^ "\n" ^ (!print_term_spec spec) ^ "\n"))) old_specs; *)
+      (* info_pprint "\n";                                                              *)
           
-      info_hprint "Inferred Termination Spec" (pr_list !print_term_spec) new_specs;
-      info_pprint "\n";
+      (* info_hprint "Inferred Termination Spec" (pr_list !print_term_spec) new_specs;  *)
+      (* info_pprint "\n";                                                              *)
       
       (* info_hprint "Simplified Termination Spec" !print_term_spec (simplify_term_spec new_spec); *)
       (* info_pprint "\n";                                                                         *)
@@ -1316,7 +1316,7 @@ let main utils prog proc_sccs =
   (*   infer_term_spec_one_proc utils proc 1 []                     *)
   (* ) procs                                                        *)
   List.iter (fun proc_scc ->
-    let _ = print_endline ("Termination Inference for SCC group: " ^ (pr_list (fun proc -> proc.proc_name) proc_scc)) in
+    (* let _ = print_endline ("Termination Inference for SCC group: " ^ (pr_list (fun proc -> proc.proc_name) proc_scc)) in *)
     infer_term_spec_one_scc utils prog proc_scc 1 []
   ) proc_sccs
 
