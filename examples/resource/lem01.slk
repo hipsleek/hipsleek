@@ -15,9 +15,12 @@ pred lseg<n, p> == case {
 
 lemma "V1" self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
 // Valid 
-
 checkentail x::lseg<3,p> |- x::lseg<1,q>.
 print residue.
+
+checkentail x::lseg<3,p> |- x::node<_,r> * r ::node<_,y> & y= null.
+print residue.
+
 
 /*
 checkentail x::lseg<3,p> |- x::lseg<3,q>.

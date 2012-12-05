@@ -14,7 +14,7 @@ pred_prim Q<low:int, high:int>
  inv low<=high & high>=0.
 
 
-checkentail x::cell<_> * y::cell2<_> & x=y |- false.
+checkentail x::cell<_> * y::cell2<_> & x=y|- false.
 
 checkentail x::R<2,10> * q::Q<3,5> & x=q |- x::R<3,5>.
 print residue.

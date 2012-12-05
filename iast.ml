@@ -1091,11 +1091,11 @@ and collect_struc (f:F.struc_formula):ident list =  match f with
 
 and collect_formula (f0 : F.formula) : ident list = 
   let rec helper (h0 : F.h_formula) = match h0 with
-	| F.HeapNode h ->
+	| F.HeapNode h -> 
 		  let (v, p), c = h.F.h_formula_heap_node, h.F.h_formula_heap_name in
           (* let _ = print_endline ("v:" ^ v ^ "  c:" ^ c) in *)
 		  if v = self then [c] else []
-	| F.Star h ->
+	| F.Star h -> 
         let h1, h2, pos = h.F.h_formula_star_h1, h.F.h_formula_star_h2, h.F.h_formula_star_pos in
 		  let n1 = helper h1 in
 		  let n2 = helper h2 in
@@ -1104,7 +1104,7 @@ and collect_formula (f0 : F.formula) : ident list =
 		  if d1>0 & d2>0 then
 			report_error pos ("Star:multiple occurrences of self as heap nodes in one branch are not allowed")
 		  else n1@n2
-    | F.Phase h ->
+    | F.Phase h -> 
         let h1, h2, pos = h.F. h_formula_phase_rd, h.F.h_formula_phase_rw, h.F.h_formula_phase_pos in
 		  let n1 = helper h1 in
 		  let n2 = helper h2 in
@@ -1113,10 +1113,11 @@ and collect_formula (f0 : F.formula) : ident list =
 		  if d1>0 & d2>0 then
 			report_error pos ("Phase: multiple occurrences of self as heap nodes in one branch are not allowed")
 		  else n1@n2
-	| _ -> [] in
+	| _ -> []
+	in
   match f0 with
-    | F.Base f -> helper f.F.formula_base_heap
-    | F.Exists f -> helper f.F.formula_exists_heap
+    | F.Base f ->  helper f.F.formula_base_heap
+    | F.Exists f ->  helper f.F.formula_exists_heap
     | F.Or f -> (collect_formula f.F.formula_or_f1) @ (collect_formula f.F.formula_or_f2)
 
 and find_data_view_x (dl:ident list) (f:Iformula.struc_formula) pos :  (ident list) * (ident list) =
