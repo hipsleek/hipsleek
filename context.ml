@@ -52,7 +52,6 @@ and action =
   | M_Nothing_to_do of string
   | M_infer_heap of (h_formula * h_formula) (* rhs * rhs_rest *)
   | M_unmatched_rhs_data_node of (h_formula * h_formula)
-  | M_allow_residue of h_formula  (* h_formula is the residue *)
   (* perform a list of actions until there is one succeed*)
   | Cond_action of action_wt list
   (*not handle yet*) 
@@ -134,7 +133,6 @@ let rec pr_action_name a = match a with
   | Seq_action l -> fmt_string "SEQ"
   | Search_action l -> fmt_string "SEARCH"
   | M_lhs_case e -> fmt_string "LHSCaseAnalysis"
-  | M_allow_residue _ -> fmt_string "AllowResidue"
 
 let rec pr_action_res pr_mr a = match a with
   | Undefined_action e -> pr_mr e; fmt_string "=>Undefined_action"
@@ -158,7 +156,6 @@ let rec pr_action_res pr_mr a = match a with
         pr_seq_vbox "=>SEARCH:" (pr_action_wt_res pr_mr) l;
         fmt_close();
   | M_lhs_case e -> pr_mr e; fmt_string "=>LHSCaseAnalysis"
-  | M_allow_residue h -> fmt_string ("=>AllowResidue" ^ (string_of_h_formula h))
 
 and pr_action_wt_res pr_mr (w,a) = 
   fmt_string ("Prio:"^(string_of_int w)); (pr_action_res pr_mr a)
@@ -196,14 +193,13 @@ let action_get_holes a = match a with
   | Cond_action _
   | M_Nothing_to_do _  
   | M_unmatched_rhs_data_node _
-  | M_allow_residue _
   | M_infer_heap _
   | Search_action _ ->None
 
  
 let action_get_holes (a:action):(h_formula*int) list option = 
   let pr1 = string_of_action_res in
-  let pr2 = pr_option pr_no in
+  let pr2 = pr_option (pr_list (pr_pair Cprinter.string_of_h_formula string_of_int)) in
   Debug.no_1 "action_get_holes" pr1 pr2 action_get_holes a
 
 let action_wt_get_holes (_,a) = action_get_holes a
@@ -315,6 +311,7 @@ let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node 
       )
       else []
     )
+  | HRel _ -> []
   | _ -> report_error no_pos "choose_context unexpected rhs formula\n"
 
 and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
@@ -453,6 +450,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
     | HTrue -> []
     | HFalse -> []
     | HEmp -> []
+    | HRel _ -> []
     | Hole _ -> []
     | DataNode ({h_formula_data_node = p1; 
 	  h_formula_data_imm = imm1}) ->
@@ -710,8 +708,6 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                     (* if (vl_view_orig || vl_self_pts==[]) then ua *)
                     (* else if (left_ls != []) then (1,M_lemma (c,Some (List.hd left_ls))) *)
                   else (1,M_Nothing_to_do ("matching data with deriv self-rec LHS node "^(string_of_match_res c)))
-            | _, HTrue -> let residue = c.match_res_lhs_node in
-                          (0, M_allow_residue residue)
             | _ -> report_error no_pos "process_one_match unexpected formulas 1\n"	
           )
     | MaterializedArg (mv,ms) ->
@@ -776,8 +772,6 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   else  (1,M_Nothing_to_do (string_of_match_res c))
             | DataNode dl, ViewNode vr -> (1,M_Nothing_to_do (string_of_match_res c))
             | ViewNode vl, DataNode dr -> (1,M_Nothing_to_do (string_of_match_res c))
-            | _, HTrue -> let residue = c.match_res_lhs_node in
-                          (0, M_allow_residue residue)
             | _ -> report_error no_pos "process_one_match unexpected formulas 3\n"	              )
     | MaterializedArg (mv,ms) -> 
           (*??? expect MATCHING only when normalizing => this situation does not need to be handled*)
@@ -1107,6 +1101,7 @@ and input_h_formula_in2_frame (frame, id_hole) (to_input : h_formula) : h_formul
     | DataNode _ 
     | ViewNode _
     | HEmp
+    | HRel _
     | HTrue | HFalse -> frame
           
 and update_ctx_es_formula ctx0 f = 

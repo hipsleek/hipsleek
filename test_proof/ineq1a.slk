@@ -1,0 +1,4 @@
+// (1) equality is important
+checkentail ($ x!=y)  & x=b & b=y |- false.
+
+

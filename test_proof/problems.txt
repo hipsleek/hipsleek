@@ -1,0 +1,43 @@
+--ufdp affects delay-proving-sat
+
+
+
+
+P => A & B
+
+not(P) \/ (A&B)
+
+P /\ ~( A & B)
+
+P /\ (~(A) \/ ~(B))
+
+(P/\~A) \/ (P/\~B)  ==> UNSAT!
+
+../hip spring/spring-5.ss --enable-logging-txt -tp z3 --log-z3 
+
+Z3 log/no_slicing_z3_proof_log_spring_spring-5_ss.txt
+has missing implies. It showed only x0_primed but
+not for the logs for x2,x3,x4 though they are there for the 
+main log file roof_log_spring_spring-5_ss.txt.
+
+;Negation of Consequence
+(assert (not false))
+(check-sat)(pop)
+(push)
+;Variables declarations
+(declare-fun x0_725 () Int)
+(declare-fun x0_790 () Int)
+(declare-fun x0_primed () Int)
+(declare-fun x0 () Int)
+;Relations declarations
+;Axioms assertions
+;Antecedent
+(assert (= (+ x0_790 ( * 1 1)) (+ 1 x0_725)))
+(assert (< 2 x0))
+(assert (< 4 (+ 1 (+ 1 x0))))
+(assert (= (+ x0_725 ( * 1 1)) (+ 1 (+ 1 (+ 1 x0)))))
+(assert (= x0_primed (+ 1 x0_790)))
+;Negation of Consequence
+(assert (not (= x0_primed (+ x0 3))))
+
+

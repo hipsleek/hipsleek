@@ -1,0 +1,52 @@
+data node { int val ; node next }.
+data tnode { int val ; tnode left; tnode right }.
+
+HeapPred H(tnode a).
+HeapPred H1(tnode a, tnode b).
+HeapPred G(tnode a, tnode b).
+
+relation T(int a).
+
+/*for x.next 
+infer [H,G] H(x) |- x::node<a,p,n>@L
+  --> [H,G,H1] x::tnode<a,p,n>*H1(p,n)
+   with H(x) -> x::tnode<a,p,n>*H1(p,n)
+*/
+
+//infer[H] H(x) |- x::tnode<a,p,n>@L.
+//print residue.
+//[(RELASS [H,HP_22], H(x)&true&{FLOW,(19,20)=__norm}[], x::tnode<a,p,n>@L[Orig] * HP_22(p,n)&true&{FLOW,(19,20)=__norm}[])]
+
+/*function call on l!=null
+
+ [H,G,H1] x::node<a,p,n>*H1(p,n) |- true --* l & n=null \/ !(l) & n!=null
+  -->  x::node<a,p,n>*H1(p,n) &  l & n=null
+       or x::node<a,p,n>*H1(p,n) &  !(l) & n!=null
+*/
+//infer[H1] x::tnode<a,p,n>*H1(p,n) |- true.
+//print residue.
+
+//BUG: post cond after then branch
+infer[H1,G] x0::tnode<a,p,n0> * H1(p,n0) * n0::tnode<a,x0,null> & x = x0 |- G(x,x0).
+//print residue.
+
+//infer[G] [(RELASS [H1,G], x0::tnode<a,p,n0>@M[Orig] * H1(p,n0)&x=x0&{FLOW,(19,20)=__norm}[], G(x,x0)&true&{FLOW,(19,20)=__norm}[]))
+//n0::tnode<a,x0,null> is eleminated?
+//new [(RELASS [H1,G], x0::tnode<a,p,n0>@M[Orig] * n0::tnode<a,x0,flted_30_33>@M[Orig]&true&{FLOW,(19,20)=__norm}[], G(x0,x0)&true&{FLOW,(19,20)=__norm}[])])
+
+
+
+//infer[H] H(n0) |- n0::tnode<a,x0,null>.
+//for recursive call
+//infer[H,H1] x::tnode<a,p,n>*H1(p,n) & n!=null & n0 = n |- H(n0).
+//print residue.
+// [(RELASS [H1,H], H1(p,n)&n!=null & n0=n&{FLOW,(19,20)=__norm}[], H(n0)&true&{FLOW,(19,20)=__norm}[])]
+
+//post-cond
+//infer[G,H1]  G(n0,n1) * x::tnode<a,p,n> * H1(p,n) & n!=null & n1 =n &x0 = x|- G(x,x0).
+//print residue.
+// [(RELASS [G,H1,G], G(n0,n1) * x::tnode<a,p,n>@M[Orig] * H1(p,n)&x0=x&{FLOW,(19,20)=__norm}[], G(x,x0)&true&{FLOW,(19,20)=__norm}[])])
+//does (n = null & n1 = n) need to save in rel 
+//new [(RELASS [G,H1,G], x::tnode<a,p,n>@M[Orig]&n!=null&{FLOW,(19,20)=__norm}[], G(x,x)&true&{FLOW,(19,20)=__norm}[])])
+
+

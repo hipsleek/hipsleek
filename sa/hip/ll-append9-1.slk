@@ -1,0 +1,14 @@
+data node {
+  int val;
+  node next;
+}.
+
+HeapPred H1a(node a).
+HeapPred G2(node a,node b).
+HeapPred HP(node a).
+
+infer [H1a,HP,G2]
+  H1a(y) * HP(v_node_43_429) * x::node<val_43_420,y> &
+     v_node_43_429=null & v_bool & next_44_430=v_node_43_429
+   |-  G2(x,y) * H1a(y).
+

@@ -1,0 +1,9 @@
+// provided fun_impt called once
+if delay_sat & smart_unsat_estate==None
+  if (no-eps & filter_assume or eps)
+     let res := (extra unsat) in
+     let smart_unsat_estate := Some res in
+     if res is false then finish
+     else not finish
+  else not finish
+else not finish 

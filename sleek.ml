@@ -39,7 +39,7 @@ let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 let source_files = ref ([] : string list)
 
 let set_source_file arg = 
-  source_files := arg :: !source_files
+  source_files := arg :: !source_files 
 
 let print_version () =
   print_endline ("SLEEK: A Separation Logic Entailment Checker");
@@ -50,7 +50,7 @@ let print_version () =
 
 let process_cmd_line () = Arg.parse Scriptarguments.sleek_arguments set_source_file usage_msg
 
-let inter = Scriptarguments.inter
+let inter = Scriptarguments.inter_hoa
 
 let prompt = ref "SLEEK> "
 let terminator = '.'
@@ -92,36 +92,44 @@ let parse_file (parse) (source_file : string) =
       | M.Loc.Exc_located (l,t)-> 
             (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
             raise t) in
+  let parse_first (cmds:command list) : (command list)  =
+    let pr = pr_list string_of_command in
+    Debug.no_1 "parse_first" pr pr parse_first cmds in
   let proc_one_def c = 
     match c with
 	  | DataDef ddef -> process_data_def ddef
 	  | PredDef pdef -> process_pred_def_4_iast pdef
 	  | BarrierCheck bdef -> process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars)
 	  | FuncDef fdef -> process_func_def fdef
-      | RelDef rdef -> process_rel_def rdef
-      | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
+    | RelDef rdef -> process_rel_def rdef
+      | HpDef hpdef -> process_hp_def hpdef
+    | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
       (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
-	  | LemmaDef _ | Infer _ | CaptureResidue _ | LetDef _ | EntailCheck _ | PrintCmd _ 
-      | Time _ | EmptyCmd -> () in
+	  | LemmaDef _ | Infer _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | PrintCmd _ | CmpCmd _ 
+    | Time _ | EmptyCmd -> () in
   let proc_one_lemma c = 
     match c with
 	  | LemmaDef ldef -> process_lemma ldef
-	  | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | AxiomDef _ (* An Hoa *)
-	  | CaptureResidue _ | LetDef _ | EntailCheck _ | Infer _ | PrintCmd _  | Time _ | EmptyCmd -> () in
+	  | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *)
+	  | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | Infer _ | PrintCmd _  | CmpCmd _| Time _ | EmptyCmd -> () in
   let proc_one_cmd c = 
     match c with
-	  | EntailCheck (iante, iconseq) -> 
+    | EntailCheck (iante, iconseq, etype) -> process_entail_check iante iconseq etype
+      (* let pr_op () = process_entail_check_common iante iconseq in  *)
+      (* Log.wrap_calculate_time pr_op !source_files ()               *)
+	  | EqCheck (lv, if1, if2) -> 
           (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
-          process_entail_check iante iconseq
-      | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
-	  | CaptureResidue lvar -> process_capture_residue lvar
-	  | PrintCmd pcmd -> process_print_command pcmd
-	  | LetDef (lvar, lbody) -> put_var lvar lbody
-	  | BarrierCheck bdef -> process_barrier_def bdef
-      | Time (b,s,_) -> 
-            if b then Gen.Profiling.push_time s 
-            else Gen.Profiling.pop_time s
-	  | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ | EmptyCmd -> () in
+          process_eq_check lv if1 if2
+    | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
+    | CaptureResidue lvar -> process_capture_residue lvar
+    | PrintCmd pcmd -> process_print_command pcmd
+	  | CmpCmd ccmd -> process_cmp_command ccmd
+    | LetDef (lvar, lbody) -> put_var lvar lbody
+    | BarrierCheck bdef -> process_barrier_def bdef
+    | Time (b,s,_) -> 
+        if b then Gen.Profiling.push_time s 
+        else Gen.Profiling.pop_time s
+	  | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ | EmptyCmd -> () in
   let cmds = parse_first [] in
    List.iter proc_one_def cmds;
 	(* An Hoa : Parsing is completed. If there is undefined type, report error.
@@ -152,6 +160,8 @@ let main () =
                 I.prog_func_decls = [];
                 I.prog_rel_decls = [];
                 I.prog_rel_ids = [];
+                I.prog_hp_decls = [];
+			    I.prog_hp_ids = [];
                 I.prog_axiom_decls = []; (* [4/10/2011] An Hoa *)
                 I.prog_proc_decls = [];
                 I.prog_coercion_decls = [];
@@ -166,7 +176,7 @@ let main () =
   let quit = ref false in
   let parse x =
     match !Scriptarguments.fe with
-      | Scriptarguments.NativeFE -> NF.parse x
+      | Scriptarguments.NativeFE -> NF.parse_slk x
       | Scriptarguments.XmlFE -> XF.parse x in
   let parse x = Debug.no_1 "parse" pr_id string_of_command parse x in
   let buffer = Buffer.create 10240 in
@@ -190,16 +200,19 @@ let main () =
                   (match cmd with
                      | DataDef ddef -> process_data_def ddef
                      | PredDef pdef -> process_pred_def pdef
-					 | BarrierCheck bdef -> 
-							(process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars) ; process_barrier_def bdef)
+                     | BarrierCheck bdef -> 
+                         (process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars) ; process_barrier_def bdef)
                      | FuncDef fdef -> process_func_def fdef
                      | RelDef rdef -> process_rel_def rdef
+                     | HpDef hpdef -> process_hp_def hpdef
                      | AxiomDef adef -> process_axiom_def adef
-                     | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
+                     | EntailCheck (iante, iconseq, etype) -> process_entail_check iante iconseq etype
+		     | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2
                      | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
                      | CaptureResidue lvar -> process_capture_residue lvar
                      | LemmaDef ldef ->   process_lemma ldef
                      | PrintCmd pcmd -> process_print_command pcmd
+		     | CmpCmd pcmd -> process_cmp_command pcmd
                      | LetDef (lvar, lbody) -> put_var lvar lbody
                      | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
                      | EmptyCmd -> ());
@@ -222,28 +235,93 @@ let main () =
         (* let _ = print_endline "Prior to parse_file" in *)
         let _ = List.map (parse_file NF.list_parse) !source_files in ()
     with
-      | End_of_file -> print_string ("\n")
+      | End_of_file -> 
+            begin
+              print_string ("\n")
+            end
       (* | Not_found -> print_string ("Not found exception caught!\n") *)
 
 (* let main () =  *)
 (*   Debug.loop_1_no "main" (fun () -> "?") (fun () -> "?") main () *)
-
+let sleek_proof_log_Z3 src_files =
+ if !Globals.proof_logging || !Globals.proof_logging_txt then 
+      begin
+	let _=sleek_src_files := src_files in			
+	let tstartlog = Gen.Profiling.get_time ()in	
+	(* let _= Log.proof_log_to_file () in *)
+  let with_option = if(!Globals.en_slc_ps) then "sleek_eps" else "sleek_no_eps" in
+  let with_option_logtxt = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
+  let fname = "logs/"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
+	let fz3name= ("logs/"^with_option^(Globals.norm_file_name (List.hd src_files)) ^".z3")  in
+	let fnamegt5 = "logs/greater_5sec_"^with_option_logtxt^"_proof_log_" ^ (Globals.norm_file_name (List.hd src_files)) ^".txt"  in
+	let _= if (!Globals.proof_logging_txt) 
+        then 
+          begin
+            Debug.info_pprint ("Logging "^fname^"\n") no_pos;
+						Debug.info_pprint ("Logging "^fz3name^"\n") no_pos;
+						Debug.info_pprint ("Logging "^fnamegt5^"\n") no_pos;
+            Log.proof_log_to_text_file !source_files;
+						Log.z3_proofs_list_to_file !source_files;
+						Log.proof_greater_5secs_to_file !source_files;
+          end
+	in
+			let tstoplog = Gen.Profiling.get_time () in
+			let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
+			(* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in	() *)
+			end
+		
 let _ =
-   wrap_exists_implicit_explicit := false ;
+  wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
   Scriptarguments.check_option_consistency ();
   if !Globals.print_version_flag then begin
-	print_version ()
-  end else
+    print_version ()
+  end else (
     let _ = Printexc.record_backtrace !Globals.trace_failure in
-    (Tpdispatcher.start_prover ();
+    if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
     Gen.Profiling.push_time "Overall";
     (* let _ = print_endline "before main" in *)
     main ();
     (* let _ = print_endline "after main" in *)
     Gen.Profiling.pop_time "Overall";
+    if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
+    (* Get the total proof time *)
+    let _ = if not(!Globals.no_cache_formula) then
+      begin
+        let fp a = (string_of_float ((floor(100. *.a))/.100.)) in
+        let calc_hit_percent c m = (100. *. ((float_of_int (c - m)) /. (float_of_int c))) in
+        let string_of_hit_percent c m = (fp (calc_hit_percent c m))^"%" in
+        let s_c = !Tpdispatcher.cache_sat_count in
+        let s_m = !Tpdispatcher.cache_sat_miss in
+        let i_c = !Tpdispatcher.cache_imply_count in
+        let i_m = !Tpdispatcher.cache_imply_miss in
+        if s_c>0 then
+          begin
+            print_endline ("\nSAT Count   : "^(string_of_int s_c)); 
+            print_endline ("SAT % Hit   : "^(string_of_hit_percent s_c s_m))
+          end;
+        if i_c>0 then
+          begin
+            print_endline ("IMPLY Count : "^(string_of_int i_c)); 
+            print_endline ("IMPLY % Hit : "^(string_of_hit_percent i_c i_m))
+           end;
+        if i_c+s_c>0 then (Gen.Profiling.print_info_task "cache overhead")
+        else ()
+     end
+          else ()
+    in
+    let ptime4 = Unix.times () in
+    let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime in
+    let _ = print_string ("\nTotal verification time: " 
+    ^ (string_of_float t4) ^ " second(s)\n"
+    ^ "\tTime spent in main process: " 
+    ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
+    ^ "\tTime spent in child processes: " 
+    ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
+    in
+    let _= sleek_proof_log_Z3 !source_files in
     let _ = 
       if (!Globals.profiling && not !inter) then 
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in
-    Tpdispatcher.stop_prover ();
-    print_string "\n")
+    print_string "\n"
+  )

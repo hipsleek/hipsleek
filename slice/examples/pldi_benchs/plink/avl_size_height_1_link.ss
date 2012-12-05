@@ -184,7 +184,7 @@ node insert(node x, int a)
 			{
 				if (height(x.left.left) > height(x.left.right))
 				{
-					dprint;
+					//dprint;
 					return rotate_right(x.left.left, x.left.right, x.right);
 				}
 				else

@@ -3,6 +3,7 @@
 *)
 
 open Globals
+open GlobProver
 module CP = Cpure
 
 let is_mona_running = ref false
@@ -10,7 +11,7 @@ let is_mona_running = ref false
 let last_test_number = ref 0
 let test_number = ref 0
 let mona_cycle = ref 90
-let timeout = ref 11.0 (* default timeout is 10 seconds *)
+let timeout = ref 10.0 (* default timeout is 10 seconds *)
 
 let result_file_name = "res"
 let log_all_flag = ref false
@@ -33,6 +34,7 @@ let rec mona_of_typ = function
   | Int           -> "int"
   | AnnT          -> "AnnT"
   | RelT          -> "RelT"
+  | HpT           -> "HpT"
   | Void          -> "void" 	(* same as for float *)
   | BagT i		  -> "("^(mona_of_typ i)^") set"
   | TVar i        -> "TVar["^(string_of_int i)^"]"
@@ -837,7 +839,7 @@ let prelude () =
    let mona_pred_file_x = get_mona_predicates_file () in
    send_cmd_no_answer ("include \"" ^ mona_pred_file_x ^ "\";\n")
 
-let set_process (proc: Globals.prover_process_t) = 
+let set_process (proc: prover_process_t) = 
   process := proc
 
 let rec check_prover_existence prover_cmd_str: bool =
