@@ -212,8 +212,7 @@ let eq_trans_constr a b =
   (asrc_id == bsrc_id) && (adst_id == bdst_id)
   
 let eq_trans_constr_list ls1 ls2 =
-  try
-    List.for_all2 eq_trans_constr ls1 ls2
+  try List.for_all2 eq_trans_constr ls1 ls2
   with _ -> false
 
 (* If the path trace of a base context is a SUPERSET of *)
@@ -1057,11 +1056,11 @@ let rec graph_of_term_constrs t_constrs =
 (*   List.exists (fun v -> List.mem v neighbors) dst                                                *)
   
 (* Find a set of neighbor scc groups of a scc *)    
-and neighbors_of_scc (scc: TG.V.t list) (scc_list: TG.V.t list list) tg : TG.V.t list list =
-  let neighbors = List.filter (fun m -> not (List.mem m scc)) (TGN.list_from_vertices tg scc) in
-  (* let scc_neighbors = List.find_all (fun s -> is_neighbors_of_scc scc s) scc_list in *) (* Less efficient *)
-  let scc_neighbors = List.find_all (fun s -> List.exists (fun m -> List.mem m neighbors) s) scc_list in 
-  scc_neighbors
+(* and neighbors_of_scc (scc: TG.V.t list) (scc_list: TG.V.t list list) tg : TG.V.t list list =                    *)
+(*   let neighbors = List.filter (fun m -> not (List.mem m scc)) (TGN.list_from_vertices tg scc) in                *)
+(*   (* let scc_neighbors = List.find_all (fun s -> is_neighbors_of_scc scc s) scc_list in *) (* Less efficient *) *)
+(*   let scc_neighbors = List.find_all (fun s -> List.exists (fun m -> List.mem m neighbors) s) scc_list in        *)
+(*   scc_neighbors                                                                                                 *)
 
 (* Find ALL sccs that can reach from src *)
 (* and reachable_sccs_top_down (src: TG.V.t list) (scc_list: TG.V.t list list) tg =                                   *)
@@ -1080,7 +1079,7 @@ and reachable_sccs_bottom_up (src: (TG.V.t * term_res) list) (scc_list: (TG.V.t 
 
 (* Partition a list of sccs into groups of reachable sccs *)
 and partition_scc_list reachable_sccs reach (scc_list: (TG.V.t * term_res) list list) tg = 
-  if scc_list = [] then []
+  if scc_list == [] then []
   else
     let root, rem = List.fold_left (fun (rt, rm) scc ->
       match rt with
@@ -1100,12 +1099,12 @@ and partition_scc_list reachable_sccs reach (scc_list: (TG.V.t * term_res) list 
       let root_reachable_sccs, rem = reachable_sccs root rem tg in
       (root::root_reachable_sccs)::(partition_scc_list reachable_sccs reach rem tg)
     
-and scc_sort (scc_list: TG.V.t list list) tg : TG.V.t list list =
-  let compare_scc scc1 scc2 =
-    if (List.mem scc2 (neighbors_of_scc scc1 scc_list tg)) then -1 (* scc1 -> scc2 => [scc1, scc2] *)
-    else if (List.mem scc1 (neighbors_of_scc scc2 scc_list tg)) then 1 (* scc2 -> scc1 *)
-    else 0
-  in List.fast_sort (fun s1 s2 -> compare_scc s1 s2) scc_list 
+(* and scc_sort (scc_list: TG.V.t list list) tg : TG.V.t list list =                                     *)
+(*   let compare_scc scc1 scc2 =                                                                         *)
+(*     if (List.mem scc2 (neighbors_of_scc scc1 scc_list tg)) then -1 (* scc1 -> scc2 => [scc1, scc2] *) *)
+(*     else if (List.mem scc1 (neighbors_of_scc scc2 scc_list tg)) then 1 (* scc2 -> scc1 *)             *)
+(*     else 0                                                                                            *)
+(*   in List.fast_sort (fun s1 s2 -> compare_scc s1 s2) scc_list                                         *)
   
 (* Check whether a scc group can reach Term or Loop or not *)  
 and may_be_reachable reach scc_group =
@@ -1121,7 +1120,8 @@ and may_be_reachable reach scc_group =
 let rec solve_constrs utils constrs proc_scc =
   (* Construct an ACYCLIC graph from SCC to determine DEFINITE LOOP *)
   let tg = graph_of_term_constrs constrs in
-  let scc_id_list = scc_sort (TGC.scc_list tg) tg in
+  (* let scc_id_list = scc_sort (TGC.scc_list tg) tg in *)
+  let scc_id_list = Array.to_list (TGC.scc_array tg) in
   let scc_list = List.map (List.map (fun id -> (id, Hashtbl.find term_res_tbl id))) (List.rev scc_id_list) in
   (***************************************)
   let scc_groups = partition_scc_list reachable_sccs_bottom_up RTerm scc_list tg in (* Divide by TERM *)
@@ -1276,7 +1276,8 @@ let subst_for_scc_with_rank_synthesis utils prog trans_constr scc scc_trans =
 
 let solve_constrs_with_rank_synthesis utils prog constrs proc_scc =
   let tg = graph_of_term_constrs constrs in
-  let scc_id_list = scc_sort (TGC.scc_list tg) tg in
+  (* let scc_id_list = scc_sort (TGC.scc_list tg) tg in *)
+  let scc_id_list = Array.to_list (TGC.scc_array tg) in
   let scc_list = List.map (List.map (fun id -> (id, Hashtbl.find term_res_tbl id))) (List.rev scc_id_list) in
   
   let unk_to_term_constrs = List.find_all (fun c -> 
@@ -1331,7 +1332,8 @@ let rec infer_term_spec_one_scc utils prog proc_scc round pre_trans_constrs =
   end
   
 let pr_inf_result (mn, spec) = 
-  mn ^ ":\n" ^ (!print_struc_formula (struc_of_term_spec spec))
+  (* mn ^ ":\n" ^ (!print_struc_formula (struc_of_term_spec spec)) *)
+  mn ^ ":\n" ^ (!print_term_spec spec)
   
 let pr_inf_results specs = 
   List.fold_left (fun s spec -> s ^ "\n" ^ (pr_inf_result spec)) "" specs
@@ -1348,5 +1350,6 @@ let main utils prog proc_sccs =
     (* let _ = print_endline ("Termination Inference for SCC group: " ^ (pr_list (fun proc -> proc.proc_name) proc_scc)) in *)
     let specs = infer_term_spec_one_scc utils prog proc_scc 1 [] in
     info_pprint (pr_inf_results specs)
-  ) proc_sccs
+  ) proc_sccs;
+  print_string "\n\n"
 
