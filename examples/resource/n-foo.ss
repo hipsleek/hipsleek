@@ -1,37 +1,38 @@
-
 pred_prim R<high:int>
   inv high>=0;
 
 lemma "R split" self::R<b> & q,r>=0 & b=q+r <-> self::R<q> * self::R<r> ;
 
-void checkR(R x, int n)
-  requires x::R<a>@L & a>=n
+global R stk;
+
+void check_rs(int n)
+  requires stk::R<a>@L & a>=n
   ensures true;
 
 // subtract space from stack
-void subR(R x, int n)
-  requires x::R<a> & a>=n
-  ensures x::R<a-n>;
+void sub_RS(int n)
+  requires stk::R<a> & a>=n
+  ensures stk::R<a-n>;
 
 // add back space into stack
-void addR(R x, int n)
-  requires x::R<a>
-  ensures x::R<a+n>;
+void add_RS(int n)
+  requires stk::R<a>
+  ensures stk::R<a+n>;
 
-void f(R s) 
-  requires s::R<m> & m=6
-  ensures  s::R<m>;
+void f() 
+  requires stk::R<m> & m=6
+  ensures  stk::R<m>;
 {
-  subR(s,2); //subtract stack frame
-  dprint;
-  g(s);
-  addR(s,2); //add back stack frame prior to return
+  sub_RS(2); //subtract stack frame
+  //dprint;
+  g();
+  add_RS(2); //add back stack frame prior to return
 }
 
-void g(R s) 
-  requires s::R<m> & m=6 
-  ensures  s::R<m>;
+void g() 
+  requires stk::R<m> & m=2
+  ensures  stk::R<m>;
 {
-  subR(s,2); //subtract stack frame
-  addR(s,2); //add back stack frame prior to return
+  sub_RS(2); //subtract stack frame
+  add_RS(2); //add back stack frame prior to return
 }
