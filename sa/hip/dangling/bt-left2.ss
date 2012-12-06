@@ -64,5 +64,17 @@ UNIFICATION of dangling important here!
     G1(cleft_582)&true
  or emp&z_590=null
  ]
+
+--sa-unify-dangling now produce below..
+
+[ H1(z_589) ::= 
+ z_589::node2<val_32_517',left_32_518',right_32_519'>@M * 
+ H1(right_32_519') * H1(left_32_518')&true
+ or z_589::node2<val_35_587,left_35_588,right_35_522'>@M * H1(left_35_588) * 
+    H1(right_35_522')&true
+ or emp&z_589=null
+ ,
+ G1(z_590) ::= H1(z_590)&true]
+
 */
 
