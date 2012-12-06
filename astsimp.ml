@@ -7630,7 +7630,7 @@ and trans_expected_ass prog ass =
     | Some (il,sl,assl) -> Some(il,sl,helper assl)
 
 (******end trans_test_components**********)
-	  
+
 (*
 and normalize_barr_decl cprog p = 
 		let nfs = Solver.normalize_frac_struc cprog in

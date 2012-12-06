@@ -22,8 +22,6 @@ let is_medium n = (n==1);;
 
 let is_long n = (n==0);;
 
-
-
 (* (\* pretty printing for primitive types *\) *)
 (* let string_of_prim_type = function  *)
 (*   | Bool          -> "boolean" *)
@@ -2759,20 +2757,43 @@ let string_of_program_separate_prelude p (iprims:Iast.prog_decl)=
    let remove_prim_procs procs=
 		List.fold_left (fun a b->
 			try 
+			if( (BatString.starts_with b.Cast.proc_name ("is_not_null___"^"$")) 
+					|| (BatString.starts_with b.Cast.proc_name ("is_null___"^"$")) )
+			then a else		 	
 			let _=List.find (fun c-> (BatString.starts_with b.Cast.proc_name (c.Iast.proc_name^"$")) 
-			                          || (BatString.starts_with b.Cast.proc_name ("is_not_null___"^"$")) 
-																|| (BatString.starts_with b.Cast.proc_name ("is_null___"^"$")) 
 																) iprims.Iast.prog_proc_decls in 
 			a
 			with Not_found ->
 				a@[b]  
 		) [] procs
 	 in
-  "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^ 
+	 let remove_prim_data_decls p_data_decls=
+		List.fold_left (fun a b->
+			(* if(b.Cast.data_name="__Exc" || b.Cast.data_name="__Error") *)
+			(* then a else                                                *)
+			try 
+			let _=List.find (fun c-> (b.Cast.data_name = c.Iast.data_name) 
+																) iprims.Iast.prog_data_decls in 
+			a
+			with Not_found ->
+				a@[b]  
+		) [] p_data_decls
+	 in
+	 let remove_prim_rel_decls p_rel_decls=
+		List.fold_left (fun a b->
+			try 
+			let _=List.find (fun c-> (b.Cast.rel_name = c.Iast.rel_name) 
+																) iprims.Iast.prog_rel_decls in 
+			a
+			with Not_found ->
+				a@[b]  
+		) [] p_rel_decls
+	 in
+  "\n" ^ (string_of_data_decl_list (remove_prim_data_decls p.prog_data_decls)) ^ "\n\n" ^ 
   (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^ 
   (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^ 
-  (string_of_rel_decl_list p.prog_rel_decls) ^ "\n\n" ^ 
-  (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^ 
+  (string_of_rel_decl_list (remove_prim_rel_decls p.prog_rel_decls)) ^ "\n\n" ^
+  (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^
   (string_of_coerc_decl_list p.prog_left_coercions)^"\n\n"^
   (string_of_coerc_decl_list p.prog_right_coercions)^"\n\n"^
   (* TODO: PD *)

@@ -8,6 +8,7 @@ open Cprinter
 module CP = Cpure
 module CF = Cformula
 
+ 
 type proof_type =
 	| IMPLY of (CP.formula * CP.formula)
 	| SAT of CP.formula
@@ -360,6 +361,9 @@ let process_proof_logging ()=
         (* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in    () *)
       end
   else ()
+
+
+
 
 (* let add_sleek_log_entry e= *)
 (*   if !Globals.sleek_logging_txt then *)
