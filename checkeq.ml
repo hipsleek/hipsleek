@@ -1897,7 +1897,9 @@ let checkeq_defs_with_diff_x hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.
 	in
 	CP.eq_spec_var hp_name v
       in
-      let def1 = List.find (fun (_,hp,_) -> check_hp (CF.formula_of_heap hp no_pos) v1) defs in
+      let def1 = List.find (fun (_,hp,_) ->
+          (* let _ = print_endline ("Diff Hp: " ^ (Cprinter.string_of_h_formula hp)) in *)
+          check_hp (CF.formula_of_heap hp no_pos) v1) defs in
       let def2 = List.find (fun (hp,_) -> check_hp hp v2) infile_defs in
       let (a,b,c) = def1 in
       ((CF.formula_of_heap b no_pos,c),def2)

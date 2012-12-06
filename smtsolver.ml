@@ -664,7 +664,7 @@ let check_formula f timeout =
   end
 
 let check_formula f timeout =
-  Debug.no_2 "Z3:check_formula" (fun x-> x) string_of_float string_of_smt_output
+  Debug.ho_2 "Z3:check_formula" (fun x-> x) string_of_float string_of_smt_output
       check_formula f timeout
 
 

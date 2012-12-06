@@ -1,0 +1,27 @@
+data node2 {
+  int val;
+  node2 left;
+  node2 right;
+}.
+
+HeapPred H1(node2 a).
+
+infer [H1] H1(z) & z!=null 
+ |-  z::node2<_,left,right>@L .
+
+print residue.
+
+/*
+
+Obtained:
+
+ H1(z)&z!=null --> z::node2<Anon_11,left,right>@M * HP_19(left,right)&true]
+*************************************
+ <1>HP_19(left,right) * z::node2<Anon_11,left,right>@M[Orig]&z!=null&{FLOW,(19,20)=__norm}[]
+
+Should really be:
+
+ H1(z)&z!=null --> z::node2<Anon_11,left,right>@M 
+                     * HP_19(left) * HP_20(right)&true]
+
+*/

@@ -10,20 +10,34 @@ echo "ll-append7.ss"
 ../../hip ll-append7.ss --sa-dangling -cp-test cp/ll-append7.cp | grep Compare
 echo "ll-append8.ss"
 ../../hip ll-append8.ss --sa-dangling --sa-inlining -cp-test cp/ll-append8.cp | grep Compare
-echo "ll-append9.ss"
+echo "ll-append9.ss --XPURE"
 ../../hip ll-append9.ss --sa-dangling --sa-inlining -cp-test cp/ll-append9.cp | grep Compare
-echo "ll-append10.ss"
+echo "ll-append10.ss --XPURE"
 ../../hip ll-append10.ss --sa-dangling --sa-inlining -cp-test cp/ll-append10.cp | grep Compare
-echo "ll-app3.ss"
+echo "dangling/ll-app3.ss"
 ../../hip dangling/ll-app3.ss --sa-dangling --sa-inlining -cp-test cp/ll-app3.cp | grep Compare
-echo "ll-app4.ss"
+echo "dangling/ll-app4.ss --XPURE"
 ../../hip dangling/ll-app4.ss --sa-dangling --sa-inlining -cp-test cp/ll-app4.cp | grep Compare
+echo "dangling/ll-app5b.ss"
+../../hip dangling/ll-app5b.ss --sa-useless --sa-dangling --sa-inlining -cp-test cp/ll-app5b.cp | grep Compare
+echo "dangling/ll-app6.ss"
+../../hip dangling/ll-app6.ss --sa-dangling --sa-inlining -cp-test cp/ll-app6.cp | grep Compare
+echo "dangling/ll-swap.ss"
+../../hip dangling/ll-swap.ss --sa-dangling --sa-inlining -cp-test cp/ll-swap.cp | grep Compare
 echo "ex1.ss"
 ../../hip ex1.ss --sa-dangling -cp-test cp/ex1.cp | grep Compare
 echo "ex1a.ss"
 ../../hip ex1a.ss --sa-dangling -cp-test cp/ex1a.cp | grep Compare
 echo "ll-get-next"
 ../../hip ll-get-next.ss --sa-dangling --sa-inlining -cp-test cp/ll-get-next.cp | grep Compare
+echo "dangling/get-next"
+../../hip dangling/get-next.ss --sa-dangling --sa-inlining -cp-test cp/get-next.cp | grep Compare
+echo "dangling/get-next2"
+../../hip dangling/get-next2.ss --sa-dangling --sa-inlining -cp-test cp/get-next2.cp | grep Compare
+echo "dangling/get-next3"
+../../hip dangling/get-next3.ss --sa-dangling --sa-inlining -cp-test cp/get-next3.cp | grep Compare
+echo "dangling/get-next4"
+../../hip dangling/get-next4.ss --sa-dangling --sa-inlining -cp-test cp/get-next4.cp | grep Compare
 echo "ll-get-next-next"
 ../../hip ll-get-next-next.ss --sa-dangling --sa-inlining -cp-test cp/ll-get-next-next.cp | grep Compare
 echo "ll-next2"
@@ -43,7 +57,7 @@ echo "ll-delete2"
 echo "ll-get_size"
 ../../hip ll-get-size.ss --sa-dangling -cp-test cp/ll-get-size.cp | grep Compare
 echo "ll_all1"
-../../hip ll_all1.ss --sa-dangling --sa-inlining -cp-test cp/ll_all1.cp | grep Compare
+../../hip ll_all1.ss -cp-test cp/ll_all1.cp | grep Compare
 echo "ll_all3"
 ../../hip ll_all3.ss --sa-dangling -cp-test cp/ll_all3.cp | grep Compare
 echo "ll_all4"

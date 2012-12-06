@@ -27,30 +27,21 @@ void append(ref node x, node y)
 *************************************
 *******relational assumption ********
 *************************************
-[ G1(x,y)&true --> x::node<val_65_528',next_65_529'>@M * 
-  HP_545(next_65_529',y)&true,
- HP_545(t_22',y)&t_22'!=null --> G1(t_22',y)&true,
- HP_545(next_67_557,y) * x'::node<val_65_550,y>@M&x=x' & 
-  next_67_557=null --> G3(x',x,y)&true,
- G3(t_570,t_567,y) * x'::node<val_65_552,t_570>@M&t_567!=null & 
+[ G1(x,y)&true --> x::node<val_82_534',next_82_535'>@M * 
+  HP_551(next_82_535',y)&true,
+ HP_551(t_24',y)&t_24'!=null --> G1(t_24',y)&true,
+ HP_551(next_84_563,y) * x'::node<val_82_556,y>@M&x=x' & 
+  next_84_563=null --> G3(x',x,y)&true,
+ G3(t_576,t_573,y) * x'::node<val_82_558,t_576>@M&t_573!=null & 
   x=x' --> G3(x',x,y)&true]
+*************************************
 
 *************************************
 *******relational definition ********
 *************************************
-*************************************
-[ G3(x_580,x_581,y_582) ::= x_580::node<val_65_550,y_582_583>@M * HP_584(y_582_583,x_581,y_582) * 
-HP_571(y_582)&x_580=x_581,
- G1(x_592,y_593) ::= x_592::node<val_65_528',next_65_529'>@M * HP_594(next_65_529',y_593) * 
-HP_571(y_593)&true,
- HP_584(y_582_583,x_591,y_582) ::= 
- y_582_583::node<val_65_550,y_582_589>@M * HP_584(y_582_589,t_567,y_582)&true
- or emp&y_582=y_582_583
- ,
- HP_594(next_65_529',y_593) ::= 
- next_65_529'::node<val_65_528',next_65_597>@M * HP_594(next_65_597,y_593)&
- true
- or emp&next_65_529'=null
+G3(x_586,x_587,y_588) ::= x_586::node<val_82_556,y_588_589>@M * y_588_589::lseg<y_588>[LHSCase] * HP_577(y_588)&x_586=x_587,
+ G1(x_597,y_598) ::= x_597::node<val_82_534',next_82_535'>@M * next_82_535'::ll[LHSCase] * 
+HP_577(y_598)&true]
 
 
 Elimination of Parameters
@@ -74,9 +65,9 @@ prior to equivalence checking.
 */
 
 
-  infer [G1,G2]
+  infer [G1,G3]
   requires G1(x,y)
-  ensures G2(x',y);//'
+  ensures G3(x',x,y);//'
 
 {
     node t = x.next;

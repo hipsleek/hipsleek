@@ -20,29 +20,31 @@ void append(ref node x, node y)
   ensures x'::ls<>;
 */
 /*
-[ H1(x)&true --> x::node<val_31_522',next_31_523'> * HP_539(next_31_523')&true,
- HP_539(t_21')&t_21'!=null --> H1(t_21')&true,
- H2(y)&true --> H2(y)&true,
- H3(t_565) * x'::node<val_31_546,t_565>&true --> H3(x')&true,
- H4(y)&true --> H4(y)&true]
 
- Rel ass:
-  HP_539(next_33_551)&next_33_551=null --> emp&true,
-   x'::node<val_31_544,y>&H2_y_563=y --> H3(x')&true,
-   H2(y)&H2_y_563=y --> H4(y)&true,
+We got:
 
- We should have instead:
-  x'::node<val_31_544,y> & PURE(H2(y)) --> H3(x')&true,
-  H2(y) --> H4(y)&true,
-
-[ H3(x_581) ::= x_581::node<val_31_544,y> * HP_582(y)&true,
- H1(x_587) ::= x_587::node<val_31_522',next_31_523'> * next_31_523'::ls[LHSCase]&true,
- H2(y) ::= emp&H2_y_563=y,
- H4(y) ::= emp&H2_y_563=y,
+*************************************
+*******relational definition ********
+*************************************
+[ H4(y_580) ::= H2(y_580)&true,
+ H3(x_581) ::= x_581::node<val_52_544,y>@M * HP_582(y)&true,
+ H1(x_587) ::= x_587::node<val_52_522',next_52_523'>@M * next_52_523'::ls[LHSCase]&true,
  HP_582(y) ::= 
- emp&H2_y_563=y
- or y::node<val_31_544,y_585> * HP_582(y_585)&true
+ y::node<val_52_544,y_585>@M * HP_582(y_585)&true
+ or emp& XPURE(H2(y))
  ]
+
+Once you have this, then --sa-dangling should simply introduce:
+
+ H4(y_580) ::= emp&DLING_H2_y_593=y_580,
+ H2(y) ::= emp&DLING_H2_y_593=y,
+
+I think we should have instead:
+ H4(y_580) ::= H2(y_580)&true,
+ H2(y) ::= emp & DLING_H2 = y
+
+After that --sa-inlining would replace all occurrences of
+H2(..).
 
 
 */
