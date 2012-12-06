@@ -2164,7 +2164,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
 			                    let name = hpdecl.hp_name in
 			                    let pr_arg arg = 
 			                      let t = CP.type_of_spec_var arg in 
-			                      (CP.name_of_type t) ^ " " ^ (Cprinter.string_of_spec_var arg) 
+					      let arg_name = Cprinter.string_of_spec_var arg in
+					      let arg_name = if(String.compare arg_name "res" == 0) then fresh_name () else arg_name in
+			                      (CP.name_of_type t) ^ " " ^ arg_name
 			                    in
 			                    let args = pr_lst ", " pr_arg hpdecl.hp_vars in
 			                    "HeapPred "^ name ^ "(" ^ args ^ ").\n"
@@ -2260,10 +2262,15 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
 			              try (
 			                  let (a, b) = List.find (fun (a,_) -> String.compare (CP.full_name_of_spec_var a) name == 0) hp_mtb in
 			                  let new_name = CP.full_name_of_spec_var b in
-			                  let (new_vars,_) = List.fold_left (fun piv v -> let (r,vnames) = piv in 
-			                  let (nv,nvnames) = get_new_var v vnames in
-			                  (r@[nv],nvnames)
-			                  )([],[]) vars in
+			                  let (_,new_vars) = List.fold_left (fun piv v -> 
+					    let (index,vs) = piv in
+					    let (typ,raw_name,p) = match v with
+					      | CP.SpecVar s -> s
+					    in
+					    let new_name = "v" ^ (string_of_int index) in
+					    let new_sv = CP.SpecVar (typ,new_name,p) in
+					    (index+1,new_sv::vs)
+			                  ) (0,[]) vars in
 			                  [({hpdecl with Cast.hp_name = new_name;
 				                  Cast.hp_vars = new_vars})]
 			              )
