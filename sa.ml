@@ -2412,7 +2412,7 @@ let generalize_one_hp_x prog non_ptr_unk_hps unk_hps par_defs=
 let generalize_one_hp prog non_ptr_unk_hps unk_hps par_defs=
   let pr1 = pr_list_ln SAU.string_of_par_def_w_name_short in
   let pr2 = pr_list_ln (pr_pair !CP.print_sv Cprinter.string_of_hp_rel_def) in
-  Debug.ho_1 "generalize_one_hp" pr1 pr2
+  Debug.no_1 "generalize_one_hp" pr1 pr2
       (fun _ -> generalize_one_hp_x prog non_ptr_unk_hps unk_hps par_defs) par_defs
 
 let get_pdef_body_x unk_hps post_hps (a1,args,unk_args,a3,olf,orf)=
