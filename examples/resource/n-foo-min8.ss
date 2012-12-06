@@ -26,7 +26,7 @@ bool rand()
 
 void g() 
   requires stk::RS<n> 
-  ensures  stk::RS<n> * stk_mark::RS_bnd<m,h> & h<=n+2 & m>=n+2;
+  ensures  stk::RS<n> * stk_mark::RS_bnd<m,h> & m>=n+2 & h<=n+2 ;
 {
   add_stk(2); //add stack frame used
   sub_stk(2); //add stack frame used
