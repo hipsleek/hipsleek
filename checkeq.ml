@@ -712,6 +712,7 @@ and check_equiv_bform_x (hvars: ident list)(b1: CP.b_formula) (b2: CP.b_formula)
     | (BConst (true,_),_),  (BConst (true,_),_) -> (true,[mt])
     | (BConst (false,_),_),  (BConst (false,_),_) -> (true,[mt])
     | (XPure xp1,_),  (XPure xp2,_) ->
+     
         if xp1.xpure_view_name = xp1.xpure_view_name then
           match xp1.xpure_view_node,xp1.xpure_view_node with
             | None,None -> let r,r_mt = check_eq_order_spec_var_list xp1.xpure_view_arguments xp2.xpure_view_arguments mt in
@@ -1874,11 +1875,10 @@ let check_equiv_def_with_diff hvars svars (def1: (CF.formula * CF.formula)) (def
 
 let checkeq_defs_with_diff_x hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) inf_vars :  (bool*(((CF.formula * CF.formula) *  (CF.formula * CF.formula) * ((map_table * (CF.formula * CF.formula)*(CF.formula * CF.formula)) list)) list))=
   let  (mtb,spairs)  = checkeq_defs hvars svars defs infile_defs in
-  (* let (mtb,smap) = process_svars full_tb svars inf_vars in *)
-  (* let pr3 = pr_list_ln (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) in *)
-  (* print_string ("smap: "^(pr3 spairs)^ "\n"); *)
-  (* let pr4 = pr_list_ln (pr_pair Cprinter.string_of_spec_var_list Cprinter.string_of_spec_var) in *)
-  (* print_string ("current map: "^(pr4 mtb)^ "\n"); *)
+  let pr3 = pr_list_ln (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) in
+  print_string ("smap: "^(pr3 spairs)^ "\n");
+  let pr4 = pr_list_ln (pr_pair Cprinter.string_of_spec_var_list Cprinter.string_of_spec_var) in
+  print_string ("current map: "^(pr4 mtb)^ "\n");
   let exists_helper v1 v2 mtb =
     let exist v1 v2 mt =
       let (ls, key) = mt in
@@ -1904,8 +1904,7 @@ let checkeq_defs_with_diff_x hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.
       let (a,b,c) = def1 in
       ((CF.formula_of_heap b no_pos,c),def2)
     )
-    with Not_found -> report_error no_pos (
-                    "Diff HP not found in either defs or infile_defs")
+    with Not_found -> report_error no_pos ("Diff HP: "^Cprinter.string_of_spec_var v1 ^" " ^Cprinter.string_of_spec_var v2 ^" not found in either defs or infile_defs")
   in
   let modify_mtl d1 d2 mtl hps=
     let find_hrel hprel_name hrs pv = 

@@ -49,6 +49,7 @@ type sleek_token =
   | INFER | SUBANN | XPRE | PRE | XPOST | POST
   | INVLOCK
   | LOGICAL
+  | XPURE
 
 module type SleekTokenS = Camlp4.Sig.Token with type t = sleek_token
   
@@ -99,6 +100,7 @@ module Token = struct
     | TERM -> "Term"
     | LOOP -> "Loop"
     | MAYLOOP -> "MayLoop"
+    | XPURE -> "XPURE"
 
 
   let print ppf x = pp_print_string ppf (to_string x)

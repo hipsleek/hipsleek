@@ -922,8 +922,8 @@ $output_file = "log";
 	   ["ll-append8.ss"],
 	   ["ll-append9.ss"],
 	   ["ll-append10.ss"],
-	   ["ll-app3.ss"],
-	   ["ll-app4.ss"],
+	   ["ll-app.ss"],
+	   ["ll-app2.ss"],
 	   ["ex1.ss"],
 	   ["ex1a.ss"],
 	   ["ll-get-next.ss"],
@@ -965,8 +965,8 @@ $output_file = "log";
 		   ["ll-append8.ss"],
 		   ["ll-append9.ss"],
 		   ["ll-append10.ss"],
-		   ["ll-app3.ss"],
-		   ["ll-app4.ss"],
+		   ["ll-app.ss"],
+		   ["ll-app2.ss"],
 		   ["ex1.ss"],
 		   ["ex1a.ss"],
 		   ["ll-get-next.ss"],
@@ -1155,12 +1155,13 @@ sub hip_process_file {
 	foreach $test (@{$t_list})
 	{
 	    ($filename) = $test->[0] =~ /(.*)\./s;
-	    $cpfile =  "$exempl_path/cp/$filename.cp";
+	    $cpfile =  "$exempl_path/test/$filename.cp";
 	    $genfile =  "$exempl_path/test/$filename.cp";
 	    if ("$param" =~ "gen_cpfile") {
-		print "Generating $cpfile\n";
+		print "Generating $genfile\n";
 		$options = "-gen-cpfile";
-		$output = `$hip $script_arguments $test->[0]  $options $genfile --sa-norm 2>&1`;
+ 		#print "$hip $script_arguments $test->[0]  $options $genfile --sa-dangling --sa-inlining 2>&1\n";
+		$output = `$hip $script_arguments $test->[0]  $options $genfile --sa-dangling --sa-inlining 2>&1`;
 	    }
 	    else 
 	    {
@@ -1174,7 +1175,7 @@ sub hip_process_file {
 		if ("$param" =~ "sa") {
 		    $options = "-cp-test" ;		    
 		    #print "$hip $exempl_path/$test->[0]  $options   $cpfile $script_arguments 2>&1 \n";	
-		    $output = `$hip $exempl_path/$test->[0]  $options  $cpfile  $script_arguments --sa-norm 2>&1`;
+		    $output = `$hip $exempl_path/$test->[0]  $options  $cpfile  $script_arguments --sa-dangling --sa-inlining  2>&1`;
 		    print LOGFILE "\n======================================\n";
 		    print LOGFILE "$output";
 		    $expected_res = "Expected res";	

@@ -4427,6 +4427,18 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
     	  (* Match types of arguments with relation signature *)
 		  let cpargs = trans_pure_exp_list args stab in
 		  CP.RelForm (nv, cpargs, pos) (* An Hoa : Translate IP.RelForm to CP.RelForm *)
+    | IP.XPure ({IP.xpure_view_node = vn ;
+		IP.xpure_view_name = r;
+		IP.xpure_view_arguments = args;
+		IP.xpure_view_remaining_branches = brs;
+		IP.xpure_view_pos = pos}) -> 
+      let nargs = List.map (fun arg -> trans_var (arg,Unprimed) stab pos) args in 
+      CP.XPure {CP.xpure_view_node = None ;
+		CP.xpure_view_name = r;
+		CP.xpure_view_arguments = nargs;
+		CP.xpure_view_remaining_branches = brs;
+		CP.xpure_view_pos = pos
+	       }
   in
   match sl with
 	| None -> (npf, None)
@@ -5186,23 +5198,41 @@ and gather_type_info_b_formula_x prog b0 stab =
           let _ = must_unify t1 (List t2) stab pos in
           ()
     | IP.ListPerm (e1, e2, pos) ->
-          let el_t = fresh_tvar stab in
-          let new_et = List el_t in
-	      let t1 = gather_type_info_exp_x e1 stab new_et in 
-	      let t2 = gather_type_info_exp_x e2 stab new_et in
-          let _ = must_unify t1 t2 stab pos in
-          ()
-	| IP.RelForm (r, args, pos) ->
- 		  (try
-		    let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls r in
-		    let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) rdef.I.rel_typed_vars in
-		    let args_exp_types = List.map (fun t -> (t)) args_ctypes in
-            let _ = gather_type_info_var r stab RelT in
-		    let _ = List.map2 (fun x y -> gather_type_info_exp x stab y) args args_exp_types in ()
-		  with
-		    | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
-            | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r)
-          )
+      let el_t = fresh_tvar stab in
+      let new_et = List el_t in
+      let t1 = gather_type_info_exp_x e1 stab new_et in 
+      let t2 = gather_type_info_exp_x e2 stab new_et in
+      let _ = must_unify t1 t2 stab pos in
+      ()
+    | IP.RelForm (r, args, pos) ->
+      (try
+	 let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls r in
+	 let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) rdef.I.rel_typed_vars in
+	 let args_exp_types = List.map (fun t -> (t)) args_ctypes in
+         let _ = gather_type_info_var r stab RelT in
+	 let _ = List.map2 (fun x y -> gather_type_info_exp x stab y) args args_exp_types in ()
+       with
+	 | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
+         | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r)
+	   
+      )
+    | IP.XPure({IP.xpure_view_node = vn ;
+		IP.xpure_view_name = r;
+		IP.xpure_view_arguments = args;
+		IP.xpure_view_pos = pos}) -> 
+      (try
+	 let hpdef = I.look_up_hp_def_raw prog.I.prog_hp_decls r in
+         if (List.length args) == (List.length hpdef.I.hp_typed_vars) then
+           let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) hpdef.I.hp_typed_vars in
+	   let args_exp_types = List.map (fun t -> (t)) args_ctypes in
+           let _ = gather_type_info_var r stab HpT in
+	   let _ = List.map2 (fun x y -> gather_type_info_var x stab y) args args_exp_types in ()
+         else
+           Err.report_error{ Err.error_loc = pos; Err.error_text = ("number of arguments for heap relation "^r^" does not match"); }
+       with
+	 | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
+         | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r)
+      )
 
               
 
