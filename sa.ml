@@ -3532,6 +3532,76 @@ let generate_hp_def_from_unk_hps unk_hps hp_defs post_hps unk_rels=
   Debug.no_3 "generate_hp_def_from_unk_hps" pr2 pr1 pr4 pr3
       (fun _ _ _ -> generate_hp_def_from_unk_hps_new_x unk_hps hp_defs post_hps unk_rels) unk_hps hp_defs unk_rels
 
+
+let unify_branches_hpdef_x unk_hps hp_defs =
+  (*move unk hps into the first position*)
+  let rec swap_map ss r=
+    match ss with
+      | [] -> r
+      | (sv1,sv2)::tl -> begin
+          let b1 = CP.mem_svl sv1 unk_hps in
+          let b2 = CP.mem_svl sv2 unk_hps in
+          let new_ss =
+            match b1,b2 with
+              | true,false -> [(sv1,sv2)]
+              | false,true -> [(sv2,sv1)]
+              | _ -> []
+          in
+          swap_map tl (r@new_ss)
+      end
+  in
+  let rec list_partition ss r=
+    match ss with
+      | [] -> r
+      | (sv1,sv2)::tl ->
+          let part,rem = List.partition (fun (_, sv4) -> CP.eq_spec_var sv2 sv4) tl in
+          let part_svl = fst (List.split part) in
+          list_partition rem r@[(sv1::part_svl, sv2)]
+  in
+  let rec check_eq_one args fs f done_fs=
+    match fs with
+      | [] -> done_fs,[f]
+      | f1::tl ->
+          let b,m = CEQ.checkeq_formulas args f f1 in
+          if b then
+            let ss = swap_map (List.hd m) [] in
+            let parts = list_partition ss [] in
+            (* let pr = pr_list (pr_pair !CP.print_svl !CP.print_sv) in *)
+            (* let _ = DD.info_pprint ("  parts: " ^ (pr parts)) no_pos in *)
+            let new_f = List.fold_left (fun f0 (from_hps, to_hp) -> CF.subst_hprel f0 from_hps to_hp) f parts in
+            let new_f1 = List.fold_left (fun f0 (from_hps, to_hp) -> CF.subst_hprel f0 from_hps to_hp) f1 parts in
+            (tl@done_fs,[new_f;new_f1])
+          else
+            check_eq_one args tl f (done_fs@[f1])
+  in
+  let rec check_eq args fs res_fs=
+    match fs with
+      | [] -> res_fs
+      | f::tl ->
+          let rem,done_fs = check_eq_one args tl f [] in
+          check_eq args rem (res_fs@done_fs)
+  in
+  let process_one_hpdef (a,hrel,f)=
+    let hp,args = CF.extract_HRel hrel in
+    if CP.mem_svl hp unk_hps then
+      (a,hrel,f)
+    else
+      let fs = CF.list_of_disjs f in
+      let fs1 = check_eq [] fs [] in
+      let p = CF.pos_of_formula f in
+      let new_f = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 p)
+                      (List.hd fs1) (List.tl fs1) in
+      (a,hrel,new_f)
+  in
+  DD.ninfo_pprint ">>>>>> unify: <<<<<<" no_pos;
+  let r = List.map process_one_hpdef hp_defs in
+  r
+
+let unify_branches_hpdef unk_hps hp_defs =
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
+  Debug.no_2 "unify_branches_hpdef" !CP.print_svl pr1 pr1
+      (fun _ _ -> unify_branches_hpdef_x unk_hps hp_defs) unk_hps hp_defs
+
 let check_eq_hpdef_x unk_hpargs post_hps hp_defs =
   let unk_hps = List.map fst unk_hpargs in
   let rec lookup_equiv_hpdef hpdefs hp args f=
@@ -3869,7 +3939,14 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hps hp_rel
         else (hp_defs3a@unk_hp_defs@unk_rel_hpdefs)
      else (hp_defs3)
   in
-  let hp_defs5 = check_eq_hpdef unk_hps sel_post_hps hp_defs4 in
+  (*unify inside on hp*)
+  let unk_hps0 = List.map fst unk_hps in
+  let hp_defs4a = check_eq_hpdef unk_hps sel_post_hps hp_defs4 in
+  let hp_defs5 =
+    if !Globals.sa_unify_dangling then
+    unify_branches_hpdef unk_hps0 hp_defs4a
+    else hp_defs4a
+  in
   (****************************************************)
    let _ =
     if !Globals.sa_print_inter then
