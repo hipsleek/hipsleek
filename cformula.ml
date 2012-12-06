@@ -178,7 +178,7 @@ and h_formula = (* heap formula *)
   | DataNode of h_formula_data
   | ViewNode of h_formula_view
   | Hole of int
-  | TempHole of int * h_formula
+  (* | TempHole of int * h_formula *)
   | HRel of (CP.spec_var * (CP.exp list) * loc)
   | HTrue
   | HFalse

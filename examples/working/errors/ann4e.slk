@@ -3,8 +3,14 @@ data cell {
 }.
 
 
-infer [] y::cell<a>@M |- y::cell<b>@v.
+infer [] y::cell<a>@M |- y::cell<b>@v & v=@L.
 print residue.
 
+checkentail @M<:v |- (exists v: v<:@L & v=@M).
+print residue.
 
+checkentail true |- (exists v: v<:@L & v=@M).
+print residue.
 
+checkentail x::cell<a> & a>=3|- (exists b: x::cell<b> & b=3).
+print residue.

@@ -868,3 +868,15 @@ and ann_opt_to_ann (ann_opt_lst: IF.ann option list) (default_ann: IF.ann) =
     | [] -> []
     | (Some ann0) :: t -> (iformula_ann_to_cformula_ann ann0) :: (ann_opt_to_ann t default_ann)
     | (None) :: t      -> (iformula_ann_to_cformula_ann default_ann) :: (ann_opt_to_ann t default_ann) 
+
+(* muatble or immutable annotations on the RHS consume the match on the LHS  *)
+and consumes (a: ann): bool = 
+  if isMutable a || isImm a then true
+  else false
+
+(* should be the opposite of consumes produces_hole x = not(consumes x); 
+   depending on the LHS ann, PolyAnn might consume after a match, but it is considered to
+   initialy create a hole. *)
+and produces_hole (a: ann): bool = 
+  if isLend a || isAccs  a || isPoly a then true
+  else false
