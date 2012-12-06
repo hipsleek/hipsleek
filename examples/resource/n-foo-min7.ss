@@ -91,3 +91,19 @@ int foo(int i)
   sub_stk(2);
   return r;
 }
+
+
+void cond(int i)
+  requires stk::RS<n> 
+  ensures stk::RS<n> * stk_min::RS_min<m> * stk_max::RS_max<h>
+       & m>=n+4 & h<=n+4 & i<0
+  or stk::RS<n> * stk_min::RS_min<m> * stk_max::RS_max<h>
+       & m>=n+5 & h<=n+5 & i>=0
+  ;
+{ 
+  add_stk(2);
+  mark();
+  if (i<0) g();
+  else h();
+  sub_stk(2);
+}
