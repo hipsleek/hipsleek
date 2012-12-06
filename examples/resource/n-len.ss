@@ -25,7 +25,7 @@ void add_stk(stk2 x, int n)
   ensures x::stk2<a+n>;
 
 int length(stk2 s,node l) 
-  requires s::stk2<m> * l::ll<n>@L & m>=2*n+2 
+  requires s::stk2<m> * l::ll<n>@L & m=2*n+2 
   ensures  s::stk2<m> & res=n;
 {
   subtr_stk(s,2); //subtract stack frame
