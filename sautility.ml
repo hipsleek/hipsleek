@@ -1086,6 +1086,32 @@ let check_com_pre_eq_formula f1 f2=
 (******************************************************************)
    (****************SIMPL HP PARDEF/CF.formula*****************)
 (******************************************************************)
+(*
+  x::node<_,p> ===> p can not be a root
+*)
+let find_root_x args fs=
+  let rec examine_one_arg fs a=
+    match fs with
+      | [] -> true
+      | f::fs_tl ->
+          (*get ptos of all nodes*)
+          let hds = get_hdnodes f in
+          let ptos = List.concat (List.map (fun hd -> hd.CF.h_formula_data_arguments) hds) in
+          if CP.mem_svl a ptos then false
+          else examine_one_arg fs_tl a
+  in
+  let root_cands = List.filter (examine_one_arg fs) args in
+  match root_cands with
+    | [] -> report_error no_pos "say.find_root_x: dont have a root. what next?"
+    | r::_ -> (r,List.filter (fun sv -> not (CP.eq_spec_var r sv)) args)
+
+let find_root args fs=
+  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
+  let pr2 = pr_pair !CP.print_sv !CP.print_svl in
+  Debug.no_2 "find_root" !CP.print_svl pr1 pr2
+      (fun _ _ -> find_root_x args fs) args fs
+
+(*root = p && p:: node<_,_> ==> root = p& root::node<_,_> & *)
 let mk_expl_root r f0=
   let rec find_r_subst ss res=
     match ss with
@@ -1596,7 +1622,7 @@ let drop_hp_arguments prog hp args0 fs=
       (fun _ _ _ -> drop_hp_arguments_x prog hp args0 fs) hp args0 fs
 
 
-let get_longest_common_hnodes_two args shortes_ldns ldns2=
+let get_longest_common_hnodes_two args shortes_ldns ldns2 eqs=
   let rec get_subst_svl svl1 svl2 ss=
     match svl1,svl2 with
 	 | [],[] -> ss
@@ -1609,8 +1635,10 @@ let get_longest_common_hnodes_two args shortes_ldns ldns2=
     match lnds with
       | [] ->  ([],[],matched2, rest2)
       | hn1::ls ->
+          let eq_svl = find_close [hn1.CF.h_formula_data_node] eqs in
           if hn.CF.h_formula_data_name = hn1.CF.h_formula_data_name &&
             CP.eq_spec_var hn.CF.h_formula_data_node hn1.CF.h_formula_data_node
+            (* CP.mem_svl hn.CF.h_formula_data_node eq_svl *)
           then
 		    (*return last args and remain*)
             (* let _ = DD.info_pprint ("  svl1: " ^ (!CP.print_svl hn1.CF.h_formula_data_arguments)) no_pos in *)
@@ -1642,12 +1670,13 @@ let get_longest_common_hnodes_two args shortes_ldns ldns2=
   (* let _ =  DD.info_pprint ("       args: " ^ (!CP.print_svl args)) no_pos in *)
   look_up_min_hds shortes_ldns [] ldns2 [] [] []
 
-let process_one_f org_args args hp_subst sh_ldns com_eqNulls com_eqPures com_hps (ldns, f)=
+let process_one_f_x org_args args hp_subst sh_ldns com_eqNulls com_eqPures com_hps (ldns, f)=
   (* let _ =  DD.info_pprint ("       new args: " ^ (!CP.print_svl args)) no_pos in *)
   (* let pr2 = pr_list Cprinter.string_of_h_formula in *)
   (* let _ = DD.info_pprint ("      sh_ldns:" ^ (pr2 (List.map (fun hd -> CF.DataNode hd) sh_ldns))) no_pos in *)
-  
-  let (matcheds2, rest2, ss, last_ss,_) = get_longest_common_hnodes_two org_args sh_ldns ldns in
+  let ( _,mix_f,_,_,_) = CF.split_components f in
+  let eqs = (MCP.ptr_equations_without_null mix_f) in
+  let (matcheds2, rest2, ss, last_ss,_) = get_longest_common_hnodes_two org_args sh_ldns ldns eqs in
   (*drop all matcheds*)
   (* let _ =  DD.info_pprint ("       matched 1: " ^ (!CP.print_svl matcheds2)) no_pos in *)
   (* let _ =  DD.info_pprint ("       eqNulls: " ^ (!CP.print_svl com_eqNulls)) no_pos in *)
@@ -1697,6 +1726,14 @@ let process_one_f org_args args hp_subst sh_ldns com_eqNulls com_eqPures com_hps
   let _ =  DD.ninfo_pprint ("       nf6: " ^ (Cprinter.prtt_string_of_formula nf6)) no_pos in
   let _ =  DD.ninfo_pprint ("       nf7: " ^ (Cprinter.prtt_string_of_formula nf7)) no_pos in
   nf7
+
+let process_one_f org_args args hp_subst sh_ldns com_eqNulls com_eqPures com_hps (ldns, f)=
+  let pr1 = !CP.print_svl in
+  let pr2 = Cprinter.prtt_string_of_formula in
+  Debug.no_3 "process_one_f" pr1 pr1 pr2 pr2
+      (fun _ _ _ -> process_one_f_x org_args args hp_subst sh_ldns com_eqNulls com_eqPures com_hps (ldns, f))
+      org_args args f
+
 
 let get_shortest_lnds ll_ldns min=
   let rec helper ll=
@@ -1863,7 +1900,7 @@ let remove_dups_recursive_x hp args unk_hps unk_svl defs=
       |  hns::rec_ls ->
           (* let pr = pr_list_ln (fun hd -> Cprinter.prtt_string_of_h_formula (CF.DataNode hd)) in *)
           (* let _ = DD.info_pprint ("       hns: " ^ (pr hns)) no_pos in *)
-           let (n_matcheds2, rest2, ss, last_ss,new_last_svl) = get_longest_common_hnodes_two args hns rest_dns2 in
+           let (n_matcheds2, rest2, ss, last_ss,new_last_svl) = get_longest_common_hnodes_two args hns rest_dns2 [] in
            (* let _ = DD.info_pprint ("       n_matcheds2: " ^ (!CP.print_svl n_matcheds2)) no_pos in *)
            (* let _ = DD.info_pprint ("       new_last_svl: " ^ (!CP.print_svl new_last_svl)) no_pos in *)
            if (List.length n_matcheds2) = (List.length hns) then
@@ -2002,12 +2039,14 @@ let mk_unk_hprel_def hp args defs pos=
   [def]
 
 (*because root is moved to top*)
-let mk_orig_hprel_def_x prog unk_hps hp args sh_ldns eqNulls eqPures hprels unk_svl=
-  let other_args = List.tl args in
+let mk_orig_hprel_def_x prog unk_hps hp r other_args args sh_ldns eqNulls eqPures hprels unk_svl=
+  (* let other_args = List.tl args in *)
   let get_connected_helper ((CP.SpecVar (t,v,p)) as r)=
     if CP.mem_svl r other_args then
-      let new_v = CP.SpecVar (t,
-                  (v) ^ "_" ^ (string_of_int (Globals.fresh_int())),Unprimed)  in
+      let new_v = (* CP.SpecVar (t, *)
+                  (* (v) ^ "_" ^ (string_of_int (Globals.fresh_int())),Unprimed) *)
+        CP.fresh_spec_var r
+      in
 	  [(r,new_v)]
 	else []
   in
@@ -2052,7 +2091,7 @@ let mk_orig_hprel_def_x prog unk_hps hp args sh_ldns eqNulls eqPures hprels unk_
       | _ -> let nptrs,nhds,hn_done,ss = helper ls_lnds root_nexts [] [] [] in
              get_last_ptrs_new nhds root_nexts nptrs (r_done@hn_done) (r_ss@ss)
   in
-  let next_roots,new_sh_dns,ss,rem_dns = get_last_ptrs_new sh_ldns [(List.hd args)] [(List.hd args)] [] [] in
+  let next_roots,new_sh_dns,ss,rem_dns = get_last_ptrs_new sh_ldns [r] [r] [] [] in
   let dnss = (new_sh_dns@rem_dns) in
   let hdss = List.map (fun hd -> (CF.DataNode hd)) dnss in
   (*subst*)
@@ -2067,7 +2106,7 @@ let mk_orig_hprel_def_x prog unk_hps hp args sh_ldns eqNulls eqPures hprels unk_
      | [] -> report_error no_pos "sau.generalize_one_hp: sth wrong"
      | _ ->  let _ = DD.ninfo_pprint ("      last root:" ^ (Cprinter.string_of_spec_var_list  next_roots)) no_pos in
          (*generate new hp*)
-             let n_args = (next_roots@((List.tl args))) in
+             let n_args = (next_roots@other_args) in
          let n_hprel,n_hp =  add_raw_hp_rel prog n_args no_pos in
               (*first rel def for the orig*)
          let rest =  (hdss@[n_hprel]@(List.map (fun hprel -> CF.HRel hprel) hprels)) in
@@ -2088,7 +2127,7 @@ let mk_orig_hprel_def_x prog unk_hps hp args sh_ldns eqNulls eqPures hprels unk_
          (*subst*)
          let hprel = CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, no_pos) in
 		 (*elim all except root*)
-		 let n_orig_defs_h = CF.drop_hnodes_hf orig_defs_h (List.tl args) in
+		 let n_orig_defs_h = CF.drop_hnodes_hf orig_defs_h other_args in
          (defs, (hprel, n_orig_defs_h), n_hp, n_args, dnss)
      (* | _ -> report_error no_pos "sau.generalize_one_hp: now we does not handle more than two ptr fields" *)
 
@@ -2125,7 +2164,7 @@ let elim_not_in_used_args (a,b,orig_fs) fs hp args=
   in
   n_orig_hpdef,new_args,new_fs
 
-let get_longest_common_hnodes_list_x prog unk_hps unk_svl hp args fs=
+let get_longest_common_hnodes_list_x prog unk_hps unk_svl hp r non_r_args args fs=
  if List.length fs <= 1 then
    let hpdef = mk_hprel_def prog unk_hps unk_svl hp args fs no_pos in
    hpdef
@@ -2142,7 +2181,7 @@ let get_longest_common_hnodes_list_x prog unk_hps unk_svl hp args fs=
      (*assume root is the first arg*)
      (* let root = List.hd args in *)
      (*let sh_ldns1 = move_root_to_top root sh_ldns in*)
-     let orig_hpdefs, hp_subst, new_hp, n_args,sh_ldns2 = mk_orig_hprel_def prog unk_hps hp args sh_ldns eqNulls eqPures hprels unk_svl in
+     let orig_hpdefs, hp_subst, new_hp, n_args,sh_ldns2 = mk_orig_hprel_def prog unk_hps hp r non_r_args args sh_ldns eqNulls eqPures hprels unk_svl in
      match orig_hpdefs with
        | [] -> []
        | [(hp01,orig_hpdef)] ->
@@ -2169,13 +2208,14 @@ let get_longest_common_hnodes_list_x prog unk_hps unk_svl hp args fs=
        | _ -> report_error no_pos "sau.get_longest_common_hnodes_list"
  end
 
-let get_longest_common_hnodes_list prog unk_hps unk_svl hp args fs=
+let get_longest_common_hnodes_list prog unk_hps unk_svl hp r non_r_args args fs=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
   let pr2 = fun (_, def) -> Cprinter.string_of_hp_rel_def def in
   let pr3 = !CP.print_sv in
   let pr4 = !CP.print_svl in
   Debug.no_5 "get_longest_common_hnodes_list" pr3 pr4 pr4 pr4 pr1 (pr_list_ln pr2)
-      (fun _ _ _ _ _-> get_longest_common_hnodes_list_x prog unk_hps unk_svl hp args fs) hp args unk_hps unk_svl fs
+      (fun _ _ _ _ _-> get_longest_common_hnodes_list_x prog unk_hps unk_svl hp r non_r_args args fs)
+      hp args unk_hps unk_svl fs
 
 (************************************************************)
       (******************END FORM HP DEF*********************)

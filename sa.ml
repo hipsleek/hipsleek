@@ -2370,25 +2370,29 @@ let generalize_one_hp_x prog non_ptr_unk_hps unk_hps par_defs=
     let subst = List.combine args args0 in
     let f1 = (CF.subst subst f) in
     let unk_args1 = List.map (CP.subs_one subst) unk_args in
-    (*root = p && p:: node<_,_> ==> root = p& root::node<_,_> & *)
-    (*make explicit root*)
-    let r =
-      if args0 = [] then report_error no_pos "sa.obtain_and_norm_def: hp has at least one arg"
-      else (List.hd args0)
-    in
-    let f2 = SAU.mk_expl_root r f1 in
-    (f2,unk_args1)
+    (* (\*root = p && p:: node<_,_> ==> root = p& root::node<_,_> & *\) *)
+    (* (\*make explicit root*\) *)
+    (* let r = *)
+    (*   if args0 = [] then report_error no_pos "sa.obtain_and_norm_def: hp has at least one arg" *)
+    (*   else (List.hd args0) *)
+    (* in *)
+    (* let f2 = SAU.mk_expl_root r f1 in *)
+    (f1,unk_args1)
   in
   DD.ninfo_pprint ">>>>>> generalize_one_hp: <<<<<<" no_pos;
   if par_defs = [] then [] else
     begin
         let hp, args, _,_ = (List.hd par_defs) in
+        (*find the root: ins2,ins3: root is the second, not the first*)
         let args0 = List.map (CP.fresh_spec_var) args in
     (* DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")") no_pos; *)
         let defs,ls_unk_args = List.split (List.map (obtain_and_norm_def args0) par_defs) in
+        let r,non_r_args = SAU.find_root args0 defs in
+        (*make explicit root*)
+        let defs0 = List.map (SAU.mk_expl_root r) defs in
         let unk_svl = CP.remove_dups_svl (List.concat (ls_unk_args)) in
   (*normalize linked ptrs*)
-        let defs1 = SAU.norm_hnodes args0 defs in
+        let defs1 = SAU.norm_hnodes args0 defs0 in
         (*remove unkhp of non-node*)
         let defs2 = (* List.map remove_non_ptr_unk_hp *) defs1 in
   (*remove duplicate*)
@@ -2401,14 +2405,14 @@ let generalize_one_hp_x prog non_ptr_unk_hps unk_hps par_defs=
         (* let base_case_exist,defs4 = SAU.remove_dups_recursive hp args0 unk_hps defs3 in *)
   (*find longest hnodes common for more than 2 formulas*)
   (*each hds of hdss is def of a next_root*)
-          let defs = SAU.get_longest_common_hnodes_list prog unk_hps unk_svl hp args0 defs4 in
+          let defs = SAU.get_longest_common_hnodes_list prog unk_hps unk_svl hp r non_r_args args0 defs4 in
           defs
     end
 
 let generalize_one_hp prog non_ptr_unk_hps unk_hps par_defs=
   let pr1 = pr_list_ln SAU.string_of_par_def_w_name_short in
   let pr2 = pr_list_ln (pr_pair !CP.print_sv Cprinter.string_of_hp_rel_def) in
-  Debug.no_1 "generalize_one_hp" pr1 pr2
+  Debug.ho_1 "generalize_one_hp" pr1 pr2
       (fun _ -> generalize_one_hp_x prog non_ptr_unk_hps unk_hps par_defs) par_defs
 
 let get_pdef_body_x unk_hps post_hps (a1,args,unk_args,a3,olf,orf)=
