@@ -455,7 +455,7 @@ and spatial_ctx_extract p f a i pi rn rr =
 
 and update_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
-  Debug.to_3 "update_ann" (Cprinter.string_of_h_formula) pr pr  (Cprinter.string_of_h_formula) (fun _ _ _-> update_ann_x f pimm1 pimm) f pimm1 pimm
+  Debug.no_3 "update_ann" (Cprinter.string_of_h_formula) pr pr  (Cprinter.string_of_h_formula) (fun _ _ _-> update_ann_x f pimm1 pimm) f pimm1 pimm
 
 and update_ann_x (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
   let new_field_ann_lnode = Immutable.replace_list_ann pimm1 pimm in

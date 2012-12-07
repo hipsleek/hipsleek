@@ -2,55 +2,11 @@ data cell {
   int val;
 }.
 
-//#16 ERROR : should have failed
-/*
- <1>y::cell<Anon_33@I,Anon_34@I>@I[Orig]&1<=1 & v=@I & v=@I & Anon_33=a & Anon_34=b&{FLOW,(19,20)=__norm}[]
-*/
-/*
-infer [] y::cell<_>@I |- y::cell<b>@v & @M<:v.
+infer [] y::cell<a>@L |- (exists v: y::cell<b>@v & v=@M).
+print residue.
+      
+infer [] y::cell<a>@L |- [v] y::cell<b>@v & v=@M.
 print residue.
 
-infer [] y::cell<1>@M |- y::cell<b>@M.
+infer [] y::cell<a>@L |- y::cell<b>@v & v=@M.
 print residue.
-
-infer [] y::cell<1>@M |- y::cell<b>@v & v=@M.
-print residue.
-
-infer [] y::cell<1>@M |- (exists v: y::cell<b>@v).
-print residue.
-*/
-
-infer [] y::cell<a>@M |- (exists v: y::cell<b>@v & v<:@L).
-print residue.
-
-/* Valid but should have a residue.
-
-Entail (1) : Valid. 
- <1>emp&a=b&{FLOW,(19,20)=__norm}[]
-*/
-
-/*
-
-Entail (1) : Valid. 
- <1>y::cell<a@M>@M[Orig]&0<=0 & v=@M & a=b&{FLOW,(19,20)=__norm}[]
-
-ERROR : should be no residue
-1!:0: 0: do_match: source RHS:  emp&true&{FLOW,(19,20)=__norm}[]
-@1! new_l_args:[#]
-@1! new_r_args:[#]
-@1! new_l_holes:[0]
-@1! new_r_holes:[0]
-@1! rem_l_node: emp
-@1! rem_r_node: emp
-@1! new_l_args:[a]
-@1! new_r_args:[b]
-@1! l_param_ann:[@M]
-@1! r_param_ann:[@v]
-@1!:0: 0: do_match (after): LHS:  y::cell<a@M>@M[Orig]&0<=0 & v=@M & a=b&{FLOW,(19,20)=__norm}[]
-
-@1!:0: 0: do_match (after): RHS: emp&true&{FLOW,(19,20)=__norm}[]
-@1!:0: 0: heap_entail_split_rhs: 
-
-*/
-
-
