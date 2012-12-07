@@ -345,6 +345,8 @@ let translate_binary_operator (op : Cil.binop) : Iast.bin_op =
 let rec translate_lval (lv: Cil.lval) : Iast.exp =
   let (lhost, offset, loc) = lv in
   let pos = translate_location loc in
+  let _ = print_endline ("=== lval = " ^ (string_of_cil_lval lv )) in
+  let _ = print_endline ("     loc = " ^ (string_of_loc pos)) in
   (* find whether lval is subtituted by another pointer variable or not *)
   let pvar = (
     try
@@ -352,8 +354,6 @@ let rec translate_lval (lv: Cil.lval) : Iast.exp =
       else Some (Hashtbl.find lc_addressof_data lv)
     with Not_found -> None
   ) in
-  (* let _ = print_endline ("=== lval = " ^ (string_of_cil_lval lv )) in *)
-  (* let _ = print_endline ("     loc = " ^ (string_of_loc pos)) in      *)
   match pvar with
   | Some p -> (
       (* this lval was represented by a structure before, return this structure data *)
