@@ -416,11 +416,11 @@ and checkTypeInfo (isadef: defuse) ti =
  * See the typing rule from cil.mli *)
 and checkLval (isconst: bool) (forAddrof: bool) (lv: lval) : typ = 
   match lv with
-    Var vi, off -> 
+    Var vi, off, _ -> 
       checkVariable vi; 
       checkOffset vi.vtype off
 
-  | Mem addr, off -> begin
+  | Mem addr, off, _ -> begin
       if isconst && not forAddrof then
         ignore (warn "Memory operation in constant");
       let ta = checkExp false addr in
@@ -434,7 +434,7 @@ and checkLval (isconst: bool) (forAddrof: bool) (lv: lval) : typ =
  * type and the offset. See the typing rules from cil.mli *)
 and checkOffset basetyp : offset -> typ = function
     NoOffset -> basetyp
-  | Index (ei, o) -> 
+  | Index (ei, o, _) -> 
       checkIntegralType (checkExp false ei);
       begin
         match unrollType basetyp with
@@ -442,7 +442,7 @@ and checkOffset basetyp : offset -> typ = function
         | t -> E.s (bug "typeOffset: Index on a non-array: %a" d_plaintype t)
       end
 
-  | Field (fi, o) -> 
+  | Field (fi, o, _) -> 
       (* Now check that the host is shared propertly *)
       checkCompInfo Used fi.fcomp;
       (* Check that this exact field is part of the host *)
@@ -623,7 +623,7 @@ and checkInit  (i: init) : typ =
                     if i > len then 
                       ignore (warn "Wrong number of initializers in array")
 
-                | (Index(Const(CInt64(i', _, _), _), NoOffset), ei) :: rest -> 
+                | (Index(Const(CInt64(i', _, _), _), NoOffset, _), ei) :: rest -> 
                     if i' <> i then 
                       ignore (warn "Initializer for index %s when %s was expected"
                                 (Int64.format "%d" i') (Int64.format "%d" i));
@@ -642,7 +642,7 @@ and checkInit  (i: init) : typ =
                     (initl: (offset * init) list) : unit = 
                   match nextflds, initl with 
                     [], [] -> ()   (* We are done *)
-                  | f :: restf, (Field(f', NoOffset), i) :: resti -> 
+                  | f :: restf, (Field(f', NoOffset, _), i) :: resti -> 
                       if f.fname <> f'.fname then 
                         ignore (warn "Expected initializer for field %s and found one for %s" f.fname f'.fname);
                       checkInitType i f.ftype;
@@ -665,7 +665,7 @@ and checkInit  (i: init) : typ =
                     ignore (warn "Initializer for empty union not empty");
                 end else begin
                   match initl with 
-                    [(Field(f, NoOffset), ei)] -> 
+                    [(Field(f, NoOffset, _), ei)] -> 
                       if f.fcomp != comp then 
                         ignore (bug "Wrong designator for union initializer");
                       if !msvcMode && f != List.hd comp.cfields then

@@ -205,24 +205,25 @@ let rec analyze_lval (lv : lval ) : A.lvalue =
               end in
   let result =
     match lv with
-        Var v, _ -> (* instantiate every syntactic occurrence of a function *)
-          let alv =
-            if isFunctionType (typeOfLval lv) then
-              A.instantiate (analyze_var_decl v) (fresh_index ())
-            else analyze_var_decl v
-          in
-            find_access alv true
-      | Mem e, _ ->
-          (* assert (not (isFunctionType(typeOf(e))) ); *)
-          let alv =
-            if !fun_ptrs_as_funs && isFunPtrType (typeOf e) then
-              analyze_expr_as_lval e
-            else A.deref (analyze_expr e)
-          in
-            find_access alv false
+    |  Var v, _, _ -> (* instantiate every syntactic occurrence of a function *)
+        let alv =
+          if isFunctionType (typeOfLval lv) then
+            A.instantiate (analyze_var_decl v) (fresh_index ())
+          else analyze_var_decl v
+        in
+          find_access alv true
+    | Mem e, _, _ ->
+        (* assert (not (isFunctionType(typeOf(e))) ); *)
+        let alv =
+          if !fun_ptrs_as_funs && isFunPtrType (typeOf e) then
+            analyze_expr_as_lval e
+          else A.deref (analyze_expr e)
+        in
+          find_access alv false
   in
-    H.replace lvalues lv result;
-    result
+  H.replace lvalues lv result;
+  result
+
 and analyze_expr_as_lval (e : exp) : A.lvalue =
   match e with
       Lval l ->  analyze_lval l

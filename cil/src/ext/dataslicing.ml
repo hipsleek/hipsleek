@@ -117,7 +117,7 @@ let rec sliceCompInfo (i : int) (cinfo : compinfo) : compinfo =
               let t = sliceType i finfo.ftype in
               if not (isVoidType t) then
                 (finfo.fname, t, finfo.fbitfield,
-                 finfo.fattr, finfo.floc) :: rest
+                 finfo.fattr, finfo.fdefn) :: rest
               else
                 rest)
            cinfo.cfields [])

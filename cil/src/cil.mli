@@ -402,8 +402,10 @@ and fieldinfo = {
      * the alignment of fields. *)
     mutable fattr: attributes;          
     (** The attributes for this field (not for its type) *)
-    mutable floc: location;
+    mutable fdefn: location;
     (** The location where this field is defined *)
+    mutable floc: location;
+    (** The current location of this field *)
 }
 
 
@@ -521,6 +523,9 @@ and varinfo = {
     (** Indicates whether the vdescr above is a pure expression or call.
      *  Printing a non-pure vdescr more than once may yield incorrect
      *  results. *)
+
+    mutable vloc: location;
+    (** Location of this variable *)
 }
 
 (** Storage-class information *)
@@ -748,7 +753,7 @@ AddrOf (Mem a, NoOffset)        = a
 *)
 (** An lvalue *)
 and lval =
-    lhost * offset
+    lhost * offset * location
 
 (** The host part of an {!Cil.lval}. *)
 and lhost = 
@@ -771,14 +776,14 @@ and offset =
                         * or as a terminator in a list of other kinds of 
                         * offsets. *)
 
-  | Field      of fieldinfo * offset    
+  | Field      of fieldinfo * offset * location
                       (** A field offset. Can be applied only to an lvalue 
                        * that denotes a structure or a union that contains 
                        * the mentioned field. This advances the offset to the 
                        * beginning of the mentioned field and changes the 
                        * type to the type of the mentioned field. *)
 
-  | Index    of exp * offset
+  | Index    of exp * offset * location
                      (** An array index offset. Can be applied only to an 
                        * lvalue that denotes an array. This advances the 
                        * starting address of the lval to the beginning of the 
@@ -1395,7 +1400,7 @@ val isSigned: ikind -> bool
 val mkCompInfo: bool ->      (* whether it is a struct or a union *)
                string ->     (* name of the composite type; cannot be empty *)
                (compinfo -> 
-                  (string * typ * int option * attributes * location) list) ->
+                  (string * typ * int option * attributes * location * location) list) ->
                (* a function that when given a forward 
                   representation of the structure type constructs the type of 
                   the fields. The function can ignore this argument if not 
@@ -2637,6 +2642,12 @@ val get_stmtLoc: stmtkind -> location
 
 (** Return the location of an expression, or locUnknown *)
 val get_expLoc: exp -> location
+
+val get_lvalLoc: lval -> location
+
+val get_offsetLoc: offset -> location
+
+val get_lhostLoc: lhost -> location
 
 (** Generate an {!Cil.exp} to be used in case of errors. *)
 val dExp: Pretty.doc -> exp 

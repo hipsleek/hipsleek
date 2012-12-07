@@ -46,9 +46,9 @@ open Cil
 
 (* utilities that should be in Cil.ml *)
 (* sfg: this function appears to never be called *)
-let mkSimpleField ci fn ft fl =
+let mkSimpleField ci fn ft fd =
   { fcomp = ci ; fname = fn ; ftype = ft ; fbitfield = None ; fattr = [];
-    floc = fl }
+    fdefn = fd }
 
 
 (* actual Heapify begins *)

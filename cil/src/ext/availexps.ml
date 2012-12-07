@@ -208,26 +208,26 @@ let eh_handle_inst i eh =
        and globals.
        otherwise kill things with lv in them and add e *)
     Set(lv,e,_) -> (match lv with
-      (Mem _, _) -> 
-	(eh_kill_mem eh; 
-	 eh_kill_addrof_or_global eh;
-	 eh)
-    | (Var vi, NoOffset) when not (exp_is_volatile e) -> 
-	(match e with
-	  Lval(Var vi', NoOffset) -> (* ignore x = x *)
-	    if vi'.vid = vi.vid then eh else
-	    (IH.replace eh vi.vid e;
-	     eh_kill_vi eh vi;
-	     eh)
-	| _ ->
-	    (IH.replace eh vi.vid e;
-	     eh_kill_vi eh vi;
-	     eh))
-    | (Var vi, _ ) -> begin
-	(* must remove mapping for vi *)
-	IH.remove eh vi.vid;
-	eh_kill_lval eh lv;
-	eh
+      | (Mem _, _) -> 
+          (eh_kill_mem eh; 
+           eh_kill_addrof_or_global eh;
+           eh)
+      | (Var vi, NoOffset, _) when not (exp_is_volatile e) -> (match e with
+          | Lval(Var vi', NoOffset) -> (* ignore x = x *)
+              if vi'.vid = vi.vid then eh else
+              (IH.replace eh vi.vid e;
+               eh_kill_vi eh vi;
+               eh)
+          | _ ->
+            (IH.replace eh vi.vid e;
+             eh_kill_vi eh vi;
+             eh)
+        )
+      | (Var vi, _, _) -> begin
+          (* must remove mapping for vi *)
+          IH.remove eh vi.vid;
+          eh_kill_lval eh lv;
+          eh
     end)
   | Call(Some(Var vi,NoOffset),_,_,_) ->
       (IH.remove eh vi.vid;

@@ -14,6 +14,9 @@ int sum2 (int n)
  
 {
   int tmp;
-  tmp = 22222;
-  return 1;
+  if (n > 0) {
+    tmp = sum2(n-1);
+    return tmp;
+  }else
+    return 1;
 }

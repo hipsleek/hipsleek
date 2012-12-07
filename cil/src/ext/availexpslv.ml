@@ -96,9 +96,9 @@ class memReadOrAddrOfFinderClass br = object(self)
   inherit nopCilVisitor
 
   method vexpr e = match e with
-  | AddrOf(Mem _, _)
-  | StartOf(Mem _, _)
-  | Lval(Mem _, _) -> begin
+  | AddrOf(Mem _, _, _)
+  | StartOf(Mem _, _, _)
+  | Lval(Mem _, _, _) -> begin
       br := true;
       SkipChildren
   end
@@ -138,7 +138,7 @@ let offset_has_mem_read off =
 let lvh_kill_mem lvh =
   LvExpHash.iter (fun lv e ->
     match lv with
-    | (Mem _, _) -> LvExpHash.remove lvh lv
+    | (Mem _, _, _) -> LvExpHash.remove lvh lv
     | _ ->
         if exp_has_mem_read e || lval_has_mem_read lv
         then LvExpHash.remove lvh lv)
@@ -263,28 +263,28 @@ let lvh_handle_inst i lvh =
   match i with
     Set(lv,e,_) -> begin 
       match lv with
-      | (Mem _, _) -> begin
-	  LvExpHash.replace lvh lv e;
-	  lvh_kill_mem lvh;
-	  lvh_kill_addrof_or_global lvh;
-	  lvh
+      | (Mem _, _, _) -> begin
+          LvExpHash.replace lvh lv e;
+          lvh_kill_mem lvh;
+          lvh_kill_addrof_or_global lvh;
+          lvh
       end
       | _ when not (exp_is_volatile e) -> begin
-	  (* ignore x = x *)
-	  if compareExpStripCasts (Lval lv) e then lvh 
-	  else begin
-	    LvExpHash.replace lvh lv e;
-	    lvh_kill_lval lvh lv;
-	    lvh
-	  end
+          (* ignore x = x *)
+          if compareExpStripCasts (Lval lv) e then lvh 
+          else begin
+            LvExpHash.replace lvh lv e;
+            lvh_kill_lval lvh lv;
+            lvh
+          end
       end
       | _ -> begin (* e is volatile *)
         (* must remove mapping for lv *)
-	    if !debug then ignore(E.log "lvh_handle_inst: %a is volatile. killing %a\n"
-		    d_exp e d_lval lv);
-	    LvExpHash.remove lvh lv;
-	    lvh_kill_lval lvh lv;
-	    lvh
+          if !debug then ignore(E.log "lvh_handle_inst: %a is volatile. killing %a\n"
+            d_exp e d_lval lv);
+          LvExpHash.remove lvh lv;
+          lvh_kill_lval lvh lv;
+          lvh
       end
     end
   | Call(Some lv,_,_,_) -> begin
@@ -292,7 +292,7 @@ let lvh_handle_inst i lvh =
       lvh_kill_lval lvh lv;
       if not((!ignore_call) i) then begin
         lvh_kill_mem lvh;
-	    lvh_kill_addrof_or_global lvh
+        lvh_kill_addrof_or_global lvh
       end;
       lvh
   end

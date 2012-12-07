@@ -633,12 +633,12 @@ let openVar (vname : string) (state : state) : unit =
     in
     let e =
       match unrollType vi.vtype with
-      | TPtr _ -> Lval (Var vi, NoOffset)
-      | TArray _ -> StartOf (Var vi, NoOffset)
+      | TPtr _ -> Lval (Var vi, NoOffset, vi.vloc), vi.vloc)
+      | TArray _ -> StartOf (Var vi, NoOffset, vi.vloc), vi.vloc)
       | _ -> E.s (E.bug "expected ptr or array type\n")
     in
     let comp =
-      match unrollType (typeOfLval (Mem e, NoOffset)) with
+      match unrollType (typeOfLval (Mem e, NoOffset, vi.vloc)) with
       | TComp (ci, _) -> ci
       | t -> E.s (E.bug "expected comp type: %a\n" d_type t)
     in
@@ -1076,11 +1076,11 @@ let rec evaluateExp (e : exp) (state : state) : summary =
 
 and evaluateLval (lv : lval) (state : state) : summary =
   match lv with
-  | Var vi, NoOffset ->
+  | Var vi, NoOffset, _ ->
       SVar vi.vname
   | Var _, _ ->
       SFacts (typeToFacts "*" (typeOfLval lv))
-  | Mem e, off ->
+  | Mem e, off, _ ->
       addVisited expStats e;
       let s = evaluateExp e state in
       if not (safeDeref (summaryToFacts s state)) then begin

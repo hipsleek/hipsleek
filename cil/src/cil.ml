@@ -362,8 +362,9 @@ and fieldinfo = {
                                             an integer type *)
     mutable fattr: attributes;          (** The attributes for this field 
                                           * (not for its type) *)
-    mutable floc: location;             (** The location where this field
+    mutable fdefn: location;            (** The location where this field
                                           * is defined *)
+    mutable floc: location;             (** The current location of this field *)
 }
 
 
@@ -421,7 +422,7 @@ and varinfo = {
 
     mutable vdecl: location;            (** Location of variable declaration *)
 
-    mutable vid: int;  (** A unique integer identifier.  *)
+    mutable vid: int;                   (** A unique integer identifier.  *)
     mutable vaddrof: bool;              (** True if the address of this
                                             variable is taken. CIL will set 
                                          * these flags when it parses C, but 
@@ -449,6 +450,8 @@ and varinfo = {
                                             Printing a non-pure vdescr more
                                             than once may yield incorrect
                                             results. *)
+
+    mutable vloc: location;             (** Location of this variable *) 
 }
 
 (** Storage-class information *)
@@ -576,14 +579,14 @@ and binop =
  * that we can tell quickly whether we are accessing some component of a 
  * variable directly or we are accessing a memory location through a pointer.*)
 and lval =
-    lhost * offset
+    lhost * offset * location
 
 (** The host part of an {!Cil.lval}. *)
 and lhost = 
-  | Var        of varinfo    
+  | Var        of varinfo
     (** The host is a variable. *)
 
-  | Mem        of exp        
+  | Mem        of exp
     (** The host is an object of type [T] when the expression has pointer 
      * [TPtr(T)]. *)
 
@@ -599,14 +602,14 @@ and offset =
                         * or as a terminator in a list of other kinds of 
                         * offsets. *)
 
-  | Field      of fieldinfo * offset    
+  | Field      of fieldinfo * offset * location
                       (** A field offset. Can be applied only to an lvalue 
                        * that denotes a structure or a union that contains 
                        * the mentioned field. This advances the offset to the 
                        * beginning of the mentioned field and changes the 
                        * type to the type of the mentioned field. *)
 
-  | Index    of exp * offset
+  | Index    of exp * offset * location
                      (** An array index offset. Can be applied only to an 
                        * lvalue that denotes an array. This advances the 
                        * starting address of the lval to the beginning of the 
@@ -1151,6 +1154,20 @@ let get_expLoc (e: exp) : location =
   | AddrOf (_, l)
   | StartOf (_, l) -> l
 
+let get_lvalLoc (l: lval) : location =
+  let _, _, loc = l in
+  loc
+
+let get_offsetLoc (o: offset) : location =
+  match o with
+  | NoOffset -> lu
+  | Field (_, _, l) -> l
+  | Index (_, _, l) -> l
+
+let get_lhostLoc (l: lhost) : location =
+  match l with
+  | Var v -> v.vloc
+  | Mem e -> get_expLoc e
 
 (* The next variable identifier to use. Counts up *)
 let nextGlobalVID = ref 1
@@ -1488,7 +1505,7 @@ let mkCompInfo
        * the fields. The function can ignore this argument if not 
        * constructing a recursive type.  *)
        (mkfspec: compinfo -> (string * typ * int option * attribute list *
-                             location) list)   
+                             location * location) list)   
        (a: attribute list) : compinfo =
 
   (* make a new name for anonymous structs *)
@@ -1505,12 +1522,13 @@ let mkCompInfo
    comp.ckey <- !nextCompinfoKey;
    incr nextCompinfoKey;
    let flds = 
-       Util.list_map (fun (fn, ft, fb, fa, fl) -> 
+       Util.list_map (fun (fn, ft, fb, fa, fd, fl) -> 
           { fcomp = comp;
             ftype = ft;
             fname = fn;
             fbitfield = fb;
             fattr = fa;
+            fdefn = fd;
             floc = fl}) (mkfspec comp) in
    comp.cfields <- flds;
    if flds <> [] then comp.cdefined <- true;
@@ -1626,7 +1644,7 @@ let isVoidPtrType t =
     TPtr(tau,_) when isVoidType tau -> true
   | _ -> false
 
-let var vi : lval = (Var vi, NoOffset)
+let var vi : lval = (Var vi, NoOffset, vi.vloc)
 (* let assign vi e = Instrs(Set (var vi, e), lu) *)
 
 let mkString s = Const(CStr s, lu)
@@ -1826,11 +1844,11 @@ let getParenthLevel (e: exp) =
   | UnOp((Neg|BNot|LNot),_,_,_) -> 30
 
                                         (* Lvals *)
-  | Lval((Mem _ , _), _) -> derefStarLevel (* 20 *)                   
-  | Lval((Var _, (Field _|Index _)), _) -> indexLevel (* 20 *)
+  | Lval((Mem _ , _, _), _) -> derefStarLevel (* 20 *)                   
+  | Lval((Var _, (Field _|Index _), _), _) -> indexLevel (* 20 *)
   | SizeOf _ | SizeOfE _ | SizeOfStr _ -> 20
   | AlignOf _ | AlignOfE _ -> 20
-  | Lval((Var _, NoOffset), _) -> 0       (* Plain variables *)
+  | Lval((Var _, NoOffset, _), _) -> 0  (* Plain variables *)
   | Const _ -> 0                        (* Constants *)
 
 
@@ -1929,8 +1947,8 @@ and typeOfInit (i: init) : typ =
   | CompoundInit (t, _) -> t
 
 and typeOfLval = function
-    Var vi, off -> typeOffset vi.vtype off
-  | Mem addr, off -> begin
+    Var vi, off, _ -> typeOffset vi.vtype off
+  | Mem addr, off, _ -> begin
       match unrollType (typeOf addr) with
         TPtr (t, _) -> typeOffset t off
       | _ -> E.s (bug "typeOfLval: Mem on a non-pointer (%a)" !pd_exp addr)
@@ -1944,18 +1962,18 @@ and typeOffset basetyp =
   in
   function
     NoOffset -> basetyp
-  | Index (_, o) -> begin
+  | Index (_, o, _) -> begin
       match unrollType basetyp with
-        TArray (t, _, baseAttrs) ->
-	  let elementType = typeOffset t o in
-	  blendAttributes baseAttrs elementType
+      | TArray (t, _, baseAttrs) ->
+          let elementType = typeOffset t o in
+          blendAttributes baseAttrs elementType
       | t -> E.s (E.bug "typeOffset: Index on a non-array")
   end 
-  | Field (fi, o) ->
+  | Field (fi, o, _) ->
       match unrollType basetyp with
-        TComp (_, baseAttrs) ->
-	  let fieldType = typeOffset fi.ftype o in
-	  blendAttributes baseAttrs fieldType
+      | TComp (_, baseAttrs) ->
+          let fieldType = typeOffset fi.ftype o in
+          blendAttributes baseAttrs fieldType
       | _ -> E.s (bug "typeOffset: Field on a non-compound")
 
 
@@ -2521,8 +2539,8 @@ and sizeOf (t, l) =
  
 and bitsOffset (baset: typ) (off: offset) : int * int = 
   let rec loopOff (baset: typ) (width: int) (start: int) = function
-      NoOffset -> start, width
-    | Index(e, off) -> begin
+    | NoOffset -> start, width
+    | Index(e, off, _) -> begin
         let ei = 
           match getInteger e with
             Some i -> cilint_to_int i
@@ -2536,11 +2554,10 @@ and bitsOffset (baset: typ) (off: offset) : int * int =
         let bitsbt = bitsSizeOf bt in
         loopOff bt bitsbt (start + ei * bitsbt) off
     end
-    | Field(f, off) when not f.fcomp.cstruct -> 
+    | Field(f, off, _) when not f.fcomp.cstruct -> 
         (* All union fields start at offset 0 *)
         loopOff f.ftype (bitsSizeOf f.ftype) start off
-
-    | Field(f, off) -> 
+    | Field(f, off, _) -> 
         (* Construct a list of fields preceeding and including this one *)
         let prevflds = 
           let rec loop = function
@@ -2616,7 +2633,7 @@ and constFold (machdep: bool) (e: exp) : exp =
             (* For an array, it is the alignment of the array ! *)
       | _ -> constFold machdep (AlignOf (typeOf e, l))
     )
-  | CastE(it, AddrOf ((Mem (CastE(TPtr(bt, _), z, _)), off), l1), l) 
+  | CastE(it, AddrOf ((Mem (CastE(TPtr(bt, _), z, _)), off, _), l1), l) 
     when machdep && isZero z -> begin
       try 
         let start, width = bitsOffset bt off in
@@ -2641,7 +2658,7 @@ and constFold (machdep: bool) (e: exp) : exp =
   | StartOf (lv, l) -> StartOf (constFoldLval machdep lv, l)
   | _ -> e
 
-and constFoldLval machdep (host,offset) =
+and constFoldLval (machdep : bool) ((host,offset,loc): lval) : lval =
   let newhost = 
     match host with
     | Mem e -> Mem (constFold machdep e)
@@ -2649,11 +2666,10 @@ and constFoldLval machdep (host,offset) =
   in
   let rec constFoldOffset machdep = function
     | NoOffset -> NoOffset
-    | Field (fi,offset) -> Field (fi, constFoldOffset machdep offset)
-    | Index (exp,offset) -> Index (constFold machdep exp,
-                                   constFoldOffset machdep offset)
+    | Field (fi,offset, l) -> Field (fi, constFoldOffset machdep offset, l)
+    | Index (exp,offset, l) -> Index (constFold machdep exp, constFoldOffset machdep offset, l)
   in
-  (newhost, constFoldOffset machdep offset)
+  (newhost, constFoldOffset machdep offset, loc)
 
 and constFoldBinOp (machdep: bool) bop e1 e2 tres loc = 
   let e1' = constFold machdep e1 in
@@ -3281,22 +3297,22 @@ class defaultCilPrinterClass : cilPrinter = object (self)
   (*** L-VALUES ***)
   method pLval () (lv:lval) =  (* lval (base is 1st field)  *)
     match lv with
-      Var vi, o -> self#pOffset (self#pVar vi) o
-    | Mem e, Field(fi, o) ->
+      Var vi, o, _ -> self#pOffset (self#pVar vi) o
+    | Mem e, Field(fi, o, _),_ ->
         self#pOffset
           ((self#pExpPrec arrowLevel () e) ++ text ("->" ^ fi.fname)) o
-    | Mem e, NoOffset -> 
+    | Mem e, NoOffset, _ -> 
         text "*" ++ self#pExpPrec derefStarLevel () e
-    | Mem e, o ->
+    | Mem e, o, _ ->
         self#pOffset
           (text "(*" ++ self#pExpPrec derefStarLevel () e ++ text ")") o
 
   (** Offsets **)
   method pOffset (base: doc) = function
     | NoOffset -> base
-    | Field (fi, o) -> 
+    | Field (fi, o, _) -> 
         self#pOffset (base ++ text "." ++ text fi.fname) o
-    | Index (e, o) ->
+    | Index (e, o, _) ->
         self#pOffset (base ++ text "[" ++ self#pExp () e ++ text "]") o
 
   method private pLvalPrec (contextprec: int) () lv = 
@@ -3334,7 +3350,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
           ++ self#pExpPrec level () e
     | SizeOf (t,_) -> 
         text "sizeof(" ++ self#pType None () t ++ chr ')'
-    | SizeOfE (Lval ((Var fv, NoOffset),_),_) when fv.vname = "__builtin_va_arg_pack" && (not !printCilAsIs) -> 
+    | SizeOfE (Lval ((Var fv, NoOffset, _),_),_) when fv.vname = "__builtin_va_arg_pack" && (not !printCilAsIs) -> 
         text "__builtin_va_arg_pack()"
     | SizeOfE (e,_) ->  
         text "sizeof(" ++ self#pExp () e ++ chr ')'
@@ -3386,7 +3402,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
           if not !msvcMode then begin
             (* Print only for union when we do not initialize the first field *)
             match unrollType t, initl with
-              TComp(ci, _), [(Field(f, NoOffset), _)] -> 
+            | TComp(ci, _), [(Field(f, NoOffset, _), _)] -> 
                 if not (ci.cstruct) && ci.cfields != [] && 
                   (List.hd ci.cfields) != f then
                   true
@@ -3397,11 +3413,11 @@ class defaultCilPrinterClass : cilPrinter = object (self)
             false 
         in
         let d_oneInit = function
-            Field(f, NoOffset), i -> 
+          | Field(f, NoOffset, _), i -> 
               (if printDesignator then 
                 text ("." ^ f.fname ^ " = ") 
               else nil) ++ self#pInit () i
-          | Index(e, NoOffset), i -> 
+          | Index(e, NoOffset, _), i -> 
               (if printDesignator then 
                 text "[" ++ self#pExp () e ++ text "] = " else nil) ++ 
                 self#pInit () i
@@ -3517,7 +3533,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
       (* In cabs2cil we have turned the call to builtin_va_arg into a 
        * three-argument call: the last argument is the address of the 
        * destination *)
-    | Call(None, Lval((Var vi, NoOffset),_), [dest; SizeOf (t,_); adest], l) 
+    | Call(None, Lval((Var vi, NoOffset, _),_), [dest; SizeOf (t,_); adest], l) 
         when vi.vname = "__builtin_va_arg" && not !printCilAsIs -> 
           let destlv = match stripCasts adest with 
             AddrOf (destlv,_) -> destlv
@@ -3542,12 +3558,12 @@ class defaultCilPrinterClass : cilPrinter = object (self)
 
       (* In cabs2cil we have dropped the last argument in the call to 
        * __builtin_va_start and __builtin_stdarg_start. *)
-    | Call(None, Lval((Var vi, NoOffset), l0), [marker], l) 
+    | Call(None, Lval((Var vi, NoOffset, l1), l2), [marker], l) 
         when ((vi.vname = "__builtin_stdarg_start" ||
                vi.vname = "__builtin_va_start") && not !printCilAsIs) -> 
         if currentFormals <> [] then begin
           let last = self#getLastNamedArgument vi.vname in
-          self#pInstr () (Call(None,Lval((Var vi,NoOffset),l0),[marker; last],l))
+          self#pInstr () (Call(None,Lval((Var vi,NoOffset,l1),l2),[marker; last],l))
         end
         else begin
           (* We can't print this call because someone called pInstr outside 
@@ -3562,10 +3578,10 @@ class defaultCilPrinterClass : cilPrinter = object (self)
         end
       (* In cabs2cil we have dropped the last argument in the call to 
        * __builtin_next_arg. *)
-    | Call(res, Lval((Var vi, NoOffset), l0), [ ], l) 
+    | Call(res, Lval((Var vi, NoOffset, l1), l2), [ ], l) 
         when vi.vname = "__builtin_next_arg" && not !printCilAsIs -> begin
           let last = self#getLastNamedArgument vi.vname in
-          self#pInstr () (Call(res,Lval((Var vi,NoOffset),l0),[last],l))
+          self#pInstr () (Call(res,Lval((Var vi,NoOffset,l1),l2),[last],l))
         end
 
       (* In cparser we have turned the call to 
@@ -3573,7 +3589,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
        * __builtin_types_compatible_p(sizeof t1, sizeof t2), so that we can
        * represent the types as expressions. 
        * Remove the sizeofs when printing. *)
-    | Call(dest, Lval((Var vi, NoOffset), _), [SizeOf (t1, _); SizeOf (t2, _)], l) 
+    | Call(dest, Lval((Var vi, NoOffset, _), _), [SizeOf (t1, _); SizeOf (t2, _)], l) 
         when vi.vname = "__builtin_types_compatible_p" && not !printCilAsIs -> 
         self#pLineDirective l
           (* Print the destination *)
@@ -3584,7 +3600,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
         ++ dprintf "%s(%a, %a)" vi.vname
              (self#pType None) t1  (self#pType None) t2
         ++ text printInstrTerminator
-    | Call(_, Lval((Var vi, NoOffset), _), _, l) 
+    | Call(_, Lval((Var vi, NoOffset, _), _), _, l) 
         when vi.vname = "__builtin_types_compatible_p" && not !printCilAsIs -> 
         E.s (bug "__builtin_types_compatible_p: cabs2cil should have added sizeof to the arguments.")
     | Call(dest,e,args,l) ->
@@ -3604,7 +3620,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
           (* Now the function name *)
           ++ (let ed = self#pExp () e in
               match e with 
-                Lval((Var _, _), _) -> ed
+                Lval((Var _, _, _), _) -> ed
               | _ -> text "(" ++ ed ++ text ")")
           ++ text "(" ++ 
           (align
@@ -4677,12 +4693,12 @@ class plainCilPrinterClass =
 
 
   method private d_plainoffset () = function
-      NoOffset -> text "NoOffset"
-    | Field(fi,o) -> 
+    | NoOffset -> text "NoOffset"
+    | Field(fi, o, _) -> 
         dprintf "Field(@[%s:%a,@?%a@])" 
           fi.fname self#pOnlyType fi.ftype self#d_plainoffset o
-     | Index(e, o) -> 
-         dprintf "Index(@[%a,@?%a@])" self#pExp e self#d_plainoffset o
+    | Index(e, o, _) -> 
+        dprintf "Index(@[%a,@?%a@])" self#pExp e self#d_plainoffset o
 
   method pInit () = function
       SingleInit e -> dprintf "SI(%a)" d_exp e
@@ -4704,8 +4720,8 @@ class plainCilPrinterClass =
 *)           
   method pLval () (lv: lval) =  
     match lv with 
-    | Var vi, o -> dprintf "Var(@[%s,@?%a@])" vi.vname self#d_plainoffset o
-    | Mem e, o -> dprintf "Mem(@[%a,@?%a@])" self#pExp e self#d_plainoffset o
+    | Var vi, o, _ -> dprintf "Var(@[%s,@?%a@])" vi.vname self#d_plainoffset o
+    | Mem e, o, _ -> dprintf "Mem(@[%a,@?%a@])" self#pExp e self#d_plainoffset o
 
 
 end
@@ -4781,10 +4797,10 @@ object (self)
   method pExp () (e:exp) : doc =
     if enable then
       match e with
-        Lval ((Var vi, o), _)
-      | StartOf ((Var vi, o), _) -> 
+        Lval ((Var vi, o, _), _)
+      | StartOf ((Var vi, o, _), _) -> 
           self#pOffset (self#pVarDescriptive vi) o
-      | AddrOf ((Var vi, o), _) -> 
+      | AddrOf ((Var vi, o, _), _) -> 
           (* No parens needed, since offsets have higher precedence than & *)
           text "& " ++ self#pOffset (self#pVarDescriptive vi) o
       | _ -> super#pExp () e
@@ -4848,6 +4864,7 @@ let makeVarinfo global name typ =
       vreferenced = false;
       vdescr = nil;
       vdescrpure = true;
+      vloc = lu;
     } in
   vi
       
@@ -5055,28 +5072,36 @@ let makeValidSymbolName (s: string) =
 let rec addOffset (toadd: offset) (off: offset) : offset =
   match off with
     NoOffset -> toadd
-  | Field(fid', offset) -> Field(fid', addOffset toadd offset)
-  | Index(e, offset) -> Index(e, addOffset toadd offset)
+  | Field(fid', offset, loc) ->
+      let loc' = makeLoc (startPos loc) (endPos (get_offsetLoc toadd)) in
+      Field(fid', addOffset toadd offset, loc')
+  | Index(e, offset, loc) ->
+      let loc' = makeLoc (startPos loc) (endPos (get_offsetLoc toadd)) in
+      Index(e, addOffset toadd offset, loc')
 
  (* Add an offset at the end of an lv *)      
-let addOffsetLval toadd (b, off) : lval =
- b, addOffset toadd off
+let addOffsetLval (toadd: offset) ((b, off, loc): lval) : lval =
+  let loc' = makeLoc (startPos loc) (endPos (get_offsetLoc toadd)) in 
+  (b, addOffset toadd off, loc')
 
 let rec removeOffset (off: offset) : offset * offset = 
   match off with 
     NoOffset -> NoOffset, NoOffset
-  | Field(f, NoOffset) -> NoOffset, off
-  | Index(i, NoOffset) -> NoOffset, off
-  | Field(f, restoff) -> 
+  | Field(f, NoOffset, _) -> NoOffset, off
+  | Index(i, NoOffset, _) -> NoOffset, off
+  | Field(f, restoff, l) -> 
       let off', last = removeOffset restoff in
-      Field(f, off'), last
-  | Index(i, restoff) -> 
+      let l' = makeLoc (startPos l) (endPos (get_offsetLoc off')) in
+      Field(f, off', l'), last
+  | Index(i, restoff, l) -> 
       let off', last = removeOffset restoff in
-      Index(i, off'), last
+      let l' = makeLoc (startPos l) (endPos (get_offsetLoc off')) in
+      Index(i, off', l'), last
 
-let removeOffsetLval ((b, off): lval) : lval * offset = 
+let removeOffsetLval ((b, off, loc): lval) : lval * offset = 
   let off', last = removeOffset off in
-  (b, off'), last
+  let loc' = makeLoc (startPos loc) (endPos (get_offsetLoc off')) in
+  (b, off', loc'), last
 
 
 (*** Define the visiting engine ****)
@@ -5202,32 +5227,33 @@ and visitCilInit (vis: cilVisitor) (forglob: varinfo)
           
 and visitCilLval (vis: cilVisitor) (lv: lval) : lval =
   doVisit vis (vis#vlval lv) childrenLval lv
+
 and childrenLval (vis: cilVisitor) (lv: lval) : lval =  
   (* and visit its subexpressions *)
   let vExp e = visitCilExpr vis e in
   let vOff off = visitCilOffset vis off in
   match lv with
-    Var v, off ->
+    Var v, off, l ->
       let v'   = doVisit vis (vis#vvrbl v) (fun _ x -> x) v in
       let off' = vOff off in
-      if v' != v || off' != off then Var v', off' else lv
-  | Mem e, off -> 
+      if v' != v || off' != off then (Var v', off', l) else lv
+  | Mem e, off, l -> 
       let e' = vExp e in
       let off' = vOff off in
-      if e' != e || off' != off then Mem e', off' else lv
+      if e' != e || off' != off then (Mem e', off', l) else lv
 
 and visitCilOffset (vis: cilVisitor) (off: offset) : offset =
   doVisit vis (vis#voffs off) childrenOffset off
 and childrenOffset (vis: cilVisitor) (off: offset) : offset =
   let vOff off = visitCilOffset vis off in
   match off with
-    Field (f, o) -> 
+  | Field (f, o, l) -> 
       let o' = vOff o in
-      if o' != o then Field (f, o') else off
-  | Index (e, o) -> 
+      if o' != o then Field (f, o', l) else off
+  | Index (e, o, l) -> 
       let e' = visitCilExpr vis e in
       let o' = vOff o in
-      if e' != e || o' != o then Index (e', o') else off
+      if e' != e || o' != o then Index (e', o', l) else off
   | NoOffset -> off
 
 (* sm: for offsets in initializers, the 'startvisit' will be the
@@ -5609,7 +5635,7 @@ class constFoldVisitorClass (machdep: bool) : cilVisitor = object
     match i with 
       (* Skip two functions to which we add Sizeof to the type arguments. 
          See the comments for these above. *)
-      Call(_,(Lval ((Var vi,NoOffset),_)),_,_) 
+    | Call(_,(Lval ((Var vi,NoOffset,_),_)),_,_) 
         when ((vi.vname = "__builtin_va_arg") 
               || (vi.vname = "__builtin_types_compatible_p")) ->
           SkipChildren
@@ -5809,7 +5835,7 @@ let rec expToAttrParam (e: exp) : attrparam =
       if not (is_int_cilint i') then
         raise (NotAnAttrParam e);
       AInt (int_of_cilint i')
-  | Lval ((Var v, NoOffset),_) -> ACons(v.vname, [])
+  | Lval ((Var v, NoOffset, _),_) -> ACons(v.vname, [])
   | SizeOf (t,_) -> ASizeOf t
   | SizeOfE (e',_) -> ASizeOfE (expToAttrParam e')
   
@@ -5989,13 +6015,13 @@ let dGlobal: doc -> location -> global =
 
   (* Make an AddrOf. Given an lval of type T will give back an expression of 
    * type ptr(T)  *)
-let mkAddrOf ((b, off) as lval) loc : exp = 
+let mkAddrOf ((b, off, l) as lval) loc : exp = 
   (* Never take the address of a register variable *)
   (match lval with
-    Var vi, off when vi.vstorage = Register -> vi.vstorage <- NoStorage
+  | Var vi, off, _ when vi.vstorage = Register -> vi.vstorage <- NoStorage
   | _ -> ()); 
   match lval with
-    Mem e, NoOffset -> e
+  | Mem e, NoOffset, _ -> e
   (* Don't do this: 
     | b, Index(z, NoOffset) when isZero z -> StartOf (b, NoOffset)
     &a[0] is not the same as a, e.g. within typeof and sizeof.
@@ -6018,8 +6044,11 @@ let mkMem ~(addr: exp) ~(off: offset) : lval =
     match addr, off with
       AddrOf (lv,_), _ -> addOffsetLval off lv
     | StartOf (lv,l), _ -> (* Must be an array *)
-        addOffsetLval (Index(zero l, off)) lv 
-    | _, _ -> Mem addr, off
+        let l1 = makeLoc (startPos l) (endPos (get_offsetLoc off)) in
+        addOffsetLval (Index(zero l, off, l1)) lv 
+    | _, _ ->
+        let l = makeLoc (startPos (get_expLoc addr)) (endPos (get_offsetLoc off)) in
+        Mem addr, off, l
   in
 (*  ignore (E.log "memof : %a:%a\nresult = %a\n" 
             d_plainexp addr d_plainoffset off d_plainexp res); *)
@@ -6051,20 +6080,20 @@ let rec isConstant = function
   | UnOp (_, e, _, _) -> isConstant e
   | BinOp (_, e1, e2, _, _) -> isConstant e1 && isConstant e2
   | Question (e1, e2, e3, _, _) -> isConstant e1 && isConstant e2 && isConstant e3
-  | Lval ((Var vi, NoOffset), _) -> 
+  | Lval ((Var vi, NoOffset, _), _) -> 
       (vi.vglob && isArrayType vi.vtype || isFunctionType vi.vtype)
   | Lval _ -> false
   | SizeOf _ | SizeOfE _ | SizeOfStr _ | AlignOf _ | AlignOfE _ -> true
   | CastE (_, e, _) -> isConstant e
-  | AddrOf ((Var vi, off), _) | StartOf ((Var vi, off), _)
-        -> vi.vglob && isConstantOffset off
-  | AddrOf ((Mem e, off), _) | StartOf((Mem e, off), _) 
-        -> isConstant e && isConstantOffset off
+  | AddrOf ((Var vi, off, _), _) | StartOf ((Var vi, off, _), _)
+      -> vi.vglob && isConstantOffset off
+  | AddrOf ((Mem e, off, _), _) | StartOf((Mem e, off, _), _) 
+      -> isConstant e && isConstantOffset off
 
 and isConstantOffset = function
-    NoOffset -> true
-  | Field(fi, off) -> isConstantOffset off
-  | Index(e, off) -> isConstant e && isConstantOffset off
+  | NoOffset -> true
+  | Field(fi, off, _) -> isConstantOffset off
+  | Index(e, off, _) -> isConstant e && isConstantOffset off
 
 
 let getCompField (cinfo:compinfo) (fieldName:string) : fieldinfo =
@@ -6152,7 +6181,7 @@ let rec makeZeroInit (t: typ) : init =
         List.fold_right
           (fun f acc -> 
             if f.fname <> missingFieldName then 
-              (Field(f, NoOffset), makeZeroInit f.ftype) :: acc
+              (Field(f, NoOffset, f.floc), makeZeroInit f.ftype) :: acc
             else
               acc)
           comp.cfields []
@@ -6191,7 +6220,7 @@ let rec makeZeroInit (t: typ) : init =
           widestField
         end
       in
-      CompoundInit(t, [(Field(fieldToInit, NoOffset), 
+      CompoundInit(t, [(Field(fieldToInit, NoOffset, fieldToInit.floc), 
                         makeZeroInit fieldToInit.ftype)])
 
   | TArray(bt, Some len, _) as t' -> 
@@ -6203,7 +6232,7 @@ let rec makeZeroInit (t: typ) : init =
       let initbt = makeZeroInit bt in
       let rec loopElems acc i = 
         if i < 0 then acc
-        else loopElems ((Index(integer i lu, NoOffset), initbt) :: acc) (i - 1) 
+        else loopElems ((Index(integer i lu, NoOffset, lu), initbt) :: acc) (i - 1) 
       in
       CompoundInit(t', loopElems [] (n - 1))
 
@@ -6248,7 +6277,7 @@ let foldLeftCompound
                 let rec loop acc i = 
                   if i >= len_array then acc
                   else 
-                    loop (doinit (Index(integer i l, NoOffset)) zi bt acc) 
+                    loop (doinit (Index(integer i l, NoOffset, l)) zi bt acc) 
                          (i + 1)
                 in
                 loop part (len_init + 1)
@@ -6264,7 +6293,7 @@ let foldLeftCompound
 
   | TComp (comp, _) -> 
       let getTypeOffset = function
-          Field(f, NoOffset) -> f.ftype
+        | Field(f, NoOffset, _) -> f.ftype
         | _ -> E.s (bug "foldLeftCompound: malformed initializer")
       in
       List.fold_left 

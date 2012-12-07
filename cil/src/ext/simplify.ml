@@ -354,7 +354,7 @@ let rec foldRightStructFields
             begin
               E.log ("%a:  Simplify: Not splitting struct %s because one"
                      ^^" of its fields is an array.\n") 
-                d_loc (List.hd comp.cfields).floc
+                d_loc (List.hd comp.cfields).fdefn
                 comp.cname;
               (doit off' f.fname f.ftype) :: post
             end

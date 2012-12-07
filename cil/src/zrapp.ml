@@ -538,7 +538,7 @@ class zraCilPrinterClass : cilPrinter = object (self)
      | g -> fprint out 80 (self#pGlobal () g)
 
   method pFieldDecl () fi = 
-    self#pLineDirective fi.floc ++
+    self#pLineDirective fi.fdefn ++
     (self#pType
        (Some (text (if fi.fname = missingFieldName then "" else fi.fname)))
        () 

@@ -143,7 +143,7 @@ let merge_iast_exp (es: Iast.exp list) : Iast.exp =
 
 
 let typ_of_cil_lval (lv: Cil.lval) : Cil.typ =
-  let lhost, offset = lv in
+  let lhost, offset, _ = lv in
   match (lhost, offset) with
   | Cil.Var v, Cil.NoOffset -> v.Cil.vtype;
   | Cil.Var _, Cil.Field _ -> report_error_msg "typ_of_cil_lval: handle (Cil.Var, Cil.Field) later!"
@@ -171,10 +171,10 @@ let rec is_global_cil_exp (e: Cil.exp) : bool =
 
 
 and is_global_cil_lval (lv: Cil.lval) : bool =
-  let lhost, offset = lv in
-  match (lhost, offset) with
-  | Cil.Var v, _ -> v.Cil.vglob;
-  | Cil.Mem m, _ -> is_global_cil_exp m
+  let lhost, _, _ = lv in
+  match lhost with
+  | Cil.Var v -> v.Cil.vglob;
+  | Cil.Mem m -> is_global_cil_exp m
 
 
 (* ---------------------------------------- *)
@@ -244,11 +244,9 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
   (* return *)
   newtype
 
-let translate_var (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
-  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
+let translate_var (vinfo: Cil.varinfo) : Iast.exp =
   let name = vinfo.Cil.vname in
-  (* let _ = print_endline ("-- var name = " ^ name) in                *)
-  (* let _ = print_endline ("        loc = " ^ (string_of_loc pos)) in *)
+  let pos = translate_location vinfo.Cil.vloc in
   let newexp = Iast.Var {Iast.exp_var_name = name;
                          Iast.exp_var_pos = pos} in
   newexp
@@ -344,8 +342,9 @@ let translate_binary_operator (op : Cil.binop) : Iast.bin_op =
   | Cil.LOr -> Iast.OpLogicalOr
 
 
-let rec translate_lval (lv: Cil.lval) (lopt: Cil.location option) : Iast.exp =
-  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
+let rec translate_lval (lv: Cil.lval) : Iast.exp =
+  let (lhost, offset, loc) = lv in
+  let pos = translate_location loc in
   (* find whether lval is subtituted by another pointer variable or not *)
   let pvar = (
     try
@@ -371,28 +370,27 @@ let rec translate_lval (lv: Cil.lval) (lopt: Cil.location option) : Iast.exp =
         match off with
         | Cil.NoOffset -> []
         | Cil.Field _ -> report_error_msg "TRUNG TODO: collect_index: handle Cil.Field _ later"
-        | Cil.Index (e, o) -> [(translate_exp e)] @ (collect_index o)
+        | Cil.Index (e, o, _) -> [(translate_exp e)] @ (collect_index o)
       ) in
       let rec collect_field (off: Cil.offset) : ident list = (
         match off with
         | Cil.NoOffset -> []
-        | Cil.Field (f, o) -> [(f.Cil.fname)] @ (collect_field o)
+        | Cil.Field (f, o, _) -> [(f.Cil.fname)] @ (collect_field o)
         | Cil.Index _ -> report_error_msg "TRUNG TODO: collect_field: handle Cil.Index _ later"
       ) in
-      let (lhost, offset) = lv in
       match (lhost, offset) with
       | Cil.Var v, Cil.NoOffset ->
-          let newexp = translate_var v lopt in
+          let newexp = translate_var v in
           newexp
       | Cil.Var v, Cil.Index _ ->
-          let base = translate_var v lopt in
+          let base = translate_var v in
           let index = collect_index offset in
           let newexp = Iast.ArrayAt {Iast.exp_arrayat_array_base = base;
                                      Iast.exp_arrayat_index = index;
                                      Iast.exp_arrayat_pos = pos} in
           newexp
       | Cil.Var v, Cil.Field _ ->
-          let base = translate_var v lopt in
+          let base = translate_var v in
           let fields = collect_field offset in
           let newexp = Iast.Member {Iast.exp_member_base = base;
                                     Iast.exp_member_fields = fields;
@@ -432,7 +430,7 @@ let rec translate_lval (lv: Cil.lval) (lopt: Cil.location option) : Iast.exp =
 and translate_exp (e: Cil.exp) : Iast.exp =
   match e with
   | Cil.Const (c, l) -> translate_constant c (Some l)
-  | Cil.Lval (lv, l) -> translate_lval lv (Some l) 
+  | Cil.Lval (lv, _) -> translate_lval lv 
   | Cil.SizeOf _ -> report_error_msg "Error!!! Iast doesn't support Cil.SizeOf exp"
   | Cil.SizeOfE _ -> report_error_msg "Error!!! Iast doesn't support Cil.SizeOfE exp!"
   | Cil.SizeOfStr _ -> report_error_msg "Error!!! Iast doesn't support Cil.SizeOfStr exp!"
@@ -554,7 +552,7 @@ let translate_instr (instr: Cil.instr) : Iast.exp =
   let translated_instr = (match instr with
     | Cil.Set (lv, exp, l) ->
         let pos = translate_location l in
-        let le = translate_lval lv (Some l) in
+        let le = translate_lval lv in
         let re = translate_exp exp in
         Iast.Assign {Iast.exp_assign_op = Iast.OpAssign;
                      Iast.exp_assign_lhs = le;
@@ -566,7 +564,7 @@ let translate_instr (instr: Cil.instr) : Iast.exp =
         let fname = match exp with
           | Cil.Const (Cil.CStr s, _) -> s
           | Cil.Const _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.Const _ !"
-          | Cil.Lval ((Cil.Var v, _), _) -> v.Cil.vname
+          | Cil.Lval ((Cil.Var v, _, _), _) -> v.Cil.vname
           | Cil.Lval _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.Lval _!"
           | Cil.SizeOf _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.SizeOf!" 
           | Cil.SizeOfE _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.SizeOfE!"
@@ -588,7 +586,7 @@ let translate_instr (instr: Cil.instr) : Iast.exp =
         match lv_opt with
         | None -> call_exp;
         | Some lv -> (
-            let lv_exp = translate_lval lv (Some l) in
+            let lv_exp = translate_lval lv in
             Iast.Assign {Iast.exp_assign_op = Iast.OpAssign;
                          Iast.exp_assign_lhs = lv_exp;
                          Iast.exp_assign_rhs = call_exp;
@@ -743,7 +741,7 @@ let translate_init (vname: ident) (init: Cil.init) (lopt: Cil.location option)
         let off, ini = x in
         let name = match off with
           | Cil.NoOffset -> report_error_msg "TRUNG TODO: translate_init: handle Cil.NoOffset later!"
-          | Cil.Field (f, o) -> (
+          | Cil.Field (f, o, _) -> (
               match o with
               | Cil.NoOffset -> f.Cil.fname
               | Cil.Field _ -> report_error_msg "TRUNG TODO: translate_init: handle Cil.Field later!"
