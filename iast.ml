@@ -78,6 +78,7 @@ rel_formula : P.formula (* Iformula.struc_formula *) ;
 
 (* [4/10/2011] An Hoa: axiom for pure constraints *)
 and axiom_decl = {
+	  axiom_id : int;
     axiom_hypothesis : P.formula ;
     axiom_conclusion : P.formula ;
 }

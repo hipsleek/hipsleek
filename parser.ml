@@ -1489,7 +1489,8 @@ rel_body:[[ (* formulas {
 
 axiom_decl:[[
 	`AXIOM; lhs=pure_constr; `ESCAPE; rhs=pure_constr ->
-		{ axiom_hypothesis = lhs;
+		{ axiom_id = fresh_int ();
+			axiom_hypothesis = lhs;
 		  axiom_conclusion = rhs; }
 ]];
 

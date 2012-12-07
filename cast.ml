@@ -107,6 +107,7 @@ and hp_decl = {
 
 (** An Hoa : axiom *)
 and axiom_decl = {
+	  axiom_id : int;
     axiom_hypothesis : P.formula;
     axiom_conclusion : P.formula; }
 

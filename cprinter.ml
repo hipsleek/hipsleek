@@ -567,7 +567,7 @@ let pure_formula_wo_paren (e:P.formula) =
     | P.Forall _ 
     | P.Exists _ | P.Not _ -> true
     | P.BForm (e1,_) -> true (* b_formula_wo_paren e1 *)
-    | P.And _ -> true 
+    | P.And _ -> false (*Bach: change from true to false*) 
     | _ -> false
 
 let pure_memoised_wo_paren (e: memo_pure) = false
@@ -2789,16 +2789,42 @@ let string_of_program_separate_prelude p (iprims:Iast.prog_decl)=
 				a@[b]  
 		) [] p_rel_decls
 	 in
-  "\n" ^ (string_of_data_decl_list (remove_prim_data_decls p.prog_data_decls)) ^ "\n\n" ^ 
-  (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^ 
-  (string_of_barrier_decl_list p.prog_barrier_decls) ^ "\n\n" ^ 
-  (string_of_rel_decl_list (remove_prim_rel_decls p.prog_rel_decls)) ^ "\n\n" ^
-  (string_of_axiom_decl_list p.prog_axiom_decls) ^ "\n\n" ^
-  (string_of_coerc_decl_list p.prog_left_coercions)^"\n\n"^
-  (string_of_coerc_decl_list p.prog_right_coercions)^"\n\n"^
-  (* TODO: PD *)
-  (*(string_of_proc_decl_list p.old_proc_decls) ^ "\n"*)
-  (string_of_proc_decl_list (remove_prim_procs (Cast.list_of_procs p))) ^ "\n"
+	 let remove_prim_axiom_decls p_axiom_decls=
+		List.fold_left (fun a b->
+			try 
+			let _=List.find (fun c-> (b.Cast.axiom_id = c.Iast.axiom_id) 
+																) iprims.Iast.prog_axiom_decls in 
+			a
+			with Not_found ->
+				a@[b]  
+		) [] p_axiom_decls
+	 in
+	 let datastr= (string_of_data_decl_list (remove_prim_data_decls p.prog_data_decls)) in
+	 let viewstr=(string_of_view_decl_list p.prog_view_decls) in
+	 let barrierstr=(string_of_barrier_decl_list p.prog_barrier_decls) in
+	 let relstr=(string_of_rel_decl_list (remove_prim_rel_decls p.prog_rel_decls)) in
+	 let axiomstr=(string_of_axiom_decl_list (remove_prim_axiom_decls p.prog_axiom_decls)) in
+	 let left_coerstr=(string_of_coerc_decl_list p.prog_left_coercions) in
+	 let right_coerstr=(string_of_coerc_decl_list p.prog_right_coercions) in
+	 let procsstr=(string_of_proc_decl_list (remove_prim_procs (Cast.list_of_procs p))) in
+	 (* let _=print_endline (if (procsstr<>"") then procsstr^"XUAN BACH\n" else "NULL\n") in *)
+	 let datastr=if(datastr<>"") then datastr^"\n\n" else "" in
+	 let viewstr=if(viewstr<>"") then viewstr^"\n\n" else "" in
+	 let barrierstr=if(barrierstr<>"") then barrierstr^"\n\n" else "" in
+	 let relstr=if(relstr<>"") then relstr^"\n\n" else "" in
+	 let axiomstr=if(axiomstr<>"") then axiomstr^"\n\n" else "" in
+	 let left_coerstr=if(left_coerstr<>"") then left_coerstr^"\n\n" else "" in
+	 let right_coerstr=if(right_coerstr<>"") then right_coerstr^"\n\n" else "" in
+	 let procsstr=if(procsstr <> "") then procsstr^"\n\n" else "" in
+   "\n" ^ datastr
+   ^ viewstr
+	 ^ barrierstr
+   ^ relstr
+   ^ axiomstr
+   ^ left_coerstr
+   ^ right_coerstr
+	 ^ procsstr
+   ^ "\n"
 ;;
                                          
 (*

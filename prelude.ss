@@ -201,6 +201,8 @@ axiom dom(a,low,high) & low<=l & h<=high ==> dom(a,l,h).
 
 axiom domb(a,low,high) & low<=l & h<=high ==> domb(a,l,h).
 
+axiom domb(a,low,high) & low<=l | h<=high ==> domb(a,l,h).
+
 relation update_array_1d_b(bool[] a, bool[] b, bool val, int i).
 
 relation update_array_1d(int[] a, int[] r, int val, int i).

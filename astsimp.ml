@@ -1269,7 +1269,8 @@ and trans_axiom_x (prog : I.prog_decl) (adef : I.axiom_decl) : C.axiom_decl =
   let chyp = trans_pure_formula adef.I.axiom_hypothesis stab in
   let ccln = trans_pure_formula adef.I.axiom_conclusion stab in
   (* let _ = Smtsolver.add_axiom_def (Smtsolver.AxmDefn (chyp,ccln)) in *)
-  { 	C.axiom_hypothesis = chyp;
+  { C.axiom_id=adef.I.axiom_id;	
+		C.axiom_hypothesis = chyp;
   C.axiom_conclusion = ccln; }
       (* END : trans_axiom *) 
 

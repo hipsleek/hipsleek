@@ -240,7 +240,7 @@ let string_of_b_formula (pf,il) =
 
 let concat_string_list_string strings =
     ""
-
+		
 (* pretty printing for a pure formula *)
 let rec string_of_pure_formula = function 
   | P.BForm (bf,lbl)                    -> string_of_b_formula bf 
