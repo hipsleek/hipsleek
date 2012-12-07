@@ -3569,8 +3569,8 @@ let unify_branches_hpdef_x unk_hps hp_defs =
             (* let pr = pr_list (pr_pair !CP.print_svl !CP.print_sv) in *)
             (* let _ = DD.info_pprint ("  parts: " ^ (pr parts)) no_pos in *)
             let new_f = List.fold_left (fun f0 (from_hps, to_hp) -> CF.subst_hprel f0 from_hps to_hp) f parts in
-            let new_f1 = List.fold_left (fun f0 (from_hps, to_hp) -> CF.subst_hprel f0 from_hps to_hp) f1 parts in
-            (tl@done_fs,[new_f;new_f1])
+            (* let new_f1 = List.fold_left (fun f0 (from_hps, to_hp) -> CF.subst_hprel f0 from_hps to_hp) f1 parts in *)
+            (tl@done_fs,[new_f(* ;new_f1 *)])
           else
             check_eq_one args tl f (done_fs@[f1])
   in
