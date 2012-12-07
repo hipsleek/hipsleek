@@ -251,7 +251,7 @@ let post_ctr = new Gen.counter 0
 
 (* let normalize_list_failesc_context_w_lemma prog lctx = *)
 (*   let pr = pr_none in *)
-(*   Debug.ho_1 "normalize_list_failesc_context_w_lemma" pr pr *)
+(*   Debug.no_1 "normalize_list_failesc_context_w_lemma" pr pr *)
 (*       (normalize_list_failesc_context_w_lemma prog) lctx *)
   
 let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 do_infer: 
