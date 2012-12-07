@@ -5659,7 +5659,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 			      (* Step 1: Extract the main variable i.e. the root of the pointer *)
 			      (* let _ = print_endline ("[gather_type_info_heap_x] heap pointer = " ^ v) in *)
 			      let tokens = Str.split (Str.regexp "\\.") v in
-			      (* let _ = print_endline ("[gather_type_info_heap_x] tokens = {" ^ (String.concat "," tokens) ^ "}") in *)
+                  (* let _ = print_endline ("[gather_type_info_heap_x] tokens = {" ^ (String.concat "," tokens) ^ "}") in *)
 			      let rootptr = List.hd tokens in
 			      (* Step 2: Determine the type of [rootptr] and the field by looking 
 			       * up the current state of stab & information supplied by the user.
