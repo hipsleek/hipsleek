@@ -450,8 +450,6 @@ and varinfo = {
                                             Printing a non-pure vdescr more
                                             than once may yield incorrect
                                             results. *)
-
-    mutable vloc: location;             (** Location of this variable *) 
 }
 
 (** Storage-class information *)
@@ -583,7 +581,7 @@ and lval =
 
 (** The host part of an {!Cil.lval}. *)
 and lhost = 
-  | Var        of varinfo
+  | Var        of varinfo * location
     (** The host is a variable. *)
 
   | Mem        of exp
@@ -1166,7 +1164,7 @@ let get_offsetLoc (o: offset) : location =
 
 let get_lhostLoc (l: lhost) : location =
   match l with
-  | Var v -> v.vloc
+  | Var (v, loc) -> loc
   | Mem e -> get_expLoc e
 
 (* The next variable identifier to use. Counts up *)
@@ -1644,7 +1642,7 @@ let isVoidPtrType t =
     TPtr(tau,_) when isVoidType tau -> true
   | _ -> false
 
-let var vi : lval = (Var vi, NoOffset, vi.vloc)
+let var (vi: varinfo) (loc: location) : lval = (Var (vi, loc), NoOffset, loc)
 (* let assign vi e = Instrs(Set (var vi, e), lu) *)
 
 let mkString s = Const(CStr s, lu)
@@ -1674,10 +1672,10 @@ let mkForIncr ~(iter : varinfo) ~(first: exp) ~stopat:(past: exp) ~(incr: exp)
     | _ -> Lt, PlusA
   in
   mkFor 
-    [ mkStmt (Instr [(Set (var iter, first, lu))]) ]
-    (BinOp(compop, Lval(var iter, lu), past, intType, lu))
-    [ mkStmt (Instr [(Set (var iter, 
-                           (BinOp(nextop, Lval(var iter, lu), incr, iter.vtype, lu)),
+    [ mkStmt (Instr [(Set (var iter lu, first, lu))]) ]
+    (BinOp(compop, Lval(var iter lu, lu), past, intType, lu))
+    [ mkStmt (Instr [(Set (var iter lu, 
+                           (BinOp(nextop, Lval(var iter lu, lu), incr, iter.vtype, lu)),
                            lu))])]
     body
     hspecs
@@ -1947,7 +1945,7 @@ and typeOfInit (i: init) : typ =
   | CompoundInit (t, _) -> t
 
 and typeOfLval = function
-    Var vi, off, _ -> typeOffset vi.vtype off
+    Var (vi, _), off, _ -> typeOffset vi.vtype off
   | Mem addr, off, _ -> begin
       match unrollType (typeOf addr) with
         TPtr (t, _) -> typeOffset t off
@@ -3272,7 +3270,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
   val mutable currentFormals : varinfo list = []
   method private getLastNamedArgument (s:string) : exp =
     match List.rev currentFormals with 
-      f :: _ -> Lval (var f, lu)
+      f :: _ -> Lval (var f lu, lu)
     | [] -> 
         E.s (bug "Cannot find the last named argument when printing call to %s\n" s)
 
@@ -3297,7 +3295,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
   (*** L-VALUES ***)
   method pLval () (lv:lval) =  (* lval (base is 1st field)  *)
     match lv with
-      Var vi, o, _ -> self#pOffset (self#pVar vi) o
+      Var (vi, _), o, _ -> self#pOffset (self#pVar vi) o
     | Mem e, Field(fi, o, _),_ ->
         self#pOffset
           ((self#pExpPrec arrowLevel () e) ++ text ("->" ^ fi.fname)) o
@@ -3350,7 +3348,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
           ++ self#pExpPrec level () e
     | SizeOf (t,_) -> 
         text "sizeof(" ++ self#pType None () t ++ chr ')'
-    | SizeOfE (Lval ((Var fv, NoOffset, _),_),_) when fv.vname = "__builtin_va_arg_pack" && (not !printCilAsIs) -> 
+    | SizeOfE (Lval ((Var (fv, _), NoOffset, _),_),_) when fv.vname = "__builtin_va_arg_pack" && (not !printCilAsIs) -> 
         text "__builtin_va_arg_pack()"
     | SizeOfE (e,_) ->  
         text "sizeof(" ++ self#pExp () e ++ chr ')'
@@ -3533,7 +3531,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
       (* In cabs2cil we have turned the call to builtin_va_arg into a 
        * three-argument call: the last argument is the address of the 
        * destination *)
-    | Call(None, Lval((Var vi, NoOffset, _),_), [dest; SizeOf (t,_); adest], l) 
+    | Call(None, Lval((Var (vi, _), NoOffset, _),_), [dest; SizeOf (t,_); adest], l) 
         when vi.vname = "__builtin_va_arg" && not !printCilAsIs -> 
           let destlv = match stripCasts adest with 
             AddrOf (destlv,_) -> destlv
@@ -3558,12 +3556,12 @@ class defaultCilPrinterClass : cilPrinter = object (self)
 
       (* In cabs2cil we have dropped the last argument in the call to 
        * __builtin_va_start and __builtin_stdarg_start. *)
-    | Call(None, Lval((Var vi, NoOffset, l1), l2), [marker], l) 
+    | Call(None, Lval((Var (vi, l1), NoOffset, l2), l3), [marker], l) 
         when ((vi.vname = "__builtin_stdarg_start" ||
                vi.vname = "__builtin_va_start") && not !printCilAsIs) -> 
         if currentFormals <> [] then begin
           let last = self#getLastNamedArgument vi.vname in
-          self#pInstr () (Call(None,Lval((Var vi,NoOffset,l1),l2),[marker; last],l))
+          self#pInstr () (Call(None,Lval((Var (vi, l1),NoOffset,l2),l3),[marker; last],l))
         end
         else begin
           (* We can't print this call because someone called pInstr outside 
@@ -3578,10 +3576,10 @@ class defaultCilPrinterClass : cilPrinter = object (self)
         end
       (* In cabs2cil we have dropped the last argument in the call to 
        * __builtin_next_arg. *)
-    | Call(res, Lval((Var vi, NoOffset, l1), l2), [ ], l) 
+    | Call(res, Lval((Var (vi, l1), NoOffset, l2), l3), [ ], l) 
         when vi.vname = "__builtin_next_arg" && not !printCilAsIs -> begin
           let last = self#getLastNamedArgument vi.vname in
-          self#pInstr () (Call(res,Lval((Var vi,NoOffset,l1),l2),[last],l))
+          self#pInstr () (Call(res,Lval((Var (vi, l1),NoOffset,l2),l3),[last],l))
         end
 
       (* In cparser we have turned the call to 
@@ -3589,7 +3587,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
        * __builtin_types_compatible_p(sizeof t1, sizeof t2), so that we can
        * represent the types as expressions. 
        * Remove the sizeofs when printing. *)
-    | Call(dest, Lval((Var vi, NoOffset, _), _), [SizeOf (t1, _); SizeOf (t2, _)], l) 
+    | Call(dest, Lval((Var (vi, _), NoOffset, _), _), [SizeOf (t1, _); SizeOf (t2, _)], l) 
         when vi.vname = "__builtin_types_compatible_p" && not !printCilAsIs -> 
         self#pLineDirective l
           (* Print the destination *)
@@ -3600,7 +3598,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
         ++ dprintf "%s(%a, %a)" vi.vname
              (self#pType None) t1  (self#pType None) t2
         ++ text printInstrTerminator
-    | Call(_, Lval((Var vi, NoOffset, _), _), _, l) 
+    | Call(_, Lval((Var (vi, _), NoOffset, _), _), _, l) 
         when vi.vname = "__builtin_types_compatible_p" && not !printCilAsIs -> 
         E.s (bug "__builtin_types_compatible_p: cabs2cil should have added sizeof to the arguments.")
     | Call(dest,e,args,l) ->
@@ -4720,7 +4718,7 @@ class plainCilPrinterClass =
 *)           
   method pLval () (lv: lval) =  
     match lv with 
-    | Var vi, o, _ -> dprintf "Var(@[%s,@?%a@])" vi.vname self#d_plainoffset o
+    | Var (vi, _), o, _ -> dprintf "Var(@[%s,@?%a@])" vi.vname self#d_plainoffset o
     | Mem e, o, _ -> dprintf "Mem(@[%a,@?%a@])" self#pExp e self#d_plainoffset o
 
 
@@ -4797,10 +4795,10 @@ object (self)
   method pExp () (e:exp) : doc =
     if enable then
       match e with
-        Lval ((Var vi, o, _), _)
-      | StartOf ((Var vi, o, _), _) -> 
+        Lval ((Var (vi, _), o, _), _)
+      | StartOf ((Var (vi, _), o, _), _) -> 
           self#pOffset (self#pVarDescriptive vi) o
-      | AddrOf ((Var vi, o, _), _) -> 
+      | AddrOf ((Var (vi, _), o, _), _) -> 
           (* No parens needed, since offsets have higher precedence than & *)
           text "& " ++ self#pOffset (self#pVarDescriptive vi) o
       | _ -> super#pExp () e
@@ -4864,7 +4862,6 @@ let makeVarinfo global name typ =
       vreferenced = false;
       vdescr = nil;
       vdescrpure = true;
-      vloc = lu;
     } in
   vi
       
@@ -5233,10 +5230,10 @@ and childrenLval (vis: cilVisitor) (lv: lval) : lval =
   let vExp e = visitCilExpr vis e in
   let vOff off = visitCilOffset vis off in
   match lv with
-    Var v, off, l ->
+    Var (v, l1), off, l2 ->
       let v'   = doVisit vis (vis#vvrbl v) (fun _ x -> x) v in
       let off' = vOff off in
-      if v' != v || off' != off then (Var v', off', l) else lv
+      if v' != v || off' != off then (Var (v', l1), off', l2) else lv
   | Mem e, off, l -> 
       let e' = vExp e in
       let off' = vOff off in
@@ -5635,7 +5632,7 @@ class constFoldVisitorClass (machdep: bool) : cilVisitor = object
     match i with 
       (* Skip two functions to which we add Sizeof to the type arguments. 
          See the comments for these above. *)
-    | Call(_,(Lval ((Var vi,NoOffset,_),_)),_,_) 
+    | Call(_,(Lval ((Var (vi,_),NoOffset,_),_)),_,_) 
         when ((vi.vname = "__builtin_va_arg") 
               || (vi.vname = "__builtin_types_compatible_p")) ->
           SkipChildren
@@ -5766,7 +5763,7 @@ let getGlobInit ?(main_name="main") (fl: file) =
               fl.globals <- GVarDecl (f.svar, lm) :: fl.globals;
               m.sbody.bstmts <- 
                  compactStmts (mkStmt (Instr [Call(None, 
-                                                   Lval((var f.svar), locUnknown), 
+                                                   Lval((var f.svar locUnknown), locUnknown), 
                                                    [], locUnknown)]) 
                                :: m.sbody.bstmts);
               inserted := true;
@@ -5835,7 +5832,7 @@ let rec expToAttrParam (e: exp) : attrparam =
       if not (is_int_cilint i') then
         raise (NotAnAttrParam e);
       AInt (int_of_cilint i')
-  | Lval ((Var v, NoOffset, _),_) -> ACons(v.vname, [])
+  | Lval ((Var (v, _), NoOffset, _),_) -> ACons(v.vname, [])
   | SizeOf (t,_) -> ASizeOf t
   | SizeOfE (e',_) -> ASizeOfE (expToAttrParam e')
   
@@ -6018,7 +6015,7 @@ let dGlobal: doc -> location -> global =
 let mkAddrOf ((b, off, l) as lval) loc : exp = 
   (* Never take the address of a register variable *)
   (match lval with
-  | Var vi, off, _ when vi.vstorage = Register -> vi.vstorage <- NoStorage
+  | Var (vi, _), off, _ when vi.vstorage = Register -> vi.vstorage <- NoStorage
   | _ -> ()); 
   match lval with
   | Mem e, NoOffset, _ -> e
@@ -6080,12 +6077,12 @@ let rec isConstant = function
   | UnOp (_, e, _, _) -> isConstant e
   | BinOp (_, e1, e2, _, _) -> isConstant e1 && isConstant e2
   | Question (e1, e2, e3, _, _) -> isConstant e1 && isConstant e2 && isConstant e3
-  | Lval ((Var vi, NoOffset, _), _) -> 
+  | Lval ((Var (vi, _), NoOffset, _), _) -> 
       (vi.vglob && isArrayType vi.vtype || isFunctionType vi.vtype)
   | Lval _ -> false
   | SizeOf _ | SizeOfE _ | SizeOfStr _ | AlignOf _ | AlignOfE _ -> true
   | CastE (_, e, _) -> isConstant e
-  | AddrOf ((Var vi, off, _), _) | StartOf ((Var vi, off, _), _)
+  | AddrOf ((Var (vi, _), off, _), _) | StartOf ((Var (vi, _), off, _), _)
       -> vi.vglob && isConstantOffset off
   | AddrOf ((Mem e, off, _), _) | StartOf((Mem e, off, _), _) 
       -> isConstant e && isConstantOffset off

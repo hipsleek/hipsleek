@@ -689,7 +689,7 @@ let newTempVar (descr:doc) (descrpure:bool) typ =
 let mkAddrOfAndMark ((b, off, l) as lval) loc : exp = 
   (* Mark the vaddrof flag if b is a variable *)
   (match b with 
-    Var vi -> vi.vaddrof <- true
+    Var (vi, _) -> vi.vaddrof <- true
   | _ -> ());
   mkAddrOf lval loc
   
@@ -697,7 +697,7 @@ let mkAddrOfAndMark ((b, off, l) as lval) loc : exp =
 let mkStartOfAndMark ((b, off, l) as lval) (loc: location) : exp = 
   (* Mark the vaddrof flag if b is a variable *)
   (match b with 
-    Var vi -> vi.vaddrof <- true
+    Var (vi, _) -> vi.vaddrof <- true
   | _ -> ());
   let res = StartOf (lval, loc) in
   res
@@ -2195,8 +2195,8 @@ let afterConversion (c: chunk) : chunk =
    * will help significantly with the handling of calls to malloc, where it 
    * is important to have the cast at the same place as the call *)
   let collapseCallCast = function
-      Call(Some(Var vi, NoOffset, _), f, args, l),
-      Set(destlv, CastE (newt, Lval((Var vi', NoOffset, _), _), _), _) 
+      Call(Some(Var (vi, _), NoOffset, _), f, args, l),
+      Set(destlv, CastE (newt, Lval((Var (vi', _), NoOffset, _), _), _), _) 
       when (not vi.vglob && 
             String.length vi.vname >= 3 &&
             (* Watch out for the possibility that we have an implied cast in 
@@ -3281,7 +3281,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                  not (isFunctionType vi.vtype) && 
                  not (isArrayType vi.vtype)then
                 E.s (error "variable appears in constant"); *)
-              finishExp empty (Lval(var vi, p)) vi.vtype
+              finishExp empty (Lval(var vi p, p)) vi.vtype
           | EnvEnum (tag, typ), _ ->
               if !Cil.lowerConstants then 
                 finishExp empty tag (typeOf tag)
@@ -3546,7 +3546,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
           | Const(CStr _, _) -> SizeOf (charPtrType, p)
 
                 (* Maybe we are taking the sizeof a variable-sized array *)
-          | Lval ((Var vi, NoOffset, _), _) -> begin
+          | Lval ((Var (vi, _), NoOffset, _), _) -> begin
               try 
                 IH.find varSizeArrays vi.vid 
               with Not_found -> SizeOfE (e', p) 
@@ -3714,7 +3714,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
               in
               let last = getLast !currentFunctionFDEC.sformals in
               let p1 = convLoc l1 in
-              let res = mkAddrOfAndMark (var last) p1 in
+              let res = mkAddrOfAndMark (var last p1) p1 in
               let tres = typeOf res in
               let tres', res' = castTo tres (TInt(IULong, [])) res in
               (* Now we must add to this address to point to the next 
@@ -3759,7 +3759,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
 
               (* Function names are converted into pointers to the function. 
                * Taking the address-of again does not change things *)
-            | AddrOf ((Var v, NoOffset, _), _) when isFunctionType v.vtype ->
+            | AddrOf ((Var (v, _), NoOffset, _), _) when isFunctionType v.vtype ->
                 finishExp se e' t
 
             | _ -> E.s (error "Expected lval for ADDROF. Got %a@!"
@@ -3843,7 +3843,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                              ++ (if uop = A.POSINCR then text "++" else text "--") in
                  let tmp = newTempVar descr true t in
                  let p = convLoc l in
-                 se +++ (Set(var tmp, e', !currentLoc)), Lval(var tmp, p)
+                 se +++ (Set(var tmp !currentLoc, e', !currentLoc)), Lval(var tmp p, p)
                else
                  se, e'
              in
@@ -3901,7 +3901,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                if needsTemp then
                  let descr = (dd_lval () lv) in
                  let tmp = newTempVar descr true lvt in
-                 var tmp, i2c (Set(lv, Lval(var tmp, p1), p))
+                 var tmp p1, i2c (Set(lv, Lval(var tmp p1, p1), p))
                else
                  lv, empty
              in
@@ -3982,7 +3982,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
              (* The type of the result is the type of the left-hand side  *) 
              if needsTemp then
                let descr = (dd_lval () lv1) in
-               let tmp = var (newTempVar descr true tresult') in
+               let tmp = var (newTempVar descr true tresult') !currentLoc in
                finishExp (se1 @@ se2 +++
                (Set(tmp, result', !currentLoc)) +++
                (Set(lv1, Lval (tmp, !currentLoc), !currentLoc)))
@@ -4017,7 +4017,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
             finishExp se e' intType
         | _ -> 
             let tmp =
-              var (newTempVar (text "<boolean expression>") true intType)
+              var (newTempVar (text "<boolean expression>") true intType) !currentLoc
             in
             finishExp (compileCondExp ce
                          (empty +++ (Set(tmp, (integer 1 p), 
@@ -4041,7 +4041,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
               try
                 let vi, _ = lookupVar n in
                 let p1 = convLoc l1 in
-                (empty, Lval(var vi, p1), vi.vtype) (* Found. Do not use 
+                (empty, Lval(var vi p1, p1), vi.vtype) (* Found. Do not use 
                                                  * finishExp. Simulate what = 
                                                  * AExp None  *)
               with Not_found -> begin
@@ -4056,7 +4056,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                 IH.add noProtoFunctions proto.vid true;
                 (* Add it to the file as well *)
                 cabsPushGlobal (GVarDecl (proto, !currentLoc));
-                (empty, Lval(var proto, lu), ftype)
+                (empty, Lval(var proto lu, lu), ftype)
               end
             end
           | _ -> doExp false f (AExp None) 
@@ -4092,7 +4092,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
          * functions alone*)
         let isSpecialBuiltin =  
           match f'' with 
-            Lval ((Var fv, NoOffset, _), _) ->
+            Lval ((Var (fv, _), NoOffset, _), _) ->
               fv.vname = "__builtin_stdarg_start" ||
               fv.vname = "__builtin_va_arg" ||
               fv.vname = "__builtin_va_start" ||
@@ -4102,7 +4102,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
         in
         let isBuiltinChooseExpr = 
           match f'' with 
-            Lval ((Var fv, NoOffset, _), _) ->
+            Lval ((Var (fv, _), NoOffset, _), _) ->
               fv.vname = "__builtin_choose_expr"
             | _ -> false
         in
@@ -4118,10 +4118,10 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
             (* create a temporary *)
             let tmp = newTempVar (dd_exp () e) true t in
             (* create an instruction to give the e to the temporary *)
-            let i = Set(var tmp, e, !currentLoc) in 
+            let i = Set(var tmp !currentLoc, e, !currentLoc) in 
             (* add the instruction to the chunk *)
             (* change the expression to be the temporary *)
-            (c +++ i, (Lval(var tmp, lu)), t) 
+            (c +++ i, (Lval(var tmp lu, lu)), t) 
           else
             (c, e, t)
         in
@@ -4204,7 +4204,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
 
         (* Try to intercept some builtins *)
         (match !pf with 
-          Lval((Var fv, NoOffset, _), _) -> begin
+          Lval((Var (fv, p), NoOffset, _), _) -> begin
             (* Atomic builtins are overloaded: check the type of the
                arguments and fix the return type accordingly.
                No trick needed for __sync_synchronize,
@@ -4252,7 +4252,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                   let destlv, destlvtyp = 
                     match !pwhat with 
                       ASet (lv, lvt) -> lv, lvt
-                    | _ -> var (newTempVar nil true resTyp), resTyp
+                    | _ -> var (newTempVar nil true resTyp) p, resTyp
                   in
                   pwhat := (ASet (destlv, destlvtyp));
                   pis__builtin_va_arg := true;
@@ -4265,7 +4265,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                 marker :: last :: [] -> begin
                   let isOk = 
                     match dropCasts last with 
-                      Lval ((Var lastv, NoOffset, _), _) -> 
+                      Lval ((Var (lastv, _), NoOffset, _), _) -> 
                         lastv.vname = getNameLastFormal ()
                     | _ -> false
                   in
@@ -4289,13 +4289,13 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                 try lookupGlobalVar "__builtin_stdarg_start" 
                 with Not_found -> E.s (bug "Cannot find __builtin_stdarg_start to replace %s\n" fv.vname)
               in
-              pf := Lval (var v, lu)
+              pf := Lval (var v p, p)
             end else if fv.vname = "__builtin_next_arg" then begin
               match !pargs with 
                 last :: [] -> begin
                   let isOk = 
                     match dropCasts last with 
-                      Lval ((Var lastv, NoOffset, _), _) -> 
+                      Lval ((Var (lastv, _), NoOffset, _), _) -> 
                         lastv.vname = getNameLastFormal ()
                     | _ -> false
                   in
@@ -4439,8 +4439,8 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
               (* Remember that this variable has been created for this 
                * specific call. We will use this in collapseCallCast. *)
               IH.add callTempVars tmp.vid ();
-              let lv = var tmp in
-              addCall (Some lv) (Lval(lv, get_lvalLoc lv)) restype''
+              let lv = var tmp lu in
+              addCall (Some lv) (Lval(lv, lu)) restype''
           end
         end;
               
@@ -4521,7 +4521,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
         | _ -> (* Use a conditional *) begin
             match e2'o with 
               None -> (* has form "e1 ? : e3"  *)
-                let tmp = var (newTempVar nil true tresult) in
+                let tmp = var (newTempVar nil true tresult) p in
                 let (se1, _, _) = doExp asconst e1 (ASet(tmp, tresult)) in
                 let (se3, _, _) = finishExp ~newWhat:(ASet(tmp, tresult)) 
                                     se3 e3' t3 in
@@ -4535,7 +4535,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                   | ASet (lv, lvt) -> lv, lvt
                   | _ -> 
                       let tmp = newTempVar nil true tresult in
-                      var tmp, tresult
+                      var tmp p, tresult
                 in
                 (* Now add the stmts lv:=e2 and lv:=e3 to se2 and se3 *)
                 let (se2, _, _) = finishExp ~newWhat:(ASet(lv,lvt)) 
@@ -4914,8 +4914,7 @@ and doInitializer
               vi.vname d_type vi.vtype);
   let topSetupInit (o: offset) (e: exp) = 
     if debugInit then
-      let loc = makeLoc (startPos vi.vloc) (endPos (get_offsetLoc o)) in
-      ignore (E.log " set %a := %a\n"  d_lval (Var vi, o, loc) d_exp e);
+      ignore (E.log " set %a := %a\n"  d_lval (Var (vi, lu), o, lu) d_exp e);
     let newinit = setOneInit !topPreInit o e in
     if newinit != !topPreInit then topPreInit := newinit
   in
@@ -4951,8 +4950,7 @@ and doInit
     (* Return the resulting chunk along with some unused initializers *)
   : chunk * (A.initwhat * A.init_expression) list = 
 
-  let loc = makeLoc (startPos so.host.vloc) (endPos (get_offsetLoc so.soOff)) in
-  let whoami () = d_lval () (Var so.host, so.soOff, loc) in
+  let whoami () = d_lval () (Var (so.host, lu), so.soOff, lu) in
       
   let initl1 = 
     match initl with
@@ -4984,7 +4982,7 @@ and doInit
   if debugInit then begin
     ignore (E.log "doInit for %t %s (current %a). Looking at: " whoami
               (if so.eof then "(eof)" else "")
-              d_lval (Var so.host, so.curOff, loc));
+              d_lval (Var (so.host, lu), so.curOff, lu));
     (match allinitl with 
       [] -> ignore (E.log "[]")
     | (what, ie) :: _ -> 
@@ -5549,33 +5547,32 @@ and createLocal ((_, sto, _, _) as specs)
           (* Register it *)
           let savelen = alphaConvertVarAndAddToEnv true savelen in
           (* Compute the sizeof *)
-          let loc = makeLoc (startPos vi.vloc) (endPos savelen.vloc) in
           let sizeof = 
             BinOp(Mult, 
-                  SizeOfE (Lval((Mem(Lval(var vi, vi.vloc)), NoOffset, vi.vloc), vi.vloc), vi.vloc),
-                  Lval (var savelen, savelen.vloc), !typeOfSizeOf, loc) in
+                  SizeOfE (Lval((Mem(Lval(var vi lu, lu)), NoOffset, lu), lu), lu),
+                  Lval (var savelen lu, lu), !typeOfSizeOf, loc) in
           (* Register the length *)
           IH.add varSizeArrays vi.vid sizeof;
           (* There can be no initializer for this *)
           if inite != A.NO_INIT then 
             E.s (error "Variable-sized array cannot have initializer");
           let setlen =  se0 +++ 
-              (Set(var savelen, makeCast len savelen.vtype, !currentLoc)) in
+              (Set(var savelen lu, makeCast len savelen.vtype, !currentLoc)) in
           (* Initialize the variable *)
           let alloca: varinfo = allocaFun () in
           if !doCollapseCallCast then
             (* do it in one step *)
-            setlen +++ (Call(Some(var vi), Lval(var alloca, lu), 
+            setlen +++ (Call(Some(var vi lu), Lval(var alloca lu, lu), 
                              [ sizeof  ], !currentLoc))
           else begin
             (* do it in two *)
             let rt, _, _, _ = splitFunctionType alloca.vtype in
             let tmp = newTempVar (dprintf "alloca(%a)" d_exp sizeof) false rt in
             setlen
-            +++ (Call(Some(var tmp), Lval(var alloca, lu), 
+            +++ (Call(Some(var tmp lu), Lval(var alloca lu, lu), 
                       [ sizeof  ], !currentLoc))
-            +++ (Set((var vi), 
-                     makeCast (Lval(var tmp, lu)) vi.vtype, !currentLoc))
+            +++ (Set((var vi lu), 
+                     makeCast (Lval(var tmp lu, lu)) vi.vtype, !currentLoc))
            end
         end else empty
       in
@@ -5596,7 +5593,7 @@ and createLocal ((_, sto, _, _) as specs)
         | _, _, _ -> ());
 
         (* Now create assignments instead of the initialization *)
-        se1 @@ se4 @@ (assignInit (Var vi, NoOffset, vi.vloc) ie' et empty)
+        se1 @@ se4 @@ (assignInit (Var (vi, loc), NoOffset, loc) ie' et empty)
       end
           
 and doAliasFun vtype (thisname:string) (othername:string) 
@@ -6021,9 +6018,9 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
                            (List.filter (fun x -> x.vid <> shadow.vid)
                               !currentFunctionFDEC.slocals);
                         (shadow :: accform,
-                         mkStmt (Instr [Set ((Var f, Field(fstfield,
+                         mkStmt (Instr [Set ((Var (f, lu), Field(fstfield,
                                                            NoOffset, fstfield.floc), fstfield.floc),
-                                             Lval (var shadow, shadow.vloc),
+                                             Lval (var shadow lu, lu),
                                              !currentLoc)]) :: accbody))
                   !currentFunctionFDEC.sformals
                   ([], !currentFunctionFDEC.sbody.bstmts)
@@ -6046,7 +6043,7 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
              * return statements are inserted properly.  *)
             let instrFallsThrough (i : instr) = match i with
               Set _ -> true
-            | Call (None, Lval ((Var e, NoOffset, _), _), _, _) -> 
+            | Call (None, Lval ((Var (e, _), NoOffset, _), _), _, _) -> 
                 (* See if this is exit, or if it has the noreturn attribute *)
                 if e.vname = "exit" then false 
                 else if hasAttribute "noreturn" e.vattr then false
@@ -6303,7 +6300,7 @@ and assignInit (lv: lval)
               else
                 (* Use a loop for any remaining initializations *)
                 let ctrv = newTempVar (text "init counter") true uintType in
-                let ctrlval = Var ctrv, NoOffset, ctrv.vloc in
+                let ctrlval = Var (ctrv, lu), NoOffset, lu in
                 let init = Set(ctrlval, Const(CInt64(Int64.of_int ilen, IUInt, None), l), !currentLoc) in
                 startLoop false;
                 let bodyc =
@@ -6542,7 +6539,7 @@ and doStatement (s : A.statement) : chunk =
         match !gotoTargetData with
           Some (switchv, switch) -> (* We have already generated this one  *)
             se 
-            @@ i2c(Set (var switchv, makeCast e' intType, loc'))
+            @@ i2c(Set (var switchv lu, makeCast e' intType, loc'))
             @@ (s2c(mkStmt(Goto (ref switch, loc'))) loc')
 
         | None -> begin
@@ -6559,12 +6556,12 @@ and doStatement (s : A.statement) : chunk =
             in
             (* Make a switch statement. We'll fill in the statements at the 
             * end of the function *)
-            let switch = mkStmt (Switch (Lval(var switchv, lu), 
+            let switch = mkStmt (Switch (Lval(var switchv lu, lu), 
                                          mkBlock [], [], loc')) in
             (* And make a label for it since we'll goto it *)
             switch.labels <- [Label ("__docompgoto", loc', false)];
             gotoTargetData := Some (switchv, switch);
-            se @@ i2c (Set(var switchv, makeCast e' intType, loc')) @@
+            se @@ i2c (Set(var switchv lu, makeCast e' intType, loc')) @@
             s2c switch loc'
         end
       end

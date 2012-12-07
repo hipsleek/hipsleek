@@ -523,9 +523,6 @@ and varinfo = {
     (** Indicates whether the vdescr above is a pure expression or call.
      *  Printing a non-pure vdescr more than once may yield incorrect
      *  results. *)
-
-    mutable vloc: location;
-    (** Location of this variable *)
 }
 
 (** Storage-class information *)
@@ -757,10 +754,10 @@ and lval =
 
 (** The host part of an {!Cil.lval}. *)
 and lhost = 
-  | Var        of varinfo    
+  | Var        of varinfo * location
     (** The host is a variable. *)
 
-  | Mem        of exp        
+  | Mem        of exp
     (** The host is an object of type [T] when the expression has pointer 
      * [TPtr(T)]. *)
 
@@ -1682,7 +1679,7 @@ val increm: exp -> int -> exp
 
 
 (** Makes an lvalue out of a given variable *)
-val var: varinfo -> lval
+val var: varinfo -> location -> lval
 
 (** Make an AddrOf. Given an lvalue of type T will give back an expression of 
     type ptr(T). It optimizes somewhat expressions like "& v" and "& v[0]"  *)

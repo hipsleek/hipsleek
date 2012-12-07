@@ -145,10 +145,10 @@ let merge_iast_exp (es: Iast.exp list) : Iast.exp =
 let typ_of_cil_lval (lv: Cil.lval) : Cil.typ =
   let lhost, offset, _ = lv in
   match (lhost, offset) with
-  | Cil.Var v, Cil.NoOffset -> v.Cil.vtype;
+  | Cil.Var (v, _), Cil.NoOffset -> v.Cil.vtype;
   | Cil.Var _, Cil.Field _ -> report_error_msg "typ_of_cil_lval: handle (Cil.Var, Cil.Field) later!"
   | Cil.Var _, Cil.Index _ -> report_error_msg "typ_of_cil_lval: handle (Cil.Var, Cil.Index) later!"
-  | Cil.Mem v, Cil.NoOffset -> report_error_msg "typ_of_cil_lval: handle (Cil.Mem, Cil.NoOffset) later!"
+  | Cil.Mem _, Cil.NoOffset -> report_error_msg "typ_of_cil_lval: handle (Cil.Mem, Cil.NoOffset) later!"
   | Cil.Mem _, Cil.Field _ -> report_error_msg "typ_of_cil_lval: handle (Cil.Mem, Cil.Field) later!"
   | Cil.Mem _, Cil.Index _ -> report_error_msg "typ_of_cil_lval: handle (Cil.Mem, Cil.Index) later!"
 
@@ -173,7 +173,7 @@ let rec is_global_cil_exp (e: Cil.exp) : bool =
 and is_global_cil_lval (lv: Cil.lval) : bool =
   let lhost, _, _ = lv in
   match lhost with
-  | Cil.Var v -> v.Cil.vglob;
+  | Cil.Var (v, _) -> v.Cil.vglob;
   | Cil.Mem m -> is_global_cil_exp m
 
 
@@ -244,9 +244,9 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
   (* return *)
   newtype
 
-let translate_var (vinfo: Cil.varinfo) : Iast.exp =
+let translate_var (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
+  let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let name = vinfo.Cil.vname in
-  let pos = translate_location vinfo.Cil.vloc in
   let newexp = Iast.Var {Iast.exp_var_name = name;
                          Iast.exp_var_pos = pos} in
   newexp
@@ -379,18 +379,18 @@ let rec translate_lval (lv: Cil.lval) : Iast.exp =
         | Cil.Index _ -> report_error_msg "TRUNG TODO: collect_field: handle Cil.Index _ later"
       ) in
       match (lhost, offset) with
-      | Cil.Var v, Cil.NoOffset ->
-          let newexp = translate_var v in
+      | Cil.Var (v, l), Cil.NoOffset ->
+          let newexp = translate_var v (Some l) in
           newexp
-      | Cil.Var v, Cil.Index _ ->
-          let base = translate_var v in
+      | Cil.Var (v, l), Cil.Index _ ->
+          let base = translate_var v (Some l) in
           let index = collect_index offset in
           let newexp = Iast.ArrayAt {Iast.exp_arrayat_array_base = base;
                                      Iast.exp_arrayat_index = index;
                                      Iast.exp_arrayat_pos = pos} in
           newexp
-      | Cil.Var v, Cil.Field _ ->
-          let base = translate_var v in
+      | Cil.Var (v, l), Cil.Field _ ->
+          let base = translate_var v (Some l) in
           let fields = collect_field offset in
           let newexp = Iast.Member {Iast.exp_member_base = base;
                                     Iast.exp_member_fields = fields;
@@ -564,7 +564,7 @@ let translate_instr (instr: Cil.instr) : Iast.exp =
         let fname = match exp with
           | Cil.Const (Cil.CStr s, _) -> s
           | Cil.Const _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.Const _ !"
-          | Cil.Lval ((Cil.Var v, _, _), _) -> v.Cil.vname
+          | Cil.Lval ((Cil.Var (v, _), _, _), _) -> v.Cil.vname
           | Cil.Lval _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.Lval _!"
           | Cil.SizeOf _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.SizeOf!" 
           | Cil.SizeOfE _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.SizeOfE!"

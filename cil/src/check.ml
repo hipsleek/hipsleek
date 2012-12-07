@@ -416,7 +416,7 @@ and checkTypeInfo (isadef: defuse) ti =
  * See the typing rule from cil.mli *)
 and checkLval (isconst: bool) (forAddrof: bool) (lv: lval) : typ = 
   match lv with
-    Var vi, off, _ -> 
+    Var (vi, _), off, _ -> 
       checkVariable vi; 
       checkOffset vi.vtype off
 
