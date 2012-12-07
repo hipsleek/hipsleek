@@ -9291,3 +9291,22 @@ and normalize_frac_struc prog f =
 		| EVariance b-> EVariance {b with formula_var_continuation = normalize_frac_struc prog b.formula_var_continuation} in
 	List.map hlp f
 	*)
+
+(*Merging fractional heap nodes when possible using normalization lemmas*)
+let normalize_list_failesc_context_w_lemma prog lctx =
+  (* if not (Perm.allow_perm ()) then lctx *)
+  (* else *)
+    (*TO CHECK merging nodes*)
+    let fct (es:CF.entail_state) =
+      let es = CF.clear_entailment_vars es in
+      (*create a tmp estate for normalizing*)
+      let tmp_es = CF.empty_es (CF.mkTrueFlow ()) es.CF.es_group_lbl no_pos in
+      CF.Ctx {es with CF.es_formula = normalize_formula_w_coers prog tmp_es es.CF.es_formula prog.prog_left_coercions}
+    in
+    let res = CF.transform_list_failesc_context (idf,idf,fct) lctx in
+    res
+
+let normalize_list_failesc_context_w_lemma prog lctx =
+  let pr = pr_none in
+  Debug.ho_1 "normalize_list_failesc_context_w_lemma" pr pr
+      (normalize_list_failesc_context_w_lemma prog) lctx

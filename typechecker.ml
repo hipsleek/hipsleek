@@ -234,20 +234,25 @@ let check_full_varperm prog ctx ( xs:CP.spec_var list) pos =
 let pre_ctr = new Gen.counter 0
 let post_ctr = new Gen.counter 0
 
-(*Merging fractional heap nodes when possible using normalization lemmas*)
-let normalize_list_failesc_context_w_lemma prog lctx =
-  if not (Perm.allow_perm ()) then lctx
-  else
-    (*TO CHECK merging nodes*)
-    let fct (es:CF.entail_state) =
-      let es = CF.clear_entailment_vars es in
-      (*create a tmp estate for normalizing*)
-      let tmp_es = CF.empty_es (CF.mkTrueFlow ()) es.CF.es_group_lbl no_pos in
-      CF.Ctx {es with CF.es_formula = normalize_formula_w_coers prog tmp_es es.CF.es_formula prog.prog_left_coercions}
-    in
-    let res = CF.transform_list_failesc_context (idf,idf,fct) lctx in
-    res
-	
+(* WN : moved so solver.ml so that sleek can use *)
+(* (\*Merging fractional heap nodes when possible using normalization lemmas*\) *)
+(* let normalize_list_failesc_context_w_lemma prog lctx = *)
+(*   if not (Perm.allow_perm ()) then lctx *)
+(*   else *)
+(*     (\*TO CHECK merging nodes*\) *)
+(*     let fct (es:CF.entail_state) = *)
+(*       let es = CF.clear_entailment_vars es in *)
+(*       (\*create a tmp estate for normalizing*\) *)
+(*       let tmp_es = CF.empty_es (CF.mkTrueFlow ()) es.CF.es_group_lbl no_pos in *)
+(*       CF.Ctx {es with CF.es_formula = normalize_formula_w_coers prog tmp_es es.CF.es_formula prog.prog_left_coercions} *)
+(*     in *)
+(*     let res = CF.transform_list_failesc_context (idf,idf,fct) lctx in *)
+(*     res *)
+
+(* let normalize_list_failesc_context_w_lemma prog lctx = *)
+(*   let pr = pr_none in *)
+(*   Debug.ho_1 "normalize_list_failesc_context_w_lemma" pr pr *)
+(*       (normalize_list_failesc_context_w_lemma prog) lctx *)
   
 let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 do_infer: 
       CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * (CF.hprel list) * (CP.spec_var list) * ((CP.spec_var * CP.spec_var list) list) * bool =
