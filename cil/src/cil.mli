@@ -1278,8 +1278,6 @@ val builtinFunctions : (string, typ * typ list * bool) Hashtbl.t
 (** This is used as the location of the prototypes of builtin functions. *)
 val builtinLoc: location
 
-
-
 (** {b Values for manipulating initializers} *)
 
 (** Make a initializer for zero-ing a data type *)
@@ -2478,6 +2476,23 @@ val dd_lval: unit -> lval -> Pretty.doc
 
 
 
+(** String conversation functions *)
+val string_of_exp: exp -> string
+val string_of_loc: location -> string
+val string_of_lval: lval -> string
+val string_of_offset: offset -> string
+val string_of_init: init -> string
+val string_of_typ: typ -> string
+val string_of_attrlist: attributes -> string
+val string_of_attr: attribute -> string
+val string_of_attrparam: attrparam -> string
+val string_of_label: label -> string
+val string_of_stmt: stmt -> string
+val string_of_block: block -> string
+val string_of_instr: instr -> string
+val string_of_global: global -> string
+
+
 (** {b ALPHA conversion} has been moved to the Alpha module. *)
 
 
@@ -2620,6 +2635,8 @@ val get_globalLoc: global -> location
 (** Return the location of a statement, or locUnknown *)
 val get_stmtLoc: stmtkind -> location 
 
+(** Return the location of an expression, or locUnknown *)
+val get_expLoc: exp -> location
 
 (** Generate an {!Cil.exp} to be used in case of errors. *)
 val dExp: Pretty.doc -> exp 

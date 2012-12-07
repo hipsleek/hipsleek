@@ -1100,9 +1100,10 @@ let stripUnderscores (s: string) : string =
 
 let get_instrLoc (inst : instr) =
   match inst with
-      Set(_, _, loc) -> loc
-    | Call(_, _, _, loc) -> loc
-    | Asm(_, _, _, _, _, loc) -> loc
+  | Set(_, _, loc) -> loc
+  | Call(_, _, _, loc) -> loc
+  | Asm(_, _, _, _, _, loc) -> loc
+
 let get_globalLoc (g : global) =
   match g with
   | GFun(_,l) -> (l)
@@ -1119,20 +1120,36 @@ let get_globalLoc (g : global) =
 
 let rec get_stmtLoc (statement : stmtkind) =
   match statement with 
-      Instr([]) -> lu
-    | Instr(hd::tl) -> get_instrLoc(hd)
-    | Return(_, loc) -> loc
-    | Goto(_, loc) -> loc
-    | Break(loc) -> loc
-    | Continue(loc) -> loc
-    | If(_, _, _, loc) -> loc
-    | Switch (_, _, _, loc) -> loc
-    | Loop (_, _, loc, _, _) -> loc
-    | Block b -> if b.bstmts == [] then lu 
-                 else get_stmtLoc ((List.hd b.bstmts).skind)
-    | TryFinally (_, _, l) -> l
-    | TryExcept (_, _, _, l) -> l
-    | HipStmt (_, l) -> l
+  | Instr([]) -> lu
+  | Instr(hd::tl) -> get_instrLoc(hd)
+  | Return(_, loc) -> loc
+  | Goto(_, loc) -> loc
+  | Break(loc) -> loc
+  | Continue(loc) -> loc
+  | If(_, _, _, loc) -> loc
+  | Switch (_, _, _, loc) -> loc
+  | Loop (_, _, loc, _, _) -> loc
+  | Block b -> if b.bstmts == [] then lu 
+               else get_stmtLoc ((List.hd b.bstmts).skind)
+  | TryFinally (_, _, l) -> l
+  | TryExcept (_, _, _, l) -> l
+  | HipStmt (_, l) -> l
+
+let get_expLoc (e: exp) : location =
+  match e with
+  | Const (_, l)
+  | Lval (_, l)
+  | SizeOf (_, l) 
+  | SizeOfE (_, l)
+  | SizeOfStr (_, l)
+  | AlignOf (_, l)
+  | AlignOfE (_, l)
+  | UnOp (_, _, _, l)
+  | BinOp (_, _, _, _, l)
+  | Question (_, _, _, _, l)
+  | CastE (_, _, l)
+  | AddrOf (_, l)
+  | StartOf (_, l) -> l
 
 
 (* The next variable identifier to use. Counts up *)
@@ -3116,6 +3133,7 @@ let initMsvcBuiltins () : unit =
   H.add h "__annotation" (voidType, [ ], true);
   ()
 
+
 (** This is used as the location of the prototypes of builtin functions. *)
 let builtinPos: position = { line = 1; 
                              file = "<compiler builtins>";
@@ -4472,6 +4490,22 @@ let d_shortglobal () = function
   | GFun(fd, _) -> dprintf "definition of %s" fd.svar.vname
   | GText _ -> text "GText"
   | GAsm _ -> text "GAsm"
+
+(** Some string conversation functions *)
+let string_of_exp (e: exp) = Pretty.sprint 10 (d_exp () e)
+let string_of_loc (l: location) = Pretty.sprint 10 (d_loc () l)
+let string_of_lval (lv: lval) = Pretty.sprint 10 (d_lval () lv)
+let string_of_offset (off: offset) = Pretty.sprint 10 (d_offset Pretty.nil () off)
+let string_of_init (i: init) = Pretty.sprint 10 (d_init () i)
+let string_of_typ (t: typ) = Pretty.sprint 10 (d_type () t)
+let string_of_attrlist (a: attributes) = Pretty.sprint 10 (d_attrlist () a)
+let string_of_attr (a: attribute) = Pretty.sprint 10 (d_attr () a)
+let string_of_attrparam (e: attrparam) = Pretty.sprint 10 (d_attrparam () e)
+let string_of_label (l: label) = Pretty.sprint 10 (d_label () l)
+let string_of_stmt (s: stmt) = Pretty.sprint 10 (d_stmt () s)
+let string_of_block (b: block) = Pretty.sprint 10 (d_block () b)
+let string_of_instr (i: instr) = Pretty.sprint 10 (d_instr () i)
+let string_of_global (g: global) = Pretty.sprint 10 (d_shortglobal () g)
 
 
 (* sm: given an ordinary CIL object printer, yield one which

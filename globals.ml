@@ -168,10 +168,10 @@ let string_of_term_ann a =
     | TermErr_Must -> "TermErr_Must"
 
 let string_of_loc (p : loc) = 
-    Printf.sprintf "File \"%s\",Line:%d,Col:%d"
+    Printf.sprintf "1 File \"%s\",Line:%d,Col:%d"
     p.start_pos.Lexing.pos_fname 
     p.start_pos.Lexing.pos_lnum
-	(p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)
+    (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)
 ;;
 
 let string_of_pos (p : Lexing.position) = 
@@ -854,8 +854,12 @@ let fresh_formula_cache_no  () =
 
 let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
-let string_of_loc (p : loc) = p.start_pos.Lexing.pos_fname ^ "_" ^ (string_of_int p.start_pos.Lexing.pos_lnum)^"_"^
-	(string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol))
+let string_of_loc (p : loc) = 
+  p.start_pos.Lexing.pos_fname ^ "_" ^ 
+  (string_of_int p.start_pos.Lexing.pos_lnum) ^ ":" ^
+  (string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)) ^ "_" ^
+  (string_of_int p.end_pos.Lexing.pos_lnum) ^ ":" ^
+  (string_of_int (p.end_pos.Lexing.pos_cnum-p.end_pos.Lexing.pos_bol))
 
 let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")"
 ;;

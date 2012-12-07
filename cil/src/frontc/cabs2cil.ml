@@ -827,13 +827,10 @@ module BlockChunk =
     let isNotEmpty (c: chunk) = not (isEmpty c)
 
     let i2c (i: instr) = 
-      let iloc = match i with
-        | Set (_, _, l) -> l
-        | Call (_, _, _, l) -> l
-        | Asm (_, _, _, _, _, l) -> l in
+      let iloc = get_instrLoc i in
       { empty with postins = [i];
                    cloc = iloc; }
-        
+
     (* Occasionally, we'll have to push postins into the statements *)
     let pushPostIns (c: chunk) : stmt list = 
       if c.postins = [] then c.stmts
@@ -859,24 +856,25 @@ module BlockChunk =
     (* Add an instruction at the end. Never refer to this instruction again 
      * after you call this *)
     let (+++) (c: chunk) (i : instr) =
-      let iloc = match i with
-        | Set (_, _, l) -> l
-        | Call (_, _, _, l) -> l
-        | Asm (_, _, _, _, _, l) -> l in
+      let iloc = get_instrLoc i in
+      let loc = if iloc = locUnknown then c.cloc
+                else makeLoc (startPos c.cloc) (endPos iloc) in
       { c with postins = i :: c.postins;
-              cloc = makeLoc (startPos c.cloc) (endPos iloc) }
+               cloc = loc }
 
     (* Append two chunks. Never refer to the original chunks after you call 
      * this. And especially never share c2 with somebody else *)
-    let (@@) (c1: chunk) (c2: chunk) = 
+    let (@@) (c1: chunk) (c2: chunk) =
+      let loc = if (c1 = empty) then c2.cloc
+                else if (c2 = empty) then c1.cloc
+                else makeLoc (startPos c1.cloc) (endPos c2.cloc) in
       { stmts = compactStmts (pushPostIns c1 @ c2.stmts);
         postins = c2.postins;
         cases = c1.cases @ c2.cases;
-        cloc = makeLoc (startPos c1.cloc) (endPos c2.cloc);
-      } 
+        cloc = loc }
 
     let skipChunk = empty
-        
+
     let returnChunk (e: exp option) (l: location) : chunk = 
       { stmts = [ mkStmt (Return(e, l)) ];
         postins = [];
@@ -885,7 +883,6 @@ module BlockChunk =
       }
 
     let ifChunk (be: exp) (l: location) (t: chunk) (e: chunk) : chunk = 
-      
       { stmts = [ mkStmt(If(be, c2block t, c2block e, l))];
         postins = [];
         cases = t.cases @ e.cases;
@@ -1238,9 +1235,9 @@ let rec integralPromotion (t : typ) : typ = (* c.f. ISO 6.3.1.1 *)
     TInt (IBool, a) -> TInt (IInt, a) (* _Bool can only be 0 or 1, irrespective of its size *)
   | TInt ((IShort|IUShort|IChar|ISChar|IUChar) as ik, a) -> 
       if bitsSizeOf t < bitsSizeOf (TInt (IInt, [])) || isSigned ik then
-	TInt(IInt, a)
+        TInt(IInt, a)
       else
-	TInt(IUInt, a)
+        TInt(IUInt, a)
   | TInt _ -> t
   | TEnum (ei, a) -> integralPromotion (TInt(ei.ekind, a)) (* gcc packed enums can be < int *)
   | t -> E.s (error "integralPromotion: not expecting %a" d_type t)
@@ -3232,14 +3229,11 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
     | ASet (lv, lvt) -> begin
         (* See if the set was done already *)
         match e with 
-          Lval(lv', _) when lv == lv' -> 
-            (se, e, t)
+        | Lval(lv', _) when lv == lv' -> (se, e, t)
         | _ -> 
             let (e', t') = processArrayFun e t in
             let (t'', e'') = castTo t' lvt e' in
-(*
-            ignore (E.log "finishExp: e = %a\n  e'' = %a\n" d_plainexp e d_plainexp e'');
-*)
+            let _ = print_endline ("\n=== set lval = " ^ (string_of_lval lv) ^ "  --loc = " ^ (string_of_loc !currentLoc)) in
             (se +++ (Set(lv, e'', !currentLoc)), e'', t'')
     end
   ) in
@@ -3863,7 +3857,6 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
     end
           
     | A.BINARY(A.ASSIGN, e1, e2, l) -> begin
-        let _ = print_endline (" == ASSIGN l = " ^ (Cprint.string_of_loc l)) in
         let p = convLoc l in
         match e1 with 
           A.COMMA (el, l1) -> (* GCC extension *)
@@ -3886,14 +3879,12 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
         | (A.VARIABLE (_, l1) | A.UNARY (A.MEMOF, _, l1) | (* Regular lvalues *)
            A.INDEX (_, _, l1) | A.MEMBEROF (_, _, l1) | A.MEMBEROFPTR (_, _, l1) ) -> begin
              let p1 = convLoc l1 in
-             let _ = print_endline (" ==     l1 = " ^ (Cprint.string_of_loc l1)) in
              if asconst then ignore (warn "ASSIGN in constant");
              let (se1, e1', lvt) = doExp false e1 (AExp None) in
              let lv = 
                match e1' with 
                  Lval (x, _) -> x
-               | _ -> E.s (error "Expected lval for assignment. Got %a"
-                             d_plainexp e1')
+               | _ -> E.s (error "Expected lval for assignment. Got %a" d_plainexp e1')
              in
              (* Catch the case of an lval that might depend on itself,
                 e.g. p[p[0]] when p[0] == 0.  We need to use a temporary

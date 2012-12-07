@@ -247,13 +247,8 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
 let translate_var (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let name = vinfo.Cil.vname in
-  (* let _ = print_endline ("== sp pos_cnum = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_cnum)) in *)
-  (* let _ = print_endline ("== sp pos_lnum = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_lnum)) in *)
-  (* let _ = print_endline ("== sp pos_bol = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_bol)) in   *)
-  (* let _ = print_endline ("== ep pos_cnum = " ^ (string_of_int pos.Globals.end_pos.Lexing.pos_cnum)) in   *)
-  (* let _ = print_endline ("== ep pos_lnum = " ^ (string_of_int pos.Globals.end_pos.Lexing.pos_lnum)) in   *)
-  (* let _ = print_endline ("== ep pos_bol = " ^ (string_of_int pos.Globals.end_pos.Lexing.pos_bol)) in     *)
-  (* let _ = print_endline ("-- name = " ^ name) in                                                         *)
+  (* let _ = print_endline ("-- var name = " ^ name) in                *)
+  (* let _ = print_endline ("        loc = " ^ (string_of_loc pos)) in *)
   let newexp = Iast.Var {Iast.exp_var_name = name;
                          Iast.exp_var_pos = pos} in
   newexp
@@ -358,6 +353,8 @@ let rec translate_lval (lv: Cil.lval) (lopt: Cil.location option) : Iast.exp =
       else Some (Hashtbl.find lc_addressof_data lv)
     with Not_found -> None
   ) in
+  (* let _ = print_endline ("=== lval = " ^ (string_of_cil_lval lv )) in *)
+  (* let _ = print_endline ("     loc = " ^ (string_of_loc pos)) in      *)
   match pvar with
   | Some p -> (
       (* this lval was represented by a structure before, return this structure data *)
