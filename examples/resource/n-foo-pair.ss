@@ -41,7 +41,8 @@ void f()
   requires stk::RS<n>
   ensures  stk::RS<n> * stk_mark::RS_bnd<m,h> 
 //    & m>=n+3+2 & h<=n+5+2;
-      & m>=n+3+2 & h<=n+5+2;
+  //& m>=n+3+2 & h<=n+5+2; // unsound if lemma not given
+  & m>=n+3+2 & h<=n+6+2; //  if lemma not given
 {
   add_stk(2); //add stack frame used
   g(); h();

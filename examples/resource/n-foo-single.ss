@@ -50,7 +50,7 @@ void f()
   requires stk::RS<n>
   ensures  stk::RS<n> * mn::RS_mark<m> * mx::RS_mark<h>
 //    & m>=n+3+2 & h<=n+5+2;
-      & m>=n+3+2 & h<=n+5+2;
+  & m>=n+3+2 & h<=n+6+2; // valid
 {
   add_stk(2); //add stack frame used
   g(); h();
