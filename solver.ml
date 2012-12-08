@@ -8510,7 +8510,7 @@ and normalize_formula_w_coers i prog estate (f:formula) (coers:coercion_decl lis
     let pr = Cprinter.string_of_formula in
     let pr_c = Cprinter.string_of_coerc_decl_list in
     let pr3 l = string_of_int (List.length l) in
-    Debug.no_2_num i "normalize_formula_w_coers" pr pr3 pr 
+    Debug.ho_2_num i "normalize_formula_w_coers" pr pr3 pr 
         (fun _ _ -> normalize_formula_w_coers_x  prog estate f coers) f coers
       
 and normalize_struc_formula_w_coers prog estate (f:struc_formula) coers : struc_formula = 
