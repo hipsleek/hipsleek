@@ -918,7 +918,8 @@ and check_scall_init prog ctx e0 (post_start_label:formula_label) ret_t mn lock 
   (* let _ = print_string (("\nSCall: init: rs =  ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
   if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then
     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
-  let tmp_res = normalize_list_failesc_context_w_lemma prog rs in
+  (* let tmp_res = normalize_list_failesc_context_w_lemma prog rs in *)
+  let tmp_res = rs in
   tmp_res
       (*=====================================*)
       (*==<<<== init[LOCK](lock,lock_args) ==*)
@@ -947,7 +948,8 @@ and check_scall_finalize prog ctx e0 (post_start_label:formula_label) ret_t mn l
   (* let _ = print_string (("\nSCall: finalize: rs =  ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
   if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then
     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
-  let tmp_res = normalize_list_failesc_context_w_lemma prog rs in
+  (* let tmp_res = normalize_list_failesc_context_w_lemma prog rs in *)
+  let tmp_res = rs in
   tmp_res
       (*=====================================*)
       (*==<<<<= finalize[LOCK](lock,args) ===*)
@@ -986,7 +988,8 @@ and check_scall_acquire prog ctx e0 (post_start_label:formula_label) ret_t mn lo
   (* let _ = print_string (("\nSCall: acquire: rs =  ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
   if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then
     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
-  let tmp_res = normalize_list_failesc_context_w_lemma prog rs in
+  (* let tmp_res = normalize_list_failesc_context_w_lemma prog rs in *)
+  let tmp_res = rs in
   tmp_res
       (*==========================================*)
       (*=<<<<== acquires[LOCK](lock,args) ========*)
@@ -1025,7 +1028,8 @@ and check_scall_release prog ctx e0 (post_start_label:formula_label) ret_t mn lo
   (* let _ = print_string (("\nSCall: release: rs =  ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
   if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then
     Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
-  let tmp_res = normalize_list_failesc_context_w_lemma prog rs in
+  (* let tmp_res = normalize_list_failesc_context_w_lemma prog rs in *)
+  let tmp_res = rs in
   tmp_res
       (*==========================================*)
       (*=<<<<== release[LOCK](lock,args) ========*)
@@ -1230,7 +1234,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		        let rs = List.fold_left CF.list_failesc_context_union (List.hd r_ctx) (List.tl r_ctx) in
 		        let _ = PTracer.log_proof (mkprf prf_r) in
 		        if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then Debug.print_info "barrier call" (to_print^" has failed \n") pos else () ;
-		        normalize_list_failesc_context_w_lemma prog rs
+		        (* normalize_list_failesc_context_w_lemma prog rs *)
+                rs
 		            
         | BConst ({exp_bconst_val = b;
           exp_bconst_pos = pos}) -> begin
@@ -1396,7 +1401,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           let _ = CF.must_consistent_list_failesc_context "bind 7" tmp_res3  in
 		                  let res = if !Globals.elim_exists then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
                           let _ = CF.must_consistent_list_failesc_context "bind 8" res  in
-                          normalize_list_failesc_context_w_lemma prog res
+                          (* normalize_list_failesc_context_w_lemma prog res *)
+                          res
                         end
                 end  (*end Bind*)
               in

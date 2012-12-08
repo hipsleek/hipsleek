@@ -1,0 +1,4 @@
+check what kind of lemmas are included in this normalize
+are they combine lemma of the form rhs -> x::p<..>
+
+let normalize_list_failesc_context_w_lemma prog lctx =
