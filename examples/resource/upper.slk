@@ -20,8 +20,6 @@ lemma "combine"
    self::RS_max<m1>*self::RS_max<m2> 
    -> self::RS_max<m> & m=max(m1,m2).
 
-
-
 /*
 checkentail x::RS_min<3> * x::RS_min<6> |- x::RS_min<3>.
 
