@@ -8730,6 +8730,8 @@ let normalize_list_failesc_context_w_lemma prog lctx =
   (* if not (Perm.allow_perm ()) then lctx *)
   (* else *)
     (* TO CHECK merging nodes *)
+  if prog.prog_left_coercions == [] then lctx
+  else
     let fct = normalize_entail_state_w_lemma prog in
     let res = CF.transform_list_failesc_context (idf,idf,fct) lctx in
     res
@@ -8740,9 +8742,11 @@ let normalize_list_failesc_context_w_lemma prog lctx =
       (normalize_list_failesc_context_w_lemma prog) lctx
       
 let normalize_list_partial_context_w_lemma prog lctx = 
-  let fct = normalize_entail_state_w_lemma prog in
-  let res = CF.transform_list_partial_context (fct, idf) lctx in
-  res
+  if prog.prog_left_coercions == [] then lctx
+  else
+    let fct = normalize_entail_state_w_lemma prog in
+    let res = CF.transform_list_partial_context (fct, idf) lctx in
+    res
 
 let heap_entail_one_context_new (prog : prog_decl) (is_folding : bool)
        (b1:bool)  (ctx : context) 
