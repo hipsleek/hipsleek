@@ -13,7 +13,9 @@ int sum2 (int n)
  
  
 {
-  int tmp;
+  int tmp, aaaaa, bbb;
+  aaaaa = 2;
+  bbb = 3;
   if (n > 0) {
     tmp = sum2(n-1);
     return tmp;

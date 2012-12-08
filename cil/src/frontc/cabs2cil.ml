@@ -3231,7 +3231,6 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
         | _ -> 
             let (e', t') = processArrayFun e t in
             let (t'', e'') = castTo t' lvt e' in
-            let _ = print_endline ("\n=== set lval = " ^ (string_of_lval lv) ^ "  --loc = " ^ (string_of_loc !currentLoc)) in
             (se +++ (Set(lv, e'', !currentLoc)), e'', t'')
     end
   ) in

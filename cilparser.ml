@@ -345,8 +345,6 @@ let translate_binary_operator (op : Cil.binop) : Iast.bin_op =
 let rec translate_lval (lv: Cil.lval) : Iast.exp =
   let (lhost, offset, loc) = lv in
   let pos = translate_location loc in
-  let _ = print_endline ("=== lval = " ^ (string_of_cil_lval lv )) in
-  let _ = print_endline ("     loc = " ^ (string_of_loc pos)) in
   (* find whether lval is subtituted by another pointer variable or not *)
   let pvar = (
     try
@@ -587,11 +585,14 @@ let translate_instr (instr: Cil.instr) : Iast.exp =
         | None -> call_exp;
         | Some lv -> (
             let lv_exp = translate_lval lv in
+            let lv_loc = Cil.get_lvalLoc lv in
+            let asgn_loc = Cil.makeLoc (Cil.startPos lv_loc) (Cil.endPos l) in
+            let asgn_pos = translate_location asgn_loc in
             Iast.Assign {Iast.exp_assign_op = Iast.OpAssign;
                          Iast.exp_assign_lhs = lv_exp;
                          Iast.exp_assign_rhs = call_exp;
                          Iast.exp_assign_path_id = None;
-                         Iast.exp_assign_pos = pos}
+                         Iast.exp_assign_pos = asgn_pos}
           )
       )
     | Cil.Asm _ ->
