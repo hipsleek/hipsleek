@@ -58,12 +58,19 @@ checkentail x::RS_max<n1> * x::RS_max<n2> & n1<=3 & n2<=6
 */
 
 checkentail x::RS_max<n1> * x::RS_max<n2> & n1<=6 & n2<=3
-    |- x::RS_max<n> & n<=5. // Valid  # UNSOUND
+    |- x::RS_max<n> & n<=6. // Valid
 
-checkentail n1<=3 & n2<=6 & n=max(n1,n2) |- n<=6.
+checkentail n1<=3 & n2<=6 & n=max(n1,n2) |- n<=6. //Valid
 
 checkentail x::RS_max<n3> & n3=max(n1,n2) & n1<=3 & n2<=6
     |- x::RS_max<n> & n<=5. // Fail
 
 checkentail x::RS_max<n1> * x::RS_max<n2> * x::RS_max<n3> & n1<=6 & n2<=3
-    |- x::RS_max<n> & n<=5. // Valid  # UNSOUND
+    |- x::RS_max<n> & n<=6. // Fail
+
+checkentail x::RS_max<n1> * x::RS_max<n2> * x::RS_max<n3> & n1<=6 & n2<=3 & n3<=10
+    |- x::RS_max<n> & n<=6. // Fail
+
+checkentail x::RS_max<n1> * x::RS_max<n2> * x::RS_max<n3> & n1<=6 & n2<=3 & n3<=10
+    |- x::RS_max<n> & n<=10. // Valid
+

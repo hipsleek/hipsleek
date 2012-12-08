@@ -669,7 +669,7 @@ let minisat_is_sat (f : Cpure.formula) (sat_no : string) : bool =
 (* minisat *)
 let minisat_is_sat (f : Cpure.formula) (sat_no : string) : bool =
   let pr = Cprinter.string_of_pure_formula in
-  let result = Debug.ho_1 "minisat_is_sat" pr string_of_bool (fun _ -> minisat_is_sat f sat_no) f in
+  let result = Debug.no_1 "minisat_is_sat" pr string_of_bool (fun _ -> minisat_is_sat f sat_no) f in
   (* let omega_result = Omega.is_sat f sat_no in
   let _ = print_endline ("-- minisat_is_sat result: " ^ (if result then "TRUE" else "FALSE")) in
   let _ = print_endline ("-- Omega.is_sat result: " ^ (if omega_result then "TRUE" else "FALSE")) in *)

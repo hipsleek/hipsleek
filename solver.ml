@@ -2925,15 +2925,15 @@ and heap_entail_struc (prog : prog_decl) (is_folding : bool)  (has_post: bool)(c
   Debug.no_2 "heap_entail_struc" Cprinter.string_of_list_context Cprinter.string_of_struc_formula
       (fun (ls,_) -> Cprinter.string_of_list_context ls) (fun a c -> heap_entail_struc_x prog is_folding has_post a c tid pos pid) cl conseq
 
-and heap_entail_one_context_struc p i1 hp cl cs (tid: CP.spec_var option) pos pid =
-  Gen.Profiling.do_3 "heap_entail_one_context_struc" heap_entail_one_context_struc_x(*_debug*) p i1 hp cl cs tid pos pid
+(* and heap_entail_one_context_struc p i1 hp cl cs (tid: CP.spec_var option) pos pid =                                      *)
+(*   Gen.Profiling.do_3 "heap_entail_one_context_struc" heap_entail_one_context_struc_x(*_debug*) p i1 hp cl cs tid pos pid *)
 
 (* this is not called by hip? *)
 and heap_entail_one_context_struc_nth n p i1 hp cl cs (tid: CP.spec_var option) pos pid =
   let str="heap_entail_one_context_struc" in
-  Gen.Profiling.do_3_num n str (heap_entail_one_context_struc_debug p i1 hp cl) cs tid pos pid
+  Gen.Profiling.do_3_num n str (heap_entail_one_context_struc p i1 hp cl) cs tid pos pid
 
-and heap_entail_one_context_struc_debug p i1 hp cl cs (tid: CP.spec_var option) pos pid =
+and heap_entail_one_context_struc p i1 hp cl cs (tid: CP.spec_var option) pos pid =
   Debug.no_2 "heap_entail_one_context_struc" 
       Cprinter.string_of_context Cprinter.string_of_struc_formula
       (fun (lctx, _) -> Cprinter.string_of_list_context lctx) 
@@ -3502,7 +3502,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
     let action = generate_action dv eset in
     (* Process the action to get the new entail state *)
     let b = {(CF.mkTrue_b_nf no_pos) with formula_base_and = formula_and_of_formula f} in (*TO CHECK: ignore formula_*_and *)
-    
+   
     let res = process_action 0 0 prog es conseq b b action [] is_folding pos in
     (res, match action with
       | Context.M_Nothing_to_do _ -> false
@@ -8510,7 +8510,7 @@ and normalize_formula_w_coers i prog estate (f:formula) (coers:coercion_decl lis
     let pr = Cprinter.string_of_formula in
     let pr_c = Cprinter.string_of_coerc_decl_list in
     let pr3 l = string_of_int (List.length l) in
-    Debug.ho_2_num i "normalize_formula_w_coers" pr pr3 pr 
+    Debug.no_2_num i "normalize_formula_w_coers" pr pr3 pr 
         (fun _ _ -> normalize_formula_w_coers_x  prog estate f coers) f coers
       
 and normalize_struc_formula_w_coers prog estate (f:struc_formula) coers : struc_formula = 
@@ -8719,11 +8719,35 @@ and transform_null (eqs) :(CP.b_formula list) = List.map (fun c ->
       | _ -> c
 ) eqs
 
+(* Merging fractional heap nodes when possible using normalization lemmas *)
+let normalize_entail_state_w_lemma prog (es:CF.entail_state) =
+  let es = CF.clear_entailment_vars es in
+  (* create a tmp estate for normalizing *)
+  let tmp_es = CF.empty_es (CF.mkTrueFlow ()) es.CF.es_group_lbl no_pos in
+  CF.Ctx {es with CF.es_formula = normalize_formula_w_coers 5 prog tmp_es es.CF.es_formula prog.prog_left_coercions}
+
+let normalize_list_failesc_context_w_lemma prog lctx =
+  (* if not (Perm.allow_perm ()) then lctx *)
+  (* else *)
+    (* TO CHECK merging nodes *)
+    let fct = normalize_entail_state_w_lemma prog in
+    let res = CF.transform_list_failesc_context (idf,idf,fct) lctx in
+    res
+
+let normalize_list_failesc_context_w_lemma prog lctx =
+  let pr = Cprinter.string_of_list_failesc_context in
+  Debug.no_1 "normalize_list_failesc_context_w_lemma" pr pr
+      (normalize_list_failesc_context_w_lemma prog) lctx
+      
+let normalize_list_partial_context_w_lemma prog lctx = 
+  let fct = normalize_entail_state_w_lemma prog in
+  let res = CF.transform_list_partial_context (fct, idf) lctx in
+  res
+
 let heap_entail_one_context_new (prog : prog_decl) (is_folding : bool)
        (b1:bool)  (ctx : context) 
     (conseq : formula) (tid: CP.spec_var option) pos (b2:control_path_id): (list_context * proof) =
       heap_entail_one_context 11 prog is_folding  ctx conseq tid pos
-
 
 let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_partial_context)
         (conseq:struc_formula) (tid: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) = 
@@ -8785,9 +8809,11 @@ let heap_entail_list_partial_context_init_x (prog : prog_decl) (is_folding : boo
   let cl_after_prune = prune_ctx_list prog cl in
   let conseq = prune_preds prog false conseq in
   Gen.Profiling.pop_time "entail_prune";
-  let entail_fct = (fun c-> heap_entail_prefix_init prog is_folding  false c 
+  (* RESOURCE: Normalize for combine lemma *)
+  let norm_cl = normalize_list_partial_context_w_lemma prog cl_after_prune in
+  let entail_fct = (fun c-> heap_entail_prefix_init prog is_folding false c 
       conseq tid pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new)) in
-  heap_entail_agressive_prunning entail_fct (prune_ctx_list prog) (fun (c,_)-> isSuccessListPartialCtx_new c) cl_after_prune 
+  heap_entail_agressive_prunning entail_fct (prune_ctx_list prog) (fun (c,_)-> isSuccessListPartialCtx_new c) norm_cl 
   end
 
 let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
@@ -8813,7 +8839,9 @@ let heap_entail_list_failesc_context_init_x (prog : prog_decl) (is_folding : boo
     let cl_after_prune = prune_ctx_failesc_list prog cl in
     let conseq = prune_preds prog false conseq in
     Gen.Profiling.pop_time "entail_prune";
-    let (lfc,prf) = heap_entail_failesc_prefix_init 2 prog is_folding  false cl_after_prune conseq tid pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new) in
+    (* RESOURCE: Normalize for combine lemma *)
+    let norm_cl = normalize_list_failesc_context_w_lemma prog cl_after_prune in
+    let (lfc,prf) = heap_entail_failesc_prefix_init 2 prog is_folding  false norm_cl conseq tid pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new) in
     (CF.convert_must_failure_4_list_failesc_context "failed proof @ loc" lfc,prf)
   end
 
@@ -9311,22 +9339,3 @@ and normalize_frac_struc prog f =
 		| EVariance b-> EVariance {b with formula_var_continuation = normalize_frac_struc prog b.formula_var_continuation} in
 	List.map hlp f
 	*)
-
-(* Merging fractional heap nodes when possible using normalization lemmas *)
-let normalize_list_failesc_context_w_lemma prog lctx =
-  (* if not (Perm.allow_perm ()) then lctx *)
-  (* else *)
-    (* TO CHECK merging nodes *)
-    let fct (es:CF.entail_state) =
-      let es = CF.clear_entailment_vars es in
-      (* create a tmp estate for normalizing *)
-      let tmp_es = CF.empty_es (CF.mkTrueFlow ()) es.CF.es_group_lbl no_pos in
-      CF.Ctx {es with CF.es_formula = normalize_formula_w_coers 5 prog tmp_es es.CF.es_formula prog.prog_left_coercions}
-    in
-    let res = CF.transform_list_failesc_context (idf,idf,fct) lctx in
-    res
-
-let normalize_list_failesc_context_w_lemma prog lctx =
-  let pr = Cprinter.string_of_list_failesc_context in
-  Debug.no_1 "normalize_list_failesc_context_w_lemma" pr pr
-      (normalize_list_failesc_context_w_lemma prog) lctx

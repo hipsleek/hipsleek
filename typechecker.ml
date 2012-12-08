@@ -535,7 +535,8 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                      * before going into the function body *)
                     let (_, rankbnds) = check_bounded_term prog ctx1 (CF.pos_of_formula post_cond) in
 		            let _ = Gen.Profiling.push_time "typechecker : check_exp" in
-	    	        let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in
+                let res_ctx = check_exp prog proc lfe e0 post_label in
+	    	        let res_ctx = CF.list_failesc_to_partial res_ctx in
 		            let _ = Gen.Profiling.pop_time "typechecker : check_exp" in
 	                (* let _ = print_string ("\n WN 1 :"^(Cprinter.string_of_list_partial_context res_ctx)) in *)
 	    	        let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
