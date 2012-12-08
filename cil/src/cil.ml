@@ -364,7 +364,6 @@ and fieldinfo = {
                                           * (not for its type) *)
     mutable fdefn: location;            (** The location where this field
                                           * is defined *)
-    mutable floc: location;             (** The current location of this field *)
 }
 
 
@@ -600,14 +599,14 @@ and offset =
                         * or as a terminator in a list of other kinds of 
                         * offsets. *)
 
-  | Field      of fieldinfo * offset * location
+  | Field of (fieldinfo * location) * offset * location
                       (** A field offset. Can be applied only to an lvalue 
                        * that denotes a structure or a union that contains 
                        * the mentioned field. This advances the offset to the 
                        * beginning of the mentioned field and changes the 
                        * type to the type of the mentioned field. *)
 
-  | Index    of exp * offset * location
+  | Index of exp * offset * location
                      (** An array index offset. Can be applied only to an 
                        * lvalue that denotes an array. This advances the 
                        * starting address of the lval to the beginning of the 
@@ -1526,8 +1525,7 @@ let mkCompInfo
             fname = fn;
             fbitfield = fb;
             fattr = fa;
-            fdefn = fd;
-            floc = fl}) (mkfspec comp) in
+            fdefn = fd;}) (mkfspec comp) in
    comp.cfields <- flds;
    if flds <> [] then comp.cdefined <- true;
    comp
@@ -1967,7 +1965,7 @@ and typeOffset basetyp =
           blendAttributes baseAttrs elementType
       | t -> E.s (E.bug "typeOffset: Index on a non-array")
   end 
-  | Field (fi, o, _) ->
+  | Field ((fi, _), o, _) ->
       match unrollType basetyp with
       | TComp (_, baseAttrs) ->
           let fieldType = typeOffset fi.ftype o in
@@ -2552,10 +2550,10 @@ and bitsOffset (baset: typ) (off: offset) : int * int =
         let bitsbt = bitsSizeOf bt in
         loopOff bt bitsbt (start + ei * bitsbt) off
     end
-    | Field(f, off, _) when not f.fcomp.cstruct -> 
+    | Field((f, _), off, _) when not f.fcomp.cstruct -> 
         (* All union fields start at offset 0 *)
         loopOff f.ftype (bitsSizeOf f.ftype) start off
-    | Field(f, off, _) -> 
+    | Field((f, _), off, _) -> 
         (* Construct a list of fields preceeding and including this one *)
         let prevflds = 
           let rec loop = function
@@ -3296,7 +3294,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
   method pLval () (lv:lval) =  (* lval (base is 1st field)  *)
     match lv with
       Var (vi, _), o, _ -> self#pOffset (self#pVar vi) o
-    | Mem e, Field(fi, o, _),_ ->
+    | Mem e, Field((fi, _), o, _),_ ->
         self#pOffset
           ((self#pExpPrec arrowLevel () e) ++ text ("->" ^ fi.fname)) o
     | Mem e, NoOffset, _ -> 
@@ -3308,7 +3306,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
   (** Offsets **)
   method pOffset (base: doc) = function
     | NoOffset -> base
-    | Field (fi, o, _) -> 
+    | Field ((fi, _), o, _) -> 
         self#pOffset (base ++ text "." ++ text fi.fname) o
     | Index (e, o, _) ->
         self#pOffset (base ++ text "[" ++ self#pExp () e ++ text "]") o
@@ -3400,7 +3398,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
           if not !msvcMode then begin
             (* Print only for union when we do not initialize the first field *)
             match unrollType t, initl with
-            | TComp(ci, _), [(Field(f, NoOffset, _), _)] -> 
+            | TComp(ci, _), [(Field((f , _), NoOffset, _), _)] -> 
                 if not (ci.cstruct) && ci.cfields != [] && 
                   (List.hd ci.cfields) != f then
                   true
@@ -3411,7 +3409,7 @@ class defaultCilPrinterClass : cilPrinter = object (self)
             false 
         in
         let d_oneInit = function
-          | Field(f, NoOffset, _), i -> 
+          | Field((f, _), NoOffset, _), i -> 
               (if printDesignator then 
                 text ("." ^ f.fname ^ " = ") 
               else nil) ++ self#pInit () i
@@ -4692,7 +4690,7 @@ class plainCilPrinterClass =
 
   method private d_plainoffset () = function
     | NoOffset -> text "NoOffset"
-    | Field(fi, o, _) -> 
+    | Field((fi, _), o, _) -> 
         dprintf "Field(@[%s:%a,@?%a@])" 
           fi.fname self#pOnlyType fi.ftype self#d_plainoffset o
     | Index(e, o, _) -> 
@@ -6176,9 +6174,9 @@ let rec makeZeroInit (t: typ) : init =
   | TComp (comp, _) as t' when comp.cstruct -> 
       let inits = 
         List.fold_right
-          (fun f acc -> 
+          (fun f acc ->
             if f.fname <> missingFieldName then 
-              (Field(f, NoOffset, f.floc), makeZeroInit f.ftype) :: acc
+              (Field((f, lu), NoOffset, lu), makeZeroInit f.ftype) :: acc
             else
               acc)
           comp.cfields []
@@ -6217,7 +6215,7 @@ let rec makeZeroInit (t: typ) : init =
           widestField
         end
       in
-      CompoundInit(t, [(Field(fieldToInit, NoOffset, fieldToInit.floc), 
+      CompoundInit(t, [(Field((fieldToInit, lu), NoOffset, lu), 
                         makeZeroInit fieldToInit.ftype)])
 
   | TArray(bt, Some len, _) as t' -> 
@@ -6290,7 +6288,7 @@ let foldLeftCompound
 
   | TComp (comp, _) -> 
       let getTypeOffset = function
-        | Field(f, NoOffset, _) -> f.ftype
+        | Field((f, _), NoOffset, _) -> f.ftype
         | _ -> E.s (bug "foldLeftCompound: malformed initializer")
       in
       List.fold_left 

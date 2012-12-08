@@ -442,7 +442,7 @@ and checkOffset basetyp : offset -> typ = function
         | t -> E.s (bug "typeOffset: Index on a non-array: %a" d_plaintype t)
       end
 
-  | Field (fi, o, _) -> 
+  | Field ((fi, _), o, _) -> 
       (* Now check that the host is shared propertly *)
       checkCompInfo Used fi.fcomp;
       (* Check that this exact field is part of the host *)
@@ -642,7 +642,7 @@ and checkInit  (i: init) : typ =
                     (initl: (offset * init) list) : unit = 
                   match nextflds, initl with 
                     [], [] -> ()   (* We are done *)
-                  | f :: restf, (Field(f', NoOffset, _), i) :: resti -> 
+                  | f :: restf, (Field((f', _), NoOffset, _), i) :: resti -> 
                       if f.fname <> f'.fname then 
                         ignore (warn "Expected initializer for field %s and found one for %s" f.fname f'.fname);
                       checkInitType i f.ftype;
@@ -665,7 +665,7 @@ and checkInit  (i: init) : typ =
                     ignore (warn "Initializer for empty union not empty");
                 end else begin
                   match initl with 
-                    [(Field(f, NoOffset, _), ei)] -> 
+                    [(Field((f, _), NoOffset, _), ei)] -> 
                       if f.fcomp != comp then 
                         ignore (bug "Wrong designator for union initializer");
                       if !msvcMode && f != List.hd comp.cfields then

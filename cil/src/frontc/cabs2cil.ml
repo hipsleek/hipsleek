@@ -1379,7 +1379,7 @@ let rec castTo ?(fromsource=false)
             let e' = 
               match e with 
                 Lval (lv, l) -> 
-                  Lval (addOffsetLval (Field(fstfield, NoOffset, fstfield.floc)) lv, l)
+                  Lval (addOffsetLval (Field((fstfield, lu), NoOffset, lu)) lv, l)
               | _ -> E.s (unimp "castTo: transparent union expression is not an lval: %a\n" d_exp e)
             in
             (* Continue casting *)
@@ -1892,7 +1892,7 @@ let rec setOneInit (this: preInit)
           restoff (* Rest offset *) =
         match o with 
         | Index(Const(CInt64(i,_,_), _), off, _) -> i64_to_int i, off
-        | Field (f, off, _) -> 
+        | Field ((f, _), off, _) -> 
             (* Find the index of the field *)
             let rec loop (idx: int) = function
                 [] -> E.s (bug "Cannot find field %s" f.fname)
@@ -1984,7 +1984,7 @@ let rec collectInitializer
                   else
                     collectFieldInitializer !pArray.(idx) f
                 in
-                (Field(f, NoOffset, f.floc), thisi) :: collect (idx + 1) restf
+                (Field((f, lu), NoOffset, lu), thisi) :: collect (idx + 1) restf
         in
         CompoundInit (thistype, collect 0 comp.cfields), thistype
 
@@ -1995,7 +1995,7 @@ let rec collectInitializer
           | _ :: rest when idx < !pMaxIdx && !pArray.(idx) = NoInitPre -> 
               findField (idx + 1) rest
           | f :: _ when idx = !pMaxIdx -> 
-              Field(f, NoOffset, f.floc), 
+              Field((f, lu), NoOffset, lu), 
               collectFieldInitializer !pArray.(idx) f
           | _ -> E.s (error "Can initialize only one field for union")
         in
@@ -2081,7 +2081,7 @@ and normalSubobj (so: subobj) : unit =
       end else begin
         let fst = List.hd nextflds in
         so.soTyp <- fst.ftype;
-        so.soOff <- addOffset (Field(fst, NoOffset, fst.floc)) parOff
+        so.soOff <- addOffset (Field((fst, lu), NoOffset, lu)) parOff
       end
 
   (* Advance to the next subobject. Always apply to a normalized object *)
@@ -3093,8 +3093,7 @@ and makeCompType (isstruct: bool)
         ftype     =  ftype;
         fbitfield =  width;
         fattr     =  nattr;
-        fdefn     =  convLoc cloc;
-        floc      =  convLoc cloc } 
+        fdefn     =  convLoc cloc } 
     in
     Util.list_map makeFieldInfo nl
   in
@@ -3242,7 +3241,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
      * matter how we search *)
     let rec search = function
         [] -> NoOffset (* Did not find *)
-      | fid :: rest when fid.fname = n -> Field(fid, NoOffset, fid.floc)
+      | fid :: rest when fid.fname = n -> Field((fid, lu), NoOffset, lu)
       | fid :: rest when prefix annonCompFieldName fid.fname -> begin
           match unrollType fid.ftype with 
             TComp (ci, _) -> 
@@ -3250,8 +3249,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
               if off = NoOffset then 
                 search rest  (* Continue searching *)
               else
-                let loc = makeLoc (startPos fid.floc) (endPos (get_offsetLoc off)) in
-                Field (fid, off, loc)
+                Field ((fid, lu), off, lu)
           | _ -> E.s (bug "unnamed field type is not a struct/union")
       end
       | _ :: rest -> search rest
@@ -6018,8 +6016,8 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
                            (List.filter (fun x -> x.vid <> shadow.vid)
                               !currentFunctionFDEC.slocals);
                         (shadow :: accform,
-                         mkStmt (Instr [Set ((Var (f, lu), Field(fstfield,
-                                                           NoOffset, fstfield.floc), fstfield.floc),
+                         mkStmt (Instr [Set ((Var (f, lu), Field((fstfield, lu),
+                                                           NoOffset, lu), lu),
                                              Lval (var shadow lu, lu),
                                              !currentLoc)]) :: accbody))
                   !currentFunctionFDEC.sformals

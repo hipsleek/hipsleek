@@ -404,8 +404,6 @@ and fieldinfo = {
     (** The attributes for this field (not for its type) *)
     mutable fdefn: location;
     (** The location where this field is defined *)
-    mutable floc: location;
-    (** The current location of this field *)
 }
 
 
@@ -773,14 +771,14 @@ and offset =
                         * or as a terminator in a list of other kinds of 
                         * offsets. *)
 
-  | Field      of fieldinfo * offset * location
+  | Field of (fieldinfo * location) * offset * location
                       (** A field offset. Can be applied only to an lvalue 
                        * that denotes a structure or a union that contains 
                        * the mentioned field. This advances the offset to the 
                        * beginning of the mentioned field and changes the 
                        * type to the type of the mentioned field. *)
 
-  | Index    of exp * offset * location
+  | Index of exp * offset * location
                      (** An array index offset. Can be applied only to an 
                        * lvalue that denotes an array. This advances the 
                        * starting address of the lval to the beginning of the 

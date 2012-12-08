@@ -375,7 +375,7 @@ let rec translate_lval (lv: Cil.lval) : Iast.exp =
       let rec collect_field (off: Cil.offset) : ident list = (
         match off with
         | Cil.NoOffset -> []
-        | Cil.Field (f, o, _) -> [(f.Cil.fname)] @ (collect_field o)
+        | Cil.Field ((f, _), o, _) -> [(f.Cil.fname)] @ (collect_field o)
         | Cil.Index _ -> report_error_msg "TRUNG TODO: collect_field: handle Cil.Index _ later"
       ) in
       match (lhost, offset) with
@@ -741,7 +741,7 @@ let translate_init (vname: ident) (init: Cil.init) (lopt: Cil.location option)
         let off, ini = x in
         let name = match off with
           | Cil.NoOffset -> report_error_msg "TRUNG TODO: translate_init: handle Cil.NoOffset later!"
-          | Cil.Field (f, o, _) -> (
+          | Cil.Field ((f, _), o, _) -> (
               match o with
               | Cil.NoOffset -> f.Cil.fname
               | Cil.Field _ -> report_error_msg "TRUNG TODO: translate_init: handle Cil.Field later!"
