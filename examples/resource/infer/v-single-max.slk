@@ -11,7 +11,16 @@ checkentail self::RS<n>*mx::RS_mark<n+3> |- self::RS<n> *mx::RS_mark<h> & h<=n+3
 print residue.
 
 /*
-  How did the RS_mark get consumed?
+  PROBLEM
+  -dd trace
+  How did the RS_mark in LHS get consumed?
+  This lead to a failure subsequently. Was this due to
+  an attempt at the combine lemma using:
+    LHS |- x::RS_mark<..>*x::RS_mark ==> ?
+  However, I did not see the consequent being
+  printed. So, i tmay be good to add some clearer
+  printing on the normzalization process using tinfo_zprint.
+
 
 !!!:0: 0: normalize_w_coers:process_one: check extra heap
 !!!:0: 0: normalize_w_coers:process_one: new_ctx: self
@@ -20,5 +29,30 @@ print residue.
  es_pure: true
  es_orig_ante: None
  es_heap: mx::RS_mark<flted_13_30>@M[0][Orig][LHSCase]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+ es_unsat_flag: true
+!!!:0: 0: normalize_w_coers:process_one: conseq_extra:
+ mx::RS_mark<m2_44>@M#O[combine2][0][Derv][LHSCase]&true&
+{FLOW,(1,22)=__flow}[]
+!!!:0: 0: heap_entail_one_context:
+ctx:
+ es_formula: 
+  self::RS<n>@M[0][Orig][LHSCase]&flted_10_30=3+n&{FLOW,(1,22)=__flow}[]
+ es_pure: true
+ es_orig_ante: None
+ es_heap: mx::RS_mark<flted_10_30>@M[0][Orig][LHSCase]
+ es_aux_conseq: true
+ es_must_error: None
+ es_var_measures: None
+ es_term_err: None
+ es_var_zero_perm: 
+ es_unsat_flag: true
+conseq:
+ mx::RS_mark<m2_44>@M#O[combine2][0][Derv][LHSCase]&true&
+{FLOW,(1,22)=__flow}[]
 
 */
