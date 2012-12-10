@@ -2318,6 +2318,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
 		            let is_match_defs il sl defs = 
 		              if(!Globals.show_diff_constrs) then (
 			              let res,res_list = CEQ.checkeq_defs_with_diff il sl ls_inferred_hps defs sel_hp_rels in
+				      let _ = CEQ.check_subsume_defs il sl ls_inferred_hps defs sel_hp_rels in
 			              if(not(res)) then 
 			                print_string ("\nDiff defs " ^ proc.proc_name ^ " {\n" ^ (print_res_list res_list true) ^ "\n}\n" );
 			              res
