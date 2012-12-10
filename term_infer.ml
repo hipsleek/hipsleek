@@ -896,9 +896,9 @@ let check_monotone_decreasing_sequence utils trans_constr proc_scc =
   let fx = unk_info.unk_trans_ctx in
   let ctx = mkAnd rec_cond fx in
   
-  (* let _ = print_endline ("\nCTX: " ^ (!print_pure_formula ctx)) in        *)
-  (* let _ = print_endline ("\nREC: " ^ (!print_pure_formula rec_cond)) in   *)
-  (* let _ = print_endline ("\nBASE: " ^ (!print_pure_formula base_cond)) in *)
+  let _ = print_endline ("\nCTX: " ^ (!print_pure_formula ctx)) in
+  let _ = print_endline ("\nREC: " ^ (!print_pure_formula rec_cond)) in
+  let _ = print_endline ("\nBASE: " ^ (!print_pure_formula base_cond)) in
   
   let def_loop_cond, unk_loop_cond, term_cond_with_rank = 
   begin
@@ -1311,19 +1311,19 @@ let rec infer_term_spec_one_scc utils prog proc_scc round pre_trans_constrs =
       in
       let new_specs = update_term_spec_one_scc utils subst tg name_procs in
         
-      (* info_hprint "Termination Constraints"                                          *)
-      (*   (pr_list (fun c -> "\n" ^ (!print_term_trans_constraint c))) trans_constrs;  *)
-      (* info_pprint "\n";                                                              *)
+      info_hprint "Termination Constraints"
+        (pr_list (fun c -> "\n" ^ (!print_term_trans_constraint c))) trans_constrs;
+      info_pprint "\n";
       
-      (* info_hprint "SUBST" (pr_list (fun (unk, cmd) ->                                *)
-      (*   "\n" ^ (!print_term_res unk) ^ " -> " ^ (!print_term_subst_cmd cmd))) subst; *)
+      info_hprint "SUBST" (pr_list (fun (unk, cmd) ->
+        "\n" ^ (!print_term_res unk) ^ " -> " ^ (!print_term_subst_cmd cmd))) subst;
         
-      (* info_hprint "Termination Spec" (pr_list                                        *)
-      (*   ((fun (mn, spec) -> mn ^ "\n" ^ (!print_term_spec spec) ^ "\n"))) old_specs; *)
-      (* info_pprint "\n";                                                              *)
+      info_hprint "Termination Spec" (pr_list
+        ((fun (mn, spec) -> mn ^ "\n" ^ (!print_term_spec spec) ^ "\n"))) old_specs;
+      info_pprint "\n";
           
-      (* info_hprint "Inferred Termination Spec" (pr_list !print_term_spec) new_specs;  *)
-      (* info_pprint "\n";                                                              *)
+      info_hprint "Inferred Termination Spec" (pr_list !print_term_spec) new_specs;
+      info_pprint "\n";
       
       (* info_hprint "Simplified Termination Spec" !print_term_spec (simplify_term_spec new_spec); *)
       (* info_pprint "\n";                                                                         *)
