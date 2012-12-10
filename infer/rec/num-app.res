@@ -25,9 +25,9 @@ Procedure appN$int~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 62 invocations 
+Stop Omega... 61 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.25 second(s)
+Total verification time: 0.24 second(s)
 	Time spent in main process: 0.2 second(s)
-	Time spent in child processes: 0.05 second(s)
+	Time spent in child processes: 0.04 second(s)

@@ -5354,6 +5354,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   (* DD.tinfo_hprint (add_str "xpure_lhs_h1(2)" !Cast.print_mix_formula) xpure_lhs_h1 no_pos; *)
   (*let estate = estate_orig in*)
   (* TODO : can infer_collect_rel be made after infer_pure_m? *)
+  (* Collect relational definitions *)
   let (estate,lhs_new,rhs_p) = Inf.infer_collect_rel (fun x -> TP.is_sat_raw (MCP.mix_of_pure x)) estate_orig xpure_lhs_h1 
     lhs_p rhs_p pos in
   let infer_rel = estate.es_infer_rel in
