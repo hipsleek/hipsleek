@@ -1442,7 +1442,7 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
     CP.remove_dups_svl (List.concat ls_not_fwd_svl)
   in
   let find_well_defined_hp_x hds hvs (hp,args) def_ptrs lhsb=
-    let closed_args = SAU.loop_up_closed_ptr_args prog hds hvs args in
+    let closed_args = SAU.look_up_closed_ptr_args prog hds hvs args in
     let undef_args = SAU.lookup_undef_args closed_args [] def_ptrs in
     if undef_args = [] then
       let f = SAU.keep_data_view_hrel_nodes_fb prog lhsb hds hvs args [hp] in

@@ -3873,6 +3873,30 @@ let is_only_neqNull args unk_hps f0=
   Debug.no_2 "is_only_neqNull" !CP.print_svl pr1 string_of_bool
       (fun _ _ -> is_only_neqNull_x args unk_hps f0) args f0
 
+let get_args_neqNull_x args expl_ptrs f0=
+  (* let non_root_svl = List.concat *)
+  (*   (List.map (fun hd -> List.filter CP.is_node_typ hd.h_formula_data_arguments) hds) in *)
+  (* let non_root_args = CP.diff_svl args non_root_svl in *)
+  let helper1 p=
+    let neqNull_svl = CP.get_neq_null_svl p in
+    let neqNull_svl1 = CP.diff_svl neqNull_svl expl_ptrs in
+    CP.intersect_svl neqNull_svl1 args
+  in
+  let rec helper f=
+    match f with
+      | Base fb ->
+           helper1 (MCP.pure_of_mix fb.formula_base_pure)
+      | Exists fe ->
+          helper1 (MCP.pure_of_mix fe.formula_exists_pure)
+      | Or orf -> CP.remove_dups_svl ((helper orf.formula_or_f1) @ (helper orf.formula_or_f2))
+  in
+  helper f0
+
+let get_args_neqNull args f0=
+  let pr1 = !print_formula in
+  Debug.no_1 "get_args_neqNull" pr1 !CP.print_svl
+      (fun _ -> get_args_neqNull_x args f0) f0
+
 let remove_neqNulls p=
   let ps = (CP.split_conjunctions p) in
   let ps1 = CP.remove_redundant_helper ps [] in
@@ -3900,9 +3924,9 @@ let remove_neqNulls_f f0=
 
 
 (*elim redundant x!=null in p*)
-let remove_neqNull_redundant_hnodes hds p=
+let remove_neqNull_redundant_hnodes svl p=
   (*currently we just work with data nodes*)
-  let neqNulls = List.map (fun dn -> CP.mkNeqNull dn.h_formula_data_node dn.h_formula_data_pos) hds in
+  let neqNulls = List.map (fun sv -> CP.mkNeqNull sv no_pos) svl in
   let ps = (CP.split_conjunctions p) in
   let ps1 = CP.remove_redundant_helper ps [] in
   let new_ps = Gen.BList.difference_eq CP.equalFormula ps1 neqNulls in
@@ -3911,7 +3935,8 @@ let remove_neqNull_redundant_hnodes hds p=
 (*elim redundant x!=null in p*)
 let remove_neqNull_redundant_hnodes_hf hf p=
   let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula hf in
-  remove_neqNull_redundant_hnodes hds p
+  let svl = List.map (fun dn -> dn.h_formula_data_node) hds in
+  remove_neqNull_redundant_hnodes svl p
 
 let remove_neqNull_redundant_hnodes_f f0=
   let rec helper f=
@@ -3928,6 +3953,23 @@ let remove_neqNull_redundant_hnodes_f f0=
                      (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
   in
   helper f0
+
+let remove_neqNull_svl svl f0=
+  let rec helper f=
+    match f with
+      | Base fb -> let np = remove_neqNull_redundant_hnodes svl
+                     (MCP.pure_of_mix fb.formula_base_pure) in
+                   (Base {fb with formula_base_pure = MCP.mix_of_pure np})
+      | Or orf -> let nf1 = helper orf.formula_or_f1 in
+                  let nf2 = helper orf.formula_or_f2 in
+                  ( Or {orf with formula_or_f1 = nf1;
+                      formula_or_f2 = nf2;})
+		      | Exists fe -> let np = remove_neqNull_redundant_hnodes svl
+                       (MCP.pure_of_mix fe.formula_exists_pure) in
+                     (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
+  in
+  helper f0
+
 
 let remove_com_pures f0 nullPtrs com_eqPures=
   let remove p elim_svl=

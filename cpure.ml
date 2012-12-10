@@ -7817,6 +7817,33 @@ let is_neq_null_exp (f:formula)=
   Debug.no_1 "is_neq_null_exp" pr1 string_of_bool
       (fun _ -> is_neq_null_exp_x f) f
 
+let rec get_neq_null_svl_x (f:formula) =
+  let helper (bf:b_formula) =
+    match bf with
+      | (Neq (sv1,sv2,_),_) -> begin
+          match sv1,sv2 with
+            | Var (v,_), Null _ -> [v]
+            | Null _, Var (v,_) -> [v]
+            | _ -> []
+      end
+      | _ -> []
+  in
+  match f with
+	| BForm (b,_)-> helper b
+	| And (b1,b2,_) -> (get_neq_null_svl_x b1)@(get_neq_null_svl_x b2)
+	| AndList b -> List.fold_left (fun svl (_,c)->
+        let svl1 = get_neq_null_svl_x c in
+        svl@svl1) [] b
+	| Or _ -> report_error no_pos "cpure.get_neq_null_svl: ?"
+	| Not (b,_,_)-> get_neq_null_svl_x b
+	| Forall (_,f,_,_) -> get_neq_null_svl_x f
+	| Exists (_,f,_,_) -> get_neq_null_svl_x f
+
+let get_neq_null_svl (f:formula)=
+  let pr1 = !print_formula in
+  Debug.no_1 "get_neq_null_svl" pr1 !print_svl
+      (fun _ -> get_neq_null_svl_x f) f
+
 let check_dang_or_null_exp_x root (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
