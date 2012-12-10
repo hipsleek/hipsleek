@@ -1,11 +1,3 @@
-data node {
-  int val;
-  node next;
-}
-
-ll<n> == self=null & n=0
-  or self::node<_,q> * q::ll<n-1>
-  inv n>=0;
 
 pred_prim RS<high:int>
   inv high>=0;
@@ -28,41 +20,36 @@ void sub_stk(int n)
 lemma "combine2" self::RS_mark<m1>*self::RS_mark<m2> 
   -> self::RS_mark<m> & m=max(m1,m2);
 
-bool rand()
- requires true
- ensures res or !res;
-
-relation R1(int h,int n, int m).
+relation R1(int n, int m).
 relation R2(int n, int m).
 
-int length(node l)
-  infer [R1]
-  requires stk::RS<m> * l::ll<n>@L 
+int sum(int x)
+  //infer [R1]
+  requires stk::RS<m> & x>=0
   ensures  stk::RS<m> 
-  * mx::RS_mark<h> & res=n //& h=m+2*n+2;
-  & R1(h,m,n);
+  * mx::RS_mark<h> & res=2*x & h=m+2*x+2;
 {
   add_stk(2); //subtract stack frame
   int r;
-  if (l==null) r=0;
+  if (x==0) r=0;
   else {
-    node nx = l.next;
-    r=1+length(nx);
+    r=2+sum(x-1);
   }
   sub_stk(2); //add back stack frame prior to return
   return r;
 }
 
 /*
-*************************************
+************************************
 *******pure relation assumption ******
 *************************************
-[RELDEFN R1: ( n=0 & m=h-2 & 2<=h) -->  R1(h,m,n),
-RELDEFN R1: ( ((n=n_663+1 & m=m_662-2 & h=h_680 & 2<=m_662 & m_662<h_680 & 0<=n_663) | 
-(n=n_663+1 & m=m_662-2 & h=m_662 & h_680<=m_662 & 2<=m_662 & 0<=n_663)) & 
-R1(h_680,m_662,n_663)) -->  R1(h,m,n)]
+[RELDEFN R1: ( n=0 & 2<=h) -->  R1(h,n),
+RELDEFN R1: ( n=n_662+1 & h_679<=h & 2<=h & 0<=n_662 & R1(h_679,n_662)) -->  R1(h,n)]
 *************************************
 
-!!! IGNORING PROBLEM of fix-point calculation
-Pr
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( R1(h,n), n>=0 & h>=2)]
+*************************************
  */

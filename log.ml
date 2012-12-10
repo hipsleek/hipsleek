@@ -82,12 +82,12 @@ let pr_sleek_log_entry e=
   (match e.sleek_proving_hprel_ass with
         | [] -> ()
         | _  -> let pr = pr_list_ln Cprinter.string_of_hprel_short in
-                fmt_string ("hprel ass: " ^ (pr e.sleek_proving_hprel_ass)^"\n")
+                fmt_string ("hprel_ass: " ^ (pr e.sleek_proving_hprel_ass)^"\n")
   );
   (match e.sleek_proving_rel_ass with
         | [] -> ()
         | _  -> let pr = pr_list_ln CP.string_of_infer_rel in
-                fmt_string ("pure rel ass: " ^ (pr e.sleek_proving_rel_ass)^"\n")
+                fmt_string ("pure rel_ass: " ^ (pr e.sleek_proving_rel_ass)^"\n")
   );
   fmt_string  ("res: " ^ (Cprinter.string_of_list_context_short e.sleek_proving_res));
   fmt_close()
