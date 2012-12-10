@@ -14,7 +14,8 @@ pred ll<n, v1, v2> == self = null & n = 0
 
 //
 // (2) fails but should be valid
-//checkentail x::ll<n,@A,@M> |- x::ll<n,@A,@L>.
+checkentail x::node<_@A,_@L> |- x::node<_@A,_@M>.
+//checkentail x::ll<n,@A,@M> |- x::ll<n,@A,@M>.
 //print residue.
 
 
@@ -23,7 +24,7 @@ pred ll<n, v1, v2> == self = null & n = 0
 //print residue.
 
 // (6) fails but should be valid as above
-checkentail y::node<p@A,q@L>  * z::node<_@A,_@A> *  x::node<p@A,q@L>  |- x != y.
+//checkentail y::node<p@A,q@L>  * z::node<_@A,_@A> *  x::node<p@A,q@L>  |- x != y.
 print residue.
 
 
