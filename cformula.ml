@@ -3892,10 +3892,29 @@ let get_args_neqNull_x args expl_ptrs f0=
   in
   helper f0
 
-let get_args_neqNull args f0=
+let get_args_neqNull args expl_svl f0=
   let pr1 = !print_formula in
   Debug.no_1 "get_args_neqNull" pr1 !CP.print_svl
-      (fun _ -> get_args_neqNull_x args f0) f0
+      (fun _ -> get_args_neqNull_x args expl_svl f0) f0
+
+let get_neqNull_x f0=
+  let helper1 p=
+    CP.get_neq_null_svl p
+  in
+  let rec helper f=
+    match f with
+      | Base fb ->
+           helper1 (MCP.pure_of_mix fb.formula_base_pure)
+      | Exists fe ->
+          helper1 (MCP.pure_of_mix fe.formula_exists_pure)
+      | Or orf -> CP.remove_dups_svl ((helper orf.formula_or_f1) @ (helper orf.formula_or_f2))
+  in
+  helper f0
+
+let get_neqNull f0=
+  let pr1 = !print_formula in
+  Debug.no_1 "get_neqNull" pr1 !CP.print_svl
+      (fun _ -> get_neqNull_x f0) f0
 
 let remove_neqNulls p=
   let ps = (CP.split_conjunctions p) in

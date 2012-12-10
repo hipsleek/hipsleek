@@ -1224,35 +1224,49 @@ let remove_dups_pardefs_w_neqNull_x grp=
     let nf1 = CF.subst ss f1 in
     (a1,args1,f1,a4,nf1)
   in
-  let rec process_one args0 (a11,args1,a13,a14,f1) rem=
-    match rem with
-      | [] -> [(a11,args1,a13,a14,f1)]
+  let get_expl_svl f=
+    let hds = get_hdnodes f in
+    List.map (fun hd -> hd.CF.h_formula_data_node) hds
+  in
+  let process_one args0 expl_svl (a11,args1,a13,a14,f1) rem=
+    let neqNull_svl1 = CF.get_neqNull f1 in
+    let rec helper l_rem=
+    match l_rem with
+      | [] ->
+          let ss = List.combine args0 args1 in
+          let neqNull_svl12 = List.map (CP.subs_one ss) neqNull_svl1 in
+          let expl_svl1 = List.map (CP.subs_one ss) expl_svl in
+          let hpargs = List.concat (snd (List.split (CF.get_HRels_f a13))) in
+          (* let _ = Debug.info_pprint ("    hpargs:" ^ (!CP.print_svl hpargs)) no_pos in *)
+          (* let _ = Debug.info_pprint ("    neqNull_svl12:" ^ (!CP.print_svl neqNull_svl12)) no_pos in *)
+          let neq_svl = CP.intersect_svl neqNull_svl12 (expl_svl1@a14@hpargs) in
+          let newf = CF.remove_neqNull_svl neq_svl a13 in
+          if is_empty_f newf then [] else
+            [(a11,args1,newf,a14,f1)]
       | (a21,args2,a23,a24,f2)::tl ->
-          let neqNull_svl1 = CF.get_args_neqNull args0 [] f1 in
-          let neqNull_svl2 = CF.get_args_neqNull args0 [] f2 in
+          let neqNull_svl2 = CF.get_neqNull f2 in
           let _ = Debug.ninfo_pprint ("    neqNull_svl1:" ^ (!CP.print_svl neqNull_svl1)) no_pos in
           let _ = Debug.ninfo_pprint ("    neqNull_svl2:" ^ (!CP.print_svl neqNull_svl2)) no_pos in
           let neqNull_svl11 = CP.diff_svl neqNull_svl1 neqNull_svl2 in
           if neqNull_svl11 = [] then
             let b = check_relaxeq_formula f1 f2 in
-            if b then [] else process_one args0 (a11,args1,a13,a14,f1) tl
+            if b then [] else helper tl
           else
-            (*get hds*)
-            let hd2s = get_hdnodes f2 in
-            let exp_svl2 = List.map (fun hd -> hd.CF.h_formula_data_node) hd2s in
-            if CP.diff_svl neqNull_svl11 exp_svl2 = [] then
+            if CP.diff_svl neqNull_svl11 expl_svl = [] then
               let new_f1 = CF.remove_neqNull_svl neqNull_svl11 f1 in
               let new_f2 = CF.drop_hnodes_f f2 neqNull_svl11 in
               let b = check_relaxeq_formula new_f1 new_f2 in
-            if b then [] else process_one args0 (a11,args1,a13,a14,f1) tl
-            else process_one args0 (a11,args1,a13,a14,f1) tl
+              if b then [] else helper tl
+            else helper tl
+    in
+    helper rem
   in
-  let rec loop_helper args0 ls res=
+  let rec loop_helper args0 expl_svl ls res=
     match ls with
       | [] -> res
       | pdef_ex::tl ->
-          let new_pdef = process_one args0 pdef_ex (res@tl) in
-          loop_helper args0 tl (res@new_pdef)
+          let new_pdef = process_one args0 expl_svl pdef_ex (res@tl) in
+          loop_helper args0 expl_svl tl (res@new_pdef)
   in
   (*to add the normalized f*)
   let args0,new_grp=
@@ -1262,7 +1276,8 @@ let remove_dups_pardefs_w_neqNull_x grp=
           let new_tl = List.map (norm args0) tl in
           (args0,(a1,args0,f0,a4,f0)::new_tl)
   in
-  let res_ex = loop_helper args0 new_grp [] in
+  let expl_svl = CP.remove_dups_svl (List.concat (List.map (fun (_,_,_,_,f0) -> get_expl_svl f0) new_grp)) in
+  let res_ex = loop_helper args0 expl_svl new_grp [] in
   (*to remove the normalized f*)
   List.map (fun (a1,a2,a3,a4,a5) -> (a1,a2,a3,a4)) res_ex
 
@@ -2267,7 +2282,7 @@ let get_longest_common_hnodes_list prog unk_hps unk_svl hp r non_r_args args fs=
   let pr2 = fun (_, def) -> Cprinter.string_of_hp_rel_def def in
   let pr3 = !CP.print_sv in
   let pr4 = !CP.print_svl in
-  Debug.ho_5 "get_longest_common_hnodes_list" pr3 pr4 pr4 pr4 pr1 (pr_list_ln pr2)
+  Debug.no_5 "get_longest_common_hnodes_list" pr3 pr4 pr4 pr4 pr1 (pr_list_ln pr2)
       (fun _ _ _ _ _-> get_longest_common_hnodes_list_x prog unk_hps unk_svl hp r non_r_args args fs)
       hp args unk_hps unk_svl fs
 

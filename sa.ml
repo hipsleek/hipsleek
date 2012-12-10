@@ -1083,7 +1083,7 @@ let rec collect_par_defs_one_side_one_hp_aux_x prog f (hrel, args) def_ptrs
         let test2 = (not (SAU.is_empty_f l)) (* && (not (CF.is_only_neqNull args keep_unk_hps l)) *) in
         if test2 then
           let l_r = (hrel, args, (* CP.intersect_svl args *) unk_svl, l, Some l, None) in
-          let _ =  DD.info_pprint ("  partial defs: \n" ^
+          let _ =  DD.ninfo_pprint ("  partial defs: \n" ^
                                           (let pr =  SAU.string_of_par_def_w_name in pr l_r) ) no_pos in
           [l_r]
         else []
@@ -2421,7 +2421,7 @@ let generalize_one_hp_x prog non_ptr_unk_hps unk_hps par_defs=
 let generalize_one_hp prog non_ptr_unk_hps unk_hps par_defs=
   let pr1 = pr_list_ln SAU.string_of_par_def_w_name_short in
   let pr2 = pr_list_ln (pr_pair !CP.print_sv Cprinter.string_of_hp_rel_def) in
-  Debug.ho_1 "generalize_one_hp" pr1 pr2
+  Debug.no_1 "generalize_one_hp" pr1 pr2
       (fun _ -> generalize_one_hp_x prog non_ptr_unk_hps unk_hps par_defs) par_defs
 
 let get_pdef_body_x unk_hps post_hps (a1,args,unk_args,a3,olf,orf)=
@@ -2947,7 +2947,7 @@ let generalize_hps_par_def_x prog non_ptr_unk_hps unk_hpargs post_hps par_defs=
     dont subst recursively
     search_largest_matching between two formulas
   *)
-  let groups1b = SAU.generate_equiv_pdefs unk_hps groups1a in
+  let groups1b = SAU.generate_equiv_pdefs unk_hps groups1 in
   let groups2 = pardef_subst_fix prog unk_hps groups1b in
   (* let _ = Debug.info_pprint ("     END: " ) no_pos in *)
   (*remove empty*)
