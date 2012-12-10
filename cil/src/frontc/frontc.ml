@@ -180,7 +180,7 @@ and clexer lexbuf =
     let token = Clexer.initial lexbuf in
     let white = Clexer.get_white () in
     let endPos = Clexer.currentPos () in
-    let cabsloc = Clexer.makeLoc startPos endPos in
+    let cabsloc = Cabs.makeLoc startPos endPos in
     let lexeme = Clexer.get_extra_lexeme () ^ Lexing.lexeme lexbuf in
     white,lexeme,token,cabsloc
 

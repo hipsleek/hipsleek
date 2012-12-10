@@ -2623,68 +2623,56 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 					  C.exp_catch_body = new_bd;																					   
 					  C.exp_catch_pos = pos;},ct2)
 	        end
-	  | I.Cond {
-            I.exp_cond_condition = e1;
-            I.exp_cond_then_arm = e2;
-            I.exp_cond_else_arm = e3;
-            I.exp_cond_path_id = pi;
-            I.exp_cond_pos = pos } ->
-      let _ = print_endline ("== if loc start lnum = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_lnum)) in
-      let _ = print_endline ("== if loc start cnum = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_cnum)) in
-      let _ = print_endline ("== if loc start bol = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_bol)) in
-      let _ = print_endline ("== if loc end lnum = " ^ (string_of_int pos.Globals.end_pos.Lexing.pos_lnum)) in
-      let _ = print_endline ("== if loc end cnum = " ^ (string_of_int pos.Globals.end_pos.Lexing.pos_cnum)) in
-      let _ = print_endline ("== if loc end bol = " ^ (string_of_int pos.Globals.end_pos.Lexing.pos_bol)) in
-      
-							(* let str_pi=match pi with                                                          *)
-							(* 			| None -> print_endline "none path id of cond"                              *)
-							(* 			| Some (x,y)-> 	print_endline ("Cond id: "^(string_of_int x)^" and "^y) in *)
-		    (* let _ = print_string ("trans_exp :: cond = " ^ Iprinter.string_of_exp e1 ^ " then branch = " ^ Iprinter.string_of_exp e2 ^ " else branch = " ^ Iprinter.string_of_exp e3 ^ "\n") in *) 
-            let (ce1, te1) = helper e1 in
-            if not (CP.are_same_types te1 C.bool_type) then
-              Err.report_error { Error.error_loc = pos; Error.error_text = "conditional expression is not bool";}
-            else
-              (let (ce2', te2) = helper e2 in
-              let (ce3', te3) = helper e3 in
-              let ce2 = insert_dummy_vars ce2' pos in
-              let ce3 = insert_dummy_vars ce3' pos in
-              match ce1 with
-                | C.Var { C.exp_var_type = _; C.exp_var_name = v; C.exp_var_pos = _} ->
-                      ((C.Cond{
-                          C.exp_cond_type = te2;
-                          C.exp_cond_condition = v;
-                          C.exp_cond_then_arm = ce2;
-                          C.exp_cond_else_arm = ce3;
-                          C.exp_cond_pos = pos;
-                          C.exp_cond_path_id = pi; }), te2)
-                | _ ->
-                      let e_pos = Iast.get_exp_pos e1 in
-                      let fn = (fresh_var_name "bool" e_pos.start_pos.Lexing.pos_lnum) in
-                      let vd = C.VarDecl {
-                          C.exp_var_decl_type = C.bool_type;
-                          C.exp_var_decl_name = fn;
-                          C.exp_var_decl_pos = e_pos; } in
-                      let init_e = C.Assign {
-                          C.exp_assign_lhs = fn;
-                          C.exp_assign_rhs = ce1;
-                          C.exp_assign_pos = e_pos;} in
-                      let cond_e = C.Cond {
-                          C.exp_cond_type = te2;
-                          C.exp_cond_condition = fn;
-                          C.exp_cond_then_arm = ce2;
-                          C.exp_cond_else_arm = ce3;
-                          C.exp_cond_pos = pos;
-                          C.exp_cond_path_id = pi; } in
-                      let tmp_e1 = C.Seq {
-                          C.exp_seq_type = te2;
-                          C.exp_seq_exp1 = init_e;
-                          C.exp_seq_exp2 = cond_e;
-                          C.exp_seq_pos = e_pos; } in
-                      let tmp_e2 = C.Seq {
-                          C.exp_seq_type = te2;
-                          C.exp_seq_exp1 = vd;
-                          C.exp_seq_exp2 = tmp_e1;
-                          C.exp_seq_pos = pos; } in (tmp_e2, te2))
+	  | I.Cond {I.exp_cond_condition = e1;
+              I.exp_cond_then_arm = e2;
+              I.exp_cond_else_arm = e3;
+              I.exp_cond_path_id = pi;
+              I.exp_cond_pos = pos } ->
+        let (ce1, te1) = helper e1 in
+        if not (CP.are_same_types te1 C.bool_type) then
+          Err.report_error { Error.error_loc = pos; Error.error_text = "conditional expression is not bool";}
+        else
+          (let (ce2', te2) = helper e2 in
+          let (ce3', te3) = helper e3 in
+          let ce2 = insert_dummy_vars ce2' pos in
+          let ce3 = insert_dummy_vars ce3' pos in
+          match ce1 with
+            | C.Var { C.exp_var_type = _; C.exp_var_name = v; C.exp_var_pos = _} ->
+                ((C.Cond{C.exp_cond_type = te2;
+                         C.exp_cond_condition = v;
+                         C.exp_cond_then_arm = ce2;
+                         C.exp_cond_else_arm = ce3;
+                         C.exp_cond_pos = pos;
+                         C.exp_cond_path_id = pi; }), te2)
+            | _ ->
+                let e_pos = Iast.get_exp_pos e1 in
+                let fn = (fresh_var_name "bool" e_pos.start_pos.Lexing.pos_lnum) in
+                let vd = C.VarDecl {
+                    C.exp_var_decl_type = C.bool_type;
+                    C.exp_var_decl_name = fn;
+                    C.exp_var_decl_pos = e_pos; } in
+                let init_e = C.Assign {
+                    C.exp_assign_lhs = fn;
+                    C.exp_assign_rhs = ce1;
+                    C.exp_assign_pos = e_pos;} in
+                let cond_e = C.Cond {
+                    C.exp_cond_type = te2;
+                    C.exp_cond_condition = fn;
+                    C.exp_cond_then_arm = ce2;
+                    C.exp_cond_else_arm = ce3;
+                    C.exp_cond_pos = pos;
+                    C.exp_cond_path_id = pi; } in
+                let tmp_e1 = C.Seq {
+                    C.exp_seq_type = te2;
+                    C.exp_seq_exp1 = init_e;
+                    C.exp_seq_exp2 = cond_e;
+                    C.exp_seq_pos = e_pos; } in
+                let tmp_e2 = C.Seq {
+                    C.exp_seq_type = te2;
+                    C.exp_seq_exp1 = vd;
+                    C.exp_seq_exp2 = tmp_e1;
+                    C.exp_seq_pos = pos; } in
+                (tmp_e2, te2))
       | I.Debug { I.exp_debug_flag = flag; I.exp_debug_pos = pos } -> ((C.Debug { C.exp_debug_flag = flag; C.exp_debug_pos = pos; }), C. void_type)
       | I.Time (b,s,p) -> (C.Time (b,s,p), C. void_type)
       | I.Dprint { I.exp_dprint_string = str; I.exp_dprint_pos = pos } ->
@@ -2769,59 +2757,58 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   C.exp_block_local_vars = local_vars;
                   C.exp_block_pos = pos; }),new_t)))
       | I.Null pos -> ((C.Null pos), (Named ""))
-      | I.Return {
-            I.exp_return_val = oe;
-            I.exp_return_path_id = pi; (*control_path_id -> option (int * string)*)
-            I.exp_return_pos = pos} ->  begin
+      | I.Return {I.exp_return_val = oe;
+                  I.exp_return_path_id = pi; (*control_path_id -> option (int * string)*)
+                  I.exp_return_pos = pos} ->  begin
           let cret_type = trans_type prog proc.I.proc_return proc.I.proc_loc in
-					let _=if(!Globals.proof_logging_txt) then (*proof logging*)   
-						Globals.return_exp_pid := !Globals.return_exp_pid @ [pi] in
+          let _=if(!Globals.proof_logging_txt) then (*proof logging*)   
+            Globals.return_exp_pid := !Globals.return_exp_pid @ [pi] in
           match oe with
             | None -> 
-                  if CP.are_same_types cret_type C.void_type then
-                    (C.Sharp ({ C.exp_sharp_type = C.void_type;
-                    C.exp_sharp_flow_type = C.Sharp_ct 
-                            {CF.formula_flow_interval = !ret_flow_int ; CF.formula_flow_link = None};
-                    C.exp_sharp_val = Cast.Sharp_no_val;
-                    C.exp_sharp_unpack = false;
-                    C.exp_sharp_path_id = pi;
-                    C.exp_sharp_pos = pos}), C.void_type)
-                  else
-                    Err.report_error { Err.error_loc = proc.I.proc_loc; 
-                    Err.error_text = "return statement for procedures with non-void return type need a value" }
+                if CP.are_same_types cret_type C.void_type then
+                  (C.Sharp ({ C.exp_sharp_type = C.void_type;
+                  C.exp_sharp_flow_type = C.Sharp_ct 
+                          {CF.formula_flow_interval = !ret_flow_int ; CF.formula_flow_link = None};
+                  C.exp_sharp_val = Cast.Sharp_no_val;
+                  C.exp_sharp_unpack = false;
+                  C.exp_sharp_path_id = pi;
+                  C.exp_sharp_pos = pos}), C.void_type)
+                else
+                  Err.report_error { Err.error_loc = proc.I.proc_loc; 
+                  Err.error_text = "return statement for procedures with non-void return type need a value" }
             | Some e -> 
-                  let e_pos = Iast.get_exp_pos e in
-                  let ce, ct = helper e in
-                  if sub_type ct cret_type then
-                    let fn = (fresh_ty_var_name (ct) e_pos.start_pos.Lexing.pos_lnum) in
-                    let vd = C.VarDecl { 
-                        C.exp_var_decl_type = ct;
-                        C.exp_var_decl_name = fn;
-                        C.exp_var_decl_pos = e_pos;} in
-                    let init_e = C.Assign { 
-                        C.exp_assign_lhs = fn;
-                        C.exp_assign_rhs = ce;
-                        C.exp_assign_pos = e_pos;} in
-                    let shar = C.Sharp ({
-                        C.exp_sharp_type = C.void_type;
-                        C.exp_sharp_flow_type = C.Sharp_ct {CF.formula_flow_interval = !ret_flow_int ; CF.formula_flow_link = None};
-                        C.exp_sharp_unpack = false;
-                        C.exp_sharp_val = Cast.Sharp_var (ct,fn);
-                        C.exp_sharp_path_id = pi;
-                        C.exp_sharp_pos = pos}) in
-                    let tmp_e1 = C.Seq { 
-                        C.exp_seq_type = C.void_type;
-                        C.exp_seq_exp1 = init_e;
-                        C.exp_seq_exp2 = shar;
-                        C.exp_seq_pos = e_pos;} in
-                    let tmp_e2 = C.Seq { 
-                        C.exp_seq_type = C.void_type;
-                        C.exp_seq_exp1 = vd;
-                        C.exp_seq_exp2 = tmp_e1;
-                        C.exp_seq_pos = e_pos;} in 
-                    (tmp_e2, C.void_type)
-                  else
-                    Err.report_error { Err.error_loc = proc.I.proc_loc; Err.error_text = "return type doesn't match" }
+                let e_pos = Iast.get_exp_pos e in
+                let ce, ct = helper e in
+                if sub_type ct cret_type then
+                  let fn = (fresh_ty_var_name (ct) e_pos.start_pos.Lexing.pos_lnum) in
+                  let vd = C.VarDecl { 
+                      C.exp_var_decl_type = ct;
+                      C.exp_var_decl_name = fn;
+                      C.exp_var_decl_pos = e_pos;} in
+                  let init_e = C.Assign { 
+                      C.exp_assign_lhs = fn;
+                      C.exp_assign_rhs = ce;
+                      C.exp_assign_pos = e_pos;} in
+                  let shar = C.Sharp ({
+                      C.exp_sharp_type = C.void_type;
+                      C.exp_sharp_flow_type = C.Sharp_ct {CF.formula_flow_interval = !ret_flow_int ; CF.formula_flow_link = None};
+                      C.exp_sharp_unpack = false;
+                      C.exp_sharp_val = Cast.Sharp_var (ct,fn);
+                      C.exp_sharp_path_id = pi;
+                      C.exp_sharp_pos = pos}) in
+                  let tmp_e1 = C.Seq { 
+                      C.exp_seq_type = C.void_type;
+                      C.exp_seq_exp1 = init_e;
+                      C.exp_seq_exp2 = shar;
+                      C.exp_seq_pos = e_pos;} in
+                  let tmp_e2 = C.Seq { 
+                      C.exp_seq_type = C.void_type;
+                      C.exp_seq_exp1 = vd;
+                      C.exp_seq_exp2 = tmp_e1;
+                      C.exp_seq_pos = e_pos;} in 
+                  (tmp_e2, C.void_type)
+                else
+                  Err.report_error { Err.error_loc = proc.I.proc_loc; Err.error_text = "return type doesn't match" }
         end
       | I.Seq { I.exp_seq_exp1 = e1; I.exp_seq_exp2 = e2; I.exp_seq_pos = pos }->
             let (ce1', te1) = trans_exp prog proc e1 in
