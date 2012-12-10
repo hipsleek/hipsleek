@@ -403,6 +403,7 @@ SHGram.Entry.of_parser "peek_print"
              | [FORALL,_;OPAREN,_;_] -> ()
              | [EXISTS,_;OPAREN,_;_] -> ()
              | [UNION,_;OPAREN,_;_] -> ()
+	     (* | [XPURE,_;OPAREN,_;_] -> () *)
              | [IDENTIFIER id,_;OPAREN,_;_] -> if hp_names # mem id then raise Stream.Failure else ()
              | [_;COLONCOLON,_;_] -> raise Stream.Failure
              | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure
@@ -1016,7 +1017,7 @@ general_h_args:
 
   
               
-opt_pure_constr: [[t=OPT and_pure_constr -> un_option t (P.mkTrue no_pos)]];
+opt_pure_constr:[[t=OPT and_pure_constr -> un_option t (P.mkTrue no_pos)]];
     
 and_pure_constr: [[ peek_and_pure; `AND; t= pure_constr ->t]];
     
@@ -1056,7 +1057,7 @@ cexp_w:
 	[ sl=slicing_label; f=SELF -> set_slicing_utils_pure_double f sl ]
   
   | "pure_or" RIGHTA
-   [ pc1=SELF; `OR; pc2=SELF             -> apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 None (get_pos_camlp4 _loc 2)) pc1 pc2]
+   [ pc1=SELF; `OR; pc2=SELF             ->apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 None (get_pos_camlp4 _loc 2)) pc1 pc2]
   
   | "pure_and" RIGHTA
    [ pc1=SELF; peek_and; `AND; pc2=SELF              -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos_camlp4 _loc 2)) pc1 pc2]
@@ -1183,34 +1184,44 @@ cexp_w:
      [e=SELF ; `COLON; ty=typ               
              -> apply_cexp_form1 (fun c-> P.mkAnnExp c ty (get_pos_camlp4 _loc 1)) e]
 
-  | "una"
-      [(*   h = ho_fct_header                   -> Pure_f (P.mkTrue (get_pos_camlp4 _loc 1)) *)
+   | "una"
+       [(*   h = ho_fct_header                   -> Pure_f (P.mkTrue (get_pos_camlp4 _loc 1)) *)
      (* | *) `NULL                                     -> Pure_c (P.Null (get_pos_camlp4 _loc 1))
 
-	 (* An Hoa : Hole for partial structures, represented by the hash # character. *)
-	  | `HASH -> let _ = hash_count := !hash_count + 1 in 
-				 Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1)))
-
-      | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN -> (* print_string("here"); *)
-			(* AnHoa: relation constraint, for instance, given the relation 
-			 * s(a,b,c) == c = a + b.
-			 * After this definition, we can have the relation constraint like
-			 * s(x,1,x+1), s(x,y,x+y), ...
-			 * in our formula.
-			 *)
-      if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
-        else if hp_names # mem id then Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
-        else
-          begin
+	  (* An Hoa : Hole for partial structures, represented by the hash # character. *)
+       | `HASH -> let _ = hash_count := !hash_count + 1 in 
+		  Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1)))
+       | `IDENTIFIER id1;`OPAREN; `IDENTIFIER id; `OPAREN; cl = id_list; `CPAREN ; `CPAREN-> (* xpure *)
+       (* print_string ("xpure"^id1^"("^id^"())!!!"); *)
+	  	  if hp_names # mem id then Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
+	  	  else
+	  	    begin
+	  	      if not(rel_names # mem id) then print_endline ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
+	  	      else  print_endline ("WARNING2 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (in rel_names)") ;
+	  	      Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
+	  	    end
+       | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN -> (* print_string("here"); *)
+      (* AnHoa: relation constraint, for instance, given the relation 
+       * s(a,b,c) == c = a + b.
+       * After this definition, we can have the relation constraint like
+       * s(x,1,x+1), s(x,y,x+y), ...
+       * in our formula.
+       *)
+	  (* print_string ("rel: "^id^"!!!\n"); *)
+	  if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
+          else if hp_names # mem id then Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
+          else
+            begin
               if not(rel_names # mem id) then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
-          Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
-          end
+              Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
+            end
         (* (try ( *)
         (*   if (String.sub id 0 5) = "term_" then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1)) *)
         (*   else Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))) *)
         (* with Invalid_argument _ -> Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))) *)
+      
       | peek_cexp_list; ocl = opt_comma_list -> (* let tmp = List.map (fun c -> P.Var(c,get_pos_camlp4 _loc 1)) ocl in *) Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
-      | t = cid                -> (* print_string ("cexp:"^(fst t)^"\n"); *)Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
+      | t = cid                ->  Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
       | `IMM -> Pure_c (P.AConst(Imm, get_pos_camlp4 _loc 1))
       | `MUT -> Pure_c (P.AConst(Mutable, get_pos_camlp4 _loc 1))
       | `LEND -> Pure_c (P.AConst(Lend, get_pos_camlp4 _loc 1))
@@ -1218,7 +1229,7 @@ cexp_w:
 	  | `ATAT;t=id	-> 
 							let t = try Hashtbl.find !macros t with _ -> (print_string ("warning, undefined macro "^t); Ts.top) in
 							Pure_c (P.Tsconst(t,get_pos_camlp4 _loc 1))
-      | `INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
+      | `INT_LITER (i,_)                          ->Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
       | `FLOAT_LIT (f,_)                          -> (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos_camlp4 _loc 1))
       | `OPAREN; t=SELF; `CPAREN                -> t  
       |  i=cid; (* An Hoa : extend with multi-dimensional array access *) `OSQUARE; c = LIST1 cexp SEP `COMMA; `CSQUARE                            -> Pure_c (P.ArrayAt (i, c, get_pos_camlp4 _loc 1))
@@ -1235,7 +1246,7 @@ cexp_w:
             -> apply_pure_form1 (fun c-> List.fold_left (fun f v ->P.mkExists [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
 		  | `FORALL; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN 
             -> apply_pure_form1 (fun c-> List.fold_left (fun f v-> P.mkForall [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
-		  | t=cid                             -> (*print_string ("pure_form:"^(fst t)^"\n");*) Pure_f (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 1), None), None ))
+		  | t=cid                             -> (* print_string ("pure_form:"^(fst t)^"\n"); *) Pure_f (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 1), None), None ))
 		  | `NOT; t=cid                       -> Pure_f (P.mkNot (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 2), None), None )) None (get_pos_camlp4 _loc 1))
 		  | `NOT; `OPAREN; c=pure_constr; `CPAREN     -> Pure_f (P.mkNot c None (get_pos_camlp4 _loc 1))  
 		  

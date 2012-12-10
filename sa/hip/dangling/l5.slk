@@ -1,0 +1,37 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+HeapPred G3(node a, node b,node c).
+
+infer [G3] G3(t_570,t_567,y) * x'::node<val_65_552,t_570> &x=x' & t_567!=null & t_567!=null & next_71_568=t_567
+|- G3(x',x,y).
+
+print residue.
+
+/*
+WHY HP_24(..) and why not consumed?
+
+*************************************
+*******relational assumption ********
+*************************************
+[ G3(t_570,t_567,y) * x'::node<val_65_552,t_570>@M&t_567!=null & 
+  x=x' --> G3(x',x,y) * HP_24(t_567)&true]
+*************************************
+ <1>HP_24(t_567)&x=x' & t_567!=null & t_567!=null & next_71_568=t_567&{FLOW,(19,20)=__norm}[]
+
+*/
+
+/*
+id: 20; caller: []; line: 71; classic: false; kind: POST; hec_num: 5; evars: []; c_heap: emp
+ checkentail G3(t_570,t_567,y) * x'::node<val_65_552,t_570>@M[Orig]&x=x' & t_567!=null & 
+!(v_bool_66_534') & t_567!=null & !(v_bool_66_534') & next_71_568=t_567&
+{FLOW,(22,23)=__norm}[]
+ |-  G3(x',x,y)&true&{FLOW,(22,23)=__norm}[]. 
+ass hprel: [ G3(t_570,t_567,y) * x'::node<val_65_552,t_570>@M&t_567!=null & 
+  x=x' --> G3(x',x,y) * HP_571(t_567)&true]
+res:  [
+  HP_571(t_567)&x=x' & t_567!=null & !(v_bool_66_534') & t_567!=null & !(v_bool_66_534') & next_71_568=t_567&{FLOW,(22,23)=__norm}[]
+  ]
+*/

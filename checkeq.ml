@@ -698,9 +698,29 @@ and check_equiv_bform  hvars b1 b2 mtl =
     (fun _ _ ->  check_equiv_bform_x hvars b1 b2 mtl) b1 b2
 
 and check_equiv_bform_x (hvars: ident list)(b1: CP.b_formula) (b2: CP.b_formula)(mt: map_table): (bool * (map_table list)) =
+  let rec check_eq_order_spec_var_list svl1 svl2 mt0=
+    match svl1,svl2 with
+      | [],[] -> (true,mt0)
+      | sv1::tl1,sv2::tl2 ->
+          let res, r_mt = check_spec_var_equiv hvars sv1 sv2 mt0 in
+          if res then
+            check_eq_order_spec_var_list tl1 tl2 r_mt
+          else (false,mt0)
+      | _ -> (false,mt0)
+  in
   match b1,b2 with
     | (BConst (true,_),_),  (BConst (true,_),_) -> (true,[mt])
     | (BConst (false,_),_),  (BConst (false,_),_) -> (true,[mt])
+    | (XPure xp1,_),  (XPure xp2,_) ->
+     
+        if xp1.xpure_view_name = xp1.xpure_view_name then
+          match xp1.xpure_view_node,xp1.xpure_view_node with
+            | None,None -> let r,r_mt = check_eq_order_spec_var_list xp1.xpure_view_arguments xp2.xpure_view_arguments mt in
+                           (r,[r_mt])
+            | Some r1,Some r2 -> let r,r_mt = check_eq_order_spec_var_list (r1::xp1.xpure_view_arguments) (r2::xp2.xpure_view_arguments) mt in
+                                 (r,[r_mt])
+            | _ -> (false,[mt])
+        else (false,[mt])
     | (Eq (e11,e12,_), _) , (Eq (e21,e22,_) , _) 
     | (Neq (e11,e12,_), _) , (Neq (e21,e22,_) , _)  ->
       (
@@ -1855,11 +1875,10 @@ let check_equiv_def_with_diff hvars svars (def1: (CF.formula * CF.formula)) (def
 
 let checkeq_defs_with_diff_x hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) inf_vars :  (bool*(((CF.formula * CF.formula) *  (CF.formula * CF.formula) * ((map_table * (CF.formula * CF.formula)*(CF.formula * CF.formula)) list)) list))=
   let  (mtb,spairs)  = checkeq_defs hvars svars defs infile_defs in
-  (* let (mtb,smap) = process_svars full_tb svars inf_vars in *)
-  (* let pr3 = pr_list_ln (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) in *)
-  (* print_string ("smap: "^(pr3 spairs)^ "\n"); *)
-  (* let pr4 = pr_list_ln (pr_pair Cprinter.string_of_spec_var_list Cprinter.string_of_spec_var) in *)
-  (* print_string ("current map: "^(pr4 mtb)^ "\n"); *)
+  let pr3 = pr_list_ln (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) in
+  print_string ("smap: "^(pr3 spairs)^ "\n");
+  let pr4 = pr_list_ln (pr_pair Cprinter.string_of_spec_var_list Cprinter.string_of_spec_var) in
+  print_string ("current map: "^(pr4 mtb)^ "\n");
   let exists_helper v1 v2 mtb =
     let exist v1 v2 mt =
       let (ls, key) = mt in
@@ -1878,12 +1897,14 @@ let checkeq_defs_with_diff_x hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.
 	in
 	CP.eq_spec_var hp_name v
       in
-      let def1 = List.find (fun (_,hp,_) -> check_hp (CF.formula_of_heap hp no_pos) v1) defs in
+      let def1 = List.find (fun (_,hp,_) ->
+          (* let _ = print_endline ("Diff Hp: " ^ (Cprinter.string_of_h_formula hp)) in *)
+          check_hp (CF.formula_of_heap hp no_pos) v1) defs in
       let def2 = List.find (fun (hp,_) -> check_hp hp v2) infile_defs in
       let (a,b,c) = def1 in
       ((CF.formula_of_heap b no_pos,c),def2)
     )
-    with Not_found -> report_error no_pos "Diff HP not found in either defs or infile_defs"
+    with Not_found -> report_error no_pos ("Diff HP: "^Cprinter.string_of_spec_var v1 ^" " ^Cprinter.string_of_spec_var v2 ^" not found in either defs or infile_defs")
   in
   let modify_mtl d1 d2 mtl hps=
     let find_hrel hprel_name hrs pv = 

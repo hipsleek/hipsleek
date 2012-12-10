@@ -712,6 +712,21 @@ let sort_exp a b =
               | _ -> (a,b)
           end
 
+let pr_xpure_view xp = match xp with
+    { 
+        CP.xpure_view_node = root ;
+        CP.xpure_view_name = vname;
+        CP.xpure_view_arguments = args;
+    } ->
+        let pr = string_of_spec_var in
+        let rn,args_s = match root with
+          | None -> ("", pr_list_round pr args)
+          | Some v -> ((pr v)^"::", pr_list_angle pr args)
+        in
+        fmt_string ("XPURE("^rn^vname^args_s^")")
+
+let string_of_xpure_view xpv = poly_string_of_pr pr_xpure_view xpv
+
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
   let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
@@ -727,6 +742,7 @@ let rec pr_b_formula (e:P.b_formula) =
       (*   pr_set pr_formula_exp ls2 *)
       (* else () *)
     | P.BConst (b,l) -> fmt_bool b 
+    | P.XPure v ->  fmt_string (string_of_xpure_view v)
     | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
     | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2
     | P.Lte (e1, e2, l) -> f_b e1; fmt_string op_lte ; f_b e2
@@ -1037,6 +1053,7 @@ let pr_hrel_formula hf=
 	      | arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
 		                           let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")")
     | _ -> report_error no_pos "Cprinter.pr_hrel_formula: can not happen"
+
 
 let rec prtt_pr_h_formula h = 
   let f_b e =  pr_bracket h_formula_wo_paren prtt_pr_h_formula e 
@@ -1491,18 +1508,18 @@ let pr_hp_rel hp_rel =
   fmt_string (pr3 hp_rel)
 
 let string_of_hp_rel_def hp_rel =
- let str_of_hp_rel (r,f1, f2) = ( (CP.print_rel_cat r)^ ": " ^(string_of_h_formula f1) ^ ":: "  ^(prtt_string_of_formula f2)) in
+ let str_of_hp_rel (r,f1, f2) = ( (CP.print_rel_cat r)^ ": " ^(string_of_h_formula f1) ^ " ::= "  ^(prtt_string_of_formula f2)) in
   (str_of_hp_rel hp_rel)
 
 let string_of_hp_rel_def_short hp_rel =
- let str_of_hp_rel (_,f1, f2) = ((string_of_h_formula f1) ^ ":: "  ^(prtt_string_of_formula f2)) in
+ let str_of_hp_rel (_,f1, f2) = ((string_of_h_formula f1) ^ " ::= "  ^(prtt_string_of_formula f2)) in
   (str_of_hp_rel hp_rel)
 
 let string_of_hp_rels (e) : string =
   (* CP.print_only_lhs_rhs e *)
   poly_string_of_pr pr_hp_rel e
 
-let pr_hprel_lhs_rhs (lhs,rhs) = 
+let pr_hprel_lhs_rhs (lhs,rhs) =
   (* fmt_string (CP.print_only_lhs_rhs rel) *)
   fmt_open_box 1;
   fmt_string "(";
@@ -2963,6 +2980,7 @@ let rec html_of_formula_exp e =
 	| P.ArrayAt (a, i, l) -> (html_of_spec_var a) ^ "[" ^ (String.concat "," (List.map html_of_formula_exp i)) ^ "]"
 
 let rec html_of_pure_b_formula f = match f with
+    | P.XPure _ -> "<b> XPURE </b>"
     | P.BConst (b,l) -> "<b>" ^ (string_of_bool b) ^ "</b>"
     | P.BVar (x, l) -> html_of_spec_var x
     | P.Lt (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_lt ^ (html_of_formula_exp e2)

@@ -95,7 +95,8 @@ let common_arguments = [
 	"Disable Lemma Proving");
 	("--dis-auto-num", Arg.Clear Globals.auto_number,
 	"Disable Auto Numbering");
-	("--dis-sleek-log-filter", Arg.Clear Globals.sleek_log_filter,
+	("--dis-sleek-log-filter
+", Arg.Clear Globals.sleek_log_filter,
 	"Sleek Log Filter Flag");
 	("--elp", Arg.Set Globals.check_coercions,
 	"Enable Lemma Proving");
@@ -345,6 +346,12 @@ let common_arguments = [
   ("--dis-sem", Arg.Set Globals.dis_sem, "Show differences between formulae");
   ("--show-diff-constrs", Arg.Set Globals.show_diff_constrs, "Show differences between list of constraint");
   ("--sa-print-inter", Arg.Set Globals.sa_print_inter, "Print intermediate results of normalization");
+  ("--sa-dis-norm", Arg.Clear Globals.sa_en_norm, "do normalization");
+  ("--sa-dangling", Arg.Set Globals.sa_elim_dangling, "elim dangling HP/pointers");
+  ("--sa-useless", Arg.Set Globals.sa_elim_useless, "elim useless parameter from HP predicate");
+  ("--sa-inlining", Arg.Set Globals.sa_inlining, "inline dangling HP/pointers");
+  ("--sa-split", Arg.Set Globals.sa_en_split, "splitting hp args into multiple hp if possible");
+  ("--sa-unify-dangling", Arg.Set Globals.sa_unify_dangling, "unify branches of definition to instantiate dangling predicate");
   ] 
 
 (* arguments/flags used only by hip *)	
