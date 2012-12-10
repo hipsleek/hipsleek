@@ -26,10 +26,11 @@ bool rand()
  requires true
  ensures res or !res;
 */
-/*
+
 void g() 
   requires stk::RS<n> 
   ensures  stk::RS<n> * mx::RS_mark<h> & h<=n+2 ;
+/*
 {
   add_stk(2); //add stack frame used
   sub_stk(2); //add stack frame used
@@ -39,20 +40,19 @@ void g()
 relation RR(int n, int m).
 
 void h() 
-  infer [RR]
-  requires stk::RS<nn> 
-  ensures  stk::RS<nn> * mx::RS_mark<hh> & RR(nn,hh);
+  requires stk::RS<n> 
+  ensures  stk::RS<n> * mx::RS_mark<h> & h<=n+2 ;
+/*
 {
   add_stk(3); //add stack frame used
   sub_stk(3); //add stack frame used
 }
+*/
 
-/*
 void f() 
-  requires stk::RS<n>
-  ensures  stk::RS<n> * mx::RS_mark<h>
-//    & m>=n+3+2 & h<=n+5+2;
-  & h<=n+3+2; // valid
+  infer [RR]
+  requires stk::RS<nn> 
+  ensures  stk::RS<nn> * mx::RS_mark<hh> & RR(nn,hh);
 {
   add_stk(2); //add stack frame used
   g(); h();
