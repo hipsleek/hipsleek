@@ -1,0 +1,21 @@
+data node { int val ; node next }.
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n-1> 
+	inv n >= 0.
+
+
+// testing unfolding
+
+checkentail (y::ll<n>@L); x::ll<m> * ((t::ll<a>@L); z::ll<m>) & n > 0  |- (y::node<_,_>@L).
+// y; x * (t; z)
+print residue.
+//1. Valid.
+
+
+checkentail (y::ll<n>@L); x::ll<m> * ((t::ll<a>@L); z::ll<m>) & n > 0  |- y::node<_,_>. 
+//print residue.
+//2. Fail.
+
+
+
+

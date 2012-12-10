@@ -50,6 +50,20 @@ let simp_lhs_rhs vars (c,lhs,rhs) =
 
 (************************************************)
 
+(* Stack of infer_rel that can be kept across sleek invocations *)
+(*  CP.infer_rel_type = (CP.rel_cat * CP.formula * CP.formula)  *)
+
+let pr = !CP.print_formula 
+let pr_ty = !CP.Label_Pure.ref_string_of_exp
+type fc_type = CP.formula * CP.Label_Pure.exp_ty
+
+let fixcalc_rel_stk : fc_type Gen.stack_pr = new Gen.stack_pr (pr_pair pr pr_ty) (==)
+
+let infer_rel_stk : CP.infer_rel_type Gen.stack_pr = new Gen.stack_pr 
+  CP.string_of_infer_rel (==)
+
+
+
 let rel_ass_stk : hprel Gen.stack_pr = new Gen.stack_pr 
   Cprinter.string_of_hprel_short (==)
 
@@ -1144,8 +1158,8 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
     let rel_rhs = List.concat rel_rhs_ls in
 
     if rel_rhs==[] then (
-      DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos; 
-      DD.devel_pprint "no relation to be inferred in rhs" pos; 
+      DD.tinfo_pprint ">>>>>> infer_collect_rel <<<<<<" pos; 
+      DD.tinfo_pprint "no relation in rhs" pos; 
       (estate,lhs_mix,rhs_mix)
     )
     else 
@@ -1165,8 +1179,8 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
       let rel_vars = List.concat (List.map CP.fv rel_lhs) in
       let lhs_rec_vars = CP.fv lhs_p_memo in
       if not (CP.subset rel_vars lhs_rec_vars) then (
-        DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
-        DD.devel_pprint ">>>>>> no recursive def <<<<<<" pos; 
+        DD.tinfo_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
+        DD.tinfo_pprint ">>>>>> no recursive def <<<<<<" pos; 
         (estate,lhs_mix,rhs_mix_new)
       )
       else
@@ -1199,9 +1213,9 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
           let vs_l = CP.fv lhs in
           (* To keep vars of RelForm _ that come from lhs *)
           let diff_vs = diff_svl vs_l (vs_r@rel_vars) in
-          DD.devel_hprint (add_str "diff_vs" !print_svl) diff_vs pos;
+          DD.tinfo_hprint (add_str "diff_vs" !print_svl) diff_vs pos;
           let new_lhs = CP.wrap_exists_svl lhs diff_vs in
-          DD.devel_hprint (add_str "new_lhs (b4 elim_exists)" !CP.print_formula) new_lhs pos;
+          DD.tinfo_hprint (add_str "new_lhs (b4 elim_exists)" !CP.print_formula) new_lhs pos;
           (* TODO: The better is to avoid from generating redundant primed vars *)
           let new_lhs = 
             if is_bag_cnt then 
@@ -1236,15 +1250,17 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
       	(* below causes non-linear LHS for relation *)
 	      (* let inf_rel_ls = List.map (simp_lhs_rhs vars) inf_rel_ls in *)
         (* DD.info_hprint (add_str "Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos; *)
+        infer_rel_stk # push_list inf_rel_ls;
         let estate = { estate with es_infer_rel = estate.es_infer_rel@inf_rel_ls } in
         if inf_rel_ls != [] then
           begin
-            DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
-            DD.devel_hprint (add_str "Infer Rel Ids" !print_svl) ivs pos;
+            DD.tinfo_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
+            DD.tinfo_hprint (add_str "Infer Rel Ids" !print_svl) ivs pos;
             (* DD.devel_hprint (add_str "LHS heap Xpure1:" !print_mix_formula) lhs_h_mix pos; *)
-            DD.devel_hprint (add_str "LHS pure" !CP.print_formula) lhs_p pos;
+            DD.tinfo_hprint (add_str "LHS pure" !CP.print_formula) lhs_p pos;
             DD.devel_hprint (add_str "RHS pure" !CP.print_formula) rhs_p pos;
-            DD.devel_hprint (add_str "RHS Rel List" (pr_list !CP.print_formula)) rel_rhs pos;
+           (* DD.tinfo_hprint (add_str "RHS pure" !CP.print_formula) rhs_p_n pos; *)
+            DD.tinfo_hprint (add_str "RHS Rel List" (pr_list !CP.print_formula)) rel_rhs pos;
           end;
         (estate,lhs_mix,rhs_mix_new)
 (*
@@ -1874,9 +1890,10 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
               hprel_lhs = CF.Base new_lhs_b;
               hprel_rhs = CF.Base new_rhs_b;
           } in
-          let _ = rel_ass_stk # push_list ([hp_rel]@defined_hprels) in
-          let _ = Log.current_hprel_ass_stk # push_list ([hp_rel]@defined_hprels) in
-          DD.tinfo_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr (defined_hprels@ [hp_rel]))) pos;
+          let hp_rel_list = [hp_rel]@defined_hprels in
+          let _ = rel_ass_stk # push_list (hp_rel_list) in
+          let _ = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
+          DD.ninfo_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rel_list)) pos;
           let update_es_f f new_hf=
              (CF.mkAnd_f_hf f (CF.h_subst leqs new_hf) pos)
           in
