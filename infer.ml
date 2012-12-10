@@ -1285,6 +1285,7 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
 	(* below causes non-linear LHS for relation *)
 	(* let inf_rel_ls = List.map (simp_lhs_rhs vars) inf_rel_ls in *)
         (* DD.info_hprint (add_str "Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos; *)
+        infer_rel_stk # push_list inf_rel_ls;
         let estate = { estate with es_infer_rel = inf_rel_ls@(estate.es_infer_rel) } in
         if inf_rel_ls != [] then
           begin
@@ -1822,9 +1823,10 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
               hprel_lhs = CF.Base new_lhs_b;
               hprel_rhs = CF.Base new_rhs_b;
           } in
-          let _ = rel_ass_stk # push_list ([hp_rel]@defined_hprels) in
-          let _ = Log.current_hprel_ass_stk # push_list ([hp_rel]@defined_hprels) in
-          DD.ninfo_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr (defined_hprels@ [hp_rel]))) pos;
+          let hp_rel_list = [hp_rel]@defined_hprels in
+          let _ = rel_ass_stk # push_list (hp_rel_list) in
+          let _ = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
+          DD.ninfo_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rel_list)) pos;
           let update_es_f f new_hp=
             match new_hp with
               | None -> f

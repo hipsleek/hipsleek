@@ -8505,7 +8505,7 @@ and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl l
     in 
     if coers ==[] then 
       begin
-        Debug.ninfo_zprint (lazy  "No combine lemma in left coercion?") no_pos;
+        Debug.info_zprint (lazy  "No combine lemma in left coercion?") no_pos;
         f
       end
     else 

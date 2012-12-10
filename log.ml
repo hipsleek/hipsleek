@@ -98,6 +98,7 @@ let sleek_log_stk : sleek_log_entry  Gen.stack_filter
 
 (* let sleek_proving_kind = ref (POST : sleek_proving_kind) *)
 let sleek_proving_id = ref (0 : int)
+
 (* let current_hprel_ass = ref ([] : CF.hprel list) *)
 let current_hprel_ass_stk : CF.hprel  Gen.stack_pr 
       = new Gen.stack_pr Cprinter.string_of_hprel_short (==) 

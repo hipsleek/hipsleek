@@ -693,6 +693,16 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
           print_endline "*************************************";
           Infer.rel_ass_stk # reset
         end;
+      (* already printed in the result *)
+      (* if not(Infer.infer_rel_stk# is_empty) then *)
+      (*   begin *)
+      (*     print_endline "*************************************"; *)
+      (*     print_endline "*******inferred pure relations ******"; *)
+      (*     print_endline "*************************************"; *)
+      (*     print_endline (Infer.infer_rel_stk # string_of_reverse); *)
+      (*     print_endline "*************************************"; *)
+      (*     Infer.infer_rel_stk # reset *)
+      (*   end; *)
       (* ;print_string ("printing here: "^(Cprinter.string_of_list_context residue)) *)
     end
   (* with e -> *)
