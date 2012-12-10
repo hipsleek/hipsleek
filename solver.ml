@@ -8214,13 +8214,13 @@ and pick_up_node (ls:CF.h_formula list) (name:ident):(CF.h_formula * CF.h_formul
 
 and normalize_w_coers prog (estate: CF.entail_state) (coers: coercion_decl list) 
   (h: h_formula) (p: MCP.mix_formula) : (h_formula * MCP.mix_formula) =
-  let pr_es = Cprinter.string_of_entail_state in
-  let pr_c = Cprinter.string_of_coerc_decl_list in
+  (* let pr_es = Cprinter.string_of_entail_state in *)
+  (* let pr_c = Cprinter.string_of_coerc_decl_list in *)
   let pr_h = Cprinter.string_of_h_formula in
   let pr_p = Cprinter.string_of_mix_formula in
   let pr_r = pr_pair pr_h pr_p in
-  Debug.no_4 "normalize_w_coers" pr_es pr_c pr_h pr_p pr_r
-  (normalize_w_coers_x prog) estate coers h p
+  Debug.no_2 "normalize_w_coers" pr_h pr_p pr_r
+  (normalize_w_coers_x prog estate coers) h p
 
 and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list) (h:h_formula) (p:MCP.mix_formula) : (h_formula * MCP.mix_formula) =
   let rec helper (estate:CF.entail_state) (h:h_formula) (p:MCP.mix_formula) : (h_formula*MCP.mix_formula) =
@@ -8314,13 +8314,13 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
             (*prove extra heap + guard*)
             let conseq_extra = mkBase extra_heap_new (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) lhs_guard_new) CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in
             
-            Debug.devel_zprint (lazy ("normalize_w_coers:process_one: check extra heap")) no_pos;
-            Debug.devel_zprint (lazy ("normalize_w_coers:process_one: new_ctx: " ^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context new_ctx1))) no_pos;
-            Debug.devel_zprint (lazy ("normalize_w_coers:process_one: conseq_extra:\n" ^ (Cprinter.string_of_formula conseq_extra))) no_pos;
+            Debug.tinfo_zprint (lazy ("normalize_w_coers:process_one: check extra heap")) no_pos;
+            Debug.tinfo_zprint (lazy ("normalize_w_coers:process_one: new_ctx: " ^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context new_ctx1))) no_pos;
+            Debug.tinfo_zprint (lazy ("normalize_w_coers:process_one: conseq_extra:\n" ^ (Cprinter.string_of_formula conseq_extra))) no_pos;
 
             let check_res, check_prf = heap_entail prog false new_ctx conseq_extra no_pos in
             
-            Debug.devel_zprint (lazy ("normalize_w_coers:process_one: after check extra heap: " ^ (Cprinter.string_of_spec_var p2) ^ "\n" ^ (Cprinter.string_of_list_context check_res))) no_pos;
+            Debug.tinfo_zprint (lazy ("normalize_w_coers:process_one: after check extra heap: " ^ (Cprinter.string_of_spec_var p2) ^ "\n" ^ (Cprinter.string_of_list_context check_res))) no_pos;
             
             (* PROCCESS RESULT *)
             (match check_res with
@@ -8339,7 +8339,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
         | _ -> report_error no_pos "unexpecte match pattern"	  
     in
     let process_one estate anode rest coer h p =
-      let pr (c1,c2,c3,c4) = string_of_bool c1 ^ "||" ^ Cprinter.string_of_entail_state c2 in 
+      let pr (c1,c2,c3,c4) = pr_pair string_of_bool Cprinter.string_of_entail_state (c1,c2) in 
       let pr_h = Cprinter.string_of_h_formula in
       Debug.no_5 "process_one_normalize" Cprinter.string_of_entail_state pr_h pr_h pr_h Cprinter.string_of_mix_formula pr  
         (fun _ _ _ _ _ -> process_one_x estate anode rest coer h p) estate anode rest  h p
@@ -8474,10 +8474,6 @@ and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl l
           | Cast.Normalize false -> false
           | Cast.Normalize true -> true) coers
     in
-    (*let _ = print_string ("normalize_formula_w_coers: "  
-      ^ " ### coers = " ^ (Cprinter.string_of_coerc_list coers) 
-      ^ "\n\n") 
-      in*) 
     let rec helper f =
       match f with
         | Base b ->
@@ -8502,7 +8498,19 @@ and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl l
 	      let f1 = helper o.formula_or_f1 in
 	      let f2 = helper o.formula_or_f2 in
               Or {o with formula_or_f1 = f1; formula_or_f2 = f2}
-    in helper f
+    in 
+    if coers ==[] then 
+      begin
+        Debug.ninfo_zprint (lazy  "No combine lemma in left coercion?") no_pos;
+        f
+      end
+    else 
+      begin
+        Debug.ninfo_zprint (lazy ("normalize_formula_w_coers: "  
+        ^ " ### coers = " ^ (Cprinter.string_of_coerc_list coers) 
+        ^ "\n\n")) no_pos;
+        helper f
+      end
 
 and normalize_formula_w_coers i prog estate (f:formula) (coers:coercion_decl list): formula =
   if coers==[] then f
@@ -8553,7 +8561,7 @@ and apply_right_coercion estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 (*
 and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 lhs_b rhs_b (c2:ident) is_folding pos =
   let _,rhs_p,rhs_t,rhs_fl, rhs_a = CF.extr_formula_base rhs_b in
   let f = mkBase resth2 rhs_p rhs_t rhs_fl rhs_a pos in
-  let _ = Debug.devel_zprint (lazy ("do_right_coercion : c2 = "
+  let _ = Debug.tinfo_zprint (lazy ("do_right_coercion : c2 = "
   ^ c2 ^ "\n")) pos in
   (* if is_coercible ln2 then *)
   let ok, new_rhs = rewrite_coercion prog estate ln2 f coer lhs_b rhs_b lhs_b false pos in
@@ -8564,7 +8572,7 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 
     (* need to make implicit var become explicit *)
     let vl = Gen.BList.intersect_eq CP.eq_spec_var estate.es_gen_impl_vars (h_fv ln2) in
     let new_iv = Gen.BList.difference_eq CP.eq_spec_var estate.es_gen_impl_vars vl in
-    let _ = if not(vl==[]) then Debug.devel_zprint (lazy ("do_right_coercion : impl to expl vars  " ^ (Cprinter.string_of_spec_var_list vl) ^ "\n")) pos in
+    let _ = if not(vl==[]) then Debug.tinfo_zprint (lazy ("do_right_coercion : impl to expl vars  " ^ (Cprinter.string_of_spec_var_list vl) ^ "\n")) pos in
     let nctx = set_context (fun es -> {es with (* es_must_match = true; *)
         es_gen_impl_vars = new_iv; es_gen_expl_vars =  (es.es_gen_expl_vars@vl)}) ctx0 in
     let new_ctx = SuccCtx [nctx] in
@@ -8575,7 +8583,7 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 
     in
     (res, [prf])
   end else
-    let _ = Debug.devel_zprint (lazy ("do_right_coercion :  " ^ c2 ^ "failed \n")) pos in
+    let _ = Debug.tinfo_zprint (lazy ("do_right_coercion :  " ^ c2 ^ "failed \n")) pos in
     (CF.mkFailCtx_in(Basic_Reason ( {fc_message ="failed right coercion application";
     fc_current_lhs = estate;
     fc_prior_steps = estate.es_prior_steps;

@@ -117,6 +117,8 @@ and hprel_def= {
     hprel_def_body_lib: formula option;
 }
 
+(* and infer_rel_type =  (CP.rel_cat * CP.formula * CP.formula) *)
+
 and list_formula = formula list
 
 and formula_base = {  formula_base_heap : h_formula;
@@ -4401,7 +4403,7 @@ think it is used to instantiate when folding.
      | RankDec [rid] | RankBounded id
   *)
   (* es_infer_rel : (CP.formula * CP.formula) list; *)
-  es_infer_rel : (CP.rel_cat * CP.formula * CP.formula) list;
+  es_infer_rel : CP.infer_rel_type list;
   es_infer_hp_rel : hprel list; (*(CP.rel_cat * formula * formula) list;*)
   (* output : pre pure assumed to infer relation *)
   (* es_infer_pures : CP.formula list; *)

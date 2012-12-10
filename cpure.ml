@@ -173,6 +173,8 @@ and rounding_func =
   | Ceil
   | Floor
 
+and infer_rel_type =  (rel_cat * formula * formula)
+
 let exp_to_spec_var e = 
   match e with
     | Var (sv, _) -> sv
@@ -212,6 +214,7 @@ let print_rel_cat rel_cat = match rel_cat with
   | RankBnd v -> "RANKBND " ^ (!print_sv v)
 let print_lhs_rhs (cat,l,r) = (print_rel_cat cat)^": ("^(!print_formula l)^") --> "^(!print_formula r)
 let print_only_lhs_rhs (l,r) = "("^(!print_formula l)^") --> "^(!print_formula r)
+let string_of_infer_rel = print_lhs_rhs
 
 let full_perm_var_name = "Anon_full_perm"
 

@@ -50,6 +50,12 @@ let simp_lhs_rhs vars (c,lhs,rhs) =
 
 (************************************************)
 
+(* Stack of infer_rel that can be kept across sleek invocations *)
+(*  CP.infer_rel_type = (CP.rel_cat * CP.formula * CP.formula)  *)
+
+let infer_rel_stk : CP.infer_rel_type Gen.stack_pr = new Gen.stack_pr 
+  CP.string_of_infer_rel (==)
+
 let rel_ass_stk : hprel Gen.stack_pr = new Gen.stack_pr 
   Cprinter.string_of_hprel_short (==)
 
@@ -1134,8 +1140,8 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
     let rel_rhs_ls, other_rhs_ls = List.split pairs in
     let rel_rhs = List.concat rel_rhs_ls in
     if rel_rhs==[] then (
-      DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos; 
-      DD.devel_pprint "no relation in rhs" pos; 
+      DD.tinfo_pprint ">>>>>> infer_collect_rel <<<<<<" pos; 
+      DD.tinfo_pprint "no relation in rhs" pos; 
       (estate,lhs_p_orig,rhs_p)
     (* DD.devel_hprint (add_str "RHS pure" !CP.print_formula) rhs_p_n_new pos; *)
     (* TODO : need to check if relation occurs in both lhs & rhs of original entailment *)
@@ -1201,8 +1207,8 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
       (* where other_constraints are not related to variable t *)
       let lhs_rec_vars = CP.fv lhs_p_memo in
       if CP.intersect lhs_rec_vars rel_vars = [] && rel_lhs != [] then (
-        DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
-        DD.devel_pprint ">>>>>> no recursive def <<<<<<" pos; 
+        DD.tinfo_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
+        DD.tinfo_pprint ">>>>>> no recursive def <<<<<<" pos; 
         (estate,lhs_p_orig,rhs_p_new))
       else
         let lhs_h = MCP.pure_of_mix xpure_lhs_h1 in
@@ -1231,9 +1237,9 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
           let vs_r = CP.fv rhs in
           let vs_l = CP.fv lhs in
           let diff_vs = diff_svl vs_l (vs_r@rel_vars) in
-          DD.devel_hprint (add_str "diff_vs" !print_svl) diff_vs pos;
+          DD.tinfo_hprint (add_str "diff_vs" !print_svl) diff_vs pos;
           let new_lhs = CP.wrap_exists_svl lhs diff_vs in
-          DD.devel_hprint (add_str "new_lhs (b4 elim_exists)" !CP.print_formula) new_lhs pos;
+          DD.tinfo_hprint (add_str "new_lhs (b4 elim_exists)" !CP.print_formula) new_lhs pos;
 (*          let new_lhs = if is_bag_cnt then new_lhs else TP.simplify_raw new_lhs in*)
 (*          DD.devel_hprint (add_str "new_lhs (aft elim_exists)" !CP.print_formula) new_lhs pos;*)
 (*          let new_lhs = pairwise_proc (new_lhs) in*)
@@ -1282,12 +1288,12 @@ let infer_collect_rel is_sat estate xpure_lhs_h1 (* lhs_h *) lhs_p_orig (* lhs_b
         let estate = { estate with es_infer_rel = inf_rel_ls@(estate.es_infer_rel) } in
         if inf_rel_ls != [] then
           begin
-            DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
-            DD.devel_hprint (add_str "Infer Rel Ids" !print_svl) ivs pos;
+            DD.tinfo_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
+            DD.tinfo_hprint (add_str "Infer Rel Ids" !print_svl) ivs pos;
             (* DD.devel_hprint (add_str "LHS heap Xpure1:" !print_mix_formula) xpure_lhs_h1 pos; *)
-            DD.devel_hprint (add_str "LHS pure" !CP.print_formula) lhs_p pos;
-            DD.devel_hprint (add_str "RHS pure" !CP.print_formula) rhs_p_n pos;
-            DD.devel_hprint (add_str "RHS Rel List" (pr_list !CP.print_formula)) rel_rhs pos;
+            DD.tinfo_hprint (add_str "LHS pure" !CP.print_formula) lhs_p pos;
+            DD.tinfo_hprint (add_str "RHS pure" !CP.print_formula) rhs_p_n pos;
+            DD.tinfo_hprint (add_str "RHS Rel List" (pr_list !CP.print_formula)) rel_rhs pos;
           end;
         (estate,lhs_p_orig,rhs_p_new)
 (*
