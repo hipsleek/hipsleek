@@ -54,6 +54,8 @@ let parse_file_full file_name =
 
 (* Parse all prelude files declared by user.*)
 let process_primitives (file_list: string list) : Iast.prog_decl list =
+  Debug.info_pprint (" processing primitives \"" ^(pr_list pr_id file_list)) no_pos;
+  flush stdout;
   let new_names = List.map (fun c-> (Gen.get_path Sys.executable_name) ^ (String.sub c 1 ((String.length c) - 2))) file_list in
   if (Sys.file_exists "./prelude.ss") then [parse_file_full "./prelude.ss"]
   else List.map parse_file_full new_names
@@ -132,7 +134,7 @@ let process_lib_file prog =
 
 (***************end process compare file*****************)
 let process_source_full source =
-  (* print_string ("\nProcessing file \"" ^ source ^ "\"\n");  *)
+  Debug.info_pprint ("Full processing file \"" ^ source ^ "\"") no_pos;
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source in
@@ -148,7 +150,6 @@ let process_source_full source =
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
   let prims_list = process_primitives new_h_files in (*list of primitives in header files*)
-
   if !to_java then begin
     print_string ("Converting to Java..."); flush stdout;
     let tmp = Filename.chop_extension (Filename.basename source) in
@@ -165,21 +166,26 @@ let process_source_full source =
     let _ = Gen.Profiling.pop_time "Preprocessing" in
     print_string (Iprinter.string_of_program prog)
   else
-    let _ = Tpdispatcher.start_prover () in
+    if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
     (* Global variables translating *)
     let _ = Gen.Profiling.push_time "Translating global var" in
     let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
-
+      
     (* Append all primitives in list into one only *)
     let iprims_list = process_intermediate_prims prims_list in
     let iprims = Iast.append_iprims_list_head iprims_list in
     (* let _ = print_endline ("process_source_full: before Globalvars.trans_global_to_param") in *)
+		(* let _=print_endline ("PROG: "^Iprinter.string_of_program prog) in *)
     let intermediate_prog = Globalvars.trans_global_to_param prog in
     (* let _ = print_endline ("process_source_full: before pre_process_of_iprog") in *)
-    let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
+    let intermediate_prog=IastUtil.pre_process_of_iprog iprims intermediate_prog in
+		(* let _= print_string ("\n*After pre process iprog* "^Iprinter.string_of_program intermediate_prog) in *)
     let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
     (* let _ = print_endline ("process_source_full: before --pip") in *)
-    let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
+    let _ = if (!Globals.print_input_all) then print_string (Iprinter.string_of_program intermediate_prog) 
+		        else if(!Globals.print_input) then
+							print_string (Iprinter.string_of_program_separate_prelude intermediate_prog iprims)
+						else () in
     (* let _ = print_endline ("process_source_full: after --pip") in *)
     let _ = Gen.Profiling.pop_time "Translating global var" in
     (* Global variables translated *)
@@ -189,12 +195,16 @@ let process_source_full source =
     (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
     let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
 
-	(* Forward axioms and relations declarations to SMT solver module *)
-	let _ = List.map (fun crdef -> 
+	  (* Forward axioms and relations declarations to SMT solver module *)
+	  let _ = List.map (fun crdef -> 
         Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
-	let _ = List.map (fun cadef -> Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion) (List.rev cprog.Cast.prog_axiom_decls) in
+  	let _ = List.map (fun cadef -> Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion) (List.rev cprog.Cast.prog_axiom_decls) in
     (* let _ = print_string (" done-2\n"); flush stdout in *)
-    let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in
+    let _ = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)  
+		        else if(!Globals.print_core) then
+							print_string (Cprinter.string_of_program_separate_prelude cprog iprims)
+						else ()
+		in
     let _ = 
       if !Globals.verify_callees then begin
 	    let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
@@ -244,8 +254,7 @@ let process_source_full source =
       raise e
     end);
     (* Stopping the prover *)
-    let _ = Tpdispatcher.stop_prover () in
-    
+    if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
     (* Get the total verification time *)
     let ptime4 = Unix.times () in
     let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
@@ -307,9 +316,8 @@ let process_source_full source =
 	)
 
 let process_source_full_parse_only source =
-  (* print_string ("\nProcessing file \"" ^ source ^ "\"\n");  *)
+  Debug.info_pprint ("Full processing file (parse only) \"" ^ source ^ "\"") no_pos;
   flush stdout;
-  let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source in
   (* Remove all duplicated declared prelude *)
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
@@ -332,7 +340,9 @@ let process_source_full_parse_only source =
   (prog, prims_list)
 
 let process_source_full_after_parser source (prog, prims_list) =
-  let _ = Tpdispatcher.start_prover () in
+  Debug.info_pprint ("Full processing file (after parser) \"" ^ source ^ "\"") no_pos;
+  flush stdout;
+  if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
   (* Global variables translating *)
   let _ = Gen.Profiling.push_time "Translating global var" in
   let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
@@ -346,7 +356,10 @@ let process_source_full_after_parser source (prog, prims_list) =
   let intermediate_prog =IastUtil.pre_process_of_iprog iprims intermediate_prog in
   let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
   (* let _ = print_endline ("process_source_full: before --pip") in *)
-  let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
+  let _ = if (!Globals.print_input_all) then print_string (Iprinter.string_of_program intermediate_prog) 
+	         else if(!Globals.print_input) then
+							print_string (Iprinter.string_of_program_separate_prelude intermediate_prog iprims)
+						else () in
   (* let _ = print_endline ("process_source_full: after --pip") in *)
   let _ = Gen.Profiling.pop_time "Translating global var" in
   (* Global variables translated *)
@@ -361,7 +374,11 @@ let process_source_full_after_parser source (prog, prims_list) =
       Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
   let _ = List.map (fun cadef -> Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion) (List.rev cprog.Cast.prog_axiom_decls) in
   (* let _ = print_string (" done-2\n"); flush stdout in *)
-  let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in
+  let _ = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)  
+		        else if(!Globals.print_core) then
+							print_string (Cprinter.string_of_program_separate_prelude cprog iprims)
+						else ()
+	in
   let _ = 
     if !Globals.verify_callees then begin
       let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
@@ -411,7 +428,7 @@ let process_source_full_after_parser source (prog, prims_list) =
     raise e
   end);
   (* Stopping the prover *)
-  let _ = Tpdispatcher.stop_prover () in
+  if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
   
   (* An Hoa : export the proof to html *)
   let _ = if !Globals.print_proof then
@@ -491,14 +508,14 @@ let pre_main =
     let _ = Printexc.record_backtrace !Globals.trace_failure in
     if List.length (!Globals.source_files) = 0 then
       print_string "Source file(s) not specified\n";
-    List.map process_source_full_parse_only !Globals.source_files
+		List.map process_source_full_parse_only !Globals.source_files
 
 let loop_cmd parsed_content = 
   let _ = List.map2 (fun s t -> process_source_full_after_parser s t) !Globals.source_files parsed_content in
   ()
 
 let finalize () =
-  Tpdispatcher.stop_prover ()
+  if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
 let old_main = 
   try

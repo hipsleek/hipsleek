@@ -1,0 +1,36 @@
+
+data node { int val ; node next }.
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n-1> 
+	inv n >= 0.
+
+pred nll<n> == self::node<_,null> & n=1
+	or self::node<next = r> * r::nll<n-1> 
+	inv n >= 1 & self!=null.
+
+/*
+// these are OK..
+
+checkentail x::ll<n> * x::ll<n> & x=null   |-  x=null & n=0.
+
+checkentail x::ll<n> * x::ll<n> & x!=null   |-  x=null & n=0.
+*/
+
+// Examples below should not require --imm.
+// However, they currently fails unless --imm option is
+// invoked.
+
+checkentail x::ll<n> * x::ll<n> & x=null  
+or x::ll<n> * x::ll<n> & x!=null   |-  x=null & n=0.
+print residue.
+
+checkentail x::ll<n> * x::ll<n>   |-  
+    case {  x=null -> [] x=null & n=0;
+            x!=null -> [] x=null & n=0; }. 
+print residue.
+
+checkentail x::nll<n> * x::nll<m>  |-  1=2. 
+print residue.
+// x * y
+// Valid
+

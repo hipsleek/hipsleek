@@ -44,6 +44,7 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   | Cpure.IConst _    -> illegal_format "SPASS don't support IConst expresion"
   | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
   | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
+  | Cpure.Tsconst _   -> illegal_format "SPASS don't support Tsconst expresion"
   | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
   | Cpure.Subtract _  -> illegal_format "SPASS don't support Substract expresion"
   | Cpure.Mult _      -> illegal_format "SPASS don't support Mult expresion"
@@ -105,6 +106,7 @@ and spass_dfg_of_p_formula (pf : Cpure.p_formula) : (string * string list * stri
     ) 
   | EqMax _         -> illegal_format "SPASS don't support EqMax p_formula"
   | EqMin _         -> illegal_format "SPASS don't support EqMin p_formula"
+  | VarPerm _       -> illegal_format "SPASS don't support VarPerm p_formula"
   (* bag formulas *)
   | BagIn _
   | BagNotIn _
@@ -178,6 +180,7 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   | Cpure.IConst _    -> illegal_format "SPASS don't support IConst expresion"
   | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
   | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
+  | Cpure.Tsconst _   -> illegal_format "SPASS don't support Tsconst expresion"
   | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
   | Cpure.Subtract _  -> illegal_format "SPASS don't support Substract expresion"
   | Cpure.Mult _      -> illegal_format "SPASS don't support Mult expresion"
@@ -220,6 +223,7 @@ and spass_tptp_of_p_formula (pf : Cpure.p_formula) : string =
   | Neq (e1, e2, _) -> "(" ^ (spass_tptp_of_exp e1) ^ " != " ^ (spass_tptp_of_exp e2) ^ ")"
   | EqMax _         -> illegal_format "SPASS don't support EqMax p_formula"
   | EqMin _         -> illegal_format "SPASS don't support EqMin p_formula"
+  | VarPerm _       -> illegal_format "SPASS don't support VarPerm p_formula"
   (* bag formulas *)
   | BagIn _
   | BagNotIn _
@@ -237,6 +241,7 @@ and spass_tptp_of_formula f =
   match f with
   | BForm (b, _)         -> spass_tptp_of_b_formula b
   | And (f1, f2, _)      -> "(" ^ (spass_tptp_of_formula f1) ^ " & " ^ (spass_tptp_of_formula f2) ^ ")"
+  | AndList _            -> Gen.report_error no_pos "[spass.ml] handle AndList later"
   | Or (f1, f2, _, _)    -> "(" ^ (spass_tptp_of_formula f1) ^ " | " ^ (spass_tptp_of_formula f2) ^ ")"
   | Not (f, _, _)        -> "~ " ^ (spass_tptp_of_formula f)
   | Forall (sv, f, _, _) -> "( ! [" ^ (spass_tptp_of_spec_var sv) ^ "] : " ^ (spass_tptp_of_formula f) ^ ")"
@@ -254,6 +259,7 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.IConst _       -> false
   | Cpure.FConst _       -> false
   | Cpure.AConst _       -> false
+  | Cpure.Tsconst _      -> false
   (* arithmetic expressions *)
   | Cpure.Add _
   | Cpure.Subtract _
@@ -293,6 +299,7 @@ and can_spass_handle_p_formula (pf : Cpure.p_formula) : bool =
   | Neq (ex1, ex2, _)    -> (can_spass_handle_expression ex1) && (can_spass_handle_expression ex2)
   | EqMax _              -> false
   | EqMin _              -> false
+  | VarPerm _            -> false
   (* bag formulars *)
   | BagIn _
   | BagNotIn _
@@ -314,6 +321,7 @@ and can_spass_handle_formula (f: Cpure.formula) : bool =
   match f with
   | BForm (bf, _)       -> can_spass_handle_b_formula bf
   | And (f1, f2, _)     -> (can_spass_handle_formula f1) && (can_spass_handle_formula f2)
+  | AndList _           -> Gen.report_error no_pos "[spass.ml] handle AndList later"
   | Or (f1, f2, _, _)   -> (can_spass_handle_formula f1) && (can_spass_handle_formula f2)
   | Not (f, _, _)       -> can_spass_handle_formula f
   | Forall (_, f, _, _) -> can_spass_handle_formula f
@@ -612,9 +620,6 @@ let to_spass (ante : Cpure.formula) (conseq : Cpure.formula option) : string =
   let res = 
     if (spass_input_format = "dfg") then (
 	    (* if sending problem in DFG format to SPASS *)
-	    let ante_fv = Cpure.fv ante in
-	    let conseq_fv = Cpure.fv conseq in
-	    let all_fv = Gen.BList.remove_dups_eq (=) (ante_fv @ conseq_fv) in
 	    let dfg_res = to_spass_dfg ante conseq
       (* let _ = print_endline ("-- Input problem in DFG format:\n" ^ dfg_res) in *)
       in dfg_res

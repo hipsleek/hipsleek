@@ -18,6 +18,8 @@ module MCP = Mcpure
 
 type ann = ConstAnn of heap_ann | PolyAnn of CP.spec_var
 
+let view_prim_lst = new Gen.stack_pr pr_id (=) 
+
 type typed_ident = (typ * ident)
 
 and formula_type =
@@ -115,6 +117,8 @@ and hprel_def= {
     hprel_def_body_lib: formula option;
 }
 
+(* and infer_rel_type =  (CP.rel_cat * CP.formula * CP.formula) *)
+
 and list_formula = formula list
 
 and formula_base = {  formula_base_heap : h_formula;
@@ -207,6 +211,7 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_name : ident;
                         h_formula_view_derv : bool;
                         h_formula_view_imm : ann;
+                        (* h_formula_view_primitive : bool; (\* indicates if it is primitive view? *\) *)
                         h_formula_view_perm : cperm; (*LDK: permission*)
                         h_formula_view_arguments : CP.spec_var list;
                         h_formula_view_modes : mode list;
@@ -269,6 +274,7 @@ struct
       h_formula_star_pos = no_pos
     }
   let string_of = !print_h_formula
+  let ref_string_of = print_h_formula
 end;;
 
 module Exp_Spec =
@@ -280,6 +286,7 @@ struct
     formula_struc_or_pos = no_pos
     }
   let string_of = !print_struc_formula
+  let ref_string_of = print_struc_formula
 end;;
 
 module Label_Heap = LabelExpr(Lab_List)(Exp_Heap);;
@@ -1300,6 +1307,14 @@ and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t :
 
 and is_view (h : h_formula) = match h with
   | ViewNode _ -> true
+  | _ -> false
+
+and is_view_primitive (h : h_formula) = match h with
+  | ViewNode v -> view_prim_lst # mem (v.h_formula_view_name)
+  | _ -> false
+
+and is_view_user (h : h_formula) = match h with
+  | ViewNode v -> not(view_prim_lst # mem (v.h_formula_view_name))
   | _ -> false
 
 and is_data (h : h_formula) = match h with
@@ -4475,7 +4490,7 @@ think it is used to instantiate when folding.
      | RankDec [rid] | RankBounded id
   *)
   (* es_infer_rel : (CP.formula * CP.formula) list; *)
-  es_infer_rel : (CP.rel_cat * CP.formula * CP.formula) list;
+  es_infer_rel : CP.infer_rel_type list;
   es_infer_hp_rel : hprel list; (*(CP.rel_cat * formula * formula) list;*)
   (* output : pre pure assumed to infer relation *)
   (* es_infer_pures : CP.formula list; *)
@@ -4487,11 +4502,6 @@ think it is used to instantiate when folding.
   *)
      es_infer_pure_thus : CP.formula; 
      es_group_lbl: spec_label_def;
-
-     
-
-  (* allow residue in lhs formula *)
-  es_allow_residue: bool;
 }
 
 and context = 
@@ -4701,7 +4711,6 @@ let empty_es flowt grp_lbl pos =
   es_group_lbl = grp_lbl;
   es_term_err = None;
   (*es_infer_invs = [];*)
-  es_allow_residue = false;
 }
 
 let is_one_context (c:context) =
@@ -9796,6 +9805,7 @@ let is_emp_term f = match f with
 
 let is_emp_term f = 
   Debug.no_1 "is_emp_term" !print_formula string_of_bool is_emp_term f
+
 
 
 

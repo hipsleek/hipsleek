@@ -4,7 +4,7 @@ let vn = "x" (*define variable name*)
 let bn = "b" (*define boolean variable name*)
 let cons1="one"
 let cons2="four"
-	
+
 let helper1 num_vars=
 	let i = ref 0 in
 		let str = ref "" in

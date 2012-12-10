@@ -8,6 +8,7 @@ open Cprinter
 module CP = Cpure
 module CF = Cformula
 
+ 
 type proof_type =
 	| IMPLY of (CP.formula * CP.formula)
 	| SAT of CP.formula
@@ -97,6 +98,7 @@ let sleek_log_stk : sleek_log_entry  Gen.stack_filter
 
 (* let sleek_proving_kind = ref (POST : sleek_proving_kind) *)
 let sleek_proving_id = ref (0 : int)
+
 (* let current_hprel_ass = ref ([] : CF.hprel list) *)
 let current_hprel_ass_stk : CF.hprel  Gen.stack_pr 
       = new Gen.stack_pr Cprinter.string_of_hprel_short (==) 
@@ -360,6 +362,9 @@ let process_proof_logging ()=
         (* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in    () *)
       end
   else ()
+
+
+
 
 (* let add_sleek_log_entry e= *)
 (*   if !Globals.sleek_logging_txt then *)

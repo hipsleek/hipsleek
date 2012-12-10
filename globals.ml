@@ -92,6 +92,7 @@ type typ =
   | BagT of typ
   (* | Prim of prim_type *)
   | Named of ident (* named type, could be enumerated or object *)
+          (* Named "R" *)
   | Array of (typ * int) (* base type and dimension *)
   | RelT (* relation type *)
   | HpT (* heap predicate relation type *)
@@ -268,6 +269,8 @@ object
      (*   | None -> "None" *)
      (*   | Some l -> l *)
 end;;
+
+
 
 (*Some global vars for logging*)
 let proving_loc  = new prog_loc
@@ -643,6 +646,7 @@ let enable_syn_base_case = ref false
 let enable_case_inference = ref false
 
 let print_core = ref false
+let print_core_all = ref false
 
 let print_err_sleek = ref false
 
@@ -657,8 +661,9 @@ let failure_analysis = ref false
 let seq_to_try = ref false
 
 let print_input = ref false
+let print_input_all = ref false
 
-let pass_global_by_value = ref false
+(* let pass_global_by_value = ref true *)
 
 (* let allow_pred_spec = ref false *)
 
@@ -680,7 +685,7 @@ let enable_redundant_elim = ref false
 
 let enulalias = ref false
 
-let pass_global_by_value = ref false
+let pass_global_by_value = ref true
 
 let exhaust_match = ref false
 

@@ -180,6 +180,7 @@ let common_arguments = [
 	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "zm"; "om";
 	"oi"; "set"; "cm"; "redlog"; "rm"; "prm"; "spass";"minisat" ;"auto";"log"; "dp"], Tpdispatcher.set_tp),
 	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
+  ("--dis-tp-batch-mode", Arg.Clear Tpdispatcher.tp_batch_mode,"disable batch-mode processing of external theorem provers");
 	("-perm", Arg.Symbol (["fperm"; "cperm"; "dperm";"none"], Perm.set_perm),
 	"Choose type of permissions for concurrency :\n\t fperm: fractional permissions\n\t cperm: counting permissions");
 	("--permprof", Arg.Set Globals.perm_prof, "Enable perm prover profiling (for distinct shares)");
@@ -214,6 +215,10 @@ let common_arguments = [
 	"print core representation");
 	("--pip", Arg.Set Globals.print_input,
 	"print input representation");
+	("--pcp-all", Arg.Set Globals.print_core_all,
+	"print core representation (including primitive library)");
+	("--pip-all", Arg.Set Globals.print_input_all,
+	"print input representation (including primitive library)");
 	(* ("--dis-cache", Arg.Set Globals.no_cache_formula, *)
     (* "Do not cache result of satisfiability and validity checking"); *)
 	("--dis-cache", Arg.Set Globals.no_cache_formula,
@@ -366,8 +371,8 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
    "Procedure to be verified. If none specified, all are verified.");
   ("-print", Arg.Set Globals.print_proc,
    "Print procedures being checked");
-  ("--pgbv", Arg.Set Globals.pass_global_by_value, 
-   "pass read global variables by value");
+  ("--dis-pgbv", Arg.Clear Globals.pass_global_by_value, 
+   "disable pass read global variables by value");
   ("--sqt", Arg.Set Globals.seq_to_try,
    "translate seq to try");
   ("-cp-test", Arg.String set_file_cp,
