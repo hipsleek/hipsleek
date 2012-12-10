@@ -2485,10 +2485,13 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
                                 fst (Solver.simplify_relation new_spec1
                                     (Some triples) pre_vars post_vars prog inf_post_flag evars lst_assume)
                             end
-                          with _ -> 
+                          with ex -> 
                               begin
-                                Debug.info_pprint "IGNORING PROBLEM of fix-point calculation" no_pos;
-                                new_spec
+                                Debug.info_pprint "PROBLEM with fix-point calculation" no_pos;
+                                (* Debug.info_pprint ("Exception:"^(Printexc.to_string ex)) no_pos; *)
+
+                                raise ex
+                                (* new_spec *)
                               end
                         in
                         (* TODO WN : what happen to the old MayLoop? *)
