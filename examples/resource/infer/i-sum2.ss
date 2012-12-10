@@ -31,7 +31,7 @@ int sum(int x)
    & R1(h,m,x);
   //& h=m+1*x+1;
 {
-  add_stk(1); //subtract stack frame
+  add_stk(2); //subtract stack frame
   int r;
   if (x==0) {
      r=0;
@@ -39,7 +39,7 @@ int sum(int x)
   else {
     r=2+sum(x-1);
   }
-  sub_stk(1); //add back stack frame prior to return
+  sub_stk(2); //add back stack frame prior to return
   return r;
 }
 

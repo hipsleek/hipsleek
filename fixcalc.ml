@@ -171,8 +171,8 @@ let rec fixcalc_of_formula e = match e with
 
 (******************************************************************************)
 
-let fixcalc = "fixcalc"
 let fixcalc = "/home/thaitm/hg-repository/infer-rec/sleekex/bin/fixcalc"
+let fixcalc = "fixcalc"
 
 let syscall cmd =
   let ic, oc = Unix.open_process cmd in
