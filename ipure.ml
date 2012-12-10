@@ -96,6 +96,7 @@ struct
   type e = formula
   let comb x y = And (x,y,no_pos)
   let string_of = !print_formula
+  let ref_string_of = print_formula
 end;;
 
 module Label_Pure = LabelExpr(Lab_List)(Exp_Pure);; 

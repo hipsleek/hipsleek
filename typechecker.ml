@@ -2442,7 +2442,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
                                 if rels = [] then []
                                 else Fixcalc.compute_fixpoint 2 rels pre_vars (proc.proc_stk_of_static_specs # top) 
                               in
-                              Debug.info_hprint (add_str "triples" (pr_list (pr_pair pr CP.Label_Pure.string_of_exp_ty))) rels no_pos;
+                              let pr_ty = !CP.Label_Pure.ref_string_of_exp in
+                              Debug.info_hprint (add_str "triples" (pr_list (pr_pair pr pr_ty))) triples no_pos;
                               let triples = List.map (fun (rel,post) ->
                                   let exist_vars = CP.diff_svl (CP.fv rel) inf_vars in
                                   (*                                let _ = Debug.info_hprint (add_str "EVARS : " !CP.print_svl) exist_vars no_pos in*)

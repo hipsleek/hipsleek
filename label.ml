@@ -7,6 +7,7 @@ module type EXPR_TYPE =
       type e
       val comb : e -> e -> e
       val string_of : e -> string
+      val ref_string_of : (e -> string) ref
     end;;
 
 (*==============================*)
@@ -20,7 +21,8 @@ struct
   (* this assumes that list merger would not affect the order of elements *)
 
   let string_of = pr_list (pr_pair Lbl.string_of Exp.string_of)
-  let string_of_exp_ty = Exp.string_of
+  let string_of_exp = Exp.string_of
+  let ref_string_of_exp = Exp.ref_string_of
 
   (* assumes that we have identical labels *)
   let comb_node l1 l2 e1 e2 = (l1, Exp.comb e1 e2)

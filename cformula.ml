@@ -274,6 +274,7 @@ struct
       h_formula_star_pos = no_pos
     }
   let string_of = !print_h_formula
+  let ref_string_of = print_h_formula
 end;;
 
 module Exp_Spec =
@@ -285,6 +286,7 @@ struct
     formula_struc_or_pos = no_pos
     }
   let string_of = !print_struc_formula
+  let ref_string_of = print_struc_formula
 end;;
 
 module Label_Heap = LabelExpr(Lab_List)(Exp_Heap);;
