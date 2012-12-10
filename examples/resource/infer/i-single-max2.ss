@@ -30,7 +30,7 @@ void g()
 
 
 void h() 
-  requires stk::RS<n> 
+hg   requires stk::RS<n> 
   ensures  stk::RS<n> * mx::RS_mark<h> & h=n+3 ;
 
 relation R(int a, int b).
