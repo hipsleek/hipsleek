@@ -12,9 +12,15 @@ pred ll<n, v1, v2> == self = null & n = 0
   inv n >= 0.
 */
 
+pred cell<v,a,b> == self::node<v,q>@a * q::node<_,_>@b
+   inv self!=null.
+
+checkentail x::cell<_,@M,_> |- x::cell<_,@L,_>.
+print residue.
+
 //
 // (2) fails but should be valid
-checkentail x::node<_@A,_@L> |- x::node<_@A,_@M>.
+//checkentail x::node<_@A,_@M> |- x::node<_@A,_@L>.
 //checkentail x::ll<n,@A,@M> |- x::ll<n,@A,@M>.
 //print residue.
 
@@ -25,7 +31,7 @@ checkentail x::node<_@A,_@L> |- x::node<_@A,_@M>.
 
 // (6) fails but should be valid as above
 //checkentail y::node<p@A,q@L>  * z::node<_@A,_@A> *  x::node<p@A,q@L>  |- x != y.
-print residue.
+//print residue.
 
 
 
