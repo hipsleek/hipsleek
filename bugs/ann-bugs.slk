@@ -23,7 +23,7 @@ pred ll<n, v1, v2> == self = null & n = 0
 //print residue.
 
 // (6) fails but should be valid as above
-checkentail y::node<p@A,q@L>  * z::node<_,_> *  x::node<p@A,q@L>  |- x != y.
+checkentail y::node<p@A,q@L>  * z::node<_@A,_@A> *  x::node<p@A,q@L>  |- x != y.
 print residue.
 
 

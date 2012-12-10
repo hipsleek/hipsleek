@@ -341,17 +341,20 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
       | Star ({h_formula_star_h1 = h1;
 	    h_formula_star_h2 = h2;
 	    h_formula_star_pos = pos}) -> 
+          Debug.tinfo_hprint (add_str "f" (fun f -> "#Star#" ^ Cprinter.string_of_h_formula f)) f pos;
           let res = 
           match h1 with
             | CF.DataNode { (* CF.h_formula_data_name = name1; *)
  		                    CF.h_formula_data_node = v1;
  		                    CF.h_formula_data_param_imm = param_ann1;
  		                  } -> 
+                Debug.tinfo_hprint (add_str "h1" (fun f -> "#DN#" ^ Cprinter.string_of_h_formula f)) h1 pos;
                 let res = 
                 match h2 with
                   | CF.DataNode { (* CF.h_formula_data_name = name2; *)
  		                          CF.h_formula_data_node = v2;
  		                          CF.h_formula_data_param_imm = param_ann2; }  -> 
+                      Debug.tinfo_hprint (add_str "h2" (fun f -> "#DN#" ^ Cprinter.string_of_h_formula f)) h2 pos;
                       let compatible = compatible_ann param_ann1 param_ann2 in
                       let sg1 = CP.DisjSetSV.singleton_dset v1 in
                       let sg2 = CP.DisjSetSV.singleton_dset v2 in
@@ -360,6 +363,7 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
 	                  {mem_formula_mset = mset;}
                   | CF.Star {CF.h_formula_star_h1 = h3;
 			                CF.h_formula_star_h2 = h4} ->  
+                      Debug.tinfo_hprint (add_str "h2" (fun f -> "#Star#" ^ Cprinter.string_of_h_formula f)) h2 pos;
                       let mset_h1h3 = helper (CF.mkStarH h1 h3 no_pos) in
                       let mset_h1h4 = helper (CF.mkStarH h1 h4 no_pos) in
                       let mset_h2 = helper h2 in
@@ -376,6 +380,7 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
 			                 CF.h_formula_conjconj_h2 = h4}                   			                 
                   | CF.Phase {CF.h_formula_phase_rd = h3;
 			                  CF.h_formula_phase_rw = h4}->  
+                      Debug.tinfo_hprint (add_str "h2" (fun f -> "#Conj/ConjStar/ConjConj/Phase#" ^ Cprinter.string_of_h_formula f)) h2 pos;
                       let mset_h1h3 = helper (CF.mkStarH h1 h3 no_pos) in
                       let mset_h1h4 = helper (CF.mkStarH h1 h4 no_pos) in
                       let mset_h2 = helper h2 in
@@ -383,6 +388,7 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
                       let mset2 = CP.DisjSetSV.merge_disj_set m mset_h2.mem_formula_mset in
                       {mem_formula_mset = mset2}
                   | _ -> 
+                      Debug.tinfo_hprint (add_str "h2" (fun f -> "#_#" ^ Cprinter.string_of_h_formula f)) h2 pos;
                       let mset_h2 = helper h2 in
                       let sg = CP.DisjSetSV.singleton_dset v1 in
                       let m = CP.DisjSetSV.merge_disj_set mset_h2.mem_formula_mset sg in
@@ -391,11 +397,12 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
                 res
             | CF.Star {CF.h_formula_star_h1 = h11;
 			           CF.h_formula_star_h2 = h12} ->
-                let mset_h11 = helper h11 in
-                let mset_h12 = helper h12 in
-                let mset_h2 = helper h2 in
+                Debug.tinfo_hprint (add_str "h1" (fun f -> "#Star#" ^ Cprinter.string_of_h_formula f)) h1 pos;
+                let mset_h11 = helper (CF.mkStarH h11 h2 no_pos) in
+                let mset_h12 = helper  (CF.mkStarH h12 h2 no_pos) in
+                let mset_h1 = helper h1 in
                 let m = CP.DisjSetSV.merge_disj_set mset_h11.mem_formula_mset mset_h12.mem_formula_mset in
-                let mset2 = CP.DisjSetSV.merge_disj_set m mset_h2.mem_formula_mset in
+                let mset2 = CP.DisjSetSV.merge_disj_set m mset_h1.mem_formula_mset in
                 {mem_formula_mset = mset2}
             (*| CF.StarMinus {CF.h_formula_starminus_h1 = h11;
 			                 CF.h_formula_starminus_h2 = h12}*)                 
@@ -407,6 +414,7 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
 			           CF.h_formula_conjconj_h2 = h12}			           			           
             | CF.Phase {CF.h_formula_phase_rd = h11;
 			            CF.h_formula_phase_rw = h12}->  
+                Debug.tinfo_hprint (add_str "h1" (fun f -> "#Conj/ConjStar/ConjConj/Phase#" ^ Cprinter.string_of_h_formula f)) h1 pos;
                 let mset_h11h2 = helper (CF.mkStarH h11 h2 no_pos) in
                 let mset_h12h2 = helper (CF.mkStarH h12 h2 no_pos) in
                 let mset_h1 = helper h1 in
@@ -414,6 +422,7 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
                 let mset2 = CP.DisjSetSV.merge_disj_set m mset_h1.mem_formula_mset in
                 {mem_formula_mset = mset2}
             | _ ->  
+                Debug.tinfo_hprint (add_str "h1" (fun f -> "#_#" ^ Cprinter.string_of_h_formula f)) h1 pos;
                 let mset_h1 = helper h1 in
                 let mset_h2 = helper h2 in
                 let m = CP.DisjSetSV.star_disj_set mset_h1.mem_formula_mset mset_h2.mem_formula_mset in
@@ -438,6 +447,7 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
       | ConjConj ({h_formula_conjconj_h1 = h1;
 	    h_formula_conjconj_h2 = h2;
 	    h_formula_conjconj_pos = pos}) ->
+          Debug.tinfo_hprint (add_str "f" (fun f -> "#Conj/ConjStar/ConjConj/Phase#" ^ Cprinter.string_of_h_formula f)) f pos;
 	        let m1 = helper h1  in
 	        let m2 = helper h2 in
 	        let m = (CP.DisjSetSV.merge_disj_set m1.mem_formula_mset m2.mem_formula_mset) in
@@ -445,6 +455,7 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
       | DataNode ({h_formula_data_node = p;
 		h_formula_data_perm = perm;
 	    h_formula_data_pos = pos}) ->
+          Debug.tinfo_hprint (add_str "f" (fun f -> "#DN#" ^ Cprinter.string_of_h_formula f)) f pos;
 	        let new_mset = 
 	          if List.mem p evars || perm<> None then CP.DisjSetSV.mkEmpty
 	          else CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*)) in
@@ -455,6 +466,7 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
         h_formula_view_remaining_branches = lbl_lst;
 		h_formula_view_perm = perm;
         h_formula_view_pos = pos}) ->
+          Debug.tinfo_hprint (add_str "f" (fun f -> "#VN#" ^ Cprinter.string_of_h_formula f)) f pos;
             let ba = look_up_view_baga prog c p vs in
             let vdef = look_up_view_def pos prog.prog_view_decls c in
             (*TO DO: Temporarily ignore LOCK*)
@@ -764,7 +776,7 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (
   (xpure_heap_helper prog h0 which_xpure, memset)
 
 and xpure_symbolic (prog : prog_decl) (h0 : formula) : (MCP.mix_formula  * CP.spec_var list * CF.mem_formula) = 
-  Debug.ho_1 "xpure_symbolic" Cprinter.string_of_formula 
+  Debug.no_1 "xpure_symbolic" Cprinter.string_of_formula 
       (fun (p1,vl,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(Cprinter.string_of_spec_var_list vl)^"#
 "^(Cprinter.string_of_mem_formula p4)) 
       (fun h0 -> xpure_symbolic_orig prog h0) h0
@@ -801,7 +813,7 @@ and xpure_symbolic_orig (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * C
   (pf, pa, mset)
 
 and xpure_heap_symbolic i (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * CP.spec_var list * CF.mem_formula) = 
-  Debug.ho_2_num i
+  Debug.no_2_num i
       "xpure_heap_symbolic" 
       string_of_int
       Cprinter.string_of_h_formula 
