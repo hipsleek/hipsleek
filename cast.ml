@@ -21,15 +21,16 @@ type typed_ident = (typ * ident)
 and prog_decl = { 
   mutable prog_data_decls : data_decl list;
   mutable prog_logical_vars : P.spec_var list;
-	mutable prog_view_decls : view_decl list;
-	mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
-	mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
+  mutable prog_view_decls : view_decl list;
+  mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
+  mutable prog_hp_decls : hp_decl list;
+  mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
   (*old_proc_decls : proc_decl list;*) (* To be removed completely *)
-    new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
-	mutable prog_left_coercions : coercion_decl list;
-	mutable prog_right_coercions : coercion_decl list;
-	prog_barrier_decls : barrier_decl list
-	}
+  new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
+  mutable prog_left_coercions : coercion_decl list;
+  mutable prog_right_coercions : coercion_decl list;
+  prog_barrier_decls : barrier_decl list
+}
 	
 and prog_or_branches = (prog_decl * 
     ((MP.mix_formula * (ident * (P.spec_var list))) option) )
@@ -77,6 +78,7 @@ and view_decl = {
     view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
     view_inv_lock : F.formula option;
     mutable view_x_formula : (MP.mix_formula); (*XPURE 1 -> revert to P.formula*)
+    mutable view_xpure_flag : bool; (* flag to indicate if XPURE0 <=> XPURE1 *)
     mutable view_baga : Gen.Baga(P.PtrSV).baga;
     mutable view_addr_vars : P.spec_var list;
     (* if view has only a single eqn, then place complex subpart into complex_inv *)  
@@ -97,11 +99,16 @@ and rel_decl = {
     rel_vars : P.spec_var list;
     rel_formula : P.formula;}
 
+and hp_decl = { 
+    hp_name : ident; 
+    hp_vars : P.spec_var list;
+    hp_formula : F.formula;}
+
 (** An Hoa : axiom *)
 and axiom_decl = {
 		axiom_hypothesis : P.formula;
 		axiom_conclusion : P.formula; }
-    
+
 and proc_decl = {
     proc_name : ident;
     proc_args : typed_ident list;
@@ -122,7 +129,14 @@ and proc_decl = {
     proc_is_main : bool;
     proc_is_recursive : bool;
     proc_file : string;
-    proc_loc : loc; }
+    proc_loc : loc;
+    proc_test_comps :  test_comps option}
+
+and test_comps = 
+    {
+      expected_ass: (ident list * ident list *(Cformula.formula * Cformula.formula) list) option;
+      expected_hpdefs: (ident list * ident list *(Cformula.formula * Cformula.formula) list) option;
+    }
 
 (*TODO: should we change lemma need struc formulas?
   would this help with lemma folding later? *)
@@ -184,6 +198,7 @@ and exp_assert = {
     exp_assert_asserted_formula : F.struc_formula option;
     exp_assert_assumed_formula : F.formula option;
     exp_assert_path_id : formula_label;
+    exp_assert_type : assert_type;
     exp_assert_pos : loc }
 
 and exp_assign = 
@@ -712,8 +727,8 @@ let place_holder = P.SpecVar (Int, "pholder___", Unprimed)
 		sensures_pos = pos;
 	}]*)
 let stub_branch_point_id s = (-1,s)
-let mkEAssume pos = Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkTrueFlow ()) pos),(stub_branch_point_id ""))
-let mkEAssume_norm pos = Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkNormalFlow ()) pos),(stub_branch_point_id ""))
+let mkEAssume pos = Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkTrueFlow ()) pos),(stub_branch_point_id ""),None)
+let mkEAssume_norm pos = Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkNormalFlow ()) pos),(stub_branch_point_id ""),None)
 	
 let mkSeq t e1 e2 pos = match e1 with
   | Unit _ -> e2
@@ -1478,7 +1493,7 @@ let check_proper_return cret_type exc_list f =
   let rec helper f0 = match f0 with 
 	| F.EBase b-> (match b.F.formula_struc_continuation with | None -> () | Some l -> helper l)
 	| F.ECase b-> List.iter (fun (_,c)-> helper c) b.F.formula_case_branches
-	| F.EAssume (_,b,_)-> if (F.isAnyConstFalse b)||(F.isAnyConstTrue b) then () else check_proper_return_f b
+	| F.EAssume (_,b,_,_)-> if (F.isAnyConstFalse b)||(F.isAnyConstTrue b) then () else check_proper_return_f b
 	| F.EInfer b -> ()(*check_proper_return cret_type exc_list b.formula_inf_continuation*)
 	| F.EList b -> List.iter (fun c-> helper(snd c)) b 
 	| F.EOr b -> (helper b.F.formula_struc_or_f1; helper b.F.formula_struc_or_f2)in
@@ -1691,6 +1706,7 @@ module IGO = Graph.Oper.P(IG)
 module IGC = Graph.Components.Make(IG)
 module IGP = Graph.Path.Check(IG)
 module IGN = Graph.Oper.Neighbourhood(IG)
+module IGT = Graph.Topological.Make(IG)
 
 let ex_args f a b = f b a
 

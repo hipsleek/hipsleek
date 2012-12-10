@@ -1,0 +1,65 @@
+//heap formula
+data node { int val ; node next }.
+data node2 { int val ; node next }.
+
+//PART2: check args
+
+//1.
+checkeq[] x::node<u,null> -|- x::node<u,null>.
+//VALID
+//!!! [[(flted_8_12, flted_8_18), (u, u), (x, x)]]
+
+
+//2.
+checkeq[] x::node<v,null> -|- y::node<c,null>.
+//VALID
+//!!! [[(flted_12_22, flted_12_28), (v, c), (x, y)]]
+
+//3.
+checkeq[x] x::node<b,null> -|- x::node<c,null>.
+//VALID
+
+//4.
+checkeq[x] x::node<a,null> -|- x::node<a,null>.
+//VALID
+
+//5.
+checkeq[] x::node<v,null> * z::node<u,null> -|- y::node<u,null>.
+//FAIL  (not check match again case yet)
+
+//6.
+checkeq[] x::node<v,null> * z::node<c,null> -|- y::node<c,null> * t::node<v,null>.
+//VALID
+
+//7.
+checkeq[x] x::node<t,null> * z::node<u,null> -|- y::node<t,null> * x::node<u,null>.
+//VALID
+
+//8.
+checkeq[u] x::node<u,c> * z::node<h,d> -|- y::node<u,a> * t::node<u,b>.
+//VALID
+//!! [[(d, b), (u_114, u_122), (z, t), (c, a), (u, u), (x, y)], 
+//[(d, a), (u_114, u), (z, y), (c, b), (u, u_122), (x, t)]]
+//[[(d, b), (u_114, u_122), (z, t), (c, a), (x, y)]]
+
+
+//9.
+checkeq[] x::node<a,null> * z::node<c,null> -|- y::node<c,null> * t::node<a,null>.
+//VALID
+
+//10.
+checkeq[] x::node<a,null> * z::node<b,null> -|- y::node<c,null> * t::node<d,null>.
+//VALID
+
+//11.
+checkeq[a] x::node<a,null> * z::node<b,null> -|- y::node<c,null> * t::node<d,null>.
+//FAIL !!!!!!!!!!!!!!!!!!!***********************
+
+//12.
+checkeq[a] x::node<a,null> * z::node<b,null> -|- y::node<c,null> * t::node<a,null>.
+//VALID
+
+//13. FAIL
+checkeq[x] x::node<a,null> -|- x::node<a,null>@L.
+
+

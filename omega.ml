@@ -2,6 +2,7 @@
   Call Omega Calculator, send input to it
 *)
 open Globals
+open GlobProver
 open Gen.Basic
 open Cpure
 
@@ -10,7 +11,7 @@ let set_prover_original_output = ref (fun _ -> ())
 
 let omega_call_count: int ref = ref 0
 let is_omega_running = ref false
-let in_timeout = ref 15.0 (* default timeout is 15 seconds *)
+let in_timeout = ref 10.0 (* default timeout is 15 seconds *)
 
 (***********)
 let test_number = ref 0
@@ -88,6 +89,7 @@ and omega_of_b_formula b =
   let (pf, _) = b in
   match pf with
   | BConst (c, _) -> if c then "(0=0)" else "(0>0)"
+  | XPure _ -> "(0=0)"
   | BVar (bv, _) ->  (omega_of_spec_var bv) ^ " > 0" (* easy to track boolean var *)
   | Lt (a1, a2, _) ->(omega_of_exp a1) ^ " < " ^ (omega_of_exp a2)
   | Lte (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
@@ -98,14 +100,14 @@ and omega_of_b_formula b =
   | Eq (a1, a2, _) -> begin
         if is_null a2 then	(omega_of_exp a1)^ " < 1"
         else if is_null a1 then (omega_of_exp a2) ^ " < 1"
-        else  				(omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
+        else (omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
   end
   | Neq (a1, a2, _) -> begin
         if is_null a2 then
-        				(omega_of_exp a1) ^ " > 0"
+          (omega_of_exp a1) ^ " > 0"
         else if is_null a1 then						
-        				(omega_of_exp a2) ^ " > 0"
-        else		(omega_of_exp a1)^ " != " ^ (omega_of_exp a2)
+          (omega_of_exp a2) ^ " > 0"
+        else (omega_of_exp a1)^ " != " ^ (omega_of_exp a2)
     end
   | EqMax (a1, a2, a3, _) ->
       let a1str = omega_of_exp a1 in
@@ -171,10 +173,11 @@ let omegacalc = ref ("oc":string)
 
 let start_with str prefix =
   (String.length str >= String.length prefix) && (String.sub str 0 (String.length prefix) = prefix) 
+	
 let send_cmd cmd =
   if !is_omega_running then output_string (!process.outchannel) (cmd ^ "\n")
 
-let set_process (proc: Globals.prover_process_t) = 
+let set_process (proc: GlobProver.prover_process_t) = 
   process := proc
 
 let prelude () =
@@ -304,8 +307,10 @@ let check_formula f timeout =
       let fail_with_timeout () = 
         restart ("[omega.ml]Timeout when checking sat for \n" ^ (string_of_float timeout));
         true (* it was checking for sat*) in
-      let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_string_bool fnc f timeout fail_with_timeout in 
-      res
+      if not (!dis_provers_timeout) then
+        let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_string_bool fnc f timeout fail_with_timeout in
+        res
+      else fnc f
   end
 
 let check_formula i f timeout =
@@ -391,6 +396,11 @@ let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
             try
                 check_formula 1 fomega !in_timeout
             with
+              | Procutils.PrvComms.Timeout as exc ->
+                if !Globals.dis_provers_timeout then (stop (); raise exc)
+                else begin
+                  Printf.eprintf "SAT Unexpected exception : %s" (Printexc.to_string exc);
+                  stop (); raise exc end
               | End_of_file ->
                   (*let _ = print_endline "SAT: End_of_file" in*)
                   restart ("End_of_file when checking #SAT \n");
@@ -478,6 +488,11 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
               try
                   not (check_formula 2 (fomega ^ "\n") !in_timeout)
               with
+                | Procutils.PrvComms.Timeout as exc -> 
+                  if !Globals.dis_provers_timeout then (stop (); raise exc)
+                  else begin
+                    Printf.eprintf "IMPLY : Unexpected exception : %s" (Printexc.to_string exc);
+                    stop (); raise exc end
                 | End_of_file ->
                     (*let _ = print_endline "IMPLY: End_of_file" in*)
                     restart ("IMPLY : End_of_file when checking \n");
@@ -513,7 +528,8 @@ let is_valid_with_check (pe : formula) timeout : bool option =
 (*let is_valid_with_check_ops pr_w pr_s (pe : formula) timeout : bool option =
   do_with_check "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe*)
 
-let is_valid_with_default_ops pr_w pr_s (pe : formula) timeout : bool = do_with_check_default "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe false
+let is_valid_with_default_ops pr_w pr_s (pe : formula) timeout : bool = 
+  do_with_check_default "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe false
 
 
 (* let is_valid (pe : formula) timeout : bool = *)
@@ -658,10 +674,11 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
 	                    match_vars (fv pe) rel
 	                  end
 	                with
-                      | Procutils.PrvComms.Timeout ->
+                      | Procutils.PrvComms.Timeout as exc ->
                             (*log ERROR ("TIMEOUT");*)
                             restart ("Timeout when checking #simplify ");
-                            pe
+                            if not (!Globals.dis_provers_timeout) then pe
+                            else raise exc (* Timeout exception of a higher-level function *)
                       | End_of_file ->
                             restart ("End_of_file when checking #simplify \n");
                             pe
@@ -676,7 +693,10 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
                   (*   let time = (post_time -. pre_time) *. 1000. in *)
                   (*let _ = print_string ("\nomega_simplify: f after"^(omega_of_formula simp_f)) in*)
                   simp_f
-              with _ -> pe (* not simplified *)
+              with
+              (* Timeout exception of provers is not expected at this level *)
+              | Procutils.PrvComms.Timeout as exc -> raise exc 
+              | _ -> pe (* not simplified *)
             end
   end
 
@@ -687,7 +707,6 @@ let simplify (pe : formula) : formula =
 let simplify (pe : formula) : formula =
   let pf = !print_pure in
   Debug.no_1 "Omega.simplify" pf pf simplify pe
-
 
 (* let simplify_ho is_complex (orig_pe : formula) : formula = *)
 (*  (\* print_endline "LOCLE: simplify";*\) *)

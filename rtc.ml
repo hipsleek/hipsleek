@@ -232,11 +232,13 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
 					   I.proc_exceptions = [];
         I.proc_is_main = false;
              I.proc_file = "";
-					   I.proc_loc = no_pos } in
+					   I.proc_loc = no_pos;
+I.proc_test_comps = None } in
 	let ddef = { I.data_name = (C.unmingle_name proc.C.proc_name) ^ "_PRE";
 				 I.data_fields = fields;
 				 I.data_parent_name = "Object";
 				 I.data_invs = [];
+                 I.data_is_template = false;
 				 I.data_methods = check_proc :: disj_procs } in
 	let _ = check_proc.I.proc_data_decl <- Some ddef in
 	let java_str = Java.java_of_data ddef [] in
@@ -302,11 +304,13 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
 					   I.proc_exceptions = [];
         I.proc_is_main = false;
              I.proc_file = "";
-					   I.proc_loc = no_pos } in
+					   I.proc_loc = no_pos;
+I.proc_test_comps =None } in
 	let ddef = { I.data_name = (C.unmingle_name proc.C.proc_name) ^ "_POST";
 				 I.data_fields = fields;
 				 I.data_parent_name = "Object";
 				 I.data_invs = [];
+                 I.data_is_template = false;
 				 I.data_methods = check_proc :: disj_procs } in
 	let _ = check_proc.I.proc_data_decl <- Some ddef in
 	let java_str = Java.java_of_data ddef [] in

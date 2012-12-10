@@ -1,0 +1,22 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred lst<n> == self=null
+  or self::node<_,q> * q::lst<n>
+  inv true .
+
+pred lst2<n> == self=null
+  or self::node<_,q> * q::lst<n>
+  inv true .
+
+
+  /*
+ERROR: at errors/list-bug.slk_17_23 
+Message: no type declaration named lst is found
+   */

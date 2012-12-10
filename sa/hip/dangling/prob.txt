@@ -1,0 +1,107 @@
+===================================================
+
+[ H(x_540)         ::= x_540::node<val_31_510',next_31_511'>@M * HP_526(next_31_511')&true,
+  G(x_541,res_542) ::= HP_526(res_542) * x_541::node<val_31_533,next_32_514'>@M&next_32_514'=null]
+
+--sa-split
+[ H(x_542)    ::= x_542::node<val_31_510',next_31_511'>@M * HP_526(next_31_511')&true,
+  G(x',res)   ::= HP_537(res) * x'::node<val_31_533,next_32_514'>@M&next_32_514'=null,
+  HP_526(res) ::= HP_537(res)&true]
+
+ERROR : where is splitting done? please show before and after.
+
+Your explanation
+================
+In the case of G(x,res), if splitting is applied:
+1. splitting step:
+  G(x,res) == HP_536(x) * HP_537(res)
+......
+normalization:
+ HP_536(x) == x'::node<val_28_533,p> & p =null
+ HP_537(res) == HP_526(res) and HP_537 is dangling
+.....
+2. combination step:
+G(x,res) == x'::node<val_28_533,p> * HP_537(res) & p =null
+==================
+since we do not eliminate dangling, HP_537 is still there.
+
+============================================
+ 
+  H(x_540)         ::= x_540::node<val_31_510',next_31_511'>@M * HP_526(next_31_511')&true,
+   G(x_541,res_542) ::= HP_526(res_542) * x_541::node<val_31_533,next_32_514'>@M&next_32_514'=null]
+
+--sa-dangling
+
+[ H(x_540) ::= x_540::node<val_31_510',HP_526_res_543>@M&true,
+ G(x_541,res_542) ::= x_541::node<val_31_533,next_32_514'>@M&next_32_514'=null & 
+HP_526_res_543=res_542]
+
+PROBLEM : please show before and after. Please use DLING_HP_526, and also provide
+
+   HP_526(y) ::= y = DLING_HP_526
+
+=======================================================================================
+Currently:
+
+[ H3(x_580) ::= x_580::node<val_54_544,y>@M * HP_581(y)&true,
+ H1(x_586) ::= x_586::node<val_54_522',next_54_523'>@M * next_54_523'::ls[LHSCase]&true,
+ H2(y) ::= H4(y)&true,
+ HP_581(y) ::= 
+ y::node<val_54_544,y_584>@M * HP_581(y_584)&true
+ or emp& XPURE(H2(y))
+ ]
+
+As H2(y) is an input, should provide instead:
+ H4(y) ::= H2(y)&true,
+
+--sa-dangling should then generate:
+
+[ H3(x_580) ::= x_580::node<val_54_544,y>@M * HP_581(y)&true,
+ H1(x_586) ::= x_586::node<val_54_522',next_54_523'>@M * next_54_523'::ls[LHSCase]&true,
+ H2(y) ::= emp & DLING_H2
+ H4(y) ::= H2(y)&true,
+ HP_581(y) ::= 
+ y::node<val_54_544,y_584>@M * HP_581(y_584)&true
+ or emp& XPURE(H2(y))
+ ]
+
+--sa-inlining would then result in:
+
+[ H3(x_580) ::= x_580::node<val_54_544,y>@M * HP_581(y)&true,
+ H1(x_586) ::= x_586::node<val_54_522',next_54_523'>@M * next_54_523'::ls[LHSCase]&true,
+ H2(y) ::= emp & DLING_H2
+ H4(y) ::= y = DLING_H2 // but y parameter is not pass-by-reference
+ HP_581(y) ::= 
+ y::node<val_54_544,y_584>@M * HP_581(y_584)&true
+ or emp& y=DLING_H2
+ ]
+
+ requires H1(x) * H2(y)
+ ensures  H3(x') * H4(y);
+
+ requires H1(x) & y = DLING_H2
+ ensures  H3(x') & y = DLING_H2;
+
+=======================================================================================
+
+--sa-split 
+[ H3(x_580) ::= x_580::node<val_54_544,y>@M * HP_581(y)&true,
+ H1(x_586) ::= x_586::node<val_54_522',next_54_523'>@M * next_54_523'::ls[LHSCase]&true,
+ H2(y) ::= H4(y)&true,
+ HP_581(y) ::= 
+ y::node<val_54_544,y_584>@M * HP_581(y_584)&true
+ or emp& XPURE(H2(y))
+ ]
+
+--sa-split --sa-dangling
+[ H3(x_580) ::= x_580::node<val_54_544,y>@M * HP_581(y)&true,
+ H1(x_586) ::= x_586::node<val_54_522',next_54_523'>@M * next_54_523'::ls[LHSCase]&true,
+ H2(y) ::= emp&H2_y_592=y,
+ H4(y) ::= emp&H2_y_592=y,
+ HP_581(y) ::= 
+ emp& XPURE(H2(y))
+ or y::node<val_54_544,y_584>@M * HP_581(y_584)&true
+ ]
+
+======================================================
+

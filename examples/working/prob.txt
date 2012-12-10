@@ -1,0 +1,67 @@
+run-fast-test.pl term
+
+Total number of errors: 38 in files:
+ error at: ex11.ss bsearch
+error at: benchs/key/AlternatingIncr.ss increase
+error at: benchs/key/Collatz.ss collatz
+term error at: benchs/key/ComplInterv.ss 
+error at: benchs/key/Ex09.ss half
+error at: benchs/key/Ex09.ss loop
+error at: benchs/key/ModuloLower.ss loop
+error at: benchs/key/ModuloUp.ss up
+error at: benchs/key/ModuloUp.ss loop
+error at: benchs/key/Plait-may.ss plait
+error at: benchs/key/WhileSum.ss increase
+error at: benchs/aprove/Aprove_09/Duplicate.ss main
+error at: benchs/aprove/Aprove_09/Duplicate.ss round
+error at: benchs/aprove/Aprove_09/GCD5.ss main
+error at: benchs/aprove/Aprove_09/GCD5.ss gcd
+error at: benchs/aprove/Aprove_09/LogBuiltIn.ss main
+error at: benchs/aprove/Aprove_09/LogBuiltIn.ss log
+error at: benchs/aprove/Aprove_09/LogIterative.ss main
+error at: benchs/aprove/Aprove_09/LogIterative.ss log
+error at: benchs/aprove/Aprove_09/Round3.ss main
+error at: benchs/aprove/AProVE_11_iterative/RetValRec.ss main
+error at: benchs/aprove/AProVE_11_iterative/RetValRec.ss ret
+error at: benchs/aprove/AProVE_11_iterative/RetValRec.ss test
+error at: benchs/aprove/AProVE_11_iterative/RetVal.ss main
+error at: benchs/aprove/AProVE_11_iterative/RetVal.ss ret
+error at: benchs/aprove/AProVE_11_iterative/RetVal.ss test
+error at: benchs/aprove/BOG_RTA_11/LogRecursive.ss main
+error at: benchs/aprove/BOG_RTA_11/LogRecursive.ss log
+term error at: benchs/aprove/Costa_Julia_09/costa09-example_1.ss 
+error at: benchs/aprove/Costa_Julia_09/costa09-example_2.ss main
+error at: benchs/aprove/Costa_Julia_09/costa09-example_2.ss divBy
+error at: benchs/aprove/Costa_Julia_09/TestJulia4.ss main
+error at: benchs/aprove/Julia_10_Recursive/Power.ss power
+error at: benchs/aprove/Julia_10_Recursive/Power.ss even
+error at: benchs/aprove/Julia_10_Recursive/Power.ss odd
+error at: benchs/aprove/Julia_11_iterative/NO_01.ss main
+error at: benchs/aprove/pasta/PastaB5.ss main
+error at: benchs/aprove/pasta/PastaB8.ss main
+.
+
+run-fast-test.pl imm -flags "--eps"
+
+Total number of errors: 9 in files:
+ error at: bigint.ss is_equal
+error at: bigint_imm.ss mult2
+error at: bigint_imm.ss is_equal
+error at: bigint_imm-star.ss is_equal
+error at: bigint-tight.ss is_equal
+error at: bigint-tight-imm.ss mult
+error at: bigint-tight-imm.ss is_equal
+error at: bigint-tight-imm-star.ss is_equal
+error at: ll_imm.ss get_next_next
+.
+
+run-fast-test.pl array -flags "-tp z3"
+
+Total number of errors: 7 in files:
+ error at: arr_binarysearch.java binary_search
+error at: arr_search_decrease_less_than_two.java searchzero
+error at: arr_insertsort_perm.java insertion_sort
+error at: arr_invert.java Invert
+error at: arr_mergesort.java merge_sorted_arrays
+error at: arr_mergesort.java copy_array
+error at: arr_mergesort.java merge_sort

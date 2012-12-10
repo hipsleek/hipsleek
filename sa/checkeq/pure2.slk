@@ -1,0 +1,30 @@
+//heap formula
+data node { int val ; node next }.
+data node2 { int val ; node next }.
+
+HeapPred H(node x).
+HeapPred HP_535(node x).
+HeapPred G_556(node x).
+HeapPred G(node x, node y).
+
+//1
+checkeq[] x::node<2,y> & x = y -|- x::node<2,y> & y = x.
+//VALID
+
+//2.
+checkeq[] H(y) & x = t -|- H(x) & x = y.
+//FAIL
+
+//3.
+checkeq[] H(x) & x = y & x = t -|- H(y) & y = t & x = l.
+//FAIL
+
+//4.
+checkeq[] H(x) & x = y & x = null -|- H(y) & y = x & x = null.
+//FAIL
+
+//5.
+checkeq[] y::node<_,x> & x = null -|- x::node<_,y> & y = null.
+//VALID
+
+

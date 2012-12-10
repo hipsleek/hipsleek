@@ -29,7 +29,6 @@ int div___(int a, int b)
     }
 }
 
-
 // why is flow of div2 __Error rather __DivByZeroErr?
 int div2(int a, int b)
  requires true 
@@ -68,6 +67,7 @@ int mod___(int a, int b) case {
     /* -1 < b < 1 -> requires false ensures false; */
   }
 }
+
 /*
 float add___(float a, float b) 
   requires true 
@@ -210,8 +210,10 @@ relation update_array_2d(int[,] a, int[,] r, int val, int i, int j).
 relation amodr(int[] a, int[] b, int i, int j) == 
     forall(k : (i<=k & k<=j | a[k] = b[k])).
 
+/*
 relation bnd(int[] a, int i, int j, int low, int high) == 
  	(i > j | i<=j & forall ( k : (k < i | k > j | low <= a[k] <= high))).
+*/
 
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////

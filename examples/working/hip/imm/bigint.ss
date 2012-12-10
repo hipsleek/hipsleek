@@ -202,7 +202,7 @@ bool is_equal(node x, node y)
 }
 
 
-int compare(node x, node y)
+int compare2(node x, node y)
   requires x::bigint<v1> * y::bigint<v2>
   ensures x::bigint<v1> * y::bigint<v2> & 
   (res = 0 & v1 = v2 | res = 1 & v1 > v2 | res = -1 & v1 < v2);
@@ -215,7 +215,7 @@ int compare(node x, node y)
     if (is_zero(x)) return 0;
     return 1;
   }
-  int c = compare(x.next, y.next);
+  int c = compare2(x.next, y.next);
   if (c == 0) return compare_int(x.val, y.val);
   return c;
 }
