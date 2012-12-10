@@ -8314,20 +8314,22 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
             (*prove extra heap + guard*)
             let conseq_extra = mkBase extra_heap_new (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) lhs_guard_new) CF.TypeTrue (CF.mkTrueFlow ()) [] no_pos in
             
-            Debug.tinfo_zprint (lazy ("normalize_w_coers:process_one: check extra heap")) no_pos;
-            Debug.tinfo_zprint (lazy ("normalize_w_coers:process_one: new_ctx: " ^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context new_ctx1))) no_pos;
-            Debug.tinfo_zprint (lazy ("normalize_w_coers:process_one: conseq_extra:\n" ^ (Cprinter.string_of_formula conseq_extra))) no_pos;
+            Debug.tinfo_zprint (lazy ("normalize_w_coers: process_one: check extra heap")) no_pos;
+            Debug.tinfo_zprint (lazy ("normalize_w_coers: process_one: new_ctx: " ^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_context new_ctx1))) no_pos;
+            Debug.tinfo_zprint (lazy ("normalize_w_coers: process_one: conseq_extra:\n" ^ (Cprinter.string_of_formula conseq_extra))) no_pos;
 
             let check_res, check_prf = heap_entail prog false new_ctx conseq_extra no_pos in
             
-            Debug.tinfo_zprint (lazy ("normalize_w_coers:process_one: after check extra heap: " ^ (Cprinter.string_of_spec_var p2) ^ "\n" ^ (Cprinter.string_of_list_context check_res))) no_pos;
+            (* Debug.tinfo_zprint (lazy ("normalize_w_coers: process_one: after check extra heap: " ^ (Cprinter.string_of_spec_var p2) ^ "\n" ^ (Cprinter.string_of_list_context check_res))) no_pos; *)
             
             (* PROCCESS RESULT *)
             (match check_res with
-              | FailCtx _ -> (false, estate, h,p)(*false, return dummy h and p*)
+              | FailCtx _ ->
+                Debug.tinfo_zprint (lazy ("normalize_w_coers: lemma matching failed")) no_pos; 
+                (false, estate, h, p) (* false, return dummy h and p *)
               | SuccCtx res -> match List.hd res with(*we expect only one result*)
                 | OCtx (c1, c2) ->
-                  let _ = print_string ("[solver.ml] Warning: normalize_w_coers:process_one: expect only one context \n") in
+                  let _ = print_string ("[solver.ml] Warning: normalize_w_coers: process_one: expect only one context \n") in
                   (false,estate,h,p)
                 | Ctx es ->
                   let new_ante = normalize_combine coer_rhs_new es.es_formula no_pos in
@@ -8335,6 +8337,8 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
                   let new_ante = CF.remove_dupl_conj_eq_formula new_ante in
                   let h1,p1,_,_,_ = split_components new_ante in
                   let new_es = {new_estate with es_formula=new_ante; es_trace=old_trace} in
+                  Debug.tinfo_zprint (lazy ("normalize_w_coers: lemma matching succeeded")) no_pos;
+                  Debug.tinfo_zprint (lazy ("normalize_w_coers: new ctx: \n" ^ (Cprinter.string_of_entail_state new_es))) no_pos;
                   (true,new_es,h1,p1))
         | _ -> report_error no_pos "unexpecte match pattern"	  
     in
