@@ -24,7 +24,7 @@ HeapPred H1(node2 a).
  or emp&z_563=null
  ]
 
-PROBLEM " intermediate predicate shown in wo elim-dangling
+PROBLEM intermediate predicate shown in wo elim-dangling
  HP_539(v_node2_40_564) ::=  H1(v_node2_40_564)&true]
 
  H1(z_562) ::=  
