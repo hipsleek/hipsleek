@@ -2123,11 +2123,12 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
 		    (* let hp_lst_simplified_assume = Sa2.simplify_lst_constrs hp_lst_assume in *)
                     if not(Infer.infer_rel_stk# is_empty) then
                       begin
-                        print_endline "*************************************";
+                        print_endline "\n*************************************";
                         print_endline "*******inferred pure relations ******";
                         print_endline "*************************************";
                         print_endline (Infer.infer_rel_stk # string_of_reverse);
                         print_endline "*************************************";
+                        Infer.infer_rel_stk # reset;
                       end;                    
                     if not(Infer.rel_ass_stk# is_empty) then
                       begin
@@ -2434,8 +2435,14 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
                           let post_vars = CP.remove_dups_svl posts in
                           try 
                             begin
-                              let triples (*(rel, post)*) = if rels = [] then []
-                              else Fixcalc.compute_fixpoint 2 rels pre_vars (proc.proc_stk_of_static_specs # top) in
+                            (* type: (Fixbag.CP.formula * Fixbag.CP.Label_Pure.exp_ty) list *)
+                              let pr = Cprinter.string_of_pure_formula in
+                              Debug.info_hprint (add_str "rels" (pr_list (pr_pair pr pr))) rels no_pos;
+                              let triples (*(rel, post)*) = 
+                                if rels = [] then []
+                                else Fixcalc.compute_fixpoint 2 rels pre_vars (proc.proc_stk_of_static_specs # top) 
+                              in
+                              Debug.info_hprint (add_str "triples" (pr_list (pr_pair pr CP.Label_Pure.string_of_exp_ty))) rels no_pos;
                               let triples = List.map (fun (rel,post) ->
                                   let exist_vars = CP.diff_svl (CP.fv rel) inf_vars in
                                   (*                                let _ = Debug.info_hprint (add_str "EVARS : " !CP.print_svl) exist_vars no_pos in*)
@@ -2497,10 +2504,10 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
                             (* let subs = List.map (fun xs -> CP.simplify_subs xs vars []) ra in *)
                             (* Debug.info_hprint (add_str "alias" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) ra no_pos; *)
                             (* Debug.info_hprint (add_str "subs" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) subs no_pos; *)
-                            Debug.ninfo_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
-                            Debug.ninfo_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
-                            Debug.ninfo_hprint (add_str "NEW RELS" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) rels no_pos;
-                            Debug.tinfo_hprint (add_str "NEW ASSUME" (pr_list_ln Cprinter.string_of_lhs_rhs)) lst_assume no_pos;
+                            Debug.info_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
+                            Debug.info_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
+                            Debug.info_hprint (add_str "NEW RELS" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) rels no_pos;
+                            Debug.info_hprint (add_str "NEW ASSUME" (pr_list_ln Cprinter.string_of_lhs_rhs)) lst_assume no_pos;
                             Debug.ninfo_hprint (add_str "NEW HP RELS" (pr_list_ln Cprinter.string_of_hprel)) hprels no_pos;
                             Debug.ninfo_hprint (add_str "NEW HP ASSUME" (pr_list_ln Cprinter.string_of_hprel)) hp_lst_assume no_pos;
 			    Debug.ninfo_hprint (add_str "NEW INFERRED HP" (pr_list_ln Cprinter.string_of_hprel)) ls_inferred_hps no_pos;

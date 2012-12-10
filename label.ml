@@ -20,6 +20,7 @@ struct
   (* this assumes that list merger would not affect the order of elements *)
 
   let string_of = pr_list (pr_pair Lbl.string_of Exp.string_of)
+  let string_of_exp_ty = Exp.string_of
 
   (* assumes that we have identical labels *)
   let comb_node l1 l2 e1 e2 = (l1, Exp.comb e1 e2)
