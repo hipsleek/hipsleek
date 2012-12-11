@@ -44,11 +44,11 @@ bool rand()
  ensures res or !res;
 
 int length(node l)
-//infer [R1]
+  infer [R1]
   requires stk::RS<m> * l::ll<n>@L & m>=3*n+3
   ensures  stk::RS<m> * mn::RS_mark<h> & res<=n 
-//& R1(h,m,n);
-  & h<=m-3;
+  & R1(h,m,n);
+//& h<=m-3;
 {
   int f = save_stk();
   sub_stk(3); //add a stack frame
