@@ -16,7 +16,7 @@ echo "ll-append10.ss"
 ../../hip ll-append10.ss --sa-dangling --sa-inlining -cp-test cp/ll-append10.cp | grep Compare
 echo "dangling/ll-app3.ss"
 ../../hip dangling/ll-app3.ss --sa-dangling --sa-inlining -cp-test cp/ll-app3.cp | grep Compare
-echo "dangling/ll-app4.ss --XPURE"
+echo "dangling/ll-app4.ss"
 ../../hip dangling/ll-app4.ss --sa-dangling --sa-inlining -cp-test cp/ll-app4.cp | grep Compare
 echo "dangling/ll-app5b.ss"
 ../../hip dangling/ll-app5b.ss --sa-useless --sa-dangling --sa-inlining -cp-test cp/ll-app5b.cp | grep Compare

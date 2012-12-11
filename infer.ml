@@ -1765,6 +1765,32 @@ let simplify_lhs_rhs prog lhs_b rhs_b leqs reqs hds hvs lhrs rhrs lhs_selected_h
   (* let lhs_b4,rhs_b4 = SAU.rename_hp_args lhs_b3 rhs_b3 in *)
   (lhs_b3,rhs_b3)
 
+let lookup_eq_hprel_ass_x hps hprel_ass lhs rhs=
+  let lhs_svl = List.map (CP.name_of_spec_var) (CP.remove_dups_svl (CF.fv lhs)) in
+  let rec checkeq_hprel hprels=
+    match hprels with
+      | [] -> false,[]
+      | ass::tl ->
+          let b1,_ = Checkeq.checkeq_formulas lhs_svl lhs ass.CF.hprel_lhs in
+          if b1 then
+            let b2,m = Checkeq.checkeq_formulas [] rhs ass.CF.hprel_rhs in
+            if b2 then
+              true,List.filter (fun (sv1,sv2) -> CP.mem sv1 hps) (List.hd m)
+            else checkeq_hprel tl
+          else
+            checkeq_hprel tl
+  in
+   checkeq_hprel hprel_ass
+
+(*example s3*)
+let lookup_eq_hprel_ass hps hprel_ass lhs rhs=
+  let pr1 = pr_list_ln Cprinter.string_of_hprel in
+  let pr2 = Cprinter.prtt_string_of_formula in
+  let pr3 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  let pr4 = pr_pair string_of_bool pr3 in
+  Debug.no_4 "lookup_eq_hprel_ass" !CP.print_svl pr1 pr2 pr2 pr4
+      (fun _ _ _ _ -> lookup_eq_hprel_ass_x hps hprel_ass lhs rhs) hps hprel_ass lhs rhs
+
 (*
 type: Cast.prog_decl ->
   Cformula.entail_state ->
@@ -1882,18 +1908,30 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
             hvs (lhras@rhras@new_hrels) (leqs@reqs) eqNull [] in
           let rf = CF.mkTrue (CF.mkTrueFlow()) pos in
           let defined_hprels = List.map (generate_hp_ass (closed_hprel_args_def@total_unk_svl) rf) defined_hps in
-          let hp_rel = {
-              CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhrs@rhrs@rvhp_rels));
-              unk_svl = total_unk_svl;(*inferred from norm*)
-              unk_hps = [];
-              predef_svl = (closed_hprel_args_def@total_unk_svl);
-              hprel_lhs = CF.Base new_lhs_b;
-              hprel_rhs = CF.Base new_rhs_b;
-          } in
-          let hp_rel_list = [hp_rel]@defined_hprels in
+          (*lookup to check redundant*)
+          let new_lhs = CF.Base new_lhs_b in
+          let new_rhs = CF.Base new_rhs_b in
+          let b,m = if rvhp_rels = [] then (false,[]) else
+                let ass = if rel_ass_stk # is_empty then [] else
+                      [(rel_ass_stk # top)]
+                in
+                lookup_eq_hprel_ass rvhp_rels ass new_lhs new_rhs
+          in
+          let hp_rels=
+          if b && m <> [] then [] else
+            [{
+                      CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhrs@rhrs@rvhp_rels));
+                      unk_svl = total_unk_svl;(*inferred from norm*)
+                      unk_hps = [];
+                      predef_svl = (closed_hprel_args_def@total_unk_svl);
+                      hprel_lhs = CF.Base new_lhs_b;
+                      hprel_rhs = CF.Base new_rhs_b;
+            }]
+          in
+          let hp_rel_list = hp_rels@defined_hprels in
           let _ = rel_ass_stk # push_list (hp_rel_list) in
           let _ = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
-          DD.ninfo_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rel_list)) pos;
+          DD.tinfo_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rel_list)) pos;
           let update_es_f f new_hf=
              (CF.mkAnd_f_hf f (CF.h_subst leqs new_hf) pos)
           in
@@ -1920,7 +1958,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           (* DD.info_pprint ("  before: " ^ (Cprinter.string_of_formula new_es_formula)) pos; *)
             (*CF.drop_hrel_f new_es_formula lhrs in *)
           (*add mismatched heap into the entail states if @L*)
-          let check_consumed_node h f= 
+          let check_consumed_node h f=
             match h with
               | DataNode hd -> if not(CF.isLend (hd.CF.h_formula_data_imm)) then f else
                     let new_h = DataNode {hd with CF.h_formula_data_imm = (CF.ConstAnn(Mutable));} in
@@ -1928,11 +1966,12 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
               | _ -> f
           in
           let new_es_formula = check_consumed_node rhs new_es_formula in
+          let new_es_formula1 = CF.subst m new_es_formula in
           let new_es = {es with CF. es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@rvhp_rels;
-              CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ defined_hprels @ [hp_rel];
+              CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ defined_hprels @ hp_rels;
               CF.es_infer_hp_unk_map = (es.CF.es_infer_hp_unk_map@unk_map);
               CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);
-              CF.es_formula = new_es_formula} in
+              CF.es_formula = new_es_formula1} in
           DD.tinfo_pprint ("  new lhs: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
           (true, new_es)
       end

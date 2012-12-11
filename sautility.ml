@@ -2065,15 +2065,17 @@ let remove_dups_recursive hp args unk_hps unk_svl defs=
 let simplify_set_of_formulas_x prog hp args unk_hps unk_svl defs=
   let helper f=
     let f1 = filter_var prog args f in
-    if is_empty_f f1 || (is_trivial f1 (hp,args)) then [] else [f1]
+    let f2 =  elim_irr_eq_exps prog (CP.remove_dups_svl (args@unk_svl)) f1 in
+    if is_empty_f f2 || (is_trivial f2 (hp,args)) then [] else [f2]
   in
   let base_case_exist,defs1 = remove_dups_recursive hp args unk_hps unk_svl defs in
   let defs2 = List.concat (List.map helper defs1) in
+  let defs3 = Gen.BList.remove_dups_eq check_relaxeq_formula defs2 in
     (*  if base_case_exist then *)
   (*      List.concat (List.map helper defs1) *)
   (*    else defs1 *)
   (* in *)
-  (base_case_exist,defs2)
+  (base_case_exist,defs3)
 
 let simplify_set_of_formulas prog hp args unk_hps unk_svl defs=
    let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in

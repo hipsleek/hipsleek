@@ -1058,6 +1058,11 @@ let elim_direct_root_pto undef_args args prog hd_nodes hv_nodes=
 
 let rec collect_par_defs_one_side_one_hp_aux_x prog f (hrel, args) def_ptrs
       eqs hd_nodes hv_nodes unk_hps unk_svl predef expl_ptrs=
+  let refine_neq_null neqNulls=
+    let neqNulls1 = SAU.find_close neqNulls eqs in
+    let neqNulls2 = CP.diff_svl neqNulls1 expl_ptrs in
+    CP.intersect_svl neqNulls2 args
+  in
   begin
       Debug.ninfo_pprint (" hp: "^ (!CP.print_sv hrel)) no_pos;
       let _ = DD.ninfo_pprint ("   def " ^(!CP.print_svl (def_ptrs@predef@unk_svl))) no_pos in
@@ -1069,7 +1074,7 @@ let rec collect_par_defs_one_side_one_hp_aux_x prog f (hrel, args) def_ptrs
       (*if root + next ptr is inside args: ll_all_13a: G***)
       let undef_args1 =  elim_direct_root_pto undef_args args prog hd_nodes hv_nodes in
       (* let _ = DD.ninfo_pprint ("   undef_args1 " ^(!CP.print_svl undef_args1)) no_pos in *)
-      let args_neqNull_svl = (CF.get_args_neqNull args expl_ptrs f) in
+      let args_neqNull_svl = refine_neq_null (CF.get_neqNull f) in
       let undef_args2 = CP.diff_svl undef_args1 args_neqNull_svl in
       let test1= (List.length undef_args2) = 0 in
         (*case 1*)
@@ -2941,7 +2946,7 @@ let generalize_hps_par_def_x prog non_ptr_unk_hps unk_hpargs post_hps par_defs=
   (*remove dups in each group*)
   let groups1 = List.map SAU.remove_dups_pardefs_w_neqNull groups in
   (*remove neqNull*)
-  let groups1a = (List.map remove_neqNull_grp_helper groups1) in
+  (* let groups1a = (List.map remove_neqNull_grp_helper groups1) in *)
   (*
     subst such that each partial def does not contain other hps
     dont subst recursively
