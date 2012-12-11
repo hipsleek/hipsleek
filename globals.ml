@@ -619,6 +619,8 @@ let split_rhs_flag = ref true
 
 let n_xpure = ref 1
 
+let fixcalc_disj = ref 2
+
 let check_coercions = ref false
 
 let num_self_fold_search = ref 0
