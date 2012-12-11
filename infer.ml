@@ -1178,7 +1178,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
       let _,rel_lhs = List.split subs in
       let rel_vars = List.concat (List.map CP.fv rel_lhs) in
       let lhs_rec_vars = CP.fv lhs_p_memo in
-      if not (CP.subset rel_vars lhs_rec_vars) then (
+      if CP.intersect lhs_rec_vars rel_vars = [] && rel_lhs != [] then (
         DD.tinfo_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
         DD.tinfo_pprint ">>>>>> no recursive def <<<<<<" pos; 
         (estate,lhs_mix,rhs_mix_new)
@@ -1251,6 +1251,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
 	      (* let inf_rel_ls = List.map (simp_lhs_rhs vars) inf_rel_ls in *)
         (* DD.info_hprint (add_str "Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos; *)
         infer_rel_stk # push_list inf_rel_ls;
+        Log.current_infer_rel_stk # push_list inf_rel_ls;
         let estate = { estate with es_infer_rel = estate.es_infer_rel@inf_rel_ls } in
         if inf_rel_ls != [] then
           begin
@@ -1572,7 +1573,6 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
   (*should include their closed ptrs*)
       let hrel_args2 = CP.remove_dups_svl (List.fold_left SAU.close_def hrel_args1 (eqs)) in
       let ls_unfold_fwd_svl = get_rhs_unfold_fwd_svl hd (def_vs@hrel_args2) ls_lhp_args in
-      (**)
       (* let l_args = List.concat (List.map (fun (_, exps, _) -> *)
   (*     let r =List.concat (List.map CP.afv exps) in *)
   (*     if (CP.intersect_svl r closed_unmatched_svl) != [] then r else [] *)
@@ -2054,14 +2054,14 @@ let get_spec_from_file prog =
     | (true,_,Some view_node) -> 
       let proc = List.filter (fun x -> x.I.proc_name=id) prog.I.prog_proc_decls in
       let keep_vars = 
-        if List.length proc != 1 then report_error no_pos "Error in get_spec_from_file"
+        if List.length proc != 1 then report_error no_pos ("Error in get_spec_from_file " ^ input_spec)
         else 
           List.map (fun x -> x.I.param_name) (List.hd proc).I.proc_args
       in
       let _ = get_shape_from_file view_node keep_vars id in
       IF.mkETrue top_flow no_pos
     | (false,Some cmd,_) -> cmd
-    | _ -> report_error no_pos "Error in get_spec_from_file"
+    | _ -> report_error no_pos "No command"
   in
   let res = List.map (fun (id1,spec) -> 
     if id1=id then (id1,IF.merge_cmd cmd spec) else (id1,spec)) res in
