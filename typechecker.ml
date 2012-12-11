@@ -2051,7 +2051,7 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
   in helper proc_lst
 
 (* checking procedure: (PROC p61) *)
-and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
+and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
   let unmin_name = unmingle_name proc.proc_name in
   (* get latest procedure from table *)
   let proc = 
@@ -2132,7 +2132,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
                         print_endline "*************************************";
                         print_endline (Infer.infer_rel_stk # string_of_reverse);
                         print_endline "*************************************";
-                        Infer.infer_rel_stk # reset;
+(*                        Infer.infer_rel_stk # reset;*)
                       end;                    
                     if not(Infer.rel_ass_stk# is_empty) then
                       begin
@@ -2453,9 +2453,14 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
                               (* type: (Fixbag.CP.formula * Fixbag.CP.Label_Pure.exp_ty) list *)
                               let pr = Cprinter.string_of_pure_formula in
                               Debug.tinfo_hprint (add_str "rels" (pr_list (pr_pair pr pr))) rels no_pos;
+                              Debug.tinfo_hprint (add_str "mutual grp" (pr_list (fun x -> x.proc_name))) mutual_grp no_pos;
                               let triples (*(rel, post)*) = 
-                                if rels = [] then []
-                                else Fixcalc.compute_fixpoint 2 rels pre_vars (proc.proc_stk_of_static_specs # top) 
+                                if rels = [] then (Infer.infer_rel_stk # reset;[])
+                                else if mutual_grp != [] then []
+                                else
+                                  (let rels = List.map (fun (rt,f1,f2) -> (f1,f2)) Infer.infer_rel_stk # get_stk in
+                                  Infer.infer_rel_stk # reset;
+                                  Fixcalc.compute_fixpoint 2 rels pre_vars (proc.proc_stk_of_static_specs # top))
                               in
                               (* let pr_ty = !CP.Label_Pure.ref_string_of_exp in *)
                               Infer.fixcalc_rel_stk # push_list triples;
@@ -2566,10 +2571,10 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
 	          end
     end else true
 
-let check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
+let check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
   let pr p = pr_id (name_of_proc p)  in
   Debug.no_1_opt (fun _ -> not(is_primitive_proc proc))
-      "check_proc" pr string_of_bool (check_proc prog) proc cout_option
+      "check_proc" pr string_of_bool (check_proc prog) proc cout_option mutual_grp
 
 let check_phase_only prog  proc =
 (* check_proc prog proc *)
@@ -2583,11 +2588,11 @@ let check_phase_only prog  proc =
       ()
 
 (* check entire program *)
-let check_proc_wrapper prog proc cout_option =
+let check_proc_wrapper prog proc cout_option mutual_grp =
 (* check_proc prog proc *)
   try
 	(*  let _ = print_endline ("check_proc_wrapper : proc = " ^ proc.Cast.proc_name) in *)
-    let res = check_proc prog proc cout_option in 
+    let res = check_proc prog proc cout_option mutual_grp in 
     (* Termination: Infer the phase numbers of functions in a scc group *) 
     (* TODO: The list of scc group does not 
      * need to be computed many times *)
@@ -2642,7 +2647,7 @@ let check_view_wrapper def = match def with
 let check_data (prog : prog_decl) (cdef : data_decl) =
   if not (Gen.is_empty cdef.data_methods) then
 	print_string ("\nChecking class " ^ cdef.data_name ^ "...\n\n");
-  List.map (check_proc_wrapper prog) cdef.data_methods
+  List.map (check_proc_wrapper prog) cdef.data_methods 
 
 let check_coercion (prog : prog_decl) =
   let find_coerc coercs name =
@@ -2681,7 +2686,7 @@ let init_files () =
 let check_proc_wrapper_map prog (proc,num) cout_option =
   if !Tpdispatcher.external_prover then Tpdispatcher.Netprover.set_use_socket_map (List.nth !Tpdispatcher.external_host_ports (num mod (List.length !Tpdispatcher.external_host_ports))); (* make this dynamic according to availability of server machines*)
   try
-    check_proc prog proc cout_option
+    check_proc prog proc cout_option []
   with _ as e ->
     if !Globals.check_all then begin
       print_string ("\nProcedure "^proc.proc_name^" FAIL-3\n");
@@ -2692,7 +2697,7 @@ let check_proc_wrapper_map prog (proc,num) cout_option =
 
 let check_proc_wrapper_map_net prog  (proc,num) cout_option =
   try
-    check_proc prog proc cout_option
+    check_proc prog proc cout_option []
   with _ as e ->
     if !Globals.check_all then begin
       print_string ("\nProcedure "^proc.proc_name^" FAIL-4\n");
@@ -2767,19 +2772,28 @@ let check_prog (prog : prog_decl) =
             Debug.dinfo_pprint ">>>>>> Perform Phase Inference for a Mutual Recursive Group  <<<<<<" no_pos;
             Debug.dinfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
             drop_phase_infer_checks();
-            proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc prog proc cout_option));
+            proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc prog proc cout_option []));
             restore_phase_infer_checks();
             (* the message here should be empty *)
             (* Term.term_check_output Term.term_res_stk; *)
             Term.phase_num_infer_whole_scc prog scc 
           end
         else prog in
-      let _ = proc_mutual_scc prog scc (fun prog proc -> ignore (check_proc_wrapper prog proc cout_option)) in
+      let mutual_grp = ref scc in
+      Debug.tinfo_hprint (add_str "MG"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
+      let _ = proc_mutual_scc prog scc (fun prog proc ->
+        begin 
+          mutual_grp := List.filter (fun x -> x.proc_name != proc.proc_name) !mutual_grp;
+          Debug.tinfo_hprint (add_str "SCC"  (pr_list (fun p -> p.proc_name))) scc no_pos;
+          Debug.tinfo_hprint (add_str "MG_new"  (pr_list (fun p -> p.proc_name))) !mutual_grp no_pos;
+          ignore (check_proc_wrapper prog proc cout_option !mutual_grp)
+        end
+      ) in        
       prog
   ) prog proc_scc 
   in 
 
-  ignore (List.map (fun proc -> check_proc_wrapper prog proc cout_option) ((* sorted_proc_main @ *) proc_prim));
+  ignore (List.map (fun proc -> check_proc_wrapper prog proc cout_option []) ((* sorted_proc_main @ *) proc_prim));
   (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)
   let _ =  match cout_option with
     | Some cout -> close_out cout
