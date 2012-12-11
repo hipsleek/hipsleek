@@ -31,21 +31,25 @@ lemma "combine2" self::RS_mark<m1>*self::RS_mark<m2>
 
 relation R1(int h,int n, int m).
 
+bool rand()
+ requires true
+ ensures res or !res;
+
 int length(node l)
   infer [R1]
   requires stk::RS<m> * l::ll<n>@L 
-  ensures  stk::RS<m> * mx::RS_mark<h> & res=n 
+  ensures  stk::RS<m> * mx::RS_mark<h> & res<=n 
   & R1(h,m,n);
   //& h=m+3n+3;
 {
-  add_stk(2); //add a stack frame
+  add_stk(3); //add a stack frame
   int r;
   if (l==null) r=0;
   else {
-    // node nx = l.next; 
-    r=1+length(l.next);
+    if (rand()) r=0;
+    else r=1+length(l.next);
   }
-  sub_stk(2); //subtract a stack frame prior to return
+  sub_stk(3); //subtract a stack frame prior to return
   return r;
 }
 

@@ -1,3 +1,5 @@
+
+
 class __DivByZeroErr  extends __Error {}
 class __ArrBoundErr  extends __Error {}
 
@@ -319,5 +321,15 @@ int[] aalloc___(int dim)
 	requires true 
 	ensures dom(res,0,dim-1);
 
+
+pred_prim RS<high:int>
+  inv high>=0;
+
+pred_prim RS_mark<high:int>
+  inv 0<=high;
+
+
+lemma "combine2" self::RS_mark<m1>*self::RS_mark<m2> 
+  -> self::RS_mark<m> & m=max(m1,m2);
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////

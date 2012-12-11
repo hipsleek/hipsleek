@@ -28,10 +28,13 @@ void g()
   requires stk::RS<n> 
   ensures  stk::RS<n> * mx::RS_mark<h> & h=n+2 ;
 
+relation R(int a,int b,int c).
 
 int fib(int n)
+ infer []
  requires stk::RS<m> & n>=0
- ensures stk::RS<m> * mx::RS_mark<h> & res>=1 
+ ensures stk::RS<m> * mx::RS_mark<h> & res>=1
+//   & R(h,m,n);
      & h=m+max(2,2*n);
      //& m+max(2*n,2)<=h<=m+max(2,2*n);
  { int r;
@@ -42,3 +45,16 @@ int fib(int n)
    return r;
  }  
 
+/*
+
+PROBLEM : fixcalc seems imprecise below.
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( R(h,m,n), m>=0 & h>=(2+m) & n>=0 & h>=(m+(2*n)))]
+*************************************
+
+
+
+*/

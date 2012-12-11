@@ -7,11 +7,6 @@ ll<n> == self=null & n=0
   or self::node<_,q> * q::ll<n-1>
   inv n>=0;
 
-pred_prim RS<high:int>
-  inv high>=0;
-
-pred_prim RS_mark<high:int>
-  inv 0<=high;
 
 //global RS_bnd stk_mark;
 global RS stk;
@@ -26,26 +21,27 @@ void sub_stk(int n)
   requires stk::RS<a> & n>=0 & a>=n
   ensures stk::RS<a-n>;
 
-lemma "combine2" self::RS_mark<m1>*self::RS_mark<m2> 
-  -> self::RS_mark<m> & m=max(m1,m2);
 
 relation R1(int h,int n, int m).
 
-int length(node l)
+int len_tail(node l, int a)
   infer [R1]
   requires stk::RS<m> * l::ll<n>@L 
-  ensures  stk::RS<m> * mx::RS_mark<h> & res=n 
+  ensures  stk::RS<m> * mx::RS_mark<h> & res=n+a 
   & R1(h,m,n);
-  //& h=m+3n+3;
+  //& h=m+n+1;
 {
-  add_stk(2); //add a stack frame
+  add_stk(3); //add a stack frame
   int r;
-  if (l==null) r=0;
+  if (l==null) {
+       sub_stk(3);
+       r=a;
+  }
   else {
     // node nx = l.next; 
-    r=1+length(l.next);
+    sub_stk(3); //subtract a stack frame prior to return
+    r=len_tail(l.next,1+a);
   }
-  sub_stk(2); //subtract a stack frame prior to return
   return r;
 }
 
