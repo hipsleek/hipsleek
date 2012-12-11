@@ -27,7 +27,9 @@ bool rand()
 
 int g() 
   requires stk::RS<m> & true
-  ensures  stk::RS<m> * mx::RS_mark<h> & h=m+1 & res=1;
+  ensures  stk::RS<m> * mx::RS_mark<h>  & res=1
+  & h=m+1
+  ;
 {
   add_stk(1);
   int r;

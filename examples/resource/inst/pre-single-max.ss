@@ -26,7 +26,7 @@ void sub_stk(int n)
   ensures stk::RS<m> * mn::RS_mark<m> & m=a-n;
 
 int g() 
-  requires stk::RS<m> & m>=1 // m=infinity
+  requires stk::RS<m> & m>=1 // m=\infinity
   ensures  stk::RS<m> 
     * mn::RS_mark<h> & h=m-1 & res=1;
 {
@@ -62,4 +62,20 @@ int f()
   add_stk(1);
   return r;
 }
+
+int f2() 
+  requires stk::RS<m> & m>=3
+  ensures  stk::RS<m> * mn::RS_mark<h> 
+  // & m-3<=h ;
+  & h<=m-2;
+{
+
+  sub_stk(1);
+  int r;
+  if (rand()) r=g();
+  else r=h();
+  add_stk(1);
+  return r;
+}
+
 

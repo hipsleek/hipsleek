@@ -47,12 +47,10 @@ int fib(int n)
 
 /*
 
-PROBLEM : fixcalc seems imprecise below.
+PROBLEM : is disjunct below precise?
 
 *************************************
-*******fixcalc of pure relation *******
-*************************************
-[( R(h,m,n), m>=0 & h>=(2+m) & n>=0 & h>=(m+(2*n)))]
+[( R(res,m,n), (m>=0 & res>=(2+m) & res=n+m) | (n>=0 & 1>=n & m>=0 & res=m+1))]
 *************************************
 
 
