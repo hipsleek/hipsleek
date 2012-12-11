@@ -5336,7 +5336,6 @@ and createGlobal (specs : (typ * storage * bool * A.attribute list))
     if debugGlobal then 
       ignore (E.log "createGlobal: %s\n" n);
             (* Make a first version of the varinfo *)
-    let _ = print_endline ("=== n = " ^ n ^ " --- loc = " ^ (Cprint.string_of_loc cloc)) in
     let vi = makeVarInfoCabs ~isformal:false 
                              ~isglobal:true (convLoc cloc) specs (n,ndt,a) in
     (* Add the variable to the environment before doing the initializer 

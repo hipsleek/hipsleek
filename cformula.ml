@@ -5544,11 +5544,11 @@ and find_false_ctx ctx pos =
    | FailCtx _ -> ()
    | SuccCtx ctx ->
 	if (List.exists isAnyFalseCtx ctx) then 
-    false_ctx_line_list := (*Gen.BList.remove_dups_eq (=)*) (pos::!false_ctx_line_list) else ()
+    false_ctx_line_list := Gen.BList.remove_dups_eq (=) (pos::!false_ctx_line_list) else ()
 
 and find_false_list_failesc_ctx (ctx:list_failesc_context) pos =
     if (List.exists isAnyFalseFailescCtx ctx) then 
-      false_ctx_line_list := (*Gen.BList.remove_dups_eq (=)*) (pos::!false_ctx_line_list) 
+      false_ctx_line_list := Gen.BList.remove_dups_eq (=) (pos::!false_ctx_line_list) 
     else ()
   
 

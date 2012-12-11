@@ -746,9 +746,9 @@ let translate_init (vname: ident) (init: Cil.init) (lopt: Cil.location option)
               match o with
               | Cil.NoOffset -> f.Cil.fname
               | Cil.Field _ -> report_error_msg "TRUNG TODO: translate_init: handle Cil.Field later!"
-              | Cil.Index _ -> report_error_msg "TRUNG TODO: translate_init: handle Cil.Index later!"
+              | Cil.Index _ -> report_error_msg "TRUNG TODO: translate_init: handle Cil.Index later! 1"
             )
-          | Cil.Index _ -> report_error_msg "TRUNG TODO:  translate_init: handle Cil.Index later!" in
+          | Cil.Index _ -> report_error_msg "TRUNG TODO:  translate_init: handle Cil.Index later! 2" in
         let exp = match ini with
           | Cil.SingleInit e -> translate_exp e
           | Cil.CompoundInit _ -> report_error_msg "TRUNG TODO:  translate_init: handle Cil.CompoundInit later!" in
