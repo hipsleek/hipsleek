@@ -58,11 +58,11 @@ let view_scc : (ident list) list ref = ref []
 (* list of views that are recursive *)
 let view_rec : (ident list) ref = ref []
 
-(* if no processed, conservatively assume a view is non-recursive *)
+(* if no processed, conservatively assume a view is recursive *)
 let is_view_recursive (n:ident) = 
   if (!view_scc)==[] then (
       (* report_warning no_pos "view_scc is empty : not processed yet?"; *)
-      false)
+      true)
   else List.mem n !view_rec 
 
 
@@ -1180,7 +1180,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
             | None -> Some fc) None n_un_str 
       in
       (* TODO : This has to be generalised to mutual-recursion *)
-      let ir = is_view_recursive vdef.I.view_name in
+      let ir = not(is_prim_v) && is_view_recursive vdef.I.view_name in
       let sf = find_pred_by_self vdef data_name in
       let cf = CF.struc_formula_set_lhs_case false cf in
       (* Thai : we can compute better pure inv named new_pf here that 
