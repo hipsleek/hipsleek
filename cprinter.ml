@@ -2339,7 +2339,7 @@ let pr_view_decl v =
   pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
   pr_vwrap  "xform: " pr_mix_formula v.view_x_formula;
   pr_vwrap  "is_recursive?: " fmt_string (string_of_bool v.view_is_rec);
-   
+  pr_vwrap  "is_primitive?: " fmt_string (string_of_bool v.view_is_prim);
   pr_vwrap  "same_xpure?: " fmt_string 
       (if v.view_xpure_flag then "YES" else "NO");
   pr_vwrap  "view_data_name: " fmt_string v.view_data_name;

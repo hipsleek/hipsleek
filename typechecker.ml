@@ -2760,7 +2760,7 @@ let check_prog (prog : prog_decl) =
           else [x]::a
   ) [] sorted_proc_main in
   let proc_scc = List.rev proc_scc in
-  let () = Debug.info_hprint (add_str "SCC" (pr_list (pr_list (Astsimp.pr_proc_call_order)))) proc_scc no_pos in
+  let () = Debug.tinfo_hprint (add_str "SCC" (pr_list (pr_list (Astsimp.pr_proc_call_order)))) proc_scc no_pos in
   (* flag to determine if can skip phase inference step *)
   let skip_pre_phase = (!Globals.dis_phase_num || !Globals.dis_term_chk) in
   let prog = List.fold_left (fun prog scc -> 

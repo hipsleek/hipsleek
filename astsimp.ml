@@ -58,11 +58,11 @@ let view_scc : (ident list) list ref = ref []
 (* list of views that are recursive *)
 let view_rec : (ident list) ref = ref []
 
-(* if no processed, conservatively assume a view is recursive *)
+(* if no processed, conservatively assume a view is non-recursive *)
 let is_view_recursive (n:ident) = 
   if (!view_scc)==[] then (
       (* report_warning no_pos "view_scc is empty : not processed yet?"; *)
-      true)
+      false)
   else List.mem n !view_rec 
 
 
@@ -1169,12 +1169,16 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           | CF.Base b -> mf f b.CF.formula_base_heap b.CF.formula_base_flow b.CF.formula_base_pos
           | CF.Exists b -> mf f b.CF.formula_exists_heap b.CF.formula_exists_flow b.CF.formula_exists_pos
           | CF.Or b -> CF.mkOr (f_tr_base b.CF.formula_or_f1) (f_tr_base b.CF.formula_or_f2) no_pos in
-      let rbc = List.fold_left (fun a (c,l)-> 
+      let is_prim_v = vdef.I.view_is_prim in
+      let rbc = 
+        if is_prim_v then None
+        else List.fold_left (fun a (c,l)-> 
           let fc = f_tr_base c in
           if (CF.isAnyConstFalse fc) then a 
           else match a with 
             | Some f1  -> Some (CF.mkOr f1 fc no_pos)
-            | None -> Some fc) None n_un_str in
+            | None -> Some fc) None n_un_str 
+      in
       (* TODO : This has to be generalised to mutual-recursion *)
       let ir = is_view_recursive vdef.I.view_name in
       let sf = find_pred_by_self vdef data_name in
@@ -1185,7 +1189,6 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue pos) new_pf in
       let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_pf in
       let xpure_flag = TP.check_diff memo_pf_N memo_pf_P in
-      let is_prim_v = vdef.I.view_is_prim in
       let vn = vdef.I.view_name in
       let _ = if is_prim_v then CF.view_prim_lst # push vn  in
       let cvdef ={
@@ -1222,9 +1225,16 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   )
 and fill_one_base_case prog vd = Debug.no_1 "fill_one_base_case" Cprinter.string_of_view_decl Cprinter.string_of_view_decl (fun vd -> fill_one_base_case_x prog vd) vd
   
-and fill_one_base_case_x prog vd = 
-  {vd with C.view_base_case = compute_base_case prog vd.C.view_un_struc_formula (Cpure.SpecVar ((Named vd.C.view_data_name), self, Unprimed) ::vd.C.view_vars)}
-      
+and fill_one_base_case_x prog vd =
+  if vd.C.view_is_prim then 
+    (Debug.ninfo_pprint "fill_one_base - prim" no_pos;
+     {vd with C.view_base_case = None; C.view_raw_base_case = None})
+  else
+    begin
+    {vd with C.view_base_case = 
+          compute_base_case prog vd.C.view_un_struc_formula (Cpure.SpecVar ((Named vd.C.view_data_name), self, Unprimed) ::vd.C.view_vars)}
+    end
+
 and  fill_base_case prog =  {prog with C.prog_view_decls = List.map (fill_one_base_case prog) prog.C.prog_view_decls }    
   
 (* An Hoa : trans_rel *)
