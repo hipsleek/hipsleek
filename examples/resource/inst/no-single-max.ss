@@ -1,3 +1,5 @@
+include "stack.ss"
+
 bool rand()
  requires true
  ensures res or !res;
