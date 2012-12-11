@@ -1,6 +1,6 @@
 HeapPred HP_570(node2 b).
 HeapPred HP_571(node2 a).
-
+HeapPred HP_571(node2 a).
 count:SUCCESS[
 ass [H1,G1][]:{
   H1(z)&z!=null --> z::node2<val_27_522',left_27_523',right_27_524'> * HP_570(left_27_523') * HP_571(right_27_524');

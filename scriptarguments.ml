@@ -378,6 +378,7 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
    "compare set of constraints");
   ("-lib", Arg.String set_lib_file,
    "lib");
+  ("--sa-subsume", Arg.Set Globals.sa_subsume, "use subsume when comparing definitions after infering");
   ] 
 
 (* arguments/flags used only by sleek *)	
