@@ -2067,7 +2067,7 @@ let check_subsume_defs hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.formul
   let pr4 b = if(b) then ">=" else "<=" in
   let pr3 = pr_list_ln (pr_triple Cprinter.string_of_spec_var Cprinter.string_of_spec_var pr4 ) in (*a >= b*)
   let pr5 b = let (_,_,c) = b in pr3 c in 
-  Debug.ho_2 "check_subsume_defs" pr2 pr1 (pr5)
+  Debug.no_2 "check_subsume_defs" pr2 pr1 (pr5)
     (fun _ _ -> check_subsume_defs_x hvars svars defs infile_defs inf_vars) defs infile_defs
 
 let check_subsume_defs_tmp hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.formula) list) ( infile_defs: (CF.formula * CF.formula) list) inf_vars =

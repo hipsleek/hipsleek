@@ -2316,22 +2316,22 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
 			            res
 		            in
 		            let is_match_defs il sl defs = 
-		              if(!Globals.show_diff_constrs) then (
-			        let res,res_list,sl =  
-				  if(!Globals.sa_subsume) then (
-				    CEQ.check_subsume_defs_tmp il sl ls_inferred_hps defs sel_hp_rels
-				  )
-				  else  let (r,rl) = CEQ.checkeq_defs_with_diff il sl ls_inferred_hps defs sel_hp_rels in
-					(r,rl,[])
-				in
-			        if(not(res)) then 
-			          print_string ("\nDiff defs " ^ proc.proc_name ^ " {\n" ^ (print_res_list res_list true) ^ "\n}\n" )
-				else 
-				  if(List.length sl > 0) then print_string ("SUCCESS WITH SUBSUME\n") ;
-			        res
-				  )
-		              else let r,_ = CEQ.checkeq_defs_with_diff  il sl ls_inferred_hps defs sel_hp_rels in 
-				   r
+			      let res,res_list,sl =  
+				if(!Globals.sa_subsume) then (
+				  CEQ.check_subsume_defs_tmp il sl ls_inferred_hps defs sel_hp_rels
+				)
+				else  let (r,rl) = CEQ.checkeq_defs_with_diff il sl ls_inferred_hps defs sel_hp_rels in
+				      (r,rl,[])
+			      in
+			      let pr1 b = if(b) then ">=" else "<=" in
+			      let pr2 = pr_list_ln (pr_triple Cprinter.string_of_spec_var Cprinter.string_of_spec_var pr1 ) in
+			      let _ = if(not(res)) then (
+				if(List.length sl > 0) then print_string ("SUBSUME: "^ pr2 sl ^"\n") ;
+			        if(!Globals.show_diff_constrs) then ( print_string ("\nDiff defs " ^ proc.proc_name ^ " {\n" ^ (print_res_list res_list true) ^ "\n}\n" ));
+			      )
+				else (if(List.length sl > 0) then print_string ("SUCCESS WITH SUBSUME: "^ pr2 sl ^"\n");)
+			      in
+			      res
 		            in
 		            (**************************************************************)
 		            (*****************************cp-test**************************)
