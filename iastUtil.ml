@@ -1264,9 +1264,6 @@ let pre_process_of_iprog iprims prog =
   let prog = float_var_decl_prog prog in
   let prog = rename_prog prog in
   let prog = add_globalv_to_mth_prog prog in 
-	(* let _= List.map ( fun x-> List.map ( fun y -> match y with (id,_,_)->print_endline ("prims bach glbv:" ^ id)) x.exp_var_decl_decls) iprims.prog_global_var_decls in *)
-	(* let _= List.map ( fun x-> List.map ( fun y -> match y with (id,_,_)->print_endline ("prog bach glbv:" ^ id)) x.exp_var_decl_decls) prog.prog_global_var_decls in *)
-	(* let _= List.map ( fun x-> print_endline ("All procs: "^x.proc_name^"mn "^x.proc_) ) prog.prog_proc_decls in *)
   prog
 
 let pre_process_of_iprog iprims prog = 
