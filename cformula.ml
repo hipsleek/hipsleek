@@ -1017,7 +1017,7 @@ formula_base_and = [];
 		formula_base_pos = pos}
 	  
 and mkTrue_b_nf pos = mkTrue_b (mkTrueFlow ()) pos
-	  
+
 and mkTrue (flowt: flow_formula) pos = Base (mkTrue_b flowt pos)
 
 and mkTrue_nf pos = Base (mkTrue_b_nf pos)
@@ -3400,6 +3400,12 @@ and get_ptrs_f (f: formula)=
   match f with
     | Base fb ->
         get_ptrs fb.formula_base_heap
+    | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
+
+and get_pure (f: formula)=
+  match f with
+    | Base fb ->
+        MCP.pure_of_mix fb.formula_base_pure
     | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
 
 and get_ptrs (f: h_formula): CP.spec_var list = match f with

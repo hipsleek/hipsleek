@@ -16,9 +16,9 @@ ass [H1,G2][]:{
 
 hpdefs [H1,G2][]:{
     HP_1(x) --> x=null or x::node<_,p> * HP_1(p);
-    HP_682(x,_) --> emp&x=null
-         or x::node<_,p> * HP_682(p,_);
-    G2(res,x) --> res::node<_,p> * HP_682(p,x) & res=x;
+    HP_682(p,res) --> emp&res=null & p=res
+         or res::node<_,p1> * HP_682(_,p1) & p=res;
+    G2(res,x) --> x::node<_,p> * HP_682(p,res);
     H1(x) --> x::node<_,p> * HP_1(p)
  }
 ]
