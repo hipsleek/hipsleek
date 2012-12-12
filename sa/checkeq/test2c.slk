@@ -1,0 +1,46 @@
+Starting Omega...oc
+ll is defined.
+rr is defined.
+
+!!! EQ. FMT: [[(flted_8_16, flted_8_22), (a, c)]]
+!!! EQ. FMT: [[(flted_8_22, flted_8_16), (c, a)]]
+Checkeq (1) : Valid.
+!!! DIFF PART: [ x::node<a,flted_12_27>]
+!!! DIFF PART: [ y::node<c,flted_12_33>&x=y]
+Checkeq (2) : Fail.
+
+!!! DIFF PART: [ x::node<a,flted_19_40>]
+!!! DIFF PART: [ y_47::node<c,flted_19_46>&x=y_47]
+Checkeq (3) : Fail.
+
+!!! EQ. FMT: [[(flted_26_54, flted_26_60), (a, c)]]
+!!! DIFF PART: [ emp&x=y]
+Checkeq (4) : Fail.
+
+!!! EQ. FMT: [[(b, d), (a, c)]]
+!!! EQ. FMT: [[(d, b), (c, a)]]
+Checkeq (5) : Valid.
+!!! DIFF PART: [ x::node2<a,a>]
+!!! EQ. FMT: [[]]
+!!! DIFF PART: [ x::node2<c,d>]
+!!! EQ. FMT: [[]]
+Checkeq (6) : Fail.
+
+!!! DIFF PART: [ x::node2<a,b>]
+!!! EQ. FMT: [[]]
+!!! DIFF PART: [ x::node2<c,c>]
+!!! EQ. FMT: [[]]
+Checkeq (7) : Fail.
+
+!!! DIFF PART: [ emp&a=b]
+!!! EQ. FMT: [[(b, d), (a, c)]]
+!!! DIFF PART: [ emp&true]
+!!! EQ. FMT: [[(d, b), (c, a)]]
+Checkeq (8) : Fail.
+
+!!! EQ. FMT: [[(b, d), (a, c)]]
+!!! EQ. FMT: [[(d, b), (c, a)]]
+Checkeq (9) : Valid.
+!!! EQ. FMT: [[(b, d), (a, c)]]
+!!! EQ. FMT: [[(d, b), (c, a)]]
+Checkeq (10) : Valid.Stop Omega... 0 invocations 

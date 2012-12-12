@@ -1,0 +1,186 @@
+Starting Omega...oc
+Translating global variables to procedure parameters...
+
+Checking procedure append$node~node... 
+*************************************
+*******relational assumption ********
+*************************************
+1. H2(x,y)&true --> x::node<val_56_548',next_56_549'> * HP_567(next_56_549',y)& true,
+2. HP_567(v_node_56_587,y)&v_node_56_587!=null --> H2(v_node_56_587,y)&true,
+3. HP_567(v_node_56_581,y) * x::node<val_56_572,y>& v_node_56_581=null --> G2(x,y)&true,
+4. x::node<val_56_574,v_node_56_587> * G2(v_node_56_587,y)& v_node_56_587!=null --> G2(x,y)&true
+*************************************
+
+*********************************************************************
+*******PHASE I: pre-process (split/unknown analyze) hprel assumptions ********
+**********************************************************************
+step1: split [H2(x,y)-->HP_596(x) * HP_597(y); 
+       HP_567(x,y) --> HP_594(x) * HP_595(y)]
+*************************************
+*******OUT: relational assumption ********
+*************************************
+1. HP_596(x) * HP_597(y) --> x::node<val_56_548',next_56_549'> * HP_594(next_56_549') * HP_595(y)
+2. HP_594(v_node_56_587) * HP_595(y)& v_node_56_587!=null --> HP_596(v_node_56_587) * HP_597(y)
+3. HP_594(v_node_56_581) * HP_595(y) * x::node<val_56_572,y>&v_node_56_581=null --> G2(x,y)
+4. x::node<val_56_574,v_node_56_587> * G2(v_node_56_587,y) & v_node_56_587!=null --> G2(x,y)
+===========================================================
+===========================================================
+===========================================================
+step2: unknown analyze
+1. dangling ptrs: [y], dangling HPs: [HP_597; HP_595], inferred dangling HPs: []
+2. dangling ptrs: [y], dangling HPs: [HP_597; HP_595], inferred dangling HPs: []
+3. dangling ptrs: [y], dangling HPs: [HP_595]        , inferred dangling HPs: []
+4. dangling ptrs: [y], dangling HPs: []              , inferred dangling HPs: [HP_595] 
+   // note:add HP_595(y) into lhs
+*************************************
+*******OUT: relational assumption ********
+*************************************
+1. HP_596(x) * HP_597(y) --> x::node<val_56_548',next_56_549'> * HP_594(next_56_549') * HP_595(y)
+2. HP_594(v_node_56_587) * HP_595(y)& v_node_56_587!=null --> HP_596(v_node_56_587) * HP_597(y)
+3. HP_594(v_node_56_581) * HP_595(y) * x::node<val_56_572,y>&v_node_56_581=null --> G2(x,y)
+4. x::node<val_56_574,v_node_56_587> * G2(v_node_56_587,y)  * HP_595(y) & v_node_56_587!=null --> G2(x,y)
+
+**************************************************************************
+*******PHASE II (loop): collect partial defs, substition, simplification ********
+**************************************************************************
+//skip detail
+*************************************
+*******OUT: partial definitions ********
+*************************************
+g2.1. HP_595(y) * x::node<val_56_572,y>&true --> G2(x,y),
+g2.2. G2(x,y) -->  x::node<val_56_574,v_node_56_587> * G2(v_node_56_587,y) * HP_595(y)&v_node_56_587!=null,
+
+hp4.1. emp&v_node_56_581=null --> HP_594(v_node_56_581),
+hp4.2. HP_594(v_node_56_587) -->  HP_596(v_node_56_587)&true,
+hp4.3. HP_594(v_node_56_587) -->  v_node_56_587::node<val_56_548',next_56_549'> * HP_596(next_56_549')&true,
+
+hp6.1. HP_596(x) -->  x::node<val_56_548',next_56_549'> * HP_594(next_56_549')&true,
+hp6.2. HP_596(x) -->  x::node<val_56_548',next_56_549'> * HP_596(next_56_549')
+
+*************************************
+*******OUT: relational assumptions ********
+*************************************
+1. HP_596(x) * HP_597(y)&true --> x::node<val_56_548',next_56_549'> * HP_595(y) * HP_596(next_56_549')&true,
+2a. HP_594(v_node_56_587) * HP_595(y)&v_node_56_587!=null --> HP_597(y) * v_node_56_587::node<val_56_548',next_56_549'> * HP_596(next_56_549')&true,
+2b. HP_594(v_node_56_587)&  v_node_56_587!=null --> v_node_56_587::node<val_56_548',next_56_549'> *  HP_596(next_56_549'),
+3a. HP_594(v_node_56_581) * HP_595(y) * x::node<val_56_572,y>& v_node_56_581=null --> G2(x,y)&true,
+4a. x::node<val_56_574,v_node_56_587> * HP_595(y)& v_node_56_587!=null --> G2(x,y)&true,
+
+*********************************************************************
+*******subst, join, combine split, transfrom unknown ********
+**********************************************************************
+step6: subst
++ build dependent graph:
+ - G2: [G2; HP_595]  // recursive
+ - HP_594: [HP_596]
+ - HP_596: [HP_594, HP_596] // recursive
++ normally substitute:
+ - substitute partial definitions of HP_594 into HP_596
+*************************************
+*******OUT: partial definitions ********
+*************************************
+hp6.1.a. HP_596(x) -->  x::node<val_56_548',p> &p=null,
+hp6.1.b. HP_596(x) -->  x::node<val_56_548',p> * HP_596(p)
+hp6.1.c  HP_596(x) -->  x::node<val_56_548',p> * p::node<val_56_548',next_56_549'> * HP_596(next_56_549')
+hp6.2.   HP_596(x) -->  x::node<val_56_548',next_56_549'> * HP_596(next_56_549')
+
++ recursively substitute
+  - substitute partial definitions of HP_596 into HP_594
+*************************************
+*******OUT: partial definitions (now it does not work properly) ********
+*************************************
+hp4.1.  emp&v_node_56_581=null --> HP_594(v_node_56_581),
+hp4.2.a HP_594(v_node_56_587) --> v_node_56_587::node<val_56_548',p> &p=null,
+hp4.2.b HP_594(v_node_56_587) --> v_node_56_587::node<val_56_548',p> * HP_594(p)
+hp4.2.c HP_594(v_node_56_587) --> v_node_56_587::node<val_56_548',p> * p::node<val_56_548',next_56_549'> * HP_594(next_56_549')
+hp4.2.d HP_594(v_node_56_587) --> v_node_56_587::node<val_56_548',next_56_549'> * HP_594next_56_549')
+hp4.3.a ...
+hp4.3.b ...
+hp4.3.c ...
+hp4.3.d ...
+===========================================================
+===========================================================
+===========================================================
+step7: do join
+ - find common patterns
+ - elim duplicate
+*************************************
+*******OUT: hp relational definitions ********
+*************************************
+G2(x,y)     === x::node<_,p> * G2_aux(p,y) * HP_595(y)
+G2_aux(p,y) === p=y or  p::node<_,p1> * G2_aux(p1,y)
+
+HP_596(x)     === x::node<_,p> * HP_596_aux(p)
+HP_596_aux(p) === p=null or p::node<_,p1> * HP_596_aux(p1)
+
+HP_594(p) === p=null or p::node<_,p1> * HP_594_aux(p1) // not work now
+
+*************************************
+*******OUT: dangling hp relations********
+*************************************
+HP_597(y) -->  HP_595(y)
+===========================================================
+===========================================================
+===========================================================
+step8: combine split [H2(x,y)--> HP_596(x) * HP_597(y); HP_567(x,y) --> HP_594(x) * HP_595(y)]
+*************************************
+*******OUT: hp relational definitions ********
+*************************************
+//new definitions
+H2(x,y) === x::node<_,p> * HP_596_aux(p) * HP_597(y)
+HP_567(x,y) === HP_595(y) & p=null or HP_595(y) * p::node<_,p1> * HP_594_aux(p1)
+
+//current definitions
+G2(x,y)     === x::node<_,p> * G2_aux(p,y) * HP_595(y)
+G2_aux(p,y) === p=y or  p::node<_,p1> * G2_aux(p1,y)
+HP_596(x)     === x::node<_,p> * HP_596_aux(p)
+HP_596_aux(p) === p=null or p::node<_,p1> * HP_596_aux(p1)
+HP_594(p) === p=null or p::node<_,p1> * HP_594_aux(p1) // not work now
+===========================================================
+===========================================================
+===========================================================
+step8: transform unknown (dangling) ptrs/predicates:
+{ IN:
+  1. dangling HP:           HP_597(y), HP_595(y)
+  2. dangling hp relations: HP_597(y) -->  HP_595(y)
+}
+
+- transform
+  HP_597(y) === logical_var_595 = y
+  HP_595(y) === logical_var_595 = y
+- subst
+*************************************
+*******OUT: hp relational definitions ********
+*************************************
+H2(x,y)     === x::node<_,p> * HP_596_aux(p) & logical_var_595 = y  //subst HERE
+HP_567(x,y) === logical_var_595 = y & p=null or p::node<_,p1> * HP_594_aux(p1) & logical_var_595 = y //subst HERE
+G2(x,y)     === x::node<_,p> * G2_aux(p,y) & logical_var_595 = y //subst HERE
+G2_aux(p,y) === p=y or  p::node<_,p1> * G2_aux(p1,y)
+HP_596(x)   === x::node<_,p> * HP_596_aux(p)
+HP_596_aux(p) === p=null or p::node<_,p1> * HP_596_aux(p1)
+HP_594(p)   === p=null or p::node<_,p1> * HP_594_aux(p1) // not work now
+
+*********************************************************************
+*******PHASE III: post-process: predefined predicates matching  ********
+**********************************************************************
+ - drop irr hps (e.g. HP_567)
+ - matching
+*************************************
+*******OUT relational definition ********
+*************************************
+[ G2(x_611,y_612) ::= x_611::node<val_56_572,y_612_613> * y_612_613::lseg<y_612>[LHSCase]&
+HP_595_y_626=y_612,
+ H2(x,y) ::= x::node<val_56_548',next_56_549'> * next_56_549'::ll[LHSCase]&HP_595_y_626=y]
+*************************************
+
+Procedure append$node~node SUCCESS
+
+Termination checking result:
+
+Stop Omega... 57 invocations 
+0 false contexts at: ()
+
+Total verification time: 0.716043 second(s)
+	Time spent in main process: 0.680041 second(s)
+	Time spent in child processes: 0.036002 second(s)
+

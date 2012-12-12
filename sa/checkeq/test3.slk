@@ -1,0 +1,52 @@
+//heap formula
+data node { int val ; node next }.
+data node2 { int val ; node next }.
+
+//PART 1: check node var + node type
+//1.
+checkeq[] x::node<t,n> -|- x::node<t,m>.
+//VALID
+
+//2.
+checkeq[] x::node<t,null> -|- y::node<t,null>.
+//VALID
+
+//3.
+checkeq[x] x::node<t,null> -|- x::node<t,null>.
+//VALID
+
+//4.
+checkeq[x] x::node<t,null> -|- y::node<t,null>.
+//FAIL
+
+//5.
+checkeq[] x::node<t,null> * z::node<t,null> -|- y::node<t,null>.
+//FAIL 
+
+//6.
+checkeq[] x::node<t,null> * z::node<t,null> -|- y::node<t,null> * p::node<t,null>.
+//VALID
+
+//7.
+checkeq[x] x::node<t,null> * z::node<t,null> -|- y::node<t,null> * x::node<t,null>.
+//VALID
+
+//8.
+checkeq[z] x::node<t,null> * z::node<t,null> -|- y::node<t,null> * p::node<t,null>.
+//FAIL
+
+//9.
+checkeq[p] x::node<t,null> * z::node<t,null> -|- y::node<t,null> * p::node<t,null>.
+//FAIL
+
+//10.
+checkeq[] x::node<t,null> -|- x::node2<t,null>.
+//FAIL
+
+//11.
+checkeq[] x::node2<t,null> -|- y::node<t,null>.
+//FAIL
+
+//12.
+checkeq[x] x::node2<t,null> -|- x::node2<t,null>.
+//VALID

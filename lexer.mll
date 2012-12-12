@@ -123,6 +123,7 @@ module Make (Token : SleekTokenS)
 	 ("break", BREAK);
 	 ("case",CASE);
    ("catch", CATCH);
+   ("checkeq", CHECKEQ);
 	 ("checkentail", CHECKENTAIL);
    ("checkentail_exact", CHECKENTAIL_EXACT);
    ("checkentail_inexact", CHECKENTAIL_INEXACT);
@@ -155,6 +156,7 @@ module Make (Token : SleekTokenS)
    ("global",GLOBAL);
    ("logical", LOGICAL);
 	 ("head",HEAD);
+     ("HeapPred", HP);
    ("ho_pred",HPRED);
    ("htrue", HTRUE);
    ("if", IF);
@@ -185,6 +187,7 @@ module Make (Token : SleekTokenS)
 	 ("pred", PRED);
      ("print", PRINT);
 	 ("dprint", DPRINT);
+	 ("compare", CMP);
    ("raise", RAISE);
 	 ("ref", REF);
 ("relation", REL);
@@ -198,6 +201,7 @@ module Make (Token : SleekTokenS)
 	 ("split", SPLIT);
 	 ("LexVar", LEXVAR);
    ("Term", TERM);
+    ("template", TEMPL);
    ("Loop", LOOP);
    ("MayLoop", MAYLOOP);
 	 ("subset", SUBSET);
@@ -330,6 +334,8 @@ rule tokenizer file_name = parse
   | '|' { OR }
   | "||" { OROR }
   | "|-" { (* (print_string "der\n"; *)DERIVE }
+  | "-|-" { EQV }
+  | "-->" { CONSTR }
   | '[' { OSQUARE }
   | '%' { PERCENT }
   | '+' { PLUS }

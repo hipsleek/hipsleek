@@ -127,6 +127,7 @@ let rec fixcalc_of_h_formula f = match f with
   | HTrue -> "HTrue"
   | HFalse -> "HFalse"
   | HEmp -> "Emp"
+  | HRel _ -> "HTrue"
   | Hole _ -> illegal_format ("Fixcalc.fixcalc_of_h_formula: Not supported Hole-formula")
 
 let fixcalc_of_mix_formula f = match f with
@@ -343,7 +344,7 @@ let rec compute_fixpoint (i:int) input_pairs pre_vars specs =
   let pr0 = !CP.print_formula in
   let pr1 = pr_list (pr_pair pr0 pr0) in
   let pr2 = !CP.print_svl in
-  DD.no_2_num i "compute_fixpoint" pr1 pr2 (pr_list (pr_triple pr0 pr0 pr0)) 
+  DD.no_2_num i "compute_fixpoint" pr1 pr2 (pr_list (pr_pair pr0 pr0)) 
       (fun _ _ -> compute_fixpoint_x input_pairs pre_vars specs) input_pairs pre_vars
 
 and compute_fixpoint_x input_pairs ante_vars specs =

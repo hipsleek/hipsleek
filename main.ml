@@ -29,13 +29,13 @@ let print_version () =
 
 let parse_file_full file_name (primitive: bool) =
   let org_in_chnl = open_in file_name in
-    try
-    (*let ptime1 = Unix.times () in
-	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
-     *)
+  try
+      (*let ptime1 = Unix.times () in
+	let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
+      *)
       (* print_string ("Parsing "^file_name^" ...\n"); flush stdout; *)
-      let _ = Gen.Profiling.push_time "Parsing" in
-      Globals.input_file_name:= file_name;
+    let _ = Gen.Profiling.push_time "Parsing" in
+    Globals.input_file_name:= file_name;
       let prog = (
         if not !Scriptarguments.cil_parser or primitive then
           Parser.parse_hip file_name (Stream.of_channel org_in_chnl)
@@ -43,20 +43,19 @@ let parse_file_full file_name (primitive: bool) =
           Cilparser.parse_hip file_name
       ) in
       close_in org_in_chnl;
-         let _ = Gen.Profiling.pop_time "Parsing" in
-    (*		  let ptime2 = Unix.times () in
-		  let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
-			print_string ("done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n"); *)
-		(* An Hoa *)
-		(*let _ = print_endline "Primitive relations : " in
-		let _ = List.map (fun x -> print_endline x.Iast.rel_name) prog.Iast.prog_rel_decls in*)
-
-			prog
-    with
-		End_of_file -> exit 0
+    let _ = Gen.Profiling.pop_time "Parsing" in
+	 (*		  let ptime2 = Unix.times () in
+			  let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
+			  print_string ("done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n"); *)
+	 (* An Hoa *)
+	 (*let _ = print_endline "Primitive relations : " in
+	   let _ = List.map (fun x -> print_endline x.Iast.rel_name) prog.Iast.prog_rel_decls in*)
+    prog
+  with
+      End_of_file -> exit 0
     | M.Loc.Exc_located (l,t)->
       (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
-      raise t)
+       raise t)
 
 (* Parse all prelude files declared by user.*)
 let process_primitives (file_list: string list) : Iast.prog_decl list =
@@ -89,11 +88,68 @@ let rec process_header_with_pragma hlist plist =
 
 (***************end process preclude*********************)
 
+(**************vp: process compare file******************)
+let parse_file_cp file_name = 
+  let _ = print_string ("File to compare: " ^ file_name ^ "\n" ) in
+  let org_in_chnl = open_in file_name in 
+  try
+    let a  = Parser.parse_cpfile file_name (Stream.of_channel org_in_chnl) in
+    close_in org_in_chnl;
+    a
+  with
+      End_of_file -> exit 0
+    | M.Loc.Exc_located (l,t)->
+      (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+       raise t)
+
+let process_cp_file prog =
+  let file_to_cp = if(String.compare !Globals.file_cp "" != 0) then !Globals.file_cp else (
+    "sa/hip/test/ll-append3.cp"
+  )
+  in
+  let (hpdefs, proc_tcomps) = parse_file_cp file_to_cp in 
+  let helper procs tcomps =
+    let rec update_tcomp proc tcomps =
+      let proc_name = proc.Iast.proc_name in
+      match tcomps with
+	|[] -> proc
+	|(id, tcs)::y -> if(String.compare id proc_name == 0) then (
+	  {proc with Iast.proc_test_comps = Some tcs}
+	)
+	  else update_tcomp proc y
+    in
+    List.map (fun proc -> update_tcomp proc tcomps) procs 
+    (*procs proc_decl list*)
+  in
+  {prog with Iast.prog_hp_decls = prog.Iast.prog_hp_decls @ hpdefs;
+  Iast.prog_proc_decls = helper prog.Iast.prog_proc_decls proc_tcomps}
+
+let process_lib_file prog =
+  let parse_one_lib (ddecls,vdecls) lib=
+    let lib_prog = parse_file_full lib false in
+    (*each template data of lib, find corres. data in progs, generate corres. view*)
+    let tmpl_data_decls = List.filter (fun dd -> dd.Iast.data_is_template) lib_prog.Iast.prog_data_decls in
+    let horm_views = Sa.generate_horm_view tmpl_data_decls lib_prog.Iast.prog_view_decls prog.Iast.prog_data_decls in
+    (ddecls@lib_prog.Iast.prog_data_decls),(vdecls@lib_prog.Iast.prog_view_decls@horm_views)
+  in
+  let ddecls,vdecls = List.fold_left parse_one_lib ([],[]) !Globals.lib_files in
+  {prog with Iast.prog_data_decls = prog.Iast.prog_data_decls @ ddecls;
+      Iast.prog_view_decls = prog.Iast.prog_view_decls @ vdecls;}
+
+(***************end process compare file*****************)
 let process_source_full source =
   (* print_string ("\nProcessing file \"" ^ source ^ "\"\n");  *)
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source false in
+  let _ = Gen.Profiling.push_time "Process compare file" in
+  let prog = if(!Globals.cp_test || !Globals.cp_prefile) then (
+    process_cp_file prog 
+  )
+    else prog
+  in
+  let prog = process_lib_file prog in
+  let _ = Gen.Profiling.pop_time "Process compare file" in
   (* Remove all duplicated declared prelude *)
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
@@ -115,7 +171,7 @@ let process_source_full source =
     let _ = Gen.Profiling.pop_time "Preprocessing" in
     print_string (Iprinter.string_of_program prog)
   else
-    let _ = Tpdispatcher.start_prover () in
+    if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
     (* Global variables translating *)
     let _ = Gen.Profiling.push_time "Translating global var" in
     let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
@@ -194,29 +250,11 @@ let process_source_full source =
       raise e
     end);
     (* Stopping the prover *)
-    let _ = Tpdispatcher.stop_prover () in
-    (* Proof Logging *)
-    let _ = if !Globals.proof_logging || !Globals.proof_logging_txt then 
-      begin
-	let tstartlog = Gen.Profiling.get_time ()in	
-	let _= Log.proof_log_to_file () in
-        let fname = ("logs/proof_log_"^Globals.norm_file_name (List.hd !Globals.source_files))^".txt" in
-	let _= if (!Globals.proof_logging_txt) 
-        then 
-          begin
-            Debug.info_pprint ("Logging "^fname^"\n") no_pos;
-            Log.proof_log_to_text_file ()
-          end
-	else try Sys.remove fname 
-          (* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *)
-			with _ ->()
-			 in
-			let tstoplog = Gen.Profiling.get_time () in
-			let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in ()
-			(* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in	() *)
-			end
-		in
-		(* let _= if not !Globals.proof_logging && not !Globals.proof_logging_txt  then Cprinter.printer_of_proof_logging () in *)
+    if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
+    (* Get the total verification time *)
+    let ptime4 = Unix.times () in
+    let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
+    
     (* An Hoa : export the proof to html *)
     let _ = if !Globals.print_proof then
     		begin 
@@ -226,11 +264,36 @@ let process_source_full source =
     		end
     in
     
+    (* Proof Logging *)
+    let _ = Log.process_proof_logging ()
+    (*  if !Globals.proof_logging || !Globals.proof_logging_txt then  *)
+      (* begin *)
+      (*   let tstartlog = Gen.Profiling.get_time () in *)
+      (*   let _= Log.proof_log_to_file () in *)
+      (*   let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in *)
+      (*   let fname = "logs/"^with_option^"_proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt"  in *)
+      (*   let fz3name= ("logs/"^with_option^"_z3_proof_log_"^ (Globals.norm_file_name (List.hd !Globals.source_files)) ^".txt") in *)
+      (*   let _= if (!Globals.proof_logging_txt)  *)
+      (*   then  *)
+      (*     begin *)
+      (*       Debug.info_pprint ("Logging "^fname^"\n") no_pos; *)
+      (*       Debug.info_pprint ("Logging "^fz3name^"\n") no_pos; *)
+      (*       Log.proof_log_to_text_file !Globals.source_files; *)
+      (*       Log.z3_proofs_list_to_file !Globals.source_files *)
+      (*     end *)
+      (*   else try Sys.remove fname  *)
+      (*     (\* ("logs/proof_log_" ^ (Globals.norm_file_name (List.hd !Globals.source_files))^".txt") *\) *)
+      (*   with _ -> () *)
+      (*   in *)
+      (*   let tstoplog = Gen.Profiling.get_time () in *)
+      (*   let _= Globals.proof_logging_time := !Globals.proof_logging_time +. (tstoplog -. tstartlog) in () *)
+      (*   (\* let _=print_endline ("Time for logging: "^(string_of_float (!Globals.proof_logging_time))) in    () *\) *)
+      (* end *)
+    in
+    (* let _ = Log.process_sleek_logging () in *)
     (* print mapping table control path id and loc *)
     (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
     
-    let ptime4 = Unix.times () in
-    let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
     print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
 		(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
 		    ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
@@ -240,8 +303,12 @@ let process_source_full source =
 	^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
 	^ "\tTime spent in child processes: " 
 	^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n"
-	^ if !Globals.proof_logging || !Globals.proof_logging_txt then "\tTime for logging: "^(string_of_float (!Globals.proof_logging_time))^" second(s)\n"
-	else ""
+	^ if !Globals.proof_logging || !Globals.proof_logging_txt then 
+      "\tTime for logging: "^(string_of_float (!Globals.proof_logging_time))^" second(s)\n"
+    else ""
+	^ if(!Tpdispatcher.tp = Tpdispatcher.Z3) then 
+      "\tZ3 Prover Time: " ^ (string_of_float !Globals.z3_time) ^ " second(s)\n"
+    else "\n"
 	)
 
 let process_source_full_parse_only source =
@@ -270,7 +337,7 @@ let process_source_full_parse_only source =
   (prog, prims_list)
 
 let process_source_full_after_parser source (prog, prims_list) =
-  let _ = Tpdispatcher.start_prover () in
+  if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
   (* Global variables translating *)
   let _ = Gen.Profiling.push_time "Translating global var" in
   let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
@@ -349,7 +416,7 @@ let process_source_full_after_parser source (prog, prims_list) =
     raise e
   end);
   (* Stopping the prover *)
-  let _ = Tpdispatcher.stop_prover () in
+  if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ();
   
   (* An Hoa : export the proof to html *)
   let _ = if !Globals.print_proof then
@@ -436,7 +503,7 @@ let loop_cmd parsed_content =
   ()
 
 let finalize () =
-  Tpdispatcher.stop_prover ()
+  if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
 let old_main = 
   try

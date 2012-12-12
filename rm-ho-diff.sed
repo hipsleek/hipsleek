@@ -6,6 +6,7 @@ s/Debug.ho_\([1-9]\)_num/Debug.no_\1_num/p
 s/Debug.ho_\([1-9]\)_loop/Debug.no_\1_loop/p
 s/Debug.to_\([1-9]\)/Debug.no_\1/p
 s/Debug.to_eff_\([1-9]\)/Debug.no_eff_\1/p
+s/Debug.info_zprint/Debug.ninfo_zprint/p
 s/DD.ho_\([1-9]\)/DD.no_\1/p
 s/DD.ho_eff_\([1-9]\)/DD.no_eff_\1/p
 s/DD.ho_\([1-9]\)_opt/DD.no_\1_opt/p

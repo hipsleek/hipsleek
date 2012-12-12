@@ -1,4 +1,6 @@
 open Globals
+open GlobProver
+
 module CP = Cpure
 
 let log_cvcl_formula = ref false

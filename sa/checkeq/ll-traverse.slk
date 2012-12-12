@@ -1,0 +1,48 @@
+//heap formula
+data node { int val ; node next }.
+data node2 { int val ; node next }.
+
+HeapPred H(node x).
+HeapPred H1(node x).
+HeapPred HP_535(node x).
+HeapPred G_556(node x).
+HeapPred G(node x, node y).
+//check exists
+
+/*
+eq
+1. HP_535(x') * x::node<val_16_543,x'> & x'!=null ==> H(x')
+1.2 x'::node<_,p1> * HP_535(p1) & x'!=null ==> H(x') (drop x)
+
+should be: 1.2 x'::node<_,p1> * HP_535(p1) & x'!=null ==> H(x') (drop x)
+*/
+checkeq[] HP_535(x0) * x::node<val_16_543,x0> & x0!=null -|- x0::node<_,p1> * HP_535(p1) & x0!=null .
+
+checkeq[] H(x0) -|- H(x0).
+
+/*
+eq
+4.1.1  x'=null ==> x'=null * G_556(x')
+4.1.l.1  x'=null ==> x'=null * G_556(x') 
+*/
+
+checkeq[] x'=null -|- x'=null.
+
+checkeq[] G_556(x')&x'=null -|-  G_556(x')&x'=null .
+
+/*
+neq
+3. H(x) ==> x::node<val_16_523',next_16_524'> * HP_535(next_16_524').
+H(x) ==> x::node<val_16_523',next_16_524'> * next_16_524' = null.
+*/
+
+checkeq[] H(x) -|- H(x).
+checkeq[] x::node<val_16_523',next_16_524'> * HP_535(next_16_524') -|- x::node<val_16_523',next_16_524'> & next_16_524' = null.
+
+/*
+x::node<_,b> * b = null * H(x) -|- H(x) * x::node<_,b> * b = null
+x::node<_,b> * b::node<_,p2> * H1(p2) * H(x) -|- H(x) * x::node<_,b> * b::node<_,p2> * H1(p2) 
+*/
+
+checkeq[] x::node<_,b>  * H(x) & b = null-|- H(x) * x::node<_,b> & b = null.
+checkeq[] x::node<_,b> * b::node<_,p2> * H1(p2) * H(x) -|- H(x) * x::node<_,b> * b::node<_,p2> * H1(p2) .

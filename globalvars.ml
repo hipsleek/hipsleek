@@ -488,8 +488,9 @@ let find_read_write_global_var_all_procs (prog : I.prog_decl) : unit =
   let global_id_set = union_all (List.map get_global_id global_var_decls) in
   let proc_decls = prog.I.prog_proc_decls in
   let _ = List.iter (find_read_write_global_var_proc global_id_set) proc_decls in
-  let scclist = NGComponents.scc_list g in
-  let sccarr = Array.of_list scclist in
+  (* let scclist = NGComponents.scc_list g in *)
+  (* let sccarr = Array.of_list scclist in    *)
+  let sccarr = NGComponents.scc_array g in
   let n = Array.length sccarr in
   let _ = Array.iter merge_scc sccarr in
   for k = 0 to n-1 do
@@ -1007,3 +1008,8 @@ let trans_global_to_param (prog : I.prog_decl) : I.prog_decl =
 		{ prog with I.prog_proc_decls = new_proc_decls }
   in
   new_prog
+  
+let trans_global_to_param (prog : I.prog_decl) : I.prog_decl =
+  let pr = Iprinter.string_of_program in
+  Debug.no_1 "trans_global_to_param" pr pr 
+  trans_global_to_param prog

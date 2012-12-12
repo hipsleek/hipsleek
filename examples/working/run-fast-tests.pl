@@ -95,7 +95,7 @@ if($timings){
     if(-e "$timings_logfile") {#check for file existance
         $book = $parser->Parse("$timings_logfile") #open file for appending
             or die "File $timings_logfile was not found";
-        my $count = $book->{SheetCount};#total number of worksheets of teh workbook
+        my $count = $book->{SheetCount};#total number of worksheets of the workbook
         my $provers_sheet_no = 0;
         for(my $i=0; $i < $count ; $i++){#iterate through all the worksheets 
             if ($book->{Worksheet}[$i]->{Name} =~ "$prover") {#check if a profiling worksheet of the selected prover already exists
@@ -207,7 +207,7 @@ $output_file = "log";
 	# END OF ARRAY TESTING EXAMPLES
 	"hip_tr"=>[["trees.ss",1,"insert"]],
     "imm" =>[ 
-        ["bigint.ss",17,  " --imm ",
+        ["bigint.ss",17,  " --imm -tp redlog",
 		 "clone", "SUCCESS",
 		 "int_value", "SUCCESS",
 		 "bigint_of", "SUCCESS",
@@ -224,10 +224,10 @@ $output_file = "log";
 #		 "karatsuba_mult", "SUCCESS",
          "is_zero", "SUCCESS",
          "is_equal", "SUCCESS",
-         "compare", "SUCCESS", #loop?
+         "compare2", "SUCCESS", #loop?
          "compare_int", "SUCCESS",
          "div_with_remainder", "SUCCESS"],
-        ["bigint_imm.ss",18,  " --imm ",
+        ["bigint_imm.ss",18,  " --imm -tp redlog",
          "clone", "SUCCESS",
          "int_value", "SUCCESS",
          "bigint_of", "SUCCESS",
@@ -244,10 +244,10 @@ $output_file = "log";
 #		 "karatsuba_mult", "SUCCESS",
          "is_zero", "SUCCESS",
          "is_equal", "SUCCESS",
-         "compare", "SUCCESS",
+         "compare2", "SUCCESS",
          "compare_int", "SUCCESS",
          "div_with_remainder", "SUCCESS"],
-        ["bigint_imm-star.ss",17,  " --imm ",
+        ["bigint_imm-star.ss",17,  " --imm -tp redlog",
          "clone", "SUCCESS",
          "int_value", "SUCCESS",
          "bigint_of", "SUCCESS",
@@ -264,10 +264,10 @@ $output_file = "log";
 #		 "karatsuba_mult", "SUCCESS",
          "is_zero", "SUCCESS",
          "is_equal", "SUCCESS",
-         "compare", "SUCCESS",
+         "compare2", "SUCCESS",
          "compare_int", "SUCCESS",
          "div_with_remainder", "SUCCESS"],
-        ["bigint-tight.ss",17,  " --imm ",
+        ["bigint-tight.ss",17,  " --imm -tp redlog",
          "clone", "SUCCESS",
          "int_value", "SUCCESS",
          "bigint_of", "SUCCESS",
@@ -284,10 +284,10 @@ $output_file = "log";
 #		 "karatsuba_mult", "SUCCESS",
          "is_zero", "SUCCESS",
          "is_equal", "SUCCESS",
-         "compare", "SUCCESS",
+         "compare2", "SUCCESS",
          "compare_int", "SUCCESS",
          "div_with_remainder", "SUCCESS"],
-        ["bigint-tight-imm.ss",18,  " --imm ",
+        ["bigint-tight-imm.ss",18,  " --imm -tp redlog",
          "clone", "SUCCESS",
          "int_value", "SUCCESS",
          "bigint_of", "SUCCESS",
@@ -304,10 +304,10 @@ $output_file = "log";
 #		 "karatsuba_mult", "SUCCESS",
          "is_zero", "SUCCESS",
          "is_equal", "SUCCESS",
-         "compare", "SUCCESS",
+         "compare2", "SUCCESS",
          "compare_int", "SUCCESS",
          "div_with_remainder", "SUCCESS"],
-        ["bigint-tight-imm-star.ss",17,  " --imm ",
+        ["bigint-tight-imm-star.ss",17,  " --imm -tp redlog",
          "clone", "SUCCESS",
          "int_value", "SUCCESS",
          "bigint_of", "SUCCESS",
@@ -324,21 +324,23 @@ $output_file = "log";
 #		 "karatsuba_mult", "SUCCESS",
          "is_zero", "SUCCESS",
          "is_equal", "SUCCESS",
-         "compare", "SUCCESS",
+         "compare2", "SUCCESS",
          "compare_int", "SUCCESS",
          "div_with_remainder", "SUCCESS"],
         ["append_imm.ss", 1,  " --imm ", "append", "SUCCESS"],
-        ["kara.ss",1,  " --imm ", "karatsuba_mult","SUCCESS"],
-        ["kara-imm-star.ss",1,  " --imm " , "karatsuba_mult","SUCCESS"],
-        ["kara-imm-conj.ss",1,  "--imm", "karatsuba_mult","SUCCESS"],
+        ["kara.ss",1,  " --imm -tp redlog", "karatsuba_mult","SUCCESS"],
+        ["kara-imm-star.ss",1,  " --imm -tp redlog" , "karatsuba_mult","SUCCESS"],
+        ["kara-imm-conj.ss",1,  "--imm -tp redlog", "karatsuba_mult","SUCCESS"],
         ["ll_imm.ss", 6,  " --imm ", "length", "SUCCESS",
          "append", "SUCCESS",
-         "get_next", "SUCCESS",
+         "sumN", "SUCCESS",
          "set_next", "SUCCESS",
          "get_next_next", "SUCCESS",
-         "sumN", "SUCCESS"]],
+         "get_next", "SUCCESS"
+        ]],
 	"hip" =>[
 #	["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
+				["eps.ss",2,  "", "get_next","SUCCESS","get_next_next","SUCCESS"],
 				["append.ss",1,  "", "append","SUCCESS"],
 				["append-tail.ss",1,  "","append","SUCCESS"],
 				["avl-bind.ss",9,  "", "height","SUCCESS", "rotate_left","SUCCESS", "rotate_right","SUCCESS", "get_max","SUCCESS", "rotate_double_left","SUCCESS",
@@ -498,8 +500,12 @@ $output_file = "log";
 										  "main","SUCCESS"],
 				["classic/classic1.ss",2, "", "foo1", "SUCCESS", "foo2", "SUCCESS"],
 				["classic/classic1.ss",2, "--classic", "foo1", "FAIL", "foo2", "SUCCESS"],
+				["classic/classic1a.ss",2, "", "foo1", "SUCCESS", "foo2", "SUCCESS"],
+				["classic/classic1a.ss",2, "--classic", "foo1", "SUCCESS", "foo2", "FAIL"],
 				["classic/classic2.ss",2, "", "foo1", "FAIL", "foo2", "SUCCESS"],
+				["classic/classic2a.ss",2, "", "foo1", "SUCCESS", "foo2", "FAIL"],
 				["classic/classic3.ss",2, "", "foo1", "SUCCESS", "foo2", "SUCCESS"],
+				["classic/classic3a.ss",2, "", "foo1", "SUCCESS", "foo2", "SUCCESS"],
 				],
 	"hip_vperm" =>[
 				["vperm/alt_threading.ss",2,  "--ann-vp", 
@@ -671,7 +677,7 @@ $output_file = "log";
 				["benchs/key/Collatz.ss", 1, "", "collatz", "SUCCESS"],
 				["benchs/key/ComplInterv2.ss", 1, "", "loop", "SUCCESS"],
 				["benchs/key/ComplInterv3.ss", 1, "", "loop", "SUCCESS"],
-				["benchs/key/ComplInterv.ss", 1, "-tp redlog", "loop", "SUCCESS"],
+				["benchs/key/ComplInterv.ss", 1, "-tp z3", "loop", "SUCCESS"],
 				["benchs/key/ComplxStruc-may.ss", 1, "", "complxStruc", "SUCCESS"], #MayLoop
 				["benchs/key/ComplxStruc2.ss", 2, "", "loop", "SUCCESS", "complxStruc", "SUCCESS"],
 				["benchs/key/ConvLower.ss", 1, "", "loop", "SUCCESS"],
@@ -770,7 +776,7 @@ $output_file = "log";
 				["benchs/aprove/Costa_Julia_09/Continue.ss", 1, "", "main", "SUCCESS"],
 				["benchs/aprove/Costa_Julia_09/costa09-example_1.ss", 6, "", "incr", "SUCCESS", "add", "SUCCESS", 
 			"incr2", "SUCCESS", "add2", "SUCCESS", "incr3", "SUCCESS", "add3", "SUCCESS"],
-				["benchs/aprove/Costa_Julia_09/costa09-example_2.ss", 2, "", "main", "SUCCESS", "divBy", "SUCCESS"],
+				["benchs/aprove/Costa_Julia_09/costa09-example_2.ss", 2, "-tp redlog", "main", "SUCCESS", "divBy", "SUCCESS"],
 				["benchs/aprove/Costa_Julia_09/costa09-example_3.ss", 2, "", "main", "SUCCESS", "m", "SUCCESS"],
 				["benchs/aprove/Costa_Julia_09/Exc1-exc.ss", 2, "", "main", "SUCCESS", "rec_f", "SUCCESS"],
 				["benchs/aprove/Costa_Julia_09/Exc2-exc.ss", 2, "", "main", "SUCCESS", "rec_f", "SUCCESS"],
@@ -960,7 +966,7 @@ $output_file = "log";
                       ["infer/infer14.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
                       ["infer/infer15.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
 # TODO : why are spaces so important in " --imm "?
-                      ["ann1.slk", " --imm ", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
+                      ["ann1.slk", " --imm ", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail."],
                       ["imm/imm1.slk", " --imm ", "", "Fail.Valid.Valid.Valid.Valid.Valid."],
                       #["imm/imm2.slk", "--imm", "Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
                       ["imm/imm2.slk", " --imm ", "", "Fail.Valid.Fail.Valid.Fail."],
@@ -990,13 +996,13 @@ $output_file = "log";
 
     );
 
-if($timings){
+# if($timings){
     $mainSum = 0.0;
     $childSum = 0.0;
     $totalSum = 0.0;
-    $prooflogSum =0.0;
+    $prooflogSum = 0.0;
     $falseContextSum = 0;
-}
+# }
 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");
 sleek_process_file();
@@ -1012,6 +1018,12 @@ if($home21){
 	chdir("/home") or die "Can't chdir to $target_dir $!";
 	rmtree(["$target_dir"]) or die ("Could not delete folder: $target_dir $!");
 }
+
+printf "Total verification time: %.2f second\n", $totalSum;
+printf "\tTime spent in main process: %.2f second\n", $mainSum;
+printf "\tTime spent in child processes: %.2f second\n", $childSum;
+printf "\tNumber of false contexts: %d\n", $falseContextSum; 
+ 
 
 if($timings){
     #do the last computations and close the timings log worksheet
@@ -1070,6 +1082,25 @@ sub log_one_line_of_timings{
  if($outp =~ m/\b(\w+) false contexts/){
      $format->set_num_format('0');
      $worksheet->write($row, $falseContextCol, "$1", $format);
+     $falseContextSum = $falseContextSum + $1;
+ }
+}
+
+sub sum_of_timings {
+ my $outp = $_[0];
+ if($outp =~ m/Total verification time: (.*?) second/){
+     $totalSum = $totalSum + $1;
+ }
+ if($outp =~ m/Time spent in main process: (.*?) second/){
+     $mainSum = $mainSum + $1;
+ }
+ if($outp =~ m/Time spent in child processes: (.*?) second/){
+     $childSum = $childSum + $1;
+ }
+ if($outp =~ m/	Time for logging: (.*?) second/){
+     $prooflogSum = $prooflogSum + $1;
+ }
+ if($outp =~ m/\b(\w+) false contexts/){
      $falseContextSum = $falseContextSum + $1;
  }
 }
@@ -1139,12 +1170,13 @@ sub hip_process_file {
 				$error_count++;
 				$error_files=$error_files."term error at: $test->[0] $test->[$i]\n";
 				print "term error at: $test->[0] $test->[$i]\n";
-            }
-            if($timings) {
-                log_one_line_of_timings ($test->[0],$output);
-            }
-        }
+			}
+      if($timings) {
+        log_one_line_of_timings ($test->[0],$output);
+      }
+      sum_of_timings ($output);
     }
+  }
 }
 
 
@@ -1213,9 +1245,10 @@ sub sleek_process_file  {
 				$error_count++;
 				$error_files = $error_files . " " . $test->[0];
 			}
-            if($timings) {
-               # log_one_line_of_timings ($test->[0],$output);
-            }
+			if($timings) {
+				# log_one_line_of_timings ($test->[0],$output);
+			}
+			sum_of_timings ($output);
 		}
 	}
 }

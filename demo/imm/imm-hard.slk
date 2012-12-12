@@ -1,0 +1,64 @@
+
+data node { int val ; node next }.
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n-1> 
+	inv n >= 0.
+
+checkentail (x::ll<n>@L * y::ll<m>@L) & n>0 & m=0  |-  x!=y. 
+print residue.
+// x * y
+// (1) Valid
+
+
+checkentail (x::ll<n>@L * y::ll<m>@L) & n>0 & m>0  |- (y::ll<m1>@L & x::ll<n1>@L) . 
+print residue.
+// x * y
+// (2) Valid
+
+checkentail (x::ll<n>@L * y::ll<m>@L) & n>0 & m>0  |- y!=x. 
+print residue.
+// x * y
+// (3) Valid
+
+
+checkentail x::ll<n> * y::ll<m> & n>0 & m>0  |- y::ll<m1> * x::ll<n1> & y!=x.
+print residue.
+// true
+// (4) Valid
+
+checkentail (x::ll<n>@L * y::ll<m>@L) & x!=null & y!=null  |- (y::ll<m1>@L & x::ll<n1>@L) & y!=x. 
+print residue.
+// x * y
+// (5) Valid
+
+checkentail (x::ll<n>@L * y::ll<n>@L) & n>0  |-  x!=y. 
+print residue.
+// x * y
+// (6) Valid
+
+checkentail x::ll<n> * x::ll<n> & n>0  |-  1=2. 
+print residue.
+// x * y
+// (7) Valid
+
+checkentail x::ll<n> * x::ll<n> & n=0   |-  x=null & n=0.
+// (8) Valid
+
+checkentail x::ll<n> * x::ll<n> & n>0   |-  x=null & n=0.
+// (9) Valid
+
+checkentail x::ll<n> * x::ll<n> & x=null  
+         or x::ll<n> * x::ll<n> & x!=null   |-  x=null & n=0.
+// (10) Valid
+
+
+checkentail x::ll<n> * x::ll<n>   |-  
+    case {  x=null -> [] x=null & n=0;
+            x!=null -> [] x=null & n=0; }. 
+// (11) Valid
+print residue.
+
+/* parse error
+checkentail x::ll<n> * x::ll<n> * (true & x=null or true & x!=null)   |- 
+            x=null & n=0. 
+*/

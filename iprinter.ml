@@ -225,6 +225,8 @@ let string_of_b_formula (pf,il) =
   | P.RelForm (r, args, _) ->
           (* An Hoa : relations *)
           r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")"
+  (* | P.HRelForm (r, args, _) -> *)
+  (*     r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")" *)
   | P.VarPerm (t,ls,l) -> (string_of_vp_ann t) ^ "[" ^ (pr_list string_of_id ls)^"]"
   | P.BagIn (i, e , l) -> "BagIn("^(string_of_id i)^","^(string_of_formula_exp e)^")"
   | P.BagNotIn (i, e , l) -> "BagNotIn("^(string_of_id i)^","^(string_of_formula_exp e)^")"
@@ -312,7 +314,7 @@ let rec string_of_h_formula = function
                  F.h_formula_heap_pos = l}) ->
       let perm_str = string_of_iperm perm in
       ((string_of_id x)
-        ^ "::" ^ id ^ perm_str ^ "<" ^ (string_of_formula_exp_list pl) ^ ">" ^ (string_of_imm imm)^"[1]")
+        ^ "::" ^ id ^ perm_str ^ "<" ^ (string_of_formula_exp_list pl) ^ ">" ^ (string_of_imm imm)^"[HeapNode1]")
   | F.HeapNode2 ({F.h_formula_heap2_node = xid;
                   F.h_formula_heap2_name = id;
                   F.h_formula_heap2_label = pi;
@@ -324,7 +326,8 @@ let rec string_of_h_formula = function
       let perm_str = string_of_iperm perm in
       string_of_formula_label_opt pi
         ((string_of_id xid)
-         ^ "::" ^ id ^perm_str ^  "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[2]")
+         ^ "::" ^ id ^perm_str ^  "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[HeapNode2]")
+  | F.HRel (r, args, _) -> "HRel " ^ r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")"
   | F.HTrue -> "htrue"
   | F.HFalse -> "hfalse"
   | F.HEmp -> "emp"

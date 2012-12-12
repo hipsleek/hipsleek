@@ -224,6 +224,7 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
                                 Iast.data_fields = [((ftype, fname), no_pos, true)];
                                 Iast.data_parent_name = "Object";
                                 Iast.data_invs = [];
+                                Iast.data_is_template = false;
                                 Iast.data_methods = [];} in
             Hashtbl.add gl_pointers_data t pointer_data;
             (* return new type*)
@@ -305,6 +306,7 @@ let translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option)
                   Iast.data_fields = fields;
                   Iast.data_parent_name = "Object";
                   Iast.data_invs = [];
+                  Iast.data_is_template = false;
                   Iast.data_methods = [];} in
   datadecl
 
@@ -503,6 +505,7 @@ and translate_exp (e: Cil.exp) : Iast.exp =
                                   Iast.data_fields = [((ftype, fname), no_pos, true)];
                                   Iast.data_parent_name = "Object";
                                   Iast.data_invs = [];
+                                  Iast.data_is_template = false;
                                   Iast.data_methods = [];} in
               Hashtbl.add gl_pointers_data ty pointer_data;
               (pointer_type, pointer_name)
@@ -840,6 +843,7 @@ let translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option)
     Iast.proc_is_main = true;
     Iast.proc_file = filename;
     Iast.proc_loc = pos;
+    Iast.proc_test_comps = None;
   } in
   newproc
 
@@ -910,11 +914,13 @@ let translate_file (file: Cil.file) : Iast.prog_decl =
                  Iast.data_fields = [];
                  Iast.data_parent_name = "";
                  Iast.data_invs = [];
+                 Iast.data_is_template = false;
                  Iast.data_methods = []} in
   let string_def = {Iast.data_name = "String";
                     Iast.data_fields = [];
                     Iast.data_parent_name = "Object";
                     Iast.data_invs = [];
+                    Iast.data_is_template = false;
                     Iast.data_methods = []} in
   (* update some global settings *)
   Hashtbl.iter (fun _ d -> data_decls := !data_decls @ [d]) gl_pointers_data;
@@ -937,6 +943,8 @@ let translate_file (file: Cil.file) : Iast.prog_decl =
     Iast.prog_proc_decls = !proc_decls;
     Iast.prog_barrier_decls = !barrier_decls;
     Iast.prog_coercion_decls = !coercion_decls;
+    Iast.prog_hp_decls = [];
+    Iast.prog_hp_ids = [];
   }) in
   newprog
 (* ---   end of translation   --- *)
