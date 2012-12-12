@@ -13,13 +13,12 @@ int foo(int x)
   int r;
   if (x==0) r=1;
   else {
-    int h=sum(x);
-    r=2+foo(x-1);
+     r=2+foo(x-1);
   }
   return r;
 }
 
-
+/*
 int sum(int x)
   infer [R1,R2]
   requires x>=0
@@ -47,23 +46,25 @@ int sum2(int x)
   }
   return r;
 }
-
+*/
 
 /*
 
 Why did we get a worse result with --fixcalc-disj 2.
 
-!!! REL :  R2(res,x)
-!!! POST:  res>=1 & x>=0
-!!! PRE :  true
-!!! REL :  R1(res,x)
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( R3(res,x), res>=1 & x>=0)]
+*************************************
+
+!!! REL :  R3(res,x)
 !!! POST:  res>=1 & x>=0
 !!! PRE :  true
 
 
 With --fixcalc-disj 1, we got.
-[( R1(res,x), x>=0 & res=(2*x)+1),
-( R2(res,x), x>=0 & res=(2*x)+1)]
+[( R3(res,x), x>=0 & res=(2*x)+1)]
 
 
 */

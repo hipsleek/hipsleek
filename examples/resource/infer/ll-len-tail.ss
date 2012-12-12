@@ -1,6 +1,5 @@
 hip_include 'include_test.ss'
 
-
 relation R1(int h,int n, int m).
 
 int len_tail(node l, int a)
