@@ -211,4 +211,7 @@ END
 
 let parse_fix s = Gram.parse_string expression (Loc.mk "<string>") s
 
+let parse_fix s = 
+  Debug.ho_1 "parse_fix" pr_id (pr_list !CP.print_formula) parse_fix s
+
 
