@@ -10,7 +10,7 @@ int fib(int n,int m)
  //ensures  res=m+max(1,n);
  ensures  R(res,m,n);
   { int r;
-   m = m+1;
+   m = m+2;
    if (n<=1) r=0;
    else r=max2(fib(n-1,m),fib(n-2,m));
    return max2(m,r);

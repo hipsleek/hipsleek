@@ -185,7 +185,7 @@ GLOBAL: expression;
   [ "exp" LEFTA
     [ x = SELF; "+"; y = SELF -> Add (x, y, loc)
     | x = SELF; "-"; y = SELF -> Subtract (x, y, loc)
-    | x = INT; "*"; y = SELF -> 
+    | x = INT; (* "*"; *) y = SELF -> 
           let ni=IConst (int_of_string x, loc) 
           in Mult (ni, y, loc)
     | x = specvar             -> Var (x, loc)
@@ -212,6 +212,6 @@ END
 let parse_fix s = Gram.parse_string expression (Loc.mk "<string>") s
 
 let parse_fix s = 
-  Debug.ho_1 "parse_fix" pr_id (pr_list !CP.print_formula) parse_fix s
+  Debug.ho_1 "parse_fix" pr_id (pr_list !Cpure.print_formula) parse_fix s
 
 
