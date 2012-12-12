@@ -69,7 +69,12 @@ let process_primitives (file_list: string list) : Iast.prog_decl list =
 let process_includes (file_list: string list) (curdir: string) : Iast.prog_decl list =
   Debug.info_pprint (" processing includes \"" ^(pr_list pr_id file_list)) no_pos;
   flush stdout;
-  List.map  (fun x->parse_file_full (curdir^"/"^x))  file_list
+  List.map  (fun x-> 
+                 if(Sys.file_exists (curdir^"/"^x)) then parse_file_full (curdir^"/"^x)
+                 else 
+                   let hip_dir= (Gen.get_path Sys.executable_name) ^x in
+                   parse_file_full hip_dir
+            )  file_list
 
 let process_includes (file_list: string list) (curdir: string): Iast.prog_decl list =
   let pr1 = pr_list (fun x -> x) in
@@ -94,15 +99,19 @@ let rec process_header_with_pragma hlist plist =
             process_header_with_pragma new_hlist tl
 
 let process_include_files incl_files ref_file=
-	if(List.length incl_files >0) then
-		let (curdir,_)=BatString.rsplit ref_file "/" in
-		(* let _= print_endline ("BachLe curdir: "^curdir) in  *)
+   if(List.length incl_files >0) then
 	  let header_files = Gen.BList.remove_dups_eq (=) incl_files in 
-    let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
-    let prims_list = process_includes new_h_files curdir in (*list of includes in header files*)
-	   prims_list
+      let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
+		try
+		  let (curdir,_)=BatString.rsplit ref_file "/" in
+		  let _= print_endline ("BachLe curdir: "^curdir) in   
+      let prims_list = process_includes new_h_files curdir in (*list of includes in header files*)
+	    prims_list
+		with Not_found ->
+			let prims_list = process_includes new_h_files "." in (*list of includes in header files*)
+	    prims_list
 	else
-		[]	
+		[]		
 		
 (***************end process preclude*********************)
 
