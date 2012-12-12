@@ -37,6 +37,7 @@ open Perm
     | Logical_var of exp_var_decl (* Globally logical vars *)
     | Proc of proc_decl
     | Coercion of coercion_decl
+		| Include of string
 		
 				
   type member = 
@@ -558,7 +559,7 @@ non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 non_empty_command:
     [[  t=data_decl           -> DataDef t
       | `PRED;t= view_decl     -> PredDef t
-	  | `PRED_PRIM;t=prim_view_decl     -> PredDef t
+	    | `PRED_PRIM;t=prim_view_decl     -> PredDef t
       | t=barrier_decl        -> BarrierCheck t
       | t = func_decl         -> FuncDef t
       | t = rel_decl          -> RelDef t
@@ -1518,6 +1519,7 @@ hp_decl:[[
  (*start of hip part*)
 hprogn: 
   [[ t = opt_decl_list ->
+		  let include_defs = ref ([]: string list) in
       let data_defs = ref ([] : data_decl list) in
       let global_var_defs = ref ([] : exp_var_decl list) in
       let logical_var_defs = ref ([] : exp_var_decl list) in
@@ -1539,8 +1541,9 @@ hprogn:
           | Enum edef -> enum_defs := edef :: !enum_defs
           | View vdef -> view_defs := vdef :: !view_defs
           | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
-		  | Barrier bdef -> barrier_defs := bdef :: !barrier_defs
+		      | Barrier bdef -> barrier_defs := bdef :: !barrier_defs
           end
+				| Include incl -> include_defs := incl :: !include_defs  	
         | Func fdef -> func_defs # push fdef 
         | Rel rdef -> rel_defs # push rdef 
         | Hp hpdef -> hp_defs # push hpdef 
@@ -1548,7 +1551,7 @@ hprogn:
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
         | Logical_var lvdef -> logical_var_defs := lvdef :: !logical_var_defs
         | Proc pdef -> proc_defs := pdef :: !proc_defs 
-      | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
+        | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
     let _ = List.map choose t in
     let obj_def = { data_name = "Object";
 					data_fields = [];
@@ -1564,7 +1567,8 @@ hprogn:
 					   data_methods = [] } in
     let rel_lst = rel_defs # get_stk in
     let hp_lst = hp_defs # get_stk in
-    { prog_data_decls = obj_def :: string_def :: !data_defs;
+    { prog_include_decls = !include_defs;
+			prog_data_decls = obj_def :: string_def :: !data_defs;
       prog_global_var_decls = !global_var_defs;
       prog_logical_var_decls = !logical_var_defs;
       prog_enum_decls = !enum_defs;
@@ -1588,7 +1592,8 @@ mdecl:
 	  |t=decl -> [t]]];
   
 decl:
-  [[ t=type_decl                  -> Type t
+  [[ `HIP_INCLUDE; `PRIME; `IDENTIFIER ic; `PRIME -> Include ic
+	|  t=type_decl                  -> Type t
   |  r=func_decl; `DOT -> Func r
   |  r=rel_decl; `DOT -> Rel r (* An Hoa *)
   |  r=hp_decl; `DOT -> Hp r

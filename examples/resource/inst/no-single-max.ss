@@ -1,4 +1,4 @@
-include "stack.ss"
+hip_include 'stack.ss'
 
 bool rand()
  requires true

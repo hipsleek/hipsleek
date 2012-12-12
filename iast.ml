@@ -18,7 +18,9 @@ module CP = Cpure
 type typed_ident = (typ * ident)
 
 
-type prog_decl = { mutable prog_data_decls : data_decl list;
+type prog_decl = { 
+prog_include_decls : ident list;
+mutable prog_data_decls : data_decl list;
 prog_global_var_decls : exp_var_decl list;
 prog_logical_var_decls : exp_var_decl list;
 prog_enum_decls : enum_decl list;
@@ -1782,6 +1784,7 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
   | [] -> iprims
   | hd::tl ->
         let new_iprims = {
+					      prog_include_decls = hd.prog_include_decls @ iprims.prog_include_decls;
                 prog_data_decls = hd.prog_data_decls @ iprims.prog_data_decls;
                 prog_logical_var_decls = hd.prog_logical_var_decls @ iprims.prog_logical_var_decls;
                 prog_global_var_decls = hd.prog_global_var_decls @ iprims.prog_global_var_decls;
@@ -1804,6 +1807,7 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
   match iprims_list with
   | [] ->
         let new_prims = {
+					      prog_include_decls = [];
                 prog_data_decls = [];
                 prog_global_var_decls = [];
                 prog_logical_var_decls = [];

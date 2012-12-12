@@ -38,7 +38,8 @@ let iobj_def =  {I.data_name = "Object";
                  I.data_is_template = false;
 				 I.data_methods = [] }
 
-let iprog = { I.prog_data_decls = [iobj_def];
+let iprog = { I.prog_include_decls =[];
+	      I.prog_data_decls = [iobj_def];
 			  I.prog_global_var_decls = [];
 			  I.prog_logical_var_decls = [];
 			  I.prog_enum_decls = [];

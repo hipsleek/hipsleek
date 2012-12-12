@@ -1,25 +1,4 @@
-data node {
-  int val;
-  node next;
-}
-
-ll<n> == self=null & n=0
-  or self::node<_,q> * q::ll<n-1>
-  inv n>=0;
-
-
-//global RS_bnd stk_mark;
-global RS stk;
-global RS_mark mx;
-
-// add back space into stack
-void add_stk(int n)
-  requires stk::RS<a> & n>=0
-  ensures stk::RS<m> * mx::RS_mark<m> & m=a+n;
-
-void sub_stk(int n)
-  requires stk::RS<a> & n>=0 & a>=n
-  ensures stk::RS<a-n>;
+hip_include 'include_test.ss'
 
 
 relation R1(int h,int n, int m).

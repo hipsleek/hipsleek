@@ -1254,6 +1254,9 @@ let pre_process_of_iprog iprims prog =
   let prog =
           { prog with prog_data_decls = iprims.prog_data_decls @ prog.prog_data_decls;
                       prog_proc_decls = iprims.prog_proc_decls @ prog.prog_proc_decls;
+											prog_view_decls = iprims.prog_view_decls @ prog.prog_view_decls;
+											prog_coercion_decls = iprims.prog_coercion_decls @ prog.prog_coercion_decls;
+											prog_global_var_decls = iprims.prog_global_var_decls @ prog.prog_global_var_decls;
 						(* An Hoa : MISSING PRIMITIVE RELATIONS! *)
 					  prog_rel_decls = iprims.prog_rel_decls @ prog.prog_rel_decls;
 					  prog_axiom_decls = iprims.prog_axiom_decls @ prog.prog_axiom_decls;
@@ -1261,6 +1264,9 @@ let pre_process_of_iprog iprims prog =
   let prog = float_var_decl_prog prog in
   let prog = rename_prog prog in
   let prog = add_globalv_to_mth_prog prog in 
+	(* let _= List.map ( fun x-> List.map ( fun y -> match y with (id,_,_)->print_endline ("prims bach glbv:" ^ id)) x.exp_var_decl_decls) iprims.prog_global_var_decls in *)
+	(* let _= List.map ( fun x-> List.map ( fun y -> match y with (id,_,_)->print_endline ("prog bach glbv:" ^ id)) x.exp_var_decl_decls) prog.prog_global_var_decls in *)
+	(* let _= List.map ( fun x-> print_endline ("All procs: "^x.proc_name^"mn "^x.proc_) ) prog.prog_proc_decls in *)
   prog
 
 let pre_process_of_iprog iprims prog = 

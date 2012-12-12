@@ -57,14 +57,25 @@ let process_primitives (file_list: string list) : Iast.prog_decl list =
   Debug.info_pprint (" processing primitives \"" ^(pr_list pr_id file_list)) no_pos;
   flush stdout;
   let new_names = List.map (fun c-> (Gen.get_path Sys.executable_name) ^ (String.sub c 1 ((String.length c) - 2))) file_list in
-  if (Sys.file_exists "./prelude.ss") then [parse_file_full "./prelude.ss"]
-  else List.map parse_file_full new_names
+  if (Sys.file_exists "./prelude.ss") then  [parse_file_full "./prelude.ss"]
+  else List.map  parse_file_full  new_names
 
 let process_primitives (file_list: string list) : Iast.prog_decl list =
   let pr1 = pr_list (fun x -> x) in
   let pr2 = pr_list (fun x -> (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls)  in
   Debug.no_1 "process_primitives" pr1 pr2 process_primitives file_list
 
+(* Parse all include files declared by user.*)
+let process_includes (file_list: string list) (curdir: string) : Iast.prog_decl list =
+  Debug.info_pprint (" processing includes \"" ^(pr_list pr_id file_list)) no_pos;
+  flush stdout;
+  List.map  (fun x->parse_file_full (curdir^"/"^x))  file_list
+
+let process_includes (file_list: string list) (curdir: string): Iast.prog_decl list =
+  let pr1 = pr_list (fun x -> x) in
+  let pr2 = pr_list (fun x -> (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls)  in
+  Debug.no_1 "process_includes" pr1 pr2 process_includes file_list curdir
+			
 (* Process all intermediate primitives which receive after parsing *)
 let rec process_intermediate_prims prims_list =
   match prims_list with
@@ -82,6 +93,17 @@ let rec process_header_with_pragma hlist plist =
         let new_hlist = if (hd = "NoImplicitPrelude") then [] else hlist in
             process_header_with_pragma new_hlist tl
 
+let process_include_files incl_files ref_file=
+	if(List.length incl_files >0) then
+		let (curdir,_)=BatString.rsplit ref_file "/" in
+		(* let _= print_endline ("BachLe curdir: "^curdir) in  *)
+	  let header_files = Gen.BList.remove_dups_eq (=) incl_files in 
+    let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
+    let prims_list = process_includes new_h_files curdir in (*list of includes in header files*)
+	   prims_list
+	else
+		[]	
+		
 (***************end process preclude*********************)
 
 (**************vp: process compare file******************)
@@ -150,6 +172,7 @@ let process_source_full source =
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
   let prims_list = process_primitives new_h_files in (*list of primitives in header files*)
+	let prims_incls = process_include_files prog.Iast.prog_include_decls source in
   if !to_java then begin
     print_string ("Converting to Java..."); flush stdout;
     let tmp = Filename.chop_extension (Filename.basename source) in
@@ -169,17 +192,20 @@ let process_source_full source =
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
     (* Global variables translating *)
     let _ = Gen.Profiling.push_time "Translating global var" in
-    let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
-      
+    (* let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in *)
+   
     (* Append all primitives in list into one only *)
+		(* let _ = print_endline ("process_source_full: before  process_intermediate_prims ") in *)
     let iprims_list = process_intermediate_prims prims_list in
+		(* let _ = print_endline ("process_source_full: after  process_intermediate_prims") in *)
     let iprims = Iast.append_iprims_list_head iprims_list in
     (* let _ = print_endline ("process_source_full: before Globalvars.trans_global_to_param") in *)
 		(* let _=print_endline ("PROG: "^Iprinter.string_of_program prog) in *)
+		let prog=Iast.append_iprims_list_head ([prog]@prims_incls) in
     let intermediate_prog = Globalvars.trans_global_to_param prog in
     (* let _ = print_endline ("process_source_full: before pre_process_of_iprog") in *)
     let intermediate_prog=IastUtil.pre_process_of_iprog iprims intermediate_prog in
-		(* let _= print_string ("\n*After pre process iprog* "^Iprinter.string_of_program intermediate_prog) in *)
+		(* let _= print_string ("\n*After pre process iprog* "(*^Iprinter.string_of_program intermediate_prog*)) in *)
     let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
     (* let _ = print_endline ("process_source_full: before --pip") in *)
     let _ = if (!Globals.print_input_all) then print_string (Iprinter.string_of_program intermediate_prog) 
@@ -194,7 +220,6 @@ let process_source_full source =
     let _ = Gen.Profiling.push_time "Translating to Core" in
     (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
     let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
-
 	  (* Forward axioms and relations declarations to SMT solver module *)
 	  let _ = List.map (fun crdef -> 
         Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
@@ -323,7 +348,7 @@ let process_source_full_parse_only source =
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
   let prims_list = process_primitives new_h_files in (*list of primitives in header files*)
-
+	
   if !to_java then begin
     print_string ("Converting to Java..."); flush stdout;
     let tmp = Filename.chop_extension (Filename.basename source) in
@@ -350,6 +375,7 @@ let process_source_full_after_parser source (prog, prims_list) =
   (* Append all primitives in list into one only *)
   let iprims_list = process_intermediate_prims prims_list in
   let iprims = Iast.append_iprims_list_head iprims_list in
+	(* let _= List.map (fun x-> print_endline ("Bachle: iprims "^x.Iast.proc_name)) iprims in *)
   (* let _ = print_endline ("process_source_full: before Globalvars.trans_global_to_param") in *)
   let intermediate_prog = Globalvars.trans_global_to_param prog in
   (* let _ = print_endline ("process_source_full: before pre_process_of_iprog") in *)
@@ -508,7 +534,7 @@ let pre_main =
     let _ = Printexc.record_backtrace !Globals.trace_failure in
     if List.length (!Globals.source_files) = 0 then
       print_string "Source file(s) not specified\n";
-		List.map process_source_full_parse_only !Globals.source_files
+		List.map ( fun x-> let _= print_endline ("SOURCE: "^x) in process_source_full_parse_only x) !Globals.source_files
 
 let loop_cmd parsed_content = 
   let _ = List.map2 (fun s t -> process_source_full_after_parser s t) !Globals.source_files parsed_content in

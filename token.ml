@@ -27,7 +27,7 @@ type sleek_token =
   | MAX | MIN 
   | NEW | NOTIN | NULL
   | OFF | ON | ORWORD | ANDWORD
-	| PRED | PRED_PRIM | DPRINT | PRINT | CMP
+	| PRED | PRED_PRIM | DPRINT | PRINT | CMP | HIP_INCLUDE
 	| REF |REL | REQUIRES (*| REQUIRESC*) | RES of string | RETURN
 	| SELFT of string | SPLIT | SUBSET | STATIC
   | THEN| THIS of string | TO | TRUE | LEXVAR
@@ -47,9 +47,10 @@ type sleek_token =
   | STAR | DIV
   | GLOBAL |VARIANCE| ESCAPE | HPRED | REFINES | JOIN | WITH | COMBINE | FINALIZE | TRY | CATCH | FINALLY | THROWS | RAISE
   | INFER | SUBANN | XPRE | PRE | XPOST | POST
-  | INVLOCK
+  | INVLOCK 
   | LOGICAL
   | XPURE
+
 
 module type SleekTokenS = Camlp4.Sig.Token with type t = sleek_token
   
@@ -79,15 +80,15 @@ module Token = struct
     | HP->"HeapPred"
     | IF ->"if" | IN_T ->"in" | INT ->"int"| INTERSECT ->"intersect" | INV->"inv" | INLINE->"inline" (* An Hoa : inline added *)
     | LEMMA ->"lemma" | LET->"let" | MAX ->"max" | MIN ->"min" | NEW ->"new" | NOTIN ->"notin" | NULL ->"null"
-    | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | PRED_PRIM -> "pred_prim" | DPRINT ->"dprint" |PRINT -> "print" |CMP -> "sleek compare" | REF ->"ref"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s 
+    | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | PRED_PRIM -> "pred_prim" |HIP_INCLUDE -> "hip_include" | DPRINT ->"dprint" |PRINT -> "print" |CMP -> "sleek compare" | REF ->"ref"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s 
     | RETURN->"return" | SELFT s ->"self "^s | SPLIT ->"split"| SUBSET ->"subset" | STATIC ->"static" | LEXVAR ->"LexVar"
     | THEN->"then" | THIS s->"this "^s | TO ->"to" | TRUE ->"true" | UNFOLD->"unfold" | UNION->"union"
     | VOID->"void" | WHILE ->"while" | FLOW s->"flow "^s
   (*operators*)
-    | AND ->"&" | ANDAND ->"&&" | AT ->"@" | ATAT -> "@@" | LEND->"@L" | IMM->"@I"| DERV->"@D"| CBRACE ->"}"| COLON ->":"| COLONCOLON ->"::"| COLONCOLONCOLON -> ":::" | COMMA ->","| CPAREN->")" | CSQUARE ->"]"
+    | AND ->"&" | ANDAND ->"&&" | AT ->"@" | ATAT -> "@@" | LEND->"@L" | IMM->"@I"| DERV->"@D"| CBRACE ->"}"| COLON ->":"| COLONCOLON ->"::"| COLONCOLONCOLON -> ":::" | COMMA ->","| CPAREN->")" | CSQUARE ->"]"  
     | DOLLAR ->"$" | DOT ->"." | DOUBLEQUOTE ->"\"" | DIV -> "/" | EQ ->"=" | EQEQ -> "==" | RIGHTARROW -> "<-"| EQUIV ->"<->" | GT ->">" | GTE ->">= " | HASH ->"#" 
     | LEFTARROW -> "->" | LT -> "<" | LTE -> "<=" | MINUS -> "-" | NEQ -> "!=" | NOT -> "!" | OBRACE ->"{" | OLIST -> "[|" | OPAREN ->"(" | OP_ADD_ASSIGN -> "+=" | OP_DEC -> "--"
-    | OP_DIV_ASSIGN -> "\\=" | OP_INC -> "++" | OP_MOD_ASSIGN -> "%=" | OP_MULT_ASSIGN ->"*=" | OP_SUB_ASSIGN -> "-=" | OR -> "|" | OROR -> "||"
+    | OP_DIV_ASSIGN -> "\\=" | OP_INC -> "++" | OP_MOD_ASSIGN -> "%=" | OP_MULT_ASSIGN ->"*=" | OP_SUB_ASSIGN -> "-=" | OR -> "|" | OROR -> "||" 
     | DERIVE -> "|-" | EQV -> "-|-" | CONSTR -> "-->" |  OSQUARE -> "[" | PERCENT ->"%" | PMACRO -> "PMACRO" | PLUS -> "+" | PRIME -> "'" | SEMICOLON -> ";" | STAR -> "*"
     | RAISE -> "raise" | THROWS -> "throws" | FINALLY -> "finally" | COMBINE -> "combine" | WITH -> "with" | JOIN -> "joinpred" | REFINES -> "refines"
     | HPRED -> "ho_pred" | ESCAPE -> "escape" | VARIANCE -> "variance" | GLOBAL -> "global" | TAIL -> "tail" | SET -> "set" | REVERSE -> "reverse"
