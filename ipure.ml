@@ -346,8 +346,8 @@ and mkAnd f1 f2 pos = match f1 with
       | BForm ((BConst (false, _), _), _) -> f2
       | BForm ((BConst (true, _), _), _) -> f1
       | _ -> match f1,f2 with 
-		| AndList b1, AndList b2 ->  mkAndList (Label_Pure.merge b1 b2)
-		| AndList b, f 
+		| AndList b1, AndList b2 -> mkAndList (Label_Pure.merge b1 b2)
+		| AndList b, f -> mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
 		| f, AndList b -> mkAndList (Label_Pure.merge b [(Lab_List.unlabelled,f)])
 		| _ -> And (f1, f2, pos)
 

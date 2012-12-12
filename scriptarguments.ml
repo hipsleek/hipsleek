@@ -2,6 +2,8 @@ open GlobProver
 
 let parse_only = ref false
 
+let cil_parser = ref false
+
 let typecheck_only = ref false
 
 let rtc = ref false
@@ -167,6 +169,7 @@ let common_arguments = [
 	("--en-self-fold-search", Arg.Set Globals.self_fold_search_flag,
     "Enable Limited Search with Self Unfold/Fold");
 	("-parse", Arg.Set parse_only,"Parse only");
+  ("--cil", Arg.Set cil_parser, "Use cil parser");
 	("-core", Arg.Set typecheck_only,"Type-Checking and Core Preprocessing only");
 	("--print-iparams", Arg.Set Globals.print_mvars,"Print input parameters of predicates");
 	("--print-type", Arg.Set Globals.print_type,"Print type info");

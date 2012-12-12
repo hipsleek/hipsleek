@@ -1,4 +1,4 @@
-  (*
+(*
   Created 21-Feb-2006
 
   Formula
