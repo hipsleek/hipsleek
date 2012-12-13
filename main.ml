@@ -30,26 +30,42 @@ let print_version () =
 let parse_file_full file_name (primitive: bool) =
   let org_in_chnl = open_in file_name in
   try
-      (*let ptime1 = Unix.times () in
-	let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
-      *)
-      (* print_string ("Parsing "^file_name^" ...\n"); flush stdout; *)
-    let _ = Gen.Profiling.push_time "Parsing" in
     Globals.input_file_name:= file_name;
-      let prog = (
-        if not !Scriptarguments.cil_parser or primitive then
-          Parser.parse_hip file_name (Stream.of_channel org_in_chnl)
+    (* choose parser to be used *)
+    let parser_to_use = (
+      if primitive or (!Parser.parser_name = "default") then
+        (* always parse primitive files by default parser *)
+        "default" 
+      else if (!Parser.parser_name = "default") then
+        (* default parser is indicated in command line parameter *)
+        "default"
+      else if (!Parser.parser_name = "cil") then
+        (* cil parser is indicated in command line parameter *)
+        "cil"
+      else (
+        (* no parser is indicated, decide to use which ones by file name extension  *)
+        let index = try String.rindex file_name '.' with _ -> 0 in
+        let length = (String.length file_name) - index in
+        let ext = String.lowercase(String.sub file_name index length) in
+        if (ext = ".c") or (ext = ".cc") or (ext = ".cpp") or (ext = ".h") then
+          "cil"
         else
-          Cilparser.parse_hip file_name
-      ) in
-      close_in org_in_chnl;
+          "default"
+      )
+    ) in
+    (* start parsing *)
+    if not primitive then 
+      print_endline ("Parsing file \"" ^ file_name ^ "\" by " 
+                     ^ parser_to_use ^ " parser...");
+    let _ = Gen.Profiling.push_time "Parsing" in
+    let prog = (
+      if parser_to_use = "cil" then
+        Cilparser.parse_hip file_name
+      else
+        Parser.parse_hip file_name (Stream.of_channel org_in_chnl)
+    ) in
+    close_in org_in_chnl;
     let _ = Gen.Profiling.pop_time "Parsing" in
-	 (*		  let ptime2 = Unix.times () in
-			  let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
-			  print_string ("done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n"); *)
-	 (* An Hoa *)
-	 (*let _ = print_endline "Primitive relations : " in
-	   let _ = List.map (fun x -> print_endline x.Iast.rel_name) prog.Iast.prog_rel_decls in*)
     prog
   with
       End_of_file -> exit 0

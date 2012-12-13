@@ -769,13 +769,6 @@ let do_infer_inc = ref false
 let add_count (t: int ref) = 
 	t := !t+1
 
-(* for parser *)
-let parser_name = ref "default"
-
-let set_cil_parser () =
-  parser_name := "cil"
-(* utility functions *)
-
 let omega_err = ref false
 
 let seq_number = ref 10

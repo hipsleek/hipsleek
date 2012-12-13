@@ -556,7 +556,7 @@ and translate_exp (e: Cil.exp) : Iast.exp =
 let translate_instr (instr: Cil.instr) : Iast.exp =
   supplement_exp := []; (* reset supplement_exp before each times translate_instr*)
   let translated_instr = (match instr with
-    | Cil.Set (lv, exp, l) ->
+    | Cil.Set (lv, exp, l) -> (
         let pos = translate_location l in
         let le = translate_lval lv in
         let re = translate_exp exp in
@@ -565,6 +565,7 @@ let translate_instr (instr: Cil.instr) : Iast.exp =
                      Iast.exp_assign_rhs = re;
                      Iast.exp_assign_path_id = None;
                      Iast.exp_assign_pos = pos}
+      )
     | Cil.Call (lv_opt, exp, exps, l) -> (
         let pos = translate_location l in
         let fname = match exp with
@@ -604,7 +605,6 @@ let translate_instr (instr: Cil.instr) : Iast.exp =
           )
       )
     | Cil.Asm _ ->
-        let _ = print_endline ("== asm = " ^ (string_of_cil_instr instr) ^ "<-->") in
         report_error_msg "TRUNG TODO: Handle Cil.Asm later!"
   ) in
   let collected_exps = !supplement_exp @ [translated_instr] in
