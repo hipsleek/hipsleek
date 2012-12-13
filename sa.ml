@@ -69,7 +69,7 @@ and check_dropable_paras_constr prog constr:((CP.spec_var*int list) list) =
 and check_dropable_paras_RHS prog f:((CP.spec_var*int list) list)=
   (*RHS: dropable if para have just partial defined or more*)
   let def_vs_wo_args, _, _, hrs, _,eqNulls = SAU.find_defined_pointers_raw prog f in
-  let def_vsl_wo_args = def_vs_wo_args@eqNulls in
+  (* let def_vsl_wo_args = def_vs_wo_args@eqNulls in *)
   let rec helper args res index=
     match args with
       | [] -> res
@@ -2475,11 +2475,11 @@ let get_pdef_body unk_hps post_hps (a1,args,unk_args,a3,olf,orf)=
       - depend on recusive groups: wait
 *)
 let pardef_subst_fix_x prog unk_hps groups=
-  let get_hp_from_grp grp=
-    match grp with
-      | (hp,_,_,_)::_ -> hp
-      | [] -> report_error no_pos "sa.pardef_subst_fix_x: 1"
-  in
+  (* let get_hp_from_grp grp= *)
+  (*   match grp with *)
+  (*     | (hp,_,_,_)::_ -> hp *)
+  (*     | [] -> report_error no_pos "sa.pardef_subst_fix_x: 1" *)
+  (* in *)
   let is_rec_pardef (hp,_,f,_)=
     let hps = CF.get_hp_rel_name_formula f in
     (CP.mem_svl hp hps)
@@ -2498,11 +2498,14 @@ let pardef_subst_fix_x prog unk_hps groups=
   let is_independ_group grp =
     List.for_all is_independ_pardef grp
   in
-  let get_succ_hps_pardef (_,_,f,_)=
-    (CF.get_HRels_f f)
-  in
+  (* let get_succ_hps_pardef (_,_,f,_)= *)
+  (*   (CF.get_HRels_f f) *)
+  (* in *)
+  (****************************************)
+     (*************BEGIN****************)
+  (****************************************)(*
   let comp_rec_grps_fix_x rec_ind_grps grps=
-    let g_rec_hps = List.map get_hp_from_grp rec_ind_grps in
+    (* let g_rec_hps = List.map get_hp_from_grp rec_ind_grps in *)
     let check_rec_grp_ext grp total_rec_hps=
       if is_rec_group grp then
         let hp = get_hp_from_grp grp in
@@ -2539,6 +2542,10 @@ let pardef_subst_fix_x prog unk_hps groups=
     Debug.no_1 "comp_rec_grps_fix" pr1 (pr_pair pr1 pr1)
         (fun _ -> comp_rec_grps_fix_x rec_ind_grps grps) grps
   in
+                                            *)
+  (****************************************)
+     (*************END****************)
+  (****************************************)
   let process_dep_group grp rec_hps nrec_grps=
     (* let (hp,args,_) = List.hd grp in *)
     (* DD.ninfo_pprint ("       process_dep_group hp: " ^ (!CP.print_sv hp)) no_pos; *)
@@ -3348,18 +3355,18 @@ let generate_hp_def_from_split prog hpdefs hp_defs_split unk_hpargs=
 
 let rel_helper post_hps unk_rels unk_map=
     (*exchange post hps into the first position*)
-  let rec ex_post_hps rem_unk_rel res=
-    match rem_unk_rel with
-      | [] -> res
-      | (hp1,hp2,args)::tl ->
-          let b1 = CP.mem_svl hp1 post_hps in
-          let b2 = CP.mem_svl hp2 post_hps in
-          begin
-              match b1,b2 with
-                | false,true -> ex_post_hps tl (res@[(hp2,hp1,args)])
-                | _ -> ex_post_hps tl (res@[(hp1,hp2,args)])
-          end
-  in
+  (* let rec ex_post_hps rem_unk_rel res= *)
+  (*   match rem_unk_rel with *)
+  (*     | [] -> res *)
+  (*     | (hp1,hp2,args)::tl -> *)
+  (*         let b1 = CP.mem_svl hp1 post_hps in *)
+  (*         let b2 = CP.mem_svl hp2 post_hps in *)
+  (*         begin *)
+  (*             match b1,b2 with *)
+  (*               | false,true -> ex_post_hps tl (res@[(hp2,hp1,args)]) *)
+  (*               | _ -> ex_post_hps tl (res@[(hp1,hp2,args)]) *)
+  (*         end *)
+  (* in *)
   let generate_p_formual args pos fr_args=
     let ss = List.combine args fr_args in
     let ps = List.map (fun (sv1,sv2) -> CP.mkPtrEqn sv1 sv2 pos) ss in
@@ -3546,7 +3553,7 @@ let generate_hp_def_from_unk_hps unk_hps hp_defs post_hps unk_rels=
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr3 (a,b,c,d,_) = let pr = pr_quad pr1 pr1 pr1 pr2 in pr (a,b,c,d) in
-  let pr5 = pr_list CP.string_of_xpure_view in
+  (* let pr5 = pr_list CP.string_of_xpure_view in *)
   Debug.no_3 "generate_hp_def_from_unk_hps" pr2 pr1 pr4 pr3
       (fun _ _ _ -> generate_hp_def_from_unk_hps_new_x unk_hps hp_defs post_hps unk_rels) unk_hps hp_defs unk_rels
 

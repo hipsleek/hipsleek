@@ -1011,7 +1011,7 @@ struct
 		        else get rst 
             in (get elist)
         in
-        let pr = pr_pair string_of_int string_of_int in
+        (* let pr = pr_pair string_of_int string_of_int in *)
         Debug.no_1 "get_hash" pr_id (fun _ -> "?") foo f
       end
     method add_edge (n1:string)(n2:string):unit =

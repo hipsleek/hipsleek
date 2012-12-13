@@ -1744,7 +1744,7 @@ let get_longest_common_hnodes_two args shortes_ldns ldns2 eqs=
     match lnds with
       | [] ->  ([],[],matched2, rest2)
       | hn1::ls ->
-          let eq_svl = find_close [hn1.CF.h_formula_data_node] eqs in
+          (* let eq_svl = find_close [hn1.CF.h_formula_data_node] eqs in *)
           if hn.CF.h_formula_data_name = hn1.CF.h_formula_data_name &&
             CP.eq_spec_var hn.CF.h_formula_data_node hn1.CF.h_formula_data_node
             (* CP.mem_svl hn.CF.h_formula_data_node eq_svl *)
@@ -2625,6 +2625,7 @@ let succ_subst_with_rec_indp_x prog rec_indp_grps unk_hps depend_grps=
   (* preprocess rec_indps:
      subst rec branch by all base branches
   *)
+(*
   let preprocess_rec_indp_x grp=
     let rec_branches,base_branches = List.partition is_rec_pardef grp in
     if rec_branches = [] || base_branches = [] then grp else
@@ -2646,9 +2647,12 @@ let succ_subst_with_rec_indp_x prog rec_indp_grps unk_hps depend_grps=
     Debug.no_1 "preprocess_rec_indp" pr1 pr1
         (fun _ -> preprocess_rec_indp_x grp) grp
   in
+*)
   (*END for debugging**)
-  let rec_indp_grps1 = List.map preprocess_rec_indp rec_indp_grps in
-  (********************)
+  (* let rec_indp_grps1 = List.map preprocess_rec_indp rec_indp_grps in *)
+  (*********************************)
+        (*******END***************)
+  (********************************)
   let rec get_last_ptr_x args0 hds=
     match hds with
       | [] -> args0
