@@ -835,6 +835,7 @@ let translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option)
     Iast.proc_data_decl = None;
     Iast.proc_constructor = false;
     Iast.proc_args = args;
+    Iast.proc_source = ""; (* WN : need to change *)
     Iast.proc_return = return;
     Iast.proc_static_specs = static_specs;
     Iast.proc_dynamic_specs = Iformula.mkEFalseF ();
@@ -931,6 +932,7 @@ let translate_file (file: Cil.file) : Iast.prog_decl =
   ) gl_addressof_data;
   let newprog : Iast.prog_decl = ({
     Iast.prog_data_decls = obj_def :: string_def :: !data_decls;
+    Iast.prog_include_decls = []; (*WN : need to fill *)
     Iast.prog_global_var_decls = !global_var_decls;
     Iast.prog_logical_var_decls = !logical_var_decls;
     Iast.prog_enum_decls = !enum_decls;

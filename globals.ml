@@ -92,6 +92,7 @@ type typ =
   | BagT of typ
   (* | Prim of prim_type *)
   | Named of ident (* named type, could be enumerated or object *)
+          (* Named "R" *)
   | Array of (typ * int) (* base type and dimension *)
   | RelT (* relation type *)
   | HpT (* heap predicate relation type *)
@@ -107,6 +108,7 @@ let barrierT = Named "barrier"
 
 (*for heap predicate*)
 let hp_default_prefix_name = "HP_"
+let dang_hp_default_prefix_name = "DLING_"
 (*
   Data types for code gen
 *)
@@ -267,6 +269,8 @@ object
      (*   | None -> "None" *)
      (*   | Some l -> l *)
 end;;
+
+
 
 (*Some global vars for logging*)
 let proving_loc  = new prog_loc
@@ -526,6 +530,18 @@ let show_diff = ref false
 
 let sa_print_inter = ref false
 
+let sa_en_norm = ref true
+
+let sa_en_split = ref false
+
+let sa_elim_dangling = ref false
+
+let sa_elim_useless = ref false
+
+let sa_inlining = ref false
+
+let sa_unify_dangling = ref false
+
 let dis_sem = ref false
 
 let show_diff_constrs = ref false
@@ -603,6 +619,8 @@ let split_rhs_flag = ref true
 
 let n_xpure = ref 1
 
+let fixcalc_disj = ref 2
+
 let check_coercions = ref false
 
 let num_self_fold_search = ref 0
@@ -630,6 +648,7 @@ let enable_syn_base_case = ref false
 let enable_case_inference = ref false
 
 let print_core = ref false
+let print_core_all = ref false
 
 let print_err_sleek = ref false
 
@@ -644,8 +663,9 @@ let failure_analysis = ref false
 let seq_to_try = ref false
 
 let print_input = ref false
+let print_input_all = ref false
 
-let pass_global_by_value = ref false
+(* let pass_global_by_value = ref true *)
 
 (* let allow_pred_spec = ref false *)
 
@@ -667,7 +687,7 @@ let enable_redundant_elim = ref false
 
 let enulalias = ref false
 
-let pass_global_by_value = ref false
+let pass_global_by_value = ref true
 
 let exhaust_match = ref false
 

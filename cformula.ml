@@ -18,6 +18,8 @@ module MCP = Mcpure
 
 type ann = ConstAnn of heap_ann | PolyAnn of CP.spec_var
 
+let view_prim_lst = new Gen.stack_pr pr_id (=) 
+
 type typed_ident = (typ * ident)
 
 and formula_type =
@@ -115,6 +117,8 @@ and hprel_def= {
     hprel_def_body_lib: formula option;
 }
 
+(* and infer_rel_type =  (CP.rel_cat * CP.formula * CP.formula) *)
+
 and list_formula = formula list
 
 and formula_base = {  formula_base_heap : h_formula;
@@ -207,6 +211,7 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_name : ident;
                         h_formula_view_derv : bool;
                         h_formula_view_imm : ann;
+                        (* h_formula_view_primitive : bool; (\* indicates if it is primitive view? *\) *)
                         h_formula_view_perm : cperm; (*LDK: permission*)
                         h_formula_view_arguments : CP.spec_var list;
                         h_formula_view_modes : mode list;
@@ -269,6 +274,7 @@ struct
       h_formula_star_pos = no_pos
     }
   let string_of = !print_h_formula
+  let ref_string_of = print_h_formula
 end;;
 
 module Exp_Spec =
@@ -280,6 +286,7 @@ struct
     formula_struc_or_pos = no_pos
     }
   let string_of = !print_struc_formula
+  let ref_string_of = print_struc_formula
 end;;
 
 module Label_Heap = LabelExpr(Lab_List)(Exp_Heap);;
@@ -1300,6 +1307,14 @@ and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t :
 
 and is_view (h : h_formula) = match h with
   | ViewNode _ -> true
+  | _ -> false
+
+and is_view_primitive (h : h_formula) = match h with
+  | ViewNode v -> view_prim_lst # mem (v.h_formula_view_name)
+  | _ -> false
+
+and is_view_user (h : h_formula) = match h with
+  | ViewNode v -> not(view_prim_lst # mem (v.h_formula_view_name))
   | _ -> false
 
 and is_data (h : h_formula) = match h with
@@ -3271,7 +3286,6 @@ let get_HRel hf=
     | HRel (hp, eargs, _ ) -> Some (hp, List.concat (List.map CP.afv eargs))
     | _ -> None
 
-
 let extract_HRel hf=
   match hf with
     | HRel (hp, eargs, _ ) -> (hp, List.concat (List.map CP.afv eargs))
@@ -3288,6 +3302,33 @@ let extract_HRel_f (f0:formula) =
     | _ -> report_error no_pos "CF.extract_HRel"
   in
   helper f0
+
+let extract_unk_hprel_x (f0:formula) =
+  let rec helper f=
+  match f with
+    | Base ({ formula_base_pure = p1;
+        formula_base_heap = h1;})
+    | Exists ({ formula_exists_pure = p1;
+        formula_exists_heap = h1;}) ->
+        (
+            if (CP.isConstTrue (MCP.pure_of_mix p1)) then
+              match h1 with
+                | HRel (hp, _, _ ) -> [hp]
+                | _ -> report_error no_pos "CF.extract_HRel"
+            else
+              report_error no_pos "extract_unk_hprel_f"
+        )
+    | Or {formula_or_f1 = f1;
+          formula_or_f2 = f2} ->
+        (helper f1) @ (helper f2)
+  in
+  helper f0
+
+let extract_unk_hprel (f0:formula) =
+  let pr1 = !print_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_1 "extract_unk_hprel" pr1 pr2
+      (fun _ ->  extract_unk_hprel_x f0) f0
 
 let extract_HRel_orig hf=
   match hf with
@@ -3327,6 +3368,19 @@ let rec get_HRels_f f=
         let a1 = get_HRels_f orf.formula_or_f1 in
         let a2 = get_HRels_f orf.formula_or_f2 in
         (a1@a2)
+
+let check_and_get_one_hpargs f=
+  let helper mf hf=
+    if CP.isConstTrue (MCP.pure_of_mix mf) then
+      match hf with
+        | HRel (hp, eargs, p ) -> [(hp, List.concat (List.map CP.afv eargs),p)]
+        | _ -> []
+    else []
+  in
+  match f with
+    | Base fb -> helper fb.formula_base_pure fb.formula_base_heap
+    | Exists fe -> helper fe.formula_exists_pure fe.formula_exists_heap
+    | Or _  -> []
 
 let rec check_eq_hrel_node  (rl1, args1 ,_)  (rl2, args2,_)=
     let rec helper l1 l2=
@@ -3430,6 +3484,41 @@ let get_hdnodes_hrel_hf (hf0: h_formula) =
       | _ -> []
   in
   helper hf0
+
+let check_imm_mis rhs_mis rhs0=
+  match rhs_mis with
+    | DataNode hd1 ->
+        if not(isLend (hd1.h_formula_data_imm)) then rhs0
+        else
+          let mis_sv = hd1.h_formula_data_node in
+          let rec helper rhs=
+            match rhs with
+              | Star { h_formula_star_h1 = hf1;
+                         h_formula_star_h2 = hf2;
+                         h_formula_star_pos = pos} ->
+                  Star {h_formula_star_h1 = helper hf1;
+                        h_formula_star_h2 = helper hf2;
+                        h_formula_star_pos = pos}
+              |  Conj { h_formula_conj_h1 = hf1;
+                       h_formula_conj_h2 = hf2;
+                       h_formula_conj_pos = pos} ->
+                  Conj { h_formula_conj_h1 = helper hf1;
+                         h_formula_conj_h2 = helper hf2;
+                         h_formula_conj_pos = pos}
+              | Phase { h_formula_phase_rd = hf1;
+                        h_formula_phase_rw = hf2;
+                        h_formula_phase_pos = pos} ->
+                  Phase { h_formula_phase_rd = helper hf1;
+                          h_formula_phase_rw = helper hf2;
+                          h_formula_phase_pos = pos}
+              | DataNode hd -> if CP.eq_spec_var mis_sv hd.h_formula_data_node then
+                    if not(isLend (hd.h_formula_data_imm)) then rhs else
+                      DataNode {hd with h_formula_data_imm = (ConstAnn(Mutable));}
+                  else rhs
+              | _ -> rhs
+          in
+          helper rhs0
+    | _ -> rhs0
 
 let rec get_hp_rel_formula (f:formula) =
   match f with
@@ -3672,6 +3761,16 @@ and filter_vars_hf hf rvs=
     | HTrue
     | HFalse
     | HEmp -> hf
+
+let rec extract_pure (f0: formula)=
+  let rec helper f=
+   match f with
+      | Base fb -> (MCP.pure_of_mix fb.formula_base_pure)
+      | Or orf ->CP.disj_of_list [(helper orf.formula_or_f1); (helper orf.formula_or_f2)] no_pos
+      | Exists fe -> (MCP.pure_of_mix fe.formula_exists_pure)
+  in
+  helper f0
+
 
 let rec subst_hprel (f0: formula) from_hps to_hp=
   let rec helper f=
@@ -4367,7 +4466,8 @@ think it is used to instantiate when folding.
   es_infer_vars : CP.spec_var list; 
   es_infer_vars_rel : CP.spec_var list;
   es_infer_vars_sel_hp_rel: CP.spec_var list;
-  es_infer_hp_unk_map: (CP.spec_var * CP.spec_var list) list;
+  es_infer_vars_sel_post_hp_rel: CP.spec_var list;
+  es_infer_hp_unk_map: (CP.spec_var*CP.xpure_view) list ;(*(CP.spec_var * CP.spec_var list) list;*)
   es_infer_vars_hp_rel : CP.spec_var list;
   (* input vars to denote vars already instantiated *)
   es_infer_vars_dead : CP.spec_var list; 
@@ -4390,7 +4490,7 @@ think it is used to instantiate when folding.
      | RankDec [rid] | RankBounded id
   *)
   (* es_infer_rel : (CP.formula * CP.formula) list; *)
-  es_infer_rel : (CP.rel_cat * CP.formula * CP.formula) list;
+  es_infer_rel : CP.infer_rel_type list;
   es_infer_hp_rel : hprel list; (*(CP.rel_cat * formula * formula) list;*)
   (* output : pre pure assumed to infer relation *)
   (* es_infer_pures : CP.formula list; *)
@@ -4501,14 +4601,31 @@ let get_infer_vars_sel_hp_ctx ctx0=
   in
   helper ctx0
 
+let get_infer_vars_sel_post_hp_ctx ctx0=
+  let rec helper ctx=
+    match ctx with
+      | Ctx es -> es.es_infer_vars_sel_post_hp_rel
+      | OCtx (ctx1,ctx2) -> (helper ctx1)@(helper ctx2)
+  in
+  helper ctx0
+
 let get_infer_vars_sel_hp_branch_ctx (_,ctx)=
   get_infer_vars_sel_hp_ctx ctx
+
+let get_infer_vars_sel_post_hp_branch_ctx (_,ctx)=
+  get_infer_vars_sel_post_hp_ctx ctx
 
 let get_infer_vars_sel_hp_partial_ctx (_, br_list)=
   get_infer_vars_sel_hp_branch_ctx (List.hd  br_list)
 
+let get_infer_vars_sel_post_hp_partial_ctx (_, br_list)=
+  get_infer_vars_sel_post_hp_branch_ctx (List.hd  br_list)
+
 let get_infer_vars_sel_hp_partial_ctx_list ls=
   get_infer_vars_sel_hp_partial_ctx (List.hd ls)
+
+let get_infer_vars_sel_post_hp_partial_ctx_list ls=
+  get_infer_vars_sel_post_hp_partial_ctx (List.hd ls)
 
 let context_of_branch_ctx_list ls = 
   let rec helper ls = match ls with
@@ -4582,6 +4699,7 @@ let empty_es flowt grp_lbl pos =
   es_infer_vars_dead = [];
   es_infer_vars_rel = [];
   es_infer_vars_sel_hp_rel = [];
+  es_infer_vars_sel_post_hp_rel = [];
   es_infer_hp_unk_map = [];
   es_infer_vars_hp_rel = [];
   es_infer_heap = []; (* HTrue; *)
@@ -5601,6 +5719,7 @@ let false_es_with_flow_and_orig_ante es flowt f pos =
         es_infer_vars_rel = es.es_infer_vars_rel;
         es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
         es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
+        es_infer_vars_sel_post_hp_rel = es.es_infer_vars_sel_post_hp_rel;
         es_infer_hp_unk_map = es.es_infer_hp_unk_map;
         es_infer_vars_dead = es.es_infer_vars_dead;
         es_infer_heap = es.es_infer_heap;
@@ -7646,6 +7765,7 @@ let clear_entailment_history_es xp (es :entail_state) :context =
           es_infer_vars_rel = es.es_infer_vars_rel;
           es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
           es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
+          es_infer_vars_sel_post_hp_rel = es.es_infer_vars_sel_post_hp_rel;
           es_infer_hp_unk_map = es.es_infer_hp_unk_map;
           es_infer_heap = es.es_infer_heap;
           es_infer_pure = es.es_infer_pure;
@@ -9685,6 +9805,7 @@ let is_emp_term f = match f with
 
 let is_emp_term f = 
   Debug.no_1 "is_emp_term" !print_formula string_of_bool is_emp_term f
+
 
 
 

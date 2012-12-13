@@ -1,0 +1,31 @@
+ data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+relation R(int n, int m).
+
+/*
+infer [R] x::ll<n>@L&x=null & v_bool_18_540' & x=null & 
+v_bool_18_540' & v_int_18_534'=0 & res=v_int_18_534'
+ |-  emp&R(res,n) . 
+print residue.
+*/
+
+infer [R] x::node<Anon_568,q_569>@L * q_569::ll<flted_7_567>@L &
+n=flted_7_567+1 & x!=null & !(v_bool_18_540') & x!=null & 
+!(v_bool_18_540') & flted_7_567=n_572 & R(r_584,n_572) & v_int_21_539'=r_584+
+1 & res=v_int_21_539'
+ |-  emp&R(res,n). 
+print residue.
+
+infer [R] res=1+r & n=1+m  |- R(res,n).
+print residue.
+
+infer [R] res=1+r & n=1+m & R(r,m) |- R(res,n).
+print residue.
+

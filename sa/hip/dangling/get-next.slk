@@ -1,0 +1,22 @@
+data node {
+	int val;
+	node next
+}.
+
+HeapPred H(node a).
+HeapPred G(node a, node b).
+
+infer [H] H(x)&x=x'
+ |-  x'::node<val_28_510',next_28_511'>@L.
+print residue.
+
+/*
+[ H(x')&true --> x'::node<val_28_510',next_28_511'>@L * HP_19(next_28_511')&
+  true]
+*************************************
+ <1>HP_19(next_28_511') * x'::node<val_28_510',next_28_511'>@M[Orig]&x=x'&{FLOW,(19,20)=__norm}[]
+
+ERROR : use @M consistently, as it is present in
+residue but not in rel-ass.
+*/
+

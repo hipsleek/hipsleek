@@ -1,0 +1,12 @@
+R:={[res,m,n]:(m>=0 & res>=(2+m) & res=n+m ) 
+     | (n>=0 & 1>=n & m>=0 & res=m+1)};
+
+R2:={[res,m,n]:
+ (m>=0 & res>=(2+m) & res=n+m) | (n>=0 & 1>=n & m>=0 & res=m+1)};
+
+P:={[res,m,n]:m>=0 & n>=0 & (n<=1 & res=m+1 | n>1 & res=m+n)};
+P subset R;
+R subset P;
+
+R2 subset P;
+P subset R2;

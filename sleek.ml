@@ -86,12 +86,12 @@ module M = Lexer.Make(Token.Token)
 let parse_file (parse) (source_file : string) =
   let rec parse_first (cmds:command list) : (command list)  =
     try 
-       parse source_file 
+        parse source_file 
 	with
 	  | End_of_file -> List.rev cmds
       | M.Loc.Exc_located (l,t)-> 
-            (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
-            raise t) in
+          (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+           raise t) in
   let parse_first (cmds:command list) : (command list)  =
     let pr = pr_list string_of_command in
     Debug.no_1 "parse_first" pr pr parse_first cmds in
@@ -101,12 +101,14 @@ let parse_file (parse) (source_file : string) =
 	  | PredDef pdef -> process_pred_def_4_iast pdef
 	  | BarrierCheck bdef -> process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars)
 	  | FuncDef fdef -> process_func_def fdef
-    | RelDef rdef -> process_rel_def rdef
+      | RelDef rdef -> process_rel_def rdef
       | HpDef hpdef -> process_hp_def hpdef
-    | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
+      | AxiomDef adef -> process_axiom_def adef  (* An Hoa *)
       (* | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq *)
 	  | LemmaDef _ | Infer _ | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | PrintCmd _ | CmpCmd _ 
-    | Time _ | EmptyCmd -> () in
+      | Time _ | EmptyCmd -> () in
+  let proc_one_def c =
+    Debug.no_1 "proc_one_def" string_of_command pr_none proc_one_def c in
   let proc_one_lemma c = 
     match c with
 	  | LemmaDef ldef -> process_lemma ldef
@@ -114,45 +116,49 @@ let parse_file (parse) (source_file : string) =
 	  | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | Infer _ | PrintCmd _  | CmpCmd _| Time _ | EmptyCmd -> () in
   let proc_one_cmd c = 
     match c with
-    | EntailCheck (iante, iconseq, etype) -> process_entail_check iante iconseq etype
+      | EntailCheck (iante, iconseq, etype) -> process_entail_check iante iconseq etype
       (* let pr_op () = process_entail_check_common iante iconseq in  *)
       (* Log.wrap_calculate_time pr_op !source_files ()               *)
 	  | EqCheck (lv, if1, if2) -> 
           (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
           process_eq_check lv if1 if2
-    | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
-    | CaptureResidue lvar -> process_capture_residue lvar
-    | PrintCmd pcmd -> process_print_command pcmd
+      | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
+      | CaptureResidue lvar -> process_capture_residue lvar
+      | PrintCmd pcmd -> process_print_command pcmd
 	  | CmpCmd ccmd -> process_cmp_command ccmd
-    | LetDef (lvar, lbody) -> put_var lvar lbody
-    | BarrierCheck bdef -> process_barrier_def bdef
-    | Time (b,s,_) -> 
-        if b then Gen.Profiling.push_time s 
-        else Gen.Profiling.pop_time s
+      | LetDef (lvar, lbody) -> put_var lvar lbody
+      | BarrierCheck bdef -> process_barrier_def bdef
+      | Time (b,s,_) -> 
+          if b then Gen.Profiling.push_time s 
+          else Gen.Profiling.pop_time s
 	  | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ | EmptyCmd -> () in
   let cmds = parse_first [] in
-   List.iter proc_one_def cmds;
+  List.iter proc_one_def cmds;
 	(* An Hoa : Parsing is completed. If there is undefined type, report error.
 	 * Otherwise, we perform second round checking!
 	 *)
-	let udefs = !Astsimp.undef_data_types in
-	let _ = match udefs with
+  let udefs = !Astsimp.undef_data_types in
+  let _ = match udefs with
 	| [] ->	perform_second_parsing_stage ()
 	| _ -> let udn,udp = List.hd (List.rev udefs) in
-			Error.report_error { Error.error_loc  = udp;
-								 Error.error_text = "Data type " ^ udn ^ " is undefined!" }
-	in ();
+		   Error.report_error { Error.error_loc  = udp;
+								Error.error_text = "Data type " ^ udn ^ " is undefined!" }
+  in ();
+  Debug.tinfo_pprint "sleek : after 2nd parsing" no_pos;
   convert_pred_to_cast ();
+  Debug.tinfo_pprint "sleek : after convert_pred_to_cast" no_pos;
   List.iter proc_one_lemma cmds;
+  Debug.tinfo_pprint "sleek : after proc one lemma" no_pos;
   (*identify universal variables*)
   let cviews = !cprog.C.prog_view_decls in
   let cviews = List.map (Cast.add_uni_vars_to_view !cprog !cprog.C.prog_left_coercions) cviews in
-   !cprog.C.prog_view_decls <- cviews;
-   List.iter proc_one_cmd cmds 
+  !cprog.C.prog_view_decls <- cviews;
+  List.iter proc_one_cmd cmds 
 
 
 let main () = 
-  let iprog = { I.prog_data_decls = [iobj_def];
+  let iprog = { I.prog_include_decls =[];
+		            I.prog_data_decls = [iobj_def];
                 I.prog_global_var_decls = [];
                 I.prog_logical_var_decls = [];
                 I.prog_enum_decls = [];
@@ -167,7 +173,7 @@ let main () =
                 I.prog_coercion_decls = [];
                 I.prog_hopred_decls = [];
 				I.prog_barrier_decls = [];
-  } in
+              } in
   let _ = process_data_def (I.b_data_constr b_datan []) in
   let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
   let _ = Iast.build_exc_hierarchy true iprog in
@@ -180,65 +186,71 @@ let main () =
       | Scriptarguments.XmlFE -> XF.parse x in
   let parse x = Debug.no_1 "parse" pr_id string_of_command parse x in
   let buffer = Buffer.create 10240 in
-    try
-      if (!inter) then 
-        while not (!quit) do
-          if !inter then (* check for interactivity *)
-            print_string !prompt;
-          let input = read_line () in
-          match input with
-            | "" -> ()
-            | _ -> 
-              try
-                let term_indx = String.index input terminator in
-                let s = String.sub input 0 (term_indx+1) in
-                Buffer.add_string buffer s;
-                let cts = Buffer.contents buffer in
-                if cts = "quit" || cts = "quit\n" then quit := true
-                else try
-                  let cmd = parse cts in
-                  (match cmd with
-                     | DataDef ddef -> process_data_def ddef
-                     | PredDef pdef -> process_pred_def pdef
-                     | BarrierCheck bdef -> 
-                         (process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars) ; process_barrier_def bdef)
-                     | FuncDef fdef -> process_func_def fdef
-                     | RelDef rdef -> process_rel_def rdef
-                     | HpDef hpdef -> process_hp_def hpdef
-                     | AxiomDef adef -> process_axiom_def adef
-                     | EntailCheck (iante, iconseq, etype) -> process_entail_check iante iconseq etype
-		     | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2
-                     | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
-                     | CaptureResidue lvar -> process_capture_residue lvar
-                     | LemmaDef ldef ->   process_lemma ldef
-                     | PrintCmd pcmd -> process_print_command pcmd
-		     | CmpCmd pcmd -> process_cmp_command pcmd
-                     | LetDef (lvar, lbody) -> put_var lvar lbody
-                     | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
-                     | EmptyCmd -> ());
-                  Buffer.clear buffer;
-                  if !inter then
-                      prompt := "SLEEK> "
-                with
-                  | _ -> dummy_exception();
-                print_string ("Error.\n");
-                Buffer.clear buffer;
-                if !inter then prompt := "SLEEK> "
-              with 
-                | SLEEK_Exception
-                | Not_found -> dummy_exception();
-              Buffer.add_string buffer input;
-              Buffer.add_char buffer '\n';
-              if !inter then prompt := "- "
-        done
-      else 
-        (* let _ = print_endline "Prior to parse_file" in *)
-        let _ = List.map (parse_file NF.list_parse) !source_files in ()
-    with
-      | End_of_file -> 
-            begin
-              print_string ("\n")
-            end
+  try
+      if (!inter) then
+        begin
+            Debug.info_pprint "sleek : interactive" no_pos;
+            while not (!quit) do
+              if !inter then (* check for interactivity *)
+                print_string !prompt;
+                let input = read_line () in
+                match input with
+                  | "" -> ()
+                  | _ -> 
+                      try
+                          let term_indx = String.index input terminator in
+                          let s = String.sub input 0 (term_indx+1) in
+                          Buffer.add_string buffer s;
+                          let cts = Buffer.contents buffer in
+                          if cts = "quit" || cts = "quit\n" then quit := true
+                          else try
+                                   let cmd = parse cts in
+                                   (match cmd with
+                                     | DataDef ddef -> process_data_def ddef
+                                     | PredDef pdef -> process_pred_def pdef
+                                     | BarrierCheck bdef -> 
+                                         (process_data_def (I.b_data_constr bdef.I.barrier_name bdef.I.barrier_shared_vars) ; process_barrier_def bdef)
+                                     | FuncDef fdef -> process_func_def fdef
+                                     | RelDef rdef -> process_rel_def rdef
+                                     | HpDef hpdef -> process_hp_def hpdef
+                                     | AxiomDef adef -> process_axiom_def adef
+                                     | EntailCheck (iante, iconseq, etype) -> process_entail_check iante iconseq etype
+		                             | EqCheck (lv, if1, if2) -> process_eq_check lv if1 if2
+                                     | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
+                                     | CaptureResidue lvar -> process_capture_residue lvar
+                                     | LemmaDef ldef ->   process_lemma ldef
+                                     | PrintCmd pcmd -> process_print_command pcmd
+		                             | CmpCmd pcmd -> process_cmp_command pcmd
+                                     | LetDef (lvar, lbody) -> put_var lvar lbody
+                                     | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
+                                     | EmptyCmd -> ());
+                                   Buffer.clear buffer;
+                                   if !inter then
+                                     prompt := "SLEEK> "
+                              with
+                                | _ -> dummy_exception();
+                                    print_string ("Error.\n");
+                                    Buffer.clear buffer;
+                                    if !inter then prompt := "SLEEK> "
+                      with 
+                        | SLEEK_Exception
+                        | Not_found -> dummy_exception();
+                            Buffer.add_string buffer input;
+                            Buffer.add_char buffer '\n';
+                            if !inter then prompt := "- "
+            done
+        end
+      else
+        begin
+      (* let _ = print_endline "Prior to parse_file" in *)
+            Debug.tinfo_pprint "sleek : batch processing" no_pos;
+            let _ = List.map (parse_file NF.list_parse) !source_files in ()
+        end
+  with
+    | End_of_file -> 
+        begin
+            print_string ("\n")
+        end
       (* | Not_found -> print_string ("Not found exception caught!\n") *)
 
 (* let main () =  *)

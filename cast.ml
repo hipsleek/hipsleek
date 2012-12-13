@@ -19,50 +19,50 @@ module Err = Error
 type typed_ident = (typ * ident)
 
 and prog_decl = { 
-  mutable prog_data_decls : data_decl list;
-  mutable prog_logical_vars : P.spec_var list;
-  mutable prog_view_decls : view_decl list;
-  mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
-  mutable prog_hp_decls : hp_decl list;
-  mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
-  (*old_proc_decls : proc_decl list;*) (* To be removed completely *)
-  new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
-  mutable prog_left_coercions : coercion_decl list;
-  mutable prog_right_coercions : coercion_decl list;
-  prog_barrier_decls : barrier_decl list
+    mutable prog_data_decls : data_decl list;
+    mutable prog_logical_vars : P.spec_var list;
+    mutable prog_view_decls : view_decl list;
+    mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
+    mutable prog_hp_decls : hp_decl list;
+    mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
+    (*old_proc_decls : proc_decl list;*) (* To be removed completely *)
+    new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
+    mutable prog_left_coercions : coercion_decl list;
+    mutable prog_right_coercions : coercion_decl list;
+    prog_barrier_decls : barrier_decl list
 }
-	
+    
 and prog_or_branches = (prog_decl * 
     ((MP.mix_formula * (ident * (P.spec_var list))) option) )
-	
+    
 and data_decl = { 
-  data_name : ident;
-  data_fields : typed_ident list;
-	data_parent_name : ident;
-  data_invs : F.formula list;
-  data_methods : proc_decl list; }
+    data_name : ident;
+    data_fields : typed_ident list;
+    data_parent_name : ident;
+    data_invs : F.formula list;
+    data_methods : proc_decl list; }
     
 and ba_prun_cond = Gen.Baga(P.PtrSV).baga * formula_label
     
 and mater_property = {
-  mater_var : P.spec_var;
-  mater_full_flag : bool;
-  mater_target_view : ident list; (*the view to which it materializes*)
+    mater_var : P.spec_var;
+    mater_full_flag : bool;
+    mater_target_view : ident list; (*the view to which it materializes*)
 }
 
 and barrier_decl = {
-	barrier_thc : int;
-	barrier_name : ident;
-	barrier_shared_vars : P.spec_var list;
-	barrier_tr_list : (int*int* F.struc_formula list) list ;
-	barrier_def: F.struc_formula ;
-	barrier_prune_branches: formula_label list; (* all the branches of a view *)
-	barrier_prune_conditions: (P.b_formula * (formula_label list)) list;
-	barrier_prune_conditions_state: (int * (formula_label list)) list;
-	barrier_prune_conditions_perm: (Tree_shares.Ts.t_sh* (formula_label list)) list ;
+    barrier_thc : int;
+    barrier_name : ident;
+    barrier_shared_vars : P.spec_var list;
+    barrier_tr_list : (int*int* F.struc_formula list) list ;
+    barrier_def: F.struc_formula ;
+    barrier_prune_branches: formula_label list; (* all the branches of a view *)
+    barrier_prune_conditions: (P.b_formula * (formula_label list)) list;
+    barrier_prune_conditions_state: (int * (formula_label list)) list;
+    barrier_prune_conditions_perm: (Tree_shares.Ts.t_sh* (formula_label list)) list ;
     barrier_prune_conditions_baga: ba_prun_cond list;
     barrier_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
-	}  
+}  
     
 and view_decl = { 
     view_name : ident; 
@@ -71,6 +71,7 @@ and view_decl = {
     view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
     view_labels : Label_only.spec_label list;
     view_modes : mode list;
+    view_is_prim : bool;
     mutable view_partially_bound_vars : bool list;
     mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
     view_data_name : ident;
@@ -106,14 +107,16 @@ and hp_decl = {
 
 (** An Hoa : axiom *)
 and axiom_decl = {
-		axiom_hypothesis : P.formula;
-		axiom_conclusion : P.formula; }
+	  axiom_id : int;
+    axiom_hypothesis : P.formula;
+    axiom_conclusion : P.formula; }
 
 and proc_decl = {
     proc_name : ident;
     proc_args : typed_ident list;
-		proc_return : typ;
-	mutable proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
+    proc_source : ident; (* source file *)
+    proc_return : typ;
+    mutable proc_important_vars : P.spec_var list; (* An Hoa : pre-computed list of important variables; namely the program parameters & logical variables in the specification that need to be retained during the process of verification i.e. such variables should not be removed when we perform simplification. Remark - all primed variables are important. *)
     proc_static_specs : Cformula.struc_formula;
     (* proc_static_specs_with_pre : Cformula.struc_formula; *)
     (* this puts invariant of pre into the post-condition *)
@@ -134,8 +137,8 @@ and proc_decl = {
 
 and test_comps = 
     {
-      expected_ass: (ident list * ident list *(Cformula.formula * Cformula.formula) list) option;
-      expected_hpdefs: (ident list * ident list *(Cformula.formula * Cformula.formula) list) option;
+        expected_ass: (ident list * ident list *(Cformula.formula * Cformula.formula) list) option;
+        expected_hpdefs: (ident list * ident list *(Cformula.formula * Cformula.formula) list) option;
     }
 
 (*TODO: should we change lemma need struc formulas?
@@ -193,7 +196,7 @@ and sharp_val =
 (* and exp_arraymod = { exp_arraymod_lhs : exp_arrayat; (* v[i] *)
    exp_arraymod_rhs : exp; 
    exp_arraymod_pos : loc } *)
-		
+	
 and exp_assert = { 
     exp_assert_asserted_formula : F.struc_formula option;
     exp_assert_assumed_formula : F.formula option;
@@ -205,7 +208,7 @@ and exp_assign =
     { exp_assign_lhs : ident;
     exp_assign_rhs : exp;
     exp_assign_pos : loc }
-	    
+	
 and exp_bconst = { 
     exp_bconst_val : bool;
     exp_bconst_pos : loc }
@@ -221,23 +224,23 @@ and exp_bind = {
     exp_bind_pos : loc }
 
 and exp_block = { exp_block_type : typ;
-    exp_block_body : exp;
-    exp_block_local_vars : typed_ident list;
-    exp_block_pos : loc }
+exp_block_body : exp;
+exp_block_local_vars : typed_ident list;
+exp_block_pos : loc }
 
 and exp_barrier = {exp_barrier_recv : typed_ident; exp_barrier_pos : loc}
-	
+    
 and exp_cast = { 
     exp_cast_target_type : typ;
     exp_cast_body : exp;
     exp_cast_pos : loc }
 
 and exp_cond = { exp_cond_type : typ;
-    exp_cond_condition : ident;
-    exp_cond_then_arm : exp;
-    exp_cond_else_arm : exp;
-    exp_cond_path_id : control_path_id;
-    exp_cond_pos : loc }
+exp_cond_condition : ident;
+exp_cond_then_arm : exp;
+exp_cond_else_arm : exp;
+exp_cond_path_id : control_path_id;
+exp_cond_pos : loc }
 
 and exp_debug = { 
     exp_debug_flag : bool;
@@ -246,17 +249,17 @@ and exp_debug = {
 and exp_fconst = { 
     exp_fconst_val : float;
     exp_fconst_pos : loc }
-	
+    
 (* instance call *)
 and exp_icall = { exp_icall_type : typ;
-    exp_icall_receiver : ident;
-		  exp_icall_receiver_type : typ;
-    exp_icall_method_name : ident;
-    exp_icall_arguments : ident list;
-    exp_icall_is_rec : bool; (* set for each mutual-recursive call *)
-    (*exp_icall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
-    exp_icall_path_id : control_path_id;
-    exp_icall_pos : loc }
+exp_icall_receiver : ident;
+exp_icall_receiver_type : typ;
+exp_icall_method_name : ident;
+exp_icall_arguments : ident list;
+exp_icall_is_rec : bool; (* set for each mutual-recursive call *)
+(*exp_icall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
+exp_icall_path_id : control_path_id;
+exp_icall_pos : loc }
 
 and exp_iconst = { 
     exp_iconst_val : int;
@@ -269,26 +272,26 @@ and exp_new = {
     exp_new_pos : loc }
 
 and exp_return = { exp_return_type : typ;
-    exp_return_val : ident option;
-    exp_return_pos : loc }
+exp_return_val : ident option;
+exp_return_pos : loc }
 
 (* static call *)
 and exp_scall = { exp_scall_type : typ;
-   exp_scall_method_name : ident;
-   exp_scall_lock : ident option;
-    exp_scall_arguments : ident list;
-    exp_scall_is_rec : bool; (* set for each mutual-recursive call *)
-    (*exp_scall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
-    exp_scall_path_id : control_path_id;
-    exp_scall_pos : loc }
+exp_scall_method_name : ident;
+exp_scall_lock : ident option;
+exp_scall_arguments : ident list;
+exp_scall_is_rec : bool; (* set for each mutual-recursive call *)
+(*exp_scall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
+exp_scall_path_id : control_path_id;
+exp_scall_pos : loc }
 
 and exp_seq = { exp_seq_type : typ;
-    exp_seq_exp1 : exp;
-    exp_seq_exp2 : exp;
-    exp_seq_pos : loc }
+exp_seq_exp1 : exp;
+exp_seq_exp2 : exp;
+exp_seq_pos : loc }
     
 and exp_sharp = {
-  exp_sharp_type : typ;
+    exp_sharp_type : typ;
     exp_sharp_flow_type :sharp_flow;(*the new flow*)
     exp_sharp_val :sharp_val;(*returned value*)
     exp_sharp_unpack : bool;(*true if it must get the new flow from the second element of the current flow pair*)
@@ -304,26 +307,26 @@ and exp_catch = {
     exp_catch_pos : loc }
     
 and exp_try = { exp_try_type : typ;
-   exp_try_body : exp;
-    exp_try_path_id : control_path_id_strict;
-    exp_catch_clause : exp ;
-    exp_try_pos : loc }
+exp_try_body : exp;
+exp_try_path_id : control_path_id_strict;
+exp_catch_clause : exp ;
+exp_try_pos : loc }
 
 and exp_this = { exp_this_type : typ;
-    exp_this_pos : loc }
+exp_this_pos : loc }
 
 and exp_var = { exp_var_type : typ;
-    exp_var_name : ident;
-    exp_var_pos : loc }
+exp_var_name : ident;
+exp_var_pos : loc }
 
 (* An Hoa : Empty array - only for initialization purpose *)
 and exp_emparray = { exp_emparray_type : typ;
-	exp_emparray_dim : int;
-    exp_emparray_pos : loc }
+exp_emparray_dim : int;
+exp_emparray_pos : loc }
 
 and exp_var_decl = { exp_var_decl_type : typ;
-    exp_var_decl_name : ident;
-    exp_var_decl_pos : loc }
+exp_var_decl_name : ident;
+exp_var_decl_pos : loc }
 
 and exp_while = { 
     exp_while_condition : ident;
@@ -349,7 +352,7 @@ and exp_java = {
     exp_java_code : string;
     exp_java_pos : loc}
 and exp_label = {
-  exp_label_type : typ;
+    exp_label_type : typ;
     exp_label_path_id : (control_path_id * path_label);
     exp_label_exp: exp;}
     
@@ -358,9 +361,9 @@ and exp = (* expressions keep their types *)
   | Label of exp_label
   | CheckRef of exp_check_ref
   | Java of exp_java
-  (* standard expressions *)
-	    (* | ArrayAt of exp_arrayat (* An Hoa *) *)
-	    (* | ArrayMod of exp_arraymod (* An Hoa *) *)
+        (* standard expressions *)
+	(* | ArrayAt of exp_arrayat (* An Hoa *) *)
+	(* | ArrayMod of exp_arraymod (* An Hoa *) *)
   | Assert of exp_assert
   | Assign of exp_assign
   | BConst of exp_bconst
@@ -374,9 +377,9 @@ and exp = (* expressions keep their types *)
   | Dprint of exp_dprint
   | FConst of exp_fconst
         (*
-	      | FieldRead of (P.typ * (ident * P.typ) * (ident * int) * loc) 
+	  | FieldRead of (P.typ * (ident * P.typ) * (ident * int) * loc) 
         (* v.f --> (type of f, v, (f, position of f in field list), pos *)
-	      | FieldWrite of ((ident * P.typ) * (ident * int) * ident * loc) 
+	  | FieldWrite of ((ident * P.typ) * (ident * int) * ident * loc) 
         (* field assignment is flattened to form x.f = y only *)
         *)
   | ICall of exp_icall
