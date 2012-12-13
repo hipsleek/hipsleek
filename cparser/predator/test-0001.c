@@ -1,15 +1,18 @@
-//#include "../sl.h"
-#include <stdlib.h>
-
+#include "sl.h"
+//#include <stdlib.h>
 
 int main() {
     struct item {
         struct item *next;
-    } *ptr = NULL;
+    } NULL;
+
+    struct item {
+        struct item *next;
+    } *ptr=NULL;
 
     for(;;) {
         void *data = ptr;
-        ptr = malloc(sizeof *ptr);
+        ptr = malloc(sizeof *ptr);//new item
         if (!ptr)
             // OOM
             return -1;
