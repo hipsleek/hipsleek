@@ -414,10 +414,6 @@ let rec translate_lval (lv: Cil.lval) : Iast.exp =
                                      Iast.exp_arrayat_pos = pos} in
           newexp
       | Cil.Mem e, Cil.Field _ ->
-          let _ = match e with
-            | Cil.Lval _ -> let _ = print_endline ("== lval ") in ()
-            | _ -> let _ = print_endline ("== unk ") in () in
-          let _ = print_endline ("== exp = " ^ (string_of_cil_exp e)) in
           let base = translate_exp e in
           let fields = collect_field offset in
           let newexp = Iast.Member {Iast.exp_member_base = base;
@@ -431,9 +427,18 @@ and translate_exp (e: Cil.exp) : Iast.exp =
   match e with
   | Cil.Const (c, l) -> translate_constant c (Some l)
   | Cil.Lval (lv, _) -> translate_lval lv 
-  | Cil.SizeOf _ -> report_error_msg "Error!!! Iast doesn't support Cil.SizeOf exp"
-  | Cil.SizeOfE _ -> report_error_msg "Error!!! Iast doesn't support Cil.SizeOfE exp!"
-  | Cil.SizeOfStr _ -> report_error_msg "Error!!! Iast doesn't support Cil.SizeOfStr exp!"
+  | Cil.SizeOf (_, l) ->  (* currently assume SizeOf = 1, TRUNG TODO: compute exact value later *)
+      let pos = translate_location l in
+      Iast.IntLit {Iast.exp_int_lit_val = 1;
+                   Iast.exp_int_lit_pos = pos}
+  | Cil.SizeOfE (_, l) -> (* currently assume SizeOfE = 1, TRUNG TODO: compute exact value later *)
+      let pos = translate_location l in
+      Iast.IntLit {Iast.exp_int_lit_val = 1;
+                   Iast.exp_int_lit_pos = pos}
+  | Cil.SizeOfStr (s, l) ->
+      let pos = translate_location l in
+      Iast.IntLit {Iast.exp_int_lit_val = String.length s;
+                   Iast.exp_int_lit_pos = pos}
   | Cil.AlignOf _ -> report_error_msg "TRUNG TODO: Handle Cil.AlignOf later!"
   | Cil.AlignOfE _ -> report_error_msg "TRUNG TODO: Handle Cil.AlignOfE later!"
   | Cil.UnOp (op, exp, ty, l) ->
@@ -599,7 +604,7 @@ let translate_instr (instr: Cil.instr) : Iast.exp =
           )
       )
     | Cil.Asm _ ->
-        let _ = print_endline ("== asm = " ^ (string_of_cil_instr instr)) in
+        let _ = print_endline ("== asm = " ^ (string_of_cil_instr instr) ^ "<-->") in
         report_error_msg "TRUNG TODO: Handle Cil.Asm later!"
   ) in
   let collected_exps = !supplement_exp @ [translated_instr] in

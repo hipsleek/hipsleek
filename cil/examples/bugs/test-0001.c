@@ -1,11 +1,11 @@
 //#include "../sl.h"
-#include <stdlib.h>
+//#include <stdlib.h>
 
 
 int main() {
     struct item {
         struct item *next;
-    } *ptr = NULL;
+    } *ptr;
 
     for(;;) {
         void *data = ptr;
