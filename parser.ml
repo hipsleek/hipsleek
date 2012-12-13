@@ -11,54 +11,63 @@ open Label_only
 
 open Perm
 
-  module F = Iformula
-  module P = Ipure
-  module E1 = Error
-  module I = Iast
-  module Ts = Tree_shares.Ts
-  
-  module SHGram = Camlp4.Struct.Grammar.Static.Make(Lexer.Make(Token))
-  
-  type type_decl =
-	| Data of data_decl
-	| Enum of enum_decl
-	| View of view_decl
-	| Hopred of hopred_decl
-	| Barrier of barrier_decl
+module F = Iformula
+module P = Ipure
+module E1 = Error
+module I = Iast
+module Ts = Tree_shares.Ts
+
+module SHGram = Camlp4.Struct.Grammar.Static.Make(Lexer.Make(Token))
+
+(* some variables and functions decide which parser will be used *)
+let parser_name = ref "unknown"
+
+let set_parser name =
+  parser_name := name
+
+
+(* type definitions *)
+
+type type_decl =
+  | Data of data_decl
+  | Enum of enum_decl
+  | View of view_decl
+  | Hopred of hopred_decl
+  | Barrier of barrier_decl
 
 		
-  type decl = 
-    | Type of type_decl
-    | Func of func_decl
-    | Rel of rel_decl (* An Hoa *)
-    | Hp of hp_decl
-    | Axm of axiom_decl (* An Hoa *)
-    | Global_var of exp_var_decl
-    | Logical_var of exp_var_decl (* Globally logical vars *)
-    | Proc of proc_decl
-    | Coercion of coercion_decl
+type decl = 
+  | Type of type_decl
+  | Func of func_decl
+  | Rel of rel_decl (* An Hoa *)
+  | Hp of hp_decl
+  | Axm of axiom_decl (* An Hoa *)
+  | Global_var of exp_var_decl
+  | Logical_var of exp_var_decl (* Globally logical vars *)
+  | Proc of proc_decl
+  | Coercion of coercion_decl
 		| Include of string
 		
 
-  type member = 
-	| Field of (typed_ident * loc)
-	| Inv of F.formula
-	| Method of proc_decl
-		
-  type spec_qualifier =
-	| Static
-	| Dynamic 
+type member = 
+  | Field of (typed_ident * loc)
+  | Inv of F.formula
+  | Method of proc_decl
 
-  type ann =
-	| AnnMode of mode
-	| AnnType of typ
+type spec_qualifier =
+  | Static
+  | Dynamic 
 
-  type file_offset =
-    {
-      line_num: int;
-      line_start: int;
-      byte_num: int;
-    }
+type ann =
+  | AnnMode of mode
+  | AnnType of typ
+
+type file_offset =
+  {
+    line_num: int;
+    line_start: int;
+    byte_num: int;
+  }
 
 let macros = ref (Hashtbl.create 19)
 
