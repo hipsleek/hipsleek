@@ -19,23 +19,23 @@ type typed_ident = (typ * ident)
 
 
 type prog_decl = { 
-prog_include_decls : ident list;
-mutable prog_data_decls : data_decl list;
-prog_global_var_decls : exp_var_decl list;
-prog_logical_var_decls : exp_var_decl list;
-prog_enum_decls : enum_decl list;
-mutable prog_view_decls : view_decl list;
-mutable prog_func_decls : func_decl list; (* TODO: Need to handle *)
-mutable prog_rel_decls : rel_decl list; 
-mutable prog_hp_decls : hp_decl list; 
-mutable prog_rel_ids : (typ * ident) list; 
-mutable prog_hp_ids : (typ * ident) list; 
-mutable prog_axiom_decls : axiom_decl list; (* [4/10/2011] An hoa : axioms *)
-mutable prog_hopred_decls : hopred_decl list;
-(* An Hoa: relational declaration *)
-prog_proc_decls : proc_decl list;
-prog_barrier_decls : barrier_decl list;
-mutable prog_coercion_decls : coercion_decl list
+    prog_include_decls : ident list;
+    mutable prog_data_decls : data_decl list;
+    prog_global_var_decls : exp_var_decl list;
+    prog_logical_var_decls : exp_var_decl list;
+    prog_enum_decls : enum_decl list;
+    mutable prog_view_decls : view_decl list;
+    mutable prog_func_decls : func_decl list; (* TODO: Need to handle *)
+    mutable prog_rel_decls : rel_decl list; 
+    mutable prog_hp_decls : hp_decl list; 
+    mutable prog_rel_ids : (typ * ident) list; 
+    mutable prog_hp_ids : (typ * ident) list; 
+    mutable prog_axiom_decls : axiom_decl list; (* [4/10/2011] An hoa : axioms *)
+    mutable prog_hopred_decls : hopred_decl list;
+    (* An Hoa: relational declaration *)
+    prog_proc_decls : proc_decl list;
+    prog_barrier_decls : barrier_decl list;
+    mutable prog_coercion_decls : coercion_decl list
 }
 
 and data_decl = { data_name : ident;
@@ -64,7 +64,7 @@ view_formula : Iformula.struc_formula;
 view_inv_lock : F.formula option;
 mutable view_pt_by_self : ident list; (* list of views pointed by self *)
 (* view_targets : ident list;  *)(* list of views pointed within declaration *)
-try_case_inference: bool}
+try_case_inference: bool }
 
 and func_decl = { func_name : ident; 
 func_typed_vars : (typ * ident) list;}
@@ -76,11 +76,11 @@ and rel_decl = { rel_name : ident;
 rel_typed_vars : (typ * ident) list;
 (* rel_invariant : (P.formula * (branch_label * P.formula) list); *)
 rel_formula : P.formula (* Iformula.struc_formula *) ; 
-(* try_case_inference: bool *)}
+(* try_case_inference: bool *) }
 
 (* [4/10/2011] An Hoa: axiom for pure constraints *)
 and axiom_decl = {
-	  axiom_id : int;
+    axiom_id : int;
     axiom_hypothesis : P.formula ;
     axiom_conclusion : P.formula ;
 }
@@ -99,8 +99,7 @@ hopred_typed_vars: (typ * ident) list;
 mutable hopred_typed_args : (typ * ident) list;
 hopred_fct_args : ident list;
 hopred_shape    : Iformula.struc_formula list;
-hopred_invariant :P.formula
-}
+hopred_invariant :P.formula }
 
 and barrier_decl = {
     barrier_thc : int;
@@ -176,7 +175,7 @@ proc_exceptions : ident list;
 proc_body : exp option;
 proc_is_main : bool;
 proc_file : string;
-proc_loc : loc ;
+proc_loc : loc;
 proc_test_comps: test_comps option}
 
 and coercion_decl = { coercion_type : coercion_type;
@@ -697,20 +696,20 @@ and mkHoPred  n m mh tv ta fa s i=
 let mkProc sfile id n dd c ot ags r ss ds pos bd =
   { proc_name = id;
   proc_source =sfile;
-  proc_mingled_name = n; 
-  proc_data_decl = dd;
-  proc_constructor = c;
-  proc_exceptions = ot;
-  proc_args = ags;
-  proc_return = r;
-  (*  proc_important_vars = [];*)
-  proc_static_specs = ss;
-  proc_dynamic_specs = ds;
-  proc_loc = pos;
-  proc_is_main = true;
-  proc_file = !input_file_name;
-  proc_body = bd;
-  proc_test_comps = None}	
+      proc_mingled_name = n; 
+      proc_data_decl = dd;
+      proc_constructor = c;
+      proc_exceptions = ot;
+      proc_args = ags;
+      proc_return = r;
+      (*  proc_important_vars = [];*)
+      proc_static_specs = ss;
+      proc_dynamic_specs = ds;
+      proc_loc = pos;
+      proc_is_main = true;
+      proc_file = !input_file_name;
+      proc_body = bd;
+      proc_test_comps = None}
 
 let mkAssert asrtf assmf pid atype pos =
       Assert { exp_assert_asserted_formula = asrtf;

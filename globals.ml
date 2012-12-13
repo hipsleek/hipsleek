@@ -45,11 +45,11 @@ type path_label = int (*which path at the current point has been taken 0 -> then
 
 type path_trace = (control_path_id_strict * path_label) list
 
-and loc = {
-			start_pos : Lexing.position (* might be expanded to contain more information *);
-			mid_pos : Lexing.position;
-			end_pos : Lexing.position;
-			}
+and loc =  {
+    start_pos : Lexing.position (* might be expanded to contain more information *);
+    mid_pos : Lexing.position;
+    end_pos : Lexing.position;
+  }
 
 and primed =
   | Primed
@@ -170,10 +170,10 @@ let string_of_term_ann a =
     | TermErr_Must -> "TermErr_Must"
 
 let string_of_loc (p : loc) = 
-    Printf.sprintf "File \"%s\",Line:%d,Col:%d"
+    Printf.sprintf "1 File \"%s\",Line:%d,Col:%d"
     p.start_pos.Lexing.pos_fname 
     p.start_pos.Lexing.pos_lnum
-	(p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)
+    (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)
 ;;
 
 let string_of_pos (p : Lexing.position) = 
@@ -789,6 +789,11 @@ let do_infer_inc = ref false
 let add_count (t: int ref) = 
 	t := !t+1
 
+(* for parser *)
+let parser_name = ref "default"
+
+let set_cil_parser () =
+  parser_name := "cil"
 (* utility functions *)
 
 let omega_err = ref false
@@ -921,8 +926,12 @@ let fresh_formula_cache_no  () =
 
 let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
-let string_of_loc (p : loc) = p.start_pos.Lexing.pos_fname ^ "_" ^ (string_of_int p.start_pos.Lexing.pos_lnum)^"_"^
-	(string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol))
+let string_of_loc (p : loc) = 
+  p.start_pos.Lexing.pos_fname ^ "_" ^ 
+  (string_of_int p.start_pos.Lexing.pos_lnum) ^ ":" ^
+  (string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)) ^ "_" ^
+  (string_of_int p.end_pos.Lexing.pos_lnum) ^ ":" ^
+  (string_of_int (p.end_pos.Lexing.pos_cnum-p.end_pos.Lexing.pos_bol))
 
 let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")"
 ;;
@@ -1023,4 +1032,3 @@ let wrap_classic et f a =
   with _ as e ->
       (do_classic_frame_rule := flag;
       raise e)
-

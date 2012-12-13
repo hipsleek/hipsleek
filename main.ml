@@ -27,7 +27,7 @@ let print_version () =
 (* main function                          *)
 (******************************************)
 
-let parse_file_full file_name = 
+let parse_file_full file_name (primitive: bool) =
   let org_in_chnl = open_in file_name in
   try
       (*let ptime1 = Unix.times () in
@@ -36,8 +36,13 @@ let parse_file_full file_name =
       (* print_string ("Parsing "^file_name^" ...\n"); flush stdout; *)
     let _ = Gen.Profiling.push_time "Parsing" in
     Globals.input_file_name:= file_name;
-    let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) in
-    close_in org_in_chnl;
+      let prog = (
+        if not !Scriptarguments.cil_parser or primitive then
+          Parser.parse_hip file_name (Stream.of_channel org_in_chnl)
+        else
+          Cilparser.parse_hip file_name
+      ) in
+      close_in org_in_chnl;
     let _ = Gen.Profiling.pop_time "Parsing" in
 	 (*		  let ptime2 = Unix.times () in
 			  let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
@@ -57,8 +62,9 @@ let process_primitives (file_list: string list) : Iast.prog_decl list =
   Debug.info_pprint (" processing primitives \"" ^(pr_list pr_id file_list)) no_pos;
   flush stdout;
   let new_names = List.map (fun c-> (Gen.get_path Sys.executable_name) ^ (String.sub c 1 ((String.length c) - 2))) file_list in
-  if (Sys.file_exists "./prelude.ss") then  [parse_file_full "./prelude.ss"]
-  else List.map  parse_file_full  new_names
+  if (Sys.file_exists "./prelude.ss") then
+    [(parse_file_full "./prelude.ss" true)]
+  else List.map (fun x -> parse_file_full x true) new_names
 
 let process_primitives (file_list: string list) : Iast.prog_decl list =
   let pr1 = pr_list (fun x -> x) in
@@ -70,10 +76,10 @@ let process_includes (file_list: string list) (curdir: string) : Iast.prog_decl 
   Debug.info_pprint (" processing includes \"" ^(pr_list pr_id file_list)) no_pos;
   flush stdout;
   List.map  (fun x-> 
-                 if(Sys.file_exists (curdir^"/"^x)) then parse_file_full (curdir^"/"^x)
+                 if(Sys.file_exists (curdir^"/"^x)) then parse_file_full (curdir^"/"^x) true
                  else 
                    let hip_dir= (Gen.get_path Sys.executable_name) ^x in
-                   parse_file_full hip_dir
+                   parse_file_full hip_dir true (* WN is include file a primitve? *)
             )  file_list
 
 let process_includes (file_list: string list) (curdir: string): Iast.prog_decl list =
@@ -153,7 +159,7 @@ let process_cp_file prog =
 
 let process_lib_file prog =
   let parse_one_lib (ddecls,vdecls) lib=
-    let lib_prog = parse_file_full lib in
+    let lib_prog = parse_file_full lib false in
     (*each template data of lib, find corres. data in progs, generate corres. view*)
     let tmpl_data_decls = List.filter (fun dd -> dd.Iast.data_is_template) lib_prog.Iast.prog_data_decls in
     let horm_views = Sa.generate_horm_view tmpl_data_decls lib_prog.Iast.prog_view_decls prog.Iast.prog_data_decls in
@@ -168,7 +174,7 @@ let process_source_full source =
   Debug.info_pprint ("Full processing file \"" ^ source ^ "\"") no_pos;
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
-  let prog = parse_file_full source in
+  let prog = parse_file_full source false in
   let _ = Gen.Profiling.push_time "Process compare file" in
   let prog = if(!Globals.cp_test || !Globals.cp_prefile) then (
     process_cp_file prog 
@@ -229,10 +235,10 @@ let process_source_full source =
     let _ = Gen.Profiling.push_time "Translating to Core" in
     (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
     let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
-	  (* Forward axioms and relations declarations to SMT solver module *)
-	  let _ = List.map (fun crdef -> 
+    (* Forward axioms and relations declarations to SMT solver module *)
+    let _ = List.map (fun crdef -> 
         Smtsolver.add_relation crdef.Cast.rel_name crdef.Cast.rel_vars crdef.Cast.rel_formula) (List.rev cprog.Cast.prog_rel_decls) in
-  	let _ = List.map (fun cadef -> Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion) (List.rev cprog.Cast.prog_axiom_decls) in
+    let _ = List.map (fun cadef -> Smtsolver.add_axiom cadef.Cast.axiom_hypothesis Smtsolver.IMPLIES cadef.Cast.axiom_conclusion) (List.rev cprog.Cast.prog_axiom_decls) in
     (* let _ = print_string (" done-2\n"); flush stdout in *)
     let _ = if (!Globals.print_core_all) then print_string (Cprinter.string_of_program cprog)  
 		        else if(!Globals.print_core) then
@@ -352,7 +358,7 @@ let process_source_full source =
 let process_source_full_parse_only source =
   Debug.info_pprint ("Full processing file (parse only) \"" ^ source ^ "\"") no_pos;
   flush stdout;
-  let prog = parse_file_full source in
+  let prog = parse_file_full source false in
   (* Remove all duplicated declared prelude *)
   let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (*prelude.ss*)
   let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
@@ -580,21 +586,21 @@ let _ =
         match s with
           | (_,(false, None, None)) -> exit 0;
           | _ ->
-                Iformula.cmd := s;
-                loop_cmd res;
-                (* let _ =  *)
-                (*   if !Global.enable_counters then *)
-                (*     print_string (Gen.Profiling.string_of_counters ()) *)
-                (*   else () in *)
-                let _ = Gen.Profiling.print_counters_info () in
-                let _ = Gen.Profiling.print_info () in
-                ()
-      with _ as e -> begin
-        finalize ();
-        print_string "caught\n"; Printexc.print_backtrace stdout;
-        print_string ("\nException occurred: " ^ (Printexc.to_string e));
-        print_string ("\nError(s) detected at main \n");
-      end
+          Iformula.cmd := s;
+          loop_cmd res;
+          (* let _ =  *)
+          (*   if !Global.enable_counters then *)
+          (*     print_string (Gen.Profiling.string_of_counters ()) *)
+          (*   else () in *)
+          let _ = Gen.Profiling.print_counters_info () in
+          let _ = Gen.Profiling.print_info () in
+          ()
+        with _ as e -> begin
+          finalize ();
+          print_string "caught\n"; Printexc.print_backtrace stdout;
+          print_string ("\nException occurred: " ^ (Printexc.to_string e));
+          print_string ("\nError(s) detected at main \n");
+        end
     done
 
 
