@@ -894,13 +894,15 @@ let check_stricteq_hnodes_x stricted_eq hns1 hns2=
     let arg_ptrs2 = List.filter CP.is_node_typ  hn2.CF.h_formula_data_arguments in
     if (hn1.CF.h_formula_data_name = hn2.CF.h_formula_data_name) &&
         (CP.eq_spec_var hn1.CF.h_formula_data_node hn2.CF.h_formula_data_node) then
+      let b = eq_spec_var_order_list arg_ptrs1 arg_ptrs2 in
+      (*bt-left2: may false if we check set eq as below*)
       let diff1 = (Gen.BList.difference_eq CP.eq_spec_var arg_ptrs1 arg_ptrs2) in
-      (*for debugging*)
+      (* (\*for debugging*\) *)
       (* let _ = Debug.info_pprint ("     arg_ptrs1: " ^ (!CP.print_svl arg_ptrs1)) no_pos in *)
       (* let _ = Debug.info_pprint ("     arg_ptrs2: " ^ (!CP.print_svl arg_ptrs2)) no_pos in *)
       (* let _ = Debug.info_pprint ("     diff1: " ^ (!CP.print_svl diff1)) no_pos in *)
       (*END for debugging*)
-      if stricted_eq then (diff1=[]) else
+      if stricted_eq then (* (diff1=[]) *)b else
           (*allow dangl ptrs have diff names*)
         let diff2 = CP.intersect_svl diff1 all_ptrs in
         (diff2 = [])
@@ -1141,10 +1143,15 @@ let find_root_x args fs=
           if CP.mem_svl a ptos then false
           else examine_one_arg fs_tl a
   in
-  let root_cands = List.filter (examine_one_arg fs) args in
-  match root_cands with
-    | [] -> report_error no_pos "say.find_root_x: dont have a root. what next?"
-    | r::_ -> (r,List.filter (fun sv -> not (CP.eq_spec_var r sv)) args)
+  (*trciky here. should have another better*)
+  match args with
+    | [a] -> (a,[])
+    | _ -> begin
+        let root_cands = List.filter (examine_one_arg fs) args in
+        match root_cands with
+          | [] -> report_error no_pos "sau.find_root_x: dont have a root. what next?"
+          | r::_ -> (r,List.filter (fun sv -> not (CP.eq_spec_var r sv)) args)
+    end
 
 let find_root args fs=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
@@ -1838,12 +1845,12 @@ let process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls c
           (*base case has at least one node?*)
           let hds= get_hdnodes_hf n_hf in
           if hds=[] then nf5 else
-            let _ = DD.ninfo_pprint ("       next_roots: " ^ (Cprinter.string_of_spec_var_list next_roots)) no_pos in
+            let _ = DD.info_pprint ("       next_roots: " ^ (Cprinter.string_of_spec_var_list next_roots)) no_pos in
             let hds1= get_hdnodes nf5 in
             let last_svl = look_up_closed_ptr_args prog hds1 [] next_roots in
             (*is recursive?*)
             let inter = CP.intersect_svl last_svl args3 in
-             let _ = DD.ninfo_pprint ("       inter: " ^ (Cprinter.string_of_spec_var_list inter)) no_pos in
+             let _ = DD.info_pprint ("       inter: " ^ (Cprinter.string_of_spec_var_list inter)) no_pos in
             if  inter <> [] then
               let ss1 = List.combine inter next_roots in
               let nf5b = CF.drop_hnodes_f nf5 last_svl in
@@ -2274,7 +2281,8 @@ let mk_orig_hprel_def_x prog unk_hps hp r other_args args sh_ldns eqNulls eqPure
          let hprel = CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, no_pos) in
 		 (*elim all except root*)
 		 let n_orig_defs_h = CF.drop_hnodes_hf orig_defs_h other_args in
-         (defs, (hprel, n_orig_defs_h), n_hp, n_args, dnss,next_roots)
+         (defs, (hprel, n_orig_defs_h), n_hp, n_args, dnss,
+          CP.diff_svl next_roots unk_svl)
      (* | _ -> report_error no_pos "sau.generalize_one_hp: now we does not handle more than two ptr fields" *)
 
 let mk_orig_hprel_def prog unk_hps hp args sh_ldns eqNulls eqPures hprels unk_svl=

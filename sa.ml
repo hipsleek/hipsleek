@@ -2708,6 +2708,8 @@ let pardef_subst_fix_x prog unk_hps groups=
     let r,new_cur,new_rec_indps,new_nrec_indps = helper cur rec_indps nrec_indps in
     if r then helper_fix new_cur new_rec_indps new_nrec_indps
     else
+      (* let pr1 = pr_list_ln (pr_list_ln (pr_quad !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula !CP.print_svl)) in *)
+      (* let _ = DD.info_pprint ("      new_cur: " ^ (pr1 new_cur)) no_pos in *)
       (*subs new_cur with new_rec_indps (new_nrec_indps is substed already)*)
       let new_cur1 = List.map SAU.remove_dups_pardefs new_cur in
       let new_cur2 = SAU.succ_subst_with_rec_indp prog new_rec_indps unk_hps new_cur1 in
@@ -2959,8 +2961,10 @@ let generalize_hps_par_def_x prog non_ptr_unk_hps unk_hpargs post_hps par_defs=
     dont subst recursively
     search_largest_matching between two formulas
   *)
-  let groups1b = SAU.generate_equiv_pdefs unk_hps groups1 in
-  let groups2 = pardef_subst_fix prog unk_hps groups1b in
+  (* let pr1 = pr_list_ln (pr_list_ln (pr_quad !CP.print_sv !CP.print_svl Cprinter.prtt_string_of_formula !CP.print_svl)) in *)
+  (* let _ = DD.info_pprint ("      groups1: " ^ (pr1 groups1)) no_pos in *)
+  (* let groups1b = SAU.generate_equiv_pdefs unk_hps groups1 in *)
+  let groups2 = pardef_subst_fix prog unk_hps groups1 in
   (* let _ = Debug.info_pprint ("     END: " ) no_pos in *)
   (*remove empty*)
   let groups3 = List.filter (fun grp -> grp <> []) groups2 in
