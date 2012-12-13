@@ -3971,17 +3971,22 @@ let infer_hps_x prog (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hps hp_rel
   (*unify inside on hp*)
   let unk_hps0 = List.map fst unk_hps in
   let hp_defs4a = check_eq_hpdef unk_hps sel_post_hps hp_defs4 in
-  let hp_defs5 =
+  let hp_defs4b =
     if !Globals.sa_unify_dangling then
-    unify_branches_hpdef unk_hps0 hp_defs4a
+      unify_branches_hpdef unk_hps0 hp_defs4a
     else hp_defs4a
+  in
+  let hp_defs5 =
+    if !Globals.sa_tree_simp then
+      SAU.simp_tree hp_defs4b
+    else hp_defs4b
   in
   (****************************************************)
    let _ =
     if !Globals.sa_print_inter then
       let _ = print_endline "\n*******relational definitions ********" in
       let _ = print_endline
-        ((let pr = pr_list_ln Cprinter.string_of_hp_rel_def_short in pr hp_defs4) )  in
+        ((let pr = pr_list_ln Cprinter.string_of_hp_rel_def_short in pr hp_defs5) )  in
       ()
     else ()
   in

@@ -3109,6 +3109,16 @@ let split_rhs prog cs=
   Debug.no_1 "split_rhs" pr1 (pr_list_ln pr1)
       (fun _ -> split_rhs_x prog cs) cs
 
+(*like tree recursion PLDI07*)
+let simp_tree_x hpdefs=
+
+  hpdefs
+
+let simp_tree hpdefs=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def_short in
+  Debug.ho_1 "simp_tree" pr1 pr1
+      (fun _ -> simp_tree_x hpdefs) hpdefs
+
 (************************************************************)
     (****************(*currently we dont use*)*****************)
 (************************************************************)
