@@ -171,8 +171,10 @@ let rec fixcalc_of_formula e = match e with
 
 (******************************************************************************)
 
-let fixcalc_exe = "/home/thaitm/hg-repository/infer-rec/sleekex/bin/fixcalc"
-let fixcalc_exe = "fixcalc"
+let fixcalc_exe = "/home/thaitm/hg-repository/infer-rec/sleekex/bin/fixcalc "
+let fixcalc_exe = "fixcalc "
+let fixcalc_options = " -v:-1"
+(* to suppress some printing *)
 
 let syscall cmd =
   let ic, oc = Unix.open_process cmd in
@@ -201,7 +203,7 @@ let compute_inv name vars fml pf =
     Printf.fprintf oc "%s" input_fixcalc;
     flush oc;
     close_out oc;
-    let res = syscall (fixcalc_exe ^ " " ^ output_of_sleek) in
+    let res = syscall (fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in
     let new_pf = List.hd (Parse_fix.parse_fix res) in
     let check_imply = Omega.imply new_pf pf "1" 100.0 in
     if check_imply then (
@@ -355,7 +357,7 @@ let compute_fixpoint_aux rel_defs ante_vars subs =
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
   close_out oc;
-  let res = syscall (fixcalc_exe ^ " " ^ output_of_sleek) in
+  let res = syscall (fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in
 
   (* Remove parentheses *)
   let res = remove_paren res (String.length res) in
