@@ -8,8 +8,8 @@ int main() {
 
     ptr=NULL;
     for(;;) {
-        void *data = ptr;
-        ptr = malloc(sizeof *ptr);//new item
+      void *data = ptr;
+      ptr= malloc(sizeof *ptr);//new item
         if (!ptr)
             // OOM
             return -1;
