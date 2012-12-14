@@ -403,7 +403,7 @@ and typeinfo = {
  * example. Use one of the {!Cil.makeLocalVar}, {!Cil.makeTempVar} or 
  * {!Cil.makeGlobalVar} to create instances of this data structure. *)
 and varinfo = { 
-    mutable vname: string;		(** The name of the variable. Cannot 
+    mutable vname: string;              (** The name of the variable. Cannot 
                                           * be empty. *)
     mutable vtype: typ;                 (** The declared type of the 
                                           * variable. *)

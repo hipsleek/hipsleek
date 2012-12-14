@@ -3269,8 +3269,8 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
     (* Do the potential lvalues first *)
     | A.VARIABLE (n, l) -> begin
         (* Look up in the environment *)
+        let p = convLoc l in
         try
-          let p = convLoc l in
           let envdata = H.find env n in
           match envdata with
             EnvVar vi, _ ->
@@ -3290,12 +3290,27 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
                 in
                 finishExp empty (Const (CEnum(tag, n, ei), p)) (typeOf tag)
               end
-
           | _ -> raise Not_found
         with Not_found -> begin
-          if isOldStyleVarArgName n then 
+          if (n = "NULL") then (
+            (* TRUNG: consider NULL as a built-in variable and pass through *)
+            let vi = {vname = "NULL";
+                      vtype = TPtr (TVoid [], []);
+                      vattr = [];
+                      vstorage = NoStorage;
+                      vglob = true;
+                      vinline = false;
+                      vdecl = lu;
+                      vid = -1;
+                      vaddrof = false;
+                      vreferenced = false;
+                      vdescr = nil;
+                      vdescrpure = false} in
+            finishExp empty (Lval(var vi p, p)) vi.vtype
+          )
+          else if isOldStyleVarArgName n then
             E.s (error "Cannot resolve variable %s. This could be a CIL bug due to the handling of old-style variable argument functions." n)
-          else 
+          else
             E.s (error "Cannot resolve variable %s." n)
         end
     end

@@ -248,8 +248,14 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
 let translate_var (vinfo: Cil.varinfo) (lopt: Cil.location option) : Iast.exp =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let name = vinfo.Cil.vname in
-  let newexp = Iast.Var {Iast.exp_var_name = name;
-                         Iast.exp_var_pos = pos} in
+  let newexp = (
+    if (name = "NULL") then
+      (* the "NULL" variable is considered as a null expression *)
+      Iast.Null pos
+    else
+      Iast.Var {Iast.exp_var_name = name;
+                Iast.exp_var_pos = pos}
+  ) in
   newexp
 
 
@@ -257,13 +263,6 @@ let translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
   let pos = translate_location vinfo.Cil.vdecl in
   let ty = translate_typ vinfo.Cil.vtype in
   let name = vinfo.Cil.vname in
-  (* let _ = print_endline ("== 1 sp pos_cnum = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_cnum)) in *)
-  (* let _ = print_endline ("== 1 sp pos_lnum = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_lnum)) in *)
-  (* let _ = print_endline ("== 1 sp pos_bol = " ^ (string_of_int pos.Globals.start_pos.Lexing.pos_bol)) in   *)
-  (* let _ = print_endline ("== 1 ep pos_cnum = " ^ (string_of_int pos.Globals.end_pos.Lexing.pos_cnum)) in   *)
-  (* let _ = print_endline ("== 1 ep pos_lnum = " ^ (string_of_int pos.Globals.end_pos.Lexing.pos_lnum)) in   *)
-  (* let _ = print_endline ("== 1 ep pos_bol = " ^ (string_of_int pos.Globals.end_pos.Lexing.pos_bol)) in     *)
-  (* let _ = print_endline ("-- name = " ^ name) in                                                           *)
   let decl = [(name, None, pos)] in
   let newexp = Iast.VarDecl {Iast.exp_var_decl_type = ty;
                              Iast.exp_var_decl_decls = decl;
