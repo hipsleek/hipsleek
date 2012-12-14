@@ -173,13 +173,13 @@ let ho_aux df lz (loop_d:bool) (test:'z -> bool) (g:('a->'z) option) (s:string) 
     pop_aft_apply_with_exc f e
   with ex -> 
       (let _ = print_string ("\n"^h^"\n") in
-      if not df then (pr_args args; pr_lazy_res lz);
+      (* if not df then *) (pr_args args; pr_lazy_res lz);
       let _ = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       flush stdout;
       raise ex)) in
   (if not(test r) then r else
     let _ = print_string ("\n"^h^"\n") in
-    if not df then (pr_args args; pr_lazy_res lz);
+    (* if not df then *) (pr_args args; pr_lazy_res lz);
     let _ = print_string (s^" EXIT out :"^(pr_o r)^"\n") in
     flush stdout;
     r)
@@ -262,6 +262,21 @@ let ho_6_opt_aux df (flags:bool list) (loop_d:bool) (test:'z->bool) g (s:string)
   let g  = match g with None -> None | Some g -> Some (g e1 e2 e3 e4 e5) in
   ho_aux df lz loop_d test g s [a1;a2;a3;a4;a5;a6] pr_o f e6
 
+let ho_7_opt_aux df (flags:bool list) (loop_d:bool) (test:'z->bool) g (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
+      (pr5:'e->string) (pr6:'f->string) (pr7:'h->string) (pr_o:'z->string) 
+      (f:'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'h-> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) (e6:'f) (e7:'h): 'z =
+  let a1 = pr1 e1 in
+  let a2 = pr2 e2 in
+  let a3 = pr3 e3 in
+  let a4 = pr4 e4 in
+  let a5 = pr5 e5 in
+  let a6 = pr6 e6 in
+  let a7 = pr7 e7 in
+  let lz = choose flags [(1,lazy (pr1 e1)); (2,lazy (pr2 e2)); (3,lazy (pr3 e3)); (4,lazy (pr4 e4)); (5,lazy (pr5 e5)); (6,lazy (pr6 e6)); (7,lazy (pr7 e7))] in
+  let f  = f e1 e2 e3 e4 e5 e6 in
+  let g  = match g with None -> None | Some g -> Some (g e1 e2 e3 e4 e5 e6) in
+  ho_aux df lz loop_d test g s [a1;a2;a3;a4;a5;a6;a7] pr_o f e7
+
 (* better re-organization *)
 let ho_1_preopt f b_loop = ho_1_opt_aux false [] b_loop f None
 let to_1_preopt f b_loop = ho_1_opt_aux true [] b_loop f None
@@ -278,6 +293,7 @@ let ho_3 s = ho_3_opt_aux false [] false (fun _ -> true) None s
 let ho_4 s = ho_4_opt_aux false [] false (fun _ -> true) None s
 let ho_5 s = ho_5_opt_aux false [] false (fun _ -> true) None s
 let ho_6 s = ho_6_opt_aux false [] false (fun _ -> true) None s
+let ho_7 s = ho_7_opt_aux false [] false (fun _ -> true) None s
 
 let to_1 s = ho_1_opt_aux true [] false (fun _ -> true) None s
 let to_2 s = ho_2_opt_aux true [] false (fun _ -> true) None s
@@ -298,6 +314,9 @@ let no_5 _ _ _ _ _ _ _ f e1 e2 e3 e4
       = ho_aux_no (f e1 e2 e3 e4)
 let no_6 _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5 
       = ho_aux_no (f e1 e2 e3 e4 e5)
+
+let no_7 _ _ _ _ _ _ _ _ _ f e1 e2 e3 e4 e5 e6
+      = ho_aux_no (f e1 e2 e3 e4 e5 e6)
 
 let ho_1_opt f = ho_1_opt_aux false [] false f None
 let ho_2_opt f = ho_2_opt_aux false [] false f None

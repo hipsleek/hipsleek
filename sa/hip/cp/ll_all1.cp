@@ -1,6 +1,7 @@
 HeapPred HP_2(node a, node b).
 HeapPred HP_2a(node a, node b).
 HeapPred HP_2b(node b, node c).
+HeapPred HP_2c(node b, node c).
 HeapPred H1a(node a).
 HeapPred HP_1(node a).
 
@@ -12,10 +13,10 @@ ass [H2,G2][]:{
         H2(x,y) --> x::node<_,b> * HP_2b(b,y)
 	}
 
-hpdefs [G2,H2][log_var]:{
- G2(x,y) --> x::node<_,p> * HP_2(p,y) & y = log_var;
- H2(x,y) --> x::node<_,p>* HP_1(p) & y = log_var;
- HP_1(x) --> x=null or x::node<_,p1> * HP_1(p1);
+hpdefs [G2,H2][]:{
+ G2(x,y) --> x::node<_,p> * HP_2(p,y);
+ H2(x,y) --> x::node<_,p>* HP_2c(p,y);
+ HP_2c(x,y) --> x=null or x::node<_,p1> * HP_2c(p1,y);
  HP_2(x,p) --> x=p or x::node<_,p1> * HP_2(p1,p)
  }
 ]

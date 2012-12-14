@@ -28,8 +28,8 @@ l2<y> == self::node<a,null> & y=self
 */
 void append(node x, node y)
 
-  infer[H1,H1a,G2]
-  requires H1(x) * H1a(y)
+  infer[H1,G2,H1a]
+  requires H1(x)* H1a(y)
      ensures G2(x,y) * H1a(y);
 
   /*

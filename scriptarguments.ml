@@ -158,6 +158,8 @@ let common_arguments = [
    "Turn on unsatisfiable formulae elimination during type-checking");
   ("-nxpure", Arg.Set_int Globals.n_xpure,
    "Number of unfolding using XPure");
+	("-fixcalc-disj", Arg.Set_int Globals.fixcalc_disj,
+    "Number of disjunct for fixcalc computation");
   ("--dis-smart-xpure", Arg.Clear Globals.smart_xpure,
    "Smart xpure with 0 then 1; otherwise just 1 ; not handled by infer yet");
   ("--en-smart-memo", Arg.Set Globals.smart_memo,
@@ -215,6 +217,10 @@ let common_arguments = [
    "print core representation");
   ("--pip", Arg.Set Globals.print_input,
    "print input representation");
+	("--pcp-all", Arg.Set Globals.print_core_all,
+	"print core representation (including primitive library)");
+	("--pip-all", Arg.Set Globals.print_input_all,
+	"print input representation (including primitive library)");
   (* ("--dis-cache", Arg.Set Globals.no_cache_formula, *)
   (* "Do not cache result of satisfiability and validity checking"); *)
   ("--dis-cache", Arg.Set Globals.no_cache_formula,
@@ -340,6 +346,12 @@ let common_arguments = [
   ("--dis-sem", Arg.Set Globals.dis_sem, "Show differences between formulae");
   ("--show-diff-constrs", Arg.Set Globals.show_diff_constrs, "Show differences between list of constraint");
   ("--sa-print-inter", Arg.Set Globals.sa_print_inter, "Print intermediate results of normalization");
+  ("--sa-dis-norm", Arg.Clear Globals.sa_en_norm, "do normalization");
+  ("--sa-dangling", Arg.Set Globals.sa_elim_dangling, "elim dangling HP/pointers");
+  ("--sa-useless", Arg.Set Globals.sa_elim_useless, "elim useless parameter from HP predicate");
+  ("--sa-inlining", Arg.Set Globals.sa_inlining, "inline dangling HP/pointers");
+  ("--sa-split", Arg.Set Globals.sa_en_split, "splitting hp args into multiple hp if possible");
+  ("--sa-unify-dangling", Arg.Set Globals.sa_unify_dangling, "unify branches of definition to instantiate dangling predicate");
   ]
 
 (* arguments/flags used only by hip *)	
@@ -359,8 +371,8 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
    "Procedure to be verified. If none specified, all are verified.");
   ("-print", Arg.Set Globals.print_proc,
    "Print procedures being checked");
-  ("--pgbv", Arg.Set Globals.pass_global_by_value, 
-   "pass read global variables by value");
+  ("--dis-pgbv", Arg.Clear Globals.pass_global_by_value, 
+   "disable pass read global variables by value");
   ("--sqt", Arg.Set Globals.seq_to_try,
    "translate seq to try");
   ("-cp-test", Arg.String set_file_cp,

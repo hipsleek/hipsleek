@@ -917,20 +917,88 @@ $output_file = "log";
     "sa"=>[["ll-append3.ss"],
 	   ["ll-append4.ss"],
 	   ["ll-append5.ss"],
-		["ll-append6.ss"],
-		["ll-append7.ss"],
-		["ll-append8.ss"],
-		["ll-append9.ss"],
-		["ll-append10.ss"]],
-
+	   ["ll-append6.ss"],
+	   ["ll-append7.ss"],
+	   ["ll-append8.ss"],
+	   ["ll-append9.ss"],
+	   ["ll-append10.ss"],
+	   ["ll-app.ss"],
+	   ["ll-app2.ss"],
+	   ["ex1.ss"],
+	   ["ex1a.ss"],
+	   ["ll-get-next.ss"],
+	   ["ll-get-next-next.ss"],
+	   ["ll-next2.ss"],
+	   ["ll-next3.ss"],
+	   ["ll-next4.ss"],
+	   ["ll-next5.ss"],
+	   ["ll-next6.ss"],
+	   ["ll-delete.ss"],
+	   ["ll-delete2.ss"],
+	   ["ll-get-size.ss"],
+	   ["ll_all1.ss"],
+	   ["ll_all3.ss"],
+	   ["ll_all4.ss"],
+	   ["ll_all5.ss"],
+	   ["ll_all7.ss"],
+	   ["ll_all8.ss"],
+	   ["ll_all10.ss"],
+	   ["ll_all_13.ss"],
+	   ["ll_all_13a.ss"],
+	   ["ll_all_13b.ss"],
+	   ["ll_all_13c.ss"],
+	   ["ll_all_13c1.ss"],
+	   ["ll_all_13e.ss"],
+	   ["ll_all_14.ss"],
+	   ["ll-ret-first.ss"],
+	   ["ll-ret-first1.ss"],
+	   ["bt-count-1.ss"],
+	   ["ll-append3.ss"],
+	   ["bt-trav.ss"],
+	   ["ll-ret-first2.ss"]],
+    "sa2"=>[["ll_all_13.ss"]],
     "gen_cpfile"=>[["ll-append3.ss"],
-	   ["ll-append4.ss"],
-	   ["ll-append5.ss"],
-		["ll-append6.ss"],
-		["ll-append7.ss"],
-		["ll-append8.ss"],
-		["ll-append9.ss"],
-		["ll-append10.ss"]]
+		   ["ll-append4.ss"],
+		   ["ll-append5.ss"],
+		   ["ll-append6.ss"],
+		   ["ll-append7.ss"],
+		   ["ll-append8.ss"],
+		   ["ll-append9.ss"],
+		   ["ll-append10.ss"],
+		   ["ll-app.ss"],
+		   ["ll-app2.ss"],
+		   ["ex1.ss"],
+		   ["ex1a.ss"],
+		   ["ll-get-next.ss"],
+		   ["ll-get-next-next.ss"],
+		   ["ll-next2.ss"],
+		   ["ll-next3.ss"],
+		   ["ll-next4.ss"],
+		   ["ll-next5.ss"],
+		   ["ll-next6.ss"],
+		   ["ll-delete.ss"],
+		   ["ll-delete2.ss"],
+		   ["ll-get-size.ss"],
+		   ["ll_all1.ss"],
+		   ["ll_all3.ss"],
+		   ["ll_all4.ss"],
+		   ["ll_all5.ss"],
+		   ["ll_all7.ss"],
+		   ["ll_all8.ss"],
+		   ["ll_all10.ss"],
+		   ["ll_all_13.ss"],
+		   ["ll_all_13a.ss"],
+		   ["ll_all_13b.ss"],
+		   ["ll_all_13c.ss"],
+		   ["ll_all_13c1.ss"],
+		   ["ll_all_13e.ss"],
+		   ["ll_all_14.ss"],
+		   ["ll-ret-first.ss"],
+		   ["ll-ret-first1.ss"],
+		   ["bt-count-1.ss"],
+		   ["ll-append3.ss"],
+		   ["bt-trav.ss"],
+		   ["ll-ret-first2.ss"]]
     );
 
 # list of file, string with result of each entailment&lemma....
@@ -1088,10 +1156,12 @@ sub hip_process_file {
 	{
 	    ($filename) = $test->[0] =~ /(.*)\./s;
 	    $cpfile =  "$exempl_path/test/$filename.cp";
+	    $genfile =  "$exempl_path/test/$filename.cp";
 	    if ("$param" =~ "gen_cpfile") {
-		print "Generating $cpfile\n";
+		print "Generating $genfile\n";
 		$options = "-gen-cpfile";
-		$output = `$hip $script_arguments $test->[0]  $options $cpfile  2>&1`;
+ 		#print "$hip $script_arguments $test->[0]  $options $genfile --sa-dangling --sa-inlining 2>&1\n";
+		$output = `$hip $script_arguments $test->[0]  $options $genfile --sa-dangling --sa-inlining 2>&1`;
 	    }
 	    else 
 	    {
@@ -1105,7 +1175,7 @@ sub hip_process_file {
 		if ("$param" =~ "sa") {
 		    $options = "-cp-test" ;		    
 		    #print "$hip $exempl_path/$test->[0]  $options   $cpfile $script_arguments 2>&1 \n";	
-		    $output = `$hip $exempl_path/$test->[0]  $options  $cpfile  $script_arguments 2>&1`;
+		    $output = `$hip $exempl_path/$test->[0]  $options  $cpfile  $script_arguments --sa-dangling --sa-inlining  2>&1`;
 		    print LOGFILE "\n======================================\n";
 		    print LOGFILE "$output";
 		    $expected_res = "Expected res";	
@@ -1116,12 +1186,16 @@ sub hip_process_file {
 		    	local $/ = undef;
 		    	<$fh>;
 		    };
-		    my @matches = $cpfile_as_string =~ /([a-z]+\:[A-Z]+)\[/g;
+			#print "sa2\n"; 	
+		    my @matches = $cpfile_as_string =~ /([a-zA-Z0-9_-]+\:[A-Z]+)\[/g;
 		    foreach (@matches) {
+			#print "$_\n"; 	
 			($proc_name) = $_ =~ /(.*)\:/s;
 			($proc_res) = $_ =~ /\:(.*)/s;
 			$r = 1;
 			#print $output;
+			#print "$proc_res\n";
+			#print "$proc_name\$.* $proc_res\n";	
 			if($output =~ /$procedure $proc_name\$.* $proc_res/) {
 			    $r = 0;
 			}

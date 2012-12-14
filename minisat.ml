@@ -98,6 +98,7 @@ let  minisat_cnf_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t)
   match pf with
   | LexVar _        -> ""
   | BConst (c, _)   -> (*let _=print_endline ("minisat_cnf_of_p_formula_for_helper BConst EXIT!")  in*) ""
+  | XPure _ -> "" (* WN : weakening *)
   | BVar (sv, _)    -> let _=print_endline ("minisat_cnf_of_p_formula_for_helper Bvar EXIT!..."^minisat_cnf_of_spec_var sv) in ""
   | Lt _            -> ""
   | Lte _           -> ""
@@ -228,10 +229,10 @@ let minisat_cnf_of_not_of_b_formula (bf : Cpure.b_formula) (allvars:Glabel.t) (g
 (*---------------------------------------CNF conversion here-----------------------------------*)
 let return_pure bf f= match bf with
   | (pf,_)-> match pf with 
-						 | Eq _ -> f
-						 | Neq _ -> f  
-						 | BConst(a,_)->f (*let _=if(a) then print_endline ("TRUE") else print_endline ("FALSE")  in*)
-	           | BVar(_,_)->f
+      | Eq _ -> f
+      | Neq _ -> f  
+      | BConst(a,_)->f (*let _=if(a) then print_endline ("TRUE") else print_endline ("FALSE")  in*)
+      | BVar(_,_)->f
 
 (*For converting to NNF--no need??--*)
 let rec minisat_cnf_of_formula f =

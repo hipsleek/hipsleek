@@ -22,7 +22,7 @@ void insert(node2 x, int a)
   if (l)
 		{	x.next = new node2(a, x, null);
 		
-dprint;
+          //dprint;
 }else 
       insert(x.next, a);
 }
