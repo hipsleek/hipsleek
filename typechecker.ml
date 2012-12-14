@@ -599,6 +599,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       (* TODO : collecting rel twice as a temporary fix to losing ranking rel inferred during check_post *)
                       (*                      let rel1 =  Inf.collect_rel_list_partial_context res_ctx in*)
                       (*                      DD.dinfo_pprint ">>>>> Performing check_post STARTS" no_pos;*)
+                      let hp_rels1 = Gen.BList.remove_dups_eq (=) (Inf.collect_hp_rel_list_partial_context res_ctx) in
                       let tmp_ctx = check_post prog proc res_ctx post_cond pos_post post_label etype in
                       (*                      DD.dinfo_pprint ">>>>> Performing check_post ENDS" no_pos;*)
                       (* Termination: collect error messages from successful states *)
@@ -2065,7 +2066,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
       match proc.proc_body with
 	    | None -> true (* sanity checks have been done by the translation *)
 	    | Some body ->
-	          begin
+	        begin
+                let _ = Debug.info_pprint ("    proc: " ^ unmin_name) no_pos in
                 stk_vars # reset;
                 (* push proc.proc_args *)
                 let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
@@ -2094,7 +2096,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
                   else
                     init_form
                 in
-		        let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
+                let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
                 (* Termination: Add the set of logical variables into the initial context *)
                 let init_ctx = 
                   if !Globals.dis_term_chk then init_ctx
@@ -2141,7 +2143,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
                         print_endline "*******relational assumption ********";
                         print_endline "*************************************";
                         print_endline (Infer.rel_ass_stk # string_of_reverse);
-                        print_endline "*************************************" 
+                        print_endline "*************************************";
+                        Infer.rel_ass_stk # reset;
                       end;
 		            let ls_hprel, ls_inferred_hps, dropped_hps =
                       if !Globals.sa_en_norm then Sa.infer_hps prog hp_lst_assume
@@ -2156,7 +2159,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
 		                print_endline "*******relational definition ********";
 		                print_endline "*************************************";
                         print_endline (Sa.rel_def_stk # string_of_reverse);
-		                print_endline "*************************************"
+		                print_endline "*************************************";
+                        Sa.rel_def_stk #reset;
                       end;
 		            (*****************************support function**************************)
 		            let print_res_list rl def=

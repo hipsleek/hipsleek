@@ -1059,7 +1059,7 @@ let remove_subsumed_pure_formula_x ps=
   (*check ps01 <<= ps02*)
   let check_subsume (ps01,null_svl1) (ps02,null_svl2)=
     (* Gen.BList.difference_eq CP.equalFormula ps01 ps02 = [] *)
-    CP.diff_svl null_svl1 null_svl2 = []
+    (List.length null_svl1>0) && (CP.diff_svl null_svl1 null_svl2 = [])
   in
   let sort_fn (ps01,null_svl1) (ps02,null_svl2)=
     (* (List.length ps01) - (List.length ps02) *)
