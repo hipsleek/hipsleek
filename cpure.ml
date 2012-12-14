@@ -201,6 +201,8 @@ and rounding_func =
   | Ceil
   | Floor
 
+and infer_rel_type =  (rel_cat * formula * formula)
+
 let exp_to_spec_var e = 
   match e with
     | Var (sv, _) -> sv
@@ -240,6 +242,7 @@ let print_rel_cat rel_cat = match rel_cat with
   | RankBnd v -> "RANKBND " ^ (!print_sv v)
 let print_lhs_rhs (cat,l,r) = (print_rel_cat cat)^": ("^(!print_formula l)^") --> "^(!print_formula r)
 let print_only_lhs_rhs (l,r) = "("^(!print_formula l)^") --> "^(!print_formula r)
+let string_of_infer_rel = print_lhs_rhs
 
 let full_perm_var_name = "Anon_full_perm"
 
@@ -248,6 +251,7 @@ struct
   type e = formula
   let comb x y = And (x,y,no_pos)
   let string_of = !print_formula
+  let ref_string_of = print_formula
 end;;
 
 module Label_Pure = LabelExpr(Lab_List)(Exp_Pure);; 
@@ -7813,6 +7817,33 @@ let is_neq_null_exp (f:formula)=
   Debug.no_1 "is_neq_null_exp" pr1 string_of_bool
       (fun _ -> is_neq_null_exp_x f) f
 
+let rec get_neq_null_svl_x (f:formula) =
+  let helper (bf:b_formula) =
+    match bf with
+      | (Neq (sv1,sv2,_),_) -> begin
+          match sv1,sv2 with
+            | Var (v,_), Null _ -> [v]
+            | Null _, Var (v,_) -> [v]
+            | _ -> []
+      end
+      | _ -> []
+  in
+  match f with
+	| BForm (b,_)-> helper b
+	| And (b1,b2,_) -> (get_neq_null_svl_x b1)@(get_neq_null_svl_x b2)
+	| AndList b -> List.fold_left (fun svl (_,c)->
+        let svl1 = get_neq_null_svl_x c in
+        svl@svl1) [] b
+	| Or _ -> report_error no_pos "cpure.get_neq_null_svl: ?"
+	| Not (b,_,_)-> get_neq_null_svl_x b
+	| Forall (_,f,_,_) -> get_neq_null_svl_x f
+	| Exists (_,f,_,_) -> get_neq_null_svl_x f
+
+let get_neq_null_svl (f:formula)=
+  let pr1 = !print_formula in
+  Debug.no_1 "get_neq_null_svl" pr1 !print_svl
+      (fun _ -> get_neq_null_svl_x f) f
+
 let check_dang_or_null_exp_x root (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
@@ -8469,22 +8500,32 @@ and count_term_b_formula bf =
         | _ -> 0)
   | _ -> 0
 
-let rec remove_cnts exist_vars f = match f with
-  | BForm _ -> if intersect (fv f) exist_vars != [] then mkTrue no_pos else f
-  | And (f1,f2,p) -> mkAnd (remove_cnts exist_vars f1) (remove_cnts exist_vars f2) p
-  | Or (f1,f2,o,p) -> mkOr (remove_cnts exist_vars f1) (remove_cnts exist_vars f2) o p
-  | Not (f,o,p) -> Not (remove_cnts exist_vars f,o,p)
-  | Forall (v,f,o,p) -> Forall (v,remove_cnts exist_vars f,o,p)
-  | Exists (v,f,o,p) -> Exists (v,remove_cnts exist_vars f,o,p)
+let rec remove_cnts remove_vars f = match f with
+  | BForm _ -> if intersect (fv f) remove_vars != [] then mkTrue no_pos else f
+  | And (f1,f2,p) -> mkAnd (remove_cnts remove_vars f1) (remove_cnts remove_vars f2) p
+  | Or (f1,f2,o,p) -> 
+    let res1 = remove_cnts remove_vars f1 in
+    let res2 = remove_cnts remove_vars f2 in
+    if isConstTrue res1 then res2
+    else if isConstTrue res2 then res1
+    else mkOr res1 res2 o p
+  | Not (f,o,p) -> mkNot (remove_cnts remove_vars f) o p
+  | Forall (v,f,o,p) -> mkForall [v] (remove_cnts remove_vars f) o p
+  | Exists (v,f,o,p) -> mkExists [v] (remove_cnts remove_vars f) o p
   | AndList _ -> report_error no_pos "unexpected AndList"
 
 let rec remove_cnts2 keep_vars f = match f with
   | BForm _ -> if intersect (fv f) keep_vars = [] then mkTrue no_pos else f
   | And (f1,f2,p) -> mkAnd (remove_cnts2 keep_vars f1) (remove_cnts2 keep_vars f2) p
-  | Or (f1,f2,o,p) -> mkOr (remove_cnts2 keep_vars f1) (remove_cnts2 keep_vars f2) o p
-  | Not (f,o,p) -> Not (remove_cnts2 keep_vars f,o,p)
-  | Forall (v,f,o,p) -> Forall (v,remove_cnts2 keep_vars f,o,p)
-  | Exists (v,f,o,p) -> Exists (v,remove_cnts2 keep_vars f,o,p)
+  | Or (f1,f2,o,p) -> 
+    let res1 = remove_cnts2 keep_vars f1 in
+    let res2 = remove_cnts2 keep_vars f2 in
+    if isConstTrue res1 then res2
+    else if isConstTrue res2 then res1
+    else mkOr res1 res2 o p
+  | Not (f,o,p) -> mkNot (remove_cnts2 keep_vars f) o p
+  | Forall (v,f,o,p) -> mkForall [v] (remove_cnts2 keep_vars f) o p
+  | Exists (v,f,o,p) -> mkExists [v] (remove_cnts2 keep_vars f) o p
   | AndList _ -> report_error no_pos "unexpected AndList"
 
 let rec is_num_dom_exp_0 e = match e with

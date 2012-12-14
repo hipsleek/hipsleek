@@ -1,0 +1,28 @@
+hip --eps
+
+All test results were as expected.
+Total verification time: 60.21 second
+	Time spent in main process: 16.57 second
+	Time spent in child processes: 43.64 second
+	Number of false contexts: 405
+
+
+hip --eps -tp z3
+
+Checking classic/classic3a.ss
+All test results were as expected.
+Total verification time: 20.92 second
+	Time spent in main process: 15.71 second
+	Time spent in child processes: 5.21 second
+	Number of false contexts: 405
+
+hip --eps
+
+Total number of errors: 2 in files:
+ error at: avl-orig-2.ss double_left_child
+error at: avl-orig-2.ss double_right_child
+.
+Total verification time: 1551.49 second
+	Time spent in main process: 15.09 second
+	Time spent in child processes: 1536.40 second
+	Number of false contexts: 405

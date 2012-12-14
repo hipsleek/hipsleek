@@ -25,6 +25,7 @@ open Perm
 	| View of view_decl
 	| Hopred of hopred_decl
 	| Barrier of barrier_decl
+	
 		
   type decl = 
     | Type of type_decl
@@ -36,6 +37,7 @@ open Perm
     | Logical_var of exp_var_decl (* Globally logical vars *)
     | Proc of proc_decl
     | Coercion of coercion_decl
+		
 				
   type member = 
 	| Field of (typed_ident * loc)
@@ -555,7 +557,8 @@ non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 
 non_empty_command:
     [[  t=data_decl           -> DataDef t
-      | `PRED;t=view_decl     -> PredDef t
+      | `PRED;t= view_decl     -> PredDef t
+	  | `PRED_PRIM;t=prim_view_decl     -> PredDef t
       | t=barrier_decl        -> BarrierCheck t
       | t = func_decl         -> FuncDef t
       | t = rel_decl          -> RelDef t
@@ -657,9 +660,18 @@ view_decl:
   [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock
       -> { vh with view_formula = (fst vb);
           view_invariant = oi; 
+          view_is_prim = false; 
           view_inv_lock = li;
           try_case_inference = (snd vb) } ]];
 
+prim_view_decl: 
+  [[ vh= view_header; oi= opt_inv; li= opt_inv_lock
+      -> { vh with 
+          (* view_formula = None; *)
+          view_invariant = oi; 
+          view_is_prim = true; 
+          view_inv_lock = li} ]];
+					
 opt_inv_lock: [[t=OPT inv_lock -> t]];
 
 inv_lock:
@@ -745,6 +757,7 @@ view_header:
           view_pt_by_self  = [];
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
           view_inv_lock = None;
+          view_is_prim = false;
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           try_case_inference = false;
 			}]];
@@ -1487,7 +1500,8 @@ rel_body:[[ (* formulas {
 
 axiom_decl:[[
 	`AXIOM; lhs=pure_constr; `ESCAPE; rhs=pure_constr ->
-		{ axiom_hypothesis = lhs;
+		{ axiom_id = fresh_int ();
+			axiom_hypothesis = lhs;
 		  axiom_conclusion = rhs; }
 ]];
 
@@ -1582,7 +1596,7 @@ decl:
   |  g=global_var_decl            -> Global_var g
   |  l=logical_var_decl -> Logical_var l
   |  p=proc_decl                  -> Proc p
-  | `LEMMA; c= coercion_decl; `SEMICOLON    -> Coercion c ]];
+  | `LEMMA; c= coercion_decl; `SEMICOLON    -> Coercion c]];
 
 type_decl: 
   [[ t= data_decl  -> Data t
@@ -1590,6 +1604,7 @@ type_decl:
    | c=class_decl -> Data c
    | e=enum_decl  -> Enum e
    | v=view_decl; `SEMICOLON -> View v
+	 | `PRED_PRIM; v = prim_view_decl; `SEMICOLON    -> View v
    | b=barrier_decl ; `SEMICOLON   -> Barrier b
    | h=hopred_decl-> Hopred h ]];
 
@@ -1757,11 +1772,11 @@ proc_decl:
 proc_header:
   [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl= opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs osl in*)
-     mkProc id "" None false ot fpl t osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
+     mkProc "source_file" id "" None false ot fpl t osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
      
   | `VOID; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs $6 in*)
-    mkProc id "" None false ot fpl void_type osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];
+    mkProc "source_file" id "" None false ot fpl void_type osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];
 
 constructor_decl: 
   [[ h=constructor_header; b=proc_body -> {h with proc_body = Some b}
@@ -1771,7 +1786,7 @@ constructor_header:
   [[ `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs $5 in*)
 		(*if Util.empty dynamic_specs then*)
-      mkProc id "" None true ot fpl (Named id) osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
+      mkProc "source_file" id "" None true ot fpl (Named id) osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
     (*	else
 		  report_error (get_pos_camlp4 _loc 1) ("constructors have only static speficiations");*) ]];
 	
@@ -2349,7 +2364,7 @@ END;;
 
 let parse_sleek n s = SHGram.parse sprog (PreCast.Loc.mk n) s
 let parse_sleek n s =
-  DD.no_1_loop "parse_sleek" (fun x -> x) (fun _ -> "?") (fun n -> parse_sleek n s) n
+  DD.no_1_loop "parse_sleek" (fun x -> x) (pr_list string_of_command) (fun n -> parse_sleek n s) n
 let parse_hip n s =  SHGram.parse hprog (PreCast.Loc.mk n) s
 let parse_hip n s =
   DD.no_1_loop "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n

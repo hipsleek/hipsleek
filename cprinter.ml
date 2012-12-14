@@ -22,8 +22,6 @@ let is_medium n = (n==1);;
 
 let is_long n = (n==0);;
 
-
-
 (* (\* pretty printing for primitive types *\) *)
 (* let string_of_prim_type = function  *)
 (*   | Bool          -> "boolean" *)
@@ -569,7 +567,7 @@ let pure_formula_wo_paren (e:P.formula) =
     | P.Forall _ 
     | P.Exists _ | P.Not _ -> true
     | P.BForm (e1,_) -> true (* b_formula_wo_paren e1 *)
-    | P.And _ -> true 
+    | P.And _ -> false (*Bach: change from true to false*) 
     | _ -> false
 
 let pure_memoised_wo_paren (e: memo_pure) = false
@@ -1137,7 +1135,7 @@ let rec prtt_pr_h_formula h =
           pr_spec_var sv; 
           fmt_string "::"; 
           pr_angle (c^perm_str) pr_spec_var svs;
-	      (* pr_imm imm; *)
+	      pr_imm imm;
 	      pr_derv dr;
           (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
           if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
@@ -1233,8 +1231,9 @@ let rec pr_h_formula_for_spec h =
     (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
     (* pr_formula_label_opt pid;  *)
     pr_spec_var sv; 
-    fmt_string "::"; 
+    fmt_string ":6:"; 
     if svs = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_spec_var svs;
+    pr_imm imm;
     pr_derv dr;
     (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
     if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
@@ -2770,7 +2769,81 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
   (string_of_proc_decl_list (Cast.list_of_procs p)) ^ "\n"
 ;;
 
-
+(* pretty printing for program written in core language separating prelude.ss program *)                                                            
+let string_of_program_separate_prelude p (iprims:Iast.prog_decl)= 
+   let remove_prim_procs procs=
+		List.fold_left (fun a b->
+			try 
+			if( (BatString.starts_with b.Cast.proc_name ("is_not_null___"^"$")) 
+					|| (BatString.starts_with b.Cast.proc_name ("is_null___"^"$")) )
+			then a else		 	
+			let _=List.find (fun c-> (BatString.starts_with b.Cast.proc_name (c.Iast.proc_name^"$")) 
+																) iprims.Iast.prog_proc_decls in 
+			a
+			with Not_found ->
+				a@[b]  
+		) [] procs
+	 in
+	 let remove_prim_data_decls p_data_decls=
+		List.fold_left (fun a b->
+			(* if(b.Cast.data_name="__Exc" || b.Cast.data_name="__Error") *)
+			(* then a else                                                *)
+			try 
+			let _=List.find (fun c-> (b.Cast.data_name = c.Iast.data_name) 
+																) iprims.Iast.prog_data_decls in 
+			a
+			with Not_found ->
+				a@[b]  
+		) [] p_data_decls
+	 in
+	 let remove_prim_rel_decls p_rel_decls=
+		List.fold_left (fun a b->
+			try 
+			let _=List.find (fun c-> (b.Cast.rel_name = c.Iast.rel_name) 
+																) iprims.Iast.prog_rel_decls in 
+			a
+			with Not_found ->
+				a@[b]  
+		) [] p_rel_decls
+	 in
+	 let remove_prim_axiom_decls p_axiom_decls=
+		List.fold_left (fun a b->
+			try 
+			let _=List.find (fun c-> (b.Cast.axiom_id = c.Iast.axiom_id) 
+																) iprims.Iast.prog_axiom_decls in 
+			a
+			with Not_found ->
+				a@[b]  
+		) [] p_axiom_decls
+	 in
+	 let datastr= (string_of_data_decl_list (remove_prim_data_decls p.prog_data_decls)) in
+	 let viewstr=(string_of_view_decl_list p.prog_view_decls) in
+	 let barrierstr=(string_of_barrier_decl_list p.prog_barrier_decls) in
+	 let relstr=(string_of_rel_decl_list (remove_prim_rel_decls p.prog_rel_decls)) in
+	 let axiomstr=(string_of_axiom_decl_list (remove_prim_axiom_decls p.prog_axiom_decls)) in
+	 let left_coerstr=(string_of_coerc_decl_list p.prog_left_coercions) in
+	 let right_coerstr=(string_of_coerc_decl_list p.prog_right_coercions) in
+	 let procsstr=(string_of_proc_decl_list (remove_prim_procs (Cast.list_of_procs p))) in
+	 (* let _=print_endline (if (procsstr<>"") then procsstr^"XUAN BACH\n" else "NULL\n") in *)
+	 let datastr=if(datastr<>"") then datastr^"\n\n" else "" in
+	 let viewstr=if(viewstr<>"") then viewstr^"\n\n" else "" in
+	 let barrierstr=if(barrierstr<>"") then barrierstr^"\n\n" else "" in
+	 let relstr=if(relstr<>"") then relstr^"\n\n" else "" in
+	 let axiomstr=if(axiomstr<>"") then axiomstr^"\n\n" else "" in
+	 let left_coerstr=if(left_coerstr<>"") then left_coerstr^"\n\n" else "" in
+	 let right_coerstr=if(right_coerstr<>"") then right_coerstr^"\n\n" else "" in
+	 let procsstr=if(procsstr <> "") then procsstr^"\n\n" else "" in
+   "\n" ^ datastr
+   ^ viewstr
+	 ^ barrierstr
+   ^ relstr
+   ^ axiomstr
+   ^ left_coerstr
+   ^ right_coerstr
+	 ^ procsstr
+   ^ "\n"
+;;
+                                         
 (*
   Created 22-Feb-2006
   Pretty printing fo the AST for the core language

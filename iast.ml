@@ -19,29 +19,29 @@ type typed_ident = (typ * ident)
 
 
 type prog_decl = { mutable prog_data_decls : data_decl list;
-                   prog_global_var_decls : exp_var_decl list;
-                   prog_logical_var_decls : exp_var_decl list;
-                   prog_enum_decls : enum_decl list;
-                   mutable prog_view_decls : view_decl list;
-                   mutable prog_func_decls : func_decl list; (* TODO: Need to handle *)
-                   mutable prog_rel_decls : rel_decl list; 
-                   mutable prog_hp_decls : hp_decl list; 
-                   mutable prog_rel_ids : (typ * ident) list; 
-                   mutable prog_hp_ids : (typ * ident) list; 
-                   mutable prog_axiom_decls : axiom_decl list; (* [4/10/2011] An hoa : axioms *)
-                   mutable prog_hopred_decls : hopred_decl list;
-                   (* An Hoa: relational declaration *)
-                   prog_proc_decls : proc_decl list;
-		   prog_barrier_decls : barrier_decl list;
-                   mutable prog_coercion_decls : coercion_decl list
-		 }
+prog_global_var_decls : exp_var_decl list;
+prog_logical_var_decls : exp_var_decl list;
+prog_enum_decls : enum_decl list;
+mutable prog_view_decls : view_decl list;
+mutable prog_func_decls : func_decl list; (* TODO: Need to handle *)
+mutable prog_rel_decls : rel_decl list; 
+mutable prog_hp_decls : hp_decl list; 
+mutable prog_rel_ids : (typ * ident) list; 
+mutable prog_hp_ids : (typ * ident) list; 
+mutable prog_axiom_decls : axiom_decl list; (* [4/10/2011] An hoa : axioms *)
+mutable prog_hopred_decls : hopred_decl list;
+(* An Hoa: relational declaration *)
+prog_proc_decls : proc_decl list;
+prog_barrier_decls : barrier_decl list;
+mutable prog_coercion_decls : coercion_decl list
+}
 
 and data_decl = { data_name : ident;
-		  data_fields : (typed_ident * loc * bool) list; (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
-		  data_parent_name : ident;
-		  data_invs : F.formula list;
-          data_is_template: bool;
-		  data_methods : proc_decl list }
+data_fields : (typed_ident * loc * bool) list; (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
+data_parent_name : ident;
+data_invs : F.formula list;
+data_is_template: bool;
+data_methods : proc_decl list }
 
 (*
   and global_var_decl = { global_var_decl_type : typ;
@@ -50,83 +50,85 @@ and data_decl = { data_name : ident;
 *)
 
 and view_decl = { view_name : ident; 
-		  mutable view_data_name : ident;
-          (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
-		  view_vars : ident list;
-		  view_labels : Label_only.spec_label list;
-		  view_modes : mode list;
-		  mutable view_typed_vars : (typ * ident) list;
-		  view_invariant : P.formula;
-		  view_formula : Iformula.struc_formula;
-          view_inv_lock : F.formula option;
-		  mutable view_pt_by_self : ident list; (* list of views pointed by self *)
-		  (* view_targets : ident list;  *)(* list of views pointed within declaration *)
-		  try_case_inference: bool}
+mutable view_data_name : ident;
+(* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
+view_vars : ident list;
+view_labels : Label_only.spec_label list;
+view_modes : mode list;
+mutable view_typed_vars : (typ * ident) list;
+view_is_prim : bool;
+view_invariant : P.formula;
+view_formula : Iformula.struc_formula;
+view_inv_lock : F.formula option;
+mutable view_pt_by_self : ident list; (* list of views pointed by self *)
+(* view_targets : ident list;  *)(* list of views pointed within declaration *)
+try_case_inference: bool}
 
 and func_decl = { func_name : ident; 
-			func_typed_vars : (typ * ident) list;}
+func_typed_vars : (typ * ident) list;}
 
 (* An Hoa: relational declaration, nearly identical to view_decl except for the view_data_name *)
 and rel_decl = { rel_name : ident; 
-		  (* rel_vars : ident list; *)
-		  (* rel_labels : branch_label list; *)
-			rel_typed_vars : (typ * ident) list;
-		  (* rel_invariant : (P.formula * (branch_label * P.formula) list); *)
-		  rel_formula : P.formula (* Iformula.struc_formula *) ; 
-		  (* try_case_inference: bool *)}
+(* rel_vars : ident list; *)
+(* rel_labels : branch_label list; *)
+rel_typed_vars : (typ * ident) list;
+(* rel_invariant : (P.formula * (branch_label * P.formula) list); *)
+rel_formula : P.formula (* Iformula.struc_formula *) ; 
+(* try_case_inference: bool *)}
 
 (* [4/10/2011] An Hoa: axiom for pure constraints *)
 and axiom_decl = {
-			axiom_hypothesis : P.formula ;
-			axiom_conclusion : P.formula ;
-		  }
+	  axiom_id : int;
+    axiom_hypothesis : P.formula ;
+    axiom_conclusion : P.formula ;
+}
 
 and hp_decl = { hp_name : ident; 
-		  (* rel_vars : ident list; *)
-		  (* rel_labels : branch_label list; *)
-		   hp_typed_vars : (typ * ident) list;
-		   hp_formula : Iformula.formula ;
-		  (* try_case_inference: bool *)}
+(* rel_vars : ident list; *)
+(* rel_labels : branch_label list; *)
+hp_typed_vars : (typ * ident) list;
+hp_formula : Iformula.formula ;
+(* try_case_inference: bool *)}
 
 and hopred_decl = { hopred_name : ident;
-          hopred_mode : ho_branch_label;
-          hopred_mode_headers : ident list;
-          hopred_typed_vars: (typ * ident) list;
-          mutable hopred_typed_args : (typ * ident) list;
-          hopred_fct_args : ident list;
-          hopred_shape    : Iformula.struc_formula list;
-          hopred_invariant :P.formula
+hopred_mode : ho_branch_label;
+hopred_mode_headers : ident list;
+hopred_typed_vars: (typ * ident) list;
+mutable hopred_typed_args : (typ * ident) list;
+hopred_fct_args : ident list;
+hopred_shape    : Iformula.struc_formula list;
+hopred_invariant :P.formula
 }
 
 and barrier_decl = {
-	barrier_thc : int;
-	barrier_name : ident;
-	barrier_shared_vars : (typ*ident) list;
-	barrier_tr_list : (int*int* Iformula.struc_formula list) list ;
+    barrier_thc : int;
+    barrier_name : ident;
+    barrier_shared_vars : (typ*ident) list;
+    barrier_tr_list : (int*int* Iformula.struc_formula list) list ;
 }
 
 
 and enum_decl = { enum_name : ident;
-		  enum_fields : (ident * int option) list } 
+enum_fields : (ident * int option) list } 
     (* a field of an enum may optionally be initialized by an integer *)
 
 and param_modifier =
   | NoMod
   | RefMod
-      
-      
+          
+          
 and jump_label_type =
   | NoJumpLabel 
   | JumpLabel of ident
-      
+        
 and rise_type = 
   | Const_flow of constant_flow
   | Var_flow of ident
 
 and param = { param_type : typ;
-	      param_name : ident;
-	      param_mod : param_modifier;
-	      param_loc : loc }
+param_name : ident;
+param_mod : param_modifier;
+param_loc : loc }
 
 (*
   and multi_spec = spec list
@@ -159,26 +161,27 @@ and param = { param_type : typ;
 *)
 
 and proc_decl = { proc_name : ident;
-				  mutable proc_mingled_name : ident;
-				  mutable proc_data_decl : data_decl option; (* the class containing the method *)
-				  proc_constructor : bool;
-				  proc_args : param list;
-				  proc_return : typ;
-               (*   mutable proc_important_vars : CP.spec_var list;*)
-				  proc_static_specs : Iformula.struc_formula;
-				  proc_dynamic_specs : Iformula.struc_formula;
-				  proc_exceptions : ident list;
-				  proc_body : exp option;
-				  proc_is_main : bool;
-				  proc_file : string;
-				  proc_loc : loc ;
-				  proc_test_comps: test_comps option}
+mutable proc_mingled_name : ident;
+mutable proc_data_decl : data_decl option; (* the class containing the method *)
+proc_source : ident;
+proc_constructor : bool;
+proc_args : param list;
+proc_return : typ;
+(*   mutable proc_important_vars : CP.spec_var list;*)
+proc_static_specs : Iformula.struc_formula;
+proc_dynamic_specs : Iformula.struc_formula;
+proc_exceptions : ident list;
+proc_body : exp option;
+proc_is_main : bool;
+proc_file : string;
+proc_loc : loc ;
+proc_test_comps: test_comps option}
 
 and coercion_decl = { coercion_type : coercion_type;
-		      coercion_name : ident;
-		      coercion_head : F.formula;
-		      coercion_body : F.formula;
-		      coercion_proof : exp }
+coercion_name : ident;
+coercion_head : F.formula;
+coercion_body : F.formula;
+coercion_proof : exp }
 and coercion_type = 
   | Left
   | Equiv
@@ -188,18 +191,18 @@ and coercion_type =
 and cp_file_comps = 
   | Hpdecl of hp_decl
   | ProcERes of (ident * test_comps)
-  
+        
 and test_comps = {
-  expected_ass: (((ident list) * (ident list) * (ass list)) option);
-  expected_hpdefs: (((ident list) * (ident list) * (ass list)) option) }
+    expected_ass: (((ident list) * (ident list) * (ass list)) option);
+    expected_hpdefs: (((ident list) * (ident list) * (ass list)) option) }
     
 and expected_comp = 
-    | ExpectedAss of ((ident list) * (ident list) *(ass list)) 
-    | ExpectedHpDef of ((ident list) * (ident list) *(ass list))
+  | ExpectedAss of ((ident list) * (ident list) *(ass list)) 
+  | ExpectedHpDef of ((ident list) * (ident list) *(ass list))
 
 and ass = {
-  ass_lhs: F.formula;
-  ass_rhs: F.formula }
+    ass_lhs: F.formula;
+    ass_rhs: F.formula }
 
 (********end parse compare file************)
 
@@ -240,8 +243,8 @@ and assign_op =
 
 (* An Hoa : v[i] where v is an identifier and i is an expression *)
 and exp_arrayat = { exp_arrayat_array_base : exp; (* An Hoa : modified from a single ident to exp to support expressions like x.A[i] for a data structure that has an array as a field *)
-					exp_arrayat_index : exp list; (* An Hoa : allow multi-dimensional arrays *)
-					exp_arrayat_pos : loc; }
+exp_arrayat_index : exp list; (* An Hoa : allow multi-dimensional arrays *)
+exp_arrayat_pos : loc; }
 
 (* (\* An Hoa : array memory allocation expression *\) *)
 (* and exp_aalloc = { exp_aalloc_etype_name : ident;		(\* Name of the base element *\) *)
@@ -250,166 +253,166 @@ and exp_arrayat = { exp_arrayat_array_base : exp; (* An Hoa : modified from a si
 
 (* An Hoa : array memory allocation expression *)
 and exp_aalloc = { exp_aalloc_etype_name : ident; (* Name of the base element *)
-	     exp_aalloc_dimensions : exp list; (* List of size for each dimensions *)
-			 exp_aalloc_pos : loc; }
+exp_aalloc_dimensions : exp list; (* List of size for each dimensions *)
+exp_aalloc_pos : loc; }
 
 and exp_assert = { exp_assert_asserted_formula : (F.struc_formula*bool) option;
-		   exp_assert_assumed_formula : F.formula option;
-		   exp_assert_path_id : formula_label;
-       exp_assert_type : assert_type;
-		   exp_assert_pos : loc }
+exp_assert_assumed_formula : F.formula option;
+exp_assert_path_id : formula_label;
+exp_assert_type : assert_type;
+exp_assert_pos : loc }
 
 and exp_assign = { exp_assign_op : assign_op;
-		   exp_assign_lhs : exp;
-		   exp_assign_rhs : exp;
-		   exp_assign_path_id : control_path_id;
-		   exp_assign_pos : loc }
+exp_assign_lhs : exp;
+exp_assign_rhs : exp;
+exp_assign_path_id : control_path_id;
+exp_assign_pos : loc }
 
 and exp_binary = { exp_binary_op : bin_op;
-		   exp_binary_oper1 : exp;
-		   exp_binary_oper2 : exp;
-		   exp_binary_path_id : control_path_id;
-		   exp_binary_pos : loc }
+exp_binary_oper1 : exp;
+exp_binary_oper2 : exp;
+exp_binary_path_id : control_path_id;
+exp_binary_pos : loc }
 
 and exp_bind = { exp_bind_bound_var : ident;
-		 exp_bind_fields : ident list;
-		 exp_bind_body : exp;
-		 exp_bind_path_id : control_path_id;
-		 exp_bind_pos : loc }
+exp_bind_fields : ident list;
+exp_bind_body : exp;
+exp_bind_path_id : control_path_id;
+exp_bind_pos : loc }
     
 and exp_break = { exp_break_jump_label : jump_label_type;
-		  exp_break_path_id : control_path_id;
-		  exp_break_pos : loc }	
+exp_break_path_id : control_path_id;
+exp_break_pos : loc }	
 
 and exp_block = { exp_block_body : exp;
-		  exp_block_jump_label : jump_label_type;
-		  exp_block_local_vars: (ident*typ*loc) list;
-		  exp_block_pos : loc }
+exp_block_jump_label : jump_label_type;
+exp_block_local_vars: (ident*typ*loc) list;
+exp_block_pos : loc }
 
 and exp_bool_lit = { exp_bool_lit_val : bool;
-		     exp_bool_lit_pos : loc }
-			 
+exp_bool_lit_pos : loc }
+    
 and exp_barrier = {exp_barrier_recv : ident; exp_barrier_pos : loc}
 
 and exp_call_nrecv = { exp_call_nrecv_method : ident;
-               exp_call_nrecv_lock : ident option;
-		       exp_call_nrecv_arguments : exp list;
-		       exp_call_nrecv_path_id : control_path_id;
-		       exp_call_nrecv_pos : loc }
+exp_call_nrecv_lock : ident option;
+exp_call_nrecv_arguments : exp list;
+exp_call_nrecv_path_id : control_path_id;
+exp_call_nrecv_pos : loc }
 
 and exp_call_recv = { exp_call_recv_receiver : exp;
-		      exp_call_recv_method : ident;
-		      exp_call_recv_arguments : exp list;
-		      exp_call_recv_path_id : control_path_id;
-		      exp_call_recv_pos : loc }
+exp_call_recv_method : ident;
+exp_call_recv_arguments : exp list;
+exp_call_recv_path_id : control_path_id;
+exp_call_recv_pos : loc }
 
 and exp_catch = { exp_catch_var : ident option ;
-		  exp_catch_flow_type : constant_flow;
-		  exp_catch_alt_var_type : typ option; 
-		  exp_catch_flow_var : ident option;
-		  exp_catch_body : exp;											   
-		  exp_catch_pos : loc }
+exp_catch_flow_type : constant_flow;
+exp_catch_alt_var_type : typ option; 
+exp_catch_flow_var : ident option;
+exp_catch_body : exp;											   
+exp_catch_pos : loc }
     
 and exp_cast = { exp_cast_target_type : typ;
-		 exp_cast_body : exp;
-		 exp_cast_pos : loc }
+exp_cast_body : exp;
+exp_cast_pos : loc }
 
 and exp_cond = { exp_cond_condition : exp;
-		 exp_cond_then_arm : exp;
-		 exp_cond_else_arm : exp;
-		 exp_cond_path_id : control_path_id;
-		 exp_cond_pos : loc }
+exp_cond_then_arm : exp;
+exp_cond_else_arm : exp;
+exp_cond_path_id : control_path_id;
+exp_cond_pos : loc }
 
 and exp_const_decl = { exp_const_decl_type : typ;
-		       exp_const_decl_decls : (ident * exp * loc) list;
-		       exp_const_decl_pos : loc }
+exp_const_decl_decls : (ident * exp * loc) list;
+exp_const_decl_pos : loc }
 
 and exp_continue = { exp_continue_jump_label : jump_label_type;
-		     exp_continue_path_id : control_path_id;
-		     exp_continue_pos : loc }
+exp_continue_path_id : control_path_id;
+exp_continue_pos : loc }
     
 and exp_debug = { exp_debug_flag : bool;
-		  exp_debug_pos : loc }
+exp_debug_pos : loc }
 
 and exp_finally = { exp_finally_body : exp;
-		    exp_finally_pos : loc }
+exp_finally_pos : loc }
 
 and exp_float_lit = { exp_float_lit_val : float;
-		      exp_float_lit_pos : loc }
+exp_float_lit_pos : loc }
 
 and exp_int_lit = { exp_int_lit_val : int;
-		    exp_int_lit_pos : loc }
+exp_int_lit_pos : loc }
 
 and exp_java = { exp_java_code : string;
-		 exp_java_pos : loc }
+exp_java_pos : loc }
 
 and exp_member = { exp_member_base : exp;
-		   exp_member_fields : ident list;
-		   exp_member_path_id : control_path_id;
-		   exp_member_pos : loc }
+exp_member_fields : ident list;
+exp_member_path_id : control_path_id;
+exp_member_pos : loc }
 
 and exp_new = { exp_new_class_name : ident;
-		exp_new_arguments : exp list;
-		exp_new_pos : loc }
+exp_new_arguments : exp list;
+exp_new_pos : loc }
 
 and exp_raise = { exp_raise_type : rise_type;
-		  exp_raise_val : exp option;
-		  exp_raise_from_final :bool; (*if so the result can have any type...*)
-		  exp_raise_use_type : bool; 
-		  exp_raise_path_id : control_path_id;
-		  exp_raise_pos : loc }
+exp_raise_val : exp option;
+exp_raise_from_final :bool; (*if so the result can have any type...*)
+exp_raise_use_type : bool; 
+exp_raise_path_id : control_path_id;
+exp_raise_pos : loc }
     
 and exp_return = { exp_return_val : exp option;
-		   exp_return_path_id : control_path_id;
-		   exp_return_pos : loc }
+exp_return_path_id : control_path_id;
+exp_return_pos : loc }
 
 and exp_seq = { exp_seq_exp1 : exp;
-		exp_seq_exp2 : exp;
-		exp_seq_pos : loc }
+exp_seq_exp2 : exp;
+exp_seq_pos : loc }
 
 and exp_this = { exp_this_pos : loc }
 
 and exp_try = { exp_try_block : exp;
-		exp_catch_clauses : exp list;
-		exp_finally_clause : exp list;
-		exp_try_path_id : control_path_id;
-		exp_try_pos : loc}
+exp_catch_clauses : exp list;
+exp_finally_clause : exp list;
+exp_try_path_id : control_path_id;
+exp_try_pos : loc}
 
 (*and exp_throw = { exp_throw_type : ident;
   exp_throw_pos : loc }
 *)
 and exp_unary = { exp_unary_op : uni_op;
-		  exp_unary_exp : exp;
-		  exp_unary_path_id : control_path_id;
-		  exp_unary_pos : loc }
+exp_unary_exp : exp;
+exp_unary_path_id : control_path_id;
+exp_unary_pos : loc }
 
 and exp_var = { exp_var_name : ident;
-		exp_var_pos : loc }
+exp_var_pos : loc }
 
 and exp_var_decl = { exp_var_decl_type : typ;
-                     exp_var_decl_decls : (ident * exp option * loc) list;
-                     exp_var_decl_pos : loc }
+exp_var_decl_decls : (ident * exp option * loc) list;
+exp_var_decl_pos : loc }
 
 and exp_while = { exp_while_condition : exp;
-		  exp_while_body : exp;
-		  exp_while_specs : Iformula.struc_formula (*multi_spec*);
-		  exp_while_jump_label : jump_label_type;
-		  exp_while_path_id : control_path_id;
-		  exp_while_f_name: ident;
-		  exp_while_wrappings: (exp*ident) option;
-		  (*used temporary to store the break wrappers, these wrappers are catch clauses which will
-		    wrap the method so that it catches and converts the break flows with target jump_label_type*)
-		  exp_while_pos : loc }
+exp_while_body : exp;
+exp_while_specs : Iformula.struc_formula (*multi_spec*);
+exp_while_jump_label : jump_label_type;
+exp_while_path_id : control_path_id;
+exp_while_f_name: ident;
+exp_while_wrappings: (exp*ident) option;
+(*used temporary to store the break wrappers, these wrappers are catch clauses which will
+  wrap the method so that it catches and converts the break flows with target jump_label_type*)
+exp_while_pos : loc }
 
 and exp_dprint = { exp_dprint_string : string;
-		   exp_dprint_pos : loc }
+exp_dprint_pos : loc }
 
 and exp_unfold = { exp_unfold_var : (string * primed);
-		   exp_unfold_pos : loc } 
+exp_unfold_pos : loc } 
 
 and exp =
-	| ArrayAt of exp_arrayat (* An Hoa *)
-	| ArrayAlloc of exp_aalloc (* An Hoa *)
+  | ArrayAt of exp_arrayat (* An Hoa *)
+  | ArrayAlloc of exp_aalloc (* An Hoa *)
   | Assert of exp_assert
   | Assign of exp_assign
   | Binary of exp_binary
@@ -467,6 +470,7 @@ let bag_type = BagT Int
 let print_struc_formula = ref (fun (x:F.struc_formula) -> "Uninitialised printer")
 let print_h_formula = ref (fun (x:F.h_formula) -> "Uninitialised printer")
 let print_view_decl = ref (fun (x:view_decl) -> "Uninitialised printer")
+let print_data_decl = ref (fun (x:data_decl) -> "Uninitialised printer")
 
 
 let find_empty_static_specs iprog = 
@@ -688,22 +692,23 @@ and mkHoPred  n m mh tv ta fa s i=
           hopred_shape    = s;
           hopred_invariant = i}
 	
-let mkProc id n dd c ot ags r ss ds pos bd=
-    { proc_name = id;
-		  proc_mingled_name = n; 
-		  proc_data_decl = dd;
-		  proc_constructor = c;
-		  proc_exceptions = ot;
-		  proc_args = ags;
-		  proc_return = r;
-        (*  proc_important_vars = [];*)
-		  proc_static_specs = ss;
-		  proc_dynamic_specs = ds;
-		  proc_loc = pos;
-    proc_is_main = true;
-      proc_file = !input_file_name;
-		  proc_body = bd;
-    proc_test_comps = None}	
+let mkProc sfile id n dd c ot ags r ss ds pos bd =
+  { proc_name = id;
+  proc_source =sfile;
+  proc_mingled_name = n; 
+  proc_data_decl = dd;
+  proc_constructor = c;
+  proc_exceptions = ot;
+  proc_args = ags;
+  proc_return = r;
+  (*  proc_important_vars = [];*)
+  proc_static_specs = ss;
+  proc_dynamic_specs = ds;
+  proc_loc = pos;
+  proc_is_main = true;
+  proc_file = !input_file_name;
+  proc_body = bd;
+  proc_test_comps = None}	
 
 let mkAssert asrtf assmf pid atype pos =
       Assert { exp_assert_asserted_formula = asrtf;
@@ -1087,11 +1092,11 @@ and collect_struc (f:F.struc_formula):ident list =  match f with
 
 and collect_formula (f0 : F.formula) : ident list = 
   let rec helper (h0 : F.h_formula) = match h0 with
-	| F.HeapNode h ->
+	| F.HeapNode h -> 
 		  let (v, p), c = h.F.h_formula_heap_node, h.F.h_formula_heap_name in
           (* let _ = print_endline ("v:" ^ v ^ "  c:" ^ c) in *)
 		  if v = self then [c] else []
-	| F.Star h ->
+	| F.Star h -> 
         let h1, h2, pos = h.F.h_formula_star_h1, h.F.h_formula_star_h2, h.F.h_formula_star_pos in
 		  let n1 = helper h1 in
 		  let n2 = helper h2 in
@@ -1100,7 +1105,7 @@ and collect_formula (f0 : F.formula) : ident list =
 		  if d1>0 & d2>0 then
 			report_error pos ("Star:multiple occurrences of self as heap nodes in one branch are not allowed")
 		  else n1@n2
-    | F.Phase h ->
+    | F.Phase h -> 
         let h1, h2, pos = h.F. h_formula_phase_rd, h.F.h_formula_phase_rw, h.F.h_formula_phase_pos in
 		  let n1 = helper h1 in
 		  let n2 = helper h2 in
@@ -1109,10 +1114,11 @@ and collect_formula (f0 : F.formula) : ident list =
 		  if d1>0 & d2>0 then
 			report_error pos ("Phase: multiple occurrences of self as heap nodes in one branch are not allowed")
 		  else n1@n2
-	| _ -> [] in
+	| _ -> []
+	in
   match f0 with
-    | F.Base f -> helper f.F.formula_base_heap
-    | F.Exists f -> helper f.F.formula_exists_heap
+    | F.Base f ->  helper f.F.formula_base_heap
+    | F.Exists f ->  helper f.F.formula_exists_heap
     | F.Or f -> (collect_formula f.F.formula_or_f1) @ (collect_formula f.F.formula_or_f2)
 
 and find_data_view_x (dl:ident list) (f:Iformula.struc_formula) pos :  (ident list) * (ident list) =
@@ -1183,17 +1189,25 @@ and incr_fixpt_view (dl:data_decl list) (view_decls: view_decl list)  =
       let _ = update_fixpt vl in
       (List.hd view_decls).view_data_name
 
-and update_fixpt (vl:(view_decl * ident list *ident list) list)  = 
+and update_fixpt_x (vl:(view_decl * ident list *ident list) list)  = 
   List.iter (fun (v,a,tl) ->
 	  (* print_endline ("update_fixpt for " ^ v.view_name);
 		 print_endline ("Feasible self type: " ^ (String.concat "," a)); *)
       v.view_pt_by_self<-tl;
-      if (List.length a==0) then report_error no_pos ("self of "^(v.view_name)^" cannot have its type determined")
-      else v.view_data_name <- List.hd a) vl 
+      if (List.length a==0) then 
+        if v.view_is_prim then v.view_data_name <- (v.view_name) (* TODO WN : to add pred name *)
+        else report_error no_pos ("self of "^(v.view_name)^" cannot have its type determined")
+      else v.view_data_name <- List.hd a) vl
+
+and update_fixpt (vl:(view_decl * ident list *ident list) list)  =
+  let pr_idl = pr_list pr_id in
+  let pr = pr_list (pr_triple !print_view_decl pr_idl pr_idl) in
+  Debug.no_1 "update_fixpt" pr pr_none update_fixpt_x vl
 
 and set_check_fixpt (data_decls : data_decl list) (view_decls: view_decl list)  =
-  let pr x = "?" in 
-  Debug.no_1 "set_check_fixpt" pr pr (fun _-> set_check_fixpt_x data_decls view_decls )  view_decls
+  let pr = pr_list !print_data_decl in 
+  let pr2 = pr_list !print_view_decl in 
+  Debug.no_2 "set_check_fixpt" pr pr2 pr_none (fun _ _ -> set_check_fixpt_x data_decls view_decls )  data_decls view_decls
 
 and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl list)  =
   let vl = syn_data_name data_decls view_decls in
@@ -1973,6 +1987,7 @@ let add_bar_inits prog =
 				F.mkHeapNode ("b",Unprimed) b.barrier_name false (F.ConstAnn(Mutable)) false false false None largs None no_pos in
 			let post =  F.EAssume (F.formula_of_heap_with_flow post_hn n_flow no_pos,fresh_formula_label "",None) in
 			{ proc_name = "init_"^b.barrier_name;
+                          proc_source = "source_file";
 			  proc_mingled_name = "";
 			  proc_data_decl = None ;
 			  proc_constructor = false;

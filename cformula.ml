@@ -18,6 +18,8 @@ module MCP = Mcpure
 
 type ann = ConstAnn of heap_ann | PolyAnn of CP.spec_var
 
+let view_prim_lst = new Gen.stack_pr pr_id (=) 
+
 type typed_ident = (typ * ident)
 
 and formula_type =
@@ -115,6 +117,8 @@ and hprel_def= {
     hprel_def_body_lib: formula option;
 }
 
+(* and infer_rel_type =  (CP.rel_cat * CP.formula * CP.formula) *)
+
 and list_formula = formula list
 
 and formula_base = {  formula_base_heap : h_formula;
@@ -207,6 +211,7 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_name : ident;
                         h_formula_view_derv : bool;
                         h_formula_view_imm : ann;
+                        (* h_formula_view_primitive : bool; (\* indicates if it is primitive view? *\) *)
                         h_formula_view_perm : cperm; (*LDK: permission*)
                         h_formula_view_arguments : CP.spec_var list;
                         h_formula_view_modes : mode list;
@@ -269,6 +274,7 @@ struct
       h_formula_star_pos = no_pos
     }
   let string_of = !print_h_formula
+  let ref_string_of = print_h_formula
 end;;
 
 module Exp_Spec =
@@ -280,6 +286,7 @@ struct
     formula_struc_or_pos = no_pos
     }
   let string_of = !print_struc_formula
+  let ref_string_of = print_struc_formula
 end;;
 
 module Label_Heap = LabelExpr(Lab_List)(Exp_Heap);;
@@ -1010,7 +1017,7 @@ formula_base_and = [];
 		formula_base_pos = pos}
 	  
 and mkTrue_b_nf pos = mkTrue_b (mkTrueFlow ()) pos
-	  
+
 and mkTrue (flowt: flow_formula) pos = Base (mkTrue_b flowt pos)
 
 and mkTrue_nf pos = Base (mkTrue_b_nf pos)
@@ -1300,6 +1307,14 @@ and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t :
 
 and is_view (h : h_formula) = match h with
   | ViewNode _ -> true
+  | _ -> false
+
+and is_view_primitive (h : h_formula) = match h with
+  | ViewNode v -> view_prim_lst # mem (v.h_formula_view_name)
+  | _ -> false
+
+and is_view_user (h : h_formula) = match h with
+  | ViewNode v -> not(view_prim_lst # mem (v.h_formula_view_name))
   | _ -> false
 
 and is_data (h : h_formula) = match h with
@@ -3387,6 +3402,12 @@ and get_ptrs_f (f: formula)=
         get_ptrs fb.formula_base_heap
     | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
 
+and get_pure (f: formula)=
+  match f with
+    | Base fb ->
+        MCP.pure_of_mix fb.formula_base_pure
+    | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
+
 and get_ptrs (f: h_formula): CP.spec_var list = match f with
   | DataNode {h_formula_data_node = c}
   | ViewNode {h_formula_view_node = c} -> [c]
@@ -3858,6 +3879,49 @@ let is_only_neqNull args unk_hps f0=
   Debug.no_2 "is_only_neqNull" !CP.print_svl pr1 string_of_bool
       (fun _ _ -> is_only_neqNull_x args unk_hps f0) args f0
 
+let get_args_neqNull_x args expl_ptrs f0=
+  (* let non_root_svl = List.concat *)
+  (*   (List.map (fun hd -> List.filter CP.is_node_typ hd.h_formula_data_arguments) hds) in *)
+  (* let non_root_args = CP.diff_svl args non_root_svl in *)
+  let helper1 p=
+    let neqNull_svl = CP.get_neq_null_svl p in
+    let neqNull_svl1 = CP.diff_svl neqNull_svl expl_ptrs in
+    CP.intersect_svl neqNull_svl1 args
+  in
+  let rec helper f=
+    match f with
+      | Base fb ->
+           helper1 (MCP.pure_of_mix fb.formula_base_pure)
+      | Exists fe ->
+          helper1 (MCP.pure_of_mix fe.formula_exists_pure)
+      | Or orf -> CP.remove_dups_svl ((helper orf.formula_or_f1) @ (helper orf.formula_or_f2))
+  in
+  helper f0
+
+let get_args_neqNull args expl_svl f0=
+  let pr1 = !print_formula in
+  Debug.no_1 "get_args_neqNull" pr1 !CP.print_svl
+      (fun _ -> get_args_neqNull_x args expl_svl f0) f0
+
+let get_neqNull_x f0=
+  let helper1 p=
+    CP.get_neq_null_svl p
+  in
+  let rec helper f=
+    match f with
+      | Base fb ->
+           helper1 (MCP.pure_of_mix fb.formula_base_pure)
+      | Exists fe ->
+          helper1 (MCP.pure_of_mix fe.formula_exists_pure)
+      | Or orf -> CP.remove_dups_svl ((helper orf.formula_or_f1) @ (helper orf.formula_or_f2))
+  in
+  helper f0
+
+let get_neqNull f0=
+  let pr1 = !print_formula in
+  Debug.no_1 "get_neqNull" pr1 !CP.print_svl
+      (fun _ -> get_neqNull_x f0) f0
+
 let remove_neqNulls p=
   let ps = (CP.split_conjunctions p) in
   let ps1 = CP.remove_redundant_helper ps [] in
@@ -3885,9 +3949,9 @@ let remove_neqNulls_f f0=
 
 
 (*elim redundant x!=null in p*)
-let remove_neqNull_redundant_hnodes hds p=
+let remove_neqNull_redundant_hnodes svl p=
   (*currently we just work with data nodes*)
-  let neqNulls = List.map (fun dn -> CP.mkNeqNull dn.h_formula_data_node dn.h_formula_data_pos) hds in
+  let neqNulls = List.map (fun sv -> CP.mkNeqNull sv no_pos) svl in
   let ps = (CP.split_conjunctions p) in
   let ps1 = CP.remove_redundant_helper ps [] in
   let new_ps = Gen.BList.difference_eq CP.equalFormula ps1 neqNulls in
@@ -3896,7 +3960,8 @@ let remove_neqNull_redundant_hnodes hds p=
 (*elim redundant x!=null in p*)
 let remove_neqNull_redundant_hnodes_hf hf p=
   let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula hf in
-  remove_neqNull_redundant_hnodes hds p
+  let svl = List.map (fun dn -> dn.h_formula_data_node) hds in
+  remove_neqNull_redundant_hnodes svl p
 
 let remove_neqNull_redundant_hnodes_f f0=
   let rec helper f=
@@ -3913,6 +3978,23 @@ let remove_neqNull_redundant_hnodes_f f0=
                      (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
   in
   helper f0
+
+let remove_neqNull_svl svl f0=
+  let rec helper f=
+    match f with
+      | Base fb -> let np = remove_neqNull_redundant_hnodes svl
+                     (MCP.pure_of_mix fb.formula_base_pure) in
+                   (Base {fb with formula_base_pure = MCP.mix_of_pure np})
+      | Or orf -> let nf1 = helper orf.formula_or_f1 in
+                  let nf2 = helper orf.formula_or_f2 in
+                  ( Or {orf with formula_or_f1 = nf1;
+                      formula_or_f2 = nf2;})
+		      | Exists fe -> let np = remove_neqNull_redundant_hnodes svl
+                       (MCP.pure_of_mix fe.formula_exists_pure) in
+                     (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
+  in
+  helper f0
+
 
 let remove_com_pures f0 nullPtrs com_eqPures=
   let remove p elim_svl=
@@ -4475,7 +4557,7 @@ think it is used to instantiate when folding.
      | RankDec [rid] | RankBounded id
   *)
   (* es_infer_rel : (CP.formula * CP.formula) list; *)
-  es_infer_rel : (CP.rel_cat * CP.formula * CP.formula) list;
+  es_infer_rel : CP.infer_rel_type list;
   es_infer_hp_rel : hprel list; (*(CP.rel_cat * formula * formula) list;*)
   (* output : pre pure assumed to infer relation *)
   (* es_infer_pures : CP.formula list; *)
@@ -4487,11 +4569,6 @@ think it is used to instantiate when folding.
   *)
      es_infer_pure_thus : CP.formula; 
      es_group_lbl: spec_label_def;
-
-     
-
-  (* allow residue in lhs formula *)
-  es_allow_residue: bool;
 }
 
 and context = 
@@ -4701,7 +4778,6 @@ let empty_es flowt grp_lbl pos =
   es_group_lbl = grp_lbl;
   es_term_err = None;
   (*es_infer_invs = [];*)
-  es_allow_residue = false;
 }
 
 let is_one_context (c:context) =
@@ -9796,6 +9872,7 @@ let is_emp_term f = match f with
 
 let is_emp_term f = 
   Debug.no_1 "is_emp_term" !print_formula string_of_bool is_emp_term f
+
 
 
 

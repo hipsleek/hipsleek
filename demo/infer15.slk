@@ -1,0 +1,40 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+// (1)
+infer [p] x::node<1, p> or x::node<1,q> * q::node<2,p> |- x::ll<m> .
+print residue.
+
+// (2)
+infer [m] x::ll<m> or x::node<1,q> * q::ll<m> or x::node<_,t> * t::node<_,p> * p::ll<m> |- x::node<_,r> * r::node<_,null>.
+print residue.
+
+// (3)
+infer [n] x::ll<n> & x=null  or x::ll<n> & x!=null |- x::node<_,null>. 
+print residue.
+
+// (4)
+infer [n] x::ll<n> |- x=null or x::node<_,null>. // --> n=0 or n=1
+print residue.
+
+// (5)
+infer [n] x::ll<n>  & n=0 |- x=null or x::node<_,null>. // --> true 
+print residue.
+
+// (6)
+infer [n] x::ll<n> |- x=null or x::node<_,null>.
+print residue.
+
+// (7)
+infer [n] x::ll<n> |- case {
+           x=null -> [] true;
+           x!=null -> [] x::node<_,q>*q::node<_,null>; }.
+print residue.
+
+
