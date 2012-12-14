@@ -4,6 +4,7 @@ open Gen
 open Exc.GTable
 open Cformula
 open Cpure
+open Cprinter
 
 module CP = Cpure
 module MCP = Mcpure
@@ -11,6 +12,14 @@ module CF = Cformula
 module TP = Tpdispatcher
 module IF = Iformula
 module I = Iast
+module C = Cast
+
+type pure_dom = {
+  para_names : spec_var list;
+  (* TODO *)
+(*  inductive_def : ...;*)
+}
+  
 
 let syscall cmd =
   let ic, oc = Unix.open_process cmd in
@@ -111,7 +120,7 @@ let get_spec_from_file prog =
   let input_spec = (get_file_name Sys.argv.(1)) ^ ".spec" in
   let input_str = syscall ("cat " ^ input_spec) in
   let res = Parser.parse_spec input_str in
-  (*  print_endline ("SPEC" ^ (Iprinter.string_of_struc_formula res));*)
+(*  print_endline ("SPEC" ^ (Iprinter.string_of_struc_formula res));*)
 (*  let id,command = get_cmd_from_file in*)
   let id, command = !(IF.cmd) in
   let cmd = match command with
@@ -131,8 +140,96 @@ let get_spec_from_file prog =
     if id1=id then (id1,IF.merge_cmd cmd spec) else (id1,spec)) res in
   res
 
-let gen_pred_def abs_dom orig_def =
-  orig_def
+let rec size_of_heap (fml:CF.h_formula) : CP.exp = match fml with
+  | Star {h_formula_star_h1 = h1;
+    h_formula_star_h2 = h2;
+    h_formula_star_pos = pos} -> 
+    let res1 = size_of_heap h1 in
+    let res2 = size_of_heap h2 in
+    Add (res1,res2,no_pos)
+  | Conj {h_formula_conj_h1 = h1;
+    h_formula_conj_h2 = h2;
+    h_formula_conj_pos = pos} ->
+    let res1 = size_of_heap h1 in
+    let res2 = size_of_heap h2 in
+    Add (res1,res2,no_pos)
+  | Phase _ -> report_error no_pos "size_of_heap: Do not expect Phase"
+  | DataNode _ -> IConst (1,no_pos)
+  | ViewNode vn -> 
+    let v = List.hd (List.rev vn.h_formula_view_arguments) in
+    Var (v,no_pos)
+  | Hole _ -> report_error no_pos "size_of_heap: Do not expect Hole"
+  | HRel _ -> report_error no_pos "size_of_heap: Do not expect HRel"
+  | HTrue
+  | HFalse
+  | HEmp -> IConst (0,no_pos)
+  
+
+let size_of_fml (fml:CF.formula) (lhs_para:CP.spec_var): CF.formula = match fml with
+  | CF.Or _ -> report_error no_pos "size_of_fml: Do not expect Or formula"
+  | CF.Base b -> 
+    let pure = mkEqExp (Var (lhs_para,no_pos)) (size_of_heap b.formula_base_heap) no_pos in
+    let mix = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix b.formula_base_pure) pure no_pos) in
+    CF.Base {b with formula_base_pure = mix}
+  | CF.Exists e -> 
+    let pure = mkEqExp (Var (lhs_para,no_pos)) (size_of_heap e.formula_exists_heap) no_pos in
+    let mix = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix e.formula_exists_pure) pure no_pos) in
+    CF.Exists {e with formula_exists_pure = mix}
+
+let rec size_of (fml:CF.struc_formula) (lhs_para:CP.spec_var): CF.struc_formula =
+  match fml with
+  | ECase b -> 
+    let res = List.map (fun (p,c) -> (p,size_of c lhs_para)) b.formula_case_branches in
+    ECase {b with formula_case_branches = res}
+  | EBase b -> 
+    let rbase = size_of_fml b.formula_struc_base lhs_para in
+    let rcont = (match b.formula_struc_continuation with
+      | None -> None
+      | Some f -> Some(size_of f lhs_para)) in
+    EBase {b with 
+      formula_struc_base = rbase;
+      formula_struc_continuation = rcont}
+  | EAssume(svl,f,fl,t) -> 
+    EAssume(svl,size_of_fml f lhs_para,fl,t)
+  | EInfer b ->
+    EInfer {b with formula_inf_continuation = size_of b.formula_inf_continuation lhs_para}
+  | EList b -> 
+    let r = List.map (fun (l,e) -> (l,size_of e lhs_para)) b in
+    EList r
+  | EOr b -> 
+    let r1 = size_of b.formula_struc_or_f1 lhs_para in
+    let r2 = size_of b.formula_struc_or_f2 lhs_para in
+    EOr {b with formula_struc_or_f1 = r1;
+                formula_struc_or_f2 = r2}
+
+let gen_struc_fml (orig_fml:CF.struc_formula) (abs_dom:pure_dom) sub_pair: CF.struc_formula =
+  let updated_fml = CF.tran_spec orig_fml sub_pair in
+  let new_fml = size_of (fst updated_fml) (List.hd abs_dom.para_names) in
+  new_fml
+
+(* TODO: abs_dom *)
+(* Primitive case: size(). See more in gen_pred.txt *)
+let gen_pred_def (orig_def:C.view_decl) (abs_dom:pure_dom): C.view_decl =
+  let new_view_name = fresh_old_name orig_def.C.view_name in
+  let new_view_vars = orig_def.C.view_vars @ abs_dom.para_names in
+  let sub_pair = ((orig_def.C.view_name,orig_def.C.view_vars),(new_view_name,new_view_vars)) in
+  let new_def = {orig_def with
+    C.view_name = new_view_name;
+    C.view_vars = new_view_vars;
+    C.view_formula = gen_struc_fml orig_def.C.view_formula abs_dom sub_pair;
+    (* TODO: compute inv *)
+    C.view_user_inv = orig_def.C.view_user_inv;
+  }
+  in
+  new_def
+
+let test prog =
+  let orig_def = List.hd prog.C.prog_view_decls in
+  let _ = pr_view_decl orig_def in
+  let _ = print_endline "\n\n" in
+  let abs_dom = {para_names = [SpecVar (Int, "n", Unprimed)]} in
+  let new_def = gen_pred_def orig_def abs_dom in
+  pr_view_decl new_def
 
 
 
