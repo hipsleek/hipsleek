@@ -28,6 +28,7 @@ bool rand()
 relation R1(int a, int b).
 relation R2(int a, int b).
 relation R3(int a, int b).
+relation R4(int a, int b).
 
 int g() 
   infer [R1]
@@ -70,3 +71,16 @@ int f()
 }
 
 
+int f2() 
+  infer [R4]
+  requires stk::RS<m> 
+  ensures  stk::RS<m> * mx::RS_mark<h> & R4(h,m);
+  // & m-3<=h ;
+{
+  add_stk(1);
+  int r;
+  if (rand()) r=g();
+  else r=h();
+  sub_stk(1);
+  return r;
+}
