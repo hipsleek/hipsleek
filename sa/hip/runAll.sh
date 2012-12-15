@@ -84,10 +84,16 @@ echo "ll_all_13e"
 ../../hip ll_all_13e.ss -cp-test cp/ll_all_13e.cp | grep Compare
 echo "ll_all_14"
 ../../hip ll_all_14.ss -cp-test cp/ll_all_14.cp | grep Compare
+echo "mul-procs "
+../../hip mul-procs.ss -cp-test cp/mul-procs.cp | grep Compare
+echo "fun-call -cp-test"
+../../hip fun-call.ss -cp-test cp/fun_call.cp | grep Compare
 echo "ll-empty"
 ../../hip ll-empty.ss -cp-test cp/ll-empty.cp | grep Compare
 echo "ll-size"
 ../../hip ll-size.ss -cp-test cp/ll-size.cp | grep Compare
+echo "ll-size1 -cp-test"
+../../hip ll-size1.ss -cp-test cp/ll-size1.cp | grep Compare
 echo "ll-ret-first"
 ../../hip ll-ret-first.ss --sa-dangling --sa-inlining -cp-test cp/ll-ret-first.cp | grep Compare
 echo "ll-ret-first1"

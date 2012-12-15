@@ -14,9 +14,6 @@ module CEQ = Checkeq
 
 exception SA_NO_BASE_CASE of (CP.spec_var * (CP.spec_var list) * (CF.formula list)) (*hp without base case*)
 
-(*temporal: name * hrel * definition body*)
-type hp_rel_def = CP.rel_cat * CF.h_formula * CF.formula
-
 (*hp_name * args * unk_args * condition * lhs * rhs *)
 type par_def_w_name =  CP.spec_var * CP.spec_var list * CP.spec_var list * CF.formula * (CF.formula option) *
       (CF.formula option)

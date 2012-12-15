@@ -7,9 +7,9 @@ data node {
 }
 
 /* view for a singly linked list */
-/* ll<n> == self = null & n = 0 */
-/* 	or self::node<_, q> * q::ll<n-1> */
-/*   inv n >= 0; */
+ll<n> == self = null & n = 0
+	or self::node<_, q> * q::ll<n-1>
+  inv n >= 0;
 
 HeapPred H(node a).
 HeapPred H1(node a).

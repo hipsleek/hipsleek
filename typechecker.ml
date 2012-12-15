@@ -1575,6 +1575,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          begin
 		        Gen.Profiling.push_time "[check_exp] SCall";
                 let mn_str = Cast.unmingle_name mn in
+                let proc0 = proc in
                 (* let farg_types, farg_names = List.split proc.proc_args in *)
                 (*=========================*)
                 (*======= CONCURRENCY======*)
@@ -1739,6 +1740,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   if (CF.isSuccessListFailescCtx_new res) then
                     (* let _ = print_endline ("\nlocle1:" ^ proc.proc_name) in*)
                     let _ = Debug.ninfo_pprint ("   We may need to transfer hpdef of callee into caller here. and remove all callee' hprel assumptions") no_pos in
+                     (* let _ = Debug.info_pprint ("   callee:" ^ mn) no_pos in *)
+                     (* let _ = Debug.info_pprint ("   caller:" ^ proc0.proc_name) no_pos in *)
+                     let _ = update_callee_hpdefs_proc prog.Cast.new_proc_decls proc0.proc_name mn in
                     res
                   else begin
                     (*   let _ = print_endline ("\nlocle2:" ^ proc.proc_name) in *)
@@ -2067,7 +2071,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
 	    | None -> true (* sanity checks have been done by the translation *)
 	    | Some body ->
 	        begin
-                let _ = Debug.info_pprint ("    proc: " ^ unmin_name) no_pos in
+                (* let _ = Debug.info_pprint ("    proc: " ^ unmin_name) no_pos in *)
                 stk_vars # reset;
                 (* push proc.proc_args *)
                 let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
@@ -2147,10 +2151,14 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
                         Infer.rel_ass_stk # reset;
                       end;
 		            let ls_hprel, ls_inferred_hps, dropped_hps =
-                      if !Globals.sa_en_norm then Sa.infer_hps prog hp_lst_assume
+                      if !Globals.sa_en_norm then
+                        Sa.infer_hps prog proc.proc_name hp_lst_assume
                         sel_hp_rels sel_post_hp_rels (Gen.BList.remove_dups_eq
                             (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) hp_rel_unkmap)
                       else [],[],[]
+                    in
+                    (**update hpdefs for func call*)
+                    let _ = Cast.update_hpdefs_proc prog.Cast.new_proc_decls ls_inferred_hps proc.proc_name
                     in
                     if not(Sa.rel_def_stk# is_empty) then
                       begin
@@ -2791,6 +2799,15 @@ let check_prog (prog : prog_decl) =
 
   ignore (List.map (fun proc -> check_proc_wrapper prog proc cout_option) ((* sorted_proc_main @ *) proc_prim));
   (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)
+  (*****BEGIN******)
+  (* let pr_hpdefs proc_name proc n= *)
+  (*   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def_short in *)
+  (*   let _ = Debug.info_pprint ((string_of_int n) ^ ". " ^ proc_name ^ ":\n" ^ *)
+  (*                                 (pr1 proc.Cast.proc_callee_hpdefs)) no_pos in *)
+  (*   (n+1) *)
+  (* in *)
+  (* let _ = Hashtbl.fold pr_hpdefs prog.Cast.new_proc_decls 1 in *)
+  (*****END******)
   let _ =  match cout_option with
     | Some cout -> close_out cout
     | _ -> ()
