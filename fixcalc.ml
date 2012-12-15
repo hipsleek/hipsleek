@@ -222,6 +222,43 @@ let rec remove_paren s n = if n=0 then "" else match s.[0] with
   | ')' -> remove_paren (String.sub s 1 (n-1)) (n-1)
   | _ -> (String.sub s 0 1) ^ (remove_paren (String.sub s 1 (n-1)) (n-1))
 
+(******************************************************************************)
+
+let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var list): CP.formula =
+  let vars = para_names in
+  let fmls = List.map (fun p -> 
+    let exists_vars = CP.diff_svl (CP.fv p) para_names in
+    let exists_vars = List.filter (fun x -> not(CP.is_rel_var x)) exists_vars in
+    CP.mkExists exists_vars p None no_pos) fmls in
+
+  (* Prepare the input for the fixpoint calculation *)
+  let input_fixcalc = 
+    try
+      name ^ ":={[" ^ (string_of_elems vars fixcalc_of_spec_var ",") ^ 
+      "] -> [] -> []: " ^ (string_of_elems fmls fixcalc_of_pure_formula op_or) ^
+      "\n};\nbottomupgen([" ^ name ^ "], [1], SimHeur);"
+    with _ -> report_error no_pos "Error in translating the input for fixcalc"
+  in 
+  DD.ninfo_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
+
+  (* Call the fixpoint calculation *)
+  let output_of_sleek = "fixcalc.inp" in
+  let oc = open_out output_of_sleek in
+  Printf.fprintf oc "%s" input_fixcalc;
+  flush oc;
+  close_out oc;
+  let res = syscall (fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in
+
+  (* Remove parentheses *)
+  let res = remove_paren res (String.length res) in
+  DD.ninfo_pprint ("res = " ^ res ^ "\n") no_pos;
+
+  (* Parse result *)
+  let inv = List.hd (Parse_fix.parse_fix res) in
+  inv
+
+(******************************************************************************)
+
 let rec is_rec pf = match pf with
   | CP.BForm (bf,_) -> CP.is_RelForm pf
   | CP.And (f1,f2,_) -> is_rec f1 || is_rec f2

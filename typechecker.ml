@@ -2454,7 +2454,6 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                               let pr = Cprinter.string_of_pure_formula in
                               Debug.tinfo_hprint (add_str "rels" (pr_list (pr_pair pr pr))) rels no_pos;
                               Debug.tinfo_hprint (add_str "mutual grp" (pr_list (fun x -> x.proc_name))) mutual_grp no_pos;
-                              let _ = Specutil.test prog in
                               let triples (*(rel, post)*) = 
                                 if rels = [] then (Infer.infer_rel_stk # reset;[])
                                 else if mutual_grp != [] then []
@@ -2500,6 +2499,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                                 (* new_spec *)
                               end
                         in
+                        let _ = Specutil.test prog in
                         (* TODO WN : what happen to the old MayLoop? *)
                         (* let new_spec = CF.norm_struc_with_lexvar new_spec false in  *)
                         let _ = proc.proc_stk_of_static_specs # push new_spec in
@@ -2548,9 +2548,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                             Debug.tinfo_hprint (add_str "NEW CONJS" string_of_int) ((CF.no_of_cnts new_spec)-(CF.no_of_cnts proc.proc_static_specs)) no_pos;
                             stk_evars # reset;
                             let _ = if not (!do_infer_inc) then () 
-                                    else Specutil.print_spec (" " ^ (Specutil.get_proc_name proc.proc_name) ^ "\n" ^ 
+                                    else Infer.print_spec (" " ^ (Infer.get_proc_name proc.proc_name) ^ "\n" ^ 
                                                              (pr_spec2 (CF.struc_to_prepost new_spec))) 
-                                         (Specutil.get_file_name Sys.argv.(1)) in
+                                         (Infer.get_file_name Sys.argv.(1)) in
                             let f = if f && !reverify_flag then 
                               let _,_,_,_,_,_,_,is_valid = check_specs_infer prog proc init_ctx new_spec body false in is_valid
                             else f 
@@ -2764,7 +2764,7 @@ let check_prog (prog : prog_decl) =
           else [x]::a
   ) [] sorted_proc_main in
   let proc_scc = List.rev proc_scc in
-  let () = Debug.info_hprint (add_str "SCC" (pr_list (pr_list (Astsimp.pr_proc_call_order)))) proc_scc no_pos in
+  let () = Debug.ninfo_hprint (add_str "SCC" (pr_list (pr_list (Astsimp.pr_proc_call_order)))) proc_scc no_pos in
   (* flag to determine if can skip phase inference step *)
   let skip_pre_phase = (!Globals.dis_phase_num || !Globals.dis_term_chk) in
   let prog = List.fold_left (fun prog scc -> 
