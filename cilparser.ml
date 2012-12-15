@@ -895,7 +895,7 @@ let translate_file (file: Cil.file) : Iast.prog_decl =
         (* let _ = print_endline ("== gl GVarDecl = " ^ (string_of_cil_global gl)) in *)
         (* report_error_msg "TRUNG TODO: Handle Cil.GVarDecl later!"                  *)
     | Cil.GVar (v, init, l) ->
-        (* let _ = print_endline ("== translate_file: collect GVar") in  *)
+        (* let _ = print_endline ("== translate_file: collect GVar") in *)
         let gvar = translate_global_var v init (Some l) in
         global_var_decls := !global_var_decls @ [gvar];
     | Cil.GFun (fd, l) ->
