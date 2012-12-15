@@ -60,7 +60,9 @@ let parse_file_full file_name (primitive: bool) =
     let _ = Gen.Profiling.push_time "Parsing" in
     let prog = (
       if parser_to_use = "cil" then
-        Cilparser.parse_hip file_name
+        let cil_prog = Cilparser.parse_hip file_name in
+        let _ = print_endline ("cil_prog: " ^ (Iprinter.string_of_program cil_prog)) in
+        cil_prog
       else
         Parser.parse_hip file_name (Stream.of_channel org_in_chnl)
     ) in

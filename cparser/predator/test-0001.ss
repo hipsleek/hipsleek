@@ -1,27 +1,15 @@
-pred_prim RS_mem<i:int>
- inv i>0 & self!=null;
 
-RS_mem malloc(int n)
- requires n>0
- ensures  res=null or res::RS_mem<n>;
-
-item cast_to_ptr(RS_mem p)
- case {
-  p=null -> ensures res=null;
-  p!=null -> 
-    requires p::RS_mem<a> & a>=size(item)
-    ensures res::item<_>
- }
-
-#include "sl.h"
+//#include "sl.h"
 //#include <stdlib.h>
+data item {
+        item next;
+    }
 
 int main() {
-    struct item {
-        struct item *next;
-    } *ptr;
+    
+    item ptr;
     ptr=null;
-    for(;;) {
+    //for()  {
         void *data = ptr;
         ptr = malloc(sizeof *ptr);//new item
         if (!ptr)
@@ -30,7 +18,7 @@ int main() {
 
         ptr->next = data;
         //   ___sl_plot("test-0001-snapshot");
-    }
+        //}
     return 0;
 }
 

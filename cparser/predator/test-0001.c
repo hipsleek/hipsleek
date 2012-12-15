@@ -20,6 +20,7 @@ int main() {
     return 0;
 }
 
+/*
 pred_prim RS_mem<i:int>
  inv i>0 & self!=null;
 
@@ -34,3 +35,4 @@ item cast_to_ptr(RS_mem p)
     requires p::RS_mem<a> & a>=size(item)
     ensures res::item<_>
  }
+*/
