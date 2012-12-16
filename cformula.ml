@@ -117,6 +117,9 @@ and hprel_def= {
     hprel_def_body_lib: formula option;
 }
 
+(*temporal: name * hrel * definition body*)
+and hp_rel_def = CP.rel_cat * h_formula * formula
+
 (* and infer_rel_type =  (CP.rel_cat * CP.formula * CP.formula) *)
 
 and list_formula = formula list

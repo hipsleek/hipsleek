@@ -14,9 +14,6 @@ module CEQ = Checkeq
 
 exception SA_NO_BASE_CASE of (CP.spec_var * (CP.spec_var list) * (CF.formula list)) (*hp without base case*)
 
-(*temporal: name * hrel * definition body*)
-type hp_rel_def = CP.rel_cat * CF.h_formula * CF.formula
-
 (*hp_name * args * unk_args * condition * lhs * rhs *)
 type par_def_w_name =  CP.spec_var * CP.spec_var list * CP.spec_var list * CF.formula * (CF.formula option) *
       (CF.formula option)
@@ -894,13 +891,15 @@ let check_stricteq_hnodes_x stricted_eq hns1 hns2=
     let arg_ptrs2 = List.filter CP.is_node_typ  hn2.CF.h_formula_data_arguments in
     if (hn1.CF.h_formula_data_name = hn2.CF.h_formula_data_name) &&
         (CP.eq_spec_var hn1.CF.h_formula_data_node hn2.CF.h_formula_data_node) then
+      let b = eq_spec_var_order_list arg_ptrs1 arg_ptrs2 in
+      (*bt-left2: may false if we check set eq as below*)
       let diff1 = (Gen.BList.difference_eq CP.eq_spec_var arg_ptrs1 arg_ptrs2) in
-      (*for debugging*)
+      (* (\*for debugging*\) *)
       (* let _ = Debug.info_pprint ("     arg_ptrs1: " ^ (!CP.print_svl arg_ptrs1)) no_pos in *)
       (* let _ = Debug.info_pprint ("     arg_ptrs2: " ^ (!CP.print_svl arg_ptrs2)) no_pos in *)
       (* let _ = Debug.info_pprint ("     diff1: " ^ (!CP.print_svl diff1)) no_pos in *)
       (*END for debugging*)
-      if stricted_eq then (diff1=[]) else
+      if stricted_eq then (* (diff1=[]) *)b else
           (*allow dangl ptrs have diff names*)
         let diff2 = CP.intersect_svl diff1 all_ptrs in
         (diff2 = [])
@@ -1057,7 +1056,7 @@ let remove_subsumed_pure_formula_x ps=
   (*check ps01 <<= ps02*)
   let check_subsume (ps01,null_svl1) (ps02,null_svl2)=
     (* Gen.BList.difference_eq CP.equalFormula ps01 ps02 = [] *)
-    CP.diff_svl null_svl1 null_svl2 = []
+    (List.length null_svl1>0) && (CP.diff_svl null_svl1 null_svl2 = [])
   in
   let sort_fn (ps01,null_svl1) (ps02,null_svl2)=
     (* (List.length ps01) - (List.length ps02) *)
@@ -1141,10 +1140,15 @@ let find_root_x args fs=
           if CP.mem_svl a ptos then false
           else examine_one_arg fs_tl a
   in
-  let root_cands = List.filter (examine_one_arg fs) args in
-  match root_cands with
-    | [] -> report_error no_pos "say.find_root_x: dont have a root. what next?"
-    | r::_ -> (r,List.filter (fun sv -> not (CP.eq_spec_var r sv)) args)
+  (*trciky here. should have another better*)
+  match args with
+    | [a] -> (a,[])
+    | _ -> begin
+        let root_cands = List.filter (examine_one_arg fs) args in
+        match root_cands with
+          | [] -> report_error no_pos "sau.find_root_x: dont have a root. what next?"
+          | r::_ -> (r,List.filter (fun sv -> not (CP.eq_spec_var r sv)) args)
+    end
 
 let find_root args fs=
   let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
@@ -2274,7 +2278,8 @@ let mk_orig_hprel_def_x prog unk_hps hp r other_args args sh_ldns eqNulls eqPure
          let hprel = CF.HRel (hp, List.map (fun x -> CP.mkVar x no_pos) args, no_pos) in
 		 (*elim all except root*)
 		 let n_orig_defs_h = CF.drop_hnodes_hf orig_defs_h other_args in
-         (defs, (hprel, n_orig_defs_h), n_hp, n_args, dnss,next_roots)
+         (defs, (hprel, n_orig_defs_h), n_hp, n_args, dnss,
+          CP.diff_svl next_roots unk_svl)
      (* | _ -> report_error no_pos "sau.generalize_one_hp: now we does not handle more than two ptr fields" *)
 
 let mk_orig_hprel_def prog unk_hps hp args sh_ldns eqNulls eqPures hprels unk_svl=
@@ -3100,6 +3105,16 @@ let split_rhs prog cs=
   let pr1 = Cprinter.string_of_hprel in
   Debug.no_1 "split_rhs" pr1 (pr_list_ln pr1)
       (fun _ -> split_rhs_x prog cs) cs
+
+(*like tree recursion PLDI07*)
+let simp_tree_x hpdefs=
+
+  hpdefs
+
+let simp_tree hpdefs=
+  let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def_short in
+  Debug.ho_1 "simp_tree" pr1 pr1
+      (fun _ -> simp_tree_x hpdefs) hpdefs
 
 (************************************************************)
     (****************(*currently we dont use*)*****************)

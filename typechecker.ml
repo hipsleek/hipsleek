@@ -599,6 +599,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       (* TODO : collecting rel twice as a temporary fix to losing ranking rel inferred during check_post *)
                       (*                      let rel1 =  Inf.collect_rel_list_partial_context res_ctx in*)
                       (*                      DD.dinfo_pprint ">>>>> Performing check_post STARTS" no_pos;*)
+                      let hp_rels1 = Gen.BList.remove_dups_eq (=) (Inf.collect_hp_rel_list_partial_context res_ctx) in
                       let tmp_ctx = check_post prog proc res_ctx post_cond pos_post post_label etype in
                       (*                      DD.dinfo_pprint ">>>>> Performing check_post ENDS" no_pos;*)
                       (* Termination: collect error messages from successful states *)
@@ -1574,6 +1575,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          begin
 		        Gen.Profiling.push_time "[check_exp] SCall";
                 let mn_str = Cast.unmingle_name mn in
+                let proc0 = proc in
                 (* let farg_types, farg_names = List.split proc.proc_args in *)
                 (*=========================*)
                 (*======= CONCURRENCY======*)
@@ -1738,6 +1740,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   if (CF.isSuccessListFailescCtx_new res) then
                     (* let _ = print_endline ("\nlocle1:" ^ proc.proc_name) in*)
                     let _ = Debug.ninfo_pprint ("   We may need to transfer hpdef of callee into caller here. and remove all callee' hprel assumptions") no_pos in
+                     (* let _ = Debug.info_pprint ("   callee:" ^ mn) no_pos in *)
+                     (* let _ = Debug.info_pprint ("   caller:" ^ proc0.proc_name) no_pos in *)
+                     let _ = update_callee_hpdefs_proc prog.Cast.new_proc_decls proc0.proc_name mn in
                     res
                   else begin
                     (*   let _ = print_endline ("\nlocle2:" ^ proc.proc_name) in *)
@@ -2332,7 +2337,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
       match proc.proc_body with
 	    | None -> true (* sanity checks have been done by the translation *)
 	    | Some body ->
-	          begin
+	        begin
+                (* let _ = Debug.info_pprint ("    proc: " ^ unmin_name) no_pos in *)
                 stk_vars # reset;
                 (* push proc.proc_args *)
                 let args = List.map (fun (t,i) -> CP.SpecVar(t,i,Unprimed) ) proc.proc_args in
@@ -2361,7 +2367,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
                   else
                     init_form
                 in
-		        let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
+                let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
                 (* Termination: Add the set of logical variables into the initial context *)
                 let init_ctx = 
                   if !Globals.dis_term_chk then init_ctx
@@ -2408,13 +2414,18 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
                         print_endline "*******relational assumption ********";
                         print_endline "*************************************";
                         print_endline (Infer.rel_ass_stk # string_of_reverse);
-                        print_endline "*************************************" 
+                        print_endline "*************************************";
+                        Infer.rel_ass_stk # reset;
                       end;
 		            let ls_hprel, ls_inferred_hps, dropped_hps =
-                      if !Globals.sa_en_norm then Sa.infer_hps prog hp_lst_assume
+                      if !Globals.sa_en_norm then
+                        Sa.infer_hps prog proc.proc_name hp_lst_assume
                         sel_hp_rels sel_post_hp_rels (Gen.BList.remove_dups_eq
                             (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) hp_rel_unkmap)
                       else [],[],[]
+                    in
+                    (**update hpdefs for func call*)
+                    let _ = Cast.update_hpdefs_proc prog.Cast.new_proc_decls ls_inferred_hps proc.proc_name
                     in
                     if not(Sa.rel_def_stk# is_empty) then
                       begin
@@ -2423,7 +2434,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
 		                print_endline "*******relational definition ********";
 		                print_endline "*************************************";
                         print_endline (Sa.rel_def_stk # string_of_reverse);
-		                print_endline "*************************************"
+		                print_endline "*************************************";
+                        Sa.rel_def_stk #reset;
                       end;
 			    (**************cp_test _ gen_cpfile******************)
 		            let _ = if(!Globals.cp_test || !Globals.cp_prefile) then cp_test proc hp_lst_assume ls_inferred_hps sel_hp_rels in
@@ -2778,6 +2790,15 @@ let check_prog (prog : prog_decl) =
 
   ignore (List.map (fun proc -> check_proc_wrapper prog proc cout_option) ((* sorted_proc_main @ *) proc_prim));
   (*ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);*)
+  (*****BEGIN******)
+  (* let pr_hpdefs proc_name proc n= *)
+  (*   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def_short in *)
+  (*   let _ = Debug.info_pprint ((string_of_int n) ^ ". " ^ proc_name ^ ":\n" ^ *)
+  (*                                 (pr1 proc.Cast.proc_callee_hpdefs)) no_pos in *)
+  (*   (n+1) *)
+  (* in *)
+  (* let _ = Hashtbl.fold pr_hpdefs prog.Cast.new_proc_decls 1 in *)
+  (*****END******)
   let _ =  match cout_option with
     | Some cout -> close_out cout
     | _ -> ()
