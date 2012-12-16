@@ -1842,12 +1842,12 @@ let process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls c
           (*base case has at least one node?*)
           let hds= get_hdnodes_hf n_hf in
           if hds=[] then nf5 else
-            let _ = DD.info_pprint ("       next_roots: " ^ (Cprinter.string_of_spec_var_list next_roots)) no_pos in
+            let _ = DD.ninfo_pprint ("       next_roots: " ^ (Cprinter.string_of_spec_var_list next_roots)) no_pos in
             let hds1= get_hdnodes nf5 in
             let last_svl = look_up_closed_ptr_args prog hds1 [] next_roots in
             (*is recursive?*)
             let inter = CP.intersect_svl last_svl args3 in
-             let _ = DD.info_pprint ("       inter: " ^ (Cprinter.string_of_spec_var_list inter)) no_pos in
+             let _ = DD.ninfo_pprint ("       inter: " ^ (Cprinter.string_of_spec_var_list inter)) no_pos in
             if  inter <> [] then
               let ss1 = List.combine inter next_roots in
               let nf5b = CF.drop_hnodes_f nf5 last_svl in
