@@ -2317,6 +2317,7 @@ and cp_test proc hp_lst_assume  ls_inferred_hps sel_hp_rels =
       in
       ()
     )
+    else print_string ("!!! Warning: There are no cp info for " ^ proc.proc_name ^ "\n" )
   in
   let _ = Gen.Profiling.pop_time "Compare res with cp file" in
   ()
@@ -2436,10 +2437,10 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
 		                print_endline "*************************************";
                         Sa.rel_def_stk #reset;
                       end;
-			    (**************cp_file _ gen_cpfile******************)
+			    (**************cp_test _ gen_cpfile******************)
 		            let _ = if(!Globals.cp_test || !Globals.cp_prefile) then cp_test proc hp_lst_assume ls_inferred_hps sel_hp_rels in
 		            let _ = if(!Globals.gen_cpfile) then gen_cpfile prog proc  hp_lst_assume ls_inferred_hps dropped_hps old_hpdecls sel_hp_rels cout_option in
-		    (**************end cp_file _ gen_cpfile******************)
+		    (**************end cp_test _ gen_cpfile******************)
                     let lst_rank = List.map (fun (_,a2,a3)-> (a2,a3)) lst_rank in
                     (*let _ = Ranking.do_nothing in*)
                     Debug.trace_hprint (add_str "SPECS (after simplify_ann)" pr_spec) new_spec no_pos;
