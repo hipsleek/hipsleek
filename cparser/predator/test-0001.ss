@@ -5,18 +5,21 @@ data item {
         item next;
     }
 
-int main() {
-    
-    item ptr;
-    ptr=null;
+int main()
+requires true
+  ensures true;
+{
+  item ptr;
+  item data;
+  ptr=null;
     //for()  {
-        void *data = ptr;
-        ptr = malloc(sizeof *ptr);//new item
-        if (!ptr)
+        data = ptr;
+        //  ptr = malloc(4);//new item
+        if (ptr==null)
             // OOM
             return -1;
 
-        ptr->next = data;
+        ptr.next = data;
         //   ___sl_plot("test-0001-snapshot");
         //}
     return 0;
