@@ -185,6 +185,9 @@ GLOBAL: expression;
   [ "exp" LEFTA
     [ x = SELF; "+"; y = SELF -> Add (x, y, loc)
     | x = SELF; "-"; y = SELF -> Subtract (x, y, loc)
+    | x = INT; y = SELF -> 
+          let ni=IConst (int_of_string x, loc) 
+          in Mult (ni, y, loc)
     | x = INT; "*"; y = SELF -> 
           let ni=IConst (int_of_string x, loc) 
           in Mult (ni, y, loc)
