@@ -143,7 +143,7 @@ let common_arguments = [
 	("--ann-vp", Arg.Set Globals.ann_vp,"manual annotation of variable permissions");
 	("--dis-ann-vp", Arg.Clear Globals.ann_vp,"manual annotation of variable permissions");
 	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
-	(* ("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields"); *)
+	("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
 	("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
 	("--dis-field-ann", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
 	("--mem", Arg.Set Globals.allow_mem,"Enable the use of Memory Specifications");
