@@ -177,10 +177,158 @@ and is_global_cil_lval (lv: Cil.lval) : bool =
   | Cil.Mem m -> is_global_cil_exp m
 
 
+(* -------------------------------------- -------------------------------- *)
+(* pre-translate: travel through CIL data to collect necessary information *)
+(* ----------------------------------------------------------------------- *)
+let travel_typ (t: Cil.typ) : unit =
+  match t with
+  | Cil.TVoid _ -> ()
+  | Cil.TInt _ -> ()
+  | Cil.TFloat _ -> ()
+  | Cil.TPtr (ty, _) -> () (* TRUNG TODO: implement here *)
+  | Cil.TArray (ty, _, _) -> () (* TRUNG TODO: implement here *)
+  | Cil.TFun _ -> () (* TRUNG TODO: implement here *)
+  | Cil.TNamed (tname, _) -> () (* TRUNG TODO: implement here *)
+  | Cil.TComp (comp, _) -> () (* TRUNG TODO: implement here *)
+  | Cil.TEnum _ -> () (* TRUNG TODO: implement here *)
+  | Cil.TBuiltin_va_list _ -> () (* TRUNG TODO: implement here *)
+
+
+let travel_var (vinfo: Cil.varinfo) : unit =
+  ()
+
+
+let travel_var_decl (vinfo: Cil.varinfo) : unit =
+  ()
+
+
+let travel_constant (c: Cil.constant) : unit =
+  match c with
+  | Cil.CInt64 (i, _, _) -> ()
+  | Cil.CStr s -> ()
+  | Cil.CWStr _ -> ()
+  | Cil.CChr _ -> ()
+  | Cil.CReal (f, fkind, _) -> () (* TRUNG TODO: implement here *)
+  | Cil.CEnum _ -> () (* TRUNG TODO: implement here *)
+
+
+let travel_fieldinfo (field: Cil.fieldinfo) : unit =
+  match field.Cil.ftype with
+  | Cil.TPtr _ -> () (* TRUNG TODO: implement here *)
+  | _ -> ()
+
+
+let travel_compinfo (comp: Cil.compinfo) : unit =
+  () (* TRUNG TODO: implement here *)
+
+
+let travel_unary_operator (op : Cil.unop) : unit =
+  match op with
+  | Cil.Neg -> ()
+  | Cil.BNot -> ()
+  | Cil.LNot -> ()
+
+
+let travel_binary_operator (op : Cil.binop) : unit =
+  match op with
+  | Cil.PlusA -> ()
+  | Cil.PlusPI -> ()
+  | Cil.IndexPI -> ()
+  | Cil.MinusA -> ()
+  | Cil.MinusPI -> ()
+  | Cil.MinusPP -> ()
+  | Cil.Mult -> ()
+  | Cil.Div -> ()
+  | Cil.Mod -> ()
+  | Cil.Shiftlt -> ()
+  | Cil.Shiftrt -> ()
+  | Cil.Lt -> ()
+  | Cil.Gt -> ()
+  | Cil.Le -> ()
+  | Cil.Ge -> ()
+  | Cil.Eq -> ()
+  | Cil.Ne -> ()
+  | Cil.BAnd -> ()
+  | Cil.BXor -> ()
+  | Cil.BOr -> ()
+  | Cil.LAnd -> ()
+  | Cil.LOr -> ()
+
+
+let travel_lval (lv: Cil.lval) : unit =
+  () (* TRUNG TODO: implement here *)
+
+
+and travel_exp (e: Cil.exp) : unit =
+  match e with
+  | Cil.Const (c, l) -> ()
+  | Cil.Lval (lv, _) -> () 
+  | Cil.SizeOf (_, l) -> ()
+  | Cil.SizeOfE (_, l) -> ()
+  | Cil.SizeOfStr (s, l) -> ()
+  | Cil.AlignOf _ -> ()
+  | Cil.AlignOfE _ -> ()
+  | Cil.UnOp (op, exp, ty, l) -> ()
+  | Cil.BinOp (op, exp1, exp2, ty, l) -> ()
+  | Cil.Question (exp1, exp2, exp3, _, l) -> ()
+  | Cil.CastE (ty, exp, l) -> ()
+  | Cil.AddrOf (lval, l) -> ()
+  | Cil.StartOf _ -> ()
+
+
+let travel_instr (instr: Cil.instr) : unit =
+  match instr with
+  | Cil.Set (lv, exp, l) -> ()
+  | Cil.Call (lv_opt, exp, exps, l) -> ()
+  | Cil.Asm _ -> ()
+
+
+let travel_stmt (s: Cil.stmt) : unit =
+  let skind = s.Cil.skind in
+  match skind with
+  | Cil.Instr instrs -> ()
+  | Cil.Return (eopt, l) -> ()
+  | Cil.Goto (sref, l) -> ()
+  | Cil.Break l -> ()
+  | Cil.Continue l -> ()
+  | Cil.If (exp, blk1, blk2, l) -> ()
+  | Cil.Switch _ -> ()
+  | Cil.Loop (blk, hspecs, l, stmt_opt1, stmt_opt2) -> ()
+  | Cil.Block blk -> ()
+  | Cil.TryFinally (blk1, blk2, l) -> ()
+  | Cil.TryExcept (blk1, (instrs, exp), blk2, l) -> ()
+  | Cil.HipStmt (iast_exp, l) -> ()
+
+
+let travel_block (blk: Cil.block) : unit =
+  let stmts = blk.Cil.bstmts in
+  match stmts with
+  | [] -> ()
+  | [s] -> ()
+  | _ -> ()
+
+
+let travel_init (vname: ident) (init: Cil.init) : unit =
+  match init with
+  | Cil.SingleInit exp -> ()
+  | Cil.CompoundInit (_, offset_init_list) -> ()
+
+
+let travel_global_var (vinfo: Cil.varinfo) (iinfo: Cil.initinfo) : unit =
+  () (* TRUNG TODO: implement here *)
+
+let travel_fundec (fundec: Cil.fundec) : unit =
+  () (* TRUNG TODO: implement here *)
+
+
+let travel_file (file: Cil.file) : unit =
+  () (* TRUNG TODO: implement here *)
+
+
+
 (* ---------------------------------------- *)
 (* translation functions from Cil -> Iast   *)
 (* ---------------------------------------- *)
-
 
 let translate_location (loc: Cil.location) : Globals.loc =
   let cilsp = loc.Cil.start_pos in
