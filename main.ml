@@ -75,7 +75,7 @@ let parse_file_full file_name (primitive: bool) =
 
 (* Parse all prelude files declared by user.*)
 let process_primitives (file_list: string list) : Iast.prog_decl list =
-  Debug.info_pprint (" processing primitives \"" ^(pr_list pr_id file_list)) no_pos;
+  Debug.info_pprint (" processing primitives \"" ^(pr_list pr_id file_list) ^ "\n") no_pos;
   flush stdout;
   let new_names = List.map (fun c-> (Gen.get_path Sys.executable_name) ^ (String.sub c 1 ((String.length c) - 2))) file_list in
   if (Sys.file_exists "./prelude.ss") then
@@ -187,7 +187,7 @@ let process_lib_file prog =
 
 (***************end process compare file*****************)
 let process_source_full source =
-  Debug.info_pprint ("Full processing file \"" ^ source ^ "\"") no_pos;
+  Debug.info_pprint ("Full processing file \"" ^ source ^ "\"\n") no_pos;
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source false in
@@ -372,7 +372,7 @@ let process_source_full source =
 	)
 
 let process_source_full_parse_only source =
-  Debug.info_pprint ("Full processing file (parse only) \"" ^ source ^ "\"") no_pos;
+  Debug.info_pprint ("Full processing file (parse only) \"" ^ source ^ "\"\n") no_pos;
   flush stdout;
   let prog = parse_file_full source false in
   (* Remove all duplicated declared prelude *)
@@ -396,7 +396,7 @@ let process_source_full_parse_only source =
   (prog, prims_list)
 
 let process_source_full_after_parser source (prog, prims_list) =
-  Debug.info_pprint ("Full processing file (after parser) \"" ^ source ^ "\"") no_pos;
+  Debug.info_pprint ("Full processing file (after parser) \"" ^ source ^ "\"\n") no_pos;
   flush stdout;
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
   (* Global variables translating *)
@@ -555,7 +555,7 @@ let main1 () =
 (* let main1 () = *)
 (*   Debug.loop_1_no "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
 
-let pre_main =
+let pre_main () =
   process_cmd_line ();
   Scriptarguments.check_option_consistency ();
   if !Globals.print_version_flag then
@@ -594,7 +594,7 @@ let old_main =
 let _ = 
   if not(!Globals.do_infer_inc) then old_main
   else
-    let res = pre_main in
+    let res = pre_main () in
     while true do
       try
         let _ = print_string "# " in
