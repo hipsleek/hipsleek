@@ -103,8 +103,8 @@ echo "bt-count-1.ss"
 echo "bt-trav.ss"
 ../../hip bt-trav.ss  -cp-test cp/bt-trav.cp | grep Compare
 echo "bt-left2.ss"
-../../hip bt-left2.ss  -cp-test cp/bt-left2.cp | grep Compare
+../../hip bt-left2.ss  --sa-tree-simp -cp-test cp/bt-left2.cp | grep Compare
 echo "bt-search-2.ss"
-../../hip bt-search-2.ss -cp-test cp/bt-search-2.cp | grep Compare
+../../hip bt-search-2.ss --sa-tree-simp -cp-test cp/bt-search-2.cp | grep Compare
 echo "ll-ret-first2: have not captured non-ptr values"
 ../../hip ll-ret-first2.ss --sa-dangling --sa-inlining -cp-test cp/ll-ret-first2.cp | grep Compare

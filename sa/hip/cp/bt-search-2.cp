@@ -16,7 +16,7 @@ ass [H1,G1][]:{
 
 hpdefs [H1,G1][]:{
   H1(z_609) --> z_609 = null or z_609::node2<_, l, r> * H1(l) * H1(r);
-  G1(z_608) --> H1(z_608)
+  G1(z_608) --> z_608 = null or z_608::node2<_, l, r> * G1(l) * G1(r)
 
  }
 ]

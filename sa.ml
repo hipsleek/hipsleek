@@ -3986,7 +3986,7 @@ let infer_hps_x prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_
   in
   let hp_defs5 =
     if !Globals.sa_tree_simp then
-      SAU.simp_tree hp_defs4b
+      SAU.simp_tree unk_hps0 hp_defs4b
     else hp_defs4b
   in
   (****************************************************)

@@ -355,6 +355,69 @@ and drop_get_hrel_h_formula hf=
   in
   helper hf
 
+
+let rec drop_data_hrel_except_x dn_names hpargs f=
+  match f with
+    | CF.Base fb ->
+        let new_hf = drop_data_hrel_except_hf dn_names hpargs fb.CF.formula_base_heap in
+        let new_p = CP.filter_var_new (MCP.pure_of_mix fb.CF.formula_base_pure) (dn_names@hpargs) in
+        (CF.Base {fb with
+            CF.formula_base_heap= new_hf;
+            CF.formula_base_pure = MCP.mix_of_pure new_p;
+        })
+    | _ -> report_error no_pos "SAU.drop_get_hrel: not handle yet"
+
+and drop_data_hrel_except dn_names hpargs f=
+  let pr1=Cprinter.prtt_string_of_formula in
+  Debug.no_3 "drop_data_hrel_except" !CP.print_svl !CP.print_svl pr1 pr1
+      (fun _ _ _ -> drop_data_hrel_except_x dn_names hpargs f) dn_names hpargs f
+
+and drop_data_hrel_except_hf dn_names hpargs hf=
+  let rec helper hf0=
+    match hf0 with
+      | CF.Star {CF.h_formula_star_h1 = hf1;
+                 CF.h_formula_star_h2 = hf2;
+                 CF.h_formula_star_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          (match n_hf1,n_hf2 with
+            | (CF.HEmp,CF.HEmp) -> (CF.HEmp)
+            | (CF.HEmp,_) -> (n_hf2)
+            | (_,CF.HEmp) -> (n_hf1)
+            | _ -> (CF.Star {CF.h_formula_star_h1 = n_hf1;
+			                CF.h_formula_star_h2 = n_hf2;
+			                CF.h_formula_star_pos = pos})
+          )
+      | CF.Conj { CF.h_formula_conj_h1 = hf1;
+		          CF.h_formula_conj_h2 = hf2;
+		          CF.h_formula_conj_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          CF.Conj { CF.h_formula_conj_h1 = n_hf1;
+		            CF.h_formula_conj_h2 = n_hf2;
+		            CF.h_formula_conj_pos = pos}
+      | CF.Phase { CF.h_formula_phase_rd = hf1;
+		           CF.h_formula_phase_rw = hf2;
+		           CF.h_formula_phase_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          CF.Phase { CF.h_formula_phase_rd = n_hf1;
+		             CF.h_formula_phase_rw = n_hf2;
+		             CF.h_formula_phase_pos = pos}
+      | CF.DataNode hd -> if CP.mem_svl hd.CF.h_formula_data_node dn_names then
+            hf0 else CF.HEmp
+      | CF.ViewNode hv -> hf0
+      | CF.HRel (_, eargs, _) ->
+          let args1 = List.concat (List.map CP.afv eargs) in
+          if CP.diff_svl args1 hpargs = [] then hf0 else CF.HEmp
+      | CF.Hole _
+      | CF.HTrue
+      | CF.HFalse
+      | CF.HEmp -> hf0
+  in
+  helper hf
+
+
 let get_ptrs hf0=
   let rec helper hf=
     match hf with
@@ -371,6 +434,64 @@ let get_ptrs hf0=
                (List.filter (fun (CP.SpecVar (t,_,_)) -> is_pointer t) hv.CF.h_formula_view_arguments))
       | CF.HRel (sv, eargs, _) -> List.concat (List.map CP.afv eargs)
       | _ -> []
+  in
+  helper hf0
+
+let rec drop_hrel_match_args f args=
+  match f with
+    | CF.Base fb -> let nfb = drop_hrel_match_args_hf fb.CF.formula_base_heap args in
+        (CF.Base {fb with CF.formula_base_heap =  nfb;})
+    | CF.Or orf -> let nf1 =  drop_hrel_match_args orf.CF.formula_or_f1 args in
+                let nf2 =  drop_hrel_match_args orf.CF.formula_or_f2 args in
+       ( CF.Or {orf with CF.formula_or_f1 = nf1;
+                CF.formula_or_f2 = nf2;})
+    | CF.Exists fe -> let nfe = drop_hrel_match_args_hf fe.CF.formula_exists_heap args in
+        (CF.Exists {fe with CF.formula_exists_heap = nfe ;})
+
+and drop_hrel_match_args_hf hf0 args=
+  let rec helper hf=
+    match hf with
+      | CF.Star {CF.h_formula_star_h1 = hf1;
+              CF.h_formula_star_h2 = hf2;
+              CF.h_formula_star_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          let newf =
+            (match n_hf1,n_hf2 with
+              | (CF.HEmp,CF.HEmp) -> CF.HEmp
+              | (CF.HEmp,_) -> n_hf2
+              | (_,CF.HEmp) -> n_hf1
+              | _ -> (CF.Star {CF.h_formula_star_h1 = n_hf1;
+                            CF.h_formula_star_h2 = n_hf2;
+                            CF.h_formula_star_pos = pos})
+            ) in
+          (newf)
+      | CF.Conj { CF.h_formula_conj_h1 = hf1;
+               CF.h_formula_conj_h2 = hf2;
+               CF.h_formula_conj_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          (CF.Conj { CF.h_formula_conj_h1 = n_hf1;
+                  CF.h_formula_conj_h2 = n_hf2;
+                  CF.h_formula_conj_pos = pos})
+      | CF.Phase { CF.h_formula_phase_rd = hf1;
+                CF.h_formula_phase_rw = hf2;
+                CF.h_formula_phase_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          (CF.Phase { CF.h_formula_phase_rd = n_hf1;
+                   CF.h_formula_phase_rw = n_hf2;
+                   CF.h_formula_phase_pos = pos})
+      | CF.DataNode hd -> (hf)
+      | CF.ViewNode hv -> (hf)
+      | CF.HRel (_,eargs1,_) ->
+          let args1 = List.fold_left List.append [] (List.map CP.afv eargs1) in
+          if eq_spec_var_order_list args args1 then (CF.HEmp)
+          else (hf)
+      | CF.Hole _
+      | CF.HTrue
+      | CF.HFalse
+      | CF.HEmp -> (hf)
   in
   helper hf0
 
@@ -3107,14 +3228,107 @@ let split_rhs prog cs=
       (fun _ -> split_rhs_x prog cs) cs
 
 (*like tree recursion PLDI07*)
-let simp_tree_x hpdefs=
+let simp_tree_one_hp_x unk_hps hp args fs=
+  let is_rec_f f=
+    let hps = CF.get_hp_rel_name_formula f in
+    (CP.mem_svl hp hps)
+  in
+  let is_independ_f f =
+    let hps = CF.get_hp_rel_name_formula f in
+    let hps1 = CP.remove_dups_svl hps in
+    (* DD.ninfo_pprint ("       hp: " ^ (!CP.print_sv hp)) no_pos; *)
+    let rems = List.filter (fun hp1 -> not(CP.eq_spec_var hp hp1)
+    && not (CP.mem_svl hp1 unk_hps) ) hps1 in
+    (* DD.ninfo_pprint ("       rems: " ^ (!CP.print_svl rems)) no_pos; *)
+    (rems = [])
+  in
+  let sort_fn (_,hds1) (_,hds2)=
+    (List.length hds1)-(List.length hds2)
+  in
+  let rec check_exist f ls_f=
+    match ls_f with
+      | [] -> false
+      | f1::tl_fs ->
+           let r,_ (*map*) = CEQ.checkeq_formulas [] f f1 in
+          if (* check_relaxeq_formula f f1 *) r then true else
+            check_exist f tl_fs
+  in
+  let rec find_prec_point r (f,hds) rec_args done_fs done_hds=
+    match hds with
+      | [] -> f
+      | hd::tl -> if CP.eq_spec_var hd.CF.h_formula_data_node r then
+            let nf = CF.drop_hnodes_f f [r] in
+            let n_roots = List.filter CP.is_node_typ hd.CF.h_formula_data_arguments in
+            let rec_nrs,non_rec_nrs = List.partition (fun arg ->
+                CP.mem_svl arg rec_args ) n_roots in
+            if non_rec_nrs = [] then f else
+              let nf1 = List.fold_left
+                (fun f0 a -> drop_hrel_match_args f0 [a]) nf rec_nrs
+              in
+              let _ = DD.ninfo_pprint ("non_rec_nrs: " ^ (!CP.print_svl non_rec_nrs) ) no_pos in
+              let nf2,a =
+                match non_rec_nrs with
+                  | [a] -> (find_prec_point a (nf1,done_hds@tl) rec_args done_fs
+                      [],a)
+                  | _ -> report_error no_pos "sau.find_prec_point"
+              in
+              let _ = DD.ninfo_pprint (" nf2: " ^ (Cprinter.prtt_string_of_formula nf2) ) no_pos in
+              let ss2 = List.combine [a] args in
+              let nf2a = CF.subst ss2 nf2 in
+              if check_exist nf2a done_fs then
+                let hf4 = mkHRel hp [a] no_pos in
+                let nf3 = drop_data_hrel_except [r] rec_nrs f in
+                CF.mkAnd_f_hf nf3 hf4 no_pos
+              else f
+          else
+            find_prec_point r (f,tl) rec_args done_fs (done_hds@[hd])
+  in
+  let process_one_rec_f args (f,hsa) done_fs=
+    let _ = DD.ninfo_pprint (" f: " ^ (Cprinter.prtt_string_of_formula f) ) no_pos in
+    if check_exist f done_fs then [] else
+      let hpargs = CF.get_HRels_f f in
+      let rec_args = List.fold_left
+        (fun args0 (hp1,args) -> if CP.eq_spec_var hp1 hp then (args0@args) else args0) [] hpargs in
+      let newf=
+        match args with
+          | [a] -> find_prec_point a (f, hsa) rec_args done_fs []
+          | _ -> report_error no_pos "sau. process_one_rec_f"
+      in
+      let _ = DD.ninfo_pprint (" newf: " ^ (Cprinter.prtt_string_of_formula newf) ) no_pos in
+      if check_exist newf done_fs then done_fs else (done_fs@[newf])
+  in
+  (*find base case*)
+   let _, dep_fs = List.partition is_independ_f fs in
+  if (List.length dep_fs >= 1) || (List.length args > 1) then fs else
+    let rec_fs,base_fs= List.partition is_rec_f fs in
+    (*sort all based on length of heaps*)
+    let rec_ls_hds = List.map (fun f -> (f,get_hdnodes f)) rec_fs in
+    let rec_ls_hds1 = List.sort sort_fn rec_ls_hds in
+  (*for each of remain: find the next root, if it exists in base case, subst to become recursive one*)
+    let fs1 = List.fold_left (fun done_fs (f,hds) -> process_one_rec_f args (f,hds) done_fs) base_fs rec_ls_hds1 in
+    (* let fs2 = norm_hnodes args fs1 in *) fs1
+    (* Gen.BList.remove_dups_eq check_relaxeq_formula fs2 *)
 
-  hpdefs
+let simp_tree_one_hp unk_hps hp args fs=
+  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
+  Debug.no_3 "simp_tree_one_hp" !CP.print_sv !CP.print_svl pr1 pr1
+      (fun _ _ _ -> simp_tree_one_hp_x unk_hps hp args fs) hp args fs
 
-let simp_tree hpdefs=
+let simp_tree_x unk_hps hpdefs=
+  let process_one_hp (a,hprel,f)=
+    let hp,args = CF.extract_HRel hprel in
+    let fs = CF.list_of_disjs f in
+    let nfs = simp_tree_one_hp unk_hps hp args fs in
+    let nf = List.fold_left (fun f1 f2 -> CF.mkOr f1 f2 (CF.pos_of_formula f))
+      (List.hd nfs) (List.tl nfs) in
+    (a,hprel, nf)
+  in
+  List.map process_one_hp hpdefs
+
+let simp_tree unk_hps hpdefs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def_short in
-  Debug.ho_1 "simp_tree" pr1 pr1
-      (fun _ -> simp_tree_x hpdefs) hpdefs
+  Debug.no_1 "simp_tree" pr1 pr1
+      (fun _ -> simp_tree_x unk_hps hpdefs) hpdefs
 
 (************************************************************)
     (****************(*currently we dont use*)*****************)
