@@ -146,7 +146,7 @@ and p_formula =
         (* NOTE: currently work with Redlog only*)
         (* TO DO: filter out VarPerm before discharge*)
   | VarPerm of (vp_ann * (spec_var list) * loc)
-	  (* list formulas *)
+  (* list formulas *)
   | ListIn of (exp * exp * loc)
   | ListNotIn of (exp * exp * loc)
   | ListAllN of (exp * exp * loc)
@@ -162,6 +162,7 @@ and exp =
   | IConst of (int * loc)
   | FConst of (float * loc)
   | AConst of (heap_ann * loc)
+  | InfConst of (ident * loc)
   | Tsconst of (Tree_shares.Ts.t_sh * loc)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
@@ -396,6 +397,11 @@ let conv_var_to_exp (v:spec_var) :exp =
 (* is exp a var  *)
 let is_var (f:exp) = match f with
   | Var _ -> true
+  | _ -> false
+
+(* is exp an infinity const *)
+let is_inf (f:exp) = match f with
+  | InfConst  _ -> true
   | _ -> false
 
 let rec contains_exists (f:formula) : bool =  match f with
@@ -890,6 +896,7 @@ and afv (af : exp) : spec_var list =
     | Null _ 
     | IConst _ 
     | AConst _ 
+    | InfConst _
     | Tsconst _
     | FConst _ -> []
     | Var (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
@@ -1425,7 +1432,7 @@ match pf with
 (* Expression *)
 and is_exp_arith (e:exp) : bool=
   match e with
-    | Null _  | Var _ | IConst _ | AConst _ | FConst _ -> true
+    | Null _  | Var _ | IConst _ | AConst _ | InfConst _ | FConst _ -> true
     | Add (e1,e2,_)  | Subtract (e1,e2,_)  | Mult (e1,e2,_) 
     | Div (e1,e2,_)  | Max (e1,e2,_)  | Min (e1,e2,_) -> (is_exp_arith e1) && (is_exp_arith e2)
           (* bag expressions *)
@@ -2786,7 +2793,7 @@ and subs_one sst v =
   in helper sst v
 
 and e_apply_subs sst e = match e with
-  | Null _ | IConst _ | FConst _ | AConst _ | Tsconst _ -> e
+  | Null _ | IConst _ | FConst _ | AConst _ |InfConst _ |Tsconst _ -> e
   | Var (sv, pos) -> Var (subs_one sst sv, pos)
   | Add (a1, a2, pos) -> normalize_add (Add (e_apply_subs sst a1,
     e_apply_subs sst a2, pos))
@@ -3048,6 +3055,7 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | Null _ 
   | IConst _ 
   | AConst _ 
+  | InfConst _ 
   | FConst _ 
   | Tsconst _ -> e
   | Add (a1, a2, pos) -> normalize_add (Add (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos))
@@ -4487,6 +4495,7 @@ and simp_mult_x (e : exp) :  exp =
     match e0 with
       | Null _ 
       | Tsconst _ 
+      | InfConst _
 	  | AConst _ -> e0	  
       | Var (v, l) ->
             (match m with 
@@ -4551,6 +4560,7 @@ and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
     |  Null _ 
     |  Var _ 
 	|  Tsconst _
+    |  InfConst _ 
     |  AConst _ -> ((Some e), None)
     |  IConst (v, l) ->
            if v >= 0 then 
@@ -4697,6 +4707,7 @@ and purge_mult_x (e :  exp):  exp = match e with
   |  Var _ 
   |  IConst _ 
   |  AConst _ 
+  | InfConst _
   | Tsconst _
   | FConst _ -> e
   |  Add (e1, e2, l) ->  Add((purge_mult e1), (purge_mult e2), l)
@@ -5006,6 +5017,7 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
 	      | Null _ 
 	      | Var _ 
 	      | IConst _
+          | InfConst _ 
 	      | AConst _
 		  | Tsconst _ 
 	      | FConst _ -> (e,f_comb [])

@@ -4434,6 +4434,7 @@ and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
     | IP.Null pos -> CP.Null pos
     | IP.Tsconst (t,pos) -> CP.Tsconst (t,pos)
     | IP.AConst(a,pos) -> CP.AConst(a,pos)
+    | IP.InfConst(a,pos) -> CP.InfConst(a,pos)
     | IP.Var ((v, p), pos) -> 
           CP.Var ((trans_var (v,p) stab pos),pos)
     | IP.Ann_Exp (e, t) -> trans_pure_exp e stab
@@ -4770,6 +4771,10 @@ and gather_type_info_exp_x a0 stab et =
           t
     | IP.AConst (_,pos) -> 
           let t = I.ann_type in
+          let _ = must_unify_expect t et stab pos in
+          t
+    | IP.InfConst (_,pos) -> 
+          let t = I.int_type in
           let _ = must_unify_expect t et stab pos in
           t
     | IP.IConst (_,pos) -> 

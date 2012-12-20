@@ -13,7 +13,7 @@ sortll<mi> == self::node<mi, null> or
 inv self!=null;
 */
 
-sortll<mi> == self=null & mi=#inf
+sortll<mi> == self=null & mi=\inf
  or self::node<mi, p> * p::sortll<m2> & mi<=m2
 inv true;
 

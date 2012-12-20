@@ -4,7 +4,7 @@ data node {
 }.
 
 pred  sortll<mi> == 
-      self=null & mi=#inf
+      self=null & mi=\inf
    or self::node<mi, p> * p::sortll<m2> & mi<=m2
 inv true.
 
@@ -23,7 +23,7 @@ checkentail res=null |- res::sortll<m> & m=\inf.
 //m=\inf instantiated
 checkentail res=null |- res::sortll<m>.
 
-checkentail x=null |- x::sort<2>.
+checkentail x=null |- x::sortll<2>.
 // must fail
 
 // must fail
@@ -43,7 +43,7 @@ checkentail true |- m>=\inf.
 
 
 // must error
-checkentail not(m=\inf) |- m>=\inf.
+checkentail m != \inf |- m >= \inf.
 
 //valid
 checkentail m=\inf |- m>=\inf.

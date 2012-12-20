@@ -98,6 +98,7 @@ module Token = struct
     (* | PREF -> "@p_ref" *) | PVALUE -> "@value" | PFULL -> "@full" | PZERO -> "@zero"
     | INVLOCK->"inv_lock"
     | LOGICAL -> "logical"
+    | INFINITY -> "\\inf"
     | TEMPL ->"template"
     | TERM -> "Term"
     | LOOP -> "Loop"
