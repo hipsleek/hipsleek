@@ -51,43 +51,43 @@ with --mem
  <1>hfalse&false&{FLOW,(19,20)=__norm}[]
 */
 
-//(2)
+//(6)
 checkentail x::pair<_@A,b@M> * x1::pair<a@M,d@A> & x=x1 & d=3|- x::pair<c@A,y@M> & y=3.
 print residue.
 
 
-//(4)
+//(7)
 checkentail x::pair<_@A,b@M> * x1::pair<a@M,d@M> & x=x1 & d=3|- false.
 print residue.
 
-//(5)
+//(8)
 checkentail x::pair<_,_> * x::pair<_,_> |- false.
 print residue.
 
-//(6)
+//(9)
 checkentail x::pair<_@M,_@M> * x::pair<_@M,_@M> |- false.
 print residue.
 
-//(7)
+//(10)
 checkentail x::pair<_@M,_@M> * x::pair<_@A,_@M> |- false.
 print residue.
 
-//(8)
+//(11)
 checkentail x::pair<_@M,_@A> * y::pair<_@A,_@M> & x=y |- false.
 print residue.
 
-//(9)
+//(12)
 checkentail x::pair<_@M,_@M> * y::pair<_@A,_@M> & x=y |- false.
 print residue.
 
-//(10)
+//(13)
 checkentail x::pair<_@M,_@M> * x::pair<_@A,_@M>  |- false.
 print residue.
 
-//(11)
+//(14)
 checkentail x::pair<b@A,d@M> & d=3|- x::pair<c@A,y@M> & d=y.
 print residue.
 
-//(12)
+//(15)
 checkentail x::pair<b@A,d@M> & d=3|- x::pair<c@A,y@M> & c=b.
 print residue.

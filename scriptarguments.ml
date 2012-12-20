@@ -148,6 +148,7 @@ let common_arguments = [
 	("--dis-field-ann", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
 	("--mem", Arg.Set Globals.allow_mem,"Enable the use of Memory Specifications");
 	("--dis-mem", Arg.Clear Globals.allow_mem,"Disable the use of Memory Specifications");
+	("--ramify", Arg.Clear Solver.unfold_duplicated_pointers,"Use Ramification (turns off unfold on dup pointers)");
 	("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
 	("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
 	("--no-coercion", Arg.Clear Globals.use_coercion,

@@ -598,10 +598,10 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       let _ = List.iter (fun m -> Term.add_term_err_stk m) term_err_msg in
                       (*                      let rel2 = Inf.collect_rel_list_partial_context tmp_ctx in*)
                       (*                      let rels = Gen.BList.remove_dups_eq (==) (rel1@rel2) in*)
-                      let rels = Gen.BList.remove_dups_eq (=) (Inf.collect_rel_list_partial_context tmp_ctx) in
-                      let hp_rels = Gen.BList.remove_dups_eq (=) (Inf.collect_hp_rel_list_partial_context tmp_ctx) in
-                      let sel_hps= CP.remove_dups_svl (CF.get_infer_vars_sel_hp_partial_ctx_list tmp_ctx) in
-                      let unk_map = Inf.collect_hp_unk_map_list_partial_context tmp_ctx in
+                      let rels = Gen.BList.remove_dups_eq (=) (Inf.collect_rel_list_partial_context tmp_ctx) in                
+                      let hp_rels = Gen.BList.remove_dups_eq (=) (Inf.collect_hp_rel_list_partial_context tmp_ctx) in               
+                      let sel_hps= CP.remove_dups_svl (CF.get_infer_vars_sel_hp_partial_ctx_list tmp_ctx) in                     
+                      let unk_map = Inf.collect_hp_unk_map_list_partial_context tmp_ctx in                   
                       let res = CF.isSuccessListPartialCtx tmp_ctx in
                       (* Debug.info_pprint ("TMP CTX: " ^ (Cprinter.string_of_list_partial_context tmp_ctx) ^ "\n") no_pos; *)
                       let lp = (* if not !do_abd_from_post then lp else ( *)

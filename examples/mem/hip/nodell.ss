@@ -36,7 +36,7 @@ ensures cached' = null;
 cached = null;
 }
 
-node add_L(ref node x, node y)
+node add_L(node x, node y)
 requires x::node<_,_> * y::ll<Ry>
 ensures res::ll<R> & R = union(Ry,{x});
 {
@@ -73,6 +73,7 @@ ensures  cached'::node<key,_> & q::ll<R1>;
     x.val = key;
     caching(x,cached);
     q = add_L(x,q);
+    //x.next = q;
     //dprint;
   //}
 }

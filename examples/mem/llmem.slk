@@ -36,7 +36,7 @@ print residue.
 
 checkentail x::node<a@A,b>  |- x::node<c,d>.
 print residue.
-// should fail but did not
+// should fail 
 
 checkentail x::rll<n> & n>0 |- x::node<_@A,_@L>.
 print residue.

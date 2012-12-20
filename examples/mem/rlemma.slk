@@ -17,16 +17,16 @@ pred lseg<p,M> ==  self = p & M = {}
 	
 lemma self::ll<M> *- p::node<_,q> & p in M -> self::lseg<p,M1> * q::ll<M2>  & M = union(M1,M2,{p}).
 
-//lemma self::ll<M> *- p::ll<Mp> & p in M  -> self::lseg<p,M1> & M = union(M1,Mp).
+lemma self::ll<M> *- p::ll<Mp> & p in M  -> self::lseg<p,M1> & M = union(M1,Mp).
 	
 checkentail y::ll<My> * (x::ll<M> *- c::node<_,p>) & c in M |- x::lseg<c,M1> * p::ll<M2> & M = union(M1,M2,{c}).
 print residue.
 
-//checkentail y::ll<My> * (x::ll<M> *- c::ll<Mc>) & c in M |- x::lseg<c,M1> * y::ll<My> & M = union(M1,Mc).
-//print residue.
+checkentail y::ll<My> * (x::ll<M> *- c::ll<Mc>) & c in M |- x::lseg<c,M1> * y::ll<My> & M = union(M1,Mc).
+print residue.
 
-//checkentail x::ll<M> *- y::node<_,p> |- x::lseg<y,M1> * q::ll<M2> & M = union(M1,M2,{y}).
-//print residue.
+checkentail x::ll<M> *- y::node<_,p> & y in M |- x::lseg<y,M1> * p::ll<M2> & M = union(M1,M2,{y}).
+print residue.
 /*
 checkentail x::ll<M> & M != {} |- x::lseg<p,M1> * p::node<_,q>.
 print residue.

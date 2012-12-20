@@ -6974,12 +6974,12 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     let l_args_ann = List.filter (fun c -> CP.is_ann_type (CP.type_of_spec_var c)) l_args in 
     let r_args_ann = List.filter (fun c -> CP.is_ann_type (CP.type_of_spec_var c)) r_args in
     let (rvl, view_param_ann_lhs, view_param_ann_rhs) =  if (!allow_field_ann) 
-    then Mem.subtype_sv_ann_gen_list es_impl_vars l_args_ann r_args_ann
+    then Mem.subtype_sv_ann_gen_list es_impl_vars l_args_ann r_args_ann 
     else (true, None,None) in
     let (r, ann_lhs, ann_rhs) = (r && rvl,Immutable.mkAndOpt ann_lhs view_param_ann_lhs, Immutable.mkAndOpt ann_rhs view_param_ann_rhs)
     in
-    (*let _ = print_string("cris: ann_lhs = " ^ (pr_opt Cprinter.string_of_pure_formula ann_lhs) ^ "\n") in *)
-    (*let _ = print_string("cris: ann_rhs = " ^ (pr_opt Cprinter.string_of_pure_formula ann_rhs) ^ "\n") in *)
+    (*let _ = print_string("cris: ann_lhs = " ^ (pr_opt Cprinter.string_of_pure_formula ann_lhs) ^ "\n") in 
+    let _ = print_string("cris: ann_rhs = " ^ (pr_opt Cprinter.string_of_pure_formula ann_rhs) ^ "\n") in *)
     Debug.tinfo_hprint (add_str "Imm annotation mismatch" (string_of_bool)) (not(r)) pos;
     if r == false 
     then 

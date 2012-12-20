@@ -41,7 +41,7 @@ Successful States:
 
 void main(pair x)
   requires x::pair<a,b>
-  ensures x::pair<a,b>;
+  ensures x::pair<a,b@I>;
 
 { 
   int r = foo(x);

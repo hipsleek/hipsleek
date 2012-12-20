@@ -1,5 +1,6 @@
 (* asankhs:  Created on 03-Sep-2012 for Memory Specifications *)
 (* Uses Field Annotations (Immutable) and Bag Constraints (Mona), run with --mem --field-ann -tp om *)
+(* For Ramifications use --ramify it will turn off unfold of duplicated pointers in solver.ml which is required to do ramifications *)
 
 open Globals
 open Gen.Basic
@@ -1085,7 +1086,7 @@ let subtype_sv_ann_gen (impl_vars: CP.spec_var list) (l: CP.spec_var) (r: CP.spe
         (* two examples in ann1.slk fail otherwise; unsound when we have *)
         (* multiple implicit being instantiated ; use explicit if needed *)
         let lhs = CP.BForm ((CP.Eq(l,r,no_pos),None), None) in
-        (* let lhs = c in *)
+        (*let lhs = c in *)
         begin
           match r with
             | CP.Var(v,_) -> 

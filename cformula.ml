@@ -5105,9 +5105,10 @@ let get_infer_vars_sel_hp_branch_ctx (_,ctx)=
   get_infer_vars_sel_hp_ctx ctx
 
 let get_infer_vars_sel_hp_partial_ctx (_, br_list)=
-  get_infer_vars_sel_hp_branch_ctx (List.hd  br_list)
+  if List.length br_list == 0 then [] else 
+  get_infer_vars_sel_hp_branch_ctx (List.hd br_list)
 
-let get_infer_vars_sel_hp_partial_ctx_list ls=
+let get_infer_vars_sel_hp_partial_ctx_list ls =
   get_infer_vars_sel_hp_partial_ctx (List.hd ls)
 
 let context_of_branch_ctx_list ls = 
