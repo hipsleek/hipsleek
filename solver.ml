@@ -3348,6 +3348,7 @@ and heap_entail_one_context i prog is_folding  ctx conseq (tid: CP.spec_var opti
 
 (*only struc_formula can have some thread id*)
 and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : context) (conseq : formula) pos : (list_context * proof) =
+  Debug.vv_trace "heap_entail_one_context" ;
   Debug.devel_zprint (lazy ("heap_entail_one_context:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)^"\n")) pos;
     if isAnyFalseCtx ctx then (* check this first so that false => false is true (with false residual) *)
       (SuccCtx [ctx], UnsatAnte)
@@ -3418,6 +3419,7 @@ and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_c
 and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula) pos : (list_context * proof) =
   (** [Internal] Collect the data and view nodes in a h_formula. 
       @return The list of all DataNode and ViewNode **)
+  Debug.vv_trace "heap_entail_conjunct_lhs" ;
   let rec collect_data_view (f : h_formula) = match f with
     | Star { h_formula_star_h1 = h1; h_formula_star_h2 = h2}
     | Conj { h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}

@@ -2052,6 +2052,7 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
 
 (* checking procedure: (PROC p61) *)
 and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
+  Debug.vv_debug ("check_proc:"^proc.proc_name);
   let unmin_name = unmingle_name proc.proc_name in
   (* get latest procedure from table *)
   let proc = 
@@ -2684,6 +2685,7 @@ let init_files () =
   end
 
 let check_proc_wrapper_map prog (proc,num) cout_option =
+  Debug.vv_debug ("check_proc_wrapper_map:"^proc.proc_name) ;
   if !Tpdispatcher.external_prover then Tpdispatcher.Netprover.set_use_socket_map (List.nth !Tpdispatcher.external_host_ports (num mod (List.length !Tpdispatcher.external_host_ports))); (* make this dynamic according to availability of server machines*)
   try
     check_proc prog proc cout_option []

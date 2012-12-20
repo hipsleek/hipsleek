@@ -129,11 +129,22 @@ let vv_plist d ls =
             end
   in helper ls
 
-let vv_hdebug f arg = vv_hprint 100 f arg 
+let vv_hdebug f arg = vv_hprint 200 f arg 
 
+(* less tracing *)
 let vv_pdebug msg = vv_hdebug (fun m -> m) msg
 
+let vv_debug msg = vv_pdebug msg
+
+(* detailed tracing *)
+let vv_trace msg = vv_hprint 100 (fun m -> m) msg
+
 let vv_zdebug msg = vv_hdebug (fun x -> Lazy.force x) msg
+
+let vv_result (s:string) (d:int) ls =
+  vv_pprint d (">>>>>>>>>"^s^">>>>>>>>>");
+  vv_plist d ls;
+  vv_pprint d (">>>>>>>>>"^s^">>>>>>>>>")
 
 let trace_pprint (msg:string) (pos:loc) : unit = 
 	ho_print false (fun a -> " "^a) msg
