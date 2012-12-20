@@ -6,6 +6,8 @@ open Cprinter
 
 module CP = Cpure
 module MCP = Mcpure
+module DD = Debug
+
 
 (* Equisatisfiable Normalization *)
 (* 
@@ -24,7 +26,7 @@ module MCP = Mcpure
 *)
 
 let rec normalize_exp (exp: CP.exp) : CP.exp =
-  let _ = print_string("\nin normalize_exp: "^ (string_of_formula_exp exp)) in
+  let _ = DD.vv_trace("in normalize_exp: "^ (string_of_formula_exp exp)) in
   match exp with
     | CP.Min(e1,e2,pos) -> let e1_norm = normalize_exp e1 in
                            let e2_norm = normalize_exp e2 in
@@ -43,7 +45,7 @@ let rec normalize_exp (exp: CP.exp) : CP.exp =
     | _ -> exp
 
 let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula = 
-  let _ = print_string("\nin normalize_b_formula: "^ (string_of_b_formula bf)) in
+  let _ = DD.vv_trace("in normalize_b_formula: "^ (string_of_b_formula bf)) in
   let (p_f,bf_ann) = bf in
   let p_f_norm = 
   (match p_f with
@@ -90,11 +92,11 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
                                  then CP.Eq(e1_norm,e3_norm,pos)
                                  else CP.EqMin(e1_norm,e2_norm,e3_norm,pos)
     | _ -> p_f
-  ) in  let _ = print_string("\nin normalized_b_formula: "^ (string_of_b_formula (p_f_norm,bf_ann))) in
+  ) in  let _ = DD.vv_trace("in normalized_b_formula: "^ (string_of_b_formula (p_f_norm,bf_ann))) in
  (p_f_norm,bf_ann)
 
 let rec normalize_formula (pf: CP.formula) : CP.formula = 
-  let _ = print_string("\nin normalize_formula: "^ (string_of_pure_formula pf)) in
+  let _ = DD.vv_trace("in normalize_formula: "^ (string_of_pure_formula pf)) in
   (match pf with 
     | CP.BForm (b,fl) -> let b_norm = normalize_b_formula b in CP.BForm(b_norm,fl) 
     | CP.And (pf1,pf2,pos) -> let pf1_norm = normalize_formula pf1 in
@@ -218,5 +220,9 @@ let normalize_inf_formula (f: CP.formula): CP.formula =
   (*let pf = MCP.pure_of_mix f in*)
   let pf_norm = normalize_formula f in 
   let f = (*MCP.mix_of_pure*) (convert_inf_to_var pf_norm) in 
-  (*let _ = print_string("\nNormalized: "^ (string_of_pure_formula pf_norm)) in*)
+  (*let _ = DD.vv_trace("Normalized: "^ (string_of_pure_formula pf_norm)) in*)
   f
+
+let normalize_inf_formula (f: CP.formula): CP.formula =
+  let pr = string_of_pure_formula in
+  DD.ho_1 "normalize_inf_formula" pr pr normalize_inf_formula f

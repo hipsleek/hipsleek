@@ -24,7 +24,7 @@ XML = cd $(CURDIR)/xml; make all; make opt; cd ..
 
 all: byte decidez.vo
 #gui
-byte: hip.byte sleek.byte
+byte: sleek.byte hip.byte
 #byte: sleek.byte hip.byte test_cilparser.byte
 native: hip.native sleek.native
 gui: ghip.native gsleek.native
@@ -63,7 +63,7 @@ sleek.native: xml
 test_cilparser.byte: xml
 	@ocamlbuild $(OBB_FLAGS) test_cilparser.byte
 	cp -u _build/test_cilparser.byte test_cilparser
-	
+
 gsleek.byte: 
 	@ocamlbuild $(OBG_FLAGS) gsleek.byte
 	cp -u _build/gsleek.byte p-gsleek
