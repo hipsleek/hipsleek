@@ -619,6 +619,8 @@ let split_rhs_flag = ref true
 
 let n_xpure = ref 1
 
+let verbose_num = ref 0
+
 let fixcalc_disj = ref 2
 
 let check_coercions = ref false

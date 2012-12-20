@@ -49,6 +49,7 @@ type sleek_token =
   | INFER | SUBANN | XPRE | PRE | XPOST | POST
   | INVLOCK 
   | LOGICAL
+  | INFINITY
   | XPURE
 
 

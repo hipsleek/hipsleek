@@ -158,7 +158,9 @@ let common_arguments = [
    "Turn on unsatisfiable formulae elimination during type-checking");
   ("-nxpure", Arg.Set_int Globals.n_xpure,
    "Number of unfolding using XPure");
-	("-fixcalc-disj", Arg.Set_int Globals.fixcalc_disj,
+  ("-v:", Arg.Set_int Globals.verbose_num,
+   "Verbosity level for Debugging");
+  ("-fixcalc-disj", Arg.Set_int Globals.fixcalc_disj,
     "Number of disjunct for fixcalc computation");
   ("--dis-smart-xpure", Arg.Clear Globals.smart_xpure,
    "Smart xpure with 0 then 1; otherwise just 1 ; not handled by infer yet");

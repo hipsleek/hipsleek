@@ -166,6 +166,7 @@ module Make (Token : SleekTokenS)
    ("inlist", INLIST);
 	 ("int", INT);
 	 ("intersect", INTERSECT);
+	 ("#inf", INFINITY);
 	 ("inv", INV);
 	 ("inv_lock", INVLOCK);
    ("joinpred", JOIN); (*Changed by 28/12/2011*)
