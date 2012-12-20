@@ -399,6 +399,13 @@ let is_var (f:exp) = match f with
   | Var _ -> true
   | _ -> false
 
+(* is exp a var or const *)
+let is_const_or_var (f:exp) = match f with
+  | Var _ -> true
+  | IConst _ -> true
+  | FConst _ -> true
+  | _ -> false 
+
 (* is exp an infinity const *)
 let is_inf (f:exp) = match f with
   | InfConst  _ -> true
