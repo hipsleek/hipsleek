@@ -822,6 +822,7 @@ and find_lexp_exp (e: exp) ls =
 	| IConst _
 	| AConst _
 	| Tsconst _
+	| InfConst _
 	| FConst _ -> []
   | Ann_Exp(e,_) -> find_lexp_exp e ls
 	| Add (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
