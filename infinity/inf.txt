@@ -1,33 +1,24 @@
 
+Equisatisfiable Normalization
+=============================
+   v<=\inf      ==> true
+   v>=\inf      ==> v=\inf
+   v<=-\inf     ==> -v>=\inf
+   v>=-\inf     ==> -v<=\inf
+   min(w,\inf)  ==> w
+   min(w,-\inf) ==> -\inf
+   max(w,\inf)  ==> \inf
+   max(w,-\inf) ==> w
+   v<inf        ==> not(v=inf)
+   v>inf        ==> false
+   v<-inf       ==> -v>inf
+   v>-inf       ==> -v<inf
 
-//  v<=\inf  ==> true
-//  v>=\inf  ==> v=\inf
-//  v<=-\inf ==> v=-\inf
-//  v>=-\inf ==> true
-// min(w,\inf) ==> w
-// max(w,\inf) ==> \inf
-// max(w,-\inf) ==> w
-//  v<inf  ==> not(v=inf)
-//  v>inf  ==> false
-//x <= -a ==> -x >= a
-//           ==> -x = inf
-//x >= -a ==> -x <= a
-//           ==> true
-
-checkentail true |- v=min(w,\inf).
-// should succeed
-//  |- v<=\inf & v=v or v>=\inf & v=\inf
-//  |- v=v  & v=\inf
 
 checkentail v<inf |- v=inf. // must failure
 
 v>=\inf ==> v=\inf
 
-checkentail x=null |- x::sort<m>.
-// instantiating m=\inf
-
-checkentail x=null |- x::sort<2>.
-// must fail
 
 checkentail true |- v=min(v,\top).
 // should succeed

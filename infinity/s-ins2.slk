@@ -1,0 +1,79 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+pred  sortll<mi> == 
+      self=null & mi=#inf
+   or self::node<mi, p> * p::sortll<m2> & mi<=m2
+inv true.
+
+/*
+a/b
+
+pred sortll<mi> == self=null 
+ or self::node<mi,null>
+ or self::node<mi, p> * p::sortll<m2> & mi<=m2 & p!=null
+inv true.
+*/
+
+//valid
+checkentail res=null |- res::sortll<m> & m=\inf.
+
+//m=\inf instantiated
+checkentail res=null |- res::sortll<m>.
+
+checkentail x=null |- x::sort<2>.
+// must fail
+
+// must fail
+checkentail v=\inf |- v=2.
+
+// valid
+checkentail v=\inf |- v>=2.
+
+// must fail
+checkentail v=\inf |- v<=2.
+
+// valid
+checkentail true |- m<=\inf.
+
+// may error
+checkentail true |- m>=\inf.
+
+
+// must error
+checkentail not(m=\inf) |- m>=\inf.
+
+//valid
+checkentail m=\inf |- m>=\inf.
+
+//true
+checkentail true |- w=min(w,\inf).
+// should succeed
+//  |- v<=\inf & v=v or v>=\inf & v=\inf
+//  |- v=v  & v=\inf
+
+checkentail v<inf |- v=inf. // must failure
+
+//valid --> m=\inf
+checkentail x::node<a,null> |- x::sortll<m>.
+
+
+// fail
+checkentail x::node<a,q>*q::node<b,null> |- x::sortll<m>.
+
+// valid
+checkentail x::node<a,q>*q::node<b,null> & a<b |- x::sortll<m>.
+
+
+//error -
+checkentail true |- \inf=1+\inf.
+
+//can we simplify x=\inf
+checkentail x=1+\inf |- x>=\inf.
+
+//can we simplify x=\inf
+checkentail 1+x=\inf |- x>=\inf.
+
+// how about x=\inf-2*\inf etc
