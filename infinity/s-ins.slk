@@ -1,4 +1,4 @@
-/*
+
 data node {
 	int val; 
 	node next; 
@@ -7,7 +7,7 @@ data node {
 pred  sortll<mi> == self=null & mi=\inf
    or self::node<mi, p> * p::sortll<m2> & mi<=m2
 inv true.
-*/
+
 
 //(1) fail
 checkentail v<\inf |- v=\inf.
@@ -40,5 +40,4 @@ checkentail true |- v>=-\inf.
 // (0+INF)<=v
 
 //(9) valid
-//checkentail res=null |- res::sortll<m> & m=\inf.
-
+checkentail res=null |- res::sortll<m> & m=\inf.

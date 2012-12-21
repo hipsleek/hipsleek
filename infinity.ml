@@ -42,6 +42,13 @@ let rec normalize_exp (exp: CP.exp) : CP.exp =
                            else if CP.is_inf e1_norm && CP.is_const_or_var e2_norm
                            then e1_norm
                            else CP.Max(e1_norm,e2_norm,pos)
+    | CP.Add(e1,e2,pos) -> let e1_norm = normalize_exp e1 in
+    			   let e2_norm = normalize_exp e2 in
+    			   if CP.is_const_or_var e1_norm && CP.is_inf e2_norm
+    			   then e2_norm
+    			   else if CP.is_inf e1_norm && CP.is_const_or_var e2_norm
+    			   then e1_norm
+    			   else CP.Add(e1_norm,e2_norm,pos)                          
     | _ -> exp
 
 let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula = 
@@ -215,14 +222,61 @@ let rec convert_inf_to_var (pf:CP.formula) : CP.formula =
     | CP.Forall (qid, qf,fl,pos) -> let qf_norm = convert_inf_to_var qf in CP.Forall(qid,qf_norm,fl,pos)
     | CP.Exists (qid, qf,fl,pos) -> let qf_norm = convert_inf_to_var qf in CP.Exists(qid,qf_norm,fl,pos)
 
+
+let rec contains_inf_eq_b_formula (bf: CP.b_formula) : bool = 
+ let (p_f,bf_ann) = bf in
+  match p_f with 
+    | CP.XPure _
+    | CP.LexVar _
+    | CP.BConst _
+    | CP.BVar _ -> false
+    | CP.Lt (e1,e2,pos) 
+    | CP.Lte (e1,e2,pos)
+    | CP.Gt (e1,e2,pos)
+    | CP.Gte (e1,e2,pos) -> false
+    | CP.Eq (e1,e2,pos) -> if CP.is_inf e1 || CP.is_inf e2 then true else false
+    | CP.Neq (e1,e2,pos) -> false
+    | CP.SubAnn (e1,e2,pos) 
+    | CP.ListIn (e1,e2,pos)
+    | CP.ListNotIn (e1,e2,pos)
+    | CP.ListAllN (e1,e2,pos)
+    | CP.ListPerm (e1,e2,pos) -> false
+    | CP.EqMax (e1,e2,e3,pos) 
+    | CP.EqMin (e1,e2,e3,pos) -> false
+    | CP.BagIn _
+    | CP.BagNotIn _
+    | CP.BagSub _
+    | CP.BagMin _
+    | CP.BagMax _
+    | CP.VarPerm _
+    | CP.RelForm _ -> false
+
+let rec contains_inf_eq (pf:CP.formula) : bool =
+  match pf with
+    | CP.BForm (b,fl) -> contains_inf_eq_b_formula b 
+    | CP.And (pf1,pf2,pos) -> contains_inf_eq pf1 || contains_inf_eq pf2
+    | CP.AndList pflst -> List.exists 
+                            (fun (sl,pf) -> contains_inf_eq pf) pflst
+    | CP.Or (pf1,pf2,fl,pos) -> contains_inf_eq pf1 || contains_inf_eq pf2
+    | CP.Not (nf,fl,pos) -> contains_inf_eq nf
+    | CP.Forall (qid, qf,fl,pos) 
+    | CP.Exists (qid, qf,fl,pos) -> contains_inf_eq qf
  
 let normalize_inf_formula (f: CP.formula): CP.formula = 
   (*let pf = MCP.pure_of_mix f in*)
   let pf_norm = normalize_formula f in 
+  if contains_inf_eq f then 
   let f = (*MCP.mix_of_pure*) (convert_inf_to_var pf_norm) in 
+  let x_sv = CP.SpecVar(Int,"x",Unprimed) in
+  let x_var =  CP.Var(x_sv,no_pos) in
+  let inf_var =  CP.Var(CP.SpecVar(Int,"ZInfinity",Unprimed),no_pos) in (* Same Name as in parser.ml *)
+  let x_f = CP.BForm((CP.Lte(x_var,inf_var,no_pos),None),None) in
+  let inf_constr = CP.Forall(x_sv,x_f,None,no_pos) in
+  let f = CP.And(f,inf_constr,no_pos) in f
+  else let f = (*MCP.mix_of_pure*) (convert_inf_to_var pf_norm) in f
   (*let _ = DD.vv_trace("Normalized: "^ (string_of_pure_formula pf_norm)) in*)
-  f
+  
 
-let normalize_inf_formula (f: CP.formula): CP.formula =
+(*let normalize_inf_formula (f: CP.formula): CP.formula =
   let pr = string_of_pure_formula in
-  DD.ho_1 "normalize_inf_formula" pr pr normalize_inf_formula f
+  DD.ho_1 "normalize_inf_formula" pr pr normalize_inf_formula f*)

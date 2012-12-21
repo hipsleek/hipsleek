@@ -225,6 +225,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | AConst _ 
   | IConst _ 
   | Tsconst _ 
+  | InfConst _
   | FConst _ -> []
   | Ann_Exp (e,_) -> afv e
   | Add (a1, a2, _) -> combine_avars a1 a2

@@ -4245,7 +4245,9 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
     let pos = base.IF.formula_base_pos in
     let (new_h, type_f) = linearize_heap h pos in
     let new_p = trans_pure_formula p stab in
+    (*let _ = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in*)
     let new_p = Cpure.arith_simplify 5 new_p in
+    (*let _ = print_string("\nSimpleForm: "^(Cprinter.string_of_pure_formula new_p)) in*)
     let new_fl = trans_flow_formula fl pos in
 
     let new_a,_ = List.split (List.map (fun f -> linearize_one_formula f pos) a) in
@@ -4304,6 +4306,7 @@ and check_dfrac_wf e1 e2 pos = if (CP.has_e_tscons e1)||(CP.has_e_tscons e2) the
 else ()
   
 and trans_pure_formula (f0 : IP.formula) stab : CP.formula =
+  (*let  _ = print_string("\nIform: "^(Iprinter.string_of_pure_formula f0)) in*)
   match f0 with
     | IP.BForm (bf,lbl) -> CP.BForm (trans_pure_b_formula bf stab , lbl) 
     | IP.And (f1, f2, pos) ->
@@ -4419,6 +4422,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
 		CP.xpure_view_pos = pos
 	       }
   in
+  (*let _ = print_string("\nC_B_Form: "^(Cprinter.string_of_b_formula (npf,None))) in*)
   match sl with
     | None -> (npf, None)
     | Some (il,lbl,el) -> let nel = trans_pure_exp_list el stab in (npf, Some (il,lbl,nel))

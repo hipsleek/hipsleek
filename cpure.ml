@@ -691,6 +691,7 @@ let rec get_exp_type (e : exp) : typ =
   | Null _ -> Named ""
   | Var (SpecVar (t, _, _), _) -> t
   | IConst _ -> Int
+  | InfConst _ -> Int
   | FConst _ -> Float
   | AConst _ -> AnnT
   | Tsconst _ -> Tree_sh
@@ -2268,6 +2269,7 @@ and pos_of_exp (e : exp) = match e with
   | Null p 
   | Var (_, p) 
   | IConst (_, p) 
+  | InfConst (_,p)
   | AConst (_, p) 
   | FConst (_, p) 
   | Tsconst (_, p)
@@ -2854,7 +2856,7 @@ and b_subst (zip: (spec_var * spec_var) list) (bf:b_formula) :b_formula =
   Debug.no_2 "b_subst" pr pr2 pr2 b_subst_x zip bf
       
 and e_apply_one (fr, t) e = match e with
-  | Null _ | IConst _ | FConst _ | AConst _ | Tsconst _ -> e
+  | Null _ | IConst _ | InfConst _ | FConst _ | AConst _ | Tsconst _ -> e
   | Var (sv, pos) -> Var ((if eq_spec_var sv fr then t else sv), pos)
   | Add (a1, a2, pos) -> normalize_add (Add (e_apply_one (fr, t) a1,
     e_apply_one (fr, t) a2, pos))
@@ -2971,6 +2973,7 @@ and subs_one_term sst v orig = List.fold_left (fun old  -> fun  (fr,t) -> if (eq
 and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
   | Null _ 
   | IConst _ 
+  | InfConst _
   | FConst _ 
   | AConst _ 
   | Tsconst _ -> e
@@ -3113,7 +3116,8 @@ and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*e
 
   and helper crt_var e = match e with
     | Null _   
-    | IConst _ 
+    | IConst _
+    | InfConst _  
     | FConst _ 
     | AConst _ 
     | Tsconst _ -> (false,e)
@@ -4145,7 +4149,7 @@ and b_apply_one_exp (fr, t) bf =
   in (npf,il)
 
 and e_apply_one_exp (fr, t) e = match e with
-  | Null _ | IConst _ | FConst _| AConst _ | Tsconst _ -> e
+  | Null _ | IConst _ | InfConst _ | FConst _| AConst _ | Tsconst _ -> e
   | Var (sv, pos) -> if eq_spec_var sv fr then t else e
   | Add (a1, a2, pos) -> Add (e_apply_one_exp (fr, t) a1,
 							  e_apply_one_exp (fr, t) a2, pos)
@@ -4373,6 +4377,7 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
 	| Null _ 
 	| Var _ 
 	| IConst _ 
+	| InfConst _ 
 	| AConst _ 
 	| Tsconst _ 
     | FConst _ -> true
@@ -4502,16 +4507,19 @@ and simp_mult_x (e : exp) :  exp =
     match e0 with
       | Null _ 
       | Tsconst _ 
-      | InfConst _
-	  | AConst _ -> e0	  
+      | AConst _ -> e0	  
       | Var (v, l) ->
             (match m with 
               | None -> e0 
               | Some c ->  Mult (IConst (c, l), e0, l))
+      | InfConst (v,l) ->
+            (match m with 
+              | None -> e0 
+              | Some c ->  Mult (IConst (c, l), e0, l))              
       | IConst (v, l) ->
             (match m with 
               | None -> e0 
-              | Some c ->  IConst (c * v, l))
+              | Some c ->  IConst (c * v, l))         
       | FConst (v, l) ->
             (match m with
               | None -> e0
@@ -4566,8 +4574,8 @@ and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
   match e with
     |  Null _ 
     |  Var _ 
-	|  Tsconst _
-    |  InfConst _ 
+    |  Tsconst _
+    |  InfConst _
     |  AConst _ -> ((Some e), None)
     |  IConst (v, l) ->
            if v >= 0 then 
@@ -4575,7 +4583,7 @@ and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
            else 
              (* if v < 0 then *)
              (None, (Some ( IConst (- v, l))))
-           (* else (None, None) *)
+           (* else (None, None) *)        
     | FConst (v, l) ->
           if v >= 0.0 then
             ((Some e), None)
@@ -4843,7 +4851,7 @@ and b_form_simplify (pf : b_formula) :  b_formula =
 
 and b_form_simplify_x (b:b_formula) :b_formula = 
   let do_all e1 e2 l =
-	  let t1 = simp_mult e1 in
+    let t1 = simp_mult e1 in
     let t2 = simp_mult e2 in
     let t1 = purge_mult t1 in
     let t2 = purge_mult t2 in
@@ -4856,7 +4864,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
 	  let rh = purge_mult rh in
 	  (lh, rh) in
   let do_all3 e1 e2 e3 l =
-	  let t1 = simp_mult e1 in
+    let t1 = simp_mult e1 in
     let t2 = simp_mult e2 in
     let t3 = simp_mult e3 in
     let (lhs, lsm) = split_sums t1 in
@@ -4892,7 +4900,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
 		   if !perm=Dperm && (perm_bounds e1 || perm_bounds e2) then  BConst (false, l)
 		   else
 			let lh, rh = do_all e1 e2 l in
-			Eq (lh, rh, l)
+			Eq (lh, rh, l)		
     |  Neq (e1, e2, l) ->
            let lh, rh = do_all e1 e2 l in
 		   Neq (lh, rh, l)
@@ -5024,9 +5032,9 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
 	      | Null _ 
 	      | Var _ 
 	      | IConst _
-          | InfConst _ 
+              | InfConst _ 
 	      | AConst _
-		  | Tsconst _ 
+              | Tsconst _ 
 	      | FConst _ -> (e,f_comb [])
 	      | Add (e1,e2,l) ->
 	            let (ne1,r1) = helper new_arg e1 in
@@ -5537,6 +5545,7 @@ let rec get_head e = match e with
     | Null _ -> "Null"
     | Var (v,_) -> name_of_spec_var v
     | IConst (i,_)-> string_of_int i
+    | InfConst(i,_) -> i
     | FConst (f,_) -> string_of_float f
     | AConst (f,_) -> string_of_heap_ann f
 	| Tsconst (f,_) -> Tree_shares.Ts.string_of f
@@ -5593,7 +5602,7 @@ and norm_exp (e:exp) =
   (* let _ = print_string "\n !!!!!!!!!!!!!!!! norm exp aux \n" in *)
   let rec helper e = match e with
     | Var _ 
-    | Null _ | IConst _ | FConst _ | AConst _ | Tsconst _ -> e
+    | Null _ | IConst _ | InfConst _ | FConst _ | AConst _ | Tsconst _ -> e
     | Add (e1,e2,l) -> simp_addsub e (IConst(0,no_pos)) l 
     | Subtract (e1,e2,l) -> simp_addsub e1 e2 l 
     | Mult (e1,e2,l) -> 
@@ -7707,6 +7716,7 @@ let compute_instantiations_x pure_f v_of_int avail_v =
     and helper (e:exp) (rhs_e:exp) :exp = match e with 
       | IConst _
       | FConst _
+      | InfConst _ 
       | AConst _
 	  | Tsconst _ 
       | Null _ -> failwith ("expecting var"^ (!print_sv v) )

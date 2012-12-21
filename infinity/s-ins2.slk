@@ -17,28 +17,29 @@ pred sortll<mi> == self=null
 inv true.
 */
 
-//valid
+//(1) valid
 checkentail res=null |- res::sortll<m> & m=\inf.
 
-//m=\inf instantiated
+//(2) m=\inf instantiated
 checkentail res=null |- res::sortll<m>.
 
+//(3)
 checkentail x=null |- x::sortll<2>.
 // must fail
 
-// must fail
+// (4) must fail
 checkentail v=\inf |- v=2.
 
-// valid
+// (5) valid
 checkentail v=\inf |- v>=2.
 
-// must fail
+// (6) must fail
 checkentail v=\inf |- v<=2.
 
-// valid
+// (7) valid
 checkentail true |- m<=\inf.
 
-// may error
+// (8) may error
 checkentail true |- m>=\inf.
 
 
