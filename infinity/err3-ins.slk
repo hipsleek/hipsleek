@@ -1,0 +1,13 @@
+//(1) Valid
+checkentail v=\inf |- v>=1 .
+/*
+   problem  
+   FAIL
+*/
+
+//(2) Valid
+checkentail v=-\inf |- v<1 .
+/*
+   problem  
+   FAIL
+*/

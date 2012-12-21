@@ -17,6 +17,10 @@ checkentail true |- v=min(v,\inf).
 
 //(3) Valid
 checkentail v=\inf |- v>=1 .
+/*
+   problem  
+   FAIL
+*/
 
 //(4)
 checkentail true |- v=max(v,-w).

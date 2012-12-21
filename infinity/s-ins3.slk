@@ -1,0 +1,5 @@
+checkentail v=\inf |- v=max(v,\inf).
+
+checkentail v=\inf |- v=max(w,\inf).
+
+checkentail v<\inf |- v=\inf.
