@@ -1,4 +1,27 @@
 
+x=inf & x=3
+
+    inf=c ==> false
+
+x=inf & x>=3
+        ==> inf>=3 
+        ==> true 
+
+ \inf!=c
+ ==> true
+ \inf=c
+ ==> false
+ \inf<=c
+ ==> false
+ \inf<=c
+ ==> false
+ \inf>c
+ ==> true
+ \inf>=c
+ ==> true
+
+
+
 v>-inf 
   ==> v+inf>0
   ==> inf>-v

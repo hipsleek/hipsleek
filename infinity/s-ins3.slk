@@ -1,5 +1,38 @@
-checkentail v=\inf |- v=max(v,\inf).
+//(1)
+/*
+checkentail 3=\inf |- false.
+normalize_inf_formula inp1 : 3=ZInfinity
+normalize_inf_formula@1 EXIT out : ZInfinity=3
+ERROR : should be false
+*/
 
-checkentail v=\inf |- v=max(w,\inf).
+//(2)
+/*
+checkentail 3>=\inf |- false.
+normalize_inf_formula inp1 : (ZInfinity)<=3
+normalize_inf_formula@5 EXIT out : ZInfinity=3
+ERROR : should be false
+*/
 
-checkentail v<\inf |- v=\inf.
+//(3)
+checkentail 3>\inf |- false.
+/*
+normalize_inf_formula inp1 : (ZInfinity)<3
+normalize_inf_formula@7 EXIT out : false
+*/
+
+//(4)
+checkentail true |- \inf>3.
+/*
+normalize_inf_formula inp1 : 3<(ZInfinity)
+normalize_inf_formula@9 EXIT out : ZInfinity!=3
+ERROR : should be true
+*/
+
+//(5)
+checkentail true |- \inf>=3.
+/*
+normalize_inf_formula inp1 : 3<=(ZInfinity)
+normalize_inf_formula@11 EXIT out : true
+*/
+
