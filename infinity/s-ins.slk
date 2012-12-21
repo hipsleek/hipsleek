@@ -24,20 +24,56 @@ checkentail true |- v=max(v,-w).
 
 //(5)
 checkentail true |- v=max(v,-\inf).
-//v=max(v,0+INF)
+/*
+normalize_inf_formula inp1 : (ZInfinity)+v=max((ZInfinity)+v,0)
+normalize_inf_formula@20 EXIT out : ZInfinity=ZInfinity
+*/
 
 //(6)
 checkentail true |- v=max(v,0-\inf).
-// (0+(INF))<v
+/*
+ PROBLEM : How come empty?
+*/
 
 //(7)
 checkentail true |- v>-\inf.
-// (0+INF)<v
+/*
+normalize_inf_formula@22
+normalize_inf_formula inp1 : 0<((ZInfinity)+v)
+normalize_inf_formula@22 EXIT out : ZInfinity!=0
+*/
 
 
 //(8) 
 checkentail true |- v>=-\inf.
-// (0+INF)<=v
+/*
+normalize_inf_formula inp1 : 0<=((ZInfinity)+v)
+normalize_inf_formula@8 EXIT out : true
+*/
 
 //(9) valid
 checkentail res=null |- res::sortll<m> & m=\inf.
+print residue.
+/*
+ UNSOUND to have false
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+
+*/
+
+//(10) valid
+checkentail res=null |- res::sortll<m> & m=\inf.
+print residue.
+/* 
+ UNSOUND to have false
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+*/
+
+//(11)
+checkentail true |- v=max(w,-\inf).
+/*
+UNSOUND:
+normalize_inf_formula@29
+normalize_inf_formula inp1 : (ZInfinity)+v=max((ZInfinity)+w,0)
+normalize_inf_formula@29 EXIT out : ZInfinity=ZInfinity
+
+*/

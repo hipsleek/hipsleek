@@ -277,6 +277,6 @@ let normalize_inf_formula (f: CP.formula): CP.formula =
   (*let _ = DD.vv_trace("Normalized: "^ (string_of_pure_formula pf_norm)) in*)
   
 
-(*let normalize_inf_formula (f: CP.formula): CP.formula =
+let normalize_inf_formula (f: CP.formula): CP.formula =
   let pr = string_of_pure_formula in
-  DD.ho_1 "normalize_inf_formula" pr pr normalize_inf_formula f*)
+  DD.ho_1 "normalize_inf_formula" pr pr normalize_inf_formula f
