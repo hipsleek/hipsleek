@@ -1,0 +1,35 @@
+//(1)
+checkentail true |- \inf=\inf.
+
+//(2)
+checkentail \inf=-\inf |- false.
+
+//(3)
+checkentail true |- \inf+3=\inf .
+
+//(4)
+checkentail true |- \inf+3=-\inf.
+
+//(5)
+checkentail true |- \inf!=\inf.
+
+//(6)
+checkentail true |- \inf != -\inf.
+
+//(7)
+checkentail true |- \inf+3 !=\inf.
+
+//(6)
+checkentail true |- \inf+c != -\inf.
+
+//(4)
+checkentail true |- \inf>=\inf.
+
+//(5)
+checkentail  \inf>\inf |-false.
+
+//(6)
+checkentail true |- \inf>=-\inf.
+
+//(7)
+checkentail -\inf>=\inf |- false.
