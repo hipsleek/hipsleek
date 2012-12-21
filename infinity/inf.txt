@@ -1,4 +1,38 @@
 
+v>-inf 
+  ==> v+inf>0
+  ==> inf>-v
+  ==> not(-v=inf)
+
+v>=-inf 
+  ==> v+inf>=0
+  ==> inf>=-v
+  ==> true
+
+x=min(w,-inf) 
+  ==> x=-inf
+  ==> x+inf = min(w+inf,0)
+
+x=-inf 
+  ==> x+inf=0
+
+exp-inf=0
+==>  exp = inf
+
+exp+inf=0
+==>  exp = -inf
+
+2x=inf 
+===> x=inf
+
+c+inf =  inf
+c-inf = -inf
+
+x+y=inf
+==> x=inf || y=inf
+
+
+
 Equisatisfiable Normalization
 =============================
    v<=\inf      ==> true
