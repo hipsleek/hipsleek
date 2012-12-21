@@ -6,6 +6,8 @@ open Exc.GTable
 (* Global variables      *)
 (* --------------------- *)
 
+(* TRUNG: use stack to store type and variables *)
+
 (* hash table contains Globals.typ structures that are used to represent Cil.typ pointers *)
 let gl_pointers_type : (Cil.typ, Globals.typ) Hashtbl.t = Hashtbl.create 10
 
@@ -15,11 +17,10 @@ let gl_pointers_data : (Cil.typ, Iast.data_decl) Hashtbl.t = Hashtbl.create 10
 let gl_pointer_data_name = "pdata"
 
 (* address of global vars *)
-let gl_addressof_data : (Cil.lval, Iast.exp) Hashtbl.t = Hashtbl.create 10  (* global vars *)
-
+let gl_addressof_data : (Cil.lval, Iast.exp) Hashtbl.t = Hashtbl.create 10
 
 (* address of local vars *)
-let lc_addressof_data : (Cil.lval, Iast.exp) Hashtbl.t = Hashtbl.create 10  (* local vars  *)
+let lc_addressof_data : (Cil.lval, Iast.exp) Hashtbl.t = Hashtbl.create 10
 
 
 let supplement_exp : Iast.exp list ref = ref []
@@ -146,25 +147,39 @@ let typ_of_cil_lval (lv: Cil.lval) : Cil.typ =
   let lhost, offset, _ = lv in
   match (lhost, offset) with
   | Cil.Var (v, _), Cil.NoOffset -> v.Cil.vtype;
-  | Cil.Var _, Cil.Field _ -> report_error_msg "typ_of_cil_lval: handle (Cil.Var, Cil.Field) later!"
-  | Cil.Var _, Cil.Index _ -> report_error_msg "typ_of_cil_lval: handle (Cil.Var, Cil.Index) later!"
-  | Cil.Mem _, Cil.NoOffset -> report_error_msg "typ_of_cil_lval: handle (Cil.Mem, Cil.NoOffset) later!"
-  | Cil.Mem _, Cil.Field _ -> report_error_msg "typ_of_cil_lval: handle (Cil.Mem, Cil.Field) later!"
-  | Cil.Mem _, Cil.Index _ -> report_error_msg "typ_of_cil_lval: handle (Cil.Mem, Cil.Index) later!"
+  | Cil.Var _, Cil.Field _ ->
+      report_error_msg "typ_of_cil_lval: handle (Cil.Var, Cil.Field) later!"
+  | Cil.Var _, Cil.Index _ ->
+      report_error_msg "typ_of_cil_lval: handle (Cil.Var, Cil.Index) later!"
+  | Cil.Mem _, Cil.NoOffset ->
+      report_error_msg "typ_of_cil_lval: handle (Cil.Mem, Cil.NoOffset) later!"
+  | Cil.Mem _, Cil.Field _ ->
+      report_error_msg "typ_of_cil_lval: handle (Cil.Mem, Cil.Field) later!"
+  | Cil.Mem _, Cil.Index _ ->
+      report_error_msg "typ_of_cil_lval: handle (Cil.Mem, Cil.Index) later!"
 
 
 let rec is_global_cil_exp (e: Cil.exp) : bool =
   match e with
-  | Cil.Const _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.Const!"
+  | Cil.Const _ ->
+      report_error_msg "Error!!! is_global_cil_exp: not handle Cil.Const!"
   | Cil.Lval (lval, _) -> is_global_cil_lval lval
-  | Cil.SizeOf _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.SizeOf!"
-  | Cil.SizeOfE _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.SizeOfE!"
-  | Cil.SizeOfStr _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.SizeOfStr!"
-  | Cil.AlignOf _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.AlignOf!"
-  | Cil.AlignOfE _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.AlignOfE!"
-  | Cil.UnOp _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.UnOp!"
-  | Cil.BinOp _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.BinOp!"
-  | Cil.Question _ -> report_error_msg "Error!!! is_global_cil_exp: In appropriate exp, don't handle Cil.Question!"
+  | Cil.SizeOf _ ->
+      report_error_msg "Error!!! is_global_cil_exp: not handle Cil.SizeOf!"
+  | Cil.SizeOfE _ ->
+      report_error_msg "Error!!! is_global_cil_exp: not handle Cil.SizeOfE!"
+  | Cil.SizeOfStr _ ->
+      report_error_msg "Error!!! is_global_cil_exp: not handle Cil.SizeOfStr!"
+  | Cil.AlignOf _ ->
+      report_error_msg "Error!!! is_global_cil_exp: not handle Cil.AlignOf!"
+  | Cil.AlignOfE _ ->
+      report_error_msg "Error!!! is_global_cil_exp: not handle Cil.AlignOfE!"
+  | Cil.UnOp _ ->
+      report_error_msg "Error!!! is_global_cil_exp: not handle Cil.UnOp!"
+  | Cil.BinOp _ ->
+      report_error_msg "Error!!! is_global_cil_exp: not handle Cil.BinOp!"
+  | Cil.Question _ ->
+      report_error_msg "Error!!! is_global_cil_exp: not handle Cil.Question!"
   | Cil.CastE (_, e1, _) -> is_global_cil_exp e1
   | Cil.AddrOf (lv, _) -> is_global_cil_lval lv
   | Cil.StartOf (lv, _) -> is_global_cil_lval lv 
@@ -417,6 +432,7 @@ let translate_var_decl (vinfo: Cil.varinfo) : Iast.exp =
                              Iast.exp_var_decl_pos = pos} in
   newexp
 
+
 let translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   match c with
@@ -435,14 +451,22 @@ let translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp 
   | Cil.CEnum _ -> report_error_msg "TRUNG TODO: Handle Cil.CEnum later!"
 
 
+(* translate a field of a struct                       *)
+(*     return: field type * location * inline property *)
 let translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option) 
                         : (Iast.typed_ident * loc * bool) =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let name = field.Cil.fname in
-  let ty = translate_typ field.Cil.ftype in
   match field.Cil.ftype with
-  | Cil.TPtr _ -> ((ty, name), pos, true)          (* pointer --> inline type in Iast *)
-  | _ -> ((ty, name), pos, false)
+  | Cil.TComp (comp, _) ->
+      let ty = Globals.Named comp.Cil.cname in
+      ((ty, name), pos, true)
+  | Cil.TPtr (Cil.TComp (comp, _), _) ->
+      let ty = Globals.Named comp.Cil.cname in
+      ((ty, name), pos, false)
+  | _ ->
+      let ty = translate_typ field.Cil.ftype in
+      ((ty, name), pos, false)
 
 
 let translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option)
