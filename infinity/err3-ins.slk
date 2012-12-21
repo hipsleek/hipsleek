@@ -11,3 +11,19 @@ checkentail v=-\inf |- v<1 .
    problem  
    FAIL
 */
+
+//(3)
+checkentail true |- v>-\inf.
+/*
+normalize_inf_formula inp1 : 0<((ZInfinity)+v)
+normalize_inf_formula@26 EXIT out : ZInfinity!=0
+
+This translation is wrong, it should have been
+v>-inf  ===> not(v=-inf)
+*/
+
+//(4)
+checkentail true |- !(v+\inf=0).
+/*
+wrong translation
+*/
