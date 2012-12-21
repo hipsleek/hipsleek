@@ -51,6 +51,36 @@ let rec normalize_exp (exp: CP.exp) : CP.exp =
     			   else CP.Add(e1_norm,e2_norm,pos)                          
     | _ -> exp
 
+
+let check_neg_inf (exp1: CP.exp) (exp2: CP.exp) (exp3: CP.exp) : bool * CP.exp * CP.exp = 
+match exp1 with
+ | CP.Add(a1,a2,pos) -> let oexp = if CP.is_inf a1 then a2 else 
+ 			           if CP.is_inf a2 then a1 else exp1 in
+  	(match exp2 with
+    	| CP.Add(e1,e2,pos) -> let flag = if CP.is_inf e1 || CP.is_inf e2 
+    			   then if CP.is_int exp3
+    			   then (match exp3 with
+    			   	| CP.IConst(b,_) -> if b == 0 then true else false
+    			   	| _ -> false)
+    			   else false
+    			   else false
+    			   in let exp = if CP.is_inf e1 then e2 else 
+    			   	if CP.is_inf e2 then e2 else exp2
+    			   in flag,oexp,exp
+    	| _ -> match exp3 with
+    	     	| CP.Add(e1,e2,pos) -> let flag = if CP.is_inf e1 || CP.is_inf e2 
+    			   	   then if CP.is_int exp2
+      			           then (match exp2 with
+				   	| CP.IConst(b,_) -> if b == 0 then true else false
+    				   	| _ -> false)
+    				   else false
+    				   else false
+    				   in let exp = if CP.is_inf e1 then e1 else 
+    			   	   if CP.is_inf e2 then e2 else exp3
+    			  	   in flag,oexp,exp
+    	     	| _ -> false,exp2,exp3)
+ | _ -> false,exp2,exp3
+
 let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula = 
   let _ = DD.vv_trace("in normalize_b_formula: "^ (string_of_b_formula bf)) in
   let (p_f,bf_ann) = bf in
@@ -60,37 +90,51 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
                           let e2_norm = normalize_exp e2 in
                           if CP.is_const_or_var e1_norm && CP.is_inf e2_norm 
                           then CP.Neq(e1_norm,e2_norm,pos)
+                          else if CP.is_inf e1_norm && CP.is_const_or_var e2_norm
+                          then CP.BConst(false,pos)
                           else CP.Lt(e1_norm,e2_norm,pos)
     | CP.Lte(e1,e2,pos) -> let e1_norm = normalize_exp e1 in
                            let e2_norm = normalize_exp e2 in
                            if CP.is_const_or_var e1_norm && CP.is_inf e2_norm 
                            then CP.BConst(true,pos)
+                           else if CP.is_inf e1_norm && CP.is_const_or_var e2_norm
+                           then CP.Eq(e1_norm,e2_norm,pos)
                            else CP.Lte(e1_norm,e2_norm,pos)
     | CP.Gt(e1,e2,pos) -> let e1_norm = normalize_exp e1 in
                           let e2_norm = normalize_exp e2 in
                           if CP.is_const_or_var e1_norm && CP.is_inf e2_norm 
                           then CP.BConst(false,pos)
+                          else if CP.is_inf e1_norm && CP.is_const_or_var e2_norm
+                          then CP.Neq(e1_norm,e2_norm,pos)
                           else CP.Gt(e1_norm,e2_norm,pos)
     | CP.Gte(e1,e2,pos) -> let e1_norm = normalize_exp e1 in
                            let e2_norm = normalize_exp e2 in
                            if CP.is_const_or_var e1_norm && CP.is_inf e2_norm 
                            then CP.Eq(e1_norm,e2_norm,pos)
+                           else if CP.is_inf e1_norm && CP.is_const_or_var e2_norm
+                           then CP.BConst(true,pos)
                            else CP.Gte(e1_norm,e2_norm,pos)
     | CP.Eq (e1,e2,pos) -> let e1_norm = normalize_exp e1 in
                            let e2_norm = normalize_exp e2 in
                            CP.Eq(e1_norm,e2_norm,pos)
     | CP.Neq (e1,e2,pos) -> let e1_norm = normalize_exp e1 in
                             let e2_norm = normalize_exp e2 in
-                            CP.Neq(e1_norm,e2_norm,pos) 
-    | CP.EqMax (e1,e2,e3,pos) -> let e1_norm = normalize_exp e1 in
+                            CP.Neq(e1_norm,e2_norm,pos)                            
+    | CP.EqMax (e1,e2,e3,pos) -> let flag,w1,w2 = check_neg_inf e1 e2 e3 in
+			         if flag then CP.Eq(w1,w2,pos)
+			         else
+			         let e1_norm = normalize_exp e1 in
                                  let e2_norm = normalize_exp e2 in
                                  let e3_norm = normalize_exp e3 in
                                  if CP.is_const_or_var e2_norm && CP.is_inf e3_norm 
                                  then CP.Eq(e1_norm,e3_norm,pos)
                                  else if CP.is_inf e2_norm && CP.is_const_or_var e3_norm
-                                 then CP.Eq(e1_norm,e2_norm,pos)
+                                 then CP.Eq(e1_norm,e2_norm,pos)                                
                                  else CP.EqMax(e1_norm,e2_norm,e3_norm,pos)
-    | CP.EqMin (e1,e2,e3,pos) -> let e1_norm = normalize_exp e1 in
+    | CP.EqMin (e1,e2,e3,pos) -> let flag,w1,w2 = check_neg_inf e1 e2 e3 in
+			         if flag then CP.Eq(e1,(CP.mkIConst 0 pos),pos)
+			         else 
+			         let e1_norm = normalize_exp e1 in   
                                  let e2_norm = normalize_exp e2 in
                                  let e3_norm = normalize_exp e3 in
                                  if CP.is_const_or_var e2_norm && CP.is_inf e3_norm 
@@ -265,7 +309,7 @@ let rec contains_inf_eq (pf:CP.formula) : bool =
 let normalize_inf_formula (f: CP.formula): CP.formula = 
   (*let pf = MCP.pure_of_mix f in*)
   let pf_norm = normalize_formula f in 
-  if contains_inf_eq f then 
+  (*if contains_inf_eq f then 
   let f = (*MCP.mix_of_pure*) (convert_inf_to_var pf_norm) in 
   let x_sv = CP.SpecVar(Int,"x",Unprimed) in
   let x_var =  CP.Var(x_sv,no_pos) in
@@ -273,7 +317,7 @@ let normalize_inf_formula (f: CP.formula): CP.formula =
   let x_f = CP.BForm((CP.Lte(x_var,inf_var,no_pos),None),None) in
   let inf_constr = CP.Forall(x_sv,x_f,None,no_pos) in
   let f = CP.And(f,inf_constr,no_pos) in f
-  else let f = (*MCP.mix_of_pure*) (convert_inf_to_var pf_norm) in f
+  else*) let f = (*MCP.mix_of_pure*) (convert_inf_to_var pf_norm) in f
   (*let _ = DD.vv_trace("Normalized: "^ (string_of_pure_formula pf_norm)) in*)
   
 

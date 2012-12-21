@@ -16,7 +16,7 @@ checkentail v<\inf |- v=\inf.
 checkentail true |- v=min(v,\inf).
 
 //(3) Valid
-checkentail v=\inf |- v>=1.
+checkentail v=\inf |- v>=1 .
 
 //(4)
 checkentail true |- v=max(v,-w).

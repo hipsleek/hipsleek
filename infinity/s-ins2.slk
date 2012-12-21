@@ -29,9 +29,11 @@ checkentail x=null |- x::sortll<2>.
 
 // (4) must fail
 checkentail v=\inf |- v=2.
+print residue.
 
 // (5) valid
 checkentail v=\inf |- v>=2.
+print residue.
 
 // (6) must fail
 checkentail v=\inf |- v<=2.
@@ -43,38 +45,39 @@ checkentail true |- m<=\inf.
 checkentail true |- m>=\inf.
 
 
-// must error
+// (9) must error
 checkentail m != \inf |- m >= \inf.
 
-//valid
+//(10) valid
 checkentail m=\inf |- m>=\inf.
 
-//true
+// (11) true
 checkentail true |- w=min(w,\inf).
 // should succeed
 //  |- v<=\inf & v=v or v>=\inf & v=\inf
 //  |- v=v  & v=\inf
 
+//(12)
 checkentail v<inf |- v=inf. // must failure
 
-//valid --> m=\inf
+// (13) valid --> m=\inf
 checkentail x::node<a,null> |- x::sortll<m>.
 
 
-// fail
+// (14) fail
 checkentail x::node<a,q>*q::node<b,null> |- x::sortll<m>.
 
-// valid
+// (15) valid
 checkentail x::node<a,q>*q::node<b,null> & a<b |- x::sortll<m>.
 
 
-//error -
+// (16) error -
 checkentail true |- \inf=1+\inf.
 
-//can we simplify x=\inf
+// (17) can we simplify x=\inf
 checkentail x=1+\inf |- x>=\inf.
 
-//can we simplify x=\inf
+// (18) can we simplify x=\inf
 checkentail 1+x=\inf |- x>=\inf.
 
 // how about x=\inf-2*\inf etc
