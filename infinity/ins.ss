@@ -8,7 +8,7 @@ data node {
 relation O(int m, int n).
 
 
-sortll<mi> == self=null or
+sortll<mi> == self=null & mi=\inf or
   self::node<mi, p> * p::sortll<m2> & mi<=m2 //& O(mi,m2)
 inv true;
 
