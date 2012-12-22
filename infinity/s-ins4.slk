@@ -60,3 +60,10 @@ PROBLEM : should be true
 normalize_inf_formula inp1 : ((ZInfinity)+8+(ZInfinity))!=0
 normalize_inf_formula@17 EXIT out : (ZInfinity+8+ZInfinity)!=0
 */
+
+//(9)
+checkentail \inf+3=\inf |- false.
+print residue.
+/* UNSOUND
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+*/
