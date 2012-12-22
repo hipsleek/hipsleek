@@ -55,6 +55,17 @@ let rec normalize_exp (exp: CP.exp) : CP.exp =
     			   else CP.Add(e1_norm,e2_norm,pos)*)                          
     | _ -> exp
 
+let check_neg_inf2_inf (exp1: CP.exp) (exp2: CP.exp) : bool = 
+match exp1 with
+    	| CP.Add(e1,e2,pos) -> if CP.is_inf e1 && CP.is_inf e2
+    			   then if CP.is_int exp2
+    			   then (match exp2 with
+    			   	| CP.IConst(b,_) -> if b == 0 then true else false
+    			   	| _ -> false)
+    			   else false
+    			   else false
+    	| _ -> false
+
 let check_neg_inf2_const (exp1: CP.exp) (exp2: CP.exp) : bool = 
 match exp1 with
     	| CP.Add(e1,e2,pos) -> if (CP.is_inf e1 && CP.is_const_exp e2) || (CP.is_inf e2 && CP.is_const_exp e1)
@@ -148,6 +159,7 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
                           else CP.Gt(e1_norm,e2_norm,pos)
     | CP.Gte(e1,e2,pos) -> let e1_norm = normalize_exp e1 in
                            let e2_norm = normalize_exp e2 in
+                           if CP.is_inf e1_norm && CP.is_inf e2_norm then CP.BConst(true,pos) else
                            if check_neg_inf2_const e2_norm e1_norm then CP.BConst(false,pos)
                            else if CP.is_const_exp e1_norm && CP.is_inf e2_norm then CP.BConst(false,pos)
                            else if CP.is_const_or_var e1_norm && CP.is_inf e2_norm 
@@ -159,6 +171,10 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
                            else CP.Gte(e1_norm,e2_norm,pos)
     | CP.Eq (e1,e2,pos) -> let e1_norm = normalize_exp e1 in
                            let e2_norm = normalize_exp e2 in
+                           if check_neg_inf2_inf e1_norm e2_norm || check_neg_inf2_inf e2_norm e1_norm
+                           then CP.BConst(false,pos)
+                           else if CP.is_inf e1_norm && CP.is_inf e2_norm 
+                           then CP.BConst(true,pos) else
                            if CP.is_const_exp e1_norm && CP.is_inf e2_norm then CP.BConst(false,pos)
                            else if CP.is_inf e1_norm && CP.is_const_exp e2_norm then CP.BConst(false,pos)
                            else if check_neg_inf2_const e1_norm e2_norm || check_neg_inf2_const e2_norm e1_norm
@@ -166,7 +182,9 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
                            else CP.Eq(e1_norm,e2_norm,pos)
     | CP.Neq (e1,e2,pos) -> let e1_norm = normalize_exp e1 in
                             let e2_norm = normalize_exp e2 in
-                            if CP.is_const_exp e1_norm && CP.is_inf e2_norm then CP.BConst(true,pos)
+                            if CP.is_inf e1_norm && CP.is_inf e2_norm 
+                            then CP.BConst(false,pos)
+                            else if CP.is_const_exp e1_norm && CP.is_inf e2_norm then CP.BConst(true,pos)
                             else if CP.is_inf e1_norm && CP.is_const_exp e2_norm then CP.BConst(true,pos)
                             else if check_neg_inf2_const e1_norm e2_norm || check_neg_inf2_const e2_norm e1_norm
                             then CP.BConst(true,pos)
@@ -358,13 +376,13 @@ let rec contains_inf_eq (pf:CP.formula) : bool  =
     | CP.Forall (qid, qf,fl,pos) 
     | CP.Exists (qid, qf,fl,pos) -> contains_inf_eq qf
  
-let rec substitute_inf (f: CP.formula): CP.formula = f
+let rec substitute_inf (f: CP.formula): CP.formula = convert_inf_to_var f
 
  
-let normalize_inf_formula (f: CP.formula): CP.formula = 
+let rec normalize_inf_formula (f: CP.formula): CP.formula = 
   (*let pf = MCP.pure_of_mix f in*)
   let pf_norm = normalize_formula f in 
-  (*if contains_inf_eq pf_norm then 
+  if contains_inf_eq pf_norm then 
   let fs = substitute_inf pf_norm in
   normalize_inf_formula fs
   (*let f = (*MCP.mix_of_pure*) (convert_inf_to_var pf_norm) in 
@@ -374,7 +392,7 @@ let normalize_inf_formula (f: CP.formula): CP.formula =
   let x_f = CP.BForm((CP.Lte(x_var,inf_var,no_pos),None),None) in
   let inf_constr = CP.Forall(x_sv,x_f,None,no_pos) in
   let f = CP.And(f,inf_constr,no_pos) in f*)
-  else*) let f = (*MCP.mix_of_pure*) (convert_inf_to_var pf_norm) in f
+  else let f = (*MCP.mix_of_pure*) (convert_inf_to_var pf_norm) in f
   (*let _ = DD.vv_trace("Normalized: "^ (string_of_pure_formula pf_norm)) in*)
   
 
