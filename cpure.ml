@@ -406,6 +406,12 @@ let is_const_or_var (f:exp) = match f with
   | FConst _ -> true
   | _ -> false 
 
+(* is exp a const *)
+let is_const_exp (f:exp) = match f with
+  | IConst _ -> true
+  | FConst _ -> true
+  | _ -> false 
+
 (* is exp an infinity const *)
 let is_inf (f:exp) = match f with
   | InfConst  _ -> true

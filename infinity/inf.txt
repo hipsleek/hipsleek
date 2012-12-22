@@ -14,8 +14,6 @@ These rules and also those of -\inf
  ==> false
  \inf<=c
  ==> false
- \inf<=c
- ==> false
  \inf>c
  ==> true
 
