@@ -27,4 +27,9 @@ v>-inf  ===> not(v=-inf)
 checkentail true |- !(v+\inf=0).
 /*
 wrong translation
+
+normalize_inf_formula@10
+normalize_inf_formula inp1 : (v+(ZInfinity))!=0
+normalize_inf_formula@10 EXIT out : ZInfinity!=0
+
 */

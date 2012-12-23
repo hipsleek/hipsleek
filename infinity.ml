@@ -490,20 +490,21 @@ Find the substitutions with \inf
 let find_inf_subs (f:CP.formula) : (CP.formula * EM.emap) list =
   let ds = CP.split_disjunctions f in
   let find_inf_eq e =
-    let f_f _ f = None in
-    let f_bf _ bf = 
+    let f_f f = None in
+    let f_bf bf = 
       (match bf with
-        | ((Eq _) as e),_ -> Some (bf,[bf]) 
-        | _,_ -> Some (bf,[])
+        | ((Eq _) as e),_ -> Some ([bf]) 
+        | _,_ -> Some ([])
       )
     in
-    let f_e _ e = Some (e,[]) in
-    let f_arg = (fun _ _ -> ()),(fun _ _ -> ()),(fun _ _ -> ()) in
-    let subs e = trans_formula e () (f_f,f_bf,f_e) f_arg List.concat in
+    let f_e e = Some ([]) in
+    (* let f_arg = (fun _ _ -> ()),(fun _ _ -> ()),(fun _ _ -> ()) in *)
+    (* let subs e = trans_formula e () (f_f,f_bf,f_e) f_arg List.concat in *)
+    let find_eq e = fold_formula e (f_f,f_bf,f_e) List.concat in
     let pr = string_of_pure_formula in
-    let prl (_,l) = pr_list string_of_b_formula l in
-    let subs e = DD.ho_1 "find_inf_subs" pr prl subs e in
-    subs e;
+    let prl l = pr_list string_of_b_formula l in
+    let find_eq e = DD.ho_1 "find_inf_subs" pr prl find_eq e in
+    find_eq e;
     EM.mkEmpty 
   in 
   List.map (fun e -> (e,find_inf_eq e)) ds

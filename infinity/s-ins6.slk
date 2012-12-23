@@ -1,5 +1,6 @@
 
-checkentail true & (x=\inf & x<0 | v=-\inf & v>0 ) |- false.
+
+checkentail true & (x=\inf & x<0 | v=-\inf & v>0 ) |- x<0.
 
 /*
 PROBLEM : why isn't v=-\inf & v>0 processed?
