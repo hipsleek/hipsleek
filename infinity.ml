@@ -380,18 +380,29 @@ let find_inf_subs (f:CP.formula) : (CP.formula * EM.emap) list =
     					| _ -> false
     			) eq_list in
     let eqset = EM.mkEmpty in
+    let neg_inf = CP.SpecVar(Int,constinfinity,Primed) in
     let eqset = List.fold_left (fun eset exp -> 
 			        let (p_f,bf_ann) = exp in
     				(match p_f with
     				| Eq (e1,e2,pos) -> (match e1,e2 with
     						    | Var(sv1,_),Var(sv2,_) -> EM.add_equiv eset sv1 sv2
-    						    | _ -> eset)
+                                | _,IConst(0,_) -> 
+                                    (match e1 with 
+                                       | Add(a1,a2,_) -> 
+                                           (match a1, a2 with 
+                                           | Var(sa1,_),Var(sa2,_) -> if is_inf a1 
+                                                          then EM.add_equiv eset sa2 neg_inf
+                                             else if is_inf a2 then EM.add_equiv eset sa1 neg_inf
+                                             else eset
+                                           | _ -> eset)
+                                       | _ -> eset)
+             			        | _ -> eset)
     				| _ -> eset)
     				) eqset eq_list in eqset 
   in 
   List.map (fun e -> (e,find_inf_eq e)) ds
 
-let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) : CP.exp =
+let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) (is_neg: bool) : CP.exp =
   match exp with
     | CP.Null _
     | CP.IConst _
@@ -399,31 +410,34 @@ let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) : CP.exp =
     | CP.InfConst _
     | CP.Tsconst _
     | CP.FConst _ -> exp
-    | CP.Var (sv,pos) -> if BList.mem_eq eq_spec_var sv vars 
-    			 then CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),pos) else exp
+    | CP.Var (sv,pos) -> 
+        if BList.mem_eq eq_spec_var sv vars 
+        then if is_neg then (mkSubtract (IConst(0,pos)) (Var(SpecVar(Int,constinfinity,Unprimed),pos)) pos)
+          else CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),pos) 
+        else exp
     | CP.Add (a1, a2, pos) -> 
-          let a1_conv = sub_inf_list_exp a1 vars in
-          let a2_conv = sub_inf_list_exp a2 vars in
+          let a1_conv = sub_inf_list_exp a1 vars is_neg in
+          let a2_conv = sub_inf_list_exp a2 vars is_neg in
           CP.Add(a1_conv,a2_conv,pos)
     | CP.Subtract (a1, a2, pos) -> 
-          let a1_conv = sub_inf_list_exp a1 vars in
-          let a2_conv = sub_inf_list_exp a2 vars in
+          let a1_conv = sub_inf_list_exp a1 vars is_neg in
+          let a2_conv = sub_inf_list_exp a2 vars is_neg in
           CP.Subtract(a1_conv,a2_conv,pos)
     | CP.Mult (a1, a2, pos) -> 
-          let a1_conv = sub_inf_list_exp a1 vars in
-          let a2_conv = sub_inf_list_exp a2 vars in
+          let a1_conv = sub_inf_list_exp a1 vars is_neg in
+          let a2_conv = sub_inf_list_exp a2 vars is_neg in
           CP.Mult(a1_conv,a2_conv,pos)
     | CP.Div (a1, a2, pos) -> 
-          let a1_conv = sub_inf_list_exp a1 vars in
-          let a2_conv = sub_inf_list_exp a2 vars in
+          let a1_conv = sub_inf_list_exp a1 vars is_neg in
+          let a2_conv = sub_inf_list_exp a2 vars is_neg in
           CP.Div(a1_conv,a2_conv,pos)
     | CP.Max (a1, a2, pos) -> 
-          let a1_conv = sub_inf_list_exp a1 vars in
-          let a2_conv = sub_inf_list_exp a2 vars in
+          let a1_conv = sub_inf_list_exp a1 vars is_neg in
+          let a2_conv = sub_inf_list_exp a2 vars is_neg in
           CP.Max(a1_conv,a2_conv,pos)
     | CP.Min (a1, a2, pos) -> 
-          let a1_conv = sub_inf_list_exp a1 vars in
-          let a2_conv = sub_inf_list_exp a2 vars in
+          let a1_conv = sub_inf_list_exp a1 vars is_neg in
+          let a2_conv = sub_inf_list_exp a2 vars is_neg in
           CP.Min(a1_conv,a2_conv,pos)
     | CP.Bag _
     | CP.BagUnion _
@@ -439,7 +453,7 @@ let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) : CP.exp =
     | CP.Func _
     | CP.ArrayAt _ -> exp
     
-let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) : CP.b_formula = 
+let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) (is_neg: bool) : CP.b_formula = 
   let (p_f,bf_ann) = bf in
   let p_f_conv = 
     (match p_f with 
@@ -448,44 +462,46 @@ let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) : CP.b_f
       | CP.BConst _
       | CP.BVar _ -> p_f
       | CP.Lt (e1,e2,pos) -> 
-            let e1_conv = sub_inf_list_exp e1 vl in
-            let e2_conv = sub_inf_list_exp e2 vl in
+            let e1_conv = sub_inf_list_exp e1 vl is_neg in
+            let e2_conv = sub_inf_list_exp e2 vl is_neg in
             CP.Lt(e1_conv,e2_conv,pos)
       | CP.Lte (e1,e2,pos) -> 
-            let e1_conv = sub_inf_list_exp e1 vl in
-            let e2_conv = sub_inf_list_exp e2 vl in
+            let e1_conv = sub_inf_list_exp e1 vl is_neg in
+            let e2_conv = sub_inf_list_exp e2 vl is_neg in
             CP.Lte(e1_conv,e2_conv,pos)
       | CP.Gt (e1,e2,pos) -> 
-            let e1_conv = sub_inf_list_exp e1 vl in
-            let e2_conv = sub_inf_list_exp e2 vl in
+            let e1_conv = sub_inf_list_exp e1 vl is_neg in
+            let e2_conv = sub_inf_list_exp e2 vl is_neg in
             CP.Gt(e1_conv,e2_conv,pos)
       | CP.Gte (e1,e2,pos) -> 
-            let e1_conv = sub_inf_list_exp e1 vl in
-            let e2_conv = sub_inf_list_exp e2 vl in
+            let e1_conv = sub_inf_list_exp e1 vl is_neg in
+            let e2_conv = sub_inf_list_exp e2 vl is_neg in
             CP.Gte(e1_conv,e2_conv,pos)
       | CP.SubAnn (e1,e2,pos) -> p_f
       | CP.Eq (e1,e2,pos) -> 
-      	    if (is_var e1 && is_inf e2) || (is_var e2 && is_inf e1) then p_f else
-            let e1_conv = sub_inf_list_exp e1 vl in
-            let e2_conv = sub_inf_list_exp e2 vl in
+      	    if (is_var e1 && is_inf e2) || (is_var e2 && is_inf e1) 
+              || (check_neg_inf2 e1 e2) || (check_neg_inf2 e2 e1)
+            then p_f else
+            let e1_conv = sub_inf_list_exp e1 vl is_neg in
+            let e2_conv = sub_inf_list_exp e2 vl is_neg in
             CP.Eq(e1_conv,e2_conv,pos)
       | CP.Neq (e1,e2,pos) -> 
-            let e1_conv = sub_inf_list_exp e1 vl in
-            let e2_conv = sub_inf_list_exp e2 vl in
+            let e1_conv = sub_inf_list_exp e1 vl is_neg in
+            let e2_conv = sub_inf_list_exp e2 vl is_neg in
             CP.Neq(e1_conv,e2_conv,pos)
       | CP.ListIn (e1,e2,pos)
       | CP.ListNotIn (e1,e2,pos)
       | CP.ListAllN (e1,e2,pos)
       | CP.ListPerm (e1,e2,pos) -> p_f
       | CP.EqMax (e1,e2,e3,pos) -> 
-            let e1_conv = sub_inf_list_exp e1 vl in
-            let e2_conv = sub_inf_list_exp e2 vl in
-            let e3_conv = sub_inf_list_exp e3 vl in
+            let e1_conv = sub_inf_list_exp e1 vl is_neg in
+            let e2_conv = sub_inf_list_exp e2 vl is_neg in
+            let e3_conv = sub_inf_list_exp e3 vl is_neg in
             CP.EqMax(e1_conv,e2_conv,e3_conv,pos)
       | CP.EqMin (e1,e2,e3,pos) -> 
-            let e1_conv = sub_inf_list_exp e1 vl in
-            let e2_conv = sub_inf_list_exp e2 vl in
-            let e3_conv = sub_inf_list_exp e3 vl in
+            let e1_conv = sub_inf_list_exp e1 vl is_neg in
+            let e2_conv = sub_inf_list_exp e2 vl is_neg in
+            let e3_conv = sub_inf_list_exp e3 vl is_neg in
             CP.EqMin(e1_conv,e2_conv,e3_conv,pos)
       | CP.BagIn _
       | CP.BagNotIn _
@@ -499,11 +515,11 @@ let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) : CP.b_f
 (*
 substitute all variables in vl with \inf in f
 *)
-let rec sub_inf_list (f:CP.formula) (vl: CP.spec_var list) : CP.formula = 
+let rec sub_inf_list (f:CP.formula) (vl: CP.spec_var list) (is_neg: bool) : CP.formula = 
   let rec helper pf vl =
     match pf with
       | CP.BForm (b,fl) -> 
-            let b_norm = sub_inf_list_b_formula b vl
+            let b_norm = sub_inf_list_b_formula b vl is_neg
             in CP.BForm(b_norm,fl) 
       | CP.And (pf1,pf2,pos) -> 
             let pf1_norm = helper pf1 vl in
@@ -544,7 +560,10 @@ let substitute_inf (f: CP.formula) : CP.formula =
   			let vlistlist = List.map (fun (e,k) -> EM.find_equiv_all e kv) filter_infs in
                         let vlist = List.flatten vlistlist in*)
                         let svlist = (find_equiv_all_x (SpecVar(Int,constinfinity,Unprimed)) kv) in  	
-  			sub_inf_list pf svlist) sublist in 
+  			            let new_pf = sub_inf_list pf svlist false in
+                        let svneglist = (find_equiv_all_x (SpecVar(Int,constinfinity,Primed)) kv) in  
+	                    let new_pf = sub_inf_list new_pf svneglist true in
+                        arith_simplify 10 new_pf) sublist in 
   join_disjunctions after_sub
 
 let rec normalize_inf_formula_sat (f: CP.formula): CP.formula = 
@@ -581,6 +600,9 @@ let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.for
   if List.length atoc_sublist == 1 
   then let _,subs_c = List.hd atoc_sublist in 
   	let vlist = find_equiv_all_x (SpecVar(Int,constinfinity,Unprimed)) subs_c in
-  	let new_c = sub_inf_list new_c vlist in
+  	let new_c = sub_inf_list new_c vlist false in (* substitute +ve inf *)
+    let negvlist =  find_equiv_all_x (SpecVar(Int,constinfinity,Primed)) subs_c in
+    let new_c =  sub_inf_list new_c negvlist true in (* substitute -ve inf *)
+    let new_c = arith_simplify 11 new_c in
   	new_a,(normalize_formula new_c)
   else new_a,new_c
