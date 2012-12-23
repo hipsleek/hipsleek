@@ -1,4 +1,20 @@
 
-checkentail v=\inf |- v=max(w,\inf).
+//checkentail v=\inf |- v=max(w,\inf).
+
+checkentail true |- v=max(w,\inf).
+/*
+UNSOUND to look for subs in RHS
+normalize_inf_formula@3
+normalize_inf_formula inp1 : v=max(w,\inf(ZInfinity))
+normalize_inf_formula@3 EXIT out : ZInfinity=ZInfinity
+
+*/
 
 checkentail v<\inf |- v=\inf.
+/*
+UNSOUND to look for subs in RHS
+normalize_inf_formula@17
+normalize_inf_formula inp1 : v=\inf(ZInfinity)
+normalize_inf_formula@17 EXIT out : ZInfinity=ZInfinity
+Entail (2) : Valid. 
+*/
