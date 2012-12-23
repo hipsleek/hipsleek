@@ -393,12 +393,22 @@ let rec convert_inf_b_formula (bf: CP.b_formula) : CP.b_formula =
       | CP.RelForm _ -> p_f
     ) in (p_f_conv,bf_ann)
 
+let convert_inf_to_var_new (pf:CP.formula) : CP.formula =
+  let f_f f = None in
+  let f_bf bf = None in
+  let f_e e = 
+    match e with
+      | InfConst (i,pos) -> Some (CP.Var(CP.SpecVar(Int,i,Unprimed),pos))
+      | _ -> None
+  in
+  map_formula pf (f_f,f_bf,f_e)
+
 (* WN : not sure what this is doing; maybe helpful to highlight some expectec examples;
    ditto for the other methods
 *)
 (*
-Converts any left over \inf to Zinfinity Variable in the end before sending to Omega
-\inf --> Zinfinity  
+  Converts any left over \inf to Zinfinity Variable in the end before sending to Omega
+  \inf --> Zinfinity  
 *)
 let convert_inf_to_var (pf:CP.formula) : CP.formula =
   let rec helper pf =
