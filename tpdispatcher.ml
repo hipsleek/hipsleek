@@ -1004,7 +1004,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let (pr_weak,pr_strong) = CP.drop_complex_ops in
   let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 in
     (* Handle Infinity Constraints *)
-  let f = Infinity.normalize_inf_formula f in
+  let f = Infinity.normalize_inf_formula_sat f in
   let wf = f in
   let omega_is_sat f = Omega.is_sat_ops pr_weak pr_strong f sat_no in 
   let redlog_is_sat f = Redlog.is_sat_ops pr_weak pr_strong f sat_no in 
@@ -1442,8 +1442,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (* add invariant constraint @M<:v<:@L for each annotation var *)
   let ante = CP.add_ann_constraints imm_vrs ante in
   (* Handle Infinity Constraints *)
-  let ante = Infinity.normalize_inf_formula ante in
-  let conseq = Infinity.normalize_inf_formula conseq in
+  let ante,conseq  = Infinity.normalize_inf_formula_imply ante conseq in
   if should_output () then (
     reset_generated_prover_input ();
     reset_prover_original_output ();

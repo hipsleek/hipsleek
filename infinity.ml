@@ -601,6 +601,7 @@ let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) : CP.b_f
             CP.Gte(e1_conv,e2_conv,pos)
       | CP.SubAnn (e1,e2,pos) -> p_f
       | CP.Eq (e1,e2,pos) -> 
+      	    if (is_var e1 && is_inf e2) || (is_var e2 && is_inf e1) then p_f else
             let e1_conv = sub_inf_list_exp e1 vl in
             let e2_conv = sub_inf_list_exp e2 vl in
             CP.Eq(e1_conv,e2_conv,pos)
@@ -682,12 +683,12 @@ let substitute_inf (f: CP.formula) : CP.formula =
   			sub_inf_list pf svlist) sublist in 
   join_disjunctions after_sub
 
-let rec normalize_inf_formula (f: CP.formula): CP.formula = 
+let rec normalize_inf_formula_sat (f: CP.formula): CP.formula = 
   (*let pf = MCP.pure_of_mix f in*)
   let pf_norm = normalize_formula f in 
   if contains_inf_eq pf_norm then 
     let fs = substitute_inf pf_norm in
-    (*normalize_inf_formula*) fs
+    normalize_formula fs
         (*let f = (*MCP.mix_of_pure*) (convert_inf_to_var pf_norm) in 
           let x_sv = CP.SpecVar(Int,"x",Unprimed) in
           let x_var =  CP.Var(x_sv,no_pos) in
@@ -699,8 +700,23 @@ let rec normalize_inf_formula (f: CP.formula): CP.formula =
   (*let _ = DD.vv_trace("Normalized: "^ (string_of_pure_formula pf_norm)) in*)
   
 
-let normalize_inf_formula (f: CP.formula): CP.formula =
+let normalize_inf_formula_sat (f: CP.formula): CP.formula =
   let pr = string_of_pure_formula in
-  DD.ho_1 "normalize_inf_formula" pr pr normalize_inf_formula f
+  DD.ho_1 "normalize_inf_formula" pr pr normalize_inf_formula_sat f
   
-let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.formula * CP.formula = ante,conseq
+let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.formula * CP.formula = 
+  let ante_norm = normalize_formula ante in
+  let conseq_norm = normalize_formula conseq in 
+  let new_c = if contains_inf_eq conseq_norm 
+  		then normalize_formula (substitute_inf conseq_norm) 
+  		else convert_inf_to_var conseq_norm in
+  let new_a = if contains_inf_eq ante_norm 
+  		then normalize_formula (substitute_inf ante_norm)
+  		else convert_inf_to_var ante_norm in
+  let atoc_sublist = find_inf_subs new_a in
+  if List.length atoc_sublist == 1 
+  then let _,subs_c = List.hd atoc_sublist in 
+  	let vlist = find_equiv_all_x (SpecVar(Int,constinfinity,Unprimed)) subs_c in
+  	let new_c = sub_inf_list new_c vlist in
+  	new_a,(normalize_formula new_c)
+  else new_a,new_c
