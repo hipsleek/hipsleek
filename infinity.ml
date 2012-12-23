@@ -700,9 +700,9 @@ let rec normalize_inf_formula_sat (f: CP.formula): CP.formula =
   (*let _ = DD.vv_trace("Normalized: "^ (string_of_pure_formula pf_norm)) in*)
   
 
-let normalize_inf_formula_sat (f: CP.formula): CP.formula =
+let normalize_formula (f: CP.formula): CP.formula =
   let pr = string_of_pure_formula in
-  DD.ho_1 "normalize_inf_formula" pr pr normalize_inf_formula_sat f
+  DD.ho_1 "normalize_formula" pr pr normalize_formula f
   
 let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.formula * CP.formula = 
   let ante_norm = normalize_formula ante in
