@@ -43,8 +43,8 @@ data list_head {
 
 void __list_add(
 		list_head new1, list_head prev, list_head next)
-  requires new1::list_head<_,_>*prev::list_head<_,_>*next::list_head<_,_>
-  ensures true;
+  requires new1::list_head<_,_>*prev::list_head<_,f>*next::list_head<l,_>
+  ensures prev::list_head<new1,f> * new1::list_head<next,prev> * next::list_head<l,new1>;
 {
 	next.prev = new1;
 	new1.next = next;
@@ -67,8 +67,8 @@ void __list_add(
 
 void list_add_tail(
 		list_head new1, list_head head1)
-   requires new1::list_head<_,_>*head1::list_head<_,prev>*prev::list_head<_,_>
-  ensures true;
+   requires new1::list_head<_,_>*head1::list_head<l,prev>*prev::list_head<_,f>
+  ensures prev::list_head<new1,f> * new1::list_head<head1,prev> * head1::list_head<l,new1>;
 {
 	__list_add(new1, head1.prev, head1);
 }
@@ -111,7 +111,7 @@ pci_dynid cast_to_pci_dynid_ptr(RS_mem p)
   p=null -> ensures res=null;
   p!=null -> 
     requires p::RS_mem<a> //& a>=size(item)
-    ensures res::pci_dynid<_,_>;
+    ensures res::pci_dynid<n,id> * n::list_head<_,_> * id::pci_device_id<_,_,_,_,_,_,_>;
  }
 
 /* struct pci_dynids { */
@@ -189,7 +189,7 @@ data pci_driver {
 
 device_driver get_driver(device_driver drv)
   requires true
-  ensures true;
+  ensures res=null;
 {
 	//	if (drv) {
 	//		struct device_driver *a;
@@ -231,7 +231,7 @@ void put_driver(device_driver drv)
 
 int driver_attach(device_driver drv)
   requires true
-  ensures true;
+  ensures res=0;
 {
 	return 0;
 }
@@ -288,7 +288,8 @@ int driver_attach(device_driver drv)
 int pci_add_dynid(pci_driver drv, int vendor,
 		int device, int subvendor, int subdevice,
 		int class_, int class_mask, int driver_data)
-  requires true
+  requires drv::pci_driver<n,_,_,d,dy> * dy::pci_dynids<l> * l::list_head<_,prev> * prev::list_head<_,f>
+  * n::list_head<_,_> * d::device_driver<_,_>
   ensures true;
  {
 	pci_dynid dynid;
