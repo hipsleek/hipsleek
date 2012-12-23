@@ -1,7 +1,7 @@
 (* Created on 20th Dec 2012 by asankhs to handle Infinity *)
 
 open Globals
-open Gen.Basic
+open Gen
 open Cprinter
 
 module CP = Cpure
@@ -478,12 +478,15 @@ let rec contains_inf_eq (pf:CP.formula) : bool  =
 
 module EM = Gen.EqMap(CP.SV)
 
-(* 
+(*
+Find the substitutions with \inf 
+ 
    x=\inf & x=c \/ x+\inf=0 & x=c
    ==> [(x=\inf & x=c,[x->\inf,x->c]),
         (x+\inf=0 & x=c,[x->-\inf,x->c])
        ]
 *)
+
 let find_inf_subs (f:CP.formula) : (CP.formula * EM.emap) list =
   let ds = CP.split_disjunctions f in
   let find_inf_eq e =
@@ -505,16 +508,163 @@ let find_inf_subs (f:CP.formula) : (CP.formula * EM.emap) list =
   in 
   List.map (fun e -> (e,find_inf_eq e)) ds
 
-let substitute_inf (f: CP.formula): CP.formula =
-  find_inf_subs f;
-  convert_inf_to_var f
+let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) : CP.exp =
+  match exp with
+    | CP.Null _
+    | CP.IConst _
+    | CP.AConst _ 
+    | CP.InfConst _
+    | CP.Tsconst _
+    | CP.FConst _ -> exp
+    | CP.Var (sv,pos) -> if BList.mem_eq eq_spec_var sv vars 
+    			 then CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),pos) else exp
+    | CP.Add (a1, a2, pos) -> 
+          let a1_conv = sub_inf_list_exp a1 vars in
+          let a2_conv = sub_inf_list_exp a2 vars in
+          CP.Add(a1_conv,a2_conv,pos)
+    | CP.Subtract (a1, a2, pos) -> 
+          let a1_conv = sub_inf_list_exp a1 vars in
+          let a2_conv = sub_inf_list_exp a2 vars in
+          CP.Subtract(a1_conv,a2_conv,pos)
+    | CP.Mult (a1, a2, pos) -> 
+          let a1_conv = sub_inf_list_exp a1 vars in
+          let a2_conv = sub_inf_list_exp a2 vars in
+          CP.Mult(a1_conv,a2_conv,pos)
+    | CP.Div (a1, a2, pos) -> 
+          let a1_conv = sub_inf_list_exp a1 vars in
+          let a2_conv = sub_inf_list_exp a2 vars in
+          CP.Div(a1_conv,a2_conv,pos)
+    | CP.Max (a1, a2, pos) -> 
+          let a1_conv = sub_inf_list_exp a1 vars in
+          let a2_conv = sub_inf_list_exp a2 vars in
+          CP.Max(a1_conv,a2_conv,pos)
+    | CP.Min (a1, a2, pos) -> 
+          let a1_conv = sub_inf_list_exp a1 vars in
+          let a2_conv = sub_inf_list_exp a2 vars in
+          CP.Min(a1_conv,a2_conv,pos)
+    | CP.Bag _
+    | CP.BagUnion _
+    | CP.BagIntersect _
+    | CP.BagDiff _
+    | CP.List _
+    | CP.ListAppend _
+    | CP.ListCons _
+    | CP.ListHead _
+    | CP.ListTail _
+    | CP.ListLength _
+    | CP.ListReverse _
+    | CP.Func _
+    | CP.ArrayAt _ -> exp
+    
+let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) : CP.b_formula = 
+  let (p_f,bf_ann) = bf in
+  let p_f_conv = 
+    (match p_f with 
+      | CP.XPure _
+      | CP.LexVar _
+      | CP.BConst _
+      | CP.BVar _ -> p_f
+      | CP.Lt (e1,e2,pos) -> 
+            let e1_conv = sub_inf_list_exp e1 vl in
+            let e2_conv = sub_inf_list_exp e2 vl in
+            CP.Lt(e1_conv,e2_conv,pos)
+      | CP.Lte (e1,e2,pos) -> 
+            let e1_conv = sub_inf_list_exp e1 vl in
+            let e2_conv = sub_inf_list_exp e2 vl in
+            CP.Lte(e1_conv,e2_conv,pos)
+      | CP.Gt (e1,e2,pos) -> 
+            let e1_conv = sub_inf_list_exp e1 vl in
+            let e2_conv = sub_inf_list_exp e2 vl in
+            CP.Gt(e1_conv,e2_conv,pos)
+      | CP.Gte (e1,e2,pos) -> 
+            let e1_conv = sub_inf_list_exp e1 vl in
+            let e2_conv = sub_inf_list_exp e2 vl in
+            CP.Gte(e1_conv,e2_conv,pos)
+      | CP.SubAnn (e1,e2,pos) -> p_f
+      | CP.Eq (e1,e2,pos) -> 
+            let e1_conv = sub_inf_list_exp e1 vl in
+            let e2_conv = sub_inf_list_exp e2 vl in
+            CP.Eq(e1_conv,e2_conv,pos)
+      | CP.Neq (e1,e2,pos) -> 
+            let e1_conv = sub_inf_list_exp e1 vl in
+            let e2_conv = sub_inf_list_exp e2 vl in
+            CP.Neq(e1_conv,e2_conv,pos)
+      | CP.ListIn (e1,e2,pos)
+      | CP.ListNotIn (e1,e2,pos)
+      | CP.ListAllN (e1,e2,pos)
+      | CP.ListPerm (e1,e2,pos) -> p_f
+      | CP.EqMax (e1,e2,e3,pos) -> 
+            let e1_conv = sub_inf_list_exp e1 vl in
+            let e2_conv = sub_inf_list_exp e2 vl in
+            let e3_conv = sub_inf_list_exp e3 vl in
+            CP.EqMax(e1_conv,e2_conv,e3_conv,pos)
+      | CP.EqMin (e1,e2,e3,pos) -> 
+            let e1_conv = sub_inf_list_exp e1 vl in
+            let e2_conv = sub_inf_list_exp e2 vl in
+            let e3_conv = sub_inf_list_exp e3 vl in
+            CP.EqMin(e1_conv,e2_conv,e3_conv,pos)
+      | CP.BagIn _
+      | CP.BagNotIn _
+      | CP.BagSub _
+      | CP.BagMin _
+      | CP.BagMax _
+      | CP.VarPerm _
+      | CP.RelForm _ -> p_f
+    ) in (p_f_conv,bf_ann)
+    
+(*
+substitute all variables in vl with \inf in f
+*)
+let rec sub_inf_list (f:CP.formula) (vl: CP.spec_var list) : CP.formula = 
+  let rec helper pf vl =
+    match pf with
+      | CP.BForm (b,fl) -> 
+            let b_norm = sub_inf_list_b_formula b vl
+            in CP.BForm(b_norm,fl) 
+      | CP.And (pf1,pf2,pos) -> 
+            let pf1_norm = helper pf1 vl in
+            let pf2_norm = helper pf2 vl in
+            CP.And(pf1_norm,pf2_norm,pos) 
+      | CP.AndList pflst -> 
+            let pflst_norm = List.map (fun (sl,pf) -> (sl,helper pf vl)) pflst 
+            in CP.AndList(pflst_norm)
+      | CP.Or (pf1,pf2,fl,pos) -> 
+            let pf1_norm = helper pf1 vl in
+            let pf2_norm = helper pf2 vl in
+            CP.Or(pf1_norm,pf2_norm,fl,pos) 
+      | CP.Not (nf,fl,pos) -> 
+            let nf_norm = helper nf vl
+            in CP.Not(nf_norm,fl,pos)
+      | CP.Forall (qid, qf,fl,pos) -> 
+            let qf_norm = helper qf vl
+            in CP.Forall(qid,qf_norm,fl,pos)
+      | CP.Exists (qid, qf,fl,pos) -> 
+            let qf_norm = helper qf vl
+            in CP.Exists(qid,qf_norm,fl,pos)
+  in
+  helper f vl
+  
+(*
+do the substitutions with \inf 
+*)
+
+let substitute_inf (f: CP.formula) : CP.formula =
+  let f = convert_inf_to_var f in
+  let sublist = find_inf_subs f in
+  let after_sub = List.map (fun (pf,kv) -> 
+  			(*let filter_infs = List.filter (fun (e,k) -> is_inf_sv k) kv in
+  			let vlistlist = List.map (fun (e,k) -> EM.find_equiv_all e kv) filter_infs in
+                        let vlist = List.flatten vlistlist in*)
+                        let svlist = (EM.find_equiv_all (SpecVar(Int,constinfinity,Unprimed)) kv) in  	
+  			sub_inf_list pf svlist) sublist in 
+  join_disjunctions after_sub
 
 let rec normalize_inf_formula (f: CP.formula): CP.formula = 
   (*let pf = MCP.pure_of_mix f in*)
   let pf_norm = normalize_formula f in 
   if contains_inf_eq pf_norm then 
     let fs = substitute_inf pf_norm in
-    normalize_inf_formula fs
+    (*normalize_inf_formula*) fs
         (*let f = (*MCP.mix_of_pure*) (convert_inf_to_var pf_norm) in 
           let x_sv = CP.SpecVar(Int,"x",Unprimed) in
           let x_var =  CP.Var(x_sv,no_pos) in

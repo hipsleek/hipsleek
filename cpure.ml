@@ -60,6 +60,10 @@ let is_bool_typ sv = match sv with
 let is_int_typ sv = match sv with
   | SpecVar (Int,_,_) -> true
   | _ -> false
+  
+let is_inf_sv sv = match sv with
+  | SpecVar (Int,"ZInfinity",_) -> true
+  | _ -> false
 
 type rel_cat = 
   | RelDefn of spec_var
@@ -415,6 +419,7 @@ let is_const_exp (f:exp) = match f with
 (* is exp an infinity const *)
 let is_inf (f:exp) = match f with
   | InfConst  _ -> true
+  | Var(sv,_) -> is_inf_sv sv
   | _ -> false
 
 let rec contains_exists (f:formula) : bool =  match f with

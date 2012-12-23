@@ -480,6 +480,8 @@ let eres_name = "eres"
 
 let self = "self"
 
+let constinfinity = "ZInfinity"
+
 let this = "this"
 
 let is_self_ident id = self=id
