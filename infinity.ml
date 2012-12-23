@@ -381,7 +381,7 @@ let find_inf_subs (f:CP.formula) : (CP.formula * EM.emap) list =
     let find_eq e = fold_formula e (f_f,f_bf,f_e) List.concat in
     let pr = string_of_pure_formula in
     let prl l = pr_list string_of_b_formula l in
-    let find_eq e = DD.ho_1 "find_inf_subs" pr prl find_eq e in
+    let find_eq e = DD.no_1 "find_inf_subs" pr prl find_eq e in
     let eq_list = find_eq e in
     let eq_list_vars = List.filter (fun bf ->  let (p_f,bf_ann) = bf in
     					match p_f with
@@ -559,7 +559,7 @@ do the substitutions with \inf
 let find_equiv_all_x  (e:EM.elem) (s:EM.emap) : EM.elist  =
     let pr = EM.string_of_elem in
     let pr2 = pr_list EM.string_of_elem in 
-    Debug.ho_1 "find_equiv_all" pr pr2 (fun _ -> EM.find_equiv_all e s) e
+    Debug.no_1 "find_equiv_all" pr pr2 (fun _ -> EM.find_equiv_all e s) e
     
 let substitute_inf (f: CP.formula) : CP.formula =
   let f = convert_inf_to_var f in
@@ -594,7 +594,7 @@ let rec normalize_inf_formula_sat (f: CP.formula): CP.formula =
 
 let normalize_formula (f: CP.formula): CP.formula =
   let pr = string_of_pure_formula in
-  DD.ho_1 "normalize_formula" pr pr normalize_formula f
+  DD.no_1 "normalize_formula" pr pr normalize_formula f
   
 let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.formula * CP.formula = 
   let ante_norm = normalize_formula ante in

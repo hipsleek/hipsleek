@@ -22,6 +22,7 @@ checkentail res=null |- res::sortll<m> & m=\inf.
 
 //(2) m=\inf instantiated
 checkentail res=null |- res::sortll<m>.
+print residue.
 
 //(3)
 checkentail x=null |- x::sortll<2>.
