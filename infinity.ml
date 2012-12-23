@@ -351,6 +351,7 @@ let rec contains_inf_eq (pf:CP.formula) : bool  =
 
 module EM = Gen.EqMap(CP.SV)
 
+
 (*
 Find the substitutions with \inf 
  
@@ -359,8 +360,8 @@ Find the substitutions with \inf
         (x+\inf=0 & x=c,[x->-\inf,x->c])
        ]
 *)
-
 let find_inf_subs (f:CP.formula) : (CP.formula * EM.emap) list =
+  let nds = distribute_disjuncts f in
   let ds = CP.split_disjunctions f in
   let find_inf_eq e =
     let f_f f = 

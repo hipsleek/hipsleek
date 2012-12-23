@@ -8829,3 +8829,52 @@ let is_term f =
   match f with
     | BForm ((bf,_),_) -> is_term bf
     | _ -> false
+
+let add_conj x rs pos =
+  List.map (fun y -> And (x,y,pos)) rs
+
+let rec dist_conj xs ys pos =
+  let r_xs = List.map (fun x -> add_conj x ys pos) xs in
+  List.concat r_xs
+
+let distr_d ls rs pos =
+  match ls with
+    | [x] ->
+          (match rs with
+            | [y] -> [And(x,y,pos)]
+            | _ -> add_conj x rs pos
+          )
+    | _ -> 
+          (match rs with
+            | [y] -> add_conj y ls pos 
+            | _ -> dist_conj ls rs pos
+          )
+(*
+distribute_disjuncts@17
+distribute_disjuncts inp1 : x=null & r=v & ((x=null & ZInfinity=m) | x!=null)
+distribute_disjuncts@17 EXIT out : (x=null & r=v & x!=null) | (x=null & r=v & x=null & ZInfinity=m)
+*)
+let distribute_disjuncts (f:formula) : formula =
+  let rec helper f =
+    let f_f f = 
+    	(match f with
+    	| And(l,r,p) -> 
+              let l2= split_disjunctions (helper l) in
+              let r2= split_disjunctions (helper r) in
+              let ls= distr_d l2 r2 p in
+              (* join_disjunctions ls *)
+              Some (disj_of_list ls p)
+        (* | AndList _ -> report_error no_pos "met an AndList" *)
+    	| _ -> Some f)
+    in
+    let f_bf bf = Some bf in
+    let f_e e = Some e in
+    map_formula f (f_f,f_bf,f_e)
+  in helper f
+
+(* let distribute_disjuncts (f:formula) : formula = *)
+(*   let pr = string_of_pure_formula in *)
+(*   DD.no_1 "distribute_disjuncts" pr pr distribute_disjuncts f *)
+
+let split_disjunctions_deep (f:formula) : formula list =
+  split_disjunctions(distribute_disjuncts f)

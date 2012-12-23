@@ -5886,13 +5886,16 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
           begin
             DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
-	        let a0l,a1l = if CP.no_andl a0 && CP.no_andl a1 then (CP.split_disjunctions a0,CP.split_disjunctions a1)
-    	    else 
-	          let r = ref (-8999) in
-	          let is_sat f = TP.is_sat_sub_no f r in
-	          let a0l = List.filter is_sat (CP.split_disjunctions a0) in
-	          let a1l = List.filter is_sat (CP.split_disjunctions a1) in 
-	          (a0l,a1l) in
+	        let a0l,a1l = 
+              if CP.no_andl a0 && CP.no_andl a1 then (CP.split_disjunctions_deep a0,CP.split_disjunctions_deep a1)
+    	      else
+                (* why andl need to be handled in a special way *)
+	            let r = ref (-8999) in
+	            let is_sat f = TP.is_sat_sub_no f r in
+	            let a0l = List.filter is_sat (CP.split_disjunctions a0) in
+	            let a1l = List.filter is_sat (CP.split_disjunctions a1) in 
+	            (a0l,a1l) 
+            in
             let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
 	        CP.imply_conj_orig a0l a1l new_rhs TP.imply imp_no
                 (* original code	        
