@@ -30,6 +30,14 @@ open CP
    \inf>c       ==> true
 *)
 
+
+(*
+Normalizes Min and Max Exp as per the rules
+   min(w,\inf)  ==> w
+   min(w,-\inf) ==> -\inf
+   max(w,\inf)  ==> \inf
+   max(w,-\inf) ==> w
+*)
 let rec normalize_exp (exp: CP.exp) : CP.exp =
   let _ = DD.vv_trace("in normalize_exp: "^ (string_of_formula_exp exp)) in
   match exp with
@@ -54,6 +62,15 @@ let rec normalize_exp (exp: CP.exp) : CP.exp =
     		  else CP.Add(e1_norm,e2_norm,pos)*)                          
     | _ -> exp
 
+(* 
+Returns true if both side of exp1 is \inf 
+used to handle rules with infinity in both sides
+   \inf+\inf=0   ==> false
+     // \inf=-\inf  ==> false
+   \inf+c+\inf=0 ==> ?false
+     // \inf+c=-\inf  ==> ?false?
+*)
+
 let check_neg_inf2_inf (exp1: CP.exp) (exp2: CP.exp) : bool = 
   match exp1 with
     | CP.Add(e1,e2,pos) ->
@@ -69,6 +86,10 @@ let check_neg_inf2_inf (exp1: CP.exp) (exp2: CP.exp) : bool =
     	  else false
     | _ -> false
 
+(*
+Return true if exp1 is \inf and exp2 is const
+used to detect c = -\inf as c + \inf = 0 
+*)
 let check_neg_inf2_const (exp1: CP.exp) (exp2: CP.exp) : bool = 
   match exp1 with
     | CP.Add(e1,e2,pos) -> 
@@ -81,6 +102,11 @@ let check_neg_inf2_const (exp1: CP.exp) (exp2: CP.exp) : bool =
     	    else false
     	  else false
     | _ -> false
+
+(*
+Return true if exp1 is \inf or exp2 is \inf
+used to detect v = -\inf as v + \inf = 0 
+*)
 
 let check_neg_inf2 (exp1: CP.exp) (exp2: CP.exp) : bool = 
   match exp1 with
@@ -95,6 +121,9 @@ let check_neg_inf2 (exp1: CP.exp) (exp2: CP.exp) : bool =
     	  else false
     | _ -> false
 
+(*
+Same as check_neg_inf2 but with 3 exps used for EqMax and EqMin
+*)
 let check_neg_inf (exp1: CP.exp) (exp2: CP.exp) (exp3: CP.exp) 
       : bool * CP.exp * CP.exp = 
   match exp1 with
@@ -139,6 +168,10 @@ let check_neg_inf (exp1: CP.exp) (exp2: CP.exp) (exp3: CP.exp)
     			  	  in flag,oexp,exp
     	     	| _ -> false,exp2,exp3)
     | _ -> false,exp2,exp3
+
+(*
+Normalize b_formula containing \inf 
+*)
 
 let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula = 
   let _ = DD.vv_trace("in normalize_b_formula: "^ (string_of_b_formula bf)) in
@@ -228,6 +261,9 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
     ) in  let _ = DD.vv_trace("in normalized_b_formula: "^ (string_of_b_formula (p_f_norm,bf_ann))) in
     (p_f_norm,bf_ann)
 
+(* 
+Main func normalization starts here
+*)
 let rec normalize_formula (pf: CP.formula) : CP.formula = 
   let _ = DD.vv_trace("in normalize_formula: "^ (string_of_pure_formula pf)) in
   (match pf with 
@@ -251,6 +287,9 @@ let rec normalize_formula (pf: CP.formula) : CP.formula =
     | CP.Exists (qid, qf,fl,pos) -> 
           let qf_norm = normalize_formula qf in CP.Exists(qid,qf_norm,fl,pos))
 
+(*
+Find InfConst and make it a Variable
+*)
 let rec convert_inf_exp (exp: CP.exp) : CP.exp =
   match exp with
     | CP.Null _
@@ -357,6 +396,10 @@ let rec convert_inf_b_formula (bf: CP.b_formula) : CP.b_formula =
 (* WN : not sure what this is doing; maybe helpful to highlight some expectec examples;
    ditto for the other methods
 *)
+(*
+Converts any left over \inf to Zinfinity Variable in the end before sending to Omega
+\inf --> Zinfinity  
+*)
 let convert_inf_to_var (pf:CP.formula) : CP.formula =
   let rec helper pf =
     match pf with
@@ -418,7 +461,10 @@ let rec contains_inf_eq_b_formula (bf: CP.b_formula) : bool =
     | CP.BagMax _
     | CP.VarPerm _
     | CP.RelForm _ -> false
-
+    
+(*
+Check if the formula contains any assignment to \inf
+*)
 let rec contains_inf_eq (pf:CP.formula) : bool  =
   match pf with
     | CP.BForm (b,fl) -> contains_inf_eq_b_formula b 
