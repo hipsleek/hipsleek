@@ -7,6 +7,7 @@ open Cprinter
 module CP = Cpure
 module MCP = Mcpure
 module DD = Debug
+open CP
 
 
 (* Equisatisfiable Normalization *)
@@ -60,15 +61,16 @@ let rec normalize_exp (exp: CP.exp) : CP.exp =
     | _ -> exp
 
 let check_neg_inf2_inf (exp1: CP.exp) (exp2: CP.exp) : bool = 
-match exp1 with
-    	| CP.Add(e1,e2,pos) -> if CP.is_inf e1 && CP.is_inf e2
-    			   then if CP.is_int exp2
-    			   then (match exp2 with
-    			   	| CP.IConst(b,_) -> if b == 0 then true else false
-    			   	| _ -> false)
-    			   else false
-    			   else false
-    	| _ -> false
+  match exp1 with
+    | CP.Add(e1,e2,pos) -> 
+          if CP.is_inf e1 && CP.is_inf e2
+    	  then if CP.is_int exp2
+    	  then (match exp2 with
+    		| CP.IConst(b,_) -> if b == 0 then true else false
+    		| _ -> false)
+    	  else false
+    	  else false
+    | _ -> false
 
 let check_neg_inf2_const (exp1: CP.exp) (exp2: CP.exp) : bool = 
   match exp1 with
@@ -83,22 +85,25 @@ let check_neg_inf2_const (exp1: CP.exp) (exp2: CP.exp) : bool =
     | _ -> false
 
 let check_neg_inf2 (exp1: CP.exp) (exp2: CP.exp) : bool = 
-match exp1 with
-    	| CP.Add(e1,e2,pos) -> if CP.is_inf e1 || CP.is_inf e2 
-    			   then if CP.is_int exp2
-    			   then (match exp2 with
-    			   	| CP.IConst(b,_) -> if b == 0 then true else false
-    			   	| _ -> false)
-    			   else false
-    			   else false
-    	| _ -> false
+  match exp1 with
+    | CP.Add(e1,e2,pos) -> 
+          if CP.is_inf e1 || CP.is_inf e2 
+    	  then if CP.is_int exp2
+    	  then (match exp2 with
+    		| CP.IConst(b,_) -> if b == 0 then true else false
+    		| _ -> false)
+    	  else false
+    	  else false
+    | _ -> false
 
 let check_neg_inf (exp1: CP.exp) (exp2: CP.exp) (exp3: CP.exp) 
       : bool * CP.exp * CP.exp = 
   match exp1 with
     | CP.Add(a1,a2,pos) -> 
-          let oexp = if CP.is_inf a1 then a2 else 
- 			if CP.is_inf a2 then a1 else exp1 in
+          let oexp = 
+            if CP.is_inf a1 then a2 else 
+ 			  if CP.is_inf a2 then a1 else exp1 
+          in
   	      (match exp2 with
     	    | CP.Add(e1,e2,pos) -> 
                   let flag = 
@@ -364,7 +369,9 @@ let rec convert_inf_b_formula (bf: CP.b_formula) : CP.b_formula =
       | CP.RelForm _ -> p_f
     ) in (p_f_conv,bf_ann)
 
-(* not sure what  this is doing *)
+(* WN : not sure what this is doing; maybe helpful to highlight some expectec examples;
+   ditto for the other methods
+*)
 let convert_inf_to_var (pf:CP.formula) : CP.formula =
   let rec helper pf =
     match pf with
@@ -438,21 +445,52 @@ let rec contains_inf_eq (pf:CP.formula) : bool  =
     | CP.Forall (qid, qf,fl,pos) 
     | CP.Exists (qid, qf,fl,pos) -> contains_inf_eq qf
 
-let rec substitute_inf (f: CP.formula): CP.formula = convert_inf_to_var f
+module EM = Gen.EqMap(CP.SV)
+
+(* 
+   x=\inf & x=c \/ x+\inf=0 & x=c
+   ==> [(x=\inf & x=c,[x->\inf,x->c]),
+        (x+\inf=0 & x=c,[x->-\inf,x->c])
+       ]
+*)
+let find_inf_subs (f:CP.formula) : (CP.formula * EM.emap) list =
+  let ds = CP.split_disjunctions f in
+  let find_inf_eq e =
+    let f_f _ f = None in
+    let f_bf _ bf = 
+      (match bf with
+        | ((Eq _) as e),_ -> Some (bf,[bf]) 
+        | _,_ -> Some (bf,[])
+      )
+    in
+    let f_e _ e = Some (e,[]) in
+    let f_arg = (fun _ _ -> ()),(fun _ _ -> ()),(fun _ _ -> ()) in
+    let subs e = trans_formula e () (f_f,f_bf,f_e) f_arg List.concat in
+    let pr = string_of_pure_formula in
+    let prl (_,l) = pr_list string_of_b_formula l in
+    let subs e = DD.ho_1 "find_inf_subs" pr prl subs e in
+    subs e;
+    EM.mkEmpty 
+  in 
+  List.map (fun e -> (e,find_inf_eq e)) ds
+
+let substitute_inf (f: CP.formula): CP.formula =
+  find_inf_subs f;
+  convert_inf_to_var f
 
 let rec normalize_inf_formula (f: CP.formula): CP.formula = 
   (*let pf = MCP.pure_of_mix f in*)
   let pf_norm = normalize_formula f in 
   if contains_inf_eq pf_norm then 
-  let fs = substitute_inf pf_norm in
-  normalize_inf_formula fs
-  (*let f = (*MCP.mix_of_pure*) (convert_inf_to_var pf_norm) in 
-  let x_sv = CP.SpecVar(Int,"x",Unprimed) in
-  let x_var =  CP.Var(x_sv,no_pos) in
-  let inf_var =  CP.Var(CP.SpecVar(Int,"ZInfinity",Unprimed),no_pos) in (* Same Name as in parser.ml *)
-  let x_f = CP.BForm((CP.Lte(x_var,inf_var,no_pos),None),None) in
-  let inf_constr = CP.Forall(x_sv,x_f,None,no_pos) in
-  let f = CP.And(f,inf_constr,no_pos) in f*)
+    let fs = substitute_inf pf_norm in
+    normalize_inf_formula fs
+        (*let f = (*MCP.mix_of_pure*) (convert_inf_to_var pf_norm) in 
+          let x_sv = CP.SpecVar(Int,"x",Unprimed) in
+          let x_var =  CP.Var(x_sv,no_pos) in
+          let inf_var =  CP.Var(CP.SpecVar(Int,"ZInfinity",Unprimed),no_pos) in (* Same Name as in parser.ml *)
+          let x_f = CP.BForm((CP.Lte(x_var,inf_var,no_pos),None),None) in
+          let inf_constr = CP.Forall(x_sv,x_f,None,no_pos) in
+          let f = CP.And(f,inf_constr,no_pos) in f*)
   else let f = (*MCP.mix_of_pure*) (convert_inf_to_var pf_norm) in f
   (*let _ = DD.vv_trace("Normalized: "^ (string_of_pure_formula pf_norm)) in*)
   

@@ -5382,7 +5382,17 @@ let transform_b_formula f (e:b_formula) :b_formula =
 		  let nlt = List.map (transform_exp f_exp) t_info.lex_tmp in
 		  LexVar { t_info with lex_exp = nle; lex_tmp = nlt; }
 	  in (npf,il)
-	  
+
+(*
+type: formula ->
+  'a ->
+  ('a -> formula -> (Label_Pure.exp_ty * 'b) option) *
+  ('a -> b_formula -> (b_formula * 'b) option) *
+  ('a -> exp -> (exp * 'b) option) ->
+  ('a -> formula -> 'a) * ('a -> b_formula -> 'a) * ('a -> exp -> 'a) ->
+  (formula -> 'b list -> 'b) * (b_formula -> 'b list -> 'b) *
+  (exp -> 'b list -> 'b) -> Label_Pure.exp_ty * 'b
+*)
 let foldr_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
     let f_formula, f_b_formula, f_exp = f in
     let f_formula_arg, f_b_formula_arg, f_exp_arg = f_arg in
@@ -5424,9 +5434,11 @@ let foldr_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
     in foldr_f arg e
 
 (* f = (f_f, f_bf, f_e) and
- * f_f: 'a -> formula -> (formula * 'b) option
- * f_bf: 'a -> b_formula -> (b_formula * 'b) option
- * f_e: 'a -> exp -> (exp * 'b) option
+   f_f: 'a -> formula -> (formula * 'b) option
+   f_bf: 'a -> b_formula -> (b_formula * 'b) option
+   f_e: 'a -> exp -> (exp * 'b) option
+   f_arg : ('a -> formula -> 'a) * ('a -> b_formula -> 'a) * ('a -> exp -> 'a) 
+   f_comb : ('b list -> 'b) 
  *)
 let trans_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
     let f_comb = (fun x l -> f_comb l), 
@@ -5434,7 +5446,6 @@ let trans_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
                  (fun x l -> f_comb l)
     in
     (* let _ = print_string ("[cpure.ml] trans_formula: \n") in *)
-
     foldr_formula e arg f f_arg f_comb
 
 (* compute a result from formula with argument
