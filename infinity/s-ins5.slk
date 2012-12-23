@@ -3,23 +3,9 @@ checkentail v=\inf |- v=max(w,\inf).
 
 //(2)
 checkentail true |- v=max(w,\inf).
-/*
-UNSOUND to look for subs in RHS
-normalize_inf_formula@3
-normalize_inf_formula inp1 : v=max(w,\inf(ZInfinity))
-normalize_inf_formula@3 EXIT out : ZInfinity=ZInfinity
-
-*/
 
 //(3)
 checkentail v<\inf |- v=\inf.
-/*
-UNSOUND to look for subs in RHS
-normalize_inf_formula@17
-normalize_inf_formula inp1 : v=\inf(ZInfinity)
-normalize_inf_formula@17 EXIT out : ZInfinity=ZInfinity
-Entail (2) : Valid. 
-*/
 
 
 //(4)
@@ -32,18 +18,29 @@ checkentail v=\inf & w!=\inf |- v>w.
 
 //(6)
 checkentail v=-\inf |- v<3.
-/* PROBLEM : how about negative infinity?
-find_equiv_all@56
-find_equiv_all inp1 :ZInfinity
-find_equiv_all@56 EXIT out :[]
 
-normalize_formula@57
-normalize_formula inp1 : v+ZInfinity=0
-normalize_formula@57 EXIT out : v+ZInfinity=0
+//(7)
+checkentail v=-\inf |- v>3.
 
-find_inf_subs@58
-find_inf_subs inp1 : v+ZInfinity=0
-find_inf_subs@58 EXIT out :[ v+ZInfinity=0]
+//(8)
+checkentail v=-\inf & w!=-\inf |- v<w.
+
+//(9)
+checkentail v=-\inf |- v<\inf.
+/*
+PROBLEM:
+normalize_formula@83
+normalize_formula inp1 : 0!=(ZInfinity+ZInfinity)
+normalize_formula@83 EXIT out : 0!=(ZInfinity+ZInfinity)
+
+Entail (9) : Fail.
 */
 
-
+//(10)
+checkentail true |- -\inf<\inf.
+/*
+PROBLEM:
+normalize_formula@112
+normalize_formula inp1 : 0!=(ZInfinity+ZInfinity)
+normalize_formula@112 EXIT out : 0!=(ZInfinity+ZInfinity)
+*/
