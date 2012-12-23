@@ -361,13 +361,11 @@ Find the substitutions with \inf
        ]
 *)
 let find_inf_subs (f:CP.formula) : (CP.formula * EM.emap) list =
-  let nds = distribute_disjuncts f in
   let ds = CP.split_disjunctions f in
   let find_inf_eq e =
     let f_f f = 
     	(match f with
-    	| And _ -> None 
-    	| BForm _ -> None 
+    	| And _ | AndList _  | BForm _ -> None 
     	| _ -> Some [])
     in
     let f_bf bf = 
