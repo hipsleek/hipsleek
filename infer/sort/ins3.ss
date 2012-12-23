@@ -5,22 +5,22 @@ data node {
 	node next; 
 }
 
-relation O(int m, int n).
+ relation O(int m,int n)
 
-/*
-sortll<mi> == self::node<mi, null> or
-  self::node<mi, p> * p::sortll<m2> & O(mi,m2)
-inv self!=null;
-*/
-
-sortll<mi> == self=null & mi=\inf 
- or self::node<mi,null>
+ sortll<mi> == 
+    self::node<mi,null>
  or self::node<mi, p> * p::sortll<m2> & mi<=m2 & p!=null
-inv true;
+ inv self!=null;
 
 node insert(node x, node y)
-     requires x::sortll<mn> * y::node<v,null>
+ requires y::node<v,null>
+ case {
+   x=null -> 
+      ensures res::sortll<v>;
+  x!=null -> 
+     requires x::sortll<mn> 
      ensures  res::sortll<w> & w=min(v,mn) ;
+  }
 {
   if (x==null) return y;
   else {
@@ -31,7 +31,6 @@ node insert(node x, node y)
     } else {
       node tmp;
       tmp = insert(x.next,y);
-      assume tmp'=null or tmp'!=null;
       x.next=tmp;
       return x;
     }
