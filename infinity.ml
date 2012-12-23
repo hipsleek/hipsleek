@@ -490,7 +490,12 @@ Find the substitutions with \inf
 let find_inf_subs (f:CP.formula) : (CP.formula * EM.emap) list =
   let ds = CP.split_disjunctions f in
   let find_inf_eq e =
-    let f_f f = None in
+    let f_f f = 
+    	(match f with
+    	| And _ -> None 
+    	| BForm _ -> None 
+    	| _ -> Some [])
+    in
     let f_bf bf = 
       (match bf with
         | ((Eq _) as e),_ -> Some ([bf]) 
@@ -504,8 +509,21 @@ let find_inf_subs (f:CP.formula) : (CP.formula * EM.emap) list =
     let pr = string_of_pure_formula in
     let prl l = pr_list string_of_b_formula l in
     let find_eq e = DD.ho_1 "find_inf_subs" pr prl find_eq e in
-    find_eq e;
-    EM.mkEmpty 
+    let eq_list = find_eq e in
+    let eq_list_vars = List.filter (fun bf ->  let (p_f,bf_ann) = bf in
+    					match p_f with
+  					| Eq(e1,e2,pos) -> if is_var e1 && is_var e2 then true else false
+    					| _ -> false
+    			) eq_list in
+    let eqset = EM.mkEmpty in
+    let eqset = List.fold_left (fun eset exp -> 
+			        let (p_f,bf_ann) = exp in
+    				(match p_f with
+    				| Eq (e1,e2,pos) -> (match e1,e2 with
+    						    | Var(sv1,_),Var(sv2,_) -> EM.add_equiv eset sv1 sv2
+    						    | _ -> eset)
+    				| _ -> eset)
+    				) eqset eq_list in eqset 
   in 
   List.map (fun e -> (e,find_inf_eq e)) ds
 
@@ -648,7 +666,11 @@ let rec sub_inf_list (f:CP.formula) (vl: CP.spec_var list) : CP.formula =
 (*
 do the substitutions with \inf 
 *)
-
+let find_equiv_all_x  (e:EM.elem) (s:EM.emap) : EM.elist  =
+    let pr = EM.string_of_elem in
+    let pr2 = pr_list EM.string_of_elem in 
+    Debug.ho_1 "find_equiv_all" pr pr2 (fun _ -> EM.find_equiv_all e s) e
+    
 let substitute_inf (f: CP.formula) : CP.formula =
   let f = convert_inf_to_var f in
   let sublist = find_inf_subs f in
@@ -656,7 +678,7 @@ let substitute_inf (f: CP.formula) : CP.formula =
   			(*let filter_infs = List.filter (fun (e,k) -> is_inf_sv k) kv in
   			let vlistlist = List.map (fun (e,k) -> EM.find_equiv_all e kv) filter_infs in
                         let vlist = List.flatten vlistlist in*)
-                        let svlist = (EM.find_equiv_all (SpecVar(Int,constinfinity,Unprimed)) kv) in  	
+                        let svlist = (find_equiv_all_x (SpecVar(Int,constinfinity,Unprimed)) kv) in  	
   			sub_inf_list pf svlist) sublist in 
   join_disjunctions after_sub
 
@@ -682,4 +704,3 @@ let normalize_inf_formula (f: CP.formula): CP.formula =
   DD.ho_1 "normalize_inf_formula" pr pr normalize_inf_formula f
   
 let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.formula * CP.formula = ante,conseq
-
