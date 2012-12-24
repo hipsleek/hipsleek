@@ -12,11 +12,11 @@ inv true.
 //(1) valid
 checkentail res=null |- res::sortll<m> & m=\inf.
 
-//(2) m=\inf instantiated
+//(2) Valid m=\inf instantiated
 checkentail res=null |- res::sortll<m>.
 print residue.
 
-//(3)
+//(3) Fail
 checkentail x=null |- x::sortll<2>.
 // must fail
 
@@ -31,10 +31,10 @@ checkentail x::node<a,q>*q::node<b,null> |- x::sortll<m>.
 checkentail x::node<a,q>*q::node<b,null> & a<b |- x::sortll<m>.
 
 
-// (7) 
+// (7) Valid
 checkentail y::node<v,null> * x::sortll<m> & x=null |- y::sortll<r>
    & r=min(v,m).
 print residue.
 
-// (8) 
+// (8) Valid
 checkentail x::sortll<m> & x=null & r=v |- r=min(v,m).

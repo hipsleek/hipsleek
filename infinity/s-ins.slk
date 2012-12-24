@@ -22,24 +22,24 @@ checkentail v=\inf |- v>=1 .
    FAIL
 */
 
-//(4)
+//(4) Fail
 checkentail true |- v=max(v,-w).
 // w+v=max(w+v,0)
 
-//(5)
+//(5) valid
 checkentail true |- v=max(v,-\inf).
 /*
 normalize_inf_formula inp1 : (ZInfinity)+v=max((ZInfinity)+v,0)
 normalize_inf_formula@20 EXIT out : ZInfinity=ZInfinity
 */
 
-//(6)
+//(6) Valid
 checkentail true |- v=max(v,0-\inf).
 /*
  PROBLEM : How come empty?
 */
 
-//(7)
+//(7) Fail
 checkentail true |- v>-\inf.
 /*
 
@@ -48,7 +48,7 @@ normalize_inf_formula@26 EXIT out : ZInfinity!=0
 */
 
 
-//(8) 
+//(8) Valid
 checkentail true |- v>=-\inf.
 /*
 normalize_inf_formula inp1 : 0<=((ZInfinity)+v)
@@ -72,7 +72,7 @@ print residue.
  <1>hfalse&false&{FLOW,(19,20)=__norm}[]
 */
 
-//(11)
+//(11) Fail
 checkentail true |- v=max(w,-\inf).
 /*
 UNSOUND:

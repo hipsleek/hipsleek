@@ -1,11 +1,11 @@
-//(1)
+//(1) Valid
 checkentail true |- \inf=\inf.
 /*
 normalize_inf_formula inp1 : ZInfinity=ZInfinity
 normalize_inf_formula@2 EXIT out : ZInfinity=ZInfinity
 */
 
-//(2)
+//(2) Valid
 checkentail \inf=-\inf |- false.
 /*
 PROBLEM : LHS is false
@@ -13,7 +13,7 @@ normalize_inf_formula inp1 : (ZInfinity)+(ZInfinity)=0
 normalize_inf_formula@4 EXIT out : ZInfinity+ZInfinity=0
 */
 
-//(3)
+//(3) Fail
 checkentail true |- \inf+3=\inf .
 /*
 ??UNSOUND : true --> false
@@ -21,7 +21,7 @@ normalize_inf_formula inp1 : (ZInfinity)+3=ZInfinity
 normalize_inf_formula@7 EXIT out : ZInfinity=ZInfinity+3
 */
 
-//(4)
+//(4) Fail
 checkentail true |- \inf+4=-\inf.
 /*
 ??UNSOUND : true --> false
@@ -29,7 +29,7 @@ normalize_inf_formula inp1 : (ZInfinity)+4+(ZInfinity)=0
 normalize_inf_formula@9 EXIT out : ZInfinity+4+ZInfinity=0
 */
 
-//(5)
+//(5) Valid
 checkentail  \inf!=\inf |- false.
 /*
 SOUND?
@@ -37,7 +37,7 @@ normalize_inf_formula inp1 : (ZInfinity)!=(ZInfinity)
 normalize_inf_formula@11 EXIT out : ZInfinity!=ZInfinity
 */
 
-//(6)
+//(6) Valid
 checkentail true |- \inf != -\inf.
 /*
 PROBLEM : true
@@ -45,7 +45,7 @@ normalize_inf_formula inp1 : ((ZInfinity)+(ZInfinity))!=0
 normalize_inf_formula@13 EXIT out : (ZInfinity+ZInfinity)!=0
 */
 
-//(7)
+//(7) Valid
 checkentail true |- \inf+7 !=\inf.
 /*
 UNSOUND?? : true --> false
@@ -53,7 +53,7 @@ normalize_inf_formula inp1 : ((ZInfinity)+7)!=(ZInfinity)
 normalize_inf_formula@15 EXIT out : ZInfinity!=(ZInfinity+7)
 */
 
-//(8)
+//(8) Fail
 checkentail true |- \inf+8 != -\inf.
 /*
 PROBLEM : should be true
@@ -61,7 +61,7 @@ normalize_inf_formula inp1 : ((ZInfinity)+8+(ZInfinity))!=0
 normalize_inf_formula@17 EXIT out : (ZInfinity+8+ZInfinity)!=0
 */
 
-//(9)
+//(9) Valid
 checkentail \inf+3=\inf |- false.
 print residue.
 /* UNSOUND
