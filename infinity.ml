@@ -62,6 +62,16 @@ let rec normalize_exp (exp: CP.exp) : CP.exp =
     		  else CP.Add(e1_norm,e2_norm,pos)*)                          
     | _ -> exp
 
+(*
+--eps converts v>w to 1+w <= v detect it and revert back to substitute \inf during normalization
+*)
+let check_leq (exp1: CP.exp) (exp2: CP.exp) pos : CP.p_formula = 
+  match exp1,exp2 with
+    | CP.Add(e1,e2,_),CP.Var(sv,_) -> 
+          if is_one e1 && is_var e2 then Gt(exp2,e2,pos)
+          else if is_var e1 && is_one e2 then Gt(exp2,e1,pos)
+          else Lte(exp1,exp2,pos)
+    | _ -> Lte(exp1,exp2,pos)
 (* 
 Returns true if both side of exp1 is \inf 
 used to handle rules with infinity in both sides
@@ -201,7 +211,7 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
             else if CP.is_inf e1_norm && CP.is_const_or_var e2_norm then CP.Eq(e1_norm,e2_norm,pos)
             else if check_neg_inf2 e1_norm e2_norm then CP.Eq(e1_norm,e2_norm,pos)
             else if check_neg_inf2 e2_norm e1_norm then CP.BConst(true,pos)
-            else CP.Lte(e1_norm,e2_norm,pos)
+            else check_leq e1_norm e2_norm pos (*CP.Lte(e1_norm,e2_norm,pos)*)
       | CP.Gt(e1,e2,pos) -> 
             let e1_norm = normalize_exp e1 in
             let e2_norm = normalize_exp e2 in

@@ -422,6 +422,23 @@ let is_inf (f:exp) = match f with
   | Var(sv,_) -> is_inf_sv sv
   | _ -> false
 
+let rec contains_inf (f:exp) = match f with
+  | InfConst  _ -> true
+  | Var(sv,_) -> is_inf_sv sv
+  | Add (e1, e2, _) 
+  | Subtract (e1, e2, _) 
+  | Mult (e1, e2, _)
+  | Max (e1, e2, _) 
+  | Min (e1, e2, _) 
+  | Div (e1, e2, _) 
+  | ListCons (e1, e2, _) 
+  | BagDiff (e1, e2, _) -> (contains_inf e1) || (contains_inf e2)
+  | ListHead (e, _) 
+  | ListLength (e, _) 
+  | ListTail (e, _)
+  | ListReverse (e, _) -> (contains_inf  e)    
+  | _ -> false
+
 let rec contains_exists (f:formula) : bool =  match f with
     | BForm _ -> false
     | Or (f1,f2,_,_)  
@@ -5707,9 +5724,11 @@ let norm_bform_a (bf:b_formula) : b_formula =
     let (pf,il) = bf in	
     let npf = 
       match pf with 
-        | Lt  (e1,e2,l) -> norm_bform_leq (Add(e1,IConst(1,no_pos),l)) e2 l
+        | Lt  (e1,e2,l) -> if contains_inf e1 || contains_inf e2 then pf else
+                           norm_bform_leq (Add(e1,IConst(1,no_pos),l)) e2 l
         | Lte (e1,e2,l) -> norm_bform_leq e1 e2 l
-        | Gt  (e1,e2,l) -> norm_bform_leq (Add(e2,IConst(1,no_pos),l)) e1 l
+        | Gt  (e1,e2,l) ->  if contains_inf e1 || contains_inf e2 then pf else
+            norm_bform_leq (Add(e2,IConst(1,no_pos),l)) e1 l
         | Gte (e1,e2,l) ->  norm_bform_leq e2 e1 l
         | Eq  (e1,e2,l) -> norm_bform_eq e1 e2 l
         | Neq (e1,e2,l) -> norm_bform_neq e1 e2 l 
@@ -6624,6 +6643,7 @@ let norm_bform_b (bf:b_formula) : b_formula =
   let (pf,il) = bf in
   let npf = match pf with 
     | Lt  (e1,e2,l) -> 
+          if contains_inf e1 || contains_inf e2 then pf else
           let e1= (Add(e1,IConst(1,no_pos),l)) in 
           let (e1,e2) = normalise_two_sides e1 e2 in
           norm_bform_leq e1 e2 l 
@@ -6631,6 +6651,7 @@ let norm_bform_b (bf:b_formula) : b_formula =
           let (e1,e2) = normalise_two_sides e1 e2 in
           norm_bform_leq e1 e2 l 
     | Gt  (e1,e2,l) -> 
+          if contains_inf e1 || contains_inf e2 then pf else
           let e1,e2= (Add(e2,IConst(1,no_pos),l),e1) in 
           let (e1,e2) = normalise_two_sides e1 e2 in
           norm_bform_leq e1 e2 l 
@@ -6881,6 +6902,7 @@ module ArithNormalizer = struct
 	let (pf,il) = bf in
 	let npf = match pf with
       | Lt (e1, e2, l) -> 
+            if contains_inf e1 || contains_inf e2 then Some(pf) else
             let e1 = Add (e1, IConst(1, no_pos), l) in 
             let lhs, rhs = norm_two_sides e1 e2 in
             Some (norm_bform_leq lhs rhs l)
@@ -6888,6 +6910,7 @@ module ArithNormalizer = struct
             let lhs, rhs = norm_two_sides e1 e2 in
             Some (norm_bform_leq lhs rhs l)
       | Gt (e1, e2, l) -> 
+            if contains_inf e1 || contains_inf e2 then Some(pf) else
             let e1, e2 = Add (e2, IConst(1, no_pos), l), e1 in 
             let lhs, rhs = norm_two_sides e1 e2 in
             Some (norm_bform_leq lhs rhs l)

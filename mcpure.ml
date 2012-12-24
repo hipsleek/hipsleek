@@ -1217,6 +1217,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     | IConst (i,_)-> string_of_int i
     | FConst (f,_) -> string_of_float f
     | AConst (f,_) -> string_of_heap_ann f
+    | InfConst(i,_) -> i
     | Tsconst (f,_) -> Tree_shares.Ts.string_of f
     | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_)
     | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_) 
@@ -1246,12 +1247,12 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
 	  if (disc<>(-1)) then ([e],[])
 	  else let (lp1,ln1),(ln2,lp2) = get_lists e1 disc, get_lists e2 disc in
 	  (lp1@lp2,ln1@ln2) 
-    | Null _ | Var _ | IConst _ | AConst _ | Tsconst _ | FConst _ | Max _  | Min _ | Bag _ | BagUnion _ | BagIntersect _ 
+    | Null _ | Var _ | IConst _ | AConst _ | InfConst _ | Tsconst _ | FConst _ | Max _  | Min _ | Bag _ | BagUnion _ | BagIntersect _ 
     | BagDiff _ | List _ | ListCons _ | ListHead _ | ListTail _ | ListLength _ | ListAppend _ | ListReverse _ 
     | ArrayAt _ | Func _ -> ([e],[]) (* An Hoa *) in
   
   let rec norm_expr e = match e with
-    | Null _ | Var _ | IConst _ | FConst _ | AConst _ | Tsconst _ -> e
+    | Null _ | Var _ | IConst _ | FConst _ | AConst _ | Tsconst _ | InfConst _ -> e
     | Add (e1,e2,l) -> cons_lsts e 1 (fun c-> Add c) (fun d-> Subtract d) (IConst (0,l))
     | Subtract (e1,e2,l) -> cons_lsts e 1 (fun c-> Add c) (fun d-> Subtract d) (IConst (0,l))
     | Mult (e1,e2,l) -> cons_lsts e (-1) (fun c-> Mult c) (fun d-> (*print_string "called \n";*) Div d) (IConst (1,l))
