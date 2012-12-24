@@ -118,8 +118,10 @@ and checkeq_formulas ivars f1 f2 =
     (fun _ _ ->  checkeq_formulas_x ivars f1 f2) f1 f2
     
 and checkeq_formulas_a ivars rvars f1 f2 mtl = 
+  let re_order mt = List.map (fun (a,b) -> (b,a)) mt in
   let (res1, mtl1) = (checkeq_formulas_one ivars rvars f1 f2 mtl) in
-  let (res2, mtl2) =  (checkeq_formulas_one ivars rvars f2 f1 mtl) in
+  let imtl = List.map (fun c -> re_order c) mtl in
+  let (res2, mtl2) =  (checkeq_formulas_one ivars rvars f2 f1 imtl) in
   (res1&&res2, mtl1)
 
 
@@ -1379,12 +1381,15 @@ let check_equiv_2f_x hvars (def1: CF.formula * CF.formula) (def2: CF.formula * C
   let f21, f22 = def2 in
   let mtl = [[]] in
   let rvars1,rvars2 = if(def) then CF.get_hp_rel_vars_formula f11, CF.get_hp_rel_vars_formula f21 else [],[] in
-  
   let (res11, mtl11) = (checkeq_formulas_one hvars ([],[]) f11 f21 mtl) in
+  (* print_string ("mtl11: " ^ string_of_map_table_list mtl11 ^ "\n"); *)
   let (res21, mtl21) = (checkeq_formulas_one hvars ([],[]) f21 f11 mtl) in
+  (* print_string ("mtl21: " ^ string_of_map_table_list mtl21 ^ "\n"); *)
   if(res11&&res21)then(
     let (res12, mtl12) = (checkeq_formulas_one hvars (rvars1,rvars2) f12 f22 mtl11) in
+    (* print_string ("mtl12: " ^ string_of_map_table_list mtl12 ^ "\n"); *)
     let (res22, mtl22) = (checkeq_formulas_one hvars (rvars2,rvars1) f22 f12 mtl21) in
+    (* print_string ("mtl22: " ^ string_of_map_table_list mtl12 ^ "\n"); *)
     (res12&&res22, mtl12)
   ) else (false,[[]])
 
