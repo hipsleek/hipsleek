@@ -19,13 +19,19 @@
  * generate better code by using them directly rather than
  * using the generic single-entry routines.
  */
-/* struct list_head { */
-/* 	struct list_head *next, *prev; */
-/* }; */
+/*
+ struct list_head { 
+ 	struct list_head *next, *prev; 
+ };
+*/ 
 data list_head {
   list_head next;
   list_head prev;
 }
+
+dll<q> == self::list_head<self , q>
+  or self::list_head<p , q> * p::dll<self> 
+  inv self!=null;
 
 /*
  * Insert a new entry between two known consecutive entries.
@@ -33,23 +39,24 @@ data list_head {
  * This is only for internal list manipulation where we know
  * the prev/next entries already!
  */
-/* static inline __attribute__((always_inline)) void __list_add( */
-/* 		struct list_head *new, struct list_head *prev, struct list_head *next) { */
-/* 	next->prev = new; */
-/* 	new->next = next; */
-/* 	new->prev = prev; */
-/* 	prev->next = new; */
-/* } */
+/*
+ static inline __attribute__((always_inline)) void __list_add( 
+ 		struct list_head *new, struct list_head *prev, struct list_head *next) { 
+ 	next->prev = new; 
+ 	new->next = next; 
+ 	new->prev = prev; 
+ 	prev->next = new; 
+ }
+*/
 
-void __list_add(
-		list_head new1, list_head prev, list_head next)
+void __list_add(list_head new1, list_head prev, list_head next)
   requires new1::list_head<_,_>*prev::list_head<_,f>*next::list_head<l,_>
   ensures prev::list_head<new1,f> * new1::list_head<next,prev> * next::list_head<l,new1>;
 {
-	next.prev = new1;
-	new1.next = next;
-	new1.prev = prev;
-    prev.next = new1;
+  next.prev = new1;
+  new1.next = next;
+  new1.prev = prev;
+  prev.next = new1;
 }
 
 /**
@@ -60,17 +67,17 @@ void __list_add(
  * Insert a new entry before the specified head.
  * This is useful for implementing queues.
  */
-/* static inline __attribute__((always_inline)) void list_add_tail( */
-/* 		struct list_head *new, struct list_head *head) { */
-/* 	__list_add(new, head->prev, head); */
-/* } */
-
-void list_add_tail(
-		list_head new1, list_head head1)
-   requires new1::list_head<_,_>*head1::list_head<l,prev>*prev::list_head<_,f>
-  ensures prev::list_head<new1,f> * new1::list_head<head1,prev> * head1::list_head<l,new1>;
+/*
+ static inline __attribute__((always_inline)) void list_add_tail( 
+ 		struct list_head *new, struct list_head *head) { 
+ 	__list_add(new, head->prev, head); 
+ } 
+*/
+void list_add_tail(list_head new1, list_head head1)
+  requires new1::list_head<_,_> * prev::list_head<head1,f> * head1::dll<prev>
+  ensures prev::list_head<new1,f> * new1::list_head<head1,prev> * head1::dll<new1>;
 {
-	__list_add(new1, head1.prev, head1);
+  __list_add(new1, head1.prev, head1);
 }
 
 /****************************************************************************/
@@ -258,38 +265,40 @@ int driver_attach(device_driver drv)
  * RETURNS:
  * 0 on success, -errno on failure.
  */
-/* int pci_add_dynid(struct pci_driver *drv, unsigned int vendor, */
-/* 		unsigned int device, unsigned int subvendor, unsigned int subdevice, */
-/* 		unsigned int class, unsigned int class_mask, unsigned long driver_data) { */
-/* 	struct pci_dynid *dynid; */
-/* 	int retval; */
+/*
+ int pci_add_dynid(struct pci_driver *drv, unsigned int vendor, 
+ 		unsigned int device, unsigned int subvendor, unsigned int subdevice, 
+ 		unsigned int class, unsigned int class_mask, unsigned long driver_data) { 
+ 	struct pci_dynid *dynid; 
+ 	int retval; 
 
-/* 	dynid = (struct pci_dynid *) malloc(sizeof(struct pci_dynid)); */
-/* 	if (!dynid) */
-/* 		return -12; */
+ 	dynid = (struct pci_dynid *) malloc(sizeof(struct pci_dynid)); 
+ 	if (!dynid) 
+ 		return -12; 
 
-/* 	dynid->id.vendor = vendor; */
-/* 	dynid->id.device = device; */
-/* 	dynid->id.subvendor = subvendor; */
-/* 	dynid->id.subdevice = subdevice; */
-/* 	dynid->id.class = class; */
-/* 	dynid->id.class_mask = class_mask; */
-/* 	dynid->id.driver_data = driver_data; */
+ 	dynid->id.vendor = vendor; 
+ 	dynid->id.device = device; 
+ 	dynid->id.subvendor = subvendor; 
+ 	dynid->id.subdevice = subdevice; 
+ 	dynid->id.class = class; 
+ 	dynid->id.class_mask = class_mask; 
+ 	dynid->id.driver_data = driver_data; 
 
-/* 	list_add_tail(&dynid->node, &drv->dynids.list); */
+ 	list_add_tail(&dynid->node, &drv->dynids.list); 
 
-/* 	get_driver(&drv->driver); */
-/* 	retval = driver_attach(&drv->driver); */
-/* 	put_driver(&drv->driver); */
+ 	get_driver(&drv->driver); 
+ 	retval = driver_attach(&drv->driver); 
+ 	put_driver(&drv->driver); 
 
-/* 	return retval; */
-/* } */
-
+ 	return retval; 
+ } 
+*/
 int pci_add_dynid(pci_driver drv, int vendor,
 		int device, int subvendor, int subdevice,
 		int class_, int class_mask, int driver_data)
-  requires drv::pci_driver<n,_,_,d,dy> * dy::pci_dynids<l> * l::list_head<_,prev> * prev::list_head<_,f>
-  * n::list_head<_,_> * d::device_driver<_,_>
+  requires drv::pci_driver<n,_,_,d,dy> * dy::pci_dynids<l> 
+            * prev::list_head<_,_> * l::dll<prev>
+            * n::list_head<_,_> * d::device_driver<_,_>
   ensures true;
  {
 	pci_dynid dynid;
@@ -316,22 +325,3 @@ int pci_add_dynid(pci_driver drv, int vendor,
 	return retval;
 }
 
-//int main(void) {
-//	struct pci_driver *pdr;
-//	pdr = (struct pci_driver *) malloc (sizeof(struct pci_driver));
-//	if (!pdr)
-//		return -12;
-//
-//	pdr->node.next = NULL;
-//	pdr->node.prev = NULL;
-//	pdr->name = (char *) malloc (sizeof(char));
-//	pdr->id_table = (struct pci_device_id *) malloc (sizeof(struct pci_device_id));
-//	pdr->driver.name = ;
-//	pdr->driver.bus = ;
-//	pdr->dynids.list = ;
-//
-//
-//	*(pdr->name) = "aaa";
-//
-//	return pci_add_dynid(pdr,2,3,4,5,6,7,8);
-//}

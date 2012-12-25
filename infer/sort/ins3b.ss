@@ -9,7 +9,7 @@ data node {
 
  sortll<mi> == 
     self::node<mi,null>
-   or self::node<mi, p> * p::sortll<m2> & O(mi,m2) & p!=null
+   or exists O: self::node<mi, p> * p::sortll<m2> & O(mi,m2) & p!=null
  inv self!=null;
 
 node insert(node x, node y)
