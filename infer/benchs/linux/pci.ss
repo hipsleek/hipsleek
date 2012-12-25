@@ -50,8 +50,8 @@ dll<q> == self::list_head<self , q>
 */
 
 void __list_add(list_head new1, list_head prev, list_head next)
-  requires new1::list_head<_,_>*prev::list_head<_,f>*next::list_head<l,_>
-  ensures prev::list_head<new1,f> * new1::list_head<next,prev> * next::list_head<l,new1>;
+  requires new1::list_head<_,_>*prev::list_head<next,pp>*next::list_head<nn,prev>
+  ensures prev::list_head<new1,pp> * new1::list_head<next,prev> * next::list_head<nn,new1>;
 {
   next.prev = new1;
   new1.next = next;
@@ -296,9 +296,9 @@ int driver_attach(device_driver drv)
 int pci_add_dynid(pci_driver drv, int vendor,
 		int device, int subvendor, int subdevice,
 		int class_, int class_mask, int driver_data)
-  requires drv::pci_driver<n,_,_,d,dy> * dy::pci_dynids<l> 
-            * prev::list_head<_,_> * l::dll<prev>
-            * n::list_head<_,_> * d::device_driver<_,_>
+  requires drv::pci_driver<node1,_,_,d,dy> * dy::pci_dynids<head1> 
+            * prev::list_head<head1,_> * head1::dll<prev>
+            * node1::list_head<_,_> * d::device_driver<_,_>
   ensures true;
  {
 	pci_dynid dynid;
