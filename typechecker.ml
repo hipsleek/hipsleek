@@ -2499,7 +2499,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                                 (* new_spec *)
                               end
                         in
-                        let _ = Specutil.test prog in
+(*                        let _ = Specutil.test prog in*)
                         (* TODO WN : what happen to the old MayLoop? *)
                         (* let new_spec = CF.norm_struc_with_lexvar new_spec false in  *)
                         let _ = proc.proc_stk_of_static_specs # push new_spec in
