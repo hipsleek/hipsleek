@@ -50,6 +50,32 @@ static inline __attribute__((always_inline)) void list_add_tail(
     __list_add(new, head->prev, head);
 }
 
+/*
+ * Delete a list entry by making the prev/next entries
+ * point to each other.
+ *
+ * This is only for internal list manipulation where we know
+ * the prev/next entries already!
+ */
+static inline void __list_del(struct list_head * prev, struct list_head * next)
+{
+    next->prev = prev;
+    prev->next = next;
+}
+
+/**
+ * list_del - deletes entry from list.
+ * @entry: the element to delete from the list.
+ * Note: list_empty() on entry does not return true after this, the entry is
+ * in an undefined state.
+ */
+static inline void list_del(struct list_head *entry)
+{
+    __list_del(entry->prev, entry->next);
+    entry->next = NULL;
+    entry->prev = NULL;
+}
+
 /****************************************************************************/
 
 struct pci_device_id {
@@ -97,19 +123,17 @@ struct pci_driver {
  * get_driver - increment driver reference count.
  * @drv: driver.
  */
-/*TODO*/
 struct device_driver *get_driver(struct device_driver *drv) {
-    //  if (drv) {
-    //      struct device_driver *a;
-    //      return a;
-    //  }
+    if (drv) {
+        struct device_driver *a;
+        return a;
+    }
     return NULL;
 }
 /**
  * put_driver - decrement driver's refcount.
  * @drv: driver.
  */
-/*TODO*/
 void put_driver(struct device_driver *drv) {
     return;
 }
@@ -123,7 +147,6 @@ void put_driver(struct device_driver *drv) {
  * returns 0 and the @dev->driver is set, we've found a
  * compatible pair.
  */
-/*TODO*/
 int driver_attach(struct device_driver *drv) {
     return 0;
 }
@@ -178,22 +201,72 @@ int pci_add_dynid(struct pci_driver *drv, unsigned int vendor,
     return retval;
 }
 
-//int main(void) {
-//  struct pci_driver *pdr;
-//  pdr = (struct pci_driver *) malloc (sizeof(struct pci_driver));
-//  if (!pdr)
-//      return -12;
-//
-//  pdr->node.next = NULL;
-//  pdr->node.prev = NULL;
-//  pdr->name = (char *) malloc (sizeof(char));
-//  pdr->id_table = (struct pci_device_id *) malloc (sizeof(struct pci_device_id));
-//  pdr->driver.name = ;
-//  pdr->driver.bus = ;
-//  pdr->dynids.list = ;
-//
-//
-//  *(pdr->name) = "aaa";
-//
-//  return pci_add_dynid(pdr,2,3,4,5,6,7,8);
-//}
+static void pci_free_dynids(struct pci_driver *drv)
+{
+    struct pci_dynid *dynid, *n;
+
+    dynid = (struct pci_dynid *) (&drv->dynids.list)->next;
+    n = (struct pci_dynid *) dynid->node.next;
+    while (&dynid->node != (&drv->dynids.list)) {
+        list_del(&dynid->node);
+        free(dynid);
+        dynid = n;
+        n = (struct pci_dynid *) n->node.next;
+    }
+    return;
+}
+
+/**
+ * store_remove_id - remove a PCI device ID from this driver
+ * @driver: target device driver
+ * @buf: buffer for scanning device ID data
+ * @count: input size
+ *
+ * Removes a dynamic pci device ID to this driver.
+ */
+static int store_remove_id(struct device_driver *driver, const char *buf, int count)
+{
+    struct pci_dynid *dynid, *n;
+    struct pci_driver *pdrv = (struct pci_driver *) driver;
+    unsigned int vendor,
+    device,
+    subvendor = (~0),
+    subdevice = (~0),
+    class = 0,
+    class_mask = 0;
+    int fields = 0;
+    int retval = -19;
+
+    fields = sscanf(buf, "%x %x %x %x %x %x",
+            &vendor, &device, &subvendor, &subdevice,
+            &class, &class_mask);
+    if (fields < 2)
+        return -22;
+
+    dynid = (struct pci_dynid *) (&pdrv->dynids.list)->next;
+    n = (struct pci_dynid *) dynid->node.next;
+    while (&dynid->node != (&pdrv->dynids.list)){
+        struct pci_device_id *id = &dynid->id;
+        if ((id->vendor == vendor) &&
+            (id->device == device) &&
+            (subvendor == (~0) || id->subvendor == subvendor) &&
+            (subdevice == (~0) || id->subdevice == subdevice) &&
+            !((id->class ^ class) & class_mask)) {
+            list_del(&dynid->node);
+            free(dynid);
+            retval = 0;
+            break;
+        }
+        dynid = n;
+        n = (struct pci_dynid *) n->node.next;
+    }
+
+    if (retval)
+        return retval;
+    return count;
+}
+
+int main(void)
+{
+    return 0;
+}
