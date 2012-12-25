@@ -21,7 +21,7 @@
  */
 /*
  struct list_head { 
- 	struct list_head *next, *prev; 
+    struct list_head *next, *prev; 
  };
 */ 
 data list_head {
@@ -45,11 +45,11 @@ dll_size<q,n> == self::list_head<self , q> & n=1
  */
 /*
  static inline __attribute__((always_inline)) void __list_add( 
- 		struct list_head *new, struct list_head *prev, struct list_head *next) { 
- 	next->prev = new; 
- 	new->next = next; 
- 	new->prev = prev; 
- 	prev->next = new; 
+        struct list_head *new, struct list_head *prev, struct list_head *next) { 
+    next->prev = new; 
+    new->next = next; 
+    new->prev = prev; 
+    prev->next = new; 
  }
 */
 
@@ -73,8 +73,8 @@ void __list_add(list_head new1, list_head prev, list_head next)
  */
 /*
  static inline __attribute__((always_inline)) void list_add_tail( 
- 		struct list_head *new, struct list_head *head) { 
- 	__list_add(new, head->prev, head); 
+        struct list_head *new, struct list_head *head) { 
+    __list_add(new, head->prev, head); 
  } 
 */
 relation D(int a, int b).
@@ -89,10 +89,10 @@ void list_add_tail(list_head new1, list_head head1)
 /****************************************************************************/
 
 /* struct pci_device_id { */
-/* 	unsigned int vendor, device; /\* Vendor and device ID or PCI_ANY_ID*\/ */
-/* 	unsigned int subvendor, subdevice; /\* Subsystem ID's or PCI_ANY_ID *\/ */
-/* 	unsigned int class, class_mask; /\* (class,subclass,prog-if) triplet *\/ */
-/* 	unsigned long driver_data; /\* Data private to the driver *\/ */
+/*  unsigned int vendor, device; /\* Vendor and device ID or PCI_ANY_ID*\/ */
+/*  unsigned int subvendor, subdevice; /\* Subsystem ID's or PCI_ANY_ID *\/ */
+/*  unsigned int class, class_mask; /\* (class,subclass,prog-if) triplet *\/ */
+/*  unsigned long driver_data; /\* Data private to the driver *\/ */
 /* }; */
 
 data pci_device_id {
@@ -103,13 +103,13 @@ data pci_device_id {
 }
 
 /* struct pci_dynid { */
-/* 	struct list_head node; */
-/* 	struct pci_device_id id; */
+/*  struct list_head node; */
+/*  struct pci_device_id id; */
 /* }; */
 
 data pci_dynid {
-	list_head node;
-	pci_device_id id;
+    list_head node;
+    pci_device_id id;
 }
 
 pred_prim RS_mem<i:int>
@@ -128,17 +128,17 @@ pci_dynid cast_to_pci_dynid_ptr(RS_mem p)
  }
 
 /* struct pci_dynids { */
-/* 	struct list_head list; */
+/*  struct list_head list; */
 /* }; */
 
 data pci_dynids {
-	list_head list;
+    list_head list;
 }
 
 /* struct bus_type { */
-/* 	const char *name; */
-/* 	//	int (*probe)(struct device *dev); */
-/* 	//	int (*remove)(struct device *dev); */
+/*  const char *name; */
+/*  //  int (*probe)(struct device *dev); */
+/*  //  int (*remove)(struct device *dev); */
 /* }; */
 
 data char {
@@ -146,43 +146,43 @@ data char {
 }
 
 data bus_type {
-	 char name;
-	//	int (*probe)(struct device *dev);
-	//	int (*remove)(struct device *dev);
+     char name;
+    //  int (*probe)(struct device *dev);
+    //  int (*remove)(struct device *dev);
 }
 
 /* struct device_driver { */
-/* 	const char *name; */
-/* 	struct bus_type *bus; */
-/* 	//	int (*probe)(struct device *dev); */
-/* 	//	int (*remove)(struct device *dev); */
+/*  const char *name; */
+/*  struct bus_type *bus; */
+/*  //  int (*probe)(struct device *dev); */
+/*  //  int (*remove)(struct device *dev); */
 /* }; */
 
 data device_driver {
-	char name;
-	bus_type bus;
-	//	int (*probe)(struct device *dev);
-	//	int (*remove)(struct device *dev);
+    char name;
+    bus_type bus;
+    //  int (*probe)(struct device *dev);
+    //  int (*remove)(struct device *dev);
 }
 
 /* struct pci_driver { */
-/* 	struct list_head node; */
-/* 	char *name; */
-/* 	const struct pci_device_id *id_table; */
-/* 	//	int (*probe)(struct pci_dev *dev, const struct pci_device_id *id); */
-/* 	//	void (*remove)(struct pci_dev *dev); */
-/* 	struct device_driver driver; */
-/* 	struct pci_dynids dynids; */
+/*  struct list_head node; */
+/*  char *name; */
+/*  const struct pci_device_id *id_table; */
+/*  //  int (*probe)(struct pci_dev *dev, const struct pci_device_id *id); */
+/*  //  void (*remove)(struct pci_dev *dev); */
+/*  struct device_driver driver; */
+/*  struct pci_dynids dynids; */
 /* }; */
 
 data pci_driver {
-	list_head node;
-	char name;
-	pci_device_id id_table;
-	//	int (*probe)(struct pci_dev *dev, const struct pci_device_id *id);
-	//	void (*remove)(struct pci_dev *dev);
-	device_driver driver;
-	pci_dynids dynids;
+    list_head node;
+    char name;
+    pci_device_id id_table;
+    //  int (*probe)(struct pci_dev *dev, const struct pci_device_id *id);
+    //  void (*remove)(struct pci_dev *dev);
+    device_driver driver;
+    pci_dynids dynids;
 }
 
 /****************************************************************************/
@@ -193,22 +193,22 @@ data pci_driver {
  */
 /*TODO*/
 /* struct device_driver *get_driver(struct device_driver *drv) { */
-/* 	//	if (drv) { */
-/* 	//		struct device_driver *a; */
-/* 	//		return a; */
-/* 	//	} */
-/* 	return NULL; */
+/*  //  if (drv) { */
+/*  //      struct device_driver *a; */
+/*  //      return a; */
+/*  //  } */
+/*  return NULL; */
 /* } */
 
 device_driver get_driver(device_driver drv)
   requires true
   ensures res=null;
 {
-	//	if (drv) {
-	//		struct device_driver *a;
-	//		return a;
-	//	}
-	return null;
+    //  if (drv) {
+    //      struct device_driver *a;
+    //      return a;
+    //  }
+    return null;
 }
 
 /**
@@ -217,7 +217,7 @@ device_driver get_driver(device_driver drv)
  */
 /*TODO*/
 /* void put_driver(struct device_driver *drv) { */
-/* 	return; */
+/*  return; */
 /* } */
 
 
@@ -225,7 +225,7 @@ void put_driver(device_driver drv)
   requires true
   ensures true;
 {
-	return;
+    return;
 }
 
 /**
@@ -239,14 +239,14 @@ void put_driver(device_driver drv)
  */
 /*TODO*/
 /* int driver_attach(struct device_driver *drv) { */
-/* 	return 0; */
+/*  return 0; */
 /* } */
 
 int driver_attach(device_driver drv)
   requires true
   ensures res=0;
 {
-	return 0;
+    return 0;
 }
 /****************************************************************************/
 
@@ -273,61 +273,61 @@ int driver_attach(device_driver drv)
  */
 /*
  int pci_add_dynid(struct pci_driver *drv, unsigned int vendor, 
- 		unsigned int device, unsigned int subvendor, unsigned int subdevice, 
- 		unsigned int class, unsigned int class_mask, unsigned long driver_data) { 
- 	struct pci_dynid *dynid; 
- 	int retval; 
+        unsigned int device, unsigned int subvendor, unsigned int subdevice, 
+        unsigned int class, unsigned int class_mask, unsigned long driver_data) { 
+    struct pci_dynid *dynid; 
+    int retval; 
 
- 	dynid = (struct pci_dynid *) malloc(sizeof(struct pci_dynid)); 
- 	if (!dynid) 
- 		return -12; 
+    dynid = (struct pci_dynid *) malloc(sizeof(struct pci_dynid)); 
+    if (!dynid) 
+        return -12; 
 
- 	dynid->id.vendor = vendor; 
- 	dynid->id.device = device; 
- 	dynid->id.subvendor = subvendor; 
- 	dynid->id.subdevice = subdevice; 
- 	dynid->id.class = class; 
- 	dynid->id.class_mask = class_mask; 
- 	dynid->id.driver_data = driver_data; 
+    dynid->id.vendor = vendor; 
+    dynid->id.device = device; 
+    dynid->id.subvendor = subvendor; 
+    dynid->id.subdevice = subdevice; 
+    dynid->id.class = class; 
+    dynid->id.class_mask = class_mask; 
+    dynid->id.driver_data = driver_data; 
 
- 	list_add_tail(&dynid->node, &drv->dynids.list); 
+    list_add_tail(&dynid->node, &drv->dynids.list); 
 
- 	get_driver(&drv->driver); 
- 	retval = driver_attach(&drv->driver); 
- 	put_driver(&drv->driver); 
+    get_driver(&drv->driver); 
+    retval = driver_attach(&drv->driver); 
+    put_driver(&drv->driver); 
 
- 	return retval; 
+    return retval; 
  } 
 */
 int pci_add_dynid(pci_driver drv, int vendor,
-		int device, int subvendor, int subdevice,
-		int class_, int class_mask, int driver_data)
+        int device, int subvendor, int subdevice,
+        int class_, int class_mask, int driver_data)
   requires drv::pci_driver<node1,_,_,d,dy> * dy::pci_dynids<head1> 
             * prev::list_head<head1,_> * head1::dll_size<prev,_>
             * node1::list_head<_,_> * d::device_driver<_,_>
   ensures true;
  {
-	pci_dynid dynid;
-	int retval;
+    pci_dynid dynid;
+    int retval;
 
-	dynid = cast_to_pci_dynid_ptr (malloc(1));
-	if (dynid==null)
-		return -12;
+    dynid = cast_to_pci_dynid_ptr (malloc(1));
+    if (dynid==null)
+        return -12;
 
-	dynid.id.vendor = vendor;
-	dynid.id.device = device;
-	dynid.id.subvendor = subvendor;
-	dynid.id.subdevice = subdevice;
-	dynid.id.class_ = class_;
-	dynid.id.class_mask = class_mask;
-	dynid.id.driver_data = driver_data;
+    dynid.id.vendor = vendor;
+    dynid.id.device = device;
+    dynid.id.subvendor = subvendor;
+    dynid.id.subdevice = subdevice;
+    dynid.id.class_ = class_;
+    dynid.id.class_mask = class_mask;
+    dynid.id.driver_data = driver_data;
 
-	list_add_tail(dynid.node, drv.dynids.list);
+    list_add_tail(dynid.node, drv.dynids.list);
 
-	get_driver(drv.driver);
-	retval = driver_attach(drv.driver);
-	put_driver(drv.driver);
+    get_driver(drv.driver);
+    retval = driver_attach(drv.driver);
+    put_driver(drv.driver);
 
-	return retval;
+    return retval;
 }
 

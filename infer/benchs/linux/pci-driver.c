@@ -20,7 +20,7 @@
  * using the generic single-entry routines.
  */
 struct list_head {
-	struct list_head *next, *prev;
+    struct list_head *next, *prev;
 };
 
 /*
@@ -30,11 +30,11 @@ struct list_head {
  * the prev/next entries already!
  */
 static inline __attribute__((always_inline)) void __list_add(
-		struct list_head *new, struct list_head *prev, struct list_head *next) {
-	next->prev = new;
-	new->next = next;
-	new->prev = prev;
-	prev->next = new;
+        struct list_head *new, struct list_head *prev, struct list_head *next) {
+    next->prev = new;
+    new->next = next;
+    new->prev = prev;
+    prev->next = new;
 }
 
 /**
@@ -46,49 +46,49 @@ static inline __attribute__((always_inline)) void __list_add(
  * This is useful for implementing queues.
  */
 static inline __attribute__((always_inline)) void list_add_tail(
-		struct list_head *new, struct list_head *head) {
-	__list_add(new, head->prev, head);
+        struct list_head *new, struct list_head *head) {
+    __list_add(new, head->prev, head);
 }
 
 /****************************************************************************/
 
 struct pci_device_id {
-	unsigned int vendor, device; /* Vendor and device ID or PCI_ANY_ID*/
-	unsigned int subvendor, subdevice; /* Subsystem ID's or PCI_ANY_ID */
-	unsigned int class, class_mask; /* (class,subclass,prog-if) triplet */
-	unsigned long driver_data; /* Data private to the driver */
+    unsigned int vendor, device; /* Vendor and device ID or PCI_ANY_ID*/
+    unsigned int subvendor, subdevice; /* Subsystem ID's or PCI_ANY_ID */
+    unsigned int class, class_mask; /* (class,subclass,prog-if) triplet */
+    unsigned long driver_data; /* Data private to the driver */
 };
 
 struct pci_dynid {
-	struct list_head node;
-	struct pci_device_id id;
+    struct list_head node;
+    struct pci_device_id id;
 };
 
 struct pci_dynids {
-	struct list_head list;
+    struct list_head list;
 };
 
 struct bus_type {
-	const char *name;
-	//	int (*probe)(struct device *dev);
-	//	int (*remove)(struct device *dev);
+    const char *name;
+    //  int (*probe)(struct device *dev);
+    //  int (*remove)(struct device *dev);
 };
 
 struct device_driver {
-	const char *name;
-	struct bus_type *bus;
-	//	int (*probe)(struct device *dev);
-	//	int (*remove)(struct device *dev);
+    const char *name;
+    struct bus_type *bus;
+    //  int (*probe)(struct device *dev);
+    //  int (*remove)(struct device *dev);
 };
 
 struct pci_driver {
-	struct list_head node;
-	char *name;
-	const struct pci_device_id *id_table;
-	//	int (*probe)(struct pci_dev *dev, const struct pci_device_id *id);
-	//	void (*remove)(struct pci_dev *dev);
-	struct device_driver driver;
-	struct pci_dynids dynids;
+    struct list_head node;
+    char *name;
+    const struct pci_device_id *id_table;
+    //  int (*probe)(struct pci_dev *dev, const struct pci_device_id *id);
+    //  void (*remove)(struct pci_dev *dev);
+    struct device_driver driver;
+    struct pci_dynids dynids;
 };
 
 /****************************************************************************/
@@ -99,11 +99,11 @@ struct pci_driver {
  */
 /*TODO*/
 struct device_driver *get_driver(struct device_driver *drv) {
-	//	if (drv) {
-	//		struct device_driver *a;
-	//		return a;
-	//	}
-	return NULL;
+    //  if (drv) {
+    //      struct device_driver *a;
+    //      return a;
+    //  }
+    return NULL;
 }
 /**
  * put_driver - decrement driver's refcount.
@@ -111,7 +111,7 @@ struct device_driver *get_driver(struct device_driver *drv) {
  */
 /*TODO*/
 void put_driver(struct device_driver *drv) {
-	return;
+    return;
 }
 
 /**
@@ -125,7 +125,7 @@ void put_driver(struct device_driver *drv) {
  */
 /*TODO*/
 int driver_attach(struct device_driver *drv) {
-	return 0;
+    return 0;
 }
 
 /****************************************************************************/
@@ -152,48 +152,48 @@ int driver_attach(struct device_driver *drv) {
  * 0 on success, -errno on failure.
  */
 int pci_add_dynid(struct pci_driver *drv, unsigned int vendor,
-		unsigned int device, unsigned int subvendor, unsigned int subdevice,
-		unsigned int class, unsigned int class_mask, unsigned long driver_data) {
-	struct pci_dynid *dynid;
-	int retval;
+        unsigned int device, unsigned int subvendor, unsigned int subdevice,
+        unsigned int class, unsigned int class_mask, unsigned long driver_data) {
+    struct pci_dynid *dynid;
+    int retval;
 
-	dynid = (struct pci_dynid *) malloc(sizeof(struct pci_dynid));
-	if (!dynid)
-		return -12;
+    dynid = (struct pci_dynid *) malloc(sizeof(struct pci_dynid));
+    if (!dynid)
+        return -12;
 
-	dynid->id.vendor = vendor;
-	dynid->id.device = device;
-	dynid->id.subvendor = subvendor;
-	dynid->id.subdevice = subdevice;
-	dynid->id.class = class;
-	dynid->id.class_mask = class_mask;
-	dynid->id.driver_data = driver_data;
+    dynid->id.vendor = vendor;
+    dynid->id.device = device;
+    dynid->id.subvendor = subvendor;
+    dynid->id.subdevice = subdevice;
+    dynid->id.class = class;
+    dynid->id.class_mask = class_mask;
+    dynid->id.driver_data = driver_data;
 
-	list_add_tail(&dynid->node, &drv->dynids.list);
+    list_add_tail(&dynid->node, &drv->dynids.list);
 
-	get_driver(&drv->driver);
-	retval = driver_attach(&drv->driver);
-	put_driver(&drv->driver);
+    get_driver(&drv->driver);
+    retval = driver_attach(&drv->driver);
+    put_driver(&drv->driver);
 
-	return retval;
+    return retval;
 }
 
 //int main(void) {
-//	struct pci_driver *pdr;
-//	pdr = (struct pci_driver *) malloc (sizeof(struct pci_driver));
-//	if (!pdr)
-//		return -12;
+//  struct pci_driver *pdr;
+//  pdr = (struct pci_driver *) malloc (sizeof(struct pci_driver));
+//  if (!pdr)
+//      return -12;
 //
-//	pdr->node.next = NULL;
-//	pdr->node.prev = NULL;
-//	pdr->name = (char *) malloc (sizeof(char));
-//	pdr->id_table = (struct pci_device_id *) malloc (sizeof(struct pci_device_id));
-//	pdr->driver.name = ;
-//	pdr->driver.bus = ;
-//	pdr->dynids.list = ;
+//  pdr->node.next = NULL;
+//  pdr->node.prev = NULL;
+//  pdr->name = (char *) malloc (sizeof(char));
+//  pdr->id_table = (struct pci_device_id *) malloc (sizeof(struct pci_device_id));
+//  pdr->driver.name = ;
+//  pdr->driver.bus = ;
+//  pdr->dynids.list = ;
 //
 //
-//	*(pdr->name) = "aaa";
+//  *(pdr->name) = "aaa";
 //
-//	return pci_add_dynid(pdr,2,3,4,5,6,7,8);
+//  return pci_add_dynid(pdr,2,3,4,5,6,7,8);
 //}
