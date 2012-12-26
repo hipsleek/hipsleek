@@ -5,15 +5,13 @@ data node {
 	node next; 
 }
 
-bnd1<n, sm, bg, mi> == self = null & n = 0 & mi = \inf & sm <= mi <= bg or 
+bnd1<n, sm, bg, mi> == self = null & n = 0 & mi = \inf & mi <= bg or 
                self::node<d, p> * p::bnd1<n-1, sm, bg, tmi> & sm <= d < bg & mi = min(d, tmi) & sm <= mi < bg
                     inv n >= 0 & sm <= mi <= bg;
-
 
 sll<n, sm> == self = null & sm = \inf & n = 0 or 
                   self::node<sm, q> * q::sll<n-1, qs> & sm <= qs
                inv n >= 0; 
-
                  
 int find_min(node x)
 	requires x::bnd1<n, s, l, mi> & n > 0
