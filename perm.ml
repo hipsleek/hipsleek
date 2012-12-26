@@ -26,6 +26,13 @@ let string_of_perm_type t =
 let perm = ref Frac
 (* let perm = ref NoPerm *)
 
+(*To disable concurrency verification, for testing purposes*)
+let disable_para () =
+  perm:= NoPerm;
+  ann_vp:= false;
+  allow_ls:= false;
+  allow_locklevel:=false
+
 let allow_perm ():bool = 
   match !perm with
     | NoPerm -> false

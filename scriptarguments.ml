@@ -122,6 +122,7 @@ let common_arguments = [
 	("--dis-ls", Arg.Clear Globals.allow_ls,"disable locksets during verification");
 	("--locklevel", Arg.Set Globals.allow_locklevel,"enable locklevels during verification");
 	("--dis-locklevel", Arg.Clear Globals.allow_locklevel,"disable locklevels during verification");
+	("--dis-para", Arg.Unit Perm.disable_para,"disable concurrency verification");
 	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
 	("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
 	("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
