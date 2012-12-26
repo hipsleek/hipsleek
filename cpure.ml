@@ -2922,6 +2922,56 @@ and split_ex_quantifiers (f0 : formula) : (spec_var list * formula) = match f0 w
 
 *)
 
+(*
+  List of bag variables.
+*)
+and bag_vars_formula (f0 : formula) : spec_var list = match f0 with
+  | BForm (bf,lbl) -> (bag_vars_b_formula bf)
+  | And (f1, f2, pos) -> (bag_vars_formula f1) @ (bag_vars_formula f2)
+  | AndList b -> fold_l_snd bag_vars_formula b 
+  | Or (f1, f2, lbl, pos)  -> (bag_vars_formula f1) @ (bag_vars_formula f2)
+  | Not (f1, lbl, pos) -> (bag_vars_formula f1)
+  | Forall (qvar, qf, lbl, pos) -> (bag_vars_formula qf)
+  | Exists (qvar, qf, lbl, pos) -> (bag_vars_formula qf)
+    
+and bag_vars_b_formula (bf : b_formula) : spec_var list =
+  let (pf,il) = bf in
+  match pf with
+  | BagIn (v1,_,_)
+  | BagNotIn (v1,_,_) -> [v1]
+  | BagMin (v1,v2,_)
+  | BagMax (v1,v2,_) -> [v1;v2]
+  | Eq (e1,e2,pos) ->
+      let vars1 = bag_vars_exp e1 in
+      let vars2 = bag_vars_exp e2 in
+      (vars1@vars2)
+  | _ -> []
+
+and bag_vars_exp (e : exp) : spec_var list =
+  let rec helper e =
+    match e with
+      | Bag (exps,pos) ->
+          let vars = List.map ( fun e ->
+              (match e with
+                | Var (sv,pos) -> [sv]
+                | Level (sv,pos) -> [sv]
+                | _ -> [])
+          ) exps in
+          (List.concat vars)
+      | BagUnion (exps,pos)
+      | BagIntersect (exps,pos) ->
+          let vars = List.map ( fun e ->
+              let vars = helper e in
+              vars
+          ) exps in
+          (List.concat vars)
+      | BagDiff (e1,e2,pos) ->
+          let vars1 = helper e1 in
+          let vars2 = helper e2 in
+          vars1@vars2
+      | _ -> []
+  in helper e
+
 and  get_subst_equation_formula_vv (f0 : formula) (v : spec_var):((spec_var * spec_var) list * formula) = 
   let r1,r2 = get_subst_equation_formula f0 v true in
   let r =List.fold_left (fun a (c1,c2)->match c2 with
@@ -2929,26 +2979,39 @@ and  get_subst_equation_formula_vv (f0 : formula) (v : spec_var):((spec_var * sp
     | _ -> a ) [] r1 in
   (r,r2)
 
+and get_subst_equation_formula (f0 : formula) (v : spec_var) only_vars: ((spec_var * exp) list * formula) =
+  let pr_out = pr_pair (pr_list (pr_pair !print_sv !print_exp)) !print_formula in
+  Debug.no_3 "get_subst_equation_formula"
+      !print_formula !print_sv string_of_bool pr_out 
+      get_subst_equation_formula_x f0 v only_vars
 
-and get_subst_equation_formula (f0 : formula) (v : spec_var) only_vars: ((spec_var * exp) list * formula) = match f0 with
-  | And (f1, f2, pos) ->
-        let st1, rf1 = get_subst_equation_formula f1 v only_vars in
-        if not (Gen.is_empty st1) then
-          (st1, mkAnd rf1 f2 pos)
-        else
-          let st2, rf2 = get_subst_equation_formula f2 v only_vars in
-          (st2, mkAnd f1 rf2 pos)
-  | AndList b -> 
-			let r1,r2 = List.fold_left (fun (a1,b1) c-> 
-				if Gen.is_empty a1 then 
-					let a, b = get_subst_equation_formula (snd c) v only_vars in
-					(a,b1@[(fst c, b)])
-				else (a1, b1@[c]) 
-			  ) ([],[]) b in
-			(r1, AndList r2)
-  | BForm (bf,lbl) -> get_subst_equation_b_formula bf v lbl only_vars
-  | _ -> ([], f0)
-        
+and get_subst_equation_formula_x (f0 : formula) (v : spec_var) only_vars: ((spec_var * exp) list * formula) =
+  let bag_vars = bag_vars_formula f0 in
+  (*OVERIDDING the input for soundness*)
+  (*If there are bag constraints -> only find equations of variables
+    such as x=v & x in BAG, but not x=v+1 & x in BAG*)
+  let only_vars = if (Gen.BList.mem_eq eq_spec_var v bag_vars) then true else only_vars in
+  let rec helper f0 v only_vars =
+    match f0 with
+      | And (f1, f2, pos) ->
+          let st1, rf1 = helper f1 v only_vars in
+          if not (Gen.is_empty st1) then
+            (st1, mkAnd rf1 f2 pos)
+          else
+            let st2, rf2 = helper f2 v only_vars in
+            (st2, mkAnd f1 rf2 pos)
+      | AndList b -> 
+		  let r1,r2 = List.fold_left (fun (a1,b1) c-> 
+			  if Gen.is_empty a1 then 
+				let a, b = helper (snd c) v only_vars in
+				(a,b1@[(fst c, b)])
+			  else (a1, b1@[c]) 
+		  ) ([],[]) b in
+		  (r1, AndList r2)
+      | BForm (bf,lbl) -> get_subst_equation_b_formula bf v lbl only_vars
+      | _ -> ([], f0)
+  in helper f0 v only_vars
+
 and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars: ((spec_var * exp) list * formula) =
   let (pf,il) = f in
   match pf with
@@ -3579,55 +3642,6 @@ and drop_varperm_b_formula (bf : b_formula) : b_formula =
 (**************************************************************)
 (**************************************************************)
 
-(*
-  List of bag variables.
-*)
-let rec bag_vars_formula (f0 : formula) : spec_var list = match f0 with
-  | BForm (bf,lbl) -> (bag_vars_b_formula bf)
-  | And (f1, f2, pos) -> (bag_vars_formula f1) @ (bag_vars_formula f2)
-  | AndList b -> fold_l_snd bag_vars_formula b 
-  | Or (f1, f2, lbl, pos)  -> (bag_vars_formula f1) @ (bag_vars_formula f2)
-  | Not (f1, lbl, pos) -> (bag_vars_formula f1)
-  | Forall (qvar, qf, lbl, pos) -> (bag_vars_formula qf)
-  | Exists (qvar, qf, lbl, pos) -> (bag_vars_formula qf)
-    
-and bag_vars_b_formula (bf : b_formula) : spec_var list =
-  let (pf,il) = bf in
-  match pf with
-  | BagIn (v1,_,_)
-  | BagNotIn (v1,_,_) -> [v1]
-  | BagMin (v1,v2,_)
-  | BagMax (v1,v2,_) -> [v1;v2]
-  | Eq (e1,e2,pos) ->
-      let vars1 = bag_vars_exp e1 in
-      let vars2 = bag_vars_exp e2 in
-      (vars1@vars2)
-  | _ -> []
-
-and bag_vars_exp (e : exp) : spec_var list =
-  let rec helper e =
-    match e with
-      | Bag (exps,pos) ->
-          let vars = List.map ( fun e ->
-              (match e with
-                | Var (sv,pos) -> [sv]
-                | Level (sv,pos) -> [sv]
-                | _ -> [])
-          ) exps in
-          (List.concat vars)
-      | BagUnion (exps,pos)
-      | BagIntersect (exps,pos) ->
-          let vars = List.map ( fun e ->
-              let vars = helper e in
-              vars
-          ) exps in
-          (List.concat vars)
-      | BagDiff (e1,e2,pos) ->
-          let vars1 = helper e1 in
-          let vars2 = helper e2 in
-          vars1@vars2
-      | _ -> []
-  in helper e
 (*************************************************************************************************************************
 	05.06.2008:
 	Utilities for existential quantifier elimination:
@@ -6577,14 +6591,7 @@ and elim_exists_x (f0 : formula) : formula =
 	              (* now eliminate the quantified variables from the part that contains it *)
 	              let with_qvars = conj_of_list with_qvars_list pos in
 	              (* now eliminate the top existential variable. *)
-	              let st, pp1 =
-                    (*If there are bag constraints -> only find equations of variables
-                    such as x=v, but not x=v+1*)
-                    if (is_bag_constraint with_qvars) then
-                      get_subst_equation_formula with_qvars qvar true
-                    else
-                      get_subst_equation_formula with_qvars qvar false
-                  in
+	              let st, pp1 = get_subst_equation_formula with_qvars qvar false in
 	              if not (Gen.is_empty st) then
 	                let new_qf = subst_term st pp1 in
 	                let new_qf = mkExists qvars0 new_qf lbl pos in
@@ -6788,11 +6795,16 @@ and get_equi_vars_b f =
 	| Eq (e1,e2,_) -> (helper e1)@(helper e2)
 	| _ -> []
 
-let elim_equi_ante ante cons=
+let elim_equi_ante_x ante cons=
   let cv = fv cons in
   let eav_all = get_equi_vars ante in
   let eav = List.filter (fun v -> not(List.mem v cv)) eav_all in
   List.fold_left elim_equi_var ante eav
+
+let elim_equi_ante ante cons=
+  Debug.no_2 "elim_equi_ante"
+      !print_formula !print_formula !print_formula
+      elim_equi_ante_x ante cons
 
 let slice_formula (fl : formula list) : (spec_var list * formula list) list =
   let repart ac f = 

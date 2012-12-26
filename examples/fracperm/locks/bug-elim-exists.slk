@@ -1,5 +1,13 @@
 /*
   Bug in elim_exists in the presence of bag constraints.
+
+ ROOT CAUSE:
+ "get_subst_equation_formula" does not handle bag constraints
+ properly.
+
+ If there are bag constraints -> only find equations of variables
+ such as x=v & x in BAG ==> v in bag
+ but not applicable for formulae such as x=v+1 & x in BAG
 */
 
 //(1)
