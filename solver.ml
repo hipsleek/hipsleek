@@ -1235,6 +1235,12 @@ and prune_preds_x prog (simp_b:bool) (f:formula):formula =
     let nh, mem, changed = heap_prune_preds_mix prog oh op in 
     if changed then fct (i+1) mem nh
     else ((match op with | MCP.MemoF f -> MCP.MemoF (MCP.reset_changed f)| _ -> op) ,oh) in
+  (*prune concurrent threads*)
+  let helper_one_formula one_f =
+    let rp,rh = fct 0 one_f.formula_pure one_f.formula_heap in 
+    let rp = f_p_simp rp in
+    {one_f with formula_pure=rp;formula_heap=rh}
+  in
   let rec helper_formulas f = match f with
     | Or o -> 
           let f1 = helper_formulas o.formula_or_f1 in
@@ -1244,13 +1250,15 @@ and prune_preds_x prog (simp_b:bool) (f:formula):formula =
     | Exists e ->    
           let rp,rh = fct 0 e.formula_exists_pure e.formula_exists_heap in 
           let rp = f_p_simp rp in
+          let new_a = List.map helper_one_formula e.formula_exists_and in
           mkExists_w_lbl e.formula_exists_qvars rh rp 
-              e.formula_exists_type e.formula_exists_flow e.formula_exists_and e.formula_exists_pos e.formula_exists_label
+              e.formula_exists_type e.formula_exists_flow new_a e.formula_exists_pos e.formula_exists_label
     | Base b ->
           let rp,rh = fct 0 b.formula_base_pure b.formula_base_heap in 
           (* let _ = print_endline ("\nprune_preds: before: rp = " ^ (Cprinter.string_of_mix_formula rp)) in *)
           let rp = f_p_simp rp in
-          mkBase_w_lbl rh rp b.formula_base_type  b.formula_base_flow b.formula_base_and b.formula_base_pos b.formula_base_label in
+          let new_a = List.map helper_one_formula b.formula_base_and in
+          mkBase_w_lbl rh rp b.formula_base_type  b.formula_base_flow new_a b.formula_base_pos b.formula_base_label in
   if not !Globals.allow_pred_spec then f
   else
     (

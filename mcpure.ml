@@ -66,8 +66,6 @@ let repatch_memo_pure (ms: memo_pure) : memo_pure =
 let consistent_memoised_group (m: memoised_group) : bool =
   let v1 = m.memo_group_fv in
   let v2 = fv_memoised_group m in
-  let _ = print_endline ("v1 = " ^ (!print_svl v1)) in
-  let _ = print_endline ("v2 = " ^ (!print_svl v2)) in
   let r = Gen.BList.difference_eq eq_spec_var v2 v1 in
   let r2 = Gen.BList.difference_eq eq_spec_var v1 v2 in
   if r==[] then 

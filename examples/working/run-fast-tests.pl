@@ -494,7 +494,7 @@ $output_file = "log";
                                 "increment","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["vperm/fibonacci.ss",2,  "--ann-vp -tp z3 -perm none", 
+				["vperm/fibonacci.ss",2,  "--ann-vp -tp z3 -perm none --dis-ls dis--locklevel", 
                                 "seq_fib","SUCCESS",
                                 "para_fib2","SUCCESS"
 								],
