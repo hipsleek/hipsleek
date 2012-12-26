@@ -3340,7 +3340,23 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 				  | Some id ->
                       (*ADD POST CONDITION as a concurrent thread in formula_*_and*)
                           (*   (\*ADD add res= unique_threadid to the main formula   and unique_threadid is the thread id*\) *)
-                          (* let _ = print_endline ("### ctx11 = " ^ (Cprinter.string_of_context ctx11)) in *)
+                          (* let _ = print_endline ("### ctx11 (before) = " ^ (Cprinter.string_of_context ctx11)) in *)
+                          (*REUSE es_pure with care*)
+                          let add_es_pure es =
+                            (*TO CHECK: reuse es_pure with care*)
+                            (*currently, only extract constraints that
+                              are not related to LS,LSMU,waitlevel,float,varperm*)
+                            let es_p = MCP.drop_varperm_mix_formula es.es_pure in
+                            let es_p = MCP.drop_float_formula_mix_formula es_p in
+                            let es_p = MCP.drop_svl_mix_formula es_p [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed);(CP.mkLsVar Unprimed);(CP.mkLsVar Primed);(CP.mkLsmuVar Unprimed);(CP.mkLsmuVar Primed)] in
+                            let new_f = CF.add_mix_formula_to_formula es_p es.es_formula in
+                            Ctx {es with
+                                es_formula = new_f;
+                                es_pure = MCP.mkMTrue pos;}
+                          in
+                          let ctx11 = CF.transform_context add_es_pure ctx11 in
+                          (* let _ = print_endline ("### ctx11 (after) = " ^ (Cprinter.string_of_context ctx11)) in *)
+
                           let f = CF.formula_of_pure_N (CP.mkEqVar (CP.mkRes thread_typ) id pos) pos in
 	                      let rs1 = CF.transform_context (normalize_es f pos true) ctx11 in
                           (*add the post condition into formul_*_and  special compose_context_formula for concurrency*)
@@ -3354,7 +3370,6 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                           let rs2 = compose_context_formula_and rs1 new_post df id new_ref_vars pos in
 	                      let rs3 = add_path_id rs2 (pid,i) in
                           let rs4 = prune_ctx prog rs3 in
-                          (* let _ = print_endline ("### rs4 = " ^ (Cprinter.string_of_context rs4)) in *)
 	                      ((SuccCtx [rs4]),TrueConseq)
                   | None ->
                       begin

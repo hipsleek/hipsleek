@@ -8091,11 +8091,15 @@ and extractLS_x (evars : CP.spec_var list) (f : formula): MCP.mix_formula  =
           let p_pure = MCP.removeLS_mix_formula p in
           (* remove formulae related to waitlevel *)
           let p_pure = MCP.drop_svl_mix_formula p_pure [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in
+          (* get variables with full permission*)
+          let full_vars = MCP.get_varperm_mix_formula p_pure VP_Full in
           (* remove formulae related to varperm *)
           let p_pure = MCP.drop_varperm_mix_formula p_pure in
           (* remove formulae related to floating point: may be unsound *)
           let p_pure = MCP.drop_float_formula_mix_formula p_pure in
-          let p_pure = MCP.drop_svl_mix_formula p_pure evars in
+          (*excl_vars are those who should not be delayed-checked*)
+          let excl_vars = full_vars@evars in
+          let p_pure = MCP.drop_svl_mix_formula p_pure excl_vars in
           MCP.merge_mems p_delayed p_pure true
       | Exists{formula_exists_pure = p;
                formula_exists_qvars =qvars} ->
@@ -8104,12 +8108,16 @@ and extractLS_x (evars : CP.spec_var list) (f : formula): MCP.mix_formula  =
           let p_pure = MCP.removeLS_mix_formula p in
           (* remove formulae related to waitlevel *)
           let p_pure = MCP.drop_svl_mix_formula p_pure [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in
+          (* get variables with full permission*)
+          let full_vars = MCP.get_varperm_mix_formula p_pure VP_Full in
           (* remove formulae related to varperm *)
           let p_pure = MCP.drop_varperm_mix_formula p_pure in
           (* remove formulae related to floating point: may be unsound TOCHECK*)
           let p_pure = MCP.drop_float_formula_mix_formula p_pure in
           (* conservatively drop formula related to exist vars: may be unsound TOCHECK *)
-          let p_pure = MCP.drop_svl_mix_formula p_pure (qvars@evars) in
+          (*excl_vars are those who should not be delayed-checked*)
+          let excl_vars = full_vars@qvars@evars in
+          let p_pure = MCP.drop_svl_mix_formula p_pure excl_vars in
           MCP.merge_mems p_delayed p_pure true
       | Or {formula_or_f1 = f1; formula_or_f2 =f2} ->
           let pf1 = helper f1 in
