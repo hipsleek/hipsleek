@@ -5180,7 +5180,9 @@ let simp_bform simp bf =
 (* normalise and simplify b_formula *)
 let norm_bform_a (bf:b_formula) : b_formula =
   (*let bf = b_form_simplify bf in *)
-  if (is_float_bformula bf) then bf
+  let fvars = bfv bf in
+  let contain_waitlevel = List.exists (fun v -> (name_of_spec_var v = Globals.waitlevel_name)) fvars in
+  if (contain_waitlevel || (is_float_bformula bf)) then bf
   else
     let (pf,il) = bf in	
     let npf = 
