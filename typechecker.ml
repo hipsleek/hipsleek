@@ -1877,7 +1877,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			    let ftypes, fnames = List.split args in
 			    (* fsvars are the spec vars corresponding to the parameters *)
 			    let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
-			    let nox = CF.formula_of_pure_N (CF.no_change fsvars proc.proc_loc) proc.proc_loc in (*init(V) := v'=v*)
+                let pf = (CF.no_change fsvars proc.proc_loc) in (*init(V) := v'=v*)
+			    let nox = CF.formula_of_pure_N  pf proc.proc_loc in 
 			    let init_form = nox in
 			    let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled  proc.proc_loc in
                 (*add default full permission = 1.0 to ante; 

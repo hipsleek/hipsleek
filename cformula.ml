@@ -8376,12 +8376,17 @@ let infer_lsmu_formula_x (f : formula) : formula =
   match f with
   | Base b ->
       let p = b.formula_base_pure in
-      let np = MCP.infer_lsmu_mix_formula p in
-      Base {b with formula_base_pure = np}
+      let np,evars = MCP.infer_lsmu_mix_formula p in
+      let nb = Base {b with formula_base_pure = np} in
+      if (evars =[]) then
+        nb
+      else
+        push_exists evars nb
   | Exists e ->
       let p = e.formula_exists_pure in
-      let np = MCP.infer_lsmu_mix_formula p in
-      Exists {e with formula_exists_pure = np}
+      let np,evars = MCP.infer_lsmu_mix_formula p in
+      let new_evars = e.formula_exists_qvars@evars in
+      Exists {e with formula_exists_pure = np;formula_exists_qvars= new_evars}
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
       let new_f1 = helper f1 in
       let new_f2 = helper f2 in

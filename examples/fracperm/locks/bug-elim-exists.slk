@@ -11,7 +11,7 @@
 */
 
 //(1)
-checkentail x=0 |- (exists v: v=x & v in S).
+checkentail x=0 |- (exists v: v=x & v notin S).
 
 /*
 BUG1:
@@ -27,7 +27,7 @@ elim_exists@2 EXIT out : x <in> S
 */
 
 //(2)
-checkentail x=0 |- (exists v: v=x+1 & v in S).
+//checkentail x=0 |- (exists v: v=x+1 & v in S).
 
 /*
 BUG2:

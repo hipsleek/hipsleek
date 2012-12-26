@@ -734,8 +734,6 @@ let rec pr_b_formula (e:P.b_formula) =
           let arg3 = bin_op_to_list op_min_short exp_assoc_op e3 in
           let arg = arg2@arg3 in
           (pr_formula_exp e1); fmt_string("="); pr_fn_args op_min pr_formula_exp arg
-    | P.BagLIn (v, e, l) -> pr_op_adhoc (fun ()-> fmt_string("level(");pr_spec_var v;fmt_string(")")) " <in> "  (fun ()-> pr_formula_exp e)
-    | P.BagLNotIn (v, e, l) -> pr_op_adhoc (fun ()-> fmt_string("level(");pr_spec_var v;fmt_string(")")) " <notin> "  (fun ()-> pr_formula_exp e)
     | P.BagIn (v, e, l) -> pr_op_adhoc (fun ()->pr_spec_var v) " <in> "  (fun ()-> pr_formula_exp e)
     | P.BagNotIn (v, e, l) -> pr_op_adhoc (fun ()->pr_spec_var v) " <notin> "  (fun ()-> pr_formula_exp e)
     | P.BagSub (e1, e2, l) -> pr_op pr_formula_exp e1  "<subset> " e2
@@ -2438,8 +2436,6 @@ let rec html_of_pure_b_formula f = match f with
 		let arg3 = bin_op_to_list op_min_short exp_assoc_op e3 in
 		let args = arg2@arg3 in
 			(html_of_formula_exp e1) ^ html_op_eq ^ html_op_min ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
-    | P.BagLIn (v, e, l) -> "<level>" ^ html_of_spec_var v ^ "</level>" ^ html_op_in ^ (html_of_formula_exp e)
-    | P.BagLNotIn (v, e, l) -> "<level>" ^ html_of_spec_var v ^ "</level>" ^ html_op_notin ^ (html_of_formula_exp e)
     | P.BagIn (v, e, l) -> (html_of_spec_var v) ^ html_op_in ^ (html_of_formula_exp e)
     | P.BagNotIn (v, e, l) -> (html_of_spec_var v) ^ html_op_notin ^ (html_of_formula_exp e)
     | P.BagSub (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_subset ^ (html_of_formula_exp e2)

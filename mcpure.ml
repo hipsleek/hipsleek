@@ -2422,12 +2422,12 @@ let translate_level_mix_formula (mf : mix_formula)  : mix_formula =
         let nf = translate_level_pure f  in
         (mix_of_pure nf)
 
-let infer_lsmu_mix_formula (mf : mix_formula)  : mix_formula =
+let infer_lsmu_mix_formula (mf : mix_formula)  : mix_formula * (CP.spec_var list) =
   match mf with
     | OnePF f -> 
-        let nf = infer_lsmu_pure f in
-        (OnePF nf)
+        let nf,evars = infer_lsmu_pure f in
+        (OnePF nf),evars
     | MemoF mp -> 
         let f = fold_mem_lst (mkTrue no_pos) false true mf in
-        let nf = infer_lsmu_pure f  in
-        (mix_of_pure nf)
+        let nf,evars = infer_lsmu_pure f  in
+        (mix_of_pure nf),evars

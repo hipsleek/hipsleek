@@ -688,8 +688,6 @@ and mona_of_b_formula_x b f vs =
       | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
       | CP.LexVar _ -> failwith ("LexVar is not supported in Mona")
 	  | CP.VarPerm _ -> failwith ("VarPerm is not supported in Mona")
-      | CP.BagLIn _ -> failwith ("BagLIn should not appear in Mona")
-      | CP.BagLNotIn _ -> failwith ("BagLNotIn should not appear in Mona") 
 	  | CP.RelForm _ -> failwith ("Relations are not supported in Mona") (* An Hoa *) 
   in
   ret
@@ -781,8 +779,6 @@ and print_b_formula b f = match b with
   | CP.Eq(a1, a2, _) -> (mona_of_exp a1 f) ^ "=" ^ (mona_of_exp a2 f)
   | CP.EqMin (a1, a2, a3, _) -> (mona_of_exp a1 f) ^ "= min(" ^ (mona_of_exp a2 f) ^ "," ^ (mona_of_exp a3 f) ^ ")"
   | CP.EqMax (a1, a2, a3, _) -> (mona_of_exp a1 f) ^ "= max(" ^ (mona_of_exp a2 f) ^ "," ^ (mona_of_exp a3 f) ^ ")"
-  | CP.BagLIn (v, e, l) -> failwith ("BagLIn should not appear in Mona")
-  | CP.BagLNotIn (v, e, l) -> failwith ("BagLNotIn should not appear in Mona")
   | CP.BagIn (v, e, l) -> (mona_of_spec_var v) ^ " in " ^ (mona_of_exp e f)
   | CP.BagNotIn (v, e, l) -> "~(" ^ (mona_of_spec_var v) ^ " in " ^ (mona_of_exp e f) ^")"
   | CP.BagSub (e1, e2, l) -> "(" ^ (mona_of_exp e1 f) ^ " sub " ^ (mona_of_exp e2 f) ^ ")"
