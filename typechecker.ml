@@ -1191,6 +1191,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let lock_data_name = vdef.view_data_name in
                   let lock_var =  CP.SpecVar (Named lock_data_name, l, Primed) in
                   let prepost = CF.prepost_of_init lock_var lock_data_name lock_sort new_args post_start_label pos in
+                  let prepost = prune_pred_struc prog true prepost in (* specialise --eps *)
                   let to_print = "\nProving precondition in method " ^ mn ^ " for spec:\n" ^ (Cprinter.string_of_struc_formula prepost)  in
                   let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in
                   Debug.devel_zprint (lazy (to_print^"\n")) pos;
@@ -1238,6 +1239,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 
                   let prepost = CF.prepost_of_finalize lock_var lock_sort new_args post_start_label pos in
                   let ctx1 = normalize_list_failesc_context_w_lemma prog ctx in (*try to combine fractional permission before finalize*)
+                  let prepost = prune_pred_struc prog true prepost in (* specialise --eps *)
                   let to_print = "\nProving precondition in method " ^ mn ^ " for spec:\n" ^ (Cprinter.string_of_struc_formula prepost)  in
                   let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in
                   Debug.devel_zprint (lazy (to_print^"\n")) pos;
@@ -1297,6 +1299,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   let renamed_inv = CF.subst_avoid_capture_all fr_vars to_vars inv_lock in
 
                   let prepost = CF.prepost_of_acquire lock_var lock_sort new_args renamed_inv post_start_label pos in
+                  let prepost = prune_pred_struc prog true prepost in (* specialise --eps *)
                   let to_print = "\nProving precondition in method " ^ mn ^ " for spec:\n" ^ (Cprinter.string_of_struc_formula prepost)  in
                   let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in
                   Debug.devel_zprint (lazy (to_print^"\n")) pos;
@@ -1367,6 +1370,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   (* let _ = print_endline ("inv_lock = " ^ (Cprinter.string_of_formula inv_lock)) in *)
                   (* let _ = print_endline ("renamed_inv = " ^ (Cprinter.string_of_formula renamed_inv)) in *)
                   let prepost = CF.prepost_of_release lock_var lock_sort new_args renamed_inv post_start_label pos in
+                  let prepost = prune_pred_struc prog true prepost in (* specialise --eps *)
                   (* let ctx1 = normalize_list_failesc_context_w_lemma prog ctx in (\*combine fractional permissions before release*\) *)
                   let to_print = "\nProving precondition in method " ^ mn ^ " for spec:\n" ^ (Cprinter.string_of_struc_formula prepost)  in
                   let to_print = ("\nVerification Context:"^(post_pos#string_of_pos)^to_print) in

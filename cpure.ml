@@ -2717,7 +2717,16 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
     | EqMin (a1, a2, a3, pos) -> EqMin (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, a_apply_one_term (fr, t) a3, pos)
     | BagLIn (v, a1, pos) -> BagLIn (v, a_apply_one_term (fr, t) a1, pos)
     | BagLNotIn (v, a1, pos) -> BagLNotIn (v, a_apply_one_term (fr, t) a1, pos)
-    | BagIn (v, a1, pos) -> BagIn (v, a_apply_one_term (fr, t) a1, pos) (*what if v is a variable that need to be applied ??? MAY need to expect v to expression as well*)
+    | BagIn (v, a1, pos) -> 
+        let new_v = if eq_spec_var v fr then
+              match t with
+                | Var (tv,pos) -> tv
+                | _ ->
+                    let _ = print_endline "[Warning] b_apply_one_term: cannot replace a bag variable with an expression" in
+                    v
+            else v
+        in
+        BagIn (new_v, a_apply_one_term (fr, t) a1, pos)(*what if v is a variable that need to be applied ??? MAY need to expect v to expression as well*)
     | BagNotIn (v, a1, pos) -> BagNotIn (v, a_apply_one_term (fr, t) a1, pos)
     | BagSub (a1, a2, pos) -> BagSub (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
     | BagMax (v1, v2, pos) -> BagMax (v1, v2, pos)
@@ -3163,116 +3172,7 @@ and find_bound_b_formula v f0 =
     | Gte (e1, e2, pos) -> helper e1 e2 false true
     | _ -> (None, None)
 
-(* eliminate exists with the help of c1<=v<=c2 *)
-and elim_exists_with_ineq (f0: formula): formula =
-  match f0 with
-    | Exists (qvar, qf,lbl, pos) ->
-          begin
-            match qf with
-              | Or (qf1, qf2,lbl2, qpos) ->
-                    let new_qf1 = mkExists [qvar] qf1 lbl qpos in
-                    let new_qf2 = mkExists [qvar] qf2 lbl qpos in
-                    let eqf1 = elim_exists_with_ineq new_qf1 in
-                    let eqf2 = elim_exists_with_ineq new_qf2 in
-                    let res = mkOr eqf1 eqf2 lbl2 pos in
-                    res
-              | _ ->
-                    let eqqf = elim_exists qf in
-                    let min, max = find_bound qvar eqqf in
-                    begin
-                      match min, max with
-                        | Some mi, Some ma -> 
-                              let res = ref (mkFalse pos) in
-                              begin
-                                for i = mi to ma do
-                                  res := mkOr !res (apply_one_term (qvar, IConst (i, pos)) eqqf) lbl pos
-                                done;
-                                !res
-                              end
-                        | _ -> f0
-                    end
-          end
-    | And (f1, f2, pos) ->
-          let ef1 = elim_exists_with_ineq f1 in
-          let ef2 = elim_exists_with_ineq f2 in
-          mkAnd ef1 ef2 pos
-    | Or (f1, f2, lbl, pos) ->
-          let ef1 = elim_exists_with_ineq f1 in
-          let ef2 = elim_exists_with_ineq f2 in
-          mkOr ef1 ef2 lbl pos
-    | Not (f1, lbl, pos) ->
-          let ef1 = elim_exists_with_ineq f1 in
-          mkNot ef1 lbl pos
-    | Forall (qvar, qf, lbl, pos) ->
-          let eqf = elim_exists_with_ineq qf in
-          mkForall [qvar] eqf lbl pos
-    | BForm _ -> f0
-	| AndList b-> AndList (map_l_snd elim_exists_with_ineq b)
 
-and elim_exists (f0 : formula) : formula =
-  let pr = !print_formula in
-  Debug.no_1 "elim_exists" pr pr elim_exists_x f0
-
-
-(*
-TODO: this formula
-ex v1: sst & ( sth | ex v2: v2 = v1 & v2 in LS)
-is wrongly translated to
-ex v1: sst & ( sth | v2 in LS)
-
-It SHOULD BE
-ex v1: sst & ( sth | v1 in LS)
-
-*)
-(* eliminate exists with the help of v=exp *)
-and elim_exists_x (f0 : formula) : formula = 
-  let rec helper f0 =
-    match f0 with
-      | Exists (qvar, qf, lbl, pos) -> begin
-	      match qf with
-	        | Or (qf1, qf2, lbl2, qpos) ->
-	              let new_qf1 = mkExists [qvar] qf1 lbl qpos in
-	              let new_qf2 = mkExists [qvar] qf2 lbl qpos in
-	              let eqf1 = helper new_qf1 in
-	              let eqf2 = helper new_qf2 in
-	              let res = mkOr eqf1 eqf2 lbl2 pos in
-	              res
-	        | _ ->
-	              let qf = helper qf in
-	              let qvars0, bare_f = split_ex_quantifiers qf in
-	              let qvars = qvar :: qvars0 in
-	              let conjs = list_of_conjs bare_f in
-	              let no_qvars_list, with_qvars_list = List.partition
-	                (fun cj -> disjoint qvars (fv cj)) conjs in
-	              (* the part that does not contain the quantified var *)
-	              let no_qvars = conj_of_list no_qvars_list pos in
-	              (* now eliminate the quantified variables from the part that contains it *)
-	              let with_qvars = conj_of_list with_qvars_list pos in
-	              (* now eliminate the top existential variable. *)
-	              let st, pp1 = get_subst_equation_formula with_qvars qvar false in
-	              if not (Gen.is_empty st) then
-	                let new_qf = subst_term st pp1 in
-	                let new_qf = mkExists qvars0 new_qf lbl pos in
-	                let tmp3 = helper new_qf in
-	                let tmp4 = mkAnd no_qvars tmp3 pos in
-	                tmp4
-	              else (* if qvar is not equated to any variables, try the next one *)
-	                let tmp1 = qf (*helper qf*) in
-	                let tmp2 = mkExists(*_with_simpl simpl*) [qvar] tmp1 lbl pos in
-	                tmp2
-        end
-      | And (f1, f2, pos) -> mkAnd ( helper f1) ( helper f2) pos 
-	  | AndList b -> AndList (map_l_snd helper b)
-      | Or (f1, f2, lbl, pos) -> mkOr ( helper f1) ( helper f2) lbl pos 
-      | Not (f1, lbl, pos) -> mkNot (helper f1) lbl pos 
-      | Forall (qvar, qf, lbl, pos) -> mkForall [qvar] (helper qf) lbl pos 
-      | BForm _ -> f0 in
-  helper f0
-
-(*
-and elim_exists (f0 : formula) : formula = 
-  Debug.no_1 "[cpure]elim_exists" !print_formula !print_formula elim_exists_x f0
-*)
 (*
 add_gte_0 inp1 : exists(b_113:exists(b_128:(b_128+2)<=b_113 & (9+b_113)<=n))
 add_gte_0@144 EXIT out : exists(b_113:0<=b_113 & 
@@ -6591,13 +6491,169 @@ let inner_simplify simpl f =
   map_formula f (f_f, f_bf, f_e) 
 
 
-let elim_exists_with_simpl simpl (f0 : formula) : formula = 
+let rec elim_exists_with_simpl_x simpl (f0 : formula) : formula = 
   let f = elim_exists f0 in
   inner_simplify simpl f
 
-let elim_exists_with_simpl simpl (f0 : formula) : formula = 
+and elim_exists_with_simpl simpl (f0 : formula) : formula = 
   Debug.no_1 "elim_exists_with_simpl" !print_formula !print_formula 
-    (fun f0 -> elim_exists_with_simpl simpl f0) f0
+    (fun f0 -> elim_exists_with_simpl_x simpl f0) f0
+
+(* Method checking whether a formula contains bag constraints or BagT vars *)
+and is_bag_b_constraint (pf,_) = match pf with
+    | BConst _ 
+    | BVar _
+    | Lt _ 
+    | Lte _ 
+    | Gt _ 
+    | Gte _
+    | EqMax _ 
+    | EqMin _
+    | ListIn _ 
+    | ListNotIn _
+    | ListAllN _ 
+    | ListPerm _
+        -> Some false
+    | BagIn _ 
+    | BagNotIn _
+    | BagMin _ 
+    | BagMax _
+    | BagSub _
+        -> Some true
+    | _ -> None
+
+and is_bag_constraint (e: formula) : bool =  
+  let f_e e = match e with
+    | Bag _
+    | BagUnion _
+    | BagIntersect _
+    | BagDiff _ 
+        -> Some true
+    | Var (SpecVar (t, _, _), _) -> 
+        (match t with
+          | BagT _ -> Some true
+          | _ -> Some false)
+    | _ -> Some false
+  in
+  let or_list = List.fold_left (||) false in
+  fold_formula e (nonef, is_bag_b_constraint, f_e) or_list
+
+and elim_exists (f0 : formula) : formula =
+  let pr = !print_formula in
+  Debug.no_1 "elim_exists" pr pr elim_exists_x f0
+
+(*
+TODO: this formula
+ex v1: sst & ( sth | ex v2: v2 = v1 & v2 in LS)
+is wrongly translated to
+ex v1: sst & ( sth | v2 in LS)
+
+It SHOULD BE
+ex v1: sst & ( sth | v1 in LS)
+
+*)
+(* eliminate exists with the help of v=exp *)
+and elim_exists_x (f0 : formula) : formula = 
+  let rec helper f0 =
+    match f0 with
+      | Exists (qvar, qf, lbl, pos) -> begin
+	      match qf with
+	        | Or (qf1, qf2, lbl2, qpos) ->
+	              let new_qf1 = mkExists [qvar] qf1 lbl qpos in
+	              let new_qf2 = mkExists [qvar] qf2 lbl qpos in
+	              let eqf1 = helper new_qf1 in
+	              let eqf2 = helper new_qf2 in
+	              let res = mkOr eqf1 eqf2 lbl2 pos in
+	              res
+	        | _ ->
+	              let qf = helper qf in
+	              let qvars0, bare_f = split_ex_quantifiers qf in
+	              let qvars = qvar :: qvars0 in
+	              let conjs = list_of_conjs bare_f in
+	              let no_qvars_list, with_qvars_list = List.partition
+	                (fun cj -> disjoint qvars (fv cj)) conjs in
+	              (* the part that does not contain the quantified var *)
+	              let no_qvars = conj_of_list no_qvars_list pos in
+	              (* now eliminate the quantified variables from the part that contains it *)
+	              let with_qvars = conj_of_list with_qvars_list pos in
+	              (* now eliminate the top existential variable. *)
+	              let st, pp1 =
+                    (*If there are bag constraints -> only find equations of variables
+                    such as x=v, but not x=v+1*)
+                    if (is_bag_constraint with_qvars) then
+                      get_subst_equation_formula with_qvars qvar true
+                    else
+                      get_subst_equation_formula with_qvars qvar false
+                  in
+	              if not (Gen.is_empty st) then
+	                let new_qf = subst_term st pp1 in
+	                let new_qf = mkExists qvars0 new_qf lbl pos in
+	                let tmp3 = helper new_qf in
+	                let tmp4 = mkAnd no_qvars tmp3 pos in
+	                tmp4
+	              else (* if qvar is not equated to any variables, try the next one *)
+	                let tmp1 = qf (*helper qf*) in
+	                let tmp2 = mkExists(*_with_simpl simpl*) [qvar] tmp1 lbl pos in
+	                tmp2
+        end
+      | And (f1, f2, pos) -> mkAnd ( helper f1) ( helper f2) pos 
+	  | AndList b -> AndList (map_l_snd helper b)
+      | Or (f1, f2, lbl, pos) -> mkOr ( helper f1) ( helper f2) lbl pos 
+      | Not (f1, lbl, pos) -> mkNot (helper f1) lbl pos 
+      | Forall (qvar, qf, lbl, pos) -> mkForall [qvar] (helper qf) lbl pos 
+      | BForm _ -> f0 in
+  helper f0
+
+(*
+and elim_exists (f0 : formula) : formula = 
+  Debug.no_1 "[cpure]elim_exists" !print_formula !print_formula elim_exists_x f0
+*)
+
+(* eliminate exists with the help of c1<=v<=c2 *)
+and elim_exists_with_ineq (f0: formula): formula =
+  match f0 with
+    | Exists (qvar, qf,lbl, pos) ->
+          begin
+            match qf with
+              | Or (qf1, qf2,lbl2, qpos) ->
+                    let new_qf1 = mkExists [qvar] qf1 lbl qpos in
+                    let new_qf2 = mkExists [qvar] qf2 lbl qpos in
+                    let eqf1 = elim_exists_with_ineq new_qf1 in
+                    let eqf2 = elim_exists_with_ineq new_qf2 in
+                    let res = mkOr eqf1 eqf2 lbl2 pos in
+                    res
+              | _ ->
+                    let eqqf = elim_exists qf in
+                    let min, max = find_bound qvar eqqf in
+                    begin
+                      match min, max with
+                        | Some mi, Some ma -> 
+                              let res = ref (mkFalse pos) in
+                              begin
+                                for i = mi to ma do
+                                  res := mkOr !res (apply_one_term (qvar, IConst (i, pos)) eqqf) lbl pos
+                                done;
+                                !res
+                              end
+                        | _ -> f0
+                    end
+          end
+    | And (f1, f2, pos) ->
+          let ef1 = elim_exists_with_ineq f1 in
+          let ef2 = elim_exists_with_ineq f2 in
+          mkAnd ef1 ef2 pos
+    | Or (f1, f2, lbl, pos) ->
+          let ef1 = elim_exists_with_ineq f1 in
+          let ef2 = elim_exists_with_ineq f2 in
+          mkOr ef1 ef2 lbl pos
+    | Not (f1, lbl, pos) ->
+          let ef1 = elim_exists_with_ineq f1 in
+          mkNot ef1 lbl pos
+    | Forall (qvar, qf, lbl, pos) ->
+          let eqf = elim_exists_with_ineq qf in
+          mkForall [qvar] eqf lbl pos
+    | BForm _ -> f0
+	| AndList b-> AndList (map_l_snd elim_exists_with_ineq b)
 
 (* result of xpure with baga and memset/diffset *)
 type xp_res_type = (BagaSV.baga * DisjSetSV.dpart * formula)
@@ -8053,46 +8109,6 @@ let rec andl_to_and f = match f with
 		let l = List.map (fun (_,c)-> andl_to_and c) b in
 		List.fold_left (fun a c-> And (a,c,no_pos)) (mkTrue no_pos) l 
 
-(* Method checking whether a formula contains bag constraints or BagT vars *)
-
-let is_bag_b_constraint (pf,_) = match pf with
-    | BConst _ 
-    | BVar _
-    | Lt _ 
-    | Lte _ 
-    | Gt _ 
-    | Gte _
-    | EqMax _ 
-    | EqMin _
-    | ListIn _ 
-    | ListNotIn _
-    | ListAllN _ 
-    | ListPerm _
-        -> Some false
-    | BagIn _ 
-    | BagNotIn _
-    | BagMin _ 
-    | BagMax _
-    | BagSub _
-        -> Some true
-    | _ -> None
-
-let is_bag_constraint (e: formula) : bool =  
-  let f_e e = match e with
-    | Bag _
-    | BagUnion _
-    | BagIntersect _
-    | BagDiff _ 
-        -> Some true
-    | Var (SpecVar (t, _, _), _) -> 
-        (match t with
-          | BagT _ -> Some true
-          | _ -> Some false)
-    | _ -> Some false
-  in
-  let or_list = List.fold_left (||) false in
-  fold_formula e (nonef, is_bag_b_constraint, f_e) or_list
-
 and extractLS_b_formula (bf : b_formula) : b_formula =
   let (pf,_) = bf in
   (match pf with
@@ -8727,7 +8743,16 @@ let rec translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos
           | Var (sv,posx) ->
               mkBagInExp sv lsmu_exp pos
           | Level (sv,posx) ->
-              mkBagLInExp sv lsmu_exp pos
+              (*level(x) in LSMU ==> exists mu_123. mu_123=level(x) & mu_123 in LSMU*)
+              let level_var = mkLevelVar Unprimed in
+              let fresh_var = fresh_spec_var level_var in (*mu_123*)
+              let fresh_var_exp = Var (fresh_var,pos) in
+              let eq_f = mkEqExp fresh_var_exp x pos in (*mu_123=level(x)*)
+              let in_f = mkBagInExp fresh_var lsmu_exp pos in (*mu_123 in LSMU*)
+              let f_and = And (eq_f,in_f,pos) in
+              let f_exists = Exists (fresh_var,f_and,None,pos) in
+              f_exists
+              (* mkBagLInExp sv lsmu_exp pos *)
           | _ -> Error.report_error { Error.error_loc = pos; Error.error_text = "translate_waitlevel_p_formula: unexpected operator: only expecting integer value in waitlevel formulae" ^ (!print_exp x);})
         in
         let f22 = And (f221,f222,pos) in

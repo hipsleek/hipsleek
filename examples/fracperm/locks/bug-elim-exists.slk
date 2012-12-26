@@ -1,0 +1,36 @@
+/*
+  Bug in elim_exists in the presence of bag constraints.
+*/
+
+//(1)
+checkentail x=0 |- (exists v: v=x & v in S).
+
+/*
+BUG1:
+
+elim_exists@2
+elim_exists inp1 : exists(v_17:v_17=x & v_17 <in> S )
+elim_exists@2 EXIT out : v_17 <in> S 
+
+AFTER FIXED
+elim_exists@2
+elim_exists inp1 : exists(v_17:v_17=x & v_17 <in> S )
+elim_exists@2 EXIT out : x <in> S 
+*/
+
+//(2)
+checkentail x=0 |- (exists v: v=x+1 & v in S).
+
+/*
+BUG2:
+elim_exists@2
+elim_exists inp1 : exists(v_18:v_18=1+x & v_18 <in> S )
+elim_exists@2 EXIT out : v_18 <in> S 
+
+AFTER FIXED:
+
+elim_exists@2
+elim_exists inp1 : exists(v_18:v_18=1+x & v_18 <in> S )
+elim_exists@2 EXIT out : exists(v_18:v_18=1+x & v_18 <in> S )
+
+*/
