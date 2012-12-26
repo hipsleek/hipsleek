@@ -4705,9 +4705,11 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
           let base_f1 = formula_of_one_formula new_f1 in
           let base_f2 = formula_of_one_formula new_f2 in
           let new_es = {estate with es_formula=base_f1} in (*TO CHECK: should estate is a parameter*)
+          let base_f2 = prune_preds prog true base_f2 in (* specialise --eps *)
           let new_ctx = Ctx new_es in
 	      Debug.devel_pprint ("process_thread_one_match:"^"\n ### ante = " ^ (Cprinter.string_of_estate new_es)^"\n ###  conseq = " ^ (Cprinter.string_of_formula base_f2)) pos;
           (*a thread is a post-condition of its method. Therefore, it only has @full*)
+          
           let rs0, prf0 = heap_entail_conjunct_helper 1 prog true new_ctx base_f2 [] pos in (*is_folding = true to collect the pure constraints of the RHS to es_pure*)
           (* check the flag to see whether should be true to result in es_pure*)
 	      (**************************************)
@@ -4924,7 +4926,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
 		                let ws = CP.fresh_spec_vars qvars in
 		                let st = List.combine qvars ws in
 		                let baref = mkBase qh qp qt qfl qa pos in
-		                let new_baref = subst_varperm st baref in
+		                let new_baref = subst st baref in
 				        let new_ctx = Ctx {estate with es_evars = ws @ estate.es_evars} in
 		                let tmp_rs, tmp_prf = heap_entail_conjunct_helper 1 prog is_folding  new_ctx new_baref rhs_h_matched_set pos in
 			            (match tmp_rs with

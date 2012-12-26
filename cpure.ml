@@ -88,7 +88,7 @@ and p_formula =
         (* do not substitute or rename here!!!! *)
         (* NOTE: currently work with Redlog only*)
         (* TO DO: filter out VarPerm before discharge*)
-  | VarPerm of (vp_ann * (spec_var list) * loc)
+  | VarPerm of (vp_ann * (spec_var list) * loc) (*list of (primed) variables*)
 	  (* list formulas *)
   | ListIn of (exp * exp * loc)
   | ListNotIn of (exp * exp * loc)
@@ -2322,26 +2322,26 @@ and apply_subs (sst : (spec_var * spec_var) list) (f : formula) : formula = matc
         else Exists (v, apply_subs sst qf, lbl, pos)
   | AndList b -> AndList (map_l_snd (apply_subs sst) b)
 
-(*substitue varperm only*)
-and apply_subs_varperm (sst : (spec_var * spec_var) list) (f : formula) : formula = match f with
-  | BForm (bf,lbl) -> BForm ((b_apply_subs_varperm sst bf),lbl)
-  | And (p1, p2, pos) -> And (apply_subs_varperm sst p1, apply_subs_varperm sst p2, pos)
-  | AndList b-> AndList (map_l_snd (apply_subs_varperm sst) b)
-  | Or (p1, p2, lbl,pos) -> Or (apply_subs_varperm sst p1,
-	apply_subs_varperm sst p2, lbl, pos)
-  | Not (p, lbl, pos) -> Not (apply_subs_varperm sst p, lbl, pos)
-  | Forall (v, qf,lbl, pos) ->
-        let sst = diff sst v in
-        if (var_in_target v sst) then
-          let fresh_v = fresh_spec_var v in
-          Forall (fresh_v, apply_subs_varperm sst (apply_subs_varperm [(v, fresh_v)] qf), lbl, pos)
-        else Forall (v, apply_subs_varperm sst qf, lbl, pos)
-  | Exists (v, qf, lbl, pos) ->
-        let sst = diff sst v in
-        if (var_in_target v sst) then
-          let fresh_v = fresh_spec_var v in
-          Exists  (fresh_v, apply_subs_varperm sst (apply_subs_varperm [(v, fresh_v)] qf), lbl, pos)
-        else Exists (v, apply_subs_varperm sst qf, lbl, pos)
+(* (\*substitue varperm only*\) *)
+(* and apply_subs_varperm (sst : (spec_var * spec_var) list) (f : formula) : formula = match f with *)
+(*   | BForm (bf,lbl) -> BForm ((b_apply_subs_varperm sst bf),lbl) *)
+(*   | And (p1, p2, pos) -> And (apply_subs_varperm sst p1, apply_subs_varperm sst p2, pos) *)
+(*   | AndList b-> AndList (map_l_snd (apply_subs_varperm sst) b) *)
+(*   | Or (p1, p2, lbl,pos) -> Or (apply_subs_varperm sst p1, *)
+(* 	apply_subs_varperm sst p2, lbl, pos) *)
+(*   | Not (p, lbl, pos) -> Not (apply_subs_varperm sst p, lbl, pos) *)
+(*   | Forall (v, qf,lbl, pos) -> *)
+(*         let sst = diff sst v in *)
+(*         if (var_in_target v sst) then *)
+(*           let fresh_v = fresh_spec_var v in *)
+(*           Forall (fresh_v, apply_subs_varperm sst (apply_subs_varperm [(v, fresh_v)] qf), lbl, pos) *)
+(*         else Forall (v, apply_subs_varperm sst qf, lbl, pos) *)
+(*   | Exists (v, qf, lbl, pos) -> *)
+(*         let sst = diff sst v in *)
+(*         if (var_in_target v sst) then *)
+(*           let fresh_v = fresh_spec_var v in *)
+(*           Exists  (fresh_v, apply_subs_varperm sst (apply_subs_varperm [(v, fresh_v)] qf), lbl, pos) *)
+(*         else Exists (v, apply_subs_varperm sst qf, lbl, pos) *)
 
 
 (* cannot change to a let, why? *)
@@ -2382,7 +2382,10 @@ and b_apply_subs sst bf =
     | BagSub (a1, a2, pos) -> BagSub (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | BagMax (v1, v2, pos) -> BagMax (subs_one sst v1, subs_one sst v2, pos)
     | BagMin (v1, v2, pos) -> BagMin (subs_one sst v1, subs_one sst v2, pos)
-  | VarPerm (ct,ls,pos) -> VarPerm (ct,ls,pos) (*substitue VarPerm using b_apply_subs_varperm *)
+    | VarPerm (ct,ls,pos) ->
+        let ls1 = List.map (subs_one sst) ls in
+        VarPerm (ct,ls1,pos)
+      (* VarPerm (ct,ls,pos) (\*substitue VarPerm using b_apply_subs_varperm *\) *)
     | ListIn (a1, a2, pos) -> ListIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
@@ -2400,53 +2403,53 @@ and b_apply_subs sst bf =
 (* and subs_one sst v = List.fold_left (fun old -> fun (fr,t) -> if (eq_spec_var fr v) then t else old) v sst  *)
 
 (*subst everything including VarPerm*)
-and b_apply_subs_varperm sst bf =
-  let (pf,sl) = bf in
-  let npf = match pf with
-  | BConst _ -> pf
-  | BVar (bv, pos) -> BVar (subs_one sst bv, pos)
-  | Lt (a1, a2, pos) -> Lt (e_apply_subs sst a1,
-	e_apply_subs sst a2, pos)
-  | Lte (a1, a2, pos) -> Lte (e_apply_subs sst a1,
-	e_apply_subs sst a2, pos)
-  | Gt (a1, a2, pos) -> Gt (e_apply_subs sst a1,
-	e_apply_subs sst a2, pos)
-  | Gte (a1, a2, pos) -> Gte (e_apply_subs sst a1,
-	e_apply_subs sst a2, pos)
-  | SubAnn (a1, a2, pos) -> SubAnn (e_apply_subs sst a1,
-	e_apply_subs sst a2, pos)
-  | Eq (a1, a2, pos) -> Eq (e_apply_subs sst a1,
-	e_apply_subs sst a2, pos)
-  | Neq (a1, a2, pos) -> Neq (e_apply_subs sst a1,
-	e_apply_subs sst a2, pos)
-  | EqMax (a1, a2, a3, pos) -> EqMax (e_apply_subs sst a1,
-	e_apply_subs sst a2,
-	e_apply_subs sst a3, pos)
-  | EqMin (a1, a2, a3, pos) -> EqMin (e_apply_subs sst a1,
-	e_apply_subs sst a2,
-	e_apply_subs sst a3, pos)
-  | BagIn (v, a1, pos) -> BagIn (subs_one sst v, e_apply_subs sst a1, pos)
-  | BagNotIn (v, a1, pos) -> BagNotIn (subs_one sst v, e_apply_subs sst a1, pos)
-        (* is it ok?... can i have a set of boolean values?... don't think so... *)
-  | BagSub (a1, a2, pos) -> BagSub (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-  | BagMax (v1, v2, pos) -> BagMax (subs_one sst v1, subs_one sst v2, pos)
-  | BagMin (v1, v2, pos) -> BagMin (subs_one sst v1, subs_one sst v2, pos)
-  | VarPerm (ct,ls,pos) ->
-      let ls1 = List.map (subs_one sst) ls in
-      VarPerm (ct,ls1,pos)
-  | ListIn (a1, a2, pos) -> ListIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-  | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-  | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-  | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-  | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (* An Hoa *)
-  | LexVar t_info -> 
-      LexVar { t_info with
-		  lex_exp = e_apply_subs_list sst t_info.lex_exp;
-		  lex_tmp = e_apply_subs_list sst t_info.lex_tmp; } 
-  in let nsl = match sl with
-	| None -> None
-	| Some (il, lbl, le) -> Some (il, lbl, List.map (fun e -> e_apply_subs sst e) le)
-  in (npf,nsl)
+(* and b_apply_subs_varperm sst bf = *)
+(*   let (pf,sl) = bf in *)
+(*   let npf = match pf with *)
+(*   | BConst _ -> pf *)
+(*   | BVar (bv, pos) -> BVar (subs_one sst bv, pos) *)
+(*   | Lt (a1, a2, pos) -> Lt (e_apply_subs sst a1, *)
+(* 	e_apply_subs sst a2, pos) *)
+(*   | Lte (a1, a2, pos) -> Lte (e_apply_subs sst a1, *)
+(* 	e_apply_subs sst a2, pos) *)
+(*   | Gt (a1, a2, pos) -> Gt (e_apply_subs sst a1, *)
+(* 	e_apply_subs sst a2, pos) *)
+(*   | Gte (a1, a2, pos) -> Gte (e_apply_subs sst a1, *)
+(* 	e_apply_subs sst a2, pos) *)
+(*   | SubAnn (a1, a2, pos) -> SubAnn (e_apply_subs sst a1, *)
+(* 	e_apply_subs sst a2, pos) *)
+(*   | Eq (a1, a2, pos) -> Eq (e_apply_subs sst a1, *)
+(* 	e_apply_subs sst a2, pos) *)
+(*   | Neq (a1, a2, pos) -> Neq (e_apply_subs sst a1, *)
+(* 	e_apply_subs sst a2, pos) *)
+(*   | EqMax (a1, a2, a3, pos) -> EqMax (e_apply_subs sst a1, *)
+(* 	e_apply_subs sst a2, *)
+(* 	e_apply_subs sst a3, pos) *)
+(*   | EqMin (a1, a2, a3, pos) -> EqMin (e_apply_subs sst a1, *)
+(* 	e_apply_subs sst a2, *)
+(* 	e_apply_subs sst a3, pos) *)
+(*   | BagIn (v, a1, pos) -> BagIn (subs_one sst v, e_apply_subs sst a1, pos) *)
+(*   | BagNotIn (v, a1, pos) -> BagNotIn (subs_one sst v, e_apply_subs sst a1, pos) *)
+(*         (\* is it ok?... can i have a set of boolean values?... don't think so... *\) *)
+(*   | BagSub (a1, a2, pos) -> BagSub (e_apply_subs sst a1, e_apply_subs sst a2, pos) *)
+(*   | BagMax (v1, v2, pos) -> BagMax (subs_one sst v1, subs_one sst v2, pos) *)
+(*   | BagMin (v1, v2, pos) -> BagMin (subs_one sst v1, subs_one sst v2, pos) *)
+(*   | VarPerm (ct,ls,pos) -> *)
+(*       let ls1 = List.map (subs_one sst) ls in *)
+(*       VarPerm (ct,ls1,pos) *)
+(*   | ListIn (a1, a2, pos) -> ListIn (e_apply_subs sst a1, e_apply_subs sst a2, pos) *)
+(*   | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_subs sst a1, e_apply_subs sst a2, pos) *)
+(*   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos) *)
+(*   | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos) *)
+(*   | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (\* An Hoa *\) *)
+(*   | LexVar t_info ->  *)
+(*       LexVar { t_info with *)
+(* 		  lex_exp = e_apply_subs_list sst t_info.lex_exp; *)
+(* 		  lex_tmp = e_apply_subs_list sst t_info.lex_tmp; }  *)
+(*   in let nsl = match sl with *)
+(* 	| None -> None *)
+(* 	| Some (il, lbl, le) -> Some (il, lbl, List.map (fun e -> e_apply_subs sst e) le) *)
+(*   in (npf,nsl) *)
 
 and subs_one sst v = 
   let rec helper sst v = match sst with
@@ -2492,7 +2495,7 @@ and e_apply_subs_list sst alist = List.map (e_apply_subs sst) alist
 and b_apply_one s bf = b_apply_subs [s] bf
 and apply_one s f = apply_subs [s] f 
 
-and apply_one_varperm s f = apply_subs_varperm [s] f
+(* and apply_one_varperm s f = apply_subs_varperm [s] f *)
 
  
 and b_subst_x (zip: (spec_var * spec_var) list) (bf:b_formula) :b_formula = 
@@ -2605,7 +2608,7 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
     | BagSub (a1, a2, pos) -> BagSub (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
     | BagMax (v1, v2, pos) -> BagMax (v1, v2, pos)
     | BagMin (v1, v2, pos) -> BagMin (v1, v2, pos)
-  | VarPerm (ct,ls,pos) -> VarPerm (ct,ls,pos) (*TO CHECK: do not substitute*)
+    | VarPerm (ct,ls,pos) -> VarPerm (ct,ls,pos) (*Do not substitute*)
     | ListIn (a1, a2, pos) -> ListIn (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
     | ListNotIn (a1, a2, pos) -> ListNotIn (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
     | ListAllN (a1, a2, pos) -> ListAllN (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
@@ -2714,7 +2717,7 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
     | BagSub (a1, a2, pos) -> BagSub (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
     | BagMax (v1, v2, pos) -> BagMax (v1, v2, pos)
     | BagMin (v1, v2, pos) -> BagMin (v1, v2, pos)
-  | VarPerm (ct,ls,pos) -> VarPerm (ct,ls,pos) (*TO CHECK: do not substitute*)
+    | VarPerm (ct,ls,pos) -> VarPerm (ct,ls,pos) (* Do not substitute, is is the list of variable names*)
     | ListIn (a1, a2, pos) -> ListIn (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
     | ListNotIn (a1, a2, pos) -> ListNotIn (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
     | ListAllN (a1, a2, pos) -> ListAllN (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
@@ -3727,7 +3730,7 @@ and b_apply_one_exp (fr, t) bf =
   | BagSub (a1, a2, pos) -> BagSub (a1, e_apply_one_exp (fr, t) a2, pos)
   | BagMax (v1, v2, pos) -> pf
   | BagMin (v1, v2, pos) -> pf
-  | VarPerm (ct,ls,pos) -> pf (*TO CHECK: do not substitute*)
+  | VarPerm (ct,ls,pos) -> pf (*Do not substitute, ls is the list of variable names*)
   | ListIn (a1, a2, pos) -> pf
   | ListNotIn (a1, a2, pos) -> pf
   | ListAllN (a1, a2, pos) -> pf
