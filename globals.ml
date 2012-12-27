@@ -639,7 +639,7 @@ let pass_global_by_value = ref false
 
 let exhaust_match = ref false
 
-let memo_verbosity = ref 2
+let memo_verbosity = ref 1
 
 let profile_threshold = 0.5 
 

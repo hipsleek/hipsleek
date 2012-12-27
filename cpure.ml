@@ -1794,6 +1794,7 @@ and eqExp_f (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
   match (e1, e2) with
     | (Null(_), Null(_)) -> true
     | (Var(sv1, _), Var(sv2, _)) -> (eq sv1 sv2)
+    | (Level(sv1, _), Level(sv2, _)) -> (eq sv1 sv2)
     | (IConst(i1, _), IConst(i2, _)) -> i1 = i2
     | (FConst(f1, _), FConst(f2, _)) -> f1 = f2
     | (Subtract(e11, e12, _), Subtract(e21, e22, _))

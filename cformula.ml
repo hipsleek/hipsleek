@@ -7994,7 +7994,7 @@ and norm_formula_vperm_x f ref_vars val_vars =
 
 (*Automatically infer VPERM spec for sequential spec*)
 let rec norm_struc_vperm struc_f ref_vars val_vars =
-  Debug.no_3 "norm_ext_vperm" 
+  Debug.no_3 "norm_struc_vperm" 
       !print_struc_formula !print_svl !print_svl !print_struc_formula
       norm_struc_vperm_x struc_f ref_vars val_vars
 
@@ -8172,7 +8172,7 @@ let infer_lsmu_formula_x (f : formula) : formula =
   in helper f
 
 let infer_lsmu_formula (f : formula) : formula =
-  Debug.no_1 "infer_lsmu" 
+  Debug.no_1 "infer_lsmu_formula" 
       !print_formula !print_formula 
       infer_lsmu_formula_x f
 

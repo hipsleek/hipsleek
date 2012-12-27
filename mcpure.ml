@@ -1388,7 +1388,7 @@ let isCtrInSet aset s c =  List.exists (fun d-> eq_b_formula aset c.memo_formula
 let cons_filter (g:memo_pure) (f:memoised_constraint->bool) : memo_pure = 
     List.map (fun c-> {c with memo_group_cons = List.filter f c.memo_group_cons}) g
 
-let slow_imply impl nf rhs =
+let slow_imply_x impl nf rhs =
   let x = Gen.Profiling.gen_time_msg () in
   try 
     (Gen.Profiling.push_time_no_cnt x;
@@ -1396,9 +1396,13 @@ let slow_imply impl nf rhs =
       let r = impl nf rhs in
       (Gen.Profiling.pop_time "slow_imply";
       Gen.Profiling.pop_time_to_s_no_count x);
-      r                   
+      r
   with _ -> (Gen.Profiling.pop_time_to_s_no_count x ;false) 
 
+let slow_imply impl nf rhs =
+  Debug.no_2 "slow_imply"
+      !print_formula !print_formula string_of_bool
+      (fun _ _ -> slow_imply_x impl nf rhs) nf rhs
 (*
 let fast_imply_debug_cmp impl aset (lhs:b_formula list) (rhs:b_formula) : int =
   let lhs_f = join_conjunctions (List.map (fun c-> (BForm (c,None))) lhs) in
@@ -1414,12 +1418,15 @@ let fast_imply_debug_cmp impl aset (lhs:b_formula list) (rhs:b_formula) : int =
   else r
 *)
 
-let elim_redundant_cons(*_slow*) impl aset asetf pn =  
+let elim_redundant_cons_x impl (aset) (asetf:formula) (pn:memoised_constraint list) =  
   let rec helper pn s r e f = match pn with
     | [] -> (s,r,e)
     | c::cs -> 
       if (isCtrInSet aset s c) then helper cs s r (c::e) f
-      else 
+      else
+        (*Assume c is not duplicated inside cs. Otherwise, trivially consider redundant
+        For example: given c ^ c ^ b, c^b always implies c. Therefore, c is considered
+        redundant and removed*)
         let conj_cs = join_conjunctions (List.map (fun c-> (BForm (c.memo_formula,None))) cs) in
         let nf = mkAnd f conj_cs no_pos in
         let b =  Gen.Profiling.push_time "erc_imply";
@@ -1430,6 +1437,11 @@ let elim_redundant_cons(*_slow*) impl aset asetf pn =
         else helper cs (c::s) r e (mkAnd f (BForm (c.memo_formula,None)) no_pos) in
   helper pn [] [] [] asetf
 
+let elim_redundant_cons(*_slow*) impl (aset) (asetf:formula) (pn:memoised_constraint list) =
+  let pr_out (o1,o2,o3)= "(1) " ^ (pr_list !print_mc_f o1) ^ "(2) " ^(pr_list !print_mc_f o2) ^ "(3) " ^ (pr_list !print_mc_f o3) in
+  Debug.no_3 "elim_redundant_cons"
+      print_alias_set !print_formula (pr_list !print_mc_f) pr_out
+      (fun _ _ _ -> elim_redundant_cons_x impl aset asetf pn) aset asetf pn
 (*
 let elim_redundant_cons_fast_x impl aset asetf pn =  
   let rec helper pn mc s r e f = match pn,mc with
@@ -1448,7 +1460,7 @@ let elim_redundant_cons_fast_x impl aset asetf pn =
 
 (* let elim_redundant_slice impl (f:memoised_group): memoised_group*memoised_group = *)
 
-let elim_redundant_slice (impl, simpl) (f:memoised_group): memoised_group * memoised_group = 
+let elim_redundant_slice_x (impl, simpl) (f:memoised_group): memoised_group * memoised_group = 
   let asetf = fold_aset f.memo_group_aset in
   (*do not elim VarPerm formula*)
   let vperm_set, rest = List.partition (fun m_constr -> is_varperm_b m_constr.memo_formula) f.memo_group_cons in
@@ -1458,7 +1470,12 @@ let elim_redundant_slice (impl, simpl) (f:memoised_group): memoised_group * memo
   let r2 = { (List.hd (mkMFalse no_pos)) with memo_group_cons = e_set@r_set@vperm_set} in (*TO CHECK: should vperm_set in r2 ??? *)
   ({f with memo_group_cons = s_set @r_set @ old_r_set@vperm_set;
            memo_group_slice = List.concat (List.map (fun c -> list_of_conjs (simpl c)) f.memo_group_slice)},r2)
-  
+
+let elim_redundant_slice (impl, simpl) (f:memoised_group): memoised_group * memoised_group =
+  let pr_out = pr_pair !print_mg_f !print_mg_f in
+  Debug.no_1 "elim_redundant_slice" !print_mg_f pr_out
+      (fun _ -> elim_redundant_slice_x (impl, simpl) f) f
+
 let elim_redundant_aux impl (f:memo_pure): memo_pure*memo_pure = 
   let b =   !suppress_warning_msg in
   suppress_warning_msg := true;
@@ -1474,7 +1491,7 @@ let elim_redundant impl (f:memo_pure): memo_pure =
     Gen.Profiling.pop_time "elim_redundant_ctr";
     r)
   else f
-  
+
 let elim_redundant impl (f:memo_pure) : memo_pure  =
   let pr = !print_mp_f in
   Debug.no_1 "elim_redundant" pr pr (fun _ -> elim_redundant impl f) f
@@ -2397,7 +2414,7 @@ let translate_level_mix_formula (mf : mix_formula)  : mix_formula =
         let nf = translate_level_pure f  in
         (mix_of_pure nf)
 
-let infer_lsmu_mix_formula (mf : mix_formula)  : mix_formula * (CP.spec_var list) =
+let infer_lsmu_mix_formula_x (mf : mix_formula)  : mix_formula * (CP.spec_var list) =
   match mf with
     | OnePF f -> 
         let nf,evars = infer_lsmu_pure f in
@@ -2406,3 +2423,8 @@ let infer_lsmu_mix_formula (mf : mix_formula)  : mix_formula * (CP.spec_var list
         let f = fold_mem_lst (mkTrue no_pos) false true mf in
         let nf,evars = infer_lsmu_pure f  in
         (mix_of_pure nf),evars
+
+let infer_lsmu_mix_formula (mf : mix_formula)  : mix_formula * (CP.spec_var list) =
+  let pr_out = pr_pair !print_mix_formula !print_svl in
+  Debug.no_1 "infer_lsmu_mix_formula" !print_mix_formula pr_out
+      infer_lsmu_mix_formula_x mf

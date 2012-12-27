@@ -1950,7 +1950,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 			  else 
                 tp_imply(*_debug*) ante conseq imp_no timeout process 
             in
-
+            let _ = Debug.devel_hprint (add_str "res: " string_of_bool) res1 no_pos in
 			let l1 = CP.get_pure_label ante in
             let l2 = CP.get_pure_label conseq in
 			if res1 then (res1,(l1,l2)::res2,None)
