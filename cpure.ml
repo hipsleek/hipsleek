@@ -6494,6 +6494,45 @@ and is_bag_constraint (e: formula) : bool =
   let or_list = List.fold_left (||) false in
   fold_formula e (nonef, is_bag_b_constraint, f_e) or_list
 
+and has_level_constraint_x (f: formula) : bool =
+  let f_e e =
+    let rec helper e =
+      match e with
+        | Level _ -> true
+        | BagDiff (e1,e2,_)
+        | ListCons(e1,e2,_)
+        | Add (e1,e2,_)  | Subtract (e1,e2,_)  | Mult (e1,e2,_) 
+        | Div (e1,e2,_)  | Max (e1,e2,_)  | Min (e1,e2,_) ->
+            let res1 = helper e1 in
+            let res2 = helper e2 in
+            (res1||res2)
+        | List (exps,_)
+        | ListAppend (exps,_)
+        | ArrayAt (_,exps,_)
+        | Func (_,exps,_)
+        | Bag (exps,_)
+        | BagUnion (exps,_)
+        | BagIntersect (exps,_) ->
+            let ress = List.map helper exps in
+            (List.exists (fun v -> v) ress)
+        | ListHead (e,_)
+        | ListTail (e,_) 
+        | ListLength (e,_)
+        | ListReverse (e,_) ->
+            helper e
+        | _ -> false
+    in
+    let res = helper e in
+    Some res
+  in
+  let or_list = List.fold_left (||) false in
+  fold_formula f (nonef, nonef, f_e) or_list
+
+and has_level_constraint (f: formula) : bool =
+  Debug.no_1 "has_level_constraint"
+      !print_formula string_of_bool
+      has_level_constraint_x f
+
 and elim_exists (f0 : formula) : formula =
   let pr = !print_formula in
   Debug.no_1 "elim_exists" pr pr elim_exists_x f0
@@ -8315,6 +8354,30 @@ let translate_level_pure_x (pf : formula) : formula =
           | Level (SpecVar (t,id,p),l) ->
               let nid = id^"_mu" in
               (Var (SpecVar (level_data_typ,nid,p),l))
+          | Add (e1,e2,pos) ->
+              let res1 = helper e1 in
+              let res2 = helper e2 in
+              Add (res1,res2,pos)
+          | Subtract (e1,e2,pos) ->
+              let res1 = helper e1 in
+              let res2 = helper e2 in
+              Subtract (res1,res2,pos)
+          | Mult (e1,e2,pos) ->
+              let res1 = helper e1 in
+              let res2 = helper e2 in
+              Mult (res1,res2,pos)
+          | Div (e1,e2,pos) ->
+              let res1 = helper e1 in
+              let res2 = helper e2 in
+              Div (res1,res2,pos)
+          | Max (e1,e2,pos) ->
+              let res1 = helper e1 in
+              let res2 = helper e2 in
+              Max (res1,res2,pos)
+          | Min (e1,e2,pos) ->
+              let res1 = helper e1 in
+              let res2 = helper e2 in
+              Min (res1,res2,pos)
           | Bag (exps,pos) -> 
               let nexps = List.map helper exps in
               Bag (nexps,pos)

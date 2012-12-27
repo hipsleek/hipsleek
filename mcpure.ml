@@ -2436,7 +2436,19 @@ let drop_svl_mix_formula (mf : mix_formula)  (svl:spec_var list) : mix_formula =
         let nf = drop_svl_pure f svl in
         (mix_of_pure nf)
 
-let translate_level_mix_formula (mf : mix_formula)  : mix_formula =
+let has_level_constraint_mix_formula (mf : mix_formula) : bool =
+  match mf with
+    | OnePF f -> 
+        let b = has_level_constraint f in
+        b
+    | MemoF mp ->
+        (*TO CHECK: This may break --eps*)
+        let f = fold_mem_lst (mkTrue no_pos) false true mf in
+        let b = has_level_constraint f  in
+        b
+
+let translate_level_mix_formula_x (mf : mix_formula)  : mix_formula =
+  if not (has_level_constraint_mix_formula mf) then mf else
   match mf with
     | OnePF f -> 
         let nf = translate_level_pure f in
@@ -2446,6 +2458,10 @@ let translate_level_mix_formula (mf : mix_formula)  : mix_formula =
         let f = fold_mem_lst (mkTrue no_pos) false true mf in
         let nf = translate_level_pure f  in
         (mix_of_pure nf)
+
+let translate_level_mix_formula (mf : mix_formula) : mix_formula =
+  Debug.no_1 "translate_level_mix_formula" !print_mix_formula !print_mix_formula 
+      translate_level_mix_formula_x mf
 
 let infer_lsmu_mix_formula_x (mf : mix_formula)  : mix_formula * (CP.spec_var list) =
   match mf with
@@ -2478,5 +2494,5 @@ let translate_waitlevel_mix_formula_x (mf : mix_formula)  : mix_formula =
         (mix_of_pure nf)
 
 let translate_waitlevel_mix_formula (mf : mix_formula) : mix_formula =
-  Debug.no_1 "translate_waitlevel_pure" !print_mix_formula !print_mix_formula 
+  Debug.no_1 "translate_waitlevel_mix_formula" !print_mix_formula !print_mix_formula 
       translate_waitlevel_mix_formula_x mf
