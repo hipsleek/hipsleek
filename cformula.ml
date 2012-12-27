@@ -7516,7 +7516,7 @@ let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:f
         ls_f
   in
   (**************)
-  let post = mkBase_simp lock_node (MCP.OnePF lock_f) in
+  let post = mkBase_simp lock_node (MCP.memoise_add_pure_N (MCP.mkMTrue pos) lock_f) in
   (* let post = formula_of_heap_w_normal_flow lock_node pos in *)
   let post = EAssume ([ls_uvar;lsmu_uvar],post,lbl) in
   let pre = formula_of_heap_w_normal_flow data_node pos in
@@ -7602,10 +7602,10 @@ let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:fo
         ls_post_f
   in
   (**************)
-  let post = mkBase_simp data_node (MCP.OnePF lock_post_f) in
+  let post = mkBase_simp data_node (MCP.memoise_add_pure_N (MCP.mkMTrue pos) lock_post_f) in
   (* let post = formula_of_heap_w_normal_flow data_node pos in *)
   let post = EAssume ([ls_uvar;lsmu_uvar],post,lbl) in
-  let pre =  mkBase_simp lock_node (MCP.OnePF ls_pre_f) in
+  let pre =  mkBase_simp lock_node (MCP.memoise_add_pure_N (MCP.mkMTrue pos) ls_pre_f) in
   (* let pre = formula_of_heap_w_normal_flow lock_node pos in *)
   EBase { 
 	formula_struc_explicit_inst = [];
@@ -7678,7 +7678,7 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   (**************)
   let read_f = mkPermInv fresh_perm in
   (*POST-CONDITION*)
-  let tmp = mkBase_simp lock_node (MCP.OnePF lock_post_f) in
+  let tmp = mkBase_simp lock_node (MCP.memoise_add_pure_N (MCP.mkMTrue pos) lock_post_f) in
   (* let tmp = formula_of_heap_w_normal_flow lock_node pos in *)
   let post = normalize 5 inv tmp pos in
   let post = EAssume ([ls_uvar;lsmu_uvar],post,lbl) in
@@ -7764,7 +7764,7 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   (* let tmp_pre = mkBase lock_node_pre (MCP.memoise_add_pure_N (MCP.OnePF ls_pre_f) read_f) TypeTrue (mkTrueFlow ()) [] pos in *)
   (*TOCHECK: ??? donot need lock_node*)
   (* let tmp_pre = mkBase HTrue (MCP.memoise_add_pure_N (MCP.OnePF ls_pre_f) read_f) TypeTrue (mkTrueFlow ()) [] pos in *)
-  let tmp_pre = mkBase HTrue (MCP.OnePF ls_pre_f) TypeTrue (mkTrueFlow ()) [] pos in
+  let tmp_pre = mkBase HTrue (MCP.memoise_add_pure_N (MCP.mkMTrue pos) ls_pre_f) TypeTrue (mkTrueFlow ()) [] pos in
   (* let tmp_pre = mkBase lock_node (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) TypeTrue (mkTrueFlow ()) [] pos in *)
   (* let tmp = add_original tmp true in  (\*but allow SPLIT in post*\) *)
   (* [S1] self::LOCKA(f)<> & ls=union(LS, {l}) & f<0<=1 & inv*)
@@ -7772,7 +7772,7 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   (* let pre_evars, pre_base = split_quantifiers pre in *)
   (* let post_f = mkBase_simp lock_node_post (MCP.OnePF ls_post_f) in *)
   (*TOCHECK: ??? donot need lock_node*)
-  let post_f = mkBase_simp HTrue (MCP.OnePF lock_post_f) in
+  let post_f = mkBase_simp HTrue (MCP.memoise_add_pure_N (MCP.mkMTrue pos) lock_post_f) in
   let post = EAssume ([ls_uvar;lsmu_uvar],post_f,lbl) in
   EBase { 
 	formula_struc_explicit_inst = [];

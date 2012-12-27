@@ -3341,7 +3341,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                       (*ADD POST CONDITION as a concurrent thread in formula_*_and*)
                           (*   (\*ADD add res= unique_threadid to the main formula   and unique_threadid is the thread id*\) *)
                           (* let _ = print_endline ("### ctx11 (before) = " ^ (Cprinter.string_of_context ctx11)) in *)
-                          (*REUSE es_pure with care*)
+                          REUSE es_pure with care
                           let add_es_pure es =
                             (*TO CHECK: reuse es_pure with care*)
                             (*currently, only extract constraints that
@@ -5504,6 +5504,20 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   (*pre: the lhs can not have any VarPerm in lhs_p*)
   (* let rhs_p = MCP.normalize_varperm_mix_formula rhs_p in (\*may be redundant*\) *)
   let rhs_vperms, _ = MCP.filter_varperm_mix_formula rhs_p in
+  (***********>TRANSLATE WAITLEVEL and LOCKLEVEL ***************)
+  let lhs_p,rhs_p =
+    if (!Globals.allow_locklevel) then
+      (*TO CHECK: This may break --eps*)
+      let lhs_p = MCP.translate_waitlevel_mix_formula lhs_p in
+      let lhs_p = MCP.translate_level_mix_formula lhs_p in
+      let rhs_p = MCP.translate_waitlevel_mix_formula rhs_p in
+      let rhs_p = MCP.translate_level_mix_formula rhs_p in
+      let _ = Debug.devel_hprint (add_str "After translate_: lhs_p = " Cprinter.string_of_mix_formula) lhs_p no_pos in
+      let _ = Debug.devel_hprint (add_str "After translate_: rhs_p = " Cprinter.string_of_mix_formula) rhs_p no_pos in
+      lhs_p,rhs_p
+    else lhs_p,rhs_p
+  in
+  (************<TRANSLATE WAITLEVEL and LOCKLEVEL *************)
   (* let rhs_p = MCP.drop_varperm_mix_formula rhs_p in *)
   (*IMPORTANT: DO NOT UPDATE rhs_p because of --eps *)
   (*TO CHECK: this may affect our current strategy*)
@@ -8568,18 +8582,31 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 
         *************************************************************************************************************************)
 
 (* apply elim_exist_exp_loop until no change *)
-and elim_exists_exp (f0 : formula) : (formula) =
+and elim_exists_exp_x (f0 : formula) : (formula) =
   let f, flag = elim_exists_exp_loop f0 in
   if flag then (elim_exists_exp f)
   else f 
 
+and elim_exists_exp (f0 : formula) : (formula) =
+   Debug.no_1 "elim_exists_exp"
+       Cprinter.string_of_formula Cprinter.string_of_formula
+       elim_exists_exp_x f0
+
+and elim_exists_exp_loop (f0 : formula) : (formula*bool) =
+   let pr_out = (pr_pair Cprinter.string_of_formula string_of_bool) in
+   Debug.no_1 "elim_exists_exp_loop"
+       Cprinter.string_of_formula pr_out
+       elim_exists_exp_loop_x f0
+
 (* removing existentail using ex x. (x=e & P(x)) <=> P(e) *)
-and elim_exists_exp_loop (f0 : formula) : (formula * bool) = match f0 with
+and elim_exists_exp_loop_x (f0 : formula) : (formula * bool) =
+  let rec helper f0 =
+  match f0 with
   | Or ({formula_or_f1 = f1;
 	formula_or_f2 = f2;
 	formula_or_pos = pos}) ->
-        let ef1, flag1 = elim_exists_exp_loop f1 in
-        let ef2, flag2 = elim_exists_exp_loop f2 in
+        let ef1, flag1 = helper f1 in
+        let ef2, flag2 = helper f2 in
 	    (mkOr ef1 ef2 pos, flag1 & flag2)
   | Base _ -> (f0, false)
   | Exists ({ formula_exists_qvars = qvar :: rest_qvars;
@@ -8598,20 +8625,21 @@ and elim_exists_exp_loop (f0 : formula) : (formula * bool) = match f0 with
 	        let tmp = mkBase h pp1 t fl a pos in
 	        let new_baref = subst_exp [one_subst] tmp in
 	        let tmp2 = add_quantifiers rest_qvars new_baref in
-	        let tmp3, _ = elim_exists_exp_loop tmp2 in
+	        let tmp3, _ = helper tmp2 in
 		    (tmp3, true)
 	      else (* if qvar is not equated to any variables, try the next one *)
 	        let tmp1 = mkExists rest_qvars h p t fl a pos in
-	        let tmp2, flag = elim_exists_exp_loop tmp1 in
+	        let tmp2, flag = helper tmp1 in
 	        let tmp3 = add_quantifiers [qvar] tmp2 in
 		    (tmp3, flag)
 	    else (* anyway it's going to stay in the heap part so we can't eliminate --> try eliminate the rest of them, and then add it back to the exist quantified vars *)
 	      let tmp1 = mkExists rest_qvars h p t fl a pos in
-	      let tmp2, flag = elim_exists_exp_loop tmp1 in
+	      let tmp2, flag = helper tmp1 in
 	      let tmp3 = add_quantifiers [qvar] tmp2 in
 	      ((push_exists [qvar] tmp3), flag)
 
   | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
+  in helper f0
 
 
 (******************************************************************************************************************

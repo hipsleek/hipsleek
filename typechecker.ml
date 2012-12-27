@@ -447,7 +447,9 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     (* Termination: Check boundedness of the measures 
                      * before going into the function body *)
                     let (_, rankbnds) = check_bounded_term prog ctx1 (CF.pos_of_formula post_cond) in
-	    	        let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 post_label) in
+                    let res_tmp = (check_exp prog proc lfe e0 post_label) in
+	                (* let _ = print_string ("\n WN 0 :"^(Cprinter.string_of_list_failesc_context res_tmp)) in *)
+	    	        let res_ctx = CF.list_failesc_to_partial res_tmp in
 	                (* let _ = print_string ("\n WN 1 :"^(Cprinter.string_of_list_partial_context res_ctx)) in *)
 	    	        let res_ctx = CF.change_ret_flow_partial_ctx res_ctx in
 	                (* let _ = print_string ("\n WN 2 : "^(Cprinter.string_of_list_partial_context res_ctx)) in*)
@@ -1396,6 +1398,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     CF.Ctx {es with CF.es_formula = new_f;}
                   in
                   let tmp_res2 = if (full_vars!=[]) then  CF.transform_list_failesc_context (idf,idf,fct) tmp_res else tmp_res in
+                  (* let _ = print_string (("\nSCall: release: tmp_res2 =  ") ^ (Cprinter.string_of_list_failesc_context tmp_res2) ^ "\n") in *)
                   tmp_res2
                 else
                 (*=========================*)

@@ -2968,7 +2968,7 @@ and get_subst_equation_formula_x (f0 : formula) (v : spec_var) only_vars: ((spec
       | _ -> ([], f0)
   in helper f0 v only_vars
 
-and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars: ((spec_var * exp) list * formula) =
+and get_subst_equation_b_formula_x (f : b_formula) (v : spec_var) lbl only_vars: ((spec_var * exp) list * formula) =
   let (pf,il) = f in
   match pf with
     | Eq (e1, e2, pos) -> begin
@@ -2988,8 +2988,12 @@ and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars: (
           | _ ->([], BForm (f,lbl))
       end
     | _ -> ([], BForm (f,lbl))
-          
-          
+
+and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars: ((spec_var * exp) list * formula) =
+  let pr_out = pr_pair (pr_list (pr_pair !print_sv !print_exp)) !print_formula in
+  Debug.no_3 "get_subst_equation_b_formula "
+      !print_b_formula !print_sv string_of_bool pr_out
+      (fun _ _ _ -> get_subst_equation_b_formula_x f v lbl only_vars) f v only_vars
 (* 
    Get a list of conjuncts, namely
    F1 & F2 & .. & Fn ==> [F1,F2,..,FN] 

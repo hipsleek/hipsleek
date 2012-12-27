@@ -334,6 +334,12 @@ and ptr_equations_aux_mp with_null (f : memo_pure) : (spec_var * spec_var) list 
    Or/Exists/Forall. The equations returned are only of form
    v1 = v2 so that they can be applied to heap nodes. *)
 
+and pure_of_memo_pure f =  fold_mem_lst (mkTrue no_pos) false true f
+
+and bag_vars_memo_pure (mp : memo_pure) : spec_var list =
+  let pf = pure_of_memo_pure mp in
+  bag_vars_formula pf
+
 and get_subst_equation_memo_formula_vv (f0: memo_pure) (v:spec_var) : ((spec_var * spec_var) list * memo_pure) = 
   let (r1,r2) = get_subst_equation_memo_formula f0 v true in
   let r1 = List.fold_left (fun a c-> match c with | (r,Var(v,_))-> (r,v)::a | _ -> a) [] r1 in
@@ -341,7 +347,12 @@ and get_subst_equation_memo_formula_vv (f0: memo_pure) (v:spec_var) : ((spec_var
       
 (* It always returns either 0 or one substitutions, *)
 (* if more are available just picks one *)
-and get_subst_equation_memo_formula (f0 : memo_pure) (v : spec_var) only_vars: ((spec_var * exp) list * memo_pure) = 
+and get_subst_equation_memo_formula_x (f0 : memo_pure) (v : spec_var) only_vars: ((spec_var * exp) list * memo_pure) =
+  let bag_vars = bag_vars_memo_pure f0 in
+  (*OVERIDDING the input for soundness*)
+  (*If there are bag constraints -> only find equations of variables
+    such as x=v & x in BAG, but not x=v+1 & x in BAG*)
+  let only_vars = if (Gen.BList.mem_eq eq_spec_var v bag_vars) then true else only_vars in
   let r = List.fold_left (fun (a1,a2) c ->
 	  if not(a1=[]) then (a1,c::a2)
 	  else if not(List.exists (eq_spec_var v) c.memo_group_fv) then (a1,c::a2)
@@ -373,6 +384,12 @@ and get_subst_equation_memo_formula (f0 : memo_pure) (v : spec_var) only_vars: (
 	    (acl_slice, rg::a2)) ([],[]) f0 
   in
   r
+
+and get_subst_equation_memo_formula (f0 : memo_pure) (v : spec_var) only_vars: ((spec_var * exp) list * memo_pure) =
+  let pr_out = pr_pair (pr_list (pr_pair !print_sv !print_exp)) !print_mp_f in
+  Debug.no_3 "get_subst_equation_memo_formula"
+      !print_mp_f !print_sv string_of_bool pr_out
+      get_subst_equation_memo_formula_x f0 v only_vars
 
 (* below need to be with_const *)
 (* this applies a substitution v->e on a list of memoised group *)
@@ -1262,11 +1279,16 @@ let memo_norm_wrapper (l:b_formula list): b_formula list =
    simpl_p_f -> syntactic simpl of individual small formula
    s_f -> semantic simplification of formula*)
   
-let simpl_memo_pure_formula simpl_b_f simpl_p_f(f:memo_pure) s_f: memo_pure = 
+let simpl_memo_pure_formula_x simpl_b_f simpl_p_f(f:memo_pure) s_f: memo_pure = 
   List.map (fun c-> {c with 
     memo_group_cons = List.map (fun c-> {c with memo_formula = simpl_b_f c.memo_formula}) c.memo_group_cons;
     memo_group_changed = true;
     memo_group_slice = list_of_conjs (s_f ((*simpl_p_f *)(conj_of_list c.memo_group_slice no_pos)))}) f  
+
+let simpl_memo_pure_formula simpl_b_f simpl_p_f (f:memo_pure) s_f: memo_pure =
+  Debug.no_1 "simpl_memo_pure_formula"
+      !print_mp_f !print_mp_f
+      (fun _ -> simpl_memo_pure_formula_x simpl_b_f simpl_p_f f s_f) f
   
 let memo_drop_null self l = List.map (fun c -> {c with memo_group_slice = List.map (fun c-> drop_null c self false ) c.memo_group_slice}) l       
          
@@ -2362,7 +2384,8 @@ let drop_float_formula_mix_formula (mf : mix_formula) : mix_formula =
     | OnePF f -> 
         let nf = Cpure.drop_float_formula f in
         (OnePF nf)
-    | MemoF mp -> 
+    | MemoF mp ->
+        (*TO CHECK: This may break --eps*)
         let f = fold_mem_lst (mkTrue no_pos) false true mf in
         let nf = Cpure.drop_float_formula f in
         (mix_of_pure nf)
@@ -2373,7 +2396,8 @@ let extractLS_mix_formula_x (mf : mix_formula) : mix_formula =
     | OnePF f -> 
         let mf_delayed = Cpure.extractLS_pure f in
         (OnePF mf_delayed)
-    | MemoF mp -> 
+    | MemoF mp ->
+        (*TO CHECK: This may break --eps*)
         let f = fold_mem_lst (mkTrue no_pos) false true mf in
         let delayed = Cpure.extractLS_pure f in
         (mix_of_pure delayed)
@@ -2389,7 +2413,8 @@ let removeLS_mix_formula_x (mf : mix_formula) : mix_formula =
     | OnePF f -> 
         let mf_delayed = Cpure.removeLS_pure f in
         (OnePF mf_delayed)
-    | MemoF mp -> 
+    | MemoF mp ->
+        (*TO CHECK: This may break --eps*)
         let f = fold_mem_lst (mkTrue no_pos) false true mf in
         let delayed = Cpure.removeLS_pure f in
         (mix_of_pure delayed)
@@ -2405,7 +2430,8 @@ let drop_svl_mix_formula (mf : mix_formula)  (svl:spec_var list) : mix_formula =
     | OnePF f -> 
         let nf = drop_svl_pure f svl in
         (OnePF nf)
-    | MemoF mp -> 
+    | MemoF mp ->
+        (*TO CHECK: This may break --eps*)
         let f = fold_mem_lst (mkTrue no_pos) false true mf in
         let nf = drop_svl_pure f svl in
         (mix_of_pure nf)
@@ -2415,7 +2441,8 @@ let translate_level_mix_formula (mf : mix_formula)  : mix_formula =
     | OnePF f -> 
         let nf = translate_level_pure f in
         (OnePF nf)
-    | MemoF mp -> 
+    | MemoF mp ->
+        (*TO CHECK: This may break --eps*)
         let f = fold_mem_lst (mkTrue no_pos) false true mf in
         let nf = translate_level_pure f  in
         (mix_of_pure nf)
@@ -2426,6 +2453,7 @@ let infer_lsmu_mix_formula_x (mf : mix_formula)  : mix_formula * (CP.spec_var li
         let nf,evars = infer_lsmu_pure f in
         (OnePF nf),evars
     | MemoF mp -> 
+        (*TO CHECK: This may break --eps*)
         let f = fold_mem_lst (mkTrue no_pos) false true mf in
         let nf,evars = infer_lsmu_pure f  in
         (mix_of_pure nf),evars
@@ -2434,3 +2462,21 @@ let infer_lsmu_mix_formula (mf : mix_formula)  : mix_formula * (CP.spec_var list
   let pr_out = pr_pair !print_mix_formula !print_svl in
   Debug.no_1 "infer_lsmu_mix_formula" !print_mix_formula pr_out
       infer_lsmu_mix_formula_x mf
+
+let translate_waitlevel_mix_formula_x (mf : mix_formula)  : mix_formula =
+  let fvars = mfv mf in
+  let b = List.exists (fun v -> (name_of_spec_var v = Globals.waitlevel_name)) fvars in
+  if not b then mf else
+  match mf with
+    | OnePF f -> 
+        let nf = translate_waitlevel_pure f in
+        (OnePF nf)
+    | MemoF mp ->
+        (*TO CHECK: This may break --eps*)
+        let f = fold_mem_lst (mkTrue no_pos) false true mf in
+        let nf = translate_waitlevel_pure f  in
+        (mix_of_pure nf)
+
+let translate_waitlevel_mix_formula (mf : mix_formula) : mix_formula =
+  Debug.no_1 "translate_waitlevel_pure" !print_mix_formula !print_mix_formula 
+      translate_waitlevel_mix_formula_x mf
