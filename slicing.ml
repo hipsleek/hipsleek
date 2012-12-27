@@ -5,6 +5,8 @@ open Gen
 
 module CP = Cpure
 
+let print_mp_f = ref (fun (c: memo_pure) -> "printing not initialized")
+
 (************************************)
 (* Signatures for Slicing Framework *)
 (************************************)
@@ -217,6 +219,21 @@ struct
  
   (* For SameSlice meta-predicate *)
   let cor_is_rel (l1: t) (l2: t) : bool =
+    (***************************************)
+    (* LS', LSMU' and waitlevel' are correlated
+    and should be in the same group/slice*)
+    let lsVar = CP.mkLsVar Primed in
+    let lsmuVar = CP.mkLsmuVar Primed in
+    let waitlevelVar = CP.mkWaitlevelVar Primed in
+    let check ls =
+      let b1 = Gen.BList.mem_eq eq_spec_var waitlevelVar ls in
+      let b2 = Gen.BList.mem_eq eq_spec_var lsVar ls in
+      let b3 = Gen.BList.mem_eq eq_spec_var lsmuVar ls in
+      (b1||b2||b3)
+    in
+    if (check l1) && (check l2) then true
+    else
+    (****************************************)
     Gen.BList.overlap_eq eq_spec_var l1 l2
 
   (* For IsRelevant meta-predicate *)
@@ -264,6 +281,21 @@ struct
   let cor_is_rel (l1: t) (l2: t) : bool =
     let (sv1, wv1) = l1 in
     let (sv2, wv2) = l2 in
+    (***************************************)
+    (* LS', LSMU' and waitlevel' are correlated
+    and should be in the same group/slice*)
+    let lsVar = CP.mkLsVar Primed in
+    let lsmuVar = CP.mkLsmuVar Primed in
+    let waitlevelVar = CP.mkWaitlevelVar Primed in
+    let check ls =
+      let b1 = Gen.BList.mem_eq eq_spec_var waitlevelVar ls in
+      let b2 = Gen.BList.mem_eq eq_spec_var lsVar ls in
+      let b3 = Gen.BList.mem_eq eq_spec_var lsmuVar ls in
+      (b1||b2||b3)
+    in
+    if (check (sv1@wv1)) && (check (sv2@wv2)) then true
+    else
+    (****************************************)
     if (sv1 = [] && sv2 = []) then
       (* Keep the linking constraints separately *)
       (Gen.BList.list_equiv_eq eq_spec_var wv1 wv2)
@@ -558,7 +590,7 @@ struct
         }) merged_mp
     in r
 
-  let create_memo_group (l1: b_formula list) (l2: formula list) 
+  let create_memo_group_x (l1: b_formula list) (l2: formula list) 
     (status: prune_status) filter_merged_cons : memo_pure =
     (* Normalize l1 and l2 to lists of atomic constraints *)
     let l1 = List.map (fun b -> 
@@ -577,6 +609,13 @@ struct
         Pure_S.split n_l 
     in
     MF_S.memo_pure_of_pure_slice sl status (Some filter_merged_cons)
+
+  let create_memo_group (l1: b_formula list) (l2: formula list) (status: prune_status) filter_merged_cons : memo_pure =
+    let pr1 = pr_list !CP.print_b_formula in
+    let pr2 = pr_list !CP.print_formula in
+    Debug.no_2 "[slicing.ml] create_memo_group" 
+        pr1 pr2 !print_mp_f 
+        (fun _ _ -> create_memo_group_x l1 l2 status filter_merged_cons) l1 l2
 
   let split_mem_grp (g : memoised_group) : memo_pure = 
     if !f_1_slice  || !dis_slicing then [g]

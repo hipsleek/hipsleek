@@ -714,7 +714,7 @@ and filter_useless_memo_pure (simp_fct:formula->formula) (simp_b:bool)
 		else {c with memo_group_slice = n_slice_lst; memo_group_cons = c.memo_group_cons;}::a ) [] c_lst in
   List.filter (fun c-> not (isConstGroupTrue c))  n_c_lst
       
-and filter_merged_cons aset l =   
+and filter_merged_cons_x aset l =   
   let eq = Cpure.eq_spec_var_aset aset  in
   let keep c1 c2 = match c1.memo_status ,c2.memo_status with
     | _, Implied_R -> if (equalBFormula_f eq c1.memo_formula c2.memo_formula) then (true,false) else (true,true)
@@ -733,7 +733,13 @@ and filter_merged_cons aset l =
   let r = remove_d (List.concat l) in 
   Gen.Profiling.pop_time "filter_dupl_memo";
   r
-	  
+
+and filter_merged_cons aset l =
+  let pr1  = pr_list (pr_list !print_mc_f) in
+  let pr_out = (pr_list !print_mc_f) in
+  Debug.no_2 "filter_merged_cons" print_alias_set pr1 pr_out
+  filter_merged_cons_x aset l
+
 and mkOr_mems (l1: memo_pure) (l2: memo_pure) (*with_dupl with_inv*) : memo_pure = 
   let f1 = fold_mem_lst (mkTrue no_pos) false true l1 in
   let f2 = fold_mem_lst (mkTrue no_pos) false true l2 in
@@ -869,7 +875,7 @@ and anon_partition (l1:(b_formula *(formula_label option)) list) =
 and create_memo_group (l1:(b_formula * (formula_label option)) list) (l2:formula list) (status:prune_status): memo_pure =
   let pr1 = fun bl -> "[" ^ (List.fold_left (fun res (b,_) -> res ^ (!print_bf_f b)) "" bl) ^ "]" in
   let pr2 = fun fl -> "[" ^ (List.fold_left (fun res f -> res ^ (!print_p_f_f f)) "" fl) ^ "]" in
-  Debug.no_3 "create_memo_group" pr1 pr2 (fun s -> "") !print_mp_f create_memo_group_x l1 l2 status
+  Debug.no_3 "[mcpure.ml] create_memo_group" pr1 pr2 (fun s -> "") !print_mp_f create_memo_group_x l1 l2 status
 
 and create_memo_group_x 
   (l1: (b_formula * (formula_label option)) list) 
