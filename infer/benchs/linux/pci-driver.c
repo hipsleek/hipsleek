@@ -473,7 +473,7 @@ static const struct pci_device_id *pci_match_device(struct pci_driver *drv,
     dynid = (struct pci_dynid *) (&drv->dynids.list)->next;
     while (1) {
         prefetch((void *) dynid->node.next);
-        if (&dynid->node != (&drv->dynids.list)){
+        if (&dynid->node == (&drv->dynids.list)){
             break;
         }
         if (pci_match_one_device(&dynid->id, dev)) {
