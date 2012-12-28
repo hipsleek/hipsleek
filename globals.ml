@@ -557,6 +557,7 @@ let b_datan = "barrier"
 let verify_callees = ref false
 
 let elim_unsat = ref false
+let disj_compute_flag = ref false
 let smart_xpure = ref true
 let super_smart_xpure = ref false
   (* this flag is dynamically set depending on

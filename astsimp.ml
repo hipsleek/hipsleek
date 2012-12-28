@@ -1070,23 +1070,28 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
 and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
   let pos = CF.pos_of_struc_formula vdef.C.view_formula in
   let _=proving_loc # set pos in
-  let rec helper n =
+  let rec helper n do_not_compute_flag =
   (* let compute_view_x_formula_x_op ()= *)
     (if (n > 0 (* && not(vdef.C.view_is_prim) *)) then
       (		
 	      let (xform', addr_vars', ms) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in	
 	      let addr_vars = CP.remove_dups_svl addr_vars' in
 	      let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
-	      let formula1 = CF.formula_of_mix_formula xform pos in
-	      let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
-	      let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
+	      (* let formula1 = CF.formula_of_mix_formula xform pos in *)
+	      (* let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in *)
+	      (* let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in *)
 	      (* let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in *)
 	      (* let _ = if not(CF.isFailCtx rs) then *)
+          (* if disj user-supplied inv; just use it *)
+          if do_not_compute_flag then 
+            vdef.C.view_xpure_flag <- true
+          else
 	        (vdef.C.view_x_formula <- xform;
-            vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform;		   
+            vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform)
+          ;
             vdef.C.view_addr_vars <- addr_vars;
 	        vdef.C.view_baga <- (match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h) ;
-	        helper (n - 1))
+	        helper (n - 1) do_not_compute_flag
 	      (* else report_error pos "view formula does not entail supplied invariant\n" in () *)
       )
     else ();
@@ -1106,7 +1111,10 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 	      let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
 	      let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
 	      let _ = if not(CF.isFailCtx rs) then
-              helper n
+	      let pf = pure_of_mix vdef.C.view_user_inv in
+	      let disj_f = CP.split_disjunctions_deep pf in
+          let do_not_recompute_flag = (List.length disj_f>1) && not(!Globals.disj_compute_flag) in
+              helper n do_not_recompute_flag
 	      else report_error pos "view formula does not entail supplied invariant\n" in ()
     else ()
   in
