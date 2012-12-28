@@ -157,7 +157,7 @@ let check_neg_inf (exp1: CP.exp) (exp2: CP.exp) (exp3: CP.exp)
     			  in let exp = 
                     if CP.is_inf e1 then e2 
                     else 
-    			   	  if CP.is_inf e2 then e2 else exp2
+    			   	  if CP.is_inf e2 then e1 else exp2
     			  in flag,oexp,exp
     	    | _ -> match exp3 with
     	     	| CP.Add(e1,e2,pos) -> 
@@ -172,9 +172,9 @@ let check_neg_inf (exp1: CP.exp) (exp2: CP.exp) (exp3: CP.exp)
     				      else false
     				    else false
     				  in let exp = 
-                        if CP.is_inf e1 then e1 
+                        if CP.is_inf e1 then e2 
                         else 
-    			   	      if CP.is_inf e2 then e2 else exp3
+    			   	      if CP.is_inf e2 then e1 else exp3
     			  	  in flag,oexp,exp
     	     	| _ -> false,exp2,exp3)
     | _ -> false,exp2,exp3
@@ -258,12 +258,17 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
             else CP.Neq(e1_norm,e2_norm,pos)                            
       | CP.EqMax (e1,e2,e3,pos) -> 
             let flag,w1,w2 = check_neg_inf e1 e2 e3 in
-			if flag then CP.Eq(w1,w2,pos)
+            (*let _ = if flag then print_string("True") else print_string("False") in
+            let _ = print_string("w1: "^(string_of_formula_exp w1)^"\n") in
+			let _ = print_string("w2: "^(string_of_formula_exp w2)^"\n") in*)
+            if flag then CP.Eq(w1,w2,pos)
 			else
 			  let e1_norm = normalize_exp e1 in
               let e2_norm = normalize_exp e2 in
               let e3_norm = normalize_exp e3 in
-              if CP.is_const_or_var e2_norm && CP.is_inf e3_norm then CP.Eq(e1_norm,e3_norm,pos)
+              if check_neg_inf2 e2_norm e3_norm then Eq(e1_norm,e3_norm,pos)
+              else if check_neg_inf2 e3_norm e2_norm then Eq(e1_norm,e2_norm,pos)
+              else if CP.is_const_or_var e2_norm && CP.is_inf e3_norm then CP.Eq(e1_norm,e3_norm,pos)
               else if CP.is_inf e2_norm && CP.is_const_or_var e3_norm then CP.Eq(e1_norm,e2_norm,pos)
               else CP.EqMax(e1_norm,e2_norm,e3_norm,pos)
       | CP.EqMin (e1,e2,e3,pos) -> 
@@ -273,7 +278,9 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
 			  let e1_norm = normalize_exp e1 in   
               let e2_norm = normalize_exp e2 in
               let e3_norm = normalize_exp e3 in
-              if CP.is_const_or_var e2_norm && CP.is_inf e3_norm then CP.Eq(e1_norm,e2_norm,pos)
+              if check_neg_inf2 e2_norm e3_norm then Eq(e1_norm,e2_norm,pos)
+              else if check_neg_inf2 e3_norm e2_norm then Eq(e1_norm,e3_norm,pos)
+              else if CP.is_const_or_var e2_norm && CP.is_inf e3_norm then CP.Eq(e1_norm,e2_norm,pos)
               else if CP.is_inf e2_norm && CP.is_const_or_var e3_norm then CP.Eq(e1_norm,e3_norm,pos)
               else CP.EqMin(e1_norm,e2_norm,e3_norm,pos)
       | _ -> p_f
