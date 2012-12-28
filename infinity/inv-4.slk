@@ -3,7 +3,16 @@ data node {
 	node next; 
 }.
 
+pred bnd1<n,mi,mx> == 
+  self = null & n = 0 & mi = \inf & mx=-\inf or 
+  self::node<d, p> * p::bnd1<n-1,tmi,tmx> & mi=min(d,tmi) 
+  & mx=max(d,tmx) & -\inf<d<\inf 
+  inv self=null & n=0 & mi=\inf & mx=-\inf |
+      self!=null & n>0 & mi<=mx & -\inf<mi & mx<\inf //& mi<=mx
+ .
+
 // the invariant below cannot be proven
+/*
 pred bnd1<n,mi,mx> == 
   self = null & n = 0 & mi = \inf & mx=-\inf or 
   self::node<d, p> * p::bnd1<n-1,tmi,tmx> & mi=min(d,tmi) 
@@ -14,6 +23,7 @@ pred bnd1<n,mi,mx> ==
       self!=null & n=1 & mi=mx & -\inf<mi<\inf |
       self!=null & n>1 & mi<=mx & -\inf<mi & mx<\inf //& mi<=mx
  .
+*/
 
 /*
 pred bnd1<n,mi,mx> == self = null & n = 0 & mi = \inf & mx=-\inf or 
