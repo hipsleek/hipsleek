@@ -1,16 +1,11 @@
-checkentail mi = min(d, tmi) 
-    & -\inf<d<\inf & -\inf<tmi |- -\inf<mi 
-  //<\inf
- .
+data cell{
+ int val;
+}.
 
-checkentail true & exists(tmi,d: mi = min(d, tmi) 
-    & -\inf<d<\inf & tmi=\inf)  |- -\inf<mi 
-  //<\inf
- .
 
-checkentail true &
-//exists(tmx:exists(tmi:exists(p:exists(d:exists(flted_7_12:
-//exists(flted_7_12:
+
+checkentail 
+true &
 exists(tmi:
 n=flted_7_12+1 & 
 mi=min(d,tmi) & mx=max(d,tmx) & 0<(d+(\inf)) & d<(\inf) & self!=null & 
@@ -21,3 +16,4 @@ mi=min(d,tmi) & mx=max(d,tmx) & 0<(d+(\inf)) & d<(\inf) & self!=null &
 |- (self=null & n=0 & mi=\inf & (\inf)+mx=0) | (self!=null & 1<=n & mi<=mx 
  & 0<((\inf)+mi)
 ).
+

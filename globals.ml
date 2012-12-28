@@ -565,7 +565,7 @@ let smart_memo = ref false
 
 (* let lemma_heuristic = ref false *)
 
-let elim_exists = ref true
+let elim_exists_ff = ref true
 
 (* let allow_imm = ref false (\*imm will delay checking guard conditions*\) *)
 let allow_imm = ref true (*imm will delay checking guard conditions*)

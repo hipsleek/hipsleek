@@ -2301,8 +2301,28 @@ and elim_exists_pure_branch_x (w : CP.spec_var list) (f0 : CP.formula) pos : CP.
     let simplified_f = List.fold_left (fun be e -> CP.mkAnd e be no_pos) sf fl in
     simplified_f
 
+and entail_state_elim_exists es =
+  let pr = Cprinter.string_of_entail_state in
+  let pr2 = Cprinter.string_of_context in
+  Debug.ho_1 "entail_state_elim_exists" pr pr2 entail_state_elim_exists_x es 
+
+(*
+PROBLEM : exists_elim NOT deep enough
+entail_state_elim_exists@1
+entail_state_elim_exists inp1 : es_formula: 
+  emp&exists(tmi:n=1+flted_7_12 & mi=min(d,tmi) & mx=max(d,tmx) & 0<((\inf)+
+  d) & d<(\inf) & self!=null & ((p=null & flted_7_12=0 & tmi=\inf & (\inf)+
+  tmx=0) | (p!=null & 1<=flted_7_12 & tmi<=tmx & 0<((\inf)+tmi))))&
+  {FLOW,(19,20)=__norm}[]
+entail_state_elim_exists@1 EXIT out : es_formula: 
+  emp&exists(tmi:n=1+flted_7_12 & mi=min(d,tmi) & mx=max(d,tmx) & 0<((\inf)+
+  d) & d<(\inf) & self!=null & ((p=null & flted_7_12=0 & tmi=\inf & (\inf)+
+  tmx=0) | (p!=null & 1<=flted_7_12 & tmi<=tmx & 0<((\inf)+tmi))))&
+  {FLOW,(19,20)=__norm}[]
+*)
+
 (* --- added 11.05.2008 *)
-and entail_state_elim_exists es = 
+and entail_state_elim_exists_x es = 
   (* let f_prim = elim_exists es.es_formula in *)
   let f_prim,new_his = elim_exists_es_his es.es_formula es.es_history in
   (* 05.06.08 *)
@@ -2334,10 +2354,13 @@ and elim_exists_failesc_ctx_list (ctx0 : list_failesc_context) =
       elim_exists_failesc_ctx_list_x ctx0
 
 and elim_exists_ctx_x (ctx0:context) =
-  if !Globals.elim_exists then
+  if !Globals.elim_exists_ff then
     transform_context entail_state_elim_exists ctx0
   else ctx0
-    
+
+
+
+
 and elim_exists_ctx (ctx0:context) =
   Gen.Profiling.do_1 "elim_exists_ctx" elim_exists_ctx_x ctx0
 
@@ -3919,7 +3942,7 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
 		                      let prf = mkExRight ctx_0 conseq qvars ws tmp_prf in
 		                      let _ = List.map (redundant_existential_check ws) sl in
 		                      let res_ctx =
-		                        if !Globals.elim_exists then List.map elim_exists_ctx sl
+		                        if !Globals.elim_exists_ff then List.map elim_exists_ctx sl
 		                        else sl in
 		                      (SuccCtx res_ctx, prf))
 	            | _ -> report_error no_pos ("[solver.ml]: No disjunction on the RHS should reach this level\n")
@@ -4789,7 +4812,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                     (*added 09-05-2008 , by Cristian, checks that after the RHS existential elimination the newly introduced variables will no appear in the residue hence no need to quantify*)
                                     let _ = List.map (redundant_existential_check ws) sl in
                                     let res_ctx =
-                                      if !Globals.elim_exists then List.map elim_exists_ctx sl
+                                      if !Globals.elim_exists_ff then List.map elim_exists_ctx sl
                                       else sl in
                                     let r = SuccCtx res_ctx in
                                     (r, prf)

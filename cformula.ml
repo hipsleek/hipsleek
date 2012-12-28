@@ -7817,7 +7817,7 @@ let conv_elim_res (cvar:typed_ident option)  (c:entail_state)
       	  let vsv_f = formula_of_pure_N (CP.mkEqVar (CP.SpecVar (res_typ, cvn, Primed)) (CP.mkeRes res_typ) no_pos) no_pos in
       	  let ctx1 = normalize_max_renaming_s vsv_f no_pos true ctx in
       	  let ctx1 = push_exists_context [CP.mkeRes res_typ] ctx1 in
-      	  if !Globals.elim_exists then elim_ex_fn ctx1 else  ctx1
+      	  if !Globals.elim_exists_ff then elim_ex_fn ctx1 else  ctx1
         end
 
 let conv_elim_res (cvar:typed_ident option)  (c:entail_state)

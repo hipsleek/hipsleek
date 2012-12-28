@@ -148,7 +148,7 @@ let common_arguments = [
   ("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
   ("--no-coercion", Arg.Clear Globals.use_coercion,
    "Turn off coercion mechanism");
-  ("--no-exists-elim", Arg.Clear Globals.elim_exists,
+  ("--no-exists-elim", Arg.Clear Globals.elim_exists_ff,
    "Turn off existential quantifier elimination during type-checking");
   ("--no-diff", Arg.Set Solver.no_diff,
    "Drop disequalities generated from the separating conjunction");
