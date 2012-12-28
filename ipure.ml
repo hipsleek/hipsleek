@@ -649,6 +649,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | IConst _ 
   | FConst _ 
   | Tsconst _
+  | InfConst _
   | AConst _ -> e
   | Ann_Exp (e,ty) -> Ann_Exp ((e_apply_one p e), ty)
   | Var (sv, pos) -> Var ((if eq_var sv fr then t else sv), pos)

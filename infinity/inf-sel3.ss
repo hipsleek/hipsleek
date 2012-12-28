@@ -32,16 +32,22 @@ int find_min(node x)
 }
 
 void delete_min(ref node x, int a)
-	requires x::bnd1<n, mi> & n >= 1 & a = mi 
+	requires x::bnd1<n, mi> & n >= 1 & a = mi
+        case 
+        { n=1 -> ensures x'=null; //=null;
+          n!=1 -> ensures x'::bnd1<n-1, mi1> & mi1>=mi;
+        }
+       /*
 	ensures x'::bnd1<n-1, mi1> 
                 & mi1>=mi 
                //&(n=1 & mil=\inf | n>1 & mi1 >= mi)
                ;//'
+        */
 {
 	if (x.val == a)
 		x = x.next;
 	else {
-                assume xnext'=null or xnext'!=null;
+                //assume xnext'=null or xnext'!=null;
 		bind x to (_, xnext) in {
 			delete_min(xnext, a);
 		}
