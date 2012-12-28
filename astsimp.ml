@@ -1161,15 +1161,15 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let cf = CF.mark_derv_self vdef.I.view_name cf in 
   let inv = vdef.I.view_invariant in
   let _ = gather_type_info_pure prog inv stab in
-  let pf = trans_pure_formula inv stab in
+  let inv_pf = trans_pure_formula inv stab in
   (* Thai : pf - user given invariant in core form *) 
-  let pf = Cpure.arith_simplify 1 pf in
+  let inv_pf = Cpure.arith_simplify 1 inv_pf in
   let cf_fv = List.map CP.name_of_spec_var (CF.struc_fv cf) in
   let inv_lock_fv = match inv_lock with
     | None -> []
     | Some f -> List.map CP.name_of_spec_var (CF.fv f)
   in
-  let pf_fv = List.map CP.name_of_spec_var (CP.fv pf) in
+  let pf_fv = List.map CP.name_of_spec_var (CP.fv inv_pf) in
 
   if (List.mem res_name cf_fv) || (List.mem res_name pf_fv) || (List.mem res_name inv_lock_fv)  then
     report_error (IF.pos_of_struc_formula view_formula1) "res is not allowed in view definition or invariant"
@@ -1180,6 +1180,9 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       let _ = 
         let vs1 = (CF.struc_fv cf) in
         let vs2 = (self_c_var::view_sv_vars) in
+        let vs1a = CP.fv inv_pf in
+        Debug.tinfo_hprint (add_str "vs1a" Cprinter.string_of_spec_var_list) vs1a no_pos;
+        let vs1 = vs1@vs1a in
         let ffv = Gen.BList.difference_eq (CP.eq_spec_var) vs1 vs2 in
         (*filter out holes (#) *)
         let ffv = List.filter (fun v -> not (CP.is_hole_spec_var v)) ffv in
@@ -1211,7 +1214,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       let cf = CF.struc_formula_set_lhs_case false cf in
       (* Thai : we can compute better pure inv named new_pf here that 
          should be stronger than pf *)
-      let new_pf = (*Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str*) pf in
+      let new_pf = (*Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str*) inv_pf in
       let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue pos) new_pf in
       let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_pf in
       let xpure_flag = TP.check_diff memo_pf_N memo_pf_P in
