@@ -1,0 +1,14 @@
+(*
+ DO NOT SIMPLIFY formulae in the presence of floating point constraints
+ x<10 ---simplify--> (1+x)<=10
+ because this does not hold if x is an floating-point
+*)
+
+//INTEGER
+checkentail (1+x)<=10 |- x<10. //VALID
+checkentail x<10 |-(1+x)<=10. //VALID
+
+
+//FLOATING POINT
+checkentail (1.0+x)<=10.0 |- x<10.0 . //VALID
+checkentail x<10.0 |-(1.0+x)<=10.0 . //FAIL

@@ -28,6 +28,7 @@ let perm = ref Frac
 
 (*To disable concurrency verification, for testing purposes*)
 let disable_para () =
+  allow_norm:= false;
   perm:= NoPerm;
   ann_vp:= false;
   allow_ls:= false;
@@ -39,7 +40,9 @@ let allow_perm ():bool =
     | _ -> true
 
 let set_perm perm_str = 
-  if perm_str = "fperm" then perm:=Frac
+  if perm_str = "fperm" then
+    let _ = allow_norm := true in
+    perm:=Frac
   else if perm_str = "cperm" then perm:=Count
   else perm:= NoPerm
 

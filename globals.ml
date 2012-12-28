@@ -521,6 +521,13 @@ let is_deployed = ref true
 
 let web_compile_flag = ref false (*enable compilation flag for website*)
 
+(* Decide whether normalization/simplification
+such as x<1 --> x+1<=1 is allowed
+   Currently, =true when using -tp parahip|rm
+   or using -perm frac
+*)
+let allow_norm = ref true
+
 let allow_ls = ref true (*enable lockset during verification*)
 
 let allow_locklevel = ref true (*enable locklevel during verification*)

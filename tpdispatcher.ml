@@ -361,7 +361,11 @@ let rec check_prover_existence prover_cmd_str =
         else check_prover_existence rest
 
 let set_tp tp_str =
-  prover_arg := tp_str;  
+  prover_arg := tp_str;
+  (******we allow normalization/simplification that may not hold
+  in the presence of floating point constraints*)
+  if tp_str = "parahip" || tp_str = "rm" then allow_norm := true else has_frac:=false;
+  (**********************************************)
   let prover_str = ref [] in
   (*else if tp_str = "omega" then
 	(tp := OmegaCalc; prover_str := "oc"::!prover_str;)*)
