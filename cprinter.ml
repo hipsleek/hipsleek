@@ -963,7 +963,7 @@ let rec pr_h_formula h =
           if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
 	      if original then fmt_string "[Orig]"
 	      else fmt_string "[Derv]";
-          (match ann with | None -> () | Some _ -> fmt_string "[]");
+          pr_remaining_branches ann;
           fmt_close();
     | ViewNode ({h_formula_view_node = sv; 
       h_formula_view_name = c; 
@@ -1835,6 +1835,8 @@ let pr_prune_invariants l = (fun c-> pr_seq "," (fun (c1,(ba,c2))->
       fmt_string ("{"^s^"} -> {"^b^"} ["^d^"]")) c) l
 
 let string_of_prune_invariants p : string = poly_string_of_pr pr_prune_invariants p
+
+let string_of_prune_conditions p : string = pr_list (pr_pair string_of_b_formula (pr_list Globals.string_of_formula_label)) p
 
 let pr_view_base_case bc = 
     (match bc with

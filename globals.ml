@@ -639,7 +639,7 @@ let pass_global_by_value = ref false
 
 let exhaust_match = ref false
 
-let memo_verbosity = ref 1
+let memo_verbosity = ref 2
 
 let profile_threshold = 0.5 
 
@@ -863,6 +863,9 @@ let string_of_loc_by_char_num (l : loc) =
   Printf.sprintf "(%d-%d)"
     l.start_pos.Lexing.pos_cnum
     l.end_pos.Lexing.pos_cnum
+
+let string_of_formula_label ((i,s):formula_label) =
+      "(" ^ (string_of_int i) ^ " , " ^ s ^ ")"
 
 let seq_local_number = ref 0
 
