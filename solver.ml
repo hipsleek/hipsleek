@@ -5893,6 +5893,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
   (*"CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula conseq_m) ^ "\n\n") in*) 
   (* detect whether memset contradicts with any of the ptr equalities from antecedent *)
   let ante_m0 = if detect_false ante_m0 memset then MCP.mkMFalse no_pos else ante_m0 in
+  let ante_m0 = MCP.mix_of_pure (CP.drop_exists (MCP.pure_of_mix ante_m0)) in
   let conseq_m = solve_ineq ante_m0 memset conseq_m in
   match ante_m0,ante_m1,conseq_m with
     | MCP.MemoF a, MCP.MemoF a1, MCP.MemoF c ->
