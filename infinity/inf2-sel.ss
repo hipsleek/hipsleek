@@ -10,7 +10,8 @@ bnd1<n,mi,mx> ==
   self::node<d, p> * p::bnd1<n-1,tmi,tmx> & mi=min(d,tmi) 
   & mx=max(d,tmx) & -\inf<d<\inf 
   inv self=null & n=0 & mi=\inf & mx=-\inf |
-      self!=null & n>0 & mi<=mx & -\inf<mi & mx<\inf 
+      self!=null & n=1 & mi=mx & -\inf<mi<\inf |
+      self!=null & n>1 & mi<=mx & -\inf<mi & mx<\inf
   ;
 
 /*
@@ -89,9 +90,11 @@ void delete_min(ref node x, int a)
 
 
 node selection_sort(ref node x)
-	requires x::bnd1<n, mi,mx> & n > 0 
-	ensures res::sll<n, mi,mx> & x' = null;
-
+	requires x::bnd1<n, mi,mx> & n>0
+    case {
+      n=1 ->  ensures res::sll<n, mi,mx> & x' = null;//'
+      n!=1 ->  ensures res::sll<n, mi,mx> & x' = null;//'
+    }
 {
 	int minimum;
 	node tmp, tmp_null = null;	
@@ -104,7 +107,7 @@ node selection_sort(ref node x)
 	else
 	{
 		tmp = selection_sort(x);
-                assert false;
+        //assert false;
 		return new node(minimum, tmp);
 	}
 }

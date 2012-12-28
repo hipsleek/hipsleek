@@ -50,8 +50,7 @@ void delete_min(ref node x, int a)
 
 node selection_sort(ref node x)
 	requires x::bnd1<n, mi> & n > 0 
-	ensures res::sll<n, mi> & x' = null;
-
+	ensures res::sll<n, mi> & x' = null;//'
 {
 	int minimum;
 	node tmp, tmp_null = null;	
