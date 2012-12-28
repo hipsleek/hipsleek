@@ -816,7 +816,7 @@ void class_interface_unregister(struct class_interface *class_intf)
     class_put(parent);
 }
 
-//int main(void)
-//{
-//    return 0;
-//}
+int main(void)
+{
+    return 0;
+}
