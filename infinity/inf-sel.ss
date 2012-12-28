@@ -5,17 +5,17 @@ data node {
 	node next; 
 }
 
-bnd1<n, sm, bg, mi> == self = null & n = 0 & mi = \inf & mi <= bg or 
-               self::node<d, p> * p::bnd1<n-1, sm, bg, tmi> & sm <= d <= bg & mi = min(d, tmi) & sm <= mi <= bg
-                    inv n >= 0 & sm <= mi <= bg;
+bnd1<n, mi> == self = null & n = 0 & mi = \inf or 
+        self::node<d, p> * p::bnd1<n-1, tmi> & mi = min(d, tmi)
+            inv n >= 0;
 
 sll<n, sm> == self = null & sm = \inf & n = 0 or 
-                  self::node<sm, q> * q::sll<n-1, qs> & sm <= qs
+               self::node<sm, q> * q::sll<n-1, qs> & sm <= qs
                inv n >= 0; 
                  
 int find_min(node x)
-	requires x::bnd1<n, s, l, mi> & n > 0
-        ensures x::bnd1<n, s, l, mi> & res = mi;
+	requires x::bnd1<n, mi> & n > 0
+    ensures x::bnd1<n, mi> & res = mi;
 {
 	int tmp; 
 
@@ -32,10 +32,8 @@ int find_min(node x)
 }
 
 void delete_min(ref node x, int a)
-	requires x::bnd1<n, s, l, mi> & n >= 1 & a = mi 
-	ensures x' = null & n = 1 & s <= mi <= l or 
-                x'::bnd1<n-1, s, l, mi1> & mi1 >= mi & x' != null & n > 1;//'
-
+	requires x::bnd1<n, mi> & n >= 1 & a = mi 
+	ensures x'::bnd1<n-1, mi1> & mi1 >= mi;//'
 {
 	if (x.val == a)
 		x = x.next;
@@ -47,7 +45,7 @@ void delete_min(ref node x, int a)
 }
 
 node selection_sort(ref node x)
-	requires x::bnd1<n, sm, lg, mi> & n > 0 
+	requires x::bnd1<n, mi> & n > 0 
 	ensures res::sll<n, mi> & x' = null;
 
 {

@@ -8734,29 +8734,26 @@ let rec andl_to_and f = match f with
 		let l = List.map (fun (_,c)-> andl_to_and c) b in
 		List.fold_left (fun a c-> And (a,c,no_pos)) (mkTrue no_pos) l 
 
-
-	
-		
 type tscons_res = 
 	| No_cons
 	| Can_split (*has tree share constraints but they can be separated*)
 	| No_split (*has tree share constraints but can not split*)
-	
+
 let join_res t1 t2 = match t1,t2 with
 	| Can_split, Can_split -> Can_split
 	| No_cons,_ -> t2
 	| _, No_cons -> t1
 	| No_split, _ 
 	| _, No_split -> No_split
-	
+
 let rec has_e_tscons f = match f with
   | Var (v,_) -> (match type_of_spec_var v with | Tree_sh -> true | _ -> false)
   | Tsconst c -> true
   | Add (e1,e2,_) -> (has_e_tscons e1)||(has_e_tscons e2)
   | _ -> false
-	
+
 let has_e_tscons f = Debug.no_1 "has_e_tscons" !print_exp string_of_bool has_e_tscons f
-	
+
 let has_b_tscons f = match f with 
   | Eq (e1,e2,_) -> if (has_e_tscons e1)|| (has_e_tscons e2) then Can_split else No_cons
   | Neq (e1,e2,_)-> if (has_e_tscons e1)|| (has_e_tscons e2) then No_split else No_cons
@@ -8830,13 +8827,13 @@ let rec get_inst fct v f = match f with
    | Forall _
    | Exists _
    | Or _ -> None
-   
+
 let get_inst_tree v f =
 	let fct e = match e with
 		| Tsconst (t,_) -> Some t
 		| _ -> None in
 	get_inst fct v f
-	
+
 let get_inst_int v f = 
 	let fct e = match e with
 		| IConst (i,_) -> Some i
@@ -8847,7 +8844,7 @@ let is_term pf =
   match pf with
     | LexVar _ -> true
     | _ -> false
-  
+
 let is_term f =
   match f with
     | BForm ((bf,_),_) -> is_term bf
