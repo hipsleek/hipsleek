@@ -8927,7 +8927,7 @@ let deep_split_disjuncts (f:formula) : formula list =
 
 let deep_split_disjuncts (f:formula) : formula list =
   let pr = !print_formula in
-  Debug.ho_1 "deep_split_disjuncts" pr (pr_list pr) deep_split_disjuncts f
+  Debug.no_1 "deep_split_disjuncts" pr (pr_list pr) deep_split_disjuncts f
 
 (* TODO WN : improve efficiency of distribute_disjuncts *)
 let split_disjunctions_deep (f:formula) : formula list =
@@ -8942,11 +8942,14 @@ let drop_exists (f:formula) :formula =
                                  let st = List.combine [qid] fresh_fr in
                                  let rename_exist_vars  = subst st qf in
                                  Some((helper rename_exist_vars))
-      | And(pf1,pf2,pos) -> Some(And((helper pf1),(helper pf2),pos))
-      | Or(pf1,pf2,fl,pos) -> Some(Or((helper pf1),(helper pf2),fl,pos))
-      | Not(pf,fl,pos) -> Some(Not((helper pf),fl,pos))
-      |  _ -> None in
-  let f_bf bf = None in
-  let f_e e = None in
+      | And _ | AndList _ | Or _  -> None
+      | Not _ | Forall _ | BForm _ -> Some(f)
+  in
+  let f_bf bf = Some bf in
+  let f_e e = Some e in
   map_formula f (f_f,f_bf,f_e)
   in helper f
+
+let drop_exists (f:formula) :formula =
+  let pr = !print_formula in 
+  Debug.no_1 "drop_exists_pure" pr pr drop_exists f 

@@ -2304,7 +2304,7 @@ and elim_exists_pure_branch_x (w : CP.spec_var list) (f0 : CP.formula) pos : CP.
 and entail_state_elim_exists es =
   let pr = Cprinter.string_of_entail_state in
   let pr2 = Cprinter.string_of_context in
-  Debug.ho_1 "entail_state_elim_exists" pr pr2 entail_state_elim_exists_x es 
+  Debug.no_1 "entail_state_elim_exists" pr pr2 entail_state_elim_exists_x es 
 
 (*
 PROBLEM : exists_elim NOT deep enough
@@ -2320,14 +2320,25 @@ entail_state_elim_exists@1 EXIT out : es_formula:
   tmx=0) | (p!=null & 1<=flted_7_12 & tmi<=tmx & 0<((\inf)+tmi))))&
   {FLOW,(19,20)=__norm}[]
 *)
-
 (* --- added 11.05.2008 *)
 and entail_state_elim_exists_x es = 
   (* let f_prim = elim_exists es.es_formula in *)
-  let f_prim,new_his = elim_exists_es_his es.es_formula es.es_history in
+  let pr_f = Cprinter.string_of_formula in
+  let pr_h = Cprinter.string_of_h_formula in
+  let ff = es.es_formula in
+  Debug.tinfo_hprint (add_str "f(b4 elim_exists_es_his)" pr_f) ff no_pos;
+  let f_prim,new_his = elim_exists_es_his ff es.es_history in
   (* 05.06.08 *)
   (* we also try to eliminate exist vars for which a find a substitution of the form v = exp from the pure part *)
   (*let _ = print_string("[solver.ml, elim_exists_ctx]: Formula before exp exist elim: " ^ Cprinter.string_of_formula f_prim ^ "\n") in*)
+(* EXAMPLE
+@5! f(b4 elim_exists_es_his): 
+  (exists mi_15: x::cell<mi_15>@M[Orig]&mi_15=v&{FLOW,(19,20)=__norm})[]
+@5! f(b4 elim_exists_es_his): 
+  x::cell<v>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+*)
+  Debug.tinfo_hprint (add_str "new_his(after elim_exists_es_his)" (pr_list pr_h)) new_his no_pos;
+  Debug.tinfo_hprint (add_str "f(after elim_exists_es_his)" pr_f) f_prim no_pos;
   let f = elim_exists_exp f_prim in
   let qvar, base = CF.split_quantifiers f in
   let h, p, fl, t, a = CF.split_components base in
@@ -8646,7 +8657,7 @@ and elim_exists_exp_x (f0 : formula) : (formula) =
   if flag then (elim_exists_exp_x f)
   else f 
 
-(* removing existentail using ex x. (x=e & P(x)) <=> P(e) *)
+(* removing existential using ex x. (x=e & P(x)) <=> P(e) *)
 and elim_exists_exp_loop (f0 : formula) : (formula * bool) = match f0 with
   | Or ({formula_or_f1 = f1;
     formula_or_f2 = f2;
