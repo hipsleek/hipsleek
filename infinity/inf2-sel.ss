@@ -5,13 +5,22 @@ data node {
 	node next; 
 }
 
+bnd1<n,mi,mx> == 
+  self = null & n = 0 & mi = \inf & mx=-\inf or 
+  self::node<d, p> * p::bnd1<n-1,tmi,tmx> & mi=min(d,tmi) 
+  & mx=max(d,tmx) & -\inf<d<\inf 
+  inv self=null & n=0 & mi=\inf & mx=-\inf |
+      self!=null & n>0 & mi<=mx & -\inf<mi & mx<\inf 
+  ;
+
+/*
 bnd1<n,mi,mx> == self = null & n = 0 & mi = \inf & mx=-\inf or 
   self::node<d, p> * p::bnd1<n-1, tmi,tmx> & mi = min(d, tmi) & mx=max(d,tmx) & -\inf<d<\inf 
   inv self=null & n=0 & mi=\inf & mx=-\inf |
       self!=null & n=1 & mi=mx & -\inf<mi<\inf |
       self!=null & n>1 & mi<=mx & -\inf<mi & mx<\inf;
    //n >= 0;
-
+*/
 /*
 sll<n, sm,mx> == self = null & sm = \inf & mx = -\inf & n = 0
  or self::node<sm, q> & q=null & sm = mx & -\inf<sm<\inf
@@ -23,13 +32,14 @@ sll<n, sm,mx> == self = null & sm = \inf & mx = -\inf & n = 0
 */
 //   inv n >= 0;
 
-sll<n, sm,mx> == 
-   self = null & sm = \inf & mx = -\inf & n = 0
- or self::node<sm, q> * q::sll<n-1, qs,mx1> & -\inf < sm <= qs 
-          & (mx1=-\inf| mx1=mx) 
+sll<n, mi,mx> == 
+   self = null & mi = \inf & mx = -\inf & n = 0
+ or self::node<mi, null> & n=1 & -\inf<mi<\inf & mi=mx
+ or self::node<mi, q> * q::sll<n-1, qs,mx> & -\inf<mi<\inf & mi <= qs
+      &  q!=null //& -\inf<mx<\inf //& n>1
   inv self=null & n=0 & mi=\inf & mx=-\inf |
-      self!=null & n=1 & mi=mx & -\inf<mi<\inf  |
-      self!=null & n>1 & mi<=mx  & -\inf<mi & mx<\inf;
+      self!=null & n>0 & mi<=mx  & -\inf<mi & mx<\inf
+;
 
 
 int find_min(node x)

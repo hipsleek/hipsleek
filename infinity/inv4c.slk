@@ -1,9 +1,10 @@
 // possible to prove mi<=mx & -\inf<mi
-// but not -\inf<mi
-// some simplification rule is missing
+// but not mx<\inf
+// some simplification rules are missing
 checkentail 
 //mi=min(d,\inf) & 
-mx=max(d,-\inf) 
+//mx=max(d,-\inf) &
+(d>=-\inf & mx=d | d<=-\inf & mx=-\inf) 
 & -\inf<d 
 //& d<\inf 
 |-  
