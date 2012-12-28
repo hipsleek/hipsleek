@@ -89,31 +89,50 @@ void delete_min(ref node x, int a)
 	}
 }
 
-node selection_sort(ref node x)
+node selection_sort(node x)
 /*
 	requires x::bnd1<n, mi,mx> & n>0
 	ensures res::sll<n, mi,mx> & x' = null;//'
     VERY slow for bytecode
 */
+ requires x::bnd1<n,mi,mx>
+ case {
+   n=0 -> ensures res=null ;//'
+   n!=0 -> ensures res::sll<n,mi,mx> ;//'
+ }
+/*
+Total verification time: 65.280079 second(s)
+	Time spent in main process: 63.223951 second(s)
+	Time spent in child processes: 2.056128 second(s)
+ case {
+   n=0 -> ensures res=null ;//'
+   n=1 -> ensures res::sll<n,mi,mx> & mi=mx;//'
+   n<0 | n>1 -> 
+     requires false
+     ensures res::sll<n,mi,mx> ;//'
+ }
  requires x::bnd1<n, mi,mx> & n > 0 
  case {
     n=1 -> ensures res::sll<n, mi,mx> & mi=mx & x' = null;//'
     n!=1 -> ensures res::sll<n, mi,mx> & x' = null;//'
  }
+*/
 {
 	int minimum;
 	node tmp, tmp_null = null;	
 
-	minimum = find_min(x);
-	delete_min(x, minimum);
 
-	if (x == null)
-		return new node(minimum, tmp_null);
+	if (x == null) return null;
 	else
 	{
-		tmp = selection_sort(x);
-        //assert false;
-		return new node(minimum, tmp);
+	    minimum = find_min(x);
+	    delete_min(x, minimum);
+        if (x==null) return new node(minimum, tmp_null);
+        else {
+		  tmp = selection_sort(x);
+          //assert false;
+		  return new node(minimum, tmp);
+        }
 	}
 }
 
