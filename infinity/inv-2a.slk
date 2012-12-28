@@ -1,0 +1,17 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+/*
+pred ls<n> == self = null & n = -1 or 
+  self::node<d, null> & n=1 or
+  self::node<d, p> * p::ls<n-1> & p!=null 
+  inv self=null & n=-1  | self!=null & n>0 
+  .
+*/
+
+pred ls<n> == self = null & n = -1 or 
+  self::node<d, p> * p::ls<m> & (m=-1 & n=1 | m>0 & n=m+1)
+  inv self=null & n=-1  | self!=null & n>0 
+  .
