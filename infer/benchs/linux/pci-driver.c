@@ -465,21 +465,6 @@ store_remove_id(struct device_driver *driver, const char *buf, int count)
  * Deprecated, don't use this as it will not catch any dynamic ids
  * that a driver might want to check for.
  */
-/*
-const struct pci_device_id *pci_match_id(const struct pci_device_id *ids,
-                     struct pci_dev *dev)
-{
-    if (ids) {
-        while (ids->vendor || ids->subvendor || ids->class_mask) {
-            if (pci_match_one_device(ids, dev))
-                return ids;
-            ids++;
-        }
-    }
-    return NULL;
-}
-*/
-
 const struct pci_device_id *pci_match_id(const struct pci_device_id *ids,
                      struct pci_dev *dev)
 {

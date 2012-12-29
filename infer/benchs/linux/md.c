@@ -33,8 +33,16 @@
 */
 
 #define NULL ((void *)0)
+
 typedef unsigned long long __u64;
 typedef unsigned long long sector_t;
+
+#define DEBUG 0
+#define printk  printf
+#define dprintk(x...) ((void)(DEBUG && printk(x)))
+#define MD_BUG(x...) { printk("md: bug in file %s, line %d\n", __FILE__, __LINE__); md_print_devices(); }
+
+
 /*
  * Simple doubly linked list implementation.
  *
@@ -121,8 +129,13 @@ static inline void __list_del(struct list_head * prev, struct list_head * next)
 static inline void list_del(struct list_head *entry)
 {
     __list_del(entry->prev, entry->next);
-    entry->next = NULL;
-    entry->prev = NULL;
+    /*
+     * These are non-NULL pointers that will result in page faults
+     * under normal circumstances, used to verify that nobody uses
+     * non-initialized list entries.
+     */
+    entry->next = ((void *) 0x00100100 + (0x0UL));
+    entry->prev = ((void *) 0x00200200 + (0x0UL));
 }
 
 /**
@@ -173,6 +186,7 @@ static inline void list_del_rcu(struct list_head *entry)
     __list_del(entry->prev, entry->next);
     entry->prev = NULL;
 }
+
 /****************************************************************************/
 /*
  * Enables to iterate over all existing md arrays
@@ -213,7 +227,7 @@ struct gendisk {
 //  int first_minor;
 //  int minors;
 //
-//  char disk_name[32];
+    char disk_name[32];
 //  char *(*devnode)(struct gendisk *gd, mode_t *mode);
 //
 //  struct disk_part_tbl *part_tbl;
@@ -322,7 +336,7 @@ struct mddev_s
                              * managed externally */
 //  char                metadata_type[17]; /* externally set*/
 //  int             chunk_sectors;
-//  time_t              ctime, utime;
+    long                ctime, utime;
 //  int             level, layout;
 //  char                clevel[16];
     int             raid_disks;
@@ -555,7 +569,11 @@ struct inode {
 };
 //# 806 "include/linux/fs.h"
 enum inode_i_mutex_lock_class {
-    I_MUTEX_NORMAL, I_MUTEX_PARENT, I_MUTEX_CHILD, I_MUTEX_XATTR, I_MUTEX_QUOTA
+    I_MUTEX_NORMAL,
+    I_MUTEX_PARENT,
+    I_MUTEX_CHILD,
+    I_MUTEX_XATTR,
+    I_MUTEX_QUOTA
 };
 
 struct block_device {
@@ -770,7 +788,6 @@ struct mdk_rdev_s
     struct sysfs_dirent *sysfs_state; /* handle for 'state'
                        * sysfs entry */
 };
-
 typedef struct mdk_rdev_s mdk_rdev_t;
 
 struct seq_file {
@@ -783,6 +800,17 @@ struct seq_file {
     unsigned long long version;
 //  const struct seq_operations *op;
     void *private;
+};
+
+struct super_type  {
+    char            *name;
+//  struct module       *owner;
+    int         (*load_super)(mdk_rdev_t *rdev, mdk_rdev_t *refdev,
+                      int minor_version);
+//  int         (*validate_super)(mddev_t *mddev, mdk_rdev_t *rdev);
+    void            (*sync_super)(mddev_t *mddev, mdk_rdev_t *rdev);
+    unsigned long long  (*rdev_size_change)(mdk_rdev_t *rdev,
+                        sector_t num_sectors);
 };
 
 /****************************************************************************/
@@ -810,6 +838,11 @@ void bd_release_from_disk(struct block_device * x, struct gendisk * y){
     return;
 }
 
+/**
+ *  sysfs_remove_link - remove symlink in object's directory.
+ *  @kobj:  object we're acting for.
+ *  @name:  name of the symlink to remove.
+ */
 void sysfs_remove_link(struct kobject *kobj, const char *name){
     return;
 }
@@ -818,14 +851,28 @@ void sysfs_put(struct sysfs_dirent *sd){
     return;
 }
 
-/*
- * test bit
+/**
+ * strict_strtoull - convert a string to an unsigned long long strictly
+ * @cp: The string to be converted
+ * @base: The number base to use
+ * @res: The converted result value
+ *
+ * strict_strtoull converts a string to an unsigned long long only if the
+ * string is really an unsigned long long string, any string containing
+ * any invalid char at the tail will be rejected and -EINVAL is returned,
+ * only a newline char at the tail is acceptible because people generally
+ * change a module parameter in the following way:
+ *
+ *  echo 1024 > /sys/module/e1000/parameters/copybreak
+ *
+ * echo will append a newline to the tail of the string.
+ *
+ * It returns 0 if conversion is successful and *res is set to the converted
+ * value, otherwise it returns -EINVAL and *res is set to 0.
+ *
+ * simple_strtoull just ignores the successive invalid characters and
+ * return the converted value of prefix part of the string.
  */
-static inline int test_bit(int nr, const volatile void *addr)
-{
-    return 1UL & (((const unsigned int *) addr)[nr >> 5] >> (nr & 31));
-}
-
 int strict_strtoull(const char * x, unsigned int y, unsigned long long *z){
     return 0;
 }
@@ -848,11 +895,61 @@ int strict_strtoull(const char * x, unsigned int y, unsigned long long *z){
 //}
 
 /****************************************************************************/
+#define atomic_set(v,i)             ((v)->counter = (i))
+#define atomic_inc(v)               ((v)->counter += 1)
+#define atomic_dec_and_test(v)      ((v)->counter-1 == 0)
+
+/**
+ * kref_init - initialize object.
+ * @kref: object in question.
+ */
+void kref_init(struct kref *kref)
+{
+    atomic_set(&kref->refcount, 1);
+}
+
+/**
+ * kref_get - increment refcount for object.
+ * @kref: object.
+ */
+void kref_get(struct kref *kref)
+{
+    atomic_inc(&kref->refcount);
+}
+
+/**
+ * kobject_get - increment refcount for object.
+ * @kobj: object.
+ */
+struct kobject *kobject_get(struct kobject *kobj)
+{
+    if (kobj)
+        kref_get(&kobj->kref);
+    return kobj;
+}
+
+static int overlaps(sector_t s1, sector_t l1, sector_t s2, sector_t l2)
+{
+    /* check if two start/length pairs overlap */
+    if (s1+l1 <= s2)
+        return 0;
+    if (s2+l2 <= s1)
+        return 0;
+    return 1;
+}
+
+/****************************************************************************/
+static atomic_t md_event_count;
+void md_new_event(mddev_t *mddev)
+{
+    atomic_inc(&md_event_count);
+    return;
+}
 
 static void mddev_put(mddev_t *mddev)
 {
     if (!mddev->raid_disks && list_empty(&mddev->disks) &&
-        !mddev->hold_active) {
+        mddev->ctime == 0 && !mddev->hold_active) {
         /* Array is not configured at all, and not held active,
          * so destroy it */
         list_del(&mddev->all_mddevs);
@@ -874,6 +971,19 @@ static void mddev_init(mddev_t *mddev)
 {
     INIT_LIST_HEAD(&mddev->disks);
     INIT_LIST_HEAD(&mddev->all_mddevs);
+//  init_timer(&mddev->safemode_timer);
+    atomic_set(&mddev->active, 1);
+    atomic_set(&mddev->openers, 0);
+//  atomic_set(&mddev->active_io, 0);
+//  spin_lock_init(&mddev->write_lock);
+//  atomic_set(&mddev->flush_pending, 0);
+//  init_waitqueue_head(&mddev->sb_wait);
+//  init_waitqueue_head(&mddev->recovery_wait);
+//  mddev->reshape_position = MaxSector;
+//  mddev->resync_min = 0;
+//  mddev->resync_max = MaxSector;
+//  mddev->level = LEVEL_NONE;
+
 }
 
 static inline mddev_t *mddev_get(mddev_t *mddev)
@@ -1019,6 +1129,19 @@ static struct mdk_personality *find_pers(int level, char *clevel)
 static LIST_HEAD(pending_raid_disks);
 
 /*
+ * test bit
+ */
+static inline int test_bit(int nr, const volatile void *addr)
+{
+    return 1UL & (((const unsigned int *) addr)[nr >> 5] >> (nr & 31));
+}
+
+static inline char * mdname (mddev_t * mddev)
+{
+    return mddev->gendisk ? mddev->gendisk->disk_name : "mdX";
+}
+
+/*
  * Try to register data integrity profile for an mddev
  *
  * This is called when an array is started and after a disk has been kicked
@@ -1067,29 +1190,13 @@ int md_integrity_register(mddev_t *mddev)
      * profiles, register the common profile for the md device.
      */
     if ((0) != 0) {
+        printk("<3>" "md: failed to register integrity for %s\n",
+           mdname(mddev));
         return -22;
     }
+    printk("<5>" "md: data integrity on %s enabled\n",
+      mdname(mddev));
     return 0;
-}
-
-/**
- * kref_get - increment refcount for object.
- * @kref: object.
- */
-void kref_get(struct kref *kref)
-{
-    (&kref->refcount)->counter++;
-}
-
-/**
- * kobject_get - increment refcount for object.
- * @kobj: object.
- */
-struct kobject *kobject_get(struct kobject *kobj)
-{
-    if (kobj)
-        kref_get(&kobj->kref);
-    return kobj;
 }
 
 static void unbind_rdev_from_array(mdk_rdev_t * rdev)
@@ -1107,17 +1214,6 @@ static void unbind_rdev_from_array(mdk_rdev_t * rdev)
     kobject_get(&rdev->kobj);
 //  schedule_work(&rdev->del_work);
 }
-
-struct super_type  {
-    char            *name;
-//  struct module       *owner;
-    int         (*load_super)(mdk_rdev_t *rdev, mdk_rdev_t *refdev,
-                      int minor_version);
-//  int         (*validate_super)(mddev_t *mddev, mdk_rdev_t *rdev);
-    void            (*sync_super)(mddev_t *mddev, mdk_rdev_t *rdev);
-    unsigned long long  (*rdev_size_change)(mdk_rdev_t *rdev,
-                        sector_t num_sectors);
-};
 
 static void super_90_sync(mddev_t *mddev, mdk_rdev_t *rdev)
 {
@@ -1228,24 +1324,14 @@ static int strict_blocks_to_sectors(const char *buf, sector_t *sectors) {
         return -22;
 
     if (blocks & 1ULL << (8 * sizeof(blocks) - 1))
-        return -22;
+        return -22; /* sector conversion overflow */
 
     new = blocks * 2;
     if (new != blocks * 2)
-        return -22;
+        return -22; /* unsigned long long to sector_t overflow */
 
     *sectors = new;
     return 0;
-}
-
-static int overlaps(sector_t s1, sector_t l1, sector_t s2, sector_t l2)
-{
-    /* check if two start/length pairs overlap */
-    if (s1+l1 <= s2)
-        return 0;
-    if (s2+l2 <= s1)
-        return 0;
-    return 1;
 }
 
 static int rdev_size_store(mdk_rdev_t *rdev, const char *buf, unsigned int len)
@@ -1489,14 +1575,6 @@ static inline __attribute__((always_inline)) void set_capacity(
  */
 void blk_integrity_unregister(struct gendisk *disk)
 {
-    return;
-}
-
-#define atomic_inc(v)           ((v)->counter=1+(v)->counter)
-static atomic_t md_event_count;
-void md_new_event(mddev_t *mddev)
-{
-    atomic_inc(&md_event_count);
     return;
 }
 
