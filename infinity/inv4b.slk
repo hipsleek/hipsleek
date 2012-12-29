@@ -6,6 +6,6 @@ checkentail
   & mx=max(d,-\inf) 
   & -\inf<d<\inf
 |-  
-  mx=d
-//  mi=mx 
+ // mx=d
+ mi=mx 
 .
