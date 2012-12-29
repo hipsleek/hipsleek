@@ -80,6 +80,48 @@ void list_add_tail(list_head new1, list_head head1)
   __list_add(new1, head1.prev, head1);
 }
 
+/*
+ * Delete a list entry by making the prev/next entries
+ * point to each other.
+ *
+ * This is only for internal list manipulation where we know
+ * the prev/next entries already!
+ */
+/* static inline void __list_del(struct list_head * prev, struct list_head * next) */
+/* { */
+/*     next->prev = prev; */
+/*     prev->next = next; */
+/* } */
+void __list_del(list_head prev, list_head next)
+  requires prev::list_head<_,p> * next::list_head<n,_>
+  ensures prev::list_head<next,p> * next::list_head<n,prev>;
+{
+    next.prev = prev;
+    prev.next = next;
+}
+/**
+ * list_del - deletes entry from list.
+ * @entry: the element to delete from the list.
+ * Note: list_empty() on entry does not return true after this, the entry is
+ * in an undefined state.
+ */
+void list_del(list_head entry)
+  requires p::list_head<_,p> * entry::list_head<n,p> * n::list_head<n,_>
+  ensures p::list_head<next,p> * entry::list_head<null,null> * next::list_head<n,p>;
+{
+    __list_del(entry.prev, entry.next);
+    entry.next = null;
+    entry.prev = null;
+}
+
+void INIT_LIST_HEAD(list_head list)
+  requires list::list_head<_,_>
+  ensures list::list_head<list,list>;
+{
+    list.next = list;
+    list.prev = list;
+}
+
 /****************************************************************************/
 
 /* struct pci_device_id { */
@@ -105,6 +147,10 @@ data pci_dynid {
     list_head node;
     pci_device_id id;
 }
+
+/* void free_pci_dynid (pc) */
+/*      requires pc::pci_dynid<n,_> */
+/*      ensures pc = null & n=null */
 
 pred_prim RS_mem<i:int>
  inv i>0 & self!=null;
@@ -179,6 +225,74 @@ data pci_driver {
     pci_dynids dynids;
 }
 
+data pci_dev {
+//  struct list_head bus_list;
+//  struct pci_bus *bus;
+//  struct pci_bus *subordinate;
+//  void *sysdata;
+//  struct proc_dir_entry *procent;
+//  struct pci_slot *slot;
+//  unsigned int devfn;
+    int vendor;
+    int device;
+    int subsystem_vendor;
+    int subsystem_device;
+    int class_;
+//  u8 revision;
+//  u8 hdr_type;
+//  u8 pcie_cap;
+//  u8 pcie_type;
+//  u8 rom_base_reg;
+//  u8 pin;
+//  struct pci_driver *driver;
+//  u64 dma_mask;
+//  struct device_dma_parameters dma_parms;
+//  pci_power_t current_state;
+//  int pm_cap;
+//  unsigned int pme_support:5;
+//  unsigned int pme_interrupt:1;
+//  unsigned int d1_support:1;
+//  unsigned int d2_support:1;
+//  unsigned int no_d1d2:1;
+//  unsigned int wakeup_prepared:1;
+//  unsigned int d3_delay;
+//  pci_channel_state_t error_state;
+//  struct device dev;
+//  int cfg_size;
+//  unsigned int irq;
+//  struct resource resource[DEVICE_COUNT_RESOURCE];
+//  resource_size_t fw_addr[DEVICE_COUNT_RESOURCE];
+//  unsigned int transparent:1;
+//  unsigned int multifunction:1;
+//  unsigned int is_added:1;
+//  unsigned int is_busmaster:1;
+//  unsigned int no_msi:1;
+//  unsigned int block_ucfg_access:1;
+//  unsigned int broken_parity_status:1;
+//  unsigned int irq_reroute_variant:2;
+//  unsigned int msi_enabled:1;
+//  unsigned int msix_enabled:1;
+//  unsigned int ari_enabled:1;
+//  unsigned int is_managed:1;
+//  unsigned int is_pcie:1;
+//  unsigned int needs_freset:1;
+//  unsigned int state_saved:1;
+//  unsigned int is_physfn:1;
+//  unsigned int is_virtfn:1;
+//  unsigned int reset_fn:1;
+//  unsigned int is_hotplug_bridge:1;
+//  unsigned int __aer_firmware_first_valid:1;
+//  unsigned int __aer_firmware_first:1;
+//  pci_dev_flags_t dev_flags;
+//  atomic_t enable_cnt;
+//  u32 saved_config_space[16];
+//  struct hlist_head saved_cap_space;
+//  struct bin_attribute *rom_attr;
+//  int rom_attr_enabled;
+//  struct bin_attribute *res_attr[DEVICE_COUNT_RESOURCE];
+//  struct bin_attribute *res_attr_wc[DEVICE_COUNT_RESOURCE];
+//  struct pci_vpd *vpd;
+}
 /****************************************************************************/
 
 /**
@@ -325,3 +439,229 @@ int pci_add_dynid(pci_driver drv, int vendor,
     return retval;
 }
 
+/* static void pci_free_dynids(struct pci_driver *drv) */
+/* { */
+/*     struct pci_dynid *dynid, *n; */
+
+/*     dynid = (struct pci_dynid *) (&drv->dynids.list)->next; */
+/*     n = (struct pci_dynid *) dynid->node.next; */
+/*     while (&dynid->node != (&drv->dynids.list)) { */
+/*         list_del(&dynid->node); */
+/*         free(dynid); */
+/*         dynid = n; */
+/*         n = (struct pci_dynid *) n->node.next; */
+/*     } */
+/*     return; */
+/* } */
+
+pci_dynid cast_to_pci_dynid1 (list_head p)
+   case {
+  p=null -> ensures res=null;
+  p!=null -> 
+    requires p::list_head<n,p> //& a>=size(item)
+    ensures res::pci_dynid<n,id> * n::list_head<n,p> * id::pci_device_id<_,_,_,_,_,_,_>;
+ }
+
+void pci_free_dynids_loop(pci_driver drv, ref pci_dynid dynid, ref pci_dynid n)
+  requires drv::pci_driver<no,na,id,d,dy> * dy::pci_dynids<l> *
+  p1::list_head<_,p> * dynid::pci_dynid<n1,id1> * n1::list_head<n2,p1> * n2::list_head<n3,_> * n::pci_dynid<n2,id2>
+ case {
+    n1 = l -> ensures drv::pci_driver<no,na,id,d,dy> * dy::pci_dynids<l> *
+       p1::list_head<_,p> * dynid'::pci_dynid<n1,id1> * n1::list_head<n2,p1> * n2::list_head<n3,_> * n'::pci_dynid<n2,id2>;
+    n1!= l -> ensures drv::pci_driver<no,na,id,d,dy> * dy::pci_dynids<l> *
+       p1::list_head<n2,p> * dynid'::pci_dynid<n2,id2> /* * n1=null */ * n2::list_head<n3,p1> * n'::pci_dynid<n3,_>;
+ }
+{
+  if (dynid.node != (drv.dynids.list)) {
+    list_del(dynid.node);
+    //free(dynid);
+    dynid = n;
+    n =  cast_to_pci_dynid1(n.node.next);
+    pci_free_dynids_loop(drv,dynid, n);
+  }
+}
+// drv.dynids.list: cyclic dll
+void pci_free_dynids(pci_driver drv)
+  requires drv::pci_driver<node1,_,_,d,dy> * dy::pci_dynids<head1> 
+            * prev::list_head<head1,_> * head1::dll<prev>
+            * node1::list_head<_,_> * d::device_driver<_,_>
+  ensures true;
+{
+    pci_dynid dynid, n;
+
+    dynid = cast_to_pci_dynid1(drv.dynids.list.next);
+    n = cast_to_pci_dynid1(dynid.node.next);
+    while (dynid.node != (drv.dynids.list)) {
+        list_del(dynid.node);
+        //free(dynid);
+        dynid = n;
+        n =  cast_to_pci_dynid1(n.node.next);
+    }
+    return;
+}
+
+
+/**
+ * pci_match_one_device - Tell if a PCI device structure has a matching
+ *                        PCI device id structure
+ * @id: single PCI device id structure to match
+ * @dev: the PCI device structure to match against
+ *
+ * Returns the matching pci_device_id structure or %NULL if there is no match.
+ */
+/* static inline const struct pci_device_id * */
+/* pci_match_one_device(const struct pci_device_id *id, const struct pci_dev *dev) */
+/* { */
+/*     if ((id->vendor == (~0) || id->vendor == dev->vendor) && */
+/*         (id->device == (~0) || id->device == dev->device) && */
+/*         (id->subvendor == (~0) || id->subvendor == dev->subsystem_vendor) && */
+/*         (id->subdevice == (~0) || id->subdevice == dev->subsystem_device) && */
+/*         !((id->class ^ dev->class) & id->class_mask)) */
+/*         return id; */
+/*     return NULL; */
+/* } */
+
+pci_device_id
+pci_match_one_device( pci_device_id id, pci_dev dev)
+  requires id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> *
+  dev::pci_dev<v2,d2,subv2,subd2,cl2>
+ case {
+  v1= 0 -> case {
+    v1= v2 -> case {
+      d1=0 ->  case {
+        d1=d2 -> case {
+          subv1=0 -> case {
+            subv1=subv2 -> case {
+              subd1=0 -> case{
+                subd1=subd2 -> ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> * dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+                subd1!=subd2 ->  ensures res=null;
+              }
+              subd1!=0 -> ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> * dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+            }
+            subv1!= subv2 -> ensures res=null;
+          }
+          subv1!=0 -> case {
+            subd1=0 -> case{
+              subd1=subd2 -> ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> * dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+              subd1!=subd2 ->  ensures res=null;
+            }
+            subd1!=0 -> ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> * dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+          }
+        }
+        d1!=d2 -> ensures res=null;
+      }
+      d1!=0 -> case {
+        subv1=0 -> case {
+          subv1=subv2 -> case {
+            subd1=0 -> case{
+              subd1=subd2 -> ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> * dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+              subd1!=subd2 ->  ensures res=null;
+            }
+            subd1!=0 -> ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> *
+            dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+          }
+          subv1!= subv2 -> ensures res=null;
+        }
+        subv1!=0 -> case {
+          subd1=0 -> case{
+            subd1=subd2 -> ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> * dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+            subd1!=subd2 ->  ensures res=null;
+          }
+          subd1!=0 -> ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> * dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+        }
+      }
+    }
+    v1!=v2 -> ensures res=null;
+   }
+  v1!=0 -> case {
+    d1=0 ->  case {
+        d1=d2 -> case {
+          subv1=0 -> case {
+            subv1=subv2 -> case {
+              subd1=0 -> case{
+                subd1=subd2 -> ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> * dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+                subd1!=subd2 ->  ensures res=null;
+              }
+              subd1!=0 -> ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> * dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+            }
+            subv1!= subv2 -> ensures res=null;
+          }
+          subv1!=0 -> case {
+            subd1=0 -> case{
+              subd1=subd2 -> ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> * dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+              subd1!=subd2 ->  ensures res=null;
+            }
+            subd1!=0 -> ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> * dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+          }
+        }
+        d1!=d2 -> ensures res=null;
+      }
+    d1!=0 -> case {
+        subv1=0 -> case {
+          subv1=subv2 -> case {
+            subd1=0 -> case{
+              subd1=subd2 -> ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> * dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+              subd1!=subd2 ->  ensures res=null;
+            }
+            subd1!=0 -> ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> *
+            dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+          }
+          subv1!= subv2 -> ensures res=null;
+        }
+        subv1!=0 -> case {
+          subd1=0 -> case{
+            subd1=subd2 -> ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> * dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+            subd1!=subd2 ->  ensures res=null;
+          }
+          subd1!=0 -> ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> * dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+        }
+      }
+  }
+}
+{
+    if ((id.vendor != (0) || id.vendor == dev.vendor) &&
+        (id.device != (0) || id.device == dev.device) &&
+        (id.subvendor != (0) || id.subvendor == dev.subsystem_vendor) &&
+        (id.subdevice != (0) || id.subdevice == dev.subsystem_device) /* && */
+        /* !((id.class_ ^ dev.class_) & id.class_mask) */)
+        return id;
+    return null;
+}
+
+/**
+ * pci_match_id - See if a pci device matches a given pci_id table
+ * @ids: array of PCI device id structures to search in
+ * @dev: the PCI device structure to match against.
+ *
+ * Used by a driver to check whether a PCI device present in the
+ * system is in its list of supported devices.  Returns the matching
+ * pci_device_id structure or %NULL if there is no match.
+ *
+ * Deprecated, don't use this as it will not catch any dynamic ids
+ * that a driver might want to check for.
+ */
+/* const struct pci_device_id *pci_match_id(const struct pci_device_id *ids, */
+/*                      struct pci_dev *dev) */
+/* { */
+/*     if (ids) { */
+/*         while (ids->vendor || ids->subvendor || ids->class_mask) { */
+/*             if (pci_match_one_device(ids, dev)) */
+/*                 return ids; */
+/*             ids++; */
+/*         } */
+/*     } */
+/*     return NULL; */
+/* } */
+
+pci_device_id pci_match_id(pci_device_id ids,
+                      pci_dev dev)
+{
+    if (ids!=null) {
+        while (ids.vendor!=0 || ids.subvendor!=0 || ids.class_mask!=0) {
+            if (pci_match_one_device(ids, dev) !=null)
+                return ids;
+            ids++;
+        }
+    }
+    return null;
+}
