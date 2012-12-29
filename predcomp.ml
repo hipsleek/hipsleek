@@ -111,6 +111,7 @@ and aug_class_name (t : typ) = match t with
         Error.error_text = "unexpected UNKNOWN type"}
   | Named c -> c ^ "Aug"
   | Int -> "IntAug"
+  | INFInt -> "INFIntAug"
   | AnnT -> "AnnAug"
   | RelT -> "RelAug"
   | Bool -> "BoolAug"

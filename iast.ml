@@ -458,6 +458,8 @@ let void_type = Void
 
 let int_type = Int
 
+let infint_type = INFInt
+
 let ann_type = AnnT
 
 let float_type = Float

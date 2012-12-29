@@ -410,6 +410,7 @@ let peek_try =
           | [BOOL,_;IDENTIFIER n,_] -> ()
           | [IDENTIFIER n,_;IDENTIFIER id,_] -> () 
           | [INT,_;OSQUARE,_] -> ()
+          (* | [INFINT_TYPE,_;OSQUARE,_] -> () *)
           | [FLOAT,_;OSQUARE,_] -> ()
           | [BOOL,_;OSQUARE,_] -> ()
           |  _ -> raise Stream.Failure)
@@ -1422,6 +1423,7 @@ typ:
 non_array_type:
   [[ `INT                -> int_type
    | `FLOAT              -> float_type 
+   | `INFINT_TYPE        -> infint_type 
    | `BOOL               -> bool_type
    | `BAG                -> bag_type
    | `IDENTIFIER id      -> Named id ]];  

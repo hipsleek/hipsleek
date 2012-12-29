@@ -32,6 +32,7 @@ let rec mona_of_typ = function
   | Tree_sh 	  -> "int"
   | Float         -> "float"	(* Can I really receive float? What do I do then? I don't have float in Mona. *)
   | Int           -> "int"
+  | INFInt        -> "int"
   | AnnT          -> "AnnT"
   | RelT          -> "RelT"
   | HpT           -> "HpT"

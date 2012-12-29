@@ -22,7 +22,7 @@ let print_p_f_f = ref (fun (c:CP.formula)-> " formula printing not initialized")
 let rec coq_of_typ = function
   | Bool          -> "int"
   | Float         -> "float"	(* all types will be ints. *)
-  | Int           -> "int"
+  | Int | INFInt  -> "int"
   | AnnT          -> "int"
   | Void          -> "unit" 	(* all types will be ints. *)
   | BagT t		   -> "("^(coq_of_typ t) ^") set"
