@@ -10,11 +10,10 @@
  *
  */
 #include <stdbool.h>
+
 #define NULL ((void *)0)
 #define KNODE_DEAD      1LU
 #define KNODE_KLIST_MASK    ~KNODE_DEAD
-
-int nondet;
 
 /*
  * Simple doubly linked list implementation.
@@ -28,6 +27,12 @@ int nondet;
 struct list_head {
     struct list_head *next, *prev;
 };
+
+static inline void INIT_LIST_HEAD(struct list_head *list)
+{
+    list->next = list;
+    list->prev = list;
+}
 
 /*
  * Insert a new entry between two known consecutive entries.
@@ -78,14 +83,13 @@ static inline void __list_del(struct list_head * prev, struct list_head * next)
 static inline void list_del(struct list_head *entry)
 {
     __list_del(entry->prev, entry->next);
-    entry->next = NULL;
-    entry->prev = NULL;
-}
-
-static inline void INIT_LIST_HEAD(struct list_head *list)
-{
-    list->next = list;
-    list->prev = list;
+    /*
+     * These are non-NULL pointers that will result in page faults
+     * under normal circumstances, used to verify that nobody uses
+     * non-initialized list entries.
+     */
+    entry->next = ((void *) 0x00100100 + (0x0UL));
+    entry->prev = ((void *) 0x00200200 + (0x0UL));
 }
 
 /**
@@ -121,16 +125,34 @@ struct kobject {
 //  struct kobj_type    *ktype;
 //  struct sysfs_dirent *sd;
     struct kref     kref;
-//  unsigned int state_initialized:1;
-//  unsigned int state_in_sysfs:1;
-//  unsigned int state_add_uevent_sent:1;
-//  unsigned int state_remove_uevent_sent:1;
+    unsigned int state_initialized:1;
+    unsigned int state_in_sysfs:1;
+    unsigned int state_add_uevent_sent:1;
+    unsigned int state_remove_uevent_sent:1;
 //  unsigned int uevent_suppress:1;
 };
 
+/**
+ * struct kset - a set of kobjects of a specific type, belonging to a specific subsystem.
+ *
+ * A kset defines a group of kobjects.  They can be individually
+ * different "types" but overall these kobjects all want to be grouped
+ * together and operated on in the same manner.  ksets are used to
+ * define the attribute callbacks and other common events that happen to
+ * a kobject.
+ *
+ * @list: the list of all kobjects for this kset
+ * @list_lock: a lock for iterating over the kobjects
+ * @kobj: the embedded kobject for this kset (recursion, isn't it fun...)
+ * @uevent_ops: the set of uevent operations for this kset.  These are
+ * called whenever a kobject has something happen to it so that the kset
+ * can add new environment variables, or filter out the uevents if so
+ * desired.
+ */
 struct kset {
     struct list_head list;
     struct kobject kobj;
+//  const struct kset_uevent_ops *uevent_ops;
 };
 
 struct klist {
@@ -238,6 +260,21 @@ struct device {
 //  void    (*release)(struct device *dev);
 };
 
+/**
+ * struct class_private - structure to hold the private to the driver core portions of the class structure.
+ *
+ * @class_subsys - the struct kset that defines this class.  This is the main kobject
+ * @class_devices - list of devices associated with this class
+ * @class_interfaces - list of class_interfaces associated with this class
+ * @class_dirs - "glue" directory for virtual devices associated with this class
+ * @class_mutex - mutex to protect the children, devices, and interfaces lists.
+ * @class - pointer back to the struct class that this structure is associated
+ * with.
+ *
+ * This structure is the one that is the actual kobject allowing struct
+ * class to be statically allocated safely.  Nothing outside of the driver
+ * core should ever touch these fields.
+ */
 struct class_private {
     struct kset class_subsys;
     struct klist class_devices;
@@ -306,6 +343,8 @@ struct class_interface {
 };
 
 /****************************************************************************/
+int nondet;
+
 /**
  * get_device - increment reference count for device.
  * @dev: device.
@@ -330,20 +369,6 @@ void put_device(struct device *dev)
 }
 
 /**
- * kobject_set_name - Set the name of a kobject
- * @kobj: struct kobject to set the name of
- * @fmt: format string used to build the name
- *
- * This sets the name of the kobject.  If you have already added the
- * kobject to the system, you must call kobject_rename() in order to
- * change the name of the kobject.
- */
-int kobject_set_name(struct kobject *kobj, const char *fmt, ...)
-{
-    return 0;
-}
-
-/**
  *  sysfs_create_file - create an attribute file for an object.
  *  @kobj:  object we're creating for.
  *  @attr:  attribute descriptor.
@@ -362,20 +387,22 @@ int sysfs_create_file(struct kobject *x, struct attribute const *y) {
  *
  *  Hash the attribute name and kill the victim.
  */
-void sysfs_remove_file(struct kobject *x, struct attribute const *y)
-{
- return;
-}
-
-static inline struct kset *kset_get(struct kset *k)
-{
-    struct kset *a;
-    return a;
-}
-
-static inline void kset_put(struct kset *k)
-{
+void sysfs_remove_file(struct kobject *x, struct attribute const *y) {
     return;
+}
+
+/**
+ * kobject_set_name - Set the name of a kobject
+ * @kobj: struct kobject to set the name of
+ * @fmt: format string used to build the name
+ *
+ * This sets the name of the kobject.  If you have already added the
+ * kobject to the system, you must call kobject_rename() in order to
+ * change the name of the kobject.
+ */
+int kobject_set_name(struct kobject *kobj, const char *fmt, ...)
+{
+    return 0;
 }
 
 static void klist_release(struct kref *kref)
@@ -383,14 +410,24 @@ static void klist_release(struct kref *kref)
     return;
 }
 
+static void kobject_release(struct kref *kref)
+{
+    return;
+}
+
 /****************************************************************************/
+
+#define atomic_set(v,i)             ((v)->counter = (i))
+#define atomic_inc(v)               ((v)->counter += 1)
+#define atomic_dec_and_test(v)      ((v)->counter-1 == 0)
+
 /**
  * kref_init - initialize object.
  * @kref: object in question.
  */
 void kref_init(struct kref *kref)
 {
-    (&kref->refcount)->counter = 1;
+    atomic_set(&kref->refcount, 1);
 }
 
 /**
@@ -399,7 +436,28 @@ void kref_init(struct kref *kref)
  */
 void kref_get(struct kref *kref)
 {
-    (&kref->refcount)->counter++;
+    atomic_inc(&kref->refcount);
+}
+
+/**
+ * kobject_get - increment refcount for object.
+ * @kobj: object.
+ */
+struct kobject *kobject_get(struct kobject *kobj)
+{
+    if (kobj)
+        kref_get(&kobj->kref);
+    return kobj;
+}
+
+static inline struct kset *to_kset(struct kobject *kobj)
+{
+    return kobj ? (struct kset *) kobj : NULL;
+}
+
+static inline struct kset *kset_get(struct kset *k)
+{
+    return k ? to_kset(kobject_get(&k->kobj)) : NULL;
 }
 
 /**
@@ -418,10 +476,30 @@ void kref_get(struct kref *kref)
  */
 int kref_put(struct kref *kref, void (*release)(struct kref *kref))
 {
-    return 1;
+    if (atomic_dec_and_test(&kref->refcount)) {
+        release(kref);
+        return 1;
+    }
+    return 0;
 }
 
-/****************************************************************************/
+/**
+ * kobject_put - decrement refcount for object.
+ * @kobj: object.
+ *
+ * Decrement the refcount, and if 0, call kobject_cleanup().
+ */
+void kobject_put(struct kobject *kobj)
+{
+    if (kobj) {
+        kref_put(&kobj->kref, kobject_release);
+    }
+}
+
+static inline void kset_put(struct kset *k)
+{
+    kobject_put(&k->kobj);
+}
 
 static void kobject_init_internal(struct kobject *kobj)
 {
@@ -429,10 +507,10 @@ static void kobject_init_internal(struct kobject *kobj)
         return;
     kref_init(&kobj->kref);
     INIT_LIST_HEAD(&kobj->entry);
-//  kobj->state_in_sysfs = 0;
-//  kobj->state_add_uevent_sent = 0;
-//  kobj->state_remove_uevent_sent = 0;
-//  kobj->state_initialized = 1;
+    kobj->state_in_sysfs = 0;
+    kobj->state_add_uevent_sent = 0;
+    kobj->state_remove_uevent_sent = 0;
+    kobj->state_initialized = 1;
 }
 
 /**
@@ -445,22 +523,90 @@ void kset_init(struct kset *k)
     INIT_LIST_HEAD(&k->list);
 }
 
+/*
+ * The actions here must match the index to the string array
+ * in lib/kobject_uevent.c
+ *
+ * Do not add new actions here without checking with the driver-core
+ * maintainers. Action strings are not meant to express subsystem
+ * or device specific properties. In most cases you want to send a
+ * kobject_uevent_env(kobj, KOBJ_CHANGE, env) with additional event
+ * specific variables added to the event environment.
+ */
+enum kobject_action {
+    KOBJ_ADD,
+    KOBJ_REMOVE,
+    KOBJ_CHANGE,
+    KOBJ_MOVE,
+    KOBJ_ONLINE,
+    KOBJ_OFFLINE,
+    KOBJ_MAX
+};
+
+/**
+ * kobject_uevent_env - send an uevent with environmental data
+ *
+ * @action: action that is happening
+ * @kobj: struct kobject that the action is happening to
+ * @envp_ext: pointer to environmental data
+ *
+ * Returns 0 if kobject_uevent() is completed with success or the
+ * corresponding error when it fails.
+ */
+int kobject_uevent_env(struct kobject *kobj, enum kobject_action action,
+               char *envp_ext[])
+{
+    return 0;
+}
+
+/**
+ * kobject_uevent - notify userspace by ending an uevent
+ *
+ * @action: action that is happening
+ * @kobj: struct kobject that the action is happening to
+ *
+ * Returns 0 if kobject_uevent() is completed with success or the
+ * corresponding error when it fails.
+ */
+int kobject_uevent(struct kobject *kobj, enum kobject_action action)
+{
+    return kobject_uevent_env(kobj, action, NULL);
+}
+
+static int kobject_add_internal(struct kobject *kobj)
+{
+    return nondet;
+}
+
 /**
  * kset_register - initialize and add a kset.
  * @k: kset.
  */
 int kset_register(struct kset *k)
 {
+    int err;
+
     if (!k)
         return -22;
 
     kset_init(k);
+    err = kobject_add_internal(&k->kobj);
+    if (err)
+        return err;
+    kobject_uevent(&k->kobj, KOBJ_ADD);
     return 0;
 }
 
 /****************************************************************************/
 
-int class_create_file(struct class *cls, const struct class_attribute *attr) {
+struct kobject *sysfs_dev_char_kobj;
+static struct kset *class_kset;
+struct class block_class = {
+    .name       = "block",
+};
+
+int class_create_file(struct class *cls, const struct class_attribute *attr)
+{
     int error;
     if (cls)
         error = sysfs_create_file(&cls->p->class_subsys.kobj, &attr->attr);
@@ -518,12 +664,6 @@ static void klist_class_dev_put(struct klist_node *n)
 
     put_device(dev);
 }
-
-struct kobject *sysfs_dev_char_kobj;
-static struct kset *class_kset;
-struct class block_class = {
-    .name       = "block",
-};
 
 int __class_register(struct class *cls, struct lock_class_key *key)
 {
