@@ -775,10 +775,22 @@ struct
             else false
       | BagT et1, BagT et2 -> sub_type et1 et2
       | List et1, List et2 -> sub_type et1 et2
+      | Int, INFInt     -> true
       | Int, NUM        -> true
       | Float, NUM        -> true
-      | p1, p2 -> p1=p2
+      | p1, p2 -> 
+            let ans = (p1=p2) in
+            Debug.vv_result "subtype" (-3) 
+                [("p1",(string_of_typ p1));
+                ("p2",(string_of_typ p2));
+                ("p1=p2?",(string_of_bool ans))];
+            ans
+
   ;;
+  let sub_type (t1 : typ) (t2 : typ) =
+    let pr = string_of_typ in
+    Debug.no_2 "sub_type(XX)" pr pr string_of_bool sub_type t1 t2
+
 end;;
 
 (* Khanh : TODO : module to support dflow *)
@@ -1088,9 +1100,13 @@ struct
       | BagT et1, BagT et2 -> sub_type et1 et2
       | List et1, List et2 -> sub_type et1 et2
       | Int, NUM        -> true
+      | Int, INFInt        -> true
       | Float, NUM        -> true
       | p1, p2 -> p1=p2
   ;;
+  let sub_type (t1 : typ) (t2 : typ) =
+    let pr = string_of_typ in
+    Debug.no_2 "sub_type(EG)" pr pr string_of_bool sub_type t1 t2
 end;;
 
 module GTable = ETABLE_NFLOW

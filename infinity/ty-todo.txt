@@ -1,0 +1,8 @@
+x:int=\inf
+
+x:IFR:?=\inf
+
+x<\inf
+
+e1:t1 --> infer
+e2:t2 --> infer

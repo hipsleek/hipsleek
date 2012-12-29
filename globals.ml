@@ -347,7 +347,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | Bool          -> "boolean"
   | Float         -> "float"
   | Int           -> "int"
-  | INFInt        -> "INFint"
+  | INFInt        -> "INFInt"
   | Void          -> "void"
   | NUM          -> "NUM"
   | AnnT          -> "AnnT"
@@ -357,7 +357,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | Tree_sh		  -> "Tsh"
   | RelT        -> "RelT"
   | HpT        -> "HpT"
-  | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
+  | Named ot -> if ((String.compare ot "") ==0) then "null" else ("N:"^ot)
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k == 0) then "" else "[]" ^ (repeat (k-1)) in
 		(string_of_typ et) ^ (repeat r)
@@ -370,7 +370,7 @@ let rec string_of_typ_alpha = function
   | Bool          -> "boolean"
   | Float         -> "float"
   | Int           -> "int"
-  | INFInt        -> "INFint"
+  | INFInt        -> "INFInt"
   | Void          -> "void"
   | NUM          -> "NUM"
   | AnnT          -> "AnnT"

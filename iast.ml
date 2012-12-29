@@ -7,7 +7,7 @@
 open Globals
 open Gen.Basic
 (* open Exc.ETABLE_NFLOW *)
-open Exc.GTable
+module EG=Exc.GTable
 open Perm
 
 module F = Iformula
@@ -1449,9 +1449,11 @@ let find_classes (c1 : ident) (c2 : ident) : ident list =
 (* 		| Not_found -> false *)
 (* 	  *\) *)
 
-let sub_type t1 t2 = sub_type t1 t2
+let sub_type t1 t2 = EG.sub_type t1 t2
 
 let compatible_types (t1 : typ) (t2 : typ) = sub_type t1 t2 || sub_type t2 t1
+
+open EG
 
 let inbuilt_build_exc_hierarchy () =
   let _  = exlist # add_edge top_flow "" in
