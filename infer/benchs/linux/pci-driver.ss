@@ -201,8 +201,18 @@ data bus_type {
 data device_driver {
     char name;
     bus_type bus;
-    //  int (*probe)(struct device *dev);
-    //  int (*remove)(struct device *dev);
+    module owner;
+    char mod_name;
+
+//  bool suppress_bind_attrs;
+//  int (*probe) (struct device *dev);
+//  int (*remove) (struct device *dev);
+//  void (*shutdown) (struct device *dev);
+//  int (*suspend) (struct device *dev, pm_message_t state);
+//  int (*resume) (struct device *dev);
+//  const struct attribute_group **groups;
+//  const struct dev_pm_ops *pm;
+//  struct driver_private *p;
 }
 
 /* struct pci_driver { */
@@ -653,15 +663,189 @@ pci_match_one_device( pci_device_id id, pci_dev dev)
 /*     return NULL; */
 /* } */
 
-pci_device_id pci_match_id(pci_device_id ids,
-                      pci_dev dev)
+/* pci_device_id pci_match_id(pci_device_id ids, */
+/*                       pci_dev dev) */
+/* { */
+/*     if (ids!=null) { */
+/*         while (ids.vendor!=0 || ids.subvendor!=0 || ids.class_mask!=0) { */
+/*             if (pci_match_one_device(ids, dev) !=null) */
+/*                 return ids; */
+/*             ids++; */
+/*         } */
+/*     } */
+/*     return null; */
+/* } */
+
+
+int pci_create_newid_file(pci_driver drv)
+  requires true
+  ensures true;
 {
-    if (ids!=null) {
-        while (ids.vendor!=0 || ids.subvendor!=0 || ids.class_mask!=0) {
-            if (pci_match_one_device(ids, dev) !=null)
-                return ids;
-            ids++;
-        }
+    return 0;
+}
+
+int pci_create_removeid_file(pci_driver drv)
+  requires true
+  ensures true;
+{
+    return 0;
+}
+
+void pci_remove_newid_file(pci_driver drv)
+  requires true
+  ensures true;
+{}
+
+/**
+ * __pci_register_driver - register a new pci driver
+ * @drv: the driver structure to register
+ * @owner: owner module of drv
+ * @mod_name: module name string
+ *
+ * Adds the driver structure to the list of registered drivers.
+ * Returns a negative value on error, otherwise 0.
+ * If no error occurred, the driver remains registered even if
+ * no device was claimed during registration.
+ */
+/* int __pci_register_driver(struct pci_driver *drv, struct module *owner, */
+/*               const char *mod_name) */
+/* { */
+/*     int error; */
+
+/*     /\* initialize common driver fields *\/ */
+/*     drv->driver.name = drv->name; */
+/*     drv->driver.bus = &pci_bus_type; */
+/*     drv->driver.owner = owner; */
+/*     drv->driver.mod_name = mod_name; */
+
+/*     INIT_LIST_HEAD(&drv->dynids.list); */
+
+/*     /\* register with core *\/ */
+/*     error = driver_register(&drv->driver); */
+/*     if (error) */
+/*         goto out; */
+
+/*     error = pci_create_newid_file(drv); */
+/*     if (error) */
+/*         goto out_newid; */
+
+/*     error = pci_create_removeid_file(drv); */
+/*     if (error) */
+/*         goto out_removeid; */
+
+/* out: */
+/*     return error; */
+
+/* out_removeid: */
+/*     pci_remove_newid_file(drv); */
+/* out_newid: */
+/*     driver_unregister(&drv->driver); */
+/*     goto out; */
+/* } */
+// module + pci_bus_type
+int __pci_register_driver(pci_driver drv, module owner,
+              char mod_name)
+  requires drv::pci_driver<node1,_,_,d,dy> * dy::pci_dynids<head1> 
+            * prev::list_head<head1,_> * head1::dll<prev>
+            * node1::list_head<_,_> * d::device_driver<_,_>
+  ensures true;
+{
+    int error;
+
+    /* initialize common driver fields */
+    drv.driver.name = drv.name;
+    drv.driver.bus = &pci_bus_type; //??
+    drv.driver.owner = owner;
+    drv.driver.mod_name = mod_name;
+
+    INIT_LIST_HEAD(drv.dynids.list);
+
+    /* register with core */
+    error = driver_register(drv.driver);
+    if (error!=0)
+        return error;
+
+    error = pci_create_newid_file(drv);
+    if (error!=0){
+      driver_unregister(drv.driver);
+      return error;
     }
-    return null;
+
+    error = pci_create_removeid_file(drv);
+    if (error)  {
+       pci_remove_newid_file(drv);
+       driver_unregister(drv.driver);
+       return error;
+    }
+    return 0;
+}
+
+void pci_remove_removeid_file(pci_driver drv)
+  requires true
+  ensures true;
+{}
+
+/**
+ * pci_unregister_driver - unregister a pci driver
+ * @drv: the driver structure to unregister
+ *
+ * Deletes the driver structure from the list of registered PCI drivers,
+ * gives it a chance to clean up by calling its remove() function for
+ * each device it was responsible for, and marks those devices as
+ * driverless.
+ */
+/* void */
+/* pci_unregister_driver(struct pci_driver *drv) */
+/* { */
+/*     pci_remove_removeid_file(drv); */
+/*     pci_remove_newid_file(drv); */
+/*     driver_unregister(&drv->driver); */
+/*     pci_free_dynids(drv); */
+/* } */
+void
+pci_unregister_driver(pci_driver drv)
+  requires drv::pci_driver<node1,_,_,d,dy> * dy::pci_dynids<head1> 
+            * prev::list_head<head1,_> * head1::dll<prev>
+            * node1::list_head<_,_> * d::device_driver<_,_>
+  ensures true;
+{
+    pci_remove_removeid_file(drv);
+    pci_remove_newid_file(drv);
+    driver_unregister(&drv->driver);
+    pci_free_dynids(drv);
+}
+
+/**
+ * pci_bus_match - Tell if a PCI device structure has a matching PCI device id structure
+ * @dev: the PCI device structure to match against
+ * @drv: the device driver to search for matching PCI device id structures
+ *
+ * Used by a driver to check whether a PCI device present in the
+ * system is in its list of supported devices. Returns the matching
+ * pci_device_id structure or %NULL if there is no match.
+ */
+/* static int pci_bus_match(struct device *dev, struct device_driver *drv) */
+/* { */
+/*     struct pci_dev *pci_dev = (struct pci_dev *) dev; */
+/*     struct pci_driver *pci_drv = (struct pci_driver *) drv; */
+/*     const struct pci_device_id *found_id; */
+
+/*     found_id = pci_match_device(pci_drv, pci_dev); */
+/*     if (found_id) */
+/*         return 1; */
+
+/*     return 0; */
+/* } */
+// miss: device. 
+int pci_bus_match(device dev, device_driver drv)
+{
+    pci_dev pci_dev = (struct pci_dev *) dev;
+    pci_driver pci_drv = (struct pci_driver *) drv;
+    pci_device_id found_id;
+
+    found_id = pci_match_device(pci_drv, pci_dev);
+    if (found_id 1= null)
+        return 1;
+
+    return 0;
 }
