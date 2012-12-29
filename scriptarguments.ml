@@ -208,10 +208,10 @@ let common_arguments = [
    "<p,q,..> comma-separated list of provers to try in parallel");
   (* ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics,  *)
   (* "enable sat statistics"); *)
-  ("--ep-stat", Arg.Set Globals.profiling,
+  ("--en-pstat", Arg.Set Globals.profiling,
    "enable profiling statistics");
-  ("--ec-stat", Arg.Set Globals.enable_counters, "enable counter statistics");
-  ("--e-stat", (Arg.Tuple [Arg.Set Globals.profiling; Arg.Set Globals.enable_counters]),
+  ("--en-cstat", Arg.Set Globals.enable_counters, "enable counter statistics");
+  ("--en-stat", (Arg.Tuple [Arg.Set Globals.profiling; Arg.Set Globals.enable_counters]),
    "enable all statistics");
   ("--sbc", Arg.Set Globals.enable_syn_base_case,
    "use only syntactic base case detection");

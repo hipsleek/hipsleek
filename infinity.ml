@@ -185,7 +185,7 @@ Normalize b_formula containing \inf
 
 let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula = 
   let _ = DD.vv_trace("in normalize_b_formula: "^ (string_of_b_formula bf)) in
-  let _ = Gen.Profiling.push_time "Normalize" in
+  let _ = Gen.Profiling.push_time "INF-Normalize" in
   let (p_f,bf_ann) = bf in
   let p_f_norm = 
     (match p_f with
@@ -287,36 +287,36 @@ let rec normalize_b_formula (bf: CP.b_formula) :CP.b_formula =
       | _ -> p_f
     ) in  
   let _ = DD.vv_trace("in normalized_b_formula: "^ (string_of_b_formula (p_f_norm,bf_ann))) in
-  let _ = Gen.Profiling.pop_time "Normalize" in
+  let _ = Gen.Profiling.pop_time "INF-Normalize" in
     (p_f_norm,bf_ann)
 
 (* 
 Main func normalization starts here
 *)
-let rec normalize_formula (pf: CP.formula) : CP.formula = 
-  let _ = DD.vv_trace("in normalize_formula: "^ (string_of_pure_formula pf)) in
+let rec normalize_inf_formula (pf: CP.formula) : CP.formula = 
+  let _ = DD.vv_trace("in normalize_inf_formula: "^ (string_of_pure_formula pf)) in
   (match pf with 
     | CP.BForm (b,fl) -> 
           let b_norm = normalize_b_formula b in CP.BForm(b_norm,fl) 
     | CP.And (pf1,pf2,pos) -> 
-        let _ = Gen.Profiling.push_time "Normalize_And" in
-          let pf1_norm = normalize_formula pf1 in
-          let pf2_norm = normalize_formula pf2 in
-          let _ = Gen.Profiling.pop_time "Normalize_And" in
+        let _ = Gen.Profiling.push_time "INF-Normalize_And" in
+          let pf1_norm = normalize_inf_formula pf1 in
+          let pf2_norm = normalize_inf_formula pf2 in
+          let _ = Gen.Profiling.pop_time "INF-Normalize_And" in
           CP.And(pf1_norm,pf2_norm,pos) 
     | CP.AndList pflst -> 
           let pflst_norm = List.map 
-            (fun (sl,pf) -> (sl,normalize_formula pf)) pflst in CP.AndList(pflst_norm)
+            (fun (sl,pf) -> (sl,normalize_inf_formula pf)) pflst in CP.AndList(pflst_norm)
     | CP.Or (pf1,pf2,fl,pos) -> 
-          let pf1_norm = normalize_formula pf1 in
-          let pf2_norm = normalize_formula pf2 in
+          let pf1_norm = normalize_inf_formula pf1 in
+          let pf2_norm = normalize_inf_formula pf2 in
           CP.Or(pf1_norm,pf2_norm,fl,pos) 
     | CP.Not (nf,fl,pos) -> 
-          let nf_norm = normalize_formula nf in CP.Not(nf_norm,fl,pos)
+          let nf_norm = normalize_inf_formula nf in CP.Not(nf_norm,fl,pos)
     | CP.Forall (qid, qf,fl,pos) -> 
-          let qf_norm = normalize_formula qf in CP.Forall(qid,qf_norm,fl,pos)
+          let qf_norm = normalize_inf_formula qf in CP.Forall(qid,qf_norm,fl,pos)
     | CP.Exists (qid, qf,fl,pos) -> 
-          let qf_norm = normalize_formula qf in CP.Exists(qid,qf_norm,fl,pos))
+          let qf_norm = normalize_inf_formula qf in CP.Exists(qid,qf_norm,fl,pos))
 
 let convert_inf_to_var (pf:CP.formula) : CP.formula =
   let f_f f = None in
@@ -583,7 +583,7 @@ let find_equiv_all_x  (e:EM.elem) (s:EM.emap) : EM.elist  =
     Debug.no_1 "find_equiv_all" pr pr2 (fun _ -> EM.find_equiv_all e s) e
     
 let substitute_inf (f: CP.formula) : CP.formula =
-  let _ = Gen.Profiling.push_time "Substitute inf" in
+  let _ = Gen.Profiling.push_time "INF-Substitute inf" in
   let f = convert_inf_to_var f in
   let sublist = find_inf_subs f in
   let after_sub = List.map (fun (pf,kv) -> 
@@ -595,16 +595,16 @@ let substitute_inf (f: CP.formula) : CP.formula =
                         let svneglist = (find_equiv_all_x (SpecVar(Int,constinfinity,Primed)) kv) in  
 	                    let new_pf = sub_inf_list new_pf svneglist true in
                         arith_simplify 10 new_pf) sublist in 
-  let _ = Gen.Profiling.pop_time "Substitute inf" in
+  let _ = Gen.Profiling.pop_time "INF-Substitute inf" in
   join_disjunctions after_sub
 
 
 let rec normalize_inf_formula_sat (f: CP.formula): CP.formula = 
   (*let pf = MCP.pure_of_mix f in*)
-  let pf_norm = normalize_formula f in 
+  let pf_norm = normalize_inf_formula f in 
   if contains_inf_eq pf_norm then 
     let fs = substitute_inf pf_norm in
-    normalize_formula fs
+    normalize_inf_formula fs
         (*let f = (*MCP.mix_of_pure*) (convert_inf_to_var pf_norm) in 
           let x_sv = CP.SpecVar(Int,"x",Unprimed) in
           let x_var =  CP.Var(x_sv,no_pos) in
@@ -615,19 +615,24 @@ let rec normalize_inf_formula_sat (f: CP.formula): CP.formula =
   else let f = (*MCP.mix_of_pure*) (convert_inf_to_var pf_norm) in f
   (*let _ = DD.vv_trace("Normalized: "^ (string_of_pure_formula pf_norm)) in*)
   
+let normalize_inf_formula_sat (f: CP.formula) : CP.formula = 
+  Gen.Profiling.do_1 "INF-norm-sat" (normalize_inf_formula_sat) f
 
-let normalize_formula (f: CP.formula): CP.formula =
+let normalize_inf_formula (f: CP.formula): CP.formula =
   let pr = string_of_pure_formula in
-  DD.no_1 "normalize_formula" pr pr normalize_formula f
+  DD.no_1 "normalize_inf_formula" pr pr normalize_inf_formula f
+
+(* let normalize_inf_formula (f: CP.formula): CP.formula = *)
+(*   Gen.Profiling.do_1 "INF-norm-f" normalize_inf_formula f *)
   
 let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.formula * CP.formula = 
-  let ante_norm = normalize_formula ante in
-  let conseq_norm = normalize_formula conseq in 
+  let ante_norm = normalize_inf_formula ante in
+  let conseq_norm = normalize_inf_formula conseq in 
   let new_c = if contains_inf_eq conseq_norm 
-  		then normalize_formula (substitute_inf conseq_norm) 
+  		then normalize_inf_formula (substitute_inf conseq_norm) 
   		else convert_inf_to_var conseq_norm in
   let new_a = if contains_inf_eq ante_norm 
-  		then normalize_formula (substitute_inf ante_norm)
+  		then normalize_inf_formula (substitute_inf ante_norm)
   		else convert_inf_to_var ante_norm in
   let atoc_sublist = find_inf_subs new_a in
   if List.length atoc_sublist == 1 
@@ -637,5 +642,8 @@ let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.for
     let negvlist =  find_equiv_all_x (SpecVar(Int,constinfinity,Primed)) subs_c in
     let new_c =  sub_inf_list new_c negvlist true in (* substitute -ve inf *)
     let new_c = arith_simplify 11 new_c in
-  	new_a,(normalize_formula new_c)
+  	new_a,(normalize_inf_formula new_c)
   else new_a,new_c
+
+let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.formula * CP.formula = 
+  Gen.Profiling.do_1 "INF-norm-imply" (normalize_inf_formula_imply ante) conseq

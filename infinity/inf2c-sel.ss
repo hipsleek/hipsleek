@@ -114,8 +114,6 @@ node selection_sort(node x)
 Total verification time: 1106.57 second(s)
 	Time spent in main process: 980.23 second(s)
 	Time spent in child processes: 126.34 second(s)
-
-*/
  requires x::bnd1<n,mi,mx>
  case {
    n=0 -> ensures res=null ;//'
@@ -123,6 +121,9 @@ Total verification time: 1106.57 second(s)
    n<0 | n>1 -> 
         ensures res::sll<n,mi,mx>  ;//'
  }
+*/
+ requires x::bnd1<n,mi,mx>
+ ensures res::sll<n,mi,mx> ;//'
 
 {
 	int minimum;
