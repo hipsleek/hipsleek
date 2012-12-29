@@ -23,6 +23,12 @@ struct list_head {
     struct list_head *next, *prev;
 };
 
+static inline void INIT_LIST_HEAD(struct list_head *list)
+{
+    list->next = list;
+    list->prev = list;
+}
+
 /*
  * Insert a new entry between two known consecutive entries.
  *
@@ -72,22 +78,22 @@ static inline void __list_del(struct list_head * prev, struct list_head * next)
 static inline void list_del(struct list_head *entry)
 {
     __list_del(entry->prev, entry->next);
-    entry->next = NULL;
-    entry->prev = NULL;
+    /*
+     * These are non-NULL pointers that will result in page faults
+     * under normal circumstances, used to verify that nobody uses
+     * non-initialized list entries.
+     */
+    entry->next = ((void *) 0x00100100 + (0x0UL));
+    entry->prev = ((void *) 0x00200200 + (0x0UL));
 }
 
-static inline void INIT_LIST_HEAD(struct list_head *list)
-{
-    list->next = list;
-    list->prev = list;
-}
 /****************************************************************************/
 
 struct pci_device_id {
     unsigned int vendor, device; /* Vendor and device ID or PCI_ANY_ID*/
     unsigned int subvendor, subdevice; /* Subsystem ID's or PCI_ANY_ID */
     unsigned int class, class_mask; /* (class,subclass,prog-if) triplet */
-    unsigned long driver_data; /* Data private to the driver */
+    unsigned long int driver_data; /* Data private to the driver */
 };
 
 struct pci_dynid {
@@ -118,6 +124,19 @@ struct bus_type {
 //  const struct dev_pm_ops *pm;
 //
 //  struct bus_type_private *p;
+};
+
+struct module {
+    struct module *next;
+    const char *name;
+//  int gpl_compatible;
+//  struct symbol *unres;
+//  int seen;
+//  int skip;
+//  int has_init;
+//  int has_cleanup;
+//  struct buffer dev_table_buf;
+//  char         srcversion[25];
 };
 
 struct device_driver {
@@ -291,9 +310,29 @@ int driver_register(struct device_driver *drv )
  *
  * Again, we pass off most of the work to the bus-level call.
  */
-void driver_unregister(struct device_driver *drv)
+void driver_unregister(struct device_driver *drv) {
+    return;
+}
+/****************************************************************************/
+
+/**
+ * pci_match_one_device - Tell if a PCI device structure has a matching
+ *                        PCI device id structure
+ * @id: single PCI device id structure to match
+ * @dev: the PCI device structure to match against
+ *
+ * Returns the matching pci_device_id structure or %NULL if there is no match.
+ */
+static inline const struct pci_device_id *
+pci_match_one_device(const struct pci_device_id *id, const struct pci_dev *dev)
 {
- return;
+    if ((id->vendor == (~0) || id->vendor == dev->vendor) &&
+        (id->device == (~0) || id->device == dev->device) &&
+        (id->subvendor == (~0) || id->subvendor == dev->subsystem_vendor) &&
+        (id->subdevice == (~0) || id->subdevice == dev->subsystem_device) &&
+        !((id->class ^ dev->class) & id->class_mask))
+        return id;
+    return NULL;
 }
 /****************************************************************************/
 
@@ -318,9 +357,12 @@ void driver_unregister(struct device_driver *drv)
  * RETURNS:
  * 0 on success, -errno on failure.
  */
-int pci_add_dynid(struct pci_driver *drv, unsigned int vendor,
-        unsigned int device, unsigned int subvendor, unsigned int subdevice,
-        unsigned int class, unsigned int class_mask, unsigned long driver_data) {
+int pci_add_dynid(struct pci_driver *drv,
+          unsigned int vendor, unsigned int device,
+          unsigned int subvendor, unsigned int subdevice,
+          unsigned int class, unsigned int class_mask,
+          unsigned long driver_data)
+{
     struct pci_dynid *dynid;
     int retval;
 
@@ -368,7 +410,8 @@ static void pci_free_dynids(struct pci_driver *drv)
  *
  * Removes a dynamic pci device ID to this driver.
  */
-static int store_remove_id(struct device_driver *driver, const char *buf, int count)
+static int
+store_remove_id(struct device_driver *driver, const char *buf, int count)
 {
     struct pci_dynid *dynid, *n;
     struct pci_driver *pdrv = (struct pci_driver *) driver;
@@ -411,26 +454,6 @@ static int store_remove_id(struct device_driver *driver, const char *buf, int co
 }
 
 /**
- * pci_match_one_device - Tell if a PCI device structure has a matching
- *                        PCI device id structure
- * @id: single PCI device id structure to match
- * @dev: the PCI device structure to match against
- *
- * Returns the matching pci_device_id structure or %NULL if there is no match.
- */
-static inline const struct pci_device_id *
-pci_match_one_device(const struct pci_device_id *id, const struct pci_dev *dev)
-{
-    if ((id->vendor == (~0) || id->vendor == dev->vendor) &&
-        (id->device == (~0) || id->device == dev->device) &&
-        (id->subvendor == (~0) || id->subvendor == dev->subsystem_vendor) &&
-        (id->subdevice == (~0) || id->subdevice == dev->subsystem_device) &&
-        !((id->class ^ dev->class) & id->class_mask))
-        return id;
-    return NULL;
-}
-
-/**
  * pci_match_id - See if a pci device matches a given pci_id table
  * @ids: array of PCI device id structures to search in
  * @dev: the PCI device structure to match against.
@@ -442,6 +465,21 @@ pci_match_one_device(const struct pci_device_id *id, const struct pci_dev *dev)
  * Deprecated, don't use this as it will not catch any dynamic ids
  * that a driver might want to check for.
  */
+/*
+const struct pci_device_id *pci_match_id(const struct pci_device_id *ids,
+                     struct pci_dev *dev)
+{
+    if (ids) {
+        while (ids->vendor || ids->subvendor || ids->class_mask) {
+            if (pci_match_one_device(ids, dev))
+                return ids;
+            ids++;
+        }
+    }
+    return NULL;
+}
+*/
+
 const struct pci_device_id *pci_match_id(const struct pci_device_id *ids,
                      struct pci_dev *dev)
 {
