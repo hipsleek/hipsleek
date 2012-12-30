@@ -371,6 +371,22 @@ let rec contains_inf_eq (pf:CP.formula) : bool  =
     | CP.Forall (qid, qf,fl,pos) 
     | CP.Exists (qid, qf,fl,pos) -> contains_inf_eq qf
 
+let contains_inf (f:CP.formula) : bool = 
+  let f_f f = None in
+  let f_bf f = let bf,_ = f in
+    match bf with
+    | CP.XPure _
+    | CP.LexVar _
+    | CP.BConst _
+    | CP.BVar _ -> Some(false)
+    | _ -> None in
+  let f_e f = 
+    match f with
+      | InfConst _ -> Some(true)
+      | Null _ | Var _ | IConst _ | FConst _ | AConst _ | Tsconst _ -> Some(false)
+      | _ -> None
+  in fold_formula f (f_f,f_bf,f_e) (List.exists (fun c -> c))
+
 module EM = Gen.EqMap(CP.SV)
 
 
@@ -601,6 +617,7 @@ let substitute_inf (f: CP.formula) : CP.formula =
 
 let rec normalize_inf_formula_sat (f: CP.formula): CP.formula = 
   (*let pf = MCP.pure_of_mix f in*)
+  if not (contains_inf f) then f else 
   let pf_norm = normalize_inf_formula f in 
   if contains_inf_eq pf_norm then 
     let fs = substitute_inf pf_norm in
@@ -626,14 +643,15 @@ let normalize_inf_formula (f: CP.formula): CP.formula =
 (*   Gen.Profiling.do_1 "INF-norm-f" normalize_inf_formula f *)
   
 let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.formula * CP.formula = 
-  let ante_norm = normalize_inf_formula ante in
-  let conseq_norm = normalize_inf_formula conseq in 
-  let new_c = if contains_inf_eq conseq_norm 
+  if not (contains_inf ante) && not (contains_inf conseq) then ante,conseq else
+  let ante_norm = normalize_inf_formula (substitute_inf ante) in
+  let conseq_norm = normalize_inf_formula (substitute_inf conseq) in 
+  let new_c = (*if contains_inf_eq conseq_norm 
   		then normalize_inf_formula (substitute_inf conseq_norm) 
-  		else convert_inf_to_var conseq_norm in
-  let new_a = if contains_inf_eq ante_norm 
+  		else convert_inf_to_var*) conseq_norm in
+  let new_a = (*if contains_inf_eq ante_norm 
   		then normalize_inf_formula (substitute_inf ante_norm)
-  		else convert_inf_to_var ante_norm in
+  		else convert_inf_to_var *) ante_norm in
   let atoc_sublist = find_inf_subs new_a in
   if List.length atoc_sublist == 1 
   then let _,subs_c = List.hd atoc_sublist in 
