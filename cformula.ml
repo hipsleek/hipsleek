@@ -7455,10 +7455,10 @@ We only allow a SPLIT when the RHS is original
 -------------------------------------------------*)
 
 (*automatically generate pre/post conditions of init[lock_sort](lock_var,lock_args) *)
-let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos = 
+let prepost_of_init_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formula_label) pos = 
   let data_node = DataNode ({
       h_formula_data_node = var;
-      h_formula_data_name = name;
+      h_formula_data_name = lock_name;
 	  h_formula_data_derv = false;
 	  h_formula_data_imm = ConstAnn(Mutable);
 	  h_formula_data_perm = None;
@@ -7530,14 +7530,13 @@ let prepost_of_init_x (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:f
   
 
 (*automatically generate pre/post conditions of init[lock_sort](lock_var,lock_args) *)
-let prepost_of_init (var:CP.spec_var) name sort (args:CP.spec_var list) (lbl:formula_label) pos = 
-  Debug.no_4 "prepost_of_init"
+let prepost_of_init (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formula_label) pos = 
+  Debug.no_3 "prepost_of_init"
       !print_sv
-      (fun str -> str)
       (fun str -> str)
       !print_svl
       !print_struc_formula
-      (fun _ _ _ _ -> prepost_of_init_x var name sort args lbl pos) var name sort args
+      (fun _ _ _ -> prepost_of_init_x var sort args lbl pos) var sort args
 
 (*automatically generate pre/post conditions of finalize[lock_sort](lock_var,lock_args) *)
 let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formula_label) pos : struc_formula = 
