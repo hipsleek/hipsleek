@@ -1,0 +1,10 @@
+data node {
+	int val;
+	node next
+}.
+
+HeapPred H(node x).
+HeapPred HP(node a, node b).
+HeapPred G(node a, node b).
+
+checkeq[] H(x)&true -|- T(x0)&true.

@@ -18,7 +18,7 @@ ks<n> == self::anode<1,null,null> & n = 0 // K
 inv n >= 0;
 
 anode clone (anode t)   // cloning a value
-requires t::value<>@I
+requires t::value<>@L
 ensures  res::value<>;
 {
  anode tmp1, tmp2, tmp3;
@@ -40,21 +40,21 @@ ensures  res::value<>;
 }
 
 bool isApply(anode t)
-  requires t::anode<v,_,_>@I
+  requires t::anode<v,_,_>@L
   ensures true & (v=0 & res | v!=0 & !res);
 {
   return t.val == 0;
 }
 
 bool isCombK(anode t)
-  requires t::anode<v,_,_>@I
+  requires t::anode<v,_,_>@L
   ensures true & (v=1 & res | v!=1 & !res);
 {
   return t.val == 1;
 }
 
 bool isCombS(anode t)
-  requires t::anode<v,_,_>@I
+  requires t::anode<v,_,_>@L
   ensures true & (v=2 & res | v!=2 & !res);
 {
   return t.val == 2;

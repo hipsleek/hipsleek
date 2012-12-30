@@ -179,7 +179,7 @@ and gen_ext_all_view (prog : C.prog_decl) ( c : C.data_decl) : C.view_decl =
 and gen_formula (prog : C.prog_decl) (c : C.data_decl) (t1 : ident) (t2 : ident) (fn1 : ident) : CF.formula = 
   let subclasses = (look_up_subclasses prog.C.prog_data_decls c) in
   (* the base case *)
-  let base_heap = CF.HTrue in
+  let base_heap = CF.HEmp in
   let base_pure = 
   CP.BForm(
 	     CP.Eq(

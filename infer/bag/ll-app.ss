@@ -14,7 +14,7 @@ relation A(bag a, bag b, bag c).
 
 /* append two singly linked lists */
 void append(node x, node y)
-  infer @pre [x,A]
+  infer [x,A]
 	requires x::ll<S1> * y::ll<S2>// & x != null
 	ensures x::ll<S> & A(S1,S2,S); //& S = union(S1, S2);
 

@@ -1,0 +1,72 @@
+data node { int val ; node next }.
+data tnode { int val ; node left; node right }.
+
+HeapPred H(node a).
+HeapPred H1(node a, node b).
+HeapPred G(node a, node b).
+
+relation T(int a).
+
+/*for x.left
+[H,G] H(x) & x!=null |- x::node<v,l,r>
+--> H1(x,l,r)*x::node<v,l,r> & x!=null
+with H(x) -> H1(l,r)*x::node<v,l,r>// for x = y
+*/
+
+//infer[H] H(x) & x!= null |- x::tnode<v,l,r>.
+//print residue.
+
+// [(RELASS [H,HP_19], H(x)&x!=null&{FLOW,(19,20)=__norm}[], x::tnode<v,l,r>@M[Orig] * HP_19(l,r)&true&{FLOW,(19,20)=__norm}[])])
+
+ /*recursive function call
+ [H,G,H1] x::node<a,x'>*H1(x,x') &  b & x'!=null
+    |- H(x') --* G(x',x")
+  --> [H,G,H1] x::node<a,x0> * G(x0,x') & x0!=null
+   with x'!=null & H1(x,x') -> H(x')
+*/
+//should not used x' in Sleek
+//infer[H,H1] x::node<a,x1>*H1(x,x1) &  b & x1!=null |- H(x1).
+//print residue.
+
+//[(RELASS [H1,H], x::node<a,x1>@M[Orig] * H1(x,x1)&b & x1!=null&{FLOW,(19,20)=__norm}[], H(x1)&true&{FLOW,(19,20)=__norm}[])])
+//just need x1 information in the assumtion
+//new [(RELASS [H1,H], H1(x,x1)&x1!=null&{FLOW,(19,20)=__norm}[], H(x1)&true&{FLOW,(19,20)=__norm}[])])
+
+
+/*Postcondition
+[H,G,H1] G(x0,x') * H1(x,l,r)*x::node<v,l,r> & (x0 = r v x0 = r)
+     |- G(x,x')
+  with G(x0,x') * H1(x,l,r)*x::node<v,l,r> & (x0 = r v x0 = r) -> G(x,x')
+*/
+
+//infer[G,H1] G(x0,x1) * H1(x,l,r)*x::tnode<v,l,r> & x0 = r  |- G(x,x1).
+//print residue.
+
+//[(RELASS [G,H1,G], G(x0,x1) * H1(x,l,r) * x::tnode<v,l,r>@M[Orig]&x0=r&{FLOW,(19,20)=__norm}[], G(x,x1)&true&{FLOW,(19,20)=__norm}[])])
+
+/*
+for x = y
+[H1] H(x) |- x = y. 
+--> H(x) -> H1(x,y) & x = y
+*/
+
+//should infer following predicate
+//infer[x,y] H(x) |- x = y.
+//print residue.
+
+//fail.
+
+//infer[H] H(x0) & x = x0 |- x::node<3,x0>.
+//print residue.
+
+//infer[H] x::node<2,x0> * x0::node<1,null>|- H(x0).
+//print residue.
+
+
+//infer[H] H(x) |- true.
+//print residue.
+//
+
+//infer[H,G] H(x)& x=null & x0 = x  |- G(x,x0).
+//print residue.
+

@@ -1,0 +1,6 @@
+
+
+// (8)
+checkentail v1=@M & v2=@I |- v1<:v2.
+print residue.
+

@@ -1,55 +1,61 @@
-
-Processing file "cll-count1.ss"
-Parsing cll-count1.ss ...
-Parsing ../../prelude.ss ...
-Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
+
 Checking procedure count$node~node... 
-dprint: cll-count1.ss:32: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(61::,0 ); (61::,0 )])]
+dprint: cll-count1.ss:32: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(131::,0 ); (131::,0 )])]
 
 Successful States:
 [
- Label: [(61::,0 ); (61::,0 )]
- State:x::cll<p,n>@M[Orig][LHSCase]&x'=x & h'=h & x'=h' & v_bool_31_539' & x'=h' & v_bool_31_539'&{FLOW,(20,21)=__norm}
-       es_infer_vars/rel: [h; p]
+ Label: [(131::,0 ); (131::,0 )]
+ State:x::cll<p,n>@M[Orig][LHSCase]&x'=x & h'=h & h=p & x'=h' & v_bool_31_570' & x'=h' & v_bool_31_570'&{FLOW,(22,23)=__norm}[]
+       es_infer_vars/rel: [A]
        es_var_measures: MayLoop
+
  ]
 
-dprint: cll-count1.ss:40: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(61::,1 ); (61::,1 )])]
+dprint: cll-count1.ss:40: ctx:  List of Failesc Context: [FEC(0, 0, 1  [(131::,1 ); (131::,1 )])]
 
 Successful States:
 [
- Label: [(61::,1 ); (61::,1 )]
- State:false&false&{FLOW,(20,21)=__norm}
-       es_infer_vars/rel: [h; p]
+ Label: [(131::,1 ); (131::,1 )]
+ State:EXISTS(n_625: x'::node<Anon_607,r_608>@M[Orig] * r_608::cll<p_611,n_612>@M[Orig][LHSCase]&flted_11_606+1=n & x'!=p & p_605=p & x'=x & h'=h & h=p & x'!=h' & !(v_bool_31_570') & x'!=h' & !(v_bool_31_570') & p_611=p_605 & n_612=flted_11_606 & 0<=flted_11_606 & A(n_625,n_612) & n_31'=1+n_625&{FLOW,(22,23)=__norm})[]
+       es_infer_vars/rel: [A]
        es_var_measures: MayLoop
+
  ]
 
-Inferred Heap:[]
-Inferred Pure:[ p=h, p=h]
-OLD SPECS:  EInfer [h,p]
-   EBase exists (Expl)(Impl)[p; n](ex)x::cll<p,n>@M[Orig][LHSCase]&true&
-         {FLOW,(20,21)=__norm}
-           EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                   EAssume 1::
-                     EXISTS(p_30,n_31: x::cll<p_30,n_31>@M[Orig][LHSCase]&
-                     res=n & p_30=p & n_31=n&{FLOW,(20,21)=__norm})
-NEW SPECS:  EBase exists (Expl)(Impl)[p; n](ex)x::cll<p,n>@M[Orig][LHSCase]&true&
-       {FLOW,(20,21)=__norm}
-         EBase true&p=h & MayLoop&{FLOW,(1,23)=__flow}
-                 EAssume 1::
-                   EXISTS(p_575,n_576: x::cll<p_575,n_576>@M[Orig][LHSCase]&
-                   res=n & p_575=p & n_576=n & 0<=n&{FLOW,(20,21)=__norm})
-NEW RELS: []
-
+!!! REL :  A(res,n)
+!!! POST:  n>=0 & n=res
+!!! PRE :  true
+!!! OLD SPECS: ((None,[]),EInfer [A]
+              EBase exists (Expl)(Impl)[p; 
+                    n](ex)x::cll<p,n>@M[Orig][LHSCase]&h=p&
+                    {FLOW,(22,23)=__norm}[]
+                      EBase emp&MayLoop&{FLOW,(1,25)=__flow}[]
+                              EAssume 66::
+                                EXISTS(p_29,
+                                n_30: x::cll<p_29,n_30>@M[Orig][LHSCase]&
+                                A(res,n) & p_29=p & n_30=n&
+                                {FLOW,(22,23)=__norm})[])
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[p; n](ex)x::cll<p,n>@M[Orig][LHSCase]&
+                  h=p&{FLOW,(22,23)=__norm}[]
+                    EBase emp&MayLoop&{FLOW,(1,25)=__flow}[]
+                            EAssume 66::
+                              EXISTS(p_29,
+                              n_30: x::cll<p_29,n_30>@M[Orig][LHSCase]&
+                              p_29=p & n_30=n & n>=0 & n=res&
+                              {FLOW,(22,23)=__norm})[])
+!!! NEW RELS:[ (res=0 & n=0) --> A(res,n),
+ (res=n_632+1 & n_612=n-1 & 1<=n & A(n_632,n_612)) --> A(res,n)]
+!!! NEW ASSUME:[]
+!!! NEW RANK:[]
 Procedure count$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 102 invocations 
-8 false contexts at: ( (41,2)  (41,9)  (39,6)  (39,10)  (39,2)  (38,6)  (38,12)  (38,2) )
+Stop Omega... 99 invocations 
+0 false contexts at: ()
 
-Total verification time: 0.26 second(s)
-	Time spent in main process: 0.19 second(s)
+Total verification time: 0.35 second(s)
+	Time spent in main process: 0.28 second(s)
 	Time spent in child processes: 0.07 second(s)

@@ -1,0 +1,59 @@
+data node {
+  int val;
+  node next;
+}.
+
+HeapPred H(node a).
+HeapPred H1(node a).
+HeapPred G(node a, node b).
+HeapPred HP_535(node a, node b).
+
+//pure formula
+//1.
+checkeq[] x =a  + 2 -|- y = b + c.
+//VALID
+//checkeq[] x =a  & e = 3 -|- (forall (c: c = 3)).
+//2.
+//checkeq[] x = 1 -|- y = 1.
+//VALID
+
+//3.
+//checkeq[x] x = 1 -|- y = 1.
+//FAIL
+
+//4.
+//checkeq[] x = 1 -|- y = 2.
+//FAIL
+
+//5
+//checkeq[x] x = 1 -|- x = 2.
+//FAIL
+
+//6.
+//checkeq[x,y] x = 1 -|- y = 1.
+//FAIL
+
+//7
+//checkeq[] x = y -|- y = x.
+//VALID
+
+//8.
+//checkeq[x] x = y -|- y = x.
+//FAIL
+
+//9
+//checkeq[x,y] x = y -|- y = x.
+//FAIL
+
+//10.
+//checkeq[] x = y & x = 1 -|- y = 1 & x = y.
+//VALID
+
+//11.
+//checkeq[x] x = y & x = 1 -|- y = 1 & x = y.
+//VALID
+
+//12.
+//checkeq[x,y] x = y & x = 1 -|- y = 1 & x = y.
+//VALID
+

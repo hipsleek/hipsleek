@@ -1,0 +1,61 @@
+//conclusion: the sleek runs like the expectation.
+
+data node { int val ; node next }.
+data tnode { int val ; tnode left; tnode right }.
+HeapPred P(node a).
+HeapPred H(node a, node b).
+HeapPred H1(node a, node b, node c).
+HeapPred G(node a, node b, node c, node d).
+
+relation T(int a).
+
+//infer[P] P(x) |- x::node<_,b>.
+//print residue.
+infer[H] H(x,y) |- x::node<_,b>.
+//print residue.
+//[(RELASS [H,HP_27], H(x,y)&true&{FLOW,(19,20)=__norm}[], x::node<Anon_11,b>@M[Orig] * HP_27(b)&true&{FLOW,(19,20)=__norm}[])])
+
+
+//infer[H1,G] H1(x,y,b) * x::node<_,y> & b = null & x0 = x & y0 = y |- G(x,x0,y,y0).
+//print residue.
+//[(RELASS [H1,G], H1(x,y,b) * x::node<_,y>&b=null, G(x,x,y,y))
+
+
+//infer[H, H1] H1(x,y,b) * x::node<_,b> & b != null & x0 = x & y0 = y |- H(b,y0).
+//print residue.
+// [(RELASS [H1,H], H1(x,y,b) * x::node<_,b>&b!=null, H(b,y))
+
+
+//infer[G]  G(b, b0, y0, y0) * x::node<_,b> & b != null & x0 = x & y0 = y |- G(x,x0,y,y0).
+//print residue.
+//[(RELASS [G,G], G(b,b0,y,y) * x::node<_,b>&b!=null, G(x,x,y,y)]
+
+/*
+if:
+case 1: H1(x,y,b) * x::node<_,b> & b = null
+
+x.next = y: H1(x,y,b) * x::node<_,y> & b = null
+
+post-cond: H1(x,y,b) * x::node<_,y> & b = null & x0 = x & y0 = y -> G(x,x0,y,y0)
+
+if:
+case 2: H1(x,y,b) * x::node<_,b> & b != null
+
+recursive call: H1(x,y,b) * x::node<_,b> & b != null & x0 = x & y0 = y |- H(b,y0) --* G(b, b0, y0, y0')
+--> G(b, b0, y0, y0) * x::node<_,b> & b != null & x0 = x & y0 = y
+  with H1(x,y,b) * x::node<_,b> & b != null & y0 = y |- H(b,y0)
+
+post-cond: G(b, b0, y0, y0) * x::node<_,b> & b != null & x0 = x & y0 = y -> G(x,x0,y,y0)
+
+
+H(x,y) -> H1(x,y,b) * x::node<_,b>
+H1(x,y,b) * x::node<_,y> & b = null & x0 = x & y0 = y -> G(x,x0,y,y0)
+H1(x,y,b) * x::node<_,b> & b != null & y0 = y |- H(b,y0)
+G(b, b0, y0, y0) * x::node<_,b> & b != null & x0 = x & y0 = y -> G(x,x0,y,y0)
+*/
+
+
+
+
+
+

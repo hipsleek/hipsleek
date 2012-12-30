@@ -1,0 +1,32 @@
+data node { int val ; node next }.
+data node2 { int val ; node2 next }.
+
+HeapPred ll(node x, int n).
+HeapPred rr(node x, int n).
+
+checkeq [x] x::node<a,null> -|- x::node<c,null> .
+// VALID --> [{a,c},{b,d}]
+
+checkeq [x] x::node<a,b> -|- y::node<c,d> .
+// FAIL
+
+checkeq [b] x::node<3,b> -|- y::node<3,d> .
+// VALID --> [{a,c},{b,d},{x,y}]
+
+
+
+//checkeq [] x::ll<a> -|- y::rr<b> .
+// VALID --> [{x,y},{a,b}]
+
+
+/*
+checkeq [] x::ll<a> -|- (exists b: y::rr<b>).
+// VALID --> [{x,y},{ll,rr}]
+
+checkeq [ll,rr] x::ll<a> -|- (exists b: y::rr<b>).
+// FAIL
+
+*/
+
+
+checkeq [b] x::node<3,b> -|- y::node<3,d> .

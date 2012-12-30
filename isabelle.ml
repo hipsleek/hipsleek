@@ -6,6 +6,7 @@
 *)
 
 open Globals
+open GlobProver
 module CP = Cpure
 
 let isabelle_file_number = ref 0
@@ -27,6 +28,7 @@ let test_number = ref 0
 (* pretty printing for primitive types *)
 let rec isabelle_of_typ = function
   | Bool          -> "int"
+  | Tree_sh 	  -> "int"
   | Float         -> "int"	(* Can I really receive float? What do I do then? I don't have float in Isabelle.*)
   | Int           -> "int"
   | Void          -> "void" 	(* same as for float *)
@@ -39,11 +41,12 @@ let rec isabelle_of_typ = function
   | List _          -> 	(* lists are not supported *)
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "list not supported for Isabelle"}
-  | NUM
+  | NUM>
   | RelT 
+  | HpT
   | AnnT->
         Error.report_error {Error.error_loc = no_pos; 
-        Error.error_text = "NUM, RelT and AnnT not supported for Isabelle"}
+        Error.error_text = "NUM, RelT, HpT and AnnT not supported for Isabelle"}
   | TVar _ 
   | Named _ 
   | Array _ ->
@@ -105,6 +108,7 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.Var (sv, _) -> isabelle_of_spec_var sv
   | CP.IConst (i, _) -> "(" ^ string_of_int i ^ "::int)"
   | CP.FConst _ -> failwith ("[isabelle.ml]: ERROR in constraints (float should not appear here)")
+  | CP.Tsconst _ -> failwith ("[isabelle.ml]: ERROR in constraints (tsconst should not appear here)")
   | CP.Add (a1, a2, _) ->  " ( " ^ (isabelle_of_exp a1) ^ " + " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (isabelle_of_exp a1) ^ " - " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Mult (a1, a2, _) -> "(" ^ (isabelle_of_exp a1) ^ " * " ^ (isabelle_of_exp a2) ^ ")"
@@ -149,6 +153,7 @@ and isabelle_of_b_formula b =
   let (pf,_) = b in
   match pf with
   | CP.BConst (c, _) -> if c then "((0::int) = 0)" else "((0::int) > 0)"
+  | CP.XPure _ -> "((0::int) = 0)" (* WN : weakening *)
   | CP.BVar (bv, _) -> "(" ^ (isabelle_of_spec_var bv) ^ " > 0)"
   | CP.Lt (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " < " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Lte (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " <= " ^ (isabelle_of_exp a2) ^ ")"

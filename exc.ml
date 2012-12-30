@@ -473,6 +473,7 @@ module type ETABLE =
     val c_flow : ident
     val raisable_class : ident
     val ret_flow : ident
+	val loop_ret_flow : ident
     val spec_flow : ident
     val false_flow : ident
     val abnormal_flow : ident
@@ -481,6 +482,7 @@ module type ETABLE =
     val norm_flow_int : nflow ref
     val ret_flow_int : nflow ref
     val c_flow_int : nflow ref
+    val loop_ret_flow_int : nflow ref
     val spec_flow_int : nflow ref
     val top_flow_int : nflow ref 
     val abnormal_flow_int : nflow ref
@@ -534,7 +536,8 @@ struct
   let brk_top = "__Brk_top"
   let c_flow = "__cflow"
   let raisable_class = "__Exc"
-  let ret_flow = "__Ret"
+  let ret_flow = "__Return"
+  let loop_ret_flow = "__RET"
   let spec_flow = "__Spec"
   let false_flow = "__false"
   let abnormal_flow = "__abnormal"
@@ -551,12 +554,13 @@ struct
   let norm_flow_int = ref empty_flow
   let c_flow_int = ref empty_flow
   let ret_flow_int = ref empty_flow 
+  let loop_ret_flow_int = ref empty_flow
   let spec_flow_int = ref empty_flow
   let top_flow_int = ref empty_flow 
   let abnormal_flow_int = ref empty_flow
   let raisable_flow_int = ref empty_flow
   let error_flow_int  = ref empty_flow 
-  let false_flow_int = empty_flow 
+  let false_flow_int = (0,0) 
   let is_empty_flow ((a,b):nflow) = a<0 || (a>b)
   let get_closest_new elist (((min,max):nflow) as nf):(string * int) =
     if is_empty_flow nf then (false_flow,1)
@@ -623,7 +627,7 @@ struct
       | _ -> f1
   let intersect_flow (n1,n2)(p1,p2) : (int*int)= ((if (n1<p1) then p1 else n1),(if (n2<p2) then n2 else p2))
   let remove_dups1 (n:flow_entry list) = Gen.BList.remove_dups_eq (fun (a,b,_) (c,d,_) -> a=c) n
-  let compute_hierarchy_aux cnt elist =
+  let compute_hierarchy_aux_x cnt elist =
     let rec lrr (f1:string)(f2:string):(((string*string*nflow) list)*nflow) =
 	  let l1 = List.find_all (fun (_,b1,_)-> ((String.compare b1 f1)==0)) elist in
 	  if ((List.length l1)==0) then 
@@ -644,6 +648,11 @@ struct
     in
     let r,_ = (lrr top_flow "") in
     r
+	
+  let compute_hierarchy_aux cnt elist =
+	let pr = pr_list (pr_triple (fun c->c) (fun c->c) (pr_pair string_of_int string_of_int)) in
+	Debug.no_1 "compute_hierarchy_aux" pr pr (fun _ -> compute_hierarchy_aux_x cnt elist) elist
+	
   class exc =
   object (self)
     val mutable elist = ([]:flow_entry list)
@@ -677,15 +686,19 @@ struct
       end
     method get_hash (f:string) : nflow =
       begin
-        if (f="") then !top_flow_int
-        else if ((String.compare f stub_flow)==0) then 
-	      Error.report_error {Error.error_loc = no_pos; Error.error_text = ("Error found stub flow")}
-        else
-	      let rec get (lst:(string*string*nflow)list):nflow = match lst with
-	        | [] -> false_flow_int
-	        | (a,_,(b,c))::rst -> if (String.compare f a)==0 then (b,c)
-		      else get rst in
-          (get elist)
+        let foo f =
+          if (f="") then !top_flow_int
+          else if ((String.compare f stub_flow)==0) then 
+	        Error.report_error {Error.error_loc = no_pos; Error.error_text = ("Error found stub flow")}
+          else
+	        let rec get (lst:(string*string*nflow)list):nflow = match lst with
+	          | [] -> false_flow_int
+	          | (a,_,(b,c))::rst -> if (String.compare f a)==0 then (b,c)
+		        else get rst in
+            (get elist)
+        in
+        let pr = pr_pair string_of_int string_of_int in
+        Debug.no_1 "get_hash2" pr_id pr foo f
       end
     method add_edge (n1:string)(n2:string):unit =
       begin
@@ -704,6 +717,7 @@ struct
         norm_flow_int := self # get_hash n_flow;
         c_flow_int := self # get_hash c_flow;
         ret_flow_int := self # get_hash ret_flow;
+		loop_ret_flow_int := self # get_hash loop_ret_flow;
         spec_flow_int := self # get_hash spec_flow;
         top_flow_int := self # get_hash top_flow;
         raisable_flow_int := self # get_hash raisable_class;
@@ -736,22 +750,30 @@ struct
     method sub_type_obj (t1 : ident) (t2 : ident): bool = 
       begin
         let n1 = self#get_hash t1 in
-        let n2 = self#get_hash t2
-        in is_subset_flow n1 n2
+        let n2 = self#get_hash t2 in
+        Debug.ninfo_pprint t1 no_pos;
+        Debug.ninfo_pprint t2 no_pos;
+        if (is_false_flow n2) 
+        then t1=t2
+        else is_subset_flow n1 n2
       end
     method union_flow_ne ((s1,b1):nflow) ((s2,b2):nflow)=
       begin
-          ((min s1 s2),(max b1 b2))
+        ((min s1 s2),(max b1 b2))
       end
   end
   let exlist = new exc
   let rec sub_type (t1 : typ) (t2 : typ) = 
     match t1,t2 with
       | UNK, _ -> true
-      | Named c1, Named c2 ->
+      | Named c1, Named c2 -> 
             if c1=c2 then true
             else if c1="" then true
-            else exlist # sub_type_obj c1 c2
+            else 
+              begin
+                Debug.ninfo_pprint (exlist#string_of) no_pos ;
+                exlist # sub_type_obj c1 c2
+              end
       | Array (et1,d1), Array (et2,d2) ->
             if (d1 = d2) then sub_type et1 et2
             else false
@@ -779,13 +801,14 @@ struct
   let norm_flow_int = ref empty_flow
   let c_flow_int = ref empty_flow
   let ret_flow_int = ref empty_flow
+  let loop_ret_flow_int = ref empty_flow
   let spec_flow_int = ref empty_flow
 
   let top_flow_int = ref empty_flow
   let abnormal_flow_int = ref empty_flow
   let raisable_flow_int = ref empty_flow
   let error_flow_int  = ref empty_flow
-  let false_flow_int = empty_flow
+  let false_flow_int = ((0,0),[(0,0)])
 
   let is_empty_flow ((a,b),lst) = lst==[] || a<0 || (a>b)
   let is_false_flow ((p1,p2),lst) :bool = (p2==0)&&(p1==0) || p1>p2 
@@ -983,15 +1006,19 @@ struct
       end
     method get_hash (f:string) : dflow =
       begin
-        if (f="") then !top_flow_int
-        else if ((String.compare f stub_flow)==0) then 
-	      Error.report_error {Error.error_loc = no_pos; Error.error_text = ("Error found stub flow")}
-        else
-	      let rec get (lst:(string*string*dflow)list):dflow = match lst with
-	        | [] -> false_flow_int
-	        | (a,_,fl)::rst -> if (String.compare f a)==0 then fl
-		      else get rst in
-          (get elist)
+        let foo f =
+          if (f="") then !top_flow_int
+          else if ((String.compare f stub_flow)==0) then 
+	        Error.report_error {Error.error_loc = no_pos; Error.error_text = ("Error found stub flow")}
+          else
+	        let rec get (lst:(string*string*dflow)list):dflow = match lst with
+	          | [] -> false_flow_int
+	          | (a,_,fl)::rst -> if (String.compare f a)==0 then fl
+		        else get rst 
+            in (get elist)
+        in
+        let pr = pr_pair string_of_int string_of_int in
+        Debug.no_1 "get_hash" pr_id (fun _ -> "?") foo f
       end
     method add_edge (n1:string)(n2:string):unit =
       begin
@@ -1010,6 +1037,7 @@ struct
         norm_flow_int := self # get_hash n_flow;
         c_flow_int := self # get_hash c_flow;
         ret_flow_int := self # get_hash ret_flow;
+		loop_ret_flow_int := self # get_hash loop_ret_flow;
         spec_flow_int := self # get_hash spec_flow;
         top_flow_int := self # get_hash top_flow;
         raisable_flow_int := self # get_hash raisable_class;
@@ -1030,7 +1058,7 @@ struct
             if t==0 then "#E" (* exact ann *)
             else if t!=1 then "#P" (* partial ann *)
             else "") (* full *)
-        (* fst(get_closest_new elist nf) *)
+            (* fst(get_closest_new elist nf) *)
       end
     method has_cycles : bool =
       begin
@@ -1043,12 +1071,14 @@ struct
     method sub_type_obj (t1 : ident) (t2 : ident): bool = 
       begin
         let n1 = self#get_hash t1 in
-        let n2 = self#get_hash t2
-        in is_subset_flow n1 n2
+        let n2 = self#get_hash t2 in
+        if (is_false_flow n2) 
+        then t1=t2
+        else is_subset_flow n1 n2
       end
     method union_flow_ne ((s1,b1):nflow) ((s2,b2):nflow)=
       begin
-          ((min s1 s2),(max b1 b2))
+        ((min s1 s2),(max b1 b2))
       end
   end
   let exlist = new exc

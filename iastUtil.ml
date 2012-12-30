@@ -37,7 +37,8 @@ let transform_exp
       | Null _ 
       | This _ 
       | Time _ 
-      | Unfold _ 
+      | Unfold _
+	  | Barrier _ 	  
       | Var _ -> (e,zero)
 			| ArrayAt b -> (* An Hoa *)
 				let il,rl = List.split (List.map (helper n_arg) b.exp_arrayat_index) in
@@ -145,9 +146,9 @@ let transform_exp
       | While b -> 
         let wrp,r = match b.exp_while_wrappings with
           | None -> (None,zero)
-          | Some s -> 
+          | Some (s,l) -> 
             let wrp,r = helper n_arg s in
-            ((Some wrp),r) in
+            (Some (wrp,l),r) in
         let ce,cr = helper n_arg b.exp_while_condition in
         let be,br = helper n_arg b.exp_while_body in
         let r = comb_f [r;cr;br] in
@@ -1042,6 +1043,7 @@ let from_H h =
   !r
 
 let ngscc_list cg = IGC.scc_list cg 
+
 let ngscc cg = IGC.scc cg
 
 let create_progfreeht_of_prog prog = 
@@ -1051,7 +1053,13 @@ let create_progfreeht_of_prog prog =
   in 
   List.iter fun0 prog.prog_proc_decls;
   ht
-
+  
+let create_progfreeht_of_prog prog = 
+  let pr_set s = IdentSet.fold (fun e a -> a ^ ", " ^ e) s "" in
+  let pr_hashtbl h = Hashtbl.fold (fun k (d1, d2) a ->
+    k ^ ", (" ^ (pr_set d1) ^ "; " ^ (pr_set d2) ^ ")\n") h "" in
+  Debug.no_1 "create_progfreeht_of_prog" (fun _ -> "") pr_hashtbl
+  create_progfreeht_of_prog prog
 
 let merge0 ht ms : ((ident list) * (IS.t * IS.t)) = 
   let find ht x = 
@@ -1106,18 +1114,6 @@ let update_ht0 ht mss0 =
     List.iter fun1 (fst ms0)
   in
   List.iter fun0 mss0
-
-
-
-
-(*
-
-*)
-(*
-let is_
-
-let merge1 ht mss = 
-*)
 
 (*hash: ident -> typ*)
 let ht_of_gvdef gvdefs =
@@ -1231,36 +1227,47 @@ let map_body_of_proc f proc =
       proc_body = match proc.proc_body with
       | None -> None
       | Some e -> Some (f e)
-          ;
   }
-
 
 let add_globalv_to_mth_prog prog = 
   let cg = callgraph_of_prog prog in
-  (* let _ = print_string "1\n" in *)
   let ht = create_progfreeht_of_prog prog in
-  (* let _ = print_endline "add_globalv_to_mth_prog: after create_progfreeht_of_prog\n" in *)
-  let scclist = List.rev (ngscc_list cg) in
-  (* let _ = print_string "2a\n" in *)
+  (* let scclist = List.rev (ngscc_list cg) in *)
+  
+  (* let _, fscc = IGC.scc cg in                                       *)
+  (* let scclist = IGC.scc_list cg in                                  *)
+  (* let scclist = List.map (fun scc ->                                *)
+  (*   (match scc with x::_ -> fscc x | _ -> 0), scc) scclist in       *)
+  (* let scclist = List.sort (fun (i1, _) (i2, _) -> i1-i2) scclist in *)
+  (* let scclist = snd (List.split scclist) in                         *)
+  
+  (* let scclist = List.sort (fun s1 s2 ->     *)
+  (*   match s1, s2 with                       *)
+  (*   | x1::_, x2::_ -> (fscc x1) - (fscc x2) *)
+  (*   | x1::_, [] -> 1                        *)
+  (*   | [], x2::_ -> -1                       *)
+  (*   | _ -> 0) (IGC.scc_list cg) in          *)
+  
+  let sccarr = IGC.scc_array cg in
+  let scclist = Array.to_list sccarr in
+  
+  (* let _ = print_endline ("scc: " ^ (pr_list (pr_list                        *)
+  (*   (fun id -> (pr_id id) ^ ": " ^ (string_of_int (fscc id)))) scclist)) in *)
+  
   let sccfv = merge1 ht scclist in
-  (* let _ = print_endline "add_globalv_to_mth_prog: after merge1\n" in *)
   let mscc = push_freev1 cg sccfv in
   let _ = update_ht0 ht mscc in
-  (* let _ = print_endline "add_globalv_to_mth_prog: after update_ht0\n" in *)
   let newsig_procs = 
     List.map (add_free_var_to_proc prog.prog_global_var_decls ht) 
       prog.prog_proc_decls in
-  (* let _ = print_endline "add_globalv_to_mth_prog: after add_free_var_to_proc\n" in *)
   let new_procs = 
     List.map (map_body_of_proc (addin_callargs_of_exp ht))
       newsig_procs in
-  (* let _ = print_string "1\n" in *)
-  { prog with
-      prog_proc_decls = new_procs;
-  }
+  { prog with prog_proc_decls = new_procs; }
 
 let add_globalv_to_mth_prog prog = 
-  Debug.no_1 "add_globalv_to_mth_prog" pr_no pr_no add_globalv_to_mth_prog prog
+  let pr = Iprinter.string_of_program in
+  Debug.no_1 "add_globalv_to_mth_prog" pr pr add_globalv_to_mth_prog prog
 
 (*iprims: primitives in the header files
 prog: current program*)  
@@ -1268,31 +1275,21 @@ let pre_process_of_iprog iprims prog =
   let prog =
           { prog with prog_data_decls = iprims.prog_data_decls @ prog.prog_data_decls;
                       prog_proc_decls = iprims.prog_proc_decls @ prog.prog_proc_decls;
+											prog_view_decls = iprims.prog_view_decls @ prog.prog_view_decls;
+											prog_coercion_decls = iprims.prog_coercion_decls @ prog.prog_coercion_decls;
+											prog_global_var_decls = iprims.prog_global_var_decls @ prog.prog_global_var_decls;
 						(* An Hoa : MISSING PRIMITIVE RELATIONS! *)
 					  prog_rel_decls = iprims.prog_rel_decls @ prog.prog_rel_decls;
 					  prog_axiom_decls = iprims.prog_axiom_decls @ prog.prog_axiom_decls;
           } in
   let prog = float_var_decl_prog prog in
-  (* let _ = print_string "[pre_process_of_iprog] 1\n" in *)
   (* let _ = print_endline ("PROG = " ^ (Iprinter.string_of_program prog)) in *)
   let prog = rename_prog prog in
-  (* let _ = print_string "[pre_process_of_iprog] after rename_prog\n" in *)
   (* let _ = print_endline ("PROG = " ^ (Iprinter.string_of_program prog)) in *)
-  let prog = add_globalv_to_mth_prog prog in
-  (* let _ = print_string "[pre_process_of_iprog] after pre_process_of_iprog\n" in *)
+  let prog = add_globalv_to_mth_prog prog in 
   prog
 
 let pre_process_of_iprog iprims prog = 
-  let pr x = (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls in
-  (* let pr x = (pr_list Iprinter.string_of_proc_decl) x.Iast.prog_proc_decls in *)
-  Debug.no_1 "pre_process_of_iprog" pr pr (fun _ -> pre_process_of_iprog iprims prog) iprims
-
-
-
-
-
-(*
-
-(e:exp) ((local,global):IS.t*IS.t) (stk:IS.t ref) : unit =
-
-*)
+  let pr1 x = (pr_list Iprinter.string_of_rel_decl) x.Iast.prog_rel_decls in
+  let pr2 x = (pr_list Iprinter.string_of_proc_decl) x.Iast.prog_proc_decls in
+  Debug.no_1 "pre_process_of_iprog" pr2 pr2 (fun _ -> pre_process_of_iprog iprims prog) prog

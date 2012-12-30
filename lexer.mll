@@ -108,6 +108,8 @@ module Make (Token : SleekTokenS)
  let comment_level = ref 0
  let _ = List.map (fun ((k,t):(string*sleek_token)) -> Hashtbl.add sleek_keywords k t)
 	[("assert", ASSERT);
+   ("assert_exact", ASSERT_EXACT);
+   ("assert_inexact", ASSERT_INEXACT);
 	 ("assume", ASSUME);
 	 ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
    ("alln", ALLN);
@@ -115,12 +117,16 @@ module Make (Token : SleekTokenS)
    ("bagmax", BAGMAX);
 	 ("bagmin", BAGMIN);
    ("bag", BAG);
+     ("Barrier", BARRIER);
 	 ("bind", BIND);
 	 ("bool", BOOL);
 	 ("break", BREAK);
 	 ("case",CASE);
    ("catch", CATCH);
+   ("checkeq", CHECKEQ);
 	 ("checkentail", CHECKENTAIL);
+   ("checkentail_exact", CHECKENTAIL_EXACT);
+   ("checkentail_inexact", CHECKENTAIL_INEXACT);
 	 ("capture_residue", CAPTURERESIDUE);
 	 ("class", CLASS);
 	 (* ("coercion", COERCION); *)
@@ -133,7 +139,10 @@ module Make (Token : SleekTokenS)
 	 ("diff", DIFF);
 	 ("dynamic", DYNAMIC);
 	 ("else", ELSE_TT);
+   ("emp", EMPTY);
 	 ("ensures", ENSURES);
+   ("ensures_exact", ENSURES_EXACT);
+   ("ensures_inexact", ENSURES_INEXACT);
 	 ("enum", ENUM);
 	 ("ex", EXISTS);
 	 ("exists", EXISTS);
@@ -147,7 +156,9 @@ module Make (Token : SleekTokenS)
    ("global",GLOBAL);
    ("logical", LOGICAL);
 	 ("head",HEAD);
+     ("HeapPred", HP);
    ("ho_pred",HPRED);
+   ("htrue", HTRUE);
    ("if", IF);
 	 ("in", IN_T);
    ("infer", INFER);
@@ -171,10 +182,14 @@ module Make (Token : SleekTokenS)
 	 ("on", ON);
 	 ("or", ORWORD);
 	 ("and", ANDWORD);
-   ("perm",PERM);
+	 ("macro",PMACRO);
+     ("perm",PERM);
 	 ("pred", PRED);
+	 ("pred_prim", PRED_PRIM);
+	 ("hip_include", HIP_INCLUDE);
      ("print", PRINT);
 	 ("dprint", DPRINT);
+	 ("compare", CMP);
    ("raise", RAISE);
 	 ("ref", REF);
 ("relation", REL);
@@ -188,6 +203,7 @@ module Make (Token : SleekTokenS)
 	 ("split", SPLIT);
 	 ("LexVar", LEXVAR);
    ("Term", TERM);
+    ("template", TEMPL);
    ("Loop", LOOP);
    ("MayLoop", MAYLOOP);
 	 ("subset", SUBSET);
@@ -269,12 +285,15 @@ rule tokenizer file_name = parse
   | '&' { AND }
   | "&&" { ANDAND }
   | "@" { AT }
+  | "@@" { ATAT }
   | "@I" {IMM}
   | "@L" {LEND}
   | "@D" { DERV }
   | "@M" { MUT }
   | "@pre" { PRE }
+  | "@xpre" { XPRE }
   | "@post" { POST }
+  | "@xpost" { XPOST }
   | "@zero" {PZERO}
   | "@full" {PFULL}
   | "@value" {PVALUE}
@@ -317,6 +336,8 @@ rule tokenizer file_name = parse
   | '|' { OR }
   | "||" { OROR }
   | "|-" { (* (print_string "der\n"; *)DERIVE }
+  | "-|-" { EQV }
+  | "-->" { CONSTR }
   | '[' { OSQUARE }
   | '%' { PERCENT }
   | '+' { PLUS }

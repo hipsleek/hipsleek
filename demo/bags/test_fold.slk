@@ -1,0 +1,104 @@
+data node {
+  int val;
+  int height;
+  node left;
+  node right;
+}.
+
+data myint {
+  int val;
+}.
+
+
+
+pred avl<m, n, S> ==
+  self = null & m = 0 & n = 0 & S = {}
+  or 
+  self::node<v, n, p, q> * p::avl<m1, n1, S1> * q::avl<m2, n2, S2> 
+      & m = 1+m1+m2 & -1<=n1-n2<=1  & n=1+max(n1,n2) & S = union(S1, S2, {v}) &
+      forall (x : (x notin S1 | x <= v)) & forall (y : (y notin S2 | y >= v))
+  inv m >= 0 & n >= 0.
+  
+  
+
+
+checkentail    
+        x'::node<vv,n,null,xr> * 
+        xr::node<v_2826,n2_2718,xrl,xrr> *
+        xrl::avl<m1_2828,n1_2829,S1_2830> * 
+        xrr::avl<m2_2832,n2_2833,S2_2834> *     
+        tmp2_141'::myint<v_int_223_2720> * a'::myint<v_2711> 
+        
+        & v_bool_237_1729' & v_bool_236_1785' &
+         m1_2713=0 & 1<=m & 1<=m2_2717 & m2_2717=1+m1_2828+m2_2832 & 
+           0<=m2_2832 & 0<=m1_2828 & m=1+m1_2713+m2_2717 &
+         ti_138'=vv & //S1_2830={} & S2_2834={} &
+         //p_2827=null & q_2831=null &
+         //n1_2829=0 & n2_2833=0 &
+         forall(x1:(x1 notin S1_2715  | x1<=v_2711)) & 
+           forall(y1:(y1 notin S2_2719  | v_2711<=y1)) & 
+           forall(x2:(x2 notin S1_2830  | x2<=v_2826)) & 
+           forall(y2:(y2 notin S2_2834  | v_2826<=y2)) & S2_2719!={} & 
+           S2_2719=union(S1_2830,S2_2834,{v_2826}) & S!={} & vv<=v_2826 & 
+           S1_2715={} & S=union(S1_2715,S2_2719,{v_2711}) & v_2711<=vv &
+          n2_2718=n_2825 & n=n_2710 & n1_2714=0 &           
+          n=1+max(n2_2718,n1_2714) &
+          n2_2718 = 1+max(n1_2829,n2_2833)                     
+           & 0<=n2_2833 & n1_2829-1<=n2_2833 & 0<=n1_2829 & 
+           n2_2833-1<=n1_2829 & 1<=n & n1_2714-1<=n2_2718 & n2_2718-1<=n1_2714 & 1<=n2_2718 &
+         xr!=null&v_bool_224_1907'&x=x' & x'!=null&0=v_int_223_2720 &
+         null=tn_139'&
+         p_2712=null & p_2712=left_225_2758&!v_bool_225_1786' &
+         xrl=tr_140'           
+         |- x::avl<mx,nx,Sx> .
+//=======
+//         p_2827=tr_140'           
+ //        |- m1_2828=0 & m2_2832=0.
+//p_2827=null & q_2831=null.
+//p_2827=null & q_2831=null.
+// n1_2829=0 & n2_2833=0.
+//x::avl<mx,nx,Sx> .
+//S1_2830={} & S2_2834={}.
+//x::avl<mx,nx,Sx> .
+    
+//print residue.
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+/*     xrl::avl<m1_2828,n1_2829,S1_2830> * 
+        xrr::avl<m2_2832,n2_2833,S2_2834> * 
+        p_2712::avl<m1_2713,n1_2714,S1_2715> * 
+        tmp2_141'::myint<v_int_223_2720> * a'::myint<v_2711> * 
+        x'::node<vv,n,left_225_2758,xr> * xr::node<v_2826,n2_2718,
+        xrl,xrr> & v_bool_237_1729' & v_bool_236_1785' &
+         m1_2713=0 & 1<=m & 1<=m2_2717 & m2_2717=1+m1_2828+m2_2832 & 
+           0<=m2_2832 & 0<=m1_2828 & m=1+m1_2713+m2_2717 &
+         ti_138'=vv & 
+         forall(x1:(x1 notin S1_2715  | x1<=v_2711)) & 
+           forall(y1:(y1 notin S2_2719  | v_2711<=y1)) & 
+           forall(x2:(x2 notin S1_2830  | x2<=v_2826)) & 
+           forall(y2:(y2 notin S2_2834  | v_2826<=y2)) & S2_2719!={} & 
+           S2_2719=union(S1_2830,S2_2834,{v_2826}) & S!={} & vv<=v_2826 & 
+           S1_2715={} & S=union(S1_2715,S2_2719,{v_2711}) & v_2711<=vv &
+          n2_2718=n_2825 & n=n_2710 & n1_2714=0 & (n1_2714=n - 1 & 
+           n2_2718<n | n2_2718=n - 1 & n1_2714<=n - 2)
+
+           & (n1_2829=n2_2718 -
+           1 & n2_2833<n2_2718 | n2_2833=n2_2718 - 1 & 
+           n1_2829<=n2_2718 -2) & 0<=n2_2833 & n1_2829-1<=n2_2833 & 0<=n1_2829 & 
+           n2_2833-1<=n1_2829 & 1<=n & n1_2714-1<=n2_2718 & n2_2718-1<=n1_2714 & 1<=n2_2718 &
+         xr!=null&v_bool_224_1907'&x=x' & x'!=null&0=v_int_223_2720 &
+         null=tn_139'&a=a' & a!=null&tmp2_141'!=null &
+         p_2712=null & p_2712=left_225_2758&!v_bool_225_1786' &
+         xrl=tr_140'           
+         |- (exists m_136,n_137,Sn,r: x::avl<m_136,n_137,Sn> * 
+            a::myint<r> & n=n_137 & m=m_136 &
+   forall(xx:(xx notin Sn  | r<=xx)) & union(S,{vv})=union(Sn,{r}) & r<=vv &
+    a!=null).*/

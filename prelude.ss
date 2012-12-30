@@ -1,3 +1,5 @@
+
+
 class __DivByZeroErr  extends __Error {}
 class __ArrBoundErr  extends __Error {}
 
@@ -28,7 +30,6 @@ int div___(int a, int b)
     -1 < b < 1 -> ensures true & flow __DivByZeroErr;
     }
 }
-
 
 // why is flow of div2 __Error rather __DivByZeroErr?
 int div2(int a, int b)
@@ -68,6 +69,7 @@ int mod___(int a, int b) case {
     /* -1 < b < 1 -> requires false ensures false; */
   }
 }
+
 /*
 float add___(float a, float b) 
   requires true 
@@ -201,6 +203,8 @@ axiom dom(a,low,high) & low<=l & h<=high ==> dom(a,l,h).
 
 axiom domb(a,low,high) & low<=l & h<=high ==> domb(a,l,h).
 
+axiom domb(a,low,high) & low<=l | h<=high ==> domb(a,l,h).
+
 relation update_array_1d_b(bool[] a, bool[] b, bool val, int i).
 
 relation update_array_1d(int[] a, int[] r, int val, int i).
@@ -210,8 +214,10 @@ relation update_array_2d(int[,] a, int[,] r, int val, int i, int j).
 relation amodr(int[] a, int[] b, int i, int j) == 
     forall(k : (i<=k & k<=j | a[k] = b[k])).
 
+/*
 relation bnd(int[] a, int i, int j, int low, int high) == 
  	(i > j | i<=j & forall ( k : (k < i | k > j | low <= a[k] <= high))).
+*/
 
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
@@ -341,6 +347,8 @@ int[,] update___2d(int v, int[,] a, int i, int j)
 int[] aalloc___(int dim) 
 	requires true 
 	ensures dom(res,0,dim-1);
+
+
 
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////

@@ -152,6 +152,7 @@ node insert(node x, int a)
 // 6 ctrs
   requires x::avl<m, n, S> & x != null
   ensures res::avl<m+1, nn, Sn> & n <= nn <= n+1 & Sn = union(S, {a});
+	//ensures res::avl<m+1, nn, _> & n <= nn <= n+1;
 {
   node tmpn, tmp_null = null;
   int hr, hl;

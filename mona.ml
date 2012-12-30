@@ -3,6 +3,7 @@
 *)
 
 open Globals
+open GlobProver
 module CP = Cpure
 
 let is_mona_running = ref false
@@ -10,7 +11,7 @@ let is_mona_running = ref false
 let last_test_number = ref 0
 let test_number = ref 0
 let mona_cycle = ref 90
-let timeout = ref 11.0 (* default timeout is 10 seconds *)
+let timeout = ref 10.0 (* default timeout is 10 seconds *)
 
 let result_file_name = "res"
 let log_all_flag = ref false
@@ -32,10 +33,12 @@ let string_of_hashtbl tab = Hashtbl.fold
 (* pretty printing for primitive types *)
 let rec mona_of_typ = function
   | Bool          -> "int"
+  | Tree_sh 	  -> "int"
   | Float         -> "float"	(* Can I really receive float? What do I do then? I don't have float in Mona. *)
   | Int           -> "int"
   | AnnT          -> "AnnT"
   | RelT          -> "RelT"
+  | HpT           -> "HpT"
   | Void          -> "void" 	(* same as for float *)
   | BagT i		  -> "("^(mona_of_typ i)^") set"
   | TVar i        -> "TVar["^(string_of_int i)^"]"
@@ -492,6 +495,7 @@ and mona_of_exp_secondorder_x e0 f = 	match e0 with
   | CP.IConst (i, _) -> ([], ("pconst(" ^ (string_of_int i) ^ ")"), "")
   | CP.AConst (i, _) -> ([], ("pconst(" ^ (string_of_int (int_of_heap_ann i))
                               ^ ")"), "")
+  | CP.Tsconst _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support tree_shares"^(Cprinter.string_of_formula_exp e0))
   | CP.Add (a1, a2, pos) ->  
         let tmp = fresh_var_name "int" pos.start_pos.Lexing.pos_lnum in
         let (exs1, a1name, a1str) = mona_of_exp_secondorder a1 f in
@@ -573,6 +577,7 @@ and mona_of_b_formula_x b f vs =
   let ret =
 	let (pf, _) = b in
     match pf with
+      | CP.XPure _ -> "(0=0)" (* WN : weakening *)
       | CP.BConst (c, _) -> if c then "(0 = 0)" else "(~ (0 <= 0))"
       | CP.BVar (bv, _) -> "greater(" ^ (mona_of_spec_var bv) ^ ", pconst(0))"
             (* CP.Lt *)   
@@ -863,7 +868,7 @@ let prelude () =
    let mona_pred_file_x = get_mona_predicates_file () in
    send_cmd_no_answer ("include \"" ^ mona_pred_file_x ^ "\";\n")
 
-let set_process (proc: Globals.prover_process_t) = 
+let set_process (proc: prover_process_t) = 
   process := proc
 
 let rec check_prover_existence prover_cmd_str: bool =

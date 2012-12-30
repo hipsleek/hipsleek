@@ -1,4 +1,6 @@
 open Globals
+open GlobProver
+
 module CP = Cpure
 
 let log_cvcl_formula = ref false
@@ -112,11 +114,15 @@ and cvcl_of_exp a = match a with
       failwith ("Aconst not supported in cvclite")
 	| CP.Level _ ->
       failwith ("level should not appear in cvclite")
+	| CP.Tsconst _ ->
+      failwith ("Tsconst not supported in cvclite")
+	  	  
   
 and cvcl_of_b_formula b =
   let (pf,_) = b in
   match pf with
   | CP.BConst (c, _) -> if c then "(TRUE)" else "(FALSE)"
+  | CP.XPure _ -> "(TRUE)" (* WN : weakening *)
   (* | CP.BVar (sv, _) -> cvcl_of_spec_var sv *)
   | CP.BVar (sv, _) -> (cvcl_of_spec_var sv) ^ " = 1"
   | CP.Lt (a1, a2, _) -> (cvcl_of_exp a1) ^ " < " ^ (cvcl_of_exp a2)

@@ -1,0 +1,23 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+//(3) fail
+/*
+infer [v2] x::node<_,q>@v1 |- x::node<a,b>@v2.
+print residue.
+
+infer [v2] 0<=v1<=2 & 0<=v2<=2 |- v1<=v2.
+print residue.
+
+infer [v2] true |- v1<:v2.
+print residue.
+*/
+
+infer [v1] v1<:@L & v2<:@L |- v1<:v2.
+//print residue.
+
+// (7)
+//checkentail v<:@M & v!=@M |- false.
+//print residue.

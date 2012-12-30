@@ -1,0 +1,47 @@
+//1
+checkeq[] x = y -|- y = x.
+//VALID
+
+//2.
+checkeq[] x = y & x = t -|- y = t & x = y.
+//VALID
+
+//3.
+checkeq[] x = y & x = t -|- y = t & x = l.
+//FAIL
+
+//4.
+checkeq[] x = y & x = t -|- y = x & x = y.
+//FAIL
+
+//5.
+checkeq[] x = null -|- y = null.
+//FAIL
+
+//6.
+checkeq[] x = 1 -|- y = 1.
+//VALID
+
+//7.
+checkeq[] x = null -|- y = null.
+//VALID
+
+//8.
+checkeq[] x = 2 -|- y = 1.
+//FAIL
+
+//9.
+checkeq[] null = x -|- y = null.
+//VALID (*not yet*)
+
+//10.
+checkeq[] x != null -|- y != null.
+//VALID
+
+//11.
+checkeq[] x!=null -|- y = null.
+//FAIL
+
+//12.
+checkeq[] x >= 3 -|- y >= 3.
+//VALID

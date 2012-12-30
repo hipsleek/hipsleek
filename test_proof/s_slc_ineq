@@ -1,0 +1,272 @@
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 16
+Prover: Z3
+Type: Imply: ante: <IL, 44, []>x2!=x7
+	     conseq:  <IL, 29, []>x2=null
+Time: 0.004
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 17
+Prover: Z3
+Type: Imply: ante: <IL, 44, []>x2!=x7
+	     conseq:  <IL, 29, []>x2=null
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 18
+Prover: Z3
+Type: Imply: ante: <IL, 44, []>x2!=x7
+	     conseq:  <IL, 29, []>x2=null
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 19
+Prover: Z3
+Type: Imply: ante: <IL, 44, []>x2!=x7
+	     conseq:  <IL, 29, []>x2=null
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 20
+Prover: Z3
+Type: Imply: ante: <IL, 44, []>x2!=x7
+	     conseq:  <IL, 29, []>x2=null
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 21
+Prover: Z3
+Type: Imply: ante: <IL, 44, []>x2!=x7
+	     conseq:  <IL, 29, []>x2=null
+Time: 0.004
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 22
+Prover: Z3
+Type: Imply: ante: true
+	     conseq:  <IL, 44, []>x2!=x7
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 23
+Prover: Z3
+Type: Imply: ante: true
+	     conseq:  <IL, 43, []>x1!=x10
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 24
+Prover: Z3
+Type: Imply: ante: true
+	     conseq:  <IL, 42, []>x1!=x6
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) ...
+id: 25
+Prover: Z3
+Type: Imply: ante: true
+	     conseq:  <IL, 41, []>x4!=x9
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 26
+Prover: Z3
+Type: Sat:  x2=x5 & x2=x1 & <IL, 30, []>x2!=null
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 27
+Prover: Z3
+Type: Sat:  x10=p_148
+Time: 0.004
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 29
+Prover: Z3
+Type: Sat:  x1=p_157
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 30
+Prover: Z3
+Type: Sat:  x2=x5 & x2=x10 & <IL, 30, []>x2!=null
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 34
+Prover: Z3
+Type: Imply: ante: true
+	     conseq:  <IL, 41, []>x4!=x9
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 35
+Prover: Z3
+Type: Imply: ante: true
+	     conseq:  <IL, 42, []>x1!=x6
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 36
+Prover: Z3
+Type: Imply: ante: true
+	     conseq:  <IL, 43, []>x1!=x10
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 37
+Prover: Z3
+Type: Imply: ante: true
+	     conseq:  <IL, 44, []>x2!=x7
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 38
+Prover: Z3
+Type: Imply: ante: true
+	     conseq:  <IL, 30, []>x2!=null
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 39
+Prover: Z3
+Type: Imply: ante: true
+	     conseq:  <IL, 25, []>x2!=x1
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 40
+Prover: Z3
+Type: Imply: ante: true
+	     conseq:  <IL, 41, []>x4!=x9
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 41
+Prover: Z3
+Type: Imply: ante: true
+	     conseq:  <IL, 42, []>x1!=x6
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 42
+Prover: Z3
+Type: Imply: ante: true
+	     conseq:  <IL, 43, []>x1!=x10
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 43
+Prover: Z3
+Type: Imply: ante: true
+	     conseq:  <IL, 44, []>x2!=x7
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 44
+Prover: Z3
+Type: Imply: ante: true
+	     conseq:  <IL, 30, []>x2!=null
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 45
+Prover: Z3
+Type: Imply: ante: true
+	     conseq:  <IL, 25, []>x2!=x10
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:None loc:(Line:8,Col:3) kind::SLEEK_ENT(1) 
+Trace::[]
+
+id: 46
+Prover: Z3
+Type: Sat:  x10=p_148
+Time: 0.004
+Result: true

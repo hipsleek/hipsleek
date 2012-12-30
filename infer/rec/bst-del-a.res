@@ -1,59 +1,68 @@
-
-Processing file "bst-del-a.ss"
-Parsing bst-del-a.ss ...
-Parsing ../../prelude.ss ...
-Starting Reduce... 
 Starting Omega...oc
 Translating global variables to procedure parameters...
+
 Checking procedure delete$node2~int... 
-dprint: bst-del-a.ss:66: ctx:  List of Failesc Context: [FEC(0, 0, 4  [(73::,0 ); (73::,0 ); (68::,0 ); (68::,0 ); (65::,0 ); (65::,0 )];  [(73::,1 ); (73::,1 ); (68::,0 ); (68::,0 ); (65::,0 ); (65::,0 )];  [(69::,0 ); (69::,0 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )];  [(69::,1 ); (69::,1 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )])]
+dprint: bst-del-a.ss:66: ctx:  List of Failesc Context: [FEC(0, 0, 4  [(149::,0 ); (149::,0 ); (144::,0 ); (144::,0 ); (141::,0 ); (141::,0 )];  [(149::,1 ); (149::,1 ); (144::,0 ); (144::,0 ); (141::,0 ); (141::,0 )];  [(145::,0 ); (145::,0 ); (144::,1 ); (144::,1 ); (141::,0 ); (141::,0 )];  [(145::,1 ); (145::,1 ); (144::,1 ); (144::,1 ); (141::,0 ); (141::,0 )])]
 
 Successful States:
 [
- Label: [(73::,0 ); (73::,0 ); (68::,0 ); (68::,0 ); (65::,0 ); (65::,0 )]
- State:p_588::bst<sm_583,pl_585>@M[Orig] * q_589::bst<qs_586,lg_584>@M[Orig] * x'::node2<v_587,p_588,q_589>@M[Orig]&pl_585<=v_587 & v_587<=qs_586 & sm_583=sm & lg_584=lg & a'=a & x!=null & v_bool_36_529' & x!=null & v_bool_36_529' & v_587=a' & v_bool_41_525' & v_587=a' & v_bool_41_525' & q_589=null & v_bool_43_523' & q_589=null & v_bool_43_523' & x'=p_588&{FLOW,(20,21)=__norm}
-       es_infer_vars/rel: [B]
-       es_var_measures: MayLoop;
- Label: [(73::,1 ); (73::,1 ); (68::,0 ); (68::,0 ); (65::,0 ); (65::,0 )]
- State:EXISTS(s1_612,xright_34': p_588::bst<sm_583,pl_585>@M[Orig] * xright_34'::bst<s1_612,b>@M[Orig][LHSCase] * x'::node2<tmp_31',p_588,xright_34'>@M[Orig]&pl_585<=v_587 & v_587<=qs_586 & sm_583=sm & lg_584=lg & x'=x & a'=a & x'!=null & v_bool_36_529' & x'!=null & v_bool_36_529' & v_587=a' & v_bool_41_525' & v_587=a' & v_bool_41_525' & q_589!=null & 175::!(v_bool_43_523') & q_589!=null & !(v_bool_43_523') & s=qs_586 & b=lg_584 & qs_586<=lg_584 & s<=tmp_31' & tmp_31'<=s1_612 & s<=b&{FLOW,(20,21)=__norm})
-       es_infer_vars/rel: [B]
-       es_var_measures: MayLoop;
- Label: [(69::,0 ); (69::,0 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )]
- State:EXISTS(s_637,l_638,xright_34': p_588::bst<sm_583,pl_585>@M[Orig] * xright_34'::bst<s_637,l_638>@M[Orig][LHSCase] * x'::node2<v_587,p_588,xright_34'>@M[Orig]&pl_585<=v_587 & v_587<=qs_586 & sm_583=sm & lg_584=lg & x'=x & a'=a & x'!=null & v_bool_36_529' & x'!=null & v_bool_36_529' & v_587!=a' & 163::!(v_bool_41_525') & v_587!=a' & !(v_bool_41_525') & v_587<a' & v_bool_60_524' & v_587<a' & v_bool_60_524' & sm_619=qs_586 & lg_620=lg_584 & qs_586<=lg_584 & sm_619<=s_637 & B(l_638,lg_620) & sm_619<=lg_620&{FLOW,(20,21)=__norm})
-       es_infer_vars/rel: [B]
-       es_var_measures: MayLoop;
- Label: [(69::,1 ); (69::,1 ); (68::,1 ); (68::,1 ); (65::,0 ); (65::,0 )]
- State:EXISTS(s_657,l_658,xleft_33': q_589::bst<qs_586,lg_584>@M[Orig] * xleft_33'::bst<s_657,l_658>@M[Orig][LHSCase] * x'::node2<v_587,xleft_33',q_589>@M[Orig]&pl_585<=v_587 & v_587<=qs_586 & sm_583=sm & lg_584=lg & x'=x & a'=a & x'!=null & v_bool_36_529' & x'!=null & v_bool_36_529' & v_587!=a' & 163::!(v_bool_41_525') & v_587!=a' & !(v_bool_41_525') & a'<=v_587 & 198::!(v_bool_60_524') & a'<=v_587 & !(v_bool_60_524') & sm_639=sm_583 & lg_640=pl_585 & sm_583<=pl_585 & sm_639<=s_657 & B(l_658,lg_640) & sm_639<=lg_640&{FLOW,(20,21)=__norm})
+ Label: [(149::,0 ); (149::,0 ); (144::,0 ); (144::,0 ); (141::,0 ); (141::,0
+          )]
+ State:p_615::bst<sm_610,pl_612>@M[Orig] * q_616::bst<qs_613,lg_611>@M[Orig] * x'::node2<v_614,p_615,q_616>@M[Orig]&pl_612<=v_614 & v_614<=qs_613 & sm_610=sm & lg_611=lg & a'=a & x!=null & v_bool_36_556' & x!=null & v_bool_36_556' & v_614=a' & v_bool_41_552' & v_614=a' & v_bool_41_552' & q_616=null & v_bool_43_550' & q_616=null & v_bool_43_550' & x'=p_615&{FLOW,(22,23)=__norm}[]
        es_infer_vars/rel: [B]
        es_var_measures: MayLoop
+;
+ Label: [(149::,1 ); (149::,1 ); (144::,0 ); (144::,0 ); (141::,0 ); (141::,0
+          )]
+ State:EXISTS(s1_636,xright_26': p_615::bst<sm_610,pl_612>@M[Orig] * xright_26'::bst<s1_636,b>@M[Orig][LHSCase] * x'::node2<tmp_23',p_615,xright_26'>@M[Orig]&pl_612<=v_614 & v_614<=qs_613 & sm_610=sm & lg_611=lg & x'=x & a'=a & x'!=null & v_bool_36_556' & x'!=null & v_bool_36_556' & v_614=a' & v_bool_41_552' & v_614=a' & v_bool_41_552' & q_616!=null & !(v_bool_43_550') & q_616!=null & !(v_bool_43_550') & s=qs_613 & b=lg_611 & qs_613<=lg_611 & s<=tmp_23' & tmp_23'<=s1_636 & s<=b&{FLOW,(22,23)=__norm})[]
+       es_infer_vars/rel: [B]
+       es_var_measures: MayLoop
+;
+ Label: [(145::,0 ); (145::,0 ); (144::,1 ); (144::,1 ); (141::,0 ); (141::,0
+          )]
+ State:EXISTS(s_650,l_651,xright_26': p_615::bst<sm_610,pl_612>@M[Orig] * xright_26'::bst<s_650,l_651>@M[Orig][LHSCase] * x'::node2<v_614,p_615,xright_26'>@M[Orig]&pl_612<=v_614 & v_614<=qs_613 & sm_610=sm & lg_611=lg & x'=x & a'=a & x'!=null & v_bool_36_556' & x'!=null & v_bool_36_556' & v_614!=a' & !(v_bool_41_552') & v_614!=a' & !(v_bool_41_552') & v_614<a' & v_bool_60_551' & v_614<a' & v_bool_60_551' & sm_643=qs_613 & lg_644=lg_611 & qs_613<=lg_611 & sm_643<=s_650 & B(l_651,lg_644)&{FLOW,(22,23)=__norm})[]
+       es_infer_vars/rel: [B]
+       es_var_measures: MayLoop
+;
+ Label: [(145::,1 ); (145::,1 ); (144::,1 ); (144::,1 ); (141::,0 ); (141::,0
+          )]
+ State:EXISTS(s_659,l_660,xleft_25': q_616::bst<qs_613,lg_611>@M[Orig] * xleft_25'::bst<s_659,l_660>@M[Orig][LHSCase] * x'::node2<v_614,xleft_25',q_616>@M[Orig]&pl_612<=v_614 & v_614<=qs_613 & sm_610=sm & lg_611=lg & x'=x & a'=a & x'!=null & v_bool_36_556' & x'!=null & v_bool_36_556' & v_614!=a' & !(v_bool_41_552') & v_614!=a' & !(v_bool_41_552') & a'<=v_614 & !(v_bool_60_551') & a'<=v_614 & !(v_bool_60_551') & sm_652=sm_610 & lg_653=pl_612 & sm_610<=pl_612 & sm_652<=s_659 & B(l_660,lg_653)&{FLOW,(22,23)=__norm})[]
+       es_infer_vars/rel: [B]
+       es_var_measures: MayLoop
+
  ]
 
-INF-POST-FLAG: false
-REL :  B(l,lg)
-POST:  lg>=l
-PRE :  true
-OLD SPECS:  EInfer [B]
-   EBase exists (Expl)(Impl)[sm; lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
-         {FLOW,(20,21)=__norm}
-           EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                   EAssume 2::ref [x]
-                     EXISTS(s,l: x'::bst<s,l>@M[Orig][LHSCase]&sm<=s & 
-                     B(l,lg)&{FLOW,(20,21)=__norm})
-NEW SPECS:  EBase exists (Expl)(Impl)[sm; lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
-       {FLOW,(20,21)=__norm}
-         EBase true&MayLoop&{FLOW,(1,23)=__flow}
-                 EAssume 2::ref [x]
-                   x'::bst<s,l>@M[Orig][LHSCase]&sm<=s & B(l,lg) & sm<=lg&
-                   {FLOW,(20,21)=__norm}
-NEW RELS: [ (l<=lg) --> B(l,lg), (l<=lg) --> B(l,lg), (l<=lg) --> B(l,lg), (l<=lg) --> B(l,lg), (l<=lg) --> B(l,lg), (l=lg) --> B(l,lg), (l<=lg) --> B(l,lg), (l=lg) --> B(l,lg), (lg_620=lg & l=l_892 & B(l_892,lg_620)) --> B(l,lg), (l=lg & l_954<=lg_640 & lg_640<=lg & B(l_954,lg_640)) --> B(l,lg), (l=lg) --> B(l,lg)]
-
+!!! REL :  B(l,lg)
+!!! POST:  lg>=l
+!!! PRE :  true
+!!! OLD SPECS: ((None,[]),EInfer [B]
+              EBase exists (Expl)(Impl)[sm; 
+                    lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
+                    {FLOW,(22,23)=__norm}[]
+                      EBase emp&MayLoop&{FLOW,(1,25)=__flow}[]
+                              EAssume 72::ref [x]
+                                EXISTS(s,l: x'::bst<s,l>@M[Orig][LHSCase]&
+                                sm<=s & B(l,lg)&{FLOW,(22,23)=__norm})[])
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[sm; 
+                  lg](ex)x::bst<sm,lg>@M[Orig][LHSCase]&true&
+                  {FLOW,(22,23)=__norm}[]
+                    EBase emp&MayLoop&{FLOW,(1,25)=__flow}[]
+                            EAssume 72::ref [x]
+                              EXISTS(s,l: x'::bst<s,l>@M[Orig][LHSCase]&
+                              sm<=s & lg>=l&{FLOW,(22,23)=__norm})[])
+!!! NEW RELS:[ (l<=lg) --> B(l,lg),
+ (lg=lg_644 & l_797=l & B(l_797,lg_644)) --> B(l,lg),
+ (lg=l & lg_653<=l & B(l_830,lg_653)) --> B(l,lg),
+ (lg=l) --> B(l,lg)]
+!!! NEW ASSUME:[ RELASS [B]: ( B(l_830,lg_653)) -->  l_830<=lg_653]
+!!! NEW RANK:[]
 Procedure delete$node2~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 554 invocations 
+Stop Omega... 243 invocations 
 0 false contexts at: ()
 
-Total verification time: 2.83 second(s)
-	Time spent in main process: 1.47 second(s)
-	Time spent in child processes: 1.36 second(s)
+Total verification time: 1.66 second(s)
+	Time spent in main process: 0.81 second(s)
+	Time spent in child processes: 0.85 second(s)

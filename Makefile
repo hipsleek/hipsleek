@@ -1,18 +1,22 @@
 OCAMLBUILD = ocamlbuild
 
-# number of parallel jobs, 0 means unlimited.
+#  number of parallel jobs, 0 means unlimited.
 JOBS = 0
 
 # dynlink should precede camlp4lib
-LIBS = unix,str,graph,xml-light,dynlink,camlp4lib
+LIBSB = unix,str,graph,xml-light,dynlink,camlp4lib,nums,site-lib/batteries/batteries,site-lib/extlib/extLib
+LIBSN = unix,str,graph,xml-light,dynlink,camlp4lib,nums,site-lib/batteries/batteries,site-lib/extlib/extLib
+#,z3
 LIBS2 = unix,str,graph,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
-INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4
+INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,$(CURDIR)/cil/obj/x86_LINUX,-I,+big_int,-I,+lablgtk2,-I,+camlp4,-I,+site-lib/batteries,-I,+site-lib/extlib
 
-FLAGS = $(INCLUDES),-g,-annot
+FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
+# ,-cclib,-lz3stubs,-cclib,-lz3,/usr/local/lib/ocaml/libcamlidl.a
 
 # -no-hygiene flag to disable "hygiene" rules
-OB_FLAGS = -no-links -libs $(LIBS) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) 
+OBB_FLAGS = -no-links -libs $(LIBSB) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
+OBN_FLAGS = -no-links -libs $(LIBSN) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
 
 OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) 
 
@@ -20,7 +24,8 @@ XML = cd $(CURDIR)/xml; make all; make opt; cd ..
 
 all: byte decidez.vo
 #gui
-byte: sleek.byte hip.byte
+byte: hip.byte sleek.byte
+#byte: sleek.byte hip.byte test_cilparser.byte
 native: hip.native sleek.native
 gui: ghip.native gsleek.native
 byte-gui: ghip.byte gsleek.byte
@@ -36,25 +41,29 @@ xml/xml-light.cma:
 	$(XML)
 
 hip.byte: xml
-	@ocamlbuild $(OB_FLAGS) main.byte
+	@ocamlbuild $(OBB_FLAGS) main.byte
 	cp -u _build/main.byte hip
 	cp -u _build/main.byte b-hip
 
 hip.native: xml
-	@ocamlbuild $(OB_FLAGS) main.native
+	@ocamlbuild $(OBN_FLAGS) main.native
 	cp -u _build/main.native hip
 	cp -u _build/main.native n-hip
 
 sleek.byte: xml
-	@ocamlbuild $(OB_FLAGS) sleek.byte
+	@ocamlbuild $(OBB_FLAGS) sleek.byte
 	cp -u _build/sleek.byte sleek
 	cp -u _build/sleek.byte b-sleek
 
 sleek.native: xml
-	@ocamlbuild $(OB_FLAGS) sleek.native
+	@ocamlbuild $(OBN_FLAGS) sleek.native
 	cp -u _build/sleek.native sleek
 	cp -u _build/sleek.native n-sleek
 
+test_cilparser.byte: xml
+	@ocamlbuild $(OBB_FLAGS) test_cilparser.byte
+	cp -u _build/test_cilparser.byte test_cilparser
+	
 gsleek.byte: 
 	@ocamlbuild $(OBG_FLAGS) gsleek.byte
 	cp -u _build/gsleek.byte p-gsleek
@@ -87,3 +96,7 @@ install:
 	cp decidez.vo /usr/local/lib/decidez.vo
 	./hip --build-image true
 	cp MyImage /usr/local/lib/MyImage
+
+install-native: hip.native sleek.native
+	cp -u _build/main.native /usr/local/bin/hip
+	cp -u _build/sleek.native /usr/local/bin/sleek

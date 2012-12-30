@@ -1,0 +1,132 @@
+data node { int val ; node next }.
+data node2 { int val ; node next }.
+
+HeapPred ll(node x, int n).
+HeapPred rr(node x, int n).
+
+//(1)
+checkeq [x] x::node<a,null> -|- x::node<c,null> .
+// VALID --> [{a,c},{b,d}]
+
+//(2)
+checkeq [] x::node<a,null> -|- x::node<c,null> .
+// VALID --> !! [(flted_10_27, flted_10_33), (a, c), (x, x)]
+
+//(3)
+checkeq [] x::node<a,null> -|- y::node<c,null> .
+// VALID --> [(flted_13_38, flted_13_44), (a, c), (x, y)]
+
+//(4)
+checkeq [] x::node<a,_> * y::node<_,_> -|- y::node<c,_> * x::node<_,_>.
+// VALID --> !! [(Anon_12, Anon_14), (Anon_11, Anon_13), (y, x), (flted_16_54, flted_16_63), (a, c), (x, y)]
+
+//(5)
+checkeq [x] x::node<a,_> * y::node<_,_> -|- y::node<c,_> * x::node<_,_>.
+// VALID --> !! [(Anon_12, Anon_14), (Anon_11, Anon_13), (y, x), (flted_16_54, flted_16_63), (a, c), (x, y)]
+
+//(6)
+checkeq [] x::node<a,_> * y::node<_,_> -|-  x::node<_,_> * y::node<c,_>.
+// VALID --> !! [(Anon_12, Anon_14), (Anon_11, Anon_13), (y, x), (flted_16_54, flted_16_63), (a, c), (x, y)]
+
+//(7)
+checkeq [] x::node<a,_> * y::node<_,_> -|-  x::node<_,_> * y::node<c,_>.
+// VALID --> !! [(Anon_12, Anon_14), (Anon_11, Anon_13), (y, x), (flted_16_54, flted_16_63), (a, c), (x, y)]
+
+//(8)
+checkeq [] x::node<a,null> & a=2 -|- y::node<c,null> & c=2 .
+// VALID --> [(flted_13_38, flted_13_44), (a, c), (x, y)]
+
+//(9)
+checkeq [x] x::node<a,null> & a=2 -|- x::node<c,null> .
+/*
+!!! DIFF PART: [ emp]
+!!! DIFF PART: []
+Checkeq (9) : Fail.
+
+where are the equality [(a,c),..]
+can we also have pure constraint in the FMT difference portion
+*/
+
+//(10)
+checkeq [] x::node<a,null> & a>2 -|- y::node<c,null> & 3<=c .
+/*
+!!! DIFF PART: [ emp&2<a]
+!!! DIFF PART: [ emp&3<=c]
+Checkeq (9) : Fail.
+
+HARD : this requires semantic handling..
+*/
+
+//(11)
+checkeq [] x::node<a,null> & a=2 -|- y::node<c,null> & c=1+1 .
+/*
+!!! DIFF PART: [ emp&a=2]
+!!! DIFF PART: [ emp&c=1+1]
+Checkeq (12) : Fail.
+
+HARD : this requires semantic handling..
+*/
+
+//(12)
+checkeq [x] x::node<a,null> & a=2 -|- x::node<2,null> .
+/*
+!!! EQ. FMT: [[(flted_82_185, flted_82_193), (a, flted_82_194)]]
+!!! EQ. FMT: [[(flted_82_193, flted_82_185), (flted_82_194, a)]]
+Checkeq (12) : Valid.
+!!! [(flted_71_171, flted_71_179), (a, flted_71_180)]
+*/
+
+//(13)
+checkeq [x] x::node<a,null> & a=2 -|- x::node<b,null> & b=c & c=2 .
+/*
+!!! DIFF PART: [ emp&a=2]
+!!! Current EQ. FMT: [[(flted_80_186, flted_80_193), (a, b)]]
+!!! DIFF PART: [ emp&b=c & c=2]
+!!! Current EQ. FMT: [[(flted_80_193, flted_80_186), (b, a)]]
+Checkeq (13) : Fail.
+
+*/
+
+//(14)
+checkeq [] x::node<a,null> & a=2 -|- y::node<c,null> & c=3 .
+/*
+!!! DIFF PART: [ emp&a=2]
+!!! DIFF PART: [ emp&c=3]
+Checkeq (13) : Fail.
+
+ERROR : maybe can print EQ FMT so far..
+*/
+
+//(15)
+checkeq [x] x::node<a,null> * y::node<_,_> -|- x::node<c,null> .
+/*
+!!! DIFF PART: [ y::node<Anon_35,Anon_36>@M[Orig]]
+!!! EQ. FMT: [[(flted_57_164, flted_57_155), (c, a)]]
+*/
+
+
+//(16)
+checkeq [x] x::node<a,null> -|- y::node<c,null> .
+// VALID --> [(flted_13_38, flted_13_44), (a, c), (x, y)]
+
+checkeq [x] x::node<a,b> -|- y::node<c,d> .
+// FAIL
+
+checkeq [b] x::node<3,b> -|- y::node<3,d> .
+// VALID --> [{a,c},{b,d},{x,y}]
+
+
+
+//checkeq [] x::ll<a> -|- y::rr<b> .
+// VALID --> [{x,y},{a,b}]
+
+
+/*
+checkeq [] x::ll<a> -|- (exists b: y::rr<b>).
+// VALID --> [{x,y},{ll,rr}]
+
+checkeq [ll,rr] x::ll<a> -|- (exists b: y::rr<b>).
+// FAIL
+
+*/
+

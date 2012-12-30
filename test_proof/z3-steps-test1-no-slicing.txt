@@ -1,0 +1,114 @@
+NO SLICING
+==========
+assert x>2;
+assert y>=0;
+assert x1=x+1;
+assert y1=y+1;
+assert b = x1>3;
+ push;
+ assert b;
+ assert x2=x1-1;
+ assert y2=y1+1;
+  push;
+  assert !(x2=x & y2>1)
+  checksat;
+  pop
+ pop;
+ push;
+ assert !b
+ assert y2=2;
+  push;
+  assert !(x1=x & y2>1)
+  checksat;
+  pop
+ pop;
+
+
+SLICING
+=======
+push
+assert x>2;
+assert x1=x+1;
+assert b = x1>3;
+ push;
+ assert b;
+ checksat
+ assert x2=x1-1;
+  push;
+  assert !(x2=x)
+  checksat;
+  pop
+ pop;
+ push;
+ assert !b
+ checksat
+ pop;
+pop
+push
+assert y>=0;
+assert y1=y+1;
+ push;
+ assert y2=y1+1;
+ checksat
+  push;
+  assert !(y2>1)
+  checksat;
+  pop
+ pop;
+pop;
+
+==============================================
+
+
+
+
+--------------
+Prover: OMEGA CALCULATOR
+Type: Sat:  2<x & 0<=y & x'=1+x & y'=1+y & 3<x' & res 
+Time: 0.004001
+Result: true
+
+--------------
+id: 116
+Prover: OMEGA CALCULATOR
+Type: Sat:  2<x & 0<=y & x'=1+x & y'=1+y & x'<=3 & !res
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:8,Col:8) kind::IF...
+id: 117
+Prover: OMEGA CALCULATOR
+Type: Sat:  2<x & 0<=y & x'=1+x & y'=1+y & 3<x' & b_19' & 3<x' & b_19'
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:8,Col:8) kind::IF...
+id: 118
+Prover: OMEGA CALCULATOR
+Type: Sat:  2<x & 0<=y & x'=1+x & y'=1+y & 3<x' & b_19' & 3<x' & !(b_19')
+Time: 0.
+Result: false
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:11,Col:15) kind::POST
+Trace::[(c_id:153:,p_label: 83),(c_id:151:,p_label: 84),(c_id:148:,p_label: 0),(c_id:147:,p_label: 117),(c_id:146:,p_label: 83),(c_id:144:,p_label: 83),(c_id:72:,p_label: -1)]
+
+id: 121
+Prover: OMEGA CALCULATOR
+Type: Imply: ante: 2<x & 0<=y & 3<(1+x) & b_547 & 3<(1+x) & b_547 & x'+(1*1)=1+x & y'=1+1+y
+	     conseq:  x'=x
+Time: 0.
+Result: true
+
+--------------
+Proving Infor spec:(Line:3,Col:10) loc:(Line:11,Col:15) kind::POST
+Trace::[(c_id:153:,p_label: 83),(c_id:151:,p_label: 84),(c_id:148:,p_label: 0),(c_id:147:,p_label: 117),(c_id:146:,p_label: 83),(c_id:144:,p_label: 83),(c_id:72:,p_label: -1)]
+
+id: 122
+Prover: OMEGA CALCULATOR
+Type: Imply: ante: 2<x & 0<=y & 3<(1+x) & b_547 & 3<(1+x) & b_547 & x'+(1*1)=1+x & y'=1+1+y
+	     conseq:  1<y'
+Time: 0.
+Result: true
