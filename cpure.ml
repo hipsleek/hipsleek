@@ -8929,6 +8929,9 @@ let deep_split_disjuncts (f:formula) : formula list =
   let pr = !print_formula in
   Debug.no_1 "deep_split_disjuncts" pr (pr_list pr) deep_split_disjuncts f
 
+let deep_split_disjuncts (f:formula) : formula list =
+  Gen.Profiling.no_1 "INF-deep-split" deep_split_disjuncts f
+
 (* TODO WN : improve efficiency of distribute_disjuncts *)
 let split_disjunctions_deep (f:formula) : formula list =
   (* split_disjunctions(distribute_disjuncts f) *)

@@ -618,10 +618,8 @@ let substitute_inf (f: CP.formula) : CP.formula =
 let rec normalize_inf_formula_sat (f: CP.formula): CP.formula = 
   (*let pf = MCP.pure_of_mix f in*)
   if not (contains_inf f) then f else 
-  let pf_norm = normalize_inf_formula f in 
-  if contains_inf_eq pf_norm then 
-    let fs = substitute_inf pf_norm in
-    normalize_inf_formula fs
+  let pf_norm =  if contains_inf_eq f then 
+    normalize_inf_formula (substitute_inf f) 
         (*let f = (*MCP.mix_of_pure*) (convert_inf_to_var pf_norm) in 
           let x_sv = CP.SpecVar(Int,"x",Unprimed) in
           let x_var =  CP.Var(x_sv,no_pos) in
@@ -629,7 +627,7 @@ let rec normalize_inf_formula_sat (f: CP.formula): CP.formula =
           let x_f = CP.BForm((CP.Lte(x_var,inf_var,no_pos),None),None) in
           let inf_constr = CP.Forall(x_sv,x_f,None,no_pos) in
           let f = CP.And(f,inf_constr,no_pos) in f*)
-  else let f = (*MCP.mix_of_pure*) (convert_inf_to_var pf_norm) in f
+  else (*MCP.mix_of_pure*) (convert_inf_to_var (normalize_inf_formula f)) in pf_norm
   (*let _ = DD.vv_trace("Normalized: "^ (string_of_pure_formula pf_norm)) in*)
   
 let normalize_inf_formula_sat (f: CP.formula) : CP.formula = 
@@ -644,14 +642,14 @@ let normalize_inf_formula (f: CP.formula): CP.formula =
   
 let normalize_inf_formula_imply (ante: CP.formula) (conseq: CP.formula) : CP.formula * CP.formula = 
   if not (contains_inf ante) && not (contains_inf conseq) then ante,conseq else
-  let ante_norm = normalize_inf_formula (substitute_inf ante) in
-  let conseq_norm = normalize_inf_formula (substitute_inf conseq) in 
-  let new_c = (*if contains_inf_eq conseq_norm 
-  		then normalize_inf_formula (substitute_inf conseq_norm) 
-  		else convert_inf_to_var*) conseq_norm in
-  let new_a = (*if contains_inf_eq ante_norm 
-  		then normalize_inf_formula (substitute_inf ante_norm)
-  		else convert_inf_to_var *) ante_norm in
+  let ante_norm = if contains_inf_eq ante 
+  		then (normalize_inf_formula (substitute_inf ante))
+  		else  normalize_inf_formula ante in
+  let conseq_norm = if contains_inf_eq conseq
+  		then (normalize_inf_formula (substitute_inf conseq))
+  		else normalize_inf_formula conseq in
+  let new_a = convert_inf_to_var ante_norm in
+  let new_c = convert_inf_to_var conseq_norm in
   let atoc_sublist = find_inf_subs new_a in
   if List.length atoc_sublist == 1 
   then let _,subs_c = List.hd atoc_sublist in 
