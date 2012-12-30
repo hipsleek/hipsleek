@@ -114,13 +114,13 @@ and omega_of_b_formula b =
       let a2str = omega_of_exp a2 in
       let a3str = omega_of_exp a3 in
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ ") | ("
-        ^ a3str ^ " >= " ^ a2str ^ " & " ^ a1str ^ " = " ^ a3str ^ "))"
+        ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a3str ^ "))"
   | EqMin (a1, a2, a3, _) ->
       let a1str = omega_of_exp a1  in
       let a2str = omega_of_exp a2  in
       let a3str = omega_of_exp a3  in
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
-        ^ a3str ^ " >= " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
+        ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
   | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint")
   | RelForm _ -> illegal_format ("Omega.omega_of_exp: RelForm")
   | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
