@@ -32,7 +32,7 @@ sortD<v> == self=null
  or self::node<v, p> * p::sortD<v2> & v>=v2 & p!=null
 inv true;
 
-sortHO<v,R:(int,int)->bool> == self=null
+sortHO<v,R:relation(int,int)> == self=null
  or self::node<v,null> 
  or self::node<v, p> * p::sortHO<v2> & R(v,v2) & p!=null
 inv true;
