@@ -191,6 +191,19 @@ data bus_type {
     //  int (*remove)(struct device *dev);
 }
 
+data module {
+    module next;
+    char name;
+//  int gpl_compatible;
+//  struct symbol *unres;
+//  int seen;
+//  int skip;
+//  int has_init;
+//  int has_cleanup;
+//  struct buffer dev_table_buf;
+//  char         srcversion[25];
+}
+
 /* struct device_driver { */
 /*  const char *name; */
 /*  struct bus_type *bus; */
@@ -303,6 +316,76 @@ data pci_dev {
 //  struct bin_attribute *res_attr_wc[DEVICE_COUNT_RESOURCE];
 //  struct pci_vpd *vpd;
 }
+
+/* struct bus_type pci_bus_type = { */
+/*     .name       = "pci", */
+/* //  .match      = pci_bus_match, */
+/* //  .uevent     = pci_uevent, */
+/* //  .probe      = pci_device_probe, */
+/* //  .remove     = pci_device_remove, */
+/* //  .shutdown   = pci_device_shutdown, */
+/* //  .dev_attrs  = pci_dev_attrs, */
+/* //  .bus_attrs  = pci_bus_attrs, */
+/* //  .pm     = PCI_PM_OPS_PTR, */
+/* }; */
+
+global bus_type pci_bus_type;
+/* pci_bus_type.name       = "pci"; */
+
+data device {
+    device   parent;
+
+//  struct device_private   *p;
+//
+//  struct kobject kobj;
+//  const char      *init_name; /* initial name of the device */
+//  struct device_type  *type;
+//
+//  struct mutex        mutex;  /* mutex to synchronize calls to
+//                   * its driver.
+//                   */
+//
+//  struct bus_type *bus;       /* type of bus device is on */
+//  struct device_driver *driver;   /* which driver has allocated this
+//                     device */
+//  void        *platform_data; /* Platform specific data, device
+//                     core doesn't touch it */
+//  struct dev_pm_info  power;
+//
+//#ifdef CONFIG_NUMA
+//  int     numa_node;  /* NUMA node this device is close to */
+//#endif
+//  u64     *dma_mask;  /* dma mask (if dma'able device) */
+//  u64     coherent_dma_mask;/* Like dma_mask, but for
+//                       alloc_coherent mappings as
+//                       not all hardware supports
+//                       64 bit addresses for consistent
+//                       allocations such descriptors. */
+//
+//  struct device_dma_parameters *dma_parms;
+//
+//  struct list_head    dma_pools;  /* dma pools (if dma'ble) */
+//
+//  struct dma_coherent_mem *dma_mem; /* internal for coherent mem
+//                       override */
+//  /* arch specific additions */
+//  struct dev_archdata archdata;
+//#ifdef CONFIG_OF
+//  struct device_node  *of_node;
+//#endif
+//
+//  dev_t           devt;   /* dev_t, creates the sysfs "dev" */
+//
+//  spinlock_t      devres_lock;
+//  struct list_head    devres_head;
+//
+//  struct klist_node   knode_class;
+//  struct class        *class;
+//  const struct attribute_group **groups;  /* optional groups */
+//
+//  void    (*release)(struct device *dev);
+}
+
 /****************************************************************************/
 
 /**
@@ -366,6 +449,43 @@ int driver_attach(device_driver drv)
 {
     return 0;
 }
+
+void prefetch()
+  requires true
+  ensures true;
+{
+    return;
+}
+
+/**
+ * driver_register - register driver with bus
+ * @drv: driver to register
+ *
+ * We pass off most of the work to the bus_add_driver() call,
+ * since most of the things we have to do deal with the bus
+ * structures.
+ */
+int driver_register( device_driver drv )
+  requires drv::device_driver<n,b,o,m>
+  ensures drv::device_driver<n,b,o,m>;
+{
+    int a;
+    return a;
+}
+
+/**
+ * driver_unregister - remove driver from system.
+ * @drv: driver.
+ *
+ * Again, we pass off most of the work to the bus-level call.
+ */
+void driver_unregister(device_driver drv)
+  requires drv::device_driver<n,b,o,m>
+  ensures drv::device_driver<n,b,o,m>;
+{
+    return;
+}
+
 /****************************************************************************/
 
 /**
@@ -422,7 +542,7 @@ int pci_add_dynid(pci_driver drv, int vendor,
         int class_, int class_mask, int driver_data)
   requires drv::pci_driver<node1,_,_,d,dy> * dy::pci_dynids<head1> 
             * prev::list_head<head1,_> * head1::dll<prev>
-            * node1::list_head<_,_> * d::device_driver<_,_>
+  * node1::list_head<_,_> * d::device_driver<_,_,_,_>
   ensures true;
  {
     pci_dynid dynid;
@@ -494,7 +614,7 @@ void pci_free_dynids_loop(pci_driver drv, ref pci_dynid dynid, ref pci_dynid n)
 void pci_free_dynids(pci_driver drv)
   requires drv::pci_driver<node1,_,_,d,dy> * dy::pci_dynids<head1> 
             * prev::list_head<head1,_> * head1::dll<prev>
-            * node1::list_head<_,_> * d::device_driver<_,_>
+  * node1::list_head<_,_> * d::device_driver<_,_,_,_>
   ensures true;
 {
     pci_dynid dynid, n;
@@ -663,18 +783,54 @@ pci_match_one_device( pci_device_id id, pci_dev dev)
 /*     return NULL; */
 /* } */
 
-/* pci_device_id pci_match_id(pci_device_id ids, */
-/*                       pci_dev dev) */
-/* { */
-/*     if (ids!=null) { */
-/*         while (ids.vendor!=0 || ids.subvendor!=0 || ids.class_mask!=0) { */
-/*             if (pci_match_one_device(ids, dev) !=null) */
-/*                 return ids; */
-/*             ids++; */
-/*         } */
-/*     } */
-/*     return null; */
-/* } */
+//ids: list of id
+pci_device_id pci_match_id(pci_device_id ids,
+                      pci_dev dev)
+  requires ids::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> *
+      dev::pci_dev<v2,d2,subv2,subd2,cl2>
+   ensures true;
+{
+    if (ids!=null) {
+        while (ids.vendor!=0 || ids.subvendor!=0 || ids.class_mask!=0) {
+            if (pci_match_one_device(ids, dev) !=null)
+                return ids;
+            ids++;
+        }
+    }
+    return null;
+}
+
+/**
+ * pci_match_device - Tell if a PCI device structure has a matching PCI device id structure
+ * @drv: the PCI driver to match against
+ * @dev: the PCI device structure to match against
+ *
+ * Used by a driver to check whether a PCI device present in the
+ * system is in its list of supported devices.  Returns the matching
+ * pci_device_id structure or %NULL if there is no match.
+ */
+ pci_device_id pci_match_device(pci_driver drv,
+                             pci_dev dev)
+   requires drv::pci_driver<no,na,id,d,dy> * id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> *
+      dev::pci_dev<v2,d2,subv2,subd2,cl2>
+   ensures true;
+{
+    pci_dynid dynid;
+
+    /* Look at the dynamic ids first, before the static ones */
+    dynid = cast_to_pci_dynid1 (drv.dynids.list.next);
+    while (true) {
+      //prefetch((void *) dynid->node.next);
+        if (dynid.node == (drv.dynids.list)){
+            break;
+        }
+        if (pci_match_one_device(dynid.id, dev) != null) {
+            return dynid.id;
+        }
+        dynid = cast_to_pci_dynid1( dynid.node.next);
+    }
+    return pci_match_id(drv.id_table, dev);
+}
 
 
 int pci_create_newid_file(pci_driver drv)
@@ -694,7 +850,9 @@ int pci_create_removeid_file(pci_driver drv)
 void pci_remove_newid_file(pci_driver drv)
   requires true
   ensures true;
-{}
+{
+  return;
+}
 
 /**
  * __pci_register_driver - register a new pci driver
@@ -742,19 +900,18 @@ void pci_remove_newid_file(pci_driver drv)
 /*     driver_unregister(&drv->driver); */
 /*     goto out; */
 /* } */
-// module + pci_bus_type
 int __pci_register_driver(pci_driver drv, module owner,
               char mod_name)
   requires drv::pci_driver<node1,_,_,d,dy> * dy::pci_dynids<head1> 
             * prev::list_head<head1,_> * head1::dll<prev>
-            * node1::list_head<_,_> * d::device_driver<_,_>
+  * node1::list_head<_,_> * d::device_driver<_,_,_,_>
   ensures true;
 {
     int error;
 
     /* initialize common driver fields */
     drv.driver.name = drv.name;
-    drv.driver.bus = &pci_bus_type; //??
+    drv.driver.bus = pci_bus_type; //??
     drv.driver.owner = owner;
     drv.driver.mod_name = mod_name;
 
@@ -772,7 +929,7 @@ int __pci_register_driver(pci_driver drv, module owner,
     }
 
     error = pci_create_removeid_file(drv);
-    if (error)  {
+    if (error !=0)  {
        pci_remove_newid_file(drv);
        driver_unregister(drv.driver);
        return error;
@@ -783,7 +940,9 @@ int __pci_register_driver(pci_driver drv, module owner,
 void pci_remove_removeid_file(pci_driver drv)
   requires true
   ensures true;
-{}
+{
+  return;
+}
 
 /**
  * pci_unregister_driver - unregister a pci driver
@@ -806,12 +965,12 @@ void
 pci_unregister_driver(pci_driver drv)
   requires drv::pci_driver<node1,_,_,d,dy> * dy::pci_dynids<head1> 
             * prev::list_head<head1,_> * head1::dll<prev>
-            * node1::list_head<_,_> * d::device_driver<_,_>
+  * node1::list_head<_,_> * d::device_driver<_,_,_,_>
   ensures true;
 {
     pci_remove_removeid_file(drv);
     pci_remove_newid_file(drv);
-    driver_unregister(&drv->driver);
+    driver_unregister(drv.driver);
     pci_free_dynids(drv);
 }
 
@@ -836,15 +995,25 @@ pci_unregister_driver(pci_driver drv)
 
 /*     return 0; */
 /* } */
-// miss: device. 
+
+pci_dev to_pci_dev(device dev)
+  requires dev::device<_>
+  ensures res::pci_dev<_,_,_,_,_>;
+
+pci_driver to_pci_driver(device_driver drv)
+  requires drv::device_driver<_,_,_,_>
+  ensures res::pci_driver<_,_,_,_,_>;
+
 int pci_bus_match(device dev, device_driver drv)
+  requires drv::device_driver<_,_,_,_> * dev::device<_>
+  ensures true;
 {
-    pci_dev pci_dev = (struct pci_dev *) dev;
-    pci_driver pci_drv = (struct pci_driver *) drv;
+  pci_dev pci_dev = to_pci_dev(dev);
+  pci_driver pci_drv = to_pci_driver(drv);
     pci_device_id found_id;
 
     found_id = pci_match_device(pci_drv, pci_dev);
-    if (found_id 1= null)
+    if (found_id != null)
         return 1;
 
     return 0;
