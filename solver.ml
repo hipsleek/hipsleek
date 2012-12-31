@@ -2505,8 +2505,7 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate (fold_rs0:lis
 	      Debug.devel_zprint (lazy ("process_fold_result: new_conseq:\n"^ (Cprinter.string_of_formula new_conseq))) pos;
           (* WN : we need to restore es_infer_vars here *)
           let new_ctx = Inf.restore_infer_vars_ctx ivars ivars_rel new_ctx in
-	      (* let rest_rs, prf = heap_entail_one_context prog is_folding new_ctx new_conseq None None None pos (\*CHECKCHECK*\) *)
-	      let rest_rs, prf = heap_entail_one_context 1 prog is_folding new_ctx new_conseq None None None pos (*CHECKCHECK*) in
+	      let rest_rs, prf = heap_entail_one_context 1 prog is_folding new_ctx new_conseq None None None pos in
 	      Debug.devel_zprint (lazy ("process_fold_result: context at end fold: "^ (Cprinter.string_of_spec_var p2) ^ "\n"^ (Cprinter.string_of_list_context rest_rs))) pos;
           let r = add_to_aux_conseq rest_rs to_conseq pos in
 	      (r, prf) in
@@ -2659,7 +2658,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
     | Base ({ formula_base_heap = h;
       formula_base_pure = p;
       formula_base_pos = pos}) ->
-            let p = MCP.translate_level_mix_formula p in (*CHECKCHECK*)
+        let p = MCP.translate_level_mix_formula p in
 	    let ph,_,_ = xpure_heap 1 prog h p 1 in
 	    let npf = MCP.merge_mems p ph true in
 	    not (TP.is_sat_mix_sub_no npf sat_subno true true)
@@ -2667,10 +2666,10 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
       formula_exists_heap = qh;
       formula_exists_pure = qp;
       formula_exists_pos = pos}) ->
-            let qp = MCP.translate_level_mix_formula qp in
-			let ph,_,_ = xpure_heap 1 prog qh qp 1 in
-	      let npf = MCP.merge_mems qp ph true in
-	      not (TP.is_sat_mix_sub_no npf sat_subno true true)
+        let qp = MCP.translate_level_mix_formula qp in
+		let ph,_,_ = xpure_heap 1 prog qh qp 1 in
+	    let npf = MCP.merge_mems qp ph true in
+	    not (TP.is_sat_mix_sub_no npf sat_subno true true)
 
 and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool = 
   (*unsat_base_x prog sat_subno f*)
@@ -4691,7 +4690,7 @@ and heap_entail_split_lhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx0 
 		              else
 			            (* else drop the read phase (don't add back the frame) *)
                         let p1 = MCP.mkMTrue no_pos in (*TO CHECK: what is p1 ???*)
-			            let xpure_rd_0, _, memset_rd = xpure_heap 2 prog h1 p1 0 in (*CHECKCHECK*)
+			            let xpure_rd_0, _, memset_rd = xpure_heap 2 prog h1 p1 0 in (*TO CHECK*)
 			            let xpure_rd_1, _, memset_rd = xpure_heap 3 prog h1 p1 1 in
 			            (* add the pure info for the dropped reading phase *)
 			            List.map 
@@ -9427,7 +9426,7 @@ let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding :
 	Cprinter.string_of_list_failesc_context
 	Cprinter.string_of_struc_formula
 	(fun (cl, _) -> Cprinter.string_of_list_failesc_context cl)
-	(fun _ _ -> heap_entail_struc_list_failesc_context_init prog is_folding has_post cl conseq tid delayed_f join_id pos pid) cl conseq (*CHECKCHECK*)
+	(fun _ _ -> heap_entail_struc_list_failesc_context_init prog is_folding has_post cl conseq tid delayed_f join_id pos pid) cl conseq
 
 let heap_entail_list_partial_context_init_x (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
         (conseq:formula) (tid: CP.spec_var option) (delayed_f: MCP.mix_formula option) (join_id: CP.spec_var option) pos (pid:control_path_id) : (list_partial_context * proof) = 

@@ -911,7 +911,7 @@ and bfv (bf : b_formula) =
           let vid = r in
 	  vid::remove_dups_svl (List.fold_left List.append [] (List.map afv args))
 	      (* An Hoa *)
-    | VarPerm (t,ls,_) -> ls (*CHECKCHECK*)
+    | VarPerm (t,ls,_) -> ls
     | LexVar l_info ->
           List.concat (List.map afv (l_info.lex_exp @ l_info.lex_tmp))
 
@@ -3751,12 +3751,9 @@ and elim_exists_with_ineq (f0: formula): formula =
     | BForm _ -> f0
     | AndList b-> AndList (map_l_snd elim_exists_with_ineq b)
 
-(*CHECKCHECK: may be duplicated*)
 and elim_exists (f0 : formula) : formula =
   let pr = !print_formula in
   Debug.no_1 "elim_exists" pr pr elim_exists_x f0
-
-
 
 (* eliminate exists with the help of v=exp *)
 and elim_exists_x (f0 : formula) : formula = 
@@ -3786,7 +3783,7 @@ and elim_exists_x (f0 : formula) : formula =
 	          let st, pp1 = get_subst_equation_formula with_qvars qvar false in
 	          if not (Gen.is_empty st) then
 	            let new_qf = subst_term st pp1 in
-		    let new_qf = prune_perm_bounds new_qf in
+		        let new_qf = prune_perm_bounds new_qf in
 	            let new_qf = mkExists qvars0 new_qf lbl pos in
 	            let tmp3 = helper new_qf in
 	            let tmp4 = mkAnd no_qvars tmp3 pos in
@@ -7242,118 +7239,6 @@ and has_level_constraint (f: formula) : bool =
   Debug.no_1 "has_level_constraint"
       !print_formula string_of_bool
       has_level_constraint_x f
-
-(*CHECKCHECK: may be duplicated*)
-and elim_exists (f0 : formula) : formula =
-  let pr = !print_formula in
-  Debug.no_1 "elim_exists" pr pr elim_exists_x f0
-
-(*
-TODO: this formula
-ex v1: sst & ( sth | ex v2: v2 = v1 & v2 in LS)
-is wrongly translated to
-ex v1: sst & ( sth | v2 in LS)
-
-It SHOULD BE
-ex v1: sst & ( sth | v1 in LS)
-
-*)
-(* eliminate exists with the help of v=exp *)
-and elim_exists_x (f0 : formula) : formula = 
-  let rec helper f0 =
-    match f0 with
-      | Exists (qvar, qf, lbl, pos) -> begin
-	      match qf with
-	        | Or (qf1, qf2, lbl2, qpos) ->
-	              let new_qf1 = mkExists [qvar] qf1 lbl qpos in
-	              let new_qf2 = mkExists [qvar] qf2 lbl qpos in
-	              let eqf1 = helper new_qf1 in
-	              let eqf2 = helper new_qf2 in
-	              let res = mkOr eqf1 eqf2 lbl2 pos in
-	              res
-	        | _ ->
-	              let qf = helper qf in
-	              let qvars0, bare_f = split_ex_quantifiers qf in
-	              let qvars = qvar :: qvars0 in
-	              let conjs = list_of_conjs bare_f in
-	              let no_qvars_list, with_qvars_list = List.partition
-	                (fun cj -> disjoint qvars (fv cj)) conjs in
-	              (* the part that does not contain the quantified var *)
-	              let no_qvars = conj_of_list no_qvars_list pos in
-	              (* now eliminate the quantified variables from the part that contains it *)
-	              let with_qvars = conj_of_list with_qvars_list pos in
-	              (* now eliminate the top existential variable. *)
-	              let st, pp1 = get_subst_equation_formula with_qvars qvar false in
-	              if not (Gen.is_empty st) then
-	                let new_qf = subst_term st pp1 in
-	                let new_qf = mkExists qvars0 new_qf lbl pos in
-	                let tmp3 = helper new_qf in
-	                let tmp4 = mkAnd no_qvars tmp3 pos in
-	                tmp4
-	              else (* if qvar is not equated to any variables, try the next one *)
-	                let tmp1 = qf (*helper qf*) in
-	                let tmp2 = mkExists(*_with_simpl simpl*) [qvar] tmp1 lbl pos in
-	                tmp2
-        end
-      | And (f1, f2, pos) -> mkAnd ( helper f1) ( helper f2) pos 
-	  | AndList b -> AndList (map_l_snd helper b)
-      | Or (f1, f2, lbl, pos) -> mkOr ( helper f1) ( helper f2) lbl pos 
-      | Not (f1, lbl, pos) -> mkNot (helper f1) lbl pos 
-      | Forall (qvar, qf, lbl, pos) -> mkForall [qvar] (helper qf) lbl pos 
-      | BForm _ -> f0 in
-  helper f0
-
-(*
-and elim_exists (f0 : formula) : formula = 
-  Debug.no_1 "[cpure]elim_exists" !print_formula !print_formula elim_exists_x f0
-*)
-
-(*CHECKCHECK: may be duplicated*)
-(* eliminate exists with the help of c1<=v<=c2 *)
-and elim_exists_with_ineq (f0: formula): formula =
-  match f0 with
-    | Exists (qvar, qf,lbl, pos) ->
-          begin
-            match qf with
-              | Or (qf1, qf2,lbl2, qpos) ->
-                    let new_qf1 = mkExists [qvar] qf1 lbl qpos in
-                    let new_qf2 = mkExists [qvar] qf2 lbl qpos in
-                    let eqf1 = elim_exists_with_ineq new_qf1 in
-                    let eqf2 = elim_exists_with_ineq new_qf2 in
-                    let res = mkOr eqf1 eqf2 lbl2 pos in
-                    res
-              | _ ->
-                    let eqqf = elim_exists qf in
-                    let min, max = find_bound qvar eqqf in
-                    begin
-                      match min, max with
-                        | Some mi, Some ma -> 
-                              let res = ref (mkFalse pos) in
-                              begin
-                                for i = mi to ma do
-                                  res := mkOr !res (apply_one_term (qvar, IConst (i, pos)) eqqf) lbl pos
-                                done;
-                                !res
-                              end
-                        | _ -> f0
-                    end
-          end
-    | And (f1, f2, pos) ->
-          let ef1 = elim_exists_with_ineq f1 in
-          let ef2 = elim_exists_with_ineq f2 in
-          mkAnd ef1 ef2 pos
-    | Or (f1, f2, lbl, pos) ->
-          let ef1 = elim_exists_with_ineq f1 in
-          let ef2 = elim_exists_with_ineq f2 in
-          mkOr ef1 ef2 lbl pos
-    | Not (f1, lbl, pos) ->
-          let ef1 = elim_exists_with_ineq f1 in
-          mkNot ef1 lbl pos
-    | Forall (qvar, qf, lbl, pos) ->
-          let eqf = elim_exists_with_ineq qf in
-          mkForall [qvar] eqf lbl pos
-    | BForm _ -> f0
-	| AndList b-> AndList (map_l_snd elim_exists_with_ineq b)
 
 (* result of xpure with baga and memset/diffset *)
 type xp_res_type = (BagaSV.baga * DisjSetSV.dpart * formula)

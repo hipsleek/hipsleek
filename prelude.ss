@@ -97,10 +97,6 @@ bool eq___(int a, int b)
     a = b -> ensures res;
     a != b -> ensures !res;}
 
-bool eq___(bool a, bool b) 
-  case {
-    a = b -> ensures res;
-    a != b -> ensures !res;}
 /*
 bool eq___(float a, float b) 
   case {
@@ -305,11 +301,11 @@ data int_ptr_ptr{
 }
 
 void delete_ptr(ref int_ptr x)
-  requires x::int_ptr<>
+  requires x::int_ptr<v>
   ensures true;
 
 void delete_ptr(ref int_ptr_ptr x)
-  requires x::int_ptr_ptr<>
+  requires x::int_ptr_ptr<v>
   ensures true;
 
 /* ********<<<*************/

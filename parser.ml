@@ -1082,7 +1082,8 @@ pure_constr:
   [[ peek_pure_out; t= cexp_w ->
        match t with
        | Pure_f f -> f
-       | Pure_c (P.Ann_Exp (P.Var (v,_), Bool)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None) (*CHECKCHECK*)
+       | Pure_c (P.Var (v,_)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
+       | Pure_c (P.Ann_Exp (P.Var (v,_), Bool)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None)
        | _ -> report_error (get_pos_camlp4 _loc 1) "expected pure_constr, found cexp"
   ]];
 
@@ -2370,8 +2371,6 @@ primary_expression_no_array_no_parenthesis :
            exp_member_fields = [id];
            exp_member_path_id = None ;
            exp_member_pos = get_pos_camlp4 _loc 3 }
-  (* | t = invocation_expression -> t *)
-  | peek_invocation; t = invocation_expression -> t
   | t = new_expression -> t
   | peek_invocation; t = invocation_expression -> t
   | `THIS _ -> This{exp_this_pos = get_pos_camlp4 _loc 1} 

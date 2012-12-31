@@ -271,7 +271,7 @@ and modifies (e:exp) (bvars:ident list) : (ident list) * (ident list) =
           let fvars3 =
             (match w.exp_while_wrappings with
               | None -> []
-              | Some (e0,id) -> (*CHECKCHECK: what is id ??? *)
+              | Some (e0,id) -> (*TO CHECK: what is id ??? *)
                   let _,vs =  (helper e0 bvars) in
                   vs
             )
@@ -458,7 +458,7 @@ let subst_exp_x (e:exp) (subst:(ident*ident) list): exp =
           let wrap =
             (match w.exp_while_wrappings with
               | None -> None
-              | Some (e0,id) -> (*CHECKCHECK: what is id ?*)
+              | Some (e0,id) -> (*TO CHECK: what is id ?*)
                   let e1 = helper e0 subst in
                   Some (e1,id)
             )
