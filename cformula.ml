@@ -2925,7 +2925,7 @@ and elim_exists_preserve (f0 : formula) rvars : formula = match f0 with
         r
   | Exists _ -> report_error no_pos ("Solver.elim_exists: Exists with an empty list of quantified variables")
 
-and elim_exists_es_his (f0 : formula) (his:h_formula list) : formula*h_formula list =
+and elim_exists_es_his_x (f0 : formula) (his:h_formula list) : formula*h_formula list =
   let rec helper f0 hfs=
     match f0 with
       | Or ({ formula_or_f1 = f1;
@@ -2961,6 +2961,13 @@ and elim_exists_es_his (f0 : formula) (his:h_formula list) : formula*h_formula l
   in
   helper f0 his
 
+and elim_exists_es_his (f0 : formula) (his:h_formula list) : formula*h_formula list =
+  let pr1 = pr_list !print_h_formula in
+  let pr_out = (pr_pair !print_formula pr1) in
+  Debug.no_2 "elim_exists_es_his"
+      !print_formula pr1 pr_out
+      elim_exists_es_his_x f0 his
+  
 and formula_of_disjuncts (f:formula list) : formula=
   match f with
     | [] -> (mkTrue (mkTrueFlow()) no_pos)
@@ -9964,6 +9971,12 @@ let collect_heap_args_formula_x (f:formula) (sv:CP.spec_var) : (CP.spec_var list
   | Exists ({formula_exists_heap = h;
            formula_exists_pure = p;}) ->
       let heaps = split_star_conjunctions h in
+      let heaps = List.filter (fun h ->
+          match h with
+            | HEmp
+            | HTrue -> false
+            | _ -> true) heaps
+      in
       let vars = MCP.find_closure_mix_formula sv p in
       let args_list = List.map (fun h ->
           let c = get_node_var h in
@@ -10044,6 +10057,7 @@ let collect_heap_args_list_failesc_context (ctx:list_failesc_context) (sv:CP.spe
     in
   (*any of them*)
     List.hd args_list
+
 let mkViewNode view_node view_name view_args pos = ViewNode
   { h_formula_view_node = view_node;
   h_formula_view_name = view_name;

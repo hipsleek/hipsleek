@@ -729,7 +729,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
   helper ctx spec 
 
 (*we infer automatically from ctx*)
-and infer_lock_invariant lock_var ctx pos =
+and infer_lock_invariant_x lock_var ctx pos =
   try 
       let found_args,found_name = CF.collect_heap_args_list_failesc_context ctx lock_var in
       let found_arg_names = List.map (fun v -> CP.name_of_spec_var v) found_args in
@@ -741,6 +741,11 @@ and infer_lock_invariant lock_var ctx pos =
         (found_name,found_arg_names)
   with _ -> report_error pos ("Scall : could not find heap node for lock " ^ (Cprinter.string_of_spec_var lock_var))
 
+and infer_lock_invariant lock_var ctx pos =
+  let pr_out = pr_pair Cprinter.string_of_ident (pr_list Cprinter.string_of_ident) in
+  Debug.no_2 "infer_lock_invariant"
+      Cprinter.string_of_spec_var Cprinter.string_of_list_failesc_context pr_out
+      (fun _ _ -> infer_lock_invariant_x lock_var ctx pos) lock_var ctx
 (*
    Important arugments:
    ctx,e0 : current ctx and exp
@@ -2103,6 +2108,10 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
 		        (* fsvars are the spec vars corresponding to the parameters *)
 		        let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
                 let pf = (CF.no_change fsvars proc.proc_loc) in (*init(V) := v'=v*)
+                (* let pf = if (!Globals.allow_locklevel) then  *)
+                (*       CP.translate_level_eqn_pure pf (\*l'=l ==> level(l')=level(l)*\) *)
+                (*     else pf *)
+                (* in *)
 			    let nox = CF.formula_of_pure_N  pf proc.proc_loc in 
 		        let init_form = nox in
 		        let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled  proc.proc_loc in

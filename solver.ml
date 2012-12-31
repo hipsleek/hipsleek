@@ -753,6 +753,13 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
   if (not (CF.is_complex_heap h)) then MCP.mkMTrue no_pos else
   let f = MCP.pure_of_mix p in
   let heaps = split_star_conjunctions h in
+  (*remove HTrue nodes*)
+  let heaps = List.filter (fun h ->
+      match h with
+        | HEmp
+        | HTrue -> false
+        | _ -> true) heaps
+  in
   (*group nodes with equal names into a partition*)
   let rec fct heaps p =
     match heaps with
@@ -2594,10 +2601,11 @@ and elim_exists_pure_branch_x (w : CP.spec_var list) (f0 : CP.formula) pos : CP.
 (* --- added 11.05.2008 *)
 and entail_state_elim_exists es = 
   (* let f_prim = elim_exists es.es_formula in *)
+  let _ = print_string("[solver.ml, elim_exists_ctx]: Formula before elim_exists_es_his" ^ Cprinter.string_of_formula es.es_formula ^ "\n") in
   let f_prim,new_his = elim_exists_es_his es.es_formula es.es_history in
   (* 05.06.08 *)
   (* we also try to eliminate exist vars for which a find a substitution of the form v = exp from the pure part *)
-  (*let _ = print_string("[solver.ml, elim_exists_ctx]: Formula before exp exist elim: " ^ Cprinter.string_of_formula f_prim ^ "\n") in*)
+  let _ = print_string("[solver.ml, elim_exists_ctx]: Formula before exp exist elim: " ^ Cprinter.string_of_formula f_prim ^ "\n") in
   let f = elim_exists_exp f_prim in
   let qvar, base = CF.split_quantifiers f in
   let h, p, fl, t, a = CF.split_components base in

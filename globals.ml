@@ -714,7 +714,7 @@ let print_version_flag = ref false
 
 let elim_exists_flag = ref true
 
-let filtering_flag = ref false
+let filtering_flag = ref true
 
 let split_rhs_flag = ref true
 
@@ -770,7 +770,7 @@ let print_input_all = ref false
 
 (* let allow_pred_spec = ref false *)
 
-let disable_failure_explaining = ref true
+let disable_failure_explaining = ref false
 
 let simplify_error = ref false
 
@@ -788,7 +788,7 @@ let enable_redundant_elim = ref false
 
 let enulalias = ref false
 
-let pass_global_by_value = ref true
+let pass_global_by_value = ref false
 
 let exhaust_match = ref false
 
