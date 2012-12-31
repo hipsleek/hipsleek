@@ -1580,9 +1580,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 else if (mn_str=Globals.acquire_name || mn_str=Globals.release_name || mn_str=Globals.finalize_name || mn_str=Globals.init_name) then
                   (*Lock operations: init/finalize/acquire/release*)
                   check_scall_lock_op prog ctx e0 post_start_label ret_t mn lock vs ir pid pos
-                      (*=========================*)
-                      (*===<<<<= CONCURRENCY=====*)
-                      (*=========================*)
+                (*=========================*)
+                (*===<<<<= CONCURRENCY=====*)
+                (*=========================*)
                 else
                   (*=========================*)
                   (*=== NORMAL METHOD CALL ==*)

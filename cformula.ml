@@ -6746,7 +6746,7 @@ and apply_one_exp_one_formula ((fr, t) as s : (CP.spec_var * CP.exp)) (f : one_f
   let ndf = MCP.memo_apply_one_exp (fr, t) df in
   let base = formula_of_one_formula f in
   let rs = apply_one_exp s base in (*TO CHECK: how about formula_thread*)
-  let one_f = (one_formula_of_formula rs f.formula_thread df) in
+  let one_f = (one_formula_of_formula rs f.formula_thread ndf) in
   {one_f with formula_ref_vars = f.formula_ref_vars}
 
 and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match f with
@@ -9384,30 +9384,30 @@ let prepost_of_acquire (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formu
       (fun _ _ _ _ -> prepost_of_acquire_x var sort args inv lbl pos) var sort args inv
 
 let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:formula) (lbl:formula_label) pos : struc_formula =
-  let fresh_perm_name = Cpure.fresh_old_name "f" in
-  let perm_t = cperm_typ () in
-  let fresh_perm =  Cpure.SpecVar (perm_t,fresh_perm_name, Unprimed) in (*LDK TO CHECK*)
-  let uargs = List.map CP.to_unprimed args in
-  let heap = ({  
-      h_formula_view_node = var; (*Have to reserve type of view_node to finalize*)
-      h_formula_view_name = sort; (*lock_sort*)
-      h_formula_view_derv = false;
-      h_formula_view_imm = ConstAnn(Mutable); 
-      h_formula_view_perm = Some fresh_perm;
-      h_formula_view_arguments = uargs;
-      h_formula_view_modes = []; (*???*)
-      h_formula_view_coercible = false; (*??*)
-      h_formula_view_origins = [];
-      h_formula_view_original = false;(*NOT ALLOW SPLIT lemmas in pre, but allow in post*)
-      h_formula_view_lhs_case = false;
-      h_formula_view_unfold_num = 0;
-      h_formula_view_remaining_branches = None;
-      h_formula_view_pruning_conditions = [];
-      h_formula_view_label = None;
-      h_formula_view_pos = pos })
-  in
-  let lock_node_post = ViewNode heap in (*not allow SPIT in POST*)
-  let lock_node_pre = ViewNode {heap with h_formula_view_original=true} in (*but allow SPLIT in PRE*)
+  (* let fresh_perm_name = Cpure.fresh_old_name "f" in *)
+  (* let perm_t = cperm_typ () in *)
+  (* let fresh_perm =  Cpure.SpecVar (perm_t,fresh_perm_name, Unprimed) in (\*LDK TO CHECK*\) *)
+  (* let uargs = List.map CP.to_unprimed args in *)
+  (* let heap = ({   *)
+  (*     h_formula_view_node = var; (\*Have to reserve type of view_node to finalize*\) *)
+  (*     h_formula_view_name = sort; (\*lock_sort*\) *)
+  (*     h_formula_view_derv = false; *)
+  (*     h_formula_view_imm = ConstAnn(Mutable);  *)
+  (*     h_formula_view_perm = Some fresh_perm; *)
+  (*     h_formula_view_arguments = uargs; *)
+  (*     h_formula_view_modes = []; (\*???*\) *)
+  (*     h_formula_view_coercible = false; (\*??*\) *)
+  (*     h_formula_view_origins = []; *)
+  (*     h_formula_view_original = false;(\*NOT ALLOW SPLIT lemmas in pre, but allow in post*\) *)
+  (*     h_formula_view_lhs_case = false; *)
+  (*     h_formula_view_unfold_num = 0; *)
+  (*     h_formula_view_remaining_branches = None; *)
+  (*     h_formula_view_pruning_conditions = []; *)
+  (*     h_formula_view_label = None; *)
+  (*     h_formula_view_pos = pos }) *)
+  (* in *)
+  (* let lock_node_post = ViewNode heap in (\*not allow SPIT in POST*\) *)
+  (* let lock_node_pre = ViewNode {heap with h_formula_view_original=true} in (\*but allow SPLIT in PRE*\) *)
   (****LOCKSET****)
   let ls_uvar = CP.mkLsVar Unprimed in
   let ls_pvar = CP.mkLsVar Primed in

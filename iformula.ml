@@ -698,7 +698,7 @@ and one_formula_apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*prime
   let new_sst = List.fold_left (fun sst (id,p) ->
         let unprimed_param = (id,Unprimed) in
         let primed_param = (id,Primed) in
-        let sub = (primed_param,primed_param) in
+        let sub = (primed_param,unprimed_param) in
         (sub::sst)
   ) [] vars
   in
@@ -884,6 +884,8 @@ and h_apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : 
                   (node,[]))
       | HeapNode2 _
       | Phase _
+      | HRel _ (*TO CHECK*)
+      | HEmp
       | HTrue
       | HFalse -> (f,[])
   in helper f

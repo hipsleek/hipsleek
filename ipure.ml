@@ -523,6 +523,7 @@ and pos_of_formula (f : formula) = match f with
 		  | ListIn (_,_,p) | ListNotIn (_,_,p) | ListAllN (_,_,p) | ListPerm (_,_,p)
 		  | RelForm (_,_,p)  | LexVar (_,_,_,p) -> p
 		  | VarPerm (_,_,p) -> p
+          | XPure xp ->  xp.xpure_view_pos
 	end
   | And (_,_,p) | Or (_,_,_,p) | Not (_,_,p)
   | Forall (_,_,_,p) -> p | Exists (_,_,_,p) -> p
@@ -604,12 +605,26 @@ and apply_one (fr, t) f = match f with
 and b_apply_one (fr, t) bf =
   let (pf,il) = bf in
   let npf = match pf with
+    | XPure ({xpure_view_node = vn ;
+		      xpure_view_arguments = args} as xp)  -> 
+        let fr,_ = fr in
+        let t,_ = t in
+        let new_vn =
+          match vn with
+            | None -> None
+            | Some v ->
+                let new_v = (if v=fr then t else v) in
+                Some new_v
+        in
+        let new_args = List.map (fun v -> if v=fr then t else v) args in
+        XPure ({ xp with xpure_view_node = new_vn ;
+		    xpure_view_arguments = new_args})
   | BConst _ -> pf
   | BVar (bv, pos) -> BVar ((if eq_var bv fr then t else bv), pos)
   | Lt (a1, a2, pos) -> Lt (e_apply_one (fr, t) a1,
 							e_apply_one (fr, t) a2, pos)
   | Lte (a1, a2, pos) -> Lte (e_apply_one (fr, t) a1,
-							  e_apply_one (fr, t) a2, pos)
+ 							  e_apply_one (fr, t) a2, pos)
   | Gt (a1, a2, pos) -> Gt (e_apply_one (fr, t) a1,
 							e_apply_one (fr, t) a2, pos)
   | Gte (a1, a2, pos) -> Gte (e_apply_one (fr, t) a1,
@@ -749,6 +764,7 @@ and look_for_anonymous_pure_formula (f : formula) : (ident * primed) list = matc
 and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
   let (pf,_) = f in
   match pf with
+  | XPure _ -> [] (*TO CHECK*)
   | BConst _ -> []
   | BVar (b1, _) -> anon_var b1
   | Lt (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
@@ -799,6 +815,7 @@ let rec find_lexp_formula (f: formula) ls =
 and find_lexp_b_formula (bf: b_formula) ls =
   let (pf, _) = bf in
   match pf with
+    | XPure _ (*TO CHECK*)
 	| BConst _
 	| BVar _ -> []
 	| Lt (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -1325,6 +1342,7 @@ let rec typ_of_exp (e: exp) : typ =
   | Null _                    -> Globals.UNK               (* Trung: TODO: what is the type of Null? *) 
   | Var  _                    -> Globals.UNK               (* Trung: TODO: what is the type of Var? *)
   (* Const *)
+  | Level _                   -> Globals.level_data_typ
   | IConst _                  -> Globals.Int
   | FConst _                  -> Globals.Float
   | AConst _                  -> Globals.AnnT

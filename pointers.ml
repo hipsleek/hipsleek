@@ -93,6 +93,8 @@ let default_value (t :typ) pos : exp =
     | Pointer ptr -> Null pos
 	| Array (t, d) ->
        failwith "default_value: Array not supported"
+	| HpT | Tree_sh ->
+       failwith "default_value: (HpT|Tree_sh) not supported"
 
 (*similar to that in Astsimp.ml*)
 let get_type_name_for_mingling (prog : prog_decl) (t : typ) : ident =
@@ -284,6 +286,7 @@ and modifies (e:exp) (bvars:ident list) : (ident list) * (ident list) =
       | Null _
       | Time _
       | Unfold _
+      | Barrier _ (*TO CHECK*)
       | Continue _ -> (bvars,[])
   in helper e bvars
 
@@ -474,6 +477,7 @@ let subst_exp_x (e:exp) (subst:(ident*ident) list): exp =
       | Null _
       | Time _
       | Unfold _
+      | Barrier _ (*TO CHECK*)
       | Continue _ -> e
   in helper e subst
 
@@ -730,6 +734,7 @@ let trans_exp_ptr_x prog (e:exp) (vars: ident list) : exp * (ident list) =
       | Null _
       | Time _
       | Unfold _
+      | Barrier _ (*TO CHECK*)
       | Continue _ -> (e,vars)
   in helper e vars
 
@@ -1546,6 +1551,7 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
       | Null _
       | Time _
       | Unfold _
+      | Barrier _ (*TO CHECK*)
       | Continue _ -> e
   in helper e vars
 
@@ -1681,6 +1687,7 @@ and find_addr (e:exp) : ident list =
       | Null _
       | Time _
       | Unfold _
+      | Barrier _ (*TO CHECK*)
       | Continue _ -> []
   in helper e
   
@@ -2278,6 +2285,7 @@ and find_addr_inter_exp prog proc e (vs:ident list) : ident list =
       | Null _
       | Time _
       | Unfold _
+      | Barrier _ (*TO CHECK*)
       | Continue _ -> []
   in helper e vs
 

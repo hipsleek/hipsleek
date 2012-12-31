@@ -513,6 +513,8 @@ and h_formula_2_mem_perm_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_v
             (* ) *)
       | Hole _
       | HTrue
+      | HRel _ (*TO CHECK*)
+      | HEmp (*TO CHECK*)
       | HFalse ->
          (*  let _ = print_endline "h_formula_2_mem: HTrue, HFalse, Hole" in*)
          {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
@@ -3058,7 +3060,7 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
       (* print_string ("\nInput ==> :"^(Cprinter.string_of_context c2)); *)
       (* print_string ("\nConseq ==> :"^(to_string conseq)); *)
       let c20 = CF.update_hp_unk_map c2 unk_map in
-	  let list_context_res,prf = f (*heap_entail_one_context_struc*) prog is_folding has_post c2 conseq tid delayed_f join_id pos pid in
+	  let list_context_res,prf = f (*heap_entail_one_context_struc*) prog is_folding has_post c20 conseq tid delayed_f join_id pos pid in
       (* print_string ("\nOutcome ==> "^(Cprinter.string_of_list_context list_context_res)) ; *)
       let res,new_unk_map = match list_context_res with
 	    | FailCtx t -> ([([(lbl,t)],[])],[])
@@ -9474,7 +9476,6 @@ let heap_entail_list_failesc_context_init_x (prog : prog_decl) (is_folding : boo
     let cl_after_prune = prune_ctx_failesc_list prog cl in
     let conseq = prune_preds prog false conseq in
     Gen.Profiling.pop_time "entail_prune";
-    let (lfc,prf) = heap_entail_failesc_prefix_init 2 prog is_folding  false cl_after_prune conseq tid delayed_f join_id pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new) in
     (* RESOURCE: Normalize for combine lemma *)
     let norm_cl = normalize_list_failesc_context_w_lemma prog cl_after_prune in
     let (lfc,prf) = heap_entail_failesc_prefix_init 2 prog is_folding  false norm_cl conseq tid delayed_f join_id pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new) in

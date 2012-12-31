@@ -9542,7 +9542,7 @@ in helper e
 
 let level_vars_b_formula bf =
   let (pf,il) = bf in
-  (match pf with	  
+  (match pf with
 	| Lt (e1,e2,l) 
 	| Lte (e1,e2,l)
 	| Gt (e1,e2,l)
@@ -9569,6 +9569,7 @@ let level_vars_b_formula bf =
 	| EqMax _
 	| EqMin _
     | VarPerm _
+    | XPure _
 	| BagMax _ -> []
   )
 
@@ -9671,12 +9672,10 @@ let infer_lsmu_pure_x (f:formula) : formula * (spec_var list)=
               | BagIn (SpecVar (t,id,pr),e,pos) ->
                   (* l in LS --> exists mu_123. mu_123 = level(l) & mu_123 in LSMU*)
                   if (t=lock_typ) then
-                    let ne =  convert_ls_to_lsmu_exp e in
-
+                    (* let ne =  convert_ls_to_lsmu_exp e in *)
                     let level_var = mkLevelVar Unprimed in
                     let fresh_var = fresh_spec_var level_var in
                     let fresh_var_exp = Var (fresh_var,pos) in
-                    let npf = BagIn (fresh_var,ne,pos) in (*mu_123 in STH*)
                     let eq_f = mkEqExp fresh_var_exp (Level (SpecVar (t,id,pr),pos)) pos in (*mu_123=level(l)*)
                     let lsmu_exp = Var (mkLsmuVar pr,pos) in
                     let in_f = mkBagInExp fresh_var lsmu_exp pos in (*mu_123 in LSMU*)
@@ -9687,12 +9686,10 @@ let infer_lsmu_pure_x (f:formula) : formula * (spec_var list)=
               | BagNotIn (SpecVar (t,id,pr),e,pos) ->
                   (* l notin LS --> exists mu_123. mu_123 = level(l) & mu_123 notin LSMU*)
                   if (t=lock_typ) then
-                    let ne =  convert_ls_to_lsmu_exp e in
-
+                    (* let ne =  convert_ls_to_lsmu_exp e in *)
                     let level_var = mkLevelVar Unprimed in
                     let fresh_var = fresh_spec_var level_var in
                     let fresh_var_exp = Var (fresh_var,pos) in
-                    let npf = BagIn (fresh_var,ne,pos) in (*mu_123 in STH*)
                     let eq_f = mkEqExp fresh_var_exp (Level (SpecVar (t,id,pr),pos)) pos in (*mu_123=level(l)*)
                     let lsmu_exp = Var (mkLsmuVar pr,pos) in
                     let in_f = mkBagNotInExp fresh_var lsmu_exp pos in (*mu_123 in LSMU*)
@@ -9884,7 +9881,8 @@ let rec translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos
         let f22 = mkGtExp fresh_var_exp x pos in (*v>x*)
         let f2_and = And (f21,f22,pos) in (* v in LSMU & v<x *)
         let f2_exists = Exists (fresh_var,f2_and,None,pos) in (*exists v. v in LSMU & v>x *)
-        And (f1,f2_exists,pos) (* (ls!={} | x<0) & (ls={} | (exist v. v in LSMU & v>x)) *)
+        let f2 = Or (f_eq_ls,f2_exists,None,pos) in (* (ls={} | (exist v. v in LSMU & v>x) *)
+        And (f1,f2,pos) (* (ls!={} | x<0) & (ls={} | (exist v. v in LSMU & v>x)) *)
     | _ -> Error.report_error { Error.error_loc = pos; Error.error_text = "translate_waitlevel_p_formula: unexpected operator: only expecting <, > and = in waitlevel formulae";}
   )
 
@@ -10094,6 +10092,7 @@ and contain_level_b_formula bf =
 	| EqMax _
 	| EqMin _
     | VarPerm _
+    | XPure _
 	| BagMax _ -> false
   )
 

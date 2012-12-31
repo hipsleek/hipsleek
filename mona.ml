@@ -49,6 +49,9 @@ let rec mona_of_typ = function
   | NUM | Named _ | Array _ ->
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "array and named type not supported for mona"}
+  | Pointer _ ->
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "pointer type not supported for mona"}
 
 (*------------------------------------------*)
 let rec mkEq l = match l with
@@ -796,6 +799,7 @@ and print_b_formula b f = match b with
   | CP.LexVar _ -> failwith ("LexVar is not supported in Mona")
   | CP.VarPerm _ -> failwith ("VarPerm not suported in Mona")
   | CP.RelForm _ -> failwith ("Arrays are not supported in Mona") (* An Hoa *)
+  | CP.XPure _ -> failwith ("XPure are not supported in Mona")
 
 let rec get_answer chn : string =
   let chr = input_char chn in
