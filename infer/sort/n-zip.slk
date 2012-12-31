@@ -1,0 +1,26 @@
+/* zip - numeric */
+relation P(int a).
+
+infer [x] x!=0 & y=0 |- false.
+print residue.
+// inferred x=0
+
+infer [x] x>=0 & y>=0 & x!=0 & y=0 |- false.
+print residue.
+// inferred x<=0
+
+infer [P] x>=0 & y>=0 & x!=0 & y=0 & P(x) |- false.
+print residue.
+// PROBLEM : currently failed
+// Correct Answer: should infer P(x) --> x<=0
+
+
+
+
+
+
+
+
+
+
+

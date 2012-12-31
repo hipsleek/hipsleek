@@ -9,10 +9,17 @@ void error()
 
 int zip(int x, int y)
 
+// Why isn't parameter mismatch checking done?
+
+  infer [R]
+  requires 0<=x<=y
+  ensures  R(res,x);
+
+/*
   infer [x,y,P]
   requires x>=0 & y>=0
   ensures  R(res,x);
-/*
+
   infer [R,P]
   requires P(x,y)
   ensures  R(res,x);
