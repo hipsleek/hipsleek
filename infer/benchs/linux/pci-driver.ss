@@ -29,9 +29,26 @@ data list_head {
   list_head prev;
 }
 
-dll<q> == self::list_head<self , q>
-  or self::list_head<p , q> * p::dll<self> 
+/*dll<q> == self::list_head<q , q>*/
+/*  or self::list_head<p , q> * p::dll<self> */
+/*  inv self!=null;*/
+
+dll<n,p,s> == self::list_head<s,p> & n=s
+  or self::list_head<n,p> * n::dll<_,self,s> & n!=s 
   inv self!=null;
+
+
+
+
+/*********************************************/
+
+void INIT_LIST_HEAD(list_head list)
+  requires list::list_head<_,_>
+  ensures list::list_head<list,list>;
+{
+  list.next = list;
+  list.prev = list;
+}
 
 /*
  * Insert a new entry between two known consecutive entries.
@@ -50,7 +67,7 @@ dll<q> == self::list_head<self , q>
 */
 
 void __list_add(list_head new1, list_head prev, list_head next)
-  requires new1::list_head<_,_>*prev::list_head<next,pp>*next::list_head<nn,prev>
+  requires new1::list_head<_,_> * prev::list_head<next,pp> * next::list_head<nn,prev>
   ensures prev::list_head<new1,pp> * new1::list_head<next,prev> * next::list_head<nn,new1>;
 {
   next.prev = new1;
@@ -74,8 +91,8 @@ void __list_add(list_head new1, list_head prev, list_head next)
  } 
 */
 void list_add_tail(list_head new1, list_head head1)
-  requires new1::list_head<_,_> * prev::list_head<head1,f> * head1::dll<prev>
-  ensures prev::list_head<new1,f> * new1::list_head<head1,prev> * head1::dll<new1>;
+  requires new1::list_head<_,_> * prev::list_head<head1,pp> * head1::dll<n,prev,s>
+  ensures prev::list_head<new1,pp> * new1::list_head<head1,prev> * head1::dll<n,new1,s>;
 {
   __list_add(new1, head1.prev, head1);
 }
@@ -96,8 +113,8 @@ void __list_del(list_head prev, list_head next)
   requires prev::list_head<_,p> * next::list_head<n,_>
   ensures prev::list_head<next,p> * next::list_head<n,prev>;
 {
-    next.prev = prev;
-    prev.next = next;
+  next.prev = prev;
+  prev.next = next;
 }
 /**
  * list_del - deletes entry from list.
@@ -106,20 +123,12 @@ void __list_del(list_head prev, list_head next)
  * in an undefined state.
  */
 void list_del(list_head entry)
-  requires p::list_head<_,p> * entry::list_head<n,p> * n::list_head<n,_>
-  ensures p::list_head<next,p> * entry::list_head<null,null> * next::list_head<n,p>;
+  requires prev::list_head<entry,p> * entry::list_head<next,prev> * next::dll<n,entry,s>
+  ensures prev::list_head<next,p> * entry::list_head<null,null> * next::dll<n,prev,s>;
 {
     __list_del(entry.prev, entry.next);
     entry.next = null;
     entry.prev = null;
-}
-
-void INIT_LIST_HEAD(list_head list)
-  requires list::list_head<_,_>
-  ensures list::list_head<list,list>;
-{
-    list.next = list;
-    list.prev = list;
 }
 
 /****************************************************************************/
@@ -147,25 +156,6 @@ data pci_dynid {
     list_head node;
     pci_device_id id;
 }
-
-/* void free_pci_dynid (pc) */
-/*      requires pc::pci_dynid<n,_> */
-/*      ensures pc = null & n=null */
-
-pred_prim RS_mem<i:int>
- inv i>0 & self!=null;
-
-RS_mem malloc(int n)
- requires n>0
- ensures  res=null or res::RS_mem<n>;
-
-pci_dynid cast_to_pci_dynid_ptr(RS_mem p)
- case {
-  p=null -> ensures res=null;
-  p!=null -> 
-    requires p::RS_mem<a> //& a>=size(item)
-    ensures res::pci_dynid<n,id> * n::list_head<_,_> * id::pci_device_id<_,_,_,_,_,_,_>;
- }
 
 /* struct pci_dynids { */
 /*  struct list_head list; */
@@ -487,6 +477,24 @@ void driver_unregister(device_driver drv)
 }
 
 /****************************************************************************/
+/* void free_pci_dynid (pc) */
+/*      requires pc::pci_dynid<n,_> */
+/*      ensures pc = null & n=null */
+
+pred_prim RS_mem<i:int>
+ inv i>0 & self!=null;
+
+RS_mem malloc(int n)
+ requires n>0
+ ensures  res=null or res::RS_mem<n>;
+
+pci_dynid cast_to_pci_dynid_ptr(RS_mem p)
+ case {
+  p=null -> ensures res=null;
+  p!=null -> 
+    requires p::RS_mem<a> //& a>=size(item)
+    ensures res::pci_dynid<n,id> * n::list_head<_,_> * id::pci_device_id<_,_,_,_,_,_,_>;
+ }
 
 /**
  * pci_add_dynid - add a new PCI device ID to this driver and re-probe devices
@@ -541,8 +549,8 @@ int pci_add_dynid(pci_driver drv, int vendor,
         int device, int subvendor, int subdevice,
         int class_, int class_mask, int driver_data)
   requires drv::pci_driver<node1,_,_,d,dy> * dy::pci_dynids<head1> 
-            * prev::list_head<head1,_> * head1::dll<prev>
-  * node1::list_head<_,_> * d::device_driver<_,_,_,_>
+            * prev::list_head<head1,_> * head1::dll<_,prev,_>
+            * node1::list_head<_,_> * d::device_driver<_,_,_,_>
   ensures true;
  {
     pci_dynid dynid;
@@ -585,36 +593,72 @@ int pci_add_dynid(pci_driver drv, int vendor,
 /* } */
 
 pci_dynid cast_to_pci_dynid1 (list_head p)
-   case {
-  p=null -> ensures res=null;
-  p!=null -> 
-    requires p::list_head<n,p> //& a>=size(item)
-    ensures res::pci_dynid<n,id> * n::list_head<n,p> * id::pci_device_id<_,_,_,_,_,_,_>;
- }
+  case {
+    p=null -> ensures res=null;
+    p!=null -> 
+      requires p::dll<next,prev,start>
+      ensures res::pci_dynid<p,id> * p::dll<next,prev,start> * id::pci_device_id<_,_,_,_,_,_,_>;
+  }
+/*  requires p::dll<next,prev,start>*/
+/*  ensures res::pci_dynid<p,id> * p::dll<next,prev,start> * id::pci_device_id<_,_,_,_,_,_,_>;*/
 
 void pci_free_dynids_loop(pci_driver drv, ref pci_dynid dynid, ref pci_dynid n)
-  requires drv::pci_driver<no,na,id,d,dy> * dy::pci_dynids<l> *
-  p1::list_head<_,p> * dynid::pci_dynid<n1,id1> * n1::list_head<n2,p1> * n2::list_head<n3,_> * n::pci_dynid<n2,id2>
- case {
-    n1 = l -> ensures drv::pci_driver<no,na,id,d,dy> * dy::pci_dynids<l> *
-       p1::list_head<_,p> * dynid'::pci_dynid<n1,id1> * n1::list_head<n2,p1> * n2::list_head<n3,_> * n'::pci_dynid<n2,id2>;
-    n1!= l -> ensures drv::pci_driver<no,na,id,d,dy> * dy::pci_dynids<l> *
-       p1::list_head<n2,p> * dynid'::pci_dynid<n2,id2> /* * n1=null */ * n2::list_head<n3,p1> * n'::pci_dynid<n3,_>;
- }
+  requires drv::pci_driver<no,na,id,d,dy> * 
+           dy::pci_dynids<head1> * head1::list_head<headnext,pp> * headnext::dll<nn1,head1,ss> *
+           dynid::pci_dynid<node1,id1> * prev1::list_head<node1,prev2> * node1::list_head<next1,prev1> * 
+           next1::dll<next2,node1,headnext> *
+           n::pci_dynid<next1,id2>
+  case {
+  node1 = head1 -> 
+    ensures drv::pci_driver<no,na,id,d,dy> * 
+            dy::pci_dynids<head1> * head1::list_head<headnext,pp> * headnext::dll<nn1,head1,ss> *
+            dynid'::pci_dynid<node1,id1> * prev1::list_head<node1,prev2> * node1::list_head<next1,prev1> * 
+            next1::dll<next2,node1,headnext> *
+            n'::pci_dynid<next1,id2>;
+  node1 != head1 -> 
+    case {
+    next2 = headnext ->
+      ensures drv::pci_driver<no,na,id,d,dy> * 
+              dy::pci_dynids<head1> * head1::list_head<headnext,pp> * headnext::dll<nn1,head1,ss> *
+              dynid'::pci_dynid<next1,id2> * prev1::list_head<next1,prev2> * node1::list_head<null,null> * 
+              next1::list_head<next2,prev1> *
+              n'::pci_dynid<next2,id3> * id3::pci_device_id<_,_,_,_,_,_,_>;
+    next2 != headnext ->
+/*      case {*/
+/*      head1 = null ->*/
+/*        ensures drv::pci_driver<no,na,id,d,dy> * dy::pci_dynids<head1> **/
+/*                dynid'::pci_dynid<next1,id2> * prev1::list_head<next1,prev2> * */
+/*                next1::list_head<next2,prev1> * next2::dll<next3,next1,head1> **/
+/*                n'::pci_dynid<next2,id3> * id3::pci_device_id<_,_,_,_,_,_,_> * node1::list_head<null,null> ;*/
+/*      head1 != null ->*/
+        ensures drv::pci_driver<no,na,id,d,dy> *
+                dy::pci_dynids<head1> * head1::list_head<headnext,pp> * headnext::dll<nn1,head1,ss> *
+                dynid'::pci_dynid<next1,id2> * prev1::list_head<next1,prev2> * 
+                next1::list_head<next2,prev1> * next2::dll<next3,next1,headnext> *
+                n'::pci_dynid<next2,id3> * id3::pci_device_id<_,_,_,_,_,_,_> * node1::list_head<null,null> ;
+/*      }*/
+    }
+  }
 {
+  assume(head1!=null);
+  assume(head1.next!=null);
   if (dynid.node != (drv.dynids.list)) {
     list_del(dynid.node);
     //free(dynid);
     dynid = n;
-    n =  cast_to_pci_dynid1(n.node.next);
-    pci_free_dynids_loop(drv,dynid, n);
+    n = cast_to_pci_dynid1(n.node.next);
+    if (n.node != drv.dynids.list.next){
+      pci_free_dynids_loop(drv,dynid,n);
+      dprint;
+    }
   }
 }
+
 // drv.dynids.list: cyclic dll
 void pci_free_dynids(pci_driver drv)
   requires drv::pci_driver<node1,_,_,d,dy> * dy::pci_dynids<head1> 
-            * prev::list_head<head1,_> * head1::dll<prev>
-  * node1::list_head<_,_> * d::device_driver<_,_,_,_>
+            * prev::list_head<head1,_> * head1::dll<_,prev,_>
+            * node1::list_head<_,_> * d::device_driver<_,_,_,_>
   ensures true;
 {
     pci_dynid dynid, n;
@@ -629,7 +673,6 @@ void pci_free_dynids(pci_driver drv)
     }
     return;
 }
-
 
 /**
  * pci_match_one_device - Tell if a PCI device structure has a matching
@@ -930,7 +973,7 @@ void pci_remove_newid_file(pci_driver drv)
 int __pci_register_driver(pci_driver drv, module owner,
               char mod_name)
   requires drv::pci_driver<node1,_,_,d,dy> * dy::pci_dynids<head1> 
-            * prev::list_head<head1,_> * head1::dll<prev>
+            * prev::list_head<head1,_> * head1::dll<_,prev,_>
   * node1::list_head<_,_> * d::device_driver<_,_,_,_>
   ensures true;
 {
@@ -991,7 +1034,7 @@ void pci_remove_removeid_file(pci_driver drv)
 void
 pci_unregister_driver(pci_driver drv)
   requires drv::pci_driver<node1,_,_,d,dy> * dy::pci_dynids<head1> 
-            * prev::list_head<head1,_> * head1::dll<prev>
+            * prev::list_head<head1,_> * head1::dll<_,prev,_>
   * node1::list_head<_,_> * d::device_driver<_,_,_,_>
   ensures true;
 {
@@ -1045,3 +1088,4 @@ int pci_bus_match(device dev, device_driver drv)
 
     return 0;
 }
+

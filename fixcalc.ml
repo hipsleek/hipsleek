@@ -39,11 +39,13 @@ let rec string_of_elems elems string_of sep = match elems with
 (******************************************************************************)
 
 let fixcalc_of_spec_var x = match x with
-(*  | CP.SpecVar (Named _, id, Unprimed) -> "NOD" ^ id*)
-(*  | CP.SpecVar (Named _, id, Primed) -> "NODPRI" ^ id*)
-  | CP.SpecVar (Named _, id, Unprimed)
-  | CP.SpecVar (Named _, id, Primed) -> 
-    report_error no_pos "Relation contains non-numerical variables"
+  | CP.SpecVar (Named _, id, Unprimed) -> "NOD" ^ id
+  | CP.SpecVar (Named _, id, Primed) -> "NODPRI" ^ id
+(* TODO: Handle mixture of non-numerical and numerical variables *)
+(* Still have problem with the order of parameters of relation *)
+(*  | CP.SpecVar (Named _, id, Unprimed)*)
+(*  | CP.SpecVar (Named _, id, Primed) -> *)
+(*    report_error no_pos "Relation contains non-numerical variables"*)
   | CP.SpecVar (_, id, Unprimed) -> id
   | CP.SpecVar (_, id, Primed) -> "PRI" ^ id
 
