@@ -782,7 +782,19 @@ pci_match_one_device( pci_device_id id, pci_dev dev)
 /*     } */
 /*     return NULL; */
 /* } */
-
+//ids: list of id
+pci_device_id pci_match_id_loop(pci_device_id ids,
+                      pci_dev dev)
+  requires ids::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> *
+      dev::pci_dev<v2,d2,subv2,subd2,cl2>
+   ensures true;
+{
+   if (ids.vendor!=0 || ids.subvendor!=0 || ids.class_mask!=0) {
+     if (pci_match_one_device(ids, dev) !=null)
+       return ids;
+   }
+   return pci_match_id_loop(ids /*.next (++) */,dev);
+}
 //ids: list of id
 pci_device_id pci_match_id(pci_device_id ids,
                       pci_dev dev)
@@ -791,11 +803,7 @@ pci_device_id pci_match_id(pci_device_id ids,
    ensures true;
 {
     if (ids!=null) {
-        while (ids.vendor!=0 || ids.subvendor!=0 || ids.class_mask!=0) {
-            if (pci_match_one_device(ids, dev) !=null)
-                return ids;
-            ids++;
-        }
+        pci_match_id_loop(ids,dev);
     }
     return null;
 }
@@ -809,6 +817,24 @@ pci_device_id pci_match_id(pci_device_id ids,
  * system is in its list of supported devices.  Returns the matching
  * pci_device_id structure or %NULL if there is no match.
  */
+pci_device_id pci_match_device_loop(pci_driver drv, ref pci_dynid dynid,
+                             pci_dev dev)
+   requires drv::pci_driver<no,na,id,d,dy> * id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> *
+      dev::pci_dev<v2,d2,subv2,subd2,cl2>
+   ensures true;
+{
+  //prefetch((void *) dynid->node.next);
+  if (dynid.node == (drv.dynids.list)){
+    return pci_match_id(drv.id_table, dev);
+  }
+  if (pci_match_one_device(dynid.id, dev) != null) {
+    return dynid.id;
+  }
+  dynid = cast_to_pci_dynid1( dynid.node.next);
+  return pci_match_device_loop(drv,dynid,dev);
+}
+
+
  pci_device_id pci_match_device(pci_driver drv,
                              pci_dev dev)
    requires drv::pci_driver<no,na,id,d,dy> * id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd> *
@@ -819,17 +845,18 @@ pci_device_id pci_match_id(pci_device_id ids,
 
     /* Look at the dynamic ids first, before the static ones */
     dynid = cast_to_pci_dynid1 (drv.dynids.list.next);
-    while (true) {
-      //prefetch((void *) dynid->node.next);
-        if (dynid.node == (drv.dynids.list)){
-            break;
-        }
-        if (pci_match_one_device(dynid.id, dev) != null) {
-            return dynid.id;
-        }
-        dynid = cast_to_pci_dynid1( dynid.node.next);
-    }
-    return pci_match_id(drv.id_table, dev);
+    return pci_match_device_loop(drv,dynid,dev);
+    /* while (true) { */
+    /*   //prefetch((void *) dynid->node.next); */
+    /*     if (dynid.node == (drv.dynids.list)){ */
+    /*         break; */
+    /*     } */
+    /*     if (pci_match_one_device(dynid.id, dev) != null) { */
+    /*         return dynid.id; */
+    /*     } */
+    /*     dynid = cast_to_pci_dynid1( dynid.node.next); */
+    /* } */
+    /* return pci_match_id(drv.id_table, dev); */
 }
 
 
