@@ -1,0 +1,62 @@
+data node { int val ; node next }.
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n-1> 
+	inv n >= 0.
+
+
+//checkentail (y::ll<n>@I & y2::ll<n2>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) & m>3  |- x::node<v1,s>. 
+//print residue.
+
+/*
+EXISTS(m_195: (y::ll<n>@I ; 
+      (y2::ll<n2>@I ; x::ll<m>@M * (t::ll<a>@I ; 
+z::ll<m_195>@M))) & 3<m & m_195=m & {FLOW,(143,144)=__norm,}) |-  exists [](I)[v1; s][]x::node<v1,s>@I & true & {FLOW,(143,144)=__norm,}
+Valid.
+
+*/
+
+//checkentail (y::ll<n>@I & y2::ll<n2>@I & y3::ll<n3>@I) ; x::ll<m> & n>3  |- y::node<v1,s>@I. 
+//print residue.
+
+
+//checkentail (y::ll<n>@I); x::ll<m>@I & n>3 & m>4  |- x::node<v1,s>@I. 
+//print residue.
+
+//checkentail (x::ll<n>@I * y::ll<n2>@I); x::ll<m> * ((y::ll<a>@I); z::ll<m>) & m>3  |- x::ll<a1>@I. 
+//print residue.
+/*
+Valid.
+ (x::ll<n>@I * y::ll<n2>@I ; x::ll<m>@M * (y::ll<a>@I ; z::ll<m>@M)) & 3<m & 
+ a1=n & {FLOW,(143,144)=__norm,}
+ (x::ll<n>@I * y::ll<n2>@I ; x::ll<m>@M * (y::ll<a>@I ; z::ll<m>@M)) & 3<m & 
+ a1=m & {FLOW,(143,144)=__norm,}
+*/
+
+//checkentail (x::ll<n>@I * y::ll<n2>@I); x::ll<m> * ((y::ll<a>@I); z::ll<m>) & m>3  |- x::ll<a1>@I * y::ll<a2>@I. 
+print residue.
+/*
+Valid.
+ (x::ll<n>@I * y::ll<n2>@I ; x::ll<m>@M * (y::ll<a>@I ; z::ll<m>@M)) & 3<m & 
+ a1=n & a2=n2 & {FLOW,(143,144)=__norm,}
+ (x::ll<n>@I * y::ll<n2>@I ; (x::ll<m>@M * y::ll<a>@I ; z::ll<m>@M)) & 3<m & 
+ a1=m & a2=a & {FLOW,(143,144)=__norm,}
+fail with frame  ([395] ; x::ll<m>@M * (y::ll<a>@I ; z::ll<m_394>@M))
+*/
+
+checkentail (x::ll<n>@I * y::ll<n2>@I); x::ll<m1> * ((y::ll<a>@I); z::ll<m2>) & m2>3  |- x::ll<a1>@I * z::ll<a2>@I. 
+print residue.
+/*
+Valid.
+ (x::ll<n>@I * y::ll<n2>@I ; (y::ll<a>@I ; x::ll<m>@M * z::ll<m>@M)) & 3<m & 
+ a1=m & a2=m & {FLOW,(143,144)=__norm,}
+BUG : residue different from original
+
+Valid.
+ (x::ll<n>@I * y::ll<n2>@I ; (y::ll<a>@I ; x::ll<m1>@M * z::ll<m2>@M)) &
+ 3<m2 & a1=m1 & a2=m2 & {FLOW,(143,144)=__norm,}
+
+*/
+
+// (x@I * y@I) ; (x@M * (y@I; z@M))  |- x@I * z@I
+
+

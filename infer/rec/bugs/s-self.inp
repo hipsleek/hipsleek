@@ -1,0 +1,14 @@
+R3:={[x] -> [res] -> []: ((res=0 && x=1) ||  (exists (v_int_16_541: (exists (v_int_16_546:((x=v_int_16_546+2 && (res=v_int_16_541+1 && 0<=v_int_16_541)) && R3(v_int_16_546,v_int_16_541)))) )) )
+};
+bottomupgen([R3], [1], SimHeur); 
+bottomupgen([R3], [2], SimHeur); 
+bottomupgen([R3], [3], SimHeur);
+F1:=bottomup(R3,1,SimHeur); F1;
+F2:=bottomup(R3,2,SimHeur); F2;
+F3:=bottomup(R3,3,SimHeur); F3;
+#(res >= 0 && 2*res + 1 = x)
+#(x >= 1 && res >= 0)
+#(x >= 1 && res >= 0)
+#(res >= 0 && 2*res + 1 = x)
+#(res >= 0 && 2*res + 1 = x)
+#(res >= 0 && 2*res + 1 = x)

@@ -1,0 +1,29 @@
+pred_prim RS<high:int>
+  inv high>=0 .
+
+pred_prim RS_mark<high:int>
+  inv 0<=high .
+
+lemma "combine2" 
+self::RS_mark<m1>*self::RS_mark<m2> -> self::RS_mark<m> & m=max(m1,m2) .
+
+relation R2(int a, int b).
+relation R3(int a, int b,int c).
+relation R4(int a, int b,int c, int d).
+
+// h<=n+3
+infer [R2] h=n+3 & n>=0  |- R2(h,n).
+print residue.
+// inferred rel: [RELDEFN R2: ( h=n+3 & 0<=n) -->  R2(h,n)]
+
+// h<=n+a
+infer [R3] h=n+a & n>=0 & a>=0 |- R3(h,n,a).
+print residue.
+//  inferred rel: [RELDEFN R3: ( h=a+n & 0<=n & 0<=a) -->  R3(h,n,a)]
+
+//h<=max(h1,h2)
+infer [R4] h1=n+a & n>=0 & h2=n+b & a,b>=0 & h=max(h1,h2) 
+     |- R4(h,n,a,b).
+print residue.
+//inferred rel: [RELDEFN R4: ( (b=h-n & 0<=a & (a+n)<h & 0<=n) | (h=a+n & 0<=b & b<=a & 0<=n)) -->  R4(h,n,a,b)]
+

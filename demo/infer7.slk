@@ -1,0 +1,55 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0.
+
+// (1)
+infer [n] x=null & n=0 |- x::node<_,_>.
+print residue.
+//inferred pure: [n!=0; n!=0]
+
+
+// (2)
+infer [x] x=null |- x::node<_,null>.
+print residue.
+//<1>false & false & {FLOW,(17,18)=__norm}
+//inferred pure: [x!=null]
+
+// (3)
+infer [x] x=null |- x::node<_,b>.
+print residue.
+//inferred heap: [x::node<inf_Anon_49,inf_50>@M[Orig]]
+//inferred pure: [x!=null; x!=null]
+
+// (4)
+infer [x] x::ll<n> |- x::node<_,b>.
+print residue.
+
+// (5) Fail
+infer [x] x::ll<n> |- x::node<_,null>.
+print residue.
+
+// (6)
+infer [n] x::ll<n> |- x::node<_,null>.
+print residue.
+
+// (7)
+infer [n] x::ll<n> & n>0 |- x::node<_,null>.
+print residue.
+
+// (8)
+infer [n] x::ll<n> & n>0 |- x=null.
+print residue.
+
+// (9) Fail.
+infer [] x::ll<n> & n>0 |- x=null.
+print residue.
+
+// (10)
+infer [x] true |- x::node<a,q>*q::node<b,c>.
+print residue.
+

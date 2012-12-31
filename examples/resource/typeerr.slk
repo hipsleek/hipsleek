@@ -1,0 +1,12 @@
+data cell {
+ int v;
+}.
+
+data cell2 {
+ int v;
+}.
+
+
+checkentail x::cell<_> * y::cell<_> & x=y |- false.
+
+

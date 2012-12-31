@@ -1,0 +1,9 @@
+data node {
+  int val;
+  node next;
+}.
+
+HeapPred H1(node a).
+HeapPred H2(node a).
+
+ infer [H1,H2] H1(x) * H2(y) &xp=x |-  xp::node<_,p>.

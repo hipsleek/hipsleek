@@ -1,0 +1,28 @@
+data node {
+	int val;
+	node next
+}.
+HeapPred H().
+HeapPred T().
+HeapPred H1(node a).
+HeapPred HP(node a, node b).
+HeapPred G(node a, node b).
+HeapPred HP_535(node a, node b).
+HeapPred HP_537(node a, node b).
+HeapPred V(node a, node b, node c, node d).
+HeapPred M(node a, node b, node c, node d).
+
+
+checkeq[] V(a,s,d,f) -|- M(x,t,q,w) .
+/*
+checkeq[] HP(x,y) -|- G(x,y).
+
+
+checkeq[] HP(x,y) -|- G(t,z).
+
+checkeq[G] HP(x,y) -|- G(t,z).
+
+checkeq[] HP_537(x0,x) * x::node<val_16_545,x0>&x0!=null-|- HP_537(b,x) * x::node<_,b>&b!=null.
+
+checkeq[]  x::node<val_16_545,x0>@M* H1(x0)&x0!=null-|- x::node<val_16_545,x1>@M * H1(x1)&x1!=null.
+*/

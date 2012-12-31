@@ -105,6 +105,12 @@ let rec string_of_typed_var_list l = match l with
 let string_of_id (id,p) = id ^ (string_of_primed p)
 ;;
 
+let string_of_loc p = 
+  (string_of_int p.start_pos.Lexing.pos_lnum) ^ ":"
+  ^ (string_of_int (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol)) ^ "-"
+  ^ (string_of_int p.end_pos.Lexing.pos_lnum) ^ ":"
+  ^ (string_of_int (p.end_pos.Lexing.pos_cnum - p.end_pos.Lexing.pos_bol))
+
 (* pretty printing for an expression for a formula *)
 let rec string_of_formula_exp = function 
   | P.Null l -> "null"
@@ -236,6 +242,8 @@ and string_of_b_formula (pf,il) =
   | P.RelForm (r, args, _) ->
           (* An Hoa : relations *)
           r ^ "(" ^ (String.concat ", " (List.map string_of_formula_exp args)) ^ ")"
+  (* | P.HRelForm (r, args, _) -> *)
+  (*     r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")" *)
   | P.VarPerm (t,ls,l) -> (string_of_vp_ann t) ^ "[" ^ (pr_list string_of_id ls)^"]"
   | P.BagIn (i, e , l) -> "BagIn("^(string_of_id i)^", "^(string_of_formula_exp e)^")"
   | P.BagNotIn (i, e , l) -> "BagNotIn("^(string_of_id i)^", "^(string_of_formula_exp e)^")"
@@ -245,7 +253,7 @@ and string_of_b_formula (pf,il) =
 
 and concat_string_list_string strings =
     ""
-
+		
 (* pretty printing for a pure formula *)
 and string_of_pure_formula = function 
   | P.BForm (bf,lbl,fo)                    -> (string_of_formula_origin fo) ^ ":" ^ (string_of_b_formula bf) 
@@ -313,7 +321,7 @@ let rec string_of_h_formula = function
                  F.h_formula_heap_pos = l}) ->
       let perm_str = string_of_iperm perm in
       ((string_of_id x)
-        ^ "::" ^ id ^ perm_str ^ "<" ^ (string_of_formula_exp_list pl) ^ ">" ^ (string_of_imm imm)^"[1]")
+        ^ "::" ^ id ^ perm_str ^ "<" ^ (string_of_formula_exp_list pl) ^ ">" ^ (string_of_imm imm)^"[HeapNode1]")
   | F.HeapNode2 ({F.h_formula_heap2_node = xid;
                   F.h_formula_heap2_name = id;
                   F.h_formula_heap2_label = pi;
@@ -325,7 +333,8 @@ let rec string_of_h_formula = function
       let perm_str = string_of_iperm perm in
       string_of_formula_label_opt pi
         ((string_of_id xid)
-         ^ "::" ^ id ^perm_str ^  "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[2]")
+         ^ "::" ^ id ^perm_str ^  "<" ^ tmp2 ^ ">"  ^ (string_of_imm imm)^"[HeapNode2]")
+  | F.HRel (r, args, _) -> "HRel " ^ r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")"
   | F.HTrue -> "htrue"
   | F.HFalse -> "hfalse"
   | F.HEmp -> "emp"
@@ -408,9 +417,15 @@ let rec string_of_struc_formula c = match c with
 				let b = string_of_formula fb in
 				let c = match cont with | None -> "" | Some l -> ("{"^(string_of_struc_formula l)^"}") in
 				"EBase: ["^l1^"]["^l2^"]"^b^" "^c
-	| F.EAssume (b,(n1,n2))-> "EAssume: "^(string_of_int n1)^", "^n2^":"^(string_of_formula b)
+	| F.EAssume (b,(n1,n2),t)-> 
+      let assume_str = match t with
+                   | None -> "EAssume: "
+                   | Some true -> "EAssume_exact: "
+                   | Some false -> "EAssume_inexact: " in
+      assume_str^(string_of_int n1)^","^n2^":"^(string_of_formula b)
 	| F.EInfer{F.formula_inf_vars = lvars;
 			   F.formula_inf_post = postf;
+         F.formula_inf_xpost = postxf;
 			   F.formula_inf_continuation = continuation;} ->
         let ps =if (lvars==[] && postf) then "@post " else "" in
 		let string_of_inf_vars = Cprinter.str_ident_list (List.map (fun v -> fst v) lvars) in
@@ -449,7 +464,7 @@ let need_parenthesis2 = function
 
 
 (* pretty printing for expressions *)
-let rec string_of_exp = function 
+let rec string_of_exp_x = function 
 	| ArrayAt ({exp_arrayat_array_base = a;
 	     exp_arrayat_index = e}) ->
 				(string_of_exp a) ^ "[" ^ (string_of_exp_list e ", ") ^ "]" (* An Hoa *)
@@ -465,6 +480,7 @@ let rec string_of_exp = function
   | Block ({
     exp_block_local_vars = lv;
     exp_block_body = e;
+    exp_block_pos = p;
     })-> 
     "{" ^(match lv with
         | [] -> ""
@@ -551,8 +567,12 @@ let rec string_of_exp = function
   | FloatLit ({exp_float_lit_val = f})
                                    -> string_of_float f
   | Null l                         -> "null"
-  | Assert l                       -> 
-        snd(l.exp_assert_path_id)^" :assert "^
+  | Assert l                       ->
+        snd(l.exp_assert_path_id) ^
+          (match l.exp_assert_type with
+            | None -> " :assert "
+            | Some true -> " :assert_exact "
+            | Some false -> " :assert_inexact ") ^ 
           (match l.exp_assert_asserted_formula with
             | None -> (" assume: ")
             | Some f-> (string_of_struc_formula (fst f))^"\n assume: ") ^
@@ -578,7 +598,49 @@ let rec string_of_exp = function
 			exp_finally_clause = fl;})
 				-> "try {"^(string_of_exp bl)^"\n}"^(List.fold_left (fun a b -> a^"\n"^(string_of_exp b)) "" cl)^
 									(List.fold_left (fun a b -> a^"\n"^(string_of_exp b)) "" fl)
-							
+
+(* pretty printing for expressions *)
+and string_of_exp e = match e with 
+  | ArrayAt ({exp_arrayat_pos = p}) -> (string_of_exp_x e) ^ "<loc_arrayat:" ^ (string_of_loc p)^">"
+  | Unfold ({exp_unfold_pos = p}) -> (string_of_exp_x e) ^ "<loc_unfold:" ^ (string_of_loc p)^">"
+  | Java ({exp_java_pos = p}) -> (string_of_exp_x e) ^ "<loc_java:" ^ (string_of_loc p)^">"
+  | Label (_, e) -> string_of_exp e
+  | Bind ({exp_bind_pos = p}) -> (string_of_exp_x e) ^ "<loc_bind:" ^ (string_of_loc p)^">"
+  | Block ({exp_block_pos = p}) -> (string_of_exp_x e) ^ "<loc_block:" ^ (string_of_loc p)^">"
+  | Break ({exp_break_pos = p}) -> (string_of_exp_x e) ^ "<loc_break:" ^ (string_of_loc p)^">"
+  | Barrier ({exp_barrier_pos = p}) -> (string_of_exp_x e) ^ "<loc_barrier:" ^ (string_of_loc p)^">"
+  | Cast ({exp_cast_pos = p}) -> (string_of_exp_x e) ^ "<loc_cast:" ^ (string_of_loc p)^">"
+  | Continue ({exp_continue_pos = p}) -> (string_of_exp_x e) ^ "<loc_continue:" ^ (string_of_loc p)^">"
+  | Catch ({exp_catch_pos = p}) -> (string_of_exp_x e) ^ "<loc_catch:" ^ (string_of_loc p)^">"
+  | Empty p -> (string_of_exp_x e) ^ "<loc_empty:" ^ (string_of_loc p)^">"
+  | Finally ({exp_finally_pos = p}) -> (string_of_exp_x e) ^ "<loc_finally:" ^ (string_of_loc p)^">"
+  | Unary ({exp_unary_pos = p}) -> (string_of_exp_x e) ^ "<loc_unary:" ^ (string_of_loc p)^">"
+  | Binary ({exp_binary_pos = p}) -> (string_of_exp_x e) ^ "<loc_binary:" ^ (string_of_loc p)^">"
+  | CallNRecv ({exp_call_nrecv_pos = p}) -> (string_of_exp_x e) ^ "<loc_callnrecv:" ^ (string_of_loc p)^">"
+  | CallRecv ({exp_call_recv_pos = p}) -> (string_of_exp_x e) ^ "<loc_callrecv:" ^ (string_of_loc p)^">"
+  | ArrayAlloc ({exp_aalloc_pos = p}) -> (string_of_exp_x e) ^ "<loc_arrayalloc:" ^ (string_of_loc p)^">"
+  | New ({exp_new_pos = p}) -> (string_of_exp_x e) ^ "<loc_new:" ^ (string_of_loc p)^">"
+  | Var ({exp_var_pos = p}) -> (string_of_exp_x e) ^ "<loc_var:" ^ (string_of_loc p)^">"
+  | Member ({exp_member_pos = p}) -> (string_of_exp_x e) ^ "<loc_member:" ^ (string_of_loc p)^">"
+  | Assign ({exp_assign_pos = p}) -> (string_of_exp_x e) ^ "<loc_assign:" ^ (string_of_loc p)^">"
+  | Cond ({exp_cond_pos = p}) -> (string_of_exp_x e) ^ "<loc_cond:" ^ (string_of_loc p)^">"
+  | While ({exp_while_pos = p}) -> (string_of_exp_x e) ^ "<loc_while:" ^ (string_of_loc p)^">"
+  | Return ({exp_return_pos = p}) -> (string_of_exp_x e) ^ "<loc_return:" ^ (string_of_loc p)^">"
+  | Seq ({exp_seq_pos = p}) -> (string_of_exp_x e) ^ "<loc_seq:" ^ (string_of_loc p)^">"
+  | VarDecl ({exp_var_decl_pos = p}) -> (string_of_exp_x e) ^ "<loc_vardecl:" ^ (string_of_loc p)^">"
+  | ConstDecl ({exp_const_decl_pos = p}) -> (string_of_exp_x e) ^ "<loc_constdecl:" ^ (string_of_loc p)^">"
+  | BoolLit ({exp_bool_lit_pos = p})  -> (string_of_exp_x e) ^ "<loc_boollit:" ^ (string_of_loc p)^">"
+  | IntLit ({exp_int_lit_pos = p}) -> (string_of_exp_x e) ^ "<loc_intlit:" ^ (string_of_loc p)^">"
+  | FloatLit ({exp_float_lit_pos = p}) -> (string_of_exp_x e) ^ "<loc_floatlit:" ^ (string_of_loc p)^">"
+  | Null p -> (string_of_exp_x e) ^ "<loc_null:" ^ (string_of_loc p)^">"
+  | Assert ({exp_assert_pos = p}) -> (string_of_exp_x e) ^ "<loc_assert:" ^ (string_of_loc p)^">"
+  | Dprint ({exp_dprint_pos = p})  -> (string_of_exp_x e) ^ "<loc_dprint:" ^ (string_of_loc p)^">"
+  | Debug ({exp_debug_pos = p}) -> (string_of_exp_x e) ^ "<loc_debug:" ^ (string_of_loc p)^">"
+  | This ({exp_this_pos = p}) -> (string_of_exp_x e) ^ "<loc_this:" ^ (string_of_loc p)^">"
+  | Time (_,_,p) -> (string_of_exp_x e) ^ "<loc_time:" ^ (string_of_loc p)^">"
+  | Raise ({exp_raise_pos = p}) -> (string_of_exp_x e) ^ "<loc_raise:" ^ (string_of_loc p)^">"
+  | Try ({exp_try_pos = p}) -> (string_of_exp_x e) ^ "<loc_try:" ^ (string_of_loc p)^">"
+
 and 
    (* function to transform a list of expression in a string *)
    string_of_exp_list l c = match l with  
@@ -760,7 +822,7 @@ let string_of_axiom_decl_list adecls =
 let string_of_data cdef = 
   let meth_str = String.concat "\n" (List.map string_of_proc_decl cdef.data_methods) in
   let field_str = String.concat ";\n" 
-	(List.map (fun f -> ((* An Hoa [22/08/2011] : convert hard coded information extraction to function calls to make code extensible *) (string_of_typ (get_field_typ f)) ^ " " ^ (get_field_name f))) cdef.data_fields) in
+	(List.map (fun f -> string_of_decl f) cdef.data_fields) in
   let inv_str = String.concat ";\n" (List.map (fun i -> "inv " ^ (string_of_formula i)) cdef.data_invs) in
 	"class " ^ cdef.data_name ^ " extends " ^ cdef.data_parent_name ^ " {\n"
 	^ field_str ^ "\n" ^ inv_str ^ "\n" ^ meth_str ^ "\n}"
@@ -778,12 +840,33 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
 ;;
 
+(* (* pretty printing for program separating prelude.ss program *)                                                            *)
+let string_of_program_separate_prelude p iprims= (* "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^  *)
+  let helper_chop l start_pos=
+		let index = ref (-1) in
+	  let chop_p= List.fold_left ( fun a b-> let _= index:= !index+1 in if (!index>=start_pos) then a@[b] else a  )  [] l in
+		chop_p
+	in	
+	(* string_of_program iprims *)
+  (String.concat "\n\n" (List.map string_of_data (helper_chop p.prog_data_decls (List.length iprims.prog_data_decls )))) ^ "\n\n" ^
+  (string_of_global_var_decl_list (helper_chop  p.prog_global_var_decls (List.length iprims.prog_global_var_decls ) )) ^ "\n" ^
+  (string_of_enum_decl_list (helper_chop p.prog_enum_decls (List.length iprims.prog_enum_decls ))) ^"\n" ^
+  (string_of_view_decl_list (helper_chop p.prog_view_decls (List.length iprims.prog_view_decls ))) ^"\n" ^
+  (string_of_barrier_decl_list (helper_chop p.prog_barrier_decls (List.length iprims.prog_barrier_decls))) ^ "\n" ^
+  (string_of_rel_decl_list (helper_chop p.prog_rel_decls (List.length iprims.prog_rel_decls))) ^"\n" ^
+  (string_of_axiom_decl_list (helper_chop p.prog_axiom_decls (List.length iprims.prog_axiom_decls))) ^"\n" ^
+  (string_of_coerc_decl_list (helper_chop p.prog_coercion_decls (List.length iprims.prog_coercion_decls))) ^ "\n\n" ^
+  (string_of_proc_decl_list (helper_chop p.prog_proc_decls (List.length iprims.prog_proc_decls))) ^ "\n"
+;;                                                                                                                         
+
+
 Iformula.print_one_formula := string_of_one_formula;;
 Iformula.print_h_formula :=string_of_h_formula;;
 Iformula.print_formula :=string_of_formula;;
 Iformula.print_struc_formula :=string_of_struc_formula;;
 Iast.print_struc_formula := string_of_struc_formula;;
 Iast.print_view_decl := string_of_view_decl;
+Iast.print_data_decl := string_of_data_decl;
 Ipure.print_formula :=string_of_pure_formula;
 Ipure.print_exp := string_of_formula_exp;
 

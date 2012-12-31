@@ -1,0 +1,43 @@
+/*
+Test pure part: mix
+*/
+
+//1.
+checkeq[] (x & !x) | (t = t) -|- (x & !x) | (h = h).
+//VALID
+
+//2.
+checkeq[x] x < 3 & (x = 7 | r = 4) -|- x < 3 & (x = 7 | r > 3).
+//FAIL
+
+//3.
+checkeq[] h | !x & y > 3 -|- t > 3 & !x | h.
+//VALID
+
+//4.
+checkeq[] m & !x | x  -|- !y | y & m.
+//FAIL
+
+//5.
+checkeq[x] x = 2 & (t <= x | f) -|- (x = 2 & y <= x) | f.
+//FAIL
+
+//6.
+checkeq[y] x = g | (y = t | r) -|- y = z | e = z | r.
+//FAIL
+
+//7.
+checkeq[x] x = null & y >= t -|- x = null & t <= z.
+//VALID !!!
+
+//8.
+checkeq[] x >= y & t = null -|- y >= z & z = g.
+//FAIL
+
+//9.
+checkeq[] x > 3 & m > 2 &  !(t = null)-|- y > 2 & w > 3 &  !(h = null).
+//VALID
+
+//10.
+checkeq[] x = y  & s!= t-|- (y != z) & x = y.
+//FAIl

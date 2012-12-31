@@ -35,7 +35,12 @@ let add_error e = all_errors := e :: !all_errors
 (*   flush stdout; *)
 (*   failwith e.error_text *)
 
-  
+(* report error and don't care about the position *)
+let report_error_msg (error_msg: string) =
+ (Printf.printf "\nERROR MESSAGE: %s\n " error_msg);
+  flush stdout;
+  failwith error_msg
+
 let report_error e =
  (if post_pos#is_avail then
        Printf.printf "\nContext of Verification Failure: %s"

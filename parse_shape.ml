@@ -13,9 +13,9 @@ let loc = no_pos;;
 
 let expression = Gram.Entry.mk "expression";;
 
-let pre = Gram.Entry.mk "pre";;
+let summaries = Gram.Entry.mk "summaries";;
 
-let post = Gram.Entry.mk "post";;
+let summary = Gram.Entry.mk "summary";;
 
 let fml = Gram.Entry.mk "fml";;
 
@@ -29,33 +29,35 @@ let lbl = Gram.Entry.mk "lbl";;
 
 let id = Gram.Entry.mk "id";;
 
+
 let gen_conj x y = normalize 1 x y loc;;
 
 let parse_lbl x = match x with
-  | None -> ""
-  | Some (1,n) -> "ll"
-  | Some _ -> "" ;;
+  | None -> ("",-1)
+  | Some (1,n) -> (!domain_name,int_of_string n)
+  | Some _ -> ("",-1) ;;
+
 
 EXTEND Gram
-GLOBAL: expression pre post fml pred preddef ptr lbl id;
+GLOBAL: expression summaries summary fml pred preddef ptr lbl id;
   expression:
   [ "expression" LEFTA
-    [ "SUMMARY"; x = pre; "SUMMARY"; y = post -> (x,y) ]
+    [ x = LIST1 summaries -> x ]
   ];
 
-  pre:
-  [ "pre" LEFTA
-    [ x = LIST1 fml -> List.fold_left gen_conj (formula_of_heap HTrue loc) x ]
+  summaries:
+  [ "summaries" LEFTA
+    [ "SUMMARY"; x = summary -> x ]
   ];
-
-  post:
-  [ "post" LEFTA
-    [ x = LIST1 fml -> List.fold_left gen_conj (formula_of_heap HTrue loc) x ]
+  
+  summary:
+  [ "summary" LEFTA
+    [ x = LIST0 fml -> List.fold_left gen_conj (formula_of_heap HTrue loc) x ]
   ];
 
   fml:
   [ "fml" LEFTA
-    [ "{"; x = pred; "}"; ";" -> formula_of_heap x loc
+    [ "{"; x = pred; "}"; ";" -> x
     | x = ptr; "["; "label"; "="; y=ptr; "]"; ";" -> formula_of_pure_formula (mkEqVar x y loc) loc
     | x = ptr; "->"; y = ptr; "["; lbl; "]"; ";" -> formula_of_pure_formula (mkEqVar x y loc) loc
     ]
@@ -63,7 +65,15 @@ GLOBAL: expression pre post fml pred preddef ptr lbl id;
 
   pred:
   [ "pred" LEFTA
-    [ x=lbl; ";"; y=preddef; LIST1 preddef -> mkViewNode y (parse_lbl x) [] loc ]
+    [ x=lbl; ";"; y=preddef; LIST1 preddef -> 
+      let typ,size = parse_lbl x in
+      let heap = mkViewNode y typ [] loc in
+      let pure = match size with
+        | 1 -> mkNeqVar y (SpecVar (Named "", "null", Unprimed)) loc
+        | _ -> mkTrue loc
+      in
+      normalize_combine_heap (formula_of_pure_formula pure loc) heap
+    ]
   ];
 
   preddef:
@@ -92,9 +102,11 @@ GLOBAL: expression pre post fml pred preddef ptr lbl id;
     [ x=INT -> x
     | x=LIDENT -> x
     | x=UIDENT -> x
-    | "CL"; "#"; INT; ":"; x=SELF; "#"; INT -> x
-    | "#"; x=INT; "["; "size"; "="; INT; "B"; "]" -> x
+(*    | "CL"; "#"; INT; ":"; x=SELF; "#"; INT -> x*)
+(*    | "#"; x=INT; "["; "size"; "="; INT; "B"; "]" -> x*)
     | "next"; x=INT -> x
+    | "tl"; x=INT -> x
+    | "data"; x=INT -> x
     ]
   ];
 

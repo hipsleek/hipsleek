@@ -221,10 +221,10 @@ let initialize () =
     raise (SourceUtil.Syntax_error ("Syntax error: " ^ msg ^ "!", pos))
   );
   (*TP.enable_log_for_all_provers ();*)
-  if (not !TP.tp_batch_mode) then TP.start_prover ()
+  TP.start_prover ()
 
 let finalize () =
-  if (not !TP.tp_batch_mode) then TP.stop_prover ()
+  TP.stop_prover ()
 
 
 (**
@@ -310,9 +310,9 @@ module SleekHelper = struct
     | SC.PredDef pdef -> 
         log "processing pred def";
         SE.process_pred_def pdef; None
-    | SC.EntailCheck (iante, iconseq) -> 
-        log "processing entail check"; 
-        Some (SE.run_entail_check iante iconseq)
+    | SC.EntailCheck (iante, iconseq, etype) -> 
+        log "processing entail check";
+        Some (SE.run_entail_check iante iconseq etype)
     | SC.CaptureResidue lvar -> 
         log "processing capture residue";
         SE.process_capture_residue lvar; None

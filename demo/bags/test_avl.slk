@@ -1,0 +1,61 @@
+data node {
+  int val;
+  int height;
+  node left;
+  node right;
+}.
+
+pred avl<m, n, S> == case{
+  self = null -> [] m = 0 & n = 0 & S = {};
+  self !=null -> [] self::node<v, n, p, q> * p::avl<m1, n1, S1> * q::avl<m2, n2, S2> 
+      & m = 1+m1+m2 & -1<=n1-n2<=1  & n=1+max(n1,n2) & S = union(S1, S2, {v}) &
+      forall (x : (x notin S1 | x <= v)) & forall (y : (y notin S2 | y >= v));}
+  inv m >= 0 & n >= 0.
+
+
+  
+checkentail  x::node<vv,n,null,xr> * 
+        xr::node<xr_v,1,xrl,xrr> *
+        xrl::avl<xrl_m,0,xrl_S> * 
+        xrr::avl<xrr_m,0,xrr_S> &
+        1<=m & 1<=m2_2717 & m2_2717=1+xrl_m+xrr_m & 
+           0<=xrr_m & 0<=xrl_m & m=1+m2_2717 &         
+           (v_2711>0 | v_2711<=0) &
+           forall(y1:(y1 notin S2_2719  | v_2711<=y1)) & 
+           forall(x2:(x2 notin xrl_S  | x2<=xr_v)) & 
+           forall(y2:(y2 notin xrr_S  | xr_v<=y2)) &
+           S2_2719=union(xrl_S,xrr_S,{xr_v}) &  vv<=xr_v & 
+            S=union(S2_2719,{v_2711}) & v_2711<=vv & n=2
+        |- x::avl<m2,n,S2>.
+//print residue.
+
+
+
+/* S2_2719!={} & S!={} &forall(x1:(x1 notin S1_2715  | x1<=v_2711)) & S1_2715={} &xr_h<=1 & 1<=xr_h 
+
+        & v_bool_237_1729' & v_bool_236_1785' & ti_138'=vv & xr_h=n_2825 & v_bool_224_1907'&null=tn_139'&
+        xrl=tr_140'   p_2712=null     p_2712=left_225_2758&!v_bool_225_1786' &  n1_2714=0 &     n=n_2710 &  
+        
+        x::node<vv,n,null,xr> * 
+        xr::node<xr_v,xr_h,xrl,xrr> *
+        xrl::avl<xrl_m,xrl_h,xrl_S> * 
+        xrr::avl<xrr_m,xrr_h,xrr_S> *     
+        tmp2_141'::myint<0> * a'::myint<v_2711> 
+        
+        
+          1<=m & 1<=m2_2717 & m2_2717=1+xrl_m+xrr_m & 
+           0<=xrr_m & 0<=xrl_m & m=1+m2_2717 &         
+         forall(x1:(x1 notin S1_2715  | x1<=v_2711)) & 
+           forall(y1:(y1 notin S2_2719  | v_2711<=y1)) & 
+           forall(x2:(x2 notin xrl_S  | x2<=xr_v)) & 
+           forall(y2:(y2 notin xrr_S  | xr_v<=y2)) & S2_2719!={} & 
+           S2_2719=union(xrl_S,xrr_S,{xr_v}) & S!={} & vv<=xr_v & 
+           S1_2715={} & S=union(S1_2715,S2_2719,{v_2711}) & v_2711<=vv &                
+          n=1+max(xr_h,0) &
+          xr_h = 1+max(xrl_h,xrr_h)                     
+           & 0<=xrr_h & xrl_h-1<=xrr_h & 0<=xrl_h & 
+           xrr_h-1<=xrl_h & 1<=n & 0-1<=xr_h & xr_h<=1 & 1<=xr_h &
+         xr!=null& x!=null&
+         
+             
+         |- x::avl<mx,nx,Sx> .*/

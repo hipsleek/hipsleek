@@ -66,7 +66,7 @@ let rec fixbag_of_b_formula b =
     | CP.Gte (e1, e2, _) -> "{}={}"
     | CP.Eq (e1, e2, _) -> fixbag_of_exp e1 ^ op_eq ^ fixbag_of_exp e2
     | CP.Neq (e1, e2, _) -> 
-      if !allow_pred_spec && (List.exists is_bag_typ (CP.bfv b) || is_bag e1 || is_bag e2) then "{}={}"
+      if (* !allow_pred_spec *) not !dis_ps && (List.exists is_bag_typ (CP.bfv b) || is_bag e1 || is_bag e2) then "{}={}"
       else
         if List.exists is_int_typ (CP.bfv b) then fixbag_of_exp e1 ^ op_neq ^ fixbag_of_exp e2
         else "!(" ^ fixbag_of_exp e1 ^ op_eq ^ fixbag_of_exp e2 ^ ")"
@@ -683,7 +683,7 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
     DD.devel_hprint (add_str "RCASE: " (pr_list !CP.print_formula)) rcases no_pos;
     let fv_rel = get_rel_args rel in
     let bcases = List.map (fun x -> let fv_x = CP.fv x in
-        if List.length fv_x <= 10 || not(!allow_pred_spec) then x else
+        if List.length fv_x <= 10 || !dis_ps (* not(!allow_pred_spec) *) then x else
           let r = CP.mkExists (CP.diff_svl (CP.fv x) fv_rel) x None no_pos in 
           let r = Redlog.elim_exists_with_eq r in
           TP.simplify_raw r) bcases in

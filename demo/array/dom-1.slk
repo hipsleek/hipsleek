@@ -1,0 +1,20 @@
+
+relation dom(int[] a, int low, int high) == (dom(a,low-1,high) | dom(a,low,high+1)).
+
+
+
+//checkentail dom(a,l1,h1) & l1<=b & h<=h1 |- dom(a,l1,h1).
+
+
+checkentail dom(a,l,h) & l1<=b  |- dom(a,l,h).
+
+
+
+    /*
+ERROR: File "", line 0, col 0 : spec not supported for SMT 
+
+[smtsolver.ml]:Unexpected exception => sat
+Killed
+     */
+
+
