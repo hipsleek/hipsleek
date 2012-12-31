@@ -262,17 +262,6 @@ and m_apply_par (sst:(spec_var * spec_var) list) f =
   let pr2 = !print_mp_f in
   Debug.no_2 "m_apply_par" pr1 pr2 pr2 m_apply_par_x sst f
 
-      let subs_cons, lv = List.split (List.map (fun d ->
-          let subs_memo = b_apply_subs_varperm sst d.memo_formula in
-          let lv = match snd subs_memo with
-            | None -> []
-            | Some (_, _, le) -> List.concat (List.map (fun e -> CP.afv e) le) 
-          in { d with memo_formula = subs_memo; }, lv) c.memo_group_cons) in
-              Gen.BList.remove_dups_eq eq_spec_var
-                  ((List.map (fun v -> subst_var_par sst v) c.memo_group_linking_vars) @
-                      (List.concat lv));
-      memo_group_cons = subs_cons;
-
 (*MOVE to cpure.ml*)
 (* and b_f_ptr_equations_aux with_null f = *)
 (*   let (pf, _) = f in *)
@@ -292,8 +281,21 @@ and m_apply_par (sst:(spec_var * spec_var) list) f =
 (*   | Eq (e1, e2, _) -> can_be_aliased_aux true e1 && can_be_aliased_aux true e2 *)
 (*   | _ -> false *)
 
+and b_f_bag_equations_aux with_emp f =
+  let (pf,_) = f in
+  match pf with
+    | Eq (e1, e2, _) ->
+          let b = can_be_aliased_aux_bag with_emp e1 && can_be_aliased_aux_bag with_emp e2 in
+          if not b then [] else [(get_alias_bag e1, get_alias_bag e2)]
+    | _ -> [] 
+
 and b_f_bag_equations f = b_f_bag_equations_aux true f
 
+and is_bf_ptr_equations bf =
+  let (pf,_) = bf in
+  match pf with
+    | Eq (e1, e2, _) -> can_be_aliased_aux true e1 && can_be_aliased_aux true e2
+    | _ -> false
 
 (*MOVE to cpure.ml*)
 (* and is_pure_ptr_equations f = match f with *)
@@ -774,7 +776,10 @@ and fold_mem_lst_with_complex (f_init:formula) with_dupl with_inv (lst:memo_pure
   !print_p_f_f !print_mp_f !print_p_f_f
   (fun _ _ -> fold_mem_lst_x f_init with_dupl with_inv lst) f_init lst
 *)
-      
+	
+and fold_mem_lst (f_init:formula) with_dupl with_inv (lst:memo_pure) : formula =
+  fold_mem_lst_gen f_init with_dupl with_inv true true lst
+  
 (* folds just the pruning constraints, ignores the memo_group_slice *) 
 and fold_mem_lst_cons init_cond lst with_dupl with_inv with_slice : formula = 
   (*fold_mem_lst_to_lst lst false true false*)
@@ -2200,6 +2205,7 @@ let fold_mem_lst_m = fold_mem_lst_with_complex
 let fold_mem_lst init_f with_dupl with_inv f : formula= match f with
   | MemoF f -> fold_mem_lst_with_complex init_f with_dupl with_inv f 
   | OnePF f -> (mkAnd init_f f no_pos)
+
 (*
 let fold_mem_lst init_f with_dupl with_inv f =
   Debug.no_2 "fold_mem_lst"

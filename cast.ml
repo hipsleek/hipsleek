@@ -148,8 +148,12 @@ and test_comps =
 and coercion_case =
   | Simple
   | Complex
-  | Split
-  | Normalize of bool (*CHECKCHECK*)
+  | Normalize of bool 
+(* 
+   |LHS| > |RHS| --> Normalize of true --> combine
+   |LHS| < |RHS| --> Normalize of false --> split
+   Otherwise, simple or complex
+*)
 
 and coercion_decl = { 
     coercion_type : coercion_type;
@@ -1060,33 +1064,16 @@ let look_up_coercion_def_raw coers (c : ident) : coercion_decl list =
   (* | [] -> [] *)
 
 (*a coercion can be simple, complex or normalizing*)
-(*a coercion is classified as Split if there are
-more than 2 node with the same name on the rhs*)
 let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
   let fct f = match f with
       | Cformula.Base {F.formula_base_heap=h}
-  let rhs_no_dupl =
-    let rec helper f = 
-    match f with
-      | F.Base b  ->
-          let h = b.F.formula_base_heap in
-          let hs = F.top_level_vars h in
-          Gen.BList.check_no_dups_eq (P.eq_spec_var) hs
-      | F.Exists e ->
-          let h = e.F.formula_exists_heap in
-          let hs = F.top_level_vars h in
-          Gen.BList.check_no_dups_eq (P.eq_spec_var) hs
-      | F.Or {F.formula_or_f1 = f1; F.formula_or_f2 =f2} ->
-          (helper f1 || helper f2)
-    in
-    helper rhs
-  in
+	  | Cformula.Exists {F.formula_exists_heap=h} ->      
           let hs = F.split_star_conjunctions h in
 		  let self_n = List.for_all (fun c-> (P.name_of_spec_var (F.get_node_var c)) = self) hs in
           (List.length hs),self_n, List.map F.get_node_name hs
       | _ -> 1,false,[]
   in
-  if (not rhs_no_dupl) then Split else
+  let lhs_length,l_sn,lhs_typ = fct lhs in
   let rhs_length,r_sn,rhs_typ = fct rhs in
   match lhs_typ@rhs_typ with
 	| [] -> Simple

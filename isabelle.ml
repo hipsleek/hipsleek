@@ -41,7 +41,7 @@ let rec isabelle_of_typ = function
   | List _          -> 	(* lists are not supported *)
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "list not supported for Isabelle"}
-  | NUM>
+  | NUM
   | RelT 
   | HpT
   | AnnT->

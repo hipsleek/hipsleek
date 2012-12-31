@@ -862,7 +862,7 @@ and h_apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : 
 	               h_formula_heap_name = c; 
 	               h_formula_heap_arguments = args;
 	               h_formula_heap_pos = pos} as h_node) ->
-          let b,_ = is_pointer c in
+          let b,_ = Globals.is_program_pointer c in
           let node = HeapNode {h_node with h_formula_heap_node = subst_var s x; 
 		                               h_formula_heap_arguments = List.map (Ipure.e_apply_one s) args;
 		                               h_formula_heap_pos = pos}
@@ -1011,7 +1011,7 @@ and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula)
 and subst_all_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula):struc_formula =
   let rec helper f =
   match f with
-	| EAssume (b,tag) -> EAssume ((subst_all sst b),tag)
+	| EAssume (b,tag,t) -> EAssume ((subst_all sst b),tag,t)
 	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> ((Ipure.subst sst c1),(helper c2))) b.formula_case_branches}
 	| EBase b->  EBase {
 			  formula_struc_implicit_inst = List.map (subst_var_list sst) b.formula_struc_implicit_inst;
@@ -1033,10 +1033,10 @@ and subst_all_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_form
 and subst_pointer_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula) (vars: (ident * primed) list):struc_formula =
   let rec helper f =
   match f with
-	| EAssume (b,tag) ->
+	| EAssume (b,tag,t) ->
         let pvars = List.map (fun (v,_) -> (v,Primed)) vars in
         let uvars = List.map (fun (v,_) -> (v,Unprimed)) vars in
-        EAssume ((subst_pointer sst b (pvars@uvars)),tag)
+        EAssume ((subst_pointer sst b (pvars@uvars)),tag,t)
 	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> ((Ipure.subst sst c1),(helper c2))) b.formula_case_branches}
 	| EBase b->
         (*Preconditions do not contain primed notations*)
@@ -1818,7 +1818,7 @@ let normalize_formula (f1 : formula) (f2 : formula) (pos : loc) =
 let add_h_formula_to_pre_x (h_f,impl_vars) (f0 : struc_formula): struc_formula =
   let rec helper (f0:struc_formula) =
     match f0 with
-	  | EAssume (b,tag) -> f0
+	  | EAssume (b,tag,t) -> f0
 	  | ECase b-> ECase {b with 
 		  formula_case_branches = (List.map (fun (c1,c2)->(c1,(helper c2))) b.formula_case_branches)}
 	  | EBase b -> EBase {b with
@@ -1839,10 +1839,10 @@ let add_h_formula_to_pre (h_f,impl_vars) (f0 : struc_formula): struc_formula =
 let add_formula_to_post_x (f,ex_vars) (f0 : struc_formula): struc_formula =
   let rec helper (f0:struc_formula) =
     match f0 with
-      | EAssume (b,tag) -> 
+      | EAssume (b,tag,t) -> 
           let new_f = normalize_formula f b no_pos in
           let new_f2 = add_quantifiers ex_vars new_f in
-          EAssume (new_f2,tag)
+          EAssume (new_f2,tag,t)
       | ECase b -> ECase ({formula_case_branches = List.map (fun (c1,c2)-> (c1,(helper c2))) b.formula_case_branches ; formula_case_pos=b.formula_case_pos})
       | EBase b-> EBase {b with
 		  formula_struc_continuation = Gen.map_opt helper b.formula_struc_continuation;

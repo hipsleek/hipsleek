@@ -986,7 +986,7 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn lo
           (*acquire() an invariant may cause UNSAT*)
           let unsat_check_fct es =
             let new_es = {es with CF.es_unsat_flag = false} in (*trigger unsat_check*)
-            elim_unsat_es prog (ref 1) new_es
+            elim_unsat_es 12 prog (ref 1) new_es
           in
           let tmp_res2 = CF.transform_list_failesc_context (idf,idf,unsat_check_fct) tmp_res in 
           tmp_res2
@@ -1350,7 +1350,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		              let _ = consume_all := true in
                       (* let _ = DD.info_pprint ("       sleek-logging (binding):" ^ (to_print)) pos in *)
                       (* let _ = Log.update_sleek_proving_kind Log.BINDING in *)
-	                  let rs_prim, prf = heap_entail_struc_list_failesc_context_init prog false  true unfolded struc_vheap None pos pid in
+	                  let rs_prim, prf = heap_entail_struc_list_failesc_context_init prog false  true unfolded struc_vheap None None None pos pid in
 		              let _ = consume_all := false in
                       let _ = CF.must_consistent_list_failesc_context "bind 3" rs_prim  in
 	                  let _ = PTracer.log_proof prf in

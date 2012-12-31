@@ -1663,8 +1663,8 @@ let pr_numbered_list_formula_trace (e:(context * (formula*formula_trace)) list) 
             pr_es_trace b;
             fmt_string "]]"
   end in*)
-  (* let f b = () in *)
-  pr_numbered_list_formula_trace_ho (e) (count:int) f 
+  let f b = () in
+  pr_numbered_list_formula_trace_ho (e) (count:int) f
 
 let pr_numbered_list_formula_no_trace (e:(context * (formula*formula_trace)) list) (count:int) =
   let f b = () in
@@ -2654,10 +2654,10 @@ let string_of_coercion_type (t:Cast.coercion_type) = match t with
   | Iast.Equiv -> "<==>" ;;
 
 let string_of_coercion_case (t:Cast.coercion_case) = match t with
-  | Cast.Split -> "Split"
   | Cast.Simple -> "Simple"
   | Cast.Complex -> "Complex"
   | Cast.Normalize b-> "Normalize "^(string_of_bool b)
+
     (* coercion_univ_vars : P.spec_var list; (\* list of universally quantified variables. *\) *)
 let string_of_coerc_opt op c = 
   let s1="Lemma \""^c.coercion_name^"\": "^(string_of_formula c.coercion_head)^(string_of_coercion_type c.coercion_type) in

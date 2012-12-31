@@ -2754,6 +2754,21 @@ and b_apply_subs_x sst bf =
     | BagSub (a1, a2, pos) -> BagSub (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | BagMax (v1, v2, pos) -> BagMax (subs_one sst v1, subs_one sst v2, pos)
     | BagMin (v1, v2, pos) -> BagMin (subs_one sst v1, subs_one sst v2, pos)
+    | VarPerm (ct,ls,pos) ->
+        let ls1 = List.map (subs_one sst) ls in
+        VarPerm (ct,ls1,pos)
+    | ListIn (a1, a2, pos) -> ListIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+    | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+    | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+    | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+    | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (* An Hoa *)
+    | LexVar t_info -> 
+        LexVar { t_info with
+				  lex_exp = e_apply_subs_list sst t_info.lex_exp;
+					lex_tmp = e_apply_subs_list sst t_info.lex_tmp; } 
+  in
+  (* Slicing: Add the inferred linking variables into sl field *)
+  (* We also restore the prior inferred information            *)
   (* let infer_lvar_enabled = !do_slicing && !infer_lvar_slicing in *)
   let infer_lvar_enabled = (not !dis_slc_ann) && !infer_lvar_slicing in
   let fv = bfv bf in
@@ -2824,58 +2839,8 @@ and b_apply_subs_x sst bf =
                     | _ -> () 
                 else () in 
               e_apply_subs sst e) le)
-    | VarPerm (ct,ls,pos) ->
-        let ls1 = List.map (subs_one sst) ls in
-        VarPerm (ct,ls1,pos)
-    | ListIn (a1, a2, pos) -> ListIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-    | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-    | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-    | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-    | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (* An Hoa *)
-    | LexVar t_info -> 
-        LexVar { t_info with
-				  lex_exp = e_apply_subs_list sst t_info.lex_exp;
-					lex_tmp = e_apply_subs_list sst t_info.lex_tmp; } 
-   in let nsl = match sl with
-(*   | Gt (a1, a2, pos) -> Gt (e_apply_subs sst a1,                                         *)
-(* 	e_apply_subs sst a2, pos)                                                               *)
-(*   | Gte (a1, a2, pos) -> Gte (e_apply_subs sst a1,                                       *)
-(* 	e_apply_subs sst a2, pos)                                                               *)
-(*   | SubAnn (a1, a2, pos) -> SubAnn (e_apply_subs sst a1,                                 *)
-(* 	e_apply_subs sst a2, pos)                                                               *)
-(*   | Eq (a1, a2, pos) -> Eq (e_apply_subs sst a1,                                         *)
-(* 	e_apply_subs sst a2, pos)                                                               *)
-(*   | Neq (a1, a2, pos) -> Neq (e_apply_subs sst a1,                                       *)
-(* 	e_apply_subs sst a2, pos)                                                               *)
-(*   | EqMax (a1, a2, a3, pos) -> EqMax (e_apply_subs sst a1,                               *)
-(* 	e_apply_subs sst a2,                                                                    *)
-(* 	e_apply_subs sst a3, pos)                                                               *)
-(*   | EqMin (a1, a2, a3, pos) -> EqMin (e_apply_subs sst a1,                               *)
-(* 	e_apply_subs sst a2,                                                                    *)
-(* 	e_apply_subs sst a3, pos)                                                               *)
-(*   | BagIn (v, a1, pos) -> BagIn (subs_one sst v, e_apply_subs sst a1, pos)               *)
-(*   | BagNotIn (v, a1, pos) -> BagNotIn (subs_one sst v, e_apply_subs sst a1, pos)         *)
-(*         (* is it ok?... can i have a set of boolean values?... don't think so... *)      *)
-(*   | BagSub (a1, a2, pos) -> BagSub (e_apply_subs sst a1, e_apply_subs sst a2, pos)       *)
-(*   | BagMax (v1, v2, pos) -> BagMax (subs_one sst v1, subs_one sst v2, pos)               *)
-(*   | BagMin (v1, v2, pos) -> BagMin (subs_one sst v1, subs_one sst v2, pos)               *)
-(*   | VarPerm (ct,ls,pos) ->                                                               *)
-(*       let ls1 = List.map (subs_one sst) ls in                                            *)
-(*       VarPerm (ct,ls1,pos)                                                               *)
-(*   | ListIn (a1, a2, pos) -> ListIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)       *)
-(*   | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_subs sst a1, e_apply_subs sst a2, pos) *)
-(*   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)   *)
-(*   | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)   *)
-(*   | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (* An Hoa *)  *)
-(*   | LexVar t_info ->                                                                     *)
-(*       LexVar { t_info with                                                               *)
-(* 		  lex_exp = e_apply_subs_list sst t_info.lex_exp;                                     *)
-(* 		  lex_tmp = e_apply_subs_list sst t_info.lex_tmp; }                                   *)
-(*   in let nsl = match sl with                                                             *)
-(* 	| None -> None                                                                          *)
-(* 	| Some (il, lbl, le) -> Some (il, lbl, List.map (fun e -> e_apply_subs sst e) le)       *)
-(*   in (npf,nsl)                                                                           *)
-
+  in (npf,nsl)
+	 
 (* and subs_one sst v = List.fold_left (fun old -> fun (fr,t) -> if (eq_spec_var fr v) then t else old) v sst  *)
 
 and subs_one sst v = 
@@ -3740,6 +3705,64 @@ and find_bound_b_formula v f0 =
     | Gte (e1, e2, pos) -> helper e1 e2 false true
     | _ -> (None, None)
 
+(* eliminate exists with the help of c1<=v<=c2 *)
+and elim_exists_with_ineq (f0: formula): formula =
+  match f0 with
+    | Exists (qvar, qf,lbl, pos) ->
+          begin
+            match qf with
+              | Or (qf1, qf2,lbl2, qpos) ->
+                    let new_qf1 = mkExists [qvar] qf1 lbl qpos in
+                    let new_qf2 = mkExists [qvar] qf2 lbl qpos in
+                    let eqf1 = elim_exists_with_ineq new_qf1 in
+                    let eqf2 = elim_exists_with_ineq new_qf2 in
+                    let res = mkOr eqf1 eqf2 lbl2 pos in
+                    res
+              | _ ->
+                    let eqqf = elim_exists qf in
+                    let min, max = find_bound qvar eqqf in
+                    begin
+                      match min, max with
+                        | Some mi, Some ma -> 
+                              let res = ref (mkFalse pos) in
+                              begin
+                                for i = mi to ma do
+                                  res := mkOr !res (apply_one_term (qvar, IConst (i, pos)) eqqf) lbl pos
+                                done;
+                                !res
+                              end
+                        | _ -> f0
+                    end
+          end
+    | And (f1, f2, pos) ->
+          let ef1 = elim_exists_with_ineq f1 in
+          let ef2 = elim_exists_with_ineq f2 in
+          mkAnd ef1 ef2 pos
+    | Or (f1, f2, lbl, pos) ->
+          let ef1 = elim_exists_with_ineq f1 in
+          let ef2 = elim_exists_with_ineq f2 in
+          mkOr ef1 ef2 lbl pos
+    | Not (f1, lbl, pos) ->
+          let ef1 = elim_exists_with_ineq f1 in
+          mkNot ef1 lbl pos
+    | Forall (qvar, qf, lbl, pos) ->
+          let eqf = elim_exists_with_ineq qf in
+          mkForall [qvar] eqf lbl pos
+    | BForm _ -> f0
+    | AndList b-> AndList (map_l_snd elim_exists_with_ineq b)
+
+(*CHECKCHECK: may be duplicated*)
+and elim_exists (f0 : formula) : formula =
+  let pr = !print_formula in
+  Debug.no_1 "elim_exists" pr pr elim_exists_x f0
+
+
+
+(* eliminate exists with the help of v=exp *)
+and elim_exists_x (f0 : formula) : formula = 
+  let rec helper f0 =
+    match f0 with
+      | Exists (qvar, qf, lbl, pos) -> begin
 	  match qf with
 	    | Or (qf1, qf2, lbl2, qpos) ->
 	          let new_qf1 = mkExists [qvar] qf1 lbl qpos in
@@ -3772,8 +3795,19 @@ and find_bound_b_formula v f0 =
 	            let tmp1 = qf (*helper qf*) in
 	            let tmp2 = mkExists(*_with_simpl simpl*) [qvar] tmp1 lbl pos in
 	            tmp2
+        end
+      | And (f1, f2, pos) -> mkAnd ( helper f1) ( helper f2) pos 
       | AndList b -> AndList (map_l_snd helper b)
+      | Or (f1, f2, lbl, pos) -> mkOr ( helper f1) ( helper f2) lbl pos 
+      | Not (f1, lbl, pos) -> mkNot (helper f1) lbl pos 
+      | Forall (qvar, qf, lbl, pos) -> mkForall [qvar] (helper qf) lbl pos 
+      | BForm _ -> f0 in
+  helper f0
 
+(*
+and elim_exists (f0 : formula) : formula = 
+  Debug.no_1 "[cpure]elim_exists" !print_formula !print_formula elim_exists_x f0
+*)
 (*
 add_gte_0 inp1 : exists(b_113:exists(b_128:(b_128+2)<=b_113 & (9+b_113)<=n))
 add_gte_0@144 EXIT out : exists(b_113:0<=b_113 & 
@@ -7209,6 +7243,7 @@ and has_level_constraint (f: formula) : bool =
       !print_formula string_of_bool
       has_level_constraint_x f
 
+(*CHECKCHECK: may be duplicated*)
 and elim_exists (f0 : formula) : formula =
   let pr = !print_formula in
   Debug.no_1 "elim_exists" pr pr elim_exists_x f0
@@ -7273,6 +7308,7 @@ and elim_exists (f0 : formula) : formula =
   Debug.no_1 "[cpure]elim_exists" !print_formula !print_formula elim_exists_x f0
 *)
 
+(*CHECKCHECK: may be duplicated*)
 (* eliminate exists with the help of c1<=v<=c2 *)
 and elim_exists_with_ineq (f0: formula): formula =
   match f0 with

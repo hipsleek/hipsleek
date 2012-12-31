@@ -100,7 +100,7 @@ type typ =
   (* | FuncT (\* function type *\) *)
   | Pointer of typ (* base type and dimension *)
 
-let is_pointer (name:ident) = 
+let is_program_pointer (name:ident) = 
   let slen = (String.length name) in
   try  
       let n = (String.rindex name '_') in
@@ -150,6 +150,7 @@ let name_of_typ (t:typ) : string =
         t1
     | _ -> 
         "Not_Support")
+
 let is_pointer t=
  match t with
    | Named _ -> true

@@ -1045,8 +1045,8 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
  * Test for satisfiability
  * We also consider unknown is the same as sat
  *)
-let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (p
-rover: smtprover) timeout : bool = (* let _ = print_endline ("smt_is_sat : " ^ (!print_pure f) ^ "\n") in *)
+let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout : bool =
+  (* let _ = print_endline ("smt_is_sat : " ^ (!print_pure f) ^ "\n") in *)
   (*drop VarPerm beforehand*)
   let f = CP.drop_varperm_formula f in
   (*--------------------------------------*)

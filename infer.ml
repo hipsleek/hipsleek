@@ -38,7 +38,7 @@ let simplify_conjs f =
   Debug.no_1 "simplify_conjs" (!CP.print_formula) (!CP.print_formula) simplify_conjs f 
 
 let simp_lhs_rhs vars (c,lhs,rhs) =
-  let ra = MCP.pure_ptr_equations lhs in
+  let ra = CP.pure_ptr_equations lhs in
   let (subs,rest) = CP.simplify_subs ra vars [] in
   let nsubs = CP.norm_subs (rest@subs) in
   let asubs = rest@nsubs in	  
@@ -733,7 +733,7 @@ let infer_pure_m estate lhs_rels lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure_orig
       let lhs_wo_ptr_eqs = CP.remove_ptr_equations lhs_wo_heap false in
       let vars_lhs = fv lhs_wo_ptr_eqs in (* var on lhs *)
       let vars_rhs = fv (CP.remove_ptr_equations rhs_xpure false) in (* var on lhs *)
-      let vars_rhs = fv (MCP.remove_ptr_equations rhs_xpure false) in (* var on rhs *) (*CHECKCHECK*)
+      let vars_rhs = fv (CP.remove_ptr_equations rhs_xpure false) in (* var on rhs *) (*CHECKCHECK*)
       let lhs_als = MCP.ptr_equations_without_null (MCP.mix_of_pure lhs_xpure) in
       let lhs_aset = build_var_aset lhs_als in
       let total_sub_flag = List.for_all (fun r ->

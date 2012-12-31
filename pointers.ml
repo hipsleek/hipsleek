@@ -269,7 +269,7 @@ and modifies (e:exp) (bvars:ident list) : (ident list) * (ident list) =
           let fvars3 =
             (match w.exp_while_wrappings with
               | None -> []
-              | Some e0 ->
+              | Some (e0,id) -> (*CHECKCHECK: what is id ??? *)
                   let _,vs =  (helper e0 bvars) in
                   vs
             )
@@ -455,9 +455,9 @@ let subst_exp_x (e:exp) (subst:(ident*ident) list): exp =
           let wrap =
             (match w.exp_while_wrappings with
               | None -> None
-              | Some e0 ->
+              | Some (e0,id) -> (*CHECKCHECK: what is id ?*)
                   let e1 = helper e0 subst in
-                  Some e1
+                  Some (e1,id)
             )
           in
           let new_e = While {w with exp_while_condition = cond;
@@ -711,9 +711,9 @@ let trans_exp_ptr_x prog (e:exp) (vars: ident list) : exp * (ident list) =
           let wrap =
             (match w.exp_while_wrappings with
               | None -> None
-              | Some e0 ->
+              | Some (e0,id) ->
                   let e1,_ = helper e0 vars in
-                  Some e1
+                  Some (e1,id)
             )
           in
           let new_e = While {w with exp_while_condition = cond;
@@ -1523,9 +1523,9 @@ and trans_exp_addr prog (e:exp) (vars: ident list) : exp =
           let wrap =
             (match w.exp_while_wrappings with
               | None -> None
-              | Some e0 ->
+              | Some (e0,id) ->
                   let e1 = helper e0 vars in
-                  Some e1
+                  Some (e1,id)
             )
           in
           (*NOTE: the translation for while loop specification
@@ -1667,7 +1667,7 @@ and find_addr (e:exp) : ident list =
           let vs3 =
             (match w.exp_while_wrappings with
               | None -> []
-              | Some e0 ->
+              | Some (e0,_) ->
                   helper e0
             )
           in
@@ -2264,7 +2264,7 @@ and find_addr_inter_exp prog proc e (vs:ident list) : ident list =
           let vs3 =
             (match w.exp_while_wrappings with
               | None -> []
-              | Some e0 ->
+              | Some (e0,_) ->
                   helper e0 vs
             )
           in

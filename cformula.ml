@@ -500,6 +500,10 @@ and mkEBase f ct pos = EBase {
       formula_struc_pos = pos;
   }
 
+and mkEAssume vars post lbl ensure = EAssume (vars,post,lbl,ensure)
+
+and mkEAssume_simp vars post lbl = EAssume (vars,post,lbl,None)
+
 and mk_ebase_inferred_pre (h:h_formula) (p:CP.formula) ct = mkEBase (mkBase_simp h (MCP.mix_of_pure p)) ct no_pos 
 
 and formula_of_pure_aux (p:CP.formula) (status:int) (pos:loc) :formula=
@@ -9194,7 +9198,7 @@ let prepost_of_init_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formul
   (**************)
   let post = mkBase_simp lock_node (MCP.memoise_add_pure_N (MCP.mkMTrue pos) lock_f) in
   (* let post = formula_of_heap_w_normal_flow lock_node pos in *)
-  let post = EAssume ([ls_uvar;lsmu_uvar],post,lbl) in
+  let post = mkEAssume_simp [ls_uvar;lsmu_uvar] post lbl in
   let pre = formula_of_heap_w_normal_flow data_node pos in
   EBase { 
 	formula_struc_explicit_inst = [];
@@ -9279,7 +9283,7 @@ let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:fo
   (**************)
   let post = mkBase_simp data_node (MCP.memoise_add_pure_N (MCP.mkMTrue pos) lock_post_f) in
   (* let post = formula_of_heap_w_normal_flow data_node pos in *)
-  let post = EAssume ([ls_uvar;lsmu_uvar],post,lbl) in
+  let post = mkEAssume_simp [ls_uvar;lsmu_uvar] post lbl in
   let pre =  mkBase_simp lock_node (MCP.memoise_add_pure_N (MCP.mkMTrue pos) ls_pre_f) in
   (* let pre = formula_of_heap_w_normal_flow lock_node pos in *)
   EBase { 
@@ -9351,12 +9355,12 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
         ls_post_f
   in
   (**************)
-  let read_f = mkPermInv fresh_perm in
+  let read_f = mkPermInv () fresh_perm in
   (*POST-CONDITION*)
   let tmp = mkBase_simp lock_node (MCP.memoise_add_pure_N (MCP.mkMTrue pos) lock_post_f) in
   (* let tmp = formula_of_heap_w_normal_flow lock_node pos in *)
   let post = normalize 5 inv tmp pos in
-  let post = EAssume ([ls_uvar;lsmu_uvar],post,lbl) in
+  let post = mkEAssume_simp [ls_uvar;lsmu_uvar] post lbl in
   (*PRE-CONDITION*)
   let pre_mf =
     if (!Globals.allow_locklevel) then
@@ -9448,7 +9452,7 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   (* let post_f = mkBase_simp lock_node_post (MCP.OnePF ls_post_f) in *)
   (*TOCHECK: ??? donot need lock_node*)
   let post_f = mkBase_simp HTrue (MCP.memoise_add_pure_N (MCP.mkMTrue pos) lock_post_f) in
-  let post = EAssume ([ls_uvar;lsmu_uvar],post_f,lbl) in
+  let post = mkEAssume_simp [ls_uvar;lsmu_uvar] post_f lbl in
   EBase { 
 	formula_struc_explicit_inst = [];
 	formula_struc_implicit_inst = [(* fresh_perm *)](* ::pre_evars *); (*instantiate*)
@@ -9731,7 +9735,7 @@ and norm_struc_vperm_x struc_f ref_vars val_vars = match struc_f with
           EAssume (vars,new_post,lb,t)
       else
         let new_post = norm_formula_vperm post pvars [] in
-        EAssume (vars,new_post,lb)
+        mkEAssume_simp vars new_post lb
         (*concurrency spec. USERS specify this*)
   | EInfer ({ formula_inf_continuation = cont }) ->struc_f (*Not handle this at the moment*)
   | EOr b -> EOr {b with 
@@ -9800,7 +9804,7 @@ and extractLS_x (evars : CP.spec_var list) (f : formula): MCP.mix_formula  =
           MCP.mkOr_mems pf1 pf2
   in helper f
 
-let rec list_of_posts (sp:struc_formula) = match sp with
+and list_of_posts (sp:struc_formula) = match sp with
   | ECase b -> List.concat (List.map (fun (p,c) -> let res = list_of_posts c in
     List.map (fun (pures,post) -> ([p]@pures,post)) res) b.formula_case_branches)
   | EBase b ->
@@ -9812,7 +9816,7 @@ let rec list_of_posts (sp:struc_formula) = match sp with
   | EList b -> List.concat (List.map (fun (_,e) -> list_of_posts e) b)
   | EOr b -> list_of_posts b.formula_struc_or_f1 @ list_of_posts b.formula_struc_or_f2
 
-let rec transform_spec (sp:struc_formula) pairs = match sp with
+and transform_spec (sp:struc_formula) pairs = match sp with
   | ECase b -> ECase {b with formula_case_branches = (List.map (fun (p,c) -> 
     let new_pairs = List.concat (List.map (fun (x,y) -> if List.hd x == p then [(List.tl x,y)] else []) pairs) in
     (p,transform_spec c new_pairs)) b.formula_case_branches)}
@@ -9828,9 +9832,9 @@ let rec transform_spec (sp:struc_formula) pairs = match sp with
   | EOr b -> EOr {b with formula_struc_or_f1 = transform_spec b.formula_struc_or_f1 pairs;
                          formula_struc_or_f2 = transform_spec b.formula_struc_or_f2 pairs}
 
-let sum_of_int_lst lst = List.fold_left (+) 0 lst
+and sum_of_int_lst lst = List.fold_left (+) 0 lst
 
-let rec no_of_cnts_heap heap = match heap with
+and no_of_cnts_heap heap = match heap with
   | Star h -> no_of_cnts_heap h.h_formula_star_h1 + no_of_cnts_heap h.h_formula_star_h2
   | Conj h -> no_of_cnts_heap h.h_formula_conj_h1 + no_of_cnts_heap h.h_formula_conj_h2
 (*  | StarList h -> sum_of_int_lst (List.map (fun (_,s) -> no_of_cnts_heap (Star s)) h)*)
@@ -9843,12 +9847,12 @@ let rec no_of_cnts_heap heap = match heap with
   | HFalse -> 1
   | HEmp -> 0
 
-let rec no_of_cnts_fml fml = match fml with
+and no_of_cnts_fml fml = match fml with
   | Or f -> no_of_cnts_fml f.formula_or_f1 + no_of_cnts_fml f.formula_or_f2
   | Base f -> no_of_cnts_heap f.formula_base_heap + CP.no_of_cnts (MCP.pure_of_mix f.formula_base_pure)
   | Exists f -> no_of_cnts_heap f.formula_exists_heap  + CP.no_of_cnts (MCP.pure_of_mix f.formula_exists_pure)
 
-let rec no_of_cnts (sp:struc_formula) = match sp with
+and no_of_cnts (sp:struc_formula) = match sp with
   | ECase b -> 
     let nums = List.map (fun (p,c) -> CP.no_of_cnts p + no_of_cnts c) b.formula_case_branches in
     sum_of_int_lst nums
@@ -9915,7 +9919,7 @@ let infer_lsmu_formula (f : formula) : formula =
 let infer_lsmu_struc_formula_x (f:struc_formula):struc_formula = 
   let rec helper f = 
     match f with
-      | EAssume (vars,post,lbl) -> EAssume (vars,(infer_lsmu_formula post),lbl)
+      | EAssume (vars,post,lbl,t) -> EAssume (vars,(infer_lsmu_formula post),lbl,t)
       | ECase b -> ECase ({b with formula_case_branches = List.map (fun (c1,c2)-> (c1,(helper c2))) b.formula_case_branches ; formula_case_pos=b.formula_case_pos})
       | EBase b-> EBase {b with
 		  formula_struc_base = infer_lsmu_formula b.formula_struc_base;

@@ -375,7 +375,7 @@ and view_mater_match_x prog c vs1 aset imm f =
               
 and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
   (* if not(c.coercion_simple_lhs && c.coercion_head_view = l_vname) then None *)
-  if not((c.coercion_case=Cast.Simple || c.coercion_case=Cast.Split) && c.coercion_head_view = l_vname) then None
+  if not((c.coercion_case=Cast.Simple || c.coercion_case= (Normalize false)) && c.coercion_head_view = l_vname) then None
   else 
     let args = List.tl (fv_simple_formula_coerc c.coercion_head) in (* dropping the self parameter and fracvar *)
     (* let args = List.tl (fv_simple_formula c.coercion_head) in (\* dropping the self parameter *\) *)
@@ -539,8 +539,8 @@ and lookup_lemma_action_x prog (c:match_res) :action =
               in
               (*expecting ((String.compare dl.h_formula_data_name dr.h_formula_data_name)==0) == true*)
               let l = 
-                let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = Cast.Split) prog.prog_left_coercions) dl.h_formula_data_name dr.h_formula_data_name in
-                let right_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = Cast.Normalize) prog.prog_right_coercions) dr.h_formula_data_name dl.h_formula_data_name in
+                let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize false)) prog.prog_left_coercions) dl.h_formula_data_name dr.h_formula_data_name in
+                let right_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize true)) prog.prog_right_coercions) dr.h_formula_data_name dl.h_formula_data_name in
                 let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
                 let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
                 left_act@right_act
@@ -587,8 +587,8 @@ and lookup_lemma_action_x prog (c:match_res) :action =
               let l = if flag
                   then begin
                       (*expecting ((String.compare vl.h_formula_view_name vr.h_formula_view_name)==0)*)
-                      let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = Cast.Split) prog.prog_left_coercions) vl_name vr_name in
-                      let right_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = Cast.Normalize) prog.prog_right_coercions) vr_name vl_name in
+                      let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize false)) prog.prog_left_coercions) vl_name vr_name in
+                      let right_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize true)) prog.prog_right_coercions) vr_name vl_name in
                       let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) left_ls else [] in
                       let right_act = if (not(!ann_derv) || vr_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) right_ls else [] in
                       left_act@right_act

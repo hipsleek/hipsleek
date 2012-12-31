@@ -1103,19 +1103,22 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
     | SetMONA -> Setmona.is_sat wf
     | Redlog -> redlog_is_sat wf
     | RM ->
-        if (is_bag_constraint wf) then mona_is_sat wf
-          if (is_bag_constraint wf) && (CP.is_float_formula wf) then
+        if (is_bag_constraint wf) && (CP.is_float_formula wf) then
             (* Mixed bag constraints and float constraints *)
             (*TO CHECK: soundness. issat(f) = issat(f1) & is(satf2)*)
-            let f_no_float = CP.drop_float_formula wf in
-            let f_no_bag = CP.drop_bag_formula wf in
-            let _ = Debug.devel_zprint (lazy ("SAT #" ^ sat_no ^ " : mixed float + bag constraints ===> partitioning: \n ### " ^ (!print_pure wf) ^ "\n INTO : " ^ (!print_pure f_no_float) ^ "\n AND : " ^ (!print_pure f_no_bag) )) no_pos
-            in
-            let b1 = mona_is_sat f_no_float in
-            let b2 = redlog_is_sat f_no_bag in
+          let f_no_float = CP.drop_float_formula wf in
+          let f_no_bag = CP.drop_bag_formula wf in
+          let _ = Debug.devel_zprint (lazy ("SAT #" ^ sat_no ^ " : mixed float + bag constraints ===> partitioning: \n ### " ^ (!print_pure wf) ^ "\n INTO : " ^ (!print_pure f_no_float) ^ "\n AND : " ^ (!print_pure f_no_bag) )) no_pos
+          in
+          let b1 = mona_is_sat f_no_float in
+          let b2 = redlog_is_sat f_no_bag in
             (* let _ = print_endline ("\n### b1 = " ^ (string_of_bool b1) ^ "\n ### b2 = "^ (string_of_bool b2)) in *)
-            (b1 && b2)
+          (b1 && b2)
+        else
+          if (is_bag_constraint wf) then
+            mona_is_sat wf
           else
+            redlog_is_sat wf
     | PARAHIP ->
           if (is_relation_constraint wf) && (is_bag_constraint wf) && (CP.is_float_formula wf) then
             (* Mixed bag constraints, relations and float constraints *)
@@ -2103,8 +2106,8 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 (* 		let conseq = elim_exists conseq in *)
         (* let conseq0 = CP.drop_svl_pure conseq0 [(CP.mkWaitlevelVar Unprimed);(CP.mkWaitlevelVar Primed)] in *)
         (* let conseq0 = CP.drop_locklevel_pure conseq0 in *)
-        (ante0,conseq0)
-  in
+  (*       (ante0,conseq0) *)
+  (* in *)
 
 
 
