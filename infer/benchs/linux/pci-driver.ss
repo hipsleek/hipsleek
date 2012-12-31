@@ -649,7 +649,7 @@ void pci_free_dynids_loop(pci_driver drv, ref pci_dynid dynid, ref pci_dynid n)
     n = cast_to_pci_dynid1(n.node.next);
     if (n.node != drv.dynids.list.next){
       pci_free_dynids_loop(drv,dynid,n);
-      dprint;
+/*      dprint;*/
     }
   }
 }
