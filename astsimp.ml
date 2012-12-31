@@ -5208,15 +5208,22 @@ and gather_type_info_b_formula_x prog b0 stab =
       ()
     | IP.RelForm (r, args, pos) ->
       (try
-	 let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls r in
-	 let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) rdef.I.rel_typed_vars in
-	 let args_exp_types = List.map (fun t -> (t)) args_ctypes in
-         let _ = gather_type_info_var r stab RelT in
-	 let _ = List.map2 (fun x y -> gather_type_info_exp x stab y) args args_exp_types in ()
-       with
-	 | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
-         | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r)
-	   
+	    let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls r in
+	    let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) rdef.I.rel_typed_vars in
+	    (* let args_exp_types = List.map (fun t -> (t)) args_ctypes in *)
+	    let args_exp_types = args_ctypes in
+        let _ = gather_type_info_var r stab RelT in
+        if List.length args == List.length args_exp_types then
+	      let _ = List.map2 (fun x y -> gather_type_info_exp x stab y) args args_exp_types in ()
+        else
+          begin
+            Debug.info_hprint (add_str ("RelF(args for "^r^")") (pr_list Iprinter.string_of_formula_exp)) args pos;
+            Debug.info_hprint (add_str ("RelF(parameter types for "^r^")") (pr_list string_of_typ)) args_exp_types pos;
+            failwith ("mismatch in number of parameters for relation "^r)
+          end
+      with
+	    | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
+        | _ -> failwith ("gather_type_info_b_formula: error with relation "^r)
       )
     | IP.XPure({IP.xpure_view_node = vn ;
 		IP.xpure_view_name = r;
