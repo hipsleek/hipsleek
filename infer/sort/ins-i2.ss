@@ -32,9 +32,15 @@ sortD<v> == self=null
  or self::node<v, p> * p::sortD<v2> & v>=v2 & p!=null
 inv true;
 
+// list with sorted elements
 sortHO<v,R:relation(int,int)> == self=null
- or self::node<v,null> 
- or self::node<v, p> * p::sortHO<v2> & R(v,v2) & p!=null
+  or self::node<v,null> 
+  or self::node<v, p> * p::sortHO<v2,R> & R(v,v2) & p!=null
+inv true;
+
+// list with positive elements
+llSP<R:relation(int)> == self=null
+  or self::node<v,p> * p::llSP<R> & R(v)
 inv true;
 
 node insert(node x, node y)
