@@ -689,7 +689,7 @@ let infer_pure_m estate lhs_rels lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure_orig
       (* (DD.devel_pprint "Cannot infer a precondition: RHS contradiction" pos; *)
       (* (None,None,[])) *)
       let p, rel_ass = infer_lhs_contra_estate estate lhs_xpure0 pos "rhs contradiction" in
-      (p,None,[])
+      (p,None,rel_ass)
     else
       (* let lhs_xpure = MCP.pure_of_mix lhs_xpure_orig in *)
       (* let rhs_vars = CP.fv rhs_xpure in *)
@@ -720,7 +720,7 @@ let infer_pure_m estate lhs_rels lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure_orig
         (* let lhs_xpure0 = CP.filter_ante lhs_xpure0 rhs_xpure in *)
         (* let _ = DD.trace_hprint (add_str "lhs0 (after filter_ante): " !CP.print_formula) lhs_xpure0 pos in *)
         let p, rel_ass = infer_lhs_contra_estate estate lhs_xpure0 pos "ante contradict with conseq" in
-        (p,None,[])
+        (p,None,rel_ass)
       else
       (*let invariants = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) estate.es_infer_invs in*)
       (* if check_sat then *)
@@ -988,9 +988,9 @@ let infer_pure_m estate lhs_mix lhs_mix_0 lhs_wo_heap rhs_mix pos =
     let rhs_p = MCP.pure_of_mix rhs_mix in
     let lhs_p = MCP.pure_of_mix lhs_mix in
     (* TODO: For relational obligation *)
-    let cl = CP.filter_ante lhs_p rhs_p in
+(*    let cl = CP.filter_ante lhs_p rhs_p in*)
     (* Assumed cl is a conjunction *)
-    let cl = CP.split_conjunctions cl in
+    let cl = CP.split_conjunctions lhs_p in
     let (lhs_rel, lhs_wo_rel) = 
       List.partition (fun d -> (CP.get_RelForm d) != [] ) cl in
     (* TODO: Double check *)
