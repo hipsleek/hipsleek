@@ -1958,6 +1958,16 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_
     (* Termination: Poststate of Loop must be unreachable (soundness) *)
     let _ = if !Globals.dis_term_chk || !Globals.dis_post_chk then true 
     else Term.check_loop_safety prog proc ctx post pos pid in
+    let ctx = if (!Globals.allow_locklevel) then
+          let translate_level_es es =
+            let new_f = CF.translate_level_formula es.CF.es_formula in
+            let new_es = {es with CF.es_formula = new_f} in (*trigger unsat_check*)
+            CF.Ctx new_es
+          in
+          let ctx1 = CF.transform_list_partial_context (translate_level_es,(fun c->c)) ctx in
+          ctx1
+        else ctx
+    in
     let fn_state=
       if (!Globals.disable_failure_explaining) then
         let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
@@ -1985,7 +1995,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_
     (* let _ = DD.ninfo_pprint ("       sleek-logging (POST): "  ^ "\n" ^ (to_print)) pos in *)
     let f1 = CF.formula_is_eq_flow post !error_flow_int in
     (* let f2 = CF.list_context_is_eq_flow cl !norm_flow_int in *)
-    (*  let _ = print_string ("\n WN 4 : "^(Cprinter.string_of_list_partial_context (*ctx*) fn_state)) in*)
+     (* let _ = print_string ("\n WN 4 : "^(Cprinter.string_of_list_partial_context (\*ctx*\) fn_state)) in *)
     let rs, prf =
       if f1 then
         begin

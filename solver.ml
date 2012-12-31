@@ -7650,7 +7650,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                         let res,_,_ = imply_mix_formula_no_memo split_ante split_conseq !imp_no !imp_subno None memset in
                         res
                   in
-                  let _ = Debug.devel_zprint (lazy ("process_action: Context.M_match : deciding MATCH or SPLIT: \n ### lhs_frac = " ^ (Cprinter.string_of_mix_formula lhs_frac) ^ "\n ### rhs_frac = " ^ (Cprinter.string_of_mix_formula rhs_frac) ^ "\n ### exists_vars = " ^ (Cprinter.string_of_spec_var_list exists_vars) ^ "\n ### split_ante = " ^ (Cprinter.string_of_mix_formula split_ante) ^ "\n ### split_conseq = " ^ (Cprinter.string_of_mix_formula split_conseq) ^ "\n ### res = " ^ (string_of_bool res) ^ "\n\n")) no_pos in
+                  let _ = Debug.devel_zprint (lazy ("process_action: Context.M_match : deciding MATCH (res=true) or SPLIT (res=false): \n ### lhs_frac = " ^ (Cprinter.string_of_mix_formula lhs_frac) ^ "\n ### rhs_frac = " ^ (Cprinter.string_of_mix_formula rhs_frac) ^ "\n ### exists_vars = " ^ (Cprinter.string_of_spec_var_list exists_vars) ^ "\n ### split_ante = " ^ (Cprinter.string_of_mix_formula split_ante) ^ "\n ### split_conseq = " ^ (Cprinter.string_of_mix_formula split_conseq) ^ "\n ### res = " ^ (string_of_bool res) ^ "\n\n")) no_pos in
                   (* the nodes should be splittable,
                      both side of permissions should be non-empty (full),
                      tmp!=[] : the fractional variables are not instantiation variables, or
@@ -8441,7 +8441,7 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
               if c.coercion_case<>(Normalize true)
               then r else (([],[]),[])
 		    else if (not (test_frac_subsume prog estate rhs_b.formula_base_pure (get_node_perm anode) (get_node_perm ln2))) || !use_split_match
-            then (([],[]),[]) 
+            then (([],[]),[])
 		    else (print_string"\n splitting \n";r)
 	    | Iast.Right -> (([],[c]),[])
 	    | _ -> report_error no_pos ("Iast.Equiv detected - astsimpl should have eliminated it ")
