@@ -1905,6 +1905,7 @@ let pr_estate (es : entail_state) =
                                                     | Some i -> string_of_int i)) es.es_var_label;
   *)
   pr_vwrap "es_trace: " pr_es_trace es.es_trace;
+  pr_vwrap "es_is_normalizing: " fmt_bool es.es_is_normalizing;
   (*
   pr_vwrap "es_var_ctx_lhs: " pr_pure_formula es.es_var_ctx_lhs;
   pr_vwrap "es_var_ctx_rhs: " pr_pure_formula es.es_var_ctx_rhs;

@@ -2601,11 +2601,11 @@ and elim_exists_pure_branch_x (w : CP.spec_var list) (f0 : CP.formula) pos : CP.
 (* --- added 11.05.2008 *)
 and entail_state_elim_exists es = 
   (* let f_prim = elim_exists es.es_formula in *)
-  let _ = print_string("[solver.ml, elim_exists_ctx]: Formula before elim_exists_es_his" ^ Cprinter.string_of_formula es.es_formula ^ "\n") in
+  (* let _ = print_string("[solver.ml, elim_exists_ctx]: Formula before elim_exists_es_his" ^ Cprinter.string_of_formula es.es_formula ^ "\n") in *)
   let f_prim,new_his = elim_exists_es_his es.es_formula es.es_history in
   (* 05.06.08 *)
   (* we also try to eliminate exist vars for which a find a substitution of the form v = exp from the pure part *)
-  let _ = print_string("[solver.ml, elim_exists_ctx]: Formula before exp exist elim: " ^ Cprinter.string_of_formula f_prim ^ "\n") in
+  (* let _ = print_string("[solver.ml, elim_exists_ctx]: Formula before exp exist elim: " ^ Cprinter.string_of_formula f_prim ^ "\n") in *)
   let f = elim_exists_exp f_prim in
   let qvar, base = CF.split_quantifiers f in
   let h, p, fl, t, a = CF.split_components base in
@@ -7609,7 +7609,10 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             if lhs_p |\- perm(lhs_node) != perm(rhs_node) then MATCH
             else SPLIT followed by MATCH or COMBINE followed by MATCH
             ***************************************>>*)
-            let res = if not (Perm.allow_perm ()) then None
+            let res = if (not (Perm.allow_perm ())) || (estate.es_is_normalizing) 
+                then
+                  (*If not using permissions or is in normalization process --> MATCH ONLY*)
+                  None
                 else
                   (* let _ = print_endline ("lhs_node = " ^ (Cprinter.string_of_h_formula lhs_node)) in *)
                   (* let _ = print_endline ("rhs_node = " ^ (Cprinter.string_of_h_formula rhs_node)) in *)
@@ -8433,13 +8436,13 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
     | Some c -> 		
 	  match c.coercion_type with
 	    | Iast.Left -> 
-		  let r = if c.coercion_univ_vars == [] then (([c],[]),[]) else (([],[]),[c]) in
-		  
-		  if !perm=NoPerm || c.coercion_case<>(Normalize false) then if c.coercion_case<>(Normalize true) then r else (([],[]),[])
-		  else 
-		    if (not (test_frac_subsume prog estate rhs_b.formula_base_pure (get_node_perm anode) (get_node_perm ln2))) || !use_split_match   then (([],[]),[]) 
+		    let r = if c.coercion_univ_vars == [] then (([c],[]),[]) else (([],[]),[c]) in
+		    if !perm=NoPerm || c.coercion_case<>(Normalize false) then
+              if c.coercion_case<>(Normalize true)
+              then r else (([],[]),[])
+		    else if (not (test_frac_subsume prog estate rhs_b.formula_base_pure (get_node_perm anode) (get_node_perm ln2))) || !use_split_match
+            then (([],[]),[]) 
 		    else (print_string"\n splitting \n";r)
-		      
 	    | Iast.Right -> (([],[c]),[])
 	    | _ -> report_error no_pos ("Iast.Equiv detected - astsimpl should have eliminated it ")
   in 
@@ -9484,7 +9487,13 @@ let heap_entail_list_failesc_context_init_x (prog : prog_decl) (is_folding : boo
     let conseq = prune_preds prog false conseq in
     Gen.Profiling.pop_time "entail_prune";
     (* RESOURCE: Normalize for combine lemma *)
+    Debug.devel_zprint (lazy ("heap_entail_init list_failesc_context_init:"
+                              ^ "before normalizing"
+                              ^"\n")) pos;
     let norm_cl = normalize_list_failesc_context_w_lemma prog cl_after_prune in
+    Debug.devel_zprint (lazy ("heap_entail_init list_failesc_context_init:"
+                              ^ "after normalizing"
+                              ^"\n")) pos;
     let (lfc,prf) = heap_entail_failesc_prefix_init 2 prog is_folding  false norm_cl conseq tid delayed_f join_id pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new) in
     (CF.convert_must_failure_4_list_failesc_context "failed proof @ loc" lfc,prf)
   end
