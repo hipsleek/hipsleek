@@ -5845,7 +5845,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
     (* Unsuppress the printing *)
     let _ = Smtsolver.unsuppress_all_output ()  in
     let _ = Tpdispatcher.restore_suppress_imply_output_state () in
-    (*let _ = print_string ("An Hoa :: New LHS with instantiation : " ^ (Cprinter.string_of_mix_formula lhs_p) ^ "\n\n") in*)
+    (* let _ = print_string ("An Hoa :: New LHS with instantiation : " ^ (Cprinter.string_of_mix_formula lhs_p) ^ "\n\n") in *)
     lhs_p
   in
   (* remove variables that are already instantiated in the right hand side *)
@@ -5881,8 +5881,13 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
     lhs_p rhs_p pos in
   let infer_rel = estate.es_infer_rel in
   if infer_rel!=[] then Debug.ninfo_hprint (add_str "REL INFERRED" (pr_list CP.print_lhs_rhs)) infer_rel no_pos;
+  
   (* Termination *)
-  let (estate,_,rhs_p,rhs_wf) = Term.check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos in
+  let (estate,_,rhs_p,rhs_wf) =
+    if not !Globals.dis_term_chk then
+      Term.check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
+    else (estate, lhs_p, rhs_p, None)
+  in
   (* Termination: Try to prove rhs_wf with inference *)
   (* rhs_wf = None --> measure succeeded or no striggered inference *)
   (* lctx = Fail --> well-founded termination failure - No need to update term_res_stk *)
