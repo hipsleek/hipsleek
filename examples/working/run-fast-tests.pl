@@ -1124,7 +1124,7 @@ $output_file = "log";
 					["fracperm/frac2.slk"," -perm fperm -tp redlog", "", "Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Fail."],
 					["fracperm/frac3.slk"," -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Fail.Fail.Fail."],
 					["fracperm/split_simple.slk"," -perm fperm -tp redlog", "", "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
-					["fracperm/combine_data.slk"," -perm fperm -tp redlog", "", "Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid."],
+					["fracperm/combine_data.slk"," -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid."],
 					["fracperm/combine_simple.slk"," -perm fperm -tp redlog", "", "Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
 					["fracperm/split-combine.slk"," -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
                   ["fracperm/combine2.slk"," -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid."]
