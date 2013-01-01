@@ -3878,7 +3878,7 @@ and heap_entail_after_sat_x prog is_folding  (ctx:CF.context) (conseq:CF.formula
               let vars = CF.get_varperm_formula es_f VP_Zero in
               let vars_val = CF.get_varperm_formula es_f VP_Value in
               let vars_full = CF.get_varperm_formula es_f VP_Full in
-                let new_f = drop_varperm_formula es_f in
+              let new_f = drop_varperm_formula es_f in
               let _ = if ((vars_val@vars_full)!=[]) then
                   print_endline ("\n[Warning] heap_entail_conjunct_lhs: the entail state should not include variable permissions other than " ^ (string_of_vp_ann VP_Zero) ^ ". They will be filtered out automatically.") in
               (* let vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some VP_Zero)) ls1) in *)
@@ -5886,7 +5886,13 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   let (estate,_,rhs_p,rhs_wf) =
     if not !Globals.dis_term_chk then
       Term.check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
-    else (estate, lhs_p, rhs_p, None)
+    else
+      (*Temporarily sacrisfy --eps for this
+      TODO: need not to add termination annotation if
+      !Globals.dis_term_chk=true*)
+      let _, rhs_p = Term.strip_lexvar_mix_formula rhs_p in
+      let rhs_p = MCP.mix_of_pure rhs_p in
+      (estate, lhs_p, rhs_p, None)
   in
   (* Termination: Try to prove rhs_wf with inference *)
   (* rhs_wf = None --> measure succeeded or no striggered inference *)
