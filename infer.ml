@@ -608,7 +608,10 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
                     if (CP.fv neg_lhs == []) then (None,[])
                     else 
                       let new_estate = CF.false_es_with_orig_ante estate estate.es_formula pos in
-                      (Some (new_estate,CP.mkTrue no_pos), [ (RelAssume vs_rel,f,neg_lhs)] )
+                      let rel_ass = [RelAssume vs_rel,f,neg_lhs] in
+                      let _ = infer_rel_stk # push_list rel_ass in
+                      let _ = Log.current_infer_rel_stk # push_list rel_ass in
+                      (Some (new_estate,CP.mkTrue no_pos), rel_ass )
                 end
             | None -> (None,[])
           end
@@ -835,7 +838,10 @@ let infer_pure_m estate lhs_rels lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure_orig
                     let vars = stk_vars # get_stk in
 			              let (_,n_lhs,n_rhs) = simp_lhs_rhs vars (0,lhs_xpure,rhs_xpure) in
                     (* (None,None,[]) *)
-                    (None,None,[ (RelAssume vs_rel,n_lhs,n_rhs) ])
+                    let rel_ass = [RelAssume vs_rel,n_lhs,n_rhs] in
+                    let _ = infer_rel_stk # push_list rel_ass in
+                    let _ = Log.current_infer_rel_stk # push_list rel_ass in
+                    (None,None,rel_ass)
                   else
                     begin
                   let n_lhs2 = CP.drop_rel_formula n_lhs in
@@ -864,7 +870,11 @@ let infer_pure_m estate lhs_rels lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure_orig
                   trace (add_str "rhs" !print_formula) n_rhs no_pos;
                   trace (add_str "new_p (rel_ass)" !print_formula) new_p no_pos;
                   if (CP.fv new_p == []) then (None,None,[])
-                  else (None,None, [ (RelAssume vs_rel,f,new_p)] )
+                  else 
+                    let rel_ass = [RelAssume vs_rel,f,new_p] in
+                    let _ = infer_rel_stk # push_list rel_ass in
+                    let _ = Log.current_infer_rel_stk # push_list rel_ass in
+                    (None,None,rel_ass)
                   end
             | None -> (None,None,[])
         end
@@ -1175,9 +1185,14 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
       (* e.g. A(x) <- A(t) && other_constraints, *)
       (* where other_constraints are independent from t *)
       let _,rel_lhs = List.split subs in
-      let rel_vars = List.concat (List.map CP.fv rel_lhs) in
+      let rel_lhs_n = List.concat (List.map (fun x -> CP.get_rel_id_list x) rel_lhs) in
+      let rel_rhs_n = List.concat (List.map (fun x -> CP.get_rel_id_list x) rel_rhs) in
+      let rel_lhs_n = CP.intersect rel_lhs_n rel_rhs_n in
+      let rel_vars = 
+        let rs = List.filter (fun x -> CP.subset (CP.get_rel_id_list x) rel_lhs_n) rel_lhs in
+        List.concat (List.map CP.fv rs) in
       let lhs_rec_vars = CP.fv lhs_p_memo in
-      if CP.intersect lhs_rec_vars rel_vars = [] && rel_lhs != [] then (
+      if CP.intersect lhs_rec_vars rel_vars = [] && rel_lhs_n != [] then (
         DD.tinfo_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
         DD.tinfo_pprint ">>>>>> no recursive def <<<<<<" pos; 
         (estate,lhs_mix,rhs_mix_new)
@@ -1283,7 +1298,7 @@ RHS pure R(rs,n) & x=null
 let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
   let pr0 = !print_svl in
   let pr1 = !print_mix_formula in
-  let pr2 (es,l,r,_) = 
+  let pr2 (es,l,r) = 
     pr_triple pr1 pr1 (pr_list CP.print_lhs_rhs) (l,r,es.es_infer_rel) in
   Debug.no_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
     (fun _ _ _ _ -> 

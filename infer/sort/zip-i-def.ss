@@ -17,8 +17,8 @@ relation R(int a,int b,int c).
 relation P(int a,int b).
 
 node zip(node x, node y)
-  infer [R]
-  requires x::llN<a> * y::llN<b> & a<=b
+  infer [a,b,R]
+  requires x::llN<a> * y::llN<b>
   ensures  res::llN<r> & R(a,b,r);
   /*
 *************************************
