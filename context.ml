@@ -98,12 +98,11 @@ let pr_match_res (c:match_res):unit =
   pr_vwrap "Type: " pr_match_type c.match_res_type;
   pr_vwrap "LHS: " pr_h_formula c.match_res_lhs_node;
   pr_vwrap "RHS: " pr_h_formula c.match_res_rhs_node;
-  fmt_close ()
-  (* fmt_string "\n lhs_rest: "; pr_h_formula c.match_res_lhs_rest; *)
-  (* fmt_string "\n rhs_rest: "; pr_h_formula c.match_res_rhs_rest; *)
+  fmt_string "\n lhs_rest: "; pr_h_formula c.match_res_lhs_rest;
+  fmt_string "\n rhs_rest: "; pr_h_formula c.match_res_rhs_rest;
   (* fmt_string "\n res_holes: "; pr_seq "" (Cprinter.pr_pair_aux  pr_h_formula pr_int) c.match_res_holes;   *)
   (* fmt_string "}" *)
-
+  fmt_close ()
   
 let pr_simpl_match_res (c:match_res):unit = 
   fmt_open_vbox 1;

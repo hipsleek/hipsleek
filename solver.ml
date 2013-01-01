@@ -30,7 +30,7 @@ module TP = Tpdispatcher
 
 
 (** An Hoa : switch to do unfolding on duplicated pointers **)
-let unfold_duplicated_pointers = ref true
+let unfold_duplicated_pointers = ref false
 
 (** An Hoa : to store the number of unfolding performed on duplicated pointers **)
 let num_unfold_on_dup = ref 0
@@ -3925,7 +3925,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
           let xy = if (is_view_user x) then x else y in
 	      let mr = { 
               Context.match_res_lhs_node = xy;
-              Context.match_res_lhs_rest = x;
+              Context.match_res_lhs_rest = x; (* ??? why*)
               Context.match_res_holes = [] ;
 	          Context.match_res_type = Context.Root;
 	          Context.match_res_rhs_node = x;
@@ -7590,7 +7590,7 @@ and init_para lhs_h rhs_h lhs_aset prog pos = match (lhs_h, rhs_h) with
 and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos =
   if not(Context.is_complex_action a) then
     begin
-      Debug.ninfo_zprint (lazy ("process_action :"
+      Debug.devel_zprint (lazy ("process_action :"
       ^ "\n ### action = " ^ (Context.string_of_action_res a)
       ^ "\n ### estate = " ^ ( Cprinter.string_of_entail_state_short estate)
       ^ "\n ### conseq = " ^ (Cprinter.string_of_formula conseq)
@@ -7629,9 +7629,13 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                     | None,None -> (true,CP.mkTrue no_pos,[]) (*1.0 = 1.0 => exact match*)
                     | Some f, None
                     | None, Some f -> (false, Perm.mkFullPerm_pure () f,[f])
-                    | Some f1,Some f2 -> (false, CP.mkEqVar f1 f2 no_pos,[f1;f2])
+                    | Some f1,Some f2 ->
+                        if (CP.eq_spec_var f1 f2) then
+                          (true,CP.mkTrue no_pos,[])
+                        else
+                          (false, CP.mkEqVar f1 f2 no_pos,[f1;f2])
                   in
-                  
+                  if (flag || exact_flag) then None else
                   let tmp = Gen.BList.intersect_eq (CP.eq_spec_var) vars (estate.es_gen_expl_vars(* @estate.es_ivars *)@estate.es_gen_impl_vars) in
                   let exists_vars = Gen.BList.difference_eq (CP.eq_spec_var) exists_vars vars in
                   let rhs_frac = if (vars=[]) then MCP.mkMTrue no_pos
@@ -7657,7 +7661,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                      f1=f2 cannot be proven
                   *)
 
-                  let test = (flag && (not exact_flag) && (res=false) (* && tmp!=[] *)) in
+                  (* let test = (flag && (not exact_flag) && (res=false) (\* && tmp!=[] *\)) in *)
                   (* let _ = print_endline ("flag = " ^ (string_of_bool flag)) in *)
                   (* let _ = print_endline ("not exact_flag = " ^ (string_of_bool (not exact_flag))) in *)
                   (* let _ = print_endline ("tmp !=[] " ^ (string_of_bool (tmp!=[]))) in *)
@@ -7665,12 +7669,13 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   (* let _ = print_endline ("res =false " ^ (string_of_bool (res=false))) in *)
                   (* let _ = print_endline ("not is_folding " ^ (string_of_bool (not is_folding))) in *)
                   (* let _ = print_endline ("test = " ^ (string_of_bool test)) in *)
-                  if (flag && (not exact_flag) && (res=false) (* && (not is_folding) *) (* && tmp!=[] *)) then
+                  if (res=false) then
                     (*if guess that cannot match exactly, apply lemma*)
                     (*First, find lemma actions to apply*)
                     let new_act = Context.lookup_lemma_action prog m_res in
-                    let str = "(try split/combine)" in (*convert means ignore previous MATCH and replaced by lemma*)
-                    let new_estate = {estate with es_trace = str::estate.es_trace} in
+                    let str = "(Match-->try split/combine)" in (*convert means ignore previous MATCH and replaced by lemma*)
+                    let new_trace = str::(List.tl estate.es_trace) in
+                    let new_estate = {estate with es_trace = new_trace} in
                     (*re-process action*)
                     let (r,prf) = process_action 5 caller prog new_estate conseq lhs_b rhs_b new_act rhs_h_matched_set is_folding pos in
                     if isFailCtx r then None (*if try SPLIT failed, try MATCH*)
@@ -8692,7 +8697,7 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
                     (* rhs_coerc * es.es_formula /\ lhs.p |-  conseq*)
                     let new_ante1 = normalize_combine coer_rhs_new es.es_formula no_pos in
                     let new_ante = add_mix_formula_to_formula lhs_p new_ante1 in
-                    let new_es = {new_estate with es_formula=new_ante; es_trace=old_trace} in
+                    let new_es = {new_estate with es_formula=new_ante; es_trace=old_trace; es_heap = HEmp} in
                     let new_ctx = (Ctx new_es) in
 
 	            Debug.devel_zprint (lazy ("apply_left_coercion_complex: process_one: resume entail check")) pos;
@@ -8703,7 +8708,7 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
 	            let rest_rs, prf = heap_entail_one_context 10 prog is_folding new_ctx conseq None None None pos in
 
 
-	            Debug.devel_zprint (lazy ("apply_left_coercion_complex: process_one: after resume entail check: rest_res =  " ^ (Cprinter.string_of_list_context check_res))) pos;
+	            Debug.devel_zprint (lazy ("apply_left_coercion_complex: process_one: after resume entail check: rest_rs =  " ^ (Cprinter.string_of_list_context rest_rs))) pos;
 
                     (rest_rs,prf)
             in
@@ -8850,6 +8855,10 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
       (* compute free vars in extra heap and guard *)
       let extra_vars =
         let lhs_heap, lhs_guard, _, _, lhs_a = split_components coer_lhs in
+        (*BE CAREFUL, the first node is not always the self node.
+          May consider using the prior implementation in para5
+          (i.e. using pick_up_node to identify head_hode)
+        *)
         let head_node = List.hd (CF.split_star_conjunctions lhs_heap) in
         let vars = Gen.BList.difference_eq CP.eq_spec_var (CF.h_fv lhs_heap @ MCP.mfv lhs_guard) (CF.h_fv head_node) in
         Gen.BList.remove_dups_eq CP.eq_spec_var vars 
@@ -8869,6 +8878,10 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
       let lhs_heap, lhs_guard, lhs_flow, _, lhs_a = split_components coer_lhs in
       let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in  (* TODO : check with_dupl, with_inv *)
       let lhs_hs = CF.split_star_conjunctions lhs_heap in
+      (*BE CAREFUL, the first node is not always the self node.
+        May consider using the prior implementation in para5
+        (i.e. using pick_up_node to identify head_hode)
+      *)
       let head_node = List.hd lhs_hs in
       let extra_heap = join_star_conjunctions (List.tl lhs_hs) in
       match anode, head_node with (*node -> current heap node | lhs_heap -> head of the coercion*)
@@ -9091,7 +9104,9 @@ and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl l
     let coers = List.filter (fun c -> 
         match c.coercion_case with
           | Cast.Simple -> false
-          | Cast.Complex -> false
+          | Cast.Complex ->
+              (*Complex lemmas is also *)
+              if (c.coercion_type = Iast.Left) then true else false
           | Cast.Normalize false -> false
           | Cast.Normalize true -> true) coers
     in

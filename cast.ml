@@ -920,7 +920,6 @@ let is_lock_inv prog (name : ident) : bool =
     | None -> false
     | Some f -> true
 
-
 let self_param vdef = P.SpecVar (Named vdef.view_data_name, self, Unprimed) 
 
 let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
@@ -1063,7 +1062,11 @@ let look_up_coercion_def_raw coers (c : ident) : coercion_decl list =
   (*   end *)
   (* | [] -> [] *)
 
-(*a coercion can be simple, complex or normalizing*)
+(*
+  a coercion can be simple, complex or normalizing
+  Note that:
+  Complex + Left == normalization
+*)
 let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
   let fct f = match f with
       | Cformula.Base {F.formula_base_heap=h}
@@ -1073,12 +1076,20 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
           (List.length hs),self_n, List.map F.get_node_name hs
       | _ -> 1,false,[]
   in
+  (*length = #nodes, sn = is there a self node, typ= List of names of nodes*)
   let lhs_length,l_sn,lhs_typ = fct lhs in
   let rhs_length,r_sn,rhs_typ = fct rhs in
   match lhs_typ@rhs_typ with
 	| [] -> Simple
 	| h::t ->
+        (*
+          Why using concret numbers (e.g. 1,2) here ?
+          If there is a lemma that split 1 node into 3 nodes,
+          it is also considered a split lemma?
+        *)
 		if l_sn && r_sn && (List.for_all (fun c-> h=c) t) then
+            (*all nodes having the same names*)
+            (* ??? why using the node names *)
 			if lhs_length=2 && rhs_length=1  then Normalize true
 			else if lhs_length=1 && rhs_length=2  then Normalize false
 			else if lhs_length=1 then Simple
