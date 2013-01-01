@@ -31,6 +31,7 @@ and control_path_id_strict = formula_label
 and control_path_id = control_path_id_strict  option
     (*identifier for if, catch, call*)
 
+let eq_control_path_id ((p1,_):formula_label) ((p2,_):formula_label) = p1==p2
 
 let empty_label = (0,"")
 let app_e_l c = (empty_label, c)

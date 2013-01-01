@@ -32,9 +32,20 @@ node zip(node x, node y)
 }
 /*
 --pip has extra {..} for bind
+{
+{(131, ):if (x == null) { 
+  (131, ):(139, ):return null;
+}
+else { 
   (131, ):{(132, ):bind x to (xv, xn) in { {(133, ):bind y to (yv, yn) in { {xv = xv + yv;
 xn = (137, ):zip(xn, yn);}
  }}
+ };
+(138, ):return x;}
+;
+}}
+}
+
 
 --pcp DONE
  translation can optimize on the return

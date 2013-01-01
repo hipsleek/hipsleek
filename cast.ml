@@ -220,7 +220,7 @@ and exp_bind = {
     exp_bind_body : exp;
     exp_bind_imm : heap_ann;
     exp_bind_read_only : bool; (*for frac perm, indicate whether the body will read or write to bound vars in exp_bind_fields*)
-    exp_bind_path_id : control_path_id;
+    exp_bind_path_id : control_path_id_strict;
     exp_bind_pos : loc }
 
 and exp_block = { exp_block_type : typ;

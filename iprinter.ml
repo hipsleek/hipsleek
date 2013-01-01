@@ -463,7 +463,7 @@ let rec string_of_exp = function
 		   exp_bind_fields = vs;
 		   exp_bind_path_id = pid;
 		   exp_bind_body = e})-> 
-          string_of_control_path_id_opt pid ("bind " ^ v ^ " to (" ^ (String.concat ", " vs) ^ ") in { " ^ (string_of_exp e) ^ " }")	   
+          string_of_control_path_id_opt pid ("bind " ^ v ^ " to (" ^ (String.concat ", " vs) ^ ") in\n" ^ (string_of_exp e))	   
   | Block ({
     exp_block_local_vars = lv;
     exp_block_body = e;
@@ -472,7 +472,7 @@ let rec string_of_exp = function
         | [] -> ""
         | _ -> "local: "^
           (String.concat "," (List.map (fun (c1,c2,c3)->(string_of_typ c2)^" "^c1) lv))^"\n")
-        ^ (string_of_exp e) ^ "}\n"
+        ^ (string_of_exp e) ^ "}"
   | Break b -> string_of_control_path_id_opt b.exp_break_path_id ("break "^(string_of_label b.exp_break_jump_label))
   | Barrier b -> "barrier "^b.exp_barrier_recv
   | Cast e -> "(" ^ (string_of_typ e.exp_cast_target_type) ^ ")" ^ (string_of_exp e.exp_cast_body)
@@ -527,7 +527,7 @@ let rec string_of_exp = function
         string_of_control_path_id_opt pid ("if " ^ (parenthesis (string_of_exp e1)) ^ " { \n  " ^ (string_of_exp e2) ^ ";\n}" ^ 
         (match e3 with 
           | Empty ll -> ""
-          | _        -> "\nelse { \n  " ^ (string_of_exp e3) ^ ";\n}"))
+          | _        -> " else { \n  " ^ (string_of_exp e3) ^ "\n}"))
   | While ({exp_while_condition = e1;
 			exp_while_body = e2;
 			exp_while_jump_label = lb;
@@ -540,10 +540,10 @@ let rec string_of_exp = function
             | Some e -> (string_of_exp e)) )
   | Seq ({exp_seq_exp1 = e1;
 		  exp_seq_exp2 = e2})-> 
-          (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2) ^ ";"  
+          (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)   
   | VarDecl ({exp_var_decl_type = t;
 			  exp_var_decl_decls = l})
-                                   -> (string_of_typ t) ^ " " ^ (string_of_assigning_list l) ^ ";";
+                                   -> (string_of_typ t) ^ " " ^ (string_of_assigning_list l);
   | ConstDecl ({exp_const_decl_type = t;
 				exp_const_decl_decls = l}) 
                                    -> "const " ^ (string_of_typ t) ^ " " ^ (string_of_cassigning_list l)
@@ -573,8 +573,8 @@ let rec string_of_exp = function
 			exp_raise_path_id = pid;
 			exp_raise_val = b;}) -> 
         let ft = match tb with 
-                      | Const_flow cf-> "CF"^cf
-                      | Var_flow cf -> "VF"^cf in
+                      | Const_flow cf-> "CF:"^cf
+                      | Var_flow cf -> "VF:"^cf in
         string_of_control_path_id_opt pid 
 				("raise "^(match b with 
                   | None -> ft

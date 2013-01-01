@@ -2314,6 +2314,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_bind_body = e;
             I.exp_bind_pos = pos;
             I.exp_bind_path_id = pid;} ->
+            let pid = match pid with | None -> fresh_strict_branch_point_id "" | Some s -> s in
             (try
               let vinfo_tmp = E.look_up v in
               match vinfo_tmp with
@@ -3444,6 +3445,7 @@ and compact_field_access_sequence prog root_type field_seq =
 
 and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
       (rhs_o : C.exp option) (pid:control_path_id) (imm : heap_ann) (read_only : bool) pos =
+  let pid_s = match pid with | None -> fresh_strict_branch_point_id "" | Some s -> s in
   match rev_fs with
     | f :: rest ->
           let (cbase, base_t) = flatten_to_bind prog proc base rest None pid imm read_only pos in
@@ -3508,7 +3510,7 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
 		        C.exp_bind_imm = imm;
                 C.exp_bind_read_only = read_only;
                 C.exp_bind_pos = pos;
-                C.exp_bind_path_id = pid;} in
+                C.exp_bind_path_id = pid_s;} in
             let seq1 = C.mkSeq bind_type init_fn bind_e pos in
             let seq2 = C.mkSeq bind_type fn_decl seq1 pos in
             if new_var then
@@ -3521,6 +3523,7 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
     | [] -> trans_exp prog proc base
 and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
       (rhs : C.exp option) pid imm read_only pos : trans_exp_type =
+  let pid_s = match pid with | None -> fresh_strict_branch_point_id "" | Some s -> s in
   match fs with
     | f :: rest ->
 	      (try
@@ -3596,7 +3599,7 @@ and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
 		              C.exp_bind_fields =
                           List.combine field_types fresh_names;
 		              C.exp_bind_body = bind_body;
-		              C.exp_bind_path_id = pid;
+		              C.exp_bind_path_id = pid_s;
 		              C.exp_bind_imm = imm;
                       C.exp_bind_read_only = read_only;
 		              C.exp_bind_pos = pos;

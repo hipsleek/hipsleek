@@ -264,6 +264,7 @@ let print_spec_var = print_sv
 let print_spec_var_list = print_svl
 let print_infer_rel(l,r) = (!print_pure_f l)^" --> "^(!print_pure_f r)
 let print_mem_formula = ref (fun (c:mem_formula) -> "printer has not been initialized")
+(* let print_failesc = ref (fun (c:failesc) -> "printer has not been initialized") *)
 
 module Exp_Heap =
 struct 
@@ -5803,11 +5804,17 @@ let mk_fail_partial_context_label (ft:fail_type) (lab:path_trace) : (partial_con
 let mk_partial_context (c:context) (lab:path_trace) : (partial_context) = ([], [ (lab, c) ] ) 
 let mk_failesc_context (c:context) (lab:path_trace) esc : (failesc_context) = ([], esc,[ (lab, c) ] ) 
 
+(* WN : this seems weird *)
+(* let rec is_empty_esc_stack (e:esc_stack) : bool = match e with *)
+(*   | [] -> false *)
+(*   | (_,[])::t -> is_empty_esc_stack t *)
+(*   | (_,h::t)::_ -> true *)
+
 let rec is_empty_esc_stack (e:esc_stack) : bool = match e with
-  | [] -> false
+  | [] -> true
   | (_,[])::t -> is_empty_esc_stack t
-  | (_,h::t)::_ -> true
-  
+  | (_,h::t)::_ -> false
+
 let colapse_esc_stack (e:esc_stack) : branch_ctx list = List.fold_left (fun a (_,c)-> a@c) [] e
 
 let push_esc_elem  (e:esc_stack) (b:branch_ctx list): esc_stack = 
@@ -7504,18 +7511,25 @@ let transform_partial_context f ((fail_c, succ_c):partial_context) : partial_con
   let f_res = List.map (fun (lbl, f_t) -> (lbl, transform_fail_ctx f_f f_t )) fail_c in
   let s_res = List.map (fun (lbl, ctx) -> (lbl, transform_context f_c ctx) ) succ_c in
     (f_res,s_res)
-	
+
+let transform_branch_ctx f_es (ls:branch_ctx list): branch_ctx list = 
+  let rs = List.map (fun (lbl, ctx) -> (lbl, transform_context f_es ctx) ) ls in
+  rs
+
 let transform_failesc_context f ((fail_c,esc_c, succ_c):failesc_context): failesc_context = 
   let ff,fe,fs = f in
   let rf = List.map (fun (lbl, ctx) -> (lbl, transform_fail_ctx ff ctx) ) fail_c in
   let re = fe esc_c in
-  let rs = List.map (fun (lbl, ctx) -> (lbl, transform_context fs ctx) ) succ_c in
+  (* let rs = List.map (fun (lbl, ctx) -> (lbl, transform_context fs ctx) ) succ_c in *)
+  let rs = transform_branch_ctx fs succ_c in
   (rf, re,rs)
 
 let transform_list_partial_context f (c:list_partial_context):list_partial_context = 
   List.map (transform_partial_context f) c
-    
-let transform_list_failesc_context f (c:list_failesc_context): list_failesc_context = 
+
+let transform_list_failesc_context 
+ (f:(fail_context -> fail_context) * (esc_stack -> esc_stack) * (entail_state -> context))
+ (c:list_failesc_context): list_failesc_context = 
   List.map (transform_failesc_context f) c
 
   (*use with care, it destroyes the information about exception stacks , preferably do not use except in check specs*)
@@ -7698,10 +7712,31 @@ let add_path_id_ctx_failesc_list (c:list_failesc_context) (pi1,pi2) : list_faile
 	let fct e = Ctx{e with es_path_label = (s,pi2)::e.es_path_label} in    
 	  transform_list_failesc_context (idf,idf,fct) c
 
-	  
+let proc_esc_stack pid f_es es = 
+  List.map (fun ((p,l) as e) -> 
+      if eq_control_path_id p pid then
+        (* Debug.info_hprint (add_str "proc_esc_stack(=pid)" Cprinter.string_of_esc_stack_lvl) e no_pos; *)
+        (p,transform_branch_ctx f_es l)
+      else e
+  ) es
+
 let normalize_max_renaming_list_partial_context f pos b ctx = 
     if !max_renaming then transform_list_partial_context ((normalize_es f pos b),(fun c->c)) ctx
       else transform_list_partial_context ((normalize_clash_es f pos b),(fun c->c)) ctx
+let normalize_max_renaming_list_failesc_context_4_bind pid f pos b ctx =
+  let norm_es = if !max_renaming then normalize_es f pos b else normalize_clash_es f pos b in
+  let f_esc = proc_esc_stack pid norm_es in
+  transform_list_failesc_context (idf,f_esc,norm_es) ctx 
+    (* if !max_renaming then transform_list_failesc_context (idf,f_esc,(normalize_es f pos b)) ctx *)
+    (*   else transform_list_failesc_context (idf,f_esc,(normalize_clash_es f pos b)) ctx *)
+
+let normalize_max_renaming_list_failesc_context_4_bind pid f pos b ctx =
+  let pr_f = !print_formula in
+  let pr_ctx = pr_list !print_failesc_context in
+  Debug.no_2 "normalize_max_renaming_list_failesc_context_4_bind" 
+      pr_f pr_ctx pr_ctx
+      (fun _ _ -> normalize_max_renaming_list_failesc_context_4_bind pid f pos b ctx) f ctx
+
 let normalize_max_renaming_list_failesc_context f pos b ctx = 
     if !max_renaming then transform_list_failesc_context (idf,idf,(normalize_es f pos b)) ctx
       else transform_list_failesc_context (idf,idf,(normalize_clash_es f pos b)) ctx
@@ -7893,6 +7928,20 @@ let splitter_failesc_context  (nf(* :nflow *)) (cvar:typed_ident option) (fn_esc
   let pr = !print_list_failesc_context in
   let pr2 = !print_flow in
   Debug.no_2 "splitter_failesc_context" pr2 pr pr (fun _ _ -> splitter_failesc_context nf cvar fn_esc elim_ex_fn pl) nf pl
+(*
+splitter_failesc_context inp1 :(23,24)
+                                                                 success
+                                                                    v
+splitter_failesc_context inp2 : List of Failesc Context: [FEC(0, 0, 1  )]
+Successful States:
+ State:EXISTS(xv': v_e1_22_548'::e1@M[Orig] * x'::node<xv',b>@M[Orig]&x=x' & y=y' & a=xv_561 & xv'=2 & eres=v_e1_22_548'&{FLOW,(19,20)=e1})[]
+                                                                     escape
+                                                                        v
+splitter_failesc_context@15 EXIT out : List of Failesc Context: [FEC(0, 1, 0 )]
+Escaped States:
+ Try-Block:0::
+  State:EXISTS(xv': v_e1_22_548'::e1@M[Orig] * x'::node<xv',b>@M[Orig]&x=x' & y=y' & a=xv_561 & xv'=2 & eres=v_e1_22_548'&{FLOW,(19,20)=e1})[]
+*)
 	
 let splitter_partial_context  (nf(* :nflow *)) (cvar:typed_ident option)   
     (fn:  path_trace -> context ->  list_partial_context) (fn_esc:context -> context) 

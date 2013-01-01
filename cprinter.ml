@@ -2137,9 +2137,10 @@ let pr_esc_stack_lvl ((i,s),e) =
   if (e==[]) 
   then
     begin
-      fmt_open_hbox ();
-      fmt_string ("Try-Block:"^(string_of_int i)^":"^s^":");
-      fmt_close_box()
+      (* fmt_open_hbox (); *)
+      (* fmt_string ("Try-Block:"^(string_of_int i)^":"^s^":"); *)
+      (* fmt_close_box() *)
+      ()
     end
   else
     begin
@@ -2150,6 +2151,7 @@ let pr_esc_stack_lvl ((i,s),e) =
       fmt_close_box ()
     end
 
+let string_of_esc_stack_lvl e  = poly_string_of_pr pr_esc_stack_lvl e
 
 (* should this include must failures? *)
 let pr_failed_states e = match e with
@@ -2517,11 +2519,11 @@ let rec string_of_exp = function
 	exp_bind_body = e;
 	exp_bind_path_id = pid;
 	exp_bind_pos = l}) -> 
-        string_of_control_path_id_opt pid ("bind " ^ id ^ " to (" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ") [" ^ (string_of_read_only ro)^ "] in \n{" ^ (string_of_exp e) ^ "\n}")
+        string_of_control_path_id pid ("bind " ^ id ^ " to (" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ") [" ^ (string_of_read_only ro)^ "] in \n" ^ (string_of_exp e))
   | Block ({exp_block_type = _;
 	exp_block_body = e;
 	exp_block_local_vars = _;
-	exp_block_pos = _}) -> "{\n" ^ (string_of_exp e) ^ "\n}"
+	exp_block_pos = _}) -> "{" ^ (string_of_exp e) ^ "}"
   | Barrier b -> "barrier "^(string_of_ident (snd b.exp_barrier_recv))
   | ICall ({exp_icall_type = _;
 	exp_icall_receiver = r;
@@ -2597,7 +2599,7 @@ let rec string_of_exp = function
 	exp_seq_exp1 = e1;
 	exp_seq_exp2 = e2;
 	exp_seq_pos = l}) -> 
-        (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)
+        "("^(string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)^")"
   | This _ -> "this"
   | Time (b,s,_) -> ("Time "^(string_of_bool b)^" "^s)
   | Var ({exp_var_type = _;
