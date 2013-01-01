@@ -27,6 +27,16 @@ node zip(node x, node y)
   requires x::llN<a> * y::llN<b>
   ensures  res::llN<r> & R(a,b,r);
 
+
+*******pure relation assumption ******
+*************************************
+[RELDEFN P: ( a=a_596+1 & b=b_597+1 & 0<=a_596 & 0<=b_597 & P(a,b)) -->  P(a_596,b_597),
+RELDEFN R: ( r_611=r-1 & b_597=b-1 & a_596=a-1 & 1<=b & 1<=a & 1<=r & P(a,b) & 
+R(a_596,b_597,r_611)) -->  R(a,b,r)]
+*************************************
+fixcalc: subrec: found different no of QSVs for CAbst:
+ P(a,b)
+
 /*  infer [R]*/
 /*  requires x::llN<a> * y::llN<b> & a<=b*/
 /*  ensures  res::llN<r> & R(a,b,r);*/

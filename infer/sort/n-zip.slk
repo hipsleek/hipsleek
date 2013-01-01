@@ -36,8 +36,19 @@ print residue.
 x::node<xv_617,xn_618>&b=flted_13_595+1 & a=flted_13_576+1 & a<=b & 
 x!=null & !(v_bool_40_545') & x!=null & !(v_bool_40_545') & v_577=xv_602 & 
 p_578=xn_610 & xv_617=v_596+xv_602 & a_603=flted_13_576 & 
-b_604=flted_13_595 & 0<=flted_13_595 & 0<=flted_13_576 & 
-R(a_603,b_604,r_616) & res=x
+b_604=flted_13_595 & 0<=flted_13_595 & 0<=flted_13_576 
+& R(a_603,b_604,r_616) 
+& res=x
+ |-  res::llN<r>&true. 
+print residue.
+
+ infer[] xn_618::llN<r_616> * y::node<v_596,p_597> * 
+x::node<xv_617,xn_618>&b=flted_13_595+1 & a=flted_13_576+1 & a<=b & 
+x!=null & !(v_bool_40_545') & x!=null & !(v_bool_40_545') & v_577=xv_602 & 
+p_578=xn_610 & xv_617=v_596+xv_602 & a_603=flted_13_576 & 
+b_604=flted_13_595 & 0<=flted_13_595 & 0<=flted_13_576 
+//& R(a_603,b_604,r_616) 
+& res=x
  |-  res::llN<r>&true. 
 print residue.
 

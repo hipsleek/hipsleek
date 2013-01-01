@@ -2668,11 +2668,11 @@ and heap_entail_failesc_prefix_init_x (prog : prog_decl) (is_folding : bool)  (h
       (conseq : 'a) (tid: CP.spec_var option) pos (pid:control_path_id) ((rename_f: 'a->'a), (to_string:'a->string),
       (f: prog_decl->bool->bool->context->'a -> CP.spec_var option -> loc ->control_path_id->(list_context * proof))
       ) : (list_failesc_context * proof) =
-  (* if (List.length cl)<1 then report_error pos ("heap_entail_failesc_prefix_init : encountered an empty list_partial_context \n") *)
-  (* else *)
-  (* TODO : must avoid empty context *)
-  if (cl==[]) then ([],UnsatAnte)
+  if (List.length cl)<1 then report_error pos ("heap_entail_failesc_prefix_init : encountered an empty list_partial_context \n")
   else
+  (* TODO : must avoid empty context *)
+  (* if (cl==[]) then ([],UnsatAnte) *)
+  (* else *)
     begin
       reset_formula_point_id();
       let rename_es es = {es with es_formula = rename_labels_formula_ante es.es_formula}in

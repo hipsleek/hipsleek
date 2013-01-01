@@ -15,11 +15,16 @@ node bindex(node x, node y)
   bind x to (xv,xn) in
   {
     //dprint;
-    xv=2;
+    {
+    int r=2;
+    assert r'=2;
+    xv=r;
     //dprint;
     raise new e1();
     xv=3;
+    }
   }
+  assert xx=2; // need msg for empty context
   dprint;
 }
 

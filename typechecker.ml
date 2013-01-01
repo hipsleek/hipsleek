@@ -1096,6 +1096,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                               let rs,prf = heap_entail_struc_list_failesc_context_init prog false false ts c1 None pos None in
                               let _ = PTracer.log_proof prf in  
                               Debug.pprint(*print_info "assert"*) ("assert condition:\n" ^ (Cprinter.string_of_struc_formula c1)) pos;
+                              Debug.info_hprint (add_str "assert(inp-formula)" Cprinter.string_of_struc_formula) c1 pos;
+                              Debug.info_hprint (add_str "assert(res-failesc)" Cprinter.string_of_list_failesc_context) rs pos;
                               if CF.isSuccessListFailescCtx rs then 
 			                    (Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok\n" else ": unreachable\n")) pos;
 			                    Debug.devel_pprint(*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos)
