@@ -1305,14 +1305,16 @@ cexp_w:
 
     | peek_cexp_list; ocl = opt_comma_list ->  Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
     | t = cid                ->  Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
-    | `IMM ->
-        Pure_c (P.AConst(Imm, get_pos_camlp4 _loc 1))
-    | `MUT ->
-        Pure_c (P.AConst(Mutable, get_pos_camlp4 _loc 1))
-    | `LEND ->
-        Pure_c (P.AConst(Lend, get_pos_camlp4 _loc 1))
-      | `INT_LITER (i,_) -> 
-        Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
+    | `IMM -> Pure_c (P.AConst(Imm, get_pos_camlp4 _loc 1))
+    | `MUT -> Pure_c (P.AConst(Mutable, get_pos_camlp4 _loc 1))
+    | `LEND -> Pure_c (P.AConst(Lend, get_pos_camlp4 _loc 1))
+    | `AT;t=tree_const ->
+        if !Globals.perm=Dperm then Pure_c (P.Tsconst(t,get_pos_camlp4 _loc 1))
+        else report_error (get_pos 1) ("distinct share reasoning not enabled")
+    | `ATAT;t=id	-> 
+        let t = try Hashtbl.find !macros t with _ -> (print_string ("warning, undefined macro "^t); Ts.top) in
+        Pure_c (P.Tsconst(t,get_pos_camlp4 _loc 1))
+    | `INT_LITER (i,_) -> Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
     | `FLOAT_LIT (f,_) ->
         (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *)
         Pure_c (P.FConst (f, get_pos_camlp4 _loc 1))
@@ -1341,6 +1343,7 @@ cexp_w:
     | `POW; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN ->
         apply_cexp_form2 (fun c1 c2-> P.mkPow c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
     ]
+
   | "pure_base"
     [ `TRUE ->
         Pure_f (P.mkTrue (get_pos_camlp4 _loc 1))
@@ -1348,7 +1351,8 @@ cexp_w:
         Pure_f (P.mkFalse (get_pos_camlp4 _loc 1))
     | `EXISTS; `OPAREN; ocl=opt_cid_list; `COLON; pc = SELF; `CPAREN ->
         apply_pure_form1 (fun c-> List.fold_left (fun f v ->P.mkExists [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
-		  | t=cid -> Pure_f (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 1), None), None, None))
+    | `FORALL; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN ->
+        apply_pure_form1 (fun c-> List.fold_left (fun f v-> P.mkForall [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
     | t=cid ->
         let fo = if !parse_primitives then Some F_o_code
                  else Some F_o_specs in
@@ -1870,10 +1874,15 @@ spec:
       F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol), (Some true))
    | `ENSURES_INEXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
       F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol), (Some false))
+	 | `CASE; `OBRACE; bl= branch_list; `CBRACE ->F.ECase {F.formula_case_branches = bl; F.formula_case_pos = get_pos_camlp4 _loc 1; }
   ]];
 
 opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];
 
+branch_list: [[t=LIST1 spec_branch -> List.rev t]];
+
+spec_branch: [[ pc=pure_constr; `LEFTARROW; sl= spec_list -> (pc,sl)]];
+	 
  
  (***********Proc decls ***********)
 
@@ -2487,6 +2496,9 @@ let parse_sleek n s =
 let parse_hip n s p =
   parse_primitives := p;
   SHGram.parse hprog (PreCast.Loc.mk n) s
+
+let parse_hip n s p =
+  DD.no_1_loop "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s p) n
 
 let parse_sleek_int n s =
   SHGram.parse_string sprog_int (PreCast.Loc.mk n) s
