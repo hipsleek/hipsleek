@@ -5864,7 +5864,7 @@ let repl_label_list_partial_context (lab:path_trace) (cl:list_partial_context) :
     = List.map (fun (fl,sl) -> (fl, List.map (fun (_,c) -> (lab,c)) sl)) cl
 
 let is_inferred_pre estate = 
-  not(estate.es_infer_heap==[] && estate.es_infer_pure==[])
+  not(estate.es_infer_heap==[] && estate.es_infer_pure==[] && estate.es_infer_rel==[])
   (* let r = (List.length (estate.es_infer_heap))+(List.length (estate.es_infer_pure)) in *)
   (* if r>0 then true else false *)
 
