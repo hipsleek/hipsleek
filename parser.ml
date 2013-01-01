@@ -25,6 +25,9 @@ let parser_name = ref "unknown"
 let set_parser name =
   parser_name := name
 
+(* parse_primitives = true -> parse primitive files, otherwise parse user-input file *)
+let parse_primitives = ref false 
+
 
 (* type definitions *)
 
@@ -314,14 +317,14 @@ let cexp_to_pure2 fct f01 f02 =
                              )
   | Pure_f f1 , Pure_c f2 ->(
       match f1  with 
-      | P.BForm((pf,il),oe) -> (match pf with 
+      | P.BForm((pf,il),oe,fo) -> (match pf with 
                                 | P.Lt (a1, a2, _) 
                                 | P.Lte (a1, a2, _) 
                                 | P.Gt (a1, a2, _) 
                                 | P.Gte (a1, a2, _)
                                 | P.Eq (a1, a2, _) 
                                 | P.Neq (a1, a2, _) ->
-                                    let tmp = P.BForm(((fct a2 f2), None),None) in
+                                    let tmp = P.BForm(((fct a2 f2), None),None,fo) in
                                     Pure_f (P.mkAnd f1 tmp (get_pos 2))
                                 | _ -> report_error (get_pos 1) "error should be an equality exp" )
       | _ -> report_error (get_pos 1) "error should be a binary exp" 
@@ -1267,9 +1270,9 @@ cexp_w:
     [
       e=SELF ; `COLON; ty=typ ->
         apply_cexp_form1 (fun c-> P.mkAnnExp c ty (get_pos_camlp4 _loc 1)) e
+    ]
    | "una"
        [(*   h = ho_fct_header                   -> Pure_f (P.mkTrue (get_pos_camlp4 _loc 1)) *)
-    [
       `NULL -> Pure_c (P.Null (get_pos_camlp4 _loc 1))
 	  (* An Hoa : Hole for partial structures, represented by the hash # character. *)
        | `HASH -> let _ = hash_count := !hash_count + 1 in 
@@ -1277,12 +1280,12 @@ cexp_w:
 		  Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1)))
        | `IDENTIFIER id1;`OPAREN; `IDENTIFIER id; `OPAREN; cl = id_list; `CPAREN ; `CPAREN-> (* xpure *)
        (* print_string ("xpure"^id1^"("^id^"())!!!"); *)
-	  	  if hp_names # mem id then Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
+	  	  if hp_names # mem id then Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None, None))
 	  	  else
 	  	    begin
 	  	      if not(rel_names # mem id) then print_endline ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
 	  	      else  print_endline ("WARNING2 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (in rel_names)") ;
-	  	      Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
+	  	      Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None, None))
 	  	    end
        | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN -> (* print_string("here"); *)
       (* AnHoa: relation constraint, for instance, given the relation 
@@ -1291,29 +1294,24 @@ cexp_w:
        * s(x,1,x+1), s(x,y,x+y), ...
        * in our formula.
        *)
-	  (* print_string ("rel: "^id^"!!!\n"); *)
-	  if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
-          else if hp_names # mem id then Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
+          (* print_string ("rel: "^id^"!!!\n"); *)
+          if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
+          else if hp_names # mem id then Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None, None))
           else
             begin
               if not(rel_names # mem id) then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
-              Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
+              Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None, None))
             end
-          Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None, fo))
-        )
-    | peek_cexp_list; ocl = opt_comma_list ->
-        (* let tmp = List.map (fun c -> P.Var(c,get_pos_camlp4 _loc 1)) ocl in *)
-      
-    | t = cid ->
-      | t = cid                ->  Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
-        Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
+
+    | peek_cexp_list; ocl = opt_comma_list ->  Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
+    | t = cid                ->  Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
     | `IMM ->
         Pure_c (P.AConst(Imm, get_pos_camlp4 _loc 1))
     | `MUT ->
         Pure_c (P.AConst(Mutable, get_pos_camlp4 _loc 1))
     | `LEND ->
         Pure_c (P.AConst(Lend, get_pos_camlp4 _loc 1))
-      | `INT_LITER (i,_)                          ->Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
+      | `INT_LITER (i,_) -> 
         Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
     | `FLOAT_LIT (f,_) ->
         (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *)
@@ -1350,8 +1348,7 @@ cexp_w:
         Pure_f (P.mkFalse (get_pos_camlp4 _loc 1))
     | `EXISTS; `OPAREN; ocl=opt_cid_list; `COLON; pc = SELF; `CPAREN ->
         apply_pure_form1 (fun c-> List.fold_left (fun f v ->P.mkExists [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
-		  | t=cid                             -> (* print_string ("pure_form:"^(fst t)^"\n"); *) Pure_f (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 1), None), None ))
-        apply_pure_form1 (fun c-> List.fold_left (fun f v-> P.mkForall [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
+		  | t=cid -> Pure_f (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 1), None), None, None))
     | t=cid ->
         let fo = if !parse_primitives then Some F_o_code
                  else Some F_o_specs in
@@ -1877,10 +1874,6 @@ spec:
 
 opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];
 
-branch_list: [[t=LIST1 spec_branch -> List.rev t]];
-
-spec_branch: [[ pc=pure_constr; `LEFTARROW; sl= spec_list -> (pc,sl)]];
-	 
  
  (***********Proc decls ***********)
 
@@ -2491,15 +2484,15 @@ let parse_sleek n s =
 let parse_sleek n s =
   DD.no_1_loop "parse_sleek" (fun x -> x) (pr_list string_of_command) (fun n -> parse_sleek n s) n
 
-let parse_hip n s =
+let parse_hip n s p =
+  parse_primitives := p;
   SHGram.parse hprog (PreCast.Loc.mk n) s
-
-
 
 let parse_sleek_int n s =
   SHGram.parse_string sprog_int (PreCast.Loc.mk n) s
 
 let parse_hip_string n s =
+  parse_primitives := true;
   SHGram.parse_string hprog (PreCast.Loc.mk n) s
 
 let parse_hip_string n s = 

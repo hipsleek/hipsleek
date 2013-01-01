@@ -92,12 +92,12 @@ GLOBAL: expression;
         if int_of_string x = int_of_string y 
         then BConst (true,loc) 
         else BConst (false,loc) 
-      in BForm ((tmp, None), None)
+      in BForm ((tmp, None), None, None)
     |	x = exp; "<"; y = exp ->
       if is_res_var y && is_zero x then 
-        BForm ((BVar (get_var "res" !stab, loc), None), None) 
+        BForm ((BVar (get_var "res" !stab, loc), None), None, None) 
       else if is_res_var x && is_one y then 
-        Not (BForm ((BVar (get_var "res" !stab, loc), None), None), None, loc) 
+        Not (BForm ((BVar (get_var "res" !stab, loc), None), None, None), None, loc) 
       else
         let tmp = 
           if is_node y & is_zero x then 
@@ -110,9 +110,9 @@ GLOBAL: expression;
       in BForm ((tmp, None), None, None)
     | x = exp; ">"; y = exp ->
       if is_res_var x && is_zero y then 
-        BForm ((BVar (get_var "res" !stab, loc), None), None) 
+        BForm ((BVar (get_var "res" !stab, loc), None), None, None) 
       else if is_res_var y && is_one x then 
-        Not (BForm ((BVar (get_var "res" !stab, loc), None), None), None, loc) 
+        Not (BForm ((BVar (get_var "res" !stab, loc), None), None, None), None, loc) 
       else
         let tmp = 
           if is_node x && is_zero y then 
@@ -125,9 +125,9 @@ GLOBAL: expression;
       in BForm ((tmp, None), None, None)
     | x = exp; "<="; y = exp ->
       if is_res_var x && is_zero y then 
-        Not (BForm ((BVar (get_var "res" !stab, loc), None), None), None, loc) 
+        Not (BForm ((BVar (get_var "res" !stab, loc), None), None, None), None, loc) 
       else if is_res_var y && is_one x then 
-        BForm ((BVar (get_var "res" !stab, loc), None), None) 
+        BForm ((BVar (get_var "res" !stab, loc), None), None, None) 
       else
         let tmp = 
           if is_node x & is_zero y then 
@@ -140,10 +140,10 @@ GLOBAL: expression;
       in BForm ((tmp, None), None, None)
     | x = exp; ">="; y = exp ->
       if is_res_var y && is_zero x then 
-        Not (BForm ((BVar (get_var "res" !stab, loc), None), None), None, loc) 
+        Not (BForm ((BVar (get_var "res" !stab, loc), None), None, None), None, loc) 
       else
       if is_res_var x && is_one y then 
-        BForm ((BVar (get_var "res" !stab, loc), None), None) 
+        BForm ((BVar (get_var "res" !stab, loc), None), None, None) 
       else
         let tmp = 
           if is_node y & is_zero x then 

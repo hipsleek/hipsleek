@@ -232,7 +232,7 @@ let rec is_rec pf = match pf with
   | CP.Exists (_,f,_,_) -> is_rec f
 
 let substitute_args_x a_rel = match a_rel with
-  | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
+  | CP.BForm ((CP.RelForm (name,args,o1),o2),o3,o4) ->
     let new_args, subs = List.split 
       (List.map (fun e ->
         match e with
@@ -246,7 +246,7 @@ let substitute_args_x a_rel = match a_rel with
           with _ -> (e,[]))
       ) args)
     in
-    (CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3), List.concat subs)
+    (CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3,o4), List.concat subs)
   | _ -> report_error no_pos "substitute_args_x Expected a relation"
 
 let substitute_args rcase =
@@ -309,10 +309,10 @@ let process_base_rec pfs rel specs = match CP.get_rel_id rel with
     
 let compute_def (rel_fml, pf, no) ante_vars =
   let (name,vars) = match rel_fml with
-    | CP.BForm ((CP.RelForm (name,args,_),_),_) -> 
-      (CP.name_of_spec_var name, (List.concat (List.map CP.afv args)))
+    | CP.BForm ((CP.RelForm (name,args,_),_),_,_) -> 
+        (CP.name_of_spec_var name, (List.concat (List.map CP.afv args)))
     | _ -> report_error no_pos 
-              ("Wrong format: " ^ (!CP.print_formula rel_fml) ^ "\n")
+        ("Wrong format: " ^ (!CP.print_formula rel_fml) ^ "\n")
   in
 
   let pre_vars, post_vars = 
@@ -382,7 +382,7 @@ let compute_fixpoint_aux rel_defs ante_vars subs =
   let res = 
     List.map (fun (a_rel,fixpoint) -> 
       match a_rel with
-      | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
+      | CP.BForm ((CP.RelForm (name,args,o1),o2),o3,o4) ->
         let subst_arg = 
           try List.assoc name subs
           with _ -> []
@@ -427,7 +427,7 @@ let arrange_para input_pairs ante_vars =
   let pairs, subs = List.split 
     (List.map (fun (r,pfs) ->
       match r with
-      | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
+      | CP.BForm ((CP.RelForm (name,args,o1),o2),o3,o4) ->
         let pre_args, post_args = 
           List.partition 
             (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) 
@@ -439,7 +439,7 @@ let arrange_para input_pairs ante_vars =
           let subst_arg = List.combine (List.map CP.exp_to_spec_var args) 
                                        (List.map CP.exp_to_spec_var new_args) 
           in
-          ((CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3), 
+          ((CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3,o4), 
             List.map (fun x -> CP.subst subst_arg x) pfs),[(name,subst_arg)])
       | _ -> report_error no_pos "arrange_para: Expected a relation"
     ) input_pairs)
@@ -447,8 +447,8 @@ let arrange_para input_pairs ante_vars =
   pairs, List.concat subs
 
 let rec unify_rels rel a_rel = match rel, a_rel with
-  | (CP.BForm ((CP.RelForm (name1,args1,p1),p2),p3), f1), 
-    (CP.BForm ((CP.RelForm (name2,args2,_ ),_ ),_ ), f2) ->
+  | (CP.BForm ((CP.RelForm (name1,args1,p1),p2),p3,p4), f1), 
+    (CP.BForm ((CP.RelForm (name2,args2,_ ),_ ), _, _), f2) ->
     let subst_arg = List.combine (List.map CP.exp_to_spec_var args2) 
                                  (List.map CP.exp_to_spec_var args1) in
     let f2 = CP.subst subst_arg f2 in

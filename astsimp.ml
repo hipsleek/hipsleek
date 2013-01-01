@@ -4337,10 +4337,9 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
         let cle = List.map (fun e -> trans_pure_exp e stab) ls1 in
         let clt = List.map (fun e -> trans_pure_exp e stab) ls2 in
         CP.LexVar { CP.lex_ann = t_ann;
-	          CP.lex_ann = t_ann;
-	          CP.lex_exp = cle;
-	          CP.lex_tmp = clt;
-	          CP.lex_loc = pos; }
+                    CP.lex_exp = cle;
+                    CP.lex_tmp = clt;
+                    CP.lex_loc = pos; }
     | IP.Lt (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.mkLt pe1 pe2 pos
@@ -4359,7 +4358,6 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
     | IP.Eq (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.mkEq pe1 pe2 pos
-	      (check_dfrac_wf pe1 pe2 pos; CP.mkEq pe1 pe2 pos)
     | IP.Neq (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.mkNeq pe1 pe2 pos
@@ -4782,7 +4780,10 @@ and gather_type_info_exp_x a0 stab et =
   | IP.Var ((sv, sp), pos) -> 
       let t = gather_type_info_var sv stab et pos
       in t
-	      let t = Tree_sh in
+  | IP.Tsconst (_,pos) ->
+      let t = Tree_sh in
+      let _ = must_unify_expect t et stab pos in
+      t
   | IP.AConst (_,pos) -> 
       let t = I.ann_type in
       let _ = must_unify_expect t et stab pos in
@@ -4796,7 +4797,7 @@ and gather_type_info_exp_x a0 stab et =
       let _ = must_unify_expect t et stab pos in
       t
   | IP.SConst (_,pos) -> 
-	      let _ = must_unify_expect_test_2 et NUM Tree_sh pos in (* UNK, Int, Float, NUm, Tvar *)
+      let t = I.sym_type in
       let _ = must_unify_expect t et stab pos in
       t
   | IP.Add (a1, a2, pos)

@@ -62,7 +62,7 @@ let parse_file_full file_name (primitive: bool) =
       if parser_to_use = "cil" then
         Cilparser.parse_hip file_name
       else
-        Parser.parse_hip file_name (Stream.of_channel org_in_chnl)
+        Parser.parse_hip file_name (Stream.of_channel org_in_chnl) false
     ) in
     close_in org_in_chnl;
     let _ = Gen.Profiling.pop_time "Parsing" in

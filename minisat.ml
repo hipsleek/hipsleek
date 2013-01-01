@@ -237,10 +237,10 @@ let return_pure bf f= match bf with
 (*For converting to NNF--no need??--*)
 let rec minisat_cnf_of_formula f =
   match f with
-  | BForm (b, _)         -> (*return_pure b *)f
+  | BForm (b, _, _)         -> (*return_pure b *)f
   | And (f1, f2, l1)      ->   And(minisat_cnf_of_formula f1,minisat_cnf_of_formula f2,l1)  
   | Or (f1, f2, l1, l2)    ->   Or(minisat_cnf_of_formula f1,minisat_cnf_of_formula f2,l1,l2)    
-  | Not (BForm(b,_), _, _) -> return_pure b f
+  | Not (BForm(b,_,_), _, _) -> return_pure b f
   | _ -> minisat_cnf_of_formula (de_morgan (double_negative f));; 
 
 (*let rec cnf_to_string f =                                               *)
@@ -279,24 +279,24 @@ and is_cnf_old2 f =
   match f with
 	| BForm _ -> true
 	| Or (f1,f2,_,_)-> if(has_and f1) then false  else if (has_and f2) then false else true
-	| And (BForm(b,_),f2,_)->let _=unsat_in_cnf b in if(!sat=true) then is_cnf f2 else true
-	| And (f1,BForm(b,_),_)->let _=unsat_in_cnf b in if(!sat=true) then is_cnf f1 else true
+	| And (BForm(b,_,_),f2,_)->let _=unsat_in_cnf b in if(!sat=true) then is_cnf f2 else true
+	| And (f1,BForm(b,_,_),_)->let _=unsat_in_cnf b in if(!sat=true) then is_cnf f1 else true
 	| And (f1,f2,_)-> if(is_cnf f1) then is_cnf f2 else false
 
 and is_cnf_old1 f = (*Should use heuristic in CNF*)
   match f with
 	| BForm _ -> true
 	| Or (f1,f2,_,_)-> if(has_and f1) then false  else if (has_and f2) then false else true
-	| And (BForm(b,_),f2,_)->is_cnf f2 
-	| And (f1,BForm(b,_),_)->is_cnf f1 
+	| And (BForm(b,_,_),f2,_)->is_cnf f2 
+	| And (f1,BForm(b,_,_),_)->is_cnf f1 
 	| And (f1,f2,_)-> if(is_cnf f1) then is_cnf f2 else false
 
 and is_cnf f = (*Should use heuristic in CNF*)
   match f with
 	| BForm _ -> true
 	| Or (f1,f2,_,_)-> if(has_and f1) then false  else if (has_and f2) then false else true
-	| And (BForm(b,_),f2,_)->is_cnf f2 
-	| And (f1,BForm(b,_),_)->is_cnf f1 
+	| And (BForm(b,_,_),f2,_)->is_cnf f2 
+	| And (f1,BForm(b,_,_),_)->is_cnf f1 
 	| And (f1,f2,_)-> if(is_cnf f1) then is_cnf f2 else false
 	| _->	 let _=print_endline ("CNF conv here: "^Cprinter.string_of_pure_formula f) in true
 
@@ -318,7 +318,7 @@ let dist_no_slicing f =
 
 let rec nnf_to_xxx f rule =
   let nf = match f with  
-    BForm (b,_) -> return_pure b f 
+    BForm (b,_,_) -> return_pure b f 
   | Not (f1,l1,l2) -> Not ((nnf_to_xxx f1 rule),l1,l2)
   | And (f1, f2,l1) -> And (nnf_to_xxx f1 rule, nnf_to_xxx f2 rule,l1)
   | Or (f1, f2,l1,l2) -> Or (nnf_to_xxx f1 rule, nnf_to_xxx f2 rule,l1,l2)
@@ -422,7 +422,7 @@ and can_minisat_handle_b_formula (bf : Cpure.b_formula) : bool =
 
 and can_minisat_handle_formula (f: Cpure.formula) : bool =
   match f with
-  | BForm (bf, _)       -> can_minisat_handle_b_formula bf
+  | BForm (bf, _, _)       -> can_minisat_handle_b_formula bf
   | And (f1, f2, _)     -> (can_minisat_handle_formula f1) && (can_minisat_handle_formula f2)
   | Or (f1, f2, _, _)   -> (can_minisat_handle_formula f1) && (can_minisat_handle_formula f2)
   | Not (f, _, _)       -> can_minisat_handle_formula f
@@ -565,10 +565,10 @@ let rtc_generate_B (f:Cpure.formula) =
 	let ge=G.create() and gd=G.create() and gr_e=Glabel.create() in (*ge is eq graph and gd is diseq graph*)
 		let rec cnf_to_string_to_file f = (*Aiming to get ge and gd and cnf string of the given CNF formula*)                                                           
 			match f with
-			  |BForm (b,_)-> minisat_cnf_of_b_formula b gr_e ge gd 
+			  |BForm (b,_,_)-> minisat_cnf_of_b_formula b gr_e ge gd 
 			  |And (f1, f2, _) ->cnf_to_string_to_file f1 ^" 0"^"\n"^ cnf_to_string_to_file f2
 			  |Or  (f1, f2, _, _)-> cnf_to_string_to_file f1 ^" "^ cnf_to_string_to_file f2
-				|Not ((BForm(b,_)),_,_)-> minisat_cnf_of_not_of_b_formula b gr_e ge gd
+				|Not ((BForm(b,_,_)),_,_)-> minisat_cnf_of_not_of_b_formula b gr_e ge gd
 				| _-> let _=print_endline ("imply Final Formula :" ^ (Cprinter.string_of_pure_formula f))in ""
 		in
 			let cnf_str =cnf_to_string_to_file f in
@@ -591,7 +591,7 @@ let to_minisat_cnf (ante: Cpure.formula)  =
 		in
 		(* let _=print_endline ("To minisat cnf :" ^ (Cprinter.string_of_pure_formula cnf_ante))in *)
 		match ante with
-		| BForm ((BConst (a,_),_),_)-> if (a) then (false,"t",G.create(),G.create(),Glabel.create()) else (false,"f",G.create(),G.create(),Glabel.create())
+		| BForm ((BConst (a,_),_),_,_)-> if (a) then (false,"t",G.create(),G.create(),Glabel.create()) else (false,"f",G.create(),G.create(),Glabel.create())
 		|	_ ->
 		(* let _=Gen.Profiling.pop_time("stat_CNF_ori_conversion") in *)
 (*			let _=print_endline "sat true" in*)

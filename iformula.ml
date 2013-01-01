@@ -1004,9 +1004,8 @@ and float_out_exps_from_heap_x (f:formula ):formula =
 								let lexp = P.find_lexp_exp c !Ipure.linking_exp_list in
 								(* let _ = Hashtbl.remove !Ipure.linking_exp_list c in *)
 						  Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), (Some (false, fresh_int(), lexp))), None, None)
-							with Not_found -> Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None)
-						  Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None, None)
-                      Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None, None) 
+							with Not_found -> Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None, None)
+            else Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None, None) 
           in
 				  (nv,[(nn,npf)])) b.h_formula_heap_arguments) in
 	    (HeapNode ({b with h_formula_heap_arguments = na; h_formula_heap_perm = na_perm}),(List.concat (ls_perm ::ls)))
@@ -1046,13 +1045,12 @@ and float_out_exps_from_heap_x (f:formula ):formula =
 					(* if !Globals.do_slicing then *)
                       if not !Globals.dis_slc_ann then
                       try
-                          let lexp = P.find_lexp_exp c !Ipure.linking_exp_list in
-                                (*let _ = Hashtbl.remove !Ipure.linking_exp_list c in*)
-						  Ipure.BForm ((Ipure.Eq (nv,c,l), (Some (false, fresh_int(), lexp))), None)
+                        let lexp = P.find_lexp_exp c !Ipure.linking_exp_list in
+                        Ipure.BForm ((Ipure.Eq (nv,c,l), (Some (false, fresh_int(), lexp))), None, None)
                       with Not_found ->
-						  Ipure.BForm ((Ipure.Eq (nv,c,l), None), None)
+                        Ipure.BForm ((Ipure.Eq (nv,c,l), None), None, None)
                     else
-                      Ipure.BForm ((Ipure.Eq (nv,c,l), None), None) 
+                      Ipure.BForm ((Ipure.Eq (nv,c,l), None), None, None) 
                         (* Slicing: TODO IL for linking exp *)
                   in
 				  (nv,[(nn,npf)])) args) in

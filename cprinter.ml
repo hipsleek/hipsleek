@@ -708,7 +708,7 @@ and pr_var_measures (measures : CP.p_formula) : unit =
   | CP.LexVar _ -> pr_p_formula measures
   | _ -> failwith "Invalid value of measures"
 
-let sort_exp a b =
+and sort_exp a b =
   match a with
     | P.Var (v1,_) ->
           begin
@@ -726,7 +726,7 @@ let sort_exp a b =
               | _ -> (a,b)
           end
 
-let pr_xpure_view xp = match xp with
+and pr_xpure_view xp = match xp with
     { 
         CP.xpure_view_node = root ;
         CP.xpure_view_name = vname;
@@ -739,18 +739,20 @@ let pr_xpure_view xp = match xp with
         in
         fmt_string ("XPURE("^rn^vname^args_s^")")
 
-let string_of_xpure_view xpv = poly_string_of_pr pr_xpure_view xpv
+and string_of_xpure_view xpv = poly_string_of_pr pr_xpure_view xpv
 
+(** print a p_formula  to formatter *)
+and pr_p_formula (pf:P.p_formula) =
   let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in
   let f_b_no e =  pr_bracket (fun x -> true) pr_formula_exp e in
   (* pr_slicing_label il; *)
   match pf with
   | P.LexVar lex -> 
-      fmt_string (string_of_term_ann t_info.CP.lex_ann);
-      pr_s "" pr_formula_exp t_info.CP.lex_exp
-      (* ;if ls2!=[] then *)
-      (*   pr_set pr_formula_exp ls2 *)
-      (* else () *)
+      let t_ann = lex.CP.lex_ann in
+      let ls1 = lex.CP.lex_exp in
+      let ls2 = lex.CP.lex_tmp in
+      let pr_s op f xs = pr_args None None op "[" "]" ", " f xs in
+      fmt_string ((string_of_term_ann t_ann) ^ "[");
       pr_s "" pr_formula_exp ls1;
       if ls2!=[] then (fmt_string "; "; pr_set pr_formula_exp ls2) else ();
       fmt_string "]"
@@ -803,7 +805,6 @@ and pr_b_formula (e:P.b_formula) =
   let (pf,il) = e in
   pr_slicing_label il;
   pr_p_formula pf;
-
 
 and string_of_int_label (i,s) s2:string = (string_of_int i)^s2
 and string_of_int_label_opt h s2:string = match h with | None-> "N "^s2 | Some s -> string_of_int_label s s2

@@ -337,4 +337,3 @@ let _ =
         ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ()));
     print_string "\n"
   )
-    )

@@ -123,7 +123,7 @@ and spass_dfg_of_p_formula (pf : Cpure.p_formula) : (string * string list * stri
 (* return formula in string * list of functions in string * list of predicates in string *)
 and spass_dfg_of_formula f : (string * string list * string list) =
   match f with
-  | BForm (b, _)         -> spass_dfg_of_b_formula b
+  | BForm (b, _, _)         -> spass_dfg_of_b_formula b
   | AndList _ -> Gen.report_error no_pos "spass.ml: encountered AndList, should have been already handled"
   | And (f1, f2, _)      -> (
       let (s1, func_list1, pred_list1) = spass_dfg_of_formula f1 in
@@ -239,7 +239,7 @@ and spass_tptp_of_p_formula (pf : Cpure.p_formula) : string =
 
 and spass_tptp_of_formula f =
   match f with
-  | BForm (b, _)         -> spass_tptp_of_b_formula b
+  | BForm (b, _, _)      -> spass_tptp_of_b_formula b
   | And (f1, f2, _)      -> "(" ^ (spass_tptp_of_formula f1) ^ " & " ^ (spass_tptp_of_formula f2) ^ ")"
   | AndList _            -> Gen.report_error no_pos "[spass.ml] handle AndList later"
   | Or (f1, f2, _, _)    -> "(" ^ (spass_tptp_of_formula f1) ^ " | " ^ (spass_tptp_of_formula f2) ^ ")"
@@ -319,7 +319,7 @@ and can_spass_handle_b_formula (bf : Cpure.b_formula) : bool =
 
 and can_spass_handle_formula (f: Cpure.formula) : bool =
   match f with
-  | BForm (bf, _)       -> can_spass_handle_b_formula bf
+  | BForm (bf, _, _)       -> can_spass_handle_b_formula bf
   | And (f1, f2, _)     -> (can_spass_handle_formula f1) && (can_spass_handle_formula f2)
   | AndList _           -> Gen.report_error no_pos "[spass.ml] handle AndList later"
   | Or (f1, f2, _, _)   -> (can_spass_handle_formula f1) && (can_spass_handle_formula f2)

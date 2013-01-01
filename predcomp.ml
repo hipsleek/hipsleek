@@ -1017,7 +1017,7 @@ let rec gen_bindings_pure (pure : CP.formula) (unbound_vars : CP.spec_var list) 
 	      CP.mkTrue pos
 	    end
       else if is_in_svars e2 unbound_vars then
-	gen_bindings_pure (CP.BForm ((CP.Eq (e2, e1, pos), il), None)) unbound_vars vmap
+	gen_bindings_pure (CP.BForm ((CP.Eq (e2, e1, pos), il), None, None)) unbound_vars vmap
       else
 	pure
     end
@@ -1025,7 +1025,7 @@ let rec gen_bindings_pure (pure : CP.formula) (unbound_vars : CP.spec_var list) 
       if is_in_svars e1 unbound_vars then
 	let emax = CP.Max (e2, e3, pos) in
 	let tmp = CP.Eq (e1, emax, pos) in
-	gen_bindings_pure (CP.BForm ((tmp, il), None)) unbound_vars vmap
+	gen_bindings_pure (CP.BForm ((tmp, il), None, None)) unbound_vars vmap
       else
 	pure
     end
@@ -1033,7 +1033,7 @@ let rec gen_bindings_pure (pure : CP.formula) (unbound_vars : CP.spec_var list) 
       if is_in_svars e1 unbound_vars then
 	let emin = CP.Min (e2, e3, pos) in
 	let tmp = CP.Eq (e1, emin, pos) in
-	gen_bindings_pure (CP.BForm ((tmp, il), None)) unbound_vars vmap
+	gen_bindings_pure (CP.BForm ((tmp, il), None, None)) unbound_vars vmap
       else
 	pure
     end

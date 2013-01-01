@@ -826,15 +826,31 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           } in
           (n_estate, lhs_p, rhs_p, None)
     end
-  with _ -> (
+  with _ -> (estate, lhs_p, rhs_p, None)
+
+let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
+  (* if (not !Globals.dis_term_chk) or (estate.es_term_err == None) then *)
+  (*   check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos   *)
+  (* else                                                                *)
   (*   (* Remove LexVar in RHS *)                                        *)
   (*   let _, rhs_p = strip_lexvar_mix_formula rhs_p in                  *)
   (*   let rhs_p = MCP.mix_of_pure rhs_p in                              *)
   (*   (estate, lhs_p, rhs_p, None)                                      *)
   if !Globals.dis_term_chk or estate.es_term_err != None then
+    (* Remove LexVar in RHS *)
+    let _, rhs_p = strip_lexvar_mix_formula rhs_p in
+    let rhs_p = MCP.mix_of_pure rhs_p in
     (estate, lhs_p, rhs_p, None)
-  )
+  else
     check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
+
+let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
+  let pr = !print_mix_formula in
+  let pr2 = !print_entail_state in
+  let f = wrap_proving_kind "TERM-DEC" (check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p) in
+   Debug.no_3 "trans_lexvar_rhs" pr2 pr pr
+    (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
+    (fun _ _ _ -> f pos) estate lhs_p rhs_p
 
   (* if (not !Globals.dis_term_chk) or (estate.es_term_err == None) then *)
   (*   check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos *)

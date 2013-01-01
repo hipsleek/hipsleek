@@ -137,7 +137,7 @@ and cvc3_of_sv_type sv = match sv with
   | _ -> "INT"
 
 and cvc3_of_formula f = match f with
-  | CP.BForm (b,_,_) -> "(" ^ (cvc3_of_b_formula b) ^ ")"
+  | CP.BForm (b,_,_) -> 
         begin
           match (fst CP.drop_complex_ops) (fst b) with
             | None -> "(" ^ (cvc3_of_b_formula b) ^ ")"

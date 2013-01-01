@@ -477,7 +477,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                             (*                      let new_rel_pre = CP.fresh_spec_var_rel () in*)
                             let new_rel_post = CP.fresh_spec_var_rel () in
                             (*                      let new_rel_fml_pre = CP.BForm ((CP.RelForm (new_rel_pre, List.map (fun v -> CP.mkVar v no_pos) pre_args, no_pos),None),None) in*)
-                            let new_rel_fml_post = CP.BForm ((CP.RelForm (new_rel_post, List.map (fun v -> CP.mkVar v no_pos) new_args, no_pos),None),None) in
+                            let new_rel_fml_post = CP.BForm ((CP.RelForm (new_rel_post, List.map (fun v -> CP.mkVar v no_pos) new_args, no_pos),None),None,None) in
                             let new_spec = CF.add_pure new_formula_inf_continuation None (Some new_rel_fml_post) in
                             Debug.tinfo_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
                             pre_args@[new_rel_post],new_spec
@@ -496,7 +496,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                           else
                             if pflag then
                               let new_rel = CP.fresh_spec_var_rel () in
-                              let new_rel_fml = CP.BForm ((CP.RelForm (new_rel, List.map (fun v -> CP.mkVar v no_pos) new_args, no_pos),None),None) in
+                              let new_rel_fml = CP.BForm ((CP.RelForm (new_rel, List.map (fun v -> CP.mkVar v no_pos) new_args, no_pos),None),None,None) in
                               let new_spec = CF.add_pure new_formula_inf_continuation None (Some new_rel_fml) in
                               Debug.tinfo_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
                               [new_rel],new_spec
@@ -1472,37 +1472,36 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	    | Catch b -> Error.report_error {Err.error_loc = b.exp_catch_pos;
           Err.error_text = "[typechecker.ml]: malformed cast, unexpected catch clause"}
         | Cond ({ exp_cond_type = t;
-          exp_cond_condition = v;
-          exp_cond_then_arm = e1;
-          exp_cond_else_arm = e2;
-          exp_cond_path_id =pid;
-          exp_cond_pos = pos}) ->
-          let fo = Some (F_o_inter) in
-	        let pure_cond = (CP.BForm ((CP.mkBVar v Primed pos, None), None, fo)) in
-	              let _ = proving_loc#set pos in
-	              let then_cond_prim = MCP.mix_of_pure pure_cond in
-	              let else_cond_prim = MCP.mix_of_pure (CP.mkNot pure_cond None pos) in
-	              let then_ctx = 
-		            if !Globals.delay_if_sat then combine_list_failesc_context prog ctx then_cond_prim
-		            else  combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
-	              Debug.devel_zprint (lazy ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_failesc_context then_ctx))) pos;
-	              let else_ctx =
-		            if !Globals.delay_if_sat then combine_list_failesc_context prog ctx else_cond_prim
-		            else  combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
-		          
-	              Debug.devel_zprint (lazy ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_failesc_context else_ctx))) pos;
-	              let then_ctx1 = CF.add_cond_label_list_failesc_context pid 0 then_ctx in
-	              let else_ctx1 = CF.add_cond_label_list_failesc_context pid 1 else_ctx in 
-	              let then_ctx2 = check_exp prog proc then_ctx1 e1 post_start_label in
-	              let else_ctx2 = check_exp prog proc else_ctx1 e2 post_start_label in
-	              let res = CF.list_failesc_context_or (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
-	              res
-	            end in
-	          Gen.Profiling.push_time "[check_exp] Cond";
-              let res = wrap_proving_kind "IF" cond_op () in
-	          Gen.Profiling.pop_time "[check_exp] Cond";
-	          res
-              ;
+                  exp_cond_condition = v;
+                  exp_cond_then_arm = e1;
+                  exp_cond_else_arm = e2;
+                  exp_cond_path_id =pid;
+                  exp_cond_pos = pos}) ->
+            let cond_op () = (
+              let fo = Some (F_o_inter) in
+              let pure_cond = (CP.BForm ((CP.mkBVar v Primed pos, None), None, fo)) in
+              let _ = proving_loc#set pos in
+              let then_cond_prim = MCP.mix_of_pure pure_cond in
+              let else_cond_prim = MCP.mix_of_pure (CP.mkNot pure_cond None pos) in
+              let then_ctx = 
+                if !Globals.delay_if_sat then combine_list_failesc_context prog ctx then_cond_prim
+                else  combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
+              Debug.devel_zprint (lazy ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_failesc_context then_ctx))) pos;
+              let else_ctx =
+                if !Globals.delay_if_sat then combine_list_failesc_context prog ctx else_cond_prim
+                else  combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
+              Debug.devel_zprint (lazy ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_failesc_context else_ctx))) pos;
+              let then_ctx1 = CF.add_cond_label_list_failesc_context pid 0 then_ctx in
+              let else_ctx1 = CF.add_cond_label_list_failesc_context pid 1 else_ctx in 
+              let then_ctx2 = check_exp prog proc then_ctx1 e1 post_start_label in
+              let else_ctx2 = check_exp prog proc else_ctx1 e2 post_start_label in
+              let res = CF.list_failesc_context_or (Cprinter.string_of_esc_stack) then_ctx2 else_ctx2 in
+              res
+            ) in
+            Gen.Profiling.push_time "[check_exp] Cond";
+            let res = wrap_proving_kind "IF" cond_op () in
+            Gen.Profiling.pop_time "[check_exp] Cond";
+            res;
         | Dprint ({exp_dprint_string = str;
           exp_dprint_visible_names = visib_names;
           exp_dprint_pos = pos}) -> begin

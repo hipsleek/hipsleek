@@ -1403,7 +1403,7 @@ let rec typ_of_exp (e: exp) : typ =
 (* Slicing Utils *)
 let rec set_il_formula f il =
   match f with
-    | BForm (bf, lbl) -> BForm (set_il_b_formula bf il, lbl)
+    | BForm (bf, lbl, fo) -> BForm (set_il_b_formula bf il, lbl, fo)
     | _ -> f
       
 and set_il_b_formula bf il =
