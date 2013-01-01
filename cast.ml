@@ -1067,6 +1067,7 @@ let look_up_coercion_def_raw coers (c : ident) : coercion_decl list =
   Note that:
   Complex + Left == normalization
 *)
+(*TODO: re-implement with care*)
 let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
   let fct f = match f with
       | Cformula.Base {F.formula_base_heap=h}
