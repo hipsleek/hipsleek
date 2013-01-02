@@ -1442,9 +1442,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   (* add invariant constraint @M<:v<:@L for each annotation var *)
   let ante = CP.add_ann_constraints imm_vrs ante in
   (* Handle Infinity Constraints *)
-  let _ = Gen.Profiling.push_time "imply normalize" in 
   let ante,conseq  = Infinity.normalize_inf_formula_imply ante conseq in
-  let _ = Gen.Profiling.pop_time "imply normalize" in 
   if should_output () then (
     reset_generated_prover_input ();
     reset_prover_original_output ();
