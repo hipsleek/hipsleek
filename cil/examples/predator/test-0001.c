@@ -1,5 +1,5 @@
 #include "sl.h"
-#include <stdlib.h>
+//#include <stdlib.h>
 
 int main() {
     struct item {
@@ -20,4 +20,6 @@ int main() {
     return 0;
 }
 
+/*
 
+*/

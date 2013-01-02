@@ -330,6 +330,18 @@ RS_mem malloc(int n)
  requires n>0
  ensures  res=null or res::RS_mem<n>;
 
+RS_mem malloc(int n)
+ requires n>0
+ ensures  res=null or res::RS_mem<n>;
+
+item cast_to_ptr(RS_mem p)
+ case {
+  p=null -> ensures res=null;
+  p!=null -> 
+    requires p::RS_mem<a> & a>=size(item)
+    ensures res::item<_>
+ }
+
 item cast_to_ptr(RS_mem p)
  case {
   p=null -> ensures res=null;

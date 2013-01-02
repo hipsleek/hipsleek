@@ -60,7 +60,9 @@ let parse_file_full file_name (primitive: bool) =
     let _ = Gen.Profiling.push_time "Parsing" in
     let prog = (
       if parser_to_use = "cil" then
-        Cilparser.parse_hip file_name
+        let cil_prog = Cilparser.parse_hip file_name in
+        let _ = print_endline ("cil_prog: " ^ (Iprinter.string_of_program cil_prog)) in
+        cil_prog
       else
         Parser.parse_hip file_name (Stream.of_channel org_in_chnl)
     ) in
@@ -236,6 +238,7 @@ let process_source_full source =
 		let prog=Iast.append_iprims_list_head ([prog]@prims_incls) in
     let intermediate_prog = Globalvars.trans_global_to_param prog in
     (* let _ = print_endline ("process_source_full: before pre_process_of_iprog") in *)
+    let _ = print_endline ("== gvdecls 2 length = " ^ (string_of_int (List.length intermediate_prog.Iast.prog_global_var_decls))) in
     let intermediate_prog=IastUtil.pre_process_of_iprog iprims intermediate_prog in
 		(* let _= print_string ("\n*After pre process iprog* "(*^Iprinter.string_of_program intermediate_prog*)) in *)
     let intermediate_prog = Iast.label_procs_prog intermediate_prog true in

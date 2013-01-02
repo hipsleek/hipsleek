@@ -3590,7 +3590,7 @@ and doExp (asconst: bool)   (* This expression is used as a constant *)
         finishExp empty (AlignOfE(e'', p)) !typeOfSizeOf
 
     | A.CAST ((specs, dt), ie, l) ->
-        let p = convLoc l in
+        (* let p = convLoc l in *)
         let s', dt', ie' = preprocessCast specs dt ie in
         (* We know now that we can do s' and dt' many times *)
         let typ = doOnlyType s' dt' in
