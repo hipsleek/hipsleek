@@ -278,13 +278,8 @@ let translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp 
   | Cil.CStr s -> report_error_msg "TRUNG TODO: Handle Cil.CStr later!"
   | Cil.CWStr _ -> report_error_msg "TRUNG TODO: Handle Cil.CWStr later!"
   | Cil.CChr _ -> report_error_msg "TRUNG TODO: Handle Cil.CChr later!"
-  | Cil.CReal (f, fkind, _) -> (
-      match fkind with
-      | Cil.FFloat -> Iast.FloatLit {Iast.exp_float_lit_val = f;
-                                     Iast.exp_float_lit_pos = pos}
-      | Cil.FDouble -> report_error_msg "TRUNG TODO: Handle Cil.FDouble later!"
-      | Cil.FLongDouble -> report_error_msg "TRUNG TODO: Handle Cil.FLongDouble later!"
-    )
+  | Cil.CReal (f, _, _) -> Iast.FloatLit {Iast.exp_float_lit_val = f;
+                                          Iast.exp_float_lit_pos = pos}
   | Cil.CEnum _ -> report_error_msg "TRUNG TODO: Handle Cil.CEnum later!"
 
 
@@ -473,13 +468,14 @@ and translate_exp (e: Cil.exp) : Iast.exp =
                               Iast.exp_cond_pos = pos} in
       newexp
   | Cil.CastE (ty, exp, l) ->
-      let t = translate_typ ty in
-      let e = translate_exp exp in
-      let pos = translate_location l in
-      let newexp = Iast.Cast {Iast.exp_cast_target_type = t;
-                              Iast.exp_cast_body = e;
-                              Iast.exp_cast_pos = pos} in
-      newexp
+      translate_exp exp
+      (* let t = translate_typ ty in                            *)
+      (* let e = translate_exp exp in                           *)
+      (* let pos = translate_location l in                      *)
+      (* let newexp = Iast.Cast {Iast.exp_cast_target_type = t; *)
+      (*                         Iast.exp_cast_body = e;        *)
+      (*                         Iast.exp_cast_pos = pos} in    *)
+      (* newexp                                                 *)
   | Cil.AddrOf (lval, l) ->
       (* create a new Iast.data_decl that has 1 inline field is lval *)
       let newexp = (
