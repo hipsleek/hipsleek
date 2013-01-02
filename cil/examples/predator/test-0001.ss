@@ -2,7 +2,7 @@
 data item {
        item next;
     }
-
+/*
 pred_prim RS_mem<i:int>
  inv i>0 & self!=null;
 
@@ -17,7 +17,7 @@ item cast_to_ptr(RS_mem p)
     requires p::RS_mem<a> //& a>=size(item)
     ensures res::item<_>;
  }
-
+*/
 
 
 // #include "sl.h"
@@ -35,7 +35,7 @@ int main()
       ptr = cast_to_ptr(malloc(4));//new item
       if (ptr == null)
           // OOM
-        return -1;
+        //return -1;
 
       ptr.next = data_;
       //   ___sl_plot("test-0001-snapshot");

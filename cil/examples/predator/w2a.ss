@@ -18,7 +18,7 @@ void loop(
        ref int i, 
        int N)
   requires i<=N
-  ensures res::rExp<ot> & i'=N & ot=i' & flow rExp;
+  ensures eres::rExp<ot> & i'=N & ot=i' & flow rExp;
  {
     if (i>=N) {
         raise new rExp(i);
@@ -28,3 +28,12 @@ void loop(
 }
 
 
+/*
+todo:
+- modify astsimp.while_return
+  - add rExp
+  - raise exp
+-modify trans_exp:WHILE: specs
+- modify body of foo
+-
+ */

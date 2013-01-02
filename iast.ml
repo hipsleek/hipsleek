@@ -472,6 +472,7 @@ let print_struc_formula = ref (fun (x:F.struc_formula) -> "Uninitialised printer
 let print_h_formula = ref (fun (x:F.h_formula) -> "Uninitialised printer")
 let print_view_decl = ref (fun (x:view_decl) -> "Uninitialised printer")
 let print_data_decl = ref (fun (x:data_decl) -> "Uninitialised printer")
+let print_exp = ref (fun (x:exp) -> "Uninitialised printer")
 
 
 let find_empty_static_specs iprog = 
@@ -2061,4 +2062,25 @@ let rec get_breaks e =
 				Some (List.concat (lb::lbc))
 		| _ -> None in
 	fold_exp e f (List.concat) [] 
-	
+
+let exists_return_x e0=
+  let rec helper e=
+    match e with
+      | Block { exp_block_body = bb} -> helper bb
+      | Cond {exp_cond_then_arm = tb; exp_cond_else_arm=eb} -> (helper tb) || (helper eb)
+      | Raise {exp_raise_type = et} -> begin
+          match et with
+            | Const_flow f -> if String.compare f loop_ret_flow =0 then true else false
+            | _ -> false
+      end
+      | Return _ -> true
+      | Seq {exp_seq_exp1 = e1; exp_seq_exp2 = e2} -> (helper e2) || (helper e1)
+      | While {exp_while_body = wb} -> helper wb
+      | _ -> false
+  in
+  helper e0
+
+let exists_return e0=
+  let pr1 = !print_exp in
+  Debug.no_1 "exists_return" pr1 string_of_bool
+      (fun _ -> exists_return_x e0) e0

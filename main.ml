@@ -191,6 +191,7 @@ let process_source_full source =
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source false in
+  let _ = Debug.ninfo_pprint ("       iprog:" ^ (Iprinter.string_of_program prog)) no_pos in
   let _ = Gen.Profiling.push_time "Process compare file" in
   let prog = if(!Globals.cp_test || !Globals.cp_prefile) then (
     process_cp_file prog 

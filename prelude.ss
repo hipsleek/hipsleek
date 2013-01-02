@@ -321,7 +321,22 @@ int[] aalloc___(int dim)
 	requires true 
 	ensures dom(res,0,dim-1);
 
+                                  ///////////////
+                                  /*
+pred_prim RS_mem<i:int>
+ inv i>0 & self!=null;
 
+RS_mem malloc(int n)
+ requires n>0
+ ensures  res=null or res::RS_mem<n>;
 
+item cast_to_ptr(RS_mem p)
+ case {
+  p=null -> ensures res=null;
+  p!=null -> 
+    requires p::RS_mem<a> //& a>=size(item)
+    ensures res::item<_>;
+ }
+                                  */
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////

@@ -760,6 +760,15 @@ and while_return e ret_type = I.map_exp e (fun c-> match c with
 		| I.While b -> 
 			let needs_ret = needs_ret b.I.exp_while_body in 
 			if needs_ret then
+              (*new class extend __Exc*)
+              let new_exc = {I.data_name = "rExp" ;
+                             I.data_fields =[];
+                             I.data_parent_name = raisable_class;
+                             I.data_invs = [];
+                             I.data_is_template = false;
+                             I.data_methods = []
+                            }
+              in
 				let new_body = I.map_exp b.I.exp_while_body (fun c -> match c with | I.Return b-> 
 					Some (I.mkRaise (I.Const_flow loop_ret_flow) true b.I.exp_return_val false b.I.exp_return_path_id b.I.exp_return_pos) | _ -> None) in
 				let b = {b with I.exp_while_body = new_body} in
@@ -3049,6 +3058,10 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             (* let w_name = fn3 ^ ("_" ^ (Gen.replace_path_sep_with_uscore *)
             (*     (Gen.replace_dot_with_uscore (string_of_loc pos)))) in  *)
             let w_name = fn3 ^ "_while_" ^ (string_of_pos_plain pos.start_pos) in
+            (*if exists return inside body:w2a.ss*)
+            (*check exists return inside loop body*)
+            let exist_return_inside = if proc.I.proc_return <> Void && I.exists_return body then true else false in
+            let _ = Debug.info_pprint ("       exist_return_inside: " ^ (string_of_bool exist_return_inside)) no_pos in
 	        let prepost = match wrap with 
 	          | None -> prepost
 	          | Some _ -> IF.add_post_for_flow (I.get_breaks body) prepost in
@@ -3130,7 +3143,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_raise_path_id = pi;
             I.exp_raise_pos = pos })->
             (*let _ = print_string ("\n trt : "^(string_of_bool ff)^"\n") in*)
-          let _ = Debug.info_pprint ("       ASTSIMP.trans_exp Raise:") no_pos in
+          (* let _ = Debug.info_pprint ("       ASTSIMP.trans_exp Raise:") no_pos in *)
             let r = match oe with
               | Some oe ->  
                     if ff then 
