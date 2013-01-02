@@ -3324,7 +3324,7 @@ and default_value (t :typ) pos : C.exp =
 	      C.BConst { C.exp_bconst_val = false; C.exp_bconst_pos = pos; }
     | Float ->
 	      C.FConst { C.exp_fconst_val = 0.0; C.exp_fconst_pos = pos; }
-    | Symbol _ ->
+    | Symbol ->
         failwith "default_value: Symbol in variable declaration should have been rejected"
     | (TVar _) ->
 	      failwith
@@ -4804,7 +4804,7 @@ and gather_type_info_exp_x a0 stab et =
   | IP.Subtract (a1, a2, pos)
   | IP.Max (a1, a2, pos)
   | IP.Min (a1, a2, pos)
-    | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) | IP.Min (a1, a2, pos) 
+  | IP.Mult (a1, a2, pos) 
   | IP.Div (a1, a2, pos)
   | IP.Pow (a1, a2, pos) ->
       let _ = must_unify_expect_test et NUM pos in (* UNK, Int, Float, NUm, Tvar *)
