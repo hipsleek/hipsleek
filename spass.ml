@@ -44,6 +44,7 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   | Cpure.IConst _    -> illegal_format "SPASS don't support IConst expresion"
   | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
   | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
+  | Cpure.SConst _    -> illegal_format "SPASS don't support SConst expresion"
   | Cpure.Tsconst _   -> illegal_format "SPASS don't support Tsconst expresion"
   | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
   | Cpure.Subtract _  -> illegal_format "SPASS don't support Substract expresion"
@@ -51,7 +52,11 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   | Cpure.Div _       -> illegal_format "SPASS don't support Div expresion"
   | Cpure.Max _       -> illegal_format "SPASS don't support Max expresion"
   | Cpure.Min _       -> illegal_format "SPASS don't support Min expresion"
-    (* bag expressions *)
+  | Cpure.Abs _       -> illegal_format "SPASS don't support Abs expresion"
+  | Cpure.Sqrt _      -> illegal_format "SPASS don't support Sqrt expresion"
+  | Cpure.Pow _       -> illegal_format "SPASS don't support Pow expresion"
+  | Cpure.Sequence _  -> illegal_format "SPASS don't support Sequence expresion"
+  (* bag expressions *)
   | Cpure.Bag _
   | Cpure.BagUnion _
   | Cpure.BagIntersect _
@@ -77,6 +82,7 @@ and spass_dfg_of_b_formula (bf : Cpure.b_formula) : (string * string list * stri
 (* return p_formula in string * list of functions in string * list of predicates in string *)
 and spass_dfg_of_p_formula (pf : Cpure.p_formula) : (string * string list * string list) =
   match pf with
+  | XPure _         -> illegal_format "SPASS don't support XPure p_formula"
   | LexVar _        -> illegal_format "SPASS don't support LexVar p_formula"
   | BConst (c, _)   -> if c then ("true", [], []) else ("false", [], [])
   | BVar (sv, _)    -> (
@@ -180,6 +186,7 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   | Cpure.IConst _    -> illegal_format "SPASS don't support IConst expresion"
   | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
   | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
+  | Cpure.SConst _    -> illegal_format "SPASS don't support SConst expresion"
   | Cpure.Tsconst _   -> illegal_format "SPASS don't support Tsconst expresion"
   | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
   | Cpure.Subtract _  -> illegal_format "SPASS don't support Substract expresion"
@@ -187,6 +194,10 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   | Cpure.Div _       -> illegal_format "SPASS don't support Div expresion"
   | Cpure.Max _       -> illegal_format "SPASS don't support Max expresion"
   | Cpure.Min _       -> illegal_format "SPASS don't support Min expresion"
+  | Cpure.Abs _       -> illegal_format "SPASS don't support Abs expresion"
+  | Cpure.Sqrt _      -> illegal_format "SPASS don't support Sqrt expresion"
+  | Cpure.Pow _       -> illegal_format "SPASS don't support Pow expresion"
+  | Cpure.Sequence _  -> illegal_format "SPASS don't support Sequence expresion"
     (* bag expressions *)
   | Cpure.Bag _
   | Cpure.BagUnion _
@@ -211,6 +222,7 @@ and spass_tptp_of_b_formula (bf : Cpure.b_formula) : string =
 
 and spass_tptp_of_p_formula (pf : Cpure.p_formula) : string =
   match pf with
+  | XPure _         -> illegal_format "SPASS don't support XPure p_formula"
   | LexVar _        -> illegal_format "SPASS don't support LexVar p_formula"
   | BConst (c, _)   -> if c then "$true" else "$false"
   | BVar (sv, _)    -> spass_tptp_of_spec_var sv
@@ -259,6 +271,7 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.IConst _       -> false
   | Cpure.FConst _       -> false
   | Cpure.AConst _       -> false
+  | Cpure.SConst _       -> false
   | Cpure.Tsconst _      -> false
   (* arithmetic expressions *)
   | Cpure.Add _
@@ -266,7 +279,11 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.Mult _
   | Cpure.Div _
   | Cpure.Max _
-  | Cpure.Min _          -> false
+  | Cpure.Min _
+  | Cpure.Abs _
+  | Cpure.Sqrt _
+  | Cpure.Pow _ 
+  | Cpure.Sequence _     -> false
   (* bag expressions *)
   | Cpure.Bag _
   | Cpure.BagUnion _
@@ -287,6 +304,7 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
 
 and can_spass_handle_p_formula (pf : Cpure.p_formula) : bool =
   match pf with
+  | XPure _              -> false
   | LexVar _             -> false
   | BConst _             -> true
   | BVar _               -> true
