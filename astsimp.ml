@@ -52,6 +52,8 @@ type trans_exp_type =
   and spec_var_kind = typ
   (* | Known of typ | Unknown *)
 
+let pr_v_decls l = pr_list (fun v -> v.I.view_name) l
+
 (* list of scc views that are in mutual-recursion *)
 let view_scc : (ident list) list ref = ref []
 
@@ -901,6 +903,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	      (* let _ =  print_endline " after case normalize" in *)
           (* let _ = I.find_empty_static_specs prog in *)
 	      let tmp_views = order_views prog.I.prog_view_decls in
+          Debug.info_hprint (add_str "trans_prog(views)" pr_v_decls) tmp_views no_pos;
 	      let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
 	      (* let _ = print_string "trans_prog :: going to trans_view \n" in *)
 	      let cviews = List.map (trans_view prog) tmp_views in
@@ -4021,7 +4024,7 @@ and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) 
   cf
 
 and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_table) =
-  let pr1 prog = "prog" in
+  let pr1 prog = (add_str "view_decls" pr_v_decls) prog.I.prog_view_decls in
   Debug.no_3 "linearize_formula" pr1 Iprinter.string_of_formula string_of_stab Cprinter.string_of_formula linearize_formula_x prog f0 stab
 
 and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_table) =
@@ -5226,8 +5229,8 @@ and gather_type_info_b_formula_x prog b0 stab =
               | _ -> None 
         in
         let arg_ls = f r in
-        Debug.info_hprint (add_str "RelForm" pr_id) r pos;
-        Debug.info_hprint (add_str "RelForm args (from Stab)" 
+        Debug.tinfo_hprint (add_str "RelForm" pr_id) r pos;
+        Debug.tinfo_hprint (add_str "RelForm args (from Stab)" 
             (pr_option (pr_list string_of_typ))) arg_ls pos;
 	    let args_ctypes =
           match arg_ls with
@@ -5846,29 +5849,30 @@ and case_normalize_pure_formula hp b f = f
 
 (*moved the liniarization to case_normalize_renamed_formula*)
 and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_expl (f:IF.formula): IF.formula* ((ident*primed)list) * ((ident*primed)list) =
+  let pr1 prog = (add_str "view_decls" pr_v_decls) prog.I.prog_view_decls in
   let pr = (pr_list (fun (i,p) -> i)) in
   let pr_out (f,h,expl) = 
     ("\n ### f = " ^ (Iprinter.string_of_formula f)
     ^"\n ### h = " ^ (pr h)
     ^"\n ### expl = " ^ (pr expl)) 
   in 
-  Debug.no_3 "case_normalize_renamed_formula" 
-      pr pr Iprinter.string_of_formula pr_out
-      (fun _ _ _ -> case_normalize_renamed_formula_x prog avail_vars posib_expl f) avail_vars posib_expl f
+  Debug.no_4 "case_normalize_renamed_formula" 
+      pr1 pr pr Iprinter.string_of_formula pr_out
+      (fun _ _ _ _ -> case_normalize_renamed_formula_x prog avail_vars posib_expl f) prog avail_vars posib_expl f
 
 (*moved the liniarization to case_normalize_renamed_formula*)
 and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib_expl (f:IF.formula):
       IF.formula* ((ident*primed)list) * ((ident*primed)list) = 
   (*existential wrapping and other magic tricks, avail_vars -> program variables, function arguments...*)
   (*returns the new formula, used variables and vars to be explicitly instantiated*)
-  let rec match_exp (used_names : (ident*primed) list) (hargs : (IP.exp * Label_only.spec_label) list) pos :
+  let rec match_exp (used_names : (ident*primed) list) (hargs : ((IP.exp * bool) * Label_only.spec_label) list) pos :
         ((ident*primed) list) * ((ident*primed) list) * ((ident*primed) list) * IP.formula = 
     match hargs with
-      | (e, label) :: rest ->
+      | ((e,rel_flag), label) :: rest ->
             let new_used_names, e_hvars, e_evars, e_link = match e with
               | IP.Var (v, pos_e) ->
                     (try
-                      if (List.mem v avail_vars) || (List.mem v used_names) then(*existential wrapping and liniarization*)
+                      if not(rel_flag) && ((List.mem v avail_vars) || (List.mem v used_names)) then(*existential wrapping and liniarization*)
                         try
                             let _ = I.look_up_rel_def_raw prog.I.prog_rel_decls (fst v) in
                               ((v :: used_names), [ v ], [],IP.mkTrue pos_e)
@@ -5940,11 +5944,16 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
       | IF.HeapNode2 b -> report_error b.IF.h_formula_heap2_pos "malfunction: heap node 2 still present"
       | IF.HeapNode b ->
 	        let pos = b.IF.h_formula_heap_pos in
-	        let labels = try
-	          let vdef = I.look_up_view_def_raw 11 prog.I.prog_view_decls b.IF.h_formula_heap_name in
-	          vdef.I.view_labels
+            let vname = b.IF.h_formula_heap_name in
+            let v_decls = prog.I.prog_view_decls in
+	        let labels,tp_vars = try
+	          let vdef = I.look_up_view_def_raw 11 v_decls vname in
+	          (vdef.I.view_labels,vdef.I.view_typed_vars)
 	        with
-	          | Not_found ->List.map (fun _ -> Label_only.empty_spec_label) b.IF.h_formula_heap_arguments in	
+	          | Not_found ->
+                    (* Debug.info_pprint ("view_decls "^(string_of_int (List.length v_decls))) pos; *)
+                    (* Debug.info_pprint ("cannot find view "^vname) pos; *)
+                    (List.map (fun _ -> Label_only.empty_spec_label) b.IF.h_formula_heap_arguments,[]) in
 	        let _ = if (List.length b.IF.h_formula_heap_arguments) != (List.length labels) then
 	          report_error pos ("predicate "^b.IF.h_formula_heap_name^" does not have the correct number of arguments")
 	        in
@@ -5953,7 +5962,17 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
                 | None -> [],[]
                 | Some f -> [Label_only.empty_spec_label], [f]
             in
-	        let new_used_names, hvars, evars, link_f = match_exp used_names (List.combine (perm_var@b.IF.h_formula_heap_arguments) (perm_labels@labels)) pos in
+            let args = b.IF.h_formula_heap_arguments in
+            Debug.tinfo_hprint (add_str "ty_vars" (pr_list (pr_pair string_of_typ pr_id))) tp_vars pos;
+            Debug.tinfo_hprint (add_str "heap args" (pr_list (Iprinter.string_of_formula_exp))) args pos;
+            (* add a flag to indicate if it is a relational parameter *)
+            let new_args = 
+              if tp_vars==[] then List.map (fun e -> (e,false)) args
+              else List.combine args (List.map (fun (a,_) -> is_RelT a) tp_vars)
+            in
+            let perm_var = List.map (fun e -> (e,false)) perm_var in
+            let heap_args = (List.combine (perm_var@new_args) (perm_labels@labels)) in
+	        let new_used_names, hvars, evars, link_f = match_exp used_names heap_args pos in
 	        let hvars = List.map (fun c-> Ipure.Var (c,pos)) hvars in
             (*split perm if any*)
             let perm_var,hvars = match b.IF.h_formula_heap_perm with
@@ -6016,7 +6035,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
       let idents, _ = List.split vs in
       (string_of_ident_list idents) in
     Debug.no_2 "linearize_heap" pr0 pr1 pr2 (fun _ _ -> linearize_heap used_names f) used_names f  in
-  
+
   let rec normalize_base heap cp fl a evs pos : IF.formula* ((ident*primed)list)* ((ident*primed)list) =
     let heap = Immutable.normalize_h_formula heap false in 
     let nu, h_evars, new_h, link_f = linearize_heap [] heap in
@@ -6729,6 +6748,7 @@ and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl =
       
 and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   let tmp_views = (* order_views *) prog.I.prog_view_decls in
+  Debug.info_hprint (add_str "case_normalize_prog(views)" pr_v_decls) tmp_views no_pos;
   (* let _ = print_string ("case_normalize_program: view_b: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in *)
   let tmp_views = List.map (fun c-> 
       let h = (self,Unprimed)::(eres_name,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in

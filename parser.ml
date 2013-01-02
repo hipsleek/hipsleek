@@ -754,6 +754,7 @@ view_header:
   [[ `IDENTIFIER vn; `LT; l= opt_ann_cid_list; `GT ->
       let cids, anns = List.split l in
       let cids_t, br_labels = List.split cids in
+      (* DD.info_hprint (add_str "parser-view_header(cids_t)" (pr_list (pr_pair string_of_typ pr_id))) cids_t no_pos; *)
       let _, cids = List.split cids_t in
       (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
       (*   report_error (get_pos_camlp4 _loc 1) ("variables in view header are not allowed to be primed") *)
@@ -823,6 +824,7 @@ cid_typ:
   [[ `IDENTIFIER id ; t=OPT c_typ ->
       let ut = un_option t UNK in
       let _ =
+        (* WN : code below uses side-effects and may also result in relational name clashes *)
         if is_RelT ut then
           (* let _ = print_endline ("ll: " ^ id) in *)
           let _ = rel_names # push id in
@@ -836,7 +838,7 @@ cid_typ:
         (ut,id)
    ]];
 
-ann_cid:[[ ob=opt_branch; c=cid_typ; al=opt_ann_list ->((c, ob), al)]];
+ann_cid:[[ ob=opt_branch; c = cid_typ; al=opt_ann_list ->((c, ob), al)]];
 
 opt_ann_list: [[t=LIST0 ann -> t]];
 

@@ -2641,7 +2641,8 @@ and b_apply_subs_x sst bf =
     | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-    | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (* An Hoa *)
+    | RelForm (r, args, pos) -> RelForm (subs_one sst r, e_apply_subs_list sst args, pos) (* An Hoa *)
+    (* | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (\* An Hoa *\) *)
     | LexVar t_info -> 
           LexVar { t_info with
 	      lex_exp = e_apply_subs_list sst t_info.lex_exp;
