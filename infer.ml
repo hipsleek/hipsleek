@@ -609,8 +609,8 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
                     else 
                       let new_estate = CF.false_es_with_orig_ante estate estate.es_formula pos in
                       let rel_ass = [RelAssume vs_rel,f,neg_lhs] in
-                      let _ = infer_rel_stk # push_list rel_ass in
-                      let _ = Log.current_infer_rel_stk # push_list rel_ass in
+(*                      let _ = infer_rel_stk # push_list rel_ass in*)
+(*                      let _ = Log.current_infer_rel_stk # push_list rel_ass in*)
                       (Some (new_estate,CP.mkTrue no_pos), rel_ass )
                 end
             | None -> (None,[])

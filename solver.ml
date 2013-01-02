@@ -2095,6 +2095,11 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               let new_ctx = Ctx new_es in
 	          (*let new_ctx = set_es_evars ctx vs in*)
               let rs0, fold_prf = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None pos None in
+              let rels = CF.get_inferred_rel_lct rs0 in
+              let rel_ass = List.filter (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
+              let _ = Infer.infer_rel_stk # push_list rel_ass in
+              let _ = Log.current_infer_rel_stk # push_list rel_ass in
+
               (* let rs0 = remove_impl_evars rs0 impl_vars in *)
               (* let _ = print_string ("\nbefore fold: " ^ (Cprinter.string_of_context new_ctx)) in *)
               (* let _ = print_string ("\nview: " ^ (Cprinter.string_of_h_formula view)) in *)

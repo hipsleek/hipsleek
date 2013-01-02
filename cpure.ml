@@ -8778,3 +8778,7 @@ let is_term f =
   match f with
     | BForm ((bf,_),_) -> is_term bf
     | _ -> false
+
+let is_rel_assume rt = match rt with
+  | RelAssume _ -> true
+  | _ -> false
