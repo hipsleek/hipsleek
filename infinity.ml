@@ -179,6 +179,39 @@ let check_neg_inf (exp1: CP.exp) (exp2: CP.exp) (exp3: CP.exp)
     	     	| _ -> false,exp2,exp3)
     | _ -> false,exp2,exp3
 
+let contains_inf_or_inf_var (f:CP.formula) : bool = 
+  let f_f f = None in
+  let f_bf f = let bf,_ = f in
+    match bf with
+    | CP.XPure _
+    | CP.LexVar _
+    | CP.BConst _
+    | CP.BVar _ -> Some(false)
+    | _ -> None in
+  let f_e f = 
+    match f with
+      | InfConst _ ->  Some(true) 
+      | Var _ -> if is_inf f then Some(true) else Some(false)
+      | Null _ | Var _ | IConst _ | FConst _ | AConst _ | Tsconst _ -> Some(false)
+      | _ -> None
+  in fold_formula f (f_f,f_bf,f_e) (List.exists (fun c -> c))
+
+let contains_inf (f:CP.formula) : bool = 
+  let f_f f = None in
+  let f_bf f = let bf,_ = f in
+    match bf with
+    | CP.XPure _
+    | CP.LexVar _
+    | CP.BConst _
+    | CP.BVar _ -> Some(false)
+    | _ -> None in
+  let f_e f = 
+    match f with
+      | InfConst _ -> Some(true)
+      | Null _ | Var _ | IConst _ | FConst _ | AConst _ | Tsconst _ -> Some(false)
+      | _ -> None
+  in fold_formula f (f_f,f_bf,f_e) (List.exists (fun c -> c))
+
 (*
 Normalize b_formula containing \inf 
 *)
@@ -295,14 +328,16 @@ Main func normalization starts here
 *)
 let rec normalize_inf_formula (pf: CP.formula) : CP.formula = 
   let _ = DD.vv_trace("in normalize_inf_formula: "^ (string_of_pure_formula pf)) in
+  (*if not (contains_inf_or_inf_var pf) then pf else*)
   (match pf with 
     | CP.BForm (b,fl) -> 
           let b_norm = normalize_b_formula b in CP.BForm(b_norm,fl) 
     | CP.And (pf1,pf2,pos) -> 
         let _ = Gen.Profiling.push_time "INF-Normalize_And" in
+        (*let _ = print_string("pf1: "^(string_of_pure_formula pf1)^"\n") in*)
           let pf1_norm = normalize_inf_formula pf1 in
           let pf2_norm = normalize_inf_formula pf2 in
-          let _ = Gen.Profiling.pop_time "INF-Normalize_And" in
+        let _ = Gen.Profiling.pop_time "INF-Normalize_And" in
           CP.And(pf1_norm,pf2_norm,pos) 
     | CP.AndList pflst -> 
           let pflst_norm = List.map 
@@ -371,21 +406,6 @@ let rec contains_inf_eq (pf:CP.formula) : bool  =
     | CP.Forall (qid, qf,fl,pos) 
     | CP.Exists (qid, qf,fl,pos) -> contains_inf_eq qf
 
-let contains_inf (f:CP.formula) : bool = 
-  let f_f f = None in
-  let f_bf f = let bf,_ = f in
-    match bf with
-    | CP.XPure _
-    | CP.LexVar _
-    | CP.BConst _
-    | CP.BVar _ -> Some(false)
-    | _ -> None in
-  let f_e f = 
-    match f with
-      | InfConst _ -> Some(true)
-      | Null _ | Var _ | IConst _ | FConst _ | AConst _ | Tsconst _ -> Some(false)
-      | _ -> None
-  in fold_formula f (f_f,f_bf,f_e) (List.exists (fun c -> c))
 
 module EM = Gen.EqMap(CP.SV)
 

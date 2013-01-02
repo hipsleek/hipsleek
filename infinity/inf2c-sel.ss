@@ -46,7 +46,7 @@ sll<n, mi,mx> ==
 
 int find_min(node x)
      requires x::bnd1<n, mi,mx> & n > 0
-     ensures x::bnd1<n, mi,mx> & res = mi & -inf<res<\inf;
+     ensures x::bnd1<n, mi,mx> & res = mi & -\inf<res<\inf;
 {
 	int tmp; 
 
@@ -69,7 +69,7 @@ void delete_min(ref node x, int a)
     n!=1 -> ensures x'::bnd1<n-1,mi1,mx> & mi<=mi1;
     }  
      //& mi<=mi1  
-     //& (n>1 & mx1=mx & mi<=mi1 | n=1 & mx1=(-\inf) & mi1=\inf);
+     //& (n>1 & mx1=mx & mi<=mi1 | n=1 & mx1=-\inf & mi1=\inf);
 /*
   requires x::bnd1<n, mi,mx> & n >= 1 & a = mi
   case {

@@ -289,9 +289,7 @@ let check_formula f timeout =
         output_string (!process.outchannel) new_f;
         flush (!process.outchannel);
         let result = ref true in
-        let _ = Gen.Profiling.push_time "check_formula read_channel" in
         let str = read_last_line_from_in_channel (!process.inchannel) in
-        let _ = Gen.Profiling.pop_time "check_formula read_channel" in
         (* An Hoa : set original output *)
         let _ = !set_prover_original_output str in
         let n = String.length str in
@@ -315,7 +313,7 @@ let check_formula f timeout =
   end
 
 let check_formula f timeout = 
-Gen.Profiling.do_2 "check_formula" check_formula f timeout 
+Gen.Profiling.do_2 "Omega:check_formula" check_formula f timeout 
 
 let check_formula i f timeout =
   Debug.no_2 "Omega:check_formula" (fun x->x) string_of_float string_of_bool
