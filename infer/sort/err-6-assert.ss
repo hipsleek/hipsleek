@@ -15,6 +15,7 @@ void bindex(node x, node y)
   {
     int r=3;
     assert r'=3;
+    //assume false;
     assert rr'=1;
     raise new e1();
     dprint;

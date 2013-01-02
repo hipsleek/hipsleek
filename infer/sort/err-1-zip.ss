@@ -12,10 +12,10 @@ inv true;
 llN<n> == self=null & n=0
   or self::node<v,p> * p::llN<n-1>
 inv n>=0;
-
-
+// why Omega gave timeout when zip.ss (with 2 binds)
+// did not have problem & z3 did not have a problem
 node zip(node x, node y)
-  requires x::llN<a> * y::llN<b> & a=b
+  requires x::llN<a> * y::llN<b> & a<=b
   ensures  res::llN<a> ;
 {
   if (x==null) return null;
