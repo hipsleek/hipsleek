@@ -10,13 +10,13 @@ graph<v,M> == self = null & M = {}
 	or self::node<0@M,l@L,r@L> & (l::graph<_,Ml> & r::graph<_,Mr>) & M = union(Ml,Mr,{self}) & v=1
 	or self::node<1@I,l@L,r@L> & (l::graph<2,Ml> & r::graph<2,Mr>) & M = union(Ml,Mr,{self}) & v=2
 	inv true
-	mem M->(node<@M,@L,@L> & 0<=v<=1 ; node<@I,@L,@L> & 1<=v<=2);
+	mem M->(node<@M,@L,@L> & 0<=v<=1 ; node<@I,@L,@L> & 1<=v<=2 ; node<@M,@M,@M> & v < 0; node<@M,@M,@M> & v > 2);
 	
 graph2<v,M> == self = null & M = {}
 	or self::node<0,l@L,r@L> * l::graph2<_,Ml> & r::graph2<_,Mr> & M = union(Ml,Mr,{self}) & v = 0
 	or self::node<1@I,l@L,r@L> * l::graph2<1,Ml> & r::graph2<1,Mr> & M = union(Ml,Mr,{self}) & v = 1
 	inv true
-	mem M->(node<@M,@L,@L> & v = 0 ; node<@I,@L,@L> & v = 1);	
+	mem M->(node<@M,@L,@L> & v = 0 ; node<@I,@L,@L> & v != 0);	
 
 void mark(ref node x)
   requires x::graph<0,M>

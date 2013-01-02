@@ -394,7 +394,6 @@ let check_mem_formula (vdf : I.view_decl) (ddcl : I.data_decl list) =
 				Err.error_text = "[mem.ml] : Memory Spec of "^ vdf.I.view_name ^" contains unrecognized expressions";})
 	| None -> ()
 
-
 let add_mem_invariant (inv : IP.formula) (vmem : IF.mem_formula option) : IP.formula =
 	match vmem with
 	| Some a -> let new_var = ("Anon"^(fresh_trailer()),Unprimed) in 

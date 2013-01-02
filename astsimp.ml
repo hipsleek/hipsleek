@@ -8079,6 +8079,11 @@ and compute_mem_spec (prog : C.prog_decl) (lhs : CF.formula) (rhs : CF.formula) 
 	else Err.report_error {Err.error_loc = pos;
 	Err.error_text = "[astsimp.ml] : view formula does not entail supplied Memory Spec";}
 
+and check_mem_formula_guards_disjoint (fl: CP.formula list) : bool = 
+    let sat_subno = ref 0 in
+    let f = CP.join_disjunctions fl in
+    Tpdispatcher.is_sat_sub_no (Cpure.Not (f,None,no_pos)) sat_subno
+
 and validate_mem_spec (prog : C.prog_decl) (vdef: C.view_decl) = 
 	match vdef.C.view_mem with
 
@@ -8095,7 +8100,10 @@ and validate_mem_spec (prog : C.prog_decl) (vdef: C.view_decl) =
 			(CP.split_conjunctions (MCP.pure_of_mix vdef.C.view_user_inv))) in
 	            Solver.simple_imply c relevant_slice) a.CF.mem_formula_guards
 	            in
-	            if flag then ()
+	            if flag then if not (check_mem_formula_guards_disjoint a.CF.mem_formula_guards) then () 
+              else Err.report_error {
+			Err.error_loc = pos;
+			Err.error_text = "[mem.ml] : Memory Guards of "^ vdef.C.view_name ^" are not exhaustive ";} 
 	            else 
 			Err.report_error {Err.error_loc = pos;
 			Err.error_text = "[astsimp.ml] : Mem Spec does not entail supplied invariant";}

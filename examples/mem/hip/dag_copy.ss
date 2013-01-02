@@ -14,7 +14,7 @@ icdag<v,M> ==  self = null & M = {}
 	or self::node<c@I,l@I,r@I> * c::node<_@I,_@I,_@I> * l::icdag<0,Ml> & r::icdag<0,Mr> & M = union({self},Ml,Mr) & v = 0
 	or self::node<null,l@I,r@I> * l::icdag<_,Ml> & r::icdag<_,Mr> & M = union({self},Ml,Mr) & v = 1
 	inv true
-	mem M->(node<@I,@I,@I> & v = 0 ; node<@M,@I,@I> & v = 1 );
+	mem M->(node<@I,@I,@I> & v = 0 ; node<@M,@I,@I> & v != 0 );
 
 lemma self::ddag<c,M> <-> self::icdag<0,M>;
 
