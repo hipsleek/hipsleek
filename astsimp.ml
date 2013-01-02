@@ -3358,7 +3358,7 @@ and default_value (t :typ) pos : C.exp =
 	      failwith "default_value: bag can only be used for constraints"
     | List _ ->
           failwith "default_value: list can only be used for constraints"
-    | RelT[]->
+    | RelT _->
           failwith "default_value: RelT can only be used for constraints"
     | HpT ->
           failwith "default_value: HpT can only be used for constraints"
@@ -5214,15 +5214,27 @@ and gather_type_info_b_formula_x prog b0 stab =
         let f sv = 
             try
               let info = Hashtbl.find stab sv in
-              Some info.sv_info_kind
+              begin
+              match info.sv_info_kind with
+                | RelT args -> Some args
+                | _ -> failwith ("gather_type_info_b_formula: parameter "^r^"is not a relation")
+              end
             with 
               | _ -> None 
-          in
+        in
+        let arg_ls = f r in
         Debug.info_hprint (add_str "RelForm" pr_id) r pos;
-        Debug.info_hprint (add_str "RelForm (from Stab)" 
-            (pr_option string_of_typ)) (f r) pos;
-	    let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls r in
-	    let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) rdef.I.rel_typed_vars in
+        Debug.info_hprint (add_str "RelForm args (from Stab)" 
+            (pr_option (pr_list string_of_typ))) arg_ls pos;
+	    let args_ctypes =
+          match arg_ls with
+            | Some l -> l
+            | None ->
+                  begin
+	              let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls r in
+                  List.map (fun (t,n) -> trans_type prog t pos) rdef.I.rel_typed_vars
+                  end
+        in
 	    (* let args_exp_types = List.map (fun t -> (t)) args_ctypes in *)
 	    let args_exp_types = args_ctypes in
         let _ = gather_type_info_var r stab (RelT[]) in
