@@ -19,6 +19,12 @@ infer [R] x::node<a,null> & R(a) |- x::node<v1,null> & v1>=0 .
 */
 print residue.
 
+infer [R] a=v1 & b=null & R(a) |- b=null & v1>=0 .
+print residue.
+/*
+ <1>emp&a=v1 & b=null & R(a)&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [R]: ( R(a)) -->  b=null & 0<=a]
+*/
 
 
 
