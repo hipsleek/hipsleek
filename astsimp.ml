@@ -906,7 +906,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	      let cviews = List.map (trans_view prog) tmp_views in
 	      (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
 	      let crels = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
-          let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT,rd.I.rel_name)) prog.I.prog_rel_decls in
+          let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
           let chps = List.map (trans_hp prog) prog.I.prog_hp_decls in 
           let _ = prog.I.prog_hp_ids <- List.map (fun rd -> (HpT,rd.I.hp_name)) prog.I.prog_hp_decls in
 	      let caxms = List.map (trans_axiom prog) prog.I.prog_axiom_decls in (* [4/10/2011] An Hoa *)
@@ -3358,7 +3358,7 @@ and default_value (t :typ) pos : C.exp =
 	      failwith "default_value: bag can only be used for constraints"
     | List _ ->
           failwith "default_value: list can only be used for constraints"
-    | RelT ->
+    | RelT[]->
           failwith "default_value: RelT can only be used for constraints"
     | HpT ->
           failwith "default_value: HpT can only be used for constraints"
@@ -3884,11 +3884,11 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
                       if t==UNK then
                         try
                           let _ = I.look_up_rel_def_raw prog.I.prog_rel_decls id in
-                          CP.SpecVar(RelT,id,pr)
+                          CP.SpecVar(RelT[],id,pr)
                         with _ -> 
                             try
                               let _ = I.look_up_func_def_raw prog.I.prog_func_decls id in
-                              CP.SpecVar(RelT,id,pr)
+                              CP.SpecVar(RelT[],id,pr)
                             with _ ->
                                 try
                                   let _ = I.look_up_hp_def_raw prog.I.prog_hp_decls id in
@@ -4428,7 +4428,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.ListPerm (pe1, pe2, pos)
     | IP.RelForm (r, args, pos) ->    
-          let nv = trans_var_safe (r,Unprimed) RelT stab pos in
+          let nv = trans_var_safe (r,Unprimed) (RelT[]) stab pos in
     	  (* Match types of arguments with relation signature *)
 	      let cpargs = trans_pure_exp_list args stab in
 	      CP.RelForm (nv, cpargs, pos) (* An Hoa : Translate IP.RelForm to CP.RelForm *)
@@ -4484,7 +4484,7 @@ and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
     | IP.ListReverse (e, pos) -> CP.ListReverse (trans_pure_exp e stab, pos)
     | IP.Func (id, es, pos) ->
 	      let es = List.map (fun e -> trans_pure_exp e stab) es in
-	      CP.Func (CP.SpecVar (RelT, id, Unprimed), es, pos)
+	      CP.Func (CP.SpecVar (RelT[], id, Unprimed), es, pos)
     | IP.ArrayAt ((a, p), ind, pos) ->
 	      let cpind = List.map (fun i -> trans_pure_exp i stab) ind in
 	      let dim = List.length ind in (* currently only support int type array *)
@@ -5210,12 +5210,22 @@ and gather_type_info_b_formula_x prog b0 stab =
       let _ = must_unify t1 t2 stab pos in
       ()
     | IP.RelForm (r, args, pos) ->
-      (try
+      (try 
+        let f sv = 
+            try
+              let info = Hashtbl.find stab sv in
+              Some info.sv_info_kind
+            with 
+              | _ -> None 
+          in
+        Debug.info_hprint (add_str "RelForm" pr_id) r pos;
+        Debug.info_hprint (add_str "RelForm (from Stab)" 
+            (pr_option string_of_typ)) (f r) pos;
 	    let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls r in
 	    let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) rdef.I.rel_typed_vars in
 	    (* let args_exp_types = List.map (fun t -> (t)) args_ctypes in *)
 	    let args_exp_types = args_ctypes in
-        let _ = gather_type_info_var r stab RelT in
+        let _ = gather_type_info_var r stab (RelT[]) in
         if List.length args == List.length args_exp_types then
 	      let _ = List.map2 (fun x y -> gather_type_info_exp x stab y) args args_exp_types in ()
         else

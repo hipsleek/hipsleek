@@ -467,7 +467,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
               else vars,new_formula_inf_continuation 
             in
             let _ = proc.proc_stk_of_static_specs # push new_formula_inf_continuation in
-            let (vars_rel,vars_inf) = List.partition (fun v -> CP.type_of_spec_var v == RelT ) vars in
+            let (vars_rel,vars_inf) = List.partition (fun v -> is_RelT(CP.type_of_spec_var v) ) vars in
             let (vars_hp_rel,vars_inf) = List.partition (fun v -> CP.type_of_spec_var v == HpT ) vars_inf in
             let new_vars = vars_inf @ (List.filter (fun r -> List.mem r (CF.struc_fv new_formula_inf_continuation)) vars_rel) in
             let new_vars = new_vars @ (List.filter (fun r -> List.mem r (CF.struc_fv new_formula_inf_continuation)) vars_hp_rel) in
@@ -1651,7 +1651,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (*   pre_free_vars prog.Cast.prog_logical_vars in  *)
                     (* free vars get to be substituted by fresh vars *)
                     (* removing ranking var and unknown predicate from renaming *)
-                    let pre_free_vars = List.filter (fun v -> let t = CP.type_of_spec_var v in t != RelT && t != HpT) pre_free_vars in
+                    let pre_free_vars = List.filter (fun v -> let t = CP.type_of_spec_var v in not(is_RelT t) && t != HpT) pre_free_vars in
                     (* let _ = Debug.info_pprint ("  pre_free_vars " ^ (Cprinter.string_of_spec_var_list pre_free_vars)) no_pos in *)
                     (* let _ = print_endline ("WN free vars to rename : "^(Cprinter.string_of_spec_var_list pre_free_vars)) in *)
                     let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in

@@ -9149,9 +9149,10 @@ let lax_impl_of_post f =
   let new_evs = CP.diff_svl evs impl_vs in
   (impl_vs, add_exists new_evs bf)
 
+
 let fv_wo_rel (f:formula) =
   let vs = fv f in
-  List.filter (fun v -> let t = CP.type_of_spec_var v in t!= RelT && t!=HpT) vs
+  List.filter (fun v -> let t = CP.type_of_spec_var v in not(is_RelT t) && t!=HpT) vs
 
 (* Termination: Check whether a formula contains LexVar *) 
 (* TODO: Termination: Need to add default term info

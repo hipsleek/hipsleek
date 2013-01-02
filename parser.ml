@@ -823,7 +823,7 @@ cid_typ:
   [[ `IDENTIFIER id ; t=OPT c_typ ->
       let ut = un_option t UNK in
       let _ =
-        if ut = RelT then
+        if is_RelT ut then
           let _ = rel_names # push id in
           let rd = get_tmp_rel_decl () in
           let rd = {rd with rel_name = id} in
@@ -1403,7 +1403,7 @@ non_array_type:
    | `BOOL               -> bool_type
    | `BAG                -> bag_type
    | `IDENTIFIER id      -> Named id
-   | t=rel_header_view     -> RelT]];
+   | t=rel_header_view     -> RelT[] ]];
 
 array_type:
   [[ (* t=array_type; r=rank_specifier -> Array (t, None)
@@ -1614,7 +1614,7 @@ hprogn:
       prog_view_decls = !view_defs;
       prog_func_decls = func_defs # get_stk ;
       prog_rel_decls = rel_lst ; (* An Hoa *)
-      prog_rel_ids = List.map (fun x -> (RelT,x.rel_name)) (rel_lst@g_rel_lst); (* WN *)
+      prog_rel_ids = List.map (fun x -> (RelT[],x.rel_name)) (rel_lst@g_rel_lst); (* WN *)
       prog_hp_decls = hp_lst ;
       prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
       prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
