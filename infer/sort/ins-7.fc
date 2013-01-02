@@ -1,0 +1,8 @@
+R:={[x,y] -> [res] -> []: (
+(x<=0 && y>0 && res=y) ||
+(x>0 && y>0 && res=y && (x<y || x>y)) ||
+(exists (res1,x1: x>0 && y>0 && res=x && R(x1,y,res1)))
+)};
+[T]:=bottomupgen([R], [2], SimHeur);
+#T;
+fixtestPost([R],[T]);

@@ -14,6 +14,15 @@ int zip(int x, int y)
 /*
 How come below not in pure relation assumption
 
+given true
+R(res,x,y) :- res=x & x>=0
+pre from R :- x>=0 (is not sufficient)
+==> top-down fixpoint
+
+given x>=0 & y>=0
+R(res,x,y) :- res=x & 0<=x<=y
+pre from R : 0<=x<=y (is sufficient)
+
  inferred rel: [RELASS [P]: ( P(x,y)) -->  y!=0 | 1>x]
 
 Checking procedure zip$int~int... 
