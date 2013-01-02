@@ -42,7 +42,7 @@ let is_bag_typ sv = match sv with
   | _ -> false
 
 let is_rel_typ sv = match sv with
-  | SpecVar (RelT,_,_) -> true
+  | SpecVar (RelT _,_,_) -> true
   | _ -> false
 
 let is_hprel_typ sv = match sv with
@@ -284,7 +284,7 @@ let type_of_spec_var (sv : spec_var) : typ =
 
 let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 
-let is_rel_var (sv : spec_var) : bool = (type_of_spec_var sv)==RelT
+let is_rel_var (sv : spec_var) : bool = is_RelT (type_of_spec_var sv)
 
 let is_primed (sv : spec_var) : bool = match sv with
   | SpecVar (_, _, p) -> p = Primed
@@ -1449,9 +1449,9 @@ and mkRes t = SpecVar (t, res_name, Unprimed)
 
 and mkeRes t = SpecVar (t, eres_name, Unprimed)
 
-and mkRel_sv n = SpecVar (RelT, n, Unprimed)
+and mkRel_sv n = SpecVar (RelT[], n, Unprimed)
 
-and mkXPure_sv v = SpecVar (RelT, v, Unprimed)
+and mkXPure_sv v = SpecVar (RelT[], v, Unprimed)
 
 and mkAdd a1 a2 pos = Add (a1, a2, pos)
 
@@ -2426,7 +2426,7 @@ and fresh_spec_var_ann () =
 and fresh_spec_var_rel () =
   let old_name = "R_" in
   let name = fresh_old_name old_name in
-  let t = RelT in
+  let t = RelT[] in
   SpecVar (t, name, Unprimed) (* fresh rel var *)
 
 and fresh_spec_vars_prefix s (svs : spec_var list) = List.map (fresh_spec_var_prefix s) svs
@@ -2641,7 +2641,8 @@ and b_apply_subs_x sst bf =
     | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-    | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (* An Hoa *)
+    | RelForm (r, args, pos) -> RelForm (subs_one sst r, e_apply_subs_list sst args, pos) (* An Hoa *)
+    (* | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (\* An Hoa *\) *)
     | LexVar t_info -> 
           LexVar { t_info with
 	      lex_exp = e_apply_subs_list sst t_info.lex_exp;
@@ -8368,7 +8369,7 @@ let simplify_disj_new (f:formula) : formula =
 
 let fv_wo_rel (f:formula) =
   let vs = fv f in
-  List.filter (fun v -> (type_of_spec_var v) != RelT) vs
+  List.filter (fun v -> not(is_RelT (type_of_spec_var v))) vs
 
 (* Termination: Add the call numbers and the implicit phase 
  * variables to specifications if the option 

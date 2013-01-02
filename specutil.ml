@@ -40,7 +40,7 @@ let rec size_of_heap (fml:CF.h_formula) : (CP.exp*CP.p_formula list) = match fml
   | ViewNode vn -> 
     let v = List.hd (List.rev vn.h_formula_view_arguments) in
     let p = Var (v,no_pos) in
-    let rel = RelForm (SpecVar (RelT, vn.h_formula_view_name, Unprimed), [p], no_pos) in
+    let rel = RelForm (SpecVar (RelT[], vn.h_formula_view_name, Unprimed), [p], no_pos) in
     (p,[rel])
   | Hole _ -> report_error no_pos "size_of_heap: Do not expect Hole"
   | HRel _ -> report_error no_pos "size_of_heap: Do not expect HRel"

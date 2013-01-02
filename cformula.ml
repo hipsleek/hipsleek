@@ -1777,7 +1777,12 @@ and no_change (svars : CP.spec_var list) (pos : loc) : CP.formula = match svars 
 	    let restf = no_change rest pos in
 		CP.mkAnd f restf pos
   | [] -> CP.mkTrue pos
- 
+
+and mkEq fr_svl to_svl pos: CP.formula=
+  let ss = List.combine to_svl fr_svl in
+  let fs = List.map (fun (sv1, sv2) -> CP.mkEqVar sv1 sv2 pos) ss in
+  List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) fs
+
 and pos_of_struc_formula (f:struc_formula): loc =match f with
 	| ECase b -> b.formula_case_pos
 	| EBase b -> b.formula_struc_pos
@@ -2335,12 +2340,12 @@ and subst_varperm_x sst (f : formula) =
   | Exists b -> 
 		(* Variable under this existential quantification should NOT be substituted! *)
 		(* Thus, we need to filter out replacements (fr |-> t) in sst where fr is in b.formula_exists_qvars *)
-		let qsvnames = (List.map CP.name_of_spec_var b.formula_exists_qvars) in
-		let sst = List.filter (fun (fr,_) -> not (List.mem (CP.name_of_spec_var fr) qsvnames)) sst in
-		if sst = [] then f
-		else Exists ({b with formula_exists_heap =  h_subst sst b.formula_exists_heap; 
-							 formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_par_varperm sst b.formula_exists_pure); 
-							 formula_exists_and = (List.map (fun f -> one_formula_subst_varperm sst f) b.formula_exists_and);})
+      let qsvnames = (List.map CP.name_of_spec_var b.formula_exists_qvars) in
+	  let sst = List.filter (fun (fr,_) -> not (List.mem (CP.name_of_spec_var fr) qsvnames)) sst in
+	  if sst = [] then f
+	  else Exists ({b with formula_exists_heap =  h_subst sst b.formula_exists_heap; 
+		  formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_par_varperm sst b.formula_exists_pure); 
+		  formula_exists_and = (List.map (fun f -> one_formula_subst_varperm sst f) b.formula_exists_and);})
   in helper f
 (** An Hoa : End of formula substitution **)
 
@@ -3035,13 +3040,16 @@ and rename_bound_vars_x (f : formula) = match f with
   | Base _ -> (f,[])
   | Exists _ ->
 	    let qvars, base_f = split_quantifiers f in
+        (*filter out RelT and HpT*)
+        let qvars = List.filter (fun sv -> not(CP.is_rel_typ sv ||
+        CP.is_hprel_typ sv)) qvars in
 	    let new_qvars = CP.fresh_spec_vars qvars in
 	    (*--- 09.05.2000 *)
 		(*let _ = (print_string ("\n[cformula.ml, line 519]: fresh name = " ^ (string_of_spec_var_list new_qvars) ^ "!!!!!!!!!!!\n")) in*)
 		(*09.05.2000 ---*)
 	    let rho = List.combine qvars new_qvars in
 	    let new_base_f = subst_varperm rho base_f in (*TO CHECK*)
-	    let resform = add_quantifiers new_qvars new_base_f in
+        let resform = add_quantifiers new_qvars new_base_f in
 		(resform,rho)
 		
 and propagate_perm_formula (f : formula) (permvar:cperm_var) : formula =
@@ -9149,9 +9157,10 @@ let lax_impl_of_post f =
   let new_evs = CP.diff_svl evs impl_vs in
   (impl_vs, add_exists new_evs bf)
 
+
 let fv_wo_rel (f:formula) =
   let vs = fv f in
-  List.filter (fun v -> let t = CP.type_of_spec_var v in t!= RelT && t!=HpT) vs
+  List.filter (fun v -> let t = CP.type_of_spec_var v in not(is_RelT t) && t!=HpT) vs
 
 (* Termination: Check whether a formula contains LexVar *) 
 (* TODO: Termination: Need to add default term info

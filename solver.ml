@@ -1564,6 +1564,7 @@ and unfold_failesc_context_x (prog:prog_or_branches) (ctx : list_failesc_context
       let zero_f = CP.mk_varperm_zero es.es_var_zero_perm pos in
       let new_f = add_pure_formula_to_formula zero_f es.es_formula in
       let unfolded_f = unfold_nth 7 prog new_f v already_unsat 0 pos in
+      (* let _ = print_endline ("unfold_failesc_context_x 1: " ^ (Cprinter.string_of_formula unfolded_f)) in *)
       let vp_list, _ = filter_varperm_formula unfolded_f in
       let zero_list, _ = List.partition (fun f -> CP.is_varperm_of_typ f VP_Zero) vp_list in
       let new_zero_vars = List.concat (List.map (fun f -> CP.varperm_of_formula f (Some  VP_Zero)) zero_list) in
@@ -1573,7 +1574,9 @@ and unfold_failesc_context_x (prog:prog_or_branches) (ctx : list_failesc_context
       if already_unsat then set_unsat_flag res true
       else res
     else
+      (* let _ = print_endline ("unfold_failesc_context_x 3: " ^ (Cprinter.string_of_formula es.es_formula)) in *)
       let unfolded_f = unfold_nth 7 prog es.es_formula v already_unsat 0 pos in
+      (* let _ = print_endline ("unfold_failesc_context_x 2: " ^ (Cprinter.string_of_formula unfolded_f)) in *)
       let res = build_context (Ctx es) unfolded_f pos in
       if already_unsat then set_unsat_flag res true
       else res in 
@@ -1621,6 +1624,7 @@ and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (fl:flow_formula) (v
   let aset' = Context.get_aset asets v in
   let aset = if CP.mem v aset' then aset' else v :: aset' in
   let unfolded_h = unfold_heap prog h aset v fl uf pos in
+  (* let _ = print_endline ("unfolded_h 1: " ^ (Cprinter.string_of_formula unfolded_h)) in *)
   let pure_f = mkBase HEmp p TypeTrue (mkTrueFlow ()) [] pos in
   let tmp_form_norm = normalize_combine unfolded_h pure_f pos in
   let tmp_form = Cformula.set_flow_in_formula_override fl tmp_form_norm in
@@ -1672,7 +1676,8 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
                       | None -> formula_of_unstruc_view_f vdef
                       | Some s -> joiner (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in
 	                let renamed_view_formula = rename_bound_vars forms in
-	                let renamed_view_formula = add_unfold_num renamed_view_formula uf in
+                    (* let _ = print_string ("renamed_view_formula: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in *)
+                   	let renamed_view_formula = add_unfold_num renamed_view_formula uf in
 		            (* propagate the immutability annotation inside the definition *)
 	                let renamed_view_formula = propagate_imm_formula renamed_view_formula imm in
 
@@ -1684,13 +1689,16 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
                           | Some f -> Cformula.propagate_perm_formula renamed_view_formula f) 
                       else renamed_view_formula
                     in
-
+                    let fr_rels,fr_rem = (List.partition CP.is_rel_typ vdef.view_vars) in
 	                let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))
-	                  :: vdef.view_vars in
-	                let to_vars = v :: vs in
+	                  :: fr_rem (*vdef.view_vars*) in
+                    let to_rels,to_rem = (List.partition CP.is_rel_typ vs) in
+	                let to_vars = v :: to_rem (* vs *) in
 	                let res_form = subst_avoid_capture fr_vars to_vars renamed_view_formula in
-		            (*let _ = print_string ("unfold pre subst: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in
-		              let _ = print_string ("unfold post subst: "^(Cprinter.string_of_formula res_form)^"\n") in *)
+                    let eq_p = CF.mkEq to_rels fr_rels pos in
+                    let res_form = CF.mkAnd_pure res_form (MCP.mix_of_pure eq_p) pos in
+		            (* let _ = print_string ("unfold pre subst: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in *)
+		            (*   let _ = print_string ("unfold post subst: "^(Cprinter.string_of_formula res_form)^"\n") in *)
 	                let res_form = add_origins res_form origs in
 		            (* let res_form = add_original res_form original in*)
 		            let res_form = set_lhs_case res_form false in (* no LHS case analysis after unfold *)
@@ -8513,7 +8521,7 @@ and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl l
     in 
     if coers ==[] then 
       begin
-        Debug.info_zprint (lazy  "No combine lemma in left coercion?") no_pos;
+        Debug.ninfo_zprint (lazy  "No combine lemma in left coercion?") no_pos;
         f
       end
     else 

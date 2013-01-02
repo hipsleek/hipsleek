@@ -1,0 +1,21 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+relation R(int a).
+
+infer [R] x::node<a,null> & R(a) |- x::node<v1,null> .
+print residue.
+
+infer [R] x::node<a,null> & R(a) |- x::node<v1,null> & v1>=0 .
+/*
+ inferred answer is wrong as f=null is separately provable
+ inferred rel: [RELASS [R]: ( R(a)) -->  flted_20_104=null & 0<=a]
+*/
+print residue.
+
+
+
+
+

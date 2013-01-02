@@ -95,7 +95,7 @@ type typ =
   | Named of ident (* named type, could be enumerated or object *)
           (* Named "R" *)
   | Array of (typ * int) (* base type and dimension *)
-  | RelT (* relation type *)
+  | RelT of (typ list) (* relation type *)
   | HpT (* heap predicate relation type *)
   | Tree_sh
   (* | FuncT (\* function type *\) *)
@@ -340,6 +340,13 @@ let set_entail_pos p = entail_pos := p
 (* let clear_proving_loc () = proving_loc#reset *)
 (*   (\* proving_loc := None *\) *)
 
+  let pr_lst s f xs = String.concat s (List.map f xs)
+
+ let pr_list_brk open_b close_b f xs  = open_b ^(pr_lst "," f xs)^close_b
+ let pr_list f xs = pr_list_brk "[" "]" f xs
+ let pr_list_angle f xs = pr_list_brk "<" ">" f xs
+ let pr_list_round f xs = pr_list_brk "(" ")" f xs
+
 (* pretty printing for types *)
 let rec string_of_typ (x:typ) : string = match x with
    (* may be based on types used !! *)
@@ -354,12 +361,18 @@ let rec string_of_typ (x:typ) : string = match x with
   | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List t        -> "list("^(string_of_typ t)^")"
   | Tree_sh		  -> "Tsh"
-  | RelT        -> "RelT"
+  | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | HpT        -> "HpT"
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
 	let rec repeat k = if (k == 0) then "" else "[]" ^ (repeat (k-1)) in
 		(string_of_typ et) ^ (repeat r)
+;;
+
+let is_RelT x =
+  match x with
+    | RelT _ -> true
+    | _ -> false
 ;;
 
 (* aphanumeric name *)
@@ -376,7 +389,7 @@ let rec string_of_typ_alpha = function
   | BagT t        -> "bag_"^(string_of_typ t)
   | TVar t        -> "TVar_"^(string_of_int t)
   | List t        -> "list_"^(string_of_typ t)
-  | RelT        -> "RelT"
+  | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | HpT        -> "HpT"
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)

@@ -146,14 +146,17 @@ let process_pred_def pdef =
   (* let _ = print_string ("process_pred_def:" *)
   (*                       ^ "\n\n") in *)
   if check_data_pred_name pdef.I.view_name then
-	let tmp = iprog.I.prog_view_decls in
+    let curr_view_decls = iprog.I.prog_view_decls in
+	(* let tmp = iprog.I.prog_view_decls in *)
 	  try
 		let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
 		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
+        (* temporarily add pdef to view_decls *)
+		iprog.I.prog_view_decls <- pdef :: curr_view_decls;
 		let wf,_ = AS.case_normalize_struc_formula 10 iprog h p pdef.Iast.view_formula false 
           false (*allow_post_vars*) false [] in
 		let new_pdef = {pdef with Iast.view_formula = wf} in
-		let tmp_views = AS.order_views (new_pdef :: iprog.I.prog_view_decls) in
+		let tmp_views = AS.order_views (new_pdef :: curr_view_decls) in
 		iprog.I.prog_view_decls <- List.rev tmp_views;
 (* ( new_pdef :: iprog.I.prog_view_decls); *)
 		(*let _ = print_string ("\n------ "^(Iprinter.string_of_struc_formula "\t" pdef.Iast.view_formula)^"\n normalized:"^(Iprinter.string_of_struc_formula "\t" wf)^"\n") in*)
@@ -183,7 +186,7 @@ let process_pred_def pdef =
 		(*print_string ("\npred def: "^(Cprinter.string_of_view_decl cpdef)^"\n")*)
 (* added 07.04.2008	*)									  
 	  with
-		| _ ->  dummy_exception() ; iprog.I.prog_view_decls <- tmp
+		| _ ->  dummy_exception() ; iprog.I.prog_view_decls <- curr_view_decls
   else
 	print_string (pdef.I.view_name ^ " is already defined.\n")
 
@@ -191,12 +194,16 @@ let process_pred_def pdef =
   let pr = Iprinter.string_of_view_decl in
   Debug.no_1 "process_pred_def" pr pr_no process_pred_def pdef
 
+(* WN : why are there two versions of process_pred_def ? *)
 let process_pred_def_4_iast pdef = 
   if check_data_pred_name pdef.I.view_name then
-	let tmp = iprog.I.prog_view_decls in
+    let curr_view_decls = iprog.I.prog_view_decls in
+	(* let tmp = iprog.I.prog_view_decls in *)
 	  try
 		let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
 		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
+        (* temporarily add pdef to view_decls *)
+		iprog.I.prog_view_decls <- pdef :: curr_view_decls;
 		let wf,_ = AS.case_normalize_struc_formula 11 iprog h p pdef.Iast.view_formula false 
           false (*allow_post_vars*) false [] in
         let inv_lock = pdef.I.view_inv_lock in
@@ -208,9 +215,9 @@ let process_pred_def_4_iast pdef =
                 Some new_f)
         in
 		let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock} in
-		iprog.I.prog_view_decls <- ( new_pdef :: iprog.I.prog_view_decls);
+		iprog.I.prog_view_decls <- ( new_pdef :: curr_view_decls);
 	  with
-		| _ ->  dummy_exception() ; iprog.I.prog_view_decls <- tmp
+		| _ ->  dummy_exception() ; iprog.I.prog_view_decls <- curr_view_decls
   else
 	print_string (pdef.I.view_name ^ " is already defined.\n")
 
@@ -574,7 +581,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* List of vars needed for abduction process *)
   let vars = List.map (fun v -> AS.get_spec_var_stab_infer v orig_vars no_pos) ivars in
   (* Init context with infer_vars and orig_vars *)
-  let (vrel,iv) = List.partition (fun v -> CP.type_of_spec_var v == RelT(*  ||  *)
+  let (vrel,iv) = List.partition (fun v -> is_RelT (CP.type_of_spec_var v)(*  ||  *)
               (* CP.type_of_spec_var v == FuncT *)) vars in
   let (v_hp_rel,iv) = List.partition (fun v -> CP.type_of_spec_var v == HpT(*  ||  *)
               (* CP.type_of_spec_var v == FuncT *)) iv in

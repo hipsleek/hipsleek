@@ -33,7 +33,7 @@ let rec mona_of_typ = function
   | Float         -> "float"	(* Can I really receive float? What do I do then? I don't have float in Mona. *)
   | Int           -> "int"
   | AnnT          -> "AnnT"
-  | RelT          -> "RelT"
+  | RelT _        -> "RelT"
   | HpT           -> "HpT"
   | Void          -> "void" 	(* same as for float *)
   | BagT i		  -> "("^(mona_of_typ i)^") set"
