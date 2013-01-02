@@ -280,6 +280,8 @@ let rec rl_of_exp e0 =
   | CP.IConst (i, _) -> string_of_int i
   | CP.AConst (i, _) -> string_of_int (int_of_heap_ann i)
   | CP.FConst (f, _) -> string_of_float f
+  | CP.SConst _ -> failwith ("redlog: SConst is not supported")
+  | CP.Tsconst _ -> failwith ("redlog: Tsconst is not supported")
   | CP.Add (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " + " ^ (rl_of_exp e2) ^ ")"
   | CP.Subtract (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " - " ^ (rl_of_exp e2) ^ ")"
   | CP.Mult (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " * " ^ (rl_of_exp e2) ^ ")"
@@ -288,7 +290,21 @@ let rec rl_of_exp e0 =
   | CP.Pow(e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ ") ^ (" ^ (rl_of_exp e2) ^ ")"
   | CP.Max _
   | CP.Min _ -> failwith ("redlog.rl_of_exp: min/max can't appear here")
-  | _ -> failwith ("redlog: bags/list is not supported")
+  | CP.Abs _ -> failwith ("redlog.rl_of_exp: handle Abs later")
+  | CP.Sequence _ -> failwith ("redlog: Sequence is not supported")
+  | CP.Bag _
+  | CP.BagUnion _
+  | CP.BagIntersect _
+  | CP.BagDiff _ -> failwith ("redlog: bags are not supported")
+  | CP.List _
+  | CP.ListCons _
+  | CP.ListHead _
+  | CP.ListTail _
+  | CP.ListLength _
+  | CP.ListAppend _
+  | CP.ListReverse _ -> failwith ("redlog: lists are not supported")
+  | CP.ArrayAt _ -> failwith ("redlog: ArrayAt is not supported")
+  | CP.Func _ -> failwith ("redlog: Func is not supported")
 
 let rl_of_b_formula b =
   let mk_bin_exp opt e1 e2 = 
