@@ -261,7 +261,7 @@ let mathematica_of_symbol (sym: symbol) =
 
 let mathematica_of_spec_var (v: CP.spec_var) =
   match v with
-  | CP.SpecVar (_, sv, _) ->
+  | CP.SpecVar (_, sv, prime) ->
       (* mathematica doesn't allow var name contains underscore '_'                        *)
       (* so convert variable name from underscore style to capitalizing-first-letter style *)
       let new_sv = ref "" in
@@ -280,6 +280,7 @@ let mathematica_of_spec_var (v: CP.spec_var) =
           to_uppercase := false
         )
       done;
+      if (prime = Primed) then new_sv := !new_sv ^ "P"; 
       !new_sv
 
 let rec mathematica_of_exp e0 : string= 
