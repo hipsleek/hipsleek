@@ -892,13 +892,13 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
       if not (Gen.is_empty dups) then
 	    (print_string ("duplicated top-level name(s): " ^((String.concat ", " dups) ^ "\n")); failwith "Error detected - astsimp")
       else (
+          (* let _ = print_string ("\ntrans_prog: Iast.prog_decl: " ^ (Iprinter.string_of_program prog) ^ "\n") in *)
 	      let prog = case_normalize_program prog in
 
 	      let prog = if !infer_slicing then slicing_label_inference_program prog else prog in
 
 	      (* let _ = print_string ("\ntrans_prog: Iast.prog_decl: " ^ (Iprinter.string_of_program prog) ^ "\n") in *)
-	      
-          (* let _ =  print_endline " after case normalize" in *)
+	      (* let _ =  print_endline " after case normalize" in *)
           (* let _ = I.find_empty_static_specs prog in *)
 	      let tmp_views = order_views prog.I.prog_view_decls in
 	      let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
@@ -1119,11 +1119,14 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   List.iter (fun (t,c) -> 
       if t==UNK 
       then () 
-      else H.add stab c {sv_info_kind=t; id=fresh_int() }) vtv ;
+      else
+        (* let _ = print_endline ("l2: " ^c ^(" typ:" ) ^ (string_of_typ t)) in *)
+        H.add stab c {sv_info_kind=t; id=fresh_int() }) vtv ;
   H.add stab self { sv_info_kind = (Named data_name);id = fresh_int () };
   (* let _ = vdef.I.view_typed_vars <- [] in (\* removing the typed arguments *\) *)
   let cf = trans_I2C_struc_formula 1 prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false 
     true (*check_pre*) in
+  (* let _ = print_string ("cf: "^(Cprinter.string_of_struc_formula cf)^"\n") in *)
   let inv_lock = vdef.I.view_inv_lock in
   let inv_lock = 
     (match inv_lock with
@@ -5866,9 +5869,16 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
               | IP.Var (v, pos_e) ->
                     (try
                       if (List.mem v avail_vars) || (List.mem v used_names) then(*existential wrapping and liniarization*)
-                        let fresh_v = (Ipure.fresh_old_name (fst v)),Unprimed in
-                        let link_f = IP.mkEqExp (IP.Var (fresh_v,pos_e)) e pos_e in
-                        (used_names, [ fresh_v ], [ fresh_v ], if Lab_List.is_unlabelled label then link_f else IP.mkAndList [label, link_f])
+                        try
+                            let _ = I.look_up_rel_def_raw prog.I.prog_rel_decls (fst v) in
+                              ((v :: used_names), [ v ], [],IP.mkTrue pos_e)
+                        with Not_found ->
+                            let fresh_v =
+                              (Ipure.fresh_old_name (fst v)),Unprimed
+                            in
+                        (* let _ = print_endline ("l2: old=" ^ (fst v) ^ " new=" ^ (fst fresh_v)) in *)
+                            let link_f = IP.mkEqExp (IP.Var (fresh_v,pos_e)) e pos_e in
+                            (used_names, [ fresh_v ], [ fresh_v ], if Lab_List.is_unlabelled label then link_f else IP.mkAndList [label, link_f])
                       else
                         ((v :: used_names), [ v ], [],IP.mkTrue pos_e)
                     with
@@ -6070,11 +6080,14 @@ and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula):IF.formu
   (*called for data invariants and assume formulas ... rename bound, convert_struc2 float out exps from heap struc*)
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 0 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = convert_heap2 prog f in
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = IF.float_out_thread f in
   let f = IF.float_out_exps_from_heap f in
   let f = IF.float_out_min_max f in
   let f = IF.rename_bound_vars f in
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f,_,_ = case_normalize_renamed_formula prog h [] f in
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 3 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   f
 
 and case_normalize_formula_not_rename prog (h:(ident*primed) list)(f:IF.formula):IF.formula = 
@@ -6126,9 +6139,9 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
   let nf = IF.float_out_struc_min_max nf in
   (* let _ = print_string ("case_normalize_struc_formula :: CHECK POINT 3 ==> nf = " ^ Iprinter.string_of_struc_formula nf ^ "\n") in *)
 
-  (*let _ = print_string ("\n b rename "^(Iprinter.string_of_struc_formula "" nf))in*)
+  (* let _ = print_string ("\n b rename "^(Iprinter.string_of_struc_formula  nf))in *)
   let nf = IF.rename_bound_var_struc_formula nf in
-  (* let _ = print_string ("\n after ren: "^(Iprinter.string_of_struc_formula  nf)^"\n") in *)
+  (* let _ = print_string ("\n after ren: "^(Iprinter.string_of_struc_formula nf)^"\n") in *)
   (*convert anonym to exists*)
   let rec helper (hv:(ident*primed) list) strad_vs vars (f0:IF.struc_formula):IF.struc_formula* ((ident*primed)list) = 
     let diff = Gen.BList.difference_eq (=) in
@@ -6716,7 +6729,7 @@ and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl =
       
 and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   let tmp_views = (* order_views *) prog.I.prog_view_decls in
-  (*let _ = print_string ("case_normalize_program: view_b: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in*)
+  (* let _ = print_string ("case_normalize_program: view_b: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in *)
   let tmp_views = List.map (fun c-> 
       let h = (self,Unprimed)::(eres_name,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
       let p = (self,Primed)::(eres_name,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
@@ -6731,7 +6744,7 @@ and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
                 Some new_f)
       in
       { c with Iast.view_formula = 	wf; Iast.view_inv_lock = inv_lock}) tmp_views in
-  (*let _ = print_string ("case_normalize_program: view_a: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in*)
+  (* let _ = print_string ("case_normalize_program: view_a: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in *)
   let prog = {prog with Iast.prog_view_decls = tmp_views} in
   let cdata = List.map (case_normalize_data prog) prog.I.prog_data_decls in
   let prog = {prog with Iast.prog_data_decls = cdata} in

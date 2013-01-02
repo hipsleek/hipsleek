@@ -991,7 +991,9 @@ and look_up_func_def_raw (defs : func_decl list) (name : ident) = match defs wit
 
 (* An Hoa *)
 and look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
-  | d :: rest -> if d.rel_name = name then d else look_up_rel_def_raw rest name
+  | d :: rest ->
+      (* let _ = print_endline ("l2: rel-def=" ^ d.rel_name) in *)
+      if d.rel_name = name then d else look_up_rel_def_raw rest name
   | [] -> raise Not_found
 
 and look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs with

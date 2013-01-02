@@ -824,6 +824,7 @@ cid_typ:
       let ut = un_option t UNK in
       let _ =
         if is_RelT ut then
+          (* let _ = print_endline ("ll: " ^ id) in *)
           let _ = rel_names # push id in
           let rd = get_tmp_rel_decl () in
           let rd = {rd with rel_name = id} in
@@ -1403,7 +1404,9 @@ non_array_type:
    | `BOOL               -> bool_type
    | `BAG                -> bag_type
    | `IDENTIFIER id      -> Named id
-   | t=rel_header_view     -> RelT[] ]];
+   | t=rel_header_view   ->
+       let tl,_ = List.split t.Iast.rel_typed_vars in
+       RelT tl ]];
 
 array_type:
   [[ (* t=array_type; r=rank_specifier -> Array (t, None)
@@ -1604,7 +1607,7 @@ hprogn:
                        data_is_template = false;
 					   data_methods = [] } in
     let g_rel_lst = g_rel_defs # get_stk in
-    let rel_lst = (rel_defs # get_stk)@(g_rel_lst) in
+    let rel_lst = ((rel_defs # get_stk)@(g_rel_lst)) in
     let hp_lst = hp_defs # get_stk in
     { prog_data_decls = obj_def :: string_def :: !data_defs;
       prog_global_var_decls = !global_var_defs;
@@ -1613,8 +1616,10 @@ hprogn:
       (* prog_rel_decls = [];  TODO : new field for array parsing *)
       prog_view_decls = !view_defs;
       prog_func_decls = func_defs # get_stk ;
-      prog_rel_decls = rel_lst ; (* An Hoa *)
-      prog_rel_ids = List.map (fun x -> (RelT[],x.rel_name)) (rel_lst@g_rel_lst); (* WN *)
+      prog_rel_decls = rel_lst; (* An Hoa *)
+      prog_rel_ids = List.map (fun x ->
+          let tl,_ = List.split x.rel_typed_vars in
+          (RelT tl,x.rel_name)) (rel_lst); (* WN *)
       prog_hp_decls = hp_lst ;
       prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
       prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
