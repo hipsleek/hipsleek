@@ -52,7 +52,19 @@ open Perm
 	| AnnMode of mode
 	| AnnType of typ
 
-	
+let default_rel_id = "rel_id__"
+let tmp_rel_decl = ref (None : rel_decl option)
+
+let set_tmp_rel_decl (rd:rel_decl)=
+  match !tmp_rel_decl with
+    | None -> tmp_rel_decl := (Some rd)
+    | Some _ -> report_error no_pos "cparser.set_tmp_rel_decl: something wrong"
+
+let get_tmp_rel_decl ():rel_decl =
+  match !tmp_rel_decl with
+    | Some rd -> let _ = tmp_rel_decl := None in rd
+    | None -> report_error no_pos "cparser.set_tmp_rel_decl: something wrong"
+
 let macros = ref (Hashtbl.create 19)
 
 (* An Hoa : Counting of holes "#" *)
@@ -64,6 +76,7 @@ let func_names = new Gen.stack (* list of names of ranking functions *)
 let rel_names = new Gen.stack (* list of names of relations declared *)
 let view_names = new Gen.stack (* list of names of views declared *)
 let hp_names = new Gen.stack (* list of names of heap preds declared *)
+let g_rel_defs = new Gen.stack (* list of relations decl in views *)
 
 let get_pos x = 
   {start_pos = Parsing.symbol_start_pos ();
@@ -803,11 +816,24 @@ cid_list: [[t=LIST1 cid SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst 
 opt_ann_cid_list: [[t=LIST0 ann_cid SEP `COMMA -> t]];
   
 c_typ:
-  [[ `COLON; t=typ -> t ]];
+ [[ `COLON; t=typ -> t
+ ]];
 
 cid_typ:
-  [[ `IDENTIFIER id ; t=OPT c_typ -> 
-      let ut = un_option t UNK in (ut,id) ]];
+  [[ `IDENTIFIER id ; t=OPT c_typ ->
+      let ut = un_option t UNK in
+      let _ =
+        if ut = RelT then
+          let _ = rel_names # push id in
+          let rd = get_tmp_rel_decl () in
+          let rd = {rd with rel_name = id} in
+        (*push rd in the list*)
+          let _ = g_rel_defs # push rd in
+          ()
+        else ()
+      in
+        (ut,id)
+   ]];
 
 ann_cid:[[ ob=opt_branch; c=cid_typ; al=opt_ann_list ->((c, ob), al)]];
 
@@ -1376,7 +1402,8 @@ non_array_type:
    | `FLOAT              -> float_type 
    | `BOOL               -> bool_type
    | `BAG                -> bag_type
-   | `IDENTIFIER id      -> Named id ]];  
+   | `IDENTIFIER id      -> Named id
+   | t=rel_header_view     -> RelT]];
 
 array_type:
   [[ (* t=array_type; r=rank_specifier -> Array (t, None)
@@ -1475,6 +1502,10 @@ typed_id_list:[[ t = typ; `IDENTIFIER id ->  (t,id) ]];
 
 typed_id_list_opt: [[ t = LIST0 typed_id_list SEP `COMMA -> t ]];
 
+typed_default_id_list:[[ t = typ  ->  (t,default_rel_id) ]];
+
+typed_default_id_list_opt: [[ t = LIST0 typed_default_id_list SEP `COMMA -> t ]];
+
 rel_header:[[
 `REL; `IDENTIFIER id; `OPAREN; tl= typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
     (* let cids, anns = List.split $4 in
@@ -1491,6 +1522,16 @@ rel_header:[[
 			rel_typed_vars = tl;
 			rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)			
 			}
+]];
+
+rel_header_view:[[
+  `REL; `OPAREN; tl= typed_default_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+  let rd = { rel_name = "";
+			rel_typed_vars = tl;
+			rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)			
+		 } in
+  let _ = set_tmp_rel_decl rd in
+  rd
 ]];
 
 rel_body:[[ (* formulas { 
@@ -1562,7 +1603,8 @@ hprogn:
 					   data_invs = []; (* F.mkTrue no_pos; *)
                        data_is_template = false;
 					   data_methods = [] } in
-    let rel_lst = rel_defs # get_stk in
+    let g_rel_lst = g_rel_defs # get_stk in
+    let rel_lst = (rel_defs # get_stk)@(g_rel_lst) in
     let hp_lst = hp_defs # get_stk in
     { prog_data_decls = obj_def :: string_def :: !data_defs;
       prog_global_var_decls = !global_var_defs;
@@ -1572,7 +1614,7 @@ hprogn:
       prog_view_decls = !view_defs;
       prog_func_decls = func_defs # get_stk ;
       prog_rel_decls = rel_lst ; (* An Hoa *)
-      prog_rel_ids = List.map (fun x -> (RelT,x.rel_name)) rel_lst; (* WN *)
+      prog_rel_ids = List.map (fun x -> (RelT,x.rel_name)) (rel_lst@g_rel_lst); (* WN *)
       prog_hp_decls = hp_lst ;
       prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
       prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
