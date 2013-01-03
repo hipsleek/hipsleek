@@ -133,11 +133,14 @@ let process_lib_file prog =
       Iast.prog_view_decls = prog.Iast.prog_view_decls @ vdecls;}
 
 (***************end process compare file*****************)
+
 let process_source_full source =
   Debug.ninfo_pprint ("Full processing file \"" ^ source ^ "\"") no_pos;
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source in
+  (* let prog_dds = prog.Iast.prog_data_decls in *)
+  (* print_string ("DATA DECLARATION: \n" ^ Cautility.string_of_iast_data_decls prog_dds ^ "\n"); *)
   let _ = Gen.Profiling.push_time "Process compare file" in
   let prog = if(!Globals.cp_test || !Globals.cp_prefile) then (
     process_cp_file prog 
@@ -313,7 +316,7 @@ let process_source_full source =
 	^ if(!Tpdispatcher.tp = Tpdispatcher.Z3) then 
       "\tZ3 Prover Time: " ^ (string_of_float !Globals.z3_time) ^ " second(s)\n"
     else "\n"
-	)
+    )
 
 let process_source_full_parse_only source =
   Debug.ninfo_pprint ("Full processing file (parse only) \"" ^ source ^ "\"") no_pos;

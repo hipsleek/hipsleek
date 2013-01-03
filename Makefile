@@ -24,14 +24,15 @@ XML = cd $(CURDIR)/xml; make all; make opt; cd ..
 
 all: byte decidez.vo 
 #gui
-byte: sleek.byte hip.byte 
+byte: sleek.byte hip.byte compare.byte
 # hsprinter.byte
-native: hip.native sleek.native
+native: hip.native sleek.native compare.native
 gui: ghip.native gsleek.native
 byte-gui: ghip.byte gsleek.byte
 
 hip: hip.native
 sleek: sleek.native
+compare: compare.native
 ghip: ghip.native
 gsleek: gsleek.native
 
@@ -64,6 +65,16 @@ sleek.native: xml
 	cp -u _build/sleek.native sleek
 	cp -u _build/sleek.native n-sleek
 
+compare.byte: xml
+	@ocamlbuild $(OBB_FLAGS) compare.byte
+	cp -u _build/compare.byte compare
+	cp -u _build/compare.byte b-compare
+
+compare.native: xml
+	@ocamlbuild $(OBN_FLAGS) compare.native
+	cp -u _build/compare.native compare
+	cp -u _build/compare.native n-compare
+
 gsleek.byte: 
 	@ocamlbuild $(OBG_FLAGS) gsleek.byte
 	cp -u _build/gsleek.byte p-gsleek
@@ -83,7 +94,7 @@ ghip.native:
 # Clean up
 clean:
 	$(OCAMLBUILD) -quiet -clean 
-	rm -f sleek sleek.norm hip hip.norm gsleek ghip sleek.byte hip.byte
+	rm -f sleek sleek.norm hip hip.norm gsleek ghip sleek.byte hip.byte compare compare.norm compare.byte
 	rm -f *.cmo *.cmi *.cmx *.o *.mli *.output *.annot slexer.ml ilexer.ml lexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml
 #	rm -f iparser.mli iparser.ml iparser.output oc.out
 
@@ -100,3 +111,4 @@ install:
 install-native: hip.native sleek.native
 	cp -u _build/main.native /usr/local/bin/hip
 	cp -u _build/sleek.native /usr/local/bin/sleek
+	cp -u _build/compare.native /usr/local/bin/compare	

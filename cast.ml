@@ -139,9 +139,24 @@ and proc_decl = {
 
 and test_comps = 
     {
-        expected_ass: (ident list * ident list *(Cformula.formula * Cformula.formula) list) option;
+        expected_hpass: (ident list * ident list *(Cformula.formula * Cformula.formula) list) option;
         expected_hpdefs: (ident list * ident list *(Cformula.formula * Cformula.formula) list) option;
+	expected_pureass: (ident list * ident list *(Cformula.formula * Cformula.formula) list) option;
+	expected_reldefs: (ident list * ident list *(Cformula.formula * Cformula.formula) list) option;
+	expected_onef: (ident list * ident list * (Cformula.formula) list) option;
+	expected_twof: (ident list * ident list *(Cformula.formula * Cformula.formula) list) option;
     }
+
+and  cpprog_decl = {
+  cp_hprog: prog_decl;
+  cp_cpproc_decls: cpproc_decl list
+}
+    
+and cpproc_decl = {
+  cp_proc_name : ident;
+  cp_proc_res: ident;
+  cp_proc_test_comps: test_comps
+}
 
 (*TODO: should we change lemma need struc formulas?
   would this help with lemma folding later? *)

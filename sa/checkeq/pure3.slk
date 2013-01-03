@@ -15,7 +15,7 @@ checkeq[] !x -|- x.
 //FAIL
 
 //4.
-checkeq[] !x -|- !y.
+//checkeq[] !x -|- !y.
 //VALID
 
 //5.

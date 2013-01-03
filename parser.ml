@@ -475,6 +475,15 @@ let peek_array_type =
              |[_;OSQUARE,_] -> (* An Hoa*) (*let _ = print_endline "Array found!" in*) ()
              | _ -> raise Stream.Failure)
 
+let peek_onef =
+   SHGram.Entry.of_parser "peek_onef"
+       (fun strm ->
+           match Stream.npeek 3 strm with
+	     |[CONSTR,_;_;_] -> ()
+	     |[_;CONSTR,_;_] ->  ()
+             |[_;_;CONSTR,_] ->  ()
+             | _ ->  raise Stream.Failure)
+
 (* let contain_vars_pure_double f =      *)
 (*   match f with                        *)
 (* 	| Pure_f _ -> false                  *)
@@ -536,15 +545,17 @@ let rec get_heap_ann annl : F.ann =
 				   
 let sprog = SHGram.Entry.mk "sprog" 
 let hprog = SHGram.Entry.mk "hprog"
+let cpprog = SHGram.Entry.mk "cpprog"
 let sprog_int = SHGram.Entry.mk "sprog_int"
 let opt_spec_list_file = SHGram.Entry.mk "opt_spec_list_file"
 let cp_file = SHGram.Entry.mk "cp_file" 
 
 EXTEND SHGram
-  GLOBAL: sprog hprog sprog_int opt_spec_list_file cp_file;
+  GLOBAL: sprog hprog sprog_int opt_spec_list_file cp_file cpprog;
   sprog:[[ t = command_list; `EOF -> t ]];
   sprog_int:[[ t = command; `EOF -> t ]];
   hprog:[[ t = hprogn; `EOF ->  t ]];
+  cpprog:[[ t = cpprogn; `EOF ->  t ]];
   cp_file:[[ t = cp_list; `EOF ->  t ]];
   
 macro: [[`PMACRO; n=id; `EQEQ ; tc=tree_const -> if !Globals.perm=(Globals.Dperm) then Hashtbl.add !macros n tc else  report_error (get_pos 1) ("distinct share reasoning not enabled")]];
@@ -2310,7 +2321,7 @@ arrayaccess_expression:[[
  
 (*end of hip part*)
 
-(*cp_list*)
+(*start of cp_list part *)
 
 cp_list:
   [[ t = opt_cp_list ->
@@ -2336,30 +2347,152 @@ test:
   [[t = id;`COLON; s = id ; `OSQUARE; tl=test_list; `CSQUARE ->  (t,tl) ]];
 
 test_list: [[t = LIST0 test_ele -> 
-    let ass  =  ref (None : ((ident list) *(ident list) * (ass list)) option) in
+    let hp_ass  =  ref (None : ((ident list) *(ident list) * (ass list)) option) in
     let hpdefs  = ref (None : ((ident list) * (ident list) *(ass list)) option) in
+    let pure_ass  =  ref (None : ((ident list) *(ident list) * (ass list)) option) in
+    let rel_defs  = ref (None : ((ident list) * (ident list) *(ass list)) option) in
+    let twof  =  ref (None : ((ident list) *(ident list) * (ass list)) option) in
+    let onef  = ref (None : ((ident list) * (ident list) *(F.formula list)) option) in
     let choose d = match d with
-      | ExpectedAss t  ->  ass := Some t
+      | ExpectedHpAss t  ->  hp_ass := Some t
       | ExpectedHpDef t ->  hpdefs := Some t
+      | ExpectedPureAss t  ->  pure_ass := Some t
+      | ExpectedRelDef t ->  rel_defs := Some t
+      | ExpectedTwoF t  ->  twof := Some t
+      | ExpectedOneF t ->  onef := Some t
     in
     let _ = List.map choose t in
-    {expected_ass = !ass;
-      expected_hpdefs = !hpdefs}]];
+    {expected_hpass = !hp_ass;
+      expected_hpdefs = !hpdefs;
+      expected_pureass = !pure_ass;
+      expected_reldefs = !rel_defs;
+      expected_onef = !onef;
+      expected_twof = !twof}]];
 
 test_ele: 
-  [[t = id; `OSQUARE; il=OPT id_list; `CSQUARE; `OSQUARE; sl=OPT id_list; `CSQUARE; `COLON;`OBRACE;cs=constrs;`CBRACE  ->  
-  let il = un_option il [] in 
+  [[ t = id; `OSQUARE; il=OPT id_list; `CSQUARE; `OSQUARE; sl=OPT id_list; `CSQUARE; `COLON;`OBRACE;peek_onef;cs=constrs;`CBRACE  ->  
+  (let il = un_option il [] in 
   let sl = un_option sl [] in 
-  if(String.compare "ass" t == 0) then ExpectedAss (il,sl,cs)
+  if(String.compare "ass" t == 0) then ExpectedHpAss (il,sl,cs)
   else if(String.compare t "hpdefs" == 0) then ExpectedHpDef (il,sl,cs)
-  else report_error no_pos "no_case"]];
+  else if(String.compare "pure_assumes" t == 0) then ExpectedPureAss (il,sl,cs)
+  else if(String.compare t "pure_reldefs" == 0) then ExpectedRelDef (il,sl,cs)
+  (* else if(String.compare t "onef" == 0) then ExpectedHpAss (il,sl,cs) *)
+  else if(String.compare t "twof" == 0) then ExpectedTwoF (il,sl,cs)
+  else  report_error no_pos ("parser: no_case " ^ t))
+   | t = id; `OSQUARE; il=OPT id_list; `CSQUARE; `OSQUARE; sl=OPT id_list; `CSQUARE; `COLON;`OBRACE;fs=forms;`CBRACE  ->  
+   (let il = un_option il [] in 
+   let sl = un_option sl [] in 
+   if(String.compare t "onef" == 0) then ExpectedOneF (il,sl,fs)
+   else report_error no_pos ("parser: no_case " ^ t))
+   ]];
 
 constrs: [[t = LIST0 constr SEP `SEMICOLON -> t]];
 
 constr : [[ t=disjunctive_constr; `CONSTR; b=disjunctive_constr -> {ass_lhs = F.subst_stub_flow n_flow t;
 ass_rhs = F.subst_stub_flow n_flow b}]];
 
-(*end of cp_list*)
+forms: [[t = LIST0 form SEP `SEMICOLON -> t]];
+
+form:  [[ t = disjunctive_constr ->  F.subst_stub_flow n_flow t]];
+
+(* end of cp_list part *)
+(* start of cpare program *)
+cp_hprogn:
+  [[ t = opt_decl_list1 ->
+      let data_defs = ref ([] : data_decl list) in
+      let global_var_defs = ref ([] : exp_var_decl list) in
+      let logical_var_defs = ref ([] : exp_var_decl list) in
+      let enum_defs = ref ([] : enum_decl list) in
+      let view_defs = ref ([] : view_decl list) in
+	  let barrier_defs = ref ([] : barrier_decl list) in
+      (* ref ([] : rel_decl list) in (\* An Hoa *\) *)
+      let func_defs = new Gen.stack in (* list of ranking functions *)
+      let rel_defs = new Gen.stack in(* list of relations *)
+      let hp_defs = new Gen.stack in(* list of heap predicate relations *)
+      let axiom_defs = ref ([] : axiom_decl list) in (* [4/10/2011] An Hoa *)
+      let coercion_defs = ref ([] : coercion_decl list) in
+      let hopred_defs = ref ([] : hopred_decl list) in
+      let choose d = match d with
+        | Type tdef -> begin
+          match tdef with
+          | Data ddef -> data_defs := ddef :: !data_defs
+          | Enum edef -> enum_defs := edef :: !enum_defs
+          | View vdef -> view_defs := vdef :: !view_defs
+          | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
+		  | Barrier bdef -> barrier_defs := bdef :: !barrier_defs
+          end
+        | Func fdef -> func_defs # push fdef
+        | Rel rdef -> rel_defs # push rdef
+        | Hp hpdef -> hp_defs # push hpdef
+        | Axm adef -> axiom_defs := adef :: !axiom_defs (* An Hoa *)
+        | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
+        | Logical_var lvdef -> logical_var_defs := lvdef :: !logical_var_defs
+      | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
+    let _ = List.map choose t in
+    let obj_def = { data_name = "Object";
+					data_fields = [];
+					data_parent_name = "";
+					data_invs = []; (* F.mkTrue no_pos; *)
+                    data_is_template = false;
+					data_methods = [] } in
+    let string_def = { data_name = "String";
+					   data_fields = [];
+					   data_parent_name = "Object";
+					   data_invs = []; (* F.mkTrue no_pos; *)
+                       data_is_template = false;
+					   data_methods = [] } in
+    let rel_lst = rel_defs # get_stk in
+    let hp_lst = hp_defs # get_stk in
+    { prog_data_decls = obj_def :: string_def :: !data_defs;
+      prog_global_var_decls = !global_var_defs;
+      prog_logical_var_decls = !logical_var_defs;
+      prog_enum_decls = !enum_defs;
+      (* prog_rel_decls = [];  TODO : new field for array parsing *)
+      prog_view_decls = !view_defs;
+      prog_func_decls = func_defs # get_stk ;
+      prog_rel_decls = rel_lst ; (* An Hoa *)
+      prog_rel_ids = List.map (fun x -> (RelT,x.rel_name)) rel_lst; (* WN *)
+      prog_hp_decls = hp_lst ;
+      prog_hp_ids = List.map (fun x -> (HpT,x.hp_name)) hp_lst; (* l2 *)
+      prog_axiom_decls = !axiom_defs; (* [4/10/2011] An Hoa *)
+      prog_proc_decls = [];
+      prog_coercion_decls = !coercion_defs;
+      prog_hopred_decls = !hopred_defs;
+	  prog_barrier_decls = !barrier_defs; } ]];
+
+opt_decl_list1: [[t=LIST0 mdecl1 -> List.concat t]];
+  
+mdecl1: 
+	[[ t=macro -> []
+	  |t=decl1 -> [t]]];
+  
+decl1:
+  [[ t=type_decl                  -> Type t
+  |  r=func_decl; `DOT -> Func r
+  |  r=rel_decl; `DOT -> Rel r (* An Hoa *)
+  |  r=hp_decl; `DOT -> Hp r
+  |  a=axiom_decl; `DOT -> Axm a (* [4/10/2011] An Hoa *)
+  |  g=global_var_decl            -> Global_var g
+  |  l=logical_var_decl -> Logical_var l
+  | `LEMMA; c= coercion_decl; `SEMICOLON    -> Coercion c]];
+
+test2:
+  [[t = id;`COLON; s = id ; `OSQUARE; tl=test_list; `CSQUARE ->  
+  {
+    cp_proc_name = t;
+    cp_proc_res= s;
+    cp_proc_test_comps= tl
+  } ]];
+
+cpprogn:
+  [[ hpr = cp_hprogn ; procs_testcomps = LIST0 test2 ->
+  {
+    cp_hprog = hpr;
+    cp_cpproc_decls = procs_testcomps
+  }
+   ]];
+(* end of cpare program *)
 END;;
 
 let parse_sleek n s = SHGram.parse sprog (PreCast.Loc.mk n) s
@@ -2375,3 +2508,4 @@ let parse_hip_string n s = SHGram.parse_string hprog (PreCast.Loc.mk n) s
   let pr_no x = "?" in DD.no_2 "parse_hip_string" pr pr pr_no parse_hip_string n s *)
 let parse_spec s = SHGram.parse_string opt_spec_list_file (PreCast.Loc.mk "spec string") s
 let parse_cpfile n s = SHGram.parse cp_file (PreCast.Loc.mk n) s
+let parse_compare n s = SHGram.parse cpprog (PreCast.Loc.mk n) s

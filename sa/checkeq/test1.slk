@@ -8,9 +8,12 @@ HeapPred H1(node a).
 HeapPred G(node a, node b).
 HeapPred HP_535(node a, node b).
 
+checkeq[t] Anon_12=Anon_69 & r=r_70 & Anon_13=Anon_75 & r2=r_76 & r2=r_71  -|- Anon_12=Anon_69 & r=r_70 & Anon_13=Anon_75 & r2=r_76 & r2=r_71 .
+
+
 //pure formula
 //1.
-checkeq[] x =a  + 2 -|- y = b + c.
+//checkeq[] x =a  + 2 -|- y = b + c.
 //VALID
 //checkeq[] x =a  & e = 3 -|- (forall (c: c = 3)).
 //2.

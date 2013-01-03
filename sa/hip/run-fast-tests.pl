@@ -1156,7 +1156,7 @@ sub hip_process_file {
 	{
 	    ($filename) = $test->[0] =~ /(.*)\./s;
 	    $cpfile =  "$exempl_path/test/$filename.cp";
-	    $genfile =  "$exempl_path/test/$filename.cp";
+	    $genfile =  "$exempl_path/test2/$filename.cp";
 	    if ("$param" =~ "gen_cpfile") {
 		print "Generating $genfile\n";
 		$options = "-gen-cpfile";

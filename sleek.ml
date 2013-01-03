@@ -29,7 +29,7 @@ module CP = Cpure
 module IF = Iformula
 module IP = Ipure
 module AS = Astsimp
-
+module CAU = Cautility
 module XF = Xmlfront
 module NF = Nativefront
 
@@ -114,29 +114,40 @@ let parse_file (parse) (source_file : string) =
 	  | LemmaDef ldef -> process_lemma ldef
 	  | DataDef _ | PredDef _ | BarrierCheck _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *)
 	  | CaptureResidue _ | LetDef _ | EntailCheck _ | EqCheck _ | Infer _ | PrintCmd _  | CmpCmd _| Time _ | EmptyCmd -> () in
+  (*for gen cp file*)
+  let cout_option = if(!Globals.gen_cpfile) then (
+    Some (open_out (!Globals.cpfile))
+  )
+    else  None
+  in
+  
+  (* let message = CAU.string_of_data_decls !cprog.Cast.prog_data_decls in *)
+  (* print_string ("DATA: " ^ message ^ "\n"); *)
   let proc_one_cmd c = 
     match c with
-      | EntailCheck (iante, iconseq, etype) -> process_entail_check iante iconseq etype
-      (* let pr_op () = process_entail_check_common iante iconseq in  *)
-      (* Log.wrap_calculate_time pr_op !source_files ()               *)
-	  | EqCheck (lv, if1, if2) -> 
+      | EntailCheck (iante, iconseq, etype) -> process_entail_check_gen_opt iante iconseq etype cout_option
+	  (* let pr_op () = process_entail_check_common iante iconseq in  *)
+	  (* Log.wrap_calculate_time pr_op !source_files ()               *)
+      | EqCheck (lv, if1, if2) -> 
           (* let _ = print_endline ("proc_one_cmd: xxx_after parse \n") in *)
-          process_eq_check lv if1 if2
+        process_eq_check lv if1 if2
       | Infer (ivars, iante, iconseq) -> process_infer ivars iante iconseq
       | CaptureResidue lvar -> process_capture_residue lvar
       | PrintCmd pcmd -> process_print_command pcmd
-	  | CmpCmd ccmd -> process_cmp_command ccmd
+      | CmpCmd ccmd -> process_cmp_command ccmd
       | LetDef (lvar, lbody) -> put_var lvar lbody
       | BarrierCheck bdef -> process_barrier_def bdef
       | Time (b,s,_) -> 
-          if b then Gen.Profiling.push_time s 
-          else Gen.Profiling.pop_time s
-	  | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ | EmptyCmd -> () in
+        if b then Gen.Profiling.push_time s 
+        else Gen.Profiling.pop_time s
+      | DataDef _ | PredDef _ | FuncDef _ | RelDef _ | HpDef _ | AxiomDef _ (* An Hoa *) | LemmaDef _ | EmptyCmd -> () in
   let cmds = parse_first [] in
+ 
   List.iter proc_one_def cmds;
-	(* An Hoa : Parsing is completed. If there is undefined type, report error.
-	 * Otherwise, we perform second round checking!
-	 *)
+  (* An Hoa : Parsing is completed. If there is undefined type, report error.
+   * Otherwise, we perform second round checking!
+   *)
+  
   let udefs = !Astsimp.undef_data_types in
   let _ = match udefs with
 	| [] ->	perform_second_parsing_stage ()
@@ -153,7 +164,15 @@ let parse_file (parse) (source_file : string) =
   let cviews = !cprog.C.prog_view_decls in
   let cviews = List.map (Cast.add_uni_vars_to_view !cprog !cprog.C.prog_left_coercions) cviews in
   !cprog.C.prog_view_decls <- cviews;
-  List.iter proc_one_cmd cmds 
+  let _ = CAU.gen_sleek_decls !cprog cout_option  in
+ (* let message = CAU.string_of_data_decls !cprog.Cast.prog_data_decls in *)
+ (*  print_string ("DATA: " ^ message ^ "\n"); *)
+  let _ = List.iter proc_one_cmd cmds  in
+  let _ =  match cout_option with
+    | Some cout -> close_out cout
+    | _ -> ()
+  in 
+  ()
 
 
 let main () = 

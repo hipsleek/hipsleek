@@ -9,10 +9,10 @@ ass [D,E][]: {
  D(x)&x!=null -->  x::node<val,next>@M * HP(next)&true
 }
 hpdefs [D,E][]: {
- E(x,x0)&true -->  emp&x=null & x0=null;
+ E(x0,x)&true -->  emp&x=null & x0=null;
  D(x)&true -->  
- emp&x=null
- or x::node<val,next>@M * D(next)&true
+ x::node<val,next>@M * D(next)&true
+ or emp&x=null
  ;
  HP(v)&true -->  D(v)&true
 }

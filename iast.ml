@@ -193,17 +193,35 @@ and cp_file_comps =
   | ProcERes of (ident * test_comps)
         
 and test_comps = {
-    expected_ass: (((ident list) * (ident list) * (ass list)) option);
-    expected_hpdefs: (((ident list) * (ident list) * (ass list)) option) }
+    expected_hpass: (((ident list) * (ident list) * (ass list)) option);
+    expected_hpdefs: (((ident list) * (ident list) * (ass list)) option);
+    expected_pureass: (((ident list) * (ident list) * (ass list)) option);
+    expected_reldefs: (((ident list) * (ident list) * (ass list)) option);
+    expected_onef: (((ident list) * (ident list) * (F.formula list)) option);
+    expected_twof: (((ident list) * (ident list) * (ass list)) option)  }
     
 and expected_comp = 
-  | ExpectedAss of ((ident list) * (ident list) *(ass list)) 
+  | ExpectedHpAss of ((ident list) * (ident list) *(ass list)) 
   | ExpectedHpDef of ((ident list) * (ident list) *(ass list))
+  | ExpectedPureAss of ((ident list) * (ident list) *(ass list)) 
+  | ExpectedRelDef of ((ident list) * (ident list) *(ass list))
+  | ExpectedOneF of ((ident list) * (ident list) *(F.formula list))
+  | ExpectedTwoF of ((ident list) * (ident list) *(ass list))
 
 and ass = {
     ass_lhs: F.formula;
     ass_rhs: F.formula }
 
+and  cpprog_decl = {
+  cp_hprog: prog_decl;
+  cp_cpproc_decls: cpproc_decl list
+}
+
+and cpproc_decl = {
+  cp_proc_name : ident;
+  cp_proc_res: ident;
+  cp_proc_test_comps: test_comps
+}
 (********end parse compare file************)
 
 and uni_op = 
@@ -2059,3 +2077,4 @@ let rec get_breaks e =
 		| _ -> None in
 	fold_exp e f (List.concat) [] 
 	
+

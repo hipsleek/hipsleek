@@ -353,6 +353,7 @@ let common_arguments = [
   ("--sa-split", Arg.Set Globals.sa_en_split, "splitting hp args into multiple hp if possible");
   ("--sa-unify-dangling", Arg.Set Globals.sa_unify_dangling, "unify branches of definition to instantiate dangling predicate");
   ("--sa-tree-simp", Arg.Set Globals.sa_tree_simp, "simplify a tree branches of definition");
+  ("-gen-cpfile", Arg.String set_gen_cpfile,  "gen compare set of constraints");
   ] 
 
 (* arguments/flags used only by hip *)	
@@ -380,12 +381,12 @@ let hip_specific_arguments = [ ("-cp", Arg.String set_pred,
    "compare set of constraints");
   ("-cp-pre-test", Arg.Set Globals.cp_prefile,
    "compare set of constraints");
-  ("-gen-cpfile", Arg.String set_gen_cpfile,
-   "compare set of constraints");
   ("-lib", Arg.String set_lib_file,
    "lib");
   ("--sa-subsume", Arg.Set Globals.sa_subsume, "use subsume when comparing definitions after infering");
   ] 
+
+let compare_specific_arguments = []
 
 (* arguments/flags used only by sleek *)	
 let sleek_specific_arguments = [
@@ -409,6 +410,9 @@ let hip_arguments = common_arguments @ hip_specific_arguments
 
 (* all sleek's arguments and flags *)	
 let sleek_arguments = common_arguments @ sleek_specific_arguments 
+
+(* all compare's arguments and flags *)	
+let compare_arguments = common_arguments @ compare_specific_arguments 
 
 (* all arguments and flags used in the gui*)	
 let gui_arguments = common_arguments @ hip_specific_arguments @ gui_specific_arguments

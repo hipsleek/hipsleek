@@ -872,7 +872,7 @@ and match_equiv_notform_x  (hvars: ident list)(f1: CP.formula) (pf2: CP.formula)
       )
       | AndList _ -> report_error no_pos "not handle ANDLIST yet"
       | Or f -> (false,[mt])
-      | Not(f2,_,_) -> report_error no_pos "temp: not handle not yet" (* checkeq_p_formula hvars f1 f2 mtl *)
+      | Not(f2,_,_) -> checkeq_p_formula hvars f1 f2 mtl
       | Forall _ 
       | Exists _ -> report_error no_pos "not handle forall and exists yet"
   in
@@ -2088,3 +2088,42 @@ let check_subsume_defs_tmp hvars svars (defs: (CP.rel_cat * CF.h_formula * CF.fo
 					if(c) then piv else r::piv) [] rl in
   if(List.length new_rl == 0) then (true, [],sl)
   else (r,new_rl,sl)
+
+(*======================================================================*)
+
+let rec checkeq_formulas_list_x hvars (fs1: CF.formula list) ( fs2: CF.formula list): bool =
+  let res = if(List.length fs1 == 0 && (List.length fs2 == 0)) then true
+  else (
+    if (List.length fs1 != List.length fs2) 
+    then false
+    else (
+      let rec check_head head fs =
+	match fs with
+	  | [] -> (false, [])
+	  | x::y -> (
+	    let r1,tmp = checkeq_formulas hvars head x in
+	    if(r1) then (
+	      let _ =  Debug.ninfo_pprint ("FORMULA MATCH") no_pos in
+	      (r1,y)
+	    )
+	    else (
+	      let r2,ncs = check_head head y in
+	      (r2,x::ncs)
+	    )
+	  )
+      in
+      let res1,new_fs2 = check_head (List.hd fs1) fs2 in
+      if(res1) then (
+	checkeq_formulas_list_x hvars (List.tl fs2) new_fs2
+      )
+      else res1
+    )
+  )
+  in
+  res
+
+let rec checkeq_formulas_list hvars (fs1: CF.formula list) ( fs2: CF.formula list): bool =
+  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
+  let pr2 b = if(b) then "CP-Formulas: VALID\n" else "CP-Formulas: INVALID\n" in
+  Debug.no_2 "check_formulas_list" pr1 pr1 (pr2)
+      (fun _ _ -> checkeq_formulas_list_x hvars fs1 fs2) fs1 fs2

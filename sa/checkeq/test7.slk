@@ -2,25 +2,25 @@
 data node { int val ; node next }.
 
 //1. Valid
-checkeq[] x::node<a,_> * y::node<a,_> -|- y::node<a,_> * x::node<a,_>.
+checkeq[] x::node<a,_> * y::node<a,_> * x::node<a,_> * y::node<a,_> -|- y::node<a,_> * x::node<a,_>* x::node<a,_> * y::node<a,_>.
 
 //2. Valid
-checkeq[] x::node<a,y> * y::node<a,x> -|- y::node<a,x> * x::node<a,y>.
+checkeq[] x::node<a,y> * y::node<a,x> * x::node<a,_> * y::node<a,_> -|- y::node<a,x> * x::node<a,y> * x::node<a,_> * y::node<a,_>. 
 
 //3.Valid
-checkeq [x] x::node<a,y> * y::node<a,x> -|- y::node<a,x> * x::node<a,y>.
+checkeq [x] x::node<a,y> * y::node<a,x> * x::node<a,_> * y::node<a,_> -|- y::node<a,x> * x::node<a,y> * x::node<a,_> * y::node<a,_>.
 
 //4. Fail
-checkeq [x,y] x::node<a,_> * y::node<a,x> -|- y::node<a,x> * x::node<a,y>.
+checkeq [x,y] x::node<a,_> * y::node<a,x> * x::node<a,_> * y::node<a,_> -|- y::node<a,x> * x::node<a,y> * x::node<a,_> * y::node<a,_> .
 
 //5. Fail
-checkeq[] x::node<a,y> * y::node<a,x> -|- x::node<a,x> * t::node<a,y>.
+checkeq[] x::node<a,y> * y::node<a,x> * x::node<a,_> * y::node<a,_>  -|- x::node<a,x> * t::node<a,y> * x::node<a,_> * y::node<a,_>.
 
 //6. Fail
-checkeq[x] x::node<a,y> * y::node<a,x> -|- x::node<a,x> * z::node<a,y>.
+checkeq[x] x::node<a,y> * y::node<a,x> * x::node<a,_> * y::node<a,_> -|- x::node<a,x> * z::node<a,y> * x::node<a,_> * y::node<a,_>.
 
 //7.Fail
-checkeq[] x::node<a,y> * y::node<a,x> -|- y::node<a,x> * x::node<a,y>*z::node<_,_>.
+checkeq[] x::node<a,y> * y::node<a,x> * x::node<a,_> * y::node<a,_> -|- y::node<a,x> * x::node<a,y>*z::node<_,_>* x::node<a,_> * y::node<a,_>.
 
 //8.Fail
-checkeq[] x::node<a,y> * y::node<a,x> -|- y::node<a,x>.
+checkeq[] x::node<a,y> * y::node<a,x>* x::node<a,_> * y::node<a,_> -|- y::node<a,x>* x::node<a,_> * y::node<a,_>.

@@ -3,7 +3,7 @@ Test pure part: 2 elements (bform or bvar)
 */
 
 //1
-checkeq[] x & !x -|- y & !x.
+//checkeq[] x & !x -|- y & !x.
 //FAIL
 
 //2.
@@ -11,11 +11,11 @@ checkeq[x] x < 3 & (x = 7) -|- x < 3 & (x = 7).
 //VALID
 
 //3.
-checkeq[] !x & y > 3 -|- t > 3 & !x.
+//checkeq[] !x & y > 3 -|- t > 3 & !x.
 //VALID
 
 //4.
-checkeq[] !x | x  -|- !y | y.
+//checkeq[] !x | x  -|- !y | y.
 //VALID
 
 //5.

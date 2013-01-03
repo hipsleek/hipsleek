@@ -7639,8 +7639,12 @@ and trans_test_comps prog tcomps =
     | None -> None
     | Some t ->
 	      Some  {
-	          C.expected_ass = trans_expected_ass prog t.Iast.expected_ass;
+	          C.expected_hpass = trans_expected_ass prog t.Iast.expected_hpass;
 	          C.expected_hpdefs = trans_expected_ass prog t.Iast.expected_hpdefs;
+		  C.expected_pureass = trans_expected_ass prog t.Iast.expected_pureass;
+		  C.expected_reldefs = trans_expected_ass prog t.Iast.expected_reldefs;
+		  C.expected_twof = trans_expected_ass prog t.Iast.expected_twof;
+		  C.expected_onef = trans_expected_onef prog t.Iast.expected_onef;
 	      }
 
 and trans_expected_ass prog ass =
@@ -7661,6 +7665,51 @@ and trans_expected_ass prog ass =
   match ass with
     | None -> None 
     | Some (il,sl,assl) -> Some(il,sl,helper assl)
+
+and trans_expected_onef prog formulas =
+  let trans_f prog i_f = 
+    let stab =  H.create 103 in
+    let i_f = case_normalize_formula prog [] i_f in
+    let _ = gather_type_info_formula prog i_f stab false in
+    (*let _ = print_endline ("typechecker1: stab: " ^ Astsimp.string_of_stab stab ) in *)
+    let f = trans_formula prog false [] false i_f stab false in
+    f
+  in
+  let helper fs = List.map (fun one_f -> trans_f prog one_f) fs in		    
+  match formulas with
+    | None -> None 
+    | Some (il,sl,fs) -> Some(il,sl,helper fs)
+
+and trans_test_comps_no_option prog t =		  
+			{
+			  C.expected_hpass = trans_expected_ass prog t.Iast.expected_hpass;
+			  C.expected_hpdefs = trans_expected_ass prog t.Iast.expected_hpdefs;
+			  C.expected_pureass = trans_expected_ass prog t.Iast.expected_pureass;
+			  C.expected_reldefs = trans_expected_ass prog t.Iast.expected_reldefs;
+			  C.expected_twof = trans_expected_ass prog t.Iast.expected_twof;
+			  C.expected_onef = trans_expected_onef prog t.Iast.expected_onef;
+			}
+
+let trans_cpprocs iprog cpprocs =
+  let trans_cpproc iprog c =
+    let test_comps = trans_test_comps_no_option iprog c.Iast.cp_proc_test_comps in
+    {
+      C.cp_proc_name = c.Iast.cp_proc_name;
+      C.cp_proc_res = c.Iast.cp_proc_res;
+      C.cp_proc_test_comps = test_comps;
+    }
+  in
+  List.map (fun c -> trans_cpproc iprog c) cpprocs 
+
+let trans_cpprog iprog cpprocs =
+  let cprog =  trans_prog iprog in
+  let c = trans_cpprocs iprog cpprocs in
+  {
+    C.cp_hprog = cprog;
+    C.cp_cpproc_decls = c;
+  }
+
+
 
 (******end trans_test_components**********)
 

@@ -1,46 +1,26 @@
-Starting Omega...oc
-ll is defined.
-rr is defined.
+//heap formula
+data node { int val ; node next }.
 
-!!! EQ. FMT: [[(flted_8_16, flted_8_22), (a, c)]]
-!!! EQ. FMT: [[(flted_8_22, flted_8_16), (c, a)]]
-Checkeq (1) : Valid.
-!!! DIFF PART: [ x::node<a,flted_12_27>]
-!!! DIFF PART: [ y::node<c,flted_12_33>&x=y]
-Checkeq (2) : Fail.
+//1. Valid
+checkeq[] x::node<a,_> * y::node<a,_> * x::node<a,_> * y::node<a,_> -|- y::node<a,_> * x::node<a,_>* x::node<a,_> * y::node<a,_>.
 
-!!! DIFF PART: [ x::node<a,flted_19_40>]
-!!! DIFF PART: [ y_47::node<c,flted_19_46>&x=y_47]
-Checkeq (3) : Fail.
+//2. Valid
+checkeq[] x::node<a,y> * y::node<a,x> * x::node<a,_> * y::node<a,_> -|- y::node<a,x> * x::node<a,y> * x::node<a,_> * y::node<a,_>. 
 
-!!! EQ. FMT: [[(flted_26_54, flted_26_60), (a, c)]]
-!!! DIFF PART: [ emp&x=y]
-Checkeq (4) : Fail.
+//3.Valid
+checkeq [x] x::node<a,y> * y::node<a,x> * x::node<a,_> * y::node<a,_> -|- y::node<a,x> * x::node<a,y> * x::node<a,_> * y::node<a,_>.
 
-!!! EQ. FMT: [[(b, d), (a, c)]]
-!!! EQ. FMT: [[(d, b), (c, a)]]
-Checkeq (5) : Valid.
-!!! DIFF PART: [ x::node2<a,a>]
-!!! EQ. FMT: [[]]
-!!! DIFF PART: [ x::node2<c,d>]
-!!! EQ. FMT: [[]]
-Checkeq (6) : Fail.
+//4. Fail
+checkeq [x,y] x::node<a,_> * y::node<a,x> * x::node<a,_> * y::node<a,_> -|- y::node<a,x> * x::node<a,y> * x::node<a,_> * y::node<a,_> .
 
-!!! DIFF PART: [ x::node2<a,b>]
-!!! EQ. FMT: [[]]
-!!! DIFF PART: [ x::node2<c,c>]
-!!! EQ. FMT: [[]]
-Checkeq (7) : Fail.
+//5. Fail
+checkeq[] x::node<a,y> * y::node<a,x> * x::node<a,_> * y::node<a,_>  -|- x::node<a,x> * t::node<a,y> * x::node<a,_> * y::node<a,_>.
 
-!!! DIFF PART: [ emp&a=b]
-!!! EQ. FMT: [[(b, d), (a, c)]]
-!!! DIFF PART: [ emp&true]
-!!! EQ. FMT: [[(d, b), (c, a)]]
-Checkeq (8) : Fail.
+//6. Fail
+checkeq[x] x::node<a,y> * y::node<a,x> * x::node<a,_> * y::node<a,_> -|- x::node<a,x> * z::node<a,y> * x::node<a,_> * y::node<a,_>.
 
-!!! EQ. FMT: [[(b, d), (a, c)]]
-!!! EQ. FMT: [[(d, b), (c, a)]]
-Checkeq (9) : Valid.
-!!! EQ. FMT: [[(b, d), (a, c)]]
-!!! EQ. FMT: [[(d, b), (c, a)]]
-Checkeq (10) : Valid.Stop Omega... 0 invocations 
+//7.Fail
+checkeq[] x::node<a,y> * y::node<a,x> * x::node<a,_> * y::node<a,_> -|- y::node<a,x> * x::node<a,y>*z::node<_,_>* x::node<a,_> * y::node<a,_>.
+
+//8.Fail
+checkeq[] x::node<a,y> * y::node<a,x>* x::node<a,_> * y::node<a,_> -|- y::node<a,x>* x::node<a,_> * y::node<a,_>.
