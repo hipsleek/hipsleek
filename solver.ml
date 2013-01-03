@@ -4926,9 +4926,9 @@ and heap_entail_thread_x prog (estate: entail_state) (conseq : formula) (a1: one
     let pr_out =
       pr_pair (pr_option (pr_pair Cprinter.string_of_one_formula Cprinter.string_of_one_formula)) (Cprinter.string_of_one_formula_list)
     in
-    Debug.no_2 "compute_thread_one_match"
-        Cprinter.string_of_one_formula_list  Cprinter.string_of_one_formula pr_out
-        (fun _ _ -> compute_thread_one_match_x a1 one_f alla allc) a1 one_f
+    Debug.no_4 "compute_thread_one_match"
+        Cprinter.string_of_one_formula_list  Cprinter.string_of_one_formula Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula pr_out
+        compute_thread_one_match_x a1 one_f alla allc
   in
   (*find all matched pairs*)
   let compute_thread_matches_x a1 a2 alla allc=

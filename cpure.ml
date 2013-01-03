@@ -10056,7 +10056,7 @@ and translate_waitlevel_pure (pf : formula) : formula =
   Debug.no_1 "translate_waitlevel_pure" !print_formula !print_formula 
       translate_waitlevel_pure_x pf
 
-let find_closure (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list = 
+let find_closure_x (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list = 
   let rec helper (vs: spec_var list) (vv:(spec_var * spec_var) list) =
     match vv with
       | (v1,v2)::xs -> 
@@ -10070,7 +10070,23 @@ let find_closure (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list =
             | Some x -> helper (x::vs) xs)
       | [] -> vs
   in
-  helper [v] vv
+  let vs = [v] in
+  let rec helper_loop vs vv =
+    let vs_new = helper vs vv in
+    if (Gen.BList.difference_eq eq_spec_var vs_new vs) =[] then
+      vs (* Reach a fixpoint*)
+    else
+      (*if found new vars --> iterate*)
+      helper_loop vs_new vv
+  in
+  helper_loop [v] vv
+
+let find_closure (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list = 
+  Debug.no_2 "find_closure" 
+      !print_sv
+      (pr_list (pr_pair !print_sv !print_sv))
+      !print_svl
+      find_closure_x v vv
 
 let find_closure_pure_formula_x (v:spec_var) (f:formula) : spec_var list = find_closure v (pure_ptr_equations f)
 

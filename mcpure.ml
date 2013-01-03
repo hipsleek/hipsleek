@@ -353,13 +353,19 @@ and pure_bag_equations_aux with_emp (f:formula) : (spec_var * spec_var) list =
 (* assume that f is a satisfiable conjunct *) 
 (* returns a list of ptr eqns v1=v2 that can be found in memo_pure *)
 (* and called during matching of predicates *)
-and ptr_equations_aux_mp with_null (f : memo_pure) : (spec_var * spec_var) list =  
+and ptr_equations_aux_mp_x with_null (f : memo_pure) : (spec_var * spec_var) list =  
   let helper f = 
     let r = List.fold_left (fun a c -> (a @ b_f_ptr_equations c.memo_formula)) [] f.memo_group_cons in
     let r = List.fold_left (fun a c -> a @ (pure_ptr_equations_aux with_null c)) r f.memo_group_slice in
     let eqs = (if !enulalias(*with_null*) then get_equiv_eq_with_null else get_equiv_eq) f.memo_group_aset in
     r @ eqs in
   List.concat (List.map helper f)
+
+and ptr_equations_aux_mp with_null (f : memo_pure) : (spec_var * spec_var) list =
+  let pr_out = pr_list (pr_pair !print_sv !print_sv) in
+  Debug.no_2 "ptr_equations_aux_mp"
+      string_of_bool !print_mp_f pr_out
+      ptr_equations_aux_mp_x with_null f
 
 and bag_equations_aux_mp with_emp (f : memo_pure) : (spec_var * spec_var) list =  
   let helper f = 

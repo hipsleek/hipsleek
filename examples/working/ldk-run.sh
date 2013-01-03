@@ -11,6 +11,9 @@ echo "*************************************"
 ./run-fast-tests.pl hip -flags "--eps --dis-para"
 echo "*************************************"
 echo "*************************************"
+./run-fast-tests.pl sleek_fracperm
+echo "*************************************"
+echo "*************************************"
 ./run-fast-tests.pl sleek_vperm
 echo "*************************************"
 ./run-fast-tests.pl sleek_vperm -flags "--eps"
