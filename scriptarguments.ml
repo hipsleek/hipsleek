@@ -157,6 +157,8 @@ let common_arguments = [
 	"Turn off set-of-states search");
 	("--unsat-elim", Arg.Set Globals.elim_unsat,
     "Turn on unsatisfiable formulae elimination during type-checking");
+  ("--en-disj-compute", Arg.Set Globals.disj_compute_flag,
+   "Enable re-computation of user-supplied disj. invariant");
 	("-nxpure", Arg.Set_int Globals.n_xpure,
     "Number of unfolding using XPure");
 	("-fixcalc-disj", Arg.Set_int Globals.fixcalc_disj,
