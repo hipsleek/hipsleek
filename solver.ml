@@ -5505,8 +5505,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                 let merge_rel_ass (rs1,rs2) = 
                   let ps1 = List.map (fun (_,a,_) -> a) rs1 in
                   let ps2 = List.map (fun (_,a,_) -> a) rs2 in
-                  if Gen.BList.intersect_eq CP.equalFormula ps1 ps2 != [] then report_error pos "merge_rel_ass: Not supported yet"
-                  else rs1 @ rs2 
+                  (* if Gen.BList.intersect_eq CP.equalFormula ps1 ps2 != [] then report_error pos "merge_rel_ass: Not supported yet" *)
+                  (* else *) rs1 @ rs2 
                 in
                 List.fold_left (fun (a,b,c,d) (a1,b1,c1,d1) -> 
                   (or_option_ip1 (a,a1),or_option_ip2 (b,b1),merge_rel_ass (c,c1),d@d1)) (None,None,[],[]) res
