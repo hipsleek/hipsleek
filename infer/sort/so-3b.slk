@@ -7,42 +7,77 @@ data node {
 relation R(int a).
 relation R2(int a, int b).
 
+//(1)
 infer [R] R(v) & R(w)  |- v>=1.
 print residue.
-//<1>emp&R(v) & R(w)&{FLOW,(19,20)=__norm}[]
-//inferred rel: [RELASS [R]: ( R(v) & R(w)) -->  1<=v]
-// expecting:
-// [R(v) --> 1<=v]
+// <1>emp&R(v) & R(w)&{FLOW,(19,20)=__norm}[]
+// inferred rel: [RELASS [R]: ( R(v)) -->  1<=v]
+// expecting 1<=v in residual
 
+//(2)
 infer [R] R(v) & R(w)  |- w>=0.
 print residue.
 //<1>emp&R(v) & R(w)&{FLOW,(19,20)=__norm}[]
-//inferred rel: [RELASS [R]: ( R(v) & R(w)) -->  0<=w]
-// expecting:
 // [R(w) --> w>=0]
+// expecting w>=0 in residue
 
-
+//(3)
 infer [R] R(v) & R(w)  |- v>=1 & w>=0.
 print residue.
-//<1>emp&R(v) & R(w)&{FLOW,(19,20)=__norm}[]
-//inferred rel: [RELASS [R]: ( R(v) & R(w)) -->  1<=v & 0<=w]
-// expecting:
-// [R(v) --> 1<=v; R(w) --> w>=0] 
+// <1>emp&R(v) & R(w)&{FLOW,(19,20)=__norm}[]
+// inferred rel: [RELASS [R]: ( R(v)) -->  1<=v; RELASS [R]: ( R(w)) -->  0<=w]
+// expecting 1<=v & w>=0 in residue
 
-infer [R] R(v) & R(w)  |- v>=w.
-print residue.
-//<1>emp&R(v) & R(w)&{FLOW,(19,20)=__norm}[]
-//inferred rel: [RELASS [R]: ( R(v) & R(w)) -->  w<=v]
-// expecting FAILURE..
-
+//(4)
 infer [R2] R2(v,x) & x>=w   |- v>=w.
 print residue.
 // <1>emp&R2(v,x) & w<=x&{FLOW,(19,20)=__norm}[]
 // inferred rel: [RELASS [R2]: ( R2(v,x)) -->  x<=v]
 
+//(5)
+infer [R] R(v) & R(w)  |- v>=w.
+print residue.
+//<1>emp&R(v) & R(w)&{FLOW,(19,20)=__norm}[]
+//Entail (5) : Fail.
+
+//(6)
+infer [R] R(v) & w=1  |- v>=w.
+print residue.
+// <1>emp&R(v) & w=1&{FLOW,(19,20)=__norm}[]
+// inferred rel: [RELASS [R]: ( R(v)) -->  1<=v]
+// add 1<=v in residue
+
+//(7)
+infer [R] R(v) & w=v  |- v+w>2.
+print residue.
+// <1>emp&R(v) & v=w&{FLOW,(19,20)=__norm}[]
+// inferred rel: [RELASS [R]: ( R(v)) -->  2<=v]
+// add 2<=v to residue
+
+//(8)
+infer [R] R(v) & w=v  |- v+w>3.
+print residue.
+// <1>emp&R(v) & v=w&{FLOW,(19,20)=__norm}[]
+// inferred rel: [RELASS [R]: ( R(v)) -->  2<=v]
+// add 2<=v to residue
+
+//(9)
+infer [R] R(v) & v<=z  |- v<z.
+print residue.
+///Entail (10) : Fail.
+
+//(10)
 infer [R,R2] R2(v,x) & R(w) & x>=w   |- v>=w.
 print residue.
 // <1>emp&R2(v,x) & R(w) & w<=x&{FLOW,(19,20)=__norm}[]
 // inferred rel: [RELASS [R2,R]: ( R2(v,x) & R(w) & w<=x) -->  w<=v]
 // expecting 
 // inferred rel: [RELASS [R2]: ( R2(v,x)) -->  x<=v]
+
+//(11)
+infer [R] R(v) & R(w) & w=1  |- v>=w.
+print residue.
+//Entail (6) : Fail.
+//wrong to fail here
+// expecting
+// inferred rel: [RELASS [R]: ( R(v)) -->  1<=v]
