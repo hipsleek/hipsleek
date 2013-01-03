@@ -1,0 +1,66 @@
+data node {
+  int val;
+  node next;
+}.
+
+HeapPred H(node a).
+HeapPred H1(node a).
+HeapPred G(node a, node b).
+HeapPred HP_535(node a, node b).
+
+
+checkeq[x] x=1 -|- y=1.
+// fail
+
+checkeq[x] x=1 -|- x=1.
+// valid
+
+checkeq[x] x=1 -|- 1=x.
+// valid
+
+checkeq[x] x=1 & x=1 -|- 1=x.
+// Fail but could be equal modular pure duplication
+
+//(5)
+checkeq[x] x=y & y=1 -|- x=1.
+// valid
+
+checkeq[x] x=y & y=z & z=1 -|- x=1.
+// valid
+
+//(7)
+checkeq[] x=1 -|- y=1.
+// valid but should fail unless extra-soft option turned on
+
+//(8)
+checkeq[] x=1 -|- x=1.
+// valid but should fail unless extra-soft option turned on
+
+//(9)
+checkeq[x,y] y=2 & x=1 -|- x=1 & y=2.
+// valid 
+
+//(10)
+checkeq[x,y] y=z & z=2 & x=1 -|- x=1 & y=2.
+// valid
+
+//(11)
+checkeq[x,y] x=y & x=1 -|- y=1.
+// fail but should be valid since it is no different from (5)
+
+//(12)
+checkeq[x] x=1 -|- x=y & y=1.
+// valid
+
+//(13)
+checkeq[x] x=1 & y=2 -|- x=1 & y=2.
+// valid but should fail unless extra-soft option turned on
+
+//(14)
+checkeq[x] x=1 & y=2 -|- x=1 & z=2.
+// valid but should fail unless extra-soft option turned on
+
+
+
+
+
