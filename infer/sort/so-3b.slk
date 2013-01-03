@@ -1,0 +1,29 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+
+relation R(int a).
+
+
+infer [R] R(v) & R(w)  |- v>=1.
+print residue.
+//<1>emp&R(v) & R(w)&{FLOW,(19,20)=__norm}[]
+//inferred rel: [RELASS [R]: ( R(v) & R(w)) -->  1<=v]
+
+
+infer [R] R(v) & R(w)  |- w>=0.
+print residue.
+//<1>emp&R(v) & R(w)&{FLOW,(19,20)=__norm}[]
+//inferred rel: [RELASS [R]: ( R(v) & R(w)) -->  0<=w]
+
+
+infer [R] R(v) & R(w)  |- v>=1 & w>=0.
+print residue.
+
+//<1>emp&R(v) & R(w)&{FLOW,(19,20)=__norm}[]
+//inferred rel: [RELASS [R]: ( R(v) & R(w)) -->  1<=v & 0<=w]
+
+
+
