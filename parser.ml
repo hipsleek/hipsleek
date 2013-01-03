@@ -145,6 +145,11 @@ let un_option s d = match s with
   
 let error_on_dups f l p = if (Gen.BList.check_dups_eq f l) then report_error p ("list contains duplicates") else l
 
+let filter_var_decl_dots s pos= 
+	if String.contains s '.' then 
+		report_error pos ("local variable names should not contain the '.' character")
+	else s
+	
 let label_formula f ofl = (match f with 
           | P.BForm (b,_) -> P.BForm (b,ofl)
           | P.And _ -> f
@@ -1850,8 +1855,14 @@ local_constant_declaration: [[ `CONST; lvt=local_variable_type; cd=constant_decl
 variable_declarators: [[ t= LIST1 variable_declarator SEP `COMMA -> t]];
   
 variable_declarator:
-  [[ `IDENTIFIER id; `EQ; t=variable_initializer  -> (* print_string ("Identifier : "^id^"\n"); *) (id, Some t, get_pos_camlp4 _loc 1)
-   | `IDENTIFIER id -> (* print_string ("Identifier : "^id^"\n"); *)(id, None, get_pos_camlp4 _loc 1) ]];
+  [[ `IDENTIFIER id; `EQ; t=variable_initializer  -> 
+	(* print_string ("Identifier : "^id^"\n"); *) 
+	let pos  = get_pos_camlp4 _loc 1 in 
+	(filter_var_decl_dots id pos, Some t, pos)
+   | `IDENTIFIER id -> 
+	(* print_string ("Identifier : "^id^"\n"); *)
+	let pos  = get_pos_camlp4 _loc 1 in 
+    (filter_var_decl_dots id pos, None, pos) ]];
 
 variable_initializer: [[t= expression ->t]];
 

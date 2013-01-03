@@ -6092,7 +6092,9 @@ let isNonFalseListFailescCtx cl =
  List.exists (fun (_,el,ss)-> 
   let ess = (colapse_esc_stack el)@ss in
   ((List.length ess) >0) && not (List.for_all (fun (_,c) -> isAnyFalseCtx c) ess )) cl
-
+  
+let isAllEscInFailescCtx cl = List.for_all (fun (_,el,ss)-> ss==[] && el!=[]) cl
+  
 let keep_failure_failesc_context ((c,es,sc): failesc_context) : failesc_context =
   (c,[],[])
 
