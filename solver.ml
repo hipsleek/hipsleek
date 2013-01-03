@@ -5503,8 +5503,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                   | Some pf1,Some pf2 -> Some (CP.mkOr pf1 pf2 None pos))
                 in
                 let merge_rel_ass (rs1,rs2) = 
-                  let ps1 = List.map (fun (_,a,_) -> a) rs1 in
-                  let ps2 = List.map (fun (_,a,_) -> a) rs2 in
+(*                  let ps1 = List.map (fun (_,a,_) -> a) rs1 in*)
+(*                  let ps2 = List.map (fun (_,a,_) -> a) rs2 in*)
                   (* if Gen.BList.intersect_eq CP.equalFormula ps1 ps2 != [] then report_error pos "merge_rel_ass: Not supported yet" *)
                   (* else *) rs1 @ rs2 
                 in
@@ -5522,9 +5522,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                                 let _ = if entail_states = [] then stk_estate # push es 
                                   else stk_estate # push_list entail_states in
                                 (true,[],None))
-                          | h::_ ->
+                          | _ ->
                                 (stk_inf_pure # push p;
-                                stk_rel_ass # push h;
+                                stk_rel_ass # push_list relass;
                                 let _ = if entail_states = [] then stk_estate # push es 
                                   else stk_estate # push_list entail_states in
                                 (true,[],None))
@@ -5537,8 +5537,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                                   match relass with
                                     | [] -> 
                                           i_res1,i_res2,i_res3
-                                    | h::_ -> (* stk_inf_pure # push pf; *)
-                                          stk_rel_ass # push h;
+                                    | _ -> (* stk_inf_pure # push pf; *)
+                                          stk_rel_ass # push_list relass;
                                           (true,[],None)
                                 end
 
