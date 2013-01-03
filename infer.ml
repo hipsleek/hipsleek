@@ -851,10 +851,14 @@ let rec infer_pure_m estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig 
                     else 
                       (* TODO: Need better split RHS *)
                       let _ = DD.ninfo_hprint (add_str "RHS : " !CP.print_formula) rhs_xpure pos in             
-                      let rel_ass = List.map (fun x -> 
-                        let lhs = CP.conj_of_list (List.filter (fun y -> 
-                          CP.intersect (CP.fv y) (CP.fv x) != []) (CP.list_of_conjs f)) pos in
-                        (RelAssume vs_rel,lhs,x)) (CP.list_of_conjs p_ass) in
+                      let rel_ass = List.concat (List.map (fun x -> 
+                        let lhs_conjs = List.filter (fun y -> 
+                          CP.intersect (CP.fv y) (CP.fv x) != []) (CP.list_of_conjs f) in
+                        let rel_ids = List.concat (List.map get_rel_id_list lhs_conjs) in
+                        if CP.remove_dups_svl rel_ids = rel_ids 
+                        then [RelAssume vs_rel,CP.conj_of_list lhs_conjs pos,x]
+                        else []
+                        ) (CP.list_of_conjs p_ass)) in
 (*                      let rel_ass = [RelAssume vs_rel,f,p_ass] in*)
                       let _ = infer_rel_stk # push_list rel_ass in
                       let _ = Log.current_infer_rel_stk # push_list rel_ass in
