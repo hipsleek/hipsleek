@@ -5482,14 +5482,16 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
               | None -> let r1,r2,r3 = Inf.infer_pure_m estate split_ante1 split_ante0 m_lhs split_conseq pos in
                 r1,r2,r3,[]
               | Some (split1,split2) -> 
-                (* TO CHECK: Are split1 & split2 the same ? *)
-                let split_mix1 = List.map MCP.mix_of_pure split1 in
+(*                let split_mix1 = List.map MCP.mix_of_pure split1 in*)
+                let split_mix2 = List.map MCP.mix_of_pure split2 in
                 let res = List.map (fun f -> 
-                    let r1,r2,r3 = Inf.infer_pure_m estate f f f split_conseq pos in
+                    (* TODO: lhs_wo_heap *)
+                    let lhs_wo_heap = f in
+                    let r1,r2,r3 = Inf.infer_pure_m estate f f lhs_wo_heap split_conseq pos in
                     let estate_f = {estate with es_formula = mkBase_simp HEmp f} in
                     (match r1 with 
                       | None -> r1,r2,r3,[estate_f]
-                      | Some (es,_) -> r1,r2,r3,[es])) split_mix1 in
+                      | Some (es,_) -> r1,r2,r3,[es])) split_mix2 in
                 let or_option_ip1 (o1,o2) = (match o1,o2 with
                   | None,_ -> o2
                   | _,None -> o1
@@ -5500,8 +5502,14 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                   | _,None -> o1
                   | Some pf1,Some pf2 -> Some (CP.mkOr pf1 pf2 None pos))
                 in
+                let merge_rel_ass (rs1,rs2) = 
+                  let ps1 = List.map (fun (_,a,_) -> a) rs1 in
+                  let ps2 = List.map (fun (_,a,_) -> a) rs2 in
+                  if Gen.BList.intersect_eq CP.equalFormula ps1 ps2 != [] then report_error pos "merge_rel_ass: Not supported yet"
+                  else rs1 @ rs2 
+                in
                 List.fold_left (fun (a,b,c,d) (a1,b1,c1,d1) -> 
-                  (or_option_ip1 (a,a1),or_option_ip2 (b,b1),(*TODO*)c@c1,d@d1)) (None,None,[],[]) res
+                  (or_option_ip1 (a,a1),or_option_ip2 (b,b1),merge_rel_ass (c,c1),d@d1)) (None,None,[],[]) res
             end
             in
             begin
