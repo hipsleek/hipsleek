@@ -33,6 +33,7 @@ infer [R2] R2(v,x) & x>=w   |- v>=w.
 print residue.
 // <1>emp&R2(v,x) & w<=x&{FLOW,(19,20)=__norm}[]
 // inferred rel: [RELASS [R2]: ( R2(v,x)) -->  x<=v]
+// expecting x<=v to be added to residue
 
 //(5)
 infer [R] R(v) & R(w)  |- v>=w.
@@ -81,3 +82,18 @@ print residue.
 //wrong to fail here
 // expecting
 // inferred rel: [RELASS [R]: ( R(v)) -->  1<=v]
+
+/*
+
+(a)  R(v) & D1 --> D2
+       D1 -> D2  (valid)
+(b)  R(v) & D1 --> D2
+       D1 /\ D2 -> false  (contradiction)
+     W=free_vars(D1)-v
+     REL_ASS R(v) --> forall W. not(D1)
+(c)  R(v) & D1 --> D2
+       D1 /\ D2 -> false  (contradiction)
+     W=free_vars(D1)-v
+     REL_ASS R(v) --> forall W. not(D1) \/ D2
+
+*/
