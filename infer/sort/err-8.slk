@@ -7,15 +7,54 @@ relation R(int a).
 
 infer [R] x::node<a,null> & R(a) |- x::node<v1,null> .
 print residue.
+// valid
 
 infer [R] x::node<a,null> & R(a) |- x::node<v1,null> & v1>=0 .
 /*
  inferred answer is wrong as f=null is separately provable
  inferred rel: [RELASS [R]: ( R(a)) -->  flted_20_104=null & 0<=a]
+
+ expecting just R(a) --> 0<=a
+
 */
 print residue.
 
+infer [R] a=v1 & b=null & R(a) |- b=null & v1>=0 .
+print residue.
+/*
+ <1>emp&a=v1 & b=null & R(a)&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [R]: ( R(a)) -->  b=null & 0<=a]
+ why different from below : --> duplicated codes.
+*/
+
+infer [a] a=v1 & b=null |- b=null & v1>=0 .
+print residue.
+// inferred pure: [0<=a]
+
+infer [b,z] a>b |- a>z.
+print residue.
+// inferred pure: [z<=b]
+
+relation R2(int a, int b).
+
+infer [R2] a>b & R2(b,z) |- a>z.
+print residue.
+//inferred rel: [RELASS [R2]: ( R2(b,z)) -->  z<=b]
 
 
+infer [b,z] a>=b |- a>z.
+print residue.
+//inferred pure: [(1+z)<=b]
 
 
+relation R2(int a, int b).
+
+infer [R2] a>=b & R2(b,z) |- a>z.
+print residue.
+// inferred rel: [RELASS [R2]: ( R2(b,z)) -->  z<b]
+// why different from above? This indicates that
+// there are two similar (duplicated codes)
+
+infer [b,z,a] a>=b |- a>z.
+print residue.
+//inferred pure: [(1+z)<=b]
