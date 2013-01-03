@@ -17,67 +17,13 @@ pred ll<n> == self=null & n=0
 //inv self=null & n=0 | self!=null & n>0.
 inv n>=0.
 
-/*
-//OK
-infer [R] x::node<a,null> & R(a) |- x::node<v1,null> & v1>=0 .
-print residue.
 
 
-//OK
-infer [n] x::ll<n> |- x=null.
-print residue.
-
-infer [n] x::llSP<n,R> |- x=null .
-print residue.
-
-infer [n,R] x::llSP<n,R> |- x::node<v1,null> .
-print residue.
-
-infer [n,R] x::node<a,q>*q::llSP<n,R> & R(a) |- x::node<v1,null> .
-print residue.
-
-*/
-infer [n,R] x::llSP<n,R> |- x::node<v1,null> .
-print residue.
-
-
-infer [n,R] x::node<a,q>*q::llSP<n,R> & R(a) |- x::node<v1,null> & v1>=0 .
-print residue.
-
-infer [n,R] x::llSP<n,R> & R(v1) |- x=null & v1>=0 .
-print residue.
-
-infer [n] x::ll<n> |- x=null.
-print residue.
-/*
- <1>emp&x=null & n=0&{FLOW,(19,20)=__norm}[]
- inferred pure: [n<=0]
-Would gist on xpure(LHS)=n>=0 be helpful?
-Maybe not as useful as gist on postcondition
-
-*/
-
-//infer [n,R] x::llSP<n,R> |- x::node<v1,q>*q::node<v2,null>&v1>=0 & v2>1.
-//print residue.
-/*
-<1>EXISTS(flted_10_127,p_144,flted_10_142: emp&flted_10_127=flted_10_142+1 & R(v2) & n=flted_10_127+1 & R(v1) & q!=x & q!=null & x!=null & p_144=null & flted_10_142=0&{FLOW,(19,20)=__norm})[]
- inferred pure: [n<=2; n!=0; n!=1]
- inferred rel: [RELASS [R]: ( R(v_143) & R(v_128)) -->  0<=v_128 & 2<=v_143]
-
-I think we should have instead two obligations"
- inferred rel: [RELASS [R]: ( R(v_143) -->  2<=v_143
-               ,(R(v_128) -->  0<=v_128]
-
-If needed, this can be combined into:
- inferred rel: [RELASS [R]: R(v) -->  2<=v & 0<=v]
-
-infer [n,R] x::llSP<n,R> |- x::node<v1,q> & v1>=0 .
-print residue.
-
-*/
 
 infer [n] x::ll<n> |- x::node<v1,q> .
+print residue.
 /*
+OK
  <1>EXISTS(flted_16_110: q::ll<flted_16_110>@M[0][Orig]&n=flted_16_110+1&{FLOW,(19,20)=__norm})[]
  inferred pure: [n!=0]
 */
@@ -85,11 +31,8 @@ infer [n] x::ll<n> |- x::node<v1,q> .
 infer [n,R] x::llSP<n,R> |- x::node<v1,q> .
 print residue.
 /*
-PROBLEM : why duplicates residues?
-<1>EXISTS(flted_10_131: q::llSP<flted_10_131,R>@M[0][Orig]&n=flted_10_131+1 & R(v1)&{FLOW,(19,20)=__norm})[]
- inferred pure: [n!=0]
-
- <1>EXISTS(flted_10_131: q::llSP<flted_10_131,R>@M[0][Orig]&n=flted_10_131+1 & R(v1)&{FLOW,(19,20)=__norm})[]
+OK
+ <1>EXISTS(flted_10_74: q::llSP<flted_10_74,R>@M[0][Orig]&n=flted_10_74+1 & R(v1)&{FLOW,(19,20)=__norm})[]
  inferred pure: [n!=0]
 */
 
