@@ -1778,10 +1778,10 @@ and no_change (svars : CP.spec_var list) (pos : loc) : CP.formula = match svars 
 		CP.mkAnd f restf pos
   | [] -> CP.mkTrue pos
 
-and mkEq fr_svl to_svl pos: CP.formula=
-  let ss = List.combine to_svl fr_svl in
-  let fs = List.map (fun (sv1, sv2) -> CP.mkEqVar sv1 sv2 pos) ss in
-  List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) fs
+(* and mkEq fr_svl to_svl pos: CP.formula= *)
+(*   let ss = List.combine to_svl fr_svl in *)
+(*   let fs = List.map (fun (sv1, sv2) -> CP.mkEqVar sv1 sv2 pos) ss in *)
+(*   List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) fs *)
 
 and pos_of_struc_formula (f:struc_formula): loc =match f with
 	| ECase b -> b.formula_case_pos

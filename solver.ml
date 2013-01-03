@@ -1689,14 +1689,15 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
                           | Some f -> Cformula.propagate_perm_formula renamed_view_formula f) 
                       else renamed_view_formula
                     in
-                    let fr_rels,fr_rem = (List.partition CP.is_rel_typ vdef.view_vars) in
+                    (* let fr_rels,fr_rem = (List.partition CP.is_rel_typ vdef.view_vars) in *)
 	                let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))
-	                  :: fr_rem (*vdef.view_vars*) in
+	                  :: (* fr_rem *) vdef.view_vars in
                     let to_rels,to_rem = (List.partition CP.is_rel_typ vs) in
-	                let to_vars = v :: to_rem (* vs *) in
+	                let to_vars = v :: (* to_rem *) vs in
 	                let res_form = subst_avoid_capture fr_vars to_vars renamed_view_formula in
-                    let eq_p = CF.mkEq to_rels fr_rels pos in
-                    let res_form = CF.mkAnd_pure res_form (MCP.mix_of_pure eq_p) pos in
+                    (* let eq_p = CF.mkEq to_rels fr_rels pos in *)
+                    (* let res_form = CF.mkAnd_pure res_form (MCP.mix_of_pure eq_p) pos in *)
+
 		            (* let _ = print_string ("unfold pre subst: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in *)
 		            (*   let _ = print_string ("unfold post subst: "^(Cprinter.string_of_formula res_form)^"\n") in *)
 	                let res_form = add_origins res_form origs in
