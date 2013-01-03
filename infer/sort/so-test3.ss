@@ -10,6 +10,7 @@ inv true;
 
 /*should not rename relation when unfold*/
 void foo(node x)
+  infer[X1]
   requires x::sortHO<m,X1>
   ensures  true;
 {

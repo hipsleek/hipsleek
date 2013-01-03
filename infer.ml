@@ -1122,6 +1122,18 @@ let check_rank_const rank_fml lhs_cond = match rank_fml with
     | _ -> CP.mkTrue no_pos)
   | _ -> CP.mkTrue no_pos*)
 
+let find_close_infer_vars_rel_x lhs_mix es_infer_vars_rel=
+  let eqs = MCP.ptr_equations_without_null lhs_mix in
+  let eqs_rels = List.filter (fun (sv1,_) -> CP.is_rel_typ sv1) eqs in
+  let new_infer_vars_rel = SAU.find_close es_infer_vars_rel eqs_rels in
+  (CP.remove_dups_svl new_infer_vars_rel)
+
+let find_close_infer_vars_rel lhs_mix es_infer_vars_rel=
+  let pr1= !CP.print_svl in
+  let pr2 = Cprinter.string_of_mix_formula in
+  Debug.ho_2 "find_close_infer_vars_rel" pr2 pr1 pr1
+      (fun _ _ -> find_close_infer_vars_rel_x lhs_mix es_infer_vars_rel) lhs_mix es_infer_vars_rel
+
 (* Assume fml is conjs *)
 (*let filter_rank fml lhs_cond =
   let (rank, others) = List.partition (fun p -> CP.is_Rank_Dec p || CP.is_Rank_Const p) (CP.split_conjunctions fml) in
@@ -1135,8 +1147,10 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
   if no_infer_rel estate then (estate,lhs_mix,rhs_mix) 
   else 
     let ivs = estate.es_infer_vars_rel in
+    (*add instance of relational s0-pred*)
+    let new_es_infer_vars_rel = find_close_infer_vars_rel lhs_mix estate.CF.es_infer_vars_rel in
+    let estate = { estate with CF.es_infer_vars_rel = new_es_infer_vars_rel} in
     let rhs_p = MCP.pure_of_mix rhs_mix in
-
 (*    (* Eliminate dijs in rhs which cannot be implied by lhs and do not contain relations *)*)
 (*    (* Suppose rhs_p is in DNF *)*)
 (*    (* Need to assure that later *)*)
@@ -1266,7 +1280,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
         (* DD.info_hprint (add_str "Rel Inferred (simplified)" (pr_list print_lhs_rhs)) inf_rel_ls pos; *)
         infer_rel_stk # push_list inf_rel_ls;
         Log.current_infer_rel_stk # push_list inf_rel_ls;
-        let estate = { estate with es_infer_rel = estate.es_infer_rel@inf_rel_ls } in
+        let estate = { estate with es_infer_rel = estate.es_infer_rel@inf_rel_ls;} in
         if inf_rel_ls != [] then
           begin
             DD.tinfo_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
@@ -1300,7 +1314,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
   let pr1 = !print_mix_formula in
   let pr2 (es,l,r) = 
     pr_triple pr1 pr1 (pr_list CP.print_lhs_rhs) (l,r,es.es_infer_rel) in
-  Debug.no_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
+  Debug.ho_4 "infer_collect_rel" pr0 pr1 pr1 pr1 pr2
     (fun _ _ _ _ -> 
       infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos) 
     estate.es_infer_vars_rel lhs_h_mix lhs_mix rhs_mix
