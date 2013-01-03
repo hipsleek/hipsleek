@@ -823,18 +823,18 @@ c_typ:
 cid_typ:
   [[ `IDENTIFIER id ; t=OPT c_typ ->
       let ut = un_option t UNK in
-      (* let _ = *)
-      (*   (\* WN : code below uses side-effects and may also result in relational name clashes *\) *)
-      (*   if is_RelT ut then *)
-      (*     (\* let _ = print_endline ("ll: " ^ id) in *\) *)
-      (*     (\* let _ = rel_names # push id in *\) *)
-      (*     let rd = get_tmp_rel_decl () in *)
-      (*    (\*  let rd = {rd with rel_name = id} in *\) *)
-      (*   (\* (\\*push rd in the list*\\) *\) *)
-      (*   (\*   let _ = g_rel_defs # push rd in *\) *)
-      (*     () *)
-      (*   else () *)
-      (* in *)
+      let _ =
+        (* WN : code below uses side-effects and may also result in relational name clashes *)
+        if is_RelT ut then
+          (* let _ = print_endline ("ll: " ^ id) in *)
+          let _ = rel_names # push id in
+          (* let rd = get_tmp_rel_decl () in *)
+         (*  let rd = {rd with rel_name = id} in *)
+        (* (\*push rd in the list*\) *)
+        (*   let _ = g_rel_defs # push rd in *)
+          ()
+        else ()
+      in
         (ut,id)
    ]];
 
