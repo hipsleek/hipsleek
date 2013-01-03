@@ -35,10 +35,10 @@ let init_files () =
 	resultfilename := "result.txt." ^ (string_of_int (Unix.getpid()));
   end
 
-let omega_of_spec_var (sv : spec_var):string = match sv with
+let omega_of_spec_var pos (sv : spec_var):string = match sv with
   | SpecVar (t, v, p) -> 
 		begin
-			(if String.contains s '.' then 
+			(if String.contains v '.' then 
 				report_warning pos ("omega calculator does not support variable identifiers which contain the '.' character")
 			else ());
 			let r = match (List.filter (fun (a,b,_)-> ((String.compare v b)==0) )!omega_subst_lst) with
@@ -58,7 +58,7 @@ let omega_of_spec_var (sv : spec_var):string = match sv with
 
 let rec omega_of_exp e0 = match e0 with
   | Null _ -> "0"
-  | Var (sv, _) -> omega_of_spec_var sv
+  | Var (sv, pos) -> omega_of_spec_var pos sv
   | IConst (i, _) -> string_of_int i 
   | AConst (i, _) -> string_of_int(int_of_heap_ann i) 
   | Add (a1, a2, _) ->  (omega_of_exp a1)^ " + " ^(omega_of_exp a2) 
@@ -95,7 +95,7 @@ and omega_of_b_formula b =
   match pf with
   | BConst (c, _) -> if c then "(0=0)" else "(0>0)"
   | XPure _ -> "(0=0)"
-  | BVar (bv, _) ->  (omega_of_spec_var bv) ^ " > 0" (* easy to track boolean var *)
+  | BVar (bv, pos) ->  (omega_of_spec_var pos bv) ^ " > 0" (* easy to track boolean var *)
   | Lt (a1, a2, _) ->(omega_of_exp a1) ^ " < " ^ (omega_of_exp a2)
   | Lte (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
   | Gt (a1, a2, _) ->  (omega_of_exp a1) ^ " > " ^ (omega_of_exp a2)
@@ -144,8 +144,8 @@ and omega_of_formula pr_w pr_s f  =
   | And (p1, p2, _) -> 	"(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
   | Or (p1, p2,_ , _) -> 	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
   | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula pr_s pr_w p) ^ ")) "	
-  | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
-  | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
+  | Forall (sv, p,_ , pos) -> " (forall (" ^ (omega_of_spec_var pos sv) ^ ":" ^ (helper p) ^ ")) "
+  | Exists (sv, p,_ , pos) -> " (exists (" ^ (omega_of_spec_var pos sv) ^ ":" ^ (helper p) ^ ")) "
   in 
   try
 	helper f
@@ -369,7 +369,7 @@ let rec omega_of_var_list (vars : ident list) : string = match vars with
 let get_vars_formula (p : formula):(string list) =
   let svars = fv p in
   (*if List.length svars >= !oc_maxVars then (false, []) else*)
-  List.map omega_of_spec_var svars
+  List.map (omega_of_spec_var no_pos) svars
 
 (*
   Use Omega Calculator to test if a formula is valid -- some other
@@ -855,7 +855,7 @@ let gist (pe1 : formula) (pe2 : formula) : formula =
       | Some fstr1, Some fstr2 ->
             begin
               let vars_list = remove_dups_svl (fv pe1 @ fv pe2) in
-			  let l1 = List.map omega_of_spec_var vars_list  in
+			  let l1 = List.map (omega_of_spec_var no_pos) vars_list  in
               let vstr = String.concat "," l1  in
               let fomega =  "gist {[" ^ vstr ^ "] : (" ^ fstr1
                 ^ ")} given {[" ^ vstr ^ "] : (" ^ fstr2 ^ ")};" ^ Gen.new_line_str
