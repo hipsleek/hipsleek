@@ -1689,14 +1689,15 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
                           | Some f -> Cformula.propagate_perm_formula renamed_view_formula f) 
                       else renamed_view_formula
                     in
-                    let fr_rels,fr_rem = (List.partition CP.is_rel_typ vdef.view_vars) in
+                    (* let fr_rels,fr_rem = (List.partition CP.is_rel_typ vdef.view_vars) in *)
 	                let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))
-	                  :: fr_rem (*vdef.view_vars*) in
+	                  :: (* fr_rem *) vdef.view_vars in
                     let to_rels,to_rem = (List.partition CP.is_rel_typ vs) in
-	                let to_vars = v :: to_rem (* vs *) in
+	                let to_vars = v :: (* to_rem *) vs in
 	                let res_form = subst_avoid_capture fr_vars to_vars renamed_view_formula in
-                    let eq_p = CF.mkEq to_rels fr_rels pos in
-                    let res_form = CF.mkAnd_pure res_form (MCP.mix_of_pure eq_p) pos in
+                    (* let eq_p = CF.mkEq to_rels fr_rels pos in *)
+                    (* let res_form = CF.mkAnd_pure res_form (MCP.mix_of_pure eq_p) pos in *)
+
 		            (* let _ = print_string ("unfold pre subst: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in *)
 		            (*   let _ = print_string ("unfold post subst: "^(Cprinter.string_of_formula res_form)^"\n") in *)
 	                let res_form = add_origins res_form origs in
@@ -5451,8 +5452,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       DD.devel_hprint (add_str "ante0 : " Cprinter.string_of_mix_formula) split_ante0 pos;
       DD.devel_hprint (add_str "ante1 : " Cprinter.string_of_mix_formula) split_ante1 pos;
       DD.devel_hprint (add_str "conseq : " Cprinter.string_of_mix_formula) split_conseq pos;
-      let i_res1,i_res2,i_res3 = 
-        if (MCP.isConstMTrue rhs_p)  then (true,[],None)
+      let (i_res1,i_res2,i_res3),split_a_opt = 
+        if (MCP.isConstMTrue rhs_p)  then ((true,[],None),None)
 	    else let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
         (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
       in
@@ -5510,7 +5511,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                                   let split_ante0 = MCP.merge_mems split_ante0 new_pf true in 
                                   let split_ante1 = MCP.merge_mems split_ante1 new_pf true in
                                   let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no)) no_pos in
-                                  (imply_mix_formula 2 split_ante0 split_ante1 split_conseq imp_no memset)
+                                  fst (imply_mix_formula 2 split_ante0 split_ante1 split_conseq imp_no memset)
                                 end
                       end
             end in
@@ -5872,12 +5873,17 @@ and imply_mix_formula i ante_m0 ante_m1 conseq_m imp_no memset =
   Debug.no_4_num i "imply_mix_formula" Cprinter.string_of_mix_formula
       Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula 
       Cprinter.string_of_mem_formula
-      (fun (r,_,_) -> string_of_bool r)
+      (fun ((r,_,_),_) -> string_of_bool r)
       (fun ante_m0 ante_m1 conseq_m memset -> imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset)
       ante_m0 ante_m1 conseq_m memset
-
-and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset 
-      :bool *(formula_label option * formula_label option) list * formula_label option =
+(*
+type: MCP.mix_formula -> MCP.mix_formula -> MCP.mix_formula -> int ref ->
+  CF.mem_formula ->
+  bool * (Globals.formula_label option * Globals.formula_label option) list *
+  Globals.formula_label option * (split_ante0,split_ante1) option
+*)
+and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
+      (* :bool *(formula_label option * formula_label option) list * formula_label option  *)
   (*let _ = print_string ("\nAn Hoa :: imply_mix_formula ::\n" ^*)
   (*"ANTECEDENT = " ^ (Cprinter.string_of_mix_formula ante_m0) ^ "\n" ^*)
   (*"CONSEQUENCE = " ^ (Cprinter.string_of_mix_formula conseq_m) ^ "\n\n") in*) 
@@ -5889,16 +5895,16 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
           begin
             DD.devel_pprint ">>>>>> imply_mix_formula: memo <<<<<<" no_pos;
             (*print_endline "imply_mix_formula: first";*)
-            if (MCP.isConstMFalse conseq_m) then (false,[],None)
+            if (MCP.isConstMFalse conseq_m) then ((false,[],None),None)
             else 
               let r1,r2,r3 = MCP.imply_memo 1 a c TP.imply imp_no in
-              if r1 || not(!Globals.super_smart_xpure) then (r1,r2,r3) 
-              else MCP.imply_memo 2 a1 c TP.imply imp_no 
+              if r1 || not(!Globals.super_smart_xpure) then ((r1,r2,r3),None)
+              else (MCP.imply_memo 2 a1 c TP.imply imp_no,None)
                 (* TODO : This to be avoided if a1 is the same as a0; also pick just complex constraints *)
           end
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
           begin
-            DD.info_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
+            DD.ninfo_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
 	        let a0l,a1l = if CP.no_andl a0 && CP.no_andl a1 then (CP.split_disjunctions_deep a0,CP.split_disjunctions_deep a1)
     	    else 
 	          let r = ref (-8999) in
@@ -5907,10 +5913,10 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
 	          let a1l = List.filter is_sat (CP.split_disjunctions a1) in 
 	          (a0l,a1l) in
                 let pr = Cprinter.string_of_pure_formula in
-                DD.info_hprint (add_str "a0l" (pr_list pr)) a0l no_pos;
-                DD.info_hprint (add_str "a1l" (pr_list pr)) a1l no_pos;
+                DD.ninfo_hprint (add_str "a0l" (pr_list pr)) a0l no_pos;
+                DD.ninfo_hprint (add_str "a1l" (pr_list pr)) a1l no_pos;
             let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
-	        CP.imply_conj_orig a0l a1l new_rhs TP.imply imp_no
+	        (CP.imply_conj_orig a0l a1l new_rhs TP.imply imp_no, Some (a0l,a1l))
                 (* original code	        
 	               CP.imply_conj_orig
                    (CP.split_disjunctions a0) 

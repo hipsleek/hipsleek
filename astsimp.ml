@@ -1111,7 +1111,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 	      let addr_vars = CP.remove_dups_svl addr_vars' in
 	      let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
           (* let _ = print_endline ("\n xform: " ^ (Cprinter.string_of_mix_formula xform)) in *)
-          let xform1 = MCP.mix_of_pure (CP.drop_rel_formula (MCP.pure_of_mix xform)) in
+          let xform1 = MCP.mix_of_pure (TP.simplify_a 1 (CP.drop_rel_formula (MCP.pure_of_mix xform))) in
           (* let _ = print_endline ("\n xform1: " ^ (Cprinter.string_of_mix_formula xform1)) in *)
 	      (* let formula1 = CF.formula_of_mix_formula xform pos in *)
 	      (* let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in *)

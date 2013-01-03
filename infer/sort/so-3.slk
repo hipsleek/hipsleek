@@ -34,13 +34,13 @@ print residue.
 infer [n,R] x::node<a,q>*q::llSP<n,R> & R(a) |- x::node<v1,null> .
 print residue.
 
-*/
+
 infer [n,R] x::llSP<n,R> |- x::node<v1,null> .
 print residue.
 
 infer [n,R] x::node<a,q>*q::llSP<n,R> & R(a) |- x::node<v1,null> & v1>=0 .
 print residue.
-
+*/
 infer [n,R] x::llSP<n,R> & R(v1) |- x=null & v1>=0 .
 print residue.
 

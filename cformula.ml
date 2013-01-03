@@ -1778,10 +1778,10 @@ and no_change (svars : CP.spec_var list) (pos : loc) : CP.formula = match svars 
 		CP.mkAnd f restf pos
   | [] -> CP.mkTrue pos
 
-and mkEq fr_svl to_svl pos: CP.formula=
-  let ss = List.combine to_svl fr_svl in
-  let fs = List.map (fun (sv1, sv2) -> CP.mkEqVar sv1 sv2 pos) ss in
-  List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) fs
+(* and mkEq fr_svl to_svl pos: CP.formula= *)
+(*   let ss = List.combine to_svl fr_svl in *)
+(*   let fs = List.map (fun (sv1, sv2) -> CP.mkEqVar sv1 sv2 pos) ss in *)
+(*   List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) (CP.mkTrue pos) fs *)
 
 and pos_of_struc_formula (f:struc_formula): loc =match f with
 	| ECase b -> b.formula_case_pos
@@ -3136,8 +3136,11 @@ and rename_struc_clash_bound_vars (f1 : struc_formula) (f2 : formula) : struc_fo
 		  ECase {formula_case_exists = (snd (List.split new_exs));
 		  formula_case_branches = List.map (fun (c1,c2)-> ((Cpure.subst rho c1),(subst_struc rho c2))) r1;
 		  formula_case_pos = b.formula_case_pos}
-	| EBase b -> 
-		  let new_imp = List.map (fun v -> (if (check_name_clash v f2) then (v,(CP.fresh_spec_var v)) else (v,v))) b.formula_struc_implicit_inst in
+	| EBase b ->
+         (* let _ = Debug.info_pprint ("  b.formula_struc_implicit_inst " ^ (!CP.print_svl b.formula_struc_implicit_inst)) no_pos in *)
+         (* let _ = Debug.info_pprint ("  b.formula_struc_explicit_inst " ^ (!CP.print_svl b.formula_struc_explicit_inst)) no_pos in *)
+		  let new_imp = List.map (fun v -> (if (check_name_clash v f2) &&
+              not(CP.is_rel_typ v) then (v,(CP.fresh_spec_var v)) else (v,v))) b.formula_struc_implicit_inst in
 		  let new_exp = List.map (fun v -> (if (check_name_clash v f2) then (v,(CP.fresh_spec_var v)) else (v,v))) b.formula_struc_explicit_inst in
 		  let new_exs = List.map (fun v -> (if (check_name_clash v f2) then (v,(CP.fresh_spec_var v)) else (v,v))) b.formula_struc_exists in
 		  (* fresh_qvars contains only the freshly generated names *)
