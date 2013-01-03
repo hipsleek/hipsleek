@@ -8,8 +8,8 @@ relation R(int a).
 
 pred llSP<n,R1:relation(int)> == self=null & n=0
   or self::node<v,p> * p::llSP<n-1,R1> & R1(v)
-inv self=null & n=0 | self!=null & n>0.
-//inv n>=0.
+//inv self=null & n=0 | self!=null & n>0.
+inv n>=0.
 
 /*
 pred ll<n> == self=null & n=0
@@ -35,6 +35,8 @@ infer [n,R] x::node<a,q>*q::llSP<n,R> & R(a) |- x::node<v1,null> .
 print residue.
 
 */
+infer [n,R] x::llSP<n,R> |- x::node<v1,null> .
+print residue.
 
 infer [n,R] x::node<a,q>*q::llSP<n,R> & R(a) |- x::node<v1,null> & v1>=0 .
 print residue.
