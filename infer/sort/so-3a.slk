@@ -74,11 +74,34 @@ If needed, this can be combined into:
 infer [n,R] x::llSP<n,R> |- x::node<v1,q> & v1>=0 .
 print residue.
 
-
 */
 
+infer [n] x::ll<n> |- x::node<v1,q> .
+/*
+ <1>EXISTS(flted_16_110: q::ll<flted_16_110>@M[0][Orig]&n=flted_16_110+1&{FLOW,(19,20)=__norm})[]
+ inferred pure: [n!=0]
+*/
 
-infer [n,R] x::llSP<n,R> |- x::node<v1,q>*q::node<v2,null> 
-                             & v1>=1 & v2>=0 .
+infer [n,R] x::llSP<n,R> |- x::node<v1,q> .
 print residue.
+/*
+PROBLEM : why duplicates residues?
+<1>EXISTS(flted_10_131: q::llSP<flted_10_131,R>@M[0][Orig]&n=flted_10_131+1 & R(v1)&{FLOW,(19,20)=__norm})[]
+ inferred pure: [n!=0]
+
+ <1>EXISTS(flted_10_131: q::llSP<flted_10_131,R>@M[0][Orig]&n=flted_10_131+1 & R(v1)&{FLOW,(19,20)=__norm})[]
+ inferred pure: [n!=0]
+*/
+
+infer [n,R] x::llSP<n,R> |- x::node<v1,q> & v1>=0 .
+print residue.
+/*
+ERROR!
+Last Proving Location: File "so-3a.slk",Line:16,Col:5
+
+ERROR: at _0_0 
+Message: merge_rel_ass: Not supported yet
+ 
+Entailment Failure (7) Failure("merge_rel_ass: Not supported yet")
+*/
 
