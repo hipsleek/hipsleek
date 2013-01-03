@@ -743,6 +743,34 @@ and infer_lock_invariant_x lock_var ctx pos =
         (found_name,found_arg_names)
   with _ -> report_error pos ("Scall : could not find heap node for lock " ^ (Cprinter.string_of_spec_var lock_var))
 
+(*
+  transform l1=l2 into l1=l2 & level(l1)=level(l2)
+  This is to maintain information about locklevels in the presence
+  of elim_exists
+*)
+and trans_level_eqn_list_failesc_context (ctx: CF.list_failesc_context) : CF.list_failesc_context =
+  let translate_level_es es =
+    let new_f = CF.translate_level_eqn_formula es.CF.es_formula in
+    let new_es = {es with CF.es_formula = new_f} in (*trigger unsat_check*)
+    CF.Ctx new_es
+  in
+  let ctx = CF.transform_list_failesc_context (idf,idf,translate_level_es) ctx in
+  ctx
+
+(*
+  transform l1=l2 into l1=l2 & level(l1)=level(l2)
+  This is to maintain information about locklevels in the presence
+  of elim_exists
+*)
+and trans_level_eqn_list_partial_context (ctx:CF.list_partial_context) : CF.list_partial_context =
+  let translate_level_es es =
+    let new_f = CF.translate_level_eqn_formula es.CF.es_formula in
+    let new_es = {es with CF.es_formula = new_f} in (*trigger unsat_check*)
+    CF.Ctx new_es
+  in
+  let ctx = CF.transform_list_partial_context (translate_level_es, (fun c -> c)) ctx in
+  ctx
+
 and infer_lock_invariant lock_var ctx pos =
   let pr_out = pr_pair Cprinter.string_of_ident (pr_list Cprinter.string_of_ident) in
   Debug.no_2 "infer_lock_invariant"
@@ -894,6 +922,7 @@ and check_scall_join prog ctx e0 (post_start_label:formula_label) ret_t mn lock 
   let empty_struc = CF.mkETrue (CF.mkTrueFlow ()) pos in
   (*Perform Delay lockset checking and join at Solver.heap_entail_conjunct_lhs_struc*)
   let rs, prf = heap_entail_struc_list_failesc_context_init prog false true ctx empty_struc None None (Some tid) pos pid in
+  let rs = normalize_list_failesc_context_w_lemma prog rs in
   if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then
     Debug.print_info "procedure call" ("join("^ (CF.string_of_spec_var tid)^") has failed.\n"  ^ (Cprinter.string_of_list_failesc_context rs)^ " \n") pos else () ;
   rs
@@ -1408,6 +1437,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let ctx2 = CF.push_exists_list_failesc_context svars ctx1 in
 	        (* let _ = print_endline ("\ncheck_exp: Block: ctx2:\n" ^ (Cprinter.string_of_list_failesc_context ctx2)) in *)
 	        (* let _ = print_endline ("\ncheck_exp: Block: after elim_exists ctx2:\n" ^ (Cprinter.string_of_list_failesc_context (elim_exists_failesc_ctx_list ctx2))) in *)
+            let ctx2 = if (!Globals.allow_locklevel) then
+                  trans_level_eqn_list_failesc_context ctx2
+                else ctx2
+            in
 	        let res = if !Globals.elim_exists then elim_exists_failesc_ctx_list ctx2 else ctx2 in
             Gen.Profiling.pop_time "[check_exp] Block";
             res

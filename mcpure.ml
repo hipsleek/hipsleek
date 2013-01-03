@@ -2662,6 +2662,23 @@ let translate_level_mix_formula (mf : mix_formula) : mix_formula =
   Debug.no_1 "translate_level_mix_formula" !print_mix_formula !print_mix_formula 
       translate_level_mix_formula_x mf
 
+(* translate l1=l2 into l1=l2 & level(l1)=level(l2) *)
+let translate_level_eqn_mix_formula_x (mf : mix_formula)  : mix_formula =
+  match mf with
+    | OnePF f -> 
+        let nf = translate_level_eqn_pure f in
+        (OnePF nf)
+    | MemoF mp ->
+        (*TO CHECK: This may break --eps*)
+        let f = fold_mem_lst (mkTrue no_pos) false true mf in
+        let nf = translate_level_eqn_pure f  in
+        (mix_of_pure nf)
+
+(* translate l1=l2 into l1=l2 & level(l1)=level(l2) *)
+let translate_level_eqn_mix_formula (mf : mix_formula) : mix_formula =
+  Debug.no_1 "translate_level_eqn_mix_formula" !print_mix_formula !print_mix_formula 
+      translate_level_eqn_mix_formula_x mf
+
 let infer_lsmu_mix_formula_x (mf : mix_formula)  : mix_formula * (CP.spec_var list) =
   match mf with
     | OnePF f -> 

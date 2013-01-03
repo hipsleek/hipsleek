@@ -9926,6 +9926,32 @@ let translate_level_formula (f : formula) : formula =
       !print_formula !print_formula
       translate_level_formula_x f
 
+(* translate l1=l2 into l1=l2 & level(l1)=level(l2) *)
+let translate_level_eqn_formula_x (f : formula) : formula =
+  let rec helper f =
+  match f with
+  | Base b ->
+      let p = b.formula_base_pure in
+      let np = MCP.translate_level_eqn_mix_formula p in
+      let nb = Base {b with formula_base_pure = np} in
+      nb
+  | Exists e ->
+      let p = e.formula_exists_pure in
+      let np = MCP.translate_level_eqn_mix_formula p in
+      Exists {e with formula_exists_pure = np;}
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+      let new_f1 = helper f1 in
+      let new_f2 = helper f2 in
+      let res = mkOr new_f1 new_f2 pos in
+      res
+  in helper f
+
+(* translate l1=l2 into l1=l2 & level(l1)=level(l2) *)
+let translate_level_eqn_formula (f : formula) : formula =
+  Debug.no_1 "translate_level_eqn_formula"
+      !print_formula !print_formula
+      translate_level_eqn_formula_x f
+
 let infer_lsmu_formula_x (f : formula) : formula =
   let rec helper f =
   match f with
@@ -10064,30 +10090,43 @@ let collect_heap_args_failesc_context ((fail_c,esc_c, succ_c):failesc_context) (
   let args_list = List.map (fun (lbl,ctx) -> collect_heap_args_context ctx sv) succ_c in
   (*check consistency in each context*)
   if args_list=[] then ([],"") else
-    let head_args,head_id = List.hd args_list in
-    let _ = List.iter (fun (args,id) ->
-        if ((List.length head_args) != (List.length args)) || (id!=head_id) then
-          report_error no_pos ("collect_heap_args_failesc_context: heap_args of node " ^ (!print_sv sv) ^ (" are inconsistent"))
-        else ()
-    ) (List.tl args_list)
-    in
-  (*any of them*)
-    List.hd args_list
+    (try
+         (*pickup a set of args and its non-empty node name*)
+         let head_args,head_id = List.find (fun (args,id) -> (id<>"")) args_list in
+         let _ = List.iter (fun (args,id) ->
+             if (id<>"") && (((List.length head_args) != (List.length args)) || (id!=head_id)) then
+               (*if a node name is non-empty, it should be consistent with the head*)
+               report_error no_pos ("collect_heap_args_failesc_context: heap_args of node " ^ (!print_sv sv) ^ (" are inconsistent"))
+             else ()
+         ) (List.tl args_list)
+         in
+         (*pickup non-empty*)
+         (head_args,head_id)
+     with Not_found -> ([],""))
 
 (*collect arguments of a heap node var sv, and its node name*)
+(*
+  Due to SPLIT of permission, in case there are 2 context, one
+  with heap node sv, the other w/o. Then pickup the one with
+  heap node. The other one will become failed during verification
+*)
 let collect_heap_args_list_failesc_context (ctx:list_failesc_context) (sv:CP.spec_var): (CP.spec_var list * ident) =
   let args_list = List.map (fun ctx -> collect_heap_args_failesc_context ctx sv) ctx in
   (*check consistency in each failesc_context*)
   if args_list=[] then ([],"") else
-    let head_args,head_id = List.hd args_list in
-    let _ = List.iter (fun (args,id) ->
-        if ((List.length head_args) != (List.length args)) || (id!=head_id) then
-          report_error no_pos ("collect_heap_args_list_failesc_context: heap_args of node " ^ (!print_sv sv) ^ (" are inconsistent"))
-        else ()
-    ) (List.tl args_list)
-    in
-  (*any of them*)
-    List.hd args_list
+    (try
+         (*pickup a set of args and its non-empty node name*)
+         let head_args,head_id = List.find (fun (args,id) -> (id<>"")) args_list in
+         let _ = List.iter (fun (args,id) ->
+             if(id<>"") & (((List.length head_args) != (List.length args)) || (id!=head_id)) then
+               (*if a node name is non-empty, it should be consistent with the head*)
+               report_error no_pos ("collect_heap_args_list_failesc_context: heap_args of node " ^ (!print_sv sv) ^ (" are inconsistent"))
+             else ()
+         ) (List.tl args_list)
+         in
+         (*pickup non-empty*)
+         (head_args,head_id)
+     with Not_found -> ([],""))
 
 let mkViewNode view_node view_name view_args pos = ViewNode
   { h_formula_view_node = view_node;
