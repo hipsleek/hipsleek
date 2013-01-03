@@ -1,7 +1,6 @@
 
 relation R(int a).
 
-
 //(1)
 infer [R] v>=1  |- R(v).
 print residue.
