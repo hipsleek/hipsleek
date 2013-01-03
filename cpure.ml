@@ -8783,3 +8783,111 @@ let is_term f =
 let is_rel_assume rt = match rt with
   | RelAssume _ -> true
   | _ -> false
+
+let add_conj x rs pos =
+  List.map (fun y -> And (x,y,pos)) rs
+
+let rec dist_conj xs ys pos =
+  let r_xs = List.map (fun x -> add_conj x ys pos) xs in
+  List.concat r_xs
+
+let distr_d ls rs pos =
+  match ls with
+    | [x] ->
+          (match rs with
+            | [y] -> [And(x,y,pos)]
+            | _ -> add_conj x rs pos
+          )
+    | _ -> 
+          (match rs with
+            | [y] -> add_conj y ls pos 
+            | _ -> dist_conj ls rs pos
+          )
+(*
+distribute_disjuncts@17
+distribute_disjuncts inp1 : x=null & r=v & ((x=null & ZInfinity=m) | x!=null)
+distribute_disjuncts@17 EXIT out : (x=null & r=v & x!=null) | (x=null & r=v & x=null & ZInfinity=m)
+*)
+(* let distribute_disjuncts (f:formula) : formula = *)
+(*   let rec helper f = *)
+(*     let f_f f =  *)
+(*     	(match f with *)
+(*     	| And(l,r,p) ->  *)
+(*               let l2= split_disjunctions (helper l) in *)
+(*               let r2= split_disjunctions (helper r) in *)
+(*               let ls= distr_d l2 r2 p in *)
+(*               (\* join_disjunctions ls *\) *)
+(*               Some (disj_of_list ls p) *)
+(*         (\* | AndList _ -> report_error no_pos "met an AndList" *\) *)
+(*     	| _ -> Some f) *)
+(*     in *)
+(*     let f_bf bf = Some bf in *)
+(*     let f_e e = Some e in *)
+(*     map_formula f (f_f,f_bf,f_e) *)
+(*   in helper f *)
+
+(* let distribute_disjuncts (f:formula) : formula = *)
+(*   let pr = !print_formula in *)
+(*   Debug.no_1 "distribute_disjuncts" pr pr distribute_disjuncts f *)
+
+(*
+deep_split_disjuncts@4
+deep_split_disjuncts inp1 : x=null & r=v & ((x=null & m=\inf(ZInfinity)) | x!=null)
+deep_split_disjuncts@4 EXIT out :[ x=null & r=v & x=null & m=\inf(ZInfinity), x=null & r=v & x!=null]
+*)
+let deep_split_disjuncts (f:formula) : formula list =
+  let rec helper f =
+    let f_f f = 
+    	(match f with
+    	| Or(l,r,_,p) -> 
+              let l2= helper l in
+              let r2= helper r in
+              (* join_disjunctions ls *)
+              Some (l2@r2)
+    	| And(l,r,p) -> 
+              let l2= (helper l) in
+              let r2= (helper r) in
+              let ls= distr_d l2 r2 p in
+              (* join_disjunctions ls *)
+              Some (ls)
+        (* currently do not split inside AndList *)
+        (* | AndList _ -> report_error no_pos "met an AndList" *)
+    	| _ -> Some [f])
+    in
+    let f_bf bf = Some [] in
+    let f_e e = Some [] in
+    fold_formula f (f_f,f_bf,f_e) List.concat
+  in helper f
+
+let deep_split_disjuncts (f:formula) : formula list =
+  let pr = !print_formula in
+  Debug.no_1 "deep_split_disjuncts" pr (pr_list pr) deep_split_disjuncts f
+
+let deep_split_disjuncts (f:formula) : formula list =
+  Gen.Profiling.no_1 "INF-deep-split" deep_split_disjuncts f
+
+(* TODO WN : improve efficiency of distribute_disjuncts *)
+let split_disjunctions_deep (f:formula) : formula list =
+  (* split_disjunctions(distribute_disjuncts f) *)
+  deep_split_disjuncts f
+
+let drop_exists (f:formula) :formula = 
+  let rec helper f =
+  let f_f f = 
+    match f with
+      | Exists(qid,qf,fl,pos) -> let fresh_fr = fresh_spec_vars [qid] in
+                                 let st = List.combine [qid] fresh_fr in
+                                 let rename_exist_vars  = subst st qf in
+                                 Some((helper rename_exist_vars))
+      | And _ | AndList _ | Or _  -> None
+      | Not _ | Forall _ | BForm _ -> Some(f)
+  in
+  let f_bf bf = Some bf in
+  let f_e e = Some e in
+  map_formula f (f_f,f_bf,f_e)
+  in helper f
+
+let drop_exists (f:formula) :formula =
+  let pr = !print_formula in 
+  Debug.no_1 "drop_exists_pure" pr pr drop_exists f 
+
