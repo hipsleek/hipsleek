@@ -758,13 +758,11 @@ and trans_level_eqn_list_failesc_context (ctx: CF.list_failesc_context) : CF.lis
   ctx
 
 (*
-  transform l1=l2 into l1=l2 & level(l1)=level(l2)
-  This is to maintain information about locklevels in the presence
-  of elim_exists
+  transform level(l1) into l1_mu
 *)
-and trans_level_eqn_list_partial_context (ctx:CF.list_partial_context) : CF.list_partial_context =
+and trans_level_list_partial_context (ctx:CF.list_partial_context) : CF.list_partial_context =
   let translate_level_es es =
-    let new_f = CF.translate_level_eqn_formula es.CF.es_formula in
+    let new_f = CF.translate_level_formula es.CF.es_formula in
     let new_es = {es with CF.es_formula = new_f} in (*trigger unsat_check*)
     CF.Ctx new_es
   in
@@ -1994,13 +1992,16 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_
     let _ = if !Globals.dis_term_chk || !Globals.dis_post_chk then true 
     else Term.check_loop_safety prog proc ctx post pos pid in
     let ctx = if (!Globals.allow_locklevel) then
-          let translate_level_es es =
-            let new_f = CF.translate_level_formula es.CF.es_formula in
-            let new_es = {es with CF.es_formula = new_f} in (*trigger unsat_check*)
-            CF.Ctx new_es
-          in
-          let ctx1 = CF.transform_list_partial_context (translate_level_es,(fun c->c)) ctx in
-          ctx1
+          (*to maintain the information of locklevels on varables
+            whose scopes are within scope of this procedure only.
+            For example, for any pass-by-value or local variables,
+            at the end of the procedure, it will become existential
+            variables. Exist vars, however, will be renamed sometimes.
+            However, elim_exists is not aware of constraints on locklevels,
+            we have to maintain these constraints by translating before
+            elim_exists
+          *)
+          trans_level_list_partial_context ctx
         else ctx
     in
     let fn_state=
