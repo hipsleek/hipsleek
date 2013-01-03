@@ -7,11 +7,14 @@ data node2 {
 }
 
 /* view for binary search trees */
-bst <sm, lg> == self = null & sm =\inf & lg=-\inf
+bst <sm, lg> == self = null & sm =\inf & lg=-\inf	
+	or self::node2<v,p,q> & p = null & q = null & sm = lg & -\inf < sm < \inf
 	or self::node2<v, p, q> * p::bst<sm1, lg1> * q::bst<sm2, lg2> 
-  & lg1<=v & v<=sm2 & sm=min(sm1,v) & lg=max(lg2,v)
+  & lg1<=v & v<=sm2 & sm=min(sm1,v) & lg=max(lg2,v) & -\inf < v < \inf
   //inv true;
-  inv self=null | self!=null & sm<=lg; // OK for insert..
+  inv self=null & sm = \inf & lg = -\inf
+  | self!=null & sm = lg & -\inf < sm < \inf
+  | self!=null & sm <= lg & sm > -\inf & lg < \inf ; // OK for insert..
   //inv self=null & sm=\inf & lg=-\inf | self!=null & sm<=lg; // why fail for insert?
 
 /*
@@ -26,7 +29,11 @@ Total verification time: 31.993998 second(s)
 /* insert a node in a bst */
 node2 insert(node2 x, int a)
 	requires x::bst<sm, lg> 
-	ensures res::bst<mi, ma> & mi = min(sm, a) & ma = max(lg, a);
+	case {
+		x = null -> ensures res::node2<a,null,null>; 
+		x != null -> ensures res::bst<mi, ma> & mi = min(sm, a) & ma = max(lg, a);
+	}
+	//ensures res::bst<mi, ma> & mi = min(sm, a) & ma = max(lg, a);
 {
 	node2 tmp;
     node2 tmp_null = null;
