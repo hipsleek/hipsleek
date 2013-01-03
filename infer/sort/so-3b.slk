@@ -87,13 +87,38 @@ print residue.
 
 (a)  R(v) & D1 --> D2
        D1 -> D2  (valid)
+
 (b)  R(v) & D1 --> D2
        D1 /\ D2 -> false  (contradiction)
      W=free_vars(D1)-v
      REL_ASS R(v) --> forall W. not(D1)
+
+     R_1(v_1)&R_2(v_2)&D1 --> D2
+       D1/\D2 -> false
+     chose i such that
+     W=free_vars(D1)-v_i
+     REL_ASS R_i(v_i) --> forall W. not(D1)
+
+
+     R_1(v_1)&R_2(v_2)&D1 --> D2
+       D1/\D2 -> false
+     v_1/\v_2 != {} & not(v_2 subseteq v_1 | v_1 subseteq v2)
+     W=free_vars(D1)-v_1Uv_2
+     REL_ASS R_1(v_i) & R_2(v_2) --> forall W. not(D1)
+
 (c)  R(v) & D1 --> D2
-       D1 /\ D2 -> false  (contradiction)
+
      W=free_vars(D1)-v
      REL_ASS R(v) --> forall W. not(D1) \/ D2
+
+     R_1(v_1)&R_2(v_2)&D1 --> D2
+     chose i such that
+     W=free_vars(D1)-v_i
+     REL_ASS R_i(v_i) --> forall W. not(D1) \/ D2
+
+     R_1(v_1)&R_2(v_2)&D1 --> D2
+     v_1/\v_2 != {} & not(v_2 subseteq v_1 | v_1 subseteq v2)
+      W=free_vars(D1)-v_1Uv_2
+     REL_ASS R_1(v_i) & R_2(v_2) --> forall W. not(D1) \/ D2
 
 */
