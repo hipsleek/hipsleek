@@ -1163,7 +1163,7 @@ let find_close_infer_vars_rel_x lhs_mix es_infer_vars_rel=
 let find_close_infer_vars_rel lhs_mix es_infer_vars_rel=
   let pr1= !CP.print_svl in
   let pr2 = Cprinter.string_of_mix_formula in
-  Debug.ho_2 "find_close_infer_vars_rel" pr2 pr1 pr1
+  Debug.no_2 "find_close_infer_vars_rel" pr2 pr1 pr1
       (fun _ _ -> find_close_infer_vars_rel_x lhs_mix es_infer_vars_rel) lhs_mix es_infer_vars_rel
 
 (* Assume fml is conjs *)
