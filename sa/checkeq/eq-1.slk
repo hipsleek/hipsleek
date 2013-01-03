@@ -46,7 +46,7 @@ checkeq[x,y] y=z & z=2 & x=1 -|- x=1 & y=2.
 
 //(11)
 checkeq[x,y] x=y & x=1 -|- y=1.
-// fail but should be valid since it is no different from (5)
+// fail (since we do not know what value of x on RHS)
 
 //(12)
 checkeq[x] x=1 -|- x=y & y=1.
@@ -59,8 +59,17 @@ checkeq[x] x=1 & y=2 -|- x=1 & y=2.
 //(14)
 checkeq[x] x=1 & y=2 -|- x=1 & z=2.
 // valid but should fail unless extra-soft option turned on
+// --en-extra-soft
+
+//(15)
+checkeq[] x=1 & a=1 -|- y=1 & b=1.
+
+//(16)
+checkeq[x,y] x=y & x=1 -|- y=1 & x=1.
+// fail but should be valid since we have x=1 & y=1 on both sides
 
 
+//checkeq [] true & exists(x:x>0) -|- true & exists(x:x>0).
 
-
+//checkeq [] true & exists(x:x>0) -|- true & exists(y:y>0).
 
