@@ -5476,7 +5476,34 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
           then (true,[],None)
           else
             let estate = Gen.unsome_safe !smart_unsat_estate estate in
-            let (ip1,ip2,relass) = Inf.infer_pure_m estate split_ante1 split_ante0 m_lhs split_conseq pos in
+            let (ip1,ip2,relass,entail_states) = 
+            begin 
+              match split_a_opt with 
+              | None -> let r1,r2,r3 = Inf.infer_pure_m estate split_ante1 split_ante0 m_lhs split_conseq pos in
+                r1,r2,r3,[]
+              | Some (split1,split2) -> 
+                (* TO CHECK: Are split1 & split2 the same ? *)
+                let split_mix1 = List.map MCP.mix_of_pure split1 in
+                let res = List.map (fun f -> 
+                    let r1,r2,r3 = Inf.infer_pure_m estate f f f split_conseq pos in
+                    let estate_f = {estate with es_formula = mkBase_simp HEmp f} in
+                    (match r1 with 
+                      | None -> r1,r2,r3,[estate_f]
+                      | Some (es,_) -> r1,r2,r3,[es])) split_mix1 in
+                let or_option_ip1 (o1,o2) = (match o1,o2 with
+                  | None,_ -> o2
+                  | _,None -> o1
+                  | Some(es1,pf1),Some(es2,pf2) -> Some (es1, CP.mkOr pf1 pf2 None pos))
+                in
+                let or_option_ip2 (o1,o2) = (match o1,o2 with
+                  | None,_ -> o2
+                  | _,None -> o1
+                  | Some pf1,Some pf2 -> Some (CP.mkOr pf1 pf2 None pos))
+                in
+                List.fold_left (fun (a,b,c,d) (a1,b1,c1,d1) -> 
+                  (or_option_ip1 (a,a1),or_option_ip2 (b,b1),(*TODO*)c@c1,d@d1)) (None,None,[],[]) res
+            end
+            in
             begin
               match ip1 with
                 | Some(es,p) -> 
@@ -5484,11 +5511,14 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                         match relass with
                           | [] -> 
                                 (stk_inf_pure # push p;
-                                stk_estate # push es;
+                                let _ = if entail_states = [] then stk_estate # push es 
+                                  else stk_estate # push_list entail_states in
                                 (true,[],None))
                           | h::_ ->
-                                (stk_rel_ass # push h;
-                                stk_estate # push es;
+                                (stk_inf_pure # push p;
+                                stk_rel_ass # push h;
+                                let _ = if entail_states = [] then stk_estate # push es 
+                                  else stk_estate # push_list entail_states in
                                 (true,[],None))
                       end
                 | None ->
@@ -5546,17 +5576,18 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
     (*let lhs_p = MCP.remove_dupl_conj_mix_formula lhs_p in*)
     if not(stk_estate # is_empty) then
       let new_estate = stk_estate # top in
+      let new_ante_fmls = List.map (fun es -> es.es_formula) (stk_estate # get_stk) in
+      let new_estate = {new_estate with es_formula = disj_of_list new_ante_fmls pos} in
       let ctx1 = (elim_unsat_es_now 8 prog (ref 1) new_estate) in
-      let ctx1 = if stk_rel_ass # is_empty then add_infer_pure_to_ctx (stk_inf_pure # get_stk) ctx1 
-      else add_infer_rel_to_ctx (stk_rel_ass # get_stk) ctx1
-      in
+      let ctx1 = add_infer_pure_to_ctx (stk_inf_pure # get_stk) ctx1 in
+      let ctx1 = add_infer_rel_to_ctx (stk_rel_ass # get_stk) ctx1 in
       (SuccCtx[ctx1],UnsatAnte)
     else
       let inf_p = (stk_inf_pure # get_stk) in
       let estate = Gen.unsome_safe !smart_unsat_estate estate in
       let (lhs_h,lhs_p) = if (CF.isAnyConstFalse estate.es_formula)
-      then (HFalse,MCP.mkMFalse no_pos) 
-      else (lhs_h,lhs_p) in
+        then (HFalse,MCP.mkMFalse no_pos) 
+        else (lhs_h,lhs_p) in
       let estate = add_infer_pure_to_estate inf_p estate in
       let estate = add_infer_rel_to_estate (stk_rel_ass # get_stk) estate in
       let to_add = MCP.mix_of_pure (CP.join_conjunctions inf_p) in
