@@ -13,12 +13,12 @@ inv self!=null;
 relation R(int r, int a, int b).
 
 node insert(node x, node y)
-  requires x::sortA<v> * y::node<v,null>
-  ensures  res::sortA<b> & b=min(a,v) ;
-/*
   infer [R]
   requires x::sortA<v> * y::node<v,null>
   ensures  res::sortA<b> & R(b,a,v);
+/*
+  requires x::sortA<v> * y::node<v,null>
+  ensures  res::sortA<b> & b=min(a,v) ;
 *************************************
 *******pure relation assumption ******
 *************************************
@@ -29,18 +29,19 @@ What happen to the recursive cases?
 
 */
 {
-    if (y.val<=x.val) {
-        y.next = x;
+  bind x to (xv,xn) in { 
+    bind y to (yv,yn) in {
+    if (yv<=xv) {
+        yn = x;
         return y;
     } else {
-      node tmp = x.next;
-      if (tmp==null) x.next=y;
+      if (xn==null) xn=y;
       else {
-        tmp = insert(x.next,y);
-        x.next=tmp;
+        xn = insert(xn,y);
       };
       return x;
     }
+  }}
 }
 
 
