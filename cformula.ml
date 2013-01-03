@@ -7794,6 +7794,13 @@ let normalize_max_renaming_s f pos b ctx =
   else transform_context (normalize_clash_es f pos b) ctx
 
 (*
+  to be used in the type-checker. Before checking post condition,
+  the history of es_pure must be cleared.
+  TO CHECK: this should be done for each entailment
+*)
+let clear_entailment_es_pure (es :entail_state) = {es with es_pure = MCP.mkMTrue no_pos;}
+
+(*
   to be used in the type-checker. After every entailment, the history of vars
   must be cleared.
 *)
