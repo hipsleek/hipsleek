@@ -5943,7 +5943,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
           end
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
           begin
-            DD.info_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
+            DD.dinfo_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
 	        let a0l,a1l = if CP.no_andl a0 && CP.no_andl a1 then (CP.split_disjunctions_deep a0,CP.split_disjunctions_deep a1)
     	    else 
 	          let r = ref (-8999) in
@@ -5952,8 +5952,8 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset =
 	          let a1l = List.filter is_sat (CP.split_disjunctions a1) in 
 	          (a0l,a1l) in
                 let pr = Cprinter.string_of_pure_formula in
-                DD.info_hprint (add_str "a0l" (pr_list pr)) a0l no_pos;
-                DD.info_hprint (add_str "a1l" (pr_list pr)) a1l no_pos;
+                DD.tinfo_hprint (add_str "a0l" (pr_list pr)) a0l no_pos;
+                DD.tinfo_hprint (add_str "a1l" (pr_list pr)) a1l no_pos;
             let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
 	        (CP.imply_conj_orig a0l a1l new_rhs TP.imply imp_no, Some (a0l,a1l))
                 (* original code	        
