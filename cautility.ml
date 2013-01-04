@@ -234,7 +234,7 @@ let gen_sleek_residues valid rs num_id2 cout_option  =
 let gen_sleek_decls prog cout_option =
   let _ = Gen.Profiling.push_time "Gen cp file" in
   let file_name = !Globals.cpfile in
-  let message = string_of_data_decls prog.Cast.prog_data_decls in
+  let message = string_of_data_decls prog.Cast.prog_data_decls ^ "\n" ^ string_of_hp_decls prog.Cast.prog_hp_decls in
   let _ = try
 	    (
 	      match cout_option with
