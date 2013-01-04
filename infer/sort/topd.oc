@@ -14,26 +14,39 @@ P := {[x,y]:y <= -1 && 0 <= x || 0 <= x <= y};
 P subset {[x,y]:y<0 | y>0 | x<1};
 
 LHS := {[x,y,x1,y1]:(y <= -1 && 0 <= x || 0 <= x <= y)
-      & x1=x-1 & y1=y-1 & x>0};
+      & x1=x-1 & y1=y-1 & x>0 & y!=0};
 RHS := {[x,y,x1,y1]:(y1 <= -1 && 0 <= x1 || 0 <= x1 <= y1)};
 LHS subset RHS;
 
+####################################
 
 A:={[n,a]:(a!=1 || n!=1) && n>=1};
-PairWiseCheck P;
+PairWiseCheck A;
 
 # ((RECn >= 1 && n >= 1 + RECn) && n + RECa = a + RECn)
 Pre:={[n,a]:forall(Recn,Reca:
    not(Recn>=1 & n>=1+Recn & Recn+a=Reca+n) | 
     (Recn>=1 & (Recn!=1 || Reca!=1)))};
-
 Pre;
+
 #{[n,a]: a <= 1} union
 #{[n,a]: 2 <= a < n} union
 #{[n,a]: n < a && 2 <= a}
 
 FinalPre:={[n,a]:
-   n>=1 & (a!=1 | n!=1) & (a<=1 | 2<=a<n | n<a && 2<=a)};
+   n>=1 & (a!=1 | n!=1) & (a<=1 | 2<=a<n | (n<a && 2<=a)) & (n!=1 | 2>a) & (n!=1 | a>0)};
 PairWiseCheck FinalPre;
-#{[n,a]: 1 <= n < a} union {[n,a]: a < n && 1 <= n}
+
+#{[n,a]: 2 <= n < a} union {[n,a]: a < n && 2 <= n}
+
+P := {[n,a]: 2 <= n < a || (a < n && 2 <= n)};
+P subset {[n,a]:(a!=1 || n!=1) && n>=1};
+P subset {[n,a]:(n!=1 | 2>a) & (n!=1 | a>0) && n>=1};
+
+# still fail
+LHS := {[n,a,n1,a1]:(2<=n<a || a<n && 2<=n)
+      & n1=n-1 & a1=a-1 & n>=1 & a!=1};
+RHS := {[n,a,n1,a1]:(2<=n1<a1 || a1<n1 && 2<=n1)};
+LHS subset RHS;
+
 
