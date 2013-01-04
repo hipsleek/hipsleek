@@ -23,10 +23,11 @@ LHS subset RHS;
 A:={[n,a]:(a!=1 || n!=1) && n>=1};
 PairWiseCheck A;
 
+# RECn & RECa: input at the arbitrary call
 # ((RECn >= 1 && n >= 1 + RECn) && n + RECa = a + RECn)
-Pre:={[n,a]:forall(Recn,Reca:
-   not(Recn>=1 & n>=1+Recn & Recn+a=Reca+n) | 
-    (Recn>=1 & (Recn!=1 || Reca!=1)))};
+Pre:={[n,a]:forall(RECn,RECa:
+   not(RECn>=1 & n>=1+RECn & RECn+a=RECa+n) | 
+    (RECn>=1 & (RECn!=1 || RECa!=1)))};
 Pre;
 
 #{[n,a]: a <= 1} union
@@ -34,19 +35,19 @@ Pre;
 #{[n,a]: n < a && 2 <= a}
 
 FinalPre:={[n,a]:
-   n>=1 & (a!=1 | n!=1) & (a<=1 | 2<=a<n | (n<a && 2<=a)) & (n!=1 | 2>a) & (n!=1 | a>0)};
+   n>=1 & (a!=1 | n!=1) & (a<=1 | 2<=a<n | (n<a & 2<=a)) & (a=1 | (a!=1 & n!=1))};
 PairWiseCheck FinalPre;
 
-#{[n,a]: 2 <= n < a} union {[n,a]: a < n && 2 <= n}
+#{[n,a]: 2 <= n < a} union {[n,a]: a <= 0 && 2 <= n} union {[n,a]: 1 <= a < n}
 
-P := {[n,a]: 2 <= n < a || (a < n && 2 <= n)};
+P := {[n,a]: 2 <= n < a || (1<=a<n) | (a <= 0 && 2 <= n)};
 P subset {[n,a]:(a!=1 || n!=1) && n>=1};
-P subset {[n,a]:(n!=1 | 2>a) & (n!=1 | a>0) && n>=1};
+P subset {[n,a]:(a=1 | (a!=1 & n!=1)) && n>=1};
 
-# still fail
-LHS := {[n,a,n1,a1]:(2<=n<a || a<n && 2<=n)
+# still fail -> need to strengthen more
+LHS := {[n,a,n1,a1]:(1<=a<n )
       & n1=n-1 & a1=a-1 & n>=1 & a!=1};
-RHS := {[n,a,n1,a1]:(2<=n1<a1 || a1<n1 && 2<=n1)};
+RHS := {[n,a,n1,a1]:(1<=a1<n1 )};
 LHS subset RHS;
 
 

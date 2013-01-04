@@ -40,5 +40,11 @@ wh:={[n,a]->[pn,pa]->[]:
 TD:=topdown(wh,1,SimHeur);
 TD;
 
-
+wh:={[n,a]->[m]->[]:
+    (a=1 && m>=1 && n=m+1)
+ || (exists (a1,m1,n1: n>=2 && (a<1 || a>1) && m1>=1 && m=m1+1 && a1=a-1 && n1=n-1 && wh(n1,a1,m1)))};
+TD:=topdown(wh,1,SimHeur);
+TD;
+TD:=bottomup(wh,1,SimHeur);
+TD;
 
