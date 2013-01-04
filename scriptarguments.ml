@@ -148,6 +148,7 @@ let common_arguments = [
 	("--locklevel", Arg.Set Globals.allow_locklevel,"enable locklevels during verification");
 	("--dis-locklevel", Arg.Clear Globals.allow_locklevel,"disable locklevels during verification");
 	("--dis-para", Arg.Unit Perm.disable_para,"disable concurrency verification");
+	("--en-para", Arg.Unit Perm.enable_para,"enable concurrency verification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
   ("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");

@@ -26,11 +26,21 @@ let perm = ref Frac
 
 (*To disable concurrency verification, for testing purposes*)
 let disable_para () =
-  allow_norm:= false;
+  allow_norm:= true;
   perm:= NoPerm;
   ann_vp:= false;
   allow_ls:= false;
   allow_locklevel:=false
+
+(*To enable concurrency verification*)
+let enable_para () =
+  allow_norm:= false;
+  perm:= (match !perm with
+    | NoPerm -> Frac (*the default is fractional permission*)
+    | _ -> !perm);
+  ann_vp:= true;
+  allow_ls:= true;
+  allow_locklevel:=true
 
 let allow_perm ():bool = 
   match !perm with
