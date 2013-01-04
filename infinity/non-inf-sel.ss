@@ -1,42 +1,84 @@
-/* insertion sort without infinity */
+/* selection sort */
 
-data node{
-	int val;
-	node next;
+data node {
+	int val; 
+	node next; 
 }
 
-sortA<v> == self = null
-	or self::node<v,null>
-	or self::node<v,p> * p::sortA<v2> & v <= v2 & p != null
-	inv true;
-	
-//sortll<mi> == self=null & mi=\inf 
-//	or self::node<mi, p> * p::sortll<m2> & mi<=m2 
-//	inv true;	
-	
-node insert(node x,node y)
+bnd1<n,mi,mx> == self = null & n = 0 & mi = \inf & mx=-\inf or 
+  self::node<d, p> * p::bnd1<n-1, tmi,tmx> & mi = min(d, tmi) & mx=max(d,tmx) & -\inf<d<\inf 
+  inv self=null & n=0 & mi=\inf & mx=-\inf |
+      self!=null & n=1 & mi=mx & -\inf<mi<\inf |
+      self!=null & n>1 & mi<=mx & -\inf<mi & mx<\inf;
+      
+noninfbnd1<n,mi,mx> == self = null & n = 0 
+	or self::node<d,null> & n = 1 & mi = mx
+	or self::node<d,p> * p::bnd1<n-1, tmi,tmx> & mi = min(d, tmi) & mx=max(d,tmx) & p != null
+	inv n >= 0;
 
-//requires x::sortll<a> * y::node<v,null>
-//ensures  res::sortll<b> & b=min(a,v);
+sll<n, mi,mx> == 
+   self = null & mi = \inf & mx = -\inf & n = 0
+ or self::node<mi, null> & n=1 & -\inf<mi<\inf & mi=mx
+ or self::node<mi, q> * q::sll<n-1, qs,mx> & -\inf<mi<\inf & mi <= qs
+      &  q!=null //& -\inf<mx<\inf //& n>1
+  inv self=null & n=0 & mi=\inf & mx=-\inf |
+      self!=null & n>0 & mi<=mx  & -\inf<mi & mx<\inf;
 
-requires y::node<v,null>
-case{
-	x = null -> ensures res::sortA<v> & res != null;
-	x != null -> requires x::sortA<a>
-			ensures res::sortA<b> & b = min(a,v) & res != null;
-	}
+
+int find_min(node x)
+     requires x::bnd1<n, mi,mx> & n > 0
+     ensures x::bnd1<n, mi,mx> & res = mi & -\inf<res<\inf;
 {
-if (x == null) return y;
-else {
-	if (y.val <= x.val){
-		y.next = x;
-		return y;
-		}
-	else {
-	node tmp;
-	tmp = insert(x.next,y);
-	x.next = tmp;
-	return x;
+	int tmp; 
+
+	if (x.next == null)
+		return x.val;
+	else
+	{	
+		tmp = find_min(x.next);
+		if (tmp > x.val)
+			return x.val;
+		else
+			return tmp;
 	}
 }
-}	
+
+void delete_min(ref node x, int a)
+  requires x::bnd1<n, mi,mx> & n >= 1 & a = mi
+  case {
+    n=1 -> ensures x'=null;
+    n!=1 -> ensures x'::bnd1<n-1,mi1,mx> & mi<=mi1;
+    }  
+{
+	if (x.val == a)
+		x = x.next;
+	else {
+        //assume false;
+		bind x to (_, xnext) in {
+                   //assume xnext'=null or xnext'!=null;
+			delete_min(xnext, a);
+		}
+	}
+}
+
+node selection_sort(node x)
+
+ requires x::bnd1<n,mi,mx>
+ ensures res::sll<n,mi,mx> ;
+
+{
+	int minimum;
+	node tmp, tmp_null = null;
+	if (x == null) return null;
+	else
+	{
+	    minimum = find_min(x);
+	    delete_min(x, minimum);
+        if (x==null) return new node(minimum, tmp_null);
+        else {
+		  tmp = selection_sort(x);
+          //assert false;
+		  return new node(minimum, tmp);
+        }
+	}
+}

@@ -574,6 +574,8 @@ let elim_exists_ff = ref true
 (* let allow_imm = ref false (\*imm will delay checking guard conditions*\) *)
 let allow_imm = ref true (*imm will delay checking guard conditions*)
 
+let allow_inf = ref true (*enable support to use infinity (\inf and -\inf) in formulas *)
+
 let ann_derv = ref false
 
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
