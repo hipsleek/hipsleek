@@ -5,29 +5,19 @@ data node {
 	node next; 
 }
 
-bnd1<n,mi,mx> == self = null & n = 0 & mi = \inf & mx=-\inf or 
-  self::node<d, p> * p::bnd1<n-1, tmi,tmx> & mi = min(d, tmi) & mx=max(d,tmx) & -\inf<d<\inf 
-  inv self=null & n=0 & mi=\inf & mx=-\inf |
-      self!=null & n=1 & mi=mx & -\inf<mi<\inf |
-      self!=null & n>1 & mi<=mx & -\inf<mi & mx<\inf;
-      
-noninfbnd1<n,mi,mx> == self = null & n = 0 
-	or self::node<d,null> & n = 1 & mi = mx
+bnd1<n,mi,mx> == self = null & n = 0 
+	or self::node<mi,null> & n = 1 & mi = mx
 	or self::node<d,p> * p::bnd1<n-1, tmi,tmx> & mi = min(d, tmi) & mx=max(d,tmx) & p != null
 	inv n >= 0;
 
-sll<n, mi,mx> == 
-   self = null & mi = \inf & mx = -\inf & n = 0
- or self::node<mi, null> & n=1 & -\inf<mi<\inf & mi=mx
- or self::node<mi, q> * q::sll<n-1, qs,mx> & -\inf<mi<\inf & mi <= qs
-      &  q!=null //& -\inf<mx<\inf //& n>1
-  inv self=null & n=0 & mi=\inf & mx=-\inf |
-      self!=null & n>0 & mi<=mx  & -\inf<mi & mx<\inf;
-
+sll<n,mi,mx> == self = null & n = 0
+	or self::node<mi,null> & n = 1 & mi = mx
+	or self::node<mi,q> * q::sll<n-1,qs,mx> & mi <= qs & n > 1
+	inv n >= 0;
 
 int find_min(node x)
      requires x::bnd1<n, mi,mx> & n > 0
-     ensures x::bnd1<n, mi,mx> & res = mi & -\inf<res<\inf;
+     ensures x::bnd1<n, mi,mx> & res = mi;
 {
 	int tmp; 
 
@@ -53,9 +43,7 @@ void delete_min(ref node x, int a)
 	if (x.val == a)
 		x = x.next;
 	else {
-        //assume false;
 		bind x to (_, xnext) in {
-                   //assume xnext'=null or xnext'!=null;
 			delete_min(xnext, a);
 		}
 	}
@@ -77,7 +65,6 @@ node selection_sort(node x)
         if (x==null) return new node(minimum, tmp_null);
         else {
 		  tmp = selection_sort(x);
-          //assert false;
 		  return new node(minimum, tmp);
         }
 	}
