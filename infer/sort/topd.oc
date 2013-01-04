@@ -17,3 +17,23 @@ LHS := {[x,y,x1,y1]:(y <= -1 && 0 <= x || 0 <= x <= y)
       & x1=x-1 & y1=y-1 & x>0};
 RHS := {[x,y,x1,y1]:(y1 <= -1 && 0 <= x1 || 0 <= x1 <= y1)};
 LHS subset RHS;
+
+
+A:={[n,a]:(a!=1 || n!=1) && n>=1};
+PairWiseCheck P;
+
+# ((RECn >= 1 && n >= 1 + RECn) && n + RECa = a + RECn)
+Pre:={[n,a]:forall(Recn,Reca:
+   not(Recn>=1 & n>=1+Recn & Recn+a=Reca+n) | 
+    (Recn>=1 & (Recn!=1 || Reca!=1)))};
+
+Pre;
+#{[n,a]: a <= 1} union
+#{[n,a]: 2 <= a < n} union
+#{[n,a]: n < a && 2 <= a}
+
+FinalPre:={[n,a]:
+   n>=1 & (a!=1 | n!=1) & (a<=1 | 2<=a<n | n<a && 2<=a)};
+PairWiseCheck FinalPre;
+#{[n,a]: 1 <= n < a} union {[n,a]: a < n && 1 <= n}
+

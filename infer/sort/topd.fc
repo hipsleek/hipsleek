@@ -1,10 +1,10 @@
 #P(x,y) -> y<0 || y>0 || x<1
-#P(x,y) & x1=x-1 & y1=y-1 & x>0 -> P(x1,y1)
+#P(x,y) & x1=x-1 & y1=y-1 & x>0 & y!=0 -> P(x1,y1)
 
 #From P(..) above, we obtain top-down relation wh
 wh:={[x,y]->[px,py]->[]:
   (x=0 && px=x && py=y)
- || (exists (x1,y1:x>0 && x1=x-1 && y1=y-1 && wh(x1,y1,px,py)))};
+ || (exists (x1,y1:x>0 && (y<0 || y>0) && x1=x-1 && y1=y-1 && wh(x1,y1,px,py)))};
 TD:=topdown(wh,1,SimHeur);
 TD;
 
@@ -32,3 +32,10 @@ TD;
 #      & x1=x-1 & y1=y-1};
 #RHS := {[x,y,x1,y1]:(y1 <= -1 && 0 <= x1 || 0 <= x1 <= y1)};
 #LHS subset RHS;
+
+
+wh:={[n,a]->[pn,pa]->[]:
+    (a=1 && n>=0 && pn=n && pa=a)
+ || (exists (a1,n1: n>=2 && (a<1 || a>1) && a1=a-1 && n1=n-1 && wh(n1,a1,pn,pa)))};
+TD:=topdown(wh,1,SimHeur);
+TD;
