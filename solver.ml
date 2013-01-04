@@ -5479,7 +5479,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
             let (ip1,ip2,relass,entail_states) = 
             begin 
               match split_a_opt with 
-              | None -> let r1,r2,r3 = Inf.infer_pure_m estate split_ante1 split_ante0 m_lhs split_conseq pos in
+              | None -> 
+                let r1,r2,r3 = Inf.infer_pure_m estate split_ante1 split_ante0 m_lhs split_conseq pos in
                 r1,r2,r3,[]
               | Some (split1,split2) -> 
 (*                let split_mix1 = List.map MCP.mix_of_pure split1 in*)
@@ -5488,10 +5489,18 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                     (* TODO: lhs_wo_heap *)
                     let lhs_wo_heap = f in
                     let r1,r2,r3 = Inf.infer_pure_m estate f f lhs_wo_heap split_conseq pos in
-                    let estate_f = {estate with es_formula = mkBase_simp HEmp f} in
-                    (match r1 with 
-                      | None -> r1,r2,r3,[estate_f]
-                      | Some (es,_) -> r1,r2,r3,[es])) split_mix2 in
+                    let estate_f = {estate with es_formula = 
+                        (match estate.es_formula with
+                        | Base b -> CF.mkBase_simp b.formula_base_heap f
+                        | _ -> report_error pos "infer_pure_m: Not supported")
+                      } 
+                    in
+(*                    let estate_f = {estate with es_formula = mkBase_simp HEmp f} in*)
+                    (match r1,r3 with 
+                      | None,[] -> r1,r2,r3,[estate_f]
+                      | None,[h] -> r1,r2,r3,[fst h]
+                      | None,_ -> report_error pos "Length of relational assumption list > 1"
+                      | Some(es,_),_ -> r1,r2,r3,[es])) split_mix2 in
                 let or_option_ip1 (o1,o2) = (match o1,o2 with
                   | None,_ -> o2
                   | _,None -> o1
@@ -5519,13 +5528,15 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                         match relass with
                           | [] -> 
                                 (stk_inf_pure # push p;
-                                let _ = if entail_states = [] then stk_estate # push es 
+                                let _ = 
+                                  if entail_states = [] then stk_estate # push es 
                                   else stk_estate # push_list entail_states in
                                 (true,[],None))
                           | _ ->
                                 (stk_inf_pure # push p;
-                                stk_rel_ass # push_list relass;
-                                let _ = if entail_states = [] then stk_estate # push es 
+                                stk_rel_ass # push_list (List.concat (snd (List.split relass)));
+                                let _ = 
+                                  if entail_states = [] then stk_estate # push es 
                                   else stk_estate # push_list entail_states in
                                 (true,[],None))
                       end
@@ -5538,10 +5549,13 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                                     | [] -> 
                                           i_res1,i_res2,i_res3
                                     | _ -> (* stk_inf_pure # push pf; *)
-                                          stk_rel_ass # push_list relass;
+                                          stk_rel_ass # push_list (List.concat (snd (List.split relass)));
+                                          let _ = 
+                                            if entail_states = [] then 
+                                              report_error pos "Expecting a non-empty list of entail states"
+                                            else stk_estate # push_list entail_states in
                                           (true,[],None)
                                 end
-
                           | Some pf ->
                                 begin
                                   stk_inf_pure # push pf;
@@ -7362,20 +7376,29 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
               begin
                 match r with
                   | Some (new_estate,pf) ->
-                        begin
-                          (* explicitly force unsat checking to be done here *)
-                          let ctx1 = (elim_unsat_es_now 6 prog (ref 1) new_estate) in
-                          (* let ctx1 = set_unsat_flag ctx1 false in  *)
-                          let r1, prf = heap_entail_one_context 9 prog is_folding ctx1 conseq None pos in
-                          match relass with
-                            | [] -> 
-                                  let r1 = add_infer_pure_to_list_context [pf] r1 in
-                                  (r1,prf)
-                            | _ -> 
-                                  let r1 = add_infer_rel_to_list_context relass r1 in
-                                  (r1,prf)
-                        end
+                    begin
+                    match relass with
+                      | [] -> 
+                        (* explicitly force unsat checking to be done here *)
+                        let ctx1 = (elim_unsat_es_now 6 prog (ref 1) new_estate) in
+                        (* let ctx1 = set_unsat_flag ctx1 false in  *)
+                        let r1, prf = heap_entail_one_context 9 prog is_folding ctx1 conseq None pos in
+                        let r1 = add_infer_pure_to_list_context [pf] r1 in
+                        (r1,prf)
+                      | [h] -> 
+                        (* explicitly force unsat checking to be done here *)
+                        let ctx1 = (elim_unsat_es_now 6 prog (ref 1) new_estate) in
+                        (* let ctx1 = set_unsat_flag ctx1 false in  *)
+                        let r1, prf = heap_entail_one_context 9 prog is_folding ctx1 conseq None pos in
+                        let r1 = add_infer_pure_to_list_context [pf] r1 in
+                        let r1 = add_infer_rel_to_list_context (snd h) r1 in
+                        (r1,prf)
+                      | _ -> report_error pos "Length of relational assumption list > 1"
+                    end
                   | None ->
+                    begin
+                    match relass with
+                      | [] -> 
                         let (res,new_estate) = Inf.infer_collect_hp_rel 2 prog estate rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos in
                         if (not res) then
                           let s = "15.5 no match for rhs data node: " ^
@@ -7384,7 +7407,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                                   !error_flow_int estate.CF.es_formula} in
                           let unmatched_lhs = Basic_Reason (mkFailContext s new_estate (Base rhs_b) None pos,
                           CF.mk_failure_must s Globals.sl_error) in
-                          let (res_lc, prf) = do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:CP.spec_var list) is_folding pos in
+                          let (res_lc, prf) = do_unmatched_rhs rhs rhs_rest caller prog estate conseq lhs_b rhs_b a
+                            (rhs_h_matched_set:CP.spec_var list) is_folding pos in
                           (CF.mkFailCtx_in (Or_Reason (res_lc, unmatched_lhs)), prf)
                         else
                           let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest} in
@@ -7392,6 +7416,15 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                           (* let res_ctx = Ctx new_estate  in *)
                           (* (SuccCtx[res_ctx], NoAlias) *)
                           (res_es0,prf0)
+                      | [h] -> 
+                          (* explicitly force unsat checking to be done here *)
+                          let ctx1 = (elim_unsat_es_now 6 prog (ref 1) (fst h)) in
+                          (* let ctx1 = set_unsat_flag ctx1 false in  *)
+                          let r1, prf = heap_entail_one_context 9 prog is_folding ctx1 conseq None pos in
+                          let r1 = add_infer_rel_to_list_context (snd h) r1 in
+                          (r1,prf)
+                      | _ -> report_error pos "Length of relational assumption list > 1"
+                    end
               end
             end
       | Context.Seq_action l ->
