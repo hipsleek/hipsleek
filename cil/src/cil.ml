@@ -194,7 +194,6 @@ and global =
       * variable in an entire program. Cannot have storage Extern or function 
       * type. *)
 
-
   | GFun of fundec * location           
      (** A function definition. *)
 
@@ -205,6 +204,7 @@ and global =
   | GText of string                     (** Some text (printed verbatim) at 
                                             top level. E.g., this way you can 
                                             put comments in the output.  *)
+  (* | GHipSpecs of  *)
 
 
 (** The various types available. Every type is associated with a list of 

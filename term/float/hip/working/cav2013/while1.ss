@@ -1,12 +1,15 @@
 void foo()
 {
-  float x;
-  while (x > 0.01)
+  int c = 2;
+  int x;
+  while ((x < c) || (x >= 0))
+    requires c > 0
     case {
-      x > 0.01 -> requires Term[Seq{x @ (0,+infty), x>0.01}] ensures true;
-      x <= 0.01 -> requires Term[] ensures true;
+      x >=  c    -> requires Term[] ensures true;
+      0 <= x < c -> requires Term[x] ensures true;
+      x < 0      -> requires Term[] ensures true;
     }
   {
-    x = x / 2.0;
+    x = x - c;
   }
 }
