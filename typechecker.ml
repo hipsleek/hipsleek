@@ -1668,7 +1668,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (* let _ = print_string ("\ncheck_pre_post@SCall@sctx: " ^
                        (Cprinter.string_of_pos pos) ^ "\n" ^
                        (Cprinter.string_of_list_failesc_context sctx) ^ "\n\n") in*)
-                    let _ = Debug.info_pprint ("  renamed spec 1 " ^ (Cprinter.string_of_struc_formula renamed_spec)) no_pos in
+                    (* let _ = Debug.info_pprint ("  renamed spec 1 " ^ (Cprinter.string_of_struc_formula renamed_spec)) no_pos in *)
                     let renamed_spec = CF.subst_struc_varperm st1 renamed_spec in
                     (* let _ = Debug.info_pprint ("  renamed spec 2 " ^ (Cprinter.string_of_struc_formula renamed_spec)) no_pos in *)
                     let renamed_spec = CF.subst_struc_avoid_capture_varperm fr_vars to_vars renamed_spec in
