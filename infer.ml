@@ -1251,19 +1251,17 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
       let rel_lhs_n = List.concat (List.map (fun x -> CP.get_rel_id_list x) rel_lhs) in
       let rel_rhs_n = List.concat (List.map (fun x -> CP.get_rel_id_list x) rel_rhs) in
       let rel_lhs_n = CP.intersect rel_lhs_n rel_rhs_n in
-      let rel_vars = 
-        let rs = List.filter (fun x -> CP.subset (CP.get_rel_id_list x) rel_lhs_n) rel_lhs in
-        List.concat (List.map CP.fv rs) in
-      let lhs_rec_vars = CP.fv lhs_p_memo in
-      if CP.intersect lhs_rec_vars rel_vars = [] && rel_lhs_n != [] then (
-        DD.tinfo_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
-        DD.tinfo_pprint ">>>>>> no recursive def <<<<<<" pos; 
-        (estate,lhs_mix,rhs_mix_new)
-      )
-      else
+      let rel_to_del = if rel_lhs_n=[] then []
+        else 
+          let lhs_rec_vars = CP.fv lhs_p_memo in
+          let rel_lhs_new = List.filter (fun x -> CP.subset (CP.get_rel_id_list x) rel_lhs_n) rel_lhs in
+          List.filter (fun x -> CP.intersect lhs_rec_vars (CP.fv x) = []) rel_lhs_new
+      in
+      DD.ninfo_hprint (add_str "rel_to_del:" (pr_list !CP.print_formula)) rel_to_del pos;
         let lhs_h_p = MCP.pure_of_mix lhs_h_mix in
         let lhs = lhs_simplifier_tp lhs_h_p lhs_p_memo in
         let lhs_p_new = CP.restore_memo_formula subs bvars lhs in
+        let rel_vars = List.concat (List.map CP.fv rel_lhs) in
 
         DD.trace_hprint (add_str "lhs_p:" (!CP.print_formula)) lhs_p pos;
         DD.trace_hprint (add_str "lhs_p_memo:" (!CP.print_formula)) lhs_p_memo pos;
@@ -1293,7 +1291,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
           DD.tinfo_hprint (add_str "diff_vs" !print_svl) diff_vs pos;
           let new_lhs = CP.wrap_exists_svl lhs diff_vs in
           DD.tinfo_hprint (add_str "new_lhs (b4 elim_exists)" !CP.print_formula) new_lhs pos;
-          (* TODO: The better is to avoid from generating redundant primed vars *)
+          (* TODO: The better is to avoid generating redundant primed vars *)
           let new_lhs = 
             if is_bag_cnt then 
               pairwise_proc (CP.arith_simplify_new (CP.remove_red_primed_vars new_lhs))
@@ -1301,9 +1299,13 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
               let new_lhs_drop_rel = 
                 TP.simplify_raw (CP.drop_rel_formula new_lhs) in
               let new_lhs_drop_rel = pairwise_proc new_lhs_drop_rel in
-              CP.conj_of_list (new_lhs_drop_rel::rel_lhs) no_pos 
+              DD.ninfo_hprint (add_str "rel_lhs(b4):" (pr_list !CP.print_formula)) rel_lhs pos;
+              let rel_lhs_new = if rel_to_del=[] then rel_lhs
+                else List.filter (fun x -> not(Gen.BList.mem_eq CP.equalFormula x rel_to_del)) rel_lhs in
+              DD.ninfo_hprint (add_str "rel_lhs(af):" (pr_list !CP.print_formula)) rel_lhs_new pos;
+              CP.conj_of_list (new_lhs_drop_rel::rel_lhs_new) no_pos 
           in
-          DD.devel_hprint (add_str "new_lhs (aft elim_exists)" !CP.print_formula) new_lhs pos;
+          DD.ninfo_hprint (add_str "new_lhs (aft elim_exists)" !CP.print_formula) new_lhs pos;
           let rel_def_id = CP.get_rel_id_list rhs in
 (*          let rank_bnd_id = CP.get_rank_bnd_id_list rhs in*)
 (*          let rank_dec_id = CP.get_rank_dec_and_const_id_list rhs in*)
