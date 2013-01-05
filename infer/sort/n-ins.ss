@@ -30,14 +30,11 @@ What happen to the recursive cases?
 */
 {
     if (y.val<=x.val) {
-        y.next = x;
-        return y;
+        y.next = x; return y;
     } else {
-      node tmp = x.next;
-      if (tmp==null) x.next=y;
+      if (x.next==null) x.next=y;
       else {
-        tmp = insert(x.next,y);
-        x.next=tmp;
+        x.next = insert(x.next,y);
       };
       return x;
     }

@@ -10,30 +10,28 @@ relation R2(int a, int b).
 //(1)
 infer [R] R(v) & R(w)  |- v>=1.
 print residue.
-// <1>emp&R(v) & R(w)&{FLOW,(19,20)=__norm}[]
+// <1>emp&1<=v&{FLOW,(19,20)=__norm}[]
 // inferred rel: [RELASS [R]: ( R(v)) -->  1<=v]
-// expecting 1<=v in residual
+// we should keep R(v) & R(w)
+// expecting R(v) & R(w) & 1<=v in residual
+// it is a bit dangerous to loss unknown relations
+// at this stage as they may be required again
 
 //(2)
 infer [R] R(v) & R(w)  |- w>=0.
 print residue.
-//<1>emp&R(v) & R(w)&{FLOW,(19,20)=__norm}[]
-// [R(w) --> w>=0]
 // expecting w>=0 in residue
+// <1>emp&0<=w&{FLOW,(19,20)=__norm}[]
+// inferred rel: [RELASS [R]: ( R(w)) -->  0<=w]
+// expecting R(v) & R(w) too
 
 //(3)
 infer [R] R(v) & R(w)  |- v>=1 & w>=0.
 print residue.
-// <1>emp&R(v) & R(w)&{FLOW,(19,20)=__norm}[]
-// inferred rel: [RELASS [R]: ( R(v)) -->  1<=v; RELASS [R]: ( R(w)) -->  0<=w]
-// expecting 1<=v & w>=0 in residue
 
 //(4)
 infer [R2] R2(v,x) & x>=w   |- v>=w.
 print residue.
-// <1>emp&R2(v,x) & w<=x&{FLOW,(19,20)=__norm}[]
-// inferred rel: [RELASS [R2]: ( R2(v,x)) -->  x<=v]
-// expecting x<=v to be added to residue
 
 //(5)
 infer [R] R(v) & R(w)  |- v>=w.
@@ -44,23 +42,20 @@ print residue.
 //(6)
 infer [R] R(v) & w=1  |- v>=w.
 print residue.
-// <1>emp&R(v) & w=1&{FLOW,(19,20)=__norm}[]
+// <1>emp&w=1 & 1<=v&{FLOW,(19,20)=__norm}[]
 // inferred rel: [RELASS [R]: ( R(v)) -->  1<=v]
-// add 1<=v in residue
+// Please keep R(v) too
+
 
 //(7)
 infer [R] R(v) & w=v  |- v+w>2.
 print residue.
-// <1>emp&R(v) & v=w&{FLOW,(19,20)=__norm}[]
-// inferred rel: [RELASS [R]: ( R(v)) -->  2<=v]
-// add 2<=v to residue
+
 
 //(8)
 infer [R] R(v) & w=v  |- v+w>3.
 print residue.
-// <1>emp&R(v) & v=w&{FLOW,(19,20)=__norm}[]
-// inferred rel: [RELASS [R]: ( R(v)) -->  2<=v]
-// add 2<=v to residue
+
 
 //(9)
 infer [R] R(v) & v<=z  |- v<z.
