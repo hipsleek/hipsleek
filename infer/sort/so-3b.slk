@@ -14,7 +14,7 @@ print residue.
 // inferred rel: [RELASS [R]: ( R(v)) -->  1<=v]
 // we should keep R(v) & R(w)
 // expecting R(v) & R(w) & 1<=v in residual
-// it is a bit dangerous to loss unknown relations
+// it is a bit dangerous to lose unknown relations
 // at this stage as they may be required again
 
 //(2)
