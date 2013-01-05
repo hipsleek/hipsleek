@@ -14,3 +14,6 @@ void mpfr_tests_tget_d_172 ()
     d /= 2.0;
   }
 }
+
+// BUG:
+// Line 6: "requires DBL_MIN > 0.0 & d > 0.0" wasn't included???
