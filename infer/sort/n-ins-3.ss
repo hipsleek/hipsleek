@@ -21,7 +21,8 @@ node insert(node x, node y)
   ensures  res::sortA<b> & b=min(a,v) ;
 *************************************
 *******pure relation assumption ******
-*************************************[RELDEFN R: ( b=v & b<=a) -->  R(b,a,v),
+*************************************
+[RELDEFN R: ( b=v & b<=a) -->  R(b,a,v),
 RELDEFN R: ( b=v & b<=a) -->  R(b,a,v),
 RELDEFN R: ( a=b & b<v) -->  R(b,a,v),
 RELASS [R]: ( R(b_658,a_642,v_643)) -->  (a_642<=b_658 & b_658<=(v_643-2)) | v_643<=(b_658+1),
