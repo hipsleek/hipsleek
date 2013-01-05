@@ -903,7 +903,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	      (* let _ =  print_endline " after case normalize" in *)
           (* let _ = I.find_empty_static_specs prog in *)
 	      let tmp_views = order_views prog.I.prog_view_decls in
-          Debug.info_hprint (add_str "trans_prog(views)" pr_v_decls) tmp_views no_pos;
+          Debug.tinfo_hprint (add_str "trans_prog(views)" pr_v_decls) tmp_views no_pos;
 	      let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
 	      (* let _ = print_string "trans_prog :: going to trans_view \n" in *)
 	      let cviews = List.map (trans_view prog) tmp_views in
@@ -5307,8 +5307,8 @@ and gather_type_info_b_formula_x prog b0 stab =
 	      let _ = List.map2 (fun x y -> gather_type_info_exp x stab y) args args_exp_types in ()
         else
           begin
-            Debug.info_hprint (add_str ("RelF(args for "^r^")") (pr_list Iprinter.string_of_formula_exp)) args pos;
-            Debug.info_hprint (add_str ("RelF(parameter types for "^r^")") (pr_list string_of_typ)) args_exp_types pos;
+            Debug.tinfo_hprint (add_str ("RelF(args for "^r^")") (pr_list Iprinter.string_of_formula_exp)) args pos;
+            Debug.tinfo_hprint (add_str ("RelF(parameter types for "^r^")") (pr_list string_of_typ)) args_exp_types pos;
             failwith ("mismatch in number of parameters for relation "^r)
           end
       with
@@ -6807,7 +6807,7 @@ and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl =
       
 and case_normalize_program_x (prog: Iast.prog_decl):Iast.prog_decl=
   let tmp_views = (* order_views *) prog.I.prog_view_decls in
-  Debug.info_hprint (add_str "case_normalize_prog(views)" pr_v_decls) tmp_views no_pos;
+  Debug.tinfo_hprint (add_str "case_normalize_prog(views)" pr_v_decls) tmp_views no_pos;
   (* let _ = print_string ("case_normalize_program: view_b: " ^ (Iprinter.string_of_view_decl_list tmp_views)) in *)
   let tmp_views = List.map (fun c-> 
       let h = (self,Unprimed)::(eres_name,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in

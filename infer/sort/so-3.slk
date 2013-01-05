@@ -9,14 +9,14 @@ relation X1(int a, int b).
 
 pred llSP<n,R1:relation(int)> == self=null & n=0
   or self::node<v,p> * p::llSP<n-1,R1> & R1(v)
-inv self=null & n=0 | self!=null & n>0.
-//inv n>=0.
+//inv self=null & n=0 | self!=null & n>0.
+inv n>=0.
 
 
 pred ll<n> == self=null & n=0
   or self::node<v,p> * p::ll<n-1> 
-inv self=null & n=0 | self!=null & n>0.
-//inv n>=0.
+//inv self=null & n=0 | self!=null & n>0.
+inv n>=0.
 
 /*
 //OK
@@ -60,8 +60,8 @@ Maybe not as useful as gist on postcondition
 
 
 
-infer [n,R] x::llSP<n,R> |- x::node<v1,q>*q::node<v2,null>&v1>=0 & v2>1.
-print residue.
+//infer [n,R] x::llSP<n,R> |- x::node<v1,q>*q::node<v2,null>&v1>=0 & v2>1.
+//print residue.
 
 <1>EXISTS(flted_10_127,p_144,flted_10_142: emp&flted_10_127=flted_10_142+1 & R(v2) & n=flted_10_127+1 & R(v1) & q!=x & q!=null & x!=null & p_144=null & flted_10_142=0&{FLOW,(19,20)=__norm})[]
  inferred pure: [n<=2; n!=0; n!=1]
@@ -74,8 +74,15 @@ I think we should have instead two obligations"
 If needed, this can be combined into:
  inferred rel: [RELASS [R]: R(v) -->  2<=v & 0<=v]
 
+infer [n,R] x::llSP<n,R> |- x::node<v1,q> & v1>=0 .
+print residue.
+
+
 */
 
 
+infer [n,R] x::llSP<n,R> |- x::node<v1,q>*q::node<v2,null> 
+                             & v1>=1 & v2>=0 .
+print residue.
 
 infer [X1] X1(v,v2) |- v<=v2 & v2=3.
