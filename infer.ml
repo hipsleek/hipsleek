@@ -618,7 +618,7 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
                       if rel_ass = [] then (None,[])
                       else
                         let new_estate = CF.false_es_with_orig_ante estate estate.es_formula pos in
-                        (None, [(new_estate,rel_ass)])
+                        (None, [(new_estate,rel_ass,true)])
                 end
             | None -> (None,[])
           end
@@ -897,7 +897,7 @@ let rec infer_pure_m estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig 
                       let _ = DD.ninfo_hprint (add_str "New estate : " !print_entail_state_short) new_estate pos in
                       let _ = infer_rel_stk # push_list rel_ass in
                       let _ = Log.current_infer_rel_stk # push_list rel_ass in
-                      (None,None,[(new_estate,rel_ass)])
+                      (None,None,[(new_estate,rel_ass,false)])
                   end
 (*                  DD.devel_pprint ">>>>>> infer_pure_m <<<<<<" pos;*)
 (*                  DD.devel_pprint "Add relational assumption" pos;*)
