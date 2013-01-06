@@ -2482,7 +2482,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                                 if rels = [] then (Infer.infer_rel_stk # reset;[])
                                 else if mutual_grp != [] then []
                                 else
-                                  (let rels = List.map (fun (rt,f1,f2) -> (f1,f2)) Infer.infer_rel_stk # get_stk in
+                                  (let rels = Infer.infer_rel_stk # get_stk in
+                                  let rels = List.filter (fun (rt,_,_) -> CP.is_rel_defn rt) rels in
+                                  let rels = List.map (fun (rt,f1,f2) -> (f1,f2)) rels in
                                   Infer.infer_rel_stk # reset;
                                   Fixcalc.compute_fixpoint 2 rels pre_vars (proc.proc_stk_of_static_specs # top))
                               in

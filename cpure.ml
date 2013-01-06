@@ -8784,6 +8784,10 @@ let is_rel_assume rt = match rt with
   | RelAssume _ -> true
   | _ -> false
 
+let is_rel_defn rt = match rt with
+  | RelDefn _ -> true
+  | _ -> false
+
 let add_conj x rs pos =
   List.map (fun y -> And (x,y,pos)) rs
 

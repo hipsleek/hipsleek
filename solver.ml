@@ -5476,12 +5476,19 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
           then (true,[],None)
           else
             let estate = Gen.unsome_safe !smart_unsat_estate estate in
-            let (ip1,ip2,relass,entail_states) = 
+            let (ip1,ip2,relass,entail_states,false_es) = 
             begin 
               match split_a_opt with 
               | None -> 
                 let r1,r2,r3 = Inf.infer_pure_m estate split_ante1 split_ante0 m_lhs split_conseq pos in
-                r1,r2,r3,[]
+                r1,r2,List.concat (List.map (fun (_,b,_) -> b) r3),[],false
+(*                (match r1,r3 with*)
+(*                  | None,[] -> r1,r2,[],[],false*)
+(*                  | None,[(h1,h2,h3)] -> r1,r2,h2,[h1],h3*)
+(*                  | Some (es,_),[] -> r1,r2,[],[es],true*)
+(*                  | Some (es,_),[(h1,h2,h3)] -> r1,r2,h2,[es],true*)
+(*                  | _,_ -> report_error pos "Length of relational assumption list > 1"*)
+(*                )*)
               | Some (split1,split2) -> 
 (*                let split_mix1 = List.map MCP.mix_of_pure split1 in*)
                 let split_mix2 = List.map MCP.mix_of_pure split2 in
@@ -5497,10 +5504,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                     in
 (*                    let estate_f = {estate with es_formula = mkBase_simp HEmp f} in*)
                     (match r1,r3 with 
-                      | None,[] -> r1,r2,r3,[estate_f]
-                      | None,[h] -> r1,r2,r3,[fst h]
-                      | None,_ -> report_error pos "Length of relational assumption list > 1"
-                      | Some(es,_),_ -> r1,r2,r3,[es])) split_mix2 in
+                      | None,[] -> r1,r2,[],[estate_f],false
+                      | None,[(h1,h2,h3)] -> r1,r2,h2,[h1],h3
+                      | Some(es,_),[] -> r1,r2,[],[es],true
+                      | Some(es,_),[(h1,h2,h3)] -> r1,r2,h2,[es],true
+                      | _,_ -> report_error pos "Length of relational assumption list > 1"
+                    )) split_mix2 in
                 let or_option_ip1 (o1,o2) = (match o1,o2 with
                   | None,_ -> o2
                   | _,None -> o1
@@ -5517,8 +5526,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                   (* if Gen.BList.intersect_eq CP.equalFormula ps1 ps2 != [] then report_error pos "merge_rel_ass: Not supported yet" *)
                   (* else *) rs1 @ rs2 
                 in
-                List.fold_left (fun (a,b,c,d) (a1,b1,c1,d1) -> 
-                  (or_option_ip1 (a,a1),or_option_ip2 (b,b1),merge_rel_ass (c,c1),d@d1)) (None,None,[],[]) res
+                List.fold_left (fun (a,b,c,d,e) (a1,b1,c1,d1,e1) -> 
+                  (or_option_ip1 (a,a1),or_option_ip2 (b,b1),merge_rel_ass (c,c1),d@d1,e||e1)) 
+                    (None,None,[],[],false) res
             end
             in
             begin
@@ -5534,7 +5544,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                                 (true,[],None))
                           | _ ->
                                 (stk_inf_pure # push p;
-                                stk_rel_ass # push_list (List.concat (snd (List.split relass)));
+                                stk_rel_ass # push_list relass;
                                 let _ = 
                                   if entail_states = [] then stk_estate # push es 
                                   else stk_estate # push_list entail_states in
@@ -5549,10 +5559,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                                     | [] -> 
                                           i_res1,i_res2,i_res3
                                     | _ -> (* stk_inf_pure # push pf; *)
-                                          stk_rel_ass # push_list (List.concat (snd (List.split relass)));
+                                          stk_rel_ass # push_list relass;
                                           let _ = 
                                             if entail_states = [] then 
                                               report_error pos "Expecting a non-empty list of entail states"
+                                            else 
+                                            if not(false_es) then ()
                                             else stk_estate # push_list entail_states in
                                           (true,[],None)
                                 end
@@ -5605,14 +5617,23 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       let ctx1 = add_infer_rel_to_ctx (stk_rel_ass # get_stk) ctx1 in
       (SuccCtx[ctx1],UnsatAnte)
     else
-      let inf_p = (stk_inf_pure # get_stk) in
       let estate = Gen.unsome_safe !smart_unsat_estate estate in
       let (lhs_h,lhs_p) = if (CF.isAnyConstFalse estate.es_formula)
         then (HFalse,MCP.mkMFalse no_pos) 
         else (lhs_h,lhs_p) in
+      let inf_p = stk_inf_pure # get_stk in
+      let inf_relass = stk_rel_ass # get_stk in
       let estate = add_infer_pure_to_estate inf_p estate in
-      let estate = add_infer_rel_to_estate (stk_rel_ass # get_stk) estate in
-      let to_add = MCP.mix_of_pure (CP.join_conjunctions inf_p) in
+      let estate = add_infer_rel_to_estate inf_relass estate in
+      let to_add_rel_ass = 
+        (match !Globals.pre_residue_lvl with
+        | 0 -> let x = List.map (fun (_,_,a) -> a) inf_relass in 
+               if List.exists CP.is_disjunct x then [] else x
+        | 1 -> List.map (fun (_,_,a) -> a) inf_relass 
+        | -1 -> []
+        | _ -> report_error pos "pre_residue_lvl is not -1 or 0 or 1")
+      in
+      let to_add = MCP.mix_of_pure (CP.join_conjunctions (inf_p@to_add_rel_ass)) in
       let lhs_p = MCP.merge_mems lhs_new to_add true in
       let res_delta = mkBase lhs_h lhs_p lhs_t lhs_fl lhs_a no_pos in
 
@@ -7385,13 +7406,13 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                         let r1, prf = heap_entail_one_context 9 prog is_folding ctx1 conseq None pos in
                         let r1 = add_infer_pure_to_list_context [pf] r1 in
                         (r1,prf)
-                      | [h] -> 
+                      | [(_,h,_)] -> 
                         (* explicitly force unsat checking to be done here *)
                         let ctx1 = (elim_unsat_es_now 6 prog (ref 1) new_estate) in
                         (* let ctx1 = set_unsat_flag ctx1 false in  *)
                         let r1, prf = heap_entail_one_context 9 prog is_folding ctx1 conseq None pos in
                         let r1 = add_infer_pure_to_list_context [pf] r1 in
-                        let r1 = add_infer_rel_to_list_context (snd h) r1 in
+                        let r1 = add_infer_rel_to_list_context h r1 in
                         (r1,prf)
                       | _ -> report_error pos "Length of relational assumption list > 1"
                     end
@@ -7416,12 +7437,12 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                           (* let res_ctx = Ctx new_estate  in *)
                           (* (SuccCtx[res_ctx], NoAlias) *)
                           (res_es0,prf0)
-                      | [h] -> 
+                      | [(h1,h2,_)] -> 
                           (* explicitly force unsat checking to be done here *)
-                          let ctx1 = (elim_unsat_es_now 6 prog (ref 1) (fst h)) in
+                          let ctx1 = (elim_unsat_es_now 6 prog (ref 1) h1) in
                           (* let ctx1 = set_unsat_flag ctx1 false in  *)
                           let r1, prf = heap_entail_one_context 9 prog is_folding ctx1 conseq None pos in
-                          let r1 = add_infer_rel_to_list_context (snd h) r1 in
+                          let r1 = add_infer_rel_to_list_context h2 r1 in
                           (r1,prf)
                       | _ -> report_error pos "Length of relational assumption list > 1"
                     end

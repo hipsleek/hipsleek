@@ -372,6 +372,7 @@ let compute_cmd rel_defs =
   (* let nos = string_of_elems nos string_of_int "," in *)
   let nos = string_of_elems nos (fun _ -> 
       string_of_int !Globals.fixcalc_disj) "," in
+  let _ = DD.ninfo_hprint (add_str "No of disjs" (fun x -> x)) nos no_pos in
   let rels = List.map (fun (a,_,_) -> 
                 CP.name_of_spec_var (CP.name_of_rel_form a)) rel_defs in
   let names = string_of_elems rels (fun x -> x) "," in

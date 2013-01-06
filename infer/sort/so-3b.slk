@@ -3,7 +3,7 @@ data node {
 	node next; 
 }.
 
-
+relation R1(int a).
 relation R(int a).
 relation R2(int a, int b).
 
@@ -14,7 +14,7 @@ print residue.
 // inferred rel: [RELASS [R]: ( R(v)) -->  1<=v]
 // we should keep R(v) & R(w)
 // expecting R(v) & R(w) & 1<=v in residual
-// it is a bit dangerous to loss unknown relations
+// it is a bit dangerous to lose unknown relations
 // at this stage as they may be required again
 
 //(2)
@@ -77,6 +77,14 @@ print residue.
 //wrong to fail here
 // expecting
 // inferred rel: [RELASS [R]: ( R(v)) -->  1<=v]
+
+//(12)
+infer [R,R2] R2(v,x) & R(w) & x=w |- x!=w.
+print residue.
+
+//(13)
+infer [R,R1] R(v) & R1(w) & w=1  |- v>=w.
+print residue.
 
 /*
 
