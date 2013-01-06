@@ -15,7 +15,8 @@ relation R(int r, int a, int b).
 node insert(node x, node y)
   infer [R]
   requires x::sortA<a> * y::node<v,null>
-  ensures  res::sortA<b> & R(b,a,v);
+  ensures  res::sortA<b> & R(a,v,b);
+//b,a,v);
 
 /*
 //  requires x::sortA<a> * y::node<v,null>
@@ -30,17 +31,22 @@ node insert(node x, node y)
 !!! PRE :  true
 
 [
+[RELDEFN R: ( b=v & b<=a) -->  R(b,a,v),
 RELDEFN R: ( b=v & b<=a) -->  R(b,a,v),
-RELDEFN R: ( b=v & b<=a) -->  R(b,a,v),
-// can remove above duplication prior to sending to fixcalc
 RELDEFN R: ( a=b & b<v) -->  R(b,a,v),
-RELDEFN R: ( 
-a<=a_642 &
-(((a+1)<=v & v<=(b_658+1)) 
-| (a_642<=b_658 & b_658<=(v-2))) 
-R(b_658,a_642,v)) -->  R(b,a,v)]
+RELASS [R]: ( R(b_658,a_642,v_643)) -->  (a_642<=b_658 & b_658<=(v_643-2)) | v_643<=(b_658+1),
+RELDEFN R: ( a=b & v=v_643 & b<=b_658 & b<=(v-1) & b<=a_642 & R(b_658,a_642,v_643)) -->  R(b,a,v)]
+// why isn't disj obligation captured?
 
-RELASS [R]: ( R(b,a,v)) -->  (a<=b & b<=(v-2)) | v<=(b+1),
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( R(b,a,v), (a>=b & b=v) | (v>=(1+b) & a=b))]
+*************************************
+
+!!! REL :  R(b,a,v)
+!!! POST:  (a>=b & b=v) | (v>=(1+b) & a=b)
+!!! PRE :  true
 
 */
 {
