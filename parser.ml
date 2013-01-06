@@ -479,10 +479,19 @@ let peek_onef =
    SHGram.Entry.of_parser "peek_onef"
        (fun strm ->
            match Stream.npeek 3 strm with
-	     |[CONSTR,_;_;_] -> ()
-	     |[_;CONSTR,_;_] ->  ()
-             |[_;_;CONSTR,_] ->  ()
-             | _ ->  raise Stream.Failure)
+	     |[CONSTR,_;_;_] -> print_string "peekonef1\n";raise Stream.Failure
+	     |[_;CONSTR,_;_] ->  print_string "peekonef2\n";raise Stream.Failure
+             |[_;_;CONSTR,_] ->  print_string "peekonef3\n";raise Stream.Failure
+             | _ -> print_string "peekonef4\n"; ())
+
+let peek_twof =
+   SHGram.Entry.of_parser "peek_twof"
+       (fun strm ->
+           match Stream.npeek 3 strm with
+	     |[CONSTR,_;_;_] ->  print_string "peektwof1\n";()
+	     |[_;CONSTR,_;_] ->    print_string "peektwof2\n";()
+             |[_;_;CONSTR,_] ->   print_string "peektwof3\n";()
+             | _ ->   print_string "peektwof4\n";raise Stream.Failure)
 
 (* let contain_vars_pure_double f =      *)
 (*   match f with                        *)
@@ -2369,10 +2378,10 @@ test_list: [[t = LIST0 test_ele ->
       expected_onef = !onef;
       expected_twof = !twof}]];
 
-test_ele: 
-  [[ t = id; `OSQUARE; il=OPT id_list; `CSQUARE; `OSQUARE; sl=OPT id_list; `CSQUARE; `COLON;`OBRACE;peek_onef;cs=constrs;`CBRACE  ->  
-  (let il = un_option il [] in 
-  let sl = un_option sl [] in 
+test_ele:
+  [[ t = id; `OSQUARE; il=OPT id_list; `CSQUARE; `OSQUARE; sl=OPT id_list; `CSQUARE; `COLON;`OBRACE; cs=constrs;`CBRACE  ->
+  (let il = un_option il [] in
+  let sl = un_option sl [] in
   if(String.compare "ass" t == 0) then ExpectedHpAss (il,sl,cs)
   else if(String.compare t "hpdefs" == 0) then ExpectedHpDef (il,sl,cs)
   else if(String.compare "pure_assumes" t == 0) then ExpectedPureAss (il,sl,cs)
@@ -2380,21 +2389,22 @@ test_ele:
   (* else if(String.compare t "onef" == 0) then ExpectedHpAss (il,sl,cs) *)
   else if(String.compare t "twof" == 0) then ExpectedTwoF (il,sl,cs)
   else  report_error no_pos ("parser: no_case " ^ t))
-   | t = id; `OSQUARE; il=OPT id_list; `CSQUARE; `OSQUARE; sl=OPT id_list; `CSQUARE; `COLON;`OBRACE;fs=forms;`CBRACE  ->  
-   (let il = un_option il [] in 
-   let sl = un_option sl [] in 
+   | t = id; `OSQUARE; il=OPT id_list; `CSQUARE; `OSQUARE; sl=OPT id_list; `CSQUARE; `COLON;`OBRACE;fs=forms;`CBRACE  ->
+   (let il = un_option il [] in
+   let sl = un_option sl [] in
    if(String.compare t "onef" == 0) then ExpectedOneF (il,sl,fs)
    else report_error no_pos ("parser: no_case " ^ t))
    ]];
 
+
 constrs: [[t = LIST0 constr SEP `SEMICOLON -> t]];
 
-constr : [[ t=disjunctive_constr; `CONSTR; b=disjunctive_constr -> {ass_lhs = F.subst_stub_flow n_flow t;
+constr : [[ peek_twof;t=disjunctive_constr; `CONSTR; b=disjunctive_constr -> {ass_lhs = F.subst_stub_flow n_flow t;
 ass_rhs = F.subst_stub_flow n_flow b}]];
 
 forms: [[t = LIST0 form SEP `SEMICOLON -> t]];
 
-form:  [[ t = disjunctive_constr ->  F.subst_stub_flow n_flow t]];
+form:  [[ peek_onef;t = disjunctive_constr -> F.subst_stub_flow n_flow t]];
 
 (* end of cp_list part *)
 (* start of cpare program *)

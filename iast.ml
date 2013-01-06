@@ -208,6 +208,10 @@ and expected_comp =
   | ExpectedOneF of ((ident list) * (ident list) *(F.formula list))
   | ExpectedTwoF of ((ident list) * (ident list) *(ass list))
 
+and ftype =
+    | Onef of (F.formula list)
+    | Twof of (ass list)
+ 
 and ass = {
     ass_lhs: F.formula;
     ass_rhs: F.formula }
