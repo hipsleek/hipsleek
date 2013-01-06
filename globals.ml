@@ -636,6 +636,11 @@ let n_xpure = ref 1
 
 let fixcalc_disj = ref 2
 
+let pre_residue_lvl = ref 0
+(* Lvl 0 - add conjunctive pre to residue only *) 
+(* Lvl 1 - add all pre to residue *) 
+(* Lvl -1 - never add any pre to residue *) 
+
 let check_coercions = ref false
 
 let num_self_fold_search = ref 0
