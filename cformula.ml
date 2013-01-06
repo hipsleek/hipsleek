@@ -5351,10 +5351,13 @@ let isFalseBranchCtxL (ss:branch_ctx list) =
    (ss!=[]) && (List.for_all (fun (_,c) -> isAnyFalseCtx c) ss )
 
 let remove_dupl_false (sl:branch_ctx list) = 
-  let nl = (List.filter (fun (_,oc) -> not (isAnyFalseCtx oc) ) sl) in
+  let (fl,nl) = (List.partition (fun (_,oc) -> (isAnyFalseCtx oc) ) sl) in
+  let pr = pr_list (fun (_,oc) -> !print_context_short oc) in
+  if not(fl==[]) && not(nl==[]) then
+    Debug.info_hprint (add_str "false ctx removed" pr) fl no_pos; 
   if nl==[] then 
-    if (sl==[]) then []
-    else [List.hd(sl)]
+    if (fl==[]) then []
+    else [List.hd(fl)]
   else nl
 
 let remove_dupl_false (sl:branch_ctx list) = 
@@ -5886,19 +5889,50 @@ let rec is_inferred_pre_ctx ctx =
 let proc_left t1 t2 =
     match t1 with
       | [] -> Some t2
-      | [c1] -> 
+      | [c1] ->
             if isAnyFalseCtx c1 then
               if is_inferred_pre_ctx c1 then Some t2 (* drop FalseCtx with Pre *)
               else Some t1 (* keep FalseCtx wo Pre *)
             else None
-      | _ -> None 
+      | _ -> None
+
+let isAnyFalseCtx (ctx:context) : bool = match ctx with
+  | Ctx es -> isAnyConstFalse es.es_formula
+  | _ -> false  
+
+let merge_false es1 es2 = 
+    { es1 with
+        (* all inferred must be concatenated from different false *)
+        es_infer_pure = es1.es_infer_pure@es2.es_infer_pure;
+        es_infer_rel = es1.es_infer_rel@es2.es_infer_rel;
+        es_infer_heap = es1.es_infer_heap@es2.es_infer_heap;
+        es_infer_hp_rel = es1.es_infer_hp_rel@es2.es_infer_hp_rel
+     }
+
+(* let proc_left t1 t2 = *)
+(*     match t1 with *)
+(*       | [] -> Some t2 *)
+(*       | [c1] ->  *)
+(*             if isAnyFalseCtx c1 then *)
+(*               if is_inferred_pre_ctx c1 then  *)
+(*                 match t2 with *)
+(*                   | [c2] -> *)
+(*                         if isAnyFalseCtx c2  *)
+(*                           && is_inferred_pre_ctx c2  *)
+(*                         (\* both t1 and t2 are FalseCtx with Pre *\) *)
+(*                         then Some [merge_false c1 c2] *)
+(*                         else Some t1 (\* only t1 is FalseCtx with Pre *\) *)
+(*                   | _ -> Some t1 (\* only t1 is FalseCtx with Pre *\) *)
+(*               else Some t1 (\* keep FalseCtx wo Pre *\) *)
+(*             else None *)
+(*       | _ -> None  *)
 
 (* remove false with precondition *)
 let simplify_ctx_elim_false_dupl t1 t2 =
   match proc_left t1 t2 with
     | Some r1 -> r1
     | None -> 
-          (match proc_left t2 t1 with
+          (match proc_left t2 [] with
             | Some r2 -> r2
             | None -> t1@t2)
 
@@ -6116,7 +6150,7 @@ let keep_failure_list_partial_context (lc: list_partial_context) : list_partial_
 
 
 (* this should be applied to merging also and be improved *)
-let count_false (sl:branch_ctx list) = List.fold_left (fun cnt (_,oc) -> if (isAnyFalseCtx oc) then cnt+1 else cnt) 0 sl
+(* let count_false (sl:branch_ctx list) = List.fold_left (fun cnt (_,oc) -> if (isAnyFalseCtx oc) then cnt+1 else cnt) 0 sl *)
 
 (*remove v=v from formula*)
 let remove_true_conj_pure (p:CP.formula) =
