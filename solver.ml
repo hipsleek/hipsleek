@@ -5482,6 +5482,13 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
               | None -> 
                 let r1,r2,r3 = Inf.infer_pure_m estate split_ante1 split_ante0 m_lhs split_conseq pos in
                 r1,r2,List.concat (List.map (fun (_,b,_) -> b) r3),[],false
+(*                (match r1,r3 with*)
+(*                  | None,[] -> r1,r2,[],[],false*)
+(*                  | None,[(h1,h2,h3)] -> r1,r2,h2,[h1],h3*)
+(*                  | Some (es,_),[] -> r1,r2,[],[es],true*)
+(*                  | Some (es,_),[(h1,h2,h3)] -> r1,r2,h2,[es],true*)
+(*                  | _,_ -> report_error pos "Length of relational assumption list > 1"*)
+(*                )*)
               | Some (split1,split2) -> 
 (*                let split_mix1 = List.map MCP.mix_of_pure split1 in*)
                 let split_mix2 = List.map MCP.mix_of_pure split2 in
@@ -5610,14 +5617,23 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       let ctx1 = add_infer_rel_to_ctx (stk_rel_ass # get_stk) ctx1 in
       (SuccCtx[ctx1],UnsatAnte)
     else
-      let inf_p = (stk_inf_pure # get_stk) in
       let estate = Gen.unsome_safe !smart_unsat_estate estate in
       let (lhs_h,lhs_p) = if (CF.isAnyConstFalse estate.es_formula)
         then (HFalse,MCP.mkMFalse no_pos) 
         else (lhs_h,lhs_p) in
+      let inf_p = stk_inf_pure # get_stk in
+      let inf_relass = stk_rel_ass # get_stk in
       let estate = add_infer_pure_to_estate inf_p estate in
-      let estate = add_infer_rel_to_estate (stk_rel_ass # get_stk) estate in
-      let to_add = MCP.mix_of_pure (CP.join_conjunctions inf_p) in
+      let estate = add_infer_rel_to_estate inf_relass estate in
+      let to_add_rel_ass = 
+        (match !Globals.pre_residue_lvl with
+        | 0 -> let x = List.map (fun (_,_,a) -> a) inf_relass in 
+               if List.exists CP.is_disjunct x then [] else x
+        | 1 -> List.map (fun (_,_,a) -> a) inf_relass 
+        | -1 -> []
+        | _ -> report_error pos "pre_residue_lvl is not -1 or 0 or 1")
+      in
+      let to_add = MCP.mix_of_pure (CP.join_conjunctions (inf_p@to_add_rel_ass)) in
       let lhs_p = MCP.merge_mems lhs_new to_add true in
       let res_delta = mkBase lhs_h lhs_p lhs_t lhs_fl lhs_a no_pos in
 
