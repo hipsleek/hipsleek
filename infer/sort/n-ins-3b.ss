@@ -20,9 +20,9 @@ inv self!=null;
 relation R(int r, int a).
 
 node insert(node x, node y)
-
-     requires x::sortHO<a,R1> * y::node<v,null>
-     ensures  res::sortHO<b,R2> & (v>a & b=a | (a>=b & b=v));
+     infer [R]
+     requires x::sortHO<a,R> * y::node<v,null>
+     ensures  res::sortHO<b,R> & (v>a & b=a | (a>=b & b=v));
 /*
 
 Can we avoid the disjunction in the xform?
