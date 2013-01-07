@@ -1069,14 +1069,23 @@ let rec infer_pure_m_x estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_ori
   Globals.loc -> (Cformula.entail_state * CP.formula) option
 *)
 
+(*
+  (CF.entail_state * Cformula.CP.formula) option *
+  CP.Label_Pure.exp_ty option *
+
+  (CF.entail_state *
+   (Cpure.rel_cat * Cpure.Label_Pure.exp_ty * Redlog.CP.formula) list * 
+   bool)
+  list
+*)
 and infer_pure_m estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_xpure_orig iv_orig pos =
   let pr1 = !print_mix_formula in 
   let pr2 = !print_entail_state_short in 
   let pr_p = !CP.print_formula in
-  let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) 
-    (fun l -> (string_of_int (List.length l))) in
+  let pr_res_lst = pr_list (fun (es,r,b) -> (pr_list CP.print_lhs_rhs) r) in
+  let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) pr_res_lst in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-  Debug.no_5 "infer_pure_m" 
+  Debug.ho_5 "infer_pure_m_1" 
     (add_str "estate " pr0) 
     (add_str "lhs xpure " pr_p) 
     (add_str "lhs xpure0 " pr1)
@@ -1118,11 +1127,13 @@ let infer_pure_m estate lhs_mix lhs_mix_0 lhs_wo_heap rhs_mix pos =
 let infer_pure_m estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos =
   let pr1 = !print_mix_formula in 
   let pr2 = !print_entail_state_short in 
+  let pr2a = !print_entail_state in 
   let pr_p = !CP.print_formula in
-  let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) 
-    (fun l -> (string_of_int (List.length l))) in
+  let pr_res_lst = pr_list (fun (es,r,b) -> pr_pair pr2 (pr_list CP.print_lhs_rhs) (es,r)) in
+  let pr_len = fun l -> (string_of_int (List.length l)) in
+  let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) pr_res_lst in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-  Debug.no_4 "infer_pure_m" 
+  Debug.ho_4 "infer_pure_m_2" 
     (add_str "estate " pr0) 
     (add_str "lhs xpure " pr1) 
     (add_str "lhs xpure0 " pr1)
