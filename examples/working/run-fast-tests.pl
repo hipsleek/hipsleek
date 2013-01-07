@@ -516,11 +516,11 @@ $output_file = "log";
                                 "seq_fib","SUCCESS",
                                 "para_fib2","SUCCESS"
 								],
-				["vperm/global-var-norace.ss",2,  "--ann-vp", 
+				["vperm/global-var-norace.ss",2,  "--ann-vp --dis-pgbv", 
                                 "inc","SUCCESS",
                                 "func","SUCCESS"
 								],
-				["vperm/global-var-race.ss",2,  "--ann-vp", 
+				["vperm/global-var-race.ss",2,  "--ann-vp --dis-pgbv", 
                                 "inc","SUCCESS",
                                 "func","FAIL"
 								],
@@ -581,116 +581,117 @@ $output_file = "log";
              ],
 	"parahip" =>[
         ### GENERAL TESTS
-				["parahip/simple.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/simple.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/forkjoin.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/forkjoin.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/cell.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/cell.ss",2,  "--en-para -tp parahip", 
                                 "test","SUCCESS",
                                 "test1","FAIL-1"
 								],
-				["parahip/cell4.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/cell4.ss",2,  "--en-para -tp parahip", 
                                 "inc","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/cell-lock-vperm.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/cell-lock-vperm.ss",2,  "--en-para -tp parahip", 
                                 "testCell","SUCCESS",
                                 "testVar","FAIL-1"
 								],
-				["parahip/cell-extreme-cases.ss",4,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/cell-extreme-cases.ss",4,  "--en-para -tp parahip", 
                                 "test","FAIL-2",
                                 "test2","FAIL-2",
                                 "test3","FAIL-1",
                                 "test4","FAIL-1"
 								],
-				["parahip/ls-bind.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/ls-bind.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/ls-waitlevel2.ss",3,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/ls-waitlevel2.ss",3,  "--en-para -tp parahip", 
                                 "func2","SUCCESS",
                                 "func3","SUCCESS",
                                 "func4","SUCCESS"
 								],
         ### DEADLOCKED and DEADLOCK-FREE scenarios
-				["parahip/double-acquire.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/double-acquire.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
                                 "main","FAIL-2"
 								],
-				["parahip/no-deadlock1.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/no-deadlock1.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/no-deadlock2.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/no-deadlock2.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/no-deadlock3.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/no-deadlock3.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/deadlock1.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/deadlock1.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
                                 "main","FAIL-1"
 								],
-				["parahip/deadlock2.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/deadlock2.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
                                 "main","FAIL-1"
 								],
-				["parahip/deadlock3.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/deadlock3.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
                                 "main","FAIL-1"
 								],
-				["parahip/disj-no-deadlock1.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/disj-no-deadlock1.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/disj-no-deadlock2.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/disj-no-deadlock2.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/disj-no-deadlock3.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/disj-no-deadlock3.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/disj-deadlock.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/disj-deadlock.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
                                 "main","FAIL-1"
 								],
-				["parahip/ordered-locking.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/ordered-locking.ss",2,  "--en-para -tp parahip", 
                                 "func","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/unordered-locking.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/unordered-locking.ss",2,  "--en-para -tp parahip", 
                                 "func","FAIL-1",
                                 "main","SUCCESS"
 								],
         ### FUNTIONAL CORRECTNESS
-				["parahip/multicast.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/multicast.ss",2,  "--en-para -tp parahip", 
                                 "initialize","SUCCESS",
                                 "thread","SUCCESS"
 								],
-				["parahip/oracle.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/oracle.ss",2,  "--en-para -tp parahip", 
                                 "thread","SUCCESS",
                  #NOTE: loop calls' naming could be varied
 #                                "f_r_767_hip_parahip_oracle_ss_54_2","SUCCESS",
 #                                "f_r_689_hip_parahip_oracle_ss_80_4","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/owicki-gries.ss",3,  "-perm fperm -tp parahip --ls --locklevel", 
+# slow in parahip/owicki-gries.ss due to search. Could modify search heuristics.
+				["parahip/owicki-gries.ss",3,  "--en-para -tp parahip", 
                                 "incrementor2","SUCCESS",
                                 "incrementor1","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["parahip/fibonacci.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
+				["parahip/fibonacci.ss",2,  "--en-para -tp parahip", 
                                 "seq_fib","SUCCESS",
                                 "para_fib","SUCCESS"
 								],
-				["parahip/create_and_acquire.ss",1,  "-perm fperm -tp parahip --ls --dis-locklevel", 
+				["parahip/create_and_acquire.ss",1,  "--en-para -tp parahip --dis-locklevel", 
                                 "create_and_acquire","SUCCESS"
 								]
         ### END parahip
