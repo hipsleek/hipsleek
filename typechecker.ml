@@ -2489,11 +2489,18 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                                 if rels = [] then (Infer.infer_rel_stk # reset;[])
                                 else if mutual_grp != [] then []
                                 else
-                                  (let rels = Infer.infer_rel_stk # get_stk in
-                                  let rels = List.filter (fun (rt,_,_) -> CP.is_rel_defn rt) rels in
-                                  let rels = List.map (fun (rt,f1,f2) -> (f1,f2)) rels in
-                                  Infer.infer_rel_stk # reset;
-                                  Fixcalc.compute_fixpoint 2 rels pre_vars (proc.proc_stk_of_static_specs # top))
+                                  let rels = Infer.infer_rel_stk # get_stk in
+                                  let is_pre_rel fml pvars =
+                                    let rhs_rel_defn = List.concat (List.map (fun x -> CP.get_rel_id_list x) (CP.list_of_conjs fml)) in
+                                    List.for_all (fun x -> List.mem x pvars) rhs_rel_defn
+                                  in
+                                  let reloblgs, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
+                                  let reldefns = List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
+                                  let pre_rel,post_rel = List.partition (fun (_,x) -> is_pre_rel x pre_vars) reldefns in
+                                  let _ = Debug.info_hprint (add_str "pre_rel" (pr_list (pr_pair pr pr))) pre_rel no_pos in
+                                  let _ = Debug.info_hprint (add_str "post_rel" (pr_list (pr_pair pr pr))) post_rel no_pos in
+                                  let _ = Infer.infer_rel_stk # reset in
+                                  Fixcalc.compute_fixpoint 2 post_rel pre_vars (proc.proc_stk_of_static_specs # top)
                               in
                               (* let pr_ty = !CP.Label_Pure.ref_string_of_exp in *)
                               Infer.fixcalc_rel_stk # push_list triples;
