@@ -50,7 +50,7 @@ node insert(node x, node y)
 /*
  expecting X1(a,b) :- a<=b
  expecting X2(a,b) :- a<=b
- R0(m2,v,m) :- m2=a | v<m & m2=v
+ R0(m2,v,m) :- m2=v | v<m & m2=v  (m2=min(v,m)
 */
 {
   if (x==null) return y;

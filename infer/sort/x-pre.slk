@@ -19,3 +19,10 @@ infer [P] emp&x=x' & y=y'
 print residue.
 // inferred rel: [RELASS [P]: ( P(x,y)) -->  (1<=x | x<=(0-1)) & 1<=y]
 // these pre-conds are too strong, can algo be improved?
+
+infer [x,y]   x=xp & xp!=0 & P(x,y) & y=yp |- y>0.
+print residue.
+
+infer [x,y] emp&x=xp & y=yp & P(x,y) & xp!=0 |-  0<yp. 
+print residue.
+

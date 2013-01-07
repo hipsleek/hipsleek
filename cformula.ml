@@ -5353,11 +5353,25 @@ let rec allFalseCtx ctx = match ctx with
 let isFalseBranchCtxL (ss:branch_ctx list) = 
    (ss!=[]) && (List.for_all (fun (_,c) -> isAnyFalseCtx c) ss )
 
+let is_inferred_pre estate = 
+  not(estate.es_infer_heap==[] && estate.es_infer_pure==[] && estate.es_infer_rel==[])
+  (* let r = (List.length (estate.es_infer_heap))+(List.length (estate.es_infer_pure)) in *)
+  (* if r>0 then true else false *)
+
+let rec is_inferred_pre_ctx ctx = 
+  match ctx with
+  | Ctx estate -> is_inferred_pre estate 
+  | OCtx (ctx1, ctx2) -> (is_inferred_pre_ctx ctx1) || (is_inferred_pre_ctx ctx2)
+
 let remove_dupl_false (sl:branch_ctx list) = 
-  let nl = (List.filter (fun (_,oc) -> not (isAnyFalseCtx oc) ) sl) in
+  let (fl,nl) = (List.partition (fun (_,oc) -> 
+      (isAnyFalseCtx oc && not(is_inferred_pre_ctx oc)) ) sl) in
+  let pr = pr_list (fun (_,oc) -> !print_context_short oc) in
+  if not(fl==[]) && not(nl==[]) then
+    Debug.info_hprint (add_str "false ctx removed" pr) fl no_pos; 
   if nl==[] then 
-    if (sl==[]) then []
-    else [List.hd(sl)]
+    if (fl==[]) then []
+    else [List.hd(fl)]
   else nl
 
 let remove_dupl_false (sl:branch_ctx list) = 
@@ -5726,7 +5740,9 @@ let empty_ctx flowt lbl pos = Ctx (empty_es flowt lbl(*Lab2_List.unlabelled*) po
 
 let false_es_with_flow_and_orig_ante es flowt f pos =
 	let new_f = mkFalse flowt pos in
-    {(empty_es flowt Lab2_List.unlabelled pos) with es_formula = new_f ; es_orig_ante = Some f; 
+    {(empty_es flowt Lab2_List.unlabelled pos) with 
+        es_formula = new_f ; 
+        es_orig_ante = Some f; 
         es_infer_vars = es.es_infer_vars;
         es_infer_vars_rel = es.es_infer_vars_rel;
         es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
@@ -5874,34 +5890,56 @@ let mk_list_partial_context (c:list_context) : (list_partial_context) =
 let repl_label_list_partial_context (lab:path_trace) (cl:list_partial_context) : list_partial_context 
     = List.map (fun (fl,sl) -> (fl, List.map (fun (_,c) -> (lab,c)) sl)) cl
 
-let is_inferred_pre estate = 
-  not(estate.es_infer_heap==[] && estate.es_infer_pure==[] && estate.es_infer_rel==[])
-  (* let r = (List.length (estate.es_infer_heap))+(List.length (estate.es_infer_pure)) in *)
-  (* if r>0 then true else false *)
-
-let rec is_inferred_pre_ctx ctx = 
-  match ctx with
-  | Ctx estate -> is_inferred_pre estate 
-  | OCtx (ctx1, ctx2) -> (is_inferred_pre_ctx ctx1) || (is_inferred_pre_ctx ctx2)
 
 (* let anyPreInCtx c = is_inferred_pre_ctx c *)
 
 let proc_left t1 t2 =
     match t1 with
       | [] -> Some t2
-      | [c1] -> 
+      | [c1] ->
             if isAnyFalseCtx c1 then
               if is_inferred_pre_ctx c1 then Some t2 (* drop FalseCtx with Pre *)
               else Some t1 (* keep FalseCtx wo Pre *)
             else None
-      | _ -> None 
+      | _ -> None
+
+let isAnyFalseCtx (ctx:context) : bool = match ctx with
+  | Ctx es -> isAnyConstFalse es.es_formula
+  | _ -> false  
+
+let merge_false es1 es2 = 
+    { es1 with
+        (* all inferred must be concatenated from different false *)
+        es_infer_pure = es1.es_infer_pure@es2.es_infer_pure;
+        es_infer_rel = es1.es_infer_rel@es2.es_infer_rel;
+        es_infer_heap = es1.es_infer_heap@es2.es_infer_heap;
+        es_infer_hp_rel = es1.es_infer_hp_rel@es2.es_infer_hp_rel
+     }
+
+(* let proc_left t1 t2 = *)
+(*     match t1 with *)
+(*       | [] -> Some t2 *)
+(*       | [c1] ->  *)
+(*             if isAnyFalseCtx c1 then *)
+(*               if is_inferred_pre_ctx c1 then  *)
+(*                 match t2 with *)
+(*                   | [c2] -> *)
+(*                         if isAnyFalseCtx c2  *)
+(*                           && is_inferred_pre_ctx c2  *)
+(*                         (\* both t1 and t2 are FalseCtx with Pre *\) *)
+(*                         then Some [merge_false c1 c2] *)
+(*                         else Some t1 (\* only t1 is FalseCtx with Pre *\) *)
+(*                   | _ -> Some t1 (\* only t1 is FalseCtx with Pre *\) *)
+(*               else Some t1 (\* keep FalseCtx wo Pre *\) *)
+(*             else None *)
+(*       | _ -> None  *)
 
 (* remove false with precondition *)
 let simplify_ctx_elim_false_dupl t1 t2 =
   match proc_left t1 t2 with
     | Some r1 -> r1
     | None -> 
-          (match proc_left t2 t1 with
+          (match proc_left t2 [] with
             | Some r2 -> r2
             | None -> t1@t2)
 
@@ -6119,7 +6157,7 @@ let keep_failure_list_partial_context (lc: list_partial_context) : list_partial_
 
 
 (* this should be applied to merging also and be improved *)
-let count_false (sl:branch_ctx list) = List.fold_left (fun cnt (_,oc) -> if (isAnyFalseCtx oc) then cnt+1 else cnt) 0 sl
+(* let count_false (sl:branch_ctx list) = List.fold_left (fun cnt (_,oc) -> if (isAnyFalseCtx oc) then cnt+1 else cnt) 0 sl *)
 
 (*remove v=v from formula*)
 let remove_true_conj_pure (p:CP.formula) =
@@ -9866,14 +9904,4 @@ let is_emp_term f = match f with
 
 let is_emp_term f = 
   Debug.no_1 "is_emp_term" !print_formula string_of_bool is_emp_term f
-
-let rec get_inferred_rel_ctx ctx = match ctx with
-  | Ctx es -> es.es_infer_rel
-  | OCtx (ctx1,ctx2) -> get_inferred_rel_ctx ctx1 @ get_inferred_rel_ctx ctx2
-
-let get_inferred_rel_lct lc = match lc with
-  | SuccCtx ctl -> List.concat (List.map (fun ct -> get_inferred_rel_ctx ct) ctl)
-  | _ -> []
-
-
 

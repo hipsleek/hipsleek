@@ -235,6 +235,7 @@ let check_full_varperm prog ctx ( xs:CP.spec_var list) pos =
 
 let pre_ctr = new Gen.counter 0
 let post_ctr = new Gen.counter 0
+let prepost_ctr = new Gen.counter 0
 
 (* WN : moved so solver.ml so that sleek can use *)
 (* (\*Merging fractional heap nodes when possible using normalization lemmas*\) *)
@@ -552,6 +553,12 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 	    	        else
                       let lh = Inf.collect_pre_heap_list_partial_context res_ctx in
                       let lp = Inf.collect_pre_pure_list_partial_context res_ctx in
+                      let lr = Inf.collect_rel_list_partial_context res_ctx in
+                      let rel_stk = Infer.infer_rel_stk # get_stk in
+                      let rel_ass = List.filter (fun (rt,_,_) -> CP.is_rel_assume rt) lr in
+                      let rel_ass = List.filter (fun r -> not(List.mem r rel_stk)) rel_ass in
+                      let _ = Infer.infer_rel_stk # push_list rel_ass in
+                      let _ = Log.current_infer_rel_stk # push_list rel_ass in
                       let post_iv = Inf.collect_infer_vars_list_partial_context res_ctx in
                       (* Why? Bug cll-count-base.ss *)
                       (* no abductive inference for post-condition *)
@@ -633,6 +640,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                           let flist = Inf.collect_formula_list_partial_context tmp_ctx in
                           let i_pre =
                             if infer_pre_flag then (
+                                prepost_ctr # inc;
                                 DD.info_pprint ">>>>>> HIP gather infer pre <<<<<<" pos;
                                 DD.info_pprint ("Inferred Heap :"^(pr_list Cprinter.string_of_h_formula lh)) pos;
                                 DD.info_pprint ("Inferred Pure :"^(pr_list Cprinter.string_of_pure_formula lp)) pos;
@@ -2564,7 +2572,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                             (* Debug.info_hprint (add_str "alias" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) ra no_pos; *)
                             (* Debug.info_hprint (add_str "subs" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) subs no_pos; *)
                             Debug.ninfo_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
-                            Debug.ninfo_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
+                            let _ = if prepost_ctr # get > 0 then 
+                              Debug.info_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos else () in
+                            let _ = prepost_ctr # reset in
                             Debug.ninfo_hprint (add_str "NEW RELS" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) rels no_pos;
                             Debug.ninfo_hprint (add_str "NEW ASSUME" (pr_list_ln Cprinter.string_of_lhs_rhs)) lst_assume no_pos;
                             Debug.ninfo_hprint (add_str "NEW HP RELS" (pr_list_ln Cprinter.string_of_hprel)) hprels no_pos;
