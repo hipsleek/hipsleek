@@ -596,22 +596,29 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
               DD.devel_pprint ">>>>>> infer_lhs_contra_estate <<<<<<" pos;
               DD.devel_pprint "Add relational assumption" pos;
               let (vs_rel,vs_lhs) = List.partition CP.is_rel_var (CP.fv f) in
-              (* TODO : how to handle multiple rel on LHS *)
-              if (List.length vs_rel)>1 then 
-                 (None,[]) 
-              else
-                let rel_ass = infer_lhs_contra p_thus lhs_xpure vs_lhs pos "relational assumption" in
-                begin
-                  match rel_ass with
-                  | None -> (None, [])
-                  | Some neg_lhs ->
-                    if (CP.fv neg_lhs == []) then (None,[])
-                    else 
-                      let new_estate = CF.false_es_with_orig_ante estate estate.es_formula pos in
-                      let rel_ass = [RelAssume vs_rel,f,neg_lhs] in
-(*                      let _ = infer_rel_stk # push_list rel_ass in*)
-(*                      let _ = Log.current_infer_rel_stk # push_list rel_ass in*)
-                      (None, [(new_estate,rel_ass)])
+              let rel_ass = infer_lhs_contra p_thus lhs_xpure vs_lhs pos "relational assumption" in
+              begin
+                match rel_ass with
+                | None -> (None, [])
+                | Some neg_lhs ->
+                  if (CP.fv neg_lhs == []) then (None,[])
+                  else 
+                    let rel_ass = 
+                      if List.length (List.concat (List.map CP.get_rel_id_list (CP.list_of_conjs f)))=1 then
+                        [RelAssume vs_rel,f,neg_lhs]
+                      else
+                        List.concat (List.map (fun x -> 
+                          let lhs_conjs = List.filter (fun y -> 
+                            CP.intersect (CP.fv y) (CP.fv x) != []) (CP.list_of_conjs f) in
+                          let rel_ids = List.concat (List.map get_rel_id_list lhs_conjs) in
+                          if CP.remove_dups_svl rel_ids = rel_ids then
+                            [RelAssume vs_rel,CP.conj_of_list lhs_conjs pos,x]
+                          else []
+                        ) (CP.list_of_conjs neg_lhs)) in
+                      if rel_ass = [] then (None,[])
+                      else
+                        let new_estate = CF.false_es_with_orig_ante estate estate.es_formula pos in
+                        (None, [(new_estate,rel_ass,true)])
                 end
             | None -> (None,[])
           end
@@ -685,7 +692,7 @@ let present_in (orig_ls:CP.formula list) (new_pre:CP.formula) : bool =
 (* let infer_h prog estate conseq lhs_b rhs_b lhs_rels*)
 
 (* lhs_rel denotes rel on LHS where rel assumption be inferred *)
-let rec infer_pure_m estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_xpure_orig iv_orig pos =
+let rec infer_pure_m_x estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_xpure_orig iv_orig pos =
   if iv_orig==[] && ((no_infer_rel estate) || (lhs_rels==None)) then (None,None,[])
   else
     if not (TP.is_sat_raw rhs_xpure_orig) then 
@@ -828,63 +835,73 @@ let rec infer_pure_m estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig 
               DD.devel_pprint "Add relational assumption" pos;
               let (vs_rel,vs_lhs) = List.partition CP.is_rel_var (CP.fv f) in
               (* TODO : how to handle multiple rel on LHS *)
-              if (List.length vs_rel)>1 then 
-                let vars = stk_vars # get_stk in
-	              let (_,n_lhs,n_rhs) = simp_lhs_rhs vars (0,lhs_xpure,rhs_xpure) in
-                let lhs_xpure = CP.drop_rel_formula lhs_xpure in
-                let new_estate = {estate with es_formula = 
-                    (match estate.es_formula with
-                    | Base b -> CF.mkBase_simp b.formula_base_heap 
-                      (MCP.mix_of_pure (TP.simplify_raw (CP.mkAnd lhs_xpure n_rhs pos)))
-                    | _ -> report_error pos "infer_pure_m: Not supported")
-                  } 
-                in
-                let rel_ass = [RelAssume vs_rel,n_lhs,n_rhs] in
-                let _ = infer_rel_stk # push_list rel_ass in
-                let _ = Log.current_infer_rel_stk # push_list rel_ass in
-                (None,None,[(new_estate,rel_ass)])
-              else
-                let (ip1,ip2,rs) = infer_pure_m estate None lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_xpure_orig vs_lhs pos in
-                let pr1 = !print_mix_formula in 
-                let pr2 = !print_entail_state_short in 
-                let pr_p = !CP.print_formula in
-                let pr = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) 
-                                      (fun l -> (string_of_int (List.length l))) in
-                let _ = DD.devel_hprint (add_str "what inferred: " pr) (ip1,ip2,rs) pos in
-                begin
-                  match ip2 with
-                  | None -> (None,None,[])
-                  | Some p_ass ->
-                    if (CP.fv p_ass == []) then (None,None,[])
-                    else 
-                      (* TODO: Need better split RHS *)
-                      let _ = DD.ninfo_hprint (add_str "RHS : " !CP.print_formula) rhs_xpure pos in
-                      let rel_ass = List.concat (List.map (fun x -> 
-                        let lhs_conjs = List.filter (fun y -> 
-                          CP.intersect (CP.fv y) (CP.fv x) != []) (CP.list_of_conjs f) in
-                        (* TODO: can make it better *)
-                        let rel_ids = List.concat (List.map get_rel_id_list lhs_conjs) in
-                        if List.length rel_ids = 1 
-                        then [RelAssume vs_rel,CP.conj_of_list lhs_conjs pos,x]
-                        else []
-                        ) (CP.list_of_conjs p_ass)) in
-(*                      let rel_ass = [RelAssume vs_rel,f,p_ass] in*)
-                      if rel_ass = [] then (None,None,[])
+(*              if (List.length vs_rel)>1 then *)
+(*                let vars = stk_vars # get_stk in*)
+(*	              let (_,n_lhs,n_rhs) = simp_lhs_rhs vars (0,lhs_xpure,rhs_xpure) in*)
+(*(*                let lhs_xpure = CP.drop_rel_formula lhs_xpure in*)*)
+(*                let new_estate = {estate with es_formula = *)
+(*                    (match estate.es_formula with*)
+(*                    | Base b -> CF.mkBase_simp b.formula_base_heap *)
+(*                      (MCP.mix_of_pure (TP.simplify_raw (CP.mkAnd lhs_xpure n_rhs pos)))*)
+(*                    | _ -> report_error pos "infer_pure_m: Not supported")*)
+(*                  } *)
+(*                in*)
+(*                let rel_ass = [RelAssume vs_rel,n_lhs,n_rhs] in*)
+(*                let _ = infer_rel_stk # push_list rel_ass in*)
+(*                let _ = Log.current_infer_rel_stk # push_list rel_ass in*)
+(*                (None,None,[(new_estate,rel_ass)])*)
+(*              else*)
+              let (ip1,ip2,rs) = infer_pure_m estate None (CP.drop_rel_formula lhs_xpure_orig) lhs_xpure0 
+                                    lhs_wo_heap_orig rhs_xpure_orig vs_lhs pos in
+(*              let pr1 = !print_mix_formula in *)
+(*              let pr2 = !print_entail_state_short in *)
+(*              let pr_p = !CP.print_formula in*)
+(*              let pr = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) *)
+(*                                    (fun l -> (string_of_int (List.length l))) in*)
+(*              let _ = DD.info_hprint (add_str "what inferred: " pr) (ip1,ip2,rs) pos in*)
+              begin
+                match ip2 with
+                | None -> (None,None,[])
+                | Some p_ass ->
+                  if (CP.fv p_ass == []) then (None,None,[])
+                  else 
+                    let rel_ass = 
+                      if List.length (List.concat (List.map CP.get_rel_id_list (CP.list_of_conjs f)))=1 then
+                        [RelAssume vs_rel,f,p_ass]
                       else
-                        let lhs_xpure = CP.drop_rel_formula lhs_xpure in
-                        let new_estate = {estate with es_formula = 
-                            (match estate.es_formula with
-                            | Base b -> CF.mkBase_simp b.formula_base_heap 
-                              (MCP.mix_of_pure (TP.simplify_raw (CP.mkAnd lhs_xpure p_ass pos)))
-                            | _ -> report_error pos "infer_pure_m: Not supported")
-                          } 
+                        let p_ass_conjs =
+                          let lhs_xpure_new = CP.drop_rel_formula lhs_xpure in
+                          let lhs_xpure_conjs = List.filter (fun x -> match x with
+                            | BForm ((Eq _,_),_) -> true | _ -> false) (CP.list_of_conjs lhs_xpure_new) in
+                          let lhs_xpure_new2 = CP.conj_of_list lhs_xpure_conjs pos in
+                          let p_ass = TP.simplify_raw (CP.mkAnd p_ass lhs_xpure_new2 pos) in
+                          List.filter (fun x -> not(TP.imply_raw lhs_xpure_new x)) (CP.list_of_conjs p_ass) 
                         in
-                        let _ = DD.ninfo_hprint (add_str "LHS : " !CP.print_formula) lhs_xpure pos in           
-                        let _ = DD.ninfo_hprint (add_str "New estate : " !print_entail_state_short) new_estate pos in
-                        let _ = infer_rel_stk # push_list rel_ass in
-                        let _ = Log.current_infer_rel_stk # push_list rel_ass in
-                        (None,None,[(new_estate,rel_ass)])
-                end
+                        (* TODO: Need better split RHS *)
+                        List.concat (List.map (fun x -> 
+                          let lhs_conjs = List.filter (fun y -> 
+                            CP.intersect (CP.fv y) (CP.fv x) != []) (CP.list_of_conjs f) in
+                          let rel_ids = List.concat (List.map get_rel_id_list lhs_conjs) in
+                          if CP.remove_dups_svl rel_ids = rel_ids then
+                            [RelAssume vs_rel,CP.conj_of_list lhs_conjs pos,x]
+                          else []
+                        ) p_ass_conjs) 
+                    in
+                    if rel_ass = [] then (None,None,[])
+                    else
+                      let new_estate = {estate with es_formula = 
+                          (match estate.es_formula with
+                          | Base b -> CF.mkBase_simp b.formula_base_heap 
+                            (MCP.mix_of_pure (TP.simplify_raw (CP.mkAnd lhs_xpure p_ass pos)))
+                          | _ -> report_error pos "infer_pure_m: Not supported")
+                        } 
+                      in
+                      let _ = DD.ninfo_hprint (add_str "LHS : " !CP.print_formula) lhs_xpure pos in           
+                      let _ = DD.ninfo_hprint (add_str "New estate : " !print_entail_state_short) new_estate pos in
+                      let _ = infer_rel_stk # push_list rel_ass in
+                      let _ = Log.current_infer_rel_stk # push_list rel_ass in
+                      (None,None,[(new_estate,rel_ass,false)])
+                  end
 (*                  DD.devel_pprint ">>>>>> infer_pure_m <<<<<<" pos;*)
 (*                  DD.devel_pprint "Add relational assumption" pos;*)
 (*                  DD.devel_hprint (add_str "new pure: " !CP.print_formula) new_p pos;*)
@@ -1052,6 +1069,31 @@ let rec infer_pure_m estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig 
   Globals.loc -> (Cformula.entail_state * CP.formula) option
 *)
 
+(*
+  (CF.entail_state * Cformula.CP.formula) option *
+  CP.Label_Pure.exp_ty option *
+
+  (CF.entail_state *
+   (Cpure.rel_cat * Cpure.Label_Pure.exp_ty * Redlog.CP.formula) list * 
+   bool)
+  list
+*)
+and infer_pure_m estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_xpure_orig iv_orig pos =
+  let pr1 = !print_mix_formula in 
+  let pr2 = !print_entail_state_short in 
+  let pr_p = !CP.print_formula in
+  let pr_res_lst = pr_list (fun (es,r,b) -> (pr_list CP.print_lhs_rhs) r) in
+  let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) pr_res_lst in
+  let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
+  Debug.no_5 "infer_pure_m_1" 
+    (add_str "estate " pr0) 
+    (add_str "lhs xpure " pr_p) 
+    (add_str "lhs xpure0 " pr1)
+    (add_str "rhs xpure " pr1)
+    (add_str "inf vars " !CP.print_svl)
+    (add_str "(new es,inf pure,rel_ass) " pr_res)
+  (fun _ _ _ _ _ -> infer_pure_m_x estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_xpure_orig iv_orig pos) 
+    estate lhs_xpure_orig lhs_xpure0 rhs_xpure_orig iv_orig
 
 let infer_pure_m estate lhs_mix lhs_mix_0 lhs_wo_heap rhs_mix pos =
   if no_infer_all estate then 
@@ -1085,11 +1127,13 @@ let infer_pure_m estate lhs_mix lhs_mix_0 lhs_wo_heap rhs_mix pos =
 let infer_pure_m estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos =
   let pr1 = !print_mix_formula in 
   let pr2 = !print_entail_state_short in 
+  let pr2a = !print_entail_state in 
   let pr_p = !CP.print_formula in
-  let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) 
-    (fun l -> (string_of_int (List.length l))) in
+  let pr_res_lst = pr_list (fun (es,r,b) -> pr_pair pr2 (pr_list CP.print_lhs_rhs) (es,r)) in
+  let pr_len = fun l -> (string_of_int (List.length l)) in
+  let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) pr_res_lst in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-  Debug.no_4 "infer_pure_m" 
+  Debug.no_4 "infer_pure_m_2" 
     (add_str "estate " pr0) 
     (add_str "lhs xpure " pr1) 
     (add_str "lhs xpure0 " pr1)

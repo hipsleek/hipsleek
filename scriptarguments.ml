@@ -167,6 +167,12 @@ let common_arguments = [
     "Smart xpure with 0 then 1; otherwise just 1 ; not handled by infer yet");
 	("--en-smart-memo", Arg.Set Globals.smart_memo,
     "Smart memo with no_complex; if fail try complex formula");
+	("--en-pre-residue", Arg.Unit (fun _ -> Globals.pre_residue_lvl := 1),
+    "Always add pre inferred to residue, ee if it is disjunctive");
+	("--dis-pre-residue", Arg.Unit (fun _ -> Globals.pre_residue_lvl := -1),
+    "Never pre inferred to residue, ee if it is conjunctive");
+    (* default is to add only conjunctive pre to residue when
+       pre_residue_lvl ==0 *)
 	("-num-self-fold-search", Arg.Set_int Globals.num_self_fold_search,
     "Allow Depth of Unfold/Fold Self Search");
 	("--en-self-fold-search", Arg.Set Globals.self_fold_search_flag,

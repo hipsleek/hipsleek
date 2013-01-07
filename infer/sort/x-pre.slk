@@ -1,0 +1,28 @@
+relation P(int a,int b).
+
+infer [P]  x!=0 & P(x,y) |- y>0.
+print residue.
+//inferred rel: [RELASS [P]: ( P(x,y)) -->  1<=y]
+
+infer [P]   x=x' & x'!=0 & P(x,y) |- y>0.
+print residue.
+//inferred rel: [RELASS [P]: ( P(x,y)) -->  1<=y]
+
+infer [P]   x=x' & x'!=0 & P(x,y) & y=y' |- y>0.
+print residue.
+// inferred rel: [RELASS [P]: ( P(x,y)) -->  (1<=x | x<=(0-1)) & 1<=y]
+// these pre-conds are too strong, can algo be improved?
+
+infer [P] emp&x=x' & y=y' 
+  & P(x,y) & x'!=0 
+ |-  0<y'. 
+print residue.
+// inferred rel: [RELASS [P]: ( P(x,y)) -->  (1<=x | x<=(0-1)) & 1<=y]
+// these pre-conds are too strong, can algo be improved?
+
+infer [x,y]   x=xp & xp!=0 & P(x,y) & y=yp |- y>0.
+print residue.
+
+infer [x,y] emp&x=xp & y=yp & P(x,y) & xp!=0 |-  0<yp. 
+print residue.
+
