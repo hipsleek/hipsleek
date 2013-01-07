@@ -1,0 +1,17 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+pred llH<v, R:relation(int,int)> == self::node<v, null>
+  or self::node<v, q> * q::llH<w, R> & R(v, w)
+  inv true.
+
+relation R1(int a, int b).
+relation R2(int a, int b).
+
+infer [R1,R2] r::node<v1,q_627> * q_627::llH<w_628,R1> * s::node<v,r> & 
+           R1(a,w_628) & a=v1 & flted_30_629=null & v1<=v  & r=res
+ |-  res::llH<r1,R2>.
+
+print residue.

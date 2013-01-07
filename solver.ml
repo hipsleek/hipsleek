@@ -5310,7 +5310,7 @@ and heap_infer_decreasing_wf prog estate rank is_folding lhs pos =
 
 and heap_entail_empty_rhs_heap i p i_f es lhs rhs pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Debug.no_3_num i "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
+  Debug.ho_3_num i "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
       (fun _ _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs pos) es lhs rhs
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) pos : (list_context * proof) =
