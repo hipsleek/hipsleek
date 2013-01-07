@@ -1,0 +1,37 @@
+Starting sleek-array tests:
+Starting hip-array tests:
+Checking arr_at.java
+Checking arr_binarysearch.java
+Checking arr_search_decrease_less_than_two.java
+error at: arr_search_decrease_less_than_two.java searchzero
+Checking arr_bubblesort.java
+Checking arr_bubblesort_perm.java
+Checking arr_double.java
+Checking arr_extract_nonzeros.java
+Checking arr_init.java
+Checking arr_insertsort.java
+Checking arr_insertsort_perm.java
+Checking arr_invert.java
+error at: arr_invert.java Invert
+Checking arr_max.java
+Checking arr_mergesort.java
+error at: arr_mergesort.java merge_sorted_arrays
+error at: arr_mergesort.java merge_sort
+Checking arr_new_exp.java
+Checking arr_nqueens.java
+Checking arr_qsort.java
+Checking arr_rev.java
+Checking arr_selectionsort.java
+Checking arr_selectionsort_perm.java
+Checking arr_sparse.java (runs with extra options: --imm)
+Checking arr_sum.java
+Total number of errors: 4 in files:
+ error at: arr_search_decrease_less_than_two.java searchzero
+error at: arr_invert.java Invert
+error at: arr_mergesort.java merge_sorted_arrays
+error at: arr_mergesort.java merge_sort
+.
+Total verification time: 51.97 second
+	Time spent in main process: 15.36 second
+	Time spent in child processes: 36.61 second
+	Number of false contexts: 127
