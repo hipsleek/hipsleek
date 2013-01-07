@@ -5737,7 +5737,9 @@ let empty_ctx flowt lbl pos = Ctx (empty_es flowt lbl(*Lab2_List.unlabelled*) po
 
 let false_es_with_flow_and_orig_ante es flowt f pos =
 	let new_f = mkFalse flowt pos in
-    {(empty_es flowt Lab2_List.unlabelled pos) with es_formula = new_f ; es_orig_ante = Some f; 
+    {(empty_es flowt Lab2_List.unlabelled pos) with 
+        es_formula = new_f ; 
+        es_orig_ante = Some f; 
         es_infer_vars = es.es_infer_vars;
         es_infer_vars_rel = es.es_infer_vars_rel;
         es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
