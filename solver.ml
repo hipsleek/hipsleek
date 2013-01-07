@@ -2104,7 +2104,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
               let new_ctx = Ctx new_es in
 	          (*let new_ctx = set_es_evars ctx vs in*)
               let rs0, fold_prf = heap_entail_one_context_struc_nth "fold" prog true false new_ctx view_form None pos None in
-              let rels = CF.get_inferred_rel_lct rs0 in
+              let rels = Inf.collect_rel_list_context rs0 in
               let rel_stk = Infer.infer_rel_stk # get_stk in
               let rel_ass = List.filter (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
               let rel_ass = List.filter (fun r -> not(List.mem r rel_stk)) rel_ass in
@@ -5481,14 +5481,14 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
               match split_a_opt with 
               | None -> 
                 let r1,r2,r3 = Inf.infer_pure_m estate split_ante1 split_ante0 m_lhs split_conseq pos in
-                r1,r2,List.concat (List.map (fun (_,b,_) -> b) r3),[],false
-(*                (match r1,r3 with*)
-(*                  | None,[] -> r1,r2,[],[],false*)
-(*                  | None,[(h1,h2,h3)] -> r1,r2,h2,[h1],h3*)
-(*                  | Some (es,_),[] -> r1,r2,[],[es],true*)
-(*                  | Some (es,_),[(h1,h2,h3)] -> r1,r2,h2,[es],true*)
-(*                  | _,_ -> report_error pos "Length of relational assumption list > 1"*)
-(*                )*)
+(*                r1,r2,List.concat (List.map (fun (_,b,_) -> b) r3),[],false*)
+                (match r1,r3 with
+                  | None,[] -> None,r2,[],[],false
+                  | None,[(h1,h2,h3)] -> None,r2,h2,[h1],h3
+                  | Some (es,p),[] -> Some p,r2,[],[es],true
+                  | Some (es,p),[(h1,h2,h3)] -> Some p,r2,h2,[es],true
+                  | _,_ -> report_error pos "Length of relational assumption list > 1"
+                )
               | Some (split1,split2) -> 
 (*                let split_mix1 = List.map MCP.mix_of_pure split1 in*)
                 let split_mix2 = List.map MCP.mix_of_pure split2 in
@@ -5504,18 +5504,13 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                     in
 (*                    let estate_f = {estate with es_formula = mkBase_simp HEmp f} in*)
                     (match r1,r3 with 
-                      | None,[] -> r1,r2,[],[estate_f],false
-                      | None,[(h1,h2,h3)] -> r1,r2,h2,[h1],h3
-                      | Some(es,_),[] -> r1,r2,[],[es],true
-                      | Some(es,_),[(h1,h2,h3)] -> r1,r2,h2,[es],true
+                      | None,[] -> None,r2,[],[estate_f],false
+                      | None,[(h1,h2,h3)] -> None,r2,h2,[h1],h3
+                      | Some(es,p),[] -> Some p,r2,[],[es],true
+                      | Some(es,p),[(h1,h2,h3)] -> Some p,r2,h2,[es],true
                       | _,_ -> report_error pos "Length of relational assumption list > 1"
                     )) split_mix2 in
-                let or_option_ip1 (o1,o2) = (match o1,o2 with
-                  | None,_ -> o2
-                  | _,None -> o1
-                  | Some(es1,pf1),Some(es2,pf2) -> Some (es1, CP.mkOr pf1 pf2 None pos))
-                in
-                let or_option_ip2 (o1,o2) = (match o1,o2 with
+                let or_option (o1,o2) = (match o1,o2 with
                   | None,_ -> o2
                   | _,None -> o1
                   | Some pf1,Some pf2 -> Some (CP.mkOr pf1 pf2 None pos))
@@ -5523,30 +5518,34 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                 let merge_rel_ass (rs1,rs2) = 
 (*                  let ps1 = List.map (fun (_,a,_) -> a) rs1 in*)
 (*                  let ps2 = List.map (fun (_,a,_) -> a) rs2 in*)
-                  (* if Gen.BList.intersect_eq CP.equalFormula ps1 ps2 != [] then report_error pos "merge_rel_ass: Not supported yet" *)
-                  (* else *) rs1 @ rs2 
+(*                  if Gen.BList.intersect_eq CP.equalFormula ps1 ps2 != [] then *)
+(*                    report_error pos "merge_rel_ass: Not supported yet" *)
+(*                  else  *)
+                  rs1 @ rs2 
                 in
                 List.fold_left (fun (a,b,c,d,e) (a1,b1,c1,d1,e1) -> 
-                  (or_option_ip1 (a,a1),or_option_ip2 (b,b1),merge_rel_ass (c,c1),d@d1,e||e1)) 
+                  (or_option (a,a1),or_option (b,b1),merge_rel_ass (c,c1),d@d1,e||e1)) 
                     (None,None,[],[],false) res
             end
             in
             begin
               match ip1 with
-                | Some(es,p) -> 
+                | Some p -> 
                       begin
                         match relass with
                           | [] -> 
                                 (stk_inf_pure # push p;
                                 let _ = 
-                                  if entail_states = [] then stk_estate # push es 
+                                  if entail_states = [] then 
+                                    report_error pos "Expecting a non-empty list of entail states"
                                   else stk_estate # push_list entail_states in
                                 (true,[],None))
                           | _ ->
                                 (stk_inf_pure # push p;
                                 stk_rel_ass # push_list relass;
                                 let _ = 
-                                  if entail_states = [] then stk_estate # push es 
+                                  if entail_states = [] then
+                                    report_error pos "Expecting a non-empty list of entail states"
                                   else stk_estate # push_list entail_states in
                                 (true,[],None))
                       end

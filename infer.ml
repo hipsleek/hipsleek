@@ -1085,7 +1085,7 @@ and infer_pure_m estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_
   let pr_res_lst = pr_list (fun (es,r,b) -> (pr_list CP.print_lhs_rhs) r) in
   let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) pr_res_lst in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-  Debug.ho_5 "infer_pure_m_1" 
+  Debug.no_5 "infer_pure_m_1" 
     (add_str "estate " pr0) 
     (add_str "lhs xpure " pr_p) 
     (add_str "lhs xpure0 " pr1)
@@ -1133,7 +1133,7 @@ let infer_pure_m estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos =
   let pr_len = fun l -> (string_of_int (List.length l)) in
   let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) pr_res_lst in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-  Debug.ho_4 "infer_pure_m_2" 
+  Debug.no_4 "infer_pure_m_2" 
     (add_str "estate " pr0) 
     (add_str "lhs xpure " pr1) 
     (add_str "lhs xpure0 " pr1)

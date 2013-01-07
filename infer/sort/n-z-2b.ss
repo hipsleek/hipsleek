@@ -15,26 +15,19 @@ int zip(int x, int y)
   ensures  true;
 
 /*
+
 Checking procedure zip$int~int... 
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELASS [P]: ( P(x,y)) -->  y!=0 | 1>x]
+*************************************
+
 *************************************
 *******fixcalc of pure relation *******
 *************************************
 []
 *************************************
-
-Pre obligation is inferred below but not placed into
-entail state. WHY?
-
- id: 4; caller: []; line: 48; classic: false; kind: PRE-2; hec_num: 2; evars: []; c_heap: emp
- checkentail emp&x=x' & y=y' & 0<=y & 0<=x & P(x,y) & x'!=0 & !(v_bool_45_511') & 
-x'!=0 & !(v_bool_45_511') & y'=0 & v_bool_47_510' & y'=y' & v_bool_47_510'&
-{FLOW,(22,23)=__norm}[]
- |-  hfalse&false&{FLOW,(22,23)=__norm}[]. 
-res:  [
-  hfalse&false&{FLOW,(22,23)=__norm}[]
-  es_infer_vars/rel: [P]
-  ]
-
 
 */
 

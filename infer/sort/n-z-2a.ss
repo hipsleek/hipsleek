@@ -22,8 +22,18 @@ Checking procedure zip$int~int...
 *******fixcalc of pure relation *******
 *************************************
 []
+*************************************
 
-WHY isn't there a summary of pre/post?
+!!! NEW SPECS: ((None,[]),EBase emp&0<=y & 0<=x&{FLOW,(22,23)=__norm}[]
+                    EBase emp&(1<=y | y<=(0-1) | x<=0) & MayLoop&
+                          {FLOW,(1,25)=__flow}[]
+                            EAssume 67::
+                              
+                              emp&x=0 & res=0 & 0<=y&{FLOW,(22,23)=__norm}[]
+                              or emp&res=1 & 1<=y & 1<=x&
+                                 {FLOW,(22,23)=__norm}[]
+                              )
+Procedure zip$int~int SUCCESS
 
 */
 
