@@ -35,7 +35,7 @@ Pre;
 #{[n,a]: n < a && 2 <= a}
 
 FinalPre:={[n,a]:
-   n>=1 & (a!=1 | n!=1) & (a<=1 | 2<=a<n | (n<a & 2<=a)) & ((n>=0 & a>=1) | (a<=-1 & n>=0)) & (a=1 | (a!=1 & n!=1))};
+   n>=1 & (a!=1 | n!=1) & (a<=1 | 2<=a<n | (n<a & 2<=a)) & (1<=a<n) & (a=1 | (a!=1 & n!=1))};
 PairWiseCheck FinalPre;
 
 #{[n,a]: 2 <= n < a} union {[n,a]: a <= 0 && 2 <= n} union {[n,a]: 1 <= a < n}

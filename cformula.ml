@@ -9902,13 +9902,3 @@ let is_emp_term f = match f with
 let is_emp_term f = 
   Debug.no_1 "is_emp_term" !print_formula string_of_bool is_emp_term f
 
-let rec get_inferred_rel_ctx ctx = match ctx with
-  | Ctx es -> es.es_infer_rel
-  | OCtx (ctx1,ctx2) -> get_inferred_rel_ctx ctx1 @ get_inferred_rel_ctx ctx2
-
-let get_inferred_rel_lct lc = match lc with
-  | SuccCtx ctl -> List.concat (List.map (fun ct -> get_inferred_rel_ctx ct) ctl)
-  | _ -> []
-
-
-
