@@ -46,7 +46,7 @@ let allow_perm ():bool =
 
 let set_perm perm_str = 
   if perm_str = "fperm" then
-    let _ = allow_norm := true in
+    let _ = allow_norm := false in
     perm:=Frac
   else if perm_str = "cperm" then perm:=Count
   else if perm_str = "dperm" then perm:=Dperm 

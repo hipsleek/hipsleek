@@ -180,7 +180,7 @@ type mode =
   | ModeIn
   | ModeOut
   
-  
+
 
 type perm_type =
   | NoPerm (*no permission at all*)
@@ -659,8 +659,15 @@ let web_compile_flag = ref false (*enable compilation flag for website*)
 such as x<1 --> x+1<=1 is allowed
    Currently, =true when using -tp parahip|rm
    or using -perm frac
+   The reason for this is that when using concurrency verification,
+   (floating-point) permission  constraints could be related to
+   integer constraints; therefore, this renders the normalization
+   unsound.
+   Look at example at sleekex/examples/fracperm/locks/bug-simplify.slk
+   for more details.
+   Currently, conservativly do not allow such simplification
 *)
-let allow_norm = ref true
+let allow_norm = ref false
 
 let allow_ls = ref false (*enable lockset during verification*)
 
@@ -713,7 +720,7 @@ let print_version_flag = ref false
 
 let elim_exists_flag = ref true
 
-let filtering_flag = ref false
+let filtering_flag = ref true
 
 let split_rhs_flag = ref true
 

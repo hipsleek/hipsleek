@@ -373,7 +373,7 @@ let set_tp tp_str =
   prover_arg := tp_str;
   (******we allow normalization/simplification that may not hold
   in the presence of floating point constraints*)
-  if tp_str = "parahip" || tp_str = "rm" then allow_norm := true else allow_norm:=false;
+  if tp_str = "parahip" || tp_str = "rm" then allow_norm := false else allow_norm:=true;
   (**********************************************)
   let prover_str = ref [] in
   (*else if tp_str = "omega" then

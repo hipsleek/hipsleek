@@ -5172,7 +5172,7 @@ and arith_simplify_x (pf : formula) :  formula =
   (* temporarily do not prevent this simplification because it helps
   convert proofs into normal form such as those of Mona (e.g. Mona
   does not allow subtraction*)
-  (* if (!Globals.allow_norm) then pf else *)
+  (* if (not !Globals.allow_norm) then pf else *)
   let rec helper pf = match pf with
     |  BForm (b,lbl) -> BForm (b_form_simplify b,lbl)
     |  And (f1, f2, loc) -> And (helper f1, helper f2, loc)
@@ -5861,7 +5861,7 @@ let simp_bform simp bf =
 (*Called directly from mcpure.ml*)
 (* normalise and simplify b_formula *)
 let norm_bform_a (bf:b_formula) : b_formula =
-  if (!Globals.allow_norm) then bf else
+  if (not !Globals.allow_norm) then bf else
   (*let bf = b_form_simplify bf in *)
   let fvars = bfv bf in
   let contain_waitlevel = List.exists (fun v -> (name_of_spec_var v = Globals.waitlevel_name)) fvars in
@@ -5916,7 +5916,7 @@ let norm_bform_option_debug (bf:b_formula) : b_formula option =
 
 
 let arith_simplify_new (pf : formula) :  formula =
-  if (!Globals.allow_norm) then pf else
+  if (not !Globals.allow_norm) then pf else
   let rec helper pf = match pf with
     |  BForm (b,lbl) -> BForm (norm_bform_aux b,lbl)
     |  And (f1, f2, loc) -> And (helper f1, helper f2, loc)
@@ -7080,14 +7080,14 @@ module ArithNormalizer = struct
 	  | Some pf -> Some (pf,il)
 
   let norm_formula (f: formula) : formula =
-    if (is_float_formula f || !Globals.allow_norm) then f else
+    if (is_float_formula f || not !Globals.allow_norm) then f else
     map_formula f (nonef, norm_b_formula, fun e -> Some (norm_exp e)) 
 
 
 end (* of ArithNormalizer module's definition *)
 
 let norm_form f =
-  if (!Globals.allow_norm) then f else
+  if (not !Globals.allow_norm) then f else
   ArithNormalizer.norm_formula f 
 
 let norm_form f =
