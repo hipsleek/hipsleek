@@ -1893,7 +1893,8 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_un
     formula_base_pos = pos}) ->  
 	    let new_f = add_formula_and a (unfold_baref prog h p fl v pos [] already_unsat uf) in
 	    let tmp_es = CF.empty_es (CF.mkTrueFlow ()) (None,[]) no_pos in
-	    normalize_formula_w_coers 1 (fst prog) tmp_es new_f (fst prog).prog_left_coercions
+	    let uf = normalize_formula_w_coers 1 (fst prog) tmp_es new_f (fst prog).prog_left_coercions in
+        uf
 
   | Exists _ -> (*report_error pos ("malfunction: trying to unfold in an existentially quantified formula!!!")*)
         let rf,l = rename_bound_vars_with_subst f in
@@ -9107,7 +9108,7 @@ and normalize_formula_perm prog f = match f with
   | Exists e -> normalize_base_perm prog f
         
 and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl list): formula =
-  if (isAnyConstFalse f) (* || !Globals.perm = NoPerm *) then f
+  if (isAnyConstFalse f) || (!Globals.perm = NoPerm) then f
   else if !Globals.perm = Dperm then normalize_formula_perm prog f 
   else
     let coers = List.filter (fun c -> 

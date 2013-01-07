@@ -1577,7 +1577,7 @@ and add_origs_to_node (v:string) (f : formula) origs =
     | Exists e -> Exists ({e with formula_exists_heap = h_add_origs_to_node v e.formula_exists_heap origs})
   in helper f
 
-(* the first matched node has orgins and its view_original=false *)
+(* the first matched node has orgins and its view_original=true *)
 (* , other nodes have their view_original=false *)
 (*ln: lhs name: name of heap node in the head of an coercion*)
 and h_add_origs_to_first_node (v : string) (ln:string) (h : h_formula) origs =
@@ -1606,7 +1606,7 @@ and h_add_origs_to_first_node (v : string) (ln:string) (h : h_formula) origs =
           (*if it is the first matched node (same pointer name, 
             same view name and first_node not found):
             - add origs to its view_origins
-            - set view_original= false*)
+            - set view_original= true*)
 	      (true,
            ViewNode {vn with
 	           h_formula_view_origins = origs @ vn.h_formula_view_origins;
@@ -1643,7 +1643,7 @@ and h_add_origs_to_first_node (v : string) (ln:string) (h : h_formula) origs =
   h1
 
 (*ln: lhs name: name of heap node in the head of an coercion*)
-and add_origs_to_first_node (v:string) (ln:string)(f : formula) origs = 
+and add_origs_to_first_node_x (v:string) (ln:string)(f : formula) origs = 
   let rec helper f = match f with
     | Or ({formula_or_f1 = f1;
 	  formula_or_f2 = f2;
@@ -1654,7 +1654,12 @@ and add_origs_to_first_node (v:string) (ln:string)(f : formula) origs =
     | Base b -> Base ({b with formula_base_heap = h_add_origs_to_first_node v ln b.formula_base_heap origs})
     | Exists e -> Exists ({e with formula_exists_heap = h_add_origs_to_first_node v ln e.formula_exists_heap origs})
   in helper f
- 
+
+and add_origs_to_first_node (v:string) (ln:string)(f : formula) origs = 
+  Debug.no_3 "add_origs_to_first_node"
+      pr_id pr_id !print_formula !print_formula
+      (fun _ _ _ -> add_origs_to_first_node_x v ln f origs) v ln f
+
 and add_origins (f : formula) origs = 
   let pr = !print_formula in
   let pr2 = !print_ident_list in

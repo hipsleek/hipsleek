@@ -21,9 +21,6 @@ let string_of_perm_type t =
     | NoPerm -> "NoPerm"
     | Dperm  -> "Dperm"
 
-let perm = ref Frac
-(* let perm = ref NoPerm *)
-
 (*To disable concurrency verification, for testing purposes*)
 let disable_para () =
   allow_norm:= true;

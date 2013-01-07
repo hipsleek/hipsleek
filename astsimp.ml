@@ -1966,9 +1966,14 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     a same name with self => only add [coercion_name] to origins of the
     first node*)
   let  coercion_lhs_type = (CF.type_of_formula c_lhs) in
-  let c_rhs = match (coercion_lhs_type) with
-    | CF.Simple -> CF.add_origs_to_first_node self lhs_view_name c_rhs [coer.I.coercion_name]
-    | CF.Complex -> c_rhs
+  let c_rhs = 
+      match (coercion_lhs_type) with
+        | CF.Simple ->
+            if (Perm.allow_perm ()) then
+              CF.add_origs_to_first_node self lhs_view_name c_rhs [coer.I.coercion_name]
+            else
+              CF.add_origs_to_node self c_rhs [coer.I.coercion_name]
+        | CF.Complex -> c_rhs
   in
   (* c_body_norm is used only for proving l2r part of a lemma (left & equiv lemmas) *)
   let h = List.map (fun c-> (c,Unprimed)) lhs_fnames0 in
