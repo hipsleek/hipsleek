@@ -427,10 +427,10 @@ let check_option_consistency () =
   end;
   if !Globals.perm=Globals.Dperm then Globals.use_split_match:=true else () ;
   if !Globals.perm<>Globals.NoPerm then Globals.allow_imm:=false else () ;
-  if !Globals.allow_imm && Perm.allow_perm() then
-  begin
-    Gen.Basic.report_error Globals.no_pos "immutability and permission options cannot be turned on at the same time"
-  end
+  (* if !Globals.allow_imm && Perm.allow_perm() then *)
+  (* begin *)
+  (*   Gen.Basic.report_error Globals.no_pos "immutability and permission options cannot be turned on at the same time" *)
+  (* end *)
   ;; (*Clean warning*)
   Astsimp.inter_hoa := !inter_hoa;;
 

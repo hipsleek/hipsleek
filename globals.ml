@@ -644,14 +644,14 @@ let smart_memo = ref false
 
 let elim_exists = ref true
 
-let allow_imm = ref false (*imm will delay checking guard conditions*)
+let allow_imm = ref true (*imm will delay checking guard conditions*)
 
 let ann_derv = ref false
 
 (*is used during deployment, e.g. on a website*)
 (*Will shorten the error/warning/... message delivered
 to end-users*)
-let is_deployed = ref true 
+let is_deployed = ref false 
 
 let web_compile_flag = ref false (*enable compilation flag for website*)
 
@@ -662,13 +662,13 @@ such as x<1 --> x+1<=1 is allowed
 *)
 let allow_norm = ref true
 
-let allow_ls = ref true (*enable lockset during verification*)
+let allow_ls = ref false (*enable lockset during verification*)
 
-let allow_locklevel = ref true (*enable locklevel during verification*)
+let allow_locklevel = ref false (*enable locklevel during verification*)
 
 (* let has_locklevel = ref false *)
 
-let ann_vp = ref true (* Disable variable permissions in default, turn on in para5*)
+let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
 
 let allow_ptr = ref false (*true -> enable pointer translation*)
 
@@ -713,7 +713,7 @@ let print_version_flag = ref false
 
 let elim_exists_flag = ref true
 
-let filtering_flag = ref true
+let filtering_flag = ref false
 
 let split_rhs_flag = ref true
 
@@ -769,7 +769,7 @@ let print_input_all = ref false
 
 (* let allow_pred_spec = ref false *)
 
-let disable_failure_explaining = ref false
+let disable_failure_explaining = ref true
 
 let simplify_error = ref false
 
@@ -787,7 +787,7 @@ let enable_redundant_elim = ref false
 
 let enulalias = ref false
 
-let pass_global_by_value = ref false
+let pass_global_by_value = ref true
 
 let exhaust_match = ref false
 
@@ -824,13 +824,13 @@ let cpfile = ref ""
   let do_sat_slice = ref false
 
 (* for Termination *)
-let dis_term_chk = ref true
+let dis_term_chk = ref false
 let term_verbosity = ref 1
 let dis_call_num = ref false
 let dis_phase_num = ref false
 let term_reverify = ref false
 let dis_bnd_chk = ref false
-let dis_term_msg = ref true
+let dis_term_msg = ref false
 let dis_post_chk = ref false
 let dis_ass_chk = ref false
 let log_filter = ref true

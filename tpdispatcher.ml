@@ -41,11 +41,11 @@ type tp_type =
 
 let test_db = false
 
-(* let tp = ref OmegaCalc *)
+let tp = ref OmegaCalc
 (* let tp = ref OZ *)
 (* let tp = ref Redlog *)
 (* let tp = ref AUTO *)
-let tp = ref PARAHIP
+(* let tp = ref PARAHIP *)
 
 let proof_no = ref 0
 let provers_process = ref None
