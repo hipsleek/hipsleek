@@ -46,7 +46,12 @@ let enable_para () =
     therefore the remaining antecedent n>10 could be proven by
     an integer solver
   *)
-  filtering_flag:=true; 
+  filtering_flag:=true;
+  (* Using variable permissions, a global variable is considered
+     pass-by-ref.
+     Reference: http://www.comp.nus.edu.sg/~leduykha/pubs/ldk-vperm-icfem2012-tr.pdf
+  *)
+  pass_global_by_value := false;
   allow_locklevel:=true
 
 let allow_perm ():bool = 
