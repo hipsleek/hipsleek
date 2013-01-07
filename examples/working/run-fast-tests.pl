@@ -619,7 +619,7 @@ $output_file = "log";
         ### DEADLOCKED and DEADLOCK-FREE scenarios
 				["parahip/double-acquire.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
                                 "func","SUCCESS",
-                                "main","FAIL-1"
+                                "main","FAIL-2"
 								],
 				["parahip/no-deadlock1.ss",2,  "-perm fperm -tp parahip --ls --locklevel", 
                                 "func","SUCCESS",

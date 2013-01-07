@@ -852,7 +852,7 @@ and check_scall_fork prog ctx e0 (post_start_label:formula_label) ret_t mn lock 
 
 	let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
     let _ = PTracer.log_proof prf in
-    (* let _ = print_endline (("\n ### fork: res ctx: ") ^ (Cprinter.string_of_list_failesc_context rs)) in *)
+    (* let _ = print_endline (("\n ### fork: after res ctx: ") ^ (Cprinter.string_of_list_failesc_context rs)) in *)
     if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
       if (!Globals.is_deployed) then
         Debug.print_info "procedure call" ("\nProving precondition in forked method " ^ proc.proc_name ^ " has failed \n") pos

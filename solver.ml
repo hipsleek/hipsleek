@@ -3397,16 +3397,75 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                   | Some one_f ->
                       let base = CF.formula_of_one_formula one_f in
                       (******Checking the delayed constraints at join point >>> *******)
+                      (* Some variables in delayed constraints could be exist vars
+                         in estate. Therefore, need to rename them appropriately.
+                         The renaming is only used in proving delayed constraints.
+                         After proving, nothing changed
+                      *)
+                      let evars = CF.get_exists_context (CF.Ctx es) in
                       let delayed_f = one_f.CF.formula_delayed in
+                      let _ = Debug.devel_pprint ("Proving delayed lockset constraints: before elim exists: \n "
+                                                  ^ "\n### es = " ^ (Cprinter.string_of_estate es)
+                                                  ^ "\n### delayed_f = " ^ (Cprinter.string_of_mix_formula delayed_f)
+                                                  ^"\n") pos in
+                      (*Those exist vars that are free var in delayed constraints*)
+                      let devars =  Gen.BList.intersect_eq CP.eq_spec_var evars (MCP.mfv delayed_f) in
+                      (* let _ = print_endline ("evars = " ^ (Cprinter.string_of_spec_var_list evars)) in *)
+                      (* let _ = print_endline ("MCP.mfv delayed_f = " ^ (Cprinter.string_of_spec_var_list (MCP.mfv delayed_f))) in *)
+                      (* let _ = print_endline ("devars = " ^ (Cprinter.string_of_spec_var_list devars)) in *)
+                      let delayed_f,new_es_f =
+                        if (devars = []) then (delayed_f,es_f)
+                        else
+                          (******helper>*****)
+                          let rec helper delayed_f (f:formula) =
+                            match f with
+                              |  Exists {formula_exists_qvars = qvars;
+                                         formula_exists_heap = qh;
+                                         formula_exists_pure = qp;
+                                         formula_exists_type = qt;
+                                         formula_exists_flow = qfl;
+                                         formula_exists_and = qa;
+                                         formula_exists_pos = pos} ->
+                                  (*Only renamed those variables that are related to
+                                  delayed constraints. Then, remove them from the evars*)
+                                  let renamed_vars = Gen.BList.intersect_eq CP.eq_spec_var qvars devars in
+                                  let remained_vars = Gen.BList.difference_eq CP.eq_spec_var qvars devars in
+                                  let fresh_vars = CP.fresh_spec_vars renamed_vars in
+                                  let st = List.combine renamed_vars fresh_vars in
+                                  let new_f = if remained_vars=[] then
+                                        mkBase qh qp qt qfl qa pos
+                                      else
+                                        mkExists remained_vars qh qp qt qfl qa pos
+                                  in
+                                  let new_f2 = subst st new_f in
+                                  let new_delayed_f = memo_subst st delayed_f in
+                                  (new_delayed_f,new_f2)
+                              | Base b -> (delayed_f,Base b)
+                              | Or {formula_or_f1 = f1;
+                                    formula_or_f2 = f2;
+                                    formula_or_pos = p} ->
+                                  let delayed_f1,new_f1 = helper delayed_f f1 in
+                                  let delayed_f2,new_f2 = helper delayed_f1 f2 in
+                                  let new_f = Or {formula_or_f1 = new_f1;
+                                                  formula_or_f2 = new_f2;
+                                                  formula_or_pos = p}
+                                  in
+                                  (delayed_f2,new_f)
+                          in
+                          (******<helper*****)
+                          let new_es_f,new_delayed_f = helper delayed_f es_f in
+                          new_es_f,new_delayed_f
+                      in
+                      let new_es = {es with es_formula = new_es_f; es_evars = Gen.BList.difference_eq CP.eq_spec_var es.es_evars devars} in
                       let ls_var_uprimed = CP.mkLsVar Unprimed in
                       let ls_var_primed = CP.mkLsVar Primed in
                       let ndf = MCP.m_apply_one (ls_var_uprimed, ls_var_primed) delayed_f in
                       let new_f = CF.formula_of_mix_formula ndf no_pos in
-                      let _ = Debug.devel_pprint ("Proving delayed lockset constraints \n "
-                                                  ^ "\n### es = " ^ (Cprinter.string_of_estate es)
+                      let _ = Debug.devel_pprint ("Proving delayed lockset constraints: after elim exists:  \n "
+                                                  ^ "\n### es = " ^ (Cprinter.string_of_estate new_es)
                                                   ^ "\n### delayed_f = " ^ (Cprinter.string_of_formula new_f)
                                                   ^"\n") pos in
-                      let rs,prf = heap_entail_one_context 12 prog false (CF.Ctx es) new_f None None None pos in
+                      let rs,prf = heap_entail_one_context 12 prog false (CF.Ctx new_es) new_f None None None pos in
                       (if (CF.isFailCtx rs) then
                             (*FAIL to satisfy the delayed constraints*)
                             (*TO CHECK: become FALSE, which may not good enough*)
@@ -3940,7 +3999,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
     let pr = pr_list Cprinter.string_of_h_formula in
     let pr_1 = P.EMapSV.string_of in
     let pr_2 = Context.string_of_action_res_simpl in
-    Debug.ho_2 "generate_action" pr pr_1 pr_2 (fun _ _ -> generate_action_x nodes eset) nodes eset
+    Debug.no_2 "generate_action" pr pr_1 pr_2 (fun _ _ -> generate_action_x nodes eset) nodes eset
 
   (** [Internal] Compare two spec var syntactically. **)
   and compare_sv_syntax xn yn = match (xn,yn) with
