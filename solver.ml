@@ -5397,6 +5397,8 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                                       (*this move_expl_inst call can occur at the end of folding and also 
                                                         at the end of entailments of stages possibly leading to duplications of instantiations
                                                         moving it would require the rhs pure to be moved as well...*)
+                                                      (*Drop variable permission variables*)
+                                                      let p2 = MCP.drop_varperm_mix_formula p2 in
                                                       let new_ctx =
                                                         (* when reaching the last phase of the entailment, we can move the explicit instantiations to the lhs; otherwise keep them in the aux consequent *)
                                                         match ctx with
@@ -6161,6 +6163,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
             is added to es_pure only when folding.
             Rule F-EMP in Mr Hai thesis, p86*)
         (*filter out vperm which has been proven in rhs_p*)
+          let rhs_p = MCP.drop_varperm_mix_formula rhs_p in
 	      let res_es = {estate with es_formula = res_delta; 
 	          es_pure = MCP.merge_mems rhs_p estate.es_pure true;
 	          es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with

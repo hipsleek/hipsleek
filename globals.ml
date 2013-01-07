@@ -644,7 +644,6 @@ let smart_memo = ref false
 
 let elim_exists = ref true
 
-(* let allow_imm = ref false (\*imm will delay checking guard conditions*\) *)
 let allow_imm = ref false (*imm will delay checking guard conditions*)
 
 let ann_derv = ref false
