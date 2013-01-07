@@ -13,39 +13,38 @@ inv self!=null;
 relation R(int r, int a, int b).
 
 node insert(node x, node y)
+
+  requires x::sortA<a> * y::node<v,null>
+  ensures  res::sortA<b> & (v>a & b=a | (a>=b & b=v)) ;
+
+/*
   infer [R]
   requires x::sortA<a> * y::node<v,null>
   ensures  res::sortA<b> & R(a,v,b);
-//b,a,v);
-
-/*
-//  requires x::sortA<a> * y::node<v,null>
-//  ensures  res::sortA<b> & (v>=(1+a) | (a>=b & b=v)) ;
 
   requires x::sortA<a> * y::node<v,null>
-  ensures  res::sortA<b> & (b=a | (a>=b & b=v)) ;
+  ensures  res::sortA<b> & (v>a & b=a | (a>=b & b=v)) ;
 
-!!! REL :  R(b,a,v)
-!!! POST:  v>=(1+a) | (a>=b & b=v)
+Checking procedure insert$node~node... 
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN R: ( b=v & b<=a) -->  R(a,v,b),
+RELDEFN R: ( b=v & b<=a) -->  R(a,v,b),
+RELDEFN R: ( a=b & b<v) -->  R(a,v,b),
+RELASS [R]: ( R(a_642,v_643,b_658)) -->  (a_642<=b_658 & b_658<=(v_643-2)) | v_643<=(b_658+1),
+RELDEFN R: ( a=b & v=v_643 & b<=b_658 & b<=(v-1) & b<=a_642 & R(a_642,v_643,b_658)) -->  R(a,v,b)]
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( R(a,v,b), (a>=b & b=v) | (v>=(1+b) & a=b))]
+*************************************
+
+!!! REL :  R(a,v,b)
+!!! POST:  (a>=b & b=v) | (v>=(1+b) & a=b)
 !!! PRE :  true
-
-[
-[RELDEFN R: ( b=v & b<=a) -->  R(b,a,v),
-RELDEFN R: ( b=v & b<=a) -->  R(b,a,v),
-RELDEFN R: ( a=b & b<v) -->  R(b,a,v),
-RELASS [R]: ( 
-R(b_658,a_642,v_643)) -->  
- (a_642<=b_658 & b_658<=(v_643-2)) 
- | v_643<=(b_658+1),
-
-RELDEFN R: ( 
-a=b & v=v_643 & b<=a_642
-& b<=b_658 & b<=(v-1)  & R(b_658,a_642,v_643)) -->  R(b,a,v)]
-
-RELDEFN R: ( 
-a=b & v=v_643 & a<=a_642 &
-((a<v & v<=(b_658+1) ) 
-| (a_642<=b_658 & b_658<=(v-2))) & R(a_642,v_643,b_658)) -->  R(a,v,b)]
+Procedure insert$node~node SUCCESS
 
 */
 {

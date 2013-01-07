@@ -14,8 +14,6 @@ relation R(int r, int a, int b).
 
 node insert(node x, node y)
 
-
-
  infer [R]
  requires x::sortA<a> * y::node<v,null>
  ensures  res::sortA<b> & R(b,a,v);
