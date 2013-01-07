@@ -30,7 +30,7 @@ module TP = Tpdispatcher
 
 
 (** An Hoa : switch to do unfolding on duplicated pointers **)
-let unfold_duplicated_pointers = ref false
+let unfold_duplicated_pointers = ref true
 
 (** An Hoa : to store the number of unfolding performed on duplicated pointers **)
 let num_unfold_on_dup = ref 0
@@ -3940,7 +3940,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
     let pr = pr_list Cprinter.string_of_h_formula in
     let pr_1 = P.EMapSV.string_of in
     let pr_2 = Context.string_of_action_res_simpl in
-    Debug.no_2 "generate_action" pr pr_1 pr_2 (fun _ _ -> generate_action_x nodes eset) nodes eset
+    Debug.ho_2 "generate_action" pr pr_1 pr_2 (fun _ _ -> generate_action_x nodes eset) nodes eset
 
   (** [Internal] Compare two spec var syntactically. **)
   and compare_sv_syntax xn yn = match (xn,yn) with
@@ -4001,7 +4001,8 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
   (* let ctx = Term.strip_lexvar_lhs ctx in *)
 
   (* Call the internal function to do the unfolding and do the checking *)
-  let temp,dup = if !unfold_duplicated_pointers then
+  (* Check duplication only when there are no permissions*)
+  let temp,dup = if !unfold_duplicated_pointers && not (Perm.allow_perm ()) then
     match ctx with 
       | Ctx es -> process_entail_state es 
       | OCtx _ -> failwith "[heap_entail_conjunct_lhs_x]::Unexpected OCtx as input!"

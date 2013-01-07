@@ -1970,9 +1970,9 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
       match (coercion_lhs_type) with
         | CF.Simple ->
             if (Perm.allow_perm ()) then
-              CF.add_origs_to_first_node self lhs_view_name c_rhs [coer.I.coercion_name]
+              CF.add_origs_to_first_node self lhs_view_name c_rhs [coer.I.coercion_name] true (*set original of the rest of nodes = true to allow permission splitting*)
             else
-              CF.add_origs_to_node self c_rhs [coer.I.coercion_name]
+              CF.add_origs_to_first_node self lhs_view_name c_rhs [coer.I.coercion_name] false
         | CF.Complex -> c_rhs
   in
   (* c_body_norm is used only for proving l2r part of a lemma (left & equiv lemmas) *)

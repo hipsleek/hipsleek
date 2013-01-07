@@ -1577,10 +1577,12 @@ and add_origs_to_node (v:string) (f : formula) origs =
     | Exists e -> Exists ({e with formula_exists_heap = h_add_origs_to_node v e.formula_exists_heap origs})
   in helper f
 
-(* the first matched node has orgins and its view_original=true *)
-(* , other nodes have their view_original=false *)
+(* the first matched node has orgins and its view_original=false *)
+(* , other nodes have their view_original=original *)
 (*ln: lhs name: name of heap node in the head of an coercion*)
-and h_add_origs_to_first_node (v : string) (ln:string) (h : h_formula) origs =
+(* origs: origs to add to the first node *)
+(* orignal: "orignal" for other nodes *)
+and h_add_origs_to_first_node (v : string) (ln:string) (h : h_formula) origs original =
   (*return a pair (is_first,h_formula), where is_first indicates
     whether the first matched node is in the h_formula*)
   let rec helper h found_first: (bool * h_formula)= match h with
@@ -1606,7 +1608,7 @@ and h_add_origs_to_first_node (v : string) (ln:string) (h : h_formula) origs =
           (*if it is the first matched node (same pointer name, 
             same view name and first_node not found):
             - add origs to its view_origins
-            - set view_original= true*)
+            - set view_original= false*)
 	      (true,
            ViewNode {vn with
 	           h_formula_view_origins = origs @ vn.h_formula_view_origins;
@@ -1615,7 +1617,7 @@ and h_add_origs_to_first_node (v : string) (ln:string) (h : h_formula) origs =
 
         else
           (*otherwise, its origins unchange but its view_original=true*)
-	      (false, ViewNode {vn with h_formula_view_original = true})
+	      (false, ViewNode {vn with h_formula_view_original = original})
 	      (* (false, ViewNode {vn with *)
           (*     h_formula_view_origins = origs @ vn.h_formula_view_origins; *)
           (*     h_formula_view_original = true}) *)
@@ -1633,7 +1635,7 @@ and h_add_origs_to_first_node (v : string) (ln:string) (h : h_formula) origs =
 
         else
           (*otherwise, its origins unchange but its view_original=true*)
-	      (false, DataNode {dn with h_formula_data_original = true})
+	      (false, DataNode {dn with h_formula_data_original = original})
 	      (* (false, DataNode {dn with  *)
 	      (*     h_formula_data_origins = origs @ dn.h_formula_data_origins; *)
           (*     h_formula_data_original = true}) *)
@@ -1642,8 +1644,12 @@ and h_add_origs_to_first_node (v : string) (ln:string) (h : h_formula) origs =
   let _, h1 = helper h false in
   h1
 
-(*ln: lhs name: name of heap node in the head of an coercion*)
-and add_origs_to_first_node_x (v:string) (ln:string)(f : formula) origs = 
+(*
+  ln: lhs name: name of heap node in the head of an coercion
+  origs: origs to add to the first node
+  orignal: "orignal" for other nodes
+*)
+and add_origs_to_first_node_x (v:string) (ln:string)(f : formula) origs original = 
   let rec helper f = match f with
     | Or ({formula_or_f1 = f1;
 	  formula_or_f2 = f2;
@@ -1651,14 +1657,14 @@ and add_origs_to_first_node_x (v:string) (ln:string)(f : formula) origs =
 	      Or ({formula_or_f1 = helper f1;
 		  formula_or_f2 = helper f2;
 		  formula_or_pos = pos})
-    | Base b -> Base ({b with formula_base_heap = h_add_origs_to_first_node v ln b.formula_base_heap origs})
-    | Exists e -> Exists ({e with formula_exists_heap = h_add_origs_to_first_node v ln e.formula_exists_heap origs})
+    | Base b -> Base ({b with formula_base_heap = h_add_origs_to_first_node v ln b.formula_base_heap origs original})
+    | Exists e -> Exists ({e with formula_exists_heap = h_add_origs_to_first_node v ln e.formula_exists_heap origs original})
   in helper f
 
-and add_origs_to_first_node (v:string) (ln:string)(f : formula) origs = 
+and add_origs_to_first_node (v:string) (ln:string)(f : formula) origs original = 
   Debug.no_3 "add_origs_to_first_node"
       pr_id pr_id !print_formula !print_formula
-      (fun _ _ _ -> add_origs_to_first_node_x v ln f origs) v ln f
+      (fun _ _ _ -> add_origs_to_first_node_x v ln f origs original) v ln f
 
 and add_origins (f : formula) origs = 
   let pr = !print_formula in

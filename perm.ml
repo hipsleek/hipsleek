@@ -37,6 +37,16 @@ let enable_para () =
     | _ -> !perm);
   ann_vp:= true;
   allow_ls:= true;
+  (*
+    need to enable filtering_flag, so that we could prove more programs.
+    For example, if we want to prove: n>10 & f=1.0 |- n>=11.
+    Because n is solved by an integer solver n>10 |- n>=11 valid.
+    However, n is solved by an floating point solver, it is not valid.
+    Therefore, we enable the flag, so that (f=1.0) is filtered out,
+    therefore the remaining antecedent n>10 could be proven by
+    an integer solver
+  *)
+  filtering_flag:=true; 
   allow_locklevel:=true
 
 let allow_perm ():bool = 
