@@ -13,29 +13,17 @@ int zip(int x, int y)
   ensures  true;
 
 /*
+
 Checking procedure zip$int~int... 
+!!! >>>>>> HIP gather infer pre <<<<<<
+!!! Inferred Heap :[]
+!!! Inferred Pure :[ y!=0 | x<=0]
 *************************************
 *******fixcalc of pure relation *******
 *************************************
 []
-*************************************
 
-Procedure zip$int~int SUCCESS
-
-Pure is inferred below but disappeared in the
-end. This may be due to our use of false elimination
-to reduce the contexts.
-
- id: 4; caller: []; line: 29; classic: false; kind: PRE-2; hec_num: 2; evars: []; c_heap: emp
- checkentail emp&x=x' & y=y' & 0<=y & 0<=x & x'!=0 & !(v_bool_26_511') & x'!=0 & 
-!(v_bool_26_511') & y'=0 & v_bool_28_510' & y'=y' & v_bool_28_510'&
-{FLOW,(22,23)=__norm}[]
- |-  hfalse&false&{FLOW,(22,23)=__norm}[]. 
-res:  [
-  hfalse&false&{FLOW,(22,23)=__norm}[]
-  es_infer_vars/rel: [x; y]
-  es_infer_pure: [y!=0 | x<=0]
-  ]
+WHY isn't there a summary of pre/post?
 
 */
 

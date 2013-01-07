@@ -111,7 +111,7 @@ print residue.
 
 (c)  R(v) & D1 --> D2
 
-     W=free_vars(D1)-v
+     W=free_vars(D1,D2)-v
      REL_ASS R(v) --> forall W. not(D1) \/ D2
 
      R_1(v_1)&R_2(v_2)&D1 --> D2

@@ -5350,8 +5350,19 @@ let rec allFalseCtx ctx = match ctx with
 let isFalseBranchCtxL (ss:branch_ctx list) = 
    (ss!=[]) && (List.for_all (fun (_,c) -> isAnyFalseCtx c) ss )
 
+let is_inferred_pre estate = 
+  not(estate.es_infer_heap==[] && estate.es_infer_pure==[] && estate.es_infer_rel==[])
+  (* let r = (List.length (estate.es_infer_heap))+(List.length (estate.es_infer_pure)) in *)
+  (* if r>0 then true else false *)
+
+let rec is_inferred_pre_ctx ctx = 
+  match ctx with
+  | Ctx estate -> is_inferred_pre estate 
+  | OCtx (ctx1, ctx2) -> (is_inferred_pre_ctx ctx1) || (is_inferred_pre_ctx ctx2)
+
 let remove_dupl_false (sl:branch_ctx list) = 
-  let (fl,nl) = (List.partition (fun (_,oc) -> (isAnyFalseCtx oc) ) sl) in
+  let (fl,nl) = (List.partition (fun (_,oc) -> 
+      (isAnyFalseCtx oc && not(is_inferred_pre_ctx oc)) ) sl) in
   let pr = pr_list (fun (_,oc) -> !print_context_short oc) in
   if not(fl==[]) && not(nl==[]) then
     Debug.info_hprint (add_str "false ctx removed" pr) fl no_pos; 
@@ -5874,15 +5885,6 @@ let mk_list_partial_context (c:list_context) : (list_partial_context) =
 let repl_label_list_partial_context (lab:path_trace) (cl:list_partial_context) : list_partial_context 
     = List.map (fun (fl,sl) -> (fl, List.map (fun (_,c) -> (lab,c)) sl)) cl
 
-let is_inferred_pre estate = 
-  not(estate.es_infer_heap==[] && estate.es_infer_pure==[] && estate.es_infer_rel==[])
-  (* let r = (List.length (estate.es_infer_heap))+(List.length (estate.es_infer_pure)) in *)
-  (* if r>0 then true else false *)
-
-let rec is_inferred_pre_ctx ctx = 
-  match ctx with
-  | Ctx estate -> is_inferred_pre estate 
-  | OCtx (ctx1, ctx2) -> (is_inferred_pre_ctx ctx1) || (is_inferred_pre_ctx ctx2)
 
 (* let anyPreInCtx c = is_inferred_pre_ctx c *)
 

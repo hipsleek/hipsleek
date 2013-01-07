@@ -13,8 +13,10 @@ inv self!=null;
 relation R(int r, int a, int b).
 
 node insert(node x, node y)
-  requires x::sortA<v> * y::node<v,null>
-  ensures  res::sortA<b> & b=min(a,v) ;
+  requires x::sortA<a> * y::node<v,null>
+  ensures  res::sortA<b> & b=min(c,v); 
+    //(b=a | v<a & b=v); 
+    //(b=a | b=v);
 /*
   infer [R]
   requires x::sortA<v> * y::node<v,null>
