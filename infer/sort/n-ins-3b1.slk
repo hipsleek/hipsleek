@@ -1,0 +1,12 @@
+relation R2(int a, int b).
+
+infer [R2] flted_28_44=null & v<=a & res=y & p_45=x & a=v2_46
+ |- (exists b: R2(b,v2_46) & b=v & a=v2_46).
+print residue.
+// inferred rel: [RELDEFN R2: ( true) -->  R2(b_23,v2_46)]
+
+infer [R2] flted_28_44=null & v<=a & res=y & p_45=x & a=v2_46
+ |- (exists b: R2(v,v2_46) & b=v & a=v2_46).
+print residue.
+// inferred rel: [RELDEFN R2: ( v<=v2_46) -->  R2(v,v2_46)]
+
