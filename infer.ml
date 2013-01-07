@@ -56,9 +56,9 @@ let simp_lhs_rhs vars (c,lhs,rhs) =
 
 let pr = !CP.print_formula 
 let pr_ty = !CP.Label_Pure.ref_string_of_exp
-type fc_type = CP.formula * CP.Label_Pure.exp_ty
+type fc_type = CP.formula * CP.formula * CP.formula * CP.formula
 
-let fixcalc_rel_stk : fc_type Gen.stack_pr = new Gen.stack_pr (pr_pair pr pr_ty) (==)
+let fixcalc_rel_stk : fc_type Gen.stack_pr = new Gen.stack_pr (pr_quad pr pr pr pr) (==)
 
 let infer_rel_stk : CP.infer_rel_type Gen.stack_pr = new Gen.stack_pr 
   CP.string_of_infer_rel (==)

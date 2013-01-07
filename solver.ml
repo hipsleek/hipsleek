@@ -9291,6 +9291,38 @@ and simplify_relation sp subst_fml pre_vars post_vars prog inf_post evars lst_as
 	let pr = !print_struc_formula in
 	Debug.no_1 "simplify_relation" pr (pr_pair pr (pr_list !CP.print_formula))
       (fun _ -> simplify_relation_x sp subst_fml pre_vars post_vars prog inf_post evars lst_assume) sp
+
+let subst_rel pre_rel pre rel = match rel,pre_rel with
+  | CP.BForm ((CP.RelForm (name1,args1,_),_),_), CP.BForm ((CP.RelForm (name2,args2,_),_),_) ->
+    if name1 = name2 then
+      let subst_args = List.combine (List.map CP.exp_to_spec_var args2) 
+                                    (List.map CP.exp_to_spec_var args1) in
+      CP.subst subst_args pre
+    else report_error no_pos "subst_rel: Expecting the same relation"
+  | _ -> report_error no_pos "subst_rel: Expecting a relation"
+
+let subst_fml pre_rel pre fml =
+  let conjs = CP.list_of_conjs fml in
+  let rels,others = List.partition CP.is_RelForm conjs in
+  let rels = List.map (fun r -> subst_rel pre_rel pre r) rels in
+  CP.conj_of_list (others@rels) no_pos
+
+let check_defn pre_rel pre rel_dfn =
+  List.for_all (fun (lhs,rhs) ->
+    let lhs = subst_fml pre_rel pre lhs in
+    let _ = Debug.ninfo_hprint (add_str "lhs" !CP.print_formula) lhs no_pos in
+    let rhs = subst_fml pre_rel pre rhs in
+    let _ = Debug.ninfo_hprint (add_str "rhs" !CP.print_formula) rhs no_pos in
+    TP.imply_raw lhs rhs
+  ) rel_dfn
+
+let check_oblg pre_rel pre reloblgs pre_rel_df =
+  let check1 = TP.imply_raw pre reloblgs in
+  let check2 = check_defn pre_rel pre pre_rel_df in
+  check1 & check2
+
+
+
 (*
 module frac_normaliz = struct
 	let normalize_frac_heap_deep prog (f:formula) = 

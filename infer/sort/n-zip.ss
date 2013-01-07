@@ -8,8 +8,8 @@ void error()
   ensures true;
 
 int zip(int x, int y)
-  infer [x,y,R]
-  requires true
+  infer [P,R]
+  requires P(x,y)
   ensures  R(res,x,y);
 /*
 

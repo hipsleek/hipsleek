@@ -8895,3 +8895,7 @@ let drop_exists (f:formula) :formula =
   let pr = !print_formula in 
   Debug.no_1 "drop_exists_pure" pr pr drop_exists f 
 
+let add_prefix_to_spec_var prefix (sv : spec_var) = match sv with
+  | SpecVar (t,n,p) -> SpecVar (t,prefix^n,p)
+
+

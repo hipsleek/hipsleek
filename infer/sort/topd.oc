@@ -2,7 +2,7 @@ P:={[x,y]:(y<0 || y>0 || x<1) && x>=0};
 PairWiseCheck P;
 Pre:={[x,y]:forall(RECx,RECy:
    not(RECx>=0 & x>=1+RECx & RECx+y=RECy+x) | 
-    (RECx>=0 & (RECy<0 || RECy>0 || RECx<1)))};
+    ((RECy<0 || RECy>0 || RECx<1)))};
 Pre;
 #{[x,y]: x <= y || y <= x-1, 0}
 
