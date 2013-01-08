@@ -8901,6 +8901,10 @@ let drop_exists (f:formula) :formula =
 let add_prefix_to_spec_var prefix (sv : spec_var) = match sv with
   | SpecVar (t,n,p) -> SpecVar (t,prefix^n,p)
 
+let fv_rel rel = match rel with
+  | BForm((RelForm (_, args, _),_),_) -> 
+    remove_dups_svl (List.concat (List.map afv args))
+    
 let get_rel_args_pformula pf= match pf with
   | RelForm (_, el, _) -> (List.fold_left List.append [] (List.map afv el))
   | _ -> []
@@ -8923,4 +8927,3 @@ let get_rel_args_x f0=
 let get_rel_args f0=
   Debug.no_1 "get_rel_args" !print_formula !print_svl
       (fun _ -> get_rel_args_x f0) f0
-
