@@ -3074,6 +3074,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	    | Ctx es -> (* (); *)
               let exec () =
                 begin
+                     (* let _ =  Debug.info_pprint ("XXXX f: " ^ (Cprinter.string_of_struc_formula f)) no_pos in *)
                   match f with
                     | ECase b   -> 
                           let ctx = add_to_context_num 1 ctx11 "case rule" in
@@ -3162,8 +3163,13 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 		                  formula_struc_base = formula_base;
 		                  formula_struc_continuation = formula_cont;} as b) -> 
                           (*formula_ext_complete = pre_c;*)
-                          if (List.length base_exists) > 0 then 
-	                        let ws = CP.fresh_spec_vars base_exists in
+                         let rel_args = CF.get_rel_args formula_base in
+                         let formula_base = if CF.check_rel_args_quan_clash rel_args formula_base then
+                               CF.elim_exists formula_base
+                             else formula_base
+                         in
+                          if (List.length base_exists) > 0 then
+                            let ws = CP.fresh_spec_vars base_exists in
 	                        let st = List.combine base_exists ws in
 	                        let new_struc = subst_struc st (EBase {b with formula_struc_exists = []})in
 	                        let new_ctx = push_exists_context ws ctx11 in
@@ -3171,8 +3177,8 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	                        (nc, (mkEexStep ctx11 f np))
 	                      else 
 			                (*let _ = print_string ("An Hoa :: inner_entailer_a :: check point 1\n") in*)
-	                        let n_ctx = (push_expl_impl_context expl_inst impl_inst ctx11 ) in
-	                        let n_ctx_list, prf = heap_entail_one_context 2 prog (if formula_cont!=None then true else is_folding) n_ctx formula_base None pos in
+                            let n_ctx = (push_expl_impl_context expl_inst impl_inst ctx11 ) in
+                           	let n_ctx_list, prf = heap_entail_one_context 2 prog (if formula_cont!=None then true else is_folding) n_ctx formula_base None pos in
 			                (*let n_ctx_list = List.filter  (fun c -> not (isFalseCtx c)) n_ctx_list in*)
 	                        let n_ctx_list = pop_expl_impl_context expl_inst impl_inst n_ctx_list in
                             (*l2: debugging*)
@@ -3567,10 +3573,10 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
             begin
               Debug.devel_zprint (lazy ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases")) pos;
               (* TO CHECK: ignore this --imm at the moment*)
-	          heap_entail_split_rhs_phases prog is_folding  ctx conseq false pos     
+               	heap_entail_split_rhs_phases prog is_folding  ctx conseq false pos     
             end
 	      else
-	        heap_entail_conjunct 1 prog is_folding  ctx conseq [] pos     
+            heap_entail_conjunct 1 prog is_folding  ctx conseq [] pos     
         in
 	    (r1,p1)
       end
@@ -3920,8 +3926,11 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
 		          formula_exists_and = qa;
 		          formula_exists_pos = pos}) ->
 	                  (* quantifiers on the RHS. Keep them for later processing *)
-	                  let ws = CP.fresh_spec_vars qvars in
-	                  let st = List.combine qvars ws in
+	                (* let rel_args = CP.get_rel_args (MCP.pure_of_mix qp) in *)
+                    (* let _ =  Debug.info_pprint ("XXXX rel_args: " ^ (!CP.print_svl rel_args)) no_pos in *)
+                    (* let qvars1 = CP.diff_svl qvars rel_args in *)
+                    let ws = CP.fresh_spec_vars qvars in
+                      let st = List.combine qvars ws in
 	                  let baref = mkBase qh qp qt qfl qa pos in
 	                  let new_baref = subst st baref in
 	                  let new_ctx = Ctx {estate with es_evars = ws @ estate.es_evars} in
@@ -4685,12 +4694,8 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
         | Ctx estate -> (estate.es_formula,estate.es_heap,estate.es_evars)
     in
     (* WN : what if evars not used in the conseq? *)
-    let _ =  Debug.info_pprint ("XXXX evars: " ^ (!CP.print_svl evars)) no_pos in
-    let _ =  Debug.info_pprint ("XXXX evars: " ^ (!CP.print_svl evars)) no_pos in
-    let rel_args = CF.get_rel_args conseq in
-    let _ =  Debug.info_pprint ("XXXX rel_args: " ^ (!CP.print_svl rel_args)) no_pos in
-    let evars1 = CP.diff_svl evars rel_args in
-    let conseq = CF.push_exists evars1 conseq in
+    (* let _ = DD.info_pprint ("  ctx0: " ^ (Cprinter.string_of_context ctx0)) pos in *)
+    let conseq = CF.push_exists evars conseq in
     let avoid = (hec_num=11) in
     let avoid = avoid or ((hec_num=1 || hec_num=2) && CF.is_emp_term conseq) in
     let avoid = avoid or (not (hec_stack # is_empty)) in
@@ -5316,7 +5321,7 @@ and heap_infer_decreasing_wf prog estate rank is_folding lhs pos =
 
 and heap_entail_empty_rhs_heap i p i_f es lhs rhs pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Debug.ho_3_num i "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
+  Debug.no_3_num i "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
       (fun _ _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs pos) es lhs rhs
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) pos : (list_context * proof) =

@@ -2799,10 +2799,28 @@ and split_components_x (f : formula) =
 and get_rel_args f0=
   let rec helper f=
     match f with
-      | Base ({formula_base_pure = p; })
-      | Exists ({ formula_exists_pure = p;}) -> CP.get_rel_args (MCP.pure_of_mix p)
+      | Base ({formula_base_pure = p; }) ->
+          (* let p1 = (MCP.pure_of_mix p) in *)
+          (* let _ =  Debug.info_pprint ("XXXX p: " ^ (!CP.print_formula p1)) no_pos in *)
+          CP.get_rel_args (MCP.pure_of_mix p)
+      | Exists ({ formula_exists_pure = p;}) ->
+          (* let p1 = (MCP.pure_of_mix p) in *)
+          (* let _ =  Debug.info_pprint ("XXXX p: " ^ (!CP.print_formula p1)) no_pos in *)
+          CP.get_rel_args (MCP.pure_of_mix p)
       | Or ({formula_or_f1 = of1;
           formula_or_f2 = of2;}) -> (helper of1)@(helper of2)
+  in
+  helper f0
+
+and check_rel_args_quan_clash args f0=
+  let rec helper f=
+    match f with
+      | Base _ ->
+          false
+      | Exists ({ formula_exists_qvars = quans;}) ->
+          CP.intersect_svl args quans <> []
+      | Or ({formula_or_f1 = of1;
+          formula_or_f2 = of2;}) -> (helper of1)||(helper of2)
   in
   helper f0
 
