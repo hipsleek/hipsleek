@@ -1808,16 +1808,16 @@ let rec remove_accs_from_formula (cf:CF.formula)  : CF.formula =
     | CF.Base f ->
     		let pos = f.CF.formula_base_pos in
     		let h,mcp,fl,t,a = CF.split_components cf in
-    		let p = MCP.pure_of_mix mcp in
+    		(*let p = MCP.pure_of_mix mcp in*)
     		let h,new_p = remove_accs_from_heap h in
-    		let p = CP.mkAnd new_p p pos in
-    		CF.mkBase h (MCP.mix_of_pure p) t fl a pos
+    		let mcp = MCP.merge_mems (MCP.mix_of_pure new_p) mcp true in
+    		CF.mkBase h mcp t fl a pos
     | CF.Exists f ->
 		let pos = f.CF.formula_exists_pos in
     		let h,mcp,fl,t,a = CF.split_components cf in
     		let qvars = f.CF.formula_exists_qvars in
-    		let p = MCP.pure_of_mix mcp in
+    		(*let p = MCP.pure_of_mix mcp in*)
     		let h,new_p = remove_accs_from_heap h in
-    		let p = CP.mkAnd new_p p pos in
- 		CF.mkExists qvars h (MCP.mix_of_pure p) t fl a pos	
+    		let mcp = MCP.merge_mems (MCP.mix_of_pure new_p) mcp true in
+ 		CF.mkExists qvars h mcp t fl a pos	
 
