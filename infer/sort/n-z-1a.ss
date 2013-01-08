@@ -13,31 +13,37 @@ int zip(int x, int y)
   ensures  res=x;
 
 /*
-
-
-Checking procedure zip$int~int... 
 *************************************
 *******pure relation assumption ******
 *************************************
-[RELDEFN P: ( y=v_int_61_512'+1 & x=v_int_61_513'+1 & 0<=v_int_61_512' & 
-0<=v_int_61_513' & P(x,y)) -->  P(v_int_61_513',v_int_61_512'),
+[RELDEFN P: ( y=v_int_65_512'+1 & x=v_int_65_513'+1 & 0<=v_int_65_512' & 
+0<=v_int_65_513' & P(x,y)) -->  P(v_int_65_513',v_int_65_512'),
 RELASS [P]: ( P(x,y)) -->  y!=0 | 1>x]
 *************************************
 
 *************************************
 *******fixcalc of pure relation *******
 *************************************
-[( true, true, true, true)]
+[( true, true, P(x,y), (y<=(x-1) & y<=(0-1)) | x<=y)]
 *************************************
 
 !!! REL POST :  true
 !!! POST:  true
-!!! REL PRE :  true
-!!! PRE :  true
+!!! REL PRE :  P(x,y)
+!!! PRE :  (y<=(x-1) & y<=(0-1)) | x<=y
 
-Seems incorrect.
+Procedure zip$int~int SUCCESS
 
-PROBLEM:
+PROBLEM : given that we have already precondition:
+  requires y>=0 & x>=0 & P(x,y)
+  ensures  res=x;
+
+I think we can simplify pre to become:
+!!! PRE :  x<=y
+
+as the other conditional is unsatisfiable
+by the current state.
+
 
 Here, we If not need to construct top-down fix-point.
 
@@ -66,20 +72,3 @@ Algorithm for Pre-relation
   }
 }
 
-/*
-*************************************
-*******pure relation assumption ******
-*************************************
-[RELDEFN P: ( y=v_int_61_512'+1 & x=v_int_61_513'+1 & 0<=v_int_61_512' & 
-0<=v_int_61_513' & P(x,y)) -->  P(v_int_61_513',v_int_61_512'),
-RELASS [P]: ( P(x,y)) -->  y!=0 | 1>x]
-*************************************
-
-If we can synthesize the following formula?
-
-wh:={[x,y]->[px,py]->[]:
-  (exists (x1,y1:x>0 && y>0 && x1=x-1 && y1=y-1 && wh(x1,y1,px,py)))};
-TD:=topdown(wh,1,SimHeur);
-TD;
-
-*/
