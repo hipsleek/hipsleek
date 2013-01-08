@@ -206,6 +206,11 @@ $output_file = "log";
 	],
 	# END OF ARRAY TESTING EXAMPLES
 	"hip_tr"=>[["trees.ss",1,"insert"]],
+	"infinity" =>[["bst-inf.ss",2,"","delete","SUCCESS","remove_min","SUCCESS"],
+	["inf-selsort.ss",3,"","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	["inf-ins.ss",1,"","insert","SUCCESS"],
+	["inf-sel.ss",3,"","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	],
     "imm" =>[ 
         ["bigint.ss",17,  " --imm -tp redlog",
 		 "clone", "SUCCESS",
