@@ -13,25 +13,29 @@ int zip(int x, int y)
   ensures  res=x;
 
 /*
+
+
+Checking procedure zip$int~int... 
 *************************************
 *******pure relation assumption ******
 *************************************
-[RELDEFN P: ( y=v_int_60_512'+1 & x=v_int_60_513'+1 & 0<=v_int_60_512' & 
-0<=v_int_60_513' & P(x,y)) -->  P(v_int_60_513',v_int_60_512'),
+[RELDEFN P: ( y=v_int_61_512'+1 & x=v_int_61_513'+1 & 0<=v_int_61_512' & 
+0<=v_int_61_513' & P(x,y)) -->  P(v_int_61_513',v_int_61_512'),
 RELASS [P]: ( P(x,y)) -->  y!=0 | 1>x]
 *************************************
 
 *************************************
 *******fixcalc of pure relation *******
 *************************************
-[RELDEFN P: ( y=v_int_60_512'+1 & x=v_int_60_513'+1 & 0<=v_int_60_512' & 
-0<=v_int_60_513' & P(x,y)) -->  P(v_int_60_513',v_int_60_512'),
-RELASS [P]: ( P(x,y)) -->  y!=0 | 1>x]
+[( true, true, true, true)]
 *************************************
 
-!!! REL :  P(v_int_77_513',v_int_77_512')
-!!! POST:  false
-!!! PRE :  false
+!!! REL POST :  true
+!!! POST:  true
+!!! REL PRE :  true
+!!! PRE :  true
+
+Seems incorrect.
 
 PROBLEM:
 
