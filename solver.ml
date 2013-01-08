@@ -9400,7 +9400,7 @@ let pre_calculate fp_func input_fml pre_vars proc_spec
   let constTrue = CP.mkTrue no_pos in
 
   let top_down_fp = fp_func 1 input_fml pre_vars proc_spec in
-  let _ = Debug.info_hprint (add_str "top_down_fp" (pr_list (pr_pair pr pr))) top_down_fp no_pos in
+  let _ = Debug.ninfo_hprint (add_str "top_down_fp" (pr_list (pr_pair pr pr))) top_down_fp no_pos in
 
   let pre_rec = match top_down_fp with
     | [(rel,rec_inv)] -> 
@@ -9423,8 +9423,32 @@ let pre_calculate fp_func input_fml pre_vars proc_spec
   if checkpoint2 then [(rel,post,pre_rel,final_pre)]
   else [(rel,post,constTrue,constTrue)]
 
-(* TODO *)
-let compute_td_fml pre_rel_df = pre_rel_df
+let update_rel rel pre_rel new_args old_rhs =
+  match old_rhs, pre_rel, rel with
+  | CP.BForm ((CP.RelForm (name,args,o1),o2),o3), 
+    CP.BForm ((CP.RelForm (name1,_,_),_),_),
+    CP.BForm ((CP.RelForm (name2,_,_),_),_) ->
+    if name=name1 & name=name2 then
+      CP.BForm ((CP.RelForm (name,args@new_args,o1),o2),o3)
+    else report_error no_pos "Not support topdown fixpoint for mutual recursion"
+  | _,_,_ -> report_error no_pos "Expecting a relation"
+
+let compute_td_one (lhs,old_rhs) (rhs,new_args) pre_rel =
+  let lhs_conjs = CP.list_of_conjs lhs in
+  let rels,others = List.partition CP.is_RelForm lhs_conjs in
+  let new_rels = List.map (fun x -> update_rel x pre_rel new_args old_rhs) rels in
+  let lhs = CP.conj_of_list (new_rels @ others) no_pos in
+  (lhs,rhs)
+
+let compute_td_fml pre_rel_df pre_rel = 
+  let rhs = match pre_rel with
+    | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
+      let new_args = List.map (fun x -> CP.mkVar 
+        (CP.add_prefix_to_spec_var "p" (CP.exp_to_spec_var x)) no_pos) args in
+      CP.BForm ((CP.RelForm (name,args@new_args,o1),o2),o3),new_args
+    | _ -> report_error no_pos "Expecting a relation"
+  in
+  List.map (fun x -> compute_td_one x rhs pre_rel) pre_rel_df
 
 let update_with_td_fp bottom_up_fp pre_rel_fmls fp_func reloblgs pre_rel_df post_rel_df pre_vars proc_spec = 
   let pr = Cprinter.string_of_pure_formula in
@@ -9439,10 +9463,12 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls fp_func reloblgs pre_rel_df post
 
     let checkpoint1 = check_oblg pre_rel constTrue pure_oblg_to_check pre_rel_df in
     if checkpoint1 then [(constTrue,constTrue,pre_rel,constTrue)]
-    else [(constTrue,constTrue,constTrue,constTrue)]
-(*      let input_fml = compute_td_fml pre_rel_df in*)
-(*      pre_calculate fp_func input_fml pre_vars proc_spec *)
-(*        constTrue pure_oblg_to_check (constTrue,constTrue,pre_rel) pre_rel_vars pre_rel_df*)
+    else 
+(*      [(constTrue,constTrue,constTrue,constTrue)]*)
+      let input_fml = compute_td_fml pre_rel_df pre_rel in
+      let _ = Debug.ninfo_hprint (add_str "input_fml" (pr_list (pr_pair pr pr))) input_fml no_pos in
+      pre_calculate fp_func input_fml pre_vars proc_spec 
+        constTrue pure_oblg_to_check (constTrue,constTrue,pre_rel) pre_rel_vars pre_rel_df
   | [(rel,post)], [pre_rel] -> 
     let pre_rel_vars = List.filter (fun x -> not (CP.is_rel_typ x)) (CP.fv pre_rel) in
     let exist_vars = CP.diff_svl (CP.fv rel) pre_rel_vars in
