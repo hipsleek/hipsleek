@@ -1435,10 +1435,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let ctx2 = CF.push_exists_list_failesc_context svars ctx1 in
 	        (* let _ = print_endline ("\ncheck_exp: Block: ctx2:\n" ^ (Cprinter.string_of_list_failesc_context ctx2)) in *)
 	        (* let _ = print_endline ("\ncheck_exp: Block: after elim_exists ctx2:\n" ^ (Cprinter.string_of_list_failesc_context (elim_exists_failesc_ctx_list ctx2))) in *)
-            let ctx2 = if (!Globals.allow_locklevel) then
-                  trans_level_eqn_list_failesc_context ctx2
-                else ctx2
-            in
+            (* let ctx2 = if (!Globals.allow_locklevel) then *)
+            (*       trans_level_eqn_list_failesc_context ctx2 *)
+            (*     else ctx2 *)
+            (* in *)
 	        let res = if !Globals.elim_exists then elim_exists_failesc_ctx_list ctx2 else ctx2 in
             Gen.Profiling.pop_time "[check_exp] Block";
             res
@@ -1553,14 +1553,22 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             let new_heap_args,level_f = if (!Globals.allow_locklevel && c=lock_name) then
                   (*If this is a lock, astsimpl ensures that it has a single argument*)
                   (*Bring locklevel out to form a new expression*)
-                  let arg = List.hd heap_args in
-                  let arg_var = CP.Var (arg,pos) in
+                  (* res = new lock(args) *)
+                  let arg_var = List.hd heap_args in (*|args| = 1*)
+                  let arg_var_exp = CP.Var (arg_var,pos) in
                   let level = CP.mkLevel res_var pos in
-                  let eqn = CP.mkEqExp level arg_var pos in
-                  let gt_f = CP.mkGtExp arg_var (CP.IConst (0,pos)) pos in
-                  let f = CP.And (eqn,gt_f,pos) in
+                  let eqn = CP.mkEqExp level arg_var_exp pos in (*  arg_var=level(res) *)
+                  let gt_f = CP.mkGtExp arg_var_exp (CP.IConst (0,pos)) pos in (* arg_var >0 *)
+                  let ls_pvar = CP.mkLsVar Primed in
+                  let ls_pvar_exp = CP.Var (ls_pvar,pos) in
+                  let notin_ls_f = CP.BForm (((CP.mkBagNotIn res_var ls_pvar_exp pos),None),None) in (* res notin ls' *)
+                  let lsmu_exp = CP.Var (CP.mkLsmuVar Primed,pos) in (*LSMU'*)
+                  let notin_lsmu_f = CP.mkBagNotInExp arg_var lsmu_exp pos in (*arg_var notin LSMU'*)
+                  let f1 = CP.And (eqn,gt_f,pos) in (* arg_var=level(res) & arg_var >0 *)
+                  let f2 = CP.And (f1,notin_ls_f,pos) in (* arg_var=level(res) & arg_var >0 & res notin LS'  *)
+                  let f = CP.And (f2,notin_lsmu_f,pos) in (* arg_var >0 & res notin LS' & arg_var notin LSMU' *)
                   let nf = MCP.mix_of_pure f in
-                  ([],nf)
+                  ([],nf) (* res::lock<> & arg_var=level(res) & arg_var >0 & res notin LS' & arg_var notin LSMU' *)
                 else (heap_args,MCP.mkMTrue pos)
             in
 	        let heap_node = CF.DataNode ({
@@ -1991,19 +1999,19 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_
     (* Termination: Poststate of Loop must be unreachable (soundness) *)
     let _ = if !Globals.dis_term_chk || !Globals.dis_post_chk then true 
     else Term.check_loop_safety prog proc ctx post pos pid in
-    let ctx = if (!Globals.allow_locklevel) then
-          (*to maintain the information of locklevels on varables
-            whose scopes are within scope of this procedure only.
-            For example, for any pass-by-value or local variables,
-            at the end of the procedure, it will become existential
-            variables. Exist vars, however, will be renamed sometimes.
-            However, elim_exists is not aware of constraints on locklevels,
-            we have to maintain these constraints by translating before
-            elim_exists
-          *)
-          trans_level_list_partial_context ctx
-        else ctx
-    in
+    (* let ctx = if (!Globals.allow_locklevel) then *)
+    (*       (\*to maintain the information of locklevels on varables *)
+    (*         whose scopes are within scope of this procedure only. *)
+    (*         For example, for any pass-by-value or local variables, *)
+    (*         at the end of the procedure, it will become existential *)
+    (*         variables. Exist vars, however, will be renamed sometimes. *)
+    (*         However, elim_exists is not aware of constraints on locklevels, *)
+    (*         we have to maintain these constraints by translating before *)
+    (*         elim_exists *)
+    (*       *\) *)
+    (*       trans_level_list_partial_context ctx *)
+    (*     else ctx *)
+    (* in *)
     let fn_state=
       if (!Globals.disable_failure_explaining) then
         let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))

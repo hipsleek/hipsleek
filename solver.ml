@@ -5879,6 +5879,10 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   (* let rhs_p = MCP.normalize_varperm_mix_formula rhs_p in (\*may be redundant*\) *)
   let rhs_vperms, _ = MCP.filter_varperm_mix_formula rhs_p in
   (***********>TRANSLATE WAITLEVEL and LOCKLEVEL ***************)
+  (* old_*hs_p is original
+     while *hs_p is translated for proving the current entailment*)
+  let old_rhs_p = rhs_p in 
+  let old_lhs_p = lhs_p in 
   let lhs_p,rhs_p =
     if (!Globals.allow_locklevel) then
       (*TO CHECK: This may break --eps*)
@@ -6133,6 +6137,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
       let estate = add_infer_pure_to_estate inf_p estate in
       let estate = add_infer_rel_to_estate (stk_rel_ass # get_stk) estate in
       let to_add = MCP.mix_of_pure (CP.join_conjunctions inf_p) in
+      let lhs_new = if (!Globals.allow_locklevel) then
+            (*TO CHECK: how this interact with infer,
+            because lhs_new and lhs_p are changed due to infer?*)
+            MCP.translate_waitlevel_mix_formula old_lhs_p
+          else lhs_new
+      in
       let lhs_p = MCP.merge_mems lhs_new to_add true in
       let res_delta = mkBase lhs_h lhs_p lhs_t lhs_fl lhs_a no_pos in
 
@@ -6224,7 +6234,14 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
             is added to es_pure only when folding.
             Rule F-EMP in Mr Hai thesis, p86*)
         (*filter out vperm which has been proven in rhs_p*)
-          let rhs_p = MCP.drop_varperm_mix_formula rhs_p in
+          let rhs_p = 
+            if (!Globals.allow_locklevel) then
+            (*TO CHECK: how this interact with the rest of system,
+              because rhs_p is changed due along the way to this point?*)
+              MCP.drop_varperm_mix_formula old_rhs_p
+            else
+              MCP.drop_varperm_mix_formula rhs_p 
+          in
 	      let res_es = {estate with es_formula = res_delta; 
 	          es_pure = MCP.merge_mems rhs_p estate.es_pure true;
 	          es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with

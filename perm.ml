@@ -52,6 +52,13 @@ let enable_para () =
      Reference: http://www.comp.nus.edu.sg/~leduykha/pubs/ldk-vperm-icfem2012-tr.pdf
   *)
   pass_global_by_value := false;
+  (* 
+     For testing.
+     Clear this flag so that information about locksets are transferred
+     until proving post-condition when new locks are created inside
+     the scope of the procedure.
+  *)
+  Globals.elim_exists := false;
   allow_locklevel:=true
 
 let allow_perm ():bool = 

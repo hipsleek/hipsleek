@@ -1904,8 +1904,10 @@ let pr_estate (es : entail_state) =
                                                     | None -> "None"
                                                     | Some i -> string_of_int i)) es.es_var_label;
   *)
-  pr_vwrap "es_trace: " pr_es_trace es.es_trace;
-  pr_vwrap "es_is_normalizing: " fmt_bool es.es_is_normalizing;
+  if es.es_trace!=[] then
+    pr_vwrap "es_trace: " pr_es_trace es.es_trace;
+  if es.es_is_normalizing then
+    pr_vwrap "es_is_normalizing: " fmt_bool es.es_is_normalizing;
   (*
   pr_vwrap "es_var_ctx_lhs: " pr_pure_formula es.es_var_ctx_lhs;
   pr_vwrap "es_var_ctx_rhs: " pr_pure_formula es.es_var_ctx_rhs;
@@ -1921,7 +1923,8 @@ let pr_estate (es : entail_state) =
    pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel; 
   (* pr_wrap_test "es_infer_pures: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pures;  *)
   (* pr_wrap_test "es_infer_invs: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_invs;  *)
-  pr_wrap_test "es_var_zero_perm: " (fun _ -> false) (pr_seq "" pr_spec_var) es.es_var_zero_perm; (*always print*)
+   if (es.es_var_zero_perm!=[]) then
+     pr_wrap_test "es_var_zero_perm: " (fun _ -> false) (pr_seq "" pr_spec_var) es.es_var_zero_perm; (*always print*)
   (* pr_vwrap "es_infer_invs:  " pr_list_pure_formula es.es_infer_invs; *)
   pr_wrap_test "es_unsat_flag: " (fun _-> false) (fun c-> fmt_string (string_of_bool c)) es.es_unsat_flag;  
   fmt_close ()
