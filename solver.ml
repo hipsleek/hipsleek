@@ -6376,7 +6376,7 @@ and generate_rel_formulas_x prog (lrel,rrel) pos=
 and generate_rel_formulas prog (lrel,rrel) pos=
    let pr1 = pr_pair !CP.print_sv !CP.print_sv in
    let pr2= pr_pair !CP.print_formula !CP.print_formula in
-   Debug.no_1 "generate_rel_formulas" pr1 pr2
+   Debug.ho_1 "generate_rel_formulas" pr1 pr2
        (fun _ -> generate_rel_formulas_x prog (lrel,rrel) pos) (lrel,rrel)
 
 and generate_rels_formulas prog rels pos=
