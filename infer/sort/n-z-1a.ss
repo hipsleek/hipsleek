@@ -61,3 +61,21 @@ Algorithm for Pre-relation
       return 1+zip(x-1,y-1);
   }
 }
+
+/*
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN P: ( y=v_int_61_512'+1 & x=v_int_61_513'+1 & 0<=v_int_61_512' & 
+0<=v_int_61_513' & P(x,y)) -->  P(v_int_61_513',v_int_61_512'),
+RELASS [P]: ( P(x,y)) -->  y!=0 | 1>x]
+*************************************
+
+If we can synthesize the following formula?
+
+wh:={[x,y]->[px,py]->[]:
+  (exists (x1,y1:x>0 && y>0 && x1=x-1 && y1=y-1 && wh(x1,y1,px,py)))};
+TD:=topdown(wh,1,SimHeur);
+TD;
+
+*/
