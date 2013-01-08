@@ -4685,7 +4685,12 @@ and heap_entail_conjunct hec_num (prog : prog_decl) (is_folding : bool)  (ctx0 :
         | Ctx estate -> (estate.es_formula,estate.es_heap,estate.es_evars)
     in
     (* WN : what if evars not used in the conseq? *)
-    let conseq = CF.push_exists evars conseq in
+    let _ =  Debug.info_pprint ("XXXX evars: " ^ (!CP.print_svl evars)) no_pos in
+    let _ =  Debug.info_pprint ("XXXX evars: " ^ (!CP.print_svl evars)) no_pos in
+    let rel_args = CF.get_rel_args conseq in
+    let _ =  Debug.info_pprint ("XXXX rel_args: " ^ (!CP.print_svl rel_args)) no_pos in
+    let evars1 = CP.diff_svl evars rel_args in
+    let conseq = CF.push_exists evars1 conseq in
     let avoid = (hec_num=11) in
     let avoid = avoid or ((hec_num=1 || hec_num=2) && CF.is_emp_term conseq) in
     let avoid = avoid or (not (hec_stack # is_empty)) in
@@ -4790,7 +4795,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                         formula_exists_and = qa;
                         formula_exists_pos = pos} -> (
                             (* quantifiers on the RHS. Keep them for later processing *)
-                            let ws = CP.fresh_spec_vars qvars in
+                          let ws = CP.fresh_spec_vars qvars in
                             let st = List.combine qvars ws in
                             let baref = mkBase qh qp qt qfl qa pos in
                             let new_baref = subst_varperm st baref in
@@ -4929,7 +4934,8 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                                       (new_ctx, proof)
                                                   )
                                               )
-                                            | _ -> (
+                                            | _ ->
+                                                (
                                                   Debug.devel_zprint (lazy ("heap_entail_conjunct_helper: "
                                                   ^ "conseq has an non-empty heap component"
                                                   ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
@@ -5310,7 +5316,7 @@ and heap_infer_decreasing_wf prog estate rank is_folding lhs pos =
 
 and heap_entail_empty_rhs_heap i p i_f es lhs rhs pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Debug.no_3_num i "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
+  Debug.ho_3_num i "heap_entail_empty_rhs_heap" Cprinter.string_of_entail_state (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
       (fun _ _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs pos) es lhs rhs
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) pos : (list_context * proof) =
@@ -6515,9 +6521,9 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               in
               let b,rels = check_rel_consistency other_subs [] in
               if b then
-                let lrels,rrels = List.split rels in
-                let estate = {estate with CF.es_infer_vars_rel = CP.remove_dups_svl
-                        (estate.CF.es_infer_vars_rel@lrels@rrels)} in
+                (* let lrels,rrels = List.split rels in *)
+                (* let estate = {estate with CF.es_infer_vars_rel = CP.remove_dups_svl *)
+                (*         (estate.CF.es_infer_vars_rel@lrels@rrels)} in *)
                 let lp_rels,rp_rels = generate_rels_formulas prog rels pos in
                 (* let _ =  Debug.info_pprint ("lp_rels: " ^ (!CP.print_formula lp_rels)) no_pos in *)
                 (* let _ =  Debug.info_pprint ("rp_rels: " ^ (!CP.print_formula rp_rels)) no_pos in *)
@@ -6529,6 +6535,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 let new_impl_vars = subtract impl_vars impl_tvars in
                 let new_exist_vars = evars(* @tmp_ivars *) in
                 let new_expl_vars = expl_vars@impl_tvars in
+                let new_expl_vars = List.filter (fun sv -> not (CP.is_rel_typ sv)) new_expl_vars in
                 let new_ivars = subtract ivars tmp_ivars in
               (* let (expl_inst, tmp_ivars', expl_vars') = (get_eqns_expl_inst rho_0 ivars pos) in *)
               (* to_lhs only contains bindings for free vars that are not to be explicitly instantiated *)

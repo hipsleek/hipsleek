@@ -2796,6 +2796,15 @@ and split_components_x (f : formula) =
     | Or ({formula_or_pos = pos}) -> 
           Err.report_error {Err.error_loc = pos;Err.error_text = "split_components: don't expect OR"}
 			 
+and get_rel_args f0=
+  let rec helper f=
+    match f with
+      | Base ({formula_base_pure = p; })
+      | Exists ({ formula_exists_pure = p;}) -> CP.get_rel_args (MCP.pure_of_mix p)
+      | Or ({formula_or_f1 = of1;
+          formula_or_f2 = of2;}) -> (helper of1)@(helper of2)
+  in
+  helper f0
 
 and all_components (f:formula) = (*the above misses some *)
 	if (isAnyConstFalse f) then ([],HFalse,(MCP.mkMFalse no_pos),TypeFalse,(flow_formula_of_formula f),None,[],  no_pos)

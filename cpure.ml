@@ -2370,6 +2370,29 @@ and subst_pos_formula p f = match f with
   | Forall (sv, f, ofl, _) -> Forall (sv,subst_pos_formula p f, ofl, p)
   | Exists (sv, f, ofl, _) -> Exists (sv,subst_pos_formula p f, ofl, p)
 
+and get_rel_args_pformula pf= match pf with
+  | RelForm (_, el, _) -> (List.fold_left List.append [] (List.map afv el))
+  | _ -> []
+
+and get_rel_args_bformula (pf, _) = get_rel_args_pformula pf
+
+and get_rel_args_x f0=
+  let rec helper f=
+    match f with
+      | BForm (bf, _) -> (get_rel_args_bformula bf)
+      | And (f1, f2, _) ->  (helper f1)@ (helper f2)
+      | AndList b -> List.fold_left (fun ls (_, p) -> ls@(helper p)) [] b
+      | Or (f1, f2, _, _) ->  (helper f1)@(helper f2)
+      | Not (f, _, _) ->  helper f
+      | Forall (_, f, _, _) -> helper f
+      | Exists (_, f, _, _) -> helper f
+  in
+  helper f0
+
+and get_rel_args f0=
+  Debug.ho_1 "get_rel_args" !print_formula !print_svl
+      (fun _ -> get_rel_args_x f0) f0
+
 (* pre : _<num> *)
 and fresh_old_name_x (s: string):string = 
   let slen = (String.length s) in
