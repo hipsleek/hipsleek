@@ -24,34 +24,19 @@ node insert(node x, node y)
      requires x::sortHO<a,R> * y::node<v,null>
      ensures  res::sortHO<b,R> & (v>a & b=a | (a>=b & b=v));
 /*
-
-Checking procedure insert$node~node... 
-*************************************
-*******pure relation assumption ******
-*************************************
-[RELDEFN R: ( true) -->  R(b,v2_668),
-RELDEFN R: ( v2_616=v2_727 & R(a,v2_616)) -->  R(v2_709,v2_727),
-RELDEFN R: ( v2_709=v_614 & a=v2_709 & v2_616=v2_727 & R(a,v2_616) & R(v_614,v2_727)) -->  R(b,v2_709),
-RELDEFN R: ( true) -->  R(b,v2_760),
-RELDEFN R: ( ((a<v2_803 & v2_803<=v2_616) | v2_616=v2_803) & R(a,v2_616)) -->  R(b,v2_803),
+[RELDEFN R: ( b<=v2_668) -->  R(b,v2_668),
+RELDEFN R: ( a=v2_706 & v2_616=v2_724 & R(a,v2_616)) -->  R(v2_706,v2_724),
+RELDEFN R: ( v2_706=v_614 & a=v2_706 & v2_616=v2_724 & b<=v2_706 & R(a,v2_616) & 
+R(v_614,v2_724)) -->  R(b,v2_706),
+RELDEFN R: ( b<v2_749) -->  R(b,v2_749),
+RELDEFN R: ( ((a=b & a<v2_789 & v2_789<=v2_616) | (a=b & v2_616=v2_789)) & R(a,v2_616)) -->  R(b,v2_789),
 RELASS [R]: ( R(a,v2_616)) -->  a>=v2_616]
-*************************************
 
-*************************************
-*******fixcalc of pure relation *******
-*************************************
-[]
-*************************************
-
-Can we avoid the disjunction in the xform?
-
- unstructured formula: 
-   {215}->EXISTS(v_19,flted_16_18: self::node<v_19,flted_16_18>@M[Orig]&
-   flted_16_18=null & v=v_19&{FLOW,(1,25)=__flow})[]
-   || {214}->EXISTS(v_20,p,v2: self::node<v_20,p>@M[Orig] * 
-      p::sortHO<v2,R>@M[0][Orig][LHSCase]&R(v,v2) & v=v_20&
-      {FLOW,(1,25)=__flow})[]
-  xform: self!=null | self!=null
+The above results look good. The main thing that is
+puzzling the rule below:
+  RELASS [R]: ( R(a,v2_616)) -->  a>=v2_616]
+why isn't it:
+  RELASS [R]: ( R(a,v2_616)) -->  a<=v2_616]
 
 */
 {
