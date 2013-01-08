@@ -6,8 +6,14 @@ echo -e "\n##################### sleek tests ###################"
 time ./run-fast-tests.pl sleek $@
 # imm1.slk and imm3.slk fail due to omitted base_case_fold
 
+echo -e "\n##################### sleek_fracperm tests ###################"
+time ./run-fast-tests.pl sleek_fracperm $@
+
 echo -e "\n##################### hip_vperm tests ###################"
 time ./run-fast-tests.pl hip_vperm $@
+
+echo -e "\n##################### parahip tests ###################"
+time ./run-fast-tests.pl parahip $@
 
 echo -e "\n##################### must-bugs error tests ###################"
 time ./run-fast-tests.pl musterr $@
