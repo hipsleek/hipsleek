@@ -3074,7 +3074,8 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	    | Ctx es -> (* (); *)
               let exec () =
                 begin
-                     (* let _ =  Debug.info_pprint ("XXXX f: " ^ (Cprinter.string_of_struc_formula f)) no_pos in *)
+                    (* let _ =  Debug.info_pprint ("XXXX lhs: " ^ (Cprinter.string_of_formula es.es_formula)) no_pos in *)
+                    (* let _ =  Debug.info_pprint ("XXXX f: " ^ (Cprinter.string_of_struc_formula f)) no_pos in *)
                   match f with
                     | ECase b   -> 
                           let ctx = add_to_context_num 1 ctx11 "case rule" in
@@ -3164,6 +3165,11 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 		                  formula_struc_continuation = formula_cont;} as b) -> 
                           (*formula_ext_complete = pre_c;*)
                          let rel_args = CF.get_rel_args formula_base in
+                         (* let rel_args1 = Sautility.find_close_f rel_args formula_base in *)
+                         (* let _ = DD.info_pprint ("  formula_base: " ^ (Cprinter.string_of_formula formula_base)) pos in *)
+                         (* let _ = DD.info_pprint ("  rel_args: " ^ (!CP.print_svl rel_args)) pos in *)
+                         (* let _ = DD.info_pprint ("  rel_args1: " ^ (!CP.print_svl rel_args1)) pos in *)
+                         (* let _ = DD.info_pprint ("  base_exists: " ^ (!CP.print_svl base_exists)) pos in *)
                          let formula_base = if CF.check_rel_args_quan_clash rel_args formula_base then
                                CF.elim_exists formula_base
                              else formula_base
@@ -4912,7 +4918,13 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                                       (*+++++++++++++++++++++++++++++++++*)
                                                       (*LDK: remove duplicated conj from the p2*)
                                                       let p2 = remove_dupl_conj_eq_mix_formula p2 in
-                                                      let ctx, proof = heap_entail_empty_rhs_heap 1 prog is_folding  estate b1 p2 pos in
+                                                      let rel_args = CP.get_rel_args (MCP.pure_of_mix p2) in
+                                                      let new_p2 = if CP.intersect_svl rel_args estate.CF.es_evars <> [] then
+                                                            let eqs = MCP.ptr_equations_without_null p2 in
+                                                           MCP.mix_of_pure (CP.subst_rel_args (MCP.pure_of_mix p2) eqs rel_args)
+                                                          else p2
+                                                      in
+                                                      let ctx, proof = heap_entail_empty_rhs_heap 1 prog is_folding  estate b1 new_p2 pos in
                                                       (* explicit instantiation this will move some constraint to the LHS*)
                                                       (*LDK: 25/08/2011, also instatiate ivars*)
                                                       (*this move_expl_inst call can occur at the end of folding and also 
@@ -4928,10 +4940,10 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                                                       (transform_context
                                                                           (fun es ->
                                                                               (* explicit inst *)
-                                                                              let l_inst = get_expl_inst es p2 in
-                                                                              let es = move_impl_inst_estate es p2 in
+                                                                              let l_inst = get_expl_inst es new_p2 in
+                                                                              let es = move_impl_inst_estate es new_p2 in
                                                                               Ctx (if (es.es_imm_last_phase) then
-                                                                                move_expl_inst_estate es p2
+                                                                                move_expl_inst_estate es new_p2
                                                                               else
                                                                                 add_to_aux_conseq_estate es (MCP.pure_of_mix l_inst) pos)
                                                                           )  c)) cl in
@@ -6376,7 +6388,7 @@ and generate_rel_formulas_x prog (lrel,rrel) pos=
 and generate_rel_formulas prog (lrel,rrel) pos=
    let pr1 = pr_pair !CP.print_sv !CP.print_sv in
    let pr2= pr_pair !CP.print_formula !CP.print_formula in
-   Debug.ho_1 "generate_rel_formulas" pr1 pr2
+   Debug.no_1 "generate_rel_formulas" pr1 pr2
        (fun _ -> generate_rel_formulas_x prog (lrel,rrel) pos) (lrel,rrel)
 
 and generate_rels_formulas prog rels pos=

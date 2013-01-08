@@ -8927,3 +8927,19 @@ let get_rel_args_x f0=
 let get_rel_args f0=
   Debug.no_1 "get_rel_args" !print_formula !print_svl
       (fun _ -> get_rel_args_x f0) f0
+
+let subst_rel_args_x p eqs rel_args=
+  let filter_fn ls (sv1,sv2)=
+    let b1 = mem_svl sv1 rel_args in
+    let b2 = mem_svl sv2 rel_args in
+    match b1,b2 with
+      | true,false -> ls@[(sv1,sv2)]
+      | false,true -> ls@[(sv2,sv1)]
+      | _ -> ls
+  in
+  let eqs1= List.fold_left filter_fn [] eqs in
+  subst eqs1 p
+
+let subst_rel_args p eqs rel_args=
+  Debug.no_2 "subst_rel_args" !print_formula !print_svl !print_formula
+      (fun _ _ -> subst_rel_args_x p eqs rel_args) p rel_args

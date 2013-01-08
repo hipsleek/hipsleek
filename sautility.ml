@@ -90,6 +90,11 @@ let find_close svl0 eqs0=
   in
   loop_helper svl0 eqs0
 
+let find_close_f svl0 f=
+  let ( _,mf,_,_,_) = CF.split_components f in
+  let eqs = (MCP.ptr_equations_without_null mf)in
+  find_close svl0 eqs
+
 (*List.combine but ls2 >= ls1*)
 let rec combine_length_neq ls1 ls2 res=
   match ls1,ls2 with
