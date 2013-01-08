@@ -6347,6 +6347,39 @@ and do_match_perm_vars l_perm r_perm evars ivars impl_vars expl_vars =
       evars,ivars,impl_vars, expl_vars
   end
 
+(*generate rel formula for relational args of views*)
+and generate_rel_formulas_x prog (lrel,rrel) pos=
+  try
+      let ldef = Cast.look_up_rel_def_raw prog.Cast.prog_rel_decls (CP.name_of_spec_var lrel) in
+      let rdef = Cast.look_up_rel_def_raw prog.Cast.prog_rel_decls (CP.name_of_spec_var rrel) in
+      if List.length ldef.Cast.rel_vars = List.length rdef.Cast.rel_vars then
+        let new_args= CP.fresh_spec_vars ldef.Cast.rel_vars  in
+        let exps = List.map (fun sv -> CP.mkVar sv pos) new_args in
+        let lp_rel= CP.mkRel lrel exps pos in
+        let rp_rel= CP.mkRel rrel exps pos in
+        (lp_rel, rp_rel)
+      else
+        report_error pos "solver.generate_rel_formula: relations should be relational args of one view"
+  with Not_found -> report_error pos "solver.generate_rel_formula: relation defs should be there"
+
+and generate_rel_formulas prog (lrel,rrel) pos=
+   let pr1 = pr_pair !CP.print_sv !CP.print_sv in
+   let pr2= pr_pair !CP.print_formula !CP.print_formula in
+   Debug.no_1 "generate_rel_formulas" pr1 pr2
+       (fun _ -> generate_rel_formulas_x prog (lrel,rrel) pos) (lrel,rrel)
+
+and generate_rels_formulas prog rels pos=
+   let rec helper lp rp ls=
+     match ls with
+       | [] -> lp,rp
+       | pair::tl ->
+           let lp1,rp1 = generate_rel_formulas prog pair pos in
+           let new_lp = CP.mkAnd lp lp1 pos in
+           let new_rp = CP.mkAnd rp rp1 pos in
+           helper new_lp new_rp tl
+   in
+   helper (CP.mkTrue pos) (CP.mkTrue pos) rels
+
 and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : list_context *proof =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in
@@ -6464,11 +6497,39 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 (ivar,impl_var) belongs to ivar_subs_to_conseq
               *)
               let ((impl_tvars, tmp_ivars, ivar_subs_to_conseq),other_subs) = subs_to_inst_vars rho ivars impl_vars pos in
-              let subtract = Gen.BList.difference_eq CP.eq_spec_var in
-              let new_impl_vars = subtract impl_vars impl_tvars in
-              let new_exist_vars = evars(* @tmp_ivars *) in
-              let new_expl_vars = expl_vars@impl_tvars in
-              let new_ivars = subtract ivars tmp_ivars in
+              let rec check_rel_consistency cur_other_subs rels = (
+                match cur_other_subs with
+                  | [] -> true,rels
+                  |  ((x,y),_)::tl ->
+                      let b,new_rels=
+                        if (CP.is_rel_typ x && CP.is_rel_typ y && not (CP.eq_spec_var x y))
+                        then
+                          if (CP.intersect_svl [x;y] estate.es_infer_vars_rel = [])
+                          then false,[]
+                          else true, (rels@[(y,x)])
+                        else true,rels
+                      in
+                      if not b then false,new_rels else
+                        check_rel_consistency tl new_rels
+              )
+              in
+              let b,rels = check_rel_consistency other_subs [] in
+              if b then
+                let lrels,rrels = List.split rels in
+                let estate = {estate with CF.es_infer_vars_rel = CP.remove_dups_svl
+                        (estate.CF.es_infer_vars_rel@lrels@rrels)} in
+                let lp_rels,rp_rels = generate_rels_formulas prog rels pos in
+                (* let _ =  Debug.info_pprint ("lp_rels: " ^ (!CP.print_formula lp_rels)) no_pos in *)
+                (* let _ =  Debug.info_pprint ("rp_rels: " ^ (!CP.print_formula rp_rels)) no_pos in *)
+                (* let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
+                (* let _ =  Debug.info_pprint ("ivar_subs_to_conseq: " ^ (pr ivar_subs_to_conseq)) no_pos in *)
+                (* let _ =  Debug.info_pprint ("tmp_ivars: " ^ (!CP.print_svl tmp_ivars)) no_pos in *)
+                (* let _ =  Debug.info_pprint ("impl_tvars: " ^ (!CP.print_svl impl_tvars)) no_pos in *)
+                let subtract = Gen.BList.difference_eq CP.eq_spec_var in
+                let new_impl_vars = subtract impl_vars impl_tvars in
+                let new_exist_vars = evars(* @tmp_ivars *) in
+                let new_expl_vars = expl_vars@impl_tvars in
+                let new_ivars = subtract ivars tmp_ivars in
               (* let (expl_inst, tmp_ivars', expl_vars') = (get_eqns_expl_inst rho_0 ivars pos) in *)
               (* to_lhs only contains bindings for free vars that are not to be explicitly instantiated *)
               (*Only instantiate an RHS impl_var to LHS if 
@@ -6477,9 +6538,16 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 Note: other_subs will never contain any impl_tvars because 
                 of the pre-processed subs_to_inst_vars*)
 	          (* An Hoa : strip all the pair of equality involving # *)
-	          let other_subs = List.filter (fun ((x,y),_) -> not (CP.is_hole_spec_var x || CP.is_hole_spec_var y)) other_subs in
+	          let other_subs = List.filter (fun ((x,y),_) -> not (CP.is_hole_spec_var x || CP.is_hole_spec_var y)
+                                                 && not (CP.is_rel_typ x)) other_subs in
+              let pr1 (a,b) = let pr = (pr_pair !CP.print_sv !CP.print_sv) in pr a in
+              (* let _ =  Debug.info_pprint ("other_subs: " ^ (pr_list pr1 other_subs)) no_pos in *)
               let to_lhs,to_rhs,ext_subst = get_eqns_free other_subs new_exist_vars impl_tvars estate.es_gen_expl_vars pos in
 
+              (* let _ =  Debug.info_pprint ("ext_subst: " ^ (pr ext_subst)) no_pos in *)
+              (*adding pure formula for relational args of view*)
+              let to_lhs = CP.mkAnd to_lhs lp_rels no_pos in
+              let to_rhs = CP.mkAnd to_rhs rp_rels no_pos in
               (* adding annotation constraints matched *)
               let to_rhs = match ann_rhs with
                 | None -> to_rhs
@@ -6506,9 +6574,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let tmp_conseq = mkBase r_h new_conseq_p r_t r_fl r_a pos  in
               let lhs_vars = CP.fv to_lhs in
               (* apply the new bindings to the consequent *)
-              let r_subs, l_sub = List.split (ivar_subs_to_conseq@ext_subst) in
+              let r_subs, l_subs = List.split (ivar_subs_to_conseq@ext_subst) in
               (*IMPORTANT TODO: global existential not took into consideration*)
-              let tmp_conseq' = subst_avoid_capture r_subs l_sub tmp_conseq in
+              let r_subs = List.filter (fun sv -> not (CP.is_rel_typ sv)) r_subs in
+              let l_subs = List.filter (fun sv -> not (CP.is_rel_typ sv)) l_subs in
+              let tmp_conseq' = subst_avoid_capture r_subs l_subs tmp_conseq in
 
               let tmp_h2, tmp_p2, tmp_fl2, _, tmp_a2 = split_components tmp_conseq' in
               let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_a2 pos in
@@ -6552,7 +6622,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               Debug.devel_zprint (lazy ("do_match (after): LHS: "^ (Cprinter.string_of_context_short new_ctx))) pos;
               Debug.devel_zprint (lazy ("do_match (after): RHS:" ^ (Cprinter.string_of_formula new_conseq))) pos;
               let res_es1, prf1 = heap_entail_conjunct 11 prog is_folding  new_ctx new_conseq (rhs_matched_set @ [r_var]) pos in
-              (Cformula.add_to_subst res_es1 r_subs l_sub, prf1)
+              (Cformula.add_to_subst res_es1 r_subs l_subs, prf1)
+              else
+                (CF.mkFailCtx_in (Basic_Reason (mkFailContext "Cannot match LHS node and RHS node" estate (CF.formula_of_heap HFalse pos) None pos, 
+          CF.mk_failure_must "99" Globals.sl_error)), NoAlias)
 
 and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b (rhs_h_matched_set:CP.spec_var list) pos : (list_context * proof) =
   Debug.devel_zprint (lazy ("heap_entail_conjunct_non_empty_rhs_heap:\ncontext:\n" ^ (Cprinter.string_of_context ctx0)

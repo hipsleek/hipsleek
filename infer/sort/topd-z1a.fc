@@ -1,4 +1,4 @@
-#[RELDEFN P: ( y=yn+1 & x=xn+1 & 0<=yn & 0<=xn & P(x,y)) -->  P(yn,xn),
+#[RELDEFN P: ( y=yn+1 & x=xn+1 & 0<=yn & 0<=xn & P(x,y)) -->  P(xn,yn),
 #RELASS [P]: ( P(x,y)) -->  y!=0 | 1>x]
 
 wh:={[x,y]->[px,py]->[]:

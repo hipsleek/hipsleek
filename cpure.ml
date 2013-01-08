@@ -1539,6 +1539,9 @@ and mkGt a1 a2 pos =
 and mkFormulaFromXP xp=
  BForm ((XPure xp,None),None)
 
+and mkRel rel args pos=
+  BForm ((RelForm (rel,args,pos), None) , None)
+
 and mkGte a1 a2 pos =
   if is_max_min a1 || is_max_min a2 then
     failwith ("max/min can only be used in equality")
