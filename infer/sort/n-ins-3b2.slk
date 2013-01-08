@@ -31,3 +31,4 @@ print residue.
 infer [R2] res::sortHO<b,R1> |-  res::sortHO<b,R2>.
 print residue.
 // should infer RelDefn : R1(a,b) -> R2(a,b)
+
