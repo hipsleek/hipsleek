@@ -1662,6 +1662,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let pre_free_vars = List.filter (fun v -> let t = CP.type_of_spec_var v in not(is_RelT t) && t != HpT) pre_free_vars in
                     (* let _ = Debug.info_pprint ("  pre_free_vars " ^ (Cprinter.string_of_spec_var_list pre_free_vars)) no_pos in *)
                     (* let _ = print_endline ("WN free vars to rename : "^(Cprinter.string_of_spec_var_list pre_free_vars)) in *)
+                    (* let _ = Debug.info_pprint ("  stripped_spec 1 " ^ (Cprinter.string_of_struc_formula stripped_spec)) no_pos in *)
                     let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
                     let renamed_spec = 
                       if !Globals.max_renaming then (CF.rename_struc_bound_vars stripped_spec(*org_spec*))

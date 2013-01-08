@@ -53,17 +53,17 @@ open Perm
 	| AnnType of typ
 
 let default_rel_id = "rel_id__"
-let tmp_rel_decl = ref (None : rel_decl option)
+(* let tmp_rel_decl = ref (None : rel_decl option) *)
 
-let set_tmp_rel_decl (rd:rel_decl)=
-  match !tmp_rel_decl with
-    | None -> tmp_rel_decl := (Some rd)
-    | Some _ -> report_error no_pos "cparser.set_tmp_rel_decl: something wrong"
+(* let set_tmp_rel_decl (rd:rel_decl)= *)
+(*   match !tmp_rel_decl with *)
+(*     | None -> tmp_rel_decl := (Some rd) *)
+(*     | Some _ -> report_error no_pos "cparser.set_tmp_rel_decl: something wrong" *)
 
-let get_tmp_rel_decl ():rel_decl =
-  match !tmp_rel_decl with
-    | Some rd -> let _ = tmp_rel_decl := None in rd
-    | None -> report_error no_pos "cparser.set_tmp_rel_decl: something wrong"
+(* let get_tmp_rel_decl ():rel_decl = *)
+(*   match !tmp_rel_decl with *)
+(*     | Some rd -> let _ = tmp_rel_decl := None in rd *)
+(*     | None -> report_error no_pos "cparser.set_tmp_rel_decl: something wrong" *)
 
 let macros = ref (Hashtbl.create 19)
 
@@ -76,7 +76,7 @@ let func_names = new Gen.stack (* list of names of ranking functions *)
 let rel_names = new Gen.stack (* list of names of relations declared *)
 let view_names = new Gen.stack (* list of names of views declared *)
 let hp_names = new Gen.stack (* list of names of heap preds declared *)
-let g_rel_defs = new Gen.stack (* list of relations decl in views *)
+(* let g_rel_defs = new Gen.stack (\* list of relations decl in views *\) *)
 
 let get_pos x = 
   {start_pos = Parsing.symbol_start_pos ();
@@ -828,10 +828,10 @@ cid_typ:
         if is_RelT ut then
           (* let _ = print_endline ("ll: " ^ id) in *)
           let _ = rel_names # push id in
-          let rd = get_tmp_rel_decl () in
-          let rd = {rd with rel_name = id} in
-        (*push rd in the list*)
-          let _ = g_rel_defs # push rd in
+          (* let rd = get_tmp_rel_decl () in *)
+         (*  let rd = {rd with rel_name = id} in *)
+        (* (\*push rd in the list*\) *)
+        (*   let _ = g_rel_defs # push rd in *)
           ()
         else ()
       in
@@ -1535,7 +1535,7 @@ rel_header_view:[[
 			rel_typed_vars = tl;
 			rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)			
 		 } in
-  let _ = set_tmp_rel_decl rd in
+  (* let _ = set_tmp_rel_decl rd in *)
   rd
 ]];
 
@@ -1608,8 +1608,8 @@ hprogn:
 					   data_invs = []; (* F.mkTrue no_pos; *)
                        data_is_template = false;
 					   data_methods = [] } in
-    let g_rel_lst = g_rel_defs # get_stk in
-    let rel_lst = ((rel_defs # get_stk)@(g_rel_lst)) in
+    (* let g_rel_lst = g_rel_defs # get_stk in *)
+    let rel_lst = ((rel_defs # get_stk)(* @(g_rel_lst) *)) in
     let hp_lst = hp_defs # get_stk in
     { prog_data_decls = obj_def :: string_def :: !data_defs;
       prog_global_var_decls = !global_var_defs;

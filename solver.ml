@@ -6588,6 +6588,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (* apply the new bindings to the consequent *)
               let r_subs, l_subs = List.split (ivar_subs_to_conseq@ext_subst) in
               (*IMPORTANT TODO: global existential not took into consideration*)
+              (*do not subst heap relation*)
               let r_subs = List.filter (fun sv -> not (CP.is_rel_typ sv)) r_subs in
               let l_subs = List.filter (fun sv -> not (CP.is_rel_typ sv)) l_subs in
               let tmp_conseq' = subst_avoid_capture r_subs l_subs tmp_conseq in
@@ -7243,6 +7244,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             Context.match_res_lhs_rest = lhs_rest;
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;} ->
+          (* let _ = Debug.info_pprint ("M_match: ") no_pos in *)
 	    let l_perm = get_node_perm lhs_node in
 	    let r_perm = get_node_perm rhs_node in
 	    if not (test_frac_eq prog estate rhs_b.formula_base_pure l_perm r_perm) then 
@@ -7259,7 +7261,9 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   | None -> rhs_b.formula_base_pure
                   | Some (p,_) -> MCP.memoise_add_pure rhs_b.formula_base_pure p in
                 let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest;formula_base_pure = rhs_p} in
+                (* let _ = Debug.info_pprint ("M_match 1: " ^ (Cprinter.string_of_formula new_estate.es_formula)) no_pos in *)
                 let res_es0, prf0 = do_match prog new_estate lhs_node rhs_node n_rhs_b rhs_h_matched_set is_folding pos in
+                (* let _ = Debug.info_pprint ("M_match 2: " ^ (Cprinter.string_of_list_context res_es0)) no_pos in *)
                 (res_es0,prf0)
       | Context.M_split_match {
             Context.match_res_lhs_node = lhs_node;
@@ -7299,9 +7303,9 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       | Context.M_fold {
             Context.match_res_rhs_node = rhs_node;
             Context.match_res_rhs_rest = rhs_rest;} -> 
-            let estate =
+          let estate =
               if Inf.no_infer_rel estate then estate
-              else 
+              else
                 let lhs_h,lhs_p,_, _, lhs_a  = CF.split_components estate.es_formula in
                 let lhs_alias = MCP.ptr_equations_without_null lhs_p in
                 let lhs_aset = CP.EMapSV.build_eset lhs_alias in
@@ -7311,7 +7315,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                 let init_pure = CP.conj_of_list init_pures pos in
                 {estate with es_formula = CF.normalize 1 estate.es_formula (CF.formula_of_pure_formula init_pure pos) pos} 
             in
-            do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
+          do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos
 
       | Context.M_unfold ({Context.match_res_lhs_node=lhs_node},unfold_num) -> 
             let lhs_var = get_node_var lhs_node in
