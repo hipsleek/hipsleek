@@ -367,7 +367,7 @@ let compute_def (rel_fml, pf, no) ante_vars =
     in input_fixcalc
   with _ -> report_error no_pos "Error in translating the input for fixcalc"
 
-let compute_cmd rel_defs = 
+let compute_cmd rel_defs bottom_up = 
   let nos = List.map (fun (_,_,a) -> a) rel_defs in
   (* let nos = string_of_elems nos string_of_int "," in *)
   let nos = string_of_elems nos (fun _ -> 
@@ -376,14 +376,17 @@ let compute_cmd rel_defs =
   let rels = List.map (fun (a,_,_) -> 
                 CP.name_of_spec_var (CP.name_of_rel_form a)) rel_defs in
   let names = string_of_elems rels (fun x -> x) "," in
-  "\nbottomupgen([" ^ names ^ "], [" ^ nos ^ "], SimHeur);"
+  if bottom_up then
+    "\nbottomupgen([" ^ names ^ "], [" ^ nos ^ "], SimHeur);"
+  else
+    "\nTD:=topdown(" ^ names ^ ", " ^ nos ^ ", SimHeur);\nTD;"
 
-let compute_fixpoint_aux rel_defs ante_vars subs = 
+let compute_fixpoint_aux rel_defs ante_vars subs bottom_up = 
   (* Prepare the input for the fixpoint calculation *)
   let input_fixcalc = 
     let def = 
       List.fold_left (fun x y -> x ^ (compute_def y ante_vars)) "" rel_defs in
-    let cmd = compute_cmd rel_defs in 
+    let cmd = compute_cmd rel_defs bottom_up in 
     def ^ cmd
   in
 
@@ -392,7 +395,7 @@ let compute_fixpoint_aux rel_defs ante_vars subs =
   DD.ninfo_pprint ("fixpoint input = " ^ input_fixcalc) no_pos;
 
   (* Call the fixpoint calculation *)
-  let output_of_sleek = "fixcalc.inf" in
+  let output_of_sleek = if bottom_up then "fixcalc.inf" else "fixcalc.td" in
   let oc = open_out output_of_sleek in
   Printf.fprintf oc "%s" input_fixcalc;
   flush oc;
@@ -419,7 +422,7 @@ let compute_fixpoint_aux rel_defs ante_vars subs =
   (* Substitute the parameters of each relation to the original ones *)
   DD.ninfo_pprint ("res(b4): " ^ 
     (pr_list (pr_pair !CP.print_formula !CP.print_formula) res)) no_pos;
-  let res = 
+  let res =
     List.map (fun (a_rel,fixpoint) -> 
       match a_rel with
       | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
@@ -486,6 +489,44 @@ let arrange_para input_pairs ante_vars =
   in 
   pairs, List.concat subs
 
+let arrange_para_of_rel rhs_rel lhs_rel_name (old_args, new_args) = 
+  match rhs_rel with
+  | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
+    if name = lhs_rel_name then 
+      let pairs = List.combine old_args args in
+      let args = List.map (fun a -> List.assoc a pairs) new_args in
+      CP.BForm ((CP.RelForm (name,args,o1),o2),o3)
+    else report_error no_pos "Not support topdown fixpoint for mutual recursion"
+  | _ -> report_error no_pos "arrange_para_of_rel: Expected a relation"
+
+let arrange_para_of_pure fml lhs_rel_name subst =
+  let conjs = CP.list_of_conjs fml in
+  let rel_conjs, others = List.partition CP.is_RelForm conjs in
+  let new_rel_conjs = List.map 
+    (fun x -> arrange_para_of_rel x lhs_rel_name subst) rel_conjs in
+  CP.conj_of_list (others @ new_rel_conjs) no_pos
+  
+
+let arrange_para_td input_pairs ante_vars =
+  let pairs = List.map (fun (r,pfs) ->
+    match r with
+      | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
+        let pre_args, post_args = 
+          List.partition 
+            (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) 
+          args
+        in
+        let new_args = pre_args @ post_args in
+        if new_args = args then (r,pfs)
+        else
+          let subst_arg = args, new_args in
+          CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3), 
+            List.map (fun x -> arrange_para_of_pure x name subst_arg) pfs
+      | _ -> report_error no_pos "arrange_para_td: Expected a relation"
+    ) input_pairs
+  in 
+  pairs, []
+
 let rec unify_rels rel a_rel = match rel, a_rel with
   | (CP.BForm ((CP.RelForm (name1,args1,p1),p2),p3), f1), 
     (CP.BForm ((CP.RelForm (name2,args2,_ ),_ ),_ ), f2) ->
@@ -513,7 +554,7 @@ let rec preprocess pairs = match pairs with
     in
     unified_rels @ (preprocess diff_rels)
 
-let compute_fixpoint_xx input_pairs_num ante_vars specs =
+let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
   (* TODO: Handle non-recursive ones separately *)
   DD.ninfo_pprint ("input_pairs_num: " ^ (pr_list 
     (pr_pair !CP.print_formula !CP.print_formula) input_pairs_num)) no_pos;
@@ -523,7 +564,9 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs =
   DD.ninfo_pprint ("input_pairs(b4): " ^ (pr_list 
     (pr_pair !CP.print_formula (pr_list !CP.print_formula)) pairs)) no_pos;
 
-  let pairs, subs = arrange_para pairs ante_vars in
+  let pairs, subs = if bottom_up then arrange_para pairs ante_vars 
+    else arrange_para_td pairs ante_vars
+  in
 
   DD.ninfo_pprint ("input_pairs(af): " ^ (pr_list 
     (pr_pair !CP.print_formula (pr_list !CP.print_formula)) pairs)) no_pos;
@@ -531,9 +574,9 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs =
   let rel_defs = List.concat 
     (List.map (fun pair -> helper pair ante_vars specs) pairs) in
 
-  compute_fixpoint_aux rel_defs ante_vars subs
+  compute_fixpoint_aux rel_defs ante_vars subs bottom_up
 
-let compute_fixpoint_x input_pairs ante_vars specs =
+let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
   let is_bag_cnt rel = List.exists CP.is_bag_typ (CP.fv rel) in
   let input_pairs_bag, input_pairs_num = 
     List.partition (fun (p,r) -> is_bag_cnt r) input_pairs 
@@ -542,7 +585,7 @@ let compute_fixpoint_x input_pairs ante_vars specs =
     else Fixbag.compute_fixpoint 1 input_pairs_bag ante_vars true 
   in
   let num_res = if input_pairs_num = [] then []
-    else compute_fixpoint_xx input_pairs_num ante_vars specs
+    else compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up
   in bag_res @ num_res
 
 let compute_fixpoint (i:int) input_pairs ante_vars specs =
@@ -550,7 +593,14 @@ let compute_fixpoint (i:int) input_pairs ante_vars specs =
   let pr1 = pr_list (pr_pair pr0 pr0) in
   let pr2 = !CP.print_svl in
   DD.no_2_num i "compute_fixpoint" pr1 pr2 (pr_list (pr_triple pr0 pr0 pr0)) 
-    (fun _ _ -> compute_fixpoint_x input_pairs ante_vars specs) 
+    (fun _ _ -> compute_fixpoint_x input_pairs ante_vars specs true) 
       input_pairs ante_vars
 
+let compute_fixpoint_td (i:int) input_pairs ante_vars specs =
+  let pr0 = !CP.print_formula in
+  let pr1 = pr_list (pr_pair pr0 pr0) in
+  let pr2 = !CP.print_svl in
+  DD.no_2_num i "compute_fixpoint_td" pr1 pr2 (pr_list (pr_triple pr0 pr0 pr0)) 
+    (fun _ _ -> compute_fixpoint_x input_pairs ante_vars specs false)
+      input_pairs ante_vars
 

@@ -435,7 +435,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     | None -> 
                           if new_args = [] then [],new_formula_inf_continuation 
                           else
-                            let pre_vars,_,_ = CF.get_pre_post_vars [] new_formula_inf_continuation in
+                            let pre_vars,_,_,_ = CF.get_pre_post_vars [] new_formula_inf_continuation in
                             let pre_args, _ = List.partition (fun x -> List.mem x pre_vars) new_args in
                             (*                      let new_rel_pre = CP.fresh_spec_var_rel () in*)
                             let new_rel_post = CP.fresh_spec_var_rel () in
@@ -447,7 +447,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     | Some pflag -> 
                           if not(pflag) then 
                             if new_args = [] then 
-                              let pre_vars,_,_ = CF.get_pre_post_vars [] new_formula_inf_continuation in
+                              let pre_vars,_,_,_ = CF.get_pre_post_vars [] new_formula_inf_continuation in
                               pre_vars,new_formula_inf_continuation
                             else 
                               (*                        let new_rel = CP.fresh_spec_var_rel () in*)
@@ -581,7 +581,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                         else ([],post_cond) in
                       stk_evars # push_list impl_vs;
                       (* TODO: Timing *)
-                      let pres, posts, _ = CF.get_pre_post_vars [] (proc.proc_stk_of_static_specs # top) in
+                      let pres, posts,_,_ = CF.get_pre_post_vars [] (proc.proc_stk_of_static_specs # top) in
                       let pre_vars = CP.remove_dups_svl (pres @ (List.map 
                           (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) in
                       let impl_vs, expl_vs = List.partition (fun v -> CP.mem_svl v (pre_vars@posts)) impl_vs in
@@ -2475,28 +2475,45 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                         let new_spec =                           
                           let inf_post_flag = post_ctr # get > 0 in
                           Debug.devel_pprint ("\nINF-POST-FLAG: " ^string_of_bool inf_post_flag) no_pos;
-                          let pres, posts, inf_vars = CF.get_pre_post_vars [] proc.proc_static_specs in
+                          let pres, posts, inf_vars, pre_rel_fmls = CF.get_pre_post_vars [] proc.proc_static_specs in
+                          let _ = Debug.ninfo_hprint (add_str "pre_rel_fml" (pr_list !CP.print_formula)) pre_rel_fmls no_pos in
                           let pre_vars = CP.remove_dups_svl (pres @ (List.map 
                               (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) in
                           let post_vars = CP.remove_dups_svl posts in
+                          let proc_spec = proc.proc_stk_of_static_specs # top in
                           try 
                             begin
                               (* type: (Fixbag.CP.formula * Fixbag.CP.Label_Pure.exp_ty) list *)
                               let pr = Cprinter.string_of_pure_formula in
                               Debug.tinfo_hprint (add_str "rels" (pr_list (pr_pair pr pr))) rels no_pos;
                               Debug.tinfo_hprint (add_str "mutual grp" (pr_list (fun x -> x.proc_name))) mutual_grp no_pos;
-                              let triples (*(rel, post)*) = 
+                              let tuples (* rel_post, post, rel_pre, pre *) = 
                                 if rels = [] then (Infer.infer_rel_stk # reset;[])
                                 else if mutual_grp != [] then []
                                 else
-                                  (let rels = Infer.infer_rel_stk # get_stk in
-                                  let rels = List.filter (fun (rt,_,_) -> CP.is_rel_defn rt) rels in
-                                  let rels = List.map (fun (rt,f1,f2) -> (f1,f2)) rels in
-                                  Infer.infer_rel_stk # reset;
-                                  Fixcalc.compute_fixpoint 2 rels pre_vars (proc.proc_stk_of_static_specs # top))
+                                  let rels = Infer.infer_rel_stk # get_stk in
+                                  let _ = Infer.infer_rel_stk # reset in
+                                  let reloblgs, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
+                                  let reldefns = List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
+                                  let is_pre_rel fml pvars =
+                                    let rhs_rel_defn = List.concat (List.map CP.get_rel_id_list (CP.list_of_conjs fml)) in
+                                    List.for_all (fun x -> List.mem x pvars) rhs_rel_defn
+                                  in
+                                  let pre_rel_df,post_rel_df = List.partition (fun (_,x) -> is_pre_rel x pre_vars) reldefns in
+                                  let _ = Debug.ninfo_hprint (add_str "pre_rel_df" (pr_list (pr_pair pr pr))) pre_rel_df no_pos in
+                                  let _ = Debug.ninfo_hprint (add_str "post_rel_df" (pr_list (pr_pair pr pr))) post_rel_df no_pos in
+                                  let pre_rel_ids = List.concat (List.map CP.get_rel_id_list pre_rel_fmls) in
+                                  let post_rel_df = if pre_rel_ids=[] then post_rel_df 
+                                    else List.map (fun (f1,f2) -> let f1 = CP.conj_of_list (List.filter 
+                                        (fun x -> CP.intersect (CP.get_rel_id_list x) pre_rel_ids=[]) (CP.list_of_conjs f1)) no_pos in
+                                        (f1,f2)) post_rel_df 
+                                  in
+                                  let bottom_up_fp = Fixcalc.compute_fixpoint 2 post_rel_df pre_vars proc_spec in
+                                  Solver.update_with_td_fp bottom_up_fp pre_rel_fmls 
+                                    Fixcalc.compute_fixpoint_td reloblgs pre_rel_df post_rel_df pre_vars proc_spec
                               in
                               (* let pr_ty = !CP.Label_Pure.ref_string_of_exp in *)
-                              Infer.fixcalc_rel_stk # push_list triples;
+                              Infer.fixcalc_rel_stk # push_list tuples;
                               begin
                                 print_endline "\n*************************************";
                                 print_endline "*******fixcalc of pure relation *******";
@@ -2505,21 +2522,24 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                                 print_endline "*************************************"
                               end;                    
                               (* Debug.info_hprint (add_str "triples" (pr_list (pr_pair pr pr_ty))) triples no_pos; *)
-                              let triples = List.map (fun (rel,post) ->
-                                  let exist_vars = CP.diff_svl (CP.fv rel) inf_vars in
-                                  (*                                let _ = Debug.info_hprint (add_str "EVARS : " !CP.print_svl) exist_vars no_pos in*)
-                                  let pre_new = TP.simplify_exists_raw exist_vars post in
-                                  (rel,post,pre_new)) triples in
+(*                              let triples = List.map (fun (rel,post) ->*)
+(*                                  let exist_vars = CP.diff_svl (CP.fv rel) inf_vars in*)
+(*                                  let pre_new = TP.simplify_exists_raw exist_vars post in*)
+(*                                  (rel,post,pre_new)) triples in*)
                               let evars = stk_evars # get_stk in
-                              (*                            let evars = [] in*)
-                              let _ = List.iter (fun (rel,post,pre) ->
-                                  Debug.info_pprint ("REL : "^Cprinter.string_of_pure_formula rel) no_pos;
+                              (* let evars = [] in*)
+                              let _ = List.iter (fun (rel_post,post,rel_pre,pre) ->
+                                  Debug.info_pprint ("REL POST : "^Cprinter.string_of_pure_formula rel_post) no_pos;
                                   Debug.info_pprint ("POST: "^Cprinter.string_of_pure_formula post) no_pos;
-                                  Debug.info_pprint ("PRE : "^Cprinter.string_of_pure_formula pre) no_pos) triples in
-                              (* let _ = print_endline ( "   new_spec 1: " ^ (Cprinter.string_of_struc_formula new_spec)) in *)
-                              if triples = [] then fst (Solver.simplify_relation new_spec None pre_vars post_vars prog inf_post_flag evars lst_assume)
+                                  Debug.info_pprint ("REL PRE : "^Cprinter.string_of_pure_formula rel_pre) no_pos;
+                                  Debug.info_pprint ("PRE : "^Cprinter.string_of_pure_formula pre) no_pos) tuples in
+                              (* TODO *)
+                              let triples = List.map (fun (a,b,c,d) -> (a,b,d)) tuples in
+                              if triples = [] then 
+                                fst (Solver.simplify_relation new_spec None 
+                                    pre_vars post_vars prog inf_post_flag evars lst_assume)
                               else
-                                let new_spec1 = (CF.transform_spec new_spec (CF.list_of_posts (proc.proc_stk_of_static_specs # top))) in
+                                let new_spec1 = (CF.transform_spec new_spec (CF.list_of_posts proc_spec)) in
                                 fst (Solver.simplify_relation new_spec1
                                     (Some triples) pre_vars post_vars prog inf_post_flag evars lst_assume)
                             end
@@ -2527,7 +2547,6 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                               begin
                                 Debug.info_pprint "PROBLEM with fix-point calculation" no_pos;
                                 (* Debug.info_pprint ("Exception:"^(Printexc.to_string ex)) no_pos; *)
-
                                 raise ex
                                 (* new_spec *)
                               end
