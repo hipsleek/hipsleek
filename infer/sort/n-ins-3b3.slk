@@ -24,12 +24,12 @@ infer [R2] x::node<a,null> * y::node<v,x>& v<=a
  |-  (exists b: y::node<b,p> * p::sortHO<v2,R2> & R2(b,v2)) .
 print residue.
 */
-/*
+
 //(3)
 infer [R2] x::node<a,null> * y::node<v,x>& v<=a 
  |-  (exists v2: y::node<b,p> * p::sortHO<v2,R2> & R2(b,v2)) .
 print residue.
-*/
+
 /*
 //(3)
 infer [R2] x::node<a,null> * y::node<v,x>& v<=a 

@@ -4918,12 +4918,12 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                                       (*+++++++++++++++++++++++++++++++++*)
                                                       (*LDK: remove duplicated conj from the p2*)
                                                       let p2 = remove_dupl_conj_eq_mix_formula p2 in
-                                                      let rel_args = CP.get_rel_args (MCP.pure_of_mix p2) in
-                                                      let new_p2 = if CP.intersect_svl rel_args estate.CF.es_evars <> [] then
-                                                            let eqs = MCP.ptr_equations_without_null p2 in
-                                                           MCP.mix_of_pure (CP.subst_rel_args (MCP.pure_of_mix p2) eqs rel_args)
-                                                          else p2
-                                                      in
+                                                      (* let rel_args = CP.get_rel_args (MCP.pure_of_mix p2) in *)
+                                                      (* let new_p2 = if CP.intersect_svl rel_args estate.CF.es_evars <> [] then *)
+                                                      (*       let eqs = MCP.ptr_equations_without_null p2 in *)
+                                                      (*       MCP.mix_of_pure (CP.subst_rel_args (MCP.pure_of_mix p2) eqs rel_args) *)
+                                                      (*     else p2 *)
+                                                      (* in *)
                                                       let ctx, proof = heap_entail_empty_rhs_heap 1 prog is_folding  estate b1 p2 pos in
                                                       (* explicit instantiation this will move some constraint to the LHS*)
                                                       (*LDK: 25/08/2011, also instatiate ivars*)
@@ -5354,7 +5354,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   (* An Hoa : INSTANTIATION OF THE EXISTENTIAL VARIABLES! *)
   let evarstoi = estate_orig.es_gen_expl_vars in
   let lhs_p = if (evarstoi = []) then (* Nothing to instantiate *) lhs_p 
-  else (*let _ = print_endline ("\n\nheap_entail_empty_rhs_heap_x : Variables to be instantiated : " ^ (String.concat "," (List.map Cprinter.string_of_spec_var evarstoi))) in*)
+  else (* let _ = print_endline ("\n\nheap_entail_empty_rhs_heap_x : Variables to be instantiated : " ^ (String.concat "," (List.map Cprinter.string_of_spec_var evarstoi))) in *)
     (* Temporarily suppress output of implication checking *)
     let _ = Smtsolver.suppress_all_output () in
     let _ = Tpdispatcher.push_suppress_imply_output_state () in
@@ -5364,7 +5364,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
     (* Unsuppress the printing *)
     let _ = Smtsolver.unsuppress_all_output ()  in
     let _ = Tpdispatcher.restore_suppress_imply_output_state () in
-    (*let _ = print_string ("An Hoa :: New LHS with instantiation : " ^ (Cprinter.string_of_mix_formula lhs_p) ^ "\n\n") in*)
+    (* let _ = print_string ("An Hoa :: New LHS with instantiation : " ^ (Cprinter.string_of_mix_formula lhs_p) ^ "\n\n") in *)
     lhs_p
   in
   (* remove variables that are already instantiated in the right hand side *)
@@ -5396,8 +5396,17 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
   (*let estate = estate_orig in*)
   (* TODO : can infer_collect_rel be made after infer_pure_m? *)
   (* Collect relational definitions *)
+  let rel_args = CP.get_rel_args (MCP.pure_of_mix rhs_p) in
+  let lhs_p2 = if CP.intersect_svl rel_args estate_orig.CF.es_evars <> [] then
+        let eqs = MCP.ptr_equations_without_null rhs_p in
+        let eq_p = CP.get_eqs_rel_args (MCP.pure_of_mix rhs_p) eqs rel_args no_pos in
+        MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix lhs_p) eq_p no_pos)
+        (* let eqs = MCP.ptr_equations_without_null rhs_p in *)
+        (* MCP.mix_of_pure (CP.subst_rel_args (MCP.pure_of_mix rhs_p) eqs rel_args) *)
+      else lhs_p
+  in
   let (estate,lhs_new,rhs_p) = Inf.infer_collect_rel (fun x -> TP.is_sat_raw (MCP.mix_of_pure x)) estate_orig xpure_lhs_h1 
-    lhs_p rhs_p pos in
+    lhs_p2 rhs_p pos in
   let infer_rel = estate.es_infer_rel in
   if infer_rel!=[] then Debug.ninfo_hprint (add_str "REL INFERRED" (pr_list CP.print_lhs_rhs)) infer_rel no_pos;
   (* Termination *)
@@ -6634,7 +6643,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                   (* update ivars - basically, those univ vars for which binsings have been found will be removed:
                      for each new binding uvar = x, uvar will be removed from es_ivars and x will be added to the es_expl_vars *)
                   es_gen_impl_vars = subtract new_impl_vars lhs_vars (* Gen.BList.difference_eq CP.eq_spec_var impl_vars (lhs_vars@expl_vars') *) ;
-                  es_evars = new_exist_vars (* Gen.BList.difference_eq CP.eq_spec_var evars expl_vars' *) ;
+                  es_evars = List.filter (fun sv -> not (CP.is_rel_typ sv)) new_exist_vars (* Gen.BList.difference_eq CP.eq_spec_var evars expl_vars' *) ;
                   es_ivars = new_ivars (*tmp_ivars'*);
                   es_heap = new_consumed;
                   es_residue_pts = n_es_res;

@@ -8943,3 +8943,18 @@ let subst_rel_args_x p eqs rel_args=
 let subst_rel_args p eqs rel_args=
   Debug.no_2 "subst_rel_args" !print_formula !print_svl !print_formula
       (fun _ _ -> subst_rel_args_x p eqs rel_args) p rel_args
+
+let get_eqs_rel_args_x p eqs rel_args pos=
+  let filter_fn (sv1,sv2)=
+    (mem_svl sv1 rel_args) ||
+    ( mem_svl sv2 rel_args)
+  in
+  let eqs1= List.filter filter_fn eqs in
+  List.fold_left (fun p1 (sv1,sv2) ->
+      let p2 = mkEqVar sv1 sv2 pos in
+      mkAnd p1 p2 pos)
+      (mkTrue pos) eqs1
+
+let get_eqs_rel_args p eqs rel_args pos=
+  Debug.no_2 "get_eqs_rel_args" !print_formula !print_svl !print_formula
+      (fun _ _ -> get_eqs_rel_args_x p eqs rel_args pos) p rel_args
