@@ -1111,8 +1111,12 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 	      let addr_vars = CP.remove_dups_svl addr_vars' in
 	      let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
           (* let _ = print_endline ("\n xform: " ^ (Cprinter.string_of_mix_formula xform)) in *)
-          let xform1 = MCP.mix_of_pure (TP.simplify_a 1 (CP.drop_rel_formula (MCP.pure_of_mix xform))) in
-          (* let _ = print_endline ("\n xform1: " ^ (Cprinter.string_of_mix_formula xform1)) in *)
+          let xform1 = (TP.simplify_a 1 (CP.drop_rel_formula (MCP.pure_of_mix xform))) in
+          let ls_disj = CP.list_of_disjs xform1 in
+          let xform2 = MCP.mix_of_pure (CP.disj_of_list (Gen.BList.remove_dups_eq CP.equalFormula ls_disj) pos) in
+          
+          (* let _ = print_endline ("\n xform1: " ^ (Cprinter.string_of_pure_formula xform1)) in *)
+          (* let _ = print_endline ("\n xform2: " ^ (Cprinter.string_of_mix_formula xform2)) in *)
 	      (* let formula1 = CF.formula_of_mix_formula xform pos in *)
 	      (* let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in *)
 	      (* let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in *)
@@ -1122,8 +1126,8 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
           if do_not_compute_flag then 
             vdef.C.view_xpure_flag <- true
           else
-	        (vdef.C.view_x_formula <- xform1;
-            vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform1)
+	        (vdef.C.view_x_formula <- xform2;
+            vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform2)
           ;
             vdef.C.view_addr_vars <- addr_vars;
 	        vdef.C.view_baga <- (match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h) ;

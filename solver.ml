@@ -4924,7 +4924,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                                            MCP.mix_of_pure (CP.subst_rel_args (MCP.pure_of_mix p2) eqs rel_args)
                                                           else p2
                                                       in
-                                                      let ctx, proof = heap_entail_empty_rhs_heap 1 prog is_folding  estate b1 new_p2 pos in
+                                                      let ctx, proof = heap_entail_empty_rhs_heap 1 prog is_folding  estate b1 p2 pos in
                                                       (* explicit instantiation this will move some constraint to the LHS*)
                                                       (*LDK: 25/08/2011, also instatiate ivars*)
                                                       (*this move_expl_inst call can occur at the end of folding and also 
@@ -4940,10 +4940,10 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                                                       (transform_context
                                                                           (fun es ->
                                                                               (* explicit inst *)
-                                                                              let l_inst = get_expl_inst es new_p2 in
-                                                                              let es = move_impl_inst_estate es new_p2 in
+                                                                              let l_inst = get_expl_inst es p2 in
+                                                                              let es = move_impl_inst_estate es p2 in
                                                                               Ctx (if (es.es_imm_last_phase) then
-                                                                                move_expl_inst_estate es new_p2
+                                                                                move_expl_inst_estate es p2
                                                                               else
                                                                                 add_to_aux_conseq_estate es (MCP.pure_of_mix l_inst) pos)
                                                                           )  c)) cl in
