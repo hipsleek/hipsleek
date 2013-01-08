@@ -1,0 +1,42 @@
+/**
+ * Find the sum of the elements of an array. This examples
+ * show two ways of computing the sum and illustrates the use
+ * of induction.
+ * 
+ * @author Vu An Hoa
+ */
+
+//relation dom(int[] a, int low, int high) == true.
+relation dom(int[] a, int low, int high) == (dom(a,low-1,high) | dom(a,low,high+1)).
+
+relation sumarray(int[] a, int i, int j, int s) == 
+	(i > j & s = 0 | i = j & s = a[i] | i < j & sumarray(a,i+1,j,s-a[i])).
+
+checkentail dom(a,l,h) |- dom(a,l+1,h).
+
+checkentail dom(a,l,h) |- dom(a,l+2,h).
+
+checkentail dom(a,l+1,h) |- dom(a,l,h).
+
+checkentail dom(a,l+2,h) |- dom(a,l,h).
+
+checkentail dom(a,l,h) & l>h |- true.
+
+checkentail dom(a,l,h) |- (exists b: dom(a,b,h) & b>=l).
+
+checkentail dom(a,l,h) |- (exists b: dom(a,b,h) & l<b).
+
+
+checkentail dom(a,l,h) & b=l |- dom(a,b,h).
+
+
+checkentail dom(a,l,h) & b>=l |- dom(a,b,h).
+
+checkentail dom(a,l,h) & b>l |- dom(a,b,h).
+
+
+checkentail dom(a,l,h) & l<b |- dom(a,b,h).
+
+checkentail dom(a,l,h) & l<=b |- dom(a,b,h).
+
+

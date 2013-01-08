@@ -16,6 +16,7 @@ HeapPred G2(node a).
 HeapPred G3(node a).
 
 infer [H1,ia] x::node<a,b>@ia * H1(b) |- x::node<c,d>@L.
+print residue.
 
 // why is the ia annotation lost?
 infer [H1,ia,G] 
@@ -31,8 +32,37 @@ infer [H1,G]
  |-  G(x',res) . 
 print residue.
 
-/*
-why isn't @I annotation printed?
-[ H1(res) * x'::node<val_36_533,next_37_514'>&next_37_514'=null 
-  --> G(x',res)&true]
-*/
+infer [H1,G,ia] 
+  H1(next_37_534) * x'::node<val_36_533,next_37_514'>@ia &x=x' & 
+  next_37_514'=null & next_37_534=v_node_38_515' & res=v_node_38_515'
+ |-  G(x',res) . 
+print residue.
+
+
+infer [ia] 
+  x'::node<val_36_533,next_37_514'>@ia 
+ |-  x'::node<_,_>@I.
+
+print residue.
+
+infer [ia] 
+  x'::node<val_36_533,next_37_514'>@ia 
+ |-  x'::node<_,_>@M.
+
+infer [ia] 
+  x'::node<val_36_533,next_37_514'>@ia 
+ |-  x'::node<_,_>@L.
+
+print residue.
+
+infer [ia] 
+  x'::node<val_36_533,next_37_514'>@ia 
+ |-  x'::node<_,_>@A.
+
+print residue.
+
+infer [] 
+  emp
+ |-  x'::node<_,_>@A.
+
+print residue.

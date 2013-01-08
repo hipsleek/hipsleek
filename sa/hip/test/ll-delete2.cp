@@ -1,32 +1,20 @@
-HeapPred HP_549(node next_19_526').
-HeapPred E(node a, node b).
-HeapPred D(node a).
+HeapPred HP(node v0').
 
-delete_list[
-ass [D,E]: {
- D(x)&x!=null -->  x::node<val_19_525',next_19_526'> * HP_549(next_19_526')&true;
- HP_549(v_node_19_527')&true -->  D(v_node_19_527')&true;
- E(v_node_19_561,v_node_19_562) * x::node<val_19_555,v_node_19_561>&x'=null -->  E(x,x')&true;
- D(x)&x=null -->  E(x,v_564)&x=v_564
+delete_list:SUCCESS[
+ass [D,E][]: {
+ emp&x0=null & x=null -->  E(x,x0)&true;
+ D(x)&x=null -->  emp&true;
+ x::node<val,v>@M&x0=null -->  E(x,x0)&true;
+ HP(v)&true -->  D(v)&true;
+ D(x)&x!=null -->  x::node<val,next>@M * HP(next)&true
 }
-hpdefs [D,E]: {
- HP_549(v_node_19_574)&true -->  
- v_node_19_574::node<val_19_525',next_19_568>&next_19_568=null
- or v_node_19_574::node<val_19_525',next_19_526'>&next_19_526'=null
- or v_node_19_574::node<val_19_525',next_19_526'> * 
-    next_19_526'::node<val_19_525',next_19_571>&next_19_571=null
- or v_node_19_574::node<val_19_525',next_19_526'>&true
- or emp&v_node_19_574=null
+hpdefs [D,E][]: {
+ E(x,x0)&true -->  emp&x=null & x0=null;
+ D(x)&true -->  
+ emp&x=null
+ or x::node<val,next>@M * D(next)&true
  ;
- E(x_575,x_576)&true -->  
- emp&x_575=x_576 & x_575=null
- or E(v_node_19_561,v_node_19_562) * x_575::node<val_19_555,v_node_19_561>&
-    x_576=null
- ;
- D(x_577)&true -->  
- x_577::node<val_19_525',next_19_526'> * D(next_19_526')&true
- or emp&x_577=null
- 
+ HP(v)&true -->  D(v)&true
 }
 ]
 

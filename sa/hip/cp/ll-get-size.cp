@@ -12,6 +12,6 @@ ass [H,G][]:{
 
 hpdefs [H,G][]:{
   H(x) --> x=null or x::node<_,p>*H(p);
-  G(x) --> x=null or x::node<_,p>*G(p)
+  G(x) --> H(x)
  }
 ]

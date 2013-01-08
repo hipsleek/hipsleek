@@ -22,8 +22,6 @@ let is_medium n = (n==1);;
 
 let is_long n = (n==0);;
 
-
-
 (* (\* pretty printing for primitive types *\) *)
 (* let string_of_prim_type = function  *)
 (*   | Bool          -> "boolean" *)
@@ -577,7 +575,7 @@ let pure_formula_wo_paren (e:P.formula) =
     | P.Forall _ 
     | P.Exists _ | P.Not _ -> true
     | P.BForm (e1,_) -> true (* b_formula_wo_paren e1 *)
-    | P.And _ -> true 
+    | P.And _ -> false (*Bach: change from true to false*) 
     | _ -> false
 
 let pure_memoised_wo_paren (e: memo_pure) = false
@@ -724,6 +722,21 @@ let sort_exp a b =
               | _ -> (a,b)
           end
 
+let pr_xpure_view xp = match xp with
+    { 
+        CP.xpure_view_node = root ;
+        CP.xpure_view_name = vname;
+        CP.xpure_view_arguments = args;
+    } ->
+        let pr = string_of_spec_var in
+        let rn,args_s = match root with
+          | None -> ("", pr_list_round pr args)
+          | Some v -> ((pr v)^"::", pr_list_angle pr args)
+        in
+        fmt_string ("XPURE("^rn^vname^args_s^")")
+
+let string_of_xpure_view xpv = poly_string_of_pr pr_xpure_view xpv
+
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
   let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
@@ -739,6 +752,7 @@ let rec pr_b_formula (e:P.b_formula) =
       (*   pr_set pr_formula_exp ls2 *)
       (* else () *)
     | P.BConst (b,l) -> fmt_bool b 
+    | P.XPure v ->  fmt_string (string_of_xpure_view v)
     | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
     | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2
     | P.Lte (e1, e2, l) -> f_b e1; fmt_string op_lte ; f_b e2
@@ -1067,6 +1081,7 @@ let pr_hrel_formula hf=
 		                           let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")")
     | _ -> report_error no_pos "Cprinter.pr_hrel_formula: can not happen"
 
+
 let rec prtt_pr_h_formula h = 
   let f_b e =  pr_bracket h_formula_wo_paren prtt_pr_h_formula e 
   in
@@ -1118,7 +1133,7 @@ let rec prtt_pr_h_formula h =
 			(* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
           pr_spec_var sv; fmt_string "::";
           pr_angle (c^perm_str) pr_spec_var svs ;
-	      (* pr_imm imm; *)
+	      pr_imm imm;
 	      pr_derv dr;
           if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
           (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
@@ -1147,7 +1162,7 @@ let rec prtt_pr_h_formula h =
           pr_spec_var sv; 
           fmt_string "::"; 
           pr_angle (c^perm_str) pr_spec_var svs;
-	      (* pr_imm imm; *)
+	      pr_imm imm;
 	      pr_derv dr;
           (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
           if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
@@ -1243,8 +1258,9 @@ let rec pr_h_formula_for_spec h =
     (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
     (* pr_formula_label_opt pid;  *)
     pr_spec_var sv; 
-    fmt_string "::"; 
+    fmt_string ":6:"; 
     if svs = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_spec_var svs;
+    pr_imm imm;
     pr_derv dr;
     (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
     if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
@@ -1519,18 +1535,18 @@ let pr_hp_rel hp_rel =
   fmt_string (pr3 hp_rel)
 
 let string_of_hp_rel_def hp_rel =
- let str_of_hp_rel (r,f1, f2) = ( (CP.print_rel_cat r)^ ": " ^(string_of_h_formula f1) ^ ":: "  ^(prtt_string_of_formula f2)) in
+ let str_of_hp_rel (r,f1, f2) = ( (CP.print_rel_cat r)^ ": " ^(string_of_h_formula f1) ^ " ::= "  ^(prtt_string_of_formula f2)) in
   (str_of_hp_rel hp_rel)
 
 let string_of_hp_rel_def_short hp_rel =
- let str_of_hp_rel (_,f1, f2) = ((string_of_h_formula f1) ^ ":: "  ^(prtt_string_of_formula f2)) in
+ let str_of_hp_rel (_,f1, f2) = ((string_of_h_formula f1) ^ " ::= "  ^(prtt_string_of_formula f2)) in
   (str_of_hp_rel hp_rel)
 
 let string_of_hp_rels (e) : string =
   (* CP.print_only_lhs_rhs e *)
   poly_string_of_pr pr_hp_rel e
 
-let pr_hprel_lhs_rhs (lhs,rhs) = 
+let pr_hprel_lhs_rhs (lhs,rhs) =
   (* fmt_string (CP.print_only_lhs_rhs rel) *)
   fmt_open_box 1;
   fmt_string "(";
@@ -2351,7 +2367,7 @@ let pr_view_decl v =
   pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
   pr_vwrap  "xform: " pr_mix_formula v.view_x_formula;
   pr_vwrap  "is_recursive?: " fmt_string (string_of_bool v.view_is_rec);
-   
+  pr_vwrap  "is_primitive?: " fmt_string (string_of_bool v.view_is_prim);
   pr_vwrap  "same_xpure?: " fmt_string 
       (if v.view_xpure_flag then "YES" else "NO");
   pr_vwrap  "view_data_name: " fmt_string v.view_data_name;
@@ -2782,7 +2798,81 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
   (string_of_proc_decl_list (Cast.list_of_procs p)) ^ "\n"
 ;;
 
-
+(* pretty printing for program written in core language separating prelude.ss program *)                                                            
+let string_of_program_separate_prelude p (iprims:Iast.prog_decl)= 
+   let remove_prim_procs procs=
+		List.fold_left (fun a b->
+			try 
+			if( (BatString.starts_with b.Cast.proc_name ("is_not_null___"^"$")) 
+					|| (BatString.starts_with b.Cast.proc_name ("is_null___"^"$")) )
+			then a else		 	
+			let _=List.find (fun c-> (BatString.starts_with b.Cast.proc_name (c.Iast.proc_name^"$")) 
+																) iprims.Iast.prog_proc_decls in 
+			a
+			with Not_found ->
+				a@[b]  
+		) [] procs
+	 in
+	 let remove_prim_data_decls p_data_decls=
+		List.fold_left (fun a b->
+			(* if(b.Cast.data_name="__Exc" || b.Cast.data_name="__Error") *)
+			(* then a else                                                *)
+			try 
+			let _=List.find (fun c-> (b.Cast.data_name = c.Iast.data_name) 
+																) iprims.Iast.prog_data_decls in 
+			a
+			with Not_found ->
+				a@[b]  
+		) [] p_data_decls
+	 in
+	 let remove_prim_rel_decls p_rel_decls=
+		List.fold_left (fun a b->
+			try 
+			let _=List.find (fun c-> (b.Cast.rel_name = c.Iast.rel_name) 
+																) iprims.Iast.prog_rel_decls in 
+			a
+			with Not_found ->
+				a@[b]  
+		) [] p_rel_decls
+	 in
+	 let remove_prim_axiom_decls p_axiom_decls=
+		List.fold_left (fun a b->
+			try 
+			let _=List.find (fun c-> (b.Cast.axiom_id = c.Iast.axiom_id) 
+																) iprims.Iast.prog_axiom_decls in 
+			a
+			with Not_found ->
+				a@[b]  
+		) [] p_axiom_decls
+	 in
+	 let datastr= (string_of_data_decl_list (remove_prim_data_decls p.prog_data_decls)) in
+	 let viewstr=(string_of_view_decl_list p.prog_view_decls) in
+	 let barrierstr=(string_of_barrier_decl_list p.prog_barrier_decls) in
+	 let relstr=(string_of_rel_decl_list (remove_prim_rel_decls p.prog_rel_decls)) in
+	 let axiomstr=(string_of_axiom_decl_list (remove_prim_axiom_decls p.prog_axiom_decls)) in
+	 let left_coerstr=(string_of_coerc_decl_list p.prog_left_coercions) in
+	 let right_coerstr=(string_of_coerc_decl_list p.prog_right_coercions) in
+	 let procsstr=(string_of_proc_decl_list (remove_prim_procs (Cast.list_of_procs p))) in
+	 (* let _=print_endline (if (procsstr<>"") then procsstr^"XUAN BACH\n" else "NULL\n") in *)
+	 let datastr=if(datastr<>"") then datastr^"\n\n" else "" in
+	 let viewstr=if(viewstr<>"") then viewstr^"\n\n" else "" in
+	 let barrierstr=if(barrierstr<>"") then barrierstr^"\n\n" else "" in
+	 let relstr=if(relstr<>"") then relstr^"\n\n" else "" in
+	 let axiomstr=if(axiomstr<>"") then axiomstr^"\n\n" else "" in
+	 let left_coerstr=if(left_coerstr<>"") then left_coerstr^"\n\n" else "" in
+	 let right_coerstr=if(right_coerstr<>"") then right_coerstr^"\n\n" else "" in
+	 let procsstr=if(procsstr <> "") then procsstr^"\n\n" else "" in
+   "\n" ^ datastr
+   ^ viewstr
+	 ^ barrierstr
+   ^ relstr
+   ^ axiomstr
+   ^ left_coerstr
+   ^ right_coerstr
+	 ^ procsstr
+   ^ "\n"
+;;
+                                         
 (*
   Created 22-Feb-2006
   Pretty printing fo the AST for the core language
@@ -2922,6 +3012,7 @@ let rec html_of_formula_exp e =
 	| P.ArrayAt (a, i, l) -> (html_of_spec_var a) ^ "[" ^ (String.concat "," (List.map html_of_formula_exp i)) ^ "]"
 
 let rec html_of_pure_b_formula f = match f with
+    | P.XPure _ -> "<b> XPURE </b>"
     | P.BConst (b,l) -> "<b>" ^ (string_of_bool b) ^ "</b>"
     | P.BVar (x, l) -> html_of_spec_var x
     | P.Lt (e1, e2, l) -> (html_of_formula_exp e1) ^ html_op_lt ^ (html_of_formula_exp e2)

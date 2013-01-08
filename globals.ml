@@ -48,11 +48,11 @@ type path_label = int (*which path at the current point has been taken 0 -> then
 
 type path_trace = (control_path_id_strict * path_label) list
 
-and loc = {
-			start_pos : Lexing.position (* might be expanded to contain more information *);
-			mid_pos : Lexing.position;
-			end_pos : Lexing.position;
-			}
+and loc =  {
+    start_pos : Lexing.position (* might be expanded to contain more information *);
+    mid_pos : Lexing.position;
+    end_pos : Lexing.position;
+  }
 
 and primed =
   | Primed
@@ -97,6 +97,7 @@ type typ =
   | BagT of typ
   (* | Prim of prim_type *)
   | Named of ident (* named type, could be enumerated or object *)
+          (* Named "R" *)
   | Array of (typ * int) (* base type and dimension *)
   | RelT (* relation type *)
   | HpT (* heap predicate relation type *)
@@ -112,6 +113,7 @@ let barrierT = Named "barrier"
 
 (*for heap predicate*)
 let hp_default_prefix_name = "HP_"
+let dang_hp_default_prefix_name = "DLING_"
 (*
   Data types for code gen
 *)
@@ -175,10 +177,10 @@ let string_of_term_ann a =
     | TermErr_Must -> "TermErr_Must"
 
 let string_of_loc (p : loc) = 
-    Printf.sprintf "File \"%s\",Line:%d,Col:%d"
+    Printf.sprintf "1 File \"%s\",Line:%d,Col:%d"
     p.start_pos.Lexing.pos_fname 
     p.start_pos.Lexing.pos_lnum
-	(p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)
+    (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)
 ;;
 
 let string_of_pos (p : Lexing.position) = 
@@ -274,6 +276,8 @@ object
      (*   | None -> "None" *)
      (*   | Some l -> l *)
 end;;
+
+
 
 (*Some global vars for logging*)
 let proving_loc  = new prog_loc
@@ -533,6 +537,18 @@ let show_diff = ref false
 
 let sa_print_inter = ref false
 
+let sa_en_norm = ref true
+
+let sa_en_split = ref false
+
+let sa_elim_dangling = ref false
+
+let sa_elim_useless = ref false
+
+let sa_inlining = ref false
+
+let sa_unify_dangling = ref false
+
 let dis_sem = ref false
 
 let show_diff_constrs = ref false
@@ -614,6 +630,8 @@ let split_rhs_flag = ref true
 
 let n_xpure = ref 1
 
+let fixcalc_disj = ref 2
+
 let check_coercions = ref false
 
 let num_self_fold_search = ref 0
@@ -641,6 +659,7 @@ let enable_syn_base_case = ref false
 let enable_case_inference = ref false
 
 let print_core = ref false
+let print_core_all = ref false
 
 let print_err_sleek = ref false
 
@@ -655,8 +674,9 @@ let failure_analysis = ref false
 let seq_to_try = ref false
 
 let print_input = ref false
+let print_input_all = ref false
 
-let pass_global_by_value = ref false
+(* let pass_global_by_value = ref true *)
 
 (* let allow_pred_spec = ref false *)
 
@@ -678,7 +698,7 @@ let enable_redundant_elim = ref false
 
 let enulalias = ref false
 
-let pass_global_by_value = ref false
+let pass_global_by_value = ref true
 
 let exhaust_match = ref false
 
@@ -779,8 +799,6 @@ let do_infer_inc = ref false
 
 let add_count (t: int ref) = 
 	t := !t+1
-
-(* utility functions *)
 
 let omega_err = ref false
 
@@ -912,8 +930,12 @@ let fresh_formula_cache_no  () =
 
 let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
-let string_of_loc (p : loc) = p.start_pos.Lexing.pos_fname ^ "_" ^ (string_of_int p.start_pos.Lexing.pos_lnum)^"_"^
-	(string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol))
+let string_of_loc (p : loc) = 
+  p.start_pos.Lexing.pos_fname ^ "_" ^ 
+  (string_of_int p.start_pos.Lexing.pos_lnum) ^ ":" ^
+  (string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)) ^ "_" ^
+  (string_of_int p.end_pos.Lexing.pos_lnum) ^ ":" ^
+  (string_of_int (p.end_pos.Lexing.pos_cnum-p.end_pos.Lexing.pos_bol))
 
 let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")"
 ;;
@@ -1014,4 +1036,3 @@ let wrap_classic et f a =
   with _ as e ->
       (do_classic_frame_rule := flag;
       raise e)
-

@@ -52,7 +52,6 @@ and action =
   | M_Nothing_to_do of string
   | M_infer_heap of (h_formula * h_formula) (* rhs * rhs_rest *)
   | M_unmatched_rhs_data_node of (h_formula * h_formula)
-  | M_allow_residue of h_formula  (* h_formula is the residue *)
   (* perform a list of actions until there is one succeed*)
   | Cond_action of action_wt list
   (*not handle yet*) 
@@ -134,7 +133,6 @@ let rec pr_action_name a = match a with
   | Seq_action l -> fmt_string "SEQ"
   | Search_action l -> fmt_string "SEARCH"
   | M_lhs_case e -> fmt_string "LHSCaseAnalysis"
-  | M_allow_residue _ -> fmt_string "AllowResidue"
 
 let rec pr_action_res pr_mr a = match a with
   | Undefined_action e -> pr_mr e; fmt_string "=>Undefined_action"
@@ -158,7 +156,6 @@ let rec pr_action_res pr_mr a = match a with
         pr_seq_vbox "=>SEARCH:" (pr_action_wt_res pr_mr) l;
         fmt_close();
   | M_lhs_case e -> pr_mr e; fmt_string "=>LHSCaseAnalysis"
-  | M_allow_residue h -> fmt_string ("=>AllowResidue" ^ (string_of_h_formula h))
 
 and pr_action_wt_res pr_mr (w,a) = 
   fmt_string ("Prio:"^(string_of_int w)); (pr_action_res pr_mr a)
@@ -196,7 +193,6 @@ let action_get_holes a = match a with
   | Cond_action _
   | M_Nothing_to_do _  
   | M_unmatched_rhs_data_node _
-  | M_allow_residue _
   | M_infer_heap _
   | Search_action _ ->None
 
@@ -801,8 +797,6 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                     (* if (vl_view_orig || vl_self_pts==[]) then ua *)
                     (* else if (left_ls != []) then (1,M_lemma (c,Some (List.hd left_ls))) *)
                   else (1,M_Nothing_to_do ("matching data with deriv self-rec LHS node "^(string_of_match_res c)))
-            | _, HTrue -> let residue = c.match_res_lhs_node in
-                          (0, M_allow_residue residue)
             | _ -> report_error no_pos "process_one_match unexpected formulas 1\n"	
           )
     | MaterializedArg (mv,ms) ->
@@ -867,8 +861,6 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   else  (1,M_Nothing_to_do (string_of_match_res c))
             | DataNode dl, ViewNode vr -> (1,M_Nothing_to_do (string_of_match_res c))
             | ViewNode vl, DataNode dr -> (1,M_Nothing_to_do (string_of_match_res c))
-            | _, HTrue -> let residue = c.match_res_lhs_node in
-                          (0, M_allow_residue residue)
             | _ -> report_error no_pos "process_one_match unexpected formulas 3\n"	              )
     | MaterializedArg (mv,ms) -> 
           (*??? expect MATCHING only when normalizing => this situation does not need to be handled*)

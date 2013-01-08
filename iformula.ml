@@ -465,11 +465,8 @@ and pos_of_struc_formula f0  = match f0 with
 	| EAssume (b,_,_) -> pos_of_formula b
 	| EInfer b -> b.formula_inf_pos
 	| EOr b -> b.formula_struc_or_pos
-	| EList b ->
-        (match b with
-          | [] -> no_pos
-          | _ -> pos_of_struc_formula (snd (List.hd b))
-        )
+	| EList b -> try pos_of_struc_formula (snd (List.hd b))
+                     with _ -> no_pos
 
 and flow_of_formula f1 = match f1 with
   | Base b-> Some b.formula_base_flow

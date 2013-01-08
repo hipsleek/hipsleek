@@ -1,0 +1,19 @@
+check what kind of lemmas are included in this normalize
+are they combine lemma of the form rhs -> x::p<..>
+
+let normalize_list_failesc_context_w_lemma prog lctx =
+
+/*
+//below not included
+lemma "norm" self::RS_max<m> 
+   <- self::RS_max<m1>*self::RS_max<m2> & m=max(m1,m2).
+
+//below included
+lemma "combine2" 
+   self::RS_max<m1>*self::RS_max<m2> 
+   -> self::RS_max<m> & m=min(m1,m2).
+
+lemma "combine" 
+   self::RS_max<m1>*self::RS_max<m2> 
+   -> self::RS_max<m> & m=max(m1,m2).
+

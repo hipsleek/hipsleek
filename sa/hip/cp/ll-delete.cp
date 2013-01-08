@@ -9,7 +9,7 @@ ass [D,E][]:{
   D(x)&x!=null --> x::node<_,next_32_560'> * HP_606(next_32_560');
   HP_606(v_node_32_561')&true --> D(v_node_32_561');
   x::node<_,v_node_32_619> * E(v_node_32_619,v_node_32_620)&x'=null
-     --> E(x,x') * HP_621(v_node_32_620);
+     --> E(x,x');
   D(x)&x=null --> emp&true;
   x=null & x'=null --> E(x,x')
  }

@@ -11,46 +11,64 @@ open Label_only
 
 open Perm
 
-  module F = Iformula
-  module P = Ipure
-  module E1 = Error
-  module I = Iast
-  module Ts = Tree_shares.Ts
-  
-  module SHGram = Camlp4.Struct.Grammar.Static.Make(Lexer.Make(Token))
-  
-  type type_decl =
-	| Data of data_decl
-	| Enum of enum_decl
-	| View of view_decl
-	| Hopred of hopred_decl
-	| Barrier of barrier_decl
-		
-  type decl = 
-    | Type of type_decl
-    | Func of func_decl
-    | Rel of rel_decl (* An Hoa *)
-    | Hp of hp_decl
-    | Axm of axiom_decl (* An Hoa *)
-    | Global_var of exp_var_decl
-    | Logical_var of exp_var_decl (* Globally logical vars *)
-    | Proc of proc_decl
-    | Coercion of coercion_decl
-				
-  type member = 
-	| Field of (typed_ident * loc)
-	| Inv of F.formula
-	| Method of proc_decl
-		
-  type spec_qualifier =
-	| Static
-	| Dynamic 
+module F = Iformula
+module P = Ipure
+module E1 = Error
+module I = Iast
+module Ts = Tree_shares.Ts
 
-  type ann =
-	| AnnMode of mode
-	| AnnType of typ
+module SHGram = Camlp4.Struct.Grammar.Static.Make(Lexer.Make(Token))
 
-	
+(* some variables and functions decide which parser will be used *)
+let parser_name = ref "unknown"
+
+let set_parser name =
+  parser_name := name
+
+
+(* type definitions *)
+
+type type_decl =
+  | Data of data_decl
+  | Enum of enum_decl
+  | View of view_decl
+  | Hopred of hopred_decl
+  | Barrier of barrier_decl
+
+		
+type decl = 
+  | Type of type_decl
+  | Func of func_decl
+  | Rel of rel_decl (* An Hoa *)
+  | Hp of hp_decl
+  | Axm of axiom_decl (* An Hoa *)
+  | Global_var of exp_var_decl
+  | Logical_var of exp_var_decl (* Globally logical vars *)
+  | Proc of proc_decl
+  | Coercion of coercion_decl
+		| Include of string
+		
+
+type member = 
+  | Field of (typed_ident * loc)
+  | Inv of F.formula
+  | Method of proc_decl
+
+type spec_qualifier =
+  | Static
+  | Dynamic 
+
+type ann =
+  | AnnMode of mode
+  | AnnType of typ
+
+type file_offset =
+  {
+    line_num: int;
+    line_start: int;
+    byte_num: int;
+  }
+
 let macros = ref (Hashtbl.create 19)
 
 (* An Hoa : Counting of holes "#" *)
@@ -63,18 +81,44 @@ let rel_names = new Gen.stack (* list of names of relations declared *)
 let view_names = new Gen.stack (* list of names of views declared *)
 let hp_names = new Gen.stack (* list of names of heap preds declared *)
 
-let get_pos x = 
-  {start_pos = Parsing.symbol_start_pos ();
-  end_pos = Parsing. symbol_end_pos ();
-  mid_pos = Parsing.rhs_start_pos x;
+let modifier_offset = ref {line_num = 1;
+                        line_start = 1;
+                        byte_num = 1;}
+
+let get_pos x =
+  try
+    {
+      start_pos = Parsing.symbol_start_pos ();
+      end_pos = Parsing. symbol_end_pos ();
+      mid_pos = Parsing.rhs_start_pos x;
+    }
+  with _ -> 
+    {
+      start_pos = Lexing.dummy_pos;
+      end_pos = Lexing.dummy_pos;
+      mid_pos = Lexing.dummy_pos;
+    }
+
+(* compute the position by adding the location return by camlp4 with starting_offset *)
+let get_pos_camlp4 l x =
+  let sp = Camlp4.PreCast.Loc.start_pos l in
+  let ep = Camlp4.PreCast.Loc.stop_pos l in
+  let mp = Camlp4.PreCast.Loc.start_pos (Camlp4.PreCast.Loc.shift x l) in
+  let new_sp = {sp with Lexing.pos_lnum = sp.Lexing.pos_lnum + !modifier_offset.line_num - 1;
+                        Lexing.pos_bol = sp.Lexing.pos_bol + !modifier_offset.byte_num - 1;
+                        Lexing.pos_cnum = sp.Lexing.pos_cnum + !modifier_offset.byte_num - 1;} in
+  let new_ep = {ep with Lexing.pos_lnum = ep.Lexing.pos_lnum + !modifier_offset.line_num - 1;
+                        Lexing.pos_bol = ep.Lexing.pos_bol + !modifier_offset.byte_num - 1;
+                        Lexing.pos_cnum = ep.Lexing.pos_cnum + !modifier_offset.byte_num - 1;} in
+  let new_mp = {mp with Lexing.pos_lnum = mp.Lexing.pos_lnum + !modifier_offset.line_num - 1;
+                        Lexing.pos_bol = mp.Lexing.pos_bol + !modifier_offset.byte_num - 1;
+                        Lexing.pos_cnum = mp.Lexing.pos_cnum + !modifier_offset.byte_num - 1;} in
+  {
+    start_pos = new_sp;
+    end_pos = new_ep;
+    mid_pos = new_mp;
   }
-let get_pos_camlp4 l x = 
-                          {
-                            start_pos = Camlp4.PreCast.Loc.start_pos l ;
-			    end_pos = Camlp4.PreCast.Loc.stop_pos l ;
-			    mid_pos = Camlp4.PreCast.Loc.start_pos (Camlp4.PreCast.Loc.shift x l);
-                          }
-        
+
 let rec get_mode (anns : ann list) : mode = match anns with
 	| ann :: rest -> begin
 		match ann with
@@ -228,11 +272,9 @@ let cexp_to_pure_slicing fct f sl = match f with
   | Pure_t (f, _) -> Pure_f (P.BForm (((fct f), sl), None))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"	
 
-let cexp_to_pure2 fct f01 f02 = match (f01,f02) with
-  | Pure_c f1 , Pure_c f2 
-  | Pure_c f1, Pure_t (f2, _)
-  | Pure_t (f1,_), Pure_c f2 
-  | Pure_t (f1,_), Pure_t (f2, _)
+let cexp_to_pure2 fct f01 f02 =
+  match (f01,f02) with
+  | Pure_c f1, Pure_c f2 
       -> (match f1 with
                              | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct c f2), None), None)) explist
                                in let len =  List.length tmp
@@ -270,19 +312,21 @@ let cexp_to_pure2 fct f01 f02 = match (f01,f02) with
                                       )
                                     )
                              )
-  | Pure_f f1 , Pure_c f2 ->(match f1  with 
-						    | P.BForm((pf,il),oe) -> (match pf with 
-                                               | P.Lt (a1, a2, _) 
-                                               | P.Lte (a1, a2, _) 
-                                               | P.Gt (a1, a2, _) 
-                                               | P.Gte (a1, a2, _)
-                                               | P.Eq (a1, a2, _) 
-                                               | P.Neq (a1, a2, _) -> let tmp = P.BForm(((fct a2 f2), None),None) in 
-                                                 Pure_f (P.mkAnd f1 tmp (get_pos 2))
-                                               | _ -> report_error (get_pos 1) "error should be an equality exp" )
-                            | _ -> report_error (get_pos 1) "error should be a binary exp" )
+  | Pure_f f1 , Pure_c f2 ->(
+      match f1  with 
+      | P.BForm((pf,il),oe) -> (match pf with 
+                                | P.Lt (a1, a2, _) 
+                                | P.Lte (a1, a2, _) 
+                                | P.Gt (a1, a2, _) 
+                                | P.Gte (a1, a2, _)
+                                | P.Eq (a1, a2, _) 
+                                | P.Neq (a1, a2, _) ->
+                                    let tmp = P.BForm(((fct a2 f2), None),None) in
+                                    Pure_f (P.mkAnd f1 tmp (get_pos 2))
+                                | _ -> report_error (get_pos 1) "error should be an equality exp" )
+      | _ -> report_error (get_pos 1) "error should be a binary exp" 
+    )
   | _ -> report_error (get_pos 1) "with 2 convert expected cexp, found pure_form" 
-
 
 (* Use the Stream.npeek to look ahead the TOKENS *)
 let peek_try = 
@@ -422,6 +466,7 @@ SHGram.Entry.of_parser "peek_print"
              | [FORALL,_;OPAREN,_;_] -> ()
              | [EXISTS,_;OPAREN,_;_] -> ()
              | [UNION,_;OPAREN,_;_] -> ()
+	     (* | [XPURE,_;OPAREN,_;_] -> () *)
              | [IDENTIFIER id,_;OPAREN,_;_] -> if hp_names # mem id then raise Stream.Failure else ()
              | [_;COLONCOLON,_;_] -> raise Stream.Failure
              | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure
@@ -611,10 +656,12 @@ let sprog = SHGram.Entry.mk "sprog"
 let hprog = SHGram.Entry.mk "hprog"
 let sprog_int = SHGram.Entry.mk "sprog_int"
 let opt_spec_list_file = SHGram.Entry.mk "opt_spec_list_file"
+let opt_spec_list = SHGram.Entry.mk "opt_spec_list"
+let statement = SHGram.Entry.mk "statement"
 let cp_file = SHGram.Entry.mk "cp_file" 
 
 EXTEND SHGram
-  GLOBAL: sprog hprog sprog_int opt_spec_list_file cp_file;
+  GLOBAL: sprog hprog sprog_int opt_spec_list_file opt_spec_list statement cp_file;
   sprog:[[ t = command_list; `EOF -> t ]];
   sprog_int:[[ t = command; `EOF -> t ]];
   hprog:[[ t = hprogn; `EOF ->  t ]];
@@ -630,7 +677,8 @@ non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 
 non_empty_command:
     [[  t=data_decl           -> DataDef t
-      | `PRED;t=view_decl     -> PredDef t
+      | `PRED;t= view_decl     -> PredDef t
+	    | `PRED_PRIM;t=prim_view_decl     -> PredDef t
       | t=barrier_decl        -> BarrierCheck t
       | t = func_decl         -> FuncDef t
       | t = rel_decl          -> RelDef t
@@ -733,9 +781,18 @@ view_decl:
       -> { vh with view_formula = (fst vb);
           view_invariant = oi; 
           view_mem = mpb;
+          view_is_prim = false; 
           view_inv_lock = li;
           try_case_inference = (snd vb) } ]];
 
+prim_view_decl: 
+  [[ vh= view_header; oi= opt_inv; li= opt_inv_lock
+      -> { vh with 
+          (* view_formula = None; *)
+          view_invariant = oi; 
+          view_is_prim = true; 
+          view_inv_lock = li} ]];
+					
 opt_inv_lock: [[t=OPT inv_lock -> t]];
 
 inv_lock:
@@ -844,6 +901,7 @@ view_header:
           view_pt_by_self  = [];
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
           view_inv_lock = None;
+          view_is_prim = false;
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           view_mem = None;
           try_case_inference = false;
@@ -1141,7 +1199,7 @@ data_h_args:
   [[ t= opt_heap_data_arg_list2 -> ([],t)
   | t= opt_heap_data_arg_list -> (t,[])]]; 
               
-opt_pure_constr: [[t=OPT and_pure_constr -> un_option t (P.mkTrue no_pos)]];
+opt_pure_constr:[[t=OPT and_pure_constr -> un_option t (P.mkTrue no_pos)]];
     
 and_pure_constr: [[ peek_and_pure; `AND; t= pure_constr ->t]];
     
@@ -1158,7 +1216,7 @@ pure_constr:
 
 ann_term: 
     [[
-        `TERM -> Term 
+     `TERM -> Term
       | `LOOP -> Loop
       | `MAYLOOP -> MayLoop
     ]];
@@ -1187,7 +1245,7 @@ cexp_w:
 	          [ sl=slicing_label; f=SELF -> set_slicing_utils_pure_double f sl ]
               
       | "pure_or" RIGHTA
-              [ pc1=SELF; `OR; pc2=SELF             -> apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 None (get_pos_camlp4 _loc 2)) pc1 pc2]
+   [ pc1=SELF; `OR; pc2=SELF             ->apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 None (get_pos_camlp4 _loc 2)) pc1 pc2]
               
       | "pure_and" RIGHTA
               [ pc1=SELF; peek_and; `AND; pc2=SELF              -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos_camlp4 _loc 2)) pc1 pc2]
@@ -1314,35 +1372,45 @@ cexp_w:
               [e=SELF ; `COLON; ty=typ               
                               -> apply_cexp_form1 (fun c-> P.mkAnnExp c ty (get_pos_camlp4 _loc 1)) e]
 
-      | "una"
-              [(*   h = ho_fct_header                   -> Pure_f (P.mkTrue (get_pos_camlp4 _loc 1)) *)
+   | "una"
+       [(*   h = ho_fct_header                   -> Pure_f (P.mkTrue (get_pos_camlp4 _loc 1)) *)
      (* | *) `NULL                                     -> Pure_c (P.Null (get_pos_camlp4 _loc 1))
 
-	            (* An Hoa : Hole for partial structures, represented by the hash # character. *)
-	            | `HASH -> let _ = hash_count := !hash_count + 1 in 
-				           Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1)))
-
-                | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN -> (* print_string("here"); *)
-		        (* AnHoa: relation constraint, for instance, given the relation 
-		         * s(a,b,c) == c = a + b.
-		         * After this definition, we can have the relation constraint like
-		         * s(x,1,x+1), s(x,y,x+y), ...
-		         * in our formula.
-		         *)
-      if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
-        else if hp_names # mem id then Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
-                else
-                  begin
+	  (* An Hoa : Hole for partial structures, represented by the hash # character. *)
+       | `HASH -> let _ = hash_count := !hash_count + 1 in 
+		  Pure_c (P.Var (("#" ^ (string_of_int !hash_count),Unprimed),(get_pos_camlp4 _loc 1)))
+       | `IDENTIFIER id1;`OPAREN; `IDENTIFIER id; `OPAREN; cl = id_list; `CPAREN ; `CPAREN-> (* xpure *)
+       (* print_string ("xpure"^id1^"("^id^"())!!!"); *)
+	  	  if hp_names # mem id then Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
+	  	  else
+	  	    begin
+	  	      if not(rel_names # mem id) then print_endline ("WARNING1 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (not in rel_names)")
+	  	      else  print_endline ("WARNING2 : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate (in rel_names)") ;
+	  	      Pure_f(P.BForm ((P.mkXPure id cl (get_pos_camlp4 _loc 1), None), None))
+	  	    end
+       | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; `CPAREN -> (* print_string("here"); *)
+      (* AnHoa: relation constraint, for instance, given the relation 
+       * s(a,b,c) == c = a + b.
+       * After this definition, we can have the relation constraint like
+       * s(x,1,x+1), s(x,y,x+y), ...
+       * in our formula.
+       *)
+	  (* print_string ("rel: "^id^"!!!\n"); *)
+	  if func_names # mem id then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1))
+          else if hp_names # mem id then Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
+          else
+            begin
               if not(rel_names # mem id) then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
-                      Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
-                  end
+              Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
+            end
                 (* (try ( *)
                 (*   if (String.sub id 0 5) = "term_" then Pure_c (P.Func (id, cl, get_pos_camlp4 _loc 1)) *)
                 (*   else Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))) *)
                 (* with Invalid_argument _ -> Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))) *)
+      
                 | peek_cexp_list; ocl = opt_comma_list -> (* let tmp = List.map (fun c -> P.Var(c,get_pos_camlp4 _loc 1)) ocl in *) 
                 Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
-                | t = cid                -> (* print_string ("cexp:"^(fst t)^"\n"); *)  Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
+      | t = cid                ->  Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
                 | t = cid; ann0 = LIST1 ann_heap           -> Pure_t ((P.Var (t, get_pos_camlp4 _loc 1)),  (get_heap_ann_opt ann0 ))
                 | `IMM -> Pure_c (P.AConst(Imm, get_pos_camlp4 _loc 1))
                 | `MUT -> Pure_c (P.AConst(Mutable, get_pos_camlp4 _loc 1))
@@ -1354,7 +1422,7 @@ cexp_w:
 							Pure_c (P.Tsconst(t,get_pos_camlp4 _loc 1))
                 | `INT_LITER (i,_) ; ann0 = LIST1 ann_heap -> Pure_t((P.IConst (i, get_pos_camlp4 _loc 1)) ,(get_heap_ann_opt ann0 ))
                 | `FLOAT_LIT (f,_) ; ann0 = LIST1 ann_heap -> (* print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_t((P.FConst (f, get_pos_camlp4 _loc 1)), (get_heap_ann_opt ann0 ))
-                | `INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
+      | `INT_LITER (i,_)                          ->Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
                 | `FLOAT_LIT (f,_)                          -> (* print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos_camlp4 _loc 1))
                 | `OPAREN; t=SELF; `CPAREN                -> t  
                 |  i=cid; (* An Hoa : extend with multi-dimensional array access *) `OSQUARE; c = LIST1 cexp SEP `COMMA; `CSQUARE                            -> Pure_c (P.ArrayAt (i, c, get_pos_camlp4 _loc 1))
@@ -1371,7 +1439,7 @@ cexp_w:
                     -> apply_pure_form1 (fun c-> List.fold_left (fun f v ->P.mkExists [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
 		        | `FORALL; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN 
                     -> apply_pure_form1 (fun c-> List.fold_left (fun f v-> P.mkForall [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
-		        | t=cid                             -> (*print_string ("pure_form:"^(fst t)^"\n");*) Pure_f (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 1), None), None ))
+		  | t=cid                             -> (* print_string ("pure_form:"^(fst t)^"\n"); *) Pure_f (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 1), None), None ))
 		        | `NOT; t=cid                       -> Pure_f (P.mkNot (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 2), None), None )) None (get_pos_camlp4 _loc 1))
 		        | `NOT; `OPAREN; c=pure_constr; `CPAREN     -> Pure_f (P.mkNot c None (get_pos_camlp4 _loc 1))  
 		        
@@ -1625,7 +1693,8 @@ rel_body:[[ (* formulas {
 
 axiom_decl:[[
 	`AXIOM; lhs=pure_constr; `ESCAPE; rhs=pure_constr ->
-		{ axiom_hypothesis = lhs;
+		{ axiom_id = fresh_int ();
+			axiom_hypothesis = lhs;
 		  axiom_conclusion = rhs; }
 ]];
 
@@ -1642,12 +1711,13 @@ hp_decl:[[
  (*start of hip part*)
 hprogn: 
   [[ t = opt_decl_list ->
+		  let include_defs = ref ([]: string list) in
       let data_defs = ref ([] : data_decl list) in
       let global_var_defs = ref ([] : exp_var_decl list) in
       let logical_var_defs = ref ([] : exp_var_decl list) in
       let enum_defs = ref ([] : enum_decl list) in
       let view_defs = ref ([] : view_decl list) in
-	  let barrier_defs = ref ([] : barrier_decl list) in
+      let barrier_defs = ref ([] : barrier_decl list) in
       (* ref ([] : rel_decl list) in (\* An Hoa *\) *)
       let func_defs = new Gen.stack in (* list of ranking functions *)
       let rel_defs = new Gen.stack in(* list of relations *)
@@ -1658,13 +1728,14 @@ hprogn:
       let hopred_defs = ref ([] : hopred_decl list) in
       let choose d = match d with
         | Type tdef -> begin
-          match tdef with
-          | Data ddef -> data_defs := ddef :: !data_defs
-          | Enum edef -> enum_defs := edef :: !enum_defs
-          | View vdef -> view_defs := vdef :: !view_defs
-          | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
-		  | Barrier bdef -> barrier_defs := bdef :: !barrier_defs
+            match tdef with
+            | Data ddef -> data_defs := ddef :: !data_defs
+            | Enum edef -> enum_defs := edef :: !enum_defs
+            | View vdef -> view_defs := vdef :: !view_defs
+            | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
+            | Barrier bdef -> barrier_defs := bdef :: !barrier_defs
           end
+				| Include incl -> include_defs := incl :: !include_defs  	
         | Func fdef -> func_defs # push fdef 
         | Rel rdef -> rel_defs # push rdef 
         | Hp hpdef -> hp_defs # push hpdef 
@@ -1672,23 +1743,24 @@ hprogn:
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs
         | Logical_var lvdef -> logical_var_defs := lvdef :: !logical_var_defs
         | Proc pdef -> proc_defs := pdef :: !proc_defs 
-      | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
+        | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
     let _ = List.map choose t in
     let obj_def = { data_name = "Object";
-					data_fields = [];
-					data_parent_name = "";
-					data_invs = []; (* F.mkTrue no_pos; *)
+                    data_fields = [];
+                    data_parent_name = "";
+                    data_invs = []; (* F.mkTrue no_pos; *)
                     data_is_template = false;
-					data_methods = [] } in
+                    data_methods = [] } in
     let string_def = { data_name = "String";
-					   data_fields = [];
-					   data_parent_name = "Object";
-					   data_invs = []; (* F.mkTrue no_pos; *)
+                       data_fields = [];
+                       data_parent_name = "Object";
+                       data_invs = []; (* F.mkTrue no_pos; *)
                        data_is_template = false;
-					   data_methods = [] } in
+                       data_methods = [] } in
     let rel_lst = rel_defs # get_stk in
     let hp_lst = hp_defs # get_stk in
-    { prog_data_decls = obj_def :: string_def :: !data_defs;
+    { prog_include_decls = !include_defs;
+			prog_data_decls = obj_def :: string_def :: !data_defs;
       prog_global_var_decls = !global_var_defs;
       prog_logical_var_decls = !logical_var_defs;
       prog_enum_decls = !enum_defs;
@@ -1703,7 +1775,7 @@ hprogn:
       prog_proc_decls = !proc_defs;
       prog_coercion_decls = !coercion_defs; 
       prog_hopred_decls = !hopred_defs;
-	  prog_barrier_decls = !barrier_defs; } ]];
+      prog_barrier_decls = !barrier_defs; } ]];
 
 opt_decl_list: [[t=LIST0 mdecl -> List.concat t]];
   
@@ -1712,7 +1784,8 @@ mdecl:
 	  |t=decl -> [t]]];
   
 decl:
-  [[ t=type_decl                  -> Type t
+  [[ `HIP_INCLUDE; `PRIME; `IDENTIFIER ic; `PRIME -> Include ic
+	|  t=type_decl                  -> Type t
   |  r=func_decl; `DOT -> Func r
   |  r=rel_decl; `DOT -> Rel r (* An Hoa *)
   |  r=hp_decl; `DOT -> Hp r
@@ -1720,7 +1793,7 @@ decl:
   |  g=global_var_decl            -> Global_var g
   |  l=logical_var_decl -> Logical_var l
   |  p=proc_decl                  -> Proc p
-  | `LEMMA; c= coercion_decl; `SEMICOLON    -> Coercion c ]];
+  | `LEMMA; c= coercion_decl; `SEMICOLON    -> Coercion c]];
 
 type_decl: 
   [[ t= data_decl  -> Data t
@@ -1728,6 +1801,7 @@ type_decl:
    | c=class_decl -> Data c
    | e=enum_decl  -> Enum e
    | v=view_decl; `SEMICOLON -> View v
+	 | `PRED_PRIM; v = prim_view_decl; `SEMICOLON    -> View v
    | b=barrier_decl ; `SEMICOLON   -> Barrier b
    | h=hopred_decl-> Hopred h ]];
 
@@ -1895,11 +1969,11 @@ proc_decl:
 proc_header:
   [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl= opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs osl in*)
-     mkProc id "" None false ot fpl t osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
+     mkProc "source_file" id "" None false ot fpl t osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
      
   | `VOID; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs $6 in*)
-    mkProc id "" None false ot fpl void_type osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];
+    mkProc "source_file" id "" None false ot fpl void_type osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None]];
 
 constructor_decl: 
   [[ h=constructor_header; b=proc_body -> {h with proc_body = Some b}
@@ -1909,7 +1983,7 @@ constructor_header:
   [[ `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs $5 in*)
 		(*if Util.empty dynamic_specs then*)
-      mkProc id "" None true ot fpl (Named id) osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
+      mkProc "source_file" id "" None true ot fpl (Named id) osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
     (*	else
 		  report_error (get_pos_camlp4 _loc 1) ("constructors have only static speficiations");*) ]];
 	
@@ -1990,7 +2064,7 @@ labeled_valid_declaration_statement:
       | _ -> report_error (get_pos_camlp4 _loc 1) ("only blocks try and while statements can have labels"))		
 	 (* | t= OPT valid_declaration_statement -> un_option t (Empty (get_pos_camlp4 _loc 1) ) *)
       | t = valid_declaration_statement -> t ]];
-  
+
 valid_declaration_statement:
   [[ t=block -> t
   | t=expression_statement;`SEMICOLON ->t
@@ -2016,7 +2090,7 @@ unfold_statement: [[ `UNFOLD; t=cid  ->	Unfold { exp_unfold_var = t; exp_unfold_
 barr_statement : [[`BARRIER; `IDENTIFIER t -> I.Barrier {exp_barrier_recv = t ; exp_barrier_pos = get_pos_camlp4 _loc 1}]];
  
 assert_statement:
-  [[ `ASSERT; ol= opt_label; f=formulas -> 
+  [[ `ASSERT; ol= opt_label; f=formulas ->
        mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) None (get_pos_camlp4 _loc 1)
    | `ASSERT_EXACT; ol= opt_label; f=formulas -> 
        mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (Some true) (get_pos_camlp4 _loc 1)
@@ -2485,16 +2559,52 @@ ass_rhs = F.subst_stub_flow n_flow b}]];
 (*end of cp_list*)
 END;;
 
-let parse_sleek n s = SHGram.parse sprog (PreCast.Loc.mk n) s
 let parse_sleek n s =
-  DD.no_1_loop "parse_sleek" (fun x -> x) (fun _ -> "?") (fun n -> parse_sleek n s) n
-let parse_hip n s =  SHGram.parse hprog (PreCast.Loc.mk n) s
+  SHGram.parse sprog (PreCast.Loc.mk n) s
+
+let parse_sleek n s =
+  DD.no_1_loop "parse_sleek" (fun x -> x) (pr_list string_of_command) (fun n -> parse_sleek n s) n
+
+let parse_hip n s =
+  SHGram.parse hprog (PreCast.Loc.mk n) s
+
 let parse_hip n s =
   DD.no_1_loop "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n
-let parse_sleek_int n s = SHGram.parse_string sprog_int (PreCast.Loc.mk n) s
-let parse_hip_string n s = SHGram.parse_string hprog (PreCast.Loc.mk n) s
-(* let parse_hip_string n s = 
+
+let parse_sleek_int n s =
+  SHGram.parse_string sprog_int (PreCast.Loc.mk n) s
+
+let parse_hip_string n s =
+  SHGram.parse_string hprog (PreCast.Loc.mk n) s
+
+let parse_hip_string n s = 
   let pr x = x in
-  let pr_no x = "?" in DD.no_2 "parse_hip_string" pr pr pr_no parse_hip_string n s *)
+  let pr_no x = "?" in DD.no_2 "parse_hip_string" pr pr pr_no parse_hip_string n s
+
+let parse_specs_list s =
+  SHGram.parse_string opt_spec_list_file (PreCast.Loc.mk "spec string") s
+
+let parse_specs_string (fname: string) (s: string) (begin_offset: file_offset) : F.struc_formula =
+  (* store the current modifier_offset and assign new value to it *)
+  let store_offset = !modifier_offset in
+  modifier_offset := begin_offset;
+  (* parse *)
+  let res = SHGram.parse_string opt_spec_list (PreCast.Loc.mk fname) s in
+  (* restore the old value of modifier_offset *)
+  modifier_offset := store_offset;
+  (* return *)
+  res
+
+let parse_statement (fname: string) (s: string) (begin_offset: file_offset) =
+  (* store the current modifier_offset and assign new value to it *)
+  let store_offset = !modifier_offset in
+  modifier_offset := begin_offset;
+  (* parse *)
+  let res = SHGram.parse_string statement (PreCast.Loc.mk fname) s in
+  (* restore the old value of modifier_offset *)
+  modifier_offset := store_offset;
+  (* return *)
+  res
+
 let parse_spec s = SHGram.parse_string opt_spec_list_file (PreCast.Loc.mk "spec string") s
 let parse_cpfile n s = SHGram.parse cp_file (PreCast.Loc.mk n) s

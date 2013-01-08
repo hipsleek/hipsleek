@@ -1,3 +1,5 @@
+
+
 class __DivByZeroErr  extends __Error {}
 class __ArrBoundErr  extends __Error {}
 
@@ -201,6 +203,8 @@ axiom dom(a,low,high) & low<=l & h<=high ==> dom(a,l,h).
 
 axiom domb(a,low,high) & low<=l & h<=high ==> domb(a,l,h).
 
+axiom domb(a,low,high) & low<=l | h<=high ==> domb(a,l,h).
+
 relation update_array_1d_b(bool[] a, bool[] b, bool val, int i).
 
 relation update_array_1d(int[] a, int[] r, int val, int i).
@@ -316,6 +320,8 @@ int[,] update___2d(int v, int[,] a, int i, int j)
 int[] aalloc___(int dim) 
 	requires true 
 	ensures dom(res,0,dim-1);
+
+
 
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////

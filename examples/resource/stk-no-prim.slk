@@ -1,0 +1,22 @@
+data cell {
+ int h;
+}.
+
+pred R<high:int> == self::cell<high> & high>=0 
+ inv high>=0.
+
+lemma "R split" self::R<b> & q>=0 & b>q <-> self::R<q> * self::R<b-q> .
+
+// introduced false ..
+
+checkentail x::R<10> |- x::R<10>.
+print residue.
+
+/*
+checkentail x::R<2,10> * x::R<3,5> |- x::R<a,b>.
+print residue.
+
+
+checkentail x::R<2,10> |- x::R<a,b>.
+print residue.
+*/

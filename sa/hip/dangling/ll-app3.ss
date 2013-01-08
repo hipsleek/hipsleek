@@ -16,29 +16,13 @@ ls<> == self=null
 
 /*
 
-H1(x)&true --> x::node<val_52_521',next_52_522'> * HP_541(next_52_522')&true,
-HP_541(v_node_52_561)&v_node_52_561!=null --> H1(v_node_52_561)&true,
-H2(y)&true --> H2(y)&true,
-HP_541(v_node_52_555)&v_node_52_555=null --> emp&true,
-H2(y) * x'::node<val_52_546,y>&true --> H3(x')&true,
-H3(r_573) * x'::node<val_52_548,r_573>&true --> H3(x')&true]
-
-Currently, we obtained:
-
- H3(x_587) ::= x_587::node<val_52_546,y> * HP_588(y)&true,
- H1(x_594) ::= x_594::node<val_52_521',next_52_522'> * next_52_522'::ls[LHSCase]&true,
- H2(y) ::= emp&H2_y_600=y,
+[ H3(x_587) ::= x_587::node<val_52_546,y>@M * HP_588(y)&true,
+ H1(x_594) ::= x_594::node<val_52_521',next_52_522'>@M * next_52_522'::ls[LHSCase]&true,
+ H2(y) ::= emp&DLING_H2_y_600=y,
  HP_588(y) ::= 
- emp&H2_y_600=y
- or y::node<val_52_546,y_591> * HP_588(y_591)&true
-
-It may be more accurate to have
-
- H3(x_587) ::= x_587::node<val_52_546,y> * HP_588(y)&true,
- H1(x_594) ::= x_594::node<val_52_521',next_52_522'> * next_52_522'::ls[LHSCase]&true,
- HP_588(y) ::= 
-  emp&H2(y)
-  or y::node<val_52_546,y_591> * HP_588(y_591)&true
+ emp&DLING_H2_y_600=y
+ or y::node<val_52_546,y_591>@M * HP_588(y_591)&true
+ ]
 
 */
 
