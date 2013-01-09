@@ -18,11 +18,12 @@ sortHO<v,R:relation(int,int)> ==
 inv self!=null;
 
 relation R(int r, int a).
+relation R2(int r, int a).
 
 node insert(node x, node y)
-     infer [R]
+     infer [R,R2]
      requires x::sortHO<a,R> * y::node<v,null>
-     ensures  res::sortHO<b,R> & (v>a & b=a | (a>=b & b=v));
+     ensures  res::sortHO<b,R2> & (v>a & b=a | (a>=b & b=v));
 /*
 
 [RELDEFN R: ( b<=v2_668) -->  R(b,v2_668),

@@ -49,3 +49,10 @@ infer [a,v2] qq!=null & a=b  & a<v & bb<=v2 & bb=v
    |-  qq=null . 
 print residue.
 
+
+
+infer [a,v2] qq!=null & a=b  & a<v & v2<v & v2=bb
+  or qq!=null & a=b  & a<v & bb<=v2 & bb=v 
+   |-  qq=null . 
+print residue.
+
