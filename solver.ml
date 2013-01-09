@@ -2680,12 +2680,17 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 	    let npf = MCP.merge_mems qp ph true in
 	    not (TP.is_sat_mix_sub_no npf sat_subno true true)
 
+
+and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool = 
+  Gen.Profiling.do_1 "unsat_base_nth" (unsat_base_x prog sat_subno) f
+      
+(*
 and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool = 
   (*unsat_base_x prog sat_subno f*)
-  Debug.no_1 "unsat_base_nth" 
+  Debug.ho_1 "unsat_base_nth" 
       Cprinter.string_of_formula string_of_bool
       (fun _ -> unsat_base_x prog sat_subno f) f
-      
+*)
 
 and elim_unsat_es i (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let pr1 = Cprinter.string_of_entail_state in
@@ -3746,9 +3751,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                             ref_vars,new_post
                                       in
 	                                  let rs1 = CF.compose_context_formula rs new_post new_ref_vars true Flow_replace pos in
-                                      (* let _ = print_endline ("\n### rs1 = "^(Cprinter.string_of_context rs1)) in *)
-                                      let rs2 = CF.transform_context (elim_unsat_es_now 14 prog (ref 1)) rs1 in
-                                      (* let _ = print_endline ("\n### rs2 = "^(Cprinter.string_of_context rs2)) in *)
+                                      let rs2 = if !Globals.force_post_sat then CF.transform_context (elim_unsat_es_now 5 prog (ref 1)) rs1 else rs1 in
                                       if (!Globals.ann_vp) then
                                         Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: after checking VarPerm in EAssume: \n ### rs = "^(Cprinter.string_of_context rs2)^"\n")) pos;
 	                                  let rs3 = add_path_id rs2 (pid,i) in
