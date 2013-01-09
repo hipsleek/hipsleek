@@ -1,0 +1,13 @@
+# n-z-1d.ss
+
+!!! REL POST :  R(res,x,y)
+!!! POST:  x>=0 & y>=x & res=x
+!!! REL PRE :  P(x,y)
+!!! PRE :  0<=x & x<=y
+
+PROBLEM : can we gist x>=0 away
+ from both pre/post
+
+# n-z-1d-1.ss
+
+Why do we infer P when it is not in the selected var list.

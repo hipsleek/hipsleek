@@ -31,11 +31,13 @@ P(x,y) & R(v_int_46_580,v_int_46_575,v_int_46_576)) -->  R(res,x,y)]
 [( R(res,x,y), x>=0 & y>=x & res=x, P(x,y), 0<=x & x<=y)]
 *************************************
 
-
 !!! REL POST :  R(res,x,y)
 !!! POST:  x>=0 & y>=x & res=x
 !!! REL PRE :  P(x,y)
 !!! PRE :  0<=x & x<=y
+
+PROBLEM : can we gist x>=0 away
+ from both pre/post
 
 */
 {
