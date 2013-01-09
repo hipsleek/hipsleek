@@ -5556,8 +5556,14 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 (*                  else  *)
                   rs1 @ rs2 
                 in
-                List.fold_left (fun (a,b,c,d,e) (a1,b1,c1,d1,e1) -> 
-                  (or_option (a,a1),or_option (b,b1),merge_rel_ass (c,c1),d@d1,e||e1)) 
+                let is_fail = List.exists (fun (neg,pure,rel,_,_) ->
+                  match neg,pure,rel with
+                  | None,None,[] -> true
+                  | _,_,_ -> false) res in
+                if is_fail then None,None,[],[],false
+                else
+                  List.fold_left (fun (a,b,c,d,e) (a1,b1,c1,d1,e1) -> 
+                    (or_option (a,a1),or_option (b,b1),merge_rel_ass (c,c1),d@d1,e||e1)) 
                     (None,None,[],[],false) res
             end
             in
@@ -9438,7 +9444,7 @@ let pre_calculate fp_func input_fml pre_vars proc_spec
   let constTrue = CP.mkTrue no_pos in
 
   let top_down_fp = fp_func 1 input_fml pre_vars proc_spec in
-  let _ = Debug.ninfo_hprint (add_str "top_down_fp" (pr_list (pr_pair pr pr))) top_down_fp no_pos in
+  let _ = Debug.devel_hprint (add_str "top_down_fp" (pr_list (pr_pair pr pr))) top_down_fp no_pos in
 
   let pre_rec = match top_down_fp with
     | [(rel,rec_inv)] -> 

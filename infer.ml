@@ -597,6 +597,7 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
               DD.devel_pprint "Add relational assumption" pos;
               let (vs_rel,vs_lhs) = List.partition CP.is_rel_var (CP.fv f) in
               let rel_ass = infer_lhs_contra p_thus lhs_xpure vs_lhs pos "relational assumption" in
+              let _ = DD.devel_hprint (add_str "rel_ass(unsat) : " (pr_opt !CP.print_formula)) rel_ass pos in
               begin
                 match rel_ass with
                 | None -> (None, [])
@@ -869,6 +870,8 @@ let rec infer_pure_m_x estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_ori
                 | None -> ([],rels)
                 | Some a -> if (CP.fv a == []) then ([],rels) else (CP.list_of_conjs a), rels)
               in
+              let _ = DD.devel_hprint (add_str "rel_ass : " (pr_pair (pr_list !CP.print_formula) 
+                      (pr_list !CP.print_formula))) p_ass pos in
               begin
                 match p_ass with
                 | [],[] -> (None,None,[])
@@ -1090,7 +1093,7 @@ and infer_pure_m estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_orig rhs_
   let pr1 = !print_mix_formula in 
   let pr2 = !print_entail_state_short in 
   let pr_p = !CP.print_formula in
-  let pr_res_lst = pr_list (fun (es,r,b) -> (pr_list CP.print_lhs_rhs) r) in
+  let pr_res_lst = pr_list (fun (es,r,b) -> (pr_pair (pr2) (pr_list CP.print_lhs_rhs)) (es,r)) in
   let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) pr_res_lst in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
   Debug.no_5 "infer_pure_m_1" 
