@@ -1,4 +1,3 @@
-/* selection sort */
 
 data node {
 	int val@VAL; 
@@ -11,34 +10,59 @@ inv true.
 
 property size<R,n> ==
    n=0 // base case
-   or R::size<R,m> & n=1+m
+   or R::size<R,m> & n=1+m .
 
 property head<V,n> ==
-   n=V
+   n=V .
 
 property sum<V,R,n> ==
    n=0 // base case
-   or REC::sum<V,R,m> & n=VAL+m
+   or REC::sum<V,R,m> & n=V+m .
 
 property height<R,h> ==
    h=0 // base case
-   or R::height<h2> & h=1+max(h2)
+   or R::height<h2> & h=1+max(h2) .
+
+property ordered<V,RR:relation(int,int)> ==
+   R::ordered<V2,RR> & RR<V,V2> .
 
 property set<V,R,S> ==
    S={}
-   or R::set<V,R,S2> & S={V} union S2
+   or R::set<V,R,S2> & S={V} union S2 .
 
-pred llN<n> == derive ll<> using size<REC,n>
+property minValue<V,m> ==
+   m=\inf
+   or R::minValue<V,m2> & m=min(V,m2)
 
-pred llNSum<n> == derive llN<n> using sum<VAL,REC,n>
+property maxValue<V,m> ==
+   m=\inf
+   or R::maxValue<V,m2> & m=max(V,m2)
 
-pred llH<n> == derive ll<> using height[REC,n]
+pred llN<n> == derive ll<> using size<REC,n> .
 
-pred llS<n> == derive ll<> using set[VAL,REC,S]
+pred llNSum<n> == derive llN<n> using sum<VAL,REC,n> .
 
-pred llNS<n,S> == derive llN<n> using set[VAl,REC,S]
+pred llH<n> == derive ll<> using height[REC,n].
 
-pred llV<n> == derive ll<> using head[VAL,n]
+pred llS<n> == derive ll<> using set[VAL,REC,S].
+
+pred llNS<n,S> == derive llN<n> using set[VAl,REC,S].
+
+pred llHead<n> == derive ll<> using head[VAL,n].
+
+pred llMin<m> == derive ll<> using minValue[VAL,m].
+
+pred llMax<m> == derive ll<> using maxValue[VAL,m].
+
+relation Inc(int a, Int b) == a<=b .
+relation Dec(int a, Int b) == a>=b .
+
+pred llOrdered<v,R> == derive llHead<h> using ordered[v,R] .
+
+pred llSorted<v> == derive llHead<h> using ordered[v,Inc] .
+
+pred llSorted<v> == llOrdered<v,Dec> .
+
 
 data node2 {
 	int val@VAL; 
@@ -50,17 +74,17 @@ pred tree<> == self=null
   or tree::node2<_,p,q> * p::tree<> * q::tree<>
 inv true.
 
-pred treeN<n> == derive tree<> using size<REC,n>
+pred treeN<n> == derive tree<> using size<REC,n> .
 
-pred treeNSum<n> == derive treeN<n> using sum<VAL,REC,n>
+pred treeNSum<n> == derive treeN<n> using sum<VAL,REC,n> .
 
-pred treeH<n> == derive tree<> using height[REC,n]
+pred treeH<n> == derive tree<> using height[REC,n].
 
-pred treeS<n> == derive tree<> using set[VAL,REC,S]
+pred treeS<n> == derive tree<> using set[VAL,REC,S].
 
-pred treeNS<n,S> == derive treeN<n> using set[VAl,REC,S]
+pred treeNS<n,S> == derive treeN<n> using set[VAl,REC,S] .
 
-pred treeV<n> == derive tree<> using head[VAL,n]
+pred treeHead<n> == derive tree<> using head[VAL,n] .
 
 
 
