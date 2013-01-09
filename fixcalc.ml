@@ -575,7 +575,11 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
   let rel_defs = List.concat 
     (List.map (fun pair -> helper pair ante_vars specs) pairs) in
 
-  compute_fixpoint_aux rel_defs ante_vars subs bottom_up
+  let true_const,rel_defs = List.partition (fun (_,pf,_) -> CP.isConstTrue pf) rel_defs in
+  let true_const = List.map (fun (rel_fml,pf,_) -> (rel_fml,pf)) true_const in
+  if rel_defs=[] then true_const 
+  else
+    true_const @ (compute_fixpoint_aux rel_defs ante_vars subs bottom_up)
 
 let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
   let is_bag_cnt rel = List.exists CP.is_bag_typ (CP.fv rel) in
