@@ -2484,6 +2484,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                           let proc_spec = proc.proc_stk_of_static_specs # top in
                           try 
                             begin
+                              let _ = DD.devel_pprint ">>>>>> do_compute_fixpoint <<<<<<" no_pos in
                               (* type: (Fixbag.CP.formula * Fixbag.CP.Label_Pure.exp_ty) list *)
                               let pr = Cprinter.string_of_pure_formula in
                               Debug.tinfo_hprint (add_str "rels" (pr_list (pr_pair pr pr))) rels no_pos;
@@ -2492,24 +2493,30 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                                 if rels = [] then (Infer.infer_rel_stk # reset;[])
                                 else if mutual_grp != [] then []
                                 else
+                                  let _ = DD.devel_pprint ">>>>>> do_compute_bottom_up_fixpoint <<<<<<" no_pos in
                                   let rels = Infer.infer_rel_stk # get_stk in
                                   let _ = Infer.infer_rel_stk # reset in
                                   let reloblgs, reldefns = List.partition (fun (rt,_,_) -> CP.is_rel_assume rt) rels in
                                   let reldefns = List.map (fun (_,f1,f2) -> (f1,f2)) reldefns in
-                                  let is_pre_rel fml pvars =
+                                  let is_post_rel fml pvars =
                                     let rhs_rel_defn = List.concat (List.map CP.get_rel_id_list (CP.list_of_conjs fml)) in
                                     List.for_all (fun x -> List.mem x pvars) rhs_rel_defn
                                   in
-                                  let pre_rel_df,post_rel_df = List.partition (fun (_,x) -> is_pre_rel x pre_vars) reldefns in
-                                  let _ = Debug.ninfo_hprint (add_str "pre_rel_df" (pr_list (pr_pair pr pr))) pre_rel_df no_pos in
-                                  let _ = Debug.ninfo_hprint (add_str "post_rel_df" (pr_list (pr_pair pr pr))) post_rel_df no_pos in
-                                  let pre_rel_ids = List.concat (List.map CP.get_rel_id_list pre_rel_fmls) in
-                                  let post_rel_df = if pre_rel_ids=[] then post_rel_df 
+                                  let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in
+                                  let _ = Debug.devel_hprint (add_str "pre_rel_df" (pr_list (pr_pair pr pr))) pre_rel_df no_pos in
+                                  let _ = Debug.devel_hprint (add_str "post_rel_df" (pr_list (pr_pair pr pr))) post_rel_df no_pos in
+(*                                  let pre_rel_ids = List.concat (List.map CP.get_rel_id_list pre_rel_fmls) in*)
+                                  let pre_rel_ids = List.filter (fun x -> CP.is_rel_typ x 
+                                      && not(Gen.BList.mem_eq CP.eq_spec_var x post_vars)) pre_vars in
+                                  let post_rel_df = 
+                                    if pre_rel_ids=[] then post_rel_df 
                                     else List.map (fun (f1,f2) -> let f1 = CP.conj_of_list (List.filter 
                                         (fun x -> CP.intersect (CP.get_rel_id_list x) pre_rel_ids=[]) (CP.list_of_conjs f1)) no_pos in
                                         (f1,f2)) post_rel_df 
                                   in
+                                  let _ = Debug.devel_hprint (add_str "post_rel_df_new" (pr_list (pr_pair pr pr))) post_rel_df no_pos in
                                   let bottom_up_fp = Fixcalc.compute_fixpoint 2 post_rel_df pre_vars proc_spec in
+                                  let _ = Debug.devel_hprint (add_str "bottom_up_fp" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in
                                   Solver.update_with_td_fp bottom_up_fp pre_rel_fmls 
                                     Fixcalc.compute_fixpoint_td reloblgs pre_rel_df post_rel_df pre_vars proc_spec
                               in

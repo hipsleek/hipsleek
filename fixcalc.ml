@@ -528,13 +528,14 @@ let arrange_para_td input_pairs ante_vars =
   pairs, []
 
 let rec unify_rels rel a_rel = match rel, a_rel with
-  | (CP.BForm ((CP.RelForm (name1,args1,p1),p2),p3), f1), 
-    (CP.BForm ((CP.RelForm (name2,args2,_ ),_ ),_ ), f2) ->
+  | (f1,CP.BForm ((CP.RelForm (name1,args1,p1),p2),p3)), 
+    (f2,CP.BForm ((CP.RelForm (name2,args2,_ ),_ ),_ )) ->
     let subst_arg = List.combine (List.map CP.exp_to_spec_var args2) 
                                  (List.map CP.exp_to_spec_var args1) in
     let f2 = CP.subst subst_arg f2 in
     f2
-  | _ -> report_error no_pos "unify_rels: Expected a relation" 
+  | _ -> report_error no_pos ("unify_rels: Expected a relation, " ^ 
+        (pr_pair !CP.print_formula !CP.print_formula) (snd rel, snd a_rel))
 
 let rec preprocess pairs = match pairs with
   | [] -> []
@@ -592,7 +593,8 @@ let compute_fixpoint (i:int) input_pairs ante_vars specs =
   let pr0 = !CP.print_formula in
   let pr1 = pr_list (pr_pair pr0 pr0) in
   let pr2 = !CP.print_svl in
-  DD.no_2_num i "compute_fixpoint" pr1 pr2 (pr_list (pr_triple pr0 pr0 pr0)) 
+  let pr_res = pr_list (pr_pair pr0 pr0) in
+  DD.no_2_num i "compute_fixpoint" pr1 pr2 pr_res
     (fun _ _ -> compute_fixpoint_x input_pairs ante_vars specs true) 
       input_pairs ante_vars
 
@@ -600,7 +602,8 @@ let compute_fixpoint_td (i:int) input_pairs ante_vars specs =
   let pr0 = !CP.print_formula in
   let pr1 = pr_list (pr_pair pr0 pr0) in
   let pr2 = !CP.print_svl in
-  DD.no_2_num i "compute_fixpoint_td" pr1 pr2 (pr_list (pr_triple pr0 pr0 pr0)) 
+  let pr_res = pr_list (pr_pair pr0 pr0) in
+  DD.no_2_num i "compute_fixpoint_td" pr1 pr2 pr_res 
     (fun _ _ -> compute_fixpoint_x input_pairs ante_vars specs false)
       input_pairs ante_vars
 

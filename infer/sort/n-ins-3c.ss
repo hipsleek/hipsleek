@@ -33,6 +33,11 @@ R(v_614,v2_724)) -->  R(b,v2_706),
 RELDEFN R: ( b<v2_749) -->  R(b,v2_749),
 RELDEFN R: ( ((a=b & a<v2_789 & v2_789<=v2_616) | (a=b & v2_616=v2_789)) & R(a,v2_616)) -->  R(b,v2_789)]
 
+How to denote true constant in fixcalc!
+!!!:0: 0: [entail:26][post:26]Input of fixcalc: R2:={[] -> [b,v2_671] -> []: true
+};
+bottomupgen([R2], [2], SimHeur);fixcalc: Parse error on line 2 rest of line: ;
+
 */
 {
     if (y.val<=x.val) {
