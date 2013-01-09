@@ -1228,7 +1228,7 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 			       		(match h1 with
 			       		| CF.ViewNode {CF.h_formula_view_node = vn;
 		       				CF.h_formula_view_arguments = vargs} -> 
-		       				let case_and_layouts = List.combine memf1.CF.mem_formula_guards 						memf1.CF.mem_formula_field_layout in
+		       				let case_and_layouts = List.combine memf1.CF.mem_formula_guards memf1.CF.mem_formula_field_layout in
 		       				let sublist = List.combine p_vars vargs in
 		       				let pure_p = (MCP.pure_of_mix mcp) in
 		       				let compatible_cases = List.filter (fun (c,_) ->
