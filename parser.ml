@@ -2389,11 +2389,11 @@ test_ele:
   (* else if(String.compare t "onef" == 0) then ExpectedHpAss (il,sl,cs) *)
   else if(String.compare t "twof" == 0) then ExpectedTwoF (il,sl,cs)
   else  report_error no_pos ("parser: no_case " ^ t))
-   | t = id; `OSQUARE; il=OPT id_list; `CSQUARE; `OSQUARE; sl=OPT id_list; `CSQUARE; `COLON;`OBRACE;fs=forms;`CBRACE  ->
-   (let il = un_option il [] in
-   let sl = un_option sl [] in
-   if(String.compare t "onef" == 0) then ExpectedOneF (il,sl,fs)
-   else report_error no_pos ("parser: no_case " ^ t))
+	| t = id; `OSQUARE; il=OPT id_list; `CSQUARE; `OSQUARE; sl=OPT id_list; `CSQUARE; `COLON;`OBRACE; cs=forms;`CBRACE  ->
+  (let il = un_option il [] in
+  let sl = un_option sl [] in
+	if(String.compare t "onef" == 0) then ExpectedOnef (il,sl,cs)
+	else report_error no_pos ("parser: no_case " ^ t))
    ]];
 
 
@@ -2404,7 +2404,7 @@ ass_rhs = F.subst_stub_flow n_flow b}]];
 
 forms: [[t = LIST0 form SEP `SEMICOLON -> t]];
 
-form:  [[ peek_onef;t = disjunctive_constr -> F.subst_stub_flow n_flow t]];
+form:  [[ t = disjunctive_constr -> F.subst_stub_flow n_flow t]];
 
 (* end of cp_list part *)
 (* start of cpare program *)
