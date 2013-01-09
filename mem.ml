@@ -1737,19 +1737,19 @@ let rec ramify_unfolded_formula (cf:CF.formula) vl : CF.formula =
     | CF.Base f ->
     		let pos = f.CF.formula_base_pos in
     		let h,mcp,fl,t,a = CF.split_components cf in
-    		let p = MCP.pure_of_mix mcp in
+    		(*let p = MCP.pure_of_mix mcp in*)
     		let ramify_cases = ramify_unfolded_heap h (CP.mkTrue no_pos) vl in
-    		let or_list = List.map (fun (h,rp) -> let p = CP.mkAnd p rp pos in
-    			CF.mkBase h (MCP.mix_of_pure p) t fl a pos) ramify_cases in
+    		let or_list = List.map (fun (h,rp) -> let p = MCP.merge_mems mcp (MCP.mix_of_pure rp) true in
+    			CF.mkBase h mcp t fl a pos) ramify_cases in
     		CF.disj_of_list or_list pos
     | CF.Exists f ->
 		let pos = f.CF.formula_exists_pos in
     		let h,mcp,fl,t,a = CF.split_components cf in
     		let qvars = f.CF.formula_exists_qvars in
-    		let p = MCP.pure_of_mix mcp in
+    		(*let p = MCP.pure_of_mix mcp in*)
     		let ramify_cases = ramify_unfolded_heap h (CP.mkTrue no_pos) vl in
-    		let or_list = List.map (fun (h,rp) -> let p = CP.mkAnd p rp pos in
-    			CF.mkExists qvars h (MCP.mix_of_pure p) t fl a pos) ramify_cases in
+    		let or_list = List.map (fun (h,rp) -> let p = MCP.merge_mems mcp (MCP.mix_of_pure rp) true in
+    			CF.mkExists qvars h mcp t fl a pos) ramify_cases in
     		CF.disj_of_list or_list pos
     		
 let rec remove_accs_from_heap (h: CF.h_formula) : CF.h_formula * CP.formula = 
