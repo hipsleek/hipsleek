@@ -1941,11 +1941,11 @@ let simpl_pair rid (ante, conseq) =
 
 let simpl_pair rid (ante, conseq) = (ante, conseq)
 
-let simpl_pair rid (ante, conseq) =
-  let pr_o = pr_pair Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula in
-  Debug.no_2 "simpl_pair"
-      Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula pr_o
-      (fun _ _ -> simpl_pair rid (ante, conseq)) ante conseq
+(* let simpl_pair rid (ante, conseq) = *)
+(*   let pr_o = pr_pair Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula in *)
+(*   Debug.no_2 "simpl_pair" *)
+(*       Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula pr_o *)
+(*       (fun _ _ -> simpl_pair rid (ante, conseq)) ante conseq *)
 
 let simpl_pair rid (ante, conseq) =
 	Gen.Profiling.do_1 "simpl_pair" (simpl_pair rid) (ante, conseq)
