@@ -8034,7 +8034,7 @@ let remove_dupl_conj_pure (p:formula) =
 let get_rel_args (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
-    | (RelForm(_,args,_),_) -> List.concat (List.map afv args)
+    | (RelForm(_,eargs,_),_) -> List.concat (List.map afv eargs)
     | _ -> [])
   | _ -> []
 

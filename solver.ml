@@ -5330,6 +5330,53 @@ and heap_infer_decreasing_wf prog estate rank is_folding lhs pos =
   Debug.no_1 "heap_infer_decreasing_wf" pr pr_no
       (fun _ -> heap_infer_decreasing_wf_x prog estate rank is_folding lhs pos) rank
 
+(*CP.mkTrue pos, CP.isConstTrue*)
+and subst_rel_by_def_x rel_w_defs (f0:CP.formula) =
+  let pos = CP.pos_of_formula f0 in
+  let rec look_up_def id args ls=
+    match ls with
+      | [] -> raise Not_found
+      | rl::rest -> if String.compare id rl.Cast.rel_name = 0 &&
+          (List.length args) = (List.length rl.Cast.rel_vars)then
+            let ss = List.combine rl.Cast.rel_vars args in
+            (CP.subst ss rl.Cast.rel_formula)
+          else look_up_def id args rest
+  in
+  let rec helper f=
+    match f with
+      | CP.BForm ((bf,_),_) -> begin
+          match bf with
+            | CP.RelForm(id,eargs,_) -> begin
+                try
+                    let args = List.concat (List.map CP.afv eargs) in
+                    let def = look_up_def (CP.name_of_spec_var id) args rel_w_defs in
+                    def
+                with Not_found ->
+                    f
+            end
+            | _ -> f
+      end
+      | CP.And (p1,p2,pos1) -> CP.And ((helper p1), (helper p2),pos1)
+      | CP.AndList al ->
+          let nal = List.fold_left (fun sl1 (sl,p) ->
+              let p2 = helper p in sl1@[(sl,p2)]) [] al in
+          (CP.AndList nal)
+      | CP.Or (p1,p2,ofl,pos1) -> CP.Or ((helper p1,helper p2,ofl,pos1))
+      | CP.Not (p1,ofl,pos1) -> (CP.Not (helper p1,ofl,pos1))
+      | CP.Forall (sv,p1,ofl,pos1) -> CP.Forall (sv,helper p1,ofl,pos1)
+      | CP.Exists (sv,p1,ofl,pos1) -> CP.Exists (sv,helper p1,ofl,pos1)
+  in
+  helper f0
+
+and subst_rel_by_def rel_w_defs (f0:CP.formula) =
+  let pr1= !CP.print_formula in
+  let pr2 = Cprinter.string_of_rel_decl_list in
+  Debug.no_2 "subst_rel_by_def" pr2 pr1 pr1
+      (fun _ _ -> subst_rel_by_def_x rel_w_defs f0) rel_w_defs f0
+
+and subst_rel_by_def_mix rel_w_defs mf =
+   let p =  subst_rel_by_def rel_w_defs (MCP.pure_of_mix mf) in
+   (MCP.mix_of_pure p)
 
 and heap_entail_empty_rhs_heap i p i_f es lhs rhs pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
@@ -5338,9 +5385,13 @@ and heap_entail_empty_rhs_heap i p i_f es lhs rhs pos =
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_orig lhs (rhs_p:MCP.mix_formula) pos : (list_context * proof) =
   (* An Hoa note: RHS has no heap so that we only have to consider whether "pure of LHS" |- RHS *)
+  let rel_w_defs = List.filter (fun rel -> not (CP.isConstTrue rel.Cast.rel_formula)) prog.Cast.prog_rel_decls in
+  let rhs_p = subst_rel_by_def_mix rel_w_defs rhs_p in
+  (*TODO: let estate_orig = {estate_orig with CF.subst_rel_by_def_formula estate_orig.CF.es_formula}*)
   let smart_unsat_estate = ref None in
   let lhs_h = lhs.formula_base_heap in
   let lhs_p = lhs.formula_base_pure in
+  let lhs_p = subst_rel_by_def_mix rel_w_defs lhs_p in
   (* memo slices that may not have been unsat *)
   let lhs_t = lhs.formula_base_type in
   let lhs_fl = lhs.formula_base_flow in
