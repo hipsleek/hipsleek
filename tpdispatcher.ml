@@ -1904,6 +1904,7 @@ let rec simpl_in_quant formula negated rid =
   in helper formula negated rid
 ;;
 
+(* Why not used ?*)
 let simpl_pair rid (ante, conseq) =
   (* let conseq_vars = CP.fv conseq in *)
   (* if (List.exists (fun v -> CP.name_of_spec_var v = waitlevel_name) conseq_vars) then *)
@@ -1938,12 +1939,16 @@ let simpl_pair rid (ante, conseq) =
   let ante3 = simpl_in_quant ante2 true rid in
   (ante3, conseq)
 
+let simpl_pair rid (ante, conseq) = (ante, conseq)
+
 let simpl_pair rid (ante, conseq) =
   let pr_o = pr_pair Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula in
   Debug.no_2 "simpl_pair"
       Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula pr_o
       (fun _ _ -> simpl_pair rid (ante, conseq)) ante conseq
 
+let simpl_pair rid (ante, conseq) =
+	Gen.Profiling.do_1 "simpl_pair" (simpl_pair rid) (ante, conseq)
 ;;
 
 let is_sat (f : CP.formula) (old_sat_no : string): bool =
