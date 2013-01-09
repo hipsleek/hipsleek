@@ -2520,6 +2520,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                                   in
                                   let _ = Debug.devel_hprint (add_str "post_rel_df_new" (pr_list (pr_pair pr pr))) post_rel_df no_pos in
                                   let bottom_up_fp = Fixcalc.compute_fixpoint 2 post_rel_df pre_vars proc_spec in
+                                  let bottom_up_fp = List.map (fun (r,p) -> (r,TP.pairwisecheck_raw p)) bottom_up_fp in
                                   let _ = Debug.devel_hprint (add_str "bottom_up_fp" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in
                                   Solver.update_with_td_fp bottom_up_fp pre_rel_fmls 
                                     Fixcalc.compute_fixpoint_td reloblgs pre_rel_df post_rel_df pre_vars proc_spec
