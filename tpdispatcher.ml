@@ -542,6 +542,9 @@ let start_prover () =
   | MINISAT -> Minisat.start ()
   | _ -> Omega.start()
 
+let start_prover () =
+  Gen.Profiling.do_1 "TP.start_prover" start_prover ()
+
 let stop_prover () =
   match !tp with
   | OmegaCalc -> (
@@ -577,6 +580,9 @@ let stop_prover () =
   | SPASS -> Spass.stop();
   | MINISAT -> Minisat.stop ();
   | _ -> Omega.stop();;
+
+let stop_prover () =
+  Gen.Profiling.do_1 "TP.stop_prover" stop_prover ()
 
 (* Method checking whether a formula contains bag constraints or BagT vars *)
 

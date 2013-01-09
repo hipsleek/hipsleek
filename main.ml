@@ -186,6 +186,7 @@ let process_lib_file prog =
       Iast.prog_view_decls = prog.Iast.prog_view_decls @ vdecls;}
 
 (***************end process compare file*****************)
+(*Working*)
 let process_source_full source =
   Debug.info_pprint ("Full processing file \"" ^ source ^ "\"\n") no_pos;
   flush stdout;
@@ -437,13 +438,16 @@ let process_source_full_after_parser source (prog, prims_list) =
       and waitlevel.
     *)
     let search_for_locklevel proc =
-      if !Globals.web_compile_flag && (not !Globals.allow_locklevel) then
+      if (not !Globals.allow_locklevel) then
         let struc_fv = Iformula.struc_free_vars false proc.Iast.proc_static_specs in
         let b = List.exists (fun (id,_) -> (id = Globals.waitlevel_name)) struc_fv in
         if b then
          Globals.allow_locklevel := true
   in
-  let _ = List.map search_for_locklevel prog.Iast.prog_proc_decls in
+  let _ = if !Globals.web_compile_flag then
+        let _ = List.map search_for_locklevel prog.Iast.prog_proc_decls in
+        ()
+  in
   (**************************************)
   let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
    
@@ -520,7 +524,6 @@ let process_source_full_after_parser source (prog, prims_list) =
   
   (* print mapping table control path id and loc *)
   (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
-  
   let ptime4 = Unix.times () in
   let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
   print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^

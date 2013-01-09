@@ -194,8 +194,7 @@ let prelude () =
   (* start omega system in a separated process and load redlog package *)
 let start() =
   if not !is_omega_running then begin
-      (* print_endline ("Starting Omega..." ^ !omegacalc); *)
-      flush stdout;
+      print_endline ("Starting Omega..." ^ !omegacalc); flush stdout;
       last_test_number := !test_number;
       let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", !omegacalc, [||]) set_process prelude in
       is_omega_running := true;
