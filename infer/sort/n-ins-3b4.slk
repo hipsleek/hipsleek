@@ -55,19 +55,28 @@ next_48_666=p_615 & res=x
 print residue.
 */
 /*
- <1>emp&a=v_614 & flted_24_583=null & v_614<v & a_649=v2_616 & v=v_650 & y!=null & p_615!=null & ((a_649<v_650 & a_649=b_665) | (b_665<=a_649 & b_665=v_650)) & next_48_666=p_615 & res=x & p_50=v_node_48_787 & b_665=v2_51 & b=v_614 & R(v_614,v2_51) & b=v_614&{FLOW,(19,20)=__norm}[]
- inferred rel: [RELDEFN R: ( true) -->  R(b,v2_51)]
-*/
-
-infer [R] v_node_48_787::sortHO<b_665,R> * 
-x::node<v_614,v_node_48_787> &R(a,v2_616) & a=v_614 & 
-flted_24_583=null & v_614<v 
+ infer [R] v_node_48_787::sortHO<b_665,R> * 
+res::node<v_614,v_node_48_787> & R(a,v2_616) & a=v_614 
+//& flted_24_583=null 
+& v_614<v 
 //& !(v_bool_43_567') & v_614<v 
 //& !(v_bool_43_567') & p_615!=null 
 //& !(v_bool_46_566') & p_615!=null & !(v_bool_46_566') 
-& a_649=v2_616 & v=v_650 & y!=null & p_615!=null & 
-((a_649<v_650 & a_649=b_665) | (b_665<=a_649 & b_665=v_650)) & 
-next_48_666=p_615 & res=x
+& a_649=v2_616 & v=v_650 
+//& y!=null 
+//& p_615!=null 
+& ((a_649<v_650 & a_649=b_665) | (b_665<=a_649 & b_665=v_650)) 
+//& next_48_666=p_615 
+//& res=x
+ |-  res::sortHO<b,R> . 
+print residue.
+
+*/
+
+infer [R] qq::sortHO<bb,R> * 
+res::node<a,qq> & R(a,v2) 
+& a<v 
+& ((v2<v & v2=bb) | (bb<=v2 & bb=v)) 
  |-  res::sortHO<b,R> . 
 print residue.
 

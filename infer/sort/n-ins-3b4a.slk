@@ -1,0 +1,19 @@
+
+
+data node {
+	int val; 
+	node next; 
+}.
+
+pred sortHO<v,R:relation(int,int)> == 
+  self::node<v,null> 
+  or self::node<v, p> * p::sortHO<v2,R> & R(v,v2) 
+inv self!=null.
+
+relation R(int a, int b).
+
+infer [R] qq::sortHO<bb,R> * res::node<a,qq> & R(a,v2) & a<v 
+   & ((v2<v & v2=bb) | (bb<=v2 & bb=v)) 
+   |-  res::sortHO<b,R> . 
+print residue.
+
