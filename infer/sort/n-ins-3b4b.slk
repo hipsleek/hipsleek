@@ -31,3 +31,21 @@ infer [R] qq!=null & a=b  & R(a,v2) & a<v
    |-  qq=null . 
 print residue.
 
+infer [a,v2] qq!=null & a=b  & a<v 
+   & ((v2<v & v2=bb) | (bb<=v2 & bb=v)) 
+   |-  qq=null . 
+print residue.
+
+infer [a,v2] qq!=null & a=v2 
+   |-  qq=null . 
+print residue.
+
+
+infer [a,v2] qq!=null & a=b  & a<v & v2<v & v2=bb 
+   |-  qq=null . 
+print residue.
+
+infer [a,v2] qq!=null & a=b  & a<v & bb<=v2 & bb=v 
+   |-  qq=null . 
+print residue.
+
