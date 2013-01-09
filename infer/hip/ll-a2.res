@@ -23,14 +23,14 @@ Checking procedure append2$node~node...
                               1<=n1 & n1<=m&{FLOW,(22,23)=__norm})[])
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
-!!! NEW RANK:[]
 Procedure append2$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 81 invocations 
+Stop Omega... 92 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.26 second(s)
-	Time spent in main process: 0.23 second(s)
-	Time spent in child processes: 0.03 second(s)
+Total verification time: 0.35 second(s)
+	Time spent in main process: 0.3 second(s)
+	Time spent in child processes: 0.05 second(s)
+

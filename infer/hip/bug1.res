@@ -15,14 +15,14 @@ Checking procedure foo2$int...
                       emp&(i-2)<=i' & i'<i & 2<=i&{FLOW,(22,23)=__norm}[])
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
-!!! NEW RANK:[]
 Procedure foo2$int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 46 invocations 
+Stop Omega... 45 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.2 second(s)
-	Time spent in main process: 0.18 second(s)
+Total verification time: 0.23 second(s)
+	Time spent in main process: 0.21 second(s)
 	Time spent in child processes: 0.02 second(s)
+

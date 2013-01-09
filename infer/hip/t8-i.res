@@ -15,7 +15,6 @@ Checking procedure foo1$int...
                       emp&i'=i-1 & 1<=i&{FLOW,(22,23)=__norm}[])
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
-!!! NEW RANK:[]
 Procedure foo1$int SUCCESS
 
 Checking procedure foo1a$int... 
@@ -32,7 +31,6 @@ Checking procedure foo1a$int...
                       emp&i'=i-1 & 1<=i&{FLOW,(22,23)=__norm}[])
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
-!!! NEW RANK:[]
 Procedure foo1a$int SUCCESS
 
 Checking procedure foo1b$int... 
@@ -44,17 +42,17 @@ Checking procedure foo1b$int...
 !!! NEW SPECS: ((None,[]),EBase emp&1<=i&{FLOW,(22,23)=__norm}[]
                     EBase emp&MayLoop&{FLOW,(1,25)=__flow}[]
                             EAssume 78::ref [i]
-                              emp&i'=i-1 & 1<=i&{FLOW,(22,23)=__norm}[])
+                              emp&i=i'+1 & 0<=i'&{FLOW,(22,23)=__norm}[])
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
-!!! NEW RANK:[]
 Procedure foo1b$int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 67 invocations 
+Stop Omega... 63 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.21 second(s)
-	Time spent in main process: 0.19 second(s)
+Total verification time: 0.23 second(s)
+	Time spent in main process: 0.21 second(s)
 	Time spent in child processes: 0.02 second(s)
+

@@ -17,18 +17,16 @@ Checking procedure appif$node~node...
                           {FLOW,(1,25)=__flow}[]
                             EAssume 64::
                               
-                              EXISTS(x',Anon_561,
-                              y': x'::node<Anon_561,y'>@M[Orig]&x'=x & 
-                              y'=y & 0<=n1&{FLOW,(22,23)=__norm})[]
-                              or EXISTS(x',Anon_561,q_562,
-                                 flted_14_560: x'::node<Anon_561,q_562>@M[Orig] * 
-                                 q_562::ll<flted_14_560>@M[Orig]&x'=x & 
-                                 n1=flted_14_560+1 & q_562!=null & 0<=(1+
-                                 flted_14_560)&{FLOW,(22,23)=__norm})[]
+                              EXISTS(Anon_560: x::node<Anon_560,y>@M[Orig]&
+                              0<=n1&{FLOW,(22,23)=__norm})[]
+                              or EXISTS(Anon_560,q_561,
+                                 flted_14_559: x::node<Anon_560,q_561>@M[Orig] * 
+                                 q_561::ll<flted_14_559>@M[Orig]&
+                                 n1=flted_14_559+1 & q_561!=null & 0<=(1+
+                                 flted_14_559)&{FLOW,(22,23)=__norm})[]
                               )
 !!! NEW RELS:[]
 !!! NEW ASSUME:[]
-!!! NEW RANK:[]
 Procedure appif$node~node SUCCESS
 
 Termination checking result:
@@ -36,6 +34,7 @@ Termination checking result:
 Stop Omega... 60 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.22 second(s)
-	Time spent in main process: 0.2 second(s)
-	Time spent in child processes: 0.02 second(s)
+Total verification time: 0.27 second(s)
+	Time spent in main process: 0.24 second(s)
+	Time spent in child processes: 0.03 second(s)
+
