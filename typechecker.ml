@@ -1120,6 +1120,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       let res = match c2 with
                         | None -> ts
                         | Some c ->
+                              let c = if (!Globals.allow_locklevel) then
+                                    (*Some assumption may contain waitlevel,
+                                      translate before adding them into current state*)
+                                    CF.translate_waitlevel_formula c
+                                  else c
+                              in
                               let c = prune_preds prog false c in (* specialise assumed formula *)
                               let assumed_ctx = CF.normalize_max_renaming_list_failesc_context c pos false new_ctx in
                               let r =if !Globals.disable_assume_cmd_sat then assumed_ctx 

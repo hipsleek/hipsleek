@@ -9963,6 +9963,30 @@ let translate_level_eqn_formula (f : formula) : formula =
       !print_formula !print_formula
       translate_level_eqn_formula_x f
 
+let translate_waitlevel_formula_x (f : formula) : formula =
+  let rec helper f =
+  match f with
+  | Base b ->
+      let p = b.formula_base_pure in
+      let np = MCP.translate_waitlevel_mix_formula p in
+      let nb = Base {b with formula_base_pure = np} in
+      nb
+  | Exists e ->
+      let p = e.formula_exists_pure in
+      let np = MCP.translate_waitlevel_mix_formula p in
+      Exists {e with formula_exists_pure = np;}
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+      let new_f1 = helper f1 in
+      let new_f2 = helper f2 in
+      let res = mkOr new_f1 new_f2 pos in
+      res
+  in helper f
+
+let translate_waitlevel_formula (f : formula) : formula =
+  Debug.no_1 "translate_waitlevel_formula"
+      !print_formula !print_formula
+      translate_waitlevel_formula_x f
+
 let infer_lsmu_formula_x (f : formula) : formula =
   let rec helper f =
   match f with

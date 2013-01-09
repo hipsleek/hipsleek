@@ -58,7 +58,7 @@ let enable_para () =
      until proving post-condition when new locks are created inside
      the scope of the procedure.
   *)
-  Globals.elim_exists := false;
+  (* Globals.elim_exists := false; *)
   allow_locklevel:=true
 
 let allow_perm ():bool = 
