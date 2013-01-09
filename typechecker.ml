@@ -2476,11 +2476,12 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                         let new_spec =                           
                           let inf_post_flag = post_ctr # get > 0 in
                           Debug.devel_pprint ("\nINF-POST-FLAG: " ^string_of_bool inf_post_flag) no_pos;
-                          let pres, posts, inf_vars, pre_rel_fmls = CF.get_pre_post_vars [] proc.proc_static_specs in
+                          let pres, posts_wo_rel, all_posts, pre_rel_fmls = CF.get_pre_post_vars [] proc.proc_static_specs in
                           let _ = Debug.ninfo_hprint (add_str "pre_rel_fml" (pr_list !CP.print_formula)) pre_rel_fmls no_pos in
                           let pre_vars = CP.remove_dups_svl (pres @ (List.map 
                               (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) in
-                          let post_vars = CP.remove_dups_svl posts in
+                          let post_vars_wo_rel = CP.remove_dups_svl posts_wo_rel in
+                          let post_vars = CP.remove_dups_svl all_posts in
                           let proc_spec = proc.proc_stk_of_static_specs # top in
                           try 
                             begin
@@ -2502,6 +2503,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                                     let rhs_rel_defn = List.concat (List.map CP.get_rel_id_list (CP.list_of_conjs fml)) in
                                     List.for_all (fun x -> List.mem x pvars) rhs_rel_defn
                                   in
+                                  let _ = Debug.info_hprint (add_str "post_vars" !print_svl) post_vars no_pos in
                                   let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in
                                   let _ = Debug.devel_hprint (add_str "pre_rel_df" (pr_list (pr_pair pr pr))) pre_rel_df no_pos in
                                   let _ = Debug.devel_hprint (add_str "post_rel_df" (pr_list (pr_pair pr pr))) post_rel_df no_pos in
@@ -2547,11 +2549,11 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                               let triples = List.map (fun (a,b,c,d) -> (a,b,d)) tuples in
                               if triples = [] then 
                                 fst (Solver.simplify_relation new_spec None 
-                                    pre_vars post_vars prog inf_post_flag evars lst_assume)
+                                    pre_vars post_vars_wo_rel prog inf_post_flag evars lst_assume)
                               else
                                 let new_spec1 = (CF.transform_spec new_spec (CF.list_of_posts proc_spec)) in
                                 fst (Solver.simplify_relation new_spec1
-                                    (Some triples) pre_vars post_vars prog inf_post_flag evars lst_assume)
+                                    (Some triples) pre_vars post_vars_wo_rel prog inf_post_flag evars lst_assume)
                             end
                           with ex -> 
                               begin

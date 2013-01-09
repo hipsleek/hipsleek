@@ -8902,7 +8902,7 @@ let filter_varperm_formula_all_x (f:formula) : CP.formula list * formula =
 
 let add_fst elem = fun (a1,a2,a3,a4) -> (elem@a1,a2,a3,a4)
 
-let add_rd elem = fun (a1,a2,a3,a4) -> (a1,a2,elem@a3,a4)
+(*let add_rd elem = fun (a1,a2,a3,a4) -> (a1,a2,elem@a3,a4)*)
 
 let add_fth elem = fun (a1,a2,a3,a4) -> (a1,a2,a3,elem@a4)
 
@@ -8927,8 +8927,9 @@ let rec get_pre_post_vars (pre_vars: CP.spec_var list) (sp:struc_formula):
 		(match b.formula_struc_continuation with
     | None -> (base_vars,[],[],rel_fmls)
     | Some l ->  add_fth rel_fmls (add_fst base_vars (get_pre_post_vars (pre_vars@base_vars) l)))
-  | EAssume(svl,f,fl,_) -> ([], (List.map CP.to_primed svl) @ (get_vars_without_rel pre_vars f), [],[])
-  | EInfer b -> add_rd b.formula_inf_vars (get_pre_post_vars pre_vars b.formula_inf_continuation)
+  | EAssume(svl,f,fl,_) -> ([], (List.map CP.to_primed svl) @ (get_vars_without_rel pre_vars f), 
+    (List.map CP.to_primed svl) @ (fv f),[])
+  | EInfer b -> (*add_rd b.formula_inf_vars *)get_pre_post_vars pre_vars b.formula_inf_continuation
   | EList b ->  
 		let l = List.map (fun (_,c)-> get_pre_post_vars pre_vars c) b in
 		List.fold_left (fun (a1,a2,a3,a4) (c1,c2,c3,c4)-> (a1@c1,a2@c2,a3@c3,a4@c4)) ([],[],[],[]) l
