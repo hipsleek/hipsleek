@@ -5395,7 +5395,7 @@ let remove_dupl_false (sl:branch_ctx list) =
       (isAnyFalseCtx oc && not(is_inferred_pre_ctx oc)) ) sl) in
   let pr = pr_list (fun (_,oc) -> !print_context_short oc) in
   if not(fl==[]) && not(nl==[]) then
-    Debug.info_hprint (add_str "false ctx removed" pr) fl no_pos; 
+    Debug.tinfo_hprint (add_str "false ctx removed" pr) fl no_pos; 
   if nl==[] then 
     if (fl==[]) then []
     else [List.hd(fl)]

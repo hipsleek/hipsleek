@@ -21,22 +21,20 @@ property sum<V,R,n> ==
 
 property height<R,h> ==
    h=0 // base case
-   or R::height<h2> & h=1+max(h2) .
+   or R::height<R,h2> & h=1+max(h2) .
 
 property ordered<V,RR:relation(int,int)> ==
-   R::ordered<V2,RR> & RR<V,V2> .
+   R::ordered<V2,RR> & RR(V,V2) .
 
 property set<V,R,S> ==
    S={}
    or R::set<V,R,S2> & S={V} union S2 .
 
 property minValue<V,m> ==
-   m=\inf
-   or R::minValue<V,m2> & m=min(V,m2).
+   R::minValue<V,m2> & m=min(V,m2).
 
 property maxValue<V,m> ==
-   m=\inf
-   or R::maxValue<V,m2> & m=max(V,m2).
+   R::maxValue<V,m2> & m=max(V,m2).
 
 pred llN<n> == derive ll<> using size<REC,n> .
 
@@ -55,6 +53,7 @@ pred llMin<m> == derive ll<> using minValue<VAL,m>.
 pred llMax<m> == derive ll<> using maxValue<VAL,m>.
 
 relation Inc(int a, Int b) == a<=b .
+
 relation Dec(int a, Int b) == a>=b .
 
 pred llOrdered<v,R> == derive llHead<h> using ordered<v,R> .
