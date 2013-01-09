@@ -2510,9 +2510,11 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                                       && not(Gen.BList.mem_eq CP.eq_spec_var x post_vars)) pre_vars in
                                   let post_rel_df = 
                                     if pre_rel_ids=[] then post_rel_df 
-                                    else List.map (fun (f1,f2) -> let f1 = CP.conj_of_list (List.filter 
-                                        (fun x -> CP.intersect (CP.get_rel_id_list x) pre_rel_ids=[]) (CP.list_of_conjs f1)) no_pos in
-                                        (f1,f2)) post_rel_df 
+                                    else List.concat (List.map (fun (f1,f2) -> 
+                                      let tmp = List.filter (fun x -> CP.intersect 
+                                        (CP.get_rel_id_list x) pre_rel_ids=[]) (CP.list_of_conjs f1) in
+                                      if tmp=[] then [] else [(CP.conj_of_list tmp no_pos,f2)]
+                                      ) post_rel_df)
                                   in
                                   let _ = Debug.devel_hprint (add_str "post_rel_df_new" (pr_list (pr_pair pr pr))) post_rel_df no_pos in
                                   let bottom_up_fp = Fixcalc.compute_fixpoint 2 post_rel_df pre_vars proc_spec in
