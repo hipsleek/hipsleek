@@ -26,12 +26,36 @@ node insert(node x, node y)
      ensures  res::sortHO<b,R2> & (v>a & b=a | (a>=b & b=v));
 /*
 
-[RELDEFN R: ( b<=v2_668) -->  R(b,v2_668),
-RELDEFN R: ( a=v2_706 & v2_616=v2_724 & R(a,v2_616)) -->  R(v2_706,v2_724),
-RELDEFN R: ( v2_706=v_614 & a=v2_706 & v2_616=v2_724 & b<=v2_706 & R(a,v2_616) & 
-R(v_614,v2_724)) -->  R(b,v2_706),
-RELDEFN R: ( b<v2_749) -->  R(b,v2_749),
-RELDEFN R: ( ((a=b & a<v2_789 & v2_789<=v2_616) | (a=b & v2_616=v2_789)) & R(a,v2_616)) -->  R(b,v2_789)]
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN R2: ( b<=v2_671) -->  R2(b,v2_671),
+RELDEFN R2: ( R(a,v2_619) & R(r_744,a_745)) -->  R2(r_744,a_745),
+RELDEFN R2: ( a=v2_709 & v2_619=v2_727 & R(a,v2_619) & R(r_744,a_745)) -->  R2(v2_709,v2_727),
+RELDEFN R2: ( v2_709=v_617 & a=v2_709 & v2_619=v2_727 & b<=v2_709 & R(a,v2_619) & 
+R(r_744,a_745) & R2(v_617,v2_727)) -->  R2(b,v2_709),
+RELDEFN R2: ( b<v2_758) -->  R2(b,v2_758),
+RELDEFN R2: ( ((a=b & a<v2_798 & v2_798<=v2_619) | (a=b & v2_619=v2_798)) & R(a,v2_619)) -->  R2(b,v2_798)]
+*************************************
+
+Context of Verification Failure: File "n-ins-3c.ss",Line:26,Col:14
+Last Proving Location: File "n-ins-3c.ss",Line:43,Col:8
+ERROR: at _0_0 
+Message: unify_rels: Expected a relation
+!!! PROBLEM with fix-point calculation
+Procedure insert$node~node FAIL-2
+Exception Failure("unify_rels: Expected a relation") Occurred!
+Error(s) detected when checking procedure insert$node~node
+
+PROBLEM
+=======
+
+The above triggers FIX-POINT computation but
+had an error. I wonder if mutual-recursive
+fixpoint is the cause of problem. It may be
+good to print more information prior to
+the FIXPOINT process, so we can tell 
+what causes such problems.
 
 */
 {
