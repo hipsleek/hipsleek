@@ -618,6 +618,7 @@ let infer_lhs_contra_estate estate lhs_xpure pos msg =
                         ) (CP.list_of_conjs neg_lhs)) in
                       if rel_ass = [] then (None,[])
                       else
+                        let _ = DD.devel_hprint (add_str "rel_ass_final(unsat) : " (pr_list print_lhs_rhs)) rel_ass pos in
                         let new_estate = CF.false_es_with_orig_ante estate estate.es_formula pos in
                         (None, [(new_estate,rel_ass,true)])
                 end
@@ -908,7 +909,8 @@ let rec infer_pure_m_x estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_ori
                         } 
                       in
                       let _ = DD.ninfo_hprint (add_str "LHS : " !CP.print_formula) lhs_xpure pos in           
-                      let _ = DD.ninfo_hprint (add_str "New estate : " !print_entail_state_short) new_estate pos in
+                      let _ = DD.devel_hprint (add_str "rel_ass_final: " (pr_list print_lhs_rhs)) rel_ass pos in
+                      let _ = DD.devel_hprint (add_str "New estate : " !print_entail_state_short) new_estate pos in
                       let _ = infer_rel_stk # push_list rel_ass in
                       let _ = Log.current_infer_rel_stk # push_list rel_ass in
                       (None,None,[(new_estate,rel_ass,false)])
@@ -1388,7 +1390,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
         in
         (* End - Auxiliary function *)
         let inf_rel_ls = List.map (filter_ass lhs_p_new) rel_rhs in
-        DD.trace_hprint (add_str "Rel Inferred (b4 pairwise):" (pr_list (fun (x,_) -> !CP.print_formula x))) inf_rel_ls pos;
+        DD.trace_hprint (add_str "Rel Inferred (b4 pairwise):" (pr_list print_only_lhs_rhs)) inf_rel_ls pos;
         let inf_rel_ls = 
           if is_bag_cnt then 
             List.map (fun (lhs,rhs) -> (pairwise_proc lhs,rhs)) inf_rel_ls 
@@ -1403,12 +1405,13 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
         let estate = { estate with es_infer_rel = estate.es_infer_rel@inf_rel_ls;} in
         if inf_rel_ls != [] then
           begin
-            DD.tinfo_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
+            DD.devel_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
             DD.tinfo_hprint (add_str "Infer Rel Ids" !print_svl) ivs pos;
             (* DD.devel_hprint (add_str "LHS heap Xpure1:" !print_mix_formula) lhs_h_mix pos; *)
             DD.tinfo_hprint (add_str "LHS pure" !CP.print_formula) lhs_p pos;
-            DD.devel_hprint (add_str "RHS pure" !CP.print_formula) rhs_p pos;
+            DD.tinfo_hprint (add_str "RHS pure" !CP.print_formula) rhs_p pos;
            (* DD.tinfo_hprint (add_str "RHS pure" !CP.print_formula) rhs_p_n pos; *)
+            DD.devel_hprint (add_str "Rel Inferred:" (pr_list print_lhs_rhs)) inf_rel_ls pos;
             DD.tinfo_hprint (add_str "RHS Rel List" (pr_list !CP.print_formula)) rel_rhs pos;
           end;
         (estate,lhs_mix,rhs_mix_new)
