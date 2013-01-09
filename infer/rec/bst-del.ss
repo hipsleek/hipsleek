@@ -64,7 +64,7 @@ void delete(ref node2 x, int a)
 					delete(xleft, a);
 			}
 		}
-        dprint;
+/*        dprint;*/
 	}
     else {
       assume true;

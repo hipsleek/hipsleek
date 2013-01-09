@@ -8,7 +8,7 @@ Entail (1) : Valid.
 
 Entail (2) : Valid. 
 
- <1>x::node<Anon_12,q>@L[Orig] * q::ll<m>@L[Orig][LHSCase]&m+1=n & x!=null & rs=r+1 & R(r,m)&{FLOW,(19,20)=__norm}[]
+ <1>x::node<Anon_12,q>@L[Orig] * q::ll<m>@L[Orig][LHSCase]&n=m+1 & x!=null & rs=r+1 & R(r,m)&{FLOW,(19,20)=__norm}[]
  inferred rel: [RELDEFN R: ( r=rs-1 & n=m+1 & 0<=m & R(r,m)) -->  R(rs,n)]
 
 Stop Omega... 20 invocations 

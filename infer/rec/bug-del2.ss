@@ -6,7 +6,7 @@ void del(int n)
 {  
     acc(n);
     n=n-1; 
-    dprint;
+    //dprint;
     acc(n);
 }
 

@@ -41,7 +41,7 @@ void delete(node x, int a)
     //node tmp = x.next.next;
     //x.next = tmp;
     x.next = x.next.next;
-    dprint;
+    //dprint;
   }
   else
   {

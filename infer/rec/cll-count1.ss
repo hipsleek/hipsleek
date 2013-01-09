@@ -29,7 +29,7 @@ int count(node x, node h)
 	int n;
 	
 	if (x == h){
-    dprint;
+    //dprint;
 		return 0; 
   }
 	else
@@ -37,7 +37,7 @@ int count(node x, node h)
     //assume false;
 		n = count(x.next, h);
 		n = n + 1;
-    dprint;
+    //dprint;
 		return n;
 	}
 }

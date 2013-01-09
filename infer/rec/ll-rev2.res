@@ -20,18 +20,18 @@ Checking procedure reverse$node~node...
                               EXISTS(t: ys'::ll<t>@M[Orig][LHSCase]&
                               xs'=null & n>=0 & t>=n & t=m+n&
                               {FLOW,(22,23)=__norm})[])
-!!! NEW RELS:[ (n_584=n-1 & m=m_585-1 & t_603=t & 1<=n & 1<=m_585 & 0<=t & 
-  A(m_585,n_584,t_603)) --> A(m,n,t),
+!!! NEW RELS:[ (n_583=n-1 & m=m_584-1 & t=t_602 & 1<=n & 1<=m_584 & 0<=t & 
+  A(m_584,n_583,t_602)) --> A(m,n,t),
  (n=0 & m=t & 0<=t) --> A(m,n,t)]
 !!! NEW ASSUME:[]
-!!! NEW RANK:[]
 Procedure reverse$node~node SUCCESS
 
 Termination checking result:
 
-Stop Omega... 73 invocations 
+Stop Omega... 67 invocations 
 0 false contexts at: ()
 
-Total verification time: 0.27 second(s)
-	Time spent in main process: 0.22 second(s)
-	Time spent in child processes: 0.05 second(s)
+Total verification time: 0.29 second(s)
+	Time spent in main process: 0.23 second(s)
+	Time spent in child processes: 0.06 second(s)
+

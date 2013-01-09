@@ -13,7 +13,7 @@ int length(node x)
 {
   if (x==null) {
     int r=0;
-    dprint;
+    //dprint;
     return r;
   }
   else {

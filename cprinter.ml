@@ -1036,7 +1036,7 @@ let rec pr_h_formula h =
 	      pr_derv dr;
           (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
           if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
-	      fmt_string ("["^(string_of_int ufn)^"]");
+(*	      fmt_string ("["^(string_of_int ufn)^"]");*)
 		  if original then fmt_string "[Orig]"
 	      else fmt_string "[Derv]";
  	  if lhs_case then fmt_string "[LHSCase]";

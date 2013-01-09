@@ -2157,24 +2157,24 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                     (* let hprels = List.map (fun (_,a2,a3)-> (a2,a3)) hprels in *)
                     (* let hp_lst_assume = List.map (fun (_,a2,a3)-> (a2,a3)) hp_lst_assume in *)
 		            (* let hp_lst_simplified_assume = Sa2.simplify_lst_constrs hp_lst_assume in *)
-                    if not(Infer.infer_rel_stk# is_empty) then
-                      begin
-                        print_endline "\n*************************************";
-                        print_endline "*******pure relation assumption ******";
-                        print_endline "*************************************";
-                        print_endline (Infer.infer_rel_stk # string_of_reverse);
-                        print_endline "*************************************";
-(*                        Infer.infer_rel_stk # reset;*)
-                      end;                    
-                    if not(Infer.rel_ass_stk# is_empty) then
-                      begin
-                        print_endline ""; 
-                        print_endline "*************************************";
-                        print_endline "*******relational assumption ********";
-                        print_endline "*************************************";
-                        print_endline (Infer.rel_ass_stk # string_of_reverse);
-                        print_endline "*************************************" 
-                      end;
+(*                    if not(Infer.infer_rel_stk# is_empty) then*)
+(*                      begin*)
+(*                        print_endline "\n*************************************";*)
+(*                        print_endline "*******pure relation assumption ******";*)
+(*                        print_endline "*************************************";*)
+(*                        print_endline (Infer.infer_rel_stk # string_of_reverse);*)
+(*                        print_endline "*************************************";*)
+(*(*                        Infer.infer_rel_stk # reset;*)*)
+(*                      end;                    *)
+(*                    if not(Infer.rel_ass_stk# is_empty) then*)
+(*                      begin*)
+(*                        print_endline ""; *)
+(*                        print_endline "*************************************";*)
+(*                        print_endline "*******relational assumption ********";*)
+(*                        print_endline "*************************************";*)
+(*                        print_endline (Infer.rel_ass_stk # string_of_reverse);*)
+(*                        print_endline "*************************************" *)
+(*                      end;*)
 		            let ls_hprel, ls_inferred_hps, dropped_hps =
                       if !Globals.sa_en_norm then Sa.infer_hps prog hp_lst_assume
                         sel_hp_rels sel_post_hp_rels (Gen.BList.remove_dups_eq
@@ -2503,7 +2503,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                                     let rhs_rel_defn = List.concat (List.map CP.get_rel_id_list (CP.list_of_conjs fml)) in
                                     List.for_all (fun x -> List.mem x pvars) rhs_rel_defn
                                   in
-                                  let _ = Debug.info_hprint (add_str "post_vars" !print_svl) post_vars no_pos in
+                                  let _ = Debug.ninfo_hprint (add_str "post_vars" !print_svl) post_vars no_pos in
                                   let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in
                                   let _ = Debug.devel_hprint (add_str "pre_rel_df" (pr_list (pr_pair pr pr))) pre_rel_df no_pos in
                                   let _ = Debug.devel_hprint (add_str "post_rel_df" (pr_list (pr_pair pr pr))) post_rel_df no_pos in
@@ -2526,13 +2526,13 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                               in
                               (* let pr_ty = !CP.Label_Pure.ref_string_of_exp in *)
                               Infer.fixcalc_rel_stk # push_list tuples;
-                              begin
-                                print_endline "\n*************************************";
-                                print_endline "*******fixcalc of pure relation *******";
-                                print_endline "*************************************";
-                                print_endline (Infer.fixcalc_rel_stk # string_of_reverse);
-                                print_endline "*************************************"
-                              end;                    
+(*                              begin*)
+(*                                print_endline "\n*************************************";*)
+(*                                print_endline "*******fixcalc of pure relation *******";*)
+(*                                print_endline "*************************************";*)
+(*                                print_endline (Infer.fixcalc_rel_stk # string_of_reverse);*)
+(*                                print_endline "*************************************"*)
+(*                              end;                    *)
                               (* Debug.info_hprint (add_str "triples" (pr_list (pr_pair pr pr_ty))) triples no_pos; *)
 (*                              let triples = List.map (fun (rel,post) ->*)
 (*                                  let exist_vars = CP.diff_svl (CP.fv rel) inf_vars in*)
@@ -2541,9 +2541,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                               let evars = stk_evars # get_stk in
                               (* let evars = [] in*)
                               let _ = List.iter (fun (rel_post,post,rel_pre,pre) ->
-                                  Debug.info_pprint ("REL POST : "^Cprinter.string_of_pure_formula rel_post) no_pos;
+                                  Debug.info_pprint ("REL : "^Cprinter.string_of_pure_formula rel_post) no_pos;
                                   Debug.info_pprint ("POST: "^Cprinter.string_of_pure_formula post) no_pos;
-                                  Debug.info_pprint ("REL PRE : "^Cprinter.string_of_pure_formula rel_pre) no_pos;
+(*                                  Debug.info_pprint ("REL PRE : "^Cprinter.string_of_pure_formula rel_pre) no_pos;*)
                                   Debug.info_pprint ("PRE : "^Cprinter.string_of_pure_formula pre) no_pos) tuples in
                               (* TODO *)
                               let triples = List.map (fun (a,b,c,d) -> (a,b,d)) tuples in
@@ -2601,12 +2601,12 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                             (* let subs = List.map (fun xs -> CP.simplify_subs xs vars []) ra in *)
                             (* Debug.info_hprint (add_str "alias" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) ra no_pos; *)
                             (* Debug.info_hprint (add_str "subs" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) subs no_pos; *)
-                            Debug.ninfo_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
-                            let _ = if prepost_ctr # get > 0 then 
+                            Debug.info_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
+                            let _ = if true then 
                               Debug.info_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos else () in
                             let _ = prepost_ctr # reset in
-                            Debug.ninfo_hprint (add_str "NEW RELS" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) rels no_pos;
-                            Debug.ninfo_hprint (add_str "NEW ASSUME" (pr_list_ln Cprinter.string_of_lhs_rhs)) lst_assume no_pos;
+                            Debug.info_hprint (add_str "NEW RELS" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) rels no_pos;
+                            Debug.info_hprint (add_str "NEW ASSUME" (pr_list_ln Cprinter.string_of_lhs_rhs)) lst_assume no_pos;
                             Debug.ninfo_hprint (add_str "NEW HP RELS" (pr_list_ln Cprinter.string_of_hprel)) hprels no_pos;
                             Debug.ninfo_hprint (add_str "NEW HP ASSUME" (pr_list_ln Cprinter.string_of_hprel)) hp_lst_assume no_pos;
                             Debug.ninfo_hprint (add_str "NEW INFERRED HP" (pr_list_ln Cprinter.string_of_hprel)) ls_inferred_hps no_pos;

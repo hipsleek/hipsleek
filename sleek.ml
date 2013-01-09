@@ -313,28 +313,28 @@ let _ =
         let i_m = !Tpdispatcher.cache_imply_miss in
         if s_c>0 then
           begin
-            print_endline ("\nSAT Count   : "^(string_of_int s_c)); 
-            print_endline ("SAT % Hit   : "^(string_of_hit_percent s_c s_m))
+(*            print_endline ("\nSAT Count   : "^(string_of_int s_c)); *)
+(*            print_endline ("SAT % Hit   : "^(string_of_hit_percent s_c s_m))*)
           end;
         if i_c>0 then
           begin
-            print_endline ("IMPLY Count : "^(string_of_int i_c)); 
-            print_endline ("IMPLY % Hit : "^(string_of_hit_percent i_c i_m))
+(*            print_endline ("IMPLY Count : "^(string_of_int i_c)); *)
+(*            print_endline ("IMPLY % Hit : "^(string_of_hit_percent i_c i_m))*)
            end;
-        if i_c+s_c>0 then (Gen.Profiling.print_info_task "cache overhead")
-        else ()
+(*        if i_c+s_c>0 then (Gen.Profiling.print_info_task "cache overhead")*)
+(*        else ()*)
      end
           else ()
     in
     let ptime4 = Unix.times () in
     let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime in
-    let _ = print_string ("\nTotal verification time: " 
-    ^ (string_of_float t4) ^ " second(s)\n"
-    ^ "\tTime spent in main process: " 
-    ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
-    ^ "\tTime spent in child processes: " 
-    ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
-    in
+(*    let _ = print_string ("\nTotal verification time: " *)
+(*    ^ (string_of_float t4) ^ " second(s)\n"*)
+(*    ^ "\tTime spent in main process: " *)
+(*    ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"*)
+(*    ^ "\tTime spent in child processes: " *)
+(*    ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")*)
+(*    in*)
     let _= sleek_proof_log_Z3 !source_files in
     let _ = 
       if (!Globals.profiling && not !inter) then 

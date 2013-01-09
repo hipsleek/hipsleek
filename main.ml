@@ -54,7 +54,7 @@ let parse_file_full file_name =
 
 (* Parse all prelude files declared by user.*)
 let process_primitives (file_list: string list) : Iast.prog_decl list =
-  Debug.info_pprint (" processing primitives \"" ^(pr_list pr_id file_list)) no_pos;
+(*  Debug.info_pprint (" processing primitives \"" ^(pr_list pr_id file_list)) no_pos;*)
   flush stdout;
   let new_names = List.map (fun c-> (Gen.get_path Sys.executable_name) ^ (String.sub c 1 ((String.length c) - 2))) file_list in
   if (Sys.file_exists "./prelude.ss") then [parse_file_full "./prelude.ss"]
@@ -134,7 +134,7 @@ let process_lib_file prog =
 
 (***************end process compare file*****************)
 let process_source_full source =
-  Debug.info_pprint ("Full processing file \"" ^ source ^ "\"") no_pos;
+(*  Debug.info_pprint ("Full processing file \"" ^ source ^ "\"") no_pos;*)
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source in
@@ -316,7 +316,7 @@ let process_source_full source =
 	)
 
 let process_source_full_parse_only source =
-  Debug.info_pprint ("Full processing file (parse only) \"" ^ source ^ "\"") no_pos;
+(*  Debug.info_pprint ("Full processing file (parse only) \"" ^ source ^ "\"") no_pos;*)
   flush stdout;
   let prog = parse_file_full source in
   (* Remove all duplicated declared prelude *)
