@@ -21,3 +21,13 @@ print residue.
 WHY isn't residue marked as false?
 */
 
+infer [R] qq::sortHO<bb,R> & a=b  & R(a,v2) & a<v 
+   & ((v2<v & v2=bb) | (bb<=v2 & bb=v)) 
+   |-  qq=null . 
+print residue.
+
+infer [R] qq!=null & a=b  & R(a,v2) & a<v 
+   & ((v2<v & v2=bb) | (bb<=v2 & bb=v)) 
+   |-  qq=null . 
+print residue.
+
