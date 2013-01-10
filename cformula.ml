@@ -8939,9 +8939,9 @@ let rec get_pre_post_vars (pre_vars: CP.spec_var list) (sp:struc_formula):
 		let l = List.map (fun (_,c)-> get_pre_post_vars pre_vars c) b in
 		fold_left_x l
   | EOr b -> 
-		let pre1, post1, iv1, inf1, rel_fmls1 = get_pre_post_vars pre_vars b.formula_struc_or_f1 in
-		let pre2, post2, iv2, inf2, rel_fmls2 = get_pre_post_vars pre_vars b.formula_struc_or_f2 in
-		(pre1@pre2, post1@post2, iv1@iv2, inf1@inf2, rel_fmls1@rel_fmls2)
+    let pre1, post1, iv1, inf1, rel_fmls1 = get_pre_post_vars pre_vars b.formula_struc_or_f1 in
+    let pre2, post2, iv2, inf2, rel_fmls2 = get_pre_post_vars pre_vars b.formula_struc_or_f2 in
+    (pre1@pre2, post1@post2, iv1@iv2, inf1@inf2, rel_fmls1@rel_fmls2)
 		
 let filter_varperm_formula_all (f:formula) : CP.formula list * formula =
   let pr_out (ls,f) = "\n ### ls = " ^ (pr_list !print_pure_f ls) ^ "\n ### f = " ^ (!print_formula f) in
@@ -9776,7 +9776,7 @@ let rec add_pure (sp:struc_formula) rel_fml_pre rel_fml_post = match sp with
     formula_struc_continuation =
     (match b.formula_struc_continuation with
       | None -> None
-      | Some f -> Some (add_pure f rel_fml_pre rel_fml_post))}
+      | Some f -> Some (add_pure f None rel_fml_post))}
   | EAssume(svl,f,fl,t) -> (match rel_fml_post with
       | None -> sp
       | Some fml -> EAssume(svl,add_pure_fml f fml,fl,t))

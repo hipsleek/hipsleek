@@ -424,7 +424,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                         let new_view = look_up_view_def b.CF.formula_inf_pos prog.prog_view_decls new_view_name in
                         let sub_pair = ((old_view_name,old_view.view_vars),(new_view_name,new_view.view_vars)) in
                         let new_spec,new_args = CF.tran_spec b.CF.formula_inf_continuation sub_pair in
-                        Debug.tinfo_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
+                        Debug.tinfo_hprint (add_str "TEMP SPECS" pr_spec) new_spec no_pos;
                         new_spec,new_args
               end
             in
@@ -437,37 +437,45 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                           else
                             let pre_vars,_,_,_,_ = CF.get_pre_post_vars [] new_formula_inf_continuation in
                             let pre_args, _ = List.partition (fun x -> List.mem x pre_vars) new_args in
-                            (*                      let new_rel_pre = CP.fresh_spec_var_rel () in*)
+                            let new_rel_pre = CP.fresh_spec_var_rel () in
                             let new_rel_post = CP.fresh_spec_var_rel () in
-                            (*                      let new_rel_fml_pre = CP.BForm ((CP.RelForm (new_rel_pre, List.map (fun v -> CP.mkVar v no_pos) pre_args, no_pos),None),None) in*)
+                            let new_rel_fml_pre = CP.BForm ((CP.RelForm (new_rel_pre, List.map (fun v -> CP.mkVar v no_pos) pre_args, no_pos),None),None) in
                             let new_rel_fml_post = CP.BForm ((CP.RelForm (new_rel_post, List.map (fun v -> CP.mkVar v no_pos) new_args, no_pos),None),None) in
-                            let new_spec = CF.add_pure new_formula_inf_continuation None (Some new_rel_fml_post) in
-                            Debug.tinfo_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
-                            pre_args@[new_rel_post],new_spec
+                            let new_spec = CF.add_pure new_formula_inf_continuation (Some new_rel_fml_pre) (Some new_rel_fml_post) in
+                            Debug.tinfo_hprint (add_str "TEMP SPECS1" pr_spec) new_spec no_pos;
+(*                            pre_args@[new_rel_post],new_spec*)
+                            [new_rel_pre;new_rel_post],new_spec
                     | Some pflag -> 
                           if not(pflag) then 
                             if new_args = [] then 
                               let pre_vars,_,_,_,_ = CF.get_pre_post_vars [] new_formula_inf_continuation in
                               pre_vars,new_formula_inf_continuation
                             else 
-                              (*                        let new_rel = CP.fresh_spec_var_rel () in*)
-                              (*                        let new_rel_fml = CP.BForm ((CP.RelForm (new_rel, List.map (fun v -> CP.mkVar v no_pos) new_args, no_pos),None),None) in*)
-                              (*                        let new_spec = CF.add_pure new_formula_inf_continuation (Some new_rel_fml) None in*)
-                              (*                        Debug.info_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;*)
-                              (*                        [new_rel],new_spec*)
-                              new_args,new_formula_inf_continuation
+                              let new_rel = CP.fresh_spec_var_rel () in
+                              let new_rel_fml = CP.BForm ((CP.RelForm (new_rel, List.map (fun v -> CP.mkVar v no_pos) new_args, no_pos),None),None) in
+                              let new_spec = CF.add_pure new_formula_inf_continuation (Some new_rel_fml) None in
+                              Debug.tinfo_hprint (add_str "TEMP SPECS2" pr_spec) new_spec no_pos;
+                              [new_rel],new_spec
+(*                              new_args,new_formula_inf_continuation*)
                           else
                             if pflag then
                               let new_rel = CP.fresh_spec_var_rel () in
                               let new_rel_fml = CP.BForm ((CP.RelForm (new_rel, List.map (fun v -> CP.mkVar v no_pos) new_args, no_pos),None),None) in
                               let new_spec = CF.add_pure new_formula_inf_continuation None (Some new_rel_fml) in
-                              Debug.tinfo_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
+                              Debug.tinfo_hprint (add_str "TEMP SPECS3" pr_spec) new_spec no_pos;
                               [new_rel],new_spec
-                            else [],new_formula_inf_continuation
+                            else 
+                              [],new_formula_inf_continuation
                 end
               else vars,new_formula_inf_continuation 
             in
-            let _ = proc.proc_stk_of_static_specs # push new_formula_inf_continuation in
+            let einfer = CF.EInfer {b with
+              CF.formula_inf_vars = vars;
+              CF.formula_inf_continuation = new_formula_inf_continuation}
+            in
+            let _ = proc.proc_stk_of_static_specs # push einfer in
+            let _ = Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos in
+            let _ = Debug.ninfo_hprint (add_str "VARS" !print_svl) vars no_pos in
             let (vars_rel,vars_inf) = List.partition (fun v -> is_RelT(CP.type_of_spec_var v) ) vars in
             let (vars_hp_rel,vars_inf) = List.partition (fun v -> CP.type_of_spec_var v == HpT ) vars_inf in
             let new_vars = vars_inf @ (List.filter (fun r -> List.mem r (CF.struc_fv new_formula_inf_continuation)) vars_rel) in
@@ -2476,7 +2484,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                         let new_spec =                           
                           let inf_post_flag = post_ctr # get > 0 in
                           Debug.devel_pprint ("\nINF-POST-FLAG: " ^string_of_bool inf_post_flag) no_pos;
-                          let pres,posts_wo_rel,all_posts,inf_vars,pre_rel_fmls = CF.get_pre_post_vars [] proc.proc_static_specs in
+                          let pres,posts_wo_rel,all_posts,inf_vars,pre_rel_fmls = CF.get_pre_post_vars [] proc.proc_stk_of_static_specs # top in
                           let pre_rel_fmls = List.filter (fun x -> CP.intersect (CP.get_rel_id_list x) inf_vars != []) pre_rel_fmls in
                           let _ = Debug.ninfo_hprint (add_str "pre_rel_fml" (pr_list !CP.print_formula)) pre_rel_fmls no_pos in
                           let pre_vars = CP.remove_dups_svl (pres @ (List.map 
