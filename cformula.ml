@@ -8900,11 +8900,16 @@ let filter_varperm_formula_all_x (f:formula) : CP.formula list * formula =
 
 (*let split_triple lst = List.fold_left (fun (a1,a2,a3) (b1,b2,b3) -> (a1@[b1],a2@[b2],a3@[b3])) ([],[],[]) lst*)
 
-let add_fst elem = fun (a1,a2,a3,a4) -> (elem@a1,a2,a3,a4)
+let add_fst elem = fun (a1,a2,a3,a4,a5) -> (elem@a1,a2,a3,a4,a5)
 
 (*let add_rd elem = fun (a1,a2,a3,a4) -> (a1,a2,elem@a3,a4)*)
 
-let add_fth elem = fun (a1,a2,a3,a4) -> (a1,a2,a3,elem@a4)
+let add_fourth elem = fun (a1,a2,a3,a4,a5) -> (a1,a2,a3,elem@a4,a5)
+
+let add_fifth elem = fun (a1,a2,a3,a4,a5) -> (a1,a2,a3,a4,elem@a5)
+
+let fold_left_x res =
+  List.fold_left (fun (a1,a2,a3,a4,a5) (c1,c2,c3,c4,c5)-> (a1@c1,a2@c2,a3@c3,a4@c4,a5@c5)) ([],[],[],[],[]) res
 
 let get_pre_rels_pure pure =
   let conjs = CP.list_of_conjs pure in
@@ -8916,27 +8921,27 @@ let rec get_pre_rels_fml fml = match fml with
   | Exists e -> get_pre_rels_pure (MCP.pure_of_mix e.formula_exists_pure)
 
 let rec get_pre_post_vars (pre_vars: CP.spec_var list) (sp:struc_formula): 
-  (CP.spec_var list * CP.spec_var list * CP.spec_var list * CP.formula list) =
+  (CP.spec_var list * CP.spec_var list * CP.spec_var list * CP.spec_var list * CP.formula list) =
   match sp with
   | ECase b -> 
     let res = List.map (fun (p,s)-> add_fst (CP.fv p) (get_pre_post_vars pre_vars s)) b.formula_case_branches in
-    List.fold_left (fun (a1,a2,a3,a4) (c1,c2,c3,c4)-> (a1@c1,a2@c2,a3@c3,a4@c4)) ([],[],[],[]) res
+    fold_left_x res
   | EBase b -> 
     let base_vars = fv b.formula_struc_base in
     let rel_fmls = get_pre_rels_fml b.formula_struc_base in
 		(match b.formula_struc_continuation with
-    | None -> (base_vars,[],[],rel_fmls)
-    | Some l ->  add_fth rel_fmls (add_fst base_vars (get_pre_post_vars (pre_vars@base_vars) l)))
+    | None -> (base_vars,[],[],[],rel_fmls)
+    | Some l ->  add_fifth rel_fmls (add_fst base_vars (get_pre_post_vars (pre_vars@base_vars) l)))
   | EAssume(svl,f,fl,_) -> ([], (List.map CP.to_primed svl) @ (get_vars_without_rel pre_vars f), 
-    (List.map CP.to_primed svl) @ (fv f),[])
-  | EInfer b -> (*add_rd b.formula_inf_vars *)get_pre_post_vars pre_vars b.formula_inf_continuation
+    (List.map CP.to_primed svl) @ (fv f),[],[])
+  | EInfer b -> add_fourth b.formula_inf_vars (get_pre_post_vars pre_vars b.formula_inf_continuation)
   | EList b ->  
 		let l = List.map (fun (_,c)-> get_pre_post_vars pre_vars c) b in
-		List.fold_left (fun (a1,a2,a3,a4) (c1,c2,c3,c4)-> (a1@c1,a2@c2,a3@c3,a4@c4)) ([],[],[],[]) l
+		fold_left_x l
   | EOr b -> 
-		let pre1, post1, iv1, rel_fmls1 = get_pre_post_vars pre_vars b.formula_struc_or_f1 in
-		let pre2, post2, iv2, rel_fmls2 = get_pre_post_vars pre_vars b.formula_struc_or_f2 in
-		(pre1@pre2, post1@post2, iv1@iv2, rel_fmls1@rel_fmls2)
+		let pre1, post1, iv1, inf1, rel_fmls1 = get_pre_post_vars pre_vars b.formula_struc_or_f1 in
+		let pre2, post2, iv2, inf2, rel_fmls2 = get_pre_post_vars pre_vars b.formula_struc_or_f2 in
+		(pre1@pre2, post1@post2, iv1@iv2, inf1@inf2, rel_fmls1@rel_fmls2)
 		
 let filter_varperm_formula_all (f:formula) : CP.formula list * formula =
   let pr_out (ls,f) = "\n ### ls = " ^ (pr_list !print_pure_f ls) ^ "\n ### f = " ^ (!print_formula f) in

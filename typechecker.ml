@@ -435,7 +435,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     | None -> 
                           if new_args = [] then [],new_formula_inf_continuation 
                           else
-                            let pre_vars,_,_,_ = CF.get_pre_post_vars [] new_formula_inf_continuation in
+                            let pre_vars,_,_,_,_ = CF.get_pre_post_vars [] new_formula_inf_continuation in
                             let pre_args, _ = List.partition (fun x -> List.mem x pre_vars) new_args in
                             (*                      let new_rel_pre = CP.fresh_spec_var_rel () in*)
                             let new_rel_post = CP.fresh_spec_var_rel () in
@@ -447,7 +447,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     | Some pflag -> 
                           if not(pflag) then 
                             if new_args = [] then 
-                              let pre_vars,_,_,_ = CF.get_pre_post_vars [] new_formula_inf_continuation in
+                              let pre_vars,_,_,_,_ = CF.get_pre_post_vars [] new_formula_inf_continuation in
                               pre_vars,new_formula_inf_continuation
                             else 
                               (*                        let new_rel = CP.fresh_spec_var_rel () in*)
@@ -581,7 +581,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                         else ([],post_cond) in
                       stk_evars # push_list impl_vs;
                       (* TODO: Timing *)
-                      let pres, posts,_,_ = CF.get_pre_post_vars [] (proc.proc_stk_of_static_specs # top) in
+                      let pres, posts,_,_,_ = CF.get_pre_post_vars [] (proc.proc_stk_of_static_specs # top) in
                       let pre_vars = CP.remove_dups_svl (pres @ (List.map 
                           (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) in
                       let impl_vs, expl_vs = List.partition (fun v -> CP.mem_svl v (pre_vars@posts)) impl_vs in
@@ -2476,7 +2476,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                         let new_spec =                           
                           let inf_post_flag = post_ctr # get > 0 in
                           Debug.devel_pprint ("\nINF-POST-FLAG: " ^string_of_bool inf_post_flag) no_pos;
-                          let pres, posts_wo_rel, all_posts, pre_rel_fmls = CF.get_pre_post_vars [] proc.proc_static_specs in
+                          let pres,posts_wo_rel,all_posts,inf_vars,pre_rel_fmls = CF.get_pre_post_vars [] proc.proc_static_specs in
+                          let pre_rel_fmls = List.filter (fun x -> CP.intersect (CP.get_rel_id_list x) inf_vars != []) pre_rel_fmls in
                           let _ = Debug.ninfo_hprint (add_str "pre_rel_fml" (pr_list !CP.print_formula)) pre_rel_fmls no_pos in
                           let pre_vars = CP.remove_dups_svl (pres @ (List.map 
                               (fun (t,id) -> CP.SpecVar (t,id,Unprimed)) proc.proc_args)) in
@@ -2503,7 +2504,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                                     let rhs_rel_defn = List.concat (List.map CP.get_rel_id_list (CP.list_of_conjs fml)) in
                                     List.for_all (fun x -> List.mem x pvars) rhs_rel_defn
                                   in
-                                  let _ = Debug.info_hprint (add_str "post_vars" !print_svl) post_vars no_pos in
+                                  let _ = Debug.ninfo_hprint (add_str "post_vars" !print_svl) post_vars no_pos in
                                   let post_rel_df,pre_rel_df = List.partition (fun (_,x) -> is_post_rel x post_vars) reldefns in
                                   let _ = Debug.devel_hprint (add_str "pre_rel_df" (pr_list (pr_pair pr pr))) pre_rel_df no_pos in
                                   let _ = Debug.devel_hprint (add_str "post_rel_df" (pr_list (pr_pair pr pr))) post_rel_df no_pos in
