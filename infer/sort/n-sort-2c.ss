@@ -46,6 +46,20 @@ RELDEFN R0: ( r_643<=a_644 & r_673<=a_674 & R0(r_643,a_644))
 !!! PRE :  true
 Procedure sort$node SUCCESS
 
+fixcalc currently formed:
+
+R0:={[] -> [r_673,a_674] -> []: 
+#r_673<=a_674 || 
+(exists (a_644: (exists (r_643:((r_643<=a_644 && r_673<=a_674) && R0(r_643,a_644)))) )) 
+};
+
+without base-case. Not sure if R0 should be classify as a post-relation.
+It is actually a relation in a predicate, rather than a relation
+that forms to post-condition.
+
+Doing least-fix-point without a base-case seems unsound
+for such pred-relation.
+
 */
 {
     node tmp = x.next;
