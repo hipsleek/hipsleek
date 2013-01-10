@@ -235,7 +235,7 @@ let convert_pred_to_cast () =
    let tmp_views_derv,tmp_views_orig= List.partition (fun v -> v.I.view_derv) tmp_views in
   let cviews_orig = List.map (AS.trans_view iprog) tmp_views_orig in
   let cviews_derv = List.map (fun v -> AS.trans_view_dervs iprog cviews_orig
-      v.I.view_derv_info) tmp_views_derv in
+      v) tmp_views_derv in
           let cviews = cviews_orig@cviews_derv in
   Debug.tinfo_pprint "after trans_view" no_pos;
   let _ = !cprog.C.prog_view_decls <- cviews in

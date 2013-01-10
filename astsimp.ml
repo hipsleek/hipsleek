@@ -908,8 +908,7 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	      (* let _ = print_string "trans_prog :: going to trans_view \n" in *)
           let tmp_views_derv,tmp_views_orig= List.partition (fun v -> v.I.view_derv) tmp_views in
 	      let cviews_orig = List.map (trans_view prog) tmp_views_orig in
-          let cviews_derv = List.map (fun v -> trans_view_dervs prog cviews_orig
-          v.I.view_derv_info) tmp_views_derv in
+          let cviews_derv = List.map (fun v -> trans_view_dervs prog cviews_orig v) tmp_views_derv in
           let cviews = cviews_orig@cviews_derv in
 	      (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
 	      let crels = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
@@ -1303,28 +1302,37 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   )
   )
 
-and trans_view_one_derv (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) derv : C.view_decl =
+and trans_view_one_derv (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) derv view_derv : C.view_decl =
   let pr1= pr_list pr_id in
   let pr = (pr_pair (pr_pair pr_id pr1) (pr_triple pr_id pr1 pr1)) in
   let pr_r = Cprinter.string_of_view_decl in
-  Debug.no_1 "trans_view_one_derv" pr pr_r  (fun _ -> trans_view_one_derv_x prog cviews derv) derv
+  Debug.no_1 "trans_view_one_derv" pr pr_r  (fun _ -> trans_view_one_derv_x prog cviews derv view_derv) view_derv
 
-and trans_view_one_derv_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) ((orig_view_name,orig_args),(extn_view,extn_props,extn_args)) :
+and trans_view_one_derv_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) view_derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) :
        C.view_decl =
  let orig_view = C.look_up_view_def_raw cviews orig_view_name in
+ let extn_view = C.look_up_view_def_raw cviews extn_view_name in
+ (*find data fields anns*)
+
+ (*new args*)
+ let ss = List.combine extn_args extn_view.C.view_vars in
+ let n_args = List.map (fun (id, CP.SpecVar (t,_,pr)) ->  CP.SpecVar (t,id,pr)) ss in
+ (*formula: extend with new args*)
   (*tmp: for success complie*)
- orig_view
+ {orig_view with
+     C.view_name = view_derv.I.view_name;
+     C.view_vars = orig_view.C.view_vars@n_args;
+ }
 
-and trans_view_dervs (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) derv_ls : C.view_decl =
-  let pr1= pr_list pr_id in
-  let pr = pr_list (pr_pair (pr_pair pr_id pr1) (pr_triple pr_id pr1 pr1)) in
+and trans_view_dervs (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) derv : C.view_decl =
   let pr_r = Cprinter.string_of_view_decl in
-  Debug.no_1 "trans_view_dervs" pr pr_r  (fun _ -> trans_view_dervs_x prog cviews derv_ls) derv_ls
+  let pr = Iprinter.string_of_view_decl in
+  Debug.no_1 "trans_view_dervs" pr pr_r  (fun _ -> trans_view_dervs_x prog cviews derv) derv
 
-and trans_view_dervs_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) derv_ls : C.view_decl =
-  match derv_ls with
+and trans_view_dervs_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) derv : C.view_decl =
+  match derv.I.view_derv_info with
     | [] -> report_error no_pos "astsimp.trans_view_dervs: 1"
-    | [d] -> trans_view_one_derv prog cviews d
+    | [d] -> trans_view_one_derv prog cviews derv d
     | _ -> report_error no_pos "astsimp.trans_view_dervs: not handle yet"
 
 and fill_one_base_case prog vd = Debug.no_1 "fill_one_base_case" Cprinter.string_of_view_decl Cprinter.string_of_view_decl (fun vd -> fill_one_base_case_x prog vd) vd
