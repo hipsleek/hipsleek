@@ -10,14 +10,15 @@ inv true.
 
 property size<R,n> ==
    n=0 // base case
-   or R::size<R,m> & n=1+m .
+   or R::size<R,m> & n=1+m // recursive case
+   inv n>=0.
 
 property head<V,n> ==
    n=V .
 
-property sum<V,R,n> ==
-   n=0 // base case
-   or REC::sum<V,R,m> & n=V+m .
+property sum<V,R,s> ==
+   s=0 // base case
+   or REC::sum<V,R,s2> & n=V+s2 .
 
 property height<R,h> ==
    h=0 // base case
@@ -38,7 +39,7 @@ property maxValue<V,m> ==
 
 pred llN<n> == derive ll<> using size<REC,n> .
 
-pred llNSum<n> == derive llN<n> using sum<VAL,REC,n> .
+pred llNSum<s,n> == derive llN<n> using sum<VAL,REC,s> .
 
 pred llH<n> == derive ll<> using height<REC,n>.
 
