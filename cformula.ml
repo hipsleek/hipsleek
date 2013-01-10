@@ -1531,7 +1531,11 @@ and get_node_imm (h : h_formula) = match h with
   | ViewNode ({h_formula_view_imm = imm}) 
   | DataNode ({h_formula_data_imm = imm}) -> imm
   | _ -> failwith ("get_node_imm: invalid argument")
-
+  
+and get_node_param_imm (h : h_formula) = match h with
+  | DataNode ({h_formula_data_param_imm = param_imm}) -> param_imm
+  | _ -> failwith ("get_node_param_imm: invalid argument")
+  
 and get_view_origins (h : h_formula) = match h with
   | ViewNode ({h_formula_view_origins = origs}) -> origs
   | _ -> [] (* failwith ("get_view_origins: not a view") *)
