@@ -28,8 +28,25 @@ node insert(node x, node y)
   ensures  res::sortHO<b,R> & (v>a & b=a | (a>=b & b=v));
 
 node sort(node x)
+     infer [R0]
      requires x::ls<a>
-     ensures  res::sortHO<b,LT> & b<=a ;
+     ensures  res::sortHO<b,R0> & b<=a ;
+/*
+Why false inferred?
+
+*************************************
+[RELASS [R0]: ( R0(r_643,a_644)) -->  r_643<=a_644,
+RELDEFN R0: ( r_643<=a_644 & r_673<=a_674 & R0(r_643,a_644)) 
+                -->  R0(r_673,a_674)]
+*************************************
+
+!!! REL POST :  R0(r_673,a_674)
+!!! POST:  false
+!!! REL PRE :  true
+!!! PRE :  true
+Procedure sort$node SUCCESS
+
+*/
 {
     node tmp = x.next;
     if (tmp==null) return x;
