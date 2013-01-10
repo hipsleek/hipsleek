@@ -690,7 +690,7 @@ view_decl:
           view_kind = Iast.View_NORM; 
           view_inv_lock = li;
           try_case_inference = (snd vb) }
-     | 
+     (* |  *)
  ]];
 
 prim_view_decl: 
