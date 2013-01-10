@@ -9489,8 +9489,13 @@ let check_oblg pre_rel pre reloblgs pre_rel_df =
   let check2 = check_defn pre_rel pre pre_rel_df in
   check1 & check2
 
+let filter_disj (p:CP.formula) (t:CP.formula list) =
+  let ps = CP.list_of_disjs p in
+  let ps = List.filter (fun x -> TP.is_sat_raw (MCP.mix_of_pure (CP.conj_of_list (x::t) no_pos))) ps in
+  CP.disj_of_list ps no_pos
+
 let pre_calculate fp_func input_fml pre_vars proc_spec
-  pre pure_oblg_to_check (rel,post,pre_rel) pre_rel_vars pre_rel_df =
+  pre pure_oblg_to_check (rel,post,pre_rel) pre_fmls pre_rel_vars pre_rel_df =
   let pr = Cprinter.string_of_pure_formula in
   let constTrue = CP.mkTrue no_pos in
 
@@ -9512,8 +9517,10 @@ let pre_calculate fp_func input_fml pre_vars proc_spec
 
   let list_pre = [pre;pre_rec;pure_oblg_to_check] in
   let final_pre = List.fold_left (fun f1 f2 -> CP.mkAnd f1 f2 no_pos) constTrue list_pre in
-  let final_pre = TP.pairwisecheck_raw (TP.simplify_raw final_pre) in
-  let _ = Debug.ninfo_hprint (add_str "final_rec" !CP.print_formula) final_pre no_pos in
+  let final_pre = TP.simplify_raw final_pre in
+  let final_pre = filter_disj final_pre pre_fmls in
+  let final_pre = TP.pairwisecheck_raw final_pre in
+  let _ = Debug.devel_hprint (add_str "final_rec" !CP.print_formula) final_pre no_pos in
   let checkpoint2 = check_defn pre_rel final_pre pre_rel_df in
   if checkpoint2 then [(rel,post,pre_rel,final_pre)]
   else [(rel,post,constTrue,constTrue)]
@@ -9545,7 +9552,7 @@ let compute_td_fml pre_rel_df pre_rel =
   in
   List.map (fun x -> compute_td_one x rhs pre_rel) pre_rel_df
 
-let update_with_td_fp bottom_up_fp pre_rel_fmls fp_func reloblgs pre_rel_df post_rel_df pre_vars proc_spec = 
+let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls fp_func reloblgs pre_rel_df post_rel_df pre_vars proc_spec = 
   let pr = Cprinter.string_of_pure_formula in
   let constTrue = CP.mkTrue no_pos in
   match bottom_up_fp, pre_rel_fmls with
@@ -9563,7 +9570,7 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls fp_func reloblgs pre_rel_df post
       let input_fml = compute_td_fml pre_rel_df pre_rel in
       let _ = Debug.ninfo_hprint (add_str "input_fml" (pr_list (pr_pair pr pr))) input_fml no_pos in
       pre_calculate fp_func input_fml pre_vars proc_spec 
-        constTrue pure_oblg_to_check (constTrue,constTrue,pre_rel) pre_rel_vars pre_rel_df
+        constTrue pure_oblg_to_check (constTrue,constTrue,pre_rel) pre_fmls pre_rel_vars pre_rel_df
   | [(rel,post)], [pre_rel] -> 
     let pre_rel_vars = List.filter (fun x -> not (CP.is_rel_typ x)) (CP.fv pre_rel) in
     let exist_vars = CP.diff_svl (CP.fv rel) pre_rel_vars in
@@ -9576,11 +9583,13 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls fp_func reloblgs pre_rel_df post
     let _ = Debug.ninfo_hprint (add_str "oblg to check" !CP.print_formula) pure_oblg_to_check no_pos in
 
     let checkpoint1 = check_oblg pre_rel pre pure_oblg_to_check pre_rel_df in
-    if checkpoint1 then [(rel,post,pre_rel,pre)]
+    if checkpoint1 then 
+      let pre = filter_disj pre pre_fmls in
+      [(rel,post,pre_rel,pre)]
     else
       let input_fml = List.map (fun (f1,f2) -> (CP.mkAnd f1 pre no_pos,f2)) post_rel_df in
       pre_calculate fp_func input_fml pre_vars proc_spec
-        pre pure_oblg_to_check (rel,post,pre_rel) pre_rel_vars pre_rel_df
+        pre pure_oblg_to_check (rel,post,pre_rel) pre_fmls pre_rel_vars pre_rel_df
   | _,_ -> List.map (fun (p1,p2) -> (p1,p2,constTrue,constTrue)) bottom_up_fp
 
 
