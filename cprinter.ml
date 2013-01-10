@@ -2341,9 +2341,9 @@ let pr_barrier_decl v =
 
 let string_of_view_kind vk=
   match vk with
-    | NORM -> "norm"
-    | PRIM -> "prim"
-    | EXT -> "ext"
+    | View_NORM -> "norm"
+    | View_PRIM -> "prim"
+    | View_EXTN -> "ext"
 
 (* pretty printing for a view *)
 let pr_view_decl v =

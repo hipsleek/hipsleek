@@ -9491,7 +9491,15 @@ let check_oblg pre_rel pre reloblgs pre_rel_df =
 
 let filter_disj (p:CP.formula) (t:CP.formula list) =
   let ps = CP.list_of_disjs p in
-  let ps = List.filter (fun x -> TP.is_sat_raw (MCP.mix_of_pure (CP.conj_of_list (x::t) no_pos))) ps in
+  let t = CP.conj_of_list t no_pos in
+  let ps = List.concat (List.map (fun x -> 
+    if TP.is_sat_raw (MCP.mix_of_pure (CP.mkAnd x t no_pos))
+    then
+      let xs = CP.list_of_conjs x in
+      let xs = List.filter (fun x -> not(TP.imply_raw t x)) xs in
+      [CP.conj_of_list xs no_pos]
+    else []
+    ) ps) in
   CP.disj_of_list ps no_pos
 
 let pre_calculate fp_func input_fml pre_vars proc_spec
@@ -9520,7 +9528,7 @@ let pre_calculate fp_func input_fml pre_vars proc_spec
   let final_pre = TP.simplify_raw final_pre in
   let final_pre = filter_disj final_pre pre_fmls in
   let final_pre = TP.pairwisecheck_raw final_pre in
-  let _ = Debug.devel_hprint (add_str "final_rec" !CP.print_formula) final_pre no_pos in
+  let _ = Debug.devel_hprint (add_str "final_pre" !CP.print_formula) final_pre no_pos in
   let checkpoint2 = check_defn pre_rel final_pre pre_rel_df in
   if checkpoint2 then [(rel,post,pre_rel,final_pre)]
   else [(rel,post,constTrue,constTrue)]
@@ -9585,6 +9593,7 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls fp_func reloblgs pre_re
     let checkpoint1 = check_oblg pre_rel pre pure_oblg_to_check pre_rel_df in
     if checkpoint1 then 
       let pre = filter_disj pre pre_fmls in
+      let _ = Debug.devel_hprint (add_str "pre" !CP.print_formula) pre no_pos in
       [(rel,post,pre_rel,pre)]
     else
       let input_fml = List.map (fun (f1,f2) -> (CP.mkAnd f1 pre no_pos,f2)) post_rel_df in

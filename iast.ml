@@ -53,7 +53,7 @@ and view_kind =
   | View_PRIM
   | View_NORM
   | View_EXTN
-  | DERV
+  | View_DERV
 
 and view_decl = { view_name : ident; 
 mutable view_data_name : ident;

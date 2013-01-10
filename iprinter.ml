@@ -641,10 +641,10 @@ let string_of_barrier_decl b =
 
 let string_of_view_kind vk=
   match vk with
-    | PRIM -> "prim"
-    | NORM -> "norm"
-    | EXT -> "norm"
-    | DERV -> "derv"
+    | View_PRIM -> "prim"
+    | View_NORM -> "norm"
+    | View_EXTN -> "extn"
+    | View_DERV -> "derv"
 
 (* pretty printig for view declaration *)
 let string_of_view_decl v = v.view_name ^"[" ^ (String.concat "," v.view_prop_extns) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
