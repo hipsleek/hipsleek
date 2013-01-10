@@ -19,3 +19,14 @@ For below:
  RELASS [P]: ( P(a,b)) -->  (b!=0 | 2>a) & (b!=0 | a!=1),
 Why did we not derived below instead:
  RELASS [P]: ( P(a,b)) -->  (b!=0 | a<=0)
+
+# zip-n-2.ss
+
+Please print the infer pre/post formed, e.g.
+ infer [P,R]
+ requires x::llN<a>*y::ll<b> & P(a,b)
+ ensures res::ll<r> & R(r,a,b)
+
+Also, why isn't a summary of pre/post
+printed after fixcalc. Did it call fixcalc?
+

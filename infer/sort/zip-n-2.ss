@@ -21,6 +21,43 @@ node zip(node x, node y)
   infer {ll -> llN} []
   requires x::ll<> * y::ll<> 
   ensures  res::ll<>;
+/*
+
+Please print the infer pre/post formed, e.g.
+ infer [P,R]
+ requires x::llN<a>*y::ll<b> & P(a,b)
+ ensures res::ll<r> & R(r,a,b)
+
+Also, why isn't a summary of pre/post
+printed after fixcalc. Did it call fixcalc?
+
+
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN R_571: ( n_570=0 & n_568=0 & 0<=n_569) -->  R_571(n_568,n_569,n_570),
+RELDEFN R_571: ( n_639=n_569-1 & n_638=n_568-1 & n_570=n_650+1 & 1<=n_569 & 1<=n_568 & 
+0<=n_650 & R_571(n_638,n_639,n_650)) -->  R_571(n_568,n_569,n_570)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[]
+*************************************
+
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[n_568; 
+                  n_569](ex)x::llN<n_568>@M[0][Orig][LHSCase] * 
+                  y::llN<n_569>@M[0][Orig][LHSCase]&true&
+                  {FLOW,(22,23)=__norm}[]
+                    EBase emp&(n_569<=(0-1) | 1<=n_569 | n_568<=0) & MayLoop&
+                          {FLOW,(1,25)=__flow}[]
+                            EAssume 66::
+                              EXISTS(n_668: res::llN<n_668>@M[0][Orig][LHSCase]&
+                              R_571(n_568,n_569,n_668) & 0<=n_568 & 0<=n_569&
+                              {FLOW,(22,23)=__norm})[])
+
+*/
 
 {
   if (x==null) return null;
