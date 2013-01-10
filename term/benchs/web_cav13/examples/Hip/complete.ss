@@ -74,9 +74,9 @@ int min_height(node2 t)
 }
 
 void insert(ref node2 t, int v)
-	requires t::complete<n, nmin> & nmin < n & Term[n] // there is still place to insert
+	requires t::complete<n, nmin> & nmin < n & Term[0,n] // there is still place to insert
 	ensures t'::complete<n, nmin1> & (nmin1 = nmin | nmin1 = nmin + 1);  
-	requires t::complete<n, nmin> & nmin = n & Term[n] // there is no empty place -> we need to increase the height
+	requires t::complete<n, nmin> & nmin = n & Term[0,n] // there is no empty place -> we need to increase the height
 	ensures t'::complete<n+1, nmin1> & (nmin1 = nmin | nmin1 = nmin + 1);  
 {
 	node2 aux;
