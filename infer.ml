@@ -868,7 +868,7 @@ let rec infer_pure_m_x estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_ori
               in
               let (ip1,ip2,rs) = infer_pure_m estate None (CP.drop_rel_formula lhs_xpure_orig) lhs_xpure0 
                                  lhs_wo_heap_orig rhs_xpure_orig vs_lhs pos in
-              let rels = List.filter (fun r -> CP.subset (CP.fv_rel r) vs_lhs) rels in
+              let rels = List.filter (fun r -> CP.subset (CP.fv_wo_rel_r r) vs_lhs) rels in
               let p_ass = (match ip2 with
                 | None -> ([],rels)
                 | Some a -> if (CP.fv a == []) then ([],rels) else (CP.list_of_conjs a), rels)
@@ -885,11 +885,15 @@ let rec infer_pure_m_x estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_ori
                       else
                         let p_ass_conjs = if ps = [] then [] else
                           let lhs_xpure_new = CP.drop_rel_formula lhs_xpure in
-                          let lhs_xpure_conjs = List.filter (fun x -> match x with
-                            | BForm ((Eq _,_),_) -> true | _ -> false) (CP.list_of_conjs lhs_xpure_new) in
-                          let lhs_xpure_new2 = CP.conj_of_list lhs_xpure_conjs pos in
-                          let p = TP.simplify_raw (CP.mkAnd (CP.conj_of_list ps pos) lhs_xpure_new2 pos) in
-                          List.filter (fun x -> not(TP.imply_raw lhs_xpure_new x)) (CP.list_of_conjs p) 
+                          let tmp = CP.conj_of_list ps pos in
+                          let tmp = Omega.gist tmp lhs_xpure_new in 
+                          if CP.subset (CP.fv tmp) vs_lhs then CP.list_of_conjs tmp else ps
+(*                          let lhs_xpure_new = CP.drop_rel_formula lhs_xpure in*)
+(*                          let lhs_xpure_conjs = List.filter (fun x -> match x with*)
+(*                            | BForm ((Eq _,_),_) -> true | _ -> false) (CP.list_of_conjs lhs_xpure_new) in*)
+(*                          let lhs_xpure_new2 = CP.conj_of_list lhs_xpure_conjs pos in*)
+(*                          let p = TP.simplify_raw (CP.mkAnd (CP.conj_of_list ps pos) lhs_xpure_new2 pos) in*)
+(*                          List.filter (fun x -> not(TP.imply_raw lhs_xpure_new x)) (CP.list_of_conjs p) *)
                         in
                         (* TODO: Need better split RHS *)
                         List.concat (List.map (fun x -> 

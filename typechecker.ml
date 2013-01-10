@@ -2521,7 +2521,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
 (*                                  let pre_rel_ids = List.concat (List.map CP.get_rel_id_list pre_rel_fmls) in*)
                                   let pre_rel_ids = List.filter (fun x -> CP.is_rel_typ x 
                                       && not(Gen.BList.mem_eq CP.eq_spec_var x post_vars)) pre_vars in
-                                  let post_rel_df = 
+                                  let post_rel_df_new = 
                                     if pre_rel_ids=[] then post_rel_df 
                                     else List.concat (List.map (fun (f1,f2) -> 
                                       let tmp = List.filter (fun x -> CP.intersect 
@@ -2529,12 +2529,13 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                                       if tmp=[] then [] else [(CP.conj_of_list tmp no_pos,f2)]
                                       ) post_rel_df)
                                   in
-                                  let _ = Debug.devel_hprint (add_str "post_rel_df_new" (pr_list (pr_pair pr pr))) post_rel_df no_pos in
-                                  let bottom_up_fp = Fixcalc.compute_fixpoint 2 post_rel_df pre_vars proc_spec in
+                                  let _ = Debug.devel_hprint (add_str "post_rel_df_new" (pr_list (pr_pair pr pr))) post_rel_df_new no_pos in
+                                  let bottom_up_fp = Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec in
                                   let bottom_up_fp = List.map (fun (r,p) -> (r,TP.pairwisecheck_raw p)) bottom_up_fp in
                                   let _ = Debug.devel_hprint (add_str "bottom_up_fp" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in
                                   Solver.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls
-                                    Fixcalc.compute_fixpoint_td reloblgs pre_rel_df post_rel_df pre_vars proc_spec
+                                    Fixcalc.compute_fixpoint_td Fixcalc.preprocess 
+                                    reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec
                               in
                               (* let pr_ty = !CP.Label_Pure.ref_string_of_exp in *)
                               Infer.fixcalc_rel_stk # push_list tuples;
