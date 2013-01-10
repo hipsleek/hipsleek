@@ -1,11 +1,12 @@
 /* zip - numeric */
 
-relation R(int a,int b,int c).
-relation P(int a,int b).
 
 void error()
   requires false
   ensures true;
+
+relation R(int a,int b,int c).
+relation P(int a,int b).
 
 int zip(int x, int y)
   infer [R]
@@ -13,6 +14,9 @@ int zip(int x, int y)
   ensures  R(res,x,y);
 
 /*
+Sound we have a WARNING that unknown P is not
+in the inferred list?
+
 Great to have this failure!
 
 Context of Verification Failure: File "n-z-1d-2.ss",Line:13,Col:11

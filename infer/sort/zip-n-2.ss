@@ -23,13 +23,11 @@ node zip(node x, node y)
   ensures  res::ll<>;
 /*
 
-Please print the infer pre/post formed, e.g.
- infer [P,R]
- requires x::llN<a>*y::ll<b> & P(a,b)
- ensures res::ll<r> & R(r,a,b)
 
-Also, why isn't a summary of pre/post
-printed after fixcalc. Did it call fixcalc?
+!!! REL POST :  R_572(n_568,n_569,n_570)
+!!! POST:  n_568=n_570 & 0<=n_570 & n_570<=n_569
+!!! REL PRE :  R_571(n_568,n_569)
+!!! PRE :  n_568<=n_569
 
 
 *************************************

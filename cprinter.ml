@@ -2338,7 +2338,13 @@ let pr_barrier_decl v =
 	pr_vwrap  "prune baga conditions: " (fun c-> fmt_string (String.concat "," (List.map (fun (bl,(lbl,_))-> "("^(string_of_spec_var_list bl)^")-"^(string_of_int lbl)) c))) v.barrier_prune_conditions_baga;
 	pr_vwrap  ("prune invs:"^( string_of_int(List.length v.barrier_prune_invariants) )^":") pr_prune_invariants v.barrier_prune_invariants;
 	fmt_close_box ()
-	  
+
+let string_of_view_kind vk=
+  match vk with
+    | NORM -> "norm"
+    | PRIM -> "prim"
+    | EXT -> "ext"
+
 (* pretty printing for a view *)
 let pr_view_decl v =
   pr_mem:=false;
@@ -2348,7 +2354,11 @@ let pr_view_decl v =
       | Some (s1,s2) -> pr_vwrap "base case: " (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula s2) ()
   in
   fmt_open_vbox 1;
-  wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name ^ "[" ^ (String.concat "," (List.map string_of_typed_spec_var v.view_prop_extns) ^ "]"))
+  let s = match v.view_kind with 
+    | View_NORM -> " "
+    | View_PRIM -> "_prim "
+    | View_EXTN -> "_extn " in
+  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name ^ "[" ^ (String.concat "," (List.map string_of_typed_spec_var v.view_prop_extns) ^ "]")) 
       pr_typed_spec_var v.view_vars; fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
@@ -2356,7 +2366,7 @@ let pr_view_decl v =
   pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
   pr_vwrap  "xform: " pr_mix_formula v.view_x_formula;
   pr_vwrap  "is_recursive?: " fmt_string (string_of_bool v.view_is_rec);
-   
+  pr_vwrap  "view_kind: " fmt_string (string_of_view_kind v.view_kind);
   pr_vwrap  "same_xpure?: " fmt_string 
       (if v.view_xpure_flag then "YES" else "NO");
   pr_vwrap  "view_data_name: " fmt_string v.view_data_name;

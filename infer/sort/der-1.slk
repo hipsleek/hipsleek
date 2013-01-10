@@ -17,9 +17,9 @@ pred_extn pos_sum[R,V]<s> ==
       s=0 // base case
    or R::pos_sum<s2> & s=V+s2 & V>=0 
    inv s>=0.
-/*
-pred llN<n> == extend ll<> with size[REC]<n> .
 
+pred llN<n> == extend ll<> with size[REC]<n> .
+/*
 pred llNPSum<n,s> == extend llN<n> with pos_sum[VAL,REC]<s> .
 
 

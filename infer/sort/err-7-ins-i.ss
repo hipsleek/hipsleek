@@ -12,33 +12,30 @@ ll<> == self=null
 inv true;
 
 node insert(node x, node y)
+
   infer [R0]
   requires x::ll<> * y::node<v,null>
   ensures  res::ll<> & R0(res,x,y);
 
 /*
+
+OK NOW
+
+  requires x::ll<> * y::node<v,null>
+  ensures  res::ll<> & (res=x & x!=null & y!=null 
+           | res=y & y!=null);
+
+!!! REL POST :  R0(res,x,y)
+!!! POST:  (res=x & x!=null & y!=null) | (res=y & y!=null)
+!!! REL PRE :  true
+!!! PRE :  true
   //expecting res=x | res=y
 
-[RELDEFN R0: ( res=y & x=null & y!=null) 
-          -->  R0(res,x,y),
+[RELDEFN R0: ( res=y & x=null & y!=null) -->  R0(res,x,y),
 RELDEFN R0: ( (res=y & x!=null & x<res) | (res=y & res!=null & res<x)) 
-          -->  R0(res,x,y),
-RELASS [R0]: ( R0(tmp_681,p_633,y)) -->  y=null,
-RELDEFN R0: ( res=x & x!=null & y!=null & R0(tmp_681,p_633,y)) 
-          -->  R0(res,x,y)]
-
-You derived the above:
-By hand, I could only spot the following:
-  // x=null & y!=null & res=y --> R0(res,x,y)
-  // x!=null & y!=null & res=y (& x!=y) --> R0(res,x,y)
-  // x!=null & y!=null & res=x & R(_,_,y) --> R0(res,x,y)
-
-Thus, the following two derived obligations seem wrong!
-RELDEFN R0: ( (res=y & x!=null & x<res) | (res=y & res!=null & res<x)) 
-          -->  R0(res,x,y),
-RELASS [R0]: ( R0(tmp_681,p_633,y)) -->  y=null,
-
-Can you see how we may fix these errors?
+   -->  R0(res,x,y),
+RELDEFN R0: ( res=x & x!=null & y!=null & R0(tmp_627,p_579,y)) 
+    -->  R0(res,x,y)]
 
 */
 
@@ -46,7 +43,6 @@ Can you see how we may fix these errors?
   if (x==null) return y;
   // x=null & y!=null & res=y --> R0(res,x,y)
   else {
-    int t = x.val;
     if (y.val<=x.val) {
         y.next = x;
         return y;

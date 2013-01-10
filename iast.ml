@@ -49,10 +49,11 @@ data_methods : proc_decl list }
   global_var_decl_pos : loc }
 *)
 
-and view_kind=
-  | PRIM
-  | ABS
-  | EXT
+and view_kind =
+  | View_PRIM
+  | View_NORM
+  | View_EXTN
+  | DERV
 
 and view_decl = { view_name : ident; 
 mutable view_data_name : ident;
@@ -60,6 +61,8 @@ mutable view_data_name : ident;
 view_vars : ident list;
 view_labels : Label_only.spec_label list;
 view_modes : mode list;
+view_derv: bool;
+view_derv_info: ((ident*ident list)*(ident*ident list*ident list)) list;
 mutable view_typed_vars : (typ * ident) list;
 view_kind : view_kind;
 view_prop_extns:  ident list;
@@ -1203,7 +1206,7 @@ and update_fixpt_x (vl:(view_decl * ident list *ident list) list)  =
 		 print_endline ("Feasible self type: " ^ (String.concat "," a)); *)
       v.view_pt_by_self<-tl;
       if (List.length a==0) then 
-        if v.view_kind = PRIM || v.view_kind = EXT then v.view_data_name <- (v.view_name) (* TODO WN : to add pred name *)
+        if v.view_kind = View_PRIM || v.view_kind = View_EXTN then v.view_data_name <- (v.view_name) (* TODO WN : to add pred name *)
         else report_error no_pos ("self of "^(v.view_name)^" cannot have its type determined")
       else v.view_data_name <- List.hd a) vl
 

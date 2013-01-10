@@ -16,16 +16,9 @@ node insert(node x, node y)
   requires x::sortA<a> * y::node<v,null>
   ensures  res::sortA<b> & b=min(a,v) ;
 /*
-  infer [R]
-  requires x::sortA<a> * y::node<v,null>
-  ensures  res::sortA<b> & R(b,a,v);
-*************************************
-*******pure relation assumption ******
-*************************************
-[RELDEFN R: ( b=v) -->  R(b,a_649,v),
-RELDEFN R: ( b=v) -->  R(b,a_686,v)]
-*************************************
-What happen to the recursive cases?
+
+ error with bind operation
+
 
 */
 {

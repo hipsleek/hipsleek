@@ -1142,7 +1142,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
     else ())
   in 
   let check_and_compute () = 
-    if not(vdef.C.view_kind = C.PRIM) then
+    if not(vdef.C.view_kind = C.View_PRIM) then
 	      let (xform', addr_vars', ms) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in	
 	      let addr_vars = CP.remove_dups_svl addr_vars' in
 	      let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
@@ -1170,9 +1170,9 @@ and find_pred_by_self vdef data_name = vdef.I.view_pt_by_self
 
 and trans_view_kind vk=
   match vk with
-    | Iast.ABS -> Cast.ABS
-    | Iast.PRIM -> Cast.PRIM
-    | Iast.EXT -> Cast.EXT
+    | Iast.View_NORM -> Cast.View_NORM
+    | Iast.View_PRIM -> Cast.View_PRIM
+    | Iast.View_EXTN -> Cast.View_EXTN
 
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let pr = Iprinter.string_of_view_decl in
@@ -1264,7 +1264,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       let xpure_flag = TP.check_diff memo_pf_N memo_pf_P in
       let view_kind = trans_view_kind vdef.I.view_kind in
       let vn = vdef.I.view_name in
-      let _ = if view_kind = Cast.PRIM then CF.view_prim_lst # push vn  in
+      let _ = if view_kind = Cast.View_PRIM then CF.view_prim_lst # push vn  in
       let cvdef ={
           C.view_name = vn;
           C.view_kind = view_kind;

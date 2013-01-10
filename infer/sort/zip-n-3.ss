@@ -37,11 +37,8 @@ RELASS [P]: ( P(a,b)) -->  (b!=0 | 2>a) & (b!=0 | a!=1)]
 !!! REL POST :  true
 !!! POST:  true
 !!! REL PRE :  P(a,b)
-!!! PRE :  (b<=(a-1) & b<=(0-1)) | a<=b
-
-Can filter a disjunct to:
 !!! PRE :  a<=b
-
+Procedure zip$node~node SUCCESS
 
  */
 {

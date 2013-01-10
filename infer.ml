@@ -532,6 +532,8 @@ let infer_lhs_contra pre_thus lhs_xpure ivars pos msg =
       let f = simplify_helper (CP.mkExists exists_var f None pos) in
       if CP.isConstTrue f || CP.isConstFalse f then None
       else 
+        let _ = DD.ninfo_hprint (add_str "f: " !print_formula) f pos in
+        let f = TP.pairwisecheck_raw f in
         let neg_f = Redlog.negate_formula f in
         (* Thai: Remove disjs contradicting with pre_thus *)
         let new_neg_f = 
