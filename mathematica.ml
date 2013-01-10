@@ -187,7 +187,7 @@ let check_formula (f: string) : bool option =
       failwith "Mathematica: Unexpected answer!"
 
 let check_formula f =
-  Debug.no_1 "check_formula" (fun s -> s) (pr_option string_of_bool) check_formula f
+  Debug.ho_1 "check_formula" (fun s -> s) (pr_option string_of_bool) check_formula f
 
 (* 
  * run func and return its result together with running time 
