@@ -23,7 +23,6 @@ type bformula_label = int
 and ho_branch_label = string
 (*and branch_label = spec_label	(*formula branches*)*)
 
-
 type formula_label = (int*string)
 
 and control_path_id_strict = formula_label

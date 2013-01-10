@@ -69,10 +69,10 @@ and barrier_decl = {
     barrier_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
 }  
 
-and view_kind=
-  | PRIM
-  | ABS
-  | EXT
+and view_kind =
+  | View_PRIM
+  | View_NORM
+  | View_EXTN
 
 and view_decl = { 
     view_name : ident; 

@@ -684,7 +684,7 @@ view_decl:
   [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock
       -> { vh with view_formula = (fst vb);
           view_invariant = oi; 
-          view_kind = Iast.ABS; 
+          view_kind = Iast.View_NORM; 
           view_inv_lock = li;
           try_case_inference = (snd vb) } ]];
 
@@ -693,14 +693,14 @@ prim_view_decl:
       -> { vh with 
           (* view_formula = None; *)
           view_invariant = oi; 
-          view_kind = Iast.PRIM; 
+          view_kind = Iast.View_PRIM; 
           view_inv_lock = li} ]];
 
 view_decl_ext:
   [[ vh= view_header_ext; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock
       -> { vh with view_formula = (fst vb);
           view_invariant = oi; 
-          view_kind = Iast.EXT;
+          view_kind = Iast.View_EXTN;
           view_inv_lock = li;
           try_case_inference = (snd vb) } ]];
 
@@ -790,7 +790,7 @@ view_header:
           view_pt_by_self  = [];
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
           view_inv_lock = None;
-          view_kind = ABS;
+          view_kind = View_NORM;
           view_prop_extns = [];
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           try_case_inference = false;
@@ -817,7 +817,7 @@ view_header_ext:
           view_pt_by_self  = [];
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
           view_inv_lock = None;
-          view_kind = EXT;
+          view_kind = View_EXTN;
           view_prop_extns = sl;
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           try_case_inference = false;
