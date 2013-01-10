@@ -13,15 +13,18 @@ int zip(int x, int y)
   ensures  R(res,x,y);
 
 /*
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( R(res,x,y), res=x & 0<=x & x<=y, true, true)]
+*************************************
+
 !!! REL POST :  R(res,x,y)
 !!! POST:  res=x & 0<=x & x<=y
-!!! REL PRE :  P(x,y)
-!!! PRE :  0<=x & x<=y
+!!! REL PRE :  true
+!!! PRE :  true
 Procedure zip$int~int SUCCESS
 
-PROBLEM : since P is not in the selected var list [R], we should
-not really have infer pre-conditionfor it, esp when there is
-a definition is given for it.
 
 */
 

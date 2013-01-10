@@ -17,32 +17,27 @@ node insert(node x, node y)
   requires x::sortA<a> * y::node<v,null>
   ensures  res::sortA<b> & R(b,a,v);
 /*
+  requires x::sortA<a> * y::node<v,null>
+  ensures  res::sortA<b> & b=min(a,v) ;
+
 !!! REL POST :  R(b,a,v)
 !!! POST:  (b=v & v<=a) | (a=b & b<v)
-
-  infer [R]
-  requires x::sortA<v> * y::node<v,null>
-  ensures  res::sortA<b> & R(b,a,v);
-
-!!! REL POST :  R(b,a_650,v)
-!!! POST:  b=v
-  
-  requires x::sortA<a> * y::node<v,null>
-  ensures  res::sortA<b> & b=min(a,v); 
-    //(b=a | v<a & b=v); 
-    //(b=a | b=v);
+!!! REL PRE :  true
+!!! PRE :  true
 
 */
 {
-    if (y.val<=x.val) {
-        y.next = x; return y;
+  bind x to (xv,xn) in { 
+     if (y.val<=xv) {
+        y.next = x;
+        return y;
     } else {
-      if (x.next==null) x.next=y;
+      if (xn==null) xn=y;
       else {
-        x.next = insert(x.next,y);
+        xn = insert(xn,y);
       };
       return x;
-    }
+  }}
 }
 
 

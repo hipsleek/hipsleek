@@ -2348,7 +2348,11 @@ let pr_view_decl v =
       | Some (s1,s2) -> pr_vwrap "base case: " (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula s2) ()
   in
   fmt_open_vbox 1;
-  wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name ^ "[" ^ (String.concat "," (List.map string_of_typed_spec_var v.view_prop_extns) ^ "]"))
+  let s = match v.view_kind with 
+    | View_NORM -> " "
+    | View_PRIM -> "_prim "
+    | View_EXTN -> "_extn " in
+  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name ^ "[" ^ (String.concat "," (List.map string_of_typed_spec_var v.view_prop_extns) ^ "]")) 
       pr_typed_spec_var v.view_vars; fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
