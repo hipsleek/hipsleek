@@ -3,7 +3,7 @@ data node {
 	int val@VAL; 
 	node next@REC; 
 }.
-
+/*
 pred ll<> == self=null
   or self::node<_,p> * p::ll<>
 inv true.
@@ -23,7 +23,7 @@ pred llN<n> == extend ll<> with size[REC]<n> .
 pred llNPSum<n,s> == extend llN<n> with pos_sum[VAL,REC]<s> .
 
 
-
+*/
 
 
 

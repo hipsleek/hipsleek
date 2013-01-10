@@ -423,7 +423,7 @@ let rec loop_up_ptr_args_data_node_x prog hd=
   (*combine with actual areg*)
   let targs = List.combine args hd.CF.h_formula_data_arguments in
   (*get pointer*)
-  snd (List.split (List.filter (fun (t, v) -> is_pointer t) targs))
+  snd (List.split (List.filter (fun ((t, v),_) -> is_pointer t) targs))
 
 and loop_up_ptr_args_data_node prog hd=
   let pr1 = fun dn -> dn.CF.h_formula_data_name in

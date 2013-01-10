@@ -2634,10 +2634,34 @@ let rec string_of_exp = function
   | Try b -> string_of_control_path_id b.exp_try_path_id  "try \n"^(string_of_exp b.exp_try_body)^(string_of_exp b.exp_catch_clause )
 ;;
 
+let string_of_field_ann ann=
+  match ann with
+    | VAL -> "@VAL"
+    | REC -> "@REC"
+    | F_NO_ANN -> ""
 
 (* pretty printing for one data declaration*)
-let string_of_decl d = (* An Hoa : un-hard-code *)
-  (string_of_typ (get_field_typ d)) ^ " " ^ (get_field_name d) 
+let string_of_decl (t,id) = (* An Hoa : un-hard-code *)
+  (string_of_typ t) ^ " " ^ (id)
+;;
+
+(* pretty printing for one data declaration*)
+let string_of_data_decl ((t,id),ann) = (* An Hoa : un-hard-code *)
+  (string_of_typ t) ^ " " ^ (id) ^ (string_of_field_ann ann)
+;;
+
+(* function to print a list of typed_ident *) 
+let rec string_of_decl_list l c = match l with 
+  | [] -> ""
+  | h::[] -> "  " ^ string_of_decl h 
+  | h::t -> "  " ^ (string_of_decl h) ^ c ^ (string_of_decl_list t c)
+;;
+
+(* function to print a list of typed_ident *) 
+let rec string_of_data_decl_list l c = match l with 
+  | [] -> ""
+  | h::[] -> "  " ^ string_of_data_decl h 
+  | h::t -> "  " ^ (string_of_data_decl h) ^ c ^ (string_of_data_decl_list t c)
 ;;
 
 (* function to print a list of typed_ident *) 
@@ -2648,7 +2672,7 @@ let rec string_of_decl_list l c = match l with
 ;;
 
 (* pretty printing for a data declaration *)
-let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_list d.data_fields "\n") ^ "\n}"
+let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_data_decl_list d.data_fields "\n") ^ "\n}"
 ;;
 
 let string_of_coercion_type (t:Cast.coercion_type) = match t with

@@ -36,8 +36,13 @@ prog_barrier_decls : barrier_decl list;
 mutable prog_coercion_decls : coercion_decl list
 }
 
+and data_field_ann =
+  | VAL
+  | REC
+  | F_NO_ANN
+
 and data_decl = { data_name : ident;
-data_fields : (typed_ident * loc * bool) list; (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
+data_fields : (typed_ident * loc * bool * data_field_ann) list; (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
 data_parent_name : ident;
 data_invs : F.formula list;
 data_is_template: bool;
@@ -918,7 +923,7 @@ let iter_exp_args_imp e (arg:'a) (imp:'c ref) (f:'a -> 'c ref -> exp -> unit opt
  **)
 let get_field_typed_id d =
 	match d with
-		| (tid,_,_) -> tid
+		| (tid,_,_,_) -> tid
 
 (**
  * An Hoa : Extract the field name from a field declaration
@@ -935,14 +940,14 @@ let get_field_typ f = fst (get_field_typed_id f)
  **)
 let get_field_pos f =
 	match f with
-		| (_,p,_) -> p 
+		| (_,p,_,_) -> p 
 
 (**
  * An Hoa : Check if a field is an inline field 
  **)
 let is_inline_field f =
 	match f with
-		| (_,_,inline) -> inline
+		| (_,_,inline,_) -> inline
 
 (** An Hoa [22/08/2011] : End of information extracting functions from field declaration **)
 
@@ -1048,7 +1053,7 @@ and look_up_all_methods (prog : prog_decl) (c : data_decl) : proc_decl list = ma
 and expand_inline_fields ddefs fls =
   (** [Internal] An Hoa : add a prefix k to a field declaration f **)
   let augment_field_with_prefix f k = match f with
-	| ((t,id),p,i) -> ((t,k ^ id),p,i)
+	| ((t,id),p,i,ann) -> ((t,k ^ id),p,i,ann)
   in
   if (List.exists is_inline_field fls) then
 	let flse = List.map (fun fld -> if (is_inline_field fld) then
@@ -1066,7 +1071,7 @@ and expand_inline_fields ddefs fls =
   else fls
 
 and look_up_all_fields (prog : prog_decl) (c : data_decl) = 
-  let pr1 = pr_list (fun (ti,_,_) -> pr_pair string_of_typ pr_id ti) in 
+  let pr1 = pr_list (fun (ti,_,_,_) -> pr_pair string_of_typ pr_id ti) in 
   Debug.no_1 "look_up_all_fields" pr_id pr1 (fun _ -> look_up_all_fields_x prog c) c.data_name
 
 and look_up_all_fields_x (prog : prog_decl) (c : data_decl) = 
@@ -1968,7 +1973,7 @@ and compute_field_seq_offset ddefs data_name field_sequence =
 let b_data_constr bn larg=
 	if bn = b_datan || (snd (List.hd larg))="state" then		
 		{ data_name = bn;
-		  data_fields = List.map (fun c-> c,no_pos,false) larg ;
+		  data_fields = List.map (fun c-> c,no_pos,false,F_NO_ANN) larg ;
 		  data_parent_name = if bn = b_datan then "Object" else b_datan;
 		  data_invs =[];
           data_is_template = false;

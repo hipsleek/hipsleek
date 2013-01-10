@@ -4001,12 +4001,12 @@ let infer_hps prog (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hp_rels hp_r
 
 let check_horm_data_decl_x tmpl_data_decl data_decl=
   (*subs type s= temp t, t into tmpl ptr fiels*)
-  let get_ptr ((t,id),_,b)=
+  let get_ptr ((t,id),_,b,_)=
     if is_pointer t then
       [(id,b)]
     else []
   in
-  let get_ptr_and_susbt (id1,id2) ((t,id),_,b)=
+  let get_ptr_and_susbt (id1,id2) ((t,id),_,b,_)=
     if is_pointer t then
       if id = id1 then
       [(id2,b)]

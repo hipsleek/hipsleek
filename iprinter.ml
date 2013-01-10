@@ -609,10 +609,16 @@ and
 
 ;;
 
+let string_of_field_ann ann=
+  match ann with
+    | VAL -> "@VAL"
+    | REC -> "@REC"
+    | F_NO_ANN -> ""
+
 (* pretty printing for one data declaration*)
-let string_of_decl (d, pos, il) = match d with (* An Hoa [22/08/2011] Add inline component *)
-  | (t, i)             -> (if il then "inline " else "") ^ (string_of_typ t) ^ " " ^ i
-;;           
+let string_of_decl (d, pos, il,ann) = match d with (* An Hoa [22/08/2011] Add inline component *)
+  | (t, i)             -> (if il then "inline " else "") ^ (string_of_typ t) ^ " " ^ i ^ (string_of_field_ann ann)
+;;
 
 (* function to print a list of typed _ident *) 
 let rec string_of_decl_list l c = match l with 

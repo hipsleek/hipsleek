@@ -34,10 +34,15 @@ and prog_decl = {
     
 and prog_or_branches = (prog_decl * 
     ((MP.mix_formula * (ident * (P.spec_var list))) option) )
-    
+
+and data_field_ann =
+  | VAL
+  | REC
+  | F_NO_ANN
+
 and data_decl = { 
     data_name : ident;
-    data_fields : typed_ident list;
+    data_fields : (typed_ident * data_field_ann) list;
     data_parent_name : ident;
     data_invs : F.formula list;
     data_methods : proc_decl list; }
@@ -434,9 +439,9 @@ let is_primitive_proc p = (*p.proc_body==None*) not p.proc_is_main
 let name_of_proc p = p.proc_name
 
 
-let get_field_typ f = fst f
+let get_field_typ (f,_) = fst f
 
-let get_field_name f = snd f
+let get_field_name (f,_) = snd f
 
 (** An Hoa [22/08/2011] End **)
 
