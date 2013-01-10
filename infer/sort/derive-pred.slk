@@ -14,18 +14,21 @@ pred_extn size<R,n> ==
    inv n>=0.
 
 pred_extn head<V,n> ==
-   n=V .
+   n=V.
 
 pred_extn sum<V,R,s> ==
    s=0 // base case
-   or REC::sum<V,R,s2> & n=V+s2 .
+   or R::sum<V,R,s2> & n=V+s2 // recursive case
+   .
 
 pred_extn height<R,h> ==
    h=0 // base case
-   or R::height<R,h2> & h=1+max(h2) .
+   or R::height<R,h2> & h=1+max(h2) // recursive case
+   .
 
 pred_extn ordered<V,RR:relation(int,int)> ==
-   R::ordered<V2,RR> & RR(V,V2) .
+   R::ordered<V2,RR> & RR(V,V2)
+   .
 
 pred_extn set<V,R,S> ==
    S={}

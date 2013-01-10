@@ -14,8 +14,8 @@ pred_extn size<R,n> ==
    inv n>=0.
 
 pred_extn pos_sum<V,R,s> ==
-      n=0 // base case
-   or REC::pos_sum<V,R,s2> & s=V+s2 & V>=0 
+      s=0 // base case
+   or R::pos_sum<V,R,s2> & s=V+s2 & V>=0 
    inv s>=0.
 
 pred llN<n> == extend ll<> with size<REC,n> .
