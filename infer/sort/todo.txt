@@ -1,3 +1,17 @@
+# zip-n-2.ss #DONE
+
+Please print the infer pre/post formed, e.g.
+ infer [P,R]
+ requires x::llN<a>*y::ll<b> & P(a,b)
+ ensures res::ll<r> & R(r,a,b)
+
+Also, why isn't a summary of pre/post
+printed after fixcalc. Did it call fixcalc?
+
+# n-z-1d-1.ss #DONE
+
+Why do we infer P when it is not in the selected var list.
+
 # n-z-1d.ss
 
 !!! REL POST :  R(res,x,y)
@@ -8,10 +22,6 @@
 PROBLEM : can we gist x>=0 away
  from both pre/post
 
-# n-z-1d-1.ss
-
-Why do we infer P when it is not in the selected var list.
-
 
 # zip-n.ss
 
@@ -20,15 +30,6 @@ For below:
 Why did we not derived below instead:
  RELASS [P]: ( P(a,b)) -->  (b!=0 | a<=0)
 
-# zip-n-2.ss
-
-Please print the infer pre/post formed, e.g.
- infer [P,R]
- requires x::llN<a>*y::ll<b> & P(a,b)
- ensures res::ll<r> & R(r,a,b)
-
-Also, why isn't a summary of pre/post
-printed after fixcalc. Did it call fixcalc?
 
 # zip-n-3.ss
 
@@ -36,3 +37,38 @@ printed after fixcalc. Did it call fixcalc?
 !!! PRE :  (b<=(a-1) & b<=(0-1)) | a<=b
 Can filter a disjunct to:
 !!! PRE :  a<=b
+
+# n-ins-3c.ss
+
+!!! REL POST :  R2(b,v2_671)
+!!! POST:  true
+!!! REL PRE :  true
+!!! PRE :  true
+
+PROBLEM
+=======
+
+We need a stronger post-condition.
+
+Algorithm
+=========
+(i) For each 
+     X & Pre(..) --> Post(...)
+    determine if X -> Post(..) reduces to true --> Post(...)
+    and remove it if so, for pre-condition obligation later
+(ii) Form a definition for Post(..) to compute least fix-point.
+(iii) Extract pre from Post and form an assumption
+          Pre(..) -> Y_i
+(iv) For each obligation of form:
+       X & Pre(..) --> ..
+     determine relational assumptions of the form:
+       Pre(..) --> Y_j
+(v) Form an initial Precondition
+      Pre(..) -> Y wher Y=Y1 & ... & Yn
+   Check if current pre satisfies all the obligation
+      ... & Pre(..) --> Pre(..)
+(vi) If not, perform a top-down fix-point using 
+      ... & Pre(..) --> Pre(..)
+    to ensure it satisfies 
+      Pre(..) --> Y
+    for all recursive invocations.
