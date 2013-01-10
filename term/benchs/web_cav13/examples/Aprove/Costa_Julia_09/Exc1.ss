@@ -1,12 +1,15 @@
 class NullExc extends __Exc {}
 
 void main ()
-requires Loop
-ensures false;
+requires Term
+ensures true & flow NullExc;
 {
 	int i = 0;
 	while (true)
-	requires Loop ensures false & flow NullExc;
+	case {
+		i<=10 -> requires Term[10-i] ensures true & flow NullExc;
+		i>10 -> requires Term ensures true & flow NullExc;
+	}
 	{
 		if (i > 10)
 			raise new NullExc();

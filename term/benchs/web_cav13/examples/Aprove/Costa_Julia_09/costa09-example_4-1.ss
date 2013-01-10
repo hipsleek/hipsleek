@@ -2,7 +2,7 @@ data Examples { int f; }
 
 int getF (Examples x)
 requires x::Examples<v> & Term
-ensures res=v;
+ensures x::Examples<v> & res=v;
 {
 	return x.f;
 }

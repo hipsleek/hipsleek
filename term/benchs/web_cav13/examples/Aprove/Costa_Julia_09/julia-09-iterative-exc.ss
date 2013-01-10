@@ -1,7 +1,6 @@
- 
  data node {int f;}
  
- void rec_f(ref node n, ref int i)
+ void rec_f (ref node n, ref int i)
 	case {i<20 -> requires n::node<_> & Term [20-i] ensures true ;
 		  i>=20 -> requires Term[] ensures true;
 		 }

@@ -1,3 +1,5 @@
+class NullExc extends __Exc {}
+
 void main ()
 requires Loop
 ensures false;
@@ -15,16 +17,18 @@ case {
 	if (i < 20) {
 		i--;
 
-		//try {
-			if (i > 10) 
+		try {
+			if (i > 10) {
 				//throw null;
+				raise new NullExc ();
 				i++;
+			}
 			else
 				i = i + 2;
-		//}
-		//catch (NullPointerException e) {
-		//	i++;
-		//}
+		}
+		catch (NullExc e) {
+			i++;
+		};;
 		loop(i);
 	}
 }

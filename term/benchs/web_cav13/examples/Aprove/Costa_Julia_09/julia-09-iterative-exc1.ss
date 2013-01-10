@@ -1,6 +1,6 @@
  
- void rec_f(ref int i)
-	requires true & Loop ensures false;
+void rec_f(ref int i)
+requires true & Loop ensures false;
  {
 	if (true) {
 	    try {
@@ -12,9 +12,9 @@
 	}
  }
  
- void main() 
-	requires Loop ensures false;
- {
+void main() 
+requires Loop ensures false;
+{
 	int i = 0;
 	rec_f (i);
 }
