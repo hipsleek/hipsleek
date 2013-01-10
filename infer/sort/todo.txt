@@ -11,3 +11,11 @@ PROBLEM : can we gist x>=0 away
 # n-z-1d-1.ss
 
 Why do we infer P when it is not in the selected var list.
+
+
+# zip-n.ss
+
+For below:
+ RELASS [P]: ( P(a,b)) -->  (b!=0 | 2>a) & (b!=0 | a!=1),
+Why did we not derived below instead:
+ RELASS [P]: ( P(a,b)) -->  (b!=0 | a<=0)
