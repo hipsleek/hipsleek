@@ -2635,11 +2635,7 @@ let rec string_of_exp = function
   | Try b -> string_of_control_path_id b.exp_try_path_id  "try \n"^(string_of_exp b.exp_try_body)^(string_of_exp b.exp_catch_clause )
 ;;
 
-let string_of_field_ann ann=
-  match ann with
-    | VAL -> "@VAL"
-    | REC -> "@REC"
-    | F_NO_ANN -> ""
+let string_of_field_ann anns= String.concat "" (List.map (fun ann -> "@" ^ann) anns)
 
 (* pretty printing for one data declaration*)
 let string_of_decl (t,id) = (* An Hoa : un-hard-code *)

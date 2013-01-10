@@ -290,8 +290,6 @@ rule tokenizer file_name = parse
   | "@L" {LEND}
   | "@D" { DERV }
   | "@M" { MUT }
-  | "@VAL" {VAL}
-  | "@REC" {REC}
   | "@pre" { PRE }
   | "@xpre" { XPRE }
   | "@post" { POST }

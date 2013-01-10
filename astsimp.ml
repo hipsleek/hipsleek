@@ -1038,14 +1038,8 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
   (** 
       * An Hoa [22/08/2011] : translate field with inline consideration.
   **)
-  let trans_field_ann ann=
-    match ann with
-      | Iast.VAL -> Cast.VAL
-      | Iast.REC -> Cast.REC
-      | Iast.F_NO_ANN -> Cast.F_NO_ANN
-  in
-  let trans_field ((t, c), pos, il, ann) =
-    (((trans_type prog t pos), c),trans_field_ann ann)
+  let trans_field ((t, c), pos, il, anns) =
+    (((trans_type prog t pos), c), anns)
   in
   (* let _ = print_endline ("[trans_data] translate data type { " ^ ddef.I.data_name ^ " }") in
      let temp = expand_inline_fields ddef.I.data_fields in
@@ -1239,6 +1233,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
         let ffv = Gen.BList.difference_eq (CP.eq_spec_var) vs1 vs2 in
         (*filter out holes (#) *)
         let ffv = List.filter (fun v -> not (CP.is_hole_spec_var v)) ffv in
+        let ffv = CP.diff_svl ffv view_prop_extns in
         if (ffv!=[]) then report_error no_pos ("error 1: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def "^vdef.I.view_name^" ") in
       let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
       let _ = vdef.I.view_typed_vars <- typed_vars in

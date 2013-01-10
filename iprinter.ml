@@ -609,11 +609,7 @@ and
 
 ;;
 
-let string_of_field_ann ann=
-  match ann with
-    | VAL -> "@VAL"
-    | REC -> "@REC"
-    | F_NO_ANN -> ""
+let string_of_field_ann anns= String.concat "" (List.map (fun ann -> "@" ^ ann) anns)
 
 (* pretty printing for one data declaration*)
 let string_of_decl (d, pos, il,ann) = match d with (* An Hoa [22/08/2011] Add inline component *)
