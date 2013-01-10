@@ -121,3 +121,73 @@ in the inferred list?
                               EXISTS(r: res::llN<r>@M[0][Orig][LHSCase]&
                               a=r & 0<=r & r<=b&{FLOW,(22,23)=__norm})[])
 
+# n-sort-2.ss
+ 
+   WHY no error messages on missing R0; R1
+   node sort(node x)
+     infer [R0,R1]
+     requires x::ls<a>
+     ensures  res::sortA<b> & b<=a ;
+
+# n-sort-2b.ss (LOC to fix)
+
+ WHY is R captured existentially? I thought this problem has been
+ fixed before?
+
+ |-  EXISTS(R_672,b_673: res::sortHO<b_673,R_672>@M[0][Orig][LHSCase]&true&
+{FLOW,(22,23)=__norm})[]. 
+
+ relation R(int r, int a) == r<=a .
+ relation LT(int r, int a) == r>a .
+
+ node insert(node x, node y)
+  requires x::sortHO<a,R> * y::node<v,null>
+  ensures  res::sortHO<b,R> & (v>a & b=a | (a>=b & b=v));
+
+ node sort(node x)
+     requires x::ls<a>
+     ensures  res::sortHO<b,R> & b<=a ;
+
+ id: 32; caller: []; line: 32; classic: false; kind: POST; hec_num: 5; evars: [R_672,b_673]; c_heap: emp
+ checkentail v_node_39_568'::sortHO<b_670,R>@M[0][Orig][LHSCase]&a=v_616 & 
+p_617=tmp_634 & tmp_634!=null & !(v_bool_35_569') & tmp_634!=null & 
+!(v_bool_35_569') & next_37_567'=null & next_37_629=p_617 & a_630=v2_618 & 
+p_617!=null & b_641<=a_630 & tmp_634!=null & a_635=b_641 & v=v_616 & 
+x!=null & tmp_671!=null & (250::(a_635<v & a_635=b_670) | (b_670<=a_635 & 
+b_670=v)) & tmp_671!=null & res=v_node_39_568'&{FLOW,(22,23)=__norm}[]
+ |-  EXISTS(R_672,b_673: res::sortHO<b_673,R_672>@M[0][Orig][LHSCase]&true&
+{FLOW,(22,23)=__norm})[]. 
+
+--pcp why insert did not quantify R, but sort quantified R?
+
+node insert$node~node(  node x,  node y)
+static  ((None,[]),EBase exists (Expl)(Impl)[a; R; 
+                  v](ex)EXISTS(flted_27_35: x::sortHO<a,R>@M[0][Orig][LHSCase] * 
+                  y::node<v,flted_27_35>@M[Orig]&flted_27_35=null&
+                  {FLOW,(22,23)=__norm})[]
+                    EBase emp&MayLoop&{FLOW,(1,25)=__flow}[]
+                            EAssume 66::
+                              EXISTS(b: res::sortHO<b,R>@M[0][Orig][LHSCase]&
+                              (a<v & a=b) | (b<=a & b=v)&
+                              {FLOW,(22,23)=__norm})[])
+dy
+static  ((None,[]),EBase exists (Expl)(Impl)[a](ex)x::ls<a>@M[0][Orig][LHSCase]&
+                  true&{FLOW,(22,23)=__norm}[]
+                    EBase emp&MayLoop&{FLOW,(1,25)=__flow}[]
+                            EAssume 67::
+                              EXISTS(R,
+                              b: res::sortHO<b,R>@M[0][Orig][LHSCase]&b<=a&
+                              {FLOW,(22,23)=__norm})[])
+
+# n-sort-2c.ss
+
+--pcp
+
+node sort$node(  node x) rec
+static  ((None,[]),EBase exists (Expl)(Impl)[a](ex)x::ls<a>@M[0][Orig][LHSCase]&
+                  true&{FLOW,(22,23)=__norm}[]
+                    EBase emp&MayLoop&{FLOW,(1,25)=__flow}[]
+                            EAssume 67::
+                              EXISTS(LT,
+                              b: res::sortHO<b,LT>@M[0][Orig][LHSCase]&b<=a&
+                              {FLOW,(22,23)=__norm})[])
