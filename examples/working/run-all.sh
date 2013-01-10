@@ -16,6 +16,9 @@ time ./run-fast-tests.pl musterr $@
 echo -e "\n##################### hip tests --eps #####################"
 time ./run-fast-tests.pl hip -flags "--eps" $@
 
+echo -e "\n##################### infinity tests ########################"
+time ./run-fast-tests.pl infinity $@
+
 echo -e "\n##################### imm tests --eps ###################"
 time ./run-fast-tests.pl imm -flags "--eps" $@ -tp redlog
 
