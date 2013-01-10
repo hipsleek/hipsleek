@@ -65,7 +65,7 @@ view_derv: bool;
 view_derv_info: ((ident*ident list)*(ident*ident list*ident list)) list;
 mutable view_typed_vars : (typ * ident) list;
 view_kind : view_kind;
-view_prop_extns:  ident list;
+view_prop_extns:  (typ * ident) list;
 view_invariant : P.formula;
 view_formula : Iformula.struc_formula;
 view_inv_lock : F.formula option;

@@ -817,8 +817,10 @@ view_header:
           try_case_inference = false;
 			}]];
 
+id_type_list_opt: [[ t = LIST0 cid_typ SEP `COMMA -> t ]];
+
 view_header_ext:
-  [[ `IDENTIFIER vn;`OSQUARE;sl= id_list_opt;`CSQUARE; `LT; l= opt_ann_cid_list; `GT ->
+  [[ `IDENTIFIER vn;`OSQUARE;sl= id_type_list_opt;`CSQUARE; `LT; l= opt_ann_cid_list; `GT ->
       let cids, anns = List.split l in
       let cids_t, br_labels = List.split cids in
       (* DD.info_hprint (add_str "parser-view_header(cids_t)" (pr_list (pr_pair string_of_typ pr_id))) cids_t no_pos; *)

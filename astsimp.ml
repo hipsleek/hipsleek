@@ -1229,7 +1229,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   else(
       let pos = IF.pos_of_struc_formula view_formula1 in
       let view_sv_vars = List.map (fun c-> trans_var (c,Unprimed) stab pos) vdef.I.view_vars in
-      let view_prop_extns =  List.map (fun c-> trans_var (c,Unprimed) stab pos) vdef.I.view_prop_extns in
+      let view_prop_extns =  List.map (fun (t,c)-> trans_var (c,Unprimed) stab pos) vdef.I.view_prop_extns in
       let self_c_var = Cpure.SpecVar ((Named data_name), self, Unprimed) in
       let _ = 
         let vs1 = (CF.struc_fv cf) in
@@ -1307,7 +1307,7 @@ and trans_view_one_derv (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_dec
   let pr1= pr_list pr_id in
   let pr = (pr_pair (pr_pair pr_id pr1) (pr_triple pr_id pr1 pr1)) in
   let pr_r = Cprinter.string_of_view_decl in
-  Debug.ho_1 "trans_view_one_derv" pr pr_r  (fun _ -> trans_view_one_derv_x prog cviews derv) derv
+  Debug.no_1 "trans_view_one_derv" pr pr_r  (fun _ -> trans_view_one_derv_x prog cviews derv) derv
 
 and trans_view_one_derv_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) ((orig_view_name,orig_args),(extn_view,extn_props,extn_args)) :
        C.view_decl =
