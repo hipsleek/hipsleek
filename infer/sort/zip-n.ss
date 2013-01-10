@@ -1,5 +1,3 @@
-/* selection sort */
-
 data node {
 	int val; 
 	node next; 
@@ -18,10 +16,14 @@ relation R(int a,int b,int c).
 relation P(int a,int b).
 
 node zip(node x, node y)
-  infer [P,R]
-  requires x::llN<a> * y::llN<b> & P(a,b)//a<=b
-  ensures  res::llN<r> & R(r,a,b);
-  // R(a,b,r);
+  infer [R,P]
+  requires x::llN<a> * y::llN<b> & 
+  //a<=b
+  P(a,b)
+  ensures  res::llN<r> & 
+  // r=a
+  R(a,b,r)
+  ;
   /*
 [RELDEFN P: ( b_639=b-1 & a_638=a-1 & 1<=a & 1<=b & P(a,b)) -->  P(a_638,b_639),
 RELASS [P]: ( P(a,b)) -->  (b!=0 | 2>a) & (b!=0 | a!=1),

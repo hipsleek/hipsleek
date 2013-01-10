@@ -30,3 +30,9 @@ Please print the infer pre/post formed, e.g.
 Also, why isn't a summary of pre/post
 printed after fixcalc. Did it call fixcalc?
 
+# zip-n-3.ss
+
+!!! REL PRE :  P(a,b)
+!!! PRE :  (b<=(a-1) & b<=(0-1)) | a<=b
+Can filter a disjunct to:
+!!! PRE :  a<=b
