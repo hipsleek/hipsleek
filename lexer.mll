@@ -146,8 +146,8 @@ module Make (Token : SleekTokenS)
 	 ("enum", ENUM);
 	 ("ex", EXISTS);
 	 ("exists", EXISTS);
-	 ("extends", EXTENDS);
-	 ("false", FALSE);
+     ("extends", EXTENDS);
+     ("false", FALSE);
    ("finalizes", FINALIZE);
    ("finally", FINALLY);
 	 ("float", FLOAT);

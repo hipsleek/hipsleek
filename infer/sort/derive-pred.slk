@@ -46,34 +46,34 @@ pred_extn minValue[V,R]<m> ==
 pred_extn maxValue[V,R]<m> ==
    R::maxValue<m2> & m=max(V,m2).
 
-pred llN<n> == extend ll<> with size[REC]<n> .
+pred llN<n> == extends ll<> with size[REC]<n> .
 
-pred llNSum<s,n> == extend llN<n> with sum[VAL,REC]<s> .
+pred llNSum<s,n> == extends llN<n> with sum[VAL,REC]<s> .
 
-pred llH<n> == extend ll<> with height[REC]<n>.
+pred llH<n> == extends ll<> with height[REC]<n>.
 
-pred llS<n> == extend ll<> with set[VAL,REC]<S>.
+pred llS<n> == extends ll<> with set[VAL,REC]<S>.
 
-pred llNS<n,S> == extend llN<n> with set[VAL,REC]<S>.
+pred llNS<n,S> == extends llN<n> with set[VAL,REC]<S>.
 
-pred llHead<n> == extend ll<> with head[VAL]<n>.
+pred llHead<n> == extends ll<> with head[VAL]<n>.
 
-pred llMin<m> == extend ll<> with minValue[VAL,REC]<m>.
+pred llMin<m> == extends ll<> with minValue[VAL,REC]<m>.
 
-pred llMax<m> == extend ll<> with maxValue[VAL,REC]<m>.
+pred llMax<m> == extends ll<> with maxValue[VAL,REC]<m>.
 
 relation Inc(int a, Int b) == a<=b .
 
 relation Dec(int a, Int b) == a>=b .
 
 pred llOrdered<v,R:relation(int,int)> 
-  == extend llHead<h> with ordered[VAL,REC]<v,R> .
+  == extends llHead<h> with ordered[VAL,REC]<v,R> .
 
-pred llSorted<v> == extend llHead<h> with ordered[VAL,REC]<v,Inc> .
+pred llSorted<v> == extends llHead<h> with ordered[VAL,REC]<v,Inc> .
 
 pred llSorted<v> == llOrdered<v,Dec> .
 
-pred llMinMax<mi,mx> == extend ll<> 
+pred llMinMax<mi,mx> == extends ll<> 
              with maxValue[VAL,REC]<mx>,minValue[VAL,REC]<mi>.
 
 data node2 {
@@ -86,17 +86,17 @@ pred tree<> == self=null
   or tree::node2<_,p,q> * p::tree<> * q::tree<>
 inv true.
 
-pred treeN<n> == extend tree<> with size[VAL,REC]<n> .
+pred treeN<n> == extends tree<> with size[VAL,REC]<n> .
 
-pred treeNSum<n> == extend treeN<n> with sum[VAL,REC]<n> .
+pred treeNSum<n> == extends treeN<n> with sum[VAL,REC]<n> .
 
-pred treeH<n> == extend tree<> with height[VAL,REC]<n>.
+pred treeH<n> == extends tree<> with height[VAL,REC]<n>.
 
-pred treeS<n> == extend tree<> with set[VAL,REC]<S>.
+pred treeS<n> == extends tree<> with set[VAL,REC]<S>.
 
-pred treeNS<n,S> == extend treeN<n> with set[VAL,REC]<S> .
+pred treeNS<n,S> == extends treeN<n> with set[VAL,REC]<S> .
 
-pred treeHead<n> == extend tree<> with head[VAL]<n> .
+pred treeHead<n> == extends tree<> with head[VAL]<n> .
 
 
 

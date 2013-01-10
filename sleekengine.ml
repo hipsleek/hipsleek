@@ -232,7 +232,11 @@ let convert_pred_to_cast () =
   let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in
   Debug.tinfo_pprint "after check_fixpt" no_pos;
   iprog.I.prog_view_decls <- tmp_views;
-  let cviews = List.map (AS.trans_view iprog) tmp_views in
+   let tmp_views_derv,tmp_views_orig= List.partition (fun v -> v.I.view_derv) tmp_views in
+  let cviews_orig = List.map (AS.trans_view iprog) tmp_views_orig in
+  let cviews_derv = List.map (fun v -> AS.trans_view_dervs iprog cviews_orig
+      v.I.view_derv_info) tmp_views_derv in
+          let cviews = cviews_orig@cviews_derv in
   Debug.tinfo_pprint "after trans_view" no_pos;
   let _ = !cprog.C.prog_view_decls <- cviews in
   let _ =  (List.map (fun vdef -> AS.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews) in

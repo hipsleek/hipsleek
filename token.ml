@@ -33,7 +33,7 @@ type sleek_token =
   | THEN| THIS of string | TO | TRUE | LEXVAR
   | TEMPL | TERM | LOOP | MAYLOOP
   | UNFOLD | UNION
-  | VOID 
+  | VOID
   | WHILE | FLOW of string
   (*operators*)
   | AND |  ANDAND | AT | ATAT | LEND | IMM | MUT | DERV | CBRACE | CLIST | COLON | COLONCOLON | COLONCOLONCOLON | COMMA | CPAREN | CSQUARE | DOLLAR

@@ -682,15 +682,29 @@ barrier_decl:
 barrier_constr: [[`OSQUARE; t=LIST1 b_trans SEP `COMMA ; `CSQUARE-> t]];
   
 b_trans : [[`OPAREN; fs=integer_literal; `COMMA; ts= integer_literal; `COMMA ;`OSQUARE;t=LIST1 spec_list SEP `COMMA;`CSQUARE; `CPAREN -> (fs,ts,t)]];
- 
+
+derv_view:
+[[
+   `IDENTIFIER vn;`LT;sl= id_list_opt; `GT -> (vn,sl)
+]];
+
+prop_extn:
+[[
+  `IDENTIFIER vn;`OSQUARE;props= id_list_opt;`CSQUARE;`LT;sl= id_list_opt;`GT -> (vn,props,sl)
+]];
+
 view_decl: 
   [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock
       -> { vh with view_formula = (fst vb);
-          view_invariant = oi; 
+          view_invariant = oi;
           view_kind = Iast.View_NORM; 
           view_inv_lock = li;
           try_case_inference = (snd vb) }
-     (* |  *)
+     |  vh= view_header;`EQEQ; `EXTENDS;orig_v = derv_view; `WITH ; extn = prop_extn->
+     { vh with view_derv = true;
+         view_derv_info = [(orig_v,extn)];
+         view_kind = Iast.View_DERV;
+     }
  ]];
 
 prim_view_decl: 
@@ -804,7 +818,7 @@ view_header:
 			}]];
 
 view_header_ext:
-  [[ `IDENTIFIER vn;`OSQUARE;sl= id_list;`CSQUARE; `LT; l= opt_ann_cid_list; `GT ->
+  [[ `IDENTIFIER vn;`OSQUARE;sl= id_list_opt;`CSQUARE; `LT; l= opt_ann_cid_list; `GT ->
       let cids, anns = List.split l in
       let cids_t, br_labels = List.split cids in
       (* DD.info_hprint (add_str "parser-view_header(cids_t)" (pr_list (pr_pair string_of_typ pr_id))) cids_t no_pos; *)

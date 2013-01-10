@@ -649,7 +649,7 @@ let string_of_view_kind vk=
 (* pretty printig for view declaration *)
 let string_of_view_decl v = v.view_name ^"[" ^ (String.concat "," v.view_prop_extns) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
                             (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula v.view_invariant) ^ " inv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) ^" view_data_name: " ^ v.view_data_name  ^ "view_kind: " ^
-(string_of_view_kind v.view_kind) (* incomplete *)
+(string_of_view_kind v.view_kind) ^ "view_derv: " ^ (string_of_bool v.view_derv) (* incomplete *)
 ;;
 
 let string_of_view_vars v_vars = (concatenate_string_list v_vars ",")
