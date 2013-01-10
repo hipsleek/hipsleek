@@ -1,7 +1,7 @@
 void test (int n)
 case {
 	n>0 -> requires Term[2*n] ensures true;
-	n<=0 -> requires Term[1] ensures true;
+	n<=0 -> requires Term ensures true;
 }
 {
 	int i = n - 1;
