@@ -1106,7 +1106,8 @@ struct
   let rec remove_dups_disj_set (s: dpart): dpart =
     match s with
     | [] -> []
-    | x::xs -> if List.exists (fun y -> list_equal x y) xs then remove_dups_disj_set xs else [x]@(remove_dups_disj_set xs)
+    | x::xs -> if (List.length x == 0) || List.exists (fun y -> (List.length x == List.length y) && List.for_all2 eq x y) xs   
+      then remove_dups_disj_set xs else [x]@(remove_dups_disj_set xs)
 
   (* returns s1/\s2 *)
   let merge_disj_set (s1: dpart) (s2: dpart): dpart =
