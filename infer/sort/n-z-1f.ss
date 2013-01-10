@@ -13,18 +13,13 @@ int zip(int x, int y)
   ensures  R(res,x,y);
 
 /*
-!! post_vars:[R,res,x,y]
-*************************************
-*******fixcalc of pure relation *******
-*************************************
-[( R(res,x,y), (res>=1 & res=x) | (x=0 & res=0), P(x,y), (y<=(0-1) & 1<=x) | (1<=x & x<=y) | x=0)]
-*************************************
 
 !!! REL POST :  R(res,x,y)
-!!! POST:  (res>=1 & res=x) | (x=0 & res=0)
+!!! POST:  res=x & 0<=x
 !!! REL PRE :  P(x,y)
-!!! PRE :  (y<=(0-1) & 1<=x) | (1<=x & x<=y) | x=0
-Pr
+!!! PRE :  (y<=(0-1) & 0<=x) | (0<=x & x<=y)
+Procedure zip$int~int SUCCESS
+
 */
 {
   if (x==0) return 0;

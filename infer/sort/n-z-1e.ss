@@ -34,13 +34,10 @@ P(x,y) & R(v_int_46_579,v_int_46_574,v_int_46_575)) -->  R(res,x,y)]
 *************************************
 
 !!! REL POST :  R(res,x,y)
-!!! POST:  (res>=1 & res=x) | (x=0 & res=0)
+!!! POST:  res=x & 0<=x
 !!! REL PRE :  P(x,y)
-!!! PRE :  (y<=(0-1) & 1<=x) | (1<=x & x<=y) | x=0
+!!! PRE :  y<=(0-1) | (x<=y & 1<=y) | (x=0 & 0<=y)
 Procedure zip$int~int SUCCESS
-
-PROBLEM : post and pre can be simplified by PairWiseCheck
-e.g. POST : res=x & x>=0.
 
 */
 {

@@ -21,20 +21,23 @@ node zip(node x, node y)
   requires x::llN<a> * y::llN<b>
   ensures  res::llN<r> & R(a,b,r);
   /*
-*************************************
-*******pure relation assumption ******
-*************************************
-[RELDEFN P: 
-( a=a_603+1 & b=b_604+1 & 0<=a_603 & 0<=b_604 & P(a,b)) 
-   -->  P(a_603,b_604),
-RELDEFN R: 
-( r_619=r-1 & b_604=b-1 & a_603=a-1 & 1<=b & 1<=a & 1<=r & P(a,b) & 
-  R(a_603,b_604,r_619)) -->  R(a,b,r)]
-*************************************
-fixcalc: subrec: found different no of QSVs for CAbst:
- P(a,b)
- 
- PROBLEM: What happen to the base-cases for R(..)?
+
+same as zip-i-2.ss
+
+WHY not mention pre is 0<=a & a<=b
+
+!!! REL POST :  R(a,b,r)
+!!! POST:  a=r & 0<=r & r<=b
+!!! REL PRE :  true
+!!! PRE :  true
+!!! NEW SPECS: ((None,[]),EBase exists (Expl)(Impl)[a; 
+                  b](ex)x::llN<a>@M[0][Orig][LHSCase] * 
+                  y::llN<b>@M[0][Orig][LHSCase]&true&{FLOW,(22,23)=__norm}[]
+                    EBase emp&(1<=b | b<=(0-1) | a<=0) & MayLoop&
+                          {FLOW,(1,25)=__flow}[]
+                            EAssume 66::
+                              EXISTS(r: res::llN<r>@M[0][Orig][LHSCase]&
+
  */
 {
   if (x==null) return null;

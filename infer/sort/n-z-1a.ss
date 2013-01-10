@@ -21,32 +21,12 @@ int zip(int x, int y)
 RELASS [P]: ( P(x,y)) -->  y!=0 | 1>x]
 *************************************
 
-*************************************
-*******fixcalc of pure relation *******
-*************************************
-[( true, true, P(x,y), (y<=(x-1) & y<=(0-1)) | x<=y)]
-*************************************
-
 !!! REL POST :  true
 !!! POST:  true
 !!! REL PRE :  P(x,y)
-!!! PRE :  (y<=(x-1) & y<=(0-1)) | x<=y
-
-Procedure zip$int~int SUCCESS
-
-PROBLEM : given that we have already precondition:
-  requires y>=0 & x>=0 & P(x,y)
-  ensures  res=x;
-
-I think we can simplify pre to become:
 !!! PRE :  x<=y
 
-as the other conditional is unsatisfiable
-by the current state.
-
-
 Here, we If not need to construct top-down fix-point.
-
 
 Algorithm for Pre-relation
 ==========================

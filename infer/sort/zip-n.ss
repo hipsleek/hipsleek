@@ -26,16 +26,10 @@ node zip(node x, node y)
   ;
   /*
 [RELDEFN P: ( b_639=b-1 & a_638=a-1 & 1<=a & 1<=b & P(a,b)) -->  P(a_638,b_639),
-RELASS [P]: ( P(a,b)) -->  (b!=0 | 2>a) & (b!=0 | a!=1),
-RELDEFN R: ( r=0 & a=0 & 0<=b & P(a,b)) -->  R(r,a,b),
+RELASS [P]: ( P(a,b)) -->  b!=0 | 1>a,
+RELDEFN R: ( r=0 & a=0 & 0<=b & P(a,b)) -->  R(a,b,r),
 RELDEFN R: ( b_639=b-1 & a_638=a-1 & r=r_651+1 & 1<=b & 1<=a & 0<=r_651 & P(a,b) & 
-R(r_651,a_638,b_639)) -->  R(r,a,b)]
-
-SLIGHT ISSUE:
-For below:
- RELASS [P]: ( P(a,b)) -->  (b!=0 | 2>a) & (b!=0 | a!=1),
-Why did we get the above, instead of below:
- RELASS [P]: ( P(a,b)) -->  (b!=0 | a<=0)
+R(a_638,b_639,r_651)) -->  R(a,b,r)]
 
 
  */

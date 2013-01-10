@@ -36,18 +36,10 @@ node insert(node x, node y)
   requires x::ll<> * y::node<v,null>
   ensures  res::ll<> & R0(res,x,y);
 /*
-  //expecting res=x | res=y
-
-TODO : can we convert the ptr to integer prior to inference?
-
-ERROR: at _0_0 
-Message: Relation contains non-numerical variables
- 
-Context of Verification Failure: File "ins-i.ss",Line:37,Col:11
-Last Proving Location: File "ins-i.ss",Line:85,Col:13
-
-ERROR: at _0_0 
-Message: Error in translating the input for fixcalc
+ !!! REL POST :  R0(res,x,y)
+!!! POST:  (res=x & x!=null & y!=null) | (res=y & y!=null)
+!!! REL PRE :  true
+!!! PRE :  true
 
 */
 /*
