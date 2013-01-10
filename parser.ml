@@ -1189,7 +1189,9 @@ cexp_w:
         else if hp_names # mem id then Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
         else
           begin
-              if not(rel_names # mem id) then print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate");
+              if not(rel_names # mem id) then 
+                (* print_endline ("WARNING : parsing problem "^id^" is neither a ranking function nor a relation nor a heap predicate"); *)
+                ();
           Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))
           end
         (* (try ( *)

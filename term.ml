@@ -255,7 +255,10 @@ let pr_term_res_stk stk =
     fmt_print_newline ();) stk
 
 let pr_term_err_stk stk =
-  List.iter (fun m -> fmt_string m; fmt_print_newline ()) stk
+  if stk == [] then fmt_string " SUCCESS\n"
+  else 
+    fmt_string "\n";
+    List.iter (fun m -> fmt_string m; fmt_print_newline ()) stk
 
 let pr_phase_constr = function
   | P_Gt (v1, v2) -> 
@@ -524,6 +527,10 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
             es_var_stack = (string_of_term_res term_res)::estate.es_var_stack;
             es_term_err = Some (string_of_term_res term_res);
           } in
+          (n_estate, lhs_p, rhs_p, None)
+      | (Loop, Loop) ->
+          let term_measures = Some (MayLoop, [], []) in 
+          let n_estate = {estate with es_var_measures = term_measures} in
           (n_estate, lhs_p, rhs_p, None)
       | (Loop, _) ->
           let term_measures = Some (Loop, [], []) in 
@@ -1194,8 +1201,11 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
 (* Main function of the termination checker *)
 let term_check_output () =
   (* if not !Globals.dis_term_msg then *)
-    (fmt_string "\nTermination checking result:\n";
-    (if (!Globals.term_verbosity == 0) then pr_term_res_stk (term_res_stk # get_stk)
+  if not !Globals.dis_term_chk then
+    (fmt_string "\nTermination checking result:";
+    (if (!Globals.term_verbosity == 0) then 
+      (fmt_string "\n";
+      pr_term_res_stk (term_res_stk # get_stk))
     else pr_term_err_stk (term_err_stk # get_stk));
     fmt_print_newline ())
 
