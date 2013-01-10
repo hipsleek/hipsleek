@@ -8,19 +8,19 @@ pred ll<> == self=null
   or self::node<_,p> * p::ll<>
 inv true.
 
-property size<R,n> ==
-   n=0 // base case
+pred_extn size<R,n> ==
+      n=0 // base case
    or R::size<R,m> & n=1+m 
    inv n>=0.
 
-property pos_sum<V,R,s> ==
-   n=0 // base case
+pred_extn pos_sum<V,R,s> ==
+      n=0 // base case
    or REC::pos_sum<V,R,s2> & s=V+s2 & V>=0 
    inv s>=0.
 
-pred llN<n> == derive ll<> using size<REC,n> .
+pred llN<n> == extend ll<> with size<REC,n> .
 
-pred llNPSum<n,s> == derive llN<n> using pos_sum<VAL,REC,s> .
+pred llNPSum<n,s> == extend llN<n> with pos_sum<VAL,REC,s> .
 
 
 

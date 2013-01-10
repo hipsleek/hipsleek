@@ -8,63 +8,63 @@ pred ll<> == self=null
   or self::node<_,p> * p::ll<>
 inv true.
 
-property size<R,n> ==
+pred_extn size<R,n> ==
    n=0 // base case
    or R::size<R,m> & n=1+m // recursive case
    inv n>=0.
 
-property head<V,n> ==
+pred_extn head<V,n> ==
    n=V .
 
-property sum<V,R,s> ==
+pred_extn sum<V,R,s> ==
    s=0 // base case
    or REC::sum<V,R,s2> & n=V+s2 .
 
-property height<R,h> ==
+pred_extn height<R,h> ==
    h=0 // base case
    or R::height<R,h2> & h=1+max(h2) .
 
-property ordered<V,RR:relation(int,int)> ==
+pred_extn ordered<V,RR:relation(int,int)> ==
    R::ordered<V2,RR> & RR(V,V2) .
 
-property set<V,R,S> ==
+pred_extn set<V,R,S> ==
    S={}
    or R::set<V,R,S2> & S={V} union S2 .
 
-property minValue<V,m> ==
+pred_extn minValue<V,m> ==
    R::minValue<V,m2> & m=min(V,m2).
 
-property maxValue<V,m> ==
+pred_extn maxValue<V,m> ==
    R::maxValue<V,m2> & m=max(V,m2).
 
-pred llN<n> == derive ll<> using size<REC,n> .
+pred llN<n> == extend ll<> with size<REC,n> .
 
-pred llNSum<s,n> == derive llN<n> using sum<VAL,REC,s> .
+pred llNSum<s,n> == extend llN<n> with sum<VAL,REC,s> .
 
-pred llH<n> == derive ll<> using height<REC,n>.
+pred llH<n> == extend ll<> with height<REC,n>.
 
-pred llS<n> == derive ll<> using set<VAL,REC,S>.
+pred llS<n> == extend ll<> with set<VAL,REC,S>.
 
-pred llNS<n,S> == derive llN<n> using set<VAl,REC,S>.
+pred llNS<n,S> == extend llN<n> with set<VAl,REC,S>.
 
-pred llHead<n> == derive ll<> using head<VAL,n>.
+pred llHead<n> == extend ll<> with head<VAL,n>.
 
-pred llMin<m> == derive ll<> using minValue<VAL,m>.
+pred llMin<m> == extend ll<> with minValue<VAL,m>.
 
-pred llMax<m> == derive ll<> using maxValue<VAL,m>.
+pred llMax<m> == extend ll<> with maxValue<VAL,m>.
 
 relation Inc(int a, Int b) == a<=b .
 
 relation Dec(int a, Int b) == a>=b .
 
-pred llOrdered<v,R> == derive llHead<h> using ordered<v,R> .
+pred llOrdered<v,R> == extend llHead<h> with ordered<v,R> .
 
-pred llSorted<v> == derive llHead<h> using ordered<v,Inc> .
+pred llSorted<v> == extend llHead<h> with ordered<v,Inc> .
 
 pred llSorted<v> == llOrdered<v,Dec> .
 
-pred llMinMax<mi,mx> == derive ll<> 
-             using maxValue<VAL,mx>,minValue<VAL,mi>.
+pred llMinMax<mi,mx> == extend ll<> 
+             with maxValue<VAL,mx>,minValue<VAL,mi>.
 
 data node2 {
 	int val@VAL; 
@@ -76,17 +76,17 @@ pred tree<> == self=null
   or tree::node2<_,p,q> * p::tree<> * q::tree<>
 inv true.
 
-pred treeN<n> == derive tree<> using size<REC,n> .
+pred treeN<n> == extend tree<> with size<REC,n> .
 
-pred treeNSum<n> == derive treeN<n> using sum<VAL,REC,n> .
+pred treeNSum<n> == extend treeN<n> with sum<VAL,REC,n> .
 
-pred treeH<n> == derive tree<> using height<REC,n>.
+pred treeH<n> == extend tree<> with height<REC,n>.
 
-pred treeS<n> == derive tree<> using set<VAL,REC,S>.
+pred treeS<n> == extend tree<> with set<VAL,REC,S>.
 
-pred treeNS<n,S> == derive treeN<n> using set<VAl,REC,S> .
+pred treeNS<n,S> == extend treeN<n> with set<VAl,REC,S> .
 
-pred treeHead<n> == derive tree<> using head<VAL,n> .
+pred treeHead<n> == extend tree<> with head<VAL,n> .
 
 
 
