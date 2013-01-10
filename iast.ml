@@ -54,6 +54,11 @@ data_methods : proc_decl list }
   global_var_decl_pos : loc }
 *)
 
+and view_kind=
+  | PRIM
+  | ABS
+  | EXT
+
 and view_decl = { view_name : ident; 
 mutable view_data_name : ident;
 (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
@@ -61,7 +66,8 @@ view_vars : ident list;
 view_labels : Label_only.spec_label list;
 view_modes : mode list;
 mutable view_typed_vars : (typ * ident) list;
-view_is_prim : bool;
+view_kind : view_kind;
+view_prop_extns:  ident list;
 view_invariant : P.formula;
 view_formula : Iformula.struc_formula;
 view_inv_lock : F.formula option;
@@ -1202,7 +1208,7 @@ and update_fixpt_x (vl:(view_decl * ident list *ident list) list)  =
 		 print_endline ("Feasible self type: " ^ (String.concat "," a)); *)
       v.view_pt_by_self<-tl;
       if (List.length a==0) then 
-        if v.view_is_prim then v.view_data_name <- (v.view_name) (* TODO WN : to add pred name *)
+        if v.view_kind = PRIM || v.view_kind = EXT then v.view_data_name <- (v.view_name) (* TODO WN : to add pred name *)
         else report_error no_pos ("self of "^(v.view_name)^" cannot have its type determined")
       else v.view_data_name <- List.hd a) vl
 

@@ -68,7 +68,12 @@ and barrier_decl = {
     barrier_prune_conditions_baga: ba_prun_cond list;
     barrier_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
 }  
-    
+
+and view_kind=
+  | PRIM
+  | ABS
+  | EXT
+
 and view_decl = { 
     view_name : ident; 
     view_vars : P.spec_var list;
@@ -76,7 +81,7 @@ and view_decl = {
     view_uni_vars : P.spec_var list; (*predicate parameters that may become universal variables of universal lemmas*)
     view_labels : Label_only.spec_label list;
     view_modes : mode list;
-    view_is_prim : bool;
+    view_kind : view_kind;
     mutable view_partially_bound_vars : bool list;
     mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
     view_data_name : ident;

@@ -186,6 +186,7 @@ module Make (Token : SleekTokenS)
      ("perm",PERM);
 	 ("pred", PRED);
 	 ("pred_prim", PRED_PRIM);
+     ("pred_extn", PRED_EXT);
      ("print", PRINT);
 	 ("dprint", DPRINT);
 	 ("compare", CMP);

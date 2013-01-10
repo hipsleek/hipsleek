@@ -571,6 +571,7 @@ non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 non_empty_command:
     [[  t=data_decl           -> DataDef t
       | `PRED;t= view_decl     -> PredDef t
+      | `PRED_EXT;t= view_decl_ext     -> PredDef t
 	  | `PRED_PRIM;t=prim_view_decl     -> PredDef t
       | t=barrier_decl        -> BarrierCheck t
       | t = func_decl         -> FuncDef t
@@ -683,7 +684,7 @@ view_decl:
   [[ vh= view_header; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock
       -> { vh with view_formula = (fst vb);
           view_invariant = oi; 
-          view_is_prim = false; 
+          view_kind = Iast.ABS; 
           view_inv_lock = li;
           try_case_inference = (snd vb) } ]];
 
@@ -692,9 +693,17 @@ prim_view_decl:
       -> { vh with 
           (* view_formula = None; *)
           view_invariant = oi; 
-          view_is_prim = true; 
+          view_kind = Iast.PRIM; 
           view_inv_lock = li} ]];
-					
+
+view_decl_ext:
+  [[ vh= view_header_ext; `EQEQ; vb=view_body; oi= opt_inv; li= opt_inv_lock
+      -> { vh with view_formula = (fst vb);
+          view_invariant = oi; 
+          view_kind = Iast.EXT;
+          view_inv_lock = li;
+          try_case_inference = (snd vb) } ]];
+
 opt_inv_lock: [[t=OPT inv_lock -> t]];
 
 inv_lock:
@@ -781,11 +790,39 @@ view_header:
           view_pt_by_self  = [];
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
           view_inv_lock = None;
-          view_is_prim = false;
+          view_kind = ABS;
+          view_prop_extns = [];
           view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
           try_case_inference = false;
 			}]];
-      
+
+view_header_ext:
+  [[ `IDENTIFIER vn;`OSQUARE;sl= id_list;`CSQUARE; `LT; l= opt_ann_cid_list; `GT ->
+      let cids, anns = List.split l in
+      let cids_t, br_labels = List.split cids in
+      (* DD.info_hprint (add_str "parser-view_header(cids_t)" (pr_list (pr_pair string_of_typ pr_id))) cids_t no_pos; *)
+      let _, cids = List.split cids_t in
+      (* if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then *)
+      (*   report_error (get_pos_camlp4 _loc 1) ("variables in view header are not allowed to be primed") *)
+      (* else *)
+      let modes = get_modes anns in
+      let _ = view_names # push vn in
+        { view_name = vn;
+          view_data_name = "";
+          view_vars = (* List.map fst *) cids;
+          (* view_frac_var = empty_iperm; *)
+          view_labels = br_labels;
+          view_modes = modes;
+          view_typed_vars = cids_t;
+          view_pt_by_self  = [];
+          view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
+          view_inv_lock = None;
+          view_kind = EXT;
+          view_prop_extns = sl;
+          view_invariant = P.mkTrue (get_pos_camlp4 _loc 1);
+          try_case_inference = false;
+			}]];
+
 (** An Hoa : Modify the rules to capture the extensional identifiers **)
 cid: 
   [[ 
@@ -1663,7 +1700,7 @@ type_decl:
    | c=class_decl -> Data c
    | e=enum_decl  -> Enum e
    | v=view_decl; `SEMICOLON -> View v
-	 | `PRED_PRIM; v = prim_view_decl; `SEMICOLON    -> View v
+   | `PRED_PRIM; v = prim_view_decl; `SEMICOLON    -> View v
    | b=barrier_decl ; `SEMICOLON   -> Barrier b
    | h=hopred_decl-> Hopred h ]];
 

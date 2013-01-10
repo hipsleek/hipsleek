@@ -644,7 +644,7 @@ let string_of_barrier_decl b =
 	"\n transitions: \n ["^(String.concat "\n " (List.map pr_trans b.barrier_tr_list))^ "]\n";;
 
 (* pretty printig for view declaration *)
-let string_of_view_decl v = v.view_name ^ "<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
+let string_of_view_decl v = v.view_name ^"[" ^ (String.concat "," v.view_prop_extns) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
                             (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula v.view_invariant) ^ " inv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) ^" view_data_name: " ^ v.view_data_name                  (* incomplete *)
 ;;
 
