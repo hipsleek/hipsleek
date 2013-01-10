@@ -334,7 +334,7 @@ let collect_update_formula_x (transition: CP.formula) (old_exp: CP.exp) (new_exp
 let collect_update_formula (transition: CP.formula) (old_exp: CP.exp) (new_exp: CP.exp) : CP.formula =
   let pr_f = !CP.print_formula in
   let pr_e = !CP.print_exp in
-  Debug.no_3 "collect_update_formula" pr_f pr_e pr_e pr_f collect_update_formula_x transition old_exp new_exp
+  Debug.ho_3 "collect_update_formula" pr_f pr_e pr_e pr_f collect_update_formula_x transition old_exp new_exp
 
 
 let collect_specs_formula_x (transition: CP.formula) : CP.formula =
