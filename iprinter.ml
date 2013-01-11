@@ -28,7 +28,10 @@ let string_of_unary_op = function
   | OpPreDec       -> "--"
   | OpPostInc      -> "++"
   | OpPostDec      -> "--"
-  | OpNot          -> "!"                                   
+  | OpNot          -> "!"
+  (*For pointers: *v and &v *)
+  | OpVal -> "*"
+  | OpAddr -> "&"
 ;;    
 
 (* pretty priting for binary operators *)
@@ -109,6 +112,7 @@ let rec string_of_formula_exp = function
   | P.Null l                  -> "null"
   | P.Ann_Exp (e,t) -> (string_of_formula_exp e)^":"^(string_of_typ t)
   | P.Var (x, l)        -> string_of_id x
+  | P.Level (x, l)        -> ("level(" ^ (string_of_id x) ^ ")")
   | P.IConst (i, l)           -> string_of_int i
   | P.AConst (i, l)           -> string_of_heap_ann i
   | P.Tsconst (i,l)			  -> Tree_shares.Ts.string_of i
@@ -723,7 +727,9 @@ let string_of_proc_decl p =
  (* let locstr = (string_of_full_loc p.proc_loc)  
   in	*)
     (if p.proc_constructor then "" else (string_of_typ p.proc_return) ^ " ")
-	^ p.proc_name ^ "(" ^ (string_of_param_list p.proc_args) ^ ")\n" 
+	^ p.proc_name ^ "(" ^ (string_of_param_list p.proc_args) ^ ")"
+    ^ "[" ^ p.proc_mingled_name ^ "]"
+    ^ "\n" 
 	^ ( "static " ^ (string_of_struc_formula  p.proc_static_specs)
 		^ "\ndynamic " ^ (string_of_struc_formula  p.proc_dynamic_specs) ^ "\n" ^ body)
 ;;
@@ -833,6 +839,8 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
 ;;
 
+Iformula.print_pure_formula := string_of_pure_formula;;
+
 (* (* pretty printing for program separating prelude.ss program *)                                                            *)
 let string_of_program_separate_prelude p iprims= (* "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^  *)
   let helper_chop l start_pos=
@@ -861,4 +869,5 @@ Iast.print_struc_formula := string_of_struc_formula;;
 Iast.print_view_decl := string_of_view_decl;
 Iast.print_data_decl := string_of_data_decl;
 Ipure.print_formula :=string_of_pure_formula;
+Ipure.print_id := string_of_id;
 

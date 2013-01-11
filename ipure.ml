@@ -5,6 +5,7 @@
 *)
 
 open Globals
+open Gen.Basic
 open Label_only
 open Label
 
@@ -82,7 +83,8 @@ and p_formula =
 and exp = 
   | Ann_Exp of (exp * typ)
   | Null of loc
-  | Var of ((ident * primed) * loc) 
+  | Level of ((ident * primed) * loc)
+  | Var of ((ident * primed) * loc)
 	  (* variables could be of type pointer, int, bags, lists etc *)
   | IConst of (int * loc)
   | FConst of (float * loc)
@@ -117,6 +119,7 @@ and relation = (* for obtaining back results from Omega Calculator. Will see if 
   | UnionRel of (relation * relation)
 
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
+let print_id = ref (fun (c:(ident*primed)) -> "cpure printer has not been initialized")
 
 module Exp_Pure =
 struct 
@@ -218,6 +221,7 @@ and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list =
     Gen.BList.remove_dups_eq (=) (fv1 @ fv2)
 
 and afv (af : exp) : (ident * primed) list = match af with
+  | Level (sv, _) -> [sv]
   | Var (sv, _) -> let id = fst sv in
 						if (id.[0] = '#') then [] else [sv]
   | Null _ 
@@ -400,6 +404,11 @@ and mkOr f1 f2 lbl pos = match f1 with
       | BForm ((BConst (true, _), _), _) -> f2
       | _ -> Or (f1, f2, lbl, pos)
 
+and mkEqVarExp (v1 : (ident * primed)) (v2 : (ident * primed)) pos =
+  let e1 = Var (v1,pos) in
+  let e2 = Var (v2,pos) in
+  mkEqExp e1 e2 pos
+
 and mkEqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
   | (Var v1, Var v2) ->
 	  if v1 = v2 then
@@ -514,6 +523,7 @@ and pos_of_formula (f : formula) = match f with
 		  | ListIn (_,_,p) | ListNotIn (_,_,p) | ListAllN (_,_,p) | ListPerm (_,_,p)
 		  | RelForm (_,_,p)  | LexVar (_,_,_,p) -> p
 		  | VarPerm (_,_,p) -> p
+          | XPure xp ->  xp.xpure_view_pos
 	end
   | And (_,_,p) | Or (_,_,_,p) | Not (_,_,p)
   | Forall (_,_,_,p) -> p | Exists (_,_,_,p) -> p
@@ -522,6 +532,7 @@ and pos_of_formula (f : formula) = match f with
 and pos_of_exp (e : exp) = match e with
   | Null p 
   | Var (_, p) 
+  | Level (_, p) 
   | IConst (_, p) 
   | FConst (_, p) 
   | Tsconst (_, p)
@@ -594,12 +605,26 @@ and apply_one (fr, t) f = match f with
 and b_apply_one (fr, t) bf =
   let (pf,il) = bf in
   let npf = match pf with
+    | XPure ({xpure_view_node = vn ;
+		      xpure_view_arguments = args} as xp)  -> 
+        let fr,_ = fr in
+        let t,_ = t in
+        let new_vn =
+          match vn with
+            | None -> None
+            | Some v ->
+                let new_v = (if v=fr then t else v) in
+                Some new_v
+        in
+        let new_args = List.map (fun v -> if v=fr then t else v) args in
+        XPure ({ xp with xpure_view_node = new_vn ;
+		    xpure_view_arguments = new_args})
   | BConst _ -> pf
   | BVar (bv, pos) -> BVar ((if eq_var bv fr then t else bv), pos)
   | Lt (a1, a2, pos) -> Lt (e_apply_one (fr, t) a1,
 							e_apply_one (fr, t) a2, pos)
   | Lte (a1, a2, pos) -> Lte (e_apply_one (fr, t) a1,
-							  e_apply_one (fr, t) a2, pos)
+ 							  e_apply_one (fr, t) a2, pos)
   | Gt (a1, a2, pos) -> Gt (e_apply_one (fr, t) a1,
 							e_apply_one (fr, t) a2, pos)
   | Gte (a1, a2, pos) -> Gte (e_apply_one (fr, t) a1,
@@ -649,6 +674,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | AConst _ -> e
   | Ann_Exp (e,ty) -> Ann_Exp ((e_apply_one p e), ty)
   | Var (sv, pos) -> Var ((if eq_var sv fr then t else sv), pos)
+  | Level (sv, pos) -> Level ((if eq_var sv fr then t else sv), pos)
   | Add (a1, a2, pos) -> Add (e_apply_one p a1,
 							  e_apply_one p a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_one p a1,
@@ -738,6 +764,7 @@ and look_for_anonymous_pure_formula (f : formula) : (ident * primed) list = matc
 and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list =
   let (pf,_) = f in
   match pf with
+  | XPure _ -> [] (*TO CHECK*)
   | BConst _ -> []
   | BVar (b1, _) -> anon_var b1
   | Lt (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
@@ -788,6 +815,7 @@ let rec find_lexp_formula (f: formula) ls =
 and find_lexp_b_formula (bf: b_formula) ls =
   let (pf, _) = bf in
   match pf with
+    | XPure _ (*TO CHECK*)
 	| BConst _
 	| BVar _ -> []
 	| Lt (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -817,6 +845,7 @@ and find_lexp_exp (e: exp) ls =
   match e with
 	| Null _
 	| Var _
+	| Level _
 	| IConst _
 	| AConst _
 	| Tsconst _
@@ -867,6 +896,7 @@ let rec contain_vars_exp (expr : exp) : bool =
   match expr with
   | Null _ 
   | Var _ 
+  | Level _ 
   | IConst _ 
   | AConst _ 
   | Tsconst _
@@ -895,6 +925,7 @@ let rec contain_vars_exp (expr : exp) : bool =
 and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = match e with 
   | Null _ 
   | Var _ 
+  | Level _ 
   | IConst _ 
   | AConst _ 
   | Tsconst _
@@ -1234,6 +1265,37 @@ and float_out_pure_min_max (p : formula) : formula =
   	| Forall (v, f1, lbl, l) -> Forall (v, (float_out_pure_min_max f1), lbl, l)
   	| Exists (v, f1, lbl, l) -> Exists (v, (float_out_pure_min_max f1), lbl, l)
 
+let find_equal_var (p:formula) : ((ident*primed) * (ident*primed)) list =
+  (match p with
+    | BForm ((p_f,_),_) ->
+        (match p_f with
+          | Eq (e1,e2,pos) ->
+              (match e1,e2 with
+                | Var (v1,_), Var (v2,_) ->
+                    [(v1,v2)]
+                | _ -> []
+              )
+          | _ -> []
+        )
+    | _ -> []
+  )
+
+let find_closure (v:(ident*primed)) (vv:((ident*primed) * (ident*primed)) list) : (ident*primed) list = 
+  let rec helper (vs: (ident*primed) list) (vv:((ident*primed) * (ident*primed)) list) =
+    match vv with
+      | (v1,v2)::xs -> 
+          let v3 = if (List.exists (fun v -> eq_var v v1) vs) then Some v2
+              else if (List.exists (fun v -> eq_var v v2) vs) then Some v1
+              else 
+                None 
+          in
+          (match v3 with
+            | None -> helper vs xs
+            | Some x -> helper (x::vs) xs)
+      | [] -> vs
+  in
+  helper [v] vv
+
 let rec find_p_val x v p = match p with 
   | BForm (((Eq (Var (a,_),IConst (b,_),_)),_),_) 
   | BForm (((Eq (IConst (b,_),Var (a,_),_)),_),_) -> a=v && b=x
@@ -1280,6 +1342,7 @@ let rec typ_of_exp (e: exp) : typ =
   | Null _                    -> Globals.UNK               (* Trung: TODO: what is the type of Null? *) 
   | Var  _                    -> Globals.UNK               (* Trung: TODO: what is the type of Var? *)
   (* Const *)
+  | Level _                   -> Globals.level_data_typ
   | IConst _                  -> Globals.Int
   | FConst _                  -> Globals.Float
   | AConst _                  -> Globals.AnnT
@@ -1348,3 +1411,74 @@ and set_il_exp exp il =
   let (pe, _) = exp in (pe, il)
   
   
+let find_closure_pure_x (v:(ident*primed)) (f:formula) : (ident*primed) list =
+  let ps = list_of_conjs f in
+  let eqvars = List.map find_equal_var ps in
+  let eqvars = List.concat eqvars in
+  find_closure v eqvars
+
+(*find all variables that are equal to variable v*)
+let find_closure_pure (v:(ident*primed)) (f:formula) : (ident*primed) list =
+  let pr = pr_list !print_id in
+  Debug.no_2 "find_closure_pure"
+      !print_id !print_formula pr
+      find_closure_pure_x v f
+
+(*parition a formula f into those of vs and the rest*)
+let partition_pointer (vs:(ident*primed) list) (f:formula) : (formula list)* (formula list) =
+  let ps = list_of_conjs f in
+  let rec helper ps =
+    match ps with
+      | [] -> [],[]
+      | (e::es) ->
+          let ls1,ls2 = helper es in
+          let vars = find_equal_var e in
+          let vars = List.map (fun (v1,v2) -> [v1;v2]) vars in
+          let vars = List.concat vars in
+          if (vars!=[] & List.for_all (fun v -> Gen.BList.mem_eq eq_var v vs) vars) then
+            (*YES: belong to vs*)
+            (e::ls1),ls2
+          else
+            ls1,e::ls2
+  in
+  let ls1,ls2 = helper ps in
+  (ls1,ls2)
+
+and subst_var (fr, t) (o : (ident*primed)) = if (eq_var fr o) then t else o
+
+(*x'=x ==> x_new = x_old*)
+let trans_special_formula s (p:formula) vars =
+  (match p with
+    | BForm ((p_f,sth1),sth2) ->
+        (match p_f with
+          | Eq (e1,e2,pos) ->
+              (match e1,e2 with
+                | Var ((id1,p1),pos1), Var ((id2,p2),pos2) ->
+                    (*x'=x*)
+                    if (id1=id2) & (p1!=p2) then
+                      if (Gen.BList.mem_eq eq_var (id1,p1) vars) || (Gen.BList.mem_eq eq_var (id2,p2) vars) then
+                        let unprimed_param = (id1,Unprimed) in
+                        let primed_param = (id1,Primed) in
+                        let old_param = (id1^"_old",Unprimed) in
+                        let new_param = (id1^"_new",Unprimed) in
+                        let s1 = (unprimed_param,old_param) in
+                        let s2 = (primed_param,new_param) in
+                        (*??? QUICK TRICK*)
+                        (* let _ = print_endline ("v1 = " ^ (!print_id (id1,p1))) in *)
+                        (* let _ = print_endline ("v2 = " ^ (!print_id (id2,p2))) in *)
+                        let new_v1 = subst_var s1 (id1,p1) in
+                        let new_v1 = subst_var s2 new_v1 in
+                        let new_v2 = subst_var s1 (id2,p2) in
+                        let new_v2 = subst_var s2 new_v2 in
+                        let e1 = Var (new_v1,pos1) in
+                        let e2 = Var (new_v2,pos2) in
+                        let ee = Eq (e1,e2,pos) in
+                        BForm ((ee,sth1),sth2)
+                      else p
+                    else p
+                | _ -> p
+              )
+          | _ -> p
+        )
+    | _ -> p
+  )

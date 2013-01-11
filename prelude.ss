@@ -97,10 +97,6 @@ bool eq___(int a, int b)
     a = b -> ensures res;
     a != b -> ensures !res;}
 
-bool eq___(bool a, bool b) 
-  case {
-    a = b -> ensures res;
-    a != b -> ensures !res;}
 /*
 bool eq___(float a, float b) 
   case {
@@ -260,6 +256,9 @@ int array_get_elm_at___2d(int[,] a, int i, int j)
 /* data tid{ */
 /* } */
 
+data lock{
+}
+
 int fork()
   requires true
   ensures true;
@@ -288,6 +287,30 @@ void release()
 /* ************ */
 /* Concurrency  */
 /* ************ */
+
+
+/* ********>>>*************/
+/* Pointer translation  */
+/* ************************/
+data int_ptr{
+  int val;
+}
+
+data int_ptr_ptr{
+  int_ptr val;
+}
+
+void delete_ptr(ref int_ptr x)
+  requires x::int_ptr<v>
+  ensures true;
+
+void delete_ptr(ref int_ptr_ptr x)
+  requires x::int_ptr_ptr<v>
+  ensures true;
+
+/* ********<<<*************/
+/* Pointer translation  */
+/* ************************/
 
 int[] update___1d(int v, int[] a, int i)
 //void update___(ref int[] a, int i, int v) 

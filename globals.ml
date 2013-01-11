@@ -98,6 +98,58 @@ type typ =
   | HpT (* heap predicate relation type *)
   | Tree_sh
   (* | FuncT (\* function type *\) *)
+  | Pointer of typ (* base type and dimension *)
+
+let is_program_pointer (name:ident) = 
+  let slen = (String.length name) in
+  try  
+      let n = (String.rindex name '_') in
+      (* let _ = print_endline ((string_of_int n)) in *)
+      let l = (slen-(n+1)) in
+      if (l==0) then (false,name)
+      else 
+        let str = String.sub name (n+1) (slen-(n+1)) in
+        if (str = "ptr") then
+          let s = String.sub name 0 n in
+          (true,s)
+        else
+          (false,name)
+  with  _ -> (false,name)
+
+let is_pointer_typ (t:typ) : bool =
+  match t with
+    | Pointer _ -> true
+    | _ -> false
+
+let convert_typ (t:typ) : typ =
+  match t with
+    | Pointer t1 -> 
+        (match t1 with
+          | Int -> Named "int_ptr"
+          | Pointer t2 ->
+              (match t2 with
+                | Int -> Named "int_ptr_ptr"
+                | _ -> t2 (*TO CHECK: need to generalize for float, bool, ...*)
+              )
+          | _ -> t1 (*TO CHECK: need to generalize for float, bool, ...*)
+        )
+    | _ -> t
+
+let revert_typ (t:typ) : typ =
+  (match t with
+    | Named t1 ->
+        (match t1 with
+          | "int_ptr" -> Int
+          | "int_ptr_ptr" -> Named "int_ptr"
+          | _ -> Named "Not_Support")
+    | _ -> Named "Not_Support")
+
+let name_of_typ (t:typ) : string =
+  (match t with
+    | Named t1 ->
+        t1
+    | _ -> 
+        "Not_Support")
 
 let is_pointer t=
  match t with
@@ -105,6 +157,17 @@ let is_pointer t=
    | _ -> false
 
 let barrierT = Named "barrier"
+
+let convert_prim_to_obj (t:typ) : typ =
+  (match t with
+    | Int -> Named "int_ptr"
+    | Named t1 ->
+        (match t1 with
+          | "int_ptr" -> Named "int_ptr_ptr"
+          | _-> t (*TO CHECK: need to generalize for float, bool, ...*)
+        )
+    | _ -> t (*TO CHECK: need to generalize for float, bool, ...*)
+  )
 
 (*for heap predicate*)
 let hp_default_prefix_name = "HP_"
@@ -117,7 +180,7 @@ type mode =
   | ModeIn
   | ModeOut
   
-  
+
 
 type perm_type =
   | NoPerm (*no permission at all*)
@@ -354,6 +417,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | List t        -> "list("^(string_of_typ t)^")"
   | Tree_sh		  -> "Tsh"
   | RelT        -> "RelT"
+  | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | HpT        -> "HpT"
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
@@ -376,6 +440,7 @@ let rec string_of_typ_alpha = function
   | TVar t        -> "TVar_"^(string_of_int t)
   | List t        -> "list_"^(string_of_typ t)
   | RelT        -> "RelT"
+  | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | HpT        -> "HpT"
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
@@ -495,6 +560,20 @@ let finalize_name = "finalize"
 let acquire_name = "acquire"
 let release_name = "release"
 let lock_name = "lock"
+let lock_typ = Named "lock"
+
+let ls_name = "LS"
+let lsmu_name = "LSMU"
+let ls_data_typ = "lock"
+
+let waitlevel_name = "waitlevel"
+let waitlevel_typ = Int
+
+let level_pred = "level"
+let level_name = "mu"
+let level_data_typ = Int
+let ls_typ = BagT (Named ls_data_typ)
+let lsmu_typ = BagT (Int)
 
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
@@ -565,12 +644,40 @@ let smart_memo = ref false
 
 let elim_exists = ref true
 
-(* let allow_imm = ref false (\*imm will delay checking guard conditions*\) *)
 let allow_imm = ref true (*imm will delay checking guard conditions*)
 
 let ann_derv = ref false
 
+(*is used during deployment, e.g. on a website*)
+(*Will shorten the error/warning/... message delivered
+to end-users*)
+let is_deployed = ref false 
+
+let web_compile_flag = ref false (*enable compilation flag for website*)
+
+(* Decide whether normalization/simplification
+such as x<1 --> x+1<=1 is allowed
+   Currently, =true when using -tp parahip|rm
+   or using -perm frac
+   The reason for this is that when using concurrency verification,
+   (floating-point) permission  constraints could be related to
+   integer constraints; therefore, this renders the normalization
+   unsound.
+   Look at example at sleekex/examples/fracperm/locks/bug-simplify.slk
+   for more details.
+   Currently, conservativly do not allow such simplification
+*)
+let allow_norm = ref false
+
+let allow_ls = ref false (*enable lockset during verification*)
+
+let allow_locklevel = ref false (*enable locklevel during verification*)
+
+(* let has_locklevel = ref false *)
+
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
+
+let allow_ptr = ref false (*true -> enable pointer translation*)
 
 let print_proc = ref false
 
@@ -935,6 +1042,9 @@ let string_of_loc_by_char_num (l : loc) =
   Printf.sprintf "(%d-%d)"
     l.start_pos.Lexing.pos_cnum
     l.end_pos.Lexing.pos_cnum
+
+let string_of_formula_label ((i,s):formula_label) =
+      "(" ^ (string_of_int i) ^ " , " ^ s ^ ")"
 
 let seq_local_number = ref 0
 

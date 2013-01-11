@@ -593,6 +593,9 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   let ctx = 
     if !Globals.delay_proving_sat then ctx
     else CF.transform_context (Solver.elim_unsat_es 9 !cprog (ref 1)) ctx in
+  let _ = if (CF.isAnyFalseCtx ctx) then
+        print_endline ("[Warning] False ctx")
+  in
   let rs1, _ = 
     if not !Globals.disable_failure_explaining then
       Solver.heap_entail_struc_init_bug_inv !cprog false false 

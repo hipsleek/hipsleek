@@ -17,6 +17,6 @@ print residue.
 
 checkentail x::sortl(1.0)<10, _> |- x::ll(1.0)<n> & n > 11.
 
-checkentail x::node(1.0)<next = r1> * r1::node(1.0)<next = aa> * y::node(1.0)<> & b > 10 & aa=null |- x::ll(1.0)<c>.
+checkentail x::node(1.0)<_,r1> * r1::node(1.0)<_,aa> * y::node(1.0)<_,_> & b > 10 & aa=null |- x::ll(1.0)<c>.
 print residue.
 

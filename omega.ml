@@ -148,6 +148,7 @@ and omega_of_formula pr_w pr_s f  =
       let _ = Debug.trace_hprint (add_str "Omega Error format:" !print_formula) f in
       raise e
 
+
 let omega_of_formula i pr_w pr_s f  =
   let pr = !print_formula in
   Debug.no_1_num i "omega_of_formula" 

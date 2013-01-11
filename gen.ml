@@ -1087,6 +1087,10 @@ struct
   let is_dupl_dset (xs:dpart) : bool = 
     List.exists (check_dups) xs
 
+  let is_mem_dset e (el:dpart): bool =
+    let ls = (List.filter (fun l -> List.exists (fun x -> eq e x) l) el) in
+    ls!=[]
+
   (* returns a list of difference sets for element e *)
   let find_diff (eq:'a->'a->bool) (s: dpart) (e:ptr) : dpart =
     (List.filter (fun l -> List.exists (fun x -> eq e x) l) s)

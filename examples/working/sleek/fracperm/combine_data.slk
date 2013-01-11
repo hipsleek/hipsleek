@@ -28,7 +28,7 @@ checkentail x::cell(0.4)<v1> * x::cell(0.2)<v1> * x::cell(0.2)<v1> * x::cell(0.2
 
 //(3)
 checkentail x::cell(0.4)<v1> * x::cell(0.6)<v3> |- x::cell(1.0)<v2>.
-//print residue. // fails as may failure
+//print residue. // valid cause from LSH we can infer v1=v3, then normalize
 
 //(4)
 checkentail x::cell(0.4)<v1> * x::cell(0.6)<v3> & v1=v3 |- x::cell(1.0)<v2>.
@@ -51,3 +51,15 @@ checkentail x::cell(0.4)<v1> * x::cell(0.3)<v1>  |- x::cell(f)<v>.
 checkentail x::cell(0.4)<v1> * x::cell(0.6)<v1>  |- x::cell(0.5)<v2>.
 print residue. //valid, COMBINE
 // succeeds with 2 answers
+
+//(9)
+checkentail x::cell(0.4)<v1> * x::cell(0.6)<v3> |- v1=v3.
+//print residue. // valid cause from LSH we can infer v1=v3, then normalize
+
+//(10)
+checkentail x::cell(0.4)<v1> * x::cell(0.6)<v3> |- v1!=v3.
+//print residue. // fail cause from LSH we can infer v1=v3, then normalize
+
+//(11)
+checkentail x::cell(0.1)<v1> * x::cell(0.2)<v2> * x::cell(0.3)<v3>|- v1=v2 & v1=v3.
+//print residue. // valid

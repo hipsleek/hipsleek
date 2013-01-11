@@ -35,9 +35,9 @@ void main()
   acquire[LOCK](l,x);
   x.val++;
   release[LOCK](l,x);
-
-  join(id);
   dprint;
+  join(id);
+  //dprint;
 
   acquire[LOCK](l,x);
   finalize[LOCK](l,x);

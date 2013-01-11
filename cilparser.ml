@@ -641,6 +641,7 @@ let rec translate_stmt (s: Cil.stmt) : Iast.exp =
                                  Iast.exp_bool_lit_pos = pos} in
         let infinite_loop = Iast.While {Iast.exp_while_condition = cond;
                                         Iast.exp_while_body = Iast.Empty pos;
+                                        Iast.exp_while_addr_vars = [];
                                         Iast.exp_while_specs = Iast.mkSpecTrue n_flow pos;
                                         Iast.exp_while_jump_label = Iast.NoJumpLabel;
                                         Iast.exp_while_path_id = None ;
@@ -681,6 +682,7 @@ let rec translate_stmt (s: Cil.stmt) : Iast.exp =
       let body = translate_block blk in
       let newexp = Iast.While {Iast.exp_while_condition = cond;
                                Iast.exp_while_body = body;
+                               Iast.exp_while_addr_vars = [];
                                Iast.exp_while_specs = hspecs;
                                Iast.exp_while_jump_label = Iast.NoJumpLabel;
                                Iast.exp_while_path_id = None ;
