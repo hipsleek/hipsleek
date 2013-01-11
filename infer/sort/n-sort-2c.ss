@@ -18,7 +18,7 @@ sortHO<v,R:relation(int,int)> ==
 inv self!=null;
 
 relation R0(int r, int a).
-relation R1(int r, int a).
+relation R1(int r, int a) == false.
 
 relation R(int r, int a) == r<=a .
 relation LT(int r, int a) == r>a .
@@ -32,6 +32,9 @@ node sort(node x)
      requires x::ls<a>
      ensures  res::sortHO<b,R0> & b<=a ;
 /*
+     requires x::ls<a>
+     ensures  res::sortHO<b,R1> & b<=a ;
+
 Why false inferred?
 
 *************************************

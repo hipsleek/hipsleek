@@ -29,7 +29,7 @@ For below:
 Why did we not derived below instead:
  RELASS [P]: ( P(a,b)) -->  (b!=0 | a<=0)
 
-# zip-n-3.ss #DONE
+# zip-n-3.ss  #DONE
 
 !!! REL PRE :  P(a,b)
 !!! PRE :  (b<=(a-1) & b<=(0-1)) | a<=b
@@ -145,3 +145,48 @@ RELDEFN R0: ( r_643<=a_644 & r_673<=a_674 & R0(r_643,a_644))
 !!! PRE :  true
 Procedure sort$node SUCCESS
 
+# n-id.ss
+
+node id(node x)
+  infer [R1,R2]
+  requires x::sortHO<a,R1>
+  ensures  res::sortHO<a,R2> & res=x;
+
+Checking procedure id$node... 
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN R2: ( a=a_30 & v2_590=v2_622 & R1(a,v2_590)) -->  R2(a_30,v2_622)]
+*************************************
+fixcalc: Parse error on line 2 rest of line: ;
+
+PROBLEM : should use 1=0 rather than false
+
+/*
+  # R1(a,b)-->R2(a,b)
+
+  RELDEFN R2: ( a=a_30 & v2_590=v2_622 & R1(a,v2_590)) -->  R2(a_30,v2_622)]
+
+*/
+{
+
+# err-9-m-app.ss
+
+node append(node x, node y)
+  infer [R1,P2]
+  requires x::sortHO<a,R1,mi,mx> * y::node<b,null> &  P2(mx,b)
+  ensures  res::sortHO<a,R2,mi2,mx2> & mi2=min(mi,b) & mx2=max(mx,b) & res=x;
+/*
+
+Need sanity checks on what is being inferred
+so inconsistency are detected early.
+
+In the above case it caused "simplify to have a problem".
+
+Checking procedure append$node~node... Timeout when checking #simplify  Restarting Omega after ... 104 invocations Stop Omega... 104 invocations Starting Omega...oc
+
+Solution 
+  (i) fix Omega 
+ (ii) provide sanity checks.
+
+*/

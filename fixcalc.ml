@@ -72,10 +72,15 @@ and fixcalc_of_exp e = match e with
     end
   | _ -> illegal_format ("Fixcalc.fixcalc_of_exp: Not supported expression")
 
+let fixcalc_of_bool b =
+  match b with
+    | true -> "1=1"
+    | false -> "1=0"
+
 let rec fixcalc_of_b_formula b =
   let (pf, _) = b in
   match pf with
-    | CP.BConst (b,_) -> string_of_bool b 
+    | CP.BConst (b,_) -> fixcalc_of_bool b 
     | CP.BVar (x, _) -> fixcalc_of_spec_var x
     | CP.Lt (e1, e2, _) -> fixcalc_of_exp e1 ^ op_lt ^ fixcalc_of_exp e2
     | CP.Lte (e1, e2, _) -> fixcalc_of_exp e1 ^ op_lte ^ fixcalc_of_exp e2
