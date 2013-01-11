@@ -1,4 +1,4 @@
-# der-1a.slk
+# der-1a.slk  # DONE
 
 // PROBLEM : should allow type annotation
 pred_extn pos_sum[R,V:int]<s> ==
