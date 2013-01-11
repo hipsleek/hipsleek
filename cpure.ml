@@ -7049,6 +7049,12 @@ let filter_ante (ante : formula) (conseq : formula) : (formula) =
 	let new_ante = filter_var ante fvar in
     new_ante
 
+let filter_ante_wo_rel (ante : formula) (conseq : formula) : (formula) =
+	let fvar = fv conseq in
+	let fvar = List.filter (fun v -> not(is_rel_var v)) fvar in
+	let new_ante = filter_var ante fvar in
+    new_ante
+
 (* automatic slicing of variables *)
 
 (* slice_formula inp1 :[ 0<=x, 0<=y, z<x] *)

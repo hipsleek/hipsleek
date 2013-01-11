@@ -1392,6 +1392,10 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
 (*            if rank_dec_id != [] then CP.RankDecr rank_dec_id else*)
               report_error pos "Relation belongs to unexpected category"
           in
+          Debug.tinfo_hprint (add_str "rel-defn:rhs" Cprinter.string_of_pure_formula) rhs no_pos;
+          Debug.tinfo_hprint (add_str "rel-defn:new lhs" Cprinter.string_of_pure_formula) new_lhs no_pos;
+          let new_lhs = filter_ante_wo_rel new_lhs rhs in
+          Debug.tinfo_hprint (add_str "rel-defn:filter_ante lhs" Cprinter.string_of_pure_formula) new_lhs no_pos;
           [(rel_cat,new_lhs,rhs)] 
         in
         (* End - Auxiliary function *)
