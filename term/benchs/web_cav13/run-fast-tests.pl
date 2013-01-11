@@ -327,6 +327,50 @@ $output_file = "log";
 		["PastaC8-while.ss", 1, "", "main", "SUCCESS"],
 		["PastaC9-while.ss", 1, "", "main", "SUCCESS"]
 	],
+	"Others" => [
+		["ex1.ss", 2, "", "length", "SUCCESS", "app2", "SUCCESS"],
+    ["ex2.ss", 1, "", "loop", "SUCCESS"],
+    ["ex3.ss", 1, "", "loop", "SUCCESS"],
+    ["ex4.ss", 1, "", "inc_loop", "SUCCESS"],
+    ["ex5.ss", 1, "", "foo", "SUCCESS"],
+    ["ex6.ss", 1, "", "Ack", "SUCCESS"],
+    ["ex7.ss", 1, "", "loop", "SUCCESS"],
+    ["ex8.ss", 2, "", "loop2", "SUCCESS", "loop", "SUCCESS"],
+    ["ex9.ss", 1, "", "loop", "SUCCESS"],
+		["ex10.ss", 1, "", "loop", "SUCCESS"],
+    ["ex11.ss", 1, "", "bsearch", "SUCCESS"],
+    ["ex12.ss", 2, "", "loop", "SUCCESS", "f", "SUCCESS"],
+    ["ex13.ss", 1, "", "loop", "SUCCESS"],
+		["ex14.ss", 1, "", "loop", "SUCCESS"],
+		["mutual.ss", 2, "", "g", "SUCCESS", "f", "SUCCESS"],
+		["lit/ase09-1.ss", 1, "", "find", "SUCCESS"],
+		["lit/ase09-2.ss", 2, "", "find", "SUCCESS", "find_r", "SUCCESS"],
+		["lit/cav08-1.ss", 1, "", "loop", "SUCCESS"],
+		["lit/cav08-2.ss", 1, "", "loop", "SUCCESS"],
+		["lit/cav08-3.ss", 1, "", "loop", "SUCCESS"],
+		["lit/cav08-4.ss", 1, "", "loop", "SUCCESS"],
+		["lit/cav08-5.ss", 2, "", "loop", "SUCCESS", "f", "SUCCESS"],
+		["lit/cav08-6.ss", 1, "", "gcd", "SUCCESS"],
+		["lit/dijkstra76-1.ss", 1, "", "loop", "SUCCESS"],
+		["lit/dijkstra76-2.ss", 1, "", "loop", "SUCCESS"],
+		["lit/dijkstra76-3.ss", 1, "", "loop", "SUCCESS"],
+		["lit/pldi06-1.ss", 1, "", "loop", "SUCCESS"],
+		["lit/pldi06-2.ss", 3, "", "main", "SUCCESS", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
+		["lit/pldi06-3.ss", 2, "", "main", "SUCCESS", "loop", "SUCCESS"],
+		["lit/pldi06-4.ss", 3, "", "main", "SUCCESS", "loop", "SUCCESS", "loop_aux", "SUCCESS"],
+		["lit/pldi06-5.ss", 1, "", "Ack", "SUCCESS"],
+		["lit/popl07-1.ss", 3, "", "loop_1", "SUCCESS", "loop_2", "SUCCESS", "loop_3", "SUCCESS"],
+		["lit/popl07-2.ss", 1, "", "loop", "SUCCESS"],
+		["lit/sas05.ss", 2, "", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
+		["lit/sas10-1.ss", 3, "", "f", "SUCCESS", "loop_1", "SUCCESS", "loop_2", "SUCCESS"],
+		["lit/sas10-2.ss", 2, "", "foo", "SUCCESS", "loop", "SUCCESS"],
+		["lit/sas10-2a.ss", 2, "", "foo", "SUCCESS", "loop", "SUCCESS"],
+		["lit/sas10-3.ss", 3, "", "main", "SUCCESS", "foo", "SUCCESS", "loop", "SUCCESS"],
+		["lit/vcc-1.ss", 2, "", "f", "SUCCESS", "g", "SUCCESS"],
+		["lit/vmcai05-1a.ss", 1, "", "loop", "SUCCESS"],
+		["lit/vmcai05-1b.ss", 1, "-tp redlog", "loop", "SUCCESS"],
+		["lit/leap-year-bug-zune-loop.ss", 3, "", "ConvertDays", "SUCCESS", "loop", "SUCCESS", "IsLeapYear", "SUCCESS"]
+	],
 	"SIR" => [
 		["print_tokens.c", 23, "-tp z3",  
 			"gat_loop1", "SUCCESS",
@@ -456,6 +500,34 @@ $output_file = "log";
 			"get_command", "SUCCESS",
 			"main", "SUCCESS"
 		]	
+	],
+	"SV-COMP" => [
+		["alternating_list.ss", 2, "-tp om", 
+			"create", "SUCCESS",
+			"main", "SUCCESS"
+		],
+		["create.ss", 1, "-tp om", "create", "SUCCESS"],
+		["list_flag.ss", 2, "-tp om", 
+			"create", "SUCCESS",
+			"main", "SUCCESS"
+		],
+		["list.ss", 2, "-tp om", 
+			"create", "SUCCESS",
+			"main", "SUCCESS"
+		],
+		["simple_built_from_end.ss", 2, "-tp om", 
+			"create", "SUCCESS",
+			"main", "SUCCESS"
+		],
+		["simple.ss", 2, "-tp om", 
+			"create", "SUCCESS",
+			"main", "SUCCESS"
+		],
+		["splice.ss", 3, "-tp om", 
+			"create", "SUCCESS",
+			"main", "SUCCESS",
+			"part", "SUCCESS"
+		]
 	],
 	"Hip" => [
 		["avl.ss", 13, "",

@@ -460,7 +460,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
           in 
           let term_stack = match term_err_msg with
             | None -> estate.es_var_stack
-            | Some msg -> msg::estate.es_var_stack
+            | Some msg -> add_term_err_stk msg; msg::estate.es_var_stack
           in
           let n_estate = { estate with
             es_var_measures = term_measures;
