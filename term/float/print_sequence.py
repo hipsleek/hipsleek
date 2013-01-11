@@ -4,13 +4,13 @@ import math
 N = 30
 
 def f(x):
-  y = x*x - 1.0
+  y = (x + 16.0/x) / 2.0
   return y
   
 
 try:
   x = float(raw_input('Choose x = '))
-  fixpoint = 2.0
+  #fixpoint = 2.0
   for i in range(N):
     # print distance 
     #distance = abs(x - fixpoint)

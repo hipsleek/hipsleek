@@ -660,9 +660,9 @@ let rec pr_formula_exp (e:P.exp) =
           f_b e1; pr_cut_after op_sub; f_b e2
     | P.Div (e1, e2, l) ->
           f_b e1; pr_cut_after op_div ; f_b e2
-    | P.Abs (e, _) -> fmt_string "Abs("; pr_formula_exp e; fmt_string ")";
-    | P.Sqrt (e, _) -> fmt_string "sqrt("; pr_formula_exp e; fmt_string ")";
-    | P.Pow (e1, e2, _) -> fmt_string "pow("; pr_formula_exp e1; fmt_string ", "; pr_formula_exp e2; fmt_string ")";
+    | P.Abs (e, _) -> fmt_string "__abs("; pr_formula_exp e; fmt_string ")";
+    | P.Sqrt (e, _) -> fmt_string "__sqrt("; pr_formula_exp e; fmt_string ")";
+    | P.Pow (e1, e2, _) -> fmt_string "__pow("; pr_formula_exp e1; fmt_string ", "; pr_formula_exp e2; fmt_string ")";
     | P.Sequence (seq, f, _) ->
         fmt_string "Sequence{";
         pr_formula_exp seq.CP.seq_measure; fmt_string " @ (";
@@ -852,7 +852,7 @@ and pr_pure_formula  (e:P.formula) =
   let f_b e =  pr_bracket pure_formula_wo_paren pr_pure_formula e 
   in
   match e with 
-    | P.BForm (bf,lbl,fo) -> (*pr_formula_label_opt lbl;*) (*pr_formula_origin fo; fmt_string ":";*) pr_b_formula bf
+    | P.BForm (bf,lbl,fo) -> (*pr_formula_label_opt lbl;*) pr_formula_origin fo; fmt_string ":"; pr_b_formula bf
     | P.And (f1, f2, l) ->  
           let arg1 = bin_op_to_list op_and_short pure_formula_assoc_op f1 in
           let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in

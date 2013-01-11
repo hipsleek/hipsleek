@@ -534,6 +534,7 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
         let limit_s = seq_s.CP.seq_domain_lb in
         let limit_d = seq_d.CP.seq_domain_lb in
         let update_formula = collect_update_formula lhs measure_s measure_d in
+        let _ = print_endline ("== update_formula = " ^ (Cprinter.string_of_pure_formula update_formula)) in
         let specs_formula = collect_specs_formula lhs in
         let refined_specs = refine_specs_adapt_sequence specs_formula seq_s seq_d in
         let assumption = CP.mkAnd update_formula refined_specs pos in
