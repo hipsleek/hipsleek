@@ -2569,12 +2569,15 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                                 print_endline "*************************************";
                                 print_endline (Infer.fixcalc_rel_stk # string_of_reverse);
                                 print_endline "*************************************"
-                              end;                    
-                              (* Debug.info_hprint (add_str "triples" (pr_list (pr_pair pr pr_ty))) triples no_pos; *)
-(*                              let triples = List.map (fun (rel,post) ->*)
-(*                                  let exist_vars = CP.diff_svl (CP.fv rel) inf_vars in*)
-(*                                  let pre_new = TP.simplify_exists_raw exist_vars post in*)
-(*                                  (rel,post,pre_new)) triples in*)
+                              end;
+
+                              let tuples = List.map (fun (rel_post,post,rel_pre,pre) ->
+                                  let pre_new = if CP.isConstTrue rel_pre then
+                                      let inf_pre_vars = List.filter (fun x -> List.mem x pre_vars) inf_vars in
+                                      let exist_vars = CP.diff_svl (CP.fv_wo_rel rel_post) inf_vars in
+                                      TP.simplify_exists_raw exist_vars post 
+                                    else pre in
+                                  (rel_post,post,rel_pre,pre_new)) tuples in
                               let evars = stk_evars # get_stk in
                               (* let evars = [] in*)
                               let _ = List.iter (fun (rel_post,post,rel_pre,pre) ->
