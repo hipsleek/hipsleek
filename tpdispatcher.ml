@@ -1027,6 +1027,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   if not !tp_batch_mode then start_prover ();
   let f = if (!Globals.allow_locklevel) then
         (*should translate waitlevel before level*)
+        let f = CP.infer_level_pure f in (*add l.mu>0*)
         let f = CP.translate_waitlevel_pure f in
         let f = CP.translate_level_pure f in
         let _ = Debug.devel_hprint (add_str "After translate_: " Cprinter.string_of_pure_formula) f no_pos in
@@ -1529,8 +1530,10 @@ let restore_suppress_imply_output_state () = match !suppress_imply_output_stack 
 let tp_imply_no_cache ante conseq imp_no timeout process =
   let ante,conseq = if (!Globals.allow_locklevel) then
         (*should translate waitlevel before level*)
+        let ante = CP.infer_level_pure ante in (*add l.mu>0*)
         let ante = CP.translate_waitlevel_pure ante in
         let ante = CP.translate_level_pure ante in
+        let conseq = CP.infer_level_pure conseq in (*add l.mu>0*)
         let conseq = CP.translate_waitlevel_pure conseq in
         let conseq = CP.translate_level_pure conseq in
         let _ = Debug.devel_hprint (add_str "After translate_: ante = " Cprinter.string_of_pure_formula) ante no_pos in
@@ -2008,8 +2011,10 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (old_imp_no : stri
 
   let ante0,conseq0 = if (!Globals.allow_locklevel) then
         (*should translate waitlevel before level*)
+        let ante0 = CP.infer_level_pure ante0 in (*add l.mu>0*)
         let ante0 = CP.translate_waitlevel_pure ante0 in
         let ante0 = CP.translate_level_pure ante0 in
+        let conseq0 = CP.infer_level_pure conseq0 in (*add l.mu>0*)
         let conseq0 = CP.translate_waitlevel_pure conseq0 in
         let conseq0 = CP.translate_level_pure conseq0 in
         let _ = Debug.devel_hprint (add_str "After translate_: ante0 = " Cprinter.string_of_pure_formula) ante0 no_pos in

@@ -10153,7 +10153,7 @@ let collect_heap_args_list_failesc_context (ctx:list_failesc_context) (sv:CP.spe
          (*pickup a set of args and its non-empty node name*)
          let head_args,head_id = List.find (fun (args,id) -> (id<>"")) args_list in
          let _ = List.iter (fun (args,id) ->
-             if(id<>"") & (((List.length head_args) != (List.length args)) || (id!=head_id)) then
+             if(id<>"") & (((List.length head_args) != (List.length args)) || (id<>head_id)) then
                (*if a node name is non-empty, it should be consistent with the head*)
                report_error no_pos ("collect_heap_args_list_failesc_context: heap_args of node " ^ (!print_sv sv) ^ (" are inconsistent"))
              else ()

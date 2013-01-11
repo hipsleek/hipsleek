@@ -1730,7 +1730,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let dynamic_specs_list = set_pre_flow (trans_I2C_struc_formula 3 prog true free_vars proc.I.proc_dynamic_specs stab true true (*check_pre*) ) in
     (****** Infering LSMU from LS if there is LS in spec >>*********)
     let static_specs_list =
-      if (!Globals.allow_locklevel) then
+      if (!Globals.allow_locklevel && !Globals.allow_lsmu_infer) then
         let vars = CF.struc_fv static_specs_list in
         let b = List.exists (fun sv -> (CP.name_of_spec_var sv)=Globals.ls_name) vars in
         if b then
@@ -1739,7 +1739,7 @@ and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       else static_specs_list
     in
     let dynamic_specs_list =
-      if (!Globals.allow_locklevel) then
+      if (!Globals.allow_locklevel && !Globals.allow_lsmu_infer) then
         let vars = CF.struc_fv dynamic_specs_list in
         let b = List.exists (fun sv -> (CP.name_of_spec_var sv)=Globals.ls_name) vars in
         if b then
@@ -6277,7 +6277,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
       strad_vs :IF.struc_formula* ((ident*primed)list) = 	
   let ilinearize_formula (f:IF.formula)(h:(ident*primed) list): IF.formula = 
     let need_quant = Gen.BList.difference_eq (=) (IF.all_fv f) h in
-    let vars = List.filter (fun (c1,c2)->(c2==Primed && c1<>Globals.ls_name)) need_quant in
+    let vars = List.filter (fun (c1,c2)->(c2==Primed && c1<>Globals.ls_name && c1<>Globals.lsmu_name)) need_quant in
     let _ = if vars!=[] then 
       let msg = "Pass-by-value parameters and local variables can not escape out of scope: " ^ (string_of_primed_ident_list vars) in
       Err.report_error{ 
@@ -6865,8 +6865,8 @@ and case_normalize_proc_x prog (f:Iast.proc_decl):Iast.proc_decl =
   (*LOCKSET variable*********)
   let ls_pvar = (ls_name,Primed) in
   let ls_uvar = (ls_name,Unprimed) in
-  let lsmu_pvar = (ls_name,Primed) in
-  let lsmu_uvar = (ls_name,Unprimed) in
+  let lsmu_pvar = (lsmu_name,Primed) in
+  let lsmu_uvar = (lsmu_name,Unprimed) in
   let waitlevel_pvar = (waitlevel_name,Primed) in
   let waitlevel_uvar = (waitlevel_name,Unprimed) in
   let lock_vars = [waitlevel_uvar;waitlevel_pvar;lsmu_uvar;lsmu_pvar;ls_uvar;ls_pvar] in

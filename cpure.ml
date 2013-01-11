@@ -9511,6 +9511,7 @@ let infer_level_pure (f : formula) : formula =
 (*Attempt to infer constraints on LSMU based on constraints on LS
 For example:
 LS'=LS --infer--> LSMU'=LSMU
+l in LS --infer--> l.mu=v & v in LSMU
 *)
 let infer_lsmu_pure_x (f:formula) : formula * (spec_var list)=
   if (not !allow_locklevel) then (f,[]) else
@@ -9622,6 +9623,11 @@ let infer_lsmu_pure_x (f:formula) : formula * (spec_var list)=
   let nf2,evars = split_ex_quantifiers_rec nf in
   (nf2,evars)
 
+(*Attempt to infer constraints on LSMU based on constraints on LS
+For example:
+LS'=LS --infer--> LSMU'=LSMU
+l in LS --infer--> l.mu=v & v in LSMU
+*)
 let infer_lsmu_pure (f:formula) : formula * (spec_var list) =
   let pr_out = pr_pair !print_formula !print_svl in
   Debug.no_1 "infer_lsmu_pure"
