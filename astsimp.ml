@@ -3932,8 +3932,9 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
             Err.error_text = "all guard free vars must be instantiated";} in
 	      let _ = 
 	        let coverage_error = 
-				(*Tpdispatcher.is_sat_sub_no (Cpure.Not (all,None,no_pos)) sat_subno*)
-				not (Tpdispatcher.simpl_imply_raw ctx all) in
+				let f_sat = Cpure.mkAnd ctx (Cpure.Not (all,None,no_pos)) no_pos in
+				Tpdispatcher.is_sat_sub_no f_sat sat_subno
+				(*not (Tpdispatcher.simpl_imply_raw ctx all)*) in
 	        if coverage_error then 
               let s = (Cprinter.string_of_struc_formula f) in
               Error.report_error {  Err.error_loc = b.CF.formula_case_pos;
@@ -3941,13 +3942,20 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
 	      
 	      let rec p_check (p:Cpure.formula list):bool = match p with
 	        | [] -> false 
-	        | p1::p2 -> 
-				let p1 = Cpure.mkAnd p1 ctx no_pos in
+	        | p1i::p2 -> 
+				let p1 = Cpure.mkAnd p1i ctx no_pos in
 				if (List.fold_left 
-					(fun a c-> a ||
-					(Tpdispatcher.is_sat_sub_no (Cpure.mkAnd p1 c no_pos) sat_subno)
-					) false p2 )
-				then true 
+					(fun a c->
+						if (Tpdispatcher.is_sat_sub_no (Cpure.mkAnd p1i c no_pos) sat_subno) then 
+							if (Tpdispatcher.is_sat_sub_no (Cpure.mkAnd p1 c no_pos) sat_subno) then 
+								(print_string ("in the context :"^(Cprinter.string_of_pure_formula ctx)^
+											  "\n the guards "^(Cprinter.string_of_pure_formula p1i)^"and"^
+											  (Cprinter.string_of_pure_formula c)^" are not disjoint\n");
+								true)
+							else a
+						else a) 
+					false p2 )
+				then true
 				else p_check p2 in
 	      
 	      let _ = if (p_check r1) then 
