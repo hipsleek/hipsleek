@@ -3914,11 +3914,11 @@ and case_coverage (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
 
 and case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
   let sat_subno  = ref 0 in
-  let rec struc_case_coverage (instant:Cpure.spec_var list)(f1:CF.struc_formula):bool = match f1 with
+  let rec struc_case_coverage (instant:Cpure.spec_var list) ctx (f1:CF.struc_formula):bool = match f1 with
     | CF.EAssume b ->  true
     | CF.EBase b -> (match b.CF.formula_struc_continuation with 
 	    | None -> true
-	    | Some l -> case_coverage_x (instant@ b.CF.formula_struc_explicit_inst@ b.CF.formula_struc_implicit_inst@ b.CF.formula_struc_exists) l)
+	    | Some l -> struc_case_coverage (instant@ b.CF.formula_struc_explicit_inst@ b.CF.formula_struc_implicit_inst@ b.CF.formula_struc_exists) (CP.mkAnd (CF.extract_pure b.CF.formula_struc_base) ctx no_pos)l)
     | CF.ECase b -> 
 	      let r1,r2 = List.split b.CF.formula_case_branches in
 	      let all = List.fold_left (fun a c->(Cpure.mkOr a c None no_pos) ) (Cpure.mkFalse b.CF.formula_case_pos) r1  in
@@ -3931,24 +3931,33 @@ and case_coverage_x (instant:Cpure.spec_var list)(f:CF.struc_formula): bool =
 	        Error.report_error {  Err.error_loc = b.CF.formula_case_pos;
             Err.error_text = "all guard free vars must be instantiated";} in
 	      let _ = 
-	        let sat = Tpdispatcher.is_sat_sub_no (Cpure.Not (all,None,no_pos)) sat_subno in
-	        if sat then 
+	        let coverage_error = 
+				(*Tpdispatcher.is_sat_sub_no (Cpure.Not (all,None,no_pos)) sat_subno*)
+				not (Tpdispatcher.simpl_imply_raw ctx all) in
+	        if coverage_error then 
               let s = (Cprinter.string_of_struc_formula f) in
               Error.report_error {  Err.error_loc = b.CF.formula_case_pos;
               Err.error_text = "the guards don't cover the whole domain for : "^s^"\n";} 	in
 	      
 	      let rec p_check (p:Cpure.formula list):bool = match p with
 	        | [] -> false 
-	        | p1::p2 -> if (List.fold_left (fun a c-> a ||(Tpdispatcher.is_sat_sub_no (Cpure.mkAnd p1 c no_pos) sat_subno)) false p2 ) then true else p_check p2 in
+	        | p1::p2 -> 
+				let p1 = Cpure.mkAnd p1 ctx no_pos in
+				if (List.fold_left 
+					(fun a c-> a ||
+					(Tpdispatcher.is_sat_sub_no (Cpure.mkAnd p1 c no_pos) sat_subno)
+					) false p2 )
+				then true 
+				else p_check p2 in
 	      
 	      let _ = if (p_check r1) then 
             Error.report_error {  Err.error_loc = b.CF.formula_case_pos;
             Err.error_text = "the guards are not disjoint : "^(Cprinter.string_of_struc_formula f)^"\n";} in
-	      let _ = List.map (case_coverage_x instant) r2 in true
-    | CF.EInfer b -> struc_case_coverage instant b.CF.formula_inf_continuation
-    | CF.EOr b -> (struc_case_coverage instant b.CF.formula_struc_or_f1)&&(struc_case_coverage instant b.CF.formula_struc_or_f2)
-    | CF.EList b -> List.for_all (fun c-> struc_case_coverage instant(snd c)) b in
-  struc_case_coverage instant f
+	      let _ = List.map (fun (c1,c2)->struc_case_coverage instant (CP.mkAnd c1 ctx no_pos) c2) b.CF.formula_case_branches in true
+    | CF.EInfer b -> struc_case_coverage instant ctx b.CF.formula_inf_continuation
+    | CF.EOr b -> (struc_case_coverage instant ctx b.CF.formula_struc_or_f1)&&(struc_case_coverage instant ctx b.CF.formula_struc_or_f2)
+    | CF.EList b -> List.for_all (fun c-> struc_case_coverage instant ctx (snd c)) b in
+  struc_case_coverage instant (CP. mkTrue no_pos) f
 
 and trans_var_nth i p stab pos =
   let pr = pr_var_prime in

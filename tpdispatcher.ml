@@ -2272,6 +2272,10 @@ Debug.no_2 "imply" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_fo
 
 and imply_x ante0 conseq0 imp_no do_cache process = imply_timeout ante0 conseq0 imp_no !imply_timeout_limit do_cache process ;;
 
+let simpl_imply_raw ante conseq = 
+	let (r,_,_)= imply ante conseq "0" false None in
+	r
+
 let memo_imply ante0 conseq0 imp_no = memo_imply_timeout ante0 conseq0 imp_no !imply_timeout_limit ;;
 
 let mix_imply ante0 conseq0 imp_no = mix_imply_timeout ante0 conseq0 imp_no !imply_timeout_limit ;;
