@@ -18,7 +18,7 @@ relation R(int r, int a) == r<=a .
 relation LT(int r, int a) == r>a .
 
 node append(node x, node y)
-  infer [R1,P2]
+  infer [R1,P2,R]
   requires x::sortHO<a,R1,mi,mx> * y::node<b,null> &  P2(mx,b)
   ensures  res::sortHO<a,R2,mi2,mx2> & mi2=min(mi,b) & mx2=max(mx,b) & res=x;
 /*
