@@ -476,9 +476,27 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             let _ = if old_vars=[] then Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos else () in
             let _ = Debug.ninfo_hprint (add_str "VARS" !print_svl) vars no_pos in
             let (vars_rel,vars_inf) = List.partition (fun v -> is_RelT(CP.type_of_spec_var v) ) vars in
+            let _ = Debug.ninfo_hprint (add_str "vars_rel" !print_svl) vars_rel no_pos in
+            let new_fml_fv = CF.struc_fv new_formula_inf_continuation in
+            let classify_rel v = 
+              let rel_decl = Cast.look_up_rel_def_raw prog.Cast.prog_rel_decls (CP.name_of_spec_var v) in
+              if CP.isConstTrue rel_decl.rel_formula then true else false in              
+            let (unknown_rel,known_rel) = List.partition classify_rel 
+              (CP.remove_dups_svl ((List.filter CP.is_rel_var new_fml_fv)@vars_rel)) in
+            let _ = Debug.ninfo_hprint (add_str "unknown_rel" !print_svl) unknown_rel no_pos in
+            let _ = Debug.ninfo_hprint (add_str "known_rel" !print_svl) known_rel no_pos in
+            let inf_pos = b.CF.formula_inf_pos in
+            let _ = 
+              if not(CP.subset unknown_rel vars_rel) then
+                report_error inf_pos "Inferable vars do not include some unknown relation!"
+              else
+              if CP.intersect known_rel vars_rel<>[] then
+                report_error inf_pos "Inferable vars include some known relation!"
+              else ()
+            in
             let (vars_hp_rel,vars_inf) = List.partition (fun v -> CP.type_of_spec_var v == HpT ) vars_inf in
-            let new_vars = vars_inf @ (List.filter (fun r -> List.mem r (CF.struc_fv new_formula_inf_continuation)) vars_rel) in
-            let new_vars = new_vars @ (List.filter (fun r -> List.mem r (CF.struc_fv new_formula_inf_continuation)) vars_hp_rel) in
+            let new_vars = vars_inf @ (List.filter (fun r -> List.mem r new_fml_fv) vars_rel) in
+            let new_vars = new_vars @ (List.filter (fun r -> List.mem r new_fml_fv) vars_hp_rel) in
             (if new_vars!=[] || postf then pre_ctr # inc) ;
             let nctx = CF.transform_context (fun es -> 
                 CF.Ctx {es with CF.es_infer_vars = es.CF.es_infer_vars@vars_inf;
