@@ -13,11 +13,14 @@ pred ll<> ==
 // Predicate extension definition
 pred_extn size<n> ==
       n=0
-   or n=1+m & @REC::size<m>
-  inv n>=0.
+   or n=1+m & @REC::size<m>.
 
 pred_extn head<n> ==
-      n=@VAL.
+      n=UNDEFINED
+   or n=@VAL.
+
+pred_extn head2<n> ==
+      n=@VAL
 
 pred_extn sum<s> ==
       s=0
@@ -27,18 +30,21 @@ pred_extn height<h> ==
       h=0
    or h=1+max(h2) & @REC::height<h2>.
 
-pred_extn ordered<V,R:relation(int,int)> ==
-      R(@VAL,V) & @REC::ordered<@VAL,R>.
+pred_extn ordered<@VAL,R:relation(int,int)> ==
+      true & @REC=NULL
+   or R(@VAL,@REC@VAL) & @REC::ordered<@REC@VAL,R>.
 
 pred_extn set<S> ==
       S={}
    or S={@VAL} union S2 & @REC::set<S2>.
 
 pred_extn minValue<m> ==
-      m=min(@VAL,m2) & @REC::minValue<m2>.
+      m=inf
+   or m=min(@VAL,m2) & @REC::minValue<m2>.
 
 pred_extn maxValue<m> ==
-      m=max(@VAL,m2) & @REC::maxValue<m2>.
+      m=inf
+   or m=max(@VAL,m2) & @REC::maxValue<m2>.
 
 /***********************************************/
 
@@ -48,7 +54,7 @@ pred llNSum<s,n> == extends llN<n> with sum<s> .
 
 pred llH<n> == extends ll<> with height<n>.
 
-pred llS<n> == extends ll<> with set<S>.
+pred llS<S> == extends ll<> with set<S>.
 
 pred llNS<n,S> == extends llN<n> with set<S>.
 
@@ -73,7 +79,7 @@ pred llSorted<v> == extends llHead<h> with ordered<v,Inc> .
 pred llSorted<v> == llOrdered<v,Dec> .
 
 pred llMinMax<mi,mx> 
-        == extends ll<> with (maxValue<mx>,minValue<mi>).
+        == extends ll<> with (minValue<mi>,maxValue<mx>).
 
 /***********************************************/
 
