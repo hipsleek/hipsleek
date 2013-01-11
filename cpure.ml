@@ -1244,6 +1244,8 @@ and is_bag (e : exp) : bool =
     | BagUnion _
     | BagIntersect _
     | BagDiff _ -> true
+    | Var (sv,_) ->
+        if (is_bag_typ sv) then true else false
     | _ -> false
 
 and is_list (e : exp) : bool =
@@ -4220,8 +4222,14 @@ let rec drop_float_formula (f0 : formula) : formula = match f0 with
   | AndList b -> AndList (map_l_snd drop_float_formula b)
   | Or (f1, f2, lbl, pos) ->mkOr (drop_float_formula f1) (drop_float_formula f2) lbl pos 
   | Not (f1, lbl, pos) -> mkNot (drop_float_formula f1) lbl pos 
-  | Forall (qvar, qf,lbl, pos) -> mkForall [qvar] (drop_float_formula qf) lbl pos 
-  | Exists (qvar, qf,lbl, pos) -> mkExists [qvar] (drop_float_formula qf) lbl pos 
+  | Forall (qvar, qf,lbl, pos) ->
+      if (is_float_var qvar) then (drop_float_formula qf)
+      else
+        mkForall [qvar] (drop_float_formula qf) lbl pos 
+  | Exists (qvar, qf,lbl, pos) ->
+      if (is_float_var qvar) then (drop_float_formula qf)
+      else
+        mkExists [qvar] (drop_float_formula qf) lbl pos 
 
 and drop_float_b_formula (bf : b_formula) : b_formula =
   if (is_float_bformula bf) then (BConst (true, no_pos),None)

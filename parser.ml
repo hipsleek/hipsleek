@@ -394,7 +394,7 @@ let peek_try =
        match Stream.npeek 1 strm with
           | [DPRINT,_] -> raise Stream.Failure
           | _ -> ())
-		  
+
  let peek_try_declarest = 
  SHGram.Entry.of_parser "peek_try_declarest" 
      (fun strm ->
@@ -421,13 +421,16 @@ SHGram.Entry.of_parser "peek_print"
 		match Stream.npeek 3 strm with
 		| [i,_;j,_;k,_]-> print_string((Token.to_string i)^" "^(Token.to_string j)^" "^(Token.to_string k)^"\n");()
 		| _ -> raise Stream.Failure)
+
+(*This is quite similar to peek_and_pure*)
  let peek_and = 
    SHGram.Entry.of_parser "peek_and"
-       (fun strm -> 
-           match Stream.npeek 2 strm with
-             | [AND,_;FLOW i,_] -> raise Stream.Failure
-             (* | [AND,_;OSQUARE,_] -> raise Stream.Failure *)
+       (fun strm ->
+           match Stream.npeek 3 strm with
+             | [AND,_;FLOW i,_;_] -> raise Stream.Failure
+             | [AND,_;OSQUARE,_;STRING _,_] -> raise Stream.Failure
              | _ -> ())
+
  let peek_pure = 
    SHGram.Entry.of_parser "peek_pure"
        (fun strm -> 
@@ -462,12 +465,13 @@ let peek_dc =
              | [OPAREN,_;EXISTS,_] -> ()
              | _ -> raise Stream.Failure)
 
+(*This seems similar to peek_and*)
  let peek_and_pure = 
    SHGram.Entry.of_parser "peek_and_pure"
        (fun strm -> 
-           match Stream.npeek 2 strm with
-             | [AND,_;FLOW i,_] -> raise Stream.Failure
-             (* | [AND,_;OSQUARE,_] -> raise Stream.Failure *)
+           match Stream.npeek 3 strm with
+             | [AND,_;FLOW i,_;_] -> raise Stream.Failure
+             | [AND,_;OSQUARE,_;STRING _,_] -> raise Stream.Failure
              | _ -> ())
 
  let peek_heap_args = 
@@ -1110,7 +1114,7 @@ exl_pure : [[  pc1=cexp_w; `HASH; pc2=cexp_w -> apply_pure_form2 (fun c1 c2-> P.
 
 cexp_w:
   [ "pure_lbl"
-    [ofl= pure_label ; spc=SELF (*LEVEL "pure_or"*)          -> apply_pure_form1 (fun c-> label_formula c ofl) spc]   (*apply_cexp*)
+    [ ofl= pure_label ; spc=SELF (*LEVEL "pure_or"*)          -> apply_pure_form1 (fun c-> label_formula c ofl) spc]   (*apply_cexp*)
 
   | "slicing_label"
 	[ sl=slicing_label; f=SELF -> set_slicing_utils_pure_double f sl ]

@@ -3888,11 +3888,11 @@ and heap_entail_one_context i prog is_folding  ctx conseq (tid: CP.spec_var opti
   (* let pr1 = fun _-> "" in  *)
   (* let pr2 = fun _-> "" in *)
   (* let pr3 = fun _-> "" in *)
-  Debug.no_2_num i "heap_entail_one_context" pr1 pr2 pr3 (fun ctx conseq -> heap_entail_one_context_a prog is_folding  ctx conseq pos) ctx conseq
+  Debug.no_2_num i "heap_entail_one_context" pr1 pr2 pr3 (fun ctx conseq -> heap_entail_one_context_a i prog is_folding  ctx conseq pos) ctx conseq
 
 (*only struc_formula can have some thread id*)
-and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool)  (ctx : context) (conseq : formula) pos : (list_context * proof) =
-  Debug.devel_zprint (lazy ("heap_entail_one_context:"^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)^"\n")) pos;
+and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool)  (ctx : context) (conseq : formula) pos : (list_context * proof) =
+  Debug.devel_zprint (lazy ("heap_entail_one_context:" ^ (string_of_int i)^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)^"\n")) pos;
     if isAnyFalseCtx ctx then (* check this first so that false => false is true (with false residual) *)
       (SuccCtx [ctx], UnsatAnte)
     else if (not !Globals.do_classic_frame_rule) && (isStrictConstTrue conseq) then (SuccCtx [ctx], TrueConseq)
@@ -6483,9 +6483,6 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
           begin
             DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
-          DD.devel_pprint ("ante0 = " ^ Cprinter.string_of_pure_formula a0) no_pos;
-          DD.devel_pprint ("ante1 = " ^ Cprinter.string_of_pure_formula a1) no_pos;
-          DD.devel_pprint ("conseq = " ^ Cprinter.string_of_mix_formula conseq_m) no_pos;
 	        let a0l,a1l = if CP.no_andl a0 && CP.no_andl a1 then (CP.split_disjunctions a0,CP.split_disjunctions a1)
     	    else 
 	          let r = ref (-8999) in

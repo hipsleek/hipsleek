@@ -34,7 +34,10 @@ let string_of_hashtbl tab = Hashtbl.fold
 let rec mona_of_typ = function
   | Bool          -> "int"
   | Tree_sh 	  -> "int"
-  | Float         -> "float"	(* Can I really receive float? What do I do then? I don't have float in Mona. *)
+  | Float         -> 
+      (* "float"	(\* Can I really receive float? What do I do then? I don't have float in Mona. *\) *)
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "float type not supported for mona"}
   | Int           -> "int"
   | AnnT          -> "AnnT"
   | RelT          -> "RelT"
@@ -223,7 +226,7 @@ and find_order_formula (f : CP.formula) vs : bool  = match f with
 and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
   let rec exp_order e vs =
     match e with
-      | CP.Null _ -> 1
+      (* | CP.Null _ -> 1 *) (* leave it unknown 0*)
       | CP.Var(sv, l) ->
 	        begin
 	          try
@@ -419,7 +422,7 @@ and is_firstorder_mem_a e vs =
           begin
             try 
 	          let r = Hashtbl.find vs sv1 in 
-	          if (r == 1 (*|| r == 0*)) then true
+	          if (r == 1) then true
 	          else false
             with 
 	          | Not_found -> Error.report_error { Error.error_loc = l1; Error.error_text = (" Error during Mona translation for var " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
@@ -434,7 +437,7 @@ and part_firstorder_mem e vs =
           begin
             try 
 	          let r = Hashtbl.find vs sv1 in 
-	          if (r == 1 (*|| r == 0*)) then true
+	          if (r == 1) then true
 	          else false
             with 
 	          | Not_found -> false
@@ -893,6 +896,9 @@ let start () =
   let pr = (fun _ -> "") in
   Debug.no_1 "[mona.ml] start" pr pr start ()
 
+let start () =
+  Gen.Profiling.do_1 "mona.start" start ()
+
 let stop () = 
   let killing_signal = 
     match !is_mona_running with
@@ -902,11 +908,17 @@ let stop () =
   let _ = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks killing_signal (fun () -> ()) in
   is_mona_running := false
 
+let stop () =
+  Gen.Profiling.do_1 "mona.stop" stop ()
+
 let restart reason =
   if !is_mona_running then
 	(* let _ = print_string ("\n[mona.ml]: Mona is preparing to restart because of " ^ reason ^ "\nRestarting Mona ...\n"); flush stdout; in *)
 	let _ = print_endline ("\nMona is running ... "); flush stdout; in
     Procutils.PrvComms.restart !log_all_flag log_all reason "mona" start stop
+
+let restart reason =
+  Gen.Profiling.do_1 "mona.restart" restart reason
 
 let check_if_mona_is_alive () : bool = 
   try
@@ -1104,8 +1116,6 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
     begin
       let _ = maybe_restart_mona () in
       let answer = send_cmd_with_answer !cmd_to_send in
-      (* let _ = print_endline("[Mona] cmd_to_send = " ^ !cmd_to_send) in *)
-      (* let _ = print_endline("[Mona] answer = " ^ answer) in *)
       check_answer content answer is_sat_b
     end
   with
@@ -1138,29 +1148,6 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   let (ante_fv, ante) = prepare_formula_for_mona pr_w pr_s ante !test_number in
   let (conseq_fv, conseq) = prepare_formula_for_mona pr_s pr_w conseq !test_number in
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
-  (****************************)
-  (*Selectively float + bag***)
-  let f = tmp_form in
-  let f,flag = 
-    if (CP.is_bag_constraint f) && (CP.is_float_formula f) then
-      let f_wo_float = CP.drop_float_formula f in
-      let f_wo_bag = CP.drop_bag_formula f in
-      (*LOCKSET: TODO : must use Redlog to discharge float constraints*)
-      (* let _ = print_string("f = " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in *)
-      (* let _ = print_string("f_wo_float = " ^ (Cprinter.string_of_pure_formula f_wo_float) ^ "\n") in *)
-      (* let _ = print_string("f_wo_bag = " ^ (Cprinter.string_of_pure_formula f_wo_bag) ^ "\n") in *)
-      let (pr_w,pr_s) = CP.drop_complex_ops in
-      let b_float,_ = Redlog.imply_no_cache_ops pr_w pr_s f_wo_bag imp_no in
-      (* let _ = print_endline("b_float = " ^ (string_of_bool b_float)) in *)
-      if (b_float) then (f_wo_float,true) else (f,false)
-    else (f,true)
-  in
-  let tmp_form = f in
-  (*IF float constraints are unsatisfiable/unsat 
-    => imply_sat_helper = false*)
-  if (not flag) then false
-  else
-  (****************)
   let vs = Hashtbl.create 10 in
   let _ = find_order tmp_form vs in
   if not !is_mona_running then
@@ -1173,6 +1160,10 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   Debug.no_3 "mona.imply" pr pr (fun x -> x) string_of_bool 
   (fun _ _ _ -> imply_ops pr_w pr_s ante conseq imp_no) ante conseq imp_no
 
+let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
+  Gen.Profiling.do_1 "mona.imply"
+  (imply_ops pr_w pr_s ante conseq) imp_no
+
 let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   let _ = if not !is_mona_running then start () else () in
   let _ = Gen.Profiling.inc_counter "stat_mona_count_sat" in
@@ -1181,31 +1172,9 @@ let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   sat_optimize := true;
   incr test_number;
   let f = CP.drop_varperm_formula f in
-  (****************************)
-  (*Selectively float + bag***)
-  let f,flag = 
-    if (CP.is_bag_constraint f) && (CP.is_float_formula f) then
-      let f_wo_float = CP.drop_float_formula f in
-      let f_wo_bag = CP.drop_bag_formula f in
-      (*LOCKSET: TODO : must use Redlog to discharge float constraints*)
-      (* let _ = print_string("f = " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in *)
-      (* let _ = print_string("f_wo_float = " ^ (Cprinter.string_of_pure_formula f_wo_float) ^ "\n") in *)
-      (* let _ = print_string("f_wo_bag = " ^ (Cprinter.string_of_pure_formula f_wo_bag) ^ "\n") in *)
-      let b_float = Redlog.is_sat f_wo_bag sat_no in
-      if (b_float) then (f_wo_float,true) else (f,false)
-    else (f,true)
-  in
-  (*IF float constraints are unsatisfiable/unsat 
-    => imply_sat_helper = false*)
-  if (not flag) then false
-  else
-  (****************)
   let (f_fv, f) = prepare_formula_for_mona pr_w pr_s f !test_number in
-  (* let _ = print_endline("[Mona] f = " ^ (Cprinter.string_of_pure_formula f) ) in *)
-  (* let _ = print_endline("[Mona] f_fv = " ^ (Cprinter.string_of_spec_var_list f_fv) ) in *)
   let vs = Hashtbl.create 10 in
   let _ = find_order f vs in
-  (* let _ = print_endline("[Mona] is_sat_ops: vs = " ^ (string_of_hashtbl vs) ) in *)
   (* print_endline ("Mona.is_sat: " ^ (string_of_int !test_number) ^ " : " ^ (string_of_bool !is_mona_running)); *)
   let sat = 
     if not !is_mona_running then
@@ -1223,6 +1192,9 @@ let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   Debug.no_2 "mona.is_sat_ops" pr (fun x -> x) string_of_bool 
   (fun _ _ -> is_sat_ops_x pr_w pr_s f sat_no) f sat_no
 
+let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
+  Gen.Profiling.do_1 "mona.is_sat_ops"
+  (is_sat_ops pr_w pr_s f) sat_no
 
 (* TODO: implement the following procedures; now they are only dummies *)
 let hull (pe : CP.formula) : CP.formula = begin
