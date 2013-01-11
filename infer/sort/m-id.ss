@@ -21,9 +21,43 @@ node id(node x)
   requires x::sortHO<a,R1,mi,mx>
   ensures  res::sortHO<a,R2,mi,mx> & res=x;
 /*
+  requires x::sortHO<a,R1,mi,mx>
+  ensures  res::sortHO<a,R2,mi,mx> 
+           & res=x & R1(a,b)->R2(a,b);
+
+
   # R1(a,b)-->R2(a,b)
 
   RELDEFN R2: ( a=a_30 & v2_590=v2_622 & R1(a,v2_590)) -->  R2(a_30,v2_622)]
+
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELDEFN R2: ( v2_614=v2_656 & a=a_30 & R1(a,v2_614)) -->  R2(a_30,v2_656)]
+*************************************
+
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( R2(a_30,v2_656), false, true, true)]
+*************************************
+
+!!! REL POST :  R2(a_30,v2_656)
+!!! POST:  false
+!!! REL PRE :  true
+!!! PRE :  true
+Procedure id$node SUCCESS
+
+Above is not really a POST condition.
+If we have: 
+  R2(a,v) == false
+We require:
+  R1(a,v) --> false
+But deriving false for pred relation
+is a bad thing since it specializes the
+predicate too much.
+
+Thus, best to keep result as R1(a,b)->R2(a,b)
 
 */
 {

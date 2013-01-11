@@ -32,8 +32,30 @@ node sort(node x)
      requires x::ls<a>
      ensures  res::sortHO<b,R0> & b<=a ;
 /*
-     requires x::ls<a>
-     ensures  res::sortHO<b,R1> & b<=a ;
+
+We derived:
+
+Checking procedure sort$node... 
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELASS [R0]: ( R0(r_643,a_644)) -->  r_643<=a_644,
+RELDEFN R0: ( r_643<=a_644 & r_673<=a_674 & R0(r_643,a_644)) 
+                -->  R0(r_673,a_674)]
+
+However  R0(r_643,a_644) is not really connected to
+the output on RHS. Actually, we should have obtained
+below instead if we only traverse the connected
+formula on the LHS.
+
+// --dis-pre-residue gives
+*************************************
+*******pure relation assumption ******
+*************************************
+[RELASS [R0]: ( R0(r_643,a_644)) -->  r_643<=a_644,
+RELDEFN R0: ( r_673<=a_674) -->  R0(r_673,a_674)]
+*************************************
+
 
 Why false inferred?
 
