@@ -41,8 +41,12 @@ and loc =  {
     end_pos : Lexing.position;
   }
 
+and spec_type =
+  | Precond
+  | Postcond
+
 and formula_origin =
-  | F_o_specs
+  | F_o_specs of (spec_type option)
   | F_o_code
   | F_o_inter
 

@@ -253,7 +253,7 @@ let collect_update_formula_x (transition: CP.formula) (old_exp: CP.exp) (new_exp
   let rec build_update_table (f: CP.formula) (utable : (CP.spec_var, CP.spec_var list) Hashtbl.t)
                              : (CP.spec_var, CP.spec_var list) Hashtbl.t = (
     match f with
-    | CP.BForm (_, _, (Some F_o_specs)) -> utable
+    | CP.BForm (_, _, (Some (F_o_specs _))) -> utable
     | CP.BForm ((CP.Eq (CP.Var (v, _), exp, _), _), _, _) ->
         let usedvars = try Hashtbl.find utable v with Not_found -> [] in
         let newvars = CP.afv exp in
@@ -295,7 +295,7 @@ let collect_update_formula_x (transition: CP.formula) (old_exp: CP.exp) (new_exp
   ) in
   let rec is_update_formula (uvars: CP.spec_var list) (f: CP.formula) : bool = (
     match f with
-    | CP.BForm (_, _, (Some F_o_specs)) -> false
+    | CP.BForm (_, _, (Some F_o_specs (Some Precond))) -> false
     | CP.BForm ((CP.Eq (CP.Var (v, _), _, _), _), _, _) -> List.exists (fun u -> CP.eq_spec_var v u) uvars 
     | CP.BForm _ -> false
     | CP.And (f1, f2, _) -> (is_update_formula uvars f1) || (is_update_formula uvars f2)
@@ -340,15 +340,15 @@ let collect_update_formula (transition: CP.formula) (old_exp: CP.exp) (new_exp: 
 let collect_specs_formula_x (transition: CP.formula) : CP.formula =
   let rec collect_helper (f: CP.formula) : CP.formula = (
     match f with
-    | CP.BForm (_, _, Some F_o_specs) -> f
+    | CP.BForm (_, _, Some F_o_specs _) -> f
     | CP.BForm _ -> CP.mkTrue no_pos
     | CP.And (f1, f2, p) -> (
         let newf1 = match f1 with
-          | CP.BForm (_, _, Some F_o_specs) -> Some f1
+          | CP.BForm (_, _, Some F_o_specs _) -> Some f1
           | CP.BForm _ -> None
           | _ -> Some (collect_helper f1) in
         let newf2 = match f2 with
-          | CP.BForm (_, _, Some F_o_specs) -> Some f2
+          | CP.BForm (_, _, Some F_o_specs _) -> Some f2
           | CP.BForm _ -> None
           | _ -> Some (collect_helper f2) in
         match newf1, newf2 with

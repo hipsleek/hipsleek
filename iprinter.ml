@@ -86,7 +86,9 @@ let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
 and string_of_formula_origin fo : string =
   match fo with
   | None -> ""
-  | Some F_o_specs -> "F_O_SPECS"
+  | Some (F_o_specs None) -> "F_O_SPECS"
+  | Some (F_o_specs (Some Precond)) -> "F_O_SPECS_PRE"
+  | Some (F_o_specs (Some Postcond)) -> "F_O_SPECS_POST"
   | Some F_o_code -> "F_O_CODE"
   | Some F_o_inter -> "F_O_INTER"
 
