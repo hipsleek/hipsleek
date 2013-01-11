@@ -147,9 +147,10 @@ let common_arguments = [
 	("--dis-ls", Arg.Clear Globals.allow_ls,"disable locksets during verification");
 	("--locklevel", Arg.Set Globals.allow_locklevel,"enable locklevels during verification");
 	("--dis-locklevel", Arg.Clear Globals.allow_locklevel,"disable locklevels during verification");
+	("--dis-lsmu-infer", Arg.Clear Globals.allow_lsmu_infer,"disable simple inference of lsmu");
+	("--en-lsmu-infer", Arg.Set Globals.allow_lsmu_infer,"enable simple inference of lsmu");
 	("--dis-para", Arg.Unit Perm.disable_para,"disable concurrency verification");
-	("--en-para", Arg.Unit Perm.enable_para,"enable concurrency verification");
-  ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
+	("--en-para", Arg.Unit Perm.enable_para,"enable concurrency verification");("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
   ("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
   ("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
