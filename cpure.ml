@@ -3803,6 +3803,9 @@ let print_var_set vset =
   let tmp3 = String.concat ", " tmp2 in
 	print_string ("\nvset:\n" ^ tmp3 ^ "\n")
 
+let fv_wo_rel f =
+  List.filter (fun v -> not(is_rel_var v)) (fv f)
+
 (*
   filter from f0 conjuncts that mention variables related to rele_vars.
 *)
@@ -3812,7 +3815,7 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
 	not (SVarSet.is_empty (SVarSet.inter fvset rele_var_set)) in
   let rele_var_set = set_of_list rele_vars0 in
   let conjs = list_of_conjs f0 in
-  let fv_list = List.map fv conjs in
+  let fv_list = List.map fv_wo_rel conjs in
   let fv_set = List.map set_of_list fv_list in
   let f_fv_list = List.combine conjs fv_set in
   let relevants0, unknowns0 = List.partition
@@ -7049,6 +7052,7 @@ let filter_ante (ante : formula) (conseq : formula) : (formula) =
 	let new_ante = filter_var ante fvar in
     new_ante
 
+
 let filter_ante_wo_rel (ante : formula) (conseq : formula) : (formula) =
 	let fvar = fv conseq in
 	let fvar = List.filter (fun v -> not(is_rel_var v)) fvar in
@@ -8376,9 +8380,9 @@ let simplify_disj_new (f:formula) : formula =
   let pr = !print_formula in
   Debug.no_1 "simplify_disj_new" pr pr simplify_disj_new f
 
-let fv_wo_rel (f:formula) =
-  let vs = fv f in
-  List.filter (fun v -> not(is_RelT (type_of_spec_var v))) vs
+(* let fv_wo_rel (f:formula) = *)
+(*   let vs = fv f in *)
+(*   List.filter (fun v -> not(is_RelT (type_of_spec_var v))) vs *)
 
 (* Termination: Add the call numbers and the implicit phase 
  * variables to specifications if the option 

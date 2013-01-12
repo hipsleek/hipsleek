@@ -224,7 +224,8 @@ formula on the LHS.
 RELDEFN R0: ( r_673<=a_674) -->  R0(r_673,a_674)]
 *************************************
 */
-# n-sort-2e.ss
+
+# n-sort-2e.ss # DONE (solved  due to error in fixcalc)
 
 node sort(node x)
      infer [R0,P]
@@ -278,20 +279,13 @@ RELDEFN R1: ( r_677<=a_678) -->  R1(r_677,a_678)]
 # n-ins-3c.ss (simplifying RELDEFN)
 
 RELDEFN R2: ( b<=v2_671) -->  R2(b,v2_671),
-RELDEFN R2: ( R(a,v2_619) & R(r_744,a_745)) -->  R2(r_744,a_745)
-  @ why filter_ante_wo_rel did not remove R(a,v2_619)?
-  R(r_744,a_745) -->  R2(r_744,a_745)
-RELDEFN R2: 
-   R(r_744,a_745) & R(a,v2_619) & a=v2_709 & v2_619=v2_727) 
-         -->  R2(v2_709,v2_727)
+RELDEFN R2: ( R(r_744,a_745)) -->  R2(r_744,a_745),
+RELDEFN R2: ( R(a,v2_619) & a=v2_709 & v2_619=v2_727) -->  R2(v2_709,v2_727),
    @can we substitute equality for existential variables on LHS 
     such as a=? and v2_619=? to obtain:
-   R(r_744,a_745) & R(v2_709,v2_727) -->  R2(v2_709,v2_727)
-   @this can be followed by filtet_ante_wo_rel
    R(v2_709,v2_727) -->  R2(v2_709,v2_727)
-RELDEFN R2: 
-  (v2_619=v2_727 & R2(v_617,v2_727) & R(r_744,a_745) & R(a,v2_619) & 
-    v2_709=v_617 & a=v2_709 & b<=v2_709) -->  R2(b,v2_709)
+RELDEFN R2: ( v2_619=v2_727 & R2(v_617,v2_727) & R(a,v2_619) & v2_709=v_617 & a=v2_709 & 
+b<=v2_709) -->  R2(b,v2_709),
   @elim exists = on LHS
   R2(v2_709,v2_727) & R(r_744,a_745) & R(v2_709,v2_727) &  b<=v2_709 
   -->  R2(b,v2_709)
@@ -301,12 +295,9 @@ RELDEFN R2:
   @using R(..)->R2(..)
   R(v2_709,v2_727) &  b<=v2_709 
   -->  R2(b,v2_709)
-
 RELDEFN R2: ( b<v2_758) -->  R2(b,v2_758),
-RELDEFN R2: 
-   ( R(a,v2_619) & 
-     ((a=b & a<v2_798 & v2_798<=v2_619) | (a=b & v2_619=v2_798))) 
-    -->  R2(b,v2_798)]
+RELDEFN R2: ( R(a,v2_619) & ((a=b & a<v2_798 & v2_798<=v2_619) | (a=b & v2_619=v2_798))) -->  R2(b,v2_798)]
+*
    @do a deep split of disjunction on the LHS
     R(a,v2_619) & a=b & a<v2_798 & v2_798<=v2_619
     -->  R2(b,v2_798)]
