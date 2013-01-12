@@ -1,4 +1,6 @@
 void main () 
+requires MayLoop
+ensures true;
 {
 	int x, y;
 	while (x > y)

@@ -13,6 +13,7 @@ void main ()
 	*/
 	requires (x<=y & Term) or (x>y & x<=1 & Term[1-x]) or (x>y & x>1 & Term[x-y])
 	ensures true;
+	
 	{
 		y = x + y;
 		x = x + 1;
