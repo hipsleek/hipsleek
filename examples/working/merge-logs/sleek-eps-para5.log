@@ -1,0 +1,52 @@
+Starting sleek tests:
+Checking sleek.slk
+Checking sleek1.slk
+Checking sleek10.slk
+Checking sleek2.slk
+Checking sleek3.slk
+Checking sleek4.slk
+Checking sleek6.slk
+Checking sleek7.slk
+Checking sleek8.slk
+Checking sleek9.slk
+Checking symb-diff.slk
+Checking infer/infer1.slk
+Checking infer/infer2.slk
+Checking infer/infer4.slk
+Checking infer/infer5.slk
+Checking infer/infer6.slk
+Checking infer/infer7.slk
+Unexpected result with : infer/infer7.slk
+Checking infer/infer8.slk
+Unexpected result with : infer/infer8.slk
+Checking infer/infer9.slk
+Unexpected result with : infer/infer9.slk
+Checking infer/infer10.slk
+Unexpected result with : infer/infer10.slk
+Checking infer/infer11.slk
+Checking infer/infer12.slk
+Checking infer/infer13.slk
+Unexpected result with : infer/infer13.slk
+Checking infer/infer14.slk
+Unexpected result with : infer/infer14.slk
+Checking infer/infer15.slk
+Unexpected result with : infer/infer15.slk
+Checking ann1.slk (runs with extra options:  --imm )
+Checking imm/imm1.slk (runs with extra options:  --imm )
+Unexpected result with : imm/imm1.slk
+Checking imm/imm2.slk (runs with extra options:  --imm )
+Checking imm/imm3.slk (runs with extra options:  --imm )
+Unexpected result with : imm/imm3.slk
+Checking imm/imm4.slk (runs with extra options:  --imm )
+Checking imm/imm-hard.slk (runs with extra options:  --imm --eps)
+Checking classic/classic1.slk
+Checking classic/classic1.slk (runs with extra options:  --classic)
+Checking classic/classic2.slk
+Checking classic/classic3.slk
+Starting hip-sleek tests:
+Total number of errors: 9 in files:
+  infer/infer7.slk infer/infer8.slk infer/infer9.slk infer/infer10.slk infer/infer13.slk infer/infer14.slk infer/infer15.slk imm/imm1.slk imm/imm3.slk.
+Total verification time: 2.59 second
+	Time spent in main process: 1.33 second
+	Time spent in child processes: 1.26 second
+	Number of false contexts: 0

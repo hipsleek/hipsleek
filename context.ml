@@ -98,12 +98,11 @@ let pr_match_res (c:match_res):unit =
   pr_vwrap "Type: " pr_match_type c.match_res_type;
   pr_vwrap "LHS: " pr_h_formula c.match_res_lhs_node;
   pr_vwrap "RHS: " pr_h_formula c.match_res_rhs_node;
-  fmt_close ()
-  (* fmt_string "\n lhs_rest: "; pr_h_formula c.match_res_lhs_rest; *)
-  (* fmt_string "\n rhs_rest: "; pr_h_formula c.match_res_rhs_rest; *)
+  fmt_string "\n lhs_rest: "; pr_h_formula c.match_res_lhs_rest;
+  fmt_string "\n rhs_rest: "; pr_h_formula c.match_res_rhs_rest;
   (* fmt_string "\n res_holes: "; pr_seq "" (Cprinter.pr_pair_aux  pr_h_formula pr_int) c.match_res_holes;   *)
   (* fmt_string "}" *)
-
+  fmt_close ()
   
 let pr_simpl_match_res (c:match_res):unit = 
   fmt_open_vbox 1;
@@ -375,7 +374,7 @@ and view_mater_match_x prog c vs1 aset imm f =
               
 and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
   (* if not(c.coercion_simple_lhs && c.coercion_head_view = l_vname) then None *)
-  if not(c.coercion_case=Cast.Simple && c.coercion_head_view = l_vname) then None
+  if not((c.coercion_case=Cast.Simple || c.coercion_case= (Normalize false)) && c.coercion_head_view = l_vname) then None
   else 
     let args = List.tl (fv_simple_formula_coerc c.coercion_head) in (* dropping the self parameter and fracvar *)
     (* let args = List.tl (fv_simple_formula c.coercion_head) in (\* dropping the self parameter *\) *)
@@ -509,7 +508,103 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
       match_res_type = mt;
       match_res_rhs_node = rhs_node;
       match_res_rhs_rest = rhs_rest;}) l
-      
+
+(*
+In the presence of permissions,
+LOOKING for actions on SPLIT/COMBINE lemmas to apply 
+because exact MATCH may fail*)
+and lookup_lemma_action prog (c:match_res) :action =
+  Debug.no_1 "lookup_lemma_action"
+      string_of_match_res string_of_action_res
+      (lookup_lemma_action_x prog) c
+
+and lookup_lemma_action_x prog (c:match_res) :action =
+  let rhs_node = c.match_res_rhs_node in
+  let lhs_node = c.match_res_lhs_node in
+  let view_decls = prog.prog_view_decls in
+  let i,act = match c.match_res_type with 
+    (*no need to prioritize => discount i, only return act*)
+    | Root ->
+        (match lhs_node,rhs_node with
+          | DataNode dl, DataNode dr ->
+              let dl_data_orig = dl.h_formula_data_original in
+              let dr_data_orig = dr.h_formula_data_original in
+              let dl_data_derv = dl.h_formula_data_derv in
+              let dr_data_derv = dr.h_formula_data_derv in
+              let flag = 
+                if !ann_derv 
+                then (not(dl_data_derv) && not(dr_data_derv)) 
+                else (dl_data_orig || dr_data_orig)
+              in
+              (*expecting ((String.compare dl.h_formula_data_name dr.h_formula_data_name)==0) == true*)
+              let l = 
+                let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize false)) prog.prog_left_coercions) dl.h_formula_data_name dr.h_formula_data_name in
+                let right_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize true)) prog.prog_right_coercions) dr.h_formula_data_name dl.h_formula_data_name in
+                let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
+                let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
+                left_act@right_act
+              in
+              if l=[] then (1,M_Nothing_to_do (string_of_match_res c))
+              else (-1,Search_action l)
+          | ViewNode vl, ViewNode vr ->
+              let vl_name = vl.h_formula_view_name in
+              let vr_name = vr.h_formula_view_name in
+              let vl_vdef = look_up_view_def_raw view_decls vl_name in
+              let vr_vdef = look_up_view_def_raw view_decls vr_name in
+              let vl_view_orig = vl.h_formula_view_original in
+              let vr_view_orig = vr.h_formula_view_original in
+              let vl_view_derv =  vl.h_formula_view_derv in
+              let vr_view_derv = vr.h_formula_view_derv in
+              (*Are they in LOCKED state*)
+              let is_l_lock = match vl_vdef.view_inv_lock with
+                | Some _ -> true
+                | None -> false
+              in
+              let is_r_lock = match vr_vdef.view_inv_lock with
+                | Some _ -> true
+                | None -> false
+              in
+              let flag = 
+                if !ann_derv 
+                then (not(vl_view_derv) && not(vr_view_derv)) 
+                (* else (vl_view_orig || vr_view_orig) *)
+                else
+                  (*only apply a SPLIT lemma to a lock
+                    if both sides are original*)
+                  (* if (is_l_lock) then *)
+                  (*   (vl_view_orig && vr_view_orig) *)
+                  (*if RHS is original --> SPLIT*)
+                  if (is_l_lock && is_r_lock && vr_view_orig) then
+                    true
+                  else if (is_l_lock && is_r_lock && not vr_view_orig) then
+                    false
+                  else
+                    (vl_view_orig || vr_view_orig)
+              in
+              let vl_new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
+              let vr_new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
+              let l = if flag
+                  then begin
+                      (*expecting ((String.compare vl.h_formula_view_name vr.h_formula_view_name)==0)*)
+                      let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize false)) prog.prog_left_coercions) vl_name vr_name in
+                      let right_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize true)) prog.prog_right_coercions) vr_name vl_name in
+                      let left_act = if (not(!ann_derv) || vl_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) left_ls else [] in
+                      let right_act = if (not(!ann_derv) || vr_new_orig) then List.map (fun l -> (1,M_lemma (c,Some l))) right_ls else [] in
+                      left_act@right_act
+                  end
+                  else  [] in
+              if l=[] then (1,M_Nothing_to_do (string_of_match_res c))
+              else (-1,Search_action l)
+          | DataNode dl, ViewNode vr -> (1,M_Nothing_to_do (string_of_match_res c))
+          | ViewNode vl, DataNode dr -> (1,M_Nothing_to_do (string_of_match_res c))
+          | _ -> report_error no_pos "process_one_match unexpected formulas\n"	              )
+    | MaterializedArg (mv,ms) -> 
+        (*unexpected*)
+        (1,M_Nothing_to_do (string_of_match_res c))
+    | WArg -> (1,M_Nothing_to_do (string_of_match_res c))
+  in
+  act
+
 and process_one_match prog is_normalizing (c:match_res) :action_wt =
   let pr1 = string_of_match_res in
   let pr2 = string_of_action_wt_res0  in
@@ -593,6 +688,15 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let vr_view_origs = vr.h_formula_view_origins in
                   let vl_view_derv =  vl.h_formula_view_derv in
                   let vr_view_derv = vr.h_formula_view_derv in
+                  (*Are they in LOCKED state*)
+                  let is_l_lock = match vl_vdef.view_inv_lock with
+                    | Some _ -> true
+                    | None -> false
+                  in
+                  let is_r_lock = match vr_vdef.view_inv_lock with
+                    | Some _ -> true
+                    | None -> false
+                  in
                   (* let vl_fold_num = vl_vdef.view_orig_fold_num in *)
                   (* let vr_fold_num = vr_vdef.view_orig_fold_num in *)
                   (*let en_num = !num_self_fold_search in*)
@@ -606,10 +710,14 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                       let a1 = (1,M_base_case_unfold c) in
 					  let a2 = (1,M_match c) in
                       let a2 = if !perm=Dperm && !use_split_match && not !consume_all then (1,Search_action [a2;(1,M_split_match c)]) else a2 in
-                      let a3 = 
+                      let a3 =
+                        (*Do not fold/unfold LOCKs, only match*)
+                        if (is_l_lock || is_r_lock) then Some a2 else 
                         if (String.compare vl_name vr_name)==0 then Some (1,Cond_action [a1;a2])
                         else None in
                       let a4 = 
+                        (*Do not fold/unfold LOCKs*)
+                        if (is_l_lock || is_r_lock) then None else 
                         if not(vl_is_rec) then Some (2,M_unfold (c,0))
                         else if not(vr_is_rec) then Some (2,M_fold c) 
                         else None in
@@ -617,10 +725,14 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                         if a4==None then
                           begin
                             let l1 =
+                              (*Do not fold/unfold LOCKs*)
+                              if (is_l_lock) then [] else 
                               if (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vl_name vr_self_pts) 
                               then  [(2,M_fold c)] 
                               else [] in
                             let l2 =
+                              (*Do not fold/unfold LOCKs*)
+                              if (is_r_lock) then [] else
                               if (vl_view_orig && vr_view_orig && en_self_fold && Gen.BList.mem_eq (=) vr_name vl_self_pts) 
                               then [(2,M_unfold (c,0))]
                               else [] in
@@ -640,7 +752,8 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                                     | Some a2 -> Some (1,Cond_action [a2; a1]) in
                       match a6 with
                         | Some a -> [a]
-                        | None -> 
+                        | None ->
+                              (* TO CHECK : MUST ensure not fold/unfold LOCKs*)
                               let lst=[(1,M_base_case_unfold c);(1,M_Nothing_to_do ("mis-matched LHS:"^(vl_name)^" and RHS: "^(vr_name)))] in
                             (*let lst = [(1,M_base_case_unfold c);(1,M_unmatched_rhs_data_node (rhs_node,c.match_res_rhs_rest))] in*)
                               [(1,Cond_action lst)]
@@ -651,7 +764,19 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let flag = 
                     if !ann_derv 
                     then (not(vl_view_derv) && not(vr_view_derv)) 
-                    else (vl_view_orig || vr_view_orig)
+                    (* else (vl_view_orig || vr_view_orig) *)
+                    else
+                      (*only apply a SPLIT lemma to a lock
+                      if both sides are original*)
+                      (* if (is_l_lock) then *)
+                      (*   (vl_view_orig && vr_view_orig) *)
+                      (*if RHS is original --> SPLIT*)
+                      if (is_l_lock && is_r_lock && vr_view_orig) then
+                        true
+                      else if (is_l_lock && is_r_lock && not vr_view_orig) then
+                        false
+                      else
+                        (vl_view_orig || vr_view_orig)
                   in
                   let l3 = if flag
                   then begin
@@ -683,9 +808,17 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let vr_self_pts = vr_vdef.view_pt_by_self in
                   let vr_view_orig = vr.h_formula_view_original in
                   let vr_view_derv = vr.h_formula_view_derv in
+                  (*Is it LOCKED state*)
+                  let is_r_lock = match vr_vdef.view_inv_lock with
+                    | Some _ -> true
+                    | None -> false
+                  in
                   let new_orig = if !ann_derv then not(vr_view_derv) else vr_view_orig in
                   (* let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr_name dl.h_formula_data_name in *)
-                  let a1 = if (new_orig || vr_self_pts==[]) then [(1,M_fold c)] else [] in
+                  (* let a1 = if (new_orig || vr_self_pts==[]) then [(1,M_fold c)] else [] in *)
+                  let a1 = 
+                    if is_r_lock then [] else
+                    if (new_orig || vr_self_pts==[]) then [(1,M_fold c)] else [] in
                   let a2 = if (new_orig) then [(1,M_rd_lemma c)] else [] in
                   let a = a1@a2 in
                   if a!=[] then (-1,Search_action a)
@@ -696,10 +829,18 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
                   let vl_self_pts = vl_vdef.view_pt_by_self in
                   let vl_view_orig = vl.h_formula_view_original in
                   let vl_view_derv = vl.h_formula_view_derv in
+                  (*Is it LOCKED state*)
+                  let is_l_lock = match vl_vdef.view_inv_lock with
+                    | Some _ -> true
+                    | None -> false
+                  in
                   let new_orig = if !ann_derv then not(vl_view_derv) else vl_view_orig in
                   let uf_i = if new_orig then 0 else 1 in
                   let left_ls = filter_norm_lemmas(look_up_coercion_with_target prog.prog_left_coercions vl_name dr.h_formula_data_name) in
-                  let a1 = if (new_orig || vl_self_pts==[]) then [(1,M_unfold (c,uf_i))] else [] in
+                  (* let a1 = if (new_orig || vl_self_pts==[]) then [(1,M_unfold (c,uf_i))] else [] in *)
+                  let a1 = 
+                    if is_l_lock then [] else
+                    if (new_orig || vl_self_pts==[]) then [(1,M_unfold (c,uf_i))] else [] in
                   let a2 = if (new_orig & left_ls!=[]) then [(1,M_lemma (c,Some (List.hd left_ls)))] else [] in
                   (* if (left_ls == [] && (vl_view_orig ) then ua *)
                   (* else (1,M_lemma (c,Some (List.hd left_ls))) *)

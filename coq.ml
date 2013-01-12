@@ -27,6 +27,7 @@ let rec coq_of_typ = function
   | Void          -> "unit" 	(* all types will be ints. *)
   | BagT t		   -> "("^(coq_of_typ t) ^") set"
   | List _		  -> "list"
+  | Pointer _
   | Tree_sh 	  -> "int"
   | UNK | NUM | TVar _ | Named _ | Array _ |RelT | HpT->
         Error.report_error {Err.error_loc = no_pos; 
@@ -126,6 +127,8 @@ and coq_of_exp e0 =
   | CP.BagDiff (a1, a2, _) -> " ( ZSets.diff " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
 	| CP.Func _ -> 
 			illegal_format "coq_of_exp : function cannot be handled"
+	| CP.Level _ -> 
+			illegal_format "coq_of_exp : level should not be here"
 	| CP.ArrayAt _ -> 
 			illegal_format "coq_of_exp : array cannot be handled"
           (* failwith ("Arrays are not supported in Coq") (\* An Hoa *\) *)

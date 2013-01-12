@@ -26,7 +26,7 @@ GetOptions( "stop"  => \$stop,
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|sleek|hip_vperm|sleek_vperm [-flags \"arguments to be transmited to hip/sleek \"]\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|sleek|parahip|hip_vperm|sleek_vperm|sleek_fracperm [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
 
@@ -45,7 +45,7 @@ if($prover){
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
 		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm', 'z3' => 'z3', 'z3-2.19' => 'z3-2.19', 'zm' => 'zm', 'log' => 'log');
 	if (!exists($provers{$prover})){
-        print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|sleek|hip_vperm|sleek_vperm [-flags \"arguments to be transmited to hip/sleek \"]\n";
+        print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|sleek|parahip|hip_vperm|sleek_vperm|sleek_fracperm [-flags \"arguments to be transmited to hip/sleek \"]\n";
 		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm', 'prm', 'z3' or 'zm'\n";
 		exit(0);
 	}
@@ -517,9 +517,17 @@ $output_file = "log";
                                 "increment","SUCCESS",
                                 "main","SUCCESS"
 								],
-				["vperm/fibonacci.ss",2,  "--ann-vp -tp z3 -perm none", 
+				["vperm/fibonacci.ss",2,  "--ann-vp -tp z3 -perm none --dis-ls dis--locklevel", 
                                 "seq_fib","SUCCESS",
                                 "para_fib2","SUCCESS"
+								],
+				["vperm/global-var-norace.ss",2,  "--ann-vp --dis-pgbv", 
+                                "inc","SUCCESS",
+                                "func","SUCCESS"
+								],
+				["vperm/global-var-race.ss",2,  "--ann-vp --dis-pgbv", 
+                                "inc","SUCCESS",
+                                "func","FAIL"
 								],
 				["vperm/mergesort.ss",5,  "--ann-vp", 
                                 "count","SUCCESS",
@@ -558,7 +566,7 @@ $output_file = "log";
 				["vperm/tree_count.ss",1,  "--ann-vp", 
                                 "parallelCount2","SUCCESS"
 								],
-				["vperm/tree_search.ss",1,  "--ann-vp -tp mona", 
+				["vperm/tree_search.ss",1,  "--ann-vp -tp mona -perm none", 
                                 "para_search2","SUCCESS"
 								],
 				["vperm/vperm_check.ss",6,  "--ann-vp", 
@@ -575,6 +583,123 @@ $output_file = "log";
                                 "foo2","SUCCESS",
                                 "f2","SUCCESS"
 								]
+             ],
+	"parahip" =>[
+        ### GENERAL TESTS
+				["parahip/simple.ss",2,  "--en-para -tp parahip", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["parahip/forkjoin.ss",2,  "--en-para -tp parahip", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["parahip/cell.ss",2,  "--en-para -tp parahip", 
+                                "test","SUCCESS",
+                                "test1","FAIL-1"
+								],
+				["parahip/cell4.ss",2,  "--en-para -tp parahip", 
+                                "inc","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["parahip/cell-lock-vperm.ss",2,  "--en-para -tp parahip", 
+                                "testCell","SUCCESS",
+                                "testVar","FAIL-1"
+								],
+				["parahip/cell-extreme-cases.ss",4,  "--en-para -tp parahip", 
+                                "test","FAIL-2",
+                                "test2","FAIL-2",
+                                "test3","FAIL-1",
+                                "test4","FAIL-1"
+								],
+				["parahip/ls-bind.ss",2,  "--en-para -tp parahip", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["parahip/ls-waitlevel2.ss",3,  "--en-para -tp parahip", 
+                                "func2","SUCCESS",
+                                "func3","SUCCESS",
+                                "func4","SUCCESS"
+								],
+        ### DEADLOCKED and DEADLOCK-FREE scenarios
+				["parahip/double-acquire.ss",2,  "--en-para -tp parahip", 
+                                "func","SUCCESS",
+                                "main","FAIL-2"
+								],
+				["parahip/no-deadlock1.ss",2,  "--en-para -tp parahip", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["parahip/no-deadlock2.ss",2,  "--en-para -tp parahip", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["parahip/no-deadlock3.ss",2,  "--en-para -tp parahip", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["parahip/deadlock1.ss",2,  "--en-para -tp parahip", 
+                                "func","SUCCESS",
+                                "main","FAIL-1"
+								],
+				["parahip/deadlock2.ss",2,  "--en-para -tp parahip", 
+                                "func","SUCCESS",
+                                "main","FAIL-1"
+								],
+				["parahip/deadlock3.ss",2,  "--en-para -tp parahip", 
+                                "func","SUCCESS",
+                                "main","FAIL-1"
+								],
+				["parahip/disj-no-deadlock1.ss",2,  "--en-para -tp parahip", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["parahip/disj-no-deadlock2.ss",2,  "--en-para -tp parahip", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["parahip/disj-no-deadlock3.ss",2,  "--en-para -tp parahip", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["parahip/disj-deadlock.ss",2,  "--en-para -tp parahip", 
+                                "func","SUCCESS",
+                                "main","FAIL-1"
+								],
+				["parahip/ordered-locking.ss",2,  "--en-para -tp parahip", 
+                                "func","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["parahip/unordered-locking.ss",2,  "--en-para -tp parahip", 
+                                "func","FAIL-1",
+                                "main","SUCCESS"
+								],
+        ### FUNTIONAL CORRECTNESS
+				["parahip/multicast.ss",2,  "--en-para -tp parahip", 
+                                "initialize","SUCCESS",
+                                "thread","SUCCESS"
+								],
+				["parahip/oracle.ss",2,  "--en-para -tp parahip", 
+                                "thread","SUCCESS",
+                 #NOTE: loop calls' naming could be varied
+#                                "f_r_767_hip_parahip_oracle_ss_54_2","SUCCESS",
+#                                "f_r_689_hip_parahip_oracle_ss_80_4","SUCCESS",
+                                "main","SUCCESS"
+								],
+# slow in parahip/owicki-gries.ss due to search. Could modify search heuristics.
+				["parahip/owicki-gries.ss",3,  "--en-para -tp parahip", 
+                                "incrementor2","SUCCESS",
+                                "incrementor1","SUCCESS",
+                                "main","SUCCESS"
+								],
+				["parahip/fibonacci.ss",2,  "--en-para -tp parahip", 
+                                "seq_fib","SUCCESS",
+                                "para_fib","SUCCESS"
+								],
+				["parahip/create_and_acquire.ss",1,  "--en-para -tp parahip --dis-locklevel", 
+                                "create_and_acquire","SUCCESS"
+								]
+        ### END parahip
              ],
 	"bags" =>[
         ["avl-all-1.ss", 8, "", "remove_min", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", 
@@ -987,6 +1112,31 @@ $output_file = "log";
     "sleek_vperm" => [
                       ["vperm/vperm.slk"," --ann-vp ", "", "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
                       ["vperm/vperm2.slk"," --ann-vp ", "", "Valid.Valid.Fail."]],
+		"sleek_fracperm"=>[["fracperm/sleek.slk","--en-para -perm fperm -tp redlog", "","Valid.Valid.Valid.Fail."],
+					["fracperm/sleek1.slk","--en-para -perm fperm -tp redlog", "", "Fail."],
+					["fracperm/sleek10.slk","--en-para -perm fperm -tp redlog", "", "Valid.Fail."],
+					["fracperm/sleek2.slk","--en-para -perm fperm -tp redlog", "", "Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
+					["fracperm/sleek3.slk","--en-para -perm fperm -tp redlog", "", "Valid.Fail.Valid."],
+					["fracperm/sleek4.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid."],
+					["fracperm/sleek6.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid."],
+					["fracperm/sleek7.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
+                  # slow in sleek8.slk due to search
+				  ["fracperm/sleek8.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+					["fracperm/sleek9.slk","--en-para -perm fperm -tp redlog", "", "Valid.Fail.Valid.Valid."],
+
+                    ["fracperm/norm1.slk","--en-para -perm fperm -tp redlog", "", "Fail.Valid.Fail.Valid."],
+					["fracperm/norm3.slk","--en-para -perm fperm -tp redlog", "", "Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
+					["fracperm/norm4.slk","--en-para -perm fperm -tp redlog", "","Valid.Valid.Valid."],
+					["fracperm/uni_vars.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid.Fail."],
+					["fracperm/frac1.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid."],
+					["fracperm/frac2.slk","--en-para -perm fperm -tp redlog", "", "Valid.Fail.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Fail."],
+					["fracperm/frac3.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Fail.Fail.Fail."],
+					["fracperm/split_simple.slk","--en-para -perm fperm -tp redlog", "", "Valid.Fail.Valid.Fail.Fail.Valid.Valid.Valid."],
+					["fracperm/combine_data.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid."],
+					["fracperm/combine_simple.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid.Fail.Valid.Valid.Valid.Valid."],
+					["fracperm/split-combine.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
+                  ["fracperm/combine2.slk","--en-para -perm fperm -tp redlog", "", "Valid.Valid.Valid.Valid."]
+           ],
     "lemmas"=>[["lemma_check01.slk", " --elp ", "Valid.Valid.Fail.", ""],
               ["lemma_check02.slk", " --elp ", "Fail.Valid.", ""],
               ["lemma_check03.slk", " --elp ", "Valid.Valid.Fail.", ""],

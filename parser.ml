@@ -376,13 +376,9 @@ let peek_try =
  let peek_invocation = 
  SHGram.Entry.of_parser "peek_invocation" 
      (fun strm ->
-         match Stream.npeek 5 strm with
-           | [_; OPAREN,_;_;_;_] -> ()
-       (* match Stream.npeek 2 strm with *)
-       (*    | [_; OPAREN,_] -> () *)
-          (* | [_; OBRACE,_] -> () *)
-           | [_; OSQUARE,_; _; CSQUARE, _ ; OPAREN,_] -> ()
-          (* | [_; OSQUARE,_] -> () *)
+       match Stream.npeek 5 strm with
+          | [_; OPAREN,_;_;_;_] -> ()
+          | [_; OSQUARE,_; _; CSQUARE, _ ; OPAREN,_] -> ()
           | _ -> raise Stream.Failure)
 		  
  let peek_member_name = 
@@ -398,7 +394,7 @@ let peek_try =
        match Stream.npeek 1 strm with
           | [DPRINT,_] -> raise Stream.Failure
           | _ -> ())
-		  
+
  let peek_try_declarest = 
  SHGram.Entry.of_parser "peek_try_declarest" 
      (fun strm ->
@@ -413,6 +409,11 @@ let peek_try =
           (* | [INFINT_TYPE,_;OSQUARE,_] -> () *)
           | [FLOAT,_;OSQUARE,_] -> ()
           | [BOOL,_;OSQUARE,_] -> ()
+          (* For pointer*)
+          | [INT,_;STAR,_] -> ()
+          | [FLOAT,_;STAR,_] -> ()
+          | [BOOL,_;STAR,_] -> ()
+          | [IDENTIFIER n,_;STAR,_] -> ()
           |  _ -> raise Stream.Failure)
 
 let peek_print = 
@@ -421,13 +422,16 @@ SHGram.Entry.of_parser "peek_print"
 		match Stream.npeek 3 strm with
 		| [i,_;j,_;k,_]-> print_string((Token.to_string i)^" "^(Token.to_string j)^" "^(Token.to_string k)^"\n");()
 		| _ -> raise Stream.Failure)
+
+(*This is quite similar to peek_and_pure*)
  let peek_and = 
    SHGram.Entry.of_parser "peek_and"
-       (fun strm -> 
-           match Stream.npeek 2 strm with
-             | [AND,_;FLOW i,_] -> raise Stream.Failure
-             | [AND,_;OSQUARE,_] -> raise Stream.Failure
+       (fun strm ->
+           match Stream.npeek 3 strm with
+             | [AND,_;FLOW i,_;_] -> raise Stream.Failure
+             | [AND,_;OSQUARE,_;STRING _,_] -> raise Stream.Failure
              | _ -> ())
+
  let peek_pure = 
    SHGram.Entry.of_parser "peek_pure"
        (fun strm -> 
@@ -462,12 +466,13 @@ let peek_dc =
              | [OPAREN,_;EXISTS,_] -> ()
              | _ -> raise Stream.Failure)
 
+(*This seems similar to peek_and*)
  let peek_and_pure = 
    SHGram.Entry.of_parser "peek_and_pure"
        (fun strm -> 
-           match Stream.npeek 2 strm with
-             | [AND,_;FLOW i,_] -> raise Stream.Failure
-             | [AND,_;OSQUARE,_] -> raise Stream.Failure
+           match Stream.npeek 3 strm with
+             | [AND,_;FLOW i,_;_] -> raise Stream.Failure
+             | [AND,_;OSQUARE,_;STRING _,_] -> raise Stream.Failure
              | _ -> ())
 
  let peek_heap_args = 
@@ -521,10 +526,13 @@ let peek_array_type =
              |[_;OSQUARE,_] -> (* An Hoa*) (*let _ = print_endline "Array found!" in*) ()
              | _ -> raise Stream.Failure)
 
-(* let contain_vars_pure_double f =      *)
-(*   match f with                        *)
-(* 	| Pure_f _ -> false                  *)
-(* 	| Pure_c pc -> P.contain_vars_exp pc *)
+let peek_pointer_type = 
+   SHGram.Entry.of_parser "peek_pointer_type"
+       (fun strm ->
+           match Stream.npeek 2 strm with
+             |[_;STAR,_] -> (* let _ = print_endline "Pointer found!" in *) ()
+             | _ -> raise Stream.Failure)
+
 
 (* Determine whether an ineq e1!=e2 *)
 (* is a linking constraints         *)
@@ -1068,6 +1076,10 @@ general_h_args:
 opt_pure_constr:[[t=OPT and_pure_constr -> un_option t (P.mkTrue no_pos)]];
     
 and_pure_constr: [[ peek_and_pure; `AND; t= pure_constr ->t]];
+
+(* pure_constr_t: [[ `OSQUARE; t= pure_constr; `CSQUARE ->t  *)
+(*                   | t= pure_constr ->t *)
+(* ]]; *)
     
 (* (formula option , expr option )   *)
     
@@ -1097,9 +1109,13 @@ cexp: [[t= cexp_w -> match t with
 
 slicing_label: [[ `DOLLAR -> true ]];
 
+(*Unified specification for locks and waitlevel [ p1 # p2 ] *)
+(*This is just syntactic sugar for p1 & p2 *)
+exl_pure : [[  pc1=cexp_w; `HASH; pc2=cexp_w -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos_camlp4 _loc 2)) pc1 pc2 ]];
+
 cexp_w:
   [ "pure_lbl"
-    [ofl= pure_label ; spc=SELF (*LEVEL "pure_or"*)          -> apply_pure_form1 (fun c-> label_formula c ofl) spc]   (*apply_cexp*)
+    [ ofl= pure_label ; spc=SELF (*LEVEL "pure_or"*)          -> apply_pure_form1 (fun c-> label_formula c ofl) spc]   (*apply_cexp*)
 
   | "slicing_label"
 	[ sl=slicing_label; f=SELF -> set_slicing_utils_pure_double f sl ]
@@ -1109,6 +1125,9 @@ cexp_w:
   
   | "pure_and" RIGHTA
    [ pc1=SELF; peek_and; `AND; pc2=SELF              -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos_camlp4 _loc 2)) pc1 pc2]
+
+  | "pure_exclusive" RIGHTA
+   [ `OSQUARE; t=exl_pure; `CSQUARE -> t]
 
   |"bconstrp" RIGHTA
       [  lc=SELF; `NEQ;  cl=SELF       ->
@@ -1269,7 +1288,18 @@ cexp_w:
         (* with Invalid_argument _ -> Pure_f(P.BForm ((P.RelForm (id, cl, get_pos_camlp4 _loc 1), None), None))) *)
       
       | peek_cexp_list; ocl = opt_comma_list -> (* let tmp = List.map (fun c -> P.Var(c,get_pos_camlp4 _loc 1)) ocl in *) Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
-      | t = cid                ->  Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
+      | t = cid                ->
+          let id,p = t in
+          if String.contains id '.' then
+            let strs = Gen.split_by "." id in
+            let lock = List.hd strs in
+            let mu = List.hd (List.tl strs) in
+            if mu=Globals.level_name then
+              Pure_c (P.Level ((lock,p), get_pos_camlp4 _loc 1))
+            else
+              Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
+          else
+            Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
       | `IMM -> Pure_c (P.AConst(Imm, get_pos_camlp4 _loc 1))
       | `MUT -> Pure_c (P.AConst(Mutable, get_pos_camlp4 _loc 1))
       | `LEND -> Pure_c (P.AConst(Lend, get_pos_camlp4 _loc 1))
@@ -1418,6 +1448,7 @@ name:[[ `STRING(_,id)  -> id]];
 
 typ:
   [[ peek_array_type; t=array_type     -> (* An Hoa *) (*let _ = print_endline "Parsed array type" in *) t
+    | peek_pointer_type; t = pointer_type     -> (*let _ = print_endline "Parsed pointer type" in *) t
     | t=non_array_type -> (* An Hoa *) (* let _ = print_endline "Parsed a non-array type" in *) t]];
 
 non_array_type:
@@ -1427,6 +1458,18 @@ non_array_type:
    | `BOOL               -> bool_type
    | `BAG                -> bag_type
    | `IDENTIFIER id      -> Named id ]];  
+
+pointer_type:
+  [[ t=non_array_type; r = star_list -> 
+  let rec create_pointer n =
+    if (n<=1) then (Pointer t) else (Pointer (create_pointer (n-1)))
+  in
+  let pointer_t = create_pointer r in
+  (* let _ = print_endline ("Pointer: " ^ (string_of_int r) ^ (string_of_typ pointer_t)) in *)
+  pointer_t
+   ]];
+
+star_list: [[`STAR; s = OPT SELF -> 1 + (un_option s 0)]];
 
 array_type:
   [[ (* t=array_type; r=rank_specifier -> Array (t, None)
@@ -1986,7 +2029,6 @@ java_statement: [[ `JAVA s -> Java { exp_java_code = s;exp_java_pos = get_pos_ca
 
 (*TO CHECK*)
 expression_statement: [[(* t=statement_expression -> t *)
-        (* t= invocation_expression -> t *)
         peek_invocation; t= invocation_expression -> t
       | t= object_creation_expression -> t
       | t= post_increment_expression -> t
@@ -2028,6 +2070,7 @@ while_statement:
   [[ `WHILE; `OPAREN; bc=boolean_expression; `CPAREN; es=embedded_statement ->
         While { exp_while_condition = bc;
             exp_while_body = es;
+            exp_while_addr_vars = [];
             exp_while_specs = Iast.mkSpecTrue n_flow (get_pos_camlp4 _loc 1);
             exp_while_jump_label = NoJumpLabel;
             exp_while_path_id = None ;
@@ -2037,6 +2080,7 @@ while_statement:
    | `WHILE; `OPAREN; bc=boolean_expression; `CPAREN; sl=spec_list_outer; es=embedded_statement ->
         While { exp_while_condition = bc;
           exp_while_body = es;
+          exp_while_addr_vars = [];
           exp_while_specs = sl;(*List.map remove_spec_qualifier $5;*)
           exp_while_jump_label = NoJumpLabel;
           exp_while_path_id = None ;
@@ -2226,6 +2270,12 @@ unary_expression:
 		let zero = IntLit { exp_int_lit_val = 0;
                         exp_int_lit_pos = get_pos_camlp4 _loc 1 }	in
 		  mkBinary OpMinus zero t (get_pos_camlp4 _loc 1)
+  | `STAR; t=SELF ->   (*Pointers: value-of *v *)
+        (* let _ = print_endline ("Pointer: value-of") in *)
+        mkUnary OpVal t (get_pos_camlp4 _loc 1)
+  | `AND; t=SELF ->   (*Pointers: address-of *& *)
+        (* let _ = print_endline ("Pointer: address-of") in *)
+        mkUnary OpAddr t (get_pos_camlp4 _loc 1)
   | t=pre_increment_expression -> t
   | t=pre_decrement_expression -> t]];
 
@@ -2328,9 +2378,8 @@ primary_expression_no_array_no_parenthesis :
            exp_member_fields = [id];
            exp_member_path_id = None ;
            exp_member_pos = get_pos_camlp4 _loc 3 }
-  (* | t = invocation_expression -> t *)
-  | peek_invocation; t = invocation_expression -> t
   | t = new_expression -> t
+  | peek_invocation; t = invocation_expression -> t
   | `THIS _ -> This{exp_this_pos = get_pos_camlp4 _loc 1} 
   ]
   | [`IDENTIFIER id -> (* print_string ("Variable Id : "^id^"\n"); *)

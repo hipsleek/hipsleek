@@ -67,7 +67,7 @@ let rec generate_list n f =
 (* Compute the n-th element of the sequence f0, f1, ..., fn defined by f0 = b and f_n = f(f_{n-1}) *)
 let rec compute f n b = if (n = 0) then b else f (compute f (n-1) b)
 	
-let rec smt_of_typ t = 
+let rec smt_of_typ t =
 	match t with
 		| Bool -> "Int" (* Use integer to represent Bool : 0 for false and > 0 for true. *)
 		| Float -> "Int" (* Currently, do not support real arithmetic! *)
@@ -105,6 +105,7 @@ let rec smt_of_exp a =
 	match a with
 	| CP.Null _ -> "0"
 	| CP.Var (sv, _) -> smt_of_spec_var sv
+	| CP.Level _ -> illegal_format ("z3.smt_of_exp: level should not appear here")
 	| CP.IConst (i, _) -> if i >= 0 then string_of_int i else "(- 0 " ^ (string_of_int (0-i)) ^ ")"
 	| CP.AConst (i, _) -> string_of_int(int_of_heap_ann i)  (*string_of_heap_ann i*)
 	| CP.FConst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (float should not appear here)")
@@ -300,6 +301,7 @@ and collect_bformula_info b = match b with
 		combine_formula_info_list (rinfo :: args_infos) (* check if there are axioms then change the quantifier free part *)
 
 and collect_exp_info e = match e with
+  | CP.Level _
   | CP.Null _ | CP.Var _ | CP.AConst _ | CP.IConst _ | CP.FConst _ -> default_formula_info
   | CP.Add (e1,e2,_) | CP.Subtract (e1,e2,_) | CP.Max (e1,e2,_) | CP.Min (e1,e2,_) -> 
 		let ef1 = collect_exp_info e1 in
@@ -622,7 +624,7 @@ let stop () =
 (* restart Z3 system *)
 let restart reason =
   if !is_z3_running then begin
-    let _ = print_string (reason^" Restarting z3 after ... "^(string_of_int !z3_call_count)^" invocations ") in
+    let _ = print_string (reason^" Restarting z3 after ... "^(string_of_int !z3_call_count)^" invocations. ") in
     Procutils.PrvComms.restart !log_all_flag log_all reason "z3" start stop
   end
   else begin
@@ -633,6 +635,7 @@ let restart reason =
 (* send formula to z3 and receive result -true/false/unknown*)
 let check_formula f timeout =
   (* try*)
+  (* let _ = print_endline ("f = " ^ f) in *)
   begin
 		  let tstartlog = Gen.Profiling.get_time () in 
     if not !is_z3_running then start ()
@@ -654,8 +657,9 @@ let check_formula f timeout =
         flush (!prover_process.outchannel);
         iget_answer (!prover_process.inchannel) f
       in
-      let fail_with_timeout () = 
-        restart ("[z3.ml]Timeout when checking sat!" ^ (string_of_float timeout));
+      let fail_with_timeout () =
+        (* let _ = print_endline ("#### fail_with_timeout f = " ^ f) in *)
+        restart ("[smtsolver.ml]Timeout when checking sat!" ^ (string_of_float timeout));
         { original_output_text = []; sat_result = Unknown; } in
       let res = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc f timeout fail_with_timeout in
 			let tstoplog = Gen.Profiling.get_time () in
@@ -704,10 +708,6 @@ let logic_for_formulas f1 f2 =
 
 (* output for smt-lib v2.0 format *)
 let to_smt_v2 pr_weak pr_strong ante conseq logic fvars info =
-    (*drop VarPerm beforehand*)
-    let conseq = CP.drop_varperm_formula conseq in
-    let ante = CP.drop_varperm_formula ante in
-    (*--------------------------------------*)
 	(* Variable declarations *)
 	let smt_var_decls = List.map (fun v ->
         let tp = (CP.type_of_spec_var v)in
@@ -747,9 +747,7 @@ and to_smt_v1 ante conseq logic fvars =
 		| [] -> ""
 		| var::rest -> "(" ^ (smt_of_spec_var var) ^ " Int) " ^ (defvars rest)
 	in
-    (*drop VarPerm beforehand*)
-    let conseq = CP.drop_varperm_formula conseq in
-    let ante = CP.drop_varperm_formula ante in
+    (* let _ = print_endline ("#### ante = " ^ (!CP.print_formula ante)) in *)
     let (pr_w,pr_s) = CP.drop_complex_ops in
 	let ante = smt_of_formula pr_w pr_s ante in
 	let conseq = smt_of_formula pr_w pr_s conseq in
@@ -773,6 +771,14 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
 		| None -> CP.mkFalse no_pos
 		| Some f -> f
 	in
+    (*drop VarPerm beforehand*)
+    let ante,conseq = if (!Globals.ann_vp) then
+          let conseq = CP.drop_varperm_formula conseq in
+          let ante = CP.drop_varperm_formula ante in
+          (ante,conseq)
+        else (ante,conseq)
+    in
+    (*-----------------------------*)
 	let conseq_info = collect_formula_info conseq in
 	(* remove occurences of dom in ante if conseq has nothing to do with dom *)
 	let ante = if (not (List.mem "dom" conseq_info.relations)) 
@@ -972,6 +978,16 @@ and smt_imply  pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula)
 
 and smt_imply_x pr_weak pr_strong (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) timeout : bool =
   (* let _ = print_endline ("smt_imply : " ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in *)
+  (*drop VarPerm beforehand*)
+  let ante,conseq = if (!Globals.ann_vp) then
+        let conseq = CP.drop_varperm_formula conseq in
+        let ante = CP.drop_varperm_formula ante in
+        (ante,conseq)
+      else (ante,conseq)
+  in
+  (*--------------------------------------*)
+  (* let _ = print_endline ("#### [smt_imply] ante = " ^ (!CP.print_formula ante)) in *)
+  (* let _ = print_endline ("#### [smt_imply] conseq = " ^ (!CP.print_formula conseq)) in *)
   let res, should_run_smt = 
     (* (false, true) in *)
 		if (has_exists conseq) then
@@ -1045,9 +1061,15 @@ let imply (ante : CP.formula) (conseq : CP.formula) timeout: bool =
  * Test for satisfiability
  * We also consider unknown is the same as sat
  *)
-let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout : bool = 
-	 (* let _ = print_endline ("smt_is_sat : " ^ (!print_pure f) ^ "\n") in *)
-  let res, should_run_smt = 
+let smt_is_sat pr_weak pr_strong (f : Cpure.formula) (sat_no : string) (prover: smtprover) timeout : bool =
+  (* let _ = print_endline ("smt_is_sat : " ^ (!print_pure f) ^ "\n") in *)
+  (*drop VarPerm beforehand*)
+  let f = if (!Globals.ann_vp) then CP.drop_varperm_formula f
+      else f
+  in
+  (*--------------------------------------*)
+  (* let _ = print_endline ("#### [smt_is_sat] f = " ^ (!CP.print_formula f)) in *)
+    let res, should_run_smt = 
     (* (false, true) in *)
 		if (Cpure.contains_exists f) then
 		try
