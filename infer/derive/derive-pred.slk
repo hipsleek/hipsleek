@@ -83,7 +83,7 @@ data node2 {
 }.
 
 pred tree<> == self=null
-  or tree::node2<_,p,q> * p::tree<> * q::tree<>
+  or self::node2<_,p,q> * p::tree<> * q::tree<>
 inv true.
 
 pred treeN<n> == extends tree<> with size[VAL,REC]<n> .

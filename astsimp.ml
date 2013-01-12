@@ -1306,14 +1306,14 @@ and trans_view_one_derv (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_dec
   let pr1= pr_list pr_id in
   let pr = (pr_pair (pr_pair pr_id pr1) (pr_triple pr_id pr1 pr1)) in
   let pr_r = Cprinter.string_of_view_decl in
-  Debug.no_1 "trans_view_one_derv" pr pr_r  (fun _ -> trans_view_one_derv_x prog cviews derv view_derv) view_derv
+  Debug.ho_1 "trans_view_one_derv" pr pr_r  (fun _ -> trans_view_one_derv_x prog cviews derv view_derv) view_derv
 
 and trans_view_one_derv_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) view_derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) :
        C.view_decl =
  let orig_view = C.look_up_view_def_raw cviews orig_view_name in
  let extn_view = C.look_up_view_def_raw cviews extn_view_name in
  (*find data fields anns*)
-
+ let f_anns = I.
  (*new args*)
  let ss = List.combine extn_args extn_view.C.view_vars in
  let n_args = List.map (fun (id, CP.SpecVar (t,_,pr)) ->  CP.SpecVar (t,id,pr)) ss in
