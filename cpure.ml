@@ -9311,7 +9311,63 @@ let drop_exists (f:formula) :formula =
 let drop_exists (f:formula) :formula =
   let pr = !print_formula in 
   Debug.no_1 "drop_exists_pure" pr pr drop_exists f 
-  
+
+(* check for x=y & x!=y and mark as unsat assumes that disjunctions are all split using deep_split*)
+let is_sat_eq_ineq (f : formula) : bool =
+  let b =
+  (*check if eqs contradict with ineqs *)
+  if (isConstFalse f) then true
+  else
+    (* create a single eset for pure formula*)
+  let find_eq_all e =
+    let f_f f = 
+    	(match f with
+    	| And _ | AndList _  | BForm _ -> None 
+    	| _ -> Some [])
+    in
+    let f_bf bf = 
+      (match bf with
+        | ((Eq _) as e),_ -> Some ([bf]) 
+        | _,_ -> Some ([])
+      )
+    in
+    let f_e e = Some ([]) in
+    (* let f_arg = (fun _ _ -> ()),(fun _ _ -> ()),(fun _ _ -> ()) in *)
+    (* let subs e = trans_formula e () (f_f,f_bf,f_e) f_arg List.concat in *)
+    let find_eq e = fold_formula e (f_f,f_bf,f_e) List.concat in
+    let eq_list = find_eq e in
+    let eqset = EMapSV.mkEmpty in
+    let eqset = List.fold_left (fun eset exp -> 
+			        let (p_f,bf_ann) = exp in
+    				(match p_f with
+    				| Eq (e1,e2,pos) -> (match e1,e2 with
+    						    | Var(sv1,_),Var(sv2,_) -> EMapSV.add_equiv eset sv1 sv2
+                                | Var(sv1,_),IConst(i2,_) -> EMapSV.add_equiv eset sv1 (mk_sp_const i2)
+                                | IConst(i1,_),Var(sv2,_) -> EMapSV.add_equiv eset (mk_sp_const i1) sv2
+                                | IConst(i1,_),IConst(i2,_) -> 
+                                    EMapSV.add_equiv eset (mk_sp_const i1)(mk_sp_const i2)
+                                | _  -> eset)
+
+    				| _ -> eset)
+    				) eqset eq_list in eqset
+    in let m_aset = find_eq_all f in
+    let p_aset = pure_ptr_equations f in
+    let p_aset = EMapSV.build_eset p_aset in
+    let m_aset = EMapSV.merge_eset p_aset m_aset in
+    if is_false_eq m_aset then true else
+    (* parition the eset *)
+    let m_apart = EMapSV.partition m_aset in
+    let flist = split_conjunctions f in
+    List.exists (fun pf ->
+      match pf with 
+        | BForm(bf,_) -> 
+            (match (get_bform_neq_args_with_const bf) with
+              | Some (v1, v2) -> List.exists (fun ls -> 
+                Gen.BList.subset_eq eq_spec_var [v1; v2] ls) m_apart  
+              | None -> false)
+        | _ -> false
+    ) flist in (not b)
+
 let extractLS_pure (pf : formula) : formula = 
   Debug.no_1 "extractLS_pure" !print_formula !print_formula 
       extractLS_pure_x pf

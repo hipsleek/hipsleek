@@ -1040,7 +1040,7 @@ and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
 (* xpure heap symbolic in the presence of permissions *)
 (* similar to xpure_heap_symbolic *)
 and xpure_heap_symbolic_perm (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CP.spec_var list * CF.mem_formula) = 
-  Debug.no_2 
+  Debug.ho_2 
       "xpure_heap_symbolic_perm" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula
       (fun (p1,p3,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(string_of_spec_var_list p3)^"#"^(Cprinter.string_of_mem_formula p4)
           ^string_of_bool(is_sat_mem_formula p4)) 
@@ -6517,9 +6517,10 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
           end
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
           begin
-            DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;	       
+            DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
               let a0l,a1l = if CP.no_andl a0 && CP.no_andl a1 
-              then (CP.split_disjunctions_deep a0,CP.split_disjunctions_deep a1)
+              then (List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a0),
+                    List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a1))
     	      else
                 (* why andl need to be handled in a special way *)
 	            let r = ref (-8999) in
