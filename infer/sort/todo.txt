@@ -186,7 +186,7 @@ In the above case it caused "simplify to have a problem".
 Checking procedure append$node~node... Timeout when checking #simplify  Restarting Omega after ... 104 invocations Stop Omega... 104 invocations Starting Omega...oc
 
 Solution 
-  (i) fix Omega 
+  (i) fix Omega (done)
  (ii) provide sanity checks.
 
 */
