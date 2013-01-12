@@ -394,8 +394,10 @@ let refine_specs_adapt_sequence_x (specs: CP.formula) (seq_src: CP.sequence) (se
         (* TRUNG TODO: temporarily use only mathematica to check termination *)
         (*             improve this mechanism later                          *)
         let old_tp = !TP.tp in
-        TP.tp := TP.Mathematica;
-        Mathematica.start ();
+        if (old_tp != TP.Mathematica) then (
+          TP.tp := TP.Mathematica;
+          Mathematica.start ();
+        );
         let keep, _, _ = TP.imply (CP.mkTrue no_pos) new_domain_cons "" false None in 
         TP.tp := old_tp;
         let can_drop = not keep in
@@ -693,8 +695,10 @@ let check_term_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv ds
           (* TRUNG TODO: temporarily use only mathematica to check termination *)
           (*             improve this mechanism later                          *)
           let old_tp = !TP.tp in
-          TP.tp := TP.Mathematica;
-          Mathematica.start ();
+          if (old_tp != TP.Mathematica) then (
+            TP.tp := TP.Mathematica;
+            Mathematica.start ();
+          );
           let entail_res, _, _ = TP.imply (CP.mkTrue pos) rank_formula "" false None in
           TP.tp := old_tp;
           begin

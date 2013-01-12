@@ -333,8 +333,10 @@ and check_bounded_term_x prog ctx post_pos =
       (* TRUNG TODO: temporarily use only mathematica to check termination *)
       (*             improve this mechanism later                          *)
       let old_tp = !TP.tp in
-      TP.tp := TP.Mathematica;
-      Mathematica.start ();
+      if (old_tp != TP.Mathematica) then (
+        TP.tp := TP.Mathematica;
+        Mathematica.start ();
+      );
       let rs, _ = heap_entail_one_context 12 prog false ctx bnd_formula None post_pos in
       TP.tp := old_tp;
       let _ = Debug.trace_hprint (add_str "Result context" 

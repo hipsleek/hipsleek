@@ -12,3 +12,5 @@ void mpfr_src_digamma_108 ()
     e = (e + 1.0) / 2.0;
   }
 }
+
+// FAIL: not bound
