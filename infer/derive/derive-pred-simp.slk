@@ -1,3 +1,5 @@
+/**************** SINGLY LINKED LIST *********************/
+
 // @VAL, @REC: user-defined
 data node {
 	int val@VAL; 
@@ -81,7 +83,7 @@ pred llSorted<v> == llOrdered<v,Dec> .
 pred llMinMax<mi,mx> 
         == extends ll<> with (minValue<mi>,maxValue<mx>).
 
-/***********************************************/
+/**************** TREE *********************/
 
 // @REC represent both @REC1 and @REC2
 data node2 {
@@ -99,8 +101,7 @@ pred tree<> ==
 // Predicate extension definition
 pred_extn sizeT<n> ==
       n=0
-   or n=1+m1+m2 & @REC1::sizeT<m1> & @REC2::sizeT<m2>
-  inv n>=0.
+   or n=1+m1+m2 & @REC1::sizeT<m1> & @REC2::sizeT<m2>.
 
 pred_extn sumT<s> ==
       s=0
@@ -121,11 +122,11 @@ pred_extn setT<S> ==
 
 pred treeN<n> == extends tree<> with sizeT<n> .
 
-pred treeNSum<n> == extends treeN<n> with sumTn> .
+pred treeNSum<n> == extends treeN<n> with sumT<n> .
 
 pred treeH<n> == extends tree<> with heightT<n>.
 
-pred treeS<n> == extends tree<> with setT<S>.
+pred treeS<S> == extends tree<> with setT<S>.
 
 pred treeNS<n,S> == extends treeN<n> with setT<S> .
 

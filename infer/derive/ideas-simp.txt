@@ -200,6 +200,77 @@ llMinMax<mi,mx> = self=null & mi=inf & mx=inf
    or self::node<v,p> * p::llMinMax<mi2,mx2> & mi=min(v,mi2) & mx=max(v,mx2)
 
 
+/***********************************************/
+
+pred_extn sizeT<n> ==
+      n=0
+   or n=1+m1+m2 & @REC1::sizeT<m1> & @REC2::sizeT<m2>.
+
+pred treeN<n> == extends tree<> with sizeT<n> .
+
+n=sizeT(emp) /* no call @REC */
+  --> n=0
+n=sizeT(node2(@VAL,@REC1,@REC2)) -> n=1+sizeT(@REC1)+sizeT(@REC2)
+
+pred treeN<n> == 
+     self=null & n=sizeT(self)
+  or tree::node2<_,p,q> * p::treeN<n1> * q::tree<n2> & n=sizeT(self).
+
+pred treeN<n> == 
+     self=null & n=sizeT(emp)
+  or tree::node2<_,p,q> * p::treeN<n1> * q::tree<n2> & n=sizeT(node2<_,p,q>).
+
+pred treeN<n> == 
+     self=null & n=0
+  or tree::node2<_,p,q> * p::treeN<n1> * q::tree<n2> & n=1+n1+n2.
+
+/***********************************************/
+
+pred_extn sizeT<n> ==
+      n=0
+   or n=1+m1+m2 & @REC1::sizeT<m1> & @REC2::sizeT<m2>.
+
+pred treeN<n> == extends tree<> with sizeT<n> .
+
+n=sizeT(emp) /* no call @REC */
+  --> n=0
+n=sizeT(node2(@VAL,@REC1,@REC2)) -> n=1+sizeT(@REC1)+sizeT(@REC2)
+
+pred treeN<n> == 
+     self=null & n=sizeT(self)
+  or tree::node2<_,p,q> * p::treeN<n1> * q::treeN<n2> & n=sizeT(self).
+
+pred treeN<n> == 
+     self=null & n=sizeT(emp)
+  or tree::node2<_,p,q> * p::treeN<n1> * q::treeN<n2> & n=sizeT(node2<_,p,q>).
+
+pred treeN<n> == 
+     self=null & n=0
+  or tree::node2<_,p,q> * p::treeN<n1> * q::treeN<n2> & n=1+n1+n2.
+
+/***********************************************/
+
+pred_extn heightT<h> ==
+      h=0
+   or h=1+max(h1,h2) & @REC1::heightT<h1> & @REC2::heightT<h2>.
+
+pred treeH<n> == extends tree<> with heightT<n>.
+
+n=heightT(emp) /* no call @REC */
+  --> n=0
+n=heightT(node2(@VAL,@REC1,@REC2)) -> n=1+max(heightT(@REC1),heightT(@REC2))
+
+pred treeH<n> == 
+     self=null & n=heightT(self)
+  or tree::node2<_,p,q> * p::treeH<n1> * q::treeH<n2> & n=heightT(self).
+
+pred treeH<n> == 
+     self=null & n=heightT(emp)
+  or tree::node2<_,p,q> * p::treeH<n1> * q::treeH<n2> & n=heightT(node2<_,p,q>).
+
+pred treeH<n> == 
+     self=null & n=0
+  or tree::node2<_,p,q> * p::treeH<n1> * q::treeH<n2> & n=1+max(n1,n2).
 
 
 
