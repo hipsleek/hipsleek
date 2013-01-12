@@ -85,12 +85,13 @@ let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
 
 and string_of_formula_origin fo : string =
   match fo with
-  | None -> ""
-  | Some (F_o_specs None) -> "F_O_SPECS"
-  | Some (F_o_specs (Some Precond)) -> "F_O_SPECS_PRE"
-  | Some (F_o_specs (Some Postcond)) -> "F_O_SPECS_POST"
-  | Some F_o_code -> "F_O_CODE"
-  | Some F_o_inter -> "F_O_INTER"
+  | None -> "origin_unknown"
+  | Some (F_o_specs None) -> "origin_specs"
+  | Some (F_o_specs (Some Precond)) -> "origin_specs_precond"
+  | Some (F_o_specs (Some Postcond)) -> "origin_specs_postcond"
+  | Some (F_o_specs (Some Branchcond)) -> "origin_specs_branch"
+  | Some F_o_code -> "origin_code"
+  | Some F_o_inter -> "origin_inter"
 
 let string_of_var (c1,c2) = c1^(string_of_primed c2);;
 

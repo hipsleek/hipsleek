@@ -88,6 +88,8 @@ let modifier_offset = ref {line_num = 1;
                         line_start = 1;
                         byte_num = 1;}
 
+let current_specs_type : spec_type option ref = ref None
+
 let get_pos x =
   try
     {
@@ -224,7 +226,7 @@ let apply_cexp_form1 fct form = match form with
   
 let apply_pure_form2 fct form1 form2 =
   let fo = if !parse_primitives then Some F_o_code
-           else Some (F_o_specs None) in
+           else Some (F_o_specs !current_specs_type) in
   match (form1,form2) with
   | Pure_f f1 ,Pure_f f2 -> Pure_f (fct f1 f2)
   | Pure_f f1 , Pure_c f2 -> (match f2 with 
@@ -257,26 +259,26 @@ let apply_cexp_form2 fct form1 form2 =
 
 let cexp_list_to_pure fct ls1 =
   let fo = if !parse_primitives then Some F_o_code
-           else Some (F_o_specs None) in
+           else Some (F_o_specs !current_specs_type) in
   Pure_f (P.BForm (((fct ls1), None), None, fo))
 
 let cexp_to_pure1 fct f =
   let fo = if !parse_primitives then Some F_o_code
-           else Some (F_o_specs None) in
+           else Some (F_o_specs !current_specs_type) in
   match f with
   | Pure_c f -> Pure_f (P.BForm (((fct f), None), None, fo))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"
 
 let cexp_to_pure_slicing fct f sl =
   let fo = if !parse_primitives then Some F_o_code
-           else Some (F_o_specs None) in
+           else Some (F_o_specs !current_specs_type) in
   match f with
   | Pure_c f -> Pure_f (P.BForm (((fct f), sl), None, fo))
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"	
 
 let cexp_to_pure2 fct f01 f02 =
   let fo = if !parse_primitives then Some F_o_code
-           else Some (F_o_specs None) in
+           else Some (F_o_specs !current_specs_type) in
   match (f01,f02) with
   | Pure_c f1 , Pure_c f2 -> (match f1 with
                              | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct c f2), None), None, fo)) explist
@@ -536,6 +538,30 @@ let peek_array_type =
            match Stream.npeek 2 strm with
              |[_;OSQUARE,_] -> (* An Hoa*) (*let _ = print_endline "Array found!" in*) ()
              | _ -> raise Stream.Failure)
+
+let peek_precondition =
+  SHGram.Entry.of_parser "peek_precondition" (
+    fun strm ->
+      match Stream.npeek 1 strm with
+      |[REQUIRES, _] -> current_specs_type := Some Precond; 
+      | _ -> raise Stream.Failure
+  )
+
+let peek_postcondition =
+  SHGram.Entry.of_parser "peek_postcondition" (
+    fun strm ->
+      match Stream.npeek 1 strm with
+      |[ENSURES, _] -> current_specs_type := Some Postcond; 
+      | _ -> raise Stream.Failure
+  )
+
+let peek_branchcondition =
+  SHGram.Entry.of_parser "peek_branchcondition" (
+    fun strm ->
+      match Stream.npeek 2 strm with
+      |[CASE, _; OBRACE, _] -> current_specs_type := Some Branchcond; 
+      | _ -> raise Stream.Failure
+  )
 
 (* let contain_vars_pure_double f =      *)
 (*   match f with                        *)
@@ -906,7 +932,8 @@ extended_constr_grp:
     | `IDENTIFIER id; `COLON; `OSQUARE; t = LIST0 extended_constr SEP `ORWORD; `CSQUARE -> List.map (fun c-> (Lab2_List.singleton id,c)) t]];
 
 extended_constr:
-	[[ `CASE; `OBRACE; il= impl_list; `CBRACE -> 
+	[[ `CASE; `OBRACE; il= impl_list; `CBRACE ->
+      current_specs_type := None; 
       F.ECase {
           F.formula_case_branches = il;
           F.formula_case_pos = (get_pos_camlp4 _loc 3) }
@@ -1090,7 +1117,7 @@ and_pure_constr: [[ peek_and_pure; `AND; t= pure_constr ->t]];
 pure_constr: 
   [[ peek_pure_out; t= cexp_w ->
        let fo = if !parse_primitives then Some F_o_code
-                else Some (F_o_specs None) in
+                else Some (F_o_specs !current_specs_type) in
        match t with
        | Pure_f f -> f
        | Pure_c (P.Var (v,_)) ->  P.BForm ((P.mkBVar v (get_pos_camlp4 _loc 1), None), None, fo)
@@ -1173,12 +1200,12 @@ cexp_w:
         set_slicing_utils_pure_double f false
     | `BAGMAX; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN ->
         let fo = if !parse_primitives then Some F_o_code
-                 else Some (F_o_specs None) in
+                 else Some (F_o_specs !current_specs_type) in
         let f = Pure_f (P.BForm ((P.BagMax (c1, c2, (get_pos_camlp4 _loc 2)), None), None, fo)) in
         set_slicing_utils_pure_double f false
     | `BAGMIN; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN ->
         let fo = if !parse_primitives then Some F_o_code
-                 else Some (F_o_specs None) in
+                 else Some (F_o_specs !current_specs_type) in
         let f = Pure_f (P.BForm ((P.BagMin (c1, c2, (get_pos_camlp4 _loc 2)), None), None, fo)) in
         set_slicing_utils_pure_double f false
     | lc=SELF; `INLIST; cl=SELF ->
@@ -1355,12 +1382,12 @@ cexp_w:
         apply_pure_form1 (fun c-> List.fold_left (fun f v-> P.mkForall [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
     | t=cid ->
         let fo = if !parse_primitives then Some F_o_code
-                 else Some (F_o_specs None) in
+                 else Some (F_o_specs !current_specs_type) in
         (*print_string ("pure_form:"^(fst t)^"\n");*)
         Pure_f (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 1), None), None , fo))
     | `NOT; t=cid ->
         let fo = if !parse_primitives then Some F_o_code
-                 else Some (F_o_specs None) in
+                 else Some (F_o_specs !current_specs_type) in
         Pure_f (P.mkNot (P.BForm ((P.mkBVar t (get_pos_camlp4 _loc 2), None), None, fo)) None (get_pos_camlp4 _loc 1))
     | `NOT; `OPAREN; c=pure_constr; `CPAREN ->
         Pure_f (P.mkNot c None (get_pos_camlp4 _loc 1))
@@ -1825,13 +1852,14 @@ spec:
     `INFER; transpec = opt_transpec; postxf = opt_infer_xpost; postf= opt_infer_post; `OSQUARE; ivl = opt_vlist; `CSQUARE; s = SELF ->
       F.EInfer {
         F.formula_inf_post = postf; 
-       F.formula_inf_xpost = postxf; 
-       F.formula_inf_transpec = transpec;
+        F.formula_inf_xpost = postxf; 
+        F.formula_inf_transpec = transpec;
         F.formula_inf_vars = ivl;
         F.formula_inf_continuation = s;
         F.formula_inf_pos = get_pos_camlp4 _loc 1;
       }
-  | `REQUIRES; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->
+  | peek_precondition; `REQUIRES; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->
+      current_specs_type := None;
       F.EBase {
         F.formula_struc_explicit_inst =cl;
         F.formula_struc_implicit_inst = [];
@@ -1839,7 +1867,8 @@ spec:
         F.formula_struc_base = (F.subst_stub_flow n_flow dc);
         F.formula_struc_continuation = Some s;
         F.formula_struc_pos = (get_pos_camlp4 _loc 1)}
-  | `REQUIRES; cl=opt_sq_clist; dc=disjunctive_constr; `OBRACE; sl=spec_list; `CBRACE ->
+  | peek_precondition; `REQUIRES; cl=opt_sq_clist; dc=disjunctive_constr; `OBRACE; sl=spec_list; `CBRACE ->
+      current_specs_type := None;
       F.EBase {
         F.formula_struc_explicit_inst =cl;
         F.formula_struc_implicit_inst = [];
@@ -1868,13 +1897,18 @@ spec:
              F.formula_ext_complete = true;
 	    	 F.formula_ext_pos = (get_pos_camlp4 _loc 1)}
   *)
-  | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
+  | peek_postcondition; `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
+      current_specs_type := None;
       F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol), None)
-   | `ENSURES_EXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
+  | peek_postcondition; `ENSURES_EXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
+      current_specs_type := None;
       F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol), (Some true))
-   | `ENSURES_INEXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
+  | peek_postcondition; `ENSURES_INEXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
+      current_specs_type := None;
       F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol), (Some false))
-	 | `CASE; `OBRACE; bl= branch_list; `CBRACE ->F.ECase {F.formula_case_branches = bl; F.formula_case_pos = get_pos_camlp4 _loc 1; }
+  | peek_branchcondition; `CASE; `OBRACE; bl= branch_list; `CBRACE ->
+      current_specs_type := None;
+      F.ECase {F.formula_case_branches = bl; F.formula_case_pos = get_pos_camlp4 _loc 1; }
   ]];
 
 opt_vlist: [[t = OPT opt_cid_list -> un_option t []]];

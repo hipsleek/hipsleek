@@ -44,6 +44,7 @@ and loc =  {
 and spec_type =
   | Precond
   | Postcond
+  | Branchcond
 
 and formula_origin =
   | F_o_specs of (spec_type option)

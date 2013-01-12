@@ -818,12 +818,13 @@ and string_of_formula_label_only x :string = string_of_formula_label x ""
 
 and string_of_formula_origin fo : string =
   match fo with
-  | None -> ""
-  | Some (F_o_specs None) -> "F_O_SPECS"
-  | Some (F_o_specs (Some Precond)) -> "F_O_SPECS_PRE"
-  | Some (F_o_specs (Some Postcond)) -> "F_O_SPECS_POST"
-  | Some F_o_code -> "F_O_CODE"
-  | Some F_o_inter -> "F_O_INTER"
+  | None -> "origin_unknown"
+  | Some (F_o_specs None) -> "origin_specs"
+  | Some (F_o_specs (Some Precond)) -> "origin_specs_precond"
+  | Some (F_o_specs (Some Postcond)) -> "origin_specs_postcond"
+  | Some (F_o_specs (Some Branchcond)) -> "origin_specs_branch"
+  | Some F_o_code -> "origin_code"
+  | Some F_o_inter -> "origin_inter"
 
 and string_of_iast_label_table table =
   let string_of_row row =
@@ -854,7 +855,7 @@ and pr_pure_formula  (e:P.formula) =
   let f_b e =  pr_bracket pure_formula_wo_paren pr_pure_formula e 
   in
   match e with 
-    | P.BForm (bf,lbl,fo) -> (*pr_formula_label_opt lbl;*) pr_formula_origin fo; fmt_string ":"; pr_b_formula bf
+    | P.BForm (bf,lbl,fo) -> (*pr_formula_label_opt lbl;*) (*pr_formula_origin fo; fmt_string ":";*) pr_b_formula bf
     | P.And (f1, f2, l) ->  
           let arg1 = bin_op_to_list op_and_short pure_formula_assoc_op f1 in
           let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in

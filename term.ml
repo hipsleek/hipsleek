@@ -253,8 +253,9 @@ let collect_update_formula_x (transition: CP.formula) (old_exp: CP.exp) (new_exp
   let rec build_update_table (f: CP.formula) (utable : (CP.spec_var, CP.spec_var list) Hashtbl.t)
                              : (CP.spec_var, CP.spec_var list) Hashtbl.t = (
     match f with
-    | CP.BForm (_, _, (Some (F_o_specs _))) -> utable
-    | CP.BForm ((CP.Eq (CP.Var (v, _), exp, _), _), _, _) ->
+    | CP.BForm ((CP.Eq (CP.Var (v, _), exp, _), _), _, Some F_o_specs (Some Postcond))
+    | CP.BForm ((CP.Eq (CP.Var (v, _), exp, _), _), _, Some F_o_code)
+    | CP.BForm ((CP.Eq (CP.Var (v, _), exp, _), _), _, Some F_o_inter) ->
         let usedvars = try Hashtbl.find utable v with Not_found -> [] in
         let newvars = CP.afv exp in
         let usedvars = CP.remove_dups_svl (usedvars @ newvars) in
@@ -334,7 +335,7 @@ let collect_update_formula_x (transition: CP.formula) (old_exp: CP.exp) (new_exp
 let collect_update_formula (transition: CP.formula) (old_exp: CP.exp) (new_exp: CP.exp) : CP.formula =
   let pr_f = !CP.print_formula in
   let pr_e = !CP.print_exp in
-  Debug.ho_3 "collect_update_formula" pr_f pr_e pr_e pr_f collect_update_formula_x transition old_exp new_exp
+  Debug.no_3 "collect_update_formula" pr_f pr_e pr_e pr_f collect_update_formula_x transition old_exp new_exp
 
 
 let collect_specs_formula_x (transition: CP.formula) : CP.formula =
@@ -534,7 +535,6 @@ let create_measure_constraint_x (lhs: CP.formula) (flag: bool) (src: CP.exp) (ds
         let limit_s = seq_s.CP.seq_domain_lb in
         let limit_d = seq_d.CP.seq_domain_lb in
         let update_formula = collect_update_formula lhs measure_s measure_d in
-        let _ = print_endline ("== update_formula = " ^ (Cprinter.string_of_pure_formula update_formula)) in
         let specs_formula = collect_specs_formula lhs in
         let refined_specs = refine_specs_adapt_sequence specs_formula seq_s seq_d in
         let assumption = CP.mkAnd update_formula refined_specs pos in
