@@ -624,33 +624,40 @@ void pci_free_dynids_loop(pci_driver drv, ref pci_dynid dynid, ref pci_dynid n)
               next1::list_head<next2,prev1> *
               n'::pci_dynid<next2,id3> * id3::pci_device_id<_,_,_,_,_,_,_>;
     next2 != headnext ->
-/*      case {*/
-/*      head1 = null ->*/
-/*        ensures drv::pci_driver<no,na,id,d,dy> * dy::pci_dynids<head1> **/
-/*                dynid'::pci_dynid<next1,id2> * prev1::list_head<next1,prev2> * */
-/*                next1::list_head<next2,prev1> * next2::dll<next3,next1,head1> **/
-/*                n'::pci_dynid<next2,id3> * id3::pci_device_id<_,_,_,_,_,_,_> * node1::list_head<null,null> ;*/
-/*      head1 != null ->*/
+      case {
+      head1 = null ->
         ensures drv::pci_driver<no,na,id,d,dy> *
                 dy::pci_dynids<head1> * head1::list_head<headnext,pp> * headnext::dll<nn1,head1,ss> *
                 dynid'::pci_dynid<next1,id2> * prev1::list_head<next1,prev2> * 
                 next1::list_head<next2,prev1> * next2::dll<next3,next1,headnext> *
                 n'::pci_dynid<next2,id3> * id3::pci_device_id<_,_,_,_,_,_,_> * node1::list_head<null,null> ;
-/*      }*/
+      head1 != null ->
+        case {
+        headnext = null ->
+          ensures drv::pci_driver<no,na,id,d,dy> *
+                  dy::pci_dynids<head1> * head1::list_head<headnext,pp> * headnext::dll<nn1,head1,ss> *
+                  dynid'::pci_dynid<next1,id2> * prev1::list_head<next1,prev2> * 
+                  next1::list_head<next2,prev1> * next2::dll<next3,next1,headnext> *
+                  n'::pci_dynid<next2,id3> * id3::pci_device_id<_,_,_,_,_,_,_> * node1::list_head<null,null> ;
+        headnext != null ->
+          ensures drv::pci_driver<no,na,id,d,dy> *
+                  dy::pci_dynids<head1> * head1::list_head<headnext,pp> * headnext::dll<nn1,head1,ss> *
+                  dynid'::pci_dynid<next1,id2> * prev1::list_head<next1,prev2> * 
+                  next1::list_head<next2,prev1> * next2::dll<next3,next1,headnext> *
+                  n'::pci_dynid<next2,id3> * id3::pci_device_id<_,_,_,_,_,_,_> * node1::list_head<null,null> ;
+        }
+      }
     }
   }
 {
-  assume(head1!=null);
-  assume(head1.next!=null);
   if (dynid.node != (drv.dynids.list)) {
     list_del(dynid.node);
     //free(dynid);
     dynid = n;
     n = cast_to_pci_dynid1(n.node.next);
-    if (n.node != drv.dynids.list.next){
-      pci_free_dynids_loop(drv,dynid,n);
-/*      dprint;*/
-    }
+/*    if (n.node != drv.dynids.list.next){*/
+/*      pci_free_dynids_loop(drv,dynid,n);*/
+/*    }*/
   }
 }
 
