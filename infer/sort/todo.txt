@@ -239,3 +239,148 @@ If so, they should NOT be present in the final answer.
 
 !!! REL POST :  P(b,a)
 !!! POST:  a=b | (b<a & r_674<=a_675)
+
+P:={[a] -> [b] -> []: (b=a ||  (exists (a_631: (exists (b_642: (exists (a_645: (exists (r_644:((((b=a && (a<=b_642 && r_644<=a_645)) || (b_642=a && (a<b && r_644<=a_645))) && R0(r_644,a_645)) && P(b_642,a_631)))) )) )) )) )
+};
+R0:={[] -> [r_674,a_675] -> []: r_674<=a_675
+};
+bottomupgen([P,R0], [2,2], SimHeur);
+
+Above is not mutually recursive. First R0 is non-recursive, so we
+first determine that 
+    R0(r,a) -> r<=a
+Later, we inline R0(..) in the defintion of P(..). Actually,
+we have already done the inlining with of --en-pre-residue.
+
+With that, we perform a fix-point of just P(..)
+
+# n-sort-2f.ss
+
+node sort(node x)
+     infer [R0,R1]
+     requires x::sortHO<a,R0>
+     ensures  res::sortHO<b,R1> & b<=a;
+     //b<=a ;
+
+[RELASS [R0,R1]: ( R1(r_647,a_648)) -->  r_647<=a_648,
+RELDEFN R1: ( r_677<=a_678) -->  R1(r_677,a_678)]
+*************************************
+
+!!! REL POST :  R1(r_677,a_678)
+!!! POST:  r_677<=a_678
+!!! REL PRE :  true
+!!! PRE :  true
+
+@@  R1 is not strictly a post. but it is a post-relation
+    where ideally, we wish for the strongest? However, what if we
+    had :  Pred(..R..) :- not(R(..))
+
+# n-ins-3c.ss (simplifying RELDEFN)
+
+RELDEFN R2: ( b<=v2_671) -->  R2(b,v2_671),
+RELDEFN R2: ( R(a,v2_619) & R(r_744,a_745)) -->  R2(r_744,a_745)
+  @ why filter_ante_wo_rel did not remove R(a,v2_619)?
+  R(r_744,a_745) -->  R2(r_744,a_745)
+RELDEFN R2: 
+   R(r_744,a_745) & R(a,v2_619) & a=v2_709 & v2_619=v2_727) 
+         -->  R2(v2_709,v2_727)
+   @can we substitute equality for existential variables on LHS 
+    such as a=? and v2_619=? to obtain:
+   R(r_744,a_745) & R(v2_709,v2_727) -->  R2(v2_709,v2_727)
+   @this can be followed by filtet_ante_wo_rel
+   R(v2_709,v2_727) -->  R2(v2_709,v2_727)
+RELDEFN R2: 
+  (v2_619=v2_727 & R2(v_617,v2_727) & R(r_744,a_745) & R(a,v2_619) & 
+    v2_709=v_617 & a=v2_709 & b<=v2_709) -->  R2(b,v2_709)
+  @elim exists = on LHS
+  R2(v2_709,v2_727) & R(r_744,a_745) & R(v2_709,v2_727) &  b<=v2_709 
+  -->  R2(b,v2_709)
+  @filter irrelevant on LHS
+  R2(v2_709,v2_727) & R(v2_709,v2_727) &  b<=v2_709 
+  -->  R2(b,v2_709)
+  @using R(..)->R2(..)
+  R(v2_709,v2_727) &  b<=v2_709 
+  -->  R2(b,v2_709)
+
+RELDEFN R2: ( b<v2_758) -->  R2(b,v2_758),
+RELDEFN R2: 
+   ( R(a,v2_619) & 
+     ((a=b & a<v2_798 & v2_798<=v2_619) | (a=b & v2_619=v2_798))) 
+    -->  R2(b,v2_798)]
+   @do a deep split of disjunction on the LHS
+    R(a,v2_619) & a=b & a<v2_798 & v2_798<=v2_619
+    -->  R2(b,v2_798)]
+    R(a,v2_619) & a=b & v2_619=v2_798 
+    -->  R2(b,v2_798)]
+   @eliminate existential = on LHS
+    R(b,v2_619) & b<v2_798 & v2_798<=v2_619
+    -->  R2(b,v2_798)]
+    R(b,v2_798) 
+    -->  R2(b,v2_798)]
+
+ Summary:
+   (b<=v2_671) -->  R2(b,v2_671),
+   R(r_744,a_745) -->  R2(r_744,a_745)
+   R(v2_709,v2_727) -->  R2(v2_709,v2_727)
+   R(v2_709,v2_727) &  b<=v2_709 -->  R2(b,v2_709)
+   b<v2_758) -->  R2(b,v2_758)
+   R(b,v2_619) & b<v2_798 & v2_798<=v2_619 -->  R2(b,v2_798)]
+   R(b,v2_798) -->  R2(b,v2_798)
+
+ Remove duplicates:
+   (b<=v2_671) -->  R2(b,v2_671),
+   b<v2_758) -->  R2(b,v2_758)
+   R(v2_709,v2_627) -->  R2(v2_709,v2_727)
+   R(v2_709,v2_727) &  b<=v2_709 -->  R2(b,v2_709)
+   R(b,v2_619) & b<v2_798 & v2_798<=v2_619 -->  R2(b,v2_798)]
+
+ Combine constant on LHS and PairWiseCheck:
+   b<=v2_671 -->  R2(b,v2_671),
+   R(v2_709,v2_627) -->  R2(v2_709,v2_727)
+   R(v2_709,v2_727) &  b<=v2_709 -->  R2(b,v2_709)
+   R(b,v2_619) & b<v2_798 & v2_798<=v2_619 -->  R2(b,v2_798)]
+
+ At this point, we can do three things
+  (i) keep relational constraints
+  (ii) use weakest pre; to find strongest post
+  (iii) use strongest post; to find weakest pre
+
+ Let us try (ii).
+ We first determine the weakest  R(..)
+   R(a,b) --> true
+ After that, we substitute in to determine strongest R1:
+   b<=v2_671 -->  R2(b,v2_671),
+   true -->  R2(v2_709,v2_727)
+   b<=v2_709 -->  R2(b,v2_709)
+   b<v2_798 & v2_798<=v2_619 -->  R2(b,v2_798)]
+ After that, we substitute in to determine strongest R1:
+   true --> R(v,b)
+
+ Let us try (iii).
+ We first determine the strongest post-relation, namely:
+   b<=v2_671 -->  R2(b,v2_671),
+ After that, we substitute in to determine pre of R(..)
+   R(v2_709,v2_627) -->  v2_709<=v2_727)
+   R(v2_709,v2_727) &  b<=v2_709 -->  b<=v2_709
+   R(b,v2_619) & b<v2_798 & v2_798<=v2_619 -->  b<=v2_798
+ This should then yield relational assumptions:
+   R(v2_709,v2_627) -->  v2_709<=v2_727
+   R(v2_709,v2_727) -->  v2_709<=v2_727
+
+ With this, we can get:
+  [a<=b -> R2(a,b); R(a,b) -> a<=b]
+  [true -> R2(a,b); R(a,b) -> true]
+
+node sort(node x)
+  requires x::sortHO<a,R0> & R0(a,b)-->a<=b
+  ensures  res::sortHO<b,R1> & b<=a & R2(a,b)-->a<=b;
+  requires x::sortHO<a,R0> 
+  ensures  res::sortHO<b,R1> & b<=a &
+   b<=v2_671 -->  R2(b,v2_671),
+   R(v2_709,v2_627) -->  R2(v2_709,v2_727)
+   R(v2_709,v2_727) &  b<=v2_709 -->  R2(b,v2_709)
+   R(b,v2_619) & b<v2_798 & v2_798<=v2_619 -->  R2(b,v2_798)]
+
+
+
+

@@ -36,57 +36,54 @@ node sort(node x)
      //b<=a ;
 /*
 
+WHY did we have superfluous vars r_674,a_675?
+Weren't they quantified in the fixcalc input?
+If so, they should NOT be present in the final answer.
+
+!!! REL POST :  P(b,a)
+!!! POST:  a=b | (b<a & r_674<=a_675)
+
 We derived:
 
-Checking procedure sort$node... 
-*************************************
-*******pure relation assumption ******
-*************************************
-[RELASS [R0]: ( R0(r_643,a_644)) -->  r_643<=a_644,
-RELDEFN R0: ( r_643<=a_644 & r_673<=a_674 & R0(r_643,a_644)) 
-                -->  R0(r_673,a_674)]
+[RELASS [P,R0]: ( R0(r_644,a_645)) -->  r_644<=a_645,
+RELDEFN R0: ( r_674<=a_675) -->  R0(r_674,a_675),
 
-However  R0(r_643,a_644) is not really connected to
-the output on RHS. Actually, we should have obtained
-below instead if we only traverse the connected
-formula on the LHS.
-
-// --dis-pre-residue gives
-*************************************
-*******pure relation assumption ******
-*************************************
-[RELASS [R0]: ( R0(r_643,a_644)) -->  r_643<=a_644,
-RELDEFN R0: ( r_673<=a_674) -->  R0(r_673,a_674)]
+RELDEFN P: ( a=b) -->  P(b,a),
+RELDEFN P: ( R0(r_644,a_645) & P(b_642,a_631) & 
+ ((a=b & b<=b_642 & r_644<=a_645) | 
+ (b=b_642 & b_642<a & r_644<=a_645))) -->  P(b,a)]
 *************************************
 
-
-Why false inferred?
+*************************************
+*******fixcalc of pure relation *******
+*************************************
+[( R0(r_674,a_675), r_674<=a_675, true, true),
+( P(b,a), a=b | (b<a & r_674<=a_675), true, true)]
 
 *************************************
-[RELASS [R0]: ( R0(r_643,a_644)) -->  r_643<=a_644,
-RELDEFN R0: ( r_643<=a_644 & r_673<=a_674 & R0(r_643,a_644)) 
-                -->  R0(r_673,a_674)]
-*************************************
 
-!!! REL POST :  R0(r_673,a_674)
-!!! POST:  false
+!!! REL POST :  P(b,a)
+!!! POST:  a=b | (b<a & r_674<=a_675)
 !!! REL PRE :  true
 !!! PRE :  true
-Procedure sort$node SUCCESS
+!!! REL POST :  R0(r_674,a_675)
+!!! POST:  r_674<=a_675
+!!! REL PRE :  true
+!!! PRE :  true
 
-fixcalc currently formed:
 
-R0:={[] -> [r_673,a_674] -> []: 
-#r_673<=a_674 || 
-(exists (a_644: (exists (r_643:((r_643<=a_644 && r_673<=a_674) && R0(r_643,a_644)))) )) 
+P:={[a] -> [b] -> []: (b=a ||  (exists (a_631: (exists (b_642: (exists (a_645: (exists (r_644:((((b=a && (a<=b_642 && r_644<=a_645)) 
+|| (b_642=a && (a<b && r_644<=a_645))) 
+&& R0(r_644,a_645)) 
+&& P(b_642,a_631)))) )) )) )) )
+};R0:={[] -> [r_674,a_675] -> []: r_674<=a_675
 };
+bottomupgen([P,R0], [2,2], SimHeur);
 
-without base-case. Not sure if R0 should be classify as a post-relation.
-It is actually a relation in a predicate, rather than a relation
-that forms to post-condition.
-
-Doing least-fix-point without a base-case seems unsound
-for such pred-relation.
+RELDEFN P: ( a=b) -->  P(b,a),
+RELDEFN P: ( P(b_642,a_631) & 
+ ((a=b & b<=b_642 & r_644<=a_645) | 
+ (b=b_642 & b_642<a & r_644<=a_645))) -->  P(b,a)]
 
 */
 {
