@@ -1306,7 +1306,7 @@ and trans_view_one_derv (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_dec
   let pr1= pr_list pr_id in
   let pr = (pr_pair (pr_pair pr_id pr1) (pr_triple pr_id pr1 pr1)) in
   let pr_r = Cprinter.string_of_view_decl in
-  Debug.ho_1 "trans_view_one_derv" pr pr_r  (fun _ -> trans_view_one_derv_x prog cviews derv view_derv) view_derv
+  Debug.no_1 "trans_view_one_derv" pr pr_r  (fun _ -> trans_view_one_derv_x prog cviews derv view_derv) view_derv
 
 and trans_view_one_derv_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) view_derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) :
        C.view_decl =
