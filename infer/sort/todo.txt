@@ -331,23 +331,11 @@ RELDEFN R2: ( R(a,v2_619) & ((a=b & a<v2_798 & v2_798<=v2_619) | (a=b & v2_619=v
    R(v2_709,v2_727) &  b<=v2_709 -->  R2(b,v2_709)
    R(b,v2_619) & b<v2_798 & v2_798<=v2_619 -->  R2(b,v2_798)]
 
- At this point, we can do three things
+ At this point, we can do two things
   (i) keep relational constraints
-  (ii) use weakest pre; to find strongest post
-  (iii) use strongest post; to find weakest pre
+  (ii) use strongest post; to find weakest pre
 
  Let us try (ii).
- We first determine the weakest  R(..)
-   R(a,b) --> true
- After that, we substitute in to determine strongest R1:
-   b<=v2_671 -->  R2(b,v2_671),
-   true -->  R2(v2_709,v2_727)
-   b<=v2_709 -->  R2(b,v2_709)
-   b<v2_798 & v2_798<=v2_619 -->  R2(b,v2_798)]
- After that, we substitute in to determine strongest R1:
-   true --> R(v,b)
-
- Let us try (iii).
  We first determine the strongest post-relation, namely:
    b<=v2_671 -->  R2(b,v2_671),
  After that, we substitute in to determine pre of R(..)
@@ -362,7 +350,9 @@ RELDEFN R2: ( R(a,v2_619) & ((a=b & a<v2_798 & v2_798<=v2_619) | (a=b & v2_619=v
   [a<=b -> R2(a,b); R(a,b) -> a<=b]
   [true -> R2(a,b); R(a,b) -> true]
 
-node sort(node x)
+We can add both versions to pre/post; as follows:
+
+ node sort(node x)
   requires x::sortHO<a,R0> & R0(a,b)-->a<=b
   ensures  res::sortHO<b,R1> & b<=a & R2(a,b)-->a<=b;
   requires x::sortHO<a,R0> 
