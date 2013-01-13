@@ -360,7 +360,7 @@ let collect_specs_formula_x (transition: CP.formula) : CP.formula =
       )
     | CP.AndList _ -> report_error no_pos "collect_specs_formula_x: handle CP.AndList later"
     | CP.Or _ -> report_error no_pos "collect_specs_formula_x: handle CP.Or later"
-    | CP.Not _ -> report_error no_pos "collect_specs_formula_x: handle CP.Not later"
+    | CP.Not (f1, _, _) -> collect_helper f1
     | CP.Forall _ -> report_error no_pos "collect_specs_formula_x: handle CP.Forall later"
     | CP.Exists _ -> report_error no_pos "collect_specs_formula_x: handle CP.Exists later"
   ) in
