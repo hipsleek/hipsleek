@@ -331,6 +331,8 @@ RELDEFN R2: ( R(a,v2_619) & ((a=b & a<v2_798 & v2_798<=v2_619) | (a=b & v2_619=v
    R(v2_709,v2_727) &  b<=v2_709 -->  R2(b,v2_709)
    R(b,v2_619) & b<v2_798 & v2_798<=v2_619 -->  R2(b,v2_798)]
 
+##################################################
+
  At this point, we can do two things
   (i) keep relational constraints
   (ii) use strongest post; to find weakest pre

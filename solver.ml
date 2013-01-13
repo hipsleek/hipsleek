@@ -9461,6 +9461,13 @@ and simplify_relation sp subst_fml pre_vars post_vars prog inf_post evars lst_as
 	Debug.no_1 "simplify_relation" pr (pr_pair pr (pr_list !CP.print_formula))
       (fun _ -> simplify_relation_x sp subst_fml pre_vars post_vars prog inf_post evars lst_assume) sp
 
+let deep_split f1 f2 =
+  let f1 = TP.simplify_raw f1 in
+  if CP.is_disjunct f1 then
+    let fs = CP.split_disjunctions_deep f1 in
+    List.map (fun f -> (f,f2)) fs
+  else [(f1,f2)]
+
 let subst_rel pre_rel pre rel = match rel,pre_rel with
   | CP.BForm ((CP.RelForm (name1,args1,_),_),_), CP.BForm ((CP.RelForm (name2,args2,_),_),_) ->
     if name1 = name2 then
@@ -9604,15 +9611,32 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls fp_func preprocess_fun 
     let rels_in_pred = List.filter CP.is_rel_var pre_vars in
     let _ = Debug.ninfo_hprint (add_str "rels_in_pred" !print_svl) rels_in_pred no_pos in
     let post_rel_df = List.filter (fun (f1,_) -> CP.intersect (CP.fv f1) rels_in_pred<>[]) post_rel_df in 
-    let new_pre_rel_df = List.map (fun (f1,f2) -> (subst_fml rel post f1, subst_fml rel post f2)) post_rel_df in
+    let _ = Debug.ninfo_hprint (add_str "pre_rel_df(b4 deep split)" (pr_list (pr_pair pr pr))) post_rel_df no_pos in
+    let new_pre_rel_df = List.concat (List.map (fun (f1,f2) -> deep_split f1 f2) post_rel_df) in
+    let _ = Debug.ninfo_hprint (add_str "pre_rel_df(after deep split)" (pr_list (pr_pair pr pr))) new_pre_rel_df no_pos in
+    let new_pre_rel_df = List.map (fun (f1,f2) -> (subst_fml rel post f1, subst_fml rel post f2)) new_pre_rel_df in
     let _ = Debug.ninfo_hprint (add_str "new_pre_rel_df" (pr_list (pr_pair pr pr))) new_pre_rel_df no_pos in
     let es = empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
     let es = {es with es_infer_vars_rel = rels_in_pred} in
-    let rel_ass = List.concat (List.map (fun (f1,f2) -> 
-      let f1 = MCP.mix_of_pure f1 in
+    let rel_ass = List.concat (List.map (fun (f1_orig,f2) -> 
+      let f1 = MCP.mix_of_pure f1_orig in
       let f2 = MCP.mix_of_pure f2 in
-      let _,_,lst = Infer.infer_pure_m es f1 f1 f1 f2 no_pos in
-      List.concat (List.map (fun (_,x,_) -> List.map (fun (a,b,c) -> (c,b)) x) lst)
+      let (i_res1,_,_),_ = 
+        if (MCP.isConstMTrue f2)  then ((true,[],None),None)
+        else 
+          (imply_mix_formula 3 f1 f1 f2 imp_no {mem_formula_mset = []}) in
+      let lst = 
+        if i_res1 then 
+          let rels_fml = List.filter CP.is_RelForm (CP.list_of_conjs f1_orig) in
+          [(constTrue, List.fold_left (fun f1 f2 -> CP.mkAnd f1 f2 no_pos) constTrue rels_fml)]
+        else 
+          let _,_,l = Infer.infer_pure_m es f1 f1 f1 f2 no_pos in
+          List.concat (List.map (fun (_,x,_) -> List.map (fun (a,b,c) -> (c,b)) x) l)
+      in
+      if lst=[] then
+        let rels_fml = List.filter CP.is_RelForm (CP.list_of_conjs f1_orig) in
+        [(CP.mkFalse no_pos,List.fold_left (fun f1 f2 -> CP.mkAnd f1 f2 no_pos) constTrue rels_fml)]
+      else lst
       ) new_pre_rel_df) in
     let _ = Debug.ninfo_hprint (add_str "rel_ass" (pr_list (pr_pair pr pr))) rel_ass no_pos in
     let pairs = preprocess_fun rel_ass in
@@ -9620,12 +9644,15 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls fp_func preprocess_fun 
     (match pairs with
     | [] -> [(rel,post,constTrue,constTrue)]
     | [(r,lst)] ->
-      let final_pre = List.fold_left (fun f1 f2 -> CP.mkAnd f1 f2 no_pos) constTrue lst in
-      let final_pre = TP.simplify_raw final_pre in
-      let final_pre = filter_disj final_pre pre_fmls in
-      let final_pre = TP.pairwisecheck_raw final_pre in
-      let _ = Debug.devel_hprint (add_str "final_pre(pred)" !CP.print_formula) final_pre no_pos in
-      [(rel,post,r,final_pre)]
+      let lst = Gen.BList.remove_dups_eq CP.equalFormula lst in
+      List.map (fun final_pre ->
+(*        let final_pre = List.fold_left (fun f1 f2 -> CP.mkAnd f1 f2 no_pos) constTrue lst in*)
+        let final_pre = TP.simplify_raw final_pre in
+        let final_pre = filter_disj final_pre pre_fmls in
+        let final_pre = TP.pairwisecheck_raw final_pre in
+        let _ = Debug.devel_hprint (add_str "final_pre(pred)" !CP.print_formula) final_pre no_pos in
+        (rel,post,r,final_pre)
+      ) lst
     | _ -> [(rel,post,constTrue,constTrue)])
 (*      let checkpoint = check_defn r final_pre pre_rel_df in*)
 (*      if checkpoint then [(rel,post,pre_rel,final_pre)]*)
