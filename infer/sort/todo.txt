@@ -278,6 +278,9 @@ RELDEFN R1: ( r_677<=a_678) -->  R1(r_677,a_678)]
 
 ## n-ins-3c.ss (simplifying RELDEFN)
 
+@ NEED to do simplicafication of relational definition
+  to avoid timeouts in larger examples.
+
 RELDEFN R2: ( b<=v2_671) -->  R2(b,v2_671),
 RELDEFN R2: ( R(r_744,a_745)) -->  R2(r_744,a_745),
 RELDEFN R2: ( R(a,v2_619) & a=v2_709 & v2_619=v2_727) -->  R2(v2_709,v2_727),
@@ -409,3 +412,39 @@ R:={[m,a]:m<=a | a<=m};
 PairWiseCheck R;
 #{[m,a]}
 
+## n-ins-4b3a.ss
+
+PROBLEM : some time-outs and very large RELDEFN. 
+ see a-ins-4b3a.ss.
+ It is important to do the simplification mechanisms
+ (see n-ins-2b.ss)
+
+ for RELDEFN.
+
+llMM<v,mi,mx> == self::node<v,null> & mi=v & mx=v 
+  or self::node<v, p> * p::llMM<_,mi2,mx2> 
+     & mi=min(v,mi2) & mx=max(v,mx2)
+inv self!=null;
+
+
+node insert(node x, node y)
+     infer [P3,P4]
+     requires x::llMM<v,mi,mx> * y::node<a,null> 
+      //& R(a,mi,mx)
+     ensures  res::llMM<v2,mi2,mx2> 
+         & P3(mi,a,mi2) 
+         & P4(mx,a,mx2);
+Checking procedure insert$node~node... Timeout when checking #simplify  Restarting Omega after ... 166 invocations Stop Omega... 166 invocations Starting Omega...oc
+Timeout when checking #simplify  Restarting Omega after ... 167 invocations Stop Omega... 167 invocations Starting Omega...oc
+
+!!! REL POST :  P4(mx,a,mx2)
+!!! POST:  (mx=mx2 & a<=mx) | (a=mx2 & mx<mx2)
+!!! REL PRE :  true
+!!! PRE :  true
+!!! REL POST :  P3(mi,a,mi2)
+!!! POST:  (a=mi2 & a<=mi) | (mi=mi2 & mi2<=a)
+!!! REL PRE :  true
+!!! PRE :  true
+Total verification time: 15.200949 second(s)
+	Time spent in main process: 6.4044 second(s)
+	Time spent in child processes: 8.796549 second(s)

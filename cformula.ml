@@ -5972,7 +5972,7 @@ let simplify_ctx_elim_false_dupl t1 t2 =
 
 let simplify_ctx_elim_false_dupl t1 t2 =
   let pr = !print_context_list_short in
-  Debug.ho_2 "simplify_ctx_elim_flse_dupl" pr pr pr simplify_ctx_elim_false_dupl t1 t2 
+  Debug.no_2 "simplify_ctx_elim_flse_dupl" pr pr pr simplify_ctx_elim_false_dupl t1 t2 
 
   (*context set union*)
 
@@ -5997,7 +5997,7 @@ match c1,c2 with
 
 let list_context_union c1 c2 =
   let pr = !print_list_context_short in
-  Debug.ho_2_opt (fun _ -> not(isFailCtx c1 ||  isFailCtx c2) )  "list_context_union" 
+  Debug.no_2_opt (fun _ -> not(isFailCtx c1 ||  isFailCtx c2) )  "list_context_union" 
       pr pr pr
       list_context_union_x c1 c2 
 
@@ -6037,7 +6037,7 @@ and isMayFailCtx cl = match cl with
 and fold_context_left i c_l = 
   let pr = !print_list_context_short in
   let pr1 x = String.concat "\n" (List.map !print_list_context_short x) in
-  Debug.ho_1_num i "fold_context_left" pr1 pr fold_context_left_x c_l
+  Debug.no_1_num i "fold_context_left" pr1 pr fold_context_left_x c_l
 
 (* Fail U Succ --> Succ *)
 (* Fail m1 U Fail m2 --> And m1 m2 *)
