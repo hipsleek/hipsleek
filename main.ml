@@ -237,10 +237,10 @@ let process_source_full source =
 		(* let _=print_endline ("PROG: "^Iprinter.string_of_program prog) in *)
 		let prog=Iast.append_iprims_list_head ([prog]@prims_incls) in
     let intermediate_prog = Globalvars.trans_global_to_param prog in
-    (* let _ = print_endline ("process_source_full: before pre_process_of_iprog") in *)
-    let _ = print_endline ("== gvdecls 2 length = " ^ (string_of_int (List.length intermediate_prog.Iast.prog_global_var_decls))) in
+    (* let _ = print_endline ("process_source_full: before pre_process_of_iprog" ^(Iprinter.string_of_program intermediate_prog)) in *)
+    (* let _ = print_endline ("== gvdecls 2 length = " ^ (string_of_int (List.length intermediate_prog.Iast.prog_global_var_decls))) in *)
     let intermediate_prog=IastUtil.pre_process_of_iprog iprims intermediate_prog in
-		(* let _= print_string ("\n*After pre process iprog* "(*^Iprinter.string_of_program intermediate_prog*)) in *)
+	(* let _= print_string ("\n*After pre process iprog* "^ (Iprinter.string_of_program intermediate_prog)) in *)
     let intermediate_prog = Iast.label_procs_prog intermediate_prog true in
     (* let _ = print_endline ("process_source_full: before --pip") in *)
     let _ = if (!Globals.print_input_all) then print_string (Iprinter.string_of_program intermediate_prog) 
@@ -254,6 +254,7 @@ let process_source_full source =
        let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
     let _ = Gen.Profiling.push_time "Translating to Core" in
     (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
+    (* let _ = print_endline (Iprinter.string_of_program intermediate_prog) in *)
     let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
     (* Forward axioms and relations declarations to SMT solver module *)
     let _ = List.map (fun crdef -> 

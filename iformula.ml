@@ -1586,4 +1586,56 @@ let add_post_for_flow fl_names f =
 		| EOr b -> EOr {b with formula_struc_or_f1 = helper b.formula_struc_or_f1; formula_struc_or_f2 = helper b.formula_struc_or_f2;}
 		| EAssume (e,pid,t)-> EAssume (fct e, pid, t) in
 	helper f
-	
+
+let mkAnd_formula_post_x (f0:formula) h p fl=
+  let rec helper f0=
+    match f0 with
+      | Base fb -> let new_h = mkStar fb.formula_base_heap h fb.formula_base_pos in
+                   let new_p = Ipure.mkAnd fb.formula_base_pure p fb.formula_base_pos in
+                   Base { fb with formula_base_heap = new_h;
+                       formula_base_pure = new_p;
+                       formula_base_flow = fl;
+                        }
+      | Exists fe ->
+          let new_h = mkStar fe.formula_exists_heap h fe.formula_exists_pos in
+          let new_p = Ipure.mkAnd fe.formula_exists_pure p fe.formula_exists_pos in
+          Exists { fe with formula_exists_heap = new_h;
+              formula_exists_pure = new_p;
+              formula_exists_flow = fl;
+               }
+      | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+                     formula_or_f2 = helper orf.formula_or_f2}
+  in
+  helper f0
+
+let mkAnd_formula_post (f0:formula) h p fl=
+  let pr1 = !Ipure.print_formula in
+  let pr2 = !print_h_formula in
+  let pr3 = !print_formula in
+  Debug.no_3 "mkAnd_formula_post" pr3 pr2 pr1 pr3
+      (fun _ _ _ -> mkAnd_formula_post_x f0 h p fl) f0 h p
+
+let mkAnd_struct_formula_post_x (f0:struc_formula) h p fl=
+  let rec helper f = match f with
+	| EBase eb -> EBase {eb with formula_struc_continuation =
+            match eb.formula_struc_continuation with
+              | None -> None
+              | Some sf -> Some (helper sf)}
+	| ECase c ->
+		let new_brs = List.map (fun (p,f) -> (p, helper f)) c.formula_case_branches in
+        ECase {c with formula_case_branches = new_brs}
+	| EAssume (bf,lb,et)-> EAssume (mkAnd_formula_post bf h p fl,lb,et)
+	| EInfer inf -> EInfer {inf with formula_inf_continuation = helper inf.formula_inf_continuation}
+	| EList lf->
+		 EList (List.map (fun (sld, sf)-> (sld, helper sf)) lf)
+	| EOr eorf -> EOr {eorf with formula_struc_or_f1 = helper eorf.formula_struc_or_f1;
+                      formula_struc_or_f2 = helper eorf.formula_struc_or_f2}
+  in
+  helper f0
+
+let mkAnd_struct_formula_post (f0:struc_formula) h p fl=
+  let pr1 = !Ipure.print_formula in
+  let pr2 = !print_h_formula in
+  let pr3 = !print_struc_formula in
+  Debug.no_3 "mkAnd_struct_formula_post" pr3 pr2 pr1 pr3
+      (fun _ _ _ -> mkAnd_struct_formula_post_x f0 h p fl) f0 h p

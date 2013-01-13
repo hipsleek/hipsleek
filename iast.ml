@@ -1831,7 +1831,7 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
  **)
 let get_field_from_typ ddefs data_typ field_name = match data_typ with
 	| Named data_name -> 
-       (* let _ = print_endline ("1: " ^ data_name) in*)
+       (* let _ = print_endline ("1: " ^ data_name) in *)
        (* let _ = print_endline ("2: " ^ field_name) in *)
 		let ddef = look_up_data_def_raw ddefs data_name in
         (try
@@ -2065,18 +2065,37 @@ let rec get_breaks e =
 
 let exists_return_x e0=
   let rec helper e=
+    (* let _ = Debug.info_pprint (" helper: " ^ (!print_exp e)  ) no_pos in *)
     match e with
-      | Block { exp_block_body = bb} -> helper bb
-      | Cond {exp_cond_then_arm = tb; exp_cond_else_arm=eb} -> (helper tb) || (helper eb)
+      | Block { exp_block_body = bb} ->
+          (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
+          helper bb
+      | Cond {exp_cond_then_arm = tb; exp_cond_else_arm=eb} ->
+          (* let _ = Debug.info_pprint (" COND" ) no_pos in *)
+          (helper tb) || (helper eb)
       | Raise {exp_raise_type = et} -> begin
+          (* let _ = Debug.info_pprint (" RAISE" ) no_pos in *)
           match et with
-            | Const_flow f -> if String.compare f loop_ret_flow =0 then true else false
+            | Const_flow f ->
+                (* let _ = Debug.info_pprint (" et" ^ ( f)) no_pos in *)
+                if (is_eq_flow  (exlist # get_hash loop_ret_flow) (exlist # get_hash f)) then true else false
             | _ -> false
       end
-      | Return _ -> true
-      | Seq {exp_seq_exp1 = e1; exp_seq_exp2 = e2} -> (helper e2) || (helper e1)
-      | While {exp_while_body = wb} -> helper wb
-      | _ -> false
+      | Return _ ->
+          true
+      | Seq {exp_seq_exp1 = e1; exp_seq_exp2 = e2} ->
+          (helper e2) || (helper e1)
+      | While {exp_while_body = wb} ->
+          (* let _ = Debug.info_pprint (" WHILE" ) no_pos in *)
+          helper wb
+      (* | Bind _ -> let _ = Debug.info_pprint (" BIND" ) no_pos in false *)
+      (* | Assign _ -> let _ = Debug.info_pprint (" ASS" ) no_pos in false *)
+      (* | Var _ -> let _ = Debug.info_pprint (" VAR" ) no_pos in false *)
+      | Label (_, el) -> (* let _ = Debug.info_pprint (" LABEL" ) no_pos in *)
+                         helper el
+      | _ ->
+          (* let _ = Debug.info_pprint (" *****" ) no_pos in *)
+          false
   in
   helper e0
 
@@ -2084,3 +2103,95 @@ let exists_return e0=
   let pr1 = !print_exp in
   Debug.no_1 "exists_return" pr1 string_of_bool
       (fun _ -> exists_return_x e0) e0
+
+let exists_return_val_x e0=
+  let rec helper e=
+    (* let _ = Debug.info_pprint (" helper: " ^ (!print_exp e)  ) no_pos in *)
+    match e with
+      | Block { exp_block_body = bb} ->
+          (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
+          helper bb
+      | Cond {exp_cond_then_arm = tb; exp_cond_else_arm=eb} ->
+          (* let _ = Debug.info_pprint (" COND" ) no_pos in *)
+          (helper tb) || (helper eb)
+      | Raise {exp_raise_type = et} -> begin
+          (* let _ = Debug.info_pprint (" RAISE" ) no_pos in *)
+          match et with
+            | Const_flow _ ->
+                (* let _ = Debug.info_pprint (" et" ^ ( f)) no_pos in *)
+                false
+            | _ -> true
+      end
+      | Return b ->(
+          match b.exp_return_val with
+            | None -> false
+            | Some _ -> true
+      )
+      | Seq {exp_seq_exp1 = e1; exp_seq_exp2 = e2} ->
+          (helper e2) || (helper e1)
+      | While {exp_while_body = wb} ->
+          (* let _ = Debug.info_pprint (" WHILE" ) no_pos in *)
+          helper wb
+      (* | Bind _ -> let _ = Debug.info_pprint (" BIND" ) no_pos in false *)
+      (* | Assign _ -> let _ = Debug.info_pprint (" ASS" ) no_pos in false *)
+      (* | Var _ -> let _ = Debug.info_pprint (" VAR" ) no_pos in false *)
+      | Label (_, el) -> (* let _ = Debug.info_pprint (" LABEL" ) no_pos in *)
+                         helper el
+      | _ ->
+          (* let _ = Debug.info_pprint (" *****" ) no_pos in *)
+          false
+  in
+  helper e0
+
+let exists_return_val e0=
+  let pr1 = !print_exp in
+  Debug.no_1 "exists_return_val" pr1 string_of_bool
+      (fun _ -> exists_return_val_x e0) e0
+
+let get_return_exp_x e0=
+  let rec helper e=
+    (* let _ = Debug.info_pprint (" helper: " ^ (!print_exp e)  ) no_pos in *)
+    match e with
+      | Block { exp_block_body = bb} ->
+          (* let _ = Debug.info_pprint (" BLOCK" ) no_pos in *)
+          helper bb
+      | Cond {exp_cond_then_arm = tb; exp_cond_else_arm=eb} -> begin
+          (* let _ = Debug.info_pprint (" COND" ) no_pos in *)
+          let r = (helper tb) in
+          match r with
+            | None ->  (helper eb)
+            | Some _ -> r
+      end
+      | Raise {exp_raise_type = et} -> None
+      | Return b -> b.exp_return_val
+      | Seq {exp_seq_exp1 = e1; exp_seq_exp2 = e2} ->(
+          let r = (helper e1) in
+          match r with
+            | None -> (helper e2)
+            | Some _ -> r
+      )
+      | While {exp_while_body = wb} ->
+          helper wb
+      | Label (_, el) -> (* let _ = Debug.info_pprint (" LABEL" ) no_pos in *)
+                         helper el
+      | _ -> None
+  in
+  helper e0
+
+let get_return_exp e0=
+  let pr1 = !print_exp in
+  let pr2 oe=
+    match oe with
+      | None -> "none"
+      | Some e -> pr1 e
+  in
+  Debug.no_1 "get_return_exp" pr1 pr2
+      (fun _ -> get_return_exp_x e0) e0
+
+let trans_to_exp_form exp0=
+  let rec helper exp=
+    match exp with
+      | Var v -> P.Var ((v.exp_var_name, Primed), v.exp_var_pos)
+      | _ -> report_error no_pos "iast.trans_exp_to_form: not handle yet"
+  in
+  helper exp0

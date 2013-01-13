@@ -756,56 +756,136 @@ let rec while_labelling (e:I.exp):I.exp =
 	
 and needs_ret e = I.fold_exp e (fun c-> match c with | I.Return _ -> Some true | _ -> None) (List.exists (fun c-> c)) false 
 	
-and while_return e ret_type = I.map_exp e (fun c-> match c with 
-		| I.While b -> 
-			let needs_ret = needs_ret b.I.exp_while_body in 
+and while_return prog e ret_type =
+  (*new class extend __Exc*)
+  let new_exc proc_ret =
+    let dname = "rExp_"^ (string_of_typ_alpha proc_ret) in
+    try
+        I.look_up_data_def_raw prog.I.prog_data_decls dname
+    with Not_found ->
+        let field = ((proc_ret, "v_" ^ (string_of_int (fresh_int ()))), no_pos, false) in
+        let new_exc =
+          {I.data_name = dname ; I.data_fields = [field];
+           I.data_parent_name = raisable_class; I.data_invs = [];
+           I.data_is_template = false; I.data_methods = []
+          }
+        in
+    (*add to hierarchy*)
+        let _ = exlist # add_edge new_exc.I.data_name new_exc.I.data_parent_name in
+        let _ = prog.I.prog_data_decls <- (prog.I.prog_data_decls@[new_exc]) in
+        new_exc
+  in
+  let helper c=
+    match c with
+      | I.Return b-> begin
+          match b.I.exp_return_val with
+            | None -> (*return*)
+                Some (I.mkRaise (I.Const_flow loop_ret_flow)
+                          true b.I.exp_return_val
+                          false b.I.exp_return_path_id b.I.exp_return_pos)
+            | Some e ->
+                let nexc = new_exc ret_type in
+                let new_exp = I.New { I.exp_new_class_name = nexc.I.data_name;
+                                I.exp_new_arguments = [e];
+                                I.exp_new_pos = b.I.exp_return_pos;
+                              }
+                in
+                (*return int*)
+		        Some (I.mkRaise (I.Var_flow nexc.I.data_name)
+                          false (Some new_exp)
+                          false b.I.exp_return_path_id b.I.exp_return_pos)
+      end
+      | _ -> None
+  in
+  (prog,I.map_exp e (fun c-> match c with 
+		| I.While b ->
+            let needs_ret = needs_ret b.I.exp_while_body in 
 			if needs_ret then
-              (*new class extend __Exc*)
-              let new_exc = {I.data_name = "rExp" ;
-                             I.data_fields =[];
-                             I.data_parent_name = raisable_class;
-                             I.data_invs = [];
-                             I.data_is_template = false;
-                             I.data_methods = []
-                            }
-              in
-				let new_body = I.map_exp b.I.exp_while_body (fun c -> match c with | I.Return b-> 
-					Some (I.mkRaise (I.Const_flow loop_ret_flow) true b.I.exp_return_val false b.I.exp_return_path_id b.I.exp_return_pos) | _ -> None) in
+              (* let _ = Debug.info_pprint ("  return inside " ) no_pos in *)
+              let new_body = I.map_exp b.I.exp_while_body helper (* (fun c -> match c with | I.Return b-> *)
+					(* Some (I.mkRaise (I.Const_flow loop_ret_flow) true b.I.exp_return_val false b.I.exp_return_path_id b.I.exp_return_pos) | _ -> None) *) in
+              if I.exists_return_val new_body then
+                let nexc = new_exc ret_type in
+                let pos = b.I.exp_while_pos in
+                let arg = fresh_name () in
+                let earg = (IP.Var ( (arg, Unprimed), pos)) in
+                let eres_node = IF.mkHeapNode (eres_name,Unprimed) nexc.I.data_name false(IF.ConstAnn Mutable)
+                  false false false None [earg] None pos
+                in
+                let oret = I.get_return_exp b.I.exp_while_body in
+                let ret_exp = match oret with
+                  | Some b-> b
+                  | _ -> report_error no_pos "astsimp.get_ret_exp: 2"
+                in
+                let p=IP.mkEqExp earg (I.trans_to_exp_form ret_exp) pos in
+                let new_prepost = IF.mkAnd_struct_formula_post b.I.exp_while_specs eres_node p nexc.I.data_name in
+		        let b = {b with I.exp_while_body = new_body;
+                    I.exp_while_specs = new_prepost;
+                        }
+                in
+				let nl2 = fresh_branch_point_id "" in
+				let vn = fresh_name () in
+                let member = I.Member { I.exp_member_base = (I.Var { I.exp_var_name= vn; I.exp_var_pos = pos});
+                                        I.exp_member_fields = List.map (fun ((_,id),_,_) -> id) nexc.I.data_fields;
+                                        I.exp_member_path_id = nl2;
+                                        I.exp_member_pos = pos;
+                }
+                in
+				let return  = I.Return { I.exp_return_val = Some member;
+                                         I.exp_return_path_id = nl2;
+                                         I.exp_return_pos = pos}
+                in
+				let catch = I.mkCatch (Some vn) (Some (Named nexc.I.data_name)) nexc.I.data_name None return pos in
+				Some (I.mkTry (I.While b) [catch] [] nl2 pos)
+              else
 				let b = {b with I.exp_while_body = new_body} in
 				let pos = b.I.exp_while_pos in
 				let nl2 = fresh_branch_point_id "" in
 				let vn = fresh_name () in
 				let return  = I.Return { I.exp_return_val = Some (I.Var { I.exp_var_name= vn; I.exp_var_pos = pos}); I.exp_return_path_id = nl2; I.exp_return_pos = pos} in
-				let catch = I.mkCatch (Some vn) (Some ret_type) loop_ret_flow None return pos in
+				let catch = I.mkCatch (Some vn) (Some ret_type)  loop_ret_flow None return pos in
 				Some (I.mkTry (I.While b) [catch] [] nl2 pos)
-			else Some c
-		|_ -> None)
-   
-and prepare_labels_x (fct: I.proc_decl): I.proc_decl = 
-  let rec syntax_err_breaks e in_loop l_lbl = 
-		let f_args (in_loop,l_lbl) e = match e with 
-			| I.While b -> (true, match b.I.exp_while_jump_label with I.NoJumpLabel -> l_lbl | I.JumpLabel l -> l::l_lbl) 
-			| _ -> (in_loop,l_lbl) in
-		let f (in_loop,l_lbl) e = match e with 
-			| I.Block b -> if (b.I.exp_block_jump_label<> I.NoJumpLabel) then Gen.report_error b.I.exp_block_pos "blocks should be unlabeled"
-						 else None
-			| I.Continue {I.exp_continue_jump_label = l1; I.exp_continue_pos = pos} 
-			| I.Break {I.exp_break_jump_label = l1; I.exp_break_pos = pos} -> 
-				if not in_loop then Gen.report_error  pos "break/continue statements are allowed only within loops"
-				else (match l1 with 
-						| I.NoJumpLabel-> None
-						| I.JumpLabel l -> 
-								if not (List.exists (fun c-> String.compare c l ==0) l_lbl) then Gen.report_error pos ("undefined label "^l)
-							else None)
-			| _ -> None in
-		  I.iter_exp_args e (in_loop,l_lbl) f f_args in
-  match fct.I.proc_body with
-	| None -> fct
-	| Some e-> (syntax_err_breaks e false []; {fct with I.proc_body = Some (while_labelling (while_return e fct.I.proc_return))})
+			else
+              (* let _ = Debug.info_pprint ("  no return inside " ) no_pos in *)
+              Some c
+		|_ -> None
+  ))
 
-and prepare_labels (fct: I.proc_decl): I.proc_decl =
+and prepare_labels_x prog (fct: I.proc_decl): (I.prog_decl*I.proc_decl) = 
+  let rec syntax_err_breaks e in_loop l_lbl = 
+	let f_args (in_loop,l_lbl) e = match e with 
+	  | I.While b ->
+          (* let _ = Debug.info_pprint ("  \nb.xxxexp_while_specs: " ^ (Iprinter.string_of_struc_formula b.Iast.exp_while_specs)) no_pos in *)
+          (true, match b.I.exp_while_jump_label with I.NoJumpLabel -> l_lbl | I.JumpLabel l -> l::l_lbl) 
+	  | _ -> (in_loop,l_lbl)
+    in
+	let f (in_loop,l_lbl) e = match e with 
+	  | I.Block b -> if (b.I.exp_block_jump_label<> I.NoJumpLabel) then Gen.report_error b.I.exp_block_pos "blocks should be unlabeled"
+		  else None
+	  | I.Continue {I.exp_continue_jump_label = l1; I.exp_continue_pos = pos} 
+	  | I.Break {I.exp_break_jump_label = l1; I.exp_break_pos = pos} -> 
+		  if not in_loop then Gen.report_error  pos "break/continue statements are allowed only within loops"
+		  else (match l1 with 
+			| I.NoJumpLabel-> None
+			| I.JumpLabel l -> 
+				if not (List.exists (fun c-> String.compare c l ==0) l_lbl) then Gen.report_error pos ("undefined label "^l)
+				else None)
+	  | _ -> None in
+	I.iter_exp_args e (in_loop,l_lbl) f f_args
+  in
+  match fct.I.proc_body with
+	| None -> (prog,fct)
+	| Some e-> (
+        let _ = syntax_err_breaks e false [] in
+        let new_prog,new_body = while_return prog e fct.I.proc_return in
+        (new_prog,{fct with I.proc_body = Some (while_labelling (new_body
+         (* while_return prog e fct.I.proc_return *)))}))
+
+and prepare_labels prog (fct: I.proc_decl): (I.prog_decl*I.proc_decl) =
   let pr = Iprinter.string_of_proc_decl in
-  Debug.no_1 "prepare_labels" pr pr prepare_labels_x fct 
+  let pr1 (_,n) = pr n in
+  Debug.no_1 "prepare_labels" pr pr1
+      (fun _ -> prepare_labels_x prog fct) fct
 
 and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 	| None -> fct
@@ -859,10 +939,31 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
   (* let _ = print_endline (exlist # string_of ) in *)
   (* let _ = I.find_empty_static_specs prog2 in *)
   let prog2 = I.add_normalize_lemmas prog2 in
-  let prog1 = { prog2 with
-      I.prog_proc_decls = List.map prepare_labels prog2.I.prog_proc_decls;
-      I.prog_data_decls = List.map (fun c-> {c with I.data_methods = List.map prepare_labels c.I.data_methods;}) prog2.I.prog_data_decls; } in
-  let _ = exlist # compute_hierarchy in	  
+  let rec map_helper prog ls r=
+    match ls with
+      | [] -> (prog,r)
+      | d::rest -> let new_proc,new_d = prepare_labels prog d in
+                   map_helper new_proc rest (r@[new_d])
+  in
+  let rec map_helper2 prog ls r=
+    match ls with
+      | [] -> (prog,r)
+      | d::rest -> let new_proc,new_dms =  map_helper prog d.I.data_methods [] in
+                   let new_d = {d with I.data_methods = new_dms} in
+                   map_helper2 new_proc rest (r@[new_d])
+  in
+  let n_prog1,new_proc_decls = map_helper prog2 prog2.I.prog_proc_decls [] in
+  let n_prog2,new_data_decls = map_helper2 n_prog1 n_prog1.I.prog_data_decls [] in
+  (*old*)
+  (* let prog1 = { prog2 with *)
+  (*     I.prog_proc_decls = List.map (prepare_labels prog2) prog2.I.prog_proc_decls; *)
+  (*     I.prog_data_decls = List.map (fun c-> {c with I.data_methods = List.map (prepare_labels prog2) c.I.data_methods;}) prog2.I.prog_data_decls; } in *)
+  (*new*)
+  let prog1 = { n_prog2 with
+      I.prog_proc_decls = new_proc_decls;
+      I.prog_data_decls = new_data_decls;}
+  in
+  let _ = exlist # compute_hierarchy in
   (* let _ = print_endline (Exc.string_of_exc_list (3)) in *)
   (* let _ = I.find_empty_static_specs prog1 in *)
   let prog0 = { prog1 with
@@ -3050,7 +3151,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_while_wrappings = wrap;
             I.exp_while_path_id = pi;
             I.exp_while_pos = pos } ->
-          let _ = Debug.info_pprint ("       ASTSIMP.trans_exp WHILE:") no_pos in
+          (* let _ = Debug.info_pprint ("      xxxtrans_exp WHILE:") no_pos in *)
             let tvars = E.visible_names () in
             let tvars = Gen.BList.remove_dups_eq (=) tvars in
             let w_args = List.map (fun tv -> I.Var { I.exp_var_name = snd tv; I.exp_var_pos = pos; }) tvars in
@@ -3060,8 +3161,9 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             let w_name = fn3 ^ "_while_" ^ (string_of_pos_plain pos.start_pos) in
             (*if exists return inside body:w2a.ss*)
             (*check exists return inside loop body*)
-            let exist_return_inside = if proc.I.proc_return <> Void && I.exists_return body then true else false in
-            let _ = Debug.info_pprint ("       exist_return_inside: " ^ (string_of_bool exist_return_inside)) no_pos in
+            (* let exist_return_inside = if proc.I.proc_return <> Void && I.exists_return body then true else false in *)
+            (* let _ = Debug.info_pprint ("       exist_return_inside: " ^ (string_of_bool exist_return_inside)) no_pos in *)
+            (* let _ = Debug.info_pprint ("       prepost 1: " ^ (Iprinter.string_of_struc_formula prepost)) no_pos in *)
 	        let prepost = match wrap with 
 	          | None -> prepost
 	          | Some _ -> IF.add_post_for_flow (I.get_breaks body) prepost in
@@ -3069,7 +3171,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             let w_body_2 = I.Block {
                 I.exp_block_jump_label = I.NoJumpLabel; 
                 I.exp_block_body = I.Seq{
-                    I.exp_seq_exp1 = w_body_1;                     
+                    I.exp_seq_exp1 = w_body_1;
                     I.exp_seq_exp2 = I.CallNRecv {
                         I.exp_call_nrecv_method = w_name;
                         I.exp_call_nrecv_lock = None;
@@ -6281,7 +6383,7 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
           let nw = match b.Iast.exp_while_wrappings with
             | None -> None
             | Some (e,l) -> Some ((rename_exp ren e),l)  in
-          Iast.While{
+          let w={
               Iast.exp_while_condition = rename_exp ren b.Iast.exp_while_condition;
               Iast.exp_while_body = rename_exp ren b.Iast.exp_while_body;
               Iast.exp_while_jump_label = b.Iast.exp_while_jump_label;
@@ -6290,6 +6392,8 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
               Iast.exp_while_specs = IF.subst_struc (List.fold_left(fun a (c1,c2)-> ((c1,Unprimed),(c2,Unprimed))::((c1,Primed),(c2,Primed))::a) [] ren) b.Iast.exp_while_specs;
               Iast.exp_while_path_id = b.Iast.exp_while_path_id;
               Iast.exp_while_pos = b.Iast.exp_while_pos;}
+          in
+          (Iast.While w)
     | Iast.Time _ ->f
     | Iast.Try b -> 
           Iast.Try { b with

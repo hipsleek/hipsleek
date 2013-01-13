@@ -14,9 +14,7 @@ int foo(int N)
  };
 }
 
-void loop(
-       ref int i, 
-       int N)
+void loop(ref int i, int N)
   requires i<=N
   ensures eres::rExp<ot> & i'=N & ot=i' & flow rExp;
  {
@@ -31,8 +29,8 @@ void loop(
 /*
 todo:
 - modify astsimp.while_return
-  - add rExp
-  - raise exp
+  - add rExp (done)
+  - raise exp ()
 -modify trans_exp:WHILE: specs
 - modify body of foo
 -
