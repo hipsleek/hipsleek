@@ -1170,7 +1170,7 @@ and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
 (* xpure heap symbolic in the presence of permissions *)
 (* similar to xpure_heap_symbolic *)
 and xpure_heap_symbolic_perm (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CP.spec_var list * CF.mem_formula) = 
-  Debug.ho_2 
+  Debug.no_2 
       "xpure_heap_symbolic_perm" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula
       (fun (p1,p3,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(string_of_spec_var_list p3)^"#"^(Cprinter.string_of_mem_formula p4)
           ^string_of_bool(is_sat_mem_formula p4)) 
@@ -2267,9 +2267,17 @@ and split_universal_x (f0 : CP.formula) (evars : CP.spec_var list)
 and split_universal (f0 : CP.formula) (evars : CP.spec_var list) (expl_inst_vars : CP.spec_var list)(impl_inst_vars : CP.spec_var list)
       (vvars : CP.spec_var list) (pos : loc) =
   let vv = evars (*impl_inst_vars*) in
-  Debug.no_2 "split_universal" (fun (f,_)->Cprinter.string_of_pure_formula f)
-      (fun _ -> (Cprinter.string_of_spec_var_list evars)^"/Impl="^(Cprinter.string_of_spec_var_list impl_inst_vars)^"/Expl="^(Cprinter.string_of_spec_var_list expl_inst_vars)^"/view vars:"^ (Cprinter.string_of_spec_var_list vvars)) (fun (f1,f2,_) -> (Cprinter.string_of_pure_formula f1)^"/"^ (Cprinter.string_of_pure_formula f2)) 
-      (fun f vv -> split_universal_x f evars expl_inst_vars impl_inst_vars vvars pos)
+  Debug.no_2 "split_universal" 
+      (fun f->Cprinter.string_of_pure_formula f)
+      (fun _ -> 
+          (Cprinter.string_of_spec_var_list evars)^
+              "/Impl="^(Cprinter.string_of_spec_var_list impl_inst_vars)^
+              "/Expl="^(Cprinter.string_of_spec_var_list expl_inst_vars)^
+              "/view vars:"^ (Cprinter.string_of_spec_var_list vvars))
+      (fun (f1,f2,_) -> 
+          (Cprinter.string_of_pure_formula f1)^"/"^ 
+          (Cprinter.string_of_pure_formula f2)) 
+      (fun f vv -> split_universal_x f0 evars expl_inst_vars impl_inst_vars vvars pos)
       f0 vv
       (*
         vvars: variables of interest
@@ -2644,7 +2652,10 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
                           which are generated because one perm var can be folded 
                           into many perm vars in many heap nodes. These generated
                           permvars might create many duplicated constraints*)
+                        let old_mix_f = mix_f in
                         let mix_f = CF.remove_dupl_conj_eq_mix_formula mix_f in
+                        (* Debug.info_hprint (add_str "old_mix_f" !print_mix_formula) old_mix_f no_pos; *)
+                        (* Debug.info_hprint (add_str "mix_f" !print_mix_formula) mix_f no_pos; *)
 		                let res_rs = Ctx {es with es_evars = estate.es_evars;
 			                es_pure = mix_f; es_prior_steps = (ss @ es.es_prior_steps);} in
 		                Debug.devel_zprint (lazy ("fold: context at beginning of fold: "^ (Cprinter.string_of_spec_var p) ^ "\n"^ (Cprinter.string_of_context ctx))) pos;
@@ -2697,7 +2708,9 @@ and process_fold_result_x (ivars,ivars_rel) prog is_folding estate (fold_rs0:lis
           let new_ante = filter_formula_memo new_ante false in
 	      let new_consumed = fold_es.es_heap in
           let impl_vars = Gen.BList.intersect_eq CP.eq_spec_var vs2 (CP.fv to_ante) in
-          let new_impl_vars = Gen.BList.difference_eq CP.eq_spec_var estate.es_gen_impl_vars impl_vars in        
+          let new_impl_vars = Gen.BList.difference_eq CP.eq_spec_var estate.es_gen_impl_vars impl_vars in
+          (* Debug.info_hprint (add_str "old_impl" !print_svl) estate.es_gen_impl_vars no_pos ; *)
+          (* Debug.info_hprint (add_str "new_impl" !print_svl) new_impl_vars no_pos; *)
 	      (* let _ = print_string("new_consumed = " ^ (Cprinter.string_of_h_formula new_consumed) ^ "\n") in *)
           (* TODO : change estate to fold_es *)
 	      let new_es = {(* fold_es *) estate with 
@@ -4778,6 +4791,7 @@ and get_expl_inst es (f : MCP.mix_formula) =
 and move_expl_inst_estate_x es (f : MCP.mix_formula) = 
   let nf,nflg= 
     let f2 = get_expl_inst es f in
+    (* Debug.info_hprint (add_str "move_expl(f2)" !print_mix_formula) f2 no_pos; *)
     CF.mkStar es.es_formula (formula_of_mix_formula f2 no_pos) Flow_combine no_pos,MCP.isConstMTrue f2 in
   {es with
       (* why isn't es_gen_expl_vars updated? *)
@@ -4799,16 +4813,25 @@ and move_impl_inst_estate es (f:MCP.mix_formula) =
 and move_impl_inst_estate_x es (f:MCP.mix_formula) =  
   let l_inst = es.es_gen_impl_vars@es.es_ivars in
   let f = MCP.find_rel_constraints f l_inst in
-  let to_elim_vars = es.es_gen_expl_vars@es.es_evars in  
+  let to_elim_vars = es.es_gen_expl_vars@es.es_evars in
+  let f_v = MCP.mfv f in
+  let inst_to_keep = Gen.BList.difference_eq CP.eq_spec_var l_inst f_v in
+  let new_to_elim = Gen.BList.intersect_eq CP.eq_spec_var f_v to_elim_vars in
+  (* Debug.info_hprint (add_str "move_impl(l_inst)" !CP.print_svl) l_inst no_pos; *)
+  (* Debug.info_hprint (add_str "move_impl(to_elim_evars)" !CP.print_svl) to_elim_vars no_pos; *)
+  (* Debug.info_hprint (add_str "move_impl(inst_to_keep)" !CP.print_svl) inst_to_keep no_pos; *)
+  (* Debug.info_hprint (add_str "move_impl(f)" !print_mix_formula) f no_pos; *)
+  (* Debug.info_hprint (add_str "move_impl(new_to_elim)" !CP.print_svl) new_to_elim no_pos;*)
   let nf,nflg = 
     let f2 = if ( to_elim_vars = []) then f else 
       (elim_exists_mix_formula to_elim_vars f no_pos) in
     (* let _ = print_endline("cris: impl inst = " ^ (Cprinter.string_of_mix_formula f2)) in *)
     (* let _ = print_endline("cris: f = " ^ (Cprinter.string_of_mix_formula f)) in *)
+    (* Debug.info_hprint (add_str "move_impl(f2)" !print_mix_formula) f2 no_pos; *)
     CF.mkStar es.es_formula (formula_of_mix_formula f2 no_pos) Flow_combine no_pos , MCP.isConstMTrue f2 in
   {es with
       (* why isn't es_gen_expl_vars updated? *)
-      es_gen_impl_vars = Gen.BList.intersect_eq CP.eq_spec_var es.es_gen_impl_vars to_elim_vars (*es.es_evars*);
+      es_gen_impl_vars = Gen.BList.intersect_eq CP.eq_spec_var es.es_gen_impl_vars (inst_to_keep @ to_elim_vars) (*es.es_evars*);
       (*es_ante_evars = es.es_ante_evars @ to_elim_vars;*)
       es_formula = nf;
       es_unsat_flag = es.es_unsat_flag && nflg; } 
@@ -6672,7 +6695,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         if (!Globals.super_smart_xpure) then MCP.merge_mems m_lhs xpure_lhs_h0 true 
         else tmp3
       in
-      let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars(* @estate.es_gen_impl_vars *) in
+      let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars (* @estate.es_gen_impl_vars *) in
       let (split_ante1, new_conseq1) as xx = heap_entail_build_mix_formula_check exist_vars tmp3 rhs_p pos in
       let split_ante0, new_conseq0 = 
         if (!Globals.super_smart_xpure) then heap_entail_build_mix_formula_check exist_vars tmp2 rhs_p pos
@@ -6893,9 +6916,17 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
             is added to es_pure only when folding.
             Rule F-EMP in Mr Hai thesis, p86*)
         (*filter out vperm which has been proven in rhs_p*)
-          let rhs_p = MCP.drop_varperm_mix_formula rhs_p 
-          in
-	      let res_es = {estate with es_formula = res_delta; 
+          let rhs_p = MCP.drop_varperm_mix_formula rhs_p in
+          let to_keep = estate.es_gen_impl_vars @ estate.es_gen_expl_vars in
+          let to_remove =  Gen.BList.difference_eq CP.eq_spec_var (MCP.mfv rhs_p)to_keep in
+          (* Debug.info_hprint (add_str "es_formula" !CF.print_formula) estate.es_formula no_pos; *)
+          (* Debug.info_hprint (add_str "es_pure" !print_mix_formula) estate.es_pure no_pos; *)
+          (* Debug.info_hprint (add_str "rhs_p" !print_mix_formula) rhs_p no_pos; *)
+          (* Debug.info_hprint (add_str "impl" !print_svl) estate.es_gen_impl_vars no_pos; *)
+          (* Debug.info_hprint (add_str "expl" !print_svl) estate.es_gen_expl_vars no_pos; *)
+          (* Debug.info_hprint (add_str "evars" !print_svl) estate.es_evars no_pos; *)
+          (* Debug.info_hprint (add_str "to_remove" !print_svl) to_remove no_pos; *)
+	      let res_es = {estate with es_formula = res_delta;
 	          es_pure = MCP.merge_mems rhs_p estate.es_pure true;
 	          es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with
 		        | Some s1,Some s2 -> (s1,s2)::a
