@@ -406,6 +406,7 @@ let peek_try =
           | [BOOL,_;IDENTIFIER n,_] -> ()
           | [IDENTIFIER n,_;IDENTIFIER id,_] -> () 
           | [INT,_;OSQUARE,_] -> ()
+          (* | [INFINT_TYPE,_;OSQUARE,_] -> () *)
           | [FLOAT,_;OSQUARE,_] -> ()
           | [BOOL,_;OSQUARE,_] -> ()
           (* For pointer*)
@@ -1306,6 +1307,7 @@ cexp_w:
 	  | `ATAT;t=id	-> 
 							let t = try Hashtbl.find !macros t with _ -> (print_string ("warning, undefined macro "^t); Ts.top) in
 							Pure_c (P.Tsconst(t,get_pos_camlp4 _loc 1))
+      | `INFINITY -> Pure_c (P.InfConst("ZInfinity",get_pos_camlp4 _loc 1))
       | `INT_LITER (i,_)                          ->Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
       | `FLOAT_LIT (f,_)                          -> (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos_camlp4 _loc 1))
       | `OPAREN; t=SELF; `CPAREN                -> t  
@@ -1452,6 +1454,7 @@ typ:
 non_array_type:
   [[ `INT                -> int_type
    | `FLOAT              -> float_type 
+   | `INFINT_TYPE        -> infint_type 
    | `BOOL               -> bool_type
    | `BAG                -> bag_type
    | `IDENTIFIER id      -> Named id ]];  

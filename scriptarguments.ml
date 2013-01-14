@@ -153,9 +153,10 @@ let common_arguments = [
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
   ("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
   ("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
+  ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
   ("--no-coercion", Arg.Clear Globals.use_coercion,
    "Turn off coercion mechanism");
-  ("--no-exists-elim", Arg.Clear Globals.elim_exists,
+  ("--no-exists-elim", Arg.Clear Globals.elim_exists_ff,
    "Turn off existential quantifier elimination during type-checking");
   ("--no-diff", Arg.Set Solver.no_diff,
    "Drop disequalities generated from the separating conjunction");
@@ -163,9 +164,13 @@ let common_arguments = [
    "Turn off set-of-states search");
   ("--unsat-elim", Arg.Set Globals.elim_unsat,
    "Turn on unsatisfiable formulae elimination during type-checking");
+  ("--en-disj-compute", Arg.Set Globals.disj_compute_flag,
+   "Enable re-computation of user-supplied disj. invariant");
   ("-nxpure", Arg.Set_int Globals.n_xpure,
    "Number of unfolding using XPure");
-	("-fixcalc-disj", Arg.Set_int Globals.fixcalc_disj,
+  ("-v:", Arg.Set_int Globals.verbose_num,
+   "Verbosity level for Debugging");
+  ("-fixcalc-disj", Arg.Set_int Globals.fixcalc_disj,
     "Number of disjunct for fixcalc computation");
   ("--dis-smart-xpure", Arg.Clear Globals.smart_xpure,
    "Smart xpure with 0 then 1; otherwise just 1 ; not handled by infer yet");
@@ -211,10 +216,10 @@ let common_arguments = [
    "<p,q,..> comma-separated list of provers to try in parallel");
   (* ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics,  *)
   (* "enable sat statistics"); *)
-  ("--ep-stat", Arg.Set Globals.profiling,
+  ("--en-pstat", Arg.Set Globals.profiling,
    "enable profiling statistics");
-  ("--ec-stat", Arg.Set Globals.enable_counters, "enable counter statistics");
-  ("--e-stat", (Arg.Tuple [Arg.Set Globals.profiling; Arg.Set Globals.enable_counters]),
+  ("--en-cstat", Arg.Set Globals.enable_counters, "enable counter statistics");
+  ("--en-stat", (Arg.Tuple [Arg.Set Globals.profiling; Arg.Set Globals.enable_counters]),
    "enable all statistics");
   ("--sbc", Arg.Set Globals.enable_syn_base_case,
    "use only syntactic base case detection");

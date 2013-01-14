@@ -671,6 +671,8 @@ let check_formula f timeout =
   Debug.no_2 "Z3:check_formula" (fun x-> x) string_of_float string_of_smt_output
       check_formula f timeout
 
+let check_formula f timeout =
+  Gen.Profiling.no_2 "smt_check_formula" check_formula f timeout
 
 (***************************************************************
    GENERATE SMT INPUT FOR IMPLICATION/SATISFIABILITY CHECKING   
@@ -1027,7 +1029,14 @@ let imply ante conseq timeout =
   let (pr_w,pr_s) = CP.drop_complex_ops in
   smt_imply pr_w pr_s ante conseq Z3 timeout
 
+let imply ante conseq timeout =
+Gen.Profiling.no_3 "smt_imply" imply ante conseq timeout
+
 let imply_ops pr_weak pr_strong ante conseq timeout = smt_imply pr_weak pr_strong ante conseq Z3 timeout
+
+let imply_ops pr_weak pr_strong ante conseq timeout = 
+Gen.Profiling.do_6 "smt_imply_ops" smt_imply pr_weak pr_strong ante conseq Z3 timeout
+
 
 let imply_with_check (ante : CP.formula) (conseq : CP.formula) (imp_no : string) timeout: bool option =
   CP.do_with_check2 "" (fun a c -> imply a c timeout) ante conseq

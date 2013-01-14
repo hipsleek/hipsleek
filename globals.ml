@@ -86,6 +86,7 @@ type typ =
   | Bool
   | Float
   | Int
+  | INFInt
   | NUM
   | Void
   | List of typ
@@ -409,6 +410,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | Bool          -> "boolean"
   | Float         -> "float"
   | Int           -> "int"
+  | INFInt        -> "INFint"
   | Void          -> "void"
   | NUM          -> "NUM"
   | AnnT          -> "AnnT"
@@ -432,6 +434,7 @@ let rec string_of_typ_alpha = function
   | Bool          -> "boolean"
   | Float         -> "float"
   | Int           -> "int"
+  | INFInt        -> "INFint"
   | Void          -> "void"
   | NUM          -> "NUM"
   | AnnT          -> "AnnT"
@@ -545,6 +548,8 @@ let eres_name = "eres"
 
 let self = "self"
 
+let constinfinity = "ZInfinity"
+
 let this = "this"
 
 let is_self_ident id = self=id
@@ -634,6 +639,7 @@ let b_datan = "barrier"
 let verify_callees = ref false
 
 let elim_unsat = ref false
+let disj_compute_flag = ref false
 let smart_xpure = ref true
 let super_smart_xpure = ref false
   (* this flag is dynamically set depending on
@@ -642,9 +648,11 @@ let smart_memo = ref false
 
 (* let lemma_heuristic = ref false *)
 
-let elim_exists = ref true
+let elim_exists_ff = ref true
 
 let allow_imm = ref true (*imm will delay checking guard conditions*)
+
+let allow_inf = ref true (*enable support to use infinity (\inf and -\inf) in formulas *)
 
 let ann_derv = ref false
 
@@ -726,6 +734,8 @@ let split_rhs_flag = ref true
 
 let n_xpure = ref 1
 
+let verbose_num = ref 0
+
 let fixcalc_disj = ref 2
 
 let check_coercions = ref false
@@ -803,6 +813,7 @@ let memo_verbosity = ref 2
 let profile_threshold = 0.5 
 
 let no_cache_formula = ref false
+
 let simplify_imply = ref true
 
 let enable_incremental_proving = ref false

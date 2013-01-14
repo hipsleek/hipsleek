@@ -658,7 +658,7 @@ let rec is_array_exp e = match e with
 											| _ -> is_array_exp exp) (Some false) el)
     | CP.ArrayAt (_,_,_) -> Some true
   | CP.Func _ -> Some false
-    | CP.AConst _ | CP.FConst _ | CP.IConst _ | CP.Tsconst _
+    | CP.AConst _ | CP.FConst _ | CP.IConst _ | CP.Tsconst _ | CP.InfConst _ 
     | CP.Level _
     | CP.Var _ | CP.Null _ -> Some false
     (* | _ -> Some false *)
@@ -690,9 +690,10 @@ let rec is_list_exp e = match e with
 											| Some true -> Some true
 											| _ -> is_list_exp exp) (Some false) el)
     | CP.ArrayAt (_,_,_) | CP.Func _ -> Some false
-    | CP.Null _ | CP.AConst _ | Tsconst _ 
+    | CP.Null _ | CP.AConst _ | CP.Tsconst _ | CP.InfConst _
     | CP.Level _
-    | CP.FConst _ | CP.IConst _ | CP.Var _ -> Some false
+    | CP.FConst _ | CP.IConst _ -> Some false
+    | CP.Var(sv,_) -> if CP.is_list_var sv then Some true else Some false
     (* | _ -> Some false *)
 	  
 (*let f_e e = Debug.no_1 "f_e" (Cprinter.string_of_formula_exp) (fun s -> match s with
@@ -788,7 +789,7 @@ let is_list_constraint (e: CP.formula) : bool =
   let or_list = List.fold_left (||) false in
   CP.fold_formula e (nonef, is_list_b_formula, is_list_exp) or_list
 
-let is_list_constraint_a (e: CP.formula) : bool =
+let is_list_constraint (e: CP.formula) : bool =
   (*Debug.no_1_opt "is_list_constraint" Cprinter.string_of_pure_formula string_of_bool (fun r -> not(r)) is_list_constraint e*)
   Debug.no_1 "is_list_constraint" Cprinter.string_of_pure_formula string_of_bool is_list_constraint e
   
@@ -1042,6 +1043,8 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let _ = disj_cnt f None "sat_no_cache" in
   let (pr_weak,pr_strong) = CP.drop_complex_ops in
   let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 in
+    (* Handle Infinity Constraints *)
+  let f = if !Globals.allow_inf then Infinity.normalize_inf_formula_sat f else f in
   let wf = f in
   let omega_is_sat f = Omega.is_sat_ops pr_weak pr_strong f sat_no in
   let redlog_is_sat f = Redlog.is_sat_ops pr_weak pr_strong f sat_no in
@@ -1549,6 +1552,9 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let imm_vrs = CP.remove_dups_svl imm_vrs in
   (* add invariant constraint @M<:v<:@L for each annotation var *)
   let ante = CP.add_ann_constraints imm_vrs ante in
+  (* Handle Infinity Constraints *)
+  let ante,conseq  = if !Globals.allow_inf then Infinity.normalize_inf_formula_imply ante conseq 
+  else ante,conseq in
   if should_output () then (
     reset_generated_prover_input ();
     reset_prover_original_output ();

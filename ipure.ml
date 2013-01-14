@@ -89,6 +89,7 @@ and exp =
   | IConst of (int * loc)
   | FConst of (float * loc)
   | AConst of (heap_ann * loc)
+  | InfConst of (ident * loc) (* Constant for Infinity  *)
   | Tsconst of (Tree_shares.Ts.t_sh * loc)
   (*| Tuple of (exp list * loc)*)
   | Add of (exp * exp * loc)
@@ -228,6 +229,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | AConst _ 
   | IConst _ 
   | Tsconst _ 
+  | InfConst _
   | FConst _ -> []
   | Ann_Exp (e,_) -> afv e
   | Add (a1, a2, _) -> combine_avars a1 a2
@@ -536,6 +538,7 @@ and pos_of_exp (e : exp) = match e with
   | IConst (_, p) 
   | FConst (_, p) 
   | Tsconst (_, p)
+  | InfConst (_, p)
   | AConst (_, p) -> p
   | Ann_Exp (e,_) -> pos_of_exp e
   | Add (_, _, p) -> p
@@ -671,6 +674,7 @@ and e_apply_one ((fr, t) as p) e = match e with
   | IConst _ 
   | FConst _ 
   | Tsconst _
+  | InfConst _
   | AConst _ -> e
   | Ann_Exp (e,ty) -> Ann_Exp ((e_apply_one p e), ty)
   | Var (sv, pos) -> Var ((if eq_var sv fr then t else sv), pos)
@@ -849,6 +853,7 @@ and find_lexp_exp (e: exp) ls =
 	| IConst _
 	| AConst _
 	| Tsconst _
+	| InfConst _
 	| FConst _ -> []
   | Ann_Exp(e,_) -> find_lexp_exp e ls
 	| Add (e1, e2, _) -> find_lexp_exp e1 ls @ find_lexp_exp e2 ls
@@ -929,6 +934,7 @@ and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = 
   | IConst _ 
   | AConst _ 
   | Tsconst _
+  | InfConst _ 
   | FConst _ -> (e, None)
   | Ann_Exp (e,_) -> float_out_exp_min_max e
   | Add (e1, e2, l) ->
@@ -1345,6 +1351,7 @@ let rec typ_of_exp (e: exp) : typ =
   | Level _                   -> Globals.level_data_typ
   | IConst _                  -> Globals.Int
   | FConst _                  -> Globals.Float
+  | InfConst _                  -> Globals.Int (* Type of Infinity should be Num keep Int for now *)
   | AConst _                  -> Globals.AnnT
   | Tsconst _ 				  -> Globals.Tree_sh
   (* Arithmetic expressions *)

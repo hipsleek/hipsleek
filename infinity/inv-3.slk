@@ -1,0 +1,23 @@
+checkentail mi = min(d, tmi) 
+    & -\inf<d<\inf & -\inf<tmi |- -\inf<mi 
+  //<\inf
+ .
+
+checkentail true & exists(tmi,d: mi = min(d, tmi) 
+    & -\inf<d<\inf & tmi=\inf)  |- -\inf<mi 
+  //<\inf
+ .
+
+checkentail true &
+//exists(tmx:exists(tmi:exists(p:exists(d:exists(flted_7_12:
+//exists(flted_7_12:
+exists(tmi:
+n=flted_7_12+1 & 
+mi=min(d,tmi) & mx=max(d,tmx) & 0<(d+(\inf)) & d<(\inf) & self!=null & 
+((p=null & flted_7_12=0 & tmi=\inf & tmx+(\inf)=0) 
+| (p!=null & 1<=flted_7_12 & tmi<=tmx & 0<(tmi+(\inf))))
+)
+//)))))
+|- (self=null & n=0 & mi=\inf & (\inf)+mx=0) | (self!=null & 1<=n & mi<=mx 
+ & 0<((\inf)+mi)
+).

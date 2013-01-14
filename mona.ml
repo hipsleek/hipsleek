@@ -39,6 +39,7 @@ let rec mona_of_typ = function
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "float type not supported for mona"}
   | Int           -> "int"
+  | INFInt        -> "int"
   | AnnT          -> "AnnT"
   | RelT          -> "RelT"
   | HpT           -> "HpT"

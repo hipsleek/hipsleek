@@ -1180,7 +1180,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       (* let _ = CF.must_consistent_context "assign 2" tmp_ctx1  in                                     *)
                       (* let tmp_ctx2 = CF.push_exists_context [CP.mkRes t] tmp_ctx1 in                                 *)
                       (* let _ = CF.must_consistent_context "assign 3" tmp_ctx2  in                                     *)
-                      (* let resctx = if !Globals.elim_exists then elim_exists_ctx tmp_ctx2 else tmp_ctx2 in            *)
+                      (* let resctx = if !Globals.elim_exists_ff then elim_exists_ctx tmp_ctx2 else tmp_ctx2 in            *)
                       (* let _ = CF.must_consistent_context "assign 4" resctx  in                                       *)
                       (* resctx                                                                                         *)
                       else (CF.Ctx c1) in
@@ -1419,7 +1419,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           let _ = CF.must_consistent_list_failesc_context "bind 6" tmp_res2  in
                           let tmp_res3 = CF.push_exists_list_failesc_context vs_prim tmp_res2 in
                           let _ = CF.must_consistent_list_failesc_context "bind 7" tmp_res3  in
-		                  let res = if !Globals.elim_exists then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
+		                  let res = if !Globals.elim_exists_ff then elim_exists_failesc_ctx_list tmp_res3 else tmp_res3 in
                           let _ = CF.must_consistent_list_failesc_context "bind 8" res  in
                           (* normalize_list_failesc_context_w_lemma prog res *)
                           res
@@ -1441,11 +1441,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let ctx2 = CF.push_exists_list_failesc_context svars ctx1 in
 	        (* let _ = print_endline ("\ncheck_exp: Block: ctx2:\n" ^ (Cprinter.string_of_list_failesc_context ctx2)) in *)
 	        (* let _ = print_endline ("\ncheck_exp: Block: after elim_exists ctx2:\n" ^ (Cprinter.string_of_list_failesc_context (elim_exists_failesc_ctx_list ctx2))) in *)
-            (* let ctx2 = if (!Globals.allow_locklevel) then *)
+	        let res = if !Globals.elim_exists_ff then elim_exists_failesc_ctx_list ctx2 else ctx2 in
             (*       trans_level_eqn_list_failesc_context ctx2 *)
             (*     else ctx2 *)
             (* in *)
-	        let res = if !Globals.elim_exists then elim_exists_failesc_ctx_list ctx2 else ctx2 in
             Gen.Profiling.pop_time "[check_exp] Block";
             res
 	      end
@@ -2030,8 +2029,9 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_
         (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(final_state_prim)));  *)
         (* let _ = print_flush ("length:"^(string_of_int (List.length final_state_prim))) in *)
         (* let _ = print_endline ("Final state prim :\n" ^ (Cprinter.string_of_list_partial_context final_state_prim)) in *)
+        Debug.ninfo_pprint "prior to elim_exists_partial_ctx_list" no_pos;
         let final_state = 
-          if !Globals.elim_exists then (elim_exists_partial_ctx_list final_state_prim) else final_state_prim in
+          if !Globals.elim_exists_ff then (elim_exists_partial_ctx_list final_state_prim) else final_state_prim in
         (* let _ = print_endline ("Final state :\n" ^ (Cprinter.string_of_list_partial_context final_state)) in *)
         (* Debug.devel_print ("Final state:\n" ^ (Cprinter.string_of_list_partial_context final_state_prim) ^ "\n"); *)
         (*  Debug.devel_print ("Final state after existential quantifier elimination:\n" *)
@@ -2123,6 +2123,7 @@ and proc_mutual_scc (prog: prog_decl) (proc_lst : proc_decl list) (fn:prog_decl 
 
 (* checking procedure: (PROC p61) *)
 and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : proc_decl list) : bool =
+  Debug.vv_debug ("check_proc:"^proc.proc_name);
   let unmin_name = unmingle_name proc.proc_name in
   (* get latest procedure from table *)
   let proc = 
@@ -2774,6 +2775,7 @@ let init_files () =
   end
 
 let check_proc_wrapper_map prog (proc,num) cout_option =
+  Debug.vv_debug ("check_proc_wrapper_map:"^proc.proc_name) ;
   if !Tpdispatcher.external_prover then Tpdispatcher.Netprover.set_use_socket_map (List.nth !Tpdispatcher.external_host_ports (num mod (List.length !Tpdispatcher.external_host_ports))); (* make this dynamic according to availability of server machines*)
   try
     check_proc prog proc cout_option []

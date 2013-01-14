@@ -1,0 +1,255 @@
+
+data node {
+	int val; 
+	node next; 
+}.
+
+pred  sortll<mi> == self=null & mi=\inf
+   or self::node<mi, p> * p::sortll<m2> & mi<=m2
+inv true.
+
+
+//(1) Fail
+checkentail v<\inf |- v=\inf.
+
+//(2) Valid
+checkentail true |- v=min(v,\inf).
+
+//(3) Valid
+checkentail v=\inf |- v>=1 .
+
+//(4) Fail
+checkentail true |- v=max(v,-w).
+
+//(5) Valid
+checkentail true |- v=max(v,-\inf).
+
+//(6) Valid
+checkentail true |- v=max(v,0-\inf).
+
+//(7) Fail
+checkentail true |- v>-\inf.
+
+//(8) Valid
+checkentail true |- v>=-\inf.
+
+//(9) Valid
+checkentail res=null |- res::sortll<m> & m=\inf.
+print residue.
+
+//(10) Valid
+checkentail res=null |- res::sortll<m> .
+print residue.
+
+//(11) Fail
+checkentail true |- v=max(w,-\inf).
+
+//(12) Valid
+checkentail res=null |- res::sortll<m> & m=\inf.
+
+//(13) Valid m=\inf instantiated
+checkentail res=null |- res::sortll<m>.
+print residue.
+
+//(14) Fail
+checkentail x=null |- x::sortll<2>.
+// must fail
+
+//(15) Fail must fail
+checkentail v=\inf |- v=2.
+print residue.
+
+//(16) Valid
+checkentail v=\inf |- v>=2.
+print residue.
+
+//(17) Fail must fail
+checkentail v=\inf |- v<=2.
+
+//(18) Valid
+checkentail true |- m<=\inf.
+
+//(19) Fail may error
+checkentail true |- m>=\inf.
+
+//(20) Fail must error
+checkentail m != \inf |- m >= \inf.
+
+//(21) Valid
+checkentail m=\inf |- m>=\inf.
+
+// (22) Valid
+checkentail true |- w=min(w,\inf).
+
+//(23) Fail
+checkentail v<inf |- v=inf. // must failure
+
+// (24) Valid --> m=\inf
+checkentail x::node<a,null> |- x::sortll<m>.
+
+// (25) Fail
+checkentail x::node<a,q>*q::node<b,null> |- x::sortll<m>.
+
+// (26) Valid
+checkentail x::node<a,q>*q::node<b,null> & a<b |- x::sortll<m>.
+
+// (27) Valid
+checkentail 1=\inf |- false.
+
+//(28) Valid
+checkentail 2>=\inf |- false.
+
+//(29) Valid
+checkentail 3>\inf |- false.
+
+//(30) Valid
+checkentail true |- \inf>4.
+
+//(31) Valid
+checkentail true |- \inf>=5.
+
+//(32) Valid
+checkentail true |- -\inf!=6.
+
+//(33) Valid
+checkentail -\inf=7 |- false.
+
+//(34) Valid
+checkentail true |- -\inf<=8.
+
+//(35) Valid
+checkentail true |- -\inf<9.
+
+//(36) Valid
+checkentail -\inf>10 |- false.
+
+//(37) Valid
+checkentail -\inf>=11 |- false.
+
+//(38) Valid
+checkentail true |- \inf=\inf.
+
+//(39) Valid
+checkentail \inf=-\inf |- false.
+
+//(40) Fail
+checkentail true |- \inf+3=\inf .
+
+//(41) Fail
+checkentail true |- \inf+4=-\inf.
+
+//(42) Valid
+checkentail  \inf!=\inf |- false.
+
+//(43) Valid
+checkentail true |- \inf != -\inf.
+
+//(44) Valid
+checkentail true |- \inf+7 !=\inf.
+
+//(45) Fail
+checkentail true |- \inf+8 != -\inf.
+
+//(46) Valid
+checkentail \inf+3=\inf |- false.
+print residue.
+
+//(47) Valid
+checkentail true |- \inf=\inf.
+
+//(48) Valid
+checkentail \inf=-\inf |- false.
+
+//(49) Fail
+checkentail true |- \inf+3=\inf .
+
+//(50) Fail
+checkentail true |- \inf+3=-\inf.
+
+//(51) Fail
+checkentail true |- \inf!=\inf.
+
+//(52) Valid
+checkentail true |- \inf != -\inf.
+
+//(53) Valid
+checkentail true |- \inf+3 !=\inf.
+
+//(54) Fail
+checkentail true |- \inf+c != -\inf.
+
+//(55) Valid
+checkentail true |- \inf>=\inf.
+
+//(56) Valid
+checkentail  \inf>\inf |-false.
+
+//(57) Valid
+checkentail true |- \inf>=-\inf.
+
+//(58) Valid
+checkentail -\inf>=\inf |- false.
+
+//(59) Valid
+checkentail v=\inf |- v=max(w,\inf).
+
+//(60) Fail
+checkentail true |- v=max(w,\inf).
+
+//(61) Fail
+checkentail v<\inf |- v=\inf.
+
+//(62) Valid
+checkentail v=\inf |- v>3.
+
+//(63) Valid
+checkentail v=\inf & w!=\inf |- v>w.
+
+//(64) Valid
+checkentail v=-\inf |- v<3.
+
+//(65) Fail
+checkentail v=-\inf |- v>3.
+
+//(66) Valid
+checkentail v=-\inf & w!=-\inf |- v<w.
+
+//(67) Valid
+checkentail v=-\inf |- v<\inf.
+
+//(68) valid
+checkentail true |- -\inf<\inf.
+
+//(69) Valid
+checkentail res=null |- res::sortll<m> & m=\inf.
+
+//(70) Valid m=\inf instantiated
+checkentail res=null |- res::sortll<m>.
+print residue.
+
+//(71) Fail
+checkentail x=null |- x::sortll<2>.
+// must fail
+
+// (72) Valid --> m=\inf
+checkentail x::node<a,null> |- x::sortll<m>.
+print residue.
+
+// (73) Fail
+checkentail x::node<a,q>*q::node<b,null> |- x::sortll<m>.
+
+// (74) Valid
+checkentail x::node<a,q>*q::node<b,null> & a<b |- x::sortll<m>.
+
+// (75) Valid
+checkentail y::node<v,null> * x::sortll<m> & x=null |- y::sortll<r> & r=min(v,m).
+print residue.
+
+// (76) Valid
+checkentail x::sortll<m> & x=null & r=v |- r=min(v,m).
+
+// (77) Valid
+checkentail  x=null & r=v & x=null & m=\inf | x=null & r=v & x!=null |- r=min(v,m).
+
+//(78) Valid
+checkentail x=null & r=v & (x=null & m=\inf | x!=null) |- r=min(v,m).

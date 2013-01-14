@@ -1077,6 +1077,7 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 (* xform: self=null & n=0 | n=1 & self!=null | n=2 & self!=null |  *)
 (*          self!=null & 3<=n *)
 and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
+  let foo () =
   Debug.no_eff_2 "compute_view_x_formula" [true]
       (* Cprinter.string_of_program *)
       Cprinter.string_of_view_decl  
@@ -1084,27 +1085,35 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
       (fun x ->   "void")
       (* Cprinter.string_of_view_decl vdef) *)
       (compute_view_x_formula_x prog) vdef n
-      
+  in wrap_proving_kind "PRED CHECK-INVARIANT" foo () 
+
+
 and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
-  let compute_view_x_formula_x_op ()=
-    let pos = CF.pos_of_struc_formula vdef.C.view_formula in
-    let _=proving_loc # set pos in
-    (if (n > 0 && not(vdef.C.view_is_prim)) then
+  let pos = CF.pos_of_struc_formula vdef.C.view_formula in
+  let _=proving_loc # set pos in
+  let rec helper n do_not_compute_flag =
+  (* let compute_view_x_formula_x_op ()= *)
+    (if (n > 0 (* && not(vdef.C.view_is_prim) *)) then
       (		
 	      let (xform', addr_vars', ms) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in	
 	      let addr_vars = CP.remove_dups_svl addr_vars' in
 	      let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
-	      let formula1 = CF.formula_of_mix_formula xform pos in
-	      let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
-	      let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
-	      let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
-	      let _ = if not(CF.isFailCtx rs) then
+	      (* let formula1 = CF.formula_of_mix_formula xform pos in *)
+	      (* let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in *)
+	      (* let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in *)
+	      (* let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in *)
+	      (* let _ = if not(CF.isFailCtx rs) then *)
+          (* if disj user-supplied inv; just use it *)
+          if do_not_compute_flag then 
+            vdef.C.view_xpure_flag <- true
+          else
 	        (vdef.C.view_x_formula <- xform;
-            vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform;		   
+            vdef.C.view_xpure_flag <- TP.check_diff vdef.C.view_user_inv xform)
+          ;
             vdef.C.view_addr_vars <- addr_vars;
 	        vdef.C.view_baga <- (match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h) ;
-	        compute_view_x_formula_x prog vdef (n - 1))
-	      else report_error pos "view formula does not entail supplied invariant\n" in ()
+	        helper (n - 1) do_not_compute_flag
+	      (* else report_error pos "view formula does not entail supplied invariant\n" in () *)
       )
     else ();
     if !Globals.print_x_inv && (n = 0)
@@ -1113,7 +1122,24 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
       print_string ("addr_vars: " ^(String.concat ", "(List.map CP.name_of_spec_var vdef.C.view_addr_vars))^ "\n\n"))
     else ())
   in 
-  wrap_proving_kind "PRED CHECK-INVARIANT" compute_view_x_formula_x_op () 
+  let check_and_compute () = 
+    if not(vdef.C.view_is_prim) then
+	      let (xform', addr_vars', ms) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in	
+	      let addr_vars = CP.remove_dups_svl addr_vars' in
+	      let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
+	      let formula1 = CF.formula_of_mix_formula xform pos in
+	      let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
+	      let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
+	      let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
+	      let _ = if not(CF.isFailCtx rs) then
+	      let pf = pure_of_mix vdef.C.view_user_inv in
+	      let disj_f = CP.split_disjunctions_deep pf in
+          let do_not_recompute_flag = (List.length disj_f>1) && not(!Globals.disj_compute_flag) in
+              helper n do_not_recompute_flag
+	      else report_error pos "view formula does not entail supplied invariant\n" in ()
+    else ()
+  in
+  check_and_compute ()
       
 (* TODO WN : this is not doing anything *)
 and fill_view_param_types (vdef : I.view_decl) =
@@ -1166,15 +1192,15 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let cf = CF.mark_derv_self vdef.I.view_name cf in 
   let inv = vdef.I.view_invariant in
   let _ = gather_type_info_pure prog inv stab in
-  let pf = trans_pure_formula inv stab in
+  let inv_pf = trans_pure_formula inv stab in
   (* Thai : pf - user given invariant in core form *) 
-  let pf = Cpure.arith_simplify 1 pf in
+  let inv_pf = Cpure.arith_simplify 1 inv_pf in
   let cf_fv = List.map CP.name_of_spec_var (CF.struc_fv cf) in
   let inv_lock_fv = match inv_lock with
     | None -> []
     | Some f -> List.map CP.name_of_spec_var (CF.fv f)
   in
-  let pf_fv = List.map CP.name_of_spec_var (CP.fv pf) in
+  let pf_fv = List.map CP.name_of_spec_var (CP.fv inv_pf) in
 
   if (List.mem res_name cf_fv) || (List.mem res_name pf_fv) || (List.mem res_name inv_lock_fv)  then
     report_error (IF.pos_of_struc_formula view_formula1) "res is not allowed in view definition or invariant"
@@ -1185,6 +1211,9 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       let _ = 
         let vs1 = (CF.struc_fv cf) in
         let vs2 = (self_c_var::view_sv_vars) in
+        let vs1a = CP.fv inv_pf in
+        Debug.tinfo_hprint (add_str "vs1a" Cprinter.string_of_spec_var_list) vs1a no_pos;
+        let vs1 = vs1@vs1a in
         let ffv = Gen.BList.difference_eq (CP.eq_spec_var) vs1 vs2 in
         (*filter out holes (#) *)
         let ffv = List.filter (fun v -> not (CP.is_hole_spec_var v)) ffv in
@@ -1216,7 +1245,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       let cf = CF.struc_formula_set_lhs_case false cf in
       (* Thai : we can compute better pure inv named new_pf here that 
          should be stronger than pf *)
-      let new_pf = (*Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str*) pf in
+      let new_pf = (*Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str*) inv_pf in
       let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue pos) new_pf in
       let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_pf in
       let xpure_flag = TP.check_diff memo_pf_N memo_pf_P in
@@ -3544,6 +3573,8 @@ and default_value (t :typ) pos : C.exp =
 	      failwith "default_value: bag can only be used for constraints"
     | List _ ->
           failwith "default_value: list can only be used for constraints"
+    | INFInt ->
+          failwith "default_value: INFInt can only be used for constraints"
     | RelT ->
           failwith "default_value: RelT can only be used for constraints"
     | HpT ->
@@ -4474,7 +4505,9 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
     let pos = base.IF.formula_base_pos in
     let (new_h, type_f) = linearize_heap h pos in
     let new_p = trans_pure_formula p stab in
+    (*let _ = print_string("\nForm: "^(Cprinter.string_of_pure_formula new_p)) in*)
     let new_p = Cpure.arith_simplify 5 new_p in
+    (*let _ = print_string("\nSimpleForm: "^(Cprinter.string_of_pure_formula new_p)) in*)
     let new_fl = trans_flow_formula fl pos in
 
     let new_a,_ = List.split (List.map (fun f -> linearize_one_formula f pos) a) in
@@ -4533,6 +4566,7 @@ and check_dfrac_wf e1 e2 pos = if (CP.has_e_tscons e1)||(CP.has_e_tscons e2) the
 else ()
   
 and trans_pure_formula (f0 : IP.formula) stab : CP.formula =
+  (*let  _ = print_string("\nIform: "^(Iprinter.string_of_pure_formula f0)) in*)
   match f0 with
     | IP.BForm (bf,lbl) -> CP.BForm (trans_pure_b_formula bf stab , lbl) 
     | IP.And (f1, f2, pos) ->
@@ -4648,6 +4682,7 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
 		CP.xpure_view_pos = pos
 	       }
   in
+  (*let _ = print_string("\nC_B_Form: "^(Cprinter.string_of_b_formula (npf,None))) in*)
   match sl with
     | None -> (npf, None)
     | Some (il,lbl,el) -> let nel = trans_pure_exp_list el stab in (npf, Some (il,lbl,nel))
@@ -4663,6 +4698,7 @@ and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
     | IP.Null pos -> CP.Null pos
     | IP.Tsconst (t,pos) -> CP.Tsconst (t,pos)
     | IP.AConst(a,pos) -> CP.AConst(a,pos)
+    | IP.InfConst(a,pos) -> CP.InfConst(a,pos)
     | IP.Var ((v, p), pos) -> 
           CP.Var ((trans_var (v,p) stab pos),pos)
     | IP.Level ((v, p), pos) -> 
@@ -5007,6 +5043,10 @@ and gather_type_info_exp_x a0 stab et =
           t
     | IP.AConst (_,pos) -> 
           let t = I.ann_type in
+          let _ = must_unify_expect t et stab pos in
+          t
+    | IP.InfConst (_,pos) -> 
+          let t = I.int_type in
           let _ = must_unify_expect t et stab pos in
           t
     | IP.IConst (_,pos) -> 

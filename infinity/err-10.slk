@@ -1,0 +1,14 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+/*
+  \inf :: IntINF
+  3: Int
+  Int <: IntInf
+*/
+
+checkentail x::node<v,_> |- -\inf<v<\inf.
+
+checkentail x::node<v,_> & v=\inf |- false.

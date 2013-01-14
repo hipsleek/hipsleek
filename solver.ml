@@ -1040,7 +1040,7 @@ and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
 (* xpure heap symbolic in the presence of permissions *)
 (* similar to xpure_heap_symbolic *)
 and xpure_heap_symbolic_perm (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CP.spec_var list * CF.mem_formula) = 
-  Debug.no_2 
+  Debug.ho_2 
       "xpure_heap_symbolic_perm" Cprinter.string_of_h_formula Cprinter.string_of_mix_formula
       (fun (p1,p3,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(string_of_spec_var_list p3)^"#"^(Cprinter.string_of_mem_formula p4)
           ^string_of_bool(is_sat_mem_formula p4)) 
@@ -2599,14 +2599,44 @@ and elim_exists_pure_branch_x (w : CP.spec_var list) (f0 : CP.formula) pos : CP.
     let simplified_f = List.fold_left (fun be e -> CP.mkAnd e be no_pos) sf fl in
     simplified_f
 
+and entail_state_elim_exists es =
+  let pr = Cprinter.string_of_entail_state in
+  let pr2 = Cprinter.string_of_context in
+  Debug.no_1 "entail_state_elim_exists" pr pr2 entail_state_elim_exists_x es 
+
+(*
+PROBLEM : exists_elim NOT deep enough
+entail_state_elim_exists@1
+entail_state_elim_exists inp1 : es_formula: 
+  emp&exists(tmi:n=1+flted_7_12 & mi=min(d,tmi) & mx=max(d,tmx) & 0<((\inf)+
+  d) & d<(\inf) & self!=null & ((p=null & flted_7_12=0 & tmi=\inf & (\inf)+
+  tmx=0) | (p!=null & 1<=flted_7_12 & tmi<=tmx & 0<((\inf)+tmi))))&
+  {FLOW,(19,20)=__norm}[]
+entail_state_elim_exists@1 EXIT out : es_formula: 
+  emp&exists(tmi:n=1+flted_7_12 & mi=min(d,tmi) & mx=max(d,tmx) & 0<((\inf)+
+  d) & d<(\inf) & self!=null & ((p=null & flted_7_12=0 & tmi=\inf & (\inf)+
+  tmx=0) | (p!=null & 1<=flted_7_12 & tmi<=tmx & 0<((\inf)+tmi))))&
+  {FLOW,(19,20)=__norm}[]
+*)
 (* --- added 11.05.2008 *)
-and entail_state_elim_exists es = 
+and entail_state_elim_exists_x es = 
   (* let f_prim = elim_exists es.es_formula in *)
-  (* let _ = print_string("[solver.ml, elim_exists_ctx]: Formula before elim_exists_es_his" ^ Cprinter.string_of_formula es.es_formula ^ "\n") in *)
-  let f_prim,new_his = elim_exists_es_his es.es_formula es.es_history in
+  let pr_f = Cprinter.string_of_formula in
+  let pr_h = Cprinter.string_of_h_formula in
+  let ff = es.es_formula in
+  Debug.tinfo_hprint (add_str "f(b4 elim_exists_es_his)" pr_f) ff no_pos;
+  let f_prim,new_his = elim_exists_es_his ff es.es_history in
   (* 05.06.08 *)
   (* we also try to eliminate exist vars for which a find a substitution of the form v = exp from the pure part *)
   (* let _ = print_string("[solver.ml, elim_exists_ctx]: Formula before exp exist elim: " ^ Cprinter.string_of_formula f_prim ^ "\n") in *)
+(* EXAMPLE
+@5! f(b4 elim_exists_es_his): 
+  (exists mi_15: x::cell<mi_15>@M[Orig]&mi_15=v&{FLOW,(19,20)=__norm})[]
+@5! f(b4 elim_exists_es_his): 
+  x::cell<v>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+*)
+  Debug.tinfo_hprint (add_str "new_his(after elim_exists_es_his)" (pr_list pr_h)) new_his no_pos;
+  Debug.tinfo_hprint (add_str "f(after elim_exists_es_his)" pr_f) f_prim no_pos;
   let f = elim_exists_exp f_prim in
   let qvar, base = CF.split_quantifiers f in
   let h, p, fl, t, a = CF.split_components base in
@@ -2633,10 +2663,13 @@ and elim_exists_failesc_ctx_list (ctx0 : list_failesc_context) =
       elim_exists_failesc_ctx_list_x ctx0
 
 and elim_exists_ctx_x (ctx0:context) =
-  if !Globals.elim_exists then
+  if !Globals.elim_exists_ff then
     transform_context entail_state_elim_exists ctx0
   else ctx0
-    
+
+
+
+
 and elim_exists_ctx (ctx0:context) =
   Gen.Profiling.do_1 "elim_exists_ctx" elim_exists_ctx_x ctx0
 
@@ -3892,7 +3925,7 @@ and heap_entail_one_context i prog is_folding  ctx conseq (tid: CP.spec_var opti
 
 (*only struc_formula can have some thread id*)
 and heap_entail_one_context_a i (prog : prog_decl) (is_folding : bool)  (ctx : context) (conseq : formula) pos : (list_context * proof) =
-  Debug.devel_zprint (lazy ("heap_entail_one_context:" ^ (string_of_int i)^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)^"\n")) pos;
+  Debug.vv_trace "heap_entail_one_context" ;
     if isAnyFalseCtx ctx then (* check this first so that false => false is true (with false residual) *)
       (SuccCtx [ctx], UnsatAnte)
     else if (not !Globals.do_classic_frame_rule) && (isStrictConstTrue conseq) then (SuccCtx [ctx], TrueConseq)
@@ -3965,6 +3998,7 @@ and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_c
 and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula) pos : (list_context * proof) =
   (** [Internal] Collect the data and view nodes in a h_formula. 
       @return The list of all DataNode and ViewNode **)
+  Debug.vv_trace "heap_entail_conjunct_lhs" ;
   let rec collect_data_view (f : h_formula) = match f with
     | Star { h_formula_star_h1 = h1; h_formula_star_h2 = h2}
     | Conj { h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
@@ -4465,7 +4499,7 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
 		                      let prf = mkExRight ctx_0 conseq qvars ws tmp_prf in
 		                      let _ = List.map (redundant_existential_check ws) sl in
 		                      let res_ctx =
-		                        if !Globals.elim_exists then List.map elim_exists_ctx sl
+		                        if !Globals.elim_exists_ff then List.map elim_exists_ctx sl
 		                        else sl in
 		                      (SuccCtx res_ctx, prf))
 	            | _ -> report_error no_pos ("[solver.ml]: No disjunction on the RHS should reach this level\n")
@@ -5340,7 +5374,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                                     (*added 09-05-2008 , by Cristian, checks that after the RHS existential elimination the newly introduced variables will no appear in the residue hence no need to quantify*)
                                     let _ = List.map (redundant_existential_check ws) sl in
                                     let res_ctx =
-                                      if !Globals.elim_exists then List.map elim_exists_ctx sl
+                                      if !Globals.elim_exists_ff then List.map elim_exists_ctx sl
                                       else sl in
                                     let r = SuccCtx res_ctx in
                                     (r, prf)
@@ -6467,6 +6501,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
   (* "memset = " ^ (Cprinter.string_of_mem_formula memset) ^ "\n\n") in  *)
   (* detect whether memset contradicts with any of the ptr equalities from antecedent *)
   let ante_m0 = if detect_false ante_m0 memset then MCP.mkMFalse no_pos else ante_m0 in
+  let ante_m0 = MCP.mix_of_pure (CP.drop_exists (MCP.pure_of_mix ante_m0)) in
   let conseq_m = solve_ineq ante_m0 memset conseq_m in
   match ante_m0,ante_m1,conseq_m with
     | MCP.MemoF a, MCP.MemoF a1, MCP.MemoF c ->
@@ -6483,13 +6518,17 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
           begin
             DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
-	        let a0l,a1l = if CP.no_andl a0 && CP.no_andl a1 then (CP.split_disjunctions a0,CP.split_disjunctions a1)
-    	    else 
-	          let r = ref (-8999) in
-	          let is_sat f = TP.is_sat_sub_no f r in
-	          let a0l = List.filter is_sat (CP.split_disjunctions a0) in
-	          let a1l = List.filter is_sat (CP.split_disjunctions a1) in 
-	          (a0l,a1l) in
+              let a0l,a1l = if CP.no_andl a0 && CP.no_andl a1 
+              then (List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a0),
+                    List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a1))
+    	      else
+                (* why andl need to be handled in a special way *)
+	            let r = ref (-8999) in
+	            let is_sat f = TP.is_sat_sub_no f r in
+	            let a0l = List.filter is_sat (CP.split_disjunctions a0) in
+	            let a1l = List.filter is_sat (CP.split_disjunctions a1) in 
+	            (a0l,a1l) 
+            in
             let new_rhs = if !Globals.split_rhs_flag then (CP.split_conjunctions c) else [c] in
 	        CP.imply_conj_orig a0l a1l new_rhs TP.imply imp_no
                 (* original code	        
@@ -7157,8 +7196,8 @@ and inst_before_fold_x estate rhs_p case_vars =
 	      let v_l = l_inter@r_inter in
 	      let cond = 				
 	        let rec prop_e e = match e with 
-                  | CP.Level _ (*TOCHECK*)
-	          | CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ | CP.AConst _ | CP.Tsconst _ -> true
+	          | CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ | CP.AConst _ | CP.Tsconst _ | CP.InfConst _ 
+              | CP.Level _ (*TOCHECK*) -> true
 	          | CP.Subtract (e1,e2,_) | CP.Mult (e1,e2,_) | CP.Div (e1,e2,_) | CP.Add (e1,e2,_) -> prop_e e1 && prop_e e2
 	          | CP.Bag (l,_) | CP.BagUnion (l,_) | CP.BagIntersect (l,_) -> List.for_all prop_e l
 	          | CP.Max _ | CP.Min _ | CP.BagDiff _ | CP.List _ | CP.ListCons _ | CP.ListHead _ 
@@ -9310,7 +9349,6 @@ and elim_exists_exp_loop (f0 : formula) : (formula*bool) =
        Cprinter.string_of_formula pr_out
        elim_exists_exp_loop_x f0
 
-(* removing existentail using ex x. (x=e & P(x)) <=> P(e) *)
 and elim_exists_exp_loop_x (f0 : formula) : (formula * bool) =
   let rec helper f0 =
   match f0 with

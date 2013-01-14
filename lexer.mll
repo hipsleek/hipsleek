@@ -165,6 +165,7 @@ module Make (Token : SleekTokenS)
 	("inline", INLINE); (* An Hoa [22/08/2011] : add inline keyword *)
    ("inlist", INLIST);
 	 ("int", INT);
+	 ("INFint", INFINT_TYPE);
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
 	 ("inv_lock", INVLOCK);
@@ -309,6 +310,7 @@ rule tokenizer file_name = parse
   | '$' { DOLLAR }
   | "." { DOT }
   | "\"" { DOUBLEQUOTE }
+  | "\\inf" {INFINITY}
   | "=" { EQ }
   | "==" { EQEQ }
   | "==>" { ESCAPE }

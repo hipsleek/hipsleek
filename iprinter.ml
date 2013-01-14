@@ -114,6 +114,7 @@ let rec string_of_formula_exp = function
   | P.Var (x, l)        -> string_of_id x
   | P.Level (x, l)        -> ("level(" ^ (string_of_id x) ^ ")")
   | P.IConst (i, l)           -> string_of_int i
+  | P.InfConst(s,l) -> s
   | P.AConst (i, l)           -> string_of_heap_ann i
   | P.Tsconst (i,l)			  -> Tree_shares.Ts.string_of i
   | P.FConst (f, _) -> string_of_float f
