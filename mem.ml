@@ -265,7 +265,7 @@ let rec xmem_heap (f: CF.h_formula) (vl: C.view_decl list) : CF.mem_perm_formula
 			 	        (*mk_mem_perm_formula new_mem_exp mpf.CF.mem_formula_exact mpf.CF.mem_formula_field_layout*)
 			 	        (mk_mem_perm_formula new_mem_exp mpf.CF.mem_formula_exact [] gforms), []
 			 	| None -> (mk_mem_perm_formula (CP.Bag([],no_pos)) false [] []),[] )
-  	| CF.Hole _ | CF.HEmp | CF.HFalse | CF.HTrue -> (mk_mem_perm_formula (CP.Bag([],no_pos)) false [] []),[]
+  	| CF.Hole _ | CF.HEmp | CF.HFalse | CF.HTrue | CF.HRel _ -> (mk_mem_perm_formula (CP.Bag([],no_pos)) false [] []),[]
 
 let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MCP.mix_formula =
 	match f with
@@ -511,6 +511,11 @@ let rec split_heap (h:CF.h_formula) : (CF.h_formula * CF.h_formula) =
 		   in (CF.mkStarH (fst right_h_split) h1 pos), (snd right_h_split)
 		   else (h,CF.HEmp)
 	| _ -> (h, CF.HEmp)
+
+let split_heap (h:CF.h_formula) : (CF.h_formula * CF.h_formula) = 
+  let pr = string_of_h_formula in
+  let pr2 = (pr_pair string_of_h_formula string_of_h_formula) in
+  Debug.no_1 "split_heap" pr pr2 split_heap h 
 
 let rec drop_node_h_formula (h:CF.h_formula) (sv:CP.spec_var) : (CF.h_formula) = 
 match h with
@@ -1740,7 +1745,7 @@ let rec ramify_unfolded_formula (cf:CF.formula) vl : CF.formula =
     		(*let p = MCP.pure_of_mix mcp in*)
     		let ramify_cases = ramify_unfolded_heap h (CP.mkTrue no_pos) vl in
     		let or_list = List.map (fun (h,rp) -> let p = MCP.merge_mems mcp (MCP.mix_of_pure rp) true in
-    			CF.mkBase h mcp t fl a pos) ramify_cases in
+    			CF.mkBase h p t fl a pos) ramify_cases in
     		CF.disj_of_list or_list pos
     | CF.Exists f ->
 		let pos = f.CF.formula_exists_pos in
@@ -1749,7 +1754,7 @@ let rec ramify_unfolded_formula (cf:CF.formula) vl : CF.formula =
     		(*let p = MCP.pure_of_mix mcp in*)
     		let ramify_cases = ramify_unfolded_heap h (CP.mkTrue no_pos) vl in
     		let or_list = List.map (fun (h,rp) -> let p = MCP.merge_mems mcp (MCP.mix_of_pure rp) true in
-    			CF.mkExists qvars h mcp t fl a pos) ramify_cases in
+    			CF.mkExists qvars h p t fl a pos) ramify_cases in
     		CF.disj_of_list or_list pos
     		
 let rec remove_accs_from_heap (h: CF.h_formula) : CF.h_formula * CP.formula = 

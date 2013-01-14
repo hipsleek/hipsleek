@@ -48,7 +48,7 @@ void insert(node x, int a)
 		x.next = new node(a, tmp);
 	else 
 		insert(x.next, a);
-} 
+}
 
 /* function to delete the a-th node in a singly linked list */
 node delete1(node x, int a)

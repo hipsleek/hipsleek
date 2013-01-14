@@ -481,7 +481,8 @@ module type ETABLE =
     val error_flow : ident
     val norm_flow_int : nflow ref
     val ret_flow_int : nflow ref
-	val loop_ret_flow_int : nflow ref
+    val c_flow_int : nflow ref
+    val loop_ret_flow_int : nflow ref
     val spec_flow_int : nflow ref
     val top_flow_int : nflow ref 
     val abnormal_flow_int : nflow ref
@@ -533,7 +534,7 @@ struct
   let n_flow = "__norm"
   let cont_top = "__Cont_top"
   let brk_top = "__Brk_top"
-  let c_flow = "__c-flow"
+  let c_flow = "__cflow"
   let raisable_class = "__Exc"
   let ret_flow = "__Return"
   let loop_ret_flow = "__RET"
@@ -551,6 +552,7 @@ struct
   type flow_entry = (ident * ident * nflow)
   let empty_flow : nflow = (-1,0)
   let norm_flow_int = ref empty_flow
+  let c_flow_int = ref empty_flow
   let ret_flow_int = ref empty_flow 
   let loop_ret_flow_int = ref empty_flow
   let spec_flow_int = ref empty_flow
@@ -658,6 +660,7 @@ struct
     method clear = 
       begin
         norm_flow_int := empty_flow;
+        c_flow_int := empty_flow;
         ret_flow_int := empty_flow;
         spec_flow_int := empty_flow;
         top_flow_int := empty_flow;
@@ -712,6 +715,7 @@ struct
     method private update_values =
       begin
         norm_flow_int := self # get_hash n_flow;
+        c_flow_int := self # get_hash c_flow;
         ret_flow_int := self # get_hash ret_flow;
 		loop_ret_flow_int := self # get_hash loop_ret_flow;
         spec_flow_int := self # get_hash spec_flow;
@@ -795,6 +799,7 @@ struct
   type flow_entry = (ident * ident * dflow)
   let empty_flow : dflow = ((-1,0),[(-1,0)])
   let norm_flow_int = ref empty_flow
+  let c_flow_int = ref empty_flow
   let ret_flow_int = ref empty_flow
   let loop_ret_flow_int = ref empty_flow
   let spec_flow_int = ref empty_flow
@@ -971,6 +976,7 @@ struct
     method clear = 
       begin
         norm_flow_int := empty_flow;
+        c_flow_int := empty_flow;
         ret_flow_int := empty_flow;
         spec_flow_int := empty_flow;
         top_flow_int := empty_flow;
@@ -1011,7 +1017,7 @@ struct
 		        else get rst 
             in (get elist)
         in
-        let pr = pr_pair string_of_int string_of_int in
+        (* let pr = pr_pair string_of_int string_of_int in *)
         Debug.no_1 "get_hash" pr_id (fun _ -> "?") foo f
       end
     method add_edge (n1:string)(n2:string):unit =
@@ -1029,6 +1035,7 @@ struct
     method private update_values =
       begin
         norm_flow_int := self # get_hash n_flow;
+        c_flow_int := self # get_hash c_flow;
         ret_flow_int := self # get_hash ret_flow;
 		loop_ret_flow_int := self # get_hash loop_ret_flow;
         spec_flow_int := self # get_hash spec_flow;

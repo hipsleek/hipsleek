@@ -216,6 +216,9 @@ and uni_op =
   | OpPostInc
   | OpPostDec
   | OpNot
+  (*For pointers: *v and &v *)
+  | OpVal (*value-of*)
+  | OpAddr (*address-off*)
 
 and bin_op = 
   | OpPlus
@@ -398,6 +401,11 @@ exp_var_decl_pos : loc }
 
 and exp_while = { exp_while_condition : exp;
 exp_while_body : exp;
+(*before pointer translation*)
+(*need a list of address-off vars that may belong to
+  specs of while loop. Updated in Pointers.trans_exp_addrr.
+  Used in Astsimpl.trans_loop_proc*)
+exp_while_addr_vars : ident list;  
 exp_while_specs : Iformula.struc_formula (*multi_spec*);
 exp_while_jump_label : jump_label_type;
 exp_while_path_id : control_path_id;
@@ -459,6 +467,8 @@ and exp =
 let void_type = Void
 
 let int_type = Int
+
+let infint_type = INFInt
 
 let ann_type = AnnT
 

@@ -1,0 +1,138 @@
+
+x=inf & x=3
+
+    inf=c ==> false
+
+x=inf & x>=3
+        ==> inf>=3 
+        ==> true 
+
+These rules and also those of -\inf
+ \inf!=c
+ ==> true
+ \inf=c
+ ==> false
+ \inf<=c
+ ==> false
+ \inf>c
+ ==> true
+
+(*Below already implemented*)
+ \inf>=c
+ ==> true
+
+
+
+v>-inf 
+  ==> v+inf>0
+  ==> inf>-v
+  ==> not(-v=inf)
+
+v>=-inf 
+  ==> v+inf>=0
+  ==> inf>=-v
+  ==> true
+
+x=min(w,-inf) 
+  ==> x=-inf // creates an inequality
+  ==> x+inf = min(w+inf,0)
+
+x=-inf 
+  ==> x+inf=0
+
+exp-inf=0
+==>  exp = inf
+
+exp+inf=0
+==>  exp = -inf
+
+2x=inf 
+===> x=inf
+
+c+inf =  inf
+c-inf = -inf
+
+x+y=inf
+==> x=inf || y=inf
+
+
+
+Equisatisfiable Normalization
+=============================
+   v<=\inf      ==> true
+   v>=\inf      ==> v=\inf
+   v+\inf<=0    ==> v+\inf=0
+     // v<=-\inf  ==> v=-\inf
+   v+\inf>=0    ==> true
+     // v>=-\inf     ==> true
+   min(w,\inf)  ==> w
+   min(w,-\inf) ==> -\inf
+   max(w,\inf)  ==> \inf
+   max(w,-\inf) ==> w
+   v<inf        ==> not(v=inf)
+   v>inf        ==> false
+   v+inf<0      ==> false
+     // v<-inf    ==> false
+   v+inf>0      ==> true
+     // v>-inf    ==> true
+
+   \inf!=c      ==> true
+   \inf=c       ==> false
+   \inf<=c      ==> false
+   \inf<c       ==> false
+   \inf>c       ==> true
+   \inf>=c      ==> true
+
+   \inf+c!=0    ==> true
+     //-inf!=c    ==> true
+   \inf+c=0     ==> false
+     //-inf=c     ==> false
+   \inf+c>=0    ==> true
+     //-inf<=c    ==> true
+   \inf+c>0     ==> true
+     //-inf<c     ==> true
+   \inf+c<0     ==> false
+     //-inf>c     ==> false
+   \inf+c<0     ==> false
+     //-inf>=c    ==> false
+
+   \inf=\inf     ==> true
+   \inf+\inf=0   ==> false
+     // \inf=-\inf  ==> false
+   \inf!=\inf    ==> ?true
+   \inf+c=\inf   ==> ?true
+   \inf+c+\inf=0 ==> ?false
+     // \inf+c=-\inf  ==> ?false?
+   \inf>=\inf    ==> true
+   \inf>\inf     ==> ?false
+
+
+(*Below already implemented*)
+   \inf>=c       ==> true
+
+===============================================
+
+checkentail v<inf |- v=inf. // must failure
+
+v>=\inf ==> v=\inf
+
+
+checkentail true |- v=min(v,\top).
+// should succeed
+//  |- v<=\top & v=v or v>=\top & v=\top
+
+checkentail v=\inf |- v=1.
+// must fail
+
+checkentail v=\inf |- v>=1.
+// should succeed
+
+checkentail v=\inf |- v<=1.
+// must fail
+
+checkentail x=null |- x::sortll<2>.
+// must fail
+
+checkentail true |- v=inf.
+// maybe fail
+

@@ -492,6 +492,8 @@ let string_of_spec_var x =
             | Primed -> "'"
             | Unprimed -> "" )^ts)
 
+let string_of_subst stt = pr_list (pr_pair string_of_spec_var string_of_spec_var) stt
+
 let rec string_of_imm imm = match imm with
   | ConstAnn(Accs) -> "@A"
   | ConstAnn(Imm) -> "@I"
@@ -636,8 +638,10 @@ let rec pr_formula_exp (e:P.exp) =
   match e with
     | P.Null l -> fmt_string "null"
     | P.Var (x, l) -> fmt_string (string_of_spec_var x)
+    | P.Level (x, l) -> fmt_string ("level(" ^ (string_of_spec_var x) ^ ")")
     | P.IConst (i, l) -> fmt_int i
     | P.AConst (i, l) -> fmt_string (string_of_heap_ann i)
+    | P.InfConst (i,l) -> let r = "\\inf" in fmt_string r
 	| P.Tsconst (i,l) -> fmt_string (Tree_shares.Ts.string_of i)
     | P.FConst (f, l) -> fmt_string "FLOAT ";fmt_float f
     | P.Add (e1, e2, l) -> 
@@ -652,7 +656,10 @@ let rec pr_formula_exp (e:P.exp) =
     | P.Min (e1, e2, l) -> 
           let args = bin_op_to_list op_min_short exp_assoc_op e in
           pr_fn_args op_min pr_formula_exp  args
-    | P.Bag (elist, l) 	-> pr_set pr_formula_exp elist
+    | P.Bag (elist, l) 	-> 
+        fmt_string ("bag("); 
+        pr_set pr_formula_exp elist;
+        fmt_string (")")
     | P.BagUnion (args, l) -> 
           let args = bin_op_to_list op_union_short exp_assoc_op e in
           pr_fn_args op_union pr_formula_exp args
@@ -796,7 +803,7 @@ let rec pr_b_formula (e:P.b_formula) =
 let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
 let string_of_int_label_opt h s2:string = match h with | None-> "N "^s2 | Some s -> string_of_int_label s s2
 let string_of_formula_type (t:formula_type):string = match t with | Simple -> "Simple" | _ -> "Complex"
-let string_of_formula_label (i,s) s2:string = (* s2 *) ((string_of_int i)^":"^s^":"^s2)
+let string_of_formula_label (i,s) s2:string = s2 (*((string_of_int i)^":#"^s^":#"^s2)*)
 let string_of_formula_label_pr_br (i,s) s2:string = ("("^(string_of_int i)^","^s^"):"^s2)
 let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> (string_of_formula_label s s2)
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
@@ -1157,7 +1164,8 @@ let rec prtt_pr_h_formula h =
       h_formula_view_pos =pos}) ->
         let perm_str = string_of_cperm perm in
           fmt_open_hbox ();
-         (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
+         (* (if pid==None then fmt_string "N
+N " else fmt_string "SS "); *)
           (* pr_formula_label_opt pid;  *)
           pr_spec_var sv; 
           fmt_string "::"; 
@@ -1349,8 +1357,9 @@ let rec string_of_sharp_flow sf = match sf with
   | Sharp_id id -> "#"^id
 
 let pr_one_formula (f:one_formula) = 
-  let h,p,th,lb,pos = split_one_formula f in
+  let h,p,th,df,lb,pos = split_one_formula f in
   fmt_string (" <thread="); (pr_spec_var th); fmt_string ("> ");
+  fmt_string (" <delayed:"); (pr_mix_formula df); fmt_string ("> ");
   fmt_string (" <ref:"); fmt_string (string_of_spec_var_list f.formula_ref_vars); fmt_string ("> ");
   pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula p
 
@@ -1678,12 +1687,13 @@ let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace))
 
 let pr_numbered_list_formula_trace (e:(context * (formula*formula_trace)) list) (count:int) =
 (*  let f b = begin
+            fmt_string "\n";
             fmt_string "[[";
             pr_es_trace b;
             fmt_string "]]"
   end in*)
   let f b = () in
-  pr_numbered_list_formula_trace_ho (e) (count:int) f 
+  pr_numbered_list_formula_trace_ho (e) (count:int) f
 
 let pr_numbered_list_formula_no_trace (e:(context * (formula*formula_trace)) list) (count:int) =
   let f b = () in
@@ -1922,7 +1932,12 @@ let pr_estate (es : entail_state) =
   pr_vwrap "es_var_label: " (fun l -> fmt_string (match l with
                                                     | None -> "None"
                                                     | Some i -> string_of_int i)) es.es_var_label;
-  pr_vwrap "es_trace: " pr_es_trace es.es_trace;
+  *)
+  if es.es_trace!=[] then
+    pr_vwrap "es_trace: " pr_es_trace es.es_trace;
+  if es.es_is_normalizing then
+    pr_vwrap "es_is_normalizing: " fmt_bool es.es_is_normalizing;
+  (*
   pr_vwrap "es_var_ctx_lhs: " pr_pure_formula es.es_var_ctx_lhs;
   pr_vwrap "es_var_ctx_rhs: " pr_pure_formula es.es_var_ctx_rhs;
   pr_vwrap "es_var_loc: " (fun pos -> fmt_string (string_of_pos pos)) es.es_var_loc;
@@ -1937,7 +1952,8 @@ let pr_estate (es : entail_state) =
    pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) es.es_infer_rel; 
   (* pr_wrap_test "es_infer_pures: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_pures;  *)
   (* pr_wrap_test "es_infer_invs: " Gen.is_empty  (pr_seq "" pr_pure_formula) es.es_infer_invs;  *)
-  pr_wrap_test "es_var_zero_perm: " (fun _ -> false) (pr_seq "" pr_spec_var) es.es_var_zero_perm; (*always print*)
+   if (es.es_var_zero_perm!=[]) then
+     pr_wrap_test "es_var_zero_perm: " (fun _ -> false) (pr_seq "" pr_spec_var) es.es_var_zero_perm; (*always print*)
   (* pr_vwrap "es_infer_invs:  " pr_list_pure_formula es.es_infer_invs; *)
   pr_wrap_test "es_unsat_flag: " (fun _-> false) (fun c-> fmt_string (string_of_bool c)) es.es_unsat_flag;  
   fmt_close ()
@@ -2078,9 +2094,9 @@ let pr_list_context (ctx:list_context) =
 
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
-    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure,e.es_var_measures,e. es_var_zero_perm)]
+    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure,e.es_var_measures,e. es_var_zero_perm,e.es_trace)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (f,(* ac, *)iv,ih,ip,vm,vperms) =
+  let pr (f,(* ac, *)iv,ih,ip,vm,vperms,trace) =
     fmt_open_vbox 0;
     pr_formula_wrap f;
     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
@@ -2089,6 +2105,7 @@ let pr_context_short (ctx : context) =
     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; 
     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
     pr_wrap_opt "es_var_measures: " pr_var_measures vm;
+    pr_vwrap "es_trace: " pr_es_trace trace;
     fmt_string "\n";
     fmt_close_box();
   in 
@@ -2329,6 +2346,8 @@ let pr_prune_invariants l = (fun c-> pr_seq "," (fun (c1,(ba,c2))->
       fmt_string ("{"^s^"} -> {"^b^"} ["^d^"]")) c) l
 
 let string_of_prune_invariants p : string = poly_string_of_pr pr_prune_invariants p
+
+let string_of_prune_conditions p : string = pr_list (pr_pair string_of_b_formula (pr_list Globals.string_of_formula_label)) p
 
 let pr_view_base_case bc = 
     (match bc with
@@ -2673,6 +2692,7 @@ let string_of_coercion_case (t:Cast.coercion_case) = match t with
   | Cast.Complex -> "Complex"
   | Cast.Ramify -> "Ramify"
   | Cast.Normalize b-> "Normalize "^(string_of_bool b)
+
     (* coercion_univ_vars : P.spec_var list; (\* list of universally quantified variables. *\) *)
 let string_of_coerc_opt op c = 
   let s1="Lemma \""^c.coercion_name^"\": "^(string_of_formula c.coercion_head)^(string_of_coercion_type c.coercion_type) in
@@ -2972,6 +2992,7 @@ let rec html_of_formula_exp e =
 	 match e with
     | P.Null l -> "<b>null</b>"
     | P.Var (x, l) -> html_of_spec_var x
+    | P.Level (x, l) -> "<level>" ^ html_of_spec_var x ^ "</level>"
     | P.IConst (i, l) -> string_of_int i
     | P.FConst (f, l) -> string_of_float f
     | P.AConst (f, l) -> string_of_heap_ann f
@@ -3218,6 +3239,7 @@ let html_of_partial_context (fs,ss) =
 let html_of_list_partial_context lctx = String.concat "<br /><br /><b>AND</b> " (List.map html_of_partial_context lctx)
 ;;
 
+Slicing.print_mp_f := string_of_memo_pure_formula ;;
 Mcpure_D.print_mp_f := string_of_memo_pure_formula ;;
 Mcpure_D.print_mg_f := string_of_memoised_group ;;
 Mcpure.print_mp_f := string_of_memo_pure_formula ;;
@@ -3238,6 +3260,7 @@ Cpure.print_svl := string_of_spec_var_list;;
 Cpure.print_sv := string_of_spec_var;;
 Cformula.print_mem_formula := string_of_mem_formula;;
 Cformula.print_formula := string_of_formula;;
+Cformula.print_one_formula := string_of_one_formula;;
 Cformula.print_pure_f := string_of_pure_formula;;
 Cformula.print_h_formula := string_of_h_formula;;
 Cformula.print_h_formula_for_spec := string_of_h_formula_for_spec;;

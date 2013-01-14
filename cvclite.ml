@@ -112,6 +112,8 @@ and cvcl_of_exp a = match a with
       failwith ("Func are not supported in cvclite")
 	| CP.AConst _ ->
       failwith ("Aconst not supported in cvclite")
+	| CP.Level _ ->
+      failwith ("level should not appear in cvclite")
 	| CP.Tsconst _ ->
       failwith ("Tsconst not supported in cvclite")
 	  	  

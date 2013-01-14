@@ -749,7 +749,7 @@ struct
     let r1 = find s e in
     if (r1==[]) then []
     else List.map fst (List.filter (fun (a,k) -> k==r1) s) 
-
+  
   (* return a distinct element equal to e *)
   let find_equiv  (e:elem) (s:emap) : elem option  =
     let ls=find_equiv_all e s in
@@ -1086,6 +1086,10 @@ struct
 
   let is_dupl_dset (xs:dpart) : bool = 
     List.exists (check_dups) xs
+
+  let is_mem_dset e (el:dpart): bool =
+    let ls = (List.filter (fun l -> List.exists (fun x -> eq e x) l) el) in
+    ls!=[]
 
   (* returns a list of difference sets for element e *)
   let find_diff (eq:'a->'a->bool) (s: dpart) (e:ptr) : dpart =

@@ -109,8 +109,10 @@ and aug_class_name (t : typ) = match t with
   | UNK  -> 	
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "unexpected UNKNOWN type"}
+  | Pointer _ -> "Pointer"
   | Named c -> c ^ "Aug"
   | Int -> "IntAug"
+  | INFInt -> "INFIntAug"
   | AnnT -> "AnnAug"
   | RelT -> "RelAug"
   | Bool -> "BoolAug"

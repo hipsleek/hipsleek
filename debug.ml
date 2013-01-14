@@ -79,6 +79,73 @@ let ninfo_zprint m p = ()
 let ninfo_hprint pr m p  = ()
 let ninfo_pprint m p = ()
 
+(*
+  -- -v:10-50 (for details + all tracing + omega)
+  -- -v:1-9 (for details only)
+  -- -v:50.. (for tracing only)
+  -- -v:-1 (minimal tracing)
+  -- -v:-2..(exact tracing)
+*)
+
+let add_str s f xs = s^":"^(f xs)
+
+let gen_vv_flags d =
+  let m = !Globals.verbose_num in
+  let (flag,str) =
+    if d<0 then (m==d,"EXACT:")
+    else if m>50 then (d>=m,"DEBUG:")
+    else if m<10 then (m>=d,"")
+    else if d>=50 then (true,"DEBUG_"^(string_of_int d)^":")
+    else (m>=d,"") in
+  (flag,str)
+
+
+let verbose_hprint (d:int) (p:'a -> string) (arg:'a)  =
+  let (flag,str)=gen_vv_flags d in
+  ho_print flag (add_str str p) arg
+
+(* let verbose_pprint (d:int) (msg:string)  = *)
+(*   verbose_hprint d (fun m -> m) msg *)
+
+(* let verbose_pprint (d:int) (msg)  = *)
+(*   verbose_hprint d (fun m -> m) msg *)
+
+let vv_pprint d msg = verbose_hprint d (fun m -> m) msg
+
+let vv_hprint d f arg = verbose_hprint d f arg
+
+let vv_zprint d lmsg = 
+  verbose_hprint d (fun x -> Lazy.force x) lmsg
+
+let vv_plist d ls = 
+  let (flag,str) = gen_vv_flags d in
+  let rec helper ls =
+    match ls with
+      | [] -> ()
+      | ((m,y)::xs) ->
+            begin
+            (ho_print flag (fun msg -> str^m^":"^msg) y)
+                ; helper xs
+            end
+  in helper ls
+
+let vv_hdebug f arg = vv_hprint 200 f arg 
+
+(* less tracing *)
+let vv_pdebug msg = vv_hdebug (fun m -> m) msg
+
+let vv_debug msg = vv_pdebug msg
+
+(* detailed tracing *)
+let vv_trace msg = vv_hprint 100 (fun m -> m) msg
+
+let vv_zdebug msg = vv_hdebug (fun x -> Lazy.force x) msg
+
+let vv_result (s:string) (d:int) ls =
+  vv_pprint d (">>>>>>>>>"^s^">>>>>>>>>");
+  vv_plist d ls;
+  vv_pprint d (">>>>>>>>>"^s^">>>>>>>>>")
+
 let trace_pprint (msg:string) (pos:loc) : unit = 
 	ho_print false (fun a -> " "^a) msg
 

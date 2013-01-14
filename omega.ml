@@ -148,6 +148,7 @@ and omega_of_formula pr_w pr_s f  =
       let _ = Debug.trace_hprint (add_str "Omega Error format:" !print_formula) f in
       raise e
 
+
 let omega_of_formula i pr_w pr_s f  =
   let pr = !print_formula in
   Debug.no_1_num i "omega_of_formula" 
@@ -288,7 +289,6 @@ let check_formula f timeout =
         in
         output_string (!process.outchannel) new_f;
         flush (!process.outchannel);
-        
         let result = ref true in
         let str = read_last_line_from_in_channel (!process.inchannel) in
         (* An Hoa : set original output *)
@@ -312,6 +312,9 @@ let check_formula f timeout =
         res
       else fnc f
   end
+
+let check_formula f timeout = 
+Gen.Profiling.do_2 "Omega:check_formula" check_formula f timeout 
 
 let check_formula i f timeout =
   Debug.no_2 "Omega:check_formula" (fun x->x) string_of_float string_of_bool
@@ -486,7 +489,7 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
 
 	        let sat =
               try
-                  not (check_formula 2 (fomega ^ "\n") !in_timeout)
+                not (check_formula 2 (fomega ^ "\n") !in_timeout)
               with
                 | Procutils.PrvComms.Timeout as exc -> 
                   if !Globals.dis_provers_timeout then (stop (); raise exc)

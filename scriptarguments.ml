@@ -85,8 +85,8 @@ let common_arguments = [
    "Existentially quantify the fresh vars in the residue after applying ENT-LHS-EX");
   ("-noee", Arg.Clear Globals.elim_exists_flag,
    "No eliminate existential quantifiers before calling TP.");
-  (* ("--no-filter", Arg.Clear Globals.filtering_flag, *)
-  (* "No assumption filtering."); *)
+  ("--no-filter", Arg.Clear Globals.filtering_flag,
+  "No assumption filtering.");
   ("--filter", Arg.Set Globals.filtering_flag,
    "Enable assumption filtering.");
   ("--no-split-rhs", Arg.Clear Globals.split_rhs_flag,
@@ -142,6 +142,13 @@ let common_arguments = [
   ("--ann-derv", Arg.Set Globals.ann_derv,"manual annotation of derived nodes");
   ("--ann-vp", Arg.Set Globals.ann_vp,"manual annotation of variable permissions");
   ("--dis-ann-vp", Arg.Clear Globals.ann_vp,"manual annotation of variable permissions");
+	("--ls", Arg.Set Globals.allow_ls,"enable locksets during verification");
+	("--en-web-compile", Arg.Set Globals.web_compile_flag,"enable web compilation setting");
+	("--dis-ls", Arg.Clear Globals.allow_ls,"disable locksets during verification");
+	("--locklevel", Arg.Set Globals.allow_locklevel,"enable locklevels during verification");
+	("--dis-locklevel", Arg.Clear Globals.allow_locklevel,"disable locklevels during verification");
+	("--dis-para", Arg.Unit Perm.disable_para,"disable concurrency verification");
+	("--en-para", Arg.Unit Perm.enable_para,"enable concurrency verification");
   ("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
 	("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
@@ -151,9 +158,10 @@ let common_arguments = [
 	("--ramify", Arg.Clear Solver.unfold_duplicated_pointers,"Use Ramification (turns off unfold on dup pointers)");
   ("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
   ("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
+  ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
   ("--no-coercion", Arg.Clear Globals.use_coercion,
    "Turn off coercion mechanism");
-  ("--no-exists-elim", Arg.Clear Globals.elim_exists,
+  ("--no-exists-elim", Arg.Clear Globals.elim_exists_ff,
    "Turn off existential quantifier elimination during type-checking");
   ("--no-diff", Arg.Set Solver.no_diff,
    "Drop disequalities generated from the separating conjunction");
@@ -161,9 +169,13 @@ let common_arguments = [
    "Turn off set-of-states search");
   ("--unsat-elim", Arg.Set Globals.elim_unsat,
    "Turn on unsatisfiable formulae elimination during type-checking");
+  ("--en-disj-compute", Arg.Set Globals.disj_compute_flag,
+   "Enable re-computation of user-supplied disj. invariant");
   ("-nxpure", Arg.Set_int Globals.n_xpure,
    "Number of unfolding using XPure");
-	("-fixcalc-disj", Arg.Set_int Globals.fixcalc_disj,
+  ("-v:", Arg.Set_int Globals.verbose_num,
+   "Verbosity level for Debugging");
+  ("-fixcalc-disj", Arg.Set_int Globals.fixcalc_disj,
     "Number of disjunct for fixcalc computation");
   ("--dis-smart-xpure", Arg.Clear Globals.smart_xpure,
    "Smart xpure with 0 then 1; otherwise just 1 ; not handled by infer yet");
@@ -185,7 +197,7 @@ let common_arguments = [
   ("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
    "Build the image theory in Isabelle - default false");
   ("-tp", Arg.Symbol (["cvcl"; "cvc3"; "oc";"oc-2.1.6"; "co"; "isabelle"; "coq"; "mona"; "monah"; "z3"; "z3-2.19"; "zm"; "om";
-   "oi"; "set"; "cm"; "redlog"; "rm"; "prm"; "spass";"minisat" ;"auto";"log"; "dp"], Tpdispatcher.set_tp),
+   "oi"; "set"; "cm"; "redlog"; "rm"; "prm"; "spass";"parahip";"minisat" ;"auto";"log"; "dp"], Tpdispatcher.set_tp),
    "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
   ("--dis-tp-batch-mode", Arg.Clear Tpdispatcher.tp_batch_mode,"disable batch-mode processing of external theorem provers");
   ("-perm", Arg.Symbol (["fperm"; "cperm"; "dperm";"none"], Perm.set_perm),
@@ -209,10 +221,10 @@ let common_arguments = [
    "<p,q,..> comma-separated list of provers to try in parallel");
   (* ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics,  *)
   (* "enable sat statistics"); *)
-  ("--ep-stat", Arg.Set Globals.profiling,
+  ("--en-pstat", Arg.Set Globals.profiling,
    "enable profiling statistics");
-  ("--ec-stat", Arg.Set Globals.enable_counters, "enable counter statistics");
-  ("--e-stat", (Arg.Tuple [Arg.Set Globals.profiling; Arg.Set Globals.enable_counters]),
+  ("--en-cstat", Arg.Set Globals.enable_counters, "enable counter statistics");
+  ("--en-stat", (Arg.Tuple [Arg.Set Globals.profiling; Arg.Set Globals.enable_counters]),
    "enable all statistics");
   ("--sbc", Arg.Set Globals.enable_syn_base_case,
    "use only syntactic base case detection");
@@ -425,10 +437,10 @@ let check_option_consistency () =
   end;
   if !Globals.perm=Globals.Dperm then Globals.use_split_match:=true else () ;
   if !Globals.perm<>Globals.NoPerm then Globals.allow_imm:=false else () ;
-  if !Globals.allow_imm && Perm.allow_perm() then
-  begin
-    Gen.Basic.report_error Globals.no_pos "immutability and permission options cannot be turned on at the same time"
-  end
+  (* if !Globals.allow_imm && Perm.allow_perm() then *)
+  (* begin *)
+  (*   Gen.Basic.report_error Globals.no_pos "immutability and permission options cannot be turned on at the same time" *)
+  (* end *)
   ;; (*Clean warning*)
   Astsimp.inter_hoa := !inter_hoa;;
 
