@@ -3744,7 +3744,12 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                       let new_ref_vars,new_post = if Gen.BList.mem_eq CP.eq_spec_var_ident ls_var post_fv
                                           then (*if LOCKSET ghost var is in the post-condition*)
                                             let waitlevel_var = CP.mkWaitlevelVar Primed in
-                                            let new_post = CF.drop_svl new_post [waitlevel_var] in
+                                            let new_post =
+                                              if !Globals.allow_locklevel then
+                                                CF.translate_waitlevel_formula new_post
+                                              else
+                                                CF.drop_svl new_post [waitlevel_var]
+                                            in
                                             (ls_var::lsmu_var::ref_vars),new_post
                                           else (*if not -> do not consider ls_var as a ref-vars*)
                                             ref_vars,new_post
