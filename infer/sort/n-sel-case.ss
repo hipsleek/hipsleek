@@ -13,13 +13,12 @@ inv self!=null;
 
 node sel(ref node x)
      requires x::llMM<mi> 
-     ensures  res::node<mi,_> & x'=null
-           or res::node<mi,_> * x'::llMM<mi2> & mi<=mi2
-     ;
-/*
-
-
-*/
+     ensures  
+        case {
+         x'=null -> res::node<mi,_>;
+         x'!=null -> res::node<mi,_> * x'::llMM<mi2> & mi<=mi2;
+        }
+        ;
 {
   node tmp;
   if (x.next==null)

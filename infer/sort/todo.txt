@@ -353,7 +353,6 @@ RELDEFN R2: ( R(a,v2_619) & ((a=b & a<v2_798 & v2_798<=v2_619) | (a=b & v2_619=v
 
  With this, we can get:
   [a<=b -> R2(a,b); R(a,b) -> a<=b]
-  [true -> R2(a,b); R(a,b) -> true]
 
 We can add both versions to pre/post; as follows:
 
