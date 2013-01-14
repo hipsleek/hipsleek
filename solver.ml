@@ -9599,8 +9599,10 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls fp_func preprocess_fun 
     let _ = Debug.ninfo_hprint (add_str "oblg to check" !CP.print_formula) pure_oblg_to_check no_pos in
 
     let checkpoint1 = check_oblg pre_rel pre pure_oblg_to_check pre_rel_df in
-    if checkpoint1 then 
+    if checkpoint1 then
+      let pre = TP.simplify_raw pre in
       let pre = filter_disj pre pre_fmls in
+      let pre = TP.pairwisecheck_raw pre in
       let _ = Debug.devel_hprint (add_str "pre" !CP.print_formula) pre no_pos in
       [(rel,post,pre_rel,pre)]
     else
