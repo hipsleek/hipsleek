@@ -19,7 +19,7 @@ relation P6(int a1, int a2,int a3).
 node sel(ref node x)
      infer [P1,P2]
      requires x::llMM<mi> 
-     ensures  res::node<m,_> & x'=null & P1(m,mi2)
+     ensures  res::node<m,_> & x'=null & P1(m,mi)
            or res::node<m,_> * x'::llMM<mi2> & P2(m,mi,mi2)
      ;
 /*
