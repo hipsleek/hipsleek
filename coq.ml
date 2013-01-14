@@ -263,7 +263,6 @@ let rec send_formula (f : string) (nr : int) : bool =
 	  output_string (snd !coq_channels) f;
 	  output_string (snd !coq_channels) ("decidez.\nQed.\n");
 	  flush (snd !coq_channels);
-	  
 	  let result = ref false in
 	  let finished = ref false in  
 	  while not !finished do 
@@ -319,7 +318,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
   max_flag := false;
   choice := 1;
   try 
-    write pr_w pr_s ante conseq
+    write pr_w pr_s ante conseq;
   with Illegal_Prover_Format s -> 
       begin
         print_endline ("\nWARNING coq.imply : Illegal_Prover_Format for :"^s);

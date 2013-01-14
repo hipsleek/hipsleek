@@ -212,6 +212,10 @@ let contains_inf (f:CP.formula) : bool =
       | _ -> None
   in fold_formula f (f_f,f_bf,f_e) (List.exists (fun c -> c))
 
+let contains_inf (f:CP.formula) : bool = 
+  let pr = string_of_pure_formula in
+    DD.no_1 "contains_inf" pr string_of_bool contains_inf f
+
 (*
 Normalize b_formula containing \inf 
 *)
@@ -406,6 +410,8 @@ let rec contains_inf_eq (pf:CP.formula) : bool  =
     | CP.Forall (qid, qf,fl,pos) 
     | CP.Exists (qid, qf,fl,pos) -> contains_inf_eq qf
 
+let contains_inf_eq (pf:CP.formula) : bool  =
+DD.no_1 "contains_inf_eq" string_of_pure_formula string_of_bool contains_inf_eq pf 
 
 module EM = Gen.EqMap(CP.SV)
 

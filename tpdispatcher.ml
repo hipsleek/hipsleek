@@ -692,7 +692,8 @@ let rec is_list_exp e = match e with
     | CP.ArrayAt (_,_,_) | CP.Func _ -> Some false
     | CP.Null _ | CP.AConst _ | CP.Tsconst _ | CP.InfConst _
     | CP.Level _
-    | CP.FConst _ | CP.IConst _ | CP.Var _ -> Some false
+    | CP.FConst _ | CP.IConst _ -> Some false
+    | CP.Var(sv,_) -> if CP.is_list_var sv then Some true else Some false
     (* | _ -> Some false *)
 	  
 (*let f_e e = Debug.no_1 "f_e" (Cprinter.string_of_formula_exp) (fun s -> match s with
@@ -788,7 +789,7 @@ let is_list_constraint (e: CP.formula) : bool =
   let or_list = List.fold_left (||) false in
   CP.fold_formula e (nonef, is_list_b_formula, is_list_exp) or_list
 
-let is_list_constraint_a (e: CP.formula) : bool =
+let is_list_constraint (e: CP.formula) : bool =
   (*Debug.no_1_opt "is_list_constraint" Cprinter.string_of_pure_formula string_of_bool (fun r -> not(r)) is_list_constraint e*)
   Debug.no_1 "is_list_constraint" Cprinter.string_of_pure_formula string_of_bool is_list_constraint e
   

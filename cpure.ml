@@ -1347,6 +1347,8 @@ and is_float_type (t : typ) = match t with
 
 and is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 
+and is_list_var (sv : spec_var) : bool = is_list_type (type_of_spec_var sv)
+
 and is_float_exp exp = 
   let rec helper exp = 
     match exp with
@@ -9312,7 +9314,7 @@ let drop_exists (f:formula) :formula =
   let pr = !print_formula in 
   Debug.no_1 "drop_exists_pure" pr pr drop_exists f 
 
-(* check for x=y & x!=y and mark as unsat assumes that disjunctions are all split using deep_split*)
+(* check for x=y & x!=y and mark as unsat assumes that disjunctions are all split using deep_split *)
 let is_sat_eq_ineq (f : formula) : bool =
   let b =
   (*check if eqs contradict with ineqs *)
@@ -9340,14 +9342,13 @@ let is_sat_eq_ineq (f : formula) : bool =
     let eqset = List.fold_left (fun eset exp -> 
 			        let (p_f,bf_ann) = exp in
     				(match p_f with
-    				| Eq (e1,e2,pos) -> (match e1,e2 with
-    						    | Var(sv1,_),Var(sv2,_) -> EMapSV.add_equiv eset sv1 sv2
-                                | Var(sv1,_),IConst(i2,_) -> EMapSV.add_equiv eset sv1 (mk_sp_const i2)
-                                | IConst(i1,_),Var(sv2,_) -> EMapSV.add_equiv eset (mk_sp_const i1) sv2
-                                | IConst(i1,_),IConst(i2,_) -> 
-                                    EMapSV.add_equiv eset (mk_sp_const i1)(mk_sp_const i2)
-                                | _  -> eset)
-
+    				| Eq (e1,e2,pos) -> 
+    				  (match e1,e2 with
+    				    | Var(sv1,_),Var(sv2,_) -> EMapSV.add_equiv eset sv1 sv2
+                                    | Var(sv1,_),IConst(i2,_) -> EMapSV.add_equiv eset sv1 (mk_sp_const i2)
+	                            | IConst(i1,_),Var(sv2,_) -> EMapSV.add_equiv eset (mk_sp_const i1) sv2
+                                    | IConst(i1,_),IConst(i2,_) -> EMapSV.add_equiv eset (mk_sp_const i1)(mk_sp_const i2)
+                               	    | _  -> eset)
     				| _ -> eset)
     				) eqset eq_list in eqset
     in let m_aset = find_eq_all f in
