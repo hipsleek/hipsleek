@@ -1642,7 +1642,7 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
     let pr2 x = add_str (x.C.proc_name^" Spec") Cprinter.string_of_struc_formula x.C.proc_static_specs in
   *)let pr  = Iprinter.string_of_proc_decl in
   let pr2 = Cprinter.string_of_proc_decl 5 in
-  Debug.no_1 "trans_proc" pr pr2 (trans_proc_x prog) proc
+  Debug.ho_1 "trans_proc" pr pr2 (trans_proc_x prog) proc
       
 and trans_proc_x (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   let trans_proc_x_op () =
