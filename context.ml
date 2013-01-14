@@ -624,7 +624,20 @@ and norm_search_action ls = match ls with
 and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
   let rhs_node = c.match_res_rhs_node in
   let lhs_node = c.match_res_lhs_node in
-  let filter_norm_lemmas l = List.filter (fun c-> match c.coercion_case with | Normalize b-> if b || !use_split_match then false else true | _ -> true) l in
+  (* let filter_norm_lemmas l = List.filter (fun c-> match c.coercion_case with | Normalize b-> if b || !use_split_match then false else true | _ -> true) l in *)
+  (*Normalize false --> split
+    Normalize true --> combine/normalize
+  *)
+  let filter_norm_lemmas l = List.filter (fun c-> 
+      match c.coercion_case with 
+        | Normalize b-> 
+            (* For fractional permission (e.g. in ParaHIP),
+               also filter out SPLIT formula.
+               Current heuristic is to decide SPLIT or MATCH when MATCH.*)
+            let b = if (!Globals.perm = Frac) then not b else b in
+            if b || !use_split_match then false else true 
+        | _ -> true) l
+  in
   let r = match c.match_res_type with 
     | Root ->
           let view_decls = prog.prog_view_decls in

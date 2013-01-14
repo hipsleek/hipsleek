@@ -7696,7 +7696,11 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                         else
                           (false, CP.mkEqVar f1 f2 no_pos,[f1;f2])
                   in
-                  if (flag || exact_flag) then None else
+                  (*We already decide this in Context.process_one_match
+                    Note: this flag may be related to the function filter_norm_lemmas
+                    in process_one_match
+                  *)
+                  (* if (flag || exact_flag) then None else *)
                   let tmp = Gen.BList.intersect_eq (CP.eq_spec_var) vars (estate.es_gen_expl_vars(* @estate.es_ivars *)@estate.es_gen_impl_vars) in
                   let exists_vars = Gen.BList.difference_eq (CP.eq_spec_var) exists_vars vars in
                   let rhs_frac = if (vars=[]) then MCP.mkMTrue no_pos
@@ -8508,7 +8512,9 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
               then r else (([],[]),[])
 		    else if (not (test_frac_subsume prog estate rhs_b.formula_base_pure (get_node_perm anode) (get_node_perm ln2))) || !use_split_match
             then (([],[]),[])
-		    else (print_string"\n splitting \n";r)
+		    else (
+                if (not !Globals.is_deployed) then print_string"\n splitting \n";
+                r)
 	    | Iast.Right -> (([],[c]),[])
 	    | _ -> report_error no_pos ("Iast.Equiv detected - astsimpl should have eliminated it ")
   in 
