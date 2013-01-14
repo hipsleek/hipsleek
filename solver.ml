@@ -7150,7 +7150,6 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
   (* "memset = " ^ (Cprinter.string_of_mem_formula memset) ^ "\n\n") in  *)
   (* detect whether memset contradicts with any of the ptr equalities from antecedent *)
   let ante_m0 = if detect_false ante_m0 memset then MCP.mkMFalse no_pos else ante_m0 in
-  let ante_m0 = MCP.mix_of_pure (CP.drop_exists (MCP.pure_of_mix ante_m0)) in
   let conseq_m = solve_ineq ante_m0 memset conseq_m in
   match ante_m0,ante_m1,conseq_m with
     | MCP.MemoF a, MCP.MemoF a1, MCP.MemoF c ->
@@ -7167,6 +7166,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
           begin
             DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
+              let a0 = CP.drop_exists a0 in
               let a0l,a1l = if CP.no_andl a0 && CP.no_andl a1 
               then (List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a0),
                     List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a1))
