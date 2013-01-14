@@ -1325,8 +1325,8 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
       (* e.g. A(x) <- A(t) && other_constraints, *)
       (* where other_constraints are independent from t *)
       let _,rel_lhs = List.split subs in
-      let rel_lhs_n = List.concat (List.map (fun x -> CP.get_rel_id_list x) rel_lhs) in
-      let rel_rhs_n = List.concat (List.map (fun x -> CP.get_rel_id_list x) rel_rhs) in
+      let rel_lhs_n = List.concat (List.map CP.get_rel_id_list rel_lhs) in
+      let rel_rhs_n = List.concat (List.map CP.get_rel_id_list rel_rhs) in
       let rel_lhs_n = CP.intersect rel_lhs_n rel_rhs_n in
       let rel_to_del = if rel_lhs_n=[] then []
         else 
@@ -1368,21 +1368,55 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
           DD.tinfo_hprint (add_str "diff_vs" !print_svl) diff_vs pos;
           let new_lhs = CP.wrap_exists_svl lhs diff_vs in
           DD.tinfo_hprint (add_str "new_lhs (b4 elim_exists)" !CP.print_formula) new_lhs pos;
-          (* TODO: The better is to avoid generating redundant primed vars *)
-          let new_lhs = 
+          let new_lhs,lhs_rel_list = 
             if is_bag_cnt then 
-              pairwise_proc (CP.arith_simplify_new (CP.remove_red_primed_vars new_lhs))
+              (* TODO: The better is to avoid generating redundant primed vars *)
+              pairwise_proc (CP.arith_simplify_new (CP.remove_red_primed_vars new_lhs)),rel_lhs
             else
-              let new_lhs_drop_rel = 
-                TP.simplify_raw (CP.drop_rel_formula new_lhs) in
+              let new_lhs_drop_rel = TP.simplify_raw (CP.drop_rel_formula new_lhs) in
               let new_lhs_drop_rel = pairwise_proc new_lhs_drop_rel in
               DD.ninfo_hprint (add_str "rel_lhs(b4):" (pr_list !CP.print_formula)) rel_lhs pos;
-              let rel_lhs_new = if rel_to_del=[] then rel_lhs
-                else List.filter (fun x -> not(Gen.BList.mem_eq CP.equalFormula x rel_to_del)) rel_lhs in
+              let rel_lhs_new = List.filter (fun x -> not(Gen.BList.mem_eq CP.equalFormula x rel_to_del)) rel_lhs in
               DD.ninfo_hprint (add_str "rel_lhs(af):" (pr_list !CP.print_formula)) rel_lhs_new pos;
-              CP.conj_of_list (new_lhs_drop_rel::rel_lhs_new) no_pos 
+              CP.conj_of_list (new_lhs_drop_rel::rel_lhs_new) no_pos,rel_lhs_new
           in
           DD.ninfo_hprint (add_str "new_lhs (aft elim_exists)" !CP.print_formula) new_lhs pos;
+          (* Simplification steps *)
+          let lhs_list = CP.split_disjunctions_deep new_lhs in
+          let new_lhs_list = List.map (fun new_lhs_local ->
+            Debug.tinfo_hprint (add_str "rel-defn:rhs" Cprinter.string_of_pure_formula) rhs no_pos;
+            Debug.tinfo_hprint (add_str "rel-defn:new lhs" Cprinter.string_of_pure_formula) new_lhs_local no_pos;
+            let new_lhs_local = filter_ante_wo_rel new_lhs_local rhs in
+            Debug.tinfo_hprint (add_str "rel-defn:filter_ante lhs" Cprinter.string_of_pure_formula) new_lhs_local no_pos;
+            let rec_lhs_rel_vars = List.filter (fun x -> CP.subset (CP.get_rel_id_list x) rel_rhs_n) lhs_rel_list in 
+            let lhs_vars_wo_rel = CP.remove_dups_svl (List.concat (List.map CP.fv_wo_rel lhs_rel_list)) in
+            let rhs_vars_wo_rel = CP.fv_wo_rel rhs @ List.concat(List.map CP.fv_wo_rel rec_lhs_rel_vars) in
+            let lhs_als = MCP.ptr_equations_without_null (MCP.mix_of_pure new_lhs_local) in
+            let lhs_aset = build_var_aset lhs_als in
+            let subs_pairs = List.concat(List.map (fun r -> 
+              let als_set = CP.EMapSV.find_equiv_all r lhs_aset in
+              let needed_set = CP.intersect als_set lhs_vars_wo_rel in
+              List.map (fun elem -> (elem,r)) needed_set
+              ) rhs_vars_wo_rel) in
+            let new_lhs_local = CP.remove_redundant_constraints (CP.subst subs_pairs new_lhs_local) in
+(*            let new_lhs_local = if is_bag_cnt then new_lhs_local else*)
+(*              let rel_lhs,conj_wo_rel = List.partition CP.is_RelForm (CP.list_of_conjs new_lhs_local) in*)
+(*              let rel_lhs = if rec_lhs_rel_vars=[] then rel_lhs else *)
+(*                  let _ = DD.info_hprint (add_str "rel_lhs(b4):" (pr_list !CP.print_formula)) rel_lhs pos in*)
+(*                  let lhs_rec_vars = List.concat (List.map CP.fv conj_wo_rel) in*)
+(*                  DD.info_hprint (add_str "Rec vars " !print_svl) lhs_rec_vars pos;*)
+(*                  let rel_to_del = List.filter (fun x -> CP.intersect lhs_rec_vars (CP.fv x) = []) rec_lhs_rel_vars in*)
+(*                  let _ = DD.info_hprint (add_str "to del:" (pr_list !CP.print_formula)) rel_to_del pos in*)
+(*                  let res = List.filter (fun x -> not(Gen.BList.mem_eq CP.equalFormula x rel_to_del)) rel_lhs in*)
+(*                  DD.info_hprint (add_str "rel_lhs(af):" (pr_list !CP.print_formula)) res pos;*)
+(*                  res*)
+(*              in*)
+(*              CP.conj_of_list (conj_wo_rel@rel_lhs) pos*)
+            new_lhs_local) lhs_list 
+          in
+          Debug.ninfo_hprint (add_str "simplified lhs" (pr_list !CP.print_formula)) new_lhs_list no_pos;
+          (* Simplification steps -- End *)
+
           let rel_def_id = CP.get_rel_id_list rhs in
 (*          let rank_bnd_id = CP.get_rank_bnd_id_list rhs in*)
 (*          let rank_dec_id = CP.get_rank_dec_and_const_id_list rhs in*)
@@ -1392,11 +1426,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
 (*            if rank_dec_id != [] then CP.RankDecr rank_dec_id else*)
               report_error pos "Relation belongs to unexpected category"
           in
-          Debug.tinfo_hprint (add_str "rel-defn:rhs" Cprinter.string_of_pure_formula) rhs no_pos;
-          Debug.tinfo_hprint (add_str "rel-defn:new lhs" Cprinter.string_of_pure_formula) new_lhs no_pos;
-          let new_lhs = filter_ante_wo_rel new_lhs rhs in
-          Debug.tinfo_hprint (add_str "rel-defn:filter_ante lhs" Cprinter.string_of_pure_formula) new_lhs no_pos;
-          [(rel_cat,new_lhs,rhs)] 
+          List.map (fun x -> (rel_cat,x,rhs)) new_lhs_list
         in
         (* End - Auxiliary function *)
         let inf_rel_ls = List.map (filter_ass lhs_p_new) rel_rhs in
