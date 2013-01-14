@@ -23,6 +23,10 @@ node id(node x)
 /*
   # R1(a,b)-->R2(a,b)
 
+
+  requires x::sortHO<a,R1> & R1(a,b)->R2(a,b)
+  ensures  res::sortHO<a,R2> & res=x ;
+
   RELDEFN R2: ( a=a_30 & v2_590=v2_622 & R1(a,v2_590)) -->  R2(a_30,v2_622)]
 
 */
