@@ -27,11 +27,16 @@ node sel(ref node x)
 */
 {
   node tmp;
-  if (x.next==null)
-    { tmp=x; x=null; return tmp;}
+  dprint;
+  tmp =x.next;
+  dprint;
+  if (tmp==null)
+    { dprint;
+      tmp=x; x=null; return tmp;}
   else {
-    tmp = x.next;
+    dprint;
     node n = sel(tmp);
+    dprint;
     if (n.val<=x.val) {
        x.next = tmp;
        return n;

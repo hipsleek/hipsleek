@@ -25,7 +25,27 @@ node sel(ref node x)
                     & P4(m,mi,mi2) & P5(m,mx,mx2)
      ;
 /*
+## n-sel-2a.ss
 
+*************************************
+[( P4(m,mi,mi2), m=mi & mi<=mi2, true, true),
+( P5(m,mx,mx2), m<=mx2 & mx2<=mx, true, true),
+( P3(m,mi,mx), m=mi & mi<=mx, true, true)]
+*************************************
+
+!!! REL POST :  P3(m,mi,mx)
+!!! POST:  m=mi & mi<=mx
+!!! REL PRE :  true
+!!! PRE :  true
+!!! REL POST :  P5(m,mx,mx2)
+!!! POST:  m<=mx2 & mx2<=mx
+!!! REL PRE :  true
+!!! PRE :  true
+!!! REL POST :  P4(m,mi,mi2)
+!!! POST:  m=mi & mi<=mi2
+!!! REL PRE :  true
+!!! PRE :  true
+P
 
 */
 {
