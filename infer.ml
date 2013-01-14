@@ -1143,7 +1143,7 @@ let infer_pure_m estate lhs_mix lhs_mix_0 lhs_wo_heap rhs_mix pos =
     Debug.tinfo_hprint (add_str "xp" !CP.print_formula) xp no_pos;
     infer_pure_m estate lhs_rels xp lhs_mix_0 lhs_wo_heap rhs_mix estate.es_infer_vars pos
 
-let infer_pure_m estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos =
+let infer_pure_m i estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos =
   let pr1 = !print_mix_formula in 
   let pr2 = !print_entail_state_short in 
   let pr2a = !print_entail_state in 
@@ -1152,7 +1152,7 @@ let infer_pure_m estate lhs_xpure lhs_xpure0 lhs_wo_heap rhs_xpure pos =
   let pr_len = fun l -> (string_of_int (List.length l)) in
   let pr_res = pr_triple (pr_option (pr_pair pr2 !print_pure_f)) (pr_option pr_p) pr_res_lst in
   let pr0 es = pr_pair pr2 !CP.print_svl (es,es.es_infer_vars) in
-  Debug.no_4 "infer_pure_m_2" 
+  Debug.no_4_num i "infer_pure_m_2" 
     (add_str "estate " pr0) 
     (add_str "lhs xpure " pr1) 
     (add_str "lhs xpure0 " pr1)
@@ -1315,9 +1315,25 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
       let rhs_p_new = CP.disj_of_list 
         ((List.map (fun x -> CP.join_conjunctions x)
           other_rhs_ls)(*@other_disjs*)) no_pos in
-      let rhs_mix_new = MCP.mix_of_pure rhs_p_new in
-
       let lhs_p = MCP.pure_of_mix lhs_mix in
+      let lhs_h_p = MCP.pure_of_mix lhs_h_mix in
+      let lhs_c = CP.mkAnd lhs_p lhs_h_p pos in
+      let fml = CP.mkAnd lhs_c rhs_p_new pos in
+      let fml = CP.drop_rel_formula fml in
+      let rhs_mix_new = MCP.mix_of_pure rhs_p_new in
+      let check_sat = TP.is_sat_raw (MCP.mix_of_pure fml) in
+      if not(check_sat) then
+        begin
+        (* TODO WN : we could perform infer_lhs_contra directly below as optimization *)
+        DD.dinfo_pprint ">>>>>> infer_collect_rel <<<<<<" pos;
+        Debug.dinfo_pprint "LHS and RHS Contradiction detected for:" pos; 
+        Debug.dinfo_hprint (add_str "lhs" Cprinter.string_of_pure_formula) lhs_c no_pos;
+        Debug.dinfo_hprint (add_str "rhs" Cprinter.string_of_pure_formula) rhs_p_new no_pos;
+        Debug.dinfo_pprint "Skip collection of following RELDEFN:" pos; 
+        Debug.dinfo_hprint (add_str "rel defns" (pr_list Cprinter.string_of_pure_formula)) rel_rhs no_pos;
+        (estate,lhs_mix,rhs_mix_new)
+        end
+      else
       let (lhs_p_memo,subs,bvars) = CP.memoise_rel_formula ivs lhs_p in
       (*let ranks = List.filter CP.has_func rel_rhs in*)
 

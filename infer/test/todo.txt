@@ -1,4 +1,4 @@
-## n-sel-2a.ss
+## n-sel-2a.ss  #DONE (accurate now)
 
 rel_defns for P3(..), P4(..), P5(..) are rather large
 Simplification could help below:
@@ -31,7 +31,10 @@ infer [P5] x=1 & P5(a) & a>0 & b=a-1
 
 print residue.
 
-## contra.slk 
+## contra.slk #DONE
+ 
+ SOLUTION : currently skip collect_inf if LHS & RHS contradict
+    can optimize by calling infer_contra directly
 
 /*
 PROBLEM : once lhs contra detected (getting false), 

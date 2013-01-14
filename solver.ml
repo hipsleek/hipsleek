@@ -5564,7 +5564,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
             begin 
               match split_a_opt with 
               | None -> 
-                let r1,r2,r3 = Inf.infer_pure_m estate split_ante1 split_ante0 m_lhs split_conseq pos in
+                let r1,r2,r3 = Inf.infer_pure_m 1 estate split_ante1 split_ante0 m_lhs split_conseq pos in
 (*                r1,r2,List.concat (List.map (fun (_,b,_) -> b) r3),[],false*)
                 (match r1,r3 with
                   | None,[] -> None,r2,[],[],false
@@ -5579,7 +5579,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                 let res = List.map (fun f -> 
                     (* TODO: lhs_wo_heap *)
                     let lhs_wo_heap = f in
-                    let r1,r2,r3 = Inf.infer_pure_m estate f f lhs_wo_heap split_conseq pos in
+                    let r1,r2,r3 = Inf.infer_pure_m 2 estate f f lhs_wo_heap split_conseq pos in
                     let estate_f = {estate with es_formula = 
                         (match estate.es_formula with
                         | Base b -> CF.mkBase_simp b.formula_base_heap f
@@ -9632,7 +9632,7 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls fp_func preprocess_fun 
 (*          let rels_fml = List.filter CP.is_RelForm (CP.list_of_conjs f1_orig) in*)
 (*          [(constTrue, List.fold_left (fun f1 f2 -> CP.mkAnd f1 f2 no_pos) constTrue rels_fml)]*)
 (*        else *)
-          let _,_,l = Infer.infer_pure_m es f1 f1 f1 f2 no_pos in
+          let _,_,l = Infer.infer_pure_m 3 es f1 f1 f1 f2 no_pos in
           List.concat (List.map (fun (_,x,_) -> List.map (fun (a,b,c) -> (c,b)) x) l)
       in lst
 (*      if lst=[] then*)
