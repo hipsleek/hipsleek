@@ -1,0 +1,16 @@
+data cell {
+  int val;
+}.
+
+// 1. Valid - ok; Residue: emp&a=b
+infer [] y::cell<a> & a=3 |- (exists b: y::cell<b>).
+print residue.
+
+infer [] y::cell<a> & a=3 |- [b] y::cell<b>.
+print residue.
+
+infer [] y::cell<a> & a>3 |- [b] y::cell<b> & b>2.
+print residue.
+
+infer [] y::cell<a> & a>3 |- y::cell<b> & b>2.
+print residue.

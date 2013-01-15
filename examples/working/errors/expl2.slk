@@ -1,0 +1,15 @@
+
+data cell {
+ int val;
+}.
+
+checkentail x::cell<2> |- x::cell<b>.
+print residue.
+
+checkentail x::cell<3> |- [bb] x::cell<bb>.
+print residue.
+
+
+//checkentail x::cell<2> |- (exists b:  x::cell<b>).
+//print residue.
+

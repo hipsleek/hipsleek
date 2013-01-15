@@ -1,0 +1,10 @@
+//Valid.Valid.Valid.Fail.Fail.Fail
+data node { int val ; node next }.
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r>@I * r::lseg<n - 1, p>
+         inv n >= 0.
+
+lemma "L61" self::lseg<n, p> & n = 6 -> self::lseg<n1, r1> * r1::lseg<n2, p> & n1 + n2 = 6.
+
+lemma "L62" self::lseg<n, p> & n>6 -> self::lseg<n1, r1> * r1::node<_,r2@M>@I * r2::lseg<n2, p> & n1 + n2 > 5.

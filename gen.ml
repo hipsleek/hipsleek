@@ -1,17 +1,17 @@
 
 module type INC_TYPE =
-    sig
-      type t
-      val zero : t
-      val inc : t -> t
-    end;;
+sig
+  type t
+  val zero : t
+  val inc : t -> t
+end;;
 
 module type EQ_TYPE =
-    sig
-      type t
-      val eq : t -> t -> bool
-      val string_of : t -> string
-    end;;
+sig
+  type t
+  val eq : t -> t -> bool
+  val string_of : t -> string
+end;;
 
 module Basic =
 (* basic utilities that can be opened *)
@@ -97,41 +97,41 @@ struct
  
  let add_str s f xs = s^":"^(f xs)
 
-  let opt_to_list o = match o with
-    | None -> []
-    | Some a -> [a]
+ let opt_to_list o = match o with
+   | None -> []
+   | Some a -> [a]
 
-  let opt_list_to_list o = match o with
-    | None -> []
-    | Some a -> a
+ let opt_list_to_list o = match o with
+   | None -> []
+   | Some a -> a
 
-  let fnone (c:'a):'a option = None
+ let fnone (c:'a):'a option = None
 
-  let is_empty l = match l with [] -> true | _ -> false
+ let is_empty l = match l with [] -> true | _ -> false
 
-  let rec last_ne l a  = match l with
-    | [] -> a
-    | x::xs -> last_ne l x
+ let rec last_ne l a  = match l with
+   | [] -> a
+   | x::xs -> last_ne l x
 
-  let last l = match l with
-    | [] -> raise Not_found
-    | x::xs -> last_ne l x
+ let last l = match l with
+   | [] -> raise Not_found
+   | x::xs -> last_ne l x
 
-  let spacify i = 
-    let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
-    function [] -> ""
-      | [x] -> x
-      | x::xs -> x ^ (s' xs)
+ let spacify i = 
+   let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
+   function [] -> ""
+     | [x] -> x
+     | x::xs -> x ^ (s' xs)
 
    (*
     first component of returned value contains the first i values from the list
     second component contains the rest
   *)
-  let rec split_at (xs : 'a list) (i : int) : ('a list * 'a list) =
-    if i = 0 then ([], xs)
-    else
-	  let a, b = split_at (List.tl xs) (i-1) in
-	  ((List.hd xs) :: a, b) 
+ let rec split_at (xs : 'a list) (i : int) : ('a list * 'a list) =
+   if i = 0 then ([], xs)
+   else
+     let a, b = split_at (List.tl xs) (i-1) in
+     ((List.hd xs) :: a, b) 
 
   let rec split3 (l : ('a * 'b * 'c) list) : 'a list * 'b list * 'c list = match l with
     | (h1, h2, h3) :: rest ->
@@ -1106,6 +1106,12 @@ struct
       let l1 = find_diff eq s x in
       let l2 = find_diff eq s y in
       (overlap_q l1 l2)
+
+  let rec remove_dups_disj_set (s: dpart): dpart =
+    match s with
+    | [] -> []
+    | x::xs -> if (List.length x == 0) || List.exists (fun y -> (List.length x == List.length y) && List.for_all2 eq x y) xs   
+      then remove_dups_disj_set xs else [x]@(remove_dups_disj_set xs)
 
   (* returns s1/\s2 *)
   let merge_disj_set (s1: dpart) (s2: dpart): dpart =

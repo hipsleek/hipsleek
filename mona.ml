@@ -309,6 +309,7 @@ and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
     | CP.ListPerm(e1, e2, _)
     | CP.Lt(e1, e2, _)
     | CP.Lte(e1, e2, _) 
+    | CP.SubAnn(e1, e2, _ )
     | CP.Gt(e1, e2, _)
     | CP.Gte(e1, e2, _) -> 
           (* let _ = print_string("find_order_exp for e1=" ^ (Cprinter.string_of_formula_exp e1) ^ " and e2="  ^ (Cprinter.string_of_formula_exp e2) ^ "\n") in *)

@@ -2146,7 +2146,7 @@ let merge_mems f1 f2 slice_dup = match (f1,f2) with
   
   
 let merge_mems f1 f2 slice_dup = 
-  Debug.no_3 "merge_mems " !print_mix_f !print_mix_f (fun x -> "?")
+  Debug.no_3 "merge_mems " !print_mix_f !print_mix_f (string_of_bool)
   !print_mix_f merge_mems f1 f2 slice_dup
 
 let reset_unsat_flag_mix m = 

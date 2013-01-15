@@ -1,0 +1,49 @@
+/*
+@M - mutable   (0)
+@I - immutable (1)
+@L - lending   (2)
+@A - no access (3)
+*/
+
+//data cell {int val;}.
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n, v1, v2> == self = null & n = 0 
+	or self::node<a@v2, q> * 
+    q::ll<n-1, v1, v2>@v1
+  inv n >= 0.
+
+
+pred ll2<n,v1> == self = null & n = 0 
+  or self::node<a, q@v1> * q::ll2<n-1,v1> 
+  inv n >= 0.
+
+/*
+checkentail x::ll2<n,@I> |- x::ll2<n,@M>.//@I
+print residue.
+
+checkentail x::node<a,q@I> |- x::node<b,p@M>.
+print residue.*/
+
+// (1) Fail ------- TODO: will it work after inference works?
+checkentail x::node<p@v,q> * q::ll<n,@L, v>@L & n > 2 &  @L <: v |- x::ll<n+1,@L,@A>@L & n > 2.
+print residue.
+
+// (2) Valid
+checkentail x::node<a@M, r@M> * r::ll<n, @M, @M> |-   x::node<a@v2, q> * q::ll<n, v1, v2>@v1. //x::ll<n + 1, @M, @M>.
+print residue.
+
+// <1>x::node<a@M,r@A>@M[Orig]&0<=0 & v1=@M & v2=@M & @M=v2 & q=r&{FLOW,(17,18)=__norm}[] ------- TODO: check this residue after inference works, should be
+// <1>x::node<a@A,r@A>@M[Orig]&0<=0 & ....
+
+// (3) Valid
+checkentail x::node<a@M, r@M> * r::node<b@M, r2@M> * r2::ll<n, @M, @M> |- x::ll<n + 2, @M, @M>.
+print residue.
+/*
+Entail (3) : Valid.
+ <1>EXISTS(flted_45_357,flted_45_356: x::node<a@M,r@A>@M[Orig] * r::node<b@M,r2@A>@M[Orig]&0<=0 & flted_45_357=@M & flted_45_356=@M & a_361=a & q_362=r & a_373=b & q_374=r2 & 0<=flted_45_356 & @M<:flted_45_356 & @M<:flted_45_356 & 0<=flted_45_356 & 0<=flted_45_356 & @M<:flted_45_356 & 0<=flted_45_356 & @M<:flted_45_356&{FLOW,(17,18)=__norm})[]
+*/

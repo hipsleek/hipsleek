@@ -1,0 +1,78 @@
+data cell {
+  int val;
+}.
+
+// 1. Valid - ok; Residue: emp&a=b
+infer [] y::cell<a>@M |- y::cell<b>@M.
+print residue.
+
+// 2. Valid - ok; Residue: emp&v=@M&a=b
+infer [] y::cell<a>@M |- y::cell<b>@v & v=@M.
+print residue.
+
+// 3. Valid - ok; Residue: emp&v=@M&a=b
+infer [] y::cell<a>@M |- y::cell<b>@v & v<:@M.
+print residue.
+
+// 4. Valid - ok; Residue: emp&a=b
+infer [] y::cell<a>@M |- (exists v: y::cell<b>@v & v=@M).
+print residue.
+
+
+// 5. Valid - ok; Residue: y::cell<a>@M[Orig]&a=b
+infer [] y::cell<a>@M |- y::cell<b>@L.
+print residue.
+
+// 6. Fail - ok:  v=@M |- v=@L.
+infer [] y::cell<a>@M |- y::cell<b>@v & v=@L.
+print residue.
+
+//7. Valid - ok; Residue: emp&v=@M&a=b
+infer [] y::cell<a>@M |- y::cell<b>@v & v<:@L.
+print residue.
+
+//8. Valid - ok; Residue: emp&a=b (?????)
+infer [] y::cell<a>@M |- (exists v: y::cell<b>@v & v=@L).
+print residue.
+
+
+//9. Valid - ok; Residue: y::cell<a>@L&a=b
+infer [] y::cell<a>@L |- y::cell<b>@L.
+print residue.
+
+//10. Valid - ok; Residue: y::cell<a>@L & v=@L & a=b
+infer [] y::cell<a>@L |- y::cell<b>@v & v=@L.
+print residue.
+
+//11. Valid - ok; Residue: y::cell<a>@L & v=@L & a=b
+infer [] y::cell<a>@L |- y::cell<b>@v & v<:@L.
+print residue.
+
+//12. Valid - ok; Residue: y::cell<a>@L&a=b
+infer [] y::cell<a>@L |- (exists v: y::cell<b>@v & v=@L).
+print residue.
+
+
+//13. Fail - ok. cause: mismatched annotation 
+infer [] y::cell<a>@L |- y::cell<b>@M.
+print residue.
+
+//14 Fail - ok; cause: v=@L |-  v=@M.
+infer [] y::cell<a>@L |- y::cell<b>@v & v=@M.
+print residue.
+
+//15. Fail - ok; cause: v=@L |-  v<:@M.
+infer [] y::cell<a>@L |- y::cell<b>@v & v<:@M.
+print residue.
+
+//16. Valid - (????); Residue: y::cell<a>@L & a=b
+infer [] y::cell<a>@L |- (exists v: y::cell<b>@v & v=@M).
+print residue.
+
+//17. Fail - ok. cause: true |-  @L<:@M.
+checkentail true |- (exists v: @L<:v & v=@M).
+print residue.
+
+checkentail true |- (exists v: @L<:v) .
+print residue.
+

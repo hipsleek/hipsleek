@@ -1,0 +1,42 @@
+/*
+@M - mutable   (0)
+@I - immutable (1)
+@L - lending   (2)
+@A - no access (3)
+*/
+
+//data cell {int val;}.
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+// (1) valid
+checkentail x::node<p,q>|- true.
+print residue.
+
+// (2) valid
+checkentail x::node<p,q> |- x::node<p,q>.
+print residue.
+
+// (3) valid
+checkentail x::node<p,q>@I |- x::node<p,q>@I.
+print residue.
+
+// (4) valid
+checkentail x::node<p,q>@L |- x::node<p,q>@L.
+print residue.
+
+// (5) valid
+checkentail x::node<p,q> |- x::node<p,q>@I.
+print residue.
+
+// (6) valid
+checkentail x::node<p,q>@M |- x::node<p,q>@L.
+print residue.
+
+// (6) valid
+checkentail x::node<p,q>@M |- x::node<p@M,q@L>.
+print residue.

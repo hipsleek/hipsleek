@@ -28,6 +28,8 @@ time ./run-fast-tests.pl infinity $@
 echo -e "\n##################### imm tests --eps ###################"
 time ./run-fast-tests.pl imm -flags "--eps" $@ -tp redlog
 
+echo -e "\n##################### mem tests ######################"
+time ./run-fast-tests.pl mem $@
 
 # fixed
 echo -e "\n##################### term tests #####################"
