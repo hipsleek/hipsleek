@@ -1069,6 +1069,24 @@ and getAnn (p:formula) =
   match p with
     | BForm ((Lte (Var (_,_), IConst(i,_), _),_),_) -> [i]
     | _ -> []
+  
+and getMaxAnn (p:formula) =
+  match p with
+  | BForm ((Lte (Var (_,_), IConst(i,_), _),_),_) -> [i]
+  | BForm ((Gte (IConst(i,_), Var (_,_), _),_),_) -> [i]
+  | _ -> []
+
+and getMinAnn (p:formula) =
+  match p with
+  | BForm ((Gte (Var (_,_), IConst(i,_), _),_),_) -> [i]
+  | BForm ((Lte (IConst(i,_), Var (_,_),_), _),_) -> [i]
+  | _ -> []
+
+and getEqAnn (p:formula) =
+  match p with
+  | BForm ((Eq (IConst(i,_), Var (_,_),_), _),_) -> [i]
+  | BForm ((Eq (Var (_,_),IConst(i,_),_), _),_) -> [i]
+  | _ -> []
 
 and is_null (e : exp) : bool =
   match e with
@@ -1802,7 +1820,7 @@ and mkAndList_x b =
   else AndList (Label_Pure.norm (List.filter (fun (_,c)-> not (isConstTrue c)) b))
     
 and mkAndList b = Debug.no_1 "pure_mkAndList" (fun _ -> "") !print_formula (fun _-> mkAndList_x b) b
-  
+
 and and_list_to_and l = match l with
   | [] -> mkTrue no_pos
   | (_,x)::t -> List.fold_left (fun a (_,c)-> mkAnd a c no_pos) x t
@@ -8135,15 +8153,20 @@ let compute_instantiations pure_f v_of_int avail_v =
   let pr3 = pr_list (pr_pair !print_sv !print_formula) in
   Debug.no_3  "compute_instantiations" pr1 pr2 pr2 pr3 (fun _ _ _ -> compute_instantiations_x pure_f v_of_int avail_v) pure_f v_of_int avail_v
 
-let rec add_ann_constraints vrs f = 
-  match vrs with
-    | v :: r -> 
-          let c1 = BForm((Lte(IConst(0, no_pos), Var(v,no_pos), no_pos), None), None) in
-          let c2 = BForm((Lte(Var(v,no_pos), IConst(2, no_pos), no_pos), None), None) in
+let add_ann_constraints vrs f = 
+  if not(!Globals.allow_field_ann) then f 
+  else
+    let rec helper vrs f = 
+    match vrs with
+      | v :: r -> 
+          let c1 = BForm((Lte(IConst( (int_of_heap_ann Mutable), no_pos), Var(v,no_pos), no_pos), None), None) in
+          let c2 = BForm((Lte(Var(v,no_pos), IConst(( (int_of_heap_ann Accs)), no_pos), no_pos), None), None) in 
+          (* let c2 = BForm((Lte(Var(v,no_pos), IConst(( (int_of_heap_ann Lend)), no_pos), no_pos), None), None) in  *)
           let c12 = mkAnd c1 c2 no_pos in
-          let rf = add_ann_constraints r f in
+          let rf = helper r f in
           mkAnd c12  rf no_pos
-    | [] -> f
+      | [] -> f
+    in helper vrs f
 
 let add_ann_constraints vrs f =
   let p1 = !print_formula in
@@ -8410,15 +8433,15 @@ let remove_dupl_conj_list (cnjlist:formula list):formula list =
   Gen.BList.remove_dups_eq (equalFormula_f eq_spec_var) cnjlist
   (* Gen.BList.remove_dups_eq fct cnjlist *)
 
- (*Eq, Lt, Lte, Gt, Gte*)
+(*Eq, Lt, Lte, Gt, Gte*)
 let remove_dupl_conj_opt_list (cnjlist:formula option list):formula option list =
-   Gen.BList.remove_dups_eq (fun opt1 opt2 ->
-       match (opt1, opt2) with
-         | (None, None)
-         | (Some _, None)
-         | (None, Some _)  -> false
-         | (Some f1, Some f2) -> equalFormula_f eq_spec_var f1 f2) cnjlist
-  
+  Gen.BList.remove_dups_eq (fun opt1 opt2 -> 
+      match (opt1, opt2) with 
+        | (None, None) 
+        | (Some _, None)
+        | (None, Some _)  -> false
+        | (Some f1, Some f2) -> equalFormula_f eq_spec_var f1 f2) cnjlist
+
 (*Eq, Lt, Lte, Gt, Gte*)
 let remove_dupl_conj_pure (p:formula) =
   let ps = split_conjunctions p in
