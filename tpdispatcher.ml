@@ -1415,12 +1415,13 @@ let pairwisecheck_raw (f : CP.formula) : CP.formula =
 
 
 let simplify_with_pairwise (f : CP.formula) : CP.formula =
-    let f1 = simplify f in
-    let f2 = pairwisecheck f1 in
-    (* Debug.info_hprint (add_str "simplifyX(input)" pf) f no_pos; *)
-    (* Debug.info_hprint (add_str "simplifyX(output)" pf) f1 no_pos; *)
-    (* Debug.info_hprint (add_str "simplifyX(pairwise)" pf) f2 no_pos; *)
-    f2
+  let pf = Cprinter.string_of_pure_formula in
+  let f1 = simplify f in
+  let f2 = pairwisecheck f1 in
+  Debug.ninfo_hprint (add_str "simplifyX(input)" pf) f no_pos;
+  Debug.ninfo_hprint (add_str "simplifyX(output)" pf) f1 no_pos;
+  Debug.ninfo_hprint (add_str "simplifyX(pairwise)" pf) f2 no_pos;
+  f2
 
 let simplify_with_pairwise (s:int) (f:CP.formula): CP.formula = 
   let pf = Cprinter.string_of_pure_formula in

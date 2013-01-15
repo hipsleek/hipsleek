@@ -1,7 +1,7 @@
 relation P5(int m).
 
 infer [P5] x=1 & P5(a) & a>0 & b=a-1 
- |-  x=2 & P5(b).
+            |-  x=2 & P5(b).
 
 print residue.
 

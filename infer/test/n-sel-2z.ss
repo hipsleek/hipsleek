@@ -7,24 +7,25 @@ data node {
 }
 
 
-llMM<mi,mx> == self::node<v,null> & mi=v  & mx=v
-  or self::node<v, p> * p::llMM<mi2,mx2> & mi=min(v,mi2) & mx=max(v,mx2)
+llMM<v,mi,mx> == self::node<v,null> & mi=v  & mx=v
+  or self::node<v, p> * p::llMM<v2,mi2,mx2> & mi=min(v,mi2) & mx=max(v,mx2)
   //& v<=mi2
-inv self!=null & mi<=mx;
+inv self!=null & mi<=v<=mx;
 
-relation P3(int a1, int a2,int a3).
+relation P3(int v,int a1, int a2,int a3).
 relation P4(int a1, int a2,int a3).
 relation P5(int a1, int a2,int a3).
 relation P6(int a1, int a2,int a3,int a5,int a6).
+relation P7(int b, int a,int a1, int a2,int a3,int a5,int a6).
 
 node sel(ref node x)
      //infer [P3,P4,P5]
-     infer [P3,P6]
-     requires x::llMM<mi,mx> 
-     ensures  res::node<m,_> & x'=null & P3(m,mi,mx)
-           or res::node<m,_> * x'::llMM<mi2,mx2> 
+     infer [P3,P7]
+     requires x::llMM<v1,mi,mx> 
+     ensures  res::node<m,_> & x'=null & P3(v1,m,mi,mx)
+           or res::node<m,_> * x'::llMM<v2,mi2,mx2> 
                     //& P4(m,mi,mi2) & P5(m,mx,mx2)
-                    & P6(m,mi,mi2,mx,mx2)
+                    & P7(v1,v2,m,mi,mi2,mx,mx2)
      ;
 /*
 ## n-sel-2a.ss

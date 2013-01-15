@@ -23,7 +23,9 @@ relation R2(int r, int a).
 node insert(node x, node y)
      infer [R,R2]
      requires x::sortHO<a,R> * y::node<v,null>
-     ensures  res::sortHO<b,R2> & (v>a & b=a | (a>=b & b=v));
+     ensures  res::sortHO<b,R2> &  b=min(a,v) 
+        //& (v>a & b=a | (a>=b & b=v))
+     ;
 /*
 !!! REL POST :  R2(b,v2_671)
 !!! POST:  b<=v2_671
