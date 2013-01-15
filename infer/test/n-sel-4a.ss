@@ -19,12 +19,13 @@ relation P5(int a1, int a2,int a3).
 relation P6(int a1, int a2,int a3).
 
 node sel(ref node x)
-     infer [P,P3,P5,P6]
+//infer [P,P3,P5,P6]
+     infer [P,P3,P4]
      requires x::llMM<mi,mx> & P(mi,mx)
      ensures  res::node<m,_> & x'=null & P3(m,mi,mx)
            or res::node<m,_> * x'::llMM<mi2,mx2> 
-     & P5(m,mi,mi2) & P6(m,mx,mx2)
-//& P4(m,mi,mi2,mx,mx2)
+//& P5(m,mi,mi2) & P6(m,mx,mx2)
+     & P4(m,mi,mi2,mx,mx2)
      ;
 /*
 ## n-sel-2a.ss

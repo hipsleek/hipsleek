@@ -17,12 +17,12 @@ relation P4(int a1, int a2,int a3).
 relation P5(int a1, int a2,int a3).
 
 node insert(node x, node y)
-     infer [R,P3,P4,P5]
-     requires x::llMM<v,mi,mx> * y::node<a,null> & R(a,mi,mx)
-     ensures  res::llMM<v2,mi2,mx2> 
-         & P3(mi,a,mi2) 
-         & P4(mx,a,mx2)
-         & P5(v2,v,a)
+//infer [R,P3,P4,P5]
+     requires x::llMM<v,mi,mx> * y::node<a,null> 
+//& R(a,mi,mx)
+     ensures  res::llMM<v2,mi2,mx2> & mi2=min(mi,a) & mx2=max(mx,a)
+                & (v2=v | v2=a)
+//& P3(mi,a,mi2) & P4(mx,a,mx2) & P5(v2,mi2,mx2)
      ;
 /*
 P5 indicates that sorting is based on an ascending technique

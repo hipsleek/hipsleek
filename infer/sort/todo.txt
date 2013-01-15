@@ -216,3 +216,29 @@ RELDEFN R2: ( R(b,v2_795)) -->  R2(b,v2_795)]
 !!! REL PRE :  R(r_741,a_742)
 !!! PRE :  r_741<=a_742
 Procedure insert$node~node SUCCESS
+
+## n-ins-4b3c.ss
+
+node insert(node x, node y)
+     infer [R,P3,P4,P5]
+     requires x::llMM<v,mi,mx> * y::node<a,null> & R(a,mi,mx)
+     ensures  res::llMM<v2,mi2,mx2> 
+         & P3(mi,a,mi2) 
+         & P4(mx,a,mx2)
+         & P5(v2,v,a)
+     ;
+
+Why did we not a printing on R(a,mi,mx) itself?
+
+!!! REL POST :  P5(v2,v,a)
+!!! POST:  (a=v2 & a<=v) | (v=v2 & v2<a)
+!!! REL PRE :  true
+!!! PRE :  true
+!!! REL POST :  P4(mx,a,mx2)
+!!! POST:  (mx=mx2 & a<=mx) | (a=mx2 & mx<mx2)
+!!! REL PRE :  true
+!!! PRE :  true
+!!! REL POST :  P3(mi,a,mi2)
+!!! POST:  (a=mi2 & a<=mi) | (mi=mi2 & mi2<=a)
+!!! REL PRE :  true
+!!! PRE :  true
