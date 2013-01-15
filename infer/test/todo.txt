@@ -31,7 +31,7 @@ infer [P5] x=1 & P5(a) & a>0 & b=a-1
 
 print residue.
 
-## contra.slk #DONE
+## contra.slk #DONE #OPTIMIZED
  
  SOLUTION : currently skip collect_inf if LHS & RHS contradict
     can optimize by calling infer_contra directly
@@ -66,7 +66,7 @@ inv self!=null & mi<=mx;
  Can we take advantage of this simplifcation to avoid
  unnecessary disjunctive formula.
 
-# n-sel-4.ss
+# n-sel-4.ss #DONE
 
 We obtained:
 

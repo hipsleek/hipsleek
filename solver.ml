@@ -5456,11 +5456,27 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         (* MCP.mix_of_pure (CP.subst_rel_args (MCP.pure_of_mix rhs_p) eqs rel_args) *)
       else lhs_p
   in
+  let stk_inf_pure = new Gen.stack in (* of xpure *)
+  let stk_rel_ass = new Gen.stack in (* of xpure *)
+  let stk_estate = new Gen.stack in (* of estate *)
   (* let _ = print_string ("lhs_p2 : " ^ (Cprinter.string_of_mix_formula lhs_p2) ^ "\n\n") in *)
-  let (estate,lhs_new,rhs_p) = Inf.infer_collect_rel (fun x -> TP.is_sat_raw (MCP.mix_of_pure x)) estate_orig xpure_lhs_h1 
-    lhs_p2 rhs_p pos in
-  let infer_rel = estate.es_infer_rel in
-  if infer_rel!=[] then Debug.ninfo_hprint (add_str "REL INFERRED" (pr_list CP.print_lhs_rhs)) infer_rel no_pos;
+  let (estate,lhs_new,rhs_p,neg_lhs,rel_ass) = Inf.infer_collect_rel 
+      (fun x -> TP.is_sat_raw (MCP.mix_of_pure x)) estate_orig xpure_lhs_h1 lhs_p2 rhs_p pos in
+  let _ = match neg_lhs,rel_ass with
+    | None,[] -> ()
+    | None,[(h1,h2,_)] ->
+      (stk_rel_ass # push_list h2;
+      stk_estate # push h1)
+    | Some (es,p),[] -> 
+      (stk_inf_pure # push p;
+      stk_estate # push es)
+    | Some (es,p),[(h1,h2,_)] -> 
+      (stk_inf_pure # push p;
+      stk_rel_ass # push_list h2;
+      stk_estate # push es)
+    | _,_ -> report_error pos "Length of relational assumption list > 1"
+  in
+  
   (* Termination *)
   let (estate,_,rhs_p,rhs_wf) = Term.check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos in
   (* Termination: Try to prove rhs_wf with inference *)
@@ -5495,9 +5511,6 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
               | Some es -> es
           end
   in
-  let stk_inf_pure = new Gen.stack in (* of xpure *)
-  let stk_rel_ass = new Gen.stack in (* of xpure *)
-  let stk_estate = new Gen.stack in (* of estate *)
   Debug.devel_zprint (lazy ("heap_entail_empty_heap: ctx:\n" ^ (Cprinter.string_of_estate estate))) pos;
   Debug.devel_zprint (lazy ("heap_entail_empty_heap: rhs:\n" ^ (Cprinter.string_of_mix_formula rhs_p))) pos;
   (* TO DOCUMENT : Loc : What are result types here? *)
@@ -5542,6 +5555,8 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
         (imply_mix_formula 1 split_ante0 split_ante1 split_conseq imp_no memset) 
       in
       let i_res1,i_res2,i_res3 =
+        if not(stk_estate # is_empty) then (true,[],None)
+        else
         if i_res1==true then (i_res1,i_res2,i_res3)
         else
           let finish_flag = 
