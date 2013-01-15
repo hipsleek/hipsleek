@@ -45,10 +45,9 @@ node sel(ref node x)
 relation P(int a1, int a2,int a3,int a4,int a5,int a6).
 
 node sort(node x)
-   infer [P]
   requires x::llMM<v,mi,mx> 
-  ensures  res::llMM<v2,mi2,mx2> & P(mi,mx,v,v2,mi2,mx2)
-//ensures  res::llMM<v2,mi2,mx2> & mx=mx2 & mi2=v2 & mi=v2 & v2<=v & v<=mx
+  //ensures  res::llMM<v2,mi2,mx2> & mx=mx2 & mi2=v2 & mi=v2 & v2<=v & v<=mx
+  ensures  res::sortMM<v2,mi2,mx2> & mx=mx2 & mi2=v2 & mi=v2 & v2<=v & v<=mx
      //ensures  res::sortMM<mi2,mx2> & mx=mx2 & mi=mi2 & mi2<=mx
      ;
   /*
