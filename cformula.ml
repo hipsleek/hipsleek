@@ -5966,7 +5966,7 @@ let simplify_ctx_elim_false_dupl t1 t2 =
   match proc_left t1 t2 with
     | Some r1 -> r1
     | None -> 
-          (match proc_left t2 [] with
+          (match proc_left t2 t1 with
             | Some r2 -> r2
             | None -> t1@t2)
 
@@ -6003,7 +6003,7 @@ let list_context_union c1 c2 =
 
 let rec union_context_left c_l = match (List.length c_l) with
   | 0 ->  Err.report_error {Err.error_loc = no_pos;  
-              Err.error_text = "folding empty context list \n"}
+              Err.error_text = "union_context_left: folding empty context list \n"}
   | 1 -> (List.hd c_l)
   | _ ->  List.fold_left list_context_union (List.hd c_l) (List.tl c_l)
  
@@ -6034,10 +6034,10 @@ and isMayFailCtx cl = match cl with
   | FailCtx fc -> isMayFail fc
   | SuccCtx _ -> false
 
-and fold_context_left c_l = 
+and fold_context_left i c_l = 
   let pr = !print_list_context_short in
   let pr1 x = String.concat "\n" (List.map !print_list_context_short x) in
-  Debug.no_1 "fold_context_left" pr1 pr fold_context_left_x c_l
+  Debug.no_1_num i "fold_context_left" pr1 pr fold_context_left_x c_l
 
 (* Fail U Succ --> Succ *)
 (* Fail m1 U Fail m2 --> And m1 m2 *)

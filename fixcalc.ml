@@ -72,10 +72,15 @@ and fixcalc_of_exp e = match e with
     end
   | _ -> illegal_format ("Fixcalc.fixcalc_of_exp: Not supported expression")
 
+let fixcalc_of_bool b =
+  match b with
+    | true -> "1=1"
+    | false -> "1=0"
+
 let rec fixcalc_of_b_formula b =
   let (pf, _) = b in
   match pf with
-    | CP.BConst (b,_) -> string_of_bool b 
+    | CP.BConst (b,_) -> fixcalc_of_bool b 
     | CP.BVar (x, _) -> fixcalc_of_spec_var x
     | CP.Lt (e1, e2, _) -> fixcalc_of_exp e1 ^ op_lt ^ fixcalc_of_exp e2
     | CP.Lte (e1, e2, _) -> fixcalc_of_exp e1 ^ op_lte ^ fixcalc_of_exp e2
@@ -229,8 +234,7 @@ let rec remove_paren s n = if n=0 then "" else match s.[0] with
 let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var list): CP.formula =
   let vars = para_names in
   let fmls = List.map (fun p -> 
-    let exists_vars = CP.diff_svl (CP.fv p) para_names in
-    let exists_vars = List.filter (fun x -> not(CP.is_rel_var x)) exists_vars in
+    let exists_vars = CP.diff_svl (CP.fv_wo_rel p) para_names in
     CP.mkExists exists_vars p None no_pos) fmls in
 
   (* Prepare the input for the fixpoint calculation *)
@@ -455,10 +459,11 @@ let helper (rel, pfs) ante_vars specs =
   let pfs,no = process_base_rec pfs rel specs in
 
   (* Make existence *)
-  let pfs = List.map (fun p -> 
-    let exists_vars = CP.diff_svl (CP.fv p) (CP.fv rel) in
-    let exists_vars = List.filter (fun x -> not(CP.is_rel_var x)) exists_vars in
-    CP.mkExists exists_vars p None no_pos) pfs 
+  let pfs = List.concat (List.map (fun p -> 
+    let exists_vars = CP.diff_svl (CP.fv_wo_rel p) (CP.fv rel) in
+    let res = CP.mkExists exists_vars p None no_pos in
+    if CP.isConstTrue (TP.simplify_raw res) then []
+    else [res]) pfs)
   in
 
   (* Disjunctive defintion for each relation *)
@@ -554,6 +559,34 @@ let rec preprocess pairs = match pairs with
         [(snd r, (fst r) :: res)]
     in
     unified_rels @ (preprocess diff_rels)
+
+(*let rec unify_rels_ass rel a_rel = match rel, a_rel with*)
+(*  | (CP.BForm ((CP.RelForm (name1,args1,p1),p2),p3),f1), *)
+(*    (CP.BForm ((CP.RelForm (name2,args2,_ ),_ ),_ ),f2) ->*)
+(*    let subst_arg = List.combine (List.map CP.exp_to_spec_var args2) *)
+(*                                 (List.map CP.exp_to_spec_var args1) in*)
+(*    let f2 = CP.subst subst_arg f2 in*)
+(*    f2*)
+(*  | _ -> report_error no_pos ("unify_rels_ass: Expected a relation, " ^ *)
+(*        (pr_pair !CP.print_formula !CP.print_formula) (fst rel, fst a_rel))*)
+
+(*let rec preprocess_rel_ass pairs = match pairs with*)
+(*  | [] -> []*)
+(*  | r::rs -> *)
+(*    let rel = fst r in*)
+(*    let name = CP.name_of_rel_form rel in*)
+(*    let same_rels, diff_rels = *)
+(*      List.partition (fun r0 -> *)
+(*        CP.eq_spec_var (CP.name_of_rel_form (fst r0)) name) rs in*)
+(*    let unified_rels = *)
+(*      if same_rels == [] then [(fst r, [snd r])]*)
+(*      else *)
+(*        let res = List.map (fun r0 -> *)
+(*                    if CP.equalFormula rel (fst r0) then (snd r0)*)
+(*                    else unify_rels_ass r r0) same_rels in*)
+(*        [(fst r, (snd r) :: res)]*)
+(*    in*)
+(*    unified_rels @ (preprocess_rel_ass diff_rels)*)
 
 let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
   (* TODO: Handle non-recursive ones separately *)

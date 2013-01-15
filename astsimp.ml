@@ -1114,9 +1114,11 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 	      let addr_vars = CP.remove_dups_svl addr_vars' in
 	      let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
           (* let _ = print_endline ("\n xform: " ^ (Cprinter.string_of_mix_formula xform)) in *)
-          let xform1 = (TP.simplify_a 1 (CP.drop_rel_formula (MCP.pure_of_mix xform))) in
+          let xform1 = (TP.simplify_with_pairwise 1 (CP.drop_rel_formula (MCP.pure_of_mix xform))) in
           let ls_disj = CP.list_of_disjs xform1 in
           let xform2 = MCP.mix_of_pure (CP.disj_of_list (Gen.BList.remove_dups_eq CP.equalFormula ls_disj) pos) in
+          (* Debug.info_hprint (add_str "xform1" !CP.print_formula) xform1 pos; *)
+          (* Debug.info_hprint (add_str "xform2" !MCP.print_mix_formula) xform2 pos; *)
           
           (* let _ = print_endline ("\n xform1: " ^ (Cprinter.string_of_pure_formula xform1)) in *)
           (* let _ = print_endline ("\n xform2: " ^ (Cprinter.string_of_mix_formula xform2)) in *)
@@ -5969,6 +5971,12 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
       pr1 pr pr Iprinter.string_of_formula pr_out
       (fun _ _ _ _ -> case_normalize_renamed_formula_x prog avail_vars posib_expl f) prog avail_vars posib_expl f
 
+and hack_filter_global_rel prog ls =
+    List.filter (fun (i,_) -> 
+        try
+          let _ = I.look_up_rel_def_raw prog.I.prog_rel_decls i in false
+        with _ -> true) ls
+
 (*moved the liniarization to case_normalize_renamed_formula*)
 and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib_expl (f:IF.formula):
       IF.formula* ((ident*primed)list) * ((ident*primed)list) = 
@@ -5981,10 +5989,13 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
             let new_used_names, e_hvars, e_evars, e_link = match e with
               | IP.Var (v, pos_e) ->
                     (try
-                      if not(rel_flag) && ((List.mem v avail_vars) || (List.mem v used_names)) then(*existential wrapping and liniarization*)
+                      (* TODO :WN logic below for relational id seems wrong *)
+                      if not(rel_flag) && ((List.mem v avail_vars) || (List.mem v used_names)) then
+                        (*existential wrapping and liniarization*)
                         try
                             let _ = I.look_up_rel_def_raw prog.I.prog_rel_decls (fst v) in
                               ((v :: used_names), [ v ], [],IP.mkTrue pos_e)
+                                  (* global relation name need not be captured in existential heap_var *)
                         with Not_found ->
                             let fresh_v =
                               (Ipure.fresh_old_name (fst v)),Unprimed
@@ -5993,7 +6004,10 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
                             let link_f = IP.mkEqExp (IP.Var (fresh_v,pos_e)) e pos_e in
                             (used_names, [ fresh_v ], [ fresh_v ], if Lab_List.is_unlabelled label then link_f else IP.mkAndList [label, link_f])
                       else
-                        ((v :: used_names), [ v ], [],IP.mkTrue pos_e)
+                        if rel_flag then
+                          ((v :: used_names), [ v ], [],IP.mkTrue pos_e)
+                        else
+                          ((v :: used_names), [ v ], [],IP.mkTrue pos_e)
                     with
                       | Not_found -> Err.report_error{ Err.error_loc = pos_e; Err.error_text = (fst v) ^ " is undefined"; })
               | _ -> Err.report_error { Err.error_loc = (IF.pos_of_formula f); Err.error_text = "malfunction with float out exp in normalizing"; } in
@@ -6001,6 +6015,9 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
             let hvars = e_hvars @ rest_hvars in
             let evars = e_evars @ rest_evars in
             let link_f = IP.mkAnd e_link rest_link pos in
+            (* Debug.info_hprint (add_str "case-norm hvars" pr_ident_list) hvars pos; *)
+            (* Debug.info_hprint (add_str "case-norm evars" pr_ident_list) evars pos; *)
+            (* Debug.info_hprint (add_str "case-norm link_f" Iprinter.string_of_pure_formula) link_f pos; *)
             (rest_used_names, hvars, evars, link_f)
       | [] -> (used_names, [], [], IP.mkTrue pos) in
 
@@ -6130,16 +6147,19 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
       | IF.HTrue ->  (used_names, [], IF.HTrue,  IP.mkTrue no_pos)
       | IF.HFalse -> (used_names, [], IF.HFalse, IP.mkTrue no_pos)
       | IF.HEmp -> (used_names, [], IF.HEmp, IP.mkTrue no_pos) in 
+
+  (* added to filter out global relation from implicit quantification *)
   
   let linearize_heap (used_names:((ident*primed) list)) (f : IF.h_formula):
         (((ident*primed) list) * ((ident*primed) list) * IF.h_formula * Ipure.formula) =
     let (a,b,h,r) = linearize_heap used_names f in
+    (* let a = hack_filter_global_rel a in  *)
     (a,b,imm_heap h,r)
   in
   let linearize_heap (used_names:((ident*primed) list)) (f : IF.h_formula):
         (((ident*primed) list) * ((ident*primed) list) * IF.h_formula * Ipure.formula) =
     let pr1 = Iprinter.string_of_h_formula in
-    let pr2 (_,_,h, p) = (Iprinter.string_of_h_formula h)^"&&$"^(Iprinter.string_of_pure_formula p) in
+    let pr2 (vl1,vl2,h, p) = (pr_ident_list vl1)^(pr_ident_list vl2)^(Iprinter.string_of_h_formula h)^"&&$"^(Iprinter.string_of_pure_formula p) in
     let pr0 (vs:((ident*primed) list))= 
       let idents, _ = List.split vs in
       (string_of_ident_list idents) in
@@ -6256,6 +6276,8 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
     in
     (* let _ = if (List.length need_quant)>0 then  *)
     (*   print_string ("\n warning "^(string_of_loc (IF.pos_of_formula f))^" quantifying: "^(Iprinter.string_of_var_list need_quant)^"\n") in *)
+    Debug.tinfo_hprint (add_str "need_quant" pr_ident_list) need_quant no_pos;
+    let need_quant = hack_filter_global_rel prog need_quant in
     IF.push_exists need_quant f in
   (* let _ = print_string ("case_normalize_struc_formula :: CHECK POINT 0 ==> f = " ^ Iprinter.string_of_struc_formula f ^ "\n") in *)
   let nf = convert_struc2 prog f in
@@ -6326,6 +6348,7 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
             let implvar = diff (IF.unbound_heap_fv onb) all_vars in
             let _ = if (List.length (diff implvar (IF.heap_fv onb @ fold_opt IF.struc_hp_fv nc)))>0 then 
               Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction: some implicit vars are not heap_vars\n")} else true in
+            let implvar = hack_filter_global_rel prog implvar in
             (IF.EBase {
                 IF.formula_struc_base = nb;
                 IF.formula_struc_implicit_inst =implvar;					

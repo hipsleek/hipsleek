@@ -795,8 +795,7 @@ let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars is_recur =
     with _ -> 
       if not(is_rec pf) then 
         let _ = DD.devel_hprint (add_str "Input: " !CP.print_formula) pf no_pos in
-        let exists_vars = CP.diff_svl (CP.fv pf) (CP.fv rel_fml) in 
-        let exists_vars = List.filter (fun x -> not(CP.is_rel_var x)) exists_vars in
+        let exists_vars = CP.diff_svl (CP.fv_wo_rel pf) (CP.fv rel_fml) in 
         let pf = TP.simplify_exists_raw exists_vars pf in
         (rel_fml, remove_subtract pf)
       else report_error no_pos "Unexpected error in computing fixpoint by FixBag")

@@ -1,0 +1,18 @@
+relation P5(int m).
+
+infer [P5] x=1 & P5(a) & a>0 & b=a-1 
+            |-  x=2 & P5(b).
+
+print residue.
+
+/*
+PROBLEM : once lhs contra detected (getting false), 
+         we should discard the other RELDEFN inferences
+
+It seems LHS contra is detected at a rather late point.
+Can we detect LHS contra at an earlier point?
+
+<1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [P5]: ( P5(a)) -->  1>a; 
+                RELDEFN P5: ( P5(a) & 1<=a & b=a-1) -->  P5(b)]
+*/

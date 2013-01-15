@@ -427,6 +427,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                         new_spec,new_args
               end
             in
+            let pre_vars,post_vars = CF.get_pre_post_vars_simp [] new_formula_inf_continuation in
             let vars, new_formula_inf_continuation = 
               if old_vars = [] then
                 begin
@@ -434,7 +435,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     | None -> 
                           if new_args = [] then [],new_formula_inf_continuation 
                           else
-                            let pre_vars,_ = CF.get_pre_post_vars_simp [] new_formula_inf_continuation in
+(*                            let pre_vars,_ = CF.get_pre_post_vars_simp [] new_formula_inf_continuation in*)
                             let pre_args, _ = List.partition (fun x -> List.mem x pre_vars) new_args in
                             let new_rel_pre = CP.fresh_spec_var_rel () in
                             let new_rel_post = CP.fresh_spec_var_rel () in
@@ -447,7 +448,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                     | Some pflag -> 
                           if not(pflag) then 
                             if new_args = [] then 
-                              let pre_vars,_ = CF.get_pre_post_vars_simp [] new_formula_inf_continuation in
+(*                              let pre_vars,_ = CF.get_pre_post_vars_simp [] new_formula_inf_continuation in*)
                               pre_vars,new_formula_inf_continuation
                             else 
                               let new_rel = CP.fresh_spec_var_rel () in
@@ -474,11 +475,34 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
             in
             let _ = proc.proc_stk_of_static_specs # push einfer in
             let _ = if old_vars=[] then Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos else () in
-            let _ = Debug.ninfo_hprint (add_str "VARS" !print_svl) vars no_pos in
+            let new_fml_fv = CF.struc_fv new_formula_inf_continuation in
+            let pre_post_vars = CP.remove_dups_svl (pre_vars @ post_vars @ new_fml_fv) in
+            let _ = Debug.ninfo_hprint (add_str "all vars" !print_svl) pre_post_vars no_pos in
+            let _ = Debug.ninfo_hprint (add_str "inf vars" !print_svl) vars no_pos in
             let (vars_rel,vars_inf) = List.partition (fun v -> is_RelT(CP.type_of_spec_var v) ) vars in
+            let _ = Debug.ninfo_hprint (add_str "vars_rel" !print_svl) vars_rel no_pos in
+            let classify_rel v = 
+              let rel_decl = Cast.look_up_rel_def_raw prog.Cast.prog_rel_decls (CP.name_of_spec_var v) in
+              if CP.isConstTrue rel_decl.rel_formula then true else false in              
+            let (unknown_rel,known_rel) = List.partition classify_rel 
+              (CP.remove_dups_svl ((List.filter CP.is_rel_var pre_post_vars)@vars_rel)) in
+            let _ = Debug.ninfo_hprint (add_str "unknown_rel" !print_svl) unknown_rel no_pos in
+            let _ = Debug.ninfo_hprint (add_str "known_rel" !print_svl) known_rel no_pos in
+            let inf_pos = b.CF.formula_inf_pos in
+            let _ =
+              if not(CP.subset vars pre_post_vars) then
+                report_error inf_pos "Inferable vars include some external variables!"
+              else
+              if not(CP.subset unknown_rel vars_rel) then
+                report_error inf_pos "Inferable vars do not include some unknown relation!"
+              else
+              if CP.intersect known_rel vars_rel<>[] then
+                report_error inf_pos "Inferable vars include some known relation!"
+              else ()
+            in
             let (vars_hp_rel,vars_inf) = List.partition (fun v -> CP.type_of_spec_var v == HpT ) vars_inf in
-            let new_vars = vars_inf @ (List.filter (fun r -> List.mem r (CF.struc_fv new_formula_inf_continuation)) vars_rel) in
-            let new_vars = new_vars @ (List.filter (fun r -> List.mem r (CF.struc_fv new_formula_inf_continuation)) vars_hp_rel) in
+            let new_vars = vars_inf @ (List.filter (fun r -> List.mem r new_fml_fv) vars_rel) in
+            let new_vars = new_vars @ (List.filter (fun r -> List.mem r new_fml_fv) vars_hp_rel) in
             (if new_vars!=[] || postf then pre_ctr # inc) ;
             let nctx = CF.transform_context (fun es -> 
                 CF.Ctx {es with CF.es_infer_vars = es.CF.es_infer_vars@vars_inf;
@@ -2521,7 +2545,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
 (*                                  let pre_rel_ids = List.concat (List.map CP.get_rel_id_list pre_rel_fmls) in*)
                                   let pre_rel_ids = List.filter (fun x -> CP.is_rel_typ x 
                                       && not(Gen.BList.mem_eq CP.eq_spec_var x post_vars)) pre_vars in
-                                  let post_rel_df = 
+                                  let post_rel_df_new = 
                                     if pre_rel_ids=[] then post_rel_df 
                                     else List.concat (List.map (fun (f1,f2) -> 
                                       let tmp = List.filter (fun x -> CP.intersect 
@@ -2529,12 +2553,13 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                                       if tmp=[] then [] else [(CP.conj_of_list tmp no_pos,f2)]
                                       ) post_rel_df)
                                   in
-                                  let _ = Debug.devel_hprint (add_str "post_rel_df_new" (pr_list (pr_pair pr pr))) post_rel_df no_pos in
-                                  let bottom_up_fp = Fixcalc.compute_fixpoint 2 post_rel_df pre_vars proc_spec in
+                                  let _ = Debug.devel_hprint (add_str "post_rel_df_new" (pr_list (pr_pair pr pr))) post_rel_df_new no_pos in
+                                  let bottom_up_fp = Fixcalc.compute_fixpoint 2 post_rel_df_new pre_vars proc_spec in
                                   let bottom_up_fp = List.map (fun (r,p) -> (r,TP.pairwisecheck_raw p)) bottom_up_fp in
                                   let _ = Debug.devel_hprint (add_str "bottom_up_fp" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in
                                   Solver.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls
-                                    Fixcalc.compute_fixpoint_td reloblgs pre_rel_df post_rel_df pre_vars proc_spec
+                                    Fixcalc.compute_fixpoint_td Fixcalc.preprocess 
+                                    reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec
                               in
                               (* let pr_ty = !CP.Label_Pure.ref_string_of_exp in *)
                               Infer.fixcalc_rel_stk # push_list tuples;
@@ -2544,12 +2569,15 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                                 print_endline "*************************************";
                                 print_endline (Infer.fixcalc_rel_stk # string_of_reverse);
                                 print_endline "*************************************"
-                              end;                    
-                              (* Debug.info_hprint (add_str "triples" (pr_list (pr_pair pr pr_ty))) triples no_pos; *)
-(*                              let triples = List.map (fun (rel,post) ->*)
-(*                                  let exist_vars = CP.diff_svl (CP.fv rel) inf_vars in*)
-(*                                  let pre_new = TP.simplify_exists_raw exist_vars post in*)
-(*                                  (rel,post,pre_new)) triples in*)
+                              end;
+
+                              let tuples = List.map (fun (rel_post,post,rel_pre,pre) ->
+                                  let pre_new = if CP.isConstTrue rel_pre then
+                                      let inf_pre_vars = List.filter (fun x -> List.mem x pre_vars) inf_vars in
+                                      let exist_vars = CP.diff_svl (CP.fv_wo_rel rel_post) inf_vars in
+                                      TP.simplify_exists_raw exist_vars post 
+                                    else pre in
+                                  (rel_post,post,rel_pre,pre_new)) tuples in
                               let evars = stk_evars # get_stk in
                               (* let evars = [] in*)
                               let _ = List.iter (fun (rel_post,post,rel_pre,pre) ->
