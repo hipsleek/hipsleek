@@ -252,10 +252,28 @@ let string_of_infer_rel = print_lhs_rhs
 
 let full_perm_var_name = "Anon_full_perm"
 
+let rec isConstTrue (p:formula) = match p with
+  | BForm ((BConst (true, pos), _),_) -> true
+  | AndList b -> all_l_snd isConstTrue b
+  | _ -> false
+		
+and isConstFalse (p:formula) =
+  match p with
+    | BForm ((BConst (false, pos),_),_) -> true
+    | AndList b -> exists_l_snd isConstFalse b
+    | _ -> false
+
+and mkAnd_dumb f1 f2 pos = 
+  if (isConstFalse f1) then f1
+  else if (isConstTrue f1) then f2
+  else if (isConstFalse f2) then f2
+  else if (isConstTrue f2) then f1
+  else And (f1, f2, pos)
+
 module Exp_Pure =
 struct 
   type e = formula
-  let comb x y = And (x,y,no_pos)
+  let comb x y = mkAnd_dumb x y no_pos (*And (x,y,no_pos)*)
   let string_of = !print_formula
   let ref_string_of = print_formula
 end;;
@@ -1024,10 +1042,7 @@ and isConstTrue_debug (p:formula) =
   Debug.no_1 "isConsTrue" !print_formula string_of_bool isConstTrue p
 
 
-and isConstTrue (p:formula) = match p with
-  | BForm ((BConst (true, pos), _),_) -> true
-  | AndList b -> all_l_snd isConstTrue b
-  | _ -> false
+
         
 and isTrivTerm (p:formula) = match p with
   | BForm ((LexVar l, _),_) -> (l.lex_ann == Term || l.lex_ann==MayLoop) && l.lex_exp==[]
@@ -1038,13 +1053,7 @@ and isConstBTrue (p:b_formula) =
   match pf with
     | BConst (true, pos) -> true
     | _ -> false
-          
-and isConstFalse (p:formula) =
-  match p with
-    | BForm ((BConst (false, pos),_),_) -> true
-    | AndList b -> exists_l_snd isConstFalse b
-    | _ -> false
-          
+                  
 and isConstBFalse (p:b_formula) =
   let (pf,_) = p in
   match pf with
@@ -1770,12 +1779,6 @@ and mkEq a1 a2 pos : p_formula=
   else
     Eq (a1, a2, pos)
 
-and mkAnd_dumb f1 f2 pos = 
-  if (isConstFalse f1) then f1
-  else if (isConstTrue f1) then f2
-  else if (isConstFalse f2) then f2
-  else if (isConstTrue f2) then f1
-  else And (f1, f2, pos)
     
 and mkAnd_x f1 f2 (*b*) pos = 
   if (isConstFalse f1) then f1
@@ -1810,11 +1813,11 @@ and mkAnd_x f1 f2 (*b*) pos =
   
   and mkAnd_x f1 f2 pos = mkAnd_dups f1 f2 true pos*)
 	            
-and mkAnd f1 f2 pos = Debug.no_2 "pure_mkAnd" !print_formula !print_formula !print_formula (fun _ _-> mkAnd_x f1 f2 pos) f1 f2
+and mkAnd f1 f2 pos = Debug.no_2_loop "pure_mkAnd" !print_formula !print_formula !print_formula (fun _ _-> mkAnd_x f1 f2 pos) f1 f2
   
 and mkAndList_x b = 
   if (exists_l_snd isConstFalse b) then mkFalse no_pos
-  else AndList (List.filter (fun (_,c)-> not (isConstTrue c)) b)
+  else AndList (Label_Pure.norm (List.filter (fun (_,c)-> not (isConstTrue c)) b))
     
 and mkAndList b = Debug.no_1 "pure_mkAndList" (fun _ -> "") !print_formula (fun _-> mkAndList_x b) b
 
@@ -2025,6 +2028,7 @@ and mkForall (vs : spec_var list) (f : formula) lbl pos = match vs with
 (* same of list_of_conjs *)
 and split_conjunctions =  function
   | And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y)
+  | AndList l -> Gen.fold_l_snd split_conjunctions l
   | z -> [z]
         
 and join_conjunctions fl = conj_of_list fl no_pos
@@ -8595,7 +8599,7 @@ let drop_complex_ops =
             else Some (mkTrue p)
         | _ -> None in
   let pr_strong b = match b with
-        | LexVar t_info -> Some (mkFalse t_info.lex_loc)
+        | LexVar t_info -> ((*print_string "dropping strong1\n";*)Some (mkFalse t_info.lex_loc))
         | RelForm (SpecVar (_, v, _),_,p) ->
             (*provers which can not handle relation => throw exception*)
             if (v="dom") or (v="amodr") or (is_update_array_relation v) then None
@@ -8605,7 +8609,7 @@ let drop_complex_ops =
 
 let drop_lexvar_ops =
   let pr_weak b = match b with
-        | LexVar t_info -> Some (mkTrue t_info.lex_loc)
+        | LexVar t_info -> ((*print_string "dropping strong2\n";*)Some (mkTrue t_info.lex_loc))
         | _ -> None in
   let pr_strong b = match b with
         | LexVar t_info -> Some (mkFalse t_info.lex_loc)
