@@ -9,14 +9,14 @@ data node2 {
 
 /* view for a doubly linked list with size */
 dll<"p":p,"n":n> == 
-	self = null & ["n":n = 0] or 
-	self::node2<_ ,p , q> * q::dll<q1, n1> & ["p":self = q1; "n":n1=n-1] 
+	true&["p":self = null; "n":n = 0] or 
+	(exists q1: self::node2<_ ,p , q> * q::dll<self, n1> & ["p":self = q1; "n":n1=n-1])
 	inv true & ["n":n >= 0];
 
 
 
 void insert(node2 x, int a)
-  requires x::dll<p, n> &  x!=null  
+  requires x::dll<p, n> &  ["p":x!=null]  
   ensures x::dll<p, n1> & ["n":n1=n+1]; 
 {
 		if (x.next == null) {
