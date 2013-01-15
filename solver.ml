@@ -7196,12 +7196,12 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
           end
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
           begin
-            DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;
-              let a0 = CP.drop_exists a0 in
-              let a0l,a1l = if CP.no_andl a0 && CP.no_andl a1 
-              then (List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a0),
-                    List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a1))
-    	      else
+            DD.devel_pprint ">>>>>> imply_mix_formula: pure <<<<<<" no_pos;             
+              let a0l,a1l = if CP.no_andl a0 && CP.no_andl a1 && !Globals.deep_split_disjuncts
+              then  let a0 = CP.drop_exists a0 in 
+              	   (List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a0),
+                    List.filter CP.is_sat_eq_ineq (CP.split_disjunctions_deep a1))                    
+    	      else if CP.no_andl a0 && CP.no_andl a1 then (CP.split_disjunctions a0,CP.split_disjunctions a1) else
                 (* why andl need to be handled in a special way *)
 	            let r = ref (-8999) in
 	            let is_sat f = TP.is_sat_sub_no f r in
