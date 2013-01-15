@@ -1319,16 +1319,17 @@ let simplify_always (f:CP.formula): CP.formula =
 let simplify (f:CP.formula): CP.formula = 
   CP.elim_exists_with_simpl simplify f 
 
-let simplify (f:CP.formula): CP.formula = 
-  let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "TP.simplify" pr pr simplify f
+(* let simplify (f:CP.formula): CP.formula =  *)
+(*   let pr = Cprinter.string_of_pure_formula in *)
+(*   Debug.no_1 "TP.simplify" pr pr simplify f *)
 
 let simplify (f : CP.formula) : CP.formula =
-  Debug.no_1 "simplify_2" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify f
+  let pf = Cprinter.string_of_pure_formula in
+  Debug.no_1 "simplify_2" pf pf simplify f
 
 let simplify_a (s:int) (f:CP.formula): CP.formula = 
   let pf = Cprinter.string_of_pure_formula in
-  Debug.no_1 ("TP.simplify_a"^(string_of_int s)) pf pf simplify f
+  Debug.no_1_num s ("TP.simplify_a") pf pf simplify f
 
 let hull (f : CP.formula) : CP.formula =
   if not !tp_batch_mode then start_prover ();
@@ -1411,6 +1412,19 @@ let pairwisecheck_raw (f : CP.formula) : CP.formula =
 let pairwisecheck_raw (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "pairwisecheck_raw" pr pr pairwisecheck_raw f
+
+
+let simplify_with_pairwise (f : CP.formula) : CP.formula =
+    let f1 = simplify f in
+    let f2 = pairwisecheck f1 in
+    (* Debug.info_hprint (add_str "simplifyX(input)" pf) f no_pos; *)
+    (* Debug.info_hprint (add_str "simplifyX(output)" pf) f1 no_pos; *)
+    (* Debug.info_hprint (add_str "simplifyX(pairwise)" pf) f2 no_pos; *)
+    f2
+
+let simplify_with_pairwise (s:int) (f:CP.formula): CP.formula = 
+  let pf = Cprinter.string_of_pure_formula in
+  Debug.no_1_num s ("TP.simplify_with_pairwise") pf pf simplify_with_pairwise f
 
 let called_prover = ref ""
 
