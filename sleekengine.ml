@@ -205,7 +205,7 @@ let process_pred_def_4_iast pdef =
           (match inv_lock with
             | None -> None
             | Some f ->
-                let new_f = AS.case_normalize_formula iprog h f in (*TO CHECK: h or p*)
+                let new_f = AS.case_normalize_formula iprog h f None in (*TO CHECK: h or p*)
                 Some new_f)
         in
 		let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock} in
@@ -393,7 +393,7 @@ let perform_second_parsing_stage () =
 	let cddefs = List.map (AS.trans_data iprog) iprog.I.prog_data_decls in
 		!cprog.C.prog_data_decls <- cddefs
 	
-let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = 
+let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (rel0: rel option) stab : CF.struc_formula = 
   let rec helper (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = 
     match mf0 with
   | MetaFormCF mf -> 
@@ -436,17 +436,17 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.str
       (* let _ = print_string ("\n2 before meta: " ^(Iprinter.string_of_struc_formula wf)^"\n") in *)
       (*let _ = print_string ("\n after meta: " ^ (Cprinter.string_of_struc_formula res)) in*)
       res
-  | MetaEFormCF b -> b (* assume it has already been normalized *)
+  | MetaEFormCF b ->       (* let _ = print_string ("\n (andreeac) meta_to_struc_formula 6") in *) b (* assume it has already been normalized *)
   in helper mf0 quant fv_idents stab 
 
 
-let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = Debug.no_4 "meta_to_struc_formula"
+let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (rel0: rel option) stab : CF.struc_formula = Debug.no_4 "meta_to_struc_formula"
   string_of_meta_formula
   string_of_bool
   string_of_ident_list
   AS.string_of_stab
   Cprinter.string_of_struc_formula
-  meta_to_struc_formula mf0 quant fv_idents stab
+  (fun _ _ _ _  ->  meta_to_struc_formula mf0 quant fv_idents rel0 stab )mf0 quant fv_idents stab
 
 (* An Hoa : DETECT THAT EITHER OF 
 AS.case_normalize_formula iprog h mf
@@ -460,7 +460,8 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
   | MetaFormLCF mf ->	(List.hd mf)
   | MetaForm mf ->
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
-      let wf = AS.case_normalize_formula iprog h mf in
+      (* let _ = print_string (" before norm: " ^(Iprinter.string_of_formula mf)^"\n") in *)
+      let wf = AS.case_normalize_formula iprog h mf None in
       let _ = Astsimp.gather_type_info_formula iprog wf stab false in
       let r = AS.trans_formula iprog quant fv_idents false wf stab false in
       (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
@@ -541,6 +542,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
       CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
     else ante
   in
+  (* let ante = AS.add_param_ann_constraints_formula ante in *)
   let vk = AS.fresh_proc_var_kind stab Float in
   let _ = H.add stab (full_perm_name ()) vk in
 (*  let _ = flush stdout in*)
@@ -553,9 +555,12 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
   (* need to make ivars be global *)
-  let conseq = meta_to_struc_formula iconseq0 false fv_idents (* (List.map CP.name_of_spec_var fvs) *) stab in
+  (* let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents None stab  *)
+  let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents (Some Globals.RSubAnn) stab
+      else meta_to_struc_formula iconseq0 false fv_idents None stab in
   (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
   let conseq = Solver.prune_pred_struc !cprog true conseq in
+  (* let conseq = AS.add_param_ann_constraints_struc conseq in  *)
   let _ = Debug.devel_zprint (lazy ("\nrun_entail_check:"
                         ^"\n ### ivars = "^(pr_list pr_id ivars)
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
@@ -813,7 +818,7 @@ let process_print_command pcmd0 = match pcmd0 with
                    Error.error_loc = no_pos;
                    Error.error_text = "couldn't find " ^ pvar;
                  }in
-	  let pf = meta_to_struc_formula mf false [] stab in
+	  let pf = meta_to_struc_formula mf false [] None stab in
 		print_string ((Cprinter.string_of_struc_formula pf) ^ "\n")
   | PCmd pcmd -> 
 	  if pcmd = "residue" then

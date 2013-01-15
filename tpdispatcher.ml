@@ -1550,7 +1550,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let vrs = (Cpure.fv conseq)@vrs in
   let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 
   let imm_vrs = CP.remove_dups_svl imm_vrs in
-  (* add invariant constraint @M<:v<:@L for each annotation var *)
+  (* add invariant constraint @M<:v<:@A for each annotation var *)
   let ante = CP.add_ann_constraints imm_vrs ante in
   (* Handle Infinity Constraints *)
   let ante,conseq  = if !Globals.allow_inf then Infinity.normalize_inf_formula_imply ante conseq 

@@ -1,0 +1,88 @@
+data node {
+  int val;
+  node next;
+}.
+
+// (1) residue must not contain v
+infer [] y::node<_,_>@w |- (exists v: y::node<a,b>@v).
+// emp
+print residue.
+
+// (2) explicit (residue to have w<:v)
+infer [] y::node<_,_>@w |- [v] y::node<a,b>@v.
+// emp
+print residue.
+
+// (3) implicit (see residue to have w=v)
+infer [] y::node<_,_>@w |- y::node<a,b>@v.
+// emp
+print residue.
+
+//4#
+infer [] y::node<_,_>@M |- y::node<a,b>@M.
+print residue.
+
+//#5
+infer [] y::node<_,_>@I |- y::node<a,b>@I.
+print residue.
+
+//#6
+infer [] y::node<_,_>@L |- y::node<a,b>@L.
+print residue.
+
+//#7
+infer [] y::node<_,_>@A |- y::node<a,b>@A.
+print residue.
+
+//#8
+infer [] y::node<_,_>@A |- y!=null.
+
+//#9
+infer [] y::node<_,_>@A |- y=null.
+
+//#10 should fail
+infer [] emp |- y::node<a,b>@A.
+
+//#11  // should succeed
+infer [] y!=null |- y::node<a,b>@A.
+
+//#12 (5)
+// fail
+infer [] @L<:v |- v=@L.
+
+//#13
+// fail
+infer [] @A<:v |- v=@A.
+
+//#14 (11) Valid
+infer [] y::node<_,_>@M |- y::node<a,b>@v & v<:@M.
+print residue.
+
+//#15 ERROR : should be valid and emp
+infer [] y::node<_,_>@M |- y::node<a,b>@v & @I<:v.
+print residue.
+
+//#16 ERROR : should have failed
+infer [] y::node<_,_>@I |- y::node<a,b>@v & @M<:v.
+print residue.
+
+
+//#17 (17)
+infer [] y::node<_,_>@v |- y::node<a,b>@L.
+print residue.
+
+// #18
+infer [] y::node<_,_>@v |- y::node<a,b>@A.
+print residue.
+
+//#19 (20) VALID
+infer [] y::node<_,_>@L |- [v] y::node<a,b>@v & v<:@M.
+print residue.
+
+//#20 (27) ERROR : Should FAIL but succeed
+infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v=@M.
+print residue.
+
+//#21 (30) ERROR : expecting to succeed with v<:@L
+infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v<:@M.
+print residue.

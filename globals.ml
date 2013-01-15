@@ -1,6 +1,9 @@
 (* global types and utility functions *)
 (* module Lb = Label_only *)
     (* circular with Lb *)
+    
+(*let ramification_entailments = ref 0
+let total_entailments = ref 0 *)
 
 type ('a,'b) twoAns = 
   | FstAns of 'a
@@ -55,7 +58,7 @@ and primed =
   | Primed
   | Unprimed
 
-and heap_ann = Lend | Imm | Mutable
+and heap_ann = Lend | Imm | Mutable | Accs
 
 and vp_ann =  VP_Zero | VP_Full | VP_Value (* | VP_Ref *)
 
@@ -68,6 +71,8 @@ and term_ann =
 and term_fail =
   | TermErr_May
   | TermErr_Must
+
+and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn
 
 (* and prim_type =  *)
 (*   | TVar of int *)
@@ -206,12 +211,14 @@ let is_float_type (t:typ) = match t with
 
 let string_of_heap_ann a =
   match a with
+    | Accs -> "@A"
     | Lend -> "@L"
     | Imm -> "@I"
     | Mutable -> "@M"
 
 let int_of_heap_ann a =
   match a with
+    | Accs -> 3
     | Lend -> 2
     | Imm -> 1
     | Mutable -> 0
@@ -550,6 +557,8 @@ let self = "self"
 
 let constinfinity = "ZInfinity"
 
+let deep_split_disjuncts = ref false
+
 let this = "this"
 
 let is_self_ident id = self=id
@@ -651,6 +660,10 @@ let smart_memo = ref false
 let elim_exists_ff = ref true
 
 let allow_imm = ref true (*imm will delay checking guard conditions*)
+
+let allow_field_ann = ref true
+
+let allow_mem = ref true
 
 let allow_inf = ref true (*enable support to use infinity (\inf and -\inf) in formulas *)
 

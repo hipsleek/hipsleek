@@ -60,6 +60,8 @@ view_modes : mode list;
 mutable view_typed_vars : (typ * ident) list;
 view_is_prim : bool;
 view_invariant : P.formula;
+		  view_mem : F.mem_formula option; 
+		  (* Represents the Memory Permission Set. Option None will not use Memory Permission Set*)
 view_formula : Iformula.struc_formula;
 view_inv_lock : F.formula option;
 mutable view_pt_by_self : ident list; (* list of views pointed by self *)
@@ -764,7 +766,7 @@ let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->e
                 let e2,r2 = helper n_arg b.exp_binary_oper2  in
                 (Binary {b with exp_binary_oper1 = e1; exp_binary_oper2 = e2;},(comb_f [r1;r2]))
           | Bind b -> 
-                let e1,r1 = helper n_arg b.exp_bind_body  in     
+                let e1,r1 = helper n_arg b.exp_bind_body  in
                 (Bind {b with exp_bind_body = e1; },r1)
 		  | Barrier _ -> (e,zero)
 				(*let e,r = helper n_arg b.exp_barrier_recv  in     
@@ -1125,7 +1127,16 @@ and collect_formula (f0 : F.formula) : ident list =
 		  if d1>0 & d2>0 then
 			report_error pos ("Phase: multiple occurrences of self as heap nodes in one branch are not allowed")
 		  else n1@n2
-	| _ -> []
+	| F.Conj h ->
+		  let h1, h2, pos = h.F.h_formula_conj_h1, h.F.h_formula_conj_h2, h.F.h_formula_conj_pos in
+		  let n1 = helper h1 in
+		  let n2 = helper h2 in
+          let d1 = List.length n1 in
+          let d2 = List.length n2 in
+		  if d1>0 & d2>0 then
+			report_error pos ("multiple occurrences of self as heap nodes in one branch are not allowed")
+		  else n1@n2		  
+        | _ -> []
 	in
   match f0 with
     | F.Base f ->  helper f.F.formula_base_heap
@@ -1175,7 +1186,9 @@ and fixpt_data_name_x (view_ans:(view_decl * ident list *ident list) list) =
               []
       )
       r) in 
-  let r = List.map (fun (v,a,r) -> (v,Gen.Basic.remove_dups (a@(fetch r)),r)) view_ans in
+  (*let v,a,r = view_ans in*)
+  let r = List.map (fun (v,a,r) ->  
+  (*let _ = print_string("View :"^List.hd a^"\n") in*) (v,Gen.Basic.remove_dups (a@(fetch r)),r)) view_ans in
   let check (v,a1,_) (_,a2,_) c = 
     let d1=List.length a1 in
     let d2=List.length a2 in
@@ -1280,6 +1293,16 @@ and data_name_of_view1 (view_decls : view_decl list) (f0 : F.formula) : ident =
 			n1
 		  else
 			n2
+	| F.Conj h ->
+		  let h1, h2, pos = h.F.h_formula_conj_h1, h.F.h_formula_conj_h2, h.F.h_formula_conj_pos in
+		  let n1 = get_name_from_heap h1 in
+		  let n2 = get_name_from_heap h2 in
+		  if Gen.is_some n1 && Gen.is_some n2 then
+			report_error pos ("multiple occurrences of self as heap nodes in one branch are not allowed")
+		  else if Gen.is_some n1 then
+			n1
+		  else
+			n2			
 	| _ -> None 
   and get_name (f0 : F.formula) = match f0 with
 	| F.Or f ->
@@ -1994,10 +2017,10 @@ let add_bar_inits prog =
   let b_proc_def = List.map (fun b-> 
 			let largs = (*(P.IConst (0,no_pos))::*)List.map (fun (_,n)-> P.Var ((n,Unprimed),no_pos)) b.barrier_shared_vars in
 			let pre_hn = 
-				F.mkHeapNode ("b",Unprimed) b_datan false (F.ConstAnn(Mutable)) false false false None [] None no_pos in
+				F.mkHeapNode ("b",Unprimed) b_datan false (F.ConstAnn(Mutable)) false false false None [] [] None no_pos in
 			let pre = F.formula_of_heap_with_flow pre_hn n_flow no_pos in 
 			let post_hn = 
-				F.mkHeapNode ("b",Unprimed) b.barrier_name false (F.ConstAnn(Mutable)) false false false None largs None no_pos in
+				F.mkHeapNode ("b",Unprimed) b.barrier_name false (F.ConstAnn(Mutable)) false false false None largs [] None no_pos in
 			let post =  F.EAssume (F.formula_of_heap_with_flow post_hn n_flow no_pos,fresh_formula_label "",None) in
 			{ proc_name = "init_"^b.barrier_name;
                           proc_source = "source_file";
@@ -2024,7 +2047,7 @@ let add_bar_inits prog =
 let gen_normalize_lemma_comb ddef = 
  let self = (self,Unprimed) in
  let lem_name = "c"^ddef.data_name in
- let gennode perm hl= F.mkHeapNode self ddef.data_name false (F.ConstAnn Mutable) false false false (Some perm) hl None no_pos in
+ let gennode perm hl= F.mkHeapNode self ddef.data_name false (F.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
  let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
  let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
  let args1,args2 = List.split (List.map (fun _-> fresh () ,fresh ()) ddef.data_fields) in
@@ -2039,7 +2062,7 @@ let gen_normalize_lemma_comb ddef =
  let gen_normalize_lemma_split ddef = 
  let self = (self,Unprimed) in
  let lem_name = "s"^ddef.data_name in
- let gennode perm hl= F.mkHeapNode self ddef.data_name false (F.ConstAnn Mutable) false false false (Some perm) hl None no_pos in
+ let gennode perm hl= F.mkHeapNode self ddef.data_name false (F.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
  let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
  let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
  let args = List.map (fun _-> fresh ()) ddef.data_fields in

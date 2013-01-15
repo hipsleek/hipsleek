@@ -1,0 +1,70 @@
+data node{
+	int val;
+	node next;
+}.
+
+data pair {
+ int fst;
+ int snd;
+}.
+
+data cell{
+	int val;
+}.
+
+pred ll<v,M> ==  self = null & M = {} & v = 0
+	or self::node<0,p> * p::ll<0,Mp> & M = union(Mp,{self}) & v = 1
+	or self::node<_@I,p> * p::ll<1,Mp> & M = union(Mp,{self}) & v = 2
+	inv 0<=v<=2
+	memE M->(node<@M,@M> & v = 1 ; node<@I,@M> & v = 2).
+
+checkentail f::cell<v> & s::cell<r> & r = 1 & v != 1 |- f::cell<v> & s::cell<1> & v != 1.
+print residue.
+//(1) Fail
+
+checkentail f::cell<w> & s::cell<1>  & v != 1 & (w = v | w = 1) |- f::cell<v> & s::cell<1> & v != 1. 
+print residue.
+//(2) Fail
+
+checkentail f::cell<w> & s::cell<1>  & v != 1 & (w = v | w = 1) |- f::cell<_> & s::cell<1>. 
+print residue.
+//(3) Valid
+
+checkentail  m::cell<1> * f::cell<v> & s::cell<r> & s = m & r != 1 & v != 1 |- f::cell<v> & s::cell<1> & v != 1.
+print residue.
+//(4) Valid
+
+checkentail  m::cell<1> * g::cell<v> & s::cell<r> & s = m & r != 1 & v != 1 & (g = f | g = m) |- f::cell<v> & s::cell<1> & v != 1.
+print residue.
+//(5) Fail
+
+checkentail  m::cell<1> * g::cell<v> & s::cell<r> & s = m & r != 1 & v != 1 & (g = f | g = m) |- g::cell<_> & s::cell<1>.
+print residue.
+//(6) Valid
+
+checkentail c::node<v,p> & x::ll<u,M> & u != 2 & v = 1 |- c::node<1,p> & x::ll<u,M> & u != 2.
+print residue.
+//(7) Valid
+
+checkentail c::node<v,p> & x::ll<w,M> & u != 2 & v = 1 & (w = u | w = 1) |- c::node<1,p> & x::ll<u,M> & u != 2.
+print residue.
+//(8) Fail
+
+checkentail c::node<v,p> & x::ll<w,M> & u != 2 & v = 1 & (w = u | w = v) |- c::node<1,p> & x::ll<_,M>.
+print residue.
+//(9) Valid
+
+/*
+checkentail (s::cell<r> -@ (f::cell<v> & s::cell<r> & v != 1 & r != 1)) * s::cell<1> |- f::cell<1> & s::cell<1>. 
+print residue.
+
+checkentail f::cell<v> & s::cell<r> & v != 1 & r != 1 |- s::cell<r> & r != 1 * (s::cell<1> -* f::cell<1> & s::cell<1>). 
+print residue.
+*/
+/*
+checkentail x::pair<a@M,_@A> * x::pair<b@A,_@A> |- true.
+print residue.
+
+checkentail x::pair<a@M,_@A> * x::pair<_@A,b@M> & a = 1 & b =2 |- x::pair<1,2>.
+print residue.
+*/

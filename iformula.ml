@@ -16,6 +16,12 @@ let top_flow = top_flow
 
 type ann = ConstAnn of heap_ann | PolyAnn of ((ident * primed) * loc)
 
+and mem_formula = {	mem_formula_exp : P.exp;
+			mem_formula_exact : bool;
+			mem_formula_field_layout : (ident * (ann list)) list;
+			mem_formula_guards : P.formula list; 
+		}
+
 and struc_formula = 
 	| ECase of struc_case_formula
 	| EBase of struc_base_formula
@@ -92,7 +98,10 @@ and formula_or = { formula_or_f1 : formula;
 and h_formula = (* heap formula *)
   | Phase of h_formula_phase
   | Conj of h_formula_conj  
+  | ConjStar of h_formula_conjstar
+  | ConjConj of h_formula_conjconj
   | Star of h_formula_star
+  | StarMinus of h_formula_starminus
   | HeapNode of h_formula_heap
   | HeapNode2 of h_formula_heap2
 	  (* Don't distinguish between view and data node for now, as that requires look up *)
@@ -106,10 +115,22 @@ and h_formula = (* heap formula *)
 and h_formula_star = { h_formula_star_h1 : h_formula;
 		       h_formula_star_h2 : h_formula;
 		       h_formula_star_pos : loc }
-
+		       
+and h_formula_starminus = { h_formula_starminus_h1 : h_formula;
+		       h_formula_starminus_h2 : h_formula;
+		       h_formula_starminus_pos : loc }
+		       
 and h_formula_conj = { h_formula_conj_h1 : h_formula;
 		       h_formula_conj_h2 : h_formula;
 		       h_formula_conj_pos : loc }
+		       
+and h_formula_conjstar = { h_formula_conjstar_h1 : h_formula;
+		       h_formula_conjstar_h2 : h_formula;
+		       h_formula_conjstar_pos : loc }
+		       
+and h_formula_conjconj = { h_formula_conjconj_h1 : h_formula;
+		       h_formula_conjconj_h2 : h_formula;
+		       h_formula_conjconj_pos : loc }		       		       
 
 and h_formula_phase = { h_formula_phase_rd : h_formula;
 			h_formula_phase_rw : h_formula;
@@ -119,6 +140,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
 		       h_formula_heap_name : ident;
 		       h_formula_heap_derv : bool; 
 		       h_formula_heap_imm : ann;
+		       h_formula_heap_imm_param : ann option list;
 		       h_formula_heap_full : bool;
 		       h_formula_heap_with_inv : bool;
 		       h_formula_heap_perm : iperm; (*LDK: optional fractional permission*)
@@ -131,6 +153,7 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 			h_formula_heap2_name : ident;
 			h_formula_heap2_derv : bool;
 			h_formula_heap2_imm : ann;
+		    h_formula_heap2_imm_param : ann option list;
 			h_formula_heap2_full : bool;
 			h_formula_heap2_with_inv : bool;
 		    h_formula_heap2_perm : iperm; (*LDK: fractional permission*)
@@ -155,6 +178,10 @@ let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized"
 let apply_one_imm (fr,t) a = match a with
   | ConstAnn _ -> a
   | PolyAnn (sv, pos) -> PolyAnn ((if P.eq_var sv fr then t else sv), pos)
+
+let apply_one_opt_imm (fr,t) a = match a with
+  | Some annot -> Some (apply_one_imm (fr,t) annot)
+  | None -> None
   
 let rec string_of_spec_var_list l = match l with 
   | []               -> ""
@@ -179,6 +206,12 @@ and string_of_spec_var = function
   | (id, p) -> id ^ (match p with 
     | Primed   -> "'"
     | Unprimed -> "")
+
+let rec is_param_ann_list_empty (anns:  ann option list) : bool =
+  match anns with
+    | [] -> true
+    | (Some _)::t  -> false
+    | (None)::t    -> true  && (is_param_ann_list_empty t)
 	
 (* constructors *)
 
@@ -347,6 +380,17 @@ and mkStar f1 f2 pos = match f1 with
            else Star { h_formula_star_h1 = f1;
                        h_formula_star_h2 = f2;
                        h_formula_star_pos = pos }
+                       
+and mkStarMinus f1 f2 pos = match f1 with
+  | HFalse -> HFalse
+  | HEmp -> f2
+  | _ -> match f2 with
+    | HFalse -> HFalse
+    | HEmp -> f1
+    | _ -> if (f1 = HTrue) && (f2 = HTrue) then HTrue
+           else StarMinus { h_formula_starminus_h1 = f1;
+                       h_formula_starminus_h2 = f2;
+                       h_formula_starminus_pos = pos }
 
 and mkConj f1 f2 pos =
   if (f1 = HFalse) || (f2 = HFalse) then HFalse
@@ -355,6 +399,22 @@ and mkConj f1 f2 pos =
   else Conj { h_formula_conj_h1 = f1;
               h_formula_conj_h2 = f2;
               h_formula_conj_pos = pos }
+              
+and mkConjStar f1 f2 pos =
+  if (f1 = HFalse) || (f2 = HFalse) then HFalse
+  else if (f1 = HTrue) && (f2 = HTrue) then HTrue
+  else if (f1 = HEmp) && (f2 = HEmp) then HEmp
+  else ConjStar { h_formula_conjstar_h1 = f1;
+              h_formula_conjstar_h2 = f2;
+              h_formula_conjstar_pos = pos }
+              
+and mkConjConj f1 f2 pos =
+  if (f1 = HFalse) || (f2 = HFalse) then HFalse
+  else if (f1 = HTrue) && (f2 = HTrue) then HTrue
+  else if (f1 = HEmp) && (f2 = HEmp) then HEmp
+  else ConjConj { h_formula_conjconj_h1 = f1;
+              h_formula_conjconj_h2 = f2;
+              h_formula_conjconj_pos = pos }                            
 
 and mkPhase f1 f2 pos =
   match f1 with
@@ -365,11 +425,13 @@ and mkPhase f1 f2 pos =
                    h_formula_phase_rw = f2;
                    h_formula_phase_pos = pos }
 
-and mkHeapNode c id dr i f inv pd perm hl ofl l= HeapNode { 
+and mkHeapNode_x c id dr i f inv pd perm hl hl_i ofl l= 
+  HeapNode { 
                    h_formula_heap_node = c;
                    h_formula_heap_name = id;
                    h_formula_heap_derv = dr;
                    h_formula_heap_imm = i;
+                   h_formula_heap_imm_param = hl_i;
                    h_formula_heap_full = f;
                    h_formula_heap_with_inv = inv;
                    h_formula_heap_pseudo_data = pd;
@@ -377,12 +439,18 @@ and mkHeapNode c id dr i f inv pd perm hl ofl l= HeapNode {
                    h_formula_heap_arguments = hl;
                    h_formula_heap_label = ofl;
                    h_formula_heap_pos = l }
+
+and mkHeapNode  c id dr i f inv pd perm hl hl_i ofl l= 
+   Debug.no_1 "mkHeapNode" (fun (name, _) -> name) !print_h_formula 
+      (fun _ -> mkHeapNode_x c id dr i f inv pd perm hl hl_i ofl l ) c
           
-and mkHeapNode2 c id dr i f inv pd perm ohl ofl l = HeapNode2 { 
+and mkHeapNode2 c id dr i f inv pd perm ohl hl_i ofl l = 
+  HeapNode2 { 
                     h_formula_heap2_node = c;
                     h_formula_heap2_name = id;
                     h_formula_heap2_derv = dr;
                     h_formula_heap2_imm = i;
+                    h_formula_heap2_imm_param = hl_i;
                     h_formula_heap2_full = f;
                     h_formula_heap2_with_inv = inv;
                     h_formula_heap2_pseudo_data = pd;
@@ -390,7 +458,7 @@ and mkHeapNode2 c id dr i f inv pd perm ohl ofl l = HeapNode2 {
                     h_formula_heap2_arguments = ohl;
                     h_formula_heap2_label = ofl;
                     h_formula_heap2_pos = l}
-          
+
 and pos_of_formula f0 = match f0 with
   | Base f -> f.formula_base_pos
   | Or f -> f.formula_or_pos
@@ -431,6 +499,11 @@ let extract_var_from_id (id,p) =
 		(var,p)
 ;;
 
+let rec ann_opt_to_ann (ann_opt_lst: ann option list) (default_ann: ann): ann list = 
+  match ann_opt_lst with
+    | [] -> []
+    | (Some ann0) :: t ->  ann0 :: (ann_opt_to_ann t default_ann)
+    | (None) :: t      ->  default_ann :: (ann_opt_to_ann t default_ann) 
 
 let fv_imm ann = match ann with
   | ConstAnn _ -> []
@@ -441,9 +514,18 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
   | Conj ({h_formula_conj_h1 = h1; 
 	   h_formula_conj_h2 = h2; 
 	   h_formula_conj_pos = pos})
+  | ConjStar ({h_formula_conjstar_h1 = h1; 
+	   h_formula_conjstar_h2 = h2; 
+	   h_formula_conjstar_pos = pos})
+  | ConjConj ({h_formula_conjconj_h1 = h1; 
+	   h_formula_conjconj_h2 = h2; 
+	   h_formula_conjconj_pos = pos})	   	   
   | Phase ({h_formula_phase_rd = h1; 
 	   h_formula_phase_rw = h2; 
 	   h_formula_phase_pos = pos}) 
+  | StarMinus ({h_formula_starminus_h1 = h1; 
+	   h_formula_starminus_h2 = h2; 
+	   h_formula_starminus_pos = pos})
   | Star ({h_formula_star_h1 = h1; 
 	   h_formula_star_h2 = h2; 
 	   h_formula_star_pos = pos}) ->  Gen.BList.remove_dups_eq (=) ((h_fv h1)@(h_fv h2))
@@ -454,9 +536,12 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
              real information inside *)
               h_formula_heap_perm = perm; (*LDK*)
               h_formula_heap_imm = imm; 
+              h_formula_heap_imm_param = ann_param; 
               h_formula_heap_arguments = b} ->
      let perm_vars = (fv_iperm ()) perm in
      let imm_vars =  fv_imm imm in
+     let prm_ann =  List.flatten (List.map fv_imm  (ann_opt_to_ann ann_param imm)) in
+     let imm_vars = if (!Globals.allow_field_ann) then imm_vars@prm_ann else imm_vars in
      Gen.BList.remove_dups_eq (=) (imm_vars@perm_vars@((extract_var_from_id name):: (List.concat (List.map Ipure.afv b))))
   | HeapNode2 { h_formula_heap2_node = name ;
                 h_formula_heap2_perm = perm; (*LDK*)
@@ -898,12 +983,30 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
         Conj ({h_formula_conj_h1 = h_apply_one s h1; 
 	    h_formula_conj_h2 = h_apply_one s h2; 
 	    h_formula_conj_pos = pos})
+  | ConjStar ({h_formula_conjstar_h1 = h1; 
+	h_formula_conjstar_h2 = h2; 
+	h_formula_conjstar_pos = pos}) ->
+        ConjStar ({h_formula_conjstar_h1 = h_apply_one s h1; 
+	    h_formula_conjstar_h2 = h_apply_one s h2; 
+	    h_formula_conjstar_pos = pos})
+  | ConjConj ({h_formula_conjconj_h1 = h1; 
+	h_formula_conjconj_h2 = h2; 
+	h_formula_conjconj_pos = pos}) ->
+        ConjConj ({h_formula_conjconj_h1 = h_apply_one s h1; 
+	    h_formula_conjconj_h2 = h_apply_one s h2; 
+	    h_formula_conjconj_pos = pos})	    	    
   | Phase ({h_formula_phase_rd = h1; 
 	h_formula_phase_rw = h2; 
 	h_formula_phase_pos = pos}) ->
         Phase ({h_formula_phase_rd = h_apply_one s h1; 
 	    h_formula_phase_rw = h_apply_one s h2; 
 	    h_formula_phase_pos = pos}) 
+  | StarMinus ({h_formula_starminus_h1 = f1; 
+	h_formula_starminus_h2 = f2; 
+	h_formula_starminus_pos = pos}) -> 
+        StarMinus ({h_formula_starminus_h1 = h_apply_one s f1; 
+	    h_formula_starminus_h2 = h_apply_one s f2; 
+	    h_formula_starminus_pos = pos})	    
   | Star ({h_formula_star_h1 = f1; 
 	h_formula_star_h2 = f2; 
 	h_formula_star_pos = pos}) -> 
@@ -914,6 +1017,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 	h_formula_heap_name = c; 
 	h_formula_heap_derv = dr; 
 	h_formula_heap_imm = imm; 
+	h_formula_heap_imm_param = imm_p; 
 	h_formula_heap_full = full; 
 	h_formula_heap_with_inv = winv;
 	h_formula_heap_perm = perm; (*LDK*)
@@ -922,6 +1026,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 	h_formula_heap_label = l;
 	h_formula_heap_pos = pos}) -> 
       let imm = apply_one_imm s imm in
+      let imm_p = List.map (fun x -> apply_one_opt_imm s x) imm_p in
       let perm1 = match perm with
         | Some f -> Some (apply_one_iperm () s f)
         | None -> None
@@ -929,6 +1034,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		h_formula_heap_name = c;
 	    h_formula_heap_derv = dr; 
 		h_formula_heap_imm = imm; 
+	    h_formula_heap_imm_param = imm_p; 
 		h_formula_heap_full = full;
 		h_formula_heap_with_inv = winv;
 		h_formula_heap_perm = perm1 ; (*LDK*)
@@ -941,6 +1047,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		h_formula_heap2_name = c;
 	    h_formula_heap2_derv = dr; 
 		h_formula_heap2_imm = imm;
+	    h_formula_heap2_imm_param = imm_p; 
 		h_formula_heap2_full = full;
 		h_formula_heap2_with_inv = winv;
 		h_formula_heap2_arguments = args;
@@ -949,6 +1056,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		h_formula_heap2_label = l;
 		h_formula_heap2_pos= pos}) -> 
       let imm = apply_one_imm s imm in
+      let imm_p = List.map (fun x -> apply_one_opt_imm s x) imm_p in
       let perm1 = match perm with
         | Some f -> Some (apply_one_iperm () s f)
         | None -> None
@@ -958,6 +1066,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 		    h_formula_heap2_name =c;
 	        h_formula_heap2_derv = dr; 
 		    h_formula_heap2_imm = imm;
+	        h_formula_heap2_imm_param = imm_p; 
 		    h_formula_heap2_full =full;
 		    h_formula_heap2_with_inv = winv;
 		    h_formula_heap2_perm = perm1; (*LDK*)
@@ -1093,10 +1202,29 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
           Star ({h_formula_star_h1 = helper f1;
 	             h_formula_star_h2 = helper f2;
 	             h_formula_star_pos = pos})
+      | ConjStar ({h_formula_conjstar_h1 = f1;
+	           h_formula_conjstar_h2 = f2;
+	           h_formula_conjstar_pos = pos}) ->
+          ConjStar ({h_formula_conjstar_h1 = helper f1;
+	             h_formula_conjstar_h2 = helper f2;
+	             h_formula_conjstar_pos = pos})
+      | ConjConj ({h_formula_conjconj_h1 = f1;
+	           h_formula_conjconj_h2 = f2;
+	           h_formula_conjconj_pos = pos}) ->
+          ConjConj ({h_formula_conjconj_h1 = helper f1;
+	             h_formula_conjconj_h2 = helper f2;
+	             h_formula_conjconj_pos = pos})
+      | StarMinus ({h_formula_starminus_h1 = f1;
+	           h_formula_starminus_h2 = f2;
+	           h_formula_starminus_pos = pos}) ->
+          StarMinus ({h_formula_starminus_h1 = helper f1;
+	             h_formula_starminus_h2 = helper f2;
+	             h_formula_starminus_pos = pos})	             	             	             
       | HeapNode ({h_formula_heap_node = x;
 	               h_formula_heap_name = c;
 	               h_formula_heap_derv = dr;
 	               h_formula_heap_imm = imm;
+               	       h_formula_heap_imm_param = imm_p; 
 	               h_formula_heap_full = full;
 	               h_formula_heap_with_inv = winv;
 	               h_formula_heap_perm = perm; (*LDK*)
@@ -1112,6 +1240,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
 		                h_formula_heap_name = subst_data_name s c;
 	                    h_formula_heap_derv = dr;
 		                h_formula_heap_imm = imm;
+                               	h_formula_heap_imm_param = imm_p; 
 		                h_formula_heap_full = full;
 		                h_formula_heap_with_inv = winv;
 		                h_formula_heap_perm = perm1 ; (*LDK*)
@@ -1124,6 +1253,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
 		  h_formula_heap2_name = c;
 	      h_formula_heap2_derv = dr;
 		  h_formula_heap2_imm = imm;
+		  h_formula_heap2_imm_param = imm_p;
 		  h_formula_heap2_full = full;
 		  h_formula_heap2_with_inv = winv;
 		  h_formula_heap2_arguments = args;
@@ -1141,6 +1271,7 @@ and h_apply_one_w_data_name ((fr, t) as s : ((ident*primed) * (ident*primed))) (
 		      h_formula_heap2_name = subst_data_name s c;
 	          h_formula_heap2_derv = dr;
 		      h_formula_heap2_imm = imm;
+		      h_formula_heap2_imm_param = imm_p;
 		      h_formula_heap2_full =full;
 		      h_formula_heap2_with_inv = winv;
 		      h_formula_heap2_perm = perm1; (*LDK*)
@@ -1220,11 +1351,11 @@ let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula = match f
 	| EOr b -> EOr {b with formula_struc_or_f1 = rename_bound_var_struc_formula b.formula_struc_or_f1; formula_struc_or_f2 = rename_bound_var_struc_formula b.formula_struc_or_f2;}
 
 
-and float_out_exps_from_heap (f:formula ):formula = (* float_out_exps_from_heap_x f *)
+and float_out_exps_from_heap (f:formula ) (rel0: rel option):formula = (* float_out_exps_from_heap_x f *)
 let pr = !print_formula in
-Debug.no_1 "float_out_exps_from_heap" pr pr float_out_exps_from_heap_x f
+Debug.no_1 "float_out_exps_from_heap" pr pr (fun _ -> float_out_exps_from_heap_x f rel0) f
 
-and float_out_exps_from_heap_x (f:formula ):formula = 
+and float_out_exps_from_heap_x (f:formula ) (rel0: rel option) :formula = 
 	
   let rec float_out_exps (f:h_formula):(h_formula * (((ident*primed)*Ipure.formula)list)) = match f with
     | Star b-> 
@@ -1232,11 +1363,26 @@ and float_out_exps_from_heap_x (f:formula ):formula =
 	let r21,r22 = float_out_exps b.h_formula_star_h2 in
 	  (Star ({h_formula_star_h1  =r11; h_formula_star_h2=r21;h_formula_star_pos = b.h_formula_star_pos}), 
 	   (r12@r22))
+    | StarMinus b-> 
+	let r11,r12 = float_out_exps b.h_formula_starminus_h1 in
+	let r21,r22 = float_out_exps b.h_formula_starminus_h2 in
+	  (StarMinus ({h_formula_starminus_h1  =r11; h_formula_starminus_h2=r21;h_formula_starminus_pos = b.h_formula_starminus_pos}), 
+	   (r12@r22))	   
     | Conj b-> 
 	let r11,r12 = float_out_exps b.h_formula_conj_h1 in
 	let r21,r22 = float_out_exps b.h_formula_conj_h2 in
 	  (Conj ({h_formula_conj_h1  =r11; h_formula_conj_h2=r21;h_formula_conj_pos = b.h_formula_conj_pos}), 
 	   (r12@r22))
+    | ConjStar b-> 
+	let r11,r12 = float_out_exps b.h_formula_conjstar_h1 in
+	let r21,r22 = float_out_exps b.h_formula_conjstar_h2 in
+	  (ConjStar ({h_formula_conjstar_h1  =r11; h_formula_conjstar_h2=r21;h_formula_conjstar_pos = b.h_formula_conjstar_pos}), 
+	   (r12@r22))
+    | ConjConj b-> 
+	let r11,r12 = float_out_exps b.h_formula_conjconj_h1 in
+	let r21,r22 = float_out_exps b.h_formula_conjconj_h2 in
+	  (ConjConj ({h_formula_conjconj_h1  =r11; h_formula_conjconj_h2=r21;h_formula_conjconj_pos = b.h_formula_conjconj_pos}), 
+	   (r12@r22))	   	   
     | Phase b-> 
 	let r11,r12 = float_out_exps b.h_formula_phase_rd in
 	let r21,r22 = float_out_exps b.h_formula_phase_rw in
@@ -1260,7 +1406,49 @@ and float_out_exps_from_heap_x (f:formula ):formula =
 								(* let _ = Hashtbl.remove !Ipure.linking_exp_list c in *)
 								Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), (Some (false, fresh_int(), lexp))), None)
 							with Not_found -> Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None)
-            else Ipure.BForm ((Ipure.Eq (nv,c,b.h_formula_heap_pos), None), None) 
+            else 
+                      let pf = if (*not(!Globals.allow_field_ann)*) (true) then Ipure.Eq (nv,c,b.h_formula_heap_pos) else
+                            (*asankhs: What is rel0 supposed to be ? this function is always called with a None removing for now*)
+                            match rel0 with (* andreeac TODO what about heapnode2 ? *)
+                              | None -> Ipure.Eq (nv,c,b.h_formula_heap_pos)
+                              | Some r ->
+                                  match r with
+                                    | REq  -> Ipure.Eq (nv,c,b.h_formula_heap_pos)
+                                    | RNeq -> Ipure.Neq (nv,c,b.h_formula_heap_pos)
+                                    | RGt  -> begin
+                                        match c with
+                                          | Ipure.Ann_Exp _
+                                          | Ipure.AConst _ ->  Ipure.SubAnn (c,nv,b.h_formula_heap_pos)
+                                          | _ -> Ipure.Gt (nv,c,b.h_formula_heap_pos)
+                                    end
+                                    | RGte -> begin
+                                        match c with
+                                          | Ipure.Ann_Exp _
+                                          | Ipure.AConst _ ->  Ipure.SubAnn (c,nv,b.h_formula_heap_pos)
+                                          | _ -> Ipure.Gte (nv,c,b.h_formula_heap_pos)
+                                    end
+                                    | RLt -> begin
+                                        match c with
+                                          | Ipure.Ann_Exp _
+                                          | Ipure.AConst _ ->  Ipure.SubAnn (nv,c,b.h_formula_heap_pos)
+                                          | _ -> Ipure.Lt (nv,c,b.h_formula_heap_pos)
+                                    end
+                                    | RLte -> begin
+                                        match c with
+                                          | Ipure.Ann_Exp _
+                                          | Ipure.AConst _ ->  Ipure.SubAnn (nv, c, b.h_formula_heap_pos)
+                                          | _ -> Ipure.Lte (nv,c,b.h_formula_heap_pos)
+                                    end
+                                    | RSubAnn -> begin
+                                        match c with
+                                          | Ipure.Ann_Exp _
+                                          | Ipure.AConst _ ->  Ipure.SubAnn (nv, c, b.h_formula_heap_pos)
+                                          | _ -> Ipure.Lte (nv,c,b.h_formula_heap_pos)
+                                    end
+                      in
+                      let nf = Ipure.BForm ((pf, None), None) in
+                      nf
+                  (* Slicing: TODO IL for linking exp *)
           in
 				  (nv,[(nn,npf)])) b.h_formula_heap_arguments) in
 	    (HeapNode ({b with h_formula_heap_arguments = na; h_formula_heap_perm = na_perm}),(List.concat (ls_perm ::ls)))
@@ -1358,25 +1546,29 @@ and float_out_exps_from_heap_x (f:formula ):formula =
 			formula_exists_pos = b.formula_exists_pos
 		      })	
     | Or b-> Or ({
-		   formula_or_f1 = float_out_exps_from_heap b.formula_or_f1;
-		   formula_or_f2 = float_out_exps_from_heap b.formula_or_f2;
+		   formula_or_f1 = float_out_exps_from_heap b.formula_or_f1 rel0;
+		   formula_or_f2 = float_out_exps_from_heap b.formula_or_f2 rel0;
 		   formula_or_pos = b.formula_or_pos
 		 })		
   in helper f
        
-and float_out_exps_from_heap_struc (f:struc_formula):struc_formula = match f with
-    | EAssume (b,tag,t) -> EAssume ((float_out_exps_from_heap b),tag,t)
-    | ECase b -> ECase {b with formula_case_branches = Gen.map_l_snd float_out_exps_from_heap_struc b.formula_case_branches}
+and float_out_exps_from_heap_struc (f:struc_formula) (rel0: rel option):struc_formula = match f with
+    | EAssume (b,tag,t) -> 
+        let rel0 = match rel0 with
+          | None -> Some RSubAnn
+          | Some r -> rel0 in
+        EAssume ((float_out_exps_from_heap b rel0),tag,t)
+    | ECase b -> ECase {b with formula_case_branches = Gen.map_l_snd (fun x -> float_out_exps_from_heap_struc x rel0) b.formula_case_branches}
     | EBase b -> EBase {
 				 formula_struc_explicit_inst = b.formula_struc_explicit_inst;
 				 formula_struc_implicit_inst = b.formula_struc_implicit_inst;
 				 formula_struc_exists = b.formula_struc_exists ;
-				 formula_struc_base = float_out_exps_from_heap b.formula_struc_base;
-				 formula_struc_continuation = Gen.map_opt float_out_exps_from_heap_struc b.formula_struc_continuation;
+				 formula_struc_base = float_out_exps_from_heap b.formula_struc_base rel0;
+				 formula_struc_continuation = Gen.map_opt (fun x -> float_out_exps_from_heap_struc x rel0)  b.formula_struc_continuation;
 				 formula_struc_pos = b.formula_struc_pos}
-    | EInfer b -> EInfer ({b with formula_inf_continuation = float_out_exps_from_heap_struc b.formula_inf_continuation;})
-	| EList b -> EList (Gen.map_l_snd float_out_exps_from_heap_struc b)
-	| EOr b-> EOr {b with formula_struc_or_f1 = float_out_exps_from_heap_struc b.formula_struc_or_f1; formula_struc_or_f2 = float_out_exps_from_heap_struc b.formula_struc_or_f2;}
+    | EInfer b -> EInfer ({b with formula_inf_continuation = float_out_exps_from_heap_struc b.formula_inf_continuation rel0;})
+	| EList b -> EList (Gen.map_l_snd (fun x -> float_out_exps_from_heap_struc x rel0) b )
+	| EOr b-> EOr {b with formula_struc_or_f1 = float_out_exps_from_heap_struc b.formula_struc_or_f1 rel0; formula_struc_or_f2 = float_out_exps_from_heap_struc b.formula_struc_or_f2 rel0;}
 
 and float_out_one_formula_min_max (f :  one_formula) :  one_formula =
   let (nh, nhpf) = float_out_heap_min_max f.formula_heap in
@@ -1459,6 +1651,28 @@ match h with
 		  h_formula_star_pos = l;
 		}),
             np)
+    |  StarMinus
+	{
+          h_formula_starminus_h1 = f1;
+          h_formula_starminus_h2 = f2;
+          h_formula_starminus_pos = l
+	} ->
+	 let (nf1, np1) = float_out_heap_min_max f1 in
+	 let (nf2, np2) = float_out_heap_min_max f2 in
+	 let np =
+           (match (np1, np2) with
+              | (None, None) -> None
+              | (Some _, None) -> np1
+              | (None, Some _) -> np2
+              | (Some e1, Some e2) -> Some (Ipure.And (e1, e2, l)))
+	 in
+           (( StarMinus
+		{
+		  h_formula_starminus_h1 = nf1;
+		  h_formula_starminus_h2 = nf2;
+		  h_formula_starminus_pos = l;
+		}),
+            np)            
     |  Conj
 	{
           h_formula_conj_h1 = f1;
@@ -1481,6 +1695,50 @@ match h with
 		  h_formula_conj_pos = l;
 		}),
             np)
+    |  ConjStar
+	{
+          h_formula_conjstar_h1 = f1;
+          h_formula_conjstar_h2 = f2;
+          h_formula_conjstar_pos = l
+	} ->
+	 let (nf1, np1) = float_out_heap_min_max f1 in
+	 let (nf2, np2) = float_out_heap_min_max f2 in
+	 let np =
+           (match (np1, np2) with
+              | (None, None) -> None
+              | (Some _, None) -> np1
+              | (None, Some _) -> np2
+              | (Some e1, Some e2) -> Some (Ipure.And (e1, e2, l)))
+	 in
+           (( ConjStar
+		{
+		  h_formula_conjstar_h1 = nf1;
+		  h_formula_conjstar_h2 = nf2;
+		  h_formula_conjstar_pos = l;
+		}),
+            np)
+    |  ConjConj
+	{
+          h_formula_conjconj_h1 = f1;
+          h_formula_conjconj_h2 = f2;
+          h_formula_conjconj_pos = l
+	} ->
+	 let (nf1, np1) = float_out_heap_min_max f1 in
+	 let (nf2, np2) = float_out_heap_min_max f2 in
+	 let np =
+           (match (np1, np2) with
+              | (None, None) -> None
+              | (Some _, None) -> np1
+              | (None, Some _) -> np2
+              | (Some e1, Some e2) -> Some (Ipure.And (e1, e2, l)))
+	 in
+           (( ConjConj
+		{
+		  h_formula_conjconj_h1 = nf1;
+		  h_formula_conjconj_h2 = nf2;
+		  h_formula_conjconj_pos = l;
+		}),
+            np)                        
     |  Phase
 	{
           h_formula_phase_rd = f1;
@@ -1646,6 +1904,11 @@ and break_struc_formula (f : struc_formula) : P.b_formula list list = match f wi
 	| EList b-> Gen.fold_l_snd break_struc_formula b
 	| EOr b-> (break_struc_formula b.formula_struc_or_f1) @(break_struc_formula b.formula_struc_or_f2)
 
+let isAccs(a : ann) : bool = 
+  match a with
+    | ConstAnn(Accs) -> true
+    | _ -> false
+
 let isLend(a : ann) : bool = 
   match a with
     | ConstAnn(Lend) -> true
@@ -1745,23 +2008,23 @@ let float_out_thread (f : formula) : formula =
       float_out_thread_x f
 
 
-let rec float_out_thread_struc_formula_x (f:struc_formula):struc_formula = match f with
+let rec float_out_thread_struc_formula_x (f:struc_formula) (rel0: rel option): struc_formula = match f with
     | EAssume (b,tag,t) -> EAssume ((float_out_thread b),tag,t)
-    | ECase b -> ECase ({formula_case_branches = List.map (fun (c1,c2)-> (c1,(float_out_exps_from_heap_struc c2))) b.formula_case_branches ; formula_case_pos=b.formula_case_pos})
+    | ECase b -> ECase ({formula_case_branches = List.map (fun (c1,c2)-> (c1,(float_out_exps_from_heap_struc c2 rel0))) b.formula_case_branches ; formula_case_pos=b.formula_case_pos})
     | EBase b-> EBase {b with
 				 formula_struc_base = float_out_thread b.formula_struc_base;
-				 formula_struc_continuation =  Gen.map_opt float_out_thread_struc_formula_x b.formula_struc_continuation;
+				 formula_struc_continuation =  Gen.map_opt (fun x -> float_out_thread_struc_formula_x x rel0) b.formula_struc_continuation;
 				}
-    | EInfer b -> EInfer ({b with formula_inf_continuation = float_out_thread_struc_formula_x b.formula_inf_continuation;})
-	| EList b -> EList (Gen.map_l_snd float_out_thread_struc_formula_x b)
+    | EInfer b -> EInfer ({b with formula_inf_continuation = float_out_thread_struc_formula_x b.formula_inf_continuation rel0;})
+	| EList b -> EList (Gen.map_l_snd (fun x -> float_out_thread_struc_formula_x x rel0) b)
 	| EOr b -> EOr {b with 
-			formula_struc_or_f1 = float_out_thread_struc_formula_x b.formula_struc_or_f1; 
-			formula_struc_or_f2 = float_out_thread_struc_formula_x b.formula_struc_or_f2; }
+			formula_struc_or_f1 = float_out_thread_struc_formula_x b.formula_struc_or_f1 rel0; 
+			formula_struc_or_f2 = float_out_thread_struc_formula_x b.formula_struc_or_f2 rel0; }
 
-let float_out_thread_struc_formula (f:struc_formula):struc_formula = 
+let float_out_thread_struc_formula (f:struc_formula) (rel0: rel option): struc_formula = 
   Debug.no_1 "float_out_thread_struc_formula"
       !print_struc_formula !print_struc_formula
-      float_out_thread_struc_formula_x f
+      (fun _ -> float_out_thread_struc_formula_x f rel0) f 
 
 let add_h_formula_to_formula (h_f: h_formula) (f0 : formula): formula =
   let rec helper f0 =
@@ -1886,6 +2149,9 @@ let find_barr_node bname (f:int) (t:int) struc :bool=
 	let rec find_h_node x h = match h with 
 		 | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2}
 		 | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
+		 | ConjStar {h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2}
+		 | ConjConj {h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2}	
+		 | StarMinus {h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2}	 		 
 		 | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} -> 
 			(match find_h_node x h1 with 
 				| Bar_not_found -> find_h_node x h2 

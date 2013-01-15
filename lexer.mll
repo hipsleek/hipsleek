@@ -189,6 +189,8 @@ module Make (Token : SleekTokenS)
 	 ("pred_prim", PRED_PRIM);
 	 ("hip_include", HIP_INCLUDE);
      ("print", PRINT);
+     ("mem", MEM);
+     ("memE", MEME);
 	 ("dprint", DPRINT);
 	 ("compare", CMP);
    ("raise", RAISE);
@@ -283,12 +285,16 @@ rule tokenizer file_name = parse
                 |['0'-'9'] ['0'-'9'] ['0'-'9']
                 |'x' hexa_char hexa_char)
           as x) "'"                                { CHAR_LIT (Camlp4.Struct.Token.Eval.char x, x) }
+  | "@A" { ACCS }  
   | '&' { AND }
+  | "&*" { ANDSTAR }
   | "&&" { ANDAND }
+  | "*-" { STARMINUS }
   | "@" { AT }
   | "@@" { ATAT }
   | "@I" {IMM}
   | "@L" {LEND}
+  | "@A" {ACCS}
   | "@D" { DERV }
   | "@M" { MUT }
   | "@pre" { PRE }

@@ -77,6 +77,7 @@ and view_decl = {
     view_data_name : ident;
     view_formula : F.struc_formula; (* case-structured formula *)
     view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
+    view_mem : F.mem_perm_formula option; (* Memory Region Spec *)
     view_inv_lock : F.formula option;
     mutable view_x_formula : (MP.mix_formula); (*XPURE 1 -> revert to P.formula*)
     mutable view_xpure_flag : bool; (* flag to indicate if XPURE0 <=> XPURE1 *)
@@ -148,6 +149,7 @@ and test_comps =
 and coercion_case =
   | Simple
   | Complex
+  | Ramify
   | Normalize of bool 
 (* 
    |LHS| > |RHS| --> Normalize of true --> combine
@@ -223,7 +225,8 @@ and exp_bind = {
     exp_bind_bound_var : typed_ident;
     exp_bind_fields : typed_ident list;
     exp_bind_body : exp;
-    exp_bind_imm : heap_ann;
+    exp_bind_imm : Cformula.ann;
+    exp_bind_param_imm : Cformula.ann list;
     exp_bind_read_only : bool; (*for frac perm, indicate whether the body will read or write to bound vars in exp_bind_fields*)
     exp_bind_path_id : control_path_id;
     exp_bind_pos : loc }
@@ -1071,9 +1074,18 @@ let look_up_coercion_def_raw coers (c : ident) : coercion_decl list =
 *)
 (*TODO: re-implement with care*)
 let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
+  let h,_,_,_,_ = F.split_components lhs in
+  let hs = F.split_star_conjunctions h in
+  let flag = if (List.length hs) == 1 then 
+	  let sm = List.hd hs in (match sm with
+	  | F.StarMinus _ -> true
+	  | _ -> false)
+	  else false in
+  if(flag) then Ramify
+  else
   let fct f = match f with
       | Cformula.Base {F.formula_base_heap=h}
-	  | Cformula.Exists {F.formula_exists_heap=h} ->      
+      | Cformula.Exists {F.formula_exists_heap=h} ->      
           let hs = F.split_star_conjunctions h in
 		  let self_n = List.for_all (fun c-> (P.name_of_spec_var (F.get_node_var c)) = self) hs in
           (List.length hs),self_n, List.map F.get_node_name hs
@@ -1101,7 +1113,7 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
 			else Complex
 		
 let case_of_coercion lhs rhs =
-	let pr1 r = match r with | Simple -> "simple" | Complex -> "complex" | Normalize b-> "normalize "^string_of_bool b in
+	let pr1 r = match r with | Simple -> "simple" | Complex -> "complex" | Ramify -> "ramify" | Normalize b-> "normalize "^string_of_bool b in
 	Debug.no_2 "case_of_coercion" !Cformula.print_formula !Cformula.print_formula pr1 case_of_coercion_x lhs rhs  
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
@@ -1264,6 +1276,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
   | cdef1 :: _ -> begin
 	  (* generate the first node *)
 	  let sub_tvar = List.hd subnode.F.h_formula_data_arguments in
+	  (* let sub_tvar_ann = List.hd subnode.F.h_formula_data_param_imm in *)
 	  let sub_ext_var = List.hd (List.tl subnode.F.h_formula_data_arguments) in
 		(* call gen_exts with sup_ext_var to link the 
 		   head node with extensions *)
@@ -1280,6 +1293,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 							   F.h_formula_data_name = cdef1.data_name;
 							   F.h_formula_data_derv = subnode.F.h_formula_data_derv;
 							   F.h_formula_data_imm = subnode.F.h_formula_data_imm;
+                               F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 							   F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
 							   F.h_formula_data_origins = subnode.F.h_formula_data_origins;
 							   F.h_formula_data_original = subnode.F.h_formula_data_original;
@@ -1300,6 +1314,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_derv = subnode.F.h_formula_data_derv;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
+                                         F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 										 F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
 							             F.h_formula_data_origins = subnode.F.h_formula_data_origins;
 							             F.h_formula_data_original = subnode.F.h_formula_data_original;
@@ -1321,6 +1336,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_derv = subnode.F.h_formula_data_derv;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
+                                         F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 										 F.h_formula_data_perm = subnode.F.h_formula_data_perm;
 							             F.h_formula_data_origins = subnode.F.h_formula_data_origins;
 							             F.h_formula_data_original = subnode.F.h_formula_data_original;

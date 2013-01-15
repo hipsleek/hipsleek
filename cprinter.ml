@@ -125,8 +125,11 @@ let op_and_short = "&"
 let op_or_short = "|"  
 let op_not_short = "!"  
 let op_star_short = "*"  
+let op_starminus_short = "*-" 
 let op_phase_short = ";"  
 let op_conj_short = "&"  
+let op_conjstar_short = "&*" 
+let op_conjconj_short = "&&" 
 let op_f_or_short = "or"  
 let op_lappend_short = "APP"
 let op_cons_short = ":::"
@@ -152,8 +155,11 @@ let op_and = " & "
 let op_or = " | "  
 let op_not = "!"  
 let op_star = " * "  
+let op_starminus = " *- " 
 let op_phase = " ; "  
 let op_conj = " & "  
+let op_conjstar = " &* " 
+let op_conjconj = " && " 
 let op_f_or = "or" 
 let op_lappend = "append"
 let op_cons = ":::"
@@ -488,10 +494,12 @@ let string_of_spec_var x =
 
 let string_of_subst stt = pr_list (pr_pair string_of_spec_var string_of_spec_var) stt
 
-let string_of_imm imm = match imm with
+let rec string_of_imm imm = match imm with
+  | ConstAnn(Accs) -> "@A"
   | ConstAnn(Imm) -> "@I"
   | ConstAnn(Lend) -> "@L"
   | ConstAnn(Mutable) -> "@M"
+  | TempAnn(t) -> "@[" ^ (string_of_imm t) ^ "]"
   | PolyAnn(v) -> "@" ^ (string_of_spec_var v)
 
 
@@ -585,8 +593,10 @@ let h_formula_assoc_op (e:h_formula) : (string * h_formula list) option =
      e.g. trivial expr and prefix forms *)
 let h_formula_wo_paren (e:h_formula) = 
   match e with
+    | DataNode _ 
+    | ViewNode _ 
     | Star _ -> true
-    | _ -> true
+    | _ -> false
 
 
 let formula_assoc_op (e:formula) : (string * formula list) option = 
@@ -958,6 +968,11 @@ let rec pr_h_formula h =
           let arg2 = bin_op_to_list op_star_short h_formula_assoc_op h2 in
           let args = arg1@arg2 in
           pr_list_op op_star f_b args
+    | StarMinus ({h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2; h_formula_starminus_pos = pos}) -> 
+	      let arg1 = bin_op_to_list op_starminus_short h_formula_assoc_op h1 in
+          let arg2 = bin_op_to_list op_starminus_short h_formula_assoc_op h2 in
+          let args = arg1@arg2 in
+          pr_list_op op_starminus f_b args          
     | Phase ({h_formula_phase_rd = h1; h_formula_phase_rw = h2; h_formula_phase_pos = pos}) -> 
 	      let arg1 = bin_op_to_list op_phase_short h_formula_assoc_op h1 in
           let arg2 = bin_op_to_list op_phase_short h_formula_assoc_op h2 in
@@ -967,11 +982,22 @@ let rec pr_h_formula h =
 	      let arg1 = bin_op_to_list op_conj_short h_formula_assoc_op h1 in
           let arg2 = bin_op_to_list op_conj_short h_formula_assoc_op h2 in
           let args = arg1@arg2 in
-          pr_list_op op_conj f_b args
+          pr_list_op op_conj (pr_bracket (fun _ -> false) pr_h_formula) args
+    | ConjStar ({h_formula_conjstar_h1 = h1; h_formula_conjstar_h2 = h2; h_formula_conjstar_pos = pos}) -> 
+	      let arg1 = bin_op_to_list op_conjstar_short h_formula_assoc_op h1 in
+          let arg2 = bin_op_to_list op_conjstar_short h_formula_assoc_op h2 in
+          let args = arg1@arg2 in
+          pr_list_op op_conjstar (pr_bracket (fun _ -> false) pr_h_formula) args
+    | ConjConj ({h_formula_conjconj_h1 = h1; h_formula_conjconj_h2 = h2; h_formula_conjconj_pos = pos}) -> 
+	      let arg1 = bin_op_to_list op_conjconj_short h_formula_assoc_op h1 in
+          let arg2 = bin_op_to_list op_conjconj_short h_formula_assoc_op h2 in
+          let args = arg1@arg2 in
+          pr_list_op op_conjconj (pr_bracket (fun _ -> false) pr_h_formula) args                    
     | DataNode ({h_formula_data_node = sv;
       h_formula_data_name = c;
 	  h_formula_data_derv = dr;
 	  h_formula_data_imm = imm;
+	  h_formula_data_param_imm = ann_param;
       h_formula_data_arguments = svs;
 		h_formula_data_holes = hs; (* An Hoa *)
       h_formula_data_perm = perm; (*LDK*)
@@ -997,10 +1023,11 @@ let rec pr_h_formula h =
           fmt_open_hbox ();
           (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
           (* pr_formula_label_opt pid; *)
-			(* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
+		  (* An Hoa : Replace the spec-vars at holes with the symbol '-' *)
           pr_spec_var sv; fmt_string "::";
-          pr_angle (c^perm_str) pr_spec_var svs ;
-	      pr_imm imm;
+          (if not(!Globals.allow_field_ann) then pr_angle (c^perm_str) (fun x ->  pr_spec_var x) svs 
+           else pr_angle (c^perm_str) (fun (x,y) ->  pr_spec_var x; pr_imm y) (List.combine svs ann_param) );
+	      if (!Globals.allow_imm) then pr_imm imm;
 	      pr_derv dr;
           if (hs!=[]) then (fmt_string "("; fmt_string (pr_list string_of_int hs); fmt_string ")");
           (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
@@ -1880,9 +1907,10 @@ let pr_estate (es : entail_state) =
   pr_vwrap "es_heap: " pr_h_formula es.es_heap;
   pr_wrap_test "es_history: " Gen.is_empty (pr_seq "" pr_h_formula) es.es_history;
   (*pr_wrap_test "es_prior_steps: "  Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.es_prior_steps;*)
-  pr_wrap_test "es_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_evars;
   pr_wrap_test "es_ivars: "  Gen.is_empty (pr_seq "" pr_spec_var) es.es_ivars;
   (* pr_wrap_test "es_expl_vars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_expl_vars; *)
+  pr_wrap_test "es_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_evars;
+  pr_wrap_test "es_ante_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_ante_evars;
   pr_wrap_test "es_gen_expl_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_gen_expl_vars;
   pr_wrap_test "es_gen_impl_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_gen_impl_vars; 
   pr_wrap_test "es_rhs_eqset: " Gen.is_empty  (pr_seq "" (pr_pair_aux pr_spec_var pr_spec_var)) (es.es_rhs_eqset); 
@@ -2536,7 +2564,7 @@ let rec string_of_exp = function
 	exp_bind_body = e;
 	exp_bind_path_id = pid;
 	exp_bind_pos = l}) -> 
-        string_of_control_path_id_opt pid ("bind " ^ id ^ " to (" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ") [" ^ (string_of_read_only ro)^ "] in \n{" ^ (string_of_exp e) ^ "\n}")
+        string_of_control_path_id_opt pid ("bind " ^ id ^ " to (" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ")[" ^ (string_of_read_only ro)^ "] in \n{" ^ (string_of_exp e) ^ "\n}")
   | Block ({exp_block_type = _;
 	exp_block_body = e;
 	exp_block_local_vars = _;
@@ -2662,6 +2690,7 @@ let string_of_coercion_type (t:Cast.coercion_type) = match t with
 let string_of_coercion_case (t:Cast.coercion_case) = match t with
   | Cast.Simple -> "Simple"
   | Cast.Complex -> "Complex"
+  | Cast.Ramify -> "Ramify"
   | Cast.Normalize b-> "Normalize "^(string_of_bool b)
 
     (* coercion_univ_vars : P.spec_var list; (\* list of universally quantified variables. *\) *)
@@ -2929,9 +2958,12 @@ let html_op_neq = " &ne; "
 let html_op_and = " &and; "  
 let html_op_or = " &or; "  
 let html_op_not = " &not; "  
-let html_op_star = " &lowast; "  
+let html_op_star = " &lowast; "
+let html_op_starminus = " &lowast;- "   
 let html_op_phase = " ; "  
 let html_op_conj = " &and; "  
+let html_op_conjstar = " &and;&lowast; " 
+let html_op_conjconj = " &and;&and; " 
 let html_op_f_or = " <b>or</b> " 
 let html_op_lappend = "<b>append</b>"
 let html_op_cons = " ::: "
@@ -3066,6 +3098,13 @@ let rec html_of_h_formula h = match h with
 		let arg2 = bin_op_to_list op_star_short h_formula_assoc_op h2 in
 		let args = arg1@arg2 in
 			String.concat html_op_star (List.map html_of_h_formula args)
+	| StarMinus ({h_formula_starminus_h1 = h1;
+			h_formula_starminus_h2 = h2;
+			h_formula_starminus_pos = pos}) -> 
+		let arg1 = bin_op_to_list op_starminus_short h_formula_assoc_op h1 in
+		let arg2 = bin_op_to_list op_starminus_short h_formula_assoc_op h2 in
+		let args = arg1@arg2 in
+			String.concat html_op_starminus (List.map html_of_h_formula args)			
 	| Phase ({h_formula_phase_rd = h1;
 			h_formula_phase_rw = h2;
 			h_formula_phase_pos = pos}) -> 
@@ -3080,10 +3119,25 @@ let rec html_of_h_formula h = match h with
 		let arg2 = bin_op_to_list op_conj_short h_formula_assoc_op h2 in
 		let args = arg1@arg2 in
 			String.concat html_op_conj (List.map html_of_h_formula args)
+	| ConjStar ({h_formula_conjstar_h1 = h1;
+			h_formula_conjstar_h2 = h2;
+			h_formula_conjstar_pos = pos}) -> 
+		let arg1 = bin_op_to_list op_conjstar_short h_formula_assoc_op h1 in
+		let arg2 = bin_op_to_list op_conjstar_short h_formula_assoc_op h2 in
+		let args = arg1@arg2 in
+			String.concat html_op_conjstar (List.map html_of_h_formula args)
+	| ConjConj ({h_formula_conjconj_h1 = h1;
+			h_formula_conjconj_h2 = h2;
+			h_formula_conjconj_pos = pos}) -> 
+		let arg1 = bin_op_to_list op_conjconj_short h_formula_assoc_op h1 in
+		let arg2 = bin_op_to_list op_conjconj_short h_formula_assoc_op h2 in
+		let args = arg1@arg2 in
+			String.concat html_op_conjconj (List.map html_of_h_formula args)						
 	| DataNode ({h_formula_data_node = sv;
 				h_formula_data_name = c;
                 h_formula_data_derv = dr;
 				h_formula_data_imm = imm;
+                h_formula_data_param_imm = ann_param; (* (andreeac) add param ann to html printer *)
 				h_formula_data_arguments = svs;
 				h_formula_data_holes = hs; 
 				h_formula_data_pos = pos;

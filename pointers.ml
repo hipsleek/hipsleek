@@ -804,7 +804,7 @@ let rec trans_specs_x specs new_params flags pos =
         let var = (param.param_name, Unprimed) in
         let old_var = (param.param_name^"_old",Unprimed) in
         let h_arg = Ipure.Var (old_var,no_pos) in
-        let var_node = Iformula.mkHeapNode var typ_name false (Iformula.ConstAnn(Mutable)) false false false None [h_arg] None no_pos in
+        let var_node = Iformula.mkHeapNode var typ_name false (Iformula.ConstAnn(Mutable)) false false false None [h_arg] [] None no_pos in
         let new_h = Iformula.mkStar h var_node no_pos in
         (new_h,old_var::impl_vars)
       else (h,impl_vars)
@@ -830,7 +830,7 @@ let rec trans_specs_x specs new_params flags pos =
             let var = (param.param_name, Primed) in (* PRIMED *)
             let new_var = (param.param_name^"_new",Unprimed) in
             let h_arg = Ipure.Var (new_var,no_pos) in
-            let var_node = Iformula.mkHeapNode var typ_name false (Iformula.ConstAnn(Mutable)) false false false None [h_arg] None no_pos in
+            let var_node = Iformula.mkHeapNode var typ_name false (Iformula.ConstAnn(Mutable)) false false false None [h_arg] [] None no_pos in
             let uvar = (param.param_name, Unprimed) in (* UNPRIMED *)
             let new_p = Ipure.mkEqVarExp var uvar pos in
             (var_node,new_p,new_var::ex_vars)
@@ -849,7 +849,7 @@ let rec trans_specs_x specs new_params flags pos =
             let new_var = (param.param_name^"_new",Unprimed) in
             (* let h_arg = Ipure.Var (old_var,no_pos) in *)
             let h_arg = Ipure.Var (new_var,no_pos) in
-            let var_node = Iformula.mkHeapNode var typ_name false (Iformula.ConstAnn(Mutable)) false false false None [h_arg] None no_pos in
+            let var_node = Iformula.mkHeapNode var typ_name false (Iformula.ConstAnn(Mutable)) false false false None [h_arg] [] None no_pos in
             (var_node, Ipure.mkTrue pos, new_var::ex_vars)
         in
         let new_h = Iformula.mkStar h var_node no_pos in

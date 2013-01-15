@@ -26,7 +26,7 @@ GetOptions( "stop"  => \$stop,
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|sleek|parahip|hip_vperm|sleek_vperm|sleek_fracperm|infinity [-flags \"arguments to be transmited to hip/sleek \"]\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|imm-filed|sleek|parahip|hip_vperm|sleek_vperm|sleek_fracperm|infinity|mem [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
 
@@ -206,10 +206,10 @@ $output_file = "log";
 	],
 	# END OF ARRAY TESTING EXAMPLES
 	"hip_tr"=>[["trees.ss",1,"insert"]],
-	"infinity" =>[["bst-inf.ss",2,"","delete","SUCCESS","remove_min","SUCCESS"],
-	["inf-selsort.ss",3,"","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
-	["inf-ins.ss",1,"","insert","SUCCESS"],
-	["inf-sel.ss",3,"","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	"infinity" =>[["bst-inf.ss",2,"--dsd","delete","SUCCESS","remove_min","SUCCESS"],
+	["inf-selsort.ss",3,"--dsd","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	["inf-ins.ss",1,"--dsd","insert","SUCCESS"],
+	["inf-sel.ss",3,"--dsd","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
 	],
     "imm" =>[ 
         ["bigint.ss",17,  " --imm -tp redlog",
@@ -343,6 +343,25 @@ $output_file = "log";
          "get_next_next", "SUCCESS",
          "get_next", "SUCCESS"
         ]],
+        "mem" => [
+        ["dag.ss",2,"-tp om --ramify","mark","SUCCESS","mark2","SUCCESS"], 
+        ["graph.ss",2,"-tp om --ramify","mark","SUCCESS","mark2","SUCCESS"],
+        ["dag_1.ss",1,"-tp om","mark","SUCCESS"],
+        ["graph_1.ss",1,"-tp om","mark","SUCCESS"],
+        ["dag_copy.ss",1,"-tp om --ramify","copy_dag","SUCCESS"],
+        ["garbage_collector.ss",3,"-tp om --ramify","mark","SUCCESS","sweep","SUCCESS","collect","SUCCESS"],
+        ["llsortll.ss",6,"-tp om --eps","overlaid_insert","SUCCESS","delete2","SUCCESS","insert2","SUCCESS",
+        "get_tail","SUCCESS","insertion_sort","SUCCESS","id","SUCCESS"],
+        ["lltree.ss",1,"-tp om","move_request","SUCCESS"],
+        ["lltree2.ss",1,"-tp om --eps","move_request","SUCCESS"],
+        ["nodell.ss",6,"-tp om --ramify","delete_cache","SUCCESS","delete","SUCCESS","add_L","SUCCESS",
+        "caching","SUCCESS","add_in","SUCCESS","find","SUCCESS"],
+        ["pll.ss",2,"-tp om","length","SUCCESS","sum","SUCCESS"],
+        ["process_schedular.ss",4,"-tp om","insert_process","SUCCESS","insert_rll","SUCCESS",
+        "insert_pll","SUCCESS","insert_sll","SUCCESS"],
+        ["ramified-cells.ss",3,"--ramify","ex0","SUCCESS","ex1","SUCCESS","mark","SUCCESS"],
+        ["ramified-pairs.ss",1,"--ramify","mark","SUCCESS"],
+        ],
 	"hip" =>[
 #	["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
 				["eps.ss",2,  "", "get_next","SUCCESS","get_next_next","SUCCESS"],
@@ -1043,7 +1062,7 @@ $output_file = "log";
         # above takes too long
         ["ll_test4.ss", 1, "", "test", "SUCCESS"],
         ["ll_test5.ss", 1, "", "delete_val", "SUCCESS"],
-        #["lr.ss", 2, "", "my_rev", "SUCCESS", "reverse", "SUCCESS"],
+        # ["lr.ss", 2, "", "my_rev", "SUCCESS", "reverse", "SUCCESS"],
         # above takes too long
         ["lrev-bug.ss", 1, "", "lrev", "SUCCESS"],
         ["lrev.ss", 1, "", "lrev", "SUCCESS"],
@@ -1103,11 +1122,14 @@ $output_file = "log";
                       ["imm/imm3.slk", " --imm ", "", "Fail.Fail.Valid.Valid.Valid.Valid."],
                       ["imm/imm4.slk", " --imm ", "", "Valid.Fail."],
                       ["imm/imm-hard.slk", " --imm --eps", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
+                      ["imm-field/sleek01.slk", " --field-ann ", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
+                      ["imm-field/sleek02.slk", " --field-ann ", "", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Fail."],
+                      ["imm-field/sleek03.slk", " --field-ann ", "", "Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail."],
                       ["classic/classic1.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic1.slk", " --classic", "", "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
                       ["classic/classic2.slk", "", "", "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
                       ["classic/classic3.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
-                      ["infinity.slk","","",                      "Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid."]
+                      ["infinity.slk","--dsd","",                      "Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid."]
                       ],
     "sleek_vperm" => [
                       ["vperm/vperm.slk"," --ann-vp ", "", "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
