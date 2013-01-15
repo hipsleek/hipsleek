@@ -966,19 +966,32 @@ pci_device_id pci_match_id_simp(pci_device_id ids,
 /*    }*/
 /*    return pci_match_id(drv->id_table, dev);*/
 /*}*/
-pci_device_id pci_match_device_loop(pci_driver drv, ref pci_dynid dynid,
+pci_device_id pci_match_device_loop_simp(pci_driver drv, ref pci_dynid dynid,
                              pci_dev dev)
   requires drv::pci_driver<no,na,ids,d,dy> * dy::pci_dynids<head1> *
-           ids::id_list<> * id1::pci_device_id<_,_,_,_,_,_,_,_> *
-           dynid::pci_dynid<node1,id1> * node1::list_head<next1,_> * 
-           next1::cll<node1,node1> * dev::pci_dev<v2,d2,subv2,subd2,cl2>
-  ensures res=null or res::pci_device_id<v4,_,_,_,_,_,_,_> *
-          drv::pci_driver<no,na,ids,d,dy> * dy::pci_dynids<head1> *
-          ids::id_list<> * id2::pci_device_id<_,_,_,_,_,_,_,_> *
-          dynid'::pci_dynid<next1,id2> * node1::list_head<next1,_> *
-          next1::cll<node1,node1> * dev::pci_dev<v2,d2,subv2,subd2,cl2> & v4=v2;
+           ids::id_list<> * id1::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> *
+           dynid::pci_dynid<node1,id1> * node1::cll<_,head1> * 
+           dev::pci_dev<v2,d2,subv2,subd2,cl2>
+  case {
+   head1=null ->
+    ensures res=null;
+   head1!=null ->
+    case {
+     node1=head1 ->
+      ensures res=null or res::pci_device_id<_,_,_,_,_,_,_,_>;
+     node1!=head1 ->
+      case {
+       v1=v2 ->
+        ensures res::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n>;
+       v1!=v2 ->        
+        ensures res=null or res::pci_device_id<_,_,_,_,_,_,_,_>;
+      }
+    }
+  }
 {
-
+  if (drv.dynids.list == null){
+    return null;
+  }
   if (dynid.node == drv.dynids.list){
     return pci_match_id_simp(drv.id_table,dev);
   }
@@ -986,73 +999,254 @@ pci_device_id pci_match_device_loop(pci_driver drv, ref pci_dynid dynid,
     return dynid.id;
   }
   dynid=cast_to_pci_dynid1(dynid.node.next);
+  return pci_match_device_loop_simp(drv,dynid,dev);
+
+}
+
+pci_device_id pci_match_device_simp(pci_driver drv,
+                             pci_dev dev)
+  requires drv::pci_driver<no,na,ids,d,dy> * dy::pci_dynids<head1> *
+           head1::list_head<head1,next1> * next1::cll<head1,head1> *
+           ids::id_list<> * dev::pci_dev<v2,d2,subv2,subd2,cl2>
+  ensures res=null or res::pci_device_id<_,_,_,_,_,_,_,_>;
+{
+    pci_dynid dynid;
+
+    /* Look at the dynamic ids first, before the static ones */
+    dynid = cast_to_pci_dynid1 (drv.dynids.list.next);
+    return pci_match_device_loop_simp(drv,dynid,dev);
+}
+
+pci_device_id pci_match_device_loop(pci_driver drv, ref pci_dynid dynid,
+                             pci_dev dev)
+  requires drv::pci_driver<no,na,ids,d,dy> * dy::pci_dynids<head1> *
+           ids::id_list<> * id1::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> *
+           dynid::pci_dynid<node1,id1> * node1::cll<_,head1> * 
+           dev::pci_dev<v2,d2,subv2,subd2,cl2>
+  case {
+   head1=null ->
+    ensures res=null;
+   head1!=null ->
+    case {
+     node1=head1 ->
+      ensures res=null or res::pci_device_id<_,_,_,_,_,_,_,_>;
+     node1!=head1 ->
+      ensures res=null or res::pci_device_id<_,_,_,_,_,_,_,_>;
+    }
+  }
+{
+
+  if (drv.dynids.list == null){
+    return null;
+  }
+  if (dynid.node == (drv.dynids.list)){
+    return pci_match_id(drv.id_table,dev);
+  }
+  if (pci_match_one_device(dynid.id,dev,4294967295) != null) {
+    return dynid.id;
+  }
+  dynid=cast_to_pci_dynid1(dynid.node.next);
   return pci_match_device_loop(drv,dynid,dev);
 
 }
 
-/*void cast_to_pci_dynid_next (ref pci_dynid dynid)*/
-/*  requires dynid::pci_dynid<node1,_> * node1::list_head<next1,_> * */
-/*           next1::list_head<next2,node1> * next2::cll<next1,node1>*/
-/*  ensures dynid'::pci_dynid<next1,id> * node1::list_head<next1,_> * */
-/*          next1::list_head<next2,node1> * */
-/*          next2::cll<next1,node1> * id::pci_device_id<_,_,_,_,_,_,_,_>;*/
-
-/*pci_device_id pci_match_device_loop(pci_driver drv, ref pci_dynid dynid,*/
-/*                             pci_dev dev)*/
-/*  requires drv::pci_driver<no,na,ids,d,dy> * dy::pci_dynids<head1> **/
-/*           ids::id_list<> * id1::pci_device_id<v1,d1,subv1,subd1,cl1,clm1,dd1,_> **/
-/*           dynid::pci_dynid<node1,id1> * node1::list_head<next1,_> * */
-/*           next1::cll<node1,node1> **/
-/*           dev::pci_dev<v2,d2,subv2,subd2,cl2>*/
-/*  case {*/
-/*   node1=head1 ->*/
-/*    ensures res=null or res::pci_device_id<_,_,_,_,_,_,_,_>;*/
-/*   node1!=head1 ->*/
-/*    ensures res::pci_device_id<v1,d1,subv1,subd1,cl1,clm1,dd1>;*/
-/*    case {*/
-/*     next1=node1 ->*/
-/*      ensures res=null or res::pci_device_id<_,_,_,_,_,_,_,_>;*/
-/*     next1!=node1 ->*/
-/*      ensures res=null or res::pci_device_id<_,_,_,_,_,_,_,_> **/
-/*              drv::pci_driver<no,na,ids,d,dy> * dy::pci_dynids<head1> **/
-/*              ids::id_list<> * id1::pci_device_id<v1,d1,subv1,subd1,cl1,clm1,dd1,_> **/
-/*              dynid'::pci_dynid<next1,id2> * node1::list_head<next1,_> * */
-/*              next1::list_head<next2,node1> * next2::cll<next1,node1> **/
-/*              dev::pci_dev<v2,d2,subv2,subd2,cl2> * */
-/*              id2::pci_device_id<v3,d3,subv3,subd3,cl3,clm3,dd3,_>;*/
-/*    }*/
-/*  }*/
-/*{*/
-
-/*  if (dynid.node == (drv.dynids.list)){*/
-/*    return pci_match_id(drv.id_table,dev);*/
-/*  }*/
-/*  else {*/
-/*    if (dynid.node == dynid.node.next){*/
-/*      return pci_match_id(drv.id_table,dev);*/
-/*    }*/
-/*    else {*/
-/*    /*  if (pci_match_one_device(dynid.id,dev) != null) {*/*/
-/*    /*    return dynid.id;*/*/
-/*    /*  }*/*/
-/*      cast_to_pci_dynid_next(dynid);*/
-/*    /*  dprint;*/*/
-/*      return pci_match_device_loop(drv,dynid,dev);*/
-/*    }*/
-/*  }*/
-/*}*/
-
 pci_device_id pci_match_device(pci_driver drv,
                              pci_dev dev)
-  requires drv::pci_driver<no,na,id,d,dy> * 
-           id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,_> *
-           dev::pci_dev<v2,d2,subv2,subd2,cl2>
-  ensures true;
+  requires drv::pci_driver<no,na,ids,d,dy> * dy::pci_dynids<head1> *
+           head1::list_head<head1,next1> * next1::cll<head1,head1> *
+           ids::id_list<> * dev::pci_dev<v2,d2,subv2,subd2,cl2>
+  ensures res=null or res::pci_device_id<_,_,_,_,_,_,_,_>;
 {
     pci_dynid dynid;
 
     /* Look at the dynamic ids first, before the static ones */
     dynid = cast_to_pci_dynid1 (drv.dynids.list.next);
     return pci_match_device_loop(drv,dynid,dev);
+}
+
+int pci_create_newid_file(pci_driver drv)
+  requires true
+  ensures res=0;
+{
+    return 0;
+}
+
+int pci_create_removeid_file(pci_driver drv)
+  requires true
+  ensures res=0;
+{
+    return 0;
+}
+
+void pci_remove_newid_file(pci_driver drv)
+  requires true
+  ensures true;
+{
+  return;
+}
+
+/**
+ * __pci_register_driver - register a new pci driver
+ * @drv: the driver structure to register
+ * @owner: owner module of drv
+ * @mod_name: module name string
+ *
+ * Adds the driver structure to the list of registered drivers.
+ * Returns a negative value on error, otherwise 0.
+ * If no error occurred, the driver remains registered even if
+ * no device was claimed during registration.
+ */
+/* int __pci_register_driver(struct pci_driver *drv, struct module *owner, */
+/*               const char *mod_name) */
+/* { */
+/*     int error; */
+
+/*     /\* initialize common driver fields *\/ */
+/*     drv->driver.name = drv->name; */
+/*     drv->driver.bus = &pci_bus_type; */
+/*     drv->driver.owner = owner; */
+/*     drv->driver.mod_name = mod_name; */
+
+/*     INIT_LIST_HEAD(&drv->dynids.list); */
+
+/*     /\* register with core *\/ */
+/*     error = driver_register(&drv->driver); */
+/*     if (error) */
+/*         goto out; */
+
+/*     error = pci_create_newid_file(drv); */
+/*     if (error) */
+/*         goto out_newid; */
+
+/*     error = pci_create_removeid_file(drv); */
+/*     if (error) */
+/*         goto out_removeid; */
+
+/* out: */
+/*     return error; */
+
+/* out_removeid: */
+/*     pci_remove_newid_file(drv); */
+/* out_newid: */
+/*     driver_unregister(&drv->driver); */
+/*     goto out; */
+/* } */
+int __pci_register_driver(pci_driver drv, module owner,
+              char mod_name)
+  requires drv::pci_driver<node1,_,_,d,dy> * dy::pci_dynids<head1> *
+           head1::list_head<_,_> * d::device_driver<_,_,_,_> *
+           mod_name::char<_> * owner::module<_,_>
+  ensures res=0 or res!=0;
+{
+    int error;
+
+    /* initialize common driver fields */
+    drv.driver.name = drv.name;
+    drv.driver.bus = pci_bus_type;
+    drv.driver.owner = owner;
+    drv.driver.mod_name = mod_name;
+
+    INIT_LIST_HEAD(drv.dynids.list);
+
+    /* register with core */
+    error = driver_register(drv.driver);
+    if (error!=0)
+        return error;
+
+    error = pci_create_newid_file(drv);
+    if (error!=0){
+      driver_unregister(drv.driver);
+      return error;
+    }
+
+    error = pci_create_removeid_file(drv);
+    if (error !=0)  {
+       pci_remove_newid_file(drv);
+       driver_unregister(drv.driver);
+       return error;
+    }
+    return 0;
+}
+
+void pci_remove_removeid_file(pci_driver drv)
+  requires true
+  ensures true;
+{
+  return;
+}
+
+/**
+ * pci_unregister_driver - unregister a pci driver
+ * @drv: the driver structure to unregister
+ *
+ * Deletes the driver structure from the list of registered PCI drivers,
+ * gives it a chance to clean up by calling its remove() function for
+ * each device it was responsible for, and marks those devices as
+ * driverless.
+ */
+/* void */
+/* pci_unregister_driver(struct pci_driver *drv) */
+/* { */
+/*     pci_remove_removeid_file(drv); */
+/*     pci_remove_newid_file(drv); */
+/*     driver_unregister(&drv->driver); */
+/*     pci_free_dynids(drv); */
+/* } */
+void
+pci_unregister_driver(pci_driver drv)
+  requires drv::pci_driver<node1,_,_,d,dy> * dy::pci_dynids<head1> 
+            * prev::list_head<head1,_> * head1::dll<prev>
+  * node1::list_head<_,_> * d::device_driver<_,_,_,_>
+  ensures true;
+{
+    pci_remove_removeid_file(drv);
+    pci_remove_newid_file(drv);
+    driver_unregister(drv.driver);
+    pci_free_dynids(drv);
+}
+
+/**
+ * pci_bus_match - Tell if a PCI device structure has a matching PCI device id structure
+ * @dev: the PCI device structure to match against
+ * @drv: the device driver to search for matching PCI device id structures
+ *
+ * Used by a driver to check whether a PCI device present in the
+ * system is in its list of supported devices. Returns the matching
+ * pci_device_id structure or %NULL if there is no match.
+ */
+/* static int pci_bus_match(struct device *dev, struct device_driver *drv) */
+/* { */
+/*     struct pci_dev *pci_dev = (struct pci_dev *) dev; */
+/*     struct pci_driver *pci_drv = (struct pci_driver *) drv; */
+/*     const struct pci_device_id *found_id; */
+
+/*     found_id = pci_match_device(pci_drv, pci_dev); */
+/*     if (found_id) */
+/*         return 1; */
+
+/*     return 0; */
+/* } */
+
+pci_dev to_pci_dev(device dev)
+  requires dev::device<_>
+  ensures res::pci_dev<_,_,_,_,_>;
+
+pci_driver to_pci_driver(device_driver drv)
+  requires drv::device_driver<_,_,_,_>
+  ensures res::pci_driver<_,_,_,_,_>;
+
+int pci_bus_match(device dev, device_driver drv)
+  requires drv::device_driver<_,_,_,_> * dev::device<_>
+  ensures true;
+{
+  pci_dev pci_dev = to_pci_dev(dev);
+  pci_driver pci_drv = to_pci_driver(drv);
+    pci_device_id found_id;
+
+    found_id = pci_match_device(pci_drv, pci_dev);
+    if (found_id != null)
+        return 1;
+
+    return 0;
 }
 
