@@ -47,3 +47,21 @@ Can we detect LHS contra at an earlier point?
  inferred rel: [RELASS [P5]: ( P5(a)) -->  1>a; 
                 RELDEFN P5: ( P5(a) & 1<=a & b=a-1) -->  P5(b)]
 */
+
+# 2a.slk (LOC to do?)
+
+--pcp shows a disjunctive invariant
+
+llMM<mi,mx> == self::node<v,null> & mi=v  & mx=v
+  or self::node<v, p> * p::llMM<mi2,mx2> & mi=min(v,mi2) & mx=max(v,mx2)
+  //& v<=mi2
+inv self!=null & mi<=mx;
+
+  xform: (mi<=mx & self!=null) | (self!=null & mi=mx)
+
+ However, a simple PairWiseCheck at 2a.oc will yeild:
+
+    self!=null & mi<=mx
+
+ Can we take advantage of this simplifcation to avoid
+ unnecessary disjunctive formula.
