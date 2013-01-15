@@ -1351,7 +1351,7 @@ let infer_collect_rel is_sat estate lhs_h_mix lhs_mix rhs_mix pos =
           List.filter (fun x -> CP.intersect lhs_rec_vars (CP.fv x) = []) rel_lhs_new
       in
       DD.ninfo_hprint (add_str "rel_to_del:" (pr_list !CP.print_formula)) rel_to_del pos;
-        let lhs_h_p = MCP.pure_of_mix lhs_h_mix in
+        (* let lhs_h_p = MCP.pure_of_mix lhs_h_mix in *)
         let lhs = lhs_simplifier_tp lhs_h_p lhs_p_memo in
         let lhs_p_new = CP.restore_memo_formula subs bvars lhs in
         let rel_vars = List.concat (List.map CP.fv rel_lhs) in
