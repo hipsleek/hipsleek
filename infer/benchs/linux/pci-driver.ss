@@ -247,90 +247,6 @@ data pci_driver {
     pci_dynids dynids;
 }
 
-data pci_dev {
-//  struct list_head bus_list;
-//  struct pci_bus *bus;
-//  struct pci_bus *subordinate;
-//  void *sysdata;
-//  struct proc_dir_entry *procent;
-//  struct pci_slot *slot;
-//  unsigned int devfn;
-    int vendor;
-    int device;
-    int subsystem_vendor;
-    int subsystem_device;
-    int class_;
-//  u8 revision;
-//  u8 hdr_type;
-//  u8 pcie_cap;
-//  u8 pcie_type;
-//  u8 rom_base_reg;
-//  u8 pin;
-//  struct pci_driver *driver;
-//  u64 dma_mask;
-//  struct device_dma_parameters dma_parms;
-//  pci_power_t current_state;
-//  int pm_cap;
-//  unsigned int pme_support:5;
-//  unsigned int pme_interrupt:1;
-//  unsigned int d1_support:1;
-//  unsigned int d2_support:1;
-//  unsigned int no_d1d2:1;
-//  unsigned int wakeup_prepared:1;
-//  unsigned int d3_delay;
-//  pci_channel_state_t error_state;
-//  struct device dev;
-//  int cfg_size;
-//  unsigned int irq;
-//  struct resource resource[DEVICE_COUNT_RESOURCE];
-//  resource_size_t fw_addr[DEVICE_COUNT_RESOURCE];
-//  unsigned int transparent:1;
-//  unsigned int multifunction:1;
-//  unsigned int is_added:1;
-//  unsigned int is_busmaster:1;
-//  unsigned int no_msi:1;
-//  unsigned int block_ucfg_access:1;
-//  unsigned int broken_parity_status:1;
-//  unsigned int irq_reroute_variant:2;
-//  unsigned int msi_enabled:1;
-//  unsigned int msix_enabled:1;
-//  unsigned int ari_enabled:1;
-//  unsigned int is_managed:1;
-//  unsigned int is_pcie:1;
-//  unsigned int needs_freset:1;
-//  unsigned int state_saved:1;
-//  unsigned int is_physfn:1;
-//  unsigned int is_virtfn:1;
-//  unsigned int reset_fn:1;
-//  unsigned int is_hotplug_bridge:1;
-//  unsigned int __aer_firmware_first_valid:1;
-//  unsigned int __aer_firmware_first:1;
-//  pci_dev_flags_t dev_flags;
-//  atomic_t enable_cnt;
-//  u32 saved_config_space[16];
-//  struct hlist_head saved_cap_space;
-//  struct bin_attribute *rom_attr;
-//  int rom_attr_enabled;
-//  struct bin_attribute *res_attr[DEVICE_COUNT_RESOURCE];
-//  struct bin_attribute *res_attr_wc[DEVICE_COUNT_RESOURCE];
-//  struct pci_vpd *vpd;
-}
-
-/* struct bus_type pci_bus_type = { */
-/*     .name       = "pci", */
-/* //  .match      = pci_bus_match, */
-/* //  .uevent     = pci_uevent, */
-/* //  .probe      = pci_device_probe, */
-/* //  .remove     = pci_device_remove, */
-/* //  .shutdown   = pci_device_shutdown, */
-/* //  .dev_attrs  = pci_dev_attrs, */
-/* //  .bus_attrs  = pci_bus_attrs, */
-/* //  .pm     = PCI_PM_OPS_PTR, */
-/* }; */
-
-global bus_type pci_bus_type;
-/* pci_bus_type.name       = "pci"; */
-
 data device {
     device   parent;
 
@@ -384,6 +300,90 @@ data device {
 //
 //  void    (*release)(struct device *dev);
 }
+
+data pci_dev {
+//  struct list_head bus_list;
+//  struct pci_bus *bus;
+//  struct pci_bus *subordinate;
+//  void *sysdata;
+//  struct proc_dir_entry *procent;
+//  struct pci_slot *slot;
+//  unsigned int devfn;
+    int vendor;
+    int device;
+    int subsystem_vendor;
+    int subsystem_device;
+    int class_;
+//  u8 revision;
+//  u8 hdr_type;
+//  u8 pcie_cap;
+//  u8 pcie_type;
+//  u8 rom_base_reg;
+//  u8 pin;
+//  struct pci_driver *driver;
+//  u64 dma_mask;
+//  struct device_dma_parameters dma_parms;
+//  pci_power_t current_state;
+//  int pm_cap;
+//  unsigned int pme_support:5;
+//  unsigned int pme_interrupt:1;
+//  unsigned int d1_support:1;
+//  unsigned int d2_support:1;
+//  unsigned int no_d1d2:1;
+//  unsigned int wakeup_prepared:1;
+//  unsigned int d3_delay;
+//  pci_channel_state_t error_state;
+    device dev;
+//  int cfg_size;
+//  unsigned int irq;
+//  struct resource resource[DEVICE_COUNT_RESOURCE];
+//  resource_size_t fw_addr[DEVICE_COUNT_RESOURCE];
+//  unsigned int transparent:1;
+//  unsigned int multifunction:1;
+//  unsigned int is_added:1;
+//  unsigned int is_busmaster:1;
+//  unsigned int no_msi:1;
+//  unsigned int block_ucfg_access:1;
+//  unsigned int broken_parity_status:1;
+//  unsigned int irq_reroute_variant:2;
+//  unsigned int msi_enabled:1;
+//  unsigned int msix_enabled:1;
+//  unsigned int ari_enabled:1;
+//  unsigned int is_managed:1;
+//  unsigned int is_pcie:1;
+//  unsigned int needs_freset:1;
+//  unsigned int state_saved:1;
+//  unsigned int is_physfn:1;
+//  unsigned int is_virtfn:1;
+//  unsigned int reset_fn:1;
+//  unsigned int is_hotplug_bridge:1;
+//  unsigned int __aer_firmware_first_valid:1;
+//  unsigned int __aer_firmware_first:1;
+//  pci_dev_flags_t dev_flags;
+//  atomic_t enable_cnt;
+//  u32 saved_config_space[16];
+//  struct hlist_head saved_cap_space;
+//  struct bin_attribute *rom_attr;
+//  int rom_attr_enabled;
+//  struct bin_attribute *res_attr[DEVICE_COUNT_RESOURCE];
+//  struct bin_attribute *res_attr_wc[DEVICE_COUNT_RESOURCE];
+//  struct pci_vpd *vpd;
+}
+
+/* struct bus_type pci_bus_type = { */
+/*     .name       = "pci", */
+/* //  .match      = pci_bus_match, */
+/* //  .uevent     = pci_uevent, */
+/* //  .probe      = pci_device_probe, */
+/* //  .remove     = pci_device_remove, */
+/* //  .shutdown   = pci_device_shutdown, */
+/* //  .dev_attrs  = pci_dev_attrs, */
+/* //  .bus_attrs  = pci_bus_attrs, */
+/* //  .pm     = PCI_PM_OPS_PTR, */
+/* }; */
+
+global bus_type pci_bus_type;
+/* pci_bus_type.name       = "pci"; */
 
 /****************************************************************************/
 
@@ -687,7 +687,7 @@ void pci_free_dynids(pci_driver drv)
 pci_device_id
 pci_match_one_device( pci_device_id id, pci_dev dev, int UNIT_MAX)
   requires id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-           dev::pci_dev<v2,d2,subv2,subd2,cl2>
+           dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc>
   case {
    v1!=UNIT_MAX -> 
     case {
@@ -704,31 +704,31 @@ pci_match_one_device( pci_device_id id, pci_dev dev, int UNIT_MAX)
                subd1!=UNIT_MAX -> 
                 case{
                  subd1=subd2  -> ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=id;
                  subd1!=subd2 -> ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=null;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=null;
                 }
                subd1=UNIT_MAX -> ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=id;
               }
              subv1!= subv2    -> ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=null;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=null;
             }
            subv1=UNIT_MAX -> 
             case {
              subd1!=UNIT_MAX -> 
               case{
                subd1=subd2 ->    ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=id;
                subd1!=subd2 ->   ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=null;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=null;
               }
              subd1=UNIT_MAX ->   ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=id;
             }
           }
          d1!=d2 ->               ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=null;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=null;
         }
        d1=UNIT_MAX -> 
         case {
@@ -739,32 +739,32 @@ pci_match_one_device( pci_device_id id, pci_dev dev, int UNIT_MAX)
              subd1!=UNIT_MAX -> 
               case{
                subd1=subd2 ->    ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=id;
                subd1!=subd2 ->   ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=null;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=null;
               }
              subd1=UNIT_MAX ->   ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=id;
             }
            subv1!= subv2 ->      ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=null;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=null;
           }
          subv1=UNIT_MAX -> 
           case {
            subd1!=UNIT_MAX -> 
             case{
              subd1=subd2 ->      ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=id;
              subd1!=subd2 ->     ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=null;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=null;
             }
            subd1=UNIT_MAX ->     ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=id;
           }
         }
       }
      v1!=v2 ->                   ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=null;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=null;
     }
    v1=UNIT_MAX -> 
     case {
@@ -779,31 +779,31 @@ pci_match_one_device( pci_device_id id, pci_dev dev, int UNIT_MAX)
              subd1!=UNIT_MAX -> 
               case{
                subd1=subd2 ->    ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=id;
                subd1!=subd2 ->   ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=null;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=null;
               }
              subd1=UNIT_MAX ->   ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=id;
             }
            subv1!= subv2 ->      ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=null;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=null;
           }
          subv1=UNIT_MAX -> 
           case {
            subd1!=UNIT_MAX -> 
             case{
              subd1=subd2 ->      ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=id;
              subd1!=subd2 ->     ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=null;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=null;
             }
            subd1=UNIT_MAX ->     ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=id;
           }
         }
        d1!=d2 ->                 ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=null;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=null;
       }
      d1=UNIT_MAX -> 
       case {
@@ -814,27 +814,27 @@ pci_match_one_device( pci_device_id id, pci_dev dev, int UNIT_MAX)
            subd1!=UNIT_MAX -> 
             case{
              subd1=subd2 ->      ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=id;
              subd1!=subd2 ->     ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=null;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=null;
             }
            subd1=UNIT_MAX ->     ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=id;
           }
          subv1!= subv2 ->        ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=null;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=null;
         }
        subv1=UNIT_MAX -> 
         case {
          subd1!=UNIT_MAX -> 
           case{
            subd1=subd2 ->        ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=id;
            subd1!=subd2 ->       ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=null;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=null;
           }
          subd1=UNIT_MAX ->       ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-                                         dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+                                         dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=id;
         }
       }
     }
@@ -883,9 +883,9 @@ id_list<> == self = null
 
 pci_device_id pci_match_id(pci_device_id ids,
                       pci_dev dev)
-  requires ids::id_list<> * dev::pci_dev<v2,d2,subv2,subd2,cl2>
+  requires ids::id_list<> * dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc>
   ensures res=null or res::pci_device_id<_,_,_,_,_,_,_,_> * 
-          dev::pci_dev<v2,d2,subv2,subd2,cl2>;
+          dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc>;
 {
   if (ids!=null) {
     if (ids.vendor!=0 || ids.subvendor!=0 || ids.class_mask!=0) {
@@ -903,14 +903,14 @@ pci_device_id pci_match_id(pci_device_id ids,
 pci_device_id
 pci_match_one_device_simp( pci_device_id id, pci_dev dev)
   requires id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-           dev::pci_dev<v2,d2,subv2,subd2,cl2>
+           dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc>
   case{
    v1!=v2 ->
     ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-            dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=null;
+            dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=null;
    v1=v2 ->
     ensures id::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> * 
-            dev::pci_dev<v2,d2,subv2,subd2,cl2> & res=id;
+            dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & res=id;
   }
 {
     if (id.vendor == dev.vendor)
@@ -920,9 +920,9 @@ pci_match_one_device_simp( pci_device_id id, pci_dev dev)
 
 pci_device_id pci_match_id_simp(pci_device_id ids,
                       pci_dev dev)
-  requires ids::id_list<> * dev::pci_dev<v2,d2,subv2,subd2,cl2>
+  requires ids::id_list<> * dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc>
   ensures res=null or res::pci_device_id<v1,_,_,_,_,_,_,_> * 
-                      dev::pci_dev<v2,d2,subv2,subd2,cl2> & v1=v2;
+                      dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc> & v1=v2;
 {
   if (ids!=null) {
     if (ids.vendor!=0){
@@ -971,7 +971,7 @@ pci_device_id pci_match_device_loop_simp(pci_driver drv, ref pci_dynid dynid,
   requires drv::pci_driver<no,na,ids,d,dy> * dy::pci_dynids<head1> *
            ids::id_list<> * id1::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> *
            dynid::pci_dynid<node1,id1> * node1::cll<_,head1> * 
-           dev::pci_dev<v2,d2,subv2,subd2,cl2>
+           dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc>
   case {
    head1=null ->
     ensures res=null;
@@ -1007,7 +1007,7 @@ pci_device_id pci_match_device_simp(pci_driver drv,
                              pci_dev dev)
   requires drv::pci_driver<no,na,ids,d,dy> * dy::pci_dynids<head1> *
            head1::list_head<head1,next1> * next1::cll<head1,head1> *
-           ids::id_list<> * dev::pci_dev<v2,d2,subv2,subd2,cl2>
+           ids::id_list<> * dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc>
   ensures res=null or res::pci_device_id<_,_,_,_,_,_,_,_>;
 {
     pci_dynid dynid;
@@ -1022,7 +1022,7 @@ pci_device_id pci_match_device_loop(pci_driver drv, ref pci_dynid dynid,
   requires drv::pci_driver<no,na,ids,d,dy> * dy::pci_dynids<head1> *
            ids::id_list<> * id1::pci_device_id<v1,d1,subv1,subd1,cl1,clm,dd,n> *
            dynid::pci_dynid<node1,id1> * node1::cll<_,head1> * 
-           dev::pci_dev<v2,d2,subv2,subd2,cl2>
+           dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc>
   case {
    head1=null ->
     ensures res=null;
@@ -1054,7 +1054,7 @@ pci_device_id pci_match_device(pci_driver drv,
                              pci_dev dev)
   requires drv::pci_driver<no,na,ids,d,dy> * dy::pci_dynids<head1> *
            head1::list_head<head1,next1> * next1::cll<head1,head1> *
-           ids::id_list<> * dev::pci_dev<v2,d2,subv2,subd2,cl2>
+           ids::id_list<> * dev::pci_dev<v2,d2,subv2,subd2,cl2,dvc>
   ensures res=null or res::pci_device_id<_,_,_,_,_,_,_,_>;
 {
     pci_dynid dynid;
@@ -1194,9 +1194,10 @@ void pci_remove_removeid_file(pci_driver drv)
 /* } */
 void
 pci_unregister_driver(pci_driver drv)
-  requires drv::pci_driver<node1,_,_,d,dy> * dy::pci_dynids<head1> 
-            * prev::list_head<head1,_> * head1::dll<prev>
-  * node1::list_head<_,_> * d::device_driver<_,_,_,_>
+  requires drv::pci_driver<no,na,id,d,dy> * dy::pci_dynids<head1> *
+           head1::list_head<node1,prev2> * node1::list_head<next1,head1> * 
+           next1::list_head<next2,node1> * next2::cll<next1,head1> *
+           d::device_driver<_,_,_,_>
   ensures true;
 {
     pci_remove_removeid_file(drv);
@@ -1229,18 +1230,20 @@ pci_unregister_driver(pci_driver drv)
 
 pci_dev to_pci_dev(device dev)
   requires dev::device<_>
-  ensures res::pci_dev<_,_,_,_,_>;
+  ensures res::pci_dev<_,_,_,_,_,dev>;
 
 pci_driver to_pci_driver(device_driver drv)
   requires drv::device_driver<_,_,_,_>
-  ensures res::pci_driver<_,_,_,_,_>;
+  ensures res::pci_driver<_,_,ids,drv,dy> * dy::pci_dynids<head1> *
+          head1::list_head<head1,next1> * next1::cll<head1,head1> * 
+          drv::device_driver<_,_,_,_> * ids::id_list<>;
 
 int pci_bus_match(device dev, device_driver drv)
   requires drv::device_driver<_,_,_,_> * dev::device<_>
-  ensures true;
+  ensures res=0 or res=1;
 {
-  pci_dev pci_dev = to_pci_dev(dev);
-  pci_driver pci_drv = to_pci_driver(drv);
+    pci_dev pci_dev = to_pci_dev(dev);
+    pci_driver pci_drv = to_pci_driver(drv);
     pci_device_id found_id;
 
     found_id = pci_match_device(pci_drv, pci_dev);
