@@ -65,3 +65,27 @@ inv self!=null & mi<=mx;
 
  Can we take advantage of this simplifcation to avoid
  unnecessary disjunctive formula.
+
+# n-sel-4.ss
+
+We obtained:
+
+  RELDEFN P3: ( P(m,m)) -->  P3(m,mi,mx),
+
+which is over-simplified, as we should have instead:
+
+  RELDEFN P3: P(mi,mx) & m=mi & m=mx -->  P3(m,mi,mx),
+
+Equality elimination should only be applied to existential
+variable in the LHS, but not with variables in the
+RHS such as m,mi,mx
+
+node sel(ref node x)
+     infer [P,P3,P4]
+     requires x::llMM<mi,mx> & P(mi,mx)
+     ensures  res::node<m,_> & x'=null & P3(m,mi,mx)
+           or res::node<m,_> * x'::llMM<mi2,mx2> 
+                    & P4(m,mi,mi2,mx,mx2)
+
+RELDEFN P: ( P(mi,mx_638) & mi<mi_637 & mi_637<=mx_638) -->  P(mi_637,mx_638),
+
