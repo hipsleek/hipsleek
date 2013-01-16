@@ -1451,7 +1451,17 @@ and trans_view_dervs (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl l
   let pr = Iprinter.string_of_view_decl in
   Debug.no_1 "trans_view_dervs" pr pr_r  (fun _ -> trans_view_dervs_x prog cviews derv) derv
 
+and do_sanity_check derv=
+  let derv_args = derv.I.view_vars in
+  let all_extn_args = List.concat (List.map (fun ((_,orig_args),(_,_,extn_args)) -> orig_args@extn_args) derv.I.view_derv_info) in
+  let diff = Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2 =0) derv_args all_extn_args in
+  if diff <> [] then
+    report_error no_pos ("in view_extn: " ^ derv.I.view_name ^ ", args: " ^
+    (String.concat ", " diff) ^ " are not declared.")
+  else ()
+
 and trans_view_dervs_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) derv : C.view_decl =
+  let _ = do_sanity_check derv in
   match derv.I.view_derv_info with
     | [] -> report_error no_pos "astsimp.trans_view_dervs: 1"
     | [d] -> let der_view = trans_view_one_derv prog cviews derv d in
