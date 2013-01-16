@@ -759,7 +759,7 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.Gte (e1, e2, l) -> f_b e1; fmt_string op_gte ; f_b e2
     | P.SubAnn (e1, e2, l) -> f_b e1; fmt_string op_sub_ann ; f_b e2
     | P.Eq (e1, e2, l) -> 
-          let (e1,e2) = sort_exp e1 e2 in
+          let (e1,e2) = if !debug_derive_flag then (e1,e2) else sort_exp e1 e2 in
           f_b_no e1; fmt_string op_eq ; f_b_no e2
     | P.Neq (e1, e2, l) -> 
           let (e1,e2) = sort_exp e1 e2 in

@@ -35,7 +35,7 @@ Fatal error: exception Not_found
 pred llNNSum<n,s> == extends llNN<> with pos_sum[VAL,REC]<s> .
 // need sanity check that n does not exist in RHS
 
-## err-2-der-2.slk
+## err-2-der-2.slk: DONE
 
 Fatal error: exception Invalid_argument("List.combine")
 
@@ -62,11 +62,11 @@ view llhead[]<n:TVar[51]>=
    EBase {1}->EXISTS(Anon_12,p: self::node<Anon_12,p>@M[Orig] * 
          p::llhead<n_52>@M[0][Orig][LHSCase]&true&{FLOW,(1,22)=__flow})[]
  
-## der-6a.slk
+## der-6a.slk: DONE
 
 Please also print for pred_extn whenever debug-derive flag
 is set.
-
+------------
 Please add self!=null whenever any annotated parameter being
 used in a branch, as it signify that self!=null is present.
 

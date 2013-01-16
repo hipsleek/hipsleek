@@ -4635,7 +4635,9 @@ let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_info
     let val_svl1 = List.concat val_svl in
     let rec_svl1 = List.concat rec_svl in
     if val_svl1=[] && rec_svl1=[] && null_paired_svl = []
-    then ([f1],[]) else ([],[(f1,val_svl1,rec_svl1@null_paired_svl)])
+    then ([f1],[]) else ([],
+    [(f1, (* List.filter (fun sv -> not (CP.is_node_typ sv)) *) val_svl1 (*todo: should improve with double check*),
+                     rec_svl1@null_paired_svl)])
   in
   let ls_bases,ls_inds = List.split (List.map process_one fs) in
   (List.concat ls_bases, List.concat ls_inds)

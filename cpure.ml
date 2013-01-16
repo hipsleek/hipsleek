@@ -8969,15 +8969,21 @@ let get_eqs_rel_args p eqs rel_args pos=
   Debug.no_2 "get_eqs_rel_args" !print_formula !print_svl !print_formula
       (fun _ _ -> get_eqs_rel_args_x p eqs rel_args pos) p rel_args
 
-let extract_inner_e e0 val_extns rec_args=
-  let rec bag_helper exps=
+let extract_inner_e e0 root val_extns rec_args=
+  let rec initial_helper exps v=
     match exps with
-      | [] -> report_error no_pos "cpure.extract_inner_e: why is it empty?"
+      | [] -> if v then
+            if is_bag_typ root then
+              Bag ([],no_pos)
+            else IConst (0, no_pos) (*todo: should improve here*)
+          else report_error no_pos "cpure.extract_inner_e: why is it empty?"
       | e:: rest ->
           let svl1 = afv e in
-          if svl1 = [] || (diff_svl svl1 val_extns = [] && intersect_svl svl1 rec_args = []) then
+          if svl1 = []  then
             e
-          else bag_helper rest
+          else
+            let valid=(diff_svl svl1 val_extns = [] && intersect_svl svl1 rec_args = []) in
+            initial_helper rest (v||valid)
   in
   let rec helper e=
     match e with
@@ -8988,36 +8994,42 @@ let extract_inner_e e0 val_extns rec_args=
       | Max (e1, e2, _)
       | Min (e1, e2, _) ->
           let svl1 = afv e1 in
-          let res=
-            if svl1 = [] then
-            (*e1 should be a const*)
-              (e, e1)
-            else if diff_svl svl1 val_extns = [] then
-              (e, e1)
-            else (e, e2)
+          let first_e =  initial_helper [e2;e1] false in
+          let res= (e, first_e)
+            (* if svl1 = [] then *)
+            (* (\*e1 should be a const*\) *)
+            (*   (e, e1) *)
+            (* else if diff_svl svl1 val_extns = [] then *)
+            (*   (e, e1) *)
+            (* else (e, e2) *)
           in
           (false, res)
 	  (* bag expressions *)
-      | Bag (exps,p) ->  (true, ( Bag ([],p), bag_helper exps))
-      | BagUnion (exps,p) -> (true, (BagUnion ([],p), bag_helper exps))
-      | BagIntersect (exps,p) -> (true, (BagIntersect ([],p), bag_helper exps))
+      | Bag (exps,p) ->  (true, ( Bag ([],p), initial_helper exps false))
+      | BagUnion (exps,p) -> (true, (BagUnion ([],p), initial_helper exps false))
+      | BagIntersect (exps,p) -> (true, (BagIntersect ([],p), initial_helper exps false))
       | _ -> report_error no_pos "cpure.extract_inner_e: not handle yet"
   in
   helper e0
 
-let extract_outer_inner_p pf0 r_args val_extns rec_args=
+let extract_outer_inner_p pf0 root_args val_extns rec_args=
   let is_root e=
     let sv = afv e in
-    diff_svl sv r_args = []
+    diff_svl sv root_args = []
   in
-  let rec find_initial exps=
+  let rec find_initial exps v=
     match exps with
-      | [] -> report_error no_pos "cpure.extract_outer_inner_p: why is it empty?"
+      | [] -> if v then
+            Bag ([],no_pos)
+          else
+            report_error no_pos "cpure.extract_outer_inner_p: why is it empty?"
       | e:: rest ->
           let svl1 = afv e in
-          if svl1 = [] || (diff_svl svl1 val_extns = [] && intersect_svl svl1 rec_args = []) then
+          if svl1 = [] (* || (diff_svl svl1 val_extns = [] && intersect_svl svl1 rec_args = []) *) then
             e
-          else find_initial rest
+          else
+            let valid =(diff_svl svl1 val_extns = [] && intersect_svl svl1 rec_args = []) in
+            find_initial rest (v||valid)
   in
   let rec helper pf=
     match pf with
@@ -9031,22 +9043,22 @@ let extract_outer_inner_p pf0 r_args val_extns rec_args=
           let b2= is_root e2 in
           match b1,b2 with
             | true,false ->
-                let is_bag, (inner_e,first_e) = extract_inner_e e2 val_extns rec_args in
+                let is_bag, (inner_e,first_e) = extract_inner_e e2 (List.hd root_args) val_extns rec_args in
                 (is_bag,(pf,e1), (inner_e,first_e))
             | false,true ->
-                 let is_bag, (inner_e,first_e) = extract_inner_e e1 val_extns rec_args in
+                 let is_bag, (inner_e,first_e) = extract_inner_e e1 (List.hd root_args) val_extns rec_args in
                 (is_bag, (pf,e2), (inner_e,first_e))
             | _ -> report_error no_pos "cpure.extract_outer_inner_p: wrong?"
       end
       |  EqMin (e1, e2, e3,p) (* first is min of second and third *) ->
           (* let _ =  Debug.info_pprint ("  EqMin: " ^ (!print_p_formula pf)) no_pos in *)
           (*find initial value: e2 or e3*)
-          let e_i = find_initial [e2;e3] in
+          let e_i = find_initial [e2;e3] false in
           (false, (Eq (e1,e2,p), e1), (Min (e2,e3,no_pos),e_i))
       |  EqMax (e1, e2, e3,p) (* first is max of second and third *) ->
           (* let _ =  Debug.info_pprint ("  EqMax: " ^ (!print_p_formula pf)) no_pos in *)
           (*find initial value: e2 or e3*)
-          let e_i = find_initial [e2;e3] in
+          let e_i = find_initial [e2;e3] false in
           (false, (Eq (e1,e2,p), e1), (Max (e2,e3,no_pos),e_i))
       | _ -> report_error no_pos "cpure.extract_outer_inner_p: not handle yet"
   in
@@ -9087,12 +9099,29 @@ let extract_outer_inner p args val_extns rec_args=
 (*         else e *)
 (*     | _ -> e *)
 
+let is_zero e=
+  match e with
+    | IConst (n, _) -> (n=0)
+    | _ -> false
+
+let is_bag_empty e=
+  match e with
+    | Bag (exps,_) -> (exps =[])
+    | _ -> false
+
+let is_node_sv e=
+  match e with
+    | Var (sv,_) -> is_node_typ sv
+    | _ -> false
+
 (*non-bag constrs*)
 let mk_exp_from_non_bag_tmpl tmpl e1 e2 p=
   let e11 = (* check_null_var *) e1 in
   let e22 = (* check_null_var *) e2 in
   match tmpl with
     | Add (_, _,_) ->
+        if is_zero e22 || is_node_sv e22 then e11
+        else if is_zero e11 || is_node_sv e11 then e22 else
         Add (e11,e22,p)
     | Subtract (_, _,_) -> Subtract (e11, e22,p)
     | Mult (_, _, _) ->  Mult (e11, e22, p)
@@ -9105,7 +9134,10 @@ let mk_exp_from_non_bag_tmpl tmpl e1 e2 p=
 let mk_exp_from_bag_tmpl tmpl e1 e2 p=
   match tmpl with
     | Bag (_,_) -> Bag ( [e1;e2],p)
-    | BagUnion (_,_) -> BagUnion ([e1;e2],p)
+    | BagUnion (_,_) ->
+        if is_bag_empty e1 || is_node_sv e1 then e2 else
+          if is_bag_empty e2 || is_node_sv e2 then e1 else
+            BagUnion ([e1;e2],p)
     | BagIntersect (_,_) -> BagIntersect ([e1;e2],p)
     | _ -> report_error no_pos "cpure.extract_inner_e: not handle yet"
 

@@ -1339,10 +1339,10 @@ and generate_extn_ho_procs prog cviews extn_view_name=
       (*cmb inner most exp*)
       (* let _ =  Debug.info_pprint ("   val_extns: "^ (!CP.print_svl val_extns)) no_pos in *)
       (* let _ =  Debug.info_pprint ("   val_extns1: "^ (!CP.print_svl val_extns1)) no_pos in *)
-      let ss1 = List.combine val_extns val_extns1 in
-      let n_first_e = CP.e_apply_subs ss1 first_e in
+      (* let ss1 = List.combine val_extns val_extns1 in *)
+      (* let n_first_e = CP.e_apply_subs ss1 first_e in *)
       let n_inner_e = List.fold_left (fun e1 e2 -> comb_fn inner_e e1 e2 no_pos)
-        n_first_e (List.map (fun sv -> CP.Var (sv,no_pos)) rec_args) in
+        first_e (List.map (fun sv -> CP.Var (sv,no_pos)) (val_extns1@rec_args)) in
       (*outer most pformula*)
       let ss2 = List.combine args svl in
       let n_root_e = CP.e_apply_subs ss2 root_e in
