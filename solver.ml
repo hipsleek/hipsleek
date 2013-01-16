@@ -5067,6 +5067,7 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
 		                    | OCtx _ -> report_error no_pos ("Disjunctive context\n"))
 		                in 
 		                let new_conseq = CF.mkStar new_conseq aux_conseq_from_fold Flow_combine pos in
+                        let _ = Debug.tinfo_hprint (add_str "new_conseq" (Cprinter.string_of_formula)) new_conseq pos in
                         (* let _ = print_endline ("**********************************") in *)
                         (* let _ = print_endline ("heap_split_rhs new_conseq :"^(Cprinter.string_of_formula new_conseq)) in *)
                         (* let _ = print_endline ("**********************************") in *)
@@ -5207,6 +5208,7 @@ and one_ctx_entail_x prog is_folding  c conseq func p pos : (list_context * proo
             | HTrue, _, _, _, _ -> HTrue
             | _ -> HEmp in
           let new_conseq = subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func h p) in
+          let _ = Debug.tinfo_hprint (add_str "new_conseq one_ctx_entail" (Cprinter.string_of_formula)) new_conseq pos in
           let aux_c = estate.es_aux_conseq in
           let aux_conseq_from_fold = subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func h (MCP.mix_of_pure aux_c)) in
           let new_conseq = CF.mkStar new_conseq aux_conseq_from_fold Flow_combine pos in
@@ -7856,6 +7858,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               Debug.tinfo_hprint (add_str "consumed_h" (Cprinter.string_of_h_formula)) consumed_h pos;
               Debug.tinfo_hprint (add_str "new_consumed" (Cprinter.string_of_h_formula)) new_consumed pos;
               Debug.tinfo_hprint (add_str "new_ante" (Cprinter.string_of_formula)) new_ante pos;
+              Debug.tinfo_hprint (add_str "new_conseq" (Cprinter.string_of_formula)) new_conseq pos;
 
               let new_es = {estate with es_formula = new_ante;
                   (* add the new vars to be explicitly instantiated *)
@@ -7874,7 +7877,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let new_es' = new_es in
               let new_es = pop_exists_estate ivars new_es' in
               let new_ctx = Ctx (CF.add_to_estate new_es "matching of view/node") in
-              Debug.devel_zprint (lazy ("do_match (after): LHS: "^ (Cprinter.string_of_context_short new_ctx))) pos;
+              Debug.devel_zprint (lazy ("do_match (after): LHS: "^ (Cprinter.string_of_context new_ctx))) pos;
               Debug.devel_zprint (lazy ("do_match (after): RHS:" ^ (Cprinter.string_of_formula new_conseq))) pos;
 	      (* let _ = print_string("cris: new_conseq = " ^ (Cprinter.string_of_formula new_conseq) ^ "\n") in *)
               let res_es1, prf1 = 
