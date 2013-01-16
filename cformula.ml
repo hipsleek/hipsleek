@@ -4569,9 +4569,9 @@ let extend_view_nodes (f0:formula) old_v_name new_v_name extra_args =
       f0 old_v_name new_v_name extra_args
 
 let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_infos=
-  let gen_null_svl extn_args=
-    List.map (fun (CP.SpecVar (t,_,p)) -> (CP.SpecVar (t,null_sv,p))) extn_args
-  in
+  (* let gen_null_svl extn_args= *)
+  (*   List.map (fun (CP.SpecVar (t,_,p)) -> (CP.SpecVar (t,null_sv,p))) extn_args *)
+  (* in *)
   let rec get_args_from_pos args all_sel_pos=
     let rec gen_n cur n res=
       if cur>=n then res

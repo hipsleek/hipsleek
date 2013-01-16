@@ -1454,7 +1454,16 @@ and trans_view_dervs (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl l
 and trans_view_dervs_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) derv : C.view_decl =
   match derv.I.view_derv_info with
     | [] -> report_error no_pos "astsimp.trans_view_dervs: 1"
-    | [d] -> trans_view_one_derv prog cviews derv d
+    | [d] -> let der_view = trans_view_one_derv prog cviews derv d in
+             let _ =
+               if !debug_derive_flag then
+                 let _ =  print_endline ("*****************************") in
+                 let _ =  print_endline (Cprinter.string_of_view_decl der_view)  in
+                 let _ =  print_endline ("*****************************") in
+                 ()
+               else ()
+             in
+             der_view
     | _ -> report_error no_pos "astsimp.trans_view_dervs: not handle yet"
 
 (* and trans_view_additional_x cprog cviews pos= *)

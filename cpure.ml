@@ -9074,18 +9074,18 @@ let extract_outer_inner p args val_extns rec_args=
       (fun _ _ _ -> extract_outer_inner_x p args val_extns rec_args)
       p args val_extns
 
-let check_null_var e=
-  match e with
-    | Var ((SpecVar (t,id,_)),p) ->
-        if String.compare id null_sv = 0 then
-          begin
-              match t with
-                | Int -> IConst (1,p)
-                | BagT _ -> Bag ([], p)
-                | _ -> e
-          end
-        else e
-    | _ -> e
+(* let check_null_var e= *)
+(*   match e with *)
+(*     | Var ((SpecVar (t,id,_)),p) -> *)
+(*         if String.compare id null_sv = 0 then *)
+(*           begin *)
+(*               match t with *)
+(*                 | Int -> IConst (1,p) *)
+(*                 | BagT _ -> Bag ([], p) *)
+(*                 | _ -> e *)
+(*           end *)
+(*         else e *)
+(*     | _ -> e *)
 
 (*non-bag constrs*)
 let mk_exp_from_non_bag_tmpl tmpl e1 e2 p=
@@ -9097,12 +9097,8 @@ let mk_exp_from_non_bag_tmpl tmpl e1 e2 p=
     | Subtract (_, _,_) -> Subtract (e11, e22,p)
     | Mult (_, _, _) ->  Mult (e11, e22, p)
     | Div (_, _, _) -> Div (e11, e22, p)
-    | Max (_, _, _) -> Max (e11, e22, p)
-    | Min (_, _, _) -> Min (e11, e22, p)
-    (* bag expressions *)
-    (* | Bag (exps,_) -> Bag (,_) *)
-    (* | BagUnion (exps,_) *)
-    (* | BagIntersect (exps,_) *)
+    | Max (_, _, _) -> mkMax e11 e22 p
+    | Min (_, _, _) -> mkMin e11 e22 p
     | _ -> report_error no_pos "cpure.extract_inner_e: not handle yet"
 
 (*bag constrs (* bag expressions *)*)

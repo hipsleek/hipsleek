@@ -10,6 +10,8 @@ data node2 {
         node2 next@REC;
 }.
 
+
+
 pred llNN<> == self::node<_,null>
   or self::node<_,p> * p::llNN<>
 inv self!=null.
@@ -35,6 +37,8 @@ pred llSNN<n> == extends llNN<> with size[REC]<n> .
 pred treeSNN<n> == extends treeNN<> with size[REC]<n> .
 
 pred llMin<m> == extends llNN<> with minValue[VAL,REC]<m>.
+
+//pred treeMin<m> == extends treeNN<> with minValue[VAL,REC]<m> .
 
 /*
 ## der-5.slk

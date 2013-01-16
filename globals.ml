@@ -410,7 +410,7 @@ let subs_tvar_in_typ t (i:int) nt =
 let null_type = Named ""
 ;;
 
-let null_sv = "__null__"
+(* let null_sv = "__null__" *)
 
 
 let rec s_i_list l c = match l with 
