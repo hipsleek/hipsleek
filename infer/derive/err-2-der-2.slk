@@ -39,6 +39,7 @@ inv self!=null.
 
 /*
 Fatal error: exception Invalid_argument("List.combine")
-pred llNNSum2<s> == extends llNN2<> with pos_sum[VAL,REC]<s> .
 */
+pred llNNSum2<s> == extends llNN2<> with pos_sum[VAL,REC]<s> .
+
 

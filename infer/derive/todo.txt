@@ -29,3 +29,14 @@ data node2 {
 ## err-1-der-5.slk
 
 Fatal error: exception Not_found
+
+## der-2.slk
+
+pred llNNSum<n,s> == extends llNN<> with pos_sum[VAL,REC]<s> .
+// need sanity check that n does not exist in RHS
+
+## err-2-der-2.slk
+
+Fatal error: exception Invalid_argument("List.combine")
+
+pred llNNSum2<s> == extends llNN2<> with pos_sum[VAL,REC]<s> .
