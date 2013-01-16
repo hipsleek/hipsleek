@@ -8891,6 +8891,13 @@ let filter_varperm_formula_all_x (f:formula) : CP.formula list * formula =
          (* TO CHECK : can use approximation *)
   in helper f
 
+let merge_flag flag1 flag2 = match flag1,flag2 with
+  | _,2 -> 2
+  | 2,_ -> 2
+  | 0,0 -> 0
+  | 1,1 -> 2
+  | _ -> 1
+
 (*let rec partition_triple fun1 fun2 lst = match lst with*)
 (*  | [] -> ([],[],[])*)
 (*  | l::ls -> *)
@@ -8900,16 +8907,17 @@ let filter_varperm_formula_all_x (f:formula) : CP.formula list * formula =
 
 (*let split_triple lst = List.fold_left (fun (a1,a2,a3) (b1,b2,b3) -> (a1@[b1],a2@[b2],a3@[b3])) ([],[],[]) lst*)
 
-let add_fst elem = fun (a1,a2,a3,a4,a5) -> (elem@a1,a2,a3,a4,a5)
+let add_fst elem = fun (a1,a2,a3,a4,a5,a6) -> (elem@a1,a2,a3,a4,a5,a6)
 
 (*let add_rd elem = fun (a1,a2,a3,a4) -> (a1,a2,elem@a3,a4)*)
 
-let add_fourth elem = fun (a1,a2,a3,a4,a5) -> (a1,a2,a3,elem@a4,a5)
+let add_fourth elem = fun (a1,a2,a3,a4,a5,a6) -> (a1,a2,a3,elem@a4,a5,a6)
 
-let add_fifth elem = fun (a1,a2,a3,a4,a5) -> (a1,a2,a3,a4,elem@a5)
+let add_fifth elem = fun (a1,a2,a3,a4,a5,a6) -> (a1,a2,a3,a4,elem@a5,a6)
 
-let fold_left_5 res =
-  List.fold_left (fun (a1,a2,a3,a4,a5) (c1,c2,c3,c4,c5)-> (a1@c1,a2@c2,a3@c3,a4@c4,a5@c5)) ([],[],[],[],[]) res
+let fold_left_6 res =
+  List.fold_left (fun (a1,a2,a3,a4,a5,a6) (c1,c2,c3,c4,c5,c6) -> 
+  (a1@c1,a2@c2,a3@c3,a4@c4,a5@c5,merge_flag a6 c6)) ([],[],[],[],[],0) res
 
 let fold_left_2 res =
   List.fold_left (fun (a1,a2) (c1,c2)-> (a1@c1,a2@c2)) ([],[]) res
@@ -8931,28 +8939,35 @@ let rec get_pre_pure_fml xpure_heap prog fml = match fml with
     let xpured,_,_ = xpure_heap 12 prog (e.formula_exists_heap) 1 in 
     [MCP.pure_of_mix (MCP.merge_mems pure xpured true)]
 
+let rec get_grp_post_rel_flag fml = match fml with
+  | Base b -> if List.exists CP.is_rel_var (CP.fv (MCP.pure_of_mix b.formula_base_pure)) then 1 else 0
+  | Or o -> merge_flag (get_grp_post_rel_flag o.formula_or_f1) (get_grp_post_rel_flag o.formula_or_f2)
+  | Exists e -> if List.exists CP.is_rel_var (CP.fv (MCP.pure_of_mix e.formula_exists_pure)) then 1 else 0
+
 let rec get_pre_post_vars (pre_vars: CP.spec_var list) xpure_heap (sp:struc_formula) prog: 
-  (CP.spec_var list * CP.spec_var list * CP.spec_var list * CP.spec_var list * CP.formula list) =
+  (CP.spec_var list * CP.spec_var list * CP.spec_var list * CP.spec_var list * CP.formula list * int) =
   match sp with
   | ECase b -> 
     let res = List.map (fun (p,s)-> add_fst (CP.fv p) (get_pre_post_vars pre_vars xpure_heap s prog)) b.formula_case_branches in
-    fold_left_5 res
+    fold_left_6 res
   | EBase b -> 
     let base_vars = fv b.formula_struc_base in
     let rel_fmls = get_pre_pure_fml xpure_heap prog b.formula_struc_base in
 		(match b.formula_struc_continuation with
-    | None -> (base_vars,[],[],[],rel_fmls)
+    | None -> (base_vars,[],[],[],rel_fmls,0)
     | Some l ->  add_fifth rel_fmls (add_fst base_vars (get_pre_post_vars (pre_vars@base_vars) xpure_heap l prog)))
-  | EAssume(svl,f,fl,_) -> ([], (List.map CP.to_primed svl) @ (get_vars_without_rel pre_vars f), 
-    (List.map CP.to_primed svl) @ (fv f),[],[])
+  | EAssume(svl,f,fl,_) -> 
+    let grp_post_rel_flag = get_grp_post_rel_flag f in 
+    ([], (List.map CP.to_primed svl) @ (get_vars_without_rel pre_vars f), 
+    (List.map CP.to_primed svl) @ (fv f),[],[],grp_post_rel_flag)
   | EInfer b -> add_fourth b.formula_inf_vars (get_pre_post_vars pre_vars xpure_heap b.formula_inf_continuation prog)
   | EList b ->  
     let l = List.map (fun (_,c)-> get_pre_post_vars pre_vars xpure_heap c prog) b in
-    fold_left_5 l
+    fold_left_6 l
   | EOr b -> 
-    let pre1, post1, iv1, inf1, rel_fmls1 = get_pre_post_vars pre_vars xpure_heap b.formula_struc_or_f1 prog in
-    let pre2, post2, iv2, inf2, rel_fmls2 = get_pre_post_vars pre_vars xpure_heap b.formula_struc_or_f2 prog in
-    (pre1@pre2, post1@post2, iv1@iv2, inf1@inf2, rel_fmls1@rel_fmls2)
+    let pre1, post1, iv1, inf1, rel_fmls1, flag1 = get_pre_post_vars pre_vars xpure_heap b.formula_struc_or_f1 prog in
+    let pre2, post2, iv2, inf2, rel_fmls2, flag2 = get_pre_post_vars pre_vars xpure_heap b.formula_struc_or_f2 prog in
+    (pre1@pre2, post1@post2, iv1@iv2, inf1@inf2, rel_fmls1@rel_fmls2, merge_flag flag1 flag2)
 
 let rec get_pre_post_vars_simp (pre_vars: CP.spec_var list) (sp:struc_formula): 
   (CP.spec_var list * CP.spec_var list) =

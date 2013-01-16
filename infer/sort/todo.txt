@@ -179,7 +179,7 @@ on the LHS?
 Need to do sanity checks
 
 
-## n-ins-3e.ss
+## n-ins-3e.ss #DONE
 
 node insert(node x, node y)
      infer [R,R2]

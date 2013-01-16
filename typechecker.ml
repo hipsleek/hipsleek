@@ -2507,7 +2507,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                         let new_spec =                           
                           let inf_post_flag = post_ctr # get > 0 in
                           Debug.devel_pprint ("\nINF-POST-FLAG: " ^string_of_bool inf_post_flag) no_pos;
-                          let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls = 
+                          let pres,posts_wo_rel,all_posts,inf_vars,pre_fmls,grp_post_rel_flag = 
                             CF.get_pre_post_vars [] Solver.xpure_heap (proc.proc_stk_of_static_specs # top) prog in
                           let _ = Debug.ninfo_hprint (add_str "pre_fmls" (pr_list !CP.print_formula)) pre_fmls no_pos in
                           let pre_rel_fmls = List.concat (List.map CF.get_pre_rels pre_fmls) in
@@ -2559,7 +2559,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                                   let _ = Debug.devel_hprint (add_str "bottom_up_fp" (pr_list (pr_pair pr pr))) bottom_up_fp no_pos in
                                   Solver.update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls
                                     Fixcalc.compute_fixpoint_td Fixcalc.preprocess 
-                                    reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec
+                                    reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec grp_post_rel_flag
                               in
                               (* let pr_ty = !CP.Label_Pure.ref_string_of_exp in *)
                               Infer.fixcalc_rel_stk # push_list tuples;
