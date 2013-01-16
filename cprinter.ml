@@ -2344,6 +2344,7 @@ let string_of_view_kind vk=
     | View_NORM -> "norm"
     | View_PRIM -> "prim"
     | View_EXTN -> "ext"
+    | View_DERV -> "derv"
 
 (* pretty printing for a view *)
 let pr_view_decl v =
@@ -2357,7 +2358,8 @@ let pr_view_decl v =
   let s = match v.view_kind with 
     | View_NORM -> " "
     | View_PRIM -> "_prim "
-    | View_EXTN -> "_extn " in
+    | View_EXTN -> "_extn "
+    | View_DERV -> "_derv " in
   wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name ^ "[" ^ (String.concat "," (List.map string_of_typed_spec_var v.view_prop_extns) ^ "]")) 
       pr_typed_spec_var v.view_vars; fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 

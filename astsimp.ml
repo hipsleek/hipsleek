@@ -942,7 +942,8 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	      let cprog1 = { cprog with			
 	          (* C.old_proc_decls = List.map substitute_seq cprog.C.old_proc_decls; *)
               C.new_proc_decls = C.proc_decls_map substitute_seq cprog.C.new_proc_decls; 
-	          C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in  
+	          C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in
+          (* let cviews = trans_view_additional cprog cviews no_pos in *)
           (ignore (List.map (fun vdef ->  ( compute_view_x_formula cprog vdef !Globals.n_xpure )) cviews);
           ignore (List.map (fun vdef ->  set_materialized_prop vdef ) cviews);
           ignore (C.build_hierarchy cprog1);
@@ -1355,7 +1356,7 @@ and trans_view_one_derv (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_dec
   let pr1= pr_list pr_id in
   let pr = (pr_pair (pr_pair pr_id pr1) (pr_triple pr_id pr1 pr1)) in
   let pr_r = Cprinter.string_of_view_decl in
-  Debug.ho_1 "trans_view_one_derv" pr pr_r  (fun _ -> trans_view_one_derv_x prog cviews derv view_derv) view_derv
+  Debug.no_1 "trans_view_one_derv" pr pr_r  (fun _ -> trans_view_one_derv_x prog cviews derv view_derv) view_derv
 
 and trans_view_one_derv_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) view_derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) :
        C.view_decl =
@@ -1435,10 +1436,12 @@ and trans_view_one_derv_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_d
  in
  {orig_view with
      C.view_name = view_derv.I.view_name;
+     (* C.view_kind = C.View_DERV; *)
      C.view_vars = orig_view.C.view_vars@n_args;
      C.view_formula = new_struct_f;
      C.view_un_struc_formula = new_un_struc_formulas;
      C.view_raw_base_case = rbc;
+     C.view_is_rec = extn_ind_brs <> [];
  }
 
 and trans_view_dervs (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) derv : C.view_decl =
@@ -1451,6 +1454,33 @@ and trans_view_dervs_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl
     | [] -> report_error no_pos "astsimp.trans_view_dervs: 1"
     | [d] -> trans_view_one_derv prog cviews derv d
     | _ -> report_error no_pos "astsimp.trans_view_dervs: not handle yet"
+
+and trans_view_additional_x cprog cviews pos=
+  let process_one vdef=
+    if vdef.C.view_kind = C.View_DERV then
+      (*xform*)
+      let (xform0, addr_vars0, ms) = Solver.xpure_symbolic cprog (C.formula_of_unstruc_view_f vdef) in
+      let addr_vars = CP.remove_dups_svl addr_vars0 in
+      let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform0 (TP.simplify_a 10) in
+ (* let _ = print_endline ("\n xform: " ^ (Cprinter.string_of_mix_formula xform)) in *)
+      let xform1 = (TP.simplify_with_pairwise 1 (CP.drop_rel_formula (MCP.pure_of_mix xform))) in
+      let ls_disj = CP.list_of_disjs xform1 in
+      let xform2 = MCP.mix_of_pure (CP.disj_of_list (Gen.BList.remove_dups_eq CP.equalFormula ls_disj) pos) in
+      { vdef with
+          C.view_kind = C.View_NORM;
+          C.view_x_formula = xform2;
+          C.view_xpure_flag = TP.check_diff vdef.C.view_user_inv xform2;
+          C.view_addr_vars = addr_vars;
+          C.view_baga = (match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h) ;
+      }
+    else vdef
+  in
+  List.map process_one cviews
+
+and trans_view_additional cprog cviews pos=
+  let pr1 = pr_list Cprinter.string_of_view_decl in
+  Debug.ho_1 "trans_view_additional" pr1 pr1
+      (fun _ -> trans_view_additional_x cprog cviews pos) cviews
 
 and fill_one_base_case prog vd = Debug.no_1 "fill_one_base_case" Cprinter.string_of_view_decl Cprinter.string_of_view_decl (fun vd -> fill_one_base_case_x prog vd) vd
   
