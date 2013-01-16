@@ -21,10 +21,11 @@ node sel(ref node x)
      //infer [P3,P4,P5]
      infer [P3,P6]
      requires x::llMM<mi,mx> 
-     ensures  res::node<m,_> & x'=null & P3(m,mi,mx)
+     ensures  res::node<m,_> & x'=null & P3(mi,mx,m)
            or res::node<m,_> * x'::llMM<mi2,mx2> 
                     //& P4(m,mi,mi2) & P5(m,mx,mx2)
-                    & P6(m,mi,mi2,mx,mx2)
+                    //& P6(m,mi,mi2,mx,mx2)
+                    & P6(mi,mx,m,mi2,mx2)
      ;
 /*
 ## n-sel-2a.ss
