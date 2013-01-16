@@ -1304,26 +1304,139 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   )
   )
 
+and generate_extn_ho_procs prog cviews extn_view_name=
+  let mk_ho_b args p =
+    fun svl ->
+        let ss = List.combine args svl in
+        CP.subst ss p
+  in
+  let mk_ho_ind_rec ann args p =
+    match args with
+      | [a] -> a
+      | _ -> report_error no_pos "astsimp.generate_extn_ho_procs: extend one property"
+    (* (args, CP.mkTrue no_pos) *)
+  in
+  let mk_ho_ind args val_extns p rec_ls=
+    (* let rec_args = List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) in *)
+    (* let _ =  CP.extract_outer_inner p args val_extns rec_args in [] *)
+    fun svl val_extns1 rec_ls1->
+      let svl1 = List.concat (snd (List.split rec_ls)) in
+      (*find subformula has svl1--skip now*)
+      let rec_args = List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls1 in
+      let ((outer, root_e), (inner_e, first_e)) =  CP.extract_outer_inner p args val_extns rec_args in
+      (*non-bag constrs inner most exp*)
+      let ss1 = List.combine val_extns val_extns1 in
+      let n_first_e = CP.e_apply_subs ss1 first_e in
+      let n_inner_e = List.fold_left (fun e1 e2 -> CP.mk_exp_from_non_bag_tmpl inner_e e1 e2 no_pos)
+        n_first_e (List.map (fun sv -> CP.Var (sv,no_pos)) rec_args) in
+      (*outer most pformula*)
+      let ss2 = List.combine args svl in
+      let n_root_e = CP.e_apply_subs ss2 root_e in
+      let n_outer = CP.mk_pformula_from_tmpl outer n_root_e n_inner_e no_pos in
+      let n_p = (CP.BForm ((n_outer, None), None)) in
+      n_p
+  in
+  let extn_v = C.look_up_view_def_raw cviews extn_view_name in
+  let extn_fs = fst (List.split extn_v.C.view_un_struc_formula) in
+  let (brs, val_extns) = CF.classify_formula_branch extn_fs extn_view_name
+    extn_v.C.view_vars extn_v.C.view_prop_extns in
+  let b_brs, ind_brs = List.partition (fun (_, ls) -> ls=[]) brs in
+  (*now, we assume we always have <= 1 base case and <=1 ind case*)
+  let ho_bs = List.map (fun (p,_) ->  mk_ho_b extn_v.C.view_vars p) b_brs in
+  let ho_inds = List.map (fun (p, ls) -> mk_ho_ind extn_v.C.view_vars
+      val_extns p ls) ind_brs in
+  (* (extn_view_name, b_brs, ind_brs, val_extns) *)
+  (extn_view_name, ho_bs, ho_inds)
+
+
 and trans_view_one_derv (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) derv view_derv : C.view_decl =
   let pr1= pr_list pr_id in
   let pr = (pr_pair (pr_pair pr_id pr1) (pr_triple pr_id pr1 pr1)) in
   let pr_r = Cprinter.string_of_view_decl in
-  Debug.no_1 "trans_view_one_derv" pr pr_r  (fun _ -> trans_view_one_derv_x prog cviews derv view_derv) view_derv
+  Debug.ho_1 "trans_view_one_derv" pr pr_r  (fun _ -> trans_view_one_derv_x prog cviews derv view_derv) view_derv
 
 and trans_view_one_derv_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) view_derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) :
        C.view_decl =
- let orig_view = C.look_up_view_def_raw cviews orig_view_name in
+  let do_extend_base_case ho_bs extn_args f=
+    match ho_bs with
+      | [] -> f
+      | ho_fn::_ -> (*now, we just care the first one*)
+          let extn_p = ho_fn extn_args in
+          let nf = CF.mkAnd_pure f (MCP.mix_of_pure extn_p) no_pos in
+          (* let _ =  Debug.info_pprint ("  nf: "^ (!CF.print_formula nf)) no_pos in *)
+          nf
+  in
+  let do_extend_ind_case ho_inds extn_args (f,val_extns,rec_extns)=
+    match ho_inds with
+      | [] -> f
+      | ho_fn::_ -> (*now, we just care the first one*)
+          let extn_p = ho_fn extn_args val_extns rec_extns in
+          let nf = CF.mkAnd_pure f (MCP.mix_of_pure extn_p) no_pos in
+          (*add rec_extns into exists*)
+          let new_extn_args = CP.remove_dups_svl (List.concat (snd (List.split rec_extns))) in
+          let nf1 = CF.add_quantifiers new_extn_args nf in
+          (* let _ =  Debug.info_pprint ("  nf1: "^ (!CF.print_formula nf1)) no_pos in *)
+          nf1
+  in
+ (**********************************)
+ (*
+   EXTN: (1) lookup, not found: (2) generate one and store for other use.
+   Now, always generate a new one
+ *)
+ (**********************************)
  let extn_view = C.look_up_view_def_raw cviews extn_view_name in
- (*find data fields anns*)
- let f_anns = I.
+ let (extn_vname, extn_ho_bs, extn_ho_inds) = generate_extn_ho_procs prog cviews extn_view_name in
+ (**********************************)
+ (*
+   BASE VIEW: (1) abs untruct formula, (2) extract ANN and (3) apply extn_ho
+ *)
+ (**********************************)
  (*new args*)
  let ss = List.combine extn_args extn_view.C.view_vars in
  let n_args = List.map (fun (id, CP.SpecVar (t,_,pr)) ->  CP.SpecVar (t,id,pr)) ss in
+ let orig_view = C.look_up_view_def_raw cviews orig_view_name in
+ (*find data fields anns*)
+ let ls_dname_pos = I.look_up_field_ann prog orig_view.C.view_data_name extn_props in
  (*formula: extend with new args*)
-  (*tmp: for success complie*)
+ let fs,labels = List.split orig_view.C.view_un_struc_formula in
+ let (base_brs,ind_brs) = CF.extract_abs_formula_branch fs orig_view.C.view_name view_derv.I.view_name n_args ls_dname_pos in
+ (*extend base cases*)
+ let extn_base_brs = List.map (do_extend_base_case extn_ho_bs n_args) base_brs in
+ (*extend ind cases*)
+ let extn_ind_brs = List.map (do_extend_ind_case extn_ho_inds n_args) ind_brs in
+ (*unstruct*)
+ let new_un_struc_formulas = List.combine (extn_base_brs@extn_ind_brs) labels in
+ (*struct*)
+ let struct_fs = List.map (fun f -> let p = CF.pos_of_formula f in CF.struc_formula_of_formula f p)
+   (extn_base_brs@extn_ind_brs) in
+ let new_struct_f = match struct_fs with
+   | [] -> orig_view.C.view_formula
+   | _ ->
+       let p = CF.pos_of_struc_formula orig_view.C.view_formula in
+       List.fold_left (fun f1 f2 -> CF.mkEOr f1 f2 p) (List.hd struct_fs) (List.tl struct_fs)
+ in
+ (*todo: view_base_case*)
+ (*raw base case*)
+ let rec f_tr_base f = 
+   let mf f h fl pos = if (CF.is_complex_heap h) then (CF.mkFalse fl pos)  else f in
+   match f with
+     | CF.Base b -> mf f b.CF.formula_base_heap b.CF.formula_base_flow b.CF.formula_base_pos
+     | CF.Exists b -> mf f b.CF.formula_exists_heap b.CF.formula_exists_flow b.CF.formula_exists_pos
+     | CF.Or b -> CF.mkOr (f_tr_base b.CF.formula_or_f1) (f_tr_base b.CF.formula_or_f2) no_pos
+ in
+ let rbc = List.fold_left (fun a (c,l)-> 
+     let fc = f_tr_base c in
+     if (CF.isAnyConstFalse fc) then a 
+     else match a with 
+       | Some f1  -> Some (CF.mkOr f1 fc no_pos)
+       | None -> Some fc) None new_un_struc_formulas
+ in
  {orig_view with
      C.view_name = view_derv.I.view_name;
      C.view_vars = orig_view.C.view_vars@n_args;
+     C.view_formula = new_struct_f;
+     C.view_un_struc_formula = new_un_struc_formulas;
+     C.view_raw_base_case = rbc;
  }
 
 and trans_view_dervs (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) derv : C.view_decl =

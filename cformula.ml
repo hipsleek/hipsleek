@@ -442,8 +442,8 @@ and struc_formula_of_heap h pos = EBase {
 	formula_struc_pos = pos}
 
 and struc_formula_of_formula f pos = EBase { 
-	formula_struc_explicit_inst = [];	 
-    formula_struc_implicit_inst = []; 
+	formula_struc_explicit_inst = [];
+    formula_struc_implicit_inst = [];
     formula_struc_exists = [];
 	formula_struc_base = f;
 	formula_struc_continuation = None;
@@ -3493,6 +3493,36 @@ and get_hnodes (f: h_formula) = match f with
       -> (get_hnodes h1)@(get_hnodes h2)
   | _ -> []
 
+let rec flatten_nodes_h (f0: h_formula) =
+  let rec helper f=
+    match f with
+      | DataNode dn -> ([dn],[])
+      | ViewNode vn -> ([],[vn])
+      | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2}
+      | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2}
+      | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2} ->
+          let hds1,hvs1=(helper h1) in
+          let hds2,hvs2 = (helper h2)in
+          ((hds1@hds2),(hvs1@hvs2))
+      | _ -> ([],[])
+  in
+  helper f0
+
+let flatten_nodes (f0:formula) =
+  let rec helper f=
+  match f with
+    | Base ({ formula_base_heap = h1;})
+    | Exists ({ formula_exists_heap = h1;}) ->
+        (
+           flatten_nodes_h h1
+        )
+    | Or {formula_or_f1 = f1;
+          formula_or_f2 = f2} ->
+        let hds1,hvs1=(helper f1) in
+          let hds2,hvs2 = (helper f2)in
+          ((hds1@hds2),(hvs1@hvs2))
+  in
+  helper f0
 
 let rec get_h_size_f (f: formula)=
   match f with
@@ -4414,6 +4444,187 @@ and subst_unk_hps_hf hf0 hp_names=
 
 
 (*end for sa*)
+
+(*****************************************)
+  (*************INFER*******************)
+(*****************************************)
+let extract_rec_extn_h hf0 v_name=
+  let rec helper hf=
+    match hf with
+    | Star {h_formula_star_h1 = hf1;
+            h_formula_star_h2 = hf2;} ->
+        (helper hf1)@(helper hf2)
+    | Conj { h_formula_conj_h1 = hf1;
+             h_formula_conj_h2 = hf2;} ->
+        (helper hf1)@(helper hf2)
+    | Phase { h_formula_phase_rd = hf1;
+              h_formula_phase_rw = hf2;} ->
+        (helper hf1)@(helper hf2)
+    | DataNode hd -> []
+    | ViewNode hv -> if String.compare hv.h_formula_view_name v_name = 0 then
+          [(hv.h_formula_view_node, hv.h_formula_view_arguments)] else []
+    | HRel _
+    | Hole _
+    | HTrue
+    | HFalse
+    | HEmp -> []
+  in
+  helper hf0
+
+let extract_rec_extn_x f v_name=
+  let rec helper f0=
+    match f0 with
+      | Base fb -> extract_rec_extn_h fb.formula_base_heap v_name
+      | Exists fe -> extract_rec_extn_h fe.formula_exists_heap v_name
+      | Or orf -> report_error no_pos "cformula.extract_rec_extn: f should not an or formula"
+  in
+  helper f
+
+let extract_rec_extn f v_name=
+  let pr1 = !print_formula in
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
+  Debug.no_2 "extract_rec_extn" pr1 pr_id pr2
+      (fun _ _ -> extract_rec_extn_x f v_name) f v_name
+
+let classify_formula_branch_x fs v_name v_args v_extns=
+  let rec list_assoc extns r_svl res=
+    match extns with
+      | [] -> res
+      | sv::rest ->
+          try
+              let l_args = List.assoc sv r_svl in
+              list_assoc rest r_svl (res@[(sv,l_args)])
+          with Not_found -> list_assoc rest r_svl res
+  in
+  let process_one f=
+    let p = extract_pure f in
+    (*prune out p*)
+    let rec_svl = extract_rec_extn f v_name in
+    let rec_extns = list_assoc v_extns rec_svl [] in
+    let keep_svl = if rec_extns=[] then v_args else (v_args@v_extns) in
+    let p1 = CP.filter_var p keep_svl in
+    (p1,rec_extns)
+  in
+  let ls_p_r = List.map process_one fs in
+  let rec_extns_all= CP.remove_dups_svl (fst (List.split
+                     (List.concat (snd (List.split ls_p_r))))) in
+  let val_extns = CP.diff_svl v_extns rec_extns_all in
+  (ls_p_r, val_extns)
+
+let classify_formula_branch fs v_name v_args v_extns=
+  let pr0 = pr_list !print_formula in
+  let pr1 = !CP.print_svl in
+  let pr2 = pr_pair (pr_list (pr_pair !CP.print_formula
+  (pr_list (pr_pair !CP.print_sv pr1)) )) pr1 in
+  Debug.no_4 "classify_formula_branch" pr0 pr_id pr1 pr1 pr2
+      (fun _ _ _ _ -> classify_formula_branch_x fs v_name v_args v_extns)
+      fs v_name v_args v_extns
+
+let extend_view_nodes_h hf0 old_v_name new_v_name extra_args =
+  let rec helper hf=
+    match hf with
+      | Star { h_formula_star_h1 = hf1; h_formula_star_h2 = hf2; h_formula_star_pos = pos} ->
+          Star {h_formula_star_h1 = helper hf1; h_formula_star_h2 = helper hf2; h_formula_star_pos = pos}
+      |  Conj { h_formula_conj_h1 = hf1; h_formula_conj_h2 = hf2; h_formula_conj_pos = pos} ->
+          Conj { h_formula_conj_h1 = helper hf1; h_formula_conj_h2 = helper hf2; h_formula_conj_pos = pos}
+      | Phase { h_formula_phase_rd = hf1; h_formula_phase_rw = hf2; h_formula_phase_pos = pos} ->
+          Phase { h_formula_phase_rd = helper hf1; h_formula_phase_rw = helper hf2; h_formula_phase_pos = pos}
+      | ViewNode vn -> if String.compare vn.h_formula_view_name old_v_name = 0 then
+            let fr_extra_args = CP.fresh_spec_vars extra_args in
+            ViewNode {vn with h_formula_view_name = new_v_name;
+                     h_formula_view_arguments = vn.h_formula_view_arguments@ fr_extra_args}
+          else hf
+      | _ -> hf
+  in
+  helper hf0
+
+let extend_view_nodes_x (f0:formula) old_v_name new_v_name extra_args =
+  let rec helper f=
+  match f with
+    | Base fb -> Base {fb with formula_base_heap = extend_view_nodes_h fb.formula_base_heap
+            old_v_name new_v_name extra_args}
+    | Exists fe -> Exists {fe with formula_exists_heap = extend_view_nodes_h fe.formula_exists_heap
+            old_v_name new_v_name extra_args}
+    | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+        formula_or_f2 = helper orf.formula_or_f2;}
+  in
+  helper f0
+
+let extend_view_nodes (f0:formula) old_v_name new_v_name extra_args =
+  let pr1 = !print_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_4 "extend_view_nodes" pr1 pr_id pr_id pr2 pr1
+      (fun _ _ _ _ -> extend_view_nodes_x f0 old_v_name new_v_name extra_args)
+      f0 old_v_name new_v_name extra_args
+
+let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_infos=
+  let rec get_args_from_pos args all_sel_pos=
+    let rec gen_n cur n res=
+      if cur>=n then res
+      else gen_n (cur+1) n (res@[cur])
+    in
+    let l = List.length args in
+    let ns = gen_n 0 l [] in
+    (* let pr = pr_list string_of_int in *)
+    (* let _ =  Debug.info_pprint ("  sel_pos: "^ (pr ns)) no_pos in *)
+    let cmb = List.combine ns args in
+    List.map (fun p -> List.assoc p cmb) all_sel_pos
+  in
+  let get_sel_args_from_dnode dn=
+    let all_sel_pos = List.fold_left (fun ls1 ls2 -> ls1@ls2) []
+      (List.map (fun (dname, pos) -> if String.compare dname dn.h_formula_data_name =0
+          then [pos] else []) ls_ann_infos) in
+    (* let all_sel_pos1 = List.sort (fun a b -> a - b) all_sel_pos in *)
+    (* let pr = pr_list string_of_int in *)
+    (* let _ =  Debug.info_pprint ("  all_sel_pos1: "^ (pr  all_sel_pos)) no_pos in *)
+    let sel_args = get_args_from_pos dn.h_formula_data_arguments all_sel_pos in
+    sel_args
+  in
+  let classify_rec_svl hvs n sv=
+    let rec look_up l_hvs=
+      match l_hvs with
+        | [] -> []
+        | hv::rest -> if CP.eq_spec_var hv.h_formula_view_node sv then
+              begin
+                let arr = Array.of_list hv.h_formula_view_arguments in
+                let arr_ex = Array.sub arr (List.length hv.h_formula_view_arguments -
+                n) n in
+                Array.to_list arr_ex
+              end
+            else
+              look_up rest
+    in
+    let extra_args= look_up hvs in
+    (* let _ =  Debug.info_pprint ("  extra_args: "^ (!CP.print_svl extra_args)) no_pos in *)
+    if extra_args = [] then ([sv],[]) else ([],[(sv,extra_args)])
+  in
+  let process_one f=
+    (*extend new new view name, new args*)
+    let f1 = extend_view_nodes f v_base_name v_new_name extn_args in
+    (*get dataNode, ViewNode*)
+    let hds,hvs= flatten_nodes f1 in
+    let sel_svl = CP.remove_dups_svl ( List.concat (List.map get_sel_args_from_dnode hds)) in
+    let val_svl,rec_svl=List.split (List.map (classify_rec_svl hvs (List.length extn_args)) sel_svl) in
+    let val_svl1 = List.concat val_svl in
+    let rec_svl1 = List.concat rec_svl in
+    if val_svl1=[] && rec_svl1=[] then ([f1],[]) else ([],[(f1,val_svl1,rec_svl1)])
+  in
+  let ls_bases,ls_inds = List.split (List.map process_one fs) in
+  (List.concat ls_bases, List.concat ls_inds)
+
+let extract_abs_formula_branch fs v_base_name v_new_name extn_args ls_ann_infos=
+  let pr0 = pr_list !print_formula in
+  let pr1 = !CP.print_svl in
+  let pr2 = pr_list (pr_pair pr_id string_of_int) in
+  let pr3 = pr_pair pr0 (pr_list (pr_triple !print_formula pr1 (pr_list (pr_pair !CP.print_sv pr1)))) in
+  Debug.no_5 "extract_abs_formula_branch" pr0 pr_id pr_id pr1 pr2 pr3
+      (fun _ _ _ _ _ -> extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_infos)
+      fs v_base_name v_new_name extn_args ls_ann_infos
+
+(*****************************************)
+  (*************END INFER*************)
+(*****************************************)
+
  (* context functions *)
 
 (*type formula_cache_no = int

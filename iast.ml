@@ -2070,4 +2070,24 @@ let rec get_breaks e =
 				Some (List.concat (lb::lbc))
 		| _ -> None in
 	fold_exp e f (List.concat) [] 
-	
+
+
+let look_up_field_ann_x prog view_data_name sel_anns=
+  let rec ann_w_pos ls_anns n res=
+    match ls_anns with
+      | [] -> res
+      | anns::rest -> if Gen.BList.intersect_eq (fun s1 s2 -> String.compare s1 s2 = 0) anns sel_anns <> [] then
+             ann_w_pos rest (n+1) (res@[(view_data_name,n)])
+          else ann_w_pos rest (n+1) res
+  in
+  let dd = look_up_data_def_raw prog.prog_data_decls view_data_name in
+  let ls_anns = List.map (fun (_,_,_,anns) -> anns) dd.data_fields in
+  ann_w_pos ls_anns 0 []
+
+let look_up_field_ann prog view_data_name sel_anns=
+  let pr1 = pr_id in
+  let pr2 =  pr_list pr_id in
+  let pr3 = pr_list (pr_pair pr_id string_of_int) in
+  Debug.no_2 "look_up_field_ann" pr1 pr2 pr3
+      (fun _ _ -> look_up_field_ann_x prog view_data_name sel_anns) view_data_name sel_anns
+

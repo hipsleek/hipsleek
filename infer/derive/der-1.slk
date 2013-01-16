@@ -4,8 +4,18 @@ data node {
 	node next@REC;
 }.
 
+data node2 {
+	int val@VAL; 
+	node2 prev@REC; 
+	node2 next@REC; 
+}.
+
 pred ll<> == self=null
   or self::node<_,p> * p::ll<>
+inv true.
+
+pred tree<> == self=null
+  or self::node2<_,p,q> * p::tree<> * q::tree<>
 inv true.
 
 pred_extn size[R]<n> ==
@@ -19,6 +29,9 @@ pred_extn pos_sum[R,V]<s> ==
    inv s>=0.
 */
 pred llN<n> == extends ll<> with size[REC]<n> .
+
+pred treeN<n> == extends tree<> with size[REC]<n> .
+
 /*
 pred llNPSum<n,s> == extend llN<n> with pos_sum[VAL,REC]<s> .
 

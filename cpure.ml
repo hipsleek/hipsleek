@@ -8968,3 +8968,98 @@ let get_eqs_rel_args_x p eqs rel_args pos=
 let get_eqs_rel_args p eqs rel_args pos=
   Debug.no_2 "get_eqs_rel_args" !print_formula !print_svl !print_formula
       (fun _ _ -> get_eqs_rel_args_x p eqs rel_args pos) p rel_args
+
+let extract_inner_e e0 val_extns rec_args=
+  let rec helper e=
+    match e with
+      | Add (e1, e2,_)
+      | Subtract (e1, e2,_)
+      | Mult (e1, e2, _)
+      | Div (e1, e2, _)
+      | Max (e1, e2, _)
+      | Min (e1, e2, _) ->
+          let svl1 = afv e1 in
+          if svl1 = [] then
+            (*e1 should be a const*)
+            (e, e1)
+          else if diff_svl svl1 val_extns = [] then
+            (e, e1)
+          else (e, e2)
+	  (* bag expressions *)
+      (* | Bag (exps,_) *)
+      (* | BagUnion (exps,_) *)
+      (* | BagIntersect (exps,_) *)
+      | _ -> report_error no_pos "cpure.extract_inner_e: not handle yet"
+  in
+  helper e0
+
+let extract_outer_inner_p pf0 r_args val_extns rec_args=
+  let is_root e=
+    let sv = afv e in
+    diff_svl sv r_args = []
+  in
+  let rec helper pf=
+    match pf with
+      | Lt (e1, e2,_)
+      | Lte (e1, e2, _)
+      | Gt (e1, e2 , _)
+      | Gte (e1, e2, _)
+      | Eq (e1, e2, _)
+      | Neq (e1, e2, _) ->
+          let b1= is_root e1 in
+          let b2= is_root e2 in
+          match b1,b2 with
+            | true,false -> ((pf,e1), extract_inner_e e2 val_extns rec_args)
+            | false,true -> ((pf,e2), extract_inner_e e1 val_extns rec_args)
+            | _ -> report_error no_pos "cpure.extract_outer_inner_p: wrong?"
+      | _ -> report_error no_pos "cpure.extract_outer_inner_p: not handle yet"
+  in
+  helper pf0
+
+let extract_outer_inner_f p0 args val_extns rec_args=
+  let rec helper p=
+    match p with
+      | BForm ((pf,_),_) ->
+          extract_outer_inner_p pf args val_extns rec_args
+      | _ -> report_error no_pos "cpure.extract_outer_inner_f: not handle yet"
+  in
+  helper p0
+
+let extract_outer_inner_x f args val_extns rec_args=
+  extract_outer_inner_f f args val_extns rec_args
+
+let extract_outer_inner p args val_extns rec_args=
+  let pr0 = !print_svl in
+  let pr1 = !print_p_formula in
+  let pr2 = !print_exp in
+  let pr3 = pr_pair (pr_pair pr1 pr2) (pr_pair pr2 pr2) in
+  let pr4 = !print_formula in
+  Debug.no_3 "extract_outer_inner" pr4 pr0 pr0 pr3
+      (fun _ _ _ -> extract_outer_inner_x p args val_extns rec_args)
+      p args val_extns
+
+(*non-bag constrs*)
+let mk_exp_from_non_bag_tmpl tmpl e1 e2 p=
+  match tmpl with
+    | Add (_, _,_) -> Add (e1,e2,p)
+    | Subtract (_, _,_) -> Subtract (e1, e2,p)
+    | Mult (_, _, _) ->  Mult (e1, e2, p)
+    | Div (_, _, _) -> Div (e1, e2, p)
+    | Max (_, _, _) -> Max (e1, e2, p)
+    | Min (_, _, _) -> Min (e1, e2, p)
+    (* bag expressions *)
+    (* | Bag (exps,_) -> Bag (,_) *)
+    (* | BagUnion (exps,_) *)
+    (* | BagIntersect (exps,_) *)
+    | _ -> report_error no_pos "cpure.extract_inner_e: not handle yet"
+
+
+let mk_pformula_from_tmpl tmpl e1 e2 p=
+  match tmpl with
+    | Lt (_, _,_) -> Lt (e1,e2,p)
+    | Lte (_, _, _) -> Lte (e1,e2,p)
+    | Gt (_, _ , _) -> Gt (e1,e2,p)
+    | Gte (_, _, _) -> Gte (e1,e2,p)
+    | Eq (_, _, _) -> Eq (e1,e2,p)
+    | Neq (_, _, _) -> Neq (e1,e2,p)
+    | _ -> report_error no_pos "cpure.extract_outer_inner_p: not handle yet"
