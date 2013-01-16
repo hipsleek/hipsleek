@@ -3,7 +3,7 @@ data node {
 	node next@REC;
 }.
 
-
+/*
 pred ll<> == self=null
   or self::node<_,p> * p::ll<>
 inv true.
@@ -27,9 +27,14 @@ pred llNN<> ==
   self::node<_,null> 
   or self::node<_,p> * p::llNN<>
 inv self!=null.
-
-pred llNNSum<n,s> == extends llNN<> with pos_sum[VAL,REC]<s> .
+*/
+//pred llNNSum<n,s> == extends llNN<> with pos_sum[VAL,REC]<s> .
 // need sanity check that n does not exist in RHS
+
+pred_extn pos_sum[R,V]<s> ==
+      s=0 // base case
+   or R::pos_sum<s2> & s=V+s2
+   inv true.
 
 pred llNN2<> == 
   self::node<_,null> 

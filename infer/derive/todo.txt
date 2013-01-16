@@ -30,7 +30,7 @@ data node2 {
 
 Fatal error: exception Not_found
 
-## der-2.slk
+## der-2.slk: DONE
 
 pred llNNSum<n,s> == extends llNN<> with pos_sum[VAL,REC]<s> .
 // need sanity check that n does not exist in RHS

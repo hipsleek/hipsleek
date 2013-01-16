@@ -1300,6 +1300,14 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           C.view_prune_conditions = [];
           C.view_prune_conditions_baga = [];
           C.view_prune_invariants = []} in
+      let _ =
+        if !debug_derive_flag then
+          let _ =  print_endline ("************VIEW_EXTN*************") in
+          let _ =  print_endline (Cprinter.string_of_view_decl cvdef)  in
+          let _ =  print_endline ("**********************************") in
+          ()
+        else ()
+      in
       (Debug.devel_zprint (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
       cvdef)
   )
@@ -1329,6 +1337,8 @@ and generate_extn_ho_procs prog cviews extn_view_name=
       (*combine bag and non-bag constrs*)
       let comb_fn= if is_bag_constr then CP.mk_exp_from_bag_tmpl else CP.mk_exp_from_non_bag_tmpl in
       (*cmb inner most exp*)
+      (* let _ =  Debug.info_pprint ("   val_extns: "^ (!CP.print_svl val_extns)) no_pos in *)
+      (* let _ =  Debug.info_pprint ("   val_extns1: "^ (!CP.print_svl val_extns1)) no_pos in *)
       let ss1 = List.combine val_extns val_extns1 in
       let n_first_e = CP.e_apply_subs ss1 first_e in
       let n_inner_e = List.fold_left (fun e1 e2 -> comb_fn inner_e e1 e2 no_pos)
