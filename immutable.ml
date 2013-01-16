@@ -559,7 +559,8 @@ and subtype_ann (imm1 : ann) (imm2 : ann) : bool =
 (* bool denotes possible subyping *)
 and subtype_ann_x (imm1 : ann) (imm2 : ann) : bool =
   let (r,op) = subtype_ann_pair imm1 imm2 in r
-                                                 
+               
+(* result: res:bool * (ann constraint = relation between lhs_ann and rhs_ann) *)
 and subtype_ann_pair (imm1 : ann) (imm2 : ann) : bool * ((CP.exp * CP.exp) option) =
   match imm1 with
     | PolyAnn v1 ->
