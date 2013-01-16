@@ -5,3 +5,27 @@ pred_extn pos_sum[R,V:int]<s> ==
       s=0 // base case
    or R::pos_sum<s2> & s=V+s2 & V>=0 
    inv s>=0.
+
+## der-5.slk
+
+WHY --pcp shows data nodes printed twice?
+
+data node {
+  int val@VAL
+  node next@REC
+}
+data node2 {
+  int val@VAL
+  node2 prev@REC
+  node2 next@REC
+}
+
+data node2 {
+  int val@VAL
+  node2 prev@REC
+  node2 next@REC
+}
+
+## err-1-der-5.slk
+
+Fatal error: exception Not_found

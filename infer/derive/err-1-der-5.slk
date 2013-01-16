@@ -36,24 +36,15 @@ pred treeSNN<n> == extends treeNN<> with size[REC]<n> .
 
 pred llMin<m> == extends llNN<> with minValue[VAL,REC]<m>.
 
+pred treeMin<n,mi> == extends treeSNN<n> with minValue[VAL,REC]<mi> .
+
+//pred llMin<m,n> == extends llSNN<n> with minValue[VAL,REC]<m>.
+
 /*
-## der-5.slk
-
-WHY --pcp shows data nodes printed twice?
-
-data node {
-  int val@VAL
-  node next@REC
-}
 data node2 {
   int val@VAL
   node2 prev@REC
   node2 next@REC
 }
-
-data node2 {
-  int val@VAL
-  node2 prev@REC
-  node2 next@REC
-}
+Fatal error: exception Not_found
 */
