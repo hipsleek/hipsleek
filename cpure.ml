@@ -8970,6 +8970,15 @@ let get_eqs_rel_args p eqs rel_args pos=
       (fun _ _ -> get_eqs_rel_args_x p eqs rel_args pos) p rel_args
 
 let extract_inner_e e0 val_extns rec_args=
+  let rec bag_helper exps=
+    match exps with
+      | [] -> report_error no_pos "cpure.extract_inner_e: why is it empty?"
+      | e:: rest ->
+          let svl1 = afv e in
+          if svl1 = [] || (diff_svl svl1 val_extns = [] && intersect_svl svl1 rec_args = []) then
+            e
+          else bag_helper rest
+  in
   let rec helper e=
     match e with
       | Add (e1, e2,_)
@@ -8979,16 +8988,19 @@ let extract_inner_e e0 val_extns rec_args=
       | Max (e1, e2, _)
       | Min (e1, e2, _) ->
           let svl1 = afv e1 in
-          if svl1 = [] then
+          let res=
+            if svl1 = [] then
             (*e1 should be a const*)
-            (e, e1)
-          else if diff_svl svl1 val_extns = [] then
-            (e, e1)
-          else (e, e2)
+              (e, e1)
+            else if diff_svl svl1 val_extns = [] then
+              (e, e1)
+            else (e, e2)
+          in
+          (false, res)
 	  (* bag expressions *)
-      (* | Bag (exps,_) *)
-      (* | BagUnion (exps,_) *)
-      (* | BagIntersect (exps,_) *)
+      | Bag (exps,p) ->  (true, ( Bag ([],p), bag_helper exps))
+      | BagUnion (exps,p) -> (true, (BagUnion ([],p), bag_helper exps))
+      | BagIntersect (exps,p) -> (true, (BagIntersect ([],p), bag_helper exps))
       | _ -> report_error no_pos "cpure.extract_inner_e: not handle yet"
   in
   helper e0
@@ -9009,8 +9021,12 @@ let extract_outer_inner_p pf0 r_args val_extns rec_args=
           let b1= is_root e1 in
           let b2= is_root e2 in
           match b1,b2 with
-            | true,false -> ((pf,e1), extract_inner_e e2 val_extns rec_args)
-            | false,true -> ((pf,e2), extract_inner_e e1 val_extns rec_args)
+            | true,false ->
+                let is_bag, (inner_e,first_e) = extract_inner_e e2 val_extns rec_args in
+                (is_bag,(pf,e1), (inner_e,first_e))
+            | false,true ->
+                 let is_bag, (inner_e,first_e) = extract_inner_e e1 val_extns rec_args in
+                (is_bag, (pf,e2), (inner_e,first_e))
             | _ -> report_error no_pos "cpure.extract_outer_inner_p: wrong?"
       | _ -> report_error no_pos "cpure.extract_outer_inner_p: not handle yet"
   in
@@ -9032,7 +9048,7 @@ let extract_outer_inner p args val_extns rec_args=
   let pr0 = !print_svl in
   let pr1 = !print_p_formula in
   let pr2 = !print_exp in
-  let pr3 = pr_pair (pr_pair pr1 pr2) (pr_pair pr2 pr2) in
+  let pr3 = pr_triple string_of_bool (pr_pair pr1 pr2) (pr_pair pr2 pr2) in
   let pr4 = !print_formula in
   Debug.no_3 "extract_outer_inner" pr4 pr0 pr0 pr3
       (fun _ _ _ -> extract_outer_inner_x p args val_extns rec_args)
@@ -9053,6 +9069,13 @@ let mk_exp_from_non_bag_tmpl tmpl e1 e2 p=
     (* | BagIntersect (exps,_) *)
     | _ -> report_error no_pos "cpure.extract_inner_e: not handle yet"
 
+(*bag constrs (* bag expressions *)*)
+let mk_exp_from_bag_tmpl tmpl e1 e2 p=
+  match tmpl with
+    | Bag (_,_) -> Bag ( [e1;e2],p)
+    | BagUnion (_,_) -> BagUnion ([e1;e2],p)
+    | BagIntersect (_,_) -> BagIntersect ([e1;e2],p)
+    | _ -> report_error no_pos "cpure.extract_inner_e: not handle yet"
 
 let mk_pformula_from_tmpl tmpl e1 e2 p=
   match tmpl with

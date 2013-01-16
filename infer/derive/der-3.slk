@@ -1,0 +1,25 @@
+/*
+bag
+-tp mona
+*/
+
+
+data node {
+	int val@VAL;
+	node next@REC;
+}.
+
+
+pred ll<> == self=null
+  or self::node<_,p> * p::ll<>
+inv true.
+
+pred_extn setp[V,R]<S> ==
+   S={}
+   or R::setp<S2> & S=union (S2,{V}) .
+
+pred llS<n> == extends ll<> with setp[VAL,REC]<S>.
+
+
+
+

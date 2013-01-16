@@ -1323,11 +1323,13 @@ and generate_extn_ho_procs prog cviews extn_view_name=
       let svl1 = List.concat (snd (List.split rec_ls)) in
       (*find subformula has svl1--skip now*)
       let rec_args = List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls1 in
-      let ((outer, root_e), (inner_e, first_e)) =  CP.extract_outer_inner p args val_extns rec_args in
-      (*non-bag constrs inner most exp*)
+      let (is_bag_constr,(outer, root_e), (inner_e, first_e)) =  CP.extract_outer_inner p args val_extns rec_args in
+      (*combine bag and non-bag constrs*)
+      let comb_fn= if is_bag_constr then CP.mk_exp_from_bag_tmpl else CP.mk_exp_from_non_bag_tmpl in
+      (*cmb inner most exp*)
       let ss1 = List.combine val_extns val_extns1 in
       let n_first_e = CP.e_apply_subs ss1 first_e in
-      let n_inner_e = List.fold_left (fun e1 e2 -> CP.mk_exp_from_non_bag_tmpl inner_e e1 e2 no_pos)
+      let n_inner_e = List.fold_left (fun e1 e2 -> comb_fn inner_e e1 e2 no_pos)
         n_first_e (List.map (fun sv -> CP.Var (sv,no_pos)) rec_args) in
       (*outer most pformula*)
       let ss2 = List.combine args svl in
