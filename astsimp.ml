@@ -1313,7 +1313,8 @@ and generate_extn_ho_procs prog cviews extn_view_name=
   in
   let mk_ho_ind_rec ann args p =
     match args with
-      | [a] -> a
+      | [a] -> [a]
+      | [] -> [] (*rec null pointer*)
       | _ -> report_error no_pos "astsimp.generate_extn_ho_procs: extend one property"
     (* (args, CP.mkTrue no_pos) *)
   in
@@ -1323,7 +1324,7 @@ and generate_extn_ho_procs prog cviews extn_view_name=
     fun svl val_extns1 rec_ls1->
       let svl1 = List.concat (snd (List.split rec_ls)) in
       (*find subformula has svl1--skip now*)
-      let rec_args = List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls1 in
+      let rec_args = List.concat (List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls1) in
       let (is_bag_constr,(outer, root_e), (inner_e, first_e)) =  CP.extract_outer_inner p args val_extns rec_args in
       (*combine bag and non-bag constrs*)
       let comb_fn= if is_bag_constr then CP.mk_exp_from_bag_tmpl else CP.mk_exp_from_non_bag_tmpl in
@@ -1337,6 +1338,7 @@ and generate_extn_ho_procs prog cviews extn_view_name=
       let n_root_e = CP.e_apply_subs ss2 root_e in
       let n_outer = CP.mk_pformula_from_tmpl outer n_root_e n_inner_e no_pos in
       let n_p = (CP.BForm ((n_outer, None), None)) in
+      (* let _ =  Debug.info_pprint ("   n_p: "^ (!CP.print_formula n_p)) no_pos in *)
       n_p
   in
   let extn_v = C.look_up_view_def_raw cviews extn_view_name in
@@ -1455,32 +1457,32 @@ and trans_view_dervs_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl
     | [d] -> trans_view_one_derv prog cviews derv d
     | _ -> report_error no_pos "astsimp.trans_view_dervs: not handle yet"
 
-and trans_view_additional_x cprog cviews pos=
-  let process_one vdef=
-    if vdef.C.view_kind = C.View_DERV then
-      (*xform*)
-      let (xform0, addr_vars0, ms) = Solver.xpure_symbolic cprog (C.formula_of_unstruc_view_f vdef) in
-      let addr_vars = CP.remove_dups_svl addr_vars0 in
-      let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform0 (TP.simplify_a 10) in
- (* let _ = print_endline ("\n xform: " ^ (Cprinter.string_of_mix_formula xform)) in *)
-      let xform1 = (TP.simplify_with_pairwise 1 (CP.drop_rel_formula (MCP.pure_of_mix xform))) in
-      let ls_disj = CP.list_of_disjs xform1 in
-      let xform2 = MCP.mix_of_pure (CP.disj_of_list (Gen.BList.remove_dups_eq CP.equalFormula ls_disj) pos) in
-      { vdef with
-          C.view_kind = C.View_NORM;
-          C.view_x_formula = xform2;
-          C.view_xpure_flag = TP.check_diff vdef.C.view_user_inv xform2;
-          C.view_addr_vars = addr_vars;
-          C.view_baga = (match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h) ;
-      }
-    else vdef
-  in
-  List.map process_one cviews
+(* and trans_view_additional_x cprog cviews pos= *)
+(*   let process_one vdef= *)
+(*     if vdef.C.view_kind = C.View_DERV then *)
+(*       (\*xform*\) *)
+(*       let (xform0, addr_vars0, ms) = Solver.xpure_symbolic cprog (C.formula_of_unstruc_view_f vdef) in *)
+(*       let addr_vars = CP.remove_dups_svl addr_vars0 in *)
+(*       let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform0 (TP.simplify_a 10) in *)
+(*  (\* let _ = print_endline ("\n xform: " ^ (Cprinter.string_of_mix_formula xform)) in *\) *)
+(*       let xform1 = (TP.simplify_with_pairwise 1 (CP.drop_rel_formula (MCP.pure_of_mix xform))) in *)
+(*       let ls_disj = CP.list_of_disjs xform1 in *)
+(*       let xform2 = MCP.mix_of_pure (CP.disj_of_list (Gen.BList.remove_dups_eq CP.equalFormula ls_disj) pos) in *)
+(*       { vdef with *)
+(*           C.view_kind = C.View_NORM; *)
+(*           C.view_x_formula = xform2; *)
+(*           C.view_xpure_flag = TP.check_diff vdef.C.view_user_inv xform2; *)
+(*           C.view_addr_vars = addr_vars; *)
+(*           C.view_baga = (match ms.CF.mem_formula_mset with | [] -> [] | h::_ -> h) ; *)
+(*       } *)
+(*     else vdef *)
+(*   in *)
+(*   List.map process_one cviews *)
 
-and trans_view_additional cprog cviews pos=
-  let pr1 = pr_list Cprinter.string_of_view_decl in
-  Debug.ho_1 "trans_view_additional" pr1 pr1
-      (fun _ -> trans_view_additional_x cprog cviews pos) cviews
+(* and trans_view_additional cprog cviews pos= *)
+(*   let pr1 = pr_list Cprinter.string_of_view_decl in *)
+(*   Debug.ho_1 "trans_view_additional" pr1 pr1 *)
+(*       (fun _ -> trans_view_additional_x cprog cviews pos) cviews *)
 
 and fill_one_base_case prog vd = Debug.no_1 "fill_one_base_case" Cprinter.string_of_view_decl Cprinter.string_of_view_decl (fun vd -> fill_one_base_case_x prog vd) vd
   

@@ -9074,15 +9074,31 @@ let extract_outer_inner p args val_extns rec_args=
       (fun _ _ _ -> extract_outer_inner_x p args val_extns rec_args)
       p args val_extns
 
+let check_null_var e=
+  match e with
+    | Var ((SpecVar (t,id,_)),p) ->
+        if String.compare id null_sv = 0 then
+          begin
+              match t with
+                | Int -> IConst (1,p)
+                | BagT _ -> Bag ([], p)
+                | _ -> e
+          end
+        else e
+    | _ -> e
+
 (*non-bag constrs*)
 let mk_exp_from_non_bag_tmpl tmpl e1 e2 p=
+  let e11 = (* check_null_var *) e1 in
+  let e22 = (* check_null_var *) e2 in
   match tmpl with
-    | Add (_, _,_) -> Add (e1,e2,p)
-    | Subtract (_, _,_) -> Subtract (e1, e2,p)
-    | Mult (_, _, _) ->  Mult (e1, e2, p)
-    | Div (_, _, _) -> Div (e1, e2, p)
-    | Max (_, _, _) -> Max (e1, e2, p)
-    | Min (_, _, _) -> Min (e1, e2, p)
+    | Add (_, _,_) ->
+        Add (e11,e22,p)
+    | Subtract (_, _,_) -> Subtract (e11, e22,p)
+    | Mult (_, _, _) ->  Mult (e11, e22, p)
+    | Div (_, _, _) -> Div (e11, e22, p)
+    | Max (_, _, _) -> Max (e11, e22, p)
+    | Min (_, _, _) -> Min (e11, e22, p)
     (* bag expressions *)
     (* | Bag (exps,_) -> Bag (,_) *)
     (* | BagUnion (exps,_) *)

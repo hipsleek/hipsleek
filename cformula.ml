@@ -3942,6 +3942,17 @@ let is_only_neqNull args unk_hps f0=
   Debug.no_2 "is_only_neqNull" !CP.print_svl pr1 string_of_bool
       (fun _ _ -> is_only_neqNull_x args unk_hps f0) args f0
 
+let get_null_svl f0=
+  let rec helper f=
+    match f with
+      | Base fb ->
+          MCP.get_null_ptrs fb.formula_base_pure
+      | Exists fe ->
+          MCP.get_null_ptrs fe.formula_exists_pure
+      | Or orf -> ((helper orf.formula_or_f1) @ (helper orf.formula_or_f2))
+  in
+  helper f0
+
 let remove_neqNulls p=
   let ps = (CP.split_conjunctions p) in
   let ps1 = CP.remove_redundant_helper ps [] in
@@ -4558,6 +4569,9 @@ let extend_view_nodes (f0:formula) old_v_name new_v_name extra_args =
       f0 old_v_name new_v_name extra_args
 
 let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_infos=
+  let gen_null_svl extn_args=
+    List.map (fun (CP.SpecVar (t,_,p)) -> (CP.SpecVar (t,null_sv,p))) extn_args
+  in
   let rec get_args_from_pos args all_sel_pos=
     let rec gen_n cur n res=
       if cur>=n then res
@@ -4598,16 +4612,30 @@ let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_info
     (* let _ =  Debug.info_pprint ("  extra_args: "^ (!CP.print_svl extra_args)) no_pos in *)
     if extra_args = [] then ([sv],[]) else ([],[(sv,extra_args)])
   in
+  let classify_sel_null_svl f sel_svl=
+    let null_svl =  get_null_svl f in
+    let sel_null_svl = CP.intersect_svl null_svl sel_svl in
+    let sel_null_pair = List.map (fun sv -> (sv, [](* gen_null_svl extn_args *)))
+      sel_null_svl in
+    (sel_null_svl, sel_null_pair)
+  in
   let process_one f=
     (*extend new new view name, new args*)
     let f1 = extend_view_nodes f v_base_name v_new_name extn_args in
     (*get dataNode, ViewNode*)
     let hds,hvs= flatten_nodes f1 in
     let sel_svl = CP.remove_dups_svl ( List.concat (List.map get_sel_args_from_dnode hds)) in
-    let val_svl,rec_svl=List.split (List.map (classify_rec_svl hvs (List.length extn_args)) sel_svl) in
+    (*process null pointer*)
+    (* let _ =  Debug.info_pprint ("  f1: "^ (!print_formula f1)) no_pos in *)
+    (* let _ =  Debug.info_pprint ("  sel_svl: "^ (!CP.print_svl sel_svl)) no_pos in *)
+    let null_svl,null_paired_svl = classify_sel_null_svl f1 sel_svl in
+    (* let _ =  Debug.info_pprint ("  null_svl: "^ (!CP.print_svl null_svl)) no_pos in *)
+    let sel_svl_rest = CP.diff_svl sel_svl null_svl in
+    let val_svl,rec_svl=List.split (List.map (classify_rec_svl hvs (List.length extn_args)) sel_svl_rest) in
     let val_svl1 = List.concat val_svl in
     let rec_svl1 = List.concat rec_svl in
-    if val_svl1=[] && rec_svl1=[] then ([f1],[]) else ([],[(f1,val_svl1,rec_svl1)])
+    if val_svl1=[] && rec_svl1=[] && null_paired_svl = []
+    then ([f1],[]) else ([],[(f1,val_svl1,rec_svl1@null_paired_svl)])
   in
   let ls_bases,ls_inds = List.split (List.map process_one fs) in
   (List.concat ls_bases, List.concat ls_inds)
