@@ -9661,15 +9661,14 @@ let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls fp_func preprocess_fun 
     (match pairs with
     | [] -> [(rel,post,constTrue,constTrue)]
     | [(r,lst)] ->
-(*      let lst = Gen.BList.remove_dups_eq CP.equalFormula lst in*)
-(*      List.map (fun final_pre ->*)
-        let final_pre = List.fold_left (fun f1 f2 -> CP.mkAnd f1 f2 no_pos) constTrue lst in
-        let final_pre = TP.simplify_raw final_pre in
-        let final_pre = filter_disj final_pre pre_fmls in
-        let final_pre = TP.pairwisecheck_raw final_pre in
-        let _ = Debug.devel_hprint (add_str "final_pre(pred)" !CP.print_formula) final_pre no_pos in
-        [(rel,post,r,final_pre)]
-(*      ) lst*)
+      let final_pre = List.fold_left (fun f1 f2 -> CP.mkAnd f1 f2 no_pos) constTrue lst in
+      let final_pre = TP.simplify_raw final_pre in
+      let final_pre = filter_disj final_pre pre_fmls in
+      let final_pre = TP.pairwisecheck_raw final_pre in
+      let _ = Debug.devel_hprint (add_str "final_pre(pred)" !CP.print_formula) final_pre no_pos in
+      let checkpoint1 = check_defn r final_pre new_pre_rel_df in
+      if checkpoint1 then [(rel,post,r,final_pre)]
+      else [(rel,post,constTrue,constTrue)]
     | _ -> [(rel,post,constTrue,constTrue)])
 (*      let checkpoint = check_defn r final_pre pre_rel_df in*)
 (*      if checkpoint then [(rel,post,pre_rel,final_pre)]*)

@@ -163,6 +163,17 @@ Total verification time: 15.200949 second(s)
 	Time spent in main process: 6.4044 second(s)
 	Time spent in child processes: 8.796549 second(s)
 
+#2a1.slk
+/*
+For the above entailment, is it possible to have
+two relations rather than four but to use min/max expression
+on the LHS?
+
+ inferred rel: [RELDEFN P4: ( mi_633<=mx_634 & P3(mi2,mi_633,mx_634) & m=mi & mi<mi_633 & mi<mi2) -->  P4(m,mi,mi2); 
+                RELDEFN P4: ( P3(mi2,mi,mx_634) & mi<=m & m<mi2 & mi<=mx_634) -->  P4(m,mi,mi2); 
+                RELDEFN P5: ( mi_633<=mx_634 & P3(mx2,mi_633,mx_634) & m=mx & mx_634<=mx & mx<mx2) -->  P5(m,mx,mx2); 
+                RELDEFN P5: ( P3(mx2,mi_633,mx) & m<=(mx-1) & m<=(mx2-1) & mi_633<=mx) -->  P5(m,mx,mx2)]
+*/
 
 ## n-sel-1.ss
 Need to do sanity checks
@@ -242,3 +253,5 @@ Why did we not a printing on R(a,mi,mx) itself?
 !!! POST:  (a=mi2 & a<=mi) | (mi=mi2 & mi2<=a)
 !!! REL PRE :  true
 !!! PRE :  true
+
+

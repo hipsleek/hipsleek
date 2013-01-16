@@ -48,7 +48,7 @@ Can we detect LHS contra at an earlier point?
                 RELDEFN P5: ( P5(a) & 1<=a & b=a-1) -->  P5(b)]
 */
 
-# 2a.slk (LOC to do?)
+# 2a.slk  #DONE
 
 --pcp shows a disjunctive invariant
 
