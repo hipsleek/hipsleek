@@ -1,7 +1,7 @@
 
 pred_extn hed[V]<n> ==
           n=V
-   //inv self!=null 
+   inv self!=null 
    // does not entail implied formula
    .
 
