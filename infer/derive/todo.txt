@@ -40,3 +40,25 @@ pred llNNSum<n,s> == extends llNN<> with pos_sum[VAL,REC]<s> .
 Fatal error: exception Invalid_argument("List.combine")
 
 pred llNNSum2<s> == extends llNN2<> with pos_sum[VAL,REC]<s> .
+
+## der-6.slk
+pred_extn hed[V]<n> ==
+          n=V
+   //inv self!=null // does not entail implied formula
+   .
+
+## der-6.slk
+
+pred llhead<n> == extends llNN<> with hed[VAL]<n> .
+
+WHY isn't N=Anon_11 captured in base and recursive cases?
+
+view llhead[]<n:TVar[51]>= 
+  
+   EBase {2}->EXISTS(flted_13_18,
+         Anon_11: self::node<Anon_11,flted_13_18>@M[Orig]&flted_13_18=null&
+         {FLOW,(1,22)=__flow})[]
+  eor 
+   EBase {1}->EXISTS(Anon_12,p: self::node<Anon_12,p>@M[Orig] * 
+         p::llhead<n_52>@M[0][Orig][LHSCase]&true&{FLOW,(1,22)=__flow})[]
+ 
