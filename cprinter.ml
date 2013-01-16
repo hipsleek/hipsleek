@@ -759,7 +759,9 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.Gte (e1, e2, l) -> f_b e1; fmt_string op_gte ; f_b e2
     | P.SubAnn (e1, e2, l) -> f_b e1; fmt_string op_sub_ann ; f_b e2
     | P.Eq (e1, e2, l) -> 
-          let (e1,e2) = if !debug_derive_flag then (e1,e2) else sort_exp e1 e2 in
+          let (e1,e2) = 
+            if !debug_derive_flag then (e1,e2) 
+            else sort_exp e1 e2 in
           f_b_no e1; fmt_string op_eq ; f_b_no e2
     | P.Neq (e1, e2, l) -> 
           let (e1,e2) = sort_exp e1 e2 in
@@ -2396,6 +2398,27 @@ let pr_view_decl v =
   fmt_close_box ();
   pr_mem:=true
 
+(* pretty printing for a view *)
+let pr_view_decl_short v =
+  pr_mem:=false;
+  let f bc =
+    match bc with
+	  | None -> ()
+      | Some (s1,s2) -> pr_vwrap "base case: " (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula s2) ()
+  in
+  fmt_open_vbox 1;
+  let s = match v.view_kind with 
+    | View_NORM -> " "
+    | View_PRIM -> "_prim "
+    | View_EXTN -> "_extn "
+    | View_DERV -> "_derv " in
+  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name ^ "[" ^ (String.concat "," (List.map string_of_typed_spec_var v.view_prop_extns) ^ "]")) 
+      pr_typed_spec_var v.view_vars; fmt_string "= ") ();
+  fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
+  pr_vwrap  "xform: " pr_mix_formula v.view_x_formula;
+  fmt_close_box ();
+  pr_mem:=true
+
 let pr_prune_invs inv_lst = 
   "prune invs: " ^ (String.concat "," (List.map 
       (fun c-> (fun (c1,c2)-> 
@@ -2408,6 +2431,8 @@ let string_of_prune_invs inv_lst : string = pr_prune_invs inv_lst
 let string_of_view_base_case (bc:(P.formula *MP.mix_formula) option): string =  poly_string_of_pr pr_view_base_case bc
 
 let string_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl v
+
+let string_of_view_decl_short (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl_short v
 
 let string_of_barrier_decl (v: Cast.barrier_decl): string = poly_string_of_pr pr_barrier_decl v
 

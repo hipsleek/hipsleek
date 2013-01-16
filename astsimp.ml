@@ -1303,8 +1303,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       let _ =
         if !debug_derive_flag then
           let _ =  print_endline ("************VIEW_EXTN*************") in
-          let _ =  print_endline (Cprinter.string_of_view_decl cvdef)  in
-          let _ =  print_endline ("**********************************") in
+          let _ =  print_endline (Cprinter.string_of_view_decl_short cvdef)  in
           ()
         else ()
       in
@@ -1477,9 +1476,8 @@ and trans_view_dervs_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl
     | [d] -> let der_view = trans_view_one_derv prog cviews derv d in
              let _ =
                if !debug_derive_flag then
-                 let _ =  print_endline ("*****************************") in
-                 let _ =  print_endline (Cprinter.string_of_view_decl der_view)  in
-                 let _ =  print_endline ("*****************************") in
+                 let _ =  print_endline ("************VIEW_DERIVED*************") in
+                 let _ =  print_endline (Cprinter.string_of_view_decl_short der_view)  in
                  ()
                else ()
              in

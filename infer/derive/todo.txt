@@ -78,3 +78,19 @@ used in a branch, as it signify that self!=null is present.
          m=min(V,m2)&{FLOW,(1,22)=__flow}[]
 
 
+## der-5.slk
+
+(1) Omega error
+(2) Why isn't n>=0 taken from the size view_extn?
+
+************VIEW_DERIVED*************
+ view llSNN[]<n:int>= 
+  
+   EBase EXISTS(flted_15_18,Anon_11: self::node<Anon_11,flted_15_18>@M[Orig]&
+         flted_15_18=null & n=1&{FLOW,(1,22)=__flow})[]
+  eor 
+   EBase EXISTS(Anon_12,p,n_66: self::node<Anon_12,p>@M[Orig] * 
+         p::llSNN<n_66>@M[0][Orig][LHSCase]&n=1+n_66&{FLOW,(1,22)=__flow})[]
+  
+  xform: self!=null
+Fatal error: exception Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  ")
