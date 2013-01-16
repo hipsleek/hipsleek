@@ -62,3 +62,18 @@ view llhead[]<n:TVar[51]>=
    EBase {1}->EXISTS(Anon_12,p: self::node<Anon_12,p>@M[Orig] * 
          p::llhead<n_52>@M[0][Orig][LHSCase]&true&{FLOW,(1,22)=__flow})[]
  
+## der-6a.slk
+
+Please also print for pred_extn whenever debug-derive flag
+is set.
+
+Please add self!=null whenever any annotated parameter being
+used in a branch, as it signify that self!=null is present.
+
+ view_extn minValue[V:NUM,R:minValue]<m:NUM>= 
+  
+   EBase {2}->emp&V=m&{FLOW,(1,22)=__flow}[]
+  eor 
+   EBase exists (Expl)(Impl)[R; m2](ex){1}->R::minValue<m2>@M[0][Orig]&
+         m=min(V,m2)&{FLOW,(1,22)=__flow}[]
+
