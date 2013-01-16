@@ -387,16 +387,14 @@ let compute_cmd rel_defs bottom_up =
 
 let compute_fixpoint_aux rel_defs ante_vars subs bottom_up = 
   (* Prepare the input for the fixpoint calculation *)
-  let def = 
-      List.fold_left (fun x y -> x ^ (compute_def y ante_vars)) "" rel_defs in
+  let def = List.fold_left (fun x y -> x ^ (compute_def y ante_vars)) "" rel_defs in
   let cmd = compute_cmd rel_defs bottom_up in 
   let input_fixcalc =  def ^ cmd  in
   DD.devel_pprint ">>>>>> compute_fixpoint <<<<<<" no_pos;
   DD.devel_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
-  DD.info_hprint (add_str "def" pr_id) def no_pos;
-  DD.info_hprint (add_str "cmd" pr_id) cmd no_pos;
+  (* DD.info_hprint (add_str "def" pr_id) def no_pos; *)
+  (* DD.info_hprint (add_str "cmd" pr_id) cmd no_pos; *)
   (* DD.info_pprint ("fixpoint input = " ^ input_fixcalc) no_pos; *)
-
   (* Call the fixpoint calculation *)
   let output_of_sleek = if bottom_up then "fixcalc.inf" else "fixcalc.td" in
   let oc = open_out output_of_sleek in
