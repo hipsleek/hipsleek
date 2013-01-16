@@ -228,7 +228,7 @@ RELDEFN R2: ( R(b,v2_795)) -->  R2(b,v2_795)]
 !!! PRE :  r_741<=a_742
 Procedure insert$node~node SUCCESS
 
-## n-ins-4b3c.ss
+## n-ins-4b3c.ss #DONE
 
 node insert(node x, node y)
      infer [R,P3,P4,P5]

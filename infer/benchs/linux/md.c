@@ -37,12 +37,6 @@
 typedef unsigned long long __u64;
 typedef unsigned long long sector_t;
 
-#define DEBUG 0
-#define printk  printf
-#define dprintk(x...) ((void)(DEBUG && printk(x)))
-#define MD_BUG(x...) { printk("md: bug in file %s, line %d\n", __FILE__, __LINE__); md_print_devices(); }
-
-
 /*
  * Simple doubly linked list implementation.
  *
@@ -227,7 +221,7 @@ struct gendisk {
 //  int first_minor;
 //  int minors;
 //
-    char disk_name[32];
+//  char disk_name[32];
 //  char *(*devnode)(struct gendisk *gd, mode_t *mode);
 //
 //  struct disk_part_tbl *part_tbl;
@@ -813,6 +807,12 @@ struct super_type  {
                         sector_t num_sectors);
 };
 
+static LIST_HEAD(all_detected_devices);
+struct detected_devices_node {
+    struct list_head list;
+    dev_t dev;
+};
+
 /****************************************************************************/
 
 void prefetch(void *x)
@@ -894,10 +894,137 @@ int strict_strtoull(const char * x, unsigned int y, unsigned long long *z){
 //  return;
 //}
 
+static inline __attribute__((always_inline)) void * ERR_PTR(long error) {
+    return (void *) error;
+}
+
+static int alloc_disk_sb(mdk_rdev_t * rdev)
+{
+    return 0;
+}
+
+/*
+ * prevent the device from being mounted, repartitioned or
+ * otherwise reused by a RAID array (or any other kernel
+ * subsystem), by bd_claiming the device.
+ */
+static int lock_rdev(mdk_rdev_t *rdev, dev_t dev, int shared)
+{
+    int err = 0;
+    return err;
+}
+
+static void unlock_rdev(mdk_rdev_t *rdev)
+{
+    return;
+}
+
+void put_page(struct page *page)
+{
+    return;
+}
+
+static void free_disk_sb(mdk_rdev_t * rdev)
+{
+    if (rdev->sb_page) {
+        put_page(rdev->sb_page);
+        rdev->sb_loaded = 0;
+        rdev->sb_page = NULL;
+        rdev->sb_start = 0;
+        rdev->sectors = 0;
+    }
+}
+
+void set_disk_ro(struct gendisk *disk, int flag)
+{
+    return;
+}
+
+static void md_stop(mddev_t *mddev)
+{
+    return;
+}
+
+void sysfs_notify_dirent(struct sysfs_dirent *sd)
+{
+    return;
+}
+
+static inline __attribute__((always_inline)) void set_capacity(
+        struct gendisk *disk, sector_t size) {
+    disk->part0.nr_sects = size;
+}
+
+/**
+ * blk_integrity_unregister - Remove block integrity profile
+ * @disk:   disk whose integrity profile to deallocate
+ *
+ * Description: This function frees all memory used by the block
+ * integrity profile.  To be called at device teardown.
+ */
+void blk_integrity_unregister(struct gendisk *disk)
+{
+    return;
+}
+
+/**
+ * revalidate_disk - wrapper for lower-level driver's revalidate_disk call-back
+ * @disk: struct gendisk to be revalidated
+ *
+ * This routine is a wrapper for lower-level driver's revalidate_disk
+ * call-backs.  It is used to do common pre and post operations needed
+ * for all revalidate_disk operations.
+ */
+int revalidate_disk(struct gendisk *disk)
+{
+    int ret = 0;
+    return ret;
+}
+
+int register_md_personality(struct mdk_personality *p)
+{
+    list_add_tail(&p->list, &pers_list);
+    return 0;
+}
+
+int unregister_md_personality(struct mdk_personality *p)
+{
+    list_del_init(&p->list);
+    return 0;
+}
+
+/*
+ * lets try to run arrays based on all disks that have arrived
+ * until now. (those are in pending_raid_disks)
+ *
+ * the method: pick the first pending disk, collect all disks with
+ * the same UUID, remove all from the pending list and put them into
+ * the 'same_array' list. Then order this list based on superblock
+ * update time (freshest comes first), kick out 'old' disks and
+ * compare superblocks. If everything's fine then run it.
+ *
+ * If "unit" is allocated, then bump its reference count
+ */
+static void autorun_devices(int part)
+{
+    return;
+}
+
+static inline __attribute__((always_inline)) long IS_ERR(const void *ptr)
+{
+    return __builtin_expect(!!(((unsigned long)ptr) >= (unsigned long)-4095), 0);
+}
+
+static inline void set_bit(int nr, void *addr)
+{
+    return;
+}
+
 /****************************************************************************/
 #define atomic_set(v,i)             ((v)->counter = (i))
 #define atomic_inc(v)               ((v)->counter += 1)
 #define atomic_dec_and_test(v)      ((v)->counter-1 == 0)
+#define atomic_read(v)              ((v)->counter)
 
 /**
  * kref_init - initialize object.
@@ -1136,11 +1263,6 @@ static inline int test_bit(int nr, const volatile void *addr)
     return 1UL & (((const unsigned int *) addr)[nr >> 5] >> (nr & 31));
 }
 
-static inline char * mdname (mddev_t * mddev)
-{
-    return mddev->gendisk ? mddev->gendisk->disk_name : "mdX";
-}
-
 /*
  * Try to register data integrity profile for an mddev
  *
@@ -1190,12 +1312,8 @@ int md_integrity_register(mddev_t *mddev)
      * profiles, register the common profile for the md device.
      */
     if ((0) != 0) {
-        printk("<3>" "md: failed to register integrity for %s\n",
-           mdname(mddev));
         return -22;
     }
-    printk("<5>" "md: data integrity on %s enabled\n",
-      mdname(mddev));
     return 0;
 }
 
@@ -1417,47 +1535,6 @@ static int rdev_size_store(mdk_rdev_t *rdev, const char *buf, unsigned int len)
     return len;
 }
 
-static inline __attribute__((always_inline)) void * ERR_PTR(long error) {
-    return (void *) error;
-}
-
-static int alloc_disk_sb(mdk_rdev_t * rdev)
-{
-    return 0;
-}
-
-/*
- * prevent the device from being mounted, repartitioned or
- * otherwise reused by a RAID array (or any other kernel
- * subsystem), by bd_claiming the device.
- */
-static int lock_rdev(mdk_rdev_t *rdev, dev_t dev, int shared)
-{
-    int err = 0;
-    return err;
-}
-
-static void unlock_rdev(mdk_rdev_t *rdev)
-{
-    return;
-}
-
-void put_page(struct page *page)
-{
-    return;
-}
-
-static void free_disk_sb(mdk_rdev_t * rdev)
-{
-    if (rdev->sb_page) {
-        put_page(rdev->sb_page);
-        rdev->sb_loaded = 0;
-        rdev->sb_page = NULL;
-        rdev->sb_start = 0;
-        rdev->sectors = 0;
-    }
-}
-
 /*
  * Import a device. If 'super_format' >= 0, then sanity check the superblock
  *
@@ -1496,9 +1573,9 @@ static mdk_rdev_t *md_import_device(dev_t newdev, int super_format, int super_mi
     rdev->sb_events = 0;
 //  rdev->last_read_error.tv_sec  = 0;
 //  rdev->last_read_error.tv_nsec = 0;
-    (&rdev->nr_pending)->counter = 0;
-    (&rdev->read_errors)->counter = 0;
-    (&rdev->corrected_errors)->counter = 0;
+    atomic_set(&rdev->nr_pending, 0);
+    atomic_set(&rdev->read_errors, 0);
+    atomic_set(&rdev->corrected_errors, 0);
 
     size = rdev->bdev->bd_inode->i_size >> 10;
     if (!size) {
@@ -1529,53 +1606,6 @@ abort_free:
     }
     free(rdev);
     return ERR_PTR(err);
-}
-
-#define atomic_read(v)      (*(volatile int *)&(v)->counter)
-void set_disk_ro(struct gendisk *disk, int flag)
-{
-    return;
-}
-
-static void md_stop(mddev_t *mddev)
-{
-    return;
-}
-
-void sysfs_notify_dirent(struct sysfs_dirent *sd)
-{
-    return;
-}
-
-/**
- * revalidate_disk - wrapper for lower-level driver's revalidate_disk call-back
- * @disk: struct gendisk to be revalidated
- *
- * This routine is a wrapper for lower-level driver's revalidate_disk
- * call-backs.  It is used to do common pre and post operations needed
- * for all revalidate_disk operations.
- */
-int revalidate_disk(struct gendisk *disk)
-{
-    int ret = 0;
-    return ret;
-}
-
-static inline __attribute__((always_inline)) void set_capacity(
-        struct gendisk *disk, sector_t size) {
-    disk->part0.nr_sects = size;
-}
-
-/**
- * blk_integrity_unregister - Remove block integrity profile
- * @disk:   disk whose integrity profile to deallocate
- *
- * Description: This function frees all memory used by the block
- * integrity profile.  To be called at device teardown.
- */
-void blk_integrity_unregister(struct gendisk *disk)
-{
-    return;
 }
 
 /* mode:
@@ -1726,20 +1756,6 @@ static void *md_seq_start(struct seq_file *seq, long long *pos) {
     return NULL;
 }
 
-int register_md_personality(struct mdk_personality *p)
-{
-    list_add_tail(&p->list, &pers_list);
-    return 0;
-}
-
-int unregister_md_personality(struct mdk_personality *p)
-{
-    list_del_init(&p->list);
-    return 0;
-}
-
-#define atomic_read(v)      (*(volatile int *)&(v)->counter)
-
 static int remove_and_add_spares(mddev_t *mddev)
 {
     mdk_rdev_t *rdev;
@@ -1798,12 +1814,6 @@ static int remove_and_add_spares(mddev_t *mddev)
     return spares;
 }
 
-static LIST_HEAD(all_detected_devices);
-struct detected_devices_node {
-    struct list_head list;
-    dev_t dev;
-};
-
 void md_autodetect_dev(dev_t dev)
 {
     struct detected_devices_node *node_detected_dev;
@@ -1813,33 +1823,6 @@ void md_autodetect_dev(dev_t dev)
         node_detected_dev->dev = dev;
         list_add_tail(&node_detected_dev->list, &all_detected_devices);
     }
-}
-
-/*
- * lets try to run arrays based on all disks that have arrived
- * until now. (those are in pending_raid_disks)
- *
- * the method: pick the first pending disk, collect all disks with
- * the same UUID, remove all from the pending list and put them into
- * the 'same_array' list. Then order this list based on superblock
- * update time (freshest comes first), kick out 'old' disks and
- * compare superblocks. If everything's fine then run it.
- *
- * If "unit" is allocated, then bump its reference count
- */
-static void autorun_devices(int part)
-{
-    return;
-}
-
-static inline __attribute__((always_inline)) long IS_ERR(const void *ptr)
-{
-    return __builtin_expect(!!(((unsigned long)ptr) >= (unsigned long)-4095), 0);
-}
-
-static inline void set_bit(int nr, void *addr)
-{
-    return;
 }
 
 static void autostart_arrays(int part)
