@@ -9010,6 +9010,15 @@ let extract_outer_inner_p pf0 r_args val_extns rec_args=
     let sv = afv e in
     diff_svl sv r_args = []
   in
+  let rec find_initial exps=
+    match exps with
+      | [] -> report_error no_pos "cpure.extract_outer_inner_p: why is it empty?"
+      | e:: rest ->
+          let svl1 = afv e in
+          if svl1 = [] || (diff_svl svl1 val_extns = [] && intersect_svl svl1 rec_args = []) then
+            e
+          else find_initial rest
+  in
   let rec helper pf=
     match pf with
       | Lt (e1, e2,_)
@@ -9017,7 +9026,7 @@ let extract_outer_inner_p pf0 r_args val_extns rec_args=
       | Gt (e1, e2 , _)
       | Gte (e1, e2, _)
       | Eq (e1, e2, _)
-      | Neq (e1, e2, _) ->
+      | Neq (e1, e2, _) -> begin
           let b1= is_root e1 in
           let b2= is_root e2 in
           match b1,b2 with
@@ -9028,6 +9037,17 @@ let extract_outer_inner_p pf0 r_args val_extns rec_args=
                  let is_bag, (inner_e,first_e) = extract_inner_e e1 val_extns rec_args in
                 (is_bag, (pf,e2), (inner_e,first_e))
             | _ -> report_error no_pos "cpure.extract_outer_inner_p: wrong?"
+      end
+      |  EqMin (e1, e2, e3,p) (* first is min of second and third *) ->
+          (* let _ =  Debug.info_pprint ("  EqMin: " ^ (!print_p_formula pf)) no_pos in *)
+          (*find initial value: e2 or e3*)
+          let e_i = find_initial [e2;e3] in
+          (false, (Eq (e1,e2,p), e1), (Min (e2,e3,no_pos),e_i))
+      |  EqMax (e1, e2, e3,p) (* first is max of second and third *) ->
+          (* let _ =  Debug.info_pprint ("  EqMax: " ^ (!print_p_formula pf)) no_pos in *)
+          (*find initial value: e2 or e3*)
+          let e_i = find_initial [e2;e3] in
+          (false, (Eq (e1,e2,p), e1), (Max (e2,e3,no_pos),e_i))
       | _ -> report_error no_pos "cpure.extract_outer_inner_p: not handle yet"
   in
   helper pf0
@@ -9079,10 +9099,10 @@ let mk_exp_from_bag_tmpl tmpl e1 e2 p=
 
 let mk_pformula_from_tmpl tmpl e1 e2 p=
   match tmpl with
-    | Lt (_, _,_) -> Lt (e1,e2,p)
-    | Lte (_, _, _) -> Lte (e1,e2,p)
-    | Gt (_, _ , _) -> Gt (e1,e2,p)
-    | Gte (_, _, _) -> Gte (e1,e2,p)
-    | Eq (_, _, _) -> Eq (e1,e2,p)
-    | Neq (_, _, _) -> Neq (e1,e2,p)
+    | Lt (_, _,_) -> mkLt e1 e2 p
+    | Lte (_, _, _) -> mkLte e1 e2 p
+    | Gt (_, _ , _) -> mkGt e1 e2 p
+    | Gte (_, _, _) -> mkGte e1 e2 p
+    | Eq (_, _, _) -> mkEq e1 e2 p
+    | Neq (_, _, _) -> mkNeq e1 e2 p
     | _ -> report_error no_pos "cpure.extract_outer_inner_p: not handle yet"

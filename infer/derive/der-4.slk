@@ -1,0 +1,25 @@
+/*
+min max
+*/
+
+
+data node {
+	int val@VAL;
+	node next@REC;
+}.
+
+
+pred ll<> == self=null
+  or self::node<_,p> * p::ll<>
+inv true.
+
+pred_extn minValue[V,R]<m> ==
+   R::minValue<m2> & m=min(V,m2).
+
+pred_extn maxValue[V,R]<m> ==
+   R::maxValue<m2> & m=max(V,m2).
+
+pred llMin<m> == extends ll<> with minValue[VAL,REC]<m>.
+
+
+pred llMax<m> == extends ll<> with maxValue[VAL,REC]<m>.
