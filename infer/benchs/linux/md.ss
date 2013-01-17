@@ -1127,6 +1127,21 @@ int overlaps(int s1, int l1, int s2, int l2)
 /*static LIST_HEAD(pending_raid_disks);*/
 
 /****************************************************************************/
+pred_prim RS_mem<i:int>
+ inv i>0 & self!=null;
+
+RS_mem malloc(int n)
+ requires n>0
+ ensures  res=null or res::RS_mem<n>;
+
+mddev_s cast_to_mddev_s_ptr(RS_mem p)
+ case {
+  p=null -> ensures res=null;
+  p!=null -> 
+    requires p::RS_mem<a> //& a>=size(item)
+    ensures res::mddev_s<_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,n> * n::list_head<_,_>;
+ }
+
 void md_new_event(mddev_s mddev)
 {
     atomic_t md_event_count;
@@ -1141,6 +1156,9 @@ void mddev_put(mddev_s mddev)
         /* Array is not configured at all, and not held active,
          * so destroy it */
         list_del(mddev.all_mddevs);
+        if (mddev.gendisk != null){
+          mddev=null;
+        }
 /*        if (mddev.gendisk != null) {*/
             /* we did a probe so need to clean up.
              * Call schedule_work inside the spinlock
@@ -1180,146 +1198,233 @@ mddev_s mddev_get(mddev_s mddev)
     return mddev;
 }
 
-mddev_s mddev_find(int unit)
-{
-    mddev_s mddev, new = null;
+mddev_s to_mddev_s(list_head p)
+  requires p::list_head<_,_>
+  ensures res::mddev_s<_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,p>;
 
- retry:
-    if (unit) {
-        mddev = (mddev_s *) all_mddevs.next;
-        while (1) {
-            if (&mddev->all_mddevs == (&all_mddevs)) {
-                break;
-            }
-            if (mddev->unit == unit) {
-                mddev_get(mddev);
-                free(new);
-                return mddev;
-            }
-            mddev = (mddev_s *) mddev->all_mddevs.next;
-        }
-        if (new) {
-            list_add(&new->all_mddevs, &all_mddevs);
-            new->hold_active = 1;
-            return new;
-        }
-    } else if (new) {
+mddev_s mddev_find_loop1(int unit, list_head all_mddevs, mddev_s mddev, mddev_s new1)
+{
+    if (mddev.all_mddevs == all_mddevs) {
+        return mddev_find_loop1_helper(unit, all_mddevs, mddev, new1);
+    }
+    if (mddev.unit == unit) {
+        mddev_get(mddev);
+        new1=null;
+        return mddev;
+    }
+    mddev = to_mddev_s (mddev.all_mddevs.next);
+    return mddev_find_loop1_helper(unit, all_mddevs, mddev, new1);
+}
+
+mddev_s mddev_find_loop1_helper(int unit, list_head all_mddevs, mddev_s mddev, mddev_s new1)
+{
+    if (new1!=null) {
+        list_add(new1.all_mddevs, all_mddevs);
+        new1.hold_active = 1;
+        return new1;
+    }
+    else {
+        return mddev_find_loop3(unit, all_mddevs, mddev, new1);
+    }
+}
+
+mddev_s mddev_find_loop2_helper1(int unit, list_head all_mddevs, mddev_s mddev, mddev_s new1, int is_free, int dev, int next_minor, int start)
+{
+/*    dev = (((9) << 20) | (next_minor));*/
+    next_minor++;
+/*    if (next_minor > ((1U << 20) - 1))*/
+/*        next_minor = 0;*/
+    if (next_minor == start) {
+        /* Oh dear, all in use. */
+        new1=null;
+        return null;
+    }
+
+    is_free = 1;
+
+    mddev = to_mddev_s (all_mddevs.next);
+    return mddev_find_loop2_helper2(unit, all_mddevs, mddev, new1, is_free, dev, next_minor, start);
+}
+
+mddev_s mddev_find_loop2_helper2(int unit, list_head all_mddevs, mddev_s mddev, mddev_s new1, int is_free, int dev, int next_minor, int start)
+{
+    if (mddev.all_mddevs == all_mddevs) {
+        return mddev_find_loop2(unit, all_mddevs, mddev, new1, is_free, dev, next_minor, start);
+    }
+    if (mddev.unit == dev) {
+        is_free = 0;
+        return mddev_find_loop2(unit, all_mddevs, mddev, new1, is_free, dev, next_minor, start);
+    }
+    mddev = to_mddev_s (mddev.all_mddevs.next);
+    return mddev_find_loop2(unit, all_mddevs, mddev, new1, is_free, dev, next_minor, start);
+}
+
+mddev_s mddev_find_loop2(int unit, list_head all_mddevs, mddev_s mddev, mddev_s new1, int is_free, int dev, int next_minor, int start)
+{
+    if (is_free==0) {
+        return mddev_find_loop2_helper1(unit, all_mddevs, mddev, new1, is_free, dev, next_minor, start);
+    }
+
+    new1.unit = dev;
+/*    new1.md_minor = ((unsigned int) ((dev) & ((1U << 20) - 1)));*/
+    new1.hold_active = 2;
+    list_add(new1.all_mddevs, all_mddevs);
+    return new1;
+}
+
+mddev_s mddev_find_loop3(int unit, list_head all_mddevs, mddev_s mddev, mddev_s new1)
+{
+    new1 = cast_to_mddev_s_ptr (malloc(1));
+    if (new1==null)
+        return null;
+
+    new1.unit = unit;
+/*    if (((unsigned int) ((unit) >> 20)) == 9)*/
+/*        new1.md_minor = ((unsigned int) ((unit) & ((1U << 20) - 1)));*/
+/*    else*/
+/*        new1.md_minor = ((unsigned int) ((unit) & ((1U << 20) - 1))) >> 6;*/
+
+    mddev_init(new1);
+    return mddev_find_helper(unit, all_mddevs, mddev, new1);
+}
+
+mddev_s mddev_find_helper(int unit, list_head all_mddevs, mddev_s mddev, mddev_s new1)
+{
+    if (unit!=0) {
+        mddev = to_mddev_s (all_mddevs.next);
+        return mddev_find_loop1(unit, all_mddevs, mddev, new1);
+    } 
+    else 
+    if (new1!=null) {
         /* find an unused unit number */
-        static int next_minor = 512;
+        int next_minor = 512;
         int start = next_minor;
         int is_free = 0;
         int dev = 0;
-        while (!is_free) {
-            dev = (((9) << 20) | (next_minor));
-            next_minor++;
-            if (next_minor > ((1U << 20) - 1))
-                next_minor = 0;
-            if (next_minor == start) {
-                /* Oh dear, all in use. */
-                free(new);
-                return NULL;
-            }
-
-            is_free = 1;
-
-            mddev = (mddev_s *) (&all_mddevs)->next;
-            while (1) {
-                prefetch(mddev->all_mddevs.next);
-                if (&mddev->all_mddevs == (&all_mddevs)) {
-                    break;
-                }
-                if (mddev->unit == dev) {
-                    is_free = 0;
-                    break;
-                }
-                mddev = (mddev_s *) mddev->all_mddevs.next;
-            }
-        }
-        new->unit = dev;
-        new->md_minor = ((unsigned int) ((dev) & ((1U << 20) - 1)));
-        new->hold_active = 2;
-        list_add(&new->all_mddevs, &all_mddevs);
-        return new;
+        return mddev_find_loop2(unit, all_mddevs, mddev, new1, is_free, dev, next_minor, start);
     }
-
-    new = (mddev_s *) malloc (sizeof(mddev_s));
-    if (!new)
-        return NULL;
-
-    new->unit = unit;
-    if (((unsigned int) ((unit) >> 20)) == 9)
-        new->md_minor = ((unsigned int) ((unit) & ((1U << 20) - 1)));
     else
-        new->md_minor = ((unsigned int) ((unit) & ((1U << 20) - 1))) >> 6;
+        return mddev_find_loop3(unit, all_mddevs, mddev, new1);
 
-    mddev_init(new);
-
-    goto retry;
 }
 
-/*
-static mdk_rdev_s * find_rdev_nr(mddev_s *mddev, int nr)
+mddev_s mddev_find(int unit, list_head all_mddevs)
 {
-    mdk_rdev_s *rdev;
+    mddev_s mddev, new1 = null;
 
-    rdev = (mdk_rdev_s *) (&mddev->disks)->next;
-    while (1) {
-        prefetch(rdev->same_set.next);
-        if (&rdev->same_set == (&mddev->disks)) {
-            break;
-        }
-        if (rdev->desc_nr == nr)
-            return rdev;
-        rdev = (mdk_rdev_s *) rdev->same_set.next;
-    }
-
-    return NULL;
+    return mddev_find_helper(unit, all_mddevs, mddev, new1);
 }
 
-static mdk_rdev_s * find_rdev(mddev_s * mddev, int dev)
+mdk_rdev_s to_mdk_rdev_s(list_head p)
+  requires p::list_head<_,_>
+  ensures res::mdk_rdev_s<p,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_>;
+
+mdk_rdev_s find_rdev_nr_helper(mddev_s mddev, mdk_rdev_s rdev, int nr)
 {
-    mdk_rdev_s *rdev;
-
-    rdev = (mdk_rdev_s *) (&mddev->disks)->next;
-    while (1) {
-        prefetch(rdev->same_set.next);
-        if (&rdev->same_set == (&mddev->disks)) {
-            break;
-        }
-        if (rdev->bdev->bd_dev == dev)
-            return rdev;
-        rdev = (mdk_rdev_s *) rdev->same_set.next;
+    if (rdev.same_set == mddev.disks) {
+        return null;
     }
-
-    return NULL;
+    if (rdev.desc_nr == nr)
+        return rdev;
+    rdev = to_mdk_rdev_s(rdev.same_set.next);
+    return find_rdev_nr_helper(mddev,rdev,nr);
 }
 
-static struct mdk_personality *find_pers(int level, char *clevel)
+mdk_rdev_s find_rdev_nr(mddev_s mddev, int nr)
 {
-    struct mdk_personality *pers;
+    mdk_rdev_s rdev;
 
-    pers = (struct mdk_personality *) (&pers_list)->next;
-    while (1) {
-        prefetch(pers->list.next);
-        if (&pers->list == (&pers_list)) {
-            break;
-        }
-        if (level != (-1000000) && pers->level == level)
-            return pers;
-        if (strcmp(pers->name, clevel)==0)
-            return pers;
-        pers = (struct mdk_personality *) pers->list.next;
+    rdev = to_mdk_rdev_s(mddev.disks.next);
+    return find_rdev_nr_helper(mddev,rdev,nr);
+}
+
+mdk_rdev_s find_rdev_helper(mddev_s mddev, mdk_rdev_s rdev, int dev)
+{
+    if (rdev.same_set == mddev.disks) {
+        return null;
     }
+    if (rdev.bdev.bd_dev == dev)
+        return rdev;
+    rdev = to_mdk_rdev_s(rdev.same_set.next);
+    return find_rdev_helper(mddev,rdev,dev);
+}
 
-    return NULL;
+mdk_rdev_s find_rdev(mddev_s mddev, int dev)
+{
+    mdk_rdev_s rdev;
+
+    rdev = to_mdk_rdev_s(mddev.disks.next);
+    return find_rdev_helper(mddev,rdev,dev);
+
+}
+
+mdk_personality to_mdk_personality(list_head p)
+  requires p::list_head<_,_>
+  ensures res::mdk_personality<_,_,p>;
+
+mdk_personality find_pers_helper(mdk_personality pers, int level, char clevel, list_head pers_list)
+{
+    if (pers.list == pers_list) {
+        return null;
+    }
+    if (level != (-1000000) && pers.level == level)
+        return pers;
+    if (strcmp(pers.name, clevel)==0)
+        return pers;
+    pers = to_mdk_personality(pers.list.next);
+    return find_pers_helper(pers, level, clevel, pers_list);
+}
+
+mdk_personality find_pers(int level, char clevel, list_head pers_list)
+{
+    mdk_personality pers;
+
+    pers = to_mdk_personality(pers_list.next);
+    return find_pers_helper(pers, level, clevel, pers_list);
 }
 
 /*
  * test bit
  */
-static inline int test_bit(int nr, const volatile void *addr)
+int test_bit(int nr)
 {
-    return 1UL & (((const unsigned int *) addr)[nr >> 5] >> (nr & 31));
+    int a;
+    return a;
+}
+
+int md_integrity_register_helper(mddev_s mddev, mdk_rdev_s rdev, mdk_rdev_s reference)
+{
+    if (rdev.same_set == mddev.disks) {
+        /*
+         * All component devices are integrity capable and have matching
+         * profiles, register the common profile for the md device.
+         */
+        if (0 != 0) {
+            return -22;
+        }
+        return 0;
+    }
+    /* skip spares and non-functional disks */
+/*    if (test_bit(1)>0)*/
+/*        continue;*/
+/*    if (rdev.raid_disk < 0)*/
+/*        continue;*/
+    /*
+     * If at least one rdev is not integrity capable, we can not
+     * enable data integrity for the md device.
+     */
+    if (1>0)
+        return -22;
+/*    if (reference==null) {*/
+/*        /* Use the first rdev as the reference */*/
+/*        reference = rdev;*/
+/*        continue;*/
+/*    }*/
+    /* does this rdev's profile match the reference profile? */
+    if (0<0)
+        return -22;
+    rdev = to_mdk_rdev_s(rdev.same_set.next);
+    return md_integrity_register_helper(mddev,rdev,reference);
 }
 
 /*
@@ -1329,53 +1434,20 @@ static inline int test_bit(int nr, const volatile void *addr)
  * from the array. It only succeeds if all working and active component devices
  * are integrity capable with matching profiles.
  */
-int md_integrity_register(mddev_s *mddev)
+int md_integrity_register(mddev_s mddev)
 {
-    mdk_rdev_s *rdev, *reference = NULL;
+    mdk_rdev_s rdev, reference = null;
 
-    if (list_empty(&mddev->disks))
+    if (list_empty(mddev.disks))
         return 0; /* nothing to do */
-    if ((0))
+    if (0>0)
         return 0;
 
-    rdev = (mdk_rdev_s *) (&mddev->disks)->next;
-    while (1) {
-        prefetch(rdev->same_set.next);
-        if (&rdev->same_set == (&mddev->disks)) {
-            break;
-        }
-        /* skip spares and non-functional disks */
-        if (test_bit(1, &rdev->flags))
-            continue;
-        if (rdev->raid_disk < 0)
-            continue;
-        /*
-         * If at least one rdev is not integrity capable, we can not
-         * enable data integrity for the md device.
-         */
-        if (!(0))
-            return -22;
-        if (!reference) {
-            /* Use the first rdev as the reference */
-            reference = rdev;
-            continue;
-        }
-        /* does this rdev's profile match the reference profile? */
-        if ((0) < 0)
-            return -22;
-        rdev = (mdk_rdev_s *) rdev->same_set.next;
-    }
-
-    /*
-     * All component devices are integrity capable and have matching
-     * profiles, register the common profile for the md device.
-     */
-    if ((0) != 0) {
-        return -22;
-    }
-    return 0;
+    rdev = to_mdk_rdev_s(mddev.disks.next);
+    return md_integrity_register_helper(mddev,rdev,reference);
 }
 
+/*
 static void unbind_rdev_from_array(mdk_rdev_s * rdev)
 {
     if (!rdev->mddev) {

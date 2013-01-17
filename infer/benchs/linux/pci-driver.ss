@@ -483,10 +483,6 @@ void driver_unregister(device_driver drv)
 }
 
 /****************************************************************************/
-/* void free_pci_dynid (pc) */
-/*      requires pc::pci_dynid<n,_> */
-/*      ensures pc = null & n=null */
-
 pred_prim RS_mem<i:int>
  inv i>0 & self!=null;
 
@@ -640,7 +636,7 @@ void pci_free_dynids_loop(pci_driver drv, ref pci_dynid dynid, ref pci_dynid n)
   if (dynid.node != (drv.dynids.list))
     if (dynid.node.next != (drv.dynids.list)){
       list_del(dynid.node);
-      //free(dynid);
+      //dynid=null;
       dynid = n;
       n = cast_to_pci_dynid1(n.node.next);
       if (dynid.node.next != n.node)
