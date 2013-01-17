@@ -80,7 +80,7 @@ used in a branch, as it signify that self!=null is present.
 
 ## der-5.slk
 
-(1) Omega error
+(1) Omega error (norm min/max: DONE)
 (2) Why isn't n>=0 taken from the size view_extn?
 
 ************VIEW_DERIVED*************
@@ -139,7 +139,7 @@ ERROR: at _0_0
 Message: cpure.extract_outer_inner_f: not handle yet
  Fatal error: exception Failure("cpure.extract_outer_inner_f: not handle yet")
 
-# err-1-der-5.slk
+# err-1-der-5.slk; DONE
 
 Why did we have : min(,Anon_11), min(,Anon_12,m_61) ??
 

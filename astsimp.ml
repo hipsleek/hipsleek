@@ -1354,7 +1354,8 @@ and generate_extn_ho_procs prog cviews extn_view_name=
       let n_outer = CP.mk_pformula_from_tmpl outer n_root_e n_inner_e no_pos in
       let n_p = (CP.BForm ((n_outer, None), None)) in
       (* let _ =  Debug.info_pprint ("   n_p: "^ (!CP.print_formula n_p)) no_pos in *)
-      n_p
+      let n_p1,quans = CP.norm_exp_min_max n_p in
+      (n_p1,quans)
   in
   let extn_v = C.look_up_view_def_raw cviews extn_view_name in
   let extn_fs = fst (List.split extn_v.C.view_un_struc_formula) in
@@ -1390,11 +1391,12 @@ and trans_view_one_derv_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_d
     match ho_inds with
       | [] -> f
       | ho_fn::_ -> (*now, we just care the first one*)
-          let extn_p = ho_fn extn_args val_extns rec_extns in
+          (*quans: ex quans from normalize min/max*)
+          let extn_p,quans = ho_fn extn_args val_extns rec_extns in
           let nf = CF.mkAnd_pure f (MCP.mix_of_pure extn_p) no_pos in
           (*add rec_extns into exists*)
           let new_extn_args = CP.remove_dups_svl (List.concat (snd (List.split rec_extns))) in
-          let nf1 = CF.add_quantifiers new_extn_args nf in
+          let nf1 = CF.add_quantifiers (new_extn_args@quans) nf in
           (* let _ =  Debug.info_pprint ("  nf1: "^ (!CF.print_formula nf1)) no_pos in *)
           nf1
   in
