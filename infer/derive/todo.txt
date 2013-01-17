@@ -94,3 +94,28 @@ used in a branch, as it signify that self!=null is present.
   
   xform: self!=null
 Fatal error: exception Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  ")
+
+## der-2d.slk
+
+data node {
+	int val@VAL;
+	node prev;
+	node next;
+}.
+
+pred llSum<s> == extends ll<> with ssum[REC,VAL]<s> .
+
+REC used but is not specified in data structure.
+This should be highlighted as an ERROR.
+
+## der-2b.slk
+
+data node {
+	int val;
+	node next@REC;
+}.
+
+pred llSum<s> == extends ll<> with ssum[REC,VAL]<s> .
+
+Missing VAL but below still goes through.
+I think we should highlight as an error since VAL cannot be used

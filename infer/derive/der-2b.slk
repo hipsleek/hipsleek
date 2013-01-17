@@ -1,0 +1,40 @@
+data node {
+	int val;
+	node next@REC;
+}.
+
+
+pred ll<> == self=null
+  or self::node<_,p> * p::ll<>
+inv true.
+
+pred ls<r> == self=r
+  or self::node<_,p> * p::ls<r>
+inv true.
+
+pred llN<n> == self=null & n=0
+  or self::node<_,p> * p::llN<m> & n=m+1
+inv n>=0.
+
+pred_extn ssum[R,V]<s> ==
+      s=0 // base case
+   or R::ssum<s2> & s=V+s2
+   inv true.
+
+pred llSum<s> == extends ll<> with ssum[REC,VAL]<s> .
+/*
+
+Missing VAL but below still goes through.
+I think we should highlight as an error since VAL cannot be used
+
+ view llSum[]<s:int>= 
+  
+   EBase {8}->emp&self=null & s=0&{FLOW,(1,22)=__flow}[]
+  eor 
+   EBase EXISTS(Anon_11,p,s_40: self::node<Anon_11,p>@M[Orig] * 
+         p::llSum<s_40>@M[0][Orig][LHSCase]&s=s_40&{FLOW,(1,22)=__flow})[]
+  
+  xform: true
+*/
+
+

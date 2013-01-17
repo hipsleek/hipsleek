@@ -1301,7 +1301,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           C.view_prune_conditions_baga = [];
           C.view_prune_invariants = []} in
       let _ =
-        if !debug_derive_flag then
+        if !debug_derive_flag && (view_kind==C.View_EXTN) then
           let _ =  print_endline ("************VIEW_EXTN*************") in
           let _ =  print_endline (Cprinter.string_of_view_decl_short cvdef)  in
           ()
