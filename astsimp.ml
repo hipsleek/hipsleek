@@ -1161,7 +1161,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
 	      let disj_f = CP.split_disjunctions_deep pf in
           let do_not_recompute_flag = (List.length disj_f>1) && not(!Globals.disj_compute_flag) in
               helper n do_not_recompute_flag
-	      else report_error pos "view formula does not entail supplied invariant\n" in ()
+	        else report_error pos "view formula does not entail supplied invariant\n" in ()
     else ()
   in
   check_and_compute ()
