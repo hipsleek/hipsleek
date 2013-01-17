@@ -38,7 +38,7 @@ print residue.
 checkentail x::node<p@v,q> * q::ll<n,@L, v>@L & n > 2 & v = @A |- x::ll<n+1,@L,@A>@L & n > 2.
 print residue.
 
-// (6) Fail ------- TODO: will it work after inference works?
+// (6) Valid
 checkentail x::node<p@v,q> * q::ll<n,@L, v>@L & n > 2 &  @L <: v |- x::ll<n+1,@L,@A>@L & n > 2.
 print residue.
 
@@ -46,7 +46,7 @@ print residue.
 checkentail x::node<p,q> * q::ll<n,_,_> & n > 1 |- x::ll<n+1,_,_> & n > 1.
 print residue.
 
-// (8) Fail
+// (8) Fail ????? why is valid?
 checkentail x::node<_, null> * y::ll<_,_,_> |- x::ll<m, _, _> & m = 2.
 print residue.
 
