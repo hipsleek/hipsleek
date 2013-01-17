@@ -9020,7 +9020,9 @@ let extract_outer_inner_p pf0 root_args val_extns rec_args=
   let rec find_initial exps v=
     match exps with
       | [] -> if v then
-            Bag ([],no_pos)
+            if is_bag_typ (List.hd root_args) then
+              Bag ([],no_pos)
+            else IConst (0, no_pos) (*todo: should improve here*)
           else
             report_error no_pos "cpure.extract_outer_inner_p: why is it empty?"
       | e:: rest ->
@@ -9116,18 +9118,39 @@ let is_node_sv e=
 
 (*non-bag constrs*)
 let mk_exp_from_non_bag_tmpl tmpl e1 e2 p=
+  let preprocess e01 e02=
+    if is_zero e02 || is_node_sv e02 then (Some e01)
+    else if is_zero e01 || is_node_sv e01 then Some e02 else None
+  in
   let e11 = (* check_null_var *) e1 in
   let e22 = (* check_null_var *) e2 in
   match tmpl with
     | Add (_, _,_) ->
-        if is_zero e22 || is_node_sv e22 then e11
-        else if is_zero e11 || is_node_sv e11 then e22 else
-        Add (e11,e22,p)
+        (* if is_zero e22 || is_node_sv e22 then e11 *)
+        (* else if is_zero e11 || is_node_sv e11 then e22 else *)
+        let r = preprocess e11 e22 in
+        begin
+            match r with
+              | Some e -> e
+              | None -> Add (e11,e22,p)
+        end
     | Subtract (_, _,_) -> Subtract (e11, e22,p)
     | Mult (_, _, _) ->  Mult (e11, e22, p)
     | Div (_, _, _) -> Div (e11, e22, p)
-    | Max (_, _, _) -> mkMax e11 e22 p
-    | Min (_, _, _) -> mkMin e11 e22 p
+    | Max (_, _, _) ->
+        let r = preprocess e11 e22 in
+        begin
+            match r with
+              | Some e -> e
+              | None -> mkMax e11 e22 p
+        end
+    | Min (_, _, _) ->
+       let r = preprocess e11 e22 in
+        begin
+            match r with
+              | Some e -> e
+              | None -> mkMin e11 e22 p
+        end
     | _ -> report_error no_pos "cpure.extract_inner_e: not handle yet"
 
 (*bag constrs (* bag expressions *)*)

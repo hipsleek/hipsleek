@@ -52,7 +52,9 @@ let omega_of_spec_var (sv : spec_var):string = match sv with
 		r ^ (if is_primed sv then Oclexer.primed_str else "")
 
 
-let rec omega_of_exp e0 = match e0 with
+let rec omega_of_exp e0 =
+  (* let _ =  Debug.info_pprint ("   Omega e0: "^ (!Cpure.print_exp e0)) no_pos in *)
+  match e0 with
   | Null _ -> "0"
   | Var (sv, _) -> omega_of_spec_var sv
   | IConst (i, _) -> string_of_int i 

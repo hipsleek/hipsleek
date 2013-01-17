@@ -6,7 +6,7 @@ pred_extn pos_sum[R,V:int]<s> ==
    or R::pos_sum<s2> & s=V+s2 & V>=0 
    inv s>=0.
 
-## der-5.slk
+## der-5.slk: DONE (from Cris's fixing)
 
 WHY --pcp shows data nodes printed twice?
 
@@ -26,7 +26,7 @@ data node2 {
   node2 next@REC
 }
 
-## err-1-der-5.slk: DONE
+## err-1-der-5.slk: DONE (fix exception in Omega: Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  "))
 
 Fatal error: exception Not_found
 

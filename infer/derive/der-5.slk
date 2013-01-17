@@ -29,35 +29,14 @@ pred_extn size[R]<n> ==
    inv n>=0.
 
 pred_extn minValue[V,R]<m> ==
-   m=V // this denote singleton case without any R
-   or R::minValue<m2> & m=min(V,m2). // in case of multiple m2
+    m=V // this denote singleton case without any R
+    or R::minValue<m2> & m=min(V,m2). // in case of multiple m2
 
-pred llSNN<n> == extends llNN<> with size[REC]<n> .
+//pred llSNN<n> == extends llNN<> with size[REC]<n> .
 
-pred treeSNN<n> == extends treeNN<> with size[REC]<n> .
+//pred treeSNN<n> == extends treeNN<> with size[REC]<n> .
 
-pred llMin<m> == extends llNN<> with minValue[VAL,REC]<m>.
+//pred llMin<m> == extends llNN<> with minValue[VAL,REC]<m>.
 
-//pred treeMin<m> == extends treeNN<> with minValue[VAL,REC]<m> .
+pred treeMin<m> == extends treeNN<> with minValue[VAL,REC]<m> .
 
-/*
-## der-5.slk
-
-WHY --pcp shows data nodes printed twice?
-
-data node {
-  int val@VAL
-  node next@REC
-}
-data node2 {
-  int val@VAL
-  node2 prev@REC
-  node2 next@REC
-}
-
-data node2 {
-  int val@VAL
-  node2 prev@REC
-  node2 next@REC
-}
-*/
