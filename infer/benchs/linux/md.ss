@@ -225,16 +225,6 @@ void list_del_rcu(list_head entry)
 }
 
 /****************************************************************************/
-/*#define LIST_HEAD(name) struct list_head name = { &(name), &(name) }*/
-/*
- * Enables to iterate over all existing md arrays
- * all_mddevs_lock protects this list.
- */
-/*static LIST_HEAD(all_mddevs);*/
-/*static LIST_HEAD(pers_list);*/
-/*static LIST_HEAD(all_detected_devices);*/
-
-/****************************************************************************/
 data atomic_t {
   int counter;
 }
@@ -1126,4 +1116,801 @@ int overlaps(int s1, int l1, int s2, int l2)
 }
 
 /****************************************************************************/
+/*#define LIST_HEAD(name) struct list_head name = { &(name), &(name) }*/
+/*
+ * Enables to iterate over all existing md arrays
+ * all_mddevs_lock protects this list.
+ */
+/*static LIST_HEAD(all_mddevs);*/
+/*static LIST_HEAD(pers_list);*/
+/*static LIST_HEAD(all_detected_devices);*/
+/*static LIST_HEAD(pending_raid_disks);*/
 
+/****************************************************************************/
+void md_new_event(mddev_s mddev)
+{
+    atomic_t md_event_count;
+    atomic_inc(md_event_count);
+    return;
+}
+
+void mddev_put(mddev_s mddev)
+{
+    if (mddev.raid_disks != 0 && list_empty(mddev.disks) &&
+        mddev.ctime == 0 && mddev.hold_active != 0) {
+        /* Array is not configured at all, and not held active,
+         * so destroy it */
+        list_del(mddev.all_mddevs);
+/*        if (mddev.gendisk != null) {*/
+            /* we did a probe so need to clean up.
+             * Call schedule_work inside the spinlock
+             * so that flush_scheduled_work() after
+             * mddev_find will succeed in waiting for the
+             * work to be done.
+             */
+//          INIT_WORK(&mddev->del_work, mddev_delayed_delete);
+//          schedule_work(&mddev->del_work);
+/*        } */
+/*        else*/
+/*            free(mddev);*/
+    }
+}
+
+void mddev_init(mddev_s mddev)
+{
+    INIT_LIST_HEAD(mddev.disks);
+    INIT_LIST_HEAD(mddev.all_mddevs);
+//  init_timer(&mddev->safemode_timer);
+    atomic_set(mddev.active, 1);
+    atomic_set(mddev.openers, 0);
+//  atomic_set(&mddev->active_io, 0);
+//  spin_lock_init(&mddev->write_lock);
+//  atomic_set(&mddev->flush_pending, 0);
+//  init_waitqueue_head(&mddev->sb_wait);
+//  init_waitqueue_head(&mddev->recovery_wait);
+//  mddev->reshape_position = MaxSector;
+//  mddev->resync_min = 0;
+//  mddev->resync_max = MaxSector;
+//  mddev->level = LEVEL_NONE;
+}
+
+mddev_s mddev_get(mddev_s mddev)
+{
+    atomic_inc(mddev.active);
+    return mddev;
+}
+
+mddev_s mddev_find(int unit)
+{
+    mddev_s mddev, new = null;
+
+ retry:
+    if (unit) {
+        mddev = (mddev_s *) all_mddevs.next;
+        while (1) {
+            if (&mddev->all_mddevs == (&all_mddevs)) {
+                break;
+            }
+            if (mddev->unit == unit) {
+                mddev_get(mddev);
+                free(new);
+                return mddev;
+            }
+            mddev = (mddev_s *) mddev->all_mddevs.next;
+        }
+        if (new) {
+            list_add(&new->all_mddevs, &all_mddevs);
+            new->hold_active = 1;
+            return new;
+        }
+    } else if (new) {
+        /* find an unused unit number */
+        static int next_minor = 512;
+        int start = next_minor;
+        int is_free = 0;
+        int dev = 0;
+        while (!is_free) {
+            dev = (((9) << 20) | (next_minor));
+            next_minor++;
+            if (next_minor > ((1U << 20) - 1))
+                next_minor = 0;
+            if (next_minor == start) {
+                /* Oh dear, all in use. */
+                free(new);
+                return NULL;
+            }
+
+            is_free = 1;
+
+            mddev = (mddev_s *) (&all_mddevs)->next;
+            while (1) {
+                prefetch(mddev->all_mddevs.next);
+                if (&mddev->all_mddevs == (&all_mddevs)) {
+                    break;
+                }
+                if (mddev->unit == dev) {
+                    is_free = 0;
+                    break;
+                }
+                mddev = (mddev_s *) mddev->all_mddevs.next;
+            }
+        }
+        new->unit = dev;
+        new->md_minor = ((unsigned int) ((dev) & ((1U << 20) - 1)));
+        new->hold_active = 2;
+        list_add(&new->all_mddevs, &all_mddevs);
+        return new;
+    }
+
+    new = (mddev_s *) malloc (sizeof(mddev_s));
+    if (!new)
+        return NULL;
+
+    new->unit = unit;
+    if (((unsigned int) ((unit) >> 20)) == 9)
+        new->md_minor = ((unsigned int) ((unit) & ((1U << 20) - 1)));
+    else
+        new->md_minor = ((unsigned int) ((unit) & ((1U << 20) - 1))) >> 6;
+
+    mddev_init(new);
+
+    goto retry;
+}
+
+/*
+static mdk_rdev_s * find_rdev_nr(mddev_s *mddev, int nr)
+{
+    mdk_rdev_s *rdev;
+
+    rdev = (mdk_rdev_s *) (&mddev->disks)->next;
+    while (1) {
+        prefetch(rdev->same_set.next);
+        if (&rdev->same_set == (&mddev->disks)) {
+            break;
+        }
+        if (rdev->desc_nr == nr)
+            return rdev;
+        rdev = (mdk_rdev_s *) rdev->same_set.next;
+    }
+
+    return NULL;
+}
+
+static mdk_rdev_s * find_rdev(mddev_s * mddev, int dev)
+{
+    mdk_rdev_s *rdev;
+
+    rdev = (mdk_rdev_s *) (&mddev->disks)->next;
+    while (1) {
+        prefetch(rdev->same_set.next);
+        if (&rdev->same_set == (&mddev->disks)) {
+            break;
+        }
+        if (rdev->bdev->bd_dev == dev)
+            return rdev;
+        rdev = (mdk_rdev_s *) rdev->same_set.next;
+    }
+
+    return NULL;
+}
+
+static struct mdk_personality *find_pers(int level, char *clevel)
+{
+    struct mdk_personality *pers;
+
+    pers = (struct mdk_personality *) (&pers_list)->next;
+    while (1) {
+        prefetch(pers->list.next);
+        if (&pers->list == (&pers_list)) {
+            break;
+        }
+        if (level != (-1000000) && pers->level == level)
+            return pers;
+        if (strcmp(pers->name, clevel)==0)
+            return pers;
+        pers = (struct mdk_personality *) pers->list.next;
+    }
+
+    return NULL;
+}
+
+/*
+ * test bit
+ */
+static inline int test_bit(int nr, const volatile void *addr)
+{
+    return 1UL & (((const unsigned int *) addr)[nr >> 5] >> (nr & 31));
+}
+
+/*
+ * Try to register data integrity profile for an mddev
+ *
+ * This is called when an array is started and after a disk has been kicked
+ * from the array. It only succeeds if all working and active component devices
+ * are integrity capable with matching profiles.
+ */
+int md_integrity_register(mddev_s *mddev)
+{
+    mdk_rdev_s *rdev, *reference = NULL;
+
+    if (list_empty(&mddev->disks))
+        return 0; /* nothing to do */
+    if ((0))
+        return 0;
+
+    rdev = (mdk_rdev_s *) (&mddev->disks)->next;
+    while (1) {
+        prefetch(rdev->same_set.next);
+        if (&rdev->same_set == (&mddev->disks)) {
+            break;
+        }
+        /* skip spares and non-functional disks */
+        if (test_bit(1, &rdev->flags))
+            continue;
+        if (rdev->raid_disk < 0)
+            continue;
+        /*
+         * If at least one rdev is not integrity capable, we can not
+         * enable data integrity for the md device.
+         */
+        if (!(0))
+            return -22;
+        if (!reference) {
+            /* Use the first rdev as the reference */
+            reference = rdev;
+            continue;
+        }
+        /* does this rdev's profile match the reference profile? */
+        if ((0) < 0)
+            return -22;
+        rdev = (mdk_rdev_s *) rdev->same_set.next;
+    }
+
+    /*
+     * All component devices are integrity capable and have matching
+     * profiles, register the common profile for the md device.
+     */
+    if ((0) != 0) {
+        return -22;
+    }
+    return 0;
+}
+
+static void unbind_rdev_from_array(mdk_rdev_s * rdev)
+{
+    if (!rdev->mddev) {
+        return;
+    }
+    bd_release_from_disk(rdev->bdev, rdev->mddev->gendisk);
+    list_del_rcu(&rdev->same_set);
+    rdev->mddev = NULL;
+    sysfs_remove_link(&rdev->kobj, "block");
+    sysfs_put(rdev->sysfs_state);
+    rdev->sysfs_state = NULL;
+//  INIT_WORK(&rdev->del_work, md_delayed_delete);
+    kobject_get(&rdev->kobj);
+//  schedule_work(&rdev->del_work);
+}
+
+static void super_90_sync(mddev_s *mddev, mdk_rdev_s *rdev)
+{
+    return;
+}
+
+static void super_1_sync(mddev_s *mddev, mdk_rdev_s *rdev)
+{
+    return;
+}
+
+static unsigned long long
+super_90_rdev_size_change(mdk_rdev_s *rdev, int num_sectors)
+{
+    return 0;
+}
+
+static unsigned long long
+super_1_rdev_size_change(mdk_rdev_s *rdev, int num_sectors)
+{
+    return 0;
+}
+
+/*
+ * load_super for 0.90.0
+ */
+static int super_90_load(mdk_rdev_s *rdev, mdk_rdev_s *refdev, int minor_version)
+{
+    return 0;
+}
+
+static int super_1_load(mdk_rdev_s *rdev, mdk_rdev_s *refdev, int minor_version)
+{
+    return 0;
+}
+
+static struct super_type super_types[] = {
+    [0] = {
+        .name   = "0.90.0",
+//      .owner  = THIS_MODULE,
+        .load_super     = super_90_load,
+//      .validate_super     = super_90_validate,
+        .sync_super     = super_90_sync,
+        .rdev_size_change   = super_90_rdev_size_change,
+    },
+    [1] = {
+        .name   = "md-1",
+//      .owner  = THIS_MODULE,
+        .load_super     = super_1_load,
+//      .validate_super     = super_1_validate,
+        .sync_super     = super_1_sync,
+        .rdev_size_change   = super_1_rdev_size_change,
+    },
+};
+
+static void sync_sbs(mddev_s * mddev, int nospares)
+{
+    /* Update each superblock (in-memory image), but
+     * if we are allowed to, skip spares which already
+     * have the right event counter, or have one earlier
+     * (which would mean they aren't being marked as dirty
+     * with the rest of the array)
+     */
+    mdk_rdev_s *rdev;
+
+    /* First make sure individual recovery_offsets are correct */
+    rdev = (mdk_rdev_s *) (&mddev->disks)->next;
+    while (1) {
+        prefetch(rdev->same_set.next);
+        if (&rdev->same_set == (&mddev->disks)) {
+            break;
+        }
+        if (rdev->raid_disk >= 0 &&
+            mddev->delta_disks >= 0 &&
+            !test_bit(2, &rdev->flags) &&
+            mddev->curr_resync_completed > rdev->recovery_offset)
+                rdev->recovery_offset = mddev->curr_resync_completed;
+        rdev = (mdk_rdev_s *) rdev->same_set.next;
+    }
+
+    rdev = (mdk_rdev_s *) (&mddev->disks)->next;
+    while (1) {
+        prefetch(rdev->same_set.next);
+        if (&rdev->same_set == (&mddev->disks)) {
+            break;
+        }
+        if (rdev->sb_events == mddev->events ||
+            (nospares &&
+             rdev->raid_disk < 0 &&
+             rdev->sb_events+1 == mddev->events)) {
+            /* Don't update this superblock */
+            rdev->sb_loaded = 2;
+        } else {
+            super_types[mddev->major_version].
+                sync_super(mddev, rdev);
+            rdev->sb_loaded = 1;
+        }
+        rdev = (mdk_rdev_s *) rdev->same_set.next;
+    }
+}
+
+
+static int strict_blocks_to_sectors(const char *buf, int *sectors) {
+    unsigned long long blocks;
+    int new;
+
+    if (strict_strtoull(buf, 10, &blocks) < 0)
+        return -22;
+
+    if (blocks & 1ULL << (8 * sizeof(blocks) - 1))
+        return -22; /* sector conversion overflow */
+
+    new = blocks * 2;
+    if (new != blocks * 2)
+        return -22; /* unsigned long long to int overflow */
+
+    *sectors = new;
+    return 0;
+}
+
+static int rdev_size_store(mdk_rdev_s *rdev, const char *buf, unsigned int len)
+{
+    mddev_s *my_mddev = rdev->mddev;
+    int oldsectors = rdev->sectors;
+    int sectors;
+
+    if (strict_blocks_to_sectors(buf, &sectors) < 0)
+        return -22;
+    if (my_mddev->pers && rdev->raid_disk >= 0) {
+        if (my_mddev->persistent) {
+            sectors = super_types[my_mddev->major_version].
+                rdev_size_change(rdev, sectors);
+            if (!sectors)
+                return -16;
+        } else if (!sectors)
+            sectors = (rdev->bdev->bd_inode->i_size >> 9) -
+                rdev->data_offset;
+    }
+    if (sectors < my_mddev->dev_sectors)
+        return -22; /* component must fit device */
+
+    rdev->sectors = sectors;
+    if (sectors > oldsectors && my_mddev->external) {
+        /* need to check that all other rdevs with the same ->bdev
+         * do not overlap.  We need to unlock the mddev to avoid
+         * a deadlock.  We have already changed rdev->sectors, and if
+         * we have to change it back, we will have the lock again.
+         */
+        mddev_s *mddev;
+        int overlap = 0;
+        struct list_head *tmp;
+
+
+        tmp = all_mddevs.next;
+        mddev = NULL;
+        while (1){
+            if (tmp != &all_mddevs)
+                mddev_get((mddev_s *) tmp);
+            if (mddev)
+                mddev_put(mddev);
+            mddev = mddev_get((mddev_s *) tmp);
+            if (tmp == &all_mddevs){
+                break;
+            }
+            mdk_rdev_s *rdev2;
+
+            rdev2 = (mdk_rdev_s *) (&mddev->disks)->next;
+            while (1){
+                prefetch(rdev2->same_set.next);
+                if (&rdev2->same_set == (&mddev->disks)) {
+                    break;
+                }
+                if (test_bit(6, &rdev2->flags) ||
+                    (rdev->bdev == rdev2->bdev &&
+                     rdev != rdev2 &&
+                     overlaps(rdev->data_offset, rdev->sectors,
+                          rdev2->data_offset,
+                          rdev2->sectors))) {
+                    overlap = 1;
+                    break;
+                }
+                rdev2 = (mdk_rdev_s *) rdev2->same_set.next;
+            }
+            if (overlap) {
+                mddev_put(mddev);
+                break;
+            }
+            tmp = tmp->next;
+        }
+        if (overlap) {
+            /* Someone else could have slipped in a size
+             * change here, but doing so is just silly.
+             * We put oldsectors back because we *know* it is
+             * safe, and trust userspace not to race with
+             * itself
+             */
+            rdev->sectors = oldsectors;
+            return -16;
+        }
+    }
+    return len;
+}
+
+/*
+ * Import a device. If 'super_format' >= 0, then sanity check the superblock
+ *
+ * mark the device faulty if:
+ *
+ *   - the device is nonexistent (zero size)
+ *   - the device has no valid superblock
+ *
+ * a faulty rdev _never_ has rdev->sb set.
+ */
+static mdk_rdev_s *md_import_device(int newdev, int super_format, int super_minor)
+{
+    int err;
+    mdk_rdev_s *rdev;
+    int size;
+
+    rdev = (mdk_rdev_s *) malloc(sizeof(mdk_rdev_s));
+    if (!rdev) {
+        return ERR_PTR(-12);
+    }
+
+    if ((err = alloc_disk_sb(rdev)))
+        goto abort_free;
+
+    err = lock_rdev(rdev, newdev, super_format == -2);
+    if (err)
+        goto abort_free;
+
+//  kobject_init(&rdev->kobj, &rdev_ktype);
+
+    rdev->desc_nr = -1;
+    rdev->saved_raid_disk = -1;
+    rdev->raid_disk = -1;
+    rdev->flags = 0;
+    rdev->data_offset = 0;
+    rdev->sb_events = 0;
+//  rdev->last_read_error.tv_sec  = 0;
+//  rdev->last_read_error.tv_nsec = 0;
+    atomic_set(&rdev->nr_pending, 0);
+    atomic_set(&rdev->read_errors, 0);
+    atomic_set(&rdev->corrected_errors, 0);
+
+    size = rdev->bdev->bd_inode->i_size >> 10;
+    if (!size) {
+        err = -22;
+        goto abort_free;
+    }
+
+    if (super_format >= 0) {
+        err = super_types[super_format].
+            load_super(rdev, NULL, super_minor);
+        if (err == -22) {
+            goto abort_free;
+        }
+        if (err < 0) {
+            goto abort_free;
+        }
+    }
+
+    INIT_LIST_HEAD(&rdev->same_set);
+
+    return rdev;
+
+abort_free:
+    if (rdev->sb_page) {
+        if (rdev->bdev)
+            unlock_rdev(rdev);
+        free_disk_sb(rdev);
+    }
+    free(rdev);
+    return ERR_PTR(err);
+}
+
+/* mode:
+ *   0 - completely stop and dis-assemble array
+ *   2 - stop but do not disassemble array
+ */
+static int do_md_stop(mddev_s * mddev, int mode, int is_open)
+{
+    int err = 0;
+    struct gendisk *disk = mddev->gendisk;
+    mdk_rdev_s *rdev;
+
+    if (atomic_read(&mddev->openers) > is_open) {
+        err = -16;
+    }
+    else if (mddev->pers) {
+
+        if (mddev->ro)
+            set_disk_ro(disk, 0);
+
+        md_stop(mddev);
+//      mddev->queue->merge_bvec_fn = NULL;
+//      mddev->queue->unplug_fn = NULL;
+//      mddev->queue->backing_dev_info.congested_fn = NULL;
+
+        /* tell userspace to handle 'inactive' */
+        sysfs_notify_dirent(mddev->sysfs_state);
+
+        rdev = (mdk_rdev_s *) (&mddev->disks)->next;
+        while (1) {
+            prefetch(rdev->same_set.next);
+            if (&rdev->same_set == (&mddev->disks)) {
+                break;
+            }
+            if (rdev->raid_disk >= 0) {
+                char nm[20];
+                sysfs_remove_link(&mddev->kobj, nm);
+            }
+            rdev = (mdk_rdev_s *) rdev->same_set.next;
+        }
+
+        set_capacity(disk, 0);
+        revalidate_disk(disk);
+
+        if (mddev->ro)
+            mddev->ro = 0;
+
+        err = 0;
+    }
+    if (err)
+        return err;
+    /*
+     * Free resources if final stop
+     */
+    if (mode == 0) {
+
+
+//      bitmap_destroy(mddev);
+//      if (mddev->bitmap_info.file) {
+//          restore_bitmap_write_access(mddev->bitmap_info.file);
+//          fput(mddev->bitmap_info.file);
+//          mddev->bitmap_info.file = NULL;
+//      }
+//      mddev->bitmap_info.offset = 0;
+//
+//      export_array(mddev);
+//
+//      md_clean(mddev);
+//      kobject_uevent(&disk_to_dev(mddev->gendisk)->kobj, KOBJ_CHANGE);
+//      if (mddev->hold_active == UNTIL_STOP)
+//          mddev->hold_active = 0;
+
+    }
+    err = 0;
+    blk_integrity_unregister(disk);
+    md_new_event(mddev);
+    sysfs_notify_dirent(mddev->sysfs_state);
+    return err;
+}
+
+static int update_size(mddev_s *mddev, int num_sectors)
+{
+    mdk_rdev_s *rdev;
+    int rv;
+    int fit = (num_sectors == 0);
+
+//  if (mddev->pers->resize == NULL)
+//      return -22;
+    /* The "num_sectors" is the number of sectors of each device that
+     * is used.  This can only make sense for arrays with redundancy.
+     * linear and raid0 always use whatever space is available. We can only
+     * consider changing this number if no resync or reconstruction is
+     * happening, and if the new size is acceptable. It must fit before the
+     * sb_start or, if that is <data_offset, it must fit before the size
+     * of each device.  If num_sectors is zero, we find the largest size
+     * that fits.
+
+     */
+//  if (mddev->sync_thread)
+//      return -16;
+//  if (mddev->bitmap)
+//      /* Sorry, cannot grow a bitmap yet, just remove it,
+//       * grow, and re-add.
+//       */
+//      return -16;
+
+    rdev = (mdk_rdev_s *) (&mddev->disks)->next;
+    while (1) {
+        prefetch(rdev->same_set.next);
+        if (&rdev->same_set == (&mddev->disks)) {
+            break;
+        }
+        int avail = rdev->sectors;
+
+        if (fit && (num_sectors == 0 || num_sectors > avail))
+            num_sectors = avail;
+        if (avail < num_sectors)
+            return -28;
+        rdev = (mdk_rdev_s *) rdev->same_set.next;
+    }
+
+//  rv = mddev->pers->resize(mddev, num_sectors);
+    if (!rv)
+        revalidate_disk(mddev->gendisk);
+    return rv;
+}
+
+static void *md_seq_start(struct seq_file *seq, long long *pos) {
+    struct list_head *tmp;
+    long long l = *pos;
+    mddev_s *mddev;
+
+    if (l >= 0x10000)
+        return NULL;
+    if (!l--)
+        /* header */
+        return (void*) 1;
+
+    for (tmp = (&all_mddevs)->next; prefetch(tmp->next), tmp != (&all_mddevs); tmp= tmp->next) {
+        if (!l--) {
+            mddev = (mddev_s *) tmp;
+            mddev_get(mddev);
+            return mddev;
+        }
+    }
+    if (!l--)
+        return (void*) 2;/* tail */
+    return NULL;
+}
+
+static int remove_and_add_spares(mddev_s *mddev)
+{
+    mdk_rdev_s *rdev;
+    int spares = 0;
+
+    mddev->curr_resync_completed = 0;
+
+    rdev = (mdk_rdev_s *) (&mddev->disks)->next;
+    while (1) {
+        prefetch(rdev->same_set.next);
+        if (&rdev->same_set == (&mddev->disks)) {
+            break;
+        }
+        if (rdev->raid_disk >= 0 &&
+            !test_bit(8, &rdev->flags) &&
+            (test_bit(1, &rdev->flags) ||
+             ! test_bit(2, &rdev->flags)) &&
+            atomic_read(&rdev->nr_pending)==0) {
+//          if (mddev->pers->hot_remove_disk(
+//                  mddev, rdev->raid_disk)==0) {
+//              char nm[20];
+//              sysfs_remove_link(&mddev->kobj, nm);
+//              rdev->raid_disk = -1;
+//          }
+        }
+        rdev = (mdk_rdev_s *) rdev->same_set.next;
+    }
+
+    if (mddev->degraded && ! mddev->ro && !mddev->recovery_disabled) {
+        rdev = (mdk_rdev_s *) (&mddev->disks)->next;
+        while (1) {
+            prefetch(rdev->same_set.next);
+            if (&rdev->same_set == (&mddev->disks)) {
+                break;
+            }
+            if (rdev->raid_disk >= 0 &&
+                !test_bit(2, &rdev->flags) &&
+                !test_bit(8, &rdev->flags))
+                spares++;
+            if (rdev->raid_disk < 0
+                && !test_bit(1, &rdev->flags)) {
+                rdev->recovery_offset = 0;
+//              if (mddev->pers->hot_add_disk(mddev, rdev) == 0) {
+//                  char nm[20];
+//                  if (sysfs_create_link(&mddev->kobj,
+//                                &rdev->kobj, nm))
+//                  spares++;
+//                  md_new_event(mddev);
+//                  set_bit(MD_CHANGE_DEVS, &mddev->flags);
+//              } else
+//                  break;
+            }
+            rdev = (mdk_rdev_s *) rdev->same_set.next;
+        }
+    }
+    return spares;
+}
+
+void md_autodetect_dev(int dev)
+{
+    struct detected_devices_node *node_detected_dev;
+
+    node_detected_dev = (struct detected_devices_node *) malloc (sizeof(struct detected_devices_node));
+    if (node_detected_dev) {
+        node_detected_dev->dev = dev;
+        list_add_tail(&node_detected_dev->list, &all_detected_devices);
+    }
+}
+
+static void autostart_arrays(int part)
+{
+    mdk_rdev_s *rdev;
+    struct detected_devices_node *node_detected_dev;
+    int dev;
+    int i_scanned, i_passed;
+
+    i_scanned = 0;
+    i_passed = 0;
+
+    while (!list_empty(&all_detected_devices) && i_scanned < 0x7fffffff) {
+        i_scanned++;
+        node_detected_dev = (struct detected_devices_node *) all_detected_devices.next;
+        list_del(&node_detected_dev->list);
+        dev = node_detected_dev->dev;
+        free(node_detected_dev);
+        rdev = md_import_device(dev,0, 90);
+        if (IS_ERR(rdev))
+            continue;
+
+        if (test_bit(1, &rdev->flags)) {
+            continue;
+        }
+        set_bit(7, &rdev->flags);
+        list_add(&rdev->same_set, &pending_raid_disks);
+        i_passed++;
+    }
+    autorun_devices(part);
+}
+*/

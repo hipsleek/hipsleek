@@ -385,7 +385,7 @@ let compute_cmd rel_defs bottom_up =
   else
     "\nTD:=topdown(" ^ names ^ ", " ^ nos ^ ", SimHeur);\nTD;"
 
-let compute_fixpoint_aux rel_defs ante_vars subs bottom_up = 
+let compute_fixpoint_aux rel_defs ante_vars bottom_up = 
   (* Prepare the input for the fixpoint calculation *)
   let def = List.fold_left (fun x y -> x ^ (compute_def y ante_vars)) "" rel_defs in
   let cmd = compute_cmd rel_defs bottom_up in 
@@ -421,23 +421,23 @@ let compute_fixpoint_aux rel_defs ante_vars subs bottom_up =
   in
 
   (* Substitute the parameters of each relation to the original ones *)
-  DD.ninfo_pprint ("res(b4): " ^ 
-    (pr_list (pr_pair !CP.print_formula !CP.print_formula) res)) no_pos;
-  let res =
-    List.map (fun (a_rel,fixpoint) -> 
-      match a_rel with
-      | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
-        let subst_arg = 
-          try List.assoc name subs
-          with _ -> []
-        in
-        let subst_arg = List.map (fun (x,y) -> (y,x)) subst_arg in
-        if subst_arg = [] then (a_rel, fixpoint)
-        else (CP.subst subst_arg a_rel, CP.subst subst_arg fixpoint)
-      | _ -> report_error no_pos "compute_fixpoint_aux: Expected a relation"
-    ) res in
-  DD.ninfo_pprint ("res(af): " ^ 
-    (pr_list (pr_pair !CP.print_formula !CP.print_formula) res)) no_pos;
+(*  DD.ninfo_pprint ("res(b4): " ^ *)
+(*    (pr_list (pr_pair !CP.print_formula !CP.print_formula) res)) no_pos;*)
+(*  let res =*)
+(*    List.map (fun (a_rel,fixpoint) -> *)
+(*      match a_rel with*)
+(*      | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->*)
+(*        let subst_arg = *)
+(*          try List.assoc name subs*)
+(*          with _ -> []*)
+(*        in*)
+(*        let subst_arg = List.map (fun (x,y) -> (y,x)) subst_arg in*)
+(*        if subst_arg = [] then (a_rel, fixpoint)*)
+(*        else (CP.subst subst_arg a_rel, CP.subst subst_arg fixpoint)*)
+(*      | _ -> report_error no_pos "compute_fixpoint_aux: Expected a relation"*)
+(*    ) res in*)
+(*  DD.ninfo_pprint ("res(af): " ^ *)
+(*    (pr_list (pr_pair !CP.print_formula !CP.print_formula) res)) no_pos;*)
   res
 
 let helper (rel, pfs) ante_vars specs =
@@ -491,23 +491,69 @@ let arrange_para input_pairs ante_vars =
   in 
   pairs, List.concat subs
 
-let arrange_para_of_rel rhs_rel lhs_rel_name (old_args, new_args) = 
+let arrange_para_of_rel rhs_rel lhs_rel_name (old_args, new_args) bottom_up = 
   match rhs_rel with
   | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
     if name = lhs_rel_name then 
       let pairs = List.combine old_args args in
       let args = List.map (fun a -> List.assoc a pairs) new_args in
       CP.BForm ((CP.RelForm (name,args,o1),o2),o3)
+    else 
+    if bottom_up then rhs_rel
     else report_error no_pos "Not support topdown fixpoint for mutual recursion"
   | _ -> report_error no_pos "arrange_para_of_rel: Expected a relation"
 
-let arrange_para_of_pure fml lhs_rel_name subst =
+let arrange_para_of_pure fml lhs_rel_name subst bottom_up =
   let conjs = CP.list_of_conjs fml in
   let rel_conjs, others = List.partition CP.is_RelForm conjs in
-  let new_rel_conjs = List.map 
-    (fun x -> arrange_para_of_rel x lhs_rel_name subst) rel_conjs in
+  let new_rel_conjs = List.map (fun x -> arrange_para_of_rel x lhs_rel_name subst bottom_up) rel_conjs in
   CP.conj_of_list (others @ new_rel_conjs) no_pos
-  
+
+let rec re_order_para rels pfs ante_vars = match rels with
+  | [] -> ([],[])
+  | r::rs ->
+    let res_rs,res_pfs = re_order_para rs pfs ante_vars in
+    (match r with
+    | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
+      let pre_args, post_args = List.partition 
+        (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) args 
+      in
+      let new_args = pre_args @ post_args in
+      if new_args = args then (r::res_rs,res_pfs)
+      else
+        let subst_arg = args, new_args in
+        let new_pfs = List.map (fun pf_lst ->
+            List.map (fun pf -> arrange_para_of_pure pf name subst_arg true) pf_lst) pfs
+        in ([CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3)]@res_rs, new_pfs)
+    | _ -> report_error no_pos "re_order_para: Expected a relation")
+
+let arrange_para_new input_pairs ante_vars =
+  let rels,pfs = List.split input_pairs in
+  let rels,pfs = re_order_para rels pfs ante_vars in
+  try List.combine rels pfs
+  with _ -> report_error no_pos "Error in arrange_para_new"
+
+(*  let pairs, subs = List.split *)
+(*    (List.map (fun (r,pfs) ->*)
+(*      match r with*)
+(*      | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->*)
+(*        let pre_args, post_args = *)
+(*          List.partition *)
+(*            (fun e -> Gen.BList.subset_eq CP.eq_spec_var (CP.afv e) ante_vars) *)
+(*          args*)
+(*        in*)
+(*        let new_args = pre_args @ post_args in*)
+(*        if new_args = args then ((r,pfs),[])*)
+(*        else*)
+(*          let subst_arg = List.combine (List.map CP.exp_to_spec_var args) *)
+(*                                       (List.map CP.exp_to_spec_var new_args) *)
+(*          in*)
+(*          ((CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3), *)
+(*            List.map (fun x -> CP.subst subst_arg x) pfs),[(name,subst_arg)])*)
+(*      | _ -> report_error no_pos "arrange_para: Expected a relation"*)
+(*    ) input_pairs)*)
+(*  in *)
+(*  pairs, List.concat subs*)
 
 let arrange_para_td input_pairs ante_vars =
   let pairs = List.map (fun (r,pfs) ->
@@ -523,11 +569,11 @@ let arrange_para_td input_pairs ante_vars =
         else
           let subst_arg = args, new_args in
           CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3), 
-            List.map (fun x -> arrange_para_of_pure x name subst_arg) pfs
+            List.map (fun x -> arrange_para_of_pure x name subst_arg false) pfs
       | _ -> report_error no_pos "arrange_para_td: Expected a relation"
     ) input_pairs
   in 
-  pairs, []
+  pairs
 
 let rec unify_rels rel a_rel = match rel, a_rel with
   | (f1,CP.BForm ((CP.RelForm (name1,args1,p1),p2),p3)), 
@@ -595,7 +641,11 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
   DD.ninfo_pprint ("input_pairs(b4): " ^ (pr_list 
     (pr_pair !CP.print_formula (pr_list !CP.print_formula)) pairs)) no_pos;
 
-  let pairs, subs = if bottom_up then arrange_para pairs ante_vars 
+(*  let pairs, subs = if bottom_up then arrange_para_new pairs ante_vars,[] *)
+(*    else arrange_para_td pairs ante_vars,[]*)
+(*  in*)
+
+  let pairs = if bottom_up then arrange_para_new pairs ante_vars
     else arrange_para_td pairs ante_vars
   in
 
@@ -609,7 +659,7 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
   let true_const = List.map (fun (rel_fml,pf,_) -> (rel_fml,pf)) true_const in
   if rel_defs=[] then true_const 
   else
-    true_const @ (compute_fixpoint_aux rel_defs ante_vars subs bottom_up)
+    true_const @ (compute_fixpoint_aux rel_defs ante_vars bottom_up)
 
 let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
   let is_bag_cnt rel = List.exists CP.is_bag_typ (CP.fv rel) in
