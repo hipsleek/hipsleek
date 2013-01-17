@@ -25,15 +25,15 @@ pred_extn size[R]<n> ==
 
 pred_extn pos_sum[R,V]<s> ==
       s=0 // base case
-   or R::pos_sum<s2> & s=V+s2 & V>=0 
-   inv s>=0.
+   or R::pos_sum<s2> & s=V+s2 //& V>=0 
+   inv true.//s>=0.
 
 pred llN<n> == extends ll<> with size[REC]<n> .
 
 pred treeN<n> == extends tree<> with size[REC]<n> .
 
 
-//pred llNPSum<n,s> == extends llN<n> with pos_sum[VAL,REC]<s> .
+pred llNPSum<n,s> == extends llN<n> with pos_sum[VAL,REC]<s> .
 
 
 

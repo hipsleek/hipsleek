@@ -2091,3 +2091,34 @@ let look_up_field_ann prog view_data_name sel_anns=
   Debug.no_2 "look_up_field_ann" pr1 pr2 pr3
       (fun _ _ -> look_up_field_ann_x prog view_data_name sel_anns) view_data_name sel_anns
 
+(************************************************************
+Building the derive graph for view hierarchy based on Iast
+*************************************************************)
+module IdentComp = struct
+  type t = ident
+  let compare = compare
+  let hash = Hashtbl.hash
+  let equal = ( = )
+end
+module IG = Graph.Persistent.Digraph.Concrete(IdentComp)
+module IGO = Graph.Oper.P(IG)
+module IGC = Graph.Components.Make(IG)
+module IGP = Graph.Path.Check(IG)
+module IGN = Graph.Oper.Neighbourhood(IG)
+module IGT = Graph.Topological.Make(IG)
+
+let ex_args f a b = f b a
+
+let ngs_union gs =
+  List.fold_left IGO.union IG.empty gs
+
+let addin_derivegraph_of_views cg der_v : IG.t =
+  let gs = List.map (fun ((orig_v ,_),_) ->  IG.add_edge cg der_v.view_name orig_v) der_v.view_derv_info in 
+  ngs_union gs
+
+let derivegraph_of_views der_views : IG.t =
+  let cg = IG.empty in
+  let pn v = v.view_name in
+  let mns = List.map pn der_views in
+  let cg = List.fold_right (ex_args IG.add_vertex) mns cg in
+  List.fold_left (fun a b -> ex_args addin_derivegraph_of_views b a) cg der_views

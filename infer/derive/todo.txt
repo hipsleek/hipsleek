@@ -26,7 +26,7 @@ data node2 {
   node2 next@REC
 }
 
-## err-1-der-5.slk
+## err-1-der-5.slk: DONE
 
 Fatal error: exception Not_found
 

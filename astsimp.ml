@@ -908,8 +908,14 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
 	      (* let _ = print_string "trans_prog :: going to trans_view \n" in *)
           let tmp_views_derv,tmp_views_orig= List.partition (fun v -> v.I.view_derv) tmp_views in
 	      let cviews_orig = List.map (trans_view prog) tmp_views_orig in
-          let cviews_derv = List.map (fun v -> trans_view_dervs prog cviews_orig v) tmp_views_derv in
-          let cviews = cviews_orig@cviews_derv in
+          (*topo sort*)
+          let tmp_views_derv1 = mark_rec_and_der_order tmp_views_derv in
+          (* let cviews_derv = List.map (fun v -> trans_view_dervs prog cviews_orig v) tmp_views_derv in *)
+          let cviews_derv = List.fold_left (fun norm_views v ->
+              let der_view = trans_view_dervs prog norm_views v in
+              (norm_views@[der_view])
+          ) cviews_orig tmp_views_derv1 in
+          let cviews = (* cviews_orig@ *)cviews_derv in
 	      (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
 	      let crels = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
           let _ = prog.I.prog_rel_ids <- List.map (fun rd -> (RelT[],rd.I.rel_name)) prog.I.prog_rel_decls in
@@ -7543,13 +7549,46 @@ and pred_prune_inference_x (cp:C.prog_decl):C.prog_decl =
         C.prog_left_coercions  = l_coerc;
         C.prog_right_coercions = r_coerc;} in
     Gen.Profiling.pop_time "pred_inference" ;r
-        
-and pr_proc_call_order p = 
+
+(****************DER VIEW**************)
+and mark_rec_and_der_order_x (views: I.view_decl list) : I.view_decl list =
+  let sort_fn (n1,_) (n2,_) = n1- n2 in
+  let cg = I.derivegraph_of_views views in
+  let scc_arr = I.IGC.scc_array cg in
+  let scc_list = Array.to_list scc_arr in
+  (*todo: detect mutual recursion *)
+  (* let cp = mark_recursive_call cp scc_list cg in *)
+  let pair_views = mark_der_order views scc_list cg in
+  (*sort on pair_views*)
+  let sorted_views = List.sort sort_fn pair_views in
+  snd (List.split sorted_views)
+
+and mark_rec_and_der_order (views: I.view_decl list) : (I.view_decl) list =
+  let pr1 v= pr_id v.I.view_name in
+  let pr = pr_list pr1 in
+  Debug.no_1 "mark_rec_and_der_order" pr pr mark_rec_and_der_order_x views
+
+and mark_der_order_x (views: I.view_decl list) scc_list cg : (int*I.view_decl) list=
+  let _, fscc = I.IGC.scc cg in
+  let odered_views = List.map (fun v -> (fscc v.I.view_name, v)) views in
+  odered_views
+
+and mark_der_order (views: I.view_decl list) scc_list cg : (int*I.view_decl) list =
+  let pr1 v= pr_id v.I.view_name in
+  let pr2 scc_list = pr_list (fun scc -> (pr_list (fun s -> s) scc) ^ "\n") scc_list in
+  let pr3 = pr_list pr1 in
+  let pr4 = pr_list (pr_pair string_of_int pr1) in
+  Debug.no_2 "mark_der_order" pr3 pr2 pr4
+      (fun _ _ -> mark_der_order_x views scc_list cg) views scc_list
+
+(************ENF DER VIEW**************)
+
+and pr_proc_call_order p =
   let n = p.Cast.proc_name in
   let c = p.Cast.proc_call_order in
   pr_pair pr_id string_of_int (n,c)
 
-(* Termination *)			  
+(* Termination *)
 (* Recursive call and call order detection *)
 (* irf = is_rec_field *)
 and mark_rec_and_call_order_x (cp: C.prog_decl) : C.prog_decl =
