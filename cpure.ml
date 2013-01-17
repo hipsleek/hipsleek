@@ -2100,6 +2100,7 @@ and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formul
   match (pf1,pf2) with
     | (BConst(c1, _), BConst(c2, _)) -> c1 = c2
     | (XPure xp1, XPure xp2) -> eq_xpure_view xp1 xp2
+    | (BVar(sv1, _), BVar(sv2, _)) -> (eq sv1 sv2)
     | (Lte(IConst(i1, _), e2, _), Lt(IConst(i3, _), e4, _)) -> i1=i3+1 && eqExp_f eq e2 e4
     | (Lte(e1, IConst(i2, _), _), Lt(e3, IConst(i4, _), _)) -> i2=i4-1 && eqExp_f eq e1 e3
     | (Lt(IConst(i1, _), e2, _), Lte(IConst(i3, _), e4, _)) -> i1=i3-1 && eqExp_f eq e2 e4
@@ -8170,7 +8171,6 @@ let add_ann_constraints vrs f =
 let add_ann_constraints vrs f =
   let p1 = !print_formula in
   Debug.no_2 "add_ann_constraints" !print_svl p1 p1  add_ann_constraints vrs f
-
 type infer_state = 
   { 
       infer_state_vars : spec_var list; (* [] if no inference *)
@@ -8309,7 +8309,7 @@ let is_Rank (f:formula) = match f with
   | BForm _ -> (get_rank_dec_id_list f) != [] || (get_rank_bnd_id_list f) != []
   | _ -> false
 
-let is_Rank_ ec (f:formula) = match f with
+let is_Rank_Dec (f:formula) = match f with
   | BForm _ -> (get_rank_dec_id_list f) != []
   | _ -> false
 

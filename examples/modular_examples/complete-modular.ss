@@ -29,9 +29,9 @@ data node2 {
 */
 complete<"h":n, "mh":nmin> == 
 	self = null & ["h":n = 0; "mh":nmin = 0] or
-	self::node2<_, l, r> * l::complete<nl, nmin1> * r::complete<nr, nmin2> & ["h":nl=n-1 & nr=n-2; "mh":tmp = min(nmin1, nmin2) & nmin = tmp + 1] or
-	self::node2<_, l, r> * l::complete<nl, nmin1> * r::complete<nr, nmin2> & ["h":nl=n-1 & nr=n-1; "mh":tmp = min(nmin1, nmin2) & nmin = tmp + 1]
-	inv true & ["h","mh":n >= nmin; "mh":nmin >= 0];
+	self::node2<_, l, r> * l::complete<nl, nmin1> * r::complete<nr, nmin2> & ["h":nl=n-1 & nr=n-2; "mh": nmin = min(nmin1, nmin2) + 1] or
+	self::node2<_, l, r> * l::complete<nl, nmin1> * r::complete<nr, nmin2> & ["h":nl=n-1 & nr=n-1; "mh": nmin = min(nmin1, nmin2) + 1]
+	inv true & ["h":n >= nmin; "mh":n >= nmin; "mh":nmin >= 0];
 
 int maxim(int a, int b) 
 	requires true

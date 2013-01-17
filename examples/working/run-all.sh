@@ -36,6 +36,8 @@ echo -e "\n##################### term tests #####################"
 time ./run-fast-tests.pl term $@
 # some failures ex1.ss, ex12, ex12b, ex12c
 
+echo -e "\n##################### modular formulae tests #####################"
+time ./run-fast-tests.pl hip_long_mod $@
 # another check for lemma-proving
 # problem to be fixed! many failures
 echo -e "\n##################### lists tests #####################"
