@@ -1,0 +1,43 @@
+
+data node {
+	int val@VAL;
+	node next@REC;
+}.
+
+data node2 {
+	int val@VAL; 
+	node2 prev@REC; 
+	node2 next@REC; 
+}.
+
+pred ll<> == self=null
+  or self::node<_,p> * p::ll<>
+inv true.
+
+pred_extn pos_sum[R,V]<s> ==
+      s=0 // base case
+   or R::pos_sum<s2> & s=V+s2 & V>=0 
+   inv s>=0
+   .
+
+pred llNPSum<s> == extends ll<> with pos_sum[VAL,REC]<s> .
+
+/*
+Two solutions 
+  (i) warning that property extension should not have
+      non-definitional constraints, like v>=0
+ (ii) avoid error below
+ERROR: at _0_0 
+Message: cpure.extract_outer_inner_f: not handle yet
+ Fatal error: exception Failure("cpure.extract_outer_inner_f: not handle yet")
+*/
+
+
+
+
+
+
+
+
+
+
