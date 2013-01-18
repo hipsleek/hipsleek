@@ -510,7 +510,7 @@ let arrange_para_of_pure fml lhs_rel_name subst bottom_up =
   CP.conj_of_list (others @ new_rel_conjs) no_pos
 
 let rec re_order_para rels pfs ante_vars = match rels with
-  | [] -> ([],[])
+  | [] -> ([],pfs)
   | r::rs ->
     let res_rs,res_pfs = re_order_para rs pfs ante_vars in
     (match r with
@@ -523,15 +523,19 @@ let rec re_order_para rels pfs ante_vars = match rels with
       else
         let subst_arg = args, new_args in
         let new_pfs = List.map (fun pf_lst ->
-            List.map (fun pf -> arrange_para_of_pure pf name subst_arg true) pf_lst) pfs
+            List.map (fun pf -> arrange_para_of_pure pf name subst_arg true) pf_lst) res_pfs
         in ([CP.BForm ((CP.RelForm (name,new_args,o1),o2),o3)]@res_rs, new_pfs)
     | _ -> report_error no_pos "re_order_para: Expected a relation")
 
 let arrange_para_new input_pairs ante_vars =
   let rels,pfs = List.split input_pairs in
+  let _ = Debug.ninfo_hprint (add_str "rels(b4):" (pr_list !CP.print_formula)) rels no_pos in
+  let _ = Debug.ninfo_hprint (add_str "pfs(b4):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
   let rels,pfs = re_order_para rels pfs ante_vars in
+  let _ = Debug.ninfo_hprint (add_str "rels(af):" (pr_list !CP.print_formula)) rels no_pos in
+  let _ = Debug.ninfo_hprint (add_str "pfs(af):" (pr_list (pr_list !CP.print_formula))) pfs no_pos in
   try List.combine rels pfs
-  with _ -> report_error no_pos "Error in arrange_para_new"
+  with _ -> report_error no_pos "Error in re_order_para"
 
 (*  let pairs, subs = List.split *)
 (*    (List.map (fun (r,pfs) ->*)

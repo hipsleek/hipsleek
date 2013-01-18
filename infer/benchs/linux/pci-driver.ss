@@ -185,7 +185,7 @@ data char {
 }
 
 data bus_type {
-     char name;
+    char name;
     //  int (*probe)(struct device *dev);
     //  int (*remove)(struct device *dev);
 }
