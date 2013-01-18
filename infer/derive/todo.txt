@@ -130,7 +130,7 @@ pred llSum<s> == extends ll<> with ssum[REC,VAL]<s> .
 Missing VAL but below still goes through.
 I think we should highlight as an error since VAL cannot be used
 
-## der-1c.slk
+## der-1c.slk: DONE
 
 pred_extn pos_sum[R,V]<s> ==
       s=0 // base case
