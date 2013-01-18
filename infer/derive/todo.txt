@@ -77,14 +77,21 @@ used in a branch, as it signify that self!=null is present.
    EBase exists (Expl)(Impl)[R; m2](ex){1}->R::minValue<m2>@M[0][Orig]&
          m=min(V,m2)&{FLOW,(1,22)=__flow}[]
 
-## der-6b.slk:
+## der-6b.slk (not pick anything), der-5.slk:
 
-derive inv
+derive inv: pick something relevant to V,n
 
-## der-5.slk
+pred_extn hed[V]<n> ==
+          n=V
+   inv self!=null 
+
+
+
+
+## der-5.slk: DONE
 
 (1) Omega error (norm min/max: DONE)
-(2) Why isn't n>=0 taken from the size view_extn?
+(2) Why isn't n>=0 taken from the size view_extn?: DONE
 
 ************VIEW_DERIVED*************
  view llSNN[]<n:int>= 

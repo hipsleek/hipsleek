@@ -23,6 +23,29 @@ module TP = Tpdispatcher
 module Chk = Checks
 
 
+(******************************************)
+   (***************PURE*****************)
+(******************************************)
+let  partition_extn_svl_x p svl=
+  let check_one f=
+    let svl0 = CP.fv f in
+    (CP.intersect_svl svl0 svl <> [])
+  in
+  let ps = CP.list_of_conjs p in
+  let ps_extn,ps_non_extn = List.partition check_one ps in
+  let new_p= CP.conj_of_list ps_extn (CP.pos_of_formula p) in
+  let p_non_extn= CP.conj_of_list ps_non_extn (CP.pos_of_formula p) in
+  (new_p, p_non_extn)
+
+let partition_extn_svl p svl=
+  let pr1 = !CP.print_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_2 "partition_extn_svl" pr1 pr2 (pr_pair pr1 pr1)
+      (fun _ _ -> partition_extn_svl_x p svl) p svl
+(******************************************)
+   (*************END PURE***************)
+(******************************************)
+
 let generate_extn_ho_procs prog cviews extn_view_name=
   let mk_ho_b args p =
     fun svl ->
@@ -41,10 +64,14 @@ let generate_extn_ho_procs prog cviews extn_view_name=
     (* let _ =  CP.extract_outer_inner p args val_extns rec_args in [] *)
     fun svl val_extns1 rec_ls1->
       let svl1 = List.concat (snd (List.split rec_ls)) in
-      (*find subformula has svl1--skip now*)
+      (*find subformula has svl1*)
+      (* let _ =  Debug.info_pprint ("   p: "^ (!CP.print_formula p)) no_pos in *)
+      (* let _ =  Debug.info_pprint ("   svl: "^ (!CP.print_svl svl)) no_pos in *)
+      let p_extn, p_non_extn = partition_extn_svl p svl in
+      (* let _ =  Debug.info_pprint ("   p_extn: "^ (!CP.print_formula p_extn)) no_pos in *)
       let rec_args = List.concat (List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls1) in
-      let (is_bag_constr,(outer, root_e), (inner_e, first_e)) =  CP.extract_outer_inner p args val_extns rec_args in
-      (*combine bag and non-bag constrs*)
+      let (is_bag_constr,(outer, root_e), (inner_e, first_e)) =  CP.extract_outer_inner p_extn args val_extns rec_args in
+      (*combine bag or non-bag constrs*)
       let comb_fn= if is_bag_constr then CP.mk_exp_from_bag_tmpl else CP.mk_exp_from_non_bag_tmpl in
       (*cmb inner most exp*)
       (* let _ =  Debug.info_pprint ("   val_extns: "^ (!CP.print_svl val_extns)) no_pos in *)
@@ -60,19 +87,33 @@ let generate_extn_ho_procs prog cviews extn_view_name=
       let n_p = (CP.BForm ((n_outer, None), None)) in
       (* let _ =  Debug.info_pprint ("   n_p: "^ (!CP.print_formula n_p)) no_pos in *)
       let n_p1,quans = CP.norm_exp_min_max n_p in
-      (n_p1,quans)
+      (*other constraints*)
+      (*may need some filter: CP.filter_var: omit now*)
+      let n_p3= if rec_args <> [] then (*ind_case*)
+            let rec_args0 = List.concat (List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls) in
+            (* let _ =  Debug.info_pprint ("   rec_args0: "^ (!CP.print_svl rec_args)) no_pos in *)
+            let ss3 = List.combine rec_args0 rec_args in
+            let p_non_extn1 = CP.subst ss3 p_non_extn in
+            (* let _ =  Debug.info_pprint ("   p_non_extn1: "^ (!CP.print_formula p_non_extn1)) no_pos in *)
+            let n_p2 = CP.mkAnd n_p1  p_non_extn1 (CP.pos_of_formula n_p1) in
+            n_p2
+          else n_p1 (*base case*)
+      in
+      (n_p3,quans)
   in
   let extn_v = C.look_up_view_def_raw cviews extn_view_name in
   let extn_fs = fst (List.split extn_v.C.view_un_struc_formula) in
-  let (brs, val_extns) = CF.classify_formula_branch extn_fs extn_view_name
+  let inv_p = (MCP.pure_of_mix extn_v.C.view_user_inv) in
+  let (brs, val_extns) = CF.classify_formula_branch extn_fs inv_p extn_view_name
     extn_v.C.view_vars extn_v.C.view_prop_extns in
   let b_brs, ind_brs = List.partition (fun (_, ls) -> ls=[]) brs in
   (*now, we assume we always have <= 1 base case and <=1 ind case*)
   let ho_bs = List.map (fun (p,_) ->  mk_ho_b extn_v.C.view_vars p) b_brs in
   let ho_inds = List.map (fun (p, ls) -> mk_ho_ind extn_v.C.view_vars
       val_extns p ls) ind_brs in
-  (* (extn_view_name, b_brs, ind_brs, val_extns) *)
-  (extn_view_name, ho_bs, ho_inds)
+  (* (extn_view_name, b_brs, ind_brs, val_extns, extn_inv) *)
+  (* let _ =  Debug.info_pprint ("   extn_v.C.view_vars: "^ (!CP.print_svl extn_v.C.view_vars)) no_pos in *)
+  (extn_view_name, ho_bs, ho_inds(* , CP.filter_var inv_p extn_v.C.view_vars *))
 
 let trans_view_one_derv_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) view_derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) :
        C.view_decl =
@@ -105,7 +146,7 @@ let trans_view_one_derv_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_d
  *)
  (**********************************)
   let extn_view = C.look_up_view_def_raw cviews extn_view_name in
-  let (extn_vname, extn_ho_bs, extn_ho_inds) = generate_extn_ho_procs prog cviews extn_view_name in
+  let (extn_vname, extn_ho_bs, extn_ho_inds(* , extn_user_inv *)) = generate_extn_ho_procs prog cviews extn_view_name in
  (**********************************)
  (*
    BASE VIEW: (1) abs untruct formula, (2) extract ANN and (3) apply extn_ho
@@ -151,6 +192,10 @@ let trans_view_one_derv_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_d
         | Some f1  -> Some (CF.mkOr f1 fc no_pos)
         | None -> Some fc) None new_un_struc_formulas
   in
+  (* let orig_user_inv = (MCP.pure_of_mix orig_view.C.view_user_inv) in *)
+  (* let _ =  Debug.info_pprint ("   extn_inv: "^ (!CP.print_formula extn_user_inv)) no_pos in *)
+  (* let n_user_inv =  MCP.mix_of_pure (CP.mkAnd orig_user_inv extn_user_inv (CP.pos_of_formula orig_user_inv)) in *)
+  (* let _ =  Debug.info_pprint ("   n_user_inv: "^ (!CP.print_formula (MCP.pure_of_mix n_user_inv))) no_pos in *)
   {orig_view with
       C.view_name = view_derv.I.view_name;
      (* C.view_kind = C.View_DERV; *)
@@ -159,6 +204,7 @@ let trans_view_one_derv_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_d
       C.view_un_struc_formula = new_un_struc_formulas;
       C.view_raw_base_case = rbc;
       C.view_is_rec = extn_ind_brs <> [];
+      (* C.view_user_inv = n_user_inv; *)
   }
 
 let trans_view_one_derv (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) derv view_derv : C.view_decl =

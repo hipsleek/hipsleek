@@ -4459,7 +4459,7 @@ and subst_unk_hps_hf hf0 hp_names=
 (*****************************************)
   (*************INFER*******************)
 (*****************************************)
-let extract_rec_extn_h hf0 v_name=
+let extract_rec_extn_h hf0 v_name v_args inv=
   let rec helper hf=
     match hf with
     | Star {h_formula_star_h1 = hf1;
@@ -4473,7 +4473,10 @@ let extract_rec_extn_h hf0 v_name=
         (helper hf1)@(helper hf2)
     | DataNode hd -> []
     | ViewNode hv -> if String.compare hv.h_formula_view_name v_name = 0 then
-          [(hv.h_formula_view_node, hv.h_formula_view_arguments)] else []
+          let ss = List.combine v_args hv.h_formula_view_arguments in
+          let inv1 = CP.subst ss inv in
+          let refined_inv = CP.filter_var inv1 hv.h_formula_view_arguments in
+          [((hv.h_formula_view_node, hv.h_formula_view_arguments),refined_inv)] else []
     | HRel _
     | Hole _
     | HTrue
@@ -4482,22 +4485,22 @@ let extract_rec_extn_h hf0 v_name=
   in
   helper hf0
 
-let extract_rec_extn_x f v_name=
+let extract_rec_extn_x f v_name v_args inv=
   let rec helper f0=
     match f0 with
-      | Base fb -> extract_rec_extn_h fb.formula_base_heap v_name
-      | Exists fe -> extract_rec_extn_h fe.formula_exists_heap v_name
+      | Base fb -> extract_rec_extn_h fb.formula_base_heap v_name v_args inv
+      | Exists fe -> extract_rec_extn_h fe.formula_exists_heap v_name v_args inv
       | Or orf -> report_error no_pos "cformula.extract_rec_extn: f should not an or formula"
   in
   helper f
 
-let extract_rec_extn f v_name=
+let extract_rec_extn f v_name v_args inv=
   let pr1 = !print_formula in
-  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-  Debug.no_2 "extract_rec_extn" pr1 pr_id pr2
-      (fun _ _ -> extract_rec_extn_x f v_name) f v_name
+  let pr2 = pr_list (pr_pair (pr_pair !CP.print_sv !CP.print_svl) !CP.print_formula) in
+  Debug.no_4 "extract_rec_extn" pr1 pr_id !CP.print_svl !CP.print_formula pr2
+      (fun _ _ _  _ -> extract_rec_extn_x f v_name v_args inv) f v_name v_args inv
 
-let classify_formula_branch_x fs v_name v_args v_extns=
+let classify_formula_branch_x fs inv v_name v_args v_extns=
   let rec list_assoc extns r_svl res=
     match extns with
       | [] -> res
@@ -4510,11 +4513,14 @@ let classify_formula_branch_x fs v_name v_args v_extns=
   let process_one f=
     let p = extract_pure f in
     (*prune out p*)
-    let rec_svl = extract_rec_extn f v_name in
+    let rec_svl, ls_inv = List.split (extract_rec_extn f v_name v_args inv) in
     let rec_extns = list_assoc v_extns rec_svl [] in
     let keep_svl = if rec_extns=[] then v_args else (v_args@v_extns) in
     let p1 = CP.filter_var p keep_svl in
-    (p1,rec_extns)
+    (*involve inv*)
+    (* let filtered_inv = CP.filter_var inv keep_svl in *)
+    let filtered_inv = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 no_pos) (CP.mkTrue no_pos) ls_inv in
+    (CP.mkAnd p1 filtered_inv (CP.pos_of_formula p1),rec_extns)
   in
   let ls_p_r = List.map process_one fs in
   let rec_extns_all= CP.remove_dups_svl (fst (List.split
@@ -4522,14 +4528,14 @@ let classify_formula_branch_x fs v_name v_args v_extns=
   let val_extns = CP.diff_svl v_extns rec_extns_all in
   (ls_p_r, val_extns)
 
-let classify_formula_branch fs v_name v_args v_extns=
+let classify_formula_branch fs inv v_name v_args v_extns=
   let pr0 = pr_list !print_formula in
   let pr1 = !CP.print_svl in
   let pr2 = pr_pair (pr_list (pr_pair !CP.print_formula
   (pr_list (pr_pair !CP.print_sv pr1)) )) pr1 in
-  Debug.no_4 "classify_formula_branch" pr0 pr_id pr1 pr1 pr2
-      (fun _ _ _ _ -> classify_formula_branch_x fs v_name v_args v_extns)
-      fs v_name v_args v_extns
+  Debug.no_5 "classify_formula_branch" pr0 !CP.print_formula pr_id pr1 pr1 pr2
+      (fun _ _ _ _ _ -> classify_formula_branch_x fs inv v_name v_args v_extns)
+      fs inv v_name v_args v_extns
 
 let extend_view_nodes_h hf0 old_v_name new_v_name extra_args =
   let rec helper hf=

@@ -32,11 +32,11 @@ pred_extn minValue[V,R]<m> ==
     m=V // this denote singleton case without any R
     or R::minValue<m2> & m=min(V,m2). // in case of multiple m2
 
-//pred llSNN<n> == extends llNN<> with size[REC]<n> .
+pred llSNN<n> == extends llNN<> with size[REC]<n> .
 
 //pred treeSNN<n> == extends treeNN<> with size[REC]<n> .
 
 //pred llMin<m> == extends llNN<> with minValue[VAL,REC]<m>.
 
-pred treeMin<m> == extends treeNN<> with minValue[VAL,REC]<m> .
+//pred treeMin<m> == extends treeNN<> with minValue[VAL,REC]<m> .
 
