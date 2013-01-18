@@ -6295,7 +6295,7 @@ and heap_entail_build_mix_formula_check_a (evars : CP.spec_var list) (ante : MCP
   let sevars = (* List.map CP.to_int_var *) evars in
   let outer_vars, inner_vars = List.partition (fun v -> CP.mem v avars) sevars in
   let conseq = if !no_RHS_prop_drop then conseq else  MCP.mix_cons_filter conseq MCP.isImplT in
-  let tmp1 = elim_exists_mix_formula inner_vars conseq no_pos in
+  let tmp1 = elim_exists_mix_formula inner_vars conseq no_pos in 
   let tmp2 = MCP.memo_pure_push_exists outer_vars tmp1 in
   (*let _ = print_string ("outer_vars: "^(pr_list Cprinter.string_of_spec_var outer_vars)^"\n inner_vars: "^(pr_list Cprinter.string_of_spec_var inner_vars)^"\n conseq: "^(Cprinter.string_of_mix_formula conseq)
     ^"\n added inner: "^(Cprinter.string_of_mix_formula tmp1)^"\n added outer: "^(Cprinter.string_of_mix_formula tmp2)^"\n") in*)
@@ -7786,14 +7786,17 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                 of the pre-processed subs_to_inst_vars*)
 	          (* An Hoa : strip all the pair of equality involving # *)
 	          let other_subs = List.filter (fun ((x,y),_) -> not (CP.is_hole_spec_var x || CP.is_hole_spec_var y)) other_subs in
-              let to_lhs,to_rhs,ext_subst = get_eqns_free other_subs new_exist_vars impl_tvars estate.es_gen_expl_vars pos in
-
+              let to_lhs,to_rhs,ext_subst =  get_eqns_free other_subs new_exist_vars impl_tvars estate.es_gen_expl_vars pos  in
+              let is_ann a = CP.is_ann_type (CP.type_of_spec_var a) in
+              let ext_subst = if (!Globals.allow_imm) then List.filter (fun (f,t) -> not ( is_ann f &&  is_ann t)) ext_subst else ext_subst in
+              let _ = Debug.tinfo_hprint (add_str "to_rhs(bef ann)" (Cprinter.string_of_pure_formula)) to_rhs pos in
+              let _ = Debug.tinfo_hprint (add_str "to_lhs(bef ann)" (Cprinter.string_of_pure_formula)) to_lhs pos in
+              let _ = Debug.tinfo_hprint (add_str "ext_subst(bef ann)" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) ext_subst pos in
               (* adding annotation constraints matched *)
               let to_rhs = match ann_rhs with
                 | None -> to_rhs
                 | Some bf -> CP.mkAnd bf to_rhs no_pos in
               let _ = Debug.tinfo_hprint (add_str "to_rhs" (Cprinter.string_of_pure_formula)) to_rhs pos in
-	      (*let _ = print_string("cris: to_rhs = " ^ (Cprinter.string_of_pure_formula to_rhs) ^ "\n") in *)
               let to_lhs = (match ann_lhs with
                 | None -> to_lhs
                 | Some bf -> CP.mkAnd bf to_lhs no_pos) in
@@ -7805,11 +7808,11 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               (********************************************************************)
               let new_ante_p = (MCP.memoise_add_pure_N l_p to_lhs ) in
               let new_conseq_p = (MCP.memoise_add_pure_N r_p to_rhs ) in
-	      (* let _ = print_string("cris: new_ante_pure = " ^ (Cprinter.string_of_mix_formula new_ante_p) ^ "\n") in *)
-	      (* let _ = print_string("cris: new_conseq_pure = " ^ (Cprinter.string_of_mix_formula new_conseq_p) ^ "\n") in *)
               (*add instantiation for perm vars*)
               let new_ante_p = (MCP.memoise_add_pure_N new_ante_p p_ante ) in
               let new_conseq_p = (MCP.memoise_add_pure_N new_conseq_p p_conseq ) in
+              let _ = Debug.tinfo_hprint (add_str "new_ante_p" (Cprinter.string_of_mix_formula)) new_ante_p pos in
+              let _ = Debug.tinfo_hprint (add_str "new_conseq_p" (Cprinter.string_of_mix_formula)) new_conseq_p pos in
 	          (* An Hoa : put the remain of l_node back to lhs if there is memory remaining after matching *)
 	      (*let _ = print_string("\nl_h : "^(Cprinter.string_of_h_formula l_h)^"\n") in
 	        let _ = print_string("rem_l_node : "^(Cprinter.string_of_h_formula rem_l_node)^"\n") in
@@ -7822,13 +7825,14 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let new_ante = mkBase l_h new_ante_p l_t l_fl l_a pos in
 	          (* An Hoa : fix new_ante *)
               let tmp_conseq = mkBase r_h new_conseq_p r_t r_fl r_a pos  in
+              let _ = Debug.tinfo_hprint (add_str "tmp_conseq" (Cprinter.string_of_formula)) tmp_conseq pos in
               let lhs_vars = CP.fv to_lhs in
               (* apply the new bindings to the consequent *)
               let r_subs, l_sub = List.split (ivar_subs_to_conseq@ext_subst) in
               (*IMPORTANT TODO: global existential not took into consideration*)
        	      (*let _ = print_string("cris: tmp_conseq = " ^ (Cprinter.string_of_formula tmp_conseq) ^ "\n") in *)
               let tmp_conseq' = subst_avoid_capture r_subs l_sub tmp_conseq in
-	      (*let _ = print_string("cris: new_tmp_conseq = " ^ (Cprinter.string_of_formula tmp_conseq') ^ "\n") in *)
+              let _ = Debug.tinfo_hprint (add_str "tmp_conseq'" (Cprinter.string_of_formula)) tmp_conseq' pos in
               let tmp_h2, tmp_p2, tmp_fl2, _, tmp_a2 = split_components tmp_conseq' in
               let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_a2 pos in
 	          (* An Hoa : TODO fix the consumption here - THIS CAUSES THE CONTRADICTION ON LEFT HAND SIDE! *)
@@ -7845,8 +7849,6 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               Debug.tinfo_hprint (add_str "r_ann" (Cprinter.string_of_imm)) r_ann pos;
               let new_consumed = 
                 if (isLend r_ann || isAccs r_ann || (isPoly r_ann && (isLend l_ann || isAccs l_ann))) (*&& not(!allow_field_ann)*) then estate.es_heap else mkStarH consumed_h estate.es_heap pos in
-	      (*let _ = print_string("\ncris: new_consumed = " ^ (Cprinter.string_of_h_formula new_consumed) ) in *)
-	      (*let _ = print_string("\ncris: new_ante = " ^ (Cprinter.string_of_formula new_ante) ) in *)
 	          let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with
                 |Some s1, Some s2 -> ((Gen.BList.remove_elem_eq (=) s1 estate.es_residue_pts),((s1,s2)::estate.es_success_pts))
                 |None, Some s2 -> (estate.es_residue_pts,estate.es_success_pts)

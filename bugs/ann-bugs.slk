@@ -10,7 +10,6 @@ pred ll<n, v1, v2> == self = null & n = 0
 	or self::node<a@v2, q> * 
     q::ll<n-1, v1, v2>@v1
   inv n >= 0.
-
 /*
 pred cell<v,a,b> == self::node<v,q>@a * q::node<_,_>@b
    inv self!=null.
@@ -39,5 +38,6 @@ print residue.
 
 
 // (8) should Fail ????? why is valid?
-checkentail x::node<_, null> * y::ll<_,_,_> |- x::ll<m, _, _> & m = 2.
+checkentail x::node<_, y> * y::ll<_,_,_> |- x::ll<m, _, _> & m = 2.
 print residue.
+

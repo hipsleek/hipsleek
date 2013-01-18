@@ -80,7 +80,7 @@ type xpure_view = {
     xpure_view_remaining_branches :  (formula_label list) option;
     xpure_view_pos : loc;
     (* xpure_view_derv : bool; *)
-    (* xpure_view_imm : ann; *)
+    (* xpure_view_imm: ann; *)
     (* xpure_view_perm : cperm; (\*LDK: permission*\) *)
     (* xpure_view_arguments : CP.spec_var list; *)
     (* xpure_view_modes : mode list; *)
@@ -8159,8 +8159,10 @@ let add_ann_constraints vrs f =
     let rec helper vrs f = 
     match vrs with
       | v :: r -> 
-          let c1 = BForm((Lte(IConst( (int_of_heap_ann Mutable), no_pos), Var(v,no_pos), no_pos), None), None) in
-          let c2 = BForm((Lte(Var(v,no_pos), IConst(( (int_of_heap_ann Accs)), no_pos), no_pos), None), None) in 
+          (* let c1 = BForm((Lte(IConst( (int_of_heap_ann Mutable), no_pos), Var(v,no_pos), no_pos), None), None) in *)
+          let c1 = BForm((SubAnn(AConst(Mutable,no_pos), Var(v,no_pos), no_pos), None), None) in
+          (* let c2 = BForm((Lte(Var(v,no_pos), IConst(( (int_of_heap_ann Accs)), no_pos), no_pos), None), None) in  *)
+          let c2 = BForm((SubAnn(Var(v,no_pos), AConst( Accs, no_pos), no_pos), None), None) in 
           (* let c2 = BForm((Lte(Var(v,no_pos), IConst(( (int_of_heap_ann Lend)), no_pos), no_pos), None), None) in  *)
           let c12 = mkAnd c1 c2 no_pos in
           let rf = helper r f in
@@ -8170,7 +8172,8 @@ let add_ann_constraints vrs f =
 
 let add_ann_constraints vrs f =
   let p1 = !print_formula in
-  Debug.no_2 "add_ann_constraints" !print_svl p1 p1  add_ann_constraints vrs f
+  Debug.ho_2 "add_ann_constraints" !print_svl p1 p1  add_ann_constraints vrs f
+
 type infer_state = 
   { 
       infer_state_vars : spec_var list; (* [] if no inference *)

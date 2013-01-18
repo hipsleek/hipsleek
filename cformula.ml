@@ -278,6 +278,7 @@ let print_pure_f = ref(fun (c:CP.formula) -> "printer not initialized")
 let print_formula_base = ref(fun (c:formula_base) -> "printer not initialized")
 let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
 let print_h_formula_for_spec = ref(fun (c:h_formula) -> "printer not initialized")
+let print_t_formula = ref(fun (c:t_formula) -> "printer not initialized")
 let print_mix_f = ref(fun (c:MCP.mix_formula) -> "printer not initialized")
 let print_mix_formula = print_mix_f
 let print_ident_list = ref(fun (c:ident list) -> "printer not initialized")
@@ -368,6 +369,12 @@ let mkExpAnn ann pos =
   match ann with
     | TempAnn _ -> CP.IConst(int_of_heap_ann Accs, pos)
     | ConstAnn a -> CP.IConst(int_of_heap_ann a, pos)
+    | PolyAnn v  -> CP.Var(v, pos)  
+
+let mkExpAnnSymb ann pos = 
+  match ann with
+    | TempAnn _ -> CP.AConst(Accs, pos)
+    | ConstAnn a -> CP.AConst(a, pos)
     | PolyAnn v  -> CP.Var(v, pos)  
 
 (* generalized to data and view *)
@@ -1298,7 +1305,7 @@ and combine_and_pure (f1:formula)(p:MCP.mix_formula)(f2:MCP.mix_formula):MCP.mix
 
 (*and combine_and_pure (f1:formula)(p:MCP.mix_formula)(f2:MCP.mix_formula):MCP.mix_formula*bool = 
 	let pr = pr_pair !print_mix_formula  (string_of_bool) in
-	Debug.ho_3 "combine_and_pure" (!print_formula) (!print_mix_formula) (!print_mix_formula) pr 
+	Debug.no_3 "combine_and_pure" (!print_formula) (!print_mix_formula) (!print_mix_formula) pr 
 	combine_and_pure_x f1 p f2 *)
 
 and sintactic_search (f:formula)(p:Cpure.formula):bool = match f with
@@ -3094,8 +3101,15 @@ and normalize_only_clash_rename_x (f1 : formula) (f2 : formula) (pos : loc) = ma
 
 (* split a conjunction into heap constraints, pure pointer constraints, *)
 (* and Presburger constraints *)
+
+ (* h_formula * MCP.mix_formula * flow_formula * t_formula * one_formula list *)
 and split_components (f: formula) =
-  Debug.no_1 "split_components" !print_formula (fun _ -> "")
+  let pr (a, b, c, d, l) =  (!print_h_formula a) ^", " ^ 
+      (!print_mix_formula b) ^", " ^
+      (!print_flow_formula c) ^", " ^
+      (!print_t_formula d)^", " ^
+      (List.fold_left (fun str x -> str ^ ", "^ (!print_one_formula x) )  "" l)  in
+  Debug.no_1 "split_components" !print_formula (* (fun _ -> "") *)  pr
   split_components_x f 
 
 and split_components_x (f : formula) = 
