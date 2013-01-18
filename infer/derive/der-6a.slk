@@ -8,7 +8,7 @@ pred_extn hed[V]<n> ==
 pred_extn minValue[V,R]<m> ==
    m=V // this denote singleton case without any R
    or R::minValue<m2> & m=min(V,m2) // in case of multiple m2
-   //inv self!=null
+   inv self!=null
 . 
 
 /*

@@ -1154,7 +1154,7 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
     else ())
   in 
   let check_and_compute () = 
-    if not(vdef.C.view_kind = C.View_PRIM) then
+    if not(vdef.C.view_kind = C.View_PRIM || vdef.C.view_kind = C.View_EXTN) then
 	      let (xform', addr_vars', ms) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in	
 	      let addr_vars = CP.remove_dups_svl addr_vars' in
 	      let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in

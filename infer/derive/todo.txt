@@ -62,7 +62,7 @@ view llhead[]<n:TVar[51]>=
 Please also print for pred_extn whenever debug-derive flag
 is set.
 
-## der-6a.slk:
+## der-6a.slk: DONE
 
 :Fatal error: exception Failure("view formula does not entail supplied invariant
 ")
@@ -77,6 +77,9 @@ used in a branch, as it signify that self!=null is present.
    EBase exists (Expl)(Impl)[R; m2](ex){1}->R::minValue<m2>@M[0][Orig]&
          m=min(V,m2)&{FLOW,(1,22)=__flow}[]
 
+## der-6b.slk:
+
+derive inv
 
 ## der-5.slk
 
