@@ -1,11 +1,10 @@
-/* selection sort */
+/* insertion algorithm */
 
 data node {
 	int val; 
 	node next; 
 }
 
-// needs infinity
 /*
 sortA<v> == self::node<v,null> 
  or self::node<v, p> * p::sortA<v2> & v<=v2 
@@ -21,11 +20,17 @@ relation R(int r, int a).
 relation R2(int r, int a).
 
 node insert(node x, node y)
+
      infer [R,R2]
      requires x::sortHO<a,R> * y::node<v,null>
-     ensures  res::sortHO<b,R2> &  b=min(a,v) 
+     ensures  res::sortHO<b,R2> &  b=min(a,v)
+    ;
+/*
+     requires x::sortA<a> * y::node<v,null>
+     ensures  res::sortA<b,> &  b=min(a,v) 
         //& (v>a & b=a | (a>=b & b=v))
      ;
+*/
 /*
 !!! REL POST :  R2(b,v2_671)
 !!! POST:  b<=v2_671
