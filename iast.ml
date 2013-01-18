@@ -2072,17 +2072,25 @@ let rec get_breaks e =
 	fold_exp e f (List.concat) [] 
 
 
-let look_up_field_ann_x prog view_data_name sel_anns=
+let look_up_field_ann_x prog data_name sel_anns=
   let rec ann_w_pos ls_anns n res=
     match ls_anns with
       | [] -> res
       | anns::rest -> if Gen.BList.intersect_eq (fun s1 s2 -> String.compare s1 s2 = 0) anns sel_anns <> [] then
-             ann_w_pos rest (n+1) (res@[(view_data_name,n)])
+             ann_w_pos rest (n+1) (res@[((data_name,n),anns)])
           else ann_w_pos rest (n+1) res
   in
-  let dd = look_up_data_def_raw prog.prog_data_decls view_data_name in
+  let dd = look_up_data_def_raw prog.prog_data_decls data_name in
   let ls_anns = List.map (fun (_,_,_,anns) -> anns) dd.data_fields in
-  ann_w_pos ls_anns 0 []
+  let ann_w_pos,ls_anns_only = List.split (ann_w_pos ls_anns 0 []) in
+  let anns_only = List.concat ls_anns_only in
+  let not_delcared_anns = Gen.BList.difference_eq (fun s1 s2 -> String.compare s1 s2 = 0) sel_anns anns_only in
+  if not_delcared_anns <> [] then
+    let prr = if List.length not_delcared_anns > 1 then " are " else " is " in
+    report_error no_pos ( (String.concat ", " not_delcared_anns) ^ prr ^
+                                "not specified in the data structure " ^ data_name)
+  else
+    ann_w_pos
 
 let look_up_field_ann prog view_data_name sel_anns=
   let pr1 = pr_id in

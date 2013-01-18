@@ -42,7 +42,7 @@ Fatal error: exception Invalid_argument("List.combine")
 pred llNNSum2<s> == extends llNN2<> with pos_sum[VAL,REC]<s> .
 
 
-## der-6.slk
+## der-6.slk: DONE
 
 pred llhead<n> == extends llNN<> with hed[VAL]<n> .
 
@@ -95,7 +95,7 @@ used in a branch, as it signify that self!=null is present.
   xform: self!=null
 Fatal error: exception Globals.Illegal_Prover_Format("Omega.omega_of_exp: array, bag or list constraint  ")
 
-## der-2d.slk
+## der-2d.slk: DONE
 
 data node {
 	int val@VAL;
@@ -108,7 +108,7 @@ pred llSum<s> == extends ll<> with ssum[REC,VAL]<s> .
 REC used but is not specified in data structure.
 This should be highlighted as an ERROR.
 
-## der-2b.slk
+## der-2b.slk: DONE
 
 data node {
 	int val;
