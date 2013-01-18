@@ -9028,7 +9028,10 @@ let extract_outer_inner_p pf0 root_args val_extns rec_args=
               Bag ([],no_pos)
             else IConst (0, no_pos) (*todo: should improve here*)
           else
-            report_error no_pos "cpure.extract_outer_inner_p: why is it empty?"
+            (*min/max*)
+            let r = List.hd root_args in
+            Var (SpecVar (type_of_spec_var r, min_max_one, primed_of_spec_var r), no_pos)
+      (* report_error no_pos "cpure.extract_outer_inner_p: why is it empty?" *)
       | e:: rest ->
           let svl1 = afv e in
           if svl1 = [] (* || (diff_svl svl1 val_extns = [] && intersect_svl svl1 rec_args = []) *) then
@@ -9071,13 +9074,24 @@ let extract_outer_inner_p pf0 root_args val_extns rec_args=
   helper pf0
 
 let extract_outer_inner_f p0 args val_extns rec_args=
-  let rec helper p=
+  let rec helper p ex_quans irr_ps=
     match p with
       | BForm ((pf,_),_) ->
-          extract_outer_inner_p pf args val_extns rec_args
-      | _ -> report_error no_pos "cpure.extract_outer_inner_f: not handle yet"
+          (extract_outer_inner_p pf args val_extns rec_args,ex_quans, irr_ps)
+      | And (p1,p2,_) -> begin
+          let svl1 = fv p1 in
+          let svl2 = fv p2 in
+          let b1 = intersect_svl svl1 rec_args = [] in
+          let b2 = intersect_svl svl2 rec_args = [] in
+          match b1,b2 with
+            | true,false -> helper p2 ex_quans (irr_ps@[p1])
+            | false,true -> helper p1 ex_quans (irr_ps@[p2])
+            | _ -> report_error no_pos "cpure.extract_outer_inner_f: not handle yet 1"
+      end
+      | Exists (sv, p1, _, _) -> helper p1 (ex_quans@[sv]) irr_ps
+      | _ -> report_error no_pos "cpure.extract_outer_inner_f: not handle yet 2"
   in
-  helper p0
+  helper p0 [] []
 
 let extract_outer_inner_x f args val_extns rec_args=
   extract_outer_inner_f f args val_extns rec_args
@@ -9088,9 +9102,10 @@ let extract_outer_inner p args val_extns rec_args=
   let pr2 = ArithNormalizer.string_of_exp in
   let pr3 = pr_triple string_of_bool (pr_pair pr1 pr2) (pr_pair pr2 pr2) in
   let pr4 = !print_formula in
-  Debug.no_3 "extract_outer_inner" pr4 pr0 pr0 pr3
-      (fun _ _ _ -> extract_outer_inner_x p args val_extns rec_args)
-      p args val_extns
+  let pr5 = pr_triple pr3 pr0 (pr_list pr4) in
+  Debug.no_5 "extract_outer_inner" pr4 pr0 pr0 pr0 pr0 pr5
+      (fun _ _ _ _ _ -> extract_outer_inner_x p args val_extns rec_args)
+      p args val_extns val_extns rec_args
 
 (* let check_null_var e= *)
 (*   match e with *)
@@ -9178,7 +9193,10 @@ let mk_pformula_from_tmpl tmpl e1 e2 p=
     | Neq (_, _, _) -> mkNeq e1 e2 p
     | _ -> report_error no_pos "cpure.extract_outer_inner_p: not handle yet"
 
-
+(************* NORM MIN/MAX**********************)
+(********************************************************)
+   (********************** NORM********************)
+(********************************************************)
 (*
   x=min(a,b,c) = Ex d: x=min(a,d) & d=min(b,c)
 *)
@@ -9238,6 +9256,11 @@ let norm_exp_min_max_p pf=
     let rest = List.rev (List.tl rest2) in
     (sv1,sv2,rest)
   in
+  let check_min_max_one e=
+    match e with
+      | Var (sv,_) -> String.compare (name_of_spec_var sv) min_max_one = 0
+      | _ -> false
+  in
 (*
  k=-1: not init
  k=0: max
@@ -9258,12 +9281,22 @@ let norm_exp_min_max_p pf=
       let np = BForm ((pf1,None),None) in
       let n_rest = rest@[fr_var] in
       if (List.length n_rest<=2) then
-        let v11,v22,_ = get_two_last n_rest in
-        let pf11= if k=0 then (EqMax (e,v11, v22, no_pos)) else
-              (EqMin (e, v11, v22, no_pos))
-        in
-        (pf11, ps@[np], (quans@[fr_sv]))
-      else
+        begin
+            let pf11=
+              let v11,v22,_ = get_two_last n_rest in
+              if check_min_max_one v11 then
+                mkEq e v22 no_pos
+              else if check_min_max_one v22 then
+                mkEq e v11 no_pos
+              else (*check x=max(v,V) -> x=V*)
+                if (eqExp_f eq_spec_var) v11 v22 then (mkEq e v11 no_pos)
+              else
+                if k=0 then (EqMax (e,v11, v22, no_pos)) else
+                  (EqMin (e, v11, v22, no_pos))
+            in
+            (pf11, ps@[np], (quans@[fr_sv]))
+        end
+        else
         helper n_rest (ps@[np]) (quans@[fr_sv])
     in
     helper exps [] []
@@ -9272,7 +9305,12 @@ let norm_exp_min_max_p pf=
     let exps0,k = extract_list_exp_min_max_exp e2 k in
     if k = -1 then (pf,[],[]) else
       let exps1 = exps0@init_exps in
-      if List.length exps1 <=2 then (pf,[],[]) else
+      if List.length exps1 <=2 then
+        (*check x=max(v,V) -> x=V*)
+        let v11,v22,_ = get_two_last exps1 in
+         if (eqExp_f eq_spec_var) v11 v22 then ((mkEq e1 v11 no_pos),[],[]) else
+           (pf,[],[])
+      else
         mk_min_max_helper k e1 exps1 pos
   in
   match pf with
@@ -9291,6 +9329,9 @@ let norm_exp_min_max_p pf=
         match b2,b3 with
           | true,false -> norm_list_min_max e1 [e2] e3 l 1
           | false,true -> norm_list_min_max e1 [e3] e2 l 1
+          | true,true -> if (eqExp_f eq_spec_var) e2 e3 then
+                (mkEq e1 e2 l,[],[])
+              else pf,[],[]
           | _ -> pf,[],[]
     end
     | EqMax (e1,e2,e3,l) -> begin
@@ -9300,6 +9341,9 @@ let norm_exp_min_max_p pf=
         match b2,b3 with
           | true,false -> norm_list_min_max e1 [e2] e3 l 0
           | false,true -> norm_list_min_max e1 [e3] e2 l 0
+          | true,true -> if (eqExp_f eq_spec_var) e2 e3 then
+                (mkEq e1 e2 l,[], [])
+              else pf,[],[]
           | _ -> pf,[],[]
     end
     | _ -> pf,[],[]
@@ -9320,6 +9364,28 @@ let norm_exp_min_max p=
   let pr1 = !print_formula in
   Debug.no_1 "norm_exp_min_max" pr1 (pr_pair pr1 !print_svl)
       (fun _ -> norm_exp_min_max_x p) p
+(********************************************************)
+   (********************END NORM********************)
+(********************************************************)
+let mk_formula_from_tmp_x outer n_root_e n_inner_e ex_quans irr_ps p=
+  let n_outer = mk_pformula_from_tmpl outer n_root_e n_inner_e p in
+  let n_p = (BForm ((n_outer, None), None)) in
+  let n_p1,quans = norm_exp_min_max n_p in
+  let p1 = List.fold_left (fun p1 p2 -> mkAnd p1 p2 no_pos) n_p1
+    irr_ps in
+  let new_f = if ex_quans = [] then p1 else
+    mkExists_with_simpl elim_exists ex_quans p1 None p
+  in
+  (new_f,quans)
+
+let mk_formula_from_tmp outer n_root_e n_inner_e ex_quans irr_ps p=
+  let pr1 = !print_svl in
+  let pr2 = !print_formula in
+  let pr3 = !print_p_formula in
+  Debug.no_3 "mk_formula_from_tmp" pr3 pr1 (pr_list pr2) (pr_pair pr2 pr1)
+      (fun _ _ _ -> mk_formula_from_tmp_x outer n_root_e n_inner_e
+          ex_quans irr_ps p) outer ex_quans irr_ps
+
 (********************************************************)
        (*****************END DERIVE*****************)
 (********************************************************)

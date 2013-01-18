@@ -411,7 +411,7 @@ let null_type = Named ""
 ;;
 
 (* let null_sv = "__null__" *)
-
+let min_max_one = "__min_max_one__"
 
 let rec s_i_list l c = match l with 
   | [] -> ""

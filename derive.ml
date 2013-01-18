@@ -51,7 +51,9 @@ let generate_extn_ho_procs prog cviews extn_view_name=
   let mk_ho_b args p =
     fun svl ->
         let ss = List.combine args svl in
-        CP.subst ss p
+        let n_p = CP.subst ss p in
+        let n_p1,_ = CP.norm_exp_min_max n_p in
+        n_p1
   in
   let mk_ho_ind_rec ann args p =
     match args with
@@ -82,8 +84,9 @@ let generate_extn_ho_procs prog cviews extn_view_name=
       (* let _ =  Debug.info_pprint ("   svl: "^ (!CP.print_svl svl)) no_pos in *)
       let p_extn, p_non_extn = partition_extn_svl p svl in
       (* let _ =  Debug.info_pprint ("   p_extn: "^ (!CP.print_formula p_extn)) no_pos in *)
+      let from_rec_args =  List.concat (List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls) in
       let rec_args = List.concat (List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls1) in
-      let (is_bag_constr,(outer, root_e), (inner_e, first_e)) =  CP.extract_outer_inner p_extn args val_extns rec_args in
+      let ((is_bag_constr,(outer, root_e), (inner_e, first_e)), exquans, irr_ps) =  CP.extract_outer_inner p_extn args val_extns from_rec_args in
       (*combine bag or non-bag constrs*)
       let comb_fn= if is_bag_constr then CP.mk_exp_from_bag_tmpl else CP.mk_exp_from_non_bag_tmpl in
       (*cmb inner most exp*)
@@ -96,32 +99,20 @@ let generate_extn_ho_procs prog cviews extn_view_name=
       (*outer most pformula*)
       let ss2 = List.combine args svl in
       let n_root_e = CP.e_apply_subs ss2 root_e in
-      let n_outer = CP.mk_pformula_from_tmpl outer n_root_e n_inner_e no_pos in
-      let n_p = (CP.BForm ((n_outer, None), None)) in
+      (* let n_outer = CP.mk_pformula_from_tmpl outer n_root_e n_inner_e no_pos in *)
+      (* let n_p = (CP.BForm ((n_outer, None), None)) in *)
+      (* let n_p1,quans = CP.norm_exp_min_max n_p in *)
+      let n_p2,quans = CP.mk_formula_from_tmp outer n_root_e n_inner_e exquans irr_ps no_pos in
       (* let _ =  Debug.info_pprint ("   n_p: "^ (!CP.print_formula n_p)) no_pos in *)
-      let n_p1,quans = CP.norm_exp_min_max n_p in
       (*other constraints*)
-      let n_p3= if CP.isConstTrue p_non_extn then n_p1 else
+      let n_p3= if CP.isConstTrue p_non_extn then n_p2 else
       (*assume we extend one property each*)
             let ls_to_args = List.concat (List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls1) in
-            let from_args =  List.concat (List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls) in
             (*this step is necessary for tree like*)
-            let new_ps = List.map (fun to_arg -> process_other_const from_args [to_arg] p_non_extn) ls_to_args in
-            let pos = CP.pos_of_formula n_p1 in
-            let n_p2 = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) n_p1 new_ps in
-            n_p2
-      (*may need some filter: CP.filter_var: omit now*)
-      (* let n_p3= if rec_args <> [] then (\*ind_case*\) *)
-      (*       let rec_args0 = List.concat (List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls) in *)
-      (*       let _ =  Debug.info_pprint ("   rec_args: "^ (!CP.print_svl rec_args)) no_pos in *)
-      (*       let _ =  Debug.info_pprint ("   rec_args0: "^ (!CP.print_svl rec_args0)) no_pos in *)
-      (*       let ss3 = List.combine rec_args0 rec_args in *)
-      (*       let p_non_extn1 = CP.subst ss3 p_non_extn in *)
-      (*       (\* let _ =  Debug.info_pprint ("   p_non_extn1: "^ (!CP.print_formula p_non_extn1)) no_pos in *\) *)
-      (*       let n_p2 = CP.mkAnd n_p1  p_non_extn1 (CP.pos_of_formula n_p1) in *)
-      (*       n_p2 *)
-      (*     else n_p1 (\*base case*\) *)
-      (* in *)
+            let new_ps = List.map (fun to_arg -> process_other_const from_rec_args [to_arg] p_non_extn) ls_to_args in
+            let pos = CP.pos_of_formula n_p2 in
+            let n_p4 = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) n_p2 new_ps in
+            n_p4
       in
       (n_p3,quans)
   in
