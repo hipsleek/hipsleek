@@ -9081,6 +9081,7 @@ let extract_outer_inner_x f args val_extns rec_args=
 let extract_outer_inner p args val_extns rec_args=
   let pr0 = !print_svl in
   let pr1 = !print_p_formula in
+  (* let pr2 = ArithNormalizer.string_of_exp in *)
   let pr2 = !print_exp in
   let pr3 = pr_triple string_of_bool (pr_pair pr1 pr2) (pr_pair pr2 pr2) in
   let pr4 = !print_formula in
@@ -9173,3 +9174,146 @@ let mk_pformula_from_tmpl tmpl e1 e2 p=
     | Eq (_, _, _) -> mkEq e1 e2 p
     | Neq (_, _, _) -> mkNeq e1 e2 p
     | _ -> report_error no_pos "cpure.extract_outer_inner_p: not handle yet"
+
+(*
+  x=min(a,b,c) = Ex d: x=min(a,d) & d=min(b,c)
+*)
+(*assume that this is a list of all min or all max*)
+(*
+ k=-1: not init
+ k=0: max
+ k=1: min
+*)
+let extract_list_exp_min_max_exp_x e k0=
+  (**)
+  let rec helper e0 k=
+    match e0 with
+      | Var _ -> ([e0],k)
+      | Max (e1,e2,_) ->
+          let k1=
+            if k = -1 then 0 else if k<>0 then
+                  report_error no_pos "cpure.extract_list_exp_min_max_exp: sth wrong 1"
+                else 0
+          in
+          let svl2,k2 = helper e1 k1 in
+          let svl3,k3 = helper e2 k1 in
+          if (k2=0 && k3=0) then (svl2@svl3,0) else
+            report_error no_pos "cpure.extract_list_exp_min_max_exp: sth wrong 2"
+      | Min (e1,e2,_) ->
+           let k1=
+            if k = -1 then 1 else if k<>1 then
+                  report_error no_pos "cpure.extract_list_exp_min_max_exp: sth wrong"
+                else 1
+          in
+           let svl2,k2 = helper e1 k1 in
+          let svl3,k3 = helper e2 k1 in
+          if (k2=1 && k3=1) then (svl2@svl3,1) else
+            report_error no_pos "cpure.extract_list_exp_min_max_exp: sth wrong 3"
+      | _ -> raise Not_found
+  in
+  try
+      helper e k0
+  with Not_found -> ([],-1)
+
+(*
+ k=-1: not init
+ k=0: max
+ k=1: min
+*)
+let extract_list_exp_min_max_exp e k=
+  (* let pr1 = ArithNormalizer.string_of_exp in *)
+  let pr1 = !print_exp in
+  Debug.no_1 "extract_list_exp_min_max_exp" pr1 (pr_pair (pr_list pr1) string_of_int)
+      (fun _ -> extract_list_exp_min_max_exp_x e k) e
+
+let norm_exp_min_max_p pf=
+  let get_two_last svl=
+    let rev_svl = List.rev svl in
+    let sv2 = List.hd rev_svl in
+    let rest2 = List.tl rev_svl in
+    let sv1 = List.hd rest2 in
+    let rest = List.rev (List.tl rest2) in
+    (sv1,sv2,rest)
+  in
+(*
+ k=-1: not init
+ k=0: max
+ k=1: min
+*)
+  let mk_min_max_helper k e exps p=
+    let sv= match e with
+      | Var (sv,_) -> sv
+      | _ -> report_error no_pos "cpure.norm_exp_min_max_p: 1"
+    in
+    let rec helper exps0 ps quans=
+      let v1,v2,rest= get_two_last exps0 in
+      let fr_sv =  (fresh_spec_var sv) in
+      let fr_var = (Var (fr_sv,no_pos)) in
+      let pf1= if k=0 then (EqMax (fr_var, v1, v2, no_pos)) else
+            (EqMin (fr_var, v1, v2, no_pos))
+      in
+      let np = BForm ((pf1,None),None) in
+      let n_rest = rest@[fr_var] in
+      if (List.length n_rest<=2) then
+        let v11,v22,_ = get_two_last n_rest in
+        let pf11= if k=0 then (EqMax (e,v11, v22, no_pos)) else
+              (EqMin (e, v11, v22, no_pos))
+        in
+        (pf11, ps@[np], (quans@[fr_sv]))
+      else
+        helper n_rest (ps@[np]) (quans@[fr_sv])
+    in
+    helper exps [] []
+  in
+  let norm_list_min_max e1 init_exps e2 pos k=
+    let exps0,k = extract_list_exp_min_max_exp e2 k in
+    if k = -1 then (pf,[],[]) else
+      let exps1 = exps0@init_exps in
+      if List.length exps1 <=2 then (pf,[],[]) else
+        mk_min_max_helper k e1 exps1 pos
+  in
+  match pf with
+    | Eq (e1,e2,l) -> begin
+        let b1 = is_var e1 in
+        let b2= is_var e2 in
+        match b1,b2 with
+          | true,false -> norm_list_min_max e1 [] e2 l (-1)
+          | false,true -> norm_list_min_max e2 [] e1 l (-1)
+          | _ -> pf,[],[]
+    end
+    | EqMin (e1,e2,e3,l) -> begin
+        (* let _ =  Debug.info_pprint ("   EqMin: ") no_pos in *)
+        let b2 = is_var e2 in
+        let b3= is_var e3 in
+        match b2,b3 with
+          | true,false -> norm_list_min_max e1 [e2] e3 l 1
+          | false,true -> norm_list_min_max e1 [e3] e2 l 1
+          | _ -> pf,[],[]
+    end
+    | EqMax (e1,e2,e3,l) -> begin
+        (* let _ =  Debug.info_pprint ("   EqMax: ") no_pos in *)
+        let b2 = is_var e2 in
+        let b3= is_var e3 in
+        match b2,b3 with
+          | true,false -> norm_list_min_max e1 [e2] e3 l 0
+          | false,true -> norm_list_min_max e1 [e3] e2 l 0
+          | _ -> pf,[],[]
+    end
+    | _ -> pf,[],[]
+
+let norm_exp_min_max_x f=
+  match f with
+    | BForm ((pf,pann),fl) ->
+        let npf,ps, quans = norm_exp_min_max_p pf in
+        if ps = [] then
+          (BForm ((npf, pann),fl), [])
+        else
+          let np =  BForm ((npf, pann),fl) in
+          let cmb_f = List.fold_left (fun p1 p2 -> mkAnd p1 p2 no_pos) np ps in
+          (cmb_f,quans)
+    | _ -> (f,[])
+
+let norm_exp_min_max p=
+  let pr1 = !print_formula in
+  Debug.no_1 "norm_exp_min_max" pr1 (pr_pair pr1 !print_svl)
+      (fun _ -> norm_exp_min_max_x p) p
