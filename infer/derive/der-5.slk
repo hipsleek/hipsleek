@@ -34,9 +34,9 @@ pred_extn minValue[V,R]<m> ==
 
 pred llSNN<n> == extends llNN<> with size[REC]<n> .
 
-//pred treeSNN<n> == extends treeNN<> with size[REC]<n> .
+pred treeSNN<n> == extends treeNN<> with size[REC]<n> .
 
-//pred llMin<m> == extends llNN<> with minValue[VAL,REC]<m>.
+pred llMin<m> == extends llNN<> with minValue[VAL,REC]<m>.
 
-//pred treeMin<m> == extends treeNN<> with minValue[VAL,REC]<m> .
+pred treeMin<m> == extends treeNN<> with minValue[VAL,REC]<m> .
 
