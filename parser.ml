@@ -1334,9 +1334,13 @@ cexp_w:
       | `FLOAT_LIT (f,_)                          -> (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos_camlp4 _loc 1))
       | `OPAREN; t=SELF; `CPAREN                -> t  
       |  i=cid; (* An Hoa : extend with multi-dimensional array access *) `OSQUARE; c = LIST1 cexp SEP `COMMA; `CSQUARE                            -> Pure_c (P.ArrayAt (i, c, get_pos_camlp4 _loc 1))
+      | `MAX; `OPAREN; c1=SELF; `CPAREN 
+        -> apply_cexp_form2 (fun c1 c2-> P.mkMax c1 c2 (get_pos_camlp4 _loc 1)) c1 c1
       | `MAX; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN 
         -> apply_cexp_form2 (fun c1 c2-> P.mkMax c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
-      | `MIN; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN 
+      | `MIN; `OPAREN; c1=SELF; `CPAREN 
+        -> apply_cexp_form2 (fun c1 c2-> P.mkMin c1 c2 (get_pos_camlp4 _loc 1)) c1 c1
+      | `MIN; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN
         -> apply_cexp_form2 (fun c1 c2-> P.mkMin c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
 	   ]
 		
