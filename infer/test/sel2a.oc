@@ -1,0 +1,22 @@
+P3:={[m,mi,mx]: mx = mi && mx = m};
+#fixcalc
+P6:={
+#[m,mi,mx,mi2,mx2]: 
+[mi,mx,m,mi2,mx2]:
+((m >= mi && mi2 >= m) && mi = mx && mi2 = mx2)};
+P3;P6;
+
+#hip
+P6n := {
+[m,mi,mi2,mx,mx2]
+#[m,mi,mx,mi2,mx2]
+: m=mi & mx=mx2 & m<=mi2 & mi2<=mx};
+P6 subset P6n;
+P6n subset P6;
+
+#(0 = 0 && mx = mi && mx = m)
+#((m >= mi && mi2 >= m) && mi = mx && mi2 = mx2)
+
+#(0 = 0 && mx = mi && mx = m)
+#((m >= mi && mi2 >= m) && mi = mx && mi2 = mx2)
+
