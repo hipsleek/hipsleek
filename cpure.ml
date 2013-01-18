@@ -8969,6 +8969,10 @@ let get_eqs_rel_args p eqs rel_args pos=
   Debug.no_2 "get_eqs_rel_args" !print_formula !print_svl !print_formula
       (fun _ _ -> get_eqs_rel_args_x p eqs rel_args pos) p rel_args
 
+
+(********************************************************)
+       (*****************DERIVE********************)
+(********************************************************)
 let extract_inner_e e0 root val_extns rec_args=
   let rec initial_helper exps v=
     match exps with
@@ -9316,3 +9320,6 @@ let norm_exp_min_max p=
   let pr1 = !print_formula in
   Debug.no_1 "norm_exp_min_max" pr1 (pr_pair pr1 !print_svl)
       (fun _ -> norm_exp_min_max_x p) p
+(********************************************************)
+       (*****************END DERIVE*****************)
+(********************************************************)

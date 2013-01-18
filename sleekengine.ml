@@ -24,6 +24,7 @@ module DD = Debug
 module XF = Xmlfront
 module NF = Nativefront
 module CEQ = Checkeq
+module DER = Derive
 
 let sleek_proof_counter = new Gen.counter 0
 
@@ -239,7 +240,7 @@ let convert_pred_to_cast () =
   (* let cviews_derv = List.map (fun v -> AS.trans_view_dervs iprog cviews_orig *)
   (*     v) tmp_views_derv in *)
   let cviews_derv = List.fold_left (fun norm_views v ->
-              let der_view = AS.trans_view_dervs iprog norm_views v in
+              let der_view = DER.trans_view_dervs iprog norm_views v in
               (norm_views@[der_view])
           ) cviews_orig tmp_views_derv1 in
   let cviews = (* cviews_orig@ *)cviews_derv in
