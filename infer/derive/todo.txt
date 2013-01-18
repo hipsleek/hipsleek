@@ -42,7 +42,7 @@ Fatal error: exception Invalid_argument("List.combine")
 pred llNNSum2<s> == extends llNN2<> with pos_sum[VAL,REC]<s> .
 
 
-## der-6.slk: DONE
+## der-6c.slk: DONE (not yet done! bug still there)
 
 pred llhead<n> == extends llNN<> with hed[VAL]<n> .
 
