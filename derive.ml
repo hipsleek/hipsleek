@@ -282,5 +282,5 @@ let trans_view_dervs (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl l
 
 (* let trans_view_additional cprog cviews pos= *)
 (*   let pr1 = pr_list Cprinter.string_of_view_decl in *)
-(*   Debug.ho_1 "trans_view_additional" pr1 pr1 *)
+(*   Debug.no_1 "trans_view_additional" pr1 pr1 *)
 (*       (fun _ -> trans_view_additional_x cprog cviews pos) cviews *)

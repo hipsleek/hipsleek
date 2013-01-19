@@ -155,6 +155,10 @@ and p_formula =
   (* | RelForm of (SpecVar * (exp list) * loc)             *)
   (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
 
+and op_code =
+  | OP_Min | OP_Max | OP_Add | OP_Mult 
+  | OP_Union | OP_Intersect
+
 (* Expression *)
 and exp =
   | Null of loc
@@ -163,6 +167,7 @@ and exp =
   | FConst of (float * loc)
   | AConst of (heap_ann * loc)
   | Tsconst of (Tree_shares.Ts.t_sh * loc)
+  | EApp of (op_code * exp list * loc)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
   | Mult of (exp * exp * loc)
@@ -9099,7 +9104,8 @@ let extract_outer_inner_x f args val_extns rec_args=
 let extract_outer_inner p args val_extns rec_args=
   let pr0 = !print_svl in
   let pr1 = !print_p_formula in
-  let pr2 = ArithNormalizer.string_of_exp in
+  (* let pr2 = ArithNormalizer.string_of_exp in *)
+  let pr2 = !print_exp in
   let pr3 = pr_triple string_of_bool (pr_pair pr1 pr2) (pr_pair pr2 pr2) in
   let pr4 = !print_formula in
   let pr5 = pr_triple pr3 pr0 (pr_list pr4) in
@@ -9243,7 +9249,8 @@ let extract_list_exp_min_max_exp_x e k0=
  k=1: min
 *)
 let extract_list_exp_min_max_exp e k=
-  let pr1 = ArithNormalizer.string_of_exp in
+  (* let pr1 = ArithNormalizer.string_of_exp in *)
+  let pr1 = !print_exp in
   Debug.no_1 "extract_list_exp_min_max_exp" pr1 (pr_pair (pr_list pr1) string_of_int)
       (fun _ -> extract_list_exp_min_max_exp_x e k) e
 
@@ -9348,7 +9355,7 @@ let norm_exp_min_max_p pf=
     end
     | _ -> pf,[],[]
 
-let norm_exp_min_max_x f=
+let norm_exp_min_max f =
   match f with
     | BForm ((pf,pann),fl) ->
         let npf,ps, quans = norm_exp_min_max_p pf in
@@ -9360,10 +9367,35 @@ let norm_exp_min_max_x f=
           (cmb_f,quans)
     | _ -> (f,[])
 
+let min_max_sv = SpecVar (NUM, "min_max", Unprimed) 
+
+let norm_exp_min_max2 p =
+  let quant = new Gen.stack in
+  let f_f p = None in
+  let f_bf (p, bann) = None in
+  let f_e e = 
+    match e with
+    | Max(_,_,l) 
+    | Min(_,_,l) ->
+          let nv = fresh_spec_var  min_max_sv in
+          quant # push (nv,e);
+          Some (Var (nv,l))
+    | _ -> None 
+  in
+  let f = map_formula p (f_f,f_bf,f_e) in
+  (f, quant # get_stk)
+
+let norm_exp_min_max2 p =
+  let pr1 = !print_formula in
+  let pr2 = pr_list (pr_pair !print_sv !print_exp) in
+  Debug.no_1 "norm_exp_min_max2" pr1 (pr_pair pr1 pr2)
+      (fun _ -> norm_exp_min_max2 p) p
+
 let norm_exp_min_max p=
   let pr1 = !print_formula in
+  (* let _ = norm_exp_min_max2 p in *)
   Debug.no_1 "norm_exp_min_max" pr1 (pr_pair pr1 !print_svl)
-      (fun _ -> norm_exp_min_max_x p) p
+      (fun _ -> norm_exp_min_max p) p
 (********************************************************)
    (********************END NORM********************)
 (********************************************************)
@@ -9389,3 +9421,15 @@ let mk_formula_from_tmp outer n_root_e n_inner_e ex_quans irr_ps p=
 (********************************************************)
        (*****************END DERIVE*****************)
 (********************************************************)
+
+
+(* map functions to formula without argument
+ * f_f: formula -> formula option
+ * f_bf: b_formula -> b_formula option
+ * f_e: exp -> exp option
+ *)
+(* let map_formula (e: formula) (f_f, f_bf, f_e) : formula = *)
+(*     let trans_func f = (fun _ e -> push_opt_void_pair (f e)) in *)
+(*     let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in *)
+
+
