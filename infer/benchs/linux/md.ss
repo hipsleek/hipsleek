@@ -947,7 +947,7 @@ int alloc_disk_sb(mdk_rdev_s rdev)
  * otherwise reused by a RAID array (or any other kernel
  * subsystem), by bd_claiming the device.
  */
-int lock_rdev(mdk_rdev_s rdev, int dev, int shared)
+int lock_rdev(mdk_rdev_s rdev, int dev, bool shared)
 {
     int err = 0;
     return err;
@@ -1048,10 +1048,11 @@ void autorun_devices(int part)
     return;
 }
 
-/*static inline __attribute__((always_inline)) long IS_ERR(const void *ptr)*/
-/*{*/
-/*    return __builtin_expect(!!(((unsigned long)ptr) >= (unsigned long)-4095), 0);*/
-/*}*/
+int IS_ERR(mdk_rdev_s ptr)
+{
+    int err;
+    return err;
+}
 
 void set_bit(int nr)
 {
@@ -1164,11 +1165,11 @@ int overlaps(int s1, int l1, int s2, int l2)
  * all_mddevs_lock protects this list.
  */
 /*
-static LIST_HEAD(all_mddevs);
-static LIST_HEAD(pers_list);
-static LIST_HEAD(all_detected_devices);
-static LIST_HEAD(pending_raid_disks);
-static struct super_type super_types[] = {
+ LIST_HEAD(all_mddevs);
+ LIST_HEAD(pers_list);
+ LIST_HEAD(all_detected_devices);
+ LIST_HEAD(pending_raid_disks);
+ struct super_type super_types[] = {
     [0] = {
         .name   = "0.90.0",
 //      .owner  = THIS_MODULE,
@@ -1215,6 +1216,15 @@ mdk_rdev_s cast_to_mdk_rdev_s_ptr(RS_mem p)
     requires p::RS_mem<a> //& a>=size(item)
     ensures res::mdk_rdev_s<n,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_> * n::list_head<_,_>;
  }
+
+detected_devices_node cast_to_detected_devices_node_ptr(RS_mem p)
+ case {
+  p=null -> ensures res=null;
+  p!=null -> 
+    requires p::RS_mem<a> //& a>=size(item)
+    ensures res::detected_devices_node<n,_> * n::list_head<_,_>;
+ }
+
 
 void md_new_event(mddev_s mddev)
 {
@@ -1702,10 +1712,10 @@ int rdev_size_store(mdk_rdev_s rdev, char buf, int len1)
     return len1;
 }
 
-mdk_rdev_s md_import_device_helper(int newdev, int super_format, int super_minor)
+mdk_rdev_s md_import_device_helper(int newdev, int super_format, int super_minor, int err, mdk_rdev_s rdev)
 {
-    if (rdev.sb_page) {
-        if (rdev.bdev)
+    if (rdev.sb_page!=null) {
+        if (rdev.bdev!=null)
             unlock_rdev(rdev);
         free_disk_sb(rdev);
     }
@@ -1731,15 +1741,15 @@ mdk_rdev_s md_import_device(int newdev, int super_format, int super_minor)
 
     rdev = cast_to_mdk_rdev_s_ptr(malloc(1));
     if (rdev==null) {
-        return null;
+        return ERR_PTR(-12);
     }
 
     if ((err == alloc_disk_sb(rdev)))
-        md_import_device_helper(newdev,super_format,super_minor);
+        md_import_device_helper(newdev,super_format,super_minor,err,rdev);
 
-    err = lock_rdev(rdev, newdev, super_format == -2);
+    err = lock_rdev(rdev, newdev, super_format==2);
     if (err > 0)
-        md_import_device_helper(newdev,super_format,super_minor);
+        md_import_device_helper(newdev,super_format,super_minor,err,rdev);
 
 //  kobject_init(&rdev.kobj, &rdev_ktype);
 
@@ -1751,88 +1761,40 @@ mdk_rdev_s md_import_device(int newdev, int super_format, int super_minor)
     rdev.sb_events = 0;
 //  rdev.last_read_error.tv_sec  = 0;
 //  rdev.last_read_error.tv_nsec = 0;
-    atomic_set(&rdev.nr_pending, 0);
-    atomic_set(&rdev.read_errors, 0);
-    atomic_set(&rdev.corrected_errors, 0);
+    atomic_set(rdev.nr_pending, 0);
+    atomic_set(rdev.read_errors, 0);
+    atomic_set(rdev.corrected_errors, 0);
 
 /*    size = rdev.bdev.bd_inode.i_size >> 10;*/
     if (size==0) {
         err = -22;
-        md_import_device_helper(newdev,super_format,super_minor);
+        md_import_device_helper(newdev,super_format,super_minor,err,rdev);
     }
 
     if (super_format >= 0) {
 /*        err = super_types[super_format].*/
 /*            load_super(rdev, NULL, super_minor);*/
         if (err == -22) {
-            md_import_device_helper(newdev,super_format,super_minor);
+            md_import_device_helper(newdev,super_format,super_minor,err,rdev);
         }
         if (err < 0) {
-            md_import_device_helper(newdev,super_format,super_minor);
+            md_import_device_helper(newdev,super_format,super_minor,err,rdev);
         }
     }
 
-    INIT_LIST_HEAD(&rdev.same_set);
+    INIT_LIST_HEAD(rdev.same_set);
 
     return rdev;
 }
 
-/*
-/* mode:
- *   0 - completely stop and dis-assemble array
- *   2 - stop but do not disassemble array
- */
-static int do_md_stop(mddev_s * mddev, int mode, int is_open)
+int do_md_stop_helper1(mddev_s mddev, int mode, int is_open, int err, gendisk disk)
 {
-    int err = 0;
-    struct gendisk *disk = mddev.gendisk;
-    mdk_rdev_s *rdev;
-
-    if (atomic_read(&mddev.openers) > is_open) {
-        err = -16;
-    }
-    else if (mddev.pers) {
-
-        if (mddev.ro)
-            set_disk_ro(disk, 0);
-
-        md_stop(mddev);
-//      mddev.queue.merge_bvec_fn = NULL;
-//      mddev.queue.unplug_fn = NULL;
-//      mddev.queue.backing_dev_info.congested_fn = NULL;
-
-        /* tell userspace to handle 'inactive' */
-        sysfs_notify_dirent(mddev.sysfs_state);
-
-        rdev = (mdk_rdev_s *) (&mddev.disks).next;
-        while (1) {
-            prefetch(rdev.same_set.next);
-            if (&rdev.same_set == (&mddev.disks)) {
-                break;
-            }
-            if (rdev.raid_disk >= 0) {
-                char nm[20];
-                sysfs_remove_link(mddev.kobj);
-            }
-            rdev = (mdk_rdev_s *) rdev.same_set.next;
-        }
-
-        set_capacity(disk, 0);
-        revalidate_disk(disk);
-
-        if (mddev.ro)
-            mddev.ro = 0;
-
-        err = 0;
-    }
-    if (err)
+    if (err!=0)
         return err;
     /*
      * Free resources if final stop
      */
-    if (mode == 0) {
-
-
+/*    if (mode == 0) {*/
 //      bitmap_destroy(mddev);
 //      if (mddev.bitmap_info.file) {
 //          restore_bitmap_write_access(mddev.bitmap_info.file);
@@ -1847,8 +1809,8 @@ static int do_md_stop(mddev_s * mddev, int mode, int is_open)
 //      kobject_uevent(&disk_to_dev(mddev.gendisk).kobj, KOBJ_CHANGE);
 //      if (mddev.hold_active == UNTIL_STOP)
 //          mddev.hold_active = 0;
+/*    }*/
 
-    }
     err = 0;
     blk_integrity_unregister(disk);
     md_new_event(mddev);
@@ -1856,11 +1818,81 @@ static int do_md_stop(mddev_s * mddev, int mode, int is_open)
     return err;
 }
 
-static int update_size(mddev_s *mddev, int num_sectors)
+int do_md_stop_helper2(mddev_s mddev, int mode, int is_open, int err, mdk_rdev_s rdev, gendisk disk)
 {
-    mdk_rdev_s *rdev;
+    if (rdev.same_set == mddev.disks) {
+        set_capacity(disk, 0);
+        revalidate_disk(disk);
+
+        if (mddev.ro != 0)
+            mddev.ro = 0;
+
+        err = 0;
+        return do_md_stop_helper1(mddev, mode, is_open, err, disk);
+    }
+    if (rdev.raid_disk >= 0) {
+        sysfs_remove_link(mddev.kobj);
+    }
+    rdev = to_mdk_rdev_s (rdev.same_set.next);
+    return do_md_stop_helper2(mddev, mode, is_open, err, rdev, disk);
+
+}
+
+/* mode:
+ *   0 - completely stop and dis-assemble array
+ *   2 - stop but do not disassemble array
+ */
+int do_md_stop(mddev_s mddev, int mode, int is_open)
+{
+    int err = 0;
+    gendisk disk = mddev.gendisk;
+    mdk_rdev_s rdev;
+
+    if (atomic_read(mddev.openers) > is_open) {
+        err = -16;
+    }
+    else if (mddev.pers!=null) {
+
+        if (mddev.ro!=0)
+            set_disk_ro(disk, 0);
+
+        md_stop(mddev);
+//      mddev.queue.merge_bvec_fn = NULL;
+//      mddev.queue.unplug_fn = NULL;
+//      mddev.queue.backing_dev_info.congested_fn = NULL;
+
+        /* tell userspace to handle 'inactive' */
+        sysfs_notify_dirent(mddev.sysfs_state);
+
+        rdev = to_mdk_rdev_s (mddev.disks.next);
+        return do_md_stop_helper2(mddev, mode, is_open, err, rdev, disk);
+    }
+    return do_md_stop_helper1(mddev, mode, is_open, err, disk);
+}
+
+int update_size_helper(mddev_s mddev, int num_sectors, mdk_rdev_s rdev, int rv, bool fit)
+{
+    if (rdev.same_set == mddev.disks) {
+        if (rv==0)
+            revalidate_disk(mddev.gendisk);
+        return rv;
+
+    }
+    int avail = rdev.sectors;
+
+    if (fit && (num_sectors == 0 || num_sectors > avail))
+        num_sectors = avail;
+    if (avail < num_sectors)
+        return -28;
+    rdev = to_mdk_rdev_s (rdev.same_set.next);
+    return update_size_helper(mddev, num_sectors, rdev, rv);
+}
+
+int update_size(mddev_s mddev, int num_sectors)
+{
+    mdk_rdev_s rdev;
     int rv;
-    int fit = (num_sectors == 0);
+    bool fit = (num_sectors == 0);
 
 //  if (mddev.pers.resize == NULL)
 //      return -22;
@@ -1882,68 +1914,59 @@ static int update_size(mddev_s *mddev, int num_sectors)
 //       */
 //      return -16;
 
-    rdev = (mdk_rdev_s *) (&mddev.disks).next;
-    while (1) {
-        prefetch(rdev.same_set.next);
-        if (&rdev.same_set == (&mddev.disks)) {
-            break;
-        }
-        int avail = rdev.sectors;
-
-        if (fit && (num_sectors == 0 || num_sectors > avail))
-            num_sectors = avail;
-        if (avail < num_sectors)
-            return -28;
-        rdev = (mdk_rdev_s *) rdev.same_set.next;
-    }
-
+    rdev = to_mdk_rdev_s (mddev.disks.next);
+    return update_size_helper(mddev, num_sectors, rdev, rv, fit);
 //  rv = mddev.pers.resize(mddev, num_sectors);
-    if (!rv)
-        revalidate_disk(mddev.gendisk);
-    return rv;
 }
 
-static void *md_seq_start(struct seq_file *seq, long long *pos) {
-    struct list_head *tmp;
-    long long l = *pos;
-    mddev_s *mddev;
+mddev_s md_seq_start_helper(seq_file seq, int pos, int l, mddev_s mddev, list_head tmp)
+{
+    if (tmp != all_mddevs){
+        l=l-1;
+        if (l==0)
+            return null;/* tail */
+        return null;
+    }
+    l=l-1;
+    if (l==0) {
+        mddev = to_mddev_s (tmp);
+        mddev_get(mddev);
+        return mddev;
+    }
+    tmp = tmp.next;
+    return md_seq_start_helper(seq,pos,l,mddev,tmp);
+}
+
+mddev_s md_seq_start(seq_file seq, int pos) {
+    list_head tmp;
+    int l = pos;
+    mddev_s mddev;
 
     if (l >= 0x10000)
-        return NULL;
-    if (!l--)
+        return null;
+    l=l-1;
+    if (l==0)
         /* header */
-        return (void*) 1;
-
-    for (tmp = (&all_mddevs).next; prefetch(tmp.next), tmp != (&all_mddevs); tmp= tmp.next) {
-        if (!l--) {
-            mddev = (mddev_s *) tmp;
-            mddev_get(mddev);
-            return mddev;
-        }
-    }
-    if (!l--)
-        return (void*) 2;/* tail */
-    return NULL;
+        return null;
+    tmp = all_mddevs.next;
+    return md_seq_start_helper(seq,pos,l,mddev,tmp);
 }
 
-static int remove_and_add_spares(mddev_s *mddev)
+int remove_and_add_spares_helper1(mddev_s mddev, mdk_rdev_s rdev, int spares)
 {
-    mdk_rdev_s *rdev;
-    int spares = 0;
-
-    mddev.curr_resync_completed = 0;
-
-    rdev = (mdk_rdev_s *) (&mddev.disks).next;
-    while (1) {
-        prefetch(rdev.same_set.next);
-        if (&rdev.same_set == (&mddev.disks)) {
-            break;
+    if (rdev.same_set == mddev.disks) {
+        if (mddev.degraded==0 && mddev.ro == 0 && mddev.recovery_disabled==0) {
+            rdev = to_mdk_rdev_s (mddev.disks.next);
+            return remove_and_add_spares_helper2(mddev,rdev,spares);
         }
+        return spares;
+    }
+/*
         if (rdev.raid_disk >= 0 &&
-            !test_bit(8, &rdev.flags) &&
-            (test_bit(1, &rdev.flags) ||
-             ! test_bit(2, &rdev.flags)) &&
-            atomic_read(&rdev.nr_pending)==0) {
+            test_bit(8, rdev.flags) == 0 &&
+            (test_bit(1, rdev.flags) != 0 ||
+             test_bit(2, rdev.flags) == 0) &&
+            atomic_read(rdev.nr_pending)==0) {
 //          if (mddev.pers.hot_remove_disk(
 //                  mddev, rdev.raid_disk)==0) {
 //              char nm[20];
@@ -1951,22 +1974,23 @@ static int remove_and_add_spares(mddev_s *mddev)
 //              rdev.raid_disk = -1;
 //          }
         }
-        rdev = (mdk_rdev_s *) rdev.same_set.next;
-    }
+*/
+    rdev = to_mdk_rdev_s (rdev.same_set.next);
+    return remove_and_add_spares_helper1(mddev,rdev,spares);
+}
 
-    if (mddev.degraded && ! mddev.ro && !mddev.recovery_disabled) {
-        rdev = (mdk_rdev_s *) (&mddev.disks).next;
-        while (1) {
-            prefetch(rdev.same_set.next);
-            if (&rdev.same_set == (&mddev.disks)) {
-                break;
-            }
-            if (rdev.raid_disk >= 0 &&
-                !test_bit(2, &rdev.flags) &&
-                !test_bit(8, &rdev.flags))
-                spares++;
+int remove_and_add_spares_helper2(mddev_s mddev, mdk_rdev_s rdev, int spares)
+{
+    if (rdev.same_set == mddev.disks) {
+        return spares;
+    }
+    if (rdev.raid_disk >= 0 &&
+        test_bit(2, rdev.flags) == 0 &&
+        test_bit(8, rdev.flags) == 0)
+        spares=spares+1;
+/*
             if (rdev.raid_disk < 0
-                && !test_bit(1, &rdev.flags)) {
+                && test_bit(1, rdev.flags) == 0) {
                 rdev.recovery_offset = 0;
 //              if (mddev.pers.hot_add_disk(mddev, rdev) == 0) {
 //                  char nm[20];
@@ -1978,50 +2002,70 @@ static int remove_and_add_spares(mddev_s *mddev)
 //              } else
 //                  break;
             }
-            rdev = (mdk_rdev_s *) rdev.same_set.next;
-        }
-    }
-    return spares;
+*/
+    rdev = to_mdk_rdev_s (rdev.same_set.next);
+    return remove_and_add_spares_helper2(mddev,rdev,spares);
+}
+
+int remove_and_add_spares(mddev_s mddev)
+{
+    mdk_rdev_s rdev;
+    int spares = 0;
+
+    mddev.curr_resync_completed = 0;
+
+    rdev = to_mdk_rdev_s (mddev.disks.next);
+    return remove_and_add_spares_helper1(mddev,rdev,spares);
 }
 
 void md_autodetect_dev(int dev)
 {
-    struct detected_devices_node *node_detected_dev;
+    detected_devices_node node_detected_dev;
 
-    node_detected_dev = (struct detected_devices_node *) malloc (sizeof(struct detected_devices_node));
-    if (node_detected_dev) {
+    node_detected_dev = cast_to_detected_devices_node_ptr (malloc(1));
+    if (node_detected_dev != null) {
         node_detected_dev.dev = dev;
-        list_add_tail(&node_detected_dev.list, &all_detected_devices);
+        list_add_tail(node_detected_dev.list, all_detected_devices);
     }
 }
 
-static void autostart_arrays(int part)
+detected_devices_node to_detected_devices_node(list_head p)
+  requires p::list_head<_,_>
+  ensures res::detected_devices_node<p,_>;
+
+void autostart_arrays_helper(int part, mdk_rdev_s rdev, 
+    detected_devices_node node_detected_dev,
+    int dev, int i_scanned, int i_passed)
 {
-    mdk_rdev_s *rdev;
-    struct detected_devices_node *node_detected_dev;
+    if (list_empty(all_detected_devices) || i_scanned >= 0x7fffffff)
+        autorun_devices(part);
+    i_scanned=i_scanned+1;
+    node_detected_dev = to_detected_devices_node (all_detected_devices.next);
+    list_del(node_detected_dev.list);
+    dev = node_detected_dev.dev;
+    node_detected_dev=null;
+    rdev = md_import_device(dev,0, 90);
+    if (IS_ERR(rdev)==0){
+        return autostart_arrays_helper(part,rdev,node_detected_dev,dev,i_scanned,i_passed);
+    }
+    if (test_bit(1, rdev.flags)!=0) {
+        return autostart_arrays_helper(part,rdev,node_detected_dev,dev,i_scanned,i_passed);
+    }
+    set_bit(7, rdev.flags);
+    list_add(rdev.same_set, pending_raid_disks);
+    i_passed=i_passed+1;
+    return autostart_arrays_helper(part,rdev,node_detected_dev,dev,i_scanned,i_passed);
+
+}
+
+void autostart_arrays(int part)
+{
+    mdk_rdev_s rdev;
+    detected_devices_node node_detected_dev;
     int dev;
     int i_scanned, i_passed;
 
     i_scanned = 0;
     i_passed = 0;
-
-    while (!list_empty(&all_detected_devices) && i_scanned < 0x7fffffff) {
-        i_scanned++;
-        node_detected_dev = (struct detected_devices_node *) all_detected_devices.next;
-        list_del(&node_detected_dev.list);
-        dev = node_detected_dev.dev;
-        free(node_detected_dev);
-        rdev = md_import_device(dev,0, 90);
-        if (IS_ERR(rdev))
-            continue;
-
-        if (test_bit(1, &rdev.flags)) {
-            continue;
-        }
-        set_bit(7, &rdev.flags);
-        list_add(&rdev.same_set, &pending_raid_disks);
-        i_passed++;
-    }
-    autorun_devices(part);
+    return autostart_arrays_helper(part,rdev,node_detected_dev,dev,i_scanned,i_passed);
 }
-*/
