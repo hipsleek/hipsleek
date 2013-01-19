@@ -69,6 +69,7 @@ and view_kind =
   | View_NORM
   | View_EXTN
   | View_DERV
+  | View_SPEC
 
 and view_decl = { 
     view_name : ident; 

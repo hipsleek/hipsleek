@@ -645,6 +645,7 @@ let string_of_view_kind vk=
     | View_NORM -> "norm"
     | View_EXTN -> "extn"
     | View_DERV -> "derv"
+    | View_SPEC -> "spec"
 
 (* pretty printig for view declaration *)
 let string_of_view_decl v = v.view_name ^"[" ^ (String.concat ","

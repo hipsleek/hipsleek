@@ -572,6 +572,7 @@ non_empty_command:
     [[  t=data_decl           -> DataDef t
       | `PRED;t= view_decl     -> PredDef t
       | `PRED_EXT;t= view_decl_ext     -> PredDef t
+      | `PRED_SPEC;t= view_decl_spec     -> PredDef t
 	  | `PRED_PRIM;t=prim_view_decl     -> PredDef t
       | t=barrier_decl        -> BarrierCheck t
       | t = func_decl         -> FuncDef t
@@ -723,6 +724,35 @@ view_decl_ext:
           view_inv_lock = li;
           try_case_inference = (snd vb) } ]];
 
+view_decl_spec:
+  [[ vh= view_header_ext; `EQEQ; `SPEC; va=view_header_ext;`WITH; vb=view_body; oi= opt_inv; li= opt_inv_lock
+      ->
+      let compare_list_string cmp ls1 ls2=
+        let rec helper ls01 ls02=
+          match ls01,ls02 with
+            | [],[] -> true
+            | s1::rest1,s2::rest2 -> if cmp s1 s2 then helper rest1 rest2 else false
+            | _ -> false
+        in
+        helper ls1 ls2
+      in
+      let cmp_id id1 id2=
+        if String.compare id1 id2 =0 then true else false
+      in
+      let cmp_typed_id (t1,id1) (t2,id2)=
+        if t1=t2 && String.compare id1 id2 =0 then true else false
+      in
+      if not (compare_list_string cmp_id vh.view_vars va.view_vars &&
+                  compare_list_string cmp_typed_id vh.view_prop_extns va.view_prop_extns) then
+        report_error no_pos ("parser.view_decl_spec: not compatiable in view_spec " ^ vh.view_name)
+      else
+        { vh with view_formula = (fst vb);
+            view_invariant = oi;
+            view_kind = Iast.View_SPEC;
+            view_parents = Some va.view_name;
+            view_inv_lock = li;
+            try_case_inference = (snd vb) } ]];
+
 opt_inv_lock: [[t=OPT inv_lock -> t]];
 
 inv_lock:
@@ -810,6 +840,7 @@ view_header:
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
           view_inv_lock = None;
           view_kind = View_NORM;
+          view_parents = None;
           view_derv = false;
           view_derv_info = [];
           view_prop_extns = [];
@@ -841,6 +872,7 @@ view_header_ext:
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
           view_inv_lock = None;
           view_kind = View_EXTN;
+          view_parents = None;
           view_derv = false;
           view_derv_info = [] ;
           view_prop_extns = sl;

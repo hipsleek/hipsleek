@@ -27,7 +27,7 @@ type sleek_token =
   | MAX | MIN 
   | NEW | NOTIN | NULL
   | OFF | ON | ORWORD | ANDWORD
-	| PRED | PRED_PRIM | PRED_EXT| DPRINT | PRINT | CMP
+	| PRED | PRED_PRIM | PRED_EXT | PRED_SPEC | DPRINT | PRINT | CMP
 	| REF |REL | REQUIRES (*| REQUIRESC*) | RES of string | RETURN
 	| SELFT of string | SPLIT | SUBSET | STATIC
   | THEN| THIS of string | TO | TRUE | LEXVAR
@@ -43,7 +43,7 @@ type sleek_token =
   | PERCENT | PMACRO 
   | PZERO | PFULL | PVALUE (* | PREF *)
   | PLUS | PRIME 
-  | SEMICOLON 
+  | SEMICOLON | SPEC
   | STAR | DIV
   | GLOBAL |VARIANCE| ESCAPE | HPRED | REFINES | JOIN | WITH | COMBINE | FINALIZE | TRY | CATCH | FINALLY | THROWS | RAISE
   | INFER | SUBANN | XPRE | PRE | XPOST | POST
@@ -79,7 +79,7 @@ module Token = struct
     | HP->"HeapPred"
     | IF ->"if" | IN_T ->"in" | INT ->"int"| INTERSECT ->"intersect" | INV->"inv" | INLINE->"inline" (* An Hoa : inline added *)
     | LEMMA ->"lemma" | LET->"let" | MAX ->"max" | MIN ->"min" | NEW ->"new" | NOTIN ->"notin" | NULL ->"null"
-    | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | PRED_PRIM -> "pred_prim" | PRED_EXT ->"pred_extn" | DPRINT ->"dprint" |PRINT -> "print" |CMP -> "sleek compare" | REF ->"ref"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s 
+    | OFF ->"off" | ON->"on" | ORWORD ->"or" | ANDWORD ->"and" | PRED ->"pred" | PRED_PRIM -> "pred_prim" | PRED_EXT ->"pred_extn" | PRED_SPEC ->"pred_spec" | DPRINT ->"dprint" |PRINT -> "print" |CMP -> "sleek compare" | REF ->"ref"|REL->"relation" |REQUIRES ->"requires" | RES s->"res "^s | SPEC -> "spec"
     | RETURN->"return" | SELFT s ->"self "^s | SPLIT ->"split"| SUBSET ->"subset" | STATIC ->"static" | LEXVAR ->"LexVar"
     | THEN->"then" | THIS s->"this "^s | TO ->"to" | TRUE ->"true" | UNFOLD->"unfold" | UNION->"union"
     | VOID->"void" | WHILE ->"while" | FLOW s->"flow "^s

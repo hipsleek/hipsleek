@@ -1185,6 +1185,8 @@ and trans_view_kind vk=
     | Iast.View_NORM -> Cast.View_NORM
     | Iast.View_PRIM -> Cast.View_PRIM
     | Iast.View_EXTN -> Cast.View_EXTN
+    | Iast.View_DERV -> Cast.View_DERV
+    | Iast.View_SPEC -> Cast.View_SPEC
 
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let pr = Iprinter.string_of_view_decl in
@@ -1199,6 +1201,18 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let data_name = if (String.length vdef.I.view_data_name) = 0  then  I.incr_fixpt_view  prog.I.prog_data_decls prog.I.prog_view_decls
   else vdef.I.view_data_name in
   (vdef.I.view_data_name <- data_name;
+   let _ =
+     if vdef.I.view_kind = I.View_SPEC then
+       let view_p_name = match vdef.I.view_parents with
+         | None -> report_error no_pos "astsimp.trans_view: view spec must have at least one parent."
+         | Some v -> v
+       in
+       let view_parent = I.look_up_view_def_raw 0 prog.I.prog_view_decls view_p_name in
+       let typed_vars = List.combine (fst (List.split view_parent.I.view_typed_vars)) vdef.I.view_vars in
+       let _ = vdef.I.view_typed_vars <- typed_vars in
+       ()
+     else ()
+   in
   let vtv = vdef.I.view_typed_vars in
   List.iter (fun (t,c) -> 
       if t==UNK 
@@ -1307,8 +1321,8 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           C.view_prune_conditions_baga = [];
           C.view_prune_invariants = []} in
       let _ =
-        if !debug_derive_flag && (view_kind==C.View_EXTN) then
-          let _ =  print_endline ("************VIEW_EXTN*************") in
+        if !debug_derive_flag && (view_kind==C.View_EXTN || view_kind==C.View_SPEC) then
+          let _ =  print_endline ("************VIEW_EXTN/VIEW_SPEC*************") in
           let _ =  print_endline (Cprinter.string_of_view_decl_short cvdef)  in
           ()
         else ()
