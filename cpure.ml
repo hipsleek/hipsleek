@@ -8489,7 +8489,12 @@ and count_term_b_formula bf =
 
 let rec remove_cnts remove_vars f = match f with
   | BForm _ -> if intersect (fv f) remove_vars != [] then mkTrue no_pos else f
-  | And (f1,f2,p) -> mkAnd (remove_cnts remove_vars f1) (remove_cnts remove_vars f2) p
+  | And (f1,f2,p) ->
+    let res1 = remove_cnts remove_vars f1 in
+    let res2 = remove_cnts remove_vars f2 in
+    if isConstFalse res1 then res2
+    else if isConstFalse res2 then res1
+    else mkAnd res1 res2 p
   | Or (f1,f2,o,p) -> 
     let res1 = remove_cnts remove_vars f1 in
     let res2 = remove_cnts remove_vars f2 in
@@ -8503,7 +8508,12 @@ let rec remove_cnts remove_vars f = match f with
 
 let rec remove_cnts2 keep_vars f = match f with
   | BForm _ -> if intersect (fv f) keep_vars = [] then mkTrue no_pos else f
-  | And (f1,f2,p) -> mkAnd (remove_cnts2 keep_vars f1) (remove_cnts2 keep_vars f2) p
+  | And (f1,f2,p) -> 
+    let res1 = remove_cnts2 keep_vars f1 in
+    let res2 = remove_cnts2 keep_vars f2 in
+    if isConstFalse res1 then res2
+    else if isConstFalse res2 then res1
+    else mkAnd res1 res2 p
   | Or (f1,f2,o,p) -> 
     let res1 = remove_cnts2 keep_vars f1 in
     let res2 = remove_cnts2 keep_vars f2 in
