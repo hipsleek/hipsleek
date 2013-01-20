@@ -474,31 +474,35 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
               CF.formula_inf_continuation = new_formula_inf_continuation}
             in
             let _ = proc.proc_stk_of_static_specs # push einfer in
-            let _ = if old_vars=[] then Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos else () in
             let new_fml_fv = CF.struc_fv new_formula_inf_continuation in
-            let pre_post_vars = CP.remove_dups_svl (pre_vars @ post_vars @ new_fml_fv) in
-            let _ = Debug.ninfo_hprint (add_str "all vars" !print_svl) pre_post_vars no_pos in
-            let _ = Debug.ninfo_hprint (add_str "inf vars" !print_svl) vars no_pos in
             let (vars_rel,vars_inf) = List.partition (fun v -> is_RelT(CP.type_of_spec_var v) ) vars in
             let _ = Debug.ninfo_hprint (add_str "vars_rel" !print_svl) vars_rel no_pos in
-            let classify_rel v = 
-              let rel_decl = Cast.look_up_rel_def_raw prog.Cast.prog_rel_decls (CP.name_of_spec_var v) in
-              if CP.isConstTrue rel_decl.rel_formula then true else false in              
-            let (unknown_rel,known_rel) = List.partition classify_rel 
-              (CP.remove_dups_svl ((List.filter CP.is_rel_var pre_post_vars)@vars_rel)) in
-            let _ = Debug.ninfo_hprint (add_str "unknown_rel" !print_svl) unknown_rel no_pos in
-            let _ = Debug.ninfo_hprint (add_str "known_rel" !print_svl) known_rel no_pos in
-            let inf_pos = b.CF.formula_inf_pos in
-            let _ =
-              if not(CP.subset vars pre_post_vars) then
-                report_error inf_pos "Inferable vars include some external variables!"
+            let _ = 
+              if old_vars=[] then 
+                Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos 
               else
-              if not(CP.subset unknown_rel vars_rel) then
-                report_error inf_pos "Inferable vars do not include some unknown relation!"
-              else
-              if CP.intersect known_rel vars_rel<>[] then
-                report_error inf_pos "Inferable vars include some known relation!"
-              else ()
+                let pre_post_vars = CP.remove_dups_svl (pre_vars @ post_vars @ new_fml_fv) in
+                let _ = Debug.ninfo_hprint (add_str "all vars" !print_svl) pre_post_vars no_pos in
+                let _ = Debug.ninfo_hprint (add_str "inf vars" !print_svl) vars no_pos in
+                let classify_rel v = 
+                  let rel_decl = Cast.look_up_rel_def_raw prog.Cast.prog_rel_decls (CP.name_of_spec_var v) in
+                  if CP.isConstTrue rel_decl.rel_formula then true else false in              
+                let (unknown_rel,known_rel) = List.partition classify_rel 
+                  (CP.remove_dups_svl ((List.filter CP.is_rel_var pre_post_vars)@vars_rel)) in
+                let _ = Debug.ninfo_hprint (add_str "unknown_rel" !print_svl) unknown_rel no_pos in
+                let _ = Debug.ninfo_hprint (add_str "known_rel" !print_svl) known_rel no_pos in
+                let inf_pos = b.CF.formula_inf_pos in
+                let _ =
+                  if not(CP.subset vars pre_post_vars) then
+                    report_error inf_pos "Inferable vars include some external variables!"
+                  else
+                  if not(CP.subset unknown_rel vars_rel) then
+                    report_error inf_pos "Inferable vars do not include some unknown relation!"
+                  else
+                  if CP.intersect known_rel vars_rel<>[] then
+                    report_error inf_pos "Inferable vars include some known relation!"
+                  else () 
+                in ()
             in
             let (vars_hp_rel,vars_inf) = List.partition (fun v -> CP.type_of_spec_var v == HpT ) vars_inf in
             let new_vars = vars_inf @ (List.filter (fun r -> List.mem r new_fml_fv) vars_rel) in
@@ -2545,12 +2549,15 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
 (*                                  let pre_rel_ids = List.concat (List.map CP.get_rel_id_list pre_rel_fmls) in*)
                                   let pre_rel_ids = List.filter (fun x -> CP.is_rel_typ x 
                                       && not(Gen.BList.mem_eq CP.eq_spec_var x post_vars)) pre_vars in
+                                  let _ = Debug.devel_hprint (add_str "pre_rel_ids" !print_svl) pre_rel_ids no_pos in
                                   let post_rel_df_new = 
                                     if pre_rel_ids=[] then post_rel_df 
                                     else List.concat (List.map (fun (f1,f2) -> 
-                                      let tmp = List.filter (fun x -> CP.intersect 
-                                        (CP.get_rel_id_list x) pre_rel_ids=[]) (CP.list_of_conjs f1) in
-                                      if tmp=[] then [] else [(CP.conj_of_list tmp no_pos,f2)]
+                                      if TP.is_bag_constraint f1 then [(CP.remove_cnts pre_rel_ids f1,f2)]
+                                      else
+                                        let tmp = List.filter (fun x -> CP.intersect 
+                                          (CP.get_rel_id_list x) pre_rel_ids=[]) (CP.list_of_conjs f1) in
+                                        if tmp=[] then [] else [(CP.conj_of_list tmp no_pos,f2)]
                                       ) post_rel_df)
                                   in
                                   let _ = Debug.devel_hprint (add_str "post_rel_df_new" (pr_list (pr_pair pr pr))) post_rel_df_new no_pos in

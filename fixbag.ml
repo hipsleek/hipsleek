@@ -258,11 +258,11 @@ let arr_para_order (rel: CP.formula) (rel_def: CP.formula) (ante_vars: CP.spec_v
       let pairs = List.combine args_def args in
       let new_args = List.map (fun a -> List.assoc a pairs) new_args_def in
       let new_args, subs = List.split (List.map (fun a -> substitute a) new_args) in
-      let id = match id with | CP.SpecVar (t,n,p) -> CP.SpecVar (t,"fixbag" ^ n,p) in
+      let id = match id with | CP.SpecVar (t,n,p) -> CP.SpecVar (t,"fixbagA"(* ^ n*),p) in
       (CP.BForm ((CP.RelForm (id,new_args,p), o1), o2), [CP.conj_of_list (List.concat subs) no_pos])
     else 
       let args, subs = List.split (List.map (fun a -> substitute a) args) in
-      let id = match id with | CP.SpecVar (t,n,p) -> CP.SpecVar (t,"fixbag" ^ n,p) in
+      let id = match id with | CP.SpecVar (t,n,p) -> CP.SpecVar (t,"fixbagA"(* ^ n*),p) in
       (CP.BForm ((CP.RelForm (id,args,p), o1), o2), [CP.conj_of_list (List.concat subs) no_pos])
   | _ -> report_error no_pos "Expecting relation formulae"
 
@@ -771,7 +771,7 @@ let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars is_recur =
     try
       let rhs = fixbag_of_pure_formula pf in
       let no = string_of_int no_of_disjs in
-      let input_fixbag =  "fixbag" ^ name ^ "(" ^ (string_of_elems pre_vars fixbag_of_spec_var ",") ^ " -> "
+      let input_fixbag =  "fixbagA" (*^ name *)^ "(" ^ (string_of_elems pre_vars fixbag_of_spec_var ",") ^ " -> "
         ^ (string_of_elems post_vars fixbag_of_spec_var ",") ^ ") := " 
         ^ rhs
       in
@@ -798,7 +798,8 @@ let compute_fixpoint_aux rel_fml pf no_of_disjs ante_vars is_recur =
         let exists_vars = CP.diff_svl (CP.fv_wo_rel pf) (CP.fv rel_fml) in 
         let pf = TP.simplify_exists_raw exists_vars pf in
         (rel_fml, remove_subtract pf)
-      else report_error no_pos "Unexpected error in computing fixpoint by FixBag")
+      else report_error no_pos "Unexpected error in computing fixpoint by FixBag"
+    )
 
 let compute_fixpoint input_pairs ante_vars is_rec =
   let (pfs, rels) = List.split input_pairs in
