@@ -1203,7 +1203,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   (vdef.I.view_data_name <- data_name;
    let _ =
      if vdef.I.view_kind = I.View_SPEC then
-       let view_p_name = match vdef.I.view_parents with
+       let view_p_name = match vdef.I.view_parent_name with
          | None -> report_error no_pos "astsimp.trans_view: view spec must have at least one parent."
          | Some v -> v
        in
@@ -1295,6 +1295,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           C.view_name = vn;
           C.view_kind = view_kind;
           C.view_prop_extns = view_prop_extns;
+          C.view_parent_name = vdef.I.view_parent_name;
           C.view_vars = view_sv_vars;
           C.view_uni_vars = [];
           C.view_labels = vdef.I.view_labels;

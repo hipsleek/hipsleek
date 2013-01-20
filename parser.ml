@@ -749,7 +749,7 @@ view_decl_spec:
         { vh with view_formula = (fst vb);
             view_invariant = oi;
             view_kind = Iast.View_SPEC;
-            view_parents = Some va.view_name;
+            view_parent_name = Some va.view_name;
             view_inv_lock = li;
             try_case_inference = (snd vb) } ]];
 
@@ -840,7 +840,7 @@ view_header:
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
           view_inv_lock = None;
           view_kind = View_NORM;
-          view_parents = None;
+          view_parent_name = None;
           view_derv = false;
           view_derv_info = [];
           view_prop_extns = [];
@@ -872,7 +872,7 @@ view_header_ext:
           view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
           view_inv_lock = None;
           view_kind = View_EXTN;
-          view_parents = None;
+          view_parent_name = None;
           view_derv = false;
           view_derv_info = [] ;
           view_prop_extns = sl;

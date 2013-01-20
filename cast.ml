@@ -80,6 +80,7 @@ and view_decl = {
     view_modes : mode list;
     view_kind : view_kind;
     view_prop_extns:  P.spec_var list;
+    view_parent_name : ident option;
     mutable view_partially_bound_vars : bool list;
     mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
     view_data_name : ident;

@@ -64,7 +64,7 @@ view_labels : Label_only.spec_label list;
 view_modes : mode list;
 view_derv: bool;
 view_derv_info: ((ident*ident list)*(ident*ident list*ident list)) list;
-view_parents: (ident) option;
+view_parent_name: (ident) option;
 mutable view_typed_vars : (typ * ident) list;
 view_kind : view_kind;
 view_prop_extns:  (typ * ident) list;

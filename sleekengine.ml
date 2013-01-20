@@ -233,9 +233,13 @@ let convert_pred_to_cast () =
   let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in
   Debug.tinfo_pprint "after check_fixpt" no_pos;
   iprog.I.prog_view_decls <- tmp_views;
-   let tmp_views_derv,tmp_views_orig= List.partition (fun v -> v.I.view_derv) tmp_views in
+  let tmp_views_derv,tmp_views_orig= List.partition (fun v -> v.I.view_derv) tmp_views in
+  (***************************)
   let cviews_orig = List.map (AS.trans_view iprog) tmp_views_orig in
-   (*topo sort derivation order*)
+  (*classify extn, spec*)
+  (* let tmp_views_derv,tmp_views_spec= List.partition (fun v -> v.I.view_kind = I.View_DERV) tmp_views_derv in *)
+  (***************************)
+   (*view_extn: topo sort derivation order*)
   let tmp_views_derv1 = AS.mark_rec_and_der_order tmp_views_derv in
   (* let cviews_derv = List.map (fun v -> AS.trans_view_dervs iprog cviews_orig *)
   (*     v) tmp_views_derv in *)
@@ -243,6 +247,8 @@ let convert_pred_to_cast () =
               let der_view = DER.trans_view_dervs iprog norm_views v in
               (norm_views@[der_view])
           ) cviews_orig tmp_views_derv1 in
+  (***************************)
+  (*view_spec*)
   let cviews = (* cviews_orig@ *)cviews_derv in
   Debug.tinfo_pprint "after trans_view" no_pos;
   let _ = !cprog.C.prog_view_decls <- cviews in
