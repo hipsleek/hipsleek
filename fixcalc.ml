@@ -670,7 +670,7 @@ let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
   let input_pairs_bag, input_pairs_num = 
     List.partition (fun (p,r) -> is_bag_cnt r) input_pairs 
   in
-  let bag_res = if input_pairs_bag = [] then [] 
+  let bag_res = if input_pairs_bag = [] || not(bottom_up) then [] 
     else Fixbag.compute_fixpoint 1 input_pairs_bag ante_vars true 
   in
   let num_res = if input_pairs_num = [] then []

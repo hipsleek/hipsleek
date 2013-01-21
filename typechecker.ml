@@ -438,6 +438,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                           if new_args = [] then [],new_formula_inf_continuation 
                           else
 (*                            let pre_vars,_ = CF.get_pre_post_vars_simp [] new_formula_inf_continuation in*)
+(*                            let pre_inf_vars = List.filter CP.is_node_typ pre_vars in*)
                             let pre_args, _ = List.partition (fun x -> List.mem x pre_vars) new_args in
                             let new_rel_pre = CP.fresh_spec_var_rel () in
                             let new_rel_post = CP.fresh_spec_var_rel () in
@@ -450,7 +451,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                             let new_spec = CF.add_pure new_formula_inf_continuation (Some new_rel_fml_pre) (Some new_rel_fml_post) in
                             Debug.tinfo_hprint (add_str "TEMP SPECS1" pr_spec) new_spec no_pos;
 (*                            pre_args@[new_rel_post],new_spec*)
-                            [new_rel_pre;new_rel_post],new_spec
+                            (*pre_inf_vars@*)[new_rel_pre;new_rel_post],new_spec
                     | Some pflag -> 
                           if not(pflag) then 
                             if new_args = [] then 

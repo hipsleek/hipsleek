@@ -670,7 +670,7 @@ let propagate_rec pfs rel ante_vars = match CP.get_rel_id rel with
     let bcases = List.map remove_subtract bcases in
     let bcases = List.map (fun bcase -> 
       let conjs = list_of_conjs bcase in
-      let conjs = List.filter (fun x -> not (isComp x)) conjs in
+      let conjs =  Gen.BList.remove_dups_eq CP.equalFormula (List.filter (fun x -> not (isComp x)) conjs) in
       conj_of_list conjs no_pos) bcases in
     let rcases = List.map remove_subtract rcases in
     DD.devel_hprint (add_str "BCASE: " (pr_list !CP.print_formula)) bcases no_pos;
