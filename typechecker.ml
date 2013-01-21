@@ -330,15 +330,7 @@ and check_bounded_term_x prog ctx post_pos =
       let ctx = CF.Ctx es in
     let bnd_formula_l = List.map (fun e -> create_bound_constraint e m_pos) m in
       let bnd_formula = CF.formula_of_pure_formula (CP.join_conjunctions bnd_formula_l) m_pos in
-      (* TRUNG TODO: temporarily use only mathematica to check termination *)
-      (*             improve this mechanism later                          *)
-      let old_tp = !TP.tp in
-      if (old_tp != TP.Mathematica) then (
-        TP.tp := TP.Mathematica;
-        Mathematica.start ();
-      );
       let rs, _ = heap_entail_one_context 12 prog false ctx bnd_formula None post_pos in
-      TP.tp := old_tp;
       let _ = Debug.trace_hprint (add_str "Result context" 
           !CF.print_list_context) rs no_pos in
       let term_pos = (m_pos, no_pos) in

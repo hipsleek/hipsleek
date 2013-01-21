@@ -391,15 +391,7 @@ let refine_specs_adapt_sequence_x (specs: CP.formula) (seq_src: CP.sequence) (se
         let msv = CP.remove_dups_svl msv in
         let tmp = CP.mkExists msv (CP.mkAnd f mcons no_pos) None no_pos in
         let new_domain_cons = CP.mkForall [delta_var] (CP.mkImply dcons tmp no_pos) None no_pos in
-        (* TRUNG TODO: temporarily use only mathematica to check termination *)
-        (*             improve this mechanism later                          *)
-        let old_tp = !TP.tp in
-        if (old_tp != TP.Mathematica) then (
-          TP.tp := TP.Mathematica;
-          Mathematica.start ();
-        );
         let keep, _, _ = TP.imply (CP.mkTrue no_pos) new_domain_cons "" false None in 
-        TP.tp := old_tp;
         let can_drop = not keep in
         can_drop
     | _ -> report_error no_pos "Error!!! can_drop_bformula: f has to be CP.BForm"
@@ -692,15 +684,7 @@ let check_term_measures_x estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv ds
           (*let (estate,_,rank_formula,_) = Inf.infer_collect_rel TP.is_sat_raw estate xpure_lhs_h1 
             lhs_p (MCP.mix_of_pure rank_formula) [] (fun i_es_vars i_lhs i_rhs i_pos -> i_lhs, i_rhs) pos in
           let rank_formula = MCP.pure_of_mix rank_formula in*)
-          (* TRUNG TODO: temporarily use only mathematica to check termination *)
-          (*             improve this mechanism later                          *)
-          let old_tp = !TP.tp in
-          if (old_tp != TP.Mathematica) then (
-            TP.tp := TP.Mathematica;
-            Mathematica.start ();
-          );
           let entail_res, _, _ = TP.imply (CP.mkTrue pos) rank_formula "" false None in
-          TP.tp := old_tp;
           begin
             (* print_endline ">>>>>> trans_lexvar_rhs <<<<<<" ; *)
             (* print_endline ("Transformed RHS: " ^ (Cprinter.string_of_mix_formula rhs_p)) ; *)
