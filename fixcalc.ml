@@ -274,6 +274,15 @@ let rec is_rec pf = match pf with
   | CP.Forall (_,f,_,_) -> is_rec f
   | CP.Exists (_,f,_,_) -> is_rec f
 
+let rec is_not_rec pf = match pf with
+  | CP.BForm (bf,_) -> not(CP.is_RelForm pf)
+  | CP.And (f1,f2,_) -> is_not_rec f1 && is_not_rec f2
+  | CP.AndList b -> all_l_snd is_not_rec b
+  | CP.Or (f1,f2,_,_) -> is_not_rec f1 && is_not_rec f2
+  | CP.Not (f,_,_) -> is_not_rec f
+  | CP.Forall (_,f,_,_) -> is_not_rec f
+  | CP.Exists (_,f,_,_) -> is_not_rec f
+
 let substitute_args_x a_rel = match a_rel with
   | CP.BForm ((CP.RelForm (name,args,o1),o2),o3) ->
     let new_args, subs = List.split 
@@ -660,10 +669,12 @@ let compute_fixpoint_xx input_pairs_num ante_vars specs bottom_up =
     (List.map (fun pair -> helper pair ante_vars specs) pairs) in
 
   let true_const,rel_defs = List.partition (fun (_,pf,_) -> CP.isConstTrue pf) rel_defs in
+  let non_rec_defs, rel_defs = List.partition (fun (_,pf,_) -> is_not_rec pf) rel_defs in
   let true_const = List.map (fun (rel_fml,pf,_) -> (rel_fml,pf)) true_const in
-  if rel_defs=[] then true_const 
+  let non_rec_defs = List.map (fun (rel_fml,pf,_) -> (rel_fml,pf)) non_rec_defs in
+  if rel_defs=[] then true_const @ non_rec_defs
   else
-    true_const @ (compute_fixpoint_aux rel_defs ante_vars bottom_up)
+    true_const @ non_rec_defs @ (compute_fixpoint_aux rel_defs ante_vars bottom_up)
 
 let compute_fixpoint_x input_pairs ante_vars specs bottom_up =
   let is_bag_cnt rel = List.exists CP.is_bag_typ (CP.fv rel) in

@@ -2397,9 +2397,9 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 
 and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool = 
   (*unsat_base_x prog sat_subno f*)
-  Debug.no_1 "unsat_base_nth" 
-      Cprinter.string_of_formula string_of_bool
-      (fun _ -> unsat_base_x prog sat_subno f) f
+  Debug.no_2 "unsat_base_nth" 
+      Cprinter.string_of_formula (fun x -> x) string_of_bool
+      (fun _ _ -> unsat_base_x prog sat_subno f) f n
       
 
 and elim_unsat_es i (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
