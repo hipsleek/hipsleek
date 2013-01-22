@@ -175,7 +175,7 @@ let trans_view_one_derv_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_d
   let ls_dname_pos = I.look_up_field_ann prog orig_view.C.view_data_name extn_props in
     (*formula: extend with new args*)
   let fs,labels = List.split orig_view.C.view_un_struc_formula in
-  let (base_brs,ind_brs) = CF.extract_abs_formula_branch fs orig_view.C.view_name view_derv.I.view_name n_args ls_dname_pos in
+  let (base_brs,ind_brs) = CF.extract_abs_formula_branch fs orig_view.C.view_name view_derv.I.view_name n_args ls_dname_pos false in
     (*extend base cases*)
   let extn_base_brs = List.map (do_extend_base_case extn_ho_bs n_args) base_brs in
     (*extend ind cases*)
@@ -239,20 +239,24 @@ let trans_view_one_spec_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_d
       | _ -> report_error no_pos "derive.trans_view_one_spec_x: not handle yet 1"
   in
   let do_extend_ind_case (f,val_extns,rec_extns) spec_ind_fs=
-    (* let rec helper ls= *)
-    (*   match ls with *)
-    (*     | [] -> f *)
-    (*     | (p,rec_list1)::rest -> *)
-    (*         let rec_extn_spec = snd (List.split rec_list1) in *)
-    (*         let rec_extn = snd (List.split rec_extns) in *)
-    (*         if List.length rec_extn_spec = List.length rec_extn then *)
-    (*           let ss = List.combine rec_extn_spec rec_extn in *)
-    (*           let p1 = CP.subst ss p in *)
-    (*           CF.mkAnd_pure f (MCP.mix_of_pure p1) (CF.pos_of_formula f) *)
-    (*         else *)
-    (*           helper rest *)
-    (* in *)
-    (* helper spec_ind_fs *) f
+    let rec helper ls=
+      match ls with
+        | [] -> f
+        | (p,rec_list1)::rest ->
+            let rec_extn_spec = List.concat (snd (List.split rec_list1)) in
+            let rec_extn = List.concat (snd (List.split rec_extns)) in
+            (* let _ =  Debug.info_pprint ("   p: "^ (!CP.print_formula p)) no_pos in *)
+            (* let _ =  Debug.info_pprint ("   rec_extn: "^ (!CP.print_svl rec_extn)) no_pos in *)
+            (* let _ =  Debug.info_pprint ("   rec_extn_spec: "^ (!CP.print_svl rec_extn_spec)) no_pos in *)
+            (* if List.length rec_extn_spec = List.length rec_extn then *)
+            if List.length rec_list1 = List.length rec_extn then
+              let ss = List.combine rec_extn_spec rec_extn in
+              let p1 = CP.subst ss p in
+              CF.mkAnd_pure f (MCP.mix_of_pure p1) (CF.pos_of_formula f)
+            else
+              helper rest
+    in
+    helper spec_ind_fs
   in
   let spec_view = C.look_up_view_def_raw cviews spec_view_name in
  (**********************************)
@@ -261,11 +265,11 @@ let trans_view_one_spec_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_d
    Now, always generate a new one
  *)
  (**********************************)
-  (* let extn_view_name= *)
-  (*   match spec_view.C.view_parent_name with *)
-  (*     | None -> report_error no_pos "derive.trans_view_one_spec_x: a spec view must base on extn view" *)
-  (*     | Some n -> n *)
-  (* in *)
+  let extn_view_name=
+    match spec_view.C.view_parent_name with
+      | None -> report_error no_pos "derive.trans_view_one_spec_x: a spec view must base on extn view"
+      | Some n -> n
+  in
   (* let _ =  Debug.info_pprint ("   extn_view_name: "^ extn_view_name) no_pos in *)
   (* let (extn_vname, extn_ho_bs, extn_ho_inds(\* , extn_user_inv *\)) = generate_extn_ho_procs prog cviews extn_view_name in *)
   (* let extn_view = C.look_up_view_def_raw cviews extn_view_name in *)
@@ -277,7 +281,7 @@ let trans_view_one_spec_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_d
   (*spec process*)
   let spec_fs,_ = List.split spec_view.C.view_un_struc_formula in
   let inv_p = (MCP.pure_of_mix spec_view.C.view_user_inv) in
-  let (spec_brs, spec_val_extns) = CF.classify_formula_branch spec_fs inv_p spec_view.C.view_name
+  let (spec_brs, spec_val_extns) = CF.classify_formula_branch spec_fs inv_p extn_view_name (* spec_view.C.view_name *)
     spec_view.C.view_vars spec_view.C.view_prop_extns in
   let spec_b_brs, spec_ind_brs = List.partition (fun (_, ls) -> ls=[]) spec_brs in
  (**********************************)
@@ -287,13 +291,14 @@ let trans_view_one_spec_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_d
  (**********************************)
   (*formula: spec*)
   (*new args*)
-  let ss = List.combine extn_args spec_view.C.view_vars in
-  let n_args = List.map (fun (id, CP.SpecVar (t,_,pr)) ->  CP.SpecVar (t,id,pr)) ss in
+  (* let n_args = List.map (fun (id, CP.SpecVar (t,_,pr)) ->  CP.SpecVar (t,id,pr)) ss in *)
   let orig_view = C.look_up_view_def_raw cviews orig_view_name in
   (*find data fields anns*)
   let ls_dname_pos = I.look_up_field_ann prog orig_view.C.view_data_name extn_props in
   let orig_fs,labels = List.split orig_view.C.view_un_struc_formula in
-  let (orig_b_brs,orig_ind_brs) = CF.extract_abs_formula_branch orig_fs orig_view.C.view_name view_derv.I.view_name n_args ls_dname_pos in
+  let ss = List.combine orig_view.C.view_vars spec_view.C.view_vars in
+  let spec_fs = List.map (CF.subst ss) orig_fs in
+  let (orig_b_brs,orig_ind_brs) = CF.extract_abs_formula_branch spec_fs orig_view.C.view_name view_derv.I.view_name spec_view.C.view_vars ls_dname_pos true in
   (* let orig_inv_p = (MCP.pure_of_mix spec_view.C.view_user_inv) in *)
   (* let (orig_brs, orig_val_extns) = CF.classify_formula_branch orig_fs orig_inv_p orig_view.C.view_name *)
   (*   orig_view.C.view_vars orig_view.C.view_prop_extns in *)
@@ -336,7 +341,7 @@ let trans_view_one_spec_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_d
   let spec_view = {orig_view with
       C.view_name = view_derv.I.view_name;
         (* C.view_kind = C.View_DERV; *)
-      C.view_vars = orig_view.C.view_vars@n_args;
+      C.view_vars = spec_view.C.view_vars;
       C.view_formula = new_struct_f;
       C.view_un_struc_formula = new_un_struc_formulas;
       C.view_raw_base_case = rbc;
@@ -350,7 +355,7 @@ let trans_view_one_spec (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_dec
   let pr1= pr_list pr_id in
   let pr = (pr_pair (pr_pair pr_id pr1) (pr_triple pr_id pr1 pr1)) in
   let pr_r = Cprinter.string_of_view_decl in
-  Debug.ho_1 "trans_view_one_spec" pr pr_r  (fun _ -> trans_view_one_spec_x prog cviews derv view_spec) view_spec
+  Debug.no_1 "trans_view_one_spec" pr pr_r  (fun _ -> trans_view_one_spec_x prog cviews derv view_spec) view_spec
 
 let do_sanity_check derv=
   let derv_args = derv.I.view_vars in

@@ -4501,13 +4501,21 @@ let extract_rec_extn f v_name v_args inv=
       (fun _ _ _  _ -> extract_rec_extn_x f v_name v_args inv) f v_name v_args inv
 
 let classify_formula_branch_x fs inv v_name v_args v_extns=
+  let rec assoc_all sv ls res=
+    match ls with
+      | [] -> if res = [] then raise Not_found
+          else res
+      | (sv1,b)::rest -> if CP.eq_spec_var sv sv1 then
+            assoc_all sv rest (res@[(sv1,b)])
+          else assoc_all sv rest res
+  in
   let rec list_assoc extns r_svl res=
     match extns with
       | [] -> res
       | sv::rest ->
           try
-              let l_args = List.assoc sv r_svl in
-              list_assoc rest r_svl (res@[(sv,l_args)])
+              let l_args = assoc_all sv r_svl [] in
+              list_assoc rest r_svl (res@ l_args)
           with Not_found -> list_assoc rest r_svl res
   in
   let process_one f=
@@ -4515,7 +4523,7 @@ let classify_formula_branch_x fs inv v_name v_args v_extns=
     (*prune out p*)
     let rec_svl, ls_inv = List.split (extract_rec_extn f v_name v_args inv) in
     let rec_extns = list_assoc v_extns rec_svl [] in
-    let keep_svl = if rec_extns=[] then v_args else (v_args@v_extns) in
+    let keep_svl = if rec_extns=[] then v_args else (v_args@v_extns@(List.concat (snd (List.split rec_svl)))) in
     let p1 = CP.filter_var p keep_svl in
     (*involve inv*)
     (* let filtered_inv = CP.filter_var inv keep_svl in *)
@@ -4574,7 +4582,7 @@ let extend_view_nodes (f0:formula) old_v_name new_v_name extra_args =
       (fun _ _ _ _ -> extend_view_nodes_x f0 old_v_name new_v_name extra_args)
       f0 old_v_name new_v_name extra_args
 
-let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_infos=
+let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_infos is_spec=
   (* let gen_null_svl extn_args= *)
   (*   List.map (fun (CP.SpecVar (t,_,p)) -> (CP.SpecVar (t,null_sv,p))) extn_args *)
   (* in *)
@@ -4626,8 +4634,9 @@ let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_info
     (sel_null_svl, sel_null_pair)
   in
   let process_one f=
-    (*extend new new view name, new args*)
-    let f1 = extend_view_nodes f v_base_name v_new_name extn_args in
+    (*extend new view name, new args*)
+    let extn_args1 = if is_spec then [] else  extn_args in
+    let f1 = extend_view_nodes f v_base_name v_new_name extn_args1 in
     (*get dataNode, ViewNode*)
     let hds,hvs= flatten_nodes f1 in
     let sel_svl = CP.remove_dups_svl ( List.concat (List.map get_sel_args_from_dnode hds)) in
