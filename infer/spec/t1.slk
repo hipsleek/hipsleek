@@ -1,0 +1,32 @@
+relation P(int x, int y).
+
+infer [P] x>=y & P(y,z) |- x>=z.
+print residue.
+
+
+infer [P] x>=y & P(y,z) |- x>=y.
+print residue.
+
+/*
+infer x>=y & form["A":y>z] |- form["B":x>=z].
+
+  form["A":y>z] -> form["B":x>=z]
+  // "A" is required to prove "B"
+
+infer x>=y &  form["A":y>z] |- form["B":x>=y].
+
+  form("B")
+  // "B" can be proven
+
+infer x>=y &  form["A":y>z] |- form["B":x<=y].
+
+  not[form("B")]`
+  // "B" cannot be proven
+
+*/
+
+infer [P] x>=y & y<=z & P(y,z)  |- x<=y.
+print residue.
+
+infer [P] x>y & y<=z & P(y,z)  |- x<=y.
+print residue.
