@@ -2,8 +2,8 @@
 (* module Lb = Label_only *)
     (* circular with Lb *)
     
-(*let ramification_entailments = ref 0
-let total_entailments = ref 0 *)
+let ramification_entailments = ref 0
+let total_entailments = ref 0 
 
 type ('a,'b) twoAns = 
   | FstAns of 'a
