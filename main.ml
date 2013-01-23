@@ -367,6 +367,10 @@ let process_source_full source =
 	^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
 	^ "\tTime spent in child processes: " 
 	^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n"
+	(*^ "\nTotal Entailments : " 
+	^ (string_of_int !Globals.total_entailments) ^ "\n" 
+	^ "Ramification Entailments : "^ (string_of_int !Globals.ramification_entailments) ^"\n"
+	^ "Noninter Entailments : "^ (string_of_int !Globals.noninter_entailments) ^"\n"*)
 	^ if !Globals.proof_logging || !Globals.proof_logging_txt then 
       "\tTime for logging: "^(string_of_float (!Globals.proof_logging_time))^" second(s)\n"
     else ""
@@ -537,10 +541,7 @@ let process_source_full_after_parser source (prog, prims_list) =
   ^ "\tTime spent in main process: " 
   ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
   ^ "\tTime spent in child processes: " 
-  ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n"
-	^ "\nTotal Entailments : " 
-	^ (string_of_int !Globals.total_entailments) ^ "\n" 
-	^ "Ramification Entailments : "^ (string_of_int !Globals.ramification_entailments) ^"\n")
+  ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
 
 let main1 () =
   (* Cprinter.fmt_set_margin 40; *)

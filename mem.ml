@@ -484,6 +484,7 @@ match f with
               
 let rec split_heap (h:CF.h_formula) : (CF.h_formula * CF.h_formula) = 
 	(*let _ = print_string ("Splitting Heap H = "^ (string_of_h_formula h) ^ "\n") in *)
+    (*let _ = Globals.noninter_entailments := !Globals.noninter_entailments + 1 in*)
 	match h with
 	| CF.Conj({CF.h_formula_conj_h1 = h1;
 		   CF.h_formula_conj_h2 = h2;
@@ -503,7 +504,7 @@ let rec split_heap (h:CF.h_formula) : (CF.h_formula * CF.h_formula) =
 		   CF.h_formula_star_h2 = h2;
 		   CF.h_formula_star_pos = pos}) ->
 		   if contains_conj h1 then
-		   (*let _ = print_string ("H1 = "^ (string_of_h_formula h1)^ "\nH2 = "^ (string_of_h_formula h2) ^ "\n") in*)
+ 		   (*let _ = print_string ("H1 = "^ (string_of_h_formula h1)^ "\nH2 = "^ (string_of_h_formula h2) ^ "\n") in*)
 		   let left_h_split = split_heap h1
 		   in (fst left_h_split),(CF.mkStarH (snd left_h_split) h2 pos)
 		   else if contains_conj h2 then
@@ -1406,7 +1407,7 @@ let ramify_conjstar = ramify_star
 let rec ramify_starminus_in_h_formula (f: CF.h_formula) (vl:C.view_decl list) (aset: CP.spec_var list list) (fl: CF.h_formula list)
 func (mcp: MCP.mix_formula ) : CF.h_formula * CP.formula = 
   if not (contains_starminus f) then f,(CP.mkTrue no_pos) else 
-  let _ = Globals.ramification_entailments := !Globals.ramification_entailments + 1 in
+  (*let _ = Globals.ramification_entailments := !Globals.ramification_entailments + 1 in*)
   (*let _ = print_string("Ramification :"^ (string_of_h_formula f)^ "\n") in*)
     match f with
       | CF.Star {CF.h_formula_star_h1 = h1;
@@ -1463,7 +1464,7 @@ func (mcp: MCP.mix_formula ) : CF.h_formula * CP.formula =
       | _ -> f,(CP.mkTrue no_pos)
 	
 let rec ramify_starminus_in_formula (cf: CF.formula) (vl:C.view_decl list): CF.formula =
-  let _ = Globals.total_entailments := !Globals.total_entailments + 1 in
+ (*let _ = Globals.total_entailments := !Globals.total_entailments + 1 in*)
   if not (!Globals.allow_mem) then cf else
   match cf with
     | CF.Base f   -> 
