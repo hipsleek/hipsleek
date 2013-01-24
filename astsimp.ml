@@ -5338,7 +5338,7 @@ and get_type stab i =
   with _ -> report_error no_pos ("UNEXPECTED : Type Var "^key^" cannot be found in stab"))
 
 and gather_type_info_exp a0 stab et =
-  Debug.no_eff_3 "gather_type_info_exp" [false;true] 
+  Debug.ho_eff_3 "gather_type_info_exp" [false;true] 
       Iprinter.string_of_formula_exp string_of_stab string_of_typ
       string_of_typ gather_type_info_exp_x a0 stab et
 
