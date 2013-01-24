@@ -50,7 +50,13 @@ let partition_extn_svl p svl=
 let generate_extn_ho_procs prog cviews extn_view_name=
   let mk_ho_b args val_extns p =
     fun svl val_extns1 ->
-        let ss = List.combine (args@val_extns) (svl@val_extns1) in
+       (* let _ =  Debug.info_pprint ("  val_extns: "^ (!CP.print_svl val_extns)) no_pos in *)
+       (* let _ =  Debug.info_pprint ("  val_extns1: "^ (!CP.print_svl val_extns1)) no_pos in *)
+        (*may be nonnull*)
+        let ss = if List.length val_extns = List.length val_extns1 then
+              List.combine (args@val_extns) (svl@val_extns1)
+            else List.combine (args) (svl)
+        in
         (*let _ =  Debug.info_pprint ("  p: "^ (!CP.print_formula p)) no_pos in*)
         let n_p = CP.subst ss p in
         let n_p1,_ = CP.norm_exp_min_max n_p in
@@ -112,7 +118,7 @@ let generate_extn_ho_procs prog cviews extn_view_name=
       (*assume we extend one property each*)
             let ls_to_args = List.concat (List.map (fun (ann,args) -> mk_ho_ind_rec ann args p) rec_ls1) in
             (*this step is necessary for tree like*)
-            let new_ps = List.map (fun to_arg -> process_other_const from_rec_args [to_arg] p_non_extn) ls_to_args in
+            let new_ps = List.map (fun to_arg -> process_other_const (from_rec_args@val_extns) ([to_arg]@val_extns1) p_non_extn) ls_to_args in
             let pos = CP.pos_of_formula n_p2 in
             let n_p4 = List.fold_left (fun p1 p2 -> CP.mkAnd p1 p2 pos) n_p2 new_ps in
             n_p4

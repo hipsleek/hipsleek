@@ -33,6 +33,7 @@ pred llNN<> ==
   or self::node<_,p> * p::llNN<>
 inv self!=null.
 
+//shoudl be error
 pred llNNSum<s,n> == extends llNN<> with ssum[VAL,REC]<s> .
 // need sanity check that n does not exist in RHS
 
