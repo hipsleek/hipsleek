@@ -48,11 +48,14 @@ let partition_extn_svl p svl=
 (******************************************)
 
 let generate_extn_ho_procs prog cviews extn_view_name=
-  let mk_ho_b args p =
-    fun svl ->
-        let ss = List.combine args svl in
+  let mk_ho_b args val_extns p =
+    fun svl val_extns1 ->
+        let ss = List.combine (args@val_extns) (svl@val_extns1) in
+        (*let _ =  Debug.info_pprint ("  p: "^ (!CP.print_formula p)) no_pos in*)
         let n_p = CP.subst ss p in
         let n_p1,_ = CP.norm_exp_min_max n_p in
+        (* let _ =  Debug.info_pprint ("  n_p: "^ (!CP.print_formula n_p)) no_pos in *)
+        (* let _ =  Debug.info_pprint ("  n_p1: "^ (!CP.print_formula n_p1)) no_pos in *)
         n_p1
   in
   let mk_ho_ind_rec ann args p =
@@ -123,7 +126,7 @@ let generate_extn_ho_procs prog cviews extn_view_name=
     extn_v.C.view_vars extn_v.C.view_prop_extns in
   let b_brs, ind_brs = List.partition (fun (_, ls) -> ls=[]) brs in
   (*now, we assume we always have <= 1 base case and <=1 ind case*)
-  let ho_bs = List.map (fun (p,_) ->  mk_ho_b extn_v.C.view_vars p) b_brs in
+  let ho_bs = List.map (fun (p,_) ->  mk_ho_b extn_v.C.view_vars val_extns p) b_brs in
   let ho_inds = List.map (fun (p, ls) -> mk_ho_ind extn_v.C.view_vars
       val_extns p ls) ind_brs in
   (* (extn_view_name, b_brs, ind_brs, val_extns, extn_inv) *)
@@ -132,13 +135,14 @@ let generate_extn_ho_procs prog cviews extn_view_name=
 
 let trans_view_one_derv_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl list) view_derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) :
        C.view_decl =
-  let do_extend_base_case ho_bs extn_args f=
+  let do_extend_base_case ho_bs extn_args val_svl f=
     match ho_bs with
       | [] -> f
       | ho_fn::_ -> (*now, we just care the first one*)
-          let extn_p = ho_fn extn_args in
+          let extn_p = ho_fn extn_args val_svl in
+          (* let _ =  Debug.info_pprint ("  np: "^ (!CP.print_formula extn_p)) no_pos in *)
           let nf = CF.mkAnd_pure f (MCP.mix_of_pure extn_p) no_pos in
-          (* let _ =  Debug.info_pprint ("  nf: "^ (!CF.print_formula nf)) no_pos in *)
+          (*let _ =  Debug.info_pprint ("  nf: "^ (!CF.print_formula nf)) no_pos in *)
           nf
   in
   let do_extend_ind_case ho_inds extn_args (f,val_extns,rec_extns)=
@@ -177,7 +181,7 @@ let trans_view_one_derv_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_d
   let fs,labels = List.split orig_view.C.view_un_struc_formula in
   let (base_brs,ind_brs) = CF.extract_abs_formula_branch fs orig_view.C.view_name view_derv.I.view_name n_args ls_dname_pos false in
     (*extend base cases*)
-  let extn_base_brs = List.map (do_extend_base_case extn_ho_bs n_args) base_brs in
+  let extn_base_brs = List.map (fun (p,val_svl)-> do_extend_base_case extn_ho_bs n_args val_svl p) base_brs in
     (*extend ind cases*)
   let extn_ind_brs = List.map (do_extend_ind_case extn_ho_inds n_args) ind_brs in
     (*unstruct*)
@@ -304,7 +308,7 @@ let trans_view_one_spec_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_d
   (*   orig_view.C.view_vars orig_view.C.view_prop_extns in *)
   (* let orig_b_brs, orig_ind_brs = List.partition (fun (_, ls) -> ls=[]) orig_brs in *)
   (*extend base cases*)
-  let extn_base_brs = do_extend_base_case orig_b_brs spec_b_brs in
+  let extn_base_brs = do_extend_base_case (fst (List.split orig_b_brs)) spec_b_brs in
     (*extend ind cases*)
   let extn_ind_brs = List.map (fun a -> do_extend_ind_case a spec_ind_brs) orig_ind_brs in
     (*unstruct*)

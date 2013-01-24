@@ -4649,21 +4649,21 @@ let extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_info
     let val_svl,rec_svl=List.split (List.map (classify_rec_svl hvs (List.length extn_args)) sel_svl_rest) in
     let val_svl1 = List.concat val_svl in
     let rec_svl1 = List.concat rec_svl in
-    if val_svl1=[] && rec_svl1=[] && null_paired_svl = []
-    then ([f1],[]) else ([],
+    if (* val_svl1=[] && *) rec_svl1=[] && null_paired_svl = []
+    then ([(f1,val_svl1)],[]) else ([],
     [(f1, (* List.filter (fun sv -> not (CP.is_node_typ sv)) *) val_svl1 (*todo: should improve with double check*),
                      rec_svl1@null_paired_svl)])
   in
   let ls_bases,ls_inds = List.split (List.map process_one fs) in
   (List.concat ls_bases, List.concat ls_inds)
 
-let extract_abs_formula_branch fs v_base_name v_new_name extn_args ls_ann_infos=
+let extract_abs_formula_branch fs v_base_name v_new_name extn_args ls_ann_infos is_spec=
   let pr0 = pr_list !print_formula in
   let pr1 = !CP.print_svl in
   let pr2 = pr_list (pr_pair pr_id string_of_int) in
-  let pr3 = pr_pair pr0 (pr_list (pr_triple !print_formula pr1 (pr_list (pr_pair !CP.print_sv pr1)))) in
+  let pr3 = pr_pair (pr_list (pr_pair !print_formula pr1)) (pr_list (pr_triple !print_formula pr1 (pr_list (pr_pair !CP.print_sv pr1)))) in
   Debug.no_5 "extract_abs_formula_branch" pr0 pr_id pr_id pr1 pr2 pr3
-      (fun _ _ _ _ _ -> extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_infos)
+      (fun _ _ _ _ _ -> extract_abs_formula_branch_x fs v_base_name v_new_name extn_args ls_ann_infos is_spec)
       fs v_base_name v_new_name extn_args ls_ann_infos
 
 (*****************************************)
