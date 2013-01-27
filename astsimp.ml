@@ -1327,13 +1327,18 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           C.view_prune_conditions = [];
           C.view_prune_conditions_baga = [];
           C.view_prune_invariants = []} in
-      let _ =
-        if !debug_derive_flag && (view_kind==C.View_EXTN || view_kind==C.View_SPEC) then
-          let _ =  print_endline ("************VIEW_EXTN/VIEW_SPEC*************") in
-          let _ =  print_endline (Cprinter.string_of_view_decl_short cvdef)  in
-          ()
-        else ()
-      in
+      (* let _ = *)
+      (*   if !debug_derive_flag then *)
+      (*     let s= *)
+      (*       if (view_kind==C.View_EXTN || view_kind==C.View_SPEC) then *)
+      (*         ("************VIEW_EXTN/VIEW_SPEC*************") *)
+      (*       else ("************VIEW NORM/DERV/SPEC*************") *)
+      (*     in *)
+      (*     let _ =  print_endline s in *)
+      (*     let _ =  print_endline (Cprinter.string_of_view_decl_short cvdef)  in *)
+      (*     () *)
+      (*   else () *)
+      (* in *)
       (Debug.devel_zprint (lazy ("\n" ^ (Cprinter.string_of_view_decl cvdef))) (CF.pos_of_struc_formula cf);
       cvdef)
   )

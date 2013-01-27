@@ -262,6 +262,22 @@ let convert_pred_to_cast () =
     then AS.pred_prune_inference cprog2 else cprog2 in
   let cprog4 = (AS.add_pre_to_cprog cprog3) in
   let cprog5 = (*if !Globals.enable_case_inference then AS.case_inference iprog cprog4 else*) cprog4 in
+  (*print views*)
+  let _ =
+    if !debug_derive_flag then
+      let print_view cvdef=
+        let s=
+          if (cvdef.C.view_kind==C.View_EXTN || cvdef.C.view_kind==C.View_SPEC) then
+            ("************VIEW_EXTN/VIEW_SPEC*************")
+          else ("************VIEW NORM/DERV/SPEC*************")
+        in
+        let _ =  print_endline s in
+        let _ =  print_endline (Cprinter.string_of_view_decl_short cvdef)  in
+      ()
+      in
+      List.iter print_view cprog5.C.prog_view_decls
+    else ()
+  in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
   let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog5) else () in
   cprog := cprog5

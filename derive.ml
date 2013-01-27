@@ -381,23 +381,23 @@ let trans_view_dervs_x (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl
   match derv.I.view_derv_info with
     | [] -> report_error no_pos "astsimp.trans_view_dervs: 1"
     | [((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args))] ->
-        let der_view,s =
+        let der_view(*,s*) =
           let extn_view = C.look_up_view_def_raw cviews extn_view_name in
           if extn_view.C.view_kind = C.View_SPEC then
             let der_view = trans_view_one_spec prog cviews derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) in
-           (der_view,("************VIEW_SPECIFIED*************"))
+           (der_view(*,("************VIEW_SPECIFIED*************")*))
           else
              let der_view = trans_view_one_derv prog cviews derv ((orig_view_name,orig_args),(extn_view_name,extn_props,extn_args)) in
-             (der_view,("************VIEW_DERIVED*************"))
+             (der_view(*,("************VIEW_DERIVED*************")*))
         in
-        let _ =
-             if !debug_derive_flag then
-               let _ =  print_endline s in
-               let _ =  print_endline (Cprinter.string_of_view_decl_short der_view)  in
-               ()
-             else ()
-           in
-          der_view
+        (* let _ = *)
+        (*      if !debug_derive_flag then *)
+        (*        let _ =  print_endline s in *)
+        (*        let _ =  print_endline (Cprinter.string_of_view_decl_short der_view)  in *)
+        (*        () *)
+        (*      else () *)
+        (* in *)
+        der_view
     | _ -> report_error no_pos "astsimp.trans_view_dervs: not handle yet"
 
 
