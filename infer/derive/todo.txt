@@ -130,38 +130,46 @@ pred llSum<s> == extends ll<> with ssum[REC,VAL]<s> .
 Missing VAL but below still goes through.
 I think we should highlight as an error since VAL cannot be used
 
-## der-1c.slk: DONE
+## der-1c.slk: 
 
 pred_extn pos_sum[R,V]<s> ==
       s=0 // base case
    or R::pos_sum<s2> & s=V+s2 & V>=0 
    inv s>=0
    .
-
 pred llNPSum<s> == extends ll<> with pos_sum[VAL,REC]<s> .
 
-Two solutions 
-  (i) warning that property extension should not have
-      non-definitional constraints, like v>=0
- (ii) avoid error below
 
-ERROR: at _0_0 
-Message: cpure.extract_outer_inner_f: not handle yet
- Fatal error: exception Failure("cpure.extract_outer_inner_f: not handle yet")
-
-## der-1c.slk: 
-
-This introduced "0<=V" which is free inside pred defn.
-Perhaps, an error should be flagged to indicate that
-that this is a specialization rather than extension.
-
-view llNPSum[]<s:int>= 
+************VIEW_EXTN/VIEW_SPEC*************
+ view_extn pos_sum[R:pos_sum,V:int]<s:int>= 
+  
+   EBase {2}->emp&s=0&{FLOW,(1,22)=__flow}[]
+  eor 
+   EBase exists (Expl)(Impl)[R; s2](ex){1}->R::pos_sum<s2>@M[0][Orig]&s=s2+
+         V & 0<=V&{FLOW,(1,22)=__flow}[]
+  
+  xform: 0<=s
+************VIEW_DERIVED*************
+ view llNPSum[]<s:int>= 
   
    EBase {4}->emp&self=null & s=0&{FLOW,(1,22)=__flow}[]
   eor 
    EBase EXISTS(Anon_11,p,s_24: self::node<Anon_11,p>@M[Orig] * 
-         p::llNPSum<s_24>@M[0][Orig][LHSCase]&s=Anon_11+s_24 & 0<=V & 
+         p::llNPSum<s_24>@M[0][Orig][LHSCase]&s=Anon_11+s_24 & 0<=Anon_11 & 
          0<=s_24&{FLOW,(1,22)=__flow})[]
+  
+  xform: true
+
+Two problem above:
+  (i) should give  warning that property extension should not have
+      non-definitional constraints, like v>=0
+
+ This introduced "0<=V" which is free inside pred defn.
+ Perhaps, an error should be flagged to indicate that
+ that this is a specialization rather than extension.
+
+ (ii) the derived llNPSum should have xform s>=0
+
 
 # err-1-der-5.slk; DONE
 
@@ -179,3 +187,14 @@ view llMin[]<m:NUM>=
          {FLOW,(1,22)=__flow})[]
   
   xform: self!=null
+
+## der-6d.slk
+
+pred_extn hed[V]<n> ==
+          n=V
+   inv self=null // does not entail implied formula
+   .
+/*
+    PROBLEM :
+    should report an error that invariant cannot be entailed.
+*/

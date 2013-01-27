@@ -10,7 +10,7 @@ inv self!=null.
 
 pred_extn hed[V]<n> ==
           n=V
-   //inv self!=null // does not entail implied formula
+   inv self!=null // does not entail implied formula
    .
 pred llhead<n> == extends llNN<> with hed[VAL]<n> .
 
