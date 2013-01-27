@@ -1,0 +1,24 @@
+# sll-del.ss
+
+void delete(node2 x)
+  /* infer[n] */
+/*
+  requires x::node2<_,p,q>*q::sll<x> & q!=null
+  ensures x::node2<_,p,r>*r::sll<x> ;
+*/
+  infer[H1,G1]
+  requires H1(x)
+  ensures G1(x);
+
+[ G1(x_589) ::= x_589::node2<val_27_548,next_29_528'>@M 
+              * HP_590(next_29_528')&true,
+
+ H1(x_594) ::= x_594::node2<val_27_520',next_27_521'>@M * 
+    next_27_521'::node2<val_27_523',next_27_587>@M&next_27_587=null,
+
+ HP_590(next_29_528') ::= 
+ emp&next_29_528'=null
+ or next_29_528'::node2<val_27_548,next_29_591>@M * HP_590(next_29_591)&true
+ ]
+
+PROBLEM : inferred H1(..) is too strong..
