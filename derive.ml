@@ -405,3 +405,26 @@ let trans_view_dervs (prog : I.prog_decl) (cviews (*orig _extn*) : C.view_decl l
   let pr_r = Cprinter.string_of_view_decl in
   let pr = Iprinter.string_of_view_decl in
   Debug.no_1 "trans_view_dervs" pr pr_r  (fun _ -> trans_view_dervs_x prog cviews derv) derv
+
+
+let leverage_self_info_x xform formulas anns data_name=
+  let detect_anns_f f=
+    let svl = CF.fv f in
+    CP.intersect_svl anns svl <> []
+  in
+  let fs = CF.list_of_disjs formulas in
+  let ls_self_not_null = List.map detect_anns_f fs in
+  let self_not_null = List.for_all (fun b -> b) ls_self_not_null in
+  let self_info =
+    let self_sv = CP.SpecVar (Named data_name,self,Unprimed) in
+    if self_not_null then
+      CP.mkNeqNull self_sv no_pos
+    else CP.mkNull self_sv no_pos
+  in
+  CP.mkAnd xform self_info (CP.pos_of_formula xform)
+
+let leverage_self_info xform formulas anns data_name=
+  let pr1= !CP.print_formula in
+  let pr2 = !CF.print_formula in
+  Debug.no_3 "leverage_self_info" pr1 pr2 (!CP.print_svl) pr1
+      (fun _ _ _ -> leverage_self_info_x xform formulas anns data_name) xform formulas anns

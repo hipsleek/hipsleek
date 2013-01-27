@@ -1154,20 +1154,26 @@ and compute_view_x_formula_x (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
     else ())
   in 
   let check_and_compute () = 
-    if not(vdef.C.view_kind = C.View_PRIM || vdef.C.view_kind = C.View_EXTN) then
+    if not(vdef.C.view_kind = C.View_PRIM (*|| vdef.C.view_kind = C.View_EXTN *)) then
 	      let (xform', addr_vars', ms) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in	
 	      let addr_vars = CP.remove_dups_svl addr_vars' in
 	      let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
-	      let formula1 = CF.formula_of_mix_formula xform pos in
-	      let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
+          let xform1 = if vdef.C.view_kind = C.View_EXTN then
+                let r = Derive.leverage_self_info (MCP.pure_of_mix xform) (C.formula_of_unstruc_view_f vdef) vdef.C.view_prop_extns vdef.C.view_data_name
+                in
+                (MCP.mix_of_pure r)
+              else xform
+          in
+	      let formula1 = CF.formula_of_mix_formula xform1 pos in
+          let ctx = CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) Lab2_List.unlabelled pos) formula1 pos in
 	      let formula = CF.formula_of_mix_formula vdef.C.view_user_inv pos in
-	      let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
+          let (rs, _) = Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos in
 	      let _ = if not(CF.isFailCtx rs) then
 	      let pf = pure_of_mix vdef.C.view_user_inv in
           let disj_f = CP.split_disjunctions_deep pf in
           let do_not_recompute_flag = (List.length disj_f>1) && not(!Globals.disj_compute_flag) in
               helper n do_not_recompute_flag
-	      else report_error pos "view formula does not entail supplied invariant\n" in ()
+	      else report_error pos ("view formual of " ^ vdef.C.view_name ^" does not entail supplied invariant\n") in ()
     else ()
   in
   check_and_compute ()

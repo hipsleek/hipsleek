@@ -188,7 +188,7 @@ view llMin[]<m:NUM>=
   
   xform: self!=null
 
-## der-6d.slk
+## der-6d.slk: DONE
 
 pred_extn hed[V]<n> ==
           n=V
