@@ -23,13 +23,23 @@ pred_extn pos_sum[R,V]<s> ==
 pred llNPSum<s> == extends ll<> with pos_sum[VAL,REC]<s> .
 
 /*
-Two solutions 
-  (i) warning that property extension should not have
-      non-definitional constraints, like v>=0
- (ii) avoid error below
-ERROR: at _0_0 
-Message: cpure.extract_outer_inner_f: not handle yet
- Fatal error: exception Failure("cpure.extract_outer_inner_f: not handle yet")
+************VIEW_DERIVED*************
+ view llNPSum[]<s:int>= 
+  
+   EBase {4}->emp&self=null & s=0&{FLOW,(1,22)=__flow}[]
+  eor 
+   EBase EXISTS(Anon_11,p,s_24: self::node<Anon_11,p>@M[Orig] * 
+         p::llNPSum<s_24>@M[0][Orig][LHSCase]&s=Anon_11+s_24 & 0<=Anon_11 & 
+         0<=s_24&{FLOW,(1,22)=__flow})[]
+  
+  xform: true
+
+PROBLEMS
+========
+   (i) 0<=s_24 need not be added in branch
+   (ii) 0<=s must be added to xform (or xpure0)
+
+
 */
 
 

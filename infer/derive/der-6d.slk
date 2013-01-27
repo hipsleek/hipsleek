@@ -9,9 +9,21 @@ pred llNN<> == self::node<_,null>
 inv self!=null.
 
 pred_extn hed[V]<n> ==
-          n=V
-   inv self=null // does not entail implied formula
+          n=0 
+     or   n=V
+   inv self!=null // does not entail implied formula
    .
+
+pred_extn hed2[V]<n> ==
+        n=V
+   inv self!=null 
+.
+/*
+pred_extn hed3[V]<n> ==
+        n=V
+   inv self=null 
+.
+*/
 
 /*
     PROBLEM :
