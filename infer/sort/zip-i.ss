@@ -13,13 +13,13 @@ llN<n> == self=null & n=0
   or self::node<v,p> * p::llN<n-1>
 inv n>=0;
 
-relation R(int a,int b,int c).
+relation Q(int a,int b,int c).
 relation P(int a,int b).
 
 node zip(node x, node y)
-  infer [P,R]
+  infer [P,Q]
   requires x::llN<a> * y::llN<b> & P(a,b)
-  ensures  res::llN<r> & R(a,b,r);
+  ensures  res::llN<r> & Q(a,b,r);
   /*
 
 !!! REL POST :  R(a,b,r)

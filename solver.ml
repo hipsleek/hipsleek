@@ -9526,7 +9526,8 @@ let filter_disj (p:CP.formula) (t:CP.formula list) =
   CP.disj_of_list ps no_pos
 
 let pre_calculate fp_func input_fml pre_vars proc_spec
-  pre pure_oblg_to_check (rel_posts,pre_rel) pre_fmls pre_rel_vars pre_rel_df =
+  pre pure_oblg_to_check (rel_posts,pre_rel) 
+  pre_fmls pre_rel_vars pre_rel_df =
   let pr = Cprinter.string_of_pure_formula in
   let constTrue = CP.mkTrue no_pos in
 
@@ -9586,7 +9587,8 @@ let compute_td_fml pre_rel_df pre_rel =
   List.map (fun x -> compute_td_one x rhs pre_rel) pre_rel_df
 
 let update_with_td_fp bottom_up_fp pre_rel_fmls pre_fmls fp_func 
-  preprocess_fun reloblgs pre_rel_df post_rel_df_new post_rel_df pre_vars proc_spec grp_post_rel_flag = 
+  preprocess_fun reloblgs pre_rel_df post_rel_df_new post_rel_df 
+  pre_vars proc_spec grp_post_rel_flag = 
   let pr = Cprinter.string_of_pure_formula in
   let constTrue = CP.mkTrue no_pos in
   match bottom_up_fp, pre_rel_fmls with
