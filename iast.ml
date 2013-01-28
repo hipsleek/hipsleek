@@ -706,6 +706,13 @@ and mkHoPred  n m mh tv ta fa s i=
           hopred_invariant = i}
 	
 let mkProc sfile id n dd c ot ags r ss ds pos bd =
+  (* Debug.info_hprint (add_str "static spec" !print_struc_formula) ss pos; *)
+  let ss = match ss with 
+    | F.EList [] -> 
+          (* Debug.info_pprint "EList" pos; *)
+          F.mkETrueTrueF () 
+    | _ -> ss 
+          in
   { proc_name = id;
   proc_source =sfile;
       proc_mingled_name = n; 

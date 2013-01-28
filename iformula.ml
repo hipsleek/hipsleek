@@ -293,6 +293,17 @@ and mkFalse flow pos = Base { formula_base_heap = HFalse;
                          formula_base_and = [];
 						 formula_base_pos = pos }
 
+and mkAssume flow pos = 
+  EAssume (mkTrue flow pos, (-1,""), None)
+
+and mkETrueTrue flow flow2 pos = EBase {
+		 formula_struc_explicit_inst = [];
+		 formula_struc_implicit_inst = [];
+		 formula_struc_exists = [];
+		 formula_struc_base = mkTrue flow pos;
+		 formula_struc_continuation = Some (mkAssume flow2 pos) ;
+		 formula_struc_pos = pos	}
+
 and mkETrue flow pos = EBase {
 		 formula_struc_explicit_inst = [];
 		 formula_struc_implicit_inst = [];
@@ -308,8 +319,10 @@ and mkEFalse flow pos = EBase {
 		 formula_struc_base = mkFalse flow pos;
 		 formula_struc_continuation = None;
 		 formula_struc_pos = pos	}
-			
+
 and mkEFalseF () = mkEFalse false_flow no_pos			
+and mkETrueF () = mkETrue n_flow no_pos			
+and mkETrueTrueF () = mkETrueTrue n_flow n_flow no_pos			
 and mkEOr (f1:struc_formula) (f2:struc_formula) pos :struc_formula= 
 	if isEConstTrue f1 || isEConstTrue f2 then mkETrue top_flow pos
   else if isEConstFalse f1 then f2

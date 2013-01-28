@@ -9,12 +9,16 @@ LIBSN = unix,str,graph,xml-light,dynlink,camlp4lib,nums,site-lib/batteries/batte
 #,z3
 LIBS2 = unix,str,graph,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
-INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,$(CURDIR)/cil/obj/x86_LINUX,-I,+big_int,-I,+lablgtk2,-I,+camlp4,-I,+site-lib/batteries,-I,+site-lib/extlib
+INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,+site-lib/batteries,-I,+site-lib/extlib
 
-FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
+#FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
+FLAGS = $(INCLUDES),-annot,-ccopt,-fopenmp 
+GFLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
 # ,-cclib,-lz3stubs,-cclib,-lz3,/usr/local/lib/ocaml/libcamlidl.a
 
 # -no-hygiene flag to disable "hygiene" rules
+OBB_GFLAGS = -no-links -libs $(LIBSB) -cflags $(GFLAGS) -lflags $(GFLAGS) -lexflag -q -yaccflag -v  -j $(JOBS)
+ 
 OBB_FLAGS = -no-links -libs $(LIBSB) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
 OBN_FLAGS = -no-links -libs $(LIBSN) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
 
@@ -22,10 +26,13 @@ OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag 
 
 XML = cd $(CURDIR)/xml; make all; make opt; cd ..
 
-all: byte decidez.vo
+all: byte decidez.vo 
 #gui
 byte: sleek.byte hip.byte
-#byte: sleek.byte hip.byte test_cilparser.byte
+
+gbyte: sleek.gbyte hip.gbyte
+ 
+# hsprinter.byte
 native: hip.native sleek.native
 gui: ghip.native gsleek.native
 byte-gui: ghip.byte gsleek.byte
@@ -40,29 +47,38 @@ xml: xml/xml-light.cma
 xml/xml-light.cma:
 	$(XML)
 
+hip.gbyte: xml
+	@ocamlbuild $(OBB_GFLAGS) main.byte
+	cp -u _build/main.byte hip
+	cp -u _build/main.byte g-hip
+
+sleek.gbyte: xml
+	@ocamlbuild $(OBB_GFLAGS) sleek.byte
+	cp -u _build/sleek.byte sleek
+	cp -u _build/sleek.byte g-sleek
+
 hip.byte: xml
 	@ocamlbuild $(OBB_FLAGS) main.byte
 	cp -u _build/main.byte hip
 	cp -u _build/main.byte b-hip
-
-hip.native: xml
-	@ocamlbuild $(OBN_FLAGS) main.native
-	cp -u _build/main.native hip
-	cp -u _build/main.native n-hip
 
 sleek.byte: xml
 	@ocamlbuild $(OBB_FLAGS) sleek.byte
 	cp -u _build/sleek.byte sleek
 	cp -u _build/sleek.byte b-sleek
 
+hip.native: xml
+	@ocamlbuild $(OBN_FLAGS) main.native
+	cp -u _build/main.native hip
+	cp -u _build/main.native n-hip
+
+hsprinter.byte: xml
+	@ocamlbuild $(OB_FLAGS) hsprinter.byte
+
 sleek.native: xml
 	@ocamlbuild $(OBN_FLAGS) sleek.native
 	cp -u _build/sleek.native sleek
 	cp -u _build/sleek.native n-sleek
-
-test_cilparser.byte: xml
-	@ocamlbuild $(OBB_FLAGS) test_cilparser.byte
-	cp -u _build/test_cilparser.byte test_cilparser
 
 gsleek.byte: 
 	@ocamlbuild $(OBG_FLAGS) gsleek.byte
