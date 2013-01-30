@@ -297,6 +297,7 @@ let compute_heap_pure_inv fml (name:ident) (para_names:CP.spec_var list): CP.for
 
   (* Parse result *)
   let inv = List.hd (Parse_fix.parse_fix res) in
+  let _ = DD.ninfo_hprint (add_str "res(parsed)= " !CP.print_formula) inv no_pos in
   inv
 
 (******************************************************************************)

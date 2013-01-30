@@ -17,7 +17,7 @@ let stab = ref (H.create 103)
 let expression = Gram.Entry.mk "expression"
 
 (******************************************************************************)
-let  get_spec_var_ident stab (var : ident) p =
+let get_spec_var_ident stab (var : ident) p =
   try
     let k = H.find stab var in
     SpecVar(k,var,p)
@@ -35,11 +35,13 @@ let add_prefix var prefix = match var with
   | SpecVar (t,id,p) -> SpecVar (t,prefix ^ id,p)
 
 let is_node var = match var with 
-  | Var (SpecVar (_,id,_), _) -> is_substr "NOD" id
+  | Var (SpecVar (_,id,_), _) -> is_substr "NOD" id || id=self
   | _ -> false
 
 let get_node var = match var with 
-  | Var (SpecVar (_,id,_), _) -> String.sub id 3 (String.length id - 3)
+  | Var (SpecVar (_,id,_), _) -> 
+    if id=self then id else 
+      String.sub id 3 (String.length id - 3)
   | _ -> report_error no_pos "Expected a pointer variable"
 
 let is_rec_node var = match var with 
