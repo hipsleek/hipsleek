@@ -39,11 +39,8 @@ let rec string_of_elems elems string_of sep = match elems with
 (******************************************************************************)
 
 let fixcalc_of_spec_var x = match x with
-  (*| CP.SpecVar (Named t, id, Unprimed) -> t ^"TYP"^ id
-  | CP.SpecVar (Named t, id, Primed) ->  "PRI"^ t ^id*)
-  | CP.SpecVar (Named _, id, Unprimed)
-  | CP.SpecVar (Named _, id, Primed) -> 
-    report_error no_pos "Relation contains non-numerical variables"
+  | CP.SpecVar (Named _, id, Unprimed) -> if id = self then id else "NOD" ^ id
+  | CP.SpecVar (Named _, id, Primed) -> if id = self then id else "NODPRI" ^ id
   | CP.SpecVar (_, id, Unprimed) -> id
   | CP.SpecVar (_, id, Primed) -> "PRI" ^ id
 
@@ -73,10 +70,15 @@ and fixcalc_of_exp e = match e with
     end
   | _ -> illegal_format ("Fixcalc.fixcalc_of_exp: Not supported expression")
 
+let fixcalc_of_bool b =
+  match b with
+    | true -> "1=1"
+    | false -> "1=0"
+
 let rec fixcalc_of_b_formula b =
   let (pf, _) = b in
   match pf with
-    | CP.BConst (b,_) -> string_of_bool b 
+    | CP.BConst (b,_) -> fixcalc_of_bool b 
     | CP.BVar (x, _) -> fixcalc_of_spec_var x
     | CP.Lt (e1, e2, _) -> fixcalc_of_exp e1 ^ op_lt ^ fixcalc_of_exp e2
     | CP.Lte (e1, e2, _) -> fixcalc_of_exp e1 ^ op_lte ^ fixcalc_of_exp e2
@@ -155,7 +157,7 @@ let rec fixcalc_of_h_formula f = match f with
                    (string_of_elems svs fixcalc_of_spec_var ",") ^ ")"
   | HTrue -> "HTrue"
   | HFalse -> "HFalse"
-  | HEmp -> "Emp"
+  | HEmp -> "0=0"
   | HRel _ -> "HTrue"
   | Hole _ -> 
     illegal_format ("Fixcalc.fixcalc_of_h_formula: Not supported Hole-formula")
@@ -194,6 +196,8 @@ let syscall cmd =
 
 (******************************************************************************)
 
+(* Deprecated *)
+(*
 let compute_inv name vars fml pf =
   if not !Globals.do_infer_inv then pf
   else
@@ -220,6 +224,7 @@ let compute_inv name vars fml pf =
                      "\nNEW: " ^ (Pr.string_of_pure_formula new_pf) ^ "\n\n");			
       new_pf)
     else pf
+*)
 
 (******************************************************************************)
 
@@ -227,6 +232,86 @@ let rec remove_paren s n = if n=0 then "" else match s.[0] with
   | '(' -> remove_paren (String.sub s 1 (n-1)) (n-1)
   | ')' -> remove_paren (String.sub s 1 (n-1)) (n-1)
   | _ -> (String.sub s 0 1) ^ (remove_paren (String.sub s 1 (n-1)) (n-1))
+
+(******************************************************************************)
+
+let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var list): CP.formula =
+  let vars = para_names in
+  let fmls = List.map (fun p -> 
+    let exists_vars = CP.diff_svl (CP.fv_wo_rel p) para_names in
+    CP.mkExists exists_vars p None no_pos) fmls in
+
+  (* Prepare the input for the fixpoint calculation *)
+  let input_fixcalc = 
+    try
+      name ^ ":={[" ^ (string_of_elems vars fixcalc_of_spec_var ",") ^ 
+      "] -> [] -> []: " ^ (string_of_elems fmls fixcalc_of_pure_formula op_or) ^
+      "\n};\nbottomupgen([" ^ name ^ "], [1], SimHeur);"
+    with _ -> report_error no_pos "Error in translating the input for fixcalc"
+  in 
+  DD.ninfo_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
+
+  (* Call the fixpoint calculation *)
+  let output_of_sleek = "fixcalc.inp" in
+  let oc = open_out output_of_sleek in
+  Printf.fprintf oc "%s" input_fixcalc;
+  flush oc;
+  close_out oc;
+  let res = syscall (fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in
+
+  (* Remove parentheses *)
+  let res = remove_paren res (String.length res) in
+  DD.ninfo_pprint ("res = " ^ res ^ "\n") no_pos;
+
+  (* Parse result *)
+  let inv = List.hd (Parse_fix.parse_fix res) in
+  inv
+
+(******************************************************************************)
+(* TODO: TO MERGE WITH ABOVE *)
+let compute_heap_pure_inv fml (name:ident) (para_names:CP.spec_var list): CP.formula =
+  let vars = para_names in
+
+  (* Prepare the input for the fixpoint calculation *)
+  let input_fixcalc = 
+    try
+      name ^ ":={[" ^ self ^ "," ^ (string_of_elems vars fixcalc_of_spec_var ",") ^ 
+      "] -> [] -> []: " ^ 
+      (string_of_elems fml (fun (c,_)-> fixcalc_of_formula c) op_or) ^
+      "\n};\nbottomupgen([" ^ name ^ "], [1], SimHeur);"
+    with _ -> report_error no_pos "Error in translating the input for fixcalc"
+  in 
+  DD.ninfo_pprint ("Input of fixcalc: " ^ input_fixcalc) no_pos;
+
+  (* Call the fixpoint calculation *)
+  let output_of_sleek = "fixcalc.inp" in
+  let oc = open_out output_of_sleek in
+  Printf.fprintf oc "%s" input_fixcalc;
+  flush oc;
+  close_out oc;
+  let res = syscall (fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in
+
+  (* Remove parentheses *)
+  let res = remove_paren res (String.length res) in
+  DD.ninfo_pprint ("res = " ^ res ^ "\n") no_pos;
+
+  (* Parse result *)
+  let inv = List.hd (Parse_fix.parse_fix res) in
+  inv
+
+(******************************************************************************)
+
+let compute_inv name vars fml pf =
+  if not !Globals.do_infer_inv then pf
+  else
+    let new_pf = compute_heap_pure_inv fml name vars in
+    let check_imply = TP.imply_raw new_pf pf in
+    if check_imply then 
+      let _ = DD.devel_hprint (add_str "new inv: " !CP.print_formula) new_pf no_pos in
+      new_pf
+    else pf
+
+(******************************************************************************)
 
 let rec is_rec pf = match pf with
   | CP.BForm (bf,_) -> CP.is_RelForm pf
