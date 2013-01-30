@@ -8172,7 +8172,7 @@ let add_ann_constraints vrs f =
 
 let add_ann_constraints vrs f =
   let p1 = !print_formula in
-  Debug.ho_2 "add_ann_constraints" !print_svl p1 p1  add_ann_constraints vrs f
+  Debug.no_2 "add_ann_constraints" !print_svl p1 p1  add_ann_constraints vrs f
 
 type infer_state = 
   { 

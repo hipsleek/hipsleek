@@ -12,11 +12,47 @@ pred cell<v,a> == self::node<v>@a
 //checkentail x::node<_@A>|- x::node<_@L>.
 //checkentail x::node<_@L>|- x::node<_@A>.
 
-//checkentail x::node<_@v> & v=@A|- (exists w: x::node<_@w> & w=@L).
 
+//false on ante
+//checkentail x::node<_@v> & v=@A|- (exists w: x::node<_@w> & w=@L).
+//false on ante
+//checkentail x::node<_@v> & v=@A|- x::node<_@w>.
+
+//false on ante
+//checkentail x::node<a@v> |- x::node<a@w>.
+
+/*
+@27! lhs_h: emp
+@27! estate_orig.es_heap: x::node<a@M>@M[Orig]
+@27! curr_lhs_h: x::node<a@M>@M[Orig]
+@27! curr_lhs_h: x::node<a@M>@M[Orig]
+*/
+//checkentail x::node<a@M> |- x::node<a@M>.
+
+/*
+@16! lhs_h: x::node<a@M>@M[Orig]
+@16! estate_orig.es_heap: x::node<a@M>@M[Orig]
+@16! curr_lhs_h: x::node<a@M>@M[Orig] * x::node<a@M>@M[Orig]
+@16! curr_lhs_h: x::node<a@M>@M[Orig] * x::node<a@M>@M[Orig]
+*/
+checkentail x::node<a@M> |- x::node<a@A>.
+print residue.
+
+/*
+@16! lhs_h: x::node<a@M>@M[Orig]
+@16! estate_orig.es_heap: x::node<a@M>@M[Orig]
+@16! curr_lhs_h: x::node<a@M>@M[Orig] * x::node<a@M>@M[Orig]
+@16! curr_lhs_h: x::node<a@M>@M[Orig] * x::node<a@M>@M[Orig]
+*/
+//checkentail x::node<a@M> |- x::node<a@v>.
+
+//no false on ante
+//checkentail x::node<_@v> & v=@A|- true.
+
+//no false on ante
 //checkentail x::node<Anon_11@v>@M & v=@A & Anon_11=Anon_12 |- false.
 
-checkentail x::node<Anon_11@v>@M & @M<:v & v=@A & Anon_11=Anon_12 |- false.
+//checkentail x::node<Anon_11@v>@M & @M<:v & v=@A & Anon_11=Anon_12 |- false.
 
 /*
 (i) why are ante0,ante1 false for

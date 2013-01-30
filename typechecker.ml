@@ -1428,7 +1428,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                           stk_vars # pop_list lsv;
                           let _ = CF.must_consistent_list_failesc_context "bind 5" tmp_res1  in
                           let tmp_res2 = 
-		            if not(CF.isLend imm) && not(CF.isAccs imm) (*&& not(!Globals.allow_field_ann)*)then 
+		            if not(CF.isLend imm) && not(CF.isAccs imm) && not(!Globals.allow_field_ann) then (* andreeac remove allow field ann (allow temp) *)
 		              CF.normalize_max_renaming_list_failesc_context vheap pos true tmp_res1 
     			          (* for Lend, Accs and field level annotations it should not be added back *)
 		            else tmp_res1 
