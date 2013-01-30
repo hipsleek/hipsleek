@@ -31,11 +31,12 @@ int count(node2 x)
 
 /*
 
-[ H1(x_579) ::= 
- emp&x_579=null
+ H1(x_579) ::=  emp&x_579=null
  or x_579::node2<val_29_577,prev_29_578,next_29_535'>@M * 
     HP_557(prev_29_578) * H1(next_29_535')&true
  ,
  G1(x_580) ::= H1(x_580)&true]
+
+Can we say that this unifies with dll?
 
 */
