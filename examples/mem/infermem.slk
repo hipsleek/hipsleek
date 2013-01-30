@@ -1,0 +1,23 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+
+//pred ll<M> == self = null & M = {} 
+//	or self::node<_,p> * p::ll<Mp> & M = union(Mp,{self})
+//	inv true
+//	mem M->(node<@M,@M>).
+
+
+//relation R(bag M1, bag M2).
+
+pred ll<n> == self = null & n = 0
+	or self::node<_,p> * p::ll<m> & n = m + 1
+	inv true.
+	
+//checkentail x::ll<Mx,n> & Mx != {} |- x::node<_,_@L>.
+//print residue.
+
+checkentail x::ll<n> |- n >= 0.
+print residue.
