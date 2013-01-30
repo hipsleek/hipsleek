@@ -498,6 +498,7 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
                     stop (); raise exc end
                 | End_of_file ->
                     (*let _ = print_endline "IMPLY: End_of_file" in*)
+					(*let _ = print_string ("\n"^fomega^"\n") in*)
                     restart ("IMPLY : End_of_file when checking \n");
                     false
                 | exc ->

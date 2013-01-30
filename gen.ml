@@ -87,6 +87,10 @@ struct
  let fold_opt f x = match x with 
    | None -> []
    | Some v -> (f v)
+  
+ let map_opt_def def f x = match x with
+	| None -> def
+	| Some v -> f v
 
  let map_l_snd f x = List.map (fun (l,c)-> (l,f c)) x
  let fold_l_snd f x = List.fold_left (fun a (_,c)-> a@(f c)) []  x

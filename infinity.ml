@@ -192,7 +192,7 @@ let contains_inf_or_inf_var (f:CP.formula) : bool =
     match f with
       | InfConst _ ->  Some(true) 
       | Var _ -> if is_inf f then Some(true) else Some(false)
-      | Null _ | Var _ | IConst _ | FConst _ | AConst _ | Tsconst _ -> Some(false)
+      | Null _ | IConst _ | FConst _ | AConst _ | Tsconst _ -> Some(false)
       | _ -> None
   in fold_formula f (f_f,f_bf,f_e) (List.exists (fun c -> c))
 
@@ -434,7 +434,7 @@ let find_inf_subs (f:CP.formula) : (CP.formula * EM.emap) list =
     in
     let f_bf bf = 
       (match bf with
-        | ((Eq _) as e),_ -> Some ([bf]) 
+        | (Eq _),_ -> Some ([bf]) 
         | _,_ -> Some ([])
       )
     in
@@ -446,11 +446,11 @@ let find_inf_subs (f:CP.formula) : (CP.formula * EM.emap) list =
     let prl l = pr_list string_of_b_formula l in
     let find_eq e = DD.no_1 "find_inf_subs" pr prl find_eq e in
     let eq_list = find_eq e in
-    let eq_list_vars = List.filter (fun bf ->  let (p_f,bf_ann) = bf in
+    (*let eq_list_vars = List.filter (fun bf ->  let (p_f,bf_ann) = bf in
     					match p_f with
   					| Eq(e1,e2,pos) -> if is_var e1 && is_var e2 then true else false
     					| _ -> false
-    			) eq_list in
+    			) eq_list in*)
     let eqset = EM.mkEmpty in
     let neg_inf = CP.SpecVar(Int,constinfinity,Primed) in
     let eqset = List.fold_left (fun eset exp -> 
@@ -524,6 +524,7 @@ let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) (is_neg: bool) :
     | CP.ListReverse _
     | CP.Func _
     | CP.ArrayAt _ -> exp
+	| Level _ -> Error.report_no_pattern()
     
 let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) (is_neg: bool) : CP.b_formula = 
   let (p_f,bf_ann) = bf in

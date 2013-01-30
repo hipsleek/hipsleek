@@ -430,7 +430,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | HpT        -> "HpT"
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
-	let rec repeat k = if (k == 0) then "" else "[]" ^ (repeat (k-1)) in
+	let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
 		(string_of_typ et) ^ (repeat r)
 ;;
 
@@ -673,6 +673,8 @@ let ann_derv = ref false
 (*Will shorten the error/warning/... message delivered
 to end-users*)
 let is_deployed = ref false 
+
+let print_assume_struc = ref false
 
 let web_compile_flag = ref false (*enable compilation flag for website*)
 

@@ -1006,7 +1006,7 @@ extended_constr:
       F.ECase {
           F.formula_case_branches = il;
           F.formula_case_pos = (get_pos_camlp4 _loc 3) }
-	| sl=sq_clist; oc=disjunctive_constr; rc= OPT extended_l -> F.mkEBase sl [] [] oc rc true (get_pos_camlp4 _loc 2)]];	
+	| sl=sq_clist; oc=disjunctive_constr; rc= OPT extended_l -> F.mkEBase sl [] [] oc rc (get_pos_camlp4 _loc 2)]];	
   
 impl_list:[[t=LIST1 impl -> t]];
 
@@ -1968,32 +1968,25 @@ spec:
 	    	 F.formula_struc_continuation = Some sl (*if ((List.length sl)==0) then report_error (get_pos_camlp4 _loc 1) "spec must contain ensures"else sl*);
 	    	 F.formula_struc_pos = (get_pos_camlp4 _loc 1)}
             (* F.formula_ext_complete = false;*)
-   (*  | `REQUIRESC; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->
-		 F.EBase {
-			 F.formula_ext_explicit_inst =cl;
-			 F.formula_ext_implicit_inst = [];
-			 F.formula_ext_exists = [];
-			 F.formula_ext_base = (F.subst_stub_flow n_flow dc);
-			 F.formula_ext_continuation = [s];
-             F.formula_ext_complete = false;
-			 F.formula_ext_pos = (get_pos_camlp4 _loc 1)}
-	 | `REQUIRESC; cl=opt_sq_clist; dc=disjunctive_constr; `OBRACE; sl=spec_list; `CBRACE ->
-	    	F.EBase {
-	    	 F.formula_ext_explicit_inst =cl;
-	    	 F.formula_ext_implicit_inst = [];
-	    	 F.formula_ext_exists = [];
-	    	 F.formula_ext_base =  (F.subst_stub_flow n_flow dc);
-	    	 F.formula_ext_continuation = if ((List.length sl)==0) then report_error (get_pos_camlp4 _loc 1) "spec must contain ensures"
-	    																					else sl;
-             F.formula_ext_complete = true;
-	    	 F.formula_ext_pos = (get_pos_camlp4 _loc 1)}
-  *)
 	 | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
-      F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol), None)
-   | `ENSURES_EXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
-      F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol), (Some true))
-   | `ENSURES_INEXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
-      F.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol), (Some false))
+			let f = F.subst_stub_flow n_flow dc in
+			let sf = F.mkEBase [] [] [] f None no_pos in		
+			F.mkEAssume f sf (fresh_formula_label ol) None
+	 
+	 | `ENSURES; ol= opt_label; dc= extended_constr; `SEMICOLON ->
+			let f = F.flatten_post_struc dc (get_pos_camlp4 _loc 1) in
+			F.mkEAssume (F.subst_stub_flow n_flow f) (F.subst_stub_flow_struc n_flow dc) (fresh_formula_label ol) None
+	  
+     | `ENSURES_EXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
+			let f = F.subst_stub_flow n_flow dc in	
+			let sf = F.mkEBase [] [] [] f None no_pos in		
+			F.mkEAssume f sf (fresh_formula_label ol) (Some true)
+	  
+     | `ENSURES_INEXACT; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
+			let f = F.subst_stub_flow n_flow dc in
+			let sf = F.mkEBase [] [] [] f None no_pos in		
+			F.mkEAssume f sf (fresh_formula_label ol) (Some false)
+	  
 	 | `CASE; `OBRACE; bl= branch_list; `CBRACE ->F.ECase {F.formula_case_branches = bl; F.formula_case_pos = get_pos_camlp4 _loc 1; }
   ]];
 

@@ -202,6 +202,7 @@ and filter_hp_rel_args (hf: CF.h_formula) (drlocs: (CP.spec_var* int list) list)
       | CF.HTrue
       | CF.HFalse
       | CF.HEmp -> hf0,[]
+	  | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern ()
   in
   helper hf
 

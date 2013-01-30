@@ -508,12 +508,12 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 		        (a1@[(l,b1)],a2@b2,a3@b3,a4@b4,a5@b5,a6@b6,a7@b7,a8@[b8])) ([],[],[],[],[],[],[],[]) b in
 	    Debug.trace_hprint (add_str "SPECS (before norm_specs)" pr_spec) (CF.EList sl) no_pos;
 	        (CF.norm_specs (CF.EList sl), pl, rl, hprl,selhps,sel_posthps, unk_map,List.for_all pr_id bl) 
-      | CF.EOr b -> 
-	        let s1,p1,r1,hpr1,selhp1,post_selhp1,unk_map1,b1 = helper ctx b.CF.formula_struc_or_f1 in
-            let s2,p2,r2,hpr2,selhp2,post_selhp2,unk_map2,b2 = helper ctx b.CF.formula_struc_or_f2 in
-	    (CF.norm_specs (CF.EOr {b with CF.formula_struc_or_f1 = s1;CF.formula_struc_or_f2 = s2;}), p1@p2, r1@r2,
-            hpr1@hpr2, selhp1@selhp2,post_selhp1@post_selhp2, unk_map1@unk_map2, pr_id b1 && pr_id b2)
-      | CF.EAssume (var_ref,post_cond,post_label,etype) ->
+      | CF.EAssume {
+			CF.formula_assume_vars = var_ref;
+			CF.formula_assume_simpl = post_cond;
+			CF.formula_assume_lbl = post_label;
+			CF.formula_assume_ensures_type = etype;
+			CF.formula_assume_struc = post_struc} ->
             let curr_vars = stk_vars # get_stk in
             (* let ovars = CF.fv post_cond in *)
             (* let ov = CP.diff_svl ovars curr_vars in *)
@@ -570,19 +570,23 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                          Inf.remove_infer_vars_all_list_partial_context res_ctx in*)
                       (* let iv = CF.collect_infer_vars ctx in *)
                       let postf = CF.collect_infer_post ctx in
-                      let (impl_vs,post_cond) =
+                      let (impl_vs,post_cond,post_struc) =
                         (* below seems to cause problem for verification *)
                         (* see bug-sort-ll.ss *)
                         if  pre_ctr # get > 0  then 
                           let (impl_vs,new_post) = CF.lax_impl_of_post post_cond in
+						  let new_post_struc, impl_struc = CF.lax_impl_of_struc_post post_struc in
                           if impl_vs!=[] then
                             begin
                               DD.devel_pprint ">>>>>> Convert Exists to Implicit Vars for Post-Cond <<<<<<" pos;
                               DD.devel_pprint ("Extra Vars :"^(Cprinter.string_of_spec_var_list impl_vs)) pos;
                               DD.devel_pprint ("New Post Cond :"^(Cprinter.string_of_formula new_post)) pos
                             end;
-                          (impl_vs,new_post)
-                        else ([],post_cond) in
+						  if (Gen.BList.list_setequal_eq  CP.eq_spec_var_ident impl_struc impl_vs) then
+						   (print_string "check 1 ok\n";
+                          (impl_vs,new_post,new_post_struc))
+						  else report_error pos "Assume struc impl error" 
+                        else ([],post_cond,post_struc) in
                       stk_evars # push_list impl_vs;
                       (* TODO: Timing *)
                       let pres, posts, _ = CF.get_pre_post_vars [] (proc.proc_stk_of_static_specs # top) in
@@ -612,7 +616,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       (* TODO : collecting rel twice as a temporary fix to losing ranking rel inferred during check_post *)
                       (*                      let rel1 =  Inf.collect_rel_list_partial_context res_ctx in*)
                       (*                      DD.dinfo_pprint ">>>>> Performing check_post STARTS" no_pos;*)
-                      let tmp_ctx = check_post prog proc res_ctx post_cond pos_post post_label etype in
+                      let tmp_ctx = check_post prog proc res_ctx (post_cond,post_struc) pos_post post_label etype in
                       (*                      DD.dinfo_pprint ">>>>> Performing check_post ENDS" no_pos;*)
                       (* Termination: collect error messages from successful states *)
                       let term_err_msg = CF.collect_term_err_list_partial_context tmp_ctx in 
@@ -702,7 +706,10 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                                   DD.devel_pprint ("Final Post :"^(Cprinter.string_of_formula post_fml)) pos;
                                   (* print_endline ("Initial Residual Post : "^(pr_list Cprinter.string_of_formula flist)); *)
                                   (* print_endline ("Final Residual Post : "^(Cprinter.string_of_formula post_fml)); *)
-                                  let inferred_post = CF.EAssume (CP.remove_dups_svl (var_ref(* @post_vars *)),post_fml,post_label, etype) in
+                                  let inferred_post = 
+									let vars = CP.remove_dups_svl (var_ref(* @post_vars *)) in
+									let post_struc = CF.mkEBase post_fml None pos in
+									CF.mkEAssume vars post_fml post_struc post_label etype in
                                   inferred_post
                                 end in
                           (i_post, i_pre)
@@ -2007,18 +2014,18 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
     let failesc = CF.splitter_failesc_context !norm_flow_int None (fun x->x)(fun x -> x) cl in
     ((check_exp1 failesc) @ fl)		
 	
-and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
+and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
   let pr = Cprinter.string_of_list_partial_context in
-  let pr1 = Cprinter.string_of_formula in
+  let pr1 = pr_pair Cprinter.string_of_formula Cprinter.string_of_struc_formula in
   (*  let pr2 = Cprinter.string_of_list_partial_context in*)
   (* let _ = Debug.info_pprint "CG dont trust 0" pos; flush(stdout) in *)
   (* let _ = Log.update_sleek_proving_kind Log.POST in *)
   (* let _ = Debug.info_pprint "CG dont trust" pos; flush(stdout) in *)
-  let f = wrap_proving_kind "POST" (check_post_x prog proc ctx post pos pid) in
-  Debug.no_2_loop "check_post" pr pr1 pr (fun _ _ -> f etype) ctx post
+  let f = wrap_proving_kind "POST" (check_post_x prog proc ctx posts pos pid) in
+  Debug.no_2_loop "check_post" pr pr1 pr (fun _ _ -> f etype) ctx posts 
 
-and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
-  wrap_classic etype (check_post_x_x prog proc ctx post pos) pid
+and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula) pos (pid:formula_label) (etype: ensures_type) : CF.list_partial_context  =
+  wrap_classic etype (check_post_x_x prog proc ctx posts pos) pid
 
 
       
@@ -2027,7 +2034,7 @@ and pr_spec = Cprinter.string_of_struc_formula
 
 and pr_spec2 = Cprinter.string_of_struc_formula_for_spec
 
-and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label): CF.list_partial_context  =
+and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (posts : CF.formula*CF.struc_formula)  pos (pid:formula_label): CF.list_partial_context  =
   (* let _ = print_string ("got into check_post on the succCtx branch\n") in *)
   (* let _ = print_string ("\n(andreeac)context before post: "^(Cprinter.string_of_list_partial_context ctx)) in *)
   (* let _= print_endline ("Check post list ctx: "^Cprinter.string_of_list_partial_context ctx) in *)
@@ -2036,14 +2043,14 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_
       begin
 	Prooftracer.push_post ();
         Prooftracer.start_compound_object ();
-	Prooftracer.push_list_partial_context_formula_entailment ctx post;
+	Prooftracer.push_list_partial_context_formula_entailment ctx (fst posts);
 	Tpdispatcher.push_suppress_imply_output_state ();
 	Tpdispatcher.unsuppress_imply_output ();
 	(* print_endline "VERIFYING POST-CONDITION" *)
       end in
     (* Termination: Poststate of Loop must be unreachable (soundness) *)
     let _ = if !Globals.dis_term_chk || !Globals.dis_post_chk then true 
-    else Term.check_loop_safety prog proc ctx post pos pid in
+    else Term.check_loop_safety prog proc ctx (fst posts) pos pid in
     (* let ctx = if (!Globals.allow_locklevel) then *)
     (*       (\*to maintain the information of locklevels on varables *)
     (*         whose scopes are within scope of this procedure only. *)
@@ -2076,26 +2083,38 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_
         (* Debug.devel_print ("Final state:\n" ^ (Cprinter.string_of_list_partial_context final_state_prim) ^ "\n"); *)
         (*  Debug.devel_print ("Final state after existential quantifier elimination:\n" *)
         (* ^ (Cprinter.string_of_list_partial_context final_state) ^ "\n"); *)
-        Debug.devel_zprint (lazy ("Post-cond:\n" ^ (Cprinter.string_of_formula  post) ^ "\n")) pos;
+        Debug.devel_zprint (lazy ("Post-cond:\n" ^ (Cprinter.string_of_formula  (fst posts)) ^ "\n")) pos;
+		Debug.devel_zprint (lazy ("Struc-post-cond:\n" ^ (Cprinter.string_of_struc_formula  (snd posts)) ^ "\n")) pos;
         let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec\n" ^ !log_spec ^ "\n" in
         Debug.devel_pprint to_print pos;
         final_state
       else ctx
     in
     (* let _ = DD.ninfo_pprint ("       sleek-logging (POST): "  ^ "\n" ^ (to_print)) pos in *)
-    let f1 = CF.formula_is_eq_flow post !error_flow_int in
+    let f1 = CF.formula_is_eq_flow (fst posts) !error_flow_int in
     (* let f2 = CF.list_context_is_eq_flow cl !norm_flow_int in *)
      (* let _ = print_string ("\n WN 4 : "^(Cprinter.string_of_list_partial_context (\*ctx*\) fn_state)) in *)
     let rs, prf =
       if f1 then
         begin
-          let post = (CF.formula_subst_flow post (CF.mkNormalFlow())) in
-           let (ans,prf) = heap_entail_list_partial_context_init prog false fn_state post None None None pos (Some pid) in
+          let flat_post = (CF.formula_subst_flow (fst posts) (CF.mkNormalFlow())) in
+		  let (*struc_post*)_ = (CF.struc_formula_subst_flow (snd posts) (CF.mkNormalFlow())) in 
+		    (*possibly change to flat post here as well??*)
+           let (ans,prf) = heap_entail_list_partial_context_init prog false fn_state flat_post None None None pos (Some pid) in
           (CF.invert_list_partial_context_outcome CF.invert_ctx_branch_must_fail CF.invert_fail_branch_must_fail ans,prf)
         end
       else
-      heap_entail_list_partial_context_init prog false fn_state post None None None pos (Some pid)
-    in
+	  (*let _ = print_string "start struct checking \n" in*)
+      let rs_struc , prf = heap_entail_struc_list_partial_context_init prog false false fn_state (snd posts) None None None pos (Some pid) in
+	  rs_struc, prf
+	  (*let _ = print_string "stop struct checking \n" in*)
+	  (*let rs_flat, prf = heap_entail_list_partial_context_init prog false fn_state (fst posts) None None None pos (Some pid) in	  
+	  (*let _ = print_string "stop flat checking \n" in*)
+	  if ( CF.isSuccessListPartialCtx_new rs_struc != CF.isSuccessListPartialCtx_new rs_flat ) then 
+		report_error pos ("got difference in assume proving: \n flat: "^(Cprinter.string_of_formula (fst posts))^"\n struc:"
+		^(Cprinter.string_of_struc_formula (snd posts))^"\n struc rez: "^(string_of_bool (CF.isSuccessListPartialCtx_new rs_struc))^"\n")
+	  else rs_flat,prf*)
+	  in
     let _ = PTracer.log_proof prf in
     let _ = if !print_proof then
       begin

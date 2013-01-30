@@ -628,6 +628,7 @@ and h_formula_2_mem_perm_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_v
       | HFalse ->
          (*  let _ = print_endline "h_formula_2_mem: HTrue, HFalse, Hole" in*)
          {mem_formula_mset = CP.DisjSetSV.mkEmpty;}
+	  | StarMinus _ | ConjStar _ | ConjConj _ -> Error.report_no_pattern ()
   in helper f
 let rec xpure (prog : prog_decl) (f0 : formula) : (mix_formula * CP.spec_var list * CF.mem_formula) =
   Debug.no_1 "xpure"
@@ -1206,7 +1207,8 @@ and heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list =
     | Conj ({ h_formula_conj_h1 = h1;h_formula_conj_h2 = h2;})     
     | ConjStar ({ h_formula_conjstar_h1 = h1;h_formula_conjstar_h2 = h2;})    
     | ConjConj ({ h_formula_conjconj_h1 = h1;h_formula_conjconj_h2 = h2;}) -> (helper h1) @ (helper h2)
-    | Hole _ | HTrue | HFalse | HEmp | StarMinus _-> [] in
+    | Hole _ | HTrue | HFalse | HEmp | StarMinus _-> []
+    | HRel _ -> Error.report_no_pattern ()	in
   helper h0
 
 and smart_same_flag = ref true 
@@ -1461,10 +1463,11 @@ and prune_pred_struc_x prog (simp_b:bool) f =
       | ECase c -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> (c1, helper c2)) c.formula_case_branches;}
       | EBase b -> EBase {b with formula_struc_base = prune_preds prog simp_b b.formula_struc_base;
             formula_struc_continuation = map_opt helper b.formula_struc_continuation}
-      | EAssume (v,f,l,t) -> EAssume (v,prune_preds prog simp_b f,l,t)
+      | EAssume b -> EAssume {b with
+			formula_assume_simpl = prune_preds prog simp_b b.formula_assume_simpl;
+			formula_assume_struc = helper b.formula_assume_struc;}
       | EInfer b -> EInfer {b with  formula_inf_continuation = helper b.formula_inf_continuation}
-      | EList b -> EList (map_l_snd helper b)
-      | EOr b-> EOr {b with formula_struc_or_f1 = helper b.formula_struc_or_f1; formula_struc_or_f2 = helper b.formula_struc_or_f2;} in    
+      | EList b -> EList (map_l_snd helper b) in    
   helper f
       (*let _ = print_string ("prunning: "^(Cprinter.string_of_struc_formula f)^"\n") in*)
       
@@ -3932,7 +3935,10 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 				                    (res_ctx,res_prf)
                                         (*  let _ = print_endline ("###: 3") in*)
                             )
-                    | EAssume (ref_vars, post, (i,y), _) ->
+                    | EAssume {
+						formula_assume_simpl = post;
+						formula_assume_vars = ref_vars;
+						formula_assume_lbl = (i,y);} ->
 		                  if not has_post then report_error pos ("malfunction: this formula "^ y ^" can not have a post condition!")
 	                      else
                             (match tid with
@@ -4104,11 +4110,6 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 			                  ((fold_context_left l1),(mkCaseStep ctx (EList conseq) l2))
 			              else (CF.mkFailCtx_in(Trivial_Reason (CF.mk_failure_must "struc conseq is [] meaning false" Globals.sl_error)) , UnsatConseq)
 			                (* TODO : can do a stronger falsity check on LHS *)
-		            | EOr b -> 
-			              let ctx = CF.add_to_context_num 21 ctx11 "OR on conseq" in
-			              let l11,l12 = helper_inner 11 ctx b.formula_struc_or_f1 in
-			              let l21,l22 = helper_inner 11 ctx b.formula_struc_or_f2 in
-			              ((fold_context_left [l11;l21]), (mkCaseStep ctx conseq [l12;l22]))
                 ) (* END match join_id with *)
                 end 
               in wrap_trace es.es_path_label exec () (*exec ()*)
@@ -8250,7 +8251,6 @@ and advance_unfold_struc prog (ctx:context) (conseq:struc_formula) : (Context.ac
   let rec get_disj_struc f = match f with
     | EBase e -> CF.split_conjuncts e.formula_struc_base 
     | EList b -> fold_l_snd get_disj_struc b
-    | EOr b -> (get_disj_struc b.formula_struc_or_f1)@(get_disj_struc b.formula_struc_or_f2)
     | _ -> [] in
   advance_unfold prog ctx (get_disj_struc conseq) 
 
@@ -10132,12 +10132,13 @@ and normalize_formula_w_coers i prog estate (f:formula) (coers:coercion_decl lis
 and normalize_struc_formula_w_coers prog estate (f:struc_formula) coers : struc_formula = 
   let n_form f = normalize_formula_w_coers 4 prog estate f coers in
   let rec helper f = match f with 
-    | EOr b -> EOr {b with formula_struc_or_f1 = helper b.formula_struc_or_f1; formula_struc_or_f2 = helper b.formula_struc_or_f2}
     | EList b-> EList (map_l_snd helper b)
     | ECase b-> ECase {b with formula_case_branches = map_l_snd helper b.formula_case_branches}
     | EBase b-> EBase {b with formula_struc_base = n_form b.formula_struc_base; formula_struc_continuation = map_opt helper b.formula_struc_continuation}
     | EInfer b-> EInfer{b with formula_inf_continuation= helper b.formula_inf_continuation}
-    | EAssume (a1,a2,a3,a4)-> EAssume (a1, n_form a2, a3, a4) in
+    | EAssume b-> EAssume {b with 
+		formula_assume_simpl = n_form b.formula_assume_simpl;
+		formula_assume_struc = helper b.formula_assume_struc;} in
   helper f
       
       
@@ -10296,15 +10297,27 @@ and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula =
 	    | None -> Some f1
 	    | Some l -> Some (combine_struc f1 l) in
 	  EBase {b with formula_struc_continuation = cont }																											  
-    | EAssume (x1,b, (y1',y2'), t1 )-> 
+    | EAssume {
+		formula_assume_vars= x1;
+		formula_assume_simpl = b;
+		formula_assume_lbl = (y1',y2');
+		formula_assume_struc = b_str;
+		formula_assume_ensures_type = t1;}-> 
 	  (match f1 with
-	    | EAssume (x2,d,(y1,y2),t2) -> EAssume ((x1@x2),(normalize_combine b d (Cformula.pos_of_formula d)),(y1,(y2^y2')),t1)
+	    | EAssume {
+			formula_assume_vars= x2;
+			formula_assume_simpl = d;
+			formula_assume_struc = d_str;
+			formula_assume_lbl = (y1,y2);
+			formula_assume_ensures_type = t2;} -> 
+				let f = normalize_combine b d (Cformula.pos_of_formula d) in
+				let f_str = combine_struc b_str d_str in
+				mkEAssume (x1@x2) f f_str (y1,(y2^y2')) t1
 	    | _-> combine_struc f2 f1)
     | EInfer e -> (match f1 with 
 	| EInfer e2 -> EInfer {e with formula_inf_vars = e.formula_inf_vars @ e2.formula_inf_vars;
 	      formula_inf_continuation = combine_struc e.formula_inf_continuation e2.formula_inf_continuation}
 	| _ -> EInfer {e with formula_inf_continuation = combine_struc f1 e.formula_inf_continuation})
-    | EOr b -> EOr {b with formula_struc_or_f1 = combine_struc f1 b.formula_struc_or_f1; formula_struc_or_f2 = combine_struc f1 b.formula_struc_or_f2;}
     | EList b -> EList (map_l_snd (combine_struc f1) b)(*push labels*)
 
 
@@ -10786,20 +10799,18 @@ let rec simplify_relation_x (sp:struc_formula) subst_fml pre_vars post_vars prog
         simplify_pre (CF.normalize 1 b.formula_struc_base (CF.formula_of_pure_formula pre no_pos) no_pos) lst_assume
       else b.formula_struc_base in
     (EBase {b with formula_struc_base = base; formula_struc_continuation = r}, [])
-  | EAssume(svl,f,fl,t) ->
-	  let pvars = CP.remove_dups_svl (CP.diff_svl (CF.fv f) post_vars) in
-      (* let pvars1 =  List.filter (fun v -> CP.type_of_spec_var v != HpT ) pvars in *)
-      let (new_f,pres) = simplify_post f pvars prog subst_fml pre_vars inf_post evars svl in
-	  (EAssume(svl,new_f,fl,t), pres)
+  | EAssume b ->
+	  let pvars = CP.remove_dups_svl (CP.diff_svl (CF.fv b.formula_assume_simpl) post_vars) in
+      let (new_f,pres) = simplify_post b.formula_assume_simpl pvars prog subst_fml pre_vars inf_post evars b.formula_assume_vars in
+	  let (new_f_struc,_) = simplify_relation b.formula_assume_struc subst_fml post_vars post_vars prog inf_post evars lst_assume in
+	  (EAssume{b with 
+		formula_assume_simpl = new_f;
+		formula_assume_struc = new_f_struc;}, pres)
   | EInfer b -> report_error no_pos "Do not expect EInfer at this level"
 	| EList b ->   
 		let new_sp, pres = map_l_snd_res (fun s-> simplify_relation s subst_fml pre_vars post_vars prog inf_post evars lst_assume) b in
 	   (EList new_sp, List.concat pres)
-	| EOr b -> 
-		let f1,l1 = simplify_relation b.formula_struc_or_f1 subst_fml pre_vars post_vars prog inf_post evars lst_assume in
-		let f2,l2 = simplify_relation b.formula_struc_or_f2 subst_fml pre_vars post_vars prog inf_post evars lst_assume in
-		(EOr {b with formula_struc_or_f1 = f1; formula_struc_or_f2 = f2;}, l1@l2)
-
+	
 and simplify_relation sp subst_fml pre_vars post_vars prog inf_post evars lst_assume =
 	let pr = !print_struc_formula in
 	Debug.no_1 "simplify_relation" pr (pr_pair pr (pr_list !CP.print_formula))

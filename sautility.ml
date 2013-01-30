@@ -299,6 +299,7 @@ and get_data_view_hrel_vars_h_formula hf=
     | CF.HTrue
     | CF.HFalse
     | CF.HEmp -> []
+	| CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
   in
   helper hf
 
@@ -355,6 +356,7 @@ and drop_get_hrel_h_formula hf=
       | CF.HTrue
       | CF.HFalse
       | CF.HEmp -> (hf0,[])
+	  | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
   in
   helper hf
 

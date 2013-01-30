@@ -257,6 +257,7 @@ let string_of_b_formula (pf,il) =
   | P.BagMin (i1, i2 , l) -> "BagMin("^(string_of_id i1)^","^(string_of_id i2)^")"
   | P.BagMax (i1, i2 , l) -> "BagMax("^(string_of_id i1)^","^(string_of_id i2)^")"
   | P.BagSub (e1, e2 , l) -> "BagSub("^(string_of_formula_exp e1)^","^(string_of_formula_exp e2)^")"
+  | P.XPure _ -> Error.report_no_pattern()
    (* | _ -> "bag constraint" *)
 ;;
 
@@ -448,21 +449,26 @@ let rec string_of_struc_formula c = match c with
 				let b = string_of_formula fb in
 				let c = match cont with | None -> "" | Some l -> ("{"^(string_of_struc_formula l)^"}") in
 				"EBase: ["^l1^"]["^l2^"]"^b^" "^c
-	| F.EAssume (b,(n1,n2),t)-> 
+	| F.EAssume {
+			F.formula_assume_simpl = b;
+			F.formula_assume_struc = s;
+			F.formula_assume_lbl = (n1,n2);
+			F.formula_assume_ensures_type = t;} -> 
       let assume_str = match t with
                    | None -> "EAssume: "
                    | Some true -> "EAssume_exact: "
                    | Some false -> "EAssume_inexact: " in
-      assume_str^(string_of_int n1)^","^n2^":"^(string_of_formula b)
+      let l1 = assume_str^(string_of_int n1)^","^n2^":"^(string_of_formula b) in
+	  let l2 = if !print_assume_struc then "\n struc: "^(string_of_struc_formula s) else "" in
+	  l1^l2
 	| F.EInfer{F.formula_inf_vars = lvars;
 			   F.formula_inf_post = postf;
-         F.formula_inf_xpost = postxf;
+			   F.formula_inf_xpost = postxf;
 			   F.formula_inf_continuation = continuation;} ->
         let ps =if (lvars==[] && postf) then "@post " else "" in
 		let string_of_inf_vars = Cprinter.str_ident_list (List.map (fun v -> fst v) lvars) in
 		let string_of_continuation = string_of_struc_formula continuation in
 		"EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation 
-	| F.EOr b-> (string_of_struc_formula b.F.formula_struc_or_f1) ^ "\nEOr" ^ (string_of_struc_formula b.F.formula_struc_or_f2)
 	| F.EList b ->   List.fold_left  (fun a (l,c)-> 
 		let l_s = (string_of_spec_label_def l) ^": " in
 		a ^ "\n" ^ (if a = "" then "" else "||") ^ "\n" ^ l_s^(string_of_struc_formula c)) "" b

@@ -1587,7 +1587,7 @@ and is_exp_arith (e:exp) : bool=
   match e with
     | Var (sv,pos) ->        (*waitlevel is a kind of bag constraints*)
         if (name_of_spec_var sv = Globals.waitlevel_name) then false else true
-    | Null _  | Var _ | IConst _ | AConst _ | InfConst _ | FConst _ 
+    | Null _  | IConst _ | AConst _ | InfConst _ | FConst _ 
     | Level _ -> true
     | Add (e1,e2,_)  | Subtract (e1,e2,_)  | Mult (e1,e2,_) 
     | Div (e1,e2,_)  | Max (e1,e2,_)  | Min (e1,e2,_) -> (is_exp_arith e1) && (is_exp_arith e2)
@@ -5442,6 +5442,7 @@ let rec transform_exp f e  =
         | ListReverse (e1,l) -> ListReverse ((transform_exp f e1),l)
     | Func (id, es, l) -> Func (id, (List.map (transform_exp f) es), l)
 		| ArrayAt (a, i, l) -> ArrayAt (a, (List.map (transform_exp f) i), l) (* An Hoa *)
+		| InfConst _ -> Error.report_no_pattern ()
 
 let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
       (*(f_comb:'b list -> 'b)*) :(b_formula * 'b) =
@@ -9365,7 +9366,7 @@ let is_sat_eq_ineq (f : formula) : bool =
     in
     let f_bf bf = 
       (match bf with
-        | ((Eq _) as e),_ -> Some ([bf]) 
+        | (Eq _) ,_ -> Some ([bf]) 
         | _,_ -> Some ([])
       )
     in
@@ -10352,7 +10353,7 @@ let find_closure_x (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list 
             | Some x -> helper (x::vs) xs)
       | [] -> vs
   in
-  let vs = [v] in
+  (*let vs = [v] in*)
   let rec helper_loop vs vv =
     let vs_new = helper vs vv in
     if (Gen.BList.difference_eq eq_spec_var vs_new vs) =[] then

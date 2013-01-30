@@ -1029,15 +1029,14 @@ let rec compact_nodes_with_same_name_in_struc (f: CF.struc_formula): CF.struc_fo
   if not (!Globals.allow_field_ann ) then f
   else
     match f with
-      | CF.EOr sf            -> CF.EOr { sf with 
-          CF.formula_struc_or_f1 = compact_nodes_with_same_name_in_struc sf.CF.formula_struc_or_f1;
-          CF.formula_struc_or_f2 = compact_nodes_with_same_name_in_struc  sf.CF.formula_struc_or_f2;} 
       | CF.EList sf          -> CF.EList  (map_l_snd compact_nodes_with_same_name_in_struc sf) 
       | CF.ECase sf          -> CF.ECase {sf with CF.formula_case_branches = map_l_snd compact_nodes_with_same_name_in_struc sf.CF.formula_case_branches;} 
       | CF.EBase sf          -> CF.EBase {sf with
           CF.formula_struc_base =  compact_nodes_with_same_name_in_formula sf.CF.formula_struc_base;
           CF.formula_struc_continuation = map_opt compact_nodes_with_same_name_in_struc sf.CF.formula_struc_continuation; }
-      | CF.EAssume (x, f, y,z)-> CF.EAssume (x,(compact_nodes_with_same_name_in_formula f),y,z)
+      | CF.EAssume b -> CF.EAssume {b with
+		CF.formula_assume_simpl = compact_nodes_with_same_name_in_formula b.CF.formula_assume_simpl;
+		CF.formula_assume_struc = compact_nodes_with_same_name_in_struc b.CF.formula_assume_struc;}
       | CF.EInfer sf         -> CF.EInfer {sf with CF.formula_inf_continuation = compact_nodes_with_same_name_in_struc sf.CF.formula_inf_continuation}
         
 let rec is_lend_h_formula (f : CF.h_formula) : bool =  match f with

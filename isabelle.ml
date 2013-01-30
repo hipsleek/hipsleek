@@ -52,6 +52,7 @@ let rec isabelle_of_typ = function
   | Array _ ->
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "type var, array and named type not supported for Isabelle"}
+  | INFInt | Pointer _ -> Error.report_no_pattern ()
 ;;
 
 (* pretty printing for spec_vars *)
@@ -138,6 +139,7 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.AConst _ -> failwith ("AConst are not supported in Isabelle")
 	| CP.ArrayAt _ ->  failwith ("Arrays are not supported in Isabelle") (* An Hoa *)
 	| CP.Level _ ->  failwith ("level should not appear in Isabelle")
+    | CP.InfConst _ -> Error.report_no_pattern ()
   
 (* pretty printing for a list of expressions *)
 and isabelle_of_formula_exp_list l = match l with

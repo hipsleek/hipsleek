@@ -1103,13 +1103,12 @@ and look_up_all_fields_x (prog : prog_decl) (c : data_decl) =
 *)
 
 and collect_struc (f:F.struc_formula):ident list =  match f with
-  | F.EAssume (b,_,_) -> collect_formula b
+  | F.EAssume b -> collect_formula b.F.formula_assume_simpl
   | F.ECase b-> Gen.fold_l_snd  collect_struc b.F.formula_case_branches
   | F.EBase b-> (collect_formula b.F.formula_struc_base)@ (Gen.fold_opt collect_struc b.F.formula_struc_continuation)
   | F.EInfer b -> collect_struc b.F.formula_inf_continuation
   | F.EList b -> Gen.fold_l_snd collect_struc b
-  | F.EOr b -> (collect_struc b.F.formula_struc_or_f1)@(collect_struc b.F.formula_struc_or_f2)
-
+  
 and collect_formula (f0 : F.formula) : ident list = 
   let rec helper (h0 : F.h_formula) = match h0 with
 	| F.HeapNode h -> 
@@ -1265,12 +1264,11 @@ and data_name_of_view_x (view_decls : view_decl list) (f0 : F.struc_formula) : i
 	  else "" in
   
   let rec data_name_in_struc (f:F.struc_formula):ident = match f with
-	| F.EAssume (b,_,_) -> data_name_of_view1 view_decls b
+	| F.EAssume b -> data_name_of_view1 view_decls b.F.formula_assume_simpl
 	| F.ECase b-> handle_list_res (Gen.fold_l_snd (fun c->[data_name_in_struc c]) b.F.formula_case_branches)
 	| F.EBase b-> handle_list_res (data_name_of_view1 view_decls b.F.formula_struc_base ::(Gen.fold_opt (fun c-> [data_name_of_view_x view_decls c]) b.F.formula_struc_continuation))
 	| F.EInfer b -> data_name_in_struc b.F.formula_inf_continuation
-	| F.EList b -> handle_list_res (List.map (fun c-> data_name_in_struc(snd c)) b) 
-	| F.EOr b -> handle_list_res [data_name_in_struc b.F.formula_struc_or_f1; data_name_in_struc b.F.formula_struc_or_f2] in
+	| F.EList b -> handle_list_res (List.map (fun c-> data_name_in_struc(snd c)) b)  in
    data_name_in_struc f0
 
 and data_name_of_view1 (view_decls : view_decl list) (f0 : F.formula) : ident = 
@@ -1450,6 +1448,9 @@ let build_hierarchy (prog : prog_decl) =
   let add_edge (cdef : data_decl) = 
 	CH.add_edge class_hierarchy (CH.V.create {ch_node_name = cdef.data_name})
 	  (CH.V.create {ch_node_name = cdef.data_parent_name}) in
+  let add_edge cdef = 
+	let pr cdef = cdef.data_name^"<:"^cdef.data_parent_name in
+	Debug.no_1 "add_edge" pr (fun _ -> "") add_edge cdef in
   let _ = List.map add_edge prog.prog_data_decls in
 	if TraverseCH.has_cycle class_hierarchy then begin
 	  print_string ("Error: Class hierarchy has cycles\n");
@@ -1463,31 +1464,29 @@ let build_hierarchy (prog : prog_decl) =
 		   CH.iter_vertex update_node class_hierarchy
 		   end
 		*)
-
 (*
   see if c1 is sub class of c2 and what are the classes in between.
 *)
-let find_classes (c1 : ident) (c2 : ident) : ident list = 
-  let v1 = CH.V.create {ch_node_name = c1} in
-  let v2 = CH.V.create {ch_node_name = c2} in
-  let path, _ = PathCH.shortest_path class_hierarchy v1 v2 in
-	List.map (fun e -> (CH.E.dst e).ch_node_name) path
+let exists_path (c1 : ident) (c2 : ident) :bool = 
+  if c2="null" then true
+  else
+	  try
+		let _ = PathCH.shortest_path class_hierarchy 
+				(CH.V.create {ch_node_name = c1}) 
+				(CH.V.create {ch_node_name = c2}) in
+		true
+	  with 
+ 		| Not_found -> false 
 
+let exists_path c1 c2 =	Debug.no_2_loop "exists_path" pr_id pr_id  string_of_bool exists_path c1 c2 
+		
 (* (\* is t1 a subtype of t2 *\) *)
-(* let sub_type (t1 : typ) (t2 : typ) =  *)
-(*   let c1 = string_of_typ t1 in *)
-(*   let c2 = string_of_typ t2 in *)
-(* 	if c1 = c2 || (is_named_type t2 && c1 = "null") then true *)
-(* 	else false *)
-(* 	  (\* *)
-(* 		try *)
-(* 		let _ = find_classes c1 c2 in *)
-(* 		true *)
-(* 		with *)
-(* 		| Not_found -> false *)
-(* 	  *\) *)
-
-let sub_type t1 t2 = sub_type t1 t2
+let sub_type2 (t1 : typ) (t2 : typ) =  
+	if is_named_type t1 && is_named_type t2 then 
+		exists_path (string_of_typ t1) (string_of_typ t2)
+	else false
+   
+let sub_type t1 t2 = sub_type t1 t2 || sub_type2 t1 t2
 
 let compatible_types (t1 : typ) (t2 : typ) = sub_type t1 t2 || sub_type t2 t1
 
@@ -2022,13 +2021,19 @@ let add_bar_inits prog =
 	(List.map (fun c-> b_data_constr c.barrier_name c.barrier_shared_vars) prog.prog_barrier_decls) in
 	
   let b_proc_def = List.map (fun b-> 
-			let largs = (*(P.IConst (0,no_pos))::*)List.map (fun (_,n)-> P.Var ((n,Unprimed),no_pos)) b.barrier_shared_vars in
+			let largs = (*(P.IConst (0,no_pos))::*)List.map (fun (_,n)-> 
+			(*print_string (n^"\n"); *)
+			P.Var ((n,Unprimed),no_pos)) b.barrier_shared_vars in
 			let pre_hn = 
 				F.mkHeapNode ("b",Unprimed) b_datan false (F.ConstAnn(Mutable)) false false false None [] [] None no_pos in
 			let pre = F.formula_of_heap_with_flow pre_hn n_flow no_pos in 
 			let post_hn = 
 				F.mkHeapNode ("b",Unprimed) b.barrier_name false (F.ConstAnn(Mutable)) false false false None largs [] None no_pos in
-			let post =  F.EAssume (F.formula_of_heap_with_flow post_hn n_flow no_pos,fresh_formula_label "",None) in
+			let post =  
+				let simp = F.formula_of_heap_with_flow post_hn n_flow no_pos in
+				let str = F.mkEBase [] [] [] simp None no_pos in
+				F.mkEAssume simp str (fresh_formula_label "") None in
+			(*let _ =print_string ("post: "^(!print_struc_formula post)^"\n") in*)
 			{ proc_name = "init_"^b.barrier_name;
                           proc_source = "source_file";
 			  proc_mingled_name = "";
@@ -2038,7 +2043,7 @@ let add_bar_inits prog =
 				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})
 								b.barrier_shared_vars);
 			  proc_return = Void;
-			  proc_static_specs = F.mkEBase [] [] [] pre (Some post) true no_pos;
+			  proc_static_specs = F.mkEBase [] [] [] pre (Some post) no_pos;
 			  proc_dynamic_specs = F.mkEFalseF ();
 			  proc_exceptions = [];
 			  proc_body = None;

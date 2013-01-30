@@ -11,9 +11,11 @@ LIBS2 = unix,str,graph,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
 INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,+site-lib/batteries,-I,+site-lib/extlib
 
+PROPERERRS = -warn-error,+4+8+9+11+12+25+28
+
 #FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
-FLAGS = $(INCLUDES),-annot,-ccopt,-fopenmp 
-GFLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
+FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp 
+GFLAGS = $(INCLUDES),$(PROPERERRS),-g,-annot,-ccopt,-fopenmp 
 # ,-cclib,-lz3stubs,-cclib,-lz3,/usr/local/lib/ocaml/libcamlidl.a
 
 # -no-hygiene flag to disable "hygiene" rules

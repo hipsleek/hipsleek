@@ -926,7 +926,8 @@ let rec contain_vars_exp (expr : exp) : bool =
   | ListReverse (exp, _) -> contain_vars_exp exp
   | Func _ -> true
   | ArrayAt _ -> true 
-
+  | InfConst _ -> Error.report_no_pattern ()
+  
 and float_out_exp_min_max (e: exp): (exp * (formula * (string list) ) option) = match e with 
   | Null _ 
   | Var _ 

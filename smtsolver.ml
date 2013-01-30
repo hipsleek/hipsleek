@@ -86,6 +86,8 @@ let rec smt_of_typ t =
     (* TODO *)
     | RelT -> "Int"
     | HpT -> "Int"
+	| INFInt 
+	| Pointer _ -> Error.report_no_pattern ()
 
 let smt_of_typ t =
   Debug.no_1 "smt_of_typ" string_of_typ (fun s -> s)
@@ -132,6 +134,8 @@ let rec smt_of_exp a =
 	| CP.Tsconst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (tsconst should not appear here)")
 	| CP.ArrayAt (a, idx, l) -> 
 		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
+	| CP.InfConst _ -> Error.report_no_pattern ()
+	
 
 let rec smt_of_b_formula b =
 	let (pf,_) = b in
@@ -196,6 +200,7 @@ let rec smt_of_b_formula b =
 				"(= " ^ new_array ^ " " ^ result ^ ")"
 		else
 			"(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
+	| CP.XPure _ -> Error.report_no_pattern ()
 		
 let rec smt_of_formula pr_w pr_s f =
   let _ = Debug.devel_hprint (add_str "f : " !CP.print_formula) f no_pos in
@@ -299,6 +304,7 @@ and collect_bformula_info b = match b with
 		else let rinfo = { default_formula_info with relations = [r]; } in
 		let args_infos = List.map collect_exp_info args in
 		combine_formula_info_list (rinfo :: args_infos) (* check if there are axioms then change the quantifier free part *)
+  | CP.XPure _ -> Error.report_no_pattern ()
 
 and collect_exp_info e = match e with
   | CP.Level _
@@ -326,6 +332,7 @@ and collect_exp_info e = match e with
   | CP.Tsconst _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
   | CP.Func (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
   | CP.ArrayAt (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
+  | CP.InfConst _ -> Error.report_no_pattern ()
 
 and combine_formula_info if1 if2 =
   {is_linear = if1.is_linear && if2.is_linear;

@@ -740,8 +740,14 @@ let place_holder = P.SpecVar (Int, "pholder___", Unprimed)
 		sensures_pos = pos;
 	}]*)
 let stub_branch_point_id s = (-1,s)
-let mkEAssume pos = Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkTrueFlow ()) pos),(stub_branch_point_id ""),None)
-let mkEAssume_norm pos = Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkNormalFlow ()) pos),(stub_branch_point_id ""),None)
+let mkEAssume pos = 
+	let f = Cformula.mkTrue (Cformula.mkTrueFlow ()) pos in
+	Cformula.mkEAssume [] f (Cformula.mkEBase f None no_pos) (stub_branch_point_id "") None
+ 
+let mkEAssume_norm pos = 
+	let f = Cformula.mkTrue (Cformula.mkNormalFlow ()) pos in
+	let sf = Cformula.mkEBase f None no_pos in
+	Cformula.mkEAssume [] f (Cformula.mkEBase f None no_pos) (stub_branch_point_id "") None
 	
 let mkSeq t e1 e2 pos = match e1 with
   | Unit _ -> e2
@@ -1543,12 +1549,14 @@ let check_proper_return cret_type exc_list f =
 			else ()			
 	| F.Or b-> check_proper_return_f b.F.formula_or_f1 ; check_proper_return_f b.F.formula_or_f2 in
   let rec helper f0 = match f0 with 
-	| F.EBase b-> (match b.F.formula_struc_continuation with | None -> () | Some l -> helper l)
-	| F.ECase b-> List.iter (fun (_,c)-> helper c) b.F.formula_case_branches
-	| F.EAssume (_,b,_,_)-> if (F.isAnyConstFalse b)||(F.isAnyConstTrue b) then () else check_proper_return_f b
-	| F.EInfer b -> ()(*check_proper_return cret_type exc_list b.formula_inf_continuation*)
-	| F.EList b -> List.iter (fun c-> helper(snd c)) b 
-	| F.EOr b -> (helper b.F.formula_struc_or_f1; helper b.F.formula_struc_or_f2)in
+	| F.EBase b   -> (match b.F.formula_struc_continuation with | None -> () | Some l -> helper l)
+	| F.ECase b   -> List.iter (fun (_,c)-> helper c) b.F.formula_case_branches
+	| F.EAssume b -> 
+			if (F.isAnyConstFalse b.F.formula_assume_simpl)||(F.isAnyConstTrue b.F.formula_assume_simpl) then () 
+			else check_proper_return_f b.F.formula_assume_simpl
+	| F.EInfer b  -> ()(*check_proper_return cret_type exc_list b.formula_inf_continuation*)
+	| F.EList b   -> List.iter (fun c-> helper(snd c)) b 
+	in
   helper f
 
  
@@ -1723,10 +1731,6 @@ let rec add_uni_vars_to_view_x cprog (l2r_coers:coercion_decl list) (view:view_d
               let vars2 = match e.F.formula_struc_continuation with | None -> [] | Some l -> process_struc_formula l in
               P.remove_dups_svl (vars1@vars2)
 		  | F.EList b -> P.remove_dups_svl (List.flatten (List.map (fun c-> process_struc_formula (snd c)) b))
-		  | F.EOr b -> 
-				let r1 = process_struc_formula b.F.formula_struc_or_f1 in
-				let r2 = process_struc_formula b.F.formula_struc_or_f2 in
-				P.remove_dups_svl (List.flatten [r1;r2])
           | _ ->
               let _ = print_string "[add_uni_vars_to_view] Warning: only handle EBase \n" in
               []

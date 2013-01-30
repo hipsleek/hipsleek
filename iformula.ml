@@ -22,21 +22,23 @@ and mem_formula = {	mem_formula_exp : P.exp;
 			mem_formula_guards : P.formula list; 
 		}
 
+and assume_formula = 
+	{
+		formula_assume_simpl : formula; 
+		formula_assume_struc : struc_formula;
+		formula_assume_lbl : formula_label;
+		formula_assume_ensures_type : ensures_type;
+	}
+		
 and struc_formula = 
 	| ECase of struc_case_formula
 	| EBase of struc_base_formula
-	| EAssume of (formula*formula_label*ensures_type)(*could be generalized to have a struc_formula type instead of simple formula*)
- (* spec feature to induce inference *)
+	| EAssume of assume_formula (*(formula*formula_label*ensures_type)*)
+		(*could be generalized to have a struc_formula type instead of simple formula*)
+		(* spec feature to induce inference *)
 	| EInfer of struc_infer_formula
 	| EList of (spec_label_def*struc_formula) list 
-	| EOr of  struc_or_formula
 
-and struc_or_formula = 
-  {
-      formula_struc_or_f1 : struc_formula;
-      formula_struc_or_f2 : struc_formula;
-      formula_struc_or_pos: loc;
-  }
 	
 and struc_infer_formula =
   {
@@ -293,17 +295,28 @@ and mkFalse flow pos = Base { formula_base_heap = HFalse;
                          formula_base_and = [];
 						 formula_base_pos = pos }
 
-and mkAssume flow pos = 
-  EAssume (mkTrue flow pos, (-1,""), None)
+and mkTrivAssume flow pos = EAssume {
+		formula_assume_simpl = mkTrue flow pos; 
+		formula_assume_struc = mkETrue flow pos;
+		formula_assume_lbl = (-1,"");
+		formula_assume_ensures_type = None;
+	}
 
 and mkETrueTrue flow flow2 pos = EBase {
 		 formula_struc_explicit_inst = [];
 		 formula_struc_implicit_inst = [];
 		 formula_struc_exists = [];
 		 formula_struc_base = mkTrue flow pos;
-		 formula_struc_continuation = Some (mkAssume flow2 pos) ;
+		 formula_struc_continuation = Some (mkTrivAssume flow2 pos) ;
 		 formula_struc_pos = pos	}
 
+and mkEAssume simp struc lbl ens = EAssume{
+		formula_assume_simpl = simp;
+		formula_assume_struc = struc;
+		formula_assume_lbl = lbl;
+		formula_assume_ensures_type = ens;
+	}
+		 
 and mkETrue flow pos = EBase {
 		 formula_struc_explicit_inst = [];
 		 formula_struc_implicit_inst = [];
@@ -323,13 +336,13 @@ and mkEFalse flow pos = EBase {
 and mkEFalseF () = mkEFalse false_flow no_pos			
 and mkETrueF () = mkETrue n_flow no_pos			
 and mkETrueTrueF () = mkETrueTrue n_flow n_flow no_pos			
-and mkEOr (f1:struc_formula) (f2:struc_formula) pos :struc_formula= 
+(*and mkEOr (f1:struc_formula) (f2:struc_formula) pos :struc_formula= 
 	if isEConstTrue f1 || isEConstTrue f2 then mkETrue top_flow pos
   else if isEConstFalse f1 then f2
   else if isEConstFalse f2 then f1
-  else EOr { formula_struc_or_f1 = f1; formula_struc_or_f2 = f2; formula_struc_or_pos = pos}
+  else EOr { formula_struc_or_f1 = f1; formula_struc_or_f2 = f2; formula_struc_or_pos = pos}*)
 
-and mkEBase ei ii e b c com l= EBase {
+and mkEBase ei ii e b (c:struc_formula option) l= EBase {
 						 	formula_struc_explicit_inst = ei;
 						 	formula_struc_implicit_inst = ii;
 							formula_struc_exists = e;
@@ -348,6 +361,10 @@ and mkOr f1 f2 pos =
     else if (isConstFalse f2) then f1
     else raw
    else raw
+   
+and disj_of_list l default pos = match l with
+	| [] -> if default then mkTrue n_flow pos else mkFalse false_flow pos
+	| h::t -> List.fold_left (fun c1 c2-> mkOr c1 c2 pos) h t
 
 and mkBase_wo_flow (h : h_formula) (p : P.formula) (a: one_formula list) pos =
   mkBase h p top_flow a pos
@@ -480,9 +497,8 @@ and pos_of_formula f0 = match f0 with
 and pos_of_struc_formula f0  = match f0 with 
 	| ECase b -> b.formula_case_pos
 	| EBase b -> b.formula_struc_pos
-	| EAssume (b,_,_) -> pos_of_formula b
+	| EAssume b -> pos_of_formula b.formula_assume_simpl
 	| EInfer b -> b.formula_inf_pos
-	| EOr b -> b.formula_struc_or_pos
 	| EList b -> try pos_of_struc_formula (snd (List.hd b))
                      with _ -> no_pos
 
@@ -575,10 +591,9 @@ let rec struc_hp_fv (f:struc_formula): (ident*primed) list =  match f with
 	| EBase b-> Gen.BList.difference_eq (=) ((Gen.fold_opt struc_hp_fv b.formula_struc_continuation)@(heap_fv b.formula_struc_base)) 
 					(b.formula_struc_explicit_inst@b.formula_struc_implicit_inst)
 	| ECase b-> Gen.fold_l_snd struc_hp_fv b.formula_case_branches
-	| EAssume (b,_,_)-> heap_fv b
+	| EAssume b-> heap_fv b.formula_assume_simpl
     | EInfer b -> struc_hp_fv b.formula_inf_continuation
 	| EList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd struc_hp_fv b)
-	| EOr b -> Gen.BList.remove_dups_eq (=) (struc_hp_fv b.formula_struc_or_f1 @ struc_hp_fv b.formula_struc_or_f2)
 							
 and heap_fv_one_formula (f:one_formula):(ident*primed) list = 
   (h_fv f.formula_heap)
@@ -615,10 +630,9 @@ and struc_free_vars with_inst (f:struc_formula) :(ident*primed) list= match f wi
 				let fvc = List.fold_left (fun a (c1,c2)-> 
 				a@(struc_free_vars with_inst c2 )@(Ipure.fv c1)) [] b.formula_case_branches in
 				Gen.BList.remove_dups_eq (=) fvc		
-	| EAssume (b,_,_)-> all_fv b
+	| EAssume b-> all_fv b.formula_assume_simpl
 	| EInfer b -> Gen.BList.remove_dups_eq (=) ( struc_free_vars with_inst b.formula_inf_continuation)
 	| EList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd (struc_free_vars with_inst) b)
-	| EOr b-> Gen.BList.remove_dups_eq (=) ((struc_free_vars with_inst b.formula_struc_or_f1)@(struc_free_vars with_inst b.formula_struc_or_f2))
 	
 	
  
@@ -645,15 +659,11 @@ and struc_split_fv_a (f0:struc_formula) with_inst:((ident*primed) list) * ((iden
 					let prc, psc = helper c2 in
 					((a1@prc@(Ipure.fv c1)),psc@a2)) ([],[]) b.formula_case_branches in
 			(rde prl, rde psl)		
-		| EAssume (b,_,_)-> ([],all_fv b)
+		| EAssume b-> ([],all_fv b.formula_assume_simpl)
 		| EInfer b -> helper b.formula_inf_continuation
 		| EList b-> 
 			let prl, pcl = List.split (List.map (fun c-> helper (snd c)) b) in
-			(rde (List.concat prl), rde (List.concat pcl))
-		| EOr b -> 
-			let l1,l2 = helper b.formula_struc_or_f1 in
-			let r1,r2 = helper b.formula_struc_or_f2 in
-			(rde (l1@r1), rde (l2@r2)) in
+			(rde (List.concat prl), rde (List.concat pcl)) in
 	helper f0
   
  
@@ -710,7 +720,7 @@ let formula_to_struc_formula (f:formula):struc_formula =
 		 			formula_struc_base = f;
 					formula_struc_continuation = None;
 		 			formula_struc_pos = b.formula_exists_pos}
-		| Or b->  EOr { formula_struc_or_f1 = helper b.formula_or_f1; formula_struc_or_f2 = helper b.formula_or_f2; formula_struc_or_pos = b.formula_or_pos} in
+		| Or b->  EList [(empty_spec_label_def,helper b.formula_or_f1);(empty_spec_label_def,helper b.formula_or_f2)] in
 	Debug.no_1 "formula_to_struc_formula" !print_formula !print_struc_formula helper f;;
   
 (* split a conjunction into heap constraints, pure pointer constraints, *)
@@ -986,6 +996,7 @@ and h_apply_one_pointer ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : 
       | HEmp
       | HTrue
       | HFalse -> (f,[])
+	  | ConjStar _ | ConjConj _ | StarMinus _ -> Error.report_no_pattern ()
   in helper f
 
 
@@ -1115,7 +1126,10 @@ and rename_bound_vars (f : formula) =
 
 	          
 and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula):struc_formula = match f with
-	| EAssume (b,tag,t) -> EAssume ((subst sst b),tag,t)
+	| EAssume b -> 
+		EAssume {b with 
+			formula_assume_simpl = subst sst b.formula_assume_simpl; 
+			formula_assume_struc = subst_struc sst b.formula_assume_struc;}
 	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> ((Ipure.subst sst c1),(subst_struc sst c2))) b.formula_case_branches}
 	| EBase b->  EBase {
 			  formula_struc_implicit_inst = List.map (subst_var_list sst) b.formula_struc_implicit_inst;
@@ -1127,7 +1141,6 @@ and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula)
   | EInfer b -> EInfer {b with
       formula_inf_vars = List.map (subst_var_list sst) b.formula_inf_vars;
       formula_inf_continuation = subst_struc sst b.formula_inf_continuation;}
-  | EOr b -> EOr {b with formula_struc_or_f1 = subst_struc sst b.formula_struc_or_f1; formula_struc_or_f2 = subst_struc sst b.formula_struc_or_f2;}
   | EList b -> EList (Gen.map_l_snd (subst_struc sst) b)
              (* formula_ext_complete = b.formula_ext_complete;*)
 
@@ -1135,7 +1148,10 @@ and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula)
 and subst_all_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula):struc_formula =
   let rec helper f =
   match f with
-	| EAssume (b,tag,t) -> EAssume ((subst_all sst b),tag,t)
+	| EAssume b -> 
+		EAssume {b with 
+			formula_assume_simpl = subst_all sst b.formula_assume_simpl; 
+			formula_assume_struc = subst_all_struc sst b.formula_assume_struc;}
 	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> ((Ipure.subst sst c1),(helper c2))) b.formula_case_branches}
 	| EBase b->  EBase {
 			  formula_struc_implicit_inst = List.map (subst_var_list sst) b.formula_struc_implicit_inst;
@@ -1147,7 +1163,6 @@ and subst_all_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_form
   | EInfer b -> EInfer {b with
       formula_inf_vars = List.map (subst_var_list sst) b.formula_inf_vars;
       formula_inf_continuation = helper b.formula_inf_continuation;}
-  | EOr b -> EOr {b with formula_struc_or_f1 = helper b.formula_struc_or_f1; formula_struc_or_f2 = helper b.formula_struc_or_f2;}
   | EList b -> EList (Gen.map_l_snd (helper) b)
              (* formula_ext_complete = b.formula_ext_complete;*)
   in helper f
@@ -1157,10 +1172,12 @@ and subst_all_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_form
 and subst_pointer_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula) (vars: (ident * primed) list):struc_formula =
   let rec helper f =
   match f with
-	| EAssume (b,tag,t) ->
+	| EAssume b ->
         let pvars = List.map (fun (v,_) -> (v,Primed)) vars in
         let uvars = List.map (fun (v,_) -> (v,Unprimed)) vars in
-        EAssume ((subst_pointer sst b (pvars@uvars)),tag,t)
+		EAssume {b with 
+			formula_assume_simpl = subst_pointer sst b.formula_assume_simpl (pvars@uvars); 
+			formula_assume_struc = helper b.formula_assume_struc;}
 	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> ((Ipure.subst sst c1),(helper c2))) b.formula_case_branches}
 	| EBase b->
         (*Preconditions do not contain primed notations*)
@@ -1175,7 +1192,6 @@ and subst_pointer_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_
   | EInfer b -> EInfer {b with
       formula_inf_vars = List.map (subst_var_list sst) b.formula_inf_vars;
       formula_inf_continuation = helper b.formula_inf_continuation;}
-  | EOr b -> EOr {b with formula_struc_or_f1 = helper b.formula_struc_or_f1; formula_struc_or_f2 = helper b.formula_struc_or_f2;}
   | EList b -> EList (Gen.map_l_snd (helper) b)
              (* formula_ext_complete = b.formula_ext_complete;*)
   in helper f
@@ -1331,8 +1347,14 @@ and subst_w_data_name sst (f : formula) = match sst with
   | [] -> f
 
 and subst_w_data_name_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula):struc_formula = match f with
-	| EAssume (b,tag,t) -> EAssume ((subst_w_data_name sst b),tag,t)
-	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> ((Ipure.subst sst c1),(subst_w_data_name_struc sst c2))) b.formula_case_branches}
+	| EAssume b -> 
+		EAssume {b with 
+			formula_assume_simpl = subst_w_data_name sst b.formula_assume_simpl; 
+			formula_assume_struc = subst_w_data_name_struc sst b.formula_assume_struc;}
+	| ECase b -> ECase {b with 
+		formula_case_branches = 
+			List.map (fun (c1,c2)-> ((Ipure.subst sst c1),(subst_w_data_name_struc sst c2)))
+				b.formula_case_branches}
 	| EBase b->  EBase {
 			  formula_struc_implicit_inst = List.map (subst_var_list sst) b.formula_struc_implicit_inst;
 			  formula_struc_explicit_inst = List.map (subst_var_list sst) b.formula_struc_explicit_inst;
@@ -1343,13 +1365,15 @@ and subst_w_data_name_struc (sst:((ident * primed)*(ident * primed)) list) (f:st
   | EInfer b -> EInfer {b with
       formula_inf_vars = List.map (subst_var_list sst) b.formula_inf_vars;
       formula_inf_continuation = subst_w_data_name_struc sst b.formula_inf_continuation;}
-  | EOr b -> EOr {b with formula_struc_or_f1 = subst_w_data_name_struc sst b.formula_struc_or_f1; formula_struc_or_f2 = subst_w_data_name_struc sst b.formula_struc_or_f2;}
   | EList b -> EList (Gen.map_l_snd (subst_w_data_name_struc sst) b)
              (* formula_ext_complete = b.formula_ext_complete;*)
 (*======END for generate tmp view======*)
 
 let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula = match f with
-	| EAssume (b,tag,t) -> EAssume ((rename_bound_vars b),tag,t)
+	| EAssume b -> 
+		EAssume {b with 
+			formula_assume_simpl = rename_bound_vars b.formula_assume_simpl; 
+			formula_assume_struc = rename_bound_var_struc_formula b.formula_assume_struc;}
 	| ECase b-> ECase {b with formula_case_branches = Gen.map_l_snd rename_bound_var_struc_formula b.formula_case_branches}
 	| EBase b-> 
 			let sst2 = List.map (fun (c1,c2)-> ((c1,c2),((Ipure.fresh_old_name c1),c2))) b.formula_struc_implicit_inst in
@@ -1361,8 +1385,7 @@ let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula = match f
 	| EInfer b -> EInfer {b with (* Need to check again *)
 					formula_inf_continuation = rename_bound_var_struc_formula b.formula_inf_continuation;}
 	| EList b -> EList (Gen.map_l_snd rename_bound_var_struc_formula b)
-	| EOr b -> EOr {b with formula_struc_or_f1 = rename_bound_var_struc_formula b.formula_struc_or_f1; formula_struc_or_f2 = rename_bound_var_struc_formula b.formula_struc_or_f2;}
-
+	
 
 and float_out_exps_from_heap (f:formula ) (rel0: rel option):formula = (* float_out_exps_from_heap_x f *)
 let pr = !print_formula in
@@ -1566,11 +1589,13 @@ and float_out_exps_from_heap_x (f:formula ) (rel0: rel option) :formula =
   in helper f
        
 and float_out_exps_from_heap_struc (f:struc_formula) (rel0: rel option):struc_formula = match f with
-    | EAssume (b,tag,t) -> 
+    | EAssume b -> 
         let rel0 = match rel0 with
           | None -> Some RSubAnn
           | Some r -> rel0 in
-        EAssume ((float_out_exps_from_heap b rel0),tag,t)
+        EAssume {b with
+			formula_assume_simpl = float_out_exps_from_heap b.formula_assume_simpl rel0; 
+			formula_assume_struc = float_out_exps_from_heap_struc b.formula_assume_struc rel0;}
     | ECase b -> ECase {b with formula_case_branches = Gen.map_l_snd (fun x -> float_out_exps_from_heap_struc x rel0) b.formula_case_branches}
     | EBase b -> EBase {
 				 formula_struc_explicit_inst = b.formula_struc_explicit_inst;
@@ -1581,8 +1606,7 @@ and float_out_exps_from_heap_struc (f:struc_formula) (rel0: rel option):struc_fo
 				 formula_struc_pos = b.formula_struc_pos}
     | EInfer b -> EInfer ({b with formula_inf_continuation = float_out_exps_from_heap_struc b.formula_inf_continuation rel0;})
 	| EList b -> EList (Gen.map_l_snd (fun x -> float_out_exps_from_heap_struc x rel0) b )
-	| EOr b-> EOr {b with formula_struc_or_f1 = float_out_exps_from_heap_struc b.formula_struc_or_f1 rel0; formula_struc_or_f2 = float_out_exps_from_heap_struc b.formula_struc_or_f2 rel0;}
-
+	
 and float_out_one_formula_min_max (f :  one_formula) :  one_formula =
   let (nh, nhpf) = float_out_heap_min_max f.formula_heap in
   let np = Ipure.float_out_pure_min_max f.formula_pure in
@@ -1830,7 +1854,10 @@ match h with
 	 
   
 and float_out_struc_min_max (f0 : struc_formula): struc_formula = match f0 with
-	| EAssume (b,tag,t) -> EAssume ((float_out_min_max b),tag,t)
+	| EAssume b -> 
+		EAssume {b with 
+			formula_assume_simpl = float_out_min_max b.formula_assume_simpl; 
+			formula_assume_struc = float_out_struc_min_max b.formula_assume_struc;}
 	| ECase b-> ECase {b with 
 					 formula_case_branches = (List.map (fun (c1,c2)->((Ipure.float_out_pure_min_max c1),(float_out_struc_min_max c2))) b.formula_case_branches)}
 	| EBase b -> EBase {b with 
@@ -1838,16 +1865,13 @@ and float_out_struc_min_max (f0 : struc_formula): struc_formula = match f0 with
 					 formula_struc_continuation = Gen.map_opt float_out_struc_min_max b.formula_struc_continuation}
 	| EInfer b -> EInfer {b with formula_inf_continuation = float_out_struc_min_max b.formula_inf_continuation;}
 	| EList b -> EList (Gen.map_l_snd float_out_struc_min_max b)
-	| EOr b -> EOr {b with formula_struc_or_f1 = float_out_struc_min_max b.formula_struc_or_f1; formula_struc_or_f2 = float_out_struc_min_max b.formula_struc_or_f2;}
-
-
+	
 and view_node_types_struc (f:struc_formula):ident list = match f with
 	| ECase b -> Gen.fold_l_snd view_node_types_struc b.formula_case_branches
 	| EBase b -> (view_node_types b.formula_struc_base)@(Gen.fold_opt view_node_types_struc b.formula_struc_continuation)
-	| EAssume (b,_,_) -> view_node_types b
+	| EAssume b -> view_node_types b.formula_assume_simpl
 	| EInfer b -> view_node_types_struc b.formula_inf_continuation
 	| EList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd view_node_types_struc b)
-	| EOr b-> Gen.BList.remove_dups_eq (=) (view_node_types_struc b.formula_struc_or_f1 @ view_node_types_struc b.formula_struc_or_f2)
 		
 and view_node_types (f:formula):ident list = 
 	let rec helper (f:h_formula):ident list =  match f with
@@ -1872,10 +1896,9 @@ and has_top_flow_struc (f:struc_formula) =
 	let rec helper f0 = match f0 with
 		| EBase b->   has_top_flow b.formula_struc_base; (match  b.formula_struc_continuation with | None -> () | Some l-> helper l)
 		| ECase b->   List.iter (fun (_,b1)-> (helper b1)) b.formula_case_branches
-		| EAssume (b,_,_)-> has_top_flow b
+		| EAssume b-> has_top_flow b.formula_assume_simpl
 		| EInfer b-> helper b.formula_inf_continuation
-		| EList b-> List.iter (fun c-> helper (snd c)) b
-		| EOr b-> helper b.formula_struc_or_f1; helper b.formula_struc_or_f2 in
+		| EList b-> List.iter (fun c-> helper (snd c)) b  in
 	helper f
 
 
@@ -1894,13 +1917,13 @@ and subst_flow_of_struc_formula  fr t (f:struc_formula):struc_formula = match f 
 						 formula_struc_base = subst_flow_of_formula fr t b.formula_struc_base;
 						 formula_struc_continuation = Gen.map_opt (subst_flow_of_struc_formula fr t) b.formula_struc_continuation}
 	| ECase b ->ECase {b with formula_case_branches = Gen.map_l_snd (subst_flow_of_struc_formula fr t) b.formula_case_branches}
-	| EAssume (b,tag,etype)-> EAssume ((subst_flow_of_formula fr t b),tag,etype) 
+	| EAssume b-> 
+		EAssume {b with 
+			formula_assume_simpl = subst_flow_of_formula fr t b.formula_assume_simpl; 
+			formula_assume_struc = subst_flow_of_struc_formula fr t b.formula_assume_struc;}
 	| EInfer b -> EInfer {b with formula_inf_continuation = subst_flow_of_struc_formula fr t b.formula_inf_continuation;}
 	| EList b-> EList (Gen.map_l_snd (subst_flow_of_struc_formula fr t) b	)
-	| EOr b -> EOr {b with 
-						formula_struc_or_f1 = subst_flow_of_struc_formula fr t b.formula_struc_or_f1; 
-						formula_struc_or_f2 = subst_flow_of_struc_formula fr t b.formula_struc_or_f2;}
-
+	
 and subst_stub_flow_struc (t:string) (f:struc_formula) : struc_formula = subst_flow_of_struc_formula stub_flow t f	
       
 let rec break_formula (f : formula) : P.b_formula list list =
@@ -1912,10 +1935,9 @@ let rec break_formula (f : formula) : P.b_formula list list =
 and break_struc_formula (f : struc_formula) : P.b_formula list list = match f with
 	| ECase cf -> List.map (fun (cond, sf) -> List.concat ([P.break_pure_formula cond] @ (break_struc_formula sf))) cf.formula_case_branches
 	| EBase bf -> [List.concat ((break_formula bf.formula_struc_base) @ (Gen.fold_opt break_struc_formula bf.formula_struc_continuation))]
-	| EAssume (af, _, _) -> break_formula af
+	| EAssume b -> break_formula b.formula_assume_simpl
 	| EInfer bf -> break_struc_formula bf.formula_inf_continuation
 	| EList b-> Gen.fold_l_snd break_struc_formula b
-	| EOr b-> (break_struc_formula b.formula_struc_or_f1) @(break_struc_formula b.formula_struc_or_f2)
 
 let isAccs(a : ann) : bool = 
   match a with
@@ -1950,6 +1972,18 @@ let rec prune_exists fml infer_vars = match fml with
     let new_vars = diff_svl fml_ex.formula_exists_qvars infer_vars in
     Exists {fml_ex with formula_exists_qvars = new_vars}
     
+
+let rec prune_exists_struc infer_vars fml = match fml with
+	| ECase b -> ECase {b with formula_case_branches = map_l_snd (prune_exists_struc infer_vars) b.formula_case_branches}
+	| EBase b -> EBase {b with 
+		formula_struc_base = prune_exists b.formula_struc_base infer_vars;
+		formula_struc_continuation = map_opt (prune_exists_struc infer_vars) b.formula_struc_continuation;}
+	| EAssume b -> EAssume {b with 
+		formula_assume_simpl = prune_exists  b.formula_assume_simpl infer_vars;
+		formula_assume_struc = prune_exists_struc infer_vars b.formula_assume_struc;}
+	| EInfer b -> EInfer {b with formula_inf_continuation = prune_exists_struc infer_vars b.formula_inf_continuation}
+	| EList b -> EList (map_l_snd (prune_exists_struc infer_vars) b) 
+	
 (*find thread id for each one_formula*)
 (*remove thread = id and add id into  formula_thread*)
 let float_out_thread_one_formula_x (f : one_formula) : one_formula =
@@ -2022,23 +2056,38 @@ let float_out_thread (f : formula) : formula =
 
 
 let rec float_out_thread_struc_formula_x (f:struc_formula) (rel0: rel option): struc_formula = match f with
-    | EAssume (b,tag,t) -> EAssume ((float_out_thread b),tag,t)
-    | ECase b -> ECase ({formula_case_branches = List.map (fun (c1,c2)-> (c1,(float_out_exps_from_heap_struc c2 rel0))) b.formula_case_branches ; formula_case_pos=b.formula_case_pos})
+    | EAssume b -> 
+		EAssume {b with 
+			formula_assume_simpl = float_out_thread b.formula_assume_simpl; 
+			formula_assume_struc = float_out_thread_struc_formula_x b.formula_assume_struc rel0;}
+    | ECase b -> 
+		ECase {
+			formula_case_branches = List.map (fun (c1,c2)-> (c1,(float_out_exps_from_heap_struc c2 rel0))) b.formula_case_branches ; 
+			formula_case_pos=b.formula_case_pos}
     | EBase b-> EBase {b with
 				 formula_struc_base = float_out_thread b.formula_struc_base;
 				 formula_struc_continuation =  Gen.map_opt (fun x -> float_out_thread_struc_formula_x x rel0) b.formula_struc_continuation;
 				}
     | EInfer b -> EInfer ({b with formula_inf_continuation = float_out_thread_struc_formula_x b.formula_inf_continuation rel0;})
 	| EList b -> EList (Gen.map_l_snd (fun x -> float_out_thread_struc_formula_x x rel0) b)
-	| EOr b -> EOr {b with 
-			formula_struc_or_f1 = float_out_thread_struc_formula_x b.formula_struc_or_f1 rel0; 
-			formula_struc_or_f2 = float_out_thread_struc_formula_x b.formula_struc_or_f2 rel0; }
 
 let float_out_thread_struc_formula (f:struc_formula) (rel0: rel option): struc_formula = 
   Debug.no_1 "float_out_thread_struc_formula"
       !print_struc_formula !print_struc_formula
       (fun _ -> float_out_thread_struc_formula_x f rel0) f 
 
+
+let add_pure_formula_to_formula (p:P.formula) (f0 : formula): formula =
+  let rec helper f0 =
+    match f0 with
+      | Base b -> Base {b with formula_base_pure = P.mkAnd p b.formula_base_pure no_pos}
+      | Exists e -> Exists {e with formula_exists_pure = P.mkAnd p e.formula_exists_pure no_pos}
+      | Or o ->
+          let o1 = helper o.formula_or_f1 in
+          let o2 = helper o.formula_or_f2 in
+          (Or {o with formula_or_f1 = o1; formula_or_f2 = o2})
+  in helper f0
+	  
 let add_h_formula_to_formula (h_f: h_formula) (f0 : formula): formula =
   let rec helper f0 =
     match f0 with
@@ -2096,7 +2145,7 @@ let normalize_formula (f1 : formula) (f2 : formula) (pos : loc) =
 let add_h_formula_to_pre_x (h_f,impl_vars) (f0 : struc_formula): struc_formula =
   let rec helper (f0:struc_formula) =
     match f0 with
-	  | EAssume (b,tag,t) -> f0
+	  | EAssume _ -> f0
 	  | ECase b-> ECase {b with 
 		  formula_case_branches = (List.map (fun (c1,c2)->(c1,(helper c2))) b.formula_case_branches)}
 	  | EBase b -> EBase {b with
@@ -2105,7 +2154,6 @@ let add_h_formula_to_pre_x (h_f,impl_vars) (f0 : struc_formula): struc_formula =
 	  | EInfer b -> EInfer {b with
           formula_inf_continuation = helper b.formula_inf_continuation}
 	  | EList b -> EList (Gen.map_l_snd helper b)
-	  | EOr b -> EOr {b with formula_struc_or_f1 = helper b.formula_struc_or_f1; formula_struc_or_f2 = helper b.formula_struc_or_f2;}
   in helper f0
 
 let add_h_formula_to_pre (h_f,impl_vars) (f0 : struc_formula): struc_formula =
@@ -2117,19 +2165,19 @@ let add_h_formula_to_pre (h_f,impl_vars) (f0 : struc_formula): struc_formula =
 let add_formula_to_post_x (f,ex_vars) (f0 : struc_formula): struc_formula =
   let rec helper (f0:struc_formula) =
     match f0 with
-      | EAssume (b,tag,t) -> 
-          let new_f = normalize_formula f b no_pos in
-          let new_f2 = add_quantifiers ex_vars new_f in
-          EAssume (new_f2,tag,t)
-      | ECase b -> ECase ({formula_case_branches = List.map (fun (c1,c2)-> (c1,(helper c2))) b.formula_case_branches ; formula_case_pos=b.formula_case_pos})
-      | EBase b-> EBase {b with
-		  formula_struc_continuation = Gen.map_opt helper b.formula_struc_continuation;
-	  }
-      | EInfer b -> EInfer ({b with formula_inf_continuation = helper b.formula_inf_continuation;})
+      | EAssume b -> 
+		  EAssume {b with 
+			formula_assume_simpl = add_quantifiers ex_vars (normalize_formula f b.formula_assume_simpl no_pos);
+			formula_assume_struc = match b.formula_assume_struc with
+				| EBase b -> 
+					EBase {b with 
+						formula_struc_base = normalize_formula f b.formula_struc_base no_pos;
+						formula_struc_exists = ex_vars@b.formula_struc_exists;}
+				| _ -> mkEBase [] [] ex_vars f (Some b.formula_assume_struc) no_pos;}
+      | ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> c1,helper c2) b.formula_case_branches}
+      | EBase b -> EBase {b with formula_struc_continuation = Gen.map_opt helper b.formula_struc_continuation; }
+      | EInfer b-> EInfer {b with formula_inf_continuation = helper b.formula_inf_continuation;}
 	  | EList b -> EList (Gen.map_l_snd helper b)
-	  | EOr b -> EOr {b with 
-		  formula_struc_or_f1 = helper b.formula_struc_or_f1; 
-		  formula_struc_or_f2 = helper b.formula_struc_or_f2; }
   in helper f0
 
 let add_formula_to_post (f,ex_vars) (f0 : struc_formula): struc_formula =
@@ -2189,12 +2237,11 @@ let find_barr_node bname (f:int) (t:int) struc :bool=
 			| Bar_not_found -> false)
 		| Or e -> find_node x e.formula_or_f1 && find_node x e.formula_or_f2 in
 	let rec helper b f0 = match f0 with
-		| EAssume (e,tag,_) -> if b then find_node t e else false
+		| EAssume e -> if b then find_node t e.formula_assume_simpl else false
 		| ECase e -> Gen.Basic.all_l_snd (helper b) e.formula_case_branches
 		| EBase e-> (match e.formula_struc_continuation with | None -> false | Some cont-> helper (if b then b else find_node f e.formula_struc_base) cont)
 		| EInfer e -> helper b e.formula_inf_continuation
-		| EList e -> Gen.Basic.all_l_snd (helper b) e
-		| EOr e -> helper b e.formula_struc_or_f1 && helper b e.formula_struc_or_f2 in
+		| EList e -> Gen.Basic.all_l_snd (helper b) e in
 	helper false struc 
 
 	
@@ -2214,9 +2261,41 @@ let add_post_for_flow fl_names f =
 	let rec helper f =  match f with
 		| ECase c -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> c1,helper c2) c.formula_case_branches} 
 		| EBase b -> EBase {b with formula_struc_continuation = Gen.map_opt helper b.formula_struc_continuation}
-		| EInfer b -> EInfer {b with formula_inf_continuation = helper b.formula_inf_continuation;}
+		| EInfer b-> EInfer {b with formula_inf_continuation = helper b.formula_inf_continuation;}
 		| EList b -> EList (Gen.map_l_snd helper b)
-		| EOr b -> EOr {b with formula_struc_or_f1 = helper b.formula_struc_or_f1; formula_struc_or_f2 = helper b.formula_struc_or_f2;}
-		| EAssume (e,pid,t)-> EAssume (fct e, pid, t) in
+		| EAssume b -> EAssume {b with 
+			formula_assume_simpl = fct b.formula_assume_simpl; 
+			formula_assume_struc = helper b.formula_assume_struc;} in
 	helper f
+	
+
+let rec flatten_post_struc f pos = match f with
+	| EBase b -> 
+		if b.formula_struc_explicit_inst!=[] || b.formula_struc_implicit_inst!=[] || b.formula_struc_exists!=[] then
+			report_error  pos "EAssume does not perform instantiations"
+		else (match b.formula_struc_continuation with
+			| None -> b.formula_struc_base
+			| Some c-> normalize_formula b.formula_struc_base (flatten_post_struc c pos) pos)
+	| ECase b -> 
+		disj_of_list (List.map (fun (c1,c2)-> add_pure_formula_to_formula c1 (flatten_post_struc c2 pos)) b.formula_case_branches) true pos
+	| EList b -> 
+		disj_of_list (List.map (fun(_,c)-> flatten_post_struc c pos) b) true pos
+	| _ -> report_error pos "EAssume supports does not allow multiple assume or any infer stage"
+	
+	
+let rec wrap_post_struc_ex fv f = match f with 
+	| EBase b -> 
+		let fvc,_ = map_opt_def ([],[])(fun c-> struc_split_fv c false) b.formula_struc_continuation in
+		let ninst = Gen.BList.intersect_eq (=) b.formula_struc_implicit_inst fvc in
+		let a_fv = fvc@fv@ninst in
+		let bfv = all_fv b.formula_struc_base in
+		let not_quant, to_quant  = List.partition (fun c-> List.mem c a_fv) bfv in
+		EBase {b with 
+			formula_struc_base = push_exists to_quant b.formula_struc_base;
+			formula_struc_continuation = map_opt (wrap_post_struc_ex  (fv@not_quant)) b.formula_struc_continuation;
+			formula_struc_explicit_inst = [];
+			formula_struc_implicit_inst = ninst;}
+	| ECase b -> ECase { b with 
+		formula_case_branches = List.map (fun (c1,c2)-> c1, wrap_post_struc_ex (fv@ P.fv c1) c2) b.formula_case_branches}
+	| _ -> f
 	
