@@ -39,7 +39,7 @@ module SVH = Graph.Components.Make(VH)
 *)
 
 type trans_exp_type =
-  (C.exp * typ)
+  (Cast.exp * typ)
 
   and spec_var_info =
   { mutable sv_info_kind : spec_var_kind;
@@ -64,9 +64,6 @@ let is_view_recursive (n:ident) =
       (* report_warning no_pos "view_scc is empty : not processed yet?"; *)
       true)
   else List.mem n !view_rec 
-
-
-
 
 let type_table : (spec_var_table ref) = ref (Hashtbl.create 19)
 
@@ -1291,7 +1288,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
 				trans_view_mem vdef.I.view_mem stab
 	  | None -> None)
   in 
-  let inv = Mem.add_mem_invariant inv vdef.I.view_mem in
+  let inv = if(!Globals.allow_mem) then Mem.add_mem_invariant inv vdef.I.view_mem else inv in
   let _ = gather_type_info_pure prog inv stab in
   let inv_pf = trans_pure_formula inv stab in
   (* Thai : pf - user given invariant in core form *) 
@@ -1346,7 +1343,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       let cf = CF.struc_formula_set_lhs_case false cf in
       (* Thai : we can compute better pure inv named new_pf here that 
          should be stronger than pf *)
-      let new_pf = (*Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str*) inv_pf in
+      let new_pf = Fixcalc.compute_inv vdef.I.view_name view_sv_vars n_un_str inv_pf in
       let memo_pf_P = MCP.memoise_add_pure_P (MCP.mkMTrue pos) new_pf in
       let memo_pf_N = MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_pf in
       let xpure_flag = TP.check_diff memo_pf_N memo_pf_P in
@@ -8412,8 +8409,8 @@ and check_mem_formula_guards_disjoint (fl: CP.formula list) : bool =
     Tpdispatcher.is_sat_sub_no (Cpure.Not (f,None,no_pos)) sat_subno
 
 and validate_mem_spec (prog : C.prog_decl) (vdef: C.view_decl) = 
+    if not(!Globals.allow_mem) then () else
 	match vdef.C.view_mem with
-
 	| Some a -> let pos = CF.pos_of_struc_formula vdef.C.view_formula in 
 		    let list_of_disjuncts = fst (List.split vdef.C.view_un_struc_formula) in 
 	            let list_of_calcmem = 

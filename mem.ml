@@ -404,7 +404,6 @@ let add_mem_invariant (inv : IP.formula) (vmem : IF.mem_formula option) : IP.for
 		in IP.mkAnd inv mem_inv (IP.pos_of_formula inv)
 	| None -> inv
 
-
 let rec conv_h_formula_conj_to_star (h : CF.h_formula) : CF.h_formula = 
 match h with
 | CF.Conj ({ CF.h_formula_conj_h1 = f1;

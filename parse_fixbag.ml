@@ -5,10 +5,10 @@ open Lexing
 open Gen
 
 module H = Hashtbl
-module AS = Astsimp
 
 let loc = no_pos;;
 
+(*asankhs: Nothing is added to this table why is it used ? *)
 let stab = ref (H.create 103)
 
 let expression = Gram.Entry.mk "expression";;
@@ -23,9 +23,16 @@ let exp = Gram.Entry.mk "exp";;
 
 let specvar = Gram.Entry.mk "specvar";;
 
+let  get_spec_var_ident stab (var : ident) p =
+  try
+    let k = H.find stab var in
+    SpecVar(k,var,p)
+  with 
+    | Not_found -> SpecVar(UNK,var,p)
+
 let get_var var stab = if is_substr "PRI" var 
-  then AS.get_spec_var_ident stab (String.sub var 3 (String.length var - 3)) Primed
-  else AS.get_spec_var_ident stab var Unprimed
+  then get_spec_var_ident stab (String.sub var 3 (String.length var - 3)) Primed
+  else get_spec_var_ident stab var Unprimed
 
 (*let change_name var name = match var with*)
 (*  | SpecVar (t,id,p) -> SpecVar (t,name ^ id,p)*)

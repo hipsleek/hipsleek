@@ -39,13 +39,16 @@ let rec string_of_elems elems string_of sep = match elems with
 (******************************************************************************)
 
 let fixcalc_of_spec_var x = match x with
-(*  | CP.SpecVar (Named _, id, Unprimed) -> "NOD" ^ id*)
-(*  | CP.SpecVar (Named _, id, Primed) -> "NODPRI" ^ id*)
+  (*| CP.SpecVar (Named t, id, Unprimed) -> t ^"TYP"^ id
+  | CP.SpecVar (Named t, id, Primed) ->  "PRI"^ t ^id*)
   | CP.SpecVar (Named _, id, Unprimed)
   | CP.SpecVar (Named _, id, Primed) -> 
     report_error no_pos "Relation contains non-numerical variables"
   | CP.SpecVar (_, id, Unprimed) -> id
   | CP.SpecVar (_, id, Primed) -> "PRI" ^ id
+
+let fixcalc_of_spec_var x =
+DD.no_1 "compute_fixpoint" !CP.print_sv (fun c->c) fixcalc_of_spec_var x
 
 let rec fixcalc_of_exp_list e op number = match number with
   | 0 -> ""
@@ -207,6 +210,7 @@ let compute_inv name vars fml pf =
     close_out oc;
     let res = syscall (fixcalc_exe ^ output_of_sleek ^ fixcalc_options) in
     let new_pf = List.hd (Parse_fix.parse_fix res) in
+    (*let _ = Pr.fmt_string("\nInv: "^(Pr.string_of_pure_formula new_pf)) in*)
     let check_imply = Omega.imply new_pf pf "1" 100.0 in
     if check_imply then (
       Pr.fmt_string "INV:  ";
