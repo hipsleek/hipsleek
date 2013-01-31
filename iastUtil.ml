@@ -1245,16 +1245,11 @@ let add_globalv_to_mth_prog prog =
   (*   (fun id -> (pr_id id) ^ ": " ^ (string_of_int (fscc id)))) scclist)) in *)
   
   let sccfv = merge1 ht scclist in
-  let _ = print_endline "add_globalv_to_mth_prog: after merge1\n" in
   let mscc = push_freev1 cg sccfv in
   let _ = update_ht0 ht mscc in
-  let _ = print_endline "add_globalv_to_mth_prog: after update_ht0\n" in
-  let _ = print_endline ("prog.prog_proc_decls length = " ^ (string_of_int (List.length prog.prog_proc_decls))) in
-  let _ = print_endline ("prog.prog_global_var_decls length = " ^ (string_of_int (List.length prog.prog_global_var_decls))) in
   let newsig_procs = 
     List.map (add_free_var_to_proc prog.prog_global_var_decls ht) 
       prog.prog_proc_decls in
-  let _ = print_endline "add_globalv_to_mth_prog: after add_free_var_to_proc\n" in
   let new_procs = 
     List.map (map_body_of_proc (addin_callargs_of_exp ht))
       newsig_procs in
@@ -1279,9 +1274,7 @@ let pre_process_of_iprog iprims prog =
           } in
   let prog = float_var_decl_prog prog in
   let prog = rename_prog prog in
-  let _ = print_string "[pre_process_of_iprog] after rename_prog\n" in
   let prog = add_globalv_to_mth_prog prog in 
-  let _ = print_string "[pre_process_of_iprog] after pre_process_of_iprog\n" in
   prog
 
 let pre_process_of_iprog iprims prog = 

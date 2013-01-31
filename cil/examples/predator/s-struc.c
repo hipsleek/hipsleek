@@ -1,18 +1,18 @@
-//#include "sl.h"
-#include <stdlib.h>
+#include "sl.h"
+//#include <stdlib.h>
 
-typedef struct item {
-     struct item *next;
-} titem ;
+typedef struct item_t {
+     struct item_t *next;
+} Item ;
 
 
-titem* foo ()
+Item* foo ()
 /*@
    requires true
    ensures res::item<_>;
 */
 {
-  titem* ptr;
+  Item* ptr;
   ptr = malloc(sizeof *ptr);
   if (!ptr) {
     //@ assume false;
