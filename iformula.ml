@@ -2299,3 +2299,6 @@ let rec wrap_post_struc_ex fv f = match f with
 		formula_case_branches = List.map (fun (c1,c2)-> c1, wrap_post_struc_ex (fv@ P.fv c1) c2) b.formula_case_branches}
 	| _ -> f
 	
+let wrap_post_struc_ex fv f = 
+	Debug.no_2 "wrap_post_struc_ex" (pr_list !P.print_id) !print_struc_formula !print_struc_formula
+		wrap_post_struc_ex fv f 

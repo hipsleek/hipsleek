@@ -6834,8 +6834,8 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
 				let vars_list = IF.all_fv nb in
 				let nb = IF.prune_exists nb vars in (* Remove exists_vars included in infer_vars *) 
 				(*let nb_struc = IF.prune_exists_struc nb_struc vars in*)
-				let nb_struc,_ = helper2 h_vars p_vars b.IF.formula_assume_struc true true  false strad_vs in
-				let nb_struc = IF.wrap_post_struc_ex (h_vars@p_vars@strad_vs@vars) nb_struc in
+				let nb_struc,_ = helper2 hv p_vars b.IF.formula_assume_struc true true  false strad_vs in
+				let nb_struc = IF.wrap_post_struc_ex (hv@p_vars@strad_vs@vars) nb_struc in
 					(* and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)
 						(p_vars:(ident*primed) list)(f:IF.struc_formula) allow_primes allow_post_vars (lax_implicit:bool)
 						 strad_vs :IF.struc_formula* ((ident*primed)list) *)
