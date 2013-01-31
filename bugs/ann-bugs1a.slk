@@ -27,7 +27,8 @@ pred cell<v,a> == self::node<v>@a
 @27! curr_lhs_h: x::node<a@M>@M[Orig]
 @27! curr_lhs_h: x::node<a@M>@M[Orig]
 */
-//checkentail x::node<a@M> |- x::node<a@M>.
+checkentail x::node<a@M> |- x::node<a@A>.
+print residue.
 
 /*
 @16! lhs_h: x::node<a@M>@M[Orig]
@@ -35,8 +36,8 @@ pred cell<v,a> == self::node<v>@a
 @16! curr_lhs_h: x::node<a@M>@M[Orig] * x::node<a@M>@M[Orig]
 @16! curr_lhs_h: x::node<a@M>@M[Orig] * x::node<a@M>@M[Orig]
 */
-checkentail x::node<a@M> |- x::node<a@A>.
-print residue.
+//checkentail x::node<a@M> |- x::node<a@A>.
+//print residue.
 
 /*
 @16! lhs_h: x::node<a@M>@M[Orig]

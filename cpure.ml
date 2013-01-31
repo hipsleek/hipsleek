@@ -2631,6 +2631,8 @@ and fresh_spec_var_ann () =
   let t = AnnT in
   SpecVar (t, name, Unprimed) (* fresh ann var *)
 
+and fresh_spec_vars_ann (svs : spec_var list) = List.map (fun _ -> fresh_spec_var_ann ()) svs
+
 and fresh_spec_var_rel () =
   let old_name = "R_" in
   let name = fresh_old_name old_name in

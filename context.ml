@@ -455,7 +455,7 @@ and update_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula 
 and update_ann_x (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
   let new_field_ann_lnode = Immutable.replace_list_ann pimm1 pimm in
   (* asankhs: If node has all field annotations as @A make it HEmp *)
-  if (isAccsList new_field_ann_lnode) then HEmp else
+  (* if (isAccsList new_field_ann_lnode) then HEmp else *) (*andreea temporarily allow nodes only with @A fields*)
   let updated_f = match f with 
     | DataNode d -> DataNode ( {d with h_formula_data_param_imm = new_field_ann_lnode} )
     | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")
@@ -478,18 +478,15 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
         if ((CP.mem p1 aset) (* && (subtyp) *)) then 
 	(* let field_ann = false in *)
 	      
-            if produces_hole imm then (* not consuming the node *)
-	          let hole_no = Globals.fresh_int() in 
-	          [((Hole hole_no), f, [(f, hole_no)], Root)]
-            else
-            if (!Globals.allow_field_ann) then
-             let new_f = update_ann f pimm1 pimm in
-            (* let _ = print_string ("\n(andreeac) spatial_ctx_extarct helper initial f: " ^ (Cprinter.string_of_h_formula f)) in *)
-            (* let _ = print_string ("\n(andreeac) spatial_ctx_extarct helper new f: " ^ (Cprinter.string_of_h_formula new_f)) in *)
+          if (!Globals.allow_field_ann) then
+            let new_f = update_ann f pimm1 pimm in
 	        [(new_f,f,[],Root)]
-	        else
-              [(HEmp, f, [], Root)]
-              else []
+          else if (!Globals.allow_imm) && (produces_hole imm) then (* not consuming the node *)
+	        let hole_no = Globals.fresh_int() in 
+	        [((Hole hole_no), f, [(f, hole_no)], Root)]
+	      else
+            [(HEmp, f, [], Root)]
+          else []
     | ViewNode ({h_formula_view_node = p1;
 	             h_formula_view_imm = imm1;
 	             h_formula_view_perm = perm1;
@@ -532,11 +529,7 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
           let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkStarMinusH lhs1 f2 pos 12 , node1, hole1, match1)) l1 in  
           let l2 = helper f2 in
           let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkStarMinusH f1 lhs2 pos 13, node2, hole2, match2)) l2 in
-	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x f:"  ^ (Cprinter.string_of_h_formula f)) in *)
-	  (* let helper0 lst = List.fold_left (fun res (a,_,_,_) -> res ^ (Cprinter.string_of_h_formula a) ) "" lst in *)
-	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res1:"  ^ helper0 res1) in *)
-	  (* let _ = print_string ("\n(andreeac) context.ml spatial_ctx_extract_x res2:"  ^ helper0 res2) in  *)
-          res1 @ res2          
+          res1 @ res2
     | Conj({h_formula_conj_h1 = f1;
 	   h_formula_conj_h2 = f2;
 	   h_formula_conj_pos = pos}) ->  if (!Globals.allow_mem) then 

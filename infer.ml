@@ -292,6 +292,10 @@ let get_args_h_formula aset (h:h_formula) =
           let root = h.h_formula_data_node in
           let arg = h.h_formula_data_arguments in
           let new_arg = CP.fresh_spec_vars_prefix "inf" arg in
+          (* if (!Globals.allow_field_ann) then  *) (*andreeac (TODO) modify this so that it infers field ann correctly*)
+          (*   Some (root, arg,new_arg, [av], *)
+          (*   DataNode {h with h_formula_data_arguments=new_arg; *)
+          (*     h_formula_data_imm = mkPolyAnn av}) *)
           if (!Globals.allow_imm) then
             Some (root, arg,new_arg, [av],
             DataNode {h with h_formula_data_arguments=new_arg;

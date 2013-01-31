@@ -1265,13 +1265,13 @@ and fv_simple_formula (f:formula) =
     | DataNode h -> 
         let perm = h.h_formula_data_perm in
         let perm_vars = fv_cperm perm in
-        let ann_vars = if (!Globals.allow_imm) then (fv_ann (h.h_formula_data_imm)) else [] in
+        let ann_vars = if (!Globals.allow_imm) || (!Globals.allow_field_ann) then (fv_ann (h.h_formula_data_imm)) else [] in
         let ann_vars = if (!Globals. allow_field_ann) then ann_vars @ (fv_ann_lst h.h_formula_data_param_imm) else ann_vars  in
         perm_vars@ann_vars@(h.h_formula_data_node::h.h_formula_data_arguments)
     | ViewNode h -> 
         let perm = h.h_formula_view_perm in
         let perm_vars = fv_cperm perm in
-        let ann_vars = fv_ann (h.h_formula_view_imm)  in
+        let ann_vars =  if ((!Globals.allow_imm) || (!Globals.allow_field_ann)) then fv_ann (h.h_formula_view_imm)  else [] in
         perm_vars@ann_vars@(h.h_formula_view_node::h.h_formula_view_arguments)
     | _ -> []
 

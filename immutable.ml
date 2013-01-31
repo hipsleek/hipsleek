@@ -649,6 +649,28 @@ and replace_list_ann (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
   Debug.no_2 "replace_list_ann" pr pr pr (fun _ _-> replace_list_ann_x ann_lst_l ann_lst_r) ann_lst_l ann_lst_r
 
+
+(* during matching *)
+and consumed_list_ann_x (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
+  match (ann_lst_l, ann_lst_r) with
+    | ([], []) -> []
+    | (ann_l :: tl, ann_r :: tr ) ->
+          begin
+	    match ann_r with
+          | ConstAnn(Accs)    
+          | PolyAnn(_)
+	      | TempAnn _
+	      | ConstAnn(Lend)    -> (ConstAnn(Accs))  :: (consumed_list_ann_x tl tr)
+	      | ConstAnn(Mutable) 
+	      | ConstAnn(Imm)     -> ann_l :: (consumed_list_ann_x tl tr)
+	      
+          end
+    | (_, _) -> ann_lst_l (* report_error no_pos ("[immutable.ml] : nodes should have same no. of fields \n") *)
+
+and consumed_list_ann (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
+  let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
+  Debug.no_2 "consumed_list_ann" pr pr pr (fun _ _-> consumed_list_ann_x ann_lst_l ann_lst_r) ann_lst_l ann_lst_r
+
 and restore_tmp_ann (ann_lst: ann list) : ann list =
   match ann_lst with
     | [] -> []
