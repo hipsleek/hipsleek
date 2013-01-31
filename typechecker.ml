@@ -2106,14 +2106,14 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_
       else
 	  (*let _ = print_string "start struct checking \n" in*)
       let rs_struc , prf = heap_entail_struc_list_partial_context_init prog false false fn_state (snd posts) None None None pos (Some pid) in
-	  rs_struc, prf
+	  (*rs_struc, prf*)
 	  (*let _ = print_string "stop struct checking \n" in*)
-	  (*let rs_flat, prf = heap_entail_list_partial_context_init prog false fn_state (fst posts) None None None pos (Some pid) in	  
+	  let rs_flat, prf = heap_entail_list_partial_context_init prog false fn_state (fst posts) None None None pos (Some pid) in	  
 	  (*let _ = print_string "stop flat checking \n" in*)
 	  if ( CF.isSuccessListPartialCtx_new rs_struc != CF.isSuccessListPartialCtx_new rs_flat ) then 
 		report_error pos ("got difference in assume proving: \n flat: "^(Cprinter.string_of_formula (fst posts))^"\n struc:"
 		^(Cprinter.string_of_struc_formula (snd posts))^"\n struc rez: "^(string_of_bool (CF.isSuccessListPartialCtx_new rs_struc))^"\n")
-	  else rs_flat,prf*)
+	  else rs_flat,prf
 	  in
     let _ = PTracer.log_proof prf in
     let _ = if !print_proof then
