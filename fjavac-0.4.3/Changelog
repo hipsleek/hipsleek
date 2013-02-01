@@ -1,0 +1,44 @@
+2006-02-12  Stephen Tse <stse@cis.upenn.edu>
+
+	Release 0.4.3.
+
+	Supported F# 1.1.9.1 on Mono. Numerous bug fixes.
+	
+
+2005-12-02  Stephen Tse <stse@cis.upenn.edu>
+
+	Release 0.4.0.
+
+	Implemented Generalized LR parsing with graph-structured
+	stacks. Tested grammars for Java 1.4.2 and Java 1.5.0. All files
+	can be parsed until one second.
+
+	Basic typechecking and bytecode compilation (no generics).
+
+	
+2005-09-29  Stephen Tse <stse@cis.upenn.edu>
+
+	Release 0.3.0.
+
+	Tested grammars for JDK 1.4.2 and JDK 1.5.0.
+
+	Added generation of disambiguation filters.
+	
+
+2005-05-10  Stephen Tse <stse@cis.upenn.edu>
+
+	Release 0.2.0. 
+
+	Re-implemented finite automaton and context-free grammar
+	with integers (instead of parameterized types).
+	
+	Implemented associativity and precedence.
+
+	Implemented disambiguation filters.
+
+	Tested parsing against most JDK 1.4.2.
+
+	
+2005-05-20  Stephen Tse <stse@cis.upenn.edu>
+
+	Release 0.1.0. 

@@ -1,0 +1,36 @@
+
+
+Fjavac: a functional Java compiler
+
+  http://www.cis.upenn.edu/~stse/javac/
+
+
+Stephen Tse <stse@cis.upenn.edu>
+2005-0517
+
+
+
+** EXAMPLES
+
+> emacs test.java
+> make
+
+
+** INSTALL
+
+For fast OCaml compilation, use ocamlopt.opt (the native-code version
+of the OCaml native-code compiler). If ocamlopt.opt is installed in
+PATH, Makefile will use them by default. But Debian does not install
+ocamlopt.opt, ocamlc.opt, or ocamllex.opt. Compile it yourself: do 
+'make world.opt install' in an OCaml distribution.
+
+Read README.fs for compiling fjavac with F# under Linux/Mono.
+
+
+** STATUS
+
+- DONE: parse any of JDK 1.4 and 1.5 files under 0.5 second
+- DONE: basic typechecking and bytecode compilation
+
+- TODO: generics and type inference
+- TODO: well-formed classfiles accepted by JVM

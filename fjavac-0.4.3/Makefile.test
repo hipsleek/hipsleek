@@ -1,0 +1,309 @@
+
+# regression check against jdk 1.5 sources (java.lang.* so far)
+# '#g' means type-checking failure due to generics (not implemented)
+check: javacx
+	./javacx jlang/AbstractMethodError.java
+	./javacx jlang/AbstractStringBuilder.java
+	./javacx jlang/Appendable.java
+	./javacx jlang/ArithmeticException.java
+	./javacx jlang/ArrayIndexOutOfBoundsException.java
+	./javacx jlang/ArrayStoreException.java
+	./javacx jlang/AssertionError.java
+	./javacx jlang/AssertionStatusDirectives.java
+	./javacx jlang/Boolean.java
+	./javacx jlang/Byte.java
+	./javacx jlang/CharSequence.java
+#g	./javacx jlang/Character.java
+#g	./javacx jlang/Class.java
+	./javacx jlang/ClassCastException.java
+	./javacx jlang/ClassCircularityError.java
+	./javacx jlang/ClassFormatError.java
+#g	./javacx jlang/ClassLoader.java
+	./javacx jlang/ClassNotFoundException.java
+	./javacx jlang/CloneNotSupportedException.java
+	./javacx jlang/Cloneable.java
+	./javacx jlang/Comparable.java
+	./javacx jlang/Compiler.java
+#g	./javacx jlang/ConditionalSpecialCasing.java
+	./javacx jlang/Deprecated.java
+	./javacx jlang/Double.java
+	./javacx jlang/Enum.java
+	./javacx jlang/EnumConstantNotPresentException.java
+	./javacx jlang/Error.java
+	./javacx jlang/Exception.java
+	./javacx jlang/ExceptionInInitializerError.java
+	./javacx jlang/Float.java
+	./javacx jlang/IllegalAccessError.java
+	./javacx jlang/IllegalAccessException.java
+	./javacx jlang/IllegalArgumentException.java
+	./javacx jlang/IllegalMonitorStateException.java
+	./javacx jlang/IllegalStateException.java
+	./javacx jlang/IllegalThreadStateException.java
+	./javacx jlang/IncompatibleClassChangeError.java
+	./javacx jlang/IndexOutOfBoundsException.java
+#g	./javacx jlang/InheritableThreadLocal.java
+	./javacx jlang/InstantiationError.java
+	./javacx jlang/InstantiationException.java
+	./javacx jlang/Integer.java
+	./javacx jlang/InternalError.java
+	./javacx jlang/InterruptedException.java
+	./javacx jlang/Iterable.java
+	./javacx jlang/LinkageError.java
+	./javacx jlang/Long.java
+	./javacx jlang/Math.java  
+	./javacx jlang/NegativeArraySizeException.java
+	./javacx jlang/NoClassDefFoundError.java
+	./javacx jlang/NoSuchFieldError.java
+	./javacx jlang/NoSuchFieldException.java
+	./javacx jlang/NoSuchMethodError.java
+	./javacx jlang/NoSuchMethodException.java
+	./javacx jlang/NullPointerException.java
+	./javacx jlang/Number.java
+	./javacx jlang/NumberFormatException.java
+	./javacx jlang/Object.java
+	./javacx jlang/OutOfMemoryError.java
+	./javacx jlang/Override.java
+#g	./javacx jlang/Package.java
+	./javacx jlang/Process.java
+#g	./javacx jlang/ProcessBuilder.java
+	./javacx jlang/Readable.java
+	./javacx jlang/Runnable.java
+	./javacx jlang/Runtime.java
+	./javacx jlang/RuntimeException.java
+	./javacx jlang/RuntimePermission.java
+	./javacx jlang/SecurityException.java
+#g	./javacx jlang/SecurityManager.java
+	./javacx jlang/Short.java
+#g	./javacx jlang/Shutdown.java
+	./javacx jlang/StackOverflowError.java
+	./javacx jlang/StackTraceElement.java
+	./javacx jlang/StrictMath.java
+#g	./javacx jlang/String.java
+#g	./javacx jlang/StringBuffer.java
+	./javacx jlang/StringBuilder.java
+#y	./javacx jlang/StringCoding.java
+	./javacx jlang/StringIndexOutOfBoundsException.java
+	./javacx jlang/SuppressWarnings.java
+#g	./javacx jlang/System.java
+#g	./javacx jlang/Thread.java
+	./javacx jlang/ThreadDeath.java
+	./javacx jlang/ThreadGroup.java
+#g	./javacx jlang/ThreadLocal.java
+	./javacx jlang/Throwable.java
+	./javacx jlang/TypeNotPresentException.java
+	./javacx jlang/UnknownError.java
+	./javacx jlang/UnsatisfiedLinkError.java
+	./javacx jlang/UnsupportedClassVersionError.java
+	./javacx jlang/UnsupportedOperationException.java
+	./javacx jlang/VerifyError.java
+	./javacx jlang/VirtualMachineError.java
+	./javacx jlang/Void.java
+
+
+# compile and try running with jvm
+run: javacx
+	./javacx jlang/AbstractMethodError.java && java java.lang.AbstractMethodError; true
+	./javacx jlang/AbstractStringBuilder.java && java java.lang.AbstractStringBuilder; true
+	./javacx jlang/Appendable.java && java java.lang.Appendable; true
+	./javacx jlang/ArithmeticException.java && java java.lang.ArithmeticException; true
+	./javacx jlang/ArrayIndexOutOfBoundsException.java && java java.lang.ArrayIndexOutOfBoundsException; true
+	./javacx jlang/ArrayStoreException.java && java java.lang.ArrayStoreException; true
+	./javacx jlang/AssertionError.java && java java.lang.AssertionError; true
+	./javacx jlang/AssertionStatusDirectives.java && java java.lang.AssertionStatusDirectives; true
+	./javacx jlang/Boolean.java && java java.lang.Boolean; true
+	./javacx jlang/Byte.java && java java.lang.Byte; true
+	./javacx jlang/CharSequence.java && java java.lang.CharSequence; true
+#g	./javacx jlang/Character.java && java java.lang.Character; true
+#g	./javacx jlang/Class.java && java java.lang.Class; true
+	./javacx jlang/ClassCastException.java && java java.lang.ClassCastException; true
+	./javacx jlang/ClassCircularityError.java && java java.lang.ClassCircularityError; true
+	./javacx jlang/ClassFormatError.java && java java.lang.ClassFormatError; true
+#g	./javacx jlang/ClassLoader.java && java java.lang.ClassLoader; true
+	./javacx jlang/ClassNotFoundException.java && java java.lang.ClassNotFoundException; true
+	./javacx jlang/CloneNotSupportedException.java && java java.lang.CloneNotSupportedException; true
+	./javacx jlang/Cloneable.java && java java.lang.Cloneable; true
+	./javacx jlang/Comparable.java && java java.lang.Comparable; true
+	./javacx jlang/Compiler.java && java java.lang.Compiler; true
+#g	./javacx jlang/ConditionalSpecialCasing.java && java java.lang.ConditionalSpecialCasing; true
+	./javacx jlang/Deprecated.java && java java.lang.Deprecated; true
+	./javacx jlang/Double.java && java java.lang.Double; true
+	./javacx jlang/Enum.java && java java.lang.Enum; true
+	./javacx jlang/EnumConstantNotPresentException.java && java java.lang.EnumConstantNotPresentException; true
+	./javacx jlang/Error.java && java java.lang.Error; true
+	./javacx jlang/Exception.java && java java.lang.Exception; true
+	./javacx jlang/ExceptionInInitializerError.java && java java.lang.ExceptionInInitializerError; true
+	./javacx jlang/Float.java && java java.lang.Float; true
+	./javacx jlang/IllegalAccessError.java && java java.lang.IllegalAccessError; true
+	./javacx jlang/IllegalAccessException.java && java java.lang.IllegalAccessException; true
+	./javacx jlang/IllegalArgumentException.java && java java.lang.IllegalArgumentException; true
+	./javacx jlang/IllegalMonitorStateException.java && java java.lang.IllegalMonitorStateException; true
+	./javacx jlang/IllegalStateException.java && java java.lang.IllegalStateException; true
+	./javacx jlang/IllegalThreadStateException.java && java java.lang.IllegalThreadStateException; true
+	./javacx jlang/IncompatibleClassChangeError.java && java java.lang.IncompatibleClassChangeError; true
+	./javacx jlang/IndexOutOfBoundsException.java && java java.lang.IndexOutOfBoundsException; true
+#g	./javacx jlang/InheritableThreadLocal.java && java java.lang.InheritableThreadLocal; true
+	./javacx jlang/InstantiationError.java && java java.lang.InstantiationError; true
+	./javacx jlang/InstantiationException.java && java java.lang.InstantiationException; true
+	./javacx jlang/Integer.java && java java.lang.Integer; true
+	./javacx jlang/InternalError.java && java java.lang.InternalError; true
+	./javacx jlang/InterruptedException.java && java java.lang.InterruptedException; true
+	./javacx jlang/Iterable.java && java java.lang.Iterable; true
+	./javacx jlang/LinkageError.java && java java.lang.LinkageError; true
+	./javacx jlang/Long.java && java java.lang.Long; true
+	./javacx jlang/Math.java   && java java.lang.Math; true
+	./javacx jlang/NegativeArraySizeException.java && java java.lang.NegativeArraySizeException; true
+	./javacx jlang/NoClassDefFoundError.java && java java.lang.NoClassDefFoundError; true
+	./javacx jlang/NoSuchFieldError.java && java java.lang.NoSuchFieldError; true
+	./javacx jlang/NoSuchFieldException.java && java java.lang.NoSuchFieldException; true
+	./javacx jlang/NoSuchMethodError.java && java java.lang.NoSuchMethodError; true
+	./javacx jlang/NoSuchMethodException.java && java java.lang.NoSuchMethodException; true
+	./javacx jlang/NullPointerException.java && java java.lang.NullPointerException; true
+	./javacx jlang/Number.java && java java.lang.Number; true
+	./javacx jlang/NumberFormatException.java && java java.lang.NumberFormatException; true
+	./javacx jlang/Object.java && java java.lang.Object; true
+	./javacx jlang/OutOfMemoryError.java && java java.lang.OutOfMemoryError; true
+	./javacx jlang/Override.java && java java.lang.Override; true
+#g	./javacx jlang/Package.java && java java.lang.Package; true
+	./javacx jlang/Process.java && java java.lang.Process; true
+#g	./javacx jlang/ProcessBuilder.java && java java.lang.ProcessBuilder; true
+	./javacx jlang/Readable.java && java java.lang.Readable; true
+	./javacx jlang/Runnable.java && java java.lang.Runnable; true
+	./javacx jlang/Runtime.java && java java.lang.Runtime; true
+	./javacx jlang/RuntimeException.java && java java.lang.RuntimeException; true
+	./javacx jlang/RuntimePermission.java && java java.lang.RuntimePermission; true
+	./javacx jlang/SecurityException.java && java java.lang.SecurityException; true
+#g	./javacx jlang/SecurityManager.java && java java.lang.SecurityManager; true
+	./javacx jlang/Short.java && java java.lang.Short; true
+#g	./javacx jlang/Shutdown.java && java java.lang.Shutdown; true
+	./javacx jlang/StackOverflowError.java && java java.lang.StackOverflowError; true
+	./javacx jlang/StackTraceElement.java && java java.lang.StackTraceElement; true
+	./javacx jlang/StrictMath.java && java java.lang.StrictMath; true
+#g	./javacx jlang/String.java && java java.lang.String; true
+#g	./javacx jlang/StringBuffer.java && java java.lang.StringBuffer; true
+	./javacx jlang/StringBuilder.java && java java.lang.StringBuilder; true
+#y	./javacx jlang/StringCoding.java && java java.lang.StringCoding; true
+	./javacx jlang/StringIndexOutOfBoundsException.java && java java.lang.StringIndexOutOfBoundsException; true
+	./javacx jlang/SuppressWarnings.java && java java.lang.SuppressWarnings; true
+#g	./javacx jlang/System.java && java java.lang.System; true
+#g	./javacx jlang/Thread.java && java java.lang.Thread; true
+	./javacx jlang/ThreadDeath.java && java java.lang.ThreadDeath; true
+	./javacx jlang/ThreadGroup.java && java java.lang.ThreadGroup; true
+#g	./javacx jlang/ThreadLocal.java && java java.lang.ThreadLocal; true
+	./javacx jlang/Throwable.java && java java.lang.Throwable; true
+	./javacx jlang/TypeNotPresentException.java && java java.lang.TypeNotPresentException; true
+	./javacx jlang/UnknownError.java && java java.lang.UnknownError; true
+	./javacx jlang/UnsatisfiedLinkError.java && java java.lang.UnsatisfiedLinkError; true
+	./javacx jlang/UnsupportedClassVersionError.java && java java.lang.UnsupportedClassVersionError; true
+	./javacx jlang/UnsupportedOperationException.java && java java.lang.UnsupportedOperationException; true
+	./javacx jlang/VerifyError.java && java java.lang.VerifyError; true
+	./javacx jlang/VirtualMachineError.java && java java.lang.VirtualMachineError; true
+	./javacx jlang/Void.java && java java.lang.Void; true
+
+
+checkall:
+	date; for a in g/*; do ./javacx $$a; done; date
+
+# benchmark parser against all jdk 1.5 sources
+time: javabx
+	date; for a in g/*; do ./javabx -time -po $$a; done; date
+
+
+# regression check against jdk 1.5 sources (java.lang.* so far)
+# '#g' means type-checking failure due to generics (not implemented)
+check-fs: javac.exe
+	mono javac.exe jlang/AbstractMethodError.java
+	mono javac.exe jlang/AbstractStringBuilder.java
+	mono javac.exe jlang/Appendable.java
+	mono javac.exe jlang/ArithmeticException.java
+	mono javac.exe jlang/ArrayIndexOutOfBoundsException.java
+	mono javac.exe jlang/ArrayStoreException.java
+	mono javac.exe jlang/AssertionError.java
+	mono javac.exe jlang/AssertionStatusDirectives.java
+	mono javac.exe jlang/Boolean.java
+	mono javac.exe jlang/Byte.java
+	mono javac.exe jlang/CharSequence.java
+#g	mono javac.exe jlang/Character.java
+#g	mono javac.exe jlang/Class.java
+	mono javac.exe jlang/ClassCastException.java
+	mono javac.exe jlang/ClassCircularityError.java
+	mono javac.exe jlang/ClassFormatError.java
+#g	mono javac.exe jlang/ClassLoader.java
+	mono javac.exe jlang/ClassNotFoundException.java
+	mono javac.exe jlang/CloneNotSupportedException.java
+	mono javac.exe jlang/Cloneable.java
+	mono javac.exe jlang/Comparable.java
+	mono javac.exe jlang/Compiler.java
+#g	mono javac.exe jlang/ConditionalSpecialCasing.java
+	mono javac.exe jlang/Deprecated.java
+	mono javac.exe jlang/Double.java
+	mono javac.exe jlang/Enum.java
+	mono javac.exe jlang/EnumConstantNotPresentException.java
+	mono javac.exe jlang/Error.java
+	mono javac.exe jlang/Exception.java
+	mono javac.exe jlang/ExceptionInInitializerError.java
+	mono javac.exe jlang/Float.java
+	mono javac.exe jlang/IllegalAccessError.java
+	mono javac.exe jlang/IllegalAccessException.java
+	mono javac.exe jlang/IllegalArgumentException.java
+	mono javac.exe jlang/IllegalMonitorStateException.java
+	mono javac.exe jlang/IllegalStateException.java
+	mono javac.exe jlang/IllegalThreadStateException.java
+	mono javac.exe jlang/IncompatibleClassChangeError.java
+	mono javac.exe jlang/IndexOutOfBoundsException.java
+#g	mono javac.exe jlang/InheritableThreadLocal.java
+	mono javac.exe jlang/InstantiationError.java
+	mono javac.exe jlang/InstantiationException.java
+	mono javac.exe jlang/Integer.java
+	mono javac.exe jlang/InternalError.java
+	mono javac.exe jlang/InterruptedException.java
+	mono javac.exe jlang/Iterable.java
+	mono javac.exe jlang/LinkageError.java
+	mono javac.exe jlang/Long.java
+	mono javac.exe jlang/Math.java  
+	mono javac.exe jlang/NegativeArraySizeException.java
+	mono javac.exe jlang/NoClassDefFoundError.java
+	mono javac.exe jlang/NoSuchFieldError.java
+	mono javac.exe jlang/NoSuchFieldException.java
+	mono javac.exe jlang/NoSuchMethodError.java
+	mono javac.exe jlang/NoSuchMethodException.java
+	mono javac.exe jlang/NullPointerException.java
+	mono javac.exe jlang/Number.java
+	mono javac.exe jlang/NumberFormatException.java
+	mono javac.exe jlang/Object.java
+	mono javac.exe jlang/OutOfMemoryError.java
+	mono javac.exe jlang/Override.java
+#g	mono javac.exe jlang/Package.java
+	mono javac.exe jlang/Process.java
+#g	mono javac.exe jlang/ProcessBuilder.java
+	mono javac.exe jlang/Readable.java
+	mono javac.exe jlang/Runnable.java
+	mono javac.exe jlang/Runtime.java
+	mono javac.exe jlang/RuntimeException.java
+	mono javac.exe jlang/RuntimePermission.java
+	mono javac.exe jlang/SecurityException.java
+#g	mono javac.exe jlang/SecurityManager.java
+	mono javac.exe jlang/Short.java
+#g	mono javac.exe jlang/Shutdown.java
+	mono javac.exe jlang/StackOverflowError.java
+	mono javac.exe jlang/StackTraceElement.java
+	mono javac.exe jlang/StrictMath.java
+#g	mono javac.exe jlang/String.java
+#g	mono javac.exe jlang/StringBuffer.java
+	mono javac.exe jlang/StringBuilder.java
+#y	mono javac.exe jlang/StringCoding.java
+	mono javac.exe jlang/StringIndexOutOfBoundsException.java
+	mono javac.exe jlang/SuppressWarnings.java
+#g	mono javac.exe jlang/System.java
+#g	mono javac.exe jlang/Thread.java
+	mono javac.exe jlang/ThreadDeath.java
+	mono javac.exe jlang/ThreadGroup.java
+#g	mono javac.exe jlang/ThreadLocal.java
+	mono javac.exe jlang/Throwable.java
+	mono javac.exe jlang/TypeNotPresentException.java
+	mono javac.exe jlang/UnknownError.java
+	mono javac.exe jlang/UnsatisfiedLinkError.java
+	mono javac.exe jlang/UnsupportedClassVersionError.java
+	mono javac.exe jlang/UnsupportedOperationException.java
+	mono javac.exe jlang/VerifyError.java
+	mono javac.exe jlang/VirtualMachineError.java
+	mono javac.exe jlang/Void.java
