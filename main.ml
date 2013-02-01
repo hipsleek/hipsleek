@@ -61,7 +61,6 @@ let parse_file_full file_name (primitive: bool) =
     let prog = (
       if parser_to_use = "cil" then
         let cil_prog = Cilparser.parse_hip file_name in
-        let _ = print_endline ("cil_prog: " ^ (Iprinter.string_of_program cil_prog)) in
         cil_prog
       else
         Parser.parse_hip file_name (Stream.of_channel org_in_chnl)
@@ -219,6 +218,13 @@ let process_source_full source =
     (* print_string (" done-1.\n"); flush stdout; *)
     exit 0
   end;
+  (* Dump prog into ss file  *)
+  if (!Scriptarguments.dump_ss) then (
+    let dump_file = "logs/" ^ (Filename.basename source) ^ ".gen-ss" in
+    let oc = open_out dump_file in
+    Printf.fprintf  oc "%s\n" (Iprinter.string_of_program prog);
+    close_out oc;
+  );
   if (!Scriptarguments.parse_only) then
     let _ = Gen.Profiling.pop_time "Preprocessing" in
     print_string (Iprinter.string_of_program prog)
@@ -560,7 +566,7 @@ let main1 () =
 (* let main1 () = *)
 (*   Debug.loop_1_no "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
 
-let pre_main =
+let pre_main () =
   process_cmd_line ();
   Scriptarguments.check_option_consistency ();
   if !Globals.print_version_flag then
@@ -579,7 +585,7 @@ let loop_cmd parsed_content =
 let finalize () =
   if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.stop_prover ()
 
-let old_main = 
+let old_main () = 
   try
     main1 ();
     (* let _ =  *)
@@ -597,9 +603,9 @@ let old_main =
   end
 
 let _ = 
-  if not(!Globals.do_infer_inc) then old_main
+  if not(!Globals.do_infer_inc) then old_main ()
   else
-    let res = pre_main in
+    let res = pre_main () in
     while true do
       try
         let _ = print_string "# " in

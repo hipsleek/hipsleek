@@ -2,6 +2,8 @@ open GlobProver
 
 let parse_only = ref false
 
+let dump_ss = ref false
+
 let typecheck_only = ref false
 
 let rtc = ref false
@@ -170,6 +172,7 @@ let common_arguments = [
    "Enable Limited Search with Self Unfold/Fold");
   ("-parse", Arg.Set parse_only,"Parse only");
   ("--parser", Arg.Symbol (["default"; "cil"], Parser.set_parser), "Choose different parser: default; cil");
+  ("--dump-ss", Arg.Set dump_ss, "Dump ss files");
   ("-core", Arg.Set typecheck_only,"Type-Checking and Core Preprocessing only");
   ("--print-iparams", Arg.Set Globals.print_mvars,"Print input parameters of predicates");
   ("--print-type", Arg.Set Globals.print_type,"Print type info");
