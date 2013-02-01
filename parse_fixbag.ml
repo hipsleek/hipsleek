@@ -30,10 +30,23 @@ let  get_spec_var_ident stab (var : ident) p =
   with 
     | Not_found -> SpecVar(UNK,var,p)
 
-let get_var var stab = if is_substr "PRI" var 
+let get_var var stab = 
+  if String.contains_from var 0 '_' then 
+    let sv = String.sub var 1 (String.length var - 1) in
+    get_spec_var_ident stab sv Unprimed
+  else if is_substr "PRI" var 
   then get_spec_var_ident stab (String.sub var 3 (String.length var - 3)) Primed
   else get_spec_var_ident stab var Unprimed
 
+let is_node var = match var with 
+  | Var (SpecVar (_,id,_), _) -> is_substr "NOD" id || id=self
+  | _ -> false
+
+let get_node var = match var with 
+  | Var (SpecVar (_,id,_), _) -> 
+    if id=self then id else 
+      String.sub id 3 (String.length id - 3)
+  | _ -> report_error no_pos "Expected a pointer variable"
 (*let change_name var name = match var with*)
 (*  | SpecVar (t,id,p) -> SpecVar (t,name ^ id,p)*)
 (*  | _ -> report_error no_pos "Error in change_name"*)
@@ -82,19 +95,50 @@ GLOBAL: expression or_formula formula pformula exp specvar;
   pformula:
   [ "pformula" LEFTA
     [ x = exp; "<="; y = exp -> 
-      begin
+    begin
+      if is_res_var x && is_zero y then 
+        Not (BForm ((BVar (get_var "res" !stab, loc), None), None), None, loc) 
+      else if is_res_var y && is_one x then 
+        BForm ((BVar (get_var "res" !stab, loc), None), None) 
+      else
+        let tmp = 
+          if is_node x & is_zero y then 
+            BForm((Eq (Var(get_var (get_node x) !stab, loc), Null loc, loc),None),None)
+          else if is_node y & is_one x then 
+            BForm((Neq (Var(get_var (get_node y) !stab, loc), Null loc, loc),None),None)
+          else if is_self_var x then 
+            BForm((Eq (Var(get_var "self" !stab, loc), Null loc, loc) ,None),None)
+      else 
       match (x,y) with
         | (Var _, Var _) -> BForm ((BagSub (x, y, loc), None), None)
         | (Bag _, Var _) -> BForm ((BagSub (x, y, loc), None), None)
         | _ -> mkTrue loc
+        in tmp
       end
     | x = exp; ">="; y = exp -> 
-      begin
+    begin
+      if is_res_var y && is_zero x then 
+        Not (BForm ((BVar (get_var "res" !stab, loc), None), None), None, loc) 
+      else
+      if is_res_var x && is_one y then 
+        BForm ((BVar (get_var "res" !stab, loc), None), None) 
+      else
+        let tmp = 
+          if is_node y & is_zero x then 
+            BForm((Eq (Var(get_var (get_node y) !stab, loc), Null loc, loc),None),None)
+          else
+          if is_node x & is_one y then 
+            BForm((Neq (Var(get_var (get_node x) !stab, loc), Null loc, loc),None),None)
+          else
+          if is_self_var y then 
+            BForm((Eq (Var(get_var "self" !stab, loc), Null loc, loc),None),None)
+      else 
       match (x,y) with
         | (Var _, Var _) -> BForm ((BagSub (y, x, loc), None), None)
         | (Var _, Bag _) -> BForm ((BagSub (y, x, loc), None), None)
         | _ -> mkTrue loc
-      end
+        in tmp
+    end
     | x = exp; "="; y = exp -> 
       begin
       match (x,y) with

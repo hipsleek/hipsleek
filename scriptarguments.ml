@@ -156,6 +156,7 @@ let common_arguments = [
 	(*("--mem", Arg.Set Globals.allow_mem,"Enable the use of Memory Specifications");*)
 	("--dis-mem", Arg.Clear Globals.allow_mem,"Disable the use of Memory Specifications");
 	("--ramify", Arg.Clear Solver.unfold_duplicated_pointers,"Use Ramification (turns off unfold on dup pointers)");
+    ("--infer-mem",Arg.Set Globals.infer_mem,"Enable inference of memory specifications");
   ("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
   ("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
   ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");

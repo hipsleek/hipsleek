@@ -271,7 +271,6 @@ let compute_pure_inv (fmls:CP.formula list) (name:ident) (para_names:CP.spec_var
 (* TODO: TO MERGE WITH ABOVE *)
 let compute_heap_pure_inv fml (name:ident) (para_names:CP.spec_var list): CP.formula =
   let vars = para_names in
-
   (* Prepare the input for the fixpoint calculation *)
   let input_fixcalc = 
     try
@@ -303,12 +302,13 @@ let compute_heap_pure_inv fml (name:ident) (para_names:CP.spec_var list): CP.for
 (******************************************************************************)
 
 let compute_inv name vars fml pf =
+if List.exists CP.is_bag_typ vars then Fixbag.compute_inv name vars fml pf 1
+else 
   if not !Globals.do_infer_inv then pf
-  else
-    let new_pf = compute_heap_pure_inv fml name vars in
+  else let new_pf = compute_heap_pure_inv fml name vars in
     let check_imply = TP.imply_raw new_pf pf in
     if check_imply then 
-      let _ = DD.devel_hprint (add_str "new inv: " !CP.print_formula) new_pf no_pos in
+      let _ = DD.info_hprint (add_str "new inv: " !CP.print_formula) new_pf no_pos in
       new_pf
     else pf
 

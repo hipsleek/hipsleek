@@ -939,7 +939,6 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
           (***************************************************)
           (* let _ =  print_endline " after case normalize" in *)
           (* let _ = I.find_empty_static_specs prog in *)
-
 	      let tmp_views = order_views prog.I.prog_view_decls in
 	      let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
 	      (* let _ = print_string "trans_prog :: going to trans_view \n" in *)
@@ -1240,6 +1239,7 @@ and add_param_ann_constraints_struc (cf: CF.struc_formula) : CF.struc_formula = 
   Debug.no_1 "add_param_ann_constraints_struc" pr pr  (fun _ -> add_param_ann_constraints_struc_x cf) cf
 
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
+  let vdef = if (!Globals.infer_mem) then  Mem.infer_mem_specs vdef prog else vdef in
   let pr = Iprinter.string_of_view_decl in
   let pr_r = Cprinter.string_of_view_decl in
   Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog vdef) vdef
