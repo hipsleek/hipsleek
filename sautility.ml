@@ -2430,7 +2430,7 @@ let mk_orig_hprel_def prog unk_hps hp r other_args args sh_ldns eqNulls eqPures 
   in
   let pr7a hrel = Cprinter.string_of_hrel_formula (CF.HRel hrel) in
   let pr7 = pr_list pr7a in
-  Debug.ho_7 "mk_orig_hprel_def" pr2 pr1 pr2 (pr_list pr3) pr2 pr4 pr7 pr6
+  Debug.no_7 "mk_orig_hprel_def" pr2 pr1 pr2 (pr_list pr3) pr2 pr4 pr7 pr6
       (fun _ _ _ _ _ _ _ -> mk_orig_hprel_def_x prog unk_hps hp r other_args args sh_ldns eqNulls eqPures hprels unk_svl)
       unk_hps hp args sh_ldns eqNulls eqPures hprels
 
@@ -2459,6 +2459,8 @@ let get_longest_common_hnodes_list_x prog unk_hps unk_svl hp r non_r_args args f
  else begin
    let lldns = List.map (fun f -> (get_hdnodes f, f)) fs in
    let min,sh_ldns,eqNulls,eqPures,hprels = get_min_number_new prog args lldns in
+   (*remove hp itself*)
+   let hprels1 = List.filter (fun (hp1,_,_) -> not(CP.eq_spec_var hp hp1)) hprels in
    if min = 0 && eqNulls = [] then
      (*mk_hprel_def*)
      let hpdef = mk_hprel_def prog unk_hps unk_svl hp args fs no_pos in
@@ -2469,11 +2471,11 @@ let get_longest_common_hnodes_list_x prog unk_hps unk_svl hp r non_r_args args f
      (*assume root is the first arg*)
      (* let root = List.hd args in *)
      (*let sh_ldns1 = move_root_to_top root sh_ldns in*)
-     let orig_hpdefs, hp_subst, new_hp, n_args,sh_ldns2,next_roots = mk_orig_hprel_def prog unk_hps hp r non_r_args args sh_ldns eqNulls eqPures hprels unk_svl in
+     let orig_hpdefs, hp_subst, new_hp, n_args,sh_ldns2,next_roots = mk_orig_hprel_def prog unk_hps hp r non_r_args args sh_ldns eqNulls eqPures hprels1 unk_svl in
      match orig_hpdefs with
        | [] -> []
        | [(hp01,orig_hpdef)] ->
-       let com_hps = List.map (fun (hp,_,_)-> hp) hprels in
+       let com_hps = List.map (fun (hp,_,_)-> hp) hprels1 in
        let n_fs = List.map (process_one_f prog args n_args next_roots hp_subst sh_ldns2 eqNulls eqPures com_hps) lldns in
        let n_fs1 = List.filter (fun f -> not ((is_empty_f f) || (CF.is_only_neqNull n_args [] f))) n_fs in
        (*for debugging*)
@@ -2501,7 +2503,7 @@ let get_longest_common_hnodes_list prog unk_hps unk_svl hp r non_r_args args fs=
   let pr2 = fun (_, def) -> Cprinter.string_of_hp_rel_def def in
   let pr3 = !CP.print_sv in
   let pr4 = !CP.print_svl in
-  Debug.ho_5 "get_longest_common_hnodes_list" pr3 pr4 pr4 pr4 pr1 (pr_list_ln pr2)
+  Debug.no_5 "get_longest_common_hnodes_list" pr3 pr4 pr4 pr4 pr1 (pr_list_ln pr2)
       (fun _ _ _ _ _-> get_longest_common_hnodes_list_x prog unk_hps unk_svl hp r non_r_args args fs)
       hp args unk_hps unk_svl fs
 

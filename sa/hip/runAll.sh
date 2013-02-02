@@ -74,7 +74,7 @@ echo "ll_all_13"
 ../../hip ll_all_13.ss -cp-test cp/ll_all_13.cp | grep Compare
 echo "ll_all_13a"
 ../../hip ll_all_13a.ss -cp-test cp/ll_all_13a.cp | grep Compare
-echo "ll_all_13b"
+echo "ll_all_13b -cp-test has problem"
 ../../hip ll_all_13b.ss -cp-test cp/ll_all_13b.cp | grep Compare
 echo "ll_all_13c"
 ../../hip ll_all_13c.ss -cp-test cp/ll_all_13c.cp | grep Compare
@@ -92,6 +92,8 @@ echo "ll-empty"
 ../../hip ll-empty.ss -cp-test cp/ll-empty.cp | grep Compare
 echo "ll-size"
 ../../hip ll-size.ss -cp-test cp/ll-size.cp | grep Compare
+echo "sll-del"
+../../hip sll-del.ss -cp-test cp/sll-del.cp | grep Compare
 echo "ll-size1 -cp-test"
 ../../hip ll-size1.ss -cp-test cp/ll-size1.cp | grep Compare
 echo "ll-ret-first"
