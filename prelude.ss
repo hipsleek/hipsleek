@@ -352,3 +352,12 @@ item cast_to_ptr(RS_mem p)
                                   */
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
+
+
+data memory {
+  int size;
+}
+
+memory malloc(int size)
+  requires size>0
+  ensures  res=null or res::memory<size>;

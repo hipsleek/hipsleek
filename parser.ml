@@ -2231,7 +2231,7 @@ unary_expression_not_plusminus:
   | `NOT; t = prefixed_unary_expression -> mkUnary OpNot t (get_pos_camlp4 _loc 1)
   | t=cast_expression -> t]];
 
-postfix_expression: 
+postfix_expression:
  [[ t=primary_expression -> t
   | t=post_increment_expression -> t
   | t=post_decrement_expression -> t]];
