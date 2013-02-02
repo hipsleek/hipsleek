@@ -3,11 +3,10 @@ data node2 {
 	node2 next;
 }
 
-/*
+
 sll<> == self = null 
   or self::node2<_ ,q> * q::sll<> // = q1
 	inv true;
-*/
 
 HeapPred G1(node2 a).
 HeapPred H1(node2 a).
@@ -15,10 +14,11 @@ HeapPred H1(node2 a).
 void delete(node2 x)
   /* infer[n] */
 
-/*
-  requires x::node2<_,p,q>*q::sll<x> & q!=null
-  ensures x::node2<_,p,r>*r::sll<x> ;
-*/
+
+  /* requires x::node2<_p,,q>*q::sll<x> & q!=null */
+  /* ensures x::node2<_,p,r>*r::sll<x> ; */
+  /* requires x::node2<_,q>*q::node2<_,q1> * q1::sll<> */
+  /* ensures x::node2<_,r>*r::sll<> ; */
 
   infer[H1,G1]
   requires H1(x)

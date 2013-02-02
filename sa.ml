@@ -1878,8 +1878,50 @@ let check_heap_inconsistency unk_hpargs f0=
 (*   dups_hps *)
 
 (*****************)
+(*
+x::node<a,b> .... ===> x::node<c,d> === ss={a/c;b/d} and
+subst into rhs
+*)
+let do_simpl_nodes_match_x lhs rhs =
+  let check_eq_data_node dn1 dn2=
+    CP.eq_spec_var dn1.CF.h_formula_data_node dn2.CF.h_formula_data_node
+  in
+  let sort_data_node_by_name dn1 dn2=
+    String.compare (CP.name_of_spec_var dn1.CF.h_formula_data_node)
+        (CP.name_of_spec_var dn2.CF.h_formula_data_node)
+  in
+  let rec get_subst lhds rhds res=
+    match rhds,lhds with
+      | [],_ -> res
+      | _, [] -> res
+      | dn2::rest2,dn1::rest1 ->
+          let ss=
+            if CP.eq_spec_var dn1.CF.h_formula_data_node dn2.CF.h_formula_data_node then
+              List.combine dn2.CF.h_formula_data_arguments dn1.CF.h_formula_data_arguments
+            else []
+          in
+          get_subst rest1 rest2 (res@ss)
+  in
+  let l_hds, _, _ = CF.get_hp_rel_formula lhs in
+  let r_hds, _, _ = CF.get_hp_rel_formula rhs in
+  let matched_data_nodes = Gen.BList.intersect_eq check_eq_data_node l_hds r_hds in
+  let l_hds = Gen.BList.intersect_eq check_eq_data_node l_hds matched_data_nodes in
+  let r_hds = Gen.BList.intersect_eq check_eq_data_node r_hds matched_data_nodes in
+  let sl_hds = List.sort sort_data_node_by_name l_hds in
+  let sr_hds = List.sort sort_data_node_by_name r_hds in
+  let ss = get_subst sl_hds sr_hds [] in
+  let n_rhs =
+    if ss = [] then rhs
+    else CF.subst ss rhs
+  in
+  n_rhs
 
-let subst_one_cs_w_one_partial_def cs_unk_hps f (hp_name, args, def_f)=
+let do_simpl_nodes_match lhs rhs =
+  let pr1 = Cprinter.string_of_formula in
+  Debug.no_2 "do_simpl_nodes_match" pr1 pr1 pr1
+      (fun _ _ -> do_simpl_nodes_match_x lhs rhs) lhs rhs
+
+let subst_one_cs_w_one_partial_def cs_unk_hps olhs f (hp_name, args, def_f)=
 (*drop hrel and get current args*)
   let new_f, argsl = CF.drop_hrel_f f [hp_name] in
   let do_subst newf eargs=
@@ -1887,40 +1929,53 @@ let subst_one_cs_w_one_partial_def cs_unk_hps f (hp_name, args, def_f)=
     let args2= (List.fold_left List.append [] (List.map CP.afv eargs)) in
     DD.ninfo_pprint ("   subst " ^ (Cprinter.prtt_string_of_formula def_f) ^ " ==> " ^ (!CP.print_sv hp_name)
                      ^ (!CP.print_svl args)) no_pos;
-    (* DD.ninfo_pprint ("   into " ^ (Cprinter.prtt_string_of_formula f)) no_pos; *)
+    DD.ninfo_pprint ("   into " ^ (Cprinter.prtt_string_of_formula f)) no_pos;
     let subst = (List.combine args args2) in
     let def_f_subst = CF.subst subst def_f in
-        (* DD.ninfo_pprint ("   body after subst " ^ (Cprinter.prtt_string_of_formula def_f_subst)) no_pos; *)
-        (*should remove duplicate*)
-    let svl1 = CF.get_all_sv_f newf in
-    let svl2 = CF.get_all_sv_f def_f_subst in
+    DD.ninfo_pprint ("   body after subst " ^ (Cprinter.prtt_string_of_formula def_f_subst)) no_pos;
+    (*should remove duplicate*)
+    let svl1 = CF.get_ptrs_f (* CF.get_all_sv_f *) newf in
+    let svl2 = CF.get_ptrs_f (* CF.get_all_sv_f *) def_f_subst in
     let intersect = CP.intersect svl1 svl2 in
-        (* DD.ninfo_pprint ("   intersect: " ^ (!CP.print_svl intersect)) no_pos; *)
+        DD.ninfo_pprint ("   intersect: " ^ (!CP.print_svl intersect)) no_pos;
+    (*node points to itself*)
+    let def_f_hnodes = SAU.get_hdnodes def_f_subst in
+    let svl3 = List.fold_left (fun res hd -> if CP.intersect_svl [hd.CF.h_formula_data_node]
+        hd.CF.h_formula_data_arguments <> [] then (res@[hd.CF.h_formula_data_node]) else res)
+     [] def_f_hnodes in
+    let elim_dnodes = CP.remove_dups_svl (intersect@svl3) in
     let def_f1 =
-      if intersect = [] then def_f_subst else
+      if elim_dnodes = [] then def_f_subst else
             (* let diff = Gen.BList.difference_eq CP.eq_spec_var svl2 svl1 in *)
         match def_f_subst with
           | CF.Base fb ->
               CF.Base {fb with CF.formula_base_heap = CF.drop_data_view_hrel_nodes_hf fb.CF.formula_base_heap
                       SAU.select_dnode SAU.select_vnode
-                      SAU.select_hrel intersect intersect (intersect(* @(get_dups_hprel newf def_f_subst) *) )}
+                      SAU.select_hrel elim_dnodes elim_dnodes (intersect(* @(get_dups_hprel newf def_f_subst) *) )}
           | _ -> report_error no_pos "sa.subst_one_cs_w_one_partial_def"
     in
         (*combi def_f_subst into newf*)
     let newf1 = CF.mkStar newf def_f1 CF.Flow_combine (CF.pos_of_formula newf) in
     (*check contradiction*)
-    let susbt_f=
+    let subst_f=
       if check_unsat newf1 || check_heap_inconsistency cs_unk_hps newf1 then
         let _ = DD.ninfo_pprint ("     contradiction found after subst.") no_pos in
         f
       else newf1
     in
-        (* DD.ninfo_pprint ("   subst out: " ^ (Cprinter.prtt_string_of_formula susbt_f)) no_pos; *)
-    susbt_f
+    DD.ninfo_pprint ("   subst out: " ^ (Cprinter.prtt_string_of_formula subst_f)) no_pos;
+    (*match with lhs if this is rhs*)
+   subst_f
   in
   match argsl with
     | [] -> f
-    | (*[eargs]*) ls_eargs -> List.fold_left do_subst new_f ls_eargs
+    | (*[eargs]*) ls_eargs ->
+        let new_f =  List.fold_left do_subst new_f ls_eargs in
+        begin
+            match olhs with
+              | None -> new_f
+              | Some lhs -> do_simpl_nodes_match lhs new_f
+        end
        (*  begin *)
       (*       (\*to subst*\) *)
       (*   (\*generate a susbst*\) *)
@@ -1960,24 +2015,30 @@ let subst_one_cs_w_one_partial_def cs_unk_hps f (hp_name, args, def_f)=
       (* end *)
     (* | _ -> report_error no_pos "sa.subst_one_cs_w_one_partial_def: should be a singleton" *)
 
+let elim_irr_rhs_hps_x lhs rhs=
+  let l_svl = CF.fv lhs in
+  let rhs0 = rhs in
+  let r_hpargs = CF.get_HRels_f rhs0 in
+  (*get hps in rhs*)
+  let r_hps = List.map fst r_hpargs in
+  let rhs1,_ =  CF.drop_hrel_f rhs r_hps in
+  let r_svl = CF.fv rhs1 in
+  let used_svl = (l_svl@r_svl) in
+  let keep_hps = List.concat (List.map (SAU.get_intersect_hps used_svl) r_hpargs) in
+  let rhs2,_ =  CF.drop_hrel_f rhs0 (CP.diff_svl (CP.remove_dups_svl r_hps) (CP.remove_dups_svl keep_hps)) in
+  rhs2
+
+let elim_irr_rhs_hps lhs rhs=
+  let pr1 = Cprinter.string_of_formula in
+  Debug.no_2 "elim_irr_rhs_hps" pr1 pr1 pr1
+      (fun _ _ -> elim_irr_rhs_hps_x lhs rhs) lhs rhs
+
 (*
 each constraints, apply lhs and rhs. each partial def in one side ==> generate new constraint
 
  ldef --> hp: subst all hp in lhs with ldef
  hp --> rdef: subst all hp in rhs with rdef
 *)
-
-let elim_irr_rhs_hps lhs rhs=
-  let l_svl = CF.fv lhs in
-  let r_hpargs = CF.get_HRels_f rhs in
-  let r_hps = List.map fst r_hpargs in
-  let rhs1,_ =  CF.drop_hrel_f rhs r_hps in
-  let r_svl = CF.fv rhs1 in
-  let used_svl = (l_svl@r_svl) in
-  let keep_hps = List.concat (List.map (SAU.get_intersect_hps used_svl) r_hpargs) in
-  let rhs2,_ =  CF.drop_hrel_f rhs (CP.diff_svl (CP.remove_dups_svl r_hps) (CP.remove_dups_svl keep_hps)) in
-  rhs2
-
 let subst_one_cs_w_partial_defs ldefs rdefs constr=
   let lhs,rhs = constr.CF.hprel_lhs,constr.CF.hprel_rhs in
   DD.ninfo_pprint ("    input: " ^ (Cprinter.string_of_hprel constr)) no_pos;
@@ -1988,10 +2049,10 @@ let subst_one_cs_w_partial_defs ldefs rdefs constr=
     | _ ->
   (*subst lhs*)
         DD.ninfo_pprint "  subst lhs" no_pos;
-        let lhs1 = List.fold_left (subst_one_cs_w_one_partial_def constr.CF.unk_hps) lhs ldefs in
+        let lhs1 = List.fold_left (subst_one_cs_w_one_partial_def constr.CF.unk_hps None) lhs ldefs in
   (*subst rhs*)
         DD.ninfo_pprint "  subst rhs" no_pos;
-        let rhs1 = List.fold_left (subst_one_cs_w_one_partial_def constr.CF.unk_hps) rhs rdefs in
+        let rhs1 = List.fold_left (subst_one_cs_w_one_partial_def constr.CF.unk_hps (Some lhs1)) rhs rdefs in
   (*rhs contradict with lhs?*)
         let cmbf = CF.mkStar lhs1 rhs1 CF.Flow_combine no_pos in
         let lhs2,rhs2 =
@@ -2398,6 +2459,10 @@ let generalize_one_hp_x prog non_ptr_unk_hps unk_hps par_defs=
     (* let f2 = SAU.mk_expl_root r f1 in *)
     (f1,unk_args1)
   in
+  (* let have_roots args f= *)
+  (*   let svl = CF.fv f in *)
+  (*   CP.intersect_svl args svl <> [] *)
+  (* in *)
   DD.ninfo_pprint ">>>>>> generalize_one_hp: <<<<<<" no_pos;
   if par_defs = [] then [] else
     begin
@@ -2405,6 +2470,7 @@ let generalize_one_hp_x prog non_ptr_unk_hps unk_hps par_defs=
         (*find the root: ins2,ins3: root is the second, not the first*)
         let args0 = List.map (CP.fresh_spec_var) args in
     (* DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")") no_pos; *)
+        (* let par_defs = List.filter (fun (_,args,f,_) -> have_roots args f) par_defs in *)
         let defs,ls_unk_args = List.split (List.map (obtain_and_norm_def args0) par_defs) in
         let r,non_r_args = SAU.find_root args0 defs in
         (*make explicit root*)

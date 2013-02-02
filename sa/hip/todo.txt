@@ -1,4 +1,4 @@
-# sll-del.ss
+# sll-del.ss: DONE
 
 void delete(node2 x)
   /* infer[n] */
@@ -22,3 +22,4 @@ void delete(node2 x)
  ]
 
 PROBLEM : inferred H1(..) is too strong..
+==================================================

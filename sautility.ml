@@ -1912,11 +1912,11 @@ let process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls c
   let eqs = (MCP.ptr_equations_without_null mix_f) in
   let (matcheds2, rest2, ss, last_ss0,_) = get_longest_common_hnodes_two org_args sh_ldns ldns eqs in
   (*drop all matcheds*)
-  (* let _ =  DD.info_pprint ("       matched 1: " ^ (!CP.print_svl matcheds2)) no_pos in *)
+  let _ =  DD.ninfo_pprint ("       matched 1: " ^ (!CP.print_svl matcheds2)) no_pos in
   (* let _ =  DD.info_pprint ("       eqNulls: " ^ (!CP.print_svl com_eqNulls)) no_pos in *)
   (* let _ =  DD.info_pprint ("       f: " ^ (Cprinter.prtt_string_of_formula f)) no_pos in *)
   let nf1 = CF.drop_hnodes_f f matcheds2 in
-  (* let _ =  DD.info_pprint ("       nf1: " ^ (Cprinter.prtt_string_of_formula nf1)) no_pos in *)
+  let _ =  DD.ninfo_pprint ("       nf1: " ^ (Cprinter.prtt_string_of_formula nf1)) no_pos in
   (* let _ =  DD.info_pprint ("       args: " ^ (!CP.print_svl args)) no_pos in *)
   (* let _ =  DD.info_pprint ("       last_ss0: " ^ (let pr = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) in pr last_ss0)) no_pos in *)
   (*apply susbt ss*)
@@ -1959,10 +1959,10 @@ let process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls c
         let fresh_svl = CP.fresh_spec_vars old_svl1 in
         let ss = List.combine old_svl1 fresh_svl in
         let n_hf = CF.h_subst (ss) hf in
-        let nf5a=
+        let nf5a,n_hf2=
           (*base case has at least one node?*)
           let hds= get_hdnodes_hf n_hf in
-          if hds=[] then nf5 else
+          if hds=[] then (nf5,n_hf) else
             let _ = DD.ninfo_pprint ("       next_roots: " ^ (Cprinter.string_of_spec_var_list next_roots)) no_pos in
             let hds1= get_hdnodes nf5 in
             let last_svl = look_up_closed_ptr_args prog hds1 [] next_roots in
@@ -1971,13 +1971,29 @@ let process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls c
              let _ = DD.ninfo_pprint ("       inter: " ^ (Cprinter.string_of_spec_var_list inter)) no_pos in
             if  inter <> [] then
               let ss1 = List.combine inter next_roots in
-              let nf5b = CF.drop_hnodes_f nf5 last_svl in
-              CF.subst ss1 nf5b
-            else nf5
+              (*find commond pattern: even/odd. testcase: sll-del*)
+              (*todo: should have better refinement*)
+              let hds2 = get_hdnodes_hf n_hf in
+              let n1 = List.length hds1 in
+              if (n1 = 0) || ((List.length hds2) mod 2 = n1 mod 2) then
+                let nf5b = CF.drop_hnodes_f nf5 last_svl in
+                let nf5b0 = CF.subst ss1 nf5b in
+                (nf5b0,n_hf)
+              else
+                (* let nf5b0 = CF.subst ss1 nf5 in *)
+                let n_hf1 =  CF.drop_hnodes_hf n_hf (List.map (fun hn -> hn.CF.h_formula_data_node) hds) in
+                let hp_args = CF.get_HRels n_hf1 in
+                let fst_args = match hp_args with
+                  | [(_,args0)] -> args0
+                  | _ -> report_error no_pos "sau.process_one_f: sth wrong"
+                in
+                let ss2 = List.combine fst_args inter in
+                (nf5, CF.h_subst ss2 n_hf1)
+            else (nf5,n_hf)
         in
-        let _ =  DD.ninfo_pprint ("       n_hf: " ^ (Cprinter.prtt_string_of_h_formula n_hf)) no_pos in
+        let _ =  DD.ninfo_pprint ("       n_hf2: " ^ (Cprinter.prtt_string_of_h_formula n_hf2)) no_pos in
         let _ =  DD.ninfo_pprint ("       nf5a: " ^ (Cprinter.prtt_string_of_formula nf5a)) no_pos in
-        let nf6 = CF.subst_hrel_f nf5a [(hprel, n_hf)] in
+        let nf6 = CF.subst_hrel_f nf5a [(hprel, n_hf2)] in
         nf6
     with Not_found -> nf5
   in
