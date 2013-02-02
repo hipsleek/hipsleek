@@ -51,9 +51,9 @@ echo "ll-next5"
 echo "ll-next6"
 ../../hip ll-next6.ss --sa-dangling --sa-split --sa-inlining --sa-inlining -cp-test cp/ll-next6.cp | grep Compare
 echo "ll-delete"
-../../hip ll-delete.ss --sa-dangling --sa-inlining --sa-split -cp-test cp/ll-delete.cp | grep Compare
-echo "ll-delete2"
-../../hip ll-delete2.ss --sa-dangling --sa-inlining -cp-test cp/ll-delete2.cp | grep Compare
+../../hip ll-delete.ss --sa-dangling --sa-inlining --sa-useless -cp-test cp/ll-delete.cp | grep Compare
+# echo "ll-delete2"
+# ../../hip ll-delete2.ss --sa-dangling --sa-inlining -cp-test cp/ll-delete2.cp | grep Compare
 echo "ll-get_size"
 ../../hip ll-get-size.ss --sa-dangling -cp-test cp/ll-get-size.cp | grep Compare
 echo "ll_all1"

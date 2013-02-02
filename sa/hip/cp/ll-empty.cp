@@ -7,7 +7,7 @@ ass [H1,G1][]:{
 }
 
 hpdefs [H1,G1][]:{
-   H1(x) --> HTrue&true;
+   H1(x) --> x=null or x!=null;
    G1(x) --> H1(x)
  }
 ]
