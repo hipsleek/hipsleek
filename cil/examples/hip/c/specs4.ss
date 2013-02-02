@@ -7,14 +7,6 @@ int foo2()
 {
   return 1;
 }
-
-int foo3()
-  requires true
-  ensures true;
-{
-  return 1;
-}
-
 /*
  when no specs are given, we should use
    requires true
@@ -23,3 +15,11 @@ int foo3()
  rather than requires false
              ensures false;
 */
+
+int foo3()
+  requires true
+  ensures true;
+{
+  return 1;
+}
+
