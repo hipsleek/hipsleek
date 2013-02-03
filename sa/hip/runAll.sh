@@ -94,6 +94,8 @@ echo "ll-size"
 ../../hip ll-size.ss -cp-test cp/ll-size.cp | grep Compare
 echo "sll-del"
 ../../hip sll-del.ss -cp-test cp/sll-del.cp | grep Compare
+echo "dll-del"
+../../hip dll-del.ss --sa-dangling --sa-inlining -cp-test cp/dll-del.cp | grep Compare
 echo "ll-size1 -cp-test"
 ../../hip ll-size1.ss -cp-test cp/ll-size1.cp | grep Compare
 echo "ll-ret-first"

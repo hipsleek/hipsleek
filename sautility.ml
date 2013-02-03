@@ -1997,7 +1997,7 @@ let process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls c
         nf6
     with Not_found -> nf5
   in
-  let nf7,_ = CF.drop_hrel_f nf6 com_hps in
+  let nf7 = CF.drop_exact_hrel_f nf6 com_hps in
   let _ =  DD.ninfo_pprint ("       nf6: " ^ (Cprinter.prtt_string_of_formula nf6)) no_pos in
   let _ =  DD.ninfo_pprint ("       nf7: " ^ (Cprinter.prtt_string_of_formula nf7)) no_pos in
   nf7
@@ -2213,13 +2213,24 @@ let remove_dups_recursive_x hp args unk_hps unk_svl defs=
       ([(f,new_residue)],[])
   in
   let match_with_base_x is_acc_dang poss_base_fs base_fs=
+    (*remove unk hps and neqNull*)
+    (* let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in *)
+    (* let _ = DD.info_pprint ("       base_fs:" ^ (pr1 base_fs)) no_pos in *)
+    let base_fs1 = List.map (fun f -> let new_f,_ = CF.drop_hrel_f f unk_hps in new_f) base_fs in
+    (* let _ = DD.info_pprint ("       base_fs1:" ^ (pr1 base_fs1)) no_pos in *)
     let process_helper (f,residue) =
-      let drop = if is_empty_f residue then is_acc_dang else
+      (* let _ = DD.info_pprint ("       residue:" ^ (Cprinter.prtt_string_of_formula residue)) no_pos in *)
+      let residue1,_ = CF.drop_hrel_f residue unk_hps in
+      let residue2 = CF.remove_neqNulls_f residue1 in
+      (* let _ = DD.info_pprint ("       residue2:" ^ (Cprinter.prtt_string_of_formula residue2)) no_pos in *)
+      let drop = if is_empty_f residue2 then
+            is_acc_dang
+          else
             List.exists
                 (fun base_f ->
-                    check_relaxeq_formula base_f residue
+                    check_relaxeq_formula base_f residue2
                 )
-                base_fs
+                base_fs1
       in
       if drop then [] else [f]
     in
@@ -2239,10 +2250,12 @@ let remove_dups_recursive_x hp args unk_hps unk_svl defs=
   let rec_fs,rem_fs= List.partition is_rec_f defs in
   let indep_fs, dep_fs = List.partition is_independ_f rem_fs in
   if (List.length indep_fs >= 1) then
-    let root =
-      if args = [] then report_error no_pos "sau.remove_dups_recursive: hp should have at least one argument"
-      else (List.hd args)
-    in
+    let root,(* non_r_args *) _ = find_root args defs in
+    (* let _ = DD.info_pprint (" root: " ^ (!CP.print_sv root) ) no_pos in *)
+    (* let root = *)
+    (*   if args = [] then report_error no_pos "sau.remove_dups_recursive: hp should have at least one argument" *)
+    (*   else (List.hd args) *)
+    (* in *)
     let rec_ls_hds = List.map get_hdnodes rec_fs in
     let parts = List.map (match_with_rec rec_ls_hds) indep_fs in
     let ls_poss_base_fs,ls_base_fs = List.split parts in
@@ -2250,6 +2263,7 @@ let remove_dups_recursive_x hp args unk_hps unk_svl defs=
     let poss_base_fs = List.concat ls_poss_base_fs in
     let dep_fs1 = remove_longer_common_prefix dep_fs in
     if base_fs = [] then
+      (*residue list*)
       let poss_base_fs1 = List.map snd poss_base_fs in
       let poss_base_fs2 = List.filter (fun f -> not(is_empty_f f)) poss_base_fs1 in
       (* Gen.BList.remove_dups_eq (fun f1 f2 -> check_relaxeq_formula f1 f2) defs *)
@@ -2471,8 +2485,8 @@ let get_longest_common_hnodes_list_x prog unk_hps unk_svl hp r non_r_args args f
      match orig_hpdefs with
        | [] -> []
        | [(hp01,orig_hpdef)] ->
-       let com_hps = List.map (fun (hp,_,_)-> hp) hprels1 in
-       let n_fs = List.map (process_one_f prog args n_args next_roots hp_subst sh_ldns2 eqNulls eqPures com_hps) lldns in
+       (* let com_hps = List.map (fun (hp,eargs,_)-> (hp,eargs)) hprels1 in *)
+       let n_fs = List.map (process_one_f prog args n_args next_roots hp_subst sh_ldns2 eqNulls eqPures hprels1) lldns in
        let n_fs1 = List.filter (fun f -> not ((is_empty_f f) || (CF.is_only_neqNull n_args [] f))) n_fs in
        (*for debugging*)
        (* let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in *)

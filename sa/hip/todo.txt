@@ -23,5 +23,5 @@ void delete(node2 x)
 
 PROBLEM : inferred H1(..) is too strong..
 ==================================================
-
+# dll-del.ss: DONE
 

@@ -4098,6 +4098,63 @@ and drop_hrel_hf hf hp_names=
     | HFalse
     | HEmp -> (hf,[])
 
+(*drop HRel in the set hp_namesxeargs*)
+let rec drop_exact_hrel_f f hpargs=
+  match f with
+    | Base fb -> let nfb = drop_exact_hrel_hf fb.formula_base_heap hpargs in
+        (Base {fb with formula_base_heap =  nfb;})
+    | Or orf -> let nf1 =  drop_exact_hrel_f orf.formula_or_f1 hpargs in
+                let nf2 =  drop_exact_hrel_f orf.formula_or_f2 hpargs in
+       ( Or {orf with formula_or_f1 = nf1;
+                formula_or_f2 = nf2;})
+    | Exists fe -> let nfe = drop_exact_hrel_hf fe.formula_exists_heap hpargs in
+        (Exists {fe with formula_exists_heap = nfe ;})
+
+and drop_exact_hrel_hf hf0 hpargs=
+  let rec helper hf=
+    match hf with
+      | Star {h_formula_star_h1 = hf1;
+              h_formula_star_h2 = hf2;
+              h_formula_star_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          let newf =
+            (match n_hf1,n_hf2 with
+              | (HEmp,HEmp) -> HEmp
+              | (HEmp,_) -> n_hf2
+              | (_,HEmp) -> n_hf1
+              | _ -> (Star {h_formula_star_h1 = n_hf1;
+                            h_formula_star_h2 = n_hf2;
+                            h_formula_star_pos = pos})
+            ) in
+          (newf)
+      | Conj { h_formula_conj_h1 = hf1;
+               h_formula_conj_h2 = hf2;
+               h_formula_conj_pos = pos} ->
+          let n_hf1= helper hf1 in
+          let n_hf2 = helper hf2 in
+          (Conj { h_formula_conj_h1 = n_hf1;
+                  h_formula_conj_h2 = n_hf2;
+                  h_formula_conj_pos = pos})
+      | Phase { h_formula_phase_rd = hf1;
+                h_formula_phase_rw = hf2;
+                h_formula_phase_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          (Phase { h_formula_phase_rd = n_hf1;
+                   h_formula_phase_rw = n_hf2;
+                   h_formula_phase_pos = pos})
+      | DataNode hd -> (hf)
+      | ViewNode hv -> (hf)
+      | HRel hprel -> if Gen.BList.mem_eq eq_hprel hprel hpargs then (HEmp)
+          else (hf)
+      | Hole _
+      | HTrue
+      | HFalse
+      | HEmp -> (hf)
+  in
+  helper hf0
+
 and drop_hnodes_f f hn_names=
   match f with
     | Base fb -> let nfb = drop_hnodes_hf fb.formula_base_heap hn_names in
