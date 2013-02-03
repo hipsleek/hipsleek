@@ -2338,12 +2338,6 @@ let mk_orig_hprel_def_x prog unk_hps hp r other_args args sh_ldns eqNulls eqPure
 	else []
   in
   let rec look_up_next_ptrs hds r res=
-    (*r_nexts may be other args, we should remove them*)
-    (*if CP.mem_svl r other_args then
-      let new_v = CP.SpecVar (CP.type_of_spec_var r,
-                  (CP.name_of_spec_var r) ^ (string_of_int (Globals.fresh_int())),Unprimed)  in
-      ([new_v],hds, [(r,new_v)])
-    else *)
       match hds with
         | [] -> ([],res,[],[])
         | hd::hss -> if CP.eq_spec_var r hd.CF.h_formula_data_node then
@@ -2395,10 +2389,11 @@ let mk_orig_hprel_def_x prog unk_hps hp r other_args args sh_ldns eqNulls eqPure
          (*generate new hp*)
              let n_args = (next_roots@other_args) in
          let n_hprel,n_hp =  add_raw_hp_rel prog n_args no_pos in
-              (*first rel def for the orig*)
+         (*first rel def for the orig*)
          let rest =  (hdss@[n_hprel]@(List.map (fun hprel -> CF.HRel hprel) hprels)) in
          let orig_defs_h = List.fold_left (fun hf1 hf2 -> CF.mkStarH hf1 hf2 no_pos) (List.hd rest) (List.tl rest) in
          let orig_def = CF.formula_of_heap orig_defs_h no_pos in
+         (*common null process*)
 		 let orig_def1 =
 		   match eqNulls with
 		   | [] -> orig_def
@@ -2408,6 +2403,7 @@ let mk_orig_hprel_def_x prog unk_hps hp r other_args args sh_ldns eqNulls eqPure
 		      let p = CP.conj_of_list ps no_pos in
 			  CF.mkAnd_pure orig_def (MCP.mix_of_pure p) no_pos
 		 in
+         (*common pure process*)
          let common_pures = CP.conj_of_list eqPures no_pos in
          let orig_def2 = CF.mkAnd_pure orig_def1 (MCP.mix_of_pure common_pures) no_pos in
          let defs = mk_hprel_def prog unk_hps unk_svl hp args [orig_def2] no_pos in

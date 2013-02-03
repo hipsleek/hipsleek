@@ -3615,7 +3615,20 @@ and get_hprel_h_formula hf0=
 
 
 and eq_hprel (hp1,eargs1,_) (hp2,eargs2,_)=
-  CP.eq_spec_var hp1 hp2
+  let rec eq_svl ls1 ls2=
+    match ls1,ls2 with
+      | [],[] -> true
+      | sv1::rest1,sv2::rest2 -> if CP.eq_spec_var sv1 sv2 then
+            eq_svl rest1 rest2
+          else false
+      | _ -> false
+  in
+  if (CP.eq_spec_var hp1 hp2) then
+   let args1 = (List.fold_left List.append [] (List.map CP.afv eargs1)) in
+   let args2 = (List.fold_left List.append [] (List.map CP.afv eargs2)) in
+   eq_svl args1 args2
+  else
+    false
 
 and get_hp_rel_name_formula (f: formula) =
   match f with

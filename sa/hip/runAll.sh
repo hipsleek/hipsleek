@@ -18,7 +18,7 @@ echo "dangling/ll-app3.ss"
 ../../hip dangling/ll-app3.ss --sa-dangling --sa-inlining -cp-test cp/ll-app3.cp | grep Compare
 echo "dangling/ll-app4.ss"
 ../../hip dangling/ll-app4.ss --sa-dangling --sa-inlining -cp-test cp/ll-app4.cp | grep Compare
-echo "dangling/ll-app5b.ss"
+echo "dangling/ll-app5b.ss - problem with -cp-test"
 ../../hip dangling/ll-app5b.ss --sa-useless --sa-dangling --sa-inlining -cp-test cp/ll-app5b.cp | grep Compare
 echo "dangling/ll-app6.ss"
 ../../hip dangling/ll-app6.ss --sa-dangling --sa-inlining -cp-test cp/ll-app6.cp | grep Compare
@@ -62,8 +62,8 @@ echo "ll_all3"
 ../../hip ll_all3.ss --sa-dangling -cp-test cp/ll_all3.cp | grep Compare
 echo "ll_all4"
 ../../hip ll_all4.ss --sa-dangling --sa-inlining -cp-test cp/ll_all4.cp | grep Compare
-echo "ll_all5"
-../../hip ll_all5.ss --sa-dangling --sa-inlining -cp-test cp/ll_all5.cp | grep Compare
+echo "ll_all5 - problem with -cp-test"
+../../hip ll_all5.ss --sa-dangling --sa-inlining --sa-split -cp-test cp/ll_all5.cp | grep Compare
 echo "ll_all7"
 ../../hip ll_all7.ss --sa-dangling --sa-inlining -cp-test cp/ll_all7.cp | grep Compare
 echo "ll_all8"

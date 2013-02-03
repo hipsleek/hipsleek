@@ -2470,7 +2470,6 @@ let generalize_one_hp_x prog non_ptr_unk_hps unk_hps par_defs=
         (*find the root: ins2,ins3: root is the second, not the first*)
         let args0 = List.map (CP.fresh_spec_var) args in
     (* DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")") no_pos; *)
-        (* let par_defs = List.filter (fun (_,args,f,_) -> have_roots args f) par_defs in *)
         let defs,ls_unk_args = List.split (List.map (obtain_and_norm_def args0) par_defs) in
         let r,non_r_args = SAU.find_root args0 defs in
         (*make explicit root*)
@@ -2490,6 +2489,7 @@ let generalize_one_hp_x prog non_ptr_unk_hps unk_hps par_defs=
         (* let base_case_exist,defs4 = SAU.remove_dups_recursive hp args0 unk_hps defs3 in *)
   (*find longest hnodes common for more than 2 formulas*)
   (*each hds of hdss is def of a next_root*)
+           (* let defs5 = List.filter (fun f -> have_roots args0 f) defs4 in *)
           let defs = SAU.get_longest_common_hnodes_list prog unk_hps unk_svl hp r non_r_args args0 defs4 in
           defs
     end
@@ -2559,9 +2559,10 @@ let pardef_subst_fix_x prog unk_hps groups=
     let hps = CF.get_hp_rel_name_formula f in
     let hps = CP.remove_dups_svl hps in
     (* DD.ninfo_pprint ("       rec hp: " ^ (!CP.print_sv hp)) no_pos; *)
-    let _,rems = List.partition (fun hp1 -> CP.eq_spec_var hp hp1) hps in
+    let dep_hps = List.filter (fun hp1 -> not ((CP.eq_spec_var hp hp1) ||
+    (CP.mem_svl hp1 unk_hps))) hps in
     (* DD.ninfo_pprint ("       rec rems: " ^ (!CP.print_svl rems)) no_pos; *)
-    (rems = [])
+    (dep_hps = [])
   in
   let is_rec_group grp=
     List.exists is_rec_pardef grp

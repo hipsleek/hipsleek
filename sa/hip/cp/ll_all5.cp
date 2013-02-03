@@ -9,7 +9,7 @@ ass [H2,G2][]:{
 	}
 
 hpdefs [G2,H2][q1]:{
- H2(x,y) --> x::node<_,n> & y=n & y=q1;
- G2(x,y) --> x::node<_,y> & y=q1
+ H2(x,y) --> x::node<_,q1> & q1=y;
+ G2(x,y) --> x::node<_,y> & q1=y
  }
 ]
