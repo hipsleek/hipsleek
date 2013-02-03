@@ -345,6 +345,44 @@ let travel_file (file: Cil.file) : unit =
 (* translation functions from Cil -> Iast   *)
 (* ---------------------------------------- *)
 
+
+let create_memory_cast_function (output_typ: Globals.typ) : Iast.proc_decl =
+  let name = "cast_" ^ (Globals.string_of_typ "memory") 
+             ^ "_to_" ^ (Globals.string_of_typ output) in
+  let param = {
+    Iast.param_type = output_typ;
+    Iast.param_name = "typ";
+    Iast.param_mod = Iast.NoMod;
+    Iast.param_loc = no_pos;
+  } in
+  let static_specs = (
+    let case1 = 
+    let struc_case_f = {
+      Iformula.formula_case_branches = 
+      Iformula.formula_case_pos = no_pos;
+    } in
+    Iformula.ECase struc_case_f
+  ) in
+  let proc_decl = {
+    Iast.proc_name = name;
+    Iast.proc_mingled_name = "";         (* TRUNG: check later *)
+    Iast.proc_data_decl = None;
+    Iast.proc_source = "";               (* TRUNG: check later *)
+    Iast.proc_constructor = false;
+    Iast.proc_args = [param];
+    Iast.proc_return = output_typ;
+    Iast.proc_static_specs = static_specs;
+    Iast.proc_dynamic_specs = Iformula.mkEFalseF ();
+    Iast.proc_exceptions = [];
+    Iast.proc_body = None;
+    Iast.proc_is_main = false;
+    Iast.proc_file = "intermediate-translation";
+    Iast.proc_loc = no_pos;
+    Iast.proc_test_comps = None;
+  } in
+  proc_decl
+
+
 let translate_location (loc: Cil.location) : Globals.loc =
   let cilsp = loc.Cil.start_pos in
   let cilep = loc.Cil.end_pos in
@@ -764,13 +802,21 @@ let translate_instr (instr: Cil.instr) : Iast.exp =
         match lv_opt with
         | None -> call_exp;
         | Some lv -> (
-            let lv_exp = translate_lval lv in
+            let le = translate_lval lv in
+            let re = (
+              (* if the callee is "malloc, alloc...", then we need to cast *)
+              (* its type to the target's type *)
+              match fname with
+              | "malloc" -> 
+              | _ -> call_exp
+            ) in
             let lv_loc = Cil.get_lvalLoc lv in
             let asgn_loc = Cil.makeLoc (Cil.startPos lv_loc) (Cil.endPos l) in
             let asgn_pos = translate_location asgn_loc in
+            let _ = print_endline ("== call_exp = " ^ (Iprinter.string_of_exp call_exp)) in
             Iast.Assign {Iast.exp_assign_op = Iast.OpAssign;
-                         Iast.exp_assign_lhs = lv_exp;
-                         Iast.exp_assign_rhs = call_exp;
+                         Iast.exp_assign_lhs = le;
+                         Iast.exp_assign_rhs = re;
                          Iast.exp_assign_path_id = None;
                          Iast.exp_assign_pos = asgn_pos}
           )

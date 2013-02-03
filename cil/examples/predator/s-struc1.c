@@ -12,6 +12,6 @@ Item* foo ()
    ensures res != null;
 */
 {
-  Item* ptr = malloc(1);
+  Item* ptr = cast_to_ptr(malloc(1));
   return ptr;
 }

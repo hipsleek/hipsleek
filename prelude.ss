@@ -361,3 +361,15 @@ data memory {
 memory malloc(int size)
   requires size>0
   ensures  res=null or res::memory<size>;
+
+data item {
+  item next;
+}
+
+item cast_to_ptr(memory p)
+  case {
+    p=null -> ensures res=null;
+    p!=null -> 
+      requires p::memory<a> & a>=1
+      ensures res::item<_>;
+  }
