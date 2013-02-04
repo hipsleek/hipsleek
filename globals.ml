@@ -1088,6 +1088,9 @@ let snd3 (_,x,_) = x
 
 let change_fst3 (_,b,c) a = (a,b,c)
 
+let concat_pair_of_lists l1 l2 =
+  (((fst l1)@(fst l2)), ((snd l1)@(snd l2)))
+
 let path_trace_eq p1 p2 =
   let rec eq pt1 pt2 = match pt1,pt2 with
     | [],[] -> true

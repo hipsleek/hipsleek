@@ -1,0 +1,38 @@
+data node {
+	int val; 
+}.
+
+//1 Valid
+checkentail x::node<_@v> & v=@A|- true.
+
+//2 Fail
+checkentail x::node<_@A>|- x::node<_@L>.
+
+//3 Valid
+checkentail x::node<_@L>|- x::node<_@A>.
+
+//4 Valid
+checkentail x::node<a@M> |- x::node<a@A>.
+
+//4 Valid
+checkentail x::node<a@M> |- x::node<a@A>.
+
+//5 Valid
+checkentail x::node<a@M> |- x::node<a@v>.
+
+//6 Faild (but it says valid)
+checkentail x::node<_@v> & v=@A|- (exists w: x::node<_@w> & w=@L).
+
+//8 Valid
+checkentail x::node<_@v> & v=@M|-  x::node<_@L>.
+print residue.
+
+//7 Fail
+checkentail x::node<_>@v & v=@A|-  x::node<_>@L.
+print residue.
+
+//8 Valid
+checkentail x::node<_@v> & v=@A|- x::node<_@w>.
+
+//9 Valid
+checkentail x::node<a@v> |- x::node<a@w>.

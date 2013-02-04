@@ -7643,17 +7643,18 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
        the remaining of the l_node and r_node after matching 
        (respectively. *)
     let es_impl_vars = estate.es_gen_impl_vars in
+    let es_evars = estate.es_evars in
     (* let _ = print_string("--C: r_node = " ^ (r_node_name) ^ "  spec var:" ^ (Cprinter.string_of_spec_var r_var) ^ "\n") in *)
     (* let _ = print_string("--C: l_node = " ^ (l_node_name) ^ "\n") in *)
     (* let _ = print_string("--C: r_ann = " ^ (Cprinter.string_of_imm r_ann) ^ "\n") in *)
     (* let _ = print_string("--C: l_ann = " ^ (Cprinter.string_of_imm l_ann) ^ "\n") in *)
     (* check subtyping between lhs and rhs node ann, and collect info between ann vars and const vars *)
     
-    let (r,add_to_lhs,add_to_rhs) = if ((*not(!allow_field_ann) &&*) (!allow_imm)) then subtype_ann_gen es_impl_vars l_ann r_ann else (true, None, None)  (*ignore node ann is field ann enable*) in
+    let (r,add_to_lhs,add_to_rhs, ann_subst) = if ((*not(!allow_field_ann) &&*) (!allow_imm)) then subtype_ann_gen es_impl_vars es_evars l_ann r_ann else (true, None, None, ([], []))  (*ignore node ann is field ann enable*) in
     Debug.tinfo_hprint (add_str "add_to_lhs" (pr_opt Cprinter.string_of_pure_formula)) add_to_lhs pos;
     Debug.tinfo_hprint (add_str "add_to_rhs" (pr_opt Cprinter.string_of_pure_formula)) add_to_rhs pos;
     (* check imm subtyping between lhs and rhs node fields, and collect info between vars and consts - makes sens only for data nodes *)
-    let (rl, param_ann_lhs, param_ann_rhs) =  if (!allow_field_ann) then subtype_ann_list es_impl_vars l_param_ann r_param_ann else (true, [], []) in
+    let (rl, param_ann_lhs, param_ann_rhs, field_ann_subst) =  if (!allow_field_ann) then subtype_ann_list es_impl_vars es_evars l_param_ann r_param_ann else (true, [], [], ([], [])) in
     Debug.tinfo_hprint (add_str "param_ann_lhs" (pr_list (pr_opt Cprinter.string_of_pure_formula))) param_ann_lhs pos;
     Debug.tinfo_hprint (add_str "param_ann_rhs" (pr_list (pr_opt Cprinter.string_of_pure_formula))) param_ann_rhs pos;
     let join_ann_constr ann ann_lst =
@@ -7666,10 +7667,10 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     let r_args_ann = List.filter (fun c -> CP.is_ann_type (CP.type_of_spec_var c)) r_args in
     let (rvl, view_param_ann_lhs, view_param_ann_rhs) =  if (!allow_field_ann) 
         then Mem.subtype_sv_ann_gen_list es_impl_vars l_args_ann r_args_ann 
-        else (true, None,None) in
+        else (true, None,None) in       (* andreeac: add ann view for ex *)
     Debug.tinfo_hprint (add_str "view_param_ann_lhs" (pr_opt Cprinter.string_of_pure_formula)) view_param_ann_lhs pos;
     Debug.tinfo_hprint (add_str "view_param_ann_rhs" (pr_opt Cprinter.string_of_pure_formula)) view_param_ann_rhs pos;
-    let (r, ann_lhs, ann_rhs) = (r && rvl,Immutable.mkAndOpt ann_lhs view_param_ann_lhs, Immutable.mkAndOpt ann_rhs view_param_ann_rhs) in
+    let (r, ann_lhs, ann_rhs, ex_subst) = (r && rvl,Immutable.mkAndOpt ann_lhs view_param_ann_lhs, Immutable.mkAndOpt ann_rhs view_param_ann_rhs, concat_pair_of_lists ann_subst field_ann_subst) in
     Debug.tinfo_hprint (add_str "ann_lhs" (pr_opt Cprinter.string_of_pure_formula)) ann_lhs pos;
     Debug.tinfo_hprint (add_str "ann_rhs" (pr_opt Cprinter.string_of_pure_formula)) ann_rhs pos;
     Debug.tinfo_hprint (add_str "Imm annotation mismatch" (string_of_bool)) (not(r)) pos;
@@ -7806,8 +7807,12 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
 	          (* An Hoa : strip all the pair of equality involving # *)
 	          let other_subs = List.filter (fun ((x,y),_) -> not (CP.is_hole_spec_var x || CP.is_hole_spec_var y)) other_subs in
               let to_lhs,to_rhs,ext_subst =  get_eqns_free other_subs new_exist_vars impl_tvars estate.es_gen_expl_vars pos  in
+              let ex_subst = List.combine (fst ex_subst) (snd ex_subst) in
+              (* let ext_subst = ex_subst@ext_subst in *)
               let is_ann a = CP.is_ann_type (CP.type_of_spec_var a) in
-              let ext_subst = if (!Globals.allow_imm)||(!Globals.allow_field_ann) then List.filter (fun (f,t) -> not ( is_ann f &&  is_ann t)) ext_subst else ext_subst in
+              let _ = Debug.tinfo_hprint (add_str "ext_subst(bef filter out ann)" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) ext_subst pos in
+              let ext_subst = if (!Globals.allow_imm)||(!Globals.allow_field_ann) then List.filter (fun (f,t) -> not ( is_ann f &&  is_ann t)) ext_subst else ext_subst in (*andreeac why filter out anns?  *)
+              let ext_subst = ext_subst@ex_subst in
               let _ = Debug.tinfo_hprint (add_str "to_rhs(bef ann)" (Cprinter.string_of_pure_formula)) to_rhs pos in
               let _ = Debug.tinfo_hprint (add_str "to_lhs(bef ann)" (Cprinter.string_of_pure_formula)) to_lhs pos in
               let _ = Debug.tinfo_hprint (add_str "ext_subst(bef ann)" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) ext_subst pos in

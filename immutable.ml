@@ -579,32 +579,45 @@ and subtype_ann_pair (imm1 : ann) (imm2 : ann) : bool * ((CP.exp * CP.exp) optio
     | TempAnn t1 -> (subtype_ann_pair (ConstAnn(Accs)) imm2) 
           
 
-and subtype_ann_gen_x impl_vars (imm1 : ann) (imm2 : ann) : bool * (CP.formula option) * (CP.formula option) =
+and subtype_ann_gen_x impl_vars evars (imm1 : ann) (imm2 : ann) : bool * (CP.formula option) * (CP.formula option) * (CP.spec_var list* CP.spec_var list)=
   let (f,op) = subtype_ann_pair imm1 imm2 in
   match op with
-    | None -> (f,None,None)
+    | None -> (f,None,None, ([], []))
     | Some (l,r) -> 
-          let c = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in
+          let to_rhs = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in
           (* implicit instantiation of @v made stronger into an equality *)
           (* two examples in ann1.slk fail otherwise; unsound when we have *)
           (* multiple implicit being instantiated ; use explicit if needed *)
-          let lhs = CP.BForm ((CP.Eq(l,r,no_pos),None), None) in
+          let to_lhs = CP.BForm ((CP.Eq(l,r,no_pos),None), None) in
           (* let lhs = c in *)
           begin
             match r with
               | CP.Var(v,_) -> 
                     (* implicit var annotation on rhs *)
-                    if CP.mem v impl_vars then (f,Some lhs,None)
-                    else (f,None,Some c)
-              | _ -> (f,None,Some c)
+                    if CP.mem v impl_vars then (f,Some to_lhs,None, ([], []))
+                    else if CP.mem v evars then 
+                      (* introduce a new var on lhs eqal to the const on  *)
+                      match l with
+                        | CP.AConst _ -> 
+                            (* add a fresh var on the lhs equal to the constant ann,
+                             * and add the fresh var and the lhs var to subst var list *)
+                            let fresh_var = CP.fresh_spec_var v in
+                            let fresh_var_exp = CP.Var(fresh_var, no_pos) in
+                            let to_lhs = CP.BForm ((CP.Eq(fresh_var_exp,l,no_pos),None), None) in
+                            (f, Some to_lhs, None, ([v], [fresh_var]))
+                        | CP.Var(vleft, _) -> 
+                            (f,None, None, ([v], [vleft]))
+                    else (f,None,Some to_rhs, ([], []))
+              | _ -> (f,None,Some to_rhs, ([], []) )
           end
 
-and subtype_ann_gen impl_vars (imm1 : ann) (imm2 : ann) : bool * (CP.formula option) * (CP.formula option) =
+and subtype_ann_gen impl_vars evars (imm1 : ann) (imm2 : ann) : bool * (CP.formula option) * (CP.formula option) * (CP.spec_var list * CP.spec_var list) =
   let pr1 = !CP.print_svl in
   let pr2 = pr_no in
   let pr2a = pr_option !CP.print_formula in
-  let pr3 = pr_triple string_of_bool pr2a pr2a in
-  Debug.no_3 "subtype_ann_gen" pr1 pr2 pr2  pr3 subtype_ann_gen_x impl_vars (imm1 : ann) (imm2 : ann) 
+  let prlst =  (pr_pair (pr_list Cprinter.string_of_spec_var) (pr_list Cprinter.string_of_spec_var)) in
+  let pr3 = pr_quad string_of_bool pr2a pr2a prlst in
+  Debug.no_4 "subtype_ann_gen" pr1 pr1 pr2 pr2 pr3 subtype_ann_gen_x impl_vars evars (imm1 : ann) (imm2 : ann) 
 
 and mkAndOpt (old_f: CP.formula option) (to_add: CP.formula option): CP.formula option =
   match (old_f, to_add) with
@@ -613,18 +626,18 @@ and mkAndOpt (old_f: CP.formula option) (to_add: CP.formula option): CP.formula 
     | (None, Some f)     -> Some f 
     | (Some f1, Some f2) -> Some (CP.mkAnd f1 f2 no_pos)
 
-and subtype_ann_list impl_vars (ann1 : ann list) (ann2 : ann list) : bool * (CP.formula option list) * (CP.formula option list) =
+and subtype_ann_list impl_vars evars (ann1 : ann list) (ann2 : ann list) : bool * (CP.formula option list) * (CP.formula option list) * (CP.spec_var list * CP.spec_var list)=
   match (ann1, ann2) with
-    | ([], [])         -> (true, [], [])
+    | ([], [])         -> (true, [], [], ([],[]))
     | (a1::[], a2::[]) -> 
-          let (r, f1, f2) = subtype_ann_gen impl_vars a1 a2 in
-          (r, [f1], [f2])
+          let (r, f1, f2, subs) = subtype_ann_gen impl_vars evars a1 a2 in
+          (r, [f1], [f2], subs)
     | (a1::t1, a2::t2) -> 
-          let (r, ann_lhs_new, ann_rhs_new) = subtype_ann_gen impl_vars a1 a2 in
-          let (res, ann_lhs, ann_rhs) = subtype_ann_list impl_vars t1 t2 in
-          (r&&res, ann_lhs_new::ann_lhs, ann_rhs_new::ann_rhs)
+          let (r, ann_lhs_new, ann_rhs_new, (subs_new_f, subs_new_t)) = subtype_ann_gen impl_vars evars a1 a2 in
+          let (res, ann_lhs, ann_rhs, (subs_f, subs_t)) = subtype_ann_list impl_vars evars t1 t2 in
+          (r&&res, ann_lhs_new::ann_lhs, ann_rhs_new::ann_rhs, (subs_new_f@subs_f, subs_new_t@subs_t))
               (* (r&&res, mkAndOpt ann_lhs ann_lhs_new, mkAndOpt ann_rhs ann_rhs_new) *)
-    | _ ->      (false, [], [])                        (* different lengths *)
+    | _ ->      (false, [], [],([], []))                        (* different lengths *)
 
 and param_ann_equals_node_ann (ann_lst : ann list) (node_ann: ann): bool =
   List.fold_left (fun res x -> res && (CF.eq_ann x node_ann)) true ann_lst

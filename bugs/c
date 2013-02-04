@@ -2,22 +2,22 @@ Starting Omega...oc
 
 !!!:0: 0: 
 run_entail_check:
- ### iante0 = IFORM:(emp ; (emp ; (x::node<a@M>@M[HeapNode1])))*(true)( FLOW __norm)
- ### iconseq0 = IFORMStruc:EBase: [][](emp ; (emp ; (x::node<a@A>@M[HeapNode1])))*(true)( FLOW __norm) 
+ ### iante0 = IFORM:(emp ; (emp ; (x::node<a>@M[HeapNode1])))*(true)( FLOW __norm)
+ ### iconseq0 = IFORMStruc:EBase: [][](EX w . (emp ; (emp ; (x::node<w>@M[HeapNode1])))*(w = a)( FLOW __norm)) 
 
 
 !!!:0: 0: 
 run_entail_check:
  ### ivars = []
  ### ante =  x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
- ### conseq =  EBase EXISTS(a_14: x::node<a_14@A>@M[Orig]&@M<:@A & a=a_14&
+ ### conseq =  EBase EXISTS(w_14: x::node<w_14@M>@M[Orig]&@M<:@M & a=w_14&
        {FLOW,(19,20)=__norm})[]
 
 
 !!!:0: 0: 
 run_entail_check: after normalization
  ### ante =  x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
- ### conseq =  EBase EXISTS(a_14: x::node<a_14@A>@M[Orig]&@M<:@A & a=a_14&
+ ### conseq =  EBase EXISTS(w_14: x::node<w_14@M>@M[Orig]&@M<:@M & a=w_14&
        {FLOW,(19,20)=__norm})[]
 
 
@@ -37,7 +37,7 @@ Good Context: [es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
                es_unsat_flag: true]
 
 conseq:
- EBase EXISTS(a_14: x::node<a_14@A>@M[Orig]&@M<:@A & a=a_14&
+ EBase EXISTS(w_14: x::node<w_14@M>@M[Orig]&@M<:@M & a=w_14&
        {FLOW,(19,20)=__norm})[]
 !!!:0: 0: heap_entail_one_context_struc:
 ctx:
@@ -51,7 +51,7 @@ ctx:
  es_term_err: None
  es_unsat_flag: true
 conseq:
- EBase EXISTS(a_14: x::node<a_14@A>@M[Orig]&@M<:@A & a=a_14&
+ EBase EXISTS(w_14: x::node<w_14@M>@M[Orig]&@M<:@M & a=w_14&
        {FLOW,(19,20)=__norm})[]
 !!!:0: 0: heap_entail_after_sat_struc: invoking heap_entail_conjunct_lhs_struc
 tid:None
@@ -67,7 +67,7 @@ context:
  es_term_err: None
  es_unsat_flag: true
 conseq:
- EBase EXISTS(a_14: x::node<a_14@A>@M[Orig]&@M<:@A & a=a_14&
+ EBase EXISTS(w_14: x::node<w_14@M>@M[Orig]&@M<:@M & a=w_14&
        {FLOW,(19,20)=__norm})[]
 !!!:0: 0: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
 context:
@@ -81,40 +81,13 @@ context:
  es_term_err: None
  es_unsat_flag: true
 conseq:
- EXISTS(a_14: x::node<a_14@A>@M[Orig]&@M<:@A & a=a_14&
+ EXISTS(w_14: x::node<w_14@M>@M[Orig]&@M<:@M & a=w_14&
 {FLOW,(19,20)=__norm})[]
-@1!:0: 0: process_action :
+!!!:0: 0: process_action :
  ### action =  NothingToDo: No duplicated nodes!
  ### estate =  x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
- ### conseq =  EXISTS(a_14: x::node<a_14@A>@M[Orig]&@M<:@A & a=a_14&
+ ### conseq =  EXISTS(w_14: x::node<w_14@M>@M[Orig]&@M<:@M & a=w_14&
 {FLOW,(19,20)=__norm})[]
-
-
-process_action@1
-process_action inp1 :0
-process_action inp2 : NothingToDo: No duplicated nodes!
-process_action inp3 : es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
- es_pure: true
- es_orig_ante: None
- es_heap: emp
- es_aux_conseq: true
- es_must_error: None
- es_var_measures: None
- es_term_err: None
- es_unsat_flag: true
-process_action inp4 : EXISTS(a_14: x::node<a_14@A>@M[Orig]&@M<:@A & a=a_14&
-{FLOW,(19,20)=__norm})[]
-process_action inp5 : emp&true&{FLOW,(1,22)=__flow}[]
-process_action inp6 : emp&true&{FLOW,(1,22)=__flow}[]
-process_action@1 EXIT out :
-ctx length:0 
- Context: 
-MaybeErr Context: 
-                   fe_kind: MAY
-                   fe_name: separation entailment
-                   fe_locs: {
-                             fc_message: No duplicated nodes!
-                             fc_current_lhs_flow: {FLOW,(19,20)=__norm}}
 
 
 !!!:0: 0: heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases
@@ -131,259 +104,206 @@ ante:
  es_term_err: None
  es_unsat_flag: true
 conseq:
- EXISTS(a_14: x::node<a_14@A>@M[Orig]&@M<:@A & a=a_14&
+ EXISTS(w_14: x::node<w_14@M>@M[Orig]&@M<:@M & a=w_14&
 {FLOW,(19,20)=__norm})[]
-!!!ann-bugs1a.slk:30: 28: heap_entail_split_rhs_phases: 
+!!!ann-sleek04.slk:51: 26: heap_entail_split_rhs_phases: 
                             
 ante:
  es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
  es_heap: emp
- es_evars: [a_17]
+ es_evars: [w_17]
  es_aux_conseq: true
  es_must_error: None
  es_var_measures: None
  es_term_err: None
  es_unsat_flag: true
 conseq:
- x::node<a_17@A>@M[Orig]&@M<:@A & a=a_17&{FLOW,(19,20)=__norm}[]
-!!!ann-bugs1a.slk:30: 28: heap_entail_split_lhs_phases: 
+ x::node<w_17@M>@M[Orig]&@M<:@M & a=w_17&{FLOW,(19,20)=__norm}[]
+!!!ann-sleek04.slk:51: 26: heap_entail_split_lhs_phases: 
 ante:
  es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
  es_heap: emp
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
  es_aux_conseq: true
  es_must_error: None
  es_var_measures: None
  es_term_err: None
  es_unsat_flag: true
 conseq:
- x::node<a_17@A>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
-!!!ann-bugs1a.slk:30: 28: heap_entail_conjunct:
+ x::node<w_17@M>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+!!!ann-sleek04.slk:51: 26: heap_entail_conjunct:
 context:
  es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
  es_heap: emp
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
  es_aux_conseq: true
  es_must_error: None
  es_var_measures: None
  es_term_err: None
  es_unsat_flag: false
 conseq:
- x::node<a_17@A>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
-!!!ann-bugs1a.slk:30: 28: heap_entail_conjunct_helper:
+ x::node<w_17@M>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+!!!ann-sleek04.slk:51: 26: heap_entail_conjunct_helper:
 context:
  es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
  es_heap: emp
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
  es_aux_conseq: true
  es_must_error: None
  es_var_measures: None
  es_term_err: None
  es_unsat_flag: false
 conseq:
- x::node<a_17@A>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
-!!!ann-bugs1a.slk:30: 28: heap_entail_conjunct_helper: conseq has an non-empty heap component
+ x::node<w_17@M>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+!!!ann-sleek04.slk:51: 26: heap_entail_conjunct_helper: conseq has an non-empty heap component
 context:
  es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
  es_heap: emp
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
  es_aux_conseq: true
  es_must_error: None
  es_var_measures: None
  es_term_err: None
  es_unsat_flag: false
 conseq:
- x::node<a_17@A>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
-!!!ann-bugs1a.slk:30: 28: heap_entail_conjunct_non_empty_rhs_heap:
+ x::node<w_17@M>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+!!!ann-sleek04.slk:51: 26: heap_entail_conjunct_non_empty_rhs_heap:
 context:
  es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
  es_heap: emp
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
  es_aux_conseq: true
  es_must_error: None
  es_var_measures: None
  es_term_err: None
  es_unsat_flag: false
 conseq:
- x::node<a_17@A>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
-replace_list_ann@5@4@3@2
-replace_list_ann inp1 :[@M, ]; 
-replace_list_ann inp2 :[@A, ]; 
-replace_list_ann@5 EXIT out :[@M, ]; 
-
-update_ann@4@3@2
-update_ann inp1 : x::node<a@M>@M[Orig]
-update_ann inp2 :[@M, ]; 
-update_ann inp3 :[@A, ]; 
-update_ann@4 EXIT out : x::node<a@M>@M[Orig]
-
-spatial_context_extract @3@2
-spatial_context_extract  inp1 : x::node<a@M>@M[Orig]
-spatial_context_extract  inp2 :@M
-spatial_context_extract  inp3 :[x]
-spatial_context_extract  inp4 : x::node<a_17@A>@M[Orig]
-spatial_context_extract @3 EXIT out :[ 
-  Type: Root
-  LHS: x::node<a@M>@M[Orig]
-  RHS: x::node<a_17@A>@M[Orig]
- lhs_rest: x::node<a@M>@M[Orig]
- rhs_rest: emp]
-
-choose_context@2
-choose_context inp1 :LHS node: x::node<a@M>@M[Orig]
-choose_context inp2 :RHS node: x::node<a_17@A>@M[Orig]
-choose_context inp3 :LHS pure: @M<:@M
-choose_context inp4 :RHS pure: true
-choose_context inp5 :right aliase:[(a_17,a)]
-choose_context@2 EXIT out :[ 
-  Type: Root
-  LHS: x::node<a@M>@M[Orig]
-  RHS: x::node<a_17@A>@M[Orig]
- lhs_rest: x::node<a@M>@M[Orig]
- rhs_rest: emp]
-
-@7!ann-bugs1a.slk:30: 28: process_action :
+ x::node<w_17@M>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+!!!ann-sleek04.slk:51: 26: process_action :
  ### action =  
   Type: Root
   LHS: x::node<a@M>@M[Orig]
-  RHS: x::node<a_17@A>@M[Orig]
- lhs_rest: x::node<a@M>@M[Orig]
+  RHS: x::node<w_17@M>@M[Orig]
+ lhs_rest: x::node<a@A>@M[Orig]
  rhs_rest: emp=>Match
  ### estate =  x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
- ### conseq =  x::node<a_17@A>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
+ ### conseq =  x::node<w_17@M>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
 
 
-@7! new_estate(M_match): es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
+@1!ann-sleek04.slk:51: 26: do_match: using  x::node<a@M>@M[Orig] to prove  x::node<w_17@M>@M[Orig]
+@1!ann-sleek04.slk:51: 26: do_match: source LHS:  es_formula: x::node<a@A>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
  es_heap: emp
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
  es_aux_conseq: true
  es_must_error: None
  es_var_measures: None
  es_term_err: None
  es_trace:  SEARCH ==>  Match ==> 
  es_unsat_flag: false
-@8!ann-bugs1a.slk:30: 28: do_match: using  x::node<a@M>@M[Orig] to prove  x::node<a_17@A>@M[Orig]
-@8!ann-bugs1a.slk:30: 28: do_match: source LHS:  es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
+@1!ann-sleek04.slk:51: 26: do_match: source RHS:  emp&true&{FLOW,(19,20)=__norm}[]
+@1! add_to_lhs:None
+@1! add_to_rhs:None
+@1! param_ann_lhs:[None]
+@1! param_ann_rhs:[None]
+@1! view_param_ann_lhs:None
+@1! view_param_ann_rhs:None
+@1! ann_lhs:None
+@1! ann_rhs:None
+@1! Imm annotation mismatch:false
+@1! l_h: x::node<a@A>@M[Orig]
+@1! estate: es_formula: x::node<a@A>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
  es_heap: emp
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
  es_aux_conseq: true
  es_must_error: None
  es_var_measures: None
  es_term_err: None
  es_trace:  SEARCH ==>  Match ==> 
  es_unsat_flag: false
-@8!ann-bugs1a.slk:30: 28: do_match: source RHS:  emp&true&{FLOW,(19,20)=__norm}[]
-@8! add_to_lhs:None
-@8! add_to_rhs:None
-@8! param_ann_lhs:[None]
-@8! param_ann_rhs:[None]
-@8! view_param_ann_lhs:None
-@8! view_param_ann_rhs:None
-@8! ann_lhs:None
-@8! ann_rhs:None
-@8! Imm annotation mismatch:false
-@8! l_h: x::node<a@M>@M[Orig]
-@8! estate: es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
+@1! r_h: emp
+@1! new_l_args:[#]
+@1! new_r_args:[#]
+@1! new_l_holes:[0]
+@1! new_r_holes:[0]
+@1! rem_l_node: emp
+@1! rem_r_node: emp
+@1! new_l_args:[a]
+@1! new_r_args:[w_17]
+@1! l_param_ann:[@M]
+@1! r_param_ann:[@M]
+@1! to_rhs(bef ann): true
+@1! to_lhs(bef ann): true
+@1! ext_subst(bef ann):[(w_17,a)]
+@1! to_rhs: true
+@1! to_lhs: true
+@1! new_ante_p: @M<:@M
+@1! new_conseq_p: true
+@1! l_h: x::node<a@A>@M[Orig]
+@1! tmp_conseq: emp&true&{FLOW,(19,20)=__norm}[]
+@1! tmp_conseq': emp&true&{FLOW,(19,20)=__norm}[]
+@1! l_node inside consumed_h: x::node<a@M>@M[Orig]
+@1! r_ann:@M
+@1! consumed_h: x::node<a@M>@M[Orig]
+@1! new_consumed: x::node<a@M>@M[Orig]
+@1! new_ante: x::node<a@A>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
+@1! new_conseq: emp&true&{FLOW,(19,20)=__norm}[]
+@1! new_es: es_formula: x::node<a@A>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
- es_heap: emp
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
+ es_heap: x::node<a@M>@M[Orig]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
  es_aux_conseq: true
  es_must_error: None
  es_var_measures: None
  es_term_err: None
  es_trace:  SEARCH ==>  Match ==> 
  es_unsat_flag: false
-@8! r_h: emp
-@8! new_l_args:[#]
-@8! new_r_args:[#]
-@8! new_l_holes:[0]
-@8! new_r_holes:[0]
-@8! rem_l_node: emp
-@8! rem_r_node: emp
-@8! new_l_args:[a]
-@8! new_r_args:[a_17]
-@8! l_param_ann:[@M]
-@8! r_param_ann:[@A]
-@8! to_rhs(bef ann): true
-@8! to_lhs(bef ann): true
-@8! ext_subst(bef ann):[(a_17,a)]
-@8! to_rhs: true
-@8! to_lhs: true
-@8! new_ante_p: @M<:@M
-@8! new_conseq_p: true
-@8! l_h: x::node<a@M>@M[Orig]
-@8! tmp_conseq: emp&true&{FLOW,(19,20)=__norm}[]
-@8! tmp_conseq': emp&true&{FLOW,(19,20)=__norm}[]
-@8! l_node inside consumed_h: x::node<a@M>@M[Orig]
-consumed_list_ann@9@8@7@6
-consumed_list_ann inp1 :[@M, ]; 
-consumed_list_ann inp2 :[@A, ]; 
-consumed_list_ann@9 EXIT out :[@A, ]; 
-
-@8! r_ann:@M
-@8! consumed_h: x::node<a@A>@M[Orig]
-@8! new_consumed: x::node<a@A>@M[Orig]
-@8! new_ante: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
-@8! new_conseq: emp&true&{FLOW,(19,20)=__norm}[]
-@8! new_es: es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
+@1!ann-sleek04.slk:51: 26: do_match (after): LHS:  es_formula: x::node<a@A>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
- es_heap: x::node<a@A>@M[Orig]
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
+ es_heap: x::node<a@M>@M[Orig]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
  es_aux_conseq: true
  es_must_error: None
  es_var_measures: None
  es_term_err: None
  es_trace:  SEARCH ==>  Match ==> 
  es_unsat_flag: false
-@8!ann-bugs1a.slk:30: 28: do_match (after): LHS:  es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
- es_pure: true
- es_orig_ante: None
- es_heap: x::node<a@A>@M[Orig]
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
- es_aux_conseq: true
- es_must_error: None
- es_var_measures: None
- es_term_err: None
- es_trace:  SEARCH ==>  Match ==> 
- es_unsat_flag: false
-@8!ann-bugs1a.slk:30: 28: do_match (after): RHS: emp&true&{FLOW,(19,20)=__norm}[]
-@8!ann-bugs1a.slk:30: 28: heap_entail_split_rhs: 
+@1!ann-sleek04.slk:51: 26: do_match (after): RHS: emp&true&{FLOW,(19,20)=__norm}[]
+@1!ann-sleek04.slk:51: 26: heap_entail_split_rhs: 
                             
 ante:
- es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
+ es_formula: x::node<a@A>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
- es_heap: x::node<a@A>@M[Orig]
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
+ es_heap: x::node<a@M>@M[Orig]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
  es_aux_conseq: true
  es_must_error: None
  es_var_measures: None
@@ -392,14 +312,14 @@ ante:
  es_unsat_flag: false
 conseq:
  emp&true&{FLOW,(19,20)=__norm}[]
-!!!ann-bugs1a.slk:30: 28: heap_entail_conjunct:
+!!!ann-sleek04.slk:51: 26: heap_entail_conjunct:
 context:
- es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
+ es_formula: x::node<a@A>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
- es_heap: x::node<a@A>@M[Orig]
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
+ es_heap: x::node<a@M>@M[Orig]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
  es_aux_conseq: true
  es_must_error: None
  es_var_measures: None
@@ -408,14 +328,14 @@ context:
  es_unsat_flag: false
 conseq:
  emp&true&{FLOW,(19,20)=__norm}[]
-!!!ann-bugs1a.slk:30: 28: heap_entail_conjunct_helper:
+!!!ann-sleek04.slk:51: 26: heap_entail_conjunct_helper:
 context:
- es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
+ es_formula: x::node<a@A>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
- es_heap: x::node<a@A>@M[Orig]
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
+ es_heap: x::node<a@M>@M[Orig]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
  es_aux_conseq: true
  es_must_error: None
  es_var_measures: None
@@ -424,14 +344,14 @@ context:
  es_unsat_flag: false
 conseq:
  emp&true&{FLOW,(19,20)=__norm}[]
-!!!ann-bugs1a.slk:30: 28: heap_entail_conjunct_helper: conseq has an empty heap component
+!!!ann-sleek04.slk:51: 26: heap_entail_conjunct_helper: conseq has an empty heap component
 context:
- es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
+ es_formula: x::node<a@A>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
- es_heap: x::node<a@A>@M[Orig]
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
+ es_heap: x::node<a@M>@M[Orig]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
  es_aux_conseq: true
  es_must_error: None
  es_var_measures: None
@@ -440,50 +360,50 @@ context:
  es_unsat_flag: false
 conseq:
  emp&true&{FLOW,(19,20)=__norm}[]
-!!!ann-bugs1a.slk:30: 28: heap_entail_empty_heap: ctx:
- es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
+!!!ann-sleek04.slk:51: 26: heap_entail_empty_heap: ctx:
+ es_formula: x::node<a@A>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
- es_heap: x::node<a@A>@M[Orig]
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
+ es_heap: x::node<a@M>@M[Orig]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
  es_aux_conseq: true
  es_must_error: None
  es_var_measures: None
  es_term_err: None
  es_trace:  SEARCH ==>  Match ==> 
  es_unsat_flag: false
-!!!ann-bugs1a.slk:30: 28: heap_entail_empty_heap: rhs:
+!!!ann-sleek04.slk:51: 26: heap_entail_empty_heap: rhs:
  true
-!!!ann-bugs1a.slk:30: 28: rhs_p : : true
-!!!ann-bugs1a.slk:30: 28: conseq0 : : true
-!!!ann-bugs1a.slk:30: 28: >>>>>> entail_empty_heap: cp1 <<<<<<
-!!!ann-bugs1a.slk:30: 28: ante0 : : @M<:@M & x!=null & x!=null
-!!!ann-bugs1a.slk:30: 28: ante1 : : @M<:@M & x!=null & x!=null
-!!!ann-bugs1a.slk:30: 28: conseq : : true
-!!!ann-bugs1a.slk:30: 28: heap_entail_empty_heap: formula is valid
-!!!ann-bugs1a.slk:30: 28: heap_entail_empty_heap: res_ctx:
- es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
+!!!ann-sleek04.slk:51: 26: rhs_p : : true
+!!!ann-sleek04.slk:51: 26: conseq0 : : true
+!!!ann-sleek04.slk:51: 26: >>>>>> entail_empty_heap: cp1 <<<<<<
+!!!ann-sleek04.slk:51: 26: ante0 : : @M<:@M & x!=null & x!=null
+!!!ann-sleek04.slk:51: 26: ante1 : : @M<:@M & x!=null & x!=null
+!!!ann-sleek04.slk:51: 26: conseq : : true
+!!!ann-sleek04.slk:51: 26: heap_entail_empty_heap: formula is valid
+!!!ann-sleek04.slk:51: 26: heap_entail_empty_heap: res_ctx:
+ es_formula: x::node<a@A>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
- es_heap: x::node<a@A>@M[Orig]
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
+ es_heap: x::node<a@M>@M[Orig]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
  es_aux_conseq: true
  es_must_error: None
  es_var_measures: None
  es_term_err: None
  es_trace:  SEARCH ==>  Match ==> 
  es_unsat_flag: false
-do_match@8@7@6
+do_match@1
 do_match inp1 : x::node<a@M>@M[Orig]
-do_match inp2 : x::node<a_17@A>@M[Orig]
-do_match inp3 : es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
+do_match inp2 : x::node<w_17@M>@M[Orig]
+do_match inp3 : es_formula: x::node<a@A>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
  es_heap: emp
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
  es_aux_conseq: true
  es_must_error: None
  es_var_measures: None
@@ -492,14 +412,14 @@ do_match inp3 : es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_unsat_flag: false
 do_match inp4 : emp&true&{FLOW,(19,20)=__norm}[]
 do_match inp5 :[]
-do_match@8 EXIT out : 
-Good Context: [es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
+do_match@1 EXIT out : 
+Good Context: [es_formula: x::node<a@A>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
                es_pure: true
                es_orig_ante: None
-               es_heap: x::node<a@A>@M[Orig]
-               es_evars: [a_17]
-               es_rhs_eqset: [(a_17,a)]
-               es_subst (from): [a_17]
+               es_heap: x::node<a@M>@M[Orig]
+               es_evars: [w_17]
+               es_rhs_eqset: [(w_17,a)]
+               es_subst (from): [w_17]
                es_subst (to): [a]
                es_aux_conseq: true
                es_must_error: None
@@ -509,94 +429,15 @@ Good Context: [es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
                es_unsat_flag: false]
 
 
-process_action@7@6
-process_action inp1 :14
-process_action inp2 : 
-  LHS: x::node<a@M>@M[Orig]
-  RHS: x::node<a_17@A>@M[Orig]=>Match
-process_action inp3 : es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
- es_pure: true
- es_orig_ante: None
- es_heap: emp
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
- es_aux_conseq: true
- es_must_error: None
- es_var_measures: None
- es_term_err: None
- es_trace:  SEARCH ==> 
- es_unsat_flag: false
-process_action inp4 : x::node<a_17@A>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
-process_action inp5 : x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
-process_action inp6 : x::node<a_17@A>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
-process_action@7 EXIT out :
-ctx length:1 
- Context: 
-Good Context: [es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
-               es_pure: true
-               es_orig_ante: None
-               es_heap: x::node<a@A>@M[Orig]
-               es_evars: [a_17]
-               es_rhs_eqset: [(a_17,a)]
-               es_subst (from): [a_17]
-               es_subst (to): [a]
-               es_aux_conseq: true
-               es_must_error: None
-               es_var_measures: None
-               es_term_err: None
-               es_trace:  SEARCH ==>  Match ==> 
-               es_unsat_flag: false]
-
-
-process_action@6
-process_action inp1 :1
-process_action inp2 : =>SEARCH:[
-  Prio:1
-         LHS: x::node<a@M>@M[Orig]
-         RHS: x::node<a_17@A>@M[Orig]=>Match
-  ]
-process_action inp3 : es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
- es_pure: true
- es_orig_ante: None
- es_heap: emp
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
- es_aux_conseq: true
- es_must_error: None
- es_var_measures: None
- es_term_err: None
- es_unsat_flag: false
-process_action inp4 : x::node<a_17@A>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
-process_action inp5 : x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
-process_action inp6 : x::node<a_17@A>@M[Orig]&true&{FLOW,(19,20)=__norm}[]
-process_action@6 EXIT out :
-ctx length:1 
- Context: 
-Good Context: [es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
-               es_pure: true
-               es_orig_ante: None
-               es_heap: x::node<a@A>@M[Orig]
-               es_evars: [a_17]
-               es_rhs_eqset: [(a_17,a)]
-               es_subst (from): [a_17]
-               es_subst (to): [a]
-               es_aux_conseq: true
-               es_must_error: None
-               es_var_measures: None
-               es_term_err: None
-               es_trace:  SEARCH ==>  Match ==> 
-               es_unsat_flag: false]
-
-
-!!!ann-bugs1a.slk:30: 28: heap_entail_conjunct:
+!!!ann-sleek04.slk:51: 26: heap_entail_conjunct:
 context:
- es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
+ es_formula: x::node<a@A>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
- es_heap: x::node<a@A>@M[Orig]
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
- es_subst (from): [a_17]
+ es_heap: x::node<a@M>@M[Orig]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
+ es_subst (from): [w_17]
  es_subst (to): [a]
  es_aux_conseq: true
  es_must_error: None
@@ -605,16 +446,16 @@ context:
  es_trace:  SEARCH ==>  Match ==> 
  es_unsat_flag: false
 conseq:
- emp&@M<:@A & a=a&{FLOW,(19,20)=__norm}[]
-!!!ann-bugs1a.slk:30: 28: heap_entail_conjunct_helper:
+ emp&@M<:@M & a=a&{FLOW,(19,20)=__norm}[]
+!!!ann-sleek04.slk:51: 26: heap_entail_conjunct_helper:
 context:
- es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
+ es_formula: x::node<a@A>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
- es_heap: x::node<a@A>@M[Orig]
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
- es_subst (from): [a_17]
+ es_heap: x::node<a@M>@M[Orig]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
+ es_subst (from): [w_17]
  es_subst (to): [a]
  es_aux_conseq: true
  es_must_error: None
@@ -623,16 +464,16 @@ context:
  es_trace:  SEARCH ==>  Match ==> 
  es_unsat_flag: false
 conseq:
- emp&@M<:@A & a=a&{FLOW,(19,20)=__norm}[]
-!!!ann-bugs1a.slk:30: 28: heap_entail_conjunct_helper: conseq has an empty heap component
+ emp&@M<:@M & a=a&{FLOW,(19,20)=__norm}[]
+!!!ann-sleek04.slk:51: 26: heap_entail_conjunct_helper: conseq has an empty heap component
 context:
- es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
+ es_formula: x::node<a@A>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
- es_heap: x::node<a@A>@M[Orig]
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
- es_subst (from): [a_17]
+ es_heap: x::node<a@M>@M[Orig]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
+ es_subst (from): [w_17]
  es_subst (to): [a]
  es_aux_conseq: true
  es_must_error: None
@@ -641,15 +482,15 @@ context:
  es_trace:  SEARCH ==>  Match ==> 
  es_unsat_flag: false
 conseq:
- emp&@M<:@A & a=a&{FLOW,(19,20)=__norm}[]
-!!!ann-bugs1a.slk:30: 28: heap_entail_empty_heap: ctx:
- es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
+ emp&@M<:@M & a=a&{FLOW,(19,20)=__norm}[]
+!!!ann-sleek04.slk:51: 26: heap_entail_empty_heap: ctx:
+ es_formula: x::node<a@A>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
- es_heap: x::node<a@A>@M[Orig]
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
- es_subst (from): [a_17]
+ es_heap: x::node<a@M>@M[Orig]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
+ es_subst (from): [w_17]
  es_subst (to): [a]
  es_aux_conseq: true
  es_must_error: None
@@ -657,29 +498,29 @@ conseq:
  es_term_err: None
  es_trace:  SEARCH ==>  Match ==> 
  es_unsat_flag: false
-!!!ann-bugs1a.slk:30: 28: heap_entail_empty_heap: rhs:
- @M<:@A & a=a
-!!!ann-bugs1a.slk:30: 28: rhs_p : : @M<:@A & a=a
-!!!ann-bugs1a.slk:30: 28: conseq0 : : @M<:@A & a=a
-!!!ann-bugs1a.slk:30: 28: >>>>>> entail_empty_heap: cp1 <<<<<<
-!!!ann-bugs1a.slk:30: 28: ante0 : : @M<:@M & x!=null & x!=null
-!!!ann-bugs1a.slk:30: 28: ante1 : : @M<:@M & x!=null & x!=null
-!!!ann-bugs1a.slk:30: 28: conseq : : @M<:@A & a=a
+!!!ann-sleek04.slk:51: 26: heap_entail_empty_heap: rhs:
+ @M<:@M & a=a
+!!!ann-sleek04.slk:51: 26: rhs_p : : @M<:@M & a=a
+!!!ann-sleek04.slk:51: 26: conseq0 : : @M<:@M & a=a
+!!!ann-sleek04.slk:51: 26: >>>>>> entail_empty_heap: cp1 <<<<<<
+!!!ann-sleek04.slk:51: 26: ante0 : : @M<:@M & x!=null & x!=null
+!!!ann-sleek04.slk:51: 26: ante1 : : @M<:@M & x!=null & x!=null
+!!!ann-sleek04.slk:51: 26: conseq : : @M<:@M & a=a
 !!!:0: 0: IMP #2
 !!!:0: 0: >>>>>> imply_mix_formula: pure <<<<<<
 !!!:0: 0: ante: :[ @M<:@M & x!=null & x!=null]
-!!!:0: 0: coseq : : @M<:@A
+!!!:0: 0: coseq : : @M<:@M
 !!!:0: 0: h : : @M<:@M & x!=null & x!=null
 !!!:0: 0: IMP #2
 !!!:0: 0: imply_timeout: ante:  @M<:@M & x!=null & x!=null
-!!!:0: 0: imply_timeout: conseq:  @M<:@A
+!!!:0: 0: imply_timeout: conseq:  @M<:@M
 !!!:0: 0: ante 1: : @M<:@M & x!=null & x!=null
 !!!:0: 0: ante 3: : @M<:@M & x!=null & x!=null
 !!!:0: 0: ante 4: : @M<:@M & x!=null
 !!!:0: 0: res: :true
 !!!:0: 0: res : :true
 !!!:0: 0: ante: :[]
-!!!:0: 0: coseq : : @M<:@A
+!!!:0: 0: coseq : : @M<:@M
 !!!:0: 0: ante: :[ @M<:@M & x!=null & x!=null]
 !!!:0: 0: coseq : : a=a
 !!!:0: 0: h : : @M<:@M & x!=null & x!=null
@@ -693,15 +534,15 @@ conseq:
 !!!:0: 0: res : :true
 !!!:0: 0: ante: :[]
 !!!:0: 0: coseq : : a=a
-!!!ann-bugs1a.slk:30: 28: heap_entail_empty_heap: formula is valid
-!!!ann-bugs1a.slk:30: 28: heap_entail_empty_heap: res_ctx:
- es_formula: x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
+!!!ann-sleek04.slk:51: 26: heap_entail_empty_heap: formula is valid
+!!!ann-sleek04.slk:51: 26: heap_entail_empty_heap: res_ctx:
+ es_formula: x::node<a@A>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
  es_pure: true
  es_orig_ante: None
- es_heap: x::node<a@A>@M[Orig]
- es_evars: [a_17]
- es_rhs_eqset: [(a_17,a)]
- es_subst (from): [a_17]
+ es_heap: x::node<a@M>@M[Orig]
+ es_evars: [w_17]
+ es_rhs_eqset: [(w_17,a)]
+ es_subst (from): [w_17]
  es_subst (to): [a]
  es_aux_conseq: true
  es_must_error: None
@@ -711,7 +552,7 @@ conseq:
  es_unsat_flag: false
 Entail (1) : Valid. 
 
- <1>x::node<a@M>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
+ <1>x::node<a@A>@M[Orig]&@M<:@M&{FLOW,(19,20)=__norm}[]
 
 Stop Omega... 3 invocations 
 SAT Count   : 1
