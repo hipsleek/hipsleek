@@ -24,4 +24,20 @@ void delete(node2 x)
 PROBLEM : inferred H1(..) is too strong..
 ==================================================
 
+# sll-del.ss: 
+
+HP_590 and HP_598 are the same but our normalization system did not
+merge them.
+
+[ H1(x_589) ::= x_589::node2<val_26_520',next_26_521'>@M * 
+next_26_521'::node2<val_26_523',next_26_587>@M * HP_590(next_26_587)&true,
+ G1(x_597) ::= x_597::node2<val_26_548,next_28_528'>@M * HP_598(next_28_528')&true,
+ HP_590(next_26_587) ::= 
+ emp&next_26_587=null
+ or next_26_587::node2<val_26_523',next_26_588>@M * HP_590(next_26_588)&true
+ ,
+ HP_598(next_28_528') ::= 
+ emp&next_28_528'=null
+ or next_28_528'::node2<val_26_548,next_28_599>@M * HP_598(next_28_599)&true
+ ]
 
