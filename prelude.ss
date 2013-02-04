@@ -353,7 +353,7 @@ item cast_to_ptr(RS_mem p)
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
 
-
+/*
 data memory {
   int size;
 }
@@ -361,15 +361,11 @@ data memory {
 memory malloc(int size)
   requires size>0
   ensures  res=null or res::memory<size>;
+*/
 
-data item {
-  item next;
-}
+pred_prim RS_mem<i:int>
+ inv i>0 & self!=null;
 
-item cast_to_ptr(memory p)
-  case {
-    p=null -> ensures res=null;
-    p!=null -> 
-      requires p::memory<a> & a>=1
-      ensures res::item<_>;
-  }
+RS_mem malloc1(int n)
+ requires n>0
+ ensures  res=null or res::RS_mem<n>;

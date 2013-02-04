@@ -8,6 +8,9 @@ open Exc.GTable
 
 (* TRUNG: use stack to store type and variables *)
 
+(* intermediate casting procs generated during the translation *)
+let tbl_cast_procs : (Globals.typ, Iast.proc_decl) Hashtbl.t = Hashtbl.create 10
+
 (* hash table contains Globals.typ structures that are used to represent Cil.typ pointers *)
 let gl_pointers_type : (Cil.typ, Globals.typ) Hashtbl.t = Hashtbl.create 10
 
@@ -143,21 +146,9 @@ let merge_iast_exp (es: Iast.exp list) : Iast.exp =
       ) hd tl
 
 
+(* get type *)
 let typ_of_cil_lval (lv: Cil.lval) : Cil.typ =
-  let lhost, offset, _ = lv in
-  match (lhost, offset) with
-  | Cil.Var (v, _), Cil.NoOffset -> v.Cil.vtype;
-  | Cil.Var _, Cil.Field _ ->
-      report_error_msg "typ_of_cil_lval: handle (Cil.Var, Cil.Field) later!"
-  | Cil.Var _, Cil.Index _ ->
-      report_error_msg "typ_of_cil_lval: handle (Cil.Var, Cil.Index) later!"
-  | Cil.Mem _, Cil.NoOffset ->
-      report_error_msg "typ_of_cil_lval: handle (Cil.Mem, Cil.NoOffset) later!"
-  | Cil.Mem _, Cil.Field _ ->
-      report_error_msg "typ_of_cil_lval: handle (Cil.Mem, Cil.Field) later!"
-  | Cil.Mem _, Cil.Index _ ->
-      report_error_msg "typ_of_cil_lval: handle (Cil.Mem, Cil.Index) later!"
-
+  Cil.typeOfLval lv
 
 let rec is_global_cil_exp (e: Cil.exp) : bool =
   match e with
@@ -346,42 +337,61 @@ let travel_file (file: Cil.file) : unit =
 (* ---------------------------------------- *)
 
 
-let create_memory_cast_function (output_typ: Globals.typ) : Iast.proc_decl =
-  let name = "cast_" ^ (Globals.string_of_typ "memory") 
-             ^ "_to_" ^ (Globals.string_of_typ output) in
-  let param = {
-    Iast.param_type = output_typ;
-    Iast.param_name = "typ";
-    Iast.param_mod = Iast.NoMod;
-    Iast.param_loc = no_pos;
-  } in
-  let static_specs = (
-    let case1 = 
-    let struc_case_f = {
-      Iformula.formula_case_branches = 
-      Iformula.formula_case_pos = no_pos;
-    } in
-    Iformula.ECase struc_case_f
-  ) in
-  let proc_decl = {
-    Iast.proc_name = name;
-    Iast.proc_mingled_name = "";         (* TRUNG: check later *)
-    Iast.proc_data_decl = None;
-    Iast.proc_source = "";               (* TRUNG: check later *)
-    Iast.proc_constructor = false;
-    Iast.proc_args = [param];
-    Iast.proc_return = output_typ;
-    Iast.proc_static_specs = static_specs;
-    Iast.proc_dynamic_specs = Iformula.mkEFalseF ();
-    Iast.proc_exceptions = [];
-    Iast.proc_body = None;
-    Iast.proc_is_main = false;
-    Iast.proc_file = "intermediate-translation";
-    Iast.proc_loc = no_pos;
-    Iast.proc_test_comps = None;
-  } in
-  proc_decl
+(* let create_memory_cast_function (output_typ: Globals.typ) : Iast.proc_decl = *)
+(*   let name = "cast_" ^ (Globals.string_of_typ "memory")                      *)
+(*              ^ "_to_" ^ (Globals.string_of_typ output) in                    *)
+(*   let param = {                                                              *)
+(*     Iast.param_type = output_typ;                                            *)
+(*     Iast.param_name = "typ";                                                 *)
+(*     Iast.param_mod = Iast.NoMod;                                             *)
+(*     Iast.param_loc = no_pos;                                                 *)
+(*   } in                                                                       *)
+(*   let static_specs = (                                                       *)
+(*     let case1 =                                                              *)
+(*     let struc_case_f = {                                                     *)
+(*       Iformula.formula_case_branches =                                       *)
+(*       Iformula.formula_case_pos = no_pos;                                    *)
+(*     } in                                                                     *)
+(*     Iformula.ECase struc_case_f                                              *)
+(*   ) in                                                                       *)
+(*   let proc_decl = {                                                          *)
+(*     Iast.proc_name = name;                                                   *)
+(*     Iast.proc_mingled_name = "";         (* TRUNG: check later *)            *)
+(*     Iast.proc_data_decl = None;                                              *)
+(*     Iast.proc_source = "";               (* TRUNG: check later *)            *)
+(*     Iast.proc_constructor = false;                                           *)
+(*     Iast.proc_args = [param];                                                *)
+(*     Iast.proc_return = output_typ;                                           *)
+(*     Iast.proc_static_specs = static_specs;                                   *)
+(*     Iast.proc_dynamic_specs = Iformula.mkEFalseF ();                         *)
+(*     Iast.proc_exceptions = [];                                               *)
+(*     Iast.proc_body = None;                                                   *)
+(*     Iast.proc_is_main = false;                                               *)
+(*     Iast.proc_file = "intermediate-translation";                             *)
+(*     Iast.proc_loc = no_pos;                                                  *)
+(*     Iast.proc_test_comps = None;                                             *)
+(*   } in                                                                       *)
+(*   proc_decl                                                                  *)
 
+let create_memory_cast_proc (output_typ: Globals.typ) : Iast.proc_decl =
+  try
+    Hashtbl.find tbl_cast_procs output_typ
+  with Not_found -> (
+    let sout = Globals.string_of_typ output_typ in
+    let sname = "cast_memory_to_" ^ sout in
+    let sproc = 
+      sout ^ " " ^ sname ^ "(memory p) \n" ^
+      "  case { \n" ^
+      "    p =  null -> ensures res = null; \n" ^
+      "    p != null -> requires p::memory<size> & size >= 1 \n" ^
+      "                 ensures res::" ^ sout ^ "<_>; \n" ^
+      "  }\n" in
+    let proc = Parser.parse_proc_string sproc "intermediate_proc" in
+    (* update *)
+    Hashtbl.add tbl_cast_procs output_typ proc;
+    (* return *)
+    proc
+  )
 
 let translate_location (loc: Cil.location) : Globals.loc =
   let cilsp = loc.Cil.start_pos in
@@ -794,26 +804,40 @@ let translate_instr (instr: Cil.instr) : Iast.exp =
           | Cil.AddrOf _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.AddrOf!" 
           | Cil.StartOf _ -> report_error_msg "Error!!! translate_intstr: cannot handle Cil.StartOf!" in
         let args = List.map (fun x -> translate_exp x) exps in
-        let call_exp = Iast.CallNRecv {Iast.exp_call_nrecv_method = fname;
-                                       Iast.exp_call_nrecv_lock = None;
-                                       Iast.exp_call_nrecv_arguments = args;
-                                       Iast.exp_call_nrecv_path_id = None;
-                                       Iast.exp_call_nrecv_pos = pos} in
+        let callee = Iast.CallNRecv {Iast.exp_call_nrecv_method = fname;
+                                     Iast.exp_call_nrecv_lock = None;
+                                     Iast.exp_call_nrecv_arguments = args;
+                                     Iast.exp_call_nrecv_path_id = None;
+                                     Iast.exp_call_nrecv_pos = pos} in
         match lv_opt with
-        | None -> call_exp;
+        | None -> callee;
         | Some lv -> (
             let le = translate_lval lv in
+            let _ = print_endline ("== le = " ^ (Iprinter.string_of_exp le)) in
             let re = (
               (* if the callee is "malloc, alloc...", then we need to cast *)
               (* its type to the target's type *)
               match fname with
-              | "malloc" -> 
-              | _ -> call_exp
+              | "malloc" -> (
+                  (* let new_typ = translate_typ (typ_of_cil_lval lv) in                          *)
+                  (* let _ = print_endline ("== new_typ = " ^ (Globals.string_of_typ new_typ)) in *)
+                  (* let cast_proc = create_memory_cast_proc new_typ in                           *)
+                  (* let casted_callee =                                                          *)
+                  (*   Iast.CallNRecv {                                                           *)
+                  (*     Iast.exp_call_nrecv_method = cast_proc.Iast.proc_name;                   *)
+                  (*     Iast.exp_call_nrecv_lock = None;                                         *)
+                  (*     Iast.exp_call_nrecv_arguments = [callee];                                *)
+                  (*     Iast.exp_call_nrecv_path_id = None;                                      *)
+                  (*     Iast.exp_call_nrecv_pos = pos                                            *)
+                  (*   } in                                                                       *)
+                  (* casted_callee                                                                *)
+                  callee
+                )
+              | _ -> callee
             ) in
             let lv_loc = Cil.get_lvalLoc lv in
             let asgn_loc = Cil.makeLoc (Cil.startPos lv_loc) (Cil.endPos l) in
             let asgn_pos = translate_location asgn_loc in
-            let _ = print_endline ("== call_exp = " ^ (Iprinter.string_of_exp call_exp)) in
             Iast.Assign {Iast.exp_assign_op = Iast.OpAssign;
                          Iast.exp_assign_lhs = le;
                          Iast.exp_assign_rhs = re;

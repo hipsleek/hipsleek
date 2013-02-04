@@ -581,6 +581,7 @@ let rec get_heap_ann annl : F.ann =
 				   
 let sprog = SHGram.Entry.mk "sprog" 
 let hprog = SHGram.Entry.mk "hprog"
+let hproc = SHGram.Entry.mk "hproc"
 let sprog_int = SHGram.Entry.mk "sprog_int"
 let opt_spec_list_file = SHGram.Entry.mk "opt_spec_list_file"
 let opt_spec_list = SHGram.Entry.mk "opt_spec_list"
@@ -588,10 +589,11 @@ let statement = SHGram.Entry.mk "statement"
 let cp_file = SHGram.Entry.mk "cp_file" 
 
 EXTEND SHGram
-  GLOBAL: sprog hprog sprog_int opt_spec_list_file opt_spec_list statement cp_file;
+  GLOBAL: sprog hprog hproc sprog_int opt_spec_list_file opt_spec_list statement cp_file;
   sprog:[[ t = command_list; `EOF -> t ]];
   sprog_int:[[ t = command; `EOF -> t ]];
   hprog:[[ t = hprogn; `EOF ->  t ]];
+  hproc:[[ t = proc_decl; `EOF -> t]];
   cp_file:[[ t = cp_list; `EOF ->  t ]];
   
 macro: [[`PMACRO; n=id; `EQEQ ; tc=tree_const -> if !Globals.perm=(Globals.Dperm) then Hashtbl.add !macros n tc else  report_error (get_pos 1) ("distinct share reasoning not enabled")]];
@@ -2435,6 +2437,9 @@ let parse_hip_string n s =
   let pr x = x in
   let pr_no x = "?" in DD.no_2 "parse_hip_string" pr pr pr_no parse_hip_string n s
 
+let parse_proc_string n s =
+  SHGram.parse_string hproc (PreCast.Loc.mk n) s
+
 let parse_specs_list s =
   SHGram.parse_string opt_spec_list_file (PreCast.Loc.mk "spec string") s
 
@@ -2461,4 +2466,5 @@ let parse_statement (fname: string) (s: string) (begin_offset: file_offset) =
   res
 
 let parse_spec s = SHGram.parse_string opt_spec_list_file (PreCast.Loc.mk "spec string") s
+
 let parse_cpfile n s = SHGram.parse cp_file (PreCast.Loc.mk n) s
