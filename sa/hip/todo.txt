@@ -25,3 +25,8 @@ PROBLEM : inferred H1(..) is too strong..
 ==================================================
 # dll-del.ss: DONE
 
+==================================================
+# bubble.ss
+
+todo: to fix bug of infer.simplify
+

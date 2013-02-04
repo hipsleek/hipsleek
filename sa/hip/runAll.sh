@@ -92,8 +92,12 @@ echo "ll-empty"
 ../../hip ll-empty.ss -cp-test cp/ll-empty.cp | grep Compare
 echo "ll-size"
 ../../hip ll-size.ss -cp-test cp/ll-size.cp | grep Compare
+echo "ll-insert"
+../../hip ll-insert.ss -cp-test cp/ll-insert.cp | grep Compare
 echo "sll-del"
 ../../hip sll-del.ss -cp-test cp/sll-del.cp | grep Compare
+echo "ll-create"
+../../hip ll-create.ss -cp-test cp/ll-create.cp | grep Compare
 echo "dll-del"
 ../../hip dll-del.ss --sa-dangling --sa-inlining -cp-test cp/dll-del.cp | grep Compare
 echo "ll-size1 -cp-test"
