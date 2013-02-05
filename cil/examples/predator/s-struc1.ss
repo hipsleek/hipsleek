@@ -2,7 +2,8 @@
 //#include <stdlib.h>
 
 data memory {
-  int size;
+  void data;
+  //memory next;
 }
  
 data item {
@@ -11,17 +12,15 @@ data item {
 }
  
 memory malloc(int size)
-  requires size>0
-  ensures  res=null or res::memory<size>;
-{
-}
+  case {
+    size <= 0 -> requires true ensures res =  null;
+    size >  0 -> requires true ensures res != null;
+  }
 
 item cast_to_ptr(memory p)
   case {
-    p=null -> ensures res=null;
-    p!=null -> 
-      requires p::memory<size> & size>=1
-      ensures res::item<_,_>;
+    p =  null -> ensures res =  null;
+    p != null -> ensures res::item<_,_>;
   }
 
 item foo ()
@@ -29,8 +28,8 @@ item foo ()
   ensures res::item<_,_>;
 {
   item ptr;
-  ptr = /*@ (item) */ cast_to_ptr(malloc(1));
-  if (ptr==null) {
+  ptr = cast_to_ptr(malloc(1));
+  if (ptr == null) {
     assume false;
   }
   return ptr;   

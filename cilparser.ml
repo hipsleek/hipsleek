@@ -9,7 +9,7 @@ open Exc.GTable
 (* TRUNG: use stack to store type and variables *)
 
 (* intermediate casting procs generated during the translation *)
-let tbl_cast_procs : (Globals.typ, Iast.proc_decl) Hashtbl.t = Hashtbl.create 10
+let tbl_cast_procs : (Globals.typ * Globals.typ, Iast.proc_decl) Hashtbl.t = Hashtbl.create 10
 
 (* hash table contains Globals.typ structures that are used to represent Cil.typ pointers *)
 let gl_pointers_type : (Cil.typ, Globals.typ) Hashtbl.t = Hashtbl.create 10
@@ -149,6 +149,9 @@ let merge_iast_exp (es: Iast.exp list) : Iast.exp =
 (* get type *)
 let typ_of_cil_lval (lv: Cil.lval) : Cil.typ =
   Cil.typeOfLval lv
+
+let typ_of_cil_exp (e: Cil.exp) : Cil.typ =
+  Cil.typeOf e
 
 let rec is_global_cil_exp (e: Cil.exp) : bool =
   match e with
@@ -373,25 +376,34 @@ let travel_file (file: Cil.file) : unit =
 (*   } in                                                                       *)
 (*   proc_decl                                                                  *)
 
-let create_memory_cast_proc (output_typ: Globals.typ) : Iast.proc_decl =
-  try
-    Hashtbl.find tbl_cast_procs output_typ
-  with Not_found -> (
-    let sout = Globals.string_of_typ output_typ in
-    let sname = "cast_memory_to_" ^ sout in
-    let sproc = 
-      sout ^ " " ^ sname ^ "(memory p) \n" ^
-      "  case { \n" ^
-      "    p =  null -> ensures res = null; \n" ^
-      "    p != null -> requires p::memory<size> & size >= 1 \n" ^
-      "                 ensures res::" ^ sout ^ "<_>; \n" ^
-      "  }\n" in
-    let proc = Parser.parse_proc_string sproc "intermediate_proc" in
-    (* update *)
-    Hashtbl.add tbl_cast_procs output_typ proc;
-    (* return *)
-    proc
-  )
+let create_data_cast_proc (input_typ: Globals.typ) (output_typ: Globals.typ) 
+                          : Iast.proc_decl option =
+  match input_typ, output_typ with
+  | Globals.Named input_typ_name, Globals.Named output_typ_name -> (
+      try
+        Some (Hashtbl.find tbl_cast_procs (input_typ, output_typ))
+      with Not_found -> (
+        let proc_name = "cast_" ^ input_typ_name ^ "_to_" ^ output_typ_name in
+        (* let output_typ_param = ( *)
+        (*   let s =                *)
+        (*     match output         *)
+        (*   List. ()               *)
+        (* )                        *)
+        let cast_proc = ( 
+          output_typ_name ^ " " ^ proc_name ^ " (" ^ input_typ_name ^ " param)\n" ^
+          "  case { \n" ^
+          "    param =  null -> requires true ensures res = null; \n" ^
+          "    param != null -> requires true ensures res::" ^ output_typ_name ^ "<_>; \n" ^
+          "  }\n" 
+        ) in
+        let proc_decl = Parser.parse_proc_string cast_proc "intermediate_proc" in
+        (* update *)
+        Hashtbl.add tbl_cast_procs (input_typ, output_typ) proc_decl;
+        (* return *)
+        Some proc_decl
+      )
+    )
+  | _, _ -> None
 
 let translate_location (loc: Cil.location) : Globals.loc =
   let cilsp = loc.Cil.start_pos in
@@ -432,7 +444,7 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
             let ftype = translate_typ ty in
             let fname = gl_pointer_data_name in
             let pointer_data = {Iast.data_name = pointer_name;
-                                Iast.data_fields = [((ftype, fname), no_pos, true)];
+                                Iast.data_fields = [((ftype, fname), no_pos, false)];
                                 Iast.data_parent_name = "Object";
                                 Iast.data_invs = [];
                                 Iast.data_is_template = false;
@@ -508,7 +520,7 @@ let translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option)
   match field.Cil.ftype with
   | Cil.TComp (comp, _) ->
       let ty = Globals.Named comp.Cil.cname in
-      ((ty, name), pos, true)
+      ((ty, name), pos, false)
   | Cil.TPtr (Cil.TComp (comp, _), _) ->
       let ty = Globals.Named comp.Cil.cname in
       ((ty, name), pos, false)
@@ -692,12 +704,28 @@ and translate_exp (e: Cil.exp) : Iast.exp =
                               Iast.exp_cond_pos = pos} in
       newexp
   | Cil.CastE (ty, exp, l) ->
-      let t = translate_typ ty in
-      let e = translate_exp exp in
       let pos = translate_location l in
-      let newexp = Iast.Cast {Iast.exp_cast_target_type = t;
-                              Iast.exp_cast_body = e;
-                              Iast.exp_cast_pos = pos} in
+      let cast_typ = translate_typ ty in
+      let input_exp = translate_exp exp in
+      let input_typ = translate_typ (typ_of_cil_exp exp) in
+      let cast_proc = create_data_cast_proc input_typ cast_typ in
+      let newexp = ( 
+        match cast_proc with
+        | None -> (
+            Iast.Cast {Iast.exp_cast_target_type = cast_typ;
+                       Iast.exp_cast_body = input_exp;
+                       Iast.exp_cast_pos = pos}
+          )
+        | Some proc -> (
+            Iast.CallNRecv {
+              Iast.exp_call_nrecv_method = proc.Iast.proc_name;
+              Iast.exp_call_nrecv_lock = None;
+              Iast.exp_call_nrecv_arguments = [input_exp];
+              Iast.exp_call_nrecv_path_id = None;
+              Iast.exp_call_nrecv_pos = pos
+            }
+          )
+      ) in
       newexp
   | Cil.AddrOf (lval, l) ->
       (* create a new Iast.data_decl that has 1 inline field is lval *)
@@ -726,7 +754,7 @@ and translate_exp (e: Cil.exp) : Iast.exp =
               let ftype = translate_typ ty in
               let fname = gl_pointer_data_name in
               let pointer_data = {Iast.data_name = pointer_name;
-                                  Iast.data_fields = [((ftype, fname), no_pos, true)];
+                                  Iast.data_fields = [((ftype, fname), no_pos, false)];
                                   Iast.data_parent_name = "Object";
                                   Iast.data_invs = [];
                                   Iast.data_is_template = false;
@@ -813,7 +841,6 @@ let translate_instr (instr: Cil.instr) : Iast.exp =
         | None -> callee;
         | Some lv -> (
             let le = translate_lval lv in
-            let _ = print_endline ("== le = " ^ (Iprinter.string_of_exp le)) in
             let re = (
               (* if the callee is "malloc, alloc...", then we need to cast *)
               (* its type to the target's type *)

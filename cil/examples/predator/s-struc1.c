@@ -5,10 +5,13 @@ typedef struct item_t {
   struct item_t *next;
 } Item ;
 
+
 void* malloc(int size) __attribute__ ((noreturn))
 /*@
-  requires size > 0
-  ensures res != null;
+  case {
+    size <= 0 -> requires true ensures res = null;
+    size >  0 -> requires true ensures res != null;
+  }
 */;
 
 

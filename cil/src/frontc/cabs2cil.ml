@@ -2650,7 +2650,6 @@ and doAttr (a: A.attribute) : attribute list =
                         (a: A.expression) : attrparam =
         match a with
         | A.VARIABLE (n, l) -> begin
-            let _ = print_endline (" == n 1 = " ^ n ^ " -- loc = " ^ (Cprint.string_of_loc l)) in
             let n' = if strip then stripUnderscore n else n in
             (** See if this is an enumeration *)
             try

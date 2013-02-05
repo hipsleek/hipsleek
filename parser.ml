@@ -1421,7 +1421,8 @@ typ:
     | t=non_array_type -> (* An Hoa *) (* let _ = print_endline "Parsed a non-array type" in *) t]];
 
 non_array_type:
-  [[ `INT                -> int_type
+  [[ `VOID               -> void_type
+   | `INT                -> int_type
    | `FLOAT              -> float_type 
    | `BOOL               -> bool_type
    | `BAG                -> bag_type
