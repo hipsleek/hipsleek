@@ -465,7 +465,7 @@ let rec analize_unk_one prog unk_hps constr =
   let svl = SAU.get_raw_defined_w_pure prog constr.CF.predef_svl lhs1 rhs1 in
   (*return*)
   let unk_hp_locs,unk_hp_args_locs = List.split (List.map (build_hp_unk_locs (svl) unk_hps CP.mem_svl) (lhrels@rhrels)) in
-  (List.concat  unk_hp_locs, List.concat unk_hp_args_locs)
+  (List.concat unk_hp_locs, List.concat unk_hp_args_locs)
 
 
 and double_check_unk unk_hp_locs unk_hps cs_hprels=
@@ -543,10 +543,10 @@ and analize_unk prog hp_rel_unkmap constrs =
      Gen.BList.remove_dups_eq (fun (hp1,_,_) (hp2,_,_) -> CP.eq_spec_var hp1 hp2) full_unk_hp_args2_locs)
   in
   let unk_hps = List.map fst hp_rel_unkmap in
-  let ls_unk_cands,ls_full_unk_cands_w_args = List.split (List.map (analize_unk_one prog  unk_hps) constrs) in
+  let ls_unk_cands,ls_full_unk_cands_w_args = List.split (List.map (analize_unk_one prog unk_hps) constrs) in
   let unk_hp_args01,_ = helper (ls_unk_cands,ls_full_unk_cands_w_args) in
   (*for debugging*)
-  let _ = Debug.ninfo_pprint ("  unks 1: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
+  let _ = Debug.info_pprint ("  unks 1: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
                                              in pr unk_hp_args01)) no_pos
   in
   (*END for debugging*)
@@ -576,7 +576,7 @@ and analize_unk prog hp_rel_unkmap constrs =
    in
    let equivs0 = List.map gen_equivs_from_full_unk_hps full_unk_hp_args2_locs in
   (*for debugging*)
-   let _ = Debug.ninfo_pprint ("  unks 2: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
+   let _ = Debug.info_pprint ("  unks 2: " ^ (let pr = pr_list (pr_pair !CP.print_sv (pr_list string_of_int))
                                               in pr unk_hp_args02)) no_pos
    in
    (* let pr1 =  pr_list_ln (pr_pair (pr_pair !CP.print_sv (pr_list string_of_int)) *)
@@ -3705,9 +3705,11 @@ let unify_branches_hpdef unk_hps hp_defs =
 
 let check_eq_hpdef_x unk_hpargs post_hps hp_defs =
   let unk_hps = List.map fst unk_hpargs in
+
+  (**************** internal methods**********************)
   let rec lookup_equiv_hpdef hpdefs hp args f=
     match hpdefs with
-      | [] -> f
+      | [] -> (f,[])
       | (a1,hrel1,f1)::tl ->
           let hp1,eargs1,p1 = CF.extract_HRel_orig hrel1 in
           let args1 = List.concat (List.map CP.afv eargs1) in
@@ -3719,19 +3721,51 @@ let check_eq_hpdef_x unk_hpargs post_hps hp_defs =
             let f10 = CF.subst ss f1 in
             let f11 = CF.subst_hprel f10 [hp1] hp in
             if SAU.checkeq_formula_list (CF.list_of_disjs f) (CF.list_of_disjs f11) then
+             (* if fst (CEQ.checkeq_formulas (List.map CP.name_of_spec_var args) f f11) then *)
               let new_f = SAU.mkHRel_f hp1 args p1 in
-              new_f
+              (new_f,[(hp,hp1)])
             else lookup_equiv_hpdef tl hp args f
   in
-  let process_one_hpdef all_hpdefs (a,hrel,f)=
+  let process_one_hpdef all_hpdefs post_hps (eq_pairs,r_hpdefs) (a,hrel,f)=
     let hp,args = CF.extract_HRel hrel in
     if not (CP.mem_svl hp post_hps) || CP.mem_svl hp unk_hps then
-      (a,hrel,f)
+      (eq_pairs,r_hpdefs@[(a,hrel,f)])
     else
-      let new_f = lookup_equiv_hpdef all_hpdefs hp args f in
-      (a,hrel,new_f)
+      let new_f,new_eq_pairs = lookup_equiv_hpdef all_hpdefs hp args f in
+      let new_f1 = List.fold_left (fun f (hp1,hp) -> CF.subst_hprel f [hp1] hp) new_f (eq_pairs) in
+      ((eq_pairs@new_eq_pairs),r_hpdefs@[(a,hrel,new_f1)])
   in
-  List.map (process_one_hpdef hp_defs) hp_defs
+  let get_post_hps_depend cur_depend (a,hrel,f)=
+    let hp,_ = CF.extract_HRel hrel in
+    if not (CP.mem_svl hp post_hps) || CP.mem_svl hp unk_hps then
+       cur_depend
+    else
+      let hps = CF.get_hp_rel_name_formula f in
+      let hps1 = CP.remove_dups_svl hps in
+      let dep_hps = List.filter (fun hp1 -> not ((CP.eq_spec_var hp hp1) ||
+                                                        (CP.mem_svl hp1 unk_hps))) hps1 in
+      (cur_depend@dep_hps)
+  in
+  let rec move_post_hps_depend hp_defs post_hps_depend res=
+    match hp_defs with
+      | [] -> res
+      | (a,hrel,f)::rest ->
+          let hp,_ = CF.extract_HRel hrel in
+    if not (CP.mem_svl hp post_hps_depend) then
+        move_post_hps_depend rest post_hps_depend (res@[(a,hrel,f)])
+    else
+      move_post_hps_depend rest post_hps_depend ((a,hrel,f)::res)
+  in
+  (****************END internal methods**********************)
+
+  let post_hps_depend = List.fold_left get_post_hps_depend [] hp_defs in
+  (* let _ = Debug.info_pprint ("     post_hps: " ^ (!CP.print_svl post_hps)) no_pos in *)
+  (* let _ = Debug.info_pprint ("     post_hps_depend: " ^ (!CP.print_svl post_hps_depend)) no_pos in *)
+  (*move post_hps_depend in the top: to be processed first*)
+  let hp_defs1 = move_post_hps_depend hp_defs post_hps_depend [] in
+  let _,res_hp_defs = List.fold_left (process_one_hpdef hp_defs (post_hps@post_hps_depend))
+    ([],[]) hp_defs1 in
+  res_hp_defs
 
 let check_eq_hpdef unk_hpargs post_hps hp_defs =
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in

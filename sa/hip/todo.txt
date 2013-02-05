@@ -31,7 +31,7 @@ PROBLEM : inferred H1(..) is too strong..
 todo: to fix bug of infer.simplify
 
 ==================================================
-# dll-del.ss:
+# dll-del.ss: DONE
 HP_590 and HP_598 are the same but our normalization system did not
 merge them.
 
