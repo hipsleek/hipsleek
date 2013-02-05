@@ -1404,7 +1404,7 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
         | [] -> None
         | hd::tl -> let ptr_args = List.filter CP.is_node_typ hd.CF.h_formula_data_arguments in
                     let ptr_args1 = SAU.look_up_closed_ptr_args prog lhs_hds lhs_hvs ptr_args in
-                    if (List.length svl = List.length ptr_args) && CP.diff_svl svl ptr_args1 = [] then
+                    if (List.length svl = List.length ptr_args1) && CP.diff_svl svl ptr_args1 = [] then
                       Some hd.CF.h_formula_data_node
                     else find_pt_new tl svl
     in

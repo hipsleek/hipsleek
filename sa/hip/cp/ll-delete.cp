@@ -17,7 +17,6 @@ ass [D,E][]:{
 hpdefs [D,E][]:{
   E(x,v) -->  HP_1(x) & v=null;
   HP_1(x) --> x=null or x::node<_,p>*HP_1(p);
-  HP_1a(x) --> x=null;
   D(x) --> x=null or x::node<_,p>*D(p)
 
  }

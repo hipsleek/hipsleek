@@ -50,7 +50,7 @@ echo "ll-next5"
 ../../hip ll-next5.ss --sa-dangling --sa-inlining -cp-test cp/ll-next5.cp | grep Compare
 echo "ll-next6"
 ../../hip ll-next6.ss --sa-dangling --sa-split --sa-inlining --sa-inlining -cp-test cp/ll-next6.cp | grep Compare
-echo "ll-delete"
+echo "ll-delete -cp-test has problem"
 ../../hip ll-delete.ss --sa-dangling --sa-inlining --sa-useless -cp-test cp/ll-delete.cp | grep Compare
 # echo "ll-delete2"
 # ../../hip ll-delete2.ss --sa-dangling --sa-inlining -cp-test cp/ll-delete2.cp | grep Compare

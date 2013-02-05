@@ -25,6 +25,6 @@ ass [H5,G1][]:{
 
 hpdefs [H5,G1][]:{
    H5(x) --> x!=null or x=null;
-   G1(x) --> H1(x)
+   G1(x) --> H5(x)
  }
 ]
