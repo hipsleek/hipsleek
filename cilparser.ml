@@ -1060,20 +1060,25 @@ let translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option)
   let static_specs = fundec.Cil.sspecs in
   let return = translate_funtyp (fheader.Cil.vtype) in
   let args = collect_params fheader in
-  let slocals = List.map translate_var_decl fundec.Cil.slocals in
-  let sbody = translate_block fundec.Cil.sbody in
-  (* collect intermediate information after translating body *) 
-  let supplement_local_vars = (
-    let vars = ref [] in
-    Hashtbl.iter (fun _ e -> vars := !vars @ [e]) lc_addressof_data;
-    !vars;
+  let funbody = (
+    match fundec.Cil.sbody.Cil.bstmts with
+    | [] -> None
+    | _ ->
+        let slocals = List.map translate_var_decl fundec.Cil.slocals in
+        let sbody = translate_block fundec.Cil.sbody in
+        (* collect intermediate information after translating body *) 
+        let supplement_local_vars = (
+          let vars = ref [] in
+          Hashtbl.iter (fun _ e -> vars := !vars @ [e]) lc_addressof_data;
+          !vars;
+        ) in
+        let blkbody = merge_iast_exp (slocals @ supplement_local_vars @ [sbody]) in
+        let blkpos = translate_location fundec.Cil.sbody.Cil.bloc in
+        Some (Iast.Block {Iast.exp_block_body = blkbody;
+                          Iast.exp_block_jump_label = Iast.NoJumpLabel;
+                          Iast.exp_block_local_vars = [];
+                          Iast.exp_block_pos = blkpos})
   ) in
-  let blkbody = merge_iast_exp (slocals @ supplement_local_vars @ [sbody]) in
-  let blkpos = translate_location fundec.Cil.sbody.Cil.bloc in
-  let funbody = Iast.Block {Iast.exp_block_body = blkbody;
-                            Iast.exp_block_jump_label = Iast.NoJumpLabel;
-                            Iast.exp_block_local_vars = [];
-                            Iast.exp_block_pos = blkpos} in
   let filename = pos.start_pos.Lexing.pos_fname in
   let newproc : Iast.proc_decl = {
     Iast.proc_name = name;
@@ -1086,7 +1091,7 @@ let translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option)
     Iast.proc_static_specs = static_specs;
     Iast.proc_dynamic_specs = Iformula.mkEFalseF ();
     Iast.proc_exceptions = [];
-    Iast.proc_body = Some funbody;
+    Iast.proc_body = funbody;
     Iast.proc_is_main = true;
     Iast.proc_file = filename;
     Iast.proc_loc = pos;

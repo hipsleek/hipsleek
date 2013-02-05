@@ -13,6 +13,8 @@ data item {
 memory malloc(int size)
   requires size>0
   ensures  res=null or res::memory<size>;
+{
+}
 
 item cast_to_ptr(memory p)
   case {
@@ -27,7 +29,7 @@ item foo ()
   ensures res::item<_,_>;
 {
   item ptr;
-  ptr = /*@ (item) */ malloc(1);
+  ptr = /*@ (item) */ cast_to_ptr(malloc(1));
   if (ptr==null) {
     assume false;
   }

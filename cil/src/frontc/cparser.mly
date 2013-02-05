@@ -1337,7 +1337,19 @@ function_def:  /* (* ISO 6.9.1 *) */
                                           let loc = makeLoc (startPos l1) (endPos (snd $3)) in
                                           currentFunctionName := "<__FUNCTION__ used outside any functions>";
                                           !Lexerhack.pop_context (); (* The context pushed by announceFunctionName *)
-                                           (doFunctionDef loc specs decl (fst $2) (fst $3), loc) }
+                                          (doFunctionDef loc specs decl (fst $2) (fst $3), loc) }
+| function_def_start hipspecs_opt SEMICOLON
+                                        { let _ = print_endline ("==== empty block") in
+                                          let (specs, decl, l1) = $1 in
+                                          let loc = makeLoc (startPos l1) (endPos $3) in
+                                          currentFunctionName := "<__FUNCTION__ used outside any functions>";
+                                          !Lexerhack.pop_context (); (* The context pushed by announceFunctionName *)
+                                          let emptyblock = {blabels = [];
+                                                            battrs  = [];
+                                                            bstmts  = [];
+                                                            bloc = $3} in
+                                          (doFunctionDef loc specs decl (fst $2) emptyblock, loc) }
+;
 
 function_def_start:  /* (* ISO 6.9.1 *) */
    decl_spec_list declarator            { announceFunctionName (fst $2);
