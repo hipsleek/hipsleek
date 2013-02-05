@@ -2,8 +2,8 @@
 //#include <stdlib.h>
 
 data memory {
-  void data;
-  //memory next;
+  int val;
+  memory next;
 }
  
 data item {
@@ -20,7 +20,7 @@ memory malloc(int size)
 item cast_to_ptr(memory p)
   case {
     p =  null -> ensures res =  null;
-    p != null -> ensures res::item<_,_>;
+    p != null -> ensures res::item<_>;
   }
 
 item foo ()

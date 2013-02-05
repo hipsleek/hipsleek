@@ -2,6 +2,7 @@
 //#include <stdlib.h>
 
 typedef struct item_t {
+  int val;
   struct item_t *next;
 } Item ;
 

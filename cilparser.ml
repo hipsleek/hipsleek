@@ -12,12 +12,10 @@ open Exc.GTable
 let tbl_cast_procs : (Globals.typ * Globals.typ, Iast.proc_decl) Hashtbl.t = Hashtbl.create 10
 
 (* hash table contains Globals.typ structures that are used to represent Cil.typ pointers *)
-let gl_pointers_type : (Cil.typ, Globals.typ) Hashtbl.t = Hashtbl.create 10
+let tbl_data_type : (Cil.typ, Globals.typ) Hashtbl.t = Hashtbl.create 10
 
 (* hash table contains Iast.data_decl structures that are used to represent pointer types *)
-let gl_pointers_data : (Cil.typ, Iast.data_decl) Hashtbl.t = Hashtbl.create 10
-
-let gl_pointer_data_name = "pdata"
+let tbl_data_decl : (Globals.typ, Iast.data_decl) Hashtbl.t = Hashtbl.create 10
 
 (* address of global vars *)
 let gl_addressof_data : (Cil.lval, Iast.exp) Hashtbl.t = Hashtbl.create 10
@@ -31,8 +29,8 @@ let supplement_exp : Iast.exp list ref = ref []
 
 (* reset all global vars for the next use *)
 let reset_global_vars () =
-  Hashtbl.clear gl_pointers_type;
-  Hashtbl.clear gl_pointers_data
+  Hashtbl.clear tbl_data_type;
+  Hashtbl.clear tbl_data_decl
 
 (* ---------------------------------------- *)
 (* string conversion functions for CIL      *)
@@ -376,7 +374,7 @@ let travel_file (file: Cil.file) : unit =
 (*   } in                                                                       *)
 (*   proc_decl                                                                  *)
 
-let create_data_cast_proc (input_typ: Globals.typ) (output_typ: Globals.typ) 
+let create_data_cast_proc (input_typ: Globals.typ) (output_typ: Globals.typ)
                           : Iast.proc_decl option =
   match input_typ, output_typ with
   | Globals.Named input_typ_name, Globals.Named output_typ_name -> (
@@ -384,19 +382,24 @@ let create_data_cast_proc (input_typ: Globals.typ) (output_typ: Globals.typ)
         Some (Hashtbl.find tbl_cast_procs (input_typ, output_typ))
       with Not_found -> (
         let proc_name = "cast_" ^ input_typ_name ^ "_to_" ^ output_typ_name in
-        (* let output_typ_param = ( *)
-        (*   let s =                *)
-        (*     match output         *)
-        (*   List. ()               *)
-        (* )                        *)
-        let cast_proc = ( 
+        let output_typ_param = ( 
+          let data_decl = (
+            try Hashtbl.find tbl_data_decl output_typ
+            with Not_found -> report_error_msg "Error: Unknown ouput_typ"
+          ) in
+          match data_decl.Iast.data_fields with
+          | []   -> report_error_msg "Error: Invalid data_decl fields"
+          | [hd] -> "<_>"
+          | hd::tl -> "<" ^ (List.fold_left (fun s _ -> s ^ ", _") "_" tl) ^ ">"
+        ) in
+        let cast_proc = (
           output_typ_name ^ " " ^ proc_name ^ " (" ^ input_typ_name ^ " param)\n" ^
           "  case { \n" ^
           "    param =  null -> requires true ensures res = null; \n" ^
-          "    param != null -> requires true ensures res::" ^ output_typ_name ^ "<_>; \n" ^
+          "    param != null -> requires true ensures res::" ^ output_typ_name ^ output_typ_param ^ "; \n" ^
           "  }\n" 
         ) in
-        let proc_decl = Parser.parse_proc_string cast_proc "intermediate_proc" in
+        let proc_decl = Parser.parse_proc_string "intermediate_proc" cast_proc in
         (* update *)
         Hashtbl.add tbl_cast_procs (input_typ, output_typ) proc_decl;
         (* return *)
@@ -433,25 +436,25 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
         (* create a new Globals.typ and a new Iast.data_decl to represent the pointer data structure *)
         let newt = (
           (* find if this pointer was handled before or not *)
-          try Hashtbl.find gl_pointers_type ty 
+          try Hashtbl.find tbl_data_type ty 
           with Not_found -> (
             (* create new Globals.typ and update to a hash table *)
-            let index = Hashtbl.length gl_pointers_type in
-            let pointer_name = "pointer_type_" ^ (string_of_int index) in
-            let pointer_type = Globals.Named pointer_name in
-            Hashtbl.add gl_pointers_type ty pointer_type;
+            let index = Hashtbl.length tbl_data_type in
+            let data_name = "pointer_type_" ^ (string_of_int index) in
+            let data_type = Globals.Named data_name in
+            Hashtbl.add tbl_data_type ty data_type;
             (* create new Iast.data_decl and update to a hash table *)
             let ftype = translate_typ ty in
-            let fname = gl_pointer_data_name in
-            let pointer_data = {Iast.data_name = pointer_name;
-                                Iast.data_fields = [((ftype, fname), no_pos, false)];
-                                Iast.data_parent_name = "Object";
-                                Iast.data_invs = [];
-                                Iast.data_is_template = false;
-                                Iast.data_methods = [];} in
-            Hashtbl.add gl_pointers_data t pointer_data;
+            let fname = "pdata" in
+            let data_decl = {Iast.data_name = data_name;
+                             Iast.data_fields = [((ftype, fname), no_pos, false)];
+                             Iast.data_parent_name = "Object";
+                             Iast.data_invs = [];
+                             Iast.data_is_template = false;
+                             Iast.data_methods = [];} in
+            Hashtbl.add tbl_data_decl data_type data_decl;
             (* return new type*)
-            pointer_type
+            data_type
           )
         ) in
         newt
@@ -588,7 +591,7 @@ let rec translate_lval (lv: Cil.lval) : Iast.exp =
   match pvar with
   | Some p -> (
       (* this lval was represented by a structure before, return this structure data *)
-      let fields = [gl_pointer_data_name] in
+      let fields = ["pdata"] in
       let newexp = Iast.Member {Iast.exp_member_base = p;
                                 Iast.exp_member_fields = fields;
                                 Iast.exp_member_path_id = None;
@@ -631,7 +634,7 @@ let rec translate_lval (lv: Cil.lval) : Iast.exp =
       | Cil.Mem e, Cil.NoOffset ->
           (* access to data in pointer variable *)
           let base = translate_exp e in
-          let fields = [gl_pointer_data_name] in
+          let fields = ["pdata"] in
           let newexp = Iast.Member {Iast.exp_member_base = base;
                                     Iast.exp_member_fields = fields;
                                     Iast.exp_member_path_id = None;
@@ -739,28 +742,28 @@ and translate_exp (e: Cil.exp) : Iast.exp =
           let pos = translate_location l in
           let (newty, tyname) = (
             try 
-              let t = Hashtbl.find gl_pointers_type ty in
+              let t = Hashtbl.find tbl_data_type ty in
               let n = match t with
                 | Globals.Named s -> s
                 | _ -> report_error_msg "Error!!! translate_exp: invalid type!" in
               (t, n)
             with Not_found -> (
               (* create new Globals.typ and update to a hash table *)
-              let index = Hashtbl.length gl_pointers_type in
-              let pointer_name = "pointer_type_" ^ (string_of_int index) in
-              let pointer_type = Globals.Named pointer_name in
-              Hashtbl.add gl_pointers_type ty pointer_type;
+              let index = Hashtbl.length tbl_data_type in
+              let data_name = "pointer_type_" ^ (string_of_int index) in
+              let data_type = Globals.Named data_name in
+              Hashtbl.add tbl_data_type ty data_type;
               (* create new Iast.data_decl and update to a hash table *)
               let ftype = translate_typ ty in
-              let fname = gl_pointer_data_name in
-              let pointer_data = {Iast.data_name = pointer_name;
-                                  Iast.data_fields = [((ftype, fname), no_pos, false)];
-                                  Iast.data_parent_name = "Object";
-                                  Iast.data_invs = [];
-                                  Iast.data_is_template = false;
-                                  Iast.data_methods = [];} in
-              Hashtbl.add gl_pointers_data ty pointer_data;
-              (pointer_type, pointer_name)
+              let fname = "pdata" in
+              let data_decl = {Iast.data_name = data_name;
+                               Iast.data_fields = [((ftype, fname), no_pos, false)];
+                               Iast.data_parent_name = "Object";
+                               Iast.data_invs = [];
+                               Iast.data_is_template = false;
+                               Iast.data_methods = [];} in
+              Hashtbl.add tbl_data_decl data_type data_decl;
+              (data_type, data_name)
             )
           ) in
           let lval_translated = translate_exp (Cil.Lval (lval, l)) in
@@ -1202,12 +1205,13 @@ let translate_file (file: Cil.file) : Iast.prog_decl =
                     Iast.data_is_template = false;
                     Iast.data_methods = []} in
   (* update some global settings *)
-  Hashtbl.iter (fun _ d -> data_decls := !data_decls @ [d]) gl_pointers_data;
-  Hashtbl.iter (fun _ v ->
-    match v with
-    | Iast.VarDecl d -> global_var_decls := !global_var_decls @ [d]
+  Hashtbl.iter (fun _ data -> data_decls := !data_decls @ [data]) tbl_data_decl;
+  Hashtbl.iter (fun _ var ->
+    match var with
+    | Iast.VarDecl vdecl -> global_var_decls := !global_var_decls @ [vdecl]
     | _ -> report_error_msg "Error!!! v has to be in form of (Iast.VarDecl _)."
   ) gl_addressof_data;
+  Hashtbl.iter (fun _ proc -> proc_decls := !proc_decls @ [proc]) tbl_cast_procs;
   let newprog : Iast.prog_decl = ({
     Iast.prog_data_decls = obj_def :: string_def :: !data_decls;
     Iast.prog_include_decls = []; (*WN : need to fill *)
