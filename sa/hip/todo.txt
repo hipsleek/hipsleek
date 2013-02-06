@@ -49,3 +49,24 @@ next_26_521'::node2<val_26_523',next_26_587>@M * HP_590(next_26_587)&true,
  or next_28_528'::node2<val_26_548,next_28_599>@M * HP_598(next_28_599)&true
  ]
 ==================================================
+# dll-del.ss
+
+The new dll-del uses two pointers and obtained the following.
+Below H1 * H2 are the same. However, H1 should have two nodes,
+due to x.next.next test;
+so I am surprised that it has suddenly lost a node.
+This did not happen for sll-del.ss.
+
+*************************************
+[ H1(x_642) ::= x_642::node2<val_26_533',prev_26_534',next_26_535'>@M * 
+  HP_643(prev_26_534',next_26_535') * HP_559(prev_26_534')&true,
+ G1(x_649) ::= x_649::node2<val_26_568,prev_26_569,next_28_544'>@M * 
+   HP_643(prev_26_569,next_28_544') * HP_559(prev_26_569)&true,
+
+ HP_643(prev_26_534',next_26_535') ::= 
+ emp&next_26_535'=null
+ or next_26_535'::node2<val_26_533',prev_26_644,next_26_645>@M * 
+    HP_643(prev_26_644,next_26_645) * HP_559(prev_26_644)&true
+ ]
+
+
