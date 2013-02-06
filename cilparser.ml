@@ -340,43 +340,6 @@ let travel_file (file: Cil.file) : unit =
 (* translation functions from Cil -> Iast   *)
 (* ---------------------------------------- *)
 
-
-(* let create_memory_cast_function (output_typ: Globals.typ) : Iast.proc_decl = *)
-(*   let name = "cast_" ^ (Globals.string_of_typ "memory")                      *)
-(*              ^ "_to_" ^ (Globals.string_of_typ output) in                    *)
-(*   let param = {                                                              *)
-(*     Iast.param_type = output_typ;                                            *)
-(*     Iast.param_name = "typ";                                                 *)
-(*     Iast.param_mod = Iast.NoMod;                                             *)
-(*     Iast.param_loc = no_pos;                                                 *)
-(*   } in                                                                       *)
-(*   let static_specs = (                                                       *)
-(*     let case1 =                                                              *)
-(*     let struc_case_f = {                                                     *)
-(*       Iformula.formula_case_branches =                                       *)
-(*       Iformula.formula_case_pos = no_pos;                                    *)
-(*     } in                                                                     *)
-(*     Iformula.ECase struc_case_f                                              *)
-(*   ) in                                                                       *)
-(*   let proc_decl = {                                                          *)
-(*     Iast.proc_name = name;                                                   *)
-(*     Iast.proc_mingled_name = "";         (* TRUNG: check later *)            *)
-(*     Iast.proc_data_decl = None;                                              *)
-(*     Iast.proc_source = "";               (* TRUNG: check later *)            *)
-(*     Iast.proc_constructor = false;                                           *)
-(*     Iast.proc_args = [param];                                                *)
-(*     Iast.proc_return = output_typ;                                           *)
-(*     Iast.proc_static_specs = static_specs;                                   *)
-(*     Iast.proc_dynamic_specs = Iformula.mkEFalseF ();                         *)
-(*     Iast.proc_exceptions = [];                                               *)
-(*     Iast.proc_body = None;                                                   *)
-(*     Iast.proc_is_main = false;                                               *)
-(*     Iast.proc_file = "intermediate-translation";                             *)
-(*     Iast.proc_loc = no_pos;                                                  *)
-(*     Iast.proc_test_comps = None;                                             *)
-(*   } in                                                                       *)
-(*   proc_decl                                                                  *)
-
 let create_data_cast_proc (input_typ: Globals.typ) (output_typ: Globals.typ)
                           : Iast.proc_decl option =
   match input_typ, output_typ with
@@ -450,6 +413,8 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
     | Cil.TFloat _ -> Globals.Float
     | Cil.TPtr (ty, _) ->
         (* create a new Globals.typ and a new Iast.data_decl to represent the pointer data structure *)
+        let _ = print_endline ("=== TPtr t = " ^ (string_of_cil_typ t)) in
+        let _ = print_endline ("=== TPtr ty = " ^ (string_of_cil_typ ty)) in
         let newt = (
           (* find if this pointer was handled before or not *)
           try Hashtbl.find tbl_data_type ty 

@@ -2,7 +2,8 @@
 //#include <stdlib.h>
 
 typedef struct item_t {
-     struct item_t *next;
+  int val;
+  struct item_t *next;
 } Item ;
 
 void* malloc(int size) __attribute__ ((noreturn))
@@ -16,12 +17,13 @@ void* malloc(int size) __attribute__ ((noreturn))
 
 Item* foo ()
 /*@
-   requires true
-   ensures res != null;
+  requires true
+  //ensures res::Item*<_>;
+  ensures res != null;
 */
 {
   Item* ptr;
-  ptr = malloc (sizeof *ptr);
+  ptr = malloc(sizeof *ptr);
   if (!ptr) {
     //@ assume false;
   }
