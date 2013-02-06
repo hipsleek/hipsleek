@@ -9,19 +9,22 @@ open Exc.GTable
 (* TRUNG: use stack to store type and variables *)
 
 (* intermediate casting procs generated during the translation *)
-let tbl_cast_procs : (Globals.typ * Globals.typ, Iast.proc_decl) Hashtbl.t = Hashtbl.create 10
+let tbl_cast_procs : (Globals.typ * Globals.typ, Iast.proc_decl) Hashtbl.t = Hashtbl.create 3
+
+(* intermediate negation procs generated during the translation *)
+let tbl_neg_procs : (Globals.typ, Iast.proc_decl) Hashtbl.t = Hashtbl.create 3
 
 (* hash table contains Globals.typ structures that are used to represent Cil.typ pointers *)
-let tbl_data_type : (Cil.typ, Globals.typ) Hashtbl.t = Hashtbl.create 10
+let tbl_data_type : (Cil.typ, Globals.typ) Hashtbl.t = Hashtbl.create 3
 
 (* hash table contains Iast.data_decl structures that are used to represent pointer types *)
-let tbl_data_decl : (Globals.typ, Iast.data_decl) Hashtbl.t = Hashtbl.create 10
+let tbl_data_decl : (Globals.typ, Iast.data_decl) Hashtbl.t = Hashtbl.create 3
 
 (* address of global vars *)
-let gl_addressof_data : (Cil.lval, Iast.exp) Hashtbl.t = Hashtbl.create 10
+let gl_addressof_data : (Cil.lval, Iast.exp) Hashtbl.t = Hashtbl.create 3
 
 (* address of local vars *)
-let lc_addressof_data : (Cil.lval, Iast.exp) Hashtbl.t = Hashtbl.create 10
+let lc_addressof_data : (Cil.lval, Iast.exp) Hashtbl.t = Hashtbl.create 3
 
 
 let supplement_exp : Iast.exp list ref = ref []
@@ -399,7 +402,7 @@ let create_data_cast_proc (input_typ: Globals.typ) (output_typ: Globals.typ)
           "    param != null -> requires true ensures res::" ^ output_typ_name ^ output_typ_param ^ "; \n" ^
           "  }\n" 
         ) in
-        let proc_decl = Parser.parse_proc_string "intermediate_proc" cast_proc in
+        let proc_decl = Parser.parse_proc_string "inter_cast_proc" cast_proc in
         (* update *)
         Hashtbl.add tbl_cast_procs (input_typ, output_typ) proc_decl;
         (* return *)
@@ -407,6 +410,19 @@ let create_data_cast_proc (input_typ: Globals.typ) (output_typ: Globals.typ)
       )
     )
   | _, _ -> None
+
+let create_negation_proc (input_typ: Globals.typ) : Iast.proc_decl =
+  match input_typ with
+  | Globals.Named input_typ_name -> (
+      let neg_proc = (
+        "bool not___(" ^ input_typ_name ^ " param)\n" ^
+        "  case { param =  null -> ensures res;\n" ^
+        "         param != null -> ensures !res; }\n"
+      ) in
+      let proc_decl = Parser.parse_proc_string "inter_neg_proc" neg_proc in
+      proc_decl
+    )
+  | _ -> report_error_msg "Error: Invalid"
 
 let translate_location (loc: Cil.location) : Globals.loc =
   let cilsp = loc.Cil.start_pos in
@@ -714,11 +730,7 @@ and translate_exp (e: Cil.exp) : Iast.exp =
       let cast_proc = create_data_cast_proc input_typ cast_typ in
       let newexp = ( 
         match cast_proc with
-        | None -> (
-            Iast.Cast {Iast.exp_cast_target_type = cast_typ;
-                       Iast.exp_cast_body = input_exp;
-                       Iast.exp_cast_pos = pos}
-          )
+        | None -> input_exp
         | Some proc -> (
             Iast.CallNRecv {
               Iast.exp_call_nrecv_method = proc.Iast.proc_name;
@@ -1212,6 +1224,11 @@ let translate_file (file: Cil.file) : Iast.prog_decl =
     | _ -> report_error_msg "Error!!! v has to be in form of (Iast.VarDecl _)."
   ) gl_addressof_data;
   Hashtbl.iter (fun _ proc -> proc_decls := !proc_decls @ [proc]) tbl_cast_procs;
+  Hashtbl.iter (fun _ typ ->
+    let neg_proc = create_negation_proc typ in
+    proc_decls := !proc_decls @ [neg_proc]
+  ) tbl_data_type;
+  (* return *)
   let newprog : Iast.prog_decl = ({
     Iast.prog_data_decls = obj_def :: string_def :: !data_decls;
     Iast.prog_include_decls = []; (*WN : need to fill *)
