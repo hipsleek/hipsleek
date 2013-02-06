@@ -1423,13 +1423,14 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
       if CP.mem_svl hp selected_hps then
         let opto = loop_helper (*find_pt_new*) lhs_hds args [] in
         (match opto with
-          | ptos ->
+          | [] -> []
+          | ptos -> begin
               (* let _ = Debug.info_pprint ("    ptos:" ^(!CP.print_svl ptos)) no_pos in *)
               (* let _ = Debug.info_pprint ("    rhs_args:" ^(!CP.print_svl rhs_args)) no_pos in *)
               if CP.intersect_svl ptos rhs_args <> [] then [] else
                 let fwd_svl = CP.remove_dups_svl (CP.diff_svl args (def_vs@rhs_args)) in
                 fwd_svl
-          | [] -> []
+          end
         )
       else []
     in
@@ -1919,7 +1920,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           let hp_rel_list = hp_rels@defined_hprels in
           let _ = rel_ass_stk # push_list (hp_rel_list) in
           let _ = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
-          DD.ninfo_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rel_list)) pos;
+          DD.tinfo_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rel_list)) pos;
           let update_es_f f new_hf=
              (CF.mkAnd_f_hf f (CF.h_subst leqs new_hf) pos)
           in
