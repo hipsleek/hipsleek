@@ -2256,7 +2256,8 @@ let remove_dups_recursive_x hp args unk_hps unk_svl defs=
     (*   if args = [] then report_error no_pos "sau.remove_dups_recursive: hp should have at least one argument" *)
     (*   else (List.hd args) *)
     (* in *)
-    let rec_ls_hds = List.map get_hdnodes rec_fs in
+    let rec_fs1 = remove_longer_common_prefix rec_fs in
+    let rec_ls_hds = List.map get_hdnodes rec_fs1 in
     let parts = List.map (match_with_rec rec_ls_hds) indep_fs in
     let ls_poss_base_fs,ls_base_fs = List.split parts in
     let base_fs = List.concat ls_base_fs in
@@ -2267,11 +2268,11 @@ let remove_dups_recursive_x hp args unk_hps unk_svl defs=
       let poss_base_fs1 = List.map snd poss_base_fs in
       let poss_base_fs2 = List.filter (fun f -> not(is_empty_f f)) poss_base_fs1 in
       (* Gen.BList.remove_dups_eq (fun f1 f2 -> check_relaxeq_formula f1 f2) defs *)
-      (false,(rec_fs@dep_fs1@poss_base_fs2))
+      (false,(rec_fs1@dep_fs1@poss_base_fs2))
     else
       let accept_dang = check_root_accept_dang_fs root defs in
       let new_base_fs = match_with_base accept_dang poss_base_fs base_fs in
-      (true,(rec_fs@dep_fs1@base_fs@new_base_fs))
+      (true,(rec_fs1@dep_fs1@base_fs@new_base_fs))
   else
     (true,defs)
 

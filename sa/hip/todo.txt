@@ -30,8 +30,9 @@ PROBLEM : inferred H1(..) is too strong..
 
 todo:
   - to fix bug of infer.simplify: DONE
-  - to revise unk analysis
-
+  - to revise unk analysis: DONE
+  - to remove redundancy in rec branches when do join: DONE
+  - to remove redundancy in constraint infer
 ==================================================
 # dll-del.ss: DONE
 HP_590 and HP_598 are the same but our normalization system did not
