@@ -14,12 +14,12 @@ HeapPred H1(node a).
 HeapPred G1(node a).
 
 bool bubble(node xs)
-  requires xs::node<_,p> * p::ll<>
-  ensures xs::node<_,p1> * p1::ll<>;
+  /* requires xs::node<_,p> * p::ll<> */
+  /* ensures xs::node<_,p1> * p1::ll<>; */
 
-  /* infer[H1,G1] */
-  /* requires H1(xs) */
-  /* ensures G1(xs); */
+  infer[H1,G1]
+  requires H1(xs)
+  ensures G1(xs);
 {
 	int aux, tmp1;
 	bool tmp, flag; 

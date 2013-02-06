@@ -28,7 +28,9 @@ PROBLEM : inferred H1(..) is too strong..
 ==================================================
 # bubble.ss
 
-todo: to fix bug of infer.simplify
+todo:
+  - to fix bug of infer.simplify: DONE
+  - to revise unk analysis
 
 ==================================================
 # dll-del.ss: DONE

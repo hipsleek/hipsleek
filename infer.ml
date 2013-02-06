@@ -1399,24 +1399,38 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
     else []
   in
   let get_lhs_fold_fwd_svl selected_hps def_vs rhs_args lhs_hds lhs_hvs ls_lhs_hpargs=
-    let rec find_pt_new cur_hds svl=
+    let rec find_pt_new cur_hds svl res hd_rest=
       match cur_hds with
-        | [] -> None
+        | [] -> res,hd_rest
         | hd::tl -> let ptr_args = List.filter CP.is_node_typ hd.CF.h_formula_data_arguments in
-                    let ptr_args1 = SAU.look_up_closed_ptr_args prog lhs_hds lhs_hvs ptr_args in
-                    if (List.length svl = List.length ptr_args1) && CP.diff_svl svl ptr_args1 = [] then
-                      Some hd.CF.h_formula_data_node
-                    else find_pt_new tl svl
+                    (* let ptr_args1 = SAU.look_up_closed_ptr_args prog lhs_hds lhs_hvs ptr_args in *)
+                    (* let _ = Debug.info_pprint ("    svl res:" ^(!CP.print_svl (svl@res))) no_pos in *)
+                    (* let _ = Debug.info_pprint ("    ptr_args:" ^(!CP.print_svl ptr_args)) no_pos in *)
+                    (* if ((List.length svl = List.length ptr_args) && CP.diff_svl svl (ptr_args) = []) then *)
+                     if ( CP.intersect_svl ptr_args (svl@res) <> []) then
+                      find_pt_new tl svl (res@[hd.CF.h_formula_data_node]) hd_rest
+                    (* else *)
+                    (*   if (CP.diff_svl svl (ptr_args1) = []) then *)
+                    (*     ([hd.CF.h_formula_data_node]@ptr_args1) *)
+                    else find_pt_new tl svl res (hd_rest@[hd])
+    in
+    let rec loop_helper hds svl r=
+      let r1,rest = find_pt_new hds svl r [] in
+      if CP.diff_svl r1 r = [] || rest = [] then r1 else
+        loop_helper rest svl r1
     in
     let process_one (hp,args)=
       if CP.mem_svl hp selected_hps then
-        let opto = find_pt_new lhs_hds args in
-        match opto with
-          | Some pto ->
-           if CP.mem_svl pto rhs_args then [] else
-             let not_fwd_svl = CP.remove_dups_svl (CP.diff_svl args (def_vs@rhs_args)) in
-             not_fwd_svl
-          | None -> []
+        let opto = loop_helper (*find_pt_new*) lhs_hds args [] in
+        (match opto with
+          | ptos ->
+              (* let _ = Debug.info_pprint ("    ptos:" ^(!CP.print_svl ptos)) no_pos in *)
+              (* let _ = Debug.info_pprint ("    rhs_args:" ^(!CP.print_svl rhs_args)) no_pos in *)
+              if CP.intersect_svl ptos rhs_args <> [] then [] else
+                let fwd_svl = CP.remove_dups_svl (CP.diff_svl args (def_vs@rhs_args)) in
+                fwd_svl
+          | [] -> []
+        )
       else []
     in
     let ls_not_fwd_svl = List.map process_one ls_lhs_hpargs in
@@ -1905,7 +1919,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           let hp_rel_list = hp_rels@defined_hprels in
           let _ = rel_ass_stk # push_list (hp_rel_list) in
           let _ = Log.current_hprel_ass_stk # push_list (hp_rel_list) in
-          DD.tinfo_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rel_list)) pos;
+          DD.ninfo_pprint ("  hp_rels: " ^ (let pr = pr_list_ln Cprinter.string_of_hprel in pr hp_rel_list)) pos;
           let update_es_f f new_hf=
              (CF.mkAnd_f_hf f (CF.h_subst leqs new_hf) pos)
           in
@@ -1942,7 +1956,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           let new_es_formula = check_consumed_node rhs new_es_formula in
           let new_es_formula1 = CF.subst m new_es_formula in
           let new_es = {es with CF. es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@rvhp_rels;
-              CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ defined_hprels @ hp_rels;
+              CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ hp_rel_list;
               CF.es_infer_hp_unk_map = (es.CF.es_infer_hp_unk_map@unk_map);
               CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);
               CF.es_formula = new_es_formula1} in
