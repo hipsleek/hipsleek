@@ -57,7 +57,6 @@ due to x.next.next test;
 so I am surprised that it has suddenly lost a node.
 This did not happen for sll-del.ss.
 
-*************************************
 [ H1(x_642) ::= x_642::node2<val_26_533',prev_26_534',next_26_535'>@M * 
   HP_643(prev_26_534',next_26_535') * HP_559(prev_26_534')&true,
  G1(x_649) ::= x_649::node2<val_26_568,prev_26_569,next_28_544'>@M * 
@@ -69,4 +68,26 @@ This did not happen for sll-del.ss.
     HP_643(prev_26_644,next_26_645) * HP_559(prev_26_644)&true
  ]
 
+*************************************
+# sll-del2.ss
 
+We obtained :
+
+ G2(res) ::= res::node2<val_30_567,v_node2_30_579>@M&true]
+
+but why did we not get:
+
+ G2(res) ::= res::node2<val_30_567,null>@M&true]
+
+This problem seems to be triggered at relational assumption:
+
+ res::node2<val_30_567,v_node2_30_579>@M&true --> G2(res)&true,
+
+# dll-del3.ss
+
+  too many lines, why did it not fold to dll?
+
+# dll-del3a.ss
+
+  too many lines, why did it not fold to dll?
+  G2(..) definition looks good.
