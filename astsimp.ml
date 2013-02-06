@@ -935,7 +935,13 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
               let _ = print_string ("Eliminating pointers...PASSED \n"); flush stdout in
               new_prog
             else prog
-          in
+          in 
+          let prog = 
+            if (!Globals.infer_mem) then 
+              let infer_views =  List.map (fun c -> Mem.infer_mem_specs c prog) prog.I.prog_view_decls in
+              {prog with I.prog_view_decls = infer_views}
+            else prog 
+          in 
           (***************************************************)
           (* let _ =  print_endline " after case normalize" in *)
           (* let _ = I.find_empty_static_specs prog in *)
@@ -1239,7 +1245,6 @@ and add_param_ann_constraints_struc (cf: CF.struc_formula) : CF.struc_formula = 
   Debug.no_1 "add_param_ann_constraints_struc" pr pr  (fun _ -> add_param_ann_constraints_struc_x cf) cf
 
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
-  let vdef = if (!Globals.infer_mem) then  Mem.infer_mem_specs vdef prog else vdef in
   let pr = Iprinter.string_of_view_decl in
   let pr_r = Cprinter.string_of_view_decl in
   Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog vdef) vdef

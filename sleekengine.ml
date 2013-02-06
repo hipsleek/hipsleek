@@ -221,6 +221,10 @@ let process_pred_def_4_iast pdef =
 
 
 let convert_pred_to_cast () = 
+  let infer_views = if (!Globals.infer_mem) 
+    then List.map (fun c -> Mem.infer_mem_specs c iprog) iprog.I.prog_view_decls 
+    else iprog.I.prog_view_decls in 
+  iprog.I.prog_view_decls <- infer_views; 
   let tmp_views = (AS.order_views (iprog.I.prog_view_decls)) in
   Debug.tinfo_pprint "after order_views" no_pos;
   let _ = Iast.set_check_fixpt iprog.I.prog_data_decls tmp_views in

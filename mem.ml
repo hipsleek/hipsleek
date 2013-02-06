@@ -1889,9 +1889,9 @@ match f with
              IF.formula_base_and = a;
              IF.formula_base_pos = pos;})-> let new_exp,fieldl = infer_mem_from_heap h prog in
                                             let new_p = IP.BForm(((IP.mkEq mexp new_exp pos),None),None) in
-                                           let and_p = IP.mkAnd p new_p pos in
+                                           let and_p = IP.And(p,new_p,pos) in
                                            IF.Base{IF.formula_base_heap = h;
-                                                   IF.formula_base_pure = new_p;
+                                                   IF.formula_base_pure = and_p;
                                                    IF.formula_base_flow = fl;
                                                    IF.formula_base_and = a;
                                                    IF.formula_base_pos = pos;
@@ -1903,10 +1903,10 @@ match f with
                 IF.formula_exists_and = a;
                 IF.formula_exists_pos = pos;})-> let new_exp,fieldl = infer_mem_from_heap h prog in
                                             let new_p = IP.BForm(((IP.mkEq mexp new_exp pos),None),None) in
-                                           let and_p = IP.mkAnd p new_p pos in
+                                           let and_p = IP.And(p,new_p,pos) in
                                            IF.Exists{IF.formula_exists_qvars = qvars;
                                                      IF.formula_exists_heap = h;   
-                                                     IF.formula_exists_pure = new_p;
+                                                     IF.formula_exists_pure = and_p;
                                                      IF.formula_exists_flow = fl;
                                                      IF.formula_exists_and = a;
                                                      IF.formula_exists_pos = pos;
@@ -1946,6 +1946,20 @@ IF.struc_formula *((ident * (IF.ann list)) list)=
                IF.formula_struc_base = new_f;
                IF.formula_struc_continuation = c;
                IF.formula_struc_pos = pos},fl
+    | IF.ECase({IF.formula_case_branches = cb;
+               IF.formula_case_pos = pos}) ->
+        let fs = List.map (fun (f,_) -> f) cb in
+        let new_cb_fls = List.map (fun (f,sf) -> infer_mem_from_struc_formula sf prog mexp) cb in
+        let new_cbs,fls = List.split new_cb_fls in
+        IF.ECase({IF.formula_case_branches = List.combine fs new_cbs;
+                 IF.formula_case_pos = pos;}),(List.flatten fls)
+    | IF.EAssume(f,flbl,entyp)-> let new_f,fl = infer_mem_from_formula f prog mexp in
+                                 IF.EAssume(new_f,flbl,entyp),fl
+    | IF.EList(ls) -> let slds = List.map (fun (sld,sf) -> sld) ls in
+           let new_sfs_fls = List.map (fun (_,sf) -> infer_mem_from_struc_formula sf prog mexp) ls in
+           let new_sfs,fls = List.split new_sfs_fls in
+           let new_ls = List.combine slds new_sfs in
+           IF.EList(new_ls),(List.flatten fls)
 
 let infer_mem_specs (vdef:I.view_decl) (prog:I.prog_decl) : I.view_decl =
   let mf = vdef.I.view_mem in
