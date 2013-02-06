@@ -1330,7 +1330,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let _ = CF.must_consistent_list_failesc_context "bind 2" unfolded  in
 	            let _ = Debug.devel_zprint (lazy ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
                     ^ "\n")) pos in
-	            (*let _ = print_string ("\n(andreeac)bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)     ^ "\n") in *)
 	            let unfolded = if(!Globals.allow_field_ann) then
                       let idf = (fun c -> c) in
 		      CF.transform_list_failesc_context (idf,idf,
@@ -1397,7 +1396,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	                CF.formula_struc_base = vheap;
 	                CF.formula_struc_continuation = None;
 	                CF.formula_struc_pos = pos} in
-	            (*let _ = print_string ("\n(andreeac)struc_vheap: " ^ (Cprinter.string_of_struc_formula struc_vheap) ) in *)
 	            let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
 	            Debug.devel_pprint to_print pos;
 
@@ -1664,8 +1662,6 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 (*=========================*)
                 (*===<<<<= CONCURRENCY=====*)
                 (*=========================*)
-		      (* let _ = print_string ("\n(andreeac)check_exp_a es_f:" ^ (Cprinter.string_of_formula es_f)) in *)
-		      (* let _ = print_string ("\n(andreeac)check_exp_a new_base:" ^ (Cprinter.string_of_formula new_base)) in *)
                 else
                   (*=========================*)
                   (*=== NORMAL METHOD CALL ==*)
@@ -2029,7 +2025,6 @@ and pr_spec2 = Cprinter.string_of_struc_formula_for_spec
 
 and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label): CF.list_partial_context  =
   (* let _ = print_string ("got into check_post on the succCtx branch\n") in *)
-  (* let _ = print_string ("\n(andreeac)context before post: "^(Cprinter.string_of_list_partial_context ctx)) in *)
   (* let _= print_endline ("Check post list ctx: "^Cprinter.string_of_list_partial_context ctx) in *)
   if !Globals.dis_post_chk then ctx else 
     let _ = if !print_proof then
@@ -2188,7 +2183,6 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
 		if pr_flag then
                   begin
                     print_string (("\nChecking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
-                    (* print_string ("\n(andreeac)Specs :\n" ^ (Cprinter.string_of_struc_formula proc.proc_static_specs) );*)
 		    Debug.devel_zprint (lazy (("Checking procedure ") ^ proc.proc_name ^ "... ")) proc.proc_loc;
 		    Debug.devel_zprint (lazy ("Specs :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs)) proc.proc_loc;
                   end;

@@ -1082,7 +1082,7 @@ let rec is_lend (f : CF.formula) : bool =
         (is_lend f1) or (is_lend f2))
         
 let subtype_sv_ann_gen (impl_vars: CP.spec_var list) (l: CP.spec_var) (r: CP.spec_var) 
-: bool * (CP.formula option) * (CP.formula option) =
+: bool * (CP.formula option) * (CP.formula option)  * (CP.formula option)=
 	let l = CP.Var(l,no_pos) in
 	let r = CP.Var(r,no_pos) in
 	let c = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in
@@ -1094,19 +1094,19 @@ let subtype_sv_ann_gen (impl_vars: CP.spec_var list) (l: CP.spec_var) (r: CP.spe
         begin
           match r with
             | CP.Var(v,_) -> 
-                if CP.mem v impl_vars then (true,Some lhs,None)
-                else (true,None,Some c)
-            | _ -> (true,None,Some c)
+                if CP.mem v impl_vars then (true,Some lhs,None, None)
+                else (true,None,Some c, None)
+            | _ -> (true,None,Some c, None)
         end
 
 let rec subtype_sv_ann_gen_list (impl_vars: CP.spec_var list) (ls: CP.spec_var list) (rs: CP.spec_var list)
-: bool * (CP.formula option) * (CP.formula option) = 
+: bool * (CP.formula option) * (CP.formula option) * (CP.formula option) = 
 match ls, rs with
-| [], [] -> (true,None,None)
-| l::ls, r::rs -> let f, lhs, rhs = (subtype_sv_ann_gen impl_vars l r) in
-		  let fs, lhsls, rhsrs = (subtype_sv_ann_gen_list impl_vars ls rs) in
-		  (f && fs, (Imm.mkAndOpt lhs lhsls) , (Imm.mkAndOpt rhs rhsrs))
-| _,_ -> (false,None,None)(* shouldn't get here *)
+| [], [] -> (true,None,None,None)
+| l::ls, r::rs -> let f, lhs, rhs, rhs_ex = (subtype_sv_ann_gen impl_vars l r) in
+		  let fs, lhsls, rhsrs, rhsrs_ex = (subtype_sv_ann_gen_list impl_vars ls rs) in
+		  (f && fs, (Imm.mkAndOpt lhs lhsls) , (Imm.mkAndOpt rhs rhsrs), (Imm.mkAndOpt rhs_ex rhsrs_ex))
+| _,_ -> (false,None,None, None)(* shouldn't get here *)
 
 
 let rec get_may_aliases (sv:CP.spec_var) (h: CF.h_formula) : (CP.spec_var) list =

@@ -5109,6 +5109,9 @@ think it is used to instantiate when folding.
   es_imm_last_phase : bool;
 (* below are being used as OUTPUTS *)
   es_subst :  (CP.spec_var list *  CP.spec_var list) (* from * to *); 
+  (* for immutability ann: as opposed to other vars, related imm vars are not substituted during a match, but added to the pure as a formula *)
+  es_exists_pure : CP.formula option;
+
   es_aux_conseq : CP.formula;
   (* es_imm_pure_stk : MCP.mix_formula list; *)
   es_must_error : (string * fail_type) option;
@@ -5355,6 +5358,7 @@ let empty_es flowt grp_lbl pos =
   es_aux_xpure_1 = MCP.mkMTrue pos;
   es_imm_last_phase = true;
   es_subst = ([], []);
+  es_exists_pure = None;
   es_aux_conseq = CP.mkTrue pos;
    (* es_imm_pure_stk = []; *)
   es_must_error = None;
@@ -8978,7 +8982,7 @@ and enable_imm_last_phase_ctx ctx =
   		Ctx{es with es_imm_last_phase = true}
       ) ctx
 
-let add_to_aux_conseq_estate es to_aux_conseq pos =
+let add_to_aux_conseq_estate es to_aux_conseq pos: entail_state =
   { es with es_aux_conseq = (*match es.es_aux_conseq with
     | None -> Some to_aux_conseq
     | Some f -> Some*) (CP.mkAnd  (*f*) es.es_aux_conseq to_aux_conseq pos)
@@ -9021,6 +9025,23 @@ and add_to_subst lctx r_subst l_subst =
     		    (* add to the substitution list *)
 		    es_subst = ((fst es.es_subst)@r_subst, (snd es.es_subst)@l_subst);
     		})) c) cl
+      in SuccCtx(new_cl)
+
+and add_to_exists_pure lctx ex_p pos =
+  match lctx with
+    | FailCtx _ -> lctx
+    | SuccCtx cl ->
+      let new_cl = List.map (fun c -> 
+          (transform_context
+    	       (fun es ->
+    		       Ctx{es with es_exists_pure = 
+                           match es.es_exists_pure with
+                             | None -> ex_p
+                             | Some p ->
+                                 match ex_p with
+                                   | None     -> Some p
+                                   | Some e_p -> Some (CP.mkAnd p e_p pos);}
+    	       )) c) cl
       in SuccCtx(new_cl)
 
 

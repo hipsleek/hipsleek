@@ -35,7 +35,6 @@ let run_entail_check_helper (iante: lem_formula) (iconseq: lem_formula) (cprog: 
   let ante = lem_to_cformula iante in
   (* let ante = Solver.prune_preds cprog true ante in (\* (andreeac) redundant? *\) *)
   let conseq = lem_to_struc_cformula iconseq in
-  (* let conseq = Solver.prune_pred_struc cprog true conseq in (\* (andreeac) redundant ? *\) *)
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let ctx = CF.build_context ectx ante no_pos in
   let _ = if !Globals.print_core || !Globals.print_core_all then print_string ("\run_entail_check_helper:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
