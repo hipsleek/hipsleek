@@ -823,16 +823,20 @@ let keep_data_view_hrel_nodes_two_fbs prog f1 f2 hd_nodes hv_nodes hpargs leqs r
 let rec drop_data_view_hrel_nodes_from_root prog f hd_nodes hv_nodes eqs drop_rootvars well_defined_svl=
   match f with
     | CF.Base fb ->
+        let hd_names = List.fold_left (fun ls hd -> ls@[hd.CF.h_formula_data_node]) [] hd_nodes in
+        let keep_hds = CP.diff_svl hd_names drop_rootvars in
+        let closed_keep_svl = look_up_closed_ptr_args prog hd_nodes hv_nodes keep_hds in
+        let well_defined_svl1 = CP.diff_svl well_defined_svl closed_keep_svl in
         let new_p=
-          if well_defined_svl = [] then fb.CF.formula_base_pure else
-            let pure_keep_svl = CP.diff_svl (CF.fv f) well_defined_svl in
+          if well_defined_svl1 = [] then fb.CF.formula_base_pure else
+            let pure_keep_svl = CP.diff_svl (CF.fv f) well_defined_svl1 in
             MCP.mix_of_pure (CP.filter_var_new
                   (MCP.pure_of_mix fb.CF.formula_base_pure) pure_keep_svl)
         in
         CF.Base { fb with
             CF.formula_base_heap = drop_data_view_hrel_nodes_hf_from_root
                 prog fb.CF.formula_base_heap
-                hd_nodes hv_nodes eqs (drop_rootvars@well_defined_svl);
+                hd_nodes hv_nodes eqs (drop_rootvars@well_defined_svl1);
             CF.formula_base_pure = new_p
     }
       | _ -> report_error no_pos "sau.drop_data_view_hrel_nodes"

@@ -21,7 +21,6 @@ node2 delete(node2 x)
   ensures x::node2<_,r>*r::sll<>*res::node2<_,null>; 
 
 */
-
   infer[H1,G1,G2]
   requires H1(x)
   ensures G1(x) * G2(res);

@@ -70,7 +70,7 @@ This did not happen for sll-del.ss.
  ]
 
 *************************************
-# sll-del2.ss
+# sll-del2.ss: DONE
 
 We obtained :
 
@@ -83,11 +83,11 @@ but why did we not get:
 This problem seems to be triggered at relational assumption:
 
  res::node2<val_30_567,v_node2_30_579>@M&true --> G2(res)&true,
-
+*************************************
 # dll-del3.ss
 
   too many lines, why did it not fold to dll?
-
+*************************************
 # dll-del3a.ss
 
   too many lines, why did it not fold to dll?

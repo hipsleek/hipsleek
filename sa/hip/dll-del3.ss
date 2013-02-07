@@ -22,13 +22,12 @@ void delete(node2 x)
   requires x::node2<_,p,q>*q::dll<x> & q!=null
   ensures x::node2<_,p,r>*r::dll<x> ;
 */
-/*
+
   infer[H1,G1]
   requires H1(x)
   ensures G1(x);
-*/
-  requires x::node2<_,p,q>*q::dll<x> & q!=null
-  ensures x::node2<_,p,r>*r::dll<x> ;
+  /* requires x::node2<_,p,q>*q::dll<x> & q!=null */
+  /* ensures x::node2<_,p,r>*r::dll<x> ; */
 
 {
   bool l = x.next.next==null;
