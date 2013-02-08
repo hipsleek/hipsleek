@@ -12,11 +12,41 @@ dll<p,n> == self = null & n = 0
   or self::node2<_ ,p , q> * q::dll<self, n-1> // = q1 
 	inv n >= 0;
 
-
+HeapPred G1(node2 a).
+HeapPred G2(node2 a).
 
 void insert(node2 x, int a)
-  requires x::dll<p, n> & n>0 //&  x!=null  
-  ensures x::dll<p, m> & m>n; 
+
+ infer [G1,G2]
+  requires G1(x)
+  ensures G2(x);//'
+
+  /*  
+[ G1(x) ::= x::node2<v1,p,n>@M * HP_650(p,n) * HP_598(p)&true,
+   HP_650(p,n) ::=  emp&n=null
+				or n::node2<v1,p2,n2>@M * HP_650(p2,n2) * HP_598(p2)&true				
+				
+				
+
+[ G2(x) ::= x::node2<v,p,n>@M * HP_648(p,n)&true,
+ G1(x) ::=  x::node2<v',p',n'>@M * HP_599(p') * HP_600(n')&true
+				or HP_648(p,n)&true
+ ,
+ HP_648(p,n) ::= HP_599(p) *  n::node2<v,prev_36_649,v_node2_38_650>@M *  HP_648(prev_36_649,v_node2_38_650)&true
+ or HP_599(p) * n::node2<a,x,v_null_38_623>@M&  v_null_38_623=null
+ or emp&n=null
+ ,
+ HP_600(v_node2_36_653) ::= v_node2_36_653::node2<v',p',n'>@M * HP_599(p') * HP_600(n')&true
+ or emp&v_node2_36_653=null
+ ,
+ HP_599(p') ::= HP_599(p')&true]			
+ ]
+
+  
+  */
+  
+  //requires x::dll<p, n> & n>0 //&  x!=null  
+  //ensures x::dll<p, m> & m=n+1; 
 {
   bool l = x.next == null;
   if (l)
@@ -25,6 +55,8 @@ void insert(node2 x, int a)
       insert(x.next, a);
 }
 
+
+/*
 
 /* delete a node from a doubly linked list */
 void delete(node2 x, int a)
@@ -262,4 +294,5 @@ node2 find_last(node2 x)
 /*
 void id1(node2 x, node2 y)
 	requires x::dlseg<q, y, n> * y::node2<_,
+*/
 */
