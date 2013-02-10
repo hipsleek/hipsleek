@@ -4349,12 +4349,11 @@ and subst_hrel_hf hf hprel_subst=
       (true, f)
     else (false, hrel1)
   in
-  let rec find_and_subst (* (HRel (id,el,p)) *) hrel subst =
-    (* List.fold_left helper (HRel (id,el,p)) subst *)
+  let rec find_and_subst hrel subst =
     match subst with
-      | [] -> (* (HRel (id,el,p)) *) hrel
-      | ((*HRel (id1,el1,p1) *) hrel1, hf)::ss ->
-          let stop,f = helper (* (HRel (id,el,p)) *) hrel (hrel1, hf) in
+      | [] -> hrel
+      | (hrel1, hf)::ss ->
+          let stop,f = helper hrel (hrel1, hf) in
           if stop then f
           else find_and_subst hrel ss
   in
@@ -4391,6 +4390,67 @@ and subst_hrel_hf hf hprel_subst=
     | HFalse
     | HEmp -> hf
 
+(* let rec rename_hrel ss f= *)
+(*   match f with *)
+(*     | Base fb -> Base {fb with formula_base_heap =  rename_hrel_hf ss fb.formula_base_heap;} *)
+(*     | Or orf -> Or {orf with formula_or_f1 = rename_hrel ss orf.formula_or_f1; *)
+(*                 formula_or_f2 = rename_hrel ss orf.formula_or_f2;} *)
+(*     | Exists fe -> Exists {fe with formula_exists_heap = rename_hrel_hf ss fe.formula_exists_heap;} *)
+
+(* and rename_hrel_hf ss hf0= *)
+(*   let rec eq_spec_var_order_list l1 l2= *)
+(*   match l1,l2 with *)
+(*     |[],[] -> true *)
+(*     | v1::ls1,v2::ls2 -> *)
+(*         if CP.eq_spec_var v1 v2 then *)
+(*           eq_spec_var_order_list ls1 ls2 *)
+(*         else false *)
+(*     | _ -> false *)
+(*   in *)
+(*   let find_and_rename (hp1,eargs,p) (hp0,(hp2, args2))= *)
+(*     if CP.eq_spec_var hp1 hp2 then *)
+(*       (\*should specvar subst*\) *)
+(*        let args1 = (List.fold_left List.append [] (List.map CP.afv eargs)) in *)
+(*        if eq_spec_var_order_list args1 args2 then *)
+(*          (hp0,eargs,p) *)
+(*        else (hp1,eargs,p) *)
+(*     else (hp1,eargs,p) *)
+(*   in *)
+(*   let rec helper hf= *)
+(*   match hf with *)
+(*     | Star {h_formula_star_h1 = hf1; *)
+(*             h_formula_star_h2 = hf2; *)
+(*             h_formula_star_pos = pos} -> *)
+(*         let n_hf1 = helper hf1 in *)
+(*         let n_hf2 = helper hf2 in *)
+(*         Star {h_formula_star_h1 = n_hf1; *)
+(*               h_formula_star_h2 = n_hf2; *)
+(*               h_formula_star_pos = pos} *)
+(*     | Conj { h_formula_conj_h1 = hf1; *)
+(*              h_formula_conj_h2 = hf2; *)
+(*              h_formula_conj_pos = pos} -> *)
+(*         let n_hf1 = helper hf1 in *)
+(*         let n_hf2 = helper hf2 in *)
+(*         Conj { h_formula_conj_h1 = n_hf1; *)
+(*                h_formula_conj_h2 = n_hf2; *)
+(*                h_formula_conj_pos = pos} *)
+(*     | Phase { h_formula_phase_rd = hf1; *)
+(*               h_formula_phase_rw = hf2; *)
+(*               h_formula_phase_pos = pos} -> *)
+(*         let n_hf1 = helper hf1 in *)
+(*         let n_hf2 = helper hf2 in *)
+(*         Phase { h_formula_phase_rd = n_hf1; *)
+(*               h_formula_phase_rw = n_hf2; *)
+(*               h_formula_phase_pos = pos} *)
+(*     | DataNode hd -> hf *)
+(*     | ViewNode hv -> hf *)
+(*     | HRel h -> HRel (find_and_rename h ss) *)
+(*     | Hole _ *)
+(*     | HTrue *)
+(*     | HFalse *)
+(*     | HEmp -> hf *)
+(*   in *)
+(*   helper hf0 *)
 
 let rec subst_hrel_hview_f f subst=
   match f with

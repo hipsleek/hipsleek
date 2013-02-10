@@ -3,7 +3,7 @@ HeapPred HP_559(node2 a).
 HeapPred HP_570(node2 a).
 HeapPred HP_571(node2 a).
 HeapPred HP_643(node2 a, node2 b).
-HeapPred HP_651(node2 a, node2 b).
+HeapPred HP_630(node2 a, node2 b).
 
 delete:SUCCESS[
 ass [H1,G1][]:{
@@ -21,11 +21,10 @@ ass [H1,G1][]:{
 }
 
 hpdefs [H1,G1][DL_559]:{
-   H1(x_642) --> x_642::node2<_,DL_559,next_26_535'>@M *HP_643(DL_559,next_26_535');
- G1(x_649) --> x_649::node2<val_26_568,DL_559,n>@M * HP_651(DL_559,n);
- HP_643(p,n) --> n::node2<_,DL_559,n1> * HP_643(DL_559,n1)
-         or emp&n=null;
- HP_651(p,n) --> n::node2<_,DL_559,n1> * HP_651(DL_559,n1)
-         or emp&n=null
+   H1(x) --> x::node2<_,DL_559,n1>@M * n1::node2<_,DL_559,n2>@M * HP_571(n2);
+   G1(x) --> x::node2<_,DL_559,n1>@M * HP_630(DL_559,n1);
+   HP_630(p,n) -->
+        n::node2<_,DL_559,n1>@M * HP_630(DL_559,n1) or n=null;
+   HP_571(p) --> p::node2<_,DL_559,n> * HP_571(n) or p=null
  }
 ]

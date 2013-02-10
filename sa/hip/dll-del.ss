@@ -25,6 +25,7 @@ void delete(node2 x)
 {
   bool l = x.next.next==null;
   if (l) {
+    // dprint;
     x.next = null;
     }
   else

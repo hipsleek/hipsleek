@@ -50,7 +50,7 @@ next_26_521'::node2<val_26_523',next_26_587>@M * HP_590(next_26_587)&true,
  or next_28_528'::node2<val_26_548,next_28_599>@M * HP_598(next_28_599)&true
  ]
 ==================================================
-# dll-del.ss
+# dll-del.ss: DONE (*)
 
 The new dll-del uses two pointers and obtained the following.
 Below H1 * H2 are the same. However, H1 should have two nodes,
