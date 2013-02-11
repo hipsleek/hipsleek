@@ -490,7 +490,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
               if old_vars=[] then 
                 Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos 
               else
-                let _ = Debug.ninfo_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos in
+                let _ = Debug.info_hprint (add_str "TRANSLATED SPECS" pr_spec) einfer no_pos in
                 let pre_post_vars = CP.remove_dups_svl (pre_vars @ post_vars @ new_fml_fv) in
                 let _ = Debug.ninfo_hprint (add_str "all vars" !print_svl) pre_post_vars no_pos in
                 let _ = Debug.ninfo_hprint (add_str "inf vars" !print_svl) vars no_pos in

@@ -5,15 +5,12 @@ data node {
 }
 
 ll<> == self = null
-  or self::node<_, q> * q::ll<>
-  inv true;
+  or self::node<_, q> * q::ll<>;
 
-llN<n> == self = null & n=0
-  or self::node<_, q> * q::llN<n-1>
-  inv n>=0;
+/******************************************/
 
+/* Append a singly linked list */
 void append(node x, node y)
-  infer {ll->llN} []
   requires x::ll<> * y::ll<> & x!=null
   ensures x::ll<>;
 {
@@ -23,8 +20,8 @@ void append(node x, node y)
     append(x.next, y);
 }
 
+/* Copy a singly linked list */
 node copy(node x)
-  infer {ll->llN} []
   requires x::ll<>
   ensures x::ll<> * res::ll<>;
 {
@@ -37,14 +34,24 @@ node copy(node x)
     return null;
 }
 
+void free(node x)
+  requires x::node<_,_>
+  ensures x=null;
+
+/* Delete the i_th node in a singly linked list */
+/* Similar to zip example, 
+   this example need size property
+   to ensure the memory safety.
+*/
 void del_index(node x, int i)
-  infer {ll->llN} []
   requires x::ll<>
   ensures x::ll<>;
 {
   if (i == 1)
   {
+    node tmp = x.next;
     x.next = x.next.next;
+    free(tmp);
   }
   else
   {
@@ -52,12 +59,8 @@ void del_index(node x, int i)
   }
 }
 
-void free(node x)
-  requires true
-  ensures true;
-
+/* Delete the node with value a */
 node del_val(node x, int a)
-  infer {ll->llN} []
   requires x::ll<>
   ensures res::ll<>;
 {
@@ -79,8 +82,8 @@ node del_val(node x, int a)
   }
 }
 
+/* Insert "a" into a non-null singly linked list */
 void insert(node x, int a)
-  infer {ll->llN} []
   requires x::ll<> & x!=null
   ensures x::ll<>;
 {
@@ -90,13 +93,13 @@ void insert(node x, int a)
     insert(x.next, a);
 }
 
+/* Traverse a singly linked list */
 void traverse(node x)
-  infer {ll->llN} []
   requires x::ll<>
   ensures x::ll<>;
 {
   node t;
-  if(x != null) {
+  if (x != null) {
     t = x;
     traverse(x.next);
   }

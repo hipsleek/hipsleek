@@ -38,3 +38,16 @@ void append1(node x, node y)
   else
     append1(x.next, y);
 }
+
+relation R1(int a, int b).
+relation R2(int a, int b, int c).
+void append1(node x, node y)
+/*  infer [R1,R2]*/
+  requires x::llN<n> * y::llN<m> & x!=null //& R1(n,m)
+  ensures x::llN<z> & z=n+m;//& R2(n,m,z);
+{
+  if (x.next == null)
+    x.next = y;
+  else
+    append1(x.next, y);
+}
