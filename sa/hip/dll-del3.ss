@@ -8,6 +8,10 @@ dll<p> == self = null
   or self::node2<_ ,p , q> * q::dll<self> // = q1
 	inv true;
 
+dll1<> == self = null 
+  or self::node2<_ ,_ , q> * q::dll1<> // = q1
+	inv true;
+
 bool rand()
   requires true
   ensures res or !res;
@@ -22,13 +26,12 @@ void delete(node2 x)
   requires x::node2<_,p,q>*q::dll<x> & q!=null
   ensures x::node2<_,p,r>*r::dll<x> ;
 */
+  /* requires x::node2<_,p,q>*q::dll1<> & q!=null */
+  /* ensures x::node2<_,p,r>*r::dll1<> ; */
 
   infer[H1,G1]
   requires H1(x)
   ensures G1(x);
-  /* requires x::node2<_,p,q>*q::dll<x> & q!=null */
-  /* ensures x::node2<_,p,r>*r::dll<x> ; */
-
 {
   bool l = x.next.next==null;
   if (l) {
@@ -38,9 +41,13 @@ void delete(node2 x)
     if (rand()) delete(x.next);
     else {
       node2 y = x.next;
+      //dprint;
       node2 z = y.next;
+      // dprint;
       x.next = z;
-      z.prev = x; 
+      //dprint;
+      z.prev = x;
+      //dprint;
     }
 
   }
