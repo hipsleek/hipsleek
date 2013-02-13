@@ -1,5 +1,5 @@
 /* Singly Linked List */
-/* Size + Bag Property */
+/* Given Shape & Size -> Infer Bag Property */
 
 data node {
   int val;
@@ -255,8 +255,8 @@ void reverse(ref node xs, ref node ys)
   }
 }
 
-/* Delete the first "a" number of nodes 
-   from a singly linked list 
+/* Split a singly linked list into two:
+   the first part contains "a" nodes
 */
 node del_lseg(node x, int a)
   requires x::llN<n> & n>a>0

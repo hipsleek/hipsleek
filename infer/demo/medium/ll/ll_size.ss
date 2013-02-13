@@ -1,5 +1,5 @@
 /* Singly Linked List */
-/* Size Property */
+/* Given Shape -> Infer Size Property */
 
 data node {
   int val;
@@ -183,7 +183,7 @@ void insert(node x, int a)
 
 /* Delete the i_th node in a singly linked list */
 void del_index(node x, int i)
-  requires x::ll<>
+  requires x::ll<> & x!=null
   ensures x::ll<>;
 {
   if (i == 1)
@@ -255,8 +255,8 @@ void reverse(ref node xs, ref node ys)
   }
 }
 
-/* Delete the first "a" number of nodes 
-   from a singly linked list 
+/* Split a singly linked list into two:
+   the first part contains "a" nodes
 */
 node del_lseg(node x, int a)
   requires x::ll<>

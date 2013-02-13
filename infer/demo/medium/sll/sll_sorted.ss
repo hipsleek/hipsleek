@@ -1,5 +1,5 @@
 /* Sorted Singly Linked List */
-/* Size + Sortedness Property */
+/* Given Shape & Size -> Infer Sortedness Property */
 
 data node {
   int val;
@@ -267,8 +267,8 @@ node create_list(int n, int v)
   }
 }
 
-/* Delete the first "a" number of nodes 
-   from a sorted singly linked list 
+/* Split a sorted singly linked list into two:
+   the first part contains "a" nodes
 */
 node del_lseg(node x, int a)
   requires x::sllN<n> & n>a>0
