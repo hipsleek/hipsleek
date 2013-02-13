@@ -2955,9 +2955,9 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 (*   Gen.Profiling.do_1 "unsat_base_nth" (unsat_base_x prog sat_subno) f *)
       
 
-and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool = 
+and unsat_base_nth(*_debug*) (n:int) prog (sat_subno:  int ref) f  : bool = 
   (*unsat_base_x prog sat_subno f*)
-  Debug.no_1 "unsat_base_nth" 
+  Debug.no_1_num n "unsat_base_nth"
       Cprinter.string_of_formula string_of_bool
       (fun _ -> unsat_base_x prog sat_subno f) f
 
@@ -2985,7 +2985,7 @@ and elim_unsat_es_now i (prog : prog_decl) (sat_subno:  int ref) (es : entail_st
 and elim_unsat_es_now_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let f = es.es_formula in
   let _ = reset_int2 () in
-  let b = unsat_base_nth "1" prog sat_subno f in
+  let b = unsat_base_nth 1 prog sat_subno f in
   (* Slicing: Set the flag memo_group_unsat to false *)
   let f = reset_unsat_flag_formula f in
   let es = { es with es_formula = f; es_unsat_flag = true } in
@@ -3027,7 +3027,7 @@ and elim_unsat_all_x prog (f : formula): formula = match f with
           else TP.is_sat_sub_no (CP.And (npf, pf1b, no_pos)) sat_subno ) true pfb in
 	      TP.incr_sat_no ();
 	    (*      if is_ok then print_endline "elim_unsat_all: true" else print_endline "elim_unsat_all: false";*)*)
-        let is_ok = unsat_base_nth "2" prog sat_subno f in
+        let is_ok = unsat_base_nth 2 prog sat_subno f in
 	    if not is_ok then f else mkFalse (flow_formula_of_formula f) (pos_of_formula f)
   | Or ({ formula_or_f1 = f1;
     formula_or_f2 = f2;
@@ -6053,7 +6053,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                           then we have a constraint x!=y
                         *)
                         let p1 =
-                          if (Perm.allow_perm ()) then
+                          if (Perm.allow_perm () && !Globals.perm != Dperm) then
                             let nodes_f = xpure_perm prog h1 p1 in
                             let p1 = MCP.merge_mems p1 nodes_f true in
                             let p1 = MCP.remove_dupl_conj_mix_formula p1 in
@@ -10072,6 +10072,7 @@ and normalize_formula_perm prog f = match f with
 and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl list): formula =
   if (isAnyConstFalse f) || (!Globals.perm = NoPerm) then f
   else if !Globals.perm = Dperm then normalize_formula_perm prog f 
+  else if coers==[] then f
   else
     let coers = List.filter (fun c -> 
         match c.coercion_case with
@@ -10121,8 +10122,6 @@ and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl l
 
 and normalize_formula_w_coers i prog estate (f:formula) (coers:coercion_decl list): formula =
   let fn = wrap_proving_kind "LEMMA-NORM" (normalize_formula_w_coers_x  prog estate f) in
-  if coers==[] then f
-  else
     let pr = Cprinter.string_of_formula in
     let pr_c = Cprinter.string_of_coerc_decl_list in
     let pr3 l = string_of_int (List.length l) in

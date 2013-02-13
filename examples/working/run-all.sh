@@ -9,6 +9,11 @@ time ./run-fast-tests.pl sleek $@
 echo -e "\n##################### sleek_fracperm tests ###################"
 time ./run-fast-tests.pl sleek_fracperm $@
 
+echo -e "\n##################### dfracperm tests+barriers ###################"
+time ./run-fast-tests.pl hip_barr $@
+time ./run-fast-tests.pl sleek_barr $@
+time ./run-fast-tests.pl dfrac $@
+
 echo -e "\n##################### hip_vperm tests ###################"
 time ./run-fast-tests.pl hip_vperm $@
 

@@ -4264,7 +4264,7 @@ and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : id
   let rec trans_struc_formula (fvars : ident list) stab (f0 : IF.struc_formula) :CF.struc_formula = match f0 with
     | IF.EAssume b ->	(*add res, self*)
 		let f = trans_formula prog true (self::res_name::eres_name::fvars) false b.IF.formula_assume_simpl stab true in
-		let f_struc = trans_I2C_struc_formula_x prog true (res_name::eres_name::fvars) b.IF.formula_assume_struc stab true false in
+		let f_struc = trans_I2C_struc_formula_x prog true (res_name::eres_name::fvars) b.IF.formula_assume_struc stab check_self_sp false in
 		CF.mkEAssume [] f f_struc b.IF.formula_assume_lbl b.IF.formula_assume_ensures_type
     | IF.ECase b-> 	
           CF.ECase {
@@ -8327,7 +8327,7 @@ and check_barrier_wf prog bd =
               let f = (*Solver.normalize_frac_formula prog*) (CF.mkStar p1 p1 CF.Flow_combine no_pos) in
 	          let f = Solver.normalize_formula_w_coers 8 prog empty_es f prog.C.prog_left_coercions in
               Gen.Profiling.inc_counter "barrier_proofs";
-	          if Solver.unsat_base_nth "0" prog (ref 0) f then (p1,p2)  
+	          if Solver.unsat_base_nth 3 prog (ref 0) f then (p1,p2)  
 	          else raise  (Err.Malformed_barrier "imprecise specification, this should not occur as long as the prev check is correct")
       | _ -> raise  (Err.Malformed_barrier " disjunctive specification?")) fl) in
     (*the pre sum totals full barrier fs get residue F1*)
@@ -8336,7 +8336,7 @@ and check_barrier_wf prog bd =
     (*let tot_pre = Solver.normalize_frac_formula prog tot_pre in*)
     (*let _ = print_string (Cprinter.string_of_formula tot_pre) in *)
     Gen.Profiling.inc_counter "barrier_proofs";
-    if Solver.unsat_base_nth "0" prog (ref 0) tot_pre then raise  (Err.Malformed_barrier (" contradiction in pres for transition "^t_str ))
+    if Solver.unsat_base_nth 4 prog (ref 0) tot_pre then raise  (Err.Malformed_barrier (" contradiction in pres for transition "^t_str ))
     else
       let tot_pre_bar = f_gen_tot fs in
       let _ = Debug.devel_zprint (lazy ("check_barriers: whole pre:  "^ (Cprinter.string_of_formula tot_pre))) no_pos in
@@ -8348,7 +8348,7 @@ and check_barrier_wf prog bd =
 	    let tot_post = Solver.normalize_formula_w_coers 10 prog empty_es tot_post prog.C.prog_left_coercions in
         (*let tot_post = Solver.normalize_frac_formula prog tot_post in*)
 	    Gen.Profiling.inc_counter "barrier_proofs";
-	    if Solver.unsat_base_nth "0" prog (ref 0) tot_post then raise (Err.Malformed_barrier (" contradiction in post for transition "^t_str ))
+	    if Solver.unsat_base_nth 5 prog (ref 0) tot_post then raise (Err.Malformed_barrier (" contradiction in post for transition "^t_str ))
 	    else 
 	      let tot_post_bar = f_gen_tot ts in
 	      let _ = Debug.devel_zprint (lazy ("check_barriers: whole post:  "^ (Cprinter.string_of_formula tot_post))) no_pos in
@@ -8378,7 +8378,9 @@ and check_barrier_wf prog bd =
     let incomp f1 f2 = 
       Gen.Profiling.inc_counter "barrier_proofs";
       (*should be made to use "and" on xpures to detect the contradiction, probably by looking only at the pures after normalization*)
-      if  Solver.unsat_base_nth "0" prog (ref 0) (CF.mkStar f1 f2 CF.Flow_combine no_pos) then () 
+		let nf = CF.mkStar f1 f2 CF.Flow_combine no_pos in
+		let nf = Solver.normalize_formula_w_coers 11 prog empty_es nf prog.C.prog_left_coercions in	  
+      if  Solver.unsat_base_nth 6 prog (ref 0) nf then () 
       else raise (Err.Malformed_barrier (" no contradiction found in preconditions of transitions from "^(string_of_int st)^"  for preconditions: \n f1:   "^
 	      (Cprinter.string_of_formula f1)^"\n f2:    "^(Cprinter.string_of_formula f2))) in
     let rec check_one p1 p2 = List.iter (fun c1 -> List.iter (incomp c1) p1) p2 in 
