@@ -60,6 +60,7 @@ let rec intersect_list_ann (ann_lst_l: CF.ann list) (ann_lst_r: CF.ann list): CF
 	  | CF.ConstAnn(Lend)    -> if (CF.isAccs ann_l) then ann_r :: (intersect_list_ann tl tr)
 	  			 else ann_l :: (intersect_list_ann tl tr)
 	  | CF.TempAnn _
+	  | CF.TempRes _
 	  | CF.ConstAnn(Accs)    -> ann_l :: (intersect_list_ann tl tr)
 	  | CF.PolyAnn(v)        -> ann_l :: (intersect_list_ann tl tr) (* TODO(ann): check if var ann is replaced or not *)
       end

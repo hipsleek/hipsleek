@@ -568,15 +568,18 @@ and subtype_ann_pair (imm1 : ann) (imm2 : ann) : bool * ((CP.exp * CP.exp) optio
             | PolyAnn v2 -> (true, Some (CP.Var(v1, no_pos), CP.Var(v2, no_pos)))
             | ConstAnn k2 -> 
                   (true, Some (CP.Var(v1,no_pos), CP.AConst(k2,no_pos)))
-	        | TempAnn t2 -> (subtype_ann_pair imm1 (ConstAnn(Accs)))
+	    | TempAnn t2 -> (subtype_ann_pair imm1 (ConstAnn(Accs)))
+            | TempRes (al,ar) -> (subtype_ann_pair imm1 ar)  (* andreeac should it be Accs? *)
           )
     | ConstAnn k1 ->
           (match imm2 with
             | PolyAnn v2 -> (true, Some (CP.AConst(k1,no_pos), CP.Var(v2,no_pos)))
             | ConstAnn k2 -> ((int_of_heap_ann k1)<=(int_of_heap_ann k2),None) 
 	    | TempAnn t2 -> (subtype_ann_pair imm1 (ConstAnn(Accs)))
+            | TempRes (al,ar) -> (subtype_ann_pair imm1 ar)  (* andreeac should it be Accs? *)
           ) 
     | TempAnn t1 -> (subtype_ann_pair (ConstAnn(Accs)) imm2) 
+    | TempRes (l,ar) -> (subtype_ann_pair (ConstAnn(Accs)) imm2)  (* andreeac should it be ar-al? or Accs? *)
           
 
 and subtype_ann_gen_x impl_vars evars (imm1 : ann) (imm2 : ann) : bool * (CP.formula option) * (CP.formula option) * (CP.formula option) =
@@ -632,57 +635,175 @@ and subtype_ann_list impl_vars evars (ann1 : ann list) (ann2 : ann list) : bool 
 and param_ann_equals_node_ann (ann_lst : ann list) (node_ann: ann): bool =
   List.fold_left (fun res x -> res && (CF.eq_ann x node_ann)) true ann_lst
 
-(* during matching *)
+and remaining_ann_x (ann_l: ann) (ann_r: ann) : ann =
+  match ann_r with
+    | ConstAnn(Mutable)
+    | ConstAnn(Imm)     -> (ConstAnn(Accs))
+    | ConstAnn(Lend)    -> TempAnn(ann_l)
+    | TempAnn _
+    | TempRes _  
+    | ConstAnn(Accs)    -> ann_l
+    | PolyAnn(_)        ->
+          (* must check ann_l (probl cases: @M,@I,@v), decide between retruning a Accs or TempRes*)
+          match ann_l with
+              (*must check ann_l (probl cases: @M,@I,@v), decide between returning Accs or TempCons*)
+            | ConstAnn(Mutable)
+            | ConstAnn(Imm)
+            | PolyAnn(_) -> TempRes(ann_l, ann_r)
+            | _          -> ann_l
+
+and remaining_ann (ann_l: ann) (ann_r: ann) : ann =
+  let pr = Cprinter.string_of_imm in
+  Debug.no_2 "remaining_ann" pr pr pr (fun _ _-> remaining_ann_x ann_l ann_r) ann_l ann_r
+
+(* during matching - for residue*)
 and replace_list_ann_x (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
   match (ann_lst_l, ann_lst_r) with
     | ([], []) -> []
-    | (ann_l :: tl, ann_r :: tr ) ->
-          begin
-	    match ann_r with 
-	      | ConstAnn(Mutable)	   
-	      | ConstAnn(Imm)     -> (ConstAnn(Accs)) :: (replace_list_ann_x tl tr)
-	      | ConstAnn(Lend)    -> TempAnn(ann_l) :: (replace_list_ann_x tl tr)
-	      | TempAnn _
-	      | ConstAnn(Accs)    -> ann_l :: (replace_list_ann_x tl tr)
-	      | PolyAnn(v)        -> ann_l :: (replace_list_ann_x tl tr) (* TODO(ann): check if var ann is replaced or not *)
-          end
+    | (ann_l :: tl, ann_r :: tr ) -> (remaining_ann ann_l ann_r) :: (replace_list_ann_x tl tr)
     | (_, _) -> ann_lst_l (* report_error no_pos ("[immutable.ml] : nodes should have same no. of fields \n") *)
 
 and replace_list_ann (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
   Debug.no_2 "replace_list_ann" pr pr pr (fun _ _-> replace_list_ann_x ann_lst_l ann_lst_r) ann_lst_l ann_lst_r
 
+and consumed_ann (ann_l: ann) (ann_r: ann): ann = 
+  match ann_r with
+    | ConstAnn(Accs)    
+    | TempAnn _
+    | TempRes _
+    | ConstAnn(Lend)    -> (ConstAnn(Accs)) 
+    | PolyAnn(_)        (* -> *)
+            (* match ann_l with *)
+            (*     (\*must check ann_l (probl cases: @M,@I,@v), decide between returning Accs or TempCons*\) *)
+            (*   | ConstAnn(Mutable) *)
+            (*   | ConstAnn(Imm) *)
+            (*   | PolyAnn() -> TempCons(ann_l) *)
+            (*   | _         -> ConstAnn(Accs) *)
+    | ConstAnn(Mutable) 
+    | ConstAnn(Imm)     -> ann_l
+
 
 (* during matching *)
 and consumed_list_ann_x (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
   match (ann_lst_l, ann_lst_r) with
     | ([], []) -> []
-    | (ann_l :: tl, ann_r :: tr ) ->
-          begin
-	    match ann_r with
-          | ConstAnn(Accs)    
-          | PolyAnn(_)
-          | TempAnn _
-	      | ConstAnn(Lend)    -> (ConstAnn(Accs))  :: (consumed_list_ann_x tl tr)
-	      | ConstAnn(Mutable) 
-	      | ConstAnn(Imm)     -> ann_l :: (consumed_list_ann_x tl tr)
-	      
-          end
+    | (ann_l :: tl, ann_r :: tr ) -> (consumed_ann ann_l ann_r):: (consumed_list_ann_x tl tr)
     | (_, _) -> ann_lst_l (* report_error no_pos ("[immutable.ml] : nodes should have same no. of fields \n") *)
 
 and consumed_list_ann (ann_lst_l: ann list) (ann_lst_r: ann list): ann list =
   let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
   Debug.no_2 "consumed_list_ann" pr pr pr (fun _ _-> consumed_list_ann_x ann_lst_l ann_lst_r) ann_lst_l ann_lst_r
 
-and restore_tmp_ann (ann_lst: ann list) : ann list =
+
+and merge_ann_formula_list(conjs: CP.formula list): heap_ann option = 
+  (* form a list with the constants on the lhs of "var=AConst.." formulae *)
+  let rec helper conjs =
+    match conjs with
+      | []    -> []
+      | x::xs -> 
+            let acst = CP.get_aconst x in
+            match acst with
+              | Some ann -> ann::(helper xs)
+              | None     -> helper xs
+  in
+  let anns = helper conjs in
+  let ann = 
+    (* merge the set of annotations anns as follows: 
+       if all the annotations in the set are the same, eg. equal to ann0, 
+       return Some ann0, otherwise return None *)
+    match anns with
+      | []     -> None
+      | x::xs  -> List.fold_left (fun a1_opt a2 -> 
+            match a1_opt with
+              | Some a1 -> if not(CP.is_diff (CP.AConst(a1,no_pos)) (CP.AConst(a2,no_pos))) then Some a1 else None
+              | None    -> None ) (Some x) xs
+  in
+  ann
+
+and collect_ann_info_from_formula (a: CF.ann) (conjs: CP.formula list) (pure: CP.formula): heap_ann option =
+  let lst = 
+    match a with
+      | PolyAnn sv -> CP.find_closure_pure_formula sv pure 
+      | _ -> []
+  in
+  (* keep only Eq formulae of form var = AConst, where var is in lst *)
+  let conjs = List.filter (fun f -> (CP.is_eq_with_aconst f) && not(CP.disjoint (CP.fv f) lst )) conjs in
+  let ann = merge_ann_formula_list conjs in
+  ann
+
+(* restore ann for residue * consumed *)
+and restore_tmp_res_ann_x (annl: ann) (annr: ann) (pure0: MCP.mix_formula): ann =
+    let pure = MCP.pure_of_mix pure0 in
+    let pairs = CP.pure_ptr_equations pure in
+    Debug.tinfo_hprint (add_str "pure:" (Cprinter.string_of_pure_formula)) pure no_pos;
+    Debug.tinfo_hprint (add_str "pairs:" (pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var))) pairs no_pos;
+    let conjs = CP.split_conjunctions pure in
+    Debug.tinfo_hprint (add_str "conjs:" (pr_list Cprinter.string_of_pure_formula)) conjs no_pos;
+    let ann_r0 = collect_ann_info_from_formula annr conjs pure in
+    let ann_l0 = collect_ann_info_from_formula annl conjs pure in
+    Debug.tinfo_hprint (add_str "annr:" (pr_opt string_of_heap_ann)) ann_r0 no_pos;
+    Debug.tinfo_hprint (add_str "annl:" (pr_opt string_of_heap_ann)) ann_l0 no_pos;
+    let ann_subst ann def_ann = match ann with
+      | Some a -> ConstAnn(a)
+      | None   -> def_ann in
+    let annl = ann_subst ann_l0 annl in
+    let annr = ann_subst ann_r0 annr in
+    let res = remaining_ann annl annr in
+    res
+
+and restore_tmp_res_ann (annl: ann) (annr: ann) (pure0: MCP.mix_formula): ann =
+  let pr = Cprinter.string_of_imm in
+  Debug.no_3 "restore_tmp_res_ann" pr pr Cprinter.string_of_mix_formula pr restore_tmp_res_ann_x annl annr pure0
+
+
+and restore_tmp_ann_x (ann_lst: ann list) (pure0: MCP.mix_formula): ann list =
   match ann_lst with
     | [] -> []
     | ann_l::tl ->
           begin
 	    match ann_l with 
-	      | TempAnn(t)     -> t :: (restore_tmp_ann tl)
-	      | _        -> ann_l :: (restore_tmp_ann tl)
+	      | TempAnn(t)     -> t :: (restore_tmp_ann_x tl pure0)
+              | TempRes(al,ar) -> 
+                    Debug.tinfo_hprint (add_str "TempRes:" (Cprinter.string_of_imm)) ann_l no_pos;
+                    Debug.tinfo_hprint (add_str "pure0:" (Cprinter.string_of_mix_formula)) pure0 no_pos;
+                    let ann_l = restore_tmp_res_ann al ar pure0 in
+                    ann_l :: (restore_tmp_ann_x tl pure0)
+	      | _        -> ann_l :: (restore_tmp_ann_x tl pure0)
           end
+
+and restore_tmp_ann (ann_lst: ann list) (pure0: MCP.mix_formula): ann list =
+  let pr = pr_list Cprinter.string_of_imm in 
+  Debug.no_2 "restore_tmp_ann" pr  (Cprinter.string_of_mix_formula) pr restore_tmp_ann_x ann_lst pure0
+
+and update_field_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
+  let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
+  Debug.no_3 "update_field_ann" (Cprinter.string_of_h_formula) pr pr  (Cprinter.string_of_h_formula) (fun _ _ _-> update_field_ann_x f pimm1 pimm) f pimm1 pimm
+
+and update_field_ann_x (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
+  let new_field_ann_lnode = replace_list_ann pimm1 pimm in
+  (* asankhs: If node has all field annotations as @A make it HEmp *)
+  (* if (isAccsList new_field_ann_lnode) then HEmp else *) (*andreea temporarily allow nodes only with @A fields*)
+  let updated_f = match f with 
+    | DataNode d -> DataNode ( {d with h_formula_data_param_imm = new_field_ann_lnode} )
+    | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")
+  in
+  updated_f
+
+and update_ann (f : h_formula) (ann_l: ann) (ann_r: ann) : h_formula = 
+  let pr = Cprinter.string_of_imm in
+  Debug.no_3 "update_ann" (Cprinter.string_of_h_formula) pr pr  (Cprinter.string_of_h_formula) (fun _ _ _-> update_ann_x f ann_l ann_r) f ann_l ann_r
+
+and update_ann_x (f : h_formula) (ann_l: ann) (ann_r: ann) : h_formula = 
+  let new_ann_lnode = remaining_ann ann_l ann_r in
+  (* asankhs: If node has all field annotations as @A make it HEmp *)
+  (* if (isAccs new_ann_lnode) then HEmp else *) (*andreea temporarily allow nodes only with @A fields*)
+  let updated_f = match f with 
+    | DataNode d -> DataNode ( {d with h_formula_data_imm = new_ann_lnode} )
+    | ViewNode v -> ViewNode ( {v with h_formula_view_imm = new_ann_lnode} )
+    | _          -> report_error no_pos ("[context.ml] : only data node or view node should allow annotations \n")
+  in
+  updated_f
 
 (* utilities for handling lhs heap state continuation *)
 and push_cont_ctx (cont : h_formula) (ctx : Cformula.context) : Cformula.context =
@@ -759,7 +880,7 @@ and restore_tmp_ann_list_ctx (ctx : list_context) : list_context =
 	  SuccCtx(List.map restore_tmp_ann_ctx cl)
 
 and restore_tmp_ann_ctx (ctx : context) : context = 
-  if not(!Globals.allow_field_ann) then ctx else
+  if (!Globals.allow_imm) || (!Globals.allow_field_ann) then
     let rec helper ctx = 
       match ctx with
         | Ctx(es) -> Ctx(restore_tmp_ann_es es)
@@ -768,26 +889,29 @@ and restore_tmp_ann_ctx (ctx : context) : context =
 	      let nc2 = helper c2 in
 	      OCtx(nc1, nc2)
     in helper ctx
+  else ctx
 
-and restore_tmp_ann_h_formula (f: h_formula): h_formula =
+and restore_tmp_ann_h_formula (f: h_formula) pure0: h_formula =
   match f with
-    | CF.Star h  -> CF.Star {h with h_formula_star_h1 = restore_tmp_ann_h_formula h.CF.h_formula_star_h1; 
-	  h_formula_star_h2 = restore_tmp_ann_h_formula h.CF.h_formula_star_h2;}
-    | CF.Conj h  -> CF.Conj {h with h_formula_conj_h1 = restore_tmp_ann_h_formula h.CF.h_formula_conj_h1; 
-	  h_formula_conj_h2 = restore_tmp_ann_h_formula h.CF.h_formula_conj_h2;}
-    | CF.ConjStar h  -> CF.ConjStar {h with h_formula_conjstar_h1 = restore_tmp_ann_h_formula h.CF.h_formula_conjstar_h1; 
-	  h_formula_conjstar_h2 = restore_tmp_ann_h_formula h.CF.h_formula_conjstar_h2;}
-    | CF.ConjConj h  -> CF.ConjConj {h with h_formula_conjconj_h1 = restore_tmp_ann_h_formula h.CF.h_formula_conjconj_h1; 
-	  h_formula_conjconj_h2 = restore_tmp_ann_h_formula h.CF.h_formula_conjconj_h2;}		
-    | CF.Phase h -> CF.Phase  {h with h_formula_phase_rd = restore_tmp_ann_h_formula h.CF.h_formula_phase_rd; 
-	  h_formula_phase_rw = restore_tmp_ann_h_formula h.CF.h_formula_phase_rw;}
-    | CF.DataNode h -> CF.DataNode {h with h_formula_data_param_imm = restore_tmp_ann h.CF.h_formula_data_param_imm}
+    | CF.Star h  -> CF.Star {h with h_formula_star_h1 = restore_tmp_ann_h_formula h.CF.h_formula_star_h1 pure0; 
+	  h_formula_star_h2 = restore_tmp_ann_h_formula h.CF.h_formula_star_h2 pure0;}
+    | CF.Conj h  -> CF.Conj {h with h_formula_conj_h1 = restore_tmp_ann_h_formula h.CF.h_formula_conj_h1 pure0; 
+	  h_formula_conj_h2 = restore_tmp_ann_h_formula h.CF.h_formula_conj_h2 pure0;}
+    | CF.ConjStar h  -> CF.ConjStar {h with h_formula_conjstar_h1 = restore_tmp_ann_h_formula h.CF.h_formula_conjstar_h1 pure0; 
+	  h_formula_conjstar_h2 = restore_tmp_ann_h_formula h.CF.h_formula_conjstar_h2 pure0;}
+    | CF.ConjConj h  -> CF.ConjConj {h with h_formula_conjconj_h1 = restore_tmp_ann_h_formula h.CF.h_formula_conjconj_h1 pure0; 
+	  h_formula_conjconj_h2 = restore_tmp_ann_h_formula h.CF.h_formula_conjconj_h2 pure0; }
+    | CF.Phase h -> CF.Phase  {h with h_formula_phase_rd = restore_tmp_ann_h_formula h.CF.h_formula_phase_rd pure0; 
+	  h_formula_phase_rw = restore_tmp_ann_h_formula h.CF.h_formula_phase_rw pure0;}
+    | CF.DataNode h -> CF.DataNode {h with h_formula_data_param_imm = restore_tmp_ann h.CF.h_formula_data_param_imm pure0;
+         h_formula_data_imm = List.hd (restore_tmp_ann [h.CF.h_formula_data_imm] pure0)}
+    | CF.ViewNode h -> CF.ViewNode {h with h_formula_view_imm = List.hd (restore_tmp_ann [h.CF.h_formula_view_imm] pure0)}
     | _          -> f
 
 and restore_tmp_ann_formula (f: formula): formula =
   match f with
-    | Base(bf) -> Base{bf with formula_base_heap = restore_tmp_ann_h_formula bf.formula_base_heap;}
-    | Exists(ef) -> Exists{ef with formula_exists_heap = restore_tmp_ann_h_formula ef.formula_exists_heap;}
+    | Base(bf) -> Base{bf with formula_base_heap = restore_tmp_ann_h_formula bf.formula_base_heap  bf.formula_base_pure;}
+    | Exists(ef) -> Exists{ef with formula_exists_heap = restore_tmp_ann_h_formula ef.formula_exists_heap  ef.formula_exists_pure;}
     | Or(orf) -> Or {orf with formula_or_f1 = restore_tmp_ann_formula orf.formula_or_f1; 
           formula_or_f2 = restore_tmp_ann_formula orf.formula_or_f2;}
 

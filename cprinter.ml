@@ -500,6 +500,7 @@ let rec string_of_imm imm = match imm with
   | ConstAnn(Lend) -> "@L"
   | ConstAnn(Mutable) -> "@M"
   | TempAnn(t) -> "@[" ^ (string_of_imm t) ^ "]"
+  | TempRes(l,r) -> "@[" ^ (string_of_imm l) ^ ", " ^ (string_of_imm r) ^ "]"
   | PolyAnn(v) -> "@" ^ (string_of_spec_var v)
 
 

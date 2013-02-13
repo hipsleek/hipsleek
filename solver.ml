@@ -5057,7 +5057,7 @@ and heap_entail_split_rhs_phases_x (prog : prog_decl) (is_folding : bool) (ctx_0
 	                (* let _ = print_string("************************************************************************\n") in *)
 	                (* let _ = print_string("[heap_n_pure_entail]: entail the pure part: p =" ^ (Cprinter.string_of_mix_formula p) ^ "\n") in *)
 	                (* let _ = print_string("************************************************************************\n") in *)
-                  let _ = Debug.tinfo_hprint (add_str "p" (Cprinter.string_of_mix_formula)) p pos in
+                        let _ = Debug.tinfo_hprint (add_str "p" (Cprinter.string_of_mix_formula)) p pos in
 	                let res = List.map (fun c -> 
 		                let new_conseq, aux_conseq_from_fold = 
 		                  (match c with 
@@ -5216,7 +5216,10 @@ and one_ctx_entail_x prog is_folding  c conseq func p pos : (list_context * proo
             | Some ex_p -> CP.mkAnd ex_p aux_c pos in
           let aux_conseq = subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func h (MCP.mix_of_pure aux_c)) in
           let new_conseq = CF.mkStar new_conseq aux_conseq Flow_combine pos in
-          heap_entail_conjunct 4 prog is_folding  c new_conseq []  pos
+          (* TODO andreeac replace TempRes with known info in the resulted ctx of the following entail *)
+          let (ctx,prf) = heap_entail_conjunct 4 prog is_folding  c new_conseq []  pos in
+          let ctx = Immutable.restore_tmp_ann_list_ctx ctx in
+          (ctx, prf)
     | OCtx (c1, c2) -> 
           let cl1, prf1 = one_ctx_entail prog is_folding  c1 conseq func p pos in
           let cl2, prf2 = one_ctx_entail prog is_folding  c2 conseq func p pos in
@@ -7692,21 +7695,21 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
     else 
       let l_h,l_p,l_fl,l_t, l_a = split_components estate.es_formula in
       let restore_hole h estate = 
-        let restore_hole_b = isPoly r_ann && (isMutable l_ann || isImm l_ann) in
+        let restore_hole_b = (isPoly r_ann && (isMutable l_ann || isImm l_ann)) || (isPoly r_ann && isPoly l_ann) in
         Debug.tinfo_hprint (add_str "restore_hole_b" (string_of_bool)) restore_hole_b pos;
         if restore_hole_b then 
           match h with
             |Hole _ -> let new_l_h = Immutable.apply_subs_h_formula estate.es_crt_holes l_h (* restore hole and update estate *) in
-                       Debug.tinfo_hprint (add_str "new_l_h" (Cprinter.string_of_h_formula)) new_l_h pos;
-                       Debug.tinfo_hprint (add_str "es_crt_holes length" (string_of_int)) (List.length estate.es_crt_holes) pos;
-                       let updated_ante = mkBase new_l_h l_p l_t l_fl l_a pos in
-                       let new_es = {estate with es_formula = updated_ante} in
-                       (new_l_h, new_es)
+              Debug.tinfo_hprint (add_str "new_l_h" (Cprinter.string_of_h_formula)) new_l_h pos;
+              Debug.tinfo_hprint (add_str "es_crt_holes length" (string_of_int)) (List.length estate.es_crt_holes) pos;
+              let updated_ante = mkBase new_l_h l_p l_t l_fl l_a pos in
+              let new_es = {estate with es_formula = updated_ante} in
+              (new_l_h, new_es)
             | _ -> (l_h, estate)
         else (l_h, estate)
       in
       let replace_hole_w_emp h estate =
-        (* if rhs ann is variable do no consume yet, restore the hole, works ok for impl quantif on rhs *)
+        (* if rhs ann is variable do no consume yet, restore the hole, works ok for impl quantif on rhs (w/o fields ann) *)
         let restore_hole_b = isPoly r_ann && (isMutable l_ann || isImm l_ann) in
         if restore_hole_b then 
           match h with
@@ -7718,27 +7721,28 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
                        (new_l_h, new_es)
             | _ -> (l_h, estate)
         else (l_h, estate) in
-      let (l_h, estate) = replace_hole_w_emp l_h estate in
+      (* let (l_h, estate) = replace_hole_w_emp l_h estate in *)
+      let (l_h, estate) = restore_hole l_h estate in
       Debug.tinfo_hprint (add_str "l_h" (Cprinter.string_of_h_formula)) l_h pos;
       Debug.tinfo_hprint (add_str "estate" (Cprinter.string_of_entail_state)) estate pos;
       let r_h,r_p,r_fl,r_t, r_a = split_components rhs in
       Debug.tinfo_hprint (add_str "r_h" (Cprinter.string_of_h_formula)) r_h pos;
       let rem_l_node,rem_r_node,l_args, r_args, l_param_ann, r_param_ann = 
         match (l_node,r_node) with
-	    | (DataNode dnl, DataNode dnr) -> 
-	          let new_args = List.combine l_args r_args in
-	          let hole = CP.SpecVar (UNK,"#",Unprimed) in
-	          (* [Internal] function to cancel out two variables *)
-	          let cancel_fun (x,y) = if (CP.is_hole_spec_var x || CP.is_hole_spec_var y) then (x,y) else (hole,hole) in
- 	          let new_args = List.map cancel_fun new_args in
-	          let new_l_args,new_r_args = List.split new_args in
-	          let new_l_holes = CF.compute_holes_list new_l_args in
-	          let new_r_holes = CF.compute_holes_list new_r_args in
-	          (* An Hoa : DO NOT ADD THE REMAINING TO THE LEFT HAND SIDE - IT MIGHT CAUSE INFINITE LOOP & CONTRADICTION AS THE l_h IS ALWAYS ADDED TO THE HEAP PART. *)
-            Debug.tinfo_hprint (add_str "new_l_args" (pr_list string_of_spec_var)) new_l_args pos;
-            Debug.tinfo_hprint (add_str "new_r_args" (pr_list string_of_spec_var)) new_r_args pos;
-            Debug.tinfo_hprint (add_str "new_l_holes" (pr_list string_of_int)) new_l_holes pos;
-            Debug.tinfo_hprint (add_str "new_r_holes" (pr_list string_of_int)) new_r_holes pos;
+	  | (DataNode dnl, DataNode dnr) -> 
+	        let new_args = List.combine l_args r_args in
+	        let hole = CP.SpecVar (UNK,"#",Unprimed) in
+	        (* [Internal] function to cancel out two variables *)
+	        let cancel_fun (x,y) = if (CP.is_hole_spec_var x || CP.is_hole_spec_var y) then (x,y) else (hole,hole) in
+ 	        let new_args = List.map cancel_fun new_args in
+	        let new_l_args,new_r_args = List.split new_args in
+	        let new_l_holes = CF.compute_holes_list new_l_args in
+	        let new_r_holes = CF.compute_holes_list new_r_args in
+	        (* An Hoa : DO NOT ADD THE REMAINING TO THE LEFT HAND SIDE - IT MIGHT CAUSE INFINITE LOOP & CONTRADICTION AS THE l_h IS ALWAYS ADDED TO THE HEAP PART. *)
+                Debug.tinfo_hprint (add_str "new_l_args" (pr_list string_of_spec_var)) new_l_args pos;
+                Debug.tinfo_hprint (add_str "new_r_args" (pr_list string_of_spec_var)) new_r_args pos;
+                Debug.tinfo_hprint (add_str "new_l_holes" (pr_list string_of_int)) new_l_holes pos;
+                Debug.tinfo_hprint (add_str "new_r_holes" (pr_list string_of_int)) new_r_holes pos;
 	        let rem_l_node = if (CF.all_hole_vars new_l_args) then HEmp
 	          else DataNode { dnl with
 		          h_formula_data_arguments = new_l_args;
@@ -7864,28 +7868,28 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let tmp_h2, tmp_p2, tmp_fl2, _, tmp_a2 = split_components tmp_conseq' in
               let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_a2 pos in
 	          (* An Hoa : TODO fix the consumption here - THIS CAUSES THE CONTRADICTION ON LEFT HAND SIDE! *)
-              (* only add the consumed node if the node matched on the rhs is mutable *)
+              (* only add the consumed node if the node matched on the rhs is mutable/imm *)
               let consumed_h =  (match rem_l_node with
 		          HRel _ | HTrue | HFalse | HEmp -> 
-                      match l_node with 
-                        | DataNode dnl -> 
-                            let _ = Debug.tinfo_hprint (add_str "l_node inside consumed_h" (Cprinter.string_of_h_formula)) l_node pos in
-                            let param_ann = Immutable.consumed_list_ann l_param_ann r_param_ann in 
-                            let consumed_data =  DataNode {dnl with h_formula_data_param_imm = param_ann; } in
-                            consumed_data
-                        | _-> l_node
+                      (* match l_node with  *)
+                      (*   | DataNode dnl ->  *)
+                      (*       let _ = Debug.tinfo_hprint (add_str "l_node inside consumed_h" (Cprinter.string_of_h_formula)) l_node pos in *)
+                      (*       let param_ann = Immutable.consumed_list_ann l_param_ann r_param_ann in  *)
+                      (*       let consumed_data =  DataNode {dnl with h_formula_data_param_imm = param_ann; } in *)
+                      (*       consumed_data *)
+                        (* | _->  *)
+                              l_node
                 | _ -> 
                       (*TO DO: this may not be correct because we may also
                         have to update the holes*)
                     subst_one_by_one_h rho_0 r_node)
               in
-          (* let poly_consumes = isPoly r_ann && (isMutable l_ann || isImm l_ann) in *)
               Debug.tinfo_hprint (add_str "r_ann" (Cprinter.string_of_imm)) r_ann pos;
               let new_consumed = 
                 if not(!Globals.allow_imm) && not(!Globals.allow_field_ann) then mkStarH consumed_h estate.es_heap pos
                 else if (!Globals.allow_imm) && not(!Globals.allow_field_ann) then
                   begin
-                      if (isLend r_ann || isAccs r_ann || (isPoly r_ann && (isLend l_ann || isAccs l_ann))) (*&& not(!allow_field_ann)*) 
+                      if (isLend r_ann || isAccs r_ann || (isPoly r_ann && (isLend l_ann || isAccs l_ann)) || (isPoly r_ann && isPoly l_ann)) (*&& not(!allow_field_ann)*) 
                       then estate.es_heap (*do not consume*)
                       else mkStarH consumed_h estate.es_heap pos end 
                 else  

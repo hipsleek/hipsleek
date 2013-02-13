@@ -6171,7 +6171,7 @@ let get_elems_eq aset =
     List.filter (fun v -> not(is_const v)) vl
 
 (* get var elements from a eq-map allowing constants *)
-let get_elems_eq_with_const aset =
+let get_elmes_eq_with_const aset =
   let vl=EMapSV.get_elems aset in
     List.filter (fun v -> true) vl
 
@@ -8202,6 +8202,22 @@ let mem_infer_var (v:spec_var) (is:infer_state)
 (* add lhs -> rhs to infer state is *)
 let add_rel_to_infer_state (lhs:formula) (rhs:formula) (is:infer_state) 
       = is.infer_state_rel # push (lhs,rhs)
+
+(* checks if formula is of form var = annotation constant *)
+let is_eq_with_aconst (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq (Var (_,_), AConst _, _),_) -> true
+    | _ -> false)
+  | _ -> false
+
+(* checks if formula is of form var = annotation constant *)
+let get_aconst (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq (Var (_,_), AConst (ann,_), _),_) -> Some ann
+    | _ -> None)
+  | _ -> None
 
 let is_eq_const (f:formula) = match f with
   | BForm (bf,_) ->

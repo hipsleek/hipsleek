@@ -10,11 +10,33 @@ pred cell<v,a> == self::node<v>@a
 */
 
 //checkentail x::node<_@A>|- x::node<_@L>.
-//checkentail x::node<_@L>|- x::node<_@A>.
+//checkentail x::node<_>@M|- x::node<_>@A.
+/*
+checkentail x::node<_>@M |- [v] x::node<_>@v & v=@M.
+print residue.
+
+checkentail x::node<_>@M |- [v] x::node<_>@v & v=@A.
+print residue.
+*/
+//to check below residue
+checkentail x::node<_>@M |- (exists v: x::node<_>@v & v=@A).
+print residue.
+/*
+checkentail x::node<5> |- (exists v: x::node<v> & v=5).
+print residue.
+*/
 
 
 //false on ante
-//checkentail x::node<_@v> & v=@A|- (exists w: x::node<_@w> & w=@L).
+/*checkentail x::node<_@v> & v=@A |- (exists w: x::node<_@w> & w=@L).
+print residue.
+
+checkentail x::node<_@v> & v=@L |- (exists w: x::node<_@w> & w=@A).
+print residue.
+
+checkentail x::node<_@v> & v=@M |- (exists w: x::node<_@w> & w=@A).
+print residue.
+*/
 //false on ante
 //checkentail x::node<_@v> & v=@A|- x::node<_@w>.
 
@@ -27,9 +49,9 @@ pred cell<v,a> == self::node<v>@a
 @27! curr_lhs_h: x::node<a@M>@M[Orig]
 @27! curr_lhs_h: x::node<a@M>@M[Orig]
 */
-checkentail x::node<a@M> |- x::node<a@A>.
+/*checkentail x::node<a@M> |- x::node<a@A>.
 print residue.
-
+*/
 /*
 @16! lhs_h: x::node<a@M>@M[Orig]
 @16! estate_orig.es_heap: x::node<a@M>@M[Orig]

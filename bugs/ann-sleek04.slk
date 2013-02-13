@@ -2,13 +2,75 @@ data node {
 	int val; 
 }.
 
+/*
+checkentail x::node<_@A>|- (exists w:  x::node<_@w> & w=@L) .
+print residue.
+*/
 
 
+//9 
+checkentail x::node<_>@M |-  [w] x::node<_>@w & w=@A.
+print residue. 
+
+checkentail x::node<_>@M |-  [w] x::node<_>@w & w=@I.
+print residue. 
+
+//Residue: emp&Anon_11=Anon_12 & w=@A & @M<:w
+//Should be: x::node<Anon_11>@M&Anon_11=Anon_12 & w=@A & @M<:w
+
+/*
+checkentail x::node<_>@M |-  x::node<_>@w & w=@M.
+print residue.
+
+checkentail x::node<_>@I |-  x::node<_>@w & w=@I.
+print residue. 
+
+checkentail x::node<_>@L |-  x::node<_>@w & w=@L.
+print residue.
+
+checkentail x::node<_>@A |-  x::node<_>@w & w=@A.
+print residue.
+
+//5
+checkentail x::node<_>@M |-  [w] x::node<_>@w & w=@M.
+print residue.
+
+checkentail x::node<_>@I |-  [w] x::node<_>@w & w=@I.
+print residue.
+
+checkentail x::node<_>@L |-  [w] x::node<_>@w & w=@L.
+print residue.
+
+//8
+checkentail x::node<_>@A |-  [w] x::node<_>@w & w=@A.
+print residue.
+
+//9
+checkentail x::node<_>@M |-  [w] x::node<_>@w & w=@A.
+print residue. 
+
+//10
+checkentail x::node<_>@L |-  [w] x::node<_>@w & w=@L.
+print residue.
+
+//11
+checkentail x::node<_>@L |-  [w] x::node<_>@w & w=@A.
+print residue.
+*/
+/*
+checkentail x::node<_>@M |-  x::node<_>@w & w=@L.
+print residue.
+*/
+/*
 checkentail x::node<_@A>|- (exists w:  x::node<_@w> & w=@L) .
 print residue.
 
 checkentail x::node<_@A>|- [w]  x::node<_@w> & w=@L.
 print residue.
+
+checkentail x::node<_@M> |-  x::node<_@w> & w=@L.
+print residue.*/
+
 /*
 checkentail x::node<_@M>|- [w]  x::node<_@w> & w=@M.
 print residue.

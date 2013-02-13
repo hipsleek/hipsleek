@@ -354,10 +354,10 @@ and view_mater_match_x prog c vs1 aset imm f =
   (* let _ = print_string ("\n\nview_mater_match: vars = " ^ (Cprinter.string_of_spec_var_list vars)^ " \n\n") in  *)
   try
       let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) aset) mvs in
-      if  (produces_hole imm) && not(!Globals.allow_field_ann) then
-	    let hole_no = Globals.fresh_int() in
-	    [(Hole hole_no, f, [(f, hole_no)], MaterializedArg (mv,View_mater))]
-      else [(HTrue, f, [], MaterializedArg (mv,View_mater))]
+        if  (produces_hole imm) && not(!Globals.allow_field_ann) then
+	  let hole_no = Globals.fresh_int() in
+	  [(Hole hole_no, f, [(f, hole_no)], MaterializedArg (mv,View_mater))]
+        else [(HTrue, f, [], MaterializedArg (mv,View_mater))]
   with 
           _ ->  
               if List.exists (CP.eq_spec_var CP.null_var) aset then [] 
@@ -448,20 +448,6 @@ and spatial_ctx_extract p f a i pi rn rr =
   Debug.no_4 "spatial_context_extract " string_of_h_formula Cprinter.string_of_imm pr_svl string_of_h_formula pr 
       (fun _ _ _ _-> spatial_ctx_extract_x p f a i pi rn rr ) f i a rn 
 
-and update_ann (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
-  let pr lst = "[" ^ (List.fold_left (fun y x-> (Cprinter.string_of_imm x) ^ ", " ^ y) "" lst) ^ "]; " in
-  Debug.no_3 "update_ann" (Cprinter.string_of_h_formula) pr pr  (Cprinter.string_of_h_formula) (fun _ _ _-> update_ann_x f pimm1 pimm) f pimm1 pimm
-
-and update_ann_x (f : h_formula) (pimm1 : ann list) (pimm : ann list) : h_formula = 
-  let new_field_ann_lnode = Immutable.replace_list_ann pimm1 pimm in
-  (* asankhs: If node has all field annotations as @A make it HEmp *)
-  (* if (isAccsList new_field_ann_lnode) then HEmp else *) (*andreea temporarily allow nodes only with @A fields*)
-  let updated_f = match f with 
-    | DataNode d -> DataNode ( {d with h_formula_data_param_imm = new_field_ann_lnode} )
-    | _          -> report_error no_pos ("[context.ml] : only data node should allow field annotations \n")
-  in
-  updated_f
-
 and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : ann) (pimm : ann list) rhs_node rhs_rest : match_res list  =
   let rec helper f = match f with
     | HTrue -> []
@@ -470,22 +456,24 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
     | HRel _ -> []
     | Hole _ -> []
     | DataNode ({h_formula_data_node = p1; 
-		         h_formula_data_imm = imm1;
-   		         h_formula_data_param_imm = pimm1}) ->
+      h_formula_data_imm = imm1;
+      h_formula_data_param_imm = pimm1}) ->
 	  (* imm1 = imm annotation on the LHS
 	     imm = imm annotation on the RHS *) 
 	  (* let subtyp = subtype_ann imm1 imm in *)
-        if ((CP.mem p1 aset) (* && (subtyp) *)) then 
-	(* let field_ann = false in *)
-	      
-          if (!Globals.allow_field_ann) then
-            let new_f = update_ann f pimm1 pimm in
-	        [(new_f,f,[],Root)]
-          else if (!Globals.allow_imm) && (produces_hole imm) then (* not consuming the node *)
-	        let hole_no = Globals.fresh_int() in 
-	        [((Hole hole_no), f, [(f, hole_no)], Root)]
-	      else
-            [(HEmp, f, [], Root)]
+          if ((CP.mem p1 aset) (* && (subtyp) *)) then 
+	    (* let field_ann = false in *)
+	    
+            if (!Globals.allow_field_ann) then
+              let new_f = Immutable.update_field_ann f pimm1 pimm in (* update field ann for the residue *)
+	      [(new_f,f,[],Root)] 
+            else if (!Globals.allow_imm) && (produces_hole imm) then (* not consuming the node *)
+              (* update ann for f *)
+              let new_f = Immutable.update_ann f imm1 imm in (* update node ann for the residue *)
+	      let hole_no = Globals.fresh_int() in 
+	      [((Hole hole_no), f, [(new_f, hole_no)], Root)]
+	    else
+              [(HEmp, f, [], Root)]
           else []
     | ViewNode ({h_formula_view_node = p1;
 	             h_formula_view_imm = imm1;
@@ -493,13 +481,14 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
 	             h_formula_view_arguments = vs1;
 	             h_formula_view_name = c}) ->
             (* if (subtype_ann imm1 imm) then *)
-        (if (CP.mem p1 aset) then
+          (if (CP.mem p1 aset) then
               (* let _ = print_string("found match for LHS = " ^ (Cprinter.string_of_h_formula f) ^ "\n") in *)
-              if produces_hole imm (*&& not(!Globals.allow_field_ann)*) then
+              if (!Globals.allow_imm) && (produces_hole imm) (*&& not(!Globals.allow_field_ann)*) then
 		        (* let _ = print_string("imm = Lend " ^ "\n") in *)
+                let new_f = Immutable.update_ann f imm1 imm in
                 let hole_no = Globals.fresh_int() in
                 (*[(Hole hole_no, matched_node, hole_no, f, Root, HTrue, [])]*)
-                [(Hole hole_no, f, [(f, hole_no)], Root)]
+                [(Hole hole_no, f, [(new_f, hole_no)], Root)]
               else
                 [(HEmp, f, [], Root)]
          else
