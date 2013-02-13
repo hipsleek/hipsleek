@@ -163,6 +163,7 @@ param_loc : loc }
 and proc_decl = { proc_name : ident;
 mutable proc_mingled_name : ident;
 mutable proc_data_decl : data_decl option; (* the class containing the method *)
+proc_flags: (ident*ident*(flags option)) list;
 proc_source : ident;
 proc_constructor : bool;
 proc_args : param list;
@@ -692,9 +693,10 @@ and mkHoPred  n m mh tv ta fa s i=
           hopred_shape    = s;
           hopred_invariant = i}
 	
-let mkProc sfile id n dd c ot ags r ss ds pos bd =
+let mkProc sfile id flgs n dd c ot ags r ss ds pos bd =
   { proc_name = id;
   proc_source =sfile;
+  proc_flags = flgs;
   proc_mingled_name = n; 
   proc_data_decl = dd;
   proc_constructor = c;
@@ -1988,6 +1990,7 @@ let add_bar_inits prog =
 			let post =  F.EAssume (F.formula_of_heap_with_flow post_hn n_flow no_pos,fresh_formula_label "",None) in
 			{ proc_name = "init_"^b.barrier_name;
                           proc_source = "source_file";
+			  proc_flags = [];
 			  proc_mingled_name = "";
 			  proc_data_decl = None ;
 			  proc_constructor = false;

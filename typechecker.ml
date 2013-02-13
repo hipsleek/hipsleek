@@ -22,6 +22,9 @@ module CEQ = Checkeq
 module M = Lexer.Make(Token.Token)
 module H = Hashtbl
 let store_label = new store Lab2_List.unlabelled Lab2_List.string_of
+let save_flags = ref (fun ()->()) ;;
+let restore_flags = ref (fun ()->());;
+let parse_flags = ref (fun (s:(string*(flags option)) list)-> ());;
 
 let phase_infer_ind = ref false
 
@@ -2575,6 +2578,14 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
 	          end
     end else true
 
+let check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
+  let flgs = !save_flags () in
+  !parse_flags (List.map (fun (c1,c2,c3)->c1^c2,c3) proc.proc_flags);
+  let r = check_proc prog proc cout_option in
+  !restore_flags flgs;
+  r
+  
+	
 let check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
   let pr p = pr_id (name_of_proc p)  in
   Debug.no_1_opt (fun _ -> not(is_primitive_proc proc))

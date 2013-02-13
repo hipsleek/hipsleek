@@ -428,3 +428,32 @@ let check_option_consistency () =
   end
   ;; (*Clean warning*)
   Astsimp.inter_hoa := !inter_hoa;;
+  
+  
+Typechecker.save_flags  := fun ()->() ;;
+Typechecker.restore_flags := fun ()-> ();;
+Typechecker.parse_flags := fun (sl:(string*(Globals.flags option)) list)-> 
+	List.iter(fun (s1,s2)-> 
+		try 
+			let _,f,_=List.find(fun (a,_,_)-> (String.compare a s1) ==0) hip_arguments in
+			let rec process_arg s1 s2 f : unit= match f with 
+				|	Arg.Unit f -> f () 
+				|   Arg.Rest _ 
+				|	Arg.Bool _-> ()
+				|	Arg.Set b -> b:=true
+				|	Arg.Clear b -> b:=false
+				|	Arg.Set_string b-> (match s2 with Some (Globals.Flag_str i)-> b:=i | _ -> failwith ("invalid flag argument for "^s1))
+				|	Arg.String f -> (match s2 with | Some (Globals.Flag_str s)-> f s | _ -> failwith ("invalid flag argument for "^s1))
+				|	Arg.Set_int b-> (match s2 with Some (Globals.Flag_int i)-> b:=i | _ -> failwith ("invalid flag argument for "^s1))
+				|   Arg.Int f -> (match s2 with Some (Globals.Flag_int i)-> f i | _ -> failwith ("invalid flag argument for "^s1))
+				|	Arg.Set_float b-> (match s2 with Some (Globals.Flag_float i)-> b:=i | _ -> failwith ("invalid flag argument for "^s1))
+				|   Arg.Float f-> (match s2 with | Some (Globals.Flag_float s)-> f s | _ -> failwith ("invalid flag argument for "^s1))
+				|	Arg.Tuple l -> List.iter (process_arg s1 s2) l
+				|	Arg.Symbol (sl, f) -> 
+					 try 
+						(match s2 with 
+							| Some (Globals.Flag_str s)-> f (List.find(fun a-> (String.compare a s) ==0) sl)
+							| _ -> failwith ("invalid flag argument for "^s1))
+					with  Not_found -> failwith ("invalid flag "^s1) in
+			process_arg s1 s2 f			
+		with Not_found -> failwith ("invalid flag "^s1)) sl;;

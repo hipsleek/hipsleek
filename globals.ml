@@ -18,7 +18,11 @@ let illegal_format s = raise (Illegal_Prover_Format s)
 
 
 (* type nflow = (int*int)(\*numeric representation of flow*\) *)
-
+type flags = 
+	  Flag_str of string
+	| Flag_int of int
+	| Flag_float of float
+	
 type bformula_label = int
 and ho_branch_label = string
 (*and branch_label = spec_label	(*formula branches*)*)
