@@ -1767,7 +1767,7 @@ throws: [[ `THROWS; l=cid_list -> List.map fst l]];
 
 flag :[[`MINUS; IDENTIFIER t -> t
 		| `OP_DEC; IDENTIFIER t -> t]];
-flag_list:[[`AT; `AT; OSQUARE; t=LIST1 flag; CSQUARE -> t]];
+flag_list:[[`AT; `AT; `OSQUARE; t=LIST1 flag;`CSQUARE -> t]];
 opt_flag_list:[[t=OPT flag_list -> un_option t []]];
 
 proc_decl: 
