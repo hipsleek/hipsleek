@@ -285,6 +285,7 @@ rule tokenizer file_name = parse
   | "&&" { ANDAND }
   | "@" { AT }
   | "@@" { ATAT }
+  | "@@[" { ATATSQ }
   | "@I" {IMM}
   | "@L" {LEND}
   | "@D" { DERV }

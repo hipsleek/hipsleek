@@ -1773,13 +1773,13 @@ flag_arg : [[
 flag: [[`MINUS; `IDENTIFIER t ; args = OPT flag_arg-> ("-",t, args)
 		| `OP_DEC; `IDENTIFIER t ; args = OPT flag_arg-> ("--",t, args)]];
 		
-flag_list:[[`AT; `AT; `OSQUARE; t=LIST1 flag;`CSQUARE -> t]];
+flag_list:[[`ATATSQ; t=LIST1 flag;`CSQUARE -> t]];
 
 opt_flag_list:[[t=OPT flag_list -> un_option t []]];
 
 proc_decl: 
-  [[ flgs=opt_flag_list;h=proc_header; b=proc_body -> { h with proc_flags=flgs; proc_body = Some b ; proc_loc = {(h.proc_loc) with end_pos = Parsing.symbol_end_pos()} }
-   | h=proc_header -> h]];
+  [[ h=proc_header; flgs=opt_flag_list;b=proc_body -> { h with proc_flags=flgs; proc_body = Some b ; proc_loc = {(h.proc_loc) with end_pos = Parsing.symbol_end_pos()} }
+   | h=proc_header; _=opt_flag_list-> h]];
   
 proc_header:
   [[ t=typ; `IDENTIFIER id; `OPAREN; fpl= opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl= opt_spec_list ->
@@ -1795,7 +1795,7 @@ constructor_decl:
    | h=constructor_header -> h]];
 
 constructor_header:
-  [[ flgs=opt_flag_list;`IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
+  [[ `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ; flgs=opt_flag_list->
     (*let static_specs, dynamic_specs = split_specs $5 in*)
 		(*if Util.empty dynamic_specs then*)
       mkProc "source_file" id flgs "" None true ot fpl (Named id) osl (F.mkEFalseF ()) (get_pos_camlp4 _loc 1) None
