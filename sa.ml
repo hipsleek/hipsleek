@@ -11,6 +11,10 @@ module CEQ = Checkeq
 module TP = Tpdispatcher
 module SAU = Sautility
 
+(*the stack seems more internal to the inference than anything else,*)
+(* the results are never picked from the stack,*)
+(* rather they are returned by the inference method however the height of the stack is used*)
+(* as an indicator of the inference success*)
 let rel_def_stk : CF.hprel_def Gen.stack_pr = new Gen.stack_pr
   Cprinter.string_of_hprel_def_lib (==)
 
@@ -134,7 +138,7 @@ and filter_hp_rel_args_f (f: CF.formula) (drlocs: (CP.spec_var* int list) list)=
     | CF.Exists fe ->
         let nh,m=filter_hp_rel_args fe.CF.formula_exists_heap drlocs  in
         (CF.Exists {fe with CF.formula_exists_heap =  nh;}),m
-  in 
+  in
   helper f drlocs
 
 and filter_hp_rel_args (hf: CF.h_formula) (drlocs: (CP.spec_var* int list) list): CF.h_formula *
@@ -209,7 +213,7 @@ and is_not_used sv constr=
   let lhs, rhs = constr in
   (is_not_used_RHS sv rhs) && (is_not_connect_LHS sv rhs lhs)
 
-and is_not_used_RHS (v: CP.spec_var)(f: CF.formula): bool = 
+and is_not_used_RHS (v: CP.spec_var)(f: CF.formula): bool =
   let hds, hvs, hrs = CF.get_hp_rel_formula f in
   let eqNulls = match f with
     |CF.Base  ({CF.formula_base_pure = p1})
@@ -226,10 +230,10 @@ and is_not_used_RHS (v: CP.spec_var)(f: CF.formula): bool =
   let str = List.fold_left (fun a b ->  (CP.name_of_spec_var b ^ "," ^ a )) "" rhs_vs in
   let _ = Debug.ninfo_pprint ("RHS vars " ^ str) no_pos in
   let b = List.exists (fun c-> if(CP.eq_spec_var v c) then true else false) rhs_vs in
-  if(b) then false 
+  if(b) then false
   else true
 
-and is_not_connect_LHS (v: CP.spec_var)(f: CF.formula)(f2:CF.formula): bool = 
+and is_not_connect_LHS (v: CP.spec_var)(f: CF.formula)(f2:CF.formula): bool =
   let hds, hvs, hrs = CF.get_hp_rel_formula f in
   let hds = List.filter (fun c -> not(is_not_used_RHS c.CF.h_formula_data_node f2)) hds in
   let hvs = List.filter (fun c -> not(is_not_used_RHS c.CF.h_formula_view_node f2)) hvs in
@@ -4345,5 +4349,5 @@ let generate_horm_view_x templ_data_decls templ_view_decls data_decls=
 let generate_horm_view templ_data_decls templ_view_decls data_decls=
   let pr1 = pr_list_ln Iprinter.string_of_data_decl in
   let pr2 = pr_list_ln Iprinter.string_of_view_decl in
-  Debug.no_3 "generate_horm_view" pr1 pr2 pr1 pr2
+  Debug.ho_3 "generate_horm_view" pr1 pr2 pr1 pr2
       (fun _ _ _ -> generate_horm_view_x templ_data_decls templ_view_decls data_decls) templ_data_decls templ_view_decls data_decls

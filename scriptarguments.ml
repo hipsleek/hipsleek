@@ -428,4 +428,3 @@ let check_option_consistency () =
   end
   ;; (*Clean warning*)
   Astsimp.inter_hoa := !inter_hoa;;
-

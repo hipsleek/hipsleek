@@ -101,6 +101,9 @@ and formula =
   | Exists of formula_exists
 
 
+(*(*intermediary structure for heap predicate inference, stores a constraint on heap predicates*)
+(*    used in the context fields: es_infer_hp_rel and returned by various methods in particular*)
+(*	check_specs_infer*)*)
 and hprel= {
     hprel_kind: CP.rel_cat;
     unk_svl: CP.spec_var list;
@@ -110,6 +113,10 @@ and hprel= {
     hprel_rhs: formula
 }
 
+
+(*seems to be finished inferred relations, used in the rel_def_stk structure*)
+(*although that stack seems more internal to the inference than anything else, *)
+ (*the results are never picked from the stack, rather they are returned by the inference method*)
 and hprel_def= {
     hprel_def_kind: CP.rel_cat;
     hprel_def_hrel: h_formula;
@@ -118,6 +125,7 @@ and hprel_def= {
 }
 
 (*temporal: name * hrel * definition body*)
+(*actually used to store the constraints on heap predicates inference*)
 and hp_rel_def = CP.rel_cat * h_formula * formula
 
 (* and infer_rel_type =  (CP.rel_cat * CP.formula * CP.formula) *)
@@ -177,7 +185,7 @@ and h_formula = (* heap formula *)
   | DataNode of h_formula_data
   | ViewNode of h_formula_view
   | Hole of int
-  | HRel of (CP.spec_var * (CP.exp list) * loc)
+  | HRel of (CP.spec_var * (CP.exp list) * loc) (*placeholder for heap predicates*)
   | HTrue
   | HFalse
   | HEmp (* emp for classical logic *)

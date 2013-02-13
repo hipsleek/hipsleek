@@ -23,7 +23,7 @@ and prog_decl = {
     mutable prog_logical_vars : P.spec_var list;
     mutable prog_view_decls : view_decl list;
     mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
-    mutable prog_hp_decls : hp_decl list;
+    mutable prog_hp_decls : hp_decl list; (*only used to compare against some expected output????*)
     mutable prog_axiom_decls : axiom_decl list; (* An Hoa : axiom definitions *)
     (*old_proc_decls : proc_decl list;*) (* To be removed completely *)
     new_proc_decls : (ident, proc_decl) Hashtbl.t; (* Mingled name with proc_delc *)
@@ -124,8 +124,10 @@ and proc_decl = {
     (*proc_dynamic_specs_with_pre : Cformula.struc_formula;*)
     (* stack of static specs inferred *)
     proc_stk_of_static_specs : Cformula.struc_formula Gen.stack;
-    mutable proc_hpdefs: Cformula.hp_rel_def list;
+    mutable proc_hpdefs: Cformula.hp_rel_def list;(*set of heap predicate constraints derived from this method*)
     mutable proc_callee_hpdefs: Cformula.hp_rel_def list;
+		(*set of heap predicate constraints derived from calls in this method*)
+		(*due to the bottom up inference they are always just copyed from the proc_hpdefs of called methods*)
     proc_by_name_params : P.spec_var list;
     proc_body : exp option;
     (* Termination: Set of logical variables of the proc's scc group *)
