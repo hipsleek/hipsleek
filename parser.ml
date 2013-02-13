@@ -1765,8 +1765,13 @@ spec_branch: [[ pc=pure_constr; `LEFTARROW; sl= spec_list -> (pc,sl)]];
 opt_throws: [[ t = OPT throws -> un_option t []]];
 throws: [[ `THROWS; l=cid_list -> List.map fst l]];
 
+flag :[[`MINUS; IDENTIFIER t -> t
+		| `OP_DEC; IDENTIFIER t -> t]];
+flag_list:[[`AT; `AT; OSQUARE; t=LIST1 flag; CSQUARE -> t]];
+opt_flag_list:[[t=OPT flag_list -> un_option t []]];
+
 proc_decl: 
-  [[ h=proc_header; b=proc_body -> { h with proc_body = Some b ; proc_loc = {(h.proc_loc) with end_pos = Parsing.symbol_end_pos()} }
+  [[ opt_flag_list=flgs;h=proc_header; b=proc_body -> { h with proc_flags=flgs; proc_body = Some b ; proc_loc = {(h.proc_loc) with end_pos = Parsing.symbol_end_pos()} }
    | h=proc_header -> h]];
   
 proc_header:
