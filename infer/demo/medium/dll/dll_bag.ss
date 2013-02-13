@@ -1,22 +1,22 @@
 /* Doubly Linked List */
 /* Given Shape & Size -> Infer Bag Property */
 
-data node {
+data node2 {
   int val;
-  node prev;
-  node next;
+  node2 prev;
+  node2 next;
 }
 
 dllN<p,n> == self = null & n=0
-  or self::node<_,p,q> * q::dllN<self,n-1>;
+  or self::node2<_,p,q> * q::dllN<self,n-1>;
 
 /******************************************/
 
-void free(node x)
-  requires x::node<_,_,_>
+void free(node2 x)
+  requires x::node2<_,_,_>
   ensures x=null;
 
-void free_list(node x)
+void free_list(node2 x)
   requires x::dllN<_,_>
   ensures x=null; 
 {
@@ -27,7 +27,7 @@ void free_list(node x)
 }
 
 // True if size is 0, false otherwise.
-bool empty(node x)
+bool empty(node2 x)
   requires x::dllN<_,_>
   case {
     x = null -> ensures res;
@@ -40,7 +40,7 @@ bool empty(node x)
     return false;
 }
 
-int size_helper(node x, ref int n)
+int size_helper(node2 x, ref int n)
   requires x::dllN<_,m>
   ensures res=m+n;
 {
@@ -54,7 +54,7 @@ int size_helper(node x, ref int n)
 }
 
 // The number of nodes in a doubly linked list
-int size(node x)
+int size(node2 x)
   requires x::dllN<_,m>
   ensures res=m;
 {
@@ -63,35 +63,35 @@ int size(node x)
 }
 
 // Get the first element in the doubly linked list.
-int front(node x)
-  requires x::node<v,_,q> * q::dllN<x,_> 
+int front(node2 x)
+  requires x::node2<v,_,q> * q::dllN<x,_> 
   ensures res=v;
 {
   return x.val;
 }
 
-void swap(ref node x, ref node y)
+void swap(ref node2 x, ref node2 y)
   requires x::dllN<p,n> * y::dllN<q,m>
   ensures x'::dllN<q,m> * y'::dllN<p,n>;
 {
-  node tmp = x;
+  node2 tmp = x;
   x = y;
   y = tmp;
 }
 
 // Erase current content and add n elements with the same value v
-void assign(ref node x, int n, int v)
+void assign(ref node2 x, int n, int v)
   requires x::dllN<_,_>
   ensures x'::dllN<_,n>;
 {
   x = create_list(n, v);
 }
 
-void push_front(ref node x, int v)
+void push_front(ref node2 x, int v)
   requires x::dllN<p,n>
-  ensures x'::node<v,_,q> * q::dllN<x',n>;
+  ensures x'::node2<v,_,q> * q::dllN<x',n>;
 {
-  node tmp = new node(v,null,x);
+  node2 tmp = new node2(v,null,x);
   if (x!=null){
     tmp.prev = x.prev;
     x.prev = tmp;
@@ -99,12 +99,12 @@ void push_front(ref node x, int v)
   x = tmp;
 }
 
-// Get first node
-node pop_front(ref node x)
-  requires x::node<v,p,q> * q::dllN<x,n>
-  ensures x'::dllN<null,n> * res::node<v,p,null> & x'=q;
+// Get the first node
+node2 pop_front(ref node2 x)
+  requires x::node2<v,p,q> * q::dllN<x,n>
+  ensures x'::dllN<null,n> * res::node2<v,p,null> & x'=q;
 {
-  node tmp = x;
+  node2 tmp = x;
   if (x.next == null)
   {
     x = x.next;
@@ -121,7 +121,7 @@ node pop_front(ref node x)
 }
 
 /* Append a doubly linked list */
-void append(node x, node y)
+void append(node2 x, node2 y)
   requires x::dllN<p,n> * y::dllN<q,m> & x!=null
   ensures x::dllN<p,z> & z=n+m;
 {
@@ -140,7 +140,7 @@ void append(node x, node y)
 }
 
 /* Get the head of a doubly linked list */
-node ret_first(node x)
+node2 ret_first(node2 x)
   requires x::dllN<p,n>
   ensures x::dllN<p,n>;
 {
@@ -148,11 +148,11 @@ node ret_first(node x)
 }
 
 /* Get the tail of a doubly linked list */
-node get_next(node x)
-  requires x::node<v,_,q> * q::dllN<x,n> 
-  ensures x::node<v,null,null> * res::dllN<null,n> & res=q;
+node2 get_next(node2 x)
+  requires x::node2<v,_,q> * q::dllN<x,n> 
+  ensures x::node2<v,null,null> * res::dllN<null,n> & res=q;
 {
-  node tmp = x.next;
+  node2 tmp = x.next;
   if (tmp!=null)
     tmp.prev = null;
   x.prev = null;
@@ -161,9 +161,9 @@ node get_next(node x)
 }
 
 /* Set the tail of a list */
-void set_next(node x, node y)
+void set_next(node2 x, node2 y)
   requires x::dllN<p,_> * y::dllN<_,n> & x!=null
-  ensures x::node<_,p,null> or x::node<_,p,y> * y::dllN<x,n>;
+  ensures x::node2<_,p,null> or x::node2<_,p,y> * y::dllN<x,n>;
 {
   if (y==null) 
     x.next = y;
@@ -175,17 +175,17 @@ void set_next(node x, node y)
 }
 
 /* Set the tail to be null */
-void set_null(node x)
+void set_null(node2 x)
   requires x::dllN<p,_> & x!=null
-  ensures x::node<_,p,null>;
+  ensures x::node2<_,p,null>;
 {
   x.next = null;
 }
 
 /* Set the tail to be null */
-void set_null2(node x)
+void set_null2(node2 x)
   requires x::dllN<p,_> & x!=null
-  ensures x::node<_,p,null>;
+  ensures x::node2<_,p,null>;
 {
   if (4>3){
     x.next = null;
@@ -196,20 +196,20 @@ void set_null2(node x)
 }
 
 /* Get the third node of a doubly linked list */
-node get_next_next(node x)
-  requires x::node<_,_,p1> * p1::node<_,x,p2> * p2::dllN<p1,n>
+node2 get_next_next(node2 x)
+  requires x::node2<_,_,p1> * p1::node2<_,x,p2> * p2::dllN<p1,n>
   ensures res::dllN<p1,n> & res=p2;
 {
   return x.next.next;
 }
 
 /* Insert "a" into a non-null doubly linked list */
-void insert(node x, int a)
+void insert(node2 x, int a)
   requires x::dllN<p,n> & x!=null
   ensures x::dllN<p,m> & m=n+1;
 {
   if (x.next == null){
-    node tmp = new node(a, null, null);
+    node2 tmp = new node2(a, null, null);
     x.next = tmp;
     tmp.prev = x;
   }
@@ -219,14 +219,14 @@ void insert(node x, int a)
 
 
 /* Delete the i_th node in a doubly linked list */
-void del_index(node x, int i)
+void del_index(node2 x, int i)
   requires x::dllN<p,n> & n>i>0
   ensures x::dllN<p,m> & n=m+1;
 {
   if (i == 1)
   {
     if (x.next.next != null){
-      node tmp = x.next;
+      node2 tmp = x.next;
       x.next.next.prev = x;
       x.next = x.next.next;
       free(tmp);
@@ -242,7 +242,7 @@ void del_index(node x, int i)
 }
 
 /* Delete the node with value a */
-node del_val(node x, int a)
+node2 del_val(node2 x, int a)
   requires x::dllN<_,n>
   ensures res::dllN<_,m> & n>=m>=n-1;
 {
@@ -252,7 +252,7 @@ node del_val(node x, int a)
   {
     if (x.val == a)
     {
-      node tmp = x.next;
+      node2 tmp = x.next;
       if (tmp!=null){
         tmp.prev = x.prev;
         free(x);
@@ -263,7 +263,7 @@ node del_val(node x, int a)
     }
     else
     {
-      node r = del_val(x.next,a);
+      node2 r = del_val(x.next,a);
       x.next = r;
       if (r!=null)
         r.prev = x;
@@ -273,7 +273,7 @@ node del_val(node x, int a)
 }
 
 /* Create a doubly linked list */
-node create_list(int n, int v)
+node2 create_list(int n, int v)
   requires true 
   ensures res::dllN<_,n>;
 {
@@ -284,11 +284,11 @@ node create_list(int n, int v)
   else
   {
     n  = n - 1;
-    node tmp = create_list(n, v);
+    node2 tmp = create_list(n, v);
     if (tmp == null)
-      return new node (v,null,null);
+      return new node2 (v,null,null);
     else {
-      node tmp2 = new node (v, null, tmp);
+      node2 tmp2 = new node2 (v, null, tmp);
       tmp.prev = tmp2;
       return tmp2;
     }
@@ -296,13 +296,13 @@ node create_list(int n, int v)
 }
 
 /* Reverse a doubly linked list */
-void reverse(ref node xs, ref node ys)
+void reverse(ref node2 xs, ref node2 ys)
   requires xs::dllN<_,n> * ys::dllN<_,m>
   ensures ys'::dllN<_,z> & xs'=null & z=n+m;
 {
   if (xs != null)
   {
-    node tmp;
+    node2 tmp;
     tmp = xs.next;
     xs.next = ys;
     if (ys!=null)
@@ -316,11 +316,11 @@ void reverse(ref node xs, ref node ys)
 /* Split a doubly linked list into two:
    the first part contains "a" nodes
 */
-node del_lseg(node x, int a)
+node2 del_lseg(node2 x, int a)
   requires x::dllN<p,n> & n>a>0
   ensures x::dllN<p,m> * res::dllN<null,z> & z+m=n & m=a;
 {
-  node tmp;
+  node2 tmp;
   if (a == 1)
   {
     tmp = x.next; 
@@ -342,11 +342,11 @@ node del_lseg(node x, int a)
 /********* SMALLFOOT EXAMPLES *************/
 
 /* Traverse a doubly linked list */
-void traverse(node x)
+void traverse(node2 x)
   requires x::dllN<p,n>
   ensures x::dllN<p,n>;
 {
-  node t;
+  node2 t;
   if (x != null) {
     t = x;
     traverse(x.next);
@@ -354,14 +354,14 @@ void traverse(node x)
 }
 
 /* Copy a doubly linked list */
-node copy(node x)
+node2 copy(node2 x)
   requires x::dllN<p,n>
   ensures x::dllN<p,m> * res::dllN<null,z> & z=n & z=m;
 {
-  node tmp;
+  node2 tmp;
   if (x != null) {
     tmp = copy(x.next);
-    node tmp2 = new node (x.val, null, tmp);
+    node2 tmp2 = new node2 (x.val, null, tmp);
     if (tmp==null)
       return tmp2;
     else {
@@ -375,13 +375,13 @@ node copy(node x)
 
 
 /* Remove the first node which has value v */
-void list_remove(node x, int v)
+void list_remove(node2 x, int v)
   requires x::dllN<p,n> & x!=null
   ensures x::dllN<p,m> & n>=m>=n-1;
 {
   if(x.next != null) {
     if(x.next.val == v) {
-      node tmp = x.next;
+      node2 tmp = x.next;
       if (x.next.next!=null)
         x.next.next.prev = x;
       x.next = x.next.next;
@@ -396,11 +396,11 @@ void list_remove(node x, int v)
 /* Remove the first node which has value v 
    in a nullable doubly linked list
 */
-node list_remove2(node x, int v)
+node2 list_remove2(node2 x, int v)
   requires x::dllN<_,n>
   ensures res::dllN<_,m> & n>=m>=n-1 ;
 {
-  node tmp;
+  node2 tmp;
   if(x != null) {
     if(x.val == v) {
       tmp = x;
@@ -422,11 +422,11 @@ node list_remove2(node x, int v)
 /* Remove all nodes which have value v 
    in nullable doubly linked list
 */
-node list_filter(node x, int v)
+node2 list_filter(node2 x, int v)
   requires x::dllN<_,n>
   ensures res::dllN<_,m> & n>=m;
 {
-  node tmp;
+  node2 tmp;
   if(x != null) {
     if(x.val == v){
       tmp = x.next;
@@ -447,9 +447,9 @@ node list_filter(node x, int v)
 /******** SLAYER EXAMPLES **********/
 
 /* Get the first node greater than v */
-node find_ge(node x, int v)
+node2 find_ge(node2 x, int v)
   requires x::dllN<_,_>
-  ensures res = null or res::node<m,_,_> & m>v;
+  ensures res = null or res::node2<m,_,_> & m>v;
 {
   if(x == null)
     return null;
@@ -462,7 +462,7 @@ node find_ge(node x, int v)
 }
 
 /* Splice 2 doubly linked list */
-void splice (ref node x, node y)
+void splice (ref node2 x, node2 y)
   requires x::dllN<_,n> * y::dllN<_,m>
   ensures x'::dllN<_,z> & z=n+m;
 {
@@ -470,8 +470,8 @@ void splice (ref node x, node y)
     x = y;
   else {
     if (y != null){
-      node nx = x.next;
-      node ny = y.next;
+      node2 nx = x.next;
+      node2 ny = y.next;
       x.next = y;
       if (y!=null)
         y.prev = x;
