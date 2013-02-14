@@ -2683,8 +2683,8 @@ let pardef_subst_fix_x prog unk_hps groups=
     let hps = CF.get_hp_rel_name_formula f in
     let hps = CP.remove_dups_svl hps in
     (* DD.ninfo_pprint ("       rec hp: " ^ (!CP.print_sv hp)) no_pos; *)
-    let dep_hps = List.filter (fun hp1 -> not ((CP.eq_spec_var hp hp1) ||
-    (CP.mem_svl hp1 unk_hps))) hps in
+    let dep_hps = List.filter (fun hp1 -> not ((CP.eq_spec_var hp hp1) (* || *)
+    (* (CP.mem_svl hp1 unk_hps) *))) hps in
     (* DD.ninfo_pprint ("       rec rems: " ^ (!CP.print_svl rems)) no_pos; *)
     (dep_hps = [])
   in
@@ -2697,51 +2697,6 @@ let pardef_subst_fix_x prog unk_hps groups=
   (* let get_succ_hps_pardef (_,_,f,_)= *)
   (*   (CF.get_HRels_f f) *)
   (* in *)
-  (****************************************)
-     (*************BEGIN****************)
-  (****************************************)(*
-  let comp_rec_grps_fix_x rec_ind_grps grps=
-    (* let g_rec_hps = List.map get_hp_from_grp rec_ind_grps in *)
-    let check_rec_grp_ext grp total_rec_hps=
-      if is_rec_group grp then
-        let hp = get_hp_from_grp grp in
-        [hp]
-      else
-        (*if it depends on a rec, it is also a rec*)
-        let succ_hp_args = List.concat (List.map get_succ_hps_pardef grp) in
-        if CP.intersect_svl (List.map fst succ_hp_args) total_rec_hps = [] then
-          []
-        else [get_hp_from_grp grp]
-    in
-    let rec process_one_loop_helper rem_grps l_rec_grps l_rec_hps nrec_grps=
-      match rem_grps with
-        | [] -> (l_rec_grps,l_rec_hps,nrec_grps)
-        | grp::tl ->
-            let rec_hp = check_rec_grp_ext grp l_rec_hps in
-            if rec_hp = [] then
-              process_one_loop_helper tl l_rec_grps l_rec_hps (nrec_grps@[grp])
-            else
-              process_one_loop_helper tl (l_rec_grps@[grp]) (l_rec_hps@rec_hp) nrec_grps
-    in
-    let rec loop_helper grps rec_grps rec_hps=
-      let new_rec_grps, new_rec_hps,new_poss_nrec_grps = process_one_loop_helper grps rec_grps rec_hps [] in
-      if CP.diff_svl new_rec_hps rec_hps = [] then
-        (*nothing new*)
-        (new_rec_grps, new_poss_nrec_grps)
-      else
-        loop_helper new_poss_nrec_grps new_rec_grps new_rec_hps
-    in
-    loop_helper grps [] []
-  in
-  let comp_rec_grps_fix rec_ind_grps grps=
-    let pr1 = pr_list_ln (pr_list_ln SAU.string_of_par_def_w_name_short) in
-    Debug.no_1 "comp_rec_grps_fix" pr1 (pr_pair pr1 pr1)
-        (fun _ -> comp_rec_grps_fix_x rec_ind_grps grps) grps
-  in
-                                            *)
-  (****************************************)
-     (*************END****************)
-  (****************************************)
   let process_dep_group grp rec_hps nrec_grps=
     (* let (hp,args,_) = List.hd grp in *)
     (* DD.ninfo_pprint ("       process_dep_group hp: " ^ (!CP.print_sv hp)) no_pos; *)
