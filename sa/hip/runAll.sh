@@ -100,8 +100,8 @@ echo "sll-del2"
 ../../hip sll-del2.ss -cp-test cp/sll-del2.cp | grep Compare
 echo "ll-create"
 ../../hip ll-create.ss -cp-test cp/ll-create.cp | grep Compare
-echo "dll-del"
-../../hip dll-del.ss --sa-dangling --sa-inlining -cp-test cp/dll-del.cp | grep Compare
+echo "dll-del0"
+../../hip dll-del0.ss --sa-dangling --sa-inlining -cp-test cp/dll-del0.cp | grep Compare
 echo "ll-size1 -cp-test"
 ../../hip ll-size1.ss -cp-test cp/ll-size1.cp | grep Compare
 echo "ll-ret-first"
