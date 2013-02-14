@@ -561,25 +561,25 @@ $output_file = "log";
 					#"less_h", "SUCCESS", "remove_min_add","SUCCESS"],
 					],	
 	"hip_barr" => [
-		["../tree_shares/thesis/video_ex1_th3.ss",6, "--eps --dis-field-ann -perm dperm", 
+		["../tree_shares/thesis/video_ex1_th3.ss",6, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
                                 "th1_loop","SUCCESS","th1","SUCCESS",
 								"th2_loop","SUCCESS","th2","SUCCESS",
 								"th3_loop","SUCCESS","th3","SUCCESS"],
-		["../tree_shares/thesis/SIMD_ex1_v2_th3.ss",10, "--eps --dis-field-ann -perm dperm", 
+		["../tree_shares/thesis/SIMD_ex1_v2_th3.ss",10, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
                                 "controll","SUCCESS","control","SUCCESS",
 								"thl1","SUCCESS","th1","SUCCESS",
 								"thl2","SUCCESS","th2","SUCCESS",
 								"thl3","SUCCESS","th3","SUCCESS",
 								"thl4","SUCCESS","th4","SUCCESS"],						
-		["../tree_shares/thesis/SIMD_ex1_th1.ss",6, "--eps --dis-field-ann -perm dperm", 
+		["../tree_shares/thesis/SIMD_ex1_th1.ss",6, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
                                 "controll","SUCCESS","control","SUCCESS",
 								"thl1","SUCCESS","th1","SUCCESS",
 								"thl2","SUCCESS","th2","SUCCESS"],
-		["../tree_shares/thesis/PIPE_ex1_th5.ss",6, "--eps --dis-field-ann -perm dperm", 
+		["../tree_shares/thesis/PIPE_ex1_th5.ss",6, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
                                 "controll","SUCCESS","thl5","SUCCESS",
 								"thl1","SUCCESS","thl2","SUCCESS",
 								"thl3","SUCCESS","thl4","SUCCESS"],
-		["../tree_shares/thesis/MIXED_ex1_th4.ss",15, "--eps --dis-field-ann -perm dperm", 
+		["../tree_shares/thesis/MIXED_ex1_th4.ss",15, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
                                 "ctl12","SUCCESS","ctl11","SUCCESS",
 								"starterc","SUCCESS","thl12","SUCCESS",
 								"thl22","SUCCESS","thl21","SUCCESS",
@@ -589,7 +589,7 @@ $output_file = "log";
 								"thl42","SUCCESS","thl41","SUCCESS",
 								"startert4","SUCCESS",
 								],
-		["../tree_shares/thesis/MIXED_ex2_th5.ss",12, "--eps --dis-field-ann -perm dperm", 
+		["../tree_shares/thesis/MISD_ex2_th5.ss",12, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
                                 "controll","SUCCESS","control","SUCCESS",
 								"thl","SUCCESS","th","SUCCESS",
 								"thl2","SUCCESS","th2","SUCCESS",
@@ -597,19 +597,19 @@ $output_file = "log";
 								"thl4","SUCCESS","th4","SUCCESS",
 								"thl5","SUCCESS","th5","SUCCESS",
 								],		
-		["../tree_shares/thesis/MIXED_ex1_th5.ss",4, "--eps --dis-field-ann -perm dperm", 
+		["../tree_shares/thesis/MISD_ex1_th5.ss",4, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
                                 "controll","SUCCESS","control","SUCCESS",
 								"thl","SUCCESS","th","SUCCESS"
 								],	
-		["../tree_shares/thesis/barrier-weak.ss",4, "--eps --dis-field-ann -perm dperm", 
+		["../tree_shares/thesis/barrier-weak.ss",4, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
                                 "th1_loop","SUCCESS","th1","SUCCESS",
 								"th2_loop","SUCCESS","th2","SUCCESS"
 								],	
-		["../tree_shares/thesis/barrier-strong.ss",4, "--eps --dis-field-ann -perm dperm", 
+		["../tree_shares/thesis/barrier-strong.ss",4, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
                                 "th1_loop","SUCCESS","th1","SUCCESS",
 								"th2_loop","SUCCESS","th2","SUCCESS"
 								],	
-		["../tree_shares/thesis/barrier-paper.ss",4, "--eps --dis-field-ann -perm dperm", 
+		["../tree_shares/thesis/barrier-paper.ss",4, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
                                 "th1_loop","SUCCESS","th1","SUCCESS",
 								"th2_loop","SUCCESS","th2","SUCCESS"
 								],	
@@ -1214,11 +1214,11 @@ $output_file = "log";
                       ["classic/classic3.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["infinity.slk","--dsd","",                      "Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid."]
                       ],
-		"sleek_barr"=>[["../tree_shares/barrier.slk", "--eps --dis-field-ann -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).Barrrier b4n Fail:  no contradiction found in preconditions of transitions from 1  for preconditions: .", ""],
-				  ["../tree_shares/barrier3.slk", "--eps --dis-field-ann -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).", ""]
+		"sleek_barr"=>[["../tree_shares/barrier.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).Barrrier b4n Fail:  no contradiction found in preconditions of transitions from 1  for preconditions: .", ""],
+				  ["../tree_shares/barrier3.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).", ""]
 				 ],
-		"dfrac"=>[["../tree_shares/fractionals.slk", "--eps --dis-field-ann -perm dperm","", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
-				  ["../tree_shares/barrier2.slk", "--eps --dis-field-ann -perm dperm","",    "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+		"sleek_dfrac"=>[["../tree_shares/fractionals.slk", "--eps --dis-field-ann -perm dperm","", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+				  ["../tree_shares/barrier2.slk", "--eps --dis-field-ann -perm dperm","", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
 				  ["../tree_shares/fractions.slk", "--eps --dis-field-ann -perm dperm","", "Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."]
                  ],
     "sleek_vperm" => [
@@ -1513,12 +1513,14 @@ sub sleek_process_file  {
                     }
                 }
             }
-			if (($entail_results !~ /^$test->[3]$/) || ( ($lem == 1)  && ($lemmas_results !~ /^$test->[2]$/)) || ($barr==1 && ($barrier_results ne $test->[2])))
+			if ((($lem==0) && ($barr==0) && ($entail_results !~ /^$test->[3]$/)) || 
+				(($lem == 1)  && ($lemmas_results !~ /^$test->[2]$/)) || 
+				($barr==1 && ($barrier_results ne $test->[2])))
 			{
 				print "Unexpected result with : $test->[0]\n";
 				$error_count++;
 				$error_files = $error_files . " " . $test->[0];
-			}
+			}	
 			if($timings) {
 				# log_one_line_of_timings ($test->[0],$output);
 			}

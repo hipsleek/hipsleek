@@ -1185,7 +1185,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       (* let ctx1 = (CF.Ctx c1) in                                                                      *)
                       (* let _ = CF.must_consistent_context "assign 1a" ctx1  in                                        *)
                       (* (* TODO : eps bug below *)                                                                     *)
-                      (* let tmp_ctx1 = CF.compose_context_formula ctx1 link [vsv] false CF.Flow_combine pos in         *)
+                      (* let tmp_ctx1 = CF.compose_context_formula ctx1 link [vsv] false CF.Flow_combine pos in  -> add perm normalization  if uncomment     *)
                       (* let _ = CF.must_consistent_context "assign 2" tmp_ctx1  in                                     *)
                       (* let tmp_ctx2 = CF.push_exists_context [CP.mkRes t] tmp_ctx1 in                                 *)
                       (* let _ = CF.must_consistent_context "assign 3" tmp_ctx2  in                                     *)
@@ -1227,14 +1227,14 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 			      let from_v = CP.SpecVar(Named bn,self, Unprimed)::bd.barrier_shared_vars in
 			      let bd_spec = CF.subst_struc (List.combine from_v args) (CF.filter_bar_branches branches bd.barrier_def) in
 			      let helper c bd_spec = 
-				let pr1 c = Cprinter.string_of_context (CF.Ctx c) in
-				let pr2 f = Cprinter.string_of_struc_formula f in
-				Debug.no_2_loop "barrier entail" pr1 pr2 (fun c-> "") 
-				    (fun _ _ -> heap_entail_struc_init prog false true (CF.SuccCtx [CF.Ctx c]) bd_spec pos None) c bd_spec (*r,proof*) 
-				    (*try
-				      Printexc.record_backtrace true ;
-				      with e ->
-				      (print_string "gagamita\n"; let bt = Printexc.get_backtrace () in print_endline bt; raise e)*) in 
+						let pr1 c = Cprinter.string_of_context (CF.Ctx c) in
+						let pr2 f = Cprinter.string_of_struc_formula f in
+						Debug.no_2_loop "barrier entail" pr1 pr2 (fun c-> "") 
+							(fun _ _ -> heap_entail_struc_init prog false true (CF.SuccCtx [CF.Ctx c]) bd_spec pos None) c bd_spec (*r,proof*) 
+							(*try
+							  Printexc.record_backtrace true ;
+							  with e ->
+							  (print_string "gagamita\n"; let bt = Printexc.get_backtrace () in print_endline bt; raise e)*) in 
 			      helper c bd_spec in
 	      
 	      let barr_failesc_context (f,e,n) =  

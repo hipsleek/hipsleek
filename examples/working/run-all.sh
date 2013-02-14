@@ -12,7 +12,7 @@ time ./run-fast-tests.pl sleek_fracperm $@
 echo -e "\n##################### dfracperm tests+barriers ###################"
 time ./run-fast-tests.pl hip_barr $@
 time ./run-fast-tests.pl sleek_barr $@
-time ./run-fast-tests.pl dfrac $@
+time ./run-fast-tests.pl sleek_dfrac $@
 
 echo -e "\n##################### hip_vperm tests ###################"
 time ./run-fast-tests.pl hip_vperm $@

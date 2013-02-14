@@ -651,6 +651,7 @@ let elim_unsat = ref false
 let disj_compute_flag = ref false
 let smart_xpure = ref true
 let super_smart_xpure = ref false
+let precise_perm_xpure = ref true
   (* this flag is dynamically set depending on
      smart_xpure and xpure0!=xpure1 *)
 let smart_memo = ref false

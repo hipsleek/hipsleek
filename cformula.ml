@@ -393,7 +393,10 @@ let chg_assume_forms b f1 f2 = { b with
 let mkEList_no_flatten l =
 	if isConstETrue (EList l) then mkETrue (mkTrueFlow ()) no_pos 
 	else if isConstEFalse (EList l) then mkEFalse (mkFalseFlow) no_pos
-	else EList l
+	else 
+	  let l = List.filter (fun (c1,c2)-> not (isConstEFalse c2)) l in
+	  if l=[] then mkEFalse (mkFalseFlow) no_pos
+	  else EList l
 	
 let mkSingle f = (empty_spec_label_def,f)
 	

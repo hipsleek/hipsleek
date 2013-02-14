@@ -947,19 +947,38 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
               (* [f1,f2,f3,f4]*)
               let vars = p_perm_vars@p1_perm_vars in
               let res = 
-                if (vars=[]) then false
+                if (vars=[] || not !Globals.precise_perm_xpure) then false
                 else
-                  let sum_exp = List.fold_left (fun e v ->
-                      let v_exp = CP.mkVar v no_pos in
-                      CP.mkAdd e v_exp no_pos
-                  ) (CP.mkVar (List.hd vars) no_pos) (List.tl vars) in
-                  let full_exp = CP.mkFConst 1.0 no_pos in
-                  (*f1+f2+f2+f4>1.0*)
-                  let gt_exp = CP.mkGtExp sum_exp full_exp no_pos in
-                  Debug.devel_zprint (lazy ("xpure_perm: check: [Begin] check fractional permission constrainst: "^ (Cprinter.string_of_pure_formula gt_exp) ^ "\n")) no_pos;
-                  let b,_,_ = CP.imply_disj_orig [f] gt_exp TP.imply imp_no in
-                  Debug.devel_zprint (lazy ("xpure_perm: check: [End] check fractional permission constrainst \n")) no_pos;
-                  b
+					if !Globals.perm != Dperm then 
+					  (*construct and check the fractional sum, otherwise use a joins fact*)
+						  let sum_exp = List.fold_left (fun e v ->
+							  let v_exp = CP.mkVar v no_pos in
+							  CP.mkAdd e v_exp no_pos
+						  ) (CP.mkVar (List.hd vars) no_pos) (List.tl vars) in
+						  let full_exp = CP.mkFConst 1.0 no_pos in
+						  (*f1+f2+f2+f4>1.0*)
+						  let gt_exp = CP.mkGtExp sum_exp full_exp no_pos in
+						  Debug.devel_zprint (lazy ("xpure_perm: check: [Begin] check fractional permission constrainst: "^ (Cprinter.string_of_pure_formula gt_exp) ^ "\n")) no_pos;
+						  let b,_,_ = CP.imply_disj_orig [f] gt_exp TP.imply imp_no in
+						  Debug.devel_zprint (lazy ("xpure_perm: check: [End] check fractional permission constrainst \n")) no_pos;
+						  b
+					else  if (List.length vars)<2 then false
+						  else 
+						  let rec perm_f lv : CP.formula*CP.spec_var= match lv with 
+							| h::[] -> (f,h)
+							| h::l-> 
+								let conss, last = perm_f l in
+								let n_ex = CP.fresh_perm_var () in
+								let v_exp = CP.mkAdd (CP.mkVar last no_pos) (CP.mkVar h no_pos) no_pos in
+								let new_eq = CP.mkEq v_exp (CP.mkVar n_ex no_pos) no_pos in
+								CP.mkAnd (CP.mkPure new_eq) conss no_pos, n_ex
+							| [] -> failwith "this case has already been checked in the previous if"in
+						  let nf, _ = perm_f vars in
+						  Debug.devel_zprint (lazy ("xpure_perm: check: [Begin] check distinct fractional permission constrainst: "^ 
+							(Cprinter.string_of_pure_formula nf) ^ "\n")) no_pos;
+						  let b =  not (TP.is_sat_sub_no nf (ref 0)) in
+						  Debug.devel_zprint (lazy ("xpure_perm: check: [End] check distinct fractional permission constrainst "^(string_of_bool b)^" \n")) no_pos;
+						  b
               in
               if(res) then
                 (*x1=x2, x3=x4, x1!=x3*)
@@ -4034,6 +4053,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                             ref_vars,new_post
                                       in
 	                                  let rs1 = CF.compose_context_formula rs new_post new_ref_vars true Flow_replace pos in
+									  let rs1 = if !Globals.perm = Dperm then normalize_context_perm prog rs1 else rs1 in
                                       let rs2 = if !Globals.force_post_sat then CF.transform_context (elim_unsat_es_now 5 prog (ref 1)) rs1 else rs1 in
                                       if (!Globals.ann_vp) then
                                         Debug.devel_zprint (lazy ("\nheap_entail_conjunct_lhs_struc: after checking VarPerm in EAssume: \n ### rs = "^(Cprinter.string_of_context rs2)^"\n")) pos;
@@ -6053,7 +6073,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                           then we have a constraint x!=y
                         *)
                         let p1 =
-                          if (Perm.allow_perm () && !Globals.perm != Dperm) then
+                          if (Perm.allow_perm ()) then
                             let nodes_f = xpure_perm prog h1 p1 in
                             let p1 = MCP.merge_mems p1 nodes_f true in
                             let p1 = MCP.remove_dupl_conj_mix_formula p1 in
@@ -10068,7 +10088,11 @@ and normalize_formula_perm prog f = match f with
   | Or b -> mkOr (normalize_formula_perm prog b.formula_or_f1) (normalize_formula_perm prog b.formula_or_f2) b.formula_or_pos
   | Base b -> normalize_base_perm prog f
   | Exists e -> normalize_base_perm prog f
-        
+      
+and normalize_context_perm prog ctx = match ctx with
+	| OCtx (c1,c2)-> mkOCtx (normalize_context_perm prog c1) (normalize_context_perm prog c2) no_pos
+	| Ctx es -> Ctx{ es with es_formula =normalize_formula_perm prog es.es_formula;}
+	  
 and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl list): formula =
   if (isAnyConstFalse f) || (!Globals.perm = NoPerm) then f
   else if !Globals.perm = Dperm then normalize_formula_perm prog f 
