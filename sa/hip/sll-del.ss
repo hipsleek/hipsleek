@@ -14,7 +14,7 @@ HeapPred H1(node2 a).
 void delete(node2 x)
   /* infer[n] */
 /*
-  requires x::node2<_,q>*q::sll<> & q!=null 
+  requires x::node2<_,q>*q::sll<> & q!=null
   ensures x::node2<_,r>*r::sll<> ;
   requires x::node2<_,q>*q::node2<_,q1> * q1::sll<> 
   ensures x::node2<_,r>*r::sll<> ; 

@@ -21,7 +21,7 @@ void delete(node2 x)
 
   infer[H1,G1]
   requires H1(x)
-  ensures  H1(x);
+  ensures  G1(x);
 {
   bool l = x.next.next==null;
   if (l) {

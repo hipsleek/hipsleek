@@ -22,10 +22,8 @@ HeapPred H1(node2 a).
 void delete(node2 x)
   /* infer[n] */
 
-/*
-  requires x::node2<_,p,q>*q::dll<x> & q!=null
-  ensures x::node2<_,p,r>*r::dll<x> ;
-*/
+  /* requires x::node2<_,p,q>*q::dll<x> & q!=null */
+  /* ensures x::node2<_,p,r>*r::dll<x> ; */
   /* requires x::node2<_,p,q>*q::dll1<> & q!=null */
   /* ensures x::node2<_,p,r>*r::dll1<> ; */
 
