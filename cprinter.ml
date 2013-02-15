@@ -1871,6 +1871,7 @@ let pr_estate (es : entail_state) =
   pr_wrap_test "es_history: " Gen.is_empty (pr_seq "" pr_h_formula) es.es_history;
   (*pr_wrap_test "es_prior_steps: "  Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.es_prior_steps;*)
   pr_wrap_test "es_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_evars;
+  pr_wrap_test "es_ante_evars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_ante_evars;
   pr_wrap_test "es_ivars: "  Gen.is_empty (pr_seq "" pr_spec_var) es.es_ivars;
   (* pr_wrap_test "es_expl_vars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_expl_vars; *)
   pr_wrap_test "es_gen_expl_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_gen_expl_vars;
