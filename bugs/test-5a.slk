@@ -5,11 +5,11 @@ data node {
 }.
 
 pred sll<n> == self = null & n = 0 
-  or self::node<_ , q> * q::sll<n-1>
+  or self::node<_ , qq> * qq::sll<n-1>
   inv n >= 0.
 
 
-checkentail x::sll<n> & n>2 |- [q] x::node<_,q>.
+checkentail x::sll<n> & n>2 |- [q1] x::node<_,q1>.
 
 print residue.
 

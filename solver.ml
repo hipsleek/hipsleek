@@ -3616,7 +3616,7 @@ and move_impl_inst_estate es (f:MCP.mix_formula) =
   {es with
       (* why isn't es_gen_expl_vars updated? *)
       es_gen_impl_vars = Gen.BList.intersect_eq CP.eq_spec_var es.es_gen_impl_vars to_elim_vars (*es.es_evars*);
-      es_ante_evars = es.es_ante_evars @ to_elim_vars;
+      es_ante_evars = es.es_ante_evars @ es.es_evars;
       es_formula = nf;
       es_unsat_flag = es.es_unsat_flag && nflg; } 
       
