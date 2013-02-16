@@ -540,6 +540,8 @@ let sa_en_split = ref false
 
 let sa_elim_dangling = ref false
 
+let sa_refine_dang = ref false
+
 let sa_elim_useless = ref false
 
 let sa_inlining = ref false

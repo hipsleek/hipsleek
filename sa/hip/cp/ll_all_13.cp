@@ -14,8 +14,8 @@ ass [H1,G2][]:{
 
 hpdefs [H1,G2][]:{
   H1(a) --> a=null or a::node<_,p> * H1(p);
-  G2(_,res_734) --> emp&res_734=null
-     or G2(_,v_node_66_708) * res_734::node<v_int_65_693,v_node_66_708>&true
+  G2(p,res_734) --> emp&res_734=null
+     or G2(p1,v_node_66_708) * res_734::node<v_int_65_693,v_node_66_708>&true
 
  }
 ]

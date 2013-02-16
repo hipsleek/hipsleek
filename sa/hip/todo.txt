@@ -84,11 +84,11 @@ This problem seems to be triggered at relational assumption:
 
  res::node2<val_30_567,v_node2_30_579>@M&true --> G2(res)&true,
 *************************************
-# dll-del3.ss
+# dll-del3.ss: DONE (--sa-refine-dang)
 
   too many lines, why did it not fold to dll?
 *************************************
-# dll-del3a.ss
+# dll-del3a.ss: DONE (--sa-refine-dang)
 
   too many lines, why did it not fold to dll?
   G2(..) definition looks good.
