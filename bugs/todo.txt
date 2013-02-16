@@ -1,4 +1,6 @@
 
+
+
 added memo_Pure re-patch;
       should do it more selectively
 
@@ -33,3 +35,18 @@ Printing very indented:
                                                                    flted_0_114,
                                                                    flted_0_115,
                                                                    flted_0_116: 
+
+# test-5a.slk
+
+How come explicit instantiation still have "exist" wrapper?
+
+ checkentail x::sll<n> & n>2 |- [q] x::node<_,q>.
+
+/*
+
+Why is there an EXIST q wrapper for explicit instantiation?
+
+ <1>EXISTS(q,flted_8_243: q::sll<flted_8_243>@M[0][Orig]&n=flted_8_243+1 & 2<n & q=q&{FLOW,(19,20)=__norm})[]
+
+
+*/
