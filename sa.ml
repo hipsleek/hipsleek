@@ -2655,7 +2655,8 @@ let generalize_one_hp_x prog hpdefs non_ptr_unk_hps unk_hps par_defs=
   (*each hds of hdss is def of a next_root*)
            (* let defs5 = List.filter (fun f -> have_roots args0 f) defs4 in *)
           let defs = SAU.get_longest_common_hnodes_list prog hpdefs unk_hps unk_svl hp r non_r_args args0 defs4 in
-          defs
+          if defs <> [] then defs else
+            report_error no_pos "shape analysis: FAIL"
     end
 
 let generalize_one_hp prog defs non_ptr_unk_hps unk_hps par_defs=
