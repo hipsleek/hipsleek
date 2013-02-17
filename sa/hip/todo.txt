@@ -93,6 +93,6 @@ This problem seems to be triggered at relational assumption:
   too many lines, why did it not fold to dll?
   G2(..) definition looks good.
 *************************************
-# dll-del3.ss:
+# dll-del3.ss: DONE
 
   Should return a failure.
