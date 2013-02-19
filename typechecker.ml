@@ -2543,15 +2543,15 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
                             (* let subs = List.map (fun xs -> CP.simplify_subs xs vars []) ra in *)
                             (* Debug.info_hprint (add_str "alias" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) ra no_pos; *)
                             (* Debug.info_hprint (add_str "subs" (pr_list (pr_list (pr_pair !CP.print_sv !CP.print_sv)))) subs no_pos; *)
-                            Debug.ninfo_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
-                            Debug.ninfo_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
-                            Debug.ninfo_hprint (add_str "NEW RELS" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) rels no_pos;
-                            Debug.ninfo_hprint (add_str "NEW ASSUME" (pr_list_ln Cprinter.string_of_lhs_rhs)) lst_assume no_pos;
-                            Debug.ninfo_hprint (add_str "NEW HP RELS" (pr_list_ln Cprinter.string_of_hprel)) hprels no_pos;
-                            Debug.ninfo_hprint (add_str "NEW HP ASSUME" (pr_list_ln Cprinter.string_of_hprel)) hp_lst_assume no_pos;
-			                Debug.ninfo_hprint (add_str "NEW INFERRED HP" (pr_list_ln Cprinter.string_of_hprel)) ls_inferred_hps no_pos;
-                            Debug.tinfo_hprint (add_str "NEW RANK" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) lst_rank no_pos;
-                            Debug.tinfo_hprint (add_str "NEW CONJS" string_of_int) ((CF.no_of_cnts new_spec)-(CF.no_of_cnts proc.proc_static_specs)) no_pos;
+                            Debug.devel_hprint (add_str "OLD SPECS" pr_spec) proc.proc_static_specs no_pos;
+                            Debug.devel_hprint (add_str "NEW SPECS" pr_spec) new_spec no_pos;
+                            Debug.devel_hprint (add_str "NEW RELS" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) rels no_pos;
+                            Debug.devel_hprint (add_str "NEW ASSUME" (pr_list_ln Cprinter.string_of_lhs_rhs)) lst_assume no_pos;
+                            Debug.devel_hprint (add_str "NEW HP RELS" (pr_list_ln Cprinter.string_of_hprel)) hprels no_pos;
+                            Debug.devel_hprint (add_str "NEW HP ASSUME" (pr_list_ln Cprinter.string_of_hprel)) hp_lst_assume no_pos;
+			                Debug.devel_hprint (add_str "NEW INFERRED HP" (pr_list_ln Cprinter.string_of_hp_rel_def)) ls_inferred_hps no_pos;
+                            Debug.devel_hprint (add_str "NEW RANK" (pr_list_ln Cprinter.string_of_only_lhs_rhs)) lst_rank no_pos;
+                            Debug.devel_hprint (add_str "NEW CONJS" string_of_int) ((CF.no_of_cnts new_spec)-(CF.no_of_cnts proc.proc_static_specs)) no_pos;
                             stk_evars # reset;
                             (*                            let _ = Inf.print_spec (" " ^ (Inf.get_proc_name proc.proc_name) ^ "\n" ^ (pr_spec2 (CF.struc_to_prepost new_spec))) (Inf.get_file_name Sys.argv.(1)) in*)
                             let f = if f && !reverify_flag then 

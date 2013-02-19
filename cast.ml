@@ -1872,3 +1872,6 @@ and add_term_nums_proc (proc: proc_decl) log_vars add_call add_phase =
     }, pvl1 @ pvl2)
 
 
+let collect_hp_rels prog= Hashtbl.fold (fun i p acc-> 
+	let name = unmingle_name p.proc_name in
+	(List.map (fun c-> name,c) p.proc_hpdefs)@acc) prog.new_proc_decls []

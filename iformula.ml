@@ -1590,3 +1590,46 @@ let add_post_for_flow fl_names f =
 		| EAssume (e,pid,t)-> EAssume (fct e, pid, t) in
 	helper f
 	
+
+let rec struc_formula_drop_infer f = 
+ let recf = struc_formula_drop_infer in
+ match f with 
+    | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches}
+	| EBase b -> EBase {b with formula_struc_continuation = Gen.map_opt recf b.formula_struc_continuation}
+	| EAssume _ -> f 
+	| EInfer b-> b.formula_inf_continuation
+	| EList l-> EList (Gen.map_l_snd recf l)
+	| EOr b-> mkEOr (recf b.formula_struc_or_f1) (recf b.formula_struc_or_f2) b.formula_struc_or_pos
+
+let rec heap_trans_heap_node fct f = 
+ let recf = heap_trans_heap_node fct in
+ match f with 
+  | HRel b -> fct f 
+  | HTrue  | HFalse | HEmp  | HeapNode _ | HeapNode2 _ -> f
+  | Phase b -> Phase {b with h_formula_phase_rd = recf b.h_formula_phase_rd; h_formula_phase_rw = recf b.h_formula_phase_rw}
+  | Conj b -> Conj {b with h_formula_conj_h2 = recf b.h_formula_conj_h2; h_formula_conj_h1 = recf b.h_formula_conj_h1}
+  | Star b -> Star {b with h_formula_star_h2 = recf b.h_formula_star_h2; h_formula_star_h1 = recf b.h_formula_star_h1}
+ 
+	
+let rec formula_trans_heap_node fct f = 
+  let recf = formula_trans_heap_node fct in
+  match f with
+	| Base b-> Base{b with  formula_base_heap = heap_trans_heap_node fct b.formula_base_heap}
+	| Exists b-> Exists{b with  formula_exists_heap = heap_trans_heap_node fct b.formula_exists_heap}
+	| Or b-> Or {b with formula_or_f1 = recf b.formula_or_f1;formula_or_f2 = recf b.formula_or_f2}
+ 
+let rec struc_formula_trans_heap_node fct f =
+ let recf = struc_formula_trans_heap_node fct in
+  match f with
+    | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd recf b.formula_case_branches}
+	| EBase b -> EBase {b with 
+						formula_struc_continuation = Gen.map_opt recf b.formula_struc_continuation;
+						formula_struc_base=formula_trans_heap_node fct b.formula_struc_base;}
+	| EAssume (f,fl,et)-> EAssume (formula_trans_heap_node fct f, fl, et)
+	| EInfer _ -> f
+	| EList l -> EList (Gen.map_l_snd recf l)
+	| EOr b-> mkEOr (recf b.formula_struc_or_f1) (recf b.formula_struc_or_f2) b.formula_struc_or_pos
+	
+let struc_formula_trans_heap_node fct f = 
+	let pr = !print_struc_formula in
+	Debug.ho_1 "struc_formula_trans_heap_node" pr pr (struc_formula_trans_heap_node fct) f

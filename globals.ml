@@ -12,6 +12,7 @@ type constant_flow = string
 exception Illegal_Prover_Format of string
 
 let reverify_flag = ref false
+let reverify_all_flag = ref false
 let ineq_opt_flag = ref false
 
 let illegal_format s = raise (Illegal_Prover_Format s)

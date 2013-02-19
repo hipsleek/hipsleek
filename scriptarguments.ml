@@ -146,6 +146,7 @@ let common_arguments = [
 	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
 	("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
 	("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
+	("--reverify-all", Arg.Set Globals.reverify_all_flag,"enable re-verification after heap specification inference");
 	("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
 	("--no-coercion", Arg.Clear Globals.use_coercion,
     "Turn off coercion mechanism");

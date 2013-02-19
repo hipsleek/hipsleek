@@ -10015,6 +10015,50 @@ let is_emp_term f =
   Debug.no_1 "is_emp_term" !print_formula string_of_bool is_emp_term f
 
 
-
-
-
+let elim_prm e =	
+	let nv v = match v with | CP.SpecVar (t,n,Primed) -> CP.SpecVar(t,n^"PRM",Unprimed) | _ -> v in
+    let f_e_f e = None in
+	let f_f e = None in
+    let f_m e = None in
+    let f_a e = None in
+	let f_b e = None in
+	let f_p_f e = None in
+	let f_e e = match e with 
+		| CP.Null _ 
+	    | CP.IConst _
+	    | CP.AConst _
+		| CP.Tsconst _
+	    | CP.FConst _ 
+		| CP.Func _
+		| CP.ArrayAt _ -> Some e 
+		| CP.Var (v,p)-> Some (CP.Var (nv v, p))
+		| CP.Add _ 
+	    | CP.Subtract _ 
+	    | CP.Mult _
+	    | CP.Div _
+	    | CP.Max _
+	    | CP.Min _
+	    | CP.Bag _ 
+	    | CP.BagUnion _
+	    | CP.BagIntersect _
+	    | CP.BagDiff _
+        | CP.List _
+        | CP.ListCons _
+        | CP.ListHead _
+        | CP.ListTail _
+        | CP.ListLength _
+        | CP.ListAppend _
+        | CP.ListReverse _ -> None in
+		
+	let rec f_h_f e = match e with 
+		| Star s -> None
+		| Conj s -> None
+		| Phase s -> None	
+  	    | DataNode d -> Some (DataNode {d with h_formula_data_arguments = List.map nv d.h_formula_data_arguments; h_formula_data_node = nv d.h_formula_data_node})
+	    | ViewNode v -> Some (ViewNode {v with h_formula_view_arguments = List.map nv v.h_formula_view_arguments; h_formula_view_node = nv v.h_formula_view_node})
+        | HRel (b1,b2,b3) -> Some (HRel (nv b1,(List.map (CP.transform_exp f_e) b2),b3))
+	    | Hole _
+	    | HTrue
+	    | HFalse 
+        | HEmp -> Some e in
+	 transform_formula (f_e_f,f_f,f_h_f,(f_m,f_a,f_p_f,f_b,f_e)) e
