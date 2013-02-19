@@ -3,10 +3,11 @@ data node {
   node next;
 }
 
-//HeapPred G2(node a, node b).
-//HeapPred H1(node a).
+HeapPred G2(node a, node b).
+HeapPred H1(node a).
 
 
+/*
 H1_delete<> == self = null
 or
  next_24_523PRM::H1_delete<> * self::node<val_24_590, next_24_523PRM> inv true;
@@ -16,7 +17,7 @@ or
  self::node<val_24_522PRM, next_24_591> * next_24_591::G2_delete<x_593> inv true;
 
 HP_553_delete<> == self::H1_delete<> inv true;
-
+*/
 
 
 
@@ -25,10 +26,10 @@ node delete(node x, int a)
   /* ensures x::ll1<>; */
 
 //G1 can not be a lseg because y!=null
-  //infer[H1,G2]
-  //requires H1(x)
-    // ensures G2(res,x) ;
-	requires x::H1_delete<> ensures res::G2_delete<x>;
+  infer[H1,G2]
+  requires H1(x)
+     ensures G2(res,x) ;
+	//requires x::H1_delete<> ensures res::G2_delete<x>;
 
 
 {
