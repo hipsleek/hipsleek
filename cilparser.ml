@@ -412,44 +412,47 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
     | Cil.TInt _ -> Globals.Int
     | Cil.TFloat _ -> Globals.Float
     | Cil.TPtr (ty, _) -> (
-        match ty with
-        | Cil.TNamed (tname, _) -> (
-            (* unroll the pointer type to a defined type  *)
-            let newty = Cil.TPtr (tname.Cil.ttype, []) in
-            translate_typ newty
+        (* create a new Globals.typ and a new Iast.data_decl to represent the pointer data structure *)
+        let newt = (
+          (* find if this pointer was handled before or not *)
+          let _ = print_endline ("== find ty = " ^ (string_of_cil_typ ty)) in 
+          try 
+            let res = Hashtbl.find tbl_data_type ty in
+            let _ = print_endline ("       --> found!") in
+            res 
+          with Not_found -> (
+            let _ = print_endline ("       --> not found!") in
+            match ty with
+            | Cil.TNamed (tname, _) -> (
+                (* unroll the pointer type to a defined type  *)
+                let unrolled_ty = Cil.TPtr (tname.Cil.ttype, []) in
+                let data_type = translate_typ unrolled_ty in
+                (* update to hashtable *)
+                Hashtbl.add tbl_data_type ty data_type;
+                data_type
+              )
+            | _ -> (
+                (* create new Globals.typ and update to a hash table *)
+                let index = Hashtbl.length tbl_data_type in
+                let data_name = "pointer_type_" ^ (string_of_int index) in
+                let data_type = Globals.Named data_name in
+                Hashtbl.add tbl_data_type ty data_type;
+                (* create new Iast.data_decl and update to a hash table *)
+                let ftype = translate_typ ty in
+                let fname = "pdata" in
+                let data_decl = {Iast.data_name = data_name;
+                                 Iast.data_fields = [((ftype, fname), no_pos, false)];
+                                 Iast.data_parent_name = "Object";
+                                 Iast.data_invs = [];
+                                 Iast.data_is_template = false;
+                                 Iast.data_methods = [];} in
+                Hashtbl.add tbl_data_decl data_type data_decl;
+                (* return new type*)
+                data_type
+              )
           )
-        | _ -> (
-          (* create a new Globals.typ and a new Iast.data_decl to represent the pointer data structure *)
-          let newt = (
-            (* find if this pointer was handled before or not *)
-            let _ = print_endline ("== find ty = " ^ (string_of_cil_typ ty)) in 
-            try 
-              let res = Hashtbl.find tbl_data_type ty in
-              let _ = print_endline ("       --> found!") in
-              res 
-            with Not_found -> (
-              let _ = print_endline ("       --> not found!") in
-              (* create new Globals.typ and update to a hash table *)
-              let index = Hashtbl.length tbl_data_type in
-              let data_name = "pointer_type_" ^ (string_of_int index) in
-              let data_type = Globals.Named data_name in
-              Hashtbl.add tbl_data_type ty data_type;
-              (* create new Iast.data_decl and update to a hash table *)
-              let ftype = translate_typ ty in
-              let fname = "pdata" in
-              let data_decl = {Iast.data_name = data_name;
-                               Iast.data_fields = [((ftype, fname), no_pos, false)];
-                               Iast.data_parent_name = "Object";
-                               Iast.data_invs = [];
-                               Iast.data_is_template = false;
-                               Iast.data_methods = [];} in
-              Hashtbl.add tbl_data_decl data_type data_decl;
-              (* return new type*)
-              data_type
-            )
-          ) in
-          newt
-        )
+        ) in
+        newt
       )
     | Cil.TArray (ty, _, _) ->
         let arrayty = translate_typ ty in
