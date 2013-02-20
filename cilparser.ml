@@ -432,14 +432,12 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
                 data_type
               )
             | _ -> (
-                (* create new Globals.typ and update to a hash table *)
-                let index = Hashtbl.length tbl_data_type in
-                let data_name = "pointer_type_" ^ (string_of_int index) in
-                let data_type = Globals.Named data_name in
-                Hashtbl.add tbl_data_type ty data_type;
-                (* create new Iast.data_decl and update to a hash table *)
+                (* create new Globals.typ and Iast.data_decl update to hash tables *)
                 let ftype = translate_typ ty in
                 let fname = "pdata" in
+                let data_name = (Globals.string_of_typ ftype) ^ "__star" in
+                let data_type = Globals.Named data_name in
+                Hashtbl.add tbl_data_type ty data_type;
                 let data_decl = {Iast.data_name = data_name;
                                  Iast.data_fields = [((ftype, fname), no_pos, false)];
                                  Iast.data_parent_name = "Object";
@@ -740,14 +738,12 @@ and translate_exp (e: Cil.exp) : Iast.exp =
                 | _ -> report_error_msg "Error!!! translate_exp: invalid type!" in
               (t, n)
             with Not_found -> (
-              (* create new Globals.typ and update to a hash table *)
-              let index = Hashtbl.length tbl_data_type in
-              let data_name = "pointer_type_" ^ (string_of_int index) in
-              let data_type = Globals.Named data_name in
-              Hashtbl.add tbl_data_type ty data_type;
-              (* create new Iast.data_decl and update to a hash table *)
+              (* create new Globals.typ and Iast.data_decl, then update to a hash table *)
               let ftype = translate_typ ty in
               let fname = "pdata" in
+              let data_name = (Globals.string_of_typ ftype) ^ "__star" in
+              let data_type = Globals.Named data_name in
+              Hashtbl.add tbl_data_type ty data_type;
               let data_decl = {Iast.data_name = data_name;
                                Iast.data_fields = [((ftype, fname), no_pos, false)];
                                Iast.data_parent_name = "Object";
