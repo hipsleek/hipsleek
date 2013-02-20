@@ -1,15 +1,38 @@
 OCAMLBUILD = ocamlbuild
 
+
+# OPAM repository
+OPREP = $(OCAML_TOPLEVEL_PATH)/..
+#~/.opam/system/lib
+BATLIB = batteries/batteries
+ELIB = extlib/extLib
+GRLIB = ocamlgraph/graph
+OLIBS = $(OPREP)/$(GRLIB),
+
+ifdef OCAML_TOPLEVEL_PATH
+ INCLPRE = $(OPREP)
+ LIBBATLIB = $(OPREP)/$(BATLIB)
+ LIBELIB = $(OPREP)/$(ELIB)
+ LIBGLIB = $(OPREP)/$(GRLIB)
+ LIBIGRAPH = $(OPREP)/ocamlgraph
+else
+ INCLPRE = +site-lib
+ LIBBATLIB = site-lib/$(BATLIB)
+ LIBELIB = site-lib/$(ELIB)
+ LIBGLIB = graph
+ LIBIGRAPH = +ocamlgraph
+endif
+
 #  number of parallel jobs, 0 means unlimited.
 JOBS = 0
 
 # dynlink should precede camlp4lib
-LIBSB = unix,str,graph,xml-light,dynlink,camlp4lib,nums,site-lib/batteries/batteries,site-lib/extlib/extLib
-LIBSN = unix,str,graph,xml-light,dynlink,camlp4lib,nums,site-lib/batteries/batteries,site-lib/extlib/extLib
+LIBSB = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB)
+LIBSN = unix,str,xml-light,dynlink,camlp4lib,nums,$(LIBBATLIB),$(LIBELIB),$(LIBGLIB)
 #,z3
-LIBS2 = unix,str,graph,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
+LIBS2 = unix,str,xml-light,lablgtk,lablgtksourceview2,dynlink,camlp4lib
 
-INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,+site-lib/batteries,-I,+site-lib/extlib
+INCLUDES = -I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$(INCLPRE)/extlib,-I,$(LIBIGRAPH)
 
 PROPERERRS = -warn-error,+4+8+9+11+12+25+28
 
