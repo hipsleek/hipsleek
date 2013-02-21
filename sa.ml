@@ -3835,19 +3835,22 @@ let check_eq_hpdef_x unk_hpargs post_hps hp_defs =
       | [] -> (f,[])
       | (a1,hrel1,f1)::tl ->
           let hp1,eargs1,p1 = CF.extract_HRel_orig hrel1 in
-          let args1 = List.concat (List.map CP.afv eargs1) in
-          if CP.eq_spec_var hp hp1 || CP.mem_svl hp1 unk_hps ||
-            (List.length args <> List.length args1) then
+          if CP.mem_svl hp1 post_hps then
             lookup_equiv_hpdef tl hp args f
           else
-            let ss = List.combine args1 args in
-            let f10 = CF.subst ss f1 in
-            let f11 = CF.subst_hprel f10 [hp1] hp in
-            if SAU.checkeq_formula_list (CF.list_of_disjs f) (CF.list_of_disjs f11) then
+            let args1 = List.concat (List.map CP.afv eargs1) in
+            if CP.eq_spec_var hp hp1 || CP.mem_svl hp1 unk_hps ||
+              (List.length args <> List.length args1) then
+              lookup_equiv_hpdef tl hp args f
+            else
+              let ss = List.combine args1 args in
+              let f10 = CF.subst ss f1 in
+              let f11 = CF.subst_hprel f10 [hp1] hp in
+              if SAU.checkeq_formula_list (CF.list_of_disjs f) (CF.list_of_disjs f11) then
              (* if fst (CEQ.checkeq_formulas (List.map CP.name_of_spec_var args) f f11) then *)
-              let new_f = SAU.mkHRel_f hp1 args p1 in
-              (new_f,[(hp,hp1)])
-            else lookup_equiv_hpdef tl hp args f
+                let new_f = SAU.mkHRel_f hp1 args p1 in
+                (new_f,[(hp,hp1)])
+              else lookup_equiv_hpdef tl hp args f
   in
   let process_one_hpdef all_hpdefs post_hps (eq_pairs,r_hpdefs) (a,hrel,f)=
     let hp,args = CF.extract_HRel hrel in

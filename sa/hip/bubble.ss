@@ -13,6 +13,9 @@ ll<> == self = null
 HeapPred H1(node a).
 HeapPred G1(node a).
 
+HeapPred H2(node a).
+HeapPred G2(node a).
+
 bool bubble(node xs)
   /* requires xs::node<_,p> * p::ll<> */
   /* ensures xs::node<_,p1> * p1::ll<>; */
@@ -40,5 +43,20 @@ bool bubble(node xs)
 		}
         //dprint;
 		return (flag || tmp);
+	}
+}
+
+void bsort(node xs)
+  /* requires xs::node<_,p>*p::ll<> */
+  /* ensures xs::node<_,p1> * p1::ll<>; */
+  infer[H2,G2]
+  requires H2(xs)
+  ensures G2(xs);
+{
+	bool b;
+
+	b = bubble(xs);
+	if (b) {
+		bsort(xs);
 	}
 }

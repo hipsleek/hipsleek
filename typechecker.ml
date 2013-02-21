@@ -2421,7 +2421,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
                         Infer.rel_ass_stk # reset;
                       end;
 		            let ls_hprel, ls_inferred_hps, dropped_hps =
-                      if !Globals.sa_en_norm then
+                      if !Globals.sa_en_norm && (hp_lst_assume <> []) then
                         Sa.infer_hps prog proc.proc_name hp_lst_assume
                         sel_hp_rels sel_post_hp_rels (Gen.BList.remove_dups_eq
                             (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) hp_rel_unkmap)

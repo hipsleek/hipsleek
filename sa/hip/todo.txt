@@ -96,3 +96,30 @@ This problem seems to be triggered at relational assumption:
 # dll-del3.ss: DONE
 
   Should return a failure.
+
+*************************************
+# ins-1.ss
+H2(res) should be stronger:
+res::node<_,p>*p::ll0<> & p !=null
+
+*************************************
+# ins-1.ss
+
+insertion_sort: should succeed
+*************************************
+# qsort-1.ss: --sa-split
+H2(xs',res) = HP1(xs')*HP2(res)
+
+HP1(x)=HP2(x)=ll0
+
+*************************************
+# qsort-2.ss:
+H2(y,res) = H6(xn_684,y_688) * res_687::node<val_78_674,xn_684>@M&true
+ or H5(res_687)&res_687=y_688
+
+note: H2(res,y): OK
+
+*************************************
+# qsort.ss:
+
+qsort: after ins-1.ss is fixed
