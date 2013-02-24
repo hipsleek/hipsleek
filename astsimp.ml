@@ -4139,7 +4139,11 @@ and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) se
 
 and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect (f0 : IF.formula) stab (clean_res:bool) : CF.formula =
   let helper_one_formula (f:IF.one_formula)  =
-    if sep_collect then (gather_type_info_pure prog f.IF.formula_pure stab; gather_type_info_heap prog f.IF.formula_heap stab) else () in
+    if sep_collect then 
+      (gather_type_info_pure prog f.IF.formula_pure stab;
+       gather_type_info_pure prog f.IF.formula_delayed stab;
+       gather_type_info_heap prog f.IF.formula_heap stab)
+    else () in
   let rec helper f0 =
     match f0 with
       | IF.Or b-> CF.mkOr (helper b.IF.formula_or_f1) (helper b.IF.formula_or_f2) b.IF.formula_or_pos
@@ -4414,12 +4418,17 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
   let linearize_one_formula_x f pos = 
     let h = f.IF.formula_heap in
     let p = f.IF.formula_pure in
+    let dl = f.IF.formula_delayed in
     let id = f.IF.formula_thread in
     let pos = f.IF.formula_pos in
     let (new_h, type_f) = linearize_heap h pos in
     let new_p = trans_pure_formula p stab in
     let new_p = Cpure.arith_simplify 5 new_p in
     let mix_p = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_p) in
+    (*formula_delayed*)
+    let new_dl = trans_pure_formula dl stab in
+    let new_dl = Cpure.arith_simplify 5 new_dl in
+    let mix_dl = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) new_dl) in
     let id_var = (match id with
       | None -> 
             (*May be redundant*)
@@ -4428,7 +4437,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
             (*look for an thread id*)
             let thread_var = Cpure.SpecVar (Globals.thread_typ, Globals.thread_name,Globals.Unprimed) in
             (*find all spec_var which is equal to "thread"*)
-            let vv = MCP.find_closure_mix_formula thread_var mix_p in 
+            let vv = MCP.find_closure_mix_formula thread_var mix_dl in 
             let vv1 = Gen.BList.difference_eq CP.eq_spec_var vv [thread_var] in
             if (vv1==[]) then Error.report_error {Error.error_loc = pos;Error.error_text = "linearize_one_formula: could not find thread id"}
             else List.hd vv1
@@ -4437,7 +4446,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
     let new_f = { CF.formula_heap = new_h;
     CF.formula_pure = mix_p;
     CF.formula_thread = id_var;
-                  CF.formula_delayed = MCP.mkMTrue pos; (*LDK: TO DO*)
+    CF.formula_delayed = mix_dl;
     CF.formula_ref_vars = [];
     CF.formula_label = None;
     CF.formula_pos = pos} in
@@ -6203,7 +6212,9 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
               let rs,evars2 = func2 xs in
               let evars1,_ = IF.split_quantifiers f1 in
               let f = IF.one_formula_of_formula f1 in
-              let f1 = {f with IF.formula_thread = f2.IF.formula_thread} in
+              let f1 = {f with IF.formula_thread = f2.IF.formula_thread;
+                  IF.formula_delayed = f2.IF.formula_delayed} (*TO CHECK*)
+              in
               (f1::rs,evars1@evars2)
     in
     let tmp = List.combine new_a a in
@@ -6272,7 +6283,7 @@ and case_normalize_struc_formula i prog (h:(ident*primed) list)(p:(ident*primed)
   let pr1 = Iprinter.string_of_struc_formula in
   let pr2 (x,_) = pr1 x in
   Debug.no_3_num i "case_normalize_struc_formula" pr0 pr0 pr1 pr2 (fun _ _ _ -> case_normalize_struc_formula_x prog h p f allow_primes allow_post_vars lax_implicit strad_vs) h p f
-      
+
 and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ident*primed) list)(f:IF.struc_formula) allow_primes allow_post_vars (lax_implicit:bool)
       strad_vs :IF.struc_formula* ((ident*primed)list) = 	
   let ilinearize_formula (f:IF.formula)(h:(ident*primed) list): IF.formula = 

@@ -351,14 +351,16 @@ and string_of_imm imm = match imm with
 (* let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "&&'" | Unprimed -> "");;  *)
 
 let string_of_one_formula (f:F.one_formula) =
-  let h,p,th,pos = F.split_one_formula f in
+  let h,p,dl,th,pos = F.split_one_formula f in
   let sh = string_of_h_formula h in
   let sp = string_of_pure_formula p in
+  let sdl = string_of_pure_formula dl in
   let sth = match th with
     | None -> ("thread = None")
     | Some (v,_) ->("thread = " ^ v)  in
   ( "<" ^ sth^ ">" 
-    ^ "*" ^ "(" ^ sh ^ ")" 
+    ^ "&" ^ "(" ^ sdl ^ ")" 
+    ^ " --> " ^ "(" ^ sh ^ ")" 
     ^ "*" ^ "(" ^ sp ^ ")" )
 
 let rec string_of_one_formula_list (f:F.one_formula list) =

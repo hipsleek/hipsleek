@@ -929,19 +929,26 @@ disjunctive_constr:
    ]
   ];
 
-core_constr_and : [[ ls=core_constr_conjunctions ->
- 
- let main = List.hd ls in
-    let formula_and = List.tl ls in
-    let formula_and = List.map (F.one_formula_of_formula) formula_and in
-    let main = F.add_formula_and formula_and main in
-    main
- ]];
+core_constr_and : [[ 
+    f1 = core_constr; `ANDWORD; ls=core_constr_conjunctions ->
+      let main = F.add_formula_and ls f1 in
+      main
+  | f1 = core_constr -> f1
+]];
 
 core_constr_conjunctions: [ "core_constr_and" LEFTA
                    [ f1 = SELF; `ANDWORD; f2 = SELF -> f1@f2]
-                   | [f1 = core_constr -> [f1]]
+                   | [f1 = and_core_constr -> [f1]]
                   ];
+
+and_core_constr:
+  [
+    [ dl = pure_constr; `CONSTR; f = core_constr  ->
+       let h,p,fl,_ = F.split_components f in
+       let pos = (get_pos_camlp4 _loc 2) in 
+       F.mkOneFormula h p dl None pos
+    ]
+  ];
 
 core_constr:
   [
