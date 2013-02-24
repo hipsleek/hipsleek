@@ -29,7 +29,7 @@ void foo(lock l)
 void bar(lock l, int tid1)
      requires l::LOCK(0.3)<> & l notin LS
               and thread=tid1 & l notin LS --> l::LOCK(0.5)<>
-     ensures l::LOCK(0.8)<> & LS'=LS;//'
+     ensures l::LOCK(0.8)<> & LS'=LS & waitlevel'=waitleve;//'
 {
   join(tid1);
 }

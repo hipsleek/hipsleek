@@ -19,14 +19,16 @@ void foo(lock l)
      requires l::LOCK(0.5)<> & [waitlevel<l.mu # l notin LS]
      ensures l::LOCK(0.5)<> & LS'=LS & waitlevel'=waitlevel;//'
 {
+  dprint;
   acquire(l);
+  dprint;
   release(l);
 }
 
 void bar(lock l, int tid1)
      requires l::LOCK(0.3)<> & l notin LS
               and thread=tid1 & l notin LS --> l::LOCK(0.5)<>
-     ensures l::LOCK(0.8)<> & LS'=LS;//'
+     ensures l::LOCK(0.8)<> & LS'=LS & waitlevel'=waitlevel;//'
 {
   join(tid1);
 }

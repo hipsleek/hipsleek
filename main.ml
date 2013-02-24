@@ -252,6 +252,28 @@ let process_source_full source =
        let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
     let _ = Gen.Profiling.push_time "Translating to Core" in
     (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
+
+    (**************************************)
+    (*Simple heuristic for ParaHIP website*)
+    (*Heuristic: check if waitlevel and locklevels have been used for verification
+      If not detect waitlevel or locklevel -> set allow_locklevel==faslse
+      Note: this is used in ParaHIP website for demonstration only.
+      We could use the run-time flag "--dis-locklevel" to disable the use of locklevels
+      and waitlevel.
+    *)
+    let search_for_locklevel proc =
+      if (not !Globals.allow_locklevel) then
+        let struc_fv = Iformula.struc_free_vars false proc.Iast.proc_static_specs in
+        let b = List.exists (fun (id,_) -> (id = Globals.waitlevel_name)) struc_fv in
+        if b then
+          Globals.allow_locklevel := true
+    in
+    let _ = if !Globals.web_compile_flag then
+          let _ = List.map search_for_locklevel prog.Iast.prog_proc_decls in
+          ()
+    in
+    (**************************************)
+
     let cprog = Astsimp.trans_prog intermediate_prog (*iprims*) in
     (* Forward axioms and relations declarations to SMT solver module *)
     let _ = List.map (fun crdef -> 
@@ -373,6 +395,7 @@ let process_source_full source =
     else "\n"
 	)
 
+(*None Working: see process_source_full instead *)
 let process_source_full_parse_only source =
   Debug.info_pprint ("Full processing file (parse only) \"" ^ source ^ "\"\n") no_pos;
   flush stdout;
@@ -430,14 +453,14 @@ let process_source_full_after_parser source (prog, prims_list) =
   let _ = Gen.Profiling.push_time "Translating to Core" in
   (* let _ = print_string ("Translating to core language...\n"); flush stdout in *)
 
-        (**************************************)
-    (*Simple heuristic for ParaHIP website*)
-    (*Heuristic: check if waitlevel and locklevels have been used for verification
-      If not detect waitlevel or locklevel -> set allow_locklevel==faslse
-      Note: this is used in ParaHIP website for demonstration only.
-      We could use the run-time flag "--dis-locklevel" to disable the use of locklevels
-      and waitlevel.
-    *)
+  (**************************************)
+  (*Simple heuristic for ParaHIP website*)
+  (*Heuristic: check if waitlevel and locklevels have been used for verification
+    If not detect waitlevel or locklevel -> set allow_locklevel==faslse
+    Note: this is used in ParaHIP website for demonstration only.
+    We could use the run-time flag "--dis-locklevel" to disable the use of locklevels
+    and waitlevel.
+  *)
   let search_for_locklevel proc =
     if (not !Globals.allow_locklevel) then
       let struc_fv = Iformula.struc_free_vars false proc.Iast.proc_static_specs in
