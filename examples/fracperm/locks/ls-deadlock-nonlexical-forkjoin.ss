@@ -1,6 +1,9 @@
 /*
   A deadlocked example in the presence of non-lexical fork/join.
 
+  A deadlock occurs when foo waits at acquire(l), bar waits at
+  join(tid1), and main waits at join(tid2).
+
   In response to reviewers of CAV2013.
 
 */
