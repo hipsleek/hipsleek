@@ -438,12 +438,12 @@ let process_source_full_after_parser source (prog, prims_list) =
       We could use the run-time flag "--dis-locklevel" to disable the use of locklevels
       and waitlevel.
     *)
-    let search_for_locklevel proc =
-      if (not !Globals.allow_locklevel) then
-        let struc_fv = Iformula.struc_free_vars false proc.Iast.proc_static_specs in
-        let b = List.exists (fun (id,_) -> (id = Globals.waitlevel_name)) struc_fv in
-        if b then
-         Globals.allow_locklevel := true
+  let search_for_locklevel proc =
+    if (not !Globals.allow_locklevel) then
+      let struc_fv = Iformula.struc_free_vars false proc.Iast.proc_static_specs in
+      let b = List.exists (fun (id,_) -> (id = Globals.waitlevel_name)) struc_fv in
+      if b then
+        Globals.allow_locklevel := true
   in
   let _ = if !Globals.web_compile_flag then
         let _ = List.map search_for_locklevel prog.Iast.prog_proc_decls in

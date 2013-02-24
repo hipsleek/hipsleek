@@ -675,7 +675,7 @@ let allow_norm = ref false
 
 let allow_ls = ref true (*enable lockset during verification*)
 
-let allow_locklevel = ref true (*enable locklevel during verification*)
+let allow_locklevel = ref false (*enable locklevel during verification*)
 
 (* let has_locklevel = ref false *)
 
