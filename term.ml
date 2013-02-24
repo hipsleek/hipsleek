@@ -1197,7 +1197,7 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
 
 (* Main function of the termination checker *)
 let term_check_output () =
-  if not !Globals.dis_term_msg then
+  if not !Globals.dis_term_msg && (not !Globals.web_compile_flag) then
     (fmt_string "\nTermination checking result:\n";
     (if (!Globals.term_verbosity == 0) then pr_term_res_stk (term_res_stk # get_stk)
     else pr_term_err_stk (term_err_stk # get_stk));

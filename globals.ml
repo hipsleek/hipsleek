@@ -651,9 +651,10 @@ let ann_derv = ref false
 (*is used during deployment, e.g. on a website*)
 (*Will shorten the error/warning/... message delivered
 to end-users*)
-let is_deployed = ref false 
+(*Unify is_deployed an web_compile_flag*)
+(* let is_deployed = ref true *)
 
-let web_compile_flag = ref false (*enable compilation flag for website*)
+let web_compile_flag = ref true (*enable compilation flag for website*)
 
 (* Decide whether normalization/simplification
 such as x<1 --> x+1<=1 is allowed

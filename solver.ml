@@ -8513,7 +8513,7 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
 		    else if (not (test_frac_subsume prog estate rhs_b.formula_base_pure (get_node_perm anode) (get_node_perm ln2))) || !use_split_match
             then (([],[]),[])
 		    else (
-                if (not !Globals.is_deployed) then print_string"\n splitting \n";
+                if (not !Globals.web_compile_flag) then print_string"\n splitting \n";
                 r)
 	    | Iast.Right -> (([],[c]),[])
 	    | _ -> report_error no_pos ("Iast.Equiv detected - astsimpl should have eliminated it ")

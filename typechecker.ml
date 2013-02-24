@@ -854,7 +854,7 @@ and check_scall_fork prog ctx e0 (post_start_label:formula_label) ret_t mn lock 
     let _ = PTracer.log_proof prf in
     (* let _ = print_endline (("\n ### fork: after res ctx: ") ^ (Cprinter.string_of_list_failesc_context rs)) in *)
     if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
-      if (!Globals.is_deployed) then
+      if (!Globals.web_compile_flag) then
         Debug.print_info "procedure call" ("\nProving precondition in forked method " ^ proc.proc_name ^ " has failed \n") pos
       else
         Debug.print_info "procedure call" (to_print^" has failed \n") pos
@@ -1009,7 +1009,7 @@ and check_scall_lock_op prog ctx e0 (post_start_label:formula_label) ret_t mn lo
       let rs, prf = heap_entail_struc_list_failesc_context_init prog false true ctx prepost None None None pos pid in
       (* let _ = print_string (("\nSCall: acquire: rs =  ") ^ (Cprinter.string_of_list_failesc_context rs) ^ "\n") in *)
       if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then
-        if (!Globals.is_deployed) then
+        if (!Globals.web_compile_flag) then
           Debug.print_info "procedure call" ("\nProving precondition in method " ^ mn ^ " has failed \n") pos
         else
           Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
@@ -1790,7 +1790,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                   else begin
                     (*   let _ = print_endline ("\nlocle2:" ^ proc.proc_name) in *)
                     (* get source code position of failed branches *)
-                    (if (!Globals.is_deployed) then
+                    (if (!Globals.web_compile_flag) then
                           let _ = Debug.print_info "procedure call" ("\nProving precondition in method " ^ mn ^ " has failed \n") pos in
                           res
                      else

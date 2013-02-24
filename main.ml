@@ -54,7 +54,8 @@ let parse_file_full file_name (primitive: bool) =
       )
     ) in
     (* start parsing *)
-    if not primitive then 
+    if not primitive then
+      if (not !Globals.web_compile_flag) then
       print_endline ("Parsing file \"" ^ file_name ^ "\" by " 
                      ^ parser_to_use ^ " parser...");
     let _ = Gen.Profiling.push_time "Parsing" in
@@ -75,7 +76,7 @@ let parse_file_full file_name (primitive: bool) =
 
 (* Parse all prelude files declared by user.*)
 let process_primitives (file_list: string list) : Iast.prog_decl list =
-  Debug.info_pprint (" processing primitives \"" ^(pr_list pr_id file_list) ^ "\n") no_pos;
+  if (not !Globals.web_compile_flag) then Debug.info_pprint (" processing primitives \"" ^(pr_list pr_id file_list) ^ "\n") no_pos;
   flush stdout;
   let new_names = List.map (fun c-> (Gen.get_path Sys.executable_name) ^ (String.sub c 1 ((String.length c) - 2))) file_list in
   if (Sys.file_exists "./prelude.ss") then
@@ -188,7 +189,7 @@ let process_lib_file prog =
 (***************end process compare file*****************)
 (*Working*)
 let process_source_full source =
-  Debug.info_pprint ("Full processing file \"" ^ source ^ "\"\n") no_pos;
+  if (not !Globals.web_compile_flag) then Debug.info_pprint ("Full processing file \"" ^ source ^ "\"\n") no_pos;
   flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source false in
