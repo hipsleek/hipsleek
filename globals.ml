@@ -188,7 +188,7 @@ type perm_type =
   | Count (*counting permissions*)
   | Dperm (*distinct fractional shares*)
   
-let perm = ref NoPerm
+let perm = ref Frac
 
 let no_pos = 
 	let no_pos1 = { Lexing.pos_fname = "";
@@ -673,13 +673,13 @@ let allow_lsmu_infer = ref true
 
 let allow_norm = ref false
 
-let allow_ls = ref false (*enable lockset during verification*)
+let allow_ls = ref true (*enable lockset during verification*)
 
-let allow_locklevel = ref false (*enable locklevel during verification*)
+let allow_locklevel = ref true (*enable locklevel during verification*)
 
 (* let has_locklevel = ref false *)
 
-let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
+let ann_vp = ref true (* Disable variable permissions in default, turn on in para5*)
 
 let allow_ptr = ref false (*true -> enable pointer translation*)
 
@@ -724,7 +724,7 @@ let print_version_flag = ref false
 
 let elim_exists_flag = ref true
 
-let filtering_flag = ref false
+let filtering_flag = ref true
 
 let split_rhs_flag = ref true
 
@@ -798,7 +798,7 @@ let enable_redundant_elim = ref false
 
 let enulalias = ref false
 
-let pass_global_by_value = ref true
+let pass_global_by_value = ref false
 
 let exhaust_match = ref false
 
