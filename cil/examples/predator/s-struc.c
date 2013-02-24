@@ -18,8 +18,8 @@ void* malloc(int size) __attribute__ ((noreturn))
 Item* foo ()
 /*@
   requires true
-  //ensures res::Item*<_>;
-  ensures res != null;
+  ensures res::Item*<_>;
+  //ensures res != null;
 */
 {
   Item* ptr;

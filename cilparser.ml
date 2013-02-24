@@ -1200,10 +1200,10 @@ let translate_file (file: Cil.file) : Iast.prog_decl =
     | _ -> report_error_msg "Error!!! v has to be in form of (Iast.VarDecl _)."
   ) gl_addressof_data;
   Hashtbl.iter (fun _ proc -> proc_decls := !proc_decls @ [proc]) tbl_cast_procs;
-  Hashtbl.iter (fun _ typ ->
+  Hashtbl.iter (fun typ _ ->
     let neg_proc = create_negation_proc typ in
     proc_decls := !proc_decls @ [neg_proc]
-  ) tbl_data_type;
+  ) tbl_data_decl;
   (* return *)
   let newprog : Iast.prog_decl = ({
     Iast.prog_data_decls = obj_def :: string_def :: !data_decls;
