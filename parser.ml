@@ -1000,8 +1000,8 @@ simple2:  [[ t= opt_type_var_list -> ()]];
 
 heap_id:
   [[
-      `IDENTIFIER id -> id
-    | id = heap_id; `STAR -> id ^ "__star"
+     `IDENTIFIER id -> id
+   | id = heap_id; `STAR -> id ^ "__star"      (* parse pointer data structures in specs of C files *)
   ]];
 
 (*LDK: frac for fractional permission*)   
