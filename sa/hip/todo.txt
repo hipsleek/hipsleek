@@ -98,6 +98,14 @@ This problem seems to be triggered at relational assumption:
   Should return a failure.
 
 *************************************
+# ll-append15.ss:
+
+  H2(x,y)&x=null --> G2(x,y)&true,
+should be H2(x,y)&x=null & x'=y --> G2(x',y)&true,
+
+todo: sth is wrong with lhs before call INFER.infer_collect_hp_rel
+
+*************************************
 # ins-1.ss
 H2(res) should be stronger:
 res::node<_,p>*p::ll0<> & p !=null
