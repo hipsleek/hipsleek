@@ -18,22 +18,24 @@ module CP = Cpure
 type typed_ident = (typ * ident)
 
 
-type prog_decl = { mutable prog_data_decls : data_decl list;
-prog_global_var_decls : exp_var_decl list;
-prog_logical_var_decls : exp_var_decl list;
-prog_enum_decls : enum_decl list;
-mutable prog_view_decls : view_decl list;
-mutable prog_func_decls : func_decl list; (* TODO: Need to handle *)
-mutable prog_rel_decls : rel_decl list; 
-mutable prog_hp_decls : hp_decl list; 
-mutable prog_rel_ids : (typ * ident) list; 
-mutable prog_hp_ids : (typ * ident) list; 
-mutable prog_axiom_decls : axiom_decl list; (* [4/10/2011] An hoa : axioms *)
-mutable prog_hopred_decls : hopred_decl list;
-(* An Hoa: relational declaration *)
-prog_proc_decls : proc_decl list;
-prog_barrier_decls : barrier_decl list;
-mutable prog_coercion_decls : coercion_decl list
+type prog_decl = { 
+    prog_include_decls : ident list;
+    mutable prog_data_decls : data_decl list;
+    prog_global_var_decls : exp_var_decl list;
+    prog_logical_var_decls : exp_var_decl list;
+    prog_enum_decls : enum_decl list;
+    mutable prog_view_decls : view_decl list;
+    mutable prog_func_decls : func_decl list; (* TODO: Need to handle *)
+    mutable prog_rel_decls : rel_decl list; 
+    mutable prog_hp_decls : hp_decl list; 
+    mutable prog_rel_ids : (typ * ident) list; 
+    mutable prog_hp_ids : (typ * ident) list; 
+    mutable prog_axiom_decls : axiom_decl list; (* [4/10/2011] An hoa : axioms *)
+    mutable prog_hopred_decls : hopred_decl list;
+    (* An Hoa: relational declaration *)
+    prog_proc_decls : proc_decl list;
+    prog_barrier_decls : barrier_decl list;
+    mutable prog_coercion_decls : coercion_decl list
 }
 
 and data_field_ann =
@@ -68,12 +70,15 @@ view_modes : mode list;
 mutable view_typed_vars : (typ * ident) list;
 view_kind : view_kind;
 view_prop_extns:  ident list;
+view_is_prim : bool;
 view_invariant : P.formula;
+		  view_mem : F.mem_formula option; 
+		  (* Represents the Memory Permission Set. Option None will not use Memory Permission Set*)
 view_formula : Iformula.struc_formula;
 view_inv_lock : F.formula option;
 mutable view_pt_by_self : ident list; (* list of views pointed by self *)
 (* view_targets : ident list;  *)(* list of views pointed within declaration *)
-try_case_inference: bool}
+try_case_inference: bool }
 
 and func_decl = { func_name : ident; 
 func_typed_vars : (typ * ident) list;}
@@ -85,11 +90,11 @@ and rel_decl = { rel_name : ident;
 rel_typed_vars : (typ * ident) list;
 (* rel_invariant : (P.formula * (branch_label * P.formula) list); *)
 rel_formula : P.formula (* Iformula.struc_formula *) ; 
-(* try_case_inference: bool *)}
+(* try_case_inference: bool *) }
 
 (* [4/10/2011] An Hoa: axiom for pure constraints *)
 and axiom_decl = {
-	  axiom_id : int;
+    axiom_id : int;
     axiom_hypothesis : P.formula ;
     axiom_conclusion : P.formula ;
 }
@@ -108,8 +113,7 @@ hopred_typed_vars: (typ * ident) list;
 mutable hopred_typed_args : (typ * ident) list;
 hopred_fct_args : ident list;
 hopred_shape    : Iformula.struc_formula list;
-hopred_invariant :P.formula
-}
+hopred_invariant :P.formula }
 
 and barrier_decl = {
     barrier_thc : int;
@@ -185,7 +189,7 @@ proc_exceptions : ident list;
 proc_body : exp option;
 proc_is_main : bool;
 proc_file : string;
-proc_loc : loc ;
+proc_loc : loc;
 proc_test_comps: test_comps option}
 
 and coercion_decl = { coercion_type : coercion_type;
@@ -224,6 +228,9 @@ and uni_op =
   | OpPostInc
   | OpPostDec
   | OpNot
+  (*For pointers: *v and &v *)
+  | OpVal (*value-of*)
+  | OpAddr (*address-off*)
 
 and bin_op = 
   | OpPlus
@@ -406,6 +413,11 @@ exp_var_decl_pos : loc }
 
 and exp_while = { exp_while_condition : exp;
 exp_while_body : exp;
+(*before pointer translation*)
+(*need a list of address-off vars that may belong to
+  specs of while loop. Updated in Pointers.trans_exp_addrr.
+  Used in Astsimpl.trans_loop_proc*)
+exp_while_addr_vars : ident list;  
 exp_while_specs : Iformula.struc_formula (*multi_spec*);
 exp_while_jump_label : jump_label_type;
 exp_while_path_id : control_path_id;
@@ -467,6 +479,8 @@ and exp =
 let void_type = Void
 
 let int_type = Int
+
+let infint_type = INFInt
 
 let ann_type = AnnT
 
@@ -704,22 +718,29 @@ and mkHoPred  n m mh tv ta fa s i=
           hopred_invariant = i}
 	
 let mkProc sfile id n dd c ot ags r ss ds pos bd =
+  (* Debug.info_hprint (add_str "static spec" !print_struc_formula) ss pos; *)
+  let ss = match ss with 
+    | F.EList [] -> 
+          (* Debug.info_pprint "EList" pos; *)
+          F.mkETrueTrueF () 
+    | _ -> ss 
+          in
   { proc_name = id;
   proc_source =sfile;
-  proc_mingled_name = n; 
-  proc_data_decl = dd;
-  proc_constructor = c;
-  proc_exceptions = ot;
-  proc_args = ags;
-  proc_return = r;
-  (*  proc_important_vars = [];*)
-  proc_static_specs = ss;
-  proc_dynamic_specs = ds;
-  proc_loc = pos;
-  proc_is_main = true;
-  proc_file = !input_file_name;
-  proc_body = bd;
-  proc_test_comps = None}	
+      proc_mingled_name = n; 
+      proc_data_decl = dd;
+      proc_constructor = c;
+      proc_exceptions = ot;
+      proc_args = ags;
+      proc_return = r;
+      (*  proc_important_vars = [];*)
+      proc_static_specs = ss;
+      proc_dynamic_specs = ds;
+      proc_loc = pos;
+      proc_is_main = true;
+      proc_file = !input_file_name;
+      proc_body = bd;
+      proc_test_comps = None}
 
 let mkAssert asrtf assmf pid atype pos =
       Assert { exp_assert_asserted_formula = asrtf;
@@ -764,7 +785,7 @@ let trans_exp (e:exp) (init_arg:'b) (f:'b->exp->(exp* 'a) option)  (f_args:'b->e
                 let e2,r2 = helper n_arg b.exp_binary_oper2  in
                 (Binary {b with exp_binary_oper1 = e1; exp_binary_oper2 = e2;},(comb_f [r1;r2]))
           | Bind b -> 
-                let e1,r1 = helper n_arg b.exp_bind_body  in     
+                let e1,r1 = helper n_arg b.exp_bind_body  in
                 (Bind {b with exp_bind_body = e1; },r1)
 		  | Barrier _ -> (e,zero)
 				(*let e,r = helper n_arg b.exp_barrier_recv  in     
@@ -1096,13 +1117,12 @@ and look_up_all_fields_x (prog : prog_decl) (c : data_decl) =
 *)
 
 and collect_struc (f:F.struc_formula):ident list =  match f with
-  | F.EAssume (b,_,_) -> collect_formula b
+  | F.EAssume b -> collect_formula b.F.formula_assume_simpl
   | F.ECase b-> Gen.fold_l_snd  collect_struc b.F.formula_case_branches
   | F.EBase b-> (collect_formula b.F.formula_struc_base)@ (Gen.fold_opt collect_struc b.F.formula_struc_continuation)
   | F.EInfer b -> collect_struc b.F.formula_inf_continuation
   | F.EList b -> Gen.fold_l_snd collect_struc b
-  | F.EOr b -> (collect_struc b.F.formula_struc_or_f1)@(collect_struc b.F.formula_struc_or_f2)
-
+  
 and collect_formula (f0 : F.formula) : ident list = 
   let rec helper (h0 : F.h_formula) = match h0 with
 	| F.HeapNode h -> 
@@ -1127,7 +1147,16 @@ and collect_formula (f0 : F.formula) : ident list =
 		  if d1>0 & d2>0 then
 			report_error pos ("Phase: multiple occurrences of self as heap nodes in one branch are not allowed")
 		  else n1@n2
-	| _ -> []
+	| F.Conj h ->
+		  let h1, h2, pos = h.F.h_formula_conj_h1, h.F.h_formula_conj_h2, h.F.h_formula_conj_pos in
+		  let n1 = helper h1 in
+		  let n2 = helper h2 in
+          let d1 = List.length n1 in
+          let d2 = List.length n2 in
+		  if d1>0 & d2>0 then
+			report_error pos ("multiple occurrences of self as heap nodes in one branch are not allowed")
+		  else n1@n2		  
+        | _ -> []
 	in
   match f0 with
     | F.Base f ->  helper f.F.formula_base_heap
@@ -1177,7 +1206,9 @@ and fixpt_data_name_x (view_ans:(view_decl * ident list *ident list) list) =
               []
       )
       r) in 
-  let r = List.map (fun (v,a,r) -> (v,Gen.Basic.remove_dups (a@(fetch r)),r)) view_ans in
+  (*let v,a,r = view_ans in*)
+  let r = List.map (fun (v,a,r) ->  
+  (*let _ = print_string("View :"^List.hd a^"\n") in*) (v,Gen.Basic.remove_dups (a@(fetch r)),r)) view_ans in
   let check (v,a1,_) (_,a2,_) c = 
     let d1=List.length a1 in
     let d2=List.length a2 in
@@ -1208,7 +1239,7 @@ and update_fixpt_x (vl:(view_decl * ident list *ident list) list)  =
 		 print_endline ("Feasible self type: " ^ (String.concat "," a)); *)
       v.view_pt_by_self<-tl;
       if (List.length a==0) then 
-        if v.view_kind = View_PRIM || v.view_kind = View_EXTN then v.view_data_name <- (v.view_name) (* TODO WN : to add pred name *)
+        if v.view_is_prim || v.view_kind = View_EXTN then v.view_data_name <- (v.view_name) (* TODO WN : to add pred name *)
         else report_error no_pos ("self of "^(v.view_name)^" cannot have its type determined")
       else v.view_data_name <- List.hd a) vl
 
@@ -1247,12 +1278,11 @@ and data_name_of_view_x (view_decls : view_decl list) (f0 : F.struc_formula) : i
 	  else "" in
   
   let rec data_name_in_struc (f:F.struc_formula):ident = match f with
-	| F.EAssume (b,_,_) -> data_name_of_view1 view_decls b
+	| F.EAssume b -> data_name_of_view1 view_decls b.F.formula_assume_simpl
 	| F.ECase b-> handle_list_res (Gen.fold_l_snd (fun c->[data_name_in_struc c]) b.F.formula_case_branches)
 	| F.EBase b-> handle_list_res (data_name_of_view1 view_decls b.F.formula_struc_base ::(Gen.fold_opt (fun c-> [data_name_of_view_x view_decls c]) b.F.formula_struc_continuation))
 	| F.EInfer b -> data_name_in_struc b.F.formula_inf_continuation
-	| F.EList b -> handle_list_res (List.map (fun c-> data_name_in_struc(snd c)) b) 
-	| F.EOr b -> handle_list_res [data_name_in_struc b.F.formula_struc_or_f1; data_name_in_struc b.F.formula_struc_or_f2] in
+	| F.EList b -> handle_list_res (List.map (fun c-> data_name_in_struc(snd c)) b)  in
    data_name_in_struc f0
 
 and data_name_of_view1 (view_decls : view_decl list) (f0 : F.formula) : ident = 
@@ -1282,6 +1312,16 @@ and data_name_of_view1 (view_decls : view_decl list) (f0 : F.formula) : ident =
 			n1
 		  else
 			n2
+	| F.Conj h ->
+		  let h1, h2, pos = h.F.h_formula_conj_h1, h.F.h_formula_conj_h2, h.F.h_formula_conj_pos in
+		  let n1 = get_name_from_heap h1 in
+		  let n2 = get_name_from_heap h2 in
+		  if Gen.is_some n1 && Gen.is_some n2 then
+			report_error pos ("multiple occurrences of self as heap nodes in one branch are not allowed")
+		  else if Gen.is_some n1 then
+			n1
+		  else
+			n2			
 	| _ -> None 
   and get_name (f0 : F.formula) = match f0 with
 	| F.Or f ->
@@ -1422,6 +1462,9 @@ let build_hierarchy (prog : prog_decl) =
   let add_edge (cdef : data_decl) = 
 	CH.add_edge class_hierarchy (CH.V.create {ch_node_name = cdef.data_name})
 	  (CH.V.create {ch_node_name = cdef.data_parent_name}) in
+  let add_edge cdef = 
+	let pr cdef = cdef.data_name^"<:"^cdef.data_parent_name in
+	Debug.no_1 "add_edge" pr (fun _ -> "") add_edge cdef in
   let _ = List.map add_edge prog.prog_data_decls in
 	if TraverseCH.has_cycle class_hierarchy then begin
 	  print_string ("Error: Class hierarchy has cycles\n");
@@ -1435,31 +1478,29 @@ let build_hierarchy (prog : prog_decl) =
 		   CH.iter_vertex update_node class_hierarchy
 		   end
 		*)
-
 (*
   see if c1 is sub class of c2 and what are the classes in between.
 *)
-let find_classes (c1 : ident) (c2 : ident) : ident list = 
-  let v1 = CH.V.create {ch_node_name = c1} in
-  let v2 = CH.V.create {ch_node_name = c2} in
-  let path, _ = PathCH.shortest_path class_hierarchy v1 v2 in
-	List.map (fun e -> (CH.E.dst e).ch_node_name) path
+let exists_path (c1 : ident) (c2 : ident) :bool = 
+  if c2="null" then true
+  else
+	  try
+		let _ = PathCH.shortest_path class_hierarchy 
+				(CH.V.create {ch_node_name = c1}) 
+				(CH.V.create {ch_node_name = c2}) in
+		true
+	  with 
+ 		| Not_found -> false 
 
+let exists_path c1 c2 =	Debug.no_2_loop "exists_path" pr_id pr_id  string_of_bool exists_path c1 c2 
+		
 (* (\* is t1 a subtype of t2 *\) *)
-(* let sub_type (t1 : typ) (t2 : typ) =  *)
-(*   let c1 = string_of_typ t1 in *)
-(*   let c2 = string_of_typ t2 in *)
-(* 	if c1 = c2 || (is_named_type t2 && c1 = "null") then true *)
-(* 	else false *)
-(* 	  (\* *)
-(* 		try *)
-(* 		let _ = find_classes c1 c2 in *)
-(* 		true *)
-(* 		with *)
-(* 		| Not_found -> false *)
-(* 	  *\) *)
-
-let sub_type t1 t2 = sub_type t1 t2
+let sub_type2 (t1 : typ) (t2 : typ) =  
+	if is_named_type t1 && is_named_type t2 then 
+		exists_path (string_of_typ t1) (string_of_typ t2)
+	else false
+   
+let sub_type t1 t2 = sub_type t1 t2 || sub_type2 t1 t2
 
 let compatible_types (t1 : typ) (t2 : typ) = sub_type t1 t2 || sub_type t2 t1
 
@@ -1795,6 +1836,7 @@ let rec append_iprims_list (iprims : prog_decl) (iprims_list : prog_decl list) :
   | [] -> iprims
   | hd::tl ->
         let new_iprims = {
+					      prog_include_decls = hd.prog_include_decls @ iprims.prog_include_decls;
                 prog_data_decls = hd.prog_data_decls @ iprims.prog_data_decls;
                 prog_logical_var_decls = hd.prog_logical_var_decls @ iprims.prog_logical_var_decls;
                 prog_global_var_decls = hd.prog_global_var_decls @ iprims.prog_global_var_decls;
@@ -1817,6 +1859,7 @@ let append_iprims_list_head (iprims_list : prog_decl list) : prog_decl =
   match iprims_list with
   | [] ->
         let new_prims = {
+					      prog_include_decls = [];
                 prog_data_decls = [];
                 prog_global_var_decls = [];
                 prog_logical_var_decls = [];
@@ -1992,13 +2035,19 @@ let add_bar_inits prog =
 	(List.map (fun c-> b_data_constr c.barrier_name c.barrier_shared_vars) prog.prog_barrier_decls) in
 	
   let b_proc_def = List.map (fun b-> 
-			let largs = (*(P.IConst (0,no_pos))::*)List.map (fun (_,n)-> P.Var ((n,Unprimed),no_pos)) b.barrier_shared_vars in
+			let largs = (*(P.IConst (0,no_pos))::*)List.map (fun (_,n)-> 
+			(*print_string (n^"\n"); *)
+			P.Var ((n,Unprimed),no_pos)) b.barrier_shared_vars in
 			let pre_hn = 
-				F.mkHeapNode ("b",Unprimed) b_datan false (F.ConstAnn(Mutable)) false false false None [] None no_pos in
+				F.mkHeapNode ("b",Unprimed) b_datan false (F.ConstAnn(Mutable)) false false false None [] [] None no_pos in
 			let pre = F.formula_of_heap_with_flow pre_hn n_flow no_pos in 
 			let post_hn = 
-				F.mkHeapNode ("b",Unprimed) b.barrier_name false (F.ConstAnn(Mutable)) false false false None largs None no_pos in
-			let post =  F.EAssume (F.formula_of_heap_with_flow post_hn n_flow no_pos,fresh_formula_label "",None) in
+				F.mkHeapNode ("b",Unprimed) b.barrier_name false (F.ConstAnn(Mutable)) false false false None largs [] None no_pos in
+			let post =  
+				let simp = F.formula_of_heap_with_flow post_hn n_flow no_pos in
+				let str = F.mkEBase [] [] [] simp None no_pos in
+				F.mkEAssume simp str (fresh_formula_label "") None in
+			(*let _ =print_string ("post: "^(!print_struc_formula post)^"\n") in*)
 			{ proc_name = "init_"^b.barrier_name;
                           proc_source = "source_file";
 			  proc_mingled_name = "";
@@ -2008,7 +2057,7 @@ let add_bar_inits prog =
 				(List.map (fun (t,n)-> {param_type =t; param_name = n; param_mod = NoMod;param_loc=no_pos})
 								b.barrier_shared_vars);
 			  proc_return = Void;
-			  proc_static_specs = F.mkEBase [] [] [] pre (Some post) true no_pos;
+			  proc_static_specs = F.mkEBase [] [] [] pre (Some post) no_pos;
 			  proc_dynamic_specs = F.mkEFalseF ();
 			  proc_exceptions = [];
 			  proc_body = None;
@@ -2024,7 +2073,7 @@ let add_bar_inits prog =
 let gen_normalize_lemma_comb ddef = 
  let self = (self,Unprimed) in
  let lem_name = "c"^ddef.data_name in
- let gennode perm hl= F.mkHeapNode self ddef.data_name false (F.ConstAnn Mutable) false false false (Some perm) hl None no_pos in
+ let gennode perm hl= F.mkHeapNode self ddef.data_name false (F.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
  let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
  let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
  let args1,args2 = List.split (List.map (fun _-> fresh () ,fresh ()) ddef.data_fields) in
@@ -2039,7 +2088,7 @@ let gen_normalize_lemma_comb ddef =
  let gen_normalize_lemma_split ddef = 
  let self = (self,Unprimed) in
  let lem_name = "s"^ddef.data_name in
- let gennode perm hl= F.mkHeapNode self ddef.data_name false (F.ConstAnn Mutable) false false false (Some perm) hl None no_pos in
+ let gennode perm hl= F.mkHeapNode self ddef.data_name false (F.ConstAnn Mutable) false false false (Some perm) hl [] None no_pos in
  let fresh () = P.Var ((P.fresh_old_name lem_name,Unprimed),no_pos) in
  let perm1,perm2,perm3 = fresh (), fresh (), fresh () in
  let args = List.map (fun _-> fresh ()) ddef.data_fields in

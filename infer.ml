@@ -39,7 +39,7 @@ let simplify_conjs f =
   Debug.no_1 "simplify_conjs" (!CP.print_formula) (!CP.print_formula) simplify_conjs f 
 
 let simp_lhs_rhs vars (c,lhs,rhs) =
-  let ra = MCP.pure_ptr_equations lhs in
+  let ra = CP.pure_ptr_equations lhs in
   let (subs,rest) = CP.simplify_subs ra vars [] in
   let nsubs = CP.norm_subs (rest@subs) in
   let asubs = rest@nsubs in	  
@@ -743,9 +743,9 @@ let rec infer_pure_m_x estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_ori
       (*      if CP.isConstTrue new_p then None                         *)
       (*      else                                                      *)
       let lhs_wo_heap = CP.drop_rel_formula (MCP.pure_of_mix lhs_wo_heap_orig) in
-      let lhs_wo_ptr_eqs = MCP.remove_ptr_equations lhs_wo_heap false in
+      let lhs_wo_ptr_eqs = CP.remove_ptr_equations lhs_wo_heap false in
       let vars_lhs = fv lhs_wo_ptr_eqs in (* var on lhs *)
-      let vars_rhs = fv (MCP.remove_ptr_equations rhs_xpure false) in (* var on rhs *)
+      let vars_rhs = fv (CP.remove_ptr_equations rhs_xpure false) in (* var on lhs *)
       let lhs_als = MCP.ptr_equations_without_null (MCP.mix_of_pure lhs_xpure) in
       let lhs_aset = build_var_aset lhs_als in
       let total_sub_flag = List.for_all (fun r ->
@@ -2260,7 +2260,7 @@ let get_shape_from_file view_node keep_vars proc_name =
 let get_spec_from_file prog = 
   let input_spec = (get_file_name Sys.argv.(1)) ^ ".spec" in
   let input_str = syscall ("cat " ^ input_spec) in
-  let res = Parser.parse_spec input_str in
+  let res = Parser.parse_specs_list input_str in
 (*  print_endline ("SPEC" ^ (Iprinter.string_of_struc_formula res));*)
 (*  let id,command = get_cmd_from_file in*)
   let id, command = !(IF.cmd) in

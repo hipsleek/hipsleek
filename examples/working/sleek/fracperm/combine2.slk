@@ -1,0 +1,35 @@
+/*
+  Examples to show to lemma "combineCell1" is more precise
+  than lemma "combineCell2".
+  By precise, we mean it enables us to prove more examples
+  such as entailments (1) and (3)
+*/
+
+data lock{}.
+
+data intCell{
+  int val;
+}.
+
+lemma "splitCell" self::intCell(f)<v> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::intCell(f1)<v> * self::intCell(f2)<v> & 0.0<f<=1.0.
+
+lemma "combineCell1" self::intCell(f1)<v1> * self::intCell(f2)<v> -> self::intCell(f1+f2)<v> & v1=v.
+
+// THIS LEMMA is not precise enough to prove entailment (1) and (3)
+//lemma "combineCell2" self::intCell(f1)<v> * self::intCell(f2)<v> -> self::intCell(f1+f2)<v>.
+
+//(1)
+checkentail (exists Y: x1::intCell(0.5)<Y> * x1::intCell(0.5)<v1>) |- x1::intCell(1.0)<v1>.
+print residue.//valid, 1 state: SPLIT
+
+//(2)
+checkentail (exists Y: x1::intCell(0.5)<Y> * x1::intCell(0.5)<v1> & Y=v1) |- x1::intCell(1.0)<v1>.
+print residue.//valid
+
+//(3)
+checkentail (exists Y: x1::intCell(0.5)<Y> * x1::intCell(0.5)<v1> & Y!=v1) |- x1::intCell(1.0)<v1>.
+print residue.//valid, false LHS
+
+//(4)
+checkentail (exists Y: x1::intCell(0.5)<Y> * x1::intCell(0.5)<v1> & Y=v1) |- x1::intCell(0.8)<v1>.
+print residue.//valid, 1 state SPLIT

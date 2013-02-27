@@ -1,0 +1,16 @@
+checkentail 
+  n=flted_9_64+1 
+  & mi=min(d_63,\inf) 
+  & mx=max(d_63,-\inf) 
+  //& mi=min(d_63,tmi_61) 
+  //& mx=max(d_63,tmx_60) 
+  & -\inf<d_63<\inf
+  & p_62=null & n=1 & tmi_61=\inf 
+  & tmx_60=-\inf & 
+  self!=null & p_62=null & flted_9_64=0 
+|-  
+ //self!=null & n=1 &
+  mi=d_63 
+  //mi=mx 
+  //& 0<((\inf)+mi) & mi<(\inf)
+.

@@ -1,0 +1,23 @@
+/*
+ id: 43; caller: []; line: 38; classic: false; kind: POST; hec_num: 4; evars: [mx_699,flted_38_700,mi1_701]; c_heap: x'::node<d_655,xnext_698>@M[Orig]
+*/
+
+ checkentail emp&n=flted_9_663+1 & mi=min(d_664,tmi_666) & mx=max(d_664,tmx_667) & 
+0<(d_664+(\inf)) & d_664<(\inf) & x=x' & 1<=n & a=mi & n!=1 & a!=d_664 & 
+!(v_bool_52_583') & a!=d_664 & !(v_bool_52_583') & flted_9_663=n_682 & 
+mi_683=tmi_666 & mx_684=tmx_667 & n_682=1 & ((p_665=null & flted_9_663=0 & 
+tmi_666=\inf & tmx_667+(\inf)=0) | (p_665!=null & 0<flted_9_663 & 
+tmi_666<=tmx_667)) & xnext_707=null & n_682=1 & ((p_665=null & n_682=0 & 
+mi_683=\inf & mx_684+(\inf)=0) | (p_665!=null & 0<n_682 & mi_683<=mx_684)) & 
+d_664=d_711 & p_712=xnext_707 & exists(tmx_714:tmx_714+(\inf)=0) & 
+tmi_713=\inf & tmx_714+(\inf)=0 & ((tmx_714<=d_711 & tmi_713<=d_711) | 
+(tmi_713<=d_711 & d_711<=tmx_714) | (tmx_714<=d_711 & d_711<=tmi_713) | 
+(d_711<=tmx_714 & d_711<=tmi_713))
+ |-  (exists mx_708,flted_40_709,mi1_710: 
+emp&n=flted_40_709+1 & mi<=mi1_710 
+& mx=max(d_711,tmx_714) 
+& mi1_710=min(d_711,tmi_713) & 
+flted_40_709=0+1). 
+
+
+

@@ -109,8 +109,10 @@ and aug_class_name (t : typ) = match t with
   | UNK  -> 	
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "unexpected UNKNOWN type"}
+  | Pointer _ -> "Pointer"
   | Named c -> c ^ "Aug"
   | Int -> "IntAug"
+  | INFInt -> "INFIntAug"
   | AnnT -> "AnnAug"
   | RelT _ -> "RelAug"
   | Bool -> "BoolAug"
@@ -1042,9 +1044,18 @@ and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (v
   | Star ({h_formula_star_h1 = h1;
     h_formula_star_h2 = h2;
     h_formula_star_pos = pos})
+  | StarMinus ({h_formula_starminus_h1 = h1;
+	   h_formula_starminus_h2 = h2;
+	   h_formula_starminus_pos = pos})	   
   | Conj ({h_formula_conj_h1 = h1;
     h_formula_conj_h2 = h2;
     h_formula_conj_pos = pos})
+  | ConjStar ({h_formula_conjstar_h1 = h1;
+	   h_formula_conjstar_h2 = h2;
+	   h_formula_conjstar_pos = pos})
+  | ConjConj ({h_formula_conjconj_h1 = h1;
+	   h_formula_conjconj_h2 = h2;
+	   h_formula_conjconj_pos = pos})	   	   
   | Phase ({h_formula_phase_rd = h1;
     h_formula_phase_rw = h2;
     h_formula_phase_pos = pos}) -> begin
@@ -1462,9 +1473,18 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
   | Star ({h_formula_star_h1 = h1;
     h_formula_star_h2 = h2;
     h_formula_star_pos = pos})
+  | StarMinus ({h_formula_starminus_h1 = h1;
+	   h_formula_starminus_h2 = h2;
+	   h_formula_starminus_pos = pos})	   
   | Conj ({h_formula_conj_h1 = h1;
     h_formula_conj_h2 = h2;
     h_formula_conj_pos = pos})
+  | ConjStar ({h_formula_conjstar_h1 = h1;
+	   h_formula_conjstar_h2 = h2;
+	   h_formula_conjstar_pos = pos})
+  | ConjConj ({h_formula_conjconj_h1 = h1;
+	   h_formula_conjconj_h2 = h2;
+	   h_formula_conjconj_pos = pos})	   	   
   | Phase ({h_formula_phase_rd = h1;
     h_formula_phase_rw = h2;
     h_formula_phase_pos = pos}) -> begin
@@ -1699,7 +1719,8 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
     proc_constructor = false;
     proc_args = [cur_color pos; new_color pos];
     proc_return = Bool;
-    proc_static_specs = Iformula.mkEFalseF ();
+    (* proc_static_specs = Iformula.mkEFalseF (); *)
+    proc_static_specs = Iformula.mkETrueF ();
     proc_dynamic_specs = Iformula.mkEFalseF ();
     proc_exceptions = [];
     proc_body = Some seq2;
@@ -1818,7 +1839,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
     proc_constructor = false;
     proc_args = [cur_color pos; new_color pos];
     proc_return = Bool;
-    proc_static_specs = Iformula.mkEFalseF ();
+    proc_static_specs = Iformula.mkETrueF ();
     proc_dynamic_specs = Iformula.mkEFalseF ();
     proc_body = Some combined_exp;
     proc_exceptions = [];

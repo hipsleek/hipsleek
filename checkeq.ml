@@ -315,6 +315,7 @@ and checkeq_h_formulas_x (hvars: ident list)(hf1: CF.h_formula) (hf2: CF.h_formu
 	| CF.HTrue  ->  (true, mtl)
 	| CF.HFalse ->  report_error no_pos "not a case"
 	| CF.HEmp   ->  (true, mtl) (*TODO: plz check*)
+	| CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
     )
 
 and checkeq_h_formulas ivars hf1 hf2 mtl= 
@@ -341,6 +342,7 @@ and check_false_formula(hf: CF.h_formula): bool =
     | CF.HRel _ 
     | CF.HTrue  
     | CF.HEmp   ->  false
+	| CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
       
 and match_equiv_node (hvars: ident list) (n: CF.h_formula_data) (hf2: CF.h_formula)(mtl: map_table list): (bool * (map_table list))=
   let rec match_equiv_node_helper (hvars: ident list) (n: CF.h_formula_data) (hf2: CF.h_formula)(mt: map_table): (bool * (map_table list)) = match hf2 with 
@@ -367,6 +369,7 @@ and match_equiv_node (hvars: ident list) (n: CF.h_formula_data) (hf2: CF.h_formu
     | CF.HTrue -> (false,[mt])
     | CF.HFalse -> report_error no_pos "not a case"
     | CF.HEmp   -> (false,[mt])
+	| CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
   in
   let res_list = (List.map (fun c -> match_equiv_node_helper hvars n hf2 c) mtl) in
   let (bs, mtls) = List.split res_list in
@@ -461,6 +464,7 @@ and match_equiv_view_node (hvars: ident list) (n: CF.h_formula_view) (hf2: CF.h_
     | CF.HTrue -> (false,[mt])
     | CF.HFalse -> report_error no_pos "not a case"
     | CF.HEmp   -> (false,[mt])
+	| CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
   in
   let res_list = (List.map (fun c -> match_equiv_view_node_helper hvars n hf2 c) mtl) in
   let (bs, mtls) = List.split res_list in
@@ -520,6 +524,7 @@ and match_equiv_rel (hvars: ident list) (r: (CP.spec_var * (CP.exp list) * loc))
     | CF.HTrue  -> (false,[mt]) 
     | CF.HFalse ->  report_error no_pos "not a case"
     | CF.HEmp   ->  (false,[mt]) 
+	| CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
   in
   let res_list = (List.map (fun c -> match_equiv_rel_helper hvars r hf2 c) mtl) in
   let (bs, mtls) = List.split res_list in
@@ -600,6 +605,7 @@ and match_equiv_emp (hf2: CF.h_formula): bool=
     | CF.HTrue 
     | CF.HFalse -> false
     | CF.HEmp   -> true
+	| CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
 
 and add_map_rel_x (mt: map_table) (v1: CP.spec_var) (v2: CP.spec_var): (bool * map_table) = 
   let vn1 = CP.full_name_of_spec_var v1 in
@@ -1243,7 +1249,7 @@ and checkeq_h_formulas_with_diff_x (hvars: ident list)(hf1: CF.h_formula) (hf2: 
 	    | _ ->   (false, modify_mtl mtl CF.HTrue))
 	| CF.HFalse ->  report_error no_pos "not a case"
 	| CF.HEmp   ->  (true, modify_mtl mtl CF.HEmp) (*TODO: plz check*)
-
+	| CF.ConjConj _ | CF.StarMinus _ | CF.ConjStar _ -> Error.report_no_pattern()
     )
 
 and checkeq_h_formulas_with_diff ivars hf1 hf2 mtl= 

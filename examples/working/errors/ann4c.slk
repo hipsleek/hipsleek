@@ -1,0 +1,12 @@
+data cell {
+  int val;
+}.
+
+infer [] y::cell<a>@L |- (exists v: y::cell<b>@v & v=@M).
+print residue.
+      
+infer [] y::cell<a>@L & |- [v] y::cell<b>@v & v=@M.
+print residue.
+
+infer [] y::cell<a>@L |- y::cell<b>@v & v=@M.
+print residue.

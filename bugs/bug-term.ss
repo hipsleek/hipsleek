@@ -34,7 +34,7 @@ node append(node x, node y)
 */
 // flattens a tree of nodes into a list of nodes
 node flatten(node2 t)
-  requires t::tree2<m> & Term[]
+  requires t::tree2<m> & Term[m]
   ensures res::ll<n>;
 {
   if (t==null) {

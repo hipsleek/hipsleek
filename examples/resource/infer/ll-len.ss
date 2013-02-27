@@ -36,16 +36,16 @@ int length(node l)
   requires stk::RS<m> * l::ll<n>@L 
   ensures  stk::RS<m> * mx::RS_mark<h> & res=n 
   & R1(h,m,n);
-  //& h=m+n+1;
+  //& h=m+3n+3;
 {
-  add_stk(1); //add a stack frame
+  add_stk(2); //add a stack frame
   int r;
   if (l==null) r=0;
   else {
     // node nx = l.next; 
     r=1+length(l.next);
   }
-  sub_stk(1); //subtract a stack frame prior to return
+  sub_stk(2); //subtract a stack frame prior to return
   return r;
 }
 

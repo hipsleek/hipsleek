@@ -1,0 +1,5 @@
+Files affected by explicit instantiation:
+========================================
+ sleek7.slk sleek8.slk sleek9.slk imm/imm1.slk imm/imm3.slk.
+ error at: vperm/task_decompose.ss main
+.

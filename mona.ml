@@ -25,13 +25,21 @@ let mona_pred_file_alternative_path = "/usr/local/lib/"
 
 let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
+let string_of_hashtbl tab = Hashtbl.fold
+		(fun c1 c2 a ->
+			a^"; ("^(Cprinter.string_of_spec_var c1)^" "^
+			(string_of_int c2) ^")") tab ""
 
 (* pretty printing for primitive types *)
 let rec mona_of_typ = function
   | Bool          -> "int"
   | Tree_sh 	  -> "int"
-  | Float         -> "float"	(* Can I really receive float? What do I do then? I don't have float in Mona. *)
+  | Float         -> 
+      (* "float"	(\* Can I really receive float? What do I do then? I don't have float in Mona. *\) *)
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "float type not supported for mona"}
   | Int           -> "int"
+  | INFInt        -> "int"
   | AnnT          -> "AnnT"
   | RelT _        -> "RelT"
   | HpT           -> "HpT"
@@ -45,6 +53,9 @@ let rec mona_of_typ = function
   | NUM | Named _ | Array _ ->
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "array and named type not supported for mona"}
+  | Pointer _ ->
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "pointer type not supported for mona"}
 
 (*------------------------------------------*)
 let rec mkEq l = match l with
@@ -158,7 +169,7 @@ and preprocess_b_formula b : (CP.b_formula * CP.formula * CP.spec_var list) =
 (* 
    Preprocessing formulae 
 *)
-and preprocess_formula pr_w pr_s (f : CP.formula) : CP.formula =
+and preprocess_formula_x pr_w pr_s (f : CP.formula) : CP.formula =
   let rec helper f = 
     match f with
       | CP.Or (p1, p2,lbl, l1) -> (CP.mkOr (helper p1) (helper p2) lbl l1)
@@ -177,6 +188,12 @@ and preprocess_formula pr_w pr_s (f : CP.formula) : CP.formula =
             end
   in helper f
 
+and preprocess_formula pr_w pr_s (f : CP.formula) : CP.formula =
+  Debug.no_1 "preprocess_formula"
+      Cprinter.string_of_pure_formula 
+      Cprinter.string_of_pure_formula
+      (fun f -> preprocess_formula_x pr_w pr_s f) f
+
 (* 
 
    HASH TABLE CONSTRUCTION:
@@ -187,9 +204,15 @@ and preprocess_formula pr_w pr_s (f : CP.formula) : CP.formula =
 
 *)
 
-and find_order (f : CP.formula) vs = 
+and find_order_x (f : CP.formula) vs = 
   let r = find_order_formula f vs in
-  if r then (find_order f vs)
+  if r then (find_order f vs) 
+(*keep finding until reach fixed point*)
+
+and find_order (f : CP.formula) vs = 
+  Debug.no_2 "find_order" 
+      Cprinter.string_of_pure_formula string_of_hashtbl (fun f->"")
+      find_order_x f vs
 
 and find_order_formula (f : CP.formula) vs : bool  = match f with
   | CP.And(f1, f2, _)
@@ -201,15 +224,16 @@ and find_order_formula (f : CP.formula) vs : bool  = match f with
   | CP.AndList b -> List.exists (fun (_,c)-> find_order_formula c vs) b
   | CP.BForm(bf,_) -> (find_order_b_formula bf vs)
 
-and find_order_b_formula (bf : CP.b_formula) vs : bool =
+and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
   let rec exp_order e vs =
     match e with
+      (* | CP.Null _ -> 1 *) (* leave it unknown 0*)
       | CP.Var(sv, l) ->
 	        begin
 	          try
 	            Hashtbl.find vs sv
 	          with
-	            | Not_found -> 0
+	            | Not_found -> 0 (* TO CHECK: 0 or 1*)
 	        end
       | CP.Add (e1, e2, l1) 
       | CP.Subtract (e1, e2, l1) ->
@@ -258,7 +282,7 @@ and find_order_b_formula (bf : CP.b_formula) vs : bool =
 	        try
 	          let r = Hashtbl.find vs sv1 in
 	          if (r == 2) then 
-	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
+	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ " in BagMin 1\n")}
 	          else 
 	            if (r == 0) then ((Hashtbl.replace vs sv1 1); true)
 	            else false
@@ -269,7 +293,7 @@ and find_order_b_formula (bf : CP.b_formula) vs : bool =
             try
 	          let r = Hashtbl.find vs sv2 in
 	          if (r == 1) then 
-	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv2) ^ "\n")}
+	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv2) ^ "in BagMin 2\n")}
 	          else 
 	            if(r == 0) then ((Hashtbl.replace vs sv1 2); true)
 	            else
@@ -285,9 +309,10 @@ and find_order_b_formula (bf : CP.b_formula) vs : bool =
     | CP.ListPerm(e1, e2, _)
     | CP.Lt(e1, e2, _)
     | CP.Lte(e1, e2, _) 
+    | CP.SubAnn(e1, e2, _ )
     | CP.Gt(e1, e2, _)
     | CP.Gte(e1, e2, _) -> 
-          (* let _ = print_string("find_order_exp for " ^ (Cprinter.string_of_formula_exp e1) ^ " and "  ^ (Cprinter.string_of_formula_exp e2) ^ "\n") in *)
+          (* let _ = print_string("find_order_exp for e1=" ^ (Cprinter.string_of_formula_exp e1) ^ " and e2="  ^ (Cprinter.string_of_formula_exp e2) ^ "\n") in *)
       	  let r1 = exp_order e1 vs in 
 	      let r2 = exp_order e2 vs in
 	      if (r1 == 1 || r2 == 1) then
@@ -308,7 +333,7 @@ and find_order_b_formula (bf : CP.b_formula) vs : bool =
             try 
 	          let r = Hashtbl.find vs sv1 in
 	          if(r == 1) then
-	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
+	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ " in BVar \n")}
 	          else
 	            if(r == 0) then
 	              (Hashtbl.replace vs sv1 2; true)
@@ -330,13 +355,17 @@ and find_order_b_formula (bf : CP.b_formula) vs : bool =
     | CP.RelForm (_ , el, l) -> List.fold_left (fun a b -> a || (find_order_exp b 0 vs)) false el
     | _ -> false
 
+and find_order_b_formula (bf : CP.b_formula) vs : bool =
+  Debug.no_2 "find_order_b_formula" 
+      Cprinter.string_of_b_formula string_of_hashtbl string_of_bool
+      find_order_b_formula_x bf vs
 
 (*
-  order = 0 --> unknown
+  order = 0 --> unknown (* TO CHECK: is it considered first or second order ??? *)
   = 1 --> inside bag
   = 2 --> bag
 *)
-and find_order_exp (e : CP.exp) order vs = match e with
+and find_order_exp_x (e : CP.exp) order vs = match e with
   | CP.Var(sv1, l1) -> 
         begin
           try
@@ -345,7 +374,7 @@ and find_order_exp (e : CP.exp) order vs = match e with
               ((Hashtbl.replace vs sv1 order); true) 
 	        else
 	          if ((r == 1 && order == 2) || (r == 2 && order == 1)) then
-	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
+	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ " in Var \n")}
 	          else false
           with
 	        | Not_found -> ((Hashtbl.add vs sv1 order); true)
@@ -374,6 +403,11 @@ and find_order_exp (e : CP.exp) order vs = match e with
   | CP.ListReverse(e, l) -> (find_order_exp e order vs)
   | CP.ArrayAt(sv, el, l) -> Error.report_error { Error.error_loc = l; Error.error_text = (" Mona does not handle arrays!\n")}
   | _ -> false
+
+and find_order_exp (e : CP.exp) order vs =
+  Debug.no_3 "find_order_exp"
+      Cprinter.string_of_formula_exp string_of_int string_of_hashtbl string_of_bool
+      find_order_exp_x e order vs
 
 (*
 
@@ -447,11 +481,11 @@ and mona_of_exp_x e0 f =
       | CP.Bag (elist, _) -> "{"^ (mona_of_formula_exp_list elist f) ^ "}"
       | CP.BagUnion ([], _) -> ""
       | CP.BagUnion (e::[], _) -> (helper e)
-      | CP.BagUnion (e::rest, l) -> (helper e) ^ " union " ^ (helper (CP.BagUnion (rest, l)))
+      | CP.BagUnion (e::rest, l) -> " ( " ^ (helper e) ^ " union " ^ (helper (CP.BagUnion (rest, l))) ^ " ) "
       | CP.BagIntersect ([], _) -> ""
       | CP.BagIntersect (e::[], _) -> (helper e)
-      | CP.BagIntersect (e::rest, l)->(helper e) ^ " inter " ^ (helper (CP.BagIntersect (rest, l)))
-      | CP.BagDiff (e1, e2, _)     -> (helper e1) ^ "\\" ^ (helper e2)
+      | CP.BagIntersect (e::rest, l)-> " ( " ^ (helper e) ^ " inter " ^ (helper (CP.BagIntersect (rest, l))) ^ " ) "
+      | CP.BagDiff (e1, e2, _)     -> " ( " ^ (helper e1) ^ "\\" ^ (helper e2) ^ " ) "
       | CP.List _
       | CP.ListCons _
       | CP.ListHead _
@@ -502,6 +536,8 @@ and mona_of_exp_secondorder_x e0 f = 	match e0 with
   | CP.Bag (elist, _) -> ([],"{"^ (mona_of_formula_exp_list elist f) ^ "}", "")
   | CP.BagUnion (_, _) -> ([], mona_of_exp e0 f, "")
   | CP.BagIntersect ([], _) -> ([], mona_of_exp e0 f, "")
+  | CP.BagIntersect (_, _) -> ([], mona_of_exp e0 f, "") (*TO CHECK: add non-empty case *)
+  | CP.BagDiff (_,_,_) -> ([], mona_of_exp e0 f, "")
   | _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction/mult/..."^(Cprinter.string_of_formula_exp e0))
 
 and mona_of_exp_secondorder e0 f =
@@ -768,6 +804,7 @@ and print_b_formula b f = match b with
   | CP.LexVar _ -> failwith ("LexVar is not supported in Mona")
   | CP.VarPerm _ -> failwith ("VarPerm not suported in Mona")
   | CP.RelForm _ -> failwith ("Arrays are not supported in Mona") (* An Hoa *)
+  | CP.XPure _ -> failwith ("XPure are not supported in Mona")
 
 let rec get_answer chn : string =
   let chr = input_char chn in
@@ -793,7 +830,7 @@ let send_cmd_with_answer str =
 
 let send_cmd_with_answer str =
   let pr = fun f -> f in
-  Debug.no_1 "send_cmd_with_answer" pr pr send_cmd_with_answer str
+  Debug.no_1 "[Mona.ml]send_cmd_with_answer" pr pr send_cmd_with_answer str
 
 let send_cmd_with_answer str =
   let pr = fun f -> f in
@@ -861,6 +898,9 @@ let start () =
   let pr = (fun _ -> "") in
   Debug.no_1 "[mona.ml] start" pr pr start ()
 
+let start () =
+  Gen.Profiling.do_1 "mona.start" start ()
+
 let stop () = 
   let killing_signal = 
     match !is_mona_running with
@@ -870,11 +910,17 @@ let stop () =
   let _ = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks killing_signal (fun () -> ()) in
   is_mona_running := false
 
+let stop () =
+  Gen.Profiling.do_1 "mona.stop" stop ()
+
 let restart reason =
   if !is_mona_running then
 	(* let _ = print_string ("\n[mona.ml]: Mona is preparing to restart because of " ^ reason ^ "\nRestarting Mona ...\n"); flush stdout; in *)
 	let _ = print_endline ("\nMona is running ... "); flush stdout; in
     Procutils.PrvComms.restart !log_all_flag log_all reason "mona" start stop
+
+let restart reason =
+  Gen.Profiling.do_1 "mona.restart" restart reason
 
 let check_if_mona_is_alive () : bool = 
   try
@@ -892,7 +938,7 @@ let create_failure_file (content: string) =
   flush fail_file;
   close_out fail_file
 
-let check_answer (mona_file_content: string) (answ: string) (is_sat_b: bool)= 
+let check_answer_x (mona_file_content: string) (answ: string) (is_sat_b: bool)= 
   let imp_sat_str = match is_sat_b with
     | true -> "sat"
     | false -> "imply" in
@@ -903,7 +949,13 @@ let check_answer (mona_file_content: string) (answ: string) (is_sat_b: bool)=
               output_string log_all (" [mona.ml]: --> SUCCESS\n");
               output_string log_all ("[mona.ml]: " ^ imp_sat_str ^ " --> true\n");
             end;
-            true
+            true;
+      | "Formula is satisfiable or unknown" -> (*TO CHECK*)
+            if !log_all_flag==true then begin
+              output_string log_all (" [mona.ml]: --> Formula is satisfiable or unknown\n");
+              output_string log_all ("[mona.ml]: " ^ imp_sat_str ^ " --> "  ^ (string_of_bool is_sat_b) ^ "\n");
+            end;
+            is_sat_b;
       | "Formula is unsatisfiable" -> 
             if !log_all_flag == true then
 		      output_string log_all ("[mona.ml]:" ^ imp_sat_str ^" --> false \n");
@@ -914,7 +966,8 @@ let check_answer (mona_file_content: string) (answ: string) (is_sat_b: bool)=
             let _ = create_failure_file mona_file_content in
             restart "mona aborted execution";
             if !log_all_flag == true then
-		      output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure)\n");
+		      output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 1)\n");
+		      print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 1)\n");
             is_sat_b
       | _ ->
             let _ = create_failure_file mona_file_content in
@@ -926,11 +979,20 @@ let check_answer (mona_file_content: string) (answ: string) (is_sat_b: bool)=
               | Not_found ->
                     begin
     	              if !log_all_flag == true then
-		                output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure)\n");
+		                output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 2)\n");
+		                print_endline ("[mona] Warning: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure 2)\n");
                       is_sat_b;
                     end
   in
   answer
+
+let check_answer (mona_file_content: string) (answ: string) (is_sat_b: bool)= 
+  Debug.no_3 "check_answer"
+      (fun str -> str)
+      (fun str -> str)
+      string_of_bool
+      string_of_bool
+      check_answer_x mona_file_content answ is_sat_b
 
 let maybe_restart_mona () : unit =
   if !is_mona_running then begin
@@ -1032,10 +1094,9 @@ let write_to_file (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_n
 	string_of_bool
 	(fun _ _ -> write_to_file is_sat_b fv f imp_no vs) is_sat_b f
 
-let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
+let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
   let all_fv = CP.remove_dups_svl fv in
-  (* let _ = print_string("f = " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in *)
-  (* let _ = Hashtbl.iter (fun x y -> (print_string ("var " ^ (Cprinter.string_of_spec_var x) ^ " --> " ^ (string_of_int y) ^ "\n"))) vs in *)
+  (* let _ = print_endline("[Mona] imply_sat_helper : vs = " ^ (string_of_hashtbl vs) ) in *)
   let (part1, part2) = (List.partition (fun (sv) -> ((*is_firstorder_mem*)part_firstorder_mem
       (CP.Var(sv, no_pos)) vs)) all_fv) in
   let first_order_var_decls =
@@ -1070,6 +1131,14 @@ let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (im
           print_string ("\n[mona.ml]:Unexpected exception\n"); flush stdout;
           stop(); raise exc
 
+let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) vs : bool =
+  Debug.no_3 "imply_sat_helper"
+      Cprinter.string_of_spec_var_list
+      Cprinter.string_of_pure_formula
+      string_of_hashtbl
+      string_of_bool
+      (fun _ _ _ -> imply_sat_helper_x is_sat_b fv f imp_no vs) fv f vs
+
 let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let _ = if not !is_mona_running then start () else () in
   let _ = Gen.Profiling.inc_counter "stat_mona_count_imply" in
@@ -1093,7 +1162,11 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : stri
   Debug.no_3 "mona.imply" pr pr (fun x -> x) string_of_bool 
   (fun _ _ _ -> imply_ops pr_w pr_s ante conseq imp_no) ante conseq imp_no
 
-let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
+let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
+  Gen.Profiling.do_1 "mona.imply"
+  (imply_ops pr_w pr_s ante conseq) imp_no
+
+let is_sat_ops_x pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
   let _ = if not !is_mona_running then start () else () in
   let _ = Gen.Profiling.inc_counter "stat_mona_count_sat" in
   if !log_all_flag == true then
@@ -1115,6 +1188,15 @@ let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
 ;;
 
 (*let imply = imply (-1.);;*)
+
+let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
+  let pr = Cprinter.string_of_pure_formula in
+  Debug.no_2 "mona.is_sat_ops" pr (fun x -> x) string_of_bool 
+  (fun _ _ -> is_sat_ops_x pr_w pr_s f sat_no) f sat_no
+
+let is_sat_ops pr_w pr_s (f : CP.formula) (sat_no :  string) : bool =
+  Gen.Profiling.do_1 "mona.is_sat_ops"
+  (is_sat_ops pr_w pr_s f) sat_no
 
 (* TODO: implement the following procedures; now they are only dummies *)
 let hull (pe : CP.formula) : CP.formula = begin

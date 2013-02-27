@@ -1,0 +1,12 @@
+
+
+checkentail true & (x=\inf & x<0 | v=-\inf & v>0 ) |- x<0.
+
+/*
+PROBLEM : why isn't v=-\inf & v>0 processed?
+
+normalize_inf_formula@1
+normalize_inf_formula inp1 : x=\inf(ZInfinity) & x<0
+normalize_inf_formula@1 EXIT out : ZInfinity=x & x<0
+
+*/

@@ -1,0 +1,35 @@
+//(1) Valid
+checkentail true |- \inf=\inf.
+
+//(2) Valid
+checkentail \inf=-\inf |- false.
+
+//(3) Fail
+checkentail true |- \inf+3=\inf .
+
+//(4) Fail
+checkentail true |- \inf+3=-\inf.
+
+//(5) Fail
+checkentail true |- \inf!=\inf.
+
+//(6) Valid
+checkentail true |- \inf != -\inf.
+
+//(7) Valid
+checkentail true |- \inf+3 !=\inf.
+
+//(8) Fail
+checkentail true |- \inf+c != -\inf.
+
+//(9) Valid
+checkentail true |- \inf>=\inf.
+
+//(10) Valid
+checkentail  \inf>\inf |-false.
+
+//(11) Valid
+checkentail true |- \inf>=-\inf.
+
+//(12) Valid
+checkentail -\inf>=\inf |- false.

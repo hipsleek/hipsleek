@@ -1,7 +1,7 @@
 data cl {int val;}.
 macro L == (#,) .
 macro R == (,#) .
-macro LR == (,#) .
+macro LR == ((,#),) .
 
  data node { int val ; node next }.
 

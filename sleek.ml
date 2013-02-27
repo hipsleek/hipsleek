@@ -180,7 +180,8 @@ let parse_file (parse) (source_file : string) =
 
 
 let main () = 
-  let iprog = { I.prog_data_decls = [iobj_def];
+  let iprog = { I.prog_include_decls =[];
+		            I.prog_data_decls = [iobj_def];
                 I.prog_global_var_decls = [];
                 I.prog_logical_var_decls = [];
                 I.prog_enum_decls = [];
