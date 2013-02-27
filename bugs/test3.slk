@@ -1,0 +1,80 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+//(1).
+infer[x]  x::ll<n> |- x::node<_,q>.
+print residue.
+
+//(2).
+infer[n] x::ll<n> |- x::node<_,q>.
+print residue.
+
+//(3).
+infer[x] x::ll<n> |- x::node<_,null>.
+print residue.
+
+//(4).
+infer[n] x::ll<n> |- x::node<_,null>.
+print residue.
+/*
+This is WRONG! Previously, we got n=1 as inferred constraint.
+
+Entail (4) : Fail.
+*/
+
+//(5).
+infer[n] true |- n>n.
+print residue.
+
+//(6).
+infer[x] true |- x::node<_,_> * x::node<_,_>.
+print residue.
+
+//(7).
+infer[b] x=1 & b>0 |- x=2.
+print residue.
+
+//(8).
+infer[x] x=null |- x::node<_,q>.
+print residue.
+
+relation Q(int a, int b, int c).
+//(9).
+infer[Q] x::node<_,y> * y::ll<n2> & n1=1 |- x::ll<n3> & Q(n1,n2,n3).
+print residue.
+
+
+//(10).
+infer[Q] x::node<_,y> * y::ll<n2> & 
+Q(n1-1, n2, n3) & n1>0 |- x::ll<n3> & Q(n1,n2,n3).
+print residue.
+/*
+The RELASS are wrong here. n3=n2+1 should have been instantiated
+and n3=1 occurs when n2=0 presumably.
+
+ <1>emp&Q(-1+n1,n2,n3) & 0<n1 & Anon_183=Anon_21 & r_184=y & n3=n2+1 & n3=1&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [Q]: ( Q(-1+n1,n2,n3)) -->  n3=n2+1; 
+                RELASS [Q]: ( Q(-1+n1,n2,n3)) -->  n3=1; 
+                RELDEFN Q: ( 1<=n1 & 0<=n2 & Q(-1+n1,n2,n3)) -->  Q(n1,n2,n3)]
+*/
+
+//(11).
+infer[Q] x::node<_,y> * y::ll<n2> & Q(n1-1, n2, n3) & n1>0 |- x::ll<n3>.
+print residue.
+/*
+Entail (11) : Valid. 
+
+WRONG again (see above) 
+
+ <1>emp&Q(-1+n1,n2,n3) & 0<n1 & Anon_207=Anon_22 & r_208=y & n3=n2+1 & n3=1&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [Q]: ( Q(-1+n1,n2,n3)) -->  n3=n2+1; 
+                RELASS [Q]: ( Q(-1+n1,n2,n3)) -->  n3=1]
+
+*/
+
+//(12).
+infer[] x::node<_,y> * y::ll<n2> & n1>0 |- x::ll<n3>.
+print residue.
