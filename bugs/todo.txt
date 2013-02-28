@@ -1,4 +1,4 @@
-# test3.slk
+# test3.slk # DONE 
 
 Inference has three basic problems in above file/
 
