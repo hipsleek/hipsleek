@@ -834,6 +834,7 @@ let rec infer_pure_m_x estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_ori
                   DD.devel_hprint (add_str "RHS : " !CP.print_formula) rhs_xpure pos;
                   DD.devel_hprint (add_str "LHS REL : " (pr_opt !CP.print_formula)) lhs_rels pos;
                   (* DD.devel_hprint (add_str "new pure: " !CP.print_formula) new_p pos; *)
+                  DD.devel_hprint (add_str "new_p_ass: " !CP.print_formula) new_p_ass pos;
                   DD.devel_hprint (add_str "new pure: " !CP.print_formula) new_p pos;
                   (None,None,[])
             end

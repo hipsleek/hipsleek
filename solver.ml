@@ -6884,12 +6884,14 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                   | _,_ -> report_error pos "Length of relational assumption list > 1"
                 )
               | Some (split1,split2) -> 
-(*                let split_mix1 = List.map MCP.mix_of_pure split1 in*)
+                let split_mix1 = List.map MCP.mix_of_pure split1 in
                 let split_mix2 = List.map MCP.mix_of_pure split2 in
-                let res = List.map (fun f -> 
+                let split_mix3 = if List.length split1 = List.length split2
+                  then split_mix1 else split_mix2 in
+                let res = List.map2 (fun f f2 -> 
                     (* TODO: lhs_wo_heap *)
                     let lhs_wo_heap = f in
-                    let r1,r2,r3 = Inf.infer_pure_m 2 estate f f lhs_wo_heap split_conseq pos in
+                    let r1,r2,r3 = Inf.infer_pure_m 2 estate f f2 lhs_wo_heap split_conseq pos in
                     let estate_f = {estate with es_formula = 
                         (match estate.es_formula with
                         | Base b -> CF.mkBase_simp b.formula_base_heap f
@@ -6898,12 +6900,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
                     in
 (*                    let estate_f = {estate with es_formula = mkBase_simp HEmp f} in*)
                     (match r1,r3 with 
-                      | None,[] -> None,r2,[],[estate_f],false
-                      | None,[(h1,h2,h3)] -> None,r2,h2,[h1],h3
-                      | Some(es,p),[] -> Some p,r2,[],[es],true
-                      | Some(es,p),[(h1,h2,h3)] -> Some p,r2,h2,[es],true
+                      | None,[] -> None,r2,[],[estate_f],false,f
+                      | None,[(h1,h2,h3)] -> None,r2,h2,[h1],h3,f
+                      | Some(es,p),[] -> Some p,r2,[],[es],true,f
+                      | Some(es,p),[(h1,h2,h3)] -> Some p,r2,h2,[es],true,f
                       | _,_ -> report_error pos "Length of relational assumption list > 1"
-                    )) split_mix2 in
+                    )) split_mix2 split_mix3 in
                 let or_option (o1,o2) = (match o1,o2 with
                   | None,_ -> o2
                   | _,None -> o1
@@ -6917,13 +6919,14 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 (*                  else  *)
                   rs1 @ rs2 
                 in
-                let is_fail = List.exists (fun (neg,pure,rel,_,_) ->
+                let is_fail = List.exists (fun (neg,pure,rel,_,_,ante) ->
                   match neg,pure,rel with
-                  | None,None,[] -> true
+                  | None,None,[] -> (fun ((a,_,_),_) -> not a) 
+                    (imply_mix_formula 0 ante ante split_conseq imp_no memset)
                   | _,_,_ -> false) res in
                 if is_fail then None,None,[],[],false
                 else
-                  List.fold_left (fun (a,b,c,d,e) (a1,b1,c1,d1,e1) -> 
+                  List.fold_left (fun (a,b,c,d,e) (a1,b1,c1,d1,e1,_) -> 
                     (or_option (a,a1),or_option (b,b1),merge_rel_ass (c,c1),d@d1,e||e1)) 
                     (None,None,[],[],false) res
             end
