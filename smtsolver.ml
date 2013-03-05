@@ -1,6 +1,7 @@
 open Globals
 open GlobProver
 open Gen.Basic
+open Gen.SysUti
 module CP = Cpure
 
 module StringSet = Set.Make(String)
@@ -49,6 +50,8 @@ type formula_info = {
 		is_linear          : bool;
 		is_quantifier_free : bool;
 		contains_array     : bool;
+        contains_list      : bool;
+        sequences          : CP.exp list; (* list of sequences (lists)  in the formula *)
 		relations          : ident list; (* list of relations that the formula mentions *)
 		axioms             : int list; (* list of related axioms (in form of position in the global list of axiom definitions) *)
 	}
@@ -77,10 +80,11 @@ let rec smt_of_typ t =
 		| UNK -> 
 			illegal_format "z3.smt_of_typ: unexpected UNKNOWN type"
 		| NUM -> "Int" (* Use default Int for NUM *)
-    | BagT _ -> "Int"
-    | TVar _ -> "Int"
-		| Void |(* (BagT _) |*) (*(TVar _) |*) List _ ->
-			illegal_format ("z3.smt_of_typ: " ^ (string_of_typ t) ^ " not supported for SMT")
+		| Void | (BagT _)  -> 	illegal_format ("z3.smt_of_typ: "^(string_of_typ t)^" not supported for SMT")
+        | (TVar _) -> "Int"
+        	| List t -> (match t with
+				| (TVar _) -> "(Seqe Int)"
+				| _ -> "(Seqe " ^ (smt_of_typ t) ^ ")"	)
 		| Named _ -> "Int" (* objects and records are just pointers *)
 		| Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
     (* TODO *)
@@ -102,10 +106,14 @@ let smt_of_typed_spec_var sv =
   with _ ->
 		illegal_format ("z3.smt_of_typed_spec_var: problem with type of"^(!print_ty_sv sv))
 
+let rec gen_list_exp str_fst xs  str_last = match xs with
+  | [] -> " nil"
+  | z::zs ->  if (Str.string_match (Str.regexp_string "append") z 1) then z else  str_fst  ^ z ^" "^ (gen_list_exp str_fst zs ")" ) ^ str_last
 
 let rec smt_of_exp a =
 	match a with
 	| CP.Null _ -> "0"
+	| CP.InfConst (i,_) -> smt_of_spec_var  (CP.SpecVar(Int,i,Unprimed))
 	| CP.Var (sv, _) -> smt_of_spec_var sv
 	| CP.Level _ -> illegal_format ("z3.smt_of_exp: level should not appear here")
 	| CP.IConst (i, _) -> if i >= 0 then string_of_int i else "(- 0 " ^ (string_of_int (0-i)) ^ ")"
@@ -123,19 +131,19 @@ let rec smt_of_exp a =
 	| CP.BagUnion _
 	| CP.BagIntersect _
 	| CP.BagDiff _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (set should not appear here)")
-	| CP.List _ 
-	| CP.ListCons _
-	| CP.ListHead _
-	| CP.ListTail _
-	| CP.ListLength _
-	| CP.ListAppend _
-	| CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
+	| CP.List (alist, _) -> (match alist with
+				| x::xs -> let list_exps = List.map smt_of_exp (x::xs) in (gen_list_exp "(insert " list_exps ")")
+				| [] -> " nil")
+	| CP.ListCons (a1, a2, _) -> "(insert " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+	| CP.ListHead (a, _) -> "(head " ^ (smt_of_exp a) ^ ")"  
+	| CP.ListTail (a, _) -> "(tail " ^ (smt_of_exp a) ^ ")"
+	| CP.ListLength (a, _) -> "(length " ^ (smt_of_exp a) ^ ")"
+	| CP.ListAppend (alist, _) ->  let list_exps = List.map smt_of_exp alist in (gen_list_exp "(append " list_exps ")")
+	| CP.ListReverse (a, _) -> "(rev " ^ (smt_of_exp a) ^ ")" (*illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)") *)
 	| CP.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
 	| CP.Tsconst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (tsconst should not appear here)")
-	| CP.ArrayAt (a, idx, l) -> 
-		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
-	| CP.InfConst _ -> Error.report_no_pattern ()
-	
+	| CP.ArrayAt (a, idx, l) ->  
+		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx 
 
 let rec smt_of_b_formula b =
 	let (pf,_) = b in
@@ -178,8 +186,10 @@ let rec smt_of_b_formula b =
 	| CP.BagMax _ | CP.BagMin _ -> 
 			illegal_format ("z3.smt_of_b_formula: BagMax/BagMin should not appear here.\n")
     | CP.VarPerm _ -> illegal_format ("z3.smt_of_b_formula: Vperm should not appear here.\n")
-	| CP.ListIn _ | CP.ListNotIn _ | CP.ListAllN _ | CP.ListPerm _ -> 
-			illegal_format ("z3.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
+ 	| CP.ListIn (e1, e2, _) -> "(isin " ^ (smt_of_exp e1) ^ "  "^(smt_of_exp e2)  ^ ")"
+    | CP.ListNotIn (e1, e2, _) ->  "(isnotin " ^ (smt_of_exp e1) ^ " " ^ (smt_of_exp e2)  ^ ")"
+    | CP.ListAllN (e1, e2, _) ->  "(alln " ^ (smt_of_exp e1) ^ " " ^ (smt_of_exp e2)  ^ ")"
+    | CP.ListPerm (e1, e2, _) ->  "(perm " ^ (smt_of_exp e1) ^ " " ^ (smt_of_exp e2)  ^ ")"
     | CP.LexVar _ ->
         illegal_format ("z3.smt_of_b_formula: LexVar should not appear here.\n")
 	| CP.RelForm (r, args, l) ->
@@ -240,6 +250,8 @@ let default_formula_info = {
 	is_linear = true; 
 	is_quantifier_free = true; 
 	contains_array = false; 
+    contains_list = false;
+    sequences = [];
 	relations = []; 
 	axioms = []; }
 
@@ -286,18 +298,21 @@ and collect_bformula_info b = match b with
 		let ef1 = collect_exp_info e1 in
 		let ef2 = collect_exp_info e2 in
 		let ef3 = collect_exp_info e3 in
-		combine_formula_info (combine_formula_info ef1 ef2) ef3
-  | CP.BagIn _ 
-  | CP.BagNotIn _ 
-  | CP.BagSub _
-  | CP.BagMin _
-  | CP.BagMax _ 
+			combine_formula_info (combine_formula_info ef1 ef2) ef3
+	| CP.BagIn _ 
+	| CP.BagNotIn _ 
+	| CP.BagSub _
+	| CP.BagMin _
     | CP.VarPerm _
-  | CP.ListIn _
-  | CP.ListNotIn _
-  | CP.ListAllN _
-  | CP.ListPerm _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
-  | CP.RelForm (r,args,_) -> 
+	| CP.BagMax _ -> default_formula_info(* Unsupported bag; but leave this default_formula_info instead of a fail_with*) 
+	| CP.ListIn (e1, e2, _) 
+	| CP.ListNotIn (e1, e2, _) 
+	| CP.ListAllN (e1, e2, _) 
+	| CP.ListPerm (e1, e2, _) ->
+		    let ef1 = collect_exp_info e1 in
+			let ef2 = collect_exp_info e2 in
+			let ifl = combine_formula_info ef1 ef2 in {ifl with contains_list = true;}(* default_formula_info *)
+	| CP.RelForm (r,args,_) ->
         let r = CP.name_of_spec_var r in
 		if r = "update_array" then
 		  default_formula_info 
@@ -308,6 +323,7 @@ and collect_bformula_info b = match b with
 
 and collect_exp_info e = match e with
   | CP.Level _
+  | CP.InfConst _ 
   | CP.Null _ | CP.Var _ | CP.AConst _ | CP.IConst _ | CP.FConst _ -> default_formula_info
   | CP.Add (e1,e2,_) | CP.Subtract (e1,e2,_) | CP.Max (e1,e2,_) | CP.Min (e1,e2,_) -> 
 		let ef1 = collect_exp_info e1 in
@@ -317,39 +333,47 @@ and collect_exp_info e = match e with
 		let ef1 = collect_exp_info e1 in
 		let ef2 = collect_exp_info e2 in
 		let result = combine_formula_info ef1 ef2 in
-		{ result with is_linear = false; }
-  | CP.Bag _
-  | CP.BagUnion _
-  | CP.BagIntersect _
-  | CP.BagDiff _
-  | CP.List _
-  | CP.ListCons _
-  | CP.ListHead _
-  | CP.ListTail _
-  | CP.ListLength _
-  | CP.ListAppend _
-  | CP.ListReverse _ 
+			{ result with is_linear = false; }
+	| CP.Bag _
+	| CP.BagUnion _
+	| CP.BagIntersect _
+	| CP.BagDiff _ -> default_formula_info (* Unsupported bag; but leave this default_formula_info instead of a fail_with *)
+	| CP.ListCons (e1, e2, l) -> 
+			let ef1 = collect_exp_info e1 in
+			let ef2 = collect_exp_info e2 in
+			let ifl = combine_formula_info ef1 ef2 in {ifl with sequences = ifl.sequences@[CP.ListCons(e1,e2,l)];}
+	| CP.ListHead (e, _) 
+	| CP.ListTail (e, _)  
+	| CP.ListLength (e, _) 
+	| CP.ListReverse (e, _) -> let ifl = collect_exp_info e in {ifl with contains_list = true;}
+	| CP.List (elist, l) -> let result = combine_formula_info_list (List.map collect_exp_info elist) in 
+      {result with sequences = result.sequences@[CP.List(elist,l)];}
+	| CP.ListAppend (elist, _) -> let result = combine_formula_info_list (List.map collect_exp_info elist) in {result with contains_list = true;}
   | CP.Tsconst _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
   | CP.Func (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
-  | CP.ArrayAt (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
-  | CP.InfConst _ -> Error.report_no_pattern ()
+	| CP.ArrayAt (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
 
 and combine_formula_info if1 if2 =
-  {is_linear = if1.is_linear && if2.is_linear;
-  is_quantifier_free = if1.is_quantifier_free && if2.is_quantifier_free;
-  contains_array = if1.contains_array || if2.contains_array;
-  relations = List.append if1.relations if2.relations;
-  axioms = List.append if1.axioms if2.axioms;}
+	{is_linear = if1.is_linear && if2.is_linear;
+	is_quantifier_free = if1.is_quantifier_free && if2.is_quantifier_free;
+	contains_array = if1.contains_array || if2.contains_array;
+	contains_list = if1.contains_list || if2.contains_list;
+    sequences = List.append if1.sequences if2.sequences;
+	relations = List.append if1.relations if2.relations;
+	axioms = List.append if1.axioms if2.axioms;}
 
 and combine_formula_info_list infos =
-  {is_linear = List.fold_left (&&) true 
-		  (List.map (fun x -> x.is_linear) infos);
-  is_quantifier_free = List.fold_left (fun x y -> x && y) true 
-		  (List.map (fun x -> x.is_quantifier_free) infos);
-  contains_array = List.fold_left (fun x y -> x || y) false 
-		  (List.map (fun x -> x.contains_array) infos);
-  relations = List.flatten (List.map (fun x -> x.relations) infos);
-  axioms = List.flatten (List.map (fun x -> x.axioms) infos);}
+	{is_linear = List.fold_left (&&) true 
+								(List.map (fun x -> x.is_linear) infos);
+	is_quantifier_free = List.fold_left (fun x y -> x && y) true 
+								(List.map (fun x -> x.is_quantifier_free) infos);
+	contains_array = List.fold_left (fun x y -> x || y) false 
+								(List.map (fun x -> x.contains_array) infos);
+	contains_list = List.fold_left (fun x y -> x || y) false 
+								(List.map (fun x -> x.contains_list) infos);
+	sequences = List.flatten (List.map (fun x -> x.sequences) infos);
+	relations = List.flatten (List.map (fun x -> x.relations) infos);
+	axioms = List.flatten (List.map (fun x -> x.axioms) infos);}
 
 and compact_formula_info info =
   { info with relations = Gen.BList.remove_dups_eq (=) info.relations;
@@ -530,6 +554,13 @@ type smtprover = Z3
 (* Global settings *)
 let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt2"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
+    (*asankhs: adding seq axioms, will later change it look up info before adding - done *)
+    (*Sequence Axioms*)
+let seq_axioms_filename = (Gen.get_path Sys.executable_name) ^ seq_axioms_file   
+let seq_axioms_sat_filename = "sat_" ^ seq_axioms_file
+let seq_axioms  = string_of_file (seq_axioms_filename)
+let seq_sat_axioms =  string_of_file (seq_axioms_sat_filename)
+let is_sat_check = ref false
 (* let sat_timeout = ref 2.0
 let imply_timeout = ref 15.0 *)
 let z3_sat_timeout_limit = 2.0
@@ -715,6 +746,7 @@ let logic_for_formulas f1 f2 =
 
 (* output for smt-lib v2.0 format *)
 let to_smt_v2 pr_weak pr_strong ante conseq logic fvars info =
+	let if_seq_axioms = if info.contains_list then (* if !is_sat_check then seq_sat_axioms else*) seq_axioms else "(define-sort Seqe (T) (List T))\n" in 
 	(* Variable declarations *)
 	let smt_var_decls = List.map (fun v ->
         let tp = (CP.type_of_spec_var v)in
@@ -737,6 +769,8 @@ let to_smt_v2 pr_weak pr_strong ante conseq logic fvars info =
 	let conseq_str = smt_of_formula pr_weak pr_strong conseq in
     (
 		(*"(set-logic AUFNIA" (\* ^ (string_of_logic logic) *\) ^ ")\n" ^  *)
+            ";Sequence Axioms \n" ^
+                if_seq_axioms ^
 			";Variables declarations\n" ^ 
 				smt_var_decls ^
 			";Relations declarations\n" ^ 
