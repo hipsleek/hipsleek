@@ -1,0 +1,4 @@
+*.dot
+*.svg
+tags
+version.h

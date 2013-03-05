@@ -1,6 +1,14 @@
 #include "sl.h"
 //#include <stdlib.h>
 
+void* malloc(int size) __attribute__ ((noreturn))
+/*@
+  case {
+    size <= 0 -> requires true ensures res = null;
+    size >  0 -> requires true ensures res != null;
+  }
+*/;
+
 int main() {
     struct item {
         struct item *next;

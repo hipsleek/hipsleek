@@ -6149,10 +6149,10 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
                 match unrollType !currentReturnType with
                   TVoid _ -> None
                 | (TInt _ | TEnum _ | TFloat _ | TPtr _) as rt -> 
-                    ignore (warn "Body of function %s falls-through. Adding a return statement"  !currentFunctionFDEC.svar.vname);
+                    (* ignore (warn "Body of function %s falls-through. Adding a return statement"  !currentFunctionFDEC.svar.vname); *)
                     Some (makeCastT (zero lu) intType rt)
                 | _ ->
-                    ignore (warn "Body of function %s falls-through and cannot find an appropriate return value" !currentFunctionFDEC.svar.vname);
+                    (* ignore (warn "Body of function %s falls-through and cannot find an appropriate return value" !currentFunctionFDEC.svar.vname); *)
                     None
               in
               if not (hasAttribute "noreturn" 

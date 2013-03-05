@@ -1,0 +1,32 @@
+digraph "test1-04-0000"
+subgraph "cluster1" {
+	rank=same;
+	label="";
+	code=on stack;
+	noRef=1.0;
+	"2" [RootValue, noRef=1, code=on stack, label="CL#2149:list [size = 16 B]"];
+	"3" [ATOMOBJ, code=default, label=".head #3"];
+	"2" -> "3" [label="[+0]"];
+	"5" [ATOMOBJ, code=default, label=".last #5"];
+	"2" -> "5" [label="[+8]"];
+}
+subgraph "cluster2" {
+	rank=same;
+	label="";
+	code=default;
+	noRef=1.0;
+	"9" [RootValue, noRef=3, code=default, label="#9 [size = 8 B]"];
+	"10" [ATOMOBJ, code=default, label=".next #10"];
+	"9" -> "10" [label="[+0]"];
+}
+	"28" [ATOMOBJ, code=on stack, label="CL#2155:next #28"];
+	"3" -> "9" [label=hasValue];
+	"5" -> "9" [label=hasValue];
+	"lonely3" [label="NULL"];
+	"10" -> "lonely3" [label=AuxValue];
+	"lonely4" [label="NULL"];
+	"28" -> "lonely4" [label=AuxValue];
+
+
+
+

@@ -1,0 +1,20 @@
+digraph "___sl_enable_debugging_of() at ../sl.h:84" {
+	label=<<FONT POINT-SIZE="18">___sl_enable_debugging_of() at ../sl.h:84</FONT>>;
+	labelloc=t;
+subgraph "cluster___sl_enable_debugging_of.L18" {
+	label="___sl_enable_debugging_of() at ../sl.h:84";
+	color=blue;
+	bgcolor=gray99;
+	URL="sl.h.svg";
+	"___sl_enable_debugging_of..1" [shape=box, color=blue, fontcolor=blue, style=bold, label=ENTRY];
+	"___sl_enable_debugging_of..1" -> "___sl_enable_debugging_of.L18.0" [color=black];
+subgraph "cluster___sl_enable_debugging_of::L18" {
+	label="L18";
+	color=black;
+	bgcolor=white;
+	style=dashed;
+	URL="";
+	"___sl_enable_debugging_of.L18.0" [shape=box, color=blue, fontcolor=blue, style=bold, label=ret];
+}
+}
+}

@@ -1,0 +1,55 @@
+digraph "test-0128.c-70-0001" {
+	label=<<FONT POINT-SIZE="18">test-0128.c-70-0001</FONT>>;
+	clusterrank=local;
+	labelloc=t;
+subgraph "cluster1" {
+	rank=same;
+	label="";
+	color=black;
+	fontcolor=black;
+	bgcolor=gray98;
+	style=dashed;
+	penwidth=1.0;
+	"9" [shape=ellipse, penwidth=2, color=black, fontcolor=black, label="#9 [size = 16 B]"];
+	"10" [shape=box, color=black, fontcolor=black, label=".next #10"];
+	"9" -> "10" [color=black, fontcolor=black, label="[+0]"];
+	"12" [shape=box, color=black, fontcolor=black, label=".data #12"];
+	"9" -> "12" [color=black, fontcolor=black, label="[+8]"];
+}
+subgraph "cluster2" {
+	rank=same;
+	label="";
+	color=black;
+	fontcolor=black;
+	bgcolor=gray98;
+	style=dashed;
+	penwidth=1.0;
+	"13" [shape=ellipse, penwidth=2, color=black, fontcolor=black, label="#13 [size = 8 B]"];
+	"14" [shape=box, color=black, fontcolor=black, label=".next #14"];
+	"13" -> "14" [color=black, fontcolor=black, label="[+0]"];
+}
+subgraph "cluster3" {
+	rank=same;
+	label="SLS 1+";
+	color=red;
+	fontcolor=red;
+	bgcolor=gray98;
+	style=dashed;
+	penwidth=3.0;
+	"15" [shape=ellipse, penwidth=2, color=red, fontcolor=red, label="#15 [size = 16 B]"];
+	"16" [shape=box, color=red, fontcolor=red, penwidth=3.0, style=dashed, label=".next #16"];
+	"15" -> "16" [color=black, fontcolor=black, label="[+0]"];
+	"18" [shape=box, color=black, fontcolor=black, label=".data #18"];
+	"15" -> "18" [color=black, fontcolor=black, label="[+8]"];
+}
+	"24" [shape=box, color=blue, fontcolor=blue, label="CL#2160:sll #24"];
+	"lonely4" [shape=plaintext, fontcolor=blue, label="NULL"];
+	"10" -> "lonely4" [color=blue];
+	"12" -> "13" [color=blue, fontcolor=blue];
+	"lonely5" [shape=plaintext, fontcolor=blue, label="NULL"];
+	"14" -> "lonely5" [color=blue];
+	"16" -> "9" [color=blue, fontcolor=blue];
+	"lonely6" [shape=plaintext, fontcolor=blue, label="NULL"];
+	"18" -> "lonely6" [color=blue];
+	"24" -> "15" [color=blue, fontcolor=blue];
+}

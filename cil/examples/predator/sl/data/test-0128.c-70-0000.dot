@@ -1,0 +1,25 @@
+digraph "test-0128.c-70-0000" {
+	label=<<FONT POINT-SIZE="18">test-0128.c-70-0000</FONT>>;
+	clusterrank=local;
+	labelloc=t;
+subgraph "cluster1" {
+	rank=same;
+	label="SLS 2+";
+	color=red;
+	fontcolor=red;
+	bgcolor=gray98;
+	style=dashed;
+	penwidth=3.0;
+	"9" [shape=ellipse, penwidth=2, color=red, fontcolor=red, label="#9 [size = 16 B]"];
+	"10" [shape=box, color=red, fontcolor=red, penwidth=3.0, style=dashed, label=".next #10"];
+	"9" -> "10" [color=black, fontcolor=black, label="[+0]"];
+	"12" [shape=box, color=black, fontcolor=black, label=".data #12"];
+	"9" -> "12" [color=black, fontcolor=black, label="[+8]"];
+}
+	"22" [shape=box, color=blue, fontcolor=blue, label="CL#2160:sll #22"];
+	"lonely2" [shape=plaintext, fontcolor=blue, label="NULL"];
+	"10" -> "lonely2" [color=blue];
+	"lonely3" [shape=plaintext, fontcolor=blue, label="NULL"];
+	"12" -> "lonely3" [color=blue];
+	"22" -> "9" [color=blue, fontcolor=blue];
+}

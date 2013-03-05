@@ -1,0 +1,66 @@
+digraph "main() at test1.c:86" {
+	label=<<FONT POINT-SIZE="18">main() at test1.c:86</FONT>>;
+	labelloc=t;
+subgraph "clustermain.L1" {
+	label="main() at test1.c:86";
+	color=blue;
+	bgcolor=gray99;
+	URL="test1.c.svg";
+	"main..0" [shape=box, color=blue, fontcolor=blue, style=bold, label=ENTRY];
+	"main..0" -> "main.L1.0" [color=black];
+subgraph "clustermain::L1" {
+	label="L1";
+	color=black;
+	bgcolor=white;
+	style=dashed;
+	URL="";
+	"main.L1.0" [shape=box, color=black, fontcolor=gray, style=dotted, label="..."];
+	"main.L1.0" -> "main.L1.1" [color=gray, style=dotted, arrowhead=open];
+	"main.L1.1" [shape=box, color=black, fontcolor=black, style=bold, label=goto];
+}
+	"main.L1.1" -> "main.L2.0" [color=black];
+subgraph "clustermain::L3" {
+	label="L3";
+	color=black;
+	bgcolor=white;
+	style=dashed;
+	URL="";
+	"main.L3.0" [shape=box, color=blue, fontcolor=blue, style=dashed, label=call];
+	"main.L3.0" -> "main.L3.1" [color=gray, style=dotted, arrowhead=open];
+	"main.L3.1" [shape=box, color=black, fontcolor=black, style=bold, label=goto];
+}
+	"main.L3.1" -> "main.L2.0" [color=black];
+subgraph "clustermain::L2" {
+	label="L2";
+	color=black;
+	bgcolor=white;
+	style=dashed;
+	URL="";
+	"main.L2.0" [shape=box, color=blue, fontcolor=blue, style=dashed, label=call];
+	"main.L2.0" -> "main.L2.1" [color=gray, style=dotted, arrowhead=open];
+	"main.L2.1" [shape=box, color=black, fontcolor=gray, style=dotted, label="..."];
+	"main.L2.1" -> "main.L2.2" [color=gray, style=dotted, arrowhead=open];
+	"main.L2.2" [shape=box, color=green, fontcolor=green, style=bold, label=if];
+}
+	"main.L2.2" -> "main.L3.0" [color=green];
+	"main.L2.2" -> "main.L4.0" [color=green];
+subgraph "clustermain::L4" {
+	label="L4";
+	color=black;
+	bgcolor=white;
+	style=dashed;
+	URL="";
+	"main.L4.0" [shape=box, color=blue, fontcolor=blue, style=dashed, label=call];
+	"main.L4.0" -> "main.L4.1" [color=gray, style=dotted, arrowhead=open];
+	"main.L4.1" [shape=box, color=black, fontcolor=gray, style=dotted, label="..."];
+	"main.L4.1" -> "main.L4.2" [color=gray, style=dotted, arrowhead=open];
+	"main.L4.2" [shape=box, color=blue, fontcolor=blue, style=bold, label=ret];
+}
+}
+	"main.___sl_get_nondet_int" [label="___sl_get_nondet_int", URL="test1.c-___sl_get_nondet_int.svg", color=blue, fontcolor=blue];
+	"main.L2.0" -> "main.___sl_get_nondet_int" [color=blue];
+	"main.___sl_plot" [label="___sl_plot", URL="test1.c-___sl_plot.svg", color=blue, fontcolor=blue];
+	"main.L4.0" -> "main.___sl_plot" [color=blue];
+	"main.add_item" [label="add_item", URL="test1.c-add_item.svg", color=blue, fontcolor=blue];
+	"main.L3.0" -> "main.add_item" [color=blue];
+}
