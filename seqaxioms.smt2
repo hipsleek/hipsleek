@@ -1,4 +1,9 @@
+(set-option :auto-config false)
 (set-option :pull-nested-quantifiers true)
+;(set-option :macro-finder true)
+;(set-option :mbqi-max-iterations 100)
+(set-option :soft-timeout 400)
+;(set-option :qi-max-instances 1000)
 
 (define-sort Seq (T) (List T))
 (declare-fun length ((Seq (Int))) Int)

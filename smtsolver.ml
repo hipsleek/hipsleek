@@ -545,7 +545,7 @@ let run st prover input timeout =
 				end 
 	in
 	let _ = Procutils.PrvComms.stop false stdout !prover_process 0 9 (fun () -> ()) in
-	remove_file infile;
+	(*remove_file infile;*)
 	remove_file outfile;
 		res
 		
@@ -714,9 +714,9 @@ let rec generate_seqs seqs acc = match seqs with
 (* output for smt-lib v2.0 format *)
 let to_smt_v2 ante conseq logic fvars info =
     (*check info has list constraints*)
-    let if_seq_axioms = if info.contains_list then (if !is_sat_check then seq_sat_axioms else seq_axioms) else "(define-sort Seq (T) (List T))\n" in 
-    let seqs = generate_seqs info.sequences info.sequences in
-    let init_seq_axioms = if (info.contains_list && !is_sat_check) then add_seq_axioms fvars seqs fvars seqs else "" in 
+    let if_seq_axioms = if info.contains_list then (* if !is_sat_check then seq_sat_axioms else*) seq_axioms else "(define-sort Seq (T) (List T))\n" in 
+    (*let seqs = generate_seqs info.sequences info.sequences in*)
+    let init_seq_axioms = (*if (info.contains_list && !is_sat_check) then add_seq_axioms fvars seqs fvars seqs else *)"" in 
 	(* Variable declarations *)
 	let smt_var_decls = List.map (fun v -> "(declare-fun " ^ (smt_of_spec_var v) ^ " () " ^ (smt_of_typ (CP.type_of_spec_var v)) ^ ")\n") fvars in   
 	let smt_var_decls = String.concat "" smt_var_decls in
