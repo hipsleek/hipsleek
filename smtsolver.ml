@@ -81,8 +81,8 @@ let rec smt_of_typ t =
 		| Void | (BagT _)  -> 	illegal_format ("z3.smt_of_typ: "^(string_of_typ t)^" not supported for SMT")
         | (TVar _) -> "Int"
         	| List t -> (match t with
-				| (TVar _) -> "(Seq Int)"
-				| _ -> "(Seq " ^ (smt_of_typ t) ^ ")"	)
+				| (TVar _) -> "(Seqe Int)"
+				| _ -> "(Seqe " ^ (smt_of_typ t) ^ ")"	)
 		| Named _ -> "Int" (* objects and records are just pointers *)
 		| Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
 
@@ -600,7 +600,7 @@ let rec add_seq_axioms fvars seqs kfvars kseqs = (match fvars with
                "(assert " ^(smt_of_b_formula (CP.Eq(CP.ListAppend(CP.ListReverse((CP.mkVar f no_pos),no_pos)::[],no_pos),
                CP.ListReverse((CP.mkVar f no_pos),no_pos),no_pos),None)) ^")\n" ^
                (*"(assert " ^(smt_of_b_formula (CP.Eq(CP.ListAppend([(CP.mkVar f no_pos)],no_pos),(CP.mkVar f no_pos),no_pos),None)) ^")\n" ^*) 
-               (*handle axiom for append nil Seq directly*)
+               (*handle axiom for append nil Seqe directly*)
                "(assert (= (append nil " ^ smt_of_spec_var f ^ ") " ^ smt_of_spec_var f  ^"))\n" ^ 
                "(assert (= (append nil (rev " ^ smt_of_spec_var f ^ ")) (rev " ^ smt_of_spec_var f  ^")))\n" ^ 
                "(assert "^(smt_of_b_formula(CP.Eq(CP.ListLength(CP.ListReverse((CP.mkVar f no_pos),no_pos),no_pos),
@@ -714,7 +714,7 @@ let rec generate_seqs seqs acc = match seqs with
 (* output for smt-lib v2.0 format *)
 let to_smt_v2 ante conseq logic fvars info =
     (*check info has list constraints*)
-    let if_seq_axioms = if info.contains_list then (* if !is_sat_check then seq_sat_axioms else*) seq_axioms else "(define-sort Seq (T) (List T))\n" in 
+    let if_seq_axioms = if info.contains_list then (* if !is_sat_check then seq_sat_axioms else*) seq_axioms else "(define-sort Seqe (T) (List T))\n" in 
     (*let seqs = generate_seqs info.sequences info.sequences in*)
     let init_seq_axioms = (*if (info.contains_list && !is_sat_check) then add_seq_axioms fvars seqs fvars seqs else *)"" in 
 	(* Variable declarations *)
@@ -742,7 +742,7 @@ let to_smt_v2 ante conseq logic fvars info =
 				rel_decls ^
 			";Axioms assertions\n" ^ 
 				axiom_asserts ^
-            ";Initialization of Seq Axioms\n" ^
+            ";Initialization of Seqe Axioms\n" ^
                 init_seq_axioms ^
 			";Antecedent\n" ^ 
 				ante_str ^ 
