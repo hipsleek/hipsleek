@@ -5325,24 +5325,6 @@ let get_infer_vars_sel_post_hp_partial_ctx_list ls=
 if List.length ls == 0  then [] else 
   get_infer_vars_sel_post_hp_partial_ctx (List.hd ls)
 
-let context_of_branch_ctx_list ls = 
-  let rec helper ls = match ls with
-    | [] -> report_error no_pos "Current Successful context should not be empty []"
-    | [(_,c)] -> c
-    | (_,c)::ts -> OCtx (c,helper ts) 
-  in helper ls
- 
-let succ_context_of_failesc_context (_,_,sl) = (context_of_branch_ctx_list sl)
-
-let succ_context_of_failesc_context ((_,_,sl) as x) =
-  let pr = !print_failesc_context in
-  let pr2 = !print_context_short in
-  Debug.no_1 "succ_context_of_failesc_context" pr pr2
-      succ_context_of_failesc_context x
-			
-let succ_context_of_list_failesc_context ctx = 
-	List.map succ_context_of_failesc_context ctx
-
 let es_fv (es:entail_state) : CP.spec_var list =
   (fv es.es_formula)@(h_fv es.es_heap)
 
@@ -6445,7 +6427,6 @@ let invert_list_partial_context_outcome fnc_ctx_invert fnc_fail_invert cl=
 
 let empty_ctx flowt lbl pos = Ctx (empty_es flowt lbl(*Lab2_List.unlabelled*) pos)
 
-
 let false_es_with_flow_and_orig_ante es flowt f pos =
 	let new_f = mkFalse flowt pos in
     {(empty_es flowt Lab2_List.unlabelled pos) with 
@@ -6479,12 +6460,32 @@ let false_ctx_with_orig_ante es f pos =
 	Ctx (false_es_with_orig_ante es f pos)
 
 let false_es flowt g_lbl pos = 
-  let x =  mkFalse flowt pos in
+  let x = mkFalse flowt pos in
     {(empty_es flowt g_lbl pos) with es_formula = x;}
 
 and true_ctx flowt g_lbl pos = Ctx (empty_es flowt g_lbl pos)
 
 (* let mkFalse_branch_ctx = ([],false_ctx mkFalseFlow no_pos) *)
+
+let context_of_branch_ctx_list ls = 
+  let rec helper ls = match ls with
+    | [] -> (* report_error no_pos "Current Successful context should not be empty []" *)
+        (* Not sure it's right or not *)
+        false_ctx_with_orig_ante (false_es mkFalseFlow (None, []) no_pos) (mkFalse mkFalseFlow no_pos) no_pos *)
+    | [(_,c)] -> c
+    | (_,c)::ts -> OCtx (c,helper ts) 
+  in helper ls
+ 
+let succ_context_of_failesc_context (_,_,sl) = (context_of_branch_ctx_list sl)
+
+let succ_context_of_failesc_context ((_,_,sl) as x) =
+  let pr = !print_failesc_context in
+  let pr2 = !print_context_short in
+  Debug.no_1 "succ_context_of_failesc_context" pr pr2
+      succ_context_of_failesc_context x
+			
+let succ_context_of_list_failesc_context ctx = 
+	List.map succ_context_of_failesc_context ctx
 
 let or_context_list (cl10 : context list) (cl20 : context list) : context list = 
   let rec helper cl1 = match cl1 with
