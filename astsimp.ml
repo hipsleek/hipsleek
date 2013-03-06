@@ -8385,10 +8385,23 @@ and trans_mem_formula (imem : IF.mem_formula) stab : CF.mem_perm_formula =
 	let mem_exp = trans_pure_exp imem.IF.mem_formula_exp stab in 
 	let helpl1, helpl2 = List.split imem.IF.mem_formula_field_layout in
 	let helpl2 = List.map trans_field_layout helpl2 in
+        let rec match_exp (hargs : (IP.exp  list))  : (CP.spec_var list) =
+          match hargs with
+            | e  :: rest ->
+                let e_hvars = match e with
+                  | IP.Var ((ve, pe), pos_e) -> trans_var_safe (ve, pe) UNK stab pos_e
+                  | IP.IConst(i,pos) -> CP.SpecVar(Int,i,Unprimed) 
+                  | _ -> report_error no_pos ("[astsimp.ml] malfunction with trans mem exp") in
+                let rest_hvars = match_exp rest in
+                let hvars = e_hvars :: rest_hvars in hvars
+            | [] -> []
+        in 
+        let field_values = List.map (fun c -> (fst c), (match_exp (snd c))) imem.IF.mem_formula_field_values in
 	let guards = List.map (fun c -> trans_pure_formula c stab) imem.IF.mem_formula_guards in 
 	let meml = List.combine helpl1 helpl2 in
 			{CF.mem_formula_exp  = mem_exp;
 			CF.mem_formula_exact = imem.IF.mem_formula_exact;
+                        CF.mem_formula_field_values = field_values;
 			CF.mem_formula_field_layout =  meml;
 			CF.mem_formula_guards = guards}
 			
@@ -8432,7 +8445,7 @@ and validate_mem_spec (prog : C.prog_decl) (vdef: C.view_decl) =
 	            if flag then if not (check_mem_formula_guards_disjoint a.CF.mem_formula_guards) then () 
               else Err.report_error {
 			Err.error_loc = pos;
-			Err.error_text = "[mem.ml] : Memory Guards of "^ vdef.C.view_name ^" are not exhaustive ";} 
+			Err.error_text = "[astsimp.ml] : Memory Guards of "^ vdef.C.view_name ^" are not exhaustive ";} 
 	            else 
 			Err.report_error {Err.error_loc = pos;
 			Err.error_text = "[astsimp.ml] : Mem Spec does not entail supplied invariant";}

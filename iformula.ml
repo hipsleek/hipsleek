@@ -18,7 +18,7 @@ type ann = ConstAnn of heap_ann | PolyAnn of ((ident * primed) * loc)
 
 and mem_formula = {	mem_formula_exp : P.exp;
 			mem_formula_exact : bool;
-			mem_formula_field_values : (P.exp list) list;
+			mem_formula_field_values : (ident * (P.exp list)) list;
 			mem_formula_field_layout : (ident * (ann list)) list;
 			mem_formula_guards : P.formula list; 
 		}

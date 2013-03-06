@@ -831,7 +831,7 @@ mem_perm_set: [[ `MEM; e = cexp; `LEFTARROW; `OPAREN;  mpl = LIST0 mem_perm_layo
 mem_perm_layout:[[ 
 `IDENTIFIER dn; `LT; annl = ann_list; `GT; guard = OPT pure_guard -> 
 let fv,annl = List.split annl in 
-let perml = get_heap_ann_list annl in (fv,(dn,perml)),(un_option guard (P.mkTrue no_pos)) ]];
+let perml = get_heap_ann_list annl in ((dn,fv),(dn,perml)),(un_option guard (P.mkTrue no_pos)) ]];
 
 pure_guard: [[ `AND; e = pure_constr -> e
 ]];

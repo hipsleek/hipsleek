@@ -19,11 +19,29 @@ module C = Cast
 module Imm = Immutable
 module TP = Tpdispatcher
 
-let mk_mem_perm_formula (mem_exp: CP.exp) (isexact: bool) (fl: (ident * (CF.ann list)) list) (g: CP.formula list): CF.mem_perm_formula = 
+let mk_mem_perm_formula 
+(mem_exp: CP.exp) (isexact: bool) (fv: (ident * (CP.spec_var list)) list) (fl: (ident * (CF.ann list)) list) (g: CP.formula list)
+: CF.mem_perm_formula = 
 	{ CF.mem_formula_exp = mem_exp;
 	  CF.mem_formula_exact = isexact;
+          CF.mem_formula_field_values = fv;
 	  CF.mem_formula_field_layout = fl;
 	  CF.mem_formula_guards = g;}
+
+let rec intersect_list_val (ann_lst_l: CP.spec_var list) (ann_lst_r: CP.spec_var list): CP.spec_var list =
+  match (ann_lst_l, ann_lst_r) with
+    | ([], []) -> []
+    | (ann_l :: tl, ann_r :: tr ) ->
+        begin
+        if CP.is_anon_var ann_l || CP.eq_spec_var ann_l ann_r then ann_l :: (intersect_list_val tl tr)
+        else if CP.is_anon_var ann_r then ann_r :: (intersect_list_val tl tr)
+        else  Err.report_error {
+			Err.error_loc = no_pos;
+			Err.error_text = "[mem.ml] : Memory Spec field values are inconsistent";}
+      end
+    | (_, _) -> Err.report_error {
+			Err.error_loc = no_pos;
+			Err.error_text = "[mem.ml] : Memory Spec should have same number of fields values";}
 
 let rec intersect_list_ann_no_inter (ann_lst_l: CF.ann list) (ann_lst_r: CF.ann list): CF.ann list =
   match (ann_lst_l, ann_lst_r) with
@@ -82,11 +100,12 @@ let mem_guards_checking_reverse (fl1: CP.formula list) (fl2 : CP.formula) pos =
 	let relevant_slice = CP.join_conjunctions (List.filter 
 		(fun c -> if (CP.disjoint x_fvs (CP.fv c)) then false else true)
 		(CP.split_conjunctions fl2)) in
-	let r,_,_  = TP.imply x relevant_slice "mem_guard_imply_reverse" false None in r) fl1 in
+        let sat_subno = ref 0 in
+        let f = CP.mkAnd x relevant_slice no_pos in TP.is_sat_sub_no (Cpure.Not (f,None,no_pos)) sat_subno) fl1 in
 	if flag then ()   
 	else 
 	Err.report_error { Err.error_loc = pos;
-	Err.error_text = "[mem.ml] : Memory Spec Guards fail during reverse implication checking";}	
+	Err.error_text = "[mem.ml] : Memory Spec Guards fail during reverse sat checking";}	
 		    
 let rec fl_subtyping (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann list)) list) pos =
 	match fl1 with
@@ -107,6 +126,28 @@ let rec fl_subtyping (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann
 			Err.report_error { Err.error_loc = pos;
 			Err.error_text = "[mem.ml] : Memory Spec field layout doesn't respect annotation subtyping";}
 		    in fl_subtyping fl2 xs pos
+
+let rec fv_intersect_no_inter (fl1 : (ident * (CP.spec_var list)) list) (fl2: (ident * (CP.spec_var list)) list) 
+: (ident * (CP.spec_var list)) list =
+	match fl2 with
+	| [] -> fl1
+	| x::xs -> let _ = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
+				then (fst c), intersect_list_val (snd c) (snd x) 
+				else c) fl1 in fv_intersect_no_inter fl1 xs
+				
+let rec fv_intersect (fl1 : (ident * (CP.spec_var list)) list) (fl2: (ident * (CP.spec_var list)) list) : (ident * (CP.spec_var list)) list =
+	match fl2 with
+	| [] -> fl1
+	| x::xs -> let _ = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
+				then (fst c), intersect_list_val (snd c) (snd x) 
+				else c) fl1 in fv_intersect fl1 xs				
+				
+let rec fv_diff (fl1 : (ident * (CP.spec_var list)) list) (fl2: (ident * (CP.spec_var list)) list) : (ident * (CP.spec_var list)) list =
+	match fl2 with
+	| [] -> fl1
+	| x::xs -> let _ = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
+				then (fst c),intersect_list_val (snd c) (snd x) 
+				else c) fl1 in fv_diff fl1 xs
 
 let rec fl_intersect_no_inter (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann list)) list) : (ident * (CF.ann list)) list =
 	match fl2 with
@@ -147,6 +188,7 @@ let mem_disj_union (f1:CF.mem_perm_formula) (f2:CF.mem_perm_formula) : CF.mem_pe
 	let pos = CP.pos_of_exp f1.CF.mem_formula_exp in
 	let mpf = {CF.mem_formula_exp = CP.BagUnion(f1.CF.mem_formula_exp::[f2.CF.mem_formula_exp],pos);
 		CF.mem_formula_exact = if f1.CF.mem_formula_exact && f2.CF.mem_formula_exact then true else false;
+                CF.mem_formula_field_values = remove_dups f1.CF.mem_formula_field_values@f2.CF.mem_formula_field_values;
 		CF.mem_formula_field_layout = remove_dups f1.CF.mem_formula_field_layout@f2.CF.mem_formula_field_layout;
 		CF.mem_formula_guards = remove_dups f1.CF.mem_formula_guards@f2.CF.mem_formula_guards;}
 		in
@@ -174,6 +216,9 @@ let mem_union (f1:CF.mem_perm_formula) (f2:CF.mem_perm_formula) : CF.mem_perm_fo
 		CF.mem_formula_field_layout = if f1.CF.mem_formula_exact && f2.CF.mem_formula_exact 
 					then (fl_intersect_no_inter f1.CF.mem_formula_field_layout f2.CF.mem_formula_field_layout)
 					else (fl_intersect f1.CF.mem_formula_field_layout f2.CF.mem_formula_field_layout);
+                CF.mem_formula_field_values =  if f1.CF.mem_formula_exact && f2.CF.mem_formula_exact 
+					then (fv_intersect_no_inter f1.CF.mem_formula_field_values f2.CF.mem_formula_field_values)
+					else (fv_intersect f1.CF.mem_formula_field_values f2.CF.mem_formula_field_values);
 		CF.mem_formula_guards = remove_dups f1.CF.mem_formula_guards@f2.CF.mem_formula_guards;}
 		(*remove_dups f1.CF.mem_formula_field_layout@f2.CF.mem_formula_field_layout;}*)
 
@@ -184,6 +229,9 @@ let mem_intersect (f1:CF.mem_perm_formula) (f2:CF.mem_perm_formula) : CF.mem_per
 		CF.mem_formula_field_layout = if f1.CF.mem_formula_exact && f2.CF.mem_formula_exact 
 					then (fl_intersect_no_inter f1.CF.mem_formula_field_layout f2.CF.mem_formula_field_layout)
 					else (fl_intersect f1.CF.mem_formula_field_layout f2.CF.mem_formula_field_layout);
+                CF.mem_formula_field_values =  if f1.CF.mem_formula_exact && f2.CF.mem_formula_exact 
+					then (fv_intersect_no_inter f1.CF.mem_formula_field_values f2.CF.mem_formula_field_values)
+					else (fv_intersect f1.CF.mem_formula_field_values f2.CF.mem_formula_field_values);
 		CF.mem_formula_guards = remove_dups f1.CF.mem_formula_guards@f2.CF.mem_formula_guards;}
 		
 let mem_diff (f1:CF.mem_perm_formula) (f2:CF.mem_perm_formula) : CF.mem_perm_formula =
@@ -191,6 +239,7 @@ let mem_diff (f1:CF.mem_perm_formula) (f2:CF.mem_perm_formula) : CF.mem_perm_for
 		{CF.mem_formula_exp = CP.BagDiff(f1.CF.mem_formula_exp,f2.CF.mem_formula_exp,pos);
 		CF.mem_formula_exact = if f1.CF.mem_formula_exact && f2.CF.mem_formula_exact then true else false;
 		CF.mem_formula_field_layout = (fl_diff f1.CF.mem_formula_field_layout f2.CF.mem_formula_field_layout);
+		CF.mem_formula_field_values = (fv_diff f1.CF.mem_formula_field_values f2.CF.mem_formula_field_values);
 		CF.mem_formula_guards = remove_dups f1.CF.mem_formula_guards@f2.CF.mem_formula_guards;}
 
 let rec xmem_heap (f: CF.h_formula) (vl: C.view_decl list) : CF.mem_perm_formula * CP.formula list = 
@@ -240,8 +289,10 @@ let rec xmem_heap (f: CF.h_formula) (vl: C.view_decl list) : CF.mem_perm_formula
 	| CF.DataNode ({ CF.h_formula_data_node = dn;
 			 CF.h_formula_data_name = name;
 			 CF.h_formula_data_param_imm = fl;
+                         CF.h_formula_data_arguments = da;
 			 CF.h_formula_data_pos = pos;}) -> 
-			 (mk_mem_perm_formula (CP.Bag([CP.Var(dn,no_pos)],pos)) true [(name, fl)] []), []
+                         let fv = List.map (fun c -> if CP.is_const c then c else CP.SpecVar(Int,"Anon_"^(fresh_trailer()),Unprimed) ) da in
+			 (mk_mem_perm_formula (CP.Bag([CP.Var(dn,no_pos)],pos)) true [(name,fv)] [(name, fl)] []), []
 	| CF.ViewNode ({ CF.h_formula_view_node = vn;
 			 CF.h_formula_view_name = name;
 			 CF.h_formula_view_arguments = argl;
@@ -254,6 +305,7 @@ let rec xmem_heap (f: CF.h_formula) (vl: C.view_decl list) : CF.mem_perm_formula
 				| Some mpf -> 
 				 	let mexp = mpf.CF.mem_formula_exp in
 				 	let gforms = mpf.CF.mem_formula_guards in
+                                        (*let fv = mpf.CF.mem_formula_field_values in*) 
 				 	(*let _ = print_string("Free Var in Mem Spec :" ^ 
 				 	(String.concat "," (List.map string_of_spec_var (CP.afv mexp))) ^"\n") in
 				 	let _ = print_string("Arg List :" ^ 
@@ -263,9 +315,9 @@ let rec xmem_heap (f: CF.h_formula) (vl: C.view_decl list) : CF.mem_perm_formula
 				 	let new_mem_exp = CP.e_apply_subs (List.combine vdef.C.view_vars argl) sbst_self in
 				 	(*let _ = print_string("Bag Exp :" ^ (string_of_formula_exp new_mem_exp) ^"\n") in*)
 			 	        (*mk_mem_perm_formula new_mem_exp mpf.CF.mem_formula_exact mpf.CF.mem_formula_field_layout*)
-			 	        (mk_mem_perm_formula new_mem_exp mpf.CF.mem_formula_exact [] gforms), []
-			 	| None -> (mk_mem_perm_formula (CP.Bag([],no_pos)) false [] []),[] )
-  	| CF.Hole _ | CF.HEmp | CF.HFalse | CF.HTrue | CF.HRel _ -> (mk_mem_perm_formula (CP.Bag([],no_pos)) false [] []),[]
+			 	        (mk_mem_perm_formula new_mem_exp mpf.CF.mem_formula_exact [] [] gforms), []
+			 	| None -> (mk_mem_perm_formula (CP.Bag([],no_pos)) false [] [] []),[] )
+  	| CF.Hole _ | CF.HEmp | CF.HFalse | CF.HTrue | CF.HRel _ -> (mk_mem_perm_formula (CP.Bag([],no_pos)) false [] [] []),[]
 
 let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MCP.mix_formula =
 	match f with
@@ -320,7 +372,7 @@ let xmem_perm (f: CF.formula) (vl:C.view_decl list) : CF.mem_perm_formula * MCP.
 	| CF.Or ({CF.formula_or_f1 = f1;
 		CF.formula_or_f2 = f2;
 		CF.formula_or_pos = pos;}) -> (* Do not call with disjunctive formula*)
-					      (mk_mem_perm_formula (CP.Bag([],no_pos)) false [] []),mix_true,[]
+					      (mk_mem_perm_formula (CP.Bag([],no_pos)) false [] [] []),mix_true,[]
 	| CF.Base ({ CF.formula_base_heap = f;
 		  CF.formula_base_pos = pos;}) -> 
 		  let mpform,disjform = (xmem_heap f vl) 
@@ -374,6 +426,8 @@ let check_mem_formula (vdf : I.view_decl) (ddcl : I.data_decl list) =
   			| IP.BagUnion (_,_) ->
   			let allfvs = IP.afv a.IF.mem_formula_exp in
   			let allguardvs = List.concat (List.map IP.fv a.IF.mem_formula_guards) in
+                        let all_field_value_exps = 
+                          List.concat (List.map (fun c -> List.concat (List.map IP.afv (snd c))) a.IF.mem_formula_field_values) in
   			let allvs = allfvs@allguardvs in
   			let fvs = (List.filter (fun c -> match c with 
   					| (a,Primed) 
