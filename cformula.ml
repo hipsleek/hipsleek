@@ -6471,7 +6471,7 @@ let context_of_branch_ctx_list ls =
   let rec helper ls = match ls with
     | [] -> (* report_error no_pos "Current Successful context should not be empty []" *)
         (* Not sure it's right or not *)
-        false_ctx_with_orig_ante (false_es mkFalseFlow (None, []) no_pos) (mkFalse mkFalseFlow no_pos) no_pos *)
+        false_ctx_with_orig_ante (false_es mkFalseFlow (None, []) no_pos) (mkFalse mkFalseFlow no_pos) no_pos
     | [(_,c)] -> c
     | (_,c)::ts -> OCtx (c,helper ts) 
   in helper ls
