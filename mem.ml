@@ -20,24 +20,39 @@ module Imm = Immutable
 module TP = Tpdispatcher
 
 let mk_mem_perm_formula 
-(mem_exp: CP.exp) (isexact: bool) (fv: (ident * (CP.spec_var list)) list) (fl: (ident * (CF.ann list)) list) (g: CP.formula list)
+(mem_exp: CP.exp) (isexact: bool) (fv: (ident * (CP.exp list)) list) (fl: (ident * (CF.ann list)) list) (g: CP.formula list)
 : CF.mem_perm_formula = 
 	{ CF.mem_formula_exp = mem_exp;
 	  CF.mem_formula_exact = isexact;
-          CF.mem_formula_field_values = fv;
+      CF.mem_formula_field_values = fv;
 	  CF.mem_formula_field_layout = fl;
 	  CF.mem_formula_guards = g;}
 
-let rec intersect_list_val (ann_lst_l: CP.spec_var list) (ann_lst_r: CP.spec_var list): CP.spec_var list =
+let rec intersect_list_val (ann_lst_l: CP.exp list) (ann_lst_r: CP.exp list): CP.exp list =
   match (ann_lst_l, ann_lst_r) with
     | ([], []) -> []
     | (ann_l :: tl, ann_r :: tr ) ->
         begin
-        if CP.is_anon_var ann_l || CP.eq_spec_var ann_l ann_r then ann_l :: (intersect_list_val tl tr)
-        else if CP.is_anon_var ann_r then ann_r :: (intersect_list_val tl tr)
-        else  Err.report_error {
-			Err.error_loc = no_pos;
-			Err.error_text = "[mem.ml] : Memory Spec field values are inconsistent";}
+        match ann_l,ann_r with
+          | CP.Var(sv1,_),CP.Var(sv2,_) ->
+              if CP.is_anon_var sv1 || CP.eq_spec_var sv1 sv2 then ann_l :: (intersect_list_val tl tr)
+              else if CP.is_anon_var sv2 then ann_r :: (intersect_list_val tl tr)
+              else Err.report_error {Err.error_loc = no_pos;
+			                         Err.error_text = "[mem.ml] : Memory Spec field values are different vars";}
+          | CP.IConst(i1,_),CP.IConst(i2,_) -> 
+              if i1 == i2 then ann_l ::(intersect_list_val tl tr)
+              else Err.report_error {Err.error_loc = no_pos;
+			                         Err.error_text = "[mem.ml] : Memory Spec field values are different ints";}
+          | CP.IConst(i,_),CP.Var(sv,_) -> 
+              if CP.is_anon_var sv then ann_r ::(intersect_list_val tl tr)
+              else Err.report_error {Err.error_loc = no_pos;
+			                         Err.error_text = "[mem.ml] : Memory Spec field values are inconsistent int and var";}
+          | CP.Var(sv,_),CP.IConst(i,_) -> 
+              if CP.is_anon_var sv then ann_l ::(intersect_list_val tl tr)
+              else Err.report_error {Err.error_loc = no_pos;
+			                         Err.error_text = "[mem.ml] : Memory Spec field values are inconsistent var and int";}
+          | _,_ -> Err.report_error {Err.error_loc = no_pos;
+			                         Err.error_text = "[mem.ml] : Memory Spec field values are inconsistent types";}
       end
     | (_, _) -> Err.report_error {
 			Err.error_loc = no_pos;
@@ -127,22 +142,24 @@ let rec fl_subtyping (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann
 			Err.error_text = "[mem.ml] : Memory Spec field layout doesn't respect annotation subtyping";}
 		    in fl_subtyping fl2 xs pos
 
-let rec fv_intersect_no_inter (fl1 : (ident * (CP.spec_var list)) list) (fl2: (ident * (CP.spec_var list)) list) 
-: (ident * (CP.spec_var list)) list =
+let rec fv_intersect_no_inter (fl1 : (ident * (CP.exp list)) list) (fl2: (ident * (CP.exp list)) list) 
+: (ident * (CP.exp list)) list =
 	match fl2 with
 	| [] -> fl1
 	| x::xs -> let _ = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
 				then (fst c), intersect_list_val (snd c) (snd x) 
 				else c) fl1 in fv_intersect_no_inter fl1 xs
 				
-let rec fv_intersect (fl1 : (ident * (CP.spec_var list)) list) (fl2: (ident * (CP.spec_var list)) list) : (ident * (CP.spec_var list)) list =
+let rec fv_intersect (fl1 : (ident * (CP.exp list)) list) (fl2: (ident * (CP.exp list)) list) 
+: (ident * (CP.exp list)) list =
 	match fl2 with
 	| [] -> fl1
 	| x::xs -> let _ = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
 				then (fst c), intersect_list_val (snd c) (snd x) 
 				else c) fl1 in fv_intersect fl1 xs				
 				
-let rec fv_diff (fl1 : (ident * (CP.spec_var list)) list) (fl2: (ident * (CP.spec_var list)) list) : (ident * (CP.spec_var list)) list =
+let rec fv_diff (fl1 : (ident * (CP.exp list)) list) (fl2: (ident * (CP.exp list)) list) 
+: (ident * (CP.exp list)) list =
 	match fl2 with
 	| [] -> fl1
 	| x::xs -> let _ = List.map (fun c -> if (String.compare (fst c) (fst x)) == 0 
@@ -289,10 +306,12 @@ let rec xmem_heap (f: CF.h_formula) (vl: C.view_decl list) : CF.mem_perm_formula
 	| CF.DataNode ({ CF.h_formula_data_node = dn;
 			 CF.h_formula_data_name = name;
 			 CF.h_formula_data_param_imm = fl;
-                         CF.h_formula_data_arguments = da;
+             CF.h_formula_data_arguments = da;
 			 CF.h_formula_data_pos = pos;}) -> 
-                         let fv = List.map (fun c -> if CP.is_const c then c else CP.SpecVar(Int,"Anon_"^(fresh_trailer()),Unprimed) ) da in
-			 (mk_mem_perm_formula (CP.Bag([CP.Var(dn,no_pos)],pos)) true [(name,fv)] [(name, fl)] []), []
+         let fv = List.map 
+           (fun c -> if CP.is_const c then CP.Var(c,pos)  
+                     else CP.Var(CP.SpecVar(Int,"Anon_"^(fresh_trailer()),Unprimed),pos)) da in
+		 (mk_mem_perm_formula (CP.Bag([CP.Var(dn,no_pos)],pos)) true [(name,fv)] [(name, fl)] []), []
 	| CF.ViewNode ({ CF.h_formula_view_node = vn;
 			 CF.h_formula_view_name = name;
 			 CF.h_formula_view_arguments = argl;
