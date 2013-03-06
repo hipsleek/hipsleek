@@ -812,24 +812,35 @@ opt_inv: [[t=OPT inv -> un_option t (P.mkTrue no_pos)]];
 opt_mem_perm_set: [[t=OPT mem_perm_set -> t ]];
 
 mem_perm_set: [[ `MEM; e = cexp; `LEFTARROW; `OPAREN;  mpl = LIST0 mem_perm_layout SEP `SEMICOLON; `CPAREN 
-				->  {	F.mem_formula_exp = e;
+				-> let fal,g = List.split mpl in
+				   let fv,al = List.split fal in   
+					{	F.mem_formula_exp = e;
 					F.mem_formula_exact = false;
-					F.mem_formula_field_layout = (fst (List.split mpl));
-					F.mem_formula_guards = (snd (List.split mpl))}				
+					F.mem_formula_field_values = fv;
+					F.mem_formula_field_layout = al;
+					F.mem_formula_guards = g}				
 		| `MEME; e = cexp; `LEFTARROW; `OPAREN; mpl = LIST0 mem_perm_layout SEP `SEMICOLON; `CPAREN 
-				->  {	F.mem_formula_exp = e;
+				-> let fal,g = List.split mpl in
+				   let fv,al = List.split fal in   
+					{	F.mem_formula_exp = e;
 					F.mem_formula_exact = true;
-					F.mem_formula_field_layout = (fst (List.split mpl));
-					F.mem_formula_guards = (snd (List.split mpl))} ]];
+					F.mem_formula_field_values = fv;
+					F.mem_formula_field_layout = al;
+					F.mem_formula_guards = g} ]];
 					
 mem_perm_layout:[[ 
 `IDENTIFIER dn; `LT; annl = ann_list; `GT; guard = OPT pure_guard -> 
-let perml = get_heap_ann_list annl in (dn,perml),(un_option guard (P.mkTrue no_pos)) ]];
+let fv,annl = List.split annl in 
+let perml = get_heap_ann_list annl in (fv,(dn,perml)),(un_option guard (P.mkTrue no_pos)) ]];
 
 pure_guard: [[ `AND; e = pure_constr -> e
 ]];
 
-ann_list:[[b = LIST0 ann_heap SEP `COMMA -> b]];
+ann_list:[[b = LIST0 cexp_ann SEP `COMMA -> b]];
+
+cexp_ann: [[ `INT_LITER (i,_) ; ah = ann_heap ->  (P.IConst(i,no_pos),ah)
+           | e = OPT cid ; ah = ann_heap -> let evar = (un_option e ("_",Unprimed) ) in (P.Var(evar,no_pos),ah)   
+          ]];
 
 opt_derv: [[t=OPT derv -> un_option t false ]];
 
@@ -1011,7 +1022,7 @@ extended_constr:
 impl_list:[[t=LIST1 impl -> t]];
 
 impl: [[ pc=pure_constr; `LEFTARROW; ec=extended_l; `SEMICOLON ->
-			if(List.length (Ipure.look_for_anonymous_pure_formula pc))>0 then report_error (get_pos_camlp4 _loc 1) ("anonimous variables in case guard are disalowed")
+			if(List.length (Ipure.look_for_anonymous_pure_formula pc))>0 then report_error (get_pos_camlp4 _loc 1) ("anonymous variables in case guard are disalowed")
 		  else (pc,ec)]];
 
 (* seem _loc 2 is empty *)
