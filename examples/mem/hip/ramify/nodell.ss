@@ -10,12 +10,12 @@ data node{
 ll<R> == R = {}
 	or self::node<_,p> * p::ll<Rp> & R = union(Rp,{self})
 	inv true
-	mem R->(node<@M,@M>);
+	memE R->(node<@M,@M>);
 
 lseg<R,p> == self = p & R = {}
 	or self::node<_,q> * q::lseg<Rq,p> & R = union(Rq,{self})
 	inv true
-	mem R->(node<@M,@M>);
+	memE R->(node<@M,@M>);
 
 lemma self::ll<R> *- x::node<_,p> & x in R -> self::lseg<R1,x> * p::ll<R2> & R = union(R1,R2,{x});
 

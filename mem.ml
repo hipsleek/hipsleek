@@ -116,22 +116,28 @@ let mem_guards_checking_reverse (fl1: CP.formula list) (fl2 : CP.formula) pos =
 		(fun c -> if (CP.disjoint x_fvs (CP.fv c)) then false else true)
 		(CP.split_conjunctions fl2)) in
         let sat_subno = ref 0 in
-        let f = CP.mkAnd x relevant_slice no_pos in TP.is_sat_sub_no (Cpure.Not (f,None,no_pos)) sat_subno) fl1 in
+        let f = CP.mkAnd x relevant_slice no_pos in TP.is_sat_sub_no f sat_subno) fl1 in
 	if flag then ()   
 	else 
 	Err.report_error { Err.error_loc = pos;
 	Err.error_text = "[mem.ml] : Memory Spec Guards fail during reverse sat checking";}	
 		    
 let rec fl_subtyping (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann list)) list) pos =
+  (*let _ = print_string("\n\nfl1: ") in 
+  let _ = List.map (fun c -> 
+    let _ = print_string ((fst c)^" : "^(String.concat "," (List.map string_of_imm (snd c)))^" ") in c) fl1 in
+  let _ = print_string("\nfl2: ") in 
+  let _ = List.map (fun c -> 
+    let _ = print_string ((fst c)^" : "^(String.concat "," (List.map string_of_imm (snd c)))^" ") in c) fl2 in *)
 	match fl1 with
 	| [] -> ()
 	| x::xs -> let matched_fields = List.filter (fun c -> if (String.compare (fst c) (fst x)) == 0 then true else false) fl2
-		    (*in let _ = List.map
-		    (fun c -> let _ = print_string (String.concat "," (List.map string_of_imm (snd c))) in c) fl2*)
 		    in (*let _ = List.map
-		    (fun c -> let _ = print_string (String.concat "," (List.map string_of_imm (snd c))) in c) fl2
-		    in*) let tmp = (List.exists (fun c -> let b,_,_ = (Imm.subtype_ann_list [] (snd x) (snd c)) in 
-		    (*let _ = 
+		    (fun c -> let _ = print_string ("fl2: "^(String.concat "," (List.map string_of_imm (snd c)))^"\n") in c) fl2
+		    in let _ = List.map
+		    (fun c -> let _ = print_string ("fl1: "^(String.concat "," (List.map string_of_imm (snd c)))^"\n") in c) fl1
+		    in *)let tmp = (List.exists (fun c -> let b,_,_ = (Imm.subtype_ann_list [] (snd x) (snd c)) in 
+     	    (*let _ = 
 		    print_string ("Ann Lists: "^ (*(string_of_bool b) ^*)(String.concat "," (List.map string_of_imm (snd c)))^" :> "^
 		    		(String.concat "," (List.map string_of_imm (snd x)))^ "\n")
 		    in*)
@@ -140,7 +146,24 @@ let rec fl_subtyping (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann
 		    in*)  let _ = if (tmp || List.length matched_fields == 0) then () else 
 			Err.report_error { Err.error_loc = pos;
 			Err.error_text = "[mem.ml] : Memory Spec field layout doesn't respect annotation subtyping";}
-		    in fl_subtyping fl2 xs pos
+		    in fl_subtyping xs fl2 pos
+
+let rec fl_subtyping_rev (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF.ann list)) list)  pos =
+  let helper fl1 fl2 pos = 
+  (* fl2 will be a list of 1 value for this case *)
+  if List.length fl2 > 1 then Err.report_error { Err.error_loc = pos;
+			Err.error_text = "[mem.ml] : Memory Spec field layout has more number of layouts than expected (1)";}
+  else if List.length fl2 == 0 then () else
+  let matched_fields = List.filter (fun c -> if (String.compare (fst c) (fst (List.hd fl2))) == 0 then true else false) fl1 in 
+  if List.length matched_fields == 0 then  Err.report_error { Err.error_loc = pos;
+			Err.error_text = "[mem.ml] : Memory Spec field layout doesn't have a matching field";}
+  else let tmp = 
+         List.exists (fun c -> let b,_,_ = (Imm.subtype_ann_list [] (snd c) (snd (List.hd matched_fields))) in b ) fl1 in
+       if  tmp then () else Err.report_error { Err.error_loc = pos;
+			Err.error_text = "[mem.ml] : Memory Spec field layout doesn't respect annotation subtyping";}
+  in match fl2 with
+    | [] -> ()
+    | x::xs -> let _ = helper fl1 [x] pos in fl_subtyping fl1 xs pos
 
 let rec fv_intersect_no_inter (fl1 : (ident * (CP.exp list)) list) (fl2: (ident * (CP.exp list)) list) 
 : (ident * (CP.exp list)) list =
@@ -356,7 +379,7 @@ let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MC
 		  	  else mem_guards_checking (MCP.pure_of_mix p) me.CF.mem_formula_guards pos in 
 		  let f = if me.CF.mem_formula_exact 
 		  	  then let f2 = CP.BForm((CP.BagSub(mfe2,mfe1,pos),None),None)
-		  		in let _ = fl_subtyping me.CF.mem_formula_field_layout mpform.CF.mem_formula_field_layout pos in
+		  		in let _ = fl_subtyping_rev me.CF.mem_formula_field_layout mpform.CF.mem_formula_field_layout pos in
 		  		let _ =  if (CF.is_empty_heap f) then ()
 					 else mem_guards_checking_reverse me.CF.mem_formula_guards (MCP.pure_of_mix p) pos
 		  		in MCP.merge_mems (MCP.mix_of_pure f1) (MCP.mix_of_pure f2) true
@@ -375,7 +398,7 @@ let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MC
 		    	    else mem_guards_checking (MCP.pure_of_mix p) me.CF.mem_formula_guards pos in 
 		    let f = if me.CF.mem_formula_exact 
 		            then let f2 = CP.BForm((CP.BagSub(mfe2,mfe1,pos),None),None)
-		    		 in let _ = fl_subtyping me.CF.mem_formula_field_layout mpform.CF.mem_formula_field_layout pos in
+		    		 in let _ = fl_subtyping_rev me.CF.mem_formula_field_layout mpform.CF.mem_formula_field_layout pos in
 		    		 let _ = if (CF.is_empty_heap f) then ()
 		    			 else mem_guards_checking_reverse me.CF.mem_formula_guards (MCP.pure_of_mix p) pos
 				 in let fe = MCP.merge_mems (MCP.mix_of_pure f1) (MCP.mix_of_pure f2) true
@@ -445,8 +468,8 @@ let check_mem_formula (vdf : I.view_decl) (ddcl : I.data_decl list) =
   			| IP.BagUnion (_,_) ->
   			let allfvs = IP.afv a.IF.mem_formula_exp in
   			let allguardvs = List.concat (List.map IP.fv a.IF.mem_formula_guards) in
-                        let all_field_value_exps = 
-                          List.concat (List.map (fun c -> List.concat (List.map IP.afv (snd c))) a.IF.mem_formula_field_values) in
+            (* let all_field_value_exps = 
+              List.concat (List.map (fun c -> List.concat (List.map IP.afv (snd c))) a.IF.mem_formula_field_values) in*)
   			let allvs = allfvs@allguardvs in
   			let fvs = (List.filter (fun c -> match c with 
   					| (a,Primed) 
@@ -709,6 +732,44 @@ match (ann_lst_l, ann_lst_r) with
   	  | CF.ConstAnn(Accs), CF.ConstAnn(Accs)-> true && (is_same_field_layout tl tr)
   	  | _ , _ -> false
 
+      end
+    | (_, _) ->	 false    
+
+let rec is_compatible_field_values (ann_lst_l: CP.exp list) (ann_lst_r: CP.exp list): bool =	
+match (ann_lst_l, ann_lst_r) with
+    | ([], []) -> true
+    | (ann_l :: tl, ann_r :: tr ) ->
+      begin
+	match ann_l, ann_r with 
+	  | CP.Var(sv1,_),CP.Var(sv2,_) -> if CP.is_anon_var sv1 || CP.is_anon_var sv2 
+        then true && (is_compatible_field_values tl tr)
+        else false
+      | CP.Var(sv,_),_  
+      | _, CP.Var(sv,_) -> if CP.is_anon_var sv then true && (is_compatible_field_values tl tr)
+        else false
+  	  | _ , _ -> false
+      end
+    | (_, _) ->	 false   
+
+let rec is_same_field_values (ann_lst_l: CP.exp list) (ann_lst_r: CP.exp list) (p:CP.formula) : bool =	
+match (ann_lst_l, ann_lst_r) with
+    | ([], []) -> true
+    | (ann_l :: tl, ann_r :: tr ) ->
+      begin
+	match ann_l, ann_r with 
+	  | CP.Var(sv1,_),CP.Var(sv2,_) -> if CP.is_anon_var sv1 || CP.is_anon_var sv2 || CP.eq_spec_var sv1 sv2 
+        then true &&  (is_same_field_values tl tr p) else false 
+      | CP.IConst(i1,_),CP.IConst(i2,_) -> i1==i2 && (is_same_field_values tl tr p)
+      | CP.Var(sv,_), CP.IConst(i,_)
+      | CP.IConst(i,_),CP.Var(sv,_) -> let checkeq = CP.mkEqExp ann_l ann_r no_pos in 
+                                       (*let _ = print_string("pure formula:"^(string_of_pure_formula p)) in
+                                       let _ = print_string("check formula:"^(string_of_pure_formula checkeq)) in*)
+                                       let r,_,_ = TP.imply p checkeq "field_value_imply" false None in
+                                       if r then true && (is_same_field_values tl tr p) else false
+      | CP.Var(sv,_),_  
+      | _, CP.Var(sv,_) -> if CP.is_anon_var sv then true && (is_same_field_values tl tr p)
+        else false
+  	  | _ , _ -> false
       end
     | (_, _) ->	 false    
 
@@ -1244,8 +1305,13 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 	| CF.ViewNode {CF.h_formula_view_node = vn2;
 		       CF.h_formula_view_arguments = vargs2} ->
 		       let case_and_layouts2 = List.combine memf2.CF.mem_formula_guards memf2.CF.mem_formula_field_layout in
+               let case_and_values2 = List.combine memf2.CF.mem_formula_guards memf2.CF.mem_formula_field_values in
 		       let sublist2 = List.combine q_vars vargs2 in
 		       let pure_p = (MCP.pure_of_mix mcp) in
+		       let compatible_values2 = List.filter (fun (c,_) ->
+		       let after_sbst_guard = CP.subst sublist2 c in		
+		       let r,_,_ =  
+		       TP.imply pure_p after_sbst_guard "ramify_imply" false None in r) case_and_values2 in
 		       let compatible_cases2 = List.filter (fun (c,_) ->
 		       let after_sbst_guard = CP.subst sublist2 c in		
 		       let r,_,_ =  
@@ -1254,7 +1320,12 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 			| CF.ViewNode {CF.h_formula_view_node = vn1;
 				CF.h_formula_view_arguments = vargs1} -> 
 				let case_and_layouts1 = List.combine memf1.CF.mem_formula_guards memf1.CF.mem_formula_field_layout in
+				let case_and_values1 = List.combine memf1.CF.mem_formula_guards memf1.CF.mem_formula_field_values in
        				let sublist1 = List.combine p_vars vargs1 in
+       				let compatible_values1 = List.filter (fun (c,_) ->
+       				let after_sbst_guard = CP.subst sublist1 c in		
+			       	let r,_,_ =
+			       	TP.imply pure_p after_sbst_guard "ramify_imply" false None in r) case_and_values1 in
        				let compatible_cases1 = List.filter (fun (c,_) ->
        				let after_sbst_guard = CP.subst sublist1 c in		
 			       	let r,_,_ =
@@ -1265,7 +1336,44 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 			       	then (if List.exists (fun (_,(_,al2)) -> List.exists (fun(_,(_,al1)) ->
 			       		(is_same_field_layout al1 al2)) compatible_cases1
 			       		) compatible_cases2
-					then h1,(CP.mkTrue no_pos)
+					    then (* Field Layout is Same, Check for Field Values to Ramify *)
+                        (if List.exists (fun (_,(_,al2)) -> List.exists (fun(_,(_,al1)) ->
+   			   (*let _ = print_string("Field Values List1 : "^(string_of_list_f string_of_formula_exp al1)^"\n") in
+       		   let _ = print_string("Field Values List2 : "^(string_of_list_f string_of_formula_exp al2)^"\n") in
+		       let _ = if (is_same_field_values al1 al2 pure_p) then print_string("true") else () in*)
+			       		  (is_same_field_values al1 al2 pure_p)) compatible_values1
+			       		  ) compatible_values2
+		       			  	(*let _ = print_string("H: "^(string_of_h_formula h1)^"\n") in*)
+                              then h1,(CP.mkTrue no_pos)
+                            else let compatible_fvs = List.map (fun (_,(_,fl)) -> fl) compatible_values2 in
+					             let ramified_cases = List.filter (fun (_,(_,fl)) ->
+					               List.exists (fun c -> 
+					                 (is_same_field_values c fl pure_p)) compatible_fvs)
+					               case_and_values1 in
+					             let ch_vars = List.map (fun (g,_) -> CP.fv g) ramified_cases in
+					             let ch_vars_lt = remove_dups (List.concat ch_vars) in
+					             let old_args = vargs1 in
+					             let fresh_args = CP.fresh_spec_vars old_args in
+					             let comb = List.combine fresh_args old_args in
+					             let comb_with_sublist = List.combine comb sublist1 in
+					             let comb_filtered = List.filter (fun ((_,_),(parg,_)) ->
+					               List.mem parg ch_vars_lt 
+					             ) comb_with_sublist in
+					             let comb,_ = List.split comb_filtered in
+					             let ramified_subst = List.map 
+			                       (fun ((nw,_),(parg,_)) -> (parg,nw)) comb_filtered in
+			                     let comb0 = List.map (fun (a,b) -> (b,a)) comb in
+					             let new_h1 = CF.h_subst comb0 h1 in
+ 					             let conjlt1 = List.map (fun (v1,v2) -> 
+					               CP.mkEqVar v1 v2 no_pos
+					             ) comb0 in
+					             let p1 = CP.join_conjunctions conjlt1 in
+					             let conjlt2 = List.map (fun (g,_) ->
+					               CP.subst ramified_subst g							
+					             ) ramified_cases in
+					             let p2 = CP.join_conjunctions conjlt2 in
+					             let new_p = CP.mkOr p1 p2 None no_pos in
+ 					             (new_h1,new_p))
 					else let compatible_fls = List.map (fun (_,(_,fl)) -> fl) compatible_cases2 in
 					let ramified_cases = List.filter (fun (_,(_,fl)) ->
 					List.exists (fun c -> 
@@ -1302,21 +1410,65 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 	| _ ->CF.HTrue,(CP.mkTrue no_pos)) (* Shouldn't get here *)
 | Some(memf1), None -> (match h2 with
 			| CF.DataNode { CF.h_formula_data_name = dn;
-			       		CF.h_formula_data_param_imm = paimm} -> 
+			       		CF.h_formula_data_param_imm = paimm;
+                          CF.h_formula_data_arguments = da;} -> 
+                        let daexps = List.map (fun c -> CP.Var(c,no_pos)) da in
 			       		(match h1 with
 			       		| CF.ViewNode {CF.h_formula_view_node = vn;
 		       				CF.h_formula_view_arguments = vargs} -> 
-		       				let case_and_layouts = List.combine memf1.CF.mem_formula_guards memf1.CF.mem_formula_field_layout in
+		       				let case_and_layouts = 
+                              List.combine memf1.CF.mem_formula_guards memf1.CF.mem_formula_field_layout in
+                            let case_and_values = 
+                              List.combine memf1.CF.mem_formula_guards memf1.CF.mem_formula_field_values in
 		       				let sublist = List.combine p_vars vargs in
 		       				let pure_p = (MCP.pure_of_mix mcp) in
+	                        let compatible_values = List.filter (fun (c,_) ->
+		       				let after_sbst_guard = CP.subst sublist c in		
+					       	let r,_,_ =
+					       	TP.imply pure_p after_sbst_guard "ramify_imply" false None in r) case_and_values in
 		       				let compatible_cases = List.filter (fun (c,_) ->
 		       				let after_sbst_guard = CP.subst sublist c in		
 					       	let r,_,_ =
 					       	TP.imply pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts in
 					       	if List.exists (fun (_,(id,_)) -> (String.compare id dn == 0)) compatible_cases
-						then (if List.exists (fun (_,(id,al)) -> 
+						    then (if List.exists (fun (_,(id,al)) -> 
 							(is_same_field_layout paimm al)) compatible_cases
-							then h1,(CP.mkTrue no_pos)
+							then (* Field Layout is Same Check for Field Values to Ramify *)
+		       			      (if List.exists (fun (_,(i_,al)) -> 
+       			   (*let _ = print_string("Field Values List : "^(string_of_list_f string_of_formula_exp al)^"\n") in
+       			   let _ = print_string("Data Field Values List : "^(string_of_list_f string_of_formula_exp daexps)^"\n") in
+		       			   let _ = if (is_same_field_values daexps al pure_p) then print_string("true") else () in*)
+		       			       (is_same_field_values daexps al pure_p)) compatible_values
+		       			  	(*let _ = print_string("H: "^(string_of_h_formula h1)^"\n") in*)
+                              then h1,(CP.mkTrue no_pos)
+                               else let ramified_cases = List.filter (fun (_,(_,fl)) ->
+							     (is_same_field_values daexps fl pure_p) )
+							          case_and_values in
+							        let ch_vars = List.map (fun (g,_) -> CP.fv g) ramified_cases in
+							        let ch_vars_lt = remove_dups (List.concat ch_vars) in
+							        let old_args = vargs in
+							        let fresh_args = CP.fresh_spec_vars old_args in
+					                let comb = List.combine fresh_args old_args in
+					                let comb_with_sublist = List.combine comb sublist in
+					                let comb_filtered = List.filter (fun ((_,_),(parg,_)) ->
+					                List.mem parg ch_vars_lt 
+					                ) comb_with_sublist in
+					                let comb,_ = List.split comb_filtered in
+					                let ramified_subst = List.map 
+					                (fun ((nw,_),(parg,_)) -> (parg,nw)) comb_filtered in
+					                let comb0 = List.map (fun (a,b) -> (b,a)) comb in
+					              	let new_h1 = CF.h_subst comb0 h1 in
+ 					   		        let conjlt1 = List.map (fun (v1,v2) -> 
+							          CP.mkEqVar v1 v2 no_pos
+							        ) comb0 in
+							        let p1 = CP.join_conjunctions conjlt1 in
+							        let conjlt2 = List.map (fun (g,_) ->
+							          CP.subst ramified_subst g						
+							        ) ramified_cases in
+							        let p2 = CP.join_conjunctions conjlt2 in
+							        let new_p = CP.mkOr p1 p2 None no_pos in
+							(*let _ = print_string("\nNew P: "^(string_of_pure_formula new_p)^"\n") in*)
+ 					   		        (new_h1,new_p) )
 							else let ramified_cases = List.filter (fun (_,(_,fl)) ->
 							(is_same_field_layout paimm fl) ||(is_compatible_field_layout paimm fl))
 							case_and_layouts in
@@ -1355,8 +1507,15 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 	| CF.ViewNode {CF.h_formula_view_node = vn;
 		       CF.h_formula_view_arguments = vargs} -> 
 		       let case_and_layouts = List.combine memf2.CF.mem_formula_guards memf2.CF.mem_formula_field_layout in
+               let case_and_values =  List.combine memf2.CF.mem_formula_guards memf2.CF.mem_formula_field_values in
 		       let sublist = List.combine q_vars vargs in
 		       let pure_p = (MCP.pure_of_mix mcp) in
+               let compatible_values = List.filter (fun (c,_) ->
+		       	let after_sbst_guard = CP.subst sublist c in		
+		       	let r,_,_ =  
+		       	(*let _ = print_string("\nPure :"^(string_of_pure_formula pure_p)^"\n") in
+		       	let _ = print_string("Case :"^(string_of_pure_formula after_sbst_guard)^"\n") in*)
+		       	TP.imply pure_p after_sbst_guard "ramify_imply" false None in r) case_and_values in
 		       let compatible_cases = List.filter (fun (c,_) ->
 		       	let after_sbst_guard = CP.subst sublist c in		
 		       	let r,_,_ =  
@@ -1365,7 +1524,9 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 		       	TP.imply pure_p after_sbst_guard "ramify_imply" false None in r) case_and_layouts in
 		       (match h1 with
 		       	| CF.DataNode { CF.h_formula_data_name = dn;
+                        CF.h_formula_data_arguments = da;
 			       		CF.h_formula_data_param_imm = paimm} -> 
+                    let daexps = List.map (fun c -> CP.Var(c,no_pos)) da in
 			       		if List.exists (fun (_,(id,_)) -> (String.compare id dn == 0)) compatible_cases
 					then			      
 		       			 (if List.exists (fun (_,(i_,al)) -> 
@@ -1373,9 +1534,21 @@ let ramify_star_one (h1: CF.h_formula) (h1mpf: CF.mem_perm_formula option) (h2: 
 		       			   let _ = print_string("Data Ann List : "^(string_of_list_f string_of_imm paimm)^"\n") in
 		       			   let _ = if (is_same_field_layout paimm al) then print_string("true") else () in*)
 		       			   (is_same_field_layout paimm al)) compatible_cases 
-		       			  then 
+		       			  then (* Field Layout is Same Check for Field Values to Ramify *)
+		       			      (if List.exists (fun (_,(i_,al)) -> 
+       			   (*let _ = print_string("Field Values List : "^(string_of_list_f string_of_formula_exp al)^"\n") in
+       			   let _ = print_string("Data Field Values List : "^(string_of_list_f string_of_formula_exp daexps)^"\n") in
+		       			   let _ = if (is_same_field_values daexps al pure_p) then print_string("true") else () in*)
+		       			       (is_same_field_values daexps al pure_p)) compatible_values
 		       			  	(*let _ = print_string("H: "^(string_of_h_formula h1)^"\n") in*)
-		       			  	h1,(CP.mkTrue no_pos)
+                              then h1,(CP.mkTrue no_pos)
+                              else let old_args = da in
+							       let fresh_args = CP.fresh_spec_vars old_args in
+					                let comb = List.combine old_args fresh_args in
+		                          	let new_h1 = CF.h_subst comb h1 in
+							(*let _ = print_string("\nNew P: "^(string_of_pure_formula new_p)^"\n") in*)
+ 					   		        (new_h1,(CP.mkTrue no_pos))
+                               )
 		       			  else 
 	       			 	   (let old_args = CF.get_node_args h1 in
 					   let fresh_args = CP.fresh_spec_vars old_args in

@@ -839,7 +839,8 @@ pure_guard: [[ `AND; e = pure_constr -> e
 ann_list:[[b = LIST0 cexp_ann SEP `COMMA -> b]];
 
 cexp_ann: [[ `INT_LITER (i,_) ; ah = ann_heap ->  (P.IConst(i,no_pos),ah)
-           | e = OPT cid ; ah = ann_heap -> let evar = (un_option e ("_",Unprimed) ) in (P.Var(evar,no_pos),ah)   
+           | e = OPT cid ; ah = ann_heap -> 
+           let evar = (un_option e ("Anon_"^(fresh_trailer()),Unprimed) ) in (P.Var(evar,no_pos),ah)   
           ]];
 
 opt_derv: [[t=OPT derv -> un_option t false ]];
