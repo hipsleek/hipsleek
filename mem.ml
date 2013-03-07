@@ -163,7 +163,43 @@ let rec fl_subtyping_rev (fl1 : (ident * (CF.ann list)) list) (fl2: (ident * (CF
 			Err.error_text = "[mem.ml] : Memory Spec field layout doesn't respect annotation subtyping";}
   in match fl2 with
     | [] -> ()
-    | x::xs -> let _ = helper fl1 [x] pos in fl_subtyping fl1 xs pos
+    | x::xs -> let _ = helper fl1 [x] pos in fl_subtyping_rev fl1 xs pos
+
+let rec fv_match (fv1 : (ident * (CP.exp list)) list) (fv2: (ident * (CP.exp list)) list) pos =
+  (*let _ = print_string("\n\nfl1: ") in 
+  let _ = List.map (fun c -> 
+    let _ = print_string ((fst c)^" : "^(String.concat "," (List.map string_of_imm (snd c)))^" ") in c) fl1 in
+  let _ = print_string("\nfl2: ") in 
+  let _ = List.map (fun c -> 
+    let _ = print_string ((fst c)^" : "^(String.concat "," (List.map string_of_imm (snd c)))^" ") in c) fl2 in *)
+  let rec helper f1 f2 =
+    match (f1, f2) with
+    | ([], []) -> true
+    | (vl :: tl, vr :: tr ) -> 
+        (match vl,vr with
+          | _ , CP.Var(sv,_)
+          | CP.Var(sv,_), _ -> if CP.is_anon_var sv then true && helper tl tr else false
+          | _  , _-> if CP.eq_exp_no_aset vl vr then true && helper tl tr else false)
+    | (_, _) -> false
+  in 
+	match fv1 with
+	| [] -> ()
+	| x::xs -> let matched_fields = List.filter (fun c -> if (String.compare (fst c) (fst x)) == 0 then true else false) fv2
+		    in (*let _ = List.map
+		    (fun c -> let _ = print_string ("fl2: "^(String.concat "," (List.map string_of_imm (snd c)))^"\n") in c) fl2
+		    in let _ = List.map
+		    (fun c -> let _ = print_string ("fl1: "^(String.concat "," (List.map string_of_imm (snd c)))^"\n") in c) fl1
+		    in *)let tmp = (List.for_all (fun c -> helper (snd x) (snd c))
+     	    (*let _ = 
+		    print_string ("Ann Lists: "^ (*(string_of_bool b) ^*)(String.concat "," (List.map string_of_imm (snd c)))^" :> "^
+		    		(String.concat "," (List.map string_of_imm (snd x)))^ "\n")
+		    in*)
+		    matched_fields)
+		    in (*let _ = print_string ((string_of_bool tmp)^"\n") 
+		    in*)  let _ = if (tmp || List.length matched_fields == 0) then () else 
+			Err.report_error { Err.error_loc = pos;
+			Err.error_text = "[mem.ml] : Memory Spec field values don't match";}
+		    in fv_match xs fv2 pos
 
 let rec fv_intersect_no_inter (fl1 : (ident * (CP.exp list)) list) (fl2: (ident * (CP.exp list)) list) 
 : (ident * (CP.exp list)) list =
@@ -375,6 +411,7 @@ let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MC
 		  let mfe2 = mpform.CF.mem_formula_exp in
 		  let f1 = CP.BForm((CP.BagSub(mfe1,mfe2,pos),None),None) in
 		  let _ = fl_subtyping mpform.CF.mem_formula_field_layout me.CF.mem_formula_field_layout pos in
+          let _ = fv_match mpform.CF.mem_formula_field_values me.CF.mem_formula_field_values pos in
 		  let _ = if (CF.is_empty_heap f) then ()
 		  	  else mem_guards_checking (MCP.pure_of_mix p) me.CF.mem_formula_guards pos in 
 		  let f = if me.CF.mem_formula_exact 
@@ -394,6 +431,7 @@ let rec xmem (f: CF.formula) (vl:C.view_decl list) (me: CF.mem_perm_formula): MC
 		    let mfe2 = mpform.CF.mem_formula_exp in
 		    let f1 = CP.BForm((CP.BagSub(mfe1,mfe2,pos),None),None) in
 		    let _ = fl_subtyping mpform.CF.mem_formula_field_layout me.CF.mem_formula_field_layout pos in
+            let _ = fv_match mpform.CF.mem_formula_field_values me.CF.mem_formula_field_values pos in
       		    let _ = if (CF.is_empty_heap f) then ()
 		    	    else mem_guards_checking (MCP.pure_of_mix p) me.CF.mem_formula_guards pos in 
 		    let f = if me.CF.mem_formula_exact 
@@ -2077,7 +2115,8 @@ match sst with
   | [] -> e
   | a::rest -> e_apply_subs rest (IP.e_apply_one a e) 
 
-let rec infer_mem_from_heap (hf: IF.h_formula) (prog:I.prog_decl) : IP.exp * ((ident * (IF.ann list)) list) = 
+let rec infer_mem_from_heap (hf: IF.h_formula) (prog:I.prog_decl) 
+: IP.exp * ((ident * (IF.ann list)) list) * ((ident * (IP.exp list)) list) = 
 match hf with
   | IF.Conj ({IF.h_formula_conj_h1 = h1; 
 	IF.h_formula_conj_h2 = h2; 
@@ -2094,9 +2133,9 @@ match hf with
   | IF.Star ({IF.h_formula_star_h1 = h1; 
 	IF.h_formula_star_h2 = h2; 
 	IF.h_formula_star_pos = pos}) -> 
-      let b1,fl1 = (infer_mem_from_heap h1 prog) in
-      let b2,fl2 = (infer_mem_from_heap h2 prog) in
-      IP.BagUnion(b1::[b2],pos),fl1@fl2
+      let b1,fl1,fv1 = (infer_mem_from_heap h1 prog) in
+      let b2,fl2,fv2 = (infer_mem_from_heap h2 prog) in
+      IP.BagUnion(b1::[b2],pos),fl1@fl2,fv1@fv2
   | IF.HeapNode ({h_formula_heap_node = x; 
 	IF.h_formula_heap_name = c; 
 	IF.h_formula_heap_arguments = args;
@@ -2110,7 +2149,7 @@ match hf with
         let sublst = List.combine view_vars new_args in
         let view_mem = vdef.I.view_mem in
         match view_mem with
-          | Some a -> let mexp = e_apply_subs sublst a.IF.mem_formula_exp in (mexp , [])
+          | Some a -> let mexp = e_apply_subs sublst a.IF.mem_formula_exp in (mexp , [],[])
           (*| None -> *)
      with
       | Not_found -> let args_annl = List.combine args annl in
@@ -2123,17 +2162,23 @@ match hf with
                                  then IF.ConstAnn(Mutable) else IF.ConstAnn(Accs))
                      ) args_annl in
                      let fl = c,new_annl in
-          IP.Bag([IP.Var(x,pos)],pos),[fl])
-  | _ ->  IP.Bag([],no_pos),[]
+                     let new_fvs = List.map (fun c ->
+                       match c with
+                         | IP.IConst(i,_) -> c 
+                         | _ -> IP.Var(("Anon_"^(fresh_trailer()),Unprimed),no_pos) 
+                     ) args in
+                     let fv = c,new_fvs in
+          IP.Bag([IP.Var(x,pos)],pos),[fl],[fv])
+  | _ ->  IP.Bag([],no_pos),[],[]
 
 let rec infer_mem_from_formula (f: IF.formula) (prog: I.prog_decl) (mexp:IP.exp): 
-IF.formula *((ident * (IF.ann list)) list) = 
+IF.formula * (IP.formula list) * ((ident * (IF.ann list)) list) * ((ident * (IP.exp list)) list) = 
 match f with
   | IF.Base ({IF.formula_base_heap = h;
              IF.formula_base_pure = p;
              IF.formula_base_flow = fl;
              IF.formula_base_and = a;
-             IF.formula_base_pos = pos;})-> let new_exp,fieldl = infer_mem_from_heap h prog in
+             IF.formula_base_pos = pos;})-> let new_exp,fieldl,fieldv = infer_mem_from_heap h prog in
                                             let new_p = IP.BForm(((IP.mkEq mexp new_exp pos),None),None) in
                                            let and_p = IP.And(p,new_p,pos) in
                                            IF.Base{IF.formula_base_heap = h;
@@ -2141,13 +2186,13 @@ match f with
                                                    IF.formula_base_flow = fl;
                                                    IF.formula_base_and = a;
                                                    IF.formula_base_pos = pos;
-                                                  },fieldl
+                                                  },[p],fieldl,fieldv
   | IF.Exists ({IF.formula_exists_qvars = qvars;
                 IF.formula_exists_heap = h;
                 IF.formula_exists_pure = p;
                 IF.formula_exists_flow = fl;
                 IF.formula_exists_and = a;
-                IF.formula_exists_pos = pos;})-> let new_exp,fieldl = infer_mem_from_heap h prog in
+                IF.formula_exists_pos = pos;})-> let new_exp,fieldl,fieldv = infer_mem_from_heap h prog in
                                             let new_p = IP.BForm(((IP.mkEq mexp new_exp pos),None),None) in
                                            let and_p = IP.And(p,new_p,pos) in
                                            IF.Exists{IF.formula_exists_qvars = qvars;
@@ -2156,63 +2201,70 @@ match f with
                                                      IF.formula_exists_flow = fl;
                                                      IF.formula_exists_and = a;
                                                      IF.formula_exists_pos = pos;
-                                                    },fieldl
+                                                    },[p],fieldl,fieldv
   | IF.Or ({IF.formula_or_f1 = f1;
             IF.formula_or_f2 = f2;
            IF.formula_or_pos = pos;}) ->  
-      let new_f1,fl1 = (infer_mem_from_formula f1 prog mexp) in
-      let new_f2,fl2 = (infer_mem_from_formula f2 prog mexp) in
+      let new_f1,p1,fl1,fv1 = (infer_mem_from_formula f1 prog mexp) in
+      let new_f2,p2,fl2,fv2 = (infer_mem_from_formula f2 prog mexp) in
       IF.Or
       {IF.formula_or_f1 = new_f1;
        IF.formula_or_f2 = new_f2;
        IF.formula_or_pos = pos;
-      },fl1@fl2
+      },p1@p2,fl1@fl2,fv1@fv2
 
 let rec infer_mem_from_struc_formula (sf: IF.struc_formula) (prog:I.prog_decl) (mexp:IP.exp) : 
-IF.struc_formula *((ident * (IF.ann list)) list)=
+IF.struc_formula *(IP.formula list) *((ident * (IF.ann list)) list) * ((ident * (IP.exp list)) list)=
   match sf with
     | IF.EOr ({IF.formula_struc_or_f1 = f1;
                IF.formula_struc_or_f2 = f2;
               IF.formula_struc_or_pos = pos;}) -> 
-        let new_f1,fl1 = infer_mem_from_struc_formula f1 prog mexp in
-        let new_f2,fl2 = infer_mem_from_struc_formula f2 prog mexp in
+        let new_f1,p1,fl1,fv1 = infer_mem_from_struc_formula f1 prog mexp in
+        let new_f2,p2,fl2,fv2 = infer_mem_from_struc_formula f2 prog mexp in
         IF.EOr{ IF.formula_struc_or_f1 = new_f1;
         IF.formula_struc_or_f2 = new_f2;
-        IF.formula_struc_or_pos = pos;},fl1@fl2
+        IF.formula_struc_or_pos = pos;},p1@p2,fl1@fl2,fv1@fv2
     | IF.EBase({IF.formula_struc_explicit_inst = ei;
                IF.formula_struc_implicit_inst = ii;
                IF.formula_struc_exists = e;
                IF.formula_struc_base = f;
                IF.formula_struc_continuation = c;
                IF.formula_struc_pos = pos}) -> 
-        let new_f,fl = infer_mem_from_formula f prog mexp in 
+        let new_f,p,fl,fv = infer_mem_from_formula f prog mexp in 
               IF.EBase{IF.formula_struc_explicit_inst = ei;
                IF.formula_struc_implicit_inst = ii;
                IF.formula_struc_exists = e;
                IF.formula_struc_base = new_f;
                IF.formula_struc_continuation = c;
-               IF.formula_struc_pos = pos},fl
+               IF.formula_struc_pos = pos},p,fl,fv
     | IF.ECase({IF.formula_case_branches = cb;
                IF.formula_case_pos = pos}) ->
         let fs = List.map (fun (f,_) -> f) cb in
-        let new_cb_fls = List.map (fun (f,sf) -> infer_mem_from_struc_formula sf prog mexp) cb in
-        let new_cbs,fls = List.split new_cb_fls in
+        let new_cbs_lst = List.map (fun (f,sf) -> infer_mem_from_struc_formula sf prog mexp) cb in
+        let new_cbs = List.map (fun (f,_,_,_) -> f) new_cbs_lst in
+        let ps = List.map (fun (_,f,_,_) -> f) new_cbs_lst in
+        let fls = List.map (fun (_,_,f,_) -> f) new_cbs_lst in
+        let fvs = List.map (fun (_,_,_,f) -> f) new_cbs_lst in
         IF.ECase({IF.formula_case_branches = List.combine fs new_cbs;
-                 IF.formula_case_pos = pos;}),(List.flatten fls)
-    | IF.EAssume(f,flbl,entyp)-> let new_f,fl = infer_mem_from_formula f prog mexp in
-                                 IF.EAssume(new_f,flbl,entyp),fl
+                 IF.formula_case_pos = pos;}),(List.flatten ps),(List.flatten fls),(List.flatten fvs)
+    | IF.EAssume(f,flbl,entyp)-> let new_f,p,fl,fv = infer_mem_from_formula f prog mexp in
+                                 IF.EAssume(new_f,flbl,entyp),p,fl,fv
     | IF.EList(ls) -> let slds = List.map (fun (sld,sf) -> sld) ls in
-           let new_sfs_fls = List.map (fun (_,sf) -> infer_mem_from_struc_formula sf prog mexp) ls in
-           let new_sfs,fls = List.split new_sfs_fls in
+           let new_sfs_lst = List.map (fun (_,sf) -> infer_mem_from_struc_formula sf prog mexp) ls in
+           let new_sfs = List.map (fun (f,_,_,_) -> f) new_sfs_lst in
+           let ps = List.map (fun (_,f,_,_) -> f) new_sfs_lst in
+           let fls = List.map (fun (_,_,f,_) -> f) new_sfs_lst in
+           let fvs = List.map (fun (_,_,_,f) -> f) new_sfs_lst in
            let new_ls = List.combine slds new_sfs in
-           IF.EList(new_ls),(List.flatten fls)
+           IF.EList(new_ls),(List.flatten ps),(List.flatten fls),(List.flatten fvs)
 
 let infer_mem_specs (vdef:I.view_decl) (prog:I.prog_decl) : I.view_decl =
   let mf = vdef.I.view_mem in
   match mf with
-  | Some a -> let iform,fl = infer_mem_from_struc_formula vdef.I.view_formula prog a.IF.mem_formula_exp in
+  | Some a -> let iform,p,fl,fv = infer_mem_from_struc_formula vdef.I.view_formula prog a.IF.mem_formula_exp in
               let mgfl = List.map (fun c -> IP.mkTrue no_pos) fl in
               let new_mf = {a with IF.mem_formula_field_layout = fl;
+                           IF.mem_formula_field_values = fv;
                            IF.mem_formula_guards = mgfl;} in
               {vdef with I.view_formula = iform;
               I.view_mem = Some(new_mf);}

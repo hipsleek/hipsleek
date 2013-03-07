@@ -14,7 +14,6 @@ ll<n,R> == self = null & n = 0
 		or self::node<_@L,p,_@A> * p::ll<n-1,Rp> //& R = union(Rp,{self})
 		inv n >= 0
 		memE R ->();
-		//mem R->(node<@L,@M,@A>);
 
 /* view for a sorted list */
 
@@ -23,14 +22,12 @@ sll<n, sm, lg, R> == self = null & n = 0 & sm <= lg
 	& qmin <= qs & ql <= lg & sm <= qmin) //& R = union(Rq,{self}))
 	inv n >= 0 & sm <= lg
 	memE R->();
-	//mem R->(node<@L,@A,@M>);
 
 /* view for list segment */	
 lseg<n,R,p> == self = p & n = 0
 	or self::node<_@L,q,_@A> * q::lseg<n-1,Rq,p>// & R = union(Rq,{self})
 	inv n>=0
 	memE R->();
-	//mem R->(node<@L,@M,@A>);
 	
 /* view for sorted list segment */
 slseg<n,sm,lg,R,p> == self = p & n = 0 & sm <= lg 
@@ -38,7 +35,6 @@ slseg<n,sm,lg,R,p> == self = p & n = 0 & sm <= lg
 	& qmin <= qs & ql <= lg & sm <= qmin) //& R = union(Rq,{self}))
 	inv n >= 0 & sm <= lg
 	memE R->();
-	//mem R->(node<@L,@A,@M>);
 	
 lemma self::sll<n,sm,lg,R> -> self::ll<n,R>;
 
