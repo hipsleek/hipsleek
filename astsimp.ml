@@ -209,13 +209,16 @@ let op_map = Hashtbl.create 19
   
 let _ =
   List.map (fun (op, func) -> Hashtbl.add op_map op func)
-    [ (I.OpPlus, "add___"); (I.OpMinus, "minus___"); (I.OpMult, "mult___");
+    [ (*(I.OpPlus, "add___");*) (I.OpMinus, "minus___"); (I.OpMult, "mult___");
       (I.OpDiv, "div___"); (I.OpMod, "mod___"); (I.OpEq, "eq___");
       (I.OpNeq, "neq___"); (I.OpLt, "lt___"); (I.OpLte, "lte___");
       (I.OpGt, "gt___"); (I.OpGte, "gte___"); (I.OpLogicalAnd, "land___");
       (I.OpLogicalOr, "lor___"); (I.OpIsNull, "is_null___");
       (I.OpIsNotNull, "is_not_null___");
     ]
+
+let _ = if !Globals.check_integer_overflow then Hashtbl.add op_map I.OpPlus "safe_sadd___"
+  else Hashtbl.add op_map I.OpPlus "add___"
 
 (**
  * Function of signature 
