@@ -1,0 +1,48 @@
+/*
+As-If Infinitely Ranged Integer Model,
+http://www.sei.cmu.edu/reports/10tn008.pdf
+*/
+/* Initialize si1 and si2 
+if (si1 > 0){
+if (si2 > 0) {
+if (si1 > \inf - si2) {
+}
+}
+else { 
+if (si2 < (-\inf - si1)) {
+}
+}
+} 
+else {
+if (si2 > 0) { 
+if (si1 < (-\inf - si2)) {
+}
+}
+else { 
+if ((si1!=0) && (si2<(\inf -si1))) {
+}
+}
+}*/
+
+int __safe_sadd(int si1, int si2)
+case { si1 > 0 -> case { si2 > 0 -> case { si1 > (\inf - si2) -> 
+					ensures true & flow __Error;
+				     si1 <= (\inf - si2) -> ensures res = si1 + si2;
+				}
+		   si2 <= 0 ->  ensures true & flow __Error;
+		}
+ 	si1 <= 0 -> case { si2 > 0 -> case { si1 < (-\inf - si2) -> 
+				ensures true & flow __Error;
+				     si1 >= (-\inf - si2) -> ensures res = si1 + si2;
+				}
+		     si2 <= 0 -> case { si1!=0 & si2 < (\inf -si1) -> 
+				ensures true & flow __Error;
+					si1=0 | si2 >=(\inf -si1) -> 
+					ensures res = si1 + si2;}
+		}
+}
+{
+int result;
+result = si1 + si2;
+return result;
+}
