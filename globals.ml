@@ -557,7 +557,7 @@ let self = "self"
 
 let constinfinity = "ZInfinity"
 let deep_split_disjuncts = ref false
-let check_integer_overflow = ref false
+let check_integer_overflow = ref true
 
 let this = "this"
 
