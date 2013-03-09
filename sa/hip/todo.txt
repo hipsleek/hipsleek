@@ -167,3 +167,15 @@ Possible to extract K(Y) ? yielding:
   or y_573=y_574
 
 *************************************
+
+# aux.slk
+
+infer [G2] x::node<_,p> * p::node<_,p2>*G2(p2,y)*K(y) & p!=null 
+    |- x::node<_,p>*G2(p,y)*K(y).
+print residue.
+/*
+FAIL but later appear as in next entailment!
+ p::node<Anon_12,p2>@M * G2(p2,y)& XPURE(K(y)) --> G2(p,y)&true,
+ p::node<Anon_12,p2>@M * G2(p2,y)& XPURE(K(y)) --> G2(p,y)&true,
+*/
+
