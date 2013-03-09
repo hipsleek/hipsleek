@@ -25,7 +25,7 @@ FAIL but later appear as in next entailment!
  p::node<Anon_12,p2>@M * G2(p2,y)& XPURE(K(y)) --> G2(p,y)&true,
 */
 
-
+/*
 infer [G2] x::node<_,y> |- x::node<_,p>*G2(p,y).
 print residue.
 /* Good
@@ -53,4 +53,4 @@ pass results.
 
 */
 
-
+*/
