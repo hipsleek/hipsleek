@@ -131,3 +131,33 @@ note: H2(res,y): OK
 # qsort.ss:
 
 qsort: after ins-1.ss is fixed
+
+
+# app.ss
+
+Used:
+  infer [H,K,G]
+  requires H(x)*K(y)
+  ensures G(x,y);//'
+
+*************************************
+*******relational definition ********
+*************************************
+[ G(x_572,y_573) ::= x_572::node<val_34_550,y_574>@M * HP_575(y_574,y_573)&true,
+ H(x_578) ::= x_578::node<val_34_526',next_34_527'>@M * HP_545(next_34_527')&true,
+ HP_575(y_574,y_573) ::= 
+ y_574::node<val_34_550,y_576>@M * HP_575(y_576,y_573)&true
+ or K(y_573)&y_573=y_574
+ ,
+ HP_545(v_node_34_579) ::= 
+ emp&v_node_34_579=null
+ or v_node_34_579::node<val_34_526',next_34_527'>@M * HP_545(next_34_527')&
+    true
+ ]
+
+Possible to extract K(Y) ? yielding:
+
+ G(x_572,y) ::= x_572::node<val_34_550,y_574>@M * HP_575(y_574,y) * K(y),
+ HP_575(y_574,y_573) ::= 
+  y_574::node<val_34_550,y_576>@M * HP_575(y_576,y_573)&true
+  or y_573=y_574

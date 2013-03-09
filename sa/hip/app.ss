@@ -23,9 +23,12 @@ void append(node x, node y)
   infer [H,K,G]
   requires H(x)*K(y)
   ensures G(x,y);//'
-*/
   infer [H,G]
   requires H(x)
+  ensures G(x,y);//'
+*/
+  infer [H,K,G]
+  requires H(x)*K(y)
   ensures G(x,y);//'
 {
 	if (x.next == null) x.next = y;	
