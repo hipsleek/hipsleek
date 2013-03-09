@@ -9,7 +9,9 @@ echo "ll-append6.ss"
 echo "ll-append7.ss"
 ../../hip ll-append7.ss --sa-dangling -cp-test cp/ll-append7.cp | grep Compare
 echo "ll-append8.ss"
-../../hip ll-append8.ss --sa-dangling --sa-inlining -cp-test cp/ll-append8.cp | grep Compare
+../../hip ll-append8.ss  -cp-test cp/ll-append8.cp | grep Compare
+echo "ll-append8.ss with --sa-danling"
+../../hip ll-append8.ss --sa-dangling --sa-inlining -cp-test cp/ll-append8_w_dl.cp | grep Compare
 echo "ll-append9.ss"
 ../../hip ll-append9.ss --sa-dangling --sa-inlining -cp-test cp/ll-append9.cp | grep Compare
 echo "ll-append10.ss"
