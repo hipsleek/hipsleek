@@ -1,0 +1,20 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+HeapPred K(node a).
+
+infer [] K(y) |- K(y).
+// should succeed
+
+infer [] K(x) & x=y |- K(y).
+// should succeed
+
+
+infer [] K(null) & null=y |- K(y).
+// should succeed
+
+infer [] K(x) |- K(y).
+// should fail
+

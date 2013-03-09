@@ -1,0 +1,36 @@
+data node {
+	int val; 
+	node next;	
+}.
+
+HeapPred K(node a).
+HeapPred G2(node a, node b).
+HeapPred G(node a, node b).
+
+/*
+infer [G2] x::node<_,y> * K(y) |- x::node<_,p>*G2(p,y)*K(y).
+print residue.
+
+infer [G2] x::node<_,p> * p::node<_,p2>*G2(p2,y)*K(y) & p!=null 
+    |- x::node<_,p>*G2(p,y)*K(y).
+print residue.
+*/
+
+infer [G2,K] x::node<_,y> * K(y) |- x::node<_,p>*G2(p,y)*K(y).
+print residue.
+
+/*
+*************************************
+*******relational assumption ********
+*************************************
+[ emp&p=y &  XPURE(K(y)) --> G2(p,y)&true,
+ K(y)&p=y --> K(y)&true]
+*************************************
+ <1>emp&Anon_11=Anon_12 & p=y&{FLOW,(19,20)=__norm}[]
+
+I think if K is not being inferred, we can simply treat
+it like a data node. In this case, the matching will
+just occur silently, once we manage to prove that
+the arguments are identical.
+
+*/
