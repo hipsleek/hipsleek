@@ -209,16 +209,13 @@ let op_map = Hashtbl.create 19
   
 let _ =
   List.map (fun (op, func) -> Hashtbl.add op_map op func)
-    [ (*(I.OpPlus, "add___");*) (I.OpMinus, "minus___"); (I.OpMult, "mult___");
+    [ (I.OpPlus, "add___"); (I.OpMinus, "minus___"); (I.OpMult, "mult___");
       (I.OpDiv, "div___"); (I.OpMod, "mod___"); (I.OpEq, "eq___");
       (I.OpNeq, "neq___"); (I.OpLt, "lt___"); (I.OpLte, "lte___");
       (I.OpGt, "gt___"); (I.OpGte, "gte___"); (I.OpLogicalAnd, "land___");
       (I.OpLogicalOr, "lor___"); (I.OpIsNull, "is_null___");
       (I.OpIsNotNull, "is_not_null___");
     ]
-
-let _ =  if !Globals.check_integer_overflow then Hashtbl.add op_map I.OpPlus "safe_sadd___"
-         else Hashtbl.add op_map I.OpPlus "add___"
 
 (**
  * Function of signature 
@@ -230,6 +227,14 @@ let _ =  if !Globals.check_integer_overflow then Hashtbl.add op_map I.OpPlus "sa
 let array_update_call = "update___"
 let array_access_call = "array_get_elm_at___"
 let array_allocate_call = "aalloc___"
+
+let get_binop_call_safe_int (bop : I.bin_op) : ident =
+  match bop with
+  | I.OpPlus -> "safe_sadd___"
+  | _ -> (try Hashtbl.find op_map bop
+         with
+           | Not_found -> failwith
+               ("binary operator " ^ ((Iprinter.string_of_binary_op bop) ^ " is not supported")))
 	  
 let get_binop_call (bop : I.bin_op) : ident =
   try Hashtbl.find op_map bop
@@ -243,7 +248,7 @@ let assign_op_to_bin_op_map =
   [ (I.OpPlusAssign, I.OpPlus); (I.OpMinusAssign, I.OpMinus);
     (I.OpMultAssign, I.OpMult); (I.OpDivAssign, I.OpDiv);
     (I.OpModAssign, I.OpMod) ]
-  
+
 let bin_op_of_assign_op (aop : I.assign_op) =
   List.assoc aop assign_op_to_bin_op_map
 
@@ -2321,7 +2326,7 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
                       "Pre- and post-conditions of coercion rules must not be disjunctive";
               }
 and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp_type =
-  Debug.ho_1 "trans_exp"
+  Debug.no_1 "trans_exp"
       Iprinter.string_of_exp
       (pr_pair Cprinter.string_of_exp string_of_typ) 
       (fun _ -> trans_exp_x prog proc ie) ie 
@@ -2632,7 +2637,21 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   I.exp_call_nrecv_pos = pos;}in 
               helper new_e)
             else
-              (let b_call = get_binop_call b_op in
+              (let b_call = if !Globals.check_integer_overflow then (let func exp = match exp with
+                | I.Var v -> Some([v.I.exp_var_name])
+                | _ -> Some([]) in
+              let e1_vars = I.fold_exp e1 func List.flatten [] in
+              (*let _ = print_string ("\ne1_vars: "^(String.concat " " e1_vars)) in*)
+              let e2_vars = I.fold_exp e2 func List.flatten [] in
+              (*let _ = print_string ("\ne2_vars: "^(String.concat " " e2_vars)) in*)
+              let local_vars = List.map (fun (t,id) -> id) (E.names_on_top ()) in
+              (*let _ = print_string ("\nlocal_vars: "^(String.concat " " local_vars)) in*)
+              let flag1 = List.for_all (fun c -> List.mem c local_vars) e1_vars in
+              let flag2 = List.for_all (fun c -> List.mem c local_vars) e2_vars in
+              if flag1 && flag2 then get_binop_call b_op
+              else get_binop_call_safe_int b_op
+               )
+              else get_binop_call b_op in
               let new_e = I.CallNRecv {
                   I.exp_call_nrecv_method = b_call;
                   I.exp_call_nrecv_lock = None;
