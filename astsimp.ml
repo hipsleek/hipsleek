@@ -5928,7 +5928,7 @@ and gather_type_info_b_formula_x prog b0 stab =
           end
       with
 	    | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
-        | _ -> failwith ("gather_type_info_b_formula: error with relation "^r)
+        | _ -> print_endline ("gather_type_info_b_formula: error with relation "^r)
       )
     | IP.XPure({IP.xpure_view_node = vn ;
 		IP.xpure_view_name = r;
