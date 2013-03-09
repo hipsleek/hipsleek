@@ -2410,7 +2410,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option : bool =
                         print_endline (Infer.infer_rel_stk # string_of_reverse);
                         print_endline "*************************************";
                         Infer.infer_rel_stk # reset;
-                      end;                    
+                      end;
                     if not(Infer.rel_ass_stk# is_empty) then
                       begin
                         print_endline ""; 

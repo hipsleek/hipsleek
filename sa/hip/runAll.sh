@@ -45,7 +45,7 @@ echo "ll-get-next-next"
 echo "ll-next2"
 ../../hip ll-next2.ss --sa-dangling --sa-inlining -cp-test cp/ll-next2.cp | grep Compare
 echo "ll-next3"
-../../hip ll-next3.ss --sa-split -cp-test cp/ll-next3.cp | grep Compare
+../../hip ll-next3.ss -cp-test cp/ll-next3.cp | grep Compare
 echo "ll-next4"
 ../../hip ll-next4.ss --sa-dangling --sa-inlining -cp-test cp/ll-next4.cp | grep Compare
 echo "ll-next5"

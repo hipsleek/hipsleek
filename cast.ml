@@ -984,9 +984,10 @@ let look_up_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) (name : st
   try
       let proc = Hashtbl.find procs name in
       proc.proc_callee_hpdefs
-  with Not_found -> Error.report_error {
-      Error.error_loc = no_pos;
-      Error.error_text = "Procedure " ^ name ^ " is not found."}
+  with Not_found -> []
+(* Error.report_error { *)
+      (* Error.error_loc = no_pos; *)
+      (* Error.error_text = "Procedure " ^ name ^ " is not found."} *)
 
 let update_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) caller_name (callee_name : string) = 
   try
