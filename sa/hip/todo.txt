@@ -179,3 +179,10 @@ FAIL but later appear as in next entailment!
  p::node<Anon_12,p2>@M * G2(p2,y)& XPURE(K(y)) --> G2(p,y)&true,
 */
 
+# aux5a.slk
+
+ H<> -> tree<> fails as expected, 
+but
+ tree<> <- H<> succeeds instead
+ 
+
