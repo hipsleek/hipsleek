@@ -1323,54 +1323,6 @@ let generate_linking_svl drop_hpargs total_unk_map=
   Debug.no_1 "generate_linking_svl" pr1 pr2
       (fun _ -> generate_linking_svl_x drop_hpargs total_unk_map) drop_hpargs
 
-let generate_xpure_view_x drop_hpargs total_unk_map=
-  let rec lookup_xpure_view hp rem_map=
-    match rem_map with
-      | [] -> []
-      | (hp0,xpv)::tl ->
-          if CP.eq_spec_var hp0 hp then
-            [xpv]
-          else lookup_xpure_view hp tl
-  in
-  let generate_xpure_view_one_hp pos (hp,args)=
-    let hp_name = CP.name_of_spec_var hp in
-    let p,unk_svl,unk_map =
-      let xpvs = lookup_xpure_view hp total_unk_map in
-      match xpvs with
-        | [xp] ->
-            let xp_r, xp_args = match xp.CP.xpure_view_node with
-              | None -> None, xp.CP.xpure_view_arguments
-              |Some _ -> Some (List.hd args), (List.tl args)
-            in
-          let new_xpv = {xp with CP.xpure_view_node =  xp_r;
-              xpure_view_arguments =  xp_args
-                        }
-          in
-          let p = CP.mkFormulaFromXP new_xpv in
-          (p,args,[])
-        | [] ->
-            let xpv = { CP.xpure_view_node = None;
-                       CP.xpure_view_name = hp_name;
-                       CP.xpure_view_arguments = args;
-                       CP.xpure_view_remaining_branches= None;
-                       CP.xpure_view_pos = no_pos;
-            }
-            in
-            let p = CP.mkFormulaFromXP xpv in
-          (p,args,[(hp,xpv)])
-        | _ -> report_error no_pos "infer.generate_xpure_view: not possible"
-    in
-    (p,unk_svl,unk_map)
-  in
-  let ps,ls_fr_svl,ls_unk_map = split3 (List.map (generate_xpure_view_one_hp no_pos) drop_hpargs) in
-  (List.concat ls_fr_svl,CP.conj_of_list ps no_pos,List.concat ls_unk_map)
-
-let generate_xpure_view drop_hpargs total_unk_map=
-  let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
-  let pr2 = pr_triple !CP.print_svl !CP.print_formula
-    (pr_list (pr_pair !CP.print_sv CP.string_of_xpure_view)) in
-  Debug.no_1 "generate_xpure_view" pr1 pr2
-      (fun _ -> generate_xpure_view_x drop_hpargs total_unk_map) drop_hpargs
 (*
 1.  H(x) --> x::node<_,p>: p is forwarded
 2.  H(x,y) --> x::node<_,p>: p and y are forwarded
@@ -1542,7 +1494,7 @@ let find_undefined_selective_pointers_x prog lfb rfb lmix_f rmix_f unmatched rhs
   let selected_hps = CP.diff_svl selected_hps0 drop_hps in
   (*unknown svl*)
   let unk_svl,ps,unk_map = (*generate_linking_svl*)
-    generate_xpure_view (List.filter (fun (hp0,_) -> CP.mem_svl hp0 selected_hps0) drop_hpargs) total_unk_map in
+    CF.generate_xpure_view (List.filter (fun (hp0,_) -> CP.mem_svl hp0 selected_hps0) drop_hpargs) total_unk_map in
   (*========*)
   (*find undefined ptrs of all hrel args*)
   (*two cases: rhs unfold (mis-match is a node) and lhs fold (mis-match is a unk hp)*)
@@ -1895,8 +1847,8 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
                       CF.hprel_kind = CP.RelAssume (CP.remove_dups_svl (lhrs@rhrs@rvhp_rels));
                       unk_svl = total_unk_svl;(*inferred from norm*)
                       unk_hps = [];
-                      predef_svl = (closed_hprel_args_def@total_unk_svl);
-                      hprel_lhs = CF.Base new_lhs_b;
+                      predef_svl = (closed_hprel_args_def@total_unk_svl@matched_svl);
+                      hprel_lhs = CF.remove_neqNull_svl matched_svl (CF.Base new_lhs_b);
                       hprel_rhs = CF.Base new_rhs_b;
             }]
           in

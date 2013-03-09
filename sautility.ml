@@ -2039,9 +2039,9 @@ let process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls c
 let process_one_f prog org_args args next_roots hp_subst sh_ldns com_eqNulls com_eqPures com_hps (ldns, f)=
   let pr1 = !CP.print_svl in
   let pr2 = Cprinter.prtt_string_of_formula in
-  Debug.no_3 "process_one_f" pr1 pr1 pr2 pr2
-      (fun _ _ _ -> process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls com_eqPures com_hps (ldns, f))
-      org_args args f
+  Debug.no_4 "process_one_f" pr1 pr1 pr2 (pr_list !CP.print_formula) pr2
+      (fun _ _ _ _-> process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls com_eqPures com_hps (ldns, f))
+      org_args args f com_eqPures
 
 
 let get_shortest_lnds ll_ldns min=
@@ -2581,7 +2581,7 @@ let get_longest_common_hnodes_list_x prog cdefs unk_hps unk_svl hp r non_r_args 
    let min,sh_ldns,eqNulls,eqPures,hprels = get_min_number_new prog args lldns in
    (*remove hp itself*)
    let hprels1 = List.filter (fun (hp1,_,_) -> not(CP.eq_spec_var hp hp1)) hprels in
-   if min = 0 && eqNulls = [] then
+   if min = 0 && eqNulls = [] && eqPures= [] then
      (*mk_hprel_def*)
      let hpdef = mk_hprel_def prog cdefs unk_hps unk_svl hp args fs no_pos in
      hpdef
@@ -3246,7 +3246,7 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
       let xp_ps,rem_ps = List.partition CP.is_xpure ps in
       let xp_hpargs = List.map CP.extract_xpure xp_ps in
       let xp_ps = (List.map (lookup_hpdefs lhpdefs) xp_hpargs) in
-      let new_p =  CP.conj_of_list (rem_ps@xp_ps) no_pos in
+      let new_p =  CP.conj_of_list (CP.remove_redundant_helper (rem_ps@xp_ps) []) no_pos in
       new_p
     in
     let rec helper f=
@@ -3276,8 +3276,10 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
   in
   let subst_pure_hp_unk args0 ls_unk_hpargs_fr f=
     let ls_used_hp_args = CF.get_HRels_f f in
+    let ls_xpures = CF.get_xpure_view f in
+    let ls_used_hp_args0 = ls_used_hp_args @ ls_xpures in
     (*look up*)
-    let r = List.map (look_up_get_eqs_ss args0 ls_unk_hpargs_fr) ls_used_hp_args in
+    let r = List.map (look_up_get_eqs_ss args0 ls_unk_hpargs_fr) ls_used_hp_args0 in
     let ls_used_unk_hps,ls_eqs, ls_ss = split3 r in
     let used_unk_hps = List.concat ls_used_unk_hps in
     let eqs = List.concat ls_eqs in

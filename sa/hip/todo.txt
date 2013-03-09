@@ -100,10 +100,14 @@ This problem seems to be triggered at relational assumption:
 *************************************
 # ll-append15.ss:
 
-  H2(x,y)&x=null --> G2(x,y)&true,
-should be H2(x,y)&x=null & x'=y --> G2(x',y)&true,
+ H2(x_600,y_601) ::=
+ emp&x_600=null
+ or x_600::node<val_35_553',next_35_554'>@M * H2(next_35_554',y_601)&true
 
-todo: sth is wrong with lhs before call INFER.infer_collect_hp_rel
+==> 
+H2(x_600,y_601) ::=
+ emp&x_600=null & DL(y_601)
+ or x_600::node<val_35_553',next_35_554'>@M * H2(next_35_554',y_601)&true
 
 *************************************
 # ins-1.ss

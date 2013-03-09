@@ -1979,10 +1979,11 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_
         final_state
       else ctx
     in
-    (* let _ = DD.ninfo_pprint ("       sleek-logging (POST): "  ^ "\n" ^ (to_print)) pos in *)
+    (* let _ = DD.info_pprint ("       sleek-logging (POST): "  ^ "\n" ^ (to_print)) pos in *)
+    let _ = DD.info_pprint ("       sleek-logging (POST): "  ^ "\n") in
     let f1 = CF.formula_is_eq_flow post !error_flow_int in
     (* let f2 = CF.list_context_is_eq_flow cl !norm_flow_int in *)
-    (*  let _ = print_string ("\n WN 4 : "^(Cprinter.string_of_list_partial_context (*ctx*) fn_state)) in*)
+     (* let _ = print_string ("\n WN 4 : "^(Cprinter.string_of_list_partial_context (\*ctx*\) fn_state)) in *)
     let rs, prf =
       if f1 then
         begin

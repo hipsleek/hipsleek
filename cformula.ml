@@ -3341,6 +3341,35 @@ let extract_unk_hprel (f0:formula) =
   Debug.no_1 "extract_unk_hprel" pr1 pr2
       (fun _ ->  extract_unk_hprel_x f0) f0
 
+let get_xpure_view (f0:formula) =
+  let rec helper f=
+  match f with
+    | Base ({ formula_base_pure = p1;})
+    | Exists ({ formula_exists_pure = p1;}) ->
+        (
+            CP.get_xpure (MCP.pure_of_mix p1)
+        )
+    | Or {formula_or_f1 = f1;
+          formula_or_f2 = f2} ->
+        (helper f1) @ (helper f2)
+  in
+  helper f0
+
+let simplify_pure_f_x (f0:formula) =
+  let rec helper f=
+    match f with
+      | Base b-> Base {b with formula_base_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix b.formula_base_pure));}
+      | Exists e -> Exists {e with formula_exists_pure = MCP.mix_of_pure (CP.remove_redundant (MCP.pure_of_mix e.formula_exists_pure));}
+      | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+          formula_or_f2 = helper orf.formula_or_f2}
+  in
+  helper f0
+
+let simplify_pure_f (f0:formula) =
+  let pr= !print_formula in
+  Debug.ho_1 "simplify_pure_f" pr pr
+      (fun _ -> simplify_pure_f_x f0) f0
+
 let extract_HRel_orig hf=
   match hf with
     | HRel (hp, eargs, p ) -> (hp, eargs,p)
@@ -3791,6 +3820,129 @@ and filter_vars_hf hf rvs=
     | HTrue
     | HFalse
     | HEmp -> hf
+
+let generate_xpure_view_x drop_hpargs total_unk_map=
+  let rec lookup_xpure_view hp rem_map=
+    match rem_map with
+      | [] -> []
+      | (hp0,xpv)::tl ->
+          if CP.eq_spec_var hp0 hp then
+            [xpv]
+          else lookup_xpure_view hp tl
+  in
+  let generate_xpure_view_one_hp pos (hp,args)=
+    let hp_name = CP.name_of_spec_var hp in
+    let p,unk_svl,unk_map =
+      let xpvs = lookup_xpure_view hp total_unk_map in
+      match xpvs with
+        | [xp] ->
+            let xp_r, xp_args = match xp.CP.xpure_view_node with
+              | None -> None, xp.CP.xpure_view_arguments
+              |Some _ -> Some (List.hd args), (List.tl args)
+            in
+          let new_xpv = {xp with CP.xpure_view_node =  xp_r;
+              xpure_view_arguments =  xp_args
+                        }
+          in
+          let p = CP.mkFormulaFromXP new_xpv in
+          (p,args,[])
+        | [] ->
+            let xpv = { CP.xpure_view_node = None;
+                       CP.xpure_view_name = hp_name;
+                       CP.xpure_view_arguments = args;
+                       CP.xpure_view_remaining_branches= None;
+                       CP.xpure_view_pos = no_pos;
+            }
+            in
+            let p = CP.mkFormulaFromXP xpv in
+          (p,args,[(hp,xpv)])
+        | _ -> report_error no_pos "infer.generate_xpure_view: not possible"
+    in
+    (p,unk_svl,unk_map)
+  in
+  let ps,ls_fr_svl,ls_unk_map = split3 (List.map (generate_xpure_view_one_hp no_pos) drop_hpargs) in
+  (List.concat ls_fr_svl,CP.conj_of_list ps no_pos,List.concat ls_unk_map)
+
+let generate_xpure_view drop_hpargs total_unk_map=
+  let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
+  let pr2 = pr_triple !CP.print_svl !CP.print_formula
+    (pr_list (pr_pair !CP.print_sv CP.string_of_xpure_view)) in
+  Debug.no_1 "generate_xpure_view" pr1 pr2
+      (fun _ -> generate_xpure_view_x drop_hpargs total_unk_map) drop_hpargs
+
+let annotate_dl_hf hf0 unk_hps=
+  let rec helper hf=
+    match hf with
+      | Star {h_formula_star_h1 = hf1;
+              h_formula_star_h2 = hf2;
+              h_formula_star_pos = pos} ->
+          let n_hf1,ps1 = helper hf1 in
+          let n_hf2,ps2 = helper hf2 in
+          let new_hf=
+            match n_hf1,n_hf2 with
+              | (HEmp,HEmp) -> HEmp
+              | (HEmp,_) -> n_hf2
+              | (_,HEmp) -> n_hf1
+              | _ -> (Star {h_formula_star_h1 = n_hf1;
+                            h_formula_star_h2 = n_hf2;
+                            h_formula_star_pos = pos})
+          in
+          (new_hf, ps1@ps2)
+      | Conj { h_formula_conj_h1 = hf1;
+               h_formula_conj_h2 = hf2;
+               h_formula_conj_pos = pos} ->
+          let n_hf1,ps1 = helper hf1 in
+          let n_hf2,ps2 = helper hf2 in
+          (Conj { h_formula_conj_h1 = n_hf1;
+                 h_formula_conj_h2 = n_hf2;
+                 h_formula_conj_pos = pos}, ps1@ps2)
+      | Phase { h_formula_phase_rd = hf1;
+                h_formula_phase_rw = hf2;
+                h_formula_phase_pos = pos} ->
+          let n_hf1,ps1 = helper hf1 in
+          let n_hf2,ps2 = helper hf2 in
+          (Phase { h_formula_phase_rd = n_hf1;
+                  h_formula_phase_rw = n_hf2;
+                  h_formula_phase_pos = pos}, ps1@ps2)
+      | DataNode hd -> (hf,[])
+      | ViewNode hv -> (hf,[])
+      | HRel (hp, eargs, _) -> if CP.mem_svl hp unk_hps then
+            let args = (List.fold_left List.append [] (List.map CP.afv eargs)) in
+            let _,p,_ = generate_xpure_view [(hp,args)] [] in
+            (HEmp,[p])
+          else (hf,[])
+      | Hole _
+      | HTrue
+      | HFalse
+      | HEmp -> (hf,[])
+  in
+  helper hf0
+
+let annotate_dl_x (f0: formula) unk_hps =
+  let rec helper f=
+    match f with
+      | Base  b ->
+          let new_h,ps = annotate_dl_hf b.formula_base_heap unk_hps in
+          let new_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix b.formula_base_pure) (CP.conj_of_list ps no_pos) no_pos)
+          in
+          Base {b with formula_base_heap = new_h;
+              formula_base_pure = new_p;
+               }
+      | Exists e ->
+          let new_h,ps = annotate_dl_hf e.formula_exists_heap unk_hps in
+          let new_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix e.formula_exists_pure) (CP.conj_of_list ps no_pos) no_pos) in
+          Exists {e with formula_exists_heap = new_h;
+		          formula_exists_pure = new_p;}
+      | Or orf  -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+          formula_or_f2 = helper orf.formula_or_f2}
+  in
+  if unk_hps=[] then f0 else helper f0
+
+let annotate_dl (f0: formula) unk_hps =
+  let pr1 = !print_formula in
+  let pr2 = !CP.print_svl in
+  Debug.no_2 "annotate_dl" pr1 pr2 pr1
+      (fun _ _ ->  annotate_dl_x f0 unk_hps) f0 unk_hps
 
 let rec extract_pure (f0: formula)=
   let rec helper f=

@@ -2302,7 +2302,7 @@ and elim_exists_pure_branch_x (w : CP.spec_var list) (f0 : CP.formula) pos : CP.
     simplified_f
 
 (* --- added 11.05.2008 *)
-and entail_state_elim_exists es = 
+and entail_state_elim_exists_x es = 
   (* let f_prim = elim_exists es.es_formula in *)
   let f_prim,new_his = elim_exists_es_his es.es_formula es.es_history in
   (* 05.06.08 *)
@@ -2319,6 +2319,13 @@ and entail_state_elim_exists es =
   let simpl_f = CF.mkExists qvar h simpl_p t simpl_fl (CF.formula_and_of_formula base) (CF.pos_of_formula base) in (*TO CHECK*)
   Ctx{es with es_formula = simpl_f;
       es_history = new_his}   (*assuming no change in cache formula*)
+
+and entail_state_elim_exists es =
+  let pr1 = Cprinter.string_of_formula in
+  let pr2 es = pr1 es.CF.es_formula in
+  let pr3 = Cprinter.string_of_context in
+  Debug.no_1 "entail_state_elim_exists" pr2 pr3
+      (fun _ -> entail_state_elim_exists_x es) es
 
 and elim_exists_ctx_list (ctx0 : list_context) = 
   transform_list_context (entail_state_elim_exists, (fun c-> c)) ctx0

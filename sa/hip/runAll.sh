@@ -3,7 +3,7 @@ echo "ll-append3.ss"
 echo "ll-append4.ss"
 ../../hip ll-append4.ss --sa-dangling  --sa-inlining -cp-test cp/ll-append4.cp | grep Compare
 echo "ll-append5.ss"
-../../hip ll-append5.ss --sa-dangling --sa-inlining -cp-test cp/ll-append5.cp | grep Compare
+../../hip ll-append5.ss --sa-dangling --sa-inlining --sa-useless -cp-test cp/ll-append5.cp | grep Compare
 echo "ll-append6.ss"
 ../../hip ll-append6.ss --sa-dangling -cp-test cp/ll-append6.cp | grep Compare
 echo "ll-append7.ss"
