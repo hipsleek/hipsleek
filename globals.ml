@@ -539,7 +539,7 @@ let sa_en_norm = ref true
 
 let sa_en_split = ref false
 
-let sa_elim_dangling = ref false
+let sa_dangling = ref false
 
 let sa_refine_dang = ref false
 

@@ -156,7 +156,8 @@ let parse_file (parse) (source_file : string) =
   List.iter proc_one_cmd cmds 
 
 
-let main () = 
+let main () =
+  let _ = Printexc.record_backtrace !Globals.trace_failure in
   let iprog = { I.prog_data_decls = [iobj_def];
                 I.prog_global_var_decls = [];
                 I.prog_logical_var_decls = [];

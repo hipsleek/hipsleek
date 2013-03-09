@@ -3337,12 +3337,14 @@ let extract_unk_hprel_x (f0:formula) =
     | Exists ({ formula_exists_pure = p1;
         formula_exists_heap = h1;}) ->
         (
-            if (CP.isConstTrue (MCP.pure_of_mix p1)) then
-              match h1 with
-                | HRel (hp, _, _ ) -> [hp]
-                | _ -> report_error no_pos "CF.extract_HRel"
-            else
-              report_error no_pos "extract_unk_hprel_f"
+            if  not (is_unkown_heap h1) then
+              if (CP.isConstTrue (MCP.pure_of_mix p1)) then
+                match h1 with
+                  | HRel (hp, _, _ ) -> [hp]
+                  | _ -> report_error no_pos "CF.extract_HRel"
+              else
+                report_error no_pos "extract_unk_hprel_f"
+            else []
         )
     | Or {formula_or_f1 = f1;
           formula_or_f2 = f2} ->
@@ -4972,9 +4974,17 @@ let get_infer_vars_sel_hp_ctx ctx0=
   let rec helper ctx=
     match ctx with
       | Ctx es -> es.es_infer_vars_sel_hp_rel
-      | OCtx (ctx1,_) -> helper ctx1
+      | OCtx (ctx1,ctx2) -> (* CP.remove_dups_svl *) ((helper ctx1)(* @(helper ctx2) *))
   in
   helper ctx0
+
+let get_infer_vars_sel_hp_list_ctx lc=
+  match lc with
+    | FailCtx _ -> []
+    | SuccCtx cl -> List.fold_left (fun rs ctx->
+        let r = get_infer_vars_sel_hp_ctx ctx in
+        (rs@r)
+    ) [] cl
 
 let get_infer_vars_sel_post_hp_ctx ctx0=
   let rec helper ctx=

@@ -608,12 +608,12 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
     if not !Globals.disable_failure_explaining then ((not (CF.isFailCtx_gen rs)))
     else ((not (CF.isFailCtx rs))) in
   residues := Some (rs, res);
-  (res, rs)
+  (res, rs,v_hp_rel)
 
 let run_infer_one_pass ivars (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let pr = string_of_meta_formula in
   let pr1 = pr_list pr_id in
-  let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
+  let pr_2 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
   Debug.no_3 "run_infer_one_pass" pr1 pr pr pr_2 run_infer_one_pass ivars iante0 iconseq0
 
 (* the value of flag "exact" decides the type of entailment checking              *)
@@ -627,16 +627,16 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) (etype: e
   let with_timeout = 
     let fctx = CF.mkFailCtx_in (CF.Trivial_Reason
       (CF.mk_failure_may "timeout" Globals.timeout_error)) in
-    (false, fctx) in
+    (false, fctx,[]) in
   Procutils.PrvComms.maybe_raise_and_catch_timeout_sleek
     (run_entail_check iante0 iconseq0) etype with_timeout
 
 let run_entail_check (iante : meta_formula) (iconseq : meta_formula) (etype: entail_type) =
   let pr = string_of_meta_formula in
-  let pr_2 = pr_pair string_of_bool Cprinter.string_of_list_context in
+  let pr_2 = pr_triple string_of_bool Cprinter.string_of_list_context !CP.print_svl in
   Debug.no_2 "run_entail_check" pr pr pr_2 (fun _ _ -> run_entail_check iante iconseq etype) iante iconseq
 
-let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
+let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string) =
   DD.ninfo_hprint (add_str "residue: " !CF.print_list_context) residue no_pos;
   (* Termination: SLEEK result printing *)
   let term_res = CF.collect_term_ann_and_msg_list_context residue in
@@ -675,6 +675,7 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
     end
   else
     begin
+         (* let sel_hp_rels = CF.get_infer_vars_sel_hp_list_ctx residue in *)
       let s =
         if not !Globals.disable_failure_explaining then
           match CF.list_context_is_eq_flow residue false_flow_int with
@@ -684,6 +685,7 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
       in
       if t_valid then print_string (num_id^": Valid. "^s^"\n"^term_output^"\n")
       else print_string (num_id^": Fail. "^s^"\n"^term_output^"\n");
+      let hp_lst_assume = Infer.rel_ass_stk # get_stk in
       if not(Infer.rel_ass_stk# is_empty) then
         begin
           print_endline "*************************************";
@@ -693,6 +695,24 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
           print_endline "*************************************";
           Infer.rel_ass_stk # reset
         end;
+      (* let _ = Debug.info_pprint (" sel_hps:" ^ (!CP.print_svl sel_hps)) no_pos in *)
+      let ls_hprel, _(* ls_inferred_hps *), _ (* dropped_hps *) =
+        if !Globals.sa_en_norm && (hp_lst_assume <> []) then
+          Sa.infer_hps !cprog num_id hp_lst_assume
+              sel_hps [] []
+        else [],[],[]
+      in
+      if not(Sa.rel_def_stk# is_empty) then
+        begin
+		    print_endline ""; 
+		    print_endline "*************************************";
+		    print_endline "*******relational definition ********";
+		    print_endline "*************************************";
+            print_endline (Sa.rel_def_stk # string_of_reverse);
+		    print_endline "*************************************";
+              Sa.rel_def_stk #reset;
+        end;
+      ()
       (* already printed in the result *)
       (* if not(Infer.infer_rel_stk# is_empty) then *)
       (*   begin *)
@@ -708,11 +728,11 @@ let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string
   (* with e -> *)
   (*     let _ =  Error.process_exct(e)in *)
 
-let print_entail_result (valid: bool) (residue: CF.list_context) (num_id: string) =
+let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id: string) =
   let pr0 = string_of_bool in
   let pr = !CF.print_list_context in
   DD.no_2 "print_entail_result" pr0 pr (fun _ -> "") 
-    (fun _ _ -> print_entail_result valid residue num_id) valid residue
+    (fun _ _ -> print_entail_result sel_hps valid residue num_id) valid residue
 
 
 let print_exc (check_id: string) =
@@ -728,11 +748,12 @@ let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etyp
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in
   try 
-    let valid, rs = 
+    let valid, rs, _(*sel_hps*) = 
       wrap_proving_kind ("SLEEK_ENT"^nn) (run_entail_check iante iconseq) etype in
-    print_entail_result valid rs num_id
+    print_entail_result [] (*sel_hps*) valid rs num_id
   with ex -> 
-    let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
+      print_string "caught\n"; Printexc.print_backtrace stdout;
+      let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
     in ()
   (* with e -> print_exc num_id *)
 
@@ -788,12 +809,13 @@ let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_f
   let nn = "("^(string_of_int (sleek_proof_counter#inc_and_get))^") " in
   let num_id = "\nEntail "^nn in
   try 
-    let valid, rs = run_infer_one_pass ivars iante0 iconseq0 in
-    print_entail_result valid rs num_id
+    let valid, rs, sel_hps = run_infer_one_pass ivars iante0 iconseq0 in
+    print_entail_result sel_hps valid rs num_id
   with ex -> 
       (* print_exc num_id *)
-         let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
-         in ()
+      print_string "caught\n"; Printexc.print_backtrace stdout;
+      let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
+      in ()
 
 let process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
