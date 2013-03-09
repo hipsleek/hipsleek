@@ -298,7 +298,16 @@ let pr_wrap_opt hdr (f: 'a -> unit) (x:'a option) =
 (** if f e  is not true print with a cut in front of  hdr*)    
 let pr_wrap_test hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
   if (e x) then ()
-  else (fmt_cut (); fmt_string hdr; (wrap_box ("B",0) f x))
+  else 
+    begin
+      fmt_cut (); 
+      fmt_open_hbox ();
+      fmt_string hdr; 
+      (* f x; *)
+      wrap_box ("B",1) f x;
+      fmt_close_box()
+    end
+
 
 (** if f e  is not true print with a cut in front of  hdr*)    
 let pr_wrap (f: 'a -> unit) (x:'a) =
@@ -1266,9 +1275,9 @@ let rec pr_h_formula_for_spec h =
     (* (if pid==None then fmt_string "NN " else fmt_string "SS "); *)
     (* pr_formula_label_opt pid;  *)
     pr_spec_var sv; 
-    fmt_string ":6:"; 
+    fmt_string "::"; 
     if svs = [] then fmt_string (c^"<>") else pr_angle (c^perm_str) pr_spec_var svs;
-    pr_imm imm;
+(*    pr_imm imm;*)
     pr_derv dr;
     (* For example, #O[lem_29][Derv] means origins=[lem_29], and the heap node is derived*)
     if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion.*)
@@ -2115,9 +2124,10 @@ let pr_list_context (ctx:list_context) =
 
 let pr_context_short (ctx : context) = 
   let rec f xs = match xs with
-    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure,e.es_var_measures,e. es_var_zero_perm,e.es_trace)]
+    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,
+      e.es_var_measures,e. es_var_zero_perm,e.es_trace)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (f,(* ac, *)iv,ih,ip,vm,vperms,trace) =
+  let pr (f,(* ac, *)iv,ih,ip,ir,vm,vperms,trace) =
     fmt_open_vbox 0;
     pr_formula_wrap f;
     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
@@ -2125,6 +2135,7 @@ let pr_context_short (ctx : context) =
     (*pr_wrap (fun _ -> fmt_string "es_aux_conseq: "; pr_pure_formula ac) ();*)
     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; 
     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
+    pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;  
     pr_wrap_opt "es_var_measures: " pr_var_measures vm;
     pr_vwrap "es_trace: " pr_es_trace trace;
     fmt_string "\n";
@@ -2146,9 +2157,9 @@ let pr_formula_vperm_wrap t =
 
 let pr_context_list_short (ctx : context list) = 
   let rec f xs = match xs with
-    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure,e.es_var_zero_perm)]
+    | Ctx e -> [(e.es_formula,e.es_infer_vars@e.es_infer_vars_rel,e.es_infer_heap,e.es_infer_pure,e.es_infer_rel,e.es_var_zero_perm)]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let pr (f,(* ac, *)iv,ih,ip,vperms) =
+  let pr (f,(* ac, *)iv,ih,ip,ir,vperms) =
     fmt_open_vbox 0;
     pr_formula_wrap f;
     pr_wrap_test "es_var_zero_perm: " Gen.is_empty  (pr_seq "" pr_spec_var) vperms;
@@ -2156,6 +2167,7 @@ let pr_context_list_short (ctx : context list) =
     (*pr_wrap (fun _ -> fmt_string "es_aux_conseq: "; pr_pure_formula ac) ();*)
     pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) ih; 
     pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) ip;
+    pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) ir;  
     fmt_close_box();
   in 
   let lls = List.map f ctx in
@@ -2181,7 +2193,9 @@ let pr_entail_state_short e =
   (* pr_vwrap "es_infer_label:  " pr_formula es.es_infer_label;*)
   pr_wrap_test "es_infer_heap: " Gen.is_empty  (pr_seq "" pr_h_formula) e.es_infer_heap; 
   pr_wrap_test "es_infer_pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) e.es_infer_pure;
+  pr_wrap_test "es_infer_rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) e.es_infer_rel;  
   pr_wrap_opt "es_var_measures: " pr_var_measures e.es_var_measures;
+  (* fmt_cut(); *)
   fmt_close_box()
 
 let string_of_context_short (ctx:context): string =  poly_string_of_pr pr_context_short ctx
@@ -2203,9 +2217,10 @@ let pr_esc_stack_lvl ((i,s),e) =
   if (e==[]) 
   then
     begin
-      fmt_open_hbox ();
-      fmt_string ("Try-Block:"^(string_of_int i)^":"^s^":");
-      fmt_close_box()
+      (* fmt_open_hbox (); *)
+      (* fmt_string ("Try-Block:"^(string_of_int i)^":"^s^":"); *)
+      (* fmt_close_box() *)
+      ()
     end
   else
     begin
@@ -2216,6 +2231,7 @@ let pr_esc_stack_lvl ((i,s),e) =
       fmt_close_box ()
     end
 
+let string_of_esc_stack_lvl e  = poly_string_of_pr pr_esc_stack_lvl e
 
 (* should this include must failures? *)
 let pr_failed_states e = match e with
@@ -2400,7 +2416,11 @@ let pr_view_decl v =
       | Some (s1,s2) -> pr_vwrap "base case: " (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula s2) ()
   in
   fmt_open_vbox 1;
-  wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_typed_spec_var v.view_vars; fmt_string "= ") ();
+  let s = match v.view_kind with 
+    | View_NORM -> " "
+    | View_PRIM -> "_prim "
+    | View_EXTN -> "_extn " in
+  wrap_box ("B",0) (fun ()-> pr_angle  ("view"^s^v.view_name) pr_typed_spec_var v.view_vars; fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_vwrap  "inv: "  pr_mix_formula v.view_user_inv;
   pr_vwrap  "inv_lock: "  (pr_opt pr_formula) v.view_inv_lock;
@@ -2585,11 +2605,11 @@ let rec string_of_exp = function
 	exp_bind_body = e;
 	exp_bind_path_id = pid;
 	exp_bind_pos = l}) -> 
-        string_of_control_path_id_opt pid ("bind " ^ id ^ " to (" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ")[" ^ (string_of_read_only ro)^ "] in \n{" ^ (string_of_exp e) ^ "\n}")
+        string_of_control_path_id pid ("bind " ^ id ^ " to (" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ") [" ^ (string_of_read_only ro)^ "] in \n" ^ (string_of_exp e))
   | Block ({exp_block_type = _;
 	exp_block_body = e;
 	exp_block_local_vars = _;
-	exp_block_pos = _}) -> "{\n" ^ (string_of_exp e) ^ "\n}"
+	exp_block_pos = _}) -> "{" ^ (string_of_exp e) ^ "}"
   | Barrier b -> "barrier "^(string_of_ident (snd b.exp_barrier_recv))
   | ICall ({exp_icall_type = _;
 	exp_icall_receiver = r;
@@ -2665,7 +2685,7 @@ let rec string_of_exp = function
 	exp_seq_exp1 = e1;
 	exp_seq_exp2 = e2;
 	exp_seq_pos = l}) -> 
-        (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)
+        "("^(string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)^")"
   | This _ -> "this"
   | Time (b,s,_) -> ("Time "^(string_of_bool b)^" "^s)
   | Var ({exp_var_type = _;
@@ -2686,10 +2706,34 @@ let rec string_of_exp = function
   | Try b -> string_of_control_path_id b.exp_try_path_id  "try \n"^(string_of_exp b.exp_try_body)^(string_of_exp b.exp_catch_clause )
 ;;
 
+let string_of_field_ann ann=
+  match ann with
+    | VAL -> "@VAL"
+    | REC -> "@REC"
+    | F_NO_ANN -> ""
 
 (* pretty printing for one data declaration*)
-let string_of_decl d = (* An Hoa : un-hard-code *)
-  (string_of_typ (get_field_typ d)) ^ " " ^ (get_field_name d) 
+let string_of_decl (t,id) = (* An Hoa : un-hard-code *)
+  (string_of_typ t) ^ " " ^ (id)
+;;
+
+(* pretty printing for one data declaration*)
+let string_of_data_decl ((t,id),ann) = (* An Hoa : un-hard-code *)
+  (string_of_typ t) ^ " " ^ (id) ^ (string_of_field_ann ann)
+;;
+
+(* function to print a list of typed_ident *) 
+let rec string_of_decl_list l c = match l with 
+  | [] -> ""
+  | h::[] -> "  " ^ string_of_decl h 
+  | h::t -> "  " ^ (string_of_decl h) ^ c ^ (string_of_decl_list t c)
+;;
+
+(* function to print a list of typed_ident *) 
+let rec string_of_data_decl_list l c = match l with 
+  | [] -> ""
+  | h::[] -> "  " ^ string_of_data_decl h 
+  | h::t -> "  " ^ (string_of_data_decl h) ^ c ^ (string_of_data_decl_list t c)
 ;;
 
 (* function to print a list of typed_ident *) 
@@ -2700,7 +2744,7 @@ let rec string_of_decl_list l c = match l with
 ;;
 
 (* pretty printing for a data declaration *)
-let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_list d.data_fields "\n") ^ "\n}"
+let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_data_decl_list d.data_fields "\n") ^ "\n}"
 ;;
 
 let string_of_coercion_type (t:Cast.coercion_type) = match t with

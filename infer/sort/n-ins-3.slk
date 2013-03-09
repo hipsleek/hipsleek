@@ -1,0 +1,78 @@
+/* selection sort */
+
+data node {
+	int val; 
+	node next; 
+}.
+
+pred sortA<v> == self::node<v,null> 
+ or self::node<v, p> * p::sortA<v2> & v<=v2 
+inv self!=null.
+
+relation R(int r, int a, int b).
+
+/*
+infer [R]
+x::node<a,vn> * vn::sortA<bn>
+& a<=an 
+& a<v 
+& R(bn,an,v) 
+|-  x::sortA<b>.
+print residue.
+*/
+
+/*
+The source of problem for n-ins-3.ss is the
+derivation of inappropriate proof-obligation for R(..). 
+However, I am not sure why it affected the post-condition
+computation since we do not strictly require an<=bn in 
+the fixpoint process.
+*/
+
+infer [R]
+a<=an // came from pred
+& a<v  // came from a cond
+& R(bn,an,v) // should we choose "an" or "v"?
+|- a<=bn .
+print residue.
+// ( R(bn,an,v)) -->  (an<=bn & bn<=(v-2)) | v<=(bn+1)]
+
+infer [R]
+a<=an 
+//& a<v 
+& R(bn,an,v) 
+|- a<=bn .
+print residue.
+// <1>emp&a<=an & an<=bn & R(bn,an,v)&{FLOW,(19,20)=__norm}[]
+// inferred rel: [RELASS [R]: ( R(bn,an,v)) -->  an<=bn]
+
+infer [R]
+//a<=an &
+a<v 
+& R(bn,an,v)
+|- a<=bn .
+print residue.
+// <1>emp&a<v & v<=(bn+1) & R(bn,an,v)&{FLOW,(19,20)=__norm}[]
+// inferred rel: [RELASS [R]: ( R(bn,an,v)) -->  v<=(bn+1)]
+
+/*
+infer []
+a<=an
+& ((an<=bn & bn<=(v-2)) | v<=(bn+1))
+& a<v 
+|- a<=bn .
+*/
+
+checkentail
+((v >= 1 + b & b = a) | (a >= b & b = v))
+|- ((a<=b & b<=(v-2)) | v<=(b+1)).
+
+
+
+
+
+
+
+
+
+

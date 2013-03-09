@@ -38,8 +38,13 @@ type prog_decl = {
     mutable prog_coercion_decls : coercion_decl list
 }
 
+and data_field_ann =
+  | VAL
+  | REC
+  | F_NO_ANN
+
 and data_decl = { data_name : ident;
-data_fields : (typed_ident * loc * bool) list; (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
+data_fields : (typed_ident * loc * bool * data_field_ann) list; (* An Hoa [20/08/2011] : add a bool to indicate whether a field is an inline field or not. TODO design revision on how to make this more extensible; for instance: use a record instead of a bool to capture additional information on the field?  *)
 data_parent_name : ident;
 data_invs : F.formula list;
 data_is_template: bool;
@@ -51,6 +56,11 @@ data_methods : proc_decl list }
   global_var_decl_pos : loc }
 *)
 
+and view_kind =
+  | View_PRIM
+  | View_NORM
+  | View_EXTN
+
 and view_decl = { view_name : ident; 
 mutable view_data_name : ident;
 (* view_frac_var : iperm; (\*LDK: frac perm ??? think about it later*\) *)
@@ -58,6 +68,8 @@ view_vars : ident list;
 view_labels : Label_only.spec_label list;
 view_modes : mode list;
 mutable view_typed_vars : (typ * ident) list;
+view_kind : view_kind;
+view_prop_extns:  ident list;
 view_is_prim : bool;
 view_invariant : P.formula;
 		  view_mem : F.mem_formula option; 
@@ -938,7 +950,7 @@ let iter_exp_args_imp e (arg:'a) (imp:'c ref) (f:'a -> 'c ref -> exp -> unit opt
  **)
 let get_field_typed_id d =
 	match d with
-		| (tid,_,_) -> tid
+		| (tid,_,_,_) -> tid
 
 (**
  * An Hoa : Extract the field name from a field declaration
@@ -955,14 +967,14 @@ let get_field_typ f = fst (get_field_typed_id f)
  **)
 let get_field_pos f =
 	match f with
-		| (_,p,_) -> p 
+		| (_,p,_,_) -> p 
 
 (**
  * An Hoa : Check if a field is an inline field 
  **)
 let is_inline_field f =
 	match f with
-		| (_,_,inline) -> inline
+		| (_,_,inline,_) -> inline
 
 (** An Hoa [22/08/2011] : End of information extracting functions from field declaration **)
 
@@ -1011,7 +1023,9 @@ and look_up_func_def_raw (defs : func_decl list) (name : ident) = match defs wit
 
 (* An Hoa *)
 and look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
-  | d :: rest -> if d.rel_name = name then d else look_up_rel_def_raw rest name
+  | d :: rest ->
+      (* let _ = print_endline ("l2: rel-def=" ^ d.rel_name) in *)
+      if d.rel_name = name then d else look_up_rel_def_raw rest name
   | [] -> raise Not_found
 
 and look_up_hp_def_raw (defs : hp_decl list) (name : ident) = match defs with
@@ -1066,7 +1080,7 @@ and look_up_all_methods (prog : prog_decl) (c : data_decl) : proc_decl list = ma
 and expand_inline_fields ddefs fls =
   (** [Internal] An Hoa : add a prefix k to a field declaration f **)
   let augment_field_with_prefix f k = match f with
-	| ((t,id),p,i) -> ((t,k ^ id),p,i)
+	| ((t,id),p,i,ann) -> ((t,k ^ id),p,i,ann)
   in
   if (List.exists is_inline_field fls) then
 	let flse = List.map (fun fld -> if (is_inline_field fld) then
@@ -1084,7 +1098,7 @@ and expand_inline_fields ddefs fls =
   else fls
 
 and look_up_all_fields (prog : prog_decl) (c : data_decl) = 
-  let pr1 = pr_list (fun (ti,_,_) -> pr_pair string_of_typ pr_id ti) in 
+  let pr1 = pr_list (fun (ti,_,_,_) -> pr_pair string_of_typ pr_id ti) in 
   Debug.no_1 "look_up_all_fields" pr_id pr1 (fun _ -> look_up_all_fields_x prog c) c.data_name
 
 and look_up_all_fields_x (prog : prog_decl) (c : data_decl) = 
@@ -1225,7 +1239,7 @@ and update_fixpt_x (vl:(view_decl * ident list *ident list) list)  =
 		 print_endline ("Feasible self type: " ^ (String.concat "," a)); *)
       v.view_pt_by_self<-tl;
       if (List.length a==0) then 
-        if v.view_is_prim then v.view_data_name <- (v.view_name) (* TODO WN : to add pred name *)
+        if v.view_is_prim || v.view_kind = View_EXTN then v.view_data_name <- (v.view_name) (* TODO WN : to add pred name *)
         else report_error no_pos ("self of "^(v.view_name)^" cannot have its type determined")
       else v.view_data_name <- List.hd a) vl
 
@@ -2008,7 +2022,7 @@ and compute_field_seq_offset ddefs data_name field_sequence =
 let b_data_constr bn larg=
 	if bn = b_datan || (snd (List.hd larg))="state" then		
 		{ data_name = bn;
-		  data_fields = List.map (fun c-> c,no_pos,false) larg ;
+		  data_fields = List.map (fun c-> c,no_pos,false,F_NO_ANN) larg ;
 		  data_parent_name = if bn = b_datan then "Object" else b_datan;
 		  data_invs =[];
           data_is_template = false;

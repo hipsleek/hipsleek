@@ -350,7 +350,7 @@ let get_data_fields (ddn : (ident * ((I.typed_ident * loc * bool) list)) list)  
 	
 let rec get_data_decl_names (ddf : I.data_decl list) : (ident * ((I.typed_ident * loc * bool) list)) list = 
 	match ddf with
-	| x::xs -> (x.I.data_name,x.I.data_fields)::(get_data_decl_names xs)
+	| x::xs -> (x.I.data_name, List.map (fun (a1,a2,a3,a4) -> (a1,a2,a3)) x.I.data_fields)::(get_data_decl_names xs)
 	| [] -> []
 
 let check_mem_formula_data_names (ddf : I.data_decl list) (fl : (ident * (IF.ann list))) : bool = 

@@ -312,9 +312,11 @@ node delete2(node x, int v)
 }
 
 /* function to create a singly linked list with a nodes */
+relation CRL(int a, int b).
 node create_list(int n, int v)
+  infer [CRL]
   requires true
-  ensures res::sll<n>;
+  ensures res::sll<m> & CRL(m,n);
 {
   node tmp;
   if (n == 0)

@@ -8,7 +8,7 @@ Successful States:
 [
  Label: [(149::,0 ); (149::,0 ); (144::,0 ); (144::,0 ); (141::,0 ); (141::,0
           )]
- State:p_616::bst<sm_611,pl_613>@M[Orig] * q_617::bst<qs_614,lg_612>@M[Orig] * x'::node2<v_615,p_616,q_617>@M[Orig]&pl_613<=v_615 & v_615<=qs_614 & sm_611=sm & lg_612=lg & a'=a & x!=null & v_bool_37_557' & x!=null & v_bool_37_557' & v_615=a' & v_bool_42_553' & v_615=a' & v_bool_42_553' & q_617=null & v_bool_44_551' & q_617=null & v_bool_44_551' & x'=p_616&{FLOW,(22,23)=__norm}[]
+ State:p_616::bst<sm_611,pl_613>@M[Orig] * q_617::bst<qs_614,lg_612>@M[Orig] * x'::node2<v_615,p_616,q_617>@M[Orig]&pl_613<=v_615 & v_615<=qs_614 & sm_611=sm & lg_612=lg & a'=a & x!=null & v_bool_37_557' & x!=null & v_bool_37_557' & v_615=a' & v_bool_42_553' & v_615=a' & v_bool_42_553' & q_617=null & v_bool_44_551' & q_617=null & v_bool_44_551' & x'=p_616&{FLOW,(22,23)=__norm}[]d
        es_infer_vars/rel: [B]
        es_var_measures: MayLoop
 ;

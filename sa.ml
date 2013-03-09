@@ -4002,12 +4002,12 @@ let infer_hps prog (hp_constrs: CF.hprel list) sel_hp_rels sel_post_hp_rels hp_r
 
 let check_horm_data_decl_x tmpl_data_decl data_decl=
   (*subs type s= temp t, t into tmpl ptr fiels*)
-  let get_ptr ((t,id),_,b)=
+  let get_ptr ((t,id),_,b,_)=
     if is_pointer t then
       [(id,b)]
     else []
   in
-  let get_ptr_and_susbt (id1,id2) ((t,id),_,b)=
+  let get_ptr_and_susbt (id1,id2) ((t,id),_,b,_)=
     if is_pointer t then
       if id = id1 then
       [(id2,b)]
@@ -4065,6 +4065,8 @@ let build_horm_view_x templ_view_decls horm_dd=
 	  Iast.view_labels = view.Iast.view_labels;
 	  Iast.view_modes = view.Iast.view_modes;
 	  Iast.view_is_prim = view.Iast.view_is_prim;
+	  Iast.view_kind = view.Iast.view_kind;
+      Iast.view_prop_extns = view.Iast.view_prop_extns;
 	  Iast.view_typed_vars = view.Iast.view_typed_vars;
 	  Iast.view_invariant = n_view_invariant;
 	  Iast.view_mem = view.Iast.view_mem;

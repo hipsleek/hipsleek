@@ -187,6 +187,7 @@ module Make (Token : SleekTokenS)
      ("perm",PERM);
 	 ("pred", PRED);
 	 ("pred_prim", PRED_PRIM);
+     ("pred_extn", PRED_EXT);
 	 ("hip_include", HIP_INCLUDE);
      ("print", PRINT);
      ("mem", MEM);
@@ -297,6 +298,8 @@ rule tokenizer file_name = parse
   | "@A" {ACCS}
   | "@D" { DERV }
   | "@M" { MUT }
+  | "@VAL" {VAL}
+  | "@REC" {REC}
   | "@pre" { PRE }
   | "@xpre" { XPRE }
   | "@post" { POST }

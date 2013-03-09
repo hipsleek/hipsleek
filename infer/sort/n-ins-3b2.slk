@@ -1,0 +1,37 @@
+
+data node {
+	int val; 
+	node next; 
+}.
+
+pred sortHO<v,R:relation(int,int)> == 
+  self::node<v,null> 
+  or self::node<v, p> * p::sortHO<v2,R> & R(v,v2) 
+inv self!=null.
+
+relation R1(int a, int b).
+relation R2(int a, int b).
+/*
+checkentail res::sortHO<b,R1> |-  res::sortHO<b,R2>.
+print residue.
+// <1>emp&R1=R2&{FLOW,(19,20)=__norm}[]
+// should fail
+
+checkentail res::sortHO<b,R1> |-  res::sortHO<b,R1>.
+print residue.
+// Valid
+
+infer [R1,R2] res::sortHO<b,R1> |-  res::sortHO<b,R2>.
+print residue.
+// should infer RelDefn : R1(a,b) -> R2(a,b)
+*/
+infer [R1] res::sortHO<b,R1> |-  res::sortHO<b,R2>.
+print residue.
+// should infer RelAssume : R1(a,b) -> R2(a,b)
+// this should be an assumption since R2 is known
+/*
+// by R1 is being inferred.
+infer [R2] res::sortHO<b,R1> |-  res::sortHO<b,R2>.
+print residue.
+// should infer RelDefn : R1(a,b) -> R2(a,b)
+*/

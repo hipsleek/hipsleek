@@ -183,6 +183,12 @@ let common_arguments = [
   ("--dis-precise-xpure", Arg.Clear Globals.precise_perm_xpure, "disable adding x!=y when the permissions of x and y overlap or exceed the full permission");
   ("--en-smart-memo", Arg.Set Globals.smart_memo,
    "Smart memo with no_complex; if fail try complex formula");
+	("--en-pre-residue", Arg.Unit (fun _ -> Globals.pre_residue_lvl := 1),
+    "Always add pre inferred to residue, ee if it is disjunctive");
+	("--dis-pre-residue", Arg.Unit (fun _ -> Globals.pre_residue_lvl := -1),
+    "Never pre inferred to residue, ee if it is conjunctive");
+    (* default is to add only conjunctive pre to residue when
+       pre_residue_lvl ==0 *)
   ("-num-self-fold-search", Arg.Set_int Globals.num_self_fold_search,
    "Allow Depth of Unfold/Fold Self Search");
   ("--en-self-fold-search", Arg.Set Globals.self_fold_search_flag,

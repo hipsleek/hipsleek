@@ -7,30 +7,16 @@ ll<n> == self=null & n=0
 	or self::node<_, q> * q::ll<n-1>
 	inv n>=0;
 
-lseg<p, n> == self=p & n=0
-	or self::node<_, q> * q::lseg<p, n-1>
-	inv n>=0;
-
-clist<n> == self::node<_,p> * p::lseg<self,n-1>
-	inv n>=1;
+relation Q(int a, int b, int c).
 
 void append(node x, node y)
+  infer [n,m,Q]
+  requires x::ll<n> * y::ll<m> 
+  ensures x::ll<e>& Q(n,m,e);
 /*
-  requires x::ll<n> & x!=null //& n>0
-  ensures x::lseg<y, n>;
-  requires x::ll<n> & y=x & n>0
-  ensures x::clist<n>; 
   requires x::ll<n> * y::ll<m> & n>0
   ensures x::ll<e>& e=n+m;
 */
-/*
-  requires x::lseg<null,n> & n>0
-  ensures x::lseg<y,n> ;
-*/
-  requires x::lseg<r,n> * r::node<a,null>
-  ensures x::lseg<r,n> * r::node<a,y> ;
-  requires x::lseg<r,n>@I * r::node<a,null>
-  ensures r::node<a,y> ;
 {
   // dprint;
 	node tmp = x.next;
@@ -44,4 +30,3 @@ void append(node x, node y)
 		return;
 	}
 }
-

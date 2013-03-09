@@ -355,7 +355,7 @@ and java_of_data_decl prog ddef java_code =
   Buffer.add_string java_code ddef.data_name;
   Buffer.add_string java_code ("{\n");
   Buffer.add_string java_code ("long color;\n");
-  Buffer.add_string java_code (fields_of_typed_ident_list ddef.data_fields);
+  Buffer.add_string java_code (fields_of_typed_ident_list (List.map fst ddef.data_fields));
   Buffer.add_string java_code "\n\n";
   build_constructor ddef java_code;
   Buffer.add_string java_code "\n\n";

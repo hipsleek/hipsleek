@@ -84,7 +84,7 @@ let rec smt_of_typ t =
 		| Named _ -> "Int" (* objects and records are just pointers *)
 		| Array (et, d) -> compute (fun x -> "(Array Int " ^ x  ^ ")") d (smt_of_typ et)
     (* TODO *)
-    | RelT -> "Int"
+    | RelT _ -> "Int"
     | HpT -> "Int"
 	| INFInt 
 	| Pointer _ -> Error.report_no_pattern ()
@@ -385,7 +385,7 @@ let add_axiom h dir c =
 			else x) !global_rel_defs;
 		(* Cache the SMT input for 'h dir c' so that we do not have to generate this over and over again *)
 		let params = List.append (CP.fv h) (CP.fv c) in
-        let rel_ids = List.map (fun r -> CP.SpecVar(RelT,r.rel_name,Unprimed)) !global_rel_defs in
+        let rel_ids = List.map (fun r -> CP.SpecVar(RelT[],r.rel_name,Unprimed)) !global_rel_defs in
         let params = Gen.BList.difference_eq CP.eq_spec_var params rel_ids in
 		let params = Gen.BList.remove_dups_eq CP.eq_spec_var params in
 		let smt_params = String.concat " " (List.map smt_of_typed_spec_var params) in
@@ -409,7 +409,7 @@ let add_axiom h dir c =
 
 (* Interface function to add a new relation *)
 let add_relation (rname1:string) rargs rform =
-  let rname = CP.SpecVar(RelT,rname1,Unprimed) in
+  let rname = CP.SpecVar(RelT[],rname1,Unprimed) in
   if (Cpure.is_update_array_relation rname1) then () else
     (* let rname1 = CP.name_of_spec_var rname in *)
 	(* Cache the declaration for this relation *)

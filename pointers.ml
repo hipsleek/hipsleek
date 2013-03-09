@@ -87,7 +87,7 @@ let default_value (t :typ) pos : exp =
 	      failwith "default_value: bag can only be used for constraints"
     | List _ ->
           failwith "default_value: list can only be used for constraints"
-    | RelT ->
+    | RelT _ ->
           failwith "default_value: RelT can only be used for constraints"
     | Named c -> Null pos
     | Pointer ptr -> Null pos

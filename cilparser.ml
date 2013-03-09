@@ -221,7 +221,7 @@ let rec translate_typ (t: Cil.typ) : Globals.typ =
             let ftype = translate_typ ty in
             let fname = gl_pointer_data_name in
             let pointer_data = {Iast.data_name = pointer_name;
-                                Iast.data_fields = [((ftype, fname), no_pos, true)];
+                                Iast.data_fields = [((ftype, fname), no_pos, true, Iast.F_NO_ANN)];
                                 Iast.data_parent_name = "Object";
                                 Iast.data_invs = [];
                                 Iast.data_is_template = false;
@@ -289,13 +289,13 @@ let translate_constant (c: Cil.constant) (lopt: Cil.location option) : Iast.exp 
 
 
 let translate_fieldinfo (field: Cil.fieldinfo) (lopt: Cil.location option) 
-                        : (Iast.typed_ident * loc * bool) =
+                        : (Iast.typed_ident * loc * bool * Iast.data_field_ann) =
   let pos = match lopt with None -> no_pos | Some l -> translate_location l in
   let name = field.Cil.fname in
   let ty = translate_typ field.Cil.ftype in
   match field.Cil.ftype with
-  | Cil.TPtr _ -> ((ty, name), pos, true)          (* pointer --> inline type in Iast *)
-  | _ -> ((ty, name), pos, false)
+  | Cil.TPtr _ -> ((ty, name), pos, true, Iast.F_NO_ANN)          (* pointer --> inline type in Iast *)
+  | _ -> ((ty, name), pos, false, Iast.F_NO_ANN)
 
 
 let translate_compinfo (comp: Cil.compinfo) (lopt: Cil.location option)
@@ -507,7 +507,7 @@ and translate_exp (e: Cil.exp) : Iast.exp =
               let ftype = translate_typ ty in
               let fname = gl_pointer_data_name in
               let pointer_data = {Iast.data_name = pointer_name;
-                                  Iast.data_fields = [((ftype, fname), no_pos, true)];
+                                  Iast.data_fields = [((ftype, fname), no_pos, true,Iast.F_NO_ANN)];
                                   Iast.data_parent_name = "Object";
                                   Iast.data_invs = [];
                                   Iast.data_is_template = false;
