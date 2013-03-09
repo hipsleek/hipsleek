@@ -136,8 +136,8 @@ note: H2(res,y): OK
 
 qsort: after ins-1.ss is fixed
 
-
-# app.ss
+*************************************
+# app.ss: DONE
 
 Used:
   infer [H,K,G]
@@ -165,3 +165,8 @@ Possible to extract K(Y) ? yielding:
  HP_575(y_574,y_573) ::= 
   y_574::node<val_34_550,y_576>@M * HP_575(y_576,y_573)&true
   or y_573=y_574
+
+
+===> G(x_572,y) ::= x_572::node<val_34_550,y_574>@M * HP_575(y_574,y) * XPURE(K(y))
+
+*************************************
