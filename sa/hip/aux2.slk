@@ -20,3 +20,4 @@ infer [] K(null) |- (exists y: K(y)).
 infer [] K(x) |- K(y).
 // should fail
 
+

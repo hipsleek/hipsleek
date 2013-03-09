@@ -3382,7 +3382,7 @@ let simplify_pure_f_x (f0:formula) =
 
 let simplify_pure_f (f0:formula) =
   let pr= !print_formula in
-  Debug.ho_1 "simplify_pure_f" pr pr
+  Debug.no_1 "simplify_pure_f" pr pr
       (fun _ -> simplify_pure_f_x f0) f0
 
 let extract_HRel_orig hf=

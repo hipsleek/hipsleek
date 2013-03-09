@@ -883,6 +883,128 @@ and drop_data_view_hrel_nodes_hf_from_root prog hf hd_nodes hv_nodes eqs drop_ro
   let _ = Debug.ninfo_pprint ("nhf: " ^ (Cprinter.string_of_h_formula nhf)) no_pos in
   nhf
 
+(***********)
+let simplify_one_constr_b_x prog unk_hps lhs_b rhs_b=
+  (*return subst of args and add in lhs*)
+  let rec look_up_eq_dn ldn rdns r_rem=
+    match rdns with
+      | [] -> ([],r_rem,[])
+      | rdn::rest ->
+          if CP.eq_spec_var ldn.CF.h_formula_data_node rdn.CF.h_formula_data_node then
+            let ss=
+              let lsvl = List.filter CP.is_node_typ ldn.CF.h_formula_data_arguments in
+              let rsvl = List.filter CP.is_node_typ rdn.CF.h_formula_data_arguments in
+              let ss1 = List.combine rsvl lsvl in
+              List.filter (fun (sv1,sv2) -> not (CP.eq_spec_var sv1 sv2)) ss1
+            in
+            ([ldn.CF.h_formula_data_node],r_rem@rest,ss)
+          else look_up_eq_dn ldn rest (r_rem@[rdn])
+  in
+  let rec get_eq_dnodes ldns rdns res ss=
+    match ldns with
+      | [] -> (res,ss)
+      | ldn::rest ->
+          let r,rdns_rem, r_ss = look_up_eq_dn ldn rdns [] in
+          get_eq_dnodes rest rdns_rem (res@r) (ss@r_ss)
+  in
+  (* let check_eq_data_node dn1 dn2= *)
+  (*   CP.eq_spec_var dn1.CF.h_formula_data_node dn2.CF.h_formula_data_node *)
+  (* in *)
+  let check_eq_view_node vn1 vn2=
+    (*return subst of args and add in lhs*)
+    CP.eq_spec_var vn1.CF.h_formula_view_node vn2.CF.h_formula_view_node
+  in
+  let l_hds, l_hvs, l_hrs = CF.get_hp_rel_bformula lhs_b in
+  let r_hds, r_hvs, r_hrs = CF.get_hp_rel_bformula rhs_b in
+  DD.ninfo_pprint (" input: " ^(Cprinter.prtt_string_of_formula_base lhs_b) ^ " ==> " ^
+  (Cprinter.prtt_string_of_formula_base rhs_b)) no_pos;
+  (*drop unused pointers in LHS*)
+  DD.ninfo_pprint "  drop not-in-used pointers" no_pos;
+  let keep_hrels,keep_ptrs = List.split (List.map
+    (fun (hrel, eargs, _) -> (hrel, List.concat (List.map CP.afv eargs)))
+    (l_hrs@r_hrs) )
+  in
+  let lhs_b1 = keep_data_view_hrel_nodes_fb prog lhs_b (l_hds@r_hds) (l_hvs@r_hvs)
+    (List.concat keep_ptrs) keep_hrels in
+  (*pointers/hps matching LHS-RHS*)
+  (*data nodes, view nodes, rel*)
+  DD.ninfo_pprint "  matching LHS-RHS" no_pos;
+  (* let matched_data_nodes = Gen.BList.intersect_eq check_eq_data_node l_hds r_hds in *)
+  let matched_data_nodes, ss = get_eq_dnodes l_hds r_hds [] [] in
+  let matched_view_nodes = Gen.BList.intersect_eq check_eq_view_node l_hvs r_hvs in
+  let matched_hrel_nodes = Gen.BList.intersect_eq CF.check_eq_hrel_node l_hrs r_hrs in
+  let hrels = List.map (fun (id,_,_) -> id) matched_hrel_nodes in
+  let dnode_names = (* List.map (fun hd -> hd.CF.h_formula_data_node) *) matched_data_nodes in
+  let vnode_names = List.map (fun hv -> hv.CF.h_formula_view_node) matched_view_nodes in
+   Debug.ninfo_pprint ("    Matching found: " ^ (!CP.print_svl (dnode_names@vnode_names@hrels))) no_pos;
+  let lhs_nhf2,rhs_nhf2=
+    if (dnode_names@vnode_names@hrels)=[] then lhs_b1.CF.formula_base_heap,rhs_b.CF.formula_base_heap
+    else
+      (*omit: not remove unk_hps in lhs*)
+      (* let hrels1 = (List.filter (fun hp -> not(CP.mem_svl hp unk_hps)) hrels) in *)
+      let lhs_nhf = CF.drop_data_view_hrel_nodes_hf lhs_b1.CF.formula_base_heap
+        select_dnode select_vnode select_hrel dnode_names vnode_names hrels in
+      let rhs_nhf = CF.drop_data_view_hrel_nodes_hf rhs_b.CF.formula_base_heap
+        select_dnode select_vnode select_hrel dnode_names vnode_names hrels in
+      let rhs_nhf2 = if ss= [] then rhs_nhf else CF.h_subst ss rhs_nhf in
+      (lhs_nhf,rhs_nhf2)
+  in
+  (*remove duplicate pure formulas and remove x!= null if x::node*)
+  let lsvl = List.map (fun hd -> hd.CF.h_formula_data_node) l_hds in
+  let rsvl = List.map (fun hd -> hd.CF.h_formula_data_node) r_hds in
+  let lhs_nmf2 = CF.remove_neqNull_redundant_hnodes lsvl (MCP.pure_of_mix lhs_b1.CF.formula_base_pure) in
+  let rhs_nmf2 = CF.remove_neqNull_redundant_hnodes (lsvl@rsvl) (MCP.pure_of_mix rhs_b.CF.formula_base_pure) in
+  let rhs_nmf3 = if ss=[] then rhs_nmf2 else CP.subst ss rhs_nmf2 in
+  (* Debug.info_pprint ("    lmf: " ^ (!CP.print_formula lhs_nmf2)) no_pos; *)
+  let lhs_b2 = {lhs_b1 with CF.formula_base_heap = lhs_nhf2;
+      CF.formula_base_pure = MCP.mix_of_pure lhs_nmf2
+               } in
+  let rhs_b2 = {rhs_b with CF.formula_base_heap = rhs_nhf2;
+               CF.formula_base_pure = MCP.mix_of_pure rhs_nmf3} in
+ (*pure subformulas matching LHS-RHS: drop RHS*)
+  DD.ninfo_pprint (" output: " ^(Cprinter.prtt_string_of_formula_base lhs_b2) ^ " ==> " ^
+  (Cprinter.prtt_string_of_formula_base rhs_b2)) no_pos;
+(lhs_b2, rhs_b2, dnode_names@vnode_names@hrels)
+
+let simplify_one_constr_b prog unk_hps lhs_b rhs_b=
+  let pr = Cprinter.prtt_string_of_formula_base in
+  Debug.no_2 "simplify_one_constr_b" pr pr (pr_triple pr pr !CP.print_svl)
+      (fun _ _ -> simplify_one_constr_b_x prog unk_hps lhs_b rhs_b) lhs_b rhs_b
+
+(************************************************)
+(**aux2.slk**)
+let simp_matching_x prog lhs rhs=
+  let ( _,mix_lf,_,_,_) = CF.split_components lhs in
+  let (_,mix_rf,_,_,_) = CF.split_components rhs in
+  let leqs = (MCP.ptr_equations_without_null mix_lf) in
+  let reqs = (MCP.ptr_equations_with_null mix_rf) in
+  let leqNulls = CP.remove_dups_svl ((MCP.get_null_ptrs mix_lf) ) in
+  let reqNulls = CP.remove_dups_svl ( (MCP.get_null_ptrs mix_rf)) in
+  let leqNull_ss = (List.map (fun (CP.SpecVar (t,id,p)) -> (CP.SpecVar (t,id,p), CP.SpecVar (t,"null", p))) leqNulls) in
+  let reqNull_ss = (List.map (fun (CP.SpecVar (t,id,p)) -> (CP.SpecVar (t,id,p), CP.SpecVar (t,"null", p))) reqNulls) in
+  let nlhs = CF.subst (leqs@leqNull_ss) lhs in
+  let nrhs = CF.subst (leqs@reqs@leqNull_ss@reqNull_ss) rhs in
+  match nlhs,nrhs with
+    | CF.Base lhs_b, CF.Base rhs_b ->
+        begin
+            let l,r,matched = simplify_one_constr_b prog [] lhs_b rhs_b in
+            if is_empty_f (CF.Base r) then
+              let lps = List.map (fun (sv1,sv2) -> CP.mkPtrEqn sv1 sv2 no_pos) leqs in
+              let lnull_ps =  List.map (fun sv-> CP.mkNull sv no_pos) leqNulls in
+              let p = CP.conj_of_list (lps@lnull_ps) no_pos in
+              let new_lhs = CF.mkAnd_pure (CF.simplify_pure_f (CF.Base l)) (MCP.mix_of_pure p) no_pos in
+              (true,new_lhs)
+            else
+              (false,lhs)
+        end
+    | _ -> report_error no_pos "sa.simplify_one_constr"
+
+let simp_matching prog lhs rhs=
+  let pr1 = Cprinter.prtt_string_of_formula in
+  let pr2 = pr_pair string_of_bool pr1 in
+  Debug.no_2 "simp_matching" pr1 pr1 pr2
+      (fun _ _ -> simp_matching_x prog lhs rhs) lhs rhs
+
 (*END for drop non-selective subformulas*)
 (************************************************************)
  (****************(*for infer_collect_hp*)*****************)

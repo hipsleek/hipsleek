@@ -7204,7 +7204,7 @@ let rec remove_redundant_helper ls rs=
     | f::fs -> if List.exists (equalFormula f) fs then
           remove_redundant_helper fs rs
         else (match f with
-          | BForm ((Eq(e1, e2, _), _) ,_) -> if (eq_exp_no_aset e1 e2) then
+          | BForm ((Eq(e1, e2, _), _) ,_) -> if (eq_exp_no_aset e1 e2) || (is_null_const_exp e1 || is_null_const_exp e2) then
                 remove_redundant_helper fs rs
               else remove_redundant_helper fs rs@[f]
           | _ -> remove_redundant_helper fs rs@[f]

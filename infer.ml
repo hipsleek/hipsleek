@@ -1722,6 +1722,14 @@ let lookup_eq_hprel_ass hps hprel_ass lhs rhs=
   Debug.no_4 "lookup_eq_hprel_ass" !CP.print_svl pr1 pr2 pr2 pr4
       (fun _ _ _ _ -> lookup_eq_hprel_ass_x hps hprel_ass lhs rhs) hps hprel_ass lhs rhs
 
+let constant_checking prog lhs_b rhs_b es=
+  let r,new_lhs = SAU.simp_matching prog (CF.Base lhs_b) (CF.Base rhs_b) in
+  if r then
+    let new_es = {es with CF.es_formula = new_lhs} in
+    (true, new_es)
+  else
+    (false, es)
+
 (*
 type: Cast.prog_decl ->
   Cformula.entail_state ->
@@ -1745,7 +1753,14 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
   let _ = Debug.ninfo_pprint ("es_infer_vars_hp_rel: " ^ (!CP.print_svl  es.es_infer_vars_hp_rel)) no_pos in
   let _ = Debug.ninfo_pprint ("es_infer_vars_sel_hp_rel: " ^ (!CP.print_svl  es.es_infer_vars_sel_hp_rel)) no_pos in
   (*end for debugging*)
-  if no_infer_hp_rel es then (false, es)
+  if no_infer_hp_rel es then
+    constant_checking prog lhs_b rhs_b es
+    (* let r,new_lhs = SAU.simp_matching prog (CF.Base lhs_b) (CF.Base rhs_b) in *)
+    (* if r then *)
+    (*   let new_es = {es with CF.es_formula = new_lhs} in *)
+    (*   (true, new_es) *)
+    (* else *)
+    (* (false, es) *)
   else
     let ivs = es.es_infer_vars_hp_rel in
     (*check whether LHS/RHS contains hp_rel*)
@@ -1754,8 +1769,9 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
     if CP.intersect ivs (lhrs@rhrs) = [] then
       begin
         (* DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos; *)
-        DD.ninfo_pprint " no hp_rel found" pos;
-        (false,es)
+          let _ = DD.tinfo_pprint " no hp_rel found" pos in
+          constant_checking prog lhs_b rhs_b es
+        (* (false,es) *)
       end
     else
       begin
@@ -1787,8 +1803,10 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
          let lhs_sel_vars = (CF.fv (CF.Base lhs_b)) in
         if (CP.intersect mis_nodes (List.fold_left SAU.close_def lhs_sel_vars leqs)) = [] then
           (
-              Debug.tinfo_pprint ">>>>>> mismatch ptr is not a selective variable <<<<<<" pos;
-              (false,es))
+              let _ = Debug.tinfo_pprint ">>>>>> mismatch ptr is not a selective variable <<<<<<" pos in
+              constant_checking prog lhs_b rhs_b es
+              (* (false,es) *)
+          )
         else
           let his_ptrs = List.concat (List.map SAU.get_ptrs es.CF.es_history) in
           let ls_unknown_ptrs,hds,hvs,lhras,rhras,eqNull,lselected_hps,rselected_hps,defined_hps,unk_svl,unk_pure,unk_map =
