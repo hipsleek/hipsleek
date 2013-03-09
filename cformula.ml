@@ -1033,6 +1033,21 @@ and mkTrue (flowt: flow_formula) pos = Base (mkTrue_b flowt pos)
 
 and mkTrue_nf pos = Base (mkTrue_b_nf pos)
 
+and mkHTrue_b (flowt:flow_formula) pos = {
+		formula_base_heap = HTrue;
+		formula_base_pure = MCP.mkMTrue pos;
+		formula_base_type = TypeTrue;
+        formula_base_and = [];
+		formula_base_flow = flowt (*(mkTrueFlow ())*);
+		formula_base_label = None;
+		formula_base_pos = pos}
+
+and mkHTrue_b_nf pos = mkHTrue_b (mkTrueFlow ()) pos
+
+and mkHTrue (flowt: flow_formula) pos = Base (mkHTrue_b flowt pos)
+
+and mkHTrue_nf pos = Base (mkHTrue_b_nf pos)
+
 and mkFalse_nf pos = mkFalse (mkTrueFlow ()) pos
 
 and mkFalse (flowt: flow_formula) pos = Base ({

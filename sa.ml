@@ -3807,6 +3807,12 @@ let generate_hp_def_from_unk_hps unk_hps hp_defs post_hps unk_rels=
   Debug.no_3 "generate_hp_def_from_unk_hps" pr2 pr1 pr4 pr3
       (fun _ _ _ -> generate_hp_def_from_unk_hps_new_x unk_hps hp_defs post_hps unk_rels) unk_hps hp_defs unk_rels
 
+let generate_init_unk_hpdefs ls_unk_hpargs=
+  let unk_defs = List.fold_left (fun ls (hp,args)  ->
+      let _, defs = List.split (SAU.mk_unk_hprel_def hp args [(CF.mkHTrue_nf no_pos)] no_pos) in
+      ls@defs) [] ls_unk_hpargs
+  in
+  unk_defs
 
 let unify_branches_hpdef_x unk_hps hp_defs =
   (*move unk hps into the first position*)
@@ -4215,6 +4221,7 @@ let infer_hps_x prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_
   let hp_def_names =  List.map (fun (a1,_,_) -> SAU.get_hpdef_name a1) hp_defs in
   let unk_hps1 = (* List.filter (fun (hp,_) -> not (CP.mem_svl hp hp_def_names)) *) new_unk_hps in
   let unk_hp_svl = (List.map (fun (hp,_) -> hp) unk_hps1) in
+  (*get unk_hps def from constraints*)
   let unk_hp_pures, unk_hp_pure_def = List.split (List.concat
     (List.map (generalize_pure_def_from_hpunk prog hp_def_names) constr3))
   in
@@ -4228,7 +4235,9 @@ let infer_hps_x prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_
       CP.eq_spec_var hp1 hp2) (hp_defs))
   in
   let hp_defs2 = (def_subst_fix prog unk_hp_svl (hp_defs1)) in
-  let hp_defs22 = SAU.combine_hpdefs (hp_defs2@unk_hp_pure_def) in
+  (*init unk_hp = true*)
+  let init_unk_hpdefs = generate_init_unk_hpdefs (List.filter (fun (hp,_) -> CP.mem_svl hp unk_hp_svl) new_unk_hps) in
+  let hp_defs22 = SAU.combine_hpdefs (hp_defs2@unk_hp_pure_def@init_unk_hpdefs) in
   let hp_def_from_split =
     if !Globals.sa_en_split then
       generate_hp_def_from_split prog hp_defs22 split_tb_hp_defs_split unk_hpargs0
