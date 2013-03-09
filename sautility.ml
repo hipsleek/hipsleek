@@ -2191,7 +2191,7 @@ let get_min_number ll_ldns=
   let fmin = List.length (fst (List.hd ll_ldns)) in
   helper (List.tl ll_ldns) fmin
 
-let get_min_number_new prog args ll_ldns=
+let get_min_number_new prog args unk_hps ll_ldns=
   let helper1 dns=
     let closed_args = (look_up_closed_ptr_args prog dns [] args) in
     let dns1 = List.filter (fun dn -> CP.mem_svl dn.CF.h_formula_data_node closed_args) dns in
@@ -2213,7 +2213,15 @@ let get_min_number_new prog args ll_ldns=
 		let eqNulls,ps,hprels = helper_pure_hprels f in
 		let new_eqNulls = CP.intersect_svl r_eqNulls eqNulls in
         let new_ps = Gen.BList.intersect_eq CP.equalFormula ps r_ps in
-        let new_hprels = Gen.BList.intersect_eq CF.eq_hprel r_hprels hprels in
+        let new_hprels =
+          if !Globals.sa_dangling then
+           Gen.BList.intersect_eq CF.eq_hprel r_hprels hprels
+          else
+            let keep_unk_hpargs = List.filter (fun (hp,_,_) -> CP.mem_svl hp unk_hps) (r_hprels@hprels) in
+            let r1 = Gen.BList.intersect_eq CF.eq_hprel r_hprels hprels in
+            Gen.BList.remove_dups_eq (fun (hp1,_,_) (hp2,_,_) ->
+                CP.eq_spec_var hp1 hp2) (keep_unk_hpargs@r1)
+        in
         if ns < r_min then
           helper lls ns nhds new_eqNulls new_ps new_hprels
         else helper lls r_min r_hns new_eqNulls new_ps new_hprels
@@ -2700,7 +2708,7 @@ let get_longest_common_hnodes_list_x prog cdefs unk_hps unk_svl hp r non_r_args 
    hpdef
  else begin
    let lldns = List.map (fun f -> (get_hdnodes f, f)) fs in
-   let min,sh_ldns,eqNulls,eqPures,hprels = get_min_number_new prog args lldns in
+   let min,sh_ldns,eqNulls,eqPures,hprels = get_min_number_new prog args unk_hps lldns in
    (*remove hp itself*)
    let hprels1 = List.filter (fun (hp1,_,_) -> not(CP.eq_spec_var hp hp1)) hprels in
    if min = 0 && eqNulls = [] && eqPures= [] then

@@ -17,7 +17,7 @@ hpdefs [G2,H1][]:{
  G2(x,y) --> x::node<_,p> * HP_2(p,y) * H1a(y);
  H1(x) --> x::node<_,p>*HP_1(p);
  HP_1(x) --> x=null or x::node<_,p1> * HP_1(p1);
- HP_2(x,p) --> x=p or x::node<_,p1> * HP_2(p1,p)
+ HP_2(x,p) --> p=x or x::node<_,p1> * HP_2(p1,p)
  }
 ]
 
