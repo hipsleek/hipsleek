@@ -153,7 +153,7 @@ let process_pred_def pdef =
 		let wf,_ = AS.case_normalize_struc_formula 10 iprog h p pdef.Iast.view_formula false 
           false (*allow_post_vars*) false [] in
 		let new_pdef = {pdef with Iast.view_formula = wf} in
-		let tmp_views = AS.order_views (new_pdef :: iprog.I.prog_view_decls) in
+       	let tmp_views = AS.order_views (new_pdef :: iprog.I.prog_view_decls) in
 		iprog.I.prog_view_decls <- List.rev tmp_views;
 (* ( new_pdef :: iprog.I.prog_view_decls); *)
 		(*let _ = print_string ("\n------ "^(Iprinter.string_of_struc_formula "\t" pdef.Iast.view_formula)^"\n normalized:"^(Iprinter.string_of_struc_formula "\t" wf)^"\n") in*)
@@ -208,7 +208,7 @@ let process_pred_def_4_iast pdef =
                 Some new_f)
         in
 		let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock} in
-		iprog.I.prog_view_decls <- ( new_pdef :: iprog.I.prog_view_decls);
+        iprog.I.prog_view_decls <- ( new_pdef :: iprog.I.prog_view_decls);
 	  with
 		| _ ->  dummy_exception() ; iprog.I.prog_view_decls <- tmp
   else

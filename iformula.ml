@@ -1632,4 +1632,61 @@ let rec struc_formula_trans_heap_node fct f =
 	
 let struc_formula_trans_heap_node fct f = 
 	let pr = !print_struc_formula in
-	Debug.ho_1 "struc_formula_trans_heap_node" pr pr (struc_formula_trans_heap_node fct) f
+	Debug.no_1 "struc_formula_trans_heap_node" pr pr (struc_formula_trans_heap_node fct) f
+
+
+let rec heap_drop_heap_node f0 hns=
+  let rec helper f=
+ match f with 
+  | HRel b -> f
+  | HTrue  | HFalse | HEmp -> f
+  | HeapNode hn ->
+      if List.exists (fun s1 -> String.compare s1 hn.h_formula_heap_name =0) hns then
+        HEmp
+      else f
+  | HeapNode2 hn2 ->
+      if List.exists (fun s1 -> String.compare s1 hn2.h_formula_heap2_name =0) hns then
+        HEmp
+      else f
+  | Phase b -> Phase {b with h_formula_phase_rd = helper b.h_formula_phase_rd; h_formula_phase_rw = helper b.h_formula_phase_rw}
+  | Conj b -> Conj {b with h_formula_conj_h2 = helper b.h_formula_conj_h2; h_formula_conj_h1 = helper b.h_formula_conj_h1}
+  | Star b -> begin
+      let nh1 = helper b.h_formula_star_h1 in
+      let nh2 = helper b.h_formula_star_h2 in
+      match nh1,nh2 with
+        | HEmp,HEmp -> HEmp
+        | HEmp,_ -> nh2
+        | _, HEmp -> nh1
+        | _ ->
+            Star {b with h_formula_star_h2 = nh2; h_formula_star_h1 = nh1}
+  end
+  in
+  helper f0
+
+
+let rec formula_drop_heap_node f0 hns=
+  let rec helper f=
+    match f with
+	  | Base b-> Base{b with formula_base_heap = heap_drop_heap_node b.formula_base_heap hns}
+	  | Exists b-> Exists{b with formula_exists_heap = heap_drop_heap_node b.formula_exists_heap hns}
+	  | Or b-> Or {b with formula_or_f1 = helper b.formula_or_f1;formula_or_f2 = helper b.formula_or_f2}
+  in
+  helper f0
+
+let rec struc_formula_drop_heap_node f0 hns =
+  let rec helper f=
+    match f with
+      | ECase b-> ECase {b with formula_case_branches= Gen.map_l_snd helper b.formula_case_branches}
+	  | EBase b -> EBase {b with
+						formula_struc_continuation = Gen.map_opt helper b.formula_struc_continuation;
+						formula_struc_base=formula_drop_heap_node b.formula_struc_base hns;}
+	  | EAssume (f,fl,et)-> EAssume (formula_drop_heap_node f hns, fl, et)
+	  | EInfer _ -> f
+	  | EList l -> EList (Gen.map_l_snd helper l)
+	  | EOr b-> mkEOr (helper b.formula_struc_or_f1) (helper b.formula_struc_or_f2) b.formula_struc_or_pos
+  in
+  helper f0
+
+let struc_formula_drop_heap_node f hns =
+	let pr = !print_struc_formula in
+	Debug.ho_1 "struc_formula_drop_heap_node" pr pr (fun _ -> struc_formula_drop_heap_node f hns) f

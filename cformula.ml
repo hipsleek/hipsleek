@@ -4023,6 +4023,201 @@ and subst_hprel_hf hf0 from_hps to_hp=
   in
   helper hf0
 
+and add_pure_formula_to_formula (f1_pure: CP.formula) (f2_f:formula)  : formula = add_mix_formula_to_formula (MCP.mix_of_pure f1_pure) f2_f
+
+let drop_views_h_formula hf0 views=
+  let rec helper hf=
+    match hf with
+      | Star {h_formula_star_h1 = hf1;
+              h_formula_star_h2 = hf2;
+              h_formula_star_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          let new_hf=
+            match n_hf1,n_hf2 with
+              | (HEmp,HEmp) -> HEmp
+              | (HEmp,_) -> n_hf2
+              | (_,HEmp) -> n_hf1
+              | _ -> (Star {h_formula_star_h1 = n_hf1;
+                            h_formula_star_h2 = n_hf2;
+                            h_formula_star_pos = pos})
+          in
+          (new_hf)
+      | Conj { h_formula_conj_h1 = hf1;
+               h_formula_conj_h2 = hf2;
+               h_formula_conj_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          (Conj { h_formula_conj_h1 = n_hf1;
+                 h_formula_conj_h2 = n_hf2;
+                 h_formula_conj_pos = pos})
+      | Phase { h_formula_phase_rd = hf1;
+                h_formula_phase_rw = hf2;
+                h_formula_phase_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          (Phase { h_formula_phase_rd = n_hf1;
+                  h_formula_phase_rw = n_hf2;
+                  h_formula_phase_pos = pos})
+      | DataNode hd -> (hf)
+      | ViewNode hv ->
+          if List.exists (fun view -> String.compare view hv.h_formula_view_name = 0) views then
+            HEmp
+          else hf
+      | HRel _
+      | Hole _
+      | HTrue
+      | HFalse
+      | HEmp -> hf
+  in
+  helper hf0
+
+let drop_views_formula_x (f0:formula) views : formula=
+  let rec helper f2_f=
+    match f2_f with
+      | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+          Or ({formula_or_f1 = helper f1 ; formula_or_f2 =  helper f2 ; formula_or_pos = pos})
+      | Base b -> Base { b with formula_base_heap = drop_views_h_formula b.formula_base_heap views;}
+      | Exists b -> Exists {b with formula_exists_heap = drop_views_h_formula b.formula_exists_heap views;}
+  in
+  helper f0
+
+let drop_view_formula (f2_f:formula) views: formula =
+  let pr2 x= String.concat ";" x in
+  Debug.no_2 "drop_view_formula" !print_formula pr2
+      !print_formula
+      drop_views_formula_x f2_f views
+
+let drop_view_struc_formula_x (f0 : struc_formula) views: struc_formula =
+  let rec helper f=
+    match f with
+	  | ECase b -> report_error no_pos "CF.drop_view_struc_formula: not handle yet"
+	  | EBase b -> EBase {b with  formula_struc_base = drop_view_formula b.formula_struc_base views;
+		  formula_struc_continuation = map_opt (helper) b.formula_struc_continuation;}
+	  | EAssume (x,b,y,_)-> f
+	  | EInfer b -> EInfer { b with formula_inf_continuation = helper b.formula_inf_continuation;}
+      | EOr b -> EOr {b with 
+		  formula_struc_or_f1 = helper b.formula_struc_or_f1; 
+		  formula_struc_or_f2 = helper b.formula_struc_or_f2; }
+	  | EList b -> EList (map_l_snd (helper) b)
+  in
+  helper f0
+
+let drop_view_struc_formula (f : struc_formula) views: struc_formula =
+  let pr1 = !print_struc_formula in
+  let pr2 x= String.concat ";" x in
+  Debug.no_2 " drop_view_struc_formula" pr1 pr2 pr1
+      (fun _ _ -> drop_view_struc_formula_x f views) f views
+
+(*******************************************)
+
+let drop_view_paras_h_formula hf0 ls_view_pos=
+  let retrieve_args_from_locs args locs=
+    let rec retrieve_args_from_locs_helper args locs index res=
+      match args with
+        | [] -> res
+        | a::ss -> if List.mem index locs then
+              retrieve_args_from_locs_helper ss locs (index+1) (res@[a])
+            else retrieve_args_from_locs_helper ss locs (index+1) res
+    in
+    retrieve_args_from_locs_helper args locs 0 []
+  in
+  let rec lookup_view vn args ls=
+    match ls with
+      | [] -> None
+      | (vn1,ls_pos)::rest ->
+          if String.compare vn vn1 = 0 then
+            Some (retrieve_args_from_locs args ls_pos)
+          else
+            lookup_view vn args rest
+  in
+  let rec helper hf=
+    match hf with
+      | Star {h_formula_star_h1 = hf1;
+              h_formula_star_h2 = hf2;
+              h_formula_star_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          let new_hf=
+            match n_hf1,n_hf2 with
+              | (HEmp,HEmp) -> HEmp
+              | (HEmp,_) -> n_hf2
+              | (_,HEmp) -> n_hf1
+              | _ -> (Star {h_formula_star_h1 = n_hf1;
+                            h_formula_star_h2 = n_hf2;
+                            h_formula_star_pos = pos})
+          in
+          (new_hf)
+      | Conj { h_formula_conj_h1 = hf1;
+               h_formula_conj_h2 = hf2;
+               h_formula_conj_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          (Conj { h_formula_conj_h1 = n_hf1;
+                 h_formula_conj_h2 = n_hf2;
+                 h_formula_conj_pos = pos})
+      | Phase { h_formula_phase_rd = hf1;
+                h_formula_phase_rw = hf2;
+                h_formula_phase_pos = pos} ->
+          let n_hf1 = helper hf1 in
+          let n_hf2 = helper hf2 in
+          (Phase { h_formula_phase_rd = n_hf1;
+                  h_formula_phase_rw = n_hf2;
+                  h_formula_phase_pos = pos})
+      | DataNode hd -> (hf)
+      | ViewNode hv -> begin
+          let on_args = lookup_view hv.h_formula_view_name hv.h_formula_view_arguments ls_view_pos in
+            match on_args with
+              | None -> hf
+              | Some n_args -> ViewNode {hv with h_formula_view_arguments = n_args}
+      end
+      | HRel _
+      | Hole _
+      | HTrue
+      | HFalse
+      | HEmp -> hf
+  in
+  helper hf0
+
+let drop_view_paras_formula_x (f0:formula) ls_view_pos : formula=
+  let rec helper f2_f=
+    match f2_f with
+      | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+          Or ({formula_or_f1 = helper f1 ; formula_or_f2 =  helper f2 ; formula_or_pos = pos})
+      | Base b -> Base { b with formula_base_heap = drop_view_paras_h_formula b.formula_base_heap ls_view_pos;}
+      | Exists b -> Exists {b with formula_exists_heap = drop_view_paras_h_formula b.formula_exists_heap ls_view_pos;}
+  in
+  let f1 = elim_exists f0 in
+  helper f1
+
+let drop_view_paras_formula (f2_f:formula) ls_view_pos: formula =
+  let pr2 = pr_list(pr_pair pr_id (pr_list string_of_int)) in
+  Debug.no_2 "drop_view_paras_formula" !print_formula pr2
+      !print_formula
+      drop_view_paras_formula_x f2_f ls_view_pos
+
+let drop_view_paras_struc_formula_x (f0 : struc_formula) ls_view_pos: struc_formula =
+  let rec helper f=
+    match f with
+	  | ECase b -> report_error no_pos "CF.drop_view_struc_formula: not handle yet"
+	  | EBase b -> EBase {b with  formula_struc_base = drop_view_paras_formula b.formula_struc_base ls_view_pos;
+		  formula_struc_continuation = map_opt (helper) b.formula_struc_continuation;}
+	  | EAssume (x,b,y,_)-> f
+	  | EInfer b -> EInfer { b with formula_inf_continuation = helper b.formula_inf_continuation;}
+      | EOr b -> EOr {b with
+		  formula_struc_or_f1 = helper b.formula_struc_or_f1;
+		  formula_struc_or_f2 = helper b.formula_struc_or_f2; }
+	  | EList b -> EList (map_l_snd (helper) b)
+  in
+  helper f0
+
+let drop_view_paras_struc_formula (f : struc_formula) ls_view_pos: struc_formula =
+  let pr1 = !print_struc_formula in
+  let pr2 = pr_list (pr_pair pr_id (pr_list string_of_int)) in
+  Debug.no_2 " drop_view_paras_struc_formula" pr1 pr2 pr1
+      (fun _ _ -> drop_view_paras_struc_formula_x f ls_view_pos) f ls_view_pos
+(*******************************************)
+
 let xpure_for_hnodes hf=
 let hds, _, _ (*hvs, hrs*) =  get_hp_rel_h_formula hf in
   (*currently we just work with data nodes*)
