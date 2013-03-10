@@ -185,4 +185,28 @@ FAIL but later appear as in next entailment!
 but
  tree<> <- H<> succeeds instead
  
+# aux5f.slk
+
+pred H2<> == self::node<_,l>
+inv self!=null.
+
+pred tree2<> == self::node<_,l>*l::node<_,_>
+inv self!=null.
+
+lemma self::tree2<> <- self::H2<>. 
+// should fail but succeeded
+
+This prepared unfolded the LHS term:
+
+Mun_entail_check_helper:
+ EXISTS(Anon_30,l_31: self_lem_15::node<Anon_30,l_31>@M[Orig]&true&
+{FLOW,(1,22)=__flow})[] |-  EBase self_lem_15::tree2@M[0][Orig][LHSCase]&true&{FLOW,(1,22)=__flow}[]
+
+which does not seem sufficient. I think we need to
+unfold RHS term once too, otherwise there is no progress when
+the coercion is applied on RHS
+
+# norm.slk
+
+Can we test the sa normalization feature in sleek?
 
