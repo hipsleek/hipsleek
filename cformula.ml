@@ -4506,12 +4506,29 @@ and mkAnd_fb_hf fb hf pos=
   } in
   {fb with formula_base_heap = new_hf}
 
-let rec subst_hrel_f f hprel_subst=
-  match f with
-    | Base fb -> Base {fb with formula_base_heap =  subst_hrel_hf fb.formula_base_heap hprel_subst;}
-    | Or orf -> Or {orf with formula_or_f1 = subst_hrel_f orf.formula_or_f1 hprel_subst;
-                formula_or_f2 = subst_hrel_f orf.formula_or_f2 hprel_subst;}
-    | Exists fe -> Exists {fe with formula_exists_heap =  subst_hrel_hf fe.formula_exists_heap hprel_subst;}
+(*List.combine but ls1 >= ls2*)
+let rec combine_length_geq_x ls1 ls2 res=
+  match ls1,ls2 with
+    | [],[] -> res
+    | sv1::_,[] -> res
+    | sv1::tl1,sv2::tl2 -> combine_length_geq_x tl1 tl2 (res@[sv1,sv2])
+    | _ -> report_error no_pos "sau.combine_length_geq"
+
+let combine_length_geq ls1 ls2 res=
+  let pr1= !CP.print_svl in
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_2 "combine_length_geq" pr1 pr1 pr2
+      (fun _ _ -> combine_length_geq_x ls1 ls2 res) ls1 ls2
+
+let rec subst_hrel_f f0 hprel_subst=
+  let rec helper f=
+    match f with
+      | Base fb -> Base {fb with formula_base_heap =  subst_hrel_hf fb.formula_base_heap hprel_subst;}
+      | Or orf -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+          formula_or_f2 = helper orf.formula_or_f2;}
+      | Exists fe -> Exists {fe with formula_exists_heap = subst_hrel_hf fe.formula_exists_heap hprel_subst;}
+  in
+  if hprel_subst = [] then f0 else helper f0
 
 and subst_hrel_hf hf hprel_subst=
   (* let helper (HRel (id,el,p)) (HRel (id1,el1,_), hf)= *)
@@ -4522,7 +4539,7 @@ and subst_hrel_hf hf hprel_subst=
       (*should specvar subst*)
       let svl1 = (List.fold_left List.append [] (List.map CP.afv el1)) in
       let svl2 = (List.fold_left List.append [] (List.map CP.afv el2)) in
-      let f = h_subst (List.combine svl2 svl1) hf in
+      let f = h_subst ((*List.combine*) combine_length_geq svl2 svl1 []) hf in
       (true, f)
     else (false, hrel1)
   in

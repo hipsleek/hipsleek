@@ -2684,28 +2684,35 @@ let mk_orig_hprel_def prog unk_hps hp r other_args args sh_ldns eqNulls eqPures 
       (fun _ _ _ _ _ _ _ -> mk_orig_hprel_def_x prog unk_hps hp r other_args args sh_ldns eqNulls eqPures hprels unk_svl)
       unk_hps hp args sh_ldns eqNulls eqPures hprels
 
-let elim_not_in_used_args (a,b,orig_fs) fs hp args=
+let elim_not_in_used_args_x orig_fs fs hp args=
   let helper svl f=
     let new_f,_ = CF.drop_hrel_f f [hp] in
     svl@(CF.fv new_f)
   in
   let svl = List.fold_left helper [] fs in
   let new_args = CP.intersect_svl args svl in
-  let n_orig_hpdef,new_fs=
-    if List.length args = List.length new_args then (a,b,orig_fs),fs
+  let n_orig_fs,new_fs,ss=
+    if List.length args = List.length new_args then (orig_fs,fs,[])
     else
       let old_hrel = mkHRel hp args no_pos in
       let new_hrel = mkHRel hp new_args no_pos in
       let subst = [(old_hrel,new_hrel)] in
       let new_fs = List.map (fun f -> CF.subst_hrel_f f subst) fs in
-      ((a,b,CF.subst_hrel_f orig_fs subst), new_fs)
+      (CF.subst_hrel_f orig_fs subst, new_fs,subst)
   in
-  n_orig_hpdef,new_args,new_fs
+  n_orig_fs,new_args,new_fs,ss
+
+let elim_not_in_used_args orig_fs fs hp args=
+  let pr1 = !CP.print_sv in
+  let pr2 = !CP.print_svl in
+  let pr3 (_,b,_,_)= pr2 b in
+  Debug.no_2 "elim_not_in_used_args" pr1 pr2 pr3
+      (fun _ _ -> elim_not_in_used_args_x orig_fs fs hp args) hp args
 
 let get_longest_common_hnodes_list_x prog cdefs unk_hps unk_svl hp r non_r_args args fs=
  if List.length fs <= 1 then
    let hpdef = mk_hprel_def prog cdefs unk_hps unk_svl hp args fs no_pos in
-   hpdef
+   (hpdef,[])
  else begin
    let lldns = List.map (fun f -> (get_hdnodes f, f)) fs in
    let min,sh_ldns,eqNulls,eqPures,hprels = get_min_number_new prog args unk_hps lldns in
@@ -2713,8 +2720,14 @@ let get_longest_common_hnodes_list_x prog cdefs unk_hps unk_svl hp r non_r_args 
    let hprels1 = List.filter (fun (hp1,_,_) -> not(CP.eq_spec_var hp hp1)) hprels in
    if min = 0 && eqNulls = [] && eqPures= [] then
      (*mk_hprel_def*)
-     let hpdef = mk_hprel_def prog cdefs unk_hps unk_svl hp args fs no_pos in
-     hpdef
+      let n_args,n_fs,elim_ss =
+        if !Globals.sa_elim_useless then
+          let _,n_args,n_fs,ss = elim_not_in_used_args (CF.mkHTrue_nf no_pos) fs hp args in
+          (n_args,n_fs,ss)
+        else (args, fs, [])
+      in
+     let hpdef = mk_hprel_def prog cdefs unk_hps unk_svl hp n_args n_fs no_pos in
+     (hpdef,elim_ss)
    else
      (*get shortest list of hnodes*)
      (* let sh_ldns, _ = get_shortest_lnds lldns min in *)
@@ -2723,28 +2736,30 @@ let get_longest_common_hnodes_list_x prog cdefs unk_hps unk_svl hp r non_r_args 
      (*let sh_ldns1 = move_root_to_top root sh_ldns in*)
      let orig_hpdefs, hp_subst, new_hp, n_args,sh_ldns2,next_roots = mk_orig_hprel_def prog cdefs unk_hps hp r non_r_args args sh_ldns eqNulls eqPures hprels1 unk_svl in
      match orig_hpdefs with
-       | [] -> []
+       | [] -> ([],[])
        | [(hp01,orig_hpdef)] ->
-       (* let com_hps = List.map (fun (hp,eargs,_)-> (hp,eargs)) hprels1 in *)
-       let n_fs = List.map (process_one_f prog args n_args next_roots hp_subst sh_ldns2 eqNulls eqPures hprels1) lldns in
-       let n_fs1 = List.filter (fun f -> not ((is_empty_f f) || (CF.is_only_neqNull n_args [] f))) n_fs in
+           (* let com_hps = List.map (fun (hp,eargs,_)-> (hp,eargs)) hprels1 in *)
+           let n_fs = List.map (process_one_f prog args n_args next_roots hp_subst sh_ldns2 eqNulls eqPures hprels1) lldns in
+           let n_fs1 = List.filter (fun f -> not ((is_empty_f f) || (CF.is_only_neqNull n_args [] f))) n_fs in
        (*for debugging*)
        (* let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in *)
        (* let _ = Debug.info_pprint ("  n_fs: "^ (pr1 n_fs)) no_pos in *)
        (* let _ = Debug.info_pprint ("  n_fs1: "^ (pr1 n_fs1)) no_pos in *)
        (*END for debugging*)
-       let n_fs2 = Gen.BList.remove_dups_eq (fun f1 f2 -> check_relaxeq_formula f1 f2) n_fs1 in
-       let n_orig_hpdef,n_args1,n_fs3 =
-         if !Globals.sa_elim_useless then
-           elim_not_in_used_args orig_hpdef n_fs2 new_hp n_args
-         else (orig_hpdef, n_args, n_fs2)
-       in
-       let new_hpdef = mk_hprel_def prog cdefs unk_hps unk_svl new_hp n_args1 n_fs3 no_pos in
-       if new_hpdef = [] then
-         let hpdef = mk_hprel_def prog cdefs unk_hps unk_svl hp args fs no_pos in
-         hpdef
-       else
-         ((hp01,n_orig_hpdef)::new_hpdef)
+           let n_fs2 = Gen.BList.remove_dups_eq (fun f1 f2 -> check_relaxeq_formula f1 f2) n_fs1 in
+           let n_orig_hpdef,n_args1,n_fs3,elim_ss =
+             if !Globals.sa_elim_useless then
+               let (a,b,orig_fs) = orig_hpdef in
+               let n_orig_fs,n_args, n_fs,ss=  elim_not_in_used_args orig_fs n_fs2 new_hp n_args in
+               ((a,b,n_orig_fs),n_args, n_fs,ss)
+             else (orig_hpdef, n_args, n_fs2, [])
+           in
+           let new_hpdef = mk_hprel_def prog cdefs unk_hps unk_svl new_hp n_args1 n_fs3 no_pos in
+           if new_hpdef = [] then
+             let hpdef = mk_hprel_def prog cdefs unk_hps unk_svl hp args fs no_pos in
+             (hpdef,[])
+           else
+             ((hp01,n_orig_hpdef)::new_hpdef,elim_ss)
        | _ -> report_error no_pos "sau.get_longest_common_hnodes_list"
  end
 
@@ -2753,7 +2768,9 @@ let get_longest_common_hnodes_list prog cdefs unk_hps unk_svl hp r non_r_args ar
   let pr2 = fun (_, def) -> Cprinter.string_of_hp_rel_def def in
   let pr3 = !CP.print_sv in
   let pr4 = !CP.print_svl in
-  Debug.no_5 "get_longest_common_hnodes_list" pr3 pr4 pr4 pr4 pr1 (pr_list_ln pr2)
+  let pr5 = pr_list (pr_pair Cprinter.prtt_string_of_h_formula Cprinter.prtt_string_of_h_formula) in
+  let pr6= (pr_list_ln pr2) in
+  Debug.no_5 "get_longest_common_hnodes_list" pr3 pr4 pr4 pr4 pr1 (pr_pair pr6 pr5)
       (fun _ _ _ _ _-> get_longest_common_hnodes_list_x prog cdefs unk_hps unk_svl hp r non_r_args args fs)
       hp args unk_hps unk_svl fs
 
