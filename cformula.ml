@@ -3926,7 +3926,7 @@ let annotate_dl_hf hf0 unk_hps=
       | HRel (hp, eargs, _) -> if CP.mem_svl hp unk_hps then
             let args = (List.fold_left List.append [] (List.map CP.afv eargs)) in
             let _,p,_ = generate_xpure_view [(hp,args)] [] in
-            (HEmp,[p])
+            (* (HEmp,[p]) *) (hf,[p])
           else (hf,[])
       | Hole _
       | HTrue
@@ -3942,13 +3942,13 @@ let annotate_dl_x (f0: formula) unk_hps =
           let new_h,ps = annotate_dl_hf b.formula_base_heap unk_hps in
           let new_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix b.formula_base_pure) (CP.conj_of_list ps no_pos) no_pos)
           in
-          Base {b with formula_base_heap = new_h;
+          Base {b with (* formula_base_heap = new_h; *)
               formula_base_pure = new_p;
                }
       | Exists e ->
           let new_h,ps = annotate_dl_hf e.formula_exists_heap unk_hps in
           let new_p = MCP.mix_of_pure (CP.mkAnd (MCP.pure_of_mix e.formula_exists_pure) (CP.conj_of_list ps no_pos) no_pos) in
-          Exists {e with formula_exists_heap = new_h;
+          Exists {e with (* formula_exists_heap = new_h; *)
 		          formula_exists_pure = new_p;}
       | Or orf  -> Or {orf with formula_or_f1 = helper orf.formula_or_f1;
           formula_or_f2 = helper orf.formula_or_f2}

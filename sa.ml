@@ -1065,12 +1065,12 @@ let elim_direct_root_pto undef_args args prog hd_nodes hv_nodes=
       (fun _ _ -> elim_direct_root_pto_x undef_args args prog hd_nodes hv_nodes) undef_args args
 
 let add_xpure_dling_x f unk_hpargs local_unk_svl=
-  let cur_hps = CF.get_hp_rel_name_formula f in
+  (* let cur_hps = CF.get_hp_rel_name_formula f in *)
   let rec sel_helper hpargs res=
     match hpargs with
       | [] -> res
       | (hp,args)::rest ->
-          if not(CP.mem_svl hp cur_hps) &&
+          if (* not(CP.mem_svl hp cur_hps) && *)
             CP.diff_svl args local_unk_svl = [] then
             sel_helper rest (res@[(hp,args)])
           else sel_helper rest res
