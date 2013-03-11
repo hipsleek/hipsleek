@@ -11,13 +11,15 @@ print residue.
 */
 
 infer [HP] HP(x) |-  x::node<_@A,q>@L .
-print residue
+print residue.
 /*
 (i) residue is wrong
 (ii) print also rel-assumption when residue is printed.
  <1>EXISTS(q,Anon_12: (HP_24(q)) * x::node<Anon_12@A,q@L>@M[Orig]&true&{FLOW,(19,20)=__norm})[]
 */
 
+infer [] x::node<2,r> |-  x::node<_@A,q>@L .
+print residue.
 
 /*
 Could we suppress the printing below
