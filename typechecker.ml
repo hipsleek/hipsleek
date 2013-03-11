@@ -1440,6 +1440,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         CF.h_formula_data_pruning_conditions = [];
                         CF.h_formula_data_pos = pos}) in
 	            let vheap = CF.formula_of_heap vdatanode pos in
+                (* let _ = print_endline ( "vheap 1: " ^ (Cprinter.string_of_formula vheap) ) in *)
                     let _ = DD.devel_hprint (add_str "vheap" (Cprinter.string_of_formula)) vheap pos in
                     (*Test whether fresh_frac is full permission or not
                       writable -> fresh_frac = full_perm => normally
@@ -1461,7 +1462,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                       else
                         vheap
                     in
-
+                    (* let _ = print_endline ( "vheap 2: " ^ (Cprinter.string_of_formula vheap) ) in *)
 	            let vheap = prune_preds prog false vheap in
                     let _ = DD.devel_hprint (add_str "vheap2" (Cprinter.string_of_formula)) vheap pos in
                     let struc_vheap = CF.EBase { 
@@ -1471,7 +1472,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	                CF.formula_struc_base = vheap;
 	                CF.formula_struc_continuation = None;
 	                CF.formula_struc_pos = pos} in
-	            (*let _ = print_string ("\n(andreeac)struc_vheap: " ^ (Cprinter.string_of_struc_formula struc_vheap) ) in *)
+	            (* let _ = print_string ("\n(andreeac)struc_vheap: " ^ (Cprinter.string_of_struc_formula struc_vheap) ) in *)
 	            let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
 	            Debug.devel_pprint to_print pos;
 

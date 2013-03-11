@@ -2215,7 +2215,7 @@ let process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls c
 let process_one_f prog org_args args next_roots hp_subst sh_ldns com_eqNulls com_eqPures com_hps (ldns, f)=
   let pr1 = !CP.print_svl in
   let pr2 = Cprinter.prtt_string_of_formula in
-  Debug.ho_4 "process_one_f" pr1 pr1 pr2 (pr_list !CP.print_formula) pr2
+  Debug.no_4 "process_one_f" pr1 pr1 pr2 (pr_list !CP.print_formula) pr2
       (fun _ _ _ _-> process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls com_eqPures com_hps (ldns, f))
       org_args args f com_eqPures
 
@@ -2824,7 +2824,7 @@ let get_longest_common_hnodes_list prog cdefs unk_hps unk_svl hp r non_r_args ar
   let pr4 = !CP.print_svl in
   let pr5 = pr_list (pr_pair Cprinter.prtt_string_of_h_formula Cprinter.prtt_string_of_h_formula) in
   let pr6= (pr_list_ln pr2) in
-  Debug.ho_5 "get_longest_common_hnodes_list" pr3 pr4 pr4 pr4 pr1 (pr_pair pr6 pr5)
+  Debug.no_5 "get_longest_common_hnodes_list" pr3 pr4 pr4 pr4 pr1 (pr_pair pr6 pr5)
       (fun _ _ _ _ _-> get_longest_common_hnodes_list_x prog cdefs unk_hps unk_svl hp r non_r_args args fs)
       hp args unk_hps unk_svl fs
 

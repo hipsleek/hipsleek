@@ -7900,13 +7900,15 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
       let f_lst = CP.remove_dupl_conj_opt_list (ann :: ann_lst) in
       List.fold_left Immutable.mkAndOpt None f_lst in
     (* construct two formulae for lhs and, respectively rhs, combining the constraints collected from both node ann and field ann *)
+    (* let _ = print_endline (" r = " ^ (string_of_bool r)) in *)
+    (* let _ = print_endline (" rl = " ^ (string_of_bool rl)) in *)
     let (r, ann_lhs, ann_rhs) = (r && rl, join_ann_constr add_to_lhs param_ann_lhs, join_ann_constr add_to_rhs param_ann_rhs) in
     (* If the matched view args are param-ann check those as well*)
     let l_args_ann = List.filter (fun c -> CP.is_ann_type (CP.type_of_spec_var c)) l_args in 
     let r_args_ann = List.filter (fun c -> CP.is_ann_type (CP.type_of_spec_var c)) r_args in
     let (rvl, view_param_ann_lhs, view_param_ann_rhs) =  if (!allow_field_ann) 
-    then Mem.subtype_sv_ann_gen_list es_impl_vars l_args_ann r_args_ann 
-    else (true, None,None) in
+        then Mem.subtype_sv_ann_gen_list es_impl_vars l_args_ann r_args_ann 
+        else (true, None,None) in
     let (r, ann_lhs, ann_rhs) = (r && rvl,Immutable.mkAndOpt ann_lhs view_param_ann_lhs, Immutable.mkAndOpt ann_rhs view_param_ann_rhs)
     in
     (*let _ = print_string("cris: ann_lhs = " ^ (pr_opt Cprinter.string_of_pure_formula ann_lhs) ^ "\n") in 

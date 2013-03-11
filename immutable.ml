@@ -600,7 +600,7 @@ and subtype_ann_gen_x impl_vars (imm1 : ann) (imm2 : ann) : bool * (CP.formula o
 
 and subtype_ann_gen impl_vars (imm1 : ann) (imm2 : ann) : bool * (CP.formula option) * (CP.formula option) =
   let pr1 = !CP.print_svl in
-  let pr2 = pr_no in
+  let pr2 = Cprinter.string_of_imm(* pr_no *) in
   let pr2a = pr_option !CP.print_formula in
   let pr3 = pr_triple string_of_bool pr2a pr2a in
   Debug.no_3 "subtype_ann_gen" pr1 pr2 pr2  pr3 subtype_ann_gen_x impl_vars (imm1 : ann) (imm2 : ann) 

@@ -8907,7 +8907,7 @@ let plugin_inferred_iviews views iprog =
 
 let plugin_inferred_iviews views iprog =
 	let pr1 = pr_list (pr_triple pr_id pr_id pr_none) in
-Debug.ho_1 "plugin_inferred_iviews" pr1 Iprinter.string_of_program (fun _ -> plugin_inferred_iviews views iprog) views
+Debug.no_1 "plugin_inferred_iviews" pr1 Iprinter.string_of_program (fun _ -> plugin_inferred_iviews views iprog) views
 		
 
 (*
