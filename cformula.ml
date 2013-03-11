@@ -3463,6 +3463,7 @@ and get_pure (f: formula)=
   match f with
     | Base fb ->
         MCP.pure_of_mix fb.formula_base_pure
+    | Exists fe -> MCP.pure_of_mix fe.formula_exists_pure
     | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
 
 and get_ptrs (f: h_formula): CP.spec_var list = match f with
@@ -3522,7 +3523,9 @@ let rec get_h_size_f (f: formula)=
   match f with
     | Base fb ->
         (get_h_size fb.formula_base_heap)
-    | _ -> report_error no_pos "SAU.is_empty_f: not handle yet"
+    | Exists fe ->
+        (get_h_size fe.formula_exists_heap)
+    | _ -> report_error no_pos "CF.get_h_size_f: not handle yet"
 
 and get_h_size (f0: h_formula) =
  let rec helper f=
@@ -4616,7 +4619,19 @@ and drop_data_view_hrel_nodes f fn_data_select fn_view_select fn_hrel_select dno
         (* let new_p1 = remove_neqNulls new_p in *)
         Base {fb with formula_base_heap = new_hf;
             formula_base_pure = MCP.mix_of_pure new_p1;
-                }
+             }
+    | Exists fe ->
+        let new_hf = drop_data_view_hrel_nodes_hf
+          fe.formula_exists_heap fn_data_select fn_view_select fn_hrel_select
+          dnodes vnodes relnodes in
+        (*assume keep vars = dnodes*)
+        let new_p = CP.filter_var_new (MCP.pure_of_mix fe.formula_exists_pure) dnodes in
+        (*currently we drop all neqnull*)
+        let new_p1 = remove_neqNull_redundant_hnodes_hf new_hf new_p in
+        (* let new_p1 = remove_neqNulls new_p in *)
+        Exists {fe with formula_exists_heap = new_hf;
+            formula_exists_pure = MCP.mix_of_pure new_p1;
+             }
     | _ -> report_error no_pos "cformula.drop_data_view_hrel_nodes"
 
 and drop_data_view_hrel_nodes_fb fb fn_data_select fn_view_select fn_hrel_select matched_data_nodes matched_view_nodes matched_hrel_nodes keep_pure_vars=

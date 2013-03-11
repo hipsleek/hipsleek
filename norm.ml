@@ -1,5 +1,6 @@
 open Globals
 open Gen
+open Cformula
 
 module DD = Debug
 module CF=Cformula
@@ -47,26 +48,106 @@ let norm_elim_useless_para cprog view_name sf args=
 (***********************************************)
    (********EXTRACT common pattern **********)
 (***********************************************)
-let norm_extract_common_x cprog cviews vdecl=
-  let self_var = Cpure.SpecVar ((Named vdecl.C.view_data_name), self, Unprimed) in
-  let args = self_var::vdecl.C.view_vars in
-  let unk_hps = [] in
-  let cdefs = [] in
-  let fs = fst (List.split vdecl.C.view_un_struc_formula) in
-  if List.length fs <= 1 then
-    vdecl
-  else
-    let lldns = List.map (fun f -> (SAU.get_hdnodes f, f)) fs in
-    let min,sh_ldns,eqNulls,eqPures,hprels = SAU.get_min_common cprog args unk_hps lldns in
-    if min = 0 && eqNulls = [] && eqPures= [] then vdecl else
-      begin
-          (* let orig_hpdefs, hp_subst, new_hp, n_args,sh_ldns2,next_roots = SAU.mk_orig_hprel_def cprog cdefs unk_hps hp r non_r_args args sh_ldns eqNulls eqPures hprels1 unk_svl in *)
-          (* let n_fs = List.map (SAU.process_one_f cprog args n_args next_roots hp_subst sh_ldns2 eqNulls eqPures hprels1) lldns in *)
-          (* let n_fs1 = List.filter (fun f -> not ((SAU.is_empty_f f) || (CF.is_only_neqNull n_args [] f))) n_fs in *)
-          vdecl
-      end
+let view_to_hprel_h_formula hf0=
+  let rec helper hf=
+    match hf with
+      | CF.Star {h_formula_star_h1 = hf1;
+              h_formula_star_h2 = hf2;
+              h_formula_star_pos = pos} ->
+          let n_hf1,hvs1 = helper hf1 in
+          let n_hf2,hvs2 = helper hf2 in
+          let new_hf=
+            match n_hf1,n_hf2 with
+              | (HEmp,HEmp) -> HEmp
+              | (HEmp,_) -> n_hf2
+              | (_,HEmp) -> n_hf1
+              | _ -> (Star {h_formula_star_h1 = n_hf1;
+                            h_formula_star_h2 = n_hf2;
+                            h_formula_star_pos = pos})
+          in
+          (new_hf,hvs1@hvs2)
+      | CF.Conj { h_formula_conj_h1 = hf1;
+               h_formula_conj_h2 = hf2;
+               h_formula_conj_pos = pos} ->
+          let n_hf1,hvs1 = helper hf1 in
+          let n_hf2,hvs2 = helper hf2 in
+          (Conj { h_formula_conj_h1 = n_hf1;
+                 h_formula_conj_h2 = n_hf2;
+                 h_formula_conj_pos = pos},hvs1@hvs2)
+      | CF.Phase { CF.h_formula_phase_rd = hf1;
+                CF.h_formula_phase_rw = hf2;
+                h_formula_phase_pos = pos} ->
+          let n_hf1,hvs1 = helper hf1 in
+          let n_hf2,hvs2 = helper hf2 in
+          (CF.Phase { CF.h_formula_phase_rd = n_hf1;
+                  CF.h_formula_phase_rw = n_hf2;
+                  CF.h_formula_phase_pos = pos},hvs1@hvs2)
+      | CF.DataNode hd -> (hf,[])
+      | CF.ViewNode hv ->
+          let eargs = List.map (fun v -> CP.mkVar v no_pos) (hv.CF.h_formula_view_node::hv.CF.h_formula_view_arguments) in
+          let nh = CF.HRel (CP.SpecVar (HpT, hv.CF.h_formula_view_name, Unprimed ),eargs, no_pos) in
+          (nh, [hv])
+      | CF.HRel _
+      | CF.Hole _
+      | CF.HTrue
+      | CF.HFalse
+      | CF.HEmp -> (hf,[])
+  in
+  helper hf0
 
-let norm_extract_common cprog cviews vdecl=
+let view_to_hprel_x (f0:CF.formula) : (CF.formula*CF.h_formula_view list)=
+  let rec helper f2_f=
+    match f2_f with
+      | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+          let nf1,hvs1 = helper f1 in
+          let nf2,hvs2 = helper f2 in
+          (Or {formula_or_f1 = nf1 ; formula_or_f2 =  nf2 ; formula_or_pos = pos}, hvs1@hvs2)
+      | Base b ->
+          let nh,hvs= view_to_hprel_h_formula b.formula_base_heap in
+          (Base { b with formula_base_heap =nh;}, hvs)
+      | Exists b ->
+          let nh,hvs = view_to_hprel_h_formula b.formula_exists_heap in
+          (Exists {b with formula_exists_heap = nh;}, hvs)
+  in
+  helper f0
+
+let view_to_hprel (f2_f:formula): (CF.formula*CF.h_formula_view list) =
+  let pr1 hv= Cprinter.prtt_string_of_h_formula (CF.ViewNode hv) in
+  let pr2 =pr_list pr1 in
+  Debug.ho_1 "view_to_hprel" !print_formula (pr_pair !print_formula pr2)
+      view_to_hprel_x f2_f
+
+let norm_extract_common_one_view_x cprog cviews vdecl=
+  let self_var = Cpure.SpecVar ((Named vdecl.C.view_data_name), self, Unprimed) in
+  let hp = CP.SpecVar (HpT, vdecl.C.view_name, Unprimed) in
+  let args = self_var::vdecl.C.view_vars in
+  let unk_hps = [] in let unk_svl = [] in
+  let cdefs = [] in
+  let fs = CF.list_of_disjs (CF.struc_to_formula vdecl.C.view_formula) in
+  (***views to hprels*******)
+  let fs1 = List.map CF.elim_exists fs in
+  let fs2,map = List.split (List.map view_to_hprel fs1) in
+  let defs,ss = SAU.get_longest_common_hnodes_list cprog cdefs unk_hps unk_svl
+    hp self_var vdecl.C.view_vars args fs2 in
+
+  (***hprels to views*******)
+  vdecl
+
+let norm_extract_common_one_view cprog cviews vdecl=
   let pr1 = Cprinter.string_of_view_decl in
-  Debug.ho_1 "norm_extract_common" pr1 pr1
-      (fun _ -> norm_extract_common_x cprog cviews vdecl) vdecl
+  Debug.ho_1 "norm_extract_common_one_view" pr1 pr1
+      (fun _ -> norm_extract_common_one_view_x cprog cviews vdecl) vdecl
+
+let norm_extract_common cprog cviews=
+  let rec process_helper rem_vs done_vs=
+    match rem_vs with
+      | [] -> done_vs
+      | vdecl::rest ->
+          let n_vdecl = norm_extract_common_one_view cprog (done_vs@rest) vdecl in
+          process_helper rest (done_vs@[n_vdecl])
+  in
+  process_helper cviews []
+
+(*****************************************************************)
+   (********EXTRACT common pattern **********)
+(*****************************************************************)

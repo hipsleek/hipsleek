@@ -228,6 +228,7 @@ let convert_pred_to_cast () =
   let cviews = List.map (AS.trans_view iprog) tmp_views in
   Debug.tinfo_pprint "after trans_view" no_pos;
   let _ = !cprog.C.prog_view_decls <- cviews in
+  let cviews1 = Norm.norm_extract_common !cprog cviews in
   let _ =  (List.map (fun vdef -> AS.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews) in
   Debug.tinfo_pprint "after compute_view" no_pos;
   let _ = (List.map (fun vdef -> AS.set_materialized_prop vdef) cviews) in
