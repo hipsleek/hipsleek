@@ -210,3 +210,29 @@ the coercion is applied on RHS
 
 Can we test the sa normalization feature in sleek?
 
+# imm.slk
+
+infer [HP] HP(x) |-  x::node<_@A,q>@L .
+print residue
+/*
+(i) residue is wrong
+(ii) print also rel-assumption when residue is printed.
+ <1>EXISTS(q,Anon_12: (HP_24(q)) * x::node<Anon_12@A,q@L>@M[Orig]&true&{FLOW,(19,20)=__norm})[]
+*/
+
+/*
+Could we suppress the printing below
+for sleek; it is only relevant for hip.
+*************************************
+*******relational assumption ********
+*************************************
+[ HP(x)&true --> x::node<Anon_12,q>@M * (HP_24(q))&true]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP(x_25) ::= x_25::node<Anon_12,q>@M * (HP_24(q))&true,
+ HP_24(q) ::= htrue&true]
+*************************************
+*/
