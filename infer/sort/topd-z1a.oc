@@ -1,0 +1,14 @@
+PreR:={[x,y]:forall(RECx,RECy:
+    not((((RECx >= 0 && x >= 1 + RECx) && RECx + y >= x) && RECx + y = RECy + x)) || RECy<0 || RECy>0 || RECx<1
+)};
+
+PreR;
+
+#{[x,y]: x <= y} union {[x,y]: y <= x-1, 0}
+
+Pre0 := {[x,y]: y<0 | y>0 | x<1};
+
+Pre:= Pre0 intersection PreR;
+
+Pre;
+

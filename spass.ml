@@ -46,6 +46,7 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
   | Cpure.Tsconst _   -> illegal_format "SPASS don't support Tsconst expresion"
   | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
+  | Cpure.Level _ -> illegal_format ("z3.smt_of_exp: level should not appear here")
   | Cpure.Subtract _  -> illegal_format "SPASS don't support Substract expresion"
   | Cpure.Mult _      -> illegal_format "SPASS don't support Mult expresion"
   | Cpure.Div _       -> illegal_format "SPASS don't support Div expresion"
@@ -68,6 +69,7 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   | Cpure.ArrayAt _   -> illegal_format "SPASS don't support Array expresion"
   (* other *)
   | Cpure.Func _      -> illegal_format "SPASS don't support Func expresion"
+  | Cpure.InfConst _ -> Error.report_no_pattern()
                            
 (* return b_formula in string * list of functions in string * list of predicates in string *)
 and spass_dfg_of_b_formula (bf : Cpure.b_formula) : (string * string list * string list) =
@@ -119,6 +121,7 @@ and spass_dfg_of_p_formula (pf : Cpure.p_formula) : (string * string list * stri
   | ListAllN _
   | ListPerm _
   | RelForm _       -> illegal_format "SPASS don't support List p_formula"
+  | XPure _ -> Error.report_no_pattern()
 
 (* return formula in string * list of functions in string * list of predicates in string *)
 and spass_dfg_of_formula f : (string * string list * string list) =
@@ -204,6 +207,7 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   | Cpure.ArrayAt _    -> illegal_format "SPASS don't support Array expresion"
   (* other *)
   | Cpure.Func _       -> illegal_format "SPASS don't support Func expresion"
+  | Cpure.Level _ | Cpure.InfConst _ -> Error.report_no_pattern()
 
 and spass_tptp_of_b_formula (bf : Cpure.b_formula) : string =
   match bf with
@@ -236,6 +240,7 @@ and spass_tptp_of_p_formula (pf : Cpure.p_formula) : string =
   | ListAllN _
   | ListPerm _
   | RelForm _       -> illegal_format "SPASS don't support List p_formula"
+  | XPure _ -> Error.report_no_pattern()
 
 and spass_tptp_of_formula f =
   match f with
@@ -282,7 +287,8 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.ListReverse _  -> false
   (* array expressions *)
   | Cpure.ArrayAt _      -> false
-  | Cpure.Func (sv, exp_list, _) -> List.for_all (fun e -> can_spass_handle_expression e) exp_list; 
+  | Cpure.Func (sv, exp_list, _) -> List.for_all (fun e -> can_spass_handle_expression e) exp_list
+  | Cpure.Level _ | Cpure.InfConst _ -> Error.report_no_pattern(); 
 
 
 and can_spass_handle_p_formula (pf : Cpure.p_formula) : bool =
@@ -312,6 +318,7 @@ and can_spass_handle_p_formula (pf : Cpure.p_formula) : bool =
   | ListAllN _
   | ListPerm _
   | RelForm _            -> false
+  | XPure _ -> Error.report_no_pattern()
 
 and can_spass_handle_b_formula (bf : Cpure.b_formula) : bool =
   match bf with

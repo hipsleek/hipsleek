@@ -1,0 +1,44 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred ll2<n> == self = null & n = 0
+	or self::node<next = r> * r::ll2<n-1>
+	inv n >= 0.
+
+pred ll3<n> == self::node<next = r> * r::ll2<n-1>
+	inv n >= 1.
+
+//(1)
+checkentail x::node(1.0)<_, null> * z::node(1.0)<_,_> * y::ll(1.0)<_> |- x::ll(1.0)<m> & m = 2.
+print residue. //fail
+
+//(2)
+checkentail x::node(1.0)<_, null> * z::node(1.0)<_,_> * y::ll(1.0)<_> & m = 1 |- x::ll(1.0)<m>.
+print residue.//valid
+
+//(3)
+checkentail x::node(1.0)<_, null> * z::node(1.0)<_,_> * y::ll(1.0)<_> & m = 0 |- x::ll(1.0)<m>.
+print residue.//fail
+
+//(4)
+checkentail x::node(1.0)<_, null> * y::ll(1.0)<1> |- x::ll(1.0)<m> & m = 0.
+print residue.//fail
+
+//(5)
+checkentail x::node(1.0)<_, r> * r::node(1.0)<_, r2> * r2::ll(1.0)<n> |- x::ll(1.0)<n + 2>.
+print residue.//valid
+
+//(6)
+checkentail x::node(1.0)<_, r> * r::node(1.0)<_, r2> * r2::ll(1.0)<n> |- x::ll(1.0)<m> & m >= n+1.
+print residue.//valid
+
+//(7)
+checkentail x::ll(1.0)<n> & n > 0 |- x::ll(1.0)<m> & m > 0.
+print residue.//valid
+
+//(8)
+checkentail x::ll(1.0)<n> & n > 3 |- x::node(1.0)<next = r1> * r1::node(1.0)<next = r2> & r2=null.//fail
+

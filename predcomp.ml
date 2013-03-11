@@ -109,10 +109,12 @@ and aug_class_name (t : typ) = match t with
   | UNK  -> 	
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "unexpected UNKNOWN type"}
+  | Pointer _ -> "Pointer"
   | Named c -> c ^ "Aug"
   | Int -> "IntAug"
+  | INFInt -> "INFIntAug"
   | AnnT -> "AnnAug"
-  | RelT -> "RelAug"
+  | RelT _ -> "RelAug"
   | Bool -> "BoolAug"
   | Float -> "FloatAug"
   | NUM -> "NUMAug"
@@ -155,7 +157,7 @@ and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos =
 		  | p -> p in
 		let t = ityp_of_ctyp (CP.type_of_spec_var var) in
 		(* An Hoa END *)
-		let fld = ((t, CP.name_of_spec_var var), pos, false) in (* An Hoa : Add [false] for inline record. TODO revise *)
+		let fld = ((t, CP.name_of_spec_var var), pos, false,F_NO_ANN) in (* An Hoa : Add [false] for inline record. TODO revise *)
 		fld :: rest_result
 	end
 	| [] -> [] in
@@ -163,7 +165,7 @@ and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos =
   let rec helper2 (CP.SpecVar (t, v, p)) =
 	let cls_name = aug_class_name t in
 	let atype = Named cls_name in
-	((atype, v), pos, false)  (* An Hoa : Add [false] for inline record. TODO revise *) in 
+	((atype, v), pos, false,F_NO_ANN)  (* An Hoa : Add [false] for inline record. TODO revise *) in 
   let pb_fields = List.map helper2 pbvars in
   let normal_vvars = Gen.BList.difference_eq CP.eq_spec_var field_vars pbvars in
   let normal_fields = helper normal_vvars in
@@ -1042,9 +1044,18 @@ and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (v
   | Star ({h_formula_star_h1 = h1;
     h_formula_star_h2 = h2;
     h_formula_star_pos = pos})
+  | StarMinus ({h_formula_starminus_h1 = h1;
+	   h_formula_starminus_h2 = h2;
+	   h_formula_starminus_pos = pos})	   
   | Conj ({h_formula_conj_h1 = h1;
     h_formula_conj_h2 = h2;
     h_formula_conj_pos = pos})
+  | ConjStar ({h_formula_conjstar_h1 = h1;
+	   h_formula_conjstar_h2 = h2;
+	   h_formula_conjstar_pos = pos})
+  | ConjConj ({h_formula_conjconj_h1 = h1;
+	   h_formula_conjconj_h2 = h2;
+	   h_formula_conjconj_pos = pos})	   	   
   | Phase ({h_formula_phase_rd = h1;
     h_formula_phase_rw = h2;
     h_formula_phase_pos = pos}) -> begin
@@ -1462,9 +1473,18 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
   | Star ({h_formula_star_h1 = h1;
     h_formula_star_h2 = h2;
     h_formula_star_pos = pos})
+  | StarMinus ({h_formula_starminus_h1 = h1;
+	   h_formula_starminus_h2 = h2;
+	   h_formula_starminus_pos = pos})	   
   | Conj ({h_formula_conj_h1 = h1;
     h_formula_conj_h2 = h2;
     h_formula_conj_pos = pos})
+  | ConjStar ({h_formula_conjstar_h1 = h1;
+	   h_formula_conjstar_h2 = h2;
+	   h_formula_conjstar_pos = pos})
+  | ConjConj ({h_formula_conjconj_h1 = h1;
+	   h_formula_conjconj_h2 = h2;
+	   h_formula_conjconj_pos = pos})	   	   
   | Phase ({h_formula_phase_rd = h1;
     h_formula_phase_rw = h2;
     h_formula_phase_pos = pos}) -> begin
@@ -1700,7 +1720,8 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
     proc_constructor = false;
     proc_args = [cur_color pos; new_color pos];
     proc_return = Bool;
-    proc_static_specs = Iformula.mkEFalseF ();
+    (* proc_static_specs = Iformula.mkEFalseF (); *)
+    proc_static_specs = Iformula.mkETrueF ();
     proc_dynamic_specs = Iformula.mkEFalseF ();
     proc_exceptions = [];
     proc_body = Some seq2;
@@ -1808,7 +1829,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
   let combined_exp, disj_procs, pbvars = 
     gen_formula prog (C.formula_of_unstruc_view_f vdef) vmap out_params in
   (* generate fields *)
-  let fields = ((Named vdef.C.view_data_name, self), pos, false) (* An Hoa : add [false] for inline record. TODO revise *) 
+  let fields = ((Named vdef.C.view_data_name, self), pos, false,F_NO_ANN) (* An Hoa : add [false] for inline record. TODO revise *) 
     :: (gen_fields vdef.C.view_vars pbvars pos) in
   (* parameters for traverse *)
   let check_proc = 
@@ -1820,7 +1841,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
     proc_constructor = false;
     proc_args = [cur_color pos; new_color pos];
     proc_return = Bool;
-    proc_static_specs = Iformula.mkEFalseF ();
+    proc_static_specs = Iformula.mkETrueF ();
     proc_dynamic_specs = Iformula.mkEFalseF ();
     proc_body = Some combined_exp;
     proc_exceptions = [];
@@ -1935,7 +1956,7 @@ and gen_partially_bound_type ((CP.SpecVar (t, v, p)) : CP.spec_var) pos : data_d
   | Named c ->
 	let cls_aug = c ^ "Aug" in
 	(* An Hoa : Add [false] for inline record. TODO revise *)
-	let fields = [((Bool, "bound"), pos, false); ((Named (string_of_typ t), "val"), pos, false)] in
+	let fields = [((Bool, "bound"), pos, false,F_NO_ANN); ((Named (string_of_typ t), "val"), pos, false,F_NO_ANN)] in
 	let ddef = { data_name = cls_aug;
 	data_fields = fields;
 	data_parent_name = "Object";

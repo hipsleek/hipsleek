@@ -87,6 +87,11 @@ let find_close svl0 eqs0=
   in
   loop_helper svl0 eqs0
 
+let find_close_f svl0 f=
+  let ( _,mf,_,_,_) = CF.split_components f in
+  let eqs = (MCP.ptr_equations_without_null mf)in
+  find_close svl0 eqs
+
 (*List.combine but ls2 >= ls1*)
 let rec combine_length_neq_x ls1 ls2 res=
   match ls1,ls2 with
@@ -309,6 +314,7 @@ and get_data_view_hrel_vars_h_formula hf=
     | CF.HTrue
     | CF.HFalse
     | CF.HEmp -> []
+	| CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
   in
   helper hf
 
@@ -365,6 +371,7 @@ and drop_get_hrel_h_formula hf=
       | CF.HTrue
       | CF.HFalse
       | CF.HEmp -> (hf0,[])
+	  | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
   in
   helper hf
 
@@ -427,6 +434,7 @@ and drop_data_hrel_except_hf dn_names hpargs hf=
       | CF.HTrue
       | CF.HFalse
       | CF.HEmp -> hf0
+      | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> report_error no_pos "CF.drop_data_hrel_except_hf: not handle yet"
   in
   helper hf
 
@@ -508,6 +516,7 @@ and drop_hrel_match_args_hf hf0 args=
       | CF.HTrue
       | CF.HFalse
       | CF.HEmp -> (hf)
+      | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> report_error no_pos "SAU.drop_hrel_match_args_hf: not handle yet"
   in
   helper hf0
 

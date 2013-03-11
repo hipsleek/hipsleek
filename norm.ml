@@ -92,6 +92,7 @@ let view_to_hprel_h_formula hf0=
       | CF.HTrue
       | CF.HFalse
       | CF.HEmp -> (hf,[])
+      | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> report_error no_pos "NORM.view_to_hprel_h_formula: not handle yet"
   in
   helper hf0
 

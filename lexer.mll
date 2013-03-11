@@ -165,6 +165,7 @@ module Make (Token : SleekTokenS)
 	("inline", INLINE); (* An Hoa [22/08/2011] : add inline keyword *)
    ("inlist", INLIST);
 	 ("int", INT);
+	 ("INFint", INFINT_TYPE);
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
 	 ("inv_lock", INVLOCK);
@@ -186,7 +187,11 @@ module Make (Token : SleekTokenS)
      ("perm",PERM);
 	 ("pred", PRED);
 	 ("pred_prim", PRED_PRIM);
+     ("pred_extn", PRED_EXT);
+	 ("hip_include", HIP_INCLUDE);
      ("print", PRINT);
+     ("mem", MEM);
+     ("memE", MEME);
 	 ("dprint", DPRINT);
 	 ("sleek_compare", CMP);
    ("raise", RAISE);
@@ -281,15 +286,21 @@ rule tokenizer file_name = parse
                 |['0'-'9'] ['0'-'9'] ['0'-'9']
                 |'x' hexa_char hexa_char)
           as x) "'"                                { CHAR_LIT (Camlp4.Struct.Token.Eval.char x, x) }
+  | "@A" { ACCS }  
   | '&' { AND }
+  | "&*" { ANDSTAR }
   | "&&" { ANDAND }
+  | "*-" { STARMINUS }
   | "@" { AT }
   | "@@" { ATAT }
   | "@@[" { ATATSQ }
   | "@I" {IMM}
   | "@L" {LEND}
+  | "@A" {ACCS}
   | "@D" { DERV }
   | "@M" { MUT }
+  | "@VAL" {VAL}
+  | "@REC" {REC}
   | "@pre" { PRE }
   | "@xpre" { XPRE }
   | "@post" { POST }
@@ -309,6 +320,7 @@ rule tokenizer file_name = parse
   | '$' { DOLLAR }
   | "." { DOT }
   | "\"" { DOUBLEQUOTE }
+  | "\\inf" {INFINITY}
   | "=" { EQ }
   | "==" { EQEQ }
   | "==>" { ESCAPE }

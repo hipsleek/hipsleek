@@ -1,0 +1,6 @@
+R1:={[m,n] -> [h] -> []: ((((h=0 && n=m+3) && 0<=m) || ((n=m+3 && 1<=h) && h+h+h<=m)) ||  (exists (n_691: (exists (m_690: (exists (h_708:(((m_690=m && (n=m+3 && (n_691=h-(1) && ((h+h+h<=m && m<h_708) && 1<=h)))) || (h_708=m && (n=m_690+3 && (n_691=h-(1) && (((0<=m && m<=m_690) && h+h+h<=m_690) && 1<=h))))) && R1(h_708,m_690,n_691)))) )) )) )
+};
+T1:=bottomup(R1,1, SimHeur);T1;
+T2:=bottomup(R1,2, SimHeur);T2;
+bottomupgen([R1], [1], SimHeur);
+bottomupgen([R1], [2], SimHeur);

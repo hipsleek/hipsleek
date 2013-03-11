@@ -1,0 +1,56 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+/*
+pred bnd1<n,mi> == self = null & n = 0 & mi = \inf or 
+  self::node<d, null> & -\inf<d<\inf & d=mi & n=1 or
+  self::node<d, p> * p::bnd1<n-1, tmi> & mi = min(d, tmi) 
+    & -\inf<d<\inf & n>1 & -\inf<tmi<\inf 
+  inv self=null & n=0 & mi=\inf  
+    | self!=null & n>0 & -\inf<mi<\inf 
+  .
+*/
+
+pred bnd1<n,mi> == self = null & n = 0 & mi = \inf or 
+  self::node<d, p> * p::bnd1<n-1, tmi> & mi = min(d, tmi) 
+    & n>1  & -\inf<d<\inf
+  inv self=null & n=0 & mi=\inf  
+    | self!=null & n>0 & -\inf<mi<\inf 
+  .
+/*
+pred bnd1<n,mi> == self = null & n = 0 & mi = \inf or 
+  self::node<d, p> * p::bnd1<n-1, tmi> & mi = min(d, tmi) 
+    & n>1  & -\inf<d<\inf 
+  //& (p=null & n=1 & tmi=\inf | p!=null & n>1 & -\inf<tmi<\inf)
+  inv self=null & n=0 & mi=\inf  
+    | self!=null & n>0 & -\inf<mi<\inf 
+  .
+*/
+
+/*
+
+
+pred bnd1<n,mi> == self = null & n = 0 & mi = \inf or 
+  self::node<d, null> & mi = d & n=1  & -\inf<d<\inf or
+  self::node<d, p> * p::bnd1<n-1, tmi> & mi = min(d, tmi) & n>1 & p!=null
+    & n-1>0 &  -\inf<tmi<\inf & -\inf<d<\inf
+  inv self=null & n=0 & mi=\inf  
+    | self!=null & n>0 & -\inf<mi<\inf 
+  .
+
+
+pred bnd1<n,mi> == self = null & n = 0 & mi = \inf or 
+  self::node<d, p> * p::bnd1<n-1, tmi> & mi = min(d, tmi) 
+    & n>1  
+  inv self=null & n=0 & mi=\inf  
+    | self!=null & n>0 & -\inf<mi<\inf 
+  .
+
+pred bnd1<n,mi> == self = null & n = 0 & mi = \inf or 
+  self::node<d, p> * p::bnd1<n-1, tmi> & mi = min(d, tmi) 
+    & n>1  
+  inv n>=0.
+
+*/

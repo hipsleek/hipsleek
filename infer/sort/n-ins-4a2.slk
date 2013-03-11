@@ -1,0 +1,11 @@
+relation R(int a, int b).
+
+ 
+infer [R] 
+  x=1
+  & R(a,mi) 
+  & a<=3 
+  |- 
+  x>0 or x=2.
+print residue.
+ 

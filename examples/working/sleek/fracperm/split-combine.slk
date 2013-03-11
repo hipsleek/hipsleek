@@ -1,0 +1,110 @@
+/*
+PREVIOUSLY, 
+checkentail x1::intCell(f1)<v1> |- x1::intCell(f4)<v1>.
+
+will incur 2 states (1 SPIT followed by MATCH + 1 MATCH)
+
+NOW (2012-08-23),
+
+checkentail x1::intCell(f1)<v1> |- x1::intCell(f4)<v1>.
+
+Conceptually,
+if ante & f1=f4 |-  => MATCH (1 state only)
+else 1 SPIT followed by MATCH
+
+More complicated heuristic is used in the implementation
+to deal with instantiation and existential variables
+*/
+
+data lock{}.
+
+data intCell{
+  int val;
+}.
+
+pred cellp<v> == self::intCell<v>
+     inv true.
+
+lemma "splitCell" self::intCell(f)<v> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::intCell(f1)<v> * self::intCell(f2)<v> & 0.0<f<=1.0.
+
+lemma "combineCell" self::intCell(f1)<v> * self::intCell(f2)<v> -> self::intCell(f1+f2)<v>.
+
+lemma "split2" self::cellp(f)<v> & f=f1+f2 &f1>0.0 & f2>0.0 -> self::cellp(f1)<v> * self::cellp(f2)<v>.
+
+//(1)
+checkentail x1::intCell(f1)<v1> |- x1::intCell(f1)<v1>.
+print residue.//valid, 1 state: MATCH
+
+//(2)
+checkentail x1::intCell(0.5)<v1> |- x1::intCell(0.5)<v1>.
+print residue.//valid, 1 state: MATCH
+
+//(3)
+checkentail x1::intCell(0.5)<v1> * y::intCell(fy1)<vy1> * z::intCell(0.7)<vz1> & fy1=0.6 |- x1::intCell(0.5)<v1> * y::intCell(fy2)<vy2> * z::intCell(fz2)<vz1> & fy2=0.6 & fz2=0.7.
+print residue. //valid, 1 state: MATCH
+
+//(4)
+checkentail x1::intCell(f1)<v1> & f1=0.5 |- x1::intCell(f4)<v1> & f4=0.5.
+print residue. //valid, 1 state: MATCH, instantiate f1=f4
+
+//(5)
+checkentail x1::intCell(f1)<v1> |- x1::intCell(f4)<v1>.
+print residue. 
+//valid
+// PREVIOUSLY, 2 states (1 SPLIT + 1 MATCH)
+// NOW, 1 state only SPLIT
+
+//(6)
+checkentail x1::intCell(f1)<v1> |- x1::intCell(f4)<v1> * x1::intCell(f5)<v1>.
+print residue. 
+// valid, 
+// PREVIOUSLY, 2 states (1 SPLIT + 1 MATCH)
+// NOW, 1 state (SPLIT)
+
+//(7)
+checkentail x1::intCell(f1)<v1> |- x1::intCell(f4)<v1> * x1::intCell(f5)<v1> * x1::intCell(f6)<v1>.
+print residue.
+// valid, 
+// PREVIOUSLY, 2 states (1 SPLIT + 1 MATCH)
+// NOW, 1 state (SPLIT)
+
+//(8)
+checkentail x1::intCell(f1)<v1> |- x1::intCell(f4)<v1> * x1::intCell(f5)<v1> * x1::intCell(f6)<v1> * x1::intCell(f7)<v1>.
+print residue.
+// valid, 
+// PREVIOUSLY, 2 states (1 SPLIT + 1 MATCH)
+// NOW, 1 state (SPLIT)
+
+//(9)
+checkentail x1::intCell(f1)<v1> * x2::intCell(f2)<v2> |- x1::intCell(f4)<v1> * x2::intCell(f5)<v2>.
+print residue. 
+// valid, 
+// PREVIOUSLY, 4 states (1 split, 1 match for both)
+// NOW, 1 state: split for both
+
+//(10
+checkentail x1::intCell(f1)<v1> * x2::intCell(f2)<v2> |- x1::intCell(f1)<v1> * x2::intCell(f2)<v2>.
+print residue. //valid, ONLY 1 state MATCH
+
+//(11)
+checkentail x1::intCell(f1)<v1> * x2::intCell(f2)<v2> * x3::intCell(f3)<v3> |- x1::intCell(f4)<v1> * x2::intCell(f5)<v2> * x3::intCell(f6)<v3>.
+print residue. 
+// valid, 
+// PREVIOUSLY, 8 states (1 split, 1 match for 3 nodes)
+// NOW, 1 state (1 split for 3)
+
+//(12)
+checkentail x1::intCell(0.6)<v1> |- x1::intCell(0.5)<v1>.
+print residue.//valid, 1 state: SPLIT
+
+//(13)
+checkentail x::cellp(1.0)<v> |-  x::cellp(f1)<v> * x::cellp(f2)<v> * x::cellp(f3)<v> * x::cellp(f4)<v> & f1=0.2 & f2=0.3 & f3=0.4 & f4=0.05.
+print residue. //valid, 1 state: SPLIT
+
+//(14)
+checkentail x1::intCell(0.6)<v1> * x1::intCell(0.3)<v1> |- x1::intCell(0.5)<v1> * x1::intCell(0.4)<v1>.
+print residue.//valid, 1 state: SPLIT
+
+//(15)
+checkentail x1::intCell(0.6)<v1> * x1::intCell(0.3)<v1> |- x1::intCell(0.5)<v1> * x1::intCell(0.3)<v1>.
+print residue.//valid, 1 state: SPLIT

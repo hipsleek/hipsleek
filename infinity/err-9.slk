@@ -1,0 +1,19 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+// should give meaningful error message
+/*
+Message: error 1: free variables [mi] in view def sll 
+ Fatal error: exception Failure("error 1: free variables [mi] in view def sll ")
+
+check also inv.. mi not used in predicate definition!
+*/
+pred sll<n, sm,mx> == 
+   self = null & sm = \inf & mx = -\inf & n = 0 
+ or self::node<sm, null> & n=1 & -\inf<sm<\inf & sm=mx
+ or self::node<sm, q> * q::sll<n-1, qs,mx> & -\inf<sm<\inf & sm <= qs
+      &  q!=null & -\inf<mx<\inf & n>1
+  inv mi=\inf 
+.

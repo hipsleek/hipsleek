@@ -1,0 +1,51 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+pred  sortll<mi> == 
+      self=null & mi=\inf
+   or self::node<mi, p> * p::sortll<m2> & mi<=m2
+inv true.
+
+
+/*
+Need to perform base-case unfold
+*/
+
+//checkentail m=\inf & x=null & r=v |- r=min(v,m).
+
+
+//checkentail x::sortll<m> & x=null |- m>3.
+/*
+Why isn't there a base-case unfold?
+Entail (2) : Fail.
+*/
+
+
+//checkentail true |- m=\inf.
+
+//checkentail true |- m=3.
+
+//checkentail x::sortll<m> & x=null |- m=\inf.
+/*
+!!!:0: 0: imply_timeout: conseq:  m=\inf(ZInfinity)
+!!!:0: 0: ante 1: : x=null & ((x=null & m=\inf(ZInfinity)) | x!=null)
+!!!:0: 0: ante 3: : x=null & ((x=null & m=\inf(ZInfinity)) | x!=null)
+!!!:0: 0: ante 4: : x=null & ((x=null & m=\inf(ZInfinity)) | x!=null)
+!!!:0: 0: res : :true
+!!!:0: 0: ante: :[]
+!!!:0: 0: coseq : : m=\inf(ZInfinity)
+*/
+
+// (8) 
+//checkentail x::sortll<m> & x=null & r=v |- r=min(v,m).
+/*
+!!!:0: 0: ante0 : : x=null & r=v
+!!!:0: 0: ante1 : : x=null & r=v & ((x=null & m=\inf(ZInfinity)) | x!=null)
+!!!:0: 0: conseq : : r=min(v,m)
+*/
+
+checkentail  x=null & r=v & x=null & m=\inf | x=null & r=v & x!=null |- r=min(v,m).
+
+checkentail x=null & r=v & (x=null & m=\inf | x!=null) |- r=min(v,m).
