@@ -344,7 +344,9 @@ let norm_extract_common_one_view_x cprog cviews vdecl=
             ([n_vdecl2],None)
           else
             let eq_hf = List.hd eq_hfs in
-            let to_hp = CP.SpecVar (HpT, extract_view_name eq_hf, Unprimed) in
+            let eq_vn = extract_view_name eq_hf in
+            let _ = Debug.info_pprint ("  DO NOT SYNTHESIZE. MATCHED view: "^ (eq_vn) ^ "\n") no_pos in 
+            let to_hp = CP.SpecVar (HpT, eq_vn, Unprimed) in
             ([], Some ([hp2], to_hp))
         in
         (*hp1 must equal hp*)

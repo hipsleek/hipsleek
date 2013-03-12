@@ -7626,6 +7626,7 @@ let rec remove_redundant_helper ls rs=
           | BForm ((Eq(e1, e2, _), _) ,_) -> if (eq_exp_no_aset e1 e2) || (is_null_const_exp e1 || is_null_const_exp e2) then
                 remove_redundant_helper fs rs
               else remove_redundant_helper fs rs@[f]
+          | BForm ((Lte(IConst (0,_), IConst (0,_), _), _) ,_) -> remove_redundant_helper fs rs
           | _ -> remove_redundant_helper fs rs@[f]
         )
 

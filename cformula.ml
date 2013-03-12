@@ -4918,7 +4918,7 @@ let remove_neqNull_redundant_hnodes_f f0=
                   let nf2 = helper orf.formula_or_f2 in
                   ( Or {orf with formula_or_f1 = nf1;
                       formula_or_f2 = nf2;})
-		      | Exists fe -> let np = remove_neqNull_redundant_hnodes_hf fe.formula_exists_heap
+	  | Exists fe -> let np = remove_neqNull_redundant_hnodes_hf fe.formula_exists_heap
                        (MCP.pure_of_mix fe.formula_exists_pure) in
                      (Exists {fe with formula_exists_pure = MCP.mix_of_pure np;})
   in
