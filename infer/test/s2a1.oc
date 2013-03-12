@@ -1,0 +1,26 @@
+P4:={[m,mi,mx,mi2,mx2]: 
+       m<=mx2 
+       & mx2<=mx & m=mi 
+       & mi<=mi2};
+
+P4;
+
+P4n:={[m,mi,mx,mi2,mx2]: 
+    m=mi & mi2<=mx2 &mx2<=mx & 
+          ((m<=mx2 & m<mx)
+               | (m<=mi2))};
+
+
+P4n subset P4;
+P4 subset P4n;
+
+
+P5:={[m,mi,mx,mi2,mx2]: 
+    m=mi & mi<=mi2 & mi=mx2 & mi<=mx & mi2<=mx2};
+
+P5 subset P4;
+P4 subset P5;
+
+
+P5 subset P4n;
+P4n subset P5;

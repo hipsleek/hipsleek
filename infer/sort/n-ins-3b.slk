@@ -1,0 +1,57 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+pred sortHO<v,R:relation(int,int)> == 
+  self::node<v,null> 
+  or self::node<v, p> * p::sortHO<v2,R> & R(v,v2) 
+inv self!=null.
+
+relation R2(int a, int b).
+
+//(1)
+infer [R2] x::node<v_621,flted_16_622> * y::node<v,x>&
+flted_16_622=null & a=v_621 & flted_24_596=null & v<=v_621 & 
+v_bool_30_580' & v<=v_621 & v_bool_30_580' & flted_24_596=next_31_644 & 
+res=y
+ |-  res::sortHO<b_682,R2>.
+print residue.
+
+//(2)
+infer [R2] x::node<a,null> * y::node<v,x>& v<=a & res=y
+ |-  res::node<a1,q>*q::sortHO<v1,R2> & R2(a1,v1).
+print residue.
+// inferred rel: [RELDEFN R2: ( a1<=v1) -->  R2(a1,v1)]
+
+//(3)
+infer [R2] x::node<a,null> * y::node<v,x>& v<=a & res=y
+ |-  res::sortHO<b,R2>.
+print residue.
+// inferred rel: [RELDEFN R2: ( true) -->  R2(b,v2_46)]
+
+//(4)
+infer [R2] x::node<a,null> * y::node<v,x>& v<=a & res=y
+ |-  (exists a1: res::node<a1,q>*q::sortHO<v1,R2> & R2(a1,v1)).
+print residue.
+
+//(5)
+infer [R2] x::node<a,null> * y::node<v,x>& v<=a & res=y
+ |-  (exists a1: res::node<a1,q>*q::sortHO<v1,R2> & R2(b,v1) & a1=b).
+print residue.
+
+//(6)
+infer [R2] x::node<a,null> * y::node<v,x>& v<=a & res=y
+ |-  (exists b: res::node<a1,q>*q::sortHO<v1,R2> & R2(b,v1) & a1=b).
+print residue.
+
+//(7)
+infer [R2] flted_28_44=null & v<=a & res=y & p_45=x & a=v2_46
+ |- (exists b: R2(b,v2_46) & b=v & a=v2_46).
+print residue.
+
+//(8)
+infer [R2] flted_28_44=null & v<=a & res=y & p_45=x & a=v2_46
+ |- (exists b: R2(v,v2_46) & b=v & a=v2_46).
+print residue.
+

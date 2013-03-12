@@ -593,7 +593,7 @@ and lookup_lemma_action_x prog (c:match_res) :action =
     | Root ->
         (match lhs_node,rhs_node with
           | DataNode dl, DataNode dr ->
-              let dl_data_orig = dl.h_formula_data_original in
+(*              let dl_data_orig = dl.h_formula_data_original in
               let dr_data_orig = dr.h_formula_data_original in
               let dl_data_derv = dl.h_formula_data_derv in
               let dr_data_derv = dr.h_formula_data_derv in
@@ -601,7 +601,7 @@ and lookup_lemma_action_x prog (c:match_res) :action =
                 if !ann_derv 
                 then (not(dl_data_derv) && not(dr_data_derv)) 
                 else (dl_data_orig || dr_data_orig)
-              in
+              in*)
               (*expecting ((String.compare dl.h_formula_data_name dr.h_formula_data_name)==0) == true*)
               let l = 
                 let left_ls = look_up_coercion_with_target (List.filter (fun c -> c.coercion_case = (Cast.Normalize false)) prog.prog_left_coercions) dl.h_formula_data_name dr.h_formula_data_name in

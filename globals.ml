@@ -26,7 +26,6 @@ type bformula_label = int
 and ho_branch_label = string
 (*and branch_label = spec_label	(*formula branches*)*)
 
-
 type formula_label = (int*string)
 
 and control_path_id_strict = formula_label
@@ -34,6 +33,7 @@ and control_path_id_strict = formula_label
 and control_path_id = control_path_id_strict  option
     (*identifier for if, catch, call*)
 
+let eq_control_path_id ((p1,_):formula_label) ((p2,_):formula_label) = p1==p2
 
 let empty_label = (0,"")
 let app_e_l c = (empty_label, c)
@@ -100,7 +100,7 @@ type typ =
   | Named of ident (* named type, could be enumerated or object *)
           (* Named "R" *)
   | Array of (typ * int) (* base type and dimension *)
-  | RelT (* relation type *)
+  | RelT of (typ list) (* relation type *)
   | HpT (* heap predicate relation type *)
   | Tree_sh
   (* | FuncT (\* function type *\) *)
@@ -410,6 +410,13 @@ let set_entail_pos p = entail_pos := p
 (* let clear_proving_loc () = proving_loc#reset *)
 (*   (\* proving_loc := None *\) *)
 
+  let pr_lst s f xs = String.concat s (List.map f xs)
+
+ let pr_list_brk open_b close_b f xs  = open_b ^(pr_lst "," f xs)^close_b
+ let pr_list f xs = pr_list_brk "[" "]" f xs
+ let pr_list_angle f xs = pr_list_brk "<" ">" f xs
+ let pr_list_round f xs = pr_list_brk "(" ")" f xs
+
 (* pretty printing for types *)
 let rec string_of_typ (x:typ) : string = match x with
    (* may be based on types used !! *)
@@ -425,13 +432,19 @@ let rec string_of_typ (x:typ) : string = match x with
   | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List t        -> "list("^(string_of_typ t)^")"
   | Tree_sh		  -> "Tsh"
-  | RelT        -> "RelT"
+  | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | HpT        -> "HpT"
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
-	let rec repeat k = if (k == 0) then "" else "[]" ^ (repeat (k-1)) in
+	let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
 		(string_of_typ et) ^ (repeat r)
+;;
+
+let is_RelT x =
+  match x with
+    | RelT _ -> true
+    | _ -> false
 ;;
 
 (* aphanumeric name *)
@@ -449,7 +462,7 @@ let rec string_of_typ_alpha = function
   | BagT t        -> "bag_"^(string_of_typ t)
   | TVar t        -> "TVar_"^(string_of_int t)
   | List t        -> "list_"^(string_of_typ t)
-  | RelT        -> "RelT"
+  | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | HpT        -> "HpT"
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
@@ -489,6 +502,8 @@ let string_of_primed p =
 
 let string_of_primed_ident (id,p) =
   id ^ string_of_primed p
+
+let pr_ident_list = pr_list (fun (i,p) -> i^(string_of_primed p))
 
 let rec s_p_i_list l c = match l with 
   | [] -> ""
@@ -651,6 +666,7 @@ let elim_unsat = ref false
 let disj_compute_flag = ref false
 let smart_xpure = ref true
 let super_smart_xpure = ref false
+let precise_perm_xpure = ref true
   (* this flag is dynamically set depending on
      smart_xpure and xpure0!=xpure1 *)
 let smart_memo = ref false
@@ -673,6 +689,8 @@ let ann_derv = ref false
 (*Will shorten the error/warning/... message delivered
 to end-users*)
 let is_deployed = ref false 
+
+let print_assume_struc = ref false
 
 let web_compile_flag = ref false (*enable compilation flag for website*)
 
@@ -750,6 +768,11 @@ let n_xpure = ref 1
 let verbose_num = ref 0
 
 let fixcalc_disj = ref 2
+
+let pre_residue_lvl = ref 0
+(* Lvl 0 - add conjunctive pre to residue only *) 
+(* Lvl 1 - add all pre to residue *) 
+(* Lvl -1 - never add any pre to residue *) 
 
 let check_coercions = ref false
 

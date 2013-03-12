@@ -257,6 +257,7 @@ let string_of_b_formula (pf,il) =
   | P.BagMin (i1, i2 , l) -> "BagMin("^(string_of_id i1)^","^(string_of_id i2)^")"
   | P.BagMax (i1, i2 , l) -> "BagMax("^(string_of_id i1)^","^(string_of_id i2)^")"
   | P.BagSub (e1, e2 , l) -> "BagSub("^(string_of_formula_exp e1)^","^(string_of_formula_exp e2)^")"
+  | P.XPure _ -> Error.report_no_pattern()
    (* | _ -> "bag constraint" *)
 ;;
 
@@ -448,21 +449,26 @@ let rec string_of_struc_formula c = match c with
 				let b = string_of_formula fb in
 				let c = match cont with | None -> "" | Some l -> ("{"^(string_of_struc_formula l)^"}") in
 				"EBase: ["^l1^"]["^l2^"]"^b^" "^c
-	| F.EAssume (b,(n1,n2),t)-> 
+	| F.EAssume {
+			F.formula_assume_simpl = b;
+			F.formula_assume_struc = s;
+			F.formula_assume_lbl = (n1,n2);
+			F.formula_assume_ensures_type = t;} -> 
       let assume_str = match t with
                    | None -> "EAssume: "
                    | Some true -> "EAssume_exact: "
                    | Some false -> "EAssume_inexact: " in
-      assume_str^(string_of_int n1)^","^n2^":"^(string_of_formula b)
+      let l1 = assume_str^(string_of_int n1)^","^n2^":"^(string_of_formula b) in
+	  let l2 = if !print_assume_struc then "\n struc: "^(string_of_struc_formula s) else "" in
+	  l1^l2
 	| F.EInfer{F.formula_inf_vars = lvars;
 			   F.formula_inf_post = postf;
-         F.formula_inf_xpost = postxf;
+			   F.formula_inf_xpost = postxf;
 			   F.formula_inf_continuation = continuation;} ->
         let ps =if (lvars==[] && postf) then "@post " else "" in
 		let string_of_inf_vars = Cprinter.str_ident_list (List.map (fun v -> fst v) lvars) in
 		let string_of_continuation = string_of_struc_formula continuation in
 		"EInfer "^ps^string_of_inf_vars^ " "^string_of_continuation 
-	| F.EOr b-> (string_of_struc_formula b.F.formula_struc_or_f1) ^ "\nEOr" ^ (string_of_struc_formula b.F.formula_struc_or_f2)
 	| F.EList b ->   List.fold_left  (fun a (l,c)-> 
 		let l_s = (string_of_spec_label_def l) ^": " in
 		a ^ "\n" ^ (if a = "" then "" else "||") ^ "\n" ^ l_s^(string_of_struc_formula c)) "" b
@@ -507,7 +513,7 @@ let rec string_of_exp_x = function
 		   exp_bind_fields = vs;
 		   exp_bind_path_id = pid;
 		   exp_bind_body = e})-> 
-          string_of_control_path_id_opt pid ("bind " ^ v ^ " to (" ^ (String.concat ", " vs) ^ ") in { " ^ (string_of_exp e) ^ " }")	   
+          string_of_control_path_id_opt pid ("bind " ^ v ^ " to (" ^ (String.concat ", " vs) ^ ") in\n" ^ (string_of_exp e))	   
   | Block ({
     exp_block_local_vars = lv;
     exp_block_body = e;
@@ -517,7 +523,7 @@ let rec string_of_exp_x = function
         | [] -> ""
         | _ -> "local: "^
           (String.concat "," (List.map (fun (c1,c2,c3)->(string_of_typ c2)^" "^c1) lv))^"\n")
-        ^ (string_of_exp e) ^ "}\n"
+        ^ (string_of_exp e) ^ "}"
   | Break b -> string_of_control_path_id_opt b.exp_break_path_id ("break "^(string_of_label b.exp_break_jump_label))
   | Barrier b -> "barrier "^b.exp_barrier_recv
   | Cast e -> "(" ^ (string_of_typ e.exp_cast_target_type) ^ ")" ^ (string_of_exp e.exp_cast_body)
@@ -572,7 +578,7 @@ let rec string_of_exp_x = function
         string_of_control_path_id_opt pid ("if " ^ (parenthesis (string_of_exp e1)) ^ " { \n  " ^ (string_of_exp e2) ^ ";\n}" ^ 
         (match e3 with 
           | Empty ll -> ""
-          | _        -> "\nelse { \n  " ^ (string_of_exp e3) ^ ";\n}"))
+          | _        -> " else { \n  " ^ (string_of_exp e3) ^ "\n}"))
   | While ({exp_while_condition = e1;
 			exp_while_body = e2;
 			exp_while_jump_label = lb;
@@ -585,10 +591,10 @@ let rec string_of_exp_x = function
             | Some e -> (string_of_exp e)) )
   | Seq ({exp_seq_exp1 = e1;
 		  exp_seq_exp2 = e2})-> 
-          (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2) ^ ";"  
+          (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)   
   | VarDecl ({exp_var_decl_type = t;
 			  exp_var_decl_decls = l})
-                                   -> (string_of_typ t) ^ " " ^ (string_of_assigning_list l) ^ ";";
+                                   -> (string_of_typ t) ^ " " ^ (string_of_assigning_list l);
   | ConstDecl ({exp_const_decl_type = t;
 				exp_const_decl_decls = l}) 
                                    -> "const " ^ (string_of_typ t) ^ " " ^ (string_of_cassigning_list l)
@@ -618,8 +624,8 @@ let rec string_of_exp_x = function
 			exp_raise_path_id = pid;
 			exp_raise_val = b;}) -> 
         let ft = match tb with 
-                      | Const_flow cf-> "CF"^cf
-                      | Var_flow cf -> "VF"^cf in
+                      | Const_flow cf-> "CF:"^cf
+                      | Var_flow cf -> "VF:"^cf in
         string_of_control_path_id_opt pid 
 				("raise "^(match b with 
                   | None -> ft
@@ -696,10 +702,16 @@ and
 
 ;;
 
+let string_of_field_ann ann=
+  match ann with
+    | VAL -> "@VAL"
+    | REC -> "@REC"
+    | F_NO_ANN -> ""
+
 (* pretty printing for one data declaration*)
-let string_of_decl (d, pos, il) = match d with (* An Hoa [22/08/2011] Add inline component *)
-  | (t, i)             -> (if il then "inline " else "") ^ (string_of_typ t) ^ " " ^ i
-;;           
+let string_of_decl (d, pos, il,ann) = match d with (* An Hoa [22/08/2011] Add inline component *)
+  | (t, i)             -> (if il then "inline " else "") ^ (string_of_typ t) ^ " " ^ i ^ (string_of_field_ann ann)
+;;
 
 (* function to print a list of typed _ident *) 
 let rec string_of_decl_list l c = match l with 
@@ -725,7 +737,7 @@ let string_of_barrier_decl b =
 	"\n transitions: \n ["^(String.concat "\n " (List.map pr_trans b.barrier_tr_list))^ "]\n";;
 
 (* pretty printig for view declaration *)
-let string_of_view_decl v = v.view_name ^ "<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
+let string_of_view_decl v = v.view_name ^"[" ^ (String.concat "," v.view_prop_extns) ^ "]<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
                             (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula v.view_invariant) ^ " inv_lock: " ^ (pr_opt string_of_formula v.view_inv_lock) ^" view_data_name: " ^ v.view_data_name                  (* incomplete *)
 ;;
 

@@ -1,0 +1,13 @@
+R1:={[an,bn,v]:(an<=bn & bn<=(v-2)) | v<=(bn+1)};
+R2:={[an,bn,v]: an<=bn};
+
+A:={[an,bn,v]:a<=an & a<v};
+
+R1 subset R2;
+R2 subset R1;
+
+# a<=an & a<v & R(bn,an,v) --> a<=bn
+Z:={[bn,an,v]:forall(a:not(a<=an & a<v) | a<=bn)};
+Z;
+
+Z:={[bn,an,v]:forall(a:not(a<=an & a<v) | a<=bn)};

@@ -1230,7 +1230,7 @@ and memo_norm (l:(b_formula * (formula_label option)) list): b_formula list * fo
       memo_norm_x l
       
 and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * formula list = 
-  let rec get_head e = match e with 
+ (* let rec get_head e = match e with 
     | Null _ -> "Null"
     | Var (v,_) -> name_of_spec_var v
     | Level (v,_) -> name_of_spec_var v
@@ -1246,9 +1246,9 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
 	  if (List.length e_l)>0 then get_head (List.hd e_l) else "[]"
     | Func (a,i,_) -> (name_of_spec_var a) ^ "(" ^ (String.concat "," (List.map get_head i)) ^ ")"
     | ArrayAt (a,i,_) -> (name_of_spec_var a) ^ "[" ^ (String.concat "," (List.map get_head i)) ^ "]" (* An Hoa *)    
-  in
+  in*)
   
-  let e_cmp e1 e2 =  String.compare (get_head e1) (get_head e2) in
+  (*let e_cmp e1 e2 =  String.compare (get_head e1) (get_head e2) in
   
   let rec get_lists (e:exp) (disc:int): exp list * exp list = match e with
     | Add (e1,e2,l)-> 
@@ -1270,9 +1270,9 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     | Null _ | Var _ | IConst _ | AConst _ | InfConst _ | Tsconst _ | FConst _ | Max _  | Min _ | Bag _ | BagUnion _ | BagIntersect _ 
     | Level _
     | BagDiff _ | List _ | ListCons _ | ListHead _ | ListTail _ | ListLength _ | ListAppend _ | ListReverse _ 
-    | ArrayAt _ | Func _ -> ([e],[]) (* An Hoa *) in
+    | ArrayAt _ | Func _ -> ([e],[]) (* An Hoa *) in*)
   
-  let rec norm_expr e = match e with
+  (*let rec norm_expr e = match e with
     | Null _ | Var _ | IConst _ | FConst _ | AConst _ | Tsconst _ | InfConst _ 
     | Level _ -> e
     | Add (e1,e2,l) -> cons_lsts e 1 (fun c-> Add c) (fun d-> Subtract d) (IConst (0,l))
@@ -1306,7 +1306,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     if (List.length lp)>0 then
       let a = List.fold_left (fun a c-> cons1(a,c,no_pos)) (List.hd lp) (List.tl lp) in
       List.fold_left(fun a c-> cons2 (a,c,no_pos)) a ln
-    else List.fold_left(fun a c-> cons2 (a,c,no_pos)) nel ln in
+    else List.fold_left(fun a c-> cons2 (a,c,no_pos)) nel ln in*)
 
   (*  let norm_bf (c1:b_formula) : (b_formula option) =
       let c1 = b_form_simplify c1 in

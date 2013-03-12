@@ -1,0 +1,27 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+
+relation R(int a).
+relation R2(int a, int b).
+
+//(1)
+infer [v,w]  x>=w   |- v>=w.
+print residue.
+// <1>emp&w<=x & w<=v&{FLOW,(19,20)=__norm}[]
+// inferred pure: [w<=v]
+
+//(2)
+infer [v,x]  x>=w   |- v>=w.
+print residue.
+// <1>emp&w<=x & x<=v&{FLOW,(19,20)=__norm}[]
+// inferred pure: [x<=v]
+
+//(3)
+infer [v,x,w]  x>=w   |- v>=w.
+print residue.
+// <1>emp&w<=x & x<=v&{FLOW,(19,20)=__norm}[]
+// inferred pure: [x<=v]
+

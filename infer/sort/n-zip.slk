@@ -1,0 +1,61 @@
+/* zip - numeric */
+relation P(int a).
+
+infer [x] x!=0 & y=0 |- false.
+print residue.
+// inferred x=0
+
+infer [x] x>=0 & y>=0 & x!=0 & y=0 |- false.
+print residue.
+// inferred x<=0
+
+infer [P] x>=0 & y>=0 & x!=0 & y=0 & P(x) |- false.
+print residue.
+// PROBLEM : currently failed
+// Correct Answer: should infer P(x) --> x<=0
+
+data node {
+	int val; 
+	node next; 
+}.
+
+pred ll<> == self=null
+  or self::node<_,p> * p::ll<>
+inv true.
+
+pred llN<n> == self=null & n=0
+  or self::node<v,p> * p::llN<n-1>
+inv n>=0.
+
+relation R(int a,int b,int c).
+
+infer [P] x>=0 & y>=0 & x!=0 & y=0 & P(x) & x1=x-1 |- P(x1).
+print residue.
+
+ infer[R] xn_618::llN<r_616> * y::node<v_596,p_597> * 
+x::node<xv_617,xn_618>&b=flted_13_595+1 & a=flted_13_576+1 & a<=b & 
+x!=null & !(v_bool_40_545') & x!=null & !(v_bool_40_545') & v_577=xv_602 & 
+p_578=xn_610 & xv_617=v_596+xv_602 & a_603=flted_13_576 & 
+b_604=flted_13_595 & 0<=flted_13_595 & 0<=flted_13_576 
+& R(a_603,b_604,r_616) 
+& res=x
+ |-  res::llN<r>&true. 
+print residue.
+
+ infer[] xn_618::llN<r_616> * y::node<v_596,p_597> * 
+x::node<xv_617,xn_618>&b=flted_13_595+1 & a=flted_13_576+1 & a<=b & 
+x!=null & !(v_bool_40_545') & x!=null & !(v_bool_40_545') & v_577=xv_602 & 
+p_578=xn_610 & xv_617=v_596+xv_602 & a_603=flted_13_576 & 
+b_604=flted_13_595 & 0<=flted_13_595 & 0<=flted_13_576 
+//& R(a_603,b_604,r_616) 
+& res=x
+ |-  res::llN<r>&true. 
+print residue.
+
+infer [P] x::node<_,_> & P(a) |- x::node<_,_>.
+print residue.
+
+
+
+
+

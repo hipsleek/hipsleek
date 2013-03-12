@@ -32,9 +32,9 @@ n>=0 & n>a
 
 /* function to delete the a-th node in a singly linked list */
 void delete(node x, int a)
-  infer [A]
+  infer [A,B]
   requires x::ll<n>  & x!=null & A(n,a)//& n > a & a > 0 
-  ensures x::ll<m> & n=m+1;
+  ensures x::ll<m> & B(n,a,m);// n=m+1;
 {
   if (a == 1)
   {

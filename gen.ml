@@ -87,6 +87,10 @@ struct
  let fold_opt f x = match x with 
    | None -> []
    | Some v -> (f v)
+  
+ let map_opt_def def f x = match x with
+	| None -> def
+	| Some v -> f v
 
  let map_l_snd f x = List.map (fun (l,c)-> (l,f c)) x
  let fold_l_snd f x = List.fold_left (fun a (_,c)-> a@(f c)) []  x
@@ -1605,6 +1609,11 @@ let break_lines_num (input : string) num: string =
   Buffer.contents buf
 
 let break_lines_1024 (input : string) : string =
+  (* let n= String.index input ';' in *)
+  (* let s = String.sub input 0 n in *)
+  (* let delta = String.length input - String.length s in *)
+  (* let _ = if  delta > 0  then print_endline ("XXXXXXXXXX: " ^(string_of_int delta) ) *)
+  (*     else  print_endline "" in *)
   break_lines_num input (1024-32)
 
 end;;
