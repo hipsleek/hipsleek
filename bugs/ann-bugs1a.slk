@@ -19,7 +19,7 @@ checkentail x::node<_>@M |- [v] x::node<_>@v & v=@A.
 print residue.
 */
 //to check below residue
-checkentail x::node<_>@M |- (exists v: x::node<_>@v & v=@A).
+checkentail x::node<5>@M |- (exists a,v: x::node<a>@v & v=@A & a=5).
 print residue.
 /*
 checkentail x::node<5> |- (exists v: x::node<v> & v=5).

@@ -2835,7 +2835,7 @@ and elim_exists_pure_branch_x (w : CP.spec_var list) (f0 : CP.formula) pos : CP.
 and entail_state_elim_exists es =
   let pr = Cprinter.string_of_entail_state in
   let pr2 = Cprinter.string_of_context in
-  Debug.no_1 "entail_state_elim_exists" pr pr2 entail_state_elim_exists_x es 
+  Debug.to_1 "entail_state_elim_exists" pr pr2 entail_state_elim_exists_x es 
 
 (*
 PROBLEM : exists_elim NOT deep enough
