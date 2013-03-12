@@ -616,7 +616,7 @@ match f with
 | _ -> false
               
 let rec split_heap (h:CF.h_formula) : (CF.h_formula * CF.h_formula) = 
-	(*let _ = print_string ("Splitting Heap H = "^ (string_of_h_formula h) ^ "\n") in *)
+	(*let _ = print_string ("Splitting Heap H = "^ (string_of_h_formula h) ^ "\n") in*)
     (*let _ = Globals.noninter_entailments := !Globals.noninter_entailments + 1 in*)
 	match h with
 	| CF.Conj({CF.h_formula_conj_h1 = h1;
