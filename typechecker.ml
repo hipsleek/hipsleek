@@ -645,9 +645,11 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
 						  if (Gen.BList.list_setequal_eq  CP.eq_spec_var_ident impl_struc impl_vs) then
 						   (print_string "check 1 ok\n";
                           (impl_vs,new_post,new_post_struc))
-						  else report_error pos "Assume struc impl error"
-                            (* (print_string "check 1 fail\n"; *)
-                            (* (impl_vs,new_post,new_post_struc)) *)
+						  else (*temp fixing*)
+                            if not (!Globals.sa_en_norm) then report_error pos "Assume struc impl error"
+                            else
+                            (print_string "check 1 fail\n";
+                            (impl_vs,new_post,new_post_struc))
                         else ([],post_cond,post_struc) in
                       stk_evars # push_list impl_vs;
                       (* TODO: Timing *)

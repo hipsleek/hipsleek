@@ -2128,14 +2128,16 @@ let process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls c
   let nf1 = CF.drop_hnodes_f f matcheds2 in
   let _ =  DD.ninfo_pprint ("       nf1: " ^ (Cprinter.prtt_string_of_formula nf1)) no_pos in
   (* let _ =  DD.info_pprint ("       args: " ^ (!CP.print_svl args)) no_pos in *)
-  (* let _ =  DD.info_pprint ("       last_ss0: " ^ (let pr = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) in pr last_ss0)) no_pos in *)
+  let _ =  DD.ninfo_pprint ("       last_ss0: " ^ (let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in pr last_ss0)) no_pos in
   (*apply susbt ss*)
   let nf2 = CF.remove_com_pures nf1 com_eqNulls com_eqPures in
   (* let _ =  DD.info_pprint ("       nf2: " ^ (Cprinter.prtt_string_of_formula nf2)) no_pos in *)
-  let nf3 = CF.subst ss nf2 in
+  let nf3 = (* CF.subst *)CF.ins ss nf2 in
+  let _ =  DD.ninfo_pprint ("       nf3: " ^ (Cprinter.prtt_string_of_formula nf3)) no_pos in
   (*if rest = [] then add pure equality all last_ss*)
   let nf5,last_ss=
     (*partition last_ss into two groups: one for subst another not*)
+    (* let pr = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
     let last_ss1,last_ss2 = List.partition
       (fun (v1,v2) -> Gen.BList.difference_eq CP.eq_spec_var [v1;v2] args = [])
       last_ss0
@@ -2147,7 +2149,8 @@ let process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls c
         else []) last_ss1) in
     let p = CP.conj_of_list ps no_pos in
    (*apply subst last_ss2*)
-    let nf4 = CF.subst last_ss2 nf3 in
+    (* let _ =  DD.ninfo_pprint ("       last_ss2: " ^ (pr last_ss2)) no_pos in *)
+    let nf4 = CF.ins last_ss2 nf3 in
     (*should remove x!=null if x is in matched2s*)
     (*combine them*)
     CF.mkAnd_pure nf4 (MCP.mix_of_pure p) no_pos,last_ss2
@@ -2176,6 +2179,8 @@ let process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls c
             let _ = DD.ninfo_pprint ("       next_roots: " ^ (Cprinter.string_of_spec_var_list next_roots)) no_pos in
             let hds1= get_hdnodes nf5 in
             let last_svl = look_up_closed_ptr_args prog hds1 [] next_roots in
+            let _ = DD.ninfo_pprint ("      last_svl: " ^ (Cprinter.string_of_spec_var_list last_svl)) no_pos in
+            let _ = DD.ninfo_pprint ("      args3: " ^ (Cprinter.string_of_spec_var_list args3)) no_pos in
             (*is recursive?*)
             let inter = CP.intersect_svl last_svl args3 in
              let _ = DD.ninfo_pprint ("       inter: " ^ (Cprinter.string_of_spec_var_list inter)) no_pos in
@@ -2198,7 +2203,9 @@ let process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls c
                   | _ -> report_error no_pos "sau.process_one_f: sth wrong"
                 in
                 let ss2 = List.combine fst_args inter in
-                (nf5, CF.h_subst ss2 n_hf1)
+                let n_hf2 = CF.h_subst ss2 n_hf1 in
+                let _ =  DD.info_pprint ("       n_hf2 1: " ^ (Cprinter.prtt_string_of_h_formula n_hf2)) no_pos in
+                (nf5, n_hf2)
             else (nf5,n_hf)
         in
         let _ =  DD.ninfo_pprint ("       n_hf2: " ^ (Cprinter.prtt_string_of_h_formula n_hf2)) no_pos in
@@ -2775,7 +2782,7 @@ let get_longest_common_hnodes_list_x prog cdefs unk_hps unk_svl hp r non_r_args 
    if min = 0 && eqNulls = [] && eqPures= [] then
      (*mk_hprel_def*)
       let n_args,n_fs,elim_ss =
-        if !Globals.sa_elim_useless then
+        if !Globals.sa_elim_useless || !Globals.norm_elim_useless then
           let _,n_args,n_fs,ss = elim_not_in_used_args (CF.mkHTrue_nf no_pos) fs hp args in
           (n_args,n_fs,ss)
         else (args, fs, [])
@@ -2802,7 +2809,7 @@ let get_longest_common_hnodes_list_x prog cdefs unk_hps unk_svl hp r non_r_args 
        (*END for debugging*)
            let n_fs2 = Gen.BList.remove_dups_eq (fun f1 f2 -> check_relaxeq_formula f1 f2) n_fs1 in
            let n_orig_hpdef,n_args1,n_fs3,elim_ss =
-             if !Globals.sa_elim_useless then
+             if !Globals.sa_elim_useless || !Globals.norm_elim_useless then
                let (a,b,orig_fs) = orig_hpdef in
                let n_orig_fs,n_args, n_fs,ss=  elim_not_in_used_args orig_fs n_fs2 new_hp n_args in
                ((a,b,n_orig_fs),n_args, n_fs,ss)
@@ -3670,6 +3677,64 @@ let simp_tree unk_hps hpdefs=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def_short in
   Debug.no_1 "simp_tree" pr1 pr1
       (fun _ -> simp_tree_x unk_hps hpdefs) hpdefs
+
+
+(************************************************************)
+    (****************(*MATCHING w view decls*)*****************)
+(************************************************************)
+let match_one_hp_one_view_x hp hp_name args def_fs (vdcl: C.view_decl): bool=
+  let v_fl,_ = List.split vdcl.C.view_un_struc_formula in
+  if (List.length def_fs) = (List.length v_fl) then
+  (*get root*)
+    let (CP.SpecVar (t,_,_)) = List.hd args in
+    (*assume self is always unprimed*)
+    let ss = List.combine (args) ([CP.SpecVar (t,self,Unprimed)]@vdcl.C.view_vars) in
+    let def_fs1 = List.map (CF.subst ss) def_fs in
+    let v_fl1 =
+      if vdcl.C.view_is_rec then
+        List.map (subst_view_hp_formula vdcl.C.view_name hp) v_fl
+      else v_fl
+    in
+    let v_fl2 = List.map CF.elim_exists v_fl1 in
+     (*for debugging*)
+    (* let pr = pr_list_ln Cprinter.prtt_string_of_formula in *)
+    (* let _ = Debug.info_pprint ("     def_fs: " ^ (pr def_fs)) no_pos in *)
+    (* let _ = Debug.info_pprint ("     def_fs1: " ^ (pr def_fs1)) no_pos in *)
+    (* let _ = Debug.info_pprint ("     v_fl1: " ^ (pr v_fl1)) no_pos in *)
+    (*END for debugging*)
+    checkeq_formula_list def_fs1 v_fl2
+  else
+    false
+
+let match_one_hp_one_view hp hp_name args def_fs (vdcl: C.view_decl):bool=
+  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
+  let pr2 = Cprinter.string_of_view_decl in
+  Debug.no_2 "match_one_hp_one_view" pr1 pr2 string_of_bool
+      (fun _ _ -> match_one_hp_one_view_x hp hp_name args def_fs vdcl) def_fs vdcl
+
+let match_one_hp_views (vdcls: C.view_decl list) (_, hf, orf):(CP.spec_var* CF.h_formula list)=
+  match hf with
+    | CF.HRel (hp, eargs, p) ->
+        let def_fl = CF.list_of_disjs orf in
+        let args = List.concat (List.map CP.afv eargs) in
+        let helper vdcl=
+          if (List.length args) = ((List.length vdcl.C.view_vars) + 1) then
+            if (match_one_hp_one_view (hp, eargs, p) hp args def_fl vdcl) then
+              let vnode = CF.mkViewNode (List.hd args) vdcl.C.view_name
+                (List.tl args) no_pos in
+              [vnode]
+            else []
+          else []
+        in
+        let eq_views = List.concat (List.map helper vdcls) in
+        (hp,eq_views)
+    | _ -> report_error no_pos "sa. match_one_hp_views: should be a hp"
+
+
+(************************************************************)
+    (****************(*END MATCHING w view decls*)*****************)
+(************************************************************)
+
 
 (************************************************************)
     (****************(*currently we dont use*)*****************)

@@ -663,6 +663,8 @@ let sa_subsume = ref false
 
 let norm_elim_useless = ref false
 
+let norm_extract = ref false
+
 let dis_sem = ref false
 
 let show_diff_constrs = ref false

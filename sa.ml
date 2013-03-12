@@ -3894,58 +3894,13 @@ let check_eq_hpdef unk_hpargs post_hps hp_defs =
   Debug.no_2 "check_eq_hpdef" !CP.print_svl pr1 pr1
       (fun _ _ -> check_eq_hpdef_x unk_hpargs post_hps hp_defs) post_hps hp_defs
 
+(************************************************************)
+    (****************(*MATCHING w view decls*)*****************)
+(************************************************************)
 (*========= matching=========*)
-let match_one_hp_one_view_x hp hp_name args def_fs (vdcl: CA.view_decl): bool=
-  let v_fl,_ = List.split vdcl.CA.view_un_struc_formula in
-  if (List.length def_fs) = (List.length v_fl) then
-  (*get root*)
-    let (CP.SpecVar (t,_,_)) = List.hd args in
-    (*assume self is always unprimed*)
-    let ss = List.combine (args) ([CP.SpecVar (t,self,Unprimed)]@vdcl.CA.view_vars) in
-    let def_fs1 = List.map (CF.subst ss) def_fs in
-    let v_fl1 =
-      if vdcl.CA.view_is_rec then
-        List.map (SAU.subst_view_hp_formula vdcl.CA.view_name hp) v_fl
-      else v_fl
-    in
-    let v_fl2 = List.map CF.elim_exists v_fl1 in
-     (*for debugging*)
-    (* let pr = pr_list_ln Cprinter.prtt_string_of_formula in *)
-    (* let _ = Debug.info_pprint ("     def_fs: " ^ (pr def_fs)) no_pos in *)
-    (* let _ = Debug.info_pprint ("     def_fs1: " ^ (pr def_fs1)) no_pos in *)
-    (* let _ = Debug.info_pprint ("     v_fl1: " ^ (pr v_fl1)) no_pos in *)
-    (*END for debugging*)
-    SAU.checkeq_formula_list def_fs1 v_fl2
-  else
-    false
-
-let match_one_hp_one_view hp hp_name args def_fs (vdcl: CA.view_decl):bool=
-  let pr1 = pr_list_ln Cprinter.prtt_string_of_formula in
-  let pr2 = Cprinter.string_of_view_decl in
-  Debug.no_2 "match_one_hp_one_view" pr1 pr2 string_of_bool
-      (fun _ _ -> match_one_hp_one_view_x hp hp_name args def_fs vdcl) def_fs vdcl
-
-let match_one_hp_views (vdcls: CA.view_decl list) (_, hf, orf):(CP.spec_var* CF.h_formula list)=
-  match hf with
-    | CF.HRel (hp, eargs, p) ->
-        let def_fl = CF.list_of_disjs orf in
-        let args = List.concat (List.map CP.afv eargs) in
-        let helper vdcl=
-          if (List.length args) = ((List.length vdcl.CA.view_vars) + 1) then
-            if (match_one_hp_one_view (hp, eargs, p) hp args def_fl vdcl) then
-              let vnode = CF.mkViewNode (List.hd args) vdcl.CA.view_name
-                (List.tl args) no_pos in
-              [vnode]
-            else []
-          else []
-        in
-        let eq_views = List.concat (List.map helper vdcls) in
-        (hp,eq_views)
-    | _ -> report_error no_pos "sa. match_one_hp_views: should be a hp"
-
 let match_hps_views_x (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
 (CP.spec_var* CF.h_formula list) list=
-  let m = List.map (match_one_hp_views vdcls) hp_defs in
+  let m = List.map (SAU.match_one_hp_views vdcls) hp_defs in
     (List.filter (fun (_,l) -> l<>[]) m)
 
 let match_hps_views (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
@@ -3960,6 +3915,9 @@ let match_hps_views (hp_defs: CF.hp_rel_def list) (vdcls: CA.view_decl list):
       (fun _ _ -> match_hps_views_x hp_defs vdcls) hp_defs vdcls
 
 (*END matching*)
+(************************************************************)
+    (****************(*END MATCHING w view decls*)*****************)
+(************************************************************)
 
 let collect_sel_hp_def_x defs sel_hps unk_hps m=
   (*currently, use the first lib matched*)

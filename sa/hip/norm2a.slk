@@ -24,4 +24,3 @@ pred H<y> == self=null
   inv true.
   // y is a useless parameter that can be eliminated
   // say under option --sa-useless
-

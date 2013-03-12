@@ -1449,7 +1449,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           C.view_base_case = None;
           C.view_is_rec = ir;
           C.view_pt_by_self = sf;
-          C.view_case_vars = Gen.BList.intersect_eq (=) view_sv_vars (CF.guard_vars cf);
+          C.view_case_vars = CP.intersect_svl view_sv_vars (CF.guard_vars cf);
           C.view_raw_base_case = rbc;
           C.view_prune_branches = [];
           C.view_prune_conditions = [];

@@ -4941,7 +4941,7 @@ let remove_neqNull_svl svl f0=
   helper f0
 
 
-let remove_com_pures f0 nullPtrs com_eqPures=
+let remove_com_pures_x f0 nullPtrs com_eqPures=
   let remove p elim_svl=
     if elim_svl = [] then p else
 	begin
@@ -4967,11 +4967,23 @@ let remove_com_pures f0 nullPtrs com_eqPures=
                   let nf2 = helper orf.formula_or_f2 in
                   ( Or {orf with formula_or_f1 = nf1;
                       formula_or_f2 = nf2;})
-      | Exists fe -> let new_p = remove (MCP.pure_of_mix fe.formula_exists_pure) nullPtrs in
-                     let new_p1 = remove_com_pures new_p com_eqPures in
-                     (Exists {fe with formula_exists_pure = MCP.mix_of_pure new_p1;})
+    | Exists fe ->
+        let qvars, base1 = split_quantifiers f in
+        let nf = helper base1 in
+        add_quantifiers qvars nf
+        (* let new_p = remove (MCP.pure_of_mix fe.formula_exists_pure) nullPtrs in *)
+        (*            let new_p1 = remove_com_pures new_p com_eqPures in *)
+        (*            (Exists {fe with formula_exists_pure = MCP.mix_of_pure new_p1;}) *)
   in
   helper f0
+
+let remove_com_pures f0 nullPtrs com_eqPures=
+  let pr1 = !print_formula in
+  let pr2 = !CP.print_svl in
+  let pr3 = pr_list !CP.print_formula in
+  Debug.no_3 "remove_com_pures" pr1 pr2 pr3 pr1
+      (fun _ _ _ -> remove_com_pures_x f0 nullPtrs com_eqPures)
+      f0 nullPtrs com_eqPures
 
 (*drop HRel in the set hp_names and return corresponding subst of their args*)
 let rec drop_hrel_f f hp_names=
@@ -5676,6 +5688,26 @@ and subst_unk_hps_hf hf0 hp_names=
     | HEmp -> hf
   in helper hf0
 
+let ins_x ss f0=
+  let rec helper f=
+    match f with
+      | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
+          Or ({formula_or_f1 = helper f1; formula_or_f2 =  helper f2; formula_or_pos = pos})
+      | Base _-> subst ss f
+      | Exists fe ->
+          let qvars, base1 = split_quantifiers f in
+          let nf = subst ss base1 in
+          let ins_svl = fst (List.split ss) in
+          let n_qvars = List.filter (fun sv -> not (CP.mem_svl sv ins_svl)) qvars in
+          add_quantifiers n_qvars nf
+  in
+  helper f0
+
+let ins ss f0=
+  let pr1 = !print_formula in
+  let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
+  Debug.no_2 "ins" pr2 pr1 pr1
+      (fun _ _ -> ins_x ss f0) ss f0
 
 (*end for sa*)
  (* context functions *)

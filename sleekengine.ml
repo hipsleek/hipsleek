@@ -236,10 +236,15 @@ let convert_pred_to_cast () =
   let cviews = List.map (AS.trans_view iprog) tmp_views in
   Debug.tinfo_pprint "after trans_view" no_pos;
   let _ = !cprog.C.prog_view_decls <- cviews in
-  let cviews1 = Norm.norm_extract_common !cprog cviews in
-  let _ =  (List.map (fun vdef -> AS.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews) in
+  let cviews1 =
+    if !Globals. norm_extract then
+      Norm.norm_extract_common !cprog cviews
+    else cviews
+  in
+  let _ = !cprog.C.prog_view_decls <- cviews1 in
+  let _ =  (List.map (fun vdef -> AS.compute_view_x_formula !cprog vdef !Globals.n_xpure) cviews1) in
   Debug.tinfo_pprint "after compute_view" no_pos;
-  let _ = (List.map (fun vdef -> AS.set_materialized_prop vdef) cviews) in
+  let _ = (List.map (fun vdef -> AS.set_materialized_prop vdef) cviews1) in
   Debug.tinfo_pprint "after materialzed_prop" no_pos;
   let cprog1 = AS.fill_base_case !cprog in
   let cprog2 = AS.sat_warnings cprog1 in        
@@ -248,7 +253,7 @@ let convert_pred_to_cast () =
   let cprog4 = (AS.add_pre_to_cprog cprog3) in
   let cprog5 = (*if !Globals.enable_case_inference then AS.case_inference iprog cprog4 else*) cprog4 in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
-  (*let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog5) else () in*)
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog5) else () in
   cprog := cprog5
 
 let convert_pred_to_cast () = 
