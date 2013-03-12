@@ -1936,13 +1936,13 @@ let lookup_eq_hprel_ass hps hprel_ass lhs rhs=
   Debug.no_4 "lookup_eq_hprel_ass" !CP.print_svl pr1 pr2 pr2 pr4
       (fun _ _ _ _ -> lookup_eq_hprel_ass_x hps hprel_ass lhs rhs) hps hprel_ass lhs rhs
 
-let constant_checking prog lhs_b rhs_b es=
+let constant_checking prog rhs lhs_b rhs_b es=
   let r,new_lhs = SAU.simp_matching prog (CF.Base lhs_b) (CF.Base rhs_b) in
   if r then
     let new_es = {es with CF.es_formula = new_lhs} in
-    (true, new_es)
+    (true, new_es, rhs)
   else
-    (false, es)
+    (false, es, rhs)
 
 (*
 type: Cast.prog_decl ->
@@ -1968,7 +1968,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
   let _ = Debug.ninfo_pprint ("es_infer_vars_sel_hp_rel: " ^ (!CP.print_svl  es.es_infer_vars_sel_hp_rel)) no_pos in
   (*end for debugging*)
   if no_infer_hp_rel es then
-    constant_checking prog lhs_b rhs_b es
+    constant_checking prog rhs lhs_b rhs_b es
     (* let r,new_lhs = SAU.simp_matching prog (CF.Base lhs_b) (CF.Base rhs_b) in *)
     (* if r then *)
     (*   let new_es = {es with CF.es_formula = new_lhs} in *)
@@ -1984,7 +1984,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
       begin
         (* DD.info_pprint ">>>>>> infer_hp_rel <<<<<<" pos; *)
           let _ = DD.tinfo_pprint " no hp_rel found" pos in
-          constant_checking prog lhs_b rhs_b es
+          constant_checking prog rhs lhs_b rhs_b es
         (* (false,es) *)
       end
     else
@@ -2018,7 +2018,7 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
         if (CP.intersect mis_nodes (List.fold_left SAU.close_def lhs_sel_vars leqs)) = [] then
           (
               let _ = Debug.tinfo_pprint ">>>>>> mismatch ptr is not a selective variable <<<<<<" pos in
-              constant_checking prog lhs_b rhs_b es
+              constant_checking prog rhs lhs_b rhs_b es
               (* (false,es) *)
           )
         else
@@ -2116,12 +2116,17 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
           (*add mismatched heap into the entail states if @L*)
           let check_consumed_node h f=
             match h with
-              | DataNode hd -> if not(CF.isLend (hd.CF.h_formula_data_imm)) then f else
-                    let new_h = DataNode {hd with CF.h_formula_data_imm = (CF.ConstAnn(Mutable));} in
-                    CF.mkAnd_f_hf f new_h pos
-              | _ -> f
+              | DataNode hd -> if not(CF.isLend (hd.CF.h_formula_data_imm)) then (f,h) else
+                    (* let _ = DD.info_pprint ("  hd: " ^ (Cprinter.string_of_h_formula (h ))) pos in *)
+                    (* let ss = List.combine hd.CF.h_formula_data_arguments hd.CF.h_formula_data_param_imm in *)
+                    (* let n_param_imm = List.map (fun (sv,imm) -> if CP.is_node_typ sv then CF.ConstAnn Mutable else imm) ss in *)
+                    let n_param_imm = List.map (fun _ -> CF.ConstAnn Mutable) hd.CF.h_formula_data_param_imm in
+                    let new_h = DataNode {hd with CF.h_formula_data_imm = (CF.ConstAnn(Mutable));
+                        CF.h_formula_data_param_imm = n_param_imm} in
+                    (CF.mkAnd_f_hf f new_h pos, new_h)
+              | _ -> (f,h)
           in
-          let new_es_formula = check_consumed_node rhs new_es_formula in
+          let new_es_formula, new_rhs = check_consumed_node rhs new_es_formula in
           let new_es_formula1 = CF.subst m new_es_formula in
           let new_es = {es with CF. es_infer_vars_hp_rel = es.CF.es_infer_vars_hp_rel@rvhp_rels;
               CF.es_infer_hp_rel = es.CF.es_infer_hp_rel @ hp_rel_list;
@@ -2129,13 +2134,13 @@ let infer_collect_hp_rel_x prog (es:entail_state) rhs rhs_rest (rhs_h_matched_se
               CF.es_infer_vars_sel_post_hp_rel = (es.CF.es_infer_vars_sel_post_hp_rel @ post_hps);
               CF.es_formula = new_es_formula1} in
           DD.tinfo_pprint ("  new lhs: " ^ (Cprinter.string_of_formula new_es.CF.es_formula)) pos;
-          (true, new_es)
+          (true, new_es,new_rhs)
       end
 
 let infer_collect_hp_rel i prog (es:entail_state) rhs rhs_rest (rhs_h_matched_set:CP.spec_var list) lhs_b rhs_b pos =
   let pr1 = Cprinter.string_of_formula_base in
   let pr4 = Cprinter.string_of_estate_infer_hp in
-  let pr5 =  pr_pair string_of_bool pr4 in
+  let pr5 =  pr_triple string_of_bool pr4 Cprinter.string_of_h_formula in
   Debug.no_2_num i "infer_collect_hp_rel" pr1 pr1 pr5
 ( fun _ _ -> infer_collect_hp_rel_x prog es rhs rhs_rest rhs_h_matched_set lhs_b rhs_b pos) lhs_b rhs_b
 

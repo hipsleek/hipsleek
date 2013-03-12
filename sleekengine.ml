@@ -704,33 +704,33 @@ let print_entail_result sel_hps (valid: bool) (residue: CF.list_context) (num_id
       in
       if t_valid then print_string (num_id^": Valid. "^s^"\n"^term_output^"\n")
       else print_string (num_id^": Fail. "^s^"\n"^term_output^"\n");
-      let hp_lst_assume = Infer.rel_ass_stk # get_stk in
-      if not(Infer.rel_ass_stk# is_empty) then
-        begin
-          print_endline "*************************************";
-          print_endline "*******relational assumption ********";
-          print_endline "*************************************";
-          print_endline (Infer.rel_ass_stk # string_of_reverse);
-          print_endline "*************************************";
-          Infer.rel_ass_stk # reset
-        end;
-      (* let _ = Debug.info_pprint (" sel_hps:" ^ (!CP.print_svl sel_hps)) no_pos in *)
-      let ls_hprel, _(* ls_inferred_hps *), _ (* dropped_hps *) =
-        if !Globals.sa_en_norm && (hp_lst_assume <> []) then
-          Sa.infer_hps !cprog num_id hp_lst_assume
-              sel_hps [] []
-        else [],[],[]
-      in
-      if not(Sa.rel_def_stk# is_empty) then
-        begin
-		    print_endline ""; 
-		    print_endline "*************************************";
-		    print_endline "*******relational definition ********";
-		    print_endline "*************************************";
-            print_endline (Sa.rel_def_stk # string_of_reverse);
-		    print_endline "*************************************";
-              Sa.rel_def_stk #reset;
-        end;
+      (* let hp_lst_assume = Infer.rel_ass_stk # get_stk in *)
+      (* if not(Infer.rel_ass_stk# is_empty) then *)
+      (*   begin *)
+      (*     print_endline "*************************************"; *)
+      (*     print_endline "*******relational assumption ********"; *)
+      (*     print_endline "*************************************"; *)
+      (*     (\* print_endline (Infer.rel_ass_stk # string_of_reverse); *\) *)
+      (*     print_endline "*************************************"; *)
+      (*     Infer.rel_ass_stk # reset *)
+      (*   end; *)
+      (* (\* let _ = Debug.info_pprint (" sel_hps:" ^ (!CP.print_svl sel_hps)) no_pos in *\) *)
+      (* let ls_hprel, _(\* ls_inferred_hps *\), _ (\* dropped_hps *\) = *)
+      (*   if !Globals.sa_en_norm && (hp_lst_assume <> []) then *)
+      (*     Sa.infer_hps !cprog num_id hp_lst_assume *)
+      (*         sel_hps [] [] *)
+      (*   else [],[],[] *)
+      (* in *)
+      (* if not(Sa.rel_def_stk# is_empty) then *)
+      (*   begin *)
+	  (*       print_endline "";  *)
+	  (*       print_endline "*************************************"; *)
+	  (*       print_endline "*******relational definition ********"; *)
+	  (*       print_endline "*************************************"; *)
+      (*       (\* print_endline (Sa.rel_def_stk # string_of_reverse); *\) *)
+	  (*       print_endline "*************************************"; *)
+      (*         Sa.rel_def_stk #reset; *)
+      (*   end; *)
       ()
       (* already printed in the result *)
       (* if not(Infer.infer_rel_stk# is_empty) then *)

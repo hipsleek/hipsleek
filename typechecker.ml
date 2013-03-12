@@ -640,10 +640,14 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                               DD.devel_pprint ("Extra Vars :"^(Cprinter.string_of_spec_var_list impl_vs)) pos;
                               DD.devel_pprint ("New Post Cond :"^(Cprinter.string_of_formula new_post)) pos
                             end;
+                          (* let _ = Debug.info_pprint ("  impl_struc: " ^ (!CP.print_svl impl_struc)) pos in *)
+                          (* let _ = Debug.info_pprint ("  impl_vs: " ^ (!CP.print_svl impl_vs)) pos in *)
 						  if (Gen.BList.list_setequal_eq  CP.eq_spec_var_ident impl_struc impl_vs) then
 						   (print_string "check 1 ok\n";
                           (impl_vs,new_post,new_post_struc))
-						  else report_error pos "Assume struc impl error" 
+						  else report_error pos "Assume struc impl error"
+                            (* (print_string "check 1 fail\n"; *)
+                            (* (impl_vs,new_post,new_post_struc)) *)
                         else ([],post_cond,post_struc) in
                       stk_evars # push_list impl_vs;
                       (* TODO: Timing *)
@@ -1479,11 +1483,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	            if (Gen.is_empty unfolded) then unfolded
 	            else
 		      let _ = consume_all := true in
-                      (* let _ = DD.info_pprint ("       sleek-logging (binding):" ^ (to_print)) pos in *)
+              (* let _ = DD.info_pprint ("       sleek-logging (binding):" ^ (to_print)) pos in *)
                       (* let _ = Log.update_sleek_proving_kind Log.BINDING in *)
 	                  let rs_prim, prf = heap_entail_struc_list_failesc_context_init prog false  true unfolded struc_vheap None None None pos (Some pid) in
 		      let _ = consume_all := false in
                       let _ = CF.must_consistent_list_failesc_context "bind 3" rs_prim  in
+                      (* let _ = print_endline ("rs_prim:" ^(Cprinter.string_of_list_failesc_context rs_prim)) in *)
 	              let _ = PTracer.log_proof prf in
 	              let rs = CF.clear_entailment_history_failesc_list (fun x -> None) rs_prim in
                       let _ = CF.must_consistent_list_failesc_context "bind 4" rs  in
@@ -1734,7 +1739,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 let _ = proving_loc#set pos in
                 let mn_str = Cast.unmingle_name mn in
                 let proc0 = proc in
-                (* let farg_types, farg_names = List.split proc.proc_args in *)
+                let farg_types, farg_names = List.split proc.proc_args in
                 (*=========================*)
                 (*======= CONCURRENCY======*)
                 (*=========================*)

@@ -3966,10 +3966,10 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
                 else (tmp, (fresh_fn :: new_rest))) in
         let all_fields = I.look_up_all_fields prog ddef in
         let ann_list = compute_ann_list all_fields rev_fs imm in
-        (*let id_string lst = List.fold_left (fun x (a,b,c) -> x ^ "," ^ (snd a)) "" lst in*)
-           (*let _ = print_string ("\n(andreeac) rev_fs: " ^ (List.fold_left (fun x str -> x ^ "," ^ str) "" rev_fs) ) in *)
-	   (*let _ = print_string ("\n Bound Ann" ^(String.concat "," (List.map Cprinter.string_of_imm ann_list))) in*)
-           (*let _ = print_string ("\n(andreeac) all_fields: " ^ (id_string all_fields) ) in*) 
+       (*  let id_string lst = List.fold_left (fun x (a1,a2,b,c) -> x ^ "," ^ (snd a1)) "" lst in *)
+       (*     let _ = print_string ("\n(andreeac) rev_fs: " ^ (List.fold_left (fun x str -> x ^ "," ^ str) "" rev_fs) ) in *)
+	   (* let _ = print_string ("\n Bound Ann" ^(String.concat "," (List.map Cprinter.string_of_imm ann_list))) in *)
+       (*     let _ = print_string ("\n(andreeac) all_fields: " ^ (id_string all_fields) ) in  *)
         let field_types = List.map (fun f -> trans_type prog (I.get_field_typ f) pos) all_fields in
         let (tmp1, fresh_names) = gen_names f (List.map I.get_field_typed_id all_fields) in
         if not (Gen.is_some tmp1) then

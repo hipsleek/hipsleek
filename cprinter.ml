@@ -1682,6 +1682,7 @@ let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace))
           let lh = collect_pre_heap ctx in
           let lp = collect_pre_pure ctx in
           let lrel = collect_rel ctx in
+          let hprel = collect_hp_rel ctx in
           let term_err = collect_term_err ctx in
           fmt_open_vbox 0;
           pr_wrap (fun _ -> fmt_string ("<" ^ (string_of_int count) ^ ">"); pr_formula a) ();
@@ -1689,6 +1690,7 @@ let rec pr_numbered_list_formula_trace_ho (e:(context * (formula*formula_trace))
           pr_wrap_test "inferred heap: " Gen.is_empty  (pr_seq "" pr_h_formula) (lh); 
           pr_wrap_test "inferred pure: " Gen.is_empty  (pr_seq "" pr_pure_formula) (lp); 
           pr_wrap_test "inferred rel: " Gen.is_empty  (pr_seq "" pr_lhs_rhs) (lrel); 
+          pr_wrap_test "inferred hprel: " Gen.is_empty  (pr_seq "" pr_hprel_short) (hprel); 
           f b;
           fmt_print_newline ();
           fmt_close_box ();

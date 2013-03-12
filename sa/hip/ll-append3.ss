@@ -56,12 +56,12 @@ HeapPred H1(node a).
 /* HeapPred T1(node a). */
 /* HeapPred T2(node a, node b). */
 
+
+/* ll<> == self=null */
+/*   or self::node<_,q>*q::ll<> */
+/*   inv true; */
+
 /*
-ll<> == self=null
-  or self::node<_,q>*q::ll<>
-  inv true;
-
-
 l2<y> == self::node<a,null> & y=self
   or self::node<_,q>*q::l2<y> 
   inv y!=null;
@@ -90,6 +90,7 @@ void append(node x, node y)
   infer[H1,G1]
   requires H1(x)*y::node<a,null>
      ensures G1(x,y) *y::node<a,null>;
+
 
 {
   if (x.next == null)
