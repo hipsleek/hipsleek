@@ -24,8 +24,8 @@ if ((si1!=0) && (si2<(\inf -si1))) {
 }
 }*/
 
-int __safe_sadd(int si1, int si2)
-/*case { si1 > 0 -> case { si2 > 0 -> case { si1 > (\inf - si2) -> 
+int add(int si1, int si2)
+case { si1 > 0 -> case { si2 > 0 -> case { si1 > (\inf - si2) -> 
 					ensures true & flow __Error;
 				     si1 <= (\inf - si2) -> ensures res = si1 + si2;
 				}
@@ -40,9 +40,9 @@ int __safe_sadd(int si1, int si2)
 					si1=0 | si2 >=(\inf -si1) -> 
 					ensures res = si1 + si2;}
 		}
-}*/
-requires true
-ensures res = si1 + si2;
+}
+//requires true
+//ensures res = si1 + si2;
 {
 int result;
 result = si1 + si2;

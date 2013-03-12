@@ -11,11 +11,11 @@ usum = ui1 + ui2;
 }
 */
 
-int __safe_uadd(int ui1,int ui2)
-//case{ (\inf - ui1) < ui2 -> ensures true & flow __Error;
-//      (\inf - ui1) >= ui2 -> ensures res = ui1 + ui2;}
-requires true
-ensures res = ui1 + ui2;
+int add(int ui1,int ui2)
+case{ (\inf - ui1) < ui2 -> ensures true & flow __Error;
+      (\inf - ui1) >= ui2 -> ensures res = ui1 + ui2;}
+//requires true
+//ensures res = ui1 + ui2;
 {
 int usum;
 usum = ui1 + ui2;
