@@ -1,0 +1,46 @@
+//(1) Valid
+checkentail v=\inf |- v=max(w,\inf).
+
+//(2) Fail
+checkentail true |- v=max(w,\inf).
+
+//(3) Fail
+checkentail v<\inf |- v=\inf.
+
+
+//(4) Valid
+checkentail v=\inf |- v>3.
+
+
+//(5) Valid
+checkentail v=\inf & w!=\inf |- v>w.
+
+
+//(6) Valid
+checkentail v=-\inf |- v<3.
+
+//(7) Fail
+checkentail v=-\inf |- v>3.
+
+//(8) Valid
+checkentail v=-\inf & w!=-\inf |- v<w.
+
+//(9) Valid
+checkentail v=-\inf |- v<\inf.
+/*
+PROBLEM:
+normalize_formula@83
+normalize_formula inp1 : 0!=(ZInfinity+ZInfinity)
+normalize_formula@83 EXIT out : 0!=(ZInfinity+ZInfinity)
+
+Entail (9) : Fail.
+*/
+
+//(10) valid
+checkentail true |- -\inf<\inf.
+/*
+PROBLEM:
+normalize_formula@112
+normalize_formula inp1 : 0!=(ZInfinity+ZInfinity)
+normalize_formula@112 EXIT out : 0!=(ZInfinity+ZInfinity)
+*/

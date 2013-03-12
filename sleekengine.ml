@@ -147,14 +147,17 @@ let process_pred_def pdef =
   (* let _ = print_string ("process_pred_def:" *)
   (*                       ^ "\n\n") in *)
   if check_data_pred_name pdef.I.view_name then
-	let tmp = iprog.I.prog_view_decls in
+    let curr_view_decls = iprog.I.prog_view_decls in
+	(* let tmp = iprog.I.prog_view_decls in *)
 	  try
 		let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
 		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
+        (* temporarily add pdef to view_decls *)
+		iprog.I.prog_view_decls <- pdef :: curr_view_decls;
 		let wf,_ = AS.case_normalize_struc_formula 10 iprog h p pdef.Iast.view_formula false 
           false (*allow_post_vars*) false [] in
 		let new_pdef = {pdef with Iast.view_formula = wf} in
-		let tmp_views = AS.order_views (new_pdef :: iprog.I.prog_view_decls) in
+		let tmp_views = AS.order_views (new_pdef :: curr_view_decls) in
 		iprog.I.prog_view_decls <- List.rev tmp_views;
 (* ( new_pdef :: iprog.I.prog_view_decls); *)
 		(*let _ = print_string ("\n------ "^(Iprinter.string_of_struc_formula "\t" pdef.Iast.view_formula)^"\n normalized:"^(Iprinter.string_of_struc_formula "\t" wf)^"\n") in*)
@@ -184,7 +187,7 @@ let process_pred_def pdef =
 		(*print_string ("\npred def: "^(Cprinter.string_of_view_decl cpdef)^"\n")*)
 (* added 07.04.2008	*)									  
 	  with
-		| _ ->  dummy_exception() ; iprog.I.prog_view_decls <- tmp
+		| _ ->  dummy_exception() ; iprog.I.prog_view_decls <- curr_view_decls
   else
 	print_string (pdef.I.view_name ^ " is already defined.\n")
 
@@ -192,12 +195,16 @@ let process_pred_def pdef =
   let pr = Iprinter.string_of_view_decl in
   Debug.no_1 "process_pred_def" pr pr_no process_pred_def pdef
 
+(* WN : why are there two versions of process_pred_def ? *)
 let process_pred_def_4_iast pdef = 
   if check_data_pred_name pdef.I.view_name then
-	let tmp = iprog.I.prog_view_decls in
+    let curr_view_decls = iprog.I.prog_view_decls in
+	(* let tmp = iprog.I.prog_view_decls in *)
 	  try
 		let h = (self,Unprimed)::(res_name,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
 		let p = (self,Primed)::(res_name,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
+        (* temporarily add pdef to view_decls *)
+		iprog.I.prog_view_decls <- pdef :: curr_view_decls;
 		let wf,_ = AS.case_normalize_struc_formula 11 iprog h p pdef.Iast.view_formula false 
           false (*allow_post_vars*) false [] in
         let inv_lock = pdef.I.view_inv_lock in
@@ -205,13 +212,13 @@ let process_pred_def_4_iast pdef =
           (match inv_lock with
             | None -> None
             | Some f ->
-                let new_f = AS.case_normalize_formula iprog h f in (*TO CHECK: h or p*)
+                let new_f = AS.case_normalize_formula iprog h f None in (*TO CHECK: h or p*)
                 Some new_f)
         in
 		let new_pdef = {pdef with Iast.view_formula = wf;Iast.view_inv_lock = inv_lock} in
-		iprog.I.prog_view_decls <- ( new_pdef :: iprog.I.prog_view_decls);
+		iprog.I.prog_view_decls <- ( new_pdef :: curr_view_decls);
 	  with
-		| _ ->  dummy_exception() ; iprog.I.prog_view_decls <- tmp
+		| _ ->  dummy_exception() ; iprog.I.prog_view_decls <- curr_view_decls
   else
 	print_string (pdef.I.view_name ^ " is already defined.\n")
 
@@ -240,7 +247,7 @@ let convert_pred_to_cast () =
   let cprog4 = (AS.add_pre_to_cprog cprog3) in
   let cprog5 = (*if !Globals.enable_case_inference then AS.case_inference iprog cprog4 else*) cprog4 in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
-  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog5) else () in
+  (*let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog5) else () in*)
   cprog := cprog5
 
 let convert_pred_to_cast () = 
@@ -393,7 +400,7 @@ let perform_second_parsing_stage () =
 	let cddefs = List.map (AS.trans_data iprog) iprog.I.prog_data_decls in
 		!cprog.C.prog_data_decls <- cddefs
 	
-let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = 
+let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (rel0: rel option) stab : CF.struc_formula = 
   let rec helper (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = 
     match mf0 with
   | MetaFormCF mf -> 
@@ -436,17 +443,17 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.str
       (* let _ = print_string ("\n2 before meta: " ^(Iprinter.string_of_struc_formula wf)^"\n") in *)
       (*let _ = print_string ("\n after meta: " ^ (Cprinter.string_of_struc_formula res)) in*)
       res
-  | MetaEFormCF b -> b (* assume it has already been normalized *)
+  | MetaEFormCF b ->       (* let _ = print_string ("\n (andreeac) meta_to_struc_formula 6") in *) b (* assume it has already been normalized *)
   in helper mf0 quant fv_idents stab 
 
 
-let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = Debug.no_4 "meta_to_struc_formula"
+let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (rel0: rel option) stab : CF.struc_formula = Debug.no_4 "meta_to_struc_formula"
   string_of_meta_formula
   string_of_bool
   string_of_ident_list
   AS.string_of_stab
   Cprinter.string_of_struc_formula
-  meta_to_struc_formula mf0 quant fv_idents stab
+  (fun _ _ _ _  ->  meta_to_struc_formula mf0 quant fv_idents rel0 stab )mf0 quant fv_idents stab
 
 (* An Hoa : DETECT THAT EITHER OF 
 AS.case_normalize_formula iprog h mf
@@ -460,7 +467,8 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
   | MetaFormLCF mf ->	(List.hd mf)
   | MetaForm mf ->
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
-      let wf = AS.case_normalize_formula iprog h mf in
+      (* let _ = print_string (" before norm: " ^(Iprinter.string_of_formula mf)^"\n") in *)
+      let wf = AS.case_normalize_formula iprog h mf None in
       let _ = Astsimp.gather_type_info_formula iprog wf stab false in
       let r = AS.trans_formula iprog quant fv_idents false wf stab false in
       (* let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in *)
@@ -541,6 +549,7 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
       CF.add_mix_formula_to_formula (Perm.full_perm_constraint ()) ante
     else ante
   in
+  (* let ante = AS.add_param_ann_constraints_formula ante in *)
   let vk = AS.fresh_proc_var_kind stab Float in
   let _ = H.add stab (full_perm_name ()) vk in
 (*  let _ = flush stdout in*)
@@ -553,9 +562,12 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
   (* let _ = print_endline ("ante vars"^(Cprinter.string_of_spec_var_list fvs)) in *)
   let fv_idents = (List.map CP.name_of_spec_var fvs)@ivars in
   (* need to make ivars be global *)
-  let conseq = meta_to_struc_formula iconseq0 false fv_idents (* (List.map CP.name_of_spec_var fvs) *) stab in
+  (* let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents None stab  *)
+  let conseq = if (!Globals.allow_field_ann) then meta_to_struc_formula iconseq0 false fv_idents (Some Globals.RSubAnn) stab
+      else meta_to_struc_formula iconseq0 false fv_idents None stab in
   (* let conseq1 = meta_to_struc_formula iconseq0 false fv_idents stab in *)
   let conseq = Solver.prune_pred_struc !cprog true conseq in
+  (* let conseq = AS.add_param_ann_constraints_struc conseq in  *)
   let _ = Debug.devel_zprint (lazy ("\nrun_entail_check:"
                         ^"\n ### ivars = "^(pr_list pr_id ivars)
                         ^ "\n ### ante = "^(Cprinter.string_of_formula ante)
@@ -570,12 +582,13 @@ let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : m
                         ^"\n\n")) no_pos in
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let ctx = CF.build_context ectx ante no_pos in
+  let ctx = Solver.elim_exists_ctx ctx in
   (* List of vars appearing in original formula *)
   let orig_vars = CF.fv ante @ CF.struc_fv conseq in
   (* List of vars needed for abduction process *)
   let vars = List.map (fun v -> AS.get_spec_var_stab_infer v orig_vars no_pos) ivars in
   (* Init context with infer_vars and orig_vars *)
-  let (vrel,iv) = List.partition (fun v -> CP.type_of_spec_var v == RelT(*  ||  *)
+  let (vrel,iv) = List.partition (fun v -> is_RelT (CP.type_of_spec_var v)(*  ||  *)
               (* CP.type_of_spec_var v == FuncT *)) vars in
   let (v_hp_rel,iv) = List.partition (fun v -> CP.type_of_spec_var v == HpT(*  ||  *)
               (* CP.type_of_spec_var v == FuncT *)) iv in
@@ -812,7 +825,7 @@ let process_print_command pcmd0 = match pcmd0 with
                    Error.error_loc = no_pos;
                    Error.error_text = "couldn't find " ^ pvar;
                  }in
-	  let pf = meta_to_struc_formula mf false [] stab in
+	  let pf = meta_to_struc_formula mf false [] None stab in
 		print_string ((Cprinter.string_of_struc_formula pf) ^ "\n")
   | PCmd pcmd -> 
 	  if pcmd = "residue" then

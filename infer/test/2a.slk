@@ -1,0 +1,11 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+
+pred llMM<mi,mx> == self::node<v,null> & mi=v  & mx=v
+  or self::node<v, p> * p::llMM<mi2,mx2> & mi=min(v,mi2) & mx=max(v,mx2)
+  //& v<=mi2
+inv self!=null & mi<=mx.
+

@@ -1,0 +1,40 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+relation R1(int a).
+relation R(int a).
+relation R2(int a, int b).
+
+//(1)
+infer [R] R(v) & R(w)  |- v>=1.
+print residue.
+// <1>emp&R(w) & R(v) & 1<=v&{FLOW,(19,20)=__norm}[]
+// inferred rel: [RELASS [R]: ( R(v)) -->  1<=v]
+// WN : should add 1<=v to residue
+// <1>emp&R(v) & R(w)&{FLOW,(19,20)=__norm}[]
+
+
+//(2)
+infer [R] R(v) & R(w) & w=1  |- v>=w.
+print residue.
+//<1>emp&R(v) & R(w) & w=1&{FLOW,(19,20)=__norm}[]
+// inferred rel: [RELASS [R]: ( R(v)) -->  1<=v]
+// WN : should add 1<=v to residue
+
+
+//(3)
+infer [R,R1] R(v) & R1(w) & w=1  |- v>=w.
+print residue.
+//Entail (3) : Valid. 
+// <1>emp&R(v) & R1(w) & w=1&{FLOW,(19,20)=__norm}[]
+//inferred rel: [RELASS [R,R1]: ( R(v)) -->  1<=v]
+// WN : should add 1<=v to residue
+
+//(4)
+infer [R,R1] R(v) & R1(w)  |- v>=1.
+print residue.
+// <1>emp&R(v) & R1(w)&{FLOW,(19,20)=__norm}[]
+// inferred rel: [RELASS [R,R1]: ( R(v)) -->  1<=v]
+// WN : should add 1<=v to residue

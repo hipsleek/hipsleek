@@ -32,6 +32,7 @@ let disable_para () =
 (*To enable concurrency verification*)
 let enable_para () =
   allow_norm:= false;
+  allow_field_ann := false;
   perm:= (match !perm with
     | NoPerm -> Frac (*the default is fractional permission*)
     | _ -> !perm);

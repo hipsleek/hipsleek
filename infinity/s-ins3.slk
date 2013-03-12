@@ -1,0 +1,79 @@
+//(1) Valid
+checkentail 1=\inf |- false.
+/*
+normalize_inf_formula inp1 : 3=ZInfinity
+normalize_inf_formula@1 EXIT out : ZInfinity=3
+ERROR : should be false
+*/
+
+//(2) Valid
+checkentail 2>=\inf |- false.
+/*
+normalize_inf_formula inp1 : (ZInfinity)<=3
+normalize_inf_formula@5 EXIT out : ZInfinity=3
+ERROR : should be false
+*/
+
+//(3) Valid
+checkentail 3>\inf |- false.
+/*
+normalize_inf_formula inp1 : (ZInfinity)<3
+normalize_inf_formula@7 EXIT out : false
+*/
+
+//(4) Valid
+checkentail true |- \inf>4.
+/*
+normalize_inf_formula inp1 : 3<(ZInfinity)
+normalize_inf_formula@9 EXIT out : ZInfinity!=3
+ERROR : should be true
+*/
+
+//(5) Valid
+checkentail true |- \inf>=5.
+/*
+normalize_inf_formula inp1 : 3<=(ZInfinity)
+normalize_inf_formula@11 EXIT out : true
+*/
+
+//(6) Valid
+checkentail true |- -\inf!=6.
+/* PROBLEM
+normalize_inf_formula inp1 : 0!=((ZInfinity)+6)
+normalize_inf_formula@13 EXIT out : 0!=(ZInfinity+6)
+*/
+
+//(7) Valid
+checkentail -\inf=7 |- false.
+/* PROBLEM
+normalize_inf_formula inp1 : 0=7+(ZInfinity)
+normalize_inf_formula@15 EXIT out : 0=7+ZInfinity
+*/
+
+//(8) Valid
+checkentail true |- -\inf<=8.
+/*
+normalize_inf_formula inp1 : 0<=((ZInfinity)+8)
+normalize_inf_formula@18 EXIT out : true
+*/
+
+//(9) Valid
+checkentail true |- -\inf<9.
+/*
+normalize_inf_formula inp1 : 0<((ZInfinity)+9)
+normalize_inf_formula@20 EXIT out : 0!=(ZInfinity+9)
+*/
+
+//(10) Valid
+checkentail -\inf>10 |- false.
+/*
+normalize_inf_formula inp1 : (10+(ZInfinity))<0
+normalize_inf_formula@21 EXIT out : false
+*/
+
+//(11) Valid
+checkentail -\inf>=11 |- false.
+/* PROBLEM
+normalize_inf_formula inp1 : (11+(ZInfinity))<=0
+normalize_inf_formula@23 EXIT out : 11+ZInfinity=0
+*/

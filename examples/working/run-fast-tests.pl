@@ -26,7 +26,7 @@ GetOptions( "stop"  => \$stop,
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|sleek|parahip|hip_vperm|sleek_vperm|sleek_fracperm [-flags \"arguments to be transmited to hip/sleek \"]\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|imm|imm-filed|sleek|parahip|hip_vperm|sleek_vperm|sleek_fracperm|infinity|mem [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
 
@@ -206,6 +206,11 @@ $output_file = "log";
 	],
 	# END OF ARRAY TESTING EXAMPLES
 	"hip_tr"=>[["trees.ss",1,"insert"]],
+	"infinity" =>[["bst-inf.ss",2,"--dsd","delete","SUCCESS","remove_min","SUCCESS"],
+	["inf-selsort.ss",3,"--dsd","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	["inf-ins.ss",1,"--dsd","insert","SUCCESS"],
+	["inf-sel.ss",3,"--dsd","find_min","SUCCESS","delete_min","SUCCESS","selection_sort","SUCCESS"],
+	],
     "imm" =>[ 
         ["bigint.ss",17,  " --imm -tp redlog",
 		 "clone", "SUCCESS",
@@ -338,6 +343,25 @@ $output_file = "log";
          "get_next_next", "SUCCESS",
          "get_next", "SUCCESS"
         ]],
+        "mem" => [
+        ["dag.ss",2,"-tp om --ramify","mark","SUCCESS","mark2","SUCCESS"], 
+        ["graph.ss",2,"-tp om --ramify","mark","SUCCESS","mark2","SUCCESS"],
+        ["dag_1.ss",1,"-tp om","mark","SUCCESS"],
+        ["graph_1.ss",1,"-tp om","mark","SUCCESS"],
+        ["dag_copy.ss",1,"-tp om --ramify","copy_dag","SUCCESS"],
+        ["garbage_collector.ss",3,"-tp om --ramify","mark","SUCCESS","sweep","SUCCESS","collect","SUCCESS"],
+        ["llsortll.ss",6,"-tp om --eps","overlaid_insert","SUCCESS","delete2","SUCCESS","insert2","SUCCESS",
+        "get_tail","SUCCESS","insertion_sort","SUCCESS","id","SUCCESS"],
+        ["lltree.ss",1,"-tp om","move_request","SUCCESS"],
+        ["lltree2.ss",1,"-tp om --eps","move_request","SUCCESS"],
+        ["nodell.ss",6,"-tp om --ramify","delete_cache","SUCCESS","delete","SUCCESS","add_L","SUCCESS",
+        "caching","SUCCESS","add_in","SUCCESS","find","SUCCESS"],
+        ["pll.ss",2,"-tp om","length","SUCCESS","sum","SUCCESS"],
+        ["process_schedular.ss",4,"-tp om","insert_process","SUCCESS","insert_rll","SUCCESS",
+        "insert_pll","SUCCESS","insert_sll","SUCCESS"],
+        ["ramified-cells.ss",3,"--ramify","ex0","SUCCESS","ex1","SUCCESS","mark","SUCCESS"],
+        ["ramified-pairs.ss",1,"--ramify","mark","SUCCESS"],
+        ],
 	"hip" =>[
 #	["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
 				["eps.ss",2,  "", "get_next","SUCCESS","get_next_next","SUCCESS"],
@@ -506,7 +530,90 @@ $output_file = "log";
 				["classic/classic2a.ss",2, "", "foo1", "SUCCESS", "foo2", "FAIL"],
 				["classic/classic3.ss",2, "", "foo1", "SUCCESS", "foo2", "SUCCESS"],
 				["classic/classic3a.ss",2, "", "foo1", "SUCCESS", "foo2", "SUCCESS"],
-				],
+				["../../modular_examples/dll-modular.ss",11, "--overeps", 
+					"append", "SUCCESS", "append1", "SUCCESS", "append2", "SUCCESS",
+					"delete", "SUCCESS", "delete1", "SUCCESS", "f1", "SUCCESS",
+					"f2", "SUCCESS", "insert", "SUCCESS", "test_del", "SUCCESS",
+					"test_del2", "SUCCESS", "test_fold", "SUCCESS"],
+				["../../modular_examples/dll-modular.ss",11, "--overeps", 
+					"append", "SUCCESS", "append1", "SUCCESS", "append2", "SUCCESS",
+					"delete", "SUCCESS", "delete1", "SUCCESS", "f1", "SUCCESS",
+					"f2", "SUCCESS", "insert", "SUCCESS", "test_del", "SUCCESS",
+					"test_del2", "SUCCESS", "test_fold", "SUCCESS"],
+				["../../modular_examples/selection-modular.ss",3, "--overeps", 
+					"delete_min", "SUCCESS", "find_min", "SUCCESS", "selection_sort", "SUCCESS"],
+				["../../modular_examples/qsort-modular.ss",3, "--overeps", 
+					"append_bll", "SUCCESS", "partition", "SUCCESS", "qsort", "SUCCESS"],				
+				#["../../modular_examples/2-3trees-modular.ss",5, "--overeps", 
+				#	"insert_left", "SUCCESS", "height", "SUCCESS", "minim", "SUCCESS",
+				#	"min_height", "SUCCESS", "insert", "SUCCESS"],
+				],	
+	"hip_long_mod" => [["../../modular_examples/sorted_list_modular.ss",8, "--overeps -tp om", 
+					"insert_first", "SUCCESS", "copy", "SUCCESS", "delete", "SUCCESS",
+					"double_reverse", "SUCCESS", "insert", "SUCCESS", "insert_last", "SUCCESS",
+					"merge", "SUCCESS", "reverse","SUCCESS"],
+					["../../modular_examples/complete-modular.ss",5, "--overeps", 
+					"maxim", "SUCCESS", "height", "SUCCESS", "minim", "SUCCESS",
+					"min_height", "SUCCESS", "insert", "SUCCESS"],
+					#["../../modular_examples/avl_modular.ss",8, "--overeps -tp om", 
+					#"height", "SUCCESS", "diff_h_by_1", "SUCCESS", "diff_h_by_2", "SUCCESS",
+					#"eq_h", "SUCCESS", "get_max", "SUCCESS", "get_max_height_add1", "SUCCESS",
+					#"less_h", "SUCCESS", "remove_min_add","SUCCESS"],
+					],	
+	"hip_barr" => [
+		["../tree_shares/thesis/video_ex1_th3.ss",6, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+                                "th1_loop","SUCCESS","th1","SUCCESS",
+								"th2_loop","SUCCESS","th2","SUCCESS",
+								"th3_loop","SUCCESS","th3","SUCCESS"],
+		["../tree_shares/thesis/SIMD_ex1_v2_th3.ss",10, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+                                "controll","SUCCESS","control","SUCCESS",
+								"thl1","SUCCESS","th1","SUCCESS",
+								"thl2","SUCCESS","th2","SUCCESS",
+								"thl3","SUCCESS","th3","SUCCESS",
+								"thl4","SUCCESS","th4","SUCCESS"],						
+		["../tree_shares/thesis/SIMD_ex1_th1.ss",6, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+                                "controll","SUCCESS","control","SUCCESS",
+								"thl1","SUCCESS","th1","SUCCESS",
+								"thl2","SUCCESS","th2","SUCCESS"],
+		["../tree_shares/thesis/PIPE_ex1_th5.ss",6, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+                                "controll","SUCCESS","thl5","SUCCESS",
+								"thl1","SUCCESS","thl2","SUCCESS",
+								"thl3","SUCCESS","thl4","SUCCESS"],
+		["../tree_shares/thesis/MIXED_ex1_th4.ss",15, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+                                "ctl12","SUCCESS","ctl11","SUCCESS",
+								"starterc","SUCCESS","thl12","SUCCESS",
+								"thl22","SUCCESS","thl21","SUCCESS",
+								"thl11","SUCCESS","startert1","SUCCESS",
+								"startert2","SUCCESS","thl32","SUCCESS",
+								"thl31","SUCCESS","startert3","SUCCESS",
+								"thl42","SUCCESS","thl41","SUCCESS",
+								"startert4","SUCCESS",
+								],
+		["../tree_shares/thesis/MISD_ex2_th5.ss",12, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+                                "controll","SUCCESS","control","SUCCESS",
+								"thl","SUCCESS","th","SUCCESS",
+								"thl2","SUCCESS","th2","SUCCESS",
+								"thl3","SUCCESS","th3","SUCCESS",
+								"thl4","SUCCESS","th4","SUCCESS",
+								"thl5","SUCCESS","th5","SUCCESS",
+								],		
+		["../tree_shares/thesis/MISD_ex1_th5.ss",4, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+                                "controll","SUCCESS","control","SUCCESS",
+								"thl","SUCCESS","th","SUCCESS"
+								],	
+		["../tree_shares/thesis/barrier-weak.ss",4, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+                                "th1_loop","SUCCESS","th1","SUCCESS",
+								"th2_loop","SUCCESS","th2","SUCCESS"
+								],	
+		["../tree_shares/thesis/barrier-strong.ss",4, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+                                "th1_loop","SUCCESS","th1","SUCCESS",
+								"th2_loop","SUCCESS","th2","SUCCESS"
+								],	
+		["../tree_shares/thesis/barrier-paper.ss",4, "--eps --dis-field-ann --dis-precise-xpure -perm dperm", 
+                                "th1_loop","SUCCESS","th1","SUCCESS",
+								"th2_loop","SUCCESS","th2","SUCCESS"
+								],	
+	],
 	"hip_vperm" =>[
 				["vperm/alt_threading.ss",2,  "--ann-vp", 
                                 "increment","SUCCESS",
@@ -1038,7 +1145,7 @@ $output_file = "log";
         # above takes too long
         ["ll_test4.ss", 1, "", "test", "SUCCESS"],
         ["ll_test5.ss", 1, "", "delete_val", "SUCCESS"],
-        #["lr.ss", 2, "", "my_rev", "SUCCESS", "reverse", "SUCCESS"],
+        # ["lr.ss", 2, "", "my_rev", "SUCCESS", "reverse", "SUCCESS"],
         # above takes too long
         ["lrev-bug.ss", 1, "", "lrev", "SUCCESS"],
         ["lrev.ss", 1, "", "lrev", "SUCCESS"],
@@ -1098,10 +1205,22 @@ $output_file = "log";
                       ["imm/imm3.slk", " --imm ", "", "Fail.Fail.Valid.Valid.Valid.Valid."],
                       ["imm/imm4.slk", " --imm ", "", "Valid.Fail."],
                       ["imm/imm-hard.slk", " --imm --eps", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."],
+                      ["imm-field/sleek01.slk", " --field-ann ", "", "Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail."],
+                      ["imm-field/sleek02.slk", " --field-ann ", "", "Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Fail."],
+                      ["imm-field/sleek03.slk", " --field-ann ", "", "Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Fail."],
                       ["classic/classic1.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
                       ["classic/classic1.slk", " --classic", "", "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
                       ["classic/classic2.slk", "", "", "Fail.Valid.Valid.Valid.Fail.Valid.Fail.Fail."],
-                      ["classic/classic3.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."]],
+                      ["classic/classic3.slk", "", "", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail."],
+                      ["infinity.slk","--dsd","",                      "Fail.Valid.Valid.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Fail.Valid.Fail.Fail.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Valid.Valid."]
+                      ],
+		"sleek_barr"=>[["../tree_shares/barrier.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).Barrrier b4n Fail:  no contradiction found in preconditions of transitions from 1  for preconditions: .", ""],
+				  ["../tree_shares/barrier3.slk", "--eps --dis-field-ann --dis-precise-xpure -perm dperm", "Barrrier b1n Success.Barrrier b3n Fail:  frames do not match (1->2).Barrrier b2n Fail:  contradiction in post for transition (1->2).", ""]
+				 ],
+		"sleek_dfrac"=>[["../tree_shares/fractionals.slk", "--eps --dis-field-ann -perm dperm","", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+				  ["../tree_shares/barrier2.slk", "--eps --dis-field-ann -perm dperm","", "Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+				  ["../tree_shares/fractions.slk", "--eps --dis-field-ann -perm dperm","", "Valid.Fail.Valid.Fail.Fail.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Fail.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Fail."]
+                 ],
     "sleek_vperm" => [
                       ["vperm/vperm.slk"," --ann-vp ", "", "Valid.Valid.Fail.Valid.Valid.Fail.Fail.Fail.Valid.Valid.Valid."],
                       ["vperm/vperm2.slk"," --ann-vp ", "", "Valid.Valid.Fail."]],
@@ -1336,12 +1455,14 @@ sub sleek_process_file  {
   {
       my $lem = 0; # assume the lemma checking is disabled by default; make $lem=1 if lemma checking will be enabled by default and uncomment elsif
       my $err = 0;
+	  my $barr = 0;
       if ("$param" =~ "musterr") {
           print "Starting sleek must/may errors tests:\n";
           $exempl_path_full = "$exec_path/errors";
           $err = 1;
       }
       if (("$param" =~ "lemmas") ||  ($script_arguments=~"--elp")) {  $lem = 1; }
+	  if ("$param" =~ "sleek_barr"){ $barr=1;}
 #      elsif ($script_arguments=~"--dlp"){ $lem = 0; }
       
       if ("$param" =~ "sleek") {
@@ -1366,12 +1487,15 @@ sub sleek_process_file  {
 	        print LOGFILE "$output";
             my $lemmas_results = "";
             my $entail_results = "";
+			my $barrier_results = "";
             my @lines = split /\n/, $output; 
             foreach my $line (@lines) { 
                 if($line =~ m/Entailing lemma/){
                     if($line =~ m/Valid/) { $lemmas_results = $lemmas_results ."Valid."; }
                     elsif($line =~ m/Fail/)  { $lemmas_results = $lemmas_results ."Fail.";}
-                }elsif($line =~ m/Entail/){
+                }elsif($line =~ m/Barrrier/){
+					 $barrier_results = $barrier_results .$line .".";
+				}elsif($line =~ m/Entail/){
                     if( $err == 1) {
                         $i = index($line, "Valid. (bot)",0);
                         $h = index($line, "Valid.",0);
@@ -1389,12 +1513,14 @@ sub sleek_process_file  {
                     }
                 }
             }
-			if (($entail_results !~ /^$test->[3]$/) || ( ($lem == 1)  && ($lemmas_results !~ /^$test->[2]$/)))
+			if ((($lem==0) && ($barr==0) && ($entail_results !~ /^$test->[3]$/)) || 
+				(($lem == 1)  && ($lemmas_results !~ /^$test->[2]$/)) || 
+				($barr==1 && ($barrier_results ne $test->[2])))
 			{
 				print "Unexpected result with : $test->[0]\n";
 				$error_count++;
 				$error_files = $error_files . " " . $test->[0];
-			}
+			}	
 			if($timings) {
 				# log_one_line_of_timings ($test->[0],$output);
 			}

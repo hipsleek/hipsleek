@@ -1,0 +1,3 @@
+Inv:={[mi,mx,self]:self<=0 & mi=mx | self<=0 & mi<=mx};
+Inv;
+PairWiseCheck Inv;

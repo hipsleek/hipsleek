@@ -1,0 +1,9 @@
+R:={[x,y] -> [res] -> []: (
+#(y<0 || y>0 || x>=0) && (y<0 || y>0 || x<=0) &&
+((x=0 && res=0) ||  (exists (res1,x1,y1: res=res1+1 && x=x1+1 && y=y1+1 
+&& R(x1,y1,res1)))))};
+[T]:=bottomupgen([R], [2], SimHeur);
+T;
+fixtestPost([R],[T]);
+#((res >= 1 && res = x) || (0 = 0 && 0 = x && 0 = res))
+#P:={[x,y]: (y<0 || y>0 || x<1)

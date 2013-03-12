@@ -658,7 +658,7 @@ let rec is_array_exp e = match e with
 											| _ -> is_array_exp exp) (Some false) el)
     | CP.ArrayAt (_,_,_) -> Some true
   | CP.Func _ -> Some false
-    | CP.AConst _ | CP.FConst _ | CP.IConst _ | CP.Tsconst _
+    | CP.AConst _ | CP.FConst _ | CP.IConst _ | CP.Tsconst _ | CP.InfConst _ 
     | CP.Level _
     | CP.Var _ | CP.Null _ -> Some false
     (* | _ -> Some false *)
@@ -690,9 +690,10 @@ let rec is_list_exp e = match e with
 											| Some true -> Some true
 											| _ -> is_list_exp exp) (Some false) el)
     | CP.ArrayAt (_,_,_) | CP.Func _ -> Some false
-    | CP.Null _ | CP.AConst _ | Tsconst _ 
+    | CP.Null _ | CP.AConst _ | CP.Tsconst _ | CP.InfConst _
     | CP.Level _
-    | CP.FConst _ | CP.IConst _ | CP.Var _ -> Some false
+    | CP.FConst _ | CP.IConst _ -> Some false
+    | CP.Var(sv,_) -> if CP.is_list_var sv then Some true else Some false
     (* | _ -> Some false *)
 	  
 (*let f_e e = Debug.no_1 "f_e" (Cprinter.string_of_formula_exp) (fun s -> match s with
@@ -788,7 +789,7 @@ let is_list_constraint (e: CP.formula) : bool =
   let or_list = List.fold_left (||) false in
   CP.fold_formula e (nonef, is_list_b_formula, is_list_exp) or_list
 
-let is_list_constraint_a (e: CP.formula) : bool =
+let is_list_constraint (e: CP.formula) : bool =
   (*Debug.no_1_opt "is_list_constraint" Cprinter.string_of_pure_formula string_of_bool (fun r -> not(r)) is_list_constraint e*)
   Debug.no_1 "is_list_constraint" Cprinter.string_of_pure_formula string_of_bool is_list_constraint e
   
@@ -1043,6 +1044,8 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   let _ = disj_cnt f None "sat_no_cache" in
   let (pr_weak,pr_strong) = CP.drop_complex_ops in
   let (pr_weak_z3,pr_strong_z3) = CP.drop_complex_ops_z3 in
+    (* Handle Infinity Constraints *)
+  let f = if !Globals.allow_inf then Infinity.normalize_inf_formula_sat f else f in
   let wf = f in
   let omega_is_sat f = Omega.is_sat_ops pr_weak pr_strong f sat_no in
   let redlog_is_sat f = Redlog.is_sat_ops pr_weak pr_strong f sat_no in
@@ -1414,16 +1417,17 @@ let simplify_always (f:CP.formula): CP.formula =
 let simplify (f:CP.formula): CP.formula = 
   CP.elim_exists_with_simpl simplify f 
 
-let simplify (f:CP.formula): CP.formula = 
-  let pr = Cprinter.string_of_pure_formula in
-  Debug.no_1 "TP.simplify" pr pr simplify f
+(* let simplify (f:CP.formula): CP.formula =  *)
+(*   let pr = Cprinter.string_of_pure_formula in *)
+(*   Debug.no_1 "TP.simplify" pr pr simplify f *)
 
 let simplify (f : CP.formula) : CP.formula =
-  Debug.no_1 "simplify_2" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify f
+  let pf = Cprinter.string_of_pure_formula in
+  Debug.no_1 "simplify_2" pf pf simplify f
 
 let simplify_a (s:int) (f:CP.formula): CP.formula = 
   let pf = Cprinter.string_of_pure_formula in
-  Debug.no_1 ("TP.simplify_a"^(string_of_int s)) pf pf simplify f
+  Debug.no_1_num s ("TP.simplify_a") pf pf simplify f
 
 let hull (f : CP.formula) : CP.formula =
   if not !tp_batch_mode then start_prover ();
@@ -1507,6 +1511,20 @@ let pairwisecheck_raw (f : CP.formula) : CP.formula =
   let pr = Cprinter.string_of_pure_formula in
   Debug.no_1 "pairwisecheck_raw" pr pr pairwisecheck_raw f
 
+
+let simplify_with_pairwise (f : CP.formula) : CP.formula =
+  let pf = Cprinter.string_of_pure_formula in
+  let f1 = simplify f in
+  let f2 = pairwisecheck f1 in
+  Debug.ninfo_hprint (add_str "simplifyX(input)" pf) f no_pos;
+  Debug.ninfo_hprint (add_str "simplifyX(output)" pf) f1 no_pos;
+  Debug.ninfo_hprint (add_str "simplifyX(pairwise)" pf) f2 no_pos;
+  f2
+
+let simplify_with_pairwise (s:int) (f:CP.formula): CP.formula = 
+  let pf = Cprinter.string_of_pure_formula in
+  Debug.no_1_num s ("TP.simplify_with_pairwise") pf pf simplify_with_pairwise f
+
 let called_prover = ref ""
 
 let should_output () = !print_proof && not !suppress_imply_out
@@ -1550,8 +1568,11 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let vrs = (Cpure.fv conseq)@vrs in
   let imm_vrs = List.filter (fun x -> (CP.type_of_spec_var x) == AnnT) vrs in 
   let imm_vrs = CP.remove_dups_svl imm_vrs in
-  (* add invariant constraint @M<:v<:@L for each annotation var *)
+  (* add invariant constraint @M<:v<:@A for each annotation var *)
   let ante = CP.add_ann_constraints imm_vrs ante in
+  (* Handle Infinity Constraints *)
+  let ante,conseq  = if !Globals.allow_inf then Infinity.normalize_inf_formula_imply ante conseq 
+  else ante,conseq in
   if should_output () then (
     reset_generated_prover_input ();
     reset_prover_original_output ();
@@ -2277,6 +2298,14 @@ Debug.no_2 "imply" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_fo
 
 and imply_x ante0 conseq0 imp_no do_cache process = imply_timeout ante0 conseq0 imp_no !imply_timeout_limit do_cache process ;;
 
+let simpl_imply_raw_x ante conseq = 
+	let (r,_,_)= imply ante conseq "0" false None in
+	r
+
+let simpl_imply_raw ante conseq = 
+Debug.no_2 "simpl_imply_raw" (Cprinter.string_of_pure_formula)(Cprinter.string_of_pure_formula) string_of_bool
+	simpl_imply_raw_x ante conseq
+	
 let memo_imply ante0 conseq0 imp_no = memo_imply_timeout ante0 conseq0 imp_no !imply_timeout_limit ;;
 
 let mix_imply ante0 conseq0 imp_no = mix_imply_timeout ante0 conseq0 imp_no !imply_timeout_limit ;;

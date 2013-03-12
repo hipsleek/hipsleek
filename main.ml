@@ -14,7 +14,10 @@ let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 let set_source_file arg = 
   Globals.source_files := arg :: !Globals.source_files
 
-let process_cmd_line () = Arg.parse Scriptarguments.hip_arguments set_source_file usage_msg
+let process_cmd_line () = 
+	Arg.parse Scriptarguments.hip_arguments set_source_file usage_msg;
+	if !Globals.override_slc_ps then Globals.en_slc_ps:=false
+	else ()
 
 let print_version () =
   print_endline ("HIP: A Verifier for Heap Manipulating Programs");
@@ -559,6 +562,9 @@ let process_source_full_after_parser source (prog, prims_list) =
   ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
   ^ "\tTime spent in child processes: " 
   ^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
+	(*;print_string ("\nTotal Entailments : " 
+	^ (string_of_int !Globals.total_entailments) ^ "\n" 
+	^ "Ramification Entailments : "^ (string_of_int !Globals.ramification_entailments) ^"\n")*)
 
 let main1 () =
   (* Cprinter.fmt_set_margin 40; *)

@@ -150,13 +150,21 @@ let common_arguments = [
 	("--dis-lsmu-infer", Arg.Clear Globals.allow_lsmu_infer,"disable simple inference of lsmu");
 	("--en-lsmu-infer", Arg.Set Globals.allow_lsmu_infer,"enable simple inference of lsmu");
 	("--dis-para", Arg.Unit Perm.disable_para,"disable concurrency verification");
-	("--en-para", Arg.Unit Perm.enable_para,"enable concurrency verification");("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
+	("--en-para", Arg.Unit Perm.enable_para,"enable concurrency verification");
+	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
+	("--field-ann", Arg.Set Globals.allow_field_ann,"enable the use of immutability annotations for data fields");
   ("--memset-opt", Arg.Set Globals.ineq_opt_flag,"to optimize the inequality set enable");
+	("--dis-field-ann", Arg.Clear Globals.allow_field_ann,"disable the use of immutability annotations for data fields");
+	(*("--mem", Arg.Set Globals.allow_mem,"Enable the use of Memory Specifications");*)
+	("--dis-mem", Arg.Clear Globals.allow_mem,"Disable the use of Memory Specifications");
+	("--ramify", Arg.Clear Solver.unfold_duplicated_pointers,"Use Ramification (turns off unfold on dup pointers)");
   ("--reverify", Arg.Set Globals.reverify_flag,"enable re-verification after specification inference");
   ("--dis-imm", Arg.Clear Globals.allow_imm,"disable the use of immutability annotations");
+  ("--dis-inf", Arg.Clear Globals.allow_inf,"disable support for infinity ");
+  ("--dsd", Arg.Set Globals.deep_split_disjuncts,"enable deep splitting of disjunctions");
   ("--no-coercion", Arg.Clear Globals.use_coercion,
    "Turn off coercion mechanism");
-  ("--no-exists-elim", Arg.Clear Globals.elim_exists,
+  ("--no-exists-elim", Arg.Clear Globals.elim_exists_ff,
    "Turn off existential quantifier elimination during type-checking");
   ("--no-diff", Arg.Set Solver.no_diff,
    "Drop disequalities generated from the separating conjunction");
@@ -164,14 +172,25 @@ let common_arguments = [
    "Turn off set-of-states search");
   ("--unsat-elim", Arg.Set Globals.elim_unsat,
    "Turn on unsatisfiable formulae elimination during type-checking");
+  ("--en-disj-compute", Arg.Set Globals.disj_compute_flag,
+   "Enable re-computation of user-supplied disj. invariant");
   ("-nxpure", Arg.Set_int Globals.n_xpure,
    "Number of unfolding using XPure");
-	("-fixcalc-disj", Arg.Set_int Globals.fixcalc_disj,
+  ("-v:", Arg.Set_int Globals.verbose_num,
+   "Verbosity level for Debugging");
+  ("-fixcalc-disj", Arg.Set_int Globals.fixcalc_disj,
     "Number of disjunct for fixcalc computation");
   ("--dis-smart-xpure", Arg.Clear Globals.smart_xpure,
    "Smart xpure with 0 then 1; otherwise just 1 ; not handled by infer yet");
+  ("--dis-precise-xpure", Arg.Clear Globals.precise_perm_xpure, "disable adding x!=y when the permissions of x and y overlap or exceed the full permission");
   ("--en-smart-memo", Arg.Set Globals.smart_memo,
    "Smart memo with no_complex; if fail try complex formula");
+	("--en-pre-residue", Arg.Unit (fun _ -> Globals.pre_residue_lvl := 1),
+    "Always add pre inferred to residue, ee if it is disjunctive");
+	("--dis-pre-residue", Arg.Unit (fun _ -> Globals.pre_residue_lvl := -1),
+    "Never pre inferred to residue, ee if it is conjunctive");
+    (* default is to add only conjunctive pre to residue when
+       pre_residue_lvl ==0 *)
   ("-num-self-fold-search", Arg.Set_int Globals.num_self_fold_search,
    "Allow Depth of Unfold/Fold Self Search");
   ("--en-self-fold-search", Arg.Set Globals.self_fold_search_flag,
@@ -183,6 +202,7 @@ let common_arguments = [
   ("--print-type", Arg.Set Globals.print_type,"Print type info");
   ("--print-x-inv", Arg.Set Globals.print_x_inv,
    "Print computed view invariants");
+  ("--pr_str_assume", Arg.Set Globals.print_assume_struc, "Print structured formula for assume");
   ("-stop", Arg.Clear Globals.check_all,
    "Stop checking on erroneous procedure");
   ("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
@@ -212,10 +232,10 @@ let common_arguments = [
    "<p,q,..> comma-separated list of provers to try in parallel");
   (* ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics,  *)
   (* "enable sat statistics"); *)
-  ("--ep-stat", Arg.Set Globals.profiling,
+  ("--en-pstat", Arg.Set Globals.profiling,
    "enable profiling statistics");
-  ("--ec-stat", Arg.Set Globals.enable_counters, "enable counter statistics");
-  ("--e-stat", (Arg.Tuple [Arg.Set Globals.profiling; Arg.Set Globals.enable_counters]),
+  ("--en-cstat", Arg.Set Globals.enable_counters, "enable counter statistics");
+  ("--en-stat", (Arg.Tuple [Arg.Set Globals.profiling; Arg.Set Globals.enable_counters]),
    "enable all statistics");
   ("--sbc", Arg.Set Globals.enable_syn_base_case,
    "use only syntactic base case detection");
@@ -312,6 +332,7 @@ let common_arguments = [
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
+  ("--overeps", Arg.Set Globals.override_slc_ps, "Override --eps, for run-fast-tests testing of modular examples");
   ("--dis-ps", Arg.Set Globals.dis_ps, "Disable predicate specialization");
   ("--dis-ann", Arg.Set Globals.dis_slc_ann, "Disable aggressive slicing with annotation scheme (not default)");
   ("--slc-rel-level", Arg.Set_int Globals.slicing_rel_level, "Set depth for GetCtr function");

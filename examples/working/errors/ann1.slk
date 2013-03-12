@@ -1,0 +1,111 @@
+data node {
+  int val;
+  node next;
+}.
+
+// (1) residue must not contain v
+infer [] y::node<_,_>@w |- (exists v: y::node<a,b>@v).
+// emp
+print residue.
+
+// (2) explicit (residue to have w<:v)
+infer [] y::node<_,_>@w |- [v] y::node<a,b>@v.
+// emp
+print residue.
+/*
+1>y::node<Anon_13@w,Anon_14@w>@w[Orig]&w<=w & Anon_13=a & Anon_14=b & v<=v & w<:v&{FLOW,(19,20)=__norm}[]
+
+ERROR : need to add:
+==> L<:v  (v=L or v=A)
+*/
+
+// (3) implicit (see residue to have w=v)
+infer [] y::node<_,_>@w |- y::node<a,b>@v.
+// emp
+print residue.
+
+// #4 implicit (see residue to have w=v)
+infer [] y::node<_,_>@M |- y::node<a,b>@v.
+// emp
+print residue.
+/*
+Got:
+ <1>y::node<Anon_17@M,Anon_18@M>@M[Orig]&0<=0 & v=@M & v=@M & Anon_17=a & Anon_18=b&{FLOW,(19,20)=__norm}[]
+ERROR : should be EMP
+*/
+
+//#5
+infer [] y::node<_,_>@M |- y::node<a,b>@M.
+print residue.
+//infer [] y::node<_,_>@I |- y::node<a,b>@I.
+//print residue.
+infer [] y::node<_,_>@L |- y::node<a,b>@L.
+print residue.
+infer [] y::node<_,_>@A |- y::node<a,b>@A.
+print residue.
+//infer [] y::node<_,_>@A |- y::node<a,b>@L.
+//print residue.
+
+//#8
+infer [] y::node<_,_>@A |- y!=null.
+
+//#9
+infer [] y::node<_,_>@A |- y=null.
+
+//#10 should fail
+infer [] emp |- y::node<a,b>@A.
+
+//#11  // should succeed
+infer [] y!=null |- y::node<a,b>@A.
+
+// (5)
+// fail
+infer [] @L<:v |- v=@L.
+
+//#13
+// valid
+infer [] @A<:v |- v=@A.
+
+// (11) Valid
+infer [] y::node<_,_>@M |- y::node<a,b>@v & v<:@M.
+print residue.
+/*
+ERROR : residue should be empty
+ <1>y::node<Anon_29@M,Anon_30@M>@M[Orig]&0<=0 & v=@M & v=@M & Anon_29=a & Anon_30=b&{FLOW,(19,20)=__norm}[]
+*/
+
+//#15 ERROR : should be valid and emp
+infer [] y::node<_,_>@M |- y::node<a,b>@v & @I<:v.
+print residue.
+/*
+ <1>y::node<Anon_31@M,Anon_32@M>@M[Orig]&0<=0 & v=@M & v=@M & Anon_31=a & Anon_32=b&{FLOW,(19,20)=__norm}[]
+*/
+
+//#16 ERROR : should have failed
+infer [] y::node<_,_>@I |- y::node<a,b>@v & @M<:v.
+print residue.
+/*
+ <1>y::node<Anon_33@I,Anon_34@I>@I[Orig]&1<=1 & v=@I & v=@I & Anon_33=a & Anon_34=b&{FLOW,(19,20)=__norm}[]
+*/
+
+
+// (17)
+infer [] y::node<_,_>@v |- y::node<a,b>@L.
+print residue.
+
+
+// #18
+infer [] y::node<_,_>@v |- y::node<a,b>@A.
+print residue.
+
+// (20) VALID
+infer [] y::node<_,_>@L |- [v] y::node<a,b>@v & v<:@M.
+print residue.
+
+// (27) FAIL
+infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v=@M.
+print residue.
+
+// (30) FAIL
+infer [] y::node<_,_>@I |- [v] y::node<a,b>@v & v<:@M.
+print residue.

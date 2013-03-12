@@ -1,0 +1,62 @@
+/*
+@M - mutable   (0)
+@I - immutable (1)
+@L - lending   (2)
+@A - no access (3)
+*/
+
+//data cell {int val;}.
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll<n, v1, v2> == self = null & n = 0 
+	or self::node<a@v2, q> * 
+    q::ll<n-1, v1, v2>@v1
+  inv n >= 0.
+
+// (13)
+checkentail x::node<p,q>@M |- x::node<_@A,b@M> * x::node<a@M,_@A>.
+print residue.
+
+// (15)
+checkentail x::node<p,q>@M |- x::node<_@M,b@M> * x::node<a@M,_@A>.
+print residue.
+
+// (16)
+checkentail x::node<p@L,q@L>@M |- (x::node<a@L,b@L>@L & x::node<a@L,b@L>@L).
+print residue.
+
+// (17)
+checkentail x::node<p@L,q@L>@M * y::node<a1@I,b1@I>@M |-  x::node<a@L,b@L>@M * y::node<a2@I,b2@I>@I.
+print residue.
+
+// (19) fail
+checkentail y::node<p@A,q@L>  * x::node<p@L,q@A>  |- x != y.
+print residue.
+
+// (20) valid
+checkentail y::node<p@A,q@L>  * x::node<p@L,q@L>  |- x != y.
+print residue.
+
+// (21) valid
+checkentail y::node<p@A,q@L>  * x::node<p@L,q@A>  |- x = y | x!=y.
+print residue.
+
+// (22) fail
+checkentail x::node<p@A,q@L>  * y::node<p@L,q@A> * z::node<a@A,b@A> |- x != z.
+print residue.
+
+// (23) valid
+checkentail x::node<p@A,q@L>  * y::node<p@L,q@A> * z::node<a@A,b@L> |- x != z.
+print residue.
+
+// (24) valid
+checkentail  (t::node<_,_>@L) ; z::node<a@A, b@L>@M * ((x::node<p@A,q@L>@L  & y::node<p@L,q@A>@L)) |- z != x.
+print residue.
+
+// (24) fail
+checkentail  (t::node<_,_>@L) ; z::node<a@A, b@L>@M * ((x::node<p@A,q@L>@L  & y::node<p@L,q@A>@L)) |- z != y.
+print residue.

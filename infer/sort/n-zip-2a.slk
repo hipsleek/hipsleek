@@ -1,0 +1,5 @@
+ relation P(int x, int y).
+infer [P] emp&x=x' & y=y' & 0<=x & P(x,y) & x'!=0 & !(v_bool_50_516') & x'!=0 & 
+!(v_bool_50_516') & y'=0 & v_bool_52_515' & y'=y' & v_bool_52_515'
+ |-  false. 
+print residue.

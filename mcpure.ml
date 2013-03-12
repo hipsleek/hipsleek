@@ -1229,13 +1229,14 @@ and memo_norm (l:(b_formula * (formula_label option)) list): b_formula list * fo
       memo_norm_x l
       
 and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * formula list = 
-  let rec get_head e = match e with 
+ (* let rec get_head e = match e with 
     | Null _ -> "Null"
     | Var (v,_) -> name_of_spec_var v
     | Level (v,_) -> name_of_spec_var v
     | IConst (i,_)-> string_of_int i
     | FConst (f,_) -> string_of_float f
     | AConst (f,_) -> string_of_heap_ann f
+    | InfConst(i,_) -> i
     | Tsconst (f,_) -> Tree_shares.Ts.string_of f
     | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_)
     | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_) 
@@ -1244,9 +1245,9 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
 	  if (List.length e_l)>0 then get_head (List.hd e_l) else "[]"
     | Func (a,i,_) -> (name_of_spec_var a) ^ "(" ^ (String.concat "," (List.map get_head i)) ^ ")"
     | ArrayAt (a,i,_) -> (name_of_spec_var a) ^ "[" ^ (String.concat "," (List.map get_head i)) ^ "]" (* An Hoa *)    
-  in
+  in*)
   
-  let e_cmp e1 e2 =  String.compare (get_head e1) (get_head e2) in
+  (*let e_cmp e1 e2 =  String.compare (get_head e1) (get_head e2) in
   
   let rec get_lists (e:exp) (disc:int): exp list * exp list = match e with
     | Add (e1,e2,l)-> 
@@ -1265,14 +1266,14 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
 	  if (disc<>(-1)) then ([e],[])
 	  else let (lp1,ln1),(ln2,lp2) = get_lists e1 disc, get_lists e2 disc in
 	  (lp1@lp2,ln1@ln2) 
+    | Null _ | Var _ | IConst _ | AConst _ | InfConst _ | Tsconst _ | FConst _ | Max _  | Min _ | Bag _ | BagUnion _ | BagIntersect _ 
     | Level _
-    | Null _ | Var _ | IConst _ | AConst _ | Tsconst _ | FConst _ | Max _  | Min _ | Bag _ | BagUnion _ | BagIntersect _ 
     | BagDiff _ | List _ | ListCons _ | ListHead _ | ListTail _ | ListLength _ | ListAppend _ | ListReverse _ 
-    | ArrayAt _ | Func _ -> ([e],[]) (* An Hoa *) in
+    | ArrayAt _ | Func _ -> ([e],[]) (* An Hoa *) in*)
   
-  let rec norm_expr e = match e with
-    | Level _
-    | Null _ | Var _ | IConst _ | FConst _ | AConst _ | Tsconst _ -> e
+  (*let rec norm_expr e = match e with
+    | Null _ | Var _ | IConst _ | FConst _ | AConst _ | Tsconst _ | InfConst _ 
+    | Level _ -> e
     | Add (e1,e2,l) -> cons_lsts e 1 (fun c-> Add c) (fun d-> Subtract d) (IConst (0,l))
     | Subtract (e1,e2,l) -> cons_lsts e 1 (fun c-> Add c) (fun d-> Subtract d) (IConst (0,l))
     | Mult (e1,e2,l) -> cons_lsts e (-1) (fun c-> Mult c) (fun d-> (*print_string "called \n";*) Div d) (IConst (1,l))
@@ -1304,7 +1305,7 @@ and memo_norm_x (l:(b_formula *(formula_label option)) list): b_formula list * f
     if (List.length lp)>0 then
       let a = List.fold_left (fun a c-> cons1(a,c,no_pos)) (List.hd lp) (List.tl lp) in
       List.fold_left(fun a c-> cons2 (a,c,no_pos)) a ln
-    else List.fold_left(fun a c-> cons2 (a,c,no_pos)) nel ln in
+    else List.fold_left(fun a c-> cons2 (a,c,no_pos)) nel ln in*)
 
   (*  let norm_bf (c1:b_formula) : (b_formula option) =
       let c1 = b_form_simplify c1 in
@@ -2145,7 +2146,7 @@ let merge_mems f1 f2 slice_dup = match (f1,f2) with
   
   
 let merge_mems f1 f2 slice_dup = 
-  Debug.no_3 "merge_mems " !print_mix_f !print_mix_f (fun x -> "?")
+  Debug.no_3 "merge_mems " !print_mix_f !print_mix_f (string_of_bool)
   !print_mix_f merge_mems f1 f2 slice_dup
 
 let reset_unsat_flag_mix m = 

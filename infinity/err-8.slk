@@ -1,0 +1,24 @@
+data cell{
+ int val;
+}.
+
+
+checkentail xy::cell<mi> |- xx!=null.
+
+/*
+WHY below has no effect?
+
+entail_state_elim_exists@4
+entail_state_elim_exists inp1 : es_formula: (exists mi_15: x::cell<mi_15>@M[O
+entail_state_elim_exists@4 EXIT out : es_formula: (exists mi_15: x::cell<mi_15>@M[Orig]&true&{FLOW,(19,20)=__norm})[]
+*/
+
+checkentail (exists mi: x::cell<mi> & mi=v) |- x!=null.
+
+/*
+PROBLEM : elim_exists not deep enough!
+ntail_state_elim_exists@7
+entail_state_elim_exists inp1 : es_formula: x::cell<mi>@M[Orig]&exists(k:k=mi)&{FLOW,(19,20)=__norm}[]
+entail_state_elim_exists@7 EXIT out : es_formula: x::cell<mi>@M[Orig]&exists(k:k=mi)&{FLOW,(19,20)=__norm}[]
+*/
+checkentail x::cell<mi> & exists (k:mi=k & k>0) |- x!=null.

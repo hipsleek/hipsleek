@@ -309,6 +309,12 @@ let rec find_lexvar_formula (f: CP.formula) : (term_ann * CP.exp list * CP.exp l
   | CP.And (f1, f2, _) ->
       (try find_lexvar_formula f1
       with _ -> find_lexvar_formula f2)
+  | CP.AndList l -> 
+		let rec hlp l = match l with
+			| [] -> raise LexVar_Not_found
+			| (_,h)::t -> (try find_lexvar_formula h
+						with _ -> hlp t) in
+		hlp l
   | _ -> raise LexVar_Not_found
 
 (* To syntactically simplify LexVar formula *) 
@@ -352,6 +358,10 @@ let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
   let (lexvar, other_p) = List.partition (CP.is_lexvar) mf_ls in
   (lexvar, CP.join_conjunctions other_p)
 
+let strip_lexvar_mix_formula mf =
+	let pr = !MCP.print_mix_formula in
+	Debug.no_1 "strip_lexvar_mix_formula" pr (pr_pair (fun _ -> "") !CP.print_formula) strip_lexvar_mix_formula mf
+  
 (* Termination: The boundedness checking for HIP has been done before *)  
 let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
   let ans  = norm_term_measures_by_length src_lv dst_lv in
@@ -541,7 +551,7 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           } in
           (n_estate, lhs_p, rhs_p, None)
     end
-  with _ -> (estate, lhs_p, rhs_p, None)
+  with _ -> (*print_string ("got exception\n "^(!MCP.print_mix_formula rhs_p)^"\n");*)(estate, lhs_p, rhs_p, None)
 
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   (* if (not !Globals.dis_term_chk) or (estate.es_term_err == None) then *)

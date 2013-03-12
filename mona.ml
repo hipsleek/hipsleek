@@ -39,8 +39,9 @@ let rec mona_of_typ = function
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "float type not supported for mona"}
   | Int           -> "int"
+  | INFInt        -> "int"
   | AnnT          -> "AnnT"
-  | RelT          -> "RelT"
+  | RelT _        -> "RelT"
   | HpT           -> "HpT"
   | Void          -> "void" 	(* same as for float *)
   | BagT i		  -> "("^(mona_of_typ i)^") set"
@@ -308,6 +309,7 @@ and find_order_b_formula_x (bf : CP.b_formula) vs : bool =
     | CP.ListPerm(e1, e2, _)
     | CP.Lt(e1, e2, _)
     | CP.Lte(e1, e2, _) 
+    | CP.SubAnn(e1, e2, _ )
     | CP.Gt(e1, e2, _)
     | CP.Gte(e1, e2, _) -> 
           (* let _ = print_string("find_order_exp for e1=" ^ (Cprinter.string_of_formula_exp e1) ^ " and e2="  ^ (Cprinter.string_of_formula_exp e2) ^ "\n") in *)
