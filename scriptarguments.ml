@@ -370,7 +370,7 @@ let common_arguments = [
   
   ("--dis-split", Arg.Set Globals.use_split_match, "Disable permission splitting lemma (use split match instead)");
   ("--en-lemma-s", Arg.Set Globals.enable_split_lemma_gen, "Enable automatic generation of splitting lemmas");
-  ("--show-diff", Arg.Set Globals.show_diff, "Show differences between formulae");
+  (* ("--show-diff", Arg.Set Globals.show_diff, "Show differences between formulae"); *)
   ("--dis-sem", Arg.Set Globals.dis_sem, "Show differences between formulae");
   ("--show-diff-constrs", Arg.Set Globals.show_diff_constrs, "Show differences between list of constraint");
   ("--sa-print-inter", Arg.Set Globals.sa_print_inter, "Print intermediate results of normalization");

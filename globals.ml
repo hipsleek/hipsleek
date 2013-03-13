@@ -639,7 +639,7 @@ let consume_all = ref false
 
 let enable_split_lemma_gen = ref false
 
-let show_diff = ref false
+let show_diff = ref true
 
 let sa_print_inter = ref false
 
