@@ -29,7 +29,7 @@ let rec coq_of_typ = function
   | List _		  -> "list"
   | Pointer _
   | Tree_sh 	  -> "int"
-  | UNK | NUM | TVar _ | Named _ | Array _ |RelT | HpT->
+  | UNK | NUM | TVar _ | Named _ | Array _ | RelT _ | HpT->
         Error.report_error {Err.error_loc = no_pos; 
         Err.error_text = "type var, array and named type not supported for Coq"}
 ;;
@@ -132,7 +132,7 @@ and coq_of_exp e0 =
 	| CP.ArrayAt _ -> 
 			illegal_format "coq_of_exp : array cannot be handled"
           (* failwith ("Arrays are not supported in Coq") (\* An Hoa *\) *)
-
+    | CP.InfConst _ -> Error.report_no_pattern ()
 (* pretty printing for a list of expressions *)
 and coq_of_formula_exp_list l = match l with
   | []         -> ""

@@ -14,11 +14,10 @@ int foo(int x)
   if (x==0) r=1;
   else {
     int h=sum(x);
-    r=2+foo(x-1);
+    r=1+foo(x-1);
   }
   return r;
 }
-
 
 int sum(int x)
   infer [R1,R2]

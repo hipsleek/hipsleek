@@ -1,0 +1,51 @@
+/* zip - numeric */
+
+infer [x,y] x!=0 & y=0 |- false.
+print residue.
+// inferred pure: [y!=0 | 0<=x; y!=0 | x<=0]
+// NOT SOUND : see below
+
+infer [] x!=0 & y=0 & (y!=0 | 0<=x & y!=0 | x<=0) |- false.
+
+/* sound answer is
+ (x=0 | x<=-1 & 1<=y | x <= -1 & y <= -1 
+ | 1 <= x & 1 <= y | y <= -1 & 1 <= x)
+ below succeeds
+*/
+
+infer [] x!=0 & y=0 & 
+ (x=0 | x<=-1 & 1<=y | x <= -1 & y <= -1 
+ | 1 <= x & 1 <= y | y <= -1 & 1 <= x)
+  |- false.
+
+/*
+
+{[0,y]} union
+ {[x,y]: x <= -1 && 1 <= y} union
+ {[x,y]: x <= -1 && y <= -1} union
+ {[x,y]: 1 <= x && 1 <= y} union
+ {[x,y]: y <= -1 && 1 <= x}
+
+Expecting:
+ x=0 | x<=-1 & 1<=y | x <= -1 && y <= -1 
+ | 1 <= x && 1 <= y | y <= -1 && 1 <= x
+*/
+
+infer [x,y] x!=0 & y=0 & x>=0 & y>=0 |- false.
+print residue.
+// inferred pure: [y!=0 | x<=0]
+/* OK but below may be weaker
+ {[x,y]: x <= 0} union
+ {[x,y]: 1 <= x && 1 <= y} union
+ {[x,y]: y <= -1 && 1 <= x}
+*/
+
+infer [] x!=0 & y=0 & x>=0 & y>=0 
+  & (y!=0 | x=0)
+   |- false.
+
+infer [x,y] x!=0 & y=0 & x>=0 |- false.
+print residue.
+// inferred pure: [y!=0 | x<=0]
+
+

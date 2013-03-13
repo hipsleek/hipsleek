@@ -1,0 +1,75 @@
+## n-z-1d.ss
+
+There seems a confusing renaming of RELDEFN inferred
+when it is tranposed to fixcalc bottom-up. The RELDEFN
+obtained is:
+
+RELDEFN R: ( x=0 & res=0 & 0<=y & P(x,y)) -->  R(res,x,y),
+RELDEFN R: ( 
+R(v_int_51_580,v_int_51_575,v_int_51_576) 
+& v_int_51_580=res-1 
+& v_int_51_575=x-1 
+& v_int_51_576=y-1 
+& 1<=x 
+& 1<=y 
+& P(x,y)) -->  R(res,x,y)]
+
+while fixcalc seems to have renamed all the variables from
+[y -> res;x -> y;res -> x]. This is confusing and does
+not serve any purpose.
+
+R:={[x,y] -> [res] -> []: 
+(((y=0 && x=0) && 0<=res) 
+||  (exists (v_int_51_576: (exists (v_int_51_575: (exists (v_int_51_580:
+(
+(x=v_int_51_580+1 
+&& (y=v_int_51_575+1 
+&& (res=v_int_51_576+1 
+&& (0<=v_int_51_575 
+&& 0<=v_int_51_576)))) 
+&& R(v_int_51_580,v_int_51_575,v_int_51_576)))) )) )) )
+};
+bottomupgen([R], [2], SimHeur);
+
+Instead, I think what we should do is to just have a
+renaming of position. For example, assume we have to
+change the parameters of R from:
+  R: [res,x,y] --> [x,y,res]
+What this suggest is that we need to have the
+following positional changes:
+     1->3
+     2->1
+     3->2
+Hence, for each rec call R(e1,e2,e3), we just need to change
+it to R(e2,e3,e1). There is no need to change the variables 
+in the rest of the formula.
+
+R:={[x,y] -> [res] -> []: 
+ (x=0 & res=0 & 0<=y) |
+  // R(v_int_51_580,v_int_51_575,v_int_51_576) -->
+  ( R(v_int_51_575,v_int_51_576,v_int_51_580) 
+  & v_int_51_580=res-1 
+  & v_int_51_575=x-1 
+  & v_int_51_576=y-1 
+  & 1<=x 
+  & 1<=y)
+  & P(x,y)) -->  R(res,x,y)]
+
+There is an easy way to do this. For each relation,
+we mark  R(res,x,y), we construct a list of bool
+where True denotes input and False denotes output.
+Thus, for R(res,x,y), it will be associated with
+("R",[False;True;True]).
+
+Thus, for each call R(e1,e2,e3), we would split
+the parameters into two sets 
+    input: [e2,e3] and 
+    output: [e1]
+and then concatenate them to give R(e2,e3,e1).
+This can be done systematically, so that inputs
+always come before outputs. With this, the formula
+we obtained need never be renamed again, as the names
+are not changed. Only the parameter positions have
+changed.
+
+

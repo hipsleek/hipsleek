@@ -482,7 +482,7 @@ let get_data_fields (ddn : (ident * ((I.typed_ident * loc * bool) list)) list)  
 	
 let rec get_data_decl_names (ddf : I.data_decl list) : (ident * ((I.typed_ident * loc * bool) list)) list = 
 	match ddf with
-	| x::xs -> (x.I.data_name,x.I.data_fields)::(get_data_decl_names xs)
+	| x::xs -> (x.I.data_name, List.map (fun (a1,a2,a3,a4) -> (a1,a2,a3)) x.I.data_fields)::(get_data_decl_names xs)
 	| [] -> []
 
 let check_mem_formula_data_names (ddf : I.data_decl list) (fl : (ident * (IF.ann list))) : bool = 
@@ -1201,15 +1201,14 @@ let rec compact_nodes_with_same_name_in_struc (f: CF.struc_formula): CF.struc_fo
   if not (!Globals.allow_field_ann ) then f
   else
     match f with
-      | CF.EOr sf            -> CF.EOr { sf with 
-          CF.formula_struc_or_f1 = compact_nodes_with_same_name_in_struc sf.CF.formula_struc_or_f1;
-          CF.formula_struc_or_f2 = compact_nodes_with_same_name_in_struc  sf.CF.formula_struc_or_f2;} 
       | CF.EList sf          -> CF.EList  (map_l_snd compact_nodes_with_same_name_in_struc sf) 
       | CF.ECase sf          -> CF.ECase {sf with CF.formula_case_branches = map_l_snd compact_nodes_with_same_name_in_struc sf.CF.formula_case_branches;} 
       | CF.EBase sf          -> CF.EBase {sf with
           CF.formula_struc_base =  compact_nodes_with_same_name_in_formula sf.CF.formula_struc_base;
           CF.formula_struc_continuation = map_opt compact_nodes_with_same_name_in_struc sf.CF.formula_struc_continuation; }
-      | CF.EAssume (x, f, y,z)-> CF.EAssume (x,(compact_nodes_with_same_name_in_formula f),y,z)
+      | CF.EAssume b -> CF.EAssume {b with
+		CF.formula_assume_simpl = compact_nodes_with_same_name_in_formula b.CF.formula_assume_simpl;
+		CF.formula_assume_struc = compact_nodes_with_same_name_in_struc b.CF.formula_assume_struc;}
       | CF.EInfer sf         -> CF.EInfer {sf with CF.formula_inf_continuation = compact_nodes_with_same_name_in_struc sf.CF.formula_inf_continuation}
         
 let rec is_lend_h_formula (f : CF.h_formula) : bool =  match f with
@@ -2145,12 +2144,13 @@ match hf with
         let vdef = I.look_up_view_def_raw 11 prog.I.prog_view_decls c in
         let view_vars = List.map (fun c ->(c,Unprimed)) vdef.I.view_vars in 
         let new_args = List.map (fun c -> match c with 
-          | IP.Var((i,p),_) -> (i,p)) args in
+          | IP.Var((i,p),_) -> (i,p)
+          | _ -> raise Not_found) args in
         let sublst = List.combine view_vars new_args in
         let view_mem = vdef.I.view_mem in
         match view_mem with
           | Some a -> let mexp = e_apply_subs sublst a.IF.mem_formula_exp in (mexp , [],[])
-          (*| None -> *)
+          | None -> raise Not_found
      with
       | Not_found -> let args_annl = List.combine args annl in
                      let new_annl = List.map (fun (exp,ann) -> 
@@ -2159,7 +2159,8 @@ match hf with
                          | None -> (match exp with
                              | IP.Var((id,p),_)  -> 
                                  if List.length (IP.anon_var (id,p)) == 0 
-                                 then IF.ConstAnn(Mutable) else IF.ConstAnn(Accs))
+                                 then IF.ConstAnn(Mutable) else IF.ConstAnn(Accs)
+                             | _ -> IF.ConstAnn(Mutable))
                      ) args_annl in
                      let fl = c,new_annl in
                      let new_fvs = List.map (fun c ->
@@ -2216,14 +2217,14 @@ match f with
 let rec infer_mem_from_struc_formula (sf: IF.struc_formula) (prog:I.prog_decl) (mexp:IP.exp) : 
 IF.struc_formula *(IP.formula list) *((ident * (IF.ann list)) list) * ((ident * (IP.exp list)) list)=
   match sf with
-    | IF.EOr ({IF.formula_struc_or_f1 = f1;
+    (*| IF.EOr ({IF.formula_struc_or_f1 = f1;
                IF.formula_struc_or_f2 = f2;
               IF.formula_struc_or_pos = pos;}) -> 
         let new_f1,p1,fl1,fv1 = infer_mem_from_struc_formula f1 prog mexp in
         let new_f2,p2,fl2,fv2 = infer_mem_from_struc_formula f2 prog mexp in
         IF.EOr{ IF.formula_struc_or_f1 = new_f1;
         IF.formula_struc_or_f2 = new_f2;
-        IF.formula_struc_or_pos = pos;},p1@p2,fl1@fl2,fv1@fv2
+        IF.formula_struc_or_pos = pos;},p1@p2,fl1@fl2,fv1@fv2*)
     | IF.EBase({IF.formula_struc_explicit_inst = ei;
                IF.formula_struc_implicit_inst = ii;
                IF.formula_struc_exists = e;
@@ -2247,8 +2248,16 @@ IF.struc_formula *(IP.formula list) *((ident * (IF.ann list)) list) * ((ident * 
         let fvs = List.map (fun (_,_,_,f) -> f) new_cbs_lst in
         IF.ECase({IF.formula_case_branches = List.combine fs new_cbs;
                  IF.formula_case_pos = pos;}),(List.flatten ps),(List.flatten fls),(List.flatten fvs)
-    | IF.EAssume(f,flbl,entyp)-> let new_f,p,fl,fv = infer_mem_from_formula f prog mexp in
-                                 IF.EAssume(new_f,flbl,entyp),p,fl,fv
+    | IF.EAssume a -> let f = a.IF.formula_assume_simpl in
+                      let flbl = a.IF.formula_assume_lbl in
+                      let entyp = a.IF.formula_assume_ensures_type in
+                      let sf = a.IF.formula_assume_struc in
+                      let new_f,p,fl,fv = infer_mem_from_formula f prog mexp in
+                      IF.EAssume({IF.formula_assume_simpl = new_f;
+                                  IF.formula_assume_lbl = flbl;
+                                  IF.formula_assume_ensures_type = entyp;
+                                  IF.formula_assume_struc = sf;
+                                 }),p,fl,fv
     | IF.EList(ls) -> let slds = List.map (fun (sld,sf) -> sld) ls in
            let new_sfs_lst = List.map (fun (_,sf) -> infer_mem_from_struc_formula sf prog mexp) ls in
            let new_sfs = List.map (fun (f,_,_,_) -> f) new_sfs_lst in
@@ -2257,6 +2266,7 @@ IF.struc_formula *(IP.formula list) *((ident * (IF.ann list)) list) * ((ident * 
            let fvs = List.map (fun (_,_,_,f) -> f) new_sfs_lst in
            let new_ls = List.combine slds new_sfs in
            IF.EList(new_ls),(List.flatten ps),(List.flatten fls),(List.flatten fvs)
+    | IF.EInfer _ -> sf,[],[],[]
 
 let infer_mem_specs (vdef:I.view_decl) (prog:I.prog_decl) : I.view_decl =
   let mf = vdef.I.view_mem in

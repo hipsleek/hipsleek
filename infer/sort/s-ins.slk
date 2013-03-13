@@ -1,0 +1,22 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+relation O(int m, int n).
+
+/*
+pred sortll<mi> == self=null & mi=\top
+ or self::node<mi, p> * p::sortll<m2> & mi<=m2
+inv true.
+*/
+
+pred sortll<mi> == self=null 
+ or self::node<mi,null>
+ or self::node<mi, p> * p::sortll<m2> & mi<=m2 & p!=null
+inv true.
+
+
+checkentail res::node<v,null> |- res::sortll<m>.
+
+checkentail y::node<v,null> |- (exists v: y::sortll<w> & w=min(v,mn)).

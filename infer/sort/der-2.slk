@@ -1,0 +1,176 @@
+
+data node {
+	int val@VAL; 
+	node next@REC; 
+}.
+
+pred ll<> == self=null
+  or self::node<_,p> * p::ll<>
+inv true.
+
+pred_extn size[R]<n> ==
+   n=0 // base case
+   or R::size<m> & n=1+m // recursive case
+   inv n>=0.
+/*
+ \ n -> n=0 // base case
+ \ n -> n=1+m & m=0 // singleton case
+ \ n ms -> n=1+(fold + ms)
+*/
+
+pred_extn sum[V,R]<n> ==
+   n=0 // base case
+   or R::sum<m> & n=V+m // recursive case
+   .
+
+pred_extn sumP[V,R]<n> ==
+   n=0 // base case
+   or R::sumP<m> & n=V+m & V>=0 // recursive case
+   inv V>=0.
+
+/*
+  \ s -> s=0 //base case
+  \ s V   -> s=V+m & V>=0 & m=0 // rec case
+  \ s V ms -> s=V+(fold + ms) & V>=0 // rec case
+*/
+// pure extension
+pred_extn head[V]<n> ==
+   true
+   or self!=null & n=V
+   .
+
+// non-null specialization
+pred_extn head[V]<n> ==
+   self!=null & n=V
+   inv self!=null.
+
+pred_extn min[V,R]<mi> ==
+   self!=null & mi=V
+   or R::min<mi2> & self!=null & mi=min(V,m2)
+   inv self!=null.
+
+// non-null specialization
+pred_extn max[V,R]<mx> ==
+   self!=null & mi=V
+   or R::max<mx2> & self!=null & mx=max(V,mx2)
+   inv self!=null.
+
+// recursive specialization
+pred_extn sum[V,R]<s> ==
+   s=0 // base case
+   or R::sum<s2> & n=V+s2 & V>=0// recursive case
+   inv s>=0.
+
+// non-null and rec specialization
+pred_extn sortedA[V]<h> ==
+   self!=null & h=V // singleton
+   or self!=null & R::sortedA<h2> & h=V & h<=h2
+   inv self!=null.
+
+
+// pred specialization
+pred_extn sortedD[V]<mi,mx> ==
+   self!=null & mi=V & mx=V
+   or R::sortedD<mi2,mx2> & self!=null & mx=V & mi=min(V,mi2) & V>=mx2
+   inv self!=null.
+
+// pred specialization
+pred_extn sortedA[V]<mi,mx> ==
+   self!=null & mi=V & mx=V
+   or R::sortedA<mi2,mx2> & self!=null & mx=max(V,mx2) & mi=V & V<=mi2
+   inv self!=null.
+
+pred_extn height[R]<h> ==
+   h=0 // base case
+   or R::height<h2> & h=1+max(h2) // recursive case
+   //or R::height<h2> * R::height<h3>  & h=1+max(h2,h3) // recursive case
+   .
+
+/*
+x::tree * y::tree & x::height[REC]<h>
+xl::tree xr::tree yl::tree yr::tree hx=1+max(xl,xr,yl,yr)
+*/
+
+pred_extn ordered[V,R]<RR:relation(int,int)> ==
+   R::ordered<RR> & RR(V,V2)
+   .
+
+pred_extn set[V,R]<S> ==
+   S={}
+   or R::set<S2> & S={V} union S2 .
+
+pred_extn minValue[V,R]<m> ==
+   R::minValue<m2> & m=min(V,m2).
+
+pred_extn maxValue[V,R]<m> ==
+   R::maxValue<m2> & m=max(V,m2).
+
+
+pred treeH<h> = extend tree<> with height[Rec]<h>.
+
+pred lsegMinMax<p,mi,mx> = extend lseg<> 
+     with min[Val,Rec]<mi>,min[Val,Rec]<mx>
+     inv mi<=mx.
+
+pred llN<n> == extend ll<> with size[REC]<n> .
+
+pred llNSum<s,n> == extend llN<n> with sum[VAL,REC]<s> .
+
+pred llH<n> == extend ll<> with height[REC]<n>.
+
+pred llS<n> == extend ll<> with set[VAL,REC]<S>.
+
+pred llNS<n,S> == extend llN<n> with set[VAL,REC]<S>.
+
+pred llHead<n> == extend ll<> with head[VAL]<n>.
+
+pred llMin<m> == extend ll<> with minValue[VAL,REC]<m>.
+
+pred llMax<m> == extend ll<> with maxValue[VAL,REC]<m>.
+
+relation Inc(int a, Int b) == a<=b .
+
+relation Dec(int a, Int b) == a>=b .
+
+pred llOrdered<v,R:relation(int,int)> 
+  == extend llHead<h> with ordered[VAL,REC]<v,R> .
+
+pred llSorted<v> == extend llHead<h> with ordered[VAL,REC]<v,Inc> .
+
+pred llSorted<v> == llOrdered<v,Dec> .
+
+pred llMinMax<mi,mx> == extend ll<> 
+             with maxValue[VAL,REC]<mx>,minValue[VAL,REC]<mi>.
+
+data node2 {
+	int val@VAL; 
+	node2 prev@REC; 
+	node2 next@REC; 
+}.
+
+pred tree<> == self=null
+  or tree::node2<_,p,q> * p::tree<> * q::tree<>
+inv true.
+
+pred treeN<n> == extend tree<> with size[VAL,REC]<n> .
+
+pred treeNSum<n> == extend treeN<n> with sum[VAL,REC]<n> .
+
+pred treeH<n> == extend tree<> with height[VAL,REC]<n>.
+
+pred treeS<n> == extend tree<> with set[VAL,REC]<S>.
+
+pred treeNS<n,S> == extend treeN<n> with set[VAL,REC]<S> .
+
+pred treeHead<n> == extend tree<> with head[VAL]<n> .
+
+
+
+
+
+
+
+
+
+
+

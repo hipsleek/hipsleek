@@ -1,0 +1,23 @@
+relation P3(int a1, int a2,int a3).
+relation P4(int a1, int a2,int a3).
+relation P5(int a1, int a2,int a3).
+
+infer [P4,P5] emp & mi=min(v,mi2) & mx=max(v,mx2) 
+ |-  emp & P4(v,mi,mi2) & P5(v,mx,mx2).
+
+print residue.
+
+/*
+What are the pros/cons of the following
+two outcomes?
+
+ inferred rel: [RELDEFN P4: ( mi=v & mi<mi2) -->  P4(v,mi,mi2); 
+                RELDEFN P4: ( mi=mi2 & mi<=v) -->  P4(v,mi,mi2); 
+                RELDEFN P5: ( mx=mx2 & v<mx) -->  P5(v,mx,mx2); 
+                RELDEFN P5: ( mx=v & mx2<=mx) -->  P5(v,mx,mx2)]
+
+
+ inferred rel: [RELDEFN P4: mi=min(v,mi2) -->  P4(v,mi,mi2); 
+                RELDEFN P5: mx=max(v,mx2) -->  P5(v,mx,mx2); 
+
+*/

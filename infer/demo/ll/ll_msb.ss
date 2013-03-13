@@ -61,10 +61,11 @@ int front(node x)
   return x.val;
 }
 
+relation SWAP(bag a, bag b, bag c, bag d).
 void swap(ref node x, ref node y)
-  infer @post []
+  infer [SWAP]
   requires x::ll2<n,S1>*y::ll2<m,S2>
-  ensures x'::ll2<m,S3>*y'::ll2<n,S4>;
+  ensures x'::ll2<m,S3>*y'::ll2<n,S4> & SWAP(a,b,c,d);
 {
   node tmp = x;
   x = y;
@@ -72,12 +73,13 @@ void swap(ref node x, ref node y)
 }
 
 // drop current content, and add n element with v value
+relation ASSIGN(int a, bag b).
 void assign(ref node x, int n, int v)
-  infer @post []
+  infer [ASSIGN]
   requires x::ll2<m,S3> & n>=0
   case {
   n = 0 -> ensures x'=null;
-  n > 0 -> ensures x'::ll2<n,S4> ;
+  n > 0 -> ensures x'::ll2<n,S4> & ASSIGN(a,S4);
   n < 0 -> ensures true;
   }
 {
@@ -122,10 +124,11 @@ void append(node x, node y)
 
 /* return the first element of a singly linked list */
 
+relation RETF(bag a, bag b).
 node ret_first(node x)
-  infer @post []
+  infer [RETF]
   requires x::ll2<n,S1>
-  ensures x::ll2<n,S2>; 
+  ensures x::ll2<n,S2> & RETF(S1,S2); 
 {
   return x;
 }

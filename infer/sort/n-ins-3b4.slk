@@ -1,0 +1,108 @@
+/* 
+
+[RELDEFN R: ( b<=v2_668) -->  R(b,v2_668),
+RELDEFN R: ( a=v2_706 & v2_616=v2_724 & R(a,v2_616)) -->  R(v2_706,v2_724),
+
+RELDEFN R: ( v2_706=v_614 & a=v2_706 & v2_616=v2_724 & b<=v2_706 & R(a,v2_616) & 
+R(v_614,v2_724)) -->  R(b,v2_706),
+
+RELDEFN R: ( b<v2_749) -->  R(b,v2_749),
+
+RELDEFN R: ( ((a=b & a<v2_789 & v2_789<=v2_616) | (a=b & v2_616=v2_789)) & R(a,v2_616)) -->  R(b,v2_789),
+RELASS [R]: ( R(a,v2_616)) -->  a>=v2_616]
+*/
+/*
+checkentail ((a=b & a<v2_789 & v2_789<=v2_616) | (a=b & v2_616=v2_789)) 
+& a<=v2_616 |-  b<=v2_789.
+
+checkentail ( a=v2_706 & v2_616=v2_724 & a<=v2_616) |-  v2_706<=v2_724.
+
+checkentail v2_706=v_614 & a=v2_706 & v2_616=v2_724 & b<=v2_706 
+& a<=v2_616 & v_614<=v2_724
+//& R(a,v2_616) 
+//& R(v_614,v2_724) 
+|-  b<=v2_706.
+
+
+checkentail a<=v2_616 
+// R(a,v2_616)) 
+|-  a>=v2_616.
+//FAIL
+*/
+
+data node {
+	int val; 
+	node next; 
+}.
+
+pred sortHO<v,R:relation(int,int)> == 
+  self::node<v,null> 
+  or self::node<v, p> * p::sortHO<v2,R> & R(v,v2) 
+inv self!=null.
+
+relation R(int a, int b).
+/*
+infer [R] v_node_48_787::sortHO<b_665,R> * 
+x::node<v_614,v_node_48_787> & a=v_614 & 
+flted_24_583=null & v_614<v 
+//& !(v_bool_43_567') & v_614<v 
+//& !(v_bool_43_567') & p_615!=null 
+//& !(v_bool_46_566') & p_615!=null & !(v_bool_46_566') 
+& a_649=v2_616 & v=v_650 & y!=null & p_615!=null & 
+((a_649<v_650 & a_649=b_665) | (b_665<=a_649 & b_665=v_650)) & 
+next_48_666=p_615 & res=x
+ |-  res::sortHO<b,R> . 
+print residue.
+*/
+/*
+ infer [R] v_node_48_787::sortHO<b_665,R> * 
+res::node<v_614,v_node_48_787> & R(a,v2_616) & a=v_614 
+//& flted_24_583=null 
+& v_614<v 
+//& !(v_bool_43_567') & v_614<v 
+//& !(v_bool_43_567') & p_615!=null 
+//& !(v_bool_46_566') & p_615!=null & !(v_bool_46_566') 
+& a_649=v2_616 & v=v_650 
+//& y!=null 
+//& p_615!=null 
+& ((a_649<v_650 & a_649=b_665) | (b_665<=a_649 & b_665=v_650)) 
+//& next_48_666=p_615 
+//& res=x
+ |-  res::sortHO<b,R> . 
+print residue.
+
+*/
+
+infer [R] qq::sortHO<bb,R> * 
+res::node<a,qq> & R(a,v2) 
+& a<v 
+& ((v2<v & v2=bb) | (bb<=v2 & bb=v)) 
+ |-  res::sortHO<b,R> . 
+print residue.
+
+/*
+Below is the result from HIP. 
+Above is cut out from sleek logging.
+Why did they have vastly different results?
+
+ id: 91; caller: []; line: 25; classic: false; kind: POST; hec_num: 5; evars: []; c_heap: emp
+ checkentail v_node_48_787::sortHO<b_665,R>@M[0][Orig][LHSCase] * 
+x::node<v_614,v_node_48_787>@M[Orig]&R(a,v2_616) & a=v_614 & 
+flted_24_583=null & v_614<v & !(v_bool_43_567') & v_614<v & 
+!(v_bool_43_567') & p_615!=null & !(v_bool_46_566') & p_615!=null & 
+!(v_bool_46_566') & a_649=v2_616 & v=v_650 & y!=null & p_615!=null & 
+(294::(a_649<v_650 & a_649=b_665) | (b_665<=a_649 & b_665=v_650)) & 
+next_48_666=p_615 & res=x&{FLOW,(22,23)=__norm}[]
+ |-  res::sortHO<b,R>@M[0][Orig][LHSCase]&true&{FLOW,(22,23)=__norm}[]. 
+pure rel_ass: [RELASS [R]: ( R(a,v2_616)) -->  a>=v2_616,
+RELDEFN R: ( ((a=b & a<v2_789 & v2_789<=v2_616) | (a=b & v2_616=v2_789)) & R(a,v2_616)) -->  R(b,v2_789)]
+res:  [
+  v_node_48_787::sortHO<b_665,R>@M[0][Orig][LHSCase]&v_node_48_787!=null & x!=null & v_node_48_787!=x & res=x & next_48_666=p_615 & R(a,v2_616) & a=v_614 & flted_24_583=null & v_614<v & !(v_bool_43_567') & v_614<v & !(v_bool_43_567') & p_615!=null & !(v_bool_46_566') & p_615!=null & !(v_bool_46_566') & a_649=v2_616 & v=v_650 & y!=null & p_615!=null & a_649<v_650 & a_649=b_665&{FLOW,(22,23)=__norm}[]
+  es_infer_vars/rel: [R]
+  es_infer_rel: [RELASS [R]: ( R(a,v2_616)) -->  a>=v2_616];
+  emp&R(a,v2_616) & a=v_614 & flted_24_583=null & v_614<v & !(v_bool_43_567') & v_614<v & !(v_bool_43_567') & p_615!=null & !(v_bool_46_566') & p_615!=null & !(v_bool_46_566') & a_649=v2_616 & v=v_650 & y!=null & p_615!=null & (294::(a_649<v_650 & a_649=b_665) | (b_665<=a_649 & b_665=v_650)) & next_48_666=p_615 & res=x & p_788=v_node_48_787 & b_665=v2_789 & b=v_614 & R(v_614,v2_789) & b=v_614&{FLOW,(22,23)=__norm}[]
+  es_infer_vars/rel: [R]
+  es_infer_rel: [RELDEFN R: ( ((a=b & a<v2_789 & v2_789<=v2_616) | (a=b & v2_616=v2_789)) & R(a,v2_616)) -->  R(b,v2_789)]
+  ]
+
+*/
