@@ -34,10 +34,15 @@ and prog_decl = {
     
 and prog_or_branches = (prog_decl * 
     ((MP.mix_formula * (ident * (P.spec_var list))) option) )
-    
+
+and data_field_ann =
+  | VAL
+  | REC
+  | F_NO_ANN
+
 and data_decl = { 
     data_name : ident;
-    data_fields : typed_ident list;
+    data_fields : (typed_ident * data_field_ann) list;
     data_parent_name : ident;
     data_invs : F.formula list;
     data_methods : proc_decl list; }
@@ -63,7 +68,12 @@ and barrier_decl = {
     barrier_prune_conditions_baga: ba_prun_cond list;
     barrier_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
 }  
-    
+
+and view_kind =
+  | View_PRIM
+  | View_NORM
+  | View_EXTN
+
 and view_decl = { 
     view_name : ident; 
     view_vars : P.spec_var list;
@@ -72,6 +82,7 @@ and view_decl = {
     view_labels : Label_only.spec_label list;
     view_modes : mode list;
     view_is_prim : bool;
+    view_kind : view_kind;
     mutable view_partially_bound_vars : bool list;
     mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
     view_data_name : ident;
@@ -228,7 +239,7 @@ and exp_bind = {
     exp_bind_imm : Cformula.ann;
     exp_bind_param_imm : Cformula.ann list;
     exp_bind_read_only : bool; (*for frac perm, indicate whether the body will read or write to bound vars in exp_bind_fields*)
-    exp_bind_path_id : control_path_id;
+    exp_bind_path_id : control_path_id_strict;
     exp_bind_pos : loc }
 
 and exp_block = { exp_block_type : typ;
@@ -442,9 +453,9 @@ let is_primitive_proc p = (*p.proc_body==None*) not p.proc_is_main
 let name_of_proc p = p.proc_name
 
 
-let get_field_typ f = fst f
+let get_field_typ (f,_) = fst f
 
-let get_field_name f = snd f
+let get_field_name (f,_) = snd f
 
 (** An Hoa [22/08/2011] End **)
 

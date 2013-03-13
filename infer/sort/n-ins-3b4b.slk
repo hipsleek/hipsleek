@@ -1,0 +1,58 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+pred sortHO<v,R:relation(int,int)> == 
+  self::node<v,null> 
+  or self::node<v, p> * p::sortHO<v2,R> & R(v,v2) 
+inv self!=null.
+
+relation R(int a, int b).
+
+infer [R] qq::sortHO<bb,R> * res::node<a,qq> & R(a,v2) & a<v 
+   & ((v2<v & v2=bb) | (bb<=v2 & bb=v)) 
+   |-  res::node<b,null> . 
+print residue.
+/*
+ <1>qq::sortHO<bb,R>@M[0][Orig][LHSCase]&qq!=null & res!=null & qq!=res & a=b & R(a,v2) & a<v & v2<v & bb=v2&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [R]: ( R(a,v2)) -->  a>=v2]
+
+WHY isn't residue marked as false?
+*/
+
+infer [R] qq::sortHO<bb,R> & a=b  & R(a,v2) & a<v 
+   & ((v2<v & v2=bb) | (bb<=v2 & bb=v)) 
+   |-  qq=null . 
+print residue.
+
+infer [R] qq!=null & a=b  & R(a,v2) & a<v 
+   & ((v2<v & v2=bb) | (bb<=v2 & bb=v)) 
+   |-  qq=null . 
+print residue.
+
+infer [a,v2] qq!=null & a=b  & a<v 
+   & ((v2<v & v2=bb) | (bb<=v2 & bb=v)) 
+   |-  qq=null . 
+print residue.
+
+infer [a,v2] qq!=null & a=v2 
+   |-  qq=null . 
+print residue.
+
+
+infer [a,v2] qq!=null & a=b  & a<v & v2<v & v2=bb 
+   |-  qq=null . 
+print residue.
+
+infer [a,v2] qq!=null & a=b  & a<v & bb<=v2 & bb=v 
+   |-  qq=null . 
+print residue.
+
+
+
+infer [a,v2] qq!=null & a=b  & a<v & v2<v & v2=bb
+  or qq!=null & a=b  & a<v & bb<=v2 & bb=v 
+   |-  qq=null . 
+print residue.
+

@@ -42,7 +42,7 @@ let rec isabelle_of_typ = function
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "list not supported for Isabelle"}
   | NUM
-  | RelT 
+  | RelT _
   | HpT
   | AnnT->
         Error.report_error {Error.error_loc = no_pos; 

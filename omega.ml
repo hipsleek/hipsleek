@@ -12,6 +12,7 @@ let set_prover_original_output = ref (fun _ -> ())
 let omega_call_count: int ref = ref 0
 let is_omega_running = ref false
 let in_timeout = ref 10.0 (* default timeout is 15 seconds *)
+let is_complex_form = ref false
 
 (***********)
 let test_number = ref 0
@@ -38,7 +39,7 @@ let init_files () =
 let omega_of_spec_var (sv : spec_var):string = match sv with
   | SpecVar (t, v, p) -> 
 		let r = match (List.filter (fun (a,b,_)-> ((String.compare v b)==0) )!omega_subst_lst) with
-				  | []->           
+				  | []->
             let ln = (String.length v) in  
             let r_c = if (ln<15) then v
               else 
@@ -105,7 +106,7 @@ and omega_of_b_formula b =
   | Neq (a1, a2, _) -> begin
         if is_null a2 then
           (omega_of_exp a1) ^ " > 0"
-        else if is_null a1 then						
+        else if is_null a1 then
           (omega_of_exp a2) ^ " > 0"
         else (omega_of_exp a1)^ " != " ^ (omega_of_exp a2)
     end
@@ -137,7 +138,7 @@ and omega_of_formula pr_w pr_s f  =
         end
   | AndList _ -> report_error no_pos "omega.ml: encountered AndList, should have been already handled"
   | And (p1, p2, _) -> 	"(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
-  | Or (p1, p2,_ , _) -> 	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
+  | Or (p1, p2,_ , _) -> let _ = is_complex_form:= true in	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
   | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula pr_s pr_w p) ^ ")) "	
   | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
   | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
@@ -168,6 +169,7 @@ and omega_of_formula_old f  =
 (*       pr pr_id (fun _ -> omega_of_formula_old f) f *)
 
  let omegacalc = ref ("oc":string)
+(* let omegacalc = ref ("/home/locle/workspace/hg/infer2r2/sleekex/omega_modified/omega_calc/obj/oc":string) *)
 (*let modified_omegacalc = "/usr/local/bin/oc5"*)
 (* TODO: fix oc path *)
 (* let omegacalc = ref ("/home/locle/workspace/default/sleekex/omega_modified/omega_calc/obj/oc": string)*)
@@ -230,6 +232,7 @@ let read_from_in_channel chn : string =
   while not !quitloop do
 	let line = input_line chn in
     let n = String.length line in
+    (* print_endline (line^"\n"); flush stdout; *)
     if n > 0 then begin
 		(* print_string (line^"\n"); flush stdout;*)
         (if !log_all_flag then
@@ -267,6 +270,13 @@ let read_last_line_from_in_channel chn : string =
       end;
   done;
   !line
+
+(* let read_from_err_channel chn: bool= *)
+(*   let line = input_line chn in *)
+(*   if String.length line > 0 then *)
+(*     let _ = print_endline line in *)
+(*     true *)
+(*   else false *)
 
 (* send formula to omega and receive result -true/false*)
 let check_formula f timeout =
@@ -341,12 +351,15 @@ let rec send_and_receive f timeout=
         (* let _ = print_endline ("before omega: " ^ new_f) in *)
         output_string (!process.outchannel) new_f;
         flush (!process.outchannel);
+        (* try *)
 	    let str = read_from_in_channel (!process.inchannel) in
 	    (* let _ = print_endline ("string from omega: " ^ str) in *)
         let lex_buf = Lexing.from_string str in
 	  (*print_string (line^"\n"); flush stdout;*)
         let rel = Ocparser.oc_output (Oclexer.tokenizer "interactive") lex_buf in
         rel
+        (* with e -> let _ = read_from_err_channel (!process.errchannel) in *)
+        (*           raise e *)
       in
       let answ = Procutils.PrvComms.maybe_raise_timeout_num 3 fnc () timeout in
       answ
@@ -672,35 +685,42 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
                   end;
                   let simp_f =
 	                try
-                      begin
-	                    let rel = send_and_receive fomega !in_timeout (* 0.0  *)in
+                        begin
+                            let timeo =
+                              if (!is_complex_form) && String.length fomega > 1024 then
+                                20.0
+                              else !in_timeout
+                            in
+	                        let rel = send_and_receive fomega timeo (* (!in_timeout) *) (* 0.0  *)in
+                            let _ = is_complex_form := false in
                         (* let _ = print_endline ("after simplification: " ^ (Cpure.string_of_relation rel)) in *)
-	                    match_vars (fv pe) rel
+	                        match_vars (fv pe) rel
 	                  end
 	                with
                       | Procutils.PrvComms.Timeout as exc ->
                             (*log ERROR ("TIMEOUT");*)
-                            restart ("Timeout when checking #simplify ");
-                            if not (!Globals.dis_provers_timeout) then pe
-                            else raise exc (* Timeout exception of a higher-level function *)
+                          restart ("Timeout when checking #simplify ");
+                          if not (!Globals.dis_provers_timeout) then pe
+                          else raise exc (* Timeout exception of a higher-level function *)
                       | End_of_file ->
-                            restart ("End_of_file when checking #simplify \n");
-                            pe
+                          restart ("End_of_file when checking #simplify \n");
+                          pe
                       | exc -> (* stop (); raise exc  *)
-                            begin
+                          begin
                               Printf.eprintf "Unexpected exception : %s" (Printexc.to_string exc);
                               restart ("Unexpected exception when checking #simplify\n ");
                               pe
-                            end
+                          end
                   in
+                  let _ = is_complex_form := false in
                   (*   let post_time = Unix.gettimeofday () in *)
                   (*   let time = (post_time -. pre_time) *. 1000. in *)
                   (*let _ = print_string ("\nomega_simplify: f after"^(omega_of_formula simp_f)) in*)
                   simp_f
               with
               (* Timeout exception of provers is not expected at this level *)
-              | Procutils.PrvComms.Timeout as exc -> raise exc 
-              | _ -> pe (* not simplified *)
+              | Procutils.PrvComms.Timeout as exc -> let _ = is_complex_form := false in raise exc 
+              | _ -> let _ = is_complex_form := false in pe (* not simplified *)
             end
   end
 

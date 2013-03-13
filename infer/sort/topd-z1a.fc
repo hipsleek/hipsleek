@@ -1,0 +1,20 @@
+#[RELDEFN P: ( y=yn+1 & x=xn+1 & 0<=yn & 0<=xn & P(x,y)) -->  P(xn,yn),
+#RELASS [P]: ( P(x,y)) -->  y!=0 | 1>x]
+
+wh:={[x,y]->[px,py]->[]:
+  (exists (xn,yn: y=yn+1 && x=xn+1 && 0<=yn && 0<=xn  && wh(xn,yn,px,py)))};
+
+TD:=topdown(wh,1,SimHeur);
+TD;
+
+#(((RECx >= 0 && x >= 1 + RECx) && RECx + y >= x) && RECx + y = RECy + x)
+
+#Pre:={[x,y]:forall(RECx,RECy:
+#    not((((RECx >= 0 && x >= 1 + RECx) && RECx + y >= x) && RECx + y = RECy+ x)) || RECy<0 || RECy>0 || RECx<1
+#)};
+
+#Pre;
+
+#{[x,y]: x <= y && 1 <= y} union
+# {[x,y]: x <= 0, y} union
+# {[x,y]: y <= -1, x-1}
