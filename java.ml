@@ -186,7 +186,7 @@ and build_constructor (ddef : data_decl) : unit =
 	
 
 
-and convert_field ((t, v), l, _) =
+and convert_field ((t, v), l, _,_) =
   Buffer.add_string java_code (string_of_typ t);
   Buffer.add_string java_code (" " ^ v ^ ";\n")
 

@@ -76,7 +76,8 @@ and cvc3_of_exp a = match a with
   | CP.AConst _ -> failwith ("aconst not supported in cvc3")
   | CP.Level _ -> failwith ("level should not be here in cvc3")
   | CP.Tsconst _ -> failwith ("tsconst not supported in cvc3")
-
+  | CP.InfConst _ -> Error.report_no_pattern ()
+  
 and cvc3_of_b_formula b =
   let (pf,_) = b in
   match pf with
@@ -126,7 +127,7 @@ and cvc3_of_b_formula b =
 	| CP.RelForm _ -> failwith ("Relations are not supported in cvc3") (* An Hoa *)
     | CP.SubAnn _ -> failwith ("SubAnn not supported in cvc3")
      | CP.LexVar _ -> failwith ("LexVar not supported in cvc3")
-	    
+  | CP.XPure _  -> Error.report_no_pattern ()
 and cvc3_of_sv_type sv = match sv with
   | CP.SpecVar ((BagT _), _, _) -> "SET"
   | CP.SpecVar ( Bool, _, _) -> "INT" (* "BOOLEAN" *)

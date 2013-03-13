@@ -42,7 +42,7 @@ let is_bag_typ sv = match sv with
   | _ -> false
 
 let is_rel_typ sv = match sv with
-  | SpecVar (RelT,_,_) -> true
+  | SpecVar (RelT _,_,_) -> true
   | _ -> false
 
 let is_hprel_typ sv = match sv with
@@ -308,7 +308,7 @@ let type_of_spec_var (sv : spec_var) : typ =
 
 let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 
-let is_rel_var (sv : spec_var) : bool = (type_of_spec_var sv)==RelT
+let is_rel_var (sv : spec_var) : bool = is_RelT (type_of_spec_var sv)
 
 let is_primed (sv : spec_var) : bool = match sv with
   | SpecVar (_, _, p) -> p = Primed
@@ -1587,7 +1587,7 @@ and is_exp_arith (e:exp) : bool=
   match e with
     | Var (sv,pos) ->        (*waitlevel is a kind of bag constraints*)
         if (name_of_spec_var sv = Globals.waitlevel_name) then false else true
-    | Null _  | Var _ | IConst _ | AConst _ | InfConst _ | FConst _ 
+    | Null _  | IConst _ | AConst _ | InfConst _ | FConst _ 
     | Level _ -> true
     | Add (e1,e2,_)  | Subtract (e1,e2,_)  | Mult (e1,e2,_) 
     | Div (e1,e2,_)  | Max (e1,e2,_)  | Min (e1,e2,_) -> (is_exp_arith e1) && (is_exp_arith e2)
@@ -1654,9 +1654,9 @@ and mkRes t = SpecVar (t, res_name, Unprimed)
 
 and mkeRes t = SpecVar (t, eres_name, Unprimed)
 
-and mkRel_sv n = SpecVar (RelT, n, Unprimed)
+and mkRel_sv n = SpecVar (RelT[], n, Unprimed)
 
-and mkXPure_sv v = SpecVar (RelT, v, Unprimed)
+and mkXPure_sv v = SpecVar (RelT[], v, Unprimed)
 
 and mkAdd a1 a2 pos = Add (a1, a2, pos)
 
@@ -1743,6 +1743,9 @@ and mkGt a1 a2 pos =
 
 and mkFormulaFromXP xp=
  BForm ((XPure xp,None),None)
+
+and mkRel rel args pos=
+  BForm ((RelForm (rel,args,pos), None) , None)
 
 and mkGte a1 a2 pos =
   if is_max_min a1 || is_max_min a2 then
@@ -2100,6 +2103,7 @@ and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formul
   match (pf1,pf2) with
     | (BConst(c1, _), BConst(c2, _)) -> c1 = c2
     | (XPure xp1, XPure xp2) -> eq_xpure_view xp1 xp2
+    | (BVar(sv1, _), BVar(sv2, _)) -> (eq sv1 sv2)
     | (Lte(IConst(i1, _), e2, _), Lt(IConst(i3, _), e4, _)) -> i1=i3+1 && eqExp_f eq e2 e4
     | (Lte(e1, IConst(i2, _), _), Lt(e3, IConst(i4, _), _)) -> i2=i4-1 && eqExp_f eq e1 e3
     | (Lt(IConst(i1, _), e2, _), Lte(IConst(i3, _), e4, _)) -> i1=i3-1 && eqExp_f eq e2 e4
@@ -2633,7 +2637,7 @@ and fresh_spec_var_ann () =
 and fresh_spec_var_rel () =
   let old_name = "R_" in
   let name = fresh_old_name old_name in
-  let t = RelT in
+  let t = RelT[] in
   SpecVar (t, name, Unprimed) (* fresh rel var *)
 
 and fresh_spec_vars_prefix s (svs : spec_var list) = List.map (fresh_spec_var_prefix s) svs
@@ -2829,7 +2833,8 @@ and b_apply_subs_x sst bf =
     | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
     | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)
-    | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (* An Hoa *)
+    | RelForm (r, args, pos) -> RelForm (subs_one sst r, e_apply_subs_list sst args, pos) (* An Hoa *)
+    (* | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (\* An Hoa *\) *)
     | LexVar t_info -> 
         LexVar { t_info with
 				  lex_exp = e_apply_subs_list sst t_info.lex_exp;
@@ -4064,6 +4069,9 @@ let print_var_set vset =
   let tmp3 = String.concat ", " tmp2 in
 	print_string ("\nvset:\n" ^ tmp3 ^ "\n")
 
+let fv_wo_rel f =
+  List.filter (fun v -> not(is_rel_var v)) (fv f)
+
 (*
   filter from f0 conjuncts that mention variables related to rele_vars.
 *)
@@ -4073,7 +4081,7 @@ let rec filter_var (f0 : formula) (rele_vars0 : spec_var list) : formula =
 	not (SVarSet.is_empty (SVarSet.inter fvset rele_var_set)) in
   let rele_var_set = set_of_list rele_vars0 in
   let conjs = list_of_conjs f0 in
-  let fv_list = List.map fv conjs in
+  let fv_list = List.map fv_wo_rel conjs in
   let fv_set = List.map set_of_list fv_list in
   let f_fv_list = List.combine conjs fv_set in
   let relevants0, unknowns0 = List.partition
@@ -5441,6 +5449,7 @@ let rec transform_exp f e  =
         | ListReverse (e1,l) -> ListReverse ((transform_exp f e1),l)
     | Func (id, es, l) -> Func (id, (List.map (transform_exp f) es), l)
 		| ArrayAt (a, i, l) -> ArrayAt (a, (List.map (transform_exp f) i), l) (* An Hoa *)
+		| InfConst _ -> Error.report_no_pattern ()
 
 let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
       (*(f_comb:'b list -> 'b)*) :(b_formula * 'b) =
@@ -7443,8 +7452,12 @@ let filter_ante (ante : formula) (conseq : formula) : (formula) =
 	let new_ante = filter_var ante fvar in
     new_ante
 
-let filter_ante (ante : formula) (conseq : formula) : (formula) =
-  Debug.no_2 "filter_ante" !print_formula !print_formula !print_formula filter_ante ante conseq
+
+let filter_ante_wo_rel (ante : formula) (conseq : formula) : (formula) =
+	let fvar = fv conseq in
+	let fvar = List.filter (fun v -> not(is_rel_var v)) fvar in
+	let new_ante = filter_var ante fvar in
+    new_ante
 
 (* automatic slicing of variables *)
 
@@ -8170,7 +8183,6 @@ let add_ann_constraints vrs f =
 let add_ann_constraints vrs f =
   let p1 = !print_formula in
   Debug.no_2 "add_ann_constraints" !print_svl p1 p1  add_ann_constraints vrs f
-
 type infer_state = 
   { 
       infer_state_vars : spec_var list; (* [] if no inference *)
@@ -8309,7 +8321,7 @@ let is_Rank (f:formula) = match f with
   | BForm _ -> (get_rank_dec_id_list f) != [] || (get_rank_bnd_id_list f) != []
   | _ -> false
 
-let is_Rank_ ec (f:formula) = match f with
+let is_Rank_Dec (f:formula) = match f with
   | BForm _ -> (get_rank_dec_id_list f) != []
   | _ -> false
 
@@ -8453,7 +8465,7 @@ let remove_dupl_conj_pure (p:formula) =
 let get_rel_args (f:formula) = match f with
   | BForm (bf,_) ->
     (match bf with
-    | (RelForm(_,args,_),_) -> List.concat (List.map afv args)
+    | (RelForm(_,eargs,_),_) -> List.concat (List.map afv eargs)
     | _ -> [])
   | _ -> []
 
@@ -8789,9 +8801,9 @@ let simplify_disj_new (f:formula) : formula =
   let pr = !print_formula in
   Debug.no_1 "simplify_disj_new" pr pr simplify_disj_new f
 
-let fv_wo_rel (f:formula) =
-  let vs = fv f in
-  List.filter (fun v -> (type_of_spec_var v) != RelT) vs
+(* let fv_wo_rel (f:formula) = *)
+(*   let vs = fv f in *)
+(*   List.filter (fun v -> not(is_RelT (type_of_spec_var v))) vs *)
 
 (* Termination: Add the call numbers and the implicit phase 
  * variables to specifications if the option 
@@ -8898,7 +8910,12 @@ and count_term_b_formula bf =
 
 let rec remove_cnts remove_vars f = match f with
   | BForm _ -> if intersect (fv f) remove_vars != [] then mkTrue no_pos else f
-  | And (f1,f2,p) -> mkAnd (remove_cnts remove_vars f1) (remove_cnts remove_vars f2) p
+  | And (f1,f2,p) ->
+    let res1 = remove_cnts remove_vars f1 in
+    let res2 = remove_cnts remove_vars f2 in
+    if isConstFalse res1 then res2
+    else if isConstFalse res2 then res1
+    else mkAnd res1 res2 p
   | Or (f1,f2,o,p) -> 
     let res1 = remove_cnts remove_vars f1 in
     let res2 = remove_cnts remove_vars f2 in
@@ -8912,7 +8929,12 @@ let rec remove_cnts remove_vars f = match f with
 
 let rec remove_cnts2 keep_vars f = match f with
   | BForm _ -> if intersect (fv f) keep_vars = [] then mkTrue no_pos else f
-  | And (f1,f2,p) -> mkAnd (remove_cnts2 keep_vars f1) (remove_cnts2 keep_vars f2) p
+  | And (f1,f2,p) -> 
+    let res1 = remove_cnts2 keep_vars f1 in
+    let res2 = remove_cnts2 keep_vars f2 in
+    if isConstFalse res1 then res2
+    else if isConstFalse res2 then res1
+    else mkAnd res1 res2 p
   | Or (f1,f2,o,p) -> 
     let res1 = remove_cnts2 keep_vars f1 in
     let res2 = remove_cnts2 keep_vars f2 in
@@ -9243,6 +9265,14 @@ let is_term f =
     | BForm ((bf,_),_) -> is_term bf
     | _ -> false
 
+let is_rel_assume rt = match rt with
+  | RelAssume _ -> true
+  | _ -> false
+
+let is_rel_defn rt = match rt with
+  | RelDefn _ -> true
+  | _ -> false
+
 let add_conj x rs pos =
   List.map (fun y -> And (x,y,pos)) rs
   
@@ -9350,6 +9380,68 @@ let drop_exists (f:formula) :formula =
   let pr = !print_formula in 
   Debug.no_1 "drop_exists_pure" pr pr drop_exists f 
 
+  let add_prefix_to_spec_var prefix (sv : spec_var) = match sv with
+  | SpecVar (t,n,p) -> SpecVar (t,prefix^n,p)
+
+let fv_wo_rel_r rel = match rel with
+  | BForm((RelForm (_, args, _),_),_) -> 
+    remove_dups_svl (List.concat (List.map afv args))
+  | _ -> report_error no_pos "fv_wo_rel_r: expected RelForm"
+    
+let get_rel_args_pformula pf= match pf with
+  | RelForm (_, el, _) -> (List.fold_left List.append [] (List.map afv el))
+  | _ -> []
+
+let get_rel_args_bformula (pf, _) = get_rel_args_pformula pf
+
+let get_rel_args_x f0=
+  let rec helper f=
+    match f with
+      | BForm (bf, _) -> (get_rel_args_bformula bf)
+      | And (f1, f2, _) ->  ((helper f1)@(helper f2))
+      | AndList b -> List.fold_left (fun ls (_, p) -> ls@(helper p)) [] b
+      | Or (f1, f2, _, _) ->  (helper f1)@(helper f2)
+      | Not (p, _, _) ->  helper p
+      | Forall (_, p, _, _) -> helper p
+      | Exists (_, p, _, _) -> helper p
+  in
+  helper f0
+
+let get_rel_args f0=
+  Debug.no_1 "get_rel_args" !print_formula !print_svl
+      (fun _ -> get_rel_args_x f0) f0
+
+let subst_rel_args_x p eqs rel_args=
+  let filter_fn ls (sv1,sv2)=
+    let b1 = mem_svl sv1 rel_args in
+    let b2 = mem_svl sv2 rel_args in
+    match b1,b2 with
+      | true,false -> ls@[(sv1,sv2)]
+      | false,true -> ls@[(sv2,sv1)]
+      | _ -> ls
+  in
+  let eqs1= List.fold_left filter_fn [] eqs in
+  subst eqs1 p
+
+let subst_rel_args p eqs rel_args=
+  Debug.no_2 "subst_rel_args" !print_formula !print_svl !print_formula
+      (fun _ _ -> subst_rel_args_x p eqs rel_args) p rel_args
+
+let get_eqs_rel_args_x p eqs rel_args pos=
+  let filter_fn (sv1,sv2)=
+    (mem_svl sv1 rel_args) ||
+    ( mem_svl sv2 rel_args)
+  in
+  let eqs1= List.filter filter_fn eqs in
+  List.fold_left (fun p1 (sv1,sv2) ->
+      let p2 = mkEqVar sv1 sv2 pos in
+      mkAnd p1 p2 pos)
+      (mkTrue pos) eqs1
+
+let get_eqs_rel_args p eqs rel_args pos=
+  Debug.no_2 "get_eqs_rel_args" !print_formula !print_svl !print_formula
+      (fun _ _ -> get_eqs_rel_args_x p eqs rel_args pos) p rel_args
+
 (* check for x=y & x!=y and mark as unsat assumes that disjunctions are all split using deep_split *)
 let is_sat_eq_ineq (f : formula) : bool =
   let b =
@@ -9365,7 +9457,7 @@ let is_sat_eq_ineq (f : formula) : bool =
     in
     let f_bf bf = 
       (match bf with
-        | ((Eq _) as e),_ -> Some ([bf]) 
+        | (Eq _) ,_ -> Some ([bf]) 
         | _,_ -> Some ([])
       )
     in
@@ -10352,7 +10444,7 @@ let find_closure_x (v:spec_var) (vv:(spec_var * spec_var) list) : spec_var list 
             | Some x -> helper (x::vs) xs)
       | [] -> vs
   in
-  let vs = [v] in
+  (*let vs = [v] in*)
   let rec helper_loop vs vv =
     let vs_new = helper vs vv in
     if (Gen.BList.difference_eq eq_spec_var vs_new vs) =[] then

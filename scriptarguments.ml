@@ -181,8 +181,15 @@ let common_arguments = [
     "Number of disjunct for fixcalc computation");
   ("--dis-smart-xpure", Arg.Clear Globals.smart_xpure,
    "Smart xpure with 0 then 1; otherwise just 1 ; not handled by infer yet");
+  ("--dis-precise-xpure", Arg.Clear Globals.precise_perm_xpure, "disable adding x!=y when the permissions of x and y overlap or exceed the full permission");
   ("--en-smart-memo", Arg.Set Globals.smart_memo,
    "Smart memo with no_complex; if fail try complex formula");
+	("--en-pre-residue", Arg.Unit (fun _ -> Globals.pre_residue_lvl := 1),
+    "Always add pre inferred to residue, ee if it is disjunctive");
+	("--dis-pre-residue", Arg.Unit (fun _ -> Globals.pre_residue_lvl := -1),
+    "Never pre inferred to residue, ee if it is conjunctive");
+    (* default is to add only conjunctive pre to residue when
+       pre_residue_lvl ==0 *)
   ("-num-self-fold-search", Arg.Set_int Globals.num_self_fold_search,
    "Allow Depth of Unfold/Fold Self Search");
   ("--en-self-fold-search", Arg.Set Globals.self_fold_search_flag,
@@ -194,6 +201,7 @@ let common_arguments = [
   ("--print-type", Arg.Set Globals.print_type,"Print type info");
   ("--print-x-inv", Arg.Set Globals.print_x_inv,
    "Print computed view invariants");
+  ("--pr_str_assume", Arg.Set Globals.print_assume_struc, "Print structured formula for assume");
   ("-stop", Arg.Clear Globals.check_all,
    "Stop checking on erroneous procedure");
   ("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
@@ -323,6 +331,7 @@ let common_arguments = [
 
   (* Slicing *)
   ("--eps", Arg.Set Globals.en_slc_ps, "Enable slicing with predicate specialization");
+  ("--overeps", Arg.Set Globals.override_slc_ps, "Override --eps, for run-fast-tests testing of modular examples");
   ("--dis-ps", Arg.Set Globals.dis_ps, "Disable predicate specialization");
   ("--dis-ann", Arg.Set Globals.dis_slc_ann, "Disable aggressive slicing with annotation scheme (not default)");
   ("--slc-rel-level", Arg.Set_int Globals.slicing_rel_level, "Set depth for GetCtr function");

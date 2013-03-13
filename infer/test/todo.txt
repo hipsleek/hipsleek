@@ -1,0 +1,91 @@
+## n-sel-2a.ss  #DONE (accurate now)
+
+rel_defns for P3(..), P4(..), P5(..) are rather large
+Simplification could help below:
+ . P3 is not accurate, we should have m=mx.
+ . P4 is not accurate, we should have mx=mx2.
+
+Also, are the three relations really mutually-recursive?
+
+*************************************
+[( P4(m,mi,mi2), m=mi & mi<=mi2, true, true),
+( P5(m,mx,mx2), m<=mx2 & mx2<=mx, true, true),
+( P3(m,mi,mx), m=mi & mi<=mx, true, true)]
+*************************************
+
+!!! REL POST :  P3(m,mi,mx)
+!!! POST:  m=mi & mi<=mx
+!!! REL PRE :  true
+!!! PRE :  true
+!!! REL POST :  P5(m,mx,mx2)
+!!! POST:  m<=mx2 & mx2<=mx
+!!! REL PRE :  true
+!!! PRE :  true
+!!! REL POST :  P4(m,mi,mi2)
+!!! POST:  m=mi & mi<=mi2
+!!! REL PRE :  true
+!!! PRE :  true
+
+infer [P5] x=1 & P5(a) & a>0 & b=a-1 
+ |-  x=2 & P5(b).
+
+print residue.
+
+## contra.slk #DONE #OPTIMIZED
+ 
+ SOLUTION : currently skip collect_inf if LHS & RHS contradict
+    can optimize by calling infer_contra directly
+
+/*
+PROBLEM : once lhs contra detected (getting false), 
+         we should discard the other RELDEFN inferences
+
+It seems LHS contra is detected at a rather late point.
+Can we detect LHS contra at an earlier point?
+
+<1>hfalse&false&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [P5]: ( P5(a)) -->  1>a; 
+                RELDEFN P5: ( P5(a) & 1<=a & b=a-1) -->  P5(b)]
+*/
+
+# 2a.slk  #DONE
+
+--pcp shows a disjunctive invariant
+
+llMM<mi,mx> == self::node<v,null> & mi=v  & mx=v
+  or self::node<v, p> * p::llMM<mi2,mx2> & mi=min(v,mi2) & mx=max(v,mx2)
+  //& v<=mi2
+inv self!=null & mi<=mx;
+
+  xform: (mi<=mx & self!=null) | (self!=null & mi=mx)
+
+ However, a simple PairWiseCheck at 2a.oc will yeild:
+
+    self!=null & mi<=mx
+
+ Can we take advantage of this simplifcation to avoid
+ unnecessary disjunctive formula.
+
+# n-sel-4.ss #DONE
+
+We obtained:
+
+  RELDEFN P3: ( P(m,m)) -->  P3(m,mi,mx),
+
+which is over-simplified, as we should have instead:
+
+  RELDEFN P3: P(mi,mx) & m=mi & m=mx -->  P3(m,mi,mx),
+
+Equality elimination should only be applied to existential
+variable in the LHS, but not with variables in the
+RHS such as m,mi,mx
+
+node sel(ref node x)
+     infer [P,P3,P4]
+     requires x::llMM<mi,mx> & P(mi,mx)
+     ensures  res::node<m,_> & x'=null & P3(m,mi,mx)
+           or res::node<m,_> * x'::llMM<mi2,mx2> 
+                    & P4(m,mi,mi2,mx,mx2)
+
+RELDEFN P: ( P(mi,mx_638) & mi<mi_637 & mi_637<=mx_638) -->  P(mi_637,mx_638),
+

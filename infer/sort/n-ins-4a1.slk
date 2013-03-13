@@ -1,0 +1,23 @@
+relation R(int a, int b).
+
+data node {
+	int val; 
+	node next; 
+}.
+
+pred llMM<mi> == self::node<v,null> & mi=v  
+  or self::node<v, p> * p::llMM<mi2> 
+  & mi=min(v,mi2)
+inv self!=null.
+ 
+infer [R] 
+  x::node<v_600,null> 
+  & mi=v_600 
+  & R(a,mi) 
+  & a<=v_600 & 
+  v_bool_22_561' & a<=v_600 & v_bool_22_561' & flted_19_575=next_23_622 & 
+  res=y & a=v_659 & p_660=x & v_600=v_670 
+  //|- x::node<mi3,null> or x::node<_,q>*q::llMM<mi3>.
+  |- x::llMM<mi3>.
+print residue.
+ 

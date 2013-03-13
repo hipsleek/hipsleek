@@ -1,0 +1,14 @@
+# specs4.ss
+
+int foo2()
+{
+  return 1;
+}
+/*
+ when no specs are given, we should use
+   requires true
+   ensures true;
+
+ rather than requires false
+             ensures false;
+*/

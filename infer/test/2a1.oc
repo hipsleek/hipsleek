@@ -1,0 +1,10 @@
+P1:={[m,mi,mi2,mx,mx2]:exists(mx_636 : mi2=mi & mx_636=mi & m=mx & mi2=mx2 & mi<=mx_636 & mx_636<=mx & mx<mi2)};
+P2:={[m,mi,mi2,mx,mx2]:
+  mi2=mi & mi=mx & mi2=mx2 & mi<=m & m<=(mx-1) & m<=(mi2-1)};
+P3:={[m,mi,mi2,mx,mx2]:exists(mi_635 :mi2=mx & mi_635=mx & m=mi & mi2=mx2 & mi<mi_635 & mi_635<=mx & mi<mi2)};
+P4:={[m,mi,mi2,mx,mx2]:exists(mx_636 :m=mi & m=mx_636 & mi2=mx & mi2=mx2 & mi<=mx_636 & mx_636<=mi2 & m<=mi2)};
+P5:={[m,mi,mi2,mx,mx2]:
+ m=mi & m=mx & 
+ mi2=mx2 & mi<=mi2 & m<=mi2 & mi2<mx};
+P6:={[m,mi,mi2,mx,mx2]:exists(mi_635:m=mi_635 & m=mx & mi=mi2 & mi2=mx2 & m<=mi2 & mi2<mi_635 & mi_635<=mx)};
+P1;P2;P3;P4;P5;P6;

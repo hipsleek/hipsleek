@@ -34,10 +34,15 @@ and prog_decl = {
     
 and prog_or_branches = (prog_decl * 
     ((MP.mix_formula * (ident * (P.spec_var list))) option) )
-    
+
+and data_field_ann =
+  | VAL
+  | REC
+  | F_NO_ANN
+
 and data_decl = { 
     data_name : ident;
-    data_fields : typed_ident list;
+    data_fields : (typed_ident * data_field_ann) list;
     data_parent_name : ident;
     data_invs : F.formula list;
     data_methods : proc_decl list; }
@@ -63,7 +68,12 @@ and barrier_decl = {
     barrier_prune_conditions_baga: ba_prun_cond list;
     barrier_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
 }  
-    
+
+and view_kind =
+  | View_PRIM
+  | View_NORM
+  | View_EXTN
+
 and view_decl = { 
     view_name : ident; 
     view_vars : P.spec_var list;
@@ -72,6 +82,7 @@ and view_decl = {
     view_labels : Label_only.spec_label list;
     view_modes : mode list;
     view_is_prim : bool;
+    view_kind : view_kind;
     mutable view_partially_bound_vars : bool list;
     mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
     view_data_name : ident;
@@ -228,7 +239,7 @@ and exp_bind = {
     exp_bind_imm : Cformula.ann;
     exp_bind_param_imm : Cformula.ann list;
     exp_bind_read_only : bool; (*for frac perm, indicate whether the body will read or write to bound vars in exp_bind_fields*)
-    exp_bind_path_id : control_path_id;
+    exp_bind_path_id : control_path_id_strict;
     exp_bind_pos : loc }
 
 and exp_block = { exp_block_type : typ;
@@ -442,9 +453,9 @@ let is_primitive_proc p = (*p.proc_body==None*) not p.proc_is_main
 let name_of_proc p = p.proc_name
 
 
-let get_field_typ f = fst f
+let get_field_typ (f,_) = fst f
 
-let get_field_name f = snd f
+let get_field_name (f,_) = snd f
 
 (** An Hoa [22/08/2011] End **)
 
@@ -740,8 +751,14 @@ let place_holder = P.SpecVar (Int, "pholder___", Unprimed)
 		sensures_pos = pos;
 	}]*)
 let stub_branch_point_id s = (-1,s)
-let mkEAssume pos = Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkTrueFlow ()) pos),(stub_branch_point_id ""),None)
-let mkEAssume_norm pos = Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkNormalFlow ()) pos),(stub_branch_point_id ""),None)
+let mkEAssume pos = 
+	let f = Cformula.mkTrue (Cformula.mkTrueFlow ()) pos in
+	Cformula.mkEAssume [] f (Cformula.mkEBase f None no_pos) (stub_branch_point_id "") None
+ 
+let mkEAssume_norm pos = 
+	let f = Cformula.mkTrue (Cformula.mkNormalFlow ()) pos in
+	let sf = Cformula.mkEBase f None no_pos in
+	Cformula.mkEAssume [] f (Cformula.mkEBase f None no_pos) (stub_branch_point_id "") None
 	
 let mkSeq t e1 e2 pos = match e1 with
   | Unit _ -> e2
@@ -1543,12 +1560,14 @@ let check_proper_return cret_type exc_list f =
 			else ()			
 	| F.Or b-> check_proper_return_f b.F.formula_or_f1 ; check_proper_return_f b.F.formula_or_f2 in
   let rec helper f0 = match f0 with 
-	| F.EBase b-> (match b.F.formula_struc_continuation with | None -> () | Some l -> helper l)
-	| F.ECase b-> List.iter (fun (_,c)-> helper c) b.F.formula_case_branches
-	| F.EAssume (_,b,_,_)-> if (F.isAnyConstFalse b)||(F.isAnyConstTrue b) then () else check_proper_return_f b
-	| F.EInfer b -> ()(*check_proper_return cret_type exc_list b.formula_inf_continuation*)
-	| F.EList b -> List.iter (fun c-> helper(snd c)) b 
-	| F.EOr b -> (helper b.F.formula_struc_or_f1; helper b.F.formula_struc_or_f2)in
+	| F.EBase b   -> (match b.F.formula_struc_continuation with | None -> () | Some l -> helper l)
+	| F.ECase b   -> List.iter (fun (_,c)-> helper c) b.F.formula_case_branches
+	| F.EAssume b -> 
+			if (F.isAnyConstFalse b.F.formula_assume_simpl)||(F.isAnyConstTrue b.F.formula_assume_simpl) then () 
+			else check_proper_return_f b.F.formula_assume_simpl
+	| F.EInfer b  -> ()(*check_proper_return cret_type exc_list b.formula_inf_continuation*)
+	| F.EList b   -> List.iter (fun c-> helper(snd c)) b 
+	in
   helper f
 
  
@@ -1723,10 +1742,6 @@ let rec add_uni_vars_to_view_x cprog (l2r_coers:coercion_decl list) (view:view_d
               let vars2 = match e.F.formula_struc_continuation with | None -> [] | Some l -> process_struc_formula l in
               P.remove_dups_svl (vars1@vars2)
 		  | F.EList b -> P.remove_dups_svl (List.flatten (List.map (fun c-> process_struc_formula (snd c)) b))
-		  | F.EOr b -> 
-				let r1 = process_struc_formula b.F.formula_struc_or_f1 in
-				let r2 = process_struc_formula b.F.formula_struc_or_f2 in
-				P.remove_dups_svl (List.flatten [r1;r2])
           | _ ->
               let _ = print_string "[add_uni_vars_to_view] Warning: only handle EBase \n" in
               []
