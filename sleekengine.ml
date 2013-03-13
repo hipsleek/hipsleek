@@ -251,7 +251,7 @@ let convert_pred_to_cast () =
   let cprog4 = (AS.add_pre_to_cprog cprog3) in
   let cprog5 = (*if !Globals.enable_case_inference then AS.case_inference iprog cprog4 else*) cprog4 in
   let _ = if (!Globals.print_input || !Globals.print_input_all) then print_string (Iprinter.string_of_program iprog) else () in
-  (*let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog5) else () in*)
+  let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog5) else () in
   cprog := cprog5
 
 let convert_pred_to_cast () = 
