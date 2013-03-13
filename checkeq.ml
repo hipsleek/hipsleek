@@ -1383,6 +1383,10 @@ let subst_with_mt (mt: map_table) (f: CF.formula): CF.formula =   (*Note: suppor
 let check_equiv_2f_x hvars (def1: CF.formula * CF.formula) (def2: CF.formula * CF.formula) def: (bool * map_table list)= 
   let f11,f12 = def1 in
   let f21, f22 = def2 in
+  let f11 = CF.simplify_pure_f f11 in
+  let f12 = CF.simplify_pure_f f12 in
+  let f21 = CF.simplify_pure_f f21 in
+  let f22 = CF.simplify_pure_f f22 in
   let mtl = [[]] in
   let rvars1,rvars2 = if(def) then CF.get_hp_rel_vars_formula f11, CF.get_hp_rel_vars_formula f21 else [],[] in
   
