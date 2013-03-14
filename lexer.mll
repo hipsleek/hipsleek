@@ -170,7 +170,8 @@ module Make (Token : SleekTokenS)
 	 ("inv", INV);
 	 ("inv_lock", INVLOCK);
    ("joinpred", JOIN); (*Changed by 28/12/2011*)
-	 ("lemma", LEMMA);
+	 ("lemma", LEMMA false);
+	 ("lemma_exact", LEMMA true);
    ("len", LENGTH);
 	 ("let", LET);
 	 ("max", MAX);

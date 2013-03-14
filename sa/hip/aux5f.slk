@@ -23,7 +23,7 @@ inv self!=null.
 pred tree2<> == self::node<_,l>*l::node<_,_>
 inv self!=null.
 
-//lemma self::H2<> -> self::tree2<>.
+lemma self::H2<> -> self::tree2<>.
 // fail as expected
 lemma self::tree2<> <- self::H2<>. 
 // should fail but succeeded

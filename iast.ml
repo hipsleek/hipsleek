@@ -194,6 +194,7 @@ proc_loc : loc;
 proc_test_comps: test_comps option}
 
 and coercion_decl = { coercion_type : coercion_type;
+coercion_exact : bool;
 coercion_name : ident;
 coercion_head : F.formula;
 coercion_body : F.formula;
@@ -2083,6 +2084,7 @@ let gen_normalize_lemma_comb ddef =
  let pure = List.fold_left2 (fun a c1 c2 -> P.And (a,P.BForm ((P.Eq (c1,c2,no_pos),None),None), no_pos)) (P.BForm ((P.Eq (perm3,P.Add (perm1,perm2,no_pos),no_pos),None),None)) args1 args2 in
  {coercion_type = Left;
   coercion_name = lem_name;
+  coercion_exact = false;
   coercion_head = F.formula_of_heap_1 (F.mkStar (gennode perm1 args1) (gennode perm2 args2) no_pos) no_pos;
   coercion_body = F. mkBase (gennode perm3 args1) pure  top_flow [] no_pos;
   coercion_proof =  Return { exp_return_val = None; exp_return_path_id = None ; exp_return_pos = no_pos }
@@ -2098,6 +2100,7 @@ let gen_normalize_lemma_comb ddef =
  let pure = P.BForm ((P.Eq (perm3,P.Add (perm1,perm2,no_pos),no_pos),None),None) in
  {coercion_type = Left;
   coercion_name = lem_name;
+  coercion_exact = false;
   coercion_head = F.mkBase (gennode perm3 args) pure  top_flow [] no_pos;
   coercion_body = F.formula_of_heap_1 (F.mkStar (gennode perm1 args) (gennode perm2 args) no_pos) no_pos;
   

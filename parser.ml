@@ -706,7 +706,7 @@ non_empty_command:
       | t = func_decl         -> FuncDef t
       | t = rel_decl          -> RelDef t
       | t = hp_decl          -> HpDef t
-      | `LEMMA;t= coercion_decl -> LemmaDef t
+      | `LEMMA lex;t= coercion_decl -> LemmaDef {t with coercion_exact = lex}
       | t= axiom_decl -> AxiomDef t (* [4/10/2011] An Hoa : axiom declarations *)
       | t=let_decl            -> t
       | t=checkeq_cmd         -> EqCheck t
@@ -1652,6 +1652,7 @@ meta_constr:
 coercion_decl:
   [[ on=opt_name; dc1=disjunctive_constr; cd=coercion_direction; dc2=disjunctive_constr ->
       { coercion_type = cd;
+		coercion_exact = false;
         coercion_name = (* on; *)
         (let v=on in (if (String.compare v "")==0 then (fresh_any_name "lem") else v));
         (* coercion_head = dc1; *)
@@ -1941,7 +1942,7 @@ decl:
   |  g=global_var_decl            -> Global_var g
   |  l=logical_var_decl -> Logical_var l
   |  p=proc_decl                  -> Proc p
-  | `LEMMA; c= coercion_decl; `SEMICOLON    -> Coercion c]];
+  | `LEMMA lex; c= coercion_decl; `SEMICOLON    -> Coercion {c with coercion_exact = lex}]];
 
 type_decl: 
   [[ t= data_decl  -> Data t

@@ -2240,6 +2240,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
         let args = CF.fv_simple_formula c_lhs in 
         let m_vars = find_materialized_prop args c_rhs in
         let c_coer ={ C.coercion_type = coer.I.coercion_type;
+		C.coercion_exact= coer.I.coercion_exact;
         C.coercion_name = coer.I.coercion_name;
         C.coercion_head = c_lhs;
         C.coercion_head_norm = c_head_norm;
@@ -7087,6 +7088,7 @@ and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl =
   let nch = case_normalize_formula prog [] cd.Iast.coercion_head None in
   let ncb = case_normalize_formula prog [] cd.Iast.coercion_body None in
   { Iast.coercion_type = cd.Iast.coercion_type;
+  Iast.coercion_exact = cd.Iast.coercion_exact;
   Iast.coercion_name = cd.Iast.coercion_name;
   Iast.coercion_head = nch;
   Iast.coercion_body = ncb;
