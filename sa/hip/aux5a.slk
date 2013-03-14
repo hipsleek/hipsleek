@@ -9,7 +9,7 @@ pred tree<> == self=null
 inv true.
 
 pred H<> == self=null
- or self::node<_,l,_>*l::H<>
+ or self::node<_,l,q>*l::H<>
 inv true.
 
 //lemma "weak" self::tree<> -> self::H<>.
