@@ -9,8 +9,6 @@ pred ls<y> ==
  }
 inv true.
 
-
-
 checkentail
 x4::ls<x5>
 * x3::node<x4>
