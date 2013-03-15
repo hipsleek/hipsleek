@@ -45,6 +45,7 @@ module E = Errormsg
 module H = Hashtbl
 module IH = Inthash
 module AL = Alpha
+module IF = Iformula
 
 open Cabs
 open Cabshelper
@@ -925,7 +926,7 @@ module BlockChunk =
     let canDrop (c: chunk) =
       List.for_all canDropStatement c.stmts
 
-    let loopChunk (body: chunk) (hspecs: Iformula.struc_formula) : chunk = 
+    let loopChunk (body: chunk) (hspecs: IF.struc_formula) : chunk = 
       (* Make the statement *)
       let loop = mkStmt (Loop (c2block body, hspecs, !currentLoc, None, None)) in
       { stmts = [ loop (* ; n *) ];
@@ -5623,7 +5624,7 @@ and doAliasFun vtype (thisname:string) (othername:string)
                               else A.RETURN(call, loc)
   in
   let body = { A.blabels = []; A.battrs = []; A.bstmts = [stmt]; A.bloc = loc } in
-  let specs = Iformula.EList [] in
+  let specs = IF.EList [] in
   let fdef = A.FUNDEF (sname, specs, body, loc) in
   ignore (doDecl true fdef);
   (* get the new function *)
@@ -5756,7 +5757,7 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
                  sbody    = dummyFunDec.sbody; (* Not final yet *)
                  smaxstmtid = None;
                  sallstmts = [];
-                 sspecs = hspecs;
+                 sspecs = IF.EList [];
                };
             !currentFunctionFDEC.svar.vdecl <- funloc;
 
@@ -5866,33 +5867,33 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
               
               
               (* Create the formals and add them to the environment. *)
-	      (* sfg: extract locations for the formals from dt *)
-	      let doFormal (loc : location) (fn, ft, fa) =
-		let f = makeVarinfo false fn ft in
-		(* makeVarinfo removes const qualifier even on formals *)
-		f.vtype <- ft;
-		  (f.vdecl <- loc;
-		   f.vattr <- fa;
-		   alphaConvertVarAndAddToEnv true f)
-	      in
-	      let rec doFormals fl' ll' = 
-		begin
-		  match (fl', ll') with
-		    | [], _ -> [] 
-			
-		    | fl, [] -> (* no more locs available *)
-			  List.map (doFormal !currentLoc) fl 
-			
-		    | f::fl, (_,(_,_,_,l))::ll ->  
-			(* sfg: these lets seem to be necessary to
-			 *  force the right order of evaluation *)
-			let f' = doFormal (convLoc l) f in
-			let fl' = doFormals fl ll in
-			  f' :: fl'
-		end
-	      in
-	      let fmlocs = (match dt with PROTO(_, fml, _) -> fml | _ -> []) in
-	      let formals = doFormals (argsToList formals_t) fmlocs in
+              (* sfg: extract locations for the formals from dt *)
+              let doFormal (loc : location) (fn, ft, fa) =
+                let f = makeVarinfo false fn ft in
+                (* makeVarinfo removes const qualifier even on formals *)
+                f.vtype <- ft;
+                (f.vdecl <- loc;
+                 f.vattr <- fa;
+                 alphaConvertVarAndAddToEnv true f)
+              in
+              let rec doFormals fl' ll' = 
+                begin
+                  match (fl', ll') with
+                  | [], _ -> [] 
+                     
+                  | fl, [] -> (* no more locs available *)
+                    List.map (doFormal !currentLoc) fl 
+                
+                  | f::fl, (_,(_,_,_,l))::ll ->  
+                  (* sfg: these lets seem to be necessary to
+                   *  force the right order of evaluation *)
+                  let f' = doFormal (convLoc l) f in
+                  let fl' = doFormals fl ll in
+                  f' :: fl'
+                end
+              in
+              let fmlocs = (match dt with PROTO(_, fml, _) -> fml | _ -> []) in
+              let formals = doFormals (argsToList formals_t) fmlocs in
 
               (* Recreate the type based on the formals. *)
               let ftype = TFun(returnType, 
@@ -5926,6 +5927,11 @@ and doDecl (isglobal: bool) : A.definition -> chunk = function
               in
               fixbackFormals 0 !currentFunctionFDEC.sformals;
               transparentUnionArgs := [];
+            in
+
+            (********** Now do the HIP specification *************)
+            let _ = 
+              !currentFunctionFDEC.sspecs <- doHipSpecs hspecs
             in
 
             (********** Now do the BODY *************)
@@ -6324,7 +6330,7 @@ and assignInit (lv: lval)
                   let inci = Set(ctrlval, BinOp(PlusA, Lval (ctrlval, l), Const(CInt64(1L, IUInt, None), l), uintType, l), !currentLoc) in
                   (ifc @@ assignc) +++ inci in
                 exitLoop ();
-                let loopc = loopChunk bodyc (Iformula.EList []) in
+                let loopc = loopChunk bodyc (IF.EList []) in
                 b +++ init @@ loopc
           | _ -> E.s (bug "Array length is not a constant expression")
         end
@@ -6674,6 +6680,20 @@ and doStatement (s : A.statement) : chunk =
     consLabel "booo_statement" empty (convLoc (C.get_statementloc s)) false
   end
 
+and doHipSpecs (specs: IF.struc_formula) : IF.struc_formula =
+  let vars = IF.struc_free_vars true specs in
+  let substitutes = ref [] in
+  List.iter (fun (v,p) ->
+    try
+      let x = Hashtbl.find env v in
+      match x with
+      | EnvVar y, _ ->
+          if (y.vname != v) then substitutes := !substitutes @ [((v, p), (y.vname, p))];
+      | _ -> ()
+    with _ -> ()
+  ) vars;
+  (* return *)
+  IF.subst_struc !substitutes specs
 
 let rec stripParenLocal e = match e with
   | A.PAREN (e2, _) -> stripParenLocal e2

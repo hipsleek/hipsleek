@@ -2192,6 +2192,7 @@ let trans_to_exp_form exp0=
   let rec helper exp=
     match exp with
       | Var v -> P.Var ((v.exp_var_name, Primed), v.exp_var_pos)
+      | IntLit i -> P.IConst (i.exp_int_lit_val, i.exp_int_lit_pos)
       | _ -> report_error no_pos "iast.trans_exp_to_form: not handle yet"
   in
   helper exp0

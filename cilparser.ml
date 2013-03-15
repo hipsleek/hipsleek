@@ -363,7 +363,7 @@ let create_data_cast_proc (input_typ: Globals.typ) (output_typ: Globals.typ)
           "  case { \n" ^
           "    param =  null -> requires true ensures res = null; \n" ^
           "    param != null -> requires true ensures res::" ^ output_typ_name ^ output_typ_param ^ "; \n" ^
-          "  }\n" 
+          "  }\n"
         ) in
         let proc_decl = Parser.parse_proc_string "inter_cast_proc" cast_proc in
         (* update *)
@@ -710,7 +710,7 @@ and translate_exp (e: Cil.exp) : Iast.exp =
       let input_exp = translate_exp exp in
       let input_typ = translate_typ (typ_of_cil_exp exp) in
       let cast_proc = create_data_cast_proc input_typ cast_typ in
-      let newexp = ( 
+      let newexp = (
         match cast_proc with
         | None -> input_exp
         | Some proc -> (
