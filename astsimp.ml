@@ -1257,8 +1257,9 @@ and add_param_ann_constraints_to_pure (h_f: CF.h_formula) (p_f: MCP.mix_formula 
       | CF.Phase h -> create_mix_formula_with_ann_constr h.CF.h_formula_phase_rd h.CF.h_formula_phase_rw p_f 
       | CF.DataNode h -> let data_ann = h.CF.h_formula_data_imm in
                          let helper1 (param_imm: CF.ann) = 
-                           let f = CP.BForm((CP.Lte(CF.mkExpAnn data_ann no_pos, CF.mkExpAnn param_imm no_pos, no_pos), None), None) in
-                           MCP.mix_of_pure f in
+						   match (CF.mkExpAnn data_ann no_pos), (CF.mkExpAnn param_imm no_pos) with
+							| CP.IConst i1, CP.IConst i2 -> if i1<=i2 then mkMTrue no_pos else mkMFalse no_pos 
+							| (_ as l), (_ as r) -> MCP.mix_of_pure(CP.BForm((CP.Lte(l, r, no_pos), None), None)) in
                          let p = match p_f with
                            | Some x -> List.fold_left (fun pf ann -> CF.add_mix_formula_to_mix_formula (helper1 ann) pf) x h.CF.h_formula_data_param_imm  
                            | None   -> 

@@ -453,7 +453,8 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (rel0: rel op
   in helper mf0 quant fv_idents stab 
 
 
-let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (rel0: rel option) stab : CF.struc_formula = Debug.no_4 "meta_to_struc_formula"
+let meta_to_struc_formula (mf0 : meta_formula) quant fv_idents (rel0: rel option) stab : CF.struc_formula = 
+Debug.no_4 "meta_to_struc_formula"
   string_of_meta_formula
   string_of_bool
   string_of_ident_list
@@ -540,7 +541,7 @@ let rec meta_to_formula_not_rename (mf0 : meta_formula) quant fv_idents stab : C
 let run_infer_one_pass (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_formula) =
   let _ = residues := None in
   let stab = H.create 103 in
-  let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline ("INPUT: \n ### ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
+  let _ = if (!Globals.print_input || !Globals.print_input_all) then print_endline ("INPUT: \n ### 1 ante = " ^ (string_of_meta_formula iante0) ^"\n ### conseq = " ^ (string_of_meta_formula iconseq0)) else () in
   let _ = Debug.devel_pprint ("\nrun_entail_check:"
                               ^ "\n ### iante0 = "^(string_of_meta_formula iante0)
                               ^ "\n ### iconseq0 = "^(string_of_meta_formula iconseq0)

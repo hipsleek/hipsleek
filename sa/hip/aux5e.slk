@@ -29,6 +29,7 @@ lemma_exact "exact2" self::H2<> -> self::tree<>.
 // should succeed
 
 checkentail x::node<_,q>*q::node<_,_> |- x::node<_,_>.
+print residue.
 // check exact ensures the absence of residue.
 checkentail_exact x::node<_,q>*q::node<_,_> |- x::node<_,_>.
 checkentail_exact x::node<_,q>*q::node<_,_> |- x::node<_,r>*r::node<_,_>.
