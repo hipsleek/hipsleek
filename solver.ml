@@ -4687,8 +4687,8 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	          Context.match_res_rhs_rest = x; } in
 	      Context.M_unfold (mr,1)
 	    with
-          | Not_found -> Context.M_Nothing_to_do "No views to unfold!" 
-                (* | Not_found -> generate_action t eset *)
+                (* | Not_found -> Context.M_Nothing_to_do "No views to unfold!"  *)
+              | Not_found -> generate_action t eset
 
   and generate_action nodes eset = 
     let pr = pr_list Cprinter.string_of_h_formula in
@@ -4749,7 +4749,12 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
       | _ -> let _ = num_unfold_on_dup := !num_unfold_on_dup + 1 in 
 	    true)
   in (* End of process_entail_state *)
-
+  let process_entail_state (es : entail_state) =
+    Debug.no_1 " process_entail_state"  Cprinter.string_of_entail_state
+        (pr_pair (fun (b,_) -> Cprinter.string_of_list_context b) string_of_bool)
+        (* (fun (_,b) -> string_of_bool b)  *)
+        process_entail_state es
+  in
   (* Termination: Strip the LexVar in the pure part of LHS - Move it to es_var_measures *)
   (* Now moving to typechecker for an earlier lexvar strip *)
   (* let ctx = Term.strip_lexvar_lhs ctx in *)
