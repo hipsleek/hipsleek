@@ -346,8 +346,8 @@ $output_file = "log";
         "mem" => [
         ["dag.ss",2,"-tp om --ramify","mark","SUCCESS","mark2","SUCCESS"], 
         ["graph.ss",2,"-tp om --ramify","mark","SUCCESS","mark2","SUCCESS"],
-        ["dag_1.ss",1,"-tp om","mark","SUCCESS"],
-        ["graph_1.ss",1,"-tp om","mark","SUCCESS"],
+        ["dag_1.ss",1,"-tp om --ramify","mark","SUCCESS"],
+        ["graph_1.ss",1,"-tp om --ramify","mark","SUCCESS"],
         ["dag_copy.ss",1,"-tp om --ramify","copy_dag","SUCCESS"],
         ["garbage_collector.ss",3,"-tp om --ramify","mark","SUCCESS","sweep","SUCCESS","collect","SUCCESS"],
         ["llsortll.ss",6,"-tp om --eps","overlaid_insert","SUCCESS","delete2","SUCCESS","insert2","SUCCESS",

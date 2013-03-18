@@ -748,9 +748,10 @@ let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etyp
     let valid, rs = 
       wrap_proving_kind ("SLEEK_ENT"^nn) (run_entail_check iante iconseq) etype in
     print_entail_result valid rs num_id
-  with ex -> 
-    let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
-    in ()
+  with ex ->
+      print_string "caught\n"; Printexc.print_backtrace stdout;
+      let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
+      in ()
   (* with e -> print_exc num_id *)
 
 (* the value of flag "exact" decides the type of entailment checking              *)
@@ -809,8 +810,9 @@ let process_infer (ivars: ident list) (iante0 : meta_formula) (iconseq0 : meta_f
     print_entail_result valid rs num_id
   with ex -> 
       (* print_exc num_id *)
-         let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
-         in ()
+      print_string "caught\n"; Printexc.print_backtrace stdout;
+      let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
+      in ()
 
 let process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
