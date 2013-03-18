@@ -426,11 +426,16 @@ and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_f
             | CF.Star {CF.h_formula_star_h1 = h11;
 			           CF.h_formula_star_h2 = h12} ->
                 Debug.tinfo_hprint (add_str "h1" (fun f -> "#Star#" ^ Cprinter.string_of_h_formula f)) h1 pos;
+                let mset_h2 = helper h2 in
+                if CF.is_data h2 then 
                 let mset_h11 = helper (CF.mkStarH h11 h2 no_pos) in
                 let mset_h12 = helper  (CF.mkStarH h12 h2 no_pos) in
-                let mset_h1 = helper h1 in
                 let m = CP.DisjSetSV.merge_disj_set mset_h11.mem_formula_mset mset_h12.mem_formula_mset in
-                let mset2 = CP.DisjSetSV.merge_disj_set m mset_h1.mem_formula_mset in
+                let mset2 = CP.DisjSetSV.merge_disj_set m mset_h2.mem_formula_mset in
+                {mem_formula_mset = mset2}
+                else 
+                let mset_h1 = helper h1 in
+                let mset2 = CP.DisjSetSV.merge_disj_set mset_h1.mem_formula_mset mset_h2.mem_formula_mset in
                 {mem_formula_mset = mset2}
             (*| CF.StarMinus {CF.h_formula_starminus_h1 = h11;
 			                 CF.h_formula_starminus_h2 = h12}*)                 
@@ -4680,8 +4685,8 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	          Context.match_res_rhs_rest = x; } in
 	      Context.M_unfold (mr,1)
 	    with
-          | Not_found -> Context.M_Nothing_to_do "No views to unfold!" 
-                (* | Not_found -> generate_action t eset *)
+              (* | Not_found -> Context.M_Nothing_to_do "No views to unfold!"  *)
+                | Not_found -> generate_action t eset
 
   and generate_action nodes eset = 
     let pr = pr_list Cprinter.string_of_h_formula in
