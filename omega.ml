@@ -63,7 +63,7 @@ let rec omega_of_exp e0 = match e0 with
         | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a2) ^ ")"
         | _ -> let rr = match a2 with
             | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
-            | _ -> illegal_format "[omega.ml] Non-linear arithmetic is not supported by Omega."
+            | _ -> illegal_format "Non-linear arithmetic is not supported by Omega. Please use other provers, such as Redlog."
                 (* Error.report_error { *)
                 (*   Error.error_loc = l; *)
                 (*   Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega." *)
@@ -79,7 +79,7 @@ let rec omega_of_exp e0 = match e0 with
   | Min _ -> illegal_format ("Omega.omega_of_exp: min/max should not appear here")
   | FConst _ -> illegal_format ("Omega.omega_of_exp: FConst")
   | Func _ -> "0" (* TODO: Need to handle *)
-  | _ -> illegal_format ("Omega.omega_of_exp: array, bag or list constraint "^(!print_exp e0))
+  | _ -> illegal_format ("Array, bag or list constraints are not supported by Omega. Please use other provers.")
 (*
 (ArrayAt _|ListReverse _|ListAppend _|ListLength _|ListTail _|ListHead _|
 ListCons _|List _|BagDiff _|BagIntersect _|BagUnion _|Bag _|FConst _)
