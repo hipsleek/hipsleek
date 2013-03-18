@@ -295,7 +295,7 @@ let _ =
   if !Globals.print_version_flag then begin
     print_version ()
   end else (
-    let _ = Printexc.record_backtrace !Globals.trace_failure in
+    (* let _ = Printexc.record_backtrace !Globals.trace_failure in *)
     if (!Tpdispatcher.tp_batch_mode) then Tpdispatcher.start_prover ();
     Gen.Profiling.push_time "Overall";
     (* let _ = print_endline "before main" in *)
