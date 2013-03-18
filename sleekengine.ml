@@ -776,10 +776,10 @@ let process_entail_check_x (iante : meta_formula) (iconseq : meta_formula) (etyp
     let valid, rs, _(*sel_hps*) = 
       wrap_proving_kind ("SLEEK_ENT"^nn) (run_entail_check iante iconseq) etype in
     print_entail_result [] (*sel_hps*) valid rs num_id
-  with ex -> 
+  with ex ->
       print_string "caught\n"; Printexc.print_backtrace stdout;
       let _ = print_string ("\nEntailment Failure "^nn^(Printexc.to_string ex)^"\n") 
-    in ()
+      in ()
   (* with e -> print_exc num_id *)
 
 (* the value of flag "exact" decides the type of entailment checking              *)

@@ -4687,8 +4687,8 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	          Context.match_res_rhs_rest = x; } in
 	      Context.M_unfold (mr,1)
 	    with
-                (* | Not_found -> Context.M_Nothing_to_do "No views to unfold!"  *)
-              | Not_found -> generate_action t eset
+              (* | Not_found -> Context.M_Nothing_to_do "No views to unfold!"  *)
+                | Not_found -> generate_action t eset
 
   and generate_action nodes eset = 
     let pr = pr_list Cprinter.string_of_h_formula in
