@@ -61,6 +61,10 @@ let is_int_typ sv = match sv with
   | SpecVar (Int,_,_) -> true
   | _ -> false
   
+let is_tmp_int sv = match sv with
+  | SpecVar (Int,str,_) ->  ((String.length str) > 5) && ((String.compare (String.sub str 0 5) "v_int") == 0)
+  | _ -> false
+
 let is_inf_sv sv = match sv with
   | SpecVar (Int,"ZInfinity",_) -> true
   | _ -> false
@@ -433,6 +437,12 @@ let is_const_or_var (f:exp) = match f with
 let is_const_exp (f:exp) = match f with
   | IConst _ -> true
   | FConst _ -> true
+  | _ -> false 
+
+let is_const_or_tmp (f:exp) = match f with
+  | IConst _ -> true
+  | FConst _ -> true
+  | Var(sv,_) -> is_tmp_int sv
   | _ -> false 
 
 (* is exp an infinity const *)

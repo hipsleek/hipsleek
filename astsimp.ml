@@ -3347,6 +3347,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         I.exp_call_nrecv_path_id = pid;
                         I.exp_call_nrecv_pos = pos;} in helper call_e
               | I.OpPostInc ->
+                  if not (!Globals.check_integer_overflow) then 
                     let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
                     let fn_decl = I.VarDecl{
                         I.exp_var_decl_type = I.int_type;
@@ -3373,6 +3374,19 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         I.exp_seq_exp2 = seq1;
                         I.exp_seq_pos = pos; } in
                     helper (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq2; I.exp_block_jump_label = I.NoJumpLabel; I.exp_block_pos = pos;})
+                  else 
+                    let add1_e = I.Binary {
+                        I.exp_binary_op = I.OpPlus;
+                        I.exp_binary_oper1 = e;
+                        I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
+                        I.exp_binary_path_id = pid;
+                        I.exp_binary_pos = pos; } in
+                     helper (I.Assign {
+                        I.exp_assign_op = I.OpAssign;
+                        I.exp_assign_lhs = e;
+                        I.exp_assign_rhs = add1_e;
+                        I.exp_assign_path_id = None;
+                        I.exp_assign_pos = pos;})                     
               | I.OpPostDec -> 
                     let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
                     let fn_decl = I.VarDecl {
