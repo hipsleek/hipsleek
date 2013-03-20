@@ -30,6 +30,21 @@ Item* foo ()
   return ptr;   
 }
 
+int* zoo ()
+/*@
+  requires true
+  ensures res::int*<_>;
+  //ensures res != null;
+*/
+{
+  int* ptr;
+  ptr = malloc(sizeof *ptr);
+  if (!ptr) {
+    //@ assume false;
+  }
+  return ptr;   
+}
+
 void main() {
 
 }

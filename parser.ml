@@ -1001,7 +1001,12 @@ simple2:  [[ t= opt_type_var_list -> ()]];
 heap_id:
   [[
      `IDENTIFIER id -> id
-   | id = heap_id; `STAR -> id ^ "__star"      (* parse pointer data structures in specs of C files *)
+   | `VOID; `STAR -> "void__star"
+   | `INT; `STAR -> "int__star"
+   | `FLOAT; `STAR -> "float__star"
+   | `BOOL; `STAR -> "bool__star"
+   | `IDENTIFIER id; `STAR -> id ^ "__star"
+   | hid = heap_id; `STAR -> hid ^ "__star"      (* parse pointer data structures in specs of C files *)
   ]];
 
 (*LDK: frac for fractional permission*)   

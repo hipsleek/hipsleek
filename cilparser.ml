@@ -553,11 +553,11 @@ let translate_unary_operator (op : Cil.unop) : Iast.uni_op =
 let translate_binary_operator (op : Cil.binop) : Iast.bin_op =
   match op with
   | Cil.PlusA -> Iast.OpPlus
-  | Cil.PlusPI -> report_error_msg "TRUNG TODO: Handle Cil.PlusPI later!"
-  | Cil.IndexPI -> report_error_msg "TRUNG TODO: Handle Cil.IndexPI later!"
+  | Cil.PlusPI -> Iast.OpPlus
+  | Cil.IndexPI -> Iast.OpPlus
   | Cil.MinusA -> Iast.OpMinus
-  | Cil.MinusPI -> report_error_msg "TRUNG TODO: Handle Cil.MinusPI later!"
-  | Cil.MinusPP -> report_error_msg "TRUNG TODO: Handle Cil.MinusPP later!"
+  | Cil.MinusPI -> Iast.OpMinus
+  | Cil.MinusPP -> Iast.OpMinus
   | Cil.Mult -> Iast.OpMult
   | Cil.Div -> Iast.OpDiv
   | Cil.Mod -> Iast.OpMod
@@ -897,7 +897,6 @@ let rec translate_stmt (s: Cil.stmt) : Iast.exp =
       newexp
   | Cil.Goto (sref, l) ->
       (* detect a infinite loop in Goto statement *)
-      let _ = print_endline ("== goto") in 
       if (!sref.Cil.sid = s.Cil.sid) then (
         let pos = translate_location l in
         let cond = Iast.BoolLit {Iast.exp_bool_lit_val = true;
@@ -1059,13 +1058,11 @@ let translate_fundec (fundec: Cil.fundec) (lopt: Cil.location option)
     | Cil.TFun (_, p, _, _) -> (
         let params = Cil.argsToList p in
         let translate_one_param (p : string * Cil.typ * Cil.attributes) : Iast.param = (
-          let (name, ty, attrs) = p in
-          let (ptyp, pmod) = match ty with
-            | Cil.TPtr (ty0, _) -> (translate_typ ty0, Iast.RefMod) 
-            | _ -> (translate_typ ty, Iast.NoMod) in
-          let newparam = {Iast.param_type = ptyp;
+          let (name, ty, _) = p in
+          let typ = translate_typ ty in
+          let newparam = {Iast.param_type = typ;
                           Iast.param_name = name;
-                          Iast.param_mod = pmod;
+                          Iast.param_mod = Iast.NoMod;
                           Iast.param_loc = pos; } in
           newparam
         ) in
