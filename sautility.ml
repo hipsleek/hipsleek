@@ -2372,7 +2372,7 @@ let check_root_accept_dang_fs root0 fs=
 let refine_dang_x hpdefs unk_hps fs=
   let rec look_up_hpdefs hp defs=
     match defs with
-      | [] -> report_error no_pos "hprels should be topo sorted"
+      | [] -> report_error no_pos ((!CP.print_sv hp) ^ " hprels should be topo sorted")
       | (hp1,(_,hrel,f))::rest ->
           if CP.eq_spec_var hp hp1 then
             let _,args = CF.extract_HRel hrel in
@@ -2382,6 +2382,9 @@ let refine_dang_x hpdefs unk_hps fs=
   let part_hps_only (f_hps_only,hps_only,rems) f=
     if CF.is_HRel_f f then
       let hp,args= CF.extract_HRel_f f in
+      if CP.mem_svl hp unk_hps then
+        (f_hps_only,hps_only,rems@[f])
+      else
         (f_hps_only@[f],hps_only@[(hp,args)], rems)
     else
       (f_hps_only,hps_only,rems@[f])
@@ -2419,7 +2422,7 @@ let refine_dang_x hpdefs unk_hps fs=
 let refine_dang hpdefs unk_hps fs=
   let pr1 = !CP.print_svl in
   let pr2 = pr_list_ln Cprinter.prtt_string_of_formula in
-  Debug.no_2 "refine_dang" pr1 pr2 pr2
+  Debug.ho_2 "refine_dang" pr1 pr2 pr2
       (fun _ _ -> refine_dang_x hpdefs unk_hps fs) unk_hps fs
 
 let remove_dups_recursive_x cdefs hp args unk_hps unk_svl defs=
@@ -3450,10 +3453,12 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
   in
   let subst_xpure lhpdefs f0=
     let process_p_helper p=
+      (* let _ = DD.info_pprint ("       p: " ^ (!CP.print_formula p)) no_pos in *)
       let ps = CP.list_of_conjs p in
       let xp_ps,rem_ps = List.partition CP.is_xpure ps in
       let xp_hpargs = List.map CP.extract_xpure xp_ps in
       let xp_ps = (List.map (lookup_hpdefs lhpdefs) xp_hpargs) in
+      (* let filtered_xp_ps = CP.filter_disj xp_ps rem_ps in *)
       let new_p =  CP.conj_of_list (CP.remove_redundant_helper (rem_ps@xp_ps) []) no_pos in
       new_p
     in
@@ -3483,17 +3488,20 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
       | Not_found -> ([],[],[])
   in
   let subst_pure_hp_unk args0 ls_unk_hpargs_fr f=
+    (* let _ = DD.info_pprint ("       f: " ^ (!CF.print_formula f)) no_pos in *)
     let ls_used_hp_args = CF.get_HRels_f f in
     let ls_xpures = CF.get_xpure_view f in
-    let ls_used_hp_args0 = ls_used_hp_args @ ls_xpures in
+    let ls_used_hp_args0 = Gen.BList.difference_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) ls_used_hp_args ls_xpures in
     (*look up*)
     let r = List.map (look_up_get_eqs_ss args0 ls_unk_hpargs_fr) ls_used_hp_args0 in
     let ls_used_unk_hps,ls_eqs, ls_ss = split3 r in
     let used_unk_hps = List.concat ls_used_unk_hps in
     let eqs = List.concat ls_eqs in
+    (* let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
+    (* let _ = DD.info_pprint ("       eqs: " ^ (pr1 eqs)) no_pos in *)
     let ss = List.concat ls_ss in
     (*remove unkhps*)
-    let f1,_ = CF.drop_hrel_f f used_unk_hps in
+    let f1,_ = (* CF.drop_unk_hrel *) CF.drop_hrel_f f used_unk_hps in
     (*subst*)
     let f2 = CF.subst ss f1 in
     (*add pure eqs*)
@@ -3504,7 +3512,8 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
     f3
   in
   let subst_pure_hp_unk_hpdef ls_unk_hpargs_fr (rc, hf, def)=
-    let _,args0 = CF.extract_HRel hf in
+    let hp,args0 = CF.extract_HRel hf in
+    (* let _ = DD.info_pprint ("       hp: " ^ (!CP.print_sv hp)) no_pos in *)
     let fs = CF.list_of_disjs def in
     let fs1 = List.map (subst_pure_hp_unk args0 ls_unk_hpargs_fr) fs in
     let def1 = CF.disj_of_list fs1 (CF.pos_of_formula def) in

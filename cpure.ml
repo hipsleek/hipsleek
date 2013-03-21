@@ -6965,6 +6965,19 @@ let norm_bform_b (bf:b_formula) : b_formula =
     | BagMax _ | ListAllN _ | ListPerm _ -> pf
   in (npf, il)
 
+let filter_disj_x disj_ps ps=
+  let filter_one_disj p=
+    let disjs = split_disjunctions p in
+    let rem_disjs = List.filter (fun p1 -> (List.exists (equalFormula p1) ps)) disjs in
+    join_disjunctions rem_disjs
+  in
+  let filtered_disj_ps = List.map filter_one_disj disj_ps in
+  filtered_disj_ps
+
+let filter_disj disj_ps ps=
+  let pr1 = pr_list !print_formula in
+  Debug.no_2 "filter_disj" pr1 pr1 pr1
+      (fun _ _ -> filter_disj_x disj_ps ps) disj_ps ps
 
 let rec extract_xpure p=
 match p with
@@ -7003,6 +7016,26 @@ match pf with
                 in
                 [(hp,args)]
   | _ -> []
+
+and drop_xpure_pformula pf= match pf with
+  | XPure xp -> BConst (true, xp.xpure_view_pos)
+  | _ -> pf
+
+and drop_xpure_bformula (pf, a) =  (drop_xpure_pformula pf, a)
+
+and drop_xpure f0 =
+  let rec helper f=
+    match f with
+      | BForm (bf, ofl) -> BForm (drop_xpure_bformula bf, ofl)
+      | And (f1, f2, p) ->  And (helper f1, helper f2, p)
+      | AndList b -> AndList (map_l_snd helper b)
+      | Or (f1, f2, ofl, p) ->  Or (helper f1, helper f2, ofl, p)
+      | Not (f, ofl, p) ->  Not (helper f, ofl, p)
+      | Forall (sv, f, ofl, p) -> Forall (sv, helper f, ofl, p)
+      | Exists (sv, f, ofl, p) -> Exists (sv, helper f, ofl, p)
+  in
+  helper f0
+
 
 (***********************************
  * aggressive simplify and normalize
@@ -8883,7 +8916,7 @@ let simplify_disj_new (f:formula) : formula =
 
 let simplify_disj_new (f:formula) : formula =
   let pr = !print_formula in
-  Debug.no_1 "simplify_disj_new" pr pr simplify_disj_new f
+  Debug.ho_1 "simplify_disj_new" pr pr simplify_disj_new f
 
 (* let fv_wo_rel (f:formula) = *)
 (*   let vs = fv f in *)

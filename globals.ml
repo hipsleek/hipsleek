@@ -639,7 +639,7 @@ let consume_all = ref false
 
 let enable_split_lemma_gen = ref false
 
-let show_diff = ref true
+let dis_show_diff = ref false
 
 let sa_print_inter = ref false
 
@@ -667,7 +667,7 @@ let norm_extract = ref false
 
 let dis_sem = ref false
 
-let show_diff_constrs = ref false
+(* let show_diff_constrs = ref true *)
 
 let procs_verified = ref ([] : string list)
 

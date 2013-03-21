@@ -13,7 +13,7 @@ ass [H1,G2,H1a][]:{
 }
 
 hpdefs [G2,H1][]:{
- H1a(y) --> hTrue;
+ H1a(y) --> htrue;
  G2(x,y) --> x::node<_,p> * HP_2(p,y) * H1a(y);
  H1(x) --> x::node<_,p>*HP_1(p);
  HP_1(x) --> x=null or x::node<_,p1> * HP_1(p1);

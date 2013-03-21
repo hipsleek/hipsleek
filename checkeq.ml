@@ -959,7 +959,7 @@ and checkeq_formulas_with_diff_x ivars f1 f2 =
   let mtl = [[]] in
   let (r,fs) = checkeq_formulas_with_diff_mt ivars ([],[]) f1 f2 mtl in
   let _ = 
-    if(!Globals.show_diff) then showdiff r fs
+    if(not !Globals.dis_show_diff) then showdiff r fs
   in
   (r,fs)
     
@@ -980,7 +980,7 @@ and checkeq_formulas_one_with_diff ivars rvars f1 f2 mtl=
 and checkeq_formulas_one_with_diff_x (hvars: ident list) rvars (f1: CF.formula) (f2: CF.formula)(mtl: (map_table list)): (bool*((map_table * CF.formula) list))=
   let helper hvars f1 f2 mtl = 
     match f1 with
-      |CF.Base({CF.formula_base_heap = h1;
+      | CF.Base({CF.formula_base_heap = h1;
 		CF.formula_base_pure = p1}) ->(
 	match f2 with 
 	  |CF.Base ({CF.formula_base_heap = h2;
@@ -989,34 +989,34 @@ and checkeq_formulas_one_with_diff_x (hvars: ident list) rvars (f1: CF.formula) 
 	    let (res2,mix_mtl2) =  checkeq_mix_formulas_with_diff hvars p1 p2 mix_mtl1 in
 	    (res1&&res2,mix_mtl2)
 	  )
-	  |_ ->  let _ = if(!Globals.show_diff) then Debug.ninfo_pprint ("DIFF: Base formula") no_pos in
+	  |_ ->  let _ = if(not !Globals.dis_show_diff) then Debug.ninfo_pprint ("DIFF: Base formula") no_pos in
 		 (false,[([],f1)])
       )
-      |CF.Exists({CF.formula_exists_qvars = qvars1;
+      | CF.Exists({CF.formula_exists_qvars = qvars1;
 		  CF.formula_exists_heap = h1;
 		  CF.formula_exists_pure = p1})->
-	(match f2 with 
-	  |CF.Exists ({CF.formula_exists_qvars = qvars2;
-		       CF.formula_exists_heap = h2;
-		       CF.formula_exists_pure = p2}) -> (
-	    let (res1,mix_mtl1) = checkeq_h_formulas_with_diff hvars h1 h2 mtl in
-	    let (res2,mix_mtl2) =  checkeq_mix_formulas_with_diff hvars p1 p2 mix_mtl1 in
-	    let res= res1&&res2 in
-	    if(res) then
-	      let new_mix_mtl = check_qvars_mix_mtl qvars1 qvars2 mix_mtl2 in
-	      if(List.length new_mix_mtl > 0) then (true, new_mix_mtl) else (false,mix_mtl2)
-	    else  (res,mix_mtl2)
-	  )
-	  | _ ->  let _ = if(!Globals.show_diff) then Debug.ninfo_pprint ("DIFF: Exists formula") no_pos in 
+	   (match f2 with
+	     | CF.Exists ({CF.formula_exists_qvars = qvars2;
+	       CF.formula_exists_heap = h2;
+	       CF.formula_exists_pure = p2}) -> (
+	           let (res1,mix_mtl1) = checkeq_h_formulas_with_diff hvars h1 h2 mtl in
+	           let (res2,mix_mtl2) =  checkeq_mix_formulas_with_diff hvars p1 p2 mix_mtl1 in
+	           let res= res1&&res2 in
+	           if(res) then
+	             let new_mix_mtl = check_qvars_mix_mtl qvars1 qvars2 mix_mtl2 in
+	             if(List.length new_mix_mtl > 0) then (true, new_mix_mtl) else (false,mix_mtl2)
+	           else  (res,mix_mtl2)
+	       )
+	     | _ -> let _ = if(not !Globals.dis_show_diff) then Debug.ninfo_pprint ("DIFF: Exists formula") no_pos in 
 		  (false,[([],f1)]))
-      |CF.Or ({CF.formula_or_f1 = f11;
+      | CF.Or ({CF.formula_or_f1 = f11;
 	       CF.formula_or_f2 = f12})  ->  (match f2 with
 		 |CF.Or ({CF.formula_or_f1 = f21;
 			  CF.formula_or_f2 = f22})  -> (
-		   let _ =  if(!Globals.show_diff) then Debug.ninfo_pprint ("DIFF: Or formula") no_pos in  
+		   let _ =  if(not !Globals.dis_show_diff) then Debug.ninfo_pprint ("DIFF: Or formula") no_pos in  
 		  (false,[([],f1)])
 		 )
-		 |_ ->   let _ =  if(!Globals.show_diff) then Debug.ninfo_pprint ("DIFF: Or formula") no_pos in  (false,[([],f1)]))
+		 |_ ->   let _ =  if(not !Globals.dis_show_diff) then Debug.ninfo_pprint ("DIFF: Or formula") no_pos in  (false,[([],f1)]))
   in
    (* print_string ("f1: "^(Cprinter.prtt_string_of_formula f1)^"\n"); *)
    (*     print_string ("f2: "^(Cprinter.prtt_string_of_formula f2)^ "\n"); *)
@@ -1030,14 +1030,14 @@ and checkeq_formulas_one_with_diff_x (hvars: ident list) rvars (f1: CF.formula) 
     else (res,new_mtl2)
   )
   else (res,new_mtl)
-					      
-and check_or_with_diff f1 f2 hvars mtl = 
+
+and check_or_with_diff f1 f2 hvars mtl =
   let pr1 = Cprinter.prtt_string_of_formula in
   let pr2 b = if(b) then "VALID" else "INVALID" in
   let pr3 = string_of_map_table_list in
   Debug.no_2 "check_or_with_diff" pr1 pr1 (pr_pair pr2 pr3)
-      (fun _ _ ->  check_or_with_diff_x f1 f2 hvars mtl) f1 f2	  
-	  
+      (fun _ _ ->  check_or_with_diff_x f1 f2 hvars mtl) f1 f2
+
 and check_or_with_diff_x f1 f2 hvars mtl =
   let new_mtl mtl1 d1 d2 f = List.map (fun mt -> (mt,d1,d2, f)) mtl1 in
   let new_mix_mtl mix_mtl f = List.map (fun (mt,d1,d2) -> (mt, d1,d2,f)) mix_mtl in
@@ -2261,7 +2261,7 @@ let cp_test proc hp_lst_assume  ls_inferred_hps sel_hp_rels =
   in
 
   let is_match_constrs il constrs =
-    if(not(!Globals.show_diff_constrs)) then
+    if((!Globals.dis_show_diff)) then
       checkeq_constrs il (List.map (fun hp -> hp.CF.hprel_lhs,hp.CF.hprel_rhs) hp_lst_assume) constrs
     else
       let res,res_list = checkeq_constrs_with_diff il (List.map (fun hp -> hp.CF.hprel_lhs,hp.CF.hprel_rhs) hp_lst_assume) constrs in
@@ -2281,7 +2281,7 @@ let cp_test proc hp_lst_assume  ls_inferred_hps sel_hp_rels =
     let pr2 = pr_list_ln (pr_triple Cprinter.string_of_spec_var Cprinter.string_of_spec_var pr1 ) in
     let _ = if(not(res)) then (
         if(List.length sl > 0) then print_string ("SUBSUME: "^ pr2 sl ^"\n") ;
-        if(!Globals.show_diff_constrs) then ( print_string ("\nDiff defs " ^ proc.Cast.proc_name ^ " {\n" ^ (print_res_list res_list true) ^ "\n}\n" ));
+        if(not !Globals.dis_show_diff) then ( print_string ("\nDiff defs " ^ proc.Cast.proc_name ^ " {\n" ^ (print_res_list res_list true) ^ "\n}\n" ));
     )
         else (if(List.length sl > 0) then print_string ("SUCCESS WITH SUBSUME: "^ pr2 sl ^"\n");)
     in

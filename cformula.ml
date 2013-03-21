@@ -3789,12 +3789,13 @@ let extract_unk_hprel_x (f0:formula) =
         formula_exists_heap = h1;}) ->
         (
             if  not (is_unkown_heap h1) then
-              if (CP.isConstTrue (MCP.pure_of_mix p1)) then
+              let p2 = (MCP.pure_of_mix p1) in
+              if (CP.isConstTrue p2 || CP.is_xpure p2) then
                 match h1 with
                   | HRel (hp, _, _ ) -> [hp]
-                  | _ -> report_error no_pos "CF.extract_HRel"
+                  | _ -> report_error no_pos "CF.extract_unk_hprel_f: 1"
               else
-                report_error no_pos "extract_unk_hprel_f"
+                report_error no_pos "CF.extract_unk_hprel_f: 2"
             else []
         )
     | Or {formula_or_f1 = f1;
@@ -4986,16 +4987,20 @@ let remove_com_pures f0 nullPtrs com_eqPures=
       f0 nullPtrs com_eqPures
 
 (*drop HRel in the set hp_names and return corresponding subst of their args*)
-let rec drop_hrel_f f hp_names=
+let rec drop_hrel_f f0 hp_names=
+  let rec helper f=
   match f with
     | Base fb -> let nfb,argsl = drop_hrel_hf fb.formula_base_heap hp_names in
         (Base {fb with formula_base_heap =  nfb;}, argsl)
-    | Or orf -> let nf1,argsl1 =  drop_hrel_f orf.formula_or_f1 hp_names in
-                let nf2,argsl2 =  drop_hrel_f orf.formula_or_f2 hp_names in
-       ( Or {orf with formula_or_f1 = nf1;
-                formula_or_f2 = nf2;}, argsl1@argsl2)
-    | Exists fe -> let nfe,argsl = drop_hrel_hf fe.formula_exists_heap hp_names in
-        (Exists {fe with formula_exists_heap = nfe ;}, argsl)
+    | Or orf -> let nf1,argsl1 =  helper orf.formula_or_f1 in
+      let nf2,argsl2 = helper orf.formula_or_f2 in
+      ( Or {orf with formula_or_f1 = nf1;
+          formula_or_f2 = nf2;}, argsl1@argsl2)
+    | Exists fe ->let qvars, base1 = split_quantifiers f in
+      let nf,argsl = helper base1 in
+      (add_quantifiers qvars nf,argsl)
+  in
+  helper f0
 
 and drop_hrel_hf hf hp_names=
   match hf with
@@ -5045,7 +5050,7 @@ and drop_hrel_hf hf hp_names=
         let n_hf2,argsl2 = drop_hrel_hf hf2 hp_names in
         (ConjConj { h_formula_conjconj_h1 = n_hf1;
                h_formula_conjconj_h2 = n_hf2;
-               h_formula_conjconj_pos = pos}, argsl1@argsl2)                              
+               h_formula_conjconj_pos = pos}, argsl1@argsl2)
     | Phase { h_formula_phase_rd = hf1;
               h_formula_phase_rw = hf2;
               h_formula_phase_pos = pos} ->
@@ -5062,6 +5067,24 @@ and drop_hrel_hf hf hp_names=
     | HTrue
     | HFalse
     | HEmp -> (hf,[])
+
+let drop_unk_hrel f0 hp_names=
+  let rec helper f=
+    match f with
+      | Base fb -> let nfb,_ = drop_hrel_hf fb.formula_base_heap hp_names in
+        (Base {fb with formula_base_heap =  nfb;
+            formula_base_pure = MCP.mix_of_pure (CP.drop_xpure (MCP.pure_of_mix fb.formula_base_pure));
+        })
+      | Or orf -> let nf1 = helper orf.formula_or_f1 in
+        let nf2 = helper orf.formula_or_f2 in
+        ( Or {orf with formula_or_f1 = nf1;
+            formula_or_f2 = nf2;})
+      | Exists fe ->
+            let qvars, base1 = split_quantifiers f in
+            let nf = helper base1 in
+            add_quantifiers qvars nf
+  in
+  helper f0
 
 (*drop HRel in the set hp_namesxeargs*)
 let rec drop_exact_hrel_f f hpargs=

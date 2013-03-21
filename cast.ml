@@ -763,7 +763,7 @@ let mkEAssume pos =
  
 let mkEAssume_norm pos = 
 	let f = Cformula.mkTrue (Cformula.mkNormalFlow ()) pos in
-	let sf = Cformula.mkEBase f None no_pos in
+	(* let sf = Cformula.mkEBase f None no_pos in *)
 	Cformula.mkEAssume [] f (Cformula.mkEBase f None no_pos) (stub_branch_point_id "") None
 	
 let mkSeq t e1 e2 pos = match e1 with
