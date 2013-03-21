@@ -2581,13 +2581,13 @@ let subst_cs prog dang_hps hp_constrs par_defs=
 (*for par_defs*)
 let generalize_one_hp_x prog hpdefs non_ptr_unk_hps unk_hps par_defs=
   (*collect definition for each partial definition*)
-  let obtain_and_norm_def args0 (a1,args,f,unk_args)=
+  let obtain_and_norm_def hp args0 (a1,args,f,unk_args)=
     (*normalize args*)
     let subst = List.combine args args0 in
     let f1 = (CF.subst subst f) in
     let f2 =
       if !Globals.sa_dangling then
-        CF.annotate_dl f1 unk_hps
+        CF.annotate_dl f1 (List.filter (fun hp1 -> not (CP.eq_spec_var hp hp1)) unk_hps)
       else f1
     in
     let unk_args1 = List.map (CP.subs_one subst) unk_args in
@@ -2611,7 +2611,7 @@ let generalize_one_hp_x prog hpdefs non_ptr_unk_hps unk_hps par_defs=
         (*find the root: ins2,ins3: root is the second, not the first*)
         let args0 = List.map (CP.fresh_spec_var) args in
     (* DD.ninfo_pprint ((!CP.print_sv hp)^"(" ^(!CP.print_svl args) ^ ")") no_pos; *)
-        let defs,ls_unk_args = List.split (List.map (obtain_and_norm_def args0) par_defs) in
+        let defs,ls_unk_args = List.split (List.map (obtain_and_norm_def hp args0) par_defs) in
         let r,non_r_args = SAU.find_root args0 defs in
         (*make explicit root*)
         let defs0 = List.map (SAU.mk_expl_root r) defs in
@@ -3573,7 +3573,7 @@ let rel_helper post_hps unk_rels unk_map=
   let unk_tmp_hpdefs =  subst_helper unk_rels [] in
   (List.map mk_def unk_tmp_hpdefs)
 
-let generate_hp_def_from_unk_hps_new_x unk_hpargs hp_defs post_hps gunk_rels=
+let generate_hp_def_from_unk_hps_new_x hpdefs unk_hpargs hp_defs post_hps gunk_rels=
   let mk_unkdef pos (hp,args)=
     let hp_name = dang_hp_default_prefix_name ^ CP.name_of_spec_var hp in
     let ps,fr_args =
@@ -3614,7 +3614,7 @@ let generate_hp_def_from_unk_hps_new_x unk_hpargs hp_defs post_hps gunk_rels=
   (*classify unk_hpdefs and non-unk ones*)
   let ls_unk_rels,ls_rem_hpdefs,ls_unk_rel_hpdefs = split3 (List.map (fun (a, hrel, f) ->
       let (hp,args) = CF.extract_HRel hrel in
-      if CP.mem_svl hp unk_hps then
+      if (CP.mem_svl hp unk_hps) && not(CP.mem_svl hp hpdefs) then
         let eq_hps = CF.extract_unk_hprel f in
         (List.map (fun hp1 -> (hp,hp1,args)) eq_hps,[],[(a, hrel, f)])
       else ([],[(a, hrel, f)],[])
@@ -3634,7 +3634,7 @@ let generate_hp_def_from_unk_hps_new_x unk_hpargs hp_defs post_hps gunk_rels=
   let rem_hpdefs = List.concat ls_rem_hpdefs in
   (rem_hpdefs,List.concat ls_unk_rel_hpdefs,all_unk_hpdefs,unk_map@rem_map,unk_rels3)
 
-let generate_hp_def_from_unk_hps_x unk_hpargs hp_defs post_hps gunk_rels=
+let generate_hp_def_from_unk_hps_x hpdefs unk_hpargs hp_defs post_hps gunk_rels=
   let rec lookup_eqv_all rem_unk_rels hp res=
     match rem_unk_rels with
       | [] -> res
@@ -3706,14 +3706,14 @@ let generate_hp_def_from_unk_hps_x unk_hpargs hp_defs post_hps gunk_rels=
   let unk_hps1 = SAU.find_close_hpargs unk_hpargs unk_rels in
   List.fold_left (helper unk_rels) ([],[]) unk_hps1
 
-let generate_hp_def_from_unk_hps unk_hps hp_defs post_hps unk_rels=
+let generate_hp_def_from_unk_hps hpdefs unk_hps hp_defs post_hps unk_rels=
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = pr_list (pr_pair !CP.print_sv !CP.print_svl) in
   let pr4 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in
   let pr3 (a,b,c,d,_) = let pr = pr_quad pr1 pr1 pr1 pr2 in pr (a,b,c,d) in
   (* let pr5 = pr_list CP.string_of_xpure_view in *)
   Debug.no_3 "generate_hp_def_from_unk_hps" pr2 pr1 pr4 pr3
-      (fun _ _ _ -> generate_hp_def_from_unk_hps_new_x unk_hps hp_defs post_hps unk_rels) unk_hps hp_defs unk_rels
+      (fun _ _ _ -> generate_hp_def_from_unk_hps_new_x hpdefs unk_hps hp_defs post_hps unk_rels) unk_hps hp_defs unk_rels
 
 let generate_init_unk_hpdefs_x ls_unk_hpargs=
   let unk_defs =
@@ -4134,7 +4134,7 @@ let infer_hps_x prog proc_name (hp_constrs: CF.hprel list) sel_hp_rels sel_post_
        let _ = print_endline
          ((let pr = pr_list_ln  Cprinter.string_of_hp_rel_def_short in pr hp_defs3) )
        in
-       let hp_defs3a,unk_rel_hpdefs, unk_hp_defs,unk_hp_frargs,unk_rels3 = generate_hp_def_from_unk_hps unk_hps2 hp_defs3 sel_post_hps [](* unk_rels *) in
+       let hp_defs3a,unk_rel_hpdefs, unk_hp_defs,unk_hp_frargs,unk_rels3 = generate_hp_def_from_unk_hps hp_def_names unk_hps2 hp_defs3 sel_post_hps [](* unk_rels *) in
        if !Globals.sa_inlining then
          let unk_hpdefs_from_rel = rel_helper sel_post_hps unk_rels3 unk_hp_frargs in
          let all_unk_hpdefs = SAU.combine_hpdefs (unk_hp_defs@unk_hpdefs_from_rel) in

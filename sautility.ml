@@ -3576,7 +3576,7 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
 let transform_unk_hps_to_pure hp_defs unk_hpargs =
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in
-  Debug.ho_2 "transform_unk_hps_to_pure" pr1 pr2 pr1
+  Debug.no_2 "transform_unk_hps_to_pure" pr1 pr2 pr1
       (fun _ _ -> transform_unk_hps_to_pure_x hp_defs unk_hpargs) hp_defs unk_hpargs
 
 (************************************************************)
