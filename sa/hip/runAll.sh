@@ -63,7 +63,7 @@ echo "ll-delete -cp-test has problem"
 echo "ll-get_size"
 ../../hip ll-get-size.ss --sa-dangling -cp-test cp/ll-get-size.cp | grep Compare
 echo "ll_all1"
-../../hip ll_all1.ss -cp-test cp/ll_all1.cp | grep Compare
+../../hip ll_all1.ss --sa-dangling --sa-inlining -cp-test cp/ll_all1.cp | grep Compare
 echo "ll_all3"
 ../../hip ll_all3.ss --sa-dangling -cp-test cp/ll_all3.cp | grep Compare
 echo "ll_all4"

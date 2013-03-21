@@ -4138,15 +4138,23 @@ and get_hprel_h_formula hf0=
   helper hf0
 
 
+and eq_svl ls1 ls2=
+  match ls1,ls2 with
+    | [],[] -> true
+    | sv1::rest1,sv2::rest2 -> if CP.eq_spec_var sv1 sv2 then
+        eq_svl rest1 rest2
+      else false
+    | _ -> false
+
+and eq_hpargs (hp1,args1) (hp2,args2)=
+  if (CP.eq_spec_var hp1 hp2) then
+   (* let args1 = (List.fold_left List.append [] (List.map CP.afv eargs1)) in *)
+   (* let args2 = (List.fold_left List.append [] (List.map CP.afv eargs2)) in *)
+   eq_svl args1 args2
+  else
+    false
+
 and eq_hprel (hp1,eargs1,_) (hp2,eargs2,_)=
-  let rec eq_svl ls1 ls2=
-    match ls1,ls2 with
-      | [],[] -> true
-      | sv1::rest1,sv2::rest2 -> if CP.eq_spec_var sv1 sv2 then
-            eq_svl rest1 rest2
-          else false
-      | _ -> false
-  in
   if (CP.eq_spec_var hp1 hp2) then
    let args1 = (List.fold_left List.append [] (List.map CP.afv eargs1)) in
    let args2 = (List.fold_left List.append [] (List.map CP.afv eargs2)) in
@@ -5087,18 +5095,24 @@ let drop_unk_hrel f0 hp_names=
   helper f0
 
 (*drop HRel in the set hp_namesxeargs*)
-let rec drop_exact_hrel_f f hpargs=
-  match f with
-    | Base fb -> let nfb = drop_exact_hrel_hf fb.formula_base_heap hpargs in
+let rec drop_exact_hrel_f f0 hprels com_eqPures=
+  let hpargs = List.map (fun (hp,eargs,_) -> (hp, (List.fold_left List.append [] (List.map CP.afv eargs)))) hprels in
+  let xpures = List.fold_left (fun ls p -> ls@(CP.get_xpure p)) [] com_eqPures in
+  let total_unk_hpargs = hpargs@xpures in
+  let rec helper f=
+    match f with
+      | Base fb -> let nfb = drop_exact_hrel_hf fb.formula_base_heap total_unk_hpargs in
         (Base {fb with formula_base_heap =  nfb;})
-    | Or orf -> let nf1 =  drop_exact_hrel_f orf.formula_or_f1 hpargs in
-                let nf2 =  drop_exact_hrel_f orf.formula_or_f2 hpargs in
-       ( Or {orf with formula_or_f1 = nf1;
-                formula_or_f2 = nf2;})
-    | Exists fe -> let nfe = drop_exact_hrel_hf fe.formula_exists_heap hpargs in
+      | Or orf -> let nf1 = helper orf.formula_or_f1 in
+        let nf2 = helper orf.formula_or_f2 in
+        ( Or {orf with formula_or_f1 = nf1;
+            formula_or_f2 = nf2;})
+      | Exists fe -> let nfe = drop_exact_hrel_hf fe.formula_exists_heap total_unk_hpargs in
         (Exists {fe with formula_exists_heap = nfe ;})
+  in
+  helper f0
 
-and drop_exact_hrel_hf hf0 hpargs=
+and drop_exact_hrel_hf hf0 unk_hpargs=
   let rec helper hf=
     match hf with
       | Star {h_formula_star_h1 = hf1;
@@ -5134,8 +5148,10 @@ and drop_exact_hrel_hf hf0 hpargs=
                    h_formula_phase_pos = pos})
       | DataNode hd -> (hf)
       | ViewNode hv -> (hf)
-      | HRel hprel -> if Gen.BList.mem_eq eq_hprel hprel hpargs then (HEmp)
-          else (hf)
+      | HRel (hp,eargs,_) ->
+            let args = (List.fold_left List.append [] (List.map CP.afv eargs)) in
+            if Gen.BList.mem_eq eq_hpargs (hp,args) unk_hpargs then (HEmp)
+            else (hf)
       | Hole _
       | HTrue
       | HFalse
@@ -5633,83 +5649,6 @@ and subst_hrel_hview_hf hf0 subst=
     | HEmp -> hf
   in
   helper2 hf0
-
-let rec subst_unk_hps_f f hp_names=
-  match f with
-    | Base fb -> let nfb = subst_unk_hps_hf fb.formula_base_heap hp_names in
-        (Base {fb with formula_base_heap =  nfb;})
-    | Or orf -> let nf1 =  subst_unk_hps_f orf.formula_or_f1 hp_names in
-                let nf2 =  subst_unk_hps_f orf.formula_or_f2 hp_names in
-       ( Or {orf with formula_or_f1 = nf1;
-                formula_or_f2 = nf2;})
-    | Exists fe -> let nfe = subst_unk_hps_hf fe.formula_exists_heap hp_names in
-        (Exists {fe with formula_exists_heap = nfe ;})
-
-and subst_unk_hps_hf hf0 hp_names=
-  let rec helper hf=
-  match hf with
-    | Star {h_formula_star_h1 = hf1;
-            h_formula_star_h2 = hf2;
-            h_formula_star_pos = pos} ->
-        let n_hf1 = helper hf1 in
-        let n_hf2 = helper hf2 in
-        let newf =
-        (match n_hf1,n_hf2 with
-          | (HTrue,HTrue) -> HTrue
-          | _ -> (Star {h_formula_star_h1 = n_hf1;
-                       h_formula_star_h2 = n_hf2;
-                       h_formula_star_pos = pos})
-        ) in
-        (newf)
-    | StarMinus { h_formula_starminus_h1 = hf1;
-             h_formula_starminus_h2 = hf2;
-             h_formula_starminus_pos = pos} ->
-        let n_hf1 = helper hf1 in
-        let n_hf2 = helper hf2 in
-        (StarMinus { h_formula_starminus_h1 = n_hf1;
-               h_formula_starminus_h2 = n_hf2;
-               h_formula_starminus_pos = pos})        
-    | Conj { h_formula_conj_h1 = hf1;
-             h_formula_conj_h2 = hf2;
-             h_formula_conj_pos = pos} ->
-        let n_hf1 = helper hf1 in
-        let n_hf2 = helper hf2 in
-        (Conj { h_formula_conj_h1 = n_hf1;
-               h_formula_conj_h2 = n_hf2;
-               h_formula_conj_pos = pos})
-    | ConjStar { h_formula_conjstar_h1 = hf1;
-             h_formula_conjstar_h2 = hf2;
-             h_formula_conjstar_pos = pos} ->
-        let n_hf1 = helper hf1 in
-        let n_hf2 = helper hf2 in
-        (ConjStar { h_formula_conjstar_h1 = n_hf1;
-               h_formula_conjstar_h2 = n_hf2;
-               h_formula_conjstar_pos = pos})
-    | ConjConj { h_formula_conjconj_h1 = hf1;
-             h_formula_conjconj_h2 = hf2;
-             h_formula_conjconj_pos = pos} ->
-        let n_hf1 = helper hf1 in
-        let n_hf2 = helper hf2 in
-        (ConjConj { h_formula_conjconj_h1 = n_hf1;
-               h_formula_conjconj_h2 = n_hf2;
-               h_formula_conjconj_pos = pos})                              
-    | Phase { h_formula_phase_rd = hf1;
-              h_formula_phase_rw = hf2;
-              h_formula_phase_pos = pos} ->
-        let n_hf1 = helper hf1 in
-        let n_hf2 = helper hf2 in
-        (Phase { h_formula_phase_rd = n_hf1;
-              h_formula_phase_rw = n_hf2;
-              h_formula_phase_pos = pos})
-    | HRel (id,_,_) -> if CP.mem_svl id hp_names then HTrue
-        else hf
-    | DataNode _
-    | ViewNode _
-    | Hole _
-    | HTrue
-    | HFalse
-    | HEmp -> hf
-  in helper hf0
 
 let ins_x ss f0=
   let rec helper f=

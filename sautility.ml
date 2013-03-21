@@ -297,24 +297,24 @@ and get_data_view_hrel_vars_bformula bf=
 
 and get_data_view_hrel_vars_h_formula hf=
   let rec helper h=
- match h with
-    | CF.Star { CF.h_formula_star_h1 = hf1;
-                CF.h_formula_star_h2 = hf2}
-    | CF.Conj { CF.h_formula_conj_h1 = hf1;
-                CF.h_formula_conj_h2 = hf2;}
-    | CF.Phase { CF.h_formula_phase_rd = hf1;
-                 CF.h_formula_phase_rw = hf2;} ->
-        let ls1 = helper hf1 in
-        let ls2 = helper hf2 in
-        (ls1@ls2)
-    | CF.DataNode hd -> [hd.CF.h_formula_data_node]
-    | CF.ViewNode hv -> [hv.CF.h_formula_view_node]
-    | CF.HRel (hp,_,_) -> [hp]
-    | CF.Hole _
-    | CF.HTrue
-    | CF.HFalse
-    | CF.HEmp -> []
-	| CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
+    match h with
+      | CF.Star { CF.h_formula_star_h1 = hf1;
+        CF.h_formula_star_h2 = hf2}
+      | CF.Conj { CF.h_formula_conj_h1 = hf1;
+        CF.h_formula_conj_h2 = hf2;}
+      | CF.Phase { CF.h_formula_phase_rd = hf1;
+        CF.h_formula_phase_rw = hf2;} ->
+            let ls1 = helper hf1 in
+            let ls2 = helper hf2 in
+            (ls1@ls2)
+      | CF.DataNode hd -> [hd.CF.h_formula_data_node]
+      | CF.ViewNode hv -> [hv.CF.h_formula_view_node]
+      | CF.HRel (hp,_,_) -> [hp]
+      | CF.Hole _
+      | CF.HTrue
+      | CF.HFalse
+      | CF.HEmp -> []
+      | CF.StarMinus _ | CF.ConjStar _ | CF.ConjConj _ -> Error.report_no_pattern()
   in
   helper hf
 
@@ -1692,10 +1692,10 @@ let remove_longer_common_prefix_w_unk unk_hps fs=
     match cur with
       | [] -> res
       | f::ss ->
-          let f1 = CF.subst_unk_hps_f f unk_hps in
+          let f1 = CF.drop_unk_hrel (*CF.subst_unk_hps_f*) f unk_hps in
           if List.exists
             (fun f2 ->
-                let f21 = CF.subst_unk_hps_f f2 unk_hps in
+                let f21 = CF.drop_unk_hrel (*CF.subst_unk_hps_f*) f2 unk_hps in
                 check_com_pre_eq_formula f1 f21)
             res then
             helper ss res
@@ -2214,7 +2214,7 @@ let process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls c
         nf6
     with Not_found -> nf5
   in
-  let nf7 = CF.drop_exact_hrel_f nf6 com_hps in
+  let nf7 = CF.drop_exact_hrel_f nf6 com_hps com_eqPures in
   let _ =  DD.ninfo_pprint ("       nf6: " ^ (Cprinter.prtt_string_of_formula nf6)) no_pos in
   let _ =  DD.ninfo_pprint ("       nf7: " ^ (Cprinter.prtt_string_of_formula nf7)) no_pos in
   nf7
@@ -2222,9 +2222,12 @@ let process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls c
 let process_one_f prog org_args args next_roots hp_subst sh_ldns com_eqNulls com_eqPures com_hps (ldns, f)=
   let pr1 = !CP.print_svl in
   let pr2 = Cprinter.prtt_string_of_formula in
-  Debug.no_4 "process_one_f" pr1 pr1 pr2 (pr_list !CP.print_formula) pr2
-      (fun _ _ _ _-> process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls com_eqPures com_hps (ldns, f))
-      org_args args f com_eqPures
+  let pr3 (a,b,_) = let pr = pr_pair !CP.print_sv (pr_list !CP.print_exp) in
+  pr (a,b)
+  in
+  Debug.no_5 "process_one_f" pr1 pr1 pr2 (pr_list !CP.print_formula) (pr_list pr3) pr2
+      (fun _ _ _ _ _-> process_one_f_x prog org_args args next_roots hp_subst sh_ldns com_eqNulls com_eqPures com_hps (ldns, f))
+      org_args args f com_eqPures com_hps
 
 
 let get_shortest_lnds ll_ldns min=
@@ -2285,7 +2288,7 @@ let get_min_common prog args unk_hps ll_ldns=
   let pr5 hrel = Cprinter.prtt_string_of_h_formula (CF.HRel hrel) in
   let pr6 = pr_penta string_of_int pr3 pr1 pr4 (pr_list pr5) in
   let pr7 (_,f) = Cprinter.prtt_string_of_formula f in
-  Debug.no_3 "get_min_common" pr1 pr1 (pr_list pr7) pr6
+  Debug.no_3 "get_min_common" pr1 pr1 (pr_list_ln pr7) pr6
       (fun _ _ _ -> get_min_common_x prog args unk_hps ll_ldns)
       args unk_hps ll_ldns
 
@@ -2422,7 +2425,7 @@ let refine_dang_x hpdefs unk_hps fs=
 let refine_dang hpdefs unk_hps fs=
   let pr1 = !CP.print_svl in
   let pr2 = pr_list_ln Cprinter.prtt_string_of_formula in
-  Debug.ho_2 "refine_dang" pr1 pr2 pr2
+  Debug.no_2 "refine_dang" pr1 pr2 pr2
       (fun _ _ -> refine_dang_x hpdefs unk_hps fs) unk_hps fs
 
 let remove_dups_recursive_x cdefs hp args unk_hps unk_svl defs=
@@ -2515,7 +2518,7 @@ let remove_dups_recursive_x cdefs hp args unk_hps unk_svl defs=
     (* let _ = DD.info_pprint ("       base_fs1:" ^ (pr1 base_fs1)) no_pos in *)
     let process_helper (f,residue) =
       (* let _ = DD.info_pprint ("       residue:" ^ (Cprinter.prtt_string_of_formula residue)) no_pos in *)
-      let residue1,_ = CF.drop_hrel_f residue unk_hps in
+      let residue1 = CF.drop_unk_hrel residue unk_hps in
       let residue2 = CF.remove_neqNulls_f residue1 in
       (* let _ = DD.info_pprint ("       residue2:" ^ (Cprinter.prtt_string_of_formula residue2)) no_pos in *)
       let drop = if is_empty_f residue2 then
@@ -2595,7 +2598,7 @@ let simplify_set_of_formulas_x prog cdefs hp args unk_hps unk_svl defs=
   in
   let helper f=
     let f1 = filter_var prog args f in
-    let f2 =  elim_irr_eq_exps prog (CP.remove_dups_svl (args@unk_svl)) f1 in
+    let f2 = elim_irr_eq_exps prog (CP.remove_dups_svl (args@unk_svl)) f1 in
     if is_empty_f f2 || (is_trivial f2 (hp,args)) || is_self_rec f2 then [] else [f2]
   in
   let base_case_exist,defs1 = remove_dups_recursive cdefs hp args unk_hps unk_svl defs in
@@ -3451,15 +3454,37 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
             CP.subst ss (CF.extract_pure f)
           else lookup_hpdefs tl (hp0,args0)
   in
-  let subst_xpure lhpdefs f0=
+  (* let subst_xpure lhpdefs f0= *)
+  (*   let process_p_helper p= *)
+  (*     let _ = DD.info_pprint ("       p: " ^ (!CP.print_formula p)) no_pos in *)
+  (*     let ps = CP.list_of_conjs p in *)
+  (*     let xp_ps,rem_ps = List.partition CP.is_xpure ps in *)
+  (*     let xp_hpargs = List.map CP.extract_xpure xp_ps in *)
+  (*     let xp_ps = (List.map (lookup_hpdefs lhpdefs) xp_hpargs) in *)
+  (*     (\* let filtered_xp_ps = CP.filter_disj xp_ps rem_ps in *\) *)
+  (*     let new_p =  CP.conj_of_list (CP.remove_redundant_helper (rem_ps@xp_ps) []) no_pos in *)
+  (*     new_p *)
+  (*   in *)
+  (*   let rec helper f= *)
+  (*     match f with *)
+  (*       | CF.Base fb -> *)
+  (*           let new_p =  process_p_helper (MCP.pure_of_mix fb.CF.formula_base_pure) in *)
+  (*           CF.Base{fb with CF.formula_base_pure = (MCP.mix_of_pure new_p)} *)
+  (*       | CF.Exists fe -> *)
+  (*           let new_p =  process_p_helper (MCP.pure_of_mix fe.CF.formula_exists_pure) in *)
+  (*           CF.Exists{fe with CF.formula_exists_pure = (MCP.mix_of_pure new_p)} *)
+  (*       | CF.Or orf -> CF.Or {orf with *)
+  (*           CF.formula_or_f1 = helper orf.CF.formula_or_f1; *)
+  (*           CF.formula_or_f2 = helper orf.CF.formula_or_f2; *)
+  (*       } *)
+  (*   in *)
+  (*   helper f0 *)
+  (* in *)
+  let subst_xpure lhpdefs xp_hpargs f0=
     let process_p_helper p=
-      (* let _ = DD.info_pprint ("       p: " ^ (!CP.print_formula p)) no_pos in *)
-      let ps = CP.list_of_conjs p in
-      let xp_ps,rem_ps = List.partition CP.is_xpure ps in
-      let xp_hpargs = List.map CP.extract_xpure xp_ps in
       let xp_ps = (List.map (lookup_hpdefs lhpdefs) xp_hpargs) in
       (* let filtered_xp_ps = CP.filter_disj xp_ps rem_ps in *)
-      let new_p =  CP.conj_of_list (CP.remove_redundant_helper (rem_ps@xp_ps) []) no_pos in
+      let new_p =  CP.conj_of_list (CP.remove_redundant_helper (xp_ps) []) no_pos in
       new_p
     in
     let rec helper f=
@@ -3478,30 +3503,43 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
     helper f0
   in
   (*returns eqs/ss: mkEqexp/subst ss*)
+  (* let look_up_get_eqs_ss args0 ls_unk_hpargs_fr (used_hp,used_args)= *)
+  (*   try *)
+  (*       let _,fr_args = List.find (fun (hp,_) -> CP.eq_spec_var hp used_hp) ls_unk_hpargs_fr in *)
+  (*       let ss = List.combine used_args fr_args in *)
+  (*       let rs1,rs2 = List.partition (fun (sv1,_) -> CP.mem_svl sv1 args0) ss in *)
+  (*       ([used_hp],rs1,rs2) *)
+  (*   with *)
+  (*     | Not_found -> ([],[],[]) *)
+  (* in *)
   let look_up_get_eqs_ss args0 ls_unk_hpargs_fr (used_hp,used_args)=
     try
         let _,fr_args = List.find (fun (hp,_) -> CP.eq_spec_var hp used_hp) ls_unk_hpargs_fr in
         let ss = List.combine used_args fr_args in
         let rs1,rs2 = List.partition (fun (sv1,_) -> CP.mem_svl sv1 args0) ss in
-        ([used_hp],rs1,rs2)
+        if List.length rs1 = List.length args0 then
+          ([used_hp],[([(used_hp,used_args)],[])],rs2)
+        else
+          ([used_hp],[([],rs1)],rs2)
     with
       | Not_found -> ([],[],[])
   in
   let subst_pure_hp_unk args0 ls_unk_hpargs_fr f=
     (* let _ = DD.info_pprint ("       f: " ^ (!CF.print_formula f)) no_pos in *)
     let ls_used_hp_args = CF.get_HRels_f f in
-    let ls_xpures = CF.get_xpure_view f in
-    let ls_used_hp_args0 = Gen.BList.difference_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) ls_used_hp_args ls_xpures in
+    let ls_xpures =  CF.get_xpure_view f in
+    let ls_used_hp_args0 = Gen.BList.remove_dups_eq (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) (ls_used_hp_args@ls_xpures) in
     (*look up*)
-    let r = List.map (look_up_get_eqs_ss args0 ls_unk_hpargs_fr) ls_used_hp_args0 in
-    let ls_used_unk_hps,ls_eqs, ls_ss = split3 r in
+    let r1 = List.map (look_up_get_eqs_ss args0 ls_unk_hpargs_fr) ls_used_hp_args in
+    let r2 = List.map (look_up_get_eqs_ss args0 ls_unk_hpargs_fr) ls_xpures in
+    let ls_used_unk_hps,ls_eqs, ls_ss = split3 (r1@r2) in
     let used_unk_hps = List.concat ls_used_unk_hps in
-    let eqs = List.concat ls_eqs in
+    let unk_need_subst, eqs = List.fold_left (fun (ls1,ls2) (a1,a2) -> (ls1@a1,ls2@a2)) ([],[]) (List.concat ls_eqs) in
     (* let pr1 = pr_list (pr_pair !CP.print_sv !CP.print_sv) in *)
     (* let _ = DD.info_pprint ("       eqs: " ^ (pr1 eqs)) no_pos in *)
     let ss = List.concat ls_ss in
     (*remove unkhps*)
-    let f1,_ = (* CF.drop_unk_hrel *) CF.drop_hrel_f f used_unk_hps in
+    let f1 =  CF.drop_unk_hrel (* CF.drop_hrel_f*) f used_unk_hps in
     (*subst*)
     let f2 = CF.subst ss f1 in
     (*add pure eqs*)
@@ -3509,21 +3547,31 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
     let p_eqs = List.map (fun (sv1,sv2) -> CP.mkPtrEqn sv1 sv2 pos) eqs in
     let p = CP.conj_of_list p_eqs pos in
     let f3 = CF.mkAnd_pure f2 (MCP.mix_of_pure p) pos in
-    f3
+    (f3, unk_need_subst)
   in
   let subst_pure_hp_unk_hpdef ls_unk_hpargs_fr (rc, hf, def)=
     let hp,args0 = CF.extract_HRel hf in
     (* let _ = DD.info_pprint ("       hp: " ^ (!CP.print_sv hp)) no_pos in *)
     let fs = CF.list_of_disjs def in
     let fs1 = List.map (subst_pure_hp_unk args0 ls_unk_hpargs_fr) fs in
-    let def1 = CF.disj_of_list fs1 (CF.pos_of_formula def) in
-    (rc, hf, def1)
+    let def1 = CF.disj_of_list (fst (List.split fs1)) (CF.pos_of_formula def) in
+    (rc, hf, def1, fs1)
+  in
+  let subst_and_combine new_hpdefs pr_fs=
+    let fs = List.map (fun (f, xp_args) ->
+        if xp_args = [] then f else
+        subst_xpure new_hpdefs xp_args f
+    ) pr_fs
+    in
+    CF.disj_of_list fs no_pos
   in
   let ls_unk_hpargs_fr = unk_hp_frargs in
   (* let ls_unk_hpargs_fr = List.map transform_hp_unk unk_hpargs in *)
   let new_hpdefs = List.map (subst_pure_hp_unk_hpdef ls_unk_hpargs_fr) hp_defs in
+  let new_hpdefs1 = List.map (fun (a,b,f,_) -> (a,b, f)) new_hpdefs in
+  let new_hpdefs2 = List.map (fun (a,b,_,pr_f) -> (a,b, pr_f)) new_hpdefs in
   (*subst XPURE*)
-  List.map (fun (a,b,f) -> (a,b, subst_xpure new_hpdefs f)) new_hpdefs
+  List.map (fun (a,b,pr_f) -> (a,b,  subst_and_combine (*subst_xpure*) new_hpdefs1 pr_f)) new_hpdefs2
 
 let transform_unk_hps_to_pure hp_defs unk_hpargs =
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in

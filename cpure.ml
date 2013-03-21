@@ -7027,7 +7027,15 @@ and drop_xpure f0 =
   let rec helper f=
     match f with
       | BForm (bf, ofl) -> BForm (drop_xpure_bformula bf, ofl)
-      | And (f1, f2, p) ->  And (helper f1, helper f2, p)
+      | And (f1, f2, p) -> begin
+            let nf1 = helper f1 in
+            let nf2 = helper f2 in
+            match isConstTrue nf1, isConstTrue nf2 with
+              | true, true -> mkTrue p
+              | true, false -> nf2
+              | false, true -> nf1
+              | false,false -> And (nf1, nf2, p)
+        end
       | AndList b -> AndList (map_l_snd helper b)
       | Or (f1, f2, ofl, p) ->  Or (helper f1, helper f2, ofl, p)
       | Not (f, ofl, p) ->  Not (helper f, ofl, p)
