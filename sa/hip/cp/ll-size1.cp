@@ -24,6 +24,8 @@ ass [H,H1,H2,H3][]:{
  }
 
 hpdefs [H2,H3][]:{
+   H1(x) --> H(x);
+  H(x) --> x=null or x::node<_,p>*H(p);
    H2(x_594) --> H(x_594);
    H3(x_595) --> H1(x_595)
  }

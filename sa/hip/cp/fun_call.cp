@@ -17,13 +17,15 @@ hpdefs [H,H1][]:{
 ]
 
 size:SUCCESS[
-ass [H,H1,H2,H3][]:{
+ass [H2,H3][]:{
    H2(x)&true --> H(x)&true;
    H1(x)&true --> H3(x)&true;
   H1(x)&x!=null --> H3(x)
  }
 
 hpdefs [H2,H3][]:{
+   H1(x) --> H(x);
+  H(x) --> x=null or x::node<_,p>*H(p)  ;
    H2(x_594) --> H(x_594);
    H3(x_595) --> H1(x_595)
  }

@@ -2389,12 +2389,15 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                         print_endline (Infer.rel_ass_stk # string_of_reverse);
                         print_endline "*************************************" 
                       end;
-		            let ls_hprel, ls_inferred_hps, dropped_hps =
+		    let ls_hprel, ls_inferred_hps, dropped_hps =
                       if !Globals.sa_en_norm then
                         Sa.infer_hps prog proc.proc_name hp_lst_assume
                             sel_hp_rels sel_post_hp_rels (Gen.BList.remove_dups_eq
-                                                              (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) hp_rel_unkmap)
+                                (fun (hp1,_) (hp2,_) -> CP.eq_spec_var hp1 hp2) hp_rel_unkmap)
                       else [],[],[]
+                    in
+                    (**update hpdefs for func call*)
+                    let _ = Cast.update_hpdefs_proc prog.Cast.new_proc_decls ls_inferred_hps proc.proc_name
                     in
                     if not(Sa.rel_def_stk# is_empty) then
                       begin
@@ -2405,11 +2408,11 @@ and check_proc (prog : prog_decl) (proc : proc_decl) cout_option (mutual_grp : p
                         print_endline (Sa.rel_def_stk # string_of_reverse);
 		        print_endline "*************************************"
                       end;
-			    (**************cp_test _ gen_cpfile******************)
-		            let _ = if(!Globals.cp_test || !Globals.cp_prefile) then
-                          CEQ.cp_test proc hp_lst_assume ls_inferred_hps sel_hp_rels in
-		            let _ = if(!Globals.gen_cpfile) then
-                          CEQ.gen_cpfile prog proc hp_lst_assume ls_inferred_hps dropped_hps old_hpdecls sel_hp_rels cout_option in
+		    (**************cp_test _ gen_cpfile******************)
+		    let _ = if(!Globals.cp_test || !Globals.cp_prefile) then
+                      CEQ.cp_test proc hp_lst_assume ls_inferred_hps sel_hp_rels in
+		    let _ = if(!Globals.gen_cpfile) then
+                      CEQ.gen_cpfile prog proc hp_lst_assume ls_inferred_hps dropped_hps old_hpdecls sel_hp_rels cout_option in
 		    (**************end cp_test _ gen_cpfile******************)
                     let lst_rank = List.map (fun (_,a2,a3)-> (a2,a3)) lst_rank in
                     (*let _ = Ranking.do_nothing in*)

@@ -3484,7 +3484,7 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
     let process_p_helper p=
       let xp_ps = (List.map (lookup_hpdefs lhpdefs) xp_hpargs) in
       (* let filtered_xp_ps = CP.filter_disj xp_ps rem_ps in *)
-      let new_p =  CP.conj_of_list (CP.remove_redundant_helper (xp_ps) []) no_pos in
+      let new_p = CP.conj_of_list (CP.remove_redundant_helper ((CP.list_of_conjs p)@ xp_ps) []) no_pos in
       new_p
     in
     let rec helper f=
@@ -3545,7 +3545,7 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
     (*add pure eqs*)
     let pos = CF.pos_of_formula f2 in
     let p_eqs = List.map (fun (sv1,sv2) -> CP.mkPtrEqn sv1 sv2 pos) eqs in
-    let p = CP.conj_of_list p_eqs pos in
+    let p = CP.conj_of_list (CP.remove_redundant_helper p_eqs []) pos in
     let f3 = CF.mkAnd_pure f2 (MCP.mix_of_pure p) pos in
     (f3, unk_need_subst)
   in
@@ -3576,7 +3576,7 @@ let transform_unk_hps_to_pure_x hp_defs unk_hp_frargs =
 let transform_unk_hps_to_pure hp_defs unk_hpargs =
   let pr1 = pr_list_ln Cprinter.string_of_hp_rel_def in
   let pr2 = pr_list_ln (pr_pair !CP.print_sv !CP.print_svl) in
-  Debug.no_2 "transform_unk_hps_to_pure" pr1 pr2 pr1
+  Debug.ho_2 "transform_unk_hps_to_pure" pr1 pr2 pr1
       (fun _ _ -> transform_unk_hps_to_pure_x hp_defs unk_hpargs) hp_defs unk_hpargs
 
 (************************************************************)

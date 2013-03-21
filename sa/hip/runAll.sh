@@ -24,8 +24,8 @@ echo "dangling/ll-app3.ss"
 ../../hip dangling/ll-app3.ss --sa-dangling --sa-inlining -cp-test cp/ll-app3.cp | grep Compare
 echo "dangling/ll-app4.ss"
 ../../hip dangling/ll-app4.ss --sa-dangling --sa-inlining -cp-test cp/ll-app4.cp | grep Compare
-echo "dangling/ll-app5b.ss - problem with -cp-test"
-../../hip dangling/ll-app5b.ss --sa-useless --sa-dangling --sa-inlining -cp-test cp/ll-app5b.cp | grep Compare
+echo "dangling/ll-app5b.ss"
+../../hip dangling/ll-app5b.ss --sa-useless -cp-test cp/ll-app5b.cp | grep Compare
 echo "dangling/ll-app6.ss"
 ../../hip dangling/ll-app6.ss --sa-dangling --sa-inlining -cp-test cp/ll-app6.cp | grep Compare
 echo "dangling/ll-swap.ss"
@@ -56,7 +56,7 @@ echo "ll-next5"
 ../../hip ll-next5.ss --sa-dangling --sa-inlining -cp-test cp/ll-next5.cp | grep Compare
 echo "ll-next6"
 ../../hip ll-next6.ss --sa-dangling --sa-split --sa-inlining --sa-inlining -cp-test cp/ll-next6.cp | grep Compare
-echo "ll-delete -cp-test has problem"
+echo "ll-delete"
 ../../hip ll-delete.ss --sa-dangling --sa-inlining --sa-useless -cp-test cp/ll-delete.cp | grep Compare
 # echo "ll-delete2"
 # ../../hip ll-delete2.ss --sa-dangling --sa-inlining -cp-test cp/ll-delete2.cp | grep Compare
@@ -68,7 +68,7 @@ echo "ll_all3"
 ../../hip ll_all3.ss --sa-dangling -cp-test cp/ll_all3.cp | grep Compare
 echo "ll_all4"
 ../../hip ll_all4.ss --sa-dangling --sa-inlining -cp-test cp/ll_all4.cp | grep Compare
-echo "ll_all5 - problem with -cp-test"
+echo "ll_all5"
 ../../hip ll_all5.ss --sa-dangling --sa-inlining --sa-split -cp-test cp/ll_all5.cp | grep Compare
 echo "ll_all7"
 ../../hip ll_all7.ss --sa-dangling --sa-inlining -cp-test cp/ll_all7.cp | grep Compare
@@ -80,7 +80,7 @@ echo "ll_all_13"
 ../../hip ll_all_13.ss -cp-test cp/ll_all_13.cp | grep Compare
 echo "ll_all_13a"
 ../../hip ll_all_13a.ss -cp-test cp/ll_all_13a.cp | grep Compare
-echo "ll_all_13b -cp-test has problem"
+echo "ll_all_13b"
 ../../hip ll_all_13b.ss -cp-test cp/ll_all_13b.cp | grep Compare
 echo "ll_all_13c"
 ../../hip ll_all_13c.ss -cp-test cp/ll_all_13c.cp | grep Compare
@@ -92,7 +92,7 @@ echo "ll_all_14"
 ../../hip ll_all_14.ss -cp-test cp/ll_all_14.cp | grep Compare
 echo "mul-procs "
 ../../hip mul-procs.ss -cp-test cp/mul-procs.cp | grep Compare
-echo "fun-call -cp-test"
+echo "fun-call"
 ../../hip fun-call.ss -cp-test cp/fun_call.cp | grep Compare
 echo "ll-empty"
 ../../hip ll-empty.ss -cp-test cp/ll-empty.cp | grep Compare
@@ -112,7 +112,7 @@ echo "dll-del3"
 ../../hip dll-del3.ss --sa-dangling --sa-inlining --sa-refine-dang -cp-test cp/dll-del3.cp | grep Compare
 echo "dll-del3a"
 ../../hip dll-del3a.ss --sa-dangling --sa-inlining --sa-refine-dang -cp-test cp/dll-del3a.cp | grep Compare
-echo "ll-size1 -cp-test"
+echo "ll-size1"
 ../../hip ll-size1.ss -cp-test cp/ll-size1.cp | grep Compare
 echo "ll-ret-first"
 ../../hip ll-ret-first.ss --sa-dangling --sa-inlining -cp-test cp/ll-ret-first.cp | grep Compare
