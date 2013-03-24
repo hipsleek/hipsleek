@@ -103,6 +103,7 @@ type typ =
   | RelT of (typ list) (* relation type *)
   | HpT (* heap predicate relation type *)
   | Tree_sh
+  | Bptyp
   (* | FuncT (\* function type *\) *)
   | Pointer of typ (* base type and dimension *)
 
@@ -193,6 +194,7 @@ type perm_type =
   | Frac (*fractional permissions*)
   | Count (*counting permissions*)
   | Dperm (*distinct fractional shares*)
+  | Bperm (*bounded permissions*)
   
 let perm = ref Frac
 
@@ -432,6 +434,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List t        -> "list("^(string_of_typ t)^")"
   | Tree_sh		  -> "Tsh"
+  | Bptyp		  -> "Bptyp"
   | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
   | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | HpT        -> "HpT"
@@ -459,6 +462,7 @@ let rec string_of_typ_alpha = function
   | NUM          -> "NUM"
   | AnnT          -> "AnnT"
   | Tree_sh		  -> "Tsh"
+  | Bptyp		  -> "Bptyp"
   | BagT t        -> "bag_"^(string_of_typ t)
   | TVar t        -> "TVar_"^(string_of_int t)
   | List t        -> "list_"^(string_of_typ t)

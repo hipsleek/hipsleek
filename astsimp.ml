@@ -3828,6 +3828,8 @@ and default_value (t :typ) pos : C.exp =
 	      C.EmptyArray { C.exp_emparray_type = t; 
 	      C.exp_emparray_dim = d; 
 	      C.exp_emparray_pos = pos}
+    | Bptyp ->
+          failwith "default_value: Bptyp can only be used for constraints"
 
 and sub_type_x (t1 : typ) (t2 : typ) =
   let it1 = trans_type_back t1 in
@@ -5135,6 +5137,14 @@ and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
   match e0 with
     | IP.Null pos -> CP.Null pos
     | IP.Tsconst (t,pos) -> CP.Tsconst (t,pos)
+    | IP.Bptriple ((pc,pt,pa),pos) ->
+        (match pc,pt,pa with
+          | Ipure.Var (vc,posc), Ipure.Var (vt,post),Ipure.Var (va,posa) ->
+              let pc = trans_var vc stab posc in
+              let pt = trans_var vt stab post in
+              let pa = trans_var va stab posa in
+              CP.Bptriple ((pc,pt,pa),pos)
+          | _ -> report_error pos ("trans_pure_exp: Bptriple error at location "^(string_of_full_loc pos)))
     | IP.AConst(a,pos) -> CP.AConst(a,pos)
     | IP.InfConst(a,pos) -> CP.InfConst(a,pos)
     | IP.Var ((v, p), pos) -> 
@@ -5495,7 +5505,17 @@ and gather_type_info_exp_x a0 stab et =
           let t = I.float_type in
           let _ = must_unify_expect t et stab pos in
           t
-    | IP.Add (a1, a2, pos) -> 
+    | IP.Bptriple ((pc,pt,pa), pos) ->
+          let _ = must_unify_expect_test et Bptyp pos in 
+          let new_et = fresh_tvar stab in
+	      let t1 = gather_type_info_exp_x pc stab new_et in (* Int *)
+	      let t2 = gather_type_info_exp_x pt stab new_et in (* Int *)
+	      let t3 = gather_type_info_exp_x pa stab new_et in (* Int *)
+          let _ = must_unify_expect t1 Int stab pos in
+          let _ = must_unify_expect t2 Int stab pos in
+          let _ = must_unify_expect t3 Int stab pos in
+          Bptyp
+    | IP.Add (a1, a2, pos) ->
 	      let _ = must_unify_expect_test_2 et NUM Tree_sh pos in (* UNK, Int, Float, NUm, Tvar *)
           let new_et = fresh_tvar stab in
 	      let t1 = gather_type_info_exp_x a1 stab new_et in (* tvar, Int, Float *)

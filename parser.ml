@@ -1276,7 +1276,7 @@ simple_heap_constr:
 opt_perm: [[t = OPT perm -> t ]];
 
 (*LDK: for fractionl permission, we expect cexp*)
-perm: [[`OPAREN; t = cexp; `CPAREN  -> t ]];  
+perm: [[`OPAREN; t = LIST1 cexp SEP `COMMA; `CPAREN  -> List.hd t ]];  
 
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];   
         

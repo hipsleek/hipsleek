@@ -169,6 +169,7 @@ and exp =
   | AConst of (heap_ann * loc)
   | InfConst of (ident * loc)
   | Tsconst of (Tree_shares.Ts.t_sh * loc)
+  | Bptriple of ((spec_var * spec_var * spec_var) * loc) (*triple for bounded permissions*)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
   | Mult of (exp * exp * loc)
@@ -776,6 +777,7 @@ let rec get_exp_type (e : exp) : typ =
   | FConst _ -> Float
   | AConst _ -> AnnT
   | Tsconst _ -> Tree_sh
+  | Bptriple  _ -> Bptyp
   | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _)
   | Max (e1, e2, _) | Min (e1, e2, _) ->
       begin
@@ -988,6 +990,7 @@ and afv (af : exp) : spec_var list =
     | InfConst _
     | Tsconst _
     | FConst _ -> []
+    | Bptriple ((ec,et,ea),_) -> [ec;et;ea]
     | Var (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
     | Level (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
     | Add (a1, a2, _) -> combine_avars a1 a2
@@ -1597,6 +1600,7 @@ and is_exp_arith (e:exp) : bool=
     | List _ | ListCons _ | ListHead _ | ListTail _
     | ListLength _ | ListAppend _ | ListReverse _ -> false
     | Tsconst _ -> false
+    | Bptriple _ -> false
     | Func _ -> true
     | ArrayAt _ -> true (* An Hoa : a[i] is just a value *)
           
@@ -2468,6 +2472,7 @@ and pos_of_exp (e : exp) = match e with
   | AConst (_, p) 
   | FConst (_, p) 
   | Tsconst (_, p)
+  | Bptriple (_,p)
   | Add (_, _, p) 
   | Subtract (_, _, p) 
   | Mult (_, _, p) 
@@ -2924,6 +2929,10 @@ and subs_one sst v =
 
 and e_apply_subs sst e = match e with
   | Null _ | IConst _ | FConst _ | AConst _ |InfConst _ |Tsconst _ -> e
+  | Bptriple ((ec,et,ea),pos) ->
+      Bptriple ((subs_one sst ec,
+                 subs_one sst et,
+                 subs_one sst ea),pos)
   | Var (sv, pos) -> Var (subs_one sst sv, pos)
   | Level (sv, pos) -> Level (subs_one sst sv, pos)
   | Add (a1, a2, pos) -> normalize_add (Add (e_apply_subs sst a1,
@@ -2974,9 +2983,15 @@ and b_subst (zip: (spec_var * spec_var) list) (bf:b_formula) :b_formula =
   let pr = pr_list (pr_pair !print_sv !print_sv) in
   let pr2 = !print_b_formula in
   Debug.no_2 "b_subst" pr pr2 pr2 b_subst_x zip bf
-      
+
+and e_apply_one_spec_var (fr, t) sv = if eq_spec_var sv fr then t else sv
+
 and e_apply_one (fr, t) e = match e with
   | Null _ | IConst _ | InfConst _ | FConst _ | AConst _ | Tsconst _ -> e
+  | Bptriple ((ec,et,ea),pos) ->
+      Bptriple ((e_apply_one_spec_var (fr, t) ec,
+                 e_apply_one_spec_var (fr, t) et,
+                 e_apply_one_spec_var (fr, t) ea),pos)
   | Var (sv, pos) -> Var ((if eq_spec_var sv fr then t else sv), pos)
   | Level (sv, pos) -> Level ((if eq_spec_var sv fr then t else sv), pos)
   | Add (a1, a2, pos) -> normalize_add (Add (e_apply_one (fr, t) a1,
@@ -3097,6 +3112,7 @@ and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
   | InfConst _
   | FConst _ 
   | AConst _ 
+  | Bptriple _ (*TOCHECK*)
   | Tsconst _ -> e
   | Add (a1, a2, pos) -> normalize_add (Add (a_apply_par_term sst a1, a_apply_par_term sst a2, pos))
   | Subtract (a1, a2, pos) -> Subtract (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
@@ -3207,6 +3223,7 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | AConst _ 
   | InfConst _ 
   | FConst _ 
+  | Bptriple _ -> e
   | Tsconst _ -> e
   | Add (a1, a2, pos) -> normalize_add (Add (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos))
   | Subtract (a1, a2, pos) -> Subtract (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
@@ -3262,6 +3279,7 @@ and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*e
     | FConst _ 
     | AConst _ 
     | Tsconst _ -> (false,e)
+    | Bptriple _ -> (false,e) (* TOCHECK *)
     | Add (a1, a2, pos) -> 
           let b1, r1 = helper crt_var a1 in
           let b2, r2 = helper crt_var a2 in
@@ -4409,6 +4427,7 @@ and b_apply_one_exp (fr, t) bf =
 
 and e_apply_one_exp (fr, t) e = match e with
   | Null _ | IConst _ | InfConst _ | FConst _| AConst _ | Tsconst _ -> e
+  | Bptriple _ -> e
   | Var (sv, pos) -> if eq_spec_var sv fr then t else e
   | Level (sv, pos) -> if eq_spec_var sv fr then t else e
   | Add (a1, a2, pos) -> Add (e_apply_one_exp (fr, t) a1,
@@ -4639,9 +4658,10 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
 	| Level _ 
 	| IConst _ 
 	| InfConst _ 
-	| AConst _ 
-	| Tsconst _ 
+	| AConst _
+	| Tsconst _
     | FConst _ -> true
+	| Bptriple _ -> false (*TOCHECK*)
 	| Add (e1,e2,_)
 	| Subtract (e1,e2,_) -> false
 	| Mult _
@@ -4768,6 +4788,7 @@ and simp_mult_x (e : exp) :  exp =
     match e0 with
       | Null _ 
       | Tsconst _ 
+      | Bptriple _ 
       | AConst _ -> e0	  
       | Var (v, l) ->
             (match m with 
@@ -4841,6 +4862,7 @@ and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
     |  Var _ 
     |  Level _ 
     |  Tsconst _
+    |  Bptriple _
     |  InfConst _
     |  AConst _ -> ((Some e), None)
     |  IConst (v, l) ->
@@ -4991,6 +5013,7 @@ and purge_mult_x (e :  exp):  exp = match e with
   |  AConst _ 
   | InfConst _
   | Tsconst _
+  | Bptriple _
   | FConst _ -> e
   |  Add (e1, e2, l) ->  Add((purge_mult e1), (purge_mult e2), l)
   |  Subtract (e1, e2, l) ->  Subtract((purge_mult e1), (purge_mult e2), l)
@@ -5307,6 +5330,7 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
               | InfConst _ 
 	      | AConst _
               | Tsconst _ 
+          | Bptriple _ 
 	      | FConst _ -> (e,f_comb [])
 	      | Add (e1,e2,l) ->
 	            let (ne1,r1) = helper new_arg e1 in
@@ -5402,6 +5426,7 @@ let rec transform_exp f e  =
 	    | IConst _
 	    | AConst _
 		| Tsconst _
+		| Bptriple _
 	    | FConst _ -> e
 	    | Add (e1,e2,l) ->
 	          let ne1 = transform_exp f e1 in
@@ -5835,6 +5860,7 @@ let rec get_head e = match e with
     | FConst (f,_) -> string_of_float f
     | AConst (f,_) -> string_of_heap_ann f
 	| Tsconst (f,_) -> Tree_shares.Ts.string_of f
+	| Bptriple _ -> "Bptriple"
     | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_)
     | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_) 
     | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
@@ -5889,6 +5915,7 @@ and norm_exp (e:exp) =
   let rec helper e = match e with
     | Var _ 
     | Null _ | IConst _ | InfConst _ | FConst _ | AConst _ | Tsconst _ 
+    | Bptriple _
     | Level _ -> e
     | Add (e1,e2,l) -> simp_addsub e (IConst(0,no_pos)) l 
     | Subtract (e1,e2,l) -> simp_addsub e1 e2 l 
@@ -8113,6 +8140,7 @@ let compute_instantiations_x pure_f v_of_int avail_v =
       | Tsconst _ 
       | Null _ -> failwith ("expecting var"^ (!print_sv v) )
       | Var (v1,_) -> if (eq_spec_var v1 v) then rhs_e else failwith ("expecting var"^ (!print_sv v))
+      | Bptriple _ -> failwith ("not expecting Bptriple, expecting var"^ (!print_sv v) )
       | Add (e1,e2,p) -> check_in_one e1 e2 (Subtract (rhs_e,e2,p)) (Subtract (rhs_e,e1,p))
       | Subtract (e1,e2,p) -> check_in_one e1 e2 (Add (rhs_e,e2,p)) (Add (rhs_e,e1,p))
       | Mult (e1,e2,p) -> check_in_one e1 e2 (Div (rhs_e,e2,p)) (Div (rhs_e,e1,p))

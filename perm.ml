@@ -5,7 +5,6 @@ open Cpure
 
 (*type of permissions*)
 
-
 type iperm = Ipure.exp option (*type of permission in iformula*)
 
 type cperm = Cpure.spec_var option (*type of permission in cformula*)
@@ -20,6 +19,7 @@ let string_of_perm_type t =
     | Count -> "Count"
     | NoPerm -> "NoPerm"
     | Dperm  -> "Dperm"
+    | Bperm  -> "Bperm"
 
 (*To disable concurrency verification, for testing purposes*)
 let disable_para () =
@@ -109,6 +109,99 @@ module type PERM =
     val fresh_cperm_var : cperm_var -> cperm_var
     val mkEq_cperm : cperm_var -> cperm_var -> loc -> Cpure.b_formula
    end;;
+
+(*==============================*)
+(*====Bounded permissions====*)
+(*==============================*)
+(*Because bperm requires a bound, there are no corresponding notions
+of DEFAULT empty permission (None) or full permission *)
+module BPERM : PERM=
+struct
+  include PERM_const
+  let cperm_typ = Bptyp (* Bounded permission typ*)
+  let empty_iperm = None 
+  let full_iperm =
+    let exp_one = Ipure.IConst (0, no_pos) in
+    Some (Ipure.Bptriple ((exp_one,exp_one,exp_one), no_pos)) (*undefined for bperm*)
+  (*LDK: a specvar to indicate FULL permission*)
+  (* let full_perm = Some (Cpure.SpecVar (cperm_typ, full_perm_name, Unprimed)) (\*undefined for bperm*\) *)
+  let fv_iperm p = match p with
+       | Some e -> (Ipure.afv e)
+       | None -> failwith ("bounded permission cannot be empty in fv_iperm")
+  let get_iperm perm =
+    match perm with
+      | None -> failwith ("bounded permission cannot be empty in get_iperm")
+      | Some f -> [f]
+  let string_of_cperm (perm:cperm) : string =
+    pr_opt !print_sv perm
+  let apply_one_iperm = Ipure.e_apply_one
+  let full_perm_var = (Cpure.SpecVar (cperm_typ, full_perm_name, Unprimed))
+  let mkFullPerm_pure  (f:cperm_var) : Cpure.formula = (*TOCHECK*)
+    Cpure.BForm (((Cpure.Eq (
+        (Cpure.Var (f,no_pos)),
+        (Cpure.Var (full_perm_var,no_pos)),
+        no_pos
+    )),None), None)
+  let mkFullPerm_pure_from_ident id : Cpure.formula = (*TOCHECK*)
+    let var = (Cpure.SpecVar (cperm_typ, id, Unprimed)) in
+    mkFullPerm_pure var
+        
+  let mkPermInv (f:cperm_var) : Cpure.formula = (*TOCHECK*)
+    Cpure.mkTrue no_pos
+  let mkPermWrite (f:cperm_var) : Cpure.formula = (*TOCHECK*)
+    Cpure.mkTrue no_pos
+  let full_perm_constraint = 
+    Mcpure.OnePF (mkPermWrite full_perm_var)
+  let float_out_iperm perm pos = 
+    match perm with
+      | None -> failwith ("bounded permission cannot be empty")
+      | Some e ->
+          match e with
+            | Ipure.Bptriple ((ec,et,ea),e_pos) ->
+                let float_one f = 
+                  match f with
+                    | Ipure.Var _ -> (f,[])
+		            | _ ->
+                        let nn_perm = ((perm_name^(string_of_int pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+			            let nv_perm = Ipure.Var (nn_perm,pos) in
+                        let npf_perm = Ipure.BForm ((Ipure.Eq (nv_perm,f,pos), None), None) in (*TO CHECK: slicing for permissions*)
+                        (nv_perm,[(nn_perm,npf_perm)])
+                in
+                let ec_var,ec_ls = float_one ec in
+                let et_var,et_ls = float_one et in
+                let ea_var,ea_ls = float_one ea in
+                let new_perm = Ipure.Bptriple ((ec_var,et_var,ea_var),e_pos) in
+                (Some new_perm,ec_ls@et_ls@ea_ls)
+            | _ -> failwith ("bounded permission is undefined")
+
+  let float_out_mix_max_iperm perm pos =
+    match perm with
+      | None -> (None, None)
+      | Some f -> 
+	      match f with
+		    | Ipure.Null _
+		    | Ipure.IConst _
+		    | Ipure.Var _ -> (Some f, None)
+		    | _ ->
+		        let new_name_perm = fresh_var_name "ptr" pos.start_pos.Lexing.pos_lnum in
+		        let nv_perm = Ipure.Var((new_name_perm, Unprimed), pos) in
+			    (Some nv_perm, Some (Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv_perm, f, pos), None), None))))
+  let fv_cperm perm =
+    match perm with
+      | None -> []
+      | Some f -> [f]
+
+  let get_cperm perm =
+    match perm with
+      | None -> []
+      | Some f -> [f]
+  let subst_var_perm ((fr, t) as s) perm =
+    map_opt (Cpure.subst_var s) perm
+  let fresh_cperm_var = Cpure.fresh_spec_var
+  let mkEq_cperm v1 v2 pos =
+    Cpure.mkEq_b (Cpure.mkVar v1 pos) ( Cpure.mkVar v2 pos) pos
+end;;
+
 
 (*=======================================*)
 (*====distinct fractional permissions====*)

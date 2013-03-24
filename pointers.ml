@@ -96,6 +96,8 @@ let default_value (t :typ) pos : exp =
 	| HpT | Tree_sh ->
        failwith "default_value: (HpT|Tree_sh) not supported"
 	| INFInt -> Error.report_no_pattern ()
+	| Bptyp ->
+       failwith "default_value: Bptyp not supported"
 
 (*similar to that in Astsimp.ml*)
 let get_type_name_for_mingling (prog : prog_decl) (t : typ) : ident =
@@ -1800,7 +1802,7 @@ and add_code_ref e (x,ptrx) =
 *)
 and trans_proc_decl_x prog (proc:proc_decl) (is_aux:bool) : proc_decl =
   (*update list of translated procs*)
-  let procs = proc::procs in
+  (* let procs = proc::procs in *)
   let ret_t = proc.proc_return in
   let new_ret_t = convert_typ ret_t in
   let params = proc.proc_args in
@@ -2135,7 +2137,7 @@ and find_addr_inter_exp prog proc e (vs:ident list) : ident list =
             else
               (orig_mn,args)
           in
-          let vars = List.concat (List.map (fun e -> helper e vs) args) in
+          (* let vars = List.concat (List.map (fun e -> helper e vs) args) in *)
           (try
                let decl = look_up_proc_def_raw prog.prog_proc_decls mn in
                let params = decl.proc_args in

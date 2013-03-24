@@ -88,6 +88,7 @@ let rec smt_of_typ t =
     | HpT -> "Int"
 	| INFInt 
 	| Pointer _ -> Error.report_no_pattern ()
+    | Bptyp -> illegal_format ("z3.smt_of_typ: " ^ (string_of_typ t) ^ " not supported for SMT")
 
 let smt_of_typ t =
   Debug.no_1 "smt_of_typ" string_of_typ (fun s -> s)
@@ -132,6 +133,7 @@ let rec smt_of_exp a =
 	| CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
 	| CP.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
 	| CP.Tsconst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (tsconst should not appear here)")
+	| CP.Bptriple _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (Bptriple should not appear here)")
 	| CP.ArrayAt (a, idx, l) -> 
 		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
 	| CP.InfConst _ -> Error.report_no_pattern ()
@@ -333,6 +335,7 @@ and collect_exp_info e = match e with
   | CP.Func (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
   | CP.ArrayAt (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
   | CP.InfConst _ -> Error.report_no_pattern ()
+  | CP.Bptriple _ -> failwith ("smtsolver.collect_exp_info: Bptriple should not appear here")
 
 and combine_formula_info if1 if2 =
   {is_linear = if1.is_linear && if2.is_linear;

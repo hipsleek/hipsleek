@@ -117,7 +117,9 @@ and cvcl_of_exp a = match a with
 	| CP.Tsconst _ ->
       failwith ("Tsconst not supported in cvclite")
 	| CP.InfConst _ -> Error.report_no_pattern ()
-	  	  
+	| CP.Bptriple _ ->
+      failwith ("cvcl_of_exp: Bptriple not supported in cvclite")
+
   
 and cvcl_of_b_formula b =
   let (pf,_) = b in

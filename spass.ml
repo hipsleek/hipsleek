@@ -45,6 +45,7 @@ let rec spass_dfg_of_exp (e0 : Cpure.exp) : (string * string list * string list)
   | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
   | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
   | Cpure.Tsconst _   -> illegal_format "SPASS don't support Tsconst expresion"
+  | Cpure.Bptriple _   -> illegal_format "SPASS don't support Bptriple expresion"
   | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
   | Cpure.Level _ -> illegal_format ("z3.smt_of_exp: level should not appear here")
   | Cpure.Subtract _  -> illegal_format "SPASS don't support Substract expresion"
@@ -184,6 +185,7 @@ let rec spass_tptp_of_exp (e0 : Cpure.exp) : string =
   | Cpure.FConst _    -> illegal_format "SPASS don't support FConst expresion"
   | Cpure.AConst _    -> illegal_format "SPASS don't support AConst expresion"
   | Cpure.Tsconst _   -> illegal_format "SPASS don't support Tsconst expresion"
+  | Cpure.Bptriple _   -> illegal_format "SPASS don't support Tsconst expresion"
   | Cpure.Add _       -> illegal_format "SPASS don't support Add expresion"
   | Cpure.Subtract _  -> illegal_format "SPASS don't support Substract expresion"
   | Cpure.Mult _      -> illegal_format "SPASS don't support Mult expresion"
@@ -289,6 +291,7 @@ let rec can_spass_handle_expression (exp: Cpure.exp) : bool =
   | Cpure.ArrayAt _      -> false
   | Cpure.Func (sv, exp_list, _) -> List.for_all (fun e -> can_spass_handle_expression e) exp_list
   | Cpure.Level _ | Cpure.InfConst _ -> Error.report_no_pattern(); 
+  | Cpure.Bptriple _      -> Error.report_no_pattern();
 
 
 and can_spass_handle_p_formula (pf : Cpure.p_formula) : bool =

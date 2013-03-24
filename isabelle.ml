@@ -52,7 +52,10 @@ let rec isabelle_of_typ = function
   | Array _ ->
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "type var, array and named type not supported for Isabelle"}
-  | INFInt | Pointer _ -> Error.report_no_pattern ()
+  | INFInt | Pointer _ -> Error.report_no_pattern ()  
+  | Bptyp ->
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "Bptyp type not supported for Isabelle"}
 ;;
 
 (* pretty printing for spec_vars *)
@@ -110,6 +113,7 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.IConst (i, _) -> "(" ^ string_of_int i ^ "::int)"
   | CP.FConst _ -> failwith ("[isabelle.ml]: ERROR in constraints (float should not appear here)")
   | CP.Tsconst _ -> failwith ("[isabelle.ml]: ERROR in constraints (tsconst should not appear here)")
+  | CP.Bptriple _ -> failwith ("[isabelle.ml]: ERROR in constraints (Bptriple should not appear here)")
   | CP.Add (a1, a2, _) ->  " ( " ^ (isabelle_of_exp a1) ^ " + " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (isabelle_of_exp a1) ^ " - " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Mult (a1, a2, _) -> "(" ^ (isabelle_of_exp a1) ^ " * " ^ (isabelle_of_exp a2) ^ ")"

@@ -659,6 +659,7 @@ let rec is_array_exp e = match e with
     | CP.ArrayAt (_,_,_) -> Some true
   | CP.Func _ -> Some false
     | CP.AConst _ | CP.FConst _ | CP.IConst _ | CP.Tsconst _ | CP.InfConst _ 
+    | CP.Bptriple _
     | CP.Level _
     | CP.Var _ | CP.Null _ -> Some false
     (* | _ -> Some false *)
@@ -691,6 +692,7 @@ let rec is_list_exp e = match e with
 											| _ -> is_list_exp exp) (Some false) el)
     | CP.ArrayAt (_,_,_) | CP.Func _ -> Some false
     | CP.Null _ | CP.AConst _ | CP.Tsconst _ | CP.InfConst _
+    | CP.Bptriple _
     | CP.Level _
     | CP.FConst _ | CP.IConst _ -> Some false
     | CP.Var(sv,_) -> if CP.is_list_var sv then Some true else Some false
