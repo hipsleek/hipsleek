@@ -118,7 +118,11 @@ res::node<_,p>*p::ll0<> & p !=null
 # qsort-1.ss:
 H2(xs',res) = HP1(xs')*HP2(res)
 
-HP1(x)=HP2(x)=ll0
+should be: HP1(x)=HP2(x)=ll0
+
+todo:
+ - support binding
+ - support two roots in synthesis
 
 *************************************
 # qsort-2.ss: DONE
@@ -133,7 +137,7 @@ note: H6(res,y): OK
 qsort: after ins-1.ss is fixed
 
 *************************************
-# app.ss (ll-append8):
+# app.ss (ll-append8): DONE
 
 Used:
   infer [H,K,G]
@@ -205,18 +209,19 @@ the coercion is applied on RHS
 
 Can we test the sa normalization feature in sleek?
 *************************************
-# imm.slk
+# imm.slk: DONE
 
 infer [HP] HP(x) |-  x::node<_@A,q>@L .
 print residue
 /*
 (i) residue is wrong
-(ii) print also rel-assumption when residue is printed.
+(ii) print also rel-assumption when residue is printed. DONE
  <1>EXISTS(q,Anon_12: (HP_24(q)) * x::node<Anon_12@A,q@L>@M[Orig]&true&{FLOW,(19,20)=__norm})[]
 */
+*************************************
+Could we suppress the printing below: DONE
 
 /*
-Could we suppress the printing below
 for sleek; it is only relevant for hip.
 *************************************
 *******relational assumption ********

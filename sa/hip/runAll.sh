@@ -10,8 +10,10 @@ echo "ll-append6.ss"
 ../../hip ll-append6.ss --sa-dangling -cp-test cp/ll-append6.cp | grep Compare
 echo "ll-append7.ss"
 ../../hip ll-append7.ss --sa-dangling -cp-test cp/ll-append7.cp | grep Compare
-echo "ll-append8.ss"
-../../hip ll-append8.ss  -cp-test cp/ll-append8.cp | grep Compare
+echo "app.ss"
+../../hip app.ss  -cp-test cp/app.cp | grep Compare
+echo "ll-append8.ss with --sa-danling "
+../../hip ll-append8.ss --sa-dangling -cp-test cp/ll-append8_w_dl.cp | grep Compare
 echo "ll-append8.ss with --sa-danling "
 ../../hip ll-append8.ss --sa-dangling -cp-test cp/ll-append8_w_dl.cp | grep Compare
 echo "ll-append8.ss with --sa-danling --sa-inlining"

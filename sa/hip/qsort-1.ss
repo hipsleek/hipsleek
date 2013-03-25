@@ -29,16 +29,17 @@ node partition(ref node xs, int c)
   else {
     if (xs.val >= c){
       v = xs.val;
-      bind xs to (xsval, xsnext) in {
-        tmp1 = partition(xsnext, c);
-      }
+      /* bind xs to (xsval, xsnext) in { */
+      /*   tmp1 = partition(xsnext, c); */
+      /* } */tmp1 = partition(xs.next, c);
       xs = xs.next;
       return new node(v, tmp1);
     }
     else {
-      bind xs to (xsval, xsnext) in {
-        tmp1 = partition(xsnext, c);
-      }
+      /* bind xs to (xsval, xsnext) in { */
+      /*   tmp1 = partition(xsnext, c); */
+      /* } */
+      tmp1 = partition(xs.next, c);
       return tmp1;
     }
   }
