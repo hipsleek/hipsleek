@@ -21,27 +21,25 @@ node partition(ref node xs, int c)
   requires H1(xs)
   ensures H2(xs',res);//'
 {
-	node tmp1;
-	int v; 
+  node tmp1;
+  int v;
 
-	if (xs == null)
-		return null;
-	else
-	{
-		if (xs.val >= c)
-		{
-            v = xs.val;
-			bind xs to (xsval, xsnext) in {
-				tmp1 = partition(xsnext, c);
-            }
-			xs = xs.next;
-			return new node(v, tmp1);
-		}
-		else {
-          bind xs to (xsval, xsnext) in {
-            tmp1 = partition(xsnext, c);
-          }
-          return tmp1;
-		}
-	}
+  if (xs == null)
+    return null;
+  else {
+    if (xs.val >= c){
+      v = xs.val;
+      bind xs to (xsval, xsnext) in {
+        tmp1 = partition(xsnext, c);
+      }
+      xs = xs.next;
+      return new node(v, tmp1);
+    }
+    else {
+      bind xs to (xsval, xsnext) in {
+        tmp1 = partition(xsnext, c);
+      }
+      return tmp1;
+    }
+  }
 }

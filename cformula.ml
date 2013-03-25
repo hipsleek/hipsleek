@@ -1506,7 +1506,7 @@ and is_empty_heap (h : h_formula) = match h with
   | HFalse -> true
   | _ -> false
 
-and is_unkown_heap (h : h_formula) = match h with
+and is_unknown_heap (h : h_formula) = match h with
   | HTrue -> true
   | _ -> false
 
@@ -3788,7 +3788,7 @@ let extract_unk_hprel_x (f0:formula) =
     | Exists ({ formula_exists_pure = p1;
         formula_exists_heap = h1;}) ->
         (
-            if  not (is_unkown_heap h1) then
+            if  not (is_unknown_heap h1) then
               let p2 = (MCP.pure_of_mix p1) in
               if (CP.isConstTrue p2 || CP.is_xpure p2) then
                 match h1 with

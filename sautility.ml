@@ -141,7 +141,7 @@ let is_empty_wop opf=
 let rec is_unk_f f=
    match f with
     | CF.Base fb ->
-        (CF.is_unkown_heap fb.CF.formula_base_heap) &&
+        (CF.is_unknown_heap fb.CF.formula_base_heap) &&
             (CP.isConstTrue (MCP.pure_of_mix fb.CF.formula_base_pure))
     | CF.Exists _ -> let _, base1 = CF.split_quantifiers f in
                      is_unk_f base1

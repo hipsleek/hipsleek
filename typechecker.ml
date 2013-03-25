@@ -273,13 +273,13 @@ let rec check_specs_infer (prog : prog_decl) (proc : proc_decl) (ctx : CF.contex
       CF.struc_formula * (CF.formula list) * ((CP.rel_cat * CP.formula * CP.formula) list) * (CF.hprel list) * (CP.spec_var list) * (CP.spec_var list) * ( CP.spec_var* CP.xpure_view) list * bool =
   let _ = pre_ctr # reset in
   let _ = post_ctr # reset in
-  let pr1 = Cprinter.string_of_struc_formula in
+  (* let pr1 = Cprinter.string_of_struc_formula in *)
   (* let pr1n s = Cprinter.string_of_struc_formula (CF.norm_specs s) in *)
-  let pr2 = add_str "inferred rels" (fun l -> string_of_int (List.length l)) in
-  let pr2a = add_str "formulae" (pr_list Cprinter.string_of_formula) in
-  let pr2b = add_str "inferred hp rels" (fun l -> string_of_int (List.length l)) in
-  let pr4 = Cprinter.string_of_spec_var_list in
-  let pr5 = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_xpure_view) in
+  (* let pr2 = add_str "inferred rels" (fun l -> string_of_int (List.length l)) in *)
+  (* let pr2a = add_str "formulae" (pr_list Cprinter.string_of_formula) in *)
+  (* let pr2b = add_str "inferred hp rels" (fun l -> string_of_int (List.length l)) in *)
+  (* let pr4 = Cprinter.string_of_spec_var_list in *)
+  (* let pr5 = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_xpure_view) in *)
   (* let pr3 = pr_hepta pr1 pr2a  pr2 pr2b pr4 pr5 string_of_bool in *)
   let f = wrap_proving_kind "CHECK-SPECS" (check_specs_infer_a prog proc ctx e0 do_infer) in
   (fun _ -> f spec_list) spec_list

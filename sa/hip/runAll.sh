@@ -22,6 +22,8 @@ echo "ll-append10.ss"
 ../../hip ll-append10.ss --sa-dangling --sa-inlining -cp-test cp/ll-append10.cp | grep Compare
 echo "ll-append15.ss"
 ../../hip ll-append15.ss --sa-dangling --sa-inlining -cp-test cp/ll-append15.cp | grep Compare
+echo "qsort-2.ss"
+../../hip qsort-2.ss --sa-dangling --sa-inlining -cp-test cp/qsort-2.cp | grep Compare
 echo "dangling/ll-app3.ss"
 ../../hip dangling/ll-app3.ss --sa-dangling --sa-inlining -cp-test cp/ll-app3.cp | grep Compare
 echo "dangling/ll-app4.ss"
