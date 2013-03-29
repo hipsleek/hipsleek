@@ -3550,7 +3550,7 @@ and  get_subst_equation_formula_vv (f0 : formula) (v : spec_var):((spec_var * sp
 
 and get_subst_equation_formula (f0 : formula) (v : spec_var) only_vars: ((spec_var * exp) list * formula) =
   let pr_out = pr_pair (pr_list (pr_pair !print_sv !print_exp)) !print_formula in
-  Debug.ho_3 "get_subst_equation_formula"
+  Debug.no_3 "get_subst_equation_formula"
       !print_formula !print_sv string_of_bool pr_out 
       get_subst_equation_formula_x f0 v only_vars
 

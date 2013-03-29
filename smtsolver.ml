@@ -811,7 +811,7 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
 	let res = to_smt_v2 pr_weak pr_strong ante conseq logic all_fv info
 	(*	| Cvc3 | Yices ->	to_smt_v1 ante conseq logic all_fv*)
 	in
-    let _ = print_endline (" ### res = \n " ^ res) in
+    (* let _ = print_endline (" ### res = \n " ^ res) in *)
     res
 	
 let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) = 

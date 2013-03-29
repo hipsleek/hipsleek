@@ -3367,7 +3367,7 @@ and elim_exists_es_his_x (f0 : formula) (his:h_formula list) : formula*h_formula
 and elim_exists_es_his (f0 : formula) (his:h_formula list) : formula*h_formula list =
   let pr1 = pr_list !print_h_formula in
   let pr_out = (pr_pair !print_formula pr1) in
-  Debug.ho_2 "elim_exists_es_his"
+  Debug.no_2 "elim_exists_es_his"
       !print_formula pr1 pr_out
       elim_exists_es_his_x f0 his
   
