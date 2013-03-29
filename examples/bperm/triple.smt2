@@ -49,3 +49,18 @@
 (assert (= p3 p2))
 ;SAT
 (check-sat)
+
+(declare-fun p5 () int-triple)
+(declare-fun p6 () int-triple)
+(declare-fun x11 () Int)
+(declare-fun x12 () Int)
+(declare-fun x13 () Int)
+(declare-fun x21 () Int)
+(declare-fun x22 () Int)
+(declare-fun x23 () Int)
+(assert (= p5 (mk-triple x11 x12 x13)))
+(assert (= p6 (mk-triple x21 x22 x23)))
+(assert (= p5 p6))
+(assert (not (= x11 x21)))
+;UNSAT
+(check-sat)

@@ -2873,7 +2873,7 @@ and elim_exists_pure_branch_x (w : CP.spec_var list) (f0 : CP.formula) pos : CP.
 and entail_state_elim_exists es =
   let pr = Cprinter.string_of_entail_state in
   let pr2 = Cprinter.string_of_context in
-  Debug.no_1 "entail_state_elim_exists" pr pr2 entail_state_elim_exists_x es 
+  Debug.ho_1 "entail_state_elim_exists" pr pr2 entail_state_elim_exists_x es 
 
 (*
 PROBLEM : exists_elim NOT deep enough
@@ -2908,8 +2908,9 @@ and entail_state_elim_exists_x es =
 *)
   Debug.tinfo_hprint (add_str "new_his(after elim_exists_es_his)" (pr_list pr_h)) new_his no_pos;
   Debug.tinfo_hprint (add_str "f(after elim_exists_es_his)" pr_f) f_prim no_pos;
+  let _ = print_string("f_prim :" ^ (Cprinter.string_of_formula f_prim) ^ "\n") in
   let f = elim_exists_exp f_prim in
-  (*let _ = print_string("f :" ^ (Cprinter.string_of_formula f) ^ "\n") in*)
+  let _ = print_string("f :" ^ (Cprinter.string_of_formula f) ^ "\n") in
   let qvar, base = CF.split_quantifiers f in
   let h, p, fl, t, a = CF.split_components base in
   let simpl_p =	
@@ -10546,13 +10547,13 @@ and elim_exists_exp_x (f0 : formula) : (formula) =
   else f 
 
 and elim_exists_exp (f0 : formula) : (formula) =
-   Debug.no_1 "elim_exists_exp"
+   Debug.ho_1 "elim_exists_exp"
        Cprinter.string_of_formula Cprinter.string_of_formula
        elim_exists_exp_x f0
 
 and elim_exists_exp_loop (f0 : formula) : (formula*bool) =
    let pr_out = (pr_pair Cprinter.string_of_formula string_of_bool) in
-   Debug.no_1 "elim_exists_exp_loop"
+   Debug.ho_1 "elim_exists_exp_loop"
        Cprinter.string_of_formula pr_out
        elim_exists_exp_loop_x f0
 
@@ -10576,6 +10577,7 @@ and elim_exists_exp_loop_x (f0 : formula) : (formula * bool) =
         let fvh = h_fv h in
 	if  not(List.exists (fun sv -> CP.eq_spec_var sv qvar) fvh) then
 	  let st, pp1 = MCP.get_subst_equation_mix_formula p qvar false in
+      let _ = print_endline ("pp1 = " ^ (Cprinter.string_of_mix_formula pp1)) in
 	  if List.length st > 0 then (* if there exists one substitution  - actually we only take the first one -> therefore, the list should only have one elem *)
 	    (* basically we only apply one substitution *)
 	    let one_subst = List.hd st in

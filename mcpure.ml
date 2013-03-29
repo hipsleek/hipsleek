@@ -450,7 +450,7 @@ and get_subst_equation_memo_formula_x (f0 : memo_pure) (v : spec_var) only_vars:
 
 and get_subst_equation_memo_formula (f0 : memo_pure) (v : spec_var) only_vars: ((spec_var * exp) list * memo_pure) =
   let pr_out = pr_pair (pr_list (pr_pair !print_sv !print_exp)) !print_mp_f in
-  Debug.no_3 "get_subst_equation_memo_formula"
+  Debug.ho_3 "get_subst_equation_memo_formula"
       !print_mp_f !print_sv string_of_bool pr_out
       get_subst_equation_memo_formula_x f0 v only_vars
 

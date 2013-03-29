@@ -1314,7 +1314,7 @@ and combine_and_pure (f1:formula)(p:MCP.mix_formula)(f2:MCP.mix_formula):MCP.mix
 
 (*and combine_and_pure (f1:formula)(p:MCP.mix_formula)(f2:MCP.mix_formula):MCP.mix_formula*bool = 
 	let pr = pr_pair !print_mix_formula  (string_of_bool) in
-	Debug.ho_3 "combine_and_pure" (!print_formula) (!print_mix_formula) (!print_mix_formula) pr 
+	Debug.no_3 "combine_and_pure" (!print_formula) (!print_mix_formula) (!print_mix_formula) pr 
 	combine_and_pure_x f1 p f2 *)
 
 and sintactic_search (f:formula)(p:Cpure.formula):bool = match f with
@@ -3367,7 +3367,7 @@ and elim_exists_es_his_x (f0 : formula) (his:h_formula list) : formula*h_formula
 and elim_exists_es_his (f0 : formula) (his:h_formula list) : formula*h_formula list =
   let pr1 = pr_list !print_h_formula in
   let pr_out = (pr_pair !print_formula pr1) in
-  Debug.no_2 "elim_exists_es_his"
+  Debug.ho_2 "elim_exists_es_his"
       !print_formula pr1 pr_out
       elim_exists_es_his_x f0 his
   
