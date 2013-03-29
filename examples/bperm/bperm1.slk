@@ -1,19 +1,24 @@
-data node { int val ; node next }.
+data node {int val ; node next;}.
 
-//checkentail x::node(1,2,1)<_, null> |- x::node(1,2,1)<_,b>.
-//print residue.
+//(1)
+checkentail x::node(1,2,1)<_, null> |- x::node(1,2,1)<_,b>.
+print residue.
 // VALID, exact match
 
-//checkentail x::node(1,2,1)<_, null> |- x::node(1,3,1)<_,b>.
-//print residue.
+//(2)
+checkentail x::node(1,2,1)<_, null> |- x::node(1,3,1)<_,b>.
+print residue.
 // VALID, exact match
 
-//checkentail x::node(1,2,1)<_, null> |- (exists c,t,a: x::node(c,t,a)<_,b>).
-//print residue.
+//(3)
+checkentail x::node(1,2,1)<_, null> |- (exists c,t,a: x::node(c,t,a)<_,b>).
+print residue.
 //VALID
 
+//(4)
 checkentail x::node(1,2,1)<_, null> |- x::node(c,t,a)<_,b>.
 print residue.
-//VALID + instantiation (NOT YET SUPPORT instantiation of tuple)
+//VALID with instantiation (NOT YET SUPPORT instantiation of tuple)
+//FAIL otherwise
 
 //checkentail x=1 & y=1 |- x=y.

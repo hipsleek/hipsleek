@@ -177,6 +177,7 @@ struct
                 let npf_perm = Ipure.BForm ((Ipure.Eq (nv_perm,new_triple,pos), None), None) in (*TO CHECK: slicing for permissions*)
                 let perm = [(nn_perm,npf_perm)] in
                 (Some nv_perm,ec_ls@et_ls@ea_ls@perm)
+            | Ipure.Var _ -> (Some e,[])
             | _ -> failwith ("bounded permission is undefined")
 
   let float_out_mix_max_iperm perm pos =

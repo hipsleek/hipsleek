@@ -2200,6 +2200,8 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let (qvars, form) = IF.split_quantifiers coer.I.coercion_head in 
   let c_hd0, c_guard0, c_fl0, c_a0 = IF.split_components form in
   (* remove the guard from the normalized head as it will be later added to the body of the right lemma *)
+  let hdvars = IF.h_fv c_hd0 in
+  let qvars = Gen.BList.intersect_eq (=) qvars hdvars in
   let new_head =  IF.mkExists qvars c_hd0 (IP.mkTrue no_pos) c_fl0 [] no_pos in
   let guard_fnames = List.map (fun (id, _) -> id ) (IP.fv c_guard0) in
   let rhs_fnames = List.map CP.name_of_spec_var (CF.fv c_rhs) in
@@ -5138,13 +5140,10 @@ and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
     | IP.Null pos -> CP.Null pos
     | IP.Tsconst (t,pos) -> CP.Tsconst (t,pos)
     | IP.Bptriple ((pc,pt,pa),pos) ->
-        (match pc,pt,pa with
-          | Ipure.Var (vc,posc), Ipure.Var (vt,post),Ipure.Var (va,posa) ->
-              let pc = trans_var vc stab posc in
-              let pt = trans_var vt stab post in
-              let pa = trans_var va stab posa in
-              CP.Bptriple ((CP.Var (pc,posc),CP.Var (pt,post),CP.Var (pa,posa)),pos)
-          | _ -> report_error pos ("trans_pure_exp: Bptriple error at location "^(string_of_full_loc pos)))
+        let npc = trans_pure_exp pc stab in
+        let npt = trans_pure_exp pt stab in
+        let npa = trans_pure_exp pa stab in
+        CP.Bptriple ((npc,npt,npa),pos)
     | IP.AConst(a,pos) -> CP.AConst(a,pos)
     | IP.InfConst(a,pos) -> CP.InfConst(a,pos)
     | IP.Var ((v, p), pos) -> 
