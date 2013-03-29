@@ -196,7 +196,7 @@ type perm_type =
   | Dperm (*distinct fractional shares*)
   | Bperm (*bounded permissions*)
   
-let perm = ref Frac
+let perm = ref Bperm
 
 let no_pos = 
 	let no_pos1 = { Lexing.pos_fname = "";

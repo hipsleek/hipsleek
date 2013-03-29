@@ -560,16 +560,19 @@ and h_formula_2_mem_perm_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_v
             Therefore, we need pure information to prove*)
 	        let new_mset = 
               match frac with
-                | Some var -> 
-                    let full_f = Perm.mkFullPerm_pure () var in
-                    (*prove that p0 |- var=full_perm*)
-                    let f0 = MCP.pure_of_mix p0 in
-                    Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [Begin] check fractional variable "^ (Cprinter.string_of_spec_var var) ^ " is full_perm" ^"\n")) pos;
-                    let res,_,_ = CP.imply_disj_orig [f0] full_f TP.imply imp_no in
-                    Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [End] check fractional variable "^ (Cprinter.string_of_spec_var var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
-                    if (res) then
-                      CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*))
-                    else []
+                | Some var ->
+                    (match !Globals.perm with
+                      | Bperm -> CP.DisjSetSV.mkEmpty (*TODO: ???*)
+                      | _ ->
+                          (*prove that p0 |- var=full_perm*)
+                          let full_f = Perm.mkFullPerm_pure () var in
+                          let f0 = MCP.pure_of_mix p0 in
+                          Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [Begin] check fractional variable "^ (Cprinter.string_of_spec_var var) ^ " is full_perm" ^"\n")) pos;
+                          let res,_,_ = CP.imply_disj_orig [f0] full_f TP.imply imp_no in
+                          Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [End] check fractional variable "^ (Cprinter.string_of_spec_var var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
+                          if (res) then
+                            CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*))
+                          else [])
                 | None ->
 	          if List.mem p evars then CP.DisjSetSV.mkEmpty
 	          else CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*)) 

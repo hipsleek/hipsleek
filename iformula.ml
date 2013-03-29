@@ -1396,7 +1396,7 @@ let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula = match f
 
 and float_out_exps_from_heap (f:formula ) (rel0: rel option):formula = (* float_out_exps_from_heap_x f *)
 let pr = !print_formula in
-Debug.no_1 "float_out_exps_from_heap" pr pr (fun _ -> float_out_exps_from_heap_x f rel0) f
+Debug.ho_1 "float_out_exps_from_heap" pr pr (fun _ -> float_out_exps_from_heap_x f rel0) f
 
 and float_out_exps_from_heap_x (f:formula ) (rel0: rel option) :formula = 
 	

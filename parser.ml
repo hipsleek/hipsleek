@@ -1276,7 +1276,20 @@ simple_heap_constr:
 opt_perm: [[t = OPT perm -> t ]];
 
 (*LDK: for fractionl permission, we expect cexp*)
-perm: [[`OPAREN; t = LIST1 cexp SEP `COMMA; `CPAREN  -> List.hd t ]];  
+perm: [[ `OPAREN; t = LIST1 cexp SEP `COMMA; `CPAREN  ->
+          match !Globals.perm with
+            | Bperm -> (*Bounded permissions have 3 parameters*)
+                if ((List.length t) ==3) then
+                  let pc = List.hd t in
+                  let pt = List.hd (List.tl t) in
+                  let pa = List.hd (List.tl (List.tl t)) in
+                  Ipure.Bptriple ((pc,pt,pa),get_pos_camlp4 _loc 1)
+                else
+                  let _ = print_endline ("Warning: bounded permission has incorrect number of arguments") in
+                  let e = Ipure.IConst (1,get_pos_camlp4 _loc 1) in
+                  Ipure.Bptriple ((e,e,e),get_pos_camlp4 _loc 1)
+            | _ -> List.hd t (*other permission systems have one parameter*)
+       ]];
 
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];   
         

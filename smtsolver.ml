@@ -88,7 +88,7 @@ let rec smt_of_typ t =
     | HpT -> "Int"
 	| INFInt 
 	| Pointer _ -> Error.report_no_pattern ()
-    | Bptyp -> illegal_format ("z3.smt_of_typ: " ^ (string_of_typ t) ^ " not supported for SMT")
+    | Bptyp -> "int-triple"
 
 let smt_of_typ t =
   Debug.no_1 "smt_of_typ" string_of_typ (fun s -> s)
@@ -133,7 +133,7 @@ let rec smt_of_exp a =
 	| CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
 	| CP.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
 	| CP.Tsconst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (tsconst should not appear here)")
-	| CP.Bptriple _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (Bptriple should not appear here)")
+	| CP.Bptriple _ -> ""
 	| CP.ArrayAt (a, idx, l) -> 
 		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
 	| CP.InfConst _ -> Error.report_no_pattern ()
@@ -331,11 +331,12 @@ and collect_exp_info e = match e with
   | CP.ListLength _
   | CP.ListAppend _
   | CP.ListReverse _ 
+  | CP.Bptriple _ (*TOCHECK*)
   | CP.Tsconst _ -> default_formula_info (* Unsupported bag and list; but leave this default_formula_info instead of a fail_with *)
   | CP.Func (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
   | CP.ArrayAt (_,i,_) -> combine_formula_info_list (List.map collect_exp_info i)
   | CP.InfConst _ -> Error.report_no_pattern ()
-  | CP.Bptriple _ -> failwith ("smtsolver.collect_exp_info: Bptriple should not appear here")
+
 
 and combine_formula_info if1 if2 =
   {is_linear = if1.is_linear && if2.is_linear;
@@ -801,7 +802,9 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
 	let logic = logic_for_formulas ante conseq in
 	let res = to_smt_v2 pr_weak pr_strong ante conseq logic all_fv info
 	(*	| Cvc3 | Yices ->	to_smt_v1 ante conseq logic all_fv*)
-	in res
+	in
+    let _ = print_endline (" ### res = \n " ^ res) in
+    res
 	
 let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) = 
 	Debug.no_1 "to_smt" (fun _ -> "") (fun c -> c) (fun c-> to_smt pr_weak pr_strong ante conseq prover) prover
