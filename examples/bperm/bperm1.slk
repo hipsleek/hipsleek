@@ -1,0 +1,6 @@
+data node { int val ; node next }.
+
+checkentail x::node(1,2,1)<_, null> |- x::node(1,2,1)<_,b>.
+print residue.
+// VALID, exact match
+
