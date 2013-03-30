@@ -19,8 +19,8 @@ dag2<v,M> == self = null & M = {}
 	memE M->(node<@M,@L,@L> & v = 0 ; node<@I,@L,@L> & v != 0);
 
 void mark(ref node x)
-  requires x::dag<0,M>
-  ensures x::dag<2,M>;
+//requires x::dag<0,M>
+//ensures x::dag<2,M>;
   requires x::dag<_,M>
   ensures x::dag<2,M>;
 {
