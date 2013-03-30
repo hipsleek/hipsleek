@@ -2716,7 +2716,7 @@ let translate_waitlevel_mix_formula (mf : mix_formula) : mix_formula =
 
 (*For BPERM, get the triple corresponding to a permission
 variable*)
-let get_perm_triple_mf (sv: CP.spec_var) (mf : mix_formula) : (CP.exp * CP.exp * CP.exp) list =
+let get_perm_triple_mf (sv: CP.spec_var) (mf : mix_formula) : (CP.exp * CP.exp * CP.exp) list= 
   match mf with
     | OnePF f -> CP.get_perm_triple_pure sv f
     | MemoF mp ->

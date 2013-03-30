@@ -1039,7 +1039,20 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula)  (p0: mix_formula) (wh
                     else
                       non_null
                   in
-                  MCP.memoise_add_pure_N (MCP.mkMTrue pos) (CP.mkAnd inv (mkPermInv () f) no_pos)
+                  let inv_f = 
+                  match !Globals.perm with
+                    | Bperm ->
+                        (*For bperm, the permission triple
+                        is equal to this perm var*)
+                        let triples = get_perm_triple_mf f p0 in
+                        let _ = if ((List.length triples)>1) then
+                              print_endline ("Found more than one triples")
+                        in
+                        let triple = List.hd triples in
+                        Bperm.mkBpermInv triple
+                    | _ -> mkPermInv () f
+                  in
+                  MCP.memoise_add_pure_N (MCP.mkMTrue pos) (CP.mkAnd inv inv_f no_pos)
             )
       (* (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_null , []) *)
       | ViewNode ({ h_formula_view_node = p;
@@ -1052,7 +1065,19 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula)  (p0: mix_formula) (wh
             (*LDK: add fractional invariant 0<f<=1, if applicable*)
             let frac_inv = match frac with
               | None -> CP.mkTrue pos
-              | Some f -> mkPermInv () f in
+              | Some f -> 
+                  (match !Globals.perm with
+                    | Bperm ->
+                        (*For bperm, the permission triple
+                          is equal to this perm var*)
+                        let triples = get_perm_triple_mf f p0 in
+                        let _ = if ((List.length triples)>1) then
+                              print_endline ("Found more than one triples")
+                        in
+                        let triple = List.hd triples in
+                        Bperm.mkBpermInv triple
+                    | _ -> mkPermInv () f)
+            in
             let inv_opt =  Cast.get_xpure_one vdef rm_br in
             let res = 
             (match inv_opt with
@@ -1203,7 +1228,7 @@ and xpure_heap_symbolic_perm (prog : prog_decl) (h0 : h_formula) (p0: mix_formul
 (* todo: add checking for fractional permissions: p0 |- frac(a) =1.0 => a in memset*)
 and xpure_heap_symbolic_perm_x (prog : prog_decl) (h0 : h_formula)  (p0: mix_formula) (which_xpure :int) : (MCP.mix_formula * CP.spec_var list * CF.mem_formula) = 
   let memset = h_formula_2_mem_perm h0 p0 [] prog in
-  let ph, pa = xpure_heap_symbolic_perm_i prog h0 which_xpure in
+  let ph, pa = xpure_heap_symbolic_perm_i prog h0 p0 which_xpure in
   (*TO CHECK: temporarily disable is_sat*)
   if (is_sat_mem_formula memset) then (ph, pa, memset)
   else (MCP.mkMFalse no_pos, pa, memset)
@@ -1308,12 +1333,12 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
   helper h0
 
 (*xpure heap in the presence of imm and permissions*)
-and xpure_heap_symbolic_perm_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formula * CP.spec_var list) = 
+and xpure_heap_symbolic_perm_i (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) i: (MCP.mix_formula * CP.spec_var list) = 
   let pr (mf,bl,_) = pr_pair Cprinter.string_of_mix_formula (pr_list (fun (_,f) -> Cprinter.string_of_pure_formula f)) (mf,bl) in
-  Debug.no_1 "xpure_heap_symbolic_perm_i" Cprinter.string_of_h_formula pr
-      (fun h0 -> xpure_heap_symbolic_perm_i_x prog h0 i) h0
+  Debug.no_2 "xpure_heap_symbolic_perm_i" Cprinter.string_of_h_formula Cprinter.string_of_pure_formula pr
+      (fun h0 p0 -> xpure_heap_symbolic_perm_i_x prog h0 p0 i) h0 p0
 
-and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_formula * CP.spec_var list) = 
+and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) xp_no: (MCP.mix_formula * CP.spec_var list) = 
   let rec helper h0 = match h0 with
     | DataNode ({ h_formula_data_node = p;
       h_formula_data_perm = frac;
@@ -1324,7 +1349,20 @@ and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP
           (match frac with
             | None -> (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [p])
             | Some f ->
-                  let res = CP.mkAnd non_zero (mkPermInv () f) no_pos in
+                  let inv_f = 
+                  match !Globals.perm with
+                    | Bperm ->
+                        (*For bperm, the permission triple
+                        is equal to this perm var*)
+                        let triples = get_perm_triple_mf f p0 in
+                        let _ = if ((List.length triples)>1) then
+                              print_endline ("Found more than one triples")
+                        in
+                        let triple = List.hd triples in
+                        Bperm.mkBpermInv triple
+                    | _ -> mkPermInv () f
+                  in
+                  let res = CP.mkAnd non_zero inv_f no_pos in
 	              (MCP.memoise_add_pure_N (MCP.mkMTrue pos) res , [p]))
     | ViewNode ({ h_formula_view_node = p;
       h_formula_view_name = c;
@@ -1344,7 +1382,19 @@ and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP
                   let _ = if diff_flag then smart_same_flag := false in
                   let frac_inv = match frac with
                     | None -> CP.mkTrue pos
-                    | Some f -> mkPermInv () f in
+                    | Some f ->
+                        (match !Globals.perm with
+                          | Bperm ->
+                              (*For bperm, the permission triple
+                                is equal to this perm var*)
+                              let triples = get_perm_triple_mf f p0 in
+                              let _ = if ((List.length triples)>1) then
+                                    print_endline ("Found more than one triples")
+                              in
+                              let triple = List.hd triples in
+                              Bperm.mkBpermInv triple
+                          | _ -> mkPermInv () f)
+                  in
                   let vinv = if (xp_no=1 && diff_flag) then vdef.view_x_formula else vdef.view_user_inv in
                   (*add fractional invariant*)
                   let frac_inv_mix = MCP.OnePF frac_inv in

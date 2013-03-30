@@ -1789,17 +1789,17 @@ and mkGt a1 a2 pos =
   else
     Gt (a1, a2, pos)
 
-and mkFormulaFromXP xp=
- BForm ((XPure xp,None),None)
-
-and mkRel rel args pos=
-  BForm ((RelForm (rel,args,pos), None) , None)
-
 and mkGte a1 a2 pos =
   if is_max_min a1 || is_max_min a2 then
     failwith ("max/min can only be used in equality")
   else
     Gte (a1, a2, pos)
+
+and mkFormulaFromXP xp=
+ BForm ((XPure xp,None),None)
+
+and mkRel rel args pos=
+  BForm ((RelForm (rel,args,pos), None) , None)
 
 and mkNull (v : spec_var) pos = mkEqExp (mkVar v pos) (Null pos) pos
 
@@ -1920,6 +1920,9 @@ and mkLtExp (ae1 : exp) (ae2 : exp) pos :formula =
           else
             BForm ((Lt (ae1, ae2, pos), None),None)
     | _ ->  BForm ((Lt (ae1, ae2, pos), None),None)
+
+and mkGteExp (ae1 : exp) (ae2 : exp) pos :formula =
+  BForm ((Gte (ae1, ae2, pos), None),None)
 
 and mkLteExp (ae1 : exp) (ae2 : exp) pos :formula =
   BForm ((Lte (ae1, ae2, pos), None),None)

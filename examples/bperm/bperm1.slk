@@ -21,4 +21,8 @@ print residue.
 //VALID with instantiation (NOT YET SUPPORT instantiation of tuple)
 //FAIL otherwise
 
-//checkentail x=1 & y=1 |- x=y.
+//(5)
+checkentail x::node(c,t,a)<_, null> |- 0<=c<=t+a & t>=0.
+print residue.
+// VALID, invariant
+

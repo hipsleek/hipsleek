@@ -1449,6 +1449,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         (*there exists fresh_frac statisfy ... *)
                         if (read_only)
                         then
+                          (*TODO: need to add parts for bounded permissions*)
                           let read_f = mkPermInv () fresh_frac in
                           CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
                         else
