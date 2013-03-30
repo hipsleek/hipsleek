@@ -2299,6 +2299,35 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
 	  vid::CP.remove_dups_svl (List.fold_left List.append [] (List.map CP.afv args))
   | HTrue | HFalse | HEmp | Hole _ -> []
 
+and h_perm_vars (h : h_formula) : CP.spec_var list  =
+  let cperms = h_perms h in
+  let vars = List.concat (List.map Perm.get_cperm cperms) in
+  Gen.BList.remove_dups_eq CP.eq_spec_var vars
+
+and h_perms (h : h_formula) : Perm.cperm list = match h with
+  | Star ({h_formula_star_h1 = h1; 
+	h_formula_star_h2 = h2; 
+	h_formula_star_pos = pos})
+  | StarMinus ({h_formula_starminus_h1 = h1; 
+	h_formula_starminus_h2 = h2; 
+	h_formula_starminus_pos = pos}) -> (h_perms h1 @ h_perms h2)
+  | Conj ({h_formula_conj_h1 = h1; 
+	h_formula_conj_h2 = h2; 
+	h_formula_conj_pos = pos}) 
+  | ConjStar ({h_formula_conjstar_h1 = h1; 
+	h_formula_conjstar_h2 = h2; 
+	h_formula_conjstar_pos = pos}) 		
+  | ConjConj ({h_formula_conjconj_h1 = h1; 
+	h_formula_conjconj_h2 = h2; 
+	h_formula_conjconj_pos = pos}) -> (h_perms h1 @ h_perms h2)
+  | Phase ({h_formula_phase_rd = h1; 
+	h_formula_phase_rw = h2; 
+	h_formula_phase_pos = pos}) -> (h_perms h1 @ h_perms h2)
+  | DataNode ({h_formula_data_perm = perm;})
+  | ViewNode ({h_formula_view_perm = perm;}) -> [perm]
+  | HRel _
+  | HTrue | HFalse | HEmp | Hole _ -> []
+
 (*and br_fv br init_l: CP.spec_var list =
   CP.remove_dups_svl (List.fold_left (fun a (c1,c2)-> (CP.fv c2)@a) init_l br)*)
   

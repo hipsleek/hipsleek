@@ -2142,8 +2142,34 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     let h, p, _, _,_ = CF.split_components c_lhs in
     let pvars =mfv p in
     let hvars = CF.h_fv h in
-    let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars hvars in 
-    Gen.BList.remove_dups_eq CP.eq_spec_var univ_vars in
+    if (!Globals.perm!=Bperm) then
+      let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars hvars in 
+      Gen.BList.remove_dups_eq CP.eq_spec_var univ_vars
+    else
+      (*Get bperm vars from heaps*)
+      let bpvars = CF.h_perm_vars h in
+      (*get a closure, in case f=f1 & f1=f2 & f2=triple*)
+      (*each list item in bpvars corresponds to 1 perm var*)
+      let bpvars =  (List.map (fun v -> MCP.find_closure_mix_formula v p) bpvars) in
+      (*derive bperms triple from bperm vars*)
+      let triples = List.map (fun ls ->  List.map (fun v -> get_perm_triple_mf v p) ls) bpvars in
+      let triples = List.concat (List.concat triples) in
+      let _ = if ((List.length triples)>1) then
+            print_endline ("Found more than one triples") 
+      in
+      let triple_vars = List.map (fun (ec,et,ea) ->
+          let helper e = 
+            match e  with
+              | CP.Var (sv,_) -> [sv]
+              | _ -> []
+          in
+          List.concat (List.map helper [ec;et;ea])
+      ) triples in
+      let triple_vars = List.concat triple_vars in
+      let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars (hvars@triple_vars) in
+      (* let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars hvars in  *)
+      Gen.BList.remove_dups_eq CP.eq_spec_var univ_vars
+  in
   let univ_vars = compute_univ () in
   let lhs_fnames = Gen.BList.difference_eq (=) lhs_fnames0 (List.map CP.name_of_spec_var univ_vars) in
   let c_rhs = trans_formula prog (Gen.is_empty univ_vars) ((* self :: *) lhs_fnames) false coer.I.coercion_body stab false in

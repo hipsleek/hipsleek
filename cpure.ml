@@ -10125,10 +10125,10 @@ let rec translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos
     | Lt _ ->
         (* WRONG: waitlevel< x ==define==> forall v. v in LSMU => v>0 & v<x*)
         (* CORRECT: waitlevel<x ==define==> (ls={} => x>0) & (ls!={} => forall v. v in LSMU => v<x)
-          or
-          (ls!={} | x>0) & (ls={} | (forall v. v in LSMU => v<x))
-          or
-          (ls!={} | x>0) & (ls={} | (forall v. v notin LSMU | v<x))
+           or
+           (ls!={} | x>0) & (ls={} | (forall v. v in LSMU => v<x))
+           or
+           (ls!={} | x>0) & (ls={} | (forall v. v notin LSMU | v<x))
         *)
         let level_var = mkLevelVar Unprimed in
         let fresh_var = fresh_spec_var level_var in
@@ -10201,7 +10201,7 @@ let rec translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos
               let f_and = And (eq_f,in_f,pos) in
               let f_exists = Exists (fresh_var,f_and,None,pos) in
               f_exists
-              (* mkBagLInExp sv lsmu_exp pos *)
+          (* mkBagLInExp sv lsmu_exp pos *)
           | _ -> Error.report_error { Error.error_loc = pos; Error.error_text = "translate_waitlevel_p_formula: unexpected operator: only expecting integer value in waitlevel formulae" ^ (!print_exp x);})
         in
         let f22 = And (f221,f222,pos) in
@@ -10209,8 +10209,8 @@ let rec translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos
         And (f1,f2,pos)
     | Gt _ ->
         (* waitlevel>x ==define==> (ls={} => x<0) & (ls!={} => exist v. v in LSMU & v>x)
-          or
-          (ls!={} | x<0) & (ls={} | (exist v. v in LSMU & v>x))
+           or
+           (ls!={} | x<0) & (ls={} | (exist v. v in LSMU & v>x))
         *)
         let level_var = mkLevelVar Unprimed in
         let fresh_var = fresh_spec_var level_var in
@@ -10557,3 +10557,58 @@ let find_closure_pure_formula (v:spec_var) (f:formula) : spec_var list =
       !print_formula
       !print_svl
       find_closure_pure_formula_x v f
+
+(*only expect to get the trpiple from equality*)
+let get_perm_triple_b_formula sv (bf : b_formula) : (exp * exp * exp) list =
+  let (pf,il) = bf in
+  (match pf with
+	| Eq (e1,e2,l) ->
+        (match e1,e2 with
+          | Var (v,_), Bptriple ((ec,et,ea),_)
+          | Bptriple ((ec,et,ea),_), Var (v,_) -> [(ec,et,ea)]
+          | _ -> [])
+	| Lt _
+	| Lte _
+	| Gt _
+	| Gte _
+	| Neq _
+	| BagIn _
+	| BagNotIn _
+	| BagSub _
+	| ListIn _
+	| ListNotIn _
+	| ListAllN _
+	| ListPerm _
+	| RelForm _
+	| LexVar _
+	| BConst _
+	| BVar _ 
+	| BagMin _ 
+    | SubAnn _
+	| EqMax _
+	| EqMin _
+    | VarPerm _
+    | XPure _
+	| BagMax _ -> []
+  )
+
+let get_perm_triple_pure (sv:spec_var) (f : formula) : (exp * exp * exp) list = 
+  let rec helper sv f =
+    match f with
+      | BForm (bf, lbl) -> get_perm_triple_b_formula sv bf
+      | And (f1, f2, pos) -> (helper sv f1)@(helper sv f2)
+      | AndList b ->
+          let nf = List.fold_left (fun ls_f (_,f_b) -> 
+              let res = helper sv f_b in
+              res@res
+          ) [] b in
+          nf
+      | Or (f1, f2, lbl, pos) -> (helper sv f1)@(helper sv f2) (*TOCHECK*)
+      | Not (f, lbl, pos) -> helper sv f
+      | Forall (qv, f, lbl, pos) -> 
+          if (eq_spec_var sv qv) then []
+          else helper sv f
+      | Exists (qv, f, lbl, pos) ->
+          if (eq_spec_var sv qv) then []
+          else helper sv f
+  in helper sv f

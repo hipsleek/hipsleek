@@ -1,13 +1,16 @@
 data cell {int val}.
 
-//lemma "splitCell" self::cell(c,t,0)<v> & c=c1+c2 -> self::cell(c1,t,0)<v> * self::cell(c2,t,0)<_>.
+//lemma "splitCell" self::cell(c,t,0)<v> & c=c1+c2 & 0<c1<t & 0<c2<t -> self::cell(c1,t,0)<v> * self::cell(c2,t,0)<_> & 0<c<=t.
+
+lemma "splitCell" self::cell(c,t,0)<v> & c=c1+c2 -> self::cell(c1,t,0)<v> * self::cell(c2,t,0)<_>.
 
 //(1)
-//checkentail x::cell(2,2,0)<_> |- x::cell(1,2,0)<_>.
-//print residue.
-
-checkentail x::cell(2,2,0)<_> |- [a] x::cell(a,2,0)<_>.
+checkentail x::cell(2,2,0)<_> |- x::cell(1,2,0)<_>.
 print residue.
+
+//checkentail x::cell(2,2,0)<_> |- [a] x::cell(a,2,0)<_>.
+//VALID, explicit instantiation
+//print residue.
 
 //checkentail x=(1+2) |- true.
 
