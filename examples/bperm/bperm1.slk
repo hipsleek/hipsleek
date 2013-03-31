@@ -26,3 +26,7 @@ checkentail x::node(c,t,a)<_, null> |- 0<=c<=t+a & t>=0.
 print residue.
 // VALID, invariant
 
+//(6)
+checkentail x::node(1,2,1)<_, null> |- [c,t,a] x::node(c,t,a)<_,b>.
+print residue.
+//VALID with explicit instantiation, residue: c=1, t=2, a=1

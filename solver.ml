@@ -7735,14 +7735,58 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
 
 (*match and instatiate perm vars*)
 (*Return a substitution, labels, to_ante,to_conseq*)
-and do_match_inst_perm_vars_x (l_perm:P.spec_var option) (r_perm:P.spec_var option) (l_args:P.spec_var list) (r_args:P.spec_var list) label_list (evars:P.spec_var list) ivars impl_vars expl_vars =
+and do_match_inst_perm_vars_x (l_perm:P.spec_var option) (r_perm:P.spec_var option) (l_args:P.spec_var list) (r_args:P.spec_var list) (l_p : mix_formula) (r_p : mix_formula) label_list (evars:P.spec_var list) ivars impl_vars expl_vars =
   begin
     if (Perm.allow_perm ()) then
       (match l_perm, r_perm with
         | Some f1, Some f2 ->
-              let rho_0 = List.combine (f2::r_args) (f1::l_args) in
-              let label_list = (Label_only.Lab_List.unlabelled::label_list) in
-              (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
+            (match !Globals.perm with
+              | Bperm ->
+                  let l_triples = MCP.get_perm_triple_mf f1 l_p in
+                  let r_triples = MCP.get_perm_triple_mf f2 r_p in
+                  if ((List.length l_triples)=0) then
+                    let _ = print_endline ("[Warning] do_match_perm_vars: bperm triple not found in LSH") in
+                    let rho_0 = List.combine (f2::r_args) (f1::l_args) in
+                    let label_list = (Label_only.Lab_List.unlabelled::label_list) in
+                    (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
+                  else if ((List.length r_triples)=0) then
+                    let _ = print_endline ("[Warning] do_match_perm_vars: bperm triple not found in RHS") in
+                    let rho_0 = List.combine (f2::r_args) (f1::l_args) in
+                    let label_list = (Label_only.Lab_List.unlabelled::label_list) in
+                    (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
+                  else 
+                    let _ = if (((List.length l_triples)>1)||((List.length r_triples)>1)) then print_endline ("[Warning] do_match_perm_vars: more than 1 bperm triple found")
+                    in
+                    let l_c,l_t,l_a = List.hd l_triples in
+                    let r_c,r_t,r_a = List.hd r_triples in
+                    let rho_1,label_list1,to_ante,to_conseq =
+                      List.fold_left (fun (rho,ls,ante,conseq) (l,r) ->
+                          match l,r with
+                            | Cpure.Var (varl,_),Cpure.Var (varr,_) ->
+                                (varr,varl)::rho,Label_only.Lab_List.unlabelled::ls,ante,conseq
+                            | Cpure.Var (varl,_),_ ->
+                                (*add to conseq to prove*)
+                                let t_conseq = Cpure.mkEqExp l r no_pos in
+                                let conseq1 = Cpure.mkAnd conseq t_conseq no_pos in
+                                (rho,ls,ante,conseq1)
+                            | _, Cpure.Var (varr,_) ->
+                                (*add to conseq and inst later*)
+                                (* ??? what if varr is an impl_var ? It is not the case for triple var*)
+                                let t_conseq = Cpure.mkEqExp l r no_pos in
+                                let conseq1 = Cpure.mkAnd conseq t_conseq no_pos in
+                                (rho,ls,ante,conseq1)
+                            | _ -> 
+                                (*do nothing, later will compare 2 triples*)
+                                (rho,ls,ante,conseq)
+                      ) ([],[],P.mkTrue no_pos,CP.mkTrue no_pos) [(l_c,r_c);(l_t,r_t);(l_a,r_a)]
+                    in
+                    let rho_0 = List.combine (f2::r_args) (f1::l_args) in
+                    let label_list = (Label_only.Lab_List.unlabelled::label_list) in
+                    (rho_1@rho_0,label_list1@label_list,to_ante,to_conseq)
+              | _ ->
+                  let rho_0 = List.combine (f2::r_args) (f1::l_args) in
+                  let label_list = (Label_only.Lab_List.unlabelled::label_list) in
+                  (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos))
         | None, Some f2 ->
 	          let rho_0 = List.combine (f2::r_args) (full_perm_var ()::l_args) in
               let label_list = (Label_only.Lab_List.unlabelled::label_list) in
@@ -7785,10 +7829,9 @@ and do_match_inst_perm_vars_x (l_perm:P.spec_var option) (r_perm:P.spec_var opti
     else
       let rho_0 = List.combine r_args l_args in (* without branch label *)
       (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
-
   end
 
-and do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars =
+and do_match_inst_perm_vars l_perm r_perm l_args r_args (l_p : mix_formula) (r_p : mix_formula) label_list evars ivars impl_vars expl_vars =
   let pr_out (rho,lbl,ante,conseq) =
     let s1 = pr_pair Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula (ante,conseq) in
     let s2 = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) rho in
@@ -7802,7 +7845,7 @@ and do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars i
       string_of_spec_var_list
       string_of_spec_var_list
       pr_out
-      (fun _ _ _ _ _ _ -> do_match_inst_perm_vars_x l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars) l_perm r_perm evars ivars impl_vars expl_vars
+      (fun _ _ _ _ _ _ -> do_match_inst_perm_vars_x l_perm r_perm l_args r_args l_p r_p label_list evars ivars impl_vars expl_vars) l_perm r_perm evars ivars impl_vars expl_vars
 
 (*Modified a set of vars in estate to reflect instantiation
   when matching 2 perm vars*)
@@ -7811,8 +7854,8 @@ and do_match_perm_vars l_perm r_perm evars ivars impl_vars expl_vars =
     if (Perm.allow_perm ()) then
       (match l_perm, r_perm with
         | Some f1, Some f2 ->
-              (*these cases will be handled by existing mechanism*)
-              evars,ivars,impl_vars, expl_vars
+            (*these cases will be handled by existing mechanism*)
+            evars,ivars,impl_vars, expl_vars
         | None, None  ->
               (*no change*)
               evars,ivars,impl_vars, expl_vars
@@ -8062,7 +8105,7 @@ and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) 
               let expl_vars = estate.es_gen_expl_vars in
               let impl_vars = estate.es_gen_impl_vars in
               let rho_0, label_list, p_ante,p_conseq =
-                do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars impl_vars expl_vars in
+                do_match_inst_perm_vars l_perm r_perm l_args r_args l_p r_p label_list evars ivars impl_vars expl_vars in
               (*  let rho_0, label_list = 
                   if (Perm.allow_perm ()) then
                   match l_perm, r_perm with
