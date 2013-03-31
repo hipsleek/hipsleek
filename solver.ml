@@ -7772,10 +7772,15 @@ and do_match_inst_perm_vars_x (l_perm:P.spec_var option) (r_perm:P.spec_var opti
                             | _, Cpure.Var (varr,_) ->
                                 (*add to conseq and inst later*)
                                 (* ??? what if varr is an impl_var ? It is not the case for triple var*)
-                                let t_conseq = Cpure.mkEqExp l r no_pos in
-                                let conseq1 = Cpure.mkAnd conseq t_conseq no_pos in
+                                if (List.mem varr impl_vars) then
+                                  let t_ante = Cpure.mkEqExp l r no_pos in
+                                  let ante1 = Cpure.mkAnd ante t_ante no_pos in
+                                  (rho,ls,ante1,conseq)
+                                else
+                                  let t_conseq = Cpure.mkEqExp l r no_pos in
+                                  let conseq1 = Cpure.mkAnd conseq t_conseq no_pos in
                                 (rho,ls,ante,conseq1)
-                            | _ -> 
+                            | _ ->
                                 (*do nothing, later will compare 2 triples*)
                                 (rho,ls,ante,conseq)
                       ) ([],[],P.mkTrue no_pos,CP.mkTrue no_pos) [(l_c,r_c);(l_t,r_t);(l_a,r_a)]
@@ -7791,7 +7796,6 @@ and do_match_inst_perm_vars_x (l_perm:P.spec_var option) (r_perm:P.spec_var opti
 	          let rho_0 = List.combine (f2::r_args) (full_perm_var ()::l_args) in
               let label_list = (Label_only.Lab_List.unlabelled::label_list) in
               (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
-		          
         (*(if (List.mem f2 evars) then
         (*rename only*)
           let rho_0 = List.combine (f2::r_args) (full_perm_var () ::l_args) in

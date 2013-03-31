@@ -591,6 +591,34 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
   | HEmp -> [] 
 ;;
 
+let rec h_perms (f:h_formula): Perm.iperm list = match f with   
+  | Conj ({h_formula_conj_h1 = h1; 
+	   h_formula_conj_h2 = h2; 
+	   h_formula_conj_pos = pos})
+  | ConjStar ({h_formula_conjstar_h1 = h1; 
+	   h_formula_conjstar_h2 = h2; 
+	   h_formula_conjstar_pos = pos})
+  | ConjConj ({h_formula_conjconj_h1 = h1; 
+	   h_formula_conjconj_h2 = h2; 
+	   h_formula_conjconj_pos = pos})	   	   
+  | Phase ({h_formula_phase_rd = h1; 
+	   h_formula_phase_rw = h2; 
+	   h_formula_phase_pos = pos}) 
+  | StarMinus ({h_formula_starminus_h1 = h1; 
+	   h_formula_starminus_h2 = h2; 
+	   h_formula_starminus_pos = pos})
+  | Star ({h_formula_star_h1 = h1; 
+	   h_formula_star_h2 = h2; 
+	   h_formula_star_pos = pos}) ->  Gen.BList.remove_dups_eq (=) ((h_perms h1)@(h_perms h2))
+  | HeapNode {h_formula_heap_perm = perm;}
+  | HeapNode2 {h_formula_heap2_perm = perm;} -> [perm] 
+  | HRel (_, args, _)-> []
+  | HTrue -> []
+  | HFalse -> [] 
+  | HEmp -> [] 
+;;
+
+
 let rec struc_hp_fv (f:struc_formula): (ident*primed) list =  match f with
 	| EBase b-> Gen.BList.difference_eq (=) ((Gen.fold_opt struc_hp_fv b.formula_struc_continuation)@(heap_fv b.formula_struc_base)) 
 					(b.formula_struc_explicit_inst@b.formula_struc_implicit_inst)
@@ -601,6 +629,13 @@ let rec struc_hp_fv (f:struc_formula): (ident*primed) list =  match f with
 							
 and heap_fv_one_formula (f:one_formula):(ident*primed) list = 
   (h_fv f.formula_heap)
+
+and heap_perms_one_formula (f:one_formula): iperm list = 
+  (h_perms f.formula_heap)
+
+and get_perm_triple_one_formula (v:(ident*primed))(f:one_formula): (Ipure.exp * Ipure.exp * Ipure.exp) list = 
+  (Ipure.get_perm_triple_pure v f.formula_pure)
+
 
 (*TO CHECK: how about formula_and*)
 and heap_fv (f:formula):(ident*primed) list = match f with
@@ -625,6 +660,28 @@ and unbound_heap_fv (f:formula):(ident*primed) list = match f with
         let hvars = h_fv b.formula_exists_heap in
 		Gen.BList.difference_eq (=) (hvars@avars) b.formula_exists_qvars
 	| Or b-> Gen.BList.remove_dups_eq (=) ((unbound_heap_fv b.formula_or_f1)@(unbound_heap_fv b.formula_or_f2))
+
+and heap_perms (f:formula): iperm list = match f with
+	| Base b->
+        let aperms = List.concat (List.map heap_perms_one_formula b.formula_base_and) in
+        let hperms = h_perms b.formula_base_heap in
+        (hperms@aperms)
+	| Exists b-> 
+        let aperms = List.concat (List.map heap_perms_one_formula b.formula_exists_and) in
+        let hperms = h_perms b.formula_exists_heap in
+		(hperms@aperms)
+	| Or b-> Gen.BList.remove_dups_eq (=) ((heap_perms b.formula_or_f1)@(heap_perms b.formula_or_f2))
+
+and get_perm_triple (v:(ident*primed)) (f:formula): (Ipure.exp * Ipure.exp * Ipure.exp) list = match f with
+	| Base b->
+        let aperms = List.concat (List.map (fun f -> get_perm_triple_one_formula v f) b.formula_base_and) in
+        let hperms = Ipure.get_perm_triple_pure v b.formula_base_pure in
+        (hperms@aperms)
+	| Exists b-> 
+        let aperms = List.concat (List.map (fun f -> get_perm_triple_one_formula v f) b.formula_exists_and) in
+        let hperms = Ipure.get_perm_triple_pure v b.formula_exists_pure in
+		(hperms@aperms)
+	| Or b-> Gen.BList.remove_dups_eq (=) ((get_perm_triple v b.formula_or_f1)@(get_perm_triple v b.formula_or_f2))
 
 and struc_free_vars with_inst (f:struc_formula) :(ident*primed) list= match f with
 	| EBase b -> Gen.BList.remove_dups_eq (=) (Gen.BList.difference_eq (=) 

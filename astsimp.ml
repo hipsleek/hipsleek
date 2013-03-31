@@ -4375,7 +4375,7 @@ and trans_I2C_struc_formula i (prog : I.prog_decl) (quantify : bool) (fvars : id
       stab (check_self_sp:bool) (*disallow self in sp*) (check_pre:bool) : CF.struc_formula = 
   let prb = string_of_bool in
   (* Debug.no_5_loop    *)
-  Debug.no_eff_5_num  i
+  Debug.ho_eff_5_num  i
       "trans_I2C_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list 
       (add_str "Input Struc:" Iprinter.string_of_struc_formula) 
       (add_str "Output Struc:" Cprinter.string_of_struc_formula)
@@ -6999,7 +6999,7 @@ and case_normalize_struc_formula i prog (h:(ident*primed) list)(p:(ident*primed)
   let pr0 = pr_list (fun (i,p) -> i) in
   let pr1 = Iprinter.string_of_struc_formula in
   let pr2 (x,_) = pr1 x in
-  Debug.no_3_num i "case_normalize_struc_formula" pr0 pr0 pr1 pr2 (fun _ _ _ -> case_normalize_struc_formula_x prog h p f allow_primes allow_post_vars lax_implicit strad_vs) h p f
+  Debug.ho_3_num i "case_normalize_struc_formula" pr0 pr0 pr1 pr2 (fun _ _ _ -> case_normalize_struc_formula_x prog h p f allow_primes allow_post_vars lax_implicit strad_vs) h p f
 
 and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ident*primed) list)(f:IF.struc_formula) 
 	allow_primes allow_post_vars (lax_implicit:bool) strad_vs :IF.struc_formula* ((ident*primed)list) = 	
@@ -7103,8 +7103,47 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
 					| Some l-> 
 						let r1,r2 = helper h1prm new_strad_vs vars l in 
 						(Some r1,r2) in
-				let implvar = diff (IF.unbound_heap_fv onb) all_vars in
-				let _ = if (List.length (diff implvar (IF.heap_fv onb @ fold_opt IF.struc_hp_fv nc)))>0 then 
+                let triple_vars =
+                  match !Globals.perm with
+                    | Bperm ->
+                        (*Idientify impl_var in bperm triples*)
+                        let perms = IF.heap_perms onb in
+                        (*perms could be a triple or a var*)
+                        (*triple vars are also consider heap_vars*)
+                        let triples,vars = List.fold_left (fun (triples,vars) perm ->
+                            (match perm with
+                              | None -> triples,vars
+                              | Some f ->
+                                  (match f with
+                                    | IP.Var (id,_) -> triples,id::vars
+                                    | IP.Bptriple (t,_) -> t::triples,vars
+                                    | _ -> triples,vars))
+                        ) ([],[]) perms
+                        in
+                        let triples_list = List.map (fun v -> IF.get_perm_triple v onb) vars in
+                        let _ = 
+                          let b = List.exists (fun triples -> (List.length triples)>1) triples_list in
+                          if b then
+                            print_endline ("[Warning] case_normalize_struc_formula: multiple triples found for a single bperm variable")
+                        in
+                        let triples2 = List.concat triples_list in
+                        let triples=triples@triples2 in
+                        (*identify vars in tuples*)
+                        let triple_vars = List.fold_left (fun vars (c,t,a) ->
+                            let helper e =
+                              match e with
+                                | IP.Var (id,_) -> [id]
+                                | _ -> []
+                            in
+                            let res = List.concat (List.map helper [c;t;a]) in
+                            res@vars
+                        ) [] triples in
+                        Gen.BList.remove_dups_eq (=) triple_vars
+                    | _ -> []
+                in
+				let implvar = diff ((IF.unbound_heap_fv onb)@triple_vars) all_vars
+                in
+				let _ = if (List.length (diff implvar (triple_vars@IF.heap_fv onb @ fold_opt IF.struc_hp_fv nc)))>0 then 
 				  Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction: some implicit vars are not heap_vars\n")} else true in
             let implvar = hack_filter_global_rel prog implvar in
 				(IF.EBase {

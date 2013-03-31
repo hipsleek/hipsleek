@@ -1514,3 +1514,58 @@ let trans_special_formula s (p:formula) vars =
         )
     | _ -> p
   )
+
+(*only expect to get the trpiple from equality*)
+let get_perm_triple_b_formula sv (bf : b_formula) : (exp * exp * exp) list =
+  let (pf,il) = bf in
+  (match pf with
+	| Eq (e1,e2,l) ->
+        (match e1,e2 with
+          | Var (v,_), Bptriple ((ec,et,ea),_)
+          | Bptriple ((ec,et,ea),_), Var (v,_) -> [(ec,et,ea)]
+          | _ -> [])
+	| Lt _
+	| Lte _
+	| Gt _
+	| Gte _
+	| Neq _
+	| BagIn _
+	| BagNotIn _
+	| BagSub _
+	| ListIn _
+	| ListNotIn _
+	| ListAllN _
+	| ListPerm _
+	| RelForm _
+	| LexVar _
+	| BConst _
+	| BVar _ 
+	| BagMin _ 
+    | SubAnn _
+	| EqMax _
+	| EqMin _
+    | VarPerm _
+    | XPure _
+	| BagMax _ -> []
+  )
+
+let get_perm_triple_pure (sv:(ident*primed)) (f : formula) : (exp * exp * exp) list = 
+  let rec helper sv f =
+    match f with
+      | BForm (bf, lbl) -> get_perm_triple_b_formula sv bf
+      | And (f1, f2, pos) -> (helper sv f1)@(helper sv f2)
+      | AndList b ->
+          let nf = List.fold_left (fun ls_f (_,f_b) -> 
+              let res = helper sv f_b in
+              res@res
+          ) [] b in
+          nf
+      | Or (f1, f2, lbl, pos) -> (helper sv f1)@(helper sv f2) (*TOCHECK*)
+      | Not (f, lbl, pos) -> helper sv f
+      | Forall (qv, f, lbl, pos) -> 
+          if (eq_var sv qv) then []
+          else helper sv f
+      | Exists (qv, f, lbl, pos) ->
+          if (eq_var sv qv) then []
+          else helper sv f
+  in helper sv f
