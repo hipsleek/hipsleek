@@ -2146,26 +2146,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
       let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars hvars in 
       Gen.BList.remove_dups_eq CP.eq_spec_var univ_vars
     else
-      (*Get bperm vars from heaps*)
-      let bpvars = CF.h_perm_vars h in
-      (*get a closure, in case f=f1 & f1=f2 & f2=triple*)
-      (*each list item in bpvars corresponds to 1 perm var*)
-      let bpvars =  (List.map (fun v -> MCP.find_closure_mix_formula v p) bpvars) in
-      (*derive bperms triple from bperm vars*)
-      let triples = List.map (fun ls ->  List.map (fun v -> get_perm_triple_mf v p) ls) bpvars in
-      let triples = List.concat (List.concat triples) in
-      let _ = if ((List.length triples)>1) then
-            print_endline ("Found more than one triples") 
-      in
-      let triple_vars = List.map (fun (ec,et,ea) ->
-          let helper e = 
-            match e  with
-              | CP.Var (sv,_) -> [sv]
-              | _ -> []
-          in
-          List.concat (List.map helper [ec;et;ea])
-      ) triples in
-      let triple_vars = List.concat triple_vars in
+      let triple_vars = CF.h_triple_vars h p in
       let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars (hvars@triple_vars) in
       (* let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars hvars in  *)
       Gen.BList.remove_dups_eq CP.eq_spec_var univ_vars
@@ -7120,10 +7101,14 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
                                     | _ -> triples,vars))
                         ) ([],[]) perms
                         in
-                        let triples_list = List.map (fun v -> IF.get_perm_triple v onb) vars in
+                        let triples_list = List.map (fun v ->
+                            let triples = IF.get_perm_triple v onb in
+                            triples
+                        ) vars in
                         let _ = 
                           let b = List.exists (fun triples -> (List.length triples)>1) triples_list in
                           if b then
+                            let _ = print_endline ("onb = " ^ (Iprinter.string_of_formula onb)) in
                             print_endline ("[Warning] case_normalize_struc_formula: multiple triples found for a single bperm variable")
                         in
                         let triples2 = List.concat triples_list in

@@ -238,9 +238,12 @@ and set_il_b_formula bf il =
 let print_b_formula = ref (fun (c:b_formula) -> "cpure printer has not been initialized")
 let print_p_formula = ref (fun (c:p_formula) -> "cpure printer has not been initialized")
 let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
+let print_exp_triple = ref (fun (c:exp*exp*exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
+
+
 let print_rel_cat rel_cat = match rel_cat with
   | RelDefn v -> "RELDEFN " ^ (!print_sv v)
   | HPRelDefn v -> "HP_RELDEFN " ^ (!print_sv v)
@@ -10568,7 +10571,10 @@ let get_perm_triple_b_formula sv (bf : b_formula) : (exp * exp * exp) list =
 	| Eq (e1,e2,l) ->
         (match e1,e2 with
           | Var (v,_), Bptriple ((ec,et,ea),_)
-          | Bptriple ((ec,et,ea),_), Var (v,_) -> [(ec,et,ea)]
+          | Bptriple ((ec,et,ea),_), Var (v,_) ->
+              if (eq_spec_var sv v) then
+                [(ec,et,ea)]
+              else []
           | _ -> [])
 	| Lt _
 	| Lte _
@@ -10595,7 +10601,7 @@ let get_perm_triple_b_formula sv (bf : b_formula) : (exp * exp * exp) list =
 	| BagMax _ -> []
   )
 
-let get_perm_triple_pure (sv:spec_var) (f : formula) : (exp * exp * exp) list = 
+let get_perm_triple_pure_x (sv:spec_var) (f : formula) : (exp * exp * exp) list = 
   let rec helper sv f =
     match f with
       | BForm (bf, lbl) -> get_perm_triple_b_formula sv bf
@@ -10615,3 +10621,8 @@ let get_perm_triple_pure (sv:spec_var) (f : formula) : (exp * exp * exp) list =
           if (eq_spec_var sv qv) then []
           else helper sv f
   in helper sv f
+
+let get_perm_triple_pure (sv:spec_var) (f : formula) : (exp * exp * exp) list =
+  Debug.no_2 "get_perm_triple_pure"
+      !print_sv !print_formula (pr_list !print_exp_triple)
+      get_perm_triple_pure_x sv f

@@ -1046,7 +1046,7 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula)  (p0: mix_formula) (wh
                         is equal to this perm var*)
                         let triples = get_perm_triple_mf f p0 in
                         let _ = if ((List.length triples)>1) then
-                              print_endline ("Found more than one triples")
+                              print_endline ("[Warning] xpure_heap_perm: Found more than one triples")
                         in
                         let triple = List.hd triples in
                         Bperm.mkBpermInv triple
@@ -1072,7 +1072,7 @@ and xpure_heap_perm_x (prog : prog_decl) (h0 : h_formula)  (p0: mix_formula) (wh
                           is equal to this perm var*)
                         let triples = get_perm_triple_mf f p0 in
                         let _ = if ((List.length triples)>1) then
-                              print_endline ("Found more than one triples")
+                              print_endline ("[Warning] xpure_heap_perm: Found more than one triples")
                         in
                         let triple = List.hd triples in
                         Bperm.mkBpermInv triple
@@ -1356,7 +1356,7 @@ and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) (p0: mix_fo
                         is equal to this perm var*)
                         let triples = get_perm_triple_mf f p0 in
                         let _ = if ((List.length triples)>1) then
-                              print_endline ("Found more than one triples")
+                              print_endline ("[Warning] xpure_heap_symbolic_perm : Found more than one triples")
                         in
                         let triple = List.hd triples in
                         Bperm.mkBpermInv triple
@@ -1389,7 +1389,7 @@ and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) (p0: mix_fo
                                 is equal to this perm var*)
                               let triples = get_perm_triple_mf f p0 in
                               let _ = if ((List.length triples)>1) then
-                                    print_endline ("Found more than one triples")
+                                    print_endline ("[Warning] xpure_heap_symbolic_perm : Found more than one triples")
                               in
                               let triple = List.hd triples in
                               Bperm.mkBpermInv triple
@@ -2993,7 +2993,7 @@ and elim_exists_ctx_x (ctx0:context) =
 
 
 and elim_exists_ctx (ctx0:context) =
-  Gen.Profiling.do_1 "elim_exists_ctx" elim_exists_ctx_x ctx0
+  Gen.Profiling.no_1 "elim_exists_ctx" elim_exists_ctx_x ctx0
 
 and elim_ante_evars (es:entail_state) : context = 
   let f = push_exists es.es_ante_evars es.es_formula in
@@ -3180,6 +3180,7 @@ and subs_to_inst_vars_x (st : ((CP.spec_var * CP.spec_var) * Label_only.spec_lab
       : (( CP.spec_var list * CP.spec_var list * (CP.spec_var * CP.spec_var) list) *   ((CP.spec_var * CP.spec_var)* Label_only.spec_label) list) =
   let rec helper st nsubs iv impl_v = match st with
     | ((rv, lv),_) :: rest ->
+        (*TODO: why (lv,rv) ???*)
           let f = helper rest ((lv,rv)::nsubs) (lv::iv) in
           if (CP.mem rv impl_vars) then
             f (rv::impl_v)  
@@ -7937,9 +7938,9 @@ and do_match prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is
 
 and do_match_x prog estate l_node r_node rhs (rhs_matched_set:CP.spec_var list) is_folding pos : 
       list_context *proof =
-  (* print_endline ("\n\n(andreeac)[do_match] input LHS = "^ (Cprinter.string_of_entail_state estate)); *)
-  (* print_endline ("[do_match] RHS = "^ (Cprinter.string_of_formula rhs)); *)
-  (* print_endline ("[do_match] matching " ^ (Cprinter.string_of_h_formula l_node) ^ " |- " ^ (Cprinter.string_of_h_formula r_node)); *)
+  print_endline ("\n\n(andreeac)[do_match] input LHS = "^ (Cprinter.string_of_entail_state estate));
+  print_endline ("[do_match] RHS = "^ (Cprinter.string_of_formula rhs));
+  print_endline ("[do_match] matching " ^ (Cprinter.string_of_h_formula l_node) ^ " |- " ^ (Cprinter.string_of_h_formula r_node));
   Debug.devel_zprint (lazy ("do_match: using " ^
       (Cprinter.string_of_h_formula l_node)	^ " to prove " ^
       (Cprinter.string_of_h_formula r_node))) pos;
@@ -9324,7 +9325,61 @@ and process_action i caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
   Debug.no_6 "process_action" string_of_int pr1 Cprinter.string_of_entail_state Cprinter.string_of_formula pr3 pr3 pr2
       (fun _ _ _ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) caller a estate conseq (Base lhs_b) (Base rhs_b) 
       
-      
+(*identify pairs of permissions to subs later
+perm1 & lp MATCH perm2&r_p
+*)
+and do_universal_perms_x (perm1:Perm.cperm) (perm2:Perm.cperm) (l_p:MCP.mix_formula) (r_p:MCP.mix_formula) =
+  match perm1,perm2 with
+    | Some f1, Some f2 ->
+        (match !Globals.perm with
+          | Bperm ->
+              let l_triples = MCP.get_perm_triple_mf f1 l_p in
+              let r_triples = MCP.get_perm_triple_mf f2 r_p in
+              if ((List.length l_triples)=0) then
+                let _ = print_endline ("[Warning] do_universal_perms: bperm triple not found in LSH") in
+                ([f1],[f2])
+              else if ((List.length r_triples)=0) then
+                let _ = print_endline ("[Warning] do_universal_perms: bperm triple not found in RHS") in
+                ([f1],[f2])
+              else 
+                let _ = if (((List.length l_triples)>1)||((List.length r_triples)>1)) then print_endline ("[Warning] do_universal_perms: more than 1 bperm triple found")
+                in
+                let l_c,l_t,l_a = List.hd l_triples in
+                let r_c,r_t,r_a = List.hd r_triples in
+                let l_res,r_res = List.fold_left (fun (l_ls,r_ls) (l,r) ->
+                    (match l,r with
+                      | Cpure.Var (varl,_),Cpure.Var (varr,_) -> (varl::l_ls,varr::r_ls)
+                      | _ ->
+                          let _ = print_endline ("[Warning] do_universal_perms: bperm triple not found in LSH") in
+                          (l_ls,r_ls))
+                )([],[]) [(l_c,r_c);(l_t,r_t);(l_a,r_a)] in
+                (f1::l_res,f2::r_res)
+          | _ ->
+              ([f1],[f2]))
+    | Some f1, None ->
+        (match !Globals.perm with
+          | Bperm ->
+              let _ = print_endline ("[Warning] do_universal_perms: this case should not available for bperm") in
+              ([f1],[full_perm_var()])
+          | _ ->
+              ([f1],[full_perm_var()]))
+    | None, Some f2 ->
+        (match !Globals.perm with
+          | Bperm ->
+              let _ = print_endline ("[Warning] do_universal_perms: this case should not available for bperm") in
+              ([full_perm_var()],[f2])
+          | _ ->
+              ([full_perm_var()],[f2]))
+    | None, None ->
+        ([],[])
+
+and do_universal_perms (perm1:Perm.cperm) (perm2:Perm.cperm) (l_p:MCP.mix_formula) (r_p:MCP.mix_formula) : (CP.spec_var list) * (CP.spec_var list)= 
+  let pr_out = pr_pair Cprinter.string_of_spec_var_list Cprinter.string_of_spec_var_list in
+  Debug.no_4 "do_universal_perms" 
+      Cprinter.string_of_cperm Cprinter.string_of_cperm Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula pr_out
+      do_universal_perms_x perm1 perm2 l_p r_p
+(************END: do_universal_perms *********************)
+
 (*******************************************************************************************************************************************************************************************)
 (*
   Summary of the coercion helper methods:
@@ -9448,15 +9503,10 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
                 (*subst perm variable when applicable*)
                 let perms1,perms2 =
                   if (Perm.allow_perm ()) then
-                    match perm1,perm2 with
-                      | Some f1, Some f2 ->
-                            ([f1],[f2])
-                      | Some f1, None ->
-                            ([f1],[full_perm_var()])
-                      | None, Some f2 ->
-                            ([full_perm_var()],[f2])
-                      | None, None ->
-                            ([],[])
+                    let rest_h,rest_p,_,_,_ = split_components rest_of_lhs in
+                    let guard_p = MCP.memoise_add_pure_N (MCP.mkMTrue pos) lhs_guard in
+                    (*Find a subst in case of permissions*)
+                    do_universal_perms perm1 perm2 rest_p guard_p
                   else
                     ([],[])
                 in
@@ -10672,6 +10722,9 @@ and elim_exists_exp_loop_x (f0 : formula) : (formula * bool) =
     formula_exists_flow = fl;
     formula_exists_pos = pos}) ->
         let fvh = h_fv h in
+        (*vars in bperm triples are also considered heap vars*)
+        let triple_vars = h_triple_vars h p in
+        let fvh=fvh@triple_vars in
 	if  not(List.exists (fun sv -> CP.eq_spec_var sv qvar) fvh) then
 	  let st, pp1 = MCP.get_subst_equation_mix_formula p qvar false in
 	  if List.length st > 0 then (* if there exists one substitution  - actually we only take the first one -> therefore, the list should only have one elem *)

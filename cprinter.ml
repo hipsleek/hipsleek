@@ -1301,6 +1301,8 @@ let rec pr_h_formula_for_spec h =
 (** convert formula exp to a string via pr_formula_exp *)
 let string_of_formula_exp (e:P.exp) : string =  poly_string_of_pr  pr_formula_exp e
 
+let string_of_formula_exp_triple (t:(Cpure.exp * Cpure.exp * Cpure.exp)) : string =
+  pr_triple string_of_formula_exp string_of_formula_exp string_of_formula_exp t
 let printer_of_formula_exp (crt_fmt: Format.formatter) (e:P.exp) : unit =
   poly_printer_of_pr crt_fmt pr_formula_exp e
 
@@ -3333,6 +3335,7 @@ Mcpure.print_mix_f := string_of_mix_formula;;
 (*Tpdispatcher.print_pure := string_of_pure_formula ;;*)
 Cpure.print_b_formula := string_of_b_formula;;
 Cpure.print_exp := string_of_formula_exp;;
+Cpure.print_exp_triple := string_of_formula_exp_triple;;
 Cpure.print_formula := string_of_pure_formula;;
 (*Cpure.print_formula_br := string_of_formula_branches;;*)
 Cpure.print_svl := string_of_spec_var_list;;

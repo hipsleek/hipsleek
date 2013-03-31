@@ -2304,6 +2304,34 @@ and h_perm_vars (h : h_formula) : CP.spec_var list  =
   let vars = List.concat (List.map Perm.get_cperm cperms) in
   Gen.BList.remove_dups_eq CP.eq_spec_var vars
 
+and h_triple_vars_x (h : h_formula) (p:MCP.mix_formula) : CP.spec_var list =
+  (*Get bperm vars from heaps*)
+  let bpvars = h_perm_vars h in
+  (*get a closure, in case f=f1 & f1=f2 & f2=triple*)
+  (*each list item in bpvars corresponds to 1 perm var*)
+  let bpvars =  (List.map (fun v -> MCP.find_closure_mix_formula v p) bpvars) in
+  (*derive bperms triple from bperm vars*)
+  let triples = List.map (fun ls ->  List.map (fun v -> MCP.get_perm_triple_mf v p) ls) bpvars in
+  let triples = List.concat (List.concat triples) in
+  (* let _ = if ((List.length triples)>1) then *)
+  (*       print_endline ("[Warning] trans_one_coercion: Found more than one triples")  *)
+  (* in *)
+  let triple_vars = List.map (fun (ec,et,ea) ->
+      let helper e = 
+        match e  with
+          | CP.Var (sv,_) -> [sv]
+          | _ -> []
+      in
+      List.concat (List.map helper [ec;et;ea])
+  ) triples in
+  let triple_vars = List.concat triple_vars in
+  triple_vars
+
+and h_triple_vars (h : h_formula) (p:MCP.mix_formula) : CP.spec_var list =
+  Debug.no_2 "h_triple_vars"
+      !print_h_formula !print_mix_f !print_svl
+      h_triple_vars_x h p
+
 and h_perms (h : h_formula) : Perm.cperm list = match h with
   | Star ({h_formula_star_h1 = h1; 
 	h_formula_star_h2 = h2; 

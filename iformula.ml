@@ -172,6 +172,8 @@ let cmd: (string * (bool * struc_formula option * string option)) ref = ref ("",
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
 let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
+let print_id = ref(fun (c:(ident * primed)) -> "printer not initialized")
+let print_formula_exp_triple = ref(fun (c:(Ipure.exp * Ipure.exp * Ipure.exp)) -> "printer not initialized")
 
 (*move to ipure.ml*)
 (* let linking_exp_list = ref (Hashtbl.create 100) *)
@@ -672,7 +674,7 @@ and heap_perms (f:formula): iperm list = match f with
 		(hperms@aperms)
 	| Or b-> Gen.BList.remove_dups_eq (=) ((heap_perms b.formula_or_f1)@(heap_perms b.formula_or_f2))
 
-and get_perm_triple (v:(ident*primed)) (f:formula): (Ipure.exp * Ipure.exp * Ipure.exp) list = match f with
+and get_perm_triple_x (v:(ident*primed)) (f:formula): (Ipure.exp * Ipure.exp * Ipure.exp) list = match f with
 	| Base b->
         let aperms = List.concat (List.map (fun f -> get_perm_triple_one_formula v f) b.formula_base_and) in
         let hperms = Ipure.get_perm_triple_pure v b.formula_base_pure in
@@ -681,7 +683,11 @@ and get_perm_triple (v:(ident*primed)) (f:formula): (Ipure.exp * Ipure.exp * Ipu
         let aperms = List.concat (List.map (fun f -> get_perm_triple_one_formula v f) b.formula_exists_and) in
         let hperms = Ipure.get_perm_triple_pure v b.formula_exists_pure in
 		(hperms@aperms)
-	| Or b-> Gen.BList.remove_dups_eq (=) ((get_perm_triple v b.formula_or_f1)@(get_perm_triple v b.formula_or_f2))
+	| Or b-> Gen.BList.remove_dups_eq (=) ((get_perm_triple_x v b.formula_or_f1)@(get_perm_triple_x v b.formula_or_f2))
+
+and get_perm_triple (v:(ident*primed)) (f:formula): (Ipure.exp * Ipure.exp * Ipure.exp) list =
+  Debug.no_2 "get_perm_triple" (!print_id) (!print_formula) (pr_list !print_formula_exp_triple)
+      get_perm_triple_x v f
 
 and struc_free_vars with_inst (f:struc_formula) :(ident*primed) list= match f with
 	| EBase b -> Gen.BList.remove_dups_eq (=) (Gen.BList.difference_eq (=) 
@@ -694,9 +700,7 @@ and struc_free_vars with_inst (f:struc_formula) :(ident*primed) list= match f wi
 	| EAssume b-> all_fv b.formula_assume_simpl
 	| EInfer b -> Gen.BList.remove_dups_eq (=) ( struc_free_vars with_inst b.formula_inf_continuation)
 	| EList b -> Gen.BList.remove_dups_eq (=) (Gen.fold_l_snd (struc_free_vars with_inst) b)
-	
-	
- 
+
 and struc_split_fv_debug f0 wi =
   Debug.no_2 "struc_split_fv" (!print_struc_formula) string_of_bool 
       (fun (l1,l2) -> (string_of_spec_var_list l1)^"|"^(string_of_spec_var_list l2)) struc_split_fv_a f0 wi
