@@ -2,12 +2,12 @@ Starting z3...
 
 Entail (1) : Valid. 
 
- <1>EXISTS(bperm_9_110,bperm_9_109,bperm_9_108,Anon_135,bperm_3_134,bperm_3_133: x::cell( (c2_118,bperm_9_109,bperm_3_133))<Anon_135>[Orig]&bperm_3_134=0 & bperm_3_133=0 & 0<bperm_9_110 & bperm_9_110<=bperm_9_109 & bperm_9_110=2 & bperm_9_109=2 & bperm_9_108=0 & Anon_12=Anon_13 & c2_118<bperm_9_109 & 0<c2_118 & bperm_9_109=2 & bperm_9_110=c2_118+1 & 0<1 & 1<bperm_9_109&{FLOW,(19,20)=__norm})[]
+ <1>EXISTS(bperm_9_114,bperm_9_113,bperm_9_112,bperm_3_139,bperm_3_138: x::cell( (c2_122,bperm_9_113,bperm_3_138))<Anon_11>[Orig]&bperm_3_139=0 & bperm_3_138=0 & 0<bperm_9_114 & bperm_9_114<=bperm_9_113 & bperm_9_114=2 & bperm_9_113=2 & bperm_9_112=0 & Anon_11=Anon_12 & c2_122<bperm_9_113 & 0<c2_122 & bperm_9_113=2 & bperm_9_114=c2_122+1 & 0<1 & 1<bperm_9_113&{FLOW,(19,20)=__norm})[]
 
 
 Entail (2) : Valid. 
 
- <1>EXISTS(bperm_13_176,bperm_13_175,bperm_13_174,bperm_3_203,bperm_3_202: emp&bperm_3_203=0 & bperm_3_202=0 & 0<bperm_13_176 & bperm_13_176<=bperm_13_175 & bperm_13_176=2 & bperm_13_175=2 & bperm_13_174=0 & Anon_14=Anon_15&{FLOW,(19,20)=__norm})[]
+ <1>EXISTS(bperm_13_180,bperm_13_179,bperm_13_178,bperm_3_208,bperm_3_207: emp&bperm_3_208=0 & bperm_3_207=0 & 0<bperm_13_180 & bperm_13_180<=bperm_13_179 & bperm_13_180=2 & bperm_13_179=2 & bperm_13_178=0 & Anon_13=Anon_14 & Anon_13=Anon_15&{FLOW,(19,20)=__norm})[]
 
 
 Entail (3) : Fail.
@@ -15,24 +15,29 @@ Entail (3) : Fail.
 
 Entail (4) : Valid. 
 
- <1>EXISTS(c2_375,bperm_21_364,bperm_21_363,bperm_21_362,bperm_3_391,bperm_3_390,Anon_417,bperm_3_416,bperm_3_415: x::cell( (c2_400,bperm_21_363,bperm_3_415))<Anon_417>[Orig]&bperm_3_416=0 & bperm_3_415=0 & 0<c2_375 & c2_375<=bperm_21_363 & bperm_3_391=0 & bperm_3_390=0 & 0<bperm_21_364 & bperm_21_364<=bperm_21_363 & bperm_21_364=3 & bperm_21_363=3 & bperm_21_362=0 & Anon_20=Anon_21 & c2_400<bperm_21_363 & 0<c2_400 & bperm_21_363=3 & bperm_21_363=3 & 1<bperm_21_363 & 0<1 & 1<bperm_21_363 & 0<(c2_400+1) & (c2_400+1)<bperm_21_363 & bperm_21_364=c2_400+1+1&{FLOW,(19,20)=__norm})[]
+ <1>EXISTS(c2_379,bperm_21_368,bperm_21_367,bperm_21_366,bperm_3_396,bperm_3_395,bperm_3_421,bperm_3_420: x::cell( (c2_404,bperm_21_367,bperm_3_420))<Anon_19>[Orig]&bperm_3_421=0 & bperm_3_420=0 & 0<c2_379 & c2_379<=bperm_21_367 & bperm_3_396=0 & bperm_3_395=0 & 0<bperm_21_368 & bperm_21_368<=bperm_21_367 & bperm_21_368=3 & bperm_21_367=3 & bperm_21_366=0 & Anon_19=Anon_20 & Anon_19=Anon_21 & c2_404<bperm_21_367 & 0<c2_404 & bperm_21_367=3 & bperm_21_367=3 & 1<bperm_21_367 & 0<1 & 1<bperm_21_367 & 0<(c2_404+1) & (c2_404+1)<bperm_21_367 & bperm_21_368=c2_404+1+1&{FLOW,(19,20)=__norm})[]
 
 
 Entail (5) : Valid. 
 
- <1>EXISTS(c2_483,bperm_25_469,bperm_25_468,bperm_25_467,bperm_3_499,bperm_3_498,bperm_3_524,bperm_3_523: emp&bperm_3_524=0 & bperm_3_523=0 & 0<c2_483 & c2_483<=bperm_25_468 & bperm_3_499=0 & bperm_3_498=0 & 0<bperm_25_469 & bperm_25_469<=bperm_25_468 & bperm_25_469=3 & bperm_25_468=3 & bperm_25_467=0 & Anon_23=Anon_24&{FLOW,(19,20)=__norm})[]
+ <1>EXISTS(c2_487,bperm_25_473,bperm_25_472,bperm_25_471,bperm_3_504,bperm_3_503,bperm_3_529,bperm_3_528: emp&bperm_3_529=0 & bperm_3_528=0 & 0<c2_487 & c2_487<=bperm_25_472 & bperm_3_504=0 & bperm_3_503=0 & 0<bperm_25_473 & bperm_25_473<=bperm_25_472 & bperm_25_473=3 & bperm_25_472=3 & bperm_25_471=0 & Anon_22=Anon_23 & Anon_22=Anon_24 & Anon_22=Anon_25&{FLOW,(19,20)=__norm})[]
 
 
 Entail (6) : Fail.
 
-Stop z3... 24 invocations 
-SAT Count   : 6
-SAT % Hit   : 66.66%
-IMPLY Count : 52
-IMPLY % Hit : 57.69%
+
+Entail (7) : Valid. 
+
+ <1>EXISTS(bperm_33_732,bperm_33_731,bperm_33_730,bperm_3_763,bperm_3_762: emp&bperm_3_763=0 & bperm_3_762=0 & 0<bperm_33_732 & bperm_33_732<=bperm_33_731 & bperm_33_732=2 & bperm_33_731=3 & bperm_33_730=0&{FLOW,(19,20)=__norm})[]
+
+Stop z3... 34 invocations 
+SAT Count   : 7
+SAT % Hit   : 57.14%
+IMPLY Count : 65
+IMPLY % Hit : 52.3%
 Time(cache overhead) : 0. (seconds)
 
-Total verification time: 0.14 second(s)
-	Time spent in main process: 0.13 second(s)
+Total verification time: 0.18 second(s)
+	Time spent in main process: 0.17 second(s)
 	Time spent in child processes: 0.01 second(s)
 

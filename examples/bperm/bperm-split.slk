@@ -1,6 +1,6 @@
 data cell {int val}.
 
-lemma "splitCell" self::cell(c,t,0)<v> & c=c1+c2 & 0<c1<t & 0<c2<t -> self::cell(c1,t,0)<v> * self::cell(c2,t,0)<_> & 0<c<=t.
+lemma "splitCell" self::cell(c,t,0)<v> & c=c1+c2 & 0<c1<t & 0<c2<t -> self::cell(c1,t,0)<v> * self::cell(c2,t,0)<v> & 0<c<=t.
 
 //THIS LEMMA is not correct because c>=0
 //lemma "splitCell" self::cell(c,t,0)<v> & c=c1+c2 -> self::cell(c1,t,0)<v> * self::cell(c2,t,0)<_>.
@@ -28,3 +28,7 @@ print residue. //VALID, 1 residue
 //(6)
 checkentail x::cell(2,2,0)<_> |- x::cell(1,2,0)<_> * x::cell(1,2,0)<_> * x::cell(1,2,0)<_>.
 print residue. //FAIL, split more than allowed
+
+//(7)
+checkentail x::cell(2,3,0)<v> |- x::cell(1,3,0)<v> * x::cell(1,3,0)<v>.
+print residue. //VALID, 1 residue

@@ -5,3 +5,5 @@ echo "======= bperm-split.slk ======"
 diff test-cases/bperm-split.res test-cases/bperm-split.n
 echo "======= bperm-combine.slk ======"
 diff test-cases/bperm-combine.res test-cases/bperm-combine.n
+echo "======= bperm-split-combine.slk ======"
+diff test-cases/bperm-split-combine.res test-cases/bperm-split-combine.n

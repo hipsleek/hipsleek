@@ -5,3 +5,5 @@ echo "======= bperm-split.slk ======"
 ../../sleek bperm-split.slk > test-cases/bperm-split.n
 echo "======= bperm-combine.slk ======"
 ../../sleek bperm-combine.slk > test-cases/bperm-combine.n
+echo "======= bperm-split-combine.slk ======"
+../../sleek bperm-split-combine.slk > test-cases/bperm-split-combine.n

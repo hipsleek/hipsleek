@@ -35,11 +35,11 @@ Entail (7) : Valid.
 
 Entail (8) : Fail.
 
-Stop z3... 15 invocations 
+Stop z3... 12 invocations 
 SAT Count   : 8
 SAT % Hit   : 62.5%
-IMPLY Count : 15
-IMPLY % Hit : 20.%
+IMPLY Count : 12
+IMPLY % Hit : 25.%
 Time(cache overhead) : 0. (seconds)
 
 Total verification time: 0.07 second(s)
