@@ -7690,17 +7690,25 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
     if (Perm.allow_perm ()) then
       (match l_perm, r_perm with
         | Some f1, Some f2 ->
-            let f1 = Cpure.get_var f1 in
-            let f2 = Cpure.get_var f2 in
-            let rho_0 = List.combine (f2::r_args) (f1::l_args) in
-            let label_list = (Label_only.Lab_List.unlabelled::label_list) in
+            let ls1 = Perm.get_cperm_var l_perm in
+            let ls2 = Perm.get_cperm_var r_perm in
+            let rho_0 = List.combine (ls2@r_args) (ls1@l_args) in
+            let label_list1 =
+              match !Globals.perm with
+                | Bperm -> [Label_only.Lab_List.unlabelled;Label_only.Lab_List.unlabelled;Label_only.Lab_List.unlabelled]
+                | _ -> [Label_only.Lab_List.unlabelled]
+            in
+            let label_list = (label_list1@label_list) in
             (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
         | None, Some f2 ->
-            let f2 = Cpure.get_var f2 in
-	        let rho_0 = List.combine (f2::r_args) (full_perm_var ()::l_args) in
-            let label_list = (Label_only.Lab_List.unlabelled::label_list) in
-            (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
-		          
+            (match !Globals.perm with
+              | Bperm -> report_error no_pos "[solver.ml] do_match_inst_perm_vars : unexpected for bperm"
+              | _ ->
+                  let f2 = Cpure.get_var f2 in
+	              let rho_0 = List.combine (f2::r_args) (full_perm_var ()::l_args) in
+                  let label_list = (Label_only.Lab_List.unlabelled::label_list) in
+                  (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos))
+
         (*(if (List.mem f2 evars) then
         (*rename only*)
           let rho_0 = List.combine (f2::r_args) (full_perm_var () ::l_args) in
@@ -7725,14 +7733,17 @@ and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_arg
           let label_list = (label_list) in
           (rho_0, label_list,CP.mkTrue no_pos,p_conseq))*)
         | Some f1, None ->
-            let f1 = Cpure.get_var f1 in
-              (*f1 is either ivar or global
-                if it is ivar, REMEMBER to convert it to expl_var*)
-            let rho_0 = List.combine r_args l_args in
-            let label_list = (label_list) in
-            let t_conseq = 
-		      mkFullPerm_pure () f1 in
-            (rho_0, label_list,CP.mkTrue no_pos,t_conseq)
+            (match !Globals.perm with
+              | Bperm -> report_error no_pos "[solver.ml] do_match_inst_perm_vars : unexpected for bperm"
+              | _ ->
+                  let f1 = Cpure.get_var f1 in
+                  (*f1 is either ivar or global
+                    if it is ivar, REMEMBER to convert it to expl_var*)
+                  let rho_0 = List.combine r_args l_args in
+                  let label_list = (label_list) in
+                  let t_conseq = 
+		            mkFullPerm_pure () f1 in
+                  (rho_0, label_list,CP.mkTrue no_pos,t_conseq))
         | _ -> let rho_0 = List.combine r_args l_args in
           (rho_0, label_list, CP.mkTrue no_pos,CP.mkTrue no_pos)
       )
@@ -8836,23 +8847,45 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   let lhs_orignal = CF.get_node_original lhs_node in
                   let rhs_orignal = CF.get_node_original rhs_node in
                   let flag = lhs_orignal in (*if flag then MATCH*)
-                  let lhs_pvars = Perm.get_cperm lhs_perm in
-                  let rhs_pvars = Perm.get_cperm rhs_perm in
+                  (* let lhs_pvars = Perm.get_cperm lhs_perm in *)
+                  (* let rhs_pvars = Perm.get_cperm rhs_perm in *)
                   let exact_flag,perm_f,vars = match lhs_perm,rhs_perm with
                     | None,None -> (true,CP.mkTrue no_pos,[]) (*1.0 = 1.0 => exact match*)
                     | Some f, None ->
-                        let f = Cpure.get_var f in
-                        (false, Perm.mkFullPerm_pure () f,[f])
+                        (match !Globals.perm with
+                          | Bperm -> report_error no_pos "[solver.ml] process_action : Context.M_match : unexpected for bperm"
+                          | _ ->
+                              let f = Cpure.get_var f in
+                              (false, Perm.mkFullPerm_pure () f,[f]))
                     | None, Some f ->
-                        let f = Cpure.get_var f in
-                        (false, Perm.mkFullPerm_pure () f,[f])
+                        (match !Globals.perm with
+                          | Bperm -> report_error no_pos "[solver.ml] process_action : Context.M_match : unexpected for bperm"
+                          | _ ->
+                              let f = Cpure.get_var f in
+                              (false, Perm.mkFullPerm_pure () f,[f]))
                     | Some f1,Some f2 ->
-                        let f1 = Cpure.get_var f1 in
-                        let f2 = Cpure.get_var f2 in
-                        if (CP.eq_spec_var f1 f2) then
-                          (true,CP.mkTrue no_pos,[])
-                        else
-                          (false, CP.mkEqVar f1 f2 no_pos,[f1;f2])
+                        (match !Globals.perm with
+                          | Bperm ->
+                              let ls1 = Perm.get_cperm_var lhs_perm in
+                              let ls2 = Perm.get_cperm_var rhs_perm in
+                              let ls = List.combine ls1 ls2 in
+                              let f = List.fold_left (fun f (lvar,rvar) ->
+                                  let nf = if (CP.eq_spec_var lvar rvar) then
+                                        CP.mkTrue no_pos
+                                      else CP.mkEqVar lvar rvar no_pos
+                                  in
+                                  (CP.mkAnd f nf no_pos)
+                              ) (CP.mkTrue no_pos) ls
+                              in
+                              (false, f,ls1@ls2)
+                          | _ ->
+                              let _ = print_endline ("I am here 3") in
+                              let f1 = Cpure.get_var f1 in
+                              let f2 = Cpure.get_var f2 in
+                              if (CP.eq_spec_var f1 f2) then
+                                (true,CP.mkTrue no_pos,[])
+                              else
+                                (false, CP.mkEqVar f1 f2 no_pos,[f1;f2]))
                   in
                   (*We already decide this in Context.process_one_match
                     Note: this flag may be related to the function filter_norm_lemmas

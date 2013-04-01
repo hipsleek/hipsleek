@@ -4657,10 +4657,17 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
     match hargs with
       | (e, _) :: rest ->
             let e_hvars = match e with
-              | IP.Var ((ve, pe), pos_e) -> trans_var_safe (ve, pe) UNK stab pos_e
+              | IP.Var ((ve, pe), pos_e) -> [trans_var_safe (ve, pe) UNK stab pos_e]
+              | IP.Bptriple ((ec,et,ea), pos_e) ->
+                  let apply_one e =
+                    (match e with
+                      | IP.Var ((ve, pe), pos_e) -> trans_var_safe (ve, pe) UNK stab pos_e
+                      | _ -> report_error (IF.pos_of_formula f0) ("linearize_formula : match_exp : Expecting Var in Bptriple"^(Iprinter.string_of_formula f0)))
+                  in
+                  List.map apply_one [ec;et;ea]
               | _ -> report_error (IF.pos_of_formula f0)("malfunction with float out exp: "^(Iprinter.string_of_formula f0))in
             let rest_hvars = match_exp rest pos in
-            let hvars = e_hvars :: rest_hvars in
+            let hvars = e_hvars @ rest_hvars in
 	        hvars
       | [] -> [] in
   let rec linearize_heap (f : IF.h_formula) pos : ( CF.h_formula * CF.t_formula) = 
@@ -4719,12 +4726,20 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                 (*LDK: linearize perm permission as a spec var*)
                 let permvar = (match perm with
                   | None -> None
-                  | Some f -> 
-                        let perms = [f] in
-                        let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
-                        let permvars = match_exp (List.combine perms permlabels) pos in
-                        let v = List.nth permvars 0 in
-                        Some (Cpure.Var (v,no_pos)) )
+                  | Some f ->
+                      let perms = [f] in
+                      let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
+                      let permvars = match_exp (List.combine perms permlabels) pos in
+                      (match !Globals.perm with
+                        | Bperm ->
+                            (*Note: ordering is important*)
+                            let c = List.nth permvars 0 in
+                            let t = List.nth permvars 1 in
+                            let a = List.nth permvars 2 in
+                            Some (Cpure.Bptriple ((c,t,a),no_pos))
+                        | _ ->
+                            let v = List.nth permvars 0 in
+                            Some (Cpure.Var (v,no_pos)) ))
                 in
                 let result_heap = CF.DataNode {
 		            CF.h_formula_data_node = CP.SpecVar (rootptr_type,rootptr,p);
@@ -4757,11 +4772,19 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                   let permvar = (match perm with
                     | None -> None
                     | Some f -> 
-                          let perms = f :: [] in
-                          let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
-                          let permvars = match_exp (List.combine perms permlabels) pos in
-                          let v = List.nth permvars 0 in
-                          Some (Cpure.Var (v,no_pos)) )
+                        let perms = [f] in
+                        let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
+                        let permvars = match_exp (List.combine perms permlabels) pos in
+                        (match !Globals.perm with
+                          | Bperm ->
+                            (*Note: ordering is important*)
+                              let c = List.nth permvars 0 in
+                              let t = List.nth permvars 1 in
+                              let a = List.nth permvars 2 in
+                              Some (Cpure.Bptriple ((c,t,a),no_pos))
+                          | _ ->
+                              let v = List.nth permvars 0 in
+                              Some (Cpure.Var (v,no_pos)) ))
                   in
                   let new_h = CF.ViewNode {
                       CF.h_formula_view_node = new_v;
@@ -4794,15 +4817,23 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
 			                (match x with 
 			                  | CP.SpecVar (_,vn,_) -> if (vn.[0] = '#') then n::th else th ) in
                         (*LDK: linearize perm permission as a spec var*)
-                        let permvar = match perm with 
+                        let permvar = (match perm with 
                           | None -> None
-                          | Some f -> 
-                                let perms = f :: [] in
-                                let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
-                                let permvars = match_exp (List.combine perms permlabels) pos in
-                                let v = List.nth permvars 0 in
-                                Some (Cpure.Var (v,no_pos)) 
-			            in
+                          | Some f ->
+                              let perms = f :: [] in
+                              let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
+                              let permvars = match_exp (List.combine perms permlabels) pos in
+                              (match !Globals.perm with
+                                | Bperm ->
+                              (*Note: ordering is important*)
+                                    let c = List.nth permvars 0 in
+                                    let t = List.nth permvars 1 in
+                                    let a = List.nth permvars 2 in
+                                    Some (Cpure.Bptriple ((c,t,a),no_pos))
+                                | _ ->
+                                    let v = List.nth permvars 0 in
+                                    Some (Cpure.Var (v,no_pos)) ))
+	in
 			            let holes = collect_holes hvars 0 in
                         let new_h = CF.DataNode {
                             CF.h_formula_data_node = new_v;
@@ -6766,7 +6797,15 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
             let perm_labels,perm_var = 
               match b.IF.h_formula_heap_perm with
                 | None -> [],[]
-                | Some f -> [Label_only.empty_spec_label], [f]
+                | Some f ->
+                    (match !Globals.perm with
+                      | Bperm ->
+                          (match f with
+                            | IP.Bptriple ((ec,et,ea),pos) ->
+                                let lbls = [Label_only.empty_spec_label;Label_only.empty_spec_label;Label_only.empty_spec_label] in
+                                lbls,[ec;et;ea]
+                            | _ ->  report_error pos ("linearize_heap : Expecting Bptriple for bperm"))
+                      | _ ->  [Label_only.empty_spec_label], [f])
             in
             let args = b.IF.h_formula_heap_arguments in
             Debug.tinfo_hprint (add_str "ty_vars" (pr_list (pr_pair string_of_typ pr_id))) tp_vars pos;
@@ -6782,7 +6821,17 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
 	        let hvars = List.map (fun c-> Ipure.Var (c,pos)) hvars in
             (*split perm if any*)
             let perm_var,hvars = match b.IF.h_formula_heap_perm with
-              | Some _ -> (Some (List.hd hvars), List.tl hvars)
+              | Some _ ->
+                    (match !Globals.perm with
+                      | Bperm ->
+                          (*Note: ordering is important*)
+                          let c = List.nth hvars 0 in
+                          let t = List.nth hvars 1 in
+                          let a = List.nth hvars 2 in
+                          let hvars = List.tl (List.tl (List.tl hvars)) in
+                          Some (IP.Bptriple ((c,t,a),no_pos)),hvars
+                      | _ ->
+                          (Some (List.hd hvars), List.tl hvars))
               | None -> (None,hvars)
             in
 	        let new_h = IF.HeapNode{ b with 

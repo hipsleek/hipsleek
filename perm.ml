@@ -170,7 +170,7 @@ struct
                   match f with
                     | Ipure.Var _ -> (f,[])
 		            | _ ->
-                        let nn_perm = ((perm_name^(string_of_int pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+                        let nn_perm = (("bperm_"^(string_of_int pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 			            let nv_perm = Ipure.Var (nn_perm,pos) in
                         let npf_perm = Ipure.BForm ((Ipure.Eq (nv_perm,f,pos), None), None) in (*TO CHECK: slicing for permissions*)
                         (nv_perm,[(nn_perm,npf_perm)])
@@ -179,11 +179,13 @@ struct
                 let et_var,et_ls = float_one et in
                 let ea_var,ea_ls = float_one ea in
                 let new_triple = Ipure.Bptriple ((ec_var,et_var,ea_var),e_pos) in
-                let nn_perm = ((perm_name^(string_of_int pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
-			    let nv_perm = Ipure.Var (nn_perm,pos) in
-                let npf_perm = Ipure.BForm ((Ipure.Eq (nv_perm,new_triple,pos), None), None) in (*TO CHECK: slicing for permissions*)
-                let perm = [(nn_perm,npf_perm)] in
-                (Some nv_perm,ec_ls@et_ls@ea_ls@perm)
+                let new_perm = Ipure.Bptriple ((ec_var,et_var,ea_var),e_pos) in
+                (Some new_perm,ec_ls@et_ls@ea_ls)
+                (* let nn_perm = ((perm_name^(string_of_int pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in *)
+			    (* let nv_perm = Ipure.Var (nn_perm,pos) in *)
+                (* let npf_perm = Ipure.BForm ((Ipure.Eq (nv_perm,new_triple,pos), None), None) in (\*TO CHECK: slicing for permissions*\) *)
+                (* let perm = [(nn_perm,npf_perm)] in *)
+                (* (Some nv_perm,ec_ls@et_ls@ea_ls@perm) *)
             | _ -> failwith ("bounded permission is undefined")
 
   let float_out_mix_max_iperm perm pos =
@@ -196,7 +198,7 @@ struct
                   match f with
 		            | Ipure.Var _ -> (f, None)
 		            | _ ->
-		                let new_name_perm = fresh_var_name "ptr" pos.start_pos.Lexing.pos_lnum in
+		                let new_name_perm = fresh_var_name "bperm_" pos.start_pos.Lexing.pos_lnum in
 		                let nv_perm = Ipure.Var((new_name_perm, Unprimed), pos) in
 			            (nv_perm, Some (Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv_perm, f, pos), None), None))))
                 in
@@ -204,9 +206,6 @@ struct
                 let et_var,et_f = float_one et in
                 let ea_var,ea_f = float_one ea in
                 let new_triple = Ipure.Bptriple ((ec_var,et_var,ea_var),e_pos) in
-		        let new_name_perm = fresh_var_name "ptr" pos.start_pos.Lexing.pos_lnum in
-		        let nv_perm = Ipure.Var((new_name_perm, Unprimed), pos) in
-                let eq_f = Some (Ipure.BForm ((Ipure.Eq (nv_perm, new_triple, pos), None), None)) in
                 let p_f = List.fold_left (fun a b ->
                     (match a with
                       | None -> b
@@ -214,10 +213,10 @@ struct
                           (match b with
                             | None -> Some f1
                             | Some f2 -> Some (Ipure.mkAnd f1 f2 no_pos)))
-                ) eq_f [ec_f;et_f;ea_f] in
-                (Some nv_perm,p_f)
-            | Ipure.Var _ -> (Some f, None)
-            | _ -> (None,None)
+                ) ec_f [et_f;ea_f] in
+                (Some new_triple,p_f)
+            | _ -> failwith ("float_out_mix_max_iperm: expecting bperm triple")
+
   let fv_cperm perm : Cpure.spec_var list =
     match perm with
       | None -> []
@@ -640,14 +639,14 @@ let fv_cperm p = match !perm with
 let get_cperm p = match !perm with
     | Count -> CPERM.get_cperm p
 	| Dperm -> DPERM.get_cperm p
-	| Bperm -> DPERM.get_cperm p
+	| Bperm -> BPERM.get_cperm p
     | Frac -> FPERM.get_cperm p
     | NoPerm -> FPERM.get_cperm p
 
 let get_cperm_var p = match !perm with
     | Count -> CPERM.get_cperm_var p
 	| Dperm -> DPERM.get_cperm_var p
-	| Bperm -> DPERM.get_cperm_var p
+	| Bperm -> BPERM.get_cperm_var p
     | Frac -> FPERM.get_cperm_var p
     | NoPerm -> FPERM.get_cperm_var p
 
@@ -662,7 +661,7 @@ let fresh_cperm_var () =   match !perm with
     | Count -> CPERM.fresh_cperm_var
 	| Dperm -> DPERM.fresh_cperm_var
 	| Bperm -> BPERM.fresh_cperm_var
-	| Frac -> BPERM.fresh_cperm_var
+	| Frac -> FPERM.fresh_cperm_var
     | NoPerm -> FPERM.fresh_cperm_var
 
 let mkEq_cperm () =   match !perm with
