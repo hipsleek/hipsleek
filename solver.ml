@@ -9273,6 +9273,27 @@ and process_action i caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
       (fun _ _ _ _ _ _ -> process_action_x caller prog estate conseq lhs_b rhs_b a rhs_h_matched_set is_folding pos) caller a estate conseq (Base lhs_b) (Base rhs_b) 
       
       
+and do_universal_perms (perm1:cperm) (perm2:cperm) =
+  (match perm1,perm2 with
+    | Some _, Some _ ->
+        let ls1 = Perm.get_cperm_var perm1 in
+        let ls2 = Perm.get_cperm_var perm2 in
+        (ls1,ls2)
+    | Some f1, None ->
+        (match !Globals.perm with
+          | Bperm -> report_error no_pos "[solver.ml] do_universal_perms : unexpected for bperm"
+          | _ ->
+              let f1 = Cpure.get_var f1 in
+              ([f1],[full_perm_var()]))
+    | None, Some f2 ->
+        (match !Globals.perm with
+          | Bperm -> report_error no_pos "[solver.ml] do_universal_perms : unexpected for bperm"
+          | _ ->
+              let f2 = Cpure.get_var f2 in
+              ([full_perm_var()],[f2]))
+    | None, None ->
+        ([],[]))
+
 (*******************************************************************************************************************************************************************************************)
 (*
   Summary of the coercion helper methods:
@@ -9396,26 +9417,14 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
                 (*subst perm variable when applicable*)
                 let perms1,perms2 =
                   if (Perm.allow_perm ()) then
-                    match perm1,perm2 with
-                      | Some f1, Some f2 ->
-                          let f1 = Cpure.get_var f1 in
-                          let f2 = Cpure.get_var f2 in
-                          ([f1],[f2])
-                      | Some f1, None ->
-                          let f1 = Cpure.get_var f1 in
-                          ([f1],[full_perm_var()])
-                      | None, Some f2 ->
-                          let f2 = Cpure.get_var f2 in
-                          ([full_perm_var()],[f2])
-                      | None, None ->
-                          ([],[])
+                    do_universal_perms perm1 perm2
                   else
                     ([],[])
                 in
                 let fr_vars = perms2@(p2 :: ps2)in
                 let to_vars = perms1@(p1 :: ps1)in
-		let lhs_guard_new = CP.subst_avoid_capture fr_vars to_vars lhs_guard in
-		let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
+		        let lhs_guard_new = CP.subst_avoid_capture fr_vars to_vars lhs_guard in
+		        let coer_rhs_new1 = subst_avoid_capture fr_vars to_vars coer_rhs in
                 let coer_rhs_new1 =
                   if (Perm.allow_perm ()) then
                     match perm1,perm2 with
@@ -9784,7 +9793,7 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
 		    if !perm=NoPerm || c.coercion_case<>(Normalize false) then
               if c.coercion_case<>(Normalize true)
               then r else (([],[]),[])
-		    else if (not (test_frac_subsume prog estate rhs_b.formula_base_pure (get_node_perm anode) (get_node_perm ln2))) || !use_split_match
+		    else if ( (!perm=Dperm) && (not (test_frac_subsume prog estate rhs_b.formula_base_pure (get_node_perm anode) (get_node_perm ln2)))) || !use_split_match
             then (([],[]),[])
 		    else (
                 if (not !Globals.web_compile_flag) then print_string"\n splitting \n";
@@ -10451,6 +10460,7 @@ and normalize_base_perm prog f =
 
 and normalize_frac_heap prog h p =  (*used after adding back the consumed heap*)
   if !perm=NoPerm then (h, p)
+  else if !perm=Bperm then (h, p) (*TODO: this is not applicable to BPERM*)
   else 
     let f = normalize_base_perm prog (mkBase h p TypeTrue (mkTrueFlow ()) [] no_pos) in 
     match f with
