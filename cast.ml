@@ -1104,7 +1104,15 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
       | Cformula.Base {F.formula_base_heap=h}
       | Cformula.Exists {F.formula_exists_heap=h} ->      
           let hs = F.split_star_conjunctions h in
-		  let self_n = List.for_all (fun c-> (P.name_of_spec_var (F.get_node_var c)) = self) hs in
+          let hs = List.filter (fun c -> not (c=F.HTrue || c=F.HEmp)) hs in
+		  let self_n = List.for_all (fun c->
+              match c with
+                | F.DataNode _ 
+                | F.ViewNode _ ->
+                    (P.name_of_spec_var (F.get_node_var c)) = self
+                | _ -> report_error no_pos ("case_of_coercion: unexpected hs")
+          ) hs
+          in
           (List.length hs),self_n, List.map F.get_node_name hs
       | _ -> 1,false,[]
   in
@@ -1119,6 +1127,8 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
           If there is a lemma that split 1 node into 3 nodes,
           it is also considered a split lemma?
         *)
+        (*special case, detecting inconsistency using lemmas*)
+        if rhs_length=0  then Normalize true else 
 		if l_sn && r_sn && (List.for_all (fun c-> h=c) t) then
             (*all nodes having the same names*)
             (* ??? why using the node names *)
