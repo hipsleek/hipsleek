@@ -10203,17 +10203,18 @@ and pick_up_node (ls:CF.h_formula list) (name:ident):(CF.h_formula * CF.h_formul
 (* while complex lemmas can be arbitary                            *)
 
 and normalize_w_coers prog (estate: CF.entail_state) (coers: coercion_decl list) 
-  (h: h_formula) (p: MCP.mix_formula) : (h_formula * MCP.mix_formula) =
+  (h: h_formula) (p: MCP.mix_formula) : (h_formula * MCP.mix_formula * flow_formula) =
   (* let pr_es = Cprinter.string_of_entail_state in *)
   (* let pr_c = Cprinter.string_of_coerc_decl_list in *)
   let pr_h = Cprinter.string_of_h_formula in
   let pr_p = Cprinter.string_of_mix_formula in
-  let pr_r = pr_pair pr_h pr_p in
+  let pr_fl = Cprinter.string_of_flow_formula "" in
+  let pr_r = pr_triple pr_h pr_p pr_fl in
   Debug.no_2 "normalize_w_coers" pr_h pr_p pr_r
   (normalize_w_coers_x prog estate coers) h p
 
-and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list) (h:h_formula) (p:MCP.mix_formula) : (h_formula * MCP.mix_formula) =
-  let rec helper (estate:CF.entail_state) (h:h_formula) (p:MCP.mix_formula) : (h_formula*MCP.mix_formula) =
+and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list) (h:h_formula) (p:MCP.mix_formula) : (h_formula * MCP.mix_formula * flow_formula) =
+  let rec helper (estate:CF.entail_state) (h:h_formula) (p:MCP.mix_formula) : (h_formula*MCP.mix_formula*flow_formula) =
     (* try to check whether the current estate with h=anode*rest and pure=p *)
     (* can entail the lhs of an coercion *)
     let process_one_x estate anode rest coer h p =
@@ -10324,24 +10325,24 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
             (match check_res with
               | FailCtx _ ->
                 Debug.tinfo_zprint (lazy ("normalize_w_coers: lemma matching failed")) no_pos; 
-                (false, estate, h, p) (* false, return dummy h and p *)
+                (false, estate, h, p,mkNormalFlow ()) (* false, return dummy h and p *)
               | SuccCtx res -> match List.hd res with(*we expect only one result*)
                 | OCtx (c1, c2) ->
                   let _ = print_string ("[solver.ml] Warning: normalize_w_coers: process_one: expect only one context \n") in
-                  (false,estate,h,p)
+                  (false,estate,h,p,mkNormalFlow ())
                 | Ctx es ->
                   let new_ante = normalize_combine coer_rhs_new es.es_formula no_pos in
                   (* let new_ante = add_mix_formula_to_formula p new_ante in *)
                   let new_ante = CF.remove_dupl_conj_eq_formula new_ante in
-                  let h1,p1,_,_,_ = split_components new_ante in
+                  let h1,p1,fl1,_,_ = split_components new_ante in
                   let new_es = {new_estate with es_formula=new_ante; es_trace=old_trace} in
                   Debug.tinfo_zprint (lazy ("normalize_w_coers: lemma matching succeeded")) no_pos;
                   Debug.tinfo_zprint (lazy ("normalize_w_coers: new ctx: \n" ^ (Cprinter.string_of_entail_state new_es))) no_pos;
-                  (true,new_es,h1,p1))
+                  (true,new_es,h1,p1,fl1))
         | _ -> report_error no_pos "unexpecte match pattern"	  
     in
     let process_one estate anode rest coer h p =
-      let pr (c1,c2,c3,c4) = pr_pair string_of_bool Cprinter.string_of_entail_state (c1,c2) in 
+      let pr (c1,c2,c3,c4,c5) = pr_triple string_of_bool Cprinter.string_of_entail_state (Cprinter.string_of_flow_formula "") (c1,c2,c5) in 
       let pr_h = Cprinter.string_of_h_formula in
       Debug.no_5 "process_one_normalize" Cprinter.string_of_entail_state pr_h pr_h pr_h Cprinter.string_of_mix_formula pr  
         (fun _ _ _ _ _ -> process_one_x estate anode rest coer h p) estate anode rest  h p
@@ -10351,7 +10352,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
       match h_lst with
         | [] ->
           (* so far, could not find any entailment -> can not normalize *)
-          h,p
+          h,p,mkNormalFlow ()
         | (anode,rest)::xs ->
               (*for each pair (anode,rest), find a list of coercions*)
               let name = match anode with
@@ -10371,11 +10372,12 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
                         process_one_h xs 
                   | ((coer,anode,res)::xs1) ->
                         (*for each triple, try to find a posible entailment*)
-                        let res,res_es,res_h,res_p = process_one estate anode rest coer h p in
+                        let res,res_es,res_h,res_p,res_fl = process_one estate anode rest coer h p in
                         if (res) (*we could find a result*)
                         then
                           (*restart and normalize the new estate*)
-                          helper res_es res_h res_p
+                          let res_h2,res_p2,res_fl2 = helper res_es res_h res_p in
+                          res_h2,res_p2,res_fl (*TOCHECK: why res_fl2 != res_fl*)
                         else
                           (*otherwise, try the rest*)
                           process_one_coerc xs1
@@ -10491,18 +10493,18 @@ and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl l
               (* let t = b.formula_base_type in *)
               (* let fl = b.formula_base_flow in *)
               (* let br = b.formula_base_branches in *)
-              let h,p = normalize_w_coers prog estate coers h p (* t fl br *) in
+              let h,p,fl = normalize_w_coers prog estate coers h p (* t fl br *) in
               let p = remove_dupl_conj_mix_formula p in
-              Base {b with formula_base_heap=h;formula_base_pure=p}
+              Base {b with formula_base_heap=h;formula_base_pure=p;formula_base_flow=fl}
         | Exists e ->
               let h = e.formula_exists_heap in
               let p = e.formula_exists_pure in
               (* let t = e.formula_exists_type in *)
               (* let fl = e.formula_exists_flow in *)
               (* let br = e.formula_exists_branches in *)
-              let h,p = normalize_w_coers prog estate coers h p (* t fl br *) in
+              let h,p,fl = normalize_w_coers prog estate coers h p (* t fl br *) in
               let p = remove_dupl_conj_mix_formula p in
-              Exists {e with formula_exists_heap=h; formula_exists_pure=p }
+              Exists {e with formula_exists_heap=h; formula_exists_pure=p;formula_exists_flow=fl }
         | Or o ->
 	      let f1 = helper o.formula_or_f1 in
 	      let f2 = helper o.formula_or_f2 in

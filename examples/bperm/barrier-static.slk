@@ -1,0 +1,17 @@
+/*
+  For static barriers, a=0 always
+*/
+
+//combine successfully
+//lemma "combineBarrier" self::barrier(c1,t,0)<p> * self::barrier(c2,t,0)<p> -> self::barrier(c1+c2,t,0)<p>.
+
+//detect inconsistency
+lemma "combineBarrierFail" self::barrier(c1,t,0)<p1> * self::barrier(c2,t,0)<p2> & p1!=p2 & flow __norm -> true & flow __Error.
+
+//(1)
+//checkentail b::barrier(1,2,0)<p1> * b::barrier(1,2,0)<p1>  |- b::barrier(2,2,0)<p2>.
+//print residue. //valid, COMBINE, 1 residue
+
+//(2)
+checkentail b::barrier(1,2,0)<0> * b::barrier(1,2,0)<1>  |- true & flow __Error.
+print residue. //valid, COMBINE, 1 residue
