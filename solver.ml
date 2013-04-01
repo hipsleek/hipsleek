@@ -4745,7 +4745,13 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
     (res, match action with
       | Context.M_Nothing_to_do _ -> false
       | _ -> let _ = num_unfold_on_dup := !num_unfold_on_dup + 1 in 
-	    true)
+	    true) 
+  in
+  let process_entail_state (es : entail_state) =
+    Debug.ho_1 " process_entail_state"  Cprinter.string_of_entail_state
+        (pr_pair (fun (b,_) -> Cprinter.string_of_list_context b) string_of_bool)
+        (* (fun (_,b) -> string_of_bool b)  *)
+        process_entail_state es
   in (* End of process_entail_state *)
 
   (* Termination: Strip the LexVar in the pure part of LHS - Move it to es_var_measures *)
