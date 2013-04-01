@@ -10283,18 +10283,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
           when CF.is_eq_node_name c1 c2 ->
             let perms1, perms2 = 
               if (Perm.allow_perm ()) then
-                match perm1, perm2 with
-                  | Some f1, Some f2 -> 
-                      let f1 = List.hd (Perm.get_cperm_var perm1) in
-                      let f2 = List.hd (Perm.get_cperm_var perm2) in
-                      ([f1],[f2])
-                  | Some f1, None -> 
-                      let f1 = List.hd (Perm.get_cperm_var perm1) in
-                      ([f1],[full_perm_var ()])
-                  | None, Some f2 -> 
-                      let f2 = List.hd (Perm.get_cperm_var perm2) in
-                      ([full_perm_var ()],[f2])
-                  | None, None -> ([],[])
+                do_universal_perms perm1 perm2
               else ([],[]) in
             let fr_vars = perms2@(p2 :: ps2) in
             let to_vars = perms1@(p1 :: ps1) in
@@ -10304,12 +10293,15 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
             let coer_rhs_new1, extra_heap_new =
               if (Perm.allow_perm ()) then
                 match perm1, perm2 with
-                | Some f1, None -> (*propagate perm into coercion*)
-                    let f1 = List.hd (Perm.get_cperm_var perm1) in
-                    let rhs = propagate_perm_formula coer_rhs_new1 f1 in
-                    let extra, svl = propagate_perm_h_formula extra_heap_new f1 in
-                    (rhs,extra)
-                | _ -> (coer_rhs_new1, extra_heap_new)
+                  | Some f1, None -> (*propagate perm into coercion*)
+                      (match !Globals.perm with
+                        | Bperm -> report_error no_pos "[solver.ml] normalize_w_coers : unexpected for bperm"
+                        | _ ->
+                            let f1 = List.hd (Perm.get_cperm_var perm1) in
+                            let rhs = propagate_perm_formula coer_rhs_new1 f1 in
+                            let extra, svl = propagate_perm_h_formula extra_heap_new f1 in
+                            (rhs,extra))
+                  | _ -> (coer_rhs_new1, extra_heap_new)
               else (coer_rhs_new1, extra_heap_new) in
             let coer_rhs_new = coer_rhs_new1 (*add_origins coer_rhs_new1 [coer.coercion_name]*) in
             let new_es_heap = anode in (*consumed*)
