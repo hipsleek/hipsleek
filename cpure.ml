@@ -1885,6 +1885,9 @@ and mkLtExp (ae1 : exp) (ae2 : exp) pos :formula =
 and mkLteExp (ae1 : exp) (ae2 : exp) pos :formula =
   BForm ((Lte (ae1, ae2, pos), None),None)
 
+and mkGteExp (ae1 : exp) (ae2 : exp) pos :formula =
+  BForm ((Gte (ae1, ae2, pos), None),None)
+
 and mkEqExp (ae1 : exp) (ae2 : exp) pos :formula =
   match (ae1, ae2) with
     | (Var v1, Var v2) ->

@@ -151,11 +151,28 @@ struct
   let mkFullPerm_pure_from_ident id : Cpure.formula = (*TOCHECK*)
     let var = (Cpure.SpecVar (cperm_typ, id, Unprimed)) in
     mkFullPerm_pure var
-        
+
+  (*0<=c<=t+a & t>=0*)
   let mkPermInv (f:Cpure.exp) : Cpure.formula = (*TOCHECK*)
-    Cpure.mkTrue no_pos
+    (match f with
+      | Cpure.Bptriple ((varc,vart,vara),e_pos) ->
+          let c = Cpure.mkVar varc no_pos in
+          let t = Cpure.mkVar vart no_pos in
+          let a = Cpure.mkVar vara no_pos in
+          let zero_exp = Cpure.IConst (0,no_pos) in
+          let t_plus_a = mkAdd t a no_pos in
+          let f1 = Cpure.mkGteExp c zero_exp no_pos in
+          let f2 = Cpure.mkGteExp t_plus_a c no_pos in
+          let f3 = Cpure.mkGteExp t zero_exp no_pos in
+          let f12 = Cpure.mkAnd f1 f2 no_pos in
+          let f123 = Cpure.mkAnd f12 f3 no_pos in
+          f123
+      | _ -> failwith ("[perm.ml] BPERM.mkPermInv : bounded permission is undefined"))
+
+  (*THIS METHOD SHOULD BE REMOVED in the end*)
   let mkPermInv_var (f:cperm_var) : Cpure.formula = (*TOCHECK*)
     Cpure.mkTrue no_pos
+
   let mkPermWrite (f:cperm_var) : Cpure.formula = (*TOCHECK*)
     Cpure.mkTrue no_pos
   let full_perm_constraint = 
