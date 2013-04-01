@@ -857,7 +857,10 @@ let rec trans_prog (prog4 : I.prog_decl) (*(iprims : I.prog_decl)*): C.prog_decl
   let _ = I.inbuilt_build_exc_hierarchy () in (* for inbuilt control flows *)
   (* let _ = (exlist # add_edge error_flow "Object") in *)
   (* let _ = I.build_exc_hierarchy false iprims in (\* Errors - defined in prelude.ss*\) *)
-  let prog4 = I.add_bar_inits prog4 in
+  let prog4 = if (!Globals.perm = Globals.Dperm)
+      then I.add_bar_inits prog4 
+      else prog4
+  in
   (*let _ = print_string (Iprinter.string_of_program prog4) in*)
   let prog4 = if not (!do_infer_inc) then prog4 else
     try
