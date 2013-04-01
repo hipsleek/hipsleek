@@ -650,14 +650,7 @@ let rec pr_formula_exp (e:P.exp) =
     | P.AConst (i, l) -> fmt_string (string_of_heap_ann i)
     | P.InfConst (i,l) -> let r = "\\inf" in fmt_string r
 	| P.Tsconst (i,l) -> fmt_string (Tree_shares.Ts.string_of i)
-	| P.Bptriple ((ec,et,ea),l) ->
-        fmt_string "(";
-        pr_formula_exp ec;
-        fmt_string ",";
-        pr_formula_exp et;
-        fmt_string ",";
-        pr_formula_exp ea;
-        fmt_string ")";
+	| P.Bptriple (t,l) -> fmt_string (pr_triple string_of_spec_var string_of_spec_var string_of_spec_var t)
     | P.FConst (f, l) -> fmt_string "FLOAT ";fmt_float f
     | P.Add (e1, e2, l) -> 
           let args = bin_op_to_list op_add_short exp_assoc_op e in
@@ -1301,8 +1294,6 @@ let rec pr_h_formula_for_spec h =
 (** convert formula exp to a string via pr_formula_exp *)
 let string_of_formula_exp (e:P.exp) : string =  poly_string_of_pr  pr_formula_exp e
 
-let string_of_formula_exp_triple (t:(Cpure.exp * Cpure.exp * Cpure.exp)) : string =
-  pr_triple string_of_formula_exp string_of_formula_exp string_of_formula_exp t
 let printer_of_formula_exp (crt_fmt: Format.formatter) (e:P.exp) : unit =
   poly_printer_of_pr crt_fmt pr_formula_exp e
 
@@ -3072,7 +3063,7 @@ let rec html_of_formula_exp e =
     | P.FConst (f, l) -> string_of_float f
     | P.AConst (f, l) -> string_of_heap_ann f
 	| P.Tsconst(f, l) -> Tree_shares.Ts.string_of f
-	| P.Bptriple((vc,vt,va), l) -> "<bperm>" ^ html_of_formula_exp vc ^ " " ^ html_of_formula_exp vt ^ " " ^ html_of_formula_exp va ^ " " ^ "</bperm>"
+	| P.Bptriple((vc,vt,va), l) -> "<bperm>" ^ html_of_spec_var vc ^ " " ^ html_of_spec_var vt ^ " " ^ html_of_spec_var va ^ " " ^ "</bperm>"
     | P.Add (e1, e2, l) -> 
           let args = bin_op_to_list op_add_short exp_assoc_op e in
           String.concat html_op_add (List.map html_of_formula_exp args)
@@ -3335,7 +3326,6 @@ Mcpure.print_mix_f := string_of_mix_formula;;
 (*Tpdispatcher.print_pure := string_of_pure_formula ;;*)
 Cpure.print_b_formula := string_of_b_formula;;
 Cpure.print_exp := string_of_formula_exp;;
-Cpure.print_exp_triple := string_of_formula_exp_triple;;
 Cpure.print_formula := string_of_pure_formula;;
 (*Cpure.print_formula_br := string_of_formula_branches;;*)
 Cpure.print_svl := string_of_spec_var_list;;

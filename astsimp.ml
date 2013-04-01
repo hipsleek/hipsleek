@@ -2142,15 +2142,8 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     let h, p, _, _,_ = CF.split_components c_lhs in
     let pvars =mfv p in
     let hvars = CF.h_fv h in
-    if (!Globals.perm!=Bperm) then
-      let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars hvars in 
-      Gen.BList.remove_dups_eq CP.eq_spec_var univ_vars
-    else
-      let triple_vars = CF.h_triple_vars h p in
-      let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars (hvars@triple_vars) in
-      (* let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars hvars in  *)
-      Gen.BList.remove_dups_eq CP.eq_spec_var univ_vars
-  in
+    let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars hvars in 
+    Gen.BList.remove_dups_eq CP.eq_spec_var univ_vars in
   let univ_vars = compute_univ () in
   let lhs_fnames = Gen.BList.difference_eq (=) lhs_fnames0 (List.map CP.name_of_spec_var univ_vars) in
   let c_rhs = trans_formula prog (Gen.is_empty univ_vars) ((* self :: *) lhs_fnames) false coer.I.coercion_body stab false in
@@ -2207,8 +2200,6 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let (qvars, form) = IF.split_quantifiers coer.I.coercion_head in 
   let c_hd0, c_guard0, c_fl0, c_a0 = IF.split_components form in
   (* remove the guard from the normalized head as it will be later added to the body of the right lemma *)
-  let hdvars = IF.h_fv c_hd0 in
-  let qvars = Gen.BList.intersect_eq (=) qvars hdvars in
   let new_head =  IF.mkExists qvars c_hd0 (IP.mkTrue no_pos) c_fl0 [] no_pos in
   let guard_fnames = List.map (fun (id, _) -> id ) (IP.fv c_guard0) in
   let rhs_fnames = List.map CP.name_of_spec_var (CF.fv c_rhs) in
@@ -5147,10 +5138,13 @@ and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
     | IP.Null pos -> CP.Null pos
     | IP.Tsconst (t,pos) -> CP.Tsconst (t,pos)
     | IP.Bptriple ((pc,pt,pa),pos) ->
-        let npc = trans_pure_exp pc stab in
-        let npt = trans_pure_exp pt stab in
-        let npa = trans_pure_exp pa stab in
-        CP.Bptriple ((npc,npt,npa),pos)
+        (match pc,pt,pa with
+          | Ipure.Var (vc,posc), Ipure.Var (vt,post),Ipure.Var (va,posa) ->
+              let pc = trans_var vc stab posc in
+              let pt = trans_var vt stab post in
+              let pa = trans_var va stab posa in
+              CP.Bptriple ((pc,pt,pa),pos)
+          | _ -> report_error pos ("trans_pure_exp: Bptriple error at location "^(string_of_full_loc pos)))
     | IP.AConst(a,pos) -> CP.AConst(a,pos)
     | IP.InfConst(a,pos) -> CP.InfConst(a,pos)
     | IP.Var ((v, p), pos) -> 
@@ -6216,7 +6210,7 @@ and gather_type_info_pointer (e0 : IP.exp) (k : spec_var_kind) stab : typ =
 (* 	      (CF.res_replace stab rl filter_res b.IF.formula_base_flow) *)
 
 and gather_type_info_formula prog f0 stab filter_res = 
-  Debug.no_eff_3 "gather_type_info_formula"
+  Debug.ho_eff_3 "gather_type_info_formula"
       [false;true]
       (Iprinter.string_of_formula) string_of_stab 
       string_of_bool (fun x -> "()")
@@ -6347,7 +6341,7 @@ and try_unify_view_type_args prog c vdef v ies stab pos =
 
 
 and gather_type_info_heap prog (h0 : IF.h_formula) stab =
-  Debug.no_eff_2 "gather_type_info_heap" [false;true]
+  Debug.ho_eff_2 "gather_type_info_heap" [false;true]
       Iprinter.string_of_h_formula string_of_stab (fun _ -> "()")
       (fun _ _ -> gather_type_info_heap_x prog h0 stab) h0 stab 
 
@@ -6614,7 +6608,7 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
     ^"\n ### h = " ^ (pr h)
     ^"\n ### expl = " ^ (pr expl)) 
   in 
-  Debug.no_4 "case_normalize_renamed_formula" 
+  Debug.ho_4 "case_normalize_renamed_formula" 
       pr1 pr pr Iprinter.string_of_formula pr_out
       (fun _ _ _ _ -> case_normalize_renamed_formula_x prog avail_vars posib_expl f) prog avail_vars posib_expl f
 
@@ -6942,7 +6936,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
 (* AN HOA : TODO CHECK *)
 and case_normalize_formula prog (h:(ident*primed) list)(f:IF.formula) (rel0: rel option): IF.formula =
   let pr = Iprinter.string_of_formula in
-  Debug.no_1 "case_normalize_formula" pr pr (fun f -> case_normalize_formula_x prog h f rel0) f
+  Debug.ho_1 "case_normalize_formula" pr pr (fun f -> case_normalize_formula_x prog h f rel0) f
       
       
 and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula) (rel0: rel option): IF.formula = 
@@ -6952,10 +6946,13 @@ and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula) (rel0: r
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = IF.float_out_thread f in
   let f = IF.float_out_exps_from_heap f rel0 in (*andreeac - check rel*)
-  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
+
   let f = IF.float_out_min_max f in
-  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
   let f = IF.rename_bound_vars f in
+  let _ = print_string ("case_normalize_formula :: CHECK POINT 3 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
+
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f,_,_ = case_normalize_renamed_formula prog h [] f in
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 3 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
@@ -7084,51 +7081,8 @@ and case_normalize_struc_formula_x prog (h_vars:(ident*primed) list)(p_vars:(ide
 					| Some l-> 
 						let r1,r2 = helper h1prm new_strad_vs vars l in 
 						(Some r1,r2) in
-                let triple_vars =
-                  match !Globals.perm with
-                    | Bperm ->
-                        (*Idientify impl_var in bperm triples*)
-                        let perms = IF.heap_perms onb in
-                        (*perms could be a triple or a var*)
-                        (*triple vars are also consider heap_vars*)
-                        let triples,vars = List.fold_left (fun (triples,vars) perm ->
-                            (match perm with
-                              | None -> triples,vars
-                              | Some f ->
-                                  (match f with
-                                    | IP.Var (id,_) -> triples,id::vars
-                                    | IP.Bptriple (t,_) -> t::triples,vars
-                                    | _ -> triples,vars))
-                        ) ([],[]) perms
-                        in
-                        let triples_list = List.map (fun v ->
-                            let triples = IF.get_perm_triple v onb in
-                            triples
-                        ) vars in
-                        let _ = 
-                          let b = List.exists (fun triples -> (List.length triples)>1) triples_list in
-                          if b then
-                            let _ = print_endline ("onb = " ^ (Iprinter.string_of_formula onb)) in
-                            print_endline ("[Warning] case_normalize_struc_formula: multiple triples found for a single bperm variable")
-                        in
-                        let triples2 = List.concat triples_list in
-                        let triples=triples@triples2 in
-                        (*identify vars in tuples*)
-                        let triple_vars = List.fold_left (fun vars (c,t,a) ->
-                            let helper e =
-                              match e with
-                                | IP.Var (id,_) -> [id]
-                                | _ -> []
-                            in
-                            let res = List.concat (List.map helper [c;t;a]) in
-                            res@vars
-                        ) [] triples in
-                        Gen.BList.remove_dups_eq (=) triple_vars
-                    | _ -> []
-                in
-				let implvar = diff ((IF.unbound_heap_fv onb)@triple_vars) all_vars
-                in
-				let _ = if (List.length (diff implvar (triple_vars@IF.heap_fv onb @ fold_opt IF.struc_hp_fv nc)))>0 then 
+				let implvar = diff (IF.unbound_heap_fv onb) all_vars in
+				let _ = if (List.length (diff implvar (IF.heap_fv onb @ fold_opt IF.struc_hp_fv nc)))>0 then 
 				  Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction: some implicit vars are not heap_vars\n")} else true in
             let implvar = hack_filter_global_rel prog implvar in
 				(IF.EBase {

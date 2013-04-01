@@ -169,7 +169,7 @@ and exp =
   | AConst of (heap_ann * loc)
   | InfConst of (ident * loc)
   | Tsconst of (Tree_shares.Ts.t_sh * loc)
-  | Bptriple of ((exp * exp * exp) * loc) (*triple for bounded permissions*)
+  | Bptriple of ((spec_var * spec_var * spec_var) * loc) (*triple for bounded permissions*)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
   | Mult of (exp * exp * loc)
@@ -238,12 +238,9 @@ and set_il_b_formula bf il =
 let print_b_formula = ref (fun (c:b_formula) -> "cpure printer has not been initialized")
 let print_p_formula = ref (fun (c:p_formula) -> "cpure printer has not been initialized")
 let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
-let print_exp_triple = ref (fun (c:exp*exp*exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
-
-
 let print_rel_cat rel_cat = match rel_cat with
   | RelDefn v -> "RELDEFN " ^ (!print_sv v)
   | HPRelDefn v -> "HP_RELDEFN " ^ (!print_sv v)
@@ -311,8 +308,6 @@ let type_of_spec_var (sv : spec_var) : typ =
   | SpecVar (t, _, _) -> t
 
 let is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
-
-let is_bptriple_var (sv : spec_var) : bool = is_bptriple_type (type_of_spec_var sv)
 
 let is_rel_var (sv : spec_var) : bool = is_RelT (type_of_spec_var sv)
 
@@ -995,7 +990,7 @@ and afv (af : exp) : spec_var list =
     | InfConst _
     | Tsconst _
     | FConst _ -> []
-    | Bptriple ((ec,et,ea),_) -> (afv ec)@(afv et)@(afv ea)
+    | Bptriple ((ec,et,ea),_) -> [ec;et;ea]
     | Var (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
     | Level (sv, _) -> if (is_hole_spec_var sv) then [] else [sv]
     | Add (a1, a2, _) -> combine_avars a1 a2
@@ -1380,10 +1375,6 @@ and is_float_type (t : typ) = match t with
   | Float -> true
   | _ -> false
 
-and is_bptriple_type (t : typ) = match t with
-  | Bptyp -> true
-  | _ -> false
-
 and is_float_var (sv : spec_var) : bool = is_float_type (type_of_spec_var sv)
 
 and is_list_var (sv : spec_var) : bool = is_list_type (type_of_spec_var sv)
@@ -1430,44 +1421,6 @@ and is_float_formula f0 =
   Debug.no_1 "is_float_formula" 
       !print_formula string_of_bool
       is_float_formula_x f0
-
-and is_bptriple_exp exp = 
-  let rec helper exp = 
-    match exp with
-      | Bptriple _ -> true
-      | Var (v,_) -> is_bptriple_var v (* check type *)
-      (* May allow add, subtract but need to define in z3*)
-      | Add (e1, e2, _) | Subtract (e1, e2, _) -> (helper e1) || (helper e2)
-      | _ -> false
-  in
-  helper exp
-
-and is_bptriple_bformula b = 
-  let b, _ = b in
-  match b with
-    | Lt (e1, e2, _) | Lte (e1, e2, _) 
-    | Gt (e1, e2, _) | Gte (e1, e2, _)
-    | Eq (e1, e2, _) | Neq (e1, e2, _)
-          -> (is_bptriple_exp e1) || (is_bptriple_exp e2)
-    | EqMax (e1, e2, e3, _) | EqMin (e1, e2, e3, _)
-          -> (is_bptriple_exp e1) || (is_bptriple_exp e2) || (is_bptriple_exp e3)
-    | _ -> false
-
-and is_bptriple_formula_x f0 = 
-  let rec helper f0=  match f0 with
-    | BForm (b,_) -> is_bptriple_bformula b
-    | Not (f, _,_) | Forall (_, f, _,_) | Exists (_, f, _,_) ->
-          is_bptriple_formula f;
-    | And (f1, f2, _) | Or (f1, f2, _,_) ->
-          (helper f1) || (helper f2)
-    | AndList l -> exists_l_snd helper l
-  in helper f0
-
-and is_bptriple_formula f0 =
-  Debug.no_1 "is_bptuple_formula" 
-      !print_formula string_of_bool
-      is_bptriple_formula_x f0
-
 
 and is_object_type (t : typ) = match t with
   | Named _ -> true
@@ -1792,17 +1745,17 @@ and mkGt a1 a2 pos =
   else
     Gt (a1, a2, pos)
 
-and mkGte a1 a2 pos =
-  if is_max_min a1 || is_max_min a2 then
-    failwith ("max/min can only be used in equality")
-  else
-    Gte (a1, a2, pos)
-
 and mkFormulaFromXP xp=
  BForm ((XPure xp,None),None)
 
 and mkRel rel args pos=
   BForm ((RelForm (rel,args,pos), None) , None)
+
+and mkGte a1 a2 pos =
+  if is_max_min a1 || is_max_min a2 then
+    failwith ("max/min can only be used in equality")
+  else
+    Gte (a1, a2, pos)
 
 and mkNull (v : spec_var) pos = mkEqExp (mkVar v pos) (Null pos) pos
 
@@ -1923,9 +1876,6 @@ and mkLtExp (ae1 : exp) (ae2 : exp) pos :formula =
           else
             BForm ((Lt (ae1, ae2, pos), None),None)
     | _ ->  BForm ((Lt (ae1, ae2, pos), None),None)
-
-and mkGteExp (ae1 : exp) (ae2 : exp) pos :formula =
-  BForm ((Gte (ae1, ae2, pos), None),None)
 
 and mkLteExp (ae1 : exp) (ae2 : exp) pos :formula =
   BForm ((Lte (ae1, ae2, pos), None),None)
@@ -2980,9 +2930,9 @@ and subs_one sst v =
 and e_apply_subs sst e = match e with
   | Null _ | IConst _ | FConst _ | AConst _ |InfConst _ |Tsconst _ -> e
   | Bptriple ((ec,et,ea),pos) ->
-      Bptriple ((e_apply_subs sst ec,
-                 e_apply_subs sst et,
-                 e_apply_subs sst ea),pos)
+      Bptriple ((subs_one sst ec,
+                 subs_one sst et,
+                 subs_one sst ea),pos)
   | Var (sv, pos) -> Var (subs_one sst sv, pos)
   | Level (sv, pos) -> Level (subs_one sst sv, pos)
   | Add (a1, a2, pos) -> normalize_add (Add (e_apply_subs sst a1,
@@ -3039,9 +2989,9 @@ and e_apply_one_spec_var (fr, t) sv = if eq_spec_var sv fr then t else sv
 and e_apply_one (fr, t) e = match e with
   | Null _ | IConst _ | InfConst _ | FConst _ | AConst _ | Tsconst _ -> e
   | Bptriple ((ec,et,ea),pos) ->
-      Bptriple ((e_apply_one (fr, t) ec,
-                 e_apply_one (fr, t) et,
-                 e_apply_one (fr, t) ea),pos)
+      Bptriple ((e_apply_one_spec_var (fr, t) ec,
+                 e_apply_one_spec_var (fr, t) et,
+                 e_apply_one_spec_var (fr, t) ea),pos)
   | Var (sv, pos) -> Var ((if eq_spec_var sv fr then t else sv), pos)
   | Level (sv, pos) -> Level ((if eq_spec_var sv fr then t else sv), pos)
   | Add (a1, a2, pos) -> normalize_add (Add (e_apply_one (fr, t) a1,
@@ -3162,8 +3112,8 @@ and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
   | InfConst _
   | FConst _ 
   | AConst _ 
+  | Bptriple _ (*TOCHECK*)
   | Tsconst _ -> e
-  | Bptriple ((ec,et,ea),pos) -> Bptriple ((a_apply_par_term  sst ec,a_apply_par_term sst et,a_apply_par_term sst ea),pos)
   | Add (a1, a2, pos) -> normalize_add (Add (a_apply_par_term sst a1, a_apply_par_term sst a2, pos))
   | Subtract (a1, a2, pos) -> Subtract (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Mult (a1, a2, pos) ->
@@ -3273,9 +3223,8 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | AConst _ 
   | InfConst _ 
   | FConst _ 
+  | Bptriple _ -> e
   | Tsconst _ -> e
-  | Bptriple ((ec,et,ea),pos) ->
-      Bptriple ((a_apply_one_term (fr, t) ec,a_apply_one_term (fr, t) et,a_apply_one_term (fr, t) ea),pos)
   | Add (a1, a2, pos) -> normalize_add (Add (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos))
   | Subtract (a1, a2, pos) -> Subtract (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Mult (a1, a2, pos) ->
@@ -4478,7 +4427,7 @@ and b_apply_one_exp (fr, t) bf =
 
 and e_apply_one_exp (fr, t) e = match e with
   | Null _ | IConst _ | InfConst _ | FConst _| AConst _ | Tsconst _ -> e
-  | Bptriple ((ec,et,ea),pos) -> Bptriple ((e_apply_one_exp (fr, t) ec,e_apply_one_exp (fr, t) et,e_apply_one_exp (fr, t) ea),pos)
+  | Bptriple _ -> e
   | Var (sv, pos) -> if eq_spec_var sv fr then t else e
   | Level (sv, pos) -> if eq_spec_var sv fr then t else e
   | Add (a1, a2, pos) -> Add (e_apply_one_exp (fr, t) a1,
@@ -4839,7 +4788,7 @@ and simp_mult_x (e : exp) :  exp =
     match e0 with
       | Null _ 
       | Tsconst _ 
-      | Bptriple _ (*TOCHECK*)
+      | Bptriple _ 
       | AConst _ -> e0	  
       | Var (v, l) ->
             (match m with 
@@ -4913,7 +4862,7 @@ and split_sums_x (e :  exp) : (( exp option) * ( exp option)) =
     |  Var _ 
     |  Level _ 
     |  Tsconst _
-    |  Bptriple _ (*TOCHECK*)
+    |  Bptriple _
     |  InfConst _
     |  AConst _ -> ((Some e), None)
     |  IConst (v, l) ->
@@ -5064,7 +5013,7 @@ and purge_mult_x (e :  exp):  exp = match e with
   |  AConst _ 
   | InfConst _
   | Tsconst _
-  | Bptriple _ (*TOCHECK*)
+  | Bptriple _
   | FConst _ -> e
   |  Add (e1, e2, l) ->  Add((purge_mult e1), (purge_mult e2), l)
   |  Subtract (e1, e2, l) ->  Subtract((purge_mult e1), (purge_mult e2), l)
@@ -5381,12 +5330,8 @@ let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
               | InfConst _ 
 	      | AConst _
               | Tsconst _ 
+          | Bptriple _ 
 	      | FConst _ -> (e,f_comb [])
-          | Bptriple ((ec,et,ea),pos) ->
-              let nec,rc = helper new_arg ec in
-              let net,rt = helper new_arg et in
-              let nea,ra = helper new_arg ea in
-              (Bptriple ((nec,net,nea),pos),f_comb[rc;rt;ra])
 	      | Add (e1,e2,l) ->
 	            let (ne1,r1) = helper new_arg e1 in
 		        let (ne2,r2) = helper new_arg e2 in
@@ -5481,12 +5426,8 @@ let rec transform_exp f e  =
 	    | IConst _
 	    | AConst _
 		| Tsconst _
+		| Bptriple _
 	    | FConst _ -> e
-		| Bptriple ((ec,et,ea),pos) ->
-            let nec = transform_exp f ec in
-            let net = transform_exp f et in
-            let nea = transform_exp f ea in
-            Bptriple ((nec,net,nea),pos)
 	    | Add (e1,e2,l) ->
 	          let ne1 = transform_exp f e1 in
 		      let ne2 = transform_exp f e2 in
@@ -5974,8 +5915,8 @@ and norm_exp (e:exp) =
   let rec helper e = match e with
     | Var _ 
     | Null _ | IConst _ | InfConst _ | FConst _ | AConst _ | Tsconst _ 
+    | Bptriple _
     | Level _ -> e
-    | Bptriple ((ec,et,ea),pos) ->Bptriple ((helper ec,helper et,helper ea),pos)
     | Add (e1,e2,l) -> simp_addsub e (IConst(0,no_pos)) l 
     | Subtract (e1,e2,l) -> simp_addsub e1 e2 l 
     | Mult (e1,e2,l) -> 
@@ -10131,10 +10072,10 @@ let rec translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos
     | Lt _ ->
         (* WRONG: waitlevel< x ==define==> forall v. v in LSMU => v>0 & v<x*)
         (* CORRECT: waitlevel<x ==define==> (ls={} => x>0) & (ls!={} => forall v. v in LSMU => v<x)
-           or
-           (ls!={} | x>0) & (ls={} | (forall v. v in LSMU => v<x))
-           or
-           (ls!={} | x>0) & (ls={} | (forall v. v notin LSMU | v<x))
+          or
+          (ls!={} | x>0) & (ls={} | (forall v. v in LSMU => v<x))
+          or
+          (ls!={} | x>0) & (ls={} | (forall v. v notin LSMU | v<x))
         *)
         let level_var = mkLevelVar Unprimed in
         let fresh_var = fresh_spec_var level_var in
@@ -10207,7 +10148,7 @@ let rec translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos
               let f_and = And (eq_f,in_f,pos) in
               let f_exists = Exists (fresh_var,f_and,None,pos) in
               f_exists
-          (* mkBagLInExp sv lsmu_exp pos *)
+              (* mkBagLInExp sv lsmu_exp pos *)
           | _ -> Error.report_error { Error.error_loc = pos; Error.error_text = "translate_waitlevel_p_formula: unexpected operator: only expecting integer value in waitlevel formulae" ^ (!print_exp x);})
         in
         let f22 = And (f221,f222,pos) in
@@ -10215,8 +10156,8 @@ let rec translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos
         And (f1,f2,pos)
     | Gt _ ->
         (* waitlevel>x ==define==> (ls={} => x<0) & (ls!={} => exist v. v in LSMU & v>x)
-           or
-           (ls!={} | x<0) & (ls={} | (exist v. v in LSMU & v>x))
+          or
+          (ls!={} | x<0) & (ls={} | (exist v. v in LSMU & v>x))
         *)
         let level_var = mkLevelVar Unprimed in
         let fresh_var = fresh_spec_var level_var in
@@ -10563,66 +10504,3 @@ let find_closure_pure_formula (v:spec_var) (f:formula) : spec_var list =
       !print_formula
       !print_svl
       find_closure_pure_formula_x v f
-
-(*only expect to get the trpiple from equality*)
-let get_perm_triple_b_formula sv (bf : b_formula) : (exp * exp * exp) list =
-  let (pf,il) = bf in
-  (match pf with
-	| Eq (e1,e2,l) ->
-        (match e1,e2 with
-          | Var (v,_), Bptriple ((ec,et,ea),_)
-          | Bptriple ((ec,et,ea),_), Var (v,_) ->
-              if (eq_spec_var sv v) then
-                [(ec,et,ea)]
-              else []
-          | _ -> [])
-	| Lt _
-	| Lte _
-	| Gt _
-	| Gte _
-	| Neq _
-	| BagIn _
-	| BagNotIn _
-	| BagSub _
-	| ListIn _
-	| ListNotIn _
-	| ListAllN _
-	| ListPerm _
-	| RelForm _
-	| LexVar _
-	| BConst _
-	| BVar _ 
-	| BagMin _ 
-    | SubAnn _
-	| EqMax _
-	| EqMin _
-    | VarPerm _
-    | XPure _
-	| BagMax _ -> []
-  )
-
-let get_perm_triple_pure_x (sv:spec_var) (f : formula) : (exp * exp * exp) list = 
-  let rec helper sv f =
-    match f with
-      | BForm (bf, lbl) -> get_perm_triple_b_formula sv bf
-      | And (f1, f2, pos) -> (helper sv f1)@(helper sv f2)
-      | AndList b ->
-          let nf = List.fold_left (fun ls_f (_,f_b) -> 
-              let res = helper sv f_b in
-              res@res
-          ) [] b in
-          nf
-      | Or (f1, f2, lbl, pos) -> (helper sv f1)@(helper sv f2) (*TOCHECK*)
-      | Not (f, lbl, pos) -> helper sv f
-      | Forall (qv, f, lbl, pos) -> 
-          if (eq_spec_var sv qv) then []
-          else helper sv f
-      | Exists (qv, f, lbl, pos) ->
-          if (eq_spec_var sv qv) then []
-          else helper sv f
-  in helper sv f
-
-let get_perm_triple_pure (sv:spec_var) (f : formula) : (exp * exp * exp) list =
-  Debug.no_2 "get_perm_triple_pure"
-      !print_sv !print_formula (pr_list !print_exp_triple)
-      get_perm_triple_pure_x sv f

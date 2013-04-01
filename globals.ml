@@ -207,10 +207,6 @@ let no_pos =
 
 let is_no_pos l = (l.start_pos.Lexing.pos_cnum == 0)
 
-let is_bptriple_type (t:typ) = match t with
-  | Float -> true
-  | _ -> false
-
 let is_float_type (t:typ) = match t with
   | Float -> true
   | _ -> false

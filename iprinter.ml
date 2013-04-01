@@ -186,9 +186,6 @@ and string_of_formula_exp_list l = match l with
   | h::[]                      -> string_of_formula_exp h
   | h::t                       -> (string_of_formula_exp h) ^ ", " ^ (string_of_formula_exp_list t)
 
-and string_of_formula_exp_triple (c,t,a) =
-  pr_triple string_of_formula_exp string_of_formula_exp string_of_formula_exp (c,t,a)
-
 and string_of_data_param param ann = (string_of_formula_exp param) ^ (string_of_imm_opt ann)
   
 (* pretty printing for a list of pure formulae *)
@@ -917,12 +914,9 @@ Iformula.print_one_formula := string_of_one_formula;;
 Iformula.print_h_formula :=string_of_h_formula;;
 Iformula.print_formula :=string_of_formula;;
 Iformula.print_struc_formula :=string_of_struc_formula;;
-Iformula.print_id :=string_of_var;;
-Iformula.print_formula_exp_triple :=string_of_formula_exp_triple;;
 Iast.print_struc_formula := string_of_struc_formula;;
 Iast.print_view_decl := string_of_view_decl;
 Iast.print_data_decl := string_of_data_decl;
 Ipure.print_formula :=string_of_pure_formula;
 Ipure.print_id := string_of_id;
-Ipure.print_formula_exp_triple :=string_of_formula_exp_triple;;
 

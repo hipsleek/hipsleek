@@ -133,7 +133,7 @@ let rec smt_of_exp a =
 	| CP.ListReverse _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (lists should not appear here)")
 	| CP.Func _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (func should not appear here)")
 	| CP.Tsconst _ -> illegal_format ("z3.smt_of_exp: ERROR in constraints (tsconst should not appear here)")
-	| CP.Bptriple ((vc,vt,va),_) -> "(mk-triple " ^ (smt_of_exp vc) ^ " " ^ (smt_of_exp vt) ^ " " ^ (smt_of_exp va) ^ ")"
+	| CP.Bptriple _ -> ""
 	| CP.ArrayAt (a, idx, l) -> 
 		List.fold_left (fun x y -> "(select " ^ x ^ " " ^ (smt_of_exp y) ^ ")") (smt_of_spec_var a) idx
 	| CP.InfConst _ -> Error.report_no_pattern ()
@@ -739,11 +739,6 @@ let to_smt_v2 pr_weak pr_strong ante conseq logic fvars info =
 	let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula pr_weak pr_strong x) ^ ")\n") ante_clauses in
 	let ante_str = String.concat "" ante_strs in
 	let conseq_str = smt_of_formula pr_weak pr_strong conseq in
-    let triple_str =
-      ";Declare integer triple\n"^ 
-      "(declare-datatypes () ((int-triple (mk-triple (first Int) (second Int) (third Int)))))\n"
-    in
-    let orig_res = 
     (
 		(*"(set-logic AUFNIA" (\* ^ (string_of_logic logic) *\) ^ ")\n" ^  *)
 			";Variables declarations\n" ^ 
@@ -756,10 +751,7 @@ let to_smt_v2 pr_weak pr_strong ante conseq logic fvars info =
 				ante_str ^
 			";Negation of Consequence\n" ^ "(assert (not " ^ conseq_str ^ "))\n" ^
 			"(check-sat)")
-     in
-    let new_res = if (Cpure.is_bptriple_formula ante) || (Cpure.is_bptriple_formula ante) then triple_str^orig_res else orig_res
-    in new_res
-
+	
 (* output for smt-lib v1.2 format *)
 and to_smt_v1 ante conseq logic fvars =
 	let rec defvars vars = match vars with
@@ -811,7 +803,7 @@ let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (p
 	let res = to_smt_v2 pr_weak pr_strong ante conseq logic all_fv info
 	(*	| Cvc3 | Yices ->	to_smt_v1 ante conseq logic all_fv*)
 	in
-    (* let _ = print_endline (" ### res = \n " ^ res) in *)
+    let _ = print_endline (" ### res = \n " ^ res) in
     res
 	
 let to_smt pr_weak pr_strong (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) = 

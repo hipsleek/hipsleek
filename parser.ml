@@ -1428,15 +1428,6 @@ cexp_w:
                 | lc=SELF; `NOTINLIST; cl=SELF             ->
 	            let f = cexp_to_pure2 (fun c1 c2-> P.ListNotIn (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
 	            set_slicing_utils_pure_double f false
-                (*Triple*)
-                | `OBRACE; fst=SELF; `COMMA; snd=SELF; `COMMA; rd=SELF; `CBRACE   ->
-                let apply_one cexp =
-                  match cexp with
-                    | Pure_c f -> f
-                    | _ -> report_error (get_pos 1) "with 1 convert expected Pure_c, found others"
-                in
-	            let f = Pure_c (P.Bptriple ((apply_one fst,apply_one snd,apply_one rd), (get_pos_camlp4 _loc 2))) in
-                set_slicing_utils_pure_double f false
                 | ct=p_vp_ann ; `OSQUARE; ls= id_list; `CSQUARE
                     ->
                     let func t =

@@ -122,7 +122,6 @@ include Ipure_D
 
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
 let print_id = ref (fun (c:(ident*primed)) -> "cpure printer has not been initialized")
-let print_formula_exp_triple = ref(fun (c:(exp * exp * exp)) -> "printer not initialized")
 
 module Exp_Pure =
 struct 
@@ -1515,65 +1514,3 @@ let trans_special_formula s (p:formula) vars =
         )
     | _ -> p
   )
-
-(*only expect to get the trpiple from equality*)
-let get_perm_triple_b_formula sv (bf : b_formula) : (exp * exp * exp) list =
-  let (pf,il) = bf in
-  (match pf with
-	| Eq (e1,e2,l) ->
-        (match e1,e2 with
-          | Var (v,_), Bptriple ((ec,et,ea),_)
-          | Bptriple ((ec,et,ea),_), Var (v,_) -> 
-              if (eq_var sv v) then
-                [(ec,et,ea)]
-              else []
-          | _ -> [])
-	| Lt _
-	| Lte _
-	| Gt _
-	| Gte _
-	| Neq _
-	| BagIn _
-	| BagNotIn _
-	| BagSub _
-	| ListIn _
-	| ListNotIn _
-	| ListAllN _
-	| ListPerm _
-	| RelForm _
-	| LexVar _
-	| BConst _
-	| BVar _ 
-	| BagMin _ 
-    | SubAnn _
-	| EqMax _
-	| EqMin _
-    | VarPerm _
-    | XPure _
-	| BagMax _ -> []
-  )
-
-let get_perm_triple_pure_x (sv:(ident*primed)) (f : formula) : (exp * exp * exp) list = 
-  let rec helper sv f =
-    match f with
-      | BForm (bf, lbl) -> get_perm_triple_b_formula sv bf
-      | And (f1, f2, pos) -> (helper sv f1)@(helper sv f2)
-      | AndList b ->
-          let nf = List.fold_left (fun ls_f (_,f_b) -> 
-              let res = helper sv f_b in
-              res@res
-          ) [] b in
-          nf
-      | Or (f1, f2, lbl, pos) -> (helper sv f1)@(helper sv f2) (*TOCHECK*)
-      | Not (f, lbl, pos) -> helper sv f
-      | Forall (qv, f, lbl, pos) -> 
-          if (eq_var sv qv) then []
-          else helper sv f
-      | Exists (qv, f, lbl, pos) ->
-          if (eq_var sv qv) then []
-          else helper sv f
-  in helper sv f
-
-let get_perm_triple_pure (sv:(ident*primed)) (f : formula) : (exp * exp * exp) list =
-  Debug.no_2 "et_perm_triple_pure" !print_id !print_formula (pr_list !print_formula_exp_triple)
-      get_perm_triple_pure_x sv f

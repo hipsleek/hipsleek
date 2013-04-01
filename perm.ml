@@ -163,7 +163,7 @@ struct
                   match f with
                     | Ipure.Var _ -> (f,[])
 		            | _ ->
-                        let nn_perm = (("bperm_"^(string_of_int pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+                        let nn_perm = ((perm_name^(string_of_int pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 			            let nv_perm = Ipure.Var (nn_perm,pos) in
                         let npf_perm = Ipure.BForm ((Ipure.Eq (nv_perm,f,pos), None), None) in (*TO CHECK: slicing for permissions*)
                         (nv_perm,[(nn_perm,npf_perm)])
@@ -177,7 +177,6 @@ struct
                 let npf_perm = Ipure.BForm ((Ipure.Eq (nv_perm,new_triple,pos), None), None) in (*TO CHECK: slicing for permissions*)
                 let perm = [(nn_perm,npf_perm)] in
                 (Some nv_perm,ec_ls@et_ls@ea_ls@perm)
-            | Ipure.Var _ -> (Some e,[])
             | _ -> failwith ("bounded permission is undefined")
 
   let float_out_mix_max_iperm perm pos =
