@@ -565,11 +565,11 @@ and h_formula_2_mem_perm_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_v
                       | Bperm -> CP.DisjSetSV.mkEmpty (*TODO: ???*)
                       | _ ->
                           (*prove that p0 |- var=full_perm*)
-                          let full_f = Perm.mkFullPerm_pure () var in
+                          let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
                           let f0 = MCP.pure_of_mix p0 in
-                          Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [Begin] check fractional variable "^ (Cprinter.string_of_spec_var var) ^ " is full_perm" ^"\n")) pos;
+                          Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
                           let res,_,_ = CP.imply_disj_orig [f0] full_f TP.imply imp_no in
-                          Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [End] check fractional variable "^ (Cprinter.string_of_spec_var var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
+                          Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
                           if (res) then
                             CP.DisjSetSV.singleton_dset (p(*, CP.mkTrue pos*))
                           else [])
@@ -600,12 +600,12 @@ and h_formula_2_mem_perm_x (f : h_formula) (p0 : mix_formula) (evars : CP.spec_v
 	        let new_mset = 
               match frac with
                 | Some var -> 
-                    let full_f = Perm.mkFullPerm_pure () var in
+                    let full_f = Perm.mkFullPerm_pure () (Cpure.get_var var) in
                     (*prove that p0 |- var=full_perm*)
                     let f0 = MCP.pure_of_mix p0 in
-                    Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [Begin] check fractional variable "^ (Cprinter.string_of_spec_var var) ^ " is full_perm" ^"\n")) pos;
+                    Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [Begin] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm" ^"\n")) pos;
                     let res,_,_ = CP.imply_disj_orig [f0] full_f TP.imply imp_no in
-                    Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [End] check fractional variable "^ (Cprinter.string_of_spec_var var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
+                    Debug.devel_zprint (lazy ("h_formula_2_mem_perm: [End] check fractional variable "^ (Cprinter.string_of_formula_exp var) ^ " is full_perm. ### res = " ^ (string_of_bool res) ^"\n")) pos;
                     if (res) then
                       (match lbl_lst with
                         |None ->
@@ -955,9 +955,8 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
 					if !Globals.perm != Dperm then 
 					  (*construct and check the fractional sum, otherwise use a joins fact*)
 						  let sum_exp = List.fold_left (fun e v ->
-							  let v_exp = CP.mkVar v no_pos in
-							  CP.mkAdd e v_exp no_pos
-						  ) (CP.mkVar (List.hd vars) no_pos) (List.tl vars) in
+							  CP.mkAdd e v no_pos
+						  ) (List.hd vars) (List.tl vars) in
 						  let full_exp = CP.mkFConst 1.0 no_pos in
 						  (*f1+f2+f2+f4>1.0*)
 						  let gt_exp = CP.mkGtExp sum_exp full_exp no_pos in
@@ -967,14 +966,15 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
 						  b
 					else  if (List.length vars)<2 then false
 						  else 
-						  let rec perm_f lv : CP.formula*CP.spec_var= match lv with 
+						  let rec perm_f lv : CP.formula*CP.exp= match lv with 
 							| h::[] -> (f,h)
 							| h::l-> 
 								let conss, last = perm_f l in
 								let n_ex = CP.fresh_perm_var () in
-								let v_exp = CP.mkAdd (CP.mkVar last no_pos) (CP.mkVar h no_pos) no_pos in
-								let new_eq = CP.mkEq v_exp (CP.mkVar n_ex no_pos) no_pos in
-								CP.mkAnd (CP.mkPure new_eq) conss no_pos, n_ex
+								let n_ex_var = (CP.mkVar n_ex no_pos) in
+								let v_exp = CP.mkAdd last h no_pos in
+								let new_eq = CP.mkEq v_exp n_ex_var no_pos in
+								CP.mkAnd (CP.mkPure new_eq) conss no_pos, n_ex_var
 							| [] -> failwith "this case has already been checked in the previous if"in
 						  let nf, _ = perm_f vars in
 						  Debug.devel_zprint (lazy ("xpure_perm: check: [Begin] check distinct fractional permission constrainst: "^ 
@@ -1764,9 +1764,9 @@ and  prune_bar_node_simpl bd dn old_mem ba_crt = (*(DataNode dn, old_mem, false)
     let l_prune2 = match perm_var with
       | None -> []
       | Some perm_v ->
-	        let rel_slice = MCP.memo_find_relevant_slice [perm_v] new_mem2 in
+	        let rel_slice = MCP.memo_find_relevant_slice [Cpure.get_var perm_v] new_mem2 in
 	        let f = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos), None) [rel_slice] false true false in
-	        match CP.get_inst_tree perm_v f with
+	        match CP.get_inst_tree (Cpure.get_var perm_v) f with
 	          | None -> []
 	          | Some ts -> 
 		            let triggered = List.fold_left (fun a (c,l)-> if (Tree_shares.Ts.contains ts c) then a else l@a) [] bd.barrier_prune_conditions_perm in
@@ -2211,7 +2211,7 @@ and unfold_heap_x (prog:Cast.prog_or_branches) (f : h_formula) (aset : CP.spec_v
                       if (Perm.allow_perm ()) then
                         (match perm with 
                           | None -> renamed_view_formula
-                          | Some f -> Cformula.propagate_perm_formula renamed_view_formula f) 
+                          | Some f -> Cformula.propagate_perm_formula renamed_view_formula (Cpure.get_var f))
                       else renamed_view_formula
                     in
                     (* let fr_rels,fr_rem = (List.partition CP.is_rel_typ vdef.view_vars) in *)
@@ -2592,7 +2592,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
                 if (Perm.allow_perm ()) then
                   (match perm with
                     | None -> renamed_view_formula
-                    | Some f -> Cformula.propagate_perm_struc_formula renamed_view_formula f)
+                    | Some f -> Cformula.propagate_perm_struc_formula renamed_view_formula (Cpure.get_var f))
                 else renamed_view_formula
               in
               let fr_vars = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)) :: vdef.view_vars in
@@ -2612,7 +2612,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
                   (match perm with
                     | None -> view_form
                     | Some permvar ->
-                          let to_fold_view = MCP.find_rel_constraints rhs_p [permvar] in
+                          let to_fold_view = MCP.find_rel_constraints rhs_p [(Cpure.get_var permvar)] in
                           add_mix_formula_to_struc_formula to_fold_view view_form)
                 else view_form
               in
@@ -2640,7 +2640,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (rhs_p : MCP.mix_formu
                 if (Perm.allow_perm ()) then
                   match perm with
                     | None -> vs
-                    | Some f -> f::vs
+                    | Some f -> (Cpure.get_var f)::vs
                 else vs
               in
               (* vs may contain non-existential free vars! *)
@@ -7685,18 +7685,21 @@ and do_lhs_case_x prog ante conseq estate lhs_node rhs_node is_folding pos=
 
 (*match and instatiate perm vars*)
 (*Return a substitution, labels, to_ante,to_conseq*)
-and do_match_inst_perm_vars_x (l_perm:P.spec_var option) (r_perm:P.spec_var option) (l_args:P.spec_var list) (r_args:P.spec_var list) label_list (evars:P.spec_var list) ivars impl_vars expl_vars =
+and do_match_inst_perm_vars_x (l_perm:P.exp option) (r_perm:P.exp option) (l_args:P.spec_var list) (r_args:P.spec_var list) label_list (evars:P.spec_var list) ivars impl_vars expl_vars =
   begin
     if (Perm.allow_perm ()) then
       (match l_perm, r_perm with
         | Some f1, Some f2 ->
-              let rho_0 = List.combine (f2::r_args) (f1::l_args) in
-              let label_list = (Label_only.Lab_List.unlabelled::label_list) in
-              (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
+            let f1 = Cpure.get_var f1 in
+            let f2 = Cpure.get_var f2 in
+            let rho_0 = List.combine (f2::r_args) (f1::l_args) in
+            let label_list = (Label_only.Lab_List.unlabelled::label_list) in
+            (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
         | None, Some f2 ->
-	          let rho_0 = List.combine (f2::r_args) (full_perm_var ()::l_args) in
-              let label_list = (Label_only.Lab_List.unlabelled::label_list) in
-              (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
+            let f2 = Cpure.get_var f2 in
+	        let rho_0 = List.combine (f2::r_args) (full_perm_var ()::l_args) in
+            let label_list = (Label_only.Lab_List.unlabelled::label_list) in
+            (rho_0, label_list,CP.mkTrue no_pos,CP.mkTrue no_pos)
 		          
         (*(if (List.mem f2 evars) then
         (*rename only*)
@@ -7722,13 +7725,14 @@ and do_match_inst_perm_vars_x (l_perm:P.spec_var option) (r_perm:P.spec_var opti
           let label_list = (label_list) in
           (rho_0, label_list,CP.mkTrue no_pos,p_conseq))*)
         | Some f1, None ->
+            let f1 = Cpure.get_var f1 in
               (*f1 is either ivar or global
                 if it is ivar, REMEMBER to convert it to expl_var*)
-              let rho_0 = List.combine r_args l_args in
-              let label_list = (label_list) in
-              let t_conseq = 
-		        mkFullPerm_pure () f1 in
-              (rho_0, label_list,CP.mkTrue no_pos,t_conseq)
+            let rho_0 = List.combine r_args l_args in
+            let label_list = (label_list) in
+            let t_conseq = 
+		      mkFullPerm_pure () f1 in
+            (rho_0, label_list,CP.mkTrue no_pos,t_conseq)
         | _ -> let rho_0 = List.combine r_args l_args in
           (rho_0, label_list, CP.mkTrue no_pos,CP.mkTrue no_pos)
       )
@@ -7756,7 +7760,7 @@ and do_match_inst_perm_vars l_perm r_perm l_args r_args label_list evars ivars i
 
 (*Modified a set of vars in estate to reflect instantiation
   when matching 2 perm vars*)
-and do_match_perm_vars l_perm r_perm evars ivars impl_vars expl_vars =
+and do_match_perm_vars (l_perm:P.exp option) (r_perm:P.exp option) evars ivars impl_vars expl_vars =
   begin
     if (Perm.allow_perm ()) then
       (match l_perm, r_perm with
@@ -7767,6 +7771,7 @@ and do_match_perm_vars l_perm r_perm evars ivars impl_vars expl_vars =
               (*no change*)
               evars,ivars,impl_vars, expl_vars
         | None, Some f2 ->
+            let f2 = Cpure.get_var f2 in
               (if (List.mem f2 evars) then
                 (*rename only. May not need to remove it from evars*)
                 evars,ivars,impl_vars, expl_vars
@@ -7782,6 +7787,7 @@ and do_match_perm_vars l_perm r_perm evars ivars impl_vars expl_vars =
                 (*f2=full to RHS*)
                 evars,ivars,impl_vars, expl_vars)
         | Some f1, None ->
+            let f1 = Cpure.get_var f1 in
               (*f1 is either ivar or global
                 if it is ivar, REMEMBER to convert it to expl_var*)
               (if (List.mem f1 ivars) then
@@ -8448,7 +8454,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
 
     let perms = 
       if (Perm.allow_perm ()) then
-        get_cperm perm
+        get_cperm_var perm
       else []
     in
     (*add permission vars if applicable*)
@@ -8834,9 +8840,15 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
                   let rhs_pvars = Perm.get_cperm rhs_perm in
                   let exact_flag,perm_f,vars = match lhs_perm,rhs_perm with
                     | None,None -> (true,CP.mkTrue no_pos,[]) (*1.0 = 1.0 => exact match*)
-                    | Some f, None
-                    | None, Some f -> (false, Perm.mkFullPerm_pure () f,[f])
+                    | Some f, None ->
+                        let f = Cpure.get_var f in
+                        (false, Perm.mkFullPerm_pure () f,[f])
+                    | None, Some f ->
+                        let f = Cpure.get_var f in
+                        (false, Perm.mkFullPerm_pure () f,[f])
                     | Some f1,Some f2 ->
+                        let f1 = Cpure.get_var f1 in
+                        let f2 = Cpure.get_var f2 in
                         if (CP.eq_spec_var f1 f2) then
                           (true,CP.mkTrue no_pos,[])
                         else
@@ -8924,7 +8936,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 	    let l_perm = get_node_perm lhs_node in
 	    let r_perm = get_node_perm rhs_node in
 	    let v_rest, v_consumed = 
-	      let l_var = match l_perm with | None -> Perm.full_perm_var() | Some v -> v in			
+	      let l_var = match l_perm with | None -> Perm.full_perm_var() | Some v -> (Cpure.get_var v) in			
 	      Perm.fresh_cperm_var () l_var , Perm.fresh_cperm_var () l_var in
 	    if not (test_frac_subsume prog estate rhs_b.formula_base_pure l_perm r_perm) then 
 	      (CF.mkFailCtx_in (Basic_Reason (mkFailContext "lhs has lower permissions than required or rhs is false" estate conseq (get_node_label rhs_node) pos,CF.mk_failure_must "perm subsumption" sl_error)), NoAlias)
@@ -8932,9 +8944,9 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 	      let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog lhs_node rhs_node in
 	      if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos,CF.mk_failure_must "mismatch in branches" sl_error)), NoAlias)
 	      else
-		let n_lhs_h = mkStarH lhs_rest (set_node_perm lhs_node (Some v_rest)) pos in
+		let n_lhs_h = mkStarH lhs_rest (set_node_perm lhs_node (Some (Cpure.Var (v_rest,no_pos)))) pos in
 		let n_rhs_pure =
-		  let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> CP.Var (v,no_pos) in
+		  let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> v in
 		  let npure = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.Var (v_rest,no_pos),CP.Var (v_consumed,no_pos),no_pos), no_pos), None),None) in
 		  MCP.memoise_add_pure rhs_b.formula_base_pure npure in
 		let new_estate = {estate with 
@@ -8947,7 +8959,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 		  | None -> n_rhs_pure
 		  | Some (p,_) -> MCP.memoise_add_pure n_rhs_pure p in
 		let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest;formula_base_pure = rhs_p} in
-		let n_lhs_node = set_node_perm lhs_node (Some v_consumed) in
+		let n_lhs_node = set_node_perm lhs_node (Some (Cpure.Var (v_consumed,no_pos))) in
 		Debug.devel_zprint (lazy "do_match_split") pos;
         Debug.tinfo_hprint (add_str "new_estate(M_split_match)" (Cprinter.string_of_entail_state)) new_estate pos;
 		let res_es0, prf0 = do_match prog new_estate n_lhs_node rhs_node n_rhs_b rhs_h_matched_set is_folding pos in
@@ -9353,13 +9365,17 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
                   if (Perm.allow_perm ()) then
                     match perm1,perm2 with
                       | Some f1, Some f2 ->
-                            ([f1],[f2])
+                          let f1 = Cpure.get_var f1 in
+                          let f2 = Cpure.get_var f2 in
+                          ([f1],[f2])
                       | Some f1, None ->
-                            ([f1],[full_perm_var()])
+                          let f1 = Cpure.get_var f1 in
+                          ([f1],[full_perm_var()])
                       | None, Some f2 ->
-                            ([full_perm_var()],[f2])
+                          let f2 = Cpure.get_var f2 in
+                          ([full_perm_var()],[f2])
                       | None, None ->
-                            ([],[])
+                          ([],[])
                   else
                     ([],[])
                 in
@@ -9371,6 +9387,7 @@ and do_universal_x prog estate (node:CF.h_formula) rest_of_lhs coer anode lhs_b 
                   if (Perm.allow_perm ()) then
                     match perm1,perm2 with
                       | Some f1, None ->
+                          let f1 = Cpure.get_var f1 in
                             propagate_perm_formula coer_rhs_new1 f1
                       | _ -> coer_rhs_new1
                   else
@@ -9559,13 +9576,17 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
                     if (Perm.allow_perm ()) then
                       match perm1,perm2 with
                         | Some f1, Some f2 ->
-                              ([f1],[f2])
+                          let f1 = Cpure.get_var f1 in
+                          let f2 = Cpure.get_var f2 in
+                          ([f1],[f2])
                         | Some f1, None ->
-                              ([f1],[full_perm_var ()])
+                            let f1 = Cpure.get_var f1 in
+                            ([f1],[full_perm_var ()])
                         | None, Some f2 ->
-                              ([full_perm_var ()],[f2])
+                            let f2 = Cpure.get_var f2 in
+                            ([full_perm_var ()],[f2])
                         | None, None ->
-                              ([],[])
+                            ([],[])
                     else
                       ([],[])
                   in
@@ -9578,6 +9599,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
                     if (Perm.allow_perm ()) then
                       match perm1,perm2 with
                         | Some f1, None ->
+                            let f1 = Cpure.get_var f1 in
                               propagate_perm_formula coer_rhs_new1 f1
                         | _ -> coer_rhs_new1
                     else
@@ -9930,13 +9952,17 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
               if (Perm.allow_perm ()) then
                 match perm1,perm2 with
                   | Some f1, Some f2 ->
-                        ([f1],[f2])
+                      let f1 = List.hd (Perm.get_cperm_var perm1) in
+                      let f2 = List.hd (Perm.get_cperm_var perm2) in
+                      ([f1],[f2])
                   | Some f1, None ->
-                        ([f1],[full_perm_var ()])
+                      let f1 = List.hd (Perm.get_cperm_var perm1) in
+                      ([f1],[full_perm_var ()])
                   | None, Some f2 ->
-                        ([full_perm_var  ()],[f2])
+                      let f2 = List.hd (Perm.get_cperm_var perm2) in
+                      ([full_perm_var  ()],[f2])
                   | None, None ->
-                        ([],[])
+                      ([],[])
               else
                 ([],[])
             in
@@ -9949,10 +9975,11 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
               if (Perm.allow_perm ()) then
                 match perm1,perm2 with
                   | Some f1, None ->
-                        (*propagate perm into coercion*)
-                        let rhs = propagate_perm_formula coer_rhs_new1 f1 in
-                        let extra, svl =  propagate_perm_h_formula extra_heap_new f1 in
-                        (rhs,extra)
+                      (*propagate perm into coercion*)
+                      let f1 = List.hd (Perm.get_cperm_var perm1) in
+                      let rhs = propagate_perm_formula coer_rhs_new1 f1 in
+                      let extra, svl =  propagate_perm_h_formula extra_heap_new f1 in
+                      (rhs,extra)
                   | _ -> (coer_rhs_new1, extra_heap_new)
               else
                 (coer_rhs_new1,extra_heap_new)
@@ -10075,8 +10102,8 @@ and pick_up_node_x (ls:CF.h_formula list) (name:ident):(CF.h_formula * CF.h_form
 and test_frac_subsume_x prog lhs rhs_p l_perm r_perm = (*if false, split permission*)
   if !perm =NoPerm then false
   else 
-    let r_perm = match r_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> CP.Var (v,no_pos) in
-    let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> CP.Var (v,no_pos) in
+    let r_perm = match r_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> v in
+    let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> v in
     let nfv = CP.fresh_perm_var()  in
     let add1 = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.Var (nfv,no_pos),r_perm,no_pos), no_pos), None),None) in
     (*let add2 = CP.BForm ((CP.Eq (l_perm, r_perm, no_pos), None),None) in*)
@@ -10089,7 +10116,7 @@ and test_frac_subsume_x prog lhs rhs_p l_perm r_perm = (*if false, split permiss
 and test_frac_subsume prog lhs rhs_p l_perm r_perm = 
   let pr1 = Cprinter.string_of_estate in
   let pr2 = Cprinter.string_of_mix_formula in
-  let pr3 c = match c with | None -> "Top" | Some v -> Cprinter.string_of_spec_var v in
+  let pr3 c = match c with | None -> "Top" | Some v -> Cprinter.string_of_formula_exp v in
   Debug.no_4_loop "test_frac_subsume" pr1 pr2 pr3 pr3 string_of_bool (test_frac_subsume_x prog) lhs rhs_p l_perm r_perm
       
 and test_frac_eq_x prog lhs rhs_p l_perm r_perm = (*if false, do match *)
@@ -10215,10 +10242,17 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
             let perms1, perms2 = 
               if (Perm.allow_perm ()) then
                 match perm1, perm2 with
-                | Some f1, Some f2 -> ([f1],[f2])
-                | Some f1, None -> ([f1],[full_perm_var ()])
-                | None, Some f2 -> ([full_perm_var ()],[f2])
-                | None, None -> ([],[])
+                  | Some f1, Some f2 -> 
+                      let f1 = List.hd (Perm.get_cperm_var perm1) in
+                      let f2 = List.hd (Perm.get_cperm_var perm2) in
+                      ([f1],[f2])
+                  | Some f1, None -> 
+                      let f1 = List.hd (Perm.get_cperm_var perm1) in
+                      ([f1],[full_perm_var ()])
+                  | None, Some f2 -> 
+                      let f2 = List.hd (Perm.get_cperm_var perm2) in
+                      ([full_perm_var ()],[f2])
+                  | None, None -> ([],[])
               else ([],[]) in
             let fr_vars = perms2@(p2 :: ps2) in
             let to_vars = perms1@(p1 :: ps1) in
@@ -10229,9 +10263,10 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
               if (Perm.allow_perm ()) then
                 match perm1, perm2 with
                 | Some f1, None -> (*propagate perm into coercion*)
-                  let rhs = propagate_perm_formula coer_rhs_new1 f1 in
-                  let extra, svl = propagate_perm_h_formula extra_heap_new f1 in
-                  (rhs,extra)
+                    let f1 = List.hd (Perm.get_cperm_var perm1) in
+                    let rhs = propagate_perm_formula coer_rhs_new1 f1 in
+                    let extra, svl = propagate_perm_h_formula extra_heap_new f1 in
+                    (rhs,extra)
                 | _ -> (coer_rhs_new1, extra_heap_new)
               else (coer_rhs_new1, extra_heap_new) in
             let coer_rhs_new = coer_rhs_new1 (*add_origins coer_rhs_new1 [coer.coercion_name]*) in
@@ -10349,13 +10384,13 @@ and normalize_base_perm_x prog (f:formula) =
 	  if (List.exists (fun c->get_node_perm c = None)l) then (HFalse,ip,iqv)
 	  else 
 	    let n_p_v = CP.fresh_perm_var () in
-	    let n_h = set_node_perm h (Some n_p_v) in
+	    let n_h = set_node_perm h (Some (Cpure.Var (n_p_v,no_pos))) in
 	    let v = get_node_var h in
 	    let args = v::(get_node_args h) in
 	    let p,lpr = List.fold_left (fun (a1,a2) c ->
 		let lv = (get_node_var c)::(get_node_args c) in
 		let lp = List.fold_left2  (fun a v1 v2-> CP.mkAnd a (CP.mkEqVar v1 v2 pos) pos) a1 args lv in
-		(lp,(get_l_perm c)@a2)) (ip,get_l_perm h) dups in	
+		(lp,(List.map Cpure.get_var (get_l_perm c))@a2)) (ip,(List.map Cpure.get_var (get_l_perm h))) dups in
 	    let npr,n_e = perm_folder (n_p_v,lpr) in
 	    let n_h = mkStarH n_h ih pos in
 	    let npr = CP.mkAnd p npr pos in

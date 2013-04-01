@@ -1425,8 +1425,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		        CF.h_formula_data_derv = false; (*TO CHECK: assume false*)
 		        CF.h_formula_data_imm = imm;
                         CF.h_formula_data_param_imm = pimm;
-                        CF.h_formula_data_perm = if (Perm.allow_perm ()) then Some fresh_frac else None; (*LDK: belong to HIP, deal later ???*)
-
+                        CF.h_formula_data_perm = if (Perm.allow_perm ()) then Some (Cpure.Var (fresh_frac,no_pos)) else None; (*LDK: belong to HIP, deal later ???*)
 		        CF.h_formula_data_origins = []; (*deal later ???*)
 		        CF.h_formula_data_original = true; (*deal later ???*)
                         CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
@@ -1449,7 +1448,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         (*there exists fresh_frac statisfy ... *)
                         if (read_only)
                         then
-                          let read_f = mkPermInv () fresh_frac in
+                          let read_f = mkPermInv_var () fresh_frac in
                           CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
                         else
                           let write_f = mkPermWrite () fresh_frac in

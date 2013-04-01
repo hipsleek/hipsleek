@@ -473,6 +473,11 @@ let get_var_opt (e:exp) =
     | Var (v,_) -> Some v
     | _ -> None
 
+let get_var (e:exp) =
+  match e with 
+    | Var (v,_) -> v
+    | _ -> report_error no_pos "[cpure.ml] get_var: expecting Var"
+
 let rec exp_contains_spec_var (e : exp) : bool =
   match e with
   | Var (SpecVar (t, _, _), _) -> true

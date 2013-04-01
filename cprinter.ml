@@ -511,16 +511,6 @@ let rec string_of_imm imm = match imm with
   | TempAnn(t) -> "@[" ^ (string_of_imm t) ^ "]"
   | PolyAnn(v) -> "@" ^ (string_of_spec_var v)
 
-
-
-
-let string_of_cperm perm =
-  let perm_str = match perm with
-    | None -> ""
-    | Some f -> string_of_spec_var f
-  in if (Perm.allow_perm ()) then "(" ^ perm_str ^ ")" else ""
-
-
 let string_of_derv dr = 
   if dr then "@D" else ""
 
@@ -968,6 +958,18 @@ let pr_mem_formula  (e : mem_formula) =
 (*     | [] -> fmt_string ";" *)
 (* ;; *)
 
+(** convert formula exp to a string via pr_formula_exp *)
+let string_of_formula_exp (e:P.exp) : string =  poly_string_of_pr  pr_formula_exp e
+
+let printer_of_formula_exp (crt_fmt: Format.formatter) (e:P.exp) : unit =
+  poly_printer_of_pr crt_fmt pr_formula_exp e
+
+let string_of_cperm perm =
+  let perm_str = match perm with
+    | None -> ""
+    | Some f -> string_of_formula_exp f
+  in if (Perm.allow_perm ()) then "(" ^ perm_str ^ ")" else ""
+
 let rec pr_h_formula h = 
   let f_b e =  pr_bracket h_formula_wo_paren pr_h_formula e 
   in
@@ -1290,12 +1292,6 @@ let rec pr_h_formula_for_spec h =
   | HEmp -> fmt_string "emp"
   | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
   | StarMinus _ | ConjStar _ | ConjConj _  -> Error.report_no_pattern ()
-
-(** convert formula exp to a string via pr_formula_exp *)
-let string_of_formula_exp (e:P.exp) : string =  poly_string_of_pr  pr_formula_exp e
-
-let printer_of_formula_exp (crt_fmt: Format.formatter) (e:P.exp) : unit =
-  poly_printer_of_pr crt_fmt pr_formula_exp e
 
 let string_of_memoised_list l : string  = poly_string_of_pr pr_memoise_group l
 
@@ -3392,3 +3388,4 @@ Redlog.print_formula := string_of_pure_formula;;
 Redlog.print_svl := string_of_spec_var_list;;
 Redlog.print_sv := string_of_spec_var;;
 Perm.print_sv := string_of_spec_var;;
+Perm.print_exp := string_of_formula_exp;;

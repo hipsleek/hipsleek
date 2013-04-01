@@ -4723,7 +4723,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                         let perms = [f] in
                         let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
                         let permvars = match_exp (List.combine perms permlabels) pos in
-                        Some (List.nth permvars 0) )
+                        let v = List.nth permvars 0 in
+                        Some (Cpure.Var (v,no_pos)) )
                 in
                 let result_heap = CF.DataNode {
 		            CF.h_formula_data_node = CP.SpecVar (rootptr_type,rootptr,p);
@@ -4759,7 +4760,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                           let perms = f :: [] in
                           let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
                           let permvars = match_exp (List.combine perms permlabels) pos in
-                          Some (List.nth permvars 0) )
+                          let v = List.nth permvars 0 in
+                          Some (Cpure.Var (v,no_pos)) )
                   in
                   let new_h = CF.ViewNode {
                       CF.h_formula_view_node = new_v;
@@ -4798,7 +4800,8 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
                                 let perms = f :: [] in
                                 let permlabels = List.map (fun _ -> Label_only.empty_spec_label) perms in
                                 let permvars = match_exp (List.combine perms permlabels) pos in
-                                Some (List.nth permvars 0) 
+                                let v = List.nth permvars 0 in
+                                Some (Cpure.Var (v,no_pos)) 
 			            in
 			            let holes = collect_holes hvars 0 in
                         let new_h = CF.DataNode {
@@ -6210,7 +6213,7 @@ and gather_type_info_pointer (e0 : IP.exp) (k : spec_var_kind) stab : typ =
 (* 	      (CF.res_replace stab rl filter_res b.IF.formula_base_flow) *)
 
 and gather_type_info_formula prog f0 stab filter_res = 
-  Debug.ho_eff_3 "gather_type_info_formula"
+  Debug.no_eff_3 "gather_type_info_formula"
       [false;true]
       (Iprinter.string_of_formula) string_of_stab 
       string_of_bool (fun x -> "()")
@@ -6341,7 +6344,7 @@ and try_unify_view_type_args prog c vdef v ies stab pos =
 
 
 and gather_type_info_heap prog (h0 : IF.h_formula) stab =
-  Debug.ho_eff_2 "gather_type_info_heap" [false;true]
+  Debug.no_eff_2 "gather_type_info_heap" [false;true]
       Iprinter.string_of_h_formula string_of_stab (fun _ -> "()")
       (fun _ _ -> gather_type_info_heap_x prog h0 stab) h0 stab 
 
@@ -6608,7 +6611,7 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
     ^"\n ### h = " ^ (pr h)
     ^"\n ### expl = " ^ (pr expl)) 
   in 
-  Debug.ho_4 "case_normalize_renamed_formula" 
+  Debug.no_4 "case_normalize_renamed_formula" 
       pr1 pr pr Iprinter.string_of_formula pr_out
       (fun _ _ _ _ -> case_normalize_renamed_formula_x prog avail_vars posib_expl f) prog avail_vars posib_expl f
 
@@ -6936,7 +6939,7 @@ and case_normalize_renamed_formula_x prog (avail_vars:(ident*primed) list) posib
 (* AN HOA : TODO CHECK *)
 and case_normalize_formula prog (h:(ident*primed) list)(f:IF.formula) (rel0: rel option): IF.formula =
   let pr = Iprinter.string_of_formula in
-  Debug.ho_1 "case_normalize_formula" pr pr (fun f -> case_normalize_formula_x prog h f rel0) f
+  Debug.no_1 "case_normalize_formula" pr pr (fun f -> case_normalize_formula_x prog h f rel0) f
       
       
 and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula) (rel0: rel option): IF.formula = 
@@ -6946,13 +6949,11 @@ and case_normalize_formula_x prog (h:(ident*primed) list)(f:IF.formula) (rel0: r
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = IF.float_out_thread f in
   let f = IF.float_out_exps_from_heap f rel0 in (*andreeac - check rel*)
-  let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
 
   let f = IF.float_out_min_max f in
-  let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = IF.rename_bound_vars f in
-  let _ = print_string ("case_normalize_formula :: CHECK POINT 3 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in
-
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f,_,_ = case_normalize_renamed_formula prog h [] f in
   (* let _ = print_string ("case_normalize_formula :: CHECK POINT 3 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
@@ -8469,7 +8470,7 @@ and check_barrier_wf prog bd =
         CF.h_formula_data_name = bd.C.barrier_name;
         CF.h_formula_data_imm = CF.ConstAnn Mutable;
                         CF.h_formula_data_param_imm = [];
-        CF.h_formula_data_perm = Some v;
+        CF.h_formula_data_perm = Some (Cpure.Var (v,no_pos));
         CF.h_formula_data_arguments = st_v::List.tl bd.C.barrier_shared_vars;
         CF.h_formula_data_label = None; 
         CF.h_formula_data_remaining_branches = None ;

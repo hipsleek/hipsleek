@@ -7,11 +7,14 @@ open Cpure
 
 type iperm = Ipure.exp option (*type of permission in iformula*)
 
-type cperm = Cpure.spec_var option (*type of permission in cformula*)
+(*which is Var for FPERM and CPERM
+and is Bptriple for BPERM*)
+type cperm = Cpure.exp option (*type of permission in cformula*)
 
 type cperm_var = Cpure.spec_var (*permission variable in cformula*)
 
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
+let print_exp = ref (fun (c:Cpure.exp) -> "cpure printer has not been initialized")
 
 let string_of_perm_type t =
   match t with
@@ -100,12 +103,14 @@ module type PERM =
     val string_of_cperm : cperm -> string
     val mkFullPerm_pure : cperm_var -> Cpure.formula
     (* val mkFullPerm_pure_from_ident : ident -> Cpure.formula *)
-    val mkPermInv : cperm_var -> Cpure.formula
+    val mkPermInv : Cpure.exp -> Cpure.formula
+    val mkPermInv_var : cperm_var -> Cpure.formula
     val mkPermWrite : cperm_var -> Cpure.formula
     val float_out_iperm : iperm -> loc -> (iperm * ( ( (ident*primed) * Ipure.formula )list) )
     val float_out_mix_max_iperm : iperm -> loc -> (iperm * Ipure.formula option)
     val fv_cperm : cperm -> cperm_var list
-    val get_cperm : cperm -> cperm_var list
+    val get_cperm : cperm -> Cpure.exp list
+    val get_cperm_var : cperm -> cperm_var list
     val subst_var_perm : (cperm_var * cperm_var) -> cperm -> cperm
     val fresh_cperm_var : cperm_var -> cperm_var
     val mkEq_cperm : cperm_var -> cperm_var -> loc -> Cpure.b_formula
@@ -134,7 +139,7 @@ struct
       | None -> failwith ("bounded permission cannot be empty in get_iperm")
       | Some f -> [f]
   let string_of_cperm (perm:cperm) : string =
-    pr_opt !print_sv perm
+    pr_opt !print_exp perm
   let apply_one_iperm = Ipure.e_apply_one
   let full_perm_var = (Cpure.SpecVar (cperm_typ, full_perm_name, Unprimed))
   let mkFullPerm_pure  (f:cperm_var) : Cpure.formula = (*TOCHECK*)
@@ -147,7 +152,9 @@ struct
     let var = (Cpure.SpecVar (cperm_typ, id, Unprimed)) in
     mkFullPerm_pure var
         
-  let mkPermInv (f:cperm_var) : Cpure.formula = (*TOCHECK*)
+  let mkPermInv (f:Cpure.exp) : Cpure.formula = (*TOCHECK*)
+    Cpure.mkTrue no_pos
+  let mkPermInv_var (f:cperm_var) : Cpure.formula = (*TOCHECK*)
     Cpure.mkTrue no_pos
   let mkPermWrite (f:cperm_var) : Cpure.formula = (*TOCHECK*)
     Cpure.mkTrue no_pos
@@ -211,17 +218,27 @@ struct
                 (Some nv_perm,p_f)
             | Ipure.Var _ -> (Some f, None)
             | _ -> (None,None)
-  let fv_cperm perm =
+  let fv_cperm perm : Cpure.spec_var list =
+    match perm with
+      | None -> []
+      | Some f -> Cpure.afv f
+
+  let get_cperm perm : Cpure.exp list =
     match perm with
       | None -> []
       | Some f -> [f]
 
-  let get_cperm perm =
-    match perm with
+  let get_cperm_var perm : cperm_var list =
+    (match perm with
       | None -> []
-      | Some f -> [f]
+      | Some f -> 
+          (match f with
+            | Cpure.Bptriple ((varc,vart,vara),_) -> [varc;vart;vara]
+            | _ -> failwith ("get_cperm: expecting Bptriple")))
+
   let subst_var_perm ((fr, t) as s) perm =
-    map_opt (Cpure.subst_var s) perm
+    map_opt (Cpure.e_apply_one s) perm
+
   let fresh_cperm_var = Cpure.fresh_spec_var
   let mkEq_cperm v1 v2 pos =
     Cpure.mkEq_b (Cpure.mkVar v1 pos) ( Cpure.mkVar v2 pos) pos
@@ -244,12 +261,13 @@ struct
   let get_iperm perm = match perm with
       | None -> []
       | Some f -> [f]
-  let string_of_cperm (perm:cperm) : string = pr_opt !print_sv perm
+  let string_of_cperm (perm:cperm) : string = pr_opt !print_exp perm
   let apply_one_iperm = Ipure.e_apply_one
   let full_perm_var = (Cpure.SpecVar (cperm_typ, full_perm_name, Unprimed))
   let mkFullPerm_pure  (f:cperm_var) : Cpure.formula = Cpure.BForm ((Cpure.Eq ( Cpure.Var (f,no_pos), Cpure.Var (full_perm_var,no_pos) , no_pos) ,None), None)
   let mkFullPerm_pure_from_ident id : Cpure.formula =   mkFullPerm_pure (Cpure.SpecVar (cperm_typ, id, Unprimed))
-  let mkPermInv (f:cperm_var) : Cpure.formula = Cpure.mkTrue no_pos 
+  let mkPermInv_var (f:cperm_var) : Cpure.formula = Cpure.mkTrue no_pos 
+  let mkPermInv (f:Cpure.exp) : Cpure.formula = Cpure.mkTrue no_pos 
     
   let mkPermWrite (f:cperm_var) : Cpure.formula = Cpure.BForm ((Cpure.Eq ( Cpure.Var (f,no_pos), Cpure.Tsconst(Tree_shares.Ts.top, no_pos),no_pos),None),None)
   let full_perm_constraint = Mcpure.OnePF (mkPermWrite full_perm_var)
@@ -272,12 +290,21 @@ struct
 			    (Some nv_perm, Some (Ipure.float_out_pure_min_max (Ipure.BForm ((Ipure.Eq (nv_perm, f, pos), None), None))))
   let fv_cperm perm = match perm with
       | None -> []
-      | Some f -> [f]
+      | Some f -> Cpure.afv f
 
   let get_cperm perm = match perm with
       | None -> []
       | Some f -> [f]
-  let subst_var_perm ((fr, t) as s) perm = map_opt (Cpure.subst_var s) perm
+
+  let get_cperm_var perm : cperm_var list =
+    (match perm with
+      | None -> []
+      | Some f -> 
+          (match f with
+            | Cpure.Var (v,_) -> [v]
+            | _ -> failwith ("get_cperm: expecting Var")))
+
+  let subst_var_perm ((fr, t) as s) perm = map_opt (Cpure.e_apply_one s) perm
   let fresh_cperm_var = Cpure.fresh_spec_var
   let mkEq_cperm v1 v2 pos = Cpure.mkEq_b (Cpure.mkVar v1 pos) ( Cpure.mkVar v2 pos) pos
 end;;
@@ -302,7 +329,7 @@ struct
       | None -> []
       | Some f -> [f]
   let string_of_cperm (perm:cperm) : string =
-    pr_opt !print_sv perm
+    pr_opt !print_exp perm
   let apply_one_iperm = Ipure.e_apply_one
   let full_perm_var = (Cpure.SpecVar (cperm_typ, full_perm_name, Unprimed))
   let mkFullPerm_pure  (f:cperm_var) : Cpure.formula = 
@@ -315,21 +342,16 @@ struct
     let var = (Cpure.SpecVar (cperm_typ, id, Unprimed)) in
     mkFullPerm_pure var
 (*create fractional permission invariant 0<f<=1*)
-  let mkPermInv (f:cperm_var) : Cpure.formula =
+  let mkPermInv (f:Cpure.exp) : Cpure.formula =
     let upper = 
-      Cpure.BForm (((Cpure.Lte (
-          (Cpure.Var (f,no_pos)),
-          (Cpure.FConst (1.0,no_pos)),
-          no_pos
-      )), None),None) in
-    let lower =  Cpure.BForm (((Cpure.Gt (
-        (Cpure.Var (f,no_pos)),
-        (Cpure.FConst (0.0,no_pos)),
-        no_pos
-    )), None),None) in
+      Cpure.BForm (((Cpure.Lte (f,(Cpure.FConst (1.0,no_pos)),no_pos)), None),None) in
+    let lower =  Cpure.BForm (((Cpure.Gt (f,(Cpure.FConst (0.0,no_pos)),no_pos)), None),None) in
     let inv = 
       (Cpure.And (lower,upper,no_pos)) in
     inv
+  let mkPermInv_var (f:cperm_var) : Cpure.formula =
+    let f_var = Cpure.Var (f,no_pos) in
+    mkPermInv f_var
   let mkPermWrite (f:cperm_var) : Cpure.formula =
     Cpure.BForm (((Cpure.Eq (
         (Cpure.Var (f,no_pos)),
@@ -364,14 +386,23 @@ struct
   let fv_cperm perm =
     match perm with
       | None -> []
-      | Some f -> [f]
+      | Some f -> Cpure.afv f
 
   let get_cperm perm =
     match perm with
       | None -> []
       | Some f -> [f]
+
+  let get_cperm_var perm : cperm_var list =
+    (match perm with
+      | None -> []
+      | Some f -> 
+          (match f with
+            | Cpure.Var (v,_) -> [v]
+            | _ -> failwith ("get_cperm: expecting Var")))
+
   let subst_var_perm ((fr, t) as s) perm =
-    map_opt (Cpure.subst_var s) perm
+    map_opt (Cpure.e_apply_one s) perm
   let fresh_cperm_var = Cpure.fresh_spec_var
   let mkEq_cperm v1 v2 pos =
     Cpure.mkEq_b (Cpure.mkVar v1 pos) ( Cpure.mkVar v2 pos) pos
@@ -397,7 +428,7 @@ struct
       | None -> []
       | Some f -> [f]
   let string_of_cperm (perm:cperm) : string =
-    pr_opt !print_sv perm
+    pr_opt !print_exp perm
   let apply_one_iperm = Ipure.e_apply_one
   let full_perm_var = (Cpure.SpecVar (cperm_typ, full_perm_name, Unprimed))
   (*LDK: a constraint to indicate FULL permission = 0*)
@@ -411,10 +442,13 @@ struct
     let var = (Cpure.SpecVar (cperm_typ, id, Unprimed)) in
     mkFullPerm_pure var
 (*create counting permission invariant c >=-1*)
-  let mkPermInv (f:Cpure.spec_var) : Cpure.formula =
-    let p_f = Cpure.mkGte (Cpure.Var (f,no_pos)) (Cpure.IConst (-1,no_pos)) no_pos in
+  let mkPermInv (f:Cpure.exp) : Cpure.formula =
+    let p_f = Cpure.mkGte f (Cpure.IConst (-1,no_pos)) no_pos in
     let b_f = (p_f,None) in
     Cpure.BForm (b_f,None)
+  let mkPermInv_var (f:Cpure.spec_var) : Cpure.formula =
+    let f_var = Cpure.Var (f,no_pos) in
+    mkPermInv f_var
   let mkPermWrite (f:Cpure.spec_var) : Cpure.formula =
     Cpure.BForm (((Cpure.Eq (
         (Cpure.Var (f,no_pos)),
@@ -449,12 +483,19 @@ struct
   let fv_cperm perm =
     match perm with
       | None -> []
-      | Some f -> [f]
+      | Some f -> Cpure.afv f
   let get_cperm perm =
     match perm with
       | None -> []
       | Some f -> [f]
-  let subst_var_perm ((fr, t) as s) perm = map_opt (Cpure.subst_var s) perm
+  let get_cperm_var perm : cperm_var list =
+    (match perm with
+      | None -> []
+      | Some f -> 
+          (match f with
+            | Cpure.Var (v,_) -> [v]
+            | _ -> failwith ("get_cperm: expecting Var")))
+  let subst_var_perm ((fr, t) as s) perm = map_opt (Cpure.e_apply_one s) perm
   let fresh_cperm_var = Cpure.fresh_spec_var
   let mkEq_cperm v1 v2 pos = Cpure.mkEq_b (Cpure.mkVar v1 pos) ( Cpure.mkVar v2 pos) pos
 end;;
@@ -561,6 +602,13 @@ let mkPermInv () =   match !perm with
     | Frac -> FPERM.mkPermInv
     | NoPerm -> FPERM.mkPermInv
 
+let mkPermInv_var () =   match !perm with
+    | Count -> CPERM.mkPermInv_var
+	| Dperm -> DPERM.mkPermInv_var
+	| Bperm -> BPERM.mkPermInv_var
+    | Frac -> FPERM.mkPermInv_var
+    | NoPerm -> FPERM.mkPermInv_var
+
 let mkPermWrite () =   match !perm with
     | Count -> CPERM.mkPermWrite
 	| Dperm -> DPERM.mkPermWrite
@@ -595,6 +643,13 @@ let get_cperm p = match !perm with
 	| Bperm -> DPERM.get_cperm p
     | Frac -> FPERM.get_cperm p
     | NoPerm -> FPERM.get_cperm p
+
+let get_cperm_var p = match !perm with
+    | Count -> CPERM.get_cperm_var p
+	| Dperm -> DPERM.get_cperm_var p
+	| Bperm -> DPERM.get_cperm_var p
+    | Frac -> FPERM.get_cperm_var p
+    | NoPerm -> FPERM.get_cperm_var p
 
 let subst_var_perm () =   match !perm with
     | Count -> CPERM.subst_var_perm

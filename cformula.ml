@@ -1314,7 +1314,7 @@ and combine_and_pure (f1:formula)(p:MCP.mix_formula)(f2:MCP.mix_formula):MCP.mix
 
 (*and combine_and_pure (f1:formula)(p:MCP.mix_formula)(f2:MCP.mix_formula):MCP.mix_formula*bool = 
 	let pr = pr_pair !print_mix_formula  (string_of_bool) in
-	Debug.ho_3 "combine_and_pure" (!print_formula) (!print_mix_formula) (!print_mix_formula) pr 
+	Debug.no_3 "combine_and_pure" (!print_formula) (!print_mix_formula) (!print_mix_formula) pr 
 	combine_and_pure_x f1 p f2 *)
 
 and sintactic_search (f:formula)(p:Cpure.formula):bool = match f with
@@ -1645,8 +1645,8 @@ and h_add_perm_a (h : h_formula) (permvar:cperm_var) : h_formula=
 	      Star ({h_formula_star_h1 = helper h1;
 		  h_formula_star_h2 = helper h2;
 		  h_formula_star_pos = pos})
-    | ViewNode vn -> ViewNode {vn with h_formula_view_perm = Some permvar}
-    | DataNode vn -> DataNode {vn with h_formula_data_perm = Some permvar}
+    | ViewNode vn -> ViewNode {vn with h_formula_view_perm = Some (Cpure.Var (permvar,no_pos))}
+    | DataNode vn -> DataNode {vn with h_formula_data_perm = Some (Cpure.Var (permvar,no_pos))}
     | _ -> h
   in helper h
 
@@ -2571,7 +2571,7 @@ and subst_b sst (f : formula_base) =
 and dn_subst sst dn=
   ({ dn with
       h_formula_data_node = CP.subst_var_par sst dn.h_formula_data_node;
-      h_formula_data_perm = map_opt (CP.subst_var_par sst) dn.h_formula_data_perm;
+      h_formula_data_perm = map_opt (CP.e_apply_subs sst) dn.h_formula_data_perm;
 	  h_formula_data_arguments = List.map (CP.subst_var_par sst) dn.h_formula_data_arguments;
 	  h_formula_data_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) dn.h_formula_data_pruning_conditions;
    })
@@ -2631,7 +2631,7 @@ and h_subst sst (f : h_formula) =
 		ViewNode { g with 
 							h_formula_view_imm = subs_imm_par sst imm;  
 							h_formula_view_node = CP.subst_var_par sst x; 
-							h_formula_view_perm = map_opt (CP.subst_var_par sst) perm;
+							h_formula_view_perm = map_opt (CP.e_apply_subs sst) perm;
 							h_formula_view_arguments = List.map (CP.subst_var_par sst) svs;
 							h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_subs sst c,c2)) pcond
 		}
@@ -2654,7 +2654,7 @@ and h_subst sst (f : h_formula) =
 							h_formula_data_derv = dr; 
 							h_formula_data_imm = subs_imm_par sst imm;  
 	                        h_formula_data_param_imm = List.map (subs_imm_par sst) ann_param;
-							h_formula_data_perm = map_opt (CP.subst_var_par sst) perm;   (*LDK*)
+							h_formula_data_perm = map_opt (CP.e_apply_subs sst) perm;   (*LDK*)
 							h_formula_data_arguments = List.map (CP.subst_var_par sst) svs;
 							h_formula_data_holes = hs; (* An Hoa 16/8/2011 Holes added *)
 							h_formula_data_origins = orgs;
@@ -3474,11 +3474,11 @@ and propagate_perm_h_formula (f : h_formula) (permvar:cperm_var) : h_formula * (
   match f with
     | ViewNode f1 -> 
         let fresh_var = fresh_cperm_var () permvar in
-        let vn = ViewNode({f1 with h_formula_view_perm = Some fresh_var}) in
+        let vn = ViewNode({f1 with h_formula_view_perm = Some (Cpure.Var (fresh_var,no_pos))}) in
         (vn,[fresh_var])
     | DataNode f1 -> 
         let fresh_var = fresh_cperm_var () permvar in
-        let dn = DataNode({f1 with h_formula_data_perm = Some fresh_var}) in
+        let dn = DataNode({f1 with h_formula_data_perm = Some (Cpure.Var (fresh_var,no_pos))}) in
         (dn,[fresh_var])
     | Star f1 ->
 	      let h1,xs1 = propagate_perm_h_formula f1.h_formula_star_h1 permvar in
@@ -10227,7 +10227,7 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
       h_formula_view_name = sort; (*lock_sort*)
       h_formula_view_derv = false;
       h_formula_view_imm = ConstAnn(Mutable); 
-      h_formula_view_perm = Some fresh_perm;
+      h_formula_view_perm = Some (Cpure.Var (fresh_perm,no_pos));
       h_formula_view_arguments = uargs;
       h_formula_view_modes = []; (*???*)
       h_formula_view_coercible = true; (*??*)
@@ -10273,7 +10273,7 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
         ls_post_f
   in
   (**************)
-  let read_f = mkPermInv () fresh_perm in
+  let read_f = mkPermInv_var () fresh_perm in
   (*POST-CONDITION*)
   let tmp = mkBase_simp lock_node (MCP.memoise_add_pure_N (MCP.mkMTrue pos) lock_post_f) in
   (* let tmp = formula_of_heap_w_normal_flow lock_node pos in *)
@@ -11289,7 +11289,7 @@ let get_bar_conds b_name self (l_f:(formula * formula_label) list): ((int option
 					let f = MCP.fold_mem_lst (CP. mkTrue no_pos) false false p in
 					let perm = match bd.h_formula_data_perm with
 						| None -> Some Tree_shares.Ts.top
-						| Some v -> CP.get_inst_tree v f in
+						| Some v -> CP.get_inst_tree (List.hd (Cpure.afv v)) f in
 					(CP.get_inst_int (List.hd bd.h_formula_data_arguments) f, perm, lbl) in	
 	List.map helper l_f
 	
