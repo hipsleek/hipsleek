@@ -923,8 +923,9 @@ let assumption_filter_slicing (ante : CP.formula) (cons : CP.formula) : (CP.form
     (List.fold_left (fun acc f -> acc ^ "+++++++++\n" ^ (Cprinter.string_of_pure_formula f) ^ "\n") "" l_ante)) in*)
 
   (CP.join_conjunctions (pick_rel_constraints cons l_ante), cons)
-	   
+
 let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP.formula) =
+  if (CP.isConstFalse cons) then (ante,cons) else
   let conseq_vars = CP.fv cons in
   if (List.exists (fun v -> CP.name_of_spec_var v = waitlevel_name) conseq_vars) then
     (ante,cons)
@@ -936,7 +937,7 @@ let assumption_filter (ante : CP.formula) (cons : CP.formula) : (CP.formula * CP
   Debug.no_2 "filter" pr pr (fun (l, _) -> pr l)
 	assumption_filter ante cons
 
-	  
+
 (* rename and shorten variables for better caching of formulas *)
 (* TODO WN: check if it avoids name clashes? *)
 let norm_var_name (e: CP.formula) : CP.formula =

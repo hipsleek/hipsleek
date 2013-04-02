@@ -1054,7 +1054,36 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
         check_x parts
   in
   let frac_p = check parts in
-  (* let np = MCP.merge_mems frac_p p true in *)
+  (*For bounded permission, for each partition,
+  x::(c1,t1,a1) * x::(c2,t2,a2) --> t1=t2*)
+  let check_consistency_x part =
+    if (!Globals.perm = Bperm) then
+      let perms = List.map CF.get_node_perm part in
+      let perm_exps = List.concat (List.map Perm.get_cperm perms) in
+      let func e =
+        match e with
+          | Cpure.Bptriple ((c,t,a),_) -> (c,t,a)
+          | _ -> report_error no_pos ("xpure_perm: expecting Bptriple")
+      in
+      let triples = List.map func perm_exps in
+      (match triples with
+        | [] -> CP.mkTrue no_pos
+        | (_,t,_)::xs ->
+            (*for each permission total t1 in xs, t1=t *)
+            List.fold_left (fun f (_,t1,_) ->
+                let f1 = CP.mkEqVar t t1 no_pos in
+                CP.mkAnd f f1 no_pos
+            ) (CP.mkTrue no_pos) xs)
+    else CP.mkTrue no_pos
+  in
+  let check_consistency part =
+    Debug.no_1 "check_consistency"
+        (pr_list Cprinter.string_of_h_formula) (Cprinter.string_of_pure_formula)
+        check_consistency_x part
+  in
+  let c_fs = List.map check_consistency parts in
+  let c_f = List.fold_left (fun res f -> CP.mkAnd res f no_pos) (CP.mkTrue no_pos) c_fs in
+  let frac_p = MCP.memoise_add_pure_N frac_p c_f in
   frac_p
 
 and xpure_perm (prog : prog_decl) (h0 : h_formula) (p0: mix_formula) : MCP.mix_formula =
@@ -6159,6 +6188,7 @@ and heap_entail_conjunct_helper_x (prog : prog_decl) (is_folding : bool)  (ctx0 
                           then we have a constraint x!=y
                         *)
                         let p1 =
+                          (*This could introduce UNSAT*)
                           if (Perm.allow_perm ()) then
                             let nodes_f = xpure_perm prog h1 p1 in
                             let p1 = MCP.merge_mems p1 nodes_f true in
@@ -7212,12 +7242,14 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 	    end
 	    else begin
 	      let res_ctx = Ctx {estate with es_formula = res_delta;
+              es_unsat_flag = false; (*the new context could be unsat*)
               (*LDK: ??? add rhs_p into residue( EMP rule in p78). Similar to the above 
 		        Currently, we do not add the whole rhs_p into the residue.We only instatiate ivars and expl_vars in heap_entail_conjunct_helper *)
               (*TO CHECK: important to instantiate ivars*)
 	          es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with
 		        | Some s1,Some s2 -> (s1,s2)::a
 		        | _ -> a) [] r_succ_match)@estate.es_success_pts;} in
+          let res_ctx = elim_unsat_ctx prog (ref 1) res_ctx in
 	      Debug.devel_zprint (lazy ("heap_entail_empty_heap: formula is valid")) pos;
 	      Debug.devel_zprint (lazy ("heap_entail_empty_heap: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
 	  (* let _ = print_string ("\n(andreeac)heap_entail_empty_heap: folding: res_ctx 2 :\n" ^ (Cprinter.string_of_context res_ctx)) in *)
