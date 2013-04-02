@@ -13,3 +13,7 @@ echo "======= barrier-split.slk ======"
 diff test-cases/barrier-split.res test-cases/barrier-split.n
 echo "======= barrier-combine.slk ======"
 diff test-cases/barrier-combine.res test-cases/barrier-combine.n
+echo "======= barrier-sep.slk ======"
+diff test-cases/barrier-sep.res test-cases/barrier-sep.n
+echo "======= barrier-static.slk ======"
+diff test-cases/barrier-static.res test-cases/barrier-static.n

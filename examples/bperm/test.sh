@@ -13,3 +13,7 @@ echo "======= barrier-split.slk ======"
 ../../sleek barrier-split.slk | grep Entail > test-cases/barrier-split.res
 echo "======= barrier-combine.slk ======"
 ../../sleek barrier-combine.slk | grep Entail > test-cases/barrier-combine.res
+echo "======= barrier-sep.slk ======"
+../../sleek barrier-sep.slk | grep Entail > test-cases/barrier-sep.res
+echo "======= barrier-static.slk ======"
+../../sleek barrier-static.slk | grep Entail > test-cases/barrier-static.res
