@@ -9699,21 +9699,8 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		  (* apply \rho (G)	and \rho(B) *)
                   let perms1,perms2 =
                     if (Perm.allow_perm ()) then
-                      match perm1,perm2 with
-                        | Some f1, Some f2 ->
-                          let f1 = Cpure.get_var f1 in
-                          let f2 = Cpure.get_var f2 in
-                          ([f1],[f2])
-                        | Some f1, None ->
-                            let f1 = Cpure.get_var f1 in
-                            ([f1],[full_perm_var ()])
-                        | None, Some f2 ->
-                            let f2 = Cpure.get_var f2 in
-                            ([full_perm_var ()],[f2])
-                        | None, None ->
-                            ([],[])
-                    else
-                      ([],[])
+                      do_universal_perms perm1 perm2
+                    else ([],[])
                   in
                   let fr_vars = perms2@(p2 :: ps2)in
                   let to_vars = perms1@(p1 :: ps1)in
@@ -9723,9 +9710,12 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
                   let coer_rhs_new1 =
                     if (Perm.allow_perm ()) then
                       match perm1,perm2 with
-                        | Some f1, None ->
-                            let f1 = Cpure.get_var f1 in
-                              propagate_perm_formula coer_rhs_new1 f1
+                        | Some f1, None -> (*propagate perm into coercion*)
+                            (match !Globals.perm with
+                              | Bperm -> report_error no_pos "[solver.ml] normalize_w_coers : unexpected for bperm"
+                              | _ ->
+                                  let f1 = Cpure.get_var f1 in
+                                  propagate_perm_formula coer_rhs_new1 f1)
                         | _ -> coer_rhs_new1
                     else
                       coer_rhs_new1

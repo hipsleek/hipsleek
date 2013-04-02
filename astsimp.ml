@@ -2191,7 +2191,18 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
       match (coercion_lhs_type) with
         | CF.Simple ->
             if (Perm.allow_perm ()) then
-              CF.add_origs_to_first_node self lhs_view_name c_rhs [coer.I.coercion_name] true (*set original of the rest of nodes = true to allow permission splitting*)
+              let h, p, _, _,_ = CF.split_components c_rhs in
+              let heaps = CF.split_star_conjunctions h in
+              let heaps = List.filter (fun h ->
+                  match h with
+                    | CF.HEmp
+                    | CF.HTrue -> false
+                    | _ -> true) heaps
+              in
+              if ((List.length heaps)>1) then
+                (*only do this if having more than 1 heap*)
+                CF.add_origs_to_first_node self lhs_view_name c_rhs [coer.I.coercion_name] true (*set original of the rest of nodes = true to allow permission splitting*)
+              else c_rhs
             else
               CF.add_origs_to_first_node self lhs_view_name c_rhs [coer.I.coercion_name] false
         | CF.Complex -> c_rhs
