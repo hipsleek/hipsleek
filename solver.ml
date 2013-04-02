@@ -926,62 +926,113 @@ and xpure_perm_x (prog : prog_decl) (h : h_formula) (p: mix_formula) : MCP.mix_f
       | part1::part2::ps ->
           let res = check_x (part2::ps) in
           let p1_vars = List.map CF.get_node_var part1 in (*[x1,x2]*)
-          let p1_perm_vars = List.map CF.get_node_perm part1 in
+          let p1_perms = List.map CF.get_node_perm part1 in
           let is_p1_full =
-            List.exists (fun v -> v=None) p1_perm_vars
+            List.exists (fun v -> v=None) p1_perms
           in
           (* [f1,f2]*)
-          let p1_perm_vars = List.concat (List.map Perm.get_cperm p1_perm_vars) in
+          let p1_perm_exps = List.concat (List.map Perm.get_cperm p1_perms) in
 
           let f1 = List.fold_left ( fun acc_f part ->
               (*check a partition part1 agains another partition part*)
               let p_vars = List.map CF.get_node_var part in (*[x3,x4]*)
-              let p_perm_vars = List.map CF.get_node_perm part in
+              let p_perms = List.map CF.get_node_perm part in
               let is_p_full =
-                List.exists (fun v -> v=None) p_perm_vars
+                List.exists (fun v -> v=None) p_perms
               in
               if (is_p1_full || is_p_full) then
                 let np = CP.mkNeqVar (List.hd p_vars) (List.hd p1_vars) no_pos in
                 (mix_of_pure np)
               else
-              (*TOCHECK: howabout None = full_perm*)
-              (*[f3,f4]*) 
-              let p_perm_vars = List.concat (List.map Perm.get_cperm p_perm_vars) in
-              (* [f1,f2,f3,f4]*)
-              let vars = p_perm_vars@p1_perm_vars in
-              let res = 
-                if (vars=[] || not !Globals.precise_perm_xpure) then false
-                else
-					if !Globals.perm != Dperm then 
+                (*TOCHECK: howabout None = full_perm*)
+                (*[f3,f4]*) 
+                let p_perm_exps = List.concat (List.map Perm.get_cperm p_perms) in
+                (* [f1,f2,f3,f4]*)
+                let vars = p_perm_exps@p1_perm_exps in
+                let res = 
+                  if (vars=[] || not !Globals.precise_perm_xpure) then false
+                  else
+                    if (!Globals.perm = Bperm) then
+                      (**********BPERM>>********************)
+                      (*part1=x1::(c1,t1,a1),x2::(c2,t2,a2),x1=x2
+                        part2=x3::(c3,t3,a3),x4::(c4,t4,a4),x3=x4
+                        IMPLY:
+                        t1=t2: otherwise fail
+                        t3=t4: otherwise fail
+                        t1!=t3 => x1!=x3
+                        c1+c2+c3+c4>t1+a1+a2+t2+a3+a4
+                      *)
+                      let func e =
+                          match e with
+                            | Cpure.Bptriple ((c,t,a),_) -> (c,t,a)
+                            | _ -> report_error no_pos ("xpure_perm: expecting Bptriple")
+                      in
+                      let p1_triples = List.map func p1_perm_exps in
+                      let p_triples = List.map func p_perm_exps in
+                      (*t1!t3*)
+                      let _,t1,_ = List.hd p1_triples in
+                      let _,t3,_ = List.hd p_triples in
+                      (*t1!=t3*)
+                      let neq_t1_t3 = CP.mkNeqVar t1 t3 no_pos in
+                      (*c1+c2+...*)
+                      let all_cs = List.map (fun (c,_,_) -> c) (p1_triples@p_triples) in
+                      let all_sum_c = List.fold_left (fun pf v ->
+                          let var = CP.Var (v,no_pos) in
+                          CP.Add (pf,var,no_pos)
+                      ) (CP.Var (List.hd all_cs,no_pos)) (List.tl all_cs)
+                      in
+                      (*a1+a2+...*)
+                      let all_as = List.map (fun (_,_,a) -> a) (p1_triples@p_triples) in
+                      let all_sum_a = List.fold_left (fun pf v ->
+                          let var = CP.Var (v,no_pos) in
+                          CP.Add (pf,var,no_pos)
+                      ) (CP.Var (List.hd all_as,no_pos)) (List.tl all_as)
+                      in
+                      (*t1+a1+a2+t2+a3+a4*)
+                      let t1_all_sum_a = CP.Add (CP.Var (t1,no_pos),all_sum_a,no_pos) in
+                      let gt_bf = CP.Gt (all_sum_c,t1_all_sum_a,no_pos) in
+                      let gt_f = CP.BForm ((gt_bf,None),None) in
+                      let or_f = CP.mkOr neq_t1_t3 gt_f None no_pos in
+					  Debug.devel_zprint (lazy ("xpure_perm: check: [Begin] check bounded permission constrainst: "^ (Cprinter.string_of_pure_formula or_f) ^ "\n")) no_pos;
+					  let b,_,_ = CP.imply_disj_orig [f] or_f TP.imply imp_no in
+					  Debug.devel_zprint (lazy ("xpure_perm: check: [End] check bounded permission constrainst "^(string_of_bool b)^" \n")) no_pos;
+                      b
+                      (**********<<BPERM********************)
+                    else if (!Globals.perm = Dperm) then
+                      (**********DPERM>>********************)
+                      if (List.length vars)<2 then false
+					  else 
+					    let rec perm_f lv : CP.formula*CP.exp= match lv with 
+						  | h::[] -> (f,h)
+						  | h::l-> 
+							  let conss, last = perm_f l in
+							  let n_ex = CP.fresh_perm_var () in
+							  let n_ex_var = (CP.mkVar n_ex no_pos) in
+							  let v_exp = CP.mkAdd last h no_pos in
+							  let new_eq = CP.mkEq v_exp n_ex_var no_pos in
+							  CP.mkAnd (CP.mkPure new_eq) conss no_pos, n_ex_var
+						  | [] -> failwith "this case has already been checked in the previous if"in
+					    let nf, _ = perm_f vars in
+					    Debug.devel_zprint (lazy ("xpure_perm: check: [Begin] check distinct fractional permission constrainst: "^ 
+							                             (Cprinter.string_of_pure_formula nf) ^ "\n")) no_pos;
+					    let b =  not (TP.is_sat_sub_no nf (ref 0)) in
+					    Debug.devel_zprint (lazy ("xpure_perm: check: [End] check distinct fractional permission constrainst "^(string_of_bool b)^" \n")) no_pos;
+					    b
+                      (**********<<DPERM********************)
+                    else
+                      (**********FPERM,CPERM,NONE>>********************)
 					  (*construct and check the fractional sum, otherwise use a joins fact*)
-						  let sum_exp = List.fold_left (fun e v ->
-							  CP.mkAdd e v no_pos
-						  ) (List.hd vars) (List.tl vars) in
-						  let full_exp = CP.mkFConst 1.0 no_pos in
-						  (*f1+f2+f2+f4>1.0*)
-						  let gt_exp = CP.mkGtExp sum_exp full_exp no_pos in
-						  Debug.devel_zprint (lazy ("xpure_perm: check: [Begin] check fractional permission constrainst: "^ (Cprinter.string_of_pure_formula gt_exp) ^ "\n")) no_pos;
-						  let b,_,_ = CP.imply_disj_orig [f] gt_exp TP.imply imp_no in
-						  Debug.devel_zprint (lazy ("xpure_perm: check: [End] check fractional permission constrainst \n")) no_pos;
-						  b
-					else  if (List.length vars)<2 then false
-						  else 
-						  let rec perm_f lv : CP.formula*CP.exp= match lv with 
-							| h::[] -> (f,h)
-							| h::l-> 
-								let conss, last = perm_f l in
-								let n_ex = CP.fresh_perm_var () in
-								let n_ex_var = (CP.mkVar n_ex no_pos) in
-								let v_exp = CP.mkAdd last h no_pos in
-								let new_eq = CP.mkEq v_exp n_ex_var no_pos in
-								CP.mkAnd (CP.mkPure new_eq) conss no_pos, n_ex_var
-							| [] -> failwith "this case has already been checked in the previous if"in
-						  let nf, _ = perm_f vars in
-						  Debug.devel_zprint (lazy ("xpure_perm: check: [Begin] check distinct fractional permission constrainst: "^ 
-							(Cprinter.string_of_pure_formula nf) ^ "\n")) no_pos;
-						  let b =  not (TP.is_sat_sub_no nf (ref 0)) in
-						  Debug.devel_zprint (lazy ("xpure_perm: check: [End] check distinct fractional permission constrainst "^(string_of_bool b)^" \n")) no_pos;
-						  b
+					  let sum_exp = List.fold_left (fun e v ->
+						  CP.mkAdd e v no_pos
+					  ) (List.hd vars) (List.tl vars) in
+					  let full_exp = CP.mkFConst 1.0 no_pos in
+					  (*f1+f2+f2+f4>1.0*)
+					  let gt_exp = CP.mkGtExp sum_exp full_exp no_pos in
+					  Debug.devel_zprint (lazy ("xpure_perm: check: [Begin] check fractional permission constrainst: "^ (Cprinter.string_of_pure_formula gt_exp) ^ "\n")) no_pos;
+					  let b,_,_ = CP.imply_disj_orig [f] gt_exp TP.imply imp_no in
+					  Debug.devel_zprint (lazy ("xpure_perm: check: [End] check fractional permission constrainst \n")) no_pos;
+					  b
+                    (**********<<FPERM,CPERM,NONE********************)
               in
               if(res) then
                 (*x1=x2, x3=x4, x1!=x3*)

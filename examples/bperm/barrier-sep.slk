@@ -1,0 +1,9 @@
+/*
+  Notation of separation in barrier permissions
+*/
+
+checkentail b1::barrier(2,2,0)<_> * b2::barrier(2,3,0)<_>  |- b1!=b2.
+print residue. //VALID, because t_b1!=t_b2 (2!=3)
+
+checkentail b1::barrier(2,2,0)<_> * b2::barrier(1,2,0)<_>  |- b1!=b2.
+print residue. //VALID, because 2=2 but 1+2>2+0+0
