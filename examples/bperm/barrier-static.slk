@@ -2,16 +2,22 @@
   For static barriers, a=0 always
 */
 
+lemma "splitBarrier" self::barrier(c,t,0)<p> & c=c1+c2 & 0<c1<t & 0<c2<t -> self::barrier(c1,t,0)<p> * self::barrier(c2,t,0)<p> & 0<c<=t.
+
 //combine successfully
-//lemma "combineBarrier" self::barrier(c1,t,0)<p> * self::barrier(c2,t,0)<p> -> self::barrier(c1+c2,t,0)<p>.
+lemma "combineBarrier" self::barrier(c1,t,0)<p> * self::barrier(c2,t,0)<p> -> self::barrier(c1+c2,t,0)<p>.
 
 //detect inconsistency
 lemma "combineBarrierFail" self::barrier(c1,t,0)<p1> * self::barrier(c2,t,0)<p2> & p1!=p2 & flow __norm -> true & flow __Error.
 
 //(1)
-//checkentail b::barrier(1,2,0)<p1> * b::barrier(1,2,0)<p1>  |- b::barrier(2,2,0)<p2>.
-//print residue. //valid, COMBINE, 1 residue
+checkentail b::barrier(2,2,0)<_> |- b::barrier(1,2,0)<_>*b::barrier(1,2,0)<_>.
+print residue. //VALID, 1 residue
 
 //(2)
+checkentail b::barrier(1,2,0)<p1> * b::barrier(1,2,0)<p1>  |- b::barrier(2,2,0)<p2>.
+print residue. //valid, COMBINE, 1 residue
+
+//(3)
 checkentail b::barrier(1,2,0)<0> * b::barrier(1,2,0)<1>  |- true & flow __Error.
 print residue. //valid, COMBINE, 1 residue
