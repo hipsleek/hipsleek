@@ -41,6 +41,9 @@ echo -e "\n##################### term tests #####################"
 time ./run-fast-tests.pl term $@
 # some failures ex1.ss, ex12, ex12b, ex12c
 
+echo -e "\n##################### array tests (runs with -tp z3) #####################"
+
+time ./run-fast-tests.pl array -flags "--eps" $@ -tp z3
 echo -e "\n##################### modular formulae tests #####################"
 time ./run-fast-tests.pl hip_long_mod $@
 # another check for lemma-proving
@@ -66,8 +69,4 @@ time ./run-fast-tests.pl imm $@ -tp redlog
 echo -e "\n##################### bags tests (runs with -tp mona) ###very slow!##################"
 
 time ./run-fast-tests.pl bags -flags "--eps" $@ -tp mona
-
-echo -e "\n##################### array tests (runs with -tp z3) #####################"
-
-time ./run-fast-tests.pl array -flags "--eps" $@ -tp z3
 
