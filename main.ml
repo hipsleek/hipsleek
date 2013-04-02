@@ -63,8 +63,12 @@ let parse_file_full file_name (primitive: bool) =
     let _ = Gen.Profiling.push_time "Parsing" in
     let prog = (
       if parser_to_use = "cil" then
-        Cilparser.parse_hip file_name
+				 Cilparser.parse_hip file_name
       else
+				let _=print_endline ("Before Parsing Jimple...") in
+				let _=Jimparser.parse_hip file_name (Stream.of_channel org_in_chnl) in
+				let _=print_endline ("After Parsing Jimple...Stop") in
+				let _= exit (0) in
         Parser.parse_hip file_name (Stream.of_channel org_in_chnl)
     ) in
     close_in org_in_chnl;
