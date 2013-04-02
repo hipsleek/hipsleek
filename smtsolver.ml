@@ -1048,7 +1048,7 @@ Gen.Profiling.no_3 "smt_imply" imply ante conseq timeout
 let imply_ops pr_weak pr_strong ante conseq timeout = smt_imply pr_weak pr_strong ante conseq Z3 timeout
 
 let imply_ops pr_weak pr_strong ante conseq timeout = 
-Gen.Profiling.no_6 "smt_imply_ops" smt_imply pr_weak pr_strong ante conseq Z3 timeout
+Gen.Profiling.do_6 "smt_imply_ops" smt_imply pr_weak pr_strong ante conseq Z3 timeout
 
 
 let imply_with_check (ante : CP.formula) (conseq : CP.formula) (imp_no : string) timeout: bool option =

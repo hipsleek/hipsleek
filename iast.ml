@@ -1518,6 +1518,7 @@ let inbuilt_build_exc_hierarchy () =
   let _ = (exlist # add_edge brk_top "__others") in
   let _ = (exlist # add_edge spec_flow "__others") in
   let _ = (exlist # add_edge error_flow top_flow) in
+  let _ = (exlist # add_edge bfail_flow top_flow) in
   ()
 
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
