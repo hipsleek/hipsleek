@@ -1642,7 +1642,7 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
           let (rem_br, prun_cond, first_prune, chg) =  
             match v.h_formula_view_remaining_branches with
               | Some l -> 
-                    let c = if (List.length l)<=1 then false else true in
+                    let c = if ((List.length l)<=1)&&(!no_prune_all) then false else true in
                     if !no_incremental then
                       let new_cond = List.map (fun (c1,c2)-> (CP.b_subst zip c1,c2)) v_def.view_prune_conditions in         
                       (v_def.view_prune_branches,new_cond ,true,c)
@@ -1651,13 +1651,12 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
                     let new_cond = List.map (fun (c1,c2)-> (CP.b_subst zip c1,c2)) v_def.view_prune_conditions in         
                     (v_def.view_prune_branches,new_cond ,true,true) in                   
           if (not chg) then
-            
             (ViewNode{v with h_formula_view_remaining_branches = Some rem_br; h_formula_view_pruning_conditions = [];}, old_mem,false)
           else
             (*decide which prunes can be activated and drop the ones that are implied while keeping the old unknowns*)
             let l_prune,l_no_prune, new_mem2 = filter_prun_cond old_mem prun_cond rem_br in        
             let l_prune' = 
-              let aliases = MCP.memo_get_asets ba_crt new_mem2 in
+              let aliases= MCP.memo_get_asets ba_crt new_mem2 in
               let ba_crt = ba_crt@(List.concat(List.map (fun c->CP.EMapSV.find_equiv_all c aliases ) ba_crt)) in
               let n_l = List.filter (fun c-> 
                   let c_ba,_ = List.find (fun (_,d)-> c=d) v_def.view_prune_conditions_baga in
