@@ -10380,7 +10380,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
             let coer_rhs_new = coer_rhs_new1 (*add_origins coer_rhs_new1 [coer.coercion_name]*) in
             let new_es_heap = anode in (*consumed*)
             let old_trace = estate.es_trace in
-            let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=("(normalizing)"::old_trace); es_is_normalizing = true} in
+            let new_estate = {estate with es_heap = new_es_heap; es_formula = f;es_trace=(("(normalizing-" ^ coer.coercion_name ^")")::old_trace); es_is_normalizing = true} in
             let new_ctx1 = Ctx new_estate in
             let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
             (*prove extra heap + guard*)
