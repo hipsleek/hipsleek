@@ -35,3 +35,5 @@ echo "======= barrier-static-exp2.ss ======"
 ../../hip barrier-static-exp2.ss | grep -E 'Proc|assert:' > test-cases/barrier-static-exp2.res
 echo "======= barrier-static-exp3.ss ======"
 ../../hip barrier-static-exp3.ss | grep -E 'Proc|assert:' > test-cases/barrier-static-exp3.res
+echo "======= barrier-static-complex.ss ======"
+../../hip barrier-static-complex.ss | grep -E 'Proc|assert:' > test-cases/barrier-static-complex.res

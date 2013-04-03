@@ -35,3 +35,5 @@ echo "======= barrier-static-exp2.ss ======"
 diff test-cases/barrier-static-exp2.res test-cases/barrier-static-exp2.n
 echo "======= barrier-static-exp1.ss ======"
 diff test-cases/barrier-static-exp3.res test-cases/barrier-static-exp3.n
+echo "======= barrier-static-complex.ss ======"
+diff test-cases/barrier-static-complex.res test-cases/barrier-static-complex.n
