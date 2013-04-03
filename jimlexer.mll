@@ -346,10 +346,10 @@ module Make (Token : JimTokenS)
     | "~~>" {LEADSTO}
     | eof { EOF }
   
-    | at_identifier as s { kwd_or_else (AT_IDENTIFIER s) s }
-    | full_identifier as s { kwd_or_else (FULL_IDENTIFIER s) s }
+    | at_identifier as s {  kwd_or_else (AT_IDENTIFIER s) s }
+    | full_identifier as s {  kwd_or_else (FULL_IDENTIFIER s) s }
     | quoted_name as s { kwd_or_else (QUOTED_NAME s) s }
-    | identifier as s { kwd_or_else (IDENTIFIER s) s }
+    | identifier as s {  kwd_or_else (IDENTIFIER s) s }
   
     | integer_constant {
         let s=Lexing.lexeme lexbuf in
