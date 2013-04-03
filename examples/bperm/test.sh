@@ -1,4 +1,6 @@
 #create a list of expected results
+#================SLEEK==========================
+#================SLEEK==========================
 echo "======= bperm1.slk ======"
 ../../sleek bperm1.slk | grep Entail > test-cases/bperm1.res
 echo "======= bperm-split.slk ======"
@@ -19,3 +21,14 @@ echo "======= barrier-static.slk ======"
 ../../sleek barrier-static.slk | grep Entail > test-cases/barrier-static.res
 echo "======= barrier-dynamic.slk ======"
 ../../sleek barrier-dynamic.slk | grep Entail > test-cases/barrier-dynamic.res
+#================HIP==========================
+#================HIP==========================
+echo "======= hip-bperm1.ss ======"
+../../hip hip-bperm1.ss | grep -E 'Proc|assert:' > test-cases/hip-bperm1.res
+echo "======= bperm-exp.ss ======"
+../../hip bperm-exp.ss | grep -E 'Proc|assert:' > test-cases/bperm-exp.res
+echo "======= barrier-static-primitives.ss ======"
+../../hip barrier-static-primitives.ss | grep -E 'Proc|assert:' > test-cases/barrier-static-primitives.res
+echo "======= barrier-static-exp1.ss ======"
+../../hip barrier-static-exp1.ss | grep -E 'Proc|assert:' > test-cases/barrier-static-exp1.res
+

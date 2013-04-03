@@ -7,6 +7,18 @@
 
 data cell {int val;}
 
+//************************************
+// WRAPPER FUNCTION
+cell newCell(int bound,int value)
+  requires bound>0
+  ensures res::cell(bound,bound,0)<value>;
+
+// WRAPPER FUNCTION
+void destroyCell(ref cell ce)
+  requires ce::cell(c,t,a)<_> & c=t+a
+  ensures ce'=null;//'
+//************************************
+
 //SUCCESS
 int readCell(cell c)
   requires c::cell(1,2,0)<v>
@@ -14,7 +26,7 @@ int readCell(cell c)
 {
   int x;
   x=c.val;
-  dprint;
+  //dprint;
   return x;
 }
 
@@ -25,9 +37,9 @@ int updateCell(cell c,int newv)
 {
   int x;
   x=c.val;
-  dprint;
+  //dprint;
   c.val=newv;
-  dprint;
+  //dprint;
   return x;
 }
 
@@ -36,29 +48,20 @@ void updateCellFail(cell c,int newv)
   requires c::cell(1,2,0)<v>
   ensures c::cell(1,2,0)<newv>;
 {
-  dprint;
+  //dprint;
   int x;
   c.val=newv; //FAIL here due to insufficient permission
-  dprint;
+  //dprint;
 }
-
-void destroyCell(ref cell ce)
-  requires ce::cell(c,t,a)<_> & c=t+a
-  ensures ce'=null;//'
 
 //FAIL-1
 void destroyCellFail(cell c)
   requires c::cell(1,2,0)<v>
-     ensures true;
+  ensures true;
 {
-  dprint;
+  //dprint;
   destroyCell(c);
 }
-
-// WRAPPER FUNCTION
-cell newCell(int bound,int value)
-  requires bound>0
-  ensures res::cell(bound,bound,0)<value>;
 
 //SUCCESS
 void testNewCell()
@@ -68,9 +71,9 @@ void testNewCell()
   //create a cell with permission total 2 and initial value 0
   cell c = new cell(2,0);
   c.val=5;
-  dprint;
+  //dprint;
   destroyCell(c);
-  dprint;
+  //dprint;
 }
 
 //SUCCESS
@@ -81,7 +84,7 @@ void testNewCell2()
   //create a cell with permission total 2 and initial value 0
   cell c = newCell(2,0);
   c.val=5;
-  dprint;
+  //dprint;
   destroyCell(c);
-  dprint;
+  //dprint;
 }

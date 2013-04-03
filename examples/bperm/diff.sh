@@ -1,4 +1,6 @@
 #Compare old result with new result
+#================SLEEK==========================
+#================SLEEK==========================
 echo "======= bperm1.slk ======"
 diff test-cases/bperm1.res test-cases/bperm1.n
 echo "======= bperm-split.slk ======"
@@ -19,3 +21,13 @@ echo "======= barrier-static.slk ======"
 diff test-cases/barrier-static.res test-cases/barrier-static.n
 echo "======= barrier-dynamic.slk ======"
 diff test-cases/barrier-dynamic.res test-cases/barrier-dynamic.n
+#================HIP==========================
+#================HIP==========================
+echo "======= hip-bperm1.ss ======"
+diff test-cases/hip-bperm1.res test-cases/hip-bperm1.n
+echo "======= bperm-exp.ss ======"
+diff test-cases/bperm-exp.res test-cases/bperm-exp.n
+echo "======= barrier-static-primitives.ss ======"
+diff test-cases/barrier-static-primitives.res test-cases/barrier-static-primitives.n
+echo "======= barrier-static-exp1.ss ======"
+diff test-cases/barrier-static-exp1.res test-cases/barrier-static-exp1.n
