@@ -55,6 +55,7 @@ void destroyCellFail(cell c)
   destroyCell(c);
 }
 
+// WRAPPER FUNCTION
 cell newCell(int bound,int value)
   requires bound>0
   ensures res::cell(bound,bound,0)<value>;
