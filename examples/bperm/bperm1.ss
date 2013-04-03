@@ -1,3 +1,10 @@
+/*
+  Note: there are two ways to create new heap
+  (1) tranditional new cell(bound,value), where the first arg
+  is the bound of bperm
+  (2) define a wrapper newCell(bound,value)
+ */
+
 data cell {int val;}
 
 //SUCCESS
@@ -48,13 +55,30 @@ void destroyCellFail(cell c)
   destroyCell(c);
 }
 
+cell newCell(int bound,int value)
+  requires bound>0
+  ensures res::cell(bound,bound,0)<value>;
+
 //SUCCESS
-void newCell()
+void testNewCell()
   requires true
   ensures true;
 {
   //create a cell with permission total 2 and initial value 0
   cell c = new cell(2,0);
+  c.val=5;
+  dprint;
+  destroyCell(c);
+  dprint;
+}
+
+//SUCCESS
+void testNewCell2()
+  requires true
+  ensures true;
+{
+  //create a cell with permission total 2 and initial value 0
+  cell c = newCell(2,0);
   c.val=5;
   dprint;
   destroyCell(c);
