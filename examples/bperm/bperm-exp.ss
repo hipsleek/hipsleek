@@ -58,6 +58,8 @@ void main()
   join(id1);
   join(id2);
   join(id3);
+  int tmp = x.val;
+  assert(tmp'=5);
   destroyCell(x);
   assert(y'=6 & z'=4 & t'=10);
 }
