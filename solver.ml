@@ -3898,10 +3898,28 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                           (**** DO NOT COMPOSE lockset because they are thread-local*****)
                           let new_f = CF.compose_formula_join es_f new_base (* one_f.F.formula_ref_vars *) (primed_full_vars) CF.Flow_combine pos in
                           (* let new_f = CF.normalize 7 es_f base pos in *) (*TO CHECK: normalize or combine???*)
-                          let new_es = {es with CF.es_formula = new_f} in
-                          (*merge*)
-                          let nctx = CF.Ctx new_es in
-                          (SuccCtx [nctx] ,TrueConseq)
+                          let empty_es = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
+                          let new_f1 = normalize_formula_w_coers 12 prog empty_es new_f prog.prog_left_coercions in
+                          (* let _ = print_endline ("check_exp: SCall : join : \n ### new_f1 (after normalization) = " ^ (Cprinter.string_of_formula new_f1)) in *)
+                          (* Look for "flow __Fail" and convert to failure *)
+                          (if (!Globals.perm=Bperm) && (CF.formula_is_eq_flow new_f1 !bfail_flow_int)
+                           then
+                                (*if detecting bperm conconsistency (i.e. flow __Fail)*)
+                                let new_es = {es with CF.es_formula = new_f1} in
+                                let err_msg = "__Fail detect after join: bounded permissions inconsistent" in
+                                let fe = mk_failure_may err_msg "bounded permission error" in
+                                (CF.mkFailCtx_in (Basic_Reason 
+                                                      ({fc_message =err_msg;
+                                                        fc_current_lhs = new_es;
+                                                        fc_orig_conseq = CF.struc_formula_of_heap HTrue pos;
+                                                        fc_prior_steps = new_es.es_prior_steps;
+                                                        fc_current_conseq = CF.mkTrue (mkTrueFlow ()) pos;
+                                                        fc_failure_pts =[];}, fe)), Failure)
+                           else
+                                let new_es = {es with CF.es_formula = new_f1} in
+                                let nctx = CF.Ctx new_es in
+                                (SuccCtx [nctx] ,TrueConseq)
+                          ) (*END IF for BPERM*)
                         ) (*END IF*)
                         ) (*END IF*)
                       ) (* END match res1 with *)
