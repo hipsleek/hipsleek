@@ -17,3 +17,5 @@ echo "======= barrier-sep.slk ======"
 ../../sleek barrier-sep.slk | grep Entail > test-cases/barrier-sep.n
 echo "======= barrier-static.slk ======"
 ../../sleek barrier-static.slk | grep Entail > test-cases/barrier-static.n
+echo "======= barrier-dynamic.slk ======"
+../../sleek barrier-dynamic.slk | grep Entail > test-cases/barrier-dynamic.n

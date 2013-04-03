@@ -17,3 +17,5 @@ echo "======= barrier-sep.slk ======"
 diff test-cases/barrier-sep.res test-cases/barrier-sep.n
 echo "======= barrier-static.slk ======"
 diff test-cases/barrier-static.res test-cases/barrier-static.n
+echo "======= barrier-dynamic.slk ======"
+diff test-cases/barrier-dynamic.res test-cases/barrier-dynamic.n
