@@ -1407,13 +1407,26 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		      (fun es -> CF.Ctx{es with CF.es_formula = Mem.compact_nodes_with_same_name_in_formula es.CF.es_formula;})) unfolded
 		    else unfolded in
 	            let c = string_of_typ v_t in
-                    let fresh_frac_name = Cpure.fresh_old_name "f" in
-                    let perm_t = cperm_typ () in
-                    let fresh_frac =  Cpure.SpecVar (perm_t,fresh_frac_name, Unprimed) in (*LDK TO CHECK*)
+                let fresh_perm_exp,perm_vars = 
+                  (match !Globals.perm with
+                    | Bperm ->  
+                        let c_name = Cpure.fresh_old_name "cbperm" in
+                        let t_name = Cpure.fresh_old_name "tbperm" in
+                        let a_name = Cpure.fresh_old_name "abperm" in
+                        let c_var = Cpure.SpecVar (Globals.Int,c_name, Unprimed) in
+                        let t_var = Cpure.SpecVar (Globals.Int,t_name, Unprimed) in
+                        let a_var = Cpure.SpecVar (Globals.Int,a_name, Unprimed) in
+                        Cpure.Bptriple ((c_var,t_var,a_var),pos), [c_var;t_var;a_var]
+                    | _ -> 
+                        let fresh_perm_name = Cpure.fresh_old_name "f" in
+                        let perm_t = cperm_typ () in
+                        let perm_var = Cpure.SpecVar (perm_t,fresh_perm_name, Unprimed) in (*LDK TO CHECK*)
+                        Cpure.Var (perm_var,no_pos),[perm_var])
+                in
                     (* let perm = (if (Perm.allow_perm ()) then  *)
-                    (*       (\*there exists fresh_frac statisfy ... *\) *)
+                    (*       (\*there exists fresh_perm_exp statisfy ... *\) *)
                     (*       (if (read_only) then *)
-                    (*             Some fresh_frac  *)
+                    (*             Some fresh_perm_exp  *)
                     (*        else *)
                     (*             (\* writeable *\) *)
                     (*             None) *)
@@ -1425,7 +1438,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		        CF.h_formula_data_derv = false; (*TO CHECK: assume false*)
 		        CF.h_formula_data_imm = imm;
                         CF.h_formula_data_param_imm = pimm;
-                        CF.h_formula_data_perm = if (Perm.allow_perm ()) then Some (Cpure.Var (fresh_frac,no_pos)) else None; (*LDK: belong to HIP, deal later ???*)
+                        CF.h_formula_data_perm = if (Perm.allow_perm ()) then Some fresh_perm_exp else None; (*LDK: belong to HIP, deal later ???*)
 		        CF.h_formula_data_origins = []; (*deal later ???*)
 		        CF.h_formula_data_original = true; (*deal later ???*)
                         CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
@@ -1436,22 +1449,22 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         CF.h_formula_data_pos = pos}) in
 	            let vheap = CF.formula_of_heap vdatanode pos in
                     let _ = DD.devel_hprint (add_str "vheap" (Cprinter.string_of_formula)) vheap pos in
-                    (*Test whether fresh_frac is full permission or not
-                      writable -> fresh_frac = full_perm => normally
-                      read-only -> fresh_frac != full_perm => in order to 
+                    (*Test whether fresh_perm_exp is full permission or not
+                      writable -> fresh_perm_exp = full_perm => normally
+                      read-only -> fresh_perm_exp != full_perm => in order to 
                       detect permission violation
                       We use exp_bind_read_only. If true -> read only -> 0.0<f<=1.0
                       Othewiese, false -> write -> f=1.0
                     *)
                     let vheap = 
                       if (Perm.allow_perm ()) then 
-                        (*there exists fresh_frac statisfy ... *)
+                        (*there exists fresh_perm_exp statisfy ... *)
                         if (read_only)
                         then
-                          let read_f = mkPermInv_var () fresh_frac in
+                          let read_f = mkPermInv () fresh_perm_exp in
                           CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) read_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
                         else
-                          let write_f = mkPermWrite () fresh_frac in
+                          let write_f = mkPermWrite () fresh_perm_exp in
                           CF.mkBase vdatanode (MCP.memoise_add_pure_N (MCP.mkMTrue pos) write_f) CF.TypeTrue (CF.mkTrueFlow ()) [] pos
                       else
                         vheap
@@ -1461,7 +1474,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     let _ = DD.devel_hprint (add_str "vheap2" (Cprinter.string_of_formula)) vheap pos in
                     let struc_vheap = CF.EBase { 
 	                CF.formula_struc_explicit_inst = [];	 
-                        CF.formula_struc_implicit_inst = if (Perm.allow_perm ()) then [fresh_frac] else [];  (*need to instantiate f*)
+                        CF.formula_struc_implicit_inst = if (Perm.allow_perm ()) then perm_vars else [];  (*need to instantiate f*)
                         CF.formula_struc_exists = [];
 	                CF.formula_struc_base = vheap;
 	                CF.formula_struc_continuation = None;
@@ -1661,6 +1674,25 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	    let field_types, vs = List.split args in
 	    let heap_args = List.map2 (fun n -> fun t -> CP.SpecVar (t, n, Primed))
 	      vs field_types in
+        let heap_args,perm,perm_vars,perm_f = if (!Globals.perm == Globals.Bperm) then
+              let bound_var = List.hd heap_args in
+              let c_name = Cpure.fresh_old_name "cbperm" in
+              let t_name = Cpure.fresh_old_name "tbperm" in
+              let a_name = Cpure.fresh_old_name "abperm" in
+              let c_var = Cpure.SpecVar (Globals.Int,c_name, Unprimed) in
+              let t_var = Cpure.SpecVar (Globals.Int,t_name, Unprimed) in
+              let a_var = Cpure.SpecVar (Globals.Int,a_name, Unprimed) in
+              let perm = Some (Cpure.Bptriple ((c_var,t_var,a_var),pos)) in
+              let perm_vars = [c_var;t_var;a_var] in
+              let nheap_args = List.tl heap_args in
+              let c_f = Cpure.mkEqVar c_var bound_var pos in
+              let t_f = Cpure.mkEqVar t_var bound_var pos in
+              let a_f = Cpure.mkEqVarInt a_var 0 pos in (*c=t=bound & a=0*)
+              let ct_f = Cpure.mkAnd c_f t_f pos in
+              let cta_f = Cpure.mkAnd ct_f a_f pos in
+              nheap_args,perm,perm_vars,cta_f
+            else heap_args,None,[],(Cpure.mkTrue pos)
+        in
             let res_var =  CP.SpecVar (Named c, res_name, Unprimed) in
             let new_heap_args,level_f = if (!Globals.allow_locklevel && c=lock_name) then
                   (*If this is a lock, astsimpl ensures that it has a single argument*)
@@ -1690,7 +1722,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 		CF.h_formula_data_imm = CF.ConstAnn(Mutable);
                 CF.h_formula_data_param_imm = List.map (fun _ -> CF.ConstAnn(Mutable)) heap_args; 
                 (* (andreeac) to check: too weak *)	     
-		        CF.h_formula_data_perm = None; (*None means full permission*)
+		        CF.h_formula_data_perm = perm;
 			    CF.h_formula_data_origins = [];
 			    CF.h_formula_data_original = true;
 
@@ -1702,7 +1734,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_pos = pos}) in
 	    (*c let heap_form = CF.mkExists [ext_var] heap_node ext_null type_constr pos in*)
             (*If this is not a lock, level_f = true*)
-	        let heap_form = CF.mkBase heap_node level_f CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
+        let aux_f = MCP.memoise_add_pure_N level_f perm_f in
+	        let heap_form = if (perm_vars!=[]) then
+                  CF.mkExists perm_vars heap_node aux_f CF.TypeTrue (CF.mkTrueFlow ()) [] pos
+                else
+                  CF.mkBase heap_node aux_f CF.TypeTrue (CF.mkTrueFlow ()) [] pos
+            in
             (* let _ = print_endline ("heap = " ^ (Cprinter.string_of_formula heap_form)) in *)
             let heap_form = prune_preds prog false heap_form in
 	    let res = CF.normalize_max_renaming_list_failesc_context heap_form pos true ctx in

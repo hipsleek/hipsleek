@@ -3180,6 +3180,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
               if !Globals.allow_locklevel  && c=lock_name then [level_data_typ] else
               List.map I.get_field_typ all_fields in
             let nargs = List.length args in
+            let nfields = List.length field_types in
             (*=========processing waitlevel===============*)
             if (!Globals.allow_locklevel && c=lock_name && nargs>1) then
               Err.report_error{ Err.error_loc = pos; Err.error_text = "number of arguments does not match: " ^ lock_name ^ " should have at most 1 arguments";}
@@ -3208,12 +3209,21 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   C.exp_block_pos = pos; }),new_t)
             else
             (*=========processing locklevel===============*)
-            if (!= ) nargs (List.length field_types) 
+            if ((!Globals.perm != Globals.Bperm && (nargs!=nfields))
+                || (!Globals.perm == Globals.Bperm && nargs!=nfields+1))
               && (not (c=lock_name)) then
               Err.report_error{ Err.error_loc = pos; Err.error_text = "number of arguments does not match in New " ^ c;}
             else
               (let tmp = List.map (helper) args in
               let (cargs, cts) = List.split tmp in
+              let field_types = if (!Globals.perm == Globals.Bperm) then
+                    (*LDK: in case of bounded permission, the first field
+                      in the args list is the bound (permission total).
+                      nargs=|field_types|+1 and bound=List.hd nargs
+                    *)
+                    Int::field_types
+                  else field_types
+              in
               let parg_types = List.map (fun ft -> trans_type prog ft pos) field_types in
               if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
                 Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match";}
@@ -3231,6 +3241,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   C.exp_block_body = seq_e;
                   C.exp_block_local_vars = local_vars;
                   C.exp_block_pos = pos; }),new_t)))
+            (***********<< processing New ********)
       | I.Null pos -> ((C.Null pos), (Named ""))
       | I.Return {I.exp_return_val = oe;
                   I.exp_return_path_id = pi; (*control_path_id -> option (int * string)*)
