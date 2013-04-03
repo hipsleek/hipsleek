@@ -1765,6 +1765,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 let _ = proving_loc#set pos in
                 let mn_str = Cast.unmingle_name mn in
                 let farg_types, farg_names = List.split proc.proc_args in
+                (*clear history*)
+	            let ctx = CF.clear_entailment_history_failesc_list (fun x -> None) ctx in
                 (*=========================*)
                 (*======= CONCURRENCY======*)
                 (*=========================*)

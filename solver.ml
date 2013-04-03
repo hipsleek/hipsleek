@@ -3073,7 +3073,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 and unsat_base_nth(*_debug*) (n:int) prog (sat_subno:  int ref) f  : bool = 
   (*unsat_base_x prog sat_subno f*)
   Debug.no_2 "unsat_base_nth" 
-      Cprinter.string_of_formula (fun x -> x) string_of_bool
+      Cprinter.string_of_formula string_of_int string_of_bool
       (fun _ _ -> unsat_base_x prog sat_subno f) f n
 
 and elim_unsat_es i (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
@@ -7233,8 +7233,11 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
 	          es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with
 		        | Some s1,Some s2 -> (s1,s2)::a
 		        | _ -> a) [] r_succ_match)@estate.es_success_pts;
-	          es_unsat_flag = estate.es_unsat_flag && (Inf.no_infer_rel estate) ;} in
+              es_unsat_flag = false; (*the new context could be unsat*)
+	          (* es_unsat_flag = estate.es_unsat_flag && (Inf.no_infer_rel estate); *)
+                       } in
 	      let res_ctx = Ctx (CF.add_to_estate res_es "folding performed") in
+          let res_ctx = elim_unsat_ctx prog (ref 1) res_ctx in
 	      Debug.devel_zprint (lazy ("heap_entail_empty_heap: folding: formula is valid")) pos;
 	      Debug.devel_zprint (lazy ("heap_entail_empty_heap: folding: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx))) pos;
 	  (*let _ = print_string ("\n(andreeac)heap_entail_empty_heap: folding: res_ctx 1 :\n" ^ (Cprinter.string_of_context res_ctx)) in *)
@@ -8916,7 +8919,7 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             if lhs_p |\- perm(lhs_node) != perm(rhs_node) then MATCH
             else SPLIT followed by MATCH or COMBINE followed by MATCH
             ***************************************>>*)
-            let res = if (not (Perm.allow_perm ())) || (estate.es_is_normalizing) || (not !Globals.use_split_match)
+            let res = if (not (Perm.allow_perm ())) || (estate.es_is_normalizing) || (!Globals.perm=Bperm && (not !Globals.use_split_match))
                 then
                   (*If not using permissions or is in normalization process --> MATCH ONLY*)
                   None

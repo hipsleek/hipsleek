@@ -27,3 +27,7 @@ print residue. //VALID, COMBINE, 1 residue
 //(4)
 checkentail b::barrier(1,2,0)<i'-i> * b::barrier(1,2,0)<j'-j> & i'=i+10 & i=0 & j'=j+10 & j=i+10 |- b::barrier(2,2,0)<_>.
 print residue. //VALID, 1 residue
+
+//(5)
+checkentail b::barrier(1,2,0)<p1> |- b::barrier(1,2,0)<p1>.
+print residue. //VALID, COMBINE, 1 residue

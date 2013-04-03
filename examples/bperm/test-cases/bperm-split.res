@@ -5,3 +5,4 @@ Entail (4) : Valid.
 Entail (5) : Valid. 
 Entail (6) : Fail.
 Entail (7) : Valid. 
+Entail (8) : Valid. 
