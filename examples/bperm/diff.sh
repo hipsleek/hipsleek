@@ -43,3 +43,7 @@ echo "======= barrier-dynamic-exp2.ss ======"
 diff test-cases/barrier-dynamic-exp2.res test-cases/barrier-dynamic-exp2.n
 echo "======= barrier-dynamic-exp3.ss ======"
 diff test-cases/barrier-dynamic-exp3.res test-cases/barrier-dynamic-exp3.n
+#================BENCHMARK==========================
+#================BENCHMARK==========================
+echo "======= plash2/code/apps/barnes/ ======"
+diff test-cases/splash2/barnes.res test-cases/splash2/barnes.n

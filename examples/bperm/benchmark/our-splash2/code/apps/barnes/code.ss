@@ -236,4 +236,5 @@ void main()
   //
   join(id1);
   join(id2);
+  destroyBarrier(b);
 }

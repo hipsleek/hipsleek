@@ -39,8 +39,8 @@ void thread1(barrier b, ref int i)
 {
   while(i<10)
     requires b::barrier(1,2,0)<p>
-    ensures b::barrier(1,2,0)<p1> & p1=p+i'-i & i<10 & i'=10
-         or b::barrier(1,2,0)<p1> & p1=p & i>=10 & i'=i; //'
+    ensures b::barrier(1,2,0)<p1> & p1=p+i'-i & i<10 & i'=10 &b'=b
+         or b::barrier(1,2,0)<p1> & p1=p & i>=10 & i'=i & b'=b; //'
   {
     i=i+1;
     waitBarrier(b);
@@ -53,8 +53,8 @@ void thread2(barrier b, ref int j)
 {
   while(j<20)
     requires b::barrier(1,2,0)<p>
-    ensures b::barrier(1,2,0)<p1> & p1=p+j'-j & j<20 & j'=20
-         or b::barrier(1,2,0)<p1> & p1=p & j>=20 & j'=j; //'
+    ensures b::barrier(1,2,0)<p1> & p1=p+j'-j & j<20 & j'=20 & b'=b
+         or b::barrier(1,2,0)<p1> & p1=p & j>=20 & j'=j & b'=b; //'
   {
     j=j+1;
     waitBarrier(b);
