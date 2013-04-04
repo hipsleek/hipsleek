@@ -51,3 +51,5 @@ echo "======= plash2/code/apps/barnes/ ======"
 diff test-cases/splash2/barnes.res test-cases/splash2/barnes.n
 echo "======= plash2/code/apps/fmm/ ======"
 diff test-cases/splash2/fmm.res test-cases/splash2/fmm.n
+echo "======= plash2/code/apps/ocean/ ======"
+diff test-cases/splash2/ocean.res test-cases/splash2/ocean.n
