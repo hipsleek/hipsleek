@@ -47,3 +47,5 @@ diff test-cases/barrier-dynamic-exp3.res test-cases/barrier-dynamic-exp3.n
 #================BENCHMARK==========================
 echo "======= plash2/code/apps/barnes/ ======"
 diff test-cases/splash2/barnes.res test-cases/splash2/barnes.n
+echo "======= plash2/code/apps/fmm/ ======"
+diff test-cases/splash2/fmm.res test-cases/splash2/fmm.n

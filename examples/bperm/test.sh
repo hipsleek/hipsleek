@@ -47,3 +47,5 @@ echo "======= barrier-dynamic-exp3.ss ======"
 #================BENCHMARK==========================
 echo "======= plash2/code/apps/barnes/ ======"
 ../../hip benchmark/our-splash2/code/apps/barnes/barnes.ss | grep -E 'Proc|assert:' > test-cases/splash2/barnes.res
+echo "======= plash2/code/apps/fmm/ ======"
+../../hip benchmark/our-splash2/code/apps/fmm/fmm.ss | grep -E 'Proc|assert:' > test-cases/splash2/fmm.res
