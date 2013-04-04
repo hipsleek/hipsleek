@@ -1,3 +1,4 @@
+(*BACHLE: Jimple Parser 03/04/2013, comprising jimparser.ml (see also _tags), jimtoken.ml, jimlexer.mll*)
 module DD=Debug (* which Debug is this? *)
 open Camlp4
 open Globals
@@ -8,7 +9,6 @@ open Jimtoken
 open Sleekcommons
 open Gen.Basic
 open Label_only
-
 open Perm
 
 module F = Iformula
@@ -27,16 +27,16 @@ let set_parser name =
 
 let test str= print_endline (str)
 
-(* Peek functions *)
+(* Peek functions to resolve ambiguity in the grammar rules*)
 
 let peek_declaration = 
  SHGram.Entry.of_parser "peek_declaration" 
      (fun strm ->
        match Stream.npeek 3 strm with
 			    | [GOTO,_;_;_] -> raise Stream.Failure 	
-          | [_;_;SEMICOLON,_] -> ()
-					| [_;_;COMMA,_] -> ()
-					| [_; L_BRACKET,_;R_BRACKET,_]-> ()
+          | [_;_;SEMICOLON,_] -> () (*One field declaration*)
+					| [_;_;COMMA,_] -> () (*Multiple fields declaration*)
+					| [_; L_BRACKET,_;R_BRACKET,_]-> () (*Array declaration*)
 					| _ -> raise Stream.Failure ) 
 
 let peek_label_name = 
@@ -95,6 +95,7 @@ let peek_binop =
 					| _ -> raise Stream.Failure ) 	
 					
 let jimprog = SHGram.Entry.mk "jimprog" 
+let x=Parser.hprog
 
 let list_to_string ls space=
 	let str=List.fold_left (fun a x-> a^space^x) "" ls in str
