@@ -1,6 +1,10 @@
 /*
-  This is a simplified version of the "fmm" program
+  This is a simplified version of the "ocean" program
   in SPLASH-2 benchmark.
+  We are using the "ocean" version with:
+  - non_contiguous_partitions
+  - 1 barrier
+
   http://www.capsl.udel.edu/splash/
  */
 
