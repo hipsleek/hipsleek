@@ -11701,8 +11701,118 @@ and normalize_frac_struc prog f =
 		| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> (c1,normalize_frac_struc prog c2)) b.formula_case_branches;}
 		| EBase b->  EBase{b with 
 			formula_ext_base = normalize_frac_formula prog b.formula_ext_base; 
-			formula_ext_continuation = normalize_frac_struc prog b.formula_ext_continuation }
+			formula_ext_continuation = normalize_frac_struc prog b.formula_ext_continu
+ation }
 		| EAssume (l,f,lbl) -> EAssume (l,normalize_frac_formula prog f , lbl)
 		| EVariance b-> EVariance {b with formula_var_continuation = normalize_frac_struc prog b.formula_var_continuation} in
 	List.map hlp f
 	*)
+
+(*a formula is considered barrier-inconsistent
+  if it consists of two barrier nodes
+  b1:barrier(c1,t1,a1)<p1> and b2::barrier(c2,t2,a2)<p2>
+  where the relation between them can not be decided.
+  This is necessary for soundness when wait(b1)
+  which requires c1=1.
+  Wihouth knowing b1=b2 or b1!=b2, it is not safe
+  to perform the wait(b1).
+*)
+let rec is_barrier_inconsistent_formula_x prog (f:formula) (es : entail_state) (sv:CP.spec_var) =
+  let rec helper f = match f with
+    | Base _ | Exists _ ->
+        let h,p,_,_,_ = split_components f in
+        let heaps = split_star_conjunctions h in
+        (*remove HTrue nodes*)
+        let heaps = List.filter (fun h ->
+            match h with
+              | HEmp
+              | HFalse
+              | HTrue -> false
+              | _ -> true) heaps
+        in
+        let barrier_nodes = List.filter (fun h ->
+            let name = CF.get_node_name h in
+            if (name="barrier") then true else false) heaps
+        in
+        let barrier_vars = List.map CF.get_node_var barrier_nodes in
+        (*Find all vars that are equal to sv*)
+        let eq_vars = MCP.find_closure_mix_formula sv p in
+        (*The rest are those possibly equal to sv*)
+        let pos_eq_vars =  Gen.BList.difference_eq (CP.eq_spec_var) barrier_vars eq_vars in
+        (*try to prove whether sv is different from all of them*)
+        if (pos_eq_vars=[]) then false (*not inconsistent*)
+        else
+          let eq_f = List.fold_left (fun res v1 ->
+              let eq_f = CP.mkNeqVar sv v1 no_pos in
+              (CP.mkAnd res eq_f no_pos)
+          ) (CP.mkTrue no_pos) pos_eq_vars
+          in
+          let new_f = CF.formula_of_pure_formula eq_f no_pos in
+          let rs,prf = heap_entail_one_context 15 prog false (CF.Ctx es) new_f None None None no_pos in
+          (*if fail then inconsistent-true*)
+          (if (CF.isFailCtx rs) then true else false)
+    | Or ({ formula_or_f1 = f1;
+            formula_or_f2 = f2;
+            formula_or_pos = pos}) ->
+        let b1 = helper f1 in
+        let b2 = helper f2 in
+        (*either of it is inconsistent*)
+        b1||b2
+  in helper f
+
+and is_barrier_inconsistent_formula prog (f:formula) (es : entail_state) (sv:CP.spec_var) =
+  Debug.no_2 "is_barrier_inconsistent_formula"
+      Cprinter.string_of_entail_state
+      Cprinter.string_of_spec_var
+      string_of_bool
+      (fun _ _ -> is_barrier_inconsistent_formula_x prog f es sv) es sv
+
+and check_barrier_inconsistency_context prog ctx (sv:CP.spec_var) pos =
+  let rec helper ctx = match ctx with
+    | OCtx (c1, c2) ->
+        let rs1,prf1 = helper c1 in
+        let rs2,prf2 = helper c2 in
+        ((or_list_context rs1 rs2),(mkOrStrucLeft ctx (CF.struc_formula_of_heap HTrue pos) [prf1;prf2]))
+    | Ctx es ->
+        let f = es.es_formula in
+        let b = is_barrier_inconsistent_formula prog f es sv in
+        if not b then (SuccCtx [ctx] ,Unknown) 
+        else
+          let err_msg = "Possibly inconsistent state detected before waitBarrier" in
+          let fe = mk_failure_may err_msg "Possibly inconsistent state" in
+          (CF.mkFailCtx_in (Basic_Reason 
+                                ({fc_message =err_msg;
+                                  fc_current_lhs = es;
+                                  fc_orig_conseq = CF.struc_formula_of_heap HTrue pos;
+                                  fc_prior_steps = es.es_prior_steps;
+                                  fc_current_conseq = CF.mkTrue (mkTrueFlow ()) pos;
+                                  fc_failure_pts =[];}, fe)), Failure)
+  in helper ctx
+
+and check_barrier_inconsistency_failesc_context prog cl (sv:CP.spec_var) pos  =
+  let fail_branches, esc_branches, succ_branches  = cl in
+  let res = List.map (fun (lbl,c2)-> 
+	  let list_context_res,prf = check_barrier_inconsistency_context prog c2 sv pos in
+      let esc_skeletal = List.map (fun (l,_) -> (l,[])) esc_branches in
+	  let res = match list_context_res with
+	    | FailCtx t -> [([(lbl,t)],esc_skeletal,[])]
+	    | SuccCtx ls -> List.map ( fun c-> ([],esc_skeletal,[(lbl,c)])) ls in
+	  (res, prf)) succ_branches in
+  let res_l,prf_l =List.split res in
+  let res = List.fold_left (list_failesc_context_or Cprinter.string_of_esc_stack) [(fail_branches,esc_branches,[])] res_l in
+  let proof = ContextList { 
+      context_list_ante = [];
+      context_list_conseq = struc_formula_of_formula (mkTrue (mkTrueFlow ()) pos) pos;
+      context_list_proofs = prf_l; } in
+  (res, proof)
+
+(*required before each wait(b1), sv=b1*)
+and check_barrier_inconsistency_list_failesc_context prog lcl (sv:CP.spec_var) pos =
+  let l = List.map (fun cl -> check_barrier_inconsistency_failesc_context prog cl sv pos) lcl in
+  let l_ctx , prf_l = List.split l in
+  let result = List.fold_left list_failesc_context_union (List.hd l_ctx) (List.tl l_ctx) in
+  let proof = ContextList { 
+      context_list_ante = [];
+      context_list_conseq = struc_formula_of_formula (mkTrue (mkTrueFlow ()) pos) pos;
+      context_list_proofs = prf_l; } in
+  (result, proof)
