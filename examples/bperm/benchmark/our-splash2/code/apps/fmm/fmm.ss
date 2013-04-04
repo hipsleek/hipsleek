@@ -1,5 +1,7 @@
 /*
-  This is a simplified version of "fmm" program in SPLASH-2 benchmark
+  This is a simplified version of the "fmm" program
+  in SPLASH-2 benchmark.
+  http://www.capsl.udel.edu/splash/
  */
 
 //permission rules for static barrier

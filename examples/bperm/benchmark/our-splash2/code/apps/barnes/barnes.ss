@@ -1,5 +1,7 @@
 /*
-  This is a simplified version of code.C
+  This is a simplified version of the "barnes" program
+  in SPLASH-2 benchmark.
+  http://www.capsl.udel.edu/splash/
  */
 
 //permission rules for static barrier
