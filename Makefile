@@ -38,7 +38,7 @@ PROPERERRS = -warn-error,+4+8+9+11+12+25+28
 
 #FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
 FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp
-FLAGS1 = $(FLAGS),-output-obj
+FLAGS1 = $(FLAGS),-output-obj,-static
 GFLAGS = $(INCLUDES),$(PROPERERRS),-g,-annot,-ccopt,-fopenmp 
 # ,-cclib,-lz3stubs,-cclib,-lz3,/usr/local/lib/ocaml/libcamlidl.a
 
@@ -125,11 +125,12 @@ ghip.native:
 
 sleeklib:
 	@ocamlbuild $(OBNLIB_FLAGS) libSleek.o
-	cp -u _build/libSleek.o libSleek.o
+#	cp -u _build/libSleek.o libSleek.o
 #	ocamlopt -c $(FLAGS) -o _build/libSleek.cmx libSleek.ml
 #	
-#	gcc -g -Wall -Wextra  -c libTest.c -o ctemp.o
-#	gcc sleekOcamlLib.o ctemp.o -ldl -lm -L /usr/local/lib/ocaml -lasmrun -o libTest
+libtest: sleeklib
+	gcc -g -Wall -Wextra  -c libTest.c -o _build/libTest.o
+#	gcc _build/libSleek.o _build/libTest.o -ldl -lm -L /usr/local/lib/ocaml -lasmrun -o libTest
 #	@ocamlbuild $(OBN_FLAGS) sleek.native	
 
 # Clean up

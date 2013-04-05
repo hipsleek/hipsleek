@@ -8,19 +8,19 @@ int flush_env()
 #include <caml/callback.h>
 
 
-static bool process_cmd (const char * cmd_string; bool flush_context)
+static int process_cmd (const char * cmd_string, int flush_context)
 {
 	CAMLparam0 () ;
-	CAMLlocal2 (ostr,o_flush_context,res) ;
+	CAMLlocal3 (ostr,o_flush_context,res) ;
     ostr = caml_copy_string (cmd_string);
 	o_flush_context = Val_bool(flush_context);
     value * func = caml_named_value ("sleek_process_cmd") ;
-	bool b;
+	int b;
     if (func == NULL) 
 		puts ("retrieving sleek_process_cmd failed!") ;
     else 
 		{res = caml_callback2 (*func, ostr, o_flush_context) ;
-		b = Bool_val(res);}
+		b = Int_val(res);}
 	CAMLreturn (b) ;
 }
 
@@ -28,12 +28,12 @@ static bool process_cmd (const char * cmd_string; bool flush_context)
 static void sleeklib_stop ()
 {
 	CAMLparam0 () ;
-	CAMLlocal2 (u) ;
+	CAMLlocal1 (u) ;
     value * func = caml_named_value ("sleeklib_stop") ;
-	bool b;
+	u = Val_bool(1);
     if (func == NULL) 
 		puts ("retrieving sleeklib_stop failed!") ;
-    else  caml_callback (*func, Val_bool(true));
+    else  caml_callback (*func, u);
 	CAMLreturn0 ;
 }
 
@@ -41,7 +41,7 @@ static void sleeklib_stop ()
 static void sleeklib_init (const char** flags)
 {
 	CAMLparam0 () ;
-      CAMLlocal3 (oargv) ;
+      CAMLlocal1 (oargv) ;
       oargv = caml_alloc_array (caml_copy_string, flags) ;
       value * func = caml_named_value ("sleeklib_init") ;
       if (func == NULL) puts ("sleeklib_init failed!") ;
