@@ -604,6 +604,8 @@ let level_data_typ = Int
 let ls_typ = BagT (Named ls_data_typ)
 let lsmu_typ = BagT (Int)
 
+let silence_output = ref false
+
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
 let pragma_list = ref ([] : string list)

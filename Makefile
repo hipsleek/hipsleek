@@ -37,7 +37,8 @@ INCLUDES = -I,$(CURDIR)/xml,-I,+lablgtk2,-I,+camlp4,-I,$(INCLPRE)/batteries,-I,$
 PROPERERRS = -warn-error,+4+8+9+11+12+25+28
 
 #FLAGS = $(INCLUDES),-g,-annot,-ccopt,-fopenmp 
-FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp 
+FLAGS = $(INCLUDES),$(PROPERERRS),-annot,-ccopt,-fopenmp
+FLAGS1 = $(FLAGS),-output-obj
 GFLAGS = $(INCLUDES),$(PROPERERRS),-g,-annot,-ccopt,-fopenmp 
 # ,-cclib,-lz3stubs,-cclib,-lz3,/usr/local/lib/ocaml/libcamlidl.a
 
@@ -46,6 +47,7 @@ OBB_GFLAGS = -no-links -libs $(LIBSB) -cflags $(GFLAGS) -lflags $(GFLAGS) -lexfl
  
 OBB_FLAGS = -no-links -libs $(LIBSB) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
 OBN_FLAGS = -no-links -libs $(LIBSN) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v  -j $(JOBS) 
+OBNLIB_FLAGS = -no-links -libs $(LIBSN) -cflags $(FLAGS) -lflags $(FLAGS1) -lexflag -q -yaccflag -v  -j $(JOBS) 
 
 OBG_FLAGS = -no-links -libs $(LIBS2) -cflags $(FLAGS) -lflags $(FLAGS) -lexflag -q -yaccflag -v -j $(JOBS) 
 
@@ -120,6 +122,15 @@ ghip.byte:
 ghip.native:
 	@ocamlbuild $(OBG_FLAGS) ghip.native
 	cp -u _build/ghip.native ghip
+
+sleeklib:
+	@ocamlbuild $(OBNLIB_FLAGS) libSleek.o
+	cp -u _build/libSleek.o libSleek.o
+#	ocamlopt -c $(FLAGS) -o _build/libSleek.cmx libSleek.ml
+#	
+#	gcc -g -Wall -Wextra  -c libTest.c -o ctemp.o
+#	gcc sleekOcamlLib.o ctemp.o -ldl -lm -L /usr/local/lib/ocaml -lasmrun -o libTest
+#	@ocamlbuild $(OBN_FLAGS) sleek.native	
 
 # Clean up
 clean:
