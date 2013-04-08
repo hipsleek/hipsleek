@@ -2191,15 +2191,26 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
       match (coercion_lhs_type) with
         | CF.Simple ->
             if (Perm.allow_perm ()) then
-              let h, p, _, _,_ = CF.split_components c_rhs in
-              let heaps = CF.split_star_conjunctions h in
-              let heaps = List.filter (fun h ->
-                  match h with
-                    | CF.HEmp
-                    | CF.HTrue -> false
-                    | _ -> true) heaps
+              let rec helper f = 
+                match f with
+                | CF.Base _
+                | CF.Exists _ ->
+                    let h, p, _, _,_ = CF.split_components f in
+                    let heaps = CF.split_star_conjunctions h in
+                    let heaps = List.filter (fun h ->
+                        match h with
+                          | CF.HEmp
+                          | CF.HTrue -> false
+                          | _ -> true) heaps
+                    in
+                    (List.length heaps)
+                | CF.Or {CF.formula_or_f1=f1; CF.formula_or_f2=f2;} ->
+                    let len1 = helper f1 in
+                    let len2 = helper f2 in
+                    (if len1>len2 then len1 else len2)
               in
-              if ((List.length heaps)>1) then
+              let len = helper c_rhs in
+              if (len>1) then
                 (*only do this if having more than 1 heap*)
                 CF.add_origs_to_first_node self lhs_view_name c_rhs [coer.I.coercion_name] true (*set original of the rest of nodes = true to allow permission splitting*)
               else c_rhs
@@ -2400,13 +2411,13 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
 		              } -> if (CP.name_of_spec_var p) = v then c else ""
               | CF.HTrue | CF.HFalse | CF.HEmp | CF.HRel _ | CF.Hole _ -> "")
 	      in find_view_heap h
-    | CF.Or _ ->
-	      Err.report_error
-              {
-                  Err.error_loc = pos;
-                  Err.error_text =
-                      "Pre- and post-conditions of coercion rules must not be disjunctive";
-              }
+    | CF.Or _ -> ""
+	      (* Err.report_error *)
+          (*     { *)
+          (*         Err.error_loc = pos; *)
+          (*         Err.error_text = *)
+          (*             "Pre- and post-conditions of coercion rules must not be disjunctive"; *)
+          (*     } *)
 and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp_type =
   Debug.no_1 "trans_exp"
       Iprinter.string_of_exp
