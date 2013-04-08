@@ -4747,7 +4747,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) (conseq:CF.formula
 	    true) 
   in
   let process_entail_state (es : entail_state) =
-    Debug.ho_1 " process_entail_state"  Cprinter.string_of_entail_state
+    Debug.no_1 " process_entail_state"  Cprinter.string_of_entail_state
         (pr_pair (fun (b,_) -> Cprinter.string_of_list_context b) string_of_bool)
         (* (fun (_,b) -> string_of_bool b)  *)
         process_entail_state es

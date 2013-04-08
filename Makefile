@@ -137,11 +137,11 @@ ghip.native:
 
 #======================================================================	
 # tedious stuff for compiling sleek as a library callable from C
-testsleeklib:
-	@ocamlbuild $(OBN_FLAGS) -ocamlopt libTest.cmx
-	@ocamlbuild $(OBNLIB_FLAGS) -ocamlopt libTest.o
-	gcc -g -Wall -Wextra -I. -c libTest.c -o _build/clibTest.o
-	gcc _build/libTest.o _build/clibTest.o -L /usr/local/lib/ocaml -ldl -lm  -lasmrun -o libTest.exe
+#testsleeklib:
+#	@ocamlbuild $(OBN_FLAGS) -ocamlopt libTest.cmx
+#	@ocamlbuild $(OBNLIB_FLAGS) -ocamlopt libTest.o
+#	gcc -g -Wall -Wextra -I. -c libTest.c -o _build/clibTest.o
+#	gcc _build/libTest.o _build/clibTest.o -L /usr/local/lib/ocaml -ldl -lm  -lasmrun -o libTest.exe
 	
 sleeklib:
 # for some reason ocamlbuild does not play well with the -output-obj compiler flag, need to do this UGLY stuff
@@ -156,19 +156,20 @@ sleeklib:
 	$(LIBOCCMD) -c -g rlparser.ml
 	ocamllex -q rllexer.mll
 	ocamllex -q lexer.mll
-	$(LIBOCCMD) ocparser.ml oclexer.ml procutils.ml omega.ml perm.ml cformula.ml iformula.ml iast.ml cast.ml coq.ml cvc3.ml rlparser.ml rllexer.ml redlog.ml smtsolver.ml cprinter.ml token.ml lexer.ml checkeq.ml checks.ml cvclite.ml dp.ml infinity.ml iprinter.ml isabelle.ml stat_global.ml log.ml rtc_algorithm.ml minisat.ml mona.ml net.ml prooftracer.ml setmona.ml share_prover.ml share_prover_w.ml spass.ml tpdispatcher.ml immutable.ml context.ml env.ml global_var.ml
+	$(LIBOCCMD) ocparser.ml oclexer.ml procutils.ml omega.ml perm.ml cformula.ml iformula.ml iast.ml cast.ml coq.ml cvc3.ml rlparser.ml rllexer.ml redlog.ml smtsolver.ml cprinter.ml token.ml lexer.ml checkeq.ml checks.ml cvclite.ml dp.ml infinity.ml iprinter.ml isabelle.ml stat_global.ml log.ml rtc_algorithm.ml minisat.ml mona.ml net.ml prooftracer.ml setmona.ml share_prover.ml share_prover_w.ml spass.ml tpdispatcher.ml immutable.ml context.ml env.ml global_var.ml sleekcommons.ml sautility.ml infer.ml pointers.ml inliner.ml mem.ml term.ml solver.ml astsimp.ml
 	$(LIBOCCMDP4) parser.ml
 	$(LIBOCCMDP4) parse_shape.ml
 	$(LIBOCCMDP4) parse_fixbag.ml
 	$(LIBOCCMDP4) parse_fix.ml
-	$(LIBOCCMD) sleekcommons.ml sautility.ml infer.ml inliner.ml mem.ml pointers.ml term.ml solver.ml astsimp.ml cjava.ml drawing.ml fixbag.ml fixcalc.ml java.ml lemproving.ml nativefront.ml paralib1.ml paralib1v2.ml predcomp.ml rtc.ml sa.ml typechecker.ml scriptarguments.ml xmlfront.ml sleekengine.ml sleek.ml libSleek.ml
+	$(LIBOCCMD) cjava.ml drawing.ml fixbag.ml fixcalc.ml java.ml lemproving.ml nativefront.ml paralib1.ml paralib1v2.ml predcomp.ml rtc.ml sa.ml typechecker.ml scriptarguments.ml xmlfront.ml sleekengine.ml sleek.ml libSleek.ml
 #
-ttt:
-	ocamlopt.opt -output-obj -o libSleekTemp.o unix.cmxa str.cmxa xml/xml-light.cmxa dynlink.cmxa camlp4/camlp4lib.cmxa nums.cmxa site-lib/batteries/batteries.cmxa site-lib/extlib/extLib.cmxa ocamlgraph/graph.cmxa globals.cmx error.cmx gen.cmx debug.cmx exc.cmx label_only.cmx label.cmx tree_shares.cmx cpure.cmx globProver.cmx ipure_D.cmx ipure.cmx mcpure_D.cmx slicing.cmx mcpure.cmx ocparser.cmx oclexer.cmx procutils.cmx omega.cmx perm.cmx cformula.cmx iformula.cmx iast.cmx cast.cmx coq.cmx cvc3.cmx rlparser.cmx rllexer.cmx redlog.cmx smtsolver.cmx cprinter.cmx token.cmx lexer.cmx checkeq.cmx checks.cmx cvclite.cmx dp.cmx infinity.cmx iprinter.cmx isabelle.cmx stat_global.cmx log.cmx rtc_algorithm.cmx minisat.cmx mona.cmx net.cmx prooftracer.cmx setmona.cmx share_prover.cmx share_prover_w.cmx spass.cmx tpdispatcher.cmx immutable.cmx context.cmx env.cmx global_var.cmx parse_shape.cmx sleekcommons.cmx parser.cmx sautility.cmx infer.cmx inliner.cmx mem.cmx pointers.cmx term.cmx solver.cmx astsimp.cmx cjava.cmx drawing.cmx parse_fixbag.cmx fixbag.cmx parse_fix.cmx fixcalc.cmx java.cmx lemproving.cmx nativefront.cmx paralib1.cmx paralib1v2.cmx predcomp.cmx rtc.cmx sa.cmx typechecker.cmx scriptarguments.cmx xmlfront.cmx sleekengine.cmx sleek.cmx libSleek.cmx
-
+	ocamlopt.opt -output-obj -o libSleekO.o unix.cmxa str.cmxa xml/xml-light.cmxa dynlink.cmxa camlp4/camlp4lib.cmxa nums.cmxa site-lib/batteries/batteries.cmxa site-lib/extlib/extLib.cmxa ocamlgraph/graph.cmxa globals.cmx error.cmx gen.cmx debug.cmx exc.cmx label_only.cmx label.cmx tree_shares.cmx cpure.cmx globProver.cmx ipure_D.cmx ipure.cmx mcpure_D.cmx slicing.cmx mcpure.cmx ocparser.cmx oclexer.cmx procutils.cmx omega.cmx perm.cmx cformula.cmx iformula.cmx iast.cmx cast.cmx coq.cmx cvc3.cmx rlparser.cmx rllexer.cmx redlog.cmx smtsolver.cmx cprinter.cmx token.cmx lexer.cmx checkeq.cmx checks.cmx cvclite.cmx dp.cmx infinity.cmx iprinter.cmx isabelle.cmx stat_global.cmx log.cmx rtc_algorithm.cmx minisat.cmx mona.cmx net.cmx prooftracer.cmx setmona.cmx share_prover.cmx share_prover_w.cmx spass.cmx tpdispatcher.cmx immutable.cmx context.cmx env.cmx global_var.cmx parse_shape.cmx sleekcommons.cmx parser.cmx sautility.cmx infer.cmx inliner.cmx mem.cmx pointers.cmx term.cmx solver.cmx astsimp.cmx cjava.cmx drawing.cmx parse_fixbag.cmx fixbag.cmx parse_fix.cmx fixcalc.cmx java.cmx lemproving.cmx nativefront.cmx paralib1.cmx paralib1v2.cmx predcomp.cmx rtc.cmx sa.cmx typechecker.cmx scriptarguments.cmx xmlfront.cmx sleekengine.cmx sleek.cmx libSleek.cmx 
+#
+	gcc -g -Wall -Wextra -I. -c libSleekC.c -o libSleekC.o
+	
 libtest:
 	gcc -g -Wall -Wextra -I. -c libSleekUsage.c -o libSleekUsage.o
-	gcc libSleekUsage.o libSleekTemp.o -L /usr/local/lib/ocaml -ldl -lm  -lasmrun -lunix -lcamlstr -lnums -o libTest
+	gcc libSleekUsage.o libSleekC.o libSleekO.o  -L /usr/local/lib/ocaml -ldl -lm  -lasmrun -lunix -lcamlstr -lnums -o libTest
 #	@ocamlbuild $(OBN_FLAGS) sleek.native	
 
 # end of tedious stuff for compiling sleek as a library callable from C
