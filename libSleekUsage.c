@@ -14,6 +14,6 @@ int main (int argc, char ** argv)
  
 /*
   ocamlopt -c libTest.ml -o libTest.cmx; ocamlopt -output-obj -o ocamltemp.o libTest.cmx ; 
-  gcc -g -Wall -Wextra -I. -c sleekLibUsage.c -o sleekLibUsage.o; 
-  gcc sleekLibUsage.o libSleek.o -ldl -lm -L /usr/local/lib/ocaml -lasmrun -o SleekTest
+  gcc -g -Wall -Wextra -I. -c libSleekUsage.c -o libSleekUsage.o; 
+  gcc libSleekUsage.o libSleek.o -ldl -lm -L /usr/local/lib/ocaml -lasmrun -o SleekTest
 */

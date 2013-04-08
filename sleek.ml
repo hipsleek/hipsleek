@@ -330,7 +330,7 @@ let _ =
     in
     let ptime4 = Unix.times () in
     let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime in
-    let _ = print_string ("\nTotal verification time: " 
+    let _ = silenced_print print_string ("\nTotal verification time: " 
     ^ (string_of_float t4) ^ " second(s)\n"
     ^ "\tTime spent in main process: " 
     ^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
