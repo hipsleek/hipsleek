@@ -29,7 +29,10 @@ case { si1 > 0 -> case { si2 > 0 -> case { si1 > (\inf - si2) ->
 					ensures true & flow __Error;
 				     si1 <= (\inf - si2) -> ensures res = si1 + si2;
 				}
-		   si2 <= 0 ->  ensures true & flow __Error;
+		   si2 <= 0 ->  case{ si2 < (-\inf - si1) ->
+					ensures true & flow __Error;
+				si2 >= (-\inf - si1) -> ensures res = si1 + si2;
+				}
 		}
  	si1 <= 0 -> case { si2 > 0 -> case { si1 < (-\inf - si2) -> 
 				ensures true & flow __Error;
