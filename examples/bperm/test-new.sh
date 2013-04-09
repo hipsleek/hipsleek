@@ -55,3 +55,5 @@ echo "======= plash2/code/apps/fmm/ ======"
 ../../hip benchmark/our-splash2/code/apps/fmm/fmm.ss | grep -E 'Proc|assert:' > test-cases/splash2/fmm.n
 echo "======= plash2/code/apps/ocean/ ======"
 ../../hip benchmark/our-splash2/code/apps/ocean/ocean.ss | grep -E 'Proc|assert:' > test-cases/splash2/ocean.n
+echo "======= plash2/code/apps/volrend/ (slow) ======"
+../../hip benchmark/our-splash2/code/apps/volrend/volrend.ss | grep -E 'Proc|assert:' > test-cases/splash2/volrend.n
