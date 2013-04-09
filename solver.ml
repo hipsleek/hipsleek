@@ -10032,6 +10032,16 @@ and apply_left_coercion_complex_x estate coer prog conseq ctx0 resth1 anode lhs_
   let coer_rhs = CF.subst tmp_rho coer_rhs in
   (************************************************************************)
   let lhs_heap, lhs_guard, lhs_flow, _, lhs_a = split_components coer_lhs in
+  let lhs_qvars,_ = CF.split_quantifiers coer_lhs in
+  (************************************************************************)
+  (* also rename the existential vars in the lhs.
+     To ensure that after each application of a specific
+     coercion, the exist vars are different *)
+  let lhs_qvars_new = CP.fresh_spec_vars lhs_qvars in
+  let lhs_heap  =  CF.subst_avoid_capture_h lhs_qvars lhs_qvars_new lhs_heap in
+  let lhs_guard = MCP.subst_avoid_capture_memo lhs_qvars lhs_qvars_new lhs_guard in
+  let coer_rhs = subst_avoid_capture lhs_qvars lhs_qvars_new coer_rhs in
+  (************************************************************************)
   let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in  (* TODO : check with_dupl, with_inv *)
   let lhs_hs = CF.split_star_conjunctions lhs_heap in (*|lhs_hs|>1*)
   let head_node, rest = pick_up_node lhs_hs Globals.self in
@@ -10339,6 +10349,16 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
       let coer_rhs = CF.subst tmp_rho coer_rhs in
       (************************************************************************)
       let lhs_heap, lhs_guard, lhs_flow, _, lhs_a = split_components coer_lhs in
+      let lhs_qvars,_ = CF.split_quantifiers coer_lhs in
+      (************************************************************************)
+      (* also rename the existential vars in the lhs.
+      To ensure that after each application of a specific
+      coercion, the exist vars are different *)
+      let lhs_qvars_new = CP.fresh_spec_vars lhs_qvars in
+      let lhs_heap  =  CF.subst_avoid_capture_h lhs_qvars lhs_qvars_new lhs_heap in
+      let lhs_guard = MCP.subst_avoid_capture_memo lhs_qvars lhs_qvars_new lhs_guard in
+      let coer_rhs = subst_avoid_capture lhs_qvars lhs_qvars_new coer_rhs in
+      (************************************************************************)
       let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in  (* TODO : check with_dupl, with_inv *)
       let lhs_hs = CF.split_star_conjunctions lhs_heap in
       (*BE CAREFUL, the first node is not always the self node.
@@ -10412,6 +10432,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
             Debug.tinfo_zprint (lazy ("normalize_w_coers: process_one: conseq_extra:\n" ^ (Cprinter.string_of_formula conseq_extra))) no_pos;
 
             let check_res, check_prf = heap_entail prog false new_ctx conseq_extra no_pos in
+            (* let _ = print_endline ("normalize_w_coers: process_one: after check extra heap: " ^ (Cprinter.string_of_spec_var p2) ^ "\n" ^ (Cprinter.string_of_list_context check_res)) in *)
             
             (* Debug.tinfo_zprint (lazy ("normalize_w_coers: process_one: after check extra heap: " ^ (Cprinter.string_of_spec_var p2) ^ "\n" ^ (Cprinter.string_of_list_context check_res))) no_pos; *)
             
@@ -10438,7 +10459,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
     let process_one estate anode rest coer h p fl =
       let pr (c1,c2,c3,c4,c5) = pr_triple string_of_bool Cprinter.string_of_entail_state (Cprinter.string_of_flow_formula "") (c1,c2,c5) in 
       let pr_h = Cprinter.string_of_h_formula in
-      Debug.no_6 "process_one_normalize" Cprinter.string_of_entail_state pr_h pr_h pr_h Cprinter.string_of_mix_formula Cprinter.string_of_flow_formula pr  
+      Debug.no_6 "process_one_normalize" Cprinter.string_of_entail_state pr_h pr_h pr_h Cprinter.string_of_mix_formula (Cprinter.string_of_flow_formula "") pr  
         (fun _ _ _ _ _ _ -> process_one_x estate anode rest coer h p fl) estate anode rest  h p fl
     in
     (*process a list of pairs (anode * rest) *)
@@ -10470,6 +10491,7 @@ and normalize_w_coers_x prog (estate:CF.entail_state) (coers:coercion_decl list)
                         if (res) (*we could find a result*)
                         then
                           (*restart and normalize the new estate*)
+                          let res_es = CF.clear_entailment_history_es2 (fun x -> None) res_es in
                           let res_h2,res_p2,res_fl2 = helper res_es res_h res_p res_fl in
                           res_h2,res_p2,res_fl2 (*TOCHECK: why res_fl2 != res_fl*)
                         else

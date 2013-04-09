@@ -8609,6 +8609,40 @@ let clear_entailment_history_es_es (es :entail_state) : entail_state =
       es_heap = HEmp;
   }
 
+
+let clear_entailment_history_es2 xp (es :entail_state) :entail_state =
+  (* TODO : this is clearing more than es_heap since qsort-tail.ss fails otherwise *)
+  let hf = es.es_heap in
+  (* let old_history =  if is_data hf then es.es_history@[hf] else es.es_history in *)
+  let old_history =  [] in
+  (* adding xpure0 of es_heap into es_formula *)
+  let es_f = match xp hf with
+    | None -> es.es_formula
+    | Some (mf,svl,mm)  -> mkAnd_pure es.es_formula mf no_pos
+  in 
+      {(empty_es (mkTrueFlow ()) es.es_group_lbl no_pos) with
+          es_formula = es_f;
+          es_history = old_history;
+          es_path_label = es.es_path_label;
+          es_prior_steps = es.es_prior_steps;
+          es_var_measures = es.es_var_measures;
+      (* WN : what is the purpose of es_var_stack?*)
+          es_var_stack = es.es_var_stack;
+      es_pure = es.es_pure;
+          es_infer_vars = es.es_infer_vars;
+          es_infer_vars_rel = es.es_infer_vars_rel;
+          es_infer_vars_hp_rel = es.es_infer_vars_hp_rel;
+          es_infer_vars_sel_hp_rel = es.es_infer_vars_sel_hp_rel;
+          es_infer_vars_sel_post_hp_rel = es.es_infer_vars_sel_post_hp_rel;
+          es_infer_hp_unk_map = es.es_infer_hp_unk_map;
+          es_infer_heap = es.es_infer_heap;
+          es_infer_pure = es.es_infer_pure;
+          es_infer_rel = es.es_infer_rel;
+          es_infer_hp_rel = es.es_infer_hp_rel;
+          es_group_lbl = es.es_group_lbl;
+          es_term_err = es.es_term_err;
+          es_var_zero_perm = es.es_var_zero_perm;}
+
 (*
   to be used in the type-checker. After every entailment, the history of consumed nodes
   must be cleared.

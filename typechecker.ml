@@ -1894,8 +1894,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     (*                              (Cprinter.string_of_list_failesc_context sctx)) in *)
                     (*we use new rules to judge the spec*)
                     let rs, prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 None None None pos pid in
-                    
-		    let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
+		            let _ = if !print_proof && should_output_html then Prooftracer.pop_div () in
                     (* The context returned by heap_entail_struc_list_failesc_context_init, rs, is the context with unbound existential variables initialized & matched. *)
                     let _ = PTracer.log_proof prf in
 
