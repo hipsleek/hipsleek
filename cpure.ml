@@ -341,10 +341,10 @@ let is_int_str_aux (n:int) (s:string) : bool =
 
 
 let string_of_spec_var (sv: spec_var) = match sv with
-    | SpecVar (t, v, _) -> v ^ (if is_primed sv then "PRMD" else "")
+    | SpecVar (t, v, _) -> v ^ (if is_primed sv then "'" else "")
  
 let string_of_spec_var_type (sv: spec_var) = match sv with
-    | SpecVar (t, v, _) -> v ^ (if is_primed sv then "PRMD" else "")^":"^(string_of_typ t)
+    | SpecVar (t, v, _) -> v ^ (if is_primed sv then "'" else "")^":"^(string_of_typ t)
 
 
 (* pretty printing for a spec_var list *)

@@ -332,7 +332,7 @@ let rl_of_b_formula b =
   | CP.VarPerm _ -> "" (*TO CHECK: ignore VarPerm*)
   | _ -> failwith "redlog: bags is not supported"
 
-let rec rl_of_formula pr_w pr_s f0 =
+let rec rl_of_formula_x pr_w pr_s f0 =
   let rec helper f0 =
     match f0 with
       | CP.BForm ((b,_) as bf,_) -> 
@@ -342,12 +342,17 @@ let rec rl_of_formula pr_w pr_s f0 =
                 | Some f -> helper f
             end
 	  | CP.AndList _ -> Gen.report_error no_pos "redlog.ml: encountered AndList, should have been already handled"
-      | CP.Not (f, _, _) -> "(not " ^ (rl_of_formula pr_s pr_w f) ^ ")"
+      | CP.Not (f, _, _) -> "(not " ^ (helper f) ^ ")"
       | CP.Forall (sv, f, _, _) -> "(all (" ^ (rl_of_spec_var sv) ^ ", " ^ (helper f) ^ "))"
       | CP.Exists (sv, f, _, _) -> "(ex (" ^ (rl_of_spec_var sv) ^ ", " ^ (helper f) ^ "))"
       | CP.And (f1, f2, _) -> "(" ^ (helper f1) ^ " and " ^ (helper f2) ^ ")"
       | CP.Or (f1, f2, _, _) -> "(" ^ (helper f1) ^ " or " ^ (helper f2) ^ ")"
   in helper f0
+
+let rl_of_formula pr_w pr_s f0 =
+  Debug.no_1 "rl_of_formula"
+      !print_formula pr_id
+      (fun _ -> rl_of_formula_x pr_w pr_s f0) f0
 
 (***********************************
  pretty printer for pure formula
@@ -357,7 +362,6 @@ let string_of_exp e0 = !print_exp e0
 let string_of_b_formula bf = !print_b_formula bf
   
 let string_of_formula f0 = !print_formula f0
-
   
 let simplify_var_name (e: CP.formula) : CP.formula =
   let shorten_sv (CP.SpecVar (typ, name, prm)) vnames =
@@ -1215,7 +1219,14 @@ let imply ante conseq imp_no =
 (*       (add_str "imp_no" (fun c -> c))  *)
 (*       string_of_bool imply ante conseq imp_no *)
 
-
+(*
+LDK:
+The translation is buggy
+For example: f'=1
+Then, rlf= "fPRMD=1"
+lexbuf = "fPRMD=1"
+Finally, simpler="fPRMD=1" which is not the orignal formula.
+*)
 let simplify_with_redlog (f: CP.formula) : CP.formula  =
   let pr_n x = None in
   if (CP.is_float_formula f) then
@@ -1228,7 +1239,9 @@ let simplify_with_redlog (f: CP.formula) : CP.formula  =
     let _ = send_cmd "rlset ofsf" in
     let lexbuf = Lexing.from_string redlog_result in
     let simpler_f = Rlparser.input Rllexer.tokenizer lexbuf in
-    simpler_f
+    (* simpler_f *)
+    (*LDK: currently temporarily do not use simpler_f*)
+    f
 
 let simplify_with_redlog (f: CP.formula) : CP.formula  =
   (* let pr = pr_pair !print_formula string_of_bool in *)

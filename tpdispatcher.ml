@@ -1827,7 +1827,8 @@ let tp_imply ante conseq imp_no timeout process =
     (* in res *)
 
 let tp_imply ante conseq imp_no timeout process =	
-  let pr1 = Cprinter.string_of_pure_formula in
+  (* let pr1 = Cprinter.string_of_pure_formula in *)
+  let pr1 = !print_pure in
   let prout x = string_of_bool x in
   Debug.no_2_loop "tp_imply" 
       (add_str "ante" pr1) 
