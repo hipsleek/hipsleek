@@ -57,3 +57,5 @@ echo "======= plash2/code/apps/ocean/ ======"
 diff test-cases/splash2/ocean.res test-cases/splash2/ocean.n
 echo "======= plash2/code/apps/volrend/ ======"
 diff test-cases/splash2/volrend.res test-cases/splash2/volrend.n
+echo "======= plash2/code/apps/water-nsquared/ ======"
+diff test-cases/splash2/water-nsquared.res test-cases/splash2/water-nsquared.n
