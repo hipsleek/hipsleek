@@ -984,6 +984,7 @@ and check_scall_join prog ctx e0 (post_start_label:formula_label) ret_t mn lock 
   let empty_struc = CF.mkETrue (CF.mkTrueFlow ()) pos in
   (*Perform Delay lockset checking and join at Solver.heap_entail_conjunct_lhs_struc*)
   let rs, prf = heap_entail_struc_list_failesc_context_init prog false true ctx empty_struc None None (Some tid) pos pid in
+  (* let _ = print_endline ("\ncheck_exp: SCall : join : after join(" ^ (Cprinter.string_of_spec_var tid) ^") \n ### res: " ^ (Cprinter.string_of_list_failesc_context rs)) in *)
   (*This is done after join inside Solver.ml*)
   (* let rs = normalize_list_failesc_context_w_lemma prog rs in *)
   if (CF.isSuccessListFailescCtx ctx) && (CF.isFailListFailescCtx rs) then
