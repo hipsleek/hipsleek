@@ -56,7 +56,17 @@ HeapPred H1(node a).
 /* HeapPred T1(node a). */
 /* HeapPred T2(node a, node b). */
 
+
+/* ll<> == self=null */
+/*   or self::node<_,q>*q::ll<> */
+/*   inv true; */
+
 /*
+l2<y> == self::node<a,null> & y=self
+  or self::node<_,q>*q::l2<y> 
+  inv y!=null;
+*/
+
 ll<> == self=null
   or self::node<_,q>*q::ll<>
   inv true;
@@ -65,14 +75,18 @@ lseg<p> == self=p
   or self::node<_,q>*q::lseg<p>
   inv true;
 
-l2<y> == self::node<a,null> & y=self
-  or self::node<_,q>*q::l2<y> 
-  inv y!=null;
-*/
-
 void append(node x, node y)
 
 //G1 can not be a lseg because y!=null
+/*
+  requires x::ll<> * y::ll<> & x!=null
+  ensures x::ll<>;
+
+  requires x::ll<> * y::node<a,null> & x!=null
+  ensures x::lseg<y>*y::node<a,null>;
+
+*/
+
   infer[H1,G1]
   requires H1(x)*y::node<a,null>
      ensures G1(x,y) *y::node<a,null>;

@@ -7,8 +7,7 @@ HeapPred HP_630(node2 a, node2 b).
 
 delete:SUCCESS[
 ass [H1,G1][]:{
-  H1(x) --> x::node2<val_26_533',prev_26_534',next_26_535'>@M * 
-    HP_559(prev_26_534') * HP_560(next_26_535');
+  H1(x) --> x::node2<_,p1,n1>@M * HP_559(p1) * HP_560(n1);
   HP_560(v_node2_26_536') --> v_node2_26_536'::node2<_,p,n>@M * HP_570(p) * HP_571(n);
  HP_570(prev_26_585) * HP_571(v_node2_26_600) * 
   v_node2_26_586::node2<val_26_584,prev_26_585,v_node2_26_600>@M&

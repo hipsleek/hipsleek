@@ -1,0 +1,50 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+pred sortHO<v,R:relation(int,int)> == 
+  self::node<v,null> 
+  or self::node<v, p> * p::sortHO<v2,R> & R(v,v2) 
+inv self!=null.
+
+relation R2(int a, int b).
+
+
+//(1)
+infer [R2] x::node<a,null> * y::node<v,x>& v<=a 
+ |-  y::sortHO<b,R2>.
+print residue.
+// inferred rel: [RELDEFN R2: ( true) -->  R2(b,v2_46)]
+
+
+/*
+//(2)
+infer [R2] x::node<a,null> * y::node<v,x>& v<=a 
+ |-  (exists b: y::node<b,p> * p::sortHO<v2,R2> & R2(b,v2)) .
+print residue.
+*/
+
+//(3)
+infer [R2] x::node<a,null> * y::node<v,x>& v<=a 
+ |-  (exists v2: y::node<b,p> * p::sortHO<v2,R2> & R2(b,v2)) .
+print residue.
+
+/*
+//(3)
+infer [R2] x::node<a,null> * y::node<v,x>& v<=a 
+ |-  (exists v2: y::node<b,p> * p::sortHO<v2,R2> & R2(b,v2)) .
+print residue.
+
+infer [R2] emp&flted_29_46=null & v<=a & b=v & p=x
+ |- (exists v2: R2(b,v2) & a=v2).
+print residue.
+*/
+
+/*
+
+WHY is there an exists(R2:..) in the residue in (1)?
+
+Why (3) obtained true -> R2(..)
+*/
+

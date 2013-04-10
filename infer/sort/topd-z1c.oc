@@ -1,0 +1,20 @@
+Pre:={[x,y]:forall(RECx,RECy:
+ not(((((RECx >= 0 && x >= 1 + RECx) && 0 >= 1 + y) && RECx + y = RECy + x) || (((RECx >= 0 && x >= 1 + RECx) && RECx + y >= x) && RECx + y = RECy + x))
+ ) | not(RECy=0) | RECx=0)};
+
+Pre;
+
+#{[x,y]: x <= y} union {[x,y]: y <= x-1, 0}
+
+
+Pre0 := {[x,y]:y!=0 | x=0};
+
+PreN := Pre0 intersection Pre;
+
+PreN;
+
+# {[x,y]: x=0 & 0<=y or x<=y<=-1 or x<=y && 1<=y or y <=-1,x-1}
+
+PairWiseCheck PreN;
+
+# {[x,y]: x=0 & 0 <= y or x <= y && 1 <= y or y <= -1

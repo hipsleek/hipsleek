@@ -1,0 +1,7 @@
+Unknown relations can be divided into 3 categories:
+  (i)   pre-relation - should be weakest
+  (ii)  post-relation - should be strongest
+  (iii) pred-relation 
+        (which can be in pre/post or both)
+For (iii), we can capture relational constraints or
+we can determine their definitions.

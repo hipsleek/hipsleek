@@ -96,3 +96,144 @@ This problem seems to be triggered at relational assumption:
 # dll-del3.ss: DONE
 
   Should return a failure.
+
+*************************************
+# ll-append15.ss: DONE --sa-dangling
+
+ H2(x_600,y_601) ::=
+ emp&x_600=null
+ or x_600::node<val_35_553',next_35_554'>@M * H2(next_35_554',y_601)&true
+
+==> 
+H2(x_600,y_601) ::=
+ emp&x_600=null & DL(y_601)
+ or x_600::node<val_35_553',next_35_554'>@M * H2(next_35_554',y_601)&true
+
+*************************************
+# ins-1.ss
+H2(res) should be stronger:
+res::node<_,p>*p::ll0<> & p !=null
+
+*************************************
+# qsort-1.ss:
+H2(xs',res) = HP1(xs')*HP2(res)
+
+should be: HP1(x)=HP2(x)=ll0
+
+todo:
+ - support binding
+ - support two roots in synthesis
+
+*************************************
+# qsort-2.ss: DONE
+H6(y,res) = H6(xn_684,y_688) * res_687::node<val_78_674,xn_684>@M&true
+ or H5(res_687)&res_687=y_688
+
+note: H6(res,y): OK
+
+*************************************
+# qsort.ss:
+
+qsort: after ins-1.ss is fixed
+
+*************************************
+# app.ss (ll-append8): DONE
+
+Used:
+  infer [H,K,G]
+  requires H(x)*K(y)
+  ensures G(x,y);//'
+
+*************************************
+*******relational definition ********
+*************************************
+[ G(x_572,y_573) ::= x_572::node<val_34_550,y_574>@M * HP_575(y_574,y_573)&true,
+ H(x_578) ::= x_578::node<val_34_526',next_34_527'>@M * HP_545(next_34_527')&true,
+ HP_575(y_574,y_573) ::= 
+ y_574::node<val_34_550,y_576>@M * HP_575(y_576,y_573)&true
+ or K(y_573)&y_573=y_574
+ ,
+ HP_545(v_node_34_579) ::= 
+ emp&v_node_34_579=null
+ or v_node_34_579::node<val_34_526',next_34_527'>@M * HP_545(next_34_527')&
+    true
+ ]
+
+Possible to extract K(Y) ? yielding:
+
+ G(x_572,y) ::= x_572::node<val_34_550,y_574>@M * HP_575(y_574,y) * K(y),
+ HP_575(y_574,y_573) ::= 
+  y_574::node<val_34_550,y_576>@M * HP_575(y_576,y_573)&true
+  or y_573=y_574
+
+*************************************
+# aux.slk
+
+infer [G2] x::node<_,p> * p::node<_,p2>*G2(p2,y)*K(y) & p!=null 
+    |- x::node<_,p>*G2(p,y)*K(y).
+print residue.
+/*
+FAIL but later appear as in next entailment!
+ p::node<Anon_12,p2>@M * G2(p2,y)& XPURE(K(y)) --> G2(p,y)&true,
+ p::node<Anon_12,p2>@M * G2(p2,y)& XPURE(K(y)) --> G2(p,y)&true,
+*/
+*************************************
+# aux5a.slk
+
+ H<> -> tree<> fails as expected, 
+but
+ tree<> <- H<> succeeds instead
+*************************************
+# aux5f.slk
+
+pred H2<> == self::node<_,l>
+inv self!=null.
+
+pred tree2<> == self::node<_,l>*l::node<_,_>
+inv self!=null.
+
+lemma self::tree2<> <- self::H2<>. 
+// should fail but succeeded
+
+This prepared unfolded the LHS term:
+
+Mun_entail_check_helper:
+ EXISTS(Anon_30,l_31: self_lem_15::node<Anon_30,l_31>@M[Orig]&true&
+{FLOW,(1,22)=__flow})[] |-  EBase self_lem_15::tree2@M[0][Orig][LHSCase]&true&{FLOW,(1,22)=__flow}[]
+
+which does not seem sufficient. I think we need to
+unfold RHS term once too, otherwise there is no progress when
+the coercion is applied on RHS
+*************************************
+# norm.slk
+
+Can we test the sa normalization feature in sleek?
+*************************************
+# imm.slk: DONE
+
+infer [HP] HP(x) |-  x::node<_@A,q>@L .
+print residue
+/*
+(i) residue is wrong
+(ii) print also rel-assumption when residue is printed. DONE
+ <1>EXISTS(q,Anon_12: (HP_24(q)) * x::node<Anon_12@A,q@L>@M[Orig]&true&{FLOW,(19,20)=__norm})[]
+*/
+*************************************
+Could we suppress the printing below: DONE
+
+/*
+for sleek; it is only relevant for hip.
+*************************************
+*******relational assumption ********
+*************************************
+[ HP(x)&true --> x::node<Anon_12,q>@M * (HP_24(q))&true]
+*************************************
+
+*************************************
+*******relational definition ********
+*************************************
+[ HP(x_25) ::= x_25::node<Anon_12,q>@M * (HP_24(q))&true,
+ HP_24(q) ::= htrue&true]
+*************************************
+*/
+*************************************

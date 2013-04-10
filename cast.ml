@@ -34,10 +34,15 @@ and prog_decl = {
     
 and prog_or_branches = (prog_decl * 
     ((MP.mix_formula * (ident * (P.spec_var list))) option) )
-    
+
+and data_field_ann =
+  | VAL
+  | REC
+  | F_NO_ANN
+
 and data_decl = { 
     data_name : ident;
-    data_fields : typed_ident list;
+    data_fields : (typed_ident * data_field_ann) list;
     data_parent_name : ident;
     data_invs : F.formula list;
     data_methods : proc_decl list; }
@@ -63,7 +68,12 @@ and barrier_decl = {
     barrier_prune_conditions_baga: ba_prun_cond list;
     barrier_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
 }  
-    
+
+and view_kind =
+  | View_PRIM
+  | View_NORM
+  | View_EXTN
+
 and view_decl = { 
     view_name : ident; 
     view_vars : P.spec_var list;
@@ -72,11 +82,13 @@ and view_decl = {
     view_labels : Label_only.spec_label list;
     view_modes : mode list;
     view_is_prim : bool;
+    view_kind : view_kind;
     mutable view_partially_bound_vars : bool list;
     mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
     view_data_name : ident;
     view_formula : F.struc_formula; (* case-structured formula *)
     view_user_inv : MP.mix_formula; (* XPURE 0 -> revert to P.formula*)
+    view_mem : F.mem_perm_formula option; (* Memory Region Spec *)
     view_inv_lock : F.formula option;
     mutable view_x_formula : (MP.mix_formula); (*XPURE 1 -> revert to P.formula*)
     mutable view_xpure_flag : bool; (* flag to indicate if XPURE0 <=> XPURE1 *)
@@ -153,10 +165,17 @@ and test_comps =
 and coercion_case =
   | Simple
   | Complex
-  | Normalize of bool
+  | Ramify
+  | Normalize of bool 
+(* 
+   |LHS| > |RHS| --> Normalize of true --> combine
+   |LHS| < |RHS| --> Normalize of false --> split
+   Otherwise, simple or complex
+*)
 
 and coercion_decl = { 
     coercion_type : coercion_type;
+	coercion_exact : bool;
     coercion_name : ident;
     coercion_head : F.formula;
     coercion_head_norm : F.formula;
@@ -223,9 +242,10 @@ and exp_bind = {
     exp_bind_bound_var : typed_ident;
     exp_bind_fields : typed_ident list;
     exp_bind_body : exp;
-    exp_bind_imm : heap_ann;
+    exp_bind_imm : Cformula.ann;
+    exp_bind_param_imm : Cformula.ann list;
     exp_bind_read_only : bool; (*for frac perm, indicate whether the body will read or write to bound vars in exp_bind_fields*)
-    exp_bind_path_id : control_path_id;
+    exp_bind_path_id : control_path_id_strict;
     exp_bind_pos : loc }
 
 and exp_block = { exp_block_type : typ;
@@ -439,9 +459,9 @@ let is_primitive_proc p = (*p.proc_body==None*) not p.proc_is_main
 let name_of_proc p = p.proc_name
 
 
-let get_field_typ f = fst f
+let get_field_typ (f,_) = fst f
 
-let get_field_name f = snd f
+let get_field_name (f,_) = snd f
 
 (** An Hoa [22/08/2011] End **)
 
@@ -719,6 +739,8 @@ let void_type = Void
 
 let int_type = Int
 
+let infint_type = INFInt
+
 let float_type = Float
 
 let bool_type = Bool
@@ -735,8 +757,14 @@ let place_holder = P.SpecVar (Int, "pholder___", Unprimed)
 		sensures_pos = pos;
 	}]*)
 let stub_branch_point_id s = (-1,s)
-let mkEAssume pos = Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkTrueFlow ()) pos),(stub_branch_point_id ""),None)
-let mkEAssume_norm pos = Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkNormalFlow ()) pos),(stub_branch_point_id ""),None)
+let mkEAssume pos = 
+	let f = Cformula.mkTrue (Cformula.mkTrueFlow ()) pos in
+	Cformula.mkEAssume [] f (Cformula.mkEBase f None no_pos) (stub_branch_point_id "") None
+ 
+let mkEAssume_norm pos = 
+	let f = Cformula.mkTrue (Cformula.mkNormalFlow ()) pos in
+	(* let sf = Cformula.mkEBase f None no_pos in *)
+	Cformula.mkEAssume [] f (Cformula.mkEBase f None no_pos) (stub_branch_point_id "") None
 	
 let mkSeq t e1 e2 pos = match e1 with
   | Unit _ -> e2
@@ -907,6 +935,19 @@ let is_rec_view_def prog (name : ident) : bool =
    (* let _ = collect_rhs_view vdef in *)
    vdef.view_is_rec
 
+(*check whether a view is a lock invariant*)
+let get_lock_inv prog (name : ident) : (bool * F.formula) =
+  let vdef = look_up_view_def_raw prog.prog_view_decls name in
+  match vdef.view_inv_lock with
+    | None -> (false, (F.mkTrue (F.mkTrueFlow ()) no_pos))
+    | Some f -> (true, f)
+
+let is_lock_inv prog (name : ident) : bool =
+  let vdef = look_up_view_def_raw prog.prog_view_decls name in
+  match vdef.view_inv_lock with
+    | None -> false
+    | Some f -> true
+
 let self_param vdef = P.SpecVar (Named vdef.view_data_name, self, Unprimed) 
 
 let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
@@ -984,9 +1025,10 @@ let look_up_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) (name : st
   try
       let proc = Hashtbl.find procs name in
       proc.proc_callee_hpdefs
-  with Not_found -> Error.report_error {
-      Error.error_loc = no_pos;
-      Error.error_text = "Procedure " ^ name ^ " is not found."}
+  with Not_found -> []
+(* Error.report_error { *)
+      (* Error.error_loc = no_pos; *)
+      (* Error.error_text = "Procedure " ^ name ^ " is not found."} *)
 
 let update_callee_hpdefs_proc (procs : (ident, proc_decl) Hashtbl.t) caller_name (callee_name : string) = 
   try
@@ -1086,22 +1128,44 @@ let look_up_coercion_def_raw coers (c : ident) : coercion_decl list =
   (*   end *)
   (* | [] -> [] *)
 
-(*a coercion can be simple, complex or normalizing*)
+(*
+  a coercion can be simple, complex or normalizing
+  Note that:
+  Complex + Left == normalization
+*)
+(*TODO: re-implement with care*)
 let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
+  let h,_,_,_,_ = F.split_components lhs in
+  let hs = F.split_star_conjunctions h in
+  let flag = if (List.length hs) == 1 then 
+	  let sm = List.hd hs in (match sm with
+	  | F.StarMinus _ -> true
+	  | _ -> false)
+	  else false in
+  if(flag) then Ramify
+  else
   let fct f = match f with
       | Cformula.Base {F.formula_base_heap=h}
-	  | Cformula.Exists {F.formula_exists_heap=h} ->      
+      | Cformula.Exists {F.formula_exists_heap=h} ->      
           let hs = F.split_star_conjunctions h in
 		  let self_n = List.for_all (fun c-> (P.name_of_spec_var (F.get_node_var c)) = self) hs in
           (List.length hs),self_n, List.map F.get_node_name hs
       | _ -> 1,false,[]
   in
+  (*length = #nodes, sn = is there a self node, typ= List of names of nodes*)
   let lhs_length,l_sn,lhs_typ = fct lhs in
   let rhs_length,r_sn,rhs_typ = fct rhs in
   match lhs_typ@rhs_typ with
 	| [] -> Simple
 	| h::t ->
+        (*
+          Why using concret numbers (e.g. 1,2) here ?
+          If there is a lemma that split 1 node into 3 nodes,
+          it is also considered a split lemma?
+        *)
 		if l_sn && r_sn && (List.for_all (fun c-> h=c) t) then
+            (*all nodes having the same names*)
+            (* ??? why using the node names *)
 			if lhs_length=2 && rhs_length=1  then Normalize true
 			else if lhs_length=1 && rhs_length=2  then Normalize false
 			else if lhs_length=1 then Simple
@@ -1110,7 +1174,7 @@ let case_of_coercion_x (lhs:F.formula) (rhs:F.formula) : coercion_case =
 			else Complex
 		
 let case_of_coercion lhs rhs =
-	let pr1 r = match r with | Simple -> "simple" | Complex -> "complex" | Normalize b-> "normalize "^string_of_bool b in
+	let pr1 r = match r with | Simple -> "simple" | Complex -> "complex" | Ramify -> "ramify" | Normalize b-> "normalize "^string_of_bool b in
 	Debug.no_2 "case_of_coercion" !Cformula.print_formula !Cformula.print_formula pr1 case_of_coercion_x lhs rhs  
 
 let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
@@ -1273,6 +1337,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
   | cdef1 :: _ -> begin
 	  (* generate the first node *)
 	  let sub_tvar = List.hd subnode.F.h_formula_data_arguments in
+	  (* let sub_tvar_ann = List.hd subnode.F.h_formula_data_param_imm in *)
 	  let sub_ext_var = List.hd (List.tl subnode.F.h_formula_data_arguments) in
 		(* call gen_exts with sup_ext_var to link the 
 		   head node with extensions *)
@@ -1289,6 +1354,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 							   F.h_formula_data_name = cdef1.data_name;
 							   F.h_formula_data_derv = subnode.F.h_formula_data_derv;
 							   F.h_formula_data_imm = subnode.F.h_formula_data_imm;
+                               F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 							   F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
 							   F.h_formula_data_origins = subnode.F.h_formula_data_origins;
 							   F.h_formula_data_original = subnode.F.h_formula_data_original;
@@ -1309,6 +1375,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_derv = subnode.F.h_formula_data_derv;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
+                                         F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 										 F.h_formula_data_perm = subnode.F.h_formula_data_perm; (*LDK*)
 							             F.h_formula_data_origins = subnode.F.h_formula_data_origins;
 							             F.h_formula_data_original = subnode.F.h_formula_data_original;
@@ -1330,6 +1397,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_derv = subnode.F.h_formula_data_derv;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
+                                         F.h_formula_data_param_imm = subnode.F.h_formula_data_param_imm;
 										 F.h_formula_data_perm = subnode.F.h_formula_data_perm;
 							             F.h_formula_data_origins = subnode.F.h_formula_data_origins;
 							             F.h_formula_data_original = subnode.F.h_formula_data_original;
@@ -1536,12 +1604,14 @@ let check_proper_return cret_type exc_list f =
 			else ()			
 	| F.Or b-> check_proper_return_f b.F.formula_or_f1 ; check_proper_return_f b.F.formula_or_f2 in
   let rec helper f0 = match f0 with 
-	| F.EBase b-> (match b.F.formula_struc_continuation with | None -> () | Some l -> helper l)
-	| F.ECase b-> List.iter (fun (_,c)-> helper c) b.F.formula_case_branches
-	| F.EAssume (_,b,_,_)-> if (F.isAnyConstFalse b)||(F.isAnyConstTrue b) then () else check_proper_return_f b
-	| F.EInfer b -> ()(*check_proper_return cret_type exc_list b.formula_inf_continuation*)
-	| F.EList b -> List.iter (fun c-> helper(snd c)) b 
-	| F.EOr b -> (helper b.F.formula_struc_or_f1; helper b.F.formula_struc_or_f2)in
+	| F.EBase b   -> (match b.F.formula_struc_continuation with | None -> () | Some l -> helper l)
+	| F.ECase b   -> List.iter (fun (_,c)-> helper c) b.F.formula_case_branches
+	| F.EAssume b -> 
+			if (F.isAnyConstFalse b.F.formula_assume_simpl)||(F.isAnyConstTrue b.F.formula_assume_simpl) then () 
+			else check_proper_return_f b.F.formula_assume_simpl
+	| F.EInfer b  -> ()(*check_proper_return cret_type exc_list b.formula_inf_continuation*)
+	| F.EList b   -> List.iter (fun c-> helper(snd c)) b 
+	in
   helper f
 
  
@@ -1716,10 +1786,6 @@ let rec add_uni_vars_to_view_x cprog (l2r_coers:coercion_decl list) (view:view_d
               let vars2 = match e.F.formula_struc_continuation with | None -> [] | Some l -> process_struc_formula l in
               P.remove_dups_svl (vars1@vars2)
 		  | F.EList b -> P.remove_dups_svl (List.flatten (List.map (fun c-> process_struc_formula (snd c)) b))
-		  | F.EOr b -> 
-				let r1 = process_struc_formula b.F.formula_struc_or_f1 in
-				let r2 = process_struc_formula b.F.formula_struc_or_f2 in
-				P.remove_dups_svl (List.flatten [r1;r2])
           | _ ->
               let _ = print_string "[add_uni_vars_to_view] Warning: only handle EBase \n" in
               []
@@ -1872,3 +1938,6 @@ and add_term_nums_proc (proc: proc_decl) log_vars add_call add_phase =
     }, pvl1 @ pvl2)
 
 
+let collect_hp_rels prog= Hashtbl.fold (fun i p acc-> 
+	let name = unmingle_name p.proc_name in
+	(List.map (fun c-> name,c) p.proc_hpdefs)@acc) prog.new_proc_decls []

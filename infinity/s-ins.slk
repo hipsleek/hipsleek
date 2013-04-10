@@ -1,0 +1,83 @@
+
+data node {
+	int val; 
+	node next; 
+}.
+
+pred  sortll<mi> == self=null & mi=\inf
+   or self::node<mi, p> * p::sortll<m2> & mi<=m2
+inv true.
+
+
+//(1) fail
+checkentail v<\inf |- v=\inf.
+
+//(2) valid
+checkentail true |- v=min(v,\inf).
+
+//(3) Valid
+checkentail v=\inf |- v>=1 .
+/*
+   problem  
+   FAIL
+*/
+
+//(4) Fail
+checkentail true |- v=max(v,-w).
+// w+v=max(w+v,0)
+
+//(5) valid
+checkentail true |- v=max(v,-\inf).
+/*
+normalize_inf_formula inp1 : (ZInfinity)+v=max((ZInfinity)+v,0)
+normalize_inf_formula@20 EXIT out : ZInfinity=ZInfinity
+*/
+
+//(6) Valid
+checkentail true |- v=max(v,0-\inf).
+/*
+ PROBLEM : How come empty?
+*/
+
+//(7) Fail
+checkentail true |- v>-\inf.
+/*
+
+normalize_inf_formula inp1 : 0<((ZInfinity)+v)
+normalize_inf_formula@26 EXIT out : ZInfinity!=0
+*/
+
+
+//(8) Valid
+checkentail true |- v>=-\inf.
+/*
+normalize_inf_formula inp1 : 0<=((ZInfinity)+v)
+normalize_inf_formula@8 EXIT out : true
+*/
+
+//(9) valid
+checkentail res=null |- res::sortll<m> & m=\inf.
+print residue.
+/*
+ UNSOUND to have false
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+
+*/
+
+//(10) valid
+checkentail res=null |- res::sortll<m> .
+print residue.
+/* 
+ UNSOUND to have false
+ <1>hfalse&false&{FLOW,(19,20)=__norm}[]
+*/
+
+//(11) Fail
+checkentail true |- v=max(w,-\inf).
+/*
+UNSOUND:
+normalize_inf_formula@29
+normalize_inf_formula inp1 : (ZInfinity)+v=max((ZInfinity)+w,0)
+normalize_inf_formula@29 EXIT out : ZInfinity=ZInfinity
+
+*/

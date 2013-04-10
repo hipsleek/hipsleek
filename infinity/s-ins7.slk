@@ -1,0 +1,40 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+pred  sortll<mi> == 
+      self=null & mi=\inf
+   or self::node<mi, p> * p::sortll<m2> & mi<=m2
+inv true.
+
+
+//(1) valid
+checkentail res=null |- res::sortll<m> & m=\inf.
+
+//(2) Valid m=\inf instantiated
+checkentail res=null |- res::sortll<m>.
+print residue.
+
+//(3) Fail
+checkentail x=null |- x::sortll<2>.
+// must fail
+
+// (4) valid --> m=\inf
+checkentail x::node<a,null> |- x::sortll<m>.
+print residue.
+
+// (5) fail
+checkentail x::node<a,q>*q::node<b,null> |- x::sortll<m>.
+
+// (6) valid
+checkentail x::node<a,q>*q::node<b,null> & a<b |- x::sortll<m>.
+
+
+// (7) Valid
+checkentail y::node<v,null> * x::sortll<m> & x=null |- y::sortll<r>
+   & r=min(v,m).
+print residue.
+
+// (8) Valid
+checkentail x::sortll<m> & x=null & r=v |- r=min(v,m).

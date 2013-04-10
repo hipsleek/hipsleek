@@ -1,0 +1,127 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+relation R1(int a).
+relation R(int a).
+relation R2(int a, int b).
+
+//(1)
+infer [R] R(v) & R(w)  |- v>=1.
+print residue.
+// <1>emp&1<=v&{FLOW,(19,20)=__norm}[]
+// inferred rel: [RELASS [R]: ( R(v)) -->  1<=v]
+// we should keep R(v) & R(w)
+// expecting R(v) & R(w) & 1<=v in residual
+// it is a bit dangerous to lose unknown relations
+// at this stage as they may be required again
+
+//(2)
+infer [R] R(v) & R(w)  |- w>=0.
+print residue.
+// expecting w>=0 in residue
+// <1>emp&0<=w&{FLOW,(19,20)=__norm}[]
+// inferred rel: [RELASS [R]: ( R(w)) -->  0<=w]
+// expecting R(v) & R(w) too
+
+//(3)
+infer [R] R(v) & R(w)  |- v>=1 & w>=0.
+print residue.
+
+//(4)
+infer [R2] R2(v,x) & x>=w   |- v>=w.
+print residue.
+
+//(5)
+infer [R] R(v) & R(w)  |- v>=w.
+print residue.
+//<1>emp&R(v) & R(w)&{FLOW,(19,20)=__norm}[]
+//Entail (5) : Fail.
+
+//(6)
+infer [R] R(v) & w=1  |- v>=w.
+print residue.
+// <1>emp&w=1 & 1<=v&{FLOW,(19,20)=__norm}[]
+// inferred rel: [RELASS [R]: ( R(v)) -->  1<=v]
+// Please keep R(v) too
+
+
+//(7)
+infer [R] R(v) & w=v  |- v+w>2.
+print residue.
+
+
+//(8)
+infer [R] R(v) & w=v  |- v+w>3.
+print residue.
+
+
+//(9)
+infer [R] R(v) & v<=z  |- v<z.
+print residue.
+///Entail (10) : Fail.
+
+//(10)
+infer [R,R2] R2(v,x) & R(w) & x>=w   |- v>=w.
+print residue.
+// <1>emp&R2(v,x) & R(w) & w<=x&{FLOW,(19,20)=__norm}[]
+// inferred rel: [RELASS [R2,R]: ( R2(v,x) & R(w) & w<=x) -->  w<=v]
+// expecting 
+// inferred rel: [RELASS [R2]: ( R2(v,x)) -->  x<=v]
+
+//(11)
+infer [R] R(v) & R(w) & w=1  |- v>=w.
+print residue.
+//Entail (6) : Fail.
+//wrong to fail here
+// expecting
+// inferred rel: [RELASS [R]: ( R(v)) -->  1<=v]
+
+//(12)
+infer [R,R2] R2(v,x) & R(w) & x=w |- x!=w.
+print residue.
+
+//(13)
+infer [R,R1] R(v) & R1(w) & w=1  |- v>=w.
+print residue.
+
+/*
+
+(a)  R(v) & D1 --> D2
+       D1 -> D2  (valid)
+
+(b)  R(v) & D1 --> D2
+       D1 /\ D2 -> false  (contradiction)
+     W=free_vars(D1)-v
+     REL_ASS R(v) --> forall W. not(D1)
+
+     R_1(v_1)&R_2(v_2)&D1 --> D2
+       D1/\D2 -> false
+     chose i such that
+     W=free_vars(D1)-v_i
+     REL_ASS R_i(v_i) --> forall W. not(D1)
+
+
+     R_1(v_1)&R_2(v_2)&D1 --> D2
+       D1/\D2 -> false
+     v_1/\v_2 != {} & not(v_2 subseteq v_1 | v_1 subseteq v2)
+     W=free_vars(D1)-v_1Uv_2
+     REL_ASS R_1(v_i) & R_2(v_2) --> forall W. not(D1)
+
+(c)  R(v) & D1 --> D2
+
+     W=free_vars(D1,D2)-v
+     REL_ASS R(v) --> forall W. not(D1) \/ D2
+
+     R_1(v_1)&R_2(v_2)&D1 --> D2
+     chose i such that
+     W=free_vars(D1)-v_i
+     REL_ASS R_i(v_i) --> forall W. not(D1) \/ D2
+
+     R_1(v_1)&R_2(v_2)&D1 --> D2
+     v_1/\v_2 != {} & not(v_2 subseteq v_1 | v_1 subseteq v2)
+      W=free_vars(D1)-v_1Uv_2
+     REL_ASS R_1(v_i) & R_2(v_2) --> forall W. not(D1) \/ D2
+
+*/

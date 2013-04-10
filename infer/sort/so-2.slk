@@ -1,0 +1,46 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+
+relation R(int a).
+
+/*
+pred sortHO<v,R:relation(int,int)> == self=null
+  or self::node<v,null> 
+  or self::node<v, p> * p::sortHO<v2,R> & R(v,v2) & p!=null
+inv true.
+*/
+
+pred llSP<R1:relation(int)> == self=null
+  or self::node<v,p> * p::llSP<R1> & R1(v)
+inv true.
+/* ERROR : relation cannot be linearized.
+   EBase exists (Expl)(Impl)[v; 
+         p](ex){1}->EXISTS(R1_12: self::node<v,p>@M[Orig] * 
+         p::llSP<R1_12>@M[0][Orig]&R1(v) & R1=R1_12&{FLOW,(1,22)=__flow})[]
+*/
+
+/*
+infer [R] x=null |- x::llSP<R>.
+print residue.
+
+infer [R] x::node<3,null> |- x::node<v,q> * q::llSP<R> & R(v).
+print residue.
+*/
+
+/*
+Below fail because substitution of R not properly
+done as old R1 is still in pure part.
+
+conseq:
+ {1}->x::node<v_33,p_34>@M[Orig] * p_34::llSP<R>@M[0][Orig]&R1(v_33)&
+{FLOW,(1,22)=__flow}[]
+*/
+infer [R] x::node<3,null> |- x::llSP<R>.
+print residue.
+
+
+
+

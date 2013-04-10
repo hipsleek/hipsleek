@@ -1,0 +1,10 @@
+1. sleek:
+   x::node<a@A,b@A>*x::node<a@M,b@M> should not be false (now it's false when on the RHS)
+   how should xpure do this?
+2. sleek:
+   x::node<a@L,b@L>@L |- x::node<a@L,b@L>@M
+- if flag activated check only inside; otherwise check outside
+3. x::node<a@L,b@L>@A should be false
+4. hip:
+   - should we have @L in the postcondition?
+

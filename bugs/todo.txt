@@ -1,3 +1,33 @@
+# test3.slk # DONE 
+
+Inference has three basic problems in above file/
+
+//(4).
+infer[n] x::ll<n> |- x::node<_,null>.
+print residue.
+/*
+This is WRONG! Previously, we got n=1 as inferred constraint.
+
+Entail (4) : Fail.
+*/
+
+//(10).
+infer[Q] x::node<_,y> * y::ll<n2> & 
+Q(n1-1, n2, n3) & n1>0 |- x::ll<n3> & Q(n1,n2,n3).
+print residue.
+/*
+The RELASS are wrong here. n3=n2+1 should have been instantiated
+and n3=1 occurs when n2=0 presumably.
+
+ <1>emp&Q(-1+n1,n2,n3) & 0<n1 & Anon_183=Anon_21 & r_184=y & n3=n2+1 & n3=1&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELASS [Q]: ( Q(-1+n1,n2,n3)) -->  n3=n2+1; 
+                RELASS [Q]: ( Q(-1+n1,n2,n3)) -->  n3=1; 
+                RELDEFN Q: ( 1<=n1 & 0<=n2 & Q(-1+n1,n2,n3)) -->  Q(n1,n2,n3)]
+*/
+
+
+
+#
 
 
 
@@ -35,6 +65,31 @@ Printing very indented:
                                                                    flted_0_114,
                                                                    flted_0_115,
                                                                    flted_0_116: 
+
+# graph2.txt: DONE
+
+Why do two equivalent expression below give different result!
+
+checkentail
+x4::ls<x5>
+* x3::node<x4>
+* x4::ls<x7>
+* x4::node<q>
+* q::ls<x6> & x4!=x6
+& x5!=x7
+& x1=x2 & x2=x3
+|- false.
+
+
+checkentail
+x3::node<x4>
+* x4::ls<x5>
+* x4::ls<x7>
+* x4::node<q>
+* q::ls<x6> & x4!=x6
+& x5!=x7
+& x1=x2 & x2=x3
+|- false.
 
 # test-5a.slk
 

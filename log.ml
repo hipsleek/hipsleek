@@ -48,6 +48,7 @@ type sleek_log_entry = {
     sleek_proving_c_heap: CF.h_formula;
     sleek_proving_evars: CP.spec_var list;
     sleek_proving_hprel_ass: CF.hprel list;
+    sleek_proving_rel_ass: CP.infer_rel_type list;
     sleek_proving_res : CF.list_context;
 }
 
@@ -81,7 +82,12 @@ let pr_sleek_log_entry e=
   (match e.sleek_proving_hprel_ass with
         | [] -> ()
         | _  -> let pr = pr_list_ln Cprinter.string_of_hprel_short in
-                fmt_string ("ass hprel: " ^ (pr e.sleek_proving_hprel_ass)^"\n")
+                fmt_string ("hprel_ass: " ^ (pr e.sleek_proving_hprel_ass)^"\n")
+  );
+  (match e.sleek_proving_rel_ass with
+        | [] -> ()
+        | _  -> let pr = pr_list_ln CP.string_of_infer_rel in
+                fmt_string ("pure rel_ass: " ^ (pr e.sleek_proving_rel_ass)^"\n")
   );
   fmt_string  ("res: " ^ (Cprinter.string_of_list_context_short e.sleek_proving_res));
   fmt_close()
@@ -100,6 +106,9 @@ let sleek_log_stk : sleek_log_entry  Gen.stack_filter
 let sleek_proving_id = ref (0 : int)
 
 (* let current_hprel_ass = ref ([] : CF.hprel list) *)
+let current_infer_rel_stk : CP.infer_rel_type Gen.stack_pr = new Gen.stack_pr 
+  CP.string_of_infer_rel (==)
+
 let current_hprel_ass_stk : CF.hprel  Gen.stack_pr 
       = new Gen.stack_pr Cprinter.string_of_hprel_short (==) 
 
@@ -133,13 +142,18 @@ let add_new_sleek_logging_entry classic_flag caller avoid hec slk_no ante conseq
         sleek_proving_ante = ante;
         sleek_proving_conseq = conseq;
         sleek_proving_hprel_ass = current_hprel_ass_stk # get_stk;
+        sleek_proving_rel_ass = current_infer_rel_stk # get_stk;
         sleek_proving_c_heap = consumed_heap;
         sleek_proving_evars = evars;
         sleek_proving_res = result;
     }
     in
     let _ = sleek_log_stk # push sleek_log_entry in
-    (if not(avoid) then current_hprel_ass_stk # reset)
+    (if not(avoid) then 
+      begin
+        current_hprel_ass_stk # reset; 
+        current_infer_rel_stk # reset
+      end)
         ; ()
   else ()
 
@@ -258,7 +272,7 @@ let z3_proofs_list_to_file (src_files) =
 		(* let with_option= if(!Globals.do_slicing) then "slice" else "noslice" in *)
 		let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
 		let with_option= with_option^"_"^if(!Globals.split_rhs_flag) then "rhs" else "norhs" in
-    let with_option= with_option^"_"^if(not !Globals.elim_exists) then "noee" else "ee" in
+    let with_option= with_option^"_"^if(not !Globals.elim_exists_ff) then "noee" else "ee" in
 		open_out ("logs/"^with_option^"_"^(Globals.norm_file_name (List.hd src_files)) ^".z3") in
 		let _= List.map (fun ix-> let _=fprintf oc "%s" ix in ()) !z3_proof_log_list in
 		let tstoplog = Gen.Profiling.get_time () in
@@ -274,7 +288,7 @@ let proof_greater_5secs_to_file (src_files) =
 		(* let with_option= if(!Globals.do_slicing) then "slice" else "noslice" in *)
 		let with_option = if(!Globals.en_slc_ps) then "eps" else "no_eps" in
 		let with_option= with_option^"_"^if(!Globals.split_rhs_flag) then "rhs" else "norhs" in
-    let with_option= with_option^"_"^if(not !Globals.elim_exists) then "noee" else "ee" in
+    let with_option= with_option^"_"^if(not !Globals.elim_exists_ff) then "noee" else "ee" in
 		open_out ("logs/greater_5sec_"^with_option^"_"^(Globals.norm_file_name (List.hd src_files)) ^".log5") in
 		let _= List.map (fun ix-> let _=fprintf oc "%s" ix in ()) !proof_gt5_log_list in
 		let tstoplog = Gen.Profiling.get_time () in

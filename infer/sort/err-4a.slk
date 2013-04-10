@@ -1,0 +1,8 @@
+/* zip - numeric */
+
+relation R(int a,int b,int c).
+
+infer [R] R(x,y,z,0) & x=0 |- true.
+
+print residue.
+

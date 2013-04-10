@@ -1,0 +1,24 @@
+data cell {
+  int val; int val1;
+}.
+
+
+infer [] y::cell<a,_>@M |- y::cell<b,_>@v & v=@L.
+print residue.
+
+/*
+infer [] x::cell<a,b>@M |- x::cell<a,b@A> * y::cell<_@A,_@M>.
+print residue.
+*/
+/*
+infer [] y::cell<a>@M |- y::cell<c>@M.
+print residue.
+*/
+/*
+infer [] y::cell<a>@M |- y::cell<_@I>@I.
+print residue.
+*/
+/*
+infer [] y::cell<a,c>@M |- y::cell<_@M,d@A>*y::cell<_@A,e@I>.
+print residue.
+*/

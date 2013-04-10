@@ -5,7 +5,7 @@ Example from VCC testsuite: termination-missing-is-top
 int f (int a)
 case {
 	a < 0 -> requires Term ensures true;
-	a >= 0 -> requires Term[2*a+1] ensures true;
+	a >= 0 -> requires Term[1,2*a+1] ensures true;
 }
 {
 	if (a < 0)
@@ -18,8 +18,8 @@ int g (int a, int b)
 case {
 	a < 0 -> requires Term ensures true;
 	a >= 0 -> case {
-		b < 0 -> requires Term[2*a] ensures true;
-		b >= 0 -> requires Term[2*a, b] ensures true;
+		b < 0 -> requires Term[1,2*a] ensures true;
+		b >= 0 -> requires Term[1,2*a, b] ensures true;
 	}
 }
 {

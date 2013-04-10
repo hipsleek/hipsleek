@@ -1,0 +1,56 @@
+/*
+  Description:
+   Term.check_term_rhs may not work well with --eps
+   If dis_term_chk = ref true, the following example failed.
+
+  Reason:
+   In check_term_rhs, there is
+     let _, rhs_p = strip_lexvar_mix_formula rhs_p in
+   This turns a mix_formula into a pure_formula; therefore,
+   lose --eps information
+*/
+
+data node { int val ; node next }.
+
+pred lseg<n, p> == case {
+     n=0 -> [] self = p & n = 0;
+//   n!=0 ->  [] self::node<next = r> * r::lseg<n - 1, p>; 
+     n!=0 ->  [] self::node<next = r> * r::lseg<b,p> & b=n-1; 
+     }
+     inv n >= 0.
+
+lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+
+checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3 & n2 = 4.
+print residue. // valid
+
+/*
+
+REASON:
+
+  In heap_entail_empty_rhs_heap, check_term changed from 
+  r1!=null(IP) to r1!=null(IN). Therefore, r1!=null has to
+  re-prove. However, the current entail-state could not.
+
+After infer_: rhs_p =  (
+(SLICE[x,n,n1,b_77,b_92,n2,r2,r1][](sat?):
+   [0<=n1(IP)& n2!=0(IP)& 0<=b_92(IN)& 0<=n2(IP)& r1!=null(IP)& n=n1+b_77(IN)
+    & 0<=n2(IN)& 0<=b_77(IN)& n1!=0(IP)& x!=null(IP)& b_77=n2+b_92(IN)]
+   [(n1!=0 | r1!=x) & (n2!=0 | r1!=r2)]
+ changed flag:true
+ unsat   flag:true
+   alias set:[@{n1, __CONST_Int_3} 
+ {__CONST_Int_4, n2}]))
+
+After check_term: rhs_p =  (
+(SLICE[n,b_77,n2,r2,n1,r1,x,b_92][](sat?):
+   [0<=b_92(IN)& b_77=b_92+n2(IN)& 0<=n1(IN)& x!=null(IN)& n2!=0(IN)
+    & n1!=0(IN)& 0<=b_77(IN)& r1!=null(IN)& 0<=n2(IN)& n=b_77+n1(IN)]
+   [(n1!=0 | r1!=x) & (n2!=0 | r1!=r2)]
+ changed flag:true
+ unsat   flag:true
+   alias set:[@{__CONST_Int_3, n1} 
+ {n2, __CONST_Int_4}]))
+
+*/

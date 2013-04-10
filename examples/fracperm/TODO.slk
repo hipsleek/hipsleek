@@ -1,0 +1,2 @@
+- Wed, 2012-08-15:
+run-fast-test sleek fails 3 examples: a weird failure for infer5.slk and 2 expected failures for imm1.slk and imm3.slk

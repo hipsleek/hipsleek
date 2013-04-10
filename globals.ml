@@ -1,6 +1,9 @@
 (* global types and utility functions *)
 (* module Lb = Label_only *)
     (* circular with Lb *)
+    
+(*let ramification_entailments = ref 0
+let total_entailments = ref 0 *)
 
 type ('a,'b) twoAns = 
   | FstAns of 'a
@@ -12,6 +15,7 @@ type constant_flow = string
 exception Illegal_Prover_Format of string
 
 let reverify_flag = ref false
+let reverify_all_flag = ref false
 let ineq_opt_flag = ref false
 
 let illegal_format s = raise (Illegal_Prover_Format s)
@@ -27,7 +31,6 @@ type bformula_label = int
 and ho_branch_label = string
 (*and branch_label = spec_label	(*formula branches*)*)
 
-
 type formula_label = (int*string)
 
 and control_path_id_strict = formula_label
@@ -35,6 +38,7 @@ and control_path_id_strict = formula_label
 and control_path_id = control_path_id_strict  option
     (*identifier for if, catch, call*)
 
+let eq_control_path_id ((p1,_):formula_label) ((p2,_):formula_label) = p1==p2
 
 let empty_label = (0,"")
 let app_e_l c = (empty_label, c)
@@ -49,17 +53,17 @@ type path_label = int (*which path at the current point has been taken 0 -> then
 
 type path_trace = (control_path_id_strict * path_label) list
 
-and loc = {
-			start_pos : Lexing.position (* might be expanded to contain more information *);
-			mid_pos : Lexing.position;
-			end_pos : Lexing.position;
-			}
+and loc =  {
+    start_pos : Lexing.position (* might be expanded to contain more information *);
+    mid_pos : Lexing.position;
+    end_pos : Lexing.position;
+  }
 
 and primed =
   | Primed
   | Unprimed
 
-and heap_ann = Lend | Imm | Mutable
+and heap_ann = Lend | Imm | Mutable | Accs
 
 and vp_ann =  VP_Zero | VP_Full | VP_Value (* | VP_Ref *)
 
@@ -72,6 +76,8 @@ and term_ann =
 and term_fail =
   | TermErr_May
   | TermErr_Must
+
+and rel = REq | RNeq | RGt | RGte | RLt | RLte | RSubAnn
 
 (* and prim_type =  *)
 (*   | TVar of int *)
@@ -90,6 +96,7 @@ type typ =
   | Bool
   | Float
   | Int
+  | INFInt
   | NUM
   | Void
   | List of typ
@@ -98,10 +105,62 @@ type typ =
   | Named of ident (* named type, could be enumerated or object *)
           (* Named "R" *)
   | Array of (typ * int) (* base type and dimension *)
-  | RelT (* relation type *)
+  | RelT of (typ list) (* relation type *)
   | HpT (* heap predicate relation type *)
   | Tree_sh
   (* | FuncT (\* function type *\) *)
+  | Pointer of typ (* base type and dimension *)
+
+let is_program_pointer (name:ident) = 
+  let slen = (String.length name) in
+  try  
+      let n = (String.rindex name '_') in
+      (* let _ = print_endline ((string_of_int n)) in *)
+      let l = (slen-(n+1)) in
+      if (l==0) then (false,name)
+      else 
+        let str = String.sub name (n+1) (slen-(n+1)) in
+        if (str = "ptr") then
+          let s = String.sub name 0 n in
+          (true,s)
+        else
+          (false,name)
+  with  _ -> (false,name)
+
+let is_pointer_typ (t:typ) : bool =
+  match t with
+    | Pointer _ -> true
+    | _ -> false
+
+let convert_typ (t:typ) : typ =
+  match t with
+    | Pointer t1 -> 
+        (match t1 with
+          | Int -> Named "int_ptr"
+          | Pointer t2 ->
+              (match t2 with
+                | Int -> Named "int_ptr_ptr"
+                | _ -> t2 (*TO CHECK: need to generalize for float, bool, ...*)
+              )
+          | _ -> t1 (*TO CHECK: need to generalize for float, bool, ...*)
+        )
+    | _ -> t
+
+let revert_typ (t:typ) : typ =
+  (match t with
+    | Named t1 ->
+        (match t1 with
+          | "int_ptr" -> Int
+          | "int_ptr_ptr" -> Named "int_ptr"
+          | _ -> Named "Not_Support")
+    | _ -> Named "Not_Support")
+
+let name_of_typ (t:typ) : string =
+  (match t with
+    | Named t1 ->
+        t1
+    | _ -> 
+        "Not_Support")
 
 let is_pointer t=
  match t with
@@ -109,6 +168,17 @@ let is_pointer t=
    | _ -> false
 
 let barrierT = Named "barrier"
+
+let convert_prim_to_obj (t:typ) : typ =
+  (match t with
+    | Int -> Named "int_ptr"
+    | Named t1 ->
+        (match t1 with
+          | "int_ptr" -> Named "int_ptr_ptr"
+          | _-> t (*TO CHECK: need to generalize for float, bool, ...*)
+        )
+    | _ -> t (*TO CHECK: need to generalize for float, bool, ...*)
+  )
 
 (*for heap predicate*)
 let hp_default_prefix_name = "HP_"
@@ -121,7 +191,7 @@ type mode =
   | ModeIn
   | ModeOut
   
-  
+
 
 type perm_type =
   | NoPerm (*no permission at all*)
@@ -146,12 +216,14 @@ let is_float_type (t:typ) = match t with
 
 let string_of_heap_ann a =
   match a with
+    | Accs -> "@A"
     | Lend -> "@L"
     | Imm -> "@I"
     | Mutable -> "@M"
 
 let int_of_heap_ann a =
   match a with
+    | Accs -> 3
     | Lend -> 2
     | Imm -> 1
     | Mutable -> 0
@@ -174,10 +246,10 @@ let string_of_term_ann a =
     | TermErr_Must -> "TermErr_Must"
 
 let string_of_loc (p : loc) = 
-    Printf.sprintf "File \"%s\",Line:%d,Col:%d"
+    Printf.sprintf "1 File \"%s\",Line:%d,Col:%d"
     p.start_pos.Lexing.pos_fname 
     p.start_pos.Lexing.pos_lnum
-	(p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)
+    (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)
 ;;
 
 let string_of_pos (p : Lexing.position) = 
@@ -343,6 +415,13 @@ let set_entail_pos p = entail_pos := p
 (* let clear_proving_loc () = proving_loc#reset *)
 (*   (\* proving_loc := None *\) *)
 
+  let pr_lst s f xs = String.concat s (List.map f xs)
+
+ let pr_list_brk open_b close_b f xs  = open_b ^(pr_lst "," f xs)^close_b
+ let pr_list f xs = pr_list_brk "[" "]" f xs
+ let pr_list_angle f xs = pr_list_brk "<" ">" f xs
+ let pr_list_round f xs = pr_list_brk "(" ")" f xs
+
 (* pretty printing for types *)
 let rec string_of_typ (x:typ) : string = match x with
    (* may be based on types used !! *)
@@ -350,6 +429,7 @@ let rec string_of_typ (x:typ) : string = match x with
   | Bool          -> "boolean"
   | Float         -> "float"
   | Int           -> "int"
+  | INFInt        -> "INFint"
   | Void          -> "void"
   | NUM          -> "NUM"
   | AnnT          -> "AnnT"
@@ -357,12 +437,19 @@ let rec string_of_typ (x:typ) : string = match x with
   | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List t        -> "list("^(string_of_typ t)^")"
   | Tree_sh		  -> "Tsh"
-  | RelT        -> "RelT"
+  | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
+  | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | HpT        -> "HpT"
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
-	let rec repeat k = if (k == 0) then "" else "[]" ^ (repeat (k-1)) in
+	let rec repeat k = if (k <= 0) then "" else "[]" ^ (repeat (k-1)) in
 		(string_of_typ et) ^ (repeat r)
+;;
+
+let is_RelT x =
+  match x with
+    | RelT _ -> true
+    | _ -> false
 ;;
 
 (* aphanumeric name *)
@@ -372,6 +459,7 @@ let rec string_of_typ_alpha = function
   | Bool          -> "boolean"
   | Float         -> "float"
   | Int           -> "int"
+  | INFInt        -> "INFint"
   | Void          -> "void"
   | NUM          -> "NUM"
   | AnnT          -> "AnnT"
@@ -379,7 +467,8 @@ let rec string_of_typ_alpha = function
   | BagT t        -> "bag_"^(string_of_typ t)
   | TVar t        -> "TVar_"^(string_of_int t)
   | List t        -> "list_"^(string_of_typ t)
-  | RelT        -> "RelT"
+  | RelT a      -> "RelT("^(pr_list string_of_typ a)^")"
+  | Pointer t        -> "Pointer{"^(string_of_typ t)^"}"
   | HpT        -> "HpT"
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, r) -> (* An Hoa *)
@@ -418,6 +507,8 @@ let string_of_primed p =
 
 let string_of_primed_ident (id,p) =
   id ^ string_of_primed p
+
+let pr_ident_list = pr_list (fun (i,p) -> i^(string_of_primed p))
 
 let rec s_p_i_list l c = match l with 
   | [] -> ""
@@ -484,6 +575,10 @@ let eres_name = "eres"
 
 let self = "self"
 
+let constinfinity = "ZInfinity"
+
+let deep_split_disjuncts = ref false
+
 let this = "this"
 
 let is_self_ident id = self=id
@@ -499,6 +594,20 @@ let finalize_name = "finalize"
 let acquire_name = "acquire"
 let release_name = "release"
 let lock_name = "lock"
+let lock_typ = Named "lock"
+
+let ls_name = "LS"
+let lsmu_name = "LSMU"
+let ls_data_typ = "lock"
+
+let waitlevel_name = "waitlevel"
+let waitlevel_typ = Int
+
+let level_pred = "level"
+let level_name = "mu"
+let level_data_typ = Int
+let ls_typ = BagT (Named ls_data_typ)
+let lsmu_typ = BagT (Int)
 
 (*precluded files*)
 let header_file_list  = ref (["\"prelude.ss\""] : string list)
@@ -530,7 +639,7 @@ let consume_all = ref false
 
 let enable_split_lemma_gen = ref false
 
-let show_diff = ref false
+let dis_show_diff = ref false
 
 let sa_print_inter = ref false
 
@@ -538,7 +647,7 @@ let sa_en_norm = ref true
 
 let sa_en_split = ref false
 
-let sa_elim_dangling = ref false
+let sa_dangling = ref false
 
 let sa_refine_dang = ref false
 
@@ -552,9 +661,13 @@ let sa_tree_simp = ref false
 
 let sa_subsume = ref false
 
+let norm_elim_useless = ref false
+
+let norm_extract = ref false
+
 let dis_sem = ref false
 
-let show_diff_constrs = ref false
+(* let show_diff_constrs = ref true *)
 
 let procs_verified = ref ([] : string list)
 
@@ -565,22 +678,60 @@ let b_datan = "barrier"
 let verify_callees = ref false
 
 let elim_unsat = ref false
+let disj_compute_flag = ref false
 let smart_xpure = ref true
 let super_smart_xpure = ref false
+let precise_perm_xpure = ref true
   (* this flag is dynamically set depending on
      smart_xpure and xpure0!=xpure1 *)
 let smart_memo = ref false
 
 (* let lemma_heuristic = ref false *)
 
-let elim_exists = ref true
+let elim_exists_ff = ref true
 
-(* let allow_imm = ref false (\*imm will delay checking guard conditions*\) *)
 let allow_imm = ref true (*imm will delay checking guard conditions*)
+
+let allow_field_ann = ref true
+
+let allow_mem = ref true
+
+let allow_inf = ref true (*enable support to use infinity (\inf and -\inf) in formulas *)
 
 let ann_derv = ref false
 
+(*is used during deployment, e.g. on a website*)
+(*Will shorten the error/warning/... message delivered
+to end-users*)
+let is_deployed = ref false 
+
+let print_assume_struc = ref false
+
+let web_compile_flag = ref false (*enable compilation flag for website*)
+
+(* Decide whether normalization/simplification
+such as x<1 --> x+1<=1 is allowed
+   Currently, =true when using -tp parahip|rm
+   or using -perm frac
+   The reason for this is that when using concurrency verification,
+   (floating-point) permission  constraints could be related to
+   integer constraints; therefore, this renders the normalization
+   unsound.
+   Look at example at sleekex/examples/fracperm/locks/bug-simplify.slk
+   for more details.
+   Currently, conservativly do not allow such simplification
+*)
+let allow_norm = ref false
+
+let allow_ls = ref false (*enable lockset during verification*)
+
+let allow_locklevel = ref false (*enable locklevel during verification*)
+
+(* let has_locklevel = ref false *)
+
 let ann_vp = ref false (* Disable variable permissions in default, turn on in para5*)
+
+let allow_ptr = ref false (*true -> enable pointer translation*)
 
 let print_proc = ref false
 
@@ -628,6 +779,15 @@ let filtering_flag = ref false
 let split_rhs_flag = ref true
 
 let n_xpure = ref 1
+
+let verbose_num = ref 0
+
+let fixcalc_disj = ref 2
+
+let pre_residue_lvl = ref 0
+(* Lvl 0 - add conjunctive pre to residue only *) 
+(* Lvl 1 - add all pre to residue *) 
+(* Lvl -1 - never add any pre to residue *) 
 
 let check_coercions = ref false
 
@@ -704,6 +864,7 @@ let memo_verbosity = ref 2
 let profile_threshold = 0.5 
 
 let no_cache_formula = ref false
+
 let simplify_imply = ref true
 
 let enable_incremental_proving = ref false
@@ -745,6 +906,7 @@ let log_filter = ref true
   
 (* Options for slicing *)
 let en_slc_ps = ref false
+let override_slc_ps = ref false (*used to force disabling of en_slc_ps, for run-fast-tests testing of modular examples*)
 let dis_ps = ref false
 let dis_slc_ann = ref false
 let slicing_rel_level = ref 2
@@ -796,8 +958,6 @@ let do_infer_inc = ref false
 
 let add_count (t: int ref) = 
 	t := !t+1
-
-(* utility functions *)
 
 let omega_err = ref false
 
@@ -929,8 +1089,12 @@ let fresh_formula_cache_no  () =
 
 let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
-let string_of_loc (p : loc) = p.start_pos.Lexing.pos_fname ^ "_" ^ (string_of_int p.start_pos.Lexing.pos_lnum)^"_"^
-	(string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol))
+let string_of_loc (p : loc) = 
+  p.start_pos.Lexing.pos_fname ^ "_" ^ 
+  (string_of_int p.start_pos.Lexing.pos_lnum) ^ ":" ^
+  (string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol)) ^ "_" ^
+  (string_of_int p.end_pos.Lexing.pos_lnum) ^ ":" ^
+  (string_of_int (p.end_pos.Lexing.pos_cnum-p.end_pos.Lexing.pos_bol))
 
 let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")"
 ;;
@@ -941,6 +1105,9 @@ let string_of_loc_by_char_num (l : loc) =
   Printf.sprintf "(%d-%d)"
     l.start_pos.Lexing.pos_cnum
     l.end_pos.Lexing.pos_cnum
+
+let string_of_formula_label ((i,s):formula_label) =
+      "(" ^ (string_of_int i) ^ " , " ^ s ^ ")"
 
 let seq_local_number = ref 0
 
@@ -1031,4 +1198,3 @@ let wrap_classic et f a =
   with _ as e ->
       (do_classic_frame_rule := flag;
       raise e)
-

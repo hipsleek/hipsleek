@@ -1,0 +1,27 @@
+/*
+ [RELASS [P]: ( P(x,y)) -->  (y!=0 | 1>x) & (y!=0 | x>(0-1))]
+*/
+
+relation P(int a, int b).
+
+infer [P] x=x' & y=y' & P(x,y) & x'!=0 & !(v_bool_44_516') & x'!=0 & 
+!(v_bool_44_516') & y'=0 & v_bool_46_515' & y'=y' & v_bool_46_515'
+|-  false .
+print residue.
+
+
+infer [P] 
+P(x,y) 
+& x!=0 
+& y=0 
+|-  false .
+print residue.
+
+
+//not(y=0 & x!=0)
+//not(y=0) | not(x!=0)
+//y!=0 | x=0
+
+
+
+
