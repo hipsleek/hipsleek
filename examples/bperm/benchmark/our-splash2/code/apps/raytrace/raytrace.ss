@@ -403,7 +403,7 @@ void main()
   int id1 = fork(StartRayTrace,start);
   int id2 = fork(StartRayTrace,start);
   //
-  dprint;
+
   join(id1);
   join(id2);
   //finalizing...
