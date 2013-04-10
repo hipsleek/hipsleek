@@ -3905,8 +3905,10 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                           else
                           (* let new_f = CF.normalize 7 es_f base pos in *) (*TO CHECK: normalize or combine???*)
                           let empty_es = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
+                          (*Currently we use the lemmas to check for b-inconsistency*)
                           let new_f1 = normalize_formula_w_coers 12 prog empty_es new_f prog.prog_left_coercions in
-                          let new_es = {es with CF.es_formula = new_f1} in
+                          let new_es = {es with CF.es_formula = new_f1;
+                              es_unsat_flag = true;} in
                           (* let _ = print_endline ("check_exp: SCall : join : \n ### new_f1 (after normalization) = " ^ (Cprinter.string_of_formula new_f1)) in *)
                           (* Look for "flow __Fail" and convert to failure *)
                           (if (!Globals.perm=Bperm) && (CF.formula_is_eq_flow new_f1 !bfail_flow_int)

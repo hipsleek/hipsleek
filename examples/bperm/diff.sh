@@ -63,3 +63,7 @@ echo "======= plash2/code/apps/water-nsquared/ ======"
 diff test-cases/splash2/water-nsquared.res test-cases/splash2/water-nsquared.n
 echo "======= plash2/code/apps/water-spatial/ ======"
 diff test-cases/splash2/water-spatial.res test-cases/splash2/water-spatial.n
+echo "======= plash2/code/kernels/cholesky/ ======"
+diff test-cases/splash2/cholesky.res test-cases/splash2/cholesky.n
+echo "======= plash2/code/kernels/fft/ ======"
+diff test-cases/splash2/fft.res test-cases/splash2/fft.n

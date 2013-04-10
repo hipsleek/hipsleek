@@ -63,3 +63,7 @@ echo "======= plash2/code/apps/water-nsquared/ (a bit slow) ======"
 ../../hip benchmark/our-splash2/code/apps/water-nsquared/water-nsquared.ss | grep -E 'Proc|assert:' > test-cases/splash2/water-nsquared.n
 echo "======= plash2/code/apps/water-spatial/ (a bit slow) ======"
 ../../hip benchmark/our-splash2/code/apps/water-spatial/water-spatial.ss | grep -E 'Proc|assert:' > test-cases/splash2/water-spatial.n
+echo "======= plash2/code/kernels/cholesky/ ======"
+../../hip benchmark/our-splash2/code/kernels/cholesky/cholesky.ss | grep -E 'Proc|assert:' > test-cases/splash2/cholesky.n
+echo "======= plash2/code/kernels/fft/ ======"
+../../hip benchmark/our-splash2/code/kernels/fft/fft.ss | grep -E 'Proc|assert:' > test-cases/splash2/fft.n
