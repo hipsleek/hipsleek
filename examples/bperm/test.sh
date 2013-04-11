@@ -23,6 +23,10 @@ echo "======= barrier-dynamic.slk ======"
 ../../sleek barrier-dynamic.slk | grep Entail > test-cases/barrier-dynamic.res
 #================HIP==========================
 #================HIP==========================
+echo "======= while-loop.ss ======"
+../../hip while-loop.ss | grep -E 'Proc|assert:' > test-cases/while-loop.res
+echo "======= while-loop2.ss ======"
+../../hip while-loop2.ss | grep -E 'Proc|assert:' > test-cases/while-loop2.res
 echo "======= hip-bperm1.ss ======"
 ../../hip hip-bperm1.ss | grep -E 'Proc|assert:' > test-cases/hip-bperm1.res
 echo "======= bperm-exp.ss ======"
@@ -39,6 +43,8 @@ echo "======= barrier-static-complex.ss ======"
 ../../hip barrier-static-complex.ss | grep -E 'Proc|assert:' > test-cases/barrier-static-complex.res
 echo "======= barrier-static-complex2.ss ======"
 ../../hip barrier-static-complex2.ss | grep -E 'Proc|assert:' > test-cases/barrier-static-complex2.res
+echo "======= barrier-static-complex3.ss ======"
+../../hip barrier-static-complex3.ss | grep -E 'Proc|assert:' > test-cases/barrier-static-complex3.res
 echo "======= barrier-static-multiple.ss ======"
 ../../hip barrier-static-multiple.ss | grep -E 'Proc|assert:' > test-cases/barrier-static-multiple.res
 echo "======= barrier-dynamic-exp1.ss ======"

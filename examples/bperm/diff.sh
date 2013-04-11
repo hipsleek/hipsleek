@@ -23,6 +23,10 @@ echo "======= barrier-dynamic.slk ======"
 diff test-cases/barrier-dynamic.res test-cases/barrier-dynamic.n
 #================HIP==========================
 #================HIP==========================
+echo "======= while-loop.ss ======"
+diff test-cases/while-loop.res test-cases/while-loop.n
+echo "======= while-loop2.ss ======"
+diff test-cases/while-loop2.res test-cases/while-loop2.n
 echo "======= hip-bperm1.ss ======"
 diff test-cases/hip-bperm1.res test-cases/hip-bperm1.n
 echo "======= bperm-exp.ss ======"
@@ -39,6 +43,8 @@ echo "======= barrier-static-complex.ss ======"
 diff test-cases/barrier-static-complex.res test-cases/barrier-static-complex.n
 echo "======= barrier-static-complex2.ss ======"
 diff test-cases/barrier-static-complex2.res test-cases/barrier-static-complex2.n
+echo "======= barrier-static-complex3.ss ======"
+diff test-cases/barrier-static-complex3.res test-cases/barrier-static-complex3.n
 echo "======= barrier-static-multiple.ss ======"
 diff test-cases/barrier-static-multiple.res test-cases/barrier-static-multiple.n
 echo "======= barrier-dynamic-exp1.ss ======"
