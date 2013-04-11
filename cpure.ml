@@ -5054,7 +5054,7 @@ and purge_mult_x (e :  exp):  exp = match e with
                       | IConst (v2, _) -> 
                             if (v2 = 0) then t2 
                             else if (v2 = 1) then t1 
-                            else if (v2 = 2) then Add(t2,t2,l)
+                            else if (v2 = 2) then Add(t1,t1,l)
                         else Mult (t1, t2, l) 
                       | FConst (v2, _) ->
                             if (v2 = 0.0) then t2 
