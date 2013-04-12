@@ -4321,10 +4321,10 @@ and heap_entail_split_rhs (prog : prog_decl) (is_folding : bool) (ctx_0 : contex
 		                if !Globals.elim_exists_ff then List.map elim_exists_ctx sl
 		                else sl in
 		              (SuccCtx res_ctx, prf))
-	        | _ -> report_error no_pos ("[solver.ml]: No disjunction on the RHS should reach this level\n")
+	        | _ -> report_error no_pos ("[solver.ml heap_entail_split_rhs 1]: No disjunction on the RHS should reach this level\n")
 	    end
       end
-    | _ -> report_error no_pos ("[solver.ml]: No disjunctive context should reach this level\n")
+    | _ -> report_error no_pos ("[solver.ml heap_entail_split_rhs 2]: No disjunctive context should reach this level\n")
 
 (* entailment method for splitting the antecedent *)
 and heap_entail_split_lhs (prog : prog_decl) (is_folding : bool) (ctx0 : context) (conseq : formula) 

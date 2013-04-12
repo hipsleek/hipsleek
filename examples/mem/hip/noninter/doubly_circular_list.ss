@@ -15,15 +15,22 @@ llt<hd,R> == self = hd & R = {}
     	memE R->(node<@L,@A,@M>);
     
    
-void insert_dcll(int v, ref node x)
+void insert_dcll(int v, node x)
 requires x::node<0,y,z> * (y::lln<x,R> &* z::llt<x,R>)
-ensures x'::node<v,y@A,z@A> * (y::lln<x',Ru> &* z::llt<x',Ru>) & x = y & x = z;
+ensures  x::node<0,i,j> * (i::lln<x,Ru> &* j::llt<x,Ru>) & R subset Ru;
 {
 	node tmp = new node(v,null,null);
-	x.next = insert_lln(x,tmp);
-	x.tnext = insert_llt(x,tmp);
-	x = tmp;
-dprint;
+	x.next = insert_lln(x.next,tmp);
+	x.tnext = insert_llt(x.tnext,tmp);
+}
+
+void insert_node_dcll(node v, node x)
+requires x::node<0,y,z> * v::node<m,_,_> * (y::lln<x,R> &* z::llt<x,R>)
+ensures  x::node<0,i,j> * (i::lln<x,Ru> &* j::llt<x,Ru>) & Ru = union(R,{v});
+{
+	//node tmp = new node(v,null,null);
+	x.next = insert_lln(x.next,v);
+	x.tnext = insert_llt(x.tnext,v);
 }
 
 node insert_lln(node x, node n)
