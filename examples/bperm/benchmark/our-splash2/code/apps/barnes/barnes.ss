@@ -208,19 +208,43 @@ void stepsystem(barrier b)
 /*
  * SLAVESTART: main task for each processor
  */
-void SlaveStart(barrier b)
-  requires  b::barrier(1,2,0)<p>
-  ensures b::barrier(1,2,0)<p+5>;
+void SlaveStart(barrier b,int tnow, int dtime, int tstop)
+  requires (exists r1: b::barrier(1,2,0)<p> & (tstop+10000*dtime-tnow)=r1*dtime & tstop+10000*dtime>tnow & dtime>0)
+  ensures (exists r2: b::barrier(1,2,0)<p1> & (tstop+10000*dtime-tnow)=r2*dtime & p1=p+1+r2*4);
 {
   //initialize data
   //...
-  find_my_initial_bodies(b);
+
+  find_my_initial_bodies(b);//+1
+
   //...
-  int i=0;
-  //ignore the while loop to terminate based on time
-  stepsystem(b);
+  // convert the real number loop into correspondent integer loop
+  /* while (Local[ProcessId].tnow < tstop + 0.1 * dtime) { */
+  /*   stepsystem(b); */
+  /* } */
+  int n = tstop+10000*dtime;
+  while(tnow<n)
+    requires (exists r1,r2: b::barrier(1,2,0)<p> & n=r1*dtime & tnow=r2*dtime & r1>=r2 & dtime>0)
+    ensures b::barrier(1,2,0)<p1> & tnow<n & tnow'=n & dtime'=dtime & 4*(tnow'-tnow)=(p1-p)*dtime & n'=n & b'=b
+         or  b::barrier(1,2,0)<p1> & tnow>=n & tnow'=tnow & p1=p & dtime'=dtime & n'=n & b'=b; //'
+   {
+      stepsystem(b); //+4
+      tnow = tnow + dtime;
+   }
   //
 }
+
+//read from command line input, assume arbitary
+int inputTnow() requires true ensures true;
+
+
+//read from command line input, assume arbitary
+int inputTstop() requires true ensures true;
+
+
+//read from command line input, assume arbitary
+int inputDtime() requires true ensures true;
+
 
 void main()
   requires true
@@ -228,13 +252,34 @@ void main()
 {
   barrier b;
   int NPROC=2;
+  /* tnow = 0.0; */
+  /* tstop (double) : The time to stop integration. */
+  /* Default is 0.075. */
+  /* dtime (double) : The integration time-step. */
+  /* Default is 0.025. */
+  /* 0.1 * dtime = 0.0025*/
+  /* Note: 
+     tnow<(tstop + 0.1 * dtime) is the termination condition
+     of the while loop in SlaveStart.
+     In order to capture the correctness, we faithfully
+     convert real-number operations to integer operations.
+     Because, 0.1 * dtime = 0.0025, therefore
+     We scale up dtime and tstop by 10000 to become integers.
+     and assume that tstop + 0.1 * dtime is also an integer.
+  */
+  int tnow = inputTnow();
+  int tstop = inputTstop();
+  int dtime = inputDtime();
+  //assumption to ensure that they are integers
+  assume(exists r1: tstop'+10000*dtime'-tnow'=r1*dtime' & tstop'+10000*dtime'>tnow' & dtime'>0);
+
   initparam();
   startrun(b,NPROC);//create barrier with NPROC parties
   initoutput();
   tab_init();
   //
-  int id1 = fork(SlaveStart,b);
-  int id2 = fork(SlaveStart,b);
+  int id1 = fork(SlaveStart,b,tnow,dtime,tstop);
+  int id2 = fork(SlaveStart,b,tnow,dtime,tstop);
   //
   join(id1);
   join(id2);
