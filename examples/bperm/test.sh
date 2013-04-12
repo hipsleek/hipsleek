@@ -75,3 +75,5 @@ echo "======= plash2/code/kernels/fft/ ======"
 ../../hip benchmark/our-splash2/code/kernels/fft/fft.ss | grep -E 'Proc|assert:' > test-cases/splash2/fft.res
 echo "======= plash2/code/kernels/fu/  (a bit slow) ======"
 ../../hip benchmark/our-splash2/code/kernels/lu/lu.ss | grep -E 'Proc|assert:' > test-cases/splash2/lu.res
+echo "======= plash2/code/kernels/radix/ ======"
+../../hip benchmark/our-splash2/code/kernels/radix/radix.ss | grep -E 'Proc|assert:' > test-cases/splash2/radix.res
