@@ -13,7 +13,7 @@ lemma "D-FULL" self::barrier(c,t,a)<p> & c=t+a & a!=0 -> self::barrier(c,t+a,0)<
 lemma "D-COMBINE-1" self::barrier(c1,t,a1)<p> * self::barrier(c2,t,a2)<p> & c1!=0 & c2!=0 -> self::barrier(c1+c2,t,a1+a2)<p>;
 
 //combine successfully, ordering is not important
-lemma "D-COMBINE-2" self::barrier(c1,t,a1)<p1> * self::barrier(c2,t,a2)<p2> & c1!=0 & c2=0 -> self::barrier(c1,t,a1+a2)<p1>;
+lemma "D-COMBINE-2" self::barrier(c1,t,a1)<p1> * self::barrier(c2,t,a2)<p2> & c1!=0 & c2=0 & p2<=p1 -> self::barrier(c1,t,a1+a2)<p1>;
 
 //combine successfully
 lemma "D-COMBINE-3" self::barrier(0,t,a1)<p1> * self::barrier(0,t,a2)<p2> -> self::barrier(0,t,a1+a2)<p> & p=max(p1,p2);
