@@ -1,7 +1,7 @@
-Procedure f_r_1016_while_40_2$int~barrier SUCCESS
-Procedure f_r_885_while_54_2$int~barrier SUCCESS
-assert:barrier-static-complex.ss:75: 2:  : ok
-assert:barrier-static-complex.ss:77: 2:  : ok
+Procedure f_r_1074_while_15_2$int~barrier SUCCESS
+Procedure f_r_943_while_29_2$int~barrier SUCCESS
+assert:barrier-static-complex.ss:50: 2:  : ok
+assert:barrier-static-complex.ss:52: 2:  : ok
 Procedure main$ SUCCESS
 Procedure thread1$barrier~int SUCCESS
 Procedure thread2$barrier~int SUCCESS
