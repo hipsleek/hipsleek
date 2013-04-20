@@ -1686,54 +1686,66 @@ let ramify_conjconj = ramify_star
 
 let ramify_conjstar = ramify_star
 
+let frame_after_ramification (h1:CF.h_formula) (h2:CF.h_formula) pos (al1:aliasing_scenario) (al2:aliasing_scenario) 
+: CF.h_formula = 
+match al1,al2 with
+  | Not_Aliased, Not_Aliased -> CF.mkStarH h1 h2 pos
+  | May_Aliased, May_Aliased -> CF.mkConjH h1 h2 pos
+  | Must_Aliased, Must_Aliased -> CF.mkConjConjH h1 h2 pos
+  | Partial_Aliased, Partial_Aliased -> CF.mkConjStarH h1 h2 pos
+(*| May_Aliased, _ -> CF.mkConjH h1 h2 pos
+  | _ ,May_Aliased -> CF.mkConjH h1 h2 pos*)
+  | _ , _ -> CF.mkStarH h1 h2 pos
+
 let rec ramify_starminus_in_h_formula (f: CF.h_formula) (vl:C.view_decl list) (aset: CP.spec_var list list) (fl: CF.h_formula list)
-func (mcp: MCP.mix_formula ) : CF.h_formula * CP.formula = 
-  if not (contains_starminus f) then f,(CP.mkTrue no_pos) else 
+func (mcp: MCP.mix_formula ) : CF.h_formula * CP.formula * aliasing_scenario = 
+  if not (contains_starminus f) then f,(CP.mkTrue no_pos),Not_Aliased else 
   let _ = Globals.ramification_entailments := !Globals.ramification_entailments + 1 in
   (*let _ = print_string("Ramification :"^ (string_of_h_formula f)^ "\n") in*)
     match f with
       | CF.Star {CF.h_formula_star_h1 = h1;
                  CF.h_formula_star_h2 = h2;
                  CF.h_formula_star_pos = pos } ->  
-        let res_h1,res_p1 = ramify_starminus_in_h_formula h1 vl aset fl ramify_star mcp in
-        let res_h2,res_p2 = ramify_starminus_in_h_formula h2 vl aset fl ramify_star mcp in           
-	let res_h = CF.mkStarH res_h1 res_h2 pos in
+        let res_h1,res_p1,al1 = ramify_starminus_in_h_formula h1 vl aset fl ramify_star mcp in
+        let res_h2,res_p2,al2 = ramify_starminus_in_h_formula h2 vl aset fl ramify_star mcp in           
+    let res_h = frame_after_ramification res_h1 res_h2 pos al1 al2 in 
 	let res_p = CP.mkAnd res_p1 res_p2 pos in
-	res_h,res_p
+	res_h,res_p,Not_Aliased
       | CF.Conj{CF.h_formula_conj_h1 = h1;
 		CF.h_formula_conj_h2 = h2;
 	        CF.h_formula_conj_pos = pos} ->
-        let res_h1,res_p1 = ramify_starminus_in_h_formula h1 vl aset fl ramify_conj mcp in
-        let res_h2,res_p2 = ramify_starminus_in_h_formula h2 vl aset fl ramify_conj mcp in           
-	let res_h = CF.mkConjH res_h1 res_h2 pos in
+        let res_h1,res_p1,al1 = ramify_starminus_in_h_formula h1 vl aset fl ramify_conj mcp in
+        let res_h2,res_p2,al2 = ramify_starminus_in_h_formula h2 vl aset fl ramify_conj mcp in           
+    let res_h = frame_after_ramification res_h1 res_h2 pos al1 al2 in 
 	let res_p = CP.mkAnd res_p1 res_p2 pos in
-	res_h,res_p
+	res_h,res_p,May_Aliased
       | CF.ConjStar{CF.h_formula_conjstar_h1 = h1;
 		CF.h_formula_conjstar_h2 = h2;
 	        CF.h_formula_conjstar_pos = pos} ->
-        let res_h1,res_p1 = ramify_starminus_in_h_formula h1 vl aset fl ramify_conjstar mcp in
-        let res_h2,res_p2 = ramify_starminus_in_h_formula h2 vl aset fl ramify_conjstar mcp in           
+        let res_h1,res_p1,al1 = ramify_starminus_in_h_formula h1 vl aset fl ramify_conjstar mcp in
+        let res_h2,res_p2,al2 = ramify_starminus_in_h_formula h2 vl aset fl ramify_conjstar mcp in           
 	let res_h = CF.mkConjStarH res_h1 res_h2 pos in
 	let res_p = CP.mkAnd res_p1 res_p2 pos in
-	res_h,res_p
+	res_h,res_p,Partial_Aliased
       | CF.ConjConj{CF.h_formula_conjconj_h1 = h1;
 		CF.h_formula_conjconj_h2 = h2;
 	        CF.h_formula_conjconj_pos = pos} ->
-        let res_h1,res_p1 = ramify_starminus_in_h_formula h1 vl aset fl ramify_conjconj mcp in
-        let res_h2,res_p2 = ramify_starminus_in_h_formula h2 vl aset fl ramify_conjconj mcp in           
+        let res_h1,res_p1,al1 = ramify_starminus_in_h_formula h1 vl aset fl ramify_conjconj mcp in
+        let res_h2,res_p2,al2 = ramify_starminus_in_h_formula h2 vl aset fl ramify_conjconj mcp in           
 	let res_h = CF.mkConjConjH res_h1 res_h2 pos in
 	let res_p = CP.mkAnd res_p1 res_p2 pos in
-	res_h,res_p		 	        
+	res_h,res_p,Must_Aliased		 	        
       | CF.Phase {CF.h_formula_phase_rd = h1;
 		CF.h_formula_phase_rw = h2;
 	        CF.h_formula_phase_pos = pos} ->
-        let res_h1,res_p1 = ramify_starminus_in_h_formula h1 vl aset fl ramify_phase mcp in
-        let res_h2,res_p2 = ramify_starminus_in_h_formula h2 vl aset fl ramify_phase mcp in           
+        let res_h1,res_p1,al1 = ramify_starminus_in_h_formula h1 vl aset fl ramify_phase mcp in
+        let res_h2,res_p2,al2 = ramify_starminus_in_h_formula h2 vl aset fl ramify_phase mcp in           
 	let res_h = CF.mkPhaseH res_h1 res_h2 pos in
 	let res_p = CP.mkAnd res_p1 res_p2 pos in
-	res_h,res_p
+	res_h,res_p,Not_Aliased
      | CF.StarMinus({CF.h_formula_starminus_h1 = h1;
 	CF.h_formula_starminus_h2 = h2;
+    CF.h_formula_starminus_aliasing = al;
 	CF.h_formula_starminus_pos = pos}) -> 
 	if (CF.is_data h2) || (CF.is_view h2) then 
 	let aset_sv  = Context.get_aset aset (CF.get_node_var h2) in
@@ -1741,9 +1753,15 @@ func (mcp: MCP.mix_formula ) : CF.h_formula * CP.formula =
 	(*let _ = print_string("Svar :"^(string_of_spec_var sp_c)^"\n") in*)
 	((CP.mem sp_c aset_sv) || (CP.eq_spec_var (CF.get_node_var h2) sp_c))) fl in
 	let res_h1, res_p1 = if (List.length ramify_list) > 0 then func h1 ramify_list vl mcp else f,(CP.mkTrue no_pos) in
-	res_h1,res_p1
-	else CF.HTrue,(CP.mkTrue no_pos)	
-      | _ -> f,(CP.mkTrue no_pos)
+	res_h1,res_p1,al
+	else CF.HTrue,(CP.mkTrue no_pos),al	
+      | _ -> f,(CP.mkTrue no_pos),Not_Aliased
+
+let ramify_starminus_in_h_formula (f: CF.h_formula) (vl:C.view_decl list) (aset: CP.spec_var list list) (fl: CF.h_formula list)
+func (mcp: MCP.mix_formula ) : CF.h_formula * CP.formula * aliasing_scenario = 
+  let pr = string_of_h_formula in
+  let pr2 = (fun (a,b,c) -> (pr_pair string_of_h_formula string_of_pure_formula (a,b) )) in
+  Debug.no_1 "ramify_starminus_in_h_formula" pr pr2 (fun c -> ramify_starminus_in_h_formula c vl aset fl func mcp) f
 	
 let rec ramify_starminus_in_formula (cf: CF.formula) (vl:C.view_decl list): CF.formula =
  let _ = Globals.total_entailments := !Globals.total_entailments + 1 in
@@ -1752,7 +1770,7 @@ let rec ramify_starminus_in_formula (cf: CF.formula) (vl:C.view_decl list): CF.f
     | CF.Base f   -> 
         let old_p = f.CF.formula_base_pure in
         let fl = split_into_list f.CF.formula_base_heap in
-        let new_h,new_p = 
+        let new_h,new_p,_ = 
     	ramify_starminus_in_h_formula f.CF.formula_base_heap vl (Context.comp_aliases old_p) fl ramify_star old_p
     	in 
     	let new_mcp = MCP.merge_mems f.CF.formula_base_pure (MCP.mix_of_pure new_p) true in
@@ -1767,7 +1785,7 @@ let rec ramify_starminus_in_formula (cf: CF.formula) (vl:C.view_decl list): CF.f
     	let h = f.CF.formula_exists_heap in
     	let mp = f.CF.formula_exists_pure in
         let fl = split_into_list h in
-    	let new_h,new_p = 
+    	let new_h,new_p,_ = 
     	ramify_starminus_in_h_formula h vl (Context.comp_aliases mp) fl ramify_star mp
     	in
  	let new_mcp = MCP.merge_mems mp (MCP.mix_of_pure new_p) true in
@@ -1913,7 +1931,7 @@ match h with
      	CF.h_formula_data_arguments = rdargs;
      	CF.h_formula_data_pos = rpos} -> 
      	if List.exists (fun (id,_) -> String.compare id rname == 0) mpf_fl then
-     	let first_case_h = CF.mkStarMinusH h r pos 57 in (* Will need a matching lemma for a cyclic proof *)
+     	let first_case_h = CF.mkStarMinusH h r Not_Aliased pos 57 in (* Will need a matching lemma for a cyclic proof *)
      	let first_case_p = CP.BForm((CP.BagIn(rdn,mpf_mexp,pos),None),None) in   
      	let second_case_h = h in (* h != r *)
     	let second_case_p = CP.BForm((CP.BagNotIn(rdn,mpf_mexp,pos),None),None) in  	
@@ -1936,7 +1954,7 @@ match h with
     	if List.exists (fun (id,_) -> List.mem id check_list) mpf_fl then
         let bagexp = CP.BagIntersect(mpf_mexp::[mpf_r_mexp],pos) in
         let emp_bag = CP.Bag([],pos) in
-    	let first_case_h = CF.mkStarMinusH h r pos 59 in (* Will need a matching lemma for a cyclic proof *)
+    	let first_case_h = CF.mkStarMinusH h r Not_Aliased pos 59 in (* Will need a matching lemma for a cyclic proof *)
         let first_case_p = CP.mkNeqExp bagexp emp_bag pos in    	
        	let second_case_h = h in (* h != r *)
         let second_case_p = CP.mkEqExp bagexp emp_bag pos in       	

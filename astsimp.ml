@@ -4831,7 +4831,7 @@ and linearize_formula_x (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_
           } ->
               let (lf1, type1) = linearize_heap f1 pos in
               let (lf2, type2) = linearize_heap f2 pos in
-              let tmp_h = CF.mkStarMinusH lf1 lf2 pos 1 in
+              let tmp_h = CF.mkStarMinusH lf1 lf2 Not_Aliased pos 1 in
               let tmp_type = CF.mkAndType type1 type2 in 
 	          (tmp_h, tmp_type)	          
         | IF.Phase

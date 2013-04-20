@@ -6,6 +6,12 @@ let ramification_entailments = ref 0
 let noninter_entailments = ref 0
 let total_entailments = ref 0
 
+type aliasing_scenario = 
+  | Not_Aliased
+  | May_Aliased
+  | Must_Aliased
+  | Partial_Aliased
+
 type ('a,'b) twoAns = 
   | FstAns of 'a
   | SndAns of 'b

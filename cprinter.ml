@@ -953,6 +953,13 @@ let string_of_ms (m:(P.spec_var list) list) : string =
 let pr_mem_formula  (e : mem_formula) = 
   fmt_string (string_of_ms e.mem_formula_mset)
 
+let pr_aliasing_scenario (al :aliasing_scenario) = 
+ match al with
+   | Not_Aliased -> fmt_string "[Not]"
+   | May_Aliased -> fmt_string "[May]"
+   | Must_Aliased -> fmt_string "[Must]"
+   | Partial_Aliased -> fmt_string "[Partial]"
+
 (** print a mem formula to formatter *)
 (* let rec pr_mem_formula  (e : mem_formula) =  *)
 (*   match e.mem_formula_mset with *)
@@ -976,11 +983,12 @@ let rec pr_h_formula h =
           let arg2 = bin_op_to_list op_star_short h_formula_assoc_op h2 in
           let args = arg1@arg2 in
           pr_list_op op_star f_b args
-    | StarMinus ({h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2; h_formula_starminus_pos = pos}) -> 
+    | StarMinus ({h_formula_starminus_h1 = h1; h_formula_starminus_h2 = h2; h_formula_starminus_aliasing = al;
+                  h_formula_starminus_pos = pos}) -> 
 	      let arg1 = bin_op_to_list op_starminus_short h_formula_assoc_op h1 in
           let arg2 = bin_op_to_list op_starminus_short h_formula_assoc_op h2 in
           let args = arg1@arg2 in
-          pr_list_op op_starminus f_b args          
+          pr_aliasing_scenario al; pr_list_op op_starminus f_b args          
     | Phase ({h_formula_phase_rd = h1; h_formula_phase_rw = h2; h_formula_phase_pos = pos}) -> 
 	      let arg1 = bin_op_to_list op_phase_short h_formula_assoc_op h1 in
           let arg2 = bin_op_to_list op_phase_short h_formula_assoc_op h2 in

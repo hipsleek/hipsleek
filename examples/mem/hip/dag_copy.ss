@@ -29,8 +29,9 @@ ensures x::ddag<y,M> & res = y;
 	l = x.left;
 	r = x.right;
 	ll = copy_dag(l);
-	rr = copy_dag(r);
+        rr = copy_dag(r);
 	y = new node(null,ll,rr);
 	x.copy = y;
 	return x.copy;
+//dprint;
 }
