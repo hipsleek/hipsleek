@@ -55,25 +55,28 @@ echo "======= barrier-dynamic-exp3.ss ======"
 ../../hip barrier-dynamic-exp3.ss | grep -E 'Proc|assert:' > test-cases/barrier-dynamic-exp3.res
 #================BENCHMARK==========================
 #================BENCHMARK==========================
-echo "======= plash2/code/apps/barnes/ ======"
+echo "======= splash2/code/apps/barnes/ ======"
 ../../hip benchmark/our-splash2/code/apps/barnes/barnes.ss | grep -E 'Proc|assert:' > test-cases/splash2/barnes.res
-echo "======= plash2/code/apps/fmm/ ======"
+echo "======= splash2/code/apps/fmm/ ======"
 ../../hip benchmark/our-splash2/code/apps/fmm/fmm.ss | grep -E 'Proc|assert:' > test-cases/splash2/fmm.res
-echo "======= plash2/code/apps/ocean/ ======"
+echo "======= splash2/code/apps/ocean/ ======"
 ../../hip benchmark/our-splash2/code/apps/ocean/ocean.ss | grep -E 'Proc|assert:' > test-cases/splash2/ocean.res
-echo "======= plash2/code/apps/raytrace/ ======"
+echo "======= splash2/code/apps/raytrace/ ======"
 ../../hip benchmark/our-splash2/code/apps/raytrace/raytrace.ss | grep -E 'Proc|assert:' > test-cases/splash2/raytrace.res
-echo "======= plash2/code/apps/volrend/ (slow) ======"
+echo "======= splash2/code/apps/volrend/ (slow) ======"
 ../../hip benchmark/our-splash2/code/apps/volrend/volrend.ss | grep -E 'Proc|assert:' > test-cases/splash2/volrend.res
-echo "======= plash2/code/apps/water-nsquared/ (a bit slow) ======"
+echo "======= splash2/code/apps/water-nsquared/ (a bit slow) ======"
 ../../hip benchmark/our-splash2/code/apps/water-nsquared/water-nsquared.ss | grep -E 'Proc|assert:' > test-cases/splash2/water-nsquared.res
-echo "======= plash2/code/apps/water-spatial/ (a bit slow) ======"
+echo "======= splash2/code/apps/water-spatial/ (a bit slow) ======"
 ../../hip benchmark/our-splash2/code/apps/water-spatial/water-spatial.ss | grep -E 'Proc|assert:' > test-cases/splash2/water-spatial.res
-echo "======= plash2/code/kernels/cholesky/ ======"
+echo "======= splash2/code/kernels/cholesky/ ======"
 ../../hip benchmark/our-splash2/code/kernels/cholesky/cholesky.ss | grep -E 'Proc|assert:' > test-cases/splash2/cholesky.res
-echo "======= plash2/code/kernels/fft/ ======"
+echo "======= splash2/code/kernels/fft/ ======"
 ../../hip benchmark/our-splash2/code/kernels/fft/fft.ss | grep -E 'Proc|assert:' > test-cases/splash2/fft.res
-echo "======= plash2/code/kernels/fu/  (a bit slow) ======"
+echo "======= splash2/code/kernels/fu/  (a bit slow) ======"
 ../../hip benchmark/our-splash2/code/kernels/lu/lu.ss | grep -E 'Proc|assert:' > test-cases/splash2/lu.res
-echo "======= plash2/code/kernels/radix/ ======"
+echo "======= splash2/code/kernels/radix/ ======"
 ../../hip benchmark/our-splash2/code/kernels/radix/radix.ss | grep -E 'Proc|assert:' > test-cases/splash2/radix.res
+echo "======= splash2/code/apps/radiosity/ ======"
+#NOT YET VERIFIABLE
+../../hip benchmark/our-splash2/code/apps/radiosity/radiosity.ss | grep -E 'Proc|assert:' > test-cases/splash2/radiosity.res

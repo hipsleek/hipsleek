@@ -55,25 +55,27 @@ echo "======= barrier-dynamic-exp3.ss ======"
 diff test-cases/barrier-dynamic-exp3.res test-cases/barrier-dynamic-exp3.n
 #================BENCHMARK==========================
 #================BENCHMARK==========================
-echo "======= plash2/code/apps/barnes/ ======"
+echo "======= splash2/code/apps/barnes/ ======"
 diff test-cases/splash2/barnes.res test-cases/splash2/barnes.n
-echo "======= plash2/code/apps/fmm/ ======"
+echo "======= splash2/code/apps/fmm/ ======"
 diff test-cases/splash2/fmm.res test-cases/splash2/fmm.n
-echo "======= plash2/code/apps/ocean/ ======"
+echo "======= splash2/code/apps/ocean/ ======"
 diff test-cases/splash2/ocean.res test-cases/splash2/ocean.n
-echo "======= plash2/code/apps/raytrace/ ======"
+echo "======= splash2/code/apps/raytrace/ ======"
 diff test-cases/splash2/raytrace.res test-cases/splash2/raytrace.n
-echo "======= plash2/code/apps/volrend/ ======"
+echo "======= splash2/code/apps/volrend/ ======"
 diff test-cases/splash2/volrend.res test-cases/splash2/volrend.n
-echo "======= plash2/code/apps/water-nsquared/ ======"
+echo "======= splash2/code/apps/water-nsquared/ ======"
 diff test-cases/splash2/water-nsquared.res test-cases/splash2/water-nsquared.n
-echo "======= plash2/code/apps/water-spatial/ ======"
+echo "======= splash2/code/apps/water-spatial/ ======"
 diff test-cases/splash2/water-spatial.res test-cases/splash2/water-spatial.n
-echo "======= plash2/code/kernels/cholesky/ ======"
+echo "======= splash2/code/kernels/cholesky/ ======"
 diff test-cases/splash2/cholesky.res test-cases/splash2/cholesky.n
-echo "======= plash2/code/kernels/fft/ ======"
+echo "======= splash2/code/kernels/fft/ ======"
 diff test-cases/splash2/fft.res test-cases/splash2/fft.n
-echo "======= plash2/code/kernels/lu/ ======"
+echo "======= splash2/code/kernels/lu/ ======"
 diff test-cases/splash2/lu.res test-cases/splash2/lu.n
-echo "======= plash2/code/kernels/radix/ ======"
+echo "======= splash2/code/kernels/radix/ ======"
 diff test-cases/splash2/radix.res test-cases/splash2/radix.n
+echo "======= splash2/code/kernels/radiosity/ ======"
+diff test-cases/splash2/radiosity.res test-cases/splash2/radiosity.n

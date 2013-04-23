@@ -1952,7 +1952,7 @@ mdecl:
 	  |t=decl -> [t]]];
   
 decl:
-  [[ `HIP_INCLUDE; `PRIME; `IDENTIFIER ic; `PRIME -> Include ic
+  [[ `HIP_INCLUDE; `PRIME; ic = dir_path ; `PRIME -> Include ic
 	|  t=type_decl                  -> Type t
   |  r=func_decl; `DOT -> Func r
   |  r=rel_decl; `DOT -> Rel r (* An Hoa *)
@@ -1962,6 +1962,16 @@ decl:
   |  l=logical_var_decl -> Logical_var l
   |  p=proc_decl                  -> Proc p
   | `LEMMA; c= coercion_decl; `SEMICOLON    -> Coercion c]];
+
+dir_path: [[t = LIST1 file_name SEP `DIV ->
+    let str  = List.fold_left (fun res str -> res^str^"/") "" t in
+    let len = String.length str in
+    Str.string_before str (len-1)
+           ]];
+
+file_name: [[ `DOTDOT -> ".."
+              | `IDENTIFIER id -> id
+            ]];
 
 type_decl: 
   [[ t= data_decl  -> Data t
