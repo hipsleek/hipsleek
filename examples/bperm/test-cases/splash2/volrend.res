@@ -13,7 +13,7 @@ Procedure Opacity_Compute$barrier SUCCESS
 Procedure Or_Neighbors_In_Base$barrier SUCCESS
 Procedure Ray_Trace$barrier~int~int SUCCESS
 Procedure Render$barrier~int~int SUCCESS
-Procedure f_r_1780_while_115_2$int~int~barrier~int~int~barrier SUCCESS
+Procedure f_r_1833_while_92_2$int~int~barrier~int~int~barrier SUCCESS
 Procedure Render_Loop$barrier~barrier~int~int~int SUCCESS
 Procedure getAdaptive$ SUCCESS
 Procedure getNumNodes$ SUCCESS

@@ -5,7 +5,7 @@ Procedure find_my_bodies$ SUCCESS
 Procedure hackcofm$ SUCCESS
 Procedure maketree$barrier SUCCESS
 Procedure stepsystem$barrier SUCCESS
-Procedure f_r_1016_while_226_2$int~int~barrier~int SUCCESS
+Procedure f_r_1069_while_201_2$int~int~barrier~int SUCCESS
 Procedure find_my_initial_bodies$barrier SUCCESS
 Procedure SlaveStart$barrier~int~int~int SUCCESS
 Procedure diagnostics$ SUCCESS

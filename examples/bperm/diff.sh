@@ -47,6 +47,8 @@ echo "======= barrier-static-complex3.ss ======"
 diff test-cases/barrier-static-complex3.res test-cases/barrier-static-complex3.n
 echo "======= barrier-static-multiple.ss ======"
 diff test-cases/barrier-static-multiple.res test-cases/barrier-static-multiple.n
+echo "======= barrier-static-consistency.ss ======"
+diff test-cases/barrier-static-consistency.res test-cases/barrier-static-consistency.n
 echo "======= barrier-dynamic-exp1.ss ======"
 diff test-cases/barrier-dynamic-exp1.res test-cases/barrier-dynamic-exp1.n
 echo "======= barrier-dynamic-exp2.ss ======"
