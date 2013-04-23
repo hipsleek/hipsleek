@@ -75,5 +75,5 @@ echo "======= plash2/code/kernels/fft/ ======"
 diff test-cases/splash2/fft.res test-cases/splash2/fft.n
 echo "======= plash2/code/kernels/lu/ ======"
 diff test-cases/splash2/lu.res test-cases/splash2/lu.n
-echo "======= plash2/code/kernels/lu/ ======"
+echo "======= plash2/code/kernels/radix/ ======"
 diff test-cases/splash2/radix.res test-cases/splash2/radix.n

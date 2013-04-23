@@ -3347,7 +3347,10 @@ and subs_to_inst_vars_x (st : ((CP.spec_var * CP.spec_var) * Label_only.spec_lab
 and is_barrier_inconsistent_formula_x prog (f:formula) (es : entail_state) (sv:CP.spec_var) =
   let rec helper f = match f with
     | Base _ | Exists _ ->
-        let h,p,_,_,_ = split_components f in
+        let h,p,fl,t,a = split_components f in
+        let new_f = mkBase h p t fl a no_pos in
+        let empty_es = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
+        let new_es = {empty_es with CF.es_formula = new_f} in
         let heaps = split_star_conjunctions h in
         (*remove HTrue nodes*)
         let heaps = List.filter (fun h ->
@@ -3407,7 +3410,7 @@ and is_barrier_inconsistent_formula_x prog (f:formula) (es : entail_state) (sv:C
                 let or_f = CP.mkOr b1_neq_b2 or_f1 None no_pos in
                 let new_f = CF.formula_of_pure_formula or_f no_pos in
                 (*******************************************)
-                let rs,prf = heap_entail_one_context 15 prog false (CF.Ctx es) new_f None None None no_pos in
+                let rs,prf = heap_entail_one_context 15 prog false (CF.Ctx new_es) new_f None None None no_pos in
                 (*if fail, cannot prove two nodes are consistent,
                   conservatively say inconsistent - true*)
                 (if (CF.isFailCtx rs) then true else helper xs))

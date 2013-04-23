@@ -14,12 +14,16 @@ lemma "D-COMBINE-2" self::barrier(c1,t,a1)<p1> * self::barrier(c2,t,a2)<p2> & c1
 //combine successfully
 lemma "D-COMBINE-3" self::barrier(0,t,a1)<p1> * self::barrier(0,t,a2)<p2> -> self::barrier(0,t,a1+a2)<p> & p=max(p1,p2);
 
+/*
+  April 23, 2013: no longer use lemmas to check for consistency (not sound).
+  Currently impose side-conditions on frame rule and par rule.
+*/
 
 //detect inconsistency
-lemma "D-FAIL-1" self::barrier(c1,t,a1)<p1> * self::barrier(c2,t,a2)<p2> & c1!=0 & c2!=0 & p1!=p2 -> true & flow __Fail;
+/* lemma "D-FAIL-1" self::barrier(c1,t,a1)<p1> * self::barrier(c2,t,a2)<p2> & c1!=0 & c2!=0 & p1!=p2 -> true & flow __Fail; */
 
 //detect inconsistency
-lemma "D-FAIL-2" self::barrier(c1,t,a1)<p1> * self::barrier(c2,t,a2)<p2> & c1!=0 & c2=0 & p1<p2 -> true & flow __Fail;
+/* lemma "D-FAIL-2" self::barrier(c1,t,a1)<p1> * self::barrier(c2,t,a2)<p2> & c1!=0 & c2=0 & p1<p2 -> true & flow __Fail; */
 
 //D-SEP is not implemented as a lemma
 //D-SEP is done automatically in xpure_perm
