@@ -1796,18 +1796,18 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let farg_types, farg_names = List.split proc.proc_args in
 	          let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
 	          let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
-              (*consistency check for barrier*)
-              let ctx = if (not (CF.isFailListFailescCtx ctx)) && (mn_str="waitBarrier") then
-                    let _ = Debug.devel_zprint (lazy ("\ncheck_exp: Scall: waitBarrier() : [Begin] checking for barrier inconsistency \n")) pos in
-                    (*If barrierWait, first try to normalize*)
-                    let ctx1 = normalize_list_failesc_context_w_lemma prog ctx in
-                    (*then eliminate inconsistency due to aliasing*)
-                    let barrier_var = CP.to_primed (List.hd actual_spec_vars) in
-                    let ctx2,_ = Solver.check_barrier_inconsistency_list_failesc_context prog ctx barrier_var pos in
-                    let _ = Debug.devel_zprint (lazy ("\ncheck_exp: Scall: waitBarrier() : [End] checking for barrier inconsistency \n")) pos in
-                    ctx2
-                  else ctx
-              in
+              (* (\*consistency check for barrier*\) *)
+              (* let ctx = if (not (CF.isFailListFailescCtx ctx)) && (mn_str="waitBarrier") then *)
+              (*       let _ = Debug.devel_zprint (lazy ("\ncheck_exp: Scall: waitBarrier() : [Begin] checking for barrier inconsistency \n")) pos in *)
+              (*       (\*If barrierWait, first try to normalize*\) *)
+              (*       let ctx1 = normalize_list_failesc_context_w_lemma prog ctx in *)
+              (*       (\*then eliminate inconsistency due to aliasing*\) *)
+              (*       let barrier_var = CP.to_primed (List.hd actual_spec_vars) in *)
+              (*       let ctx2,_ = Solver.check_barrier_inconsistency_list_failesc_context prog ctx barrier_var pos in *)
+              (*       let _ = Debug.devel_zprint (lazy ("\ncheck_exp: Scall: waitBarrier() : [End] checking for barrier inconsistency \n")) pos in *)
+              (*       ctx2 *)
+              (*     else ctx *)
+              (* in *)
                   (***************************************************************************)
                   (* let _ = print_endline (proc.proc_name ^ ": " ^ (!CF.print_struc_formula proc.proc_static_specs)) in *)
                   (* let _ = print_endline (proc.proc_name ^ ": " ^ (!CF.print_struc_formula proc.proc_stk_of_static_specs#top)) in  *)

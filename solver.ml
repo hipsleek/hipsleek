@@ -3334,6 +3334,170 @@ and subs_to_inst_vars_x (st : ((CP.spec_var * CP.spec_var) * Label_only.spec_lab
 (*   helper f0 his *)
 
 (**************************************************************)
+(* Check barrier consistency (db-consistency)                 *)
+(* Check is done on combined states (after normalize_w_coer)  *)
+(* Neccesary for soundness of frame rule and par rule         *)
+(**************************************************************)
+
+(*a formula (i.e. a combined state) is barrier-consistent if
+  for any pair of its barrier nodes (in combined state)
+  b1:barrier(c1,t1,a1)<p1> and b2::barrier(c2,t2,a2)<p2>
+  where (b1!=b2) \/ (t1!=t2) \/ (t1=t2 & c1+c2>t1+a1+a2 & p1=p2)
+*)
+and is_barrier_inconsistent_formula_x prog (f:formula) (es : entail_state) (sv:CP.spec_var) =
+  let rec helper f = match f with
+    | Base _ | Exists _ ->
+        let h,p,_,_,_ = split_components f in
+        let heaps = split_star_conjunctions h in
+        (*remove HTrue nodes*)
+        let heaps = List.filter (fun h ->
+            match h with
+              | HEmp
+              | HFalse
+              | HTrue -> false
+              | _ -> true) heaps
+        in
+        let barrier_nodes = List.filter (fun h ->
+            let name = CF.get_node_name h in
+            if (name="barrier") then true else false) heaps
+        in
+        if (List.length barrier_nodes <= 1) then (*consistent*) false
+        else
+          let rec pairs_of ls =
+            match ls with
+              | [] -> []
+              | x::xs ->
+                  let res1 = pairs_of xs in
+                  let res2 = List.map (fun v -> (x,v)) xs in
+                  res1@res2
+          in
+          let pairs = pairs_of barrier_nodes in
+          let rec helper pairs = 
+          (match pairs with
+            | [] -> false
+            | (node1,node2)::xs ->
+                let func e =
+                  match e with
+                    | Cpure.Bptriple ((c,t,a),_) -> (c,t,a)
+                    | _ -> report_error no_pos ("is_barrier_inconsistent_formula: expecting Bptriple")
+                in
+                let node1_perm = CF.get_node_perm node1 in
+                let node1_perm = List.hd (Perm.get_cperm node1_perm) in
+                let c1,t1,a1 = func node1_perm in
+                let b1 = CF.get_node_var node1 in
+                let node1_args = CF.get_node_args node1 in
+                let p1 = List.hd node1_args in
+                let node2_perm = CF.get_node_perm node2 in
+                let node2_perm =  List.hd (Perm.get_cperm node2_perm) in
+                let c2,t2,a2 = func node2_perm in
+                let b2 = CF.get_node_var node2 in
+                let node2_args = CF.get_node_args node2 in
+                let p2 = List.hd node2_args in
+                (* (b1!=b2) \/ (t1!=t2) \/ (t1=t2 & c1+c2>t1+a1+a2 & p1=p2) *)
+                let t1_neq_t2 = CP.mkNeqVar t1 t2 no_pos in
+                let t1_eq_t2 = CP.mkEqVar t1 t2 no_pos in
+                let p1_eq_p2 = CP.mkEqVar p1 p2 no_pos in
+                let c1_plus_c2 = CP.mkAdd (CP.mkVar c1 no_pos) (CP.mkVar c2 no_pos) no_pos in
+                let a1_plus_a2 = CP.mkAdd (CP.mkVar a1 no_pos) (CP.mkVar a2 no_pos) no_pos in
+                let a1_a2_plus_t1 = CP.mkAdd (CP.mkVar t1 no_pos) a1_plus_a2 no_pos in
+                let gt_f = CP.mkGtExp c1_plus_c2 a1_a2_plus_t1 no_pos in
+                let or_f2 = CP.mkAnd p1_eq_p2 gt_f no_pos in
+                let or_f1 = CP.mkOr t1_neq_t2 or_f2 None no_pos in
+                let b1_neq_b2 = CP.mkNeqVar b1 b2 no_pos in
+                let or_f = CP.mkOr b1_neq_b2 or_f1 None no_pos in
+                let new_f = CF.formula_of_pure_formula or_f no_pos in
+                (*******************************************)
+                let rs,prf = heap_entail_one_context 15 prog false (CF.Ctx es) new_f None None None no_pos in
+                (*if fail, cannot prove two nodes are consistent,
+                  conservatively say inconsistent - true*)
+                (if (CF.isFailCtx rs) then true else helper xs))
+          in
+          helper pairs
+    | Or ({ formula_or_f1 = f1;
+            formula_or_f2 = f2;
+            formula_or_pos = pos}) ->
+        let b1 = helper f1 in
+        let b2 = helper f2 in
+        (*either of it is inconsistent*)
+        b1||b2
+  in helper f
+
+and is_barrier_inconsistent_formula prog (f:formula) (es : entail_state) (sv:CP.spec_var) =
+  Debug.no_2 "is_barrier_inconsistent_formula"
+      Cprinter.string_of_entail_state
+      Cprinter.string_of_spec_var
+      string_of_bool
+      (fun _ _ -> is_barrier_inconsistent_formula_x prog f es sv) es sv
+
+and check_barrier_inconsistency_context prog ctx (sv:CP.spec_var) pos =
+  let rec helper ctx = match ctx with
+    | OCtx (c1, c2) ->
+        let rs1,prf1 = helper c1 in
+        let rs2,prf2 = helper c2 in
+        ((or_list_context rs1 rs2),(mkOrStrucLeft ctx (CF.struc_formula_of_heap HTrue pos) [prf1;prf2]))
+    | Ctx es ->
+        let f = es.es_formula in
+        let b = is_barrier_inconsistent_formula prog f es sv in
+        if not b then (SuccCtx [ctx] ,Unknown) 
+        else
+          let err_msg = "Possibly inconsistent state detected" in
+          let fe = mk_failure_may err_msg "Possibly inconsistent state" in
+          (CF.mkFailCtx_in (Basic_Reason 
+                                ({fc_message =err_msg;
+                                  fc_current_lhs = es;
+                                  fc_orig_conseq = CF.struc_formula_of_heap HTrue pos;
+                                  fc_prior_steps = es.es_prior_steps;
+                                  fc_current_conseq = CF.mkTrue (mkTrueFlow ()) pos;
+                                  fc_failure_pts =[];}, fe)), Failure)
+  in helper ctx
+
+(*Only check barrier nodes related to svl*)
+and check_barrier_inconsistency_context_svl_x prog ctx (svl : CP.spec_var list) pos =
+  match svl with
+    | [] ->  (SuccCtx [ctx] ,Unknown)
+    | sv::xs ->
+        let (res,prf) = check_barrier_inconsistency_context prog ctx sv pos in
+        if (isFailCtx res) then (res,prf)
+        else check_barrier_inconsistency_context_svl prog ctx xs pos
+
+and check_barrier_inconsistency_context_svl prog ctx (svl : CP.spec_var list) pos =
+  let pr_out (res,prf) = Cprinter.string_of_list_context res in
+  Debug.no_2 "check_barrier_inconsistency_context_svl"
+      Cprinter.string_of_context_short
+      Cprinter.string_of_spec_var_list
+      pr_out
+      (fun _ _ -> check_barrier_inconsistency_context_svl_x prog ctx svl pos) ctx svl
+
+and check_barrier_inconsistency_failesc_context prog cl (sv:CP.spec_var) pos  =
+  let fail_branches, esc_branches, succ_branches  = cl in
+  let res = List.map (fun (lbl,c2)-> 
+	  let list_context_res,prf = check_barrier_inconsistency_context prog c2 sv pos in
+      let esc_skeletal = List.map (fun (l,_) -> (l,[])) esc_branches in
+	  let res = match list_context_res with
+	    | FailCtx t -> [([(lbl,t)],esc_skeletal,[])]
+	    | SuccCtx ls -> List.map ( fun c-> ([],esc_skeletal,[(lbl,c)])) ls in
+	  (res, prf)) succ_branches in
+  let res_l,prf_l =List.split res in
+  let res = List.fold_left (list_failesc_context_or Cprinter.string_of_esc_stack) [(fail_branches,esc_branches,[])] res_l in
+  let proof = ContextList { 
+      context_list_ante = [];
+      context_list_conseq = struc_formula_of_formula (mkTrue (mkTrueFlow ()) pos) pos;
+      context_list_proofs = prf_l; } in
+  (res, proof)
+
+(*required before each wait(b1), sv=b1*)
+and check_barrier_inconsistency_list_failesc_context prog lcl (sv:CP.spec_var) pos =
+  let l = List.map (fun cl -> check_barrier_inconsistency_failesc_context prog cl sv pos) lcl in
+  let l_ctx , prf_l = List.split l in
+  let result = List.fold_left list_failesc_context_union (List.hd l_ctx) (List.tl l_ctx) in
+  let proof = ContextList { 
+      context_list_ante = [];
+      context_list_conseq = struc_formula_of_formula (mkTrue (mkTrueFlow ()) pos) pos;
+      context_list_proofs = prf_l; } in
+  (result, proof)
+
+
+(**************************************************************)
 (* heap entailment                                            *)
 (**************************************************************)
 
@@ -3897,36 +4061,61 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                           (* let _ = print_endline ("check_exp: SCall : join : \n ### es_f = " ^ (Cprinter.string_of_formula es_f) ^ " \n new_base = " ^ (Cprinter.string_of_formula new_base)) in *)
                           (**** DO NOT COMPOSE lockset because they are thread-local*****)
                           let new_f = CF.compose_formula_join es_f new_base (* one_f.F.formula_ref_vars *) (primed_full_vars) CF.Flow_combine pos in
-                          let unsat = unsat_base_nth 1 prog (ref 1) new_f in
-                          if (unsat) then
-                            (*UNSAT when join*)
-                                let nctx = false_ctx_with_orig_ante es new_f no_pos in
-                                (SuccCtx [nctx] ,Unknown)
-                          else
-                          (* let new_f = CF.normalize 7 es_f base pos in *) (*TO CHECK: normalize or combine???*)
-                          let empty_es = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in
-                          (*Currently we use the lemmas to check for b-inconsistency*)
-                          let new_f1 = normalize_formula_w_coers 12 prog empty_es new_f prog.prog_left_coercions in
-                          let new_es = {es with CF.es_formula = new_f1;
+                          let new_es = {es with CF.es_formula = new_f;
                               es_unsat_flag = true;} in
-                          (* let _ = print_endline ("check_exp: SCall : join : \n ### new_f1 (after normalization) = " ^ (Cprinter.string_of_formula new_f1)) in *)
-                          (* Look for "flow __Fail" and convert to failure *)
-                          (if (!Globals.perm=Bperm) && (CF.formula_is_eq_flow new_f1 !bfail_flow_int)
-                           then
-                                (*if detecting bperm conconsistency (i.e. flow __Fail)*)
-                                let err_msg = "__Fail detect after join: bounded permissions inconsistent" in
-                                let fe = mk_failure_may err_msg "bounded permission error" in
-                                (CF.mkFailCtx_in (Basic_Reason 
-                                                      ({fc_message =err_msg;
-                                                        fc_current_lhs = new_es;
-                                                        fc_orig_conseq = CF.struc_formula_of_heap HTrue pos;
-                                                        fc_prior_steps = new_es.es_prior_steps;
-                                                        fc_current_conseq = CF.mkTrue (mkTrueFlow ()) pos;
-                                                        fc_failure_pts =[];}, fe)), Failure)
-                           else
-                                let nctx = CF.Ctx new_es in
-                                (SuccCtx [nctx] ,TrueConseq)
-                          ) (*END IF for BPERM*)
+                          let nctx = CF.Ctx new_es in
+                          let rs = CF.transform_context (elim_unsat_es_now 5 prog (ref 1)) nctx in
+                          let rs2 = prune_ctx prog rs in
+                          (*********CHECK db-consistency***********)
+                          let rs_norm = transform_context (normalize_entail_state_w_lemma prog) rs2 in
+                          let res = if (!Globals.perm = Bperm) then
+                                let hfv = (CF.fv_heap_of new_base) in
+                                let bfv = List.filter (fun v -> (CP.type_of_spec_var v) = barrierT)  hfv in
+                                (*Only check for consistency when there are barrier variables inside the post-condition*)
+                                if (bfv == []) then None
+                                else
+                                  (*normalize until a fixpoint is reached*)
+                                  (* check_barrier_inconsistency_context prog res1 *)
+                                  let res,prf = check_barrier_inconsistency_context_svl prog rs_norm bfv pos in
+                                  if (isFailCtx res) then Some (res,prf)
+                                  else None
+                              else None
+                          in
+                          match res with
+                            | Some res -> res
+                            | None -> (SuccCtx [rs_norm] ,TrueConseq)
+                          (****************************************)
+
+                          (* let unsat = unsat_base_nth 1 prog (ref 1) new_f in *)
+                          (* if (unsat) then *)
+                          (*       (\*UNSAT when join*\) *)
+                          (*       let nctx = false_ctx_with_orig_ante es new_f no_pos in *)
+                          (*       (SuccCtx [nctx] ,Unknown) *)
+                          (* else *)
+                          (* (\* let new_f = CF.normalize 7 es_f base pos in *\) (\*TO CHECK: normalize or combine???*\) *)
+                          (* let empty_es = CF.empty_es (CF.mkTrueFlow ()) Label_only.Lab2_List.unlabelled no_pos in *)
+                          (* (\*Currently we use the lemmas to check for b-inconsistency*\) *)
+                          (* let new_f1 = normalize_formula_w_coers 12 prog empty_es new_f prog.prog_left_coercions in *)
+                          (* let new_es = {es with CF.es_formula = new_f1; *)
+                          (*     es_unsat_flag = true;} in *)
+                          (* (\* let _ = print_endline ("check_exp: SCall : join : \n ### new_f1 (after normalization) = " ^ (Cprinter.string_of_formula new_f1)) in *\) *)
+                          (* (\* Look for "flow __Fail" and convert to failure *\) *)
+                          (* (if (!Globals.perm=Bperm) && (CF.formula_is_eq_flow new_f1 !bfail_flow_int) *)
+                          (*  then *)
+                          (*       (\*if detecting bperm conconsistency (i.e. flow __Fail)*\) *)
+                          (*       let err_msg = "__Fail detect after join: bounded permissions inconsistent" in *)
+                          (*       let fe = mk_failure_may err_msg "bounded permission error" in *)
+                          (*       (CF.mkFailCtx_in (Basic_Reason  *)
+                          (*                             ({fc_message =err_msg; *)
+                          (*                               fc_current_lhs = new_es; *)
+                          (*                               fc_orig_conseq = CF.struc_formula_of_heap HTrue pos; *)
+                          (*                               fc_prior_steps = new_es.es_prior_steps; *)
+                          (*                               fc_current_conseq = CF.mkTrue (mkTrueFlow ()) pos; *)
+                          (*                               fc_failure_pts =[];}, fe)), Failure) *)
+                          (*  else *)
+                          (*       let nctx = CF.Ctx new_es in *)
+                          (*       (SuccCtx [nctx] ,TrueConseq) *)
+                          (* ) (\*END IF for BPERM*\) *)
                         ) (*END IF*)
                         ) (*END IF*)
                       ) (* END match res1 with *)
@@ -4196,6 +4385,26 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
 	                                  let rs3 = add_path_id rs2 (pid,i) in
                                       (* let _ = print_endline ("\n### rs3 = "^(Cprinter.string_of_context rs3)) in *)
                                       let rs4 = prune_ctx prog rs3 in
+                                      (* let _ = print_endline ("\n### rs4 = "^(Cprinter.string_of_context rs4)) in *)
+                                      (*********CHECK db-consistency***********)
+                                      let res = if (!Globals.perm = Bperm) then
+                                            let hfv = (CF.fv_heap_of new_post) in
+                                            let bfv = List.filter (fun v -> (CP.type_of_spec_var v) = barrierT)  hfv in
+                                            (*Only check for consistency when there are barrier variables inside the post-condition*)
+                                            if (bfv == []) then None
+                                            else
+                                              (*normalize until a fixpoint is reached*)
+                                              let rs_norm = transform_context (normalize_entail_state_w_lemma prog) rs4 in
+                                              (* check_barrier_inconsistency_context prog res1 *)
+                                              let res,prf = check_barrier_inconsistency_context_svl prog rs_norm bfv pos in
+                                              if (isFailCtx res) then Some (res,prf)
+                                              else None
+                                          else None
+                                      in
+                                      match res with
+                                        | Some res -> res
+                                        | None ->
+                                      (****************************************)
                                       (*l2: debugging*)
                                       (* DD.info_pprint ("  before consume post rs: " ^ (Cprinter.string_of_context rs)) pos; *)
                                       (* DD.info_pprint ("  before consume post rs1: " ^ (Cprinter.string_of_context rs1)) pos; *)
@@ -10593,7 +10802,7 @@ and normalize_formula_perm prog f = match f with
       
 and normalize_context_perm prog ctx = match ctx with
 	| OCtx (c1,c2)-> mkOCtx (normalize_context_perm prog c1) (normalize_context_perm prog c2) no_pos
-	| Ctx es -> Ctx{ es with es_formula =normalize_formula_perm prog es.es_formula;}
+	| Ctx es -> Ctx{ es with es_formula = normalize_formula_perm prog es.es_formula;}
 	  
 and normalize_formula_w_coers_x prog estate (f: formula) (coers: coercion_decl list): formula =
   if (isAnyConstFalse f) || (!Globals.perm = NoPerm) then f
@@ -10882,13 +11091,13 @@ and transform_null (eqs) :(CP.b_formula list) = List.map (fun c ->
 ) eqs
 
 (* Merging fractional heap nodes when possible using normalization lemmas *)
-let normalize_entail_state_w_lemma prog (es:CF.entail_state) =
+and normalize_entail_state_w_lemma prog (es:CF.entail_state) =
   let es = CF.clear_entailment_vars es in
   (* create a tmp estate for normalizing *)
   let tmp_es = CF.empty_es (CF.mkTrueFlow ()) es.CF.es_group_lbl no_pos in
   CF.Ctx {es with CF.es_formula = normalize_formula_w_coers 5 prog tmp_es es.CF.es_formula prog.prog_left_coercions}
 
-let normalize_list_failesc_context_w_lemma prog lctx =
+and normalize_list_failesc_context_w_lemma_x prog lctx =
   (* if not (Perm.allow_perm ()) then lctx *)
   (* else *)
     (* TO CHECK merging nodes *)
@@ -10898,12 +11107,12 @@ let normalize_list_failesc_context_w_lemma prog lctx =
     let res = CF.transform_list_failesc_context (idf,idf,fct) lctx in
     res
 
-let normalize_list_failesc_context_w_lemma prog lctx =
+and normalize_list_failesc_context_w_lemma prog lctx =
   let pr = Cprinter.string_of_list_failesc_context in
   Debug.no_1 "normalize_list_failesc_context_w_lemma" pr pr
-      (normalize_list_failesc_context_w_lemma prog) lctx
+      (normalize_list_failesc_context_w_lemma_x prog) lctx
       
-let normalize_list_partial_context_w_lemma prog lctx = 
+and normalize_list_partial_context_w_lemma prog lctx = 
   if prog.prog_left_coercions == [] then lctx
   else
     let fct = normalize_entail_state_w_lemma prog in
@@ -11736,112 +11945,3 @@ ation }
 		| EVariance b-> EVariance {b with formula_var_continuation = normalize_frac_struc prog b.formula_var_continuation} in
 	List.map hlp f
 	*)
-
-(*a formula is considered barrier-inconsistent
-  if it consists of two barrier nodes
-  b1:barrier(c1,t1,a1)<p1> and b2::barrier(c2,t2,a2)<p2>
-  where the relation between them can not be decided.
-  This is necessary for soundness when wait(b1)
-  which requires c1=1.
-  Wihouth knowing b1=b2 or b1!=b2, it is not safe
-  to perform the wait(b1).
-*)
-let rec is_barrier_inconsistent_formula_x prog (f:formula) (es : entail_state) (sv:CP.spec_var) =
-  let rec helper f = match f with
-    | Base _ | Exists _ ->
-        let h,p,_,_,_ = split_components f in
-        let heaps = split_star_conjunctions h in
-        (*remove HTrue nodes*)
-        let heaps = List.filter (fun h ->
-            match h with
-              | HEmp
-              | HFalse
-              | HTrue -> false
-              | _ -> true) heaps
-        in
-        let barrier_nodes = List.filter (fun h ->
-            let name = CF.get_node_name h in
-            if (name="barrier") then true else false) heaps
-        in
-        let barrier_vars = List.map CF.get_node_var barrier_nodes in
-        (*Find all vars that are equal to sv*)
-        let eq_vars = MCP.find_closure_mix_formula sv p in
-        (*The rest are those possibly equal to sv*)
-        let pos_eq_vars =  Gen.BList.difference_eq (CP.eq_spec_var) barrier_vars eq_vars in
-        (*try to prove whether sv is different from all of them*)
-        if (pos_eq_vars=[]) then false (*not inconsistent*)
-        else
-          let eq_f = List.fold_left (fun res v1 ->
-              let eq_f = CP.mkNeqVar sv v1 no_pos in
-              (CP.mkAnd res eq_f no_pos)
-          ) (CP.mkTrue no_pos) pos_eq_vars
-          in
-          let new_f = CF.formula_of_pure_formula eq_f no_pos in
-          let rs,prf = heap_entail_one_context 15 prog false (CF.Ctx es) new_f None None None no_pos in
-          (*if fail then inconsistent-true*)
-          (if (CF.isFailCtx rs) then true else false)
-    | Or ({ formula_or_f1 = f1;
-            formula_or_f2 = f2;
-            formula_or_pos = pos}) ->
-        let b1 = helper f1 in
-        let b2 = helper f2 in
-        (*either of it is inconsistent*)
-        b1||b2
-  in helper f
-
-and is_barrier_inconsistent_formula prog (f:formula) (es : entail_state) (sv:CP.spec_var) =
-  Debug.no_2 "is_barrier_inconsistent_formula"
-      Cprinter.string_of_entail_state
-      Cprinter.string_of_spec_var
-      string_of_bool
-      (fun _ _ -> is_barrier_inconsistent_formula_x prog f es sv) es sv
-
-and check_barrier_inconsistency_context prog ctx (sv:CP.spec_var) pos =
-  let rec helper ctx = match ctx with
-    | OCtx (c1, c2) ->
-        let rs1,prf1 = helper c1 in
-        let rs2,prf2 = helper c2 in
-        ((or_list_context rs1 rs2),(mkOrStrucLeft ctx (CF.struc_formula_of_heap HTrue pos) [prf1;prf2]))
-    | Ctx es ->
-        let f = es.es_formula in
-        let b = is_barrier_inconsistent_formula prog f es sv in
-        if not b then (SuccCtx [ctx] ,Unknown) 
-        else
-          let err_msg = "Possibly inconsistent state detected before waitBarrier" in
-          let fe = mk_failure_may err_msg "Possibly inconsistent state" in
-          (CF.mkFailCtx_in (Basic_Reason 
-                                ({fc_message =err_msg;
-                                  fc_current_lhs = es;
-                                  fc_orig_conseq = CF.struc_formula_of_heap HTrue pos;
-                                  fc_prior_steps = es.es_prior_steps;
-                                  fc_current_conseq = CF.mkTrue (mkTrueFlow ()) pos;
-                                  fc_failure_pts =[];}, fe)), Failure)
-  in helper ctx
-
-and check_barrier_inconsistency_failesc_context prog cl (sv:CP.spec_var) pos  =
-  let fail_branches, esc_branches, succ_branches  = cl in
-  let res = List.map (fun (lbl,c2)-> 
-	  let list_context_res,prf = check_barrier_inconsistency_context prog c2 sv pos in
-      let esc_skeletal = List.map (fun (l,_) -> (l,[])) esc_branches in
-	  let res = match list_context_res with
-	    | FailCtx t -> [([(lbl,t)],esc_skeletal,[])]
-	    | SuccCtx ls -> List.map ( fun c-> ([],esc_skeletal,[(lbl,c)])) ls in
-	  (res, prf)) succ_branches in
-  let res_l,prf_l =List.split res in
-  let res = List.fold_left (list_failesc_context_or Cprinter.string_of_esc_stack) [(fail_branches,esc_branches,[])] res_l in
-  let proof = ContextList { 
-      context_list_ante = [];
-      context_list_conseq = struc_formula_of_formula (mkTrue (mkTrueFlow ()) pos) pos;
-      context_list_proofs = prf_l; } in
-  (res, proof)
-
-(*required before each wait(b1), sv=b1*)
-and check_barrier_inconsistency_list_failesc_context prog lcl (sv:CP.spec_var) pos =
-  let l = List.map (fun cl -> check_barrier_inconsistency_failesc_context prog cl sv pos) lcl in
-  let l_ctx , prf_l = List.split l in
-  let result = List.fold_left list_failesc_context_union (List.hd l_ctx) (List.tl l_ctx) in
-  let proof = ContextList { 
-      context_list_ante = [];
-      context_list_conseq = struc_formula_of_formula (mkTrue (mkTrueFlow ()) pos) pos;
-      context_list_proofs = prf_l; } in
-  (result, proof)

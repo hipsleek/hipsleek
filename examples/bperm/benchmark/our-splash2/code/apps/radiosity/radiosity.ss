@@ -9,6 +9,8 @@
   when the program converges.
   That is, we couldnot determine how many steps
   (i.e. barrier waits) a program takes to converge.
+  [FUTURE WORK] Related functional correctness
+  with barrier phase numbers.
  */
 
 //permission rules for static barrier
@@ -46,10 +48,16 @@ void waitBarrier(barrier b)
  *
  ****************************************************************************/
 //elemman.C
-long radiosity_converged() requires true ensures true;
+int radiosity_converged() requires true ensures true;
 
+/*
+  [FUTURE WORK]
+  This procedure is tricky to capture.
+  It is important to relate functional correctness
+  of this procedures with the barrier's phase number
+ */
 //rad_main.C
-long init_ray_tasks(long process_id) requires true ensures true;
+bool init_ray_tasks() requires true ensures true;
 {
   int conv;
   //...
@@ -57,8 +65,9 @@ long init_ray_tasks(long process_id) requires true ensures true;
   conv = radiosity_converged() ;
   //...
   /* If radiosity converged, then return 0 */
-  if( conv )
-    return( 0 ) ;
+  if( conv==1 )
+    return( false ) ;
+  return (true);
 }
 
 
@@ -68,6 +77,7 @@ long init_ray_tasks(long process_id) requires true ensures true;
  *
  ****************************************/
 //rad_main.C
+//FAIL
 void radiosity(barrier barr)
   requires barr::barrier(1,2,0)<p>
   ensures barr::barrier(1,2,0)<p1> & p1=p+4;
@@ -76,32 +86,62 @@ void radiosity(barrier barr)
   //...
   /* Decompose model objects into patches and build the BSP tree */
   /* Create the initial tasks */
-  init_modeling_tasks(process_id) ;
-  process_tasks(process_id) ;
+  init_modeling_tasks() ;
+  process_tasks(barr) ;//+1
   /* Gather rays & do BF refinement */
-  while( init_ray_tasks() )
+  while(init_ray_tasks())
     requires true ensures true;
   {
     /* Wait till tasks are put in the queue */
     waitBarrier(barr);//+1
     /* Then perform ray-gathering and BF-refinement till the
        solution converges */
-    process_tasks() ;
+    process_tasks(barr) ;//+1
   }
   //...
   waitBarrier(barr);//+1
 
   /* Compute area-weighted radiosity value at each vertex */
   init_radavg_tasks() ;
-  process_tasks();
+  process_tasks(barr);//+1
 
   /* Then normalize the radiosity at vertices */
   init_radavg_tasks() ;
-  process_tasks() ;
+  process_tasks(barr) ;//+1
   //finalizing ...
   //...
 }
 
+
+/***************************************************************************
+ *
+ *    init_radavg_tasks()
+ *
+ *    Create initial tasks to perform radiosity averaging.
+ *
+ ****************************************************************************/
+//rad_main.C
+void init_radavg_tasks() requires true ensures true;
+
+
+//taskman.C
+void process_tasks(barrier barr)
+  requires barr::barrier(1,2,0)<p>
+  ensures barr::barrier(1,2,0)<p1> & p1=p+1;
+{
+  //...
+  waitBarrier(barr);
+}
+
+/***************************************************************************
+ *
+ *    init_modeling_tasks()
+ *
+ *    Initialize modeling task.
+ *
+ ****************************************************************************/
+//modelman.C
+void init_modeling_tasks() requires true ensures true;
 
 void init_patch_cache() requires true ensures true;
 
@@ -138,7 +178,7 @@ void init_visibility_module()
 *
 ****************************************/
 //rad_tools.C
-void init_stat_info(long process_id) requires true ensures true;
+void init_stat_info() requires true ensures true;
 
 
 /***************************************************************************
@@ -150,7 +190,7 @@ void init_stat_info(long process_id) requires true ensures true;
   *
   ****************************************************************************/
 //smallobj.C
-void init_edge(long process_id) requires true ensures true;
+void init_edge() requires true ensures true;
 
 
 /***************************************************************************
@@ -182,7 +222,7 @@ void init_interactionlist() requires true ensures true;
  *
  ****************************************************************************/
 //elemman.C
-void init_elemlist(long process_id) requires true ensures true;
+void init_elemlist() requires true ensures true;
 
 /***************************************************************************
  *
@@ -211,33 +251,33 @@ void init_taskq() requires true ensures true;
  *    init_global()
  *
  ****************************************/
-void init_global(barrier barr, int n_processors)
+void init_global(ref barrier barr, int n_processors)
   requires n_processors>0
-  ensures barr'::barrier(int n_processors,int n_processors,0)<0>;//'
+  ensures barr'::barrier(n_processors,n_processors,0)<0>;//'
 {
   //initlizing data ...
   //...
   /* Initialize the barrier */
-  barr = newBarrier(nprocs);
+  barr = newBarrier(n_processors);
   //...
   /* Initialize task queue */
-  init_taskq(process_id) ;
+  init_taskq() ;
   /* Initialize Patch, Element, Interaction free lists */
-  init_patchlist(process_id) ;
-  init_elemlist(process_id) ;
-  init_interactionlist(process_id) ;
-  init_elemvertex(process_id) ;
-  init_edge(process_id) ;
+  init_patchlist() ;
+  init_elemlist() ;
+  init_interactionlist();
+  init_elemvertex() ;
+  init_edge() ;
 
   /* Initialize statistical info */
-  init_stat_info(process_id) ;
+  init_stat_info() ;
 }
 
 
 int random() requires true ensures (exists v: res=v);
 
 //assuming input is random
-int input(int ref batch_mode) requires true ensures true;
+int input() requires true ensures true;
 {
   return random();//assuming there are 2 threads
 }
@@ -272,7 +312,7 @@ void main()
   init_global(barr,n_processors) ;
   //...
   /* Initial random testing rays array for visibility test. */
-  init_visibility_module(0) ;
+  init_visibility_module() ;
 
   if(batch_mode==1){
     /* In batch mode, create child processes and start immediately */
@@ -289,28 +329,12 @@ void main()
        notification loop */
 
     /* Start notification loop */
-    g_start( expose_callback,
-             N_SLIDERS, sliders, N_CHOICES, choices ) ;
+    /* Start notification loop */
+    // empty invocation to glibdumb/glib.c
+    /* g_start( expose_callback, N_SLIDERS, sliders, N_CHOICES, choices ) ; */
+    ;
   }
   //...
   destroyBarrier(barr);
   //...
-
-
-  int nprocs = gets();
-  barrier barr = newBarrier(nprocs);
-  //...
-  /* Determine starting coord and number of points to process in     */
-  /* each direction                                                  */
-  //...
-  /* initialize constants and variables
-     id is a global shared variable that has fetch-and-add operations
-     performed on it by processes to obtain their pids.   */
-  int id1 = fork(slave,barr);
-  int id2 = fork(slave,barr);
-  //
-  join(id1);
-  join(id2);
-  //finalizing...
-  destroyBarrier(barr);
 }
