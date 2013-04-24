@@ -63,7 +63,7 @@ lemma self::tree<p,S> & h in S
 
 node list_remove_first(ref node q1s)
 requires q1s::ll<S>
-ensures res::node<_@I,q,_@A,_@A,_@A> * q::ll<S1> & S = union(S1,{res}) & q1s' = q & q1s = res;
+ensures res::node<_@I,null,_@A,_@A,_@A> * q::ll<S1> & S = union(S1,{res}) & q1s' = q & q1s = res;
 
 void tree_remove(node x, ref node q1t)
 requires q1t::treeseg<p,px,x,S>
