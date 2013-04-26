@@ -21,6 +21,8 @@ echo "======= barrier-static.slk ======"
 ../../sleek barrier-static.slk | grep Entail > test-cases/barrier-static.res
 echo "======= barrier-dynamic.slk ======"
 ../../sleek barrier-dynamic.slk | grep Entail > test-cases/barrier-dynamic.res
+echo "======= barrier-dynamic2.slk ======"
+../../sleek barrier-dynamic2.slk | grep Entail > test-cases/barrier-dynamic2.res
 #================HIP==========================
 #================HIP==========================
 echo "======= while-loop.ss ======"

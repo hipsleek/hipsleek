@@ -21,6 +21,8 @@ echo "======= barrier-static.slk ======"
 diff test-cases/barrier-static.res test-cases/barrier-static.n
 echo "======= barrier-dynamic.slk ======"
 diff test-cases/barrier-dynamic.res test-cases/barrier-dynamic.n
+echo "======= barrier-dynamic2.slk ======"
+diff test-cases/barrier-dynamic2.res test-cases/barrier-dynamic2.n
 #================HIP==========================
 #================HIP==========================
 echo "======= while-loop.ss ======"

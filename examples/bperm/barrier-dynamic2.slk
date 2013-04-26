@@ -1,14 +1,11 @@
 /*
   For static barriers, a=0 always.
   Do dynamic barriers, a!=0 possibly (both negative and positive)
-
-  This D-SPLIT rule could lead to FULL permission (unsound).
-  See barrier-dynamic-error.slk
 */
 
 //********************************************
 //********************************************
-lemma "D-SPLIT" self::barrier(c,t,a)<p> & 0<c<=t+a & c=c1+c2 & a=a1+a2 & 0<c1<t+a1 & 0<c2<t+a2 -> self::barrier(c1,t,a1)<p> * self::barrier(c2,t,a2)<p>.
+lemma "D-SPLIT" self::barrier(c,t,a)<p> & 0<c<=t+a & c=c1+c2 & a=a1+a2 & 0<c1<t+a1 & 0<c2<t+a2 & a1*c=c1*a & a2*c=c2*a -> self::barrier(c1,t,a1)<p> * self::barrier(c2,t,a2)<p>.
 
 lemma "D-FULL" self::barrier(c,t,a)<p> & c=t+a & a!=0 -> self::barrier(c,t+a,0)<p>.
 
@@ -36,11 +33,11 @@ lemma "D-FAIL-2" self::barrier(c1,t,a1)<p1> * self::barrier(c2,t,a2)<p2> & c1!=0
 //********************************************
 
 //(1)
-checkentail b::barrier(2,3,1)<p> |- b::barrier(1,3,1)<p>*b::barrier(1,3,0)<p>.
+checkentail b::barrier(2,3,1)<p> |- b::barrier(1,3,1/2)<p>*b::barrier(1,3,1/2)<p>.
 print residue. //VALID, 1 residue
 
 //(2)
-checkentail b::barrier(1,3,1)<p> |- b::barrier(0,3,1)<p>*b::barrier(1,3,0)<p>.
+checkentail b::barrier(1,3,1)<p> |- b::barrier(0,3,0)<p>*b::barrier(1,3,1)<p>.
 print residue. //FAIL, zero-permission is not allowed when SPLIT
 // due to 0<c1<t+a1 & 0<c2<t+a2
 
@@ -53,11 +50,12 @@ checkentail b::barrier(3,2,1)<p> |- b::barrier(1,3,0)<p> * b::barrier(2,3,0)<p>.
 print residue. //VALID, D-FULL -> D-SPLIT -> MATCH -> MATCH
 
 //(5)
-checkentail b::barrier(1,3,0)<p> * b::barrier(2,3,1)<p>  * b::barrier(3,3,2)<p> |- b::barrier(6,3,3)<p>.
+checkentail b::barrier(1,3,0)<p> * b::barrier(2,3,2*3/5)<p>  * b::barrier(3,3,3*3/5)<p> |- b::barrier(6,3,3)<p>.
 print residue. //VALID, 1 residue, D-COMBINE1 -> D-COMBINE1 -> MATCH
 
+
 //(6)
-checkentail b::barrier(1,3,0)<p> * b::barrier(2,3,1)<p>  * b::barrier(3,3,2)<p> |- b::barrier(6,6,0)<p>.
+checkentail b::barrier(1,3,0)<p> * b::barrier(2,3,2*3/5)<p>  * b::barrier(3,3,3*3/5)<p> |- b::barrier(6,6,0)<p>.
 print residue. //VALID, 1 residue, D-COMBINE1 -> D-COMBINE1 -> D-FULL -> MATCH
 
 //(7)
@@ -90,11 +88,11 @@ print residue. //VALID, 1 residue,  D-SPLIT --> D-SPLIT
 
 //(14)
 checkentail b::barrier(1,3,0)<2> * b::barrier(0,3,-1)<1> * b::barrier(0,3,-1)<0> |- b::barrier(1,3,-2)<2>.
-print residue. //VALID, 1 residue,  D-SPLIT --> D-SPLIT
+print residue. //VALID, 1 residue, D-COMBINE
 
 //(15)
 checkentail b::barrier(1,3,0)<2> * b::barrier(0,3,-1)<1> * b::barrier(0,3,-1)<0> |- b::barrier(1,1,0)<2>.
-print residue. //VALID, 1 residue,  D-SPLIT --> D-SPLIT
+print residue. //VALID, 1 residue, D-COMBINE --> D-FULL --> MATCH
 
 //(16)
 checkentail b::barrier(1,2,0)<2> |- b::barrier(1,2,0)<1>.
@@ -149,3 +147,4 @@ print residue. //VALID, D-SEP
 //Example of D-SEP, which is done automatically in xpure_perm
 checkentail b1::barrier(c1,t1,a1)<p1> * b2::barrier(c2,t2,a2)<p2> & c1+c2>t1+a1+a2 |- b1!=b2.
 print residue. //VALID, D-SEP
+
