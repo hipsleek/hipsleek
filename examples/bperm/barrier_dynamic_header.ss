@@ -1,7 +1,7 @@
 //permission rules for dynamic barriers
 //********************************************
 //********************************************
-lemma "D-SPLIT" self::barrier(c,t,a)<p> & 0<c<=t+a & c=c1+c2 & a=a1+a2 & 0<c1<t+a1 & 0<c2<t+a2 -> self::barrier(c1,t,a1)<p> * self::barrier(c2,t,a2)<p>;
+lemma "D-SPLIT" self::barrier(c,t,a)<p> & 0<c<=t+a & c=c1+c2 & a=a1+a2 & 0<c1<t+a1 & 0<c2<t+a2 & a1*c=c1*a & a2*c=c2*a -> self::barrier(c1,t,a1)<p> * self::barrier(c2,t,a2)<p>;
 
 lemma "D-FULL" self::barrier(c,t,a)<p> & c=t+a & a!=0 -> self::barrier(c,t+a,0)<p>;
 
