@@ -4388,20 +4388,42 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                       let rs4 = prune_ctx prog rs3 in
                                       (* let _ = print_endline ("\n### rs4 = "^(Cprinter.string_of_context rs4)) in *)
                                       (*********CHECK db-consistency***********)
-                                      let res = if (!Globals.perm = Bperm) then
-                                            let hfv = (CF.fv_heap_of new_post) in
-                                            let bfv = List.filter (fun v -> (CP.type_of_spec_var v) = barrierT)  hfv in
-                                            (*Only check for consistency when there are barrier variables inside the post-condition*)
-                                            if (bfv == []) then None
-                                            else
-                                              (*normalize until a fixpoint is reached*)
-                                              let rs_norm = transform_context (normalize_entail_state_w_lemma prog) rs4 in
-                                              (* check_barrier_inconsistency_context prog res1 *)
-                                              let res,prf = check_barrier_inconsistency_context_svl prog rs_norm bfv pos in
-                                              if (isFailCtx res) then Some (res,prf)
-                                              else None
+                                      let hfv = (CF.fv_heap_of new_post) in
+                                      let bfv = List.filter (fun v -> (CP.type_of_spec_var v) = barrierT)  hfv in
+                                      let has_barriers = if (!Globals.perm = Bperm) then
+                                            if (bfv == [])  then true
+                                            else false
+                                          else false
+                                      in
+                                      (*normalize until a fixpoint is reached*)
+                                      let rs4 = if (has_barriers)
+                                          then transform_context (normalize_entail_state_w_lemma prog) rs4
+                                          else rs4
+                                      in
+                                      let res = if (has_barriers) then
+                                            (*
+                                              check_barrier_inconsistency_context prog rs4
+                                              Note that rs4 was already normalized in previous step
+                                            *)
+                                            let res,prf = check_barrier_inconsistency_context_svl prog rs4 bfv pos in
+                                            if (isFailCtx res) then Some (res,prf)
+                                            else None
                                           else None
                                       in
+                                      (* let res = if (!Globals.perm = Bperm) then *)
+                                      (*       let hfv = (CF.fv_heap_of new_post) in *)
+                                      (*       let bfv = List.filter (fun v -> (CP.type_of_spec_var v) = barrierT)  hfv in *)
+                                      (*       (\*Only check for consistency when there are barrier variables inside the post-condition*\) *)
+                                      (*       if (bfv == []) then None *)
+                                      (*       else *)
+                                      (*         (\*normalize until a fixpoint is reached*\) *)
+                                      (*         let rs_norm = transform_context (normalize_entail_state_w_lemma prog) rs4 in *)
+                                      (*         (\* check_barrier_inconsistency_context prog res1 *\) *)
+                                      (*         let res,prf = check_barrier_inconsistency_context_svl prog rs_norm bfv pos in *)
+                                      (*         if (isFailCtx res) then Some (res,prf) *)
+                                      (*         else None *)
+                                      (*     else None *)
+                                      (* in *)
                                       match res with
                                         | Some res -> res
                                         | None ->
