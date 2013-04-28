@@ -63,6 +63,8 @@ echo "======= barrier-dynamic-exp5.ss (slow) ======"
 ../../hip barrier-dynamic-exp5.ss | grep -E 'Proc|assert:' > test-cases/barrier-dynamic-exp5.res
 echo "======= barrier-dynamic-exp6.ss ======"
 ../../hip barrier-dynamic-exp6.ss | grep -E 'Proc|assert:' > test-cases/barrier-dynamic-exp6.res
+echo "======= barrier-dynamic-exp7.ss ======"
+../../hip barrier-dynamic-exp7.ss | grep -E 'Proc|assert:' > test-cases/barrier-dynamic-exp7.res
 #================BENCHMARK==========================
 #================BENCHMARK==========================
 echo "======= splash2/code/apps/barnes/ ======"
