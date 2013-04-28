@@ -38,8 +38,8 @@ void thread3(barrier b)
 
 //SUCCESS
 void main()
-  requires emp & flow __norm
-  ensures emp & flow __norm;
+  requires true
+  ensures true;
 {
   barrier b = newBarrier(2);
   addParticipant(b,1);

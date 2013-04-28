@@ -3342,7 +3342,20 @@ and subs_to_inst_vars_x (st : ((CP.spec_var * CP.spec_var) * Label_only.spec_lab
 (*a formula (i.e. a combined state) is barrier-consistent if
   for any pair of its barrier nodes (in combined state)
   b1:barrier(c1,t1,a1)<p1> and b2::barrier(c2,t2,a2)<p2>
-  where (b1!=b2) \/ (t1!=t2) \/ (t1=t2 & c1+c2>t1+a1+a2 & p1=p2)
+  where:
+
+  [db-consistency]
+  (b1=b2 => (c1!=0 & c2!=0 & p1=p2) \/ 
+            (c1=0 & p1<=p2) \/
+            (c2=0 & p2<=p1)
+
+  Note that db-consistency is more general
+  then b-consistency.
+  For static barriers, c1,c2 always != 0
+  Hence, [b-consistency] check is simplified to:
+  (b1=b2 => p1=p2)
+
+
 *)
 and is_barrier_inconsistent_formula_x prog (f:formula) (es : entail_state) (sv:CP.spec_var) =
   let rec helper f = match f with
@@ -3396,18 +3409,34 @@ and is_barrier_inconsistent_formula_x prog (f:formula) (es : entail_state) (sv:C
                 let b2 = CF.get_node_var node2 in
                 let node2_args = CF.get_node_args node2 in
                 let p2 = List.hd node2_args in
-                (* (b1!=b2) \/ (t1!=t2) \/ (t1=t2 & c1+c2>t1+a1+a2 & p1=p2) *)
-                let t1_neq_t2 = CP.mkNeqVar t1 t2 no_pos in
-                let t1_eq_t2 = CP.mkEqVar t1 t2 no_pos in
+
+                (* c1!=0 & c2!=0 & p1=p2 *)
+                let c1_neq_0 = CP.mkNeqVarInt c1 0 no_pos in
+                let c2_neq_0 = CP.mkNeqVarInt c2 0 no_pos in
                 let p1_eq_p2 = CP.mkEqVar p1 p2 no_pos in
-                let c1_plus_c2 = CP.mkAdd (CP.mkVar c1 no_pos) (CP.mkVar c2 no_pos) no_pos in
-                let a1_plus_a2 = CP.mkAdd (CP.mkVar a1 no_pos) (CP.mkVar a2 no_pos) no_pos in
-                let a1_a2_plus_t1 = CP.mkAdd (CP.mkVar t1 no_pos) a1_plus_a2 no_pos in
-                let gt_f = CP.mkGtExp c1_plus_c2 a1_a2_plus_t1 no_pos in
-                let or_f2 = CP.mkAnd p1_eq_p2 gt_f no_pos in
-                let or_f1 = CP.mkOr t1_neq_t2 or_f2 None no_pos in
+                let or_f1 = CP.mkAnd c1_neq_0 (CP.mkAnd c2_neq_0 p1_eq_p2 no_pos) no_pos in
+
+                (* (c1=0 & p1<=p2) *)
+                let c1_eq_0 = CP.mkEqVarInt c1 0 no_pos in
+                let p1_lte_p2 = CP.mkLteVar p1 p2 no_pos in
+                let or_f2 = CP.mkAnd c1_eq_0 p1_lte_p2 no_pos in
+
+                (* (c2=0 & p2<=p1) *)
+                let c2_eq_0 = CP.mkEqVarInt c2 0 no_pos in
+                let p2_lte_p1 = CP.mkLteVar p2 p1 no_pos in
+                let or_f3 = CP.mkAnd c2_eq_0 p2_lte_p1 no_pos in
+
+                (* b1!=b2  *)
                 let b1_neq_b2 = CP.mkNeqVar b1 b2 no_pos in
-                let or_f = CP.mkOr b1_neq_b2 or_f1 None no_pos in
+
+                (*
+                   Final formula:
+                   (b1=b2 => (c1!=0 & c2!=0 & p1=p2) \/ 
+                             (c1=0 & p1<=p2) \/
+                             (c2=0 & p2<=p1)
+                *)
+                let or_f = CP.mkOr b1_neq_b2 (CP.mkOr or_f1 (CP.mkOr or_f2 or_f3 None no_pos) None no_pos) None no_pos in
+
                 let new_f = CF.formula_of_pure_formula or_f no_pos in
                 (*******************************************)
                 let rs,prf = heap_entail_one_context 15 prog false (CF.Ctx new_es) new_f None None None no_pos in
