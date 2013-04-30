@@ -849,6 +849,10 @@ and check_scall_fork prog ctx e0 (post_start_label:formula_label) ret_t mn lock 
   (*=========================*)
   (*=== id=FORK(fn,args) ====*)
   (*=========================*)
+  if (CF.isFailListFailescCtx ctx) then
+    let _ = Debug.print_info "procedure call" ("\nempty/false context: Proving precondition in method " ^ mn ^ " has failed \n") pos in
+    ctx
+  else
   (* let _ = print_endline ("\ncheck_exp: SCall: fork") in *)
   let fn = List.hd vs in
   (* let _ = print_endline ("\ncheck_exp: SCall: vs = " ^ (string_of_ident_list vs)) in *)
@@ -969,6 +973,10 @@ and check_scall_join prog ctx e0 (post_start_label:formula_label) ret_t mn lock 
   (*=========================*)
   (*========= JOIN ==========*)
   (*=========================*)
+  if (CF.isFailListFailescCtx ctx) then
+    let _ = Debug.print_info "procedure call" ("\nempty/false context: Proving precondition in method " ^ mn ^ " has failed \n") pos in
+    ctx
+  else
   (* let proc = look_up_proc_def pos prog.prog_proc_decls mn in *)
   (* let farg_types, farg_names = List.split proc.proc_args in *)
   (* let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in *)
