@@ -4,6 +4,7 @@
   This example is not sync-correct because
   thread2 goes ahead of thread1 while
   thread3 has dropped in phase 1
+
  */
 
 hip_include 'barrier_dynamic_header.ss'

@@ -1169,15 +1169,21 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                               Debug.devel_pprint(*print_info "assert"*) to_print pos;
                               (* let _ = Log.update_sleek_proving_kind Log.ASSERTION in *)
                               let rs,prf = heap_entail_struc_list_failesc_context_init prog false false ts c1 None None None pos None in
-                              let _ = PTracer.log_proof prf in  
+                              let _ = PTracer.log_proof prf in
+
+                              (*do not display the context if deploy in website*)
+                              if not !Globals.web_compile_flag then
+                                begin
                               Debug.pprint(*print_info "assert"*) ("assert condition:\n" ^ (Cprinter.string_of_struc_formula c1)) pos;
                               Debug.info_hprint (add_str "assert(inp-formula)" Cprinter.string_of_struc_formula) c1 pos;
-                              Debug.info_hprint (add_str "assert(res-failesc)" Cprinter.string_of_list_failesc_context) rs pos;
+                              Debug.info_hprint (add_str "assert(res-failesc)" Cprinter.string_of_list_failesc_context) rs pos
+                                end;
                               if CF.isSuccessListFailescCtx rs then 
 			        (Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok\n" else ": unreachable\n")) pos;
 			        Debug.devel_pprint(*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos)
 			      else Debug.print_info "assert/assume" (s ^" : failed\n") pos ;
-                              rs in 
+                              rs
+                                    in
 		      let _ = if !print_proof  && (match c1_o with | None -> false | Some _ -> true) then 
                         begin
           	          Prooftracer.add_assert_assume e0;
@@ -1612,11 +1618,12 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             (* Debug.info_hprint (add_str "dprint ctx1:" Cprinter.string_of_list_failesc_context) ctx1 pos; *)
             (* Debug.info_hprint (add_str "dprint ctx2:" Cprinter.string_of_list_failesc_context) ctx2 pos; *)
             if str = "" then begin
-              let str1 = (Cprinter.string_of_list_failesc_context ctx)  in
+              let str1 =
+                (Cprinter.string_of_list_failesc_context ctx)  in
 	      (if (Gen.is_empty ctx) then
                 (print_string ("\ndprint:"^pos.start_pos.Lexing.pos_fname
                 ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^" empty context")) 
-	      else
+	       else
                 let tmp1 = "\ndprint: " ^ pos.start_pos.Lexing.pos_fname
                   ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str1 ^ "\n" in
                 let tmp1 = if (previous_failure ()) then ("failesc context: "^tmp1) else tmp1 in

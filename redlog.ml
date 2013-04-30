@@ -1150,7 +1150,9 @@ let imply_no_cache_ops pr_w pr_s (f : CP.formula) (imp_no: string) : bool * floa
         if (has_eq_int eef) then
           begin
               (* If there is exist quantified over integers, issue the warning*)
-              (print_string ("\n[Redlog] WARNING: Found formula with existential quantified var(s), result may be unsound! (Imply #" ^ imp_no ^ ") for redlog\n"));
+              let _ = if not !Globals.web_compile_flag then
+              (print_string ("\n[Redlog] WARNING: Found formula with existential quantified var(s), result may be unsound! (Imply #" ^ imp_no ^ ") for redlog\n"))
+              in
               valid eef
           end
         else
