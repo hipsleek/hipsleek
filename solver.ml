@@ -3388,63 +3388,69 @@ and is_barrier_inconsistent_formula_x prog (f:formula) (es : entail_state) (sv:C
                   res1@res2
           in
           let pairs = pairs_of barrier_nodes in
-          let rec helper pairs = 
-          (match pairs with
-            | [] -> false
-            | (node1,node2)::xs ->
-                let func e =
-                  match e with
-                    | Cpure.Bptriple ((c,t,a),_) -> (c,t,a)
-                    | _ -> report_error no_pos ("is_barrier_inconsistent_formula: expecting Bptriple")
-                in
-                let node1_perm = CF.get_node_perm node1 in
-                let node1_perm = List.hd (Perm.get_cperm node1_perm) in
-                let c1,t1,a1 = func node1_perm in
-                let b1 = CF.get_node_var node1 in
-                let node1_args = CF.get_node_args node1 in
-                let p1 = List.hd node1_args in
-                let node2_perm = CF.get_node_perm node2 in
-                let node2_perm =  List.hd (Perm.get_cperm node2_perm) in
-                let c2,t2,a2 = func node2_perm in
-                let b2 = CF.get_node_var node2 in
-                let node2_args = CF.get_node_args node2 in
-                let p2 = List.hd node2_args in
+          let rec helper (node1,node2) =
+            let func e =
+              match e with
+                | Cpure.Bptriple ((c,t,a),_) -> (c,t,a)
+                | _ -> report_error no_pos ("is_barrier_inconsistent_formula: expecting Bptriple")
+            in
+            let node1_perm = CF.get_node_perm node1 in
+            let node1_perm = List.hd (Perm.get_cperm node1_perm) in
+            let c1,t1,a1 = func node1_perm in
+            let b1 = CF.get_node_var node1 in
+            let node1_args = CF.get_node_args node1 in
+            let p1 = List.hd node1_args in
+            let node2_perm = CF.get_node_perm node2 in
+            let node2_perm =  List.hd (Perm.get_cperm node2_perm) in
+            let c2,t2,a2 = func node2_perm in
+            let b2 = CF.get_node_var node2 in
+            let node2_args = CF.get_node_args node2 in
+            let p2 = List.hd node2_args in
 
                 (* c1!=0 & c2!=0 & p1=p2 *)
-                let c1_neq_0 = CP.mkNeqVarInt c1 0 no_pos in
-                let c2_neq_0 = CP.mkNeqVarInt c2 0 no_pos in
-                let p1_eq_p2 = CP.mkEqVar p1 p2 no_pos in
-                let or_f1 = CP.mkAnd c1_neq_0 (CP.mkAnd c2_neq_0 p1_eq_p2 no_pos) no_pos in
+            let c1_neq_0 = CP.mkNeqVarInt c1 0 no_pos in
+            let c2_neq_0 = CP.mkNeqVarInt c2 0 no_pos in
+            let p1_eq_p2 = CP.mkEqVar p1 p2 no_pos in
+            let or_f1 = CP.mkAnd c1_neq_0 (CP.mkAnd c2_neq_0 p1_eq_p2 no_pos) no_pos in
 
                 (* (c1=0 & p1<=p2) *)
-                let c1_eq_0 = CP.mkEqVarInt c1 0 no_pos in
-                let p1_lte_p2 = CP.mkLteVar p1 p2 no_pos in
-                let or_f2 = CP.mkAnd c1_eq_0 p1_lte_p2 no_pos in
+            let c1_eq_0 = CP.mkEqVarInt c1 0 no_pos in
+            let p1_lte_p2 = CP.mkLteVar p1 p2 no_pos in
+            let or_f2 = CP.mkAnd c1_eq_0 p1_lte_p2 no_pos in
 
                 (* (c2=0 & p2<=p1) *)
-                let c2_eq_0 = CP.mkEqVarInt c2 0 no_pos in
-                let p2_lte_p1 = CP.mkLteVar p2 p1 no_pos in
-                let or_f3 = CP.mkAnd c2_eq_0 p2_lte_p1 no_pos in
+            let c2_eq_0 = CP.mkEqVarInt c2 0 no_pos in
+            let p2_lte_p1 = CP.mkLteVar p2 p1 no_pos in
+            let or_f3 = CP.mkAnd c2_eq_0 p2_lte_p1 no_pos in
 
                 (* b1!=b2  *)
-                let b1_neq_b2 = CP.mkNeqVar b1 b2 no_pos in
+            let b1_neq_b2 = CP.mkNeqVar b1 b2 no_pos in
 
                 (*
-                   Final formula:
-                   (b1=b2 => (c1!=0 & c2!=0 & p1=p2) \/ 
-                             (c1=0 & p1<=p2) \/
-                             (c2=0 & p2<=p1)
+                  Final formula:
+                  (b1=b2 => (c1!=0 & c2!=0 & p1=p2) \/ 
+                  (c1=0 & p1<=p2) \/
+                  (c2=0 & p2<=p1)
                 *)
-                let or_f = CP.mkOr b1_neq_b2 (CP.mkOr or_f1 (CP.mkOr or_f2 or_f3 None no_pos) None no_pos) None no_pos in
-
-                let new_f = CF.formula_of_pure_formula or_f no_pos in
+            let or_f = CP.mkOr b1_neq_b2 (CP.mkOr or_f1 (CP.mkOr or_f2 or_f3 None no_pos) None no_pos) None no_pos in
+            or_f
+          in
+          if (pairs==[]) then false
+          else
+            (*before entailments could take long time.
+              We first generate the consistency constraints
+              and check them one time
+            *)
+            (*list of formulaes for consistency check*)
+            let fs = List.map helper pairs in
+            let new_f = List.fold_left (fun res f -> CP.mkAnd res f no_pos) (CP.mkTrue no_pos) fs
+            in
+            let new_f = CF.formula_of_pure_formula new_f no_pos in
                 (*******************************************)
-                let rs,prf = heap_entail_one_context 15 prog false (CF.Ctx new_es) new_f None None None no_pos in
+            let rs,prf = heap_entail_one_context 15 prog false (CF.Ctx new_es) new_f None None None no_pos in
                 (*if fail, cannot prove two nodes are consistent,
                   conservatively say inconsistent - true*)
-                (if (CF.isFailCtx rs) then true else helper xs))
-          in
-          helper pairs
+            (if (CF.isFailCtx rs) then true else false)
     | Or ({ formula_or_f1 = f1;
             formula_or_f2 = f2;
             formula_or_pos = pos}) ->
@@ -4391,7 +4397,7 @@ and heap_entail_conjunct_lhs_struc_x (prog : prog_decl)  (is_folding : bool) (ha
                                       let hfv = (CF.fv_heap_of new_post) in
                                       let bfv = List.filter (fun v -> (CP.type_of_spec_var v) = barrierT)  hfv in
                                       let has_barriers = if (!Globals.perm = Bperm) then
-                                            if (bfv == [])  then true
+                                            if (bfv != [])  then true
                                             else false
                                           else false
                                       in

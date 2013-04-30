@@ -60,7 +60,7 @@ echo "======= barrier-dynamic-exp3.ss ======"
 echo "======= barrier-dynamic-exp4.ss ======"
 ../../hip barrier-dynamic-exp4.ss | grep -E 'Proc|assert:' > test-cases/barrier-dynamic-exp4.n
 echo "======= barrier-dynamic-exp5.ss (slow) ======"
-../../hip barrier-dynamic-exp5.ss | grep -E 'Proc|assert:' > test-cases/barrier-dynamic-exp4.n
+../../hip barrier-dynamic-exp5.ss | grep -E 'Proc|assert:' > test-cases/barrier-dynamic-exp5.n
 echo "======= barrier-dynamic-exp6.ss ======"
 ../../hip barrier-dynamic-exp6.ss | grep -E 'Proc|assert:' > test-cases/barrier-dynamic-exp6.n
 echo "======= barrier-dynamic-exp7.ss ======"
