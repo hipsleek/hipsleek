@@ -1,22 +1,7 @@
-#loc1: error occurs in the base case rather than
+#loc1.ss: error occurs in the base case rather than
 the recursive case? 
 
-int double (int n)
- requires true
- ensures res=2*n
- {
-   if n=0 then 1
-   else 2+double(n)
- }
 
 
 *********************************************************************
-#loc1: error occurs in the recursive case? 
-
-int double2 (int n)
- requires true
- ensures res=2*n
- {
-   if n=0 then 0
-   else 3+double2(n)
- }
+#loc2.ss: error occurs in the recursive case? 
