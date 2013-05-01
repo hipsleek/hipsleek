@@ -723,7 +723,7 @@ and process_one_match_x prog is_normalizing (c:match_res) :action_wt =
             (* For fractional permission (e.g. in ParaHIP),
                also filter out SPLIT formula.
                Current heuristic is to decide SPLIT or MATCH when MATCH.*)
-            let b = if (!Globals.perm = Frac) then not b else b in
+            let b = if (!Globals.perm = Frac) || (!Globals.perm = Bperm) then not b else b in
             if b || !use_split_match then false else true 
         | _ -> true) l
   in

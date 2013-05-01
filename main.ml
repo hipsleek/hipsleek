@@ -130,7 +130,7 @@ let process_include_files incl_files ref_file=
       let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
 		try
 		  let (curdir,_)=BatString.rsplit ref_file "/" in
-		  let _= print_endline ("BachLe curdir: "^curdir) in   
+		  (* let _= print_endline ("BachLe curdir: "^curdir) in    *)
       let prims_list = process_includes new_h_files curdir in (*list of includes in header files*)
 	    prims_list
 		with Not_found ->

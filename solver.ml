@@ -9182,7 +9182,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
             if lhs_p |\- perm(lhs_node) != perm(rhs_node) then MATCH
             else SPLIT followed by MATCH or COMBINE followed by MATCH
             ***************************************>>*)
-            let res = if (not (Perm.allow_perm ())) || (estate.es_is_normalizing) || (!Globals.perm=Bperm && (not !Globals.use_split_match))
+            let res = if (not (Perm.allow_perm ())) || (estate.es_is_normalizing) 
+                  (* || (!Globals.perm=Bperm && (not !Globals.use_split_match)) *)
                 then
                   (*If not using permissions or is in normalization process --> MATCH ONLY*)
                   None

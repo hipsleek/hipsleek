@@ -55,10 +55,8 @@ void main()
   requires emp
   ensures emp;
 {
-  barrier b = newBarrier(2);
+  barrier b = newBarrier(3);
 
-  //oops, I want 1 more participant
-  addParticipant(b,1);
   int id1 = fork(thread1,b);
   int id2 = fork(thread2,b);
   int id3 = fork(thread3,b);
