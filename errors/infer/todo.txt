@@ -1,7 +1,15 @@
-#loc1.ss: error occurs in the base case rather than
-the recursive case? 
 
-
+#loc1.ss: error occurs in the base case: DONE
 
 *********************************************************************
 #loc2.ss: error occurs in the recursive case? 
+
+*********************************************************************
+# einv2: xZero0
+ return MAY1 error= disj of
+   - a MUST of a path trace and
+a OK of another path trace
+
+*********************************************************************
+# einv2: xZero
+ - infer complete specs
