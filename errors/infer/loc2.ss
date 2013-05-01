@@ -7,5 +7,5 @@ int double (int n)
    if (n==0)
      return 0;
    else
-     return 3+double(n);
+     return 3+double(n-1);
  }

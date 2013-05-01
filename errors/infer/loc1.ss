@@ -5,5 +5,5 @@ int double (int n)
    if (n==0)
      return 1;
    else
-     return 2+double(n);
+     return 2+double(n-1);
  }
