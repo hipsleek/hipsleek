@@ -1,0 +1,4 @@
+
+infer [x,y] x!=0 & y=0 & x>=0 |- false.
+print residue.
+//inferred pure: [y!=0 | x<=0]

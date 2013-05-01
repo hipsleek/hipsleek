@@ -25,7 +25,7 @@ Procedure del$int~int SUCCESS
 
 Termination checking result:
 
-Stop Omega... 57 invocations 
+Stop Omega... 56 invocations 
 0 false contexts at: ()
 
 Total verification time: 0.26 second(s)

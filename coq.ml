@@ -3,6 +3,7 @@
 *)
 
 open Globals
+open GlobProver
 module CP = Cpure
 module Err = Error
 
@@ -21,13 +22,14 @@ let print_p_f_f = ref (fun (c:CP.formula)-> " formula printing not initialized")
 let rec coq_of_typ = function
   | Bool          -> "int"
   | Float         -> "float"	(* all types will be ints. *)
-  | Int           -> "int"
+  | Int | INFInt  -> "int"
   | AnnT          -> "int"
   | Void          -> "unit" 	(* all types will be ints. *)
   | BagT t		   -> "("^(coq_of_typ t) ^") set"
   | List _		  -> "list"
+  | Pointer _
   | Tree_sh 	  -> "int"
-  | UNK | NUM | TVar _ | Named _ | Array _ |RelT ->
+  | UNK | NUM | TVar _ | Named _ | Array _ | RelT _ | HpT->
         Error.report_error {Err.error_loc = no_pos; 
         Err.error_text = "type var, array and named type not supported for Coq"}
 ;;
@@ -125,10 +127,12 @@ and coq_of_exp e0 =
   | CP.BagDiff (a1, a2, _) -> " ( ZSets.diff " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
 	| CP.Func _ -> 
 			illegal_format "coq_of_exp : function cannot be handled"
+	| CP.Level _ -> 
+			illegal_format "coq_of_exp : level should not be here"
 	| CP.ArrayAt _ -> 
 			illegal_format "coq_of_exp : array cannot be handled"
           (* failwith ("Arrays are not supported in Coq") (\* An Hoa *\) *)
-
+    | CP.InfConst _ -> Error.report_no_pattern ()
 (* pretty printing for a list of expressions *)
 and coq_of_formula_exp_list l = match l with
   | []         -> ""
@@ -140,6 +144,7 @@ and coq_of_b_formula b =
   let (pf,_) = b in
   match pf with
   | CP.BConst (c, _) -> if c then "True" else "False"
+  | CP.XPure _ -> "True" (* WN : weakening - need to translate> *)
   | CP.BVar (bv, _) -> " (" ^ (coq_of_spec_var bv) ^ " = 1)"
   | CP.Lt (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " < " ^ (coq_of_exp a2) ^ ")"
   | CP.SubAnn (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " <= " ^ (coq_of_exp a2) ^ ")"
@@ -258,7 +263,6 @@ let rec send_formula (f : string) (nr : int) : bool =
 	  output_string (snd !coq_channels) f;
 	  output_string (snd !coq_channels) ("decidez.\nQed.\n");
 	  flush (snd !coq_channels);
-	  
 	  let result = ref false in
 	  let finished = ref false in  
 	  while not !finished do 
@@ -314,7 +318,7 @@ let imply_ops pr_w pr_s (ante : CP.formula) (conseq : CP.formula) : bool =
   max_flag := false;
   choice := 1;
   try 
-    write pr_w pr_s ante conseq
+    write pr_w pr_s ante conseq;
   with Illegal_Prover_Format s -> 
       begin
         print_endline ("\nWARNING coq.imply : Illegal_Prover_Format for :"^s);

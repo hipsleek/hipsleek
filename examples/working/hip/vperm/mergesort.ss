@@ -55,7 +55,7 @@ node split_func(ref node x, int a)
 	}
 }
 
-int div2(int c) 
+int div_2(int c) 
   requires true //@value[c] 
   ensures res + res = c;
 
@@ -118,7 +118,7 @@ void parallel_merge_sort2(node xs,ref node ys)
 	if (xs.next != null)
 	{
 		c = count(xs);
-		middle = div2(c);
+		middle = div_2(c);
 		s1 = split_func(xs, middle);
         // xs contains up to middle elements
         // s1 is the rest

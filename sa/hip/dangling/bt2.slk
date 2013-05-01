@@ -1,0 +1,26 @@
+data node2 {
+  int val;
+  node2 left;
+  node2 right;
+}.
+
+HeapPred H2(node2 a,node2 b).
+
+infer [H2] H2(z,b) & z!=null 
+ |-  z::node2<_,left,right>@L .
+
+print residue.
+
+/*
+
+Obtained:
+
+[ H2(z,b)&z!=null --> z::node2<Anon_11,left,right>@M * HP_21(left,right,b)&
+  true]
+
+should be instead:
+
+[ H2(z,b)&z!=null --> z::node2<Anon_11,left,right>@M * 
+    HP_21(left,b) * HP_22(right,b)
+
+*/

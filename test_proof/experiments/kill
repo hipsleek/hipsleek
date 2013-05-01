@@ -1,0 +1,37 @@
+#!/bin/bash
+
+ps -u chanhle -a | grep sleek > /dev/null
+if [ $? -eq 0 ]; then 
+	kill $(ps -u chanhle -a | grep sleek | awk '{print $1}')
+fi
+
+if [ "$1" == "redlog" ]; then
+	ps -u chanhle -a | grep oc > /dev/null
+	if [ $? -eq 0 ]; then 
+		kill $(ps -u chanhle -a | grep oc | awk '{print $1}')
+	fi
+
+	ps -u chanhle -a | grep reduce > /dev/null
+	if [ $? -eq 0 ]; then 
+		kill $(ps -u chanhle -a | grep reduce | awk '{print $1}')
+	fi
+fi
+
+if [ "$1" == "spass" ]; then
+	ps -u chanhle -a | grep oc > /dev/null
+	if [ $? -eq 0 ]; then 
+		kill $(ps -u chanhle -a | grep oc | awk '{print $1}')
+	fi
+
+	ps -u chanhle -a | grep SPASS-MOD > /dev/null
+	if [ $? -eq 0 ]; then 
+		kill $(ps -u chanhle -a | grep SPASS-MOD | awk '{print $1}')
+	fi
+
+else
+	ps -u chanhle -a | grep $1 > /dev/null
+	if [ $? -eq 0 ]; then 
+		kill $(ps -u chanhle -a | grep $1 | awk '{print $1}')
+	fi
+fi
+

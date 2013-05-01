@@ -108,6 +108,8 @@ module Make (Token : SleekTokenS)
  let comment_level = ref 0
  let _ = List.map (fun ((k,t):(string*sleek_token)) -> Hashtbl.add sleek_keywords k t)
 	[("assert", ASSERT);
+   ("assert_exact", ASSERT_EXACT);
+   ("assert_inexact", ASSERT_INEXACT);
 	 ("assume", ASSUME);
 	 ("axiom", AXIOM); (* [4/10/2011] An Hoa : new keyword *)
    ("alln", ALLN);
@@ -121,7 +123,10 @@ module Make (Token : SleekTokenS)
 	 ("break", BREAK);
 	 ("case",CASE);
    ("catch", CATCH);
+   ("checkeq", CHECKEQ);
 	 ("checkentail", CHECKENTAIL);
+   ("checkentail_exact", CHECKENTAIL_EXACT);
+   ("checkentail_inexact", CHECKENTAIL_INEXACT);
      ("checksat", CHECKSAT);
      ("neg", NEG);
 	 ("capture_residue", CAPTURERESIDUE);
@@ -138,6 +143,8 @@ module Make (Token : SleekTokenS)
 	 ("else", ELSE_TT);
    ("emp", EMPTY);
 	 ("ensures", ENSURES);
+   ("ensures_exact", ENSURES_EXACT);
+   ("ensures_inexact", ENSURES_INEXACT);
 	 ("enum", ENUM);
 	 ("ex", EXISTS);
 	 ("exists", EXISTS);
@@ -151,6 +158,7 @@ module Make (Token : SleekTokenS)
    ("global",GLOBAL);
    ("logical", LOGICAL);
 	 ("head",HEAD);
+     ("HeapPred", HP);
    ("ho_pred",HPRED);
    ("htrue", HTRUE);
    ("if", IF);
@@ -160,6 +168,7 @@ module Make (Token : SleekTokenS)
 	("inline", INLINE); (* An Hoa [22/08/2011] : add inline keyword *)
    ("inlist", INLIST);
 	 ("int", INT);
+	 ("INFint", INFINT_TYPE);
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
 	 ("inv_lock", INVLOCK);
@@ -180,8 +189,14 @@ module Make (Token : SleekTokenS)
 	 ("macro",PMACRO);
      ("perm",PERM);
 	 ("pred", PRED);
+	 ("pred_prim", PRED_PRIM);
+     ("pred_extn", PRED_EXT);
+	 ("hip_include", HIP_INCLUDE);
      ("print", PRINT);
+     ("mem", MEM);
+     ("memE", MEME);
 	 ("dprint", DPRINT);
+	 ("compare", CMP);
    ("raise", RAISE);
 	 ("ref", REF);
 ("relation", REL);
@@ -195,6 +210,7 @@ module Make (Token : SleekTokenS)
 	 ("split", SPLIT);
 	 ("LexVar", LEXVAR);
    ("Term", TERM);
+    ("template", TEMPL);
    ("Loop", LOOP);
    ("MayLoop", MAYLOOP);
 	 ("subset", SUBSET);
@@ -273,14 +289,20 @@ rule tokenizer file_name = parse
                 |['0'-'9'] ['0'-'9'] ['0'-'9']
                 |'x' hexa_char hexa_char)
           as x) "'"                                { CHAR_LIT (Camlp4.Struct.Token.Eval.char x, x) }
+  | "@A" { ACCS }  
   | '&' { AND }
+  | "&*" { ANDSTAR }
   | "&&" { ANDAND }
+  | "*-" { STARMINUS }
   | "@" { AT }
   | "@@" { ATAT }
   | "@I" {IMM}
   | "@L" {LEND}
+  | "@A" {ACCS}
   | "@D" { DERV }
   | "@M" { MUT }
+  | "@VAL" {VAL}
+  | "@REC" {REC}
   | "@pre" { PRE }
   | "@xpre" { XPRE }
   | "@post" { POST }
@@ -301,6 +323,7 @@ rule tokenizer file_name = parse
   (* | '?' { QMARK } *)
   | "." { DOT }
   | "\"" { DOUBLEQUOTE }
+  | "\\inf" {INFINITY}
   | "=" { EQ }
   | "==" { EQEQ }
   | "==>" { ESCAPE }
@@ -328,6 +351,8 @@ rule tokenizer file_name = parse
   | '|' { OR }
   | "||" { OROR }
   | "|-" { (* (print_string "der\n"; *)DERIVE }
+  | "-|-" { EQV }
+  | "-->" { CONSTR }
   | '[' { OSQUARE }
   | '%' { PERCENT }
   | '+' { PLUS }

@@ -1,3 +1,5 @@
+
+
 class __DivByZeroErr  extends __Error {}
 class __ArrBoundErr  extends __Error {}
 
@@ -28,7 +30,6 @@ int div___(int a, int b)
     -1 < b < 1 -> ensures true & flow __DivByZeroErr;
     }
 }
-
 
 // why is flow of div2 __Error rather __DivByZeroErr?
 int div2(int a, int b)
@@ -68,6 +69,7 @@ int mod___(int a, int b) case {
     /* -1 < b < 1 -> requires false ensures false; */
   }
 }
+
 /*
 float add___(float a, float b) 
   requires true 
@@ -95,10 +97,6 @@ bool eq___(int a, int b)
     a = b -> ensures res;
     a != b -> ensures !res;}
 
-bool eq___(bool a, bool b) 
-  case {
-    a = b -> ensures res;
-    a != b -> ensures !res;}
 /*
 bool eq___(float a, float b) 
   case {
@@ -201,6 +199,8 @@ axiom dom(a,low,high) & low<=l & h<=high ==> dom(a,l,h).
 
 axiom domb(a,low,high) & low<=l & h<=high ==> domb(a,l,h).
 
+axiom domb(a,low,high) & low<=l | h<=high ==> domb(a,l,h).
+
 relation update_array_1d_b(bool[] a, bool[] b, bool val, int i).
 
 relation update_array_1d(int[] a, int[] r, int val, int i).
@@ -210,8 +210,10 @@ relation update_array_2d(int[,] a, int[,] r, int val, int i, int j).
 relation amodr(int[] a, int[] b, int i, int j) == 
     forall(k : (i<=k & k<=j | a[k] = b[k])).
 
+/*
 relation bnd(int[] a, int i, int j, int low, int high) == 
  	(i > j | i<=j & forall ( k : (k < i | k > j | low <= a[k] <= high))).
+*/
 
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////
@@ -254,6 +256,9 @@ int array_get_elm_at___2d(int[,] a, int i, int j)
 /* data tid{ */
 /* } */
 
+data lock{
+}
+
 int fork()
   requires true
   ensures true;
@@ -282,6 +287,30 @@ void release()
 /* ************ */
 /* Concurrency  */
 /* ************ */
+
+
+/* ********>>>*************/
+/* Pointer translation  */
+/* ************************/
+data int_ptr{
+  int val;
+}
+
+data int_ptr_ptr{
+  int_ptr val;
+}
+
+void delete_ptr(ref int_ptr x)
+  requires x::int_ptr<v>
+  ensures true;
+
+void delete_ptr(ref int_ptr_ptr x)
+  requires x::int_ptr_ptr<v>
+  ensures true;
+
+/* ********<<<*************/
+/* Pointer translation  */
+/* ************************/
 
 int[] update___1d(int v, int[] a, int i)
 //void update___(ref int[] a, int i, int v) 
@@ -314,6 +343,8 @@ int[,] update___2d(int v, int[,] a, int i, int j)
 int[] aalloc___(int dim) 
 	requires true 
 	ensures dom(res,0,dim-1);
+
+
 
 //////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////

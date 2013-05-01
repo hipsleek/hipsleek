@@ -1,0 +1,28 @@
+data node {
+	int val; 
+	node next; 
+}.
+
+pred sortHO<v,mi,mx> == 
+  self::node<mi,null> & mi=mx & v=mi
+  or self::node<v, p> * p::sortHO<v2,mi2,mx2> & mi=min(v,mi2) & mx=max(v,mx2) 
+inv self!=null.
+
+checkentail x::node<v_609,p_610> * 
+tmp_695::sortHO<Anon_692,mi2_693,mx2_694>
+& mi=min(a,mi2_612) 
+& mx=max(a,mx2_613) 
+& a=v_609 
+& flted_15_614=null 
+& p_610=tmp_640 
+//& tmp_640!=null 
+//& !(v_bool_23_556') 
+//& tmp_640!=null 
+//& !(v_bool_23_556') 
+& a_625=v2_611 & mi2_612=mi_626 & mx2_613=mx_627 & b=b_628 & y!=null 
+& p_610!=null 
+& tmp_640!=null & res=x
+//|-  (exists Anon_696,mi2_697,mx2_698: res::sortHO<Anon_696,mi2_697,mx2_698>).
+ |-  res::sortHO<Anon_696,mi2_697,mx2_698>.
+
+

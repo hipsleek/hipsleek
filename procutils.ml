@@ -47,7 +47,8 @@ module PrvComms =
 struct
 
   open Globals
-  type proc = Globals.prover_process_t
+  open GlobProver
+  type proc = GlobProver.prover_process_t
   exception Timeout
 
   let sigalrm_handler = Sys.Signal_handle (fun _ -> raise Timeout)
@@ -83,6 +84,16 @@ struct
           (* print_endline "Non-timeout Exception from maybe_raise_and_catch" ;  *)
           (* with_timeout () *)
               end
+
+  let maybe_raise_and_catch_timeout_sleek (fnc: 'a -> 'b) (arg: 'a) (with_timeout: 'b): 'b =
+    try 
+      if !sleek_timeout_limit > 0. then
+        let res = maybe_raise_timeout fnc arg !sleek_timeout_limit in
+        res 
+      else fnc arg
+    with 
+    | Timeout -> with_timeout
+    | exc -> raise exc
 
   let maybe_raise_and_catch_timeout_bool (fnc: 'a -> bool) (arg: 'a) (tsec: float) (with_timeout: unit -> bool): bool =
     Debug.no_1 "maybe_raise_and_catch_timeout" string_of_float string_of_bool 

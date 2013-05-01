@@ -84,10 +84,16 @@ and dot_of_conjunct prog n h p visib_names buffer =
 and gen_nodes prog n h0 buffer = match h0 with
   | Star ({h_formula_star_h1 = h1;
 	   h_formula_star_h2 = h2}) 
+  | StarMinus ({h_formula_starminus_h1 = h1;
+	       h_formula_starminus_h2 = h2}) 	   
   | Phase ({h_formula_phase_rd = h1;
 	    h_formula_phase_rw = h2}) 
   | Conj ({h_formula_conj_h1 = h1;
-	   h_formula_conj_h2 = h2}) ->
+	   h_formula_conj_h2 = h2})
+  | ConjStar ({h_formula_conjstar_h1 = h1;
+	   h_formula_conjstar_h2 = h2})	   	    
+  | ConjConj ({h_formula_conjconj_h1 = h1;
+	   h_formula_conjconj_h2 = h2}) ->
       let nodes1 = gen_nodes prog n h1 buffer in
       let nodes2 = gen_nodes prog n h2 buffer in
 	nodes1 @ nodes2
@@ -112,7 +118,7 @@ and gen_nodes prog n h0 buffer = match h0 with
       let tmp = List.map (fun v -> (dot_of_spec_var v, pname)) mvars in
 	Buffer.add_string buffer (pname ^ " [shape=box,style=dashed,label=\"" ^ c ^ "\"];\n");
 	(dot_of_spec_var p, pname) :: tmp
-  | HTrue | HFalse | HEmp | Hole _ -> []
+  | HTrue | HFalse | HEmp |HRel _ |  Hole _ | DangNode _ -> []
 
 
 and gen_edges prog n h0 p nodes buffer = 
@@ -132,9 +138,15 @@ and gen_edges prog n h0 p nodes buffer =
   in
     match h0 with
       | Star ({h_formula_star_h1 = h1;
-	       h_formula_star_h2 = h2}) 
+	       h_formula_star_h2 = h2})
+      | StarMinus ({h_formula_starminus_h1 = h1;
+	       h_formula_starminus_h2 = h2}) 
       | Conj ({h_formula_conj_h1 = h1;
 	       h_formula_conj_h2 = h2}) 
+      | ConjStar ({h_formula_conjstar_h1 = h1;
+	       h_formula_conjstar_h2 = h2}) 
+      | ConjConj ({h_formula_conjconj_h1 = h1;
+	       h_formula_conjconj_h2 = h2}) 	       	       
       | Phase ({h_formula_phase_rd = h1;
 	       h_formula_phase_rw = h2}) ->
 	  gen_edges prog n h1 p nodes buffer;
@@ -154,7 +166,7 @@ and gen_edges prog n h0 p nodes buffer =
 	  let param_names = List.map dot_of_spec_var vdef.Cast.view_vars in
 	    ignore (List.map2 (fun a -> fun lbl -> make_edge p a lbl) args param_names)
 	end
-      | HTrue | HFalse | HEmp | Hole _ -> ()
+      | HTrue | HFalse | HEmp | HRel _ | Hole _ | DangNode _ -> ()
 
 and gen_edges_visib_names n visib_names p nodes buffer =
   let visib_names = List.map (fun v -> SpecVar (Named "", v, Primed)) visib_names in

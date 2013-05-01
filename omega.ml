@@ -2,6 +2,7 @@
   Call Omega Calculator, send input to it
 *)
 open Globals
+open GlobProver
 open Gen.Basic
 open Cpure
 
@@ -10,7 +11,8 @@ let set_prover_original_output = ref (fun _ -> ())
 
 let omega_call_count: int ref = ref 0
 let is_omega_running = ref false
-let in_timeout = ref 15.0 (* default timeout is 15 seconds *)
+let in_timeout = ref 10.0 (* default timeout is 15 seconds *)
+let is_complex_form = ref false
 
 (***********)
 let test_number = ref 0
@@ -37,7 +39,7 @@ let init_files () =
 let omega_of_spec_var (sv : spec_var):string = match sv with
   | SpecVar (t, v, p) -> 
 		let r = match (List.filter (fun (a,b,_)-> ((String.compare v b)==0) )!omega_subst_lst) with
-				  | []->           
+				  | []->
             let ln = (String.length v) in  
             let r_c = if (ln<15) then v
               else 
@@ -88,6 +90,7 @@ and omega_of_b_formula b =
   let (pf, _) = b in
   match pf with
   | BConst (c, _) -> if c then "(0=0)" else "(0>0)"
+  | XPure _ -> "(0=0)"
   | BVar (bv, _) ->  (omega_of_spec_var bv) ^ " > 0" (* easy to track boolean var *)
   | Lt (a1, a2, _) ->(omega_of_exp a1) ^ " < " ^ (omega_of_exp a2)
   | Lte (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
@@ -98,14 +101,14 @@ and omega_of_b_formula b =
   | Eq (a1, a2, _) -> begin
         if is_null a2 then	(omega_of_exp a1)^ " < 1"
         else if is_null a1 then (omega_of_exp a2) ^ " < 1"
-        else  				(omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
+        else (omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
   end
   | Neq (a1, a2, _) -> begin
         if is_null a2 then
-        				(omega_of_exp a1) ^ " > 0"
-        else if is_null a1 then						
-        				(omega_of_exp a2) ^ " > 0"
-        else		(omega_of_exp a1)^ " != " ^ (omega_of_exp a2)
+          (omega_of_exp a1) ^ " > 0"
+        else if is_null a1 then
+          (omega_of_exp a2) ^ " > 0"
+        else (omega_of_exp a1)^ " != " ^ (omega_of_exp a2)
     end
   | EqMax (a1, a2, a3, _) ->
       let a1str = omega_of_exp a1 in
@@ -135,7 +138,7 @@ and omega_of_formula pr_w pr_s f  =
         end
   | AndList _ -> report_error no_pos "omega.ml: encountered AndList, should have been already handled"
   | And (p1, p2, _) -> 	"(" ^ (helper p1) ^ " & " ^ (helper p2 ) ^ ")"
-  | Or (p1, p2,_ , _) -> 	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
+  | Or (p1, p2,_ , _) -> let _ = is_complex_form:= true in	"(" ^ (helper p1) ^ " | " ^ (helper p2) ^ ")"
   | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula pr_s pr_w p) ^ ")) "	
   | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
   | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (helper p) ^ ")) "
@@ -145,6 +148,7 @@ and omega_of_formula pr_w pr_s f  =
   with _ as e -> 
       let _ = Debug.trace_hprint (add_str "Omega Error format:" !print_formula) f in
       raise e
+
 
 let omega_of_formula i pr_w pr_s f  =
   let pr = !print_formula in
@@ -164,17 +168,19 @@ and omega_of_formula_old f  =
 (*   Debug.no_1_num i "omega_of_formula_old"  *)
 (*       pr pr_id (fun _ -> omega_of_formula_old f) f *)
 
-let omegacalc = ref ("oc":string)
+ let omegacalc = ref ("oc":string)
+(* let omegacalc = ref ("/home/locle/workspace/hg/infer2r2/sleekex/omega_modified/omega_calc/obj/oc":string) *)
 (*let modified_omegacalc = "/usr/local/bin/oc5"*)
 (* TODO: fix oc path *)
-(*let omegacalc = "/home/locle/workspace/hg/error_specs/sleekex/omega_modified/omega_calc/obj/oc"*)
+(* let omegacalc = ref ("/home/locle/workspace/default/sleekex/omega_modified/omega_calc/obj/oc": string)*)
 
 let start_with str prefix =
   (String.length str >= String.length prefix) && (String.sub str 0 (String.length prefix) = prefix) 
+	
 let send_cmd cmd =
   if !is_omega_running then output_string (!process.outchannel) (cmd ^ "\n")
 
-let set_process (proc: Globals.prover_process_t) = 
+let set_process (proc: GlobProver.prover_process_t) = 
   process := proc
 
 let prelude () =
@@ -226,6 +232,7 @@ let read_from_in_channel chn : string =
   while not !quitloop do
 	let line = input_line chn in
     let n = String.length line in
+    (* print_endline (line^"\n"); flush stdout; *)
     if n > 0 then begin
 		(* print_string (line^"\n"); flush stdout;*)
         (if !log_all_flag then
@@ -264,6 +271,13 @@ let read_last_line_from_in_channel chn : string =
   done;
   !line
 
+(* let read_from_err_channel chn: bool= *)
+(*   let line = input_line chn in *)
+(*   if String.length line > 0 then *)
+(*     let _ = print_endline line in *)
+(*     true *)
+(*   else false *)
+
 (* send formula to omega and receive result -true/false*)
 let check_formula f timeout =
   (*  try*)
@@ -285,7 +299,6 @@ let check_formula f timeout =
         in
         output_string (!process.outchannel) new_f;
         flush (!process.outchannel);
-        
         let result = ref true in
         let str = read_last_line_from_in_channel (!process.inchannel) in
         (* An Hoa : set original output *)
@@ -304,9 +317,14 @@ let check_formula f timeout =
       let fail_with_timeout () = 
         restart ("[omega.ml]Timeout when checking sat for \n" ^ (string_of_float timeout));
         true (* it was checking for sat*) in
-      let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_string_bool fnc f timeout fail_with_timeout in 
-      res
+      if not (!dis_provers_timeout) then
+        let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_string_bool fnc f timeout fail_with_timeout in
+        res
+      else fnc f
   end
+
+let check_formula f timeout = 
+Gen.Profiling.do_2 "Omega:check_formula" check_formula f timeout 
 
 let check_formula i f timeout =
   Debug.no_2 "Omega:check_formula" (fun x->x) string_of_float string_of_bool
@@ -333,12 +351,15 @@ let rec send_and_receive f timeout=
         (* let _ = print_endline ("before omega: " ^ new_f) in *)
         output_string (!process.outchannel) new_f;
         flush (!process.outchannel);
+        (* try *)
 	    let str = read_from_in_channel (!process.inchannel) in
 	    (* let _ = print_endline ("string from omega: " ^ str) in *)
         let lex_buf = Lexing.from_string str in
 	  (*print_string (line^"\n"); flush stdout;*)
         let rel = Ocparser.oc_output (Oclexer.tokenizer "interactive") lex_buf in
         rel
+        (* with e -> let _ = read_from_err_channel (!process.errchannel) in *)
+        (*           raise e *)
       in
       let answ = Procutils.PrvComms.maybe_raise_timeout_num 3 fnc () timeout in
       answ
@@ -391,6 +412,11 @@ let is_sat_ops pr_weak pr_strong (pe : formula)  (sat_no : string): bool =
             try
                 check_formula 1 fomega !in_timeout
             with
+              | Procutils.PrvComms.Timeout as exc ->
+                if !Globals.dis_provers_timeout then (stop (); raise exc)
+                else begin
+                  Printf.eprintf "SAT Unexpected exception : %s" (Printexc.to_string exc);
+                  stop (); raise exc end
               | End_of_file ->
                   (*let _ = print_endline "SAT: End_of_file" in*)
                   restart ("End_of_file when checking #SAT \n");
@@ -476,10 +502,16 @@ let is_valid_ops_x pr_weak pr_strong (pe : formula) timeout: bool =
 
 	        let sat =
               try
-                  not (check_formula 2 (fomega ^ "\n") !in_timeout)
+                not (check_formula 2 (fomega ^ "\n") !in_timeout)
               with
+                | Procutils.PrvComms.Timeout as exc -> 
+                  if !Globals.dis_provers_timeout then (stop (); raise exc)
+                  else begin
+                    Printf.eprintf "IMPLY : Unexpected exception : %s" (Printexc.to_string exc);
+                    stop (); raise exc end
                 | End_of_file ->
                     (*let _ = print_endline "IMPLY: End_of_file" in*)
+					(*let _ = print_string ("\n"^fomega^"\n") in*)
                     restart ("IMPLY : End_of_file when checking \n");
                     false
                 | exc ->
@@ -513,7 +545,8 @@ let is_valid_with_check (pe : formula) timeout : bool option =
 (*let is_valid_with_check_ops pr_w pr_s (pe : formula) timeout : bool option =
   do_with_check "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe*)
 
-let is_valid_with_default_ops pr_w pr_s (pe : formula) timeout : bool = do_with_check_default "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe false
+let is_valid_with_default_ops pr_w pr_s (pe : formula) timeout : bool = 
+  do_with_check_default "" (fun x -> is_valid_ops pr_w pr_s x timeout) pe false
 
 
 (* let is_valid (pe : formula) timeout : bool = *)
@@ -652,31 +685,42 @@ let simplify_ops pr_weak pr_strong (pe : formula) : formula =
                   end;
                   let simp_f =
 	                try
-                      begin
-	                    let rel = send_and_receive fomega !in_timeout (* 0.0  *)in
+                        begin
+                            let timeo =
+                              if (!is_complex_form) && String.length fomega > 1024 then
+                                20.0
+                              else !in_timeout
+                            in
+	                        let rel = send_and_receive fomega timeo (* (!in_timeout) *) (* 0.0  *)in
+                            let _ = is_complex_form := false in
                         (* let _ = print_endline ("after simplification: " ^ (Cpure.string_of_relation rel)) in *)
-	                    match_vars (fv pe) rel
+	                        match_vars (fv pe) rel
 	                  end
 	                with
-                      | Procutils.PrvComms.Timeout ->
+                      | Procutils.PrvComms.Timeout as exc ->
                             (*log ERROR ("TIMEOUT");*)
-                            restart ("Timeout when checking #simplify ");
-                            pe
+                          restart ("Timeout when checking #simplify ");
+                          if not (!Globals.dis_provers_timeout) then pe
+                          else raise exc (* Timeout exception of a higher-level function *)
                       | End_of_file ->
-                            restart ("End_of_file when checking #simplify \n");
-                            pe
+                          restart ("End_of_file when checking #simplify \n");
+                          pe
                       | exc -> (* stop (); raise exc  *)
-                            begin
+                          begin
                               Printf.eprintf "Unexpected exception : %s" (Printexc.to_string exc);
                               restart ("Unexpected exception when checking #simplify\n ");
                               pe
-                            end
+                          end
                   in
+                  let _ = is_complex_form := false in
                   (*   let post_time = Unix.gettimeofday () in *)
                   (*   let time = (post_time -. pre_time) *. 1000. in *)
                   (*let _ = print_string ("\nomega_simplify: f after"^(omega_of_formula simp_f)) in*)
                   simp_f
-              with _ -> pe (* not simplified *)
+              with
+              (* Timeout exception of provers is not expected at this level *)
+              | Procutils.PrvComms.Timeout as exc -> let _ = is_complex_form := false in raise exc 
+              | _ -> let _ = is_complex_form := false in pe (* not simplified *)
             end
   end
 
@@ -687,7 +731,6 @@ let simplify (pe : formula) : formula =
 let simplify (pe : formula) : formula =
   let pf = !print_pure in
   Debug.no_1 "Omega.simplify" pf pf simplify pe
-
 
 (* let simplify_ho is_complex (orig_pe : formula) : formula = *)
 (*  (\* print_endline "LOCLE: simplify";*\) *)

@@ -12,9 +12,13 @@ ensures false;
 		if (i < 10) {
 			int j = 0;
 			while (j < 15)
+			/* case { */
+			/* 	j>=15 -> requires Term ensures i'=i; */
+			/* 	j<15 -> requires Term[15-j] ensures i'=i; */
+			/* } */
 			case {
-				j>=15 -> requires Term ensures i'=i;
-				j<15 -> requires Term[15-j] ensures i'=i;
+				j>=15 -> requires Term ensures true;
+				j<15 -> requires Term[15-j] ensures true;
 			}
 			{
 				j++;

@@ -1,0 +1,35 @@
+data node {
+  int val;
+  node next;
+}.
+
+HeapPred H4(node a).
+HeapPred H2(node a).
+HeapPred H3(node a).
+HeapPred HP(node a).
+
+infer [H2,HP,H3,H4] 
+  H2(y) * HP(next_62_428) * xp::node<val_60_421,y> & x=xp & 
+  next_62_428=null & v_bool & next_62_428=null 
+  |-  H3(xp) * H4(y) .
+
+/*
+  @@ H2(y) -> H4(y)
+  @@ HP(v) & v=null -> emp
+  @@ xp::node<_,y> -> H3(xp) // where y is logical
+*/
+
+/*
+  @@ H2(y) & y = log_y -> H4(y)
+  @@ HP(v) & v=null -> emp
+  @@ xp::node<_,y> & y = log_y-> H3(xp) // where y is logical
+*/
+
+/*
+ass hprel: [ H2(y) * HP_416(next_62_428) * x'::node<val_60_421,y>&
+  next_62_428=null --> H3(x') * H4(y)&true,
+ H2(y)&true --> H4(y)&true]
+res:  [
+  emp&x=x' & next_62_428=null & v_bool_61_413' & next_62_428=null & v_bool_61_413'&{FLOW,(22,23)=__norm}[]
+  ]
+*/

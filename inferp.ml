@@ -173,7 +173,7 @@ let synthesize_one_inductive_pair_x neg_view_name ((uvl, ud,up) ,(vl, d,p)):CF.s
   (*mkAnd p_hvs, p2*)
   let p2 = CP.mkAnd p_hv up no_pos in
   let sf2 = synthesize_struc_f hf2 (Mcpure.OnePF p2) in
-  CF.mkEOr sf1 sf2 no_pos
+  CF.mkEList_no_flatten [(Label_only.empty_spec_label_def,sf1);(Label_only.empty_spec_label_def, sf2)]
 
 let synthesize_one_inductive_pair neg_view_name ((uvl, ud,up) ,(vl, d,p)):CF.struc_formula=
   let pr1 = pr_list (fun x -> Cprinter.string_of_h_formula (CF.DataNode x)) in
@@ -196,8 +196,9 @@ let synthesize_neg_view_def_x vd_u vd=
   let rec mkEOr fs f=
     match fs with
       | [] -> f
-      | f1::fss -> let f_tmp = CF.EOr ({CF.formula_struc_or_f1 = f; formula_struc_or_f2 = f1; formula_struc_or_pos = no_pos}) in
-                   mkEOr fss f_tmp
+      | f1::fss ->
+            let ls = List.map (fun f -> (Label_only.empty_spec_label_def, f)) (f::fs) in
+            CF.mkEList_no_flatten ls
   in
   (*partition into base_case and inductive case*)
   (*we have two kinds of varibales: inductive vars and non-inductive vars (pure formulas)*)
@@ -245,11 +246,15 @@ let synthesize_neg_view_def_x vd_u vd=
     C.view_uni_vars = [];
     C.view_labels = [];
     C.view_modes = vd.C.view_modes;
+    C.view_is_prim = false;
+    C.view_kind = C.View_NORM;
     C.view_partially_bound_vars= [];
     C.view_materialized_vars = [];
     C.view_data_name = vd.C.view_data_name;
     C.view_formula = f2;
     C.view_user_inv = MCP.OnePF (CP.mkTrue no_pos);(*todo:*)
+    C.view_mem = None;
+    C.view_xpure_flag = false;
     C.view_inv_lock = None;
     C.view_x_formula = MCP.OnePF (CP.mkTrue no_pos);(*todo:*)
     C.view_baga = vd.C.view_baga;

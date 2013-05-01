@@ -1,0 +1,11 @@
+// possible to prove mi=d 
+// but not mx=d nor mi=mx?
+// some simplification rule is missing
+checkentail 
+  mi=min(d,\inf) 
+  & mx=max(d,-\inf) 
+  & -\inf<d<\inf
+|-  
+ // mx=d
+ mi=mx 
+.

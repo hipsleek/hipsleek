@@ -2,6 +2,7 @@
 *)
 
 open Globals
+open GlobProver
 open Cpure
 
 let infilename = ref (!tmp_files_path ^ "input.mona." ^ (string_of_int (Unix.getpid ())))
@@ -167,6 +168,7 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 				  | ListPerm _ -> failwith ("Lists are not supported in Mona")
 					| RelForm _ -> failwith ("Relations are not supported in Mona")
 					| LexVar _ -> failwith ("LexVar are not supported in Mona")
+					| XPure _ -> Error.report_no_pattern()
 
 			  end (* end of bf :: rest case *)
 			| [] ->
@@ -240,6 +242,7 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
   | FConst _ -> failwith ("[setmona.ml]: ERROR in constraints (float should not appear here)")
   | Tsconst _ -> failwith ("[setmona.ml]: ERROR in constraints (tsconst should not appear here)")
   | Var (sv, _) -> compute_fo_var sv order var_map
+  | Level _ -> failwith "[setmona.ml]: level should not appear here"
   | Add (e1, e2, _)
   | Subtract (e1, e2, _)
   | Max (e1, e2, _)
@@ -286,6 +289,7 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
   | ListReverse _ -> failwith ("Lists are not supported in Mona")
 	| Func _ -> failwith ("Functions are not supported in Mona") 
 	| ArrayAt _ -> failwith ("Arrays are not supported in Mona") 
+	| InfConst _ -> Error.report_no_pattern()
 
 (* 
    Transformations: 
@@ -367,6 +371,7 @@ and normalize_b_formula (bf0 : b_formula) lbl: formula =
 	  | ListPerm _ -> failwith ("Lists are not supported in Mona")
 	  | LexVar _ -> failwith ("LexVar are not supported in Mona")
 		| RelForm _ -> failwith ("Lists are not supported in Mona") (* An Hoa *)
+		| XPure _ -> Error.report_no_pattern()
 		  
 (*
   return value:

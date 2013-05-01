@@ -38,10 +38,12 @@ type command =
   | PredDef of I.view_decl
   | FuncDef of I.func_decl
   | RelDef of I.rel_decl (* An Hoa *)
+  | HpDef of I.hp_decl
   | AxiomDef of I.axiom_decl (* [4/10/2011] An Hoa *)
   | LemmaDef of I.coercion_decl
   | LetDef of (ident * meta_formula)
-  | EntailCheck of (meta_formula * meta_formula)
+  | EntailCheck of (meta_formula * meta_formula * entail_type)
+  | EqCheck of (ident list * meta_formula * meta_formula)
   | SatCheck of (meta_formula)
   | BarrierCheck of I.barrier_decl
   | Neg of (meta_formula)
@@ -49,6 +51,7 @@ type command =
   | Infer of (ident list * meta_formula * meta_formula)
   | CaptureResidue of ident
   | PrintCmd of print_cmd
+  | CmpCmd of (ident list * ident * meta_formula list)
   | Time of (bool*string*loc)
   | EmptyCmd 
 
@@ -79,13 +82,15 @@ let var_tab : var_table_t = H.create 10240
 
 let string_of_command c = match c with
   | DataDef _ -> "DataDef"
-  | PredDef _ -> "PredDef" 
+  | PredDef i -> "PredDef "^(Iprinter.string_of_view_decl i)
   | FuncDef  _ -> "FuncDef"  
   | RelDef  _ -> "RelDef"  
+  | HpDef  _ -> "HpDef"  
   | AxiomDef  _ -> "AxiomDef"  
   | LemmaDef  _ -> "LemmaDef"
   | LetDef  _ -> "LetDef"   
   | EntailCheck _ -> "EntailCheck"
+  | EqCheck _ -> "EqCheck"
   | SatCheck _ -> "SatCheck"
   | BarrierCheck _ -> "BarrierCheck"
   | Neg _ -> "Neg"
@@ -93,6 +98,7 @@ let string_of_command c = match c with
   | Infer _ -> "Infer"
   | CaptureResidue _ -> "CaptureResidue"  
   | PrintCmd _ -> "PrintCmd"  
+  | CmpCmd _ -> "CmpCmd"  
   | Time _ -> "Time"
   | EmptyCmd -> "EmptyCmd"
 

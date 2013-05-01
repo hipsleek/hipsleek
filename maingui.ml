@@ -27,7 +27,7 @@ let parse_file_full file_name =
      *)
 		print_string "Parsing...\n";
         let _ = Gen.Profiling.push_time "Parsing" in
-      let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) in
+      let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) false in
 		(* let prog = Iparser.program (Ilexer.tokenizer file_name) input in *)
 		  close_in org_in_chnl;
          let _ = Gen.Profiling.pop_time "Parsing" in
@@ -76,7 +76,7 @@ let process_source_full source =
       let _ = print_string ("Translating to core language...\n"); flush stdout in
       let cprog = Astsimp.trans_prog intermediate_prog in
       let _ = print_string (" done\n"); flush stdout in
-      let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in
+      let _ = if (!Globals.print_core || !Globals.print_core_all) then print_string (Cprinter.string_of_program cprog) else () in
       let _ = 
 	if !Globals.verify_callees then begin
 	  let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in

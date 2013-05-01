@@ -6,13 +6,15 @@
 *)
 
 open Globals
+open GlobProver
 module CP = Cpure
 
 let isabelle_file_number = ref 0
 let result_file_name = "res"
 let log_all_flag = ref false
 let log_all = open_log_out "allinput.thy"
-let image_path_lst = ["MyImage"; "/usr/local/bin/MyImage"]
+(* let image_path_lst = ["MyImage"; "/usr/local/bin/MyImage"] *)
+let image_path_lst = ["/usr/local/bin/MyImage"]
 let isabelle_image = ref "MyImage"
 let max_flag = ref false
 let choice = ref 1
@@ -39,9 +41,18 @@ let rec isabelle_of_typ = function
   | List _          -> 	(* lists are not supported *)
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "list not supported for Isabelle"}
-  | NUM | TVar _ | Named _ | Array _ |RelT |AnnT ->
+  | NUM
+  | RelT _
+  | HpT
+  | AnnT->
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "NUM, RelT, HpT and AnnT not supported for Isabelle"}
+  | TVar _ 
+  | Named _ 
+  | Array _ ->
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "type var, array and named type not supported for Isabelle"}
+  | INFInt | Pointer _ -> Error.report_no_pattern ()
 ;;
 
 (* pretty printing for spec_vars *)
@@ -127,6 +138,8 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.Func _ -> failwith ("Func are not supported in Isabelle")
   | CP.AConst _ -> failwith ("AConst are not supported in Isabelle")
 	| CP.ArrayAt _ ->  failwith ("Arrays are not supported in Isabelle") (* An Hoa *)
+	| CP.Level _ ->  failwith ("level should not appear in Isabelle")
+    | CP.InfConst _ -> Error.report_no_pattern ()
   
 (* pretty printing for a list of expressions *)
 and isabelle_of_formula_exp_list l = match l with
@@ -142,6 +155,7 @@ and isabelle_of_b_formula b =
   let (pf,_) = b in
   match pf with
   | CP.BConst (c, _) -> if c then "((0::int) = 0)" else "((0::int) > 0)"
+  | CP.XPure _ -> "((0::int) = 0)" (* WN : weakening *)
   | CP.BVar (bv, _) -> "(" ^ (isabelle_of_spec_var bv) ^ " > 0)"
   | CP.Lt (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " < " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Lte (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " <= " ^ (isabelle_of_exp a2) ^ ")"

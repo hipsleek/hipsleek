@@ -1,0 +1,1493 @@
+Starting Omega...oc
+Translating global variables to procedure parameters...
+trans_prog
+
+data __Exc {
+
+}
+data __Error {
+
+}
+data __ArrBoundErr {
+
+}
+data __DivByZeroErr {
+
+}
+data Object {
+
+}
+data String {
+
+}
+data node {
+  int h
+  node n
+}
+data barrier {
+
+}
+
+ view ls<p:node>= 
+  
+   EBase {178}->emp&self=p&{FLOW,(1,23)=__flow}[]
+  eor 
+   EBase exists (Expl)(Impl)[q](ex){177}->EXISTS(p_22,
+         flted_15_21: self::node<flted_15_21,q>@M[Orig] * 
+         q::ls<p_22>@M[Orig]&flted_15_21=1 & p_22=p&{FLOW,(1,23)=__flow})[]
+  
+  inv: true
+  inv_lock: None
+  unstructured formula: 
+   {178}->emp&self=p&{FLOW,(1,23)=__flow}[]
+   || {177}->EXISTS(p_22,flted_15_21,q: self::node<flted_15_21,q>@M[Orig] * 
+      q::ls<p_22>@M[Orig][LHSCase]&flted_15_21=1 & p_22=p&
+      {FLOW,(1,23)=__flow})[]
+  xform: self=p | self!=null
+  is_recursive?: true
+  view_data_name: node
+  self preds: []
+  materialized vars: [(self,partial,)]
+  addr vars: self
+  uni_vars: []
+  bag of addr: 
+  raw base case: {178}->emp&self=p&{FLOW,(1,23)=__flow}[]
+  view_complex_inv: None
+  prune branches: ,
+  prune conditions: {
+}
+  prune baga conditions: 
+  prune invs:0:,
+
+
+
+relation bnd
+relation amodr
+relation update_array_2d
+relation update_array_1d
+relation update_array_1d_b
+relation domb
+relation dom
+relation induce
+
+axiom  domb(a,low,high) & low<=l & h<=high |-  domb(a,l,h)
+axiom  dom(a,low,high) & low<=l & h<=high |-  dom(a,l,h)
+
+
+
+
+
+void acquire$()
+static  ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                    EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                            EAssume 73::
+                              emp&true&{FLOW,(20,21)=__norm}[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(273,0),(275,15)}
+
+void release$()
+static  ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                    EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                            EAssume 74::
+                              emp&true&{FLOW,(20,21)=__norm}[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(277,0),(279,15)}
+
+void create$()
+static  ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                    EBase emp&MayLoop&{FLOW,(1,23)=__flow}[]
+                            EAssume 3::
+                              emp&true&{FLOW,(20,21)=__norm}[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+node a_41;
+a_41 = {
+102::malloc$()
+};
+boolean v_bool_23_597;
+v_bool_23_597 = {
+105::is_null___$node(a_41)
+};
+103::if (v_bool_23_597) [LABEL! 103,0: 104::return]
+else [LABEL! 103,1: ]
+;
+node t_42;
+node p_43;
+p_43 = a_41;
+{
+106::loop$node~node(p_43,t_42)
+};
+{
+int v_int_30_598;
+v_int_30_598 = 1;
+108::bind p_43 to (h_30_599,n_30_600) [write] in 
+{h_30_599 = v_int_30_598
+}
+};
+{
+null v_null_31_601;
+v_null_31_601 = null;
+110::bind p_43 to (h_31_602,n_31_603) [write] in 
+{n_31_603 = v_null_31_601
+}
+};
+{
+111::loop2$node(p_43)
+};
+112::return
+
+{(18,0),(0,-1)}
+
+boolean eq___$barrier~barrier(  barrier a,  barrier b)
+static  ((None,[]),ECase case {
+                   a=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                             EBase emp&Term&
+                                                   {FLOW,(1,23)=__flow}[]
+                                                     EAssume 169::
+                                                       emp&res&
+                                                       {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                              EBase emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 170::
+                                                        emp&!(res)&
+                                                        {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(29,0),(29,111)}
+
+boolean is_not_null___$__DivByZeroErr(  __DivByZeroErr a)
+static  ((None,[]),ECase case {
+                   a=null -> ((None,[]),EBase emp&true&
+                                              {FLOW,(20,21)=__norm}[]
+                                                EBase emp&Term&
+                                                      {FLOW,(1,23)=__flow}[]
+                                                        EAssume 143::
+                                                          emp&!(res)&
+                                                          {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=null -> ((None,[]),EBase emp&true&
+                                               {FLOW,(20,21)=__norm}[]
+                                                 EBase emp&Term&
+                                                       {FLOW,(1,23)=__flow}[]
+                                                         EAssume 144::
+                                                           emp&res&
+                                                           {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(16,0),(16,122)}
+
+int fork$()
+static  ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                    EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                            EAssume 69::
+                              emp&true&{FLOW,(20,21)=__norm}[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(257,0),(259,15)}
+
+boolean eq___$__ArrBoundErr~__ArrBoundErr(  __ArrBoundErr a,  __ArrBoundErr b)
+static  ((None,[]),ECase case {
+                   a=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                             EBase emp&Term&
+                                                   {FLOW,(1,23)=__flow}[]
+                                                     EAssume 129::
+                                                       emp&res&
+                                                       {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                              EBase emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 130::
+                                                        emp&!(res)&
+                                                        {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(9,0),(9,123)}
+
+boolean[] update___1d$boolean~boolean[]~int(  boolean v,  boolean[] a,  int i)
+static  ((None,[]),EBase exists (Expl)[ahalb; ahaub](Impl)(ex)emp&
+                  domb(a,ahalb,ahaub) & ahalb<=i & i<=ahaub&
+                  {FLOW,(20,21)=__norm}[]
+                    EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                            EAssume 76::
+                              emp&domb(res,ahalb,ahaub) & 
+                              update_array_1d_b(a,res,v,i)&
+                              {FLOW,(20,21)=__norm}[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(306,0),(308,62)}
+
+boolean eq___$String~String(  String a,  String b)
+static  ((None,[]),ECase case {
+                   a=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                             EBase emp&Term&
+                                                   {FLOW,(1,23)=__flow}[]
+                                                     EAssume 153::
+                                                       emp&res&
+                                                       {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                              EBase emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 154::
+                                                        emp&!(res)&
+                                                        {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(21,0),(21,109)}
+
+void finalize$()
+static  ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                    EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                            EAssume 72::
+                              emp&true&{FLOW,(20,21)=__norm}[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(269,0),(271,15)}
+
+boolean error$()
+static  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(5,0),(7,14)}
+
+void loop2$node(  node p) rec
+static  ((None,[]),EBase EXISTS(flted_52_36: p::ls<flted_52_36>@M[Orig][LHSCase]&
+                  flted_52_36=null&{FLOW,(20,21)=__norm})[]
+                    EBase emp&MayLoop&{FLOW,(1,23)=__flow}[]
+                            EAssume 13::ref [p]
+                              emp&p'=null&{FLOW,(20,21)=__norm}[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+
+ref p
+boolean v_bool_55_575;
+v_bool_55_575 = {
+87::is_not_null___$node(p)
+};
+79::if (v_bool_55_575) [LABEL! 79,0: boolean v_bool_56_572;
+v_bool_56_572 = {
+int v_int_56_571;
+v_int_56_571 = 83::bind p to (h_56_568,n_56_569) [read] in 
+{h_56_568
+};
+int v_int_56_570;
+v_int_56_570 = 1;
+82::neq___$int~int(v_int_56_571,v_int_56_570)
+};
+80::if (v_bool_56_572) [LABEL! 80,0: 81::return]
+else [LABEL! 80,1: ]
+;
+p = 85::bind p to (h_60_573,n_60_574) [read] in 
+{n_60_574
+};
+{
+86::loop2$node(p) rec
+}]
+else [LABEL! 79,1: ]
+
+
+{(51,0),(0,-1)}
+
+boolean neq___$Object~Object(  Object a,  Object b)
+static  ((None,[]),ECase case {
+                   a=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                             EBase emp&Term&
+                                                   {FLOW,(1,23)=__flow}[]
+                                                     EAssume 147::
+                                                       emp&!(res)&
+                                                       {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                              EBase emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 148::
+                                                        emp&res&
+                                                        {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(18,0),(18,109)}
+
+boolean eq___$node~node(  node a,  node b)
+static  ((None,[]),ECase case {
+                   a=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                             EBase emp&Term&
+                                                   {FLOW,(1,23)=__flow}[]
+                                                     EAssume 161::
+                                                       emp&res&
+                                                       {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                              EBase emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 162::
+                                                        emp&!(res)&
+                                                        {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(25,0),(25,105)}
+
+boolean eq___$__Exc~__Exc(  __Exc a,  __Exc b)
+static  ((None,[]),ECase case {
+                   a=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                             EBase emp&Term&
+                                                   {FLOW,(1,23)=__flow}[]
+                                                     EAssume 113::
+                                                       emp&res&
+                                                       {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                              EBase emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 114::
+                                                        emp&!(res)&
+                                                        {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(1,0),(1,107)}
+
+boolean is_null___$__ArrBoundErr(  __ArrBoundErr a)
+static  ((None,[]),ECase case {
+                   a=null -> ((None,[]),EBase emp&true&
+                                              {FLOW,(20,21)=__norm}[]
+                                                EBase emp&Term&
+                                                      {FLOW,(1,23)=__flow}[]
+                                                        EAssume 133::
+                                                          emp&res&
+                                                          {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=null -> ((None,[]),EBase emp&true&
+                                               {FLOW,(20,21)=__norm}[]
+                                                 EBase emp&Term&
+                                                       {FLOW,(1,23)=__flow}[]
+                                                         EAssume 134::
+                                                           emp&!(res)&
+                                                           {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(11,0),(11,117)}
+
+boolean is_not_null___$__Exc(  __Exc a)
+static  ((None,[]),ECase case {
+                   a=null -> ((None,[]),EBase emp&true&
+                                              {FLOW,(20,21)=__norm}[]
+                                                EBase emp&Term&
+                                                      {FLOW,(1,23)=__flow}[]
+                                                        EAssume 119::
+                                                          emp&!(res)&
+                                                          {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=null -> ((None,[]),EBase emp&true&
+                                               {FLOW,(20,21)=__norm}[]
+                                                 EBase emp&Term&
+                                                       {FLOW,(1,23)=__flow}[]
+                                                         EAssume 120::
+                                                           emp&res&
+                                                           {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(4,0),(4,113)}
+
+boolean neq___$boolean~boolean(  boolean a,  boolean b)
+static  ((None,[]),ECase case {
+                   a=b -> ((None,[]),EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                                             EAssume 47::
+                                               emp&!(res)&
+                                               {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=b -> ((None,[]),EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                                              EAssume 48::
+                                                emp&res&
+                                                {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(113,0),(115,27)}
+
+int array_get_elm_at___2d$int[][]~int~int(  int[][] a,  int i,  int j)
+static  ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                    EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                            EAssume 68::
+                              emp&res=a[i,j]&{FLOW,(20,21)=__norm}[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(247,0),(249,22)}
+
+boolean is_not_null___$String(  String a)
+static  ((None,[]),ECase case {
+                   a=null -> ((None,[]),EBase emp&true&
+                                              {FLOW,(20,21)=__norm}[]
+                                                EBase emp&Term&
+                                                      {FLOW,(1,23)=__flow}[]
+                                                        EAssume 159::
+                                                          emp&!(res)&
+                                                          {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=null -> ((None,[]),EBase emp&true&
+                                               {FLOW,(20,21)=__norm}[]
+                                                 EBase emp&Term&
+                                                       {FLOW,(1,23)=__flow}[]
+                                                         EAssume 160::
+                                                           emp&res&
+                                                           {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(24,0),(24,114)}
+
+boolean neq___$String~String(  String a,  String b)
+static  ((None,[]),ECase case {
+                   a=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                             EBase emp&Term&
+                                                   {FLOW,(1,23)=__flow}[]
+                                                     EAssume 155::
+                                                       emp&!(res)&
+                                                       {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                              EBase emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 156::
+                                                        emp&res&
+                                                        {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(22,0),(22,109)}
+
+int[] update___1d$int~int[]~int(  int v,  int[] a,  int i)
+static  ((None,[]),EBase exists (Expl)[ahalb; ahaub](Impl)(ex)emp&
+                  dom(a,ahalb,ahaub) & ahalb<=i & i<=ahaub&
+                  {FLOW,(20,21)=__norm}[]
+                    EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                            EAssume 75::
+                              emp&dom(res,ahalb,ahaub) & 
+                              update_array_1d(a,res,v,i)&
+                              {FLOW,(20,21)=__norm}[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(286,0),(303,33)}
+
+boolean eq___$__Error~__Error(  __Error a,  __Error b)
+static  ((None,[]),ECase case {
+                   a=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                             EBase emp&Term&
+                                                   {FLOW,(1,23)=__flow}[]
+                                                     EAssume 121::
+                                                       emp&res&
+                                                       {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                              EBase emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 122::
+                                                        emp&!(res)&
+                                                        {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(5,0),(5,111)}
+
+boolean lt___$int~int(  int a,  int b)
+static  ((None,[]),ECase case {
+                   a<b -> ((None,[]),EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                                             EAssume 49::
+                                               emp&res&
+                                               {FLOW,(20,21)=__norm}[])
+                   ;
+                   b<=a -> ((None,[]),EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                                              EAssume 50::
+                                                emp&!(res)&
+                                                {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(121,0),(123,28)}
+
+int minus___$int~int(  int a,  int b)
+static  ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                    EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                            EAssume 20::
+                              emp&res+(1*b)=a&{FLOW,(20,21)=__norm}[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(8,0),(10,22)}
+
+boolean nondeterm$()
+static  ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                    EBase emp&MayLoop&{FLOW,(1,23)=__flow}[]
+                            EAssume 1::
+                              
+                              emp&!(res)&{FLOW,(20,21)=__norm}[]
+                              or emp&res&{FLOW,(20,21)=__norm}[]
+                              )
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(1,0),(3,21)}
+
+int div4$int~int(  int a,  int b)
+static  ((None,[]),EBase emp&b!=0&{FLOW,(20,21)=__norm}[]
+                    EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                            EAssume 32::
+                              emp&true&{FLOW,(20,21)=__norm}[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(47,0),(49,15)}
+
+int[][] update___2d$int~int[][]~int~int(  int v,  int[][] a,  int i,  int j)
+static  ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                    EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                            EAssume 77::
+                              emp&update_array_2d(a,res,v,i,j)&
+                              {FLOW,(20,21)=__norm}[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(310,0),(312,38)}
+
+boolean is_null___$__DivByZeroErr(  __DivByZeroErr a)
+static  ((None,[]),ECase case {
+                   a=null -> ((None,[]),EBase emp&true&
+                                              {FLOW,(20,21)=__norm}[]
+                                                EBase emp&Term&
+                                                      {FLOW,(1,23)=__flow}[]
+                                                        EAssume 141::
+                                                          emp&res&
+                                                          {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=null -> ((None,[]),EBase emp&true&
+                                               {FLOW,(20,21)=__norm}[]
+                                                 EBase emp&Term&
+                                                       {FLOW,(1,23)=__flow}[]
+                                                         EAssume 142::
+                                                           emp&!(res)&
+                                                           {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(15,0),(15,118)}
+
+boolean neq___$barrier~barrier(  barrier a,  barrier b)
+static  ((None,[]),ECase case {
+                   a=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                             EBase emp&Term&
+                                                   {FLOW,(1,23)=__flow}[]
+                                                     EAssume 171::
+                                                       emp&!(res)&
+                                                       {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                              EBase emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 172::
+                                                        emp&res&
+                                                        {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(30,0),(30,111)}
+
+boolean is_not_null___$Object(  Object a)
+static  ((None,[]),ECase case {
+                   a=null -> ((None,[]),EBase emp&true&
+                                              {FLOW,(20,21)=__norm}[]
+                                                EBase emp&Term&
+                                                      {FLOW,(1,23)=__flow}[]
+                                                        EAssume 151::
+                                                          emp&!(res)&
+                                                          {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=null -> ((None,[]),EBase emp&true&
+                                               {FLOW,(20,21)=__norm}[]
+                                                 EBase emp&Term&
+                                                       {FLOW,(1,23)=__flow}[]
+                                                         EAssume 152::
+                                                           emp&res&
+                                                           {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(20,0),(20,114)}
+
+boolean gt___$int~int(  int a,  int b)
+static  ((None,[]),ECase case {
+                   b<a -> ((None,[]),EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                                             EAssume 53::
+                                               emp&res&
+                                               {FLOW,(20,21)=__norm}[])
+                   ;
+                   a<=b -> ((None,[]),EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                                              EAssume 54::
+                                                emp&!(res)&
+                                                {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(137,0),(139,28)}
+
+boolean eq___$int~int(  int a,  int b)
+static  ((None,[]),ECase case {
+                   a=b -> ((None,[]),EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                                             EAssume 41::
+                                               emp&res&
+                                               {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=b -> ((None,[]),EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                                              EAssume 42::
+                                                emp&!(res)&
+                                                {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(93,0),(96,28)}
+
+boolean is_null___$barrier(  barrier a)
+static  ((None,[]),ECase case {
+                   a=null -> ((None,[]),EBase emp&true&
+                                              {FLOW,(20,21)=__norm}[]
+                                                EBase emp&Term&
+                                                      {FLOW,(1,23)=__flow}[]
+                                                        EAssume 173::
+                                                          emp&res&
+                                                          {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=null -> ((None,[]),EBase emp&true&
+                                               {FLOW,(20,21)=__norm}[]
+                                                 EBase emp&Term&
+                                                       {FLOW,(1,23)=__flow}[]
+                                                         EAssume 174::
+                                                           emp&!(res)&
+                                                           {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(31,0),(31,111)}
+
+boolean is_null___$__Exc(  __Exc a)
+static  ((None,[]),ECase case {
+                   a=null -> ((None,[]),EBase emp&true&
+                                              {FLOW,(20,21)=__norm}[]
+                                                EBase emp&Term&
+                                                      {FLOW,(1,23)=__flow}[]
+                                                        EAssume 117::
+                                                          emp&res&
+                                                          {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=null -> ((None,[]),EBase emp&true&
+                                               {FLOW,(20,21)=__norm}[]
+                                                 EBase emp&Term&
+                                                       {FLOW,(1,23)=__flow}[]
+                                                         EAssume 118::
+                                                           emp&!(res)&
+                                                           {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(3,0),(3,109)}
+
+int pow___$int~int(  int a,  int b)
+static  ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                    EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                            EAssume 65::
+                              emp&true&{FLOW,(20,21)=__norm}[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(167,0),(169,16)}
+
+boolean land___$boolean~boolean(  boolean a,  boolean b)
+static  ((None,[]),ECase case {
+                   a -> ((None,[]),ECase case {
+                                          b -> ((None,[]),EBase emp&Term&
+                                                                {FLOW,(1,23)=__flow}[]
+                                                                  EAssume 57::
+                                                                    emp&res&
+                                                                    {FLOW,(20,21)=__norm}[])
+                                          ;
+                                          !(b) -> ((None,[]),EBase emp&Term&
+                                                                   {FLOW,(1,23)=__flow}[]
+                                                                    EAssume 58::
+                                                                    emp&
+                                                                    !(res)&
+                                                                    {FLOW,(20,21)=__norm}[])
+                                          
+                                          })
+                   ;
+                   !(a) -> ((None,[]),EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                                              EAssume 59::
+                                                emp&!(res)&
+                                                {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(153,0),(156,21)}
+
+boolean neq___$int~int(  int a,  int b)
+static  ((None,[]),ECase case {
+                   a=b -> ((None,[]),EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                                             EAssume 45::
+                                               emp&!(res)&
+                                               {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=b -> ((None,[]),EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                                              EAssume 46::
+                                                emp&res&
+                                                {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(108,0),(111,27)}
+
+void form_node$node~int~node(  node x,  int v1,  node n2)
+static  ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                    EBase emp&MayLoop&{FLOW,(1,23)=__flow}[]
+                            EAssume 18::
+                              EXISTS(v1_31,
+                              n2_32: x::node<v1_31,n2_32>@M[Orig]&v1_31=v1 & 
+                              n2_32=n2&{FLOW,(20,21)=__norm})[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(70,0),(72,26)}
+
+boolean neq___$__DivByZeroErr~__DivByZeroErr(  __DivByZeroErr a,  __DivByZeroErr b)
+static  ((None,[]),ECase case {
+                   a=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                             EBase emp&Term&
+                                                   {FLOW,(1,23)=__flow}[]
+                                                     EAssume 139::
+                                                       emp&!(res)&
+                                                       {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                              EBase emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 140::
+                                                        emp&res&
+                                                        {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(14,0),(14,125)}
+
+boolean is_not_null___$__ArrBoundErr(  __ArrBoundErr a)
+static  ((None,[]),ECase case {
+                   a=null -> ((None,[]),EBase emp&true&
+                                              {FLOW,(20,21)=__norm}[]
+                                                EBase emp&Term&
+                                                      {FLOW,(1,23)=__flow}[]
+                                                        EAssume 135::
+                                                          emp&!(res)&
+                                                          {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=null -> ((None,[]),EBase emp&true&
+                                               {FLOW,(20,21)=__norm}[]
+                                                 EBase emp&Term&
+                                                       {FLOW,(1,23)=__flow}[]
+                                                         EAssume 136::
+                                                           emp&res&
+                                                           {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(12,0),(12,121)}
+
+boolean eq___$__DivByZeroErr~__DivByZeroErr(  __DivByZeroErr a,  __DivByZeroErr b)
+static  ((None,[]),ECase case {
+                   a=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                             EBase emp&Term&
+                                                   {FLOW,(1,23)=__flow}[]
+                                                     EAssume 137::
+                                                       emp&res&
+                                                       {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                              EBase emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 138::
+                                                        emp&!(res)&
+                                                        {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(13,0),(13,125)}
+
+boolean is_null___$node(  node a)
+static  ((None,[]),ECase case {
+                   a=null -> ((None,[]),EBase emp&true&
+                                              {FLOW,(20,21)=__norm}[]
+                                                EBase emp&Term&
+                                                      {FLOW,(1,23)=__flow}[]
+                                                        EAssume 165::
+                                                          emp&res&
+                                                          {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=null -> ((None,[]),EBase emp&true&
+                                               {FLOW,(20,21)=__norm}[]
+                                                 EBase emp&Term&
+                                                       {FLOW,(1,23)=__flow}[]
+                                                         EAssume 166::
+                                                           emp&!(res)&
+                                                           {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(27,0),(27,108)}
+
+boolean is_null___$String(  String a)
+static  ((None,[]),ECase case {
+                   a=null -> ((None,[]),EBase emp&true&
+                                              {FLOW,(20,21)=__norm}[]
+                                                EBase emp&Term&
+                                                      {FLOW,(1,23)=__flow}[]
+                                                        EAssume 157::
+                                                          emp&res&
+                                                          {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=null -> ((None,[]),EBase emp&true&
+                                               {FLOW,(20,21)=__norm}[]
+                                                 EBase emp&Term&
+                                                       {FLOW,(1,23)=__flow}[]
+                                                         EAssume 158::
+                                                           emp&!(res)&
+                                                           {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(23,0),(23,110)}
+
+boolean neq___$__Error~__Error(  __Error a,  __Error b)
+static  ((None,[]),ECase case {
+                   a=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                             EBase emp&Term&
+                                                   {FLOW,(1,23)=__flow}[]
+                                                     EAssume 123::
+                                                       emp&!(res)&
+                                                       {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                              EBase emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 124::
+                                                        emp&res&
+                                                        {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(6,0),(6,111)}
+
+int add___$int~int(  int a,  int b)
+static  ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                    EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                            EAssume 19::
+                              emp&res=b+a&{FLOW,(20,21)=__norm}[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(4,0),(6,22)}
+
+boolean is_not_null___$barrier(  barrier a)
+static  ((None,[]),ECase case {
+                   a=null -> ((None,[]),EBase emp&true&
+                                              {FLOW,(20,21)=__norm}[]
+                                                EBase emp&Term&
+                                                      {FLOW,(1,23)=__flow}[]
+                                                        EAssume 175::
+                                                          emp&!(res)&
+                                                          {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=null -> ((None,[]),EBase emp&true&
+                                               {FLOW,(20,21)=__norm}[]
+                                                 EBase emp&Term&
+                                                       {FLOW,(1,23)=__flow}[]
+                                                         EAssume 176::
+                                                           emp&res&
+                                                           {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(32,0),(32,115)}
+
+int mult___$int~int(  int a,  int b)
+static  ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                    EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                            EAssume 21::
+                              emp&res=a*b&{FLOW,(20,21)=__norm}[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(12,0),(14,22)}
+
+boolean is_null___$Object(  Object a)
+static  ((None,[]),ECase case {
+                   a=null -> ((None,[]),EBase emp&true&
+                                              {FLOW,(20,21)=__norm}[]
+                                                EBase emp&Term&
+                                                      {FLOW,(1,23)=__flow}[]
+                                                        EAssume 149::
+                                                          emp&res&
+                                                          {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=null -> ((None,[]),EBase emp&true&
+                                               {FLOW,(20,21)=__norm}[]
+                                                 EBase emp&Term&
+                                                       {FLOW,(1,23)=__flow}[]
+                                                         EAssume 150::
+                                                           emp&!(res)&
+                                                           {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(19,0),(19,110)}
+
+void join$int(  int id)
+static  ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                    EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                            EAssume 70::
+                              emp&true&{FLOW,(20,21)=__norm}[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(261,0),(263,15)}
+
+boolean is_null___$__Error(  __Error a)
+static  ((None,[]),ECase case {
+                   a=null -> ((None,[]),EBase emp&true&
+                                              {FLOW,(20,21)=__norm}[]
+                                                EBase emp&Term&
+                                                      {FLOW,(1,23)=__flow}[]
+                                                        EAssume 125::
+                                                          emp&res&
+                                                          {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=null -> ((None,[]),EBase emp&true&
+                                               {FLOW,(20,21)=__norm}[]
+                                                 EBase emp&Term&
+                                                       {FLOW,(1,23)=__flow}[]
+                                                         EAssume 126::
+                                                           emp&!(res)&
+                                                           {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(7,0),(7,111)}
+
+boolean lte___$int~int(  int a,  int b)
+static  ((None,[]),ECase case {
+                   a<=b -> ((None,[]),EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                                              EAssume 51::
+                                                emp&res&
+                                                {FLOW,(20,21)=__norm}[])
+                   ;
+                   b<a -> ((None,[]),EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                                             EAssume 52::
+                                               emp&!(res)&
+                                               {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(129,0),(131,28)}
+
+int div3$int~int(  int a,  int b)
+static  ((None,[]),ECase case {
+                   b=0 -> EBase hfalse&false&{FLOW,(20,21)=__norm}[] ;
+                   b!=0 -> ((None,[]),EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                                              EAssume 31::
+                                                emp&true&
+                                                {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(41,0),(45,2)}
+
+boolean neq___$__Exc~__Exc(  __Exc a,  __Exc b)
+static  ((None,[]),ECase case {
+                   a=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                             EBase emp&Term&
+                                                   {FLOW,(1,23)=__flow}[]
+                                                     EAssume 115::
+                                                       emp&!(res)&
+                                                       {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                              EBase emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 116::
+                                                        emp&res&
+                                                        {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(2,0),(2,107)}
+
+boolean is_not_null___$node(  node a)
+static  ((None,[]),ECase case {
+                   a=null -> ((None,[]),EBase emp&true&
+                                              {FLOW,(20,21)=__norm}[]
+                                                EBase emp&Term&
+                                                      {FLOW,(1,23)=__flow}[]
+                                                        EAssume 167::
+                                                          emp&!(res)&
+                                                          {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=null -> ((None,[]),EBase emp&true&
+                                               {FLOW,(20,21)=__norm}[]
+                                                 EBase emp&Term&
+                                                       {FLOW,(1,23)=__flow}[]
+                                                         EAssume 168::
+                                                           emp&res&
+                                                           {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(28,0),(28,112)}
+
+void loop$node~node(  node p,  node t) rec
+static  ((None,[]),EBase exists (Expl)(Impl)[Anon_11](ex)EXISTS(flted_38_40: 
+                  p::node<Anon_11,flted_38_40>@M[Orig]&flted_38_40=null&
+                  {FLOW,(20,21)=__norm})[]
+                    EBase emp&MayLoop&{FLOW,(1,23)=__flow}[]
+                            EAssume 7::ref [p;t]
+                              EXISTS(flted_39_39,
+                              Anon_12: p'::node<Anon_12,flted_39_39>@M[Orig]&
+                              flted_39_39=null&{FLOW,(20,21)=__norm})[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+
+ref p, t
+boolean v_bool_41_594;
+v_bool_41_594 = {
+101::nondeterm$()
+};
+88::if (v_bool_41_594) [LABEL! 88,0: {
+int v_int_42_586;
+v_int_42_586 = 1;
+90::bind p to (h_42_587,n_42_588) [write] in 
+{h_42_587 = v_int_42_586
+}
+};
+t = {
+92::malloc$()
+};
+boolean v_bool_44_589;
+v_bool_44_589 = {
+95::is_null___$node(t)
+};
+93::if (v_bool_44_589) [LABEL! 93,0: 94::return]
+else [LABEL! 93,1: ]
+;
+97::bind p to (h_45_590,n_45_591) [write] in 
+{n_45_591 = t
+};
+p = 99::bind p to (h_46_592,n_46_593) [read] in 
+{n_46_593
+};
+{
+100::loop$node~node(p,t) rec
+}]
+else [LABEL! 88,1: ]
+
+
+{(37,0),(0,-1)}
+
+void init$()
+static  ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                    EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                            EAssume 71::
+                              emp&true&{FLOW,(20,21)=__norm}[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(265,0),(267,15)}
+
+boolean lor___$boolean~boolean(  boolean a,  boolean b)
+static  ((None,[]),ECase case {
+                   a -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                           EBase emp&Term&
+                                                 {FLOW,(1,23)=__flow}[]
+                                                   EAssume 60::
+                                                     emp&res&
+                                                     {FLOW,(20,21)=__norm}[])
+                   ;
+                   !(a) -> ((None,[]),ECase case {
+                                             b -> ((None,[]),EBase emp&Term&
+                                                                   {FLOW,(1,23)=__flow}[]
+                                                                    EAssume 61::
+                                                                    emp&res&
+                                                                    {FLOW,(20,21)=__norm}[])
+                                             ;
+                                             !(b) -> ((None,[]),EBase 
+                                                     emp&Term&
+                                                     {FLOW,(1,23)=__flow}[]
+                                                       EAssume 62::
+                                                         emp&!(res)&
+                                                         {FLOW,(20,21)=__norm}[])
+                                             
+                                             })
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(158,0),(161,37)}
+
+boolean is_not_null___$__Error(  __Error a)
+static  ((None,[]),ECase case {
+                   a=null -> ((None,[]),EBase emp&true&
+                                              {FLOW,(20,21)=__norm}[]
+                                                EBase emp&Term&
+                                                      {FLOW,(1,23)=__flow}[]
+                                                        EAssume 127::
+                                                          emp&!(res)&
+                                                          {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=null -> ((None,[]),EBase emp&true&
+                                               {FLOW,(20,21)=__norm}[]
+                                                 EBase emp&Term&
+                                                       {FLOW,(1,23)=__flow}[]
+                                                         EAssume 128::
+                                                           emp&res&
+                                                           {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(8,0),(8,115)}
+
+int div___$int~int(  int a,  int b)
+static  ((None,[]),ECase case {
+                   0<=a -> ((None,[]),ECase case {
+                                             1<=b -> ((None,[]),EBase 
+                                                     emp&Term&
+                                                     {FLOW,(1,23)=__flow}[]
+                                                       EAssume 22::
+                                                         EXISTS(r_30: emp&
+                                                         a=r_30+(b*res) & 
+                                                         0<=res & 0<=r_30 & 
+                                                         (r_30+1)<=b&
+                                                         {FLOW,(20,21)=__norm})[])
+                                             ;
+                                             (b+
+                                             1)<=0 -> ((None,[]),EBase 
+                                                      emp&Term&
+                                                      {FLOW,(1,23)=__flow}[]
+                                                        EAssume 23::
+                                                          EXISTS(r_29: emp&
+                                                          a=r_29+(b*res) & 
+                                                          res<=0 & 0<=r_29 & 
+                                                          (r_29+1+(1*b))<=0&
+                                                          {FLOW,(20,21)=__norm})[])
+                                             ;
+                                             0<(b+1) & 
+                                             b<1 -> ((None,[]),EBase 
+                                                    emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 24::
+                                                        emp&true&
+                                                        {FLOW,(1,2)=__DivByZeroErr}[])
+                                             
+                                             })
+                   ;
+                   a<0 -> ((None,[]),ECase case {
+                                            1<=b -> ((None,[]),EBase 
+                                                    emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 25::
+                                                        EXISTS(r_28: emp&
+                                                        a=r_28+(b*res) & 
+                                                        (res+1)<=0 & 
+                                                        0<=r_28 & (r_28+
+                                                        1)<=b&
+                                                        {FLOW,(20,21)=__norm})[])
+                                            ;
+                                            (b+
+                                            1)<=0 -> ((None,[]),EBase 
+                                                     emp&Term&
+                                                     {FLOW,(1,23)=__flow}[]
+                                                       EAssume 26::
+                                                         EXISTS(r_27: emp&
+                                                         a=r_27+(b*res) & 
+                                                         1<=res & 0<=r_27 & 
+                                                         (r_27+1+(1*b))<=0&
+                                                         {FLOW,(20,21)=__norm})[])
+                                            ;
+                                            0<(b+1) & 
+                                            b<1 -> ((None,[]),EBase emp&Term&
+                                                                    {FLOW,(1,23)=__flow}[]
+                                                                    EAssume 27::
+                                                                    emp&true&
+                                                                    {FLOW,(1,2)=__DivByZeroErr}[])
+                                            
+                                            })
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(16,0),(30,1)}
+
+boolean not___$boolean(  boolean a)
+static  ((None,[]),ECase case {
+                   a -> ((None,[]),EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                                           EAssume 63::
+                                             emp&!(res)&
+                                             {FLOW,(20,21)=__norm}[])
+                   ;
+                   !(a) -> ((None,[]),EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                                              EAssume 64::
+                                                emp&res&
+                                                {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(163,0),(165,29)}
+
+node malloc$()
+static  ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                    EBase emp&MayLoop&{FLOW,(1,23)=__flow}[]
+                            EAssume 17::
+                              
+                              emp&res=null&{FLOW,(20,21)=__norm}[]
+                              or EXISTS(flted_68_34,
+                                 Anon_13: res::node<Anon_13,flted_68_34>@M[Orig]&
+                                 flted_68_34=null&{FLOW,(20,21)=__norm})[]
+                              )
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(66,0),(68,40)}
+
+int array_get_elm_at___1d$int[]~int(  int[] a,  int i)
+static  ((None,[]),EBase exists (Expl)[ahalb; ahaub](Impl)(ex)emp&
+                  dom(a,ahalb,ahaub) & ahalb<=i & i<=ahaub&
+                  {FLOW,(20,21)=__norm}[]
+                    EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                            EAssume 66::
+                              emp&res=a[i]&{FLOW,(20,21)=__norm}[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(224,0),(237,20)}
+
+boolean gte___$int~int(  int a,  int b)
+static  ((None,[]),ECase case {
+                   b<=a -> ((None,[]),EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                                              EAssume 55::
+                                                emp&res&
+                                                {FLOW,(20,21)=__norm}[])
+                   ;
+                   a<b -> ((None,[]),EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                                             EAssume 56::
+                                               emp&!(res)&
+                                               {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(145,0),(147,28)}
+
+int div2$int~int(  int a,  int b)
+static  ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                    ECase case {
+                           b!=0 -> ((None,[]),EBase emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 28::
+                                                        emp&true&
+                                                        {FLOW,(20,21)=__norm}[])
+                           ;
+                           b=0 -> ((None,[]),EBase emp&Term&
+                                                   {FLOW,(1,23)=__flow}[]
+                                                     EAssume 29::
+                                                       emp&true&
+                                                       {FLOW,(1,2)=__DivByZeroErr}[])
+                           
+                           })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(34,0),(39,2)}
+
+boolean array_get_elm_at___1d$boolean[]~int(  boolean[] a,  int i)
+static  ((None,[]),EBase exists (Expl)[ahalb; ahaub](Impl)(ex)emp&
+                  domb(a,ahalb,ahaub) & ahalb<=i & i<=ahaub&
+                  {FLOW,(20,21)=__norm}[]
+                    EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                            EAssume 67::
+                              emp&res=a[i]&{FLOW,(20,21)=__norm}[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(239,0),(244,20)}
+
+boolean eq___$boolean~boolean(  boolean a,  boolean b)
+static  ((None,[]),ECase case {
+                   a=b -> ((None,[]),EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                                             EAssume 43::
+                                               emp&res&
+                                               {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=b -> ((None,[]),EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                                              EAssume 44::
+                                                emp&!(res)&
+                                                {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(98,0),(101,28)}
+
+int mod___$int~int(  int a,  int b)
+static  ((None,[]),ECase case {
+                   0<=a -> ((None,[]),ECase case {
+                                             1<=b -> ((None,[]),ECase 
+                                                     case {
+                                                      a<b -> ((None,[]),EBase 
+                                                             emp&Term&
+                                                             {FLOW,(1,23)=__flow}[]
+                                                               EAssume 33::
+                                                                 emp&res=a&
+                                                                 {FLOW,(20,21)=__norm}[])
+                                                      ;
+                                                      b<=a -> ((None,[]),ECase 
+                                                              case {
+                                                               a<(b+
+                                                               b) -> 
+                                                               ((None,[]),EBase 
+                                                               emp&Term&
+                                                               {FLOW,(1,23)=__flow}[]
+                                                                 EAssume 34::
+                                                                   emp&res+
+                                                                   (1*b)=a&
+                                                                   {FLOW,(20,21)=__norm}[])
+                                                               ;
+                                                               (b+
+                                                               b)<=a -> 
+                                                               ((None,[]),EBase 
+                                                               emp&Term&
+                                                               {FLOW,(1,23)=__flow}[]
+                                                                 EAssume 35::
+                                                                   EXISTS(q_26: emp&
+                                                                   a=res+(b*
+                                                                   q_26) & 
+                                                                   0<=q_26 & 
+                                                                   0<=res & 
+                                                                   (res+
+                                                                   1)<=b&
+                                                                   {FLOW,(20,21)=__norm})[])
+                                                               
+                                                               })
+                                                      
+                                                      })
+                                             ;
+                                             (b+
+                                             1)<=0 -> ((None,[]),EBase 
+                                                      emp&Term&
+                                                      {FLOW,(1,23)=__flow}[]
+                                                        EAssume 36::
+                                                          EXISTS(q_25: emp&
+                                                          a=res+(b*q_25) & 
+                                                          q_25<=0 & 0<=res & 
+                                                          (res+1+(1*b))<=0&
+                                                          {FLOW,(20,21)=__norm})[])
+                                             ;
+                                             0<(b+1) & 
+                                             b<1 -> ((None,[]),EBase 
+                                                    emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 37::
+                                                        emp&true&
+                                                        {FLOW,(1,2)=__DivByZeroErr}[])
+                                             
+                                             })
+                   ;
+                   a<0 -> ((None,[]),ECase case {
+                                            1<=b -> ((None,[]),EBase 
+                                                    emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 38::
+                                                        EXISTS(q_24: emp&
+                                                        a=res+(b*q_24) & 
+                                                        (q_24+1)<=0 & 
+                                                        0<=res & (res+1)<=b&
+                                                        {FLOW,(20,21)=__norm})[])
+                                            ;
+                                            (b+
+                                            1)<=0 -> ((None,[]),EBase 
+                                                     emp&Term&
+                                                     {FLOW,(1,23)=__flow}[]
+                                                       EAssume 39::
+                                                         EXISTS(q_23: emp&
+                                                         a=res+(b*q_23) & 
+                                                         1<=q_23 & 0<=res & 
+                                                         (res+1+(1*b))<=0&
+                                                         {FLOW,(20,21)=__norm})[])
+                                            ;
+                                            0<(b+1) & 
+                                            b<1 -> ((None,[]),EBase emp&Term&
+                                                                    {FLOW,(1,23)=__flow}[]
+                                                                    EAssume 40::
+                                                                    emp&true&
+                                                                    {FLOW,(1,2)=__DivByZeroErr}[])
+                                            
+                                            })
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(51,0),(70,1)}
+
+int[] aalloc___$int(  int dim)
+static  ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                    EBase emp&Term&{FLOW,(1,23)=__flow}[]
+                            EAssume 78::
+                              emp&dom(res,0,-1+dim)&{FLOW,(20,21)=__norm}[])
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(314,0),(316,26)}
+
+boolean neq___$node~node(  node a,  node b)
+static  ((None,[]),ECase case {
+                   a=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                             EBase emp&Term&
+                                                   {FLOW,(1,23)=__flow}[]
+                                                     EAssume 163::
+                                                       emp&!(res)&
+                                                       {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                              EBase emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 164::
+                                                        emp&res&
+                                                        {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(26,0),(26,105)}
+
+boolean neq___$__ArrBoundErr~__ArrBoundErr(  __ArrBoundErr a,  __ArrBoundErr b)
+static  ((None,[]),ECase case {
+                   a=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                             EBase emp&Term&
+                                                   {FLOW,(1,23)=__flow}[]
+                                                     EAssume 131::
+                                                       emp&!(res)&
+                                                       {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                              EBase emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 132::
+                                                        emp&res&
+                                                        {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(10,0),(10,123)}
+
+boolean eq___$Object~Object(  Object a,  Object b)
+static  ((None,[]),ECase case {
+                   a=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                             EBase emp&Term&
+                                                   {FLOW,(1,23)=__flow}[]
+                                                     EAssume 145::
+                                                       emp&res&
+                                                       {FLOW,(20,21)=__norm}[])
+                   ;
+                   a!=b -> ((None,[]),EBase emp&true&{FLOW,(20,21)=__norm}[]
+                                              EBase emp&Term&
+                                                    {FLOW,(1,23)=__flow}[]
+                                                      EAssume 146::
+                                                        emp&!(res)&
+                                                        {FLOW,(20,21)=__norm}[])
+                   
+                   })
+dynamic  EBase hfalse&false&{FLOW,(20,21)=__norm}[]
+{(17,0),(17,109)}
+
+
+Checking procedure loop$node~node... 
+Procedure loop$node~node SUCCESS
+
+Checking procedure loop2$node... 
+Procedure loop2$node SUCCESS
+
+Checking procedure create$... 
+Procedure create$ SUCCESS
+
+Termination checking result:
+
+Stop Omega... 86 invocations 
+1 false contexts at: ( (58,5) )
+
+Total verification time: 0.3 second(s)
+	Time spent in main process: 0.28 second(s)
+	Time spent in child processes: 0.02 second(s)

@@ -1,0 +1,65 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+//(1).
+infer[x]  x::ll<n> |- x::node<_,q>.
+print residue.
+
+//(2).
+infer[n] x::ll<n> |- x::node<_,q>.
+print residue.
+
+//(3).
+infer[x] x::ll<n> |- x::node<_,null>.
+print residue.
+
+//(4).
+infer[n] x::ll<n> |- x::node<_,null>.
+print residue.
+
+//(5).
+infer[n] true |- n>n.
+print residue.
+
+//(6).
+infer[x] true |- x::node<_,_> * x::node<_,_>.
+print residue.
+
+//(7).
+infer[b] x=1 & b>0 |- x=2.
+print residue.
+
+//(8).
+infer[x] x=null |- x::node<_,q>.
+print residue.
+
+relation Q(int a, int b, int c).
+//(9).
+infer[Q] x::node<_,y> * y::ll<n2> & n1=1 |- x::ll<n3> & Q(n1,n2,n3).
+print residue.
+
+
+//(10).
+infer[Q] x::node<_,y> * y::ll<n2> & Q(n1-1, n4, n2) & n1>0 |- x::ll<n3> & Q(n1,n4,n3).
+print residue.
+/*
+<1>emp&0<=0 & Q(-1+n1,n4,n2) & 0<n1 & Anon_174=Anon_21 & r_175=y & n3=n2+1&{FLOW,(19,20)=__norm}[]
+ inferred rel: [RELDEFN Q: ( 0<=n2 & n3=n2+1 & 1<=n1 & Q(-1+n1,n4,n2)) -->  Q(n1,n4,n3)]
+*/
+
+//(11).
+infer[Q] x::node<_,y> * y::ll<n2> & Q(n1-1, n4, n2) & n1>0 |- x::ll<n3>.
+print residue.
+/*
+Entail (11) : Valid. 
+
+ <1>emp&0<=0 & Q(-1+n1,n4,n2) & 0<n1 & Anon_193=Anon_22 & r_194=y & n3=n2+1&{FLOW,(19,20)=__norm}[]
+
+*/
+
+//(12).
+infer[] x::node<_,y> * y::ll<n2> & n1>0 |- x::ll<n3>.
+print residue.

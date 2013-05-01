@@ -55,6 +55,7 @@ type term_res = term_trans_loc * term_ann_trans option * formula option * term_s
  * of constraints in phase inference:
  * p2>p1 and p2>=p1 *)
 exception Invalid_Phase_Constr
+
 type phase_constr =
   | P_Gt of (CP.spec_var * CP.spec_var)  (* p2>p1 *)
   | P_Gte of (CP.spec_var * CP.spec_var) (* p2>=p1 *)
@@ -270,32 +271,32 @@ exception LexVar_Not_found;;
 exception Invalid_Phase_Num;;
 
 
-(* let rec has_variance_struc struc_f = *)
-(*   List.exists (fun ef -> has_variance_ext ef) struc_f *)
+(* let rec has_variance_struc struc_f =                                    *)
+(*   List.exists (fun ef -> has_variance_ext ef) struc_f                   *)
   
-(* and has_variance_ext ext_f =  *)
-(*   match ext_f with *)
-(*     | ECase { formula_case_branches = cl } -> *)
-(*         List.exists (fun (_, sf) -> has_variance_struc sf) cl *)
-(*     | EBase { formula_ext_continuation = cont } -> *)
-(*         has_variance_struc cont *)
-(*     | EAssume _ -> false *)
-(*     | EVariance _ -> true *)
+(* and has_variance_ext ext_f =                                            *)
+(*   match ext_f with                                                      *)
+(*     | ECase { formula_case_branches = cl } ->                           *)
+(*         List.exists (fun (_, sf) -> has_variance_struc sf) cl           *)
+(*     | EBase { formula_ext_continuation = cont } ->                      *)
+(*         has_variance_struc cont                                         *)
+(*     | EAssume _ -> false                                                *)
+(*     | EVariance _ -> true                                               *)
 (*     | EInfer {formula_inf_continuation = cont} -> has_variance_ext cont *)
-(*
-let lexvar_of_evariance (v: ext_variance_formula) : CP.formula option =
-  if (v.formula_var_measures = []) then None 
-  else
-	  let vm = fst (List.split v.formula_var_measures) in
-	  let vi = v.formula_var_infer in
-    let pos = v.formula_var_pos in
-    Some (CP.mkPure (CP.mkLexVar Term vm vi pos))
 
-let measures_of_evariance (v: ext_variance_formula) : (term_ann * CP.exp list * CP.exp list) =
-  let vm = fst (List.split v.formula_var_measures) in
-	let vi = v.formula_var_infer in
-  (Term, vm, vi)
-*)
+(* let lexvar_of_evariance (v: ext_variance_formula) : CP.formula option =                        *)
+(*   if (v.formula_var_measures = []) then None                                                   *)
+(*   else                                                                                         *)
+(* 	  let vm = fst (List.split v.formula_var_measures) in                                         *)
+(* 	  let vi = v.formula_var_infer in                                                             *)
+(*     let pos = v.formula_var_pos in                                                             *)
+(*     Some (CP.mkPure (CP.mkLexVar Term vm vi pos))                                              *)
+
+(* let measures_of_evariance (v: ext_variance_formula) : (term_ann * CP.exp list * CP.exp list) = *)
+(*   let vm = fst (List.split v.formula_var_measures) in                                          *)
+(* 	let vi = v.formula_var_infer in                                                               *)
+(*   (Term, vm, vi)                                                                               *)
+
 let find_lexvar_b_formula (bf: CP.b_formula) : (term_ann * CP.exp list * CP.exp list * loc) =
   let (pf, _) = bf in
   match pf with
@@ -308,6 +309,12 @@ let rec find_lexvar_formula (f: CP.formula) : (term_ann * CP.exp list * CP.exp l
   | CP.And (f1, f2, _) ->
       (try find_lexvar_formula f1
       with _ -> find_lexvar_formula f2)
+  | CP.AndList l -> 
+		let rec hlp l = match l with
+			| [] -> raise LexVar_Not_found
+			| (_,h)::t -> (try find_lexvar_formula h
+						with _ -> hlp t) in
+		hlp l
   | _ -> raise LexVar_Not_found
 
 (* To syntactically simplify LexVar formula *) 
@@ -351,6 +358,10 @@ let strip_lexvar_mix_formula (mf: MCP.mix_formula) =
   let (lexvar, other_p) = List.partition (CP.is_lexvar) mf_ls in
   (lexvar, CP.join_conjunctions other_p)
 
+let strip_lexvar_mix_formula mf =
+	let pr = !MCP.print_mix_formula in
+	Debug.no_1 "strip_lexvar_mix_formula" pr (pr_pair (fun _ -> "") !CP.print_formula) strip_lexvar_mix_formula mf
+  
 (* Termination: The boundedness checking for HIP has been done before *)  
 let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos =
   let ans  = norm_term_measures_by_length src_lv dst_lv in
@@ -372,7 +383,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
         let bnd_measures = List.map2 (fun s d -> (s, d)) src_lv dst_lv in
         (* [(0,0), (s2,d2)] -> [(s2,d2)] *)
         let res, bnd_measures = syn_simplify_lexvar bnd_measures in
-        if bnd_measures = [] then 
+        if bnd_measures == [] then 
           let t_ann, ml, il = find_lexvar_es estate in
           (* Residue of the termination,
            * The termination checking result - 
@@ -448,7 +459,7 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
                  * The term_res_stk and es_var_stack 
                  * should be updated based on this result: 
                  * MayTerm_S -> Term_S *)
-		(* Assumming Inference will be successed *)
+                (* Assumming Inference will be successed *)
                 Some (t_ann, ml, il),
                 (term_pos, t_ann_trans, Some orig_ante, Term_S (Decreasing_Measure t_ann_trans)),
                 None, 
@@ -472,15 +483,15 @@ let check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_
   let pr2 = !print_entail_state in
   let pr3 = pr_list !CP.print_exp in
   Debug.no_5 "check_term_measures" pr2 
-      (add_str "lhs_p" pr) 
-      (add_str "rhs_p" pr) 
-      (add_str "src_lv" pr3) 
-      (add_str "src_rv" pr3)
-    (fun (es, lhs, rhs, rank_fml) -> 
-        pr_quad pr2 (add_str "lhs" pr) 
-            (add_str "rhs" pr) 
-            (add_str "rank_fml" (pr_option pr1)) 
-            (es, lhs, rhs, rank_fml))  
+    (add_str "lhs_p" pr)
+    (add_str "rhs_p" pr) 
+    (add_str "src_lv" pr3) 
+    (add_str "src_rv" pr3)
+    (fun (es, lhs, rhs, rank_fml) ->
+      pr_quad pr2 (add_str "lhs" pr)
+      (add_str "rhs" pr) 
+      (add_str "rank_fml" (pr_option pr1)) 
+      (es, lhs, rhs, rank_fml))  
       (fun _ _ _ _ _ -> check_term_measures estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p src_lv dst_lv t_ann_trans pos) 
         estate lhs_p rhs_p src_lv dst_lv
 
@@ -490,12 +501,14 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   try
     begin
       let _ = DD.trace_hprint (add_str "es" !print_entail_state) estate pos in
+      (*TODO: THIS MAY CAUSE THE LOST --eps information*)
       let conseq = MCP.pure_of_mix rhs_p in
       let t_ann_d, dst_lv, _, l_pos = find_lexvar_formula conseq in (* [d1,d2] *)
       let t_ann_s, src_lv, src_il = find_lexvar_es estate in
       let t_ann_trans = ((t_ann_s, src_lv), (t_ann_d, dst_lv)) in
       let t_ann_trans_opt = Some t_ann_trans in
       let _, rhs_p = strip_lexvar_mix_formula rhs_p in
+      (*TODO: THIS MAY CAUSE THE LOST --eps information*)
       let rhs_p = MCP.mix_of_pure rhs_p in
       let p_pos = post_pos # get in
       let p_pos = if p_pos == no_pos then l_pos else p_pos in (* Update pos for SLEEK output *)
@@ -538,23 +551,33 @@ let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
           } in
           (n_estate, lhs_p, rhs_p, None)
     end
-  with _ -> (estate, lhs_p, rhs_p, None)
+  with _ -> (*print_string ("got exception\n "^(!MCP.print_mix_formula rhs_p)^"\n");*)(estate, lhs_p, rhs_p, None)
 
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
-  if (not !Globals.dis_term_chk) or (estate.es_term_err == None) then
-    check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
-  else
+  (* if (not !Globals.dis_term_chk) or (estate.es_term_err == None) then *)
+  (*   check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos   *)
+  (* else                                                                *)
+  (*   (* Remove LexVar in RHS *)                                        *)
+  (*   let _, rhs_p = strip_lexvar_mix_formula rhs_p in                  *)
+  (*   let rhs_p = MCP.mix_of_pure rhs_p in                              *)
+  (*   (estate, lhs_p, rhs_p, None)                                      *)
+  if !Globals.dis_term_chk or estate.es_term_err != None then
     (* Remove LexVar in RHS *)
+    (*TODO: THIS MAY CAUSE THE LOST --eps information*)
     let _, rhs_p = strip_lexvar_mix_formula rhs_p in
     let rhs_p = MCP.mix_of_pure rhs_p in
     (estate, lhs_p, rhs_p, None)
+  else
+    check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos
 
+(*TODO: consider --eps *)
 let check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos =
   let pr = !print_mix_formula in
   let pr2 = !print_entail_state in
+  let f = wrap_proving_kind "TERM-DEC" (check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p) in
    Debug.no_3 "trans_lexvar_rhs" pr2 pr pr
     (fun (es, lhs, rhs, _) -> pr_triple pr2 pr pr (es, lhs, rhs))  
-      (fun _ _ _ -> check_term_rhs estate lhs_p xpure_lhs_h0 xpure_lhs_h1 rhs_p pos) estate lhs_p rhs_p
+    (fun _ _ _ -> f pos) estate lhs_p rhs_p
 
 let strip_lexvar_lhs (ctx: context) : context =
   let es_strip_lexvar_lhs (es: entail_state) : context =
@@ -585,7 +608,6 @@ let strip_lexvar_lhs (ctx: context) : context =
   Debug.no_1 "strip_lexvar_lhs" pr pr strip_lexvar_lhs ctx
 
 (* End of LexVar handling *) 
-
 
 (* HIP: Collecting information for termination proof *)
 let report_term_error (ctx: formula) (reason: term_reason) pos : term_res =
@@ -1185,7 +1207,7 @@ let phase_num_infer_whole_scc (prog: Cast.prog_decl) (proc_lst: Cast.proc_decl l
 
 (* Main function of the termination checker *)
 let term_check_output () =
-  (* if not !Globals.dis_term_msg then *)
+  if not !Globals.dis_term_msg then
     (fmt_string "\nTermination checking result:\n";
     (if (!Globals.term_verbosity == 0) then pr_term_res_stk (term_res_stk # get_stk)
     else pr_term_err_stk (term_err_stk # get_stk));
@@ -1232,6 +1254,7 @@ let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : lis
     end
 
 let check_loop_safety (prog : Cast.prog_decl) (proc : Cast.proc_decl) (ctx : list_partial_context) post pos (pid:formula_label) : bool  =
-  Debug.no_1 "check_loop_safety" 
-      pr_id string_of_bool (fun _ -> check_loop_safety prog proc ctx post pos pid) proc.Cast.proc_name
+  let pr = !print_list_partial_context in
+  Debug.no_2 "check_loop_safety" 
+    pr_id pr string_of_bool (fun _ _ -> check_loop_safety prog proc ctx post pos pid) proc.Cast.proc_name ctx
 

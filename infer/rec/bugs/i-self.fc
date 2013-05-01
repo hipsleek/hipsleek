@@ -1,0 +1,19 @@
+# initial inferred pre is {[n,m]:n>=1}
+
+R3:={[x,r] -> [] -> []: exists(r2,x2:
+         (x=0 && r=1)
+       || (1<=x && r=r2+2 && x=x2+1 && R3(x2,r2)) )
+};
+
+# place z as output
+# there is a missing constraint RECn>=1 from a nullness check
+# make existential vars z_580,m_558,n_557
+
+F1:=bottomup(R3,1,SimHeur); F1;
+F2:=bottomup(R3,2,SimHeur); F2;
+F3:=bottomup(R3,3,SimHeur); F3;
+ 
+#(x >= 0 && 2*x + 1 = r)
+#(x >= 0 && 2*x + 1 = r)
+#(x >= 0 && 2*x + 1 = r)
+

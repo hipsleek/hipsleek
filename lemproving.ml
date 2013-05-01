@@ -31,15 +31,15 @@ let string_of_lem_formula lf = match lf with
 (* checks if iante(CF.formula) entails iconseq(CF.formula or CF.struc_formula) in cprog(C.prog_decl)
    - similar to Sleekengine.run_entail_check
 *)
-let run_entail_check (iante: lem_formula) (iconseq: lem_formula)  (cprog: C.prog_decl)  =
+let run_entail_check_helper (iante: lem_formula) (iconseq: lem_formula) (cprog: C.prog_decl)  =
   let ante = lem_to_cformula iante in
   (* let ante = Solver.prune_preds cprog true ante in (\* (andreeac) redundant? *\) *)
   let conseq = lem_to_struc_cformula iconseq in
   (* let conseq = Solver.prune_pred_struc cprog true conseq in (\* (andreeac) redundant ? *\) *)
   let ectx = CF.empty_ctx (CF.mkTrueFlow ()) Lab2_List.unlabelled no_pos in
   let ctx = CF.build_context ectx ante no_pos in
-  let _ = if !Globals.print_core then print_string ("\nrun_entail_check:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
-  let ctx = CF.transform_context (Solver.elim_unsat_es cprog (ref 1)) ctx in
+  let _ = if !Globals.print_core || !Globals.print_core_all then print_string ("\run_entail_check_helper:\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
+  let ctx = CF.transform_context (Solver.elim_unsat_es 10 cprog (ref 1)) ctx in
   let rs1, _ = 
   if not !Globals.disable_failure_explaining then
     Solver.heap_entail_struc_init_bug_inv cprog false false (CF.SuccCtx[ctx]) conseq no_pos None
@@ -54,6 +54,13 @@ let run_entail_check (iante: lem_formula) (iconseq: lem_formula)  (cprog: C.prog
   in
   (res, rs)
 
+(* the value of flag "exact" decides the type of entailment checking              *)
+(*   None       -->  forbid residue in RHS when the option --classic is turned on *)
+(*   Some true  -->  always check entailment exactly (no residue in RHS)          *)
+(*   Some false -->  always check entailment inexactly (allow residue in RHS)     *)
+let run_entail_check (iante : lem_formula) (iconseq : lem_formula) (cprog: C.prog_decl) (exact : bool option) =
+  wrap_classic exact (run_entail_check_helper iante iconseq) cprog
+
 let print_exc (check_id: string) =
   Printexc.print_backtrace stdout;
   dummy_exception() ; 
@@ -62,7 +69,7 @@ let print_exc (check_id: string) =
 (* calls the entailment method and catches possible exceptions *)
 let process_coercion_check iante iconseq (lemma_name: string)  (cprog: C.prog_decl)  =
   try 
-    run_entail_check iante iconseq cprog
+    run_entail_check iante iconseq cprog None
   with _ -> print_exc ("lemma \""^ lemma_name ^"\""); 
       let rs = (CF.FailCtx (CF.Trivial_Reason (CF.mk_failure_must "exception in lemma proving" lemma_error))) in
       (false, rs)
@@ -80,6 +87,12 @@ let process_coercion_check iante0 iconseq0 (lemma_name: string)  (cprog: C.prog_
 let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
     let pos = CF.pos_of_formula coer.C.coercion_head in
     let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
+    (*let _ = print_string("lhs_unfoldfed: "^(Cprinter.string_of_formula lhs)^"\n") in*)
+    let lhs = if(coer.C.coercion_case == C.Ramify) then 
+    	Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
+    	else lhs
+    in
+    (*let _ = print_string("lhs_unfoldfed_ramified: "^(Cprinter.string_of_formula lhs)^"\n") in*)
     let lhs = CF.add_original lhs true in
     let lhs = CF.reset_origins lhs in
     let rhs = CF.add_original rhs true in
@@ -99,6 +112,12 @@ let check_coercion coer lhs rhs  (cprog: C.prog_decl) =
 let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
     let pos = CF.pos_of_formula coer.C.coercion_head in
     let lhs = Solver.unfold_nth 9 (cprog,None) lhs (CP.SpecVar (Named "", self, Unprimed)) true 0 pos in
+    (*let _ = print_string("lhs_unfoldfed_struc: "^(Cprinter.string_of_formula lhs)^"\n") in*)
+    let lhs = if(coer.C.coercion_case == C.Ramify) then 
+    	Mem.ramify_unfolded_formula lhs cprog.C.prog_view_decls 
+    	else lhs
+    in
+   (*let _ = print_string("lhs_unfoldfed_ramified: "^(Cprinter.string_of_formula lhs)^"\n") in*)
     let lhs = CF.add_original lhs true in
     let lhs = CF.reset_origins lhs in
     let rhs = CF.add_struc_original true rhs in
@@ -117,7 +136,7 @@ let check_coercion_struc coer lhs rhs (cprog: C.prog_decl) =
 
 (* sets the lhs & rhs of the entailment when proving l2r lemma (coercion), where the rhs (coercion body) is normalized  *)
 let check_left_coercion coer (cprog: C.prog_decl) =
-  (* let _ = print_string ("\nCoercion name: " ^ coer.C.coercion_name) in *)
+  (*let _ = print_string ("\nCoercion name: " ^ coer.C.coercion_name) in *)
   let ent_lhs =coer.C.coercion_head in
   let ent_rhs = coer.C.coercion_body_norm in
   check_coercion_struc coer ent_lhs ent_rhs cprog

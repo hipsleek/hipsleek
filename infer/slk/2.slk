@@ -14,7 +14,7 @@ print residue.
 
 
 // (2)
-infer [x] x=null |- x::node<_,null>.
+infer [x] x=null & n=0 |- x::node<_,null>.
 print residue.
 //<1>false & false & {FLOW,(17,18)=__norm}
 //inferred pure: [x!=null]
@@ -27,6 +27,13 @@ print residue.
 
 // (4)
 infer [x] x::ll<n> |- x::node<_,b>.
+print residue.
+
+// (4)
+infer [n] x::ll<n> |- x::node<_,b>.
+print residue.
+
+infer [n] n>100 |- x::node<_,null>.
 print residue.
 
 // (5)

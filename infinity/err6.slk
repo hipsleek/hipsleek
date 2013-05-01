@@ -1,0 +1,32 @@
+/*
+ id: 43; caller: []; line: 38; classic: false; kind: POST; hec_num: 4; evars: [mx_699,flted_38_700,mi1_701]; c_heap: x'::node<d_655,xnext_698>@M[Orig]
+*/
+
+ checkentail emp&n=flted_9_654+1 & mi=min(d_655,tmi_657) & mx=max(d_655,tmx_658) & 
+x=x' & 1<=n & a=mi & n!=1 & a!=d_655 & !(v_bool_41_574') & a!=d_655 & 
+!(v_bool_41_574') & flted_9_654=n_673 & mi_674=tmi_657 & mx_675=tmx_658 & 
+n_673=1 & 0<=flted_9_654 & xnext_698=null & n_673=1 & 0<=n_673 & 
+d_655=d_702 & p_703=xnext_698 
+& 
+//exists(tmx_705:
+tmx_705=-\inf & 
+tmi_704=\inf & tmx_705+\inf=0 & 
+((tmx_705<=d_702 & tmi_704<=d_702) | 
+(tmi_704<=d_702 & d_702<=tmx_705) 
+ | (tmx_705<=d_702 & d_702<=tmi_704) 
+ | (d_702<=(tmx_705-1) & d_702<=(tmi_704-1)))
+//)
+ |-  (exists //mx_699,
+      flted_38_700,mi1_701: emp&n=flted_38_700+1 
+  //& x'!=null 
+ & mi<=mi1_701 
+ //& mx=mx_699 
+   & mx=max(d_702,tmx_705)
+ //& mx_699=max(d_702,tmx_705) 
+ //& mi1_701=min(d_702,tmi_704) 
+ & flted_38_700=0+1). 
+
+/*
+a=min(x,y) = a
+*/
+

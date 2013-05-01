@@ -1,0 +1,49 @@
+data node {
+	int val; 
+	node next;
+	node left;
+	node right;	
+}.
+
+pred ll<M> == self = null & M = {} 
+	or self::node<_@L,p,_@A,_@A> * p::ll<Mp> & M = union(Mp,{self})
+	inv true
+	memE M->(node<@L,@M,@A,@A>).
+	
+pred tree<M> == self = null & M = {}
+	or self::node<_@L,_@A,l,r> * l::tree<Ml> * r::tree<Mr> & M = union({self},Ml,Mr)
+	inv true
+	memE M->(node<@L,@A,@M,@M>).
+	
+checkentail x::ll<M> & t::tree<M> & M != {} |- t::node<_@L,p@A,l@M,r@M>.
+print residue.
+/*
+checkentail x::node<_@L,p@M,_@A,_@A> |- (x::ll<M> & t::tree<M>).
+print residue.
+
+checkentail (x::ll<Mx> & t::tree<Mt>) & Mx = Mt |- x::ll<Mx>.
+print residue.
+
+checkentail (x::ll<Mx> & t::tree<Mt>) & Mt != {} |- (x::ll<Mx> & t::node<_@L,p@A,l@M,r@M>).
+print residue.
+
+checkentail (x::ll<Mx> & t::tree<Mt>) & Mt != {} |- t::node<_@L,p@A,l@M,r@M>.
+print residue.
+
+checkentail (x::ll<Mx> & t::tree<Mt>) & Mt != {} & Mt = Mx |- (x::ll<Mx> & t::tree<Mx>).
+print residue.
+
+checkentail (x::ll<M> & t::tree<M> * y::ll<My>) & My != {} |- y::node<_@L,_@M,_@A,_@A>.
+print residue.
+
+checkentail y::node<_@L,_@M,_@A,_@A> & x = y|- (x::ll<M> * y::ll<My> & t::tree<M> ) & My != {}.
+print residue.
+
+checkentail p::node<_@L,_@M,_@A,_@A> * r::node<_@A,_@A,_@A,_@A> & p = r|- r::node<_@L,_@A,_@A,_@A>.
+print residue.
+
+checkentail p::node<_@L,_@L,_@A,_@A> |-  p::node<_@L,_@L,_@A,_@A> * r::node<_@A,_@A,_@A,_@A> & p = r.
+print residue.
+
+checkentail c::node<_@L,_@A,_@M,_@M> & c = h  |- h::node<_@L,_@A,_@M,_@M> .
+print residue.*/

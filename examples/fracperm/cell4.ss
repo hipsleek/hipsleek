@@ -13,7 +13,7 @@ data cell{
 
 lemma "splitCell" self::cell(f)<l,v> & f=f1+f2 & f1>0.0 & f2>0.0  -> self::cell(f1)<l,v> * self::cell(f2)<l,v> & 0.0<f<=1.0;
 
-                                                                             lemma "combineCell" self::cell(f1)<l,v> * self::cell(f2)<l,v> -> self::cell(f1+f2)<l,v>;
+lemma "combineCell" self::cell(f1)<l,v> * self::cell(f2)<l,v> -> self::cell(f1+f2)<l,v>;
 
 LOCK<x> == self::lock<>
   inv self!=null
@@ -35,9 +35,9 @@ void main()
   acquire[LOCK](l,x);
   x.val++;
   release[LOCK](l,x);
-
-  join(id);
   dprint;
+  join(id);
+  //dprint;
 
   acquire[LOCK](l,x);
   finalize[LOCK](l,x);

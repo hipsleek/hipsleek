@@ -1,0 +1,13 @@
+data cell { int val}.
+
+pred ll<n> == self = null & n = 0
+	or self::cell<n-1> 
+	inv true.
+
+relation Q(int a, int b).
+
+//(11).
+infer[Q] x=null & Q(n, n3) |- [n3] x::ll<n3> .
+//infer[] x=null |- x::ll<n3>.
+print residue.
+
