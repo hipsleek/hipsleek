@@ -51,7 +51,10 @@ void main()
   requires true
   ensures true;
 {
-  barrier b = newBarrier(3);
+  barrier b = newBarrier(2);
+
+  //oops, I want 1 more participant
+  addParticipant(b,1);
 
   int id1 = fork(thread1,b);
   int id2 = fork(thread2,b);
