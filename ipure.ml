@@ -1222,8 +1222,8 @@ let rec typ_of_exp (e: exp) : typ =
     )
   in
   let merge_types typ1 typ2 =
-    let _ = print_endline ("typ1:" ^ (string_of_typ typ1 )) in
-    let _ = print_endline ("typ2:" ^ (string_of_typ typ2 )) in
+    (* let _ = print_endline ("typ1:" ^ (string_of_typ typ1 )) in *)
+    (* let _ = print_endline ("typ2:" ^ (string_of_typ typ2 )) in *)
     if (typ1 = UNK) then typ2
     else if (typ1 = typ2) then typ1
     else match typ2  with
