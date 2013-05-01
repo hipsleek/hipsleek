@@ -5,3 +5,28 @@ the recursive case?
 
 *********************************************************************
 #loc2.ss: error occurs in the recursive case? 
+
+
+*********************************************************************
+#loc2-bug.ss: why isn't intermediate statement like k=3 included?
+
+*********************************************************************
+#einv.ss: why isn't intermediate statement like k=3 included?
+
+global int y =0;
+
+int foo (int a, int b, int x)
+  requires a=0 & b=-2 & x=1
+  ensures res>=0;
+{
+7:  x = x+a;
+8:  x= x+b;
+9:  y = y + a;
+10:  return x;
+}
+Checking procedure foo$int~int~int~int... 
+Post condition cannot be derived:
+  (must) cause:  b+2=0 & res=b+0+1 |-  0<=res. LOCS:[9;8;7;4;3;10;5] (must-bug)
+
+How do I interpret the locations?
+Why is 10 not included? Why is 9 included?

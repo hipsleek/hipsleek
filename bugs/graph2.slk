@@ -31,6 +31,67 @@ x3::node<x4>
 |- false.
 */
 
+checkentail
+x3::node<x4>
+* x4::ls<x5>
+* x4::ls<x7> 
+* x4::ls<x6>
+& x5!=x7
+& x1=x2 & x2=x3
+|-
+x1::node<x4> * x4::ls<x5> * x4::ls<x7> & x5!=x7
+& x1=x2 & x2=x3 & x4=x6 & x1!=x4
+.
+
+checkentail
+x1::ls<x3> * x1::ls<x2> * x2::ls<x3>
+* x3::node<x4>
+* x4::ls<x5>
+* x4::ls<x6>
+* x4::ls<x7> & x5!=x7
+|-
+x1::node<x4> * x4::ls<x5> * x4::ls<x7> & x5!=x7
+& x1=x2 & x2=x3 & x4=x6 & x1!=x4
+.
+
+checkentail
+x1::node<x4> * x4::ls<x5> * x4::ls<x7> & x5!=x7
+& x1=x2 & x2=x3 & x4=x6 & x1!=x4
+|-
+x1::ls<x3> * x1::ls<x2> * x2::ls<x3>
+* x3::node<x4>
+* x4::ls<x5>
+* x4::ls<x6>
+* x4::ls<x7> & x5!=x7
+.
+print residue.
+
+checkentail
+x1::ls<x3> * x1::ls<x2> * x2::ls<x3>
+* x3::node<x4>
+* x4::ls<x5>
+* x4::ls<x6>
+* x4::ls<x7> & x5!=x7
+|-
+x1::node<x4> * x4::ls<x5> * x4::ls<x7> & x5!=x7
+& x1=x2 & x2=x3 & x4=x6 & x1!=x4
+.
+print residue.
+
+checkentail
+x1::node<x4> * x4::ls<x5> * x4::ls<x7> & x5!=x7
+& x1=x2 & x2=x3 & x4=x6 & x1!=x4
+|-
+x1::node<x4> *x4::ls<x6> * x6::ls<x7> & x1!=x4 & x1!=x6
+.
+
+checkentail
+x1::node<x4> *x4::ls<x6> * x6::ls<x7> & x1!=x4 & x1!=x6
+|-
+x1::node<x4> * x4::ls<x5> * x4::ls<x7> & x5!=x7
+& x1=x2 & x2=x3 & x4=x6 & x1!=x4
+.
+
 /*
 
 
@@ -134,8 +195,6 @@ x3::node<x4>
 x1::node<x4> * x4::ls<x5> * x4::ls<x7> & x5!=x7
 & x1=x2 & x2=x3 & x4=x6 & x1!=x4
 .
-
-
 
 
 
