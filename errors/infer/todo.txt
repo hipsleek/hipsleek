@@ -52,3 +52,29 @@ Post condition cannot be derived:
 
 How do I interpret the locations?
 Why is 10 not included? Why is 9 included?
+
+# einv3.ss
+
+global int y =0;
+
+int foo (int a, int b, int x)
+  requires true
+5:  ensures res>=0;
+{
+  x = x+a;
+  x= x+b;
+  y = y + a;
+10:  return x;
+}
+
+Checking procedure foo$int~int~int~int... 
+Post condition cannot be derived:
+  (may) cause:  res=b+a+x |-  0<=res. LOCS:[9;8;7;3;10;5] (may-bug)
+
+// why is 10 placed at the end?
+// for may-bug, it may be interesting to
+   infer a pre-condition that would confirm it as
+   a must-bug?
+
+
+
