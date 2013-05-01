@@ -5864,14 +5864,15 @@ let rec get_must_failure_list_partial_context (ls:list_partial_context): (string
       | [] -> rs
       | [os] -> let tmp=
             ( match os with
-              | None -> rs
+              | None -> let _ = print_endline "xxxx" in
+                    rs
               | Some s -> rs ^ s
             ) in tmp
       | os::ss ->
           (*os contains all failed of 1 path trace*)
           let tmp=
             ( match os with
-              | None -> rs
+              | None -> let _ = print_endline "xxxx" in rs
               | Some s -> rs ^ s ^ "\n" ^ op
             ) in
           combine_helper op ss tmp
@@ -5881,7 +5882,7 @@ let rec get_must_failure_list_partial_context (ls:list_partial_context): (string
       let os = get_must_failure_ft ft in
       match os with
         | None -> None
-        | Some (s) ->  (* let spt = !print_path_trace pt in *)
+        | Some (s) ->  let spt = !print_path_trace pt in
                     Some ((*"  path trace: " ^spt ^ "\nlocs: " ^ (!print_list_int ll) ^*) "cause: " ^s)
     in
     match bfl with
@@ -5895,23 +5896,31 @@ let rec get_must_failure_list_partial_context (ls:list_partial_context): (string
 (*currently, we do not use lor to combine traces,
 so just call get_may_falure_list_partial_context*)
 let rec get_failure_list_partial_context (ls:list_partial_context): (string*failure_kind)=
-    (*may use lor to combine the list first*)
-  (*return failure of 1 lemma is enough*)
-    let (los, fk)= List.split (List.map get_failure_partial_context [(List.hd ls)]) in
+  let _ = print_endline "\naaaa" in
+  let helper pctx =
+    (*return failure of 1 lemma is enough*)
+    let (los, fk)= List.split (List.map get_failure_partial_context [pctx]) in
     (*los contains path traces*)
-    (combine_helper "UNIONR\n" [List.hd los] "", List.hd fk)
+    (*return failure of 1 lemma is enough*)
+    let s, fk = (combine_helper "UNIONR\n" [List.hd los] "", List.hd fk) in
+    s,fk
+  in
+  let ls_str,ls_fk= List.split (List.map helper ls) in
+  (String.concat "\n" ls_str, List.fold_left cmb_lor (List.hd ls_fk) (List.tl ls_fk))
 
 and get_failure_branch bfl=
    let helper (pt, ft)=
-     (* let spt = !print_path_trace pt in *)
+     let spt = !print_path_trace pt in
       match  (get_failure_ft ft) with
-        | Failure_Must m -> (Some ((*"  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^*) "  (must) cause: " ^m),  Failure_Must m)
-        | Failure_May m -> (Some ((*"  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^*) "  (may) cause: " ^m),  Failure_May m)
-        | Failure_Valid -> (None, Failure_Valid)
-        | Failure_Bot m -> (Some ((*"  path trace: " ^spt^*)"  unreachable: "^m), Failure_Bot m)
+        | Failure_Must m -> (Some ("  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^ "  (must) cause: " ^m),  Failure_Must m)
+        | Failure_May m -> (Some ("  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll) *) ^ "  (may) cause: " ^m),  Failure_May m)
+        | Failure_Valid ->
+              let _ = print_endline "yyyy" in
+              (None, Failure_Valid)
+        | Failure_Bot m -> (Some ("  path trace: " ^spt^"  unreachable: "^m), Failure_Bot m)
     in
     match bfl with
-      | [] -> (None, Failure_Valid)
+      | [] -> let _ = print_endline "zzz" in (None, Failure_Valid)
       | fl -> let los, fks= List.split (List.map helper fl) in
               ( match (combine_helper "OrR\n" los "") with
                 | "" -> None, Failure_Valid
@@ -5922,12 +5931,15 @@ and get_failure_partial_context ((bfl:branch_fail list), _): (string option*fail
    get_failure_branch bfl
 
 let rec get_failure_list_failesc_context (ls:list_failesc_context): (string* failure_kind)=
-    (*may use rand to combine the list first*)
-    let los, fks= List.split (List.map get_failure_failesc_context [(List.hd ls)]) in
+  let helper fctx =
+    let los, fks= List.split (List.map get_failure_failesc_context [fctx]) in
     (*los contains path traces*)
     (*combine_helper "UNION\n" los ""*)
-     (*return failure of 1 lemma is enough*)
-   (combine_helper "UNIONR\n" [(List.hd los)] "", List.hd fks)
+    (*return failure of 1 lemma is enough*)
+    (combine_helper "UNIONR\n" [(List.hd los)] "", List.hd fks)
+  in
+  let ls_str,ls_fk= List.split (List.map helper ls) in
+  (String.concat "\n" ls_str, List.fold_left cmb_lor (List.hd ls_fk) (List.tl ls_fk))
 
 and get_failure_failesc_context ((bfl:branch_fail list), _, _): (string option*failure_kind)=
   get_failure_branch bfl
