@@ -13,3 +13,50 @@ a OK of another path trace
 *********************************************************************
 # einv2: xZero
  - infer complete specs
+
+
+*********************************************************************
+#loc2-bug.ss: why isn't intermediate statement like k=3 included?
+int double (int n)
+ requires true
+5:  ensures res=2*n;
+ {
+7:   if (n==0)
+     return 0;
+   else
+     {
+       int k;
+12:       k = 3;
+13:     return k+double(n-1);
+     }
+ }
+
+Checking procedure double$int... 
+Post condition cannot be derived:
+  (must) cause:  res=v_int_13_771+v_int_13_771+3 & (v_int_13_771+1)!=0 & n=v_int_13_771+1 |-  res=n+n. 
+
+Got:
+LOCS:[13;7;3;5] (must-bug)
+
+Why isn't 12: k=2 included? What does 3,5 denote?
+
+*********************************************************************
+#einv.ss: why isn't intermediate statement like k=3 included?
+
+global int y =0;
+
+int foo (int a, int b, int x)
+  requires a=0 & b=-2 & x=1
+  ensures res>=0;
+{
+7:  x = x+a;
+8:  x= x+b;
+9:  y = y + a;
+10:  return x;
+}
+Checking procedure foo$int~int~int~int... 
+Post condition cannot be derived:
+  (must) cause:  b+2=0 & res=b+0+1 |-  0<=res. LOCS:[9;8;7;4;3;10;5] (must-bug)
+
+How do I interpret the locations?
+Why is 10 not included? Why is 9 included?
