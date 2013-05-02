@@ -2389,7 +2389,7 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
                       "Pre- and post-conditions of coercion rules must not be disjunctive";
               }
 and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp_type =
-  Debug.no_1 "trans_exp"
+  Debug.ho_1 "trans_exp"
       Iprinter.string_of_exp
       (pr_pair Cprinter.string_of_exp string_of_typ) 
       (fun _ -> trans_exp_x prog proc ie) ie 

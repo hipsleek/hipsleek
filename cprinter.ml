@@ -698,6 +698,66 @@ let rec pr_formula_exp (e:P.exp) =
 			| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
 				let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest
 		in fmt_string  ("]") (* An Hoa *)
+
+(** print a formula exp to formatter *)
+let rec pr_formula_exp_w_loc (e:P.exp) =
+  let f_b e =  pr_bracket exp_wo_paren pr_formula_exp_w_loc e in
+  match e with
+    | P.Null l -> fmt_string "null";fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
+    | P.Var (x, l) -> fmt_string (string_of_spec_var x);fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
+    | P.Level (x, l) -> fmt_string ("level(" ^ (string_of_spec_var x) ^ ")")
+    | P.IConst (i, l) -> fmt_int i;fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
+    | P.AConst (i, l) -> fmt_string (string_of_heap_ann i)
+    | P.InfConst (i,l) -> let r = "\\inf" in fmt_string r
+	| P.Tsconst (i,l) -> fmt_string (Tree_shares.Ts.string_of i)
+    | P.FConst (f, l) -> fmt_string "FLOAT ";fmt_float f;fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
+    | P.Add (e1, e2, l) -> 
+          let args = bin_op_to_list op_add_short exp_assoc_op e in
+          pr_list_op op_add f_b args; (*fmt_string (string_of_pos l.start_pos);*)
+    | P.Mult (e1, e2, l) -> 
+          let args = bin_op_to_list op_mult_short exp_assoc_op e in
+          pr_list_op op_mult f_b  args
+    | P.Max (e1, e2, l) -> 
+          let args = bin_op_to_list op_max_short exp_assoc_op e in
+          pr_fn_args op_max pr_formula_exp args
+    | P.Min (e1, e2, l) -> 
+          let args = bin_op_to_list op_min_short exp_assoc_op e in
+          pr_fn_args op_min pr_formula_exp  args
+    | P.Bag (elist, l) 	-> 
+        fmt_string ("bag("); 
+        pr_set pr_formula_exp elist;
+        fmt_string (")")
+    | P.BagUnion (args, l) -> 
+          let args = bin_op_to_list op_union_short exp_assoc_op e in
+          pr_fn_args op_union pr_formula_exp args
+    | P.BagIntersect (args, l) -> 
+          let args = bin_op_to_list op_intersect_short exp_assoc_op e in
+          pr_fn_args op_intersect pr_formula_exp args
+    | P.Subtract (e1, e2, l) ->
+          f_b e1; pr_cut_after op_sub; f_b e2
+    | P.Div (e1, e2, l) ->
+          f_b e1; pr_cut_after op_div ; f_b e2
+    | P.BagDiff (e1, e2, l) -> 
+          pr_formula_exp e1; pr_cut_after op_diff ; pr_formula_exp e2
+    | P.List (elist, l) -> pr_coq_list pr_formula_exp elist 
+    | P.ListAppend (elist, l) -> pr_tuple op_lappend pr_formula_exp elist
+    | P.ListCons (e1, e2, l)  ->  f_b e1; pr_cut_after op_cons; f_b e2
+    | P.ListHead (e, l)     -> fmt_string ("head("); pr_formula_exp e; fmt_string  (")")
+    | P.ListTail (e, l)     -> fmt_string ("tail("); pr_formula_exp e; fmt_string  (")")
+    | P.ListLength (e, l)   -> fmt_string ("len("); pr_formula_exp e; fmt_string  (")")
+    | P.ListReverse (e, l)  -> fmt_string ("rev("); pr_formula_exp e; fmt_string  (")")
+		| P.Func (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("(");
+		(match i with
+			| [] -> ()
+			| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
+				let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest
+		in fmt_string  (")"))
+		| P.ArrayAt (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("[");
+		match i with
+			| [] -> ()
+			| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
+				let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest
+		in fmt_string  ("]") (* An Hoa *)
 ;;
 
 let pr_slicing_label sl =
@@ -805,6 +865,72 @@ let rec pr_b_formula (e:P.b_formula) =
 		| [] -> ()
 		| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
 		  let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")" (* An Hoa *) 
+
+(** print a b_formula  to formatter *)
+let rec pr_b_formula_w_loc (e:P.b_formula) =
+  let pr_s op f xs = pr_args None None op "[" "]" "," f xs in
+  let f_b e =  pr_bracket exp_wo_paren pr_formula_exp_w_loc e in
+  let f_b_no e =  pr_bracket (fun x -> true) pr_formula_exp_w_loc e in
+  let (pf,il) = e in
+  (* pr_slicing_label il; *)
+  match pf with
+    | P.LexVar t_info -> 
+      fmt_string (string_of_term_ann t_info.CP.lex_ann);
+      pr_s "" pr_formula_exp t_info.CP.lex_exp
+      (* ;if ls2!=[] then *)
+      (*   pr_set pr_formula_exp ls2 *)
+      (* else () *)
+    | P.BConst (b,l) -> fmt_bool b ;fmt_string (" (" ^ (line_number_of_pos l) ^ ")")
+    | P.XPure v ->  fmt_string (string_of_xpure_view v) ;fmt_string (" (" ^ (line_number_of_pos v.P.xpure_view_pos) ^ ")" )
+    | P.BVar (x, l) -> fmt_string (string_of_spec_var x);fmt_string (" (" ^ (line_number_of_pos l) ^ ")" )
+    | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2;fmt_string (" (" ^ (line_number_of_pos l) ^ ")" )
+    | P.Lte (e1, e2, l) -> f_b e1; fmt_string op_lte ; f_b e2;fmt_string (" (" ^ (line_number_of_pos l )^ ")" )
+    | P.Gt (e1, e2, l) -> f_b e1; fmt_string op_gt ; f_b e2;fmt_string (" (" ^ (line_number_of_pos l) ^ ")" )
+    | P.Gte (e1, e2, l) -> f_b e1; fmt_string op_gte ; f_b e2;fmt_string (" (" ^ (line_number_of_pos l) ^ ")" )
+    | P.SubAnn (e1, e2, l) -> f_b e1; fmt_string op_sub_ann ; f_b e2;fmt_string (" (" ^ (line_number_of_pos l) ^ ")" )
+    | P.Eq (e1, e2, l) -> 
+          let (e1,e2) = sort_exp e1 e2 in
+          f_b_no e1; fmt_string op_eq ; f_b_no e2;fmt_string (" (" ^ (line_number_of_pos l) ^ ")" )
+    | P.Neq (e1, e2, l) -> 
+          let (e1,e2) = sort_exp e1 e2 in
+          f_b e1; fmt_string op_neq ; f_b e2;(* fmt_string (string_of_pos l.start_pos);*);
+          fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
+    | P.EqMax (e1, e2, e3, l) ->   
+          let arg2 = bin_op_to_list op_max_short exp_assoc_op e2 in
+          let arg3 = bin_op_to_list op_max_short exp_assoc_op e3 in
+          let arg = arg2@arg3 in
+          (pr_formula_exp e1); fmt_string("="); pr_fn_args op_max pr_formula_exp arg;
+          fmt_string (" (" ^ (line_number_of_pos l) ^ ")" )
+    | P.EqMin (e1, e2, e3, l) ->   
+          let arg2 = bin_op_to_list op_min_short exp_assoc_op e2 in
+          let arg3 = bin_op_to_list op_min_short exp_assoc_op e3 in
+          let arg = arg2@arg3 in
+          (pr_formula_exp e1); fmt_string("="); pr_fn_args op_min pr_formula_exp arg;
+          fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
+    | P.BagIn (v, e, l) -> pr_op_adhoc (fun ()->pr_spec_var v) " <in> "  (fun ()-> pr_formula_exp e);
+          fmt_string (" (" ^ (line_number_of_pos l) ^ ")" )
+    | P.BagNotIn (v, e, l) -> pr_op_adhoc (fun ()->pr_spec_var v) " <notin> "  (fun ()-> pr_formula_exp e);
+          fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
+    | P.BagSub (e1, e2, l) -> pr_op pr_formula_exp e1  "<subset> " e2;
+          fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
+    | P.BagMin (v1, v2, l) -> pr_op pr_spec_var v1  " = <min> " v2;fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
+    | P.BagMax (v1, v2, l) -> pr_op pr_spec_var v1  " = <max> " v2;fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
+    | P.VarPerm (t,ls,l) -> 
+        fmt_string (string_of_vp_ann t); fmt_string ("[");
+        fmt_string (string_of_spec_var_list ls); fmt_string ("]")
+        ;fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
+    | P.ListIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lin> "  (fun ()-> pr_formula_exp e2)
+          ;fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
+    | P.ListNotIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lnotin> "  (fun ()-> pr_formula_exp e2)
+          ;fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
+    | P.ListAllN (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <allN> "  (fun ()-> pr_formula_exp e2)
+          ;fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
+    | P.ListPerm (e1, e2, l) -> pr_op_adhoc (fun ()->pr_formula_exp e1) " <perm> "  (fun ()-> pr_formula_exp e2)
+	| P.RelForm (r, args, l) -> fmt_string ((string_of_spec_var r) ^ "("); match args with
+		| [] -> fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
+		| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
+		  let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")" (* An Hoa *) 
+                  ;fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
 ;;
 
 let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
@@ -870,6 +996,38 @@ let rec pr_pure_formula  (e:P.formula) =
           pr_formula_label_opt lbl; 
 	      fmt_string "exists("; pr_spec_var x; fmt_string ":";
 	      pr_pure_formula f; fmt_string ")"
+;;
+
+(** print a pure formula to formatter *)
+let rec pr_pure_formula_w_loc  (e:P.formula) = 
+  let f_b e =  pr_bracket pure_formula_wo_paren pr_pure_formula_w_loc e 
+  in
+  match e with 
+    | P.BForm (bf,lbl) -> (* pr_formula_label_opt lbl; *) pr_b_formula_w_loc bf
+    | P.And (f1, f2, l) ->  
+          let arg1 = bin_op_to_list op_and_short pure_formula_assoc_op f1 in
+          let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in
+          let args = arg1@arg2 in
+          pr_list_op op_and f_b args
+    | P.AndList b -> fmt_string "(AndList ";
+		pr_list_op_none " & " (wrap_box ("B",0) (pr_pair_aux pr_spec_label pr_pure_formula_w_loc)) b;fmt_string ") "
+    | P.Or (f1, f2, lbl,l) -> 
+          pr_formula_label_opt lbl; 
+          let arg1 = bin_op_to_list op_or_short pure_formula_assoc_op f1 in
+          let arg2 = bin_op_to_list op_or_short pure_formula_assoc_op f2 in
+          let args = arg1@arg2 in
+          pr_list_op op_or f_b args
+    | P.Not (f, lbl, l) -> 
+          pr_formula_label_opt lbl; 
+          fmt_string "!(";f_b f;fmt_string ")"
+    | P.Forall (x, f,lbl, l) -> 
+          pr_formula_label_opt lbl; 
+	      fmt_string "forall("; pr_spec_var x; fmt_string ":";
+	      pr_pure_formula_w_loc f; fmt_string ")"
+    | P.Exists (x, f, lbl, l) -> 
+          pr_formula_label_opt lbl; 
+	      fmt_string "exists("; pr_spec_var x; fmt_string ":";
+	      pr_pure_formula_w_loc f; fmt_string ")"
 ;;
 
 let pr_prune_status st = match st with
@@ -1333,6 +1491,8 @@ let string_of_mem_formula (e:Cformula.mem_formula) : string =  poly_string_of_pr
 
 (** convert pure_formula  to a string via pr_pure_formula *)
 let string_of_pure_formula (e:P.formula) : string =  poly_string_of_pr  pr_pure_formula e
+
+let string_of_pure_formula_w_loc (e:P.formula) : string =  poly_string_of_pr  pr_pure_formula_w_loc e
 
 let rec string_of_pure_formula_list_noparen l = match l with 
   | [] -> ""

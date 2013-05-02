@@ -2549,10 +2549,72 @@ and pos_of_formula (f: formula) =
     | Exists (_, _, _, p) -> p
     | AndList l -> match l with | x::_ -> pos_of_formula (snd x) | _-> no_pos
 
-(*used by error explanation*)    
+(********************************************)
+(********************************************)
+(*used by error explanation*)
+and list_pos_of_exp (e : exp) = match e with
+  | Null p -> [p]
+  | Var (_, p) -> [p]
+  | Level (_, p) -> []
+  | IConst (_, p) -> [p]
+  | InfConst (_,p)-> []
+  | AConst (_, p) -> []
+  | FConst (_, p) -> [p]
+  | Tsconst (_, p) -> []
+  | Add (_, _, p) 
+  | Subtract (_, _, p) 
+  | Mult (_, _, p) 
+  | Div (_, _, p) 
+  | Max (_, _, p) 
+  | Min (_, _, p) 
+          (*| BagEmpty (p) -> p*)
+  | Bag (_, p) 
+  | BagUnion (_, p) 
+  | BagIntersect (_, p) 
+  | BagDiff (_, _, p) 
+  | List (_, p) 
+  | ListAppend (_, p) 
+  | ListCons (_, _, p) 
+  | ListHead (_, p) 
+  | ListTail (_, p) 
+  | ListLength (_, p) 
+  | ListReverse (_, p) 
+  | Func (_,_,p)
+  | ArrayAt (_, _, p) -> []
+
+and list_pos_of_b_formula (b: b_formula) = 
+  let (p, _) = b in
+  match p with
+    | LexVar l_info -> [l_info.lex_loc]
+    | SubAnn (_, _, p) -> [p]
+    | BConst (_, p) -> [p]
+    | XPure x -> [x.xpure_view_pos]
+    | BVar (_, p) -> [p]
+    | Lt (e1,e2, p) -> (list_pos_of_exp e1)@(list_pos_of_exp e2)@[p]
+    | Lte (e1,e2, p) -> (list_pos_of_exp e1)@(list_pos_of_exp e2)@[p]
+    | Gt (e1, e2, p) -> (list_pos_of_exp e1)@(list_pos_of_exp e2)@[p]
+    | Gte (e1, e2, p) -> (list_pos_of_exp e1)@(list_pos_of_exp e2)@[p]
+    | Eq (e1, e2, p) -> (list_pos_of_exp e1)@(list_pos_of_exp e2)@[p]
+    | Neq (e1, e2, p) -> (list_pos_of_exp e1)@(list_pos_of_exp e2)@[p]
+    | EqMax (_, _, _, p) -> [p]
+    | EqMin (_, _, _, p) -> [p]
+	  (* bag formulas *)
+    | BagIn (_, _, p) -> [p]
+    | BagNotIn (_, _, p) -> [p]
+    | BagSub (_, _, p) -> [p]
+    | BagMin (_, _, p) -> [p]
+    | BagMax (_, _, p) -> [p]
+	  (* list formulas *)
+    | ListIn (_, _, p) -> [p]
+    | ListNotIn (_, _, p) -> [p]
+    | ListAllN (_, _, p) -> [p]
+    | ListPerm (_, _, p) -> [p]
+    | RelForm (_, _, p) -> [p]
+    | VarPerm (_,_,p) -> [p]
+ 
 and list_pos_of_formula f rs: loc list=
   match f with
-    | BForm (bf , _) -> rs @ [pos_of_b_formula bf]
+    | BForm (bf , _) -> rs @ (list_pos_of_b_formula bf)
     | And (f1, f2, l) -> (list_pos_of_formula f2 (list_pos_of_formula f1 rs))
     | AndList b -> List.fold_left (fun a (_,b)-> list_pos_of_formula b a) rs b
     | Or (f1, f2, _, l)-> let rs1 = (list_pos_of_formula f1 rs) in
@@ -2560,6 +2622,9 @@ and list_pos_of_formula f rs: loc list=
     | Not (f,_, l) -> rs @ [l]
     | Forall (_, f,_, l) -> rs @ [l]
     | Exists (_, f,_, l) -> rs @ [l]
+
+(********************************************)
+(********************************************)
 
 and subst_pos_pformula p pf= match pf with
   | LexVar l_info -> LexVar {l_info with lex_loc=p}
