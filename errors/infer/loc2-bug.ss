@@ -24,11 +24,3 @@ Post condition cannot be derived:
   WHY isn't line 12 included?
  */
 
-int foo (int n)
- requires true
-  ensures res>0;
- {
-   int r;
-   r = -3;
-   return r;
- }

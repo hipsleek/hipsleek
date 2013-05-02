@@ -2525,6 +2525,21 @@ and one_formula_subst sst (f : one_formula) =
   let one_f = (one_formula_of_formula rs tid ndf) in
   {one_f with formula_ref_vars = ref_vars}
 
+and one_formula_subst_w_locs sst (f : one_formula) =
+  let sst0 = List.map (fun (a,b,_) -> (a,b)) sst in
+  let sst = List.filter (fun (fr,t,_) -> 
+      if ((CP.name_of_spec_var fr)=Globals.ls_name || (CP.name_of_spec_var fr)=Globals.lsmu_name) then false
+      else true
+  ) sst in (*donot rename ghost LOCKSET name*)
+  let df = f.formula_delayed in
+  let ndf = MCP.m_apply_par_w_locs sst df in
+  let base = formula_of_one_formula f in
+  let rs = subst_w_locs sst base in
+  let ref_vars = (List.map (CP.subst_var_par sst0) f.formula_ref_vars) in
+  let tid = CP.subst_var_par sst0 f.formula_thread in
+  let one_f = (one_formula_of_formula rs tid ndf) in
+  {one_f with formula_ref_vars = ref_vars}
+
 
 (** An Hoa : replace the function subst above by substituting f in parallel **)
 
@@ -2563,6 +2578,40 @@ and subst_x sst (f : formula) =
 									formula_exists_label = lbl;
 									formula_exists_pos = pos})
   in helper f
+
+
+and subst_w_locs sst (f : formula) =
+  let sst0 = List.map (fun (a,b,_) -> (a,b)) sst in
+  let rec helper f =
+    match f with
+      | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
+            Or ({formula_or_f1 = helper f1; formula_or_f2 =  helper f2; formula_or_pos = pos})
+      | Base b-> Base ({b with formula_base_heap = h_subst sst0 b.formula_base_heap; 
+	    formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_par_w_locs sst b.formula_base_pure); 
+            formula_base_and = (List.map (fun f -> one_formula_subst_w_locs sst f) b.formula_base_and);})
+  | Exists ({formula_exists_qvars = qsv;
+    formula_exists_heap = qh; 
+    formula_exists_pure = qp; 
+    formula_exists_type = tconstr;
+    formula_exists_and = a; (*TO CHECK*)
+    formula_exists_flow = fl;
+    formula_exists_label = lbl;
+    formula_exists_pos = pos}) -> 
+	(* Variable under this existential quantification should NOT be substituted! *)
+	(* Thus, we need to filter out replacements (fr |-> t) in sst where fr is in qsv *)
+	let qsvnames = (List.map CP.name_of_spec_var qsv) in
+	let sst = List.filter (fun (fr,_,_) -> not (List.mem (CP.name_of_spec_var fr) qsvnames)) sst in
+	if sst = [] then f
+	else Exists ({formula_exists_qvars = qsv; 
+	formula_exists_heap =  h_subst sst0 qh; 
+	formula_exists_pure = MCP.regroup_memo_group (MCP.m_apply_par_w_locs sst qp);
+	formula_exists_type = tconstr;
+        formula_exists_and = (List.map (fun f -> one_formula_subst_w_locs sst f) a);
+	formula_exists_flow = fl;
+	formula_exists_label = lbl;
+	formula_exists_pos = pos})
+  in helper f
+
 
 and subst_b_x sst (b:formula_base): formula_base =
   {b with formula_base_heap = h_subst sst b.formula_base_heap;
@@ -3354,12 +3403,12 @@ and elim_exists_es_his_x (f0 : formula) (his:h_formula list) : formula*h_formula
                   formula_exists_flow = fl;
                   formula_exists_and = a;
                   formula_exists_pos = pos}) ->
-          let st, pp1 = MCP.get_subst_equation_memo_formula_vv p qvar in
+          let st, pp1 = MCP.get_subst_equation_memo_formula_vv_w_locs p qvar in
+          let st0 = List.map (fun (a,b,_) -> (a,b)) st in
           let r,n_hfs = if List.length st = 1 then
-            let _ = print_endline ("\n ***** 3" ) in
-             let tmp = mkBase h pp1 t fl a pos in (*TO CHECK*)
-             let new_baref = subst st tmp in
-             let new_hfs = List.map (h_subst st) hfs in
+            let tmp = mkBase h pp1 t fl a pos in (*TO CHECK*)
+             let new_baref = subst_w_locs st tmp in
+             let new_hfs = List.map (h_subst st0) hfs in
              let tmp2 = add_quantifiers rest_qvars new_baref in
              let tmp3,new_hfs1 = helper tmp2 new_hfs in
                 (tmp3,new_hfs1)
@@ -3377,7 +3426,7 @@ and elim_exists_es_his_x (f0 : formula) (his:h_formula list) : formula*h_formula
 and elim_exists_es_his (f0 : formula) (his:h_formula list) : formula*h_formula list =
   let pr1 = pr_list !print_h_formula in
   let pr_out = (pr_pair !print_formula_w_loc pr1) in
-  Debug.ho_2 "elim_exists_es_his"
+  Debug.no_2 "elim_exists_es_his"
       !print_formula_w_loc pr1 pr_out
       elim_exists_es_his_x f0 his
   

@@ -86,6 +86,8 @@ Post condition cannot be derived:
 
 *********************************************************************
 
-#loc2-bug2a.ss: should be LOCS:[6;7;3]
+#loc2-bug2a.ss: should be LOCS:[6;7;3]: DONE
 
 *********************************************************************
+
+#loc2-bug2b.ss: should be LOCS:[6;7;3]

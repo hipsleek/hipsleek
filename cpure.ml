@@ -2623,6 +2623,99 @@ and list_pos_of_formula f rs: loc list=
     | Forall (_, f,_, l) -> rs @ [l]
     | Exists (_, f,_, l) -> rs @ [l]
 
+and get_var_locs_exp (e0 : exp) sv =
+  let rec helper e=
+    match e with
+      | Var (sv1, ps) -> if eq_spec_var sv sv1 then ps else []
+      | Null _ -> []
+      | Level _
+      | IConst _
+      | InfConst _
+      | AConst _
+      | FConst _
+      | Tsconst _ -> []
+      | Add (e1, e2, _)
+      | Subtract (e1, e2, _)
+      | Mult (e1, e2, _)
+      | Div (e1, e2, _)
+      | Max (e1, e2, _)
+      | Min (e1, e2, _)
+      | BagDiff (e1, e2, _)
+      | ListCons (e1, e2, _) -> let ps= helper e1 in
+        if ps = [] then helper e2 else ps
+      | Bag (el, _)
+      | BagUnion (el, _)
+      | BagIntersect (el, _)
+      | List (el, _)
+      | ListAppend (el, _)
+      | Func (_,el,_)
+      | ArrayAt (_, el, _) ->
+            List.fold_left (fun ps e ->
+                if ps = [] then helper e
+                else ps
+            ) [] el
+      | ListHead (e, _)
+      | ListTail (e, _)
+      | ListLength (e, _)
+      | ListReverse (e, _) -> helper e
+  in
+  helper e0
+
+and get_var_locs_b_formula (b: b_formula) v = 
+  let (p, _) = b in
+  match p with
+    | LexVar _ -> []
+    | SubAnn _ -> []
+    | BConst _ -> []
+    | XPure _ -> []
+    | BVar (sv1, p) -> if eq_spec_var sv1 v then [p] else []
+    | Lt (e1,e2, _) 
+    | Lte (e1,e2, _)
+    | Gt (e1, e2, _)
+    | Gte (e1, e2, _)
+    | Eq (e1, e2, _) 
+    | Neq (e1, e2, _) -> let ps = get_var_locs_exp e1 v in
+      if ps = [] then get_var_locs_exp e2 v else ps
+    | EqMax (e1, e2, e3, _) 
+    | EqMin (e1, e2, e3, _) -> let ps1= get_var_locs_exp e1 v in
+      if ps1 = [] then
+        let ps2 = get_var_locs_exp e2 v in
+          if ps2 = [] then get_var_locs_exp e3 v else ps2
+      else ps1
+	  (* bag formulas *)
+    | BagIn (_, _, p) -> []
+    | BagNotIn (_, _, p) -> []
+    | BagSub (_, _, p) -> []
+    | BagMin (_, _, p) -> []
+    | BagMax (_, _, p) -> []
+	  (* list formulas *)
+    | ListIn (_, _, p) -> []
+    | ListNotIn (_, _, p) -> []
+    | ListAllN (_, _, p) -> []
+    | ListPerm (_, _, p) -> []
+    | RelForm (_, _, p) -> []
+    | VarPerm (_,_,p) -> []
+
+and get_var_locs f0 v: loc list=
+  let rec helper f=
+    match f with
+      | BForm (bf , _) -> (get_var_locs_b_formula bf v)
+      | And (f1, f2, l) ->
+          let ps = helper f1 in
+          if ps = [] then helper f2 else ps
+      | AndList b -> List.fold_left (fun a (_,b)->
+            if a = [] then
+              let ps = helper b in ps
+            else a
+        ) [] b
+    | Or (f1, f2, _, l)->
+          let ps = helper f1 in
+          if ps = [] then helper f2 else ps
+    | Not (f,_, l)
+    | Forall (_, f,_, l)
+    | Exists (_, f,_, l) ->  helper f
+  in
+  helper f0
 (********************************************)
 (********************************************)
 
@@ -2827,6 +2920,9 @@ and subst_avoid_capture_x (fr : spec_var list) (t : spec_var list) (f : formula)
   f2
 
 and subst (sst : (spec_var * spec_var) list) (f : formula) : formula = apply_subs sst f
+
+and subst_w_locs (sst : (spec_var * spec_var * loc list) list) (f : formula) : formula = apply_subs_w_locs sst f
+
   (* match sst with *)
   (* | s::ss -> subst ss (apply_one s f) 				(\* applies one substitution at a time *\) *)
   (* | [] -> f *)
@@ -2873,6 +2969,31 @@ and apply_subs (sst : (spec_var * spec_var) list) (f : formula) : formula = matc
         else Exists (v, apply_subs sst qf, lbl, pos)
   | AndList b -> AndList (map_l_snd (apply_subs sst) b)
 
+and apply_subs_w_locs (sst : (spec_var * spec_var * loc list) list)
+      (f0 : formula) : formula =
+  let sst0 = List.map (fun (a,b,_) -> (a,b)) sst in
+  let rec helper f=
+    match f with
+      | BForm (bf,lbl) -> BForm ((b_apply_subs_w_locs sst bf),lbl)
+      | And (p1, p2, pos) -> And (helper p1, helper p2, pos)
+      | Or (p1, p2, lbl,pos) -> Or (helper p1, helper p2, lbl, pos)
+      | Not (p, lbl, pos) -> Not (helper p, lbl, pos)
+      | Forall (v, qf,lbl, pos) ->
+            let sst = diff sst0 v in
+            if (var_in_target v sst) then
+              let fresh_v = fresh_spec_var v in
+              Forall (fresh_v, helper (apply_subs [(v, fresh_v)] qf), lbl, pos)
+            else Forall (v, helper qf, lbl, pos)
+      | Exists (v, qf, lbl, pos) ->
+            let sst = diff sst0 v in
+            if (var_in_target v sst) then
+              let fresh_v = fresh_spec_var v in
+              Exists  (fresh_v, helper (apply_subs [(v, fresh_v)] qf), lbl, pos)
+            else Exists (v, helper qf, lbl, pos)
+      | AndList b -> AndList (map_l_snd helper b)
+  in
+  helper f0
+
 (* cannot change to a let, why? *)
 and diff (sst : (spec_var * 'b) list) (v:spec_var) : (spec_var * 'b) list
       = List.filter (fun (a,_) -> not(eq_spec_var a v)) sst
@@ -2882,7 +3003,7 @@ and var_in_target v sst = List.fold_left (fun curr -> fun (_,t) -> curr or (eq_s
 (*subst everything excluding VarPerm*)
 and b_apply_subs sst bf =
   let pr = !print_b_formula in
-  Debug.ho_1 "b_apply_subs" pr 
+  Debug.no_1 "b_apply_subs" pr 
       pr (fun _ -> b_apply_subs_x sst bf) bf
 
 and b_apply_subs_x sst bf =
@@ -2998,13 +3119,153 @@ and b_apply_subs_x sst bf =
                 else () in 
               e_apply_subs sst e) le)
   in (npf,nsl)
-	 
+
+(*=====================================*)
+and b_apply_subs_w_locs sst bf =
+  let pr = !print_b_formula in
+  Debug.ho_1 "b_apply_subs" pr 
+      pr (fun _ -> b_apply_subs_w_locs_x sst bf) bf
+
+and b_apply_subs_w_locs_x sst bf =
+  let (pf,sl) = bf in
+  let sst0 = List.map (fun (a,b,_) -> (a,b)) sst in
+  let npf = match pf with
+    | BConst _ -> pf
+    | BVar (bv, pos) ->
+          let new_sv,locs = subs_one_w_locs sst bv in
+          BVar (new_sv, List.hd (pos::locs)) (*marking*)
+    | XPure x -> XPure {x with
+          xpure_view_node=map_opt (fun sv -> fst (subs_one_w_locs sst sv)) x.xpure_view_node;
+          xpure_view_arguments=List.map (fun sv -> fst (subs_one_w_locs sst sv)) x.xpure_view_arguments;
+      } 
+    | Lt (a1, a2, pos) -> Lt (e_apply_subs_w_locs sst a1, e_apply_subs_w_locs sst a2, pos)
+    | Lte (a1, a2, pos) -> Lte (e_apply_subs_w_locs sst a1, e_apply_subs_w_locs sst a2, pos)
+    | Gt (a1, a2, pos) -> Gt (e_apply_subs_w_locs sst a1, e_apply_subs_w_locs sst a2, pos)
+    | Gte (a1, a2, pos) -> Gte (e_apply_subs_w_locs sst a1, e_apply_subs_w_locs sst a2, pos)
+    | SubAnn (a1, a2, pos) -> SubAnn (e_apply_subs_w_locs sst a1, e_apply_subs_w_locs sst a2, pos)
+    | Eq (a1, a2, pos) -> Eq (e_apply_subs_w_locs sst a1, e_apply_subs_w_locs sst a2, pos)
+    | Neq (a1, a2, pos) -> Neq (e_apply_subs_w_locs sst a1, e_apply_subs_w_locs sst a2, pos)
+    | EqMax (a1, a2, a3, pos) -> 
+          EqMax (e_apply_subs_w_locs sst a1, e_apply_subs_w_locs sst a2, e_apply_subs_w_locs sst a3, pos)
+    | EqMin (a1, a2, a3, pos) -> 
+          EqMin (e_apply_subs_w_locs sst a1, e_apply_subs_w_locs sst a2, e_apply_subs_w_locs sst a3, pos)
+    | BagIn (v, a1, pos) ->
+          let new_sv,locs = subs_one_w_locs sst v in
+          BagIn (new_sv, e_apply_subs_w_locs sst a1, List.hd (pos::locs))
+    | BagNotIn (v, a1, pos) ->
+          let new_sv,locs = subs_one_w_locs sst v in
+          BagNotIn (new_sv, e_apply_subs_w_locs sst a1, List.hd (pos::locs))
+          (* is it ok?... can i have a set of boolean values?... don't think so... *)
+    | BagSub (a1, a2, pos) -> BagSub (e_apply_subs_w_locs sst a1, e_apply_subs_w_locs sst a2, pos)
+    | BagMax (v1, v2, pos) ->
+          let new_sv1,locs1 = subs_one_w_locs sst v1 in
+          let new_sv2,locs2 = subs_one_w_locs sst v2 in
+          BagMax (new_sv1, new_sv2, List.hd (pos::(locs1@locs2)))
+    | BagMin (v1, v2, pos) ->
+          let new_sv1,locs1 = subs_one_w_locs sst v1 in
+          let new_sv2,locs2 = subs_one_w_locs sst v2 in
+          BagMin (new_sv1, new_sv2, List.hd (pos::(locs1@locs2)))
+    | VarPerm (ct,ls,pos) ->
+        let ls1 = List.map (fun sv -> fst(subs_one_w_locs sst sv)) ls in
+        VarPerm (ct,ls1,pos)
+    | ListIn (a1, a2, pos) -> ListIn (e_apply_subs_w_locs sst a1, e_apply_subs_w_locs sst a2, pos)
+    | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_subs_w_locs sst a1, e_apply_subs_w_locs sst a2, pos)
+    | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs_w_locs sst a1, e_apply_subs_w_locs sst a2, pos)
+    | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs_w_locs sst a1, e_apply_subs_w_locs sst a2, pos)
+    | RelForm (r, args, pos) -> RelForm (fst (subs_one_w_locs sst r), e_apply_subs_list_w_locs sst args, pos) (* An Hoa *)
+    (* | RelForm (r, args, pos) -> RelForm (r, e_apply_subs_list sst args, pos) (\* An Hoa *\) *)
+    | LexVar t_info -> 
+        LexVar { t_info with
+	    lex_exp = e_apply_subs_list_w_locs sst t_info.lex_exp;
+	    lex_tmp = e_apply_subs_list_w_locs sst t_info.lex_tmp; } 
+  in
+  (* Slicing: Add the inferred linking variables into sl field *)
+  (* We also restore the prior inferred information            *)
+  (* let infer_lvar_enabled = !do_slicing && !infer_lvar_slicing in *)
+  let infer_lvar_enabled = (not !dis_slc_ann) && !infer_lvar_slicing in
+  let fv = bfv bf in
+  let inf_lv = 
+    if infer_lvar_enabled then
+      match pf with
+        | Eq (_, _, pos) ->
+              (* Find all fv of bf that do not appear in linking_var_tbl *)
+              (* If only one var like this then it is also a linking var *)
+              begin let res = List.find_all (fun v1 ->
+                  try
+                    let v2 = List.assoc v1 sst0 in
+                    (* not (Hashtbl.find !linking_var_tbl (name_of_spec_var v2)) *)
+                    not (List.mem (name_of_spec_var v2) !linking_var_tbl)
+                  with Not_found -> true 
+              ) fv in
+              match res with
+                | r::[] -> [r]
+                | _ -> []
+              end
+        | _ -> []
+    else [] 
+  in 
+  (* Restore prior inferred linking variables *)
+  let pri_lv =
+    if infer_lvar_enabled then
+      List.fold_left (fun a (v1, v2) ->
+          (* let _ = print_endline ("V1: " ^ (!print_sv v1)) in                                                        *)
+          (* let _ = print_endline ("V2: " ^ (!print_sv v2)) in                                                        *)
+          (* let _ = print_endline ("BF: " ^ (!print_b_formula bf)) in                                                 *)
+          (* let _ = print_endline ("C1: " ^ (string_of_bool (Gen.BList.mem_eq eq_spec_var v1 fv))) in                 *)
+          (* let _ = print_endline ("C2: " ^ (string_of_bool (Hashtbl.mem !linking_var_tbl (name_of_spec_var v2)))) in *)
+          (* let _ = print_endline ("C2: " ^ (string_of_bool (List.mem (name_of_spec_var v2) !linking_var_tbl))) in    *)
+          if (Gen.BList.mem_eq eq_spec_var v1 fv) &&
+            (* (Hashtbl.mem !linking_var_tbl (name_of_spec_var v2))  *)
+            (List.mem (name_of_spec_var v2) !linking_var_tbl)
+          then a @ [v2]
+          else a
+      ) [] sst0
+    else [] 
+  in
+  (* print_endline ("PRI LV: " ^ (pr_list !print_sv pri_lv)); *)
+  let inf_sl = match inf_lv @ pri_lv with
+    | [] -> None
+    | _ -> 
+          Some (false, fresh_int (), List.map (fun v -> mkVar v no_pos) (inf_lv @ pri_lv))
+  in
+  let nsl = match sl with
+    | None -> inf_sl
+    | Some (il, lbl, le) -> 
+          let inf_le = match inf_sl with
+            | None -> []
+            | Some (_, _, le) -> le 
+          in Some (il, lbl, inf_le @ List.map (fun e ->
+              (* With a substitution (v1, v2),      *)
+              (* if v1 is a linking variable        *)
+              (* then v2 is also a linking variable *)
+              let _ = 
+                if infer_lvar_enabled then
+                  match e with
+                    | Var (SpecVar _ as v1, _) ->
+                          (try
+                            let v2 = List.assoc v1 sst0 in
+                            (* print_endline ("ADD LV: " ^ (!print_sv v2)); *)
+                            (* Hashtbl.add !linking_var_tbl (name_of_spec_var v2) true *)
+                            linking_var_tbl := (name_of_spec_var v2)::!linking_var_tbl
+                          with Not_found -> ()) 
+                    | _ -> () 
+                else () in 
+              e_apply_subs_w_locs sst e) le)
+  in (npf,nsl)
+(*=====================================*)
 (* and subs_one sst v = List.fold_left (fun old -> fun (fr,t) -> if (eq_spec_var fr v) then t else old) v sst  *)
 
 and subs_one sst v = 
   let rec helper sst v = match sst with
     | [] -> v
     | (fr,t)::sst -> if (eq_spec_var fr v) then t else (helper sst v)
+  in helper sst v
+
+and subs_one_w_locs sst v: (spec_var * Globals.loc list) = 
+  let rec helper sst v = match sst with
+    | [] -> (v,[])
+    | (fr,t,locs)::sst -> if (eq_spec_var fr v) then (t,locs)
+      else (helper sst v)
   in helper sst v
 
 and e_apply_subs sst e = match e with
@@ -3039,7 +3300,48 @@ and e_apply_subs sst e = match e with
   | Func (a, i, pos) -> Func (subs_one sst a, e_apply_subs_list sst i, pos)
   | ArrayAt (a, i, pos) -> ArrayAt (subs_one sst a, e_apply_subs_list sst i, pos)
 
+and e_apply_subs_w_locs sst e = match e with
+  | Null _ | IConst _ | FConst _ | AConst _ |InfConst _ |Tsconst _ -> e
+  | Var (sv, ps) -> let new_sv,locs = subs_one_w_locs sst sv in
+        Var (new_sv, ps@locs)
+  | Level (sv, pos) -> let new_sv,ps = subs_one_w_locs sst sv in
+        Level (new_sv, List.hd (pos::ps)) (*marking*)
+  | Add (a1, a2, pos) -> normalize_add (Add (e_apply_subs_w_locs sst a1,
+    e_apply_subs_w_locs sst a2, pos))
+  | Subtract (a1, a2, pos) -> Subtract (e_apply_subs_w_locs sst  a1,
+    e_apply_subs_w_locs sst a2, pos)
+  | Mult (a1, a2, pos) -> 
+        Mult (e_apply_subs_w_locs sst a1, e_apply_subs_w_locs sst a2, pos)
+  | Div (a1, a2, pos) ->
+        Div (e_apply_subs_w_locs sst a1, e_apply_subs_w_locs sst a2, pos)
+  | Max (a1, a2, pos) -> Max (e_apply_subs_w_locs sst a1,
+    e_apply_subs_w_locs sst a2, pos)
+  | Min (a1, a2, pos) -> Min (e_apply_subs_w_locs sst a1,
+    e_apply_subs_w_locs sst a2, pos)
+        (*| BagEmpty (pos) -> BagEmpty (pos)*)
+  | Bag (alist, pos) -> Bag ((e_apply_subs_list_w_locs sst alist), pos)
+  | BagUnion (alist, pos) -> BagUnion ((e_apply_subs_list_w_locs sst alist), pos)
+  | BagIntersect (alist, pos) -> BagIntersect ((e_apply_subs_list_w_locs sst alist), pos)
+  | BagDiff (a1, a2, pos) -> BagDiff (e_apply_subs_w_locs sst a1,
+    e_apply_subs_w_locs sst a2, pos)
+  | List (alist, pos) -> List (e_apply_subs_list_w_locs sst alist, pos)
+  | ListAppend (alist, pos) -> ListAppend (e_apply_subs_list_w_locs sst alist, pos)
+  | ListCons (a1, a2, pos) -> ListCons (e_apply_subs_w_locs sst a1,
+    e_apply_subs_w_locs sst a2, pos)
+  | ListHead (a, pos) -> ListHead (e_apply_subs_w_locs sst a, pos)
+  | ListTail (a, pos) -> ListTail (e_apply_subs_w_locs sst a, pos)
+  | ListLength (a, pos) -> ListLength (e_apply_subs_w_locs sst a, pos)
+  | ListReverse (a, pos) -> ListReverse (e_apply_subs_w_locs sst a, pos)
+  | Func (a, i, pos) ->
+        let new_sv,locs = subs_one_w_locs sst a in
+        Func (new_sv, e_apply_subs_list_w_locs sst i, List.hd (pos::locs)) (*marking*)
+  | ArrayAt (a, i, pos) ->
+        let new_sv,locs = subs_one_w_locs sst a in
+        ArrayAt (new_sv, e_apply_subs_list_w_locs sst i,  List.hd (pos::locs)) (*marking*)
+
 and e_apply_subs_list_x sst alist = List.map (e_apply_subs sst) alist
+
+and e_apply_subs_list_w_locs sst alist = List.map (e_apply_subs_w_locs sst) alist
 
 and e_apply_subs_list sst alist = 
   let pr = pr_list (pr_pair !print_sv !print_sv) in
@@ -3567,6 +3869,14 @@ and  get_subst_equation_formula_vv (f0 : formula) (v : spec_var):((spec_var * sp
   let r1,r2 = get_subst_equation_formula f0 v true in
   let r =List.fold_left (fun a (c1,c2)->match c2 with
     | Var (v,_)-> (c1,v)::a
+    | _ -> a ) [] r1 in
+  (r,r2)
+
+and  get_subst_equation_formula_vv_w_locs (f0 : formula) (v : spec_var):((spec_var * spec_var* loc list) list * formula) = 
+  let r1,r2 = get_subst_equation_formula f0 v true in
+  let v_locs = get_var_locs f0 v in
+  let r =List.fold_left (fun a (c1,c2)->match c2 with
+    | Var (v,locs)-> (c1,v,locs@v_locs)::a
     | _ -> a ) [] r1 in
   (r,r2)
 

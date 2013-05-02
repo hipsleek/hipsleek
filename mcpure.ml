@@ -262,6 +262,40 @@ and m_apply_par (sst:(spec_var * spec_var) list) f =
   let pr2 = !print_mp_f in
   Debug.no_2 "m_apply_par" pr1 pr2 pr2 m_apply_par_x sst f
 
+and m_apply_par_w_locs (sst:(spec_var * spec_var * loc list) list) f = 
+  let sst = List.map (fun (a,b,_) -> (a,b)) sst in
+  let r1 = List.map (fun c -> 
+      let r = EMapSV.subs_eset_par sst c.memo_group_aset in
+      (* Slicing: Linking Variables Inference        *)
+      (* We might have some new linking variables    *)
+      (* that need to add to memo_group_linking_vars *)
+      let subs_cons, lv = List.split (List.map (fun d ->
+          let subs_memo = b_apply_subs sst d.memo_formula in
+          let lv = match snd subs_memo with
+            | None -> []
+            | Some (_, _, le) -> List.concat (List.map (fun e -> CP.afv e) le) 
+          in { d with memo_formula = subs_memo; }, lv) c.memo_group_cons) in
+      { memo_group_fv = Gen.BList.remove_dups_eq eq_spec_var (List.map (fun v -> subst_var_par sst v) c.memo_group_fv);
+      memo_group_linking_vars = 
+              Gen.BList.remove_dups_eq eq_spec_var
+                  ((List.map (fun v1 -> 
+                      let v2 = subst_var_par sst v1 in
+                      (* print_endline ("\nADD LV: " ^ (!print_sv v2)); *)
+                      (* Hashtbl.add !linking_var_tbl (name_of_spec_var v2); *)
+                      linking_var_tbl := (name_of_spec_var v2)::!linking_var_tbl;
+                      v2) c.memo_group_linking_vars) @
+                      (List.concat lv));
+      memo_group_changed = c.memo_group_changed;
+      (* Slicing: A substituted slice keeps its unsat flag *)
+      (* if it is not merged to other slices               *)
+      (* TODO: Slicing UNSAT: x>3 & y<=3 --> x>3 & x<=3 *)
+      memo_group_unsat = c.memo_group_unsat; 
+      memo_group_cons = subs_cons;
+      memo_group_slice = List.map (apply_subs sst) c.memo_group_slice; 
+      memo_group_aset = r }) f in  
+  let r = filter_mem_triv r1 in
+  r
+
 (*MOVE to cpure.ml*)
 (* and b_f_ptr_equations_aux with_null f = *)
 (*   let (pf, _) = f in *)
@@ -405,9 +439,25 @@ and bag_vars_memo_pure (mp : memo_pure) : spec_var list =
 
 and get_subst_equation_memo_formula_vv (f0: memo_pure) (v:spec_var) : ((spec_var * spec_var) list * memo_pure) = 
   let (r1,r2) = get_subst_equation_memo_formula f0 v true in
-  let r1 = List.fold_left (fun a c-> match c with | (r,Var(v,_))-> (r,v)::a | _ -> a) [] r1 in
+  let r1 = List.fold_left (fun a c->
+      match c with
+        | (r,Var(v,_))-> (r,v)::a
+        | _ -> a
+  )
+    [] r1 in
   (r1,r2)
-      
+
+and get_subst_equation_memo_formula_vv_w_locs (f0: memo_pure) (v:spec_var) : ((spec_var * spec_var* loc list) list * memo_pure) = 
+  let (r1,r2) = get_subst_equation_memo_formula f0 v true in
+  let v_locs = CP.get_var_locs (pure_of_memo_pure f0) v in
+  let r1 = List.fold_left (fun a c->
+      match c with
+        | (r,Var(v,locs))-> (r,v,v_locs@locs)::a
+        | _ -> a
+  )
+    [] r1 in
+  (r1,r2)
+
 (* It always returns either 0 or one substitutions, *)
 (* if more are available just picks one *)
 and get_subst_equation_memo_formula_x (f0 : memo_pure) (v : spec_var) only_vars: ((spec_var * exp) list * memo_pure) =
@@ -450,7 +500,7 @@ and get_subst_equation_memo_formula_x (f0 : memo_pure) (v : spec_var) only_vars:
 
 and get_subst_equation_memo_formula (f0 : memo_pure) (v : spec_var) only_vars: ((spec_var * exp) list * memo_pure) =
   let pr_out = pr_pair (pr_list (pr_pair !print_sv !print_exp)) !print_mp_f in
-  Debug.no_3 "get_subst_equation_memo_formula"
+  Debug.ho_3 "get_subst_equation_memo_formula"
       !print_mp_f !print_sv string_of_bool pr_out
       get_subst_equation_memo_formula_x f0 v only_vars
 
@@ -2109,6 +2159,10 @@ let m_apply_par sst qp = match qp with
   | MemoF f -> MemoF (m_apply_par sst f)
   | OnePF f -> OnePF (apply_subs sst f)
 
+let m_apply_par_w_locs sst qp = match qp with
+  | MemoF f -> MemoF (m_apply_par_w_locs sst f)
+  | OnePF f -> OnePF (apply_subs_w_locs sst f)
+
 let memo_apply_one_exp s qp = match qp with
   | MemoF mf -> MemoF (memo_apply_one_exp s mf)
   | OnePF f -> OnePF (apply_one_exp s f)
@@ -2313,6 +2367,14 @@ let get_subst_equation_memo_formula_vv p qvar = match p with
   | OnePF f -> 
     let l,f = get_subst_equation_formula_vv f qvar in
     (l,OnePF f)
+
+let get_subst_equation_memo_formula_vv_w_locs p qvar = match p with
+  | MemoF f ->
+        let l,f = get_subst_equation_memo_formula_vv_w_locs f qvar in
+        (l,MemoF f)
+  | OnePF f ->
+        let l,f = get_subst_equation_formula_vv_w_locs f qvar in
+        (l,OnePF f)
 
 let get_subst_equation_mix_formula p qvar only_vars = match p with
   | MemoF f -> 

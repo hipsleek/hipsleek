@@ -671,7 +671,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       (* TODO : collecting rel twice as a temporary fix to losing ranking rel inferred during check_post *)
                       (*                      let rel1 =  Inf.collect_rel_list_partial_context res_ctx in*)
                       (*                      DD.dinfo_pprint ">>>>> Performing check_post STARTS" no_pos;*)
-                      let _ = print_endline ("\ncheck_post ctx: "^ (Cprinter.string_of_list_partial_context_w_loc res_ctx)) in
+                      (* let _ = print_endline ("\ncheck_post ctx: "^ (Cprinter.string_of_list_partial_context_w_loc res_ctx)) in *)
                       let tmp_ctx = check_post prog proc res_ctx (post_cond,post_struc) pos_post post_label etype in
                       (*                      DD.dinfo_pprint ">>>>> Performing check_post ENDS" no_pos;*)
                       (* Termination: collect error messages from successful states *)
@@ -1540,12 +1540,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	    let ctx1 = check_exp prog proc ctx e post_start_label in
             stk_vars # pop_list vss;
 	    let svars = List.map (fun (t, n) -> CP.SpecVar (t, n, Primed)) local_vars in
-             let _ = print_endline ("\n ***1 :"^(Cprinter.string_of_list_failesc_context_w_loc ctx1)) in
-	    let ctx2 = CF.push_exists_list_failesc_context svars ctx1 in
+            let ctx2 = CF.push_exists_list_failesc_context svars ctx1 in
             (* let _ = print_endline ("\ncheck_exp: Block: ctx2:\n" ^ (Cprinter.string_of_list_failesc_context ctx2)) in  *)
 	    (*  let _ = print_endline ("\ncheck_exp: Block: after elim_exists ctx2:\n" ^ (Cprinter.string_of_list_failesc_context (elim_exists_failesc_ctx_list ctx2))) in  *)
-	        let res = if !Globals.elim_exists_ff then elim_exists_failesc_ctx_list ctx2 else ctx2 in
-                 let _ = print_endline ("\n ***2 :"^(Cprinter.string_of_list_failesc_context_w_loc res)) in
+	    let res = if !Globals.elim_exists_ff then elim_exists_failesc_ctx_list ctx2 else ctx2 in
             (*       trans_level_eqn_list_failesc_context ctx2 *)
             (*     else ctx2 *)
             (* in *)
