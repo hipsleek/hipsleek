@@ -2214,7 +2214,7 @@ and check_post_x_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_
         List.fold_left (fun res l -> res ^ (string_of_loc_by_char_num l) ^ ",") "" locs
         in*)
       let _ =
-        let _ = print_string (" ls pctxs:" ^ (Cprinter.string_of_list_partial_context rs)) in
+        (* let _ = print_string (" ls pctxs:" ^ (Cprinter.string_of_list_partial_context rs)) in *)
         if not !Globals.disable_failure_explaining then
           let s,_ = CF.get_failure_list_partial_context rs
             (*match CF.get_must_failure_list_partial_context rs with

@@ -5737,7 +5737,7 @@ let rec get_failure_es_ft_x (ft:fail_type) : (failure_kind * (entail_state optio
   let rec helper ft = 
   match ft with
     | Basic_Reason (fc,fe) ->
-        (*let _= print_endline ("fe_name: " ^ fe.fe_name) in*)
+        (* let _= print_endline ("fe_name: " ^ fe.fe_name) in *)
         let f = get_failure_fe fe in
         if (is_must_failure_fe fe) then (f,  fe.fe_name, Some fc.fc_current_lhs)
         else (f,fe.fe_name, None)
@@ -5864,7 +5864,7 @@ let rec get_must_failure_list_partial_context (ls:list_partial_context): (string
       | [] -> rs
       | [os] -> let tmp=
             ( match os with
-              | None -> let _ = print_endline "xxxx" in
+              | None ->
                     rs
               | Some s -> rs ^ s
             ) in tmp
@@ -5872,7 +5872,7 @@ let rec get_must_failure_list_partial_context (ls:list_partial_context): (string
           (*os contains all failed of 1 path trace*)
           let tmp=
             ( match os with
-              | None -> let _ = print_endline "xxxx" in rs
+              | None -> rs
               | Some s -> rs ^ s ^ "\n" ^ op
             ) in
           combine_helper op ss tmp
@@ -5896,7 +5896,6 @@ let rec get_must_failure_list_partial_context (ls:list_partial_context): (string
 (*currently, we do not use lor to combine traces,
 so just call get_may_falure_list_partial_context*)
 let rec get_failure_list_partial_context (ls:list_partial_context): (string*failure_kind)=
-  let _ = print_endline "\naaaa" in
   let helper pctx =
     (*return failure of 1 lemma is enough*)
     let (los, fk)= List.split (List.map get_failure_partial_context [pctx]) in
@@ -5911,24 +5910,42 @@ let rec get_failure_list_partial_context (ls:list_partial_context): (string*fail
 and get_failure_branch bfl=
    let helper (pt, ft)=
      let spt = !print_path_trace pt in
-      match  (get_failure_ft ft) with
-        | Failure_Must m -> (Some ("  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^ "  (must) cause: " ^m),  Failure_Must m)
+      match (get_failure_ft ft) with
+        | Failure_Must m ->
+              (Some ("  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll)*) ^ "  (must) cause: " ^m),  Failure_Must m)
         | Failure_May m -> (Some ("  path trace: " ^spt (*^ "\nlocs: " ^ (!print_list_int ll) *) ^ "  (may) cause: " ^m),  Failure_May m)
         | Failure_Valid ->
-              let _ = print_endline "yyyy" in
               (None, Failure_Valid)
-        | Failure_Bot m -> (Some ("  path trace: " ^spt^"  unreachable: "^m), Failure_Bot m)
+        | Failure_Bot m ->
+              (Some ("  path trace: " ^spt^"  unreachable: "^m), Failure_Bot m)
     in
     match bfl with
-      | [] -> let _ = print_endline "zzz" in (None, Failure_Valid)
+      | [] -> (None, Failure_Valid)
       | fl -> let los, fks= List.split (List.map helper fl) in
-              ( match (combine_helper "OrR\n" los "") with
+              ( match (combine_helper "OrL\n" los "") with
                 | "" -> None, Failure_Valid
                 | s -> Some s, List.fold_left cmb_lor (List.hd fks) (List.tl fks)
               )
+(*success traces*)
+and get_branch_ctx bctxs=
+  let helper (pt,_)=
+    let spt = !print_path_trace pt in
+    Some ("  path trace: " ^spt ^"  valid")
+  in
+  let r = if bctxs = [] then None else
+    let ss = List.map helper bctxs in
+    Some (combine_helper "OrL\n" ss "")
+  in r
 
-and get_failure_partial_context ((bfl:branch_fail list), _): (string option*failure_kind)=
-   get_failure_branch bfl
+(*to improve*)
+and get_failure_partial_context ((bfl:branch_fail list), bctxs): (string option*failure_kind)=
+  let s, ft = get_failure_branch bfl in
+  let valid_s =  get_branch_ctx bctxs in
+  match s,valid_s with
+    | None, None -> None,ft
+    | None, _ -> valid_s, ft
+    | _ , None -> s,ft
+    | Some s1, Some s2 -> Some (s1 ^ "\nOrL\n" ^ s2), ft
 
 let rec get_failure_list_failesc_context (ls:list_failesc_context): (string* failure_kind)=
   let helper fctx =
