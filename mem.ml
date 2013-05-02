@@ -139,7 +139,9 @@ let rec make_disj_constraints (exps: CP.exp list) (mpf : CF.mem_perm_formula) : 
 	match exps with
 	| [] -> CP.mkTrue no_pos
 	| x::xs -> match x with
-		   | CP.Var(sv,pos) -> let svisin = CP.BForm((CP.BagNotIn(sv,mpf.CF.mem_formula_exp,pos),None),None)
+		   | CP.Var(sv,ps) ->
+                         let pos = List.hd ps in
+                         let svisin = CP.BForm((CP.BagNotIn(sv,mpf.CF.mem_formula_exp,pos),None),None)
 		   			in (CP.mkAnd svisin (make_disj_constraints xs mpf)  pos)
 		   | _ -> CP.mkTrue no_pos
 				
@@ -241,7 +243,7 @@ let rec xmem_heap (f: CF.h_formula) (vl: C.view_decl list) : CF.mem_perm_formula
 			 CF.h_formula_data_name = name;
 			 CF.h_formula_data_param_imm = fl;
 			 CF.h_formula_data_pos = pos;}) -> 
-			 (mk_mem_perm_formula (CP.Bag([CP.Var(dn,no_pos)],pos)) true [(name, fl)] []), []
+			 (mk_mem_perm_formula (CP.Bag([CP.mkVar dn no_pos],pos)) true [(name, fl)] []), []
 	| CF.ViewNode ({ CF.h_formula_view_node = vn;
 			 CF.h_formula_view_name = name;
 			 CF.h_formula_view_arguments = argl;
@@ -1082,8 +1084,8 @@ let rec is_lend (f : CF.formula) : bool =
         
 let subtype_sv_ann_gen (impl_vars: CP.spec_var list) (l: CP.spec_var) (r: CP.spec_var) 
 : bool * (CP.formula option) * (CP.formula option) =
-	let l = CP.Var(l,no_pos) in
-	let r = CP.Var(r,no_pos) in
+	let l = CP.mkVar l no_pos in
+	let r = CP.mkVar r no_pos in
 	let c = CP.BForm ((CP.SubAnn(l,r,no_pos),None), None) in
         (* implicit instantiation of @v made stronger into an equality *)
         (* two examples in ann1.slk fail otherwise; unsound when we have *)

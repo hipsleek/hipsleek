@@ -107,10 +107,10 @@ GLOBAL: expression or_formula formula pformula exp specvar;
         | (Var (v1,_), BForm ((Eq(Var(v2,_),Var(v3,_),_),_),_)) -> 
           if eq_spec_var v1 v2 then mkForall [v1]
             (mkOr (BForm ((BagNotIn (v1,y,loc),None),None)) 
-                  (BForm ((Eq (Var (v1,loc),Var (v3,loc),loc),None),None)) None loc) None loc else
+                  (BForm ((Eq (mkVar v1 loc,mkVar v3 loc,loc),None),None)) None loc) None loc else
           if eq_spec_var v1 v3 then mkForall [v1]
             (mkOr (BForm ((BagNotIn (v1,y,loc),None),None)) 
-                  (BForm ((Eq (Var (v1,loc),Var (v2,loc),loc),None),None)) None loc) None loc else mkTrue loc
+                  (BForm ((Eq (mkVar v1 loc,mkVar v2 loc,loc),None),None)) None loc) None loc else mkTrue loc
         | _ -> mkTrue loc
       end
     | "exists"; x = exp; "in"; y = exp; ":"; z = pformula ->
@@ -128,7 +128,7 @@ GLOBAL: expression or_formula formula pformula exp specvar;
   exp:
   [ "exp" LEFTA
     [ x = SELF; "+"; y = SELF -> BagUnion([x; y], loc)
-    | x = specvar -> Var (x,loc)
+    | x = specvar -> mkVar x loc
     | "|"; x = specvar; "|" -> FConst (0.0,loc) (* Do not care, return anything *)
     | "{"; x = LIST0 exp SEP ","; "}" -> Bag (x, loc)
     | x = INT -> IConst (int_of_string x, loc) 

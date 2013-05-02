@@ -94,29 +94,29 @@ and preprocess_exp (e0 : CP.exp) : (CP.exp * CP.formula * CP.spec_var list) =
     | CP.Add( CP.Var(CP.SpecVar(t1, _, _), l1), CP.IConst(_, _), l3) ->
           let tmp = fresh_var_name (string_of_typ t1) l3.start_pos.Lexing.pos_lnum in
 	      let new_evar = CP.SpecVar(t1, tmp, Unprimed) in
-	      let additional_constr = CP.BForm((CP.Eq(CP.Var(new_evar, no_pos), e0, l3), None), None) in
-	      (CP.Var(new_evar, l3), additional_constr, [new_evar])
-    | CP.Subtract(CP.Var(CP.SpecVar(t1, id1, p1), l1), CP.Var(CP.SpecVar(t2, id2, p2), l2), l3) ->
+	      let additional_constr = CP.BForm((CP.Eq(CP.mkVar new_evar no_pos, e0, l3), None), None) in
+	      (CP.mkVar new_evar l3, additional_constr, [new_evar])
+    | CP.Subtract (CP.Var (CP.SpecVar(t1, id1, p1), l1), CP.Var (CP.SpecVar(t2, id2, p2), l2), l3) ->
           let tmp = fresh_var_name (string_of_typ t1) l3.start_pos.Lexing.pos_lnum in
 	      let new_evar = CP.SpecVar(t1, tmp, Unprimed) in
-	      let additional_constr = CP.BForm((CP.Eq(CP.Var(new_evar, no_pos), CP.Add(CP.Var(CP.SpecVar(t1, tmp, p1), l1), CP.Var(CP.SpecVar(t2, id2, p2), l2), l3), l3), None), None) in
-	      (CP.Var(new_evar, l3), additional_constr, [new_evar])
+	      let additional_constr = CP.BForm((CP.Eq(CP.mkVar new_evar no_pos, CP.Add(CP.Var (CP.SpecVar(t1, tmp, p1), l1), CP.Var (CP.SpecVar(t2, id2, p2), l2), l3), l3), None), None) in
+	      (CP.mkVar new_evar l3, additional_constr, [new_evar])
     | CP.Subtract( CP.Var(CP.SpecVar(t2, id2, p2), l2), CP.IConst(i1, l1), l3) ->
           let tmp = fresh_var_name (string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
 	      let new_evar = CP.SpecVar(t2, tmp, Unprimed) in
-	      let additional_constr = CP.BForm((CP.Eq(CP.Var(new_evar, no_pos), CP.Add(CP.IConst(i1, l1), CP.Var(CP.SpecVar(t2, tmp, p2), l2), l3), l3), None), None) in
-	      (CP.Var(new_evar, l3), additional_constr, [new_evar])
+	      let additional_constr = CP.BForm((CP.Eq(CP.mkVar new_evar no_pos, CP.Add(CP.IConst(i1, l1), CP.Var(CP.SpecVar(t2, tmp, p2), l2), l3), l3), None), None) in
+	      (CP.mkVar new_evar l3, additional_constr, [new_evar])
     | CP.Subtract( CP.IConst(i1, l1), CP.Var(CP.SpecVar(t2, id2, p2), l2), l3) ->
           let tmp = fresh_var_name (string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
 	      let new_evar = CP.SpecVar(t2, tmp, Unprimed) in
 	      let additional_constr = CP.BForm((CP.Eq(CP.IConst(i1, l1), CP.Add(CP.Var(CP.SpecVar(t2, id2 , p2), l2), CP.Var(CP.SpecVar(t2, tmp, p2), l2), l3), l3), None), None) in
-	      (CP.Var(new_evar, l3), additional_constr, [new_evar])
+	      (CP.mkVar new_evar l3, additional_constr, [new_evar])
     | CP.Add(CP.IConst(i1, _), CP.IConst(12, _) , l3) -> (CP.IConst(i1+12, l3), CP.BForm((CP.BConst (true, l3), None), None), [])
     | CP.Subtract( CP.IConst(i1, l1), CP.IConst(i2, l2), l3) ->
           let tmp = fresh_var_name "int" l3.start_pos.Lexing.pos_lnum in
 	      let new_evar = CP.SpecVar(Int, tmp, Unprimed) in
-	      let additional_constr = CP.BForm((CP.Eq(CP.IConst(i1, l1), CP.Add(CP.IConst(i2, l2), CP.Var(CP.SpecVar(Int, tmp, Globals.Unprimed), l3), l3), l3), None), None) in
-	      (CP.Var(new_evar, l3), additional_constr, [new_evar])
+	      let additional_constr = CP.BForm((CP.Eq(CP.IConst(i1, l1), CP.Add(CP.IConst(i2, l2), CP.mkVar (CP.SpecVar(Int, tmp, Globals.Unprimed)) l3, l3), l3), None), None) in
+	      (CP.mkVar new_evar l3, additional_constr, [new_evar])
     | CP.Add (a1, a2, l1) -> 
           reconstr_2arg a1 a2 (fun e1 e2 l -> CP.Add(e1, e2, l)) l1
     | CP.Subtract(a1, a2, l1) -> 
@@ -374,7 +374,7 @@ and find_order_exp_x (e : CP.exp) order vs = match e with
               ((Hashtbl.replace vs sv1 order); true) 
 	        else
 	          if ((r == 1 && order == 2) || (r == 2 && order == 1)) then
-	            Error.report_error { Error.error_loc = l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ " in Var \n")}
+	            Error.report_error { Error.error_loc = List.hd l1; Error.error_text = ("Mona translation failure for variable " ^ (Cprinter.string_of_spec_var sv1) ^ " in Var \n")}
 	          else false
           with
 	        | Not_found -> ((Hashtbl.add vs sv1 order); true)
@@ -427,7 +427,7 @@ and is_firstorder_mem_a e vs =
 	          if (r == 1) then true
 	          else false
             with 
-	          | Not_found -> Error.report_error { Error.error_loc = l1; Error.error_text = (" Error during Mona translation for var " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
+	          | Not_found -> Error.report_error { Error.error_loc = List.hd l1; Error.error_text = (" Error during Mona translation for var " ^ (Cprinter.string_of_spec_var sv1) ^ "\n")}
           end
     | CP.IConst _ 
     | CP.Null _ -> true
@@ -764,12 +764,12 @@ and mona_of_formula_x f initial_f vs =
                   | CP.Exists (sv, p, _) ->
   	              "(ex1 " ^ (mona_of_spec_var sv) ^ " : " ^ (helper p) ^ ")"*)
       | CP.Forall (sv, p, _,l) ->
-            if (is_firstorder_mem (CP.Var(sv, l)) vs) then
+            if (is_firstorder_mem (CP.mkVar sv l) vs) then
 	          " (all1 " ^ (mona_of_spec_var sv) ^ ":" ^ (helper p) ^ ") "
             else
 	          " (all2 " ^ (mona_of_spec_var sv) ^ ":" ^ (helper p) ^ ") "
       | CP.Exists (sv, p, _,l) ->
-            if (is_firstorder_mem (CP.Var(sv, l)) vs) then
+            if (is_firstorder_mem (CP.mkVar sv l) vs) then
 	          begin
 	            " (ex1 " ^ (mona_of_spec_var sv) ^ ":" ^ (helper p) ^ ") "
 	          end
@@ -1044,7 +1044,7 @@ let create_file_for_mona (filename: string) (fv: CP.spec_var list) (f: CP.formul
         let all_fv = CP.remove_dups_svl fv in
         (* let vs = Hashtbl.create 10 in *)
 	(* let _ = find_order f vs in *)
-        let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem (CP.Var(sv, no_pos)) vs)) all_fv) in
+        let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem (CP.mkVar sv no_pos) vs)) all_fv) in
         let first_order_var_decls =
           if Gen.is_empty part1 then ""
           else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var part1)) ^ ";\n " in
@@ -1098,7 +1098,7 @@ let imply_sat_helper_x (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (
   let all_fv = CP.remove_dups_svl fv in
   (* let _ = print_endline("[Mona] imply_sat_helper : vs = " ^ (string_of_hashtbl vs) ) in *)
   let (part1, part2) = (List.partition (fun (sv) -> ((*is_firstorder_mem*)part_firstorder_mem
-      (CP.Var(sv, no_pos)) vs)) all_fv) in
+      (CP.mkVar sv no_pos) vs)) all_fv) in
   let first_order_var_decls =
     if Gen.is_empty part1 then ""
     else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var part1)) ^ "; " in

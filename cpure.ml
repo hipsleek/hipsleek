@@ -162,7 +162,7 @@ and p_formula =
 (* Expression *)
 and exp =
   | Null of loc
-  | Var of (spec_var * loc)
+  | Var of (spec_var * (loc list))
   | Level of (spec_var * loc) (*represent locklevel of a lock spec_var*)
   | IConst of (int * loc)
   | FConst of (float * loc)
@@ -412,7 +412,7 @@ let conv_var_to_exp (v:spec_var) :exp =
   if (full_name_of_spec_var v="null") then (Null no_pos)
   else match get_int_const (name_of_spec_var v) with
     | Some i -> IConst(i,no_pos)
-    | None -> Var(v,no_pos)
+    | None -> Var(v, [no_pos])
 
 (* let conv_var_to_exp_debug (v:spec_var) :exp = *)
 (*  Debug.no_1 "conv_var_to_exp" (full_name_of_spec_var) (!print_exp) conv_var_to_exp v *)
@@ -1674,7 +1674,7 @@ and mkMax a1 a2 pos = Max (a1, a2, pos)
 
 and mkMin a1 a2 pos = Min (a1, a2, pos)
 
-and mkVar sv pos = Var (sv, pos)
+and mkVar sv pos = Var (sv, [pos])
 
 and mkBVar v p pos = BVar (SpecVar (Bool, v, p), pos)
 
@@ -1953,22 +1953,22 @@ and mkEqVar (sv1 : spec_var) (sv2 : spec_var) pos=
   if eq_spec_var sv1 sv2 then
     mkTrue pos
   else
-    BForm ((Eq (Var (sv1, pos), Var (sv2, pos), pos), None),None)
+    BForm ((Eq (Var (sv1, [pos]), Var (sv2, [pos]), pos), None),None)
 
 and mkGteVar (sv1 : spec_var) (sv2 : spec_var) pos=
   if eq_spec_var sv1 sv2 then
     mkTrue pos
   else
-    BForm (((Gte (Var (sv1, pos), Var (sv2, pos), pos)),None), None)
+    BForm (((Gte (Var (sv1, [pos]), Var (sv2, [pos]), pos)),None), None)
 
 and mkNeqVar (sv1 : spec_var) (sv2 : spec_var) pos=
   if eq_spec_var sv1 sv2 then
     mkFalse pos
   else
-    BForm ((Neq (Var (sv1, pos), Var (sv2, pos), pos), None),None)
+    BForm ((Neq (Var (sv1, [pos]), Var (sv2, [pos]), pos), None),None)
 
 and mkEqVarInt (sv : spec_var) (i : int) pos =
-  BForm ((Eq (Var (sv, pos), IConst (i, pos), pos), None),None)
+  BForm ((Eq (Var (sv, [pos]), IConst (i, pos), pos), None),None)
 
 
 (*and mkTrue pos l= BForm ((BConst (true, pos)),l)*)
@@ -2480,8 +2480,8 @@ and name_of_type (t : typ) : ident =
       (*   | Array (et, _) -> name_of_type et ^ "[]" (\* An Hoa *\) *)
 
 and pos_of_exp (e : exp) = match e with
+  | Var (_, ps) -> List.hd ps
   | Null p 
-  | Var (_, p) 
   | Level (_, p)
   | IConst (_, p) 
   | InfConst (_,p)
@@ -2553,8 +2553,8 @@ and pos_of_formula (f: formula) =
 (********************************************)
 (*used by error explanation*)
 and list_pos_of_exp (e : exp) = match e with
+  | Var (_, ps) -> ps
   | Null p -> [p]
-  | Var (_, p) -> [p]
   | Level (_, p) -> []
   | IConst (_, p) -> [p]
   | InfConst (_,p)-> []
@@ -2882,7 +2882,7 @@ and var_in_target v sst = List.fold_left (fun curr -> fun (_,t) -> curr or (eq_s
 (*subst everything excluding VarPerm*)
 and b_apply_subs sst bf =
   let pr = !print_b_formula in
-  Debug.no_1 "b_apply_subs" pr 
+  Debug.ho_1 "b_apply_subs" pr 
       pr (fun _ -> b_apply_subs_x sst bf) bf
 
 and b_apply_subs_x sst bf =
@@ -3207,12 +3207,12 @@ and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
   | ListLength (a1, pos) -> ListLength (a_apply_par_term sst a1, pos)
   | ListReverse (a1, pos) -> ListReverse (a_apply_par_term sst a1, pos)
   | Func (a, i, pos) ->
-	let a1 = subs_one_term sst a (Var (a,pos)) in
+	let a1 = subs_one_term sst a (Var (a,[pos])) in
 	(match a1 with
 	  | Var (a2,_) -> Func (a2, a_apply_par_term_list sst i, pos) 
 	  | _ -> failwith "Cannot substitute a function by a non variable!\n")  
   | ArrayAt (a, i, pos) -> (* An Hoa : CHECK BUG DETECTED - substitute a as well *)
-	let a1 = subs_one_term sst a (Var (a,pos)) in
+	let a1 = subs_one_term sst a (Var (a,[pos])) in
 	(match a1 with
 	  | Var (a2,_) -> ArrayAt (a2, a_apply_par_term_list sst i, pos) 
 	  | _ -> failwith "Cannot substitute an array variable by a non variable!\n")  
@@ -3977,7 +3977,7 @@ add_gte_0@144 EXIT out : exists(b_113:0<=b_113 &
 let add_gte0_for_mona (f0 : formula): (formula)=
   let mkGte_f spec_var lbl pos=
 	let zero = IConst (0, pos) in
-    BForm (((mkLte zero (Var (spec_var, no_pos)) pos), None), lbl) in
+    BForm (((mkLte zero (Var (spec_var,[no_pos])) pos), None), lbl) in
   let rec helper f0 =
     match f0 with
       | Exists (qvar, qf, lbl, pos) ->
@@ -4780,7 +4780,7 @@ and drop_null (f:formula) self neg:formula =
 	| Exists (q,f,lbl,l) -> Exists (q,(drop_null f self neg),lbl,l)
 	      
 and add_null f self : formula =  
-  mkAnd f (BForm ((mkEq_b (Var (self,no_pos)) (Null no_pos) no_pos, None))) no_pos	  
+  mkAnd f (BForm ((mkEq_b (Var (self,[no_pos])) (Null no_pos) no_pos, None))) no_pos	  
       (*to fully extend*)
       (* TODO: double check this func *)
 
@@ -4857,7 +4857,7 @@ and simp_mult_x (e : exp) :  exp =
       | Var (v, l) ->
             (match m with 
               | None -> e0 
-              | Some c ->  Mult (IConst (c, l), e0, l))
+              | Some c ->  Mult (IConst (c, List.hd l), e0, List.hd l))
       | Level (v, l) ->
             (match m with 
               | None -> e0 
@@ -5929,7 +5929,7 @@ let rec get_head e = match e with
 		| ArrayAt (a, i, _) -> "" (* An Hoa *) 
 
 let form_bform_eq (v1:spec_var) (v2:spec_var) =
-   Eq(Var(v1,no_pos),Var(v2,no_pos),no_pos)
+   Eq(Var(v1,[no_pos]),Var(v2,[no_pos]),no_pos)
 
 let form_formula_eq (v1:spec_var) (v2:spec_var) =
   BForm (((form_bform_eq v1 v2), None), None)
@@ -6170,7 +6170,7 @@ let conv_exp_to_var (e:exp) : (spec_var * loc) option =
 
 (* convert exp to var representation where possible *)
 let conv_exp_with_const e = match conv_exp_to_var e with
-    | Some (v,loc) -> Var(v,loc)
+    | Some (v,loc) -> Var(v,[loc])
     | _ -> e
 
 (* get arguments of bformula and allowing constants *)
@@ -6185,7 +6185,7 @@ let get_bform_neq_args_with_const (bf:b_formula) =
 
 (* form bformula assuming only vars *)
 let form_bform_eq (v1:spec_var) (v2:spec_var) =
-  let conv v = Var(v,no_pos) in
+  let conv v = Var(v,[no_pos]) in
   if ((is_const v1) || (is_const v2)) then              
     Error.report_error  {
         Error.error_loc = no_pos;
@@ -6366,7 +6366,7 @@ let get_all_const_eq (aset : var_aset) (v : spec_var) : spec_var list =
 let conv_var_to_exp_eq (aset : var_aset) (v:spec_var) : exp = 
   let nlst = get_all_const_eq aset v in
   match nlst with
-    | [] -> Var(v,no_pos)
+    | [] -> Var(v,[no_pos])
     | hd::_ -> conv_var_to_exp hd
 
 (*Convert an expresion to another expresion after replacing the variables representing constants*)
@@ -6856,8 +6856,8 @@ let add_term_to_exp (xs:add_term_list) : exp =
     if (i<0) then mk_err "add_term has -ve sign" else
     match e with
       | C _ -> IConst(i,no_pos)
-      | V v -> if (i==1) then Var(v,no_pos)
-        else Mult(IConst(i,no_pos),Var(v,no_pos),no_pos)
+      | V v -> if (i==1) then Var(v,[no_pos])
+        else Mult(IConst(i,no_pos),Var(v,[no_pos]),no_pos)
       | E e -> if (i==1) then e
         else Mult (IConst(i,no_pos),e,no_pos) in 
   match xs with
@@ -6873,7 +6873,7 @@ let mult_term_to_exp (xs:mult_term_list) : exp =
     if (i<0) then mk_err "mult_term has -ve power" else
       match e with
         | C c -> IConst(c,no_pos)
-        | V v -> power (Var(v,no_pos)) i
+        | V v -> power (Var(v,[no_pos])) i
         | E e -> power e i in
   match xs with
     | [] -> IConst (1,no_pos)
@@ -8241,7 +8241,7 @@ let compute_instantiations_x pure_f v_of_int avail_v =
         |[] -> []
         |h::t-> [h] in
   let l_r = List.concat (List.map (compute_one [] leqs) v_of_int) in
-  List.map (fun (v,e) -> (v,BForm ((Eq (Var (v,no_pos),e,no_pos), None),None))) l_r 
+  List.map (fun (v,e) -> (v,BForm ((Eq (Var (v,[no_pos]),e,no_pos), None),None))) l_r 
 
 
 let compute_instantiations pure_f v_of_int avail_v =
@@ -8256,8 +8256,8 @@ let add_ann_constraints vrs f =
     let rec helper vrs f = 
     match vrs with
       | v :: r -> 
-          let c1 = BForm((Lte(IConst( (int_of_heap_ann Mutable), no_pos), Var(v,no_pos), no_pos), None), None) in
-          let c2 = BForm((Lte(Var(v,no_pos), IConst(( (int_of_heap_ann Accs)), no_pos), no_pos), None), None) in 
+          let c1 = BForm((Lte(IConst( (int_of_heap_ann Mutable), no_pos), Var(v,[no_pos]), no_pos), None), None) in
+          let c2 = BForm((Lte(Var(v,[no_pos]), IConst(( (int_of_heap_ann Accs)), no_pos), no_pos), None), None) in 
           (* let c2 = BForm((Lte(Var(v,no_pos), IConst(( (int_of_heap_ann Lend)), no_pos), no_pos), None), None) in  *)
           let c12 = mkAnd c1 c2 no_pos in
           let rf = helper r f in
@@ -9725,8 +9725,8 @@ let translate_level_eqn_b_formula (bf:b_formula) : formula =
           (match (e1, e2) with
             | (Var (sv1,pos1), Var (sv2,pos2)) ->
                 if (type_of_spec_var sv1) = lock_typ then
-                  let mu1 = Level (sv1,pos1) in (* l1.mu *)
-                  let mu2 = Level (sv2,pos2) in (* l2.mu *)
+                  let mu1 = Level (sv1,List.hd pos1) in (* l1.mu *)
+                  let mu2 = Level (sv2,List.hd pos2) in (* l2.mu *)
                   let npf = Eq (mu1,mu2,pos) in
                   let nf = BForm ((npf,sth),None) in
                   let f = BForm (bf,None) in
@@ -9788,7 +9788,7 @@ let translate_level_pure_x (pf : formula) : formula =
         match e with
           | Level (SpecVar (t,id,p),l) ->
               let nid = id^"_mu" in
-              (Var (SpecVar (level_data_typ,nid,p),l))
+              (Var (SpecVar (level_data_typ,nid,p),[l]))
           | Add (e1,e2,pos) ->
               let res1 = helper e1 in
               let res2 = helper e2 in
@@ -9970,7 +9970,7 @@ let infer_lsmu_pure_x (f:formula) : formula * (spec_var list)=
       match e with
         | Var (SpecVar (t,id,p),pos) ->
             if (t = Globals.lock_typ) then
-              Level (SpecVar (t,id,p),pos)
+              Level (SpecVar (t,id,p),List.hd pos)
             else if (id = ls_name) then
               let nsv = SpecVar (lsmu_typ,lsmu_name,p) in
               Var (nsv,pos)
@@ -10019,9 +10019,9 @@ let infer_lsmu_pure_x (f:formula) : formula * (spec_var list)=
                     (* let ne =  convert_ls_to_lsmu_exp e in *)
                     let level_var = mkLevelVar Unprimed in
                     let fresh_var = fresh_spec_var level_var in
-                    let fresh_var_exp = Var (fresh_var,pos) in
+                    let fresh_var_exp = Var (fresh_var,[pos]) in
                     let eq_f = mkEqExp fresh_var_exp (Level (SpecVar (t,id,pr),pos)) pos in (*mu_123=level(l)*)
-                    let lsmu_exp = Var (mkLsmuVar pr,pos) in
+                    let lsmu_exp = Var (mkLsmuVar pr,[pos]) in
                     let in_f = mkBagInExp fresh_var lsmu_exp pos in (*mu_123 in LSMU*)
                     let f_and = And (eq_f,in_f,pos) in
                     let f_exists = Exists (fresh_var,f_and,None,pos) in
@@ -10033,9 +10033,9 @@ let infer_lsmu_pure_x (f:formula) : formula * (spec_var list)=
                     (* let ne =  convert_ls_to_lsmu_exp e in *)
                     let level_var = mkLevelVar Unprimed in
                     let fresh_var = fresh_spec_var level_var in
-                    let fresh_var_exp = Var (fresh_var,pos) in
+                    let fresh_var_exp = Var (fresh_var,[pos]) in
                     let eq_f = mkEqExp fresh_var_exp (Level (SpecVar (t,id,pr),pos)) pos in (*mu_123=level(l)*)
-                    let lsmu_exp = Var (mkLsmuVar pr,pos) in
+                    let lsmu_exp = Var (mkLsmuVar pr,[pos]) in
                     let in_f = mkBagNotInExp fresh_var lsmu_exp pos in (*mu_123 in LSMU*)
                     let f_and = And (eq_f,in_f,pos) in
                     let f_exists = Exists (fresh_var,f_and,None,pos) in
@@ -10130,9 +10130,9 @@ let rec translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos
         *)
         let level_var = mkLevelVar Unprimed in
         let fresh_var = fresh_spec_var level_var in
-        let fresh_var_exp = Var (fresh_var,pos) in
-        let lsmu_exp = Var (mkLsmuVar pr,pos) in
-        let ls_exp = Var (mkLsmuVar pr,pos) in (*TO CHECK*)
+        let fresh_var_exp = Var (fresh_var,[pos]) in
+        let lsmu_exp = Var (mkLsmuVar pr,[pos]) in
+        let ls_exp = Var (mkLsmuVar pr,[pos]) in (*TO CHECK*)
         (*---------------*)
         let f_neq = mkNeqExp ls_exp (mkEmptyBag pos) pos in (* LS!={} *)
         let f_gt_zero = mkGtExp x (IConst (0,pos)) pos in (*x>0*)
@@ -10158,9 +10158,9 @@ let rec translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos
 
         let level_var = mkLevelVar Unprimed in
         let fresh_var = fresh_spec_var level_var in
-        let fresh_var_exp = Var (fresh_var,pos) in
-        let lsmu_exp = Var (mkLsmuVar pr,pos) in
-        let ls_exp = Var (mkLsmuVar pr,pos) in (*TO CHECK*)
+        let fresh_var_exp = Var (fresh_var,[pos]) in
+        let lsmu_exp = Var (mkLsmuVar pr,[pos]) in
+        let ls_exp = Var (mkLsmuVar pr,[pos]) in (*TO CHECK*)
         (*---------------*)
         let f_neq = mkNeqExp ls_exp (mkEmptyBag pos) pos in (* LS!={} *)
         let f_eq_zero = mkEqExp x (IConst (0,pos)) pos in (*x=0*)
@@ -10193,7 +10193,7 @@ let rec translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos
               (*level(x) in LSMU ==> exists mu_123. mu_123=level(x) & mu_123 in LSMU*)
               let level_var = mkLevelVar Unprimed in
               let fresh_var = fresh_spec_var level_var in (*mu_123*)
-              let fresh_var_exp = Var (fresh_var,pos) in
+              let fresh_var_exp = Var (fresh_var,[pos]) in
               let eq_f = mkEqExp fresh_var_exp x pos in (*mu_123=level(x)*)
               let in_f = mkBagInExp fresh_var lsmu_exp pos in (*mu_123 in LSMU*)
               let f_and = And (eq_f,in_f,pos) in
@@ -10212,9 +10212,9 @@ let rec translate_waitlevel_p_formula_x (bf : b_formula) (x:exp) (pr:primed) pos
         *)
         let level_var = mkLevelVar Unprimed in
         let fresh_var = fresh_spec_var level_var in
-        let fresh_var_exp = Var (fresh_var,pos) in
-        let lsmu_exp = Var (mkLsmuVar pr,pos) in
-        let ls_exp = Var (mkLsmuVar pr,pos) in (*TO CHECK*)
+        let fresh_var_exp = Var (fresh_var,[pos]) in
+        let lsmu_exp = Var (mkLsmuVar pr,[pos]) in
+        let ls_exp = Var (mkLsmuVar pr,[pos]) in (*TO CHECK*)
         (*---------------*)
         let f_neq = mkNeqExp ls_exp (mkEmptyBag pos) pos in (* LS!={} *)
         let f_lt_zero = mkLtExp x (IConst (0,pos)) pos in (*x<0*)
@@ -10255,7 +10255,7 @@ and translate_waitlevel_b_formula_x (bf:b_formula) : formula =
                             (*waitlevel'>waitlevel ==> exist x: waitlevel > x & waitlevel'= x*)
                             let level_var = mkLevelVar Unprimed in
                             let fresh_var = fresh_spec_var level_var in
-                            let x_exp = Var (fresh_var,pos) in
+                            let x_exp = Var (fresh_var,[pos]) in
                             match pf with
                               | Eq (e1,e2,pos) ->
                                   (*waitlevel'=waitlevel ==> exist x: waitlevel = x & waitlevel'= x*)

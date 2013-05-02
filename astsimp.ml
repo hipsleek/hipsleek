@@ -2389,7 +2389,7 @@ and find_view_name_x (f0 : CF.formula) (v : ident) pos =
                       "Pre- and post-conditions of coercion rules must not be disjunctive";
               }
 and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp_type =
-  Debug.ho_1 "trans_exp"
+  Debug.no_1 "trans_exp"
       Iprinter.string_of_exp
       (pr_pair Cprinter.string_of_exp string_of_typ) 
       (fun _ -> trans_exp_x prog proc ie) ie 
@@ -5129,7 +5129,7 @@ and trans_pure_exp_x (e0 : IP.exp) stab : CP.exp =
     | IP.AConst(a,pos) -> CP.AConst(a,pos)
     | IP.InfConst(a,pos) -> CP.InfConst(a,pos)
     | IP.Var ((v, p), pos) -> 
-          CP.Var ((trans_var (v,p) stab pos),pos)
+          CP.mkVar (trans_var (v,p) stab pos) pos
     | IP.Level ((v, p), pos) -> 
           CP.Level ((trans_var (v,p) stab pos),pos)
     | IP.Ann_Exp (e, t) -> trans_pure_exp e stab
@@ -8450,7 +8450,7 @@ and check_barrier_wf prog bd =
   let f_gen st = f_gen_base st (CP.fresh_perm_var ()) (CP.mkTrue no_pos) in
   let f_gen_tot st = 
     let v = CP.fresh_perm_var () in
-    let pf = CP.mkEq (CP.Var (v,no_pos)) (CP.Tsconst (Tree_shares.Ts.top,no_pos)) no_pos  in
+    let pf = CP.mkEq (CP.mkVar v no_pos) (CP.Tsconst (Tree_shares.Ts.top,no_pos)) no_pos  in
     f_gen_base st v (CP.BForm ((pf,None),None)) in
   
   let one_entail f1 f2 = 

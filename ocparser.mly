@@ -14,12 +14,12 @@
     let rec trans_p_f_null pf =
 	  match pf with
       | Lt (e1,e2,p) -> (match (e1,e2) with
-            | IConst (i,_), Var(v,l) ->  if (is_object_var v) then if (i>=0) then Neq(e2,Null l,p) else BConst (true,p) else pf
-            | Var (v,l), IConst (i,_) -> if (is_object_var v) then if (i<=1) then Eq(e1,Null l,p) else BConst(true,p) else pf          
+            | IConst (i,_), Var (v,l) ->  if (is_object_var v) then if (i>=0) then Neq(e2,Null (List.hd l),p) else BConst (true,p) else pf
+            | Var (v,l), IConst (i,_) -> if (is_object_var v) then if (i<=1) then Eq(e1,Null (List.hd l),p) else BConst(true,p) else pf          
             | _ -> pf)
       | Lte(e1,e2,p) ->(match (e1,e2) with
-            | IConst (i,_), Var(v,l) ->  if (is_object_var v) then if (i>=1) then Neq(e2,Null l,p) else BConst (true,p) else pf
-            | Var (v,l), IConst (i,_) -> if (is_object_var v) then if (i<1) then Eq(e1,Null l,p) else BConst(true,p) else pf          
+            | IConst (i,_), Var(v,l) ->  if (is_object_var v) then if (i>=1) then Neq(e2,Null (List.hd l),p) else BConst (true,p) else pf
+            | Var (v,l), IConst (i,_) -> if (is_object_var v) then if (i<1) then Eq(e1,Null (List.hd l),p) else BConst(true,p) else pf          
             | _ -> pf) 
       | Gt (e1,e2,p) -> trans_p_f_null (Lt (e2,e1,p))
       | Gte(e1,e2,p) -> trans_p_f_null (Lte (e2,e1,p))
@@ -186,13 +186,13 @@ bconstr: aexp_list LT aexp_list { (build_relation mkLt $1 $3 None (get_pos 2), S
 ;
 
 aexp: cid {
-	Var ($1,get_pos 1)
+	mkVar $1 (get_pos 1)
   }
 | ICONST {
 	IConst ($1, get_pos 1)
   }
 | ICONST cid {
-	Mult (IConst ($1, get_pos 1), (Var ($2,get_pos 2)), get_pos 1)
+	Mult (IConst ($1, get_pos 1), (mkVar $2 (get_pos 2)), get_pos 1)
   }
 | aexp PLUS aexp {
 	Add ($1, $3, get_pos 2)

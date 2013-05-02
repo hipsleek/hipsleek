@@ -129,11 +129,11 @@ struct
   let string_of_cperm (perm:cperm) : string = pr_opt !print_sv perm
   let apply_one_iperm = Ipure.e_apply_one
   let full_perm_var = (Cpure.SpecVar (cperm_typ, full_perm_name, Unprimed))
-  let mkFullPerm_pure  (f:cperm_var) : Cpure.formula = Cpure.BForm ((Cpure.Eq ( Cpure.Var (f,no_pos), Cpure.Var (full_perm_var,no_pos) , no_pos) ,None), None)
+  let mkFullPerm_pure  (f:cperm_var) : Cpure.formula = Cpure.BForm ((Cpure.Eq ( Cpure.Var (f,[no_pos]), Cpure.Var (full_perm_var,[no_pos]) , no_pos) ,None), None)
   let mkFullPerm_pure_from_ident id : Cpure.formula =   mkFullPerm_pure (Cpure.SpecVar (cperm_typ, id, Unprimed))
   let mkPermInv (f:cperm_var) : Cpure.formula = Cpure.mkTrue no_pos 
     
-  let mkPermWrite (f:cperm_var) : Cpure.formula = Cpure.BForm ((Cpure.Eq ( Cpure.Var (f,no_pos), Cpure.Tsconst(Tree_shares.Ts.top, no_pos),no_pos),None),None)
+  let mkPermWrite (f:cperm_var) : Cpure.formula = Cpure.BForm ((Cpure.Eq ( Cpure.Var (f,[no_pos]), Cpure.Tsconst(Tree_shares.Ts.top, no_pos),no_pos),None),None)
   let full_perm_constraint = Mcpure.OnePF (mkPermWrite full_perm_var)
   let float_out_iperm perm pos =  match perm with
       | None -> (None, [])
@@ -189,8 +189,8 @@ struct
   let full_perm_var = (Cpure.SpecVar (cperm_typ, full_perm_name, Unprimed))
   let mkFullPerm_pure  (f:cperm_var) : Cpure.formula = 
     Cpure.BForm (((Cpure.Eq (
-        (Cpure.Var (f,no_pos)),
-        (Cpure.Var (full_perm_var,no_pos)),
+        (Cpure.Var (f,[no_pos])),
+        (Cpure.Var (full_perm_var,[no_pos])),
         no_pos
     )),None), None)
   let mkFullPerm_pure_from_ident id : Cpure.formula = 
@@ -200,12 +200,12 @@ struct
   let mkPermInv (f:cperm_var) : Cpure.formula =
     let upper = 
       Cpure.BForm (((Cpure.Lte (
-          (Cpure.Var (f,no_pos)),
+          (Cpure.Var (f,[no_pos])),
           (Cpure.FConst (1.0,no_pos)),
           no_pos
       )), None),None) in
     let lower =  Cpure.BForm (((Cpure.Gt (
-        (Cpure.Var (f,no_pos)),
+        (Cpure.Var (f,[no_pos])),
         (Cpure.FConst (0.0,no_pos)),
         no_pos
     )), None),None) in
@@ -214,7 +214,7 @@ struct
     inv
   let mkPermWrite (f:cperm_var) : Cpure.formula =
     Cpure.BForm (((Cpure.Eq (
-        (Cpure.Var (f,no_pos)),
+        (Cpure.Var (f,[no_pos])),
         (Cpure.FConst (1.0,no_pos)),
         no_pos
     )),None),None)
@@ -285,8 +285,8 @@ struct
   (*LDK: a constraint to indicate FULL permission = 0*)
   let mkFullPerm_pure  (f:cperm_var) : Cpure.formula = 
     Cpure.BForm (((Cpure.Eq (
-        (Cpure.Var (f,no_pos)),
-        (Cpure.Var (full_perm_var,no_pos)),
+        (Cpure.Var (f,[no_pos])),
+        (Cpure.Var (full_perm_var,[no_pos])),
         no_pos
     )),None), None)
   let mkFullPerm_pure_from_ident id : Cpure.formula = 
@@ -294,12 +294,12 @@ struct
     mkFullPerm_pure var
 (*create counting permission invariant c >=-1*)
   let mkPermInv (f:Cpure.spec_var) : Cpure.formula =
-    let p_f = Cpure.mkGte (Cpure.Var (f,no_pos)) (Cpure.IConst (-1,no_pos)) no_pos in
+    let p_f = Cpure.mkGte (Cpure.Var (f,[no_pos])) (Cpure.IConst (-1,no_pos)) no_pos in
     let b_f = (p_f,None) in
     Cpure.BForm (b_f,None)
   let mkPermWrite (f:Cpure.spec_var) : Cpure.formula =
     Cpure.BForm (((Cpure.Eq (
-        (Cpure.Var (f,no_pos)),
+        (Cpure.Var (f,[no_pos])),
         (Cpure.IConst (0,no_pos)),
         no_pos
     )),None),None)

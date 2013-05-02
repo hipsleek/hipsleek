@@ -633,7 +633,7 @@ let rec match_vars (vars_list0 : spec_var list) rel =
         let v = List.hd vlist in
         let restvars = List.tl vlist in
         let restf = match_helper restvars rest f in
-        let tmp1 = mkEqExp (Var (v, no_pos)) ae no_pos in
+        let tmp1 = mkEqExp (Var (v, [no_pos])) ae no_pos in
         let tmp2 = mkAnd_dumb tmp1 restf no_pos in
         tmp2
     in

@@ -279,6 +279,7 @@ approx_formula_and_a2 : approx_formula }
 
 
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
+let print_formula_w_loc = ref(fun (c:formula) -> "printer not initialized")
 let print_one_formula = ref(fun (c:one_formula) -> "printer not initialized")
 let print_pure_f = ref(fun (c:CP.formula) -> "printer not initialized")
 let print_formula_base = ref(fun (c:formula_base) -> "printer not initialized")
@@ -484,7 +485,7 @@ let mkExpAnn ann pos =
   match ann with
     | TempAnn _ -> CP.IConst(int_of_heap_ann Accs, pos)
     | ConstAnn a -> CP.IConst(int_of_heap_ann a, pos)
-    | PolyAnn v  -> CP.Var(v, pos)  
+    | PolyAnn v  -> CP.mkVar v pos
 
 (* generalized to data and view *)
 let get_ptr_from_data h =
@@ -3355,6 +3356,7 @@ and elim_exists_es_his_x (f0 : formula) (his:h_formula list) : formula*h_formula
                   formula_exists_pos = pos}) ->
           let st, pp1 = MCP.get_subst_equation_memo_formula_vv p qvar in
           let r,n_hfs = if List.length st = 1 then
+            let _ = print_endline ("\n ***** 3" ) in
              let tmp = mkBase h pp1 t fl a pos in (*TO CHECK*)
              let new_baref = subst st tmp in
              let new_hfs = List.map (h_subst st) hfs in
@@ -3374,9 +3376,9 @@ and elim_exists_es_his_x (f0 : formula) (his:h_formula list) : formula*h_formula
 
 and elim_exists_es_his (f0 : formula) (his:h_formula list) : formula*h_formula list =
   let pr1 = pr_list !print_h_formula in
-  let pr_out = (pr_pair !print_formula pr1) in
-  Debug.no_2 "elim_exists_es_his"
-      !print_formula pr1 pr_out
+  let pr_out = (pr_pair !print_formula_w_loc pr1) in
+  Debug.ho_2 "elim_exists_es_his"
+      !print_formula_w_loc pr1 pr_out
       elim_exists_es_his_x f0 his
   
 and formula_of_disjuncts (f:formula list) : formula=
@@ -10161,9 +10163,9 @@ let prepost_of_init_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formul
   (****LOCKSET****)
   let ls_uvar = CP.mkLsVar Unprimed in
   let ls_pvar = CP.mkLsVar Primed in
-  let ls_uvar_exp = CP.Var (ls_uvar,pos) in
-  let ls_pvar_exp = CP.Var (ls_pvar,pos) in
-  let var_exp = CP.Var (var,pos)in
+  let ls_uvar_exp = CP.mkVar ls_uvar pos in
+  let ls_pvar_exp = CP.mkVar ls_pvar pos in
+  let var_exp = CP.mkVar var pos in
   let bag_exp = CP.mkBag [var_exp] pos in  (* {l} *)
   let union_exp = CP.mkBagUnion [ls_uvar_exp;bag_exp] pos in (* union(ls,{l})*)
   let ls_f = CP.mkEqExp ls_pvar_exp union_exp pos in (*ls' = union(ls,{l})*)
@@ -10171,8 +10173,8 @@ let prepost_of_init_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:formul
   (****LOCKSET LSMU****)
   let lsmu_uvar = CP.mkLsmuVar Unprimed in
   let lsmu_pvar = CP.mkLsmuVar Primed in
-  let lsmu_uvar_exp = CP.Var (lsmu_uvar,pos) in
-  let lsmu_pvar_exp = CP.Var (lsmu_pvar,pos) in
+  let lsmu_uvar_exp = CP.mkVar lsmu_uvar pos in
+  let lsmu_pvar_exp = CP.mkVar lsmu_pvar pos in
   let varmu_exp = CP.Level (var,pos)in
   let bagmu_exp = CP.mkBag [varmu_exp] pos in  (* {l.mu} *)
   let unionmu_exp = CP.mkBagUnion [lsmu_uvar_exp;bagmu_exp] pos in (* union(LSMU,{l.mu})*)
@@ -10246,9 +10248,9 @@ let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:fo
   (****LOCKSET****)
   let ls_uvar = CP.mkLsVar Unprimed in
   let ls_pvar = CP.mkLsVar Primed in
-  let ls_uvar_exp = CP.Var (ls_uvar,pos) in
-  let ls_pvar_exp = CP.Var (ls_pvar,pos) in
-  let var_exp = CP.Var (var,pos)in
+  let ls_uvar_exp = CP.mkVar ls_uvar pos in
+  let ls_pvar_exp = CP.mkVar ls_pvar pos in
+  let var_exp = CP.mkVar var pos in
   let bag_exp = CP.mkBag [var_exp] pos in  (* {l} *)
   let ls_pre_f = CP.BForm (((CP.mkBagIn var ls_pvar_exp pos),None),None) in (* l in ls' *)
   let diff_exp = CP.mkBagDiff ls_uvar_exp bag_exp pos in (* diff(ls,{l})*)
@@ -10257,8 +10259,8 @@ let prepost_of_finalize_x (var:CP.spec_var) sort (args:CP.spec_var list) (lbl:fo
   (****LOCKSET****)
   let lsmu_uvar = CP.mkLsmuVar Unprimed in
   let lsmu_pvar = CP.mkLsmuVar Primed in
-  let lsmu_uvar_exp = CP.Var (lsmu_uvar,pos) in
-  let lsmu_pvar_exp = CP.Var (lsmu_pvar,pos) in
+  let lsmu_uvar_exp = CP.mkVar lsmu_uvar pos in
+  let lsmu_pvar_exp = CP.mkVar lsmu_pvar pos in
   let varmu_exp = CP.Level (var,pos)in
   let bagmu_exp = CP.mkBag [varmu_exp] pos in  (* {l.mu} *)
   let diffmu_exp = CP.mkBagDiff lsmu_uvar_exp bagmu_exp pos in (* diff(lsmu,{l.mu})*)
@@ -10320,9 +10322,9 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   (****LOCKSET****)
   let ls_uvar = CP.mkLsVar Unprimed in
   let ls_pvar = CP.mkLsVar Primed in
-  let ls_uvar_exp = CP.Var (ls_uvar,pos) in
-  let ls_pvar_exp = CP.Var (ls_pvar,pos) in
-  let var_exp = CP.Var (var,pos)in
+  let ls_uvar_exp = CP.mkVar ls_uvar pos in
+  let ls_pvar_exp = CP.mkVar ls_pvar pos in
+  let var_exp = CP.mkVar var pos in
   let bag_exp = CP.mkBag [var_exp] pos in  (* {l} *)
   let union_exp = CP.mkBagUnion [ls_uvar_exp;bag_exp] pos in (* union(ls,{l})*)
   let ls_post_f = CP.mkEqExp ls_pvar_exp union_exp pos in (*ls' = union(ls,{l})*)
@@ -10331,8 +10333,8 @@ let prepost_of_acquire_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   (****LOCKSET LSMU****)
   let lsmu_uvar = CP.mkLsmuVar Unprimed in
   let lsmu_pvar = CP.mkLsmuVar Primed in
-  let lsmu_uvar_exp = CP.Var (lsmu_uvar,pos) in
-  let lsmu_pvar_exp = CP.Var (lsmu_pvar,pos) in
+  let lsmu_uvar_exp = CP.mkVar lsmu_uvar pos in
+  let lsmu_pvar_exp = CP.mkVar lsmu_pvar pos in
   let varmu_exp = CP.Level (var,pos)in
   let bagmu_exp = CP.mkBag [varmu_exp] pos in  (* {l.mu} *)
   let unionmu_exp = CP.mkBagUnion [lsmu_uvar_exp;bagmu_exp] pos in (* union(lsmu,{l.mu})*)
@@ -10400,9 +10402,9 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   (****LOCKSET****)
   let ls_uvar = CP.mkLsVar Unprimed in
   let ls_pvar = CP.mkLsVar Primed in
-  let ls_uvar_exp = CP.Var (ls_uvar,pos) in
-  let ls_pvar_exp = CP.Var (ls_pvar,pos) in
-  let var_exp = CP.Var (var,pos)in
+  let ls_uvar_exp = CP.mkVar ls_uvar pos in
+  let ls_pvar_exp = CP.mkVar ls_pvar pos in
+  let var_exp = CP.mkVar var pos in
   let bag_exp = CP.mkBag [var_exp] pos in  (* {l} *)
   let ls_pre_f = CP.BForm (((CP.mkBagIn var ls_pvar_exp pos),None),None) in (* l in ls' *)
   let diff_exp = CP.mkBagDiff ls_uvar_exp bag_exp pos in (* diff(ls,{l})*)
@@ -10411,9 +10413,9 @@ let prepost_of_release_x (var:CP.spec_var) sort (args:CP.spec_var list) (inv:for
   (****LOCKSET MU****)
   let lsmu_uvar = CP.mkLsmuVar Unprimed in
   let lsmu_pvar = CP.mkLsmuVar Primed in
-  let lsmu_uvar_exp = CP.Var (lsmu_uvar,pos) in
-  let lsmu_pvar_exp = CP.Var (lsmu_pvar,pos) in
-  let varmu_exp = CP.Level (var,pos)in
+  let lsmu_uvar_exp = CP.mkVar lsmu_uvar pos in
+  let lsmu_pvar_exp = CP.mkVar lsmu_pvar pos in
+  let varmu_exp = CP.Level (var, pos) in
   let bagmu_exp = CP.mkBag [varmu_exp] pos in  (* {l.mu} *)
   let diffmu_exp = CP.mkBagDiff lsmu_uvar_exp bagmu_exp pos in (* diff(lsmu,{l.mu})*)
   let lsmu_post_f = CP.mkEqExp lsmu_pvar_exp diffmu_exp pos in (*lsmu' = diff(lsmu,{l.mu})*)
@@ -10477,8 +10479,8 @@ let compose_formula_and_x (f : formula) (post : formula) (delayed_f : MCP.mix_fo
   (*y'=y_20*)
   let func v1 v2 =
     Cpure.BForm (((Cpure.Eq (
-        (Cpure.Var (v1,no_pos)),
-        (Cpure.Var (v2,no_pos)),
+        (Cpure.mkVar v1 no_pos),
+        (Cpure.mkVar v2 no_pos),
         no_pos
     )),None), None)
   in

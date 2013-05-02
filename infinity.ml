@@ -362,7 +362,7 @@ let convert_inf_to_var (pf:CP.formula) : CP.formula =
   let f_bf bf = None in
   let f_e e = 
     match e with
-      | InfConst (i,pos) -> Some (CP.Var(CP.SpecVar(Int,i,Unprimed),pos))
+      | InfConst (i,pos) -> Some (CP.mkVar (CP.SpecVar(Int,i,Unprimed)) pos)
       | _ -> None
   in
   map_formula pf (f_f,f_bf,f_e)
@@ -484,7 +484,7 @@ let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) (is_neg: bool) :
     | CP.FConst _ -> exp
     | CP.Var (sv,pos) -> 
         if BList.mem_eq eq_spec_var sv vars 
-        then if is_neg then (mkSubtract (IConst(0,pos)) (Var(SpecVar(Int,constinfinity,Unprimed),pos)) pos)
+        then if is_neg then (mkSubtract (IConst(0,List.hd pos)) (Var(SpecVar(Int,constinfinity,Unprimed),pos)) (List.hd pos))
           else CP.Var(CP.SpecVar(Int,constinfinity,Unprimed),pos) 
         else exp
     | CP.Add (a1, a2, pos) -> 

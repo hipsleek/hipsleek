@@ -1031,7 +1031,7 @@ let add_phase_constr_by_scc (proc: Cast.proc_decl) (lp: CP.formula list) =
 
 let subst_phase_num_exp subst exp = 
   match exp with
-  | CP.Var (v, pos) ->
+  | CP.Var (v, ps) -> let pos = List.hd ps in
       (try
         let i = List.assoc v subst in
         CP.mkIConst i pos

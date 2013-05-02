@@ -564,14 +564,14 @@ and subtype_ann_pair (imm1 : ann) (imm2 : ann) : bool * ((CP.exp * CP.exp) optio
   match imm1 with
     | PolyAnn v1 ->
           (match imm2 with
-            | PolyAnn v2 -> (true, Some (CP.Var(v1, no_pos), CP.Var(v2, no_pos)))
+            | PolyAnn v2 -> (true, Some (CP.mkVar v1 no_pos, CP.mkVar v2 no_pos))
             | ConstAnn k2 -> 
-                  (true, Some (CP.Var(v1,no_pos), CP.AConst(k2,no_pos)))
+                  (true, Some (CP.mkVar v1 no_pos, CP.AConst(k2,no_pos)))
 	        | TempAnn t2 -> (subtype_ann_pair imm1 (ConstAnn(Accs)))
           )
     | ConstAnn k1 ->
           (match imm2 with
-            | PolyAnn v2 -> (true, Some (CP.AConst(k1,no_pos), CP.Var(v2,no_pos)))
+            | PolyAnn v2 -> (true, Some (CP.AConst(k1,no_pos), CP.mkVar v2 no_pos))
             | ConstAnn k2 -> ((int_of_heap_ann k1)<=(int_of_heap_ann k2),None) 
 	    | TempAnn t2 -> (subtype_ann_pair imm1 (ConstAnn(Accs)))
           ) 

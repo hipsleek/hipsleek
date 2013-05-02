@@ -1251,7 +1251,7 @@ and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_
     | DataNode ({ h_formula_data_node = p;
       h_formula_data_label = lbl;
       h_formula_data_pos = pos}) ->
-          let non_zero = CP.BForm ((CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None), lbl) in
+          let non_zero = CP.BForm ((CP.Neq (CP.mkVar p pos, CP.Null pos, pos), None), lbl) in
           (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [p])
     | ViewNode ({ h_formula_view_node = p;
       h_formula_view_name = c;
@@ -1321,7 +1321,7 @@ and xpure_heap_symbolic_perm_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP
       h_formula_data_perm = frac;
       h_formula_data_label = lbl;
       h_formula_data_pos = pos}) ->
-          let non_zero = CP.BForm ( (CP.Neq (CP.Var (p, pos), CP.Null pos, pos), None),lbl) in
+          let non_zero = CP.BForm ( (CP.Neq (CP.mkVar p pos, CP.Null pos, pos), None),lbl) in
           (*LDK: add fractional invariant 0<f<=1, if applicable*)
           (match frac with
             | None -> (MCP.memoise_add_pure_N (MCP.mkMTrue pos) non_zero , [p])
@@ -1676,8 +1676,8 @@ and heap_prune_preds_x prog (hp:h_formula) (old_mem: memo_pure) ba_crt : (h_form
 	        | Not_found  -> match d.h_formula_data_remaining_branches with
 		        | Some l -> (hp, old_mem, false)
 		        | None -> 
-		              let not_null_form = CP.BForm ((CP.Neq (CP.Var (d.h_formula_data_node,no_pos),CP.Null no_pos,no_pos), None), None) in
-		              let null_form = (CP.Eq (CP.Var (d.h_formula_data_node,no_pos), CP.Null no_pos,no_pos), None) in
+		              let not_null_form = CP.BForm ((CP.Neq (CP.mkVar d.h_formula_data_node no_pos,CP.Null no_pos,no_pos), None), None) in
+		              let null_form = (CP.Eq (CP.mkVar d.h_formula_data_node no_pos, CP.Null no_pos,no_pos), None) in
 		              let br_lbl = [(1,"")] in
 		              let new_hp = DataNode{d with 
 			              h_formula_data_remaining_branches = Some br_lbl;
@@ -1810,7 +1810,7 @@ and  prune_bar_node_simpl bd dn old_mem ba_crt = (*(DataNode dn, old_mem, false)
   if (List.length rem_br)<=1 then (DataNode{dn with h_formula_data_remaining_branches = Some rem_br;}, old_mem,false)
   else
     (*decide which prunes can be activated and drop the ones that are implied while keeping the old unknowns*)
-    let state_prun_cond = List.map (fun (c,l)-> (CP.Eq(CP.Var (state_var,no_pos), CP.IConst (c,no_pos),no_pos),None),l) bd.barrier_prune_conditions_state in
+    let state_prun_cond = List.map (fun (c,l)-> (CP.Eq(CP.mkVar state_var no_pos, CP.IConst (c,no_pos),no_pos),None),l) bd.barrier_prune_conditions_state in
     let l_prune1,_, new_mem2 = filter_prun_cond old_mem state_prun_cond rem_br in
     let l_prune2 = match perm_var with
       | None -> []
@@ -2924,7 +2924,7 @@ and elim_exists_pure_branch_x (w : CP.spec_var list) (f0 : CP.formula) pos : CP.
 and entail_state_elim_exists es =
   let pr = Cprinter.string_of_entail_state in
   let pr2 = Cprinter.string_of_context in
-  Debug.no_1 "entail_state_elim_exists" pr pr2 entail_state_elim_exists_x es 
+  Debug.ho_1 "entail_state_elim_exists" pr pr2 entail_state_elim_exists_x es 
 
 (*
 PROBLEM : exists_elim NOT deep enough
@@ -7401,7 +7401,7 @@ and check_disj ante memset l (f1 : Cpure.formula) (f2 : Cpure.formula) pos : Cpu
 		            | CP.Var(sv1, _), CP.Var(sv2, _), CP.Var(sv3, _), CP.Var(sv4, _) ->
 		                  if (CP.eq_spec_var sv1 sv4) && (CP.eq_spec_var sv2 sv3)
 		                  then 
-			                s_ineq  (CP.BForm ((CP.Neq(CP.Var(sv1, pos), CP.Var(sv2, pos), pos), il1), label1))
+			                s_ineq  (CP.BForm ((CP.Neq(CP.mkVar sv1 pos, CP.mkVar sv2 pos, pos), il1), label1))
 		                  else
 			                Cpure.mkOr (s_ineq f1) (s_ineq f2) l pos
 		            | _, _, _, _ -> Cpure.Or((s_ineq f1), (s_ineq f2), l, pos)
@@ -8997,8 +8997,8 @@ and process_action_x caller prog estate conseq lhs_b rhs_b a (rhs_h_matched_set:
 	      else
 		let n_lhs_h = mkStarH lhs_rest (set_node_perm lhs_node (Some v_rest)) pos in
 		let n_rhs_pure =
-		  let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> CP.Var (v,no_pos) in
-		  let npure = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.Var (v_rest,no_pos),CP.Var (v_consumed,no_pos),no_pos), no_pos), None),None) in
+		  let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> CP.mkVar v no_pos in
+		  let npure = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.mkVar v_rest no_pos, CP.mkVar v_consumed no_pos, no_pos), no_pos), None),None) in
 		  MCP.memoise_add_pure rhs_b.formula_base_pure npure in
 		let new_estate = {estate with 
 		    es_formula = Base{lhs_b with formula_base_heap = n_lhs_h}; 
@@ -10136,10 +10136,10 @@ and pick_up_node_x (ls:CF.h_formula list) (name:ident):(CF.h_formula * CF.h_form
 and test_frac_subsume_x prog lhs rhs_p l_perm r_perm = (*if false, split permission*)
   if !perm =NoPerm then false
   else 
-    let r_perm = match r_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> CP.Var (v,no_pos) in
-    let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> CP.Var (v,no_pos) in
+    let r_perm = match r_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> CP.mkVar v no_pos in
+    let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> CP.mkVar v no_pos in
     let nfv = CP.fresh_perm_var()  in
-    let add1 = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.Var (nfv,no_pos),r_perm,no_pos), no_pos), None),None) in
+    let add1 = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.mkVar nfv no_pos,r_perm,no_pos), no_pos), None),None) in
     (*let add2 = CP.BForm ((CP.Eq (l_perm, r_perm, no_pos), None),None) in*)
     let add = add1 (*CP.Or (add1,add2,None,no_pos)*) in
     let rhs_p = MCP.pure_of_mix rhs_p in
@@ -10156,8 +10156,8 @@ and test_frac_subsume prog lhs rhs_p l_perm r_perm =
 and test_frac_eq_x prog lhs rhs_p l_perm r_perm = (*if false, do match *)
   if !perm =NoPerm then true
   else 
-    let r_perm = match r_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> CP.Var (v,no_pos) in
-    let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> CP.Var (v,no_pos) in
+    let r_perm = match r_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> CP.mkVar v no_pos in
+    let l_perm = match l_perm with | None -> CP.Tsconst (Tree_shares.Ts.top, no_pos) | Some v -> CP.mkVar v no_pos in
     (*let nfv = CP.fresh_perm_var () in
       let add1 = CP.BForm ((CP.Eq (r_perm, CP.Add (CP.Var (nfv,no_pos),l_perm,no_pos), no_pos), None),None) in
       let add2 = CP.BForm ((CP.Eq (l_perm, CP.Add (CP.Var (nfv,no_pos),r_perm,no_pos), no_pos), None),None) in

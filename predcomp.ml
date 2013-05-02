@@ -1160,7 +1160,8 @@ and gen_pure_exp (pe : CP.exp) (vmap : var_map) (unbound_vars : CP.spec_var list
       exp_call_nrecv_pos = pos}) in
       (ce, p1 || p2)
     end
-  | CP.Var (sv, pos) -> begin
+  | CP.Var (sv, ps) -> begin
+      let pos = List.hd ps in
       let var = CP.name_of_spec_var sv in
       try
 	let tmp = H.find vmap var in
@@ -1579,7 +1580,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
 	| (farg :: rest1, param :: rest2, m :: rest3) -> begin
 	    let rest = helper rest1 rest2 rest3 in
 	    if m = ModeIn then
-	      let param_e = CP.Var (param, pos) in
+	      let param_e = CP.mkVar param pos in
 	      let e, _ = gen_pure_exp param_e vmap unbound_vars in
 	      let lhs = Member ({exp_member_base = new_checker_var;
 	      exp_member_fields = [CP.name_of_spec_var farg];
@@ -1664,7 +1665,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 	exp_var_pos = pos}) in
 	let rhs = 
 	  try
-	    fst (gen_pure_exp (CP.Var (sovar, pos)) vmap unbound_vars)
+	    fst (gen_pure_exp (CP.mkVar sovar pos) vmap unbound_vars)
 	  with
 	    | Unbound_var msg -> 
 		  (* bind to a "unbound" boxed object *)

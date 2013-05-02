@@ -101,11 +101,11 @@ GLOBAL: expression;
       else
         let tmp = 
           if is_node y & is_zero x then 
-            Neq (Var(get_var (get_node y) !stab, loc), Null loc, loc)
+            Neq (mkVar (get_var (get_node y) !stab) loc, Null loc, loc)
           else if is_node x & is_one y then 
-            Eq (Var(get_var (get_node x) !stab, loc), Null loc, loc)
+            Eq (mkVar (get_var (get_node x) !stab) loc, Null loc, loc)
           else if is_self_var y then 
-            Neq (Var(get_var "self" !stab, loc), Null loc, loc)
+            Neq (mkVar (get_var "self" !stab) loc, Null loc, loc)
           else Lt (x, y, loc) 
        in BForm ((tmp, None), None)
     | x = exp; ">"; y = exp ->
@@ -116,11 +116,11 @@ GLOBAL: expression;
       else
         let tmp = 
           if is_node x && is_zero y then 
-            Neq (Var(get_var (get_node x) !stab, loc), Null loc, loc)
+            Neq (mkVar (get_var (get_node x) !stab) loc, Null loc, loc)
           else if is_node y && is_one x then 
-            Eq (Var(get_var (get_node y) !stab, loc), Null loc, loc)
+            Eq (mkVar (get_var (get_node y) !stab) loc, Null loc, loc)
           else if is_self_var x then 
-            Neq (Var(get_var "self" !stab, loc), Null loc, loc)
+            Neq (mkVar (get_var "self" !stab) loc, Null loc, loc)
           else Gt (x, y, loc) 
         in BForm ((tmp, None), None)
     | x = exp; "<="; y = exp ->
@@ -131,11 +131,11 @@ GLOBAL: expression;
       else
         let tmp = 
           if is_node x & is_zero y then 
-            Eq (Var(get_var (get_node x) !stab, loc), Null loc, loc)
+            Eq (mkVar (get_var (get_node x) !stab) loc, Null loc, loc)
           else if is_node y & is_one x then 
-            Neq (Var(get_var (get_node y) !stab, loc), Null loc, loc)
+            Neq (mkVar (get_var (get_node y) !stab) loc, Null loc, loc)
           else if is_self_var x then 
-            Eq (Var(get_var "self" !stab, loc), Null loc, loc)
+            Eq (mkVar (get_var "self" !stab) loc, Null loc, loc)
           else Lte (x, y, loc)
         in BForm ((tmp, None), None)
     | x = exp; ">="; y = exp ->
@@ -147,32 +147,32 @@ GLOBAL: expression;
       else
         let tmp = 
           if is_node y & is_zero x then 
-            Eq (Var(get_var (get_node y) !stab, loc), Null loc, loc)
+            Eq (mkVar (get_var (get_node y) !stab) loc, Null loc, loc)
           else
           if is_node x & is_one y then 
-            Neq (Var(get_var (get_node x) !stab, loc), Null loc, loc)
+            Neq (mkVar (get_var (get_node x) !stab) loc, Null loc, loc)
           else
           if is_self_var y then 
-            Eq (Var(get_var "self" !stab, loc), Null loc, loc)
+            Eq (mkVar (get_var "self" !stab) loc, Null loc, loc)
           else Gte (x, y, loc)
         in BForm ((tmp, None), None)
     | x = exp; "="; y = exp -> 
       let tmp = 
         if is_node x && is_node y then 
-          Eq (Var(get_var (get_node x) !stab, loc), 
-              Var(get_var (get_node y) !stab, loc), loc)
+          Eq (mkVar (get_var (get_node x) !stab) loc, 
+              mkVar (get_var (get_node y) !stab) loc, loc)
         else
         if is_node x && is_rec_node y then 
-          Eq (Var(get_var (get_node x) !stab, loc), 
-              Var(add_prefix (get_var (get_rec_node y) !stab) "REC", loc), loc)
+          Eq (mkVar (get_var (get_node x) !stab) loc, 
+              mkVar (add_prefix (get_var (get_rec_node y) !stab) "REC") loc, loc)
         else
         if is_node y && is_rec_node x then 
-          Eq (Var(get_var (get_node y) !stab, loc), 
-              Var(add_prefix (get_var (get_rec_node x) !stab) "REC", loc), loc)
+          Eq (mkVar (get_var (get_node y) !stab) loc, 
+              mkVar (add_prefix (get_var (get_rec_node x) !stab) "REC") loc, loc)
         else
         if is_rec_node x && is_rec_node y then 
-          Eq (Var(add_prefix (get_var (get_rec_node x) !stab) "REC", loc), 
-              Var(add_prefix (get_var (get_rec_node y) !stab) "REC", loc), loc)
+          Eq (mkVar (add_prefix (get_var (get_rec_node x) !stab) "REC") loc,
+              mkVar (add_prefix (get_var (get_rec_node y) !stab) "REC") loc, loc)
         else Eq (x, y, loc)
       in BForm ((tmp, None), None)
     | x = exp; "!="; y = exp -> 
@@ -191,9 +191,9 @@ GLOBAL: expression;
     | x = INT; "*"; y = SELF -> 
           let ni=IConst (int_of_string x, loc) 
           in Mult (ni, y, loc)
-    | x = specvar             -> Var (x, loc)
+    | x = specvar             -> mkVar x loc
     | x = INT                 -> IConst (int_of_string x, loc) 
-    | NATIVEINT               -> Var (SpecVar(Named "abc", "abc", Unprimed),loc)
+    | NATIVEINT               -> mkVar (SpecVar(Named "abc", "abc", Unprimed)) loc
     ]
   ]; 
 		

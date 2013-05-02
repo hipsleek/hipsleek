@@ -2472,7 +2472,7 @@ let constraint_collector p_sel f : (mix_formula * (b_formula * spec_var) list)=
          let aset, l_aset =
             let vl = EMapSV.get_equiv x.memo_group_aset in
             List.fold_left (fun (a1,a2) (v1,v2)->
-                match p_sel ((Eq (Var (v1,no_pos), Var (v2,no_pos),no_pos)),None) with
+                match p_sel ((Eq (Var (v1,[no_pos]), Var (v2,[no_pos]),no_pos)),None) with
                   | (true,l) -> ((v1,v2)::a1, l@a2)
                   | (false,l) -> (a1, l@a2)) ([],[]) vl in
          let aset = List.fold_left (fun a (x,y) -> EMapSV.add_equiv a x y) []  aset in
