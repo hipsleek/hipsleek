@@ -41,7 +41,7 @@ LOCS:[13;7;3;5] (must-bug)
 Why isn't 12: k=2 included? What does 3,5 denote?
 
 *********************************************************************
-#einv.ss: why isn't intermediate statement like k=3 included?
+#einv.ss: why isn't intermediate statement like k=3 included? DONE
 
 global int y =0;
 
@@ -63,7 +63,7 @@ Why is 10 not included? Why is 9 included?
 
 Loc:
  - by right, 9 should not be included. now it is included because a relates to unsat (although this statement
-does not contribute to unsat) ==> solution: interpolant
+does not contribute to unsat) ==> solution: slicing
 
 *********************************************************************
 # einv3.ss
