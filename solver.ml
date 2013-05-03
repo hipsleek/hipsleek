@@ -6527,6 +6527,8 @@ and build_and_failures_x (failure_code:string) (failure_name:string) ((contra_li
         let ll = (CP.list_pos_of_formula ante []) @ (CP.list_pos_of_formula cons []) in
         (* let _ = print_endline (Cprinter.string_of_list_loc ll) in *)
         let lli = Gen.BList.remove_dups_eq (=) (CF.get_lines ll) in
+        let pr1 = pr_list string_of_int in
+        let _ = print_endline (pr1 lli) in
         (*possible to eliminate unnecessary intermediate that are defined by equality.*)
         (*not sure it is better*)
         let ante = CP.elim_equi_ante ante cons in

@@ -2064,7 +2064,71 @@ let rec pr_struc_formula  (e:struc_formula) = match e with
           let arg2 = bin_op_to_list op_f_or_short struc_formula_assoc_op b.formula_struc_or_f2 in
 		  let f_b e =  pr_bracket struc_formula_wo_paren pr_struc_formula e in
 	      pr_list_vbox_wrap "eor " f_b (arg1@arg2)*)
-	
+
+let rec pr_struc_formula_w_loc  (e:struc_formula) = match e with
+  | ECase { formula_case_exists =ee; formula_case_branches  =  case_list ; formula_case_pos = _} ->
+	fmt_string "ECase ";
+        (* fmt_string (string_of_pos p.start_pos);*)
+        pr_args  (Some("V",1)) (Some "A") "case " "{" "}" ";"
+            (fun (c1,c2) -> wrap_box ("B",0) (pr_op_adhoc (fun () -> pr_pure_formula_w_loc c1) " -> " )
+                (fun () -> pr_struc_formula_w_loc c2)) case_list
+  | EBase { formula_struc_implicit_inst = ii; formula_struc_explicit_inst = ei; formula_struc_exists = ee; formula_struc_base = fb;
+    formula_struc_continuation = cont; formula_struc_pos = _ } ->
+	fmt_string "EBase ";
+        (* fmt_string (string_of_pos p.start_pos);*)
+        fmt_open_vbox 2;
+        wrap_box ("B",0) (fun fb ->
+	    if not(Gen.is_empty(ee@ii@ei)) then
+	      begin
+		fmt_string "exists ";
+		pr_seq "(Expl)" pr_spec_var ei;
+		pr_seq "(Impl)" pr_spec_var ii;
+		pr_seq "(ex)" pr_spec_var ee;
+	      end;
+	    pr_formula_w_loc fb) fb;
+        (match cont with 
+	  | None -> ()
+	  | Some l -> 
+	        begin
+	          fmt_cut();
+	          wrap_box ("B",0) pr_struc_formula_w_loc l;
+                end);
+        fmt_close();
+  | EAssume {
+	formula_assume_vars = x;
+	formula_assume_simpl = b;
+	formula_assume_lbl = (y1,y2);
+	formula_assume_ensures_type = t;
+	formula_assume_struc = s;}->
+        wrap_box ("V",2)
+            (fun b ->
+                let assume_str = match t with
+                  | None -> "EAssume "
+                  | Some true -> "EAssume_exact "
+                  | Some false -> "EAssume_inexact " in
+	        fmt_string assume_str;
+	        pr_formula_label (y1,y2);
+	        if not(Gen.is_empty(x)) then pr_seq_nocut "ref " pr_spec_var x;
+	        fmt_cut();
+	        wrap_box ("B",0) pr_formula_w_loc b;
+		fmt_cut();
+		if !print_assume_struc then 
+		  (fmt_string "struct:";
+		  wrap_box ("B",0) pr_struc_formula_w_loc s)
+		else ()) b
+  | EInfer {
+        formula_inf_post = postf;
+        formula_inf_xpost = postxf;
+        formula_inf_vars = lvars;
+        formula_inf_continuation = cont;} ->
+        let ps =if (lvars==[] && postf) then "@post " else "" in
+        fmt_open_vbox 2;
+        fmt_string ("EInfer "^ps^string_of_spec_var_list lvars);
+        fmt_cut();
+        wrap_box ("B",0) pr_struc_formula_w_loc cont;
+        fmt_close();
+  | EList b ->  if b==[] then fmt_string "[]" else pr_list_op_none "|| " (wrap_box ("B",0) (pr_pair_aux pr_spec_label_def_opt pr_struc_formula_w_loc)) b
+
 let rec pr_struc_formula_for_spec (e:struc_formula) = 
   let res = match e with
   | ECase {formula_case_branches = case_list} ->
@@ -2114,6 +2178,8 @@ let printer_of_ext_formula (fmt: Format.formatter) (e:ext_formula) : unit =
   poly_printer_of_pr fmt pr_ext_formula e*)
 
 let string_of_struc_formula (e:struc_formula) : string =  poly_string_of_pr  pr_struc_formula e
+
+let string_of_struc_formula_w_loc (e:struc_formula) : string =  poly_string_of_pr  pr_struc_formula_w_loc e
 
 let string_of_struc_formula_for_spec (e:struc_formula): string = poly_string_of_pr pr_struc_formula_for_spec e
 

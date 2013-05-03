@@ -2552,35 +2552,38 @@ and pos_of_formula (f: formula) =
 (********************************************)
 (********************************************)
 (*used by error explanation*)
-and list_pos_of_exp (e : exp) = match e with
-  | Var (_, ps) -> ps
-  | Null p -> [p]
-  | Level (_, p) -> []
-  | IConst (_, p) -> [p]
-  | InfConst (_,p)-> []
-  | AConst (_, p) -> []
-  | FConst (_, p) -> [p]
-  | Tsconst (_, p) -> []
-  | Add (_, _, p) 
-  | Subtract (_, _, p) 
-  | Mult (_, _, p) 
-  | Div (_, _, p) 
-  | Max (_, _, p) 
-  | Min (_, _, p) 
-          (*| BagEmpty (p) -> p*)
-  | Bag (_, p) 
-  | BagUnion (_, p) 
-  | BagIntersect (_, p) 
-  | BagDiff (_, _, p) 
-  | List (_, p) 
-  | ListAppend (_, p) 
-  | ListCons (_, _, p) 
-  | ListHead (_, p) 
-  | ListTail (_, p) 
-  | ListLength (_, p) 
-  | ListReverse (_, p) 
-  | Func (_,_,p)
-  | ArrayAt (_, _, p) -> []
+and list_pos_of_exp (e0 : exp) =
+  let rec helper e= match e with
+    | Var (_, ps) -> ps
+    | Null p -> [p]
+    | Level (_, p) -> []
+    | IConst (_, p) -> [p]
+    | InfConst (_,p)-> []
+    | AConst (_, p) -> []
+    | FConst (_, p) -> [p]
+    | Tsconst (_, p) -> []
+    | Add (e1, e2, p)
+    | Subtract (e1, e2, p)
+    | Mult (e1, e2, p) 
+    | Div (e1, e2, p) 
+    | Max (e1, e2, p) 
+    | Min (e1, e2, p) -> (helper e1)@(helper e2)@[p]
+            (*| BagEmpty (p) -> p*)
+    | Bag (_, p) 
+    | BagUnion (_, p) 
+    | BagIntersect (_, p) 
+    | BagDiff (_, _, p) 
+    | List (_, p) 
+    | ListAppend (_, p) 
+    | ListCons (_, _, p) 
+    | ListHead (_, p) 
+    | ListTail (_, p) 
+    | ListLength (_, p) 
+    | ListReverse (_, p) 
+    | Func (_,_,p)
+    | ArrayAt (_, _, p) -> []
+  in
+  helper e0
 
 and list_pos_of_b_formula (b: b_formula) = 
   let (p, _) = b in
@@ -2718,6 +2721,38 @@ and get_var_locs f0 v: loc list=
   helper f0
 (********************************************)
 (********************************************)
+and subst_pos_exp p (e0 : exp) =
+  let rec helper e=
+    match e with
+      | Var (sv1, ps) -> Var (sv1, [p])
+      | Null _ -> Null p
+      | Level (sv,_) -> Level (sv,p)
+      | IConst (i,_) -> IConst (i,p)
+      | InfConst (id,_) ->  InfConst (id,p)
+      | AConst (a,_) -> AConst (a,p)
+      | FConst (f,_) -> FConst (f,p)
+      | Tsconst (t,_) -> Tsconst (t,p)
+      | Add (e1, e2, _) -> Add (helper e1, helper e2, p)
+      | Subtract (e1, e2, _) -> Subtract (helper e1, helper e2, p)
+      | Mult (e1, e2, _) -> Mult (helper e1, helper e2, p)
+      | Div (e1, e2, _) -> Div (helper e1, helper e2, p)
+      | Max (e1, e2, _) -> Max (helper e1,helper e2, p)
+      | Min (e1, e2, _) -> Min (helper e1, helper e2, p)
+      | BagDiff (e1, e2, _) -> BagDiff (helper e1, helper e2, p)
+      | ListCons (e1, e2, _) ->  ListCons (helper e1,helper e2, p)
+      | Bag (el, _) -> Bag (List.map helper el, p)
+      | BagUnion (el, _) ->  BagUnion (List.map helper el, p)
+      | BagIntersect (el, _) -> BagIntersect (List.map helper el, p)
+      | List (el, _) -> List (List.map helper el, p)
+      | ListAppend (el, _) -> ListAppend (List.map helper el, p)
+      | Func (sv,el,_) -> Func (sv,List.map helper el,p)
+      | ArrayAt (sv, el, _) ->  ArrayAt (sv,List.map helper el, p)
+      | ListHead (e, _) -> ListHead (helper e, p)
+      | ListTail (e, _) ->  ListTail (helper e, p)
+      | ListLength (e, _) -> ListLength (helper e, p)
+      | ListReverse (e, _) -> ListReverse (helper e, p)
+  in
+  helper e0
 
 and subst_pos_pformula p pf= match pf with
   | LexVar l_info -> LexVar {l_info with lex_loc=p}
@@ -2725,14 +2760,14 @@ and subst_pos_pformula p pf= match pf with
   | BConst (b,_) -> BConst (b,p)
   | XPure x -> XPure {x with xpure_view_pos = p}
   | BVar (sv, _) -> BVar (sv, p)
-  | Lt (e1, e2, _) -> Lt (e1, e2, p)
-  | Lte (e1, e2, _) -> Lte (e1, e2, p)
-  | Gt (e1, e2, _) -> Gt (e1, e2, p)
-  | Gte (e1, e2, _) -> Gte (e1, e2, p)
-  | Eq (e1, e2, _) -> Eq (e1, e2, p)
-  | Neq (e1, e2, _) -> Neq (e1, e2, p)
-  | EqMax (e1, e2,e3, _) -> EqMax (e1, e2,e3, p)
-  | EqMin (e1, e2,e3, _) -> EqMin (e1, e2,e3, p)
+  | Lt (e1, e2, _) -> Lt (subst_pos_exp p e1, subst_pos_exp p e2, p)
+  | Lte (e1, e2, _) -> Lte (subst_pos_exp p e1, subst_pos_exp p e2, p)
+  | Gt (e1, e2, _) -> Gt (subst_pos_exp p e1, subst_pos_exp p e2, p)
+  | Gte (e1, e2, _) -> Gte (subst_pos_exp p e1, subst_pos_exp p e2, p)
+  | Eq (e1, e2, _) -> Eq (subst_pos_exp p e1, subst_pos_exp p e2, p)
+  | Neq (e1, e2, _) -> Neq (subst_pos_exp p e1, subst_pos_exp p e2, p)
+  | EqMax (e1, e2,e3, _) -> EqMax (subst_pos_exp p e1, subst_pos_exp p e2, subst_pos_exp p e3, p)
+  | EqMin (e1, e2,e3, _) -> EqMin (e1, e2, e3, p)
   | BagIn (sv, e, _) -> BagIn (sv, e, p)
   | BagNotIn (sv, e, _) -> BagNotIn (sv, e, p)
   | BagSub(e1, e2, _) -> BagSub (e1, e2, p)
@@ -3123,7 +3158,7 @@ and b_apply_subs_x sst bf =
 (*=====================================*)
 and b_apply_subs_w_locs sst bf =
   let pr = !print_b_formula in
-  Debug.ho_1 "b_apply_subs" pr 
+  Debug.no_1 "b_apply_subs_w_locs" pr 
       pr (fun _ -> b_apply_subs_w_locs_x sst bf) bf
 
 and b_apply_subs_w_locs_x sst bf =

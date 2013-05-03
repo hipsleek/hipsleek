@@ -2774,6 +2774,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_call_recv_arguments = args;
             I.exp_call_recv_path_id = pi;
             I.exp_call_recv_pos = pos } ->
+            let _ = print_endline ("trans_exp :: case CallRecv " ^ mn ^ " pos:" ^ (string_of_loc pos)) in
             let (crecv, crecv_t) = helper recv in
             let (recv_ident, recv_init, new_recv_ident) =
               (match crecv with
@@ -2835,7 +2836,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_call_nrecv_arguments = args;
             I.exp_call_nrecv_path_id = pi;
             I.exp_call_nrecv_pos = pos } ->
-	        (* let _ = print_string "trans_exp :: case CallNRecv\n" in*)
+	    (* let _ = print_endline ("trans_exp :: case CallNRecv " ^ mn ^ " pos:" ^ (string_of_loc pos)) in *)
             let tmp = List.map (helper) args in
             let (cargs, cts) = List.split tmp in
             let mingled_mn = C.mingle_name mn cts in (* signature of the function *)
@@ -2964,7 +2965,7 @@ and trans_exp_x (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
                   Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match"; }
                 else if Inliner.is_inlined mn then (let inlined_exp = Inliner.inline prog pdef ie in helper inlined_exp)
-                else 
+                else
                   (let ret_ct = trans_type prog pdef.I.proc_return pdef.I.proc_loc in
                   let positions = List.map I.get_exp_pos args in
                   let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in
