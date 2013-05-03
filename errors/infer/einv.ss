@@ -9,7 +9,15 @@ int foo (int a, int b, int x)
   y = y + a;
   return x;
 }
+/*
+filter_ante inp1 : a=a' & b=b' & x=x_762 & y_15=y_772 & a=0 & b+2=0 & x=1 & x_767=a'+x_762 & 
+x'=b'+x_767 & y_15'=a'+y_772 & res=x'
+filter_ante inp2 : 0<=res
 
+1.  a=a' & b=b' & x=x_762 & y_15=y_772 & a=0 & b+2=0 & x=1 & x_767=a'+x_762 & 
+res=b'+x_767 & y_15'=a'+y_772
+
+ */
 relation H(int a, int b, int c).
 
 /*

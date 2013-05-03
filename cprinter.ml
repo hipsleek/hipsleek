@@ -3759,6 +3759,7 @@ Mcpure.print_mix_f := string_of_mix_formula;;
 Cpure.print_b_formula := string_of_b_formula;;
 Cpure.print_exp := string_of_formula_exp;;
 Cpure.print_formula := string_of_pure_formula;;
+Cpure.print_formula_w_loc := string_of_pure_formula_w_loc;;
 (*Cpure.print_formula_br := string_of_formula_branches;;*)
 Cpure.print_svl := string_of_spec_var_list;;
 Cpure.print_sv := string_of_spec_var;;

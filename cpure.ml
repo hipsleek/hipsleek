@@ -238,6 +238,7 @@ let print_b_formula = ref (fun (c:b_formula) -> "cpure printer has not been init
 let print_p_formula = ref (fun (c:p_formula) -> "cpure printer has not been initialized")
 let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
+let print_formula_w_loc = ref (fun (c:formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:spec_var) -> "cpure printer has not been initialized")
 let print_rel_cat rel_cat = match rel_cat with
@@ -857,6 +858,39 @@ let full_name_of_spec_var (sv : spec_var) : ident =
     | SpecVar (_, v, p) -> if (p==Primed) then (v^"\'") else v
 
 let is_void_type t = match t with | Void -> true | _ -> false
+
+let is_eq_const (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq (Var (_,_), IConst _, _),_)
+    | (Eq (IConst _, Var (_,_), _),_) -> true
+    | _ -> false)
+  | _ -> false
+
+let is_eq_exp (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Eq _,_) -> true
+    | _ -> false)
+  | _ -> false
+
+let is_neq_null_exp_x (f:formula) = match f with
+  | BForm (bf,_) ->
+    (match bf with
+    | (Neq (sv1,sv2,_),_) ->
+        begin
+            match sv1,sv2 with
+              | Var _, Null _ -> true
+              | Null _, Var _ -> true
+              | _ -> false
+        end
+    | _ -> false)
+  | _ -> false
+
+let is_neq_null_exp (f:formula)=
+  let pr1 = !print_formula in
+  Debug.no_1 "is_neq_null_exp" pr1 string_of_bool
+      (fun _ -> is_neq_null_exp_x f) f
 
 let rec fv (f : formula) : spec_var list =
   let tmp = fv_helper f in
@@ -1649,7 +1683,6 @@ and mkBagInExp v exp pos =
   BForm ((bf, None),None)
 
 (******************************************)
-
 and mkRes t = SpecVar (t, res_name, Unprimed)
 
 and mkeRes t = SpecVar (t, eres_name, Unprimed)
@@ -2055,6 +2088,8 @@ and split_conjunctions =  function
   | z -> [z]
         
 and join_conjunctions fl = conj_of_list fl no_pos
+
+
 
 (******************)
 (* 
@@ -7877,11 +7912,69 @@ let mkNot_b_norm (bf : b_formula) : b_formula option =
 		| None -> None
 		| Some bf -> Some (norm_bform_aux bf)
 
-let filter_ante (ante : formula) (conseq : formula) : (formula) =
-	let fvar = fv conseq in
-	let new_ante = filter_var ante fvar in
-    new_ante
+(*slice eq first*)
+let slice_eq_formulas_x ps0 svl0 pos=
+  let rec find_rele_eq ps svl rele_ps rem_ps=
+    match ps with
+      | [] -> (svl, rele_ps, rem_ps)
+      | p::rest -> begin
+            match p with
+              | BForm (bf,_) ->
+                    (match bf with
+                      | (Eq (e1,e2,_),_) ->
+                            let lsvl = afv e1 in
+                            if intersect_svl lsvl svl <> [] then
+                              let rsvl = afv e2 in
+                              find_rele_eq rest (svl@rsvl) (rele_ps@[p]) (rem_ps)
+                            else
+                              find_rele_eq rest svl rele_ps (rem_ps@[p])
+                      | _ -> find_rele_eq rest svl rele_ps (rem_ps@[p])
+                    )
+              | _ -> find_rele_eq rest svl rele_ps (rem_ps@[p])
+        end
+  in
+  (*loop until can not find new things*)
+  let rec find_rele_eq_fix ps svl rele_ps rem_ps=
+    let n_svl,n_rele_ps,n_rem_ps = find_rele_eq ps svl rele_ps rem_ps in
+    let n_svl1 = remove_dups_svl n_svl in
+    if n_rem_ps = [] || (List.length n_svl1 = List.length svl) then
+      n_svl1,n_rele_ps,n_rem_ps
+    else find_rele_eq_fix n_rem_ps n_svl1 n_rele_ps []
+  in
+  let svl01 = remove_dups_svl svl0 in
+  let n_svl,n_rele_ps,n_rem_ps = find_rele_eq_fix ps0 svl01 [] [] in
+  (n_svl,n_rele_ps)
 
+let slice_eq_formulas ps svl pos=
+  let pr = pr_list (!print_formula) in
+  Debug.no_2 "slice_eq_formulas" pr !print_svl (pr_pair !print_svl pr)
+      (fun _ _ -> slice_eq_formulas_x ps svl pos) ps svl
+
+let slice_ante_x ante svl=
+  let pos = pos_of_formula ante in
+  let conjs = list_of_conjs ante in
+  let eq_ps, non_eq_ps = List.partition is_eq_exp conjs in
+  let svl1, eq_ps1 = slice_eq_formulas eq_ps svl pos in
+  let p1 = conj_of_list non_eq_ps pos in
+  let p11 = filter_var p1 svl1 in
+  let p2 = conj_of_list (p11::eq_ps1) pos in
+  p2
+
+let slice_ante ante svl=
+  let pr = !print_formula in
+  Debug.no_2 "slice_ante" pr !print_svl pr
+      (fun _ _ -> slice_ante_x ante svl) ante svl
+
+let filter_ante_x (ante : formula) (conseq : formula) : (formula) =
+  let fvar = fv conseq in
+  (* let new_ante = filter_var ante fvar in *)
+  let new_ante = slice_ante ante fvar in
+  new_ante
+
+let filter_ante (ante : formula) (conseq : formula) : (formula) =
+  let pr = !print_formula in
+  Debug.no_2 "filter_ante" pr pr pr
+      (fun _ _ -> filter_ante_x ante conseq) ante conseq
 
 let filter_ante_wo_rel (ante : formula) (conseq : formula) : (formula) =
 	let fvar = fv conseq in
@@ -8028,7 +8121,7 @@ let find_all_failures is_sat ante cons =
   (contra_list,must_list,may_list)
 
 let find_all_failures is_sat  ante cons =
-  let pr = !print_formula in
+  let pr = !print_formula_w_loc in
   let pr2 = pr_list (pr_pair pr pr) in
   Debug.no_2 "find_all_failures" pr pr (pr_triple pr2 pr2 pr2) (fun _ _ -> find_all_failures is_sat ante cons) ante cons 
 
@@ -8066,7 +8159,7 @@ let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : fo
    filter_ante n_a conseq
 
 let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula = 
-  let pr = !print_formula in
+  let pr = !print_formula_w_loc in
   Debug.no_2 "simplify_filter_ante" pr pr pr (fun _ _ -> simplify_filter_ante simpl ante conseq) ante conseq
 
 (*=================================================*)
@@ -8639,39 +8732,6 @@ let mem_infer_var (v:spec_var) (is:infer_state)
 (* add lhs -> rhs to infer state is *)
 let add_rel_to_infer_state (lhs:formula) (rhs:formula) (is:infer_state) 
       = is.infer_state_rel # push (lhs,rhs)
-
-let is_eq_const (f:formula) = match f with
-  | BForm (bf,_) ->
-    (match bf with
-    | (Eq (Var (_,_), IConst _, _),_)
-    | (Eq (IConst _, Var (_,_), _),_) -> true
-    | _ -> false)
-  | _ -> false
-
-let is_eq_exp (f:formula) = match f with
-  | BForm (bf,_) ->
-    (match bf with
-    | (Eq _,_) -> true
-    | _ -> false)
-  | _ -> false
-
-let is_neq_null_exp_x (f:formula) = match f with
-  | BForm (bf,_) ->
-    (match bf with
-    | (Neq (sv1,sv2,_),_) ->
-        begin
-            match sv1,sv2 with
-              | Var _, Null _ -> true
-              | Null _, Var _ -> true
-              | _ -> false
-        end
-    | _ -> false)
-  | _ -> false
-
-let is_neq_null_exp (f:formula)=
-  let pr1 = !print_formula in
-  Debug.no_1 "is_neq_null_exp" pr1 string_of_bool
-      (fun _ -> is_neq_null_exp_x f) f
 
 let check_dang_or_null_exp_x root (f:formula) = match f with
   | BForm (bf,_) ->
