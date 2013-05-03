@@ -5,6 +5,7 @@ int foo (int a, int b, int x)
   ensures res>=0;
 {
   x = x+a;
+  x=0;
   x= x+b;
   y = y + a;
   return x;
