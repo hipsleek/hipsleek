@@ -6510,7 +6510,7 @@ and build_and_failures i (failure_code:string) (failure_name:string) ((contra_li
   let pr3 = pr_list (pr_pair pr1 pr1) in
   let pr4 = pr_triple pr3 pr3 pr3 in
   let pr2 = (fun _ -> "OUT") in
-  Debug.ho_1_num i "build_and_failures" pr4 pr2 
+  Debug.no_1_num i "build_and_failures" pr4 pr2 
       (fun triple_list -> build_and_failures_x failure_code failure_name triple_list fail_ctx_template)
       (contra_list, must_list, may_list)
 
@@ -6522,13 +6522,14 @@ and build_and_failures_x (failure_code:string) (failure_name:string) ((contra_li
     let build_and_one_kind_failures (failure_string:string) (fk: CF.failure_kind) (failure_list:(CP.formula*CP.formula) list):CF.fail_type option=
       (*build must/may msg*)
       let build_failure_msg (ante, cons) =
-        let _ = print_endline ("\nante: " ^ (Cprinter.string_of_pure_formula_w_loc ante)) in
-        let _ = print_endline ("cons: " ^ (Cprinter.string_of_pure_formula_w_loc cons)) in
+        (* let _ = print_endline ("\nante: " ^ (Cprinter.string_of_pure_formula_w_loc ante)) in *)
+        (* let _ = print_endline ("cons: " ^ (Cprinter.string_of_pure_formula_w_loc cons)) in *)
         let ll = (CP.list_pos_of_formula ante []) @ (CP.list_pos_of_formula cons []) in
         (* let _ = print_endline (Cprinter.string_of_list_loc ll) in *)
         let lli = Gen.BList.remove_dups_eq (=) (CF.get_lines ll) in
-        let pr1 = pr_list string_of_int in
-        let _ = print_endline (pr1 lli) in
+        let lli = List.sort (fun i1 i2 -> i1-i2) lli in
+        (* let pr1 = pr_list string_of_int in *)
+        (* let _ = print_endline (pr1 lli) in *)
         (*possible to eliminate unnecessary intermediate that are defined by equality.*)
         (*not sure it is better*)
         let ante = CP.elim_equi_ante ante cons in

@@ -671,7 +671,7 @@ and check_specs_infer_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context)
                       (* TODO : collecting rel twice as a temporary fix to losing ranking rel inferred during check_post *)
                       (*                      let rel1 =  Inf.collect_rel_list_partial_context res_ctx in*)
                       (*                      DD.dinfo_pprint ">>>>> Performing check_post STARTS" no_pos;*)
-                      let _ = print_endline ("\ncheck_post ctx: "^ (Cprinter.string_of_list_partial_context_w_loc res_ctx)) in
+                      (* let _ = print_endline ("\ncheck_post ctx: "^ (Cprinter.string_of_list_partial_context_w_loc res_ctx)) in *)
                       let tmp_ctx = check_post prog proc res_ctx (post_cond,post_struc) pos_post post_label etype in
                       (*                      DD.dinfo_pprint ">>>>> Performing check_post ENDS" no_pos;*)
                       (* Termination: collect error messages from successful states *)
