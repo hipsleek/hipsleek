@@ -496,6 +496,7 @@ let print_struc_formula = ref (fun (x:F.struc_formula) -> "Uninitialised printer
 let print_h_formula = ref (fun (x:F.h_formula) -> "Uninitialised printer")
 let print_view_decl = ref (fun (x:view_decl) -> "Uninitialised printer")
 let print_data_decl = ref (fun (x:data_decl) -> "Uninitialised printer")
+let print_exp = ref (fun (x:exp) -> "Uninitialised printer")
 
 
 let find_empty_static_specs iprog = 
@@ -609,8 +610,58 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | Try e -> e.exp_try_pos
   | Time (_,_,l) ->  l
   | Raise e -> e.exp_raise_pos
-	  
-	  
+
+let get_ids_of_cond_exp_x (e0 : exp) : ident list =
+  let rec helper e1=
+    match e1 with
+      | Var e -> [e.exp_var_name]
+      | Unary e -> helper e.exp_unary_exp
+      | Binary e -> (helper e.exp_binary_oper1)@(helper e.exp_binary_oper2)
+      | ArrayAt _
+      | Label _
+      | Assert _
+      | Assign _
+      | Bind _
+      | Block _
+      | BoolLit _
+      | Break _
+      | Barrier _ -> []
+      | CallRecv e -> List.fold_left (fun ls e1 -> ls@(helper e1)) [] e.exp_call_recv_arguments
+      | CallNRecv e -> List.fold_left (fun ls e1 -> ls@(helper e1)) [] e.exp_call_nrecv_arguments
+      | Cast _
+      | Catch _
+      | Cond _
+      | ConstDecl _
+      | Continue _
+      | Debug _
+      | Dprint _
+      | Empty _
+      | FloatLit _
+      | Finally _
+      | IntLit _
+      | Java _
+      | Member _
+      | ArrayAlloc _
+      | New _
+      | Null _
+      | Return _
+      | Seq _
+      | This _
+      | VarDecl _
+      | While _
+      | Unfold _
+      | Try _
+      | Time _
+      | Raise _ -> []
+  in
+  helper e0
+
+let get_ids_of_cond_exp (e0 : exp) : ident list =
+  let pr1 = !print_exp in
+  let pr2 = pr_list pr_id in
+  Debug.no_1 "get_ids_of_cond_exp" pr1 pr2
+      (fun _ -> get_ids_of_cond_exp_x e0) e0
+
 let get_catch_of_exp e = match e with
 	| Catch e -> e
 	| _  -> Error.report_error {Err.error_loc = get_exp_pos e; Err.error_text = "malformed expression, expecting catch clause"}

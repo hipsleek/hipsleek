@@ -3770,6 +3770,22 @@ and disj_count (f0 : formula) = match f0 with
 
   | _ -> 1
 
+let rec update_eq_lhs_sv_formula (f0:formula) l_ass path_vars=
+  let rec helper f=
+    match f with
+      | Base fb ->
+            Base {fb with formula_base_pure = MCP.update_eq_lhs_sv_formula
+                    fb.formula_base_pure l_ass path_vars
+            }
+      | Exists fe ->
+            Exists {fe with formula_exists_pure = MCP.update_eq_lhs_sv_formula
+                    fe.formula_exists_pure l_ass path_vars}
+      | Or orf  ->
+            Or {orf with formula_or_f1 = helper orf.formula_or_f1;
+                formula_or_f2 = helper orf.formula_or_f2;
+            }
+  in
+  helper f0
 (*=========for sa==========*)
 let is_HRel hf=
   match hf with

@@ -500,7 +500,7 @@ and get_subst_equation_memo_formula_x (f0 : memo_pure) (v : spec_var) only_vars:
 
 and get_subst_equation_memo_formula (f0 : memo_pure) (v : spec_var) only_vars: ((spec_var * exp) list * memo_pure) =
   let pr_out = pr_pair (pr_list (pr_pair !print_sv !print_exp)) !print_mp_f in
-  Debug.ho_3 "get_subst_equation_memo_formula"
+  Debug.no_3 "get_subst_equation_memo_formula"
       !print_mp_f !print_sv string_of_bool pr_out
       get_subst_equation_memo_formula_x f0 v only_vars
 
@@ -2237,6 +2237,10 @@ let ptr_equations_aux with_null f = match f with
 let bag_equations_aux with_emp f = match f with
   | MemoF f -> bag_equations_aux_mp with_emp f
   | OnePF f -> pure_bag_equations_aux with_emp f
+
+let update_eq_lhs_sv_formula mf l_ass path_vars = match mf with
+  | MemoF _ -> mf (*todo: to handle path like CP.update_eq_lhs_sv_formula *)
+  | OnePF f -> OnePF (CP.update_eq_lhs_sv_formula f l_ass path_vars)
 
 (* type: mix_formula -> (Cpure.EMapSV.elem * Cpure.EMapSV.elem) list *)
  let ptr_equations_with_null f = ptr_equations_aux true f

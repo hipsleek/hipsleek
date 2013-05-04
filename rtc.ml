@@ -394,6 +394,7 @@ and compile_exp prog proc (e0 : C.exp) : C.exp = match e0 with
 	      C.exp_var_pos = pos}) in
 	      let new_assign = C.Assign ({C.exp_assign_lhs = lhs;
 	      C.exp_assign_rhs = result_e;
+              C.exp_path_vars = [];
 	      C.exp_assign_pos = pos}) in
 	      let seq1 = C.mkSeq C.void_type call new_assign pos in
 	      let seq2 = C.mkSeq C.void_type result_decl seq1 pos in
@@ -493,6 +494,7 @@ and compile_call prog proc (e0 : C.exp) : (C.exp * ident) = match e0 with
 	  else 
 	    let assign = C.Assign ({C.exp_assign_lhs = res;
 	    C.exp_assign_rhs = e0;
+            C.exp_path_vars = [];
 	    C.exp_assign_pos = pos}) in
 	    (assign, res)
 	in
@@ -511,6 +513,7 @@ and push_assignment_in (lhs : ident) (rhs : C.exp) pos : C.exp = match rhs with
 	if C.is_unit e2 then
 	  C.Assign ({C.exp_assign_lhs = lhs;
 	  C.exp_assign_rhs = e1;
+          C.exp_path_vars = [];
 	  C.exp_assign_pos = pos})
 	else
 	  let new_e2 = push_assignment_in lhs e2 pos in
@@ -522,6 +525,7 @@ and push_assignment_in (lhs : ident) (rhs : C.exp) pos : C.exp = match rhs with
   | _ ->
 	C.Assign ({C.exp_assign_lhs = lhs;
 	C.exp_assign_rhs = rhs;
+        C.exp_path_vars = [];
 	C.exp_assign_pos = pos})
 
 and find_binds (e0 : C.exp) : C.typed_ident list = match e0 with

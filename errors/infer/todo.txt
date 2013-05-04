@@ -99,5 +99,5 @@ Post condition cannot be derived:
 *********************************************************************
 # eif.ss:
  - add path(exp, svl, loc): DONE
- - symbolic rule for path
+ - symbolic rule for path: DONE
  - subs rule for path

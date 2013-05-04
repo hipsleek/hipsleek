@@ -914,6 +914,7 @@ Iformula.print_struc_formula :=string_of_struc_formula;;
 Iast.print_struc_formula := string_of_struc_formula;;
 Iast.print_view_decl := string_of_view_decl;
 Iast.print_data_decl := string_of_data_decl;
+Iast.print_exp := string_of_exp;
 Ipure.print_formula :=string_of_pure_formula;
 Ipure.print_id := string_of_id;
 

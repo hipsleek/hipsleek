@@ -225,6 +225,7 @@ and exp_assert = {
 and exp_assign = 
     { exp_assign_lhs : ident;
     exp_assign_rhs : exp;
+    exp_path_vars: ident list;
     exp_assign_pos : loc }
 	
 and exp_bconst = { 
@@ -1503,7 +1504,7 @@ let rec pos_of_exp (e:exp) :loc = match e with
   | While b -> b.exp_while_pos
   | Try b -> b.exp_try_pos
   | Label b -> pos_of_exp b.exp_label_exp
-	  
+
 let get_catch_of_exp e = match e with
 	| Catch e -> e
 	| _  -> Error.report_error {Err.error_loc = pos_of_exp e; Err.error_text = "malformed expression, expecting catch clause"}

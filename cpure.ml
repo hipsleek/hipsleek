@@ -7972,6 +7972,68 @@ let mkNot_b_norm (bf : b_formula) : b_formula option =
 		| None -> None
 		| Some bf -> Some (norm_bform_aux bf)
 
+let update_eq_lhs_sv_formula_x p0 lhs_sv path_vars=
+  (**********FROM ID To SVL************)
+  let rec look_up_var svl id=
+    match svl with
+      | [] -> report_error no_pos ("cpure.update_eq_res_formula: can't find" ^ id)
+      | SpecVar (t, id1, p)::rest -> if p=Primed && String.compare id id1 = 0 then SpecVar (t, id1, Primed) else
+          look_up_var rest id
+  in
+  let svl = fv p0 in
+  let path_svl = List.map (fun id -> look_up_var svl id) path_vars in
+  (*************************)
+  let look_up_eq_lhs_sv_pformula pf=
+    match pf with
+      | Eq (e1, e2, l) ->
+            let lhs_svl = afv e1 in
+            if mem_svl lhs_sv lhs_svl then
+              Some (Eq (e1, e2, l), l)
+            else None
+      | _ -> None
+  in
+  let rec look_up_eq_lhs_sv_rhs p=
+    match p with
+      | BForm ((pf,il),l) ->begin
+          let orhs = look_up_eq_lhs_sv_pformula pf in
+          match orhs with
+            | None -> false,p
+            | Some (pf, l1) ->
+                  let path_pf = Path (pf, path_svl, l1) in
+                  true, BForm((path_pf,il),l)
+        end
+      | And (p1,p2,l) ->
+            let b,p21 = look_up_eq_lhs_sv_rhs p2 in
+            if b then true, And (p1,p21,l) else
+              let b,p11 = look_up_eq_lhs_sv_rhs p1 in
+              if b then true, And (p11,p2,l) else
+                false, p
+      | AndList slfs -> false,p
+      | Or (p1,p2,ol, l) ->
+            let b,p11 = look_up_eq_lhs_sv_rhs p1 in
+            if b then (true, Or (p11,p2,ol, l)) else
+              let b,p21 = look_up_eq_lhs_sv_rhs p2 in
+              if b then true, (Or (p1,p21,ol, l)) else
+                false, p
+      | Not (p, ol, l) -> let b,newp= look_up_eq_lhs_sv_rhs p in
+        b,Not (newp, ol,l)
+      | Forall (sv, p, ol, l) -> let b,newp= look_up_eq_lhs_sv_rhs p in
+        b, Forall (sv, newp, ol, l)
+      | Exists (sv, p, ol, l) -> let b,newp= look_up_eq_lhs_sv_rhs p in
+        b, Exists (sv, newp, ol, l)
+  in
+  let b,new_p = look_up_eq_lhs_sv_rhs p0 in
+  if not b then
+    report_error no_pos "cpure.update_eq_res_formula: can't find res=..."
+  else
+  new_p
+
+let update_eq_lhs_sv_formula p lhs_sv path_vars=
+  let pr1 = !print_formula in
+  Debug.no_3 "update_eq_lhs_sv_formula" pr1 !print_sv (pr_list pr_id) pr1
+      (fun _ _ _ ->  update_eq_lhs_sv_formula_x p lhs_sv path_vars)
+      p lhs_sv path_vars
+
 (*slice eq first*)
 let slice_eq_formulas_x ps0 svl0 pos=
   let rec find_rele_eq ps svl rele_ps rem_ps=

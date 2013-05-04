@@ -10,6 +10,7 @@ int xZero0(int input)
 
   if (y<0){//11
     x=0; //12
+    // dprint;
   }
   y=y+1;
   return x;

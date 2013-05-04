@@ -1206,7 +1206,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               wrap_classic atype (wrap_proving_kind "ASSERT/ASSUME" assert_op) ()
         | Assign ({ exp_assign_lhs = v;
           exp_assign_rhs = rhs;
+          exp_path_vars = path_vars;
           exp_assign_pos = pos}) ->
+              (* let pr1 = pr_list pr_id in *)
+              (* let _ = print_endline ("\nAssign: exp_path_vars: " ^ (pr1 path_vars)) in *)
               let pr = Cprinter.string_of_exp in
               let check_rhs_exp rhs = Debug.no_1 "check Assign (rhs)" pr (fun _ -> "void") 
                 (fun rhs -> check_exp prog proc ctx rhs post_start_label) rhs in
@@ -1236,13 +1239,16 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                         let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
                         let tmp_vsv = CP.fresh_spec_var vsv in
                         let compose_es = CF.subst [(vsv, tmp_vsv); ((P.mkRes t), vsv)] c1.CF.es_formula in
-                        let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es})) in
-                        (* Debug.info_hprint (add_str "vsv" Cprinter.string_of_spec_var) vsv no_pos; *)
-                        (* Debug.info_hprint (add_str "tmp_vsv" Cprinter.string_of_spec_var) tmp_vsv no_pos; *)
+                        let compose_es1 =
+                          if path_vars = [] then compose_es else
+                            CF.update_eq_lhs_sv_formula compose_es vsv path_vars
+                        in
+                        let compose_ctx = (CF.Ctx ({c1 with CF.es_formula = compose_es1})) in
+                        (* Debug.info_hprint (add_str "vsv " Cprinter.string_of_spec_var) vsv no_pos; *)
+                        (* Debug.info_hprint (add_str "tmp_vsv: " Cprinter.string_of_spec_var) tmp_vsv no_pos; *)
                         (* print_endline ("ASSIGN CTX: " ^ (Cprinter.string_of_context compose_ctx)); *)
                         compose_ctx
-                            
-                      (* let link = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqVar vsv (P.mkRes t) pos)) pos in *)
+                            (* let link = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqVar vsv (P.mkRes t) pos)) pos in *)
                       (* let ctx1 = (CF.Ctx c1) in                                                                      *)
                       (* let _ = CF.must_consistent_context "assign 1a" ctx1  in                                        *)
                       (* (* TODO : eps bug below *)                                                                     *)
