@@ -1,0 +1,146 @@
+
+#loc1.ss: error occurs in the base case: DONE
+
+*********************************************************************
+#loc2.ss: error occurs in the recursive case? 
+
+*********************************************************************
+# einv2: xZero0: DONE
+ return MAY1 error= disj of
+   - a MUST of a path trace and
+a OK of another path trace
+
+*********************************************************************
+# einv2: xZero
+ - infer complete specs
+
+
+*********************************************************************
+#loc2-bug.ss: why isn't intermediate statement like k=3 included?
+int double (int n) :DONE
+ requires true
+5:  ensures res=2*n;
+ {
+7:   if (n==0)
+     return 0;
+   else
+     {
+       int k;
+12:       k = 3;
+13:     return k+double(n-1);
+     }
+ }
+
+Checking procedure double$int... 
+Post condition cannot be derived:
+  (must) cause:  res=v_int_13_771+v_int_13_771+3 & (v_int_13_771+1)!=0 & n=v_int_13_771+1 |-  res=n+n. 
+
+Got:
+LOCS:[13;7;3;5] (must-bug)
+
+Why isn't 12: k=2 included? What does 3,5 denote?
+
+*********************************************************************
+#einv.ss: why isn't intermediate statement like k=3 included? DONE
+
+global int y =0;
+
+int foo (int a, int b, int x)
+  requires a=0 & b=-2 & x=1
+  ensures res>=0;
+{
+7:  x = x+a;
+8:  x= x+b;
+9:  y = y + a;
+10:  return x;
+}
+Checking procedure foo$int~int~int~int... 
+Post condition cannot be derived:
+  (must) cause:  b+2=0 & res=b+0+1 |-  0<=res. LOCS:[9;8;7;4;3;10;5] (must-bug)
+
+How do I interpret the locations?
+Why is 10 not included? Why is 9 included?
+
+Loc:
+ - by right, 9 should not be included. now it is included because a relates to unsat (although this statement
+does not contribute to unsat) ==> solution: slicing
+
+*********************************************************************
+# einv3.ss
+
+global int y =0;
+
+int foo (int a, int b, int x)
+  requires true
+5:  ensures res>=0;
+{
+  x = x+a;
+  x= x+b;
+  y = y + a;
+10:  return x;
+}
+
+Checking procedure foo$int~int~int~int... 
+Post condition cannot be derived:
+  (may) cause:  res=b+a+x |-  0<=res. LOCS:[9;8;7;3;10;5] (may-bug)
+
+// why is 10 placed at the end?
+// for may-bug, it may be interesting to
+   infer a pre-condition that would confirm it as
+   a must-bug?
+
+*********************************************************************
+
+#loc2-bug2a.ss: should be LOCS:[6;7;3]: DONE
+
+*********************************************************************
+
+#loc2-bug2b.ss: should be LOCS:[6;7;3]: DONE
+<<<<<<< local
+
+# ep.slk
+
+  why is post-cond included in LOCS?
+
+checkentail 
+   p=null 
+   & y>0
+    |- p!=null. // 16
+
+/*
+Entail (1) : Fail.(must: ) cause: p!=null |-  p=null. LOCS:[8;10] (must-bug)
+  Why do we include post-cond 10?
+
+Entail (2) : Fail.(must: ) cause: p=null |-  p!=null. LOCS:[14;16] (must-bug)
+  Why do we include post-cond 16?
+*/
+
+# es1.slk
+
+ Why is there 0,1 below? Why isn't 11 included?
+ I think nodes and precidates must also be labelled.
+
+ pred ll<n> == self = null & n = 0 //6
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+ checkentail 
+   x::ll<n> //11
+   & x=null
+    |- n>0.
+
+
+/*
+  Entail (1) : Fail.(may) cause: (1<=n & x!=null) | (n=0 & x=null) 
+       |-  0<n. LOCS:[0;1;13] (may-bug)
+
+  where did 0,1 came from?
+
+ */
+=======
+*********************************************************************
+# eif.ss:
+ - add path(exp, svl, loc)
+ - symbolic rule for path
+ - subs rule for path
+>>>>>>> other
