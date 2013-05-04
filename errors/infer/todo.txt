@@ -96,3 +96,8 @@ Post condition cannot be derived:
 *********************************************************************
 
 #loc2-bug2b.ss: should be LOCS:[6;7;3]: DONE
+*********************************************************************
+# eif.ss:
+ - add path(exp, svl, loc)
+ - symbolic rule for path
+ - subs rule for path
