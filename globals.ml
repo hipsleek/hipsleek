@@ -830,6 +830,8 @@ let check_sat = ref false
 
 let simplify_error = ref false
 
+let show_col = ref false
+
 let prune_cnt_limit = ref 2
 
 let suppress_warning_msg = ref false

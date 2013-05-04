@@ -243,10 +243,10 @@ let common_arguments = [
    "print core representation");
   ("--pip", Arg.Set Globals.print_input,
    "print input representation");
-	("--pcp-all", Arg.Set Globals.print_core_all,
-	"print core representation (including primitive library)");
-	("--pip-all", Arg.Set Globals.print_input_all,
-	"print input representation (including primitive library)");
+  ("--pcp-all", Arg.Set Globals.print_core_all,
+  "print core representation (including primitive library)");
+  ("--pip-all", Arg.Set Globals.print_input_all,
+  "print input representation (including primitive library)");
   (* ("--dis-cache", Arg.Set Globals.no_cache_formula, *)
   (* "Do not cache result of satisfiability and validity checking"); *)
   ("--dis-cache", Arg.Set Globals.no_cache_formula,
@@ -284,6 +284,8 @@ let common_arguments = [
   ("--en-failure-analysis", Arg.Clear Globals.disable_failure_explaining,"enable failure explanation analysis");
   ("--refine-error", Arg.Set Globals.simplify_error,
    "Simplify the error");
+  ("--show-col", Arg.Set Globals.show_col,
+   "Show column numbers (together with lines) in error");
   (*("--redlog-int-relax", Arg.Set Redlog.integer_relax_mode, "use redlog real q.e to prove intefer formula  *experiment*");*)
   (*("--redlog-ee", Arg.Set Redlog.is_ee, "enable Redlog existential quantifier elimination");*)
   ("--redlog-presburger", Arg.Set Redlog.is_presburger, "use presburger arithmetic for redlog");

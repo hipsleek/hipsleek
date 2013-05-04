@@ -2028,6 +2028,11 @@ and list_pos_of_heap_formula (h: h_formula): (loc list)= match h with
 and get_lines (ll: loc list): (int list)=
   Gen.Basic.remove_dups (List.map (fun x -> x.start_pos.Lexing.pos_lnum) ll)
 
+and get_line_cols (ll: loc list): (int*int) list=
+  Gen.BList.remove_dups_eq (fun (l1,c1) (l2,c2) ->
+              l1=l2 && c1=c2) (List.map (fun p -> (p.start_pos.Lexing.pos_lnum,
+  (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol) )) ll)
+
 and subst_pos_struc_formula (p:loc) (f:struc_formula): struc_formula=
   match f with
     | ECase b ->

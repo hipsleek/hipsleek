@@ -6529,20 +6529,37 @@ and build_and_failures_x (failure_code:string) (failure_name:string) ((contra_li
         (* let _ = print_endline ("\nante: " ^ (Cprinter.string_of_pure_formula_w_loc ante)) in *)
         (* let _ = print_endline ("cons: " ^ (Cprinter.string_of_pure_formula_w_loc cons)) in *)
         let ll = (CP.list_pos_of_formula ante []) @ (CP.list_pos_of_formula cons []) in
-        (* let _ = print_endline (Cprinter.string_of_list_loc ll) in *)
-        let lli = Gen.BList.remove_dups_eq (=) (CF.get_lines ll) in
-        let lli = List.sort (fun i1 i2 -> i1-i2) lli in
-        (* let pr1 = pr_list string_of_int in *)
-        (* let _ = print_endline (pr1 lli) in *)
         (*possible to eliminate unnecessary intermediate that are defined by equality.*)
         (*not sure it is better*)
         let ante = CP.elim_equi_ante ante cons in
-        (*path_deps*)
+         (*path_deps*)
         let path_ll = CP.list_pos_of_formula path_deps [] in
-        let path_lli = Gen.BList.remove_dups_eq (=) (CF.get_lines path_ll) in
-        let path_lli = List.sort (fun i1 i2 -> i1-i2) path_lli in
-        ((Cprinter.string_of_pure_formula ante) ^ " |- "^
-            (Cprinter.string_of_pure_formula cons) ^ ". LOCS:[" ^ (Cprinter.string_of_list_int lli) ^ "]\n        path dependency:" ^ (Cprinter.string_of_pure_formula path_deps) ^ ". LOCS:[" ^ (Cprinter.string_of_list_int path_lli) ^ "]" , ll)
+        if not !Globals.show_col then
+          (* let _ = print_endline (Cprinter.string_of_list_loc ll) in *)
+          let lli = (* Gen.BList.remove_dups_eq (=) *) (CF.get_lines ll) in
+          let lli = List.sort (fun i1 i2 -> i1-i2) lli in
+          (* let pr1 = pr_list string_of_int in *)
+          (* let _ = print_endline (pr1 lli) in *)
+          (*path_deps*)
+          let path_lli = (* Gen.BList.remove_dups_eq (=) *) (CF.get_lines path_ll) in
+          let path_lli = List.sort (fun i1 i2 -> i1-i2) path_lli in
+          ((Cprinter.string_of_pure_formula ante) ^ " |- "^
+              (Cprinter.string_of_pure_formula cons) ^ ". LOCS:[" ^ (Cprinter.string_of_list_int lli) ^ "]\n        path dependency:" ^ (Cprinter.string_of_pure_formula path_deps) ^ ". LOCS:[" ^ (Cprinter.string_of_list_int path_lli) ^ "]" , ll)
+        else
+          let sort_fn (i1,c1) (i2,c2)=
+            let del1 = i1-i2 in
+            if del1 = 0 then c1-c2 else del1
+          in
+          let lli = (* Gen.BList.remove_dups_eq (fun (l1,c1) (l2,c2) -> *)
+              (* l1=l2 && c1=c2) *) (CF.get_line_cols ll) in
+          let lli = List.sort sort_fn lli in
+          (*path_deps*)
+          let path_lli = (* Gen.BList.remove_dups_eq (fun (l1,c1) (l2,c2) -> *)
+              (* l1=l2 && c1=c2) *) (CF.get_line_cols path_ll) in
+          let path_lli = List.sort sort_fn path_lli in
+          let pr_line_cols = pr_list (pr_pair string_of_int string_of_int) in
+          ((Cprinter.string_of_pure_formula ante) ^ " |- "^
+              (Cprinter.string_of_pure_formula cons) ^ ". LOCS:[" ^ (pr_line_cols lli) ^ "]\n        path dependency:" ^ (Cprinter.string_of_pure_formula path_deps) ^ ". LOCS:[" ^ (pr_line_cols path_lli) ^ "]" , ll)
       in
       match failure_list with
         | [] -> None
