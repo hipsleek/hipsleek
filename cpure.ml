@@ -8034,6 +8034,46 @@ let update_eq_lhs_sv_formula p lhs_sv path_vars=
       (fun _ _ _ ->  update_eq_lhs_sv_formula_x p lhs_sv path_vars)
       p lhs_sv path_vars
 
+let extract_path_deps_pformula pf il l0=
+  match pf with
+    | Path (pf1, svl, l) ->
+          let np =  BForm ((pf1,il),l0) in
+          (np, [(np,svl)])
+    | _ -> let np =  BForm ((pf,il),l0) in
+          (np, [])
+
+let extract_path_deps_x p0=
+  let rec helper p=
+    match p with
+      | BForm ((pf,il),l) ->begin
+          let np, path_deps = extract_path_deps_pformula pf il l in
+          (np, path_deps)
+        end
+      | And (p1,p2,l) ->
+            let p11,path_deps1  = helper p1 in
+            let p21,path_deps2 = helper p2 in
+            (And (p11,p21,l), path_deps1@path_deps2)
+      | AndList slfs -> p,[]
+      | Or (p1,p2,ol, l) ->
+           let p11,path_deps1  = helper p1 in
+            let p21,path_deps2 = helper p2 in
+            (Or (p11,p21,ol,l), path_deps1@path_deps2)
+      | Not (p, ol, l) -> let newp,path_deps= helper p in
+        Not (newp, ol,l),path_deps
+      | Forall (sv, p, ol, l) -> let newp,path_deps= helper p in
+        Forall (sv, newp, ol, l),path_deps
+      | Exists (sv, p, ol, l) -> let newp,path_deps= helper p in
+        Exists (sv, newp, ol, l),path_deps
+  in
+  let np,path_deps = helper p0 in
+  (np,path_deps)
+
+let extract_path_deps p=
+  let pr1 = !print_formula in
+  let pr2 = pr_list (pr_pair pr1 !print_svl) in
+  Debug.no_1 "extract_path_deps" pr1 (pr_pair pr1 pr2)
+      (fun _ -> extract_path_deps_x p) p
+
 (*slice eq first*)
 let slice_eq_formulas_x ps0 svl0 pos=
   let rec find_rele_eq ps svl rele_ps rem_ps=
@@ -8072,37 +8112,50 @@ let slice_eq_formulas ps svl pos=
   Debug.no_2 "slice_eq_formulas" pr !print_svl (pr_pair !print_svl pr)
       (fun _ _ -> slice_eq_formulas_x ps svl pos) ps svl
 
-let slice_ante_x ante svl=
+let slice_ante_x ante svl need_path_deps=
   let pos = pos_of_formula ante in
-  let conjs = list_of_conjs ante in
+   (*separate path deps reasone *)
+  let ante1, path_deps = if need_path_deps then extract_path_deps ante
+  else ante,[]
+  in
+  (*main failure reason*)
+  let conjs = list_of_conjs ante1 in
   let eq_ps, non_eq_ps = List.partition is_eq_exp conjs in
   let svl1, eq_ps1 = slice_eq_formulas eq_ps svl pos in
   let p1 = conj_of_list non_eq_ps pos in
   let p11 = filter_var p1 svl1 in
   let p2 = conj_of_list (p11::eq_ps1) pos in
-  p2
+  (*path depen process*)
+  let path_deps_p =
+    if need_path_deps then
+       let path_depend_svl = List.fold_left (fun ls (_,svl) -> ls@svl) []  path_deps in
+       let path_deps_p = filter_var ante1 (remove_dups_svl path_depend_svl) in
+       path_deps_p
+    else mkTrue no_pos
+  in
+  (p2,path_deps_p)
 
-let slice_ante ante svl=
+let slice_ante ante svl need_path_deps=
   let pr = !print_formula in
-  Debug.no_2 "slice_ante" pr !print_svl pr
-      (fun _ _ -> slice_ante_x ante svl) ante svl
+  Debug.no_3 "slice_ante" pr !print_svl string_of_bool (pr_pair pr pr)
+      (fun _ _ _ -> slice_ante_x ante svl need_path_deps) ante svl need_path_deps
 
-let filter_ante_x (ante : formula) (conseq : formula) : (formula) =
+let filter_ante_x (ante : formula) (conseq : formula) need_path_deps: (formula*formula) =
   let fvar = fv conseq in
   (* let new_ante = filter_var ante fvar in *)
-  let new_ante = slice_ante ante fvar in
-  new_ante
+  let new_ante,path_deps_p = slice_ante ante fvar need_path_deps in
+  (new_ante,path_deps_p)
 
-let filter_ante (ante : formula) (conseq : formula) : (formula) =
+let filter_ante (ante : formula) (conseq : formula) need_path_deps: (formula*formula) =
   let pr = !print_formula in
-  Debug.no_2 "filter_ante" pr pr pr
-      (fun _ _ -> filter_ante_x ante conseq) ante conseq
+  Debug.no_3 "filter_ante" pr pr string_of_bool (pr_pair pr pr)
+      (fun _ _ _ -> filter_ante_x ante conseq need_path_deps) ante conseq need_path_deps
 
 let filter_ante_wo_rel (ante : formula) (conseq : formula) : (formula) =
-	let fvar = fv conseq in
-	let fvar = List.filter (fun v -> not(is_rel_var v)) fvar in
-	let new_ante = filter_var ante fvar in
-    new_ante
+  let fvar = fv conseq in
+  let fvar = List.filter (fun v -> not(is_rel_var v)) fvar in
+  let new_ante = filter_var ante fvar in
+  new_ante
 
 (* automatic slicing of variables *)
 
@@ -8164,34 +8217,35 @@ let slice_formula (fl : formula list) : (spec_var list * formula list) list =
   Debug.no_1 "slice_formula" pr pr2 slice_formula fl
 
 let part_contradiction is_sat pairs =
-  let (p1,p2) = List.partition (fun (a,c) -> not(is_sat c)) pairs in
-  (List.map (fun (_,c) -> (mkTrue no_pos,c) ) p1, p2)
+  let (p1,p2) = List.partition (fun (a,c,_) -> not(is_sat c)) pairs in
+  (List.map (fun (_,c,p) -> (mkTrue no_pos,c,p) ) p1, p2)
 
-let part_must_failures is_sat pairs = List.partition (fun (a,c) ->not(is_sat (mkAnd a c no_pos))) pairs
+let part_must_failures is_sat pairs = List.partition (fun (a,c,_) ->not(is_sat (mkAnd a c no_pos))) pairs
 
-let part_must_failures is_sat pairs = List.partition (fun (a,c) -> not(is_sat (mkAnd a c no_pos))) pairs
+(* let part_must_failures is_sat pairs = List.partition (fun (a,c) -> not(is_sat (mkAnd a c no_pos))) pairs *)
 
 let imply is_sat a c = not (is_sat (mkAnd a (mkNot c None no_pos) no_pos))
 
-let refine_one_must is_sat (ante,conseq) : (formula * formula) list =
+let refine_one_must is_sat (ante,conseq,path) : (formula * formula * formula) list =
   let cs = split_conjunctions conseq in
   let ml = List.filter (fun c ->
       let f = mkAnd ante c no_pos in
       not(is_sat f)) cs in
-  if ml==[] then [(ante,conseq)]
-  else List.map (fun f -> (ante,f)) ml
+  if ml==[] then [(ante,conseq,path)]
+  else List.map (fun f -> (ante,f,path)) ml
 
-let refine_one_must is_sat (ante,conseq) : (formula * formula) list =
+let refine_one_must is_sat (ante,conseq,path) : (formula * formula * formula) list =
 
   (* let _ = print_string ("refine_one_must: before is_sat" *)
   (*                       ^ "\n\n") in *)
 
   let pr = !print_formula in
-  let pr2 = pr_list (pr_pair pr pr) in
-  Debug.no_1 "refine_one_must" (pr_pair pr pr) pr2 (fun  _ ->refine_one_must is_sat (ante, conseq)) (ante, conseq)
+  let pr2 = pr_list (pr_triple pr pr pr) in
+  Debug.no_1 "refine_one_must" (pr_pair pr pr) pr2
+      (fun  _ ->refine_one_must is_sat (ante, conseq,path)) (ante, conseq)
 
 
-let refine_must is_sat (pairs:(formula * formula) list) : (formula * formula) list =
+let refine_must is_sat (pairs:(formula * formula * formula) list) : (formula * formula*formula) list =
 
   (* let _ = print_string ("refine_must: before is_sat" *)
   (*                       ^ "\n\n") in *)
@@ -8200,11 +8254,11 @@ let refine_must is_sat (pairs:(formula * formula) list) : (formula * formula) li
   List.concat rs
  
 let find_may_failures imply pairs =
-  let pairs = List.map (fun (a,c) -> 
+  let pairs = List.map (fun (a,c,p) -> 
       let cs = split_conjunctions c in
-      List.map (fun c -> (a,c)) cs) pairs in
+      List.map (fun c -> (a,c,p)) cs) pairs in
   let pairs = List.concat pairs in
-  List.filter (fun (a,c) ->  not(imply a c)) pairs
+  List.filter (fun (a,c,_) ->  not(imply a c)) pairs
 
 let rec remove_redundant_helper ls rs=
   match ls with
@@ -8231,7 +8285,10 @@ let find_all_failures is_sat ante cons =
   let ante = (*remove_dup_constraints*) remove_redundant ante in
   let cs= split_conjunctions cons in
   let cs = List.map (fun (_,ls) -> join_conjunctions ls) (slice_formula cs) in
-  let cand_pairs = List.map (fun c -> (filter_ante ante c,c)) cs in
+  let cand_pairs = List.map (fun c ->
+      let a,path = filter_ante ante c true in
+      (a,c,path)
+  ) cs in
   let (contra_list,cand_pairs) = part_contradiction is_sat cand_pairs in
   let (must_list,cand_pairs) = part_must_failures is_sat cand_pairs in
   let must_list = refine_must is_sat must_list in
@@ -8244,8 +8301,9 @@ let find_all_failures is_sat ante cons =
 
 let find_all_failures is_sat  ante cons =
   let pr = !print_formula_w_loc in
-  let pr2 = pr_list (pr_pair pr pr) in
-  Debug.no_2 "find_all_failures" pr pr (pr_triple pr2 pr2 pr2) (fun _ _ -> find_all_failures is_sat ante cons) ante cons 
+  let pr2 = pr_list (pr_triple pr pr pr) in
+  Debug.no_2 "find_all_failures" pr pr (pr_triple pr2 pr2 pr2)
+      (fun _ _ -> find_all_failures is_sat ante cons) ante cons
 
 let find_must_failures is_sat ante cons =
 
@@ -8278,7 +8336,8 @@ let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : fo
     simpl ante
   else ante 
   in
-   filter_ante n_a conseq
+  (* let ante1,_ = filter_ante n_a conseq false in ante1 *)
+  n_a
 
 let simplify_filter_ante (simpl: formula -> formula) (ante:formula) (conseq : formula) : formula = 
   let pr = !print_formula_w_loc in
@@ -9110,7 +9169,7 @@ let rec get_Neg_RelForm pf = match pf with
 
 let assumption_filter (ante : formula) (conseq : formula) : (formula * formula) =
   if !filtering_flag (* && (not !allow_pred_spec) *) 
-  then (filter_ante ante conseq, conseq)
+  then (fst (filter_ante ante conseq false), conseq)
   else (ante, conseq)
 
 (* need unsat checking for disjunctive LHS *)
@@ -9120,7 +9179,7 @@ let assumption_filter_aggressive is_sat (ante : formula) (conseq : formula) : (f
     let ante_ls = List.filter is_sat (split_disjunctions ante) in
     if ante_ls==[] then (mkFalse no_pos,conseq)
     else 
-      let ante_ls = List.map (fun x -> filter_ante x conseq) ante_ls in
+      let ante_ls = List.map (fun x -> fst (filter_ante x conseq false)) ante_ls in
       let ante = join_disjunctions ante_ls in
       (ante, conseq)
   else (ante, conseq)

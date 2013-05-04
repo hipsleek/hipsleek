@@ -6469,21 +6469,22 @@ and xpure_imply_x (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : b
   res
 
 (*maximising must bug with RAND (error information)*)
-and check_maymust_failure (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list))=
+and check_maymust_failure (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula*CP.formula) list * (CP.formula*CP.formula*CP.formula) list * (CP.formula*CP.formula*CP.formula) list))=
   let pr1 = Cprinter.string_of_pure_formula in
-  let pr3 = pr_list (pr_pair pr1 pr1) in
+  let pr3 = pr_list (pr_triple pr1 pr1 pr1) in
   let pr2 = pr_pair (Cprinter.string_of_failure_kind) (pr_triple pr3 pr3 pr3) in
   Debug.no_2 "check_maymust_failure" pr1 pr1 pr2 (fun _ _ -> check_maymust_failure_x ante cons) ante cons
 
 (*maximising must bug with RAND (error information)*)
-and check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list))=
+and check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kind*((CP.formula*CP.formula*CP.formula) list *
+ (CP.formula*CP.formula*CP.formula) list * (CP.formula*CP.formula*CP.formula) list))=
   if not !disable_failure_explaining then
     let r = ref (-9999) in
     let is_sat f = TP.is_sat_sub_no f r in
     let find_all_failures a c = CP.find_all_failures is_sat a c in
     let find_all_failures a c =
       let pr1 = Cprinter.string_of_pure_formula in
-      let pr2 = pr_list (pr_pair pr1 pr1) in
+      let pr2 = pr_list (pr_triple pr1 pr1 pr1) in
       let pr3 = pr_triple pr2 pr2 pr2 in
       Debug.no_2 "find_all_failures" pr1 pr1 pr3 find_all_failures a c in
     let filter_redundant a c = CP.simplify_filter_ante TP.simplify_always a c in
@@ -6501,13 +6502,15 @@ and check_maymust_failure_x (ante:CP.formula) (cons:CP.formula): (CF.failure_kin
         (CF.mk_failure_must_raw "", (r1, r2, r3))
       end
   else
-    (CF.mk_failure_may_raw "", ([], [], [(ante, cons)]))
+    (CF.mk_failure_may_raw "", ([], [], [(ante, cons, CP.mkTrue no_pos)]))
 
 and build_and_failures i (failure_code:string) (failure_name:string) ((contra_list, must_list, may_list)
-    :((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list)) 
+    :((CP.formula*CP.formula*CP.formula) list *
+        (CP.formula*CP.formula*CP.formula) list *
+        (CP.formula*CP.formula*CP.formula) list)) 
       (fail_ctx_template: fail_context): list_context=
   let pr1 = Cprinter.string_of_pure_formula_w_loc in
-  let pr3 = pr_list (pr_pair pr1 pr1) in
+  let pr3 = pr_list (pr_triple pr1 pr1 pr1) in
   let pr4 = pr_triple pr3 pr3 pr3 in
   let pr2 = (fun _ -> "OUT") in
   Debug.no_1_num i "build_and_failures" pr4 pr2 
@@ -6516,12 +6519,13 @@ and build_and_failures i (failure_code:string) (failure_name:string) ((contra_li
 
 (*maximising must bug with AND (error information)*)
 (* to return fail_type with AND_reason *)
-and build_and_failures_x (failure_code:string) (failure_name:string) ((contra_list, must_list, may_list)
-    :((CP.formula*CP.formula) list * (CP.formula*CP.formula) list * (CP.formula*CP.formula) list)) (fail_ctx_template: fail_context): list_context=
+and build_and_failures_x (failure_code:string) (failure_name:string) ((contra_list, must_list, may_list) :((CP.formula*CP.formula*CP.formula) list *
+    (CP.formula*CP.formula*CP.formula) list *(CP.formula*CP.formula*CP.formula) list))
+      (fail_ctx_template: fail_context): list_context=
   if not !disable_failure_explaining then
-    let build_and_one_kind_failures (failure_string:string) (fk: CF.failure_kind) (failure_list:(CP.formula*CP.formula) list):CF.fail_type option=
+    let build_and_one_kind_failures (failure_string:string) (fk: CF.failure_kind) (failure_list:(CP.formula*CP.formula*CP.formula) list):CF.fail_type option=
       (*build must/may msg*)
-      let build_failure_msg (ante, cons) =
+      let build_failure_msg (ante, cons,path_deps) =
         (* let _ = print_endline ("\nante: " ^ (Cprinter.string_of_pure_formula_w_loc ante)) in *)
         (* let _ = print_endline ("cons: " ^ (Cprinter.string_of_pure_formula_w_loc cons)) in *)
         let ll = (CP.list_pos_of_formula ante []) @ (CP.list_pos_of_formula cons []) in
@@ -6533,8 +6537,13 @@ and build_and_failures_x (failure_code:string) (failure_name:string) ((contra_li
         (*possible to eliminate unnecessary intermediate that are defined by equality.*)
         (*not sure it is better*)
         let ante = CP.elim_equi_ante ante cons in
+        (*path_deps*)
+        let path_ll = CP.list_pos_of_formula path_deps [] in
+        let path_lli = Gen.BList.remove_dups_eq (=) (CF.get_lines path_ll) in
+        let path_lli = List.sort (fun i1 i2 -> i1-i2) path_lli in
         ((Cprinter.string_of_pure_formula ante) ^ " |- "^
-            (Cprinter.string_of_pure_formula cons) ^ ". LOCS:[" ^ (Cprinter.string_of_list_int lli) ^ "]", ll) in
+            (Cprinter.string_of_pure_formula cons) ^ ". LOCS:[" ^ (Cprinter.string_of_list_int lli) ^ "]\n        path dependency:" ^ (Cprinter.string_of_pure_formula path_deps) ^ ". LOCS:[" ^ (Cprinter.string_of_list_int path_lli) ^ "]" , ll)
+      in
       match failure_list with
         | [] -> None
         | _ ->
@@ -7074,7 +7083,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate_
               match fc with
                 | Failure_May _ -> check_maymust_failure (MCP.pure_of_mix split_ante1) cons4
                 | _ -> (fc, (contra_list, must_list, may_list)) in
-            (false,[],None, (new_fc_kind, (new_contra_list, new_must_list, new_may_list))) 
+            (false,[],None, (new_fc_kind, (new_contra_list, new_must_list, new_may_list)))
           end
         else (i_res1,i_res2,i_res3, (fc_kind, (contra_list, must_list, may_list)))
       in

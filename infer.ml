@@ -713,7 +713,7 @@ let rec infer_pure_m_x estate lhs_rels lhs_xpure_orig lhs_xpure0 lhs_wo_heap_ori
       let _ = DD.trace_hprint (add_str "lhs(orig): " !CP.print_formula) lhs_xpure_orig pos in
       let _ = DD.trace_hprint (add_str "lhs0(orig): " !print_mix_formula) lhs_xpure0 pos in
       let _ = DD.trace_hprint (add_str "rhs(orig): " !CP.print_formula) rhs_xpure pos in
-      let lhs_xpure = CP.filter_ante lhs_xpure_orig rhs_xpure in
+      let lhs_xpure = fst (CP.filter_ante lhs_xpure_orig rhs_xpure false) in
       let _ = DD.trace_hprint (add_str "lhs (after filter_ante): " !CP.print_formula) lhs_xpure pos in
       let fml = CP.mkAnd lhs_xpure rhs_xpure pos in
       let fml = CP.drop_rel_formula fml in
