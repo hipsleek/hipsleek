@@ -158,6 +158,7 @@ and p_formula =
   | RelForm of (spec_var * (exp list) * loc)
   (* | RelForm of (SpecVar * (exp list) * loc)             *)
   (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
+  | Path of (p_formula * spec_var list * loc)
 
 (* Expression *)
 and exp =
@@ -950,64 +951,68 @@ and remove_qvar qid qf =
   Gen.BList.difference_eq eq_spec_var qfv [qid]
 
 and bfv (bf : b_formula) =
-  let (pf,_) = bf in
-  match pf with
-    | BConst _ -> []
-    | XPure xp -> begin
-        match xp.xpure_view_node with
-          | None -> xp.xpure_view_arguments
-          | Some r -> r::xp.xpure_view_arguments
-    end
-    | BVar (bv, _) -> [bv]
-    | Lt (a1, a2, _) 
-    | Lte (a1, a2, _) 
-    | Gt (a1, a2, _) 
-    | Gte (a1, a2, _) 
-    | SubAnn (a1, a2, _) 
-    | Eq (a1, a2, _) 
-    | Neq (a1, a2, _) -> combine_avars a1 a2
-    | EqMax (a1, a2, a3, _) ->
-          let fv1 = afv a1 in
-          let fv2 = afv a2 in
-          let fv3 = afv a3 in
-          remove_dups_svl (fv1 @ fv2 @ fv3)
-    | EqMin (a1, a2, a3, _) ->
-          let fv1 = afv a1 in
-          let fv2 = afv a2 in
-          let fv3 = afv a3 in
-          remove_dups_svl (fv1 @ fv2 @ fv3)
-    | BagIn (v, a1, _) ->
-          let fv1 = afv a1 in
-          [v] @ fv1
-    | BagNotIn (v, a1, _) ->
-          let fv1 = afv a1 in
-          [v] @ fv1
-    | BagSub (a1, a2, _) -> combine_avars a1 a2
-    | BagMax (v1, v2, _) ->remove_dups_svl ([v1] @ [v2])
-    | BagMin (v1, v2, _) ->remove_dups_svl ([v1] @ [v2])
-    | ListIn (a1, a2, _) ->
-          let fv1 = afv a1 in
-          let fv2 = afv a2 in
-          fv1 @ fv2
-    | ListNotIn (a1, a2, _) ->
-          let fv1 = afv a1 in
-          let fv2 = afv a2 in
-          fv1 @ fv2
-    | ListAllN (a1, a2, _) ->
-          let fv1 = afv a1 in
-          let fv2 = afv a2 in
-          fv1 @ fv2
-    | ListPerm (a1, a2, _) ->
-          let fv1 = afv a1 in
-          let fv2 = afv a2 in
-          fv1 @ fv2
-    | RelForm (r, args, _) ->
-          let vid = r in
-	  vid::remove_dups_svl (List.fold_left List.append [] (List.map afv args))
-	      (* An Hoa *)
-    | VarPerm (t,ls,_) -> ls
-    | LexVar l_info ->
-          List.concat (List.map afv (l_info.lex_exp @ l_info.lex_tmp))
+  let (pf0,_) = bf in
+  let rec helper pf=
+    match pf with
+      | BConst _ -> []
+      | XPure xp -> begin
+          match xp.xpure_view_node with
+            | None -> xp.xpure_view_arguments
+            | Some r -> r::xp.xpure_view_arguments
+        end
+      | BVar (bv, _) -> [bv]
+      | Lt (a1, a2, _) 
+      | Lte (a1, a2, _) 
+      | Gt (a1, a2, _) 
+      | Gte (a1, a2, _) 
+      | SubAnn (a1, a2, _) 
+      | Eq (a1, a2, _) 
+      | Neq (a1, a2, _) -> combine_avars a1 a2
+      | EqMax (a1, a2, a3, _) ->
+            let fv1 = afv a1 in
+            let fv2 = afv a2 in
+            let fv3 = afv a3 in
+            remove_dups_svl (fv1 @ fv2 @ fv3)
+      | EqMin (a1, a2, a3, _) ->
+            let fv1 = afv a1 in
+            let fv2 = afv a2 in
+            let fv3 = afv a3 in
+            remove_dups_svl (fv1 @ fv2 @ fv3)
+      | BagIn (v, a1, _) ->
+            let fv1 = afv a1 in
+            [v] @ fv1
+      | BagNotIn (v, a1, _) ->
+            let fv1 = afv a1 in
+            [v] @ fv1
+      | BagSub (a1, a2, _) -> combine_avars a1 a2
+      | BagMax (v1, v2, _) ->remove_dups_svl ([v1] @ [v2])
+      | BagMin (v1, v2, _) ->remove_dups_svl ([v1] @ [v2])
+      | ListIn (a1, a2, _) ->
+            let fv1 = afv a1 in
+            let fv2 = afv a2 in
+            fv1 @ fv2
+      | ListNotIn (a1, a2, _) ->
+            let fv1 = afv a1 in
+            let fv2 = afv a2 in
+            fv1 @ fv2
+      | ListAllN (a1, a2, _) ->
+            let fv1 = afv a1 in
+            let fv2 = afv a2 in
+            fv1 @ fv2
+      | ListPerm (a1, a2, _) ->
+            let fv1 = afv a1 in
+            let fv2 = afv a2 in
+            fv1 @ fv2
+      | RelForm (r, args, _) ->
+            let vid = r in
+	    vid::remove_dups_svl (List.fold_left List.append [] (List.map afv args))
+	        (* An Hoa *)
+      | VarPerm (t,ls,_) -> ls
+      | LexVar l_info ->
+            List.concat (List.map afv (l_info.lex_exp @ l_info.lex_tmp))
+      | Path (pf1, _, _) -> helper pf1
+  in
+  helper pf0
 
 and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
   let fv1 = afv a1 in
@@ -1593,18 +1598,23 @@ and partition_by_const eql =
     else helper (n_lbl, eq_const_lst @ eq_consts) eq_others
   in helper ([], []) eql
          
-and is_b_form_arith (b: b_formula) :bool = let (pf,_) = b in
-match pf with
-  | BConst _  | BVar _ | SubAnn _ | LexVar _ | XPure _ -> true
-  | Lt (e1,e2,_) | Lte (e1,e2,_)  | Gt (e1,e2,_) | Gte (e1,e2,_) | Eq (e1,e2,_) 
-  | Neq (e1,e2,_) -> (is_exp_arith e1)&&(is_exp_arith e2)
-  | EqMax (e1,e2,e3,_) | EqMin (e1,e2,e3,_) -> (is_exp_arith e1)&&(is_exp_arith e2) && (is_exp_arith e3)
-        (* bag formulas *)
-  | BagIn _ | BagNotIn _ | BagSub _ | BagMin _ | BagMax _
-  | VarPerm _
-          (* list formulas *)
-  | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _
-  | RelForm _ -> false (* An Hoa *)
+and is_b_form_arith (b: b_formula) :bool =
+  let (pf0,_) = b in
+  let rec helper pf=
+    match pf with
+      | BConst _  | BVar _ | SubAnn _ | LexVar _ | XPure _ -> true
+      | Lt (e1,e2,_) | Lte (e1,e2,_)  | Gt (e1,e2,_) | Gte (e1,e2,_) | Eq (e1,e2,_) 
+      | Neq (e1,e2,_) -> (is_exp_arith e1)&&(is_exp_arith e2)
+      | EqMax (e1,e2,e3,_) | EqMin (e1,e2,e3,_) -> (is_exp_arith e1)&&(is_exp_arith e2) && (is_exp_arith e3)
+            (* bag formulas *)
+      | BagIn _ | BagNotIn _ | BagSub _ | BagMin _ | BagMax _
+      | VarPerm _
+              (* list formulas *)
+      | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _
+      | RelForm _ -> false (* An Hoa *)
+      | Path (pf1, _, _) -> helper pf1
+  in
+  helper pf0
 
 and is_xpure p=
 match p with
@@ -2573,6 +2583,7 @@ and pos_of_b_formula (b: b_formula) =
     | ListPerm (_, _, p) -> p
     | RelForm (_, _, p) -> p
     | VarPerm (_,_,p) -> p
+    | Path (_, _, p) -> p
 
 and pos_of_formula (f: formula) =
   match f with
@@ -2649,6 +2660,7 @@ and list_pos_of_b_formula (b: b_formula) =
     | ListPerm (_, _, p) -> [p]
     | RelForm (_, _, p) -> [p]
     | VarPerm (_,_,p) -> [p]
+    | Path (_, _, p) -> [p]
  
 and list_pos_of_formula f rs: loc list=
   match f with
@@ -2700,7 +2712,8 @@ and get_var_locs_exp (e0 : exp) sv =
   helper e0
 
 and get_var_locs_b_formula (b: b_formula) v = 
-  let (p, _) = b in
+  let (p0, _) = b in
+  let rec helper p=
   match p with
     | LexVar _ -> []
     | SubAnn _ -> []
@@ -2733,6 +2746,9 @@ and get_var_locs_b_formula (b: b_formula) v =
     | ListPerm (_, _, p) -> []
     | RelForm (_, _, p) -> []
     | VarPerm (_,_,p) -> []
+    | Path (pf, _, _) -> helper pf
+  in
+  helper p0
 
 and get_var_locs f0 v: loc list=
   let rec helper f=
@@ -2814,6 +2830,7 @@ and subst_pos_pformula p pf= match pf with
   | ListPerm (e1, e2, _) -> ListPerm (e1, e2, p)
   | RelForm (id, el, _) -> RelForm (id, el, p)
   | VarPerm (t,ls,_) -> VarPerm (t,ls,p)
+  | Path (pf1, svl, _) -> Path (subst_pos_pformula p pf1, svl, p)
 
 and  subst_pos_bformula p (pf, a) =  (subst_pos_pformula p pf, a)
 
@@ -3078,7 +3095,7 @@ and b_apply_subs sst bf =
 
 and b_apply_subs_x sst bf =
   let (pf,sl) = bf in
-  let npf = match pf with
+  let rec helper pf0= match pf0 with
     | BConst _ -> pf
     | BVar (bv, pos) -> BVar (subs_one sst bv, pos)
     | XPure x -> XPure {x with 
@@ -3114,8 +3131,10 @@ and b_apply_subs_x sst bf =
     | LexVar t_info -> 
         LexVar { t_info with
 				  lex_exp = e_apply_subs_list sst t_info.lex_exp;
-					lex_tmp = e_apply_subs_list sst t_info.lex_tmp; } 
+					lex_tmp = e_apply_subs_list sst t_info.lex_tmp; }
+    | Path (pf1, svl, pos) -> Path (helper pf1, List.map (subs_one sst) svl, pos)
   in
+  let npf = helper pf in
   (* Slicing: Add the inferred linking variables into sl field *)
   (* We also restore the prior inferred information            *)
   (* let infer_lvar_enabled = !do_slicing && !infer_lvar_slicing in *)
@@ -3199,7 +3218,7 @@ and b_apply_subs_w_locs sst bf =
 and b_apply_subs_w_locs_x sst bf =
   let (pf,sl) = bf in
   let sst0 = List.map (fun (a,b,_) -> (a,b)) sst in
-  let npf = match pf with
+  let rec helper pf0 = match pf0 with
     | BConst _ -> pf
     | BVar (bv, pos) ->
           let new_sv,locs = subs_one_w_locs sst bv in
@@ -3248,7 +3267,9 @@ and b_apply_subs_w_locs_x sst bf =
         LexVar { t_info with
 	    lex_exp = e_apply_subs_list_w_locs sst t_info.lex_exp;
 	    lex_tmp = e_apply_subs_list_w_locs sst t_info.lex_tmp; } 
+    | Path (pf1, svl, pos) -> Path (helper pf1, List.map (fun sv -> fst (subs_one_w_locs sst sv)) svl, pos)
   in
+  let npf = helper pf in
   (* Slicing: Add the inferred linking variables into sl field *)
   (* We also restore the prior inferred information            *)
   (* let infer_lvar_enabled = !do_slicing && !infer_lvar_slicing in *)
@@ -3512,7 +3533,7 @@ and is_member v t = let vl=afv t in List.fold_left (fun curr -> fun nv -> curr o
 
 and b_apply_par_term (sst : (spec_var * exp) list) bf =
   let (pf,il) = bf in
-  let npf = match pf with
+  let rec helper pf0 = match pf0 with
     | BConst _ -> pf
     | XPure _ -> pf (* WN XPure : not possible *)
     | BVar (bv, pos) ->
@@ -3544,7 +3565,10 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf =
           LexVar { t_info with 
 	      lex_exp = a_apply_par_term_list sst t_info.lex_exp;
 	      lex_tmp = a_apply_par_term_list sst t_info.lex_tmp; } 
-  in (npf,il)
+    | Path (pf1, svl, pos) -> Path (helper pf1, svl, pos)
+  in
+  let npf = helper pf in
+  (npf,il)
 
 and subs_one_term sst v orig = List.fold_left (fun old  -> fun  (fr,t) -> if (eq_spec_var fr v) then t else old) orig sst 
 
@@ -3604,7 +3628,16 @@ and apply_one_term (fr, t) f = match f with
         
 and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
   let (pf,il) = bf in
-  let npf = match pf with
+  let subst_sv sv=
+    if eq_spec_var sv fr then
+      match t with
+        | Var (tv,pos) -> tv
+        | _ ->
+              let _ = print_endline "[Warning] b_apply_one_term: cannot replace a variable with an expression" in
+              sv
+    else sv
+  in
+  let rec helper pf0 = match pf0 with
     | BConst _ -> pf
     | XPure _ -> pf
     | BVar (bv, pos) ->
@@ -3656,7 +3689,10 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf =
           LexVar { t_info with
 	      lex_exp = List.map (a_apply_one_term (fr, t)) t_info.lex_exp; 
 	      lex_tmp = List.map (a_apply_one_term (fr, t)) t_info.lex_tmp; } 
-  in (npf,il)
+    | Path (pf1, svl, pos) -> Path (helper pf1, List.map subst_sv svl, pos)
+  in
+  let npf = helper pf in
+  (npf,il)
 
 and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | Null _ 
@@ -4826,7 +4862,16 @@ and apply_one_exp ((fr, t) : spec_var * exp) f =
 
 and b_apply_one_exp (fr, t) bf =
   let (pf,il) = bf in
-  let npf = match pf with
+  let subst_sv sv=
+    if eq_spec_var sv fr then
+      match t with
+        | Var (tv,pos) -> tv
+        | _ ->
+              let _ = print_endline "[Warning] b_apply_one_term: cannot replace a variable with an expression" in
+              sv
+    else sv
+  in
+  let rec helper pf0 = match pf0 with
   | BConst _ -> pf
   | XPure _ -> pf
   | BVar (bv, pos) -> pf
@@ -4870,7 +4915,10 @@ and b_apply_one_exp (fr, t) bf =
       LexVar { t_info with
 			  lex_exp = e_apply_one_list_exp (fr, t) t_info.lex_exp; 
 				lex_tmp = e_apply_one_list_exp (fr, t) t_info.lex_tmp; }
-  in (npf,il)
+  | Path (pf1, svl, pos) -> Path (helper pf1, List.map subst_sv svl, pos)
+  in
+  let npf = helper pf in
+  (npf,il)
 
 and e_apply_one_exp (fr, t) e = match e with
   | Null _ | IConst _ | InfConst _ | FConst _| AConst _ | Tsconst _ -> e
@@ -5612,7 +5660,7 @@ and b_form_simplify_x (b:b_formula) :b_formula =
 	let qh = purge_mult qh in
 	(lh, rh, qh,flag) in
   let (pf,il) = b in
-  let npf = match pf with
+  let rec helper pf0 = match pf0 with
     |  BConst _ 
     |  SubAnn _ | LexVar _ | XPure _
     |  BVar _ -> pf
@@ -5710,10 +5758,12 @@ and b_form_simplify_x (b:b_formula) :b_formula =
     |  BagMin _ -> pf
     |  BagMax _ -> pf
     |  VarPerm _ -> pf
-	|  RelForm (v,exs,p) ->  
+    |  RelForm (v,exs,p) ->  
            let new_exs = List.map (fun e -> purge_mult (simp_mult e)) exs in
            RelForm (v,new_exs,p)
-  in (npf,il)
+    | Path (pf1, svl, pos) -> Path (helper pf1,svl, pos)
+  in
+  let npf = helper pf in (npf,il)
            
 (* a+a    --> 2*a
    1+3    --> 4
@@ -5923,102 +5973,106 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
   let (f_b_formula_comb, f_exp_comb) = f_comb in
   let helper (arg:'a) (e:exp) : (exp * 'b)= foldr_exp e arg f_exp f_exp_args f_exp_comb in
   let helper2 (arg:'a) (e:b_formula) : (b_formula * 'b) =
-	let r =  f_b_formula arg e in 
-	match r with
-	  | Some e1 -> e1
-	  | None  -> let new_arg = f_b_formula_args arg e in 
+    let r =  f_b_formula arg e in 
+    match r with
+      | Some e1 -> e1
+      | None  -> let new_arg = f_b_formula_args arg e in 
         let f_comb = f_b_formula_comb e in
-		let (pf, annot) = e in
-		let (nannot, opt1) = match annot with
-		  | None -> (None, f_comb [])
-		  | Some (il, lb, el) ->
-			let (nel, opt1) = List.split (List.map (fun e -> helper new_arg e) el) in
-			(Some (il, lb, nel), f_comb opt1)
-		in
-        let (npf, opt2) = match pf with	  
-	      | BConst _
-	      | BVar _ 
-	      | XPure _ 
-	      | BagMin _ 
-	      | SubAnn _ 
+	let (pf, annot) = e in
+	let (nannot, opt1) = match annot with
+	  | None -> (None, f_comb [])
+	  | Some (il, lb, el) ->
+		let (nel, opt1) = List.split (List.map (fun e -> helper new_arg e) el) in
+		(Some (il, lb, nel), f_comb opt1)
+	in
+        let rec helper3 pf0= match pf0 with
+	  | BConst _
+	  | BVar _ 
+	  | XPure _ 
+	  | BagMin _ 
+	  | SubAnn _ 
           | VarPerm _ (*TO CHECK*)
-	      | BagMax _ -> (pf,f_comb [])
-	      | Lt (e1,e2,l) ->
-		        let (ne1,r1) = helper new_arg e1 in
-		        let (ne2,r2) = helper new_arg e2 in
-		        (Lt (ne1,ne2,l),f_comb[r1;r2])
-	      | Lte (e1,e2,l) ->
-		        let (ne1,r1) = helper new_arg e1 in
-		        let (ne2,r2) = helper new_arg e2 in
-		        (Lte (ne1,ne2,l),f_comb[r1;r2])
-	      | Gt (e1,e2,l) ->
-		        let (ne1,r1) = helper new_arg e1 in
-		        let (ne2,r2) = helper new_arg e2 in
-		        (Gt (ne1,ne2,l),f_comb[r1;r2])
-	      | Gte (e1,e2,l) ->
-		        let (ne1,r1) = helper new_arg e1 in
-		        let (ne2,r2) = helper new_arg e2 in
-		        (Gte (ne1,ne2,l),f_comb[r1;r2])
-	      | Eq (e1,e2,l) ->
-		        let (ne1,r1) = helper new_arg e1 in
-		        let (ne2,r2) = helper new_arg e2 in
-		        (Eq (ne1,ne2,l),f_comb[r1;r2])
-	      | Neq (e1,e2,l) ->
-		        let (ne1,r1) = helper new_arg e1 in
-		        let (ne2,r2) = helper new_arg e2 in
-		        (Neq (ne1,ne2,l),f_comb[r1;r2])
-	      | EqMax (e1,e2,e3,l) ->
-		        let (ne1,r1) = helper new_arg e1 in
-		        let (ne2,r2) = helper new_arg e2 in
-		        let (ne3,r3) = helper new_arg e3 in
-		        (EqMax (ne1,ne2,ne3,l),f_comb[r1;r2;r3])	  
-	      | EqMin (e1,e2,e3,l) ->
-		        let (ne1,r1) = helper new_arg e1 in
-		        let (ne2,r2) = helper new_arg e2 in
-		        let (ne3,r3) = helper new_arg e3 in
-		        (EqMin (ne1,ne2,ne3,l),f_comb[r1;r2;r3])
-		            (* bag formulas *)
-	      | BagIn (v,e,l)->
-		        let (ne1,r1) = helper new_arg e in
-		        (BagIn (v,ne1,l),f_comb [r1])
-	      | BagNotIn (v,e,l)->
-		        let (ne1,r1) = helper new_arg e in
-		        (BagNotIn (v,ne1,l),f_comb [r1])
-	      | BagSub (e1,e2,l) ->
-		        let (ne1,r1) = helper new_arg e1 in
-		        let (ne2,r2) = helper new_arg e2 in
-		        (BagSub (ne1,ne2,l),f_comb[r1;r2])
+	  | BagMax _ -> (pf,f_comb [])
+	  | Lt (e1,e2,l) ->
+		let (ne1,r1) = helper new_arg e1 in
+		let (ne2,r2) = helper new_arg e2 in
+		(Lt (ne1,ne2,l),f_comb[r1;r2])
+	  | Lte (e1,e2,l) ->
+		let (ne1,r1) = helper new_arg e1 in
+		let (ne2,r2) = helper new_arg e2 in
+		(Lte (ne1,ne2,l),f_comb[r1;r2])
+	  | Gt (e1,e2,l) ->
+		let (ne1,r1) = helper new_arg e1 in
+		let (ne2,r2) = helper new_arg e2 in
+		(Gt (ne1,ne2,l),f_comb[r1;r2])
+	  | Gte (e1,e2,l) ->
+		let (ne1,r1) = helper new_arg e1 in
+		let (ne2,r2) = helper new_arg e2 in
+		(Gte (ne1,ne2,l),f_comb[r1;r2])
+	  | Eq (e1,e2,l) ->
+		let (ne1,r1) = helper new_arg e1 in
+		let (ne2,r2) = helper new_arg e2 in
+		(Eq (ne1,ne2,l),f_comb[r1;r2])
+	  | Neq (e1,e2,l) ->
+		let (ne1,r1) = helper new_arg e1 in
+		let (ne2,r2) = helper new_arg e2 in
+		(Neq (ne1,ne2,l),f_comb[r1;r2])
+	  | EqMax (e1,e2,e3,l) ->
+		let (ne1,r1) = helper new_arg e1 in
+		let (ne2,r2) = helper new_arg e2 in
+		let (ne3,r3) = helper new_arg e3 in
+		(EqMax (ne1,ne2,ne3,l),f_comb[r1;r2;r3])
+	  | EqMin (e1,e2,e3,l) ->
+		let (ne1,r1) = helper new_arg e1 in
+		let (ne2,r2) = helper new_arg e2 in
+		let (ne3,r3) = helper new_arg e3 in
+		(EqMin (ne1,ne2,ne3,l),f_comb[r1;r2;r3])
+		    (* bag formulas *)
+	  | BagIn (v,e,l)->
+		let (ne1,r1) = helper new_arg e in
+		(BagIn (v,ne1,l),f_comb [r1])
+	  | BagNotIn (v,e,l)->
+		let (ne1,r1) = helper new_arg e in
+		(BagNotIn (v,ne1,l),f_comb [r1])
+	  | BagSub (e1,e2,l) ->
+		let (ne1,r1) = helper new_arg e1 in
+		let (ne2,r2) = helper new_arg e2 in
+		(BagSub (ne1,ne2,l),f_comb[r1;r2])
           | ListIn (e1,e2,l) ->
-	            let (ne1,r1) = helper new_arg e1 in
+	        let (ne1,r1) = helper new_arg e1 in
                 let (ne2,r2) = helper new_arg e2 in
                 (ListIn (ne1,ne2,l),f_comb[r1;r2])
           | ListNotIn (e1,e2,l) ->
-	            let (ne1,r1) = helper new_arg e1 in
+	        let (ne1,r1) = helper new_arg e1 in
                 let (ne2,r2) = helper new_arg e2 in
                 (ListNotIn (ne1,ne2,l),f_comb[r1;r2])
           | ListAllN (e1,e2,l) ->
-	            let (ne1,r1) = helper new_arg e1 in
+	        let (ne1,r1) = helper new_arg e1 in
                 let (ne2,r2) = helper new_arg e2 in
                 (ListAllN (ne1,ne2,l),f_comb[r1;r2])
           | ListPerm (e1,e2,l) ->
-	            let (ne1,r1) = helper new_arg e1 in
+	        let (ne1,r1) = helper new_arg e1 in
                 let (ne2,r2) = helper new_arg e2 in
                 (ListPerm (ne1,ne2,l),f_comb[r1;r2])
-		  | RelForm (r, args, l) -> (* An Hoa *)
-					    let tmp = List.map (helper new_arg) args in
-							let nargs = List.map fst tmp in
-							let rs = List.map snd tmp in
+	  | RelForm (r, args, l) -> (* An Hoa *)
+		let tmp = List.map (helper new_arg) args in
+		let nargs = List.map fst tmp in
+		let rs = List.map snd tmp in
                 (RelForm (r,nargs,l),f_comb rs)
-		  | LexVar t_info -> 
-					    let tmp1 = List.map (helper new_arg) t_info.lex_exp in
-					    let n_lex_exp = List.map fst tmp1 in
-					    let tmp2 = List.map (helper new_arg) t_info.lex_tmp in
-					    let n_lex_tmp = List.map fst tmp2 in
-							let rs = List.map snd (tmp1@tmp2) in
-              (LexVar { t_info with 
-							  lex_exp = n_lex_exp; lex_tmp = n_lex_tmp;  
-							}, f_comb rs)
-		in ((npf, nannot), f_comb [opt1; opt2])
+	  | LexVar t_info -> 
+		let tmp1 = List.map (helper new_arg) t_info.lex_exp in
+		let n_lex_exp = List.map fst tmp1 in
+		let tmp2 = List.map (helper new_arg) t_info.lex_tmp in
+		let n_lex_tmp = List.map fst tmp2 in
+		let rs = List.map snd (tmp1@tmp2) in
+                (LexVar { t_info with 
+		    lex_exp = n_lex_exp; lex_tmp = n_lex_tmp;
+		}, f_comb rs)
+          | Path (pf1, svl, pos) -> let npf1, opts1 = helper3 pf1 in
+            (Path (npf1,svl,pos), opts1)
+        in
+        let (npf, opt2) = helper3 pf in
+	((npf, nannot), f_comb [opt1; opt2])
   in (helper2 arg e)
 
 
@@ -6038,7 +6092,7 @@ let transform_b_formula f (e:b_formula) :b_formula =
     | Some e1 -> e1
     | None  ->
 	  let (pf,il) = e in
-	  let npf = match pf with	  
+	  let rec helper pf0 = match pf0 with	  
 	    | BConst _
 	    | XPure _ (* WN : xpure *)
 	    | BVar _ 
@@ -6114,7 +6168,9 @@ let transform_b_formula f (e:b_formula) :b_formula =
 		  let nle = List.map (transform_exp f_exp) t_info.lex_exp in
 		  let nlt = List.map (transform_exp f_exp) t_info.lex_tmp in
 		  LexVar { t_info with lex_exp = nle; lex_tmp = nlt; }
-	  in (npf,il)
+            | Path (pf1, svl, l) -> Path (helper pf1, svl, l)
+          in
+          let npf = helper pf in (npf,il)
 
 (*
 type: formula ->
@@ -6439,8 +6495,8 @@ let norm_bform_a (bf:b_formula) : b_formula =
   if (contain_waitlevel || (is_float_bformula bf)) then bf
   else
     let (pf,il) = bf in	
-    let npf = 
-      match pf with 
+    let rec helper pf0=
+      match pf0 with 
         | Lt  (e1,e2,l) -> if contains_inf e1 || contains_inf e2 then pf else
                            norm_bform_leq (Add(e1,IConst(1,no_pos),l)) e2 l
         | Lte (e1,e2,l) -> norm_bform_leq e1 e2 l
@@ -6457,14 +6513,16 @@ let norm_bform_a (bf:b_formula) : b_formula =
         | EqMin _ |  BagSub _ | BagMin _ 
         | BagMax _ | ListAllN _ | ListPerm _ | SubAnn _ -> pf
         | VarPerm _ -> pf
-	    | RelForm (id,exs,l) -> 
+	| RelForm (id,exs,l) -> 
               let exs = List.map norm_exp exs in
               RelForm (id,exs,l)
- 	    | LexVar t_info -> 
+ 	| LexVar t_info -> 
               let nle = List.map norm_exp t_info.lex_exp in
               let nlt = List.map norm_exp t_info.lex_tmp in
               LexVar { t_info with lex_exp = nle; lex_tmp = nlt; }
-   in (npf, il)
+        | Path (pf1, svl, l) -> Path (helper pf1, svl, l)
+    in
+    let npf = helper pf in (npf, il)
 
 let norm_bform_aux (bf:b_formula) : b_formula = norm_bform_a bf
 
@@ -7359,7 +7417,7 @@ let assoc_max (e:exp) : add_term_list list =
 let norm_bform_b (bf:b_formula) : b_formula =
   (*let bf = b_form_simplify bf in *)
   let (pf,il) = bf in
-  let npf = match pf with 
+  let rec helper pf0 = match pf0 with 
     | Lt  (e1,e2,l) -> 
           if contains_inf e1 || contains_inf e2 then pf else
           let e1= (Add(e1,IConst(1,no_pos),l)) in 
@@ -7395,7 +7453,9 @@ let norm_bform_b (bf:b_formula) : b_formula =
     | XPure _ | BConst _ | BVar _ | EqMax _ 
     | EqMin _ |  BagSub _ | BagMin _ 
     | BagMax _ | ListAllN _ | ListPerm _ -> pf
-  in (npf, il)
+    | Path (pf1, svl, l) ->  Path (helper pf1, svl, l)
+  in
+  let npf = helper pf in (npf, il)
 
 
 let rec extract_xpure p=
@@ -10291,36 +10351,38 @@ in helper e
 
 let level_vars_b_formula bf =
   let (pf,il) = bf in
-  (match pf with
-	| Lt (e1,e2,l) 
-	| Lte (e1,e2,l)
-	| Gt (e1,e2,l)
-	| Gte (e1,e2,l)
-	| Eq (e1,e2,l)
-	| Neq (e1,e2,l) ->
-		let vars1 = level_vars_exp e1 in
-		let vars2 = level_vars_exp e2 in
-        vars1@vars2
-	| BagIn (v,e,l)
-	| BagNotIn (v,e,l)->
-        level_vars_exp e
-	| BagSub _
-	| ListIn _
-	| ListNotIn _
-	| ListAllN _
-	| ListPerm _
-	| RelForm _
-	| LexVar _
-	| BConst _
-	| BVar _ 
-	| BagMin _ 
+  let rec helper pf0 = match pf0 with
+    | Lt (e1,e2,l) 
+    | Lte (e1,e2,l)
+    | Gt (e1,e2,l)
+    | Gte (e1,e2,l)
+    | Eq (e1,e2,l)
+    | Neq (e1,e2,l) ->
+	  let vars1 = level_vars_exp e1 in
+	  let vars2 = level_vars_exp e2 in
+          vars1@vars2
+    | BagIn (v,e,l)
+    | BagNotIn (v,e,l)->
+          level_vars_exp e
+    | BagSub _
+    | ListIn _
+    | ListNotIn _
+    | ListAllN _
+    | ListPerm _
+    | RelForm _
+    | LexVar _
+    | BConst _
+    | BVar _ 
+    | BagMin _ 
     | SubAnn _
-	| EqMax _
-	| EqMin _
+    | EqMax _
+    | EqMin _
     | VarPerm _
     | XPure _
-	| BagMax _ -> []
-  )
+    | BagMax _ -> []
+    | Path (pf1, _,_) -> helper pf1
+  in
+  helper pf
 
 (*for each level(l), add a constraint level(l) > 0*)
 let infer_level_pure_x (pf : formula) : formula =
@@ -10814,36 +10876,38 @@ and contain_level_exp e =
 
 and contain_level_b_formula bf =
   let (pf,il) = bf in
-  (match pf with	  
-	| Lt (e1,e2,l) 
-	| Lte (e1,e2,l)
-	| Gt (e1,e2,l)
-	| Gte (e1,e2,l)
-	| Eq (e1,e2,l)
-	| Neq (e1,e2,l) ->
-		let b1 = contain_level_exp e1 in
-		let b2 = contain_level_exp e2 in
-        b1||b2
-	| BagIn (v,e,l)
-	| BagNotIn (v,e,l)->
-        contain_level_exp e
-	| BagSub _
-	| ListIn _
-	| ListNotIn _
-	| ListAllN _
-	| ListPerm _
-	| RelForm _
-	| LexVar _
-	| BConst _
-	| BVar _ 
-	| BagMin _ 
+  let rec helper pf0 = match pf0 with
+    | Lt (e1,e2,l) 
+    | Lte (e1,e2,l)
+    | Gt (e1,e2,l)
+    | Gte (e1,e2,l)
+    | Eq (e1,e2,l)
+    | Neq (e1,e2,l) ->
+	  let b1 = contain_level_exp e1 in
+	  let b2 = contain_level_exp e2 in
+          b1||b2
+    | BagIn (v,e,l)
+    | BagNotIn (v,e,l)->
+          contain_level_exp e
+    | BagSub _
+    | ListIn _
+    | ListNotIn _
+    | ListAllN _
+    | ListPerm _
+    | RelForm _
+    | LexVar _
+    | BConst _
+    | BVar _ 
+    | BagMin _ 
     | SubAnn _
-	| EqMax _
-	| EqMin _
+    | EqMax _
+    | EqMin _
     | VarPerm _
     | XPure _
-	| BagMax _ -> false
-  )
+    | BagMax _ -> false
+    | Path (pf1, _, _) -> helper pf1
+  in
+  helper pf
 
 and drop_locklevel_pure_x (f : formula) : formula =
   let f_e e = Some e in

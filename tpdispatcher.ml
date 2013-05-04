@@ -687,8 +687,8 @@ let rec is_list_exp e = match e with
 	| CP.BagUnion (el,_)
 	| CP.BagIntersect (el,_)
 		-> (List.fold_left (fun res exp -> match res with
-											| Some true -> Some true
-											| _ -> is_list_exp exp) (Some false) el)
+		  | Some true -> Some true
+		  | _ -> is_list_exp exp) (Some false) el)
     | CP.ArrayAt (_,_,_) | CP.Func _ -> Some false
     | CP.Null _ | CP.AConst _ | CP.Tsconst _ | CP.InfConst _
     | CP.Level _
@@ -702,34 +702,35 @@ let rec is_list_exp e = match e with
 *)	
 
 (* TODO : where are the array components *)
-let is_array_b_formula (pf,_) = match pf with
+let is_array_b_formula (pf,_) =
+  let rec helper pf0 = match pf0 with
     | CP.BConst _ | CP.XPure _ 
     | CP.BVar _
-	| CP.BagMin _ 
+    | CP.BagMin _ 
     | CP.BagMax _
     | CP.SubAnn _
     | CP.LexVar _
-		-> Some false    
+	-> Some false    
     | CP.Lt (e1,e2,_) 
     | CP.Lte (e1,e2,_) 
     | CP.Gt (e1,e2,_)
     | CP.Gte (e1,e2,_)
-	| CP.Eq (e1,e2,_)
-	| CP.Neq (e1,e2,_)
-	| CP.BagSub (e1,e2,_)
-		-> (match (is_array_exp e1) with
-						| Some true -> Some true
-						| _ -> is_array_exp e2)
+    | CP.Eq (e1,e2,_)
+    | CP.Neq (e1,e2,_)
+    | CP.BagSub (e1,e2,_) ->
+          (match (is_array_exp e1) with
+	    | Some true -> Some true
+	    | _ -> is_array_exp e2)
     | CP.EqMax (e1,e2,e3,_)
     | CP.EqMin (e1,e2,e3,_)
-		-> (match (is_array_exp e1) with
-						| Some true -> Some true
-						| _ -> (match (is_array_exp e2) with
-											| Some true -> Some true
-											| _ -> is_array_exp e3))
+	-> (match (is_array_exp e1) with
+	  | Some true -> Some true
+	  | _ -> (match (is_array_exp e2) with
+	      | Some true -> Some true
+	      | _ -> is_array_exp e3))
     | CP.BagIn (_,e,_) 
     | CP.BagNotIn (_,e,_)
-		-> is_array_exp e
+	-> is_array_exp e
     | CP.ListIn _ 
     | CP.ListNotIn _
     | CP.ListAllN _ 
@@ -737,6 +738,10 @@ let is_array_b_formula (pf,_) = match pf with
         -> Some false
     | CP.RelForm _ -> Some true
     | CP.VarPerm _ -> Some false
+    | CP.Path(pf1, _, _) -> helper pf1
+  in
+  helper pf
+
 
 let is_list_b_formula (pf,_) = match pf with
     | CP.BConst _ 

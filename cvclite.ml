@@ -121,7 +121,7 @@ and cvcl_of_exp a = match a with
   
 and cvcl_of_b_formula b =
   let (pf,_) = b in
-  match pf with
+  let rec helper pf0 = match pf0 with
   | CP.BConst (c, _) -> if c then "(TRUE)" else "(FALSE)"
   | CP.XPure _ -> "(TRUE)" (* WN : weakening *)
   (* | CP.BVar (sv, _) -> cvcl_of_spec_var sv *)
@@ -159,10 +159,13 @@ and cvcl_of_b_formula b =
   | CP.ListNotIn _
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in cvclite")
-	| CP.RelForm _ -> failwith ("Relations are not supported in cvclite") 
-	| CP.LexVar _ -> failwith ("LexVar are not supported in cvclite") 
-	| CP.SubAnn _ -> failwith ("SubAnn are not supported in cvclite") 
-	  
+  | CP.RelForm _ -> failwith ("Relations are not supported in cvclite") 
+  | CP.LexVar _ -> failwith ("LexVar are not supported in cvclite") 
+  | CP.SubAnn _ -> failwith ("SubAnn are not supported in cvclite") 
+  | CP.Path (pf1, _, _) -> helper pf1
+  in
+  helper pf
+
 and cvcl_of_sv_type sv = match sv with
   | CP.SpecVar ((BagT _), _, _) -> "SET"
   | CP.SpecVar (Bool, _, _) -> "INT" (* "BOOLEAN" *)

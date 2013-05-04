@@ -369,7 +369,7 @@ let convert_inf_to_var (pf:CP.formula) : CP.formula =
 
 let rec contains_inf_eq_b_formula (bf: CP.b_formula) : bool = 
   let (p_f,bf_ann) = bf in
-  match p_f with 
+  let rec helper pf = match pf with 
     | CP.XPure _
     | CP.LexVar _
     | CP.BConst _
@@ -395,7 +395,9 @@ let rec contains_inf_eq_b_formula (bf: CP.b_formula) : bool =
     | CP.BagMax _
     | CP.VarPerm _
     | CP.RelForm _ -> false
-    
+    | CP.Path(pf1, _, _) -> helper pf1
+  in
+  helper p_f
 (*
 Check if the formula contains any assignment to \inf
 *)
@@ -528,8 +530,7 @@ let rec sub_inf_list_exp (exp: CP.exp) (vars: CP.spec_var list) (is_neg: bool) :
     
 let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) (is_neg: bool) : CP.b_formula = 
   let (p_f,bf_ann) = bf in
-  let p_f_conv = 
-    (match p_f with 
+  let p_f_conv = let rec helper pf= match pf with 
       | CP.XPure _
       | CP.LexVar _
       | CP.BConst _
@@ -583,8 +584,11 @@ let rec sub_inf_list_b_formula (bf:CP.b_formula) (vl: CP.spec_var list) (is_neg:
       | CP.BagMax _
       | CP.VarPerm _
       | CP.RelForm _ -> p_f
-    ) in (p_f_conv,bf_ann)
-    
+      | CP.Path(pf1,_,_) -> helper pf1
+  in
+  helper p_f in
+  (p_f_conv,bf_ann)
+
 (*
 substitute all variables in vl with \inf in f
 *)

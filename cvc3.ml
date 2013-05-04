@@ -80,54 +80,58 @@ and cvc3_of_exp a = match a with
   
 and cvc3_of_b_formula b =
   let (pf,_) = b in
-  match pf with
+  let rec helper pf0 = match pf0 with
   (* | CP.BConst (c, _) -> if c then "(TRUE)" else "(FALSE)" *)
-  | CP.BConst (c, _) -> if c then "(0 = 0)" else "( 0 > 0)"
-      (* | CP.BVar (sv, _) -> cvc3_of_spec_var sv *)
-  | CP.BVar (sv, _) -> (cvc3_of_spec_var sv) ^ " > 0"
-  | CP.Lt (a1, a2, _) -> (cvc3_of_exp a1) ^ " < " ^ (cvc3_of_exp a2)
-  | CP.Lte (a1, a2, _) -> (cvc3_of_exp a1) ^ " <= " ^ (cvc3_of_exp a2)
-  | CP.Gt (a1, a2, _) -> (cvc3_of_exp a1) ^ " > " ^ (cvc3_of_exp a2)
-  | CP.Gte (a1, a2, _) -> (cvc3_of_exp a1) ^ " >= " ^ (cvc3_of_exp a2)
-  | CP.Eq (a1, a2, _) -> 
-    if CP.is_null a2 then 
-		(cvc3_of_exp a1) ^ " < 1"
+    | CP.BConst (c, _) -> if c then "(0 = 0)" else "( 0 > 0)"
+        (* | CP.BVar (sv, _) -> cvc3_of_spec_var sv *)
+    | CP.BVar (sv, _) -> (cvc3_of_spec_var sv) ^ " > 0"
+    | CP.Lt (a1, a2, _) -> (cvc3_of_exp a1) ^ " < " ^ (cvc3_of_exp a2)
+    | CP.Lte (a1, a2, _) -> (cvc3_of_exp a1) ^ " <= " ^ (cvc3_of_exp a2)
+    | CP.Gt (a1, a2, _) -> (cvc3_of_exp a1) ^ " > " ^ (cvc3_of_exp a2)
+    | CP.Gte (a1, a2, _) -> (cvc3_of_exp a1) ^ " >= " ^ (cvc3_of_exp a2)
+    | CP.Eq (a1, a2, _) -> 
+          if CP.is_null a2 then 
+	    (cvc3_of_exp a1) ^ " < 1"
 	  else if CP.is_null a1 then 
-		(cvc3_of_exp a2) ^ " < 1"
+	    (cvc3_of_exp a2) ^ " < 1"
 	  else 
-    (cvc3_of_exp a1) ^ " = " ^ (cvc3_of_exp a2)
-  | CP.Neq (a1, a2, _) -> 
-	    if CP.is_null a2 then 
-		  (cvc3_of_exp a1) ^ " > 0"
-	    else if CP.is_null a1 then 
+            (cvc3_of_exp a1) ^ " = " ^ (cvc3_of_exp a2)
+    | CP.Neq (a1, a2, _) -> 
+	  if CP.is_null a2 then 
+	    (cvc3_of_exp a1) ^ " > 0"
+	  else if CP.is_null a1 then 
 		  (cvc3_of_exp a2) ^ " > 0"
-	    else
-		  (cvc3_of_exp a1) ^ " /= " ^ (cvc3_of_exp a2)
-  | CP.EqMax (a1, a2, a3, _) ->
-	    let a1str = cvc3_of_exp a1 in
-	    let a2str = cvc3_of_exp a2 in
-	    let a3str = cvc3_of_exp a3 in
-		"((" ^ a2str ^ " >= " ^ a3str ^ " AND " ^ a1str ^ " = " ^ a2str ^ ") OR (" 
-		^ a3str ^ " > " ^ a2str ^ " AND " ^ a1str ^ " = " ^ a3str ^ "))"
-  | CP.EqMin (a1, a2, a3, _) ->
-	    let a1str = cvc3_of_exp a1 in
-	    let a2str = cvc3_of_exp a2 in
-	    let a3str = cvc3_of_exp a3 in
-		"((" ^ a2str ^ " >= " ^ a3str ^ " AND " ^ a1str ^ " = " ^ a3str ^ ") OR (" 
-		^ a3str ^ " > " ^ a2str ^ " AND " ^ a1str ^ " = " ^ a2str ^ "))"
-  | CP.BagIn (v, e, l)			-> " in(" ^ (cvc3_of_spec_var v) ^ ", " ^ (cvc3_of_exp e) ^ ")"
-  | CP.BagNotIn (v, e, l)	-> " NOT(in(" ^ (cvc3_of_spec_var v) ^ ", " ^ (cvc3_of_exp e) ^"))"
-  | CP.BagSub (e1, e2, l)	-> " subset(" ^ cvc3_of_exp e1 ^ ", " ^ cvc3_of_exp e2 ^ ")"
-  | CP.BagMax _ | CP.BagMin _ -> failwith ("cvc3_of_b_formula: BagMax/BagMin should not appear here.\n")
-  | CP.VarPerm _ -> failwith ("VarPerm are not supported in cvc3")
-  | CP.ListIn _
-  | CP.ListNotIn _
-  | CP.ListAllN _
-  | CP.ListPerm _ -> failwith ("Lists are not supported in cvc3")
-	| CP.RelForm _ -> failwith ("Relations are not supported in cvc3") (* An Hoa *)
+	  else
+	    (cvc3_of_exp a1) ^ " /= " ^ (cvc3_of_exp a2)
+    | CP.EqMax (a1, a2, a3, _) ->
+	  let a1str = cvc3_of_exp a1 in
+	  let a2str = cvc3_of_exp a2 in
+	  let a3str = cvc3_of_exp a3 in
+	  "((" ^ a2str ^ " >= " ^ a3str ^ " AND " ^ a1str ^ " = " ^ a2str ^ ") OR (" 
+	  ^ a3str ^ " > " ^ a2str ^ " AND " ^ a1str ^ " = " ^ a3str ^ "))"
+    | CP.EqMin (a1, a2, a3, _) ->
+	  let a1str = cvc3_of_exp a1 in
+	  let a2str = cvc3_of_exp a2 in
+	  let a3str = cvc3_of_exp a3 in
+	  "((" ^ a2str ^ " >= " ^ a3str ^ " AND " ^ a1str ^ " = " ^ a3str ^ ") OR (" 
+	  ^ a3str ^ " > " ^ a2str ^ " AND " ^ a1str ^ " = " ^ a2str ^ "))"
+    | CP.BagIn (v, e, l)			-> " in(" ^ (cvc3_of_spec_var v) ^ ", " ^ (cvc3_of_exp e) ^ ")"
+    | CP.BagNotIn (v, e, l)	-> " NOT(in(" ^ (cvc3_of_spec_var v) ^ ", " ^ (cvc3_of_exp e) ^"))"
+    | CP.BagSub (e1, e2, l)	-> " subset(" ^ cvc3_of_exp e1 ^ ", " ^ cvc3_of_exp e2 ^ ")"
+    | CP.BagMax _ | CP.BagMin _ -> failwith ("cvc3_of_b_formula: BagMax/BagMin should not appear here.\n")
+    | CP.VarPerm _ -> failwith ("VarPerm are not supported in cvc3")
+    | CP.ListIn _
+    | CP.ListNotIn _
+    | CP.ListAllN _
+    | CP.ListPerm _ -> failwith ("Lists are not supported in cvc3")
+    | CP.RelForm _ -> failwith ("Relations are not supported in cvc3") (* An Hoa *)
     | CP.SubAnn _ -> failwith ("SubAnn not supported in cvc3")
-     | CP.LexVar _ -> failwith ("LexVar not supported in cvc3")
-  | CP.XPure _  -> Error.report_no_pattern ()
+    | CP.LexVar _ -> failwith ("LexVar not supported in cvc3")
+    | CP.XPure _  -> Error.report_no_pattern ()
+    | CP.Path (pf1, _, _) -> helper pf1
+  in
+  helper pf
+
 and cvc3_of_sv_type sv = match sv with
   | CP.SpecVar ((BagT _), _, _) -> "SET"
   | CP.SpecVar ( Bool, _, _) -> "INT" (* "BOOLEAN" *)

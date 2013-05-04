@@ -88,7 +88,7 @@ ListCons _|List _|BagDiff _|BagIntersect _|BagUnion _|Bag _|FConst _)
 
 and omega_of_b_formula b =
   let (pf, _) = b in
-  match pf with
+  let rec helper pf0 = match pf0 with
   | BConst (c, _) -> if c then "(0=0)" else "(0>0)"
   | XPure _ -> "(0=0)"
   | BVar (bv, _) ->  (omega_of_spec_var bv) ^ " > 0" (* easy to track boolean var *)
@@ -125,7 +125,10 @@ and omega_of_b_formula b =
   | VarPerm _ -> illegal_format ("Omega.omega_of_exp: VarPerm constraint")
   | RelForm _ -> illegal_format ("Omega.omega_of_exp: RelForm")
   | LexVar _ -> illegal_format ("Omega.omega_of_exp: LexVar 3")
+  | Path(pf1, _, _) -> helper pf1
   | _ -> illegal_format ("Omega.omega_of_exp: bag or list constraint")
+  in
+  helper pf
 
 and omega_of_formula pr_w pr_s f  =
   let rec helper f = 

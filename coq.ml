@@ -142,48 +142,51 @@ and coq_of_formula_exp_list l = match l with
 (* pretty printing for boolean vars *)
 and coq_of_b_formula b =
   let (pf,_) = b in
-  match pf with
-  | CP.BConst (c, _) -> if c then "True" else "False"
-  | CP.XPure _ -> "True" (* WN : weakening - need to translate> *)
-  | CP.BVar (bv, _) -> " (" ^ (coq_of_spec_var bv) ^ " = 1)"
-  | CP.Lt (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " < " ^ (coq_of_exp a2) ^ ")"
-  | CP.SubAnn (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " <= " ^ (coq_of_exp a2) ^ ")"
-  | CP.Lte (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " <= " ^ (coq_of_exp a2) ^ ")"
-  | CP.Gt (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " > " ^ (coq_of_exp a2) ^ ")"
-  | CP.Gte (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " >= " ^ (coq_of_exp a2) ^ ")"
-  | CP.Eq (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " = " ^ (coq_of_exp a2) ^ ")"
-  | CP.Neq (a1, a2, _) -> "( " ^ (coq_of_exp a1) ^ " <> " ^ (coq_of_exp a2) ^ ")"
-  | CP.EqMax (a1, a2, a3, _) ->
+  let rec helper pf0 =  match pf0 with
+    | CP.BConst (c, _) -> if c then "True" else "False"
+    | CP.XPure _ -> "True" (* WN : weakening - need to translate> *)
+    | CP.BVar (bv, _) -> " (" ^ (coq_of_spec_var bv) ^ " = 1)"
+    | CP.Lt (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " < " ^ (coq_of_exp a2) ^ ")"
+    | CP.SubAnn (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " <= " ^ (coq_of_exp a2) ^ ")"
+    | CP.Lte (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " <= " ^ (coq_of_exp a2) ^ ")"
+    | CP.Gt (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " > " ^ (coq_of_exp a2) ^ ")"
+    | CP.Gte (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " >= " ^ (coq_of_exp a2) ^ ")"
+    | CP.Eq (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " = " ^ (coq_of_exp a2) ^ ")"
+    | CP.Neq (a1, a2, _) -> "( " ^ (coq_of_exp a1) ^ " <> " ^ (coq_of_exp a2) ^ ")"
+    | CP.EqMax (a1, a2, a3, _) ->
 	  let a1str = coq_of_exp a1 in
 	  let a2str = coq_of_exp a2 in
 	  let a3str = coq_of_exp a3 in
-	      "((" ^ a1str ^ " = " ^ a3str ^ " /\\ " ^ a3str ^ " > " ^ a2str ^ ") \\/ ("
-	      ^ a2str ^ " >= " ^ a3str ^ " /\\ " ^ a1str ^ " = " ^ a2str ^ "))"
-  | CP.EqMin (a1, a2, a3, _) ->
+	  "((" ^ a1str ^ " = " ^ a3str ^ " /\\ " ^ a3str ^ " > " ^ a2str ^ ") \\/ ("
+	  ^ a2str ^ " >= " ^ a3str ^ " /\\ " ^ a1str ^ " = " ^ a2str ^ "))"
+    | CP.EqMin (a1, a2, a3, _) ->
 	  let a1str = coq_of_exp a1 in
 	  let a2str = coq_of_exp a2 in
 	  let a3str = coq_of_exp a3 in
           "((" ^ a1str ^ " = " ^ a3str ^ " /\\ " ^ a2str ^ " >= " ^ a3str ^ ") \\/ ("
-		  ^ a2str ^ " <= " ^ a3str ^ " /\\ " ^ a1str ^ " = " ^ a2str ^ "))"
-  (* lists *)
-  | CP.ListIn (a1, a2, _) -> " ( In " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
-  | CP.ListNotIn (a1, a2, _) ->  " ( not ( In " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ "))"
-  | CP.ListAllN (a1, a2, _) -> " ( alln " ^ (coq_of_exp a2) ^ " " ^ (coq_of_exp a1) ^ ")"
-  | CP.ListPerm (a1, a2, _) -> " ( Permutation " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
-  (* bags *)
-  | CP.BagIn (sv, a, _) -> " ( ZSets.mem " ^ (coq_of_spec_var sv) ^ " " ^ (coq_of_exp a) ^ " = true)"
-  | CP.BagNotIn (sv, a, _) -> " ( ZSets.mem " ^ (coq_of_spec_var sv) ^ " " ^ (coq_of_exp a) ^ " = false)"
-  | CP.BagSub (a1, a2, _) -> " ( ZSets.subset " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ " = true)"
-  | CP.BagMin _
-  | CP.BagMax _ -> 
-			illegal_format "coq_of_exp : bags cannot be handled"
-(* failwith ("No bags in Coq yet") *)
-	| CP.RelForm _ -> 
+	  ^ a2str ^ " <= " ^ a3str ^ " /\\ " ^ a1str ^ " = " ^ a2str ^ "))"
+              (* lists *)
+    | CP.ListIn (a1, a2, _) -> " ( In " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
+    | CP.ListNotIn (a1, a2, _) ->  " ( not ( In " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ "))"
+    | CP.ListAllN (a1, a2, _) -> " ( alln " ^ (coq_of_exp a2) ^ " " ^ (coq_of_exp a1) ^ ")"
+    | CP.ListPerm (a1, a2, _) -> " ( Permutation " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
+          (* bags *)
+    | CP.BagIn (sv, a, _) -> " ( ZSets.mem " ^ (coq_of_spec_var sv) ^ " " ^ (coq_of_exp a) ^ " = true)"
+    | CP.BagNotIn (sv, a, _) -> " ( ZSets.mem " ^ (coq_of_spec_var sv) ^ " " ^ (coq_of_exp a) ^ " = false)"
+    | CP.BagSub (a1, a2, _) -> " ( ZSets.subset " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ " = true)"
+    | CP.BagMin _
+    | CP.BagMax _ -> 
+	  illegal_format "coq_of_exp : bags cannot be handled"
+              (* failwith ("No bags in Coq yet") *)
+    | CP.RelForm _ -> 
           (* failwith ("No relations in Coq yet") (\* An Hoa *\) *)
-			illegal_format "coq_of_exp : relation cannot be handled"
+	  illegal_format "coq_of_exp : relation cannot be handled"
     | CP.LexVar _ -> illegal_format "coq_of_exp : lexvar cannot be handled"
     | CP.VarPerm _ ->
-		illegal_format "coq_of_exp : VarPerm cannot be handled"
+	  illegal_format "coq_of_exp : VarPerm cannot be handled"
+    | CP.Path (pf1, _, _) -> helper pf1
+  in
+  helper pf
 
 (* pretty printing for formulas *)
 and coq_of_formula pr_w pr_s f =

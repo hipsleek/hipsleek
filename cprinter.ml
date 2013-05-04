@@ -819,7 +819,7 @@ let rec pr_b_formula (e:P.b_formula) =
   let f_b_no e =  pr_bracket (fun x -> true) pr_formula_exp e in
   let (pf,il) = e in
   (* pr_slicing_label il; *)
-  match pf with
+  let rec helper pf0 = match pf0 with
     | P.LexVar t_info -> 
       fmt_string (string_of_term_ann t_info.CP.lex_ann);
       pr_s "" pr_formula_exp t_info.CP.lex_exp
@@ -862,10 +862,16 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.ListNotIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lnotin> "  (fun ()-> pr_formula_exp e2)
     | P.ListAllN (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <allN> "  (fun ()-> pr_formula_exp e2)
     | P.ListPerm (e1, e2, l) -> pr_op_adhoc (fun ()->pr_formula_exp e1) " <perm> "  (fun ()-> pr_formula_exp e2)
-	| P.RelForm (r, args, l) -> fmt_string ((string_of_spec_var r) ^ "("); match args with
-		| [] -> ()
-		| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
-		  let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")" (* An Hoa *) 
+    | P.RelForm (r, args, l) -> begin
+        fmt_string ((string_of_spec_var r) ^ "("); match args with
+	  | [] -> ()
+	  | arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
+	    let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")" (* An Hoa *)
+      end
+    | P.Path (pf1, svl, l) ->
+           fmt_string "path(" ; helper pf1;  fmt_string ("," ^ (string_of_spec_var_list svl) ^ ")")
+  in
+  helper pf
 
 (** print a b_formula  to formatter *)
 let rec pr_b_formula_w_loc (e:P.b_formula) =
@@ -874,7 +880,7 @@ let rec pr_b_formula_w_loc (e:P.b_formula) =
   let f_b_no e =  pr_bracket (fun x -> true) pr_formula_exp_w_loc e in
   let (pf,il) = e in
   (* pr_slicing_label il; *)
-  match pf with
+  let rec helper pf0 = match pf0 with
     | P.LexVar t_info -> 
       fmt_string (string_of_term_ann t_info.CP.lex_ann);
       pr_s "" pr_formula_exp t_info.CP.lex_exp
@@ -927,11 +933,16 @@ let rec pr_b_formula_w_loc (e:P.b_formula) =
     | P.ListAllN (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <allN> "  (fun ()-> pr_formula_exp e2)
           ;fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
     | P.ListPerm (e1, e2, l) -> pr_op_adhoc (fun ()->pr_formula_exp e1) " <perm> "  (fun ()-> pr_formula_exp e2)
-	| P.RelForm (r, args, l) -> fmt_string ((string_of_spec_var r) ^ "("); match args with
-		| [] -> fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
-		| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
-		  let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")" (* An Hoa *) 
-                  ;fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
+    | P.RelForm (r, args, l) -> begin fmt_string ((string_of_spec_var r) ^ "("); match args with
+	| [] -> fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
+	| arg_first::arg_rest -> let _ = pr_formula_exp arg_first in 
+	  let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) arg_rest in fmt_string ")" (* An Hoa *) 
+          ;fmt_string (" (" ^ (line_number_of_pos l)^ ")" )
+      end
+    | P.Path (pf1, svl, l) ->
+          fmt_string "path("; helper pf1; fmt_string ("," ^ (string_of_spec_var_list svl) ^ "," ^ (line_number_of_pos l)^ ")")
+  in
+  helper pf
 ;;
 
 let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
@@ -3567,7 +3578,8 @@ let rec html_of_pure_b_formula f = match f with
     | P.ListNotIn (e1, e2, l) ->  (html_of_formula_exp e1) ^ " <Lnotin> " ^ (html_of_formula_exp e2)
     | P.ListAllN (e1, e2, l) ->  (html_of_formula_exp e1) ^ " <allN> " ^ (html_of_formula_exp e2)
     | P.ListPerm (e1, e2, l) -> (html_of_formula_exp e1) ^ " <perm> " ^ (html_of_formula_exp e2)
-	| P.RelForm (r, args, l) -> (html_of_spec_var r) ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
+    | P.RelForm (r, args, l) -> (html_of_spec_var r) ^ "(" ^ (String.concat "," (List.map html_of_formula_exp args)) ^ ")"
+    | P.Path (pf1, svl, l) -> "<b> path(" ^ (html_of_pure_b_formula pf1) ^  ("," ^ (string_of_spec_var_list svl) ^ ")</b>")
 
 let rec html_of_pure_formula f =
 	match f with

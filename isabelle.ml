@@ -153,7 +153,7 @@ and isabelle_of_formula_exp_list l = match l with
 (* pretty printing for boolean vars *)
 and isabelle_of_b_formula b =
   let (pf,_) = b in
-  match pf with
+  let rec helper pf0 = match pf0 with
   | CP.BConst (c, _) -> if c then "((0::int) = 0)" else "((0::int) > 0)"
   | CP.XPure _ -> "((0::int) = 0)" (* WN : weakening *)
   | CP.BVar (bv, _) -> "(" ^ (isabelle_of_spec_var bv) ^ " > 0)"
@@ -218,8 +218,11 @@ and isabelle_of_b_formula b =
   | CP.SubAnn _ -> failwith ("SubAnn are not supported in Isabelle")
   | CP.VarPerm _ -> failwith ("VarPerm not suported by Isabelle")
   | CP.LexVar _ -> failwith ("Lexvar are not supported in Isabelle")
-	| CP.RelForm _ -> failwith ("Relations are not supported in Isabelle") (* An Hoa *)
-  
+  | CP.RelForm _ -> failwith ("Relations are not supported in Isabelle") (* An Hoa *)
+  | CP.Path (pf1, _, _) -> helper pf1
+  in
+  helper pf
+
 (* pretty printing for formulas *)
 and isabelle_of_formula f =
     match f with

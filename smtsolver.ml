@@ -138,70 +138,73 @@ let rec smt_of_exp a =
 	
 
 let rec smt_of_b_formula b =
-	let (pf,_) = b in
-	match pf with
-	| CP.BConst (c, _) -> if c then "true" else "false"
-	| CP.BVar (sv, _) -> "(> " ^(smt_of_spec_var sv) ^ " 0)"
-	| CP.Lt (a1, a2, _) -> "(< " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-	| CP.SubAnn (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-	| CP.Lte (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-	| CP.Gt (a1, a2, _) -> "(> " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-	| CP.Gte (a1, a2, _) -> "(>= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-	| CP.Eq (a1, a2, _) -> 
-			if CP.is_null a2 then
-				"(< " ^(smt_of_exp a1)^ " 1)"
-			else if CP.is_null a1 then
-				"(< " ^(smt_of_exp a2)^ " 1)"
-			else
-				"(= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-	| CP.Neq (a1, a2, _) ->
-			if CP.is_null a2 then
-				"(> " ^(smt_of_exp a1)^ " 0)"
-			else if CP.is_null a1 then
-				"(> " ^(smt_of_exp a2)^ " 0)"
-			else
-				"(not (= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ "))"
-	| CP.EqMax (a1, a2, a3, _) ->
-			let a1str = smt_of_exp a1 in
-			let a2str = smt_of_exp a2 in
-			let a3str = smt_of_exp a3 in
-			"(or (and (= " ^ a1str ^ " " ^ a2str ^ ") (>= "^a2str^" "^a3str^")) (and (= " ^ a1str ^ " " ^ a3str ^ ") (< "^a2str^" "^a3str^")))"
-	| CP.EqMin (a1, a2, a3, _) ->
-			let a1str = smt_of_exp a1 in
-			let a2str = smt_of_exp a2 in
-			let a3str = smt_of_exp a3 in
-			"(or (and (= " ^ a1str ^ " " ^ a2str ^ ") (< "^a2str^" "^a3str^")) (and (= " ^ a1str ^ " " ^ a3str ^ ") (>= "^a2str^" "^a3str^")))"
-			(* UNHANDLED *)
-	| CP.BagIn (v, e, l)		-> " in(" ^ (smt_of_spec_var v) ^ ", " ^ (smt_of_exp e) ^ ")"
-	| CP.BagNotIn (v, e, l) -> " NOT(in(" ^ (smt_of_spec_var v) ^ ", " ^ (smt_of_exp e) ^"))"
-	| CP.BagSub (e1, e2, l) -> " subset(" ^ smt_of_exp e1 ^ ", " ^ smt_of_exp e2 ^ ")"
-	| CP.BagMax _ | CP.BagMin _ -> 
-			illegal_format ("z3.smt_of_b_formula: BagMax/BagMin should not appear here.\n")
+  let (pf,_) = b in
+  let rec helper pf0 = match pf0 with
+    | CP.BConst (c, _) -> if c then "true" else "false"
+    | CP.BVar (sv, _) -> "(> " ^(smt_of_spec_var sv) ^ " 0)"
+    | CP.Lt (a1, a2, _) -> "(< " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | CP.SubAnn (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | CP.Lte (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | CP.Gt (a1, a2, _) -> "(> " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | CP.Gte (a1, a2, _) -> "(>= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | CP.Eq (a1, a2, _) -> 
+	  if CP.is_null a2 then
+	    "(< " ^(smt_of_exp a1)^ " 1)"
+	  else if CP.is_null a1 then
+	    "(< " ^(smt_of_exp a2)^ " 1)"
+	  else
+	    "(= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+    | CP.Neq (a1, a2, _) ->
+	  if CP.is_null a2 then
+	    "(> " ^(smt_of_exp a1)^ " 0)"
+	  else if CP.is_null a1 then
+	    "(> " ^(smt_of_exp a2)^ " 0)"
+	  else
+	    "(not (= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ "))"
+    | CP.EqMax (a1, a2, a3, _) ->
+	  let a1str = smt_of_exp a1 in
+	  let a2str = smt_of_exp a2 in
+	  let a3str = smt_of_exp a3 in
+	  "(or (and (= " ^ a1str ^ " " ^ a2str ^ ") (>= "^a2str^" "^a3str^")) (and (= " ^ a1str ^ " " ^ a3str ^ ") (< "^a2str^" "^a3str^")))"
+    | CP.EqMin (a1, a2, a3, _) ->
+	  let a1str = smt_of_exp a1 in
+	  let a2str = smt_of_exp a2 in
+	  let a3str = smt_of_exp a3 in
+	  "(or (and (= " ^ a1str ^ " " ^ a2str ^ ") (< "^a2str^" "^a3str^")) (and (= " ^ a1str ^ " " ^ a3str ^ ") (>= "^a2str^" "^a3str^")))"
+	      (* UNHANDLED *)
+    | CP.BagIn (v, e, l)		-> " in(" ^ (smt_of_spec_var v) ^ ", " ^ (smt_of_exp e) ^ ")"
+    | CP.BagNotIn (v, e, l) -> " NOT(in(" ^ (smt_of_spec_var v) ^ ", " ^ (smt_of_exp e) ^"))"
+    | CP.BagSub (e1, e2, l) -> " subset(" ^ smt_of_exp e1 ^ ", " ^ smt_of_exp e2 ^ ")"
+    | CP.BagMax _ | CP.BagMin _ -> 
+	  illegal_format ("z3.smt_of_b_formula: BagMax/BagMin should not appear here.\n")
     | CP.VarPerm _ -> illegal_format ("z3.smt_of_b_formula: Vperm should not appear here.\n")
-	| CP.ListIn _ | CP.ListNotIn _ | CP.ListAllN _ | CP.ListPerm _ -> 
-			illegal_format ("z3.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
+    | CP.ListIn _ | CP.ListNotIn _ | CP.ListAllN _ | CP.ListPerm _ -> 
+	  illegal_format ("z3.smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
     | CP.LexVar _ ->
-        illegal_format ("z3.smt_of_b_formula: LexVar should not appear here.\n")
-	| CP.RelForm (r, args, l) ->
-		let smt_args = List.map smt_of_exp args in 
-		(* special relation 'update_array' translate to smt primitive store in array theory *)
-        let rn = CP.name_of_spec_var r in
-		if Cpure.is_update_array_relation rn then
-			let orig_array = List.nth smt_args 0 in
-			let new_array = List.nth smt_args 1 in
-			let value = List.nth smt_args 2 in
-			let index = List.rev (List.tl (List.tl (List.tl smt_args))) in
-			let last_index = List.hd index in
-			let rem_index = List.rev (List.tl index) in
-			let arr_select = List.fold_left (fun x y -> let k = List.hd x in ("(select " ^ k ^ " " ^ y ^ ")") :: x) [orig_array] rem_index in
-			let arr_select = List.rev arr_select in
-			let fl = List.map2 (fun x y -> (x,y)) arr_select (rem_index @ [last_index]) in
-			let result = List.fold_right (fun x y -> "(store " ^ (fst x) ^ " " ^ (snd x) ^ " " ^ y ^ ")") fl value in
-				"(= " ^ new_array ^ " " ^ result ^ ")"
-		else
-			"(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
-	| CP.XPure _ -> Error.report_no_pattern ()
-		
+          illegal_format ("z3.smt_of_b_formula: LexVar should not appear here.\n")
+    | CP.RelForm (r, args, l) ->
+	  let smt_args = List.map smt_of_exp args in 
+	  (* special relation 'update_array' translate to smt primitive store in array theory *)
+          let rn = CP.name_of_spec_var r in
+	  if Cpure.is_update_array_relation rn then
+	    let orig_array = List.nth smt_args 0 in
+	    let new_array = List.nth smt_args 1 in
+	    let value = List.nth smt_args 2 in
+	    let index = List.rev (List.tl (List.tl (List.tl smt_args))) in
+	    let last_index = List.hd index in
+	    let rem_index = List.rev (List.tl index) in
+	    let arr_select = List.fold_left (fun x y -> let k = List.hd x in ("(select " ^ k ^ " " ^ y ^ ")") :: x) [orig_array] rem_index in
+	    let arr_select = List.rev arr_select in
+	    let fl = List.map2 (fun x y -> (x,y)) arr_select (rem_index @ [last_index]) in
+	    let result = List.fold_right (fun x y -> "(store " ^ (fst x) ^ " " ^ (snd x) ^ " " ^ y ^ ")") fl value in
+	    "(= " ^ new_array ^ " " ^ result ^ ")"
+	  else
+	    "(" ^ (CP.name_of_spec_var r) ^ " " ^ (String.concat " " smt_args) ^ ")"
+    | CP.XPure _ -> Error.report_no_pattern ()
+    | CP.Path (pf1, _ ,_) -> helper pf1
+  in
+  helper pf
+
 let rec smt_of_formula pr_w pr_s f =
   let _ = Debug.devel_hprint (add_str "f : " !CP.print_formula) f no_pos in
   let rec helper f=
@@ -279,14 +282,14 @@ and collect_bformula_info b = match b with
   | CP.BConst _ | CP.BVar _ -> default_formula_info
   | CP.Lt (e1,e2,_) | CP.Lte (e1,e2,_) | CP.SubAnn (e1,e2,_) | CP.Gt (e1,e2,_) 
   | CP.Gte (e1,e2,_) | CP.Eq (e1,e2,_) | CP.Neq (e1,e2,_) -> 
-		let ef1 = collect_exp_info e1 in
-		let ef2 = collect_exp_info e2 in
-		combine_formula_info ef1 ef2
+	let ef1 = collect_exp_info e1 in
+	let ef2 = collect_exp_info e2 in
+	combine_formula_info ef1 ef2
   | CP.EqMax (e1,e2,e3,_) | CP.EqMin (e1,e2,e3,_) ->
-		let ef1 = collect_exp_info e1 in
-		let ef2 = collect_exp_info e2 in
-		let ef3 = collect_exp_info e3 in
-		combine_formula_info (combine_formula_info ef1 ef2) ef3
+	let ef1 = collect_exp_info e1 in
+	let ef2 = collect_exp_info e2 in
+	let ef3 = collect_exp_info e3 in
+	combine_formula_info (combine_formula_info ef1 ef2) ef3
   | CP.BagIn _ 
   | CP.BagNotIn _ 
   | CP.BagSub _
@@ -305,6 +308,7 @@ and collect_bformula_info b = match b with
 		let args_infos = List.map collect_exp_info args in
 		combine_formula_info_list (rinfo :: args_infos) (* check if there are axioms then change the quantifier free part *)
   | CP.XPure _ -> Error.report_no_pattern ()
+  | CP.Path (pf1, _, _) ->  collect_bformula_info pf1
 
 and collect_exp_info e = match e with
   | CP.Level _

@@ -94,7 +94,7 @@ let rec minisat_of_exp e0 = match e0 with
 (* 				 end                                                                                   *)
 
 
-let  minisat_cnf_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t) (gd:G.t) =
+let rec minisat_cnf_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t) (gd:G.t) =
   match pf with
   | LexVar _        -> ""
   | BConst (c, _)   -> (*let _=print_endline ("minisat_cnf_of_p_formula_for_helper BConst EXIT!")  in*) ""
@@ -154,12 +154,13 @@ let  minisat_cnf_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t)
   | ListPerm _
   | RelForm _       -> "" 
   | VarPerm _ -> Error.report_no_pattern ()
+  | Path(pf1, _, _) -> minisat_cnf_of_p_formula pf1 allvars ge gd
 
 let minisat_cnf_of_b_formula (bf : Cpure.b_formula) (allvars:Glabel.t) (ge:G.t) (gd:G.t)=
   match bf with
   | (pf, _) -> minisat_cnf_of_p_formula pf allvars ge gd
 
-let  minisat_cnf_of_not_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t) (gd:G.t) =
+let rec minisat_cnf_of_not_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (ge:G.t) (gd:G.t) =
   match pf with
   | LexVar _        -> ""
   | BConst (c, _)   -> (*let _=print_endline ("minisat_cnf_of_not_of_p_formula_for_helper BConst EXIT!")  in*) ""
@@ -219,6 +220,7 @@ let  minisat_cnf_of_not_of_p_formula (pf : Cpure.p_formula) (allvars:Glabel.t) (
   | ListPerm _
   | RelForm _       -> ""
   | XPure _ | VarPerm _ -> Error.report_no_pattern ()
+  | Path(pf1, _, _) ->  minisat_cnf_of_not_of_p_formula pf1 allvars ge gd
 
 let minisat_cnf_of_not_of_b_formula (bf : Cpure.b_formula) (allvars:Glabel.t) (ge:G.t) (gd:G.t) =
   match bf with
@@ -230,13 +232,15 @@ let minisat_cnf_of_not_of_b_formula (bf : Cpure.b_formula) (allvars:Glabel.t) (g
 
 (*---------------------------------------CNF conversion here-----------------------------------*)
 let return_pure bf f= match bf with
-  | (pf,_)-> match pf with 
+  | (pf,_)-> let rec helper pf0 = match pf0 with 
       | Eq _ -> f
       | Neq _ -> f  
       | BConst(a,_)->f (*let _=if(a) then print_endline ("TRUE") else print_endline ("FALSE")  in*)
       | BVar(_,_)->f
-	  | XPure _ | LexVar _ | Lt _ | Lte _ | Gt _ | Gte _ | SubAnn _ | EqMax _ | EqMin _ | BagIn _ | BagNotIn _ | BagSub _ 
-	  | BagMin _ | BagMax _ | VarPerm _ | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _ | RelForm _ -> Error.report_no_pattern ()
+      | XPure _ | LexVar _ | Lt _ | Lte _ | Gt _ | Gte _ | SubAnn _ | EqMax _ | EqMin _ | BagIn _ | BagNotIn _ | BagSub _ 
+      | BagMin _ | BagMax _ | VarPerm _ | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _ | RelForm _ -> Error.report_no_pattern ()
+      | Path (pf1, _, _) -> helper pf
+    in helper pf
 
 (*For converting to NNF--no need??--*)
 let rec minisat_cnf_of_formula f =
@@ -424,6 +428,7 @@ and can_minisat_handle_p_formula (pf : Cpure.p_formula) : bool =
   | ListPerm _
   | RelForm _            -> false
   | XPure _ | VarPerm _ -> Error.report_no_pattern()
+  | Path(pf1, _, _) -> can_minisat_handle_p_formula pf1
 
 and can_minisat_handle_b_formula (bf : Cpure.b_formula) : bool =
   match bf with

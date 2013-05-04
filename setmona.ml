@@ -97,7 +97,7 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 			| bf :: rest -> begin
 				current_bforms := rest; (* prepare for next iteration *)
 			  let (pf,_) = bf in
-				match pf with
+			  let rec helper pf0 = match pf0 with
 					(* Bag constraints *)
 				  | BagIn (sv, e, _)
 				  | BagNotIn (sv, e, _) ->
@@ -166,9 +166,12 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 				  | ListNotIn _
 				  | ListAllN _
 				  | ListPerm _ -> failwith ("Lists are not supported in Mona")
-					| RelForm _ -> failwith ("Relations are not supported in Mona")
-					| LexVar _ -> failwith ("LexVar are not supported in Mona")
-					| XPure _ -> Error.report_no_pattern()
+				  | RelForm _ -> failwith ("Relations are not supported in Mona")
+				  | LexVar _ -> failwith ("LexVar are not supported in Mona")
+				  | XPure _ -> Error.report_no_pattern()
+                                  | Path (pf1, _, _) -> helper pf1
+                          in
+                          helper pf
 
 			  end (* end of bf :: rest case *)
 			| [] ->
@@ -344,35 +347,38 @@ and normalize_b_formula (bf0 : b_formula) lbl: formula =
 	  res_f
   in
   let (pf,il) = bf0 in
-	match pf with
-	  | BConst _
-	  | BVar _
-	  | EqMin _
-	  | EqMax _
-	  | BagIn _
-	  | BagNotIn _
-	  | BagSub _
-	  | BagMin _
-	  | BagMax _ -> BForm (bf0,lbl)
-	  | Eq (e1, e2, pos) -> 
-		  if ((is_var_num e1 || is_null e1) && is_normalized_term e2) || 
-			((is_var_num e2 || is_null e2) && is_normalized_term e1)
-		  then (BForm (bf0,lbl))
-		  else helper2 mkEq e1 e2 pos
-	  | Neq (e1, e2, pos) -> mkNot (helper2 mkEq e1 e2 pos) lbl pos
-	  | Lt (e1, e2, pos) -> helper2 mkLt e1 e2 pos
-	  | Lte (e1, e2, pos) | SubAnn (e1, e2, pos) -> helper2 mkLte e1 e2 pos
-	  | Gt (e1, e2, pos) -> helper2 mkGt e1 e2 pos
-	  | Gte (e1, e2, pos) -> helper2 mkGte e1 e2 pos
-	  | VarPerm _ -> failwith ("normalize_b_formula: VarPerm should not appear here")
-	  | ListIn _
-	  | ListNotIn _
-	  | ListAllN _
-	  | ListPerm _ -> failwith ("Lists are not supported in Mona")
-	  | LexVar _ -> failwith ("LexVar are not supported in Mona")
-		| RelForm _ -> failwith ("Lists are not supported in Mona") (* An Hoa *)
-		| XPure _ -> Error.report_no_pattern()
-		  
+  let rec helper pf0 = match pf0 with
+    | BConst _
+    | BVar _
+    | EqMin _
+    | EqMax _
+    | BagIn _
+    | BagNotIn _
+    | BagSub _
+    | BagMin _
+    | BagMax _ -> BForm (bf0,lbl)
+    | Eq (e1, e2, pos) -> 
+	  if ((is_var_num e1 || is_null e1) && is_normalized_term e2) || 
+	    ((is_var_num e2 || is_null e2) && is_normalized_term e1)
+	  then (BForm (bf0,lbl))
+	  else helper2 mkEq e1 e2 pos
+    | Neq (e1, e2, pos) -> mkNot (helper2 mkEq e1 e2 pos) lbl pos
+    | Lt (e1, e2, pos) -> helper2 mkLt e1 e2 pos
+    | Lte (e1, e2, pos) | SubAnn (e1, e2, pos) -> helper2 mkLte e1 e2 pos
+    | Gt (e1, e2, pos) -> helper2 mkGt e1 e2 pos
+    | Gte (e1, e2, pos) -> helper2 mkGte e1 e2 pos
+    | VarPerm _ -> failwith ("normalize_b_formula: VarPerm should not appear here")
+    | ListIn _
+    | ListNotIn _
+    | ListAllN _
+    | ListPerm _ -> failwith ("Lists are not supported in Mona")
+    | LexVar _ -> failwith ("LexVar are not supported in Mona")
+    | RelForm _ -> failwith ("Lists are not supported in Mona") (* An Hoa *)
+    | XPure _ -> Error.report_no_pattern()
+    | Path (pf1, _, _) -> helper pf1
+  in
+  helper pf
+
 (*
   return value:
   first component: list of "add" terms
