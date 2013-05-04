@@ -1,0 +1,23 @@
+data node {
+  int val;
+  node next;
+}.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+checkentail 
+  x::ll<n> //11
+   & x=null
+    |- n>0.
+
+
+/*
+  Entail (1) : Fail.(may) cause: (1<=n & x!=null) | (n=0 & x=null) 
+       |-  0<n. LOCS:[0;1;13] (may-bug)
+
+  where did 0,1 came from?
+
+ */
+

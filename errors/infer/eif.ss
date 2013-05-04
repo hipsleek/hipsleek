@@ -48,8 +48,10 @@ In that way, when we can use it when performing substitution:
 
 We can also use it in slicing:
     {9}: y'=input'-42 & {11}: y'<0 & {12}: path(x'=0,[y']) |- ..x'..
-    === slicing {x'} ==>
-    {9,12}: path(x'=0,[input']) |- ..x'..
+    === slicing_all {x'} ==>
+    {9}: y'=input'-42 & {11}: y'<0 & {12}: path(x'=0,[y']) |- ..x'..
+    === slicing_some {x'} ==>
+    {12}: path(x'=0,[y']) |- ..x'..
 
 Thus, when performing substitution
 
