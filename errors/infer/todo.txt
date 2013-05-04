@@ -136,3 +136,10 @@ Entail (2) : Fail.(must: ) cause: p=null |-  p!=null. LOCS:[14;16] (must-bug)
   where did 0,1 came from?
 
  */
+
+*********************************************************************
+# eif.ss:
+ - add path(exp, svl, loc)
+ - symbolic rule for path
+ - subs rule for path
+
