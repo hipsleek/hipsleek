@@ -1,0 +1,10 @@
+checkentail 
+   y=3
+   & path(x>0,[y])
+    |- z=0.
+
+/*
+Entail (1) : Fail.(may) cause: true |-  z=0. LOCS:[0;4]
+        path dependency: y=3. LOCS:[2] (may-bug)
+
+*/
