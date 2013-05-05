@@ -1,0 +1,11 @@
+
+checkentail 
+   y=3
+   & path(x>0,[z])
+    |- x=0.
+
+checkentail 
+   y=3
+   & path(x>0,[])
+    |- x=0.
+
