@@ -1,0 +1,54 @@
+
+
+checkentail 
+   y=3
+   & x>0
+    |- x=0.
+// Entail (1) : Fail.(must: ) cause: 0<x |-  x=0. LOCS:[5;6] (must-bug)
+// if path(x>0,"y"), we expect 4 also to be included
+
+checkentail 
+   x>=0
+   & x>0
+    |- x=0.
+
+// Entail (2) : Fail.(must: ) cause: 0<x & 0<=x |-  x=0. LOCS:[11;12;13] (must-bug) -- need interpolant
+
+/*
+
+     b & x>0
+
+ x>y ==>    
+  requires true
+  ensures   x>y  &  res  & depends(res,[x,y])
+         or x<=y &  !res & depends(res,[x,y])
+  case {
+    x>y -> res & depends(res,[x,y])
+    x<=y -> !res & depends(res,[x,y])
+  }
+
+ depend(b,
+
+
+  foo(x,y)
+  requires true
+  ensures x>y & res
+       or x<=y & !res
+   {
+      if x>y then true
+      else false
+
+   }
+         x in vs
+ ------------------------------------
+  depend(x,rs) & path(exp,vs) 
+       ==> path(exp,vs-{x}+rs)
+
+  x>3 & y>4 & x>y & res 
+
+   if x>y then res
+   else !res
+
+
+*/
+

@@ -1,0 +1,15 @@
+
+
+checkentail 
+   y=3
+   & x>0
+    |- x=0.
+// Entail (1) : Fail.(must: ) cause: 0<x |-  x=0. LOCS:[5;6] (must-bug)
+// if path(x>0,"y"), we expect 4 also to be included
+
+
+checkentail 
+   y=3
+   & path(x>0,[y])
+    |- x=0.
+
