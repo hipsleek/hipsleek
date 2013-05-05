@@ -203,7 +203,7 @@ let string_of_slicing_label sl =
 	  ^ (string_of_int lbl) ^ ", " ^ (string_of_formula_exp_list el) ^ ">"
 
 let string_of_b_formula (pf,il) =
-  (string_of_slicing_label il) ^ match pf with 
+  let rec helper pf0 = match pf0 with 
   | P.BConst (b,l)              -> string_of_bool b 
   | P.BVar (x, l)               -> string_of_id x
   | P.SubAnn (e1,e2, l)        -> 
@@ -259,6 +259,12 @@ let string_of_b_formula (pf,il) =
   | P.BagSub (e1, e2 , l) -> "BagSub("^(string_of_formula_exp e1)^","^(string_of_formula_exp e2)^")"
   | P.XPure _ -> Error.report_no_pattern()
    (* | _ -> "bag constraint" *)
+  | P.Path (pf1, svl, l) ->
+        let s1 = helper pf1 in
+        let s2 =String.concat "," (List.map string_of_id svl ) in
+        "Path(" ^ s1 ^ ",[" ^ s2 ^ "])"
+  in
+  (string_of_slicing_label il) ^ (helper pf)
 ;;
 
 (*  | BagIn of ((ident * primed) * exp * loc)

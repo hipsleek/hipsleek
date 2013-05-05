@@ -357,6 +357,7 @@ rule tokenizer file_name = parse
   | '%' { PERCENT }
   | '+' { PLUS }
   | '\'' { PRIME }
+  | "path" {PATH}
   | ';' { SEMICOLON }
   | '*' { STAR }
   | "<:" { SUBANN }

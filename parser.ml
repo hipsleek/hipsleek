@@ -289,7 +289,7 @@ let cexp_to_pure2 fct f01 f02 =
   match (f01,f02) with
   | Pure_c f1, Pure_c f2 
       -> (match f1 with
-                             | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct c f2), None), None)) explist
+        | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (((fct c f2), None), None)) explist
                                in let len =  List.length tmp
                                in let res =  if (len > 1) then List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
                                              else  P.BForm (((fct f1 f2), None), None)
@@ -1425,13 +1425,27 @@ cexp_w:
                 | `ALLN; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    ->
 	            let f = cexp_to_pure2 (fun c1 c2-> P.ListAllN (c1, c2, (get_pos_camlp4 _loc 2))) lc cl  in
   set_slicing_utils_pure_double f false
+                | `PATH; `OPAREN; lc=SELF;`COMMA; `OSQUARE; cl = id_list; `CSQUARE; `CPAREN -> begin
+                    match lc with
+                      | Pure_f (P.BForm ((pf, b), fol))->
+                            let func t =
+                      if  String.contains t '\'' then 
+                        (* Remove the primed in the identifier *)
+				        (Str.global_replace (Str.regexp "[']") "" t,Primed)
+			          else (t,Unprimed)
+                    in
+                    let ls = List.map func cl in
+                            let npf = (IP.Path (pf, ls, get_pos_camlp4 _loc 2), b) in
+                             Pure_f (P.BForm (npf, fol))
+                      | _ -> report_error no_pos "parser.cexp_w"
+                  end
                 | `PERM; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    ->
 	            let f = cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos_camlp4 _loc 2))) lc cl in
 	            set_slicing_utils_pure_double f false
                 | t_ann=ann_term; ls1=opt_measures_seq_sqr; ls2=opt_measures_seq
-                                                          ->
-	                                                      let f = cexp_list_to_pure (fun ls1 -> P.LexVar(t_ann,ls1,ls2,(get_pos_camlp4 _loc 1))) ls1 in
-	                                                      set_slicing_utils_pure_double f false
+                            ->
+	                        let f = cexp_list_to_pure (fun ls1 -> P.LexVar(t_ann,ls1,ls2,(get_pos_camlp4 _loc 1))) ls1 in
+	                        set_slicing_utils_pure_double f false
               ]
 	          
 	          

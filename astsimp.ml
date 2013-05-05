@@ -5038,7 +5038,7 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
       
 and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
   let (pf, sl) = b0 in
-  let npf =  match pf with
+  let rec helper pf0 = match pf0 with
     | IP.BConst (b, pos) -> CP.BConst (b, pos)
     | IP.BVar ((v, p), pos) -> CP.BVar (CP.SpecVar (C.bool_type, v, p), pos)
     | IP.LexVar (t_ann, ls1, ls2, pos) ->
@@ -5128,7 +5128,12 @@ and trans_pure_b_formula_x (b0 : IP.b_formula) stab : CP.b_formula =
 		CP.xpure_view_remaining_branches = brs;
 		CP.xpure_view_pos = pos
 	       }
+    | IP.Path(pf1, svl, pos) ->
+          let c_pf = helper pf1 in
+          let trans_vp (v,p) = (trans_var (v,p) stab pos) in
+          CP.Path (c_pf, List.map trans_vp svl, pos)
   in
+  let npf =  helper pf in
   (*let _ = print_string("\nC_B_Form: "^(Cprinter.string_of_b_formula (npf,None))) in*)
   match sl with
     | None -> (npf, None)
@@ -5835,7 +5840,7 @@ and gather_type_info_b_formula prog b0 stab =
       
 and gather_type_info_b_formula_x prog b0 stab =
   let (pf,_) = b0 in
-  match pf with
+  let rec helper pf0 = match pf0 with
     | IP.BConst _ -> ()
     | IP.BVar ((bv, bp), pos) ->
 	      let _ = gather_type_info_var bv stab (C.bool_type) pos in
@@ -5965,8 +5970,9 @@ and gather_type_info_b_formula_x prog b0 stab =
 	 | Not_found ->    failwith ("gather_type_info_b_formula: relation "^r^" cannot be found")
          | _ -> print_endline ("gather_type_info_b_formula: relation " ^ r)
       )
-
-              
+    | IP.Path (pf, vps, pos) -> helper pf
+  in
+  helper pf
 
 (* An Hoa *)
 
