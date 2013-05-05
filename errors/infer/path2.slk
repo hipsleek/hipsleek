@@ -1,0 +1,25 @@
+
+checkentail 
+   b 
+   & y>0
+   & x>0
+    |- x=0.
+
+checkentail 
+   b 
+   & y>0
+   & path(x>0,[y])
+    |- x=0.
+
+checkentail 
+   b 
+   & y>0
+   & path(x>0,[b])
+    |- x=0.
+
+checkentail 
+   b 
+   & y>0
+   & correlate(b,[y])
+   & path(x>0,[b])
+    |- x=0.
