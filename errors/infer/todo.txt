@@ -110,6 +110,7 @@ checkentail
 /*
 Entail (1) : Fail.(must: ) cause: p!=null |-  p=null. LOCS:[8;10] (must-bug)
   Why do we include post-cond 10?
+==> for case specs: we should highlight which post relate to the failure
 
 Entail (2) : Fail.(must: ) cause: p=null |-  p!=null. LOCS:[14;16] (must-bug)
   Why do we include post-cond 16?
