@@ -28,16 +28,18 @@ treeseg<p,ph,h,S> == case {
 // proven successfully
 lemma self::tree<p,S> <- self::treeseg<p,ph,h,S1> * h::tree<ph,S2> & S = union(S1,S2); 
 
+//x is not really deleted from the tree but stays in the end as a node with null pointers
+// won't wrork without the binary search tree property
 void tree_remove(node x, ref node q1t)
-requires q1t::tree<_,S> * x::node<_,_@A,_,_,_> 
+requires q1t::tree<_,S> * x::node<_,_@A,_,_,_>
 ensures q1t'::tree<_,S1> & S = union(S1,{x});
 //requires q1t::tree<p,S> * x::node<_,_@A,px,_,_>
 //ensures q1t'::treeseg<p,px,x,S1> * px::tree<_,S2> & S = union(S1,S2,{x});
 {
-if (q1t == null) return;
-else if (x.val < q1t.val) tree_remove(x,q1t.left);
-else if(x.val > q1t.val) tree_remove(x,q1t.right);
-else {
+if (q1t == null) x = null;
+else if (x.val < q1t.val) {tree_remove(x,q1t.left);}
+else if(x.val > q1t.val) {assume(false); tree_remove(x,q1t.right);}
+else { assume(false);
 	node temp;
 	if (q1t.left == null){
 		temp = q1t.right;
@@ -58,6 +60,10 @@ else {
 dprint;
 }
 
+/*
+Cannot verify the version with parent since the predicate tree doesn't expose the parent node but
+rather just tracks it
+*/
 /*
 void tree_remove_using_parent(node x, ref node q1t)
 requires q1t::tree<p,S> & x in S
